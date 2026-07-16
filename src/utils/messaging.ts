@@ -10,6 +10,7 @@ import type { NetworkMonitorRequestBodyRule } from "~adapters/base"
 
 export const MSG_SHOW_NOTIFICATION = "SHOW_NOTIFICATION"
 export const MSG_FOCUS_TAB = "FOCUS_TAB"
+export const MSG_GET_LOCALE_MESSAGES = "GET_LOCALE_MESSAGES"
 
 export interface ShowNotificationPayload {
   title: string
@@ -22,6 +23,30 @@ export interface ShowNotificationMessage extends ShowNotificationPayload {
 
 export interface FocusTabMessage {
   type: typeof MSG_FOCUS_TAB
+}
+
+export type AppLocale =
+  | "zh-CN"
+  | "zh-TW"
+  | "en"
+  | "ja"
+  | "ko"
+  | "it"
+  | "fr"
+  | "de"
+  | "ru"
+  | "es"
+  | "pt"
+
+export interface GetLocaleMessagesMessage {
+  type: typeof MSG_GET_LOCALE_MESSAGES
+  locale: AppLocale
+}
+
+export interface GetLocaleMessagesResponse {
+  success: boolean
+  messages?: Record<string, string>
+  error?: string
 }
 
 export const MSG_PROXY_FETCH = "PROXY_FETCH"
@@ -96,6 +121,26 @@ export interface BasicBackgroundResponse {
   error?: string
 }
 
+export function requireSuccessfulMessageAcknowledgement(response: unknown): void {
+  if (
+    typeof response === "object" &&
+    response !== null &&
+    "success" in response &&
+    response.success === true
+  ) {
+    return
+  }
+
+  const error =
+    typeof response === "object" &&
+    response !== null &&
+    "error" in response &&
+    typeof response.error === "string"
+      ? response.error
+      : "Content script did not acknowledge the message"
+  throw new Error(error)
+}
+
 // 撤销权限
 export const MSG_REVOKE_PERMISSIONS = "REVOKE_PERMISSIONS"
 
@@ -139,9 +184,23 @@ export interface ExtensionUpdateAvailableMessage extends ExtensionUpdateAvailabl
 
 // 清除全部数据（通知各上下文重置内存态）
 export const MSG_CLEAR_ALL_DATA = "CLEAR_ALL_DATA"
+export const MSG_COMPLETE_CLEAR_ALL_DATA = "COMPLETE_CLEAR_ALL_DATA"
+export const MSG_ABORT_CLEAR_ALL_DATA = "ABORT_CLEAR_ALL_DATA"
+export const EVENT_CLEAR_ALL_DATA = "ophel:clear-all-data"
 
 export interface ClearAllDataMessage {
   type: typeof MSG_CLEAR_ALL_DATA
+  transactionId?: string
+}
+
+export interface CompleteClearAllDataMessage {
+  type: typeof MSG_COMPLETE_CLEAR_ALL_DATA
+  transactionId: string
+}
+
+export interface AbortClearAllDataMessage {
+  type: typeof MSG_ABORT_CLEAR_ALL_DATA
+  transactionId: string
 }
 
 // 恢复备份数据（通知各上下文重载页面以加载最新数据）
@@ -196,6 +255,7 @@ export interface CheckClaudeGeneratingResponse {
 export type ExtensionMessage =
   | ShowNotificationMessage
   | FocusTabMessage
+  | GetLocaleMessagesMessage
   | ProxyFetchMessage
   | WebDAVRequestMessage
   | CheckPermissionMessage
@@ -206,6 +266,8 @@ export type ExtensionMessage =
   | OpenUrlMessage
   | ExtensionUpdateAvailableMessage
   | ClearAllDataMessage
+  | CompleteClearAllDataMessage
+  | AbortClearAllDataMessage
   | RestoreDataMessage
   | SetClaudeSessionKeyMessage
   | TestClaudeTokenMessage
@@ -234,6 +296,28 @@ export interface StartNewConversationMessage {
   type: typeof MSG_START_NEW_CONVERSATION
 }
 
+// Background -> Content Script: 查询当前页面生成状态
+export const MSG_CHECK_IS_GENERATING = "CHECK_IS_GENERATING"
+
+export interface CheckIsGeneratingMessage {
+  type: typeof MSG_CHECK_IS_GENERATING
+}
+
+// Background -> AI Studio Content Script: 获取当前可选模型
+export const MSG_GET_MODEL_LIST = "GET_MODEL_LIST"
+
+export interface GetModelListMessage {
+  type: typeof MSG_GET_MODEL_LIST
+}
+
+export type ContentScriptMessage =
+  | ClearAllDataMessage
+  | RestoreDataMessage
+  | ExtensionUpdateAvailableMessage
+  | StartNewConversationMessage
+  | CheckIsGeneratingMessage
+  | GetModelListMessage
+
 export interface AIStudioModelInfo {
   id: string
   name: string
@@ -247,15 +331,20 @@ export interface AIStudioModelsResponse {
 }
 
 interface BackgroundResponseMap {
+  [MSG_GET_LOCALE_MESSAGES]: GetLocaleMessagesResponse
+  [MSG_PROXY_FETCH]: BasicBackgroundResponse & { data?: string | ArrayBuffer | null }
   [MSG_CHECK_PERMISSION]: PermissionCheckResponse
   [MSG_CHECK_PERMISSIONS]: PermissionCheckResponse
   [MSG_REQUEST_PERMISSIONS]: BasicBackgroundResponse
+  [MSG_REVOKE_PERMISSIONS]: BasicBackgroundResponse & { removed?: boolean }
   [MSG_CHECK_CLAUDE_GENERATING]: CheckClaudeGeneratingResponse
   [MSG_GET_AISTUDIO_MODELS]: AIStudioModelsResponse
 }
 
 type BackgroundResponseFor<T extends ExtensionMessage> =
-  T["type"] extends keyof BackgroundResponseMap ? BackgroundResponseMap[T["type"]] : any
+  T["type"] extends keyof BackgroundResponseMap
+    ? BackgroundResponseMap[T["type"]]
+    : BasicBackgroundResponse
 
 /**
  * Send a message to the background service worker with type safety
@@ -324,5 +413,5 @@ export interface GeminiMyStuffCachePayload {
 
 export interface WindowMessage {
   type: string
-  payload?: any
+  payload?: unknown
 }

@@ -162,8 +162,24 @@ function buildUserscriptStyleBundle(): string {
     path.resolve(__dirname, "src/styles/settings.css"),
     "utf-8",
   )
+  const overlaysStyle = fs.readFileSync(
+    path.resolve(__dirname, "src/styles/overlays.css"),
+    "utf-8",
+  )
+  const queueOverlayStyle = fs.readFileSync(
+    path.resolve(__dirname, "src/styles/queue-overlay.css"),
+    "utf-8",
+  )
 
-  return [themeVariablesStyle, mainStyle, conversationsStyle, releaseNotesStyle, settingsStyle].join("\n")
+  return [
+    themeVariablesStyle,
+    mainStyle,
+    conversationsStyle,
+    releaseNotesStyle,
+    settingsStyle,
+    overlaysStyle,
+    queueOverlayStyle,
+  ].join("\n")
 }
 
 function createContentHash(content: string | Buffer): string {
@@ -448,7 +464,6 @@ export default defineConfig({
           "https://business.gemini.google/*",
           "https://aistudio.google.com/*",
           "https://grok.com/*",
-          "https://chat.openai.com/*",
           "https://chatgpt.com/*",
           "https://claude.ai/*",
           "https://www.doubao.com/*",
@@ -467,6 +482,7 @@ export default defineConfig({
           "GM_getValue",
           "GM_setValue",
           "GM_deleteValue",
+          "GM_listValues",
           "GM_addValueChangeListener",
           "GM_removeValueChangeListener",
           "GM_xmlhttpRequest",

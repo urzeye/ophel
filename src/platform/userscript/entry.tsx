@@ -7,8 +7,18 @@ import { getInitialUserscriptLanguage, primeUserscriptLocales, subscribeI18nChan
 import { injectScrollLock } from "./scroll-lock-inject"
 import { injectYuanbaoMonacoWrap } from "./yuanbao-monaco-wrap-inject"
 import { applyOphelPlatformFontClass } from "~utils/font"
+import { drainCleanupStack } from "~utils/cleanup-stack"
+import { suspendPersistenceWrites } from "~stores/chrome-adapter"
+import { EVENT_CLEAR_ALL_DATA } from "~utils/messaging"
+
+import {
+  initUserscriptClearAllCoordinator,
+  isUserscriptClearRuntimeKey,
+} from "./clear-all-coordinator"
+import { prepareUserscriptRuntimeForClearAll } from "./runtime-lifecycle"
 
 const USERSCRIPT_OBJECT_URLS = new Set<string>()
+let activeUserscriptRuntimeCleanup: (() => void) | null = null
 
 type ChromeStorageAreaPolyfill = {
   get: (keys: string | string[] | null, callback: (items: Record<string, unknown>) => void) => void
@@ -197,23 +207,11 @@ primeUserscriptLocales(getInitialUserscriptLanguage())
 declare function GM_getValue<T>(key: string, defaultValue?: T): T
 declare function GM_setValue(key: string, value: unknown): void
 declare function GM_deleteValue(key: string): void
+declare function GM_listValues(): string[]
 
 if (typeof chrome === "undefined" || !chrome.storage) {
-  // 创建 chrome.storage.local polyfill
-  // 定义所有已知的 storage keys（用于 get(null) 时获取全部数据）
-  const KNOWN_STORAGE_KEYS = [
-    "settings",
-    "prompts",
-    "promptChains",
-    "folders",
-    "tags",
-    "readingHistory",
-    "claudeSessionKeys",
-    "conversations",
-    "ophel:releaseNotesState",
-    "ophel:clearAllFlag",
-    "ophel:restoreFlag",
-  ]
+  const listDataStorageKeys = () =>
+    GM_listValues().filter((key) => !isUserscriptClearRuntimeKey(key))
 
   userscriptWindow.chrome = {
     storage: {
@@ -223,9 +221,8 @@ if (typeof chrome === "undefined" || !chrome.storage) {
           callback: (items: Record<string, unknown>) => void,
         ) => {
           if (keys === null) {
-            // 获取所有数据 - 遍历已知的 keys
             const result: Record<string, unknown> = {}
-            for (const key of KNOWN_STORAGE_KEYS) {
+            for (const key of listDataStorageKeys()) {
               const value = GM_getValue(key)
               if (value !== undefined && value !== null) {
                 result[key] = value
@@ -257,8 +254,7 @@ if (typeof chrome === "undefined" || !chrome.storage) {
           callback?.()
         },
         clear: (callback?: () => void) => {
-          // 遍历所有已知的 storage keys 并删除
-          for (const key of KNOWN_STORAGE_KEYS) {
+          for (const key of listDataStorageKeys()) {
             GM_deleteValue(key)
           }
           callback?.()
@@ -272,7 +268,7 @@ if (typeof chrome === "undefined" || !chrome.storage) {
         ) => {
           if (keys === null) {
             const result: Record<string, unknown> = {}
-            for (const key of KNOWN_STORAGE_KEYS) {
+            for (const key of listDataStorageKeys()) {
               const value = GM_getValue(key)
               if (value !== undefined && value !== null) {
                 result[key] = value
@@ -304,7 +300,7 @@ if (typeof chrome === "undefined" || !chrome.storage) {
           callback?.()
         },
         clear: (callback?: () => void) => {
-          for (const key of KNOWN_STORAGE_KEYS) {
+          for (const key of listDataStorageKeys()) {
             GM_deleteValue(key)
           }
           callback?.()
@@ -352,6 +348,30 @@ if (window.ophelUserscriptInitialized) {
 }
 window.ophelUserscriptInitialized = true
 
+const clearUserscriptRuntimeCaches = () => {
+  suspendPersistenceWrites()
+  try {
+    localStorage.removeItem("ophel_us_theme_cache")
+    localStorage.removeItem("ophel:global-search-shortcut-nudge:v1")
+  } catch (error) {
+    console.warn("[Ophel] Failed to clear userscript runtime caches:", error)
+  }
+}
+window.addEventListener(EVENT_CLEAR_ALL_DATA, clearUserscriptRuntimeCaches)
+
+const userscriptClearCoordinator = initUserscriptClearAllCoordinator({
+  prepareCurrentRuntime: prepareUserscriptRuntimeForClearAll,
+  reloadCurrentRuntime: () => window.location.reload(),
+})
+window.addEventListener(
+  "unload",
+  () => {
+    userscriptClearCoordinator.cleanup()
+    window.removeEventListener(EVENT_CLEAR_ALL_DATA, clearUserscriptRuntimeCaches)
+  },
+  { once: true },
+)
+
 // 注入滚动锁定 API 劫持到页面主世界
 // 等效于浏览器扩展中的 scroll-lock-main.ts (MAIN World content script)
 // 必须在 document-start 时同步执行，在页面代码加载前劫持滚动 API
@@ -368,40 +388,89 @@ injectYuanbaoMonacoWrap()
  * document-start 时 DOM 尚未就绪，需等待 document.readyState 变化
  */
 async function init() {
-  const [{ getAdapter }, { App }, { initNetworkMonitor }, { initGeminiTitleGuard }] =
-    await Promise.all([
-      import("~adapters"),
-      import("~components/App"),
-      import("~core/network-monitor"),
-      import("~core/gemini-title-guard"),
-    ])
+  const cleanupTasks: Array<() => void> = []
+  let cleanedUp = false
+  const cleanupRuntime = () => {
+    if (cleanedUp) return
+    cleanedUp = true
+    drainCleanupStack(cleanupTasks, "userscript runtime")
+    if (activeUserscriptRuntimeCleanup === cleanupRuntime) {
+      activeUserscriptRuntimeCleanup = null
+    }
+    window.ophelUserscriptInitialized = false
+  }
+  activeUserscriptRuntimeCleanup = cleanupRuntime
+  cleanupTasks.push(cleanupUserscriptObjectUrls)
+  window.addEventListener("unload", cleanupRuntime, { once: true })
+  cleanupTasks.push(() => window.removeEventListener("unload", cleanupRuntime))
+  window.addEventListener(EVENT_CLEAR_ALL_DATA, cleanupRuntime, { once: true })
+  cleanupTasks.push(() => window.removeEventListener(EVENT_CLEAR_ALL_DATA, cleanupRuntime))
 
+  const [
+    { loadAdapter },
+    { App },
+    { OverlayPortalProvider },
+    { clearAdapterRuntime, setAdapterRuntime },
+    { destroyNetworkMonitor, initNetworkMonitor },
+    { destroyGeminiTitleGuard, initGeminiTitleGuard },
+  ] = await Promise.all([
+    import("~adapters"),
+    import("~components/App"),
+    import("~components/ui/OverlayPortal"),
+    import("~core/adapter-runtime"),
+    import("~core/network-monitor"),
+    import("~core/gemini-title-guard"),
+  ])
+  if (cleanedUp) return
+
+  cleanupTasks.push(destroyNetworkMonitor)
+  cleanupTasks.push(destroyGeminiTitleGuard)
   initGeminiTitleGuard()
 
-  const adapter = getAdapter()
+  const adapter = await loadAdapter()
+  if (cleanedUp) return
 
   if (!adapter) {
-    return
+    throw new Error(`No supported adapter for ${window.location.hostname}`)
   }
+
+  setAdapterRuntime(adapter)
+  cleanupTasks.push(() => clearAdapterRuntime(adapter))
 
   // 初始化适配器
+  cleanupTasks.push(() => adapter.dispose())
   adapter.afterPropertiesSet({})
 
-  let mountObserver: MutationObserver | null = null
-  let mountInterval: number | null = null
+  let mountParentObserver: MutationObserver | null = null
+  let documentRootObserver: MutationObserver | null = null
+  let mountParentWaitObserver: MutationObserver | null = null
+  let mountParentWaitResolve: (() => void) | null = null
+  let userscriptRoot: ReturnType<typeof ReactDOM.createRoot> | null = null
+  let shadowHost: HTMLElement | null = null
+  const mountRetryTimers: number[] = []
 
   const cleanupMountWatchers = () => {
-    mountObserver?.disconnect()
-    mountObserver = null
-    if (mountInterval !== null) {
-      window.clearInterval(mountInterval)
-      mountInterval = null
-    }
+    mountParentObserver?.disconnect()
+    mountParentObserver = null
+    documentRootObserver?.disconnect()
+    documentRootObserver = null
+    mountParentWaitObserver?.disconnect()
+    mountParentWaitObserver = null
+    const resolveMountParentWait = mountParentWaitResolve
+    mountParentWaitResolve = null
+    resolveMountParentWait?.()
+    mountRetryTimers.forEach((timer) => window.clearTimeout(timer))
+    mountRetryTimers.length = 0
+    userscriptRoot?.unmount()
+    userscriptRoot = null
+    shadowHost?.remove()
+    shadowHost = null
   }
+  cleanupTasks.push(cleanupMountWatchers)
 
   const mountUserscriptApp = async () => {
     try {
-      const shadowHost = document.createElement("div")
+      shadowHost = document.createElement("div")
       shadowHost.id = "ophel-userscript-root"
       applyOphelPlatformFontClass(shadowHost)
       shadowHost.style.cssText =
@@ -412,14 +481,30 @@ async function init() {
       const waitForMountParent = async () => {
         if (getMountParent()) return
         await new Promise<void>((resolve) => {
-          const observer = new MutationObserver(() => {
+          mountParentWaitResolve = resolve
+          mountParentWaitObserver = new MutationObserver(() => {
             if (getMountParent()) {
-              observer.disconnect()
+              mountParentWaitObserver?.disconnect()
+              mountParentWaitObserver = null
+              mountParentWaitResolve = null
               resolve()
             }
           })
-          observer.observe(document.documentElement, { childList: true, subtree: true })
+          mountParentWaitObserver.observe(document.documentElement, {
+            childList: true,
+            subtree: false,
+          })
         })
+      }
+
+      const observeMountParent = (parent: HTMLElement) => {
+        mountParentObserver?.disconnect()
+        mountParentObserver = new MutationObserver(() => {
+          if (!shadowHost.isConnected) {
+            doMount()
+          }
+        })
+        mountParentObserver.observe(parent, { childList: true, subtree: false })
       }
 
       const doMount = () => {
@@ -428,24 +513,22 @@ async function init() {
         if (shadowHost.parentElement !== parent) {
           parent.appendChild(shadowHost)
         }
+        observeMountParent(parent)
       }
 
       await waitForMountParent()
+      if (cleanedUp) return
       doMount()
-      ;[250, 600, 1200, 2000, 3500, 5000].forEach((delay) => setTimeout(doMount, delay))
+      ;[250, 600, 1200, 2000, 3500, 5000].forEach((delay) => {
+        mountRetryTimers.push(window.setTimeout(doMount, delay))
+      })
 
-      mountObserver = new MutationObserver(() => {
-        if (!shadowHost.isConnected) {
+      documentRootObserver = new MutationObserver(() => {
+        if (shadowHost.parentElement !== getMountParent()) {
           doMount()
         }
       })
-      mountObserver.observe(document.documentElement, { childList: true, subtree: true })
-
-      mountInterval = window.setInterval(() => {
-        if (!shadowHost.isConnected) {
-          doMount()
-        }
-      }, 2000)
+      documentRootObserver.observe(document.documentElement, { childList: true, subtree: false })
 
       if (window.location.hostname.includes("chatglm.cn")) {
         shadowHost.classList.add("gh-site-chatglm")
@@ -478,11 +561,15 @@ async function init() {
           [],
         )
 
-        return React.createElement(App)
+        return React.createElement(
+          OverlayPortalProvider,
+          null,
+          React.createElement(App, { adapter }),
+        )
       }
 
-      const root = ReactDOM.createRoot(container)
-      root.render(React.createElement(UserscriptAppRoot))
+      userscriptRoot = ReactDOM.createRoot(container)
+      userscriptRoot.render(React.createElement(UserscriptAppRoot))
     } catch (error) {
       cleanupMountWatchers()
       throw error
@@ -490,6 +577,7 @@ async function init() {
   }
 
   await mountUserscriptApp()
+  if (cleanedUp) return
 
   // 等待 Zustand hydration 完成后初始化核心模块
   const { useSettingsStore, getSettingsState } = await import("~stores/settings-store")
@@ -504,7 +592,6 @@ async function init() {
   const waitForHydration = (store: {
     getState: () => { _hasHydrated: boolean }
     subscribe: (fn: (state: { _hasHydrated: boolean }) => void) => () => void
-    setState: (partial: Partial<{ _hasHydrated: boolean }>) => void
   }) => {
     if (store.getState()._hasHydrated) {
       return Promise.resolve(true)
@@ -529,9 +616,6 @@ async function init() {
 
       timeoutId = window.setTimeout(() => {
         unsub()
-        // 首次空存储时，persist 可能不会自然结束 hydration。
-        // userscript 环境下这里直接兜底结束 loading，允许默认配置先渲染出来。
-        store.setState({ _hasHydrated: true })
         finish(false)
       }, 5000)
     })
@@ -539,51 +623,70 @@ async function init() {
     return hydrationPromise
   }
 
-  await Promise.all([
-    waitForHydration(useSettingsStore),
-    waitForHydration(useConversationsStore),
-    waitForHydration(useFoldersStore),
-    waitForHydration(useTagsStore),
-    waitForHydration(usePromptsStore),
-    waitForHydration(useClaudeSessionKeysStore),
-    waitForHydration(useReadingHistoryStore),
-  ])
+  const hydrationStores = [
+    ["settings", useSettingsStore],
+    ["conversations", useConversationsStore],
+    ["folders", useFoldersStore],
+    ["tags", useTagsStore],
+    ["prompts", usePromptsStore],
+    ["claudeSessionKeys", useClaudeSessionKeysStore],
+    ["readingHistory", useReadingHistoryStore],
+  ] as const
+  const hydrationResults = await Promise.all(
+    hydrationStores.map(([, store]) => waitForHydration(store)),
+  )
+  if (cleanedUp) return
+  const timedOutStores = hydrationStores
+    .filter((_, index) => !hydrationResults[index])
+    .map(([name]) => name)
+  if (timedOutStores.length > 0) {
+    throw new Error(`Store hydration timed out: ${timedOutStores.join(", ")}`)
+  }
 
   // 获取用户设置
   const settings = getSettingsState()
   const siteId = adapter.getSiteId()
 
   // ========== 初始化所有核心模块（使用共享模块） ==========
-  const { initCoreModules, subscribeModuleUpdates, initUrlChangeObserver } = await import(
-    "~core/modules-init"
-  )
+  const { destroyCoreModules, initCoreModules, subscribeModuleUpdates, initUrlChangeObserver } =
+    await import("~core/modules-init")
+  cleanupTasks.push(destroyCoreModules)
 
   const ctx = { adapter, settings, siteId }
 
   await initCoreModules(ctx)
+  if (cleanedUp) return
 
   // 初始化 NetworkMonitor 消息监听器（必须显式调用以避免 tree-shaking）
   initNetworkMonitor()
 
   // 订阅设置变化
   const unsubscribeModuleUpdates = subscribeModuleUpdates(ctx)
-  window.addEventListener("unload", unsubscribeModuleUpdates, { once: true })
+  cleanupTasks.push(unsubscribeModuleUpdates)
 
   // 初始化 URL 变化监听 (SPA 导航)
   const cleanupUrlChangeObserver = initUrlChangeObserver(ctx)
-  window.addEventListener("unload", cleanupUrlChangeObserver, { once: true })
+  cleanupTasks.push(cleanupUrlChangeObserver)
+}
 
-  window.addEventListener("unload", cleanupMountWatchers)
-  window.addEventListener("unload", cleanupUserscriptObjectUrls)
+function runInit() {
+  void init().catch(async (error) => {
+    activeUserscriptRuntimeCleanup?.()
+    const { destroyCoreModules } = await import("~core/modules-init")
+    destroyCoreModules()
+    window.ophelUserscriptInitialized = false
+    console.error("[Ophel] Userscript initialization failed:", error)
+  })
 }
 
 // 启动：document-start 时 DOM 未就绪，需等待
 // injectScrollLock() 已在上方同步执行，后续初始化延迟到 DOM 就绪
 function startWhenReady() {
+  if (userscriptClearCoordinator.clearPending) return
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", () => void init(), { once: true })
+    document.addEventListener("DOMContentLoaded", runInit, { once: true })
   } else {
-    void init()
+    runInit()
   }
 }
 startWhenReady()

@@ -42,11 +42,27 @@
   --gh-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
   --gh-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
   --gh-shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.3);
+  --gh-shadow-md: 0 8px 16px rgba(0, 0, 0, 0.12);
 
   /* === 品牌色 === */
   --gh-primary: #4285f4;
   --gh-secondary: #34a853;
   --gh-danger: #ef4444;
+  --gh-accent: var(--gh-primary);
+  --gh-accent-hover: color-mix(in srgb, var(--gh-primary) 86%, black);
+  --gh-bg-accent: color-mix(in srgb, var(--gh-primary) 10%, var(--gh-bg));
+  --gh-border-light: color-mix(in srgb, var(--gh-border) 72%, transparent);
+  --gh-border-hover: color-mix(in srgb, var(--gh-primary) 38%, var(--gh-border));
+  --gh-primary-hover: color-mix(in srgb, var(--gh-primary) 86%, black);
+  --gh-primary-light: color-mix(in srgb, var(--gh-primary) 12%, var(--gh-bg));
+  --gh-success: var(--gh-secondary);
+  --gh-error: var(--gh-danger);
+  --gh-text-disabled: color-mix(in srgb, var(--gh-text-secondary) 62%, transparent);
+  --gh-warning: #f59e0b;
+  --gh-text-warning: #b45309;
+  --gh-bg-warning-light: color-mix(in srgb, var(--gh-warning) 10%, var(--gh-bg));
+  --gh-warning-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  --gh-border-danger: color-mix(in srgb, var(--gh-danger) 32%, var(--gh-border));
   --gh-brand-gradient: linear-gradient(135deg, #4285f4 0%, #34a853 100%);
   --gh-shadow-brand: 0 4px 12px rgba(66, 133, 244, 0.3);
 
@@ -140,6 +156,17 @@
 
   /* === 滑块圆点颜色 === */
   --gh-slider-dot-bg: #d1d5db;
+
+  /* === 代码块 === */
+  --gh-code-bg: rgba(0, 0, 0, 0.05);
+
+  /* === 组件布局 === */
+  --gh-icon-left: -24px;
+
+  /* === 可选主题装饰 === */
+  --gh-bg-image: none;
+  --gh-bg-animation: none;
+  --gh-footer-text: var(--gh-text-on-primary);
 
   /* === 分类颜色（柔和背景色） === */
   --gh-category-1: #fecaca; /* 红 */

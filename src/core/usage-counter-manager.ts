@@ -1,4 +1,5 @@
 import type { SiteAdapter } from "~adapters/base"
+import { PollingTaskRegistry } from "~core/polling-task-registry"
 import { DOMToolkit } from "~utils/dom-toolkit"
 import { t } from "~utils/i18n"
 import type { UsageMonitorSettings } from "~utils/storage"
@@ -57,7 +58,8 @@ export class UsageCounterManager {
   private slot: HTMLDivElement | null = null
   private activeAnchor: HTMLElement | null = null
   private mounted = false
-  private mountTimer: number | null = null
+  private readonly pollingTasks = new PollingTaskRegistry()
+  private readonly mountTaskName = "usage-counter-mount"
   private renderTimer: number | null = null
   private renderInFlight = false
   private rerenderRequested = false
@@ -167,10 +169,7 @@ export class UsageCounterManager {
     window.removeEventListener("resize", this.handleViewportChange, true)
     window.removeEventListener("scroll", this.handleViewportChange, true)
 
-    if (this.mountTimer !== null) {
-      window.clearInterval(this.mountTimer)
-      this.mountTimer = null
-    }
+    this.pollingTasks.stop(this.mountTaskName)
 
     if (this.renderTimer !== null) {
       window.clearTimeout(this.renderTimer)
@@ -250,14 +249,17 @@ export class UsageCounterManager {
   }
 
   private startMountLoop() {
-    if (this.mountTimer !== null) return
-
-    this.mountTimer = window.setInterval(() => {
-      const mountedChanged = this.ensureMounted()
-      if (mountedChanged || this.root) {
-        this.scheduleRender(0)
-      }
-    }, 1000)
+    this.pollingTasks.start({
+      name: this.mountTaskName,
+      intervalMs: 1000,
+      runWhenHidden: false,
+      run: () => {
+        const mountedChanged = this.ensureMounted()
+        if (mountedChanged || this.root) {
+          this.scheduleRender(0)
+        }
+      },
+    })
   }
 
   private ensureMounted(force = false): boolean {

@@ -85,6 +85,9 @@ export class OutlineManager {
   private treeKey: string = ""
   private listeners: (() => void)[] = []
   private isAutoUpdating = false
+  private destroyed = false
+  private bookmarkUnsubscribe: (() => void) | null = null
+  private readonly handleWindowMessage = (event: MessageEvent) => this.handleMessage(event)
 
   // UI State
   private expandLevel: number = 6
@@ -111,6 +114,7 @@ export class OutlineManager {
   // 兜底方案：基于内容变化检测
   private lastTreeChangeTime: number = 0
   private fallbackRefreshTimer: ReturnType<typeof setTimeout> | null = null
+  private postGenerationRefreshTimer: ReturnType<typeof setTimeout> | null = null
   private static readonly FALLBACK_DELAY = 3000 // 3秒无变化后触发强制刷新
 
   // 使用方激活状态（只有至少一个入口需要实时大纲时才监听）
@@ -122,6 +126,7 @@ export class OutlineManager {
 
   // Global refresh debounce (防止多处同时触发时的重复执行)
   private refreshDebounceTimer: ReturnType<typeof setTimeout> | null = null
+  private routeRefreshTimers = new Set<ReturnType<typeof setTimeout>>()
   private readonly REFRESH_DEBOUNCE_MS = 300
 
   // 设置变更回调
@@ -144,10 +149,10 @@ export class OutlineManager {
     this.expandLevel = settings.expandLevel ?? 6
 
     // Listen to monitor messages
-    window.addEventListener("message", this.handleMessage.bind(this))
+    window.addEventListener("message", this.handleWindowMessage)
 
     // 订阅 bookmarks-store，当书签变化时刷新大纲
-    void useBookmarkStore.subscribe(() => {
+    this.bookmarkUnsubscribe = useBookmarkStore.subscribe(() => {
       // 只有在激活状态下才刷新，避免不必要的计算
       if (this.isActive) {
         this.refresh()
@@ -248,6 +253,7 @@ export class OutlineManager {
   private routeChangeVersion = 0
 
   private handleMessage(event: MessageEvent) {
+    if (this.destroyed) return
     if (event.source !== window) return
     // Imports needed: EVENT_MONITOR_START, EVENT_MONITOR_COMPLETE
     // I will add them to the top of the file
@@ -389,7 +395,9 @@ export class OutlineManager {
     if (this.wasGenerating && !isGenerating && !this.postGenerationScheduled) {
       this.postGenerationScheduled = true
       // 生成完成后延迟 500ms 再刷新，确保 DOM 稳定
-      setTimeout(() => {
+      this.postGenerationRefreshTimer = setTimeout(() => {
+        this.postGenerationRefreshTimer = null
+        if (this.destroyed) return
         this.postGenerationScheduled = false
         if (!this.isActive) {
           // Tab 已切走，标记为待刷新，切回时再执行
@@ -433,6 +441,7 @@ export class OutlineManager {
   }
 
   subscribe(listener: () => void) {
+    if (this.destroyed) return () => {}
     this.listeners.push(listener)
     return () => {
       this.listeners = this.listeners.filter((l) => l !== listener)
@@ -440,7 +449,40 @@ export class OutlineManager {
   }
 
   private notify() {
+    if (this.destroyed) return
     this.listeners.forEach((l) => l())
+  }
+
+  destroy(): void {
+    if (this.destroyed) return
+    this.destroyed = true
+    this.routeChangeVersion += 1
+    this.activeConsumers.clear()
+    this.isActive = false
+
+    window.removeEventListener("message", this.handleWindowMessage)
+    this.bookmarkUnsubscribe?.()
+    this.bookmarkUnsubscribe = null
+
+    this.stopAutoUpdate()
+    this.stopPeriodicOutlineRefreshFallback()
+    this.stopSourceObserver()
+
+    if (this.fallbackRefreshTimer) {
+      clearTimeout(this.fallbackRefreshTimer)
+      this.fallbackRefreshTimer = null
+    }
+    if (this.postGenerationRefreshTimer) {
+      clearTimeout(this.postGenerationRefreshTimer)
+      this.postGenerationRefreshTimer = null
+    }
+    if (this.refreshDebounceTimer) {
+      clearTimeout(this.refreshDebounceTimer)
+      this.refreshDebounceTimer = null
+    }
+    this.routeRefreshTimers.forEach((timer) => clearTimeout(timer))
+    this.routeRefreshTimers.clear()
+    this.listeners = []
   }
 
   private normalizeSources(sources: OutlineSource[]): OutlineSource[] {
@@ -783,6 +825,7 @@ export class OutlineManager {
 
   // Adjusted refresh signature
   refresh(overrideLevel?: number, immediate = false) {
+    if (this.destroyed) return
     if (!this.settings.enabled || this.isRefreshing) return
 
     // immediate = true: 立即执行（用于 fallback 检测和路由切换）
@@ -855,7 +898,9 @@ export class OutlineManager {
     // 使用 immediate=true 避免被防抖合并，确保每个探测都能执行
     const delays = [80, 250, 600, 1200]
     delays.forEach((delay, index) => {
-      setTimeout(() => {
+      const timer = setTimeout(() => {
+        this.routeRefreshTimers.delete(timer)
+        if (this.destroyed) return
         if (routeVersion !== this.routeChangeVersion) return
 
         this.refresh(undefined, true)
@@ -864,6 +909,7 @@ export class OutlineManager {
           this.updateAutoUpdateState()
         }
       }, delay)
+      this.routeRefreshTimers.add(timer)
     })
   }
 

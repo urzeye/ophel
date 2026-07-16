@@ -8,13 +8,14 @@
  * 主要用途：图文并茂（Canvas）模式下的滚动控制
  */
 
-import type { PlasmoCSConfig } from "plasmo"
+import type { MainWorldCSConfig } from "~types/plasmo-content-script"
 
 // 配置为主世界运行
-export const config: PlasmoCSConfig = {
+export const config: MainWorldCSConfig = {
   matches: ["https://gemini.google.com/*", "https://business.gemini.google/*"],
   world: "MAIN",
   run_at: "document_start",
+  persist_across_sessions: false,
 }
 
 // 防止重复初始化

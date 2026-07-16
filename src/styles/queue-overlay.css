@@ -3,12 +3,11 @@
 /* 折叠态胶囊 */
 .gh-queue-capsule {
   position: fixed;
-  z-index: 99998;
+  z-index: 20;
   display: flex;
   align-items: center;
   gap: 6px;
   padding: 6px 14px;
-  border-radius: 20px;
   border-radius: 20px;
   background: var(--gh-bg, #ffffff);
   border: 1px solid var(--gh-border, #e5e7eb);
@@ -66,7 +65,7 @@
 /* 展开态面板 */
 .gh-queue-panel {
   position: fixed;
-  z-index: 99999;
+  z-index: 40;
   width: 420px;
   max-width: calc(100vw - 40px);
   max-height: min(440px, calc(100vh - 32px));

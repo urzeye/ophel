@@ -722,6 +722,8 @@ Gemini 生成的图片通常托管在 `googleusercontent.com`，但也可能重�
 
 **日期**: 2026-01-03
 
+> 2026-07 更新：当前菜单和对话框已统一渲染到 Ophel Shadow Root 内的 `#ophel-overlay-root`。以下 `document.body` Portal 内容仅用于解释历史根因，不得作为新实现模板。
+
 ### 症状
 
 - 面板在边缘吸附（Edge Snap）隐藏状态下，用户悬停显示面板后打开菜单或对话框
@@ -734,7 +736,7 @@ Gemini 生成的图片通常托管在 `googleusercontent.com`，但也可能重�
 
 1. 用户可以将面板拖到屏幕边缘，面板会自动吸附并隐藏
 2. 当鼠标悬停在面板区域时，面板通过 CSS `:hover` 或 `.edge-peek` 类显示
-3. 菜单和对话框通过 React Portal 渲染到 `document.body`，不在面板 DOM 内部
+3. 当时菜单和对话框通过 React Portal 渲染到 `document.body`，不在面板 DOM 内部（现已废弃）
 
 相关代码结构：
 
@@ -793,7 +795,7 @@ src/components/
 分析对话框的渲染方式：
 
 ```tsx
-// DialogOverlay 组件
+// 历史 DialogOverlay 组件（现已废弃）
 const dialogContent = (
   <div className="conversations-dialog-overlay" onClick={onClose}>
     {/* 全屏覆盖层，z-index: 1000003 */}
@@ -801,7 +803,7 @@ const dialogContent = (
   </div>
 )
 
-return createPortal(dialogContent, document.body)
+return createPortal(dialogContent, document.body) // 不要在当前代码中复用
 ```
 
 **根因**：
@@ -1763,7 +1765,7 @@ useEffect(() => {
       if (hideTimerRef.current) clearTimeout(hideTimerRef.current)
       hideTimerRef.current = setTimeout(() => {
         if (!isInputFocusedRef.current && !isSettingsOpenRef.current && !isInteractionActiveRef.current) {
-          const portalElements = document.body.querySelectorAll(/* Portal 选择器 */)
+          const portalElements = window.__ophelOverlayRoot?.querySelectorAll(/* 覆盖层选择器 */)
           if (portalElements.length === 0) {
             setIsEdgePeeking(false)
           }
@@ -1829,6 +1831,8 @@ onMouseLeave={() => {
 
 **日期**: 2026-01-11
 
+> 2026-07 更新：Shadow Host 仍使用 body 挂载与站点级重挂载保护，但面板覆盖层已固定在 Shadow Root 内；本节关于 body Portal 的比较是历史方案分析。
+
 ### 症状
 
 - 在 ChatGPT 页面上，面板刷新后短暂显示后消失
@@ -1851,7 +1855,7 @@ ChatGPT 是一个 React 应用，使用 **React Hydration** 初始化页面。Pl
 
 将面板挂载到 `document.documentElement`（`<html>`）可以避开 Hydration，但引发了连锁问题：
 
-1. **Portal 渲染问题**：`createPortal(content, document.body)` 渲染的菜单/对话框在 Shadow DOM 外部，样式丢失
+1. **历史 Portal 渲染问题**：当时 `createPortal(content, document.body)` 让菜单/对话框离开 Shadow DOM 并丢失样式
 2. **pointer-events 问题**：`.gh-root` 有 `pointer-events: none`，Portal 容器需要特殊处理
 3. **z-index 管理复杂**：需要为 Portal 容器设置层级，与现有组件的 z-index 产生冲突
 
@@ -1892,15 +1896,13 @@ export const mountShadowHost: PlasmoMountShadowHost = ({ shadowHost }) => {
 }
 ```
 
-### 挂载位置对 Portal 的影响
+### 当前挂载与 Portal 边界
 
-| 维度               | body 挂载                   | html 挂载                         |
-| ------------------ | --------------------------- | --------------------------------- |
-| **Portal 目标**    | `document.body`（主文档）   | 需要 Shadow DOM 内的容器          |
-| **pointer-events** | 自然继承，无需处理          | 需要显式设置                      |
-| **z-index**        | 主文档层叠上下文，清晰      | Shadow DOM 内，需额外管理         |
-| **样式隔离**       | Portal 在主文档，需注入样式 | Portal 在 Shadow DOM 内，自动隔离 |
-| **复杂度**         | ⭐️ 简单                    | ⭐️⭐️⭐️ 复杂                    |
+| 对象 | 当前目标 | 约束 |
+| --- | --- | --- |
+| Shadow Host | `document.body`，部分 SPA 使用延迟挂载/重挂载保护 | 只负责承载 Ophel Shadow Root |
+| 面板覆盖层 | Shadow Root 内的 `#ophel-overlay-root` | 共享主题变量、样式隔离和 z-index 体系 |
+| 文档根伪元素/页面增强 | `document.head` 或目标第三方 Shadow Root | 仅限不能在 Ophel Shadow Root 生效的能力 |
 
 ### 经验总结
 

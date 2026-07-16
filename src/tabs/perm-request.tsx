@@ -63,7 +63,8 @@ const PermissionRequestPage: React.FC = () => {
   useEffect(() => {
     if (isHydrated) {
       if (settings?.language) {
-        setLanguage(settings.language)
+        void setLanguage(settings.language).then(() => setLangReady(true))
+        return
       }
       // 语言设置完成后标记为就绪，触发重渲染
       setLangReady(true)

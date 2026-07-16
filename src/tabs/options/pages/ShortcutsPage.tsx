@@ -124,7 +124,7 @@ const ShortcutInput: React.FC<{
             ? "2px solid var(--gh-primary)"
             : "1px solid var(--gh-border, #e5e7eb)",
           borderRadius: "6px",
-          background: isRecording ? "var(--gh-bg-hover)" : "var(--gh-bg)",
+          background: isRecording ? "var(--gh-hover)" : "var(--gh-bg)",
           color: binding ? "var(--gh-text)" : "var(--gh-text-tertiary)",
           cursor: "pointer",
           textAlign: "center",

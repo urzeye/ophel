@@ -1546,6 +1546,11 @@ export const ko = {
   queueQuickAsk: "프롬프트 대기열",
   queueInQueue: "대기 중 ({count})",
   queueEmpty: "대기열이 비어 있습니다. 입력 후 Enter를 눌러 보내거나 대기열에 추가하세요",
+  queueEmptyShortcut:
+    "대기열이 비어 있습니다. 내용을 입력하고 {shortcut}을 눌러 보내거나 대기열에 추가하세요",
+  activeSearchFilters: "활성 검색 필터",
+  titleFormatPlaceholders: "제목 형식 자리표시자",
+  noOptions: "사용 가능한 옵션이 없습니다",
   queueClearAll: "모두 지우기",
   queueRemove: "제거",
   queuePlaceholderIdle: "프롬프트를 입력하고 Enter를 눌러 전송...",

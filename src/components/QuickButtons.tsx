@@ -8,7 +8,7 @@ import React, {
   useSyncExternalStore,
 } from "react"
 
-import { getAdapter } from "~adapters/index"
+import type { SiteAdapter } from "~adapters/base"
 import { ThemeDarkIcon, ThemeLightIcon, EyeClosedIcon } from "~components/icons"
 import { LoadingOverlay } from "~components/LoadingOverlay"
 import { Tooltip } from "~components/ui/Tooltip"
@@ -34,6 +34,7 @@ import {
 import { showToast } from "~utils/toast"
 
 interface QuickButtonsProps {
+  adapter: SiteAdapter
   isPanelExpanded: boolean
   onPanelToggle: () => void
   onPanelLogoHoverStart?: (anchorRect: DOMRect, options?: { waitForGroupDwell?: boolean }) => void
@@ -97,6 +98,7 @@ const LEAVE_WINDOW_RETAIN_MS = 1500
 const HOVER_DWELL_MS = 300
 
 export const QuickButtons: React.FC<QuickButtonsProps> = ({
+  adapter,
   isPanelExpanded,
   onPanelToggle,
   onPanelLogoHoverStart,
@@ -128,7 +130,6 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
 
   const { settings, updateNestedSetting } = useSettingsStore()
   const currentSettings = settings || DEFAULT_SETTINGS
-  const adapter = getAdapter()
   const quickButtonsSettings = currentSettings.quickButtons || DEFAULT_SETTINGS.quickButtons
   const collapsedButtonsOrder = useMemo(
     () => quickButtonsSettings.collapsed || [],
@@ -140,7 +141,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   const quickButtonsOpacity = Math.min(Math.max(quickButtonsSettings.opacity ?? 1, 0.4), 1)
   const persistedGroupPosition = quickButtonsSettings.position ?? null
   const proximityRadius = quickButtonsSettings.proximityRadius ?? 150
-  const siteId = adapter?.getSiteId() || "_default"
+  const siteId = adapter.getSiteId()
   const siteTheme = getSiteTheme(currentSettings, siteId)
   const resolvedThemeMode = themeMode || (siteTheme.mode === "dark" ? "dark" : "light")
   const panelSparkleColor = resolvedThemeMode === "dark" ? "brand" : "currentColor"
@@ -421,7 +422,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
 
       return { width, height, maxX, maxY }
     },
-    [DRAG_PADDING_PX],
+    [],
   )
 
   const clampPixelGroupPosition = useCallback(
@@ -442,7 +443,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
         maxY,
       }
     },
-    [DRAG_PADDING_PX, getGroupBounds],
+    [getGroupBounds],
   )
 
   const toLogicalGroupPosition = useCallback(
@@ -460,7 +461,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
 
       return { xRatio, yRatio }
     },
-    [DRAG_PADDING_PX, clampPixelGroupPosition],
+    [clampPixelGroupPosition],
   )
 
   const resolveLogicalGroupPosition = useCallback(
@@ -482,7 +483,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
         y: Math.min(Math.max(rawY, DRAG_PADDING_PX), maxY),
       }
     },
-    [DRAG_PADDING_PX, getGroupBounds],
+    [getGroupBounds],
   )
 
   useLayoutEffect(() => {

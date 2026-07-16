@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react"
+import React, { useEffect, useId, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 
 import {
@@ -6,100 +6,30 @@ import {
   OPHEL_HOVER_WIDTH_RETAIN_LAYER_PROPS,
 } from "~utils/dom-toolkit"
 import { t } from "~utils/i18n"
+import { useOverlayPortalTarget } from "./OverlayPortal"
 
-// ==================== 对话框样式 ====================
+const getDeepActiveElement = (): HTMLElement | null => {
+  let activeElement: Element | null = document.activeElement
 
-const DIALOG_STYLES = `
-  .gh-dialog-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: var(--gh-overlay-bg, rgba(0,0,0,0.5));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 2147483647;
+  while (activeElement?.shadowRoot?.activeElement) {
+    activeElement = activeElement.shadowRoot.activeElement
   }
-  .gh-dialog {
-    background: var(--gh-bg, white);
-    border-radius: 12px;
-    padding: 20px;
-    min-width: 280px;
-    max-width: 400px;
-    box-shadow: var(--gh-shadow-lg, 0 20px 50px rgba(0,0,0,0.3));
-  }
-  .gh-dialog-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--gh-text, #1f2937);
-    margin-bottom: 12px;
-  }
-  .gh-dialog-message {
-    font-size: 14px;
-    color: var(--gh-text-secondary, #6b7280);
-    margin-bottom: 20px;
-    line-height: 1.5;
-    white-space: pre-wrap;
-  }
-  .gh-dialog-buttons {
-    display: flex;
-    gap: 8px;
-    justify-content: flex-end;
-  }
-  .gh-dialog-btn {
-    padding: 8px 16px;
-    border-radius: 6px;
-    font-size: 14px;
-    cursor: pointer;
-    transition: all 0.2s;
-    border: none;
-  }
-  .gh-dialog-btn-secondary {
-    border: 1px solid var(--gh-border, #d1d5db);
-    background: var(--gh-bg, white);
-    color: var(--gh-text, #374151);
-  }
-  .gh-dialog-btn-secondary:hover {
-    background: var(--gh-hover, #f3f4f6);
-  }
-  .gh-dialog-btn-primary {
-    background: var(--gh-brand-gradient, linear-gradient(135deg, #4285f4 0%, #34a853 100%));
-    color: white;
-  }
-  .gh-dialog-btn-danger {
-    background: var(--gh-text-danger, #ef4444);
-    color: white;
-  }
-  .gh-dialog-input {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid var(--gh-border, #d1d5db);
-    border-radius: 6px;
-    font-size: 14px;
-    box-sizing: border-box;
-    margin-bottom: 20px;
-    background: var(--gh-bg, #ffffff);
-    color: var(--gh-text, #1f2937);
-  }
-  .gh-dialog-input:focus {
-    outline: none;
-    border-color: var(--gh-input-focus-border, #4285f4);
-  }
-`
 
-// 样式注入状态
-let dialogStyleInjected = false
-
-const injectDialogStyles = () => {
-  if (dialogStyleInjected) return
-  const style = document.createElement("style")
-  style.id = "gh-dialog-styles"
-  style.textContent = DIALOG_STYLES
-  document.head.appendChild(style)
-  dialogStyleInjected = true
+  return activeElement instanceof HTMLElement ? activeElement : null
 }
+
+const dialogStack: symbol[] = []
+
+const registerDialog = (token: symbol): void => {
+  dialogStack.push(token)
+}
+
+const unregisterDialog = (token: symbol): void => {
+  const index = dialogStack.lastIndexOf(token)
+  if (index !== -1) dialogStack.splice(index, 1)
+}
+
+const isTopDialog = (token: symbol): boolean => dialogStack.at(-1) === token
 
 // ==================== DialogOverlay ====================
 
@@ -108,34 +38,112 @@ export interface DialogOverlayProps {
   onClose: () => void
   closeOnOverlayClick?: boolean
   closeOnEscape?: boolean
+  overlayClassName?: string
   dialogClassName?: string
   dialogStyle?: React.CSSProperties
+  ariaLabel?: string
 }
 
 /**
- * 对话框覆盖层 - 使用 Portal 渲染到 document.body
+ * 对话框覆盖层 - 渲染到当前 React 树注册的统一覆盖层根节点
  */
 export const DialogOverlay: React.FC<DialogOverlayProps> = ({
   children,
   onClose,
   closeOnOverlayClick = true,
   closeOnEscape = true,
+  overlayClassName,
   dialogClassName,
   dialogStyle,
+  ariaLabel,
 }) => {
+  const portalTarget = useOverlayPortalTarget()
   const overlayRef = useRef<HTMLDivElement>(null)
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const restoreFocusRef = useRef<HTMLElement | null>(null)
+  const dialogTokenRef = useRef(Symbol("dialog"))
+  const onCloseRef = useRef(onClose)
+  const closeOnEscapeRef = useRef(closeOnEscape)
+  const titleId = `gh-dialog-title-${useId().replace(/:/g, "")}`
+  const [resolvedTitleId, setResolvedTitleId] = useState<string | undefined>(undefined)
+
+  onCloseRef.current = onClose
+  closeOnEscapeRef.current = closeOnEscape
 
   useEffect(() => {
-    injectDialogStyles()
+    if (!portalTarget) return
+
+    const token = dialogTokenRef.current
+    restoreFocusRef.current = getDeepActiveElement()
+    registerDialog(token)
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (closeOnEscape && e.key === "Escape") onClose()
+      if (!isTopDialog(token)) return
+
+      if (closeOnEscapeRef.current && e.key === "Escape") {
+        e.preventDefault()
+        onCloseRef.current()
+        return
+      }
+
+      if (e.key !== "Tab") return
+
+      const dialog = dialogRef.current
+      if (!dialog) return
+      const focusable = Array.from(
+        dialog.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((element) => element.getAttribute("aria-hidden") !== "true")
+
+      if (focusable.length === 0) {
+        e.preventDefault()
+        dialog.focus()
+        return
+      }
+
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      const activeElement = getDeepActiveElement()
+      if (e.shiftKey && activeElement === first) {
+        e.preventDefault()
+        last.focus()
+      } else if (!e.shiftKey && activeElement === last) {
+        e.preventDefault()
+        first.focus()
+      }
     }
     document.addEventListener("keydown", handleKeyDown)
-    return () => document.removeEventListener("keydown", handleKeyDown)
-  }, [closeOnEscape, onClose])
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown)
+      unregisterDialog(token)
+      restoreFocusRef.current?.focus()
+    }
+  }, [portalTarget])
 
   useEffect(() => {
+    if (!portalTarget) return
+
+    const dialog = dialogRef.current
+    if (!dialog) return
+
+    const title = dialog.querySelector<HTMLElement>(".gh-dialog-title, .conversations-dialog-title")
+    if (title) {
+      title.id = titleId
+      setResolvedTitleId(titleId)
+    } else {
+      setResolvedTitleId(undefined)
+    }
+
+    const initialFocus = dialog.querySelector<HTMLElement>(
+      '[autofocus], input:not([disabled]), textarea:not([disabled]), select:not([disabled]), button:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    )
+    ;(initialFocus || dialog).focus()
+  }, [portalTarget, titleId])
+
+  useEffect(() => {
+    if (!portalTarget) return
+
     const overlay = overlayRef.current
     if (!overlay) {
       return
@@ -143,24 +151,38 @@ export const DialogOverlay: React.FC<DialogOverlayProps> = ({
 
     // 通用弹窗内部广泛依赖本地 onKeyDown 逻辑，这里使用冒泡阶段拦截，避免吞掉确认/关闭等键盘行为。
     return attachEditableKeyboardFocusGuard(overlay, { capture: false })
-  }, [])
+  }, [portalTarget])
 
   const dialogContent = (
     <div
       ref={overlayRef}
-      className="gh-dialog-overlay gh-interactive"
+      className={`gh-dialog-overlay gh-interactive${overlayClassName ? ` ${overlayClassName}` : ""}`}
       {...OPHEL_HOVER_WIDTH_RETAIN_LAYER_PROPS}
-      onClick={closeOnOverlayClick ? onClose : undefined}>
+      onClick={
+        closeOnOverlayClick
+          ? (event) => {
+              if (event.target === event.currentTarget && isTopDialog(dialogTokenRef.current)) {
+                onClose()
+              }
+            }
+          : undefined
+      }>
       <div
+        ref={dialogRef}
         className={dialogClassName ? `gh-dialog ${dialogClassName}` : "gh-dialog"}
         style={dialogStyle}
+        role="dialog"
+        aria-modal="true"
+        aria-label={ariaLabel}
+        aria-labelledby={ariaLabel ? undefined : resolvedTitleId}
+        tabIndex={-1}
         onClick={(e) => e.stopPropagation()}>
         {children}
       </div>
     </div>
   )
 
-  return createPortal(dialogContent, document.body)
+  return portalTarget ? createPortal(dialogContent, portalTarget) : null
 }
 
 // ==================== ConfirmDialog ====================

@@ -55,7 +55,10 @@ export const STORAGE_KEYS = {
 } as const
 
 // 清除全部数据标记（用于跳过首次自动恢复/自动同步）
+export const CLEAR_ALL_PREPARE_KEY = "ophel:clearAllPrepare"
 export const CLEAR_ALL_FLAG_KEY = "ophel:clearAllFlag"
+export const CLEAR_ALL_GENERATION_KEY = "ophel:clearAllGeneration"
+export const CLEAR_ALL_RESUME_KEY = "ophel:clearAllResume"
 export const CLEAR_ALL_FLAG_TTL_MS = 5 * 1000
 export const SKIP_READING_HISTORY_RESTORE_PARAM = "ophel_skip_restore"
 

@@ -2,11 +2,27 @@ import cssText from "data-text:~style.css"
 import conversationsCssText from "data-text:~styles/conversations.css"
 import releaseNotesCssText from "data-text:~styles/release-notes.css"
 import settingsCssText from "data-text:~styles/settings.css"
+import overlaysCssText from "data-text:~styles/overlays.css"
+import queueOverlayCssText from "data-text:~styles/queue-overlay.css"
 import type { PlasmoCSConfig, PlasmoMountShadowHost } from "plasmo"
 import React from "react"
 
 import { App } from "~components/App"
+import { OverlayPortalProvider } from "~components/ui/OverlayPortal"
+import { getAdapterRuntime, subscribeAdapterRuntime } from "~core/adapter-runtime"
+import { drainPersistenceWrites, suspendPersistenceWrites } from "~stores/chrome-adapter"
+import { registerClearAllDataTask } from "~utils/clear-all-event"
 import { applyOphelPlatformFontClass } from "~utils/font"
+import { EVENT_CLEAR_ALL_DATA } from "~utils/messaging"
+
+window.addEventListener(
+  EVENT_CLEAR_ALL_DATA,
+  (event) => {
+    suspendPersistenceWrites()
+    registerClearAllDataTask(event, drainPersistenceWrites())
+  },
+  { once: true },
+)
 
 export const config: PlasmoCSConfig = {
   matches: [
@@ -14,7 +30,6 @@ export const config: PlasmoCSConfig = {
     "https://business.gemini.google/*",
     "https://aistudio.google.com/*",
     "https://grok.com/*",
-    "https://chat.openai.com/*",
     "https://chatgpt.com/*",
     "https://claude.ai/*",
     "https://www.doubao.com/*",
@@ -24,7 +39,6 @@ export const config: PlasmoCSConfig = {
     "https://chatglm.cn/*",
     "https://chat.qwen.ai/*",
     "https://www.qianwen.com/*",
-    "https://qianwen.com/*",
     "https://yuanbao.tencent.com/*",
     "https://chat.z.ai/*",
   ],
@@ -69,6 +83,10 @@ export const getStyle = () => {
     releaseNotesCssText +
     "\n" +
     settingsCssText +
+    "\n" +
+    overlaysCssText +
+    "\n" +
+    queueOverlayCssText +
     (earlyThemeCSS ? "\n" + earlyThemeCSS : "")
   return style
 }
@@ -93,7 +111,6 @@ export const mountShadowHost: PlasmoMountShadowHost = ({
   // ChatGPT、Claude 和 Grok 都是 Next.js 应用，需要延迟挂载
   const needsDelayedMount =
     hostname.includes("chatgpt.com") ||
-    hostname.includes("chat.openai.com") ||
     hostname.includes("grok.com") ||
     hostname.includes("claude.ai") ||
     hostname.includes("deepseek.com") ||
@@ -127,7 +144,17 @@ export const mountShadowHost: PlasmoMountShadowHost = ({
 }
 
 const PlasmoApp = () => {
-  return <App />
+  const adapter = React.useSyncExternalStore(
+    subscribeAdapterRuntime,
+    getAdapterRuntime,
+    getAdapterRuntime,
+  )
+
+  return adapter ? (
+    <OverlayPortalProvider>
+      <App adapter={adapter} />
+    </OverlayPortalProvider>
+  ) : null
 }
 
 export default PlasmoApp

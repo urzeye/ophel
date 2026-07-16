@@ -98,6 +98,15 @@ export interface Platform {
    */
   readonly storage: PlatformStorage
 
+  /** Freeze data writers in every active runtime before clearing storage. */
+  prepareClearAllData(): Promise<void>
+
+  /** Finalize a successful clear and reload other active runtimes. */
+  completeClearAllData(): Promise<void>
+
+  /** Resume or reload runtimes after a failed clear transaction. */
+  abortClearAllData(): Promise<void>
+
   /**
    * 发起网络请求（绕过 CORS）
    */

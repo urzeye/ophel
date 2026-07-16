@@ -1,4 +1,5 @@
 import { normalizeAssistantMermaidSource, type SiteAdapter } from "~adapters/base"
+import { PollingTaskRegistry } from "~core/polling-task-registry"
 import { DOMToolkit } from "~utils/dom-toolkit"
 import { t } from "~utils/i18n"
 import { showToast } from "~utils/toast"
@@ -64,7 +65,7 @@ const ASSISTANT_MERMAID_CSS = `
   gap: 10px;
   padding: 8px 10px;
   border-bottom: 1px solid var(--gh-border, rgba(148, 163, 184, 0.2));
-  background: var(--gh-bg-primary, rgba(248, 250, 252, 0.96));
+  background: var(--gh-bg, rgba(248, 250, 252, 0.96));
 }
 
 .gh-assistant-mermaid-actions {
@@ -133,7 +134,7 @@ const ASSISTANT_MERMAID_CSS = `
 .gh-assistant-mermaid-preview {
   padding: 12px;
   overflow-x: auto;
-  background: var(--gh-bg-primary, rgba(255, 255, 255, 0.96));
+  background: var(--gh-bg, rgba(255, 255, 255, 0.96));
 }
 
 .gh-assistant-mermaid-preview:fullscreen,
@@ -146,7 +147,7 @@ const ASSISTANT_MERMAID_CSS = `
   padding: ${FULLSCREEN_PREVIEW_PADDING}px;
   box-sizing: border-box;
   overflow: auto;
-  background: var(--gh-bg-primary, rgba(255, 255, 255, 0.98));
+  background: var(--gh-bg, rgba(255, 255, 255, 0.98));
 }
 
 .gh-assistant-mermaid-preview[hidden] {
@@ -321,7 +322,9 @@ export class AssistantMermaidRenderer {
   private adapter: SiteAdapter
   private enabled: boolean
   private stopWatch: (() => void) | null = null
-  private rescanTimer: number | null = null
+  private readonly pollingTasks = new PollingTaskRegistry()
+  private readonly rescanTaskName = "assistant-mermaid-rescan"
+  private initialRescanTimer: number | null = null
   private clickHandler: ((e: MouseEvent) => void) | null = null
   private messageHandler: ((event: MessageEvent) => void) | null = null
   private fullscreenChangeHandler: (() => void) | null = null
@@ -360,9 +363,10 @@ export class AssistantMermaidRenderer {
       this.stopWatch = null
     }
 
-    if (this.rescanTimer) {
-      window.clearInterval(this.rescanTimer)
-      this.rescanTimer = null
+    this.pollingTasks.stop(this.rescanTaskName)
+    if (this.initialRescanTimer !== null) {
+      window.clearTimeout(this.initialRescanTimer)
+      this.initialRescanTimer = null
     }
 
     if (this.clickHandler) {
@@ -622,18 +626,23 @@ export class AssistantMermaidRenderer {
   }
 
   private startRescanTimer() {
-    if (this.rescanTimer) return
+    if (this.pollingTasks.isRunning(this.rescanTaskName)) return
 
-    window.setTimeout(() => {
+    this.initialRescanTimer = window.setTimeout(() => {
+      this.initialRescanTimer = null
       if (this.enabled) {
         this.rescan()
       }
     }, INITIAL_DELAY)
 
-    this.rescanTimer = window.setInterval(() => {
-      if (!this.enabled) return
-      this.rescan()
-    }, RESCAN_INTERVAL)
+    this.pollingTasks.start({
+      name: this.rescanTaskName,
+      intervalMs: RESCAN_INTERVAL,
+      runWhenHidden: false,
+      run: () => {
+        if (this.enabled) this.rescan()
+      },
+    })
   }
 
   private rescan() {

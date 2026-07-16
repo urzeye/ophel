@@ -23,11 +23,23 @@ import {
   sendToBackground,
 } from "~utils/messaging"
 import { showToast } from "~utils/toast"
+import type { ClaudeSessionKey } from "~utils/storage"
 
 import { SettingCard } from "../components"
 
 interface ClaudeSettingsProps {
   siteId: string
+}
+
+function isClaudeSessionKey(value: unknown): value is ClaudeSessionKey {
+  if (typeof value !== "object" || value === null) return false
+  const key = value as Record<string, unknown>
+  return (
+    typeof key.id === "string" &&
+    typeof key.name === "string" &&
+    typeof key.key === "string" &&
+    typeof key.createdAt === "number"
+  )
 }
 
 // 对话框状态类型
@@ -315,7 +327,7 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
         }
 
         const existingKeys = new Set(keys.map((k) => k.key))
-        const newKeys = imported.filter((k: any) => !existingKeys.has(k.key))
+        const newKeys = imported.filter(isClaudeSessionKey).filter((k) => !existingKeys.has(k.key))
 
         if (newKeys.length === 0) {
           showToast(t("claudeNoNewTokens"), TOAST_DURATION.SHORT)
@@ -565,7 +577,7 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
               padding: "8px 12px",
               flex: "1 1 auto",
               opacity: keys.length === 0 || isBatchTesting ? 0.6 : 1,
-              backgroundColor: isBatchTesting ? "rgba(var(--gh-primary-rgb), 0.1)" : undefined,
+              backgroundColor: isBatchTesting ? "var(--gh-primary-light)" : undefined,
               color: isBatchTesting ? "var(--gh-primary)" : undefined,
               borderColor: isBatchTesting ? "var(--gh-primary)" : undefined,
               whiteSpace: "nowrap",

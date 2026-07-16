@@ -56,6 +56,7 @@ export const SelectedPromptBar: React.FC<SelectedPromptBarProps> = ({
 
     // 如果没有输入框引用或输入框不在 DOM 中，使用默认位置
     if (!textarea || !textarea.isConnected) {
+      const hadLayoutSnapshot = lastLayoutSnapshotRef.current !== null
       setBottomPosition((current) =>
         current === DEFAULT_BOTTOM_POSITION ? current : DEFAULT_BOTTOM_POSITION,
       )
@@ -63,7 +64,7 @@ export const SelectedPromptBar: React.FC<SelectedPromptBarProps> = ({
         current === DEFAULT_LEFT_POSITION ? current : DEFAULT_LEFT_POSITION,
       )
       lastLayoutSnapshotRef.current = null
-      return
+      return hadLayoutSnapshot
     }
 
     const observedElement = observedElementRef.current
@@ -99,7 +100,7 @@ export const SelectedPromptBar: React.FC<SelectedPromptBarProps> = ({
       lastLayoutSnapshot.height === layoutSnapshot.height &&
       lastLayoutSnapshot.viewportHeight === layoutSnapshot.viewportHeight
     ) {
-      return
+      return false
     }
     lastLayoutSnapshotRef.current = layoutSnapshot
 
@@ -116,6 +117,7 @@ export const SelectedPromptBar: React.FC<SelectedPromptBarProps> = ({
     // 横向跟随输入容器中心，避免在有侧边栏时按整个页面居中。
     const nextLeftPosition = `${Math.round(layoutSnapshot.left + layoutSnapshot.width / 2)}px`
     setLeftPosition((current) => (current === nextLeftPosition ? current : nextLeftPosition))
+    return true
   }, [adapter, findInputContainer])
 
   useEffect(() => {
@@ -124,9 +126,35 @@ export const SelectedPromptBar: React.FC<SelectedPromptBarProps> = ({
     const textarea = adapter?.getTextareaElement()
 
     // 创建 ResizeObserver 监听输入框容器尺寸变化
-    resizeObserverRef.current = new ResizeObserver(() => {
-      updatePosition()
-    })
+    let scheduledFrameId: number | null = null
+    let trackingFrameId: number | null = null
+    let trackingDeadline = 0
+
+    const scheduleUpdate = () => {
+      if (scheduledFrameId !== null) return
+      scheduledFrameId = window.requestAnimationFrame(() => {
+        scheduledFrameId = null
+        updatePosition()
+      })
+    }
+
+    const startBoundedTracking = (durationMs = 700) => {
+      trackingDeadline = Math.max(trackingDeadline, performance.now() + durationMs)
+      if (trackingFrameId !== null) return
+
+      const trackPosition = (timestamp: number) => {
+        updatePosition()
+        if (timestamp < trackingDeadline) {
+          trackingFrameId = window.requestAnimationFrame(trackPosition)
+        } else {
+          trackingFrameId = null
+        }
+      }
+
+      trackingFrameId = window.requestAnimationFrame(trackPosition)
+    }
+
+    resizeObserverRef.current = new ResizeObserver(scheduleUpdate)
 
     // 如果能找到输入框，开始监听其容器
     if (textarea) {
@@ -140,25 +168,27 @@ export const SelectedPromptBar: React.FC<SelectedPromptBarProps> = ({
 
     // 选中时多次延迟更新（处理输入框容器还未渲染完成的情况）
     const delays = [50, 200, 400]
-    const timeoutIds = delays.map((delay) => setTimeout(updatePosition, delay))
+    const timeoutIds = delays.map((delay) => setTimeout(scheduleUpdate, delay))
+    startBoundedTracking()
 
-    // 跟随 CSS transition / transform 引起的位置变化，例如站点侧边栏展开收起。
-    let animationFrameId: number | null = null
-    const trackPosition = () => {
-      updatePosition()
-      animationFrameId = window.requestAnimationFrame(trackPosition)
-    }
-    animationFrameId = window.requestAnimationFrame(trackPosition)
-
-    // 监听窗口大小变化
-    window.addEventListener("resize", updatePosition)
+    const handleTransitionStart = () => startBoundedTracking()
+    window.addEventListener("resize", scheduleUpdate)
+    window.addEventListener("scroll", scheduleUpdate, true)
+    document.addEventListener("transitionrun", handleTransitionStart, true)
+    document.addEventListener("animationstart", handleTransitionStart, true)
+    window.visualViewport?.addEventListener("resize", scheduleUpdate)
+    window.visualViewport?.addEventListener("scroll", scheduleUpdate)
 
     return () => {
-      window.removeEventListener("resize", updatePosition)
+      window.removeEventListener("resize", scheduleUpdate)
+      window.removeEventListener("scroll", scheduleUpdate, true)
+      document.removeEventListener("transitionrun", handleTransitionStart, true)
+      document.removeEventListener("animationstart", handleTransitionStart, true)
+      window.visualViewport?.removeEventListener("resize", scheduleUpdate)
+      window.visualViewport?.removeEventListener("scroll", scheduleUpdate)
       timeoutIds.forEach((id) => clearTimeout(id))
-      if (animationFrameId !== null) {
-        window.cancelAnimationFrame(animationFrameId)
-      }
+      if (scheduledFrameId !== null) window.cancelAnimationFrame(scheduledFrameId)
+      if (trackingFrameId !== null) window.cancelAnimationFrame(trackingFrameId)
       if (resizeObserverRef.current) {
         resizeObserverRef.current.disconnect()
         resizeObserverRef.current = null

@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 
+import { useOverlayPortalTarget } from "~components/ui/OverlayPortal"
+
 export const LANG_MAP: Record<string, string> = {
   "zh-CN": "简体中文",
   "zh-TW": "繁體中文",
@@ -25,11 +27,11 @@ interface LanguageMenuProps {
 
 export const LanguageMenu: React.FC<LanguageMenuProps> = ({
   currentLang,
-  themeMode = "light",
   onSelect,
   onClose,
   triggerRef,
 }) => {
+  const portalTarget = useOverlayPortalTarget()
   const menuRef = useRef<HTMLDivElement>(null)
   const [position, setPosition] = useState({ top: 0, left: 0 })
 
@@ -37,32 +39,17 @@ export const LanguageMenu: React.FC<LanguageMenuProps> = ({
   useEffect(() => {
     if (!triggerRef.current) return
     const rect = triggerRef.current.getBoundingClientRect()
-    // Position: Bottom-Right aligned with trigger, appearing ABOVE it
-    // Note: Since we are in Portal (Light DOM), coordinates are relative to viewport, which matches rect.
+    // Position: Bottom-Right aligned with trigger, appearing ABOVE it.
+    // fixed 坐标按 viewport 计算；独立 Options 与面板设置都由各自 overlay root 承载。
     setPosition({
       top: rect.top - 10, // Slight offset
       left: rect.right, // Align to right edge
     })
   }, [triggerRef])
 
-  const colors =
-    themeMode === "dark"
-      ? {
-          bg: "#1f2937",
-          border: "#374151",
-          text: "#e5e7eb",
-          hover: "#374151",
-          activeBg: "rgba(59, 130, 246, 0.2)",
-        }
-      : {
-          bg: "#ffffff",
-          border: "#e5e7eb",
-          text: "#374151",
-          hover: "#f3f4f6",
-          activeBg: "rgba(59, 130, 246, 0.1)",
-        }
+  if (!portalTarget) return null
 
-  // Use createPortal to render outside of any overflow:hidden containers
+  // Render outside overflow:hidden containers while staying in the current overlay root.
   return createPortal(
     <div className="lang-menu-portal" style={{ position: "relative", zIndex: 2147483647 }}>
       {/* Backdrop */}
@@ -91,8 +78,8 @@ export const LanguageMenu: React.FC<LanguageMenuProps> = ({
           bottom: window.innerHeight - position.top + 5,
           left: position.left - 150, // Shift left by width
           width: "150px",
-          background: colors.bg,
-          border: `1px solid ${colors.border}`,
+          background: "var(--gh-bg, #ffffff)",
+          border: "1px solid var(--gh-border, #e5e7eb)",
           borderRadius: "8px",
           boxShadow: "0 4px 20px rgba(0, 0, 0, 0.15)",
           padding: "4px",
@@ -116,8 +103,11 @@ export const LanguageMenu: React.FC<LanguageMenuProps> = ({
               justifyContent: "space-between",
               padding: "8px 12px",
               border: "none",
-              background: currentLang === key ? colors.activeBg : "transparent",
-              color: currentLang === key ? "#3b82f6" : colors.text,
+              background:
+                currentLang === key
+                  ? "color-mix(in srgb, var(--gh-primary, #4285f4) 12%, transparent)"
+                  : "transparent",
+              color: currentLang === key ? "var(--gh-primary, #4285f4)" : "var(--gh-text, #374151)",
               fontSize: "13px",
               cursor: "pointer",
               borderRadius: "4px",
@@ -127,12 +117,12 @@ export const LanguageMenu: React.FC<LanguageMenuProps> = ({
               transition: "background-color 0.1s",
             }}
             onMouseEnter={(e) => {
-              if (currentLang !== key) e.currentTarget.style.backgroundColor = colors.hover
+              if (currentLang !== key) {
+                e.currentTarget.style.backgroundColor = "var(--gh-hover, #f3f4f6)"
+              }
             }}
             onMouseLeave={(e) => {
-              if (currentLang !== key)
-                e.currentTarget.style.backgroundColor =
-                  currentLang === key ? colors.activeBg : "transparent"
+              if (currentLang !== key) e.currentTarget.style.backgroundColor = "transparent"
             }}>
             <span>{label}</span>
             {currentLang === key && <span>✓</span>}
@@ -146,6 +136,6 @@ export const LanguageMenu: React.FC<LanguageMenuProps> = ({
         }
       `}</style>
     </div>,
-    document.body,
+    portalTarget,
   )
 }

@@ -70,6 +70,7 @@ export class SafeCodeEditor extends Component<SafeCodeEditorProps, SafeCodeEdito
       )
     }
 
-    return <Editor {...(this.props as any)} />
+    const { fallbackPlaceholder: _fallbackPlaceholder, ...editorProps } = this.props
+    return <Editor {...(editorProps as BaseEditorProps)} />
   }
 }

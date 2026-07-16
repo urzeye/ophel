@@ -172,7 +172,7 @@ export class QianwenAdapter extends SiteAdapter {
 
   match(): boolean {
     const hostname = window.location.hostname
-    return hostname === "www.qianwen.com" || hostname === "qianwen.com"
+    return hostname === "www.qianwen.com"
   }
 
   getSiteId(): string {

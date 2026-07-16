@@ -217,10 +217,7 @@ export class ClaudeAdapter extends SiteAdapter {
   private outlineWordCountCache = new WeakMap<Element, ClaudeOutlineWordCountCacheEntry>()
 
   match(): boolean {
-    return (
-      window.location.hostname.includes("claude.ai") ||
-      window.location.hostname.includes("claude.com")
-    )
+    return window.location.hostname === "claude.ai"
   }
 
   getSiteId(): string {

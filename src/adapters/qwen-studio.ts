@@ -23,6 +23,7 @@ import {
 import { htmlToMarkdown, type ExportBundle, type ExportMessage } from "~utils/exporter"
 import { loadCompleteHistoryForExport } from "~utils/history-loader"
 import { t } from "~utils/i18n"
+import { showToast } from "~utils/toast"
 
 import {
   SiteAdapter,
@@ -2376,9 +2377,6 @@ export class QwenAiAdapter extends SiteAdapter {
     reason: QwenAiModelLockFailureReason,
   ): Promise<void> {
     try {
-      const { showToast } = await import("~utils/toast")
-      const { t } = await import("~utils/i18n")
-
       let message: string
       switch (reason) {
         case "button_not_found":

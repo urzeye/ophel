@@ -85,24 +85,34 @@ document
 
 这些文件的样式会被注入到 **Plasmo 的 Shadow DOM** 中，用于插件 UI 组件。
 
-| 文件                             | 用途                                             | 注入方式                              |
-| -------------------------------- | ------------------------------------------------ | ------------------------------------- |
-| `src/style.css`                  | 主样式文件，包含面板、大纲、工具栏等核心 UI 样式 | `data-text:~style.css`                |
-| `src/styles/conversations.css`   | 会话 Tab 专用样式，从油猴脚本迁移                | `data-text:~styles/conversations.css` |
-| `src/styles/theme-variables.css` | CSS 变量定义（浅色/深色模式默认值）              | 被 `style.css` 通过 `@import` 引入    |
+| 文件                             | 用途                                      | 注入方式                                  |
+| -------------------------------- | ----------------------------------------- | ----------------------------------------- |
+| `src/style.css`                  | 面板、大纲、工具栏等核心 UI               | `data-text:~style.css`                    |
+| `src/styles/conversations.css`   | 会话 Tab                                  | `data-text:~styles/conversations.css`     |
+| `src/styles/release-notes.css`   | 更新日志弹窗                              | `data-text:~styles/release-notes.css`     |
+| `src/styles/settings.css`        | 设置弹窗共享样式                          | `data-text:~styles/settings.css`          |
+| `src/styles/overlays.css`        | Dialog、Menu、Tooltip 等覆盖层            | `data-text:~styles/overlays.css`          |
+| `src/styles/queue-overlay.css`   | Prompt Queue 覆盖层                       | `data-text:~styles/queue-overlay.css`     |
+| `src/styles/theme-variables.css` | CSS 变量默认值，由 `style.css` 引入       | `@import`                                 |
 
 **注入代码** (`src/contents/ui-entry.tsx`)：
 
 ```typescript
 import cssText from "data-text:~style.css"
 import conversationsCssText from "data-text:~styles/conversations.css"
+import overlaysCssText from "data-text:~styles/overlays.css"
+import queueOverlayCssText from "data-text:~styles/queue-overlay.css"
 
 export const getStyle = () => {
   const style = document.createElement("style")
-  style.textContent = cssText + "\n" + conversationsCssText
+  style.textContent = [cssText, conversationsCssText, overlaysCssText, queueOverlayCssText].join(
+    "\n",
+  )
   return style
 }
 ```
+
+油猴构建在 `vite.userscript.config.ts` 的 `buildUserscriptStyleBundle()` 中读取同一批 CSS，并作为 Shadow Root 样式资源注入。普通组件里的 `import "*.css"` 会进入页面级构建产物，不能替代这条注入链路。
 
 ### 2.2 动态注入的 CSS（内嵌在 TypeScript 中）
 
@@ -144,8 +154,8 @@ private injectStyleToShadowRoot(shadowRoot: ShadowRoot) {
 | --------------------------------- | ------------------------------------------ |
 | `src/utils/themes/index.ts`       | 主题系统入口，导出预置列表和工具函数       |
 | `src/utils/themes/types.ts`       | 类型定义 (`ThemePreset`, `ThemeVariables`) |
-| `src/utils/themes/light/index.ts` | 浅色主题预置 (10+ 种配色方案)              |
-| `src/utils/themes/dark/index.ts`  | 深色主题预置 (10+ 种配色方案)              |
+| `src/utils/themes/light/index.ts` | 12 套浅色主题预置                          |
+| `src/utils/themes/dark/index.ts`  | 12 套深色主题预置                          |
 
 ---
 
@@ -341,6 +351,8 @@ src/
 | 大纲组件         | `style.css`                             | Plasmo Shadow DOM          | `getStyle()`            |
 | 会话列表         | `conversations.css`                     | Plasmo Shadow DOM          | `getStyle()`            |
 | 提示词 Tab       | `style.css`                             | Plasmo Shadow DOM          | `getStyle()`            |
+| 通用覆盖层       | `overlays.css`                          | Shadow overlay root        | `getStyle()`            |
+| Prompt Queue     | `queue-overlay.css`                     | Shadow Root ambient layer  | `getStyle()`            |
 | CSS 变量默认值   | `theme-variables.css`                   | Plasmo Shadow DOM          | `@import` by style.css  |
 | 主题预置变量     | `themes/light/*.ts`, `themes/dark/*.ts` | Plasmo Shadow DOM          | `ThemeManager` 动态注入 |
 | 代码高亮         | `markdown.ts`                           | 多个上下文                 | 函数返回字符串          |
@@ -418,10 +430,11 @@ export const getStyle = () => {
 
 **Portal 渲染规则**：
 
-| 挂载位置                   | Portal 目标       | 适用场景                      |
-| -------------------------- | ----------------- | ----------------------------- |
-| `document.body`            | `document.body`   | 默认方案，简单可靠            |
-| `document.documentElement` | Shadow DOM 内容器 | 需要额外的 Context 和样式处理 |
+- 面板内 Dialog、Menu、Tooltip、Loading、Prompt 编辑/预览默认通过 `OverlayPortalProvider` 渲染到 Shadow Root 内的唯一 overlay root。
+- Prompt Queue 的常驻胶囊和面板渲染到 Shadow Root 环境层，使用低层级避免覆盖站点弹窗；Queue 发起的 Dialog 仍进入统一 overlay root。
+- `useOverlayPortalTarget()` 在 overlay root 尚未注册时返回 `null`；调用方应等待或不渲染，不得静默回退 `document.body`。
+- 只有必须影响宿主文档根的能力（例如 `::view-transition-*`）或页面增强样式，才写入 `document.head`；这类节点不属于面板 overlay。
+- 不要把面板组件 Portal 到 `document.body`，否则会丢失 `ThemeManager` 只注入 Shadow Root 的动态变量，并污染宿主页 DOM/CSS。
 
 详见 [troubleshooting.md #12](./troubleshooting.md#12-chatgpt-面板被-react-hydration-清除)。
 

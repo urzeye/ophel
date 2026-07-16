@@ -1084,11 +1084,12 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
       const containerRect = container.getBoundingClientRect()
       const elementRect = element.getBoundingClientRect()
       const targetScrollTop = container.scrollTop + (elementRect.top - containerRect.top)
-      container.scrollTo({
+      const options: ScrollToOptions & { __bypassLock: boolean } = {
         top: targetScrollTop,
         behavior: "instant",
         __bypassLock: true,
-      } as any)
+      }
+      container.scrollTo(options)
     } else {
       super.scrollToOutlineTarget(element)
     }

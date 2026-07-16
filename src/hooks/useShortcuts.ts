@@ -691,7 +691,7 @@ export function useShortcuts({
   const switchClaudeKey = useCallback(async () => {
     // 仅在 Claude 站点生效 (简单判断)
     // 仅在 Claude 站点生效
-    if (!location.hostname.includes("claude.ai") && !location.hostname.includes("claude.com")) {
+    if (location.hostname !== "claude.ai") {
       showToast(t("claudeShortcutOnlyOnSite"), 2000)
       return
     }
@@ -711,7 +711,7 @@ export function useShortcuts({
           showToast(t("noClaudeKeys"), 2000)
         } else {
           // 尝试翻译错误信息，如果没有翻译则显示原始错误
-          const translatedError = t(result.error as any)
+          const translatedError = t(result.error || "operationFailed")
           showToast(
             translatedError !== result.error
               ? translatedError

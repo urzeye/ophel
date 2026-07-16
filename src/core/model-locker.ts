@@ -18,6 +18,7 @@ export class ModelLocker {
   private adapter: SiteAdapter
   private config: ModelLockSiteConfig
   private isLocked = false
+  private startTimer: ReturnType<typeof setTimeout> | null = null
   private verifyTimer: ReturnType<typeof setInterval> | null = null
   private configDebounceTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -30,6 +31,11 @@ export class ModelLocker {
     const wasEnabled = this.config.enabled
     const oldKeyword = this.config.keyword
     this.config = config
+
+    if (!config.enabled || !config.keyword) {
+      this.stop()
+      return
+    }
 
     // 动态开关支持：从 false→true 或 关键词变化时触发锁定
     const needsLock =
@@ -52,11 +58,19 @@ export class ModelLocker {
     if (!this.config.enabled || !this.config.keyword) return
     if (this.isLocked) return
 
+    if (this.startTimer) {
+      clearTimeout(this.startTimer)
+    }
+
+    const keyword = this.config.keyword
+
     // 延迟后开始锁定（初始化时需要延迟等待页面加载，手动触发时可直接执行）
-    setTimeout(() => {
+    this.startTimer = setTimeout(() => {
+      this.startTimer = null
+      if (!this.config.enabled || this.config.keyword !== keyword) return
       if (this.isLocked) return // 再次检查，避免重复锁定
 
-      this.adapter.lockModel(this.config.keyword, () => {
+      this.adapter.lockModel(keyword, () => {
         // 锁定成功后，启动持续监控（防止页面初始化后又改回默认值）
         this.startVerification()
       })
@@ -151,6 +165,10 @@ export class ModelLocker {
   }
 
   stop() {
+    if (this.startTimer) {
+      clearTimeout(this.startTimer)
+      this.startTimer = null
+    }
     // 停止防抖定时器
     if (this.configDebounceTimer) {
       clearTimeout(this.configDebounceTimer)

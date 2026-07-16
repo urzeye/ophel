@@ -4,24 +4,16 @@
  */
 import React, { useEffect, useRef, useState } from "react"
 
-import {
-  AboutIcon,
-  AppearanceIcon,
-  BackupIcon,
-  ClearIcon,
-  FeaturesIcon,
-  GeneralIcon,
-  KeyboardIcon,
-  MaximizeIcon,
-  PageContentIcon,
-  PermissionsIcon,
-  RestoreIcon,
-  SearchIcon,
-} from "~components/icons"
+import { ClearIcon, MaximizeIcon, RestoreIcon } from "~components/icons"
 import ModelLockSettingsContent from "~components/ModelLockSettingsContent"
 import { Tooltip } from "~components/ui/Tooltip"
 import { SidebarCommunityLinks } from "~components/SidebarCommunityLinks"
-import { NAV_IDS, resolveSettingsNavigateDetail, type SettingsNavigateDetail } from "~constants"
+import {
+  getSettingsNavigationItems,
+  NAV_IDS,
+  resolveSettingsNavigateDetail,
+  type SettingsNavigateDetail,
+} from "~constants"
 import { platform } from "~platform"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
 import { SidebarFooter } from "~tabs/options/components/SidebarFooter"
@@ -37,11 +29,6 @@ import SiteSettingsPage from "~tabs/options/pages/SiteSettingsPage"
 import { APP_DISPLAY_NAME, APP_ICON_URL } from "~utils/config"
 import { attachEditableKeyboardFocusGuard, OPHEL_INTERACTION_LAYER_PROPS } from "~utils/dom-toolkit"
 import { setLanguage, t } from "~utils/i18n"
-
-const getLocalizedLabel = (labelKey: string, fallback: string): string => {
-  const localized = t(labelKey)
-  return localized === labelKey ? fallback : localized
-}
 
 const FOCUSABLE_SETTINGS_MODAL_SELECTOR = [
   "a[href]",
@@ -72,44 +59,6 @@ const getFocusableElements = (container: HTMLElement): HTMLElement[] =>
   Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SETTINGS_MODAL_SELECTOR)).filter(
     isFocusableElementVisible,
   )
-
-// 导航菜单定义
-const NAV_ITEMS = [
-  {
-    id: NAV_IDS.GENERAL,
-    Icon: GeneralIcon,
-    labelKey: "navGeneral",
-    label: "基本设置",
-  },
-  {
-    id: NAV_IDS.APPEARANCE,
-    Icon: AppearanceIcon,
-    labelKey: "navAppearance",
-    label: "外观主题",
-  },
-  { id: NAV_IDS.FEATURES, Icon: FeaturesIcon, labelKey: "navFeatures", label: "功能模块" },
-  {
-    id: NAV_IDS.SITE_SETTINGS,
-    Icon: PageContentIcon,
-    labelKey: "navSiteSettings",
-    label: "站点配置",
-  },
-  {
-    id: NAV_IDS.GLOBAL_SEARCH,
-    Icon: SearchIcon,
-    labelKey: "navGlobalSearch",
-    label: "全局搜索",
-  },
-  { id: NAV_IDS.SHORTCUTS, Icon: KeyboardIcon, labelKey: "navShortcuts", label: "快捷键位" },
-  { id: NAV_IDS.BACKUP, Icon: BackupIcon, labelKey: "navBackup", label: "数据管理" },
-  {
-    id: NAV_IDS.PERMISSIONS,
-    Icon: PermissionsIcon,
-    labelKey: "navPermissions",
-    label: "权限管理",
-  },
-  { id: NAV_IDS.ABOUT, Icon: AboutIcon, labelKey: "navAbout", label: "关于" },
-]
 
 interface SettingsModalProps {
   isOpen: boolean
@@ -144,7 +93,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   // 初始化语言
   useEffect(() => {
     if (isHydrated && settings?.language) {
-      setLanguage(settings.language)
+      void setLanguage(settings.language)
     }
   }, [isHydrated, settings?.language])
 
@@ -236,7 +185,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     const handleNavigate = (e: CustomEvent<SettingsNavigateDetail>) => {
       const resolved = resolveSettingsNavigateDetail(e.detail || {})
 
-      if (resolved.page && NAV_ITEMS.some((item) => item.id === resolved.page)) {
+      if (
+        resolved.page &&
+        getSettingsNavigationItems(platform.hasCapability("permissions")).some(
+          (item) => item.id === resolved.page,
+        )
+      ) {
         setActivePage(resolved.page)
       }
 
@@ -460,12 +414,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           </div>
           <nav className="settings-sidebar-nav">
-            {NAV_ITEMS.filter((item) => {
-              // 油猴脚本环境中过滤掉 permissions 导航项
-              if (!platform.hasCapability("permissions") && item.id === NAV_IDS.PERMISSIONS)
-                return false
-              return true
-            }).map((item) => (
+            {getSettingsNavigationItems(platform.hasCapability("permissions")).map((item) => (
               <button
                 key={item.id}
                 className={`settings-nav-item ${activePage === item.id ? "active" : ""}`}
@@ -477,9 +426,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <span className="settings-nav-item-icon">
                   <item.Icon size={22} />
                 </span>
-                <span className="settings-nav-item-label">
-                  {getLocalizedLabel(item.labelKey, item.label)}
-                </span>
+                <span className="settings-nav-item-label">{t(item.labelKey)}</span>
               </button>
             ))}
 

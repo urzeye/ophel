@@ -5,6 +5,13 @@
  */
 
 import { t } from "~utils/i18n"
+import type { ClaudeSessionKey, ClaudeSessionKeysState } from "~utils/storage"
+
+import {
+  abortUserscriptClearAll,
+  completeUserscriptClearAll,
+  prepareUserscriptClearAll,
+} from "./clear-all-coordinator"
 
 import type {
   FetchOptions,
@@ -14,6 +21,7 @@ import type {
   PlatformCapability,
   PlatformStorage,
 } from "../types"
+import { runTrackedPersistenceWrite } from "~stores/chrome-adapter"
 
 declare global {
   interface Window {
@@ -51,6 +59,11 @@ declare function GM_notification(details: {
   silent?: boolean
   onclick?: () => void
 }): void
+
+interface PersistedClaudeSessionKeys {
+  state: ClaudeSessionKeysState
+  version?: number
+}
 
 /**
  * 油猴版存储实现
@@ -92,6 +105,18 @@ export const platform: Platform = {
 
   storage: userscriptStorage,
 
+  async prepareClearAllData(): Promise<void> {
+    await prepareUserscriptClearAll()
+  },
+
+  async completeClearAllData(): Promise<void> {
+    completeUserscriptClearAll()
+  },
+
+  async abortClearAllData(): Promise<void> {
+    abortUserscriptClearAll()
+  },
+
   async fetch(url: string, options?: FetchOptions): Promise<FetchResponse> {
     return new Promise((resolve, reject) => {
       GM_xmlhttpRequest({
@@ -119,7 +144,7 @@ export const platform: Platform = {
                   url,
                   method: options?.method || "GET",
                   headers: options?.headers,
-                  responseType: "blob" as any,
+                  responseType: "blob",
                   onload(blobResponse) {
                     res(blobResponse.response as Blob)
                   },
@@ -275,7 +300,7 @@ export const platform: Platform = {
     try {
       // 1. 从 GM 存储读取 claudeSessionKeys
       // Zustand persist 存储结构: { state: { keys: [], currentKeyId: "" }, version: 0 }
-      const storageData = GM_getValue("claudeSessionKeys") as any
+      const storageData = GM_getValue<PersistedClaudeSessionKeys | undefined>("claudeSessionKeys")
       const rawKeys = storageData?.state?.keys || []
 
       if (rawKeys.length === 0) {
@@ -285,7 +310,7 @@ export const platform: Platform = {
       const currentId = storageData?.state?.currentKeyId
 
       // 2. 筛选可用 Keys 并排序 (Pro 优先)
-      let availableKeys = rawKeys.filter((k: any) => k.isValid !== false)
+      let availableKeys: ClaudeSessionKey[] = rawKeys.filter((key) => key.isValid !== false)
 
       // 如果没有可用 Key，尝试使用所有 Key
       if (availableKeys.length === 0) {
@@ -293,7 +318,7 @@ export const platform: Platform = {
       }
 
       // 排序: Pro 优先，然后是名称
-      availableKeys.sort((a: any, b: any) => {
+      availableKeys.sort((a, b) => {
         const isAPro = a.accountType?.toLowerCase()?.includes("pro")
         const isBPro = b.accountType?.toLowerCase()?.includes("pro")
         if (isAPro && !isBPro) return -1
@@ -302,7 +327,7 @@ export const platform: Platform = {
       })
 
       // 3. 找到下一个 Key
-      const currentIndex = availableKeys.findIndex((k: any) => k.id === currentId)
+      const currentIndex = availableKeys.findIndex((key) => key.id === currentId)
 
       // 如果只有一个 Key 且当前正在使用它，则不执行切换
       if (availableKeys.length === 1 && currentIndex !== -1) {
@@ -328,7 +353,9 @@ export const platform: Platform = {
       // 5. 更新存储中的当前 Key ID
       if (storageData?.state) {
         storageData.state.currentKeyId = nextKey.id
-        GM_setValue("claudeSessionKeys", storageData)
+        await runTrackedPersistenceWrite(async () => {
+          GM_setValue("claudeSessionKeys", storageData)
+        })
       }
 
       // 6. 跳转到首页

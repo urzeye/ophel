@@ -1,5 +1,7 @@
 # Ophel Atlas - AI 对话结构化与导航工具
 
+> 最近校验：2026-07-10。本文描述当前 `refactor/project-audit-remediation` 架构；历史实施计划不作为运行时事实来源。
+
 ## 项目愿景
 
 Ophel 是一款跨平台浏览器扩展（同时支持油猴脚本），将 AI 对话转化为可阅读、可导航、可复用的知识内容。通过实时大纲、会话文件夹与 Prompt 词库，让 AI 对话告别无限滚动，成为可组织、可沉淀的工作流。
@@ -29,10 +31,14 @@ Ophel 是一款跨平台浏览器扩展（同时支持油猴脚本），将 AI �
 本项目采用 **适配器模式 (Adapter Pattern)** 实现多站点支持：
 
 ```
-Content Script (main.ts)
+Content Script (site-*.ts + main.ts / userscript entry)
     |
     v
-getAdapter() --> SiteAdapter (抽象基类)
+扩展：site-*.ts 静态注册唯一 SiteAdapter --> main.ts 启动公共模块
+油猴：loadAdapter(location) --> hostname/path 轻量路由 --> 动态 import 当前 SiteAdapter
+    |
+    v
+adapter-runtime.ts --> main、UI 与 userscript 共享当前 adapter 实例
     |               |
     |               +-- GeminiAdapter
     |               +-- GeminiEnterpriseAdapter
@@ -51,7 +57,7 @@ getAdapter() --> SiteAdapter (抽象基类)
     |               +-- ImaAdapter
     |
     v
-initCoreModules(ctx) --> 13 个核心模块
+initCoreModules(ctx) --> 核心模块编排与设置热更新
     |
     v
 App.tsx (Shadow DOM 内的 React 面板)
@@ -122,7 +128,7 @@ graph TD
 | `src/core/`       | 核心业务模块（多个管理器），由 `modules-init.ts` 统一编排     | `modules-init.ts`, `outline-manager.ts`, `theme-manager.ts`, `layout-manager.ts`, `conversation/`, `webdav-sync.ts`, `assistant-mermaid-renderer.ts`, `gemini-mystuff-bridge.ts`, `usage-counter-manager.ts`                         |
 | `src/components/` | React UI 层，运行在 Shadow DOM 中                             | `App.tsx`, `MainPanel.tsx`, `OutlineTab.tsx`, `ConversationsTab.tsx`, `SettingsModal.tsx`, `global-search/`                                                                                                                          |
 | `src/stores/`     | Zustand 状态管理，persist 到 chrome.storage.local             | `settings-store.ts`, `conversations-store.ts`, `prompts-store.ts`, `folders-store.ts`, `tags-store.ts`                                                                                                                               |
-| `src/contents/`   | Plasmo Content Script 入口                                    | `main.ts`（逻辑入口）, `ui-entry.tsx`（UI/Shadow DOM）, `monitor-entry.ts`（网络监控）, `aistudio-preload.ts`, `gemini-watermark-main.ts`, `iframe-scroll-main.ts`, `scroll-lock-main.ts`                                            |
+| `src/contents/`   | Plasmo Content Script 入口                                    | `site-*.ts`（站点适配器静态注册）, `main.ts`（公共逻辑入口）, `ui-entry.tsx`（UI/Shadow DOM）, `monitor-entry.ts`（网络监控）, `aistudio-preload.ts`, `gemini-watermark-main.ts`, `iframe-scroll-main.ts`, `scroll-lock-main.ts`                                            |
 | `src/platform/`   | 平台抽象层（浏览器扩展 vs 油猴脚本）                          | `types.ts`, `index.ts`, `extension/`, `userscript/`                                                                                                                                                                                  |
 | `src/utils/`      | 工具函数                                                      | `i18n.ts`, `dom-toolkit.ts`, `exporter.ts`, `markdown.ts`, `themes/`, `scroll-helper.ts`                                                                                                                                             |
 | `src/constants/`  | 常量与默认配置                                                | `defaults.ts`（SITE_IDS）, `ui.ts`, `shortcuts.ts`, `tools-menu.ts`                                                                                                                                                                  |
@@ -185,7 +191,8 @@ pnpm docs:build    # 构建文档
 
 | 入口                      | 路径                                | 说明                                  |
 | ------------------------- | ----------------------------------- | ------------------------------------- |
-| Content Script 逻辑入口   | `src/contents/main.ts`              | 初始化适配器和核心模块                |
+| Content Script 适配器入口 | `src/contents/site-*.ts`            | 按站点静态注册唯一适配器              |
+| Content Script 逻辑入口   | `src/contents/main.ts`              | 使用已注册适配器初始化核心模块        |
 | Content Script UI 入口    | `src/contents/ui-entry.tsx`         | Shadow DOM 内挂载 React App           |
 | Background Service Worker | `src/background.ts`                 | 消息处理、通知、代理请求、Cookie 管理 |
 | Popup 页面                | `src/popup.tsx`                     | 扩展弹出窗口                          |
@@ -282,27 +289,33 @@ import { useSettingsStore } from "~stores/settings-store"
 
 ## 测试策略
 
-**当前状态：项目尚未建立测试体系。** 源码中无 test/spec 文件，`package.json` 中无测试相关命令或依赖（如 Jest、Vitest、Playwright）。
+项目使用 Vitest + jsdom 覆盖纯逻辑、生命周期和关键 UI primitive。测试入口为 `pnpm test` / `pnpm test:run`，当前覆盖：
 
-建议优先引入的测试：
-1. **单元测试**：适配器的 `match()` / `getSiteId()` 逻辑、`backup-validator.ts`、`format.ts`、`syntax.ts`（搜索语法解析）
-2. **集成测试**：`modules-init.ts` 的模块编排、`webdav-sync.ts` 的同步逻辑
-3. **E2E 测试**：使用 Playwright + 浏览器扩展测试框架验证核心用户流程
+1. 适配器轻量路由与共享 runtime。
+2. 设置归一化、persist write gate、备份 schema 与旧格式兼容。
+3. ModelLocker、OutlineManager、PollingTaskRegistry 生命周期。
+4. i18n 按需加载与 11 种语言 key 一致性。
+5. 全局搜索语法、设置深链、主题预置与 token 完整性。
+6. Dialog、Switch、SelectedPromptBar 等交互回归。
+
+生产构建后运行 `pnpm check:bundle-budget`，校验扩展内容脚本和 userscript 的 raw/gzip 预算。UI 响应式和键盘行为使用 Playwright 做最小浏览器冒烟；真实站点 DOM 兼容仍需按 adapter 做手动回归。
 
 ## CSS 架构
 
 ### 样式文件清单
 
-项目共 **7 个 CSS 文件**（纯原生 CSS，无预处理器），总计 ~5,974 行：
+截至 2026-07-10，`src/` 下共有 **9 个 CSS 文件**（纯原生 CSS，无预处理器），总计约 10,484 行：
 
 | 文件路径                         | 行数  | 用途                                            |
 | -------------------------------- | ----- | ----------------------------------------------- |
-| `src/style.css`                  | 1,472 | 主样式（大纲面板、快捷按钮、tooltip 等核心 UI） |
-| `src/styles/settings.css`        | 2,081 | 设置页面（Options Page）样式                    |
-| `src/styles/conversations.css`   | 1,313 | 会话 Tab 样式（文件夹、标签、搜索、批量操作）   |
-| `src/styles/queue-overlay.css`   | 395   | Prompt Queue 排队叠加层样式                     |
-| `src/styles/theme-variables.css` | 286   | CSS 变量定义文件（浅色/深色模式默认值）         |
-| `src/popup.css`                  | 395   | 浏览器扩展 Popup 页面样式                       |
+| `src/style.css`                  | 4,463 | 主样式（面板、大纲、快捷按钮、通用组件）        |
+| `src/styles/settings.css`        | 3,727 | 设置弹窗与 Options 共享样式                     |
+| `src/styles/conversations.css`   | 1,344 | 会话 Tab 样式                                   |
+| `src/styles/queue-overlay.css`   | 778   | Prompt Queue 覆盖层样式                         |
+| `src/styles/release-notes.css`   | 421   | 更新日志弹窗样式                                |
+| `src/styles/overlays.css`        | 264   | Dialog、Menu、Tooltip 等统一覆盖层样式          |
+| `src/styles/theme-variables.css` | 313   | CSS 变量默认值                                  |
+| `src/popup.css`                  | 613   | 浏览器扩展 Popup 页面样式                       |
 | `src/tabs/options.css`           | 32    | Options 页面入口（仅 @import）                  |
 
 ### 样式技术方案
@@ -316,7 +329,7 @@ import { useSettingsStore } from "~stores/settings-store"
 | 样式隔离  | Shadow DOM（`:host` 选择器 + 动态 style 注入）                        |
 | 命名前缀  | `--gh-*`（项目前身 Gemini Helper 缩写）                               |
 | 布局      | Flexbox 为主，Grid 辅助，固定定位用于浮动 UI                          |
-| 响应式    | 极少媒体查询，主要依赖 JS 动态类名（`.is-narrow`）                    |
+| 响应式    | 面板动态状态 + Options 900/720/640 px 明确断点                        |
 | 现代特性  | `color-mix()`、`backdrop-filter`、View Transitions、`scrollbar-width` |
 
 ### 主题系统
@@ -367,14 +380,16 @@ src/utils/themes/
 
 **两种 Shadow Host**：`<plasmo-csui>`（扩展模式）、`<div id="ophel-userscript-root">`（油猴模式）。
 
-**静态样式**（初始化时）：`ui-entry.tsx` 通过 `getStyle()` 将三个 CSS 文件合并注入 Shadow DOM `<style>` 标签。
+**静态样式**（初始化时）：`ui-entry.tsx` 通过 `getStyle()` 合并 `style.css`、`conversations.css`、`release-notes.css`、`settings.css`、`overlays.css` 和 `queue-overlay.css`，注入 Shadow DOM `<style>` 标签。userscript 构建在 `vite.userscript.config.ts` 中生成等价样式资源。
 
 **动态主题变量**（切换时）：`ThemeManager.syncPluginUITheme()` 创建/更新 `<style id="gh-theme-vars">`，注入 `:host { ... }` 规则到各 Shadow Root。
 
 **CSS 导入方式**：
 - Plasmo 扩展：`import cssText from "data-text:~style.css"`（编译时转字符串）
-- 油猴脚本：`import mainStyle from "../../style.css?inline"`（Vite 内联）
+- 油猴脚本：`vite.userscript.config.ts` 的 `buildUserscriptStyleBundle()` 读取并合并 CSS 资源
 - 常规页面：`import "./popup.css"`（直接导入）
+
+普通组件 CSS import 会进入页面级构建产物，不能作为 Shadow UI 的样式来源。面板新增 CSS 必须进入上述 `getStyle()` / userscript 样式资源链路。
 
 ### CSS 动画
 
@@ -433,7 +448,7 @@ feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert, deps, ux
 
 ### 关键路径
 
-- 用户操作流程：`popup.tsx` -> 支持站点检测 -> Content Script 注入 -> `main.ts` 初始化适配器 -> `modules-init.ts` 初始化模块 -> `ui-entry.tsx` 挂载 Shadow DOM -> `App.tsx` 渲染面板
+- 用户操作流程：`popup.tsx` -> 支持站点检测 -> `site-*.ts` 静态注册当前站点适配器 -> `main.ts` 启动公共逻辑 -> `modules-init.ts` 初始化模块 -> `ui-entry.tsx` 挂载 Shadow DOM -> `App.tsx` 渲染面板
 - 设置同步流程：UI 操作 -> `useSettingsStore.updateNestedSetting()` -> Zustand persist -> `chrome.storage.local` -> `subscribeModuleUpdates()` 热更新模块
 - 会话管理流程：`ConversationObserverConfig` 观察 DOM -> `ConversationManager` 聚合数据 -> `conversations-store` 持久化
 - WebDAV 同步流程：`WebDAVSyncManager` -> `MSG_WEBDAV_REQUEST` -> Background SW 代理 -> WebDAV 服务器

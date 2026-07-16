@@ -33,8 +33,6 @@ import { LoadingOverlay } from "./LoadingOverlay"
 import { ConversationMenu, ExportMenu, FolderMenu, type MenuAnchorPoint } from "./ConversationMenus"
 import { SegmentedExportDialog } from "./SegmentedExportDialog"
 
-import "~styles/conversations.css"
-
 // 渐进式加载：每次渲染的会话批次大小
 const PROGRESSIVE_BATCH_SIZE = 30
 
@@ -1744,8 +1742,8 @@ const ConversationItem = React.memo<ConversationItemProps>(
                   />
                 )}
                 {searchQuery && searchResult?.conversationMatches.has(conv.id)
-                  ? highlightText(conv.title || "无标题", searchQuery)
-                  : conv.title || "无标题"}
+                  ? highlightText(conv.title || t("untitledConversation"), searchQuery)
+                  : conv.title || t("untitledConversation")}
               </span>
             </Tooltip>
 

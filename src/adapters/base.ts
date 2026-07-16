@@ -10,7 +10,9 @@ import { extractConversationTitleFromDocumentTitle } from "~utils/conversation-t
 import { DOMToolkit } from "~utils/dom-toolkit"
 import { createExportAssetCollector, type ExportAssetCollector } from "~utils/export-assets"
 import type { ExportBundle, ExportFormat, ExportMessage } from "~utils/exporter"
+import { t } from "~utils/i18n"
 import type { ExportPackaging } from "~utils/storage"
+import { showToast } from "~utils/toast"
 
 // ==================== 类型定义 ====================
 
@@ -374,6 +376,11 @@ export abstract class SiteAdapter {
 
   /** 检测当前页面是否匹配该站点 */
   abstract match(): boolean
+
+  /** 仅当站点会绕过 history/hash/popstate 修改 URL 时启用轮询兜底 */
+  usesUrlPollingFallback(): boolean {
+    return false
+  }
 
   /** 返回站点标识符（用于配置存储） */
   abstract getSiteId(): string
@@ -1270,11 +1277,12 @@ export abstract class SiteAdapter {
    * 默认使用 scrollIntoView；子类可覆盖以避免外层容器被意外滚动（如 Shadow DOM 场景）。
    */
   scrollToOutlineTarget(element: HTMLElement): void {
-    element.scrollIntoView({
+    const options: ScrollIntoViewOptions & { __bypassLock: boolean } = {
       behavior: "instant",
       block: "start",
       __bypassLock: true,
-    } as any)
+    }
+    element.scrollIntoView(options)
   }
 
   getOutlineScrollContainer(_sourceId = "conversation"): HTMLElement | null {
@@ -1816,9 +1824,6 @@ export abstract class SiteAdapter {
     reason: "button_not_found" | "menu_empty" | "not_found",
   ): Promise<void> {
     try {
-      const { showToast } = await import("~utils/toast")
-      const { t } = await import("~utils/i18n")
-
       let message: string
       switch (reason) {
         case "button_not_found":
@@ -1860,6 +1865,9 @@ export abstract class SiteAdapter {
       this.lockModel(modelLockConfig.keyword)
     }
   }
+
+  /** 释放 afterPropertiesSet() 创建的站点级持久资源。 */
+  dispose(): void {}
 
   /** 判断是否应该将样式注入到指定的 Shadow Host 中 */
   shouldInjectIntoShadow(_host: Element): boolean {

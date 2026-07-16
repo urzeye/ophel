@@ -12,32 +12,9 @@ import { DEFAULT_SETTINGS, type Settings } from "~utils/storage"
 import { normalizeSettings, type SettingsInput } from "~utils/settings-normalize"
 
 import { chromeStorageAdapter } from "./chrome-adapter"
+import { PersistWriteGate } from "./persist-write-gate"
 
-let isUpdatingFromStorage = false
-let skippedPersistWrites = 0
-
-const releaseSkippedPersistWrite = () => {
-  const release = () => {
-    skippedPersistWrites = Math.max(0, skippedPersistWrites - 1)
-  }
-
-  if (typeof queueMicrotask === "function") {
-    queueMicrotask(release)
-    return
-  }
-
-  void Promise.resolve().then(release)
-}
-
-const runWithoutPersist = <T>(callback: () => T): T => {
-  skippedPersistWrites += 1
-
-  try {
-    return callback()
-  } finally {
-    releaseSkippedPersistWrite()
-  }
-}
+const persistWriteGate = new PersistWriteGate()
 
 const sortedStringify = (obj: unknown): string => {
   if (typeof obj !== "object" || obj === null) return JSON.stringify(obj)
@@ -56,7 +33,7 @@ const sortedStringify = (obj: unknown): string => {
 const storageAdapter: StateStorage = {
   ...chromeStorageAdapter,
   setItem: async (name, value) => {
-    if (isUpdatingFromStorage || skippedPersistWrites > 0) {
+    if (persistWriteGate.shouldSkipWrite()) {
       return
     }
     return chromeStorageAdapter.setItem(name, value)
@@ -138,7 +115,7 @@ export const useSettingsStore = create<SettingsState>()(
          * 设置临时预览 settings（不持久化）
          */
         setPreviewSettings: (previewSettings) =>
-          runWithoutPersist(() =>
+          persistWriteGate.runWithoutPersist(() =>
             set((state) => ({
               previewSettings,
               settings: buildEffectiveSettings(state.persistedSettings, previewSettings),
@@ -149,7 +126,7 @@ export const useSettingsStore = create<SettingsState>()(
          * 清除临时预览 settings
          */
         clearPreviewSettings: () =>
-          runWithoutPersist(() =>
+          persistWriteGate.runWithoutPersist(() =>
             set((state) => ({
               previewSettings: null,
               settings: state.persistedSettings,
@@ -234,7 +211,8 @@ export const useSettingsStore = create<SettingsState>()(
         /**
          * 设置 hydration 状态
          */
-        setHasHydrated: (state) => runWithoutPersist(() => set({ _hasHydrated: state })),
+        setHasHydrated: (state) =>
+          persistWriteGate.runWithoutPersist(() => set({ _hasHydrated: state })),
       }
     ),
     {
@@ -266,7 +244,7 @@ export const useSettingsStore = create<SettingsState>()(
       // Hydration 完成回调
       onRehydrateStorage: () => {
         return (state, _error) => {
-          runWithoutPersist(() => {
+          persistWriteGate.runWithoutPersist(() => {
             if (state) {
               const normalizedSettings = normalizeSettings(state.settings)
               _hydrationSet?.({
@@ -362,10 +340,7 @@ if (isExtension) {
         if (
           sortedStringify(currentPersistedSettings) !== sortedStringify(normalizedIncomingSettings)
         ) {
-          // 标记为来自 Storage 的更新，防止回写导致死循环
-          isUpdatingFromStorage = true
-
-          try {
+          persistWriteGate.runWithoutPersist(() => {
             // 同时更新 settings 和递增 _syncVersion
             // _syncVersion 变化会强制触发所有订阅它的 React 组件重渲染
             useSettingsStore.setState({
@@ -376,12 +351,7 @@ if (isExtension) {
               ),
               _syncVersion: currentState._syncVersion + 1,
             })
-          } finally {
-            // 恢复标记 (setTimeout 确保在 persist 异步写入之后)
-            setTimeout(() => {
-              isUpdatingFromStorage = false
-            }, 100)
-          }
+          })
 
           // 同步更新 i18n 模块的语言设置
           if (
@@ -390,10 +360,10 @@ if (isExtension) {
           ) {
             import("~utils/i18n")
               .then(({ setLanguage }) => {
-                setLanguage(normalizedIncomingSettings.language)
+                void setLanguage(normalizedIncomingSettings.language)
               })
-              .catch(() => {
-                // ignore
+              .catch((error) => {
+                console.error("[SettingsStore] 更新跨上下文语言失败:", error)
               })
           }
 

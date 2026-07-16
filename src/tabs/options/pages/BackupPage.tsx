@@ -15,13 +15,7 @@ import {
   InfoIcon,
 } from "~components/icons"
 import { ConfirmDialog, Tooltip } from "~components/ui"
-import {
-  DEFAULT_FOLDERS,
-  MULTI_PROP_STORES,
-  ZUSTAND_KEYS,
-  getDefaultPromptChains,
-  getDefaultPrompts,
-} from "~constants/defaults"
+import { MULTI_PROP_STORES, ZUSTAND_KEYS } from "~constants/defaults"
 import {
   WEBDAV_PROVIDER_PRESETS,
   detectProviderFromUrl,
@@ -31,22 +25,29 @@ import {
   type WebDAVProvider,
 } from "~core/webdav-sync"
 import { platform } from "~platform"
-import { useConversationsStore } from "~stores/conversations-store"
-import { useFoldersStore } from "~stores/folders-store"
-import { usePromptChainsStore } from "~stores/prompt-chains-store"
-import { usePromptsStore } from "~stores/prompts-store"
-import { useReadingHistoryStore } from "~stores/reading-history-store"
 import { useSettingsStore } from "~stores/settings-store"
-import { useTagsStore } from "~stores/tags-store"
-import { validateBackupData } from "~utils/backup-validator"
-import { t } from "~utils/i18n"
 import {
-  MSG_CHECK_PERMISSION,
-  MSG_CLEAR_ALL_DATA,
-  MSG_REQUEST_PERMISSIONS,
-  MSG_RESTORE_DATA,
-} from "~utils/messaging"
-import { CLEAR_ALL_FLAG_KEY, DEFAULT_SETTINGS, RESTORE_FLAG_KEY } from "~utils/storage"
+  drainPersistenceWrites,
+  runTrackedPersistenceWrite,
+  suspendPersistenceWrites,
+} from "~stores/chrome-adapter"
+import { validateBackupData } from "~utils/backup-validator"
+import { dispatchClearAllDataEvent } from "~utils/clear-all-event"
+import { runClearAllTransaction } from "~utils/clear-all-transaction"
+import {
+  clearStorageAreas,
+  restoreStorageAreas,
+  snapshotStorageAreas,
+  type StorageAreaSnapshots,
+} from "~utils/storage-area-transaction"
+import { t } from "~utils/i18n"
+import { MSG_CHECK_PERMISSION, MSG_REQUEST_PERMISSIONS, MSG_RESTORE_DATA } from "~utils/messaging"
+import {
+  CLEAR_ALL_FLAG_KEY,
+  CLEAR_ALL_GENERATION_KEY,
+  DEFAULT_SETTINGS,
+  RESTORE_FLAG_KEY,
+} from "~utils/storage"
 import { showToast as showDomToast } from "~utils/toast"
 
 import { PageTitle, SettingCard, SettingRow } from "../components"
@@ -140,7 +141,9 @@ const RemoteBackupModal: React.FC<{
           if (result.success) {
             try {
               if (platform.type === "extension" && typeof chrome !== "undefined") {
-                await platform.storage.set(RESTORE_FLAG_KEY, Date.now())
+                await runTrackedPersistenceWrite(() =>
+                  platform.storage.set(RESTORE_FLAG_KEY, Date.now()),
+                )
                 await chrome.runtime.sendMessage({ type: MSG_RESTORE_DATA })
               }
             } catch {
@@ -380,7 +383,7 @@ const RemoteBackupModal: React.FC<{
 
 // ==================== 主页面组件 ====================
 const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
-  const { settings, setSettings, resetSettings } = useSettingsStore()
+  const { settings, setSettings } = useSettingsStore()
 
   // 状态管理
   const [showRemoteBackups, setShowRemoteBackups] = useState(false)
@@ -439,17 +442,20 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
   if (!settings) return null
 
   const writeStorageUpdates = async (updates: Record<string, unknown>) => {
-    await new Promise<void>((resolve, reject) =>
-      chrome.storage.local.set(updates, () =>
-        chrome.runtime.lastError ? reject(chrome.runtime.lastError) : resolve(),
-      ),
+    await runTrackedPersistenceWrite(
+      () =>
+        new Promise<void>((resolve, reject) =>
+          chrome.storage.local.set(updates, () =>
+            chrome.runtime.lastError ? reject(chrome.runtime.lastError) : resolve(),
+          ),
+        ),
     )
   }
 
   const notifyPagesToReload = async () => {
     try {
       if (platform.type === "extension" && typeof chrome !== "undefined") {
-        await platform.storage.set(RESTORE_FLAG_KEY, Date.now())
+        await runTrackedPersistenceWrite(() => platform.storage.set(RESTORE_FLAG_KEY, Date.now()))
         await chrome.runtime.sendMessage({ type: MSG_RESTORE_DATA })
       }
     } catch {
@@ -744,16 +750,6 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
     processImport(pasteContent)
   }
 
-  const resetLocalStores = () => {
-    resetSettings()
-    usePromptsStore.getState().setPrompts(getDefaultPrompts())
-    usePromptChainsStore.getState().setChains(getDefaultPromptChains())
-    useFoldersStore.setState({ folders: DEFAULT_FOLDERS })
-    useTagsStore.setState({ tags: [] })
-    useConversationsStore.setState({ conversations: {}, lastUsedFolderId: "inbox" })
-    useReadingHistoryStore.setState({ history: {}, lastCleanupRun: 0 })
-  }
-
   // 清除数据
   const handleClearAll = () => {
     setConfirmConfig({
@@ -763,33 +759,57 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
       danger: true,
       onConfirm: async () => {
         setConfirmConfig((prev) => ({ ...prev, show: false }))
+        let storageSnapshots: StorageAreaSnapshots | null = null
         try {
-          if (platform.type === "extension" && typeof chrome !== "undefined") {
+          await runClearAllTransaction({
+            prepare: async () => {
+              suspendPersistenceWrites()
+              await Promise.all([drainPersistenceWrites(), dispatchClearAllDataEvent()])
+              await platform.prepareClearAllData()
+
+              storageSnapshots = await snapshotStorageAreas(
+                chrome.storage.local,
+                chrome.storage.sync,
+              )
+            },
+            clear: () => clearStorageAreas(chrome.storage.local, chrome.storage.sync),
+            commit: async () => {
+              if (platform.type === "userscript") {
+                await platform.storage.set(CLEAR_ALL_GENERATION_KEY, crypto.randomUUID())
+              }
+              await platform.storage.set(CLEAR_ALL_FLAG_KEY, Date.now())
+            },
+            abort: async () => {
+              try {
+                if (storageSnapshots) {
+                  await restoreStorageAreas(
+                    chrome.storage.local,
+                    chrome.storage.sync,
+                    storageSnapshots,
+                  )
+                }
+              } finally {
+                await platform.abortClearAllData()
+              }
+            },
+          })
+
+          try {
+            await platform.completeClearAllData()
+          } catch (error) {
             try {
-              await chrome.runtime.sendMessage({ type: MSG_CLEAR_ALL_DATA })
-            } catch {
-              // 忽略消息发送失败
+              await platform.abortClearAllData()
+            } catch (abortError) {
+              console.error("[Ophel] Failed to abort clear-all after finalize failure:", abortError)
             }
+            throw error
           }
 
-          await Promise.all([
-            new Promise<void>((resolve, reject) =>
-              chrome.storage.local.clear(() =>
-                chrome.runtime.lastError ? reject(chrome.runtime.lastError) : resolve(),
-              ),
-            ),
-            new Promise<void>((resolve, reject) =>
-              chrome.storage.sync.clear(() =>
-                chrome.runtime.lastError ? reject(chrome.runtime.lastError) : resolve(),
-              ),
-            ),
-          ])
-          await platform.storage.set(CLEAR_ALL_FLAG_KEY, Date.now())
-          resetLocalStores()
           showDomToast(t("clearSuccess"))
           setTimeout(() => window.location.reload(), 1500)
         } catch (err) {
           showDomToast(t("error") + ": " + String(err))
+          setTimeout(() => window.location.reload(), 1500)
         }
       },
     })
@@ -1162,8 +1182,8 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
           return (
             <div
               style={{
-                background: "var(--gh-primary-light-bg, rgba(66, 133, 244, 0.05))",
-                border: "1px solid var(--gh-primary-border, rgba(66, 133, 244, 0.2))",
+                background: "var(--gh-primary-light, rgba(66, 133, 244, 0.05))",
+                border: "1px solid var(--gh-border-hover, rgba(66, 133, 244, 0.2))",
                 borderRadius: "8px",
                 padding: "10px 12px",
                 marginBottom: "4px",

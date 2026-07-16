@@ -5,6 +5,7 @@ import type {
   SiteAdapter,
   WidthSelectorConfig,
 } from "~adapters/base"
+import { PollingTaskRegistry } from "~core/polling-task-registry"
 import { useSettingsStore } from "~stores/settings-store"
 import { DOMToolkit } from "~utils/dom-toolkit"
 import { createSafeHTML } from "~utils/trusted-types"
@@ -90,7 +91,8 @@ export class LayoutManager {
   private cleanModeEnabled = false
 
   private processedShadowRoots = new WeakSet<ShadowRoot>()
-  private shadowCheckInterval: ReturnType<typeof setTimeout> | null = null
+  private readonly pollingTasks = new PollingTaskRegistry()
+  private readonly shadowCheckTaskName = "layout-shadow-injection"
   private panelAvoidanceStarted = false
   private panelAvoidanceRaf: number | null = null
   private panelAvoidanceHostObserver: MutationObserver | null = null
@@ -1204,16 +1206,16 @@ export class LayoutManager {
     this.injectToAllShadows()
 
     // 定期检查新增的 Shadow DOM
-    if (!this.shadowCheckInterval) {
-      this.shadowCheckInterval = setInterval(() => this.injectToAllShadows(), 1000)
-    }
+    this.pollingTasks.start({
+      name: this.shadowCheckTaskName,
+      intervalMs: 1000,
+      runWhenHidden: false,
+      run: () => this.injectToAllShadows(),
+    })
   }
 
   private stopShadowInjection() {
-    if (this.shadowCheckInterval) {
-      clearInterval(this.shadowCheckInterval)
-      this.shadowCheckInterval = null
-    }
+    this.pollingTasks.stop(this.shadowCheckTaskName)
   }
 
   private injectToAllShadows() {
@@ -1330,5 +1332,30 @@ export class LayoutManager {
       this.removeStyleFromShadow(shadowRoot, STYLE_IDS.CLEAN_MODE_SHADOW)
       this.processedShadowRoots.delete(shadowRoot)
     })
+  }
+
+  /** 释放所有布局样式、观察器和轮询任务。 */
+  destroy() {
+    this.stopPanelAvoidance()
+    this.stopShadowInjection()
+
+    this.pageWidthConfig = { ...this.pageWidthConfig, enabled: false }
+    this.userQueryWidthConfig = null
+    this.zenModeEnabled = false
+    this.cleanModeEnabled = false
+
+    this.removeStyle(this.pageWidthStyle)
+    this.removeStyle(this.userQueryWidthStyle)
+    this.removeStyle(this.zenModeStyle)
+    this.removeStyle(this.cleanModeStyle)
+    this.pageWidthStyle = null
+    this.userQueryWidthStyle = null
+    this.zenModeStyle = null
+    this.cleanModeStyle = null
+
+    this.cleanupZenModeRootClass()
+    this.unmountZenModeExitButton()
+    this.clearAllShadowStyles()
+    this.pollingTasks.stopAll()
   }
 }

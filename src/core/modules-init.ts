@@ -12,6 +12,7 @@ import type { CoreModule } from "~core/core-module"
 import { CopyManager } from "~core/copy-manager"
 import { LayoutManager } from "~core/layout-manager"
 import { MarkdownFixer } from "~core/markdown-fixer"
+import { destroyModuleInstances } from "~core/module-lifecycle"
 import { ModelLocker } from "~core/model-locker"
 import { PolicyRetryManager } from "~core/policy-retry-manager"
 import { ReadingHistoryManager } from "~core/reading-history"
@@ -24,6 +25,7 @@ import { WatermarkRemover } from "~core/watermark-remover"
 import { getSettingsState, subscribeSettings } from "~stores/settings-store"
 import { setLanguage, t } from "~utils/i18n"
 import { EVENT_PAGE_URL_CHANGE } from "~utils/messaging"
+import { showToast } from "~utils/toast"
 import {
   getSiteModelLock,
   getSitePanelAvoidance,
@@ -67,7 +69,7 @@ export interface ModuleInstances {
 }
 
 // 全局模块实例（用于设置变更时的热更新）
-let modules: ModuleInstances = {
+const createEmptyModuleInstances = (): ModuleInstances => ({
   assistantMermaidRenderer: null,
   themeManager: null,
   copyManager: null,
@@ -81,10 +83,14 @@ let modules: ModuleInstances = {
   userQueryMarkdownRenderer: null,
   policyRetryManager: null,
   usageCounterManager: null,
-}
+})
+
+let modules = createEmptyModuleInstances()
 
 let readingHistoryAutoStartTimer: ReturnType<typeof setTimeout> | null = null
+let hostThemeSyncTimer: ReturnType<typeof setTimeout> | null = null
 let assistantMermaidInitPromise: Promise<void> | null = null
+let coreModuleGeneration = 0
 
 const startCoreModule = (module: Pick<CoreModule, "start">): void => {
   module.start()
@@ -122,7 +128,7 @@ export async function initAssistantMermaidRenderer(ctx: ModulesContext): Promise
   }
 
   if (!assistantMermaidInitPromise) {
-    assistantMermaidInitPromise = (async () => {
+    const initPromise = (async () => {
       if (adapter.getAssistantMermaidSupportMode() !== "fallback") {
         return
       }
@@ -136,9 +142,13 @@ export async function initAssistantMermaidRenderer(ctx: ModulesContext): Promise
       } else {
         modules.assistantMermaidRenderer.updateSettings(true)
       }
-    })().finally(() => {
+    })()
+    assistantMermaidInitPromise = initPromise
+    const clearInitPromise = () => {
+      if (assistantMermaidInitPromise !== initPromise) return
       assistantMermaidInitPromise = null
-    })
+    }
+    void initPromise.then(clearInitPromise, clearInitPromise)
   }
 
   await assistantMermaidInitPromise
@@ -161,6 +171,7 @@ export function initThemeManager(ctx: ModulesContext): ThemeManager {
   })
 
   modules.themeManager = themeManager
+  themeManager.startThemeMonitoring()
 
   return themeManager
 }
@@ -338,8 +349,12 @@ export function initWatermarkRemover(ctx: ModulesContext): void {
 /**
  * 初始化阅读历史管理器
  */
-export async function initReadingHistoryManager(ctx: ModulesContext): Promise<void> {
+export async function initReadingHistoryManager(
+  ctx: ModulesContext,
+  generation = coreModuleGeneration,
+): Promise<void> {
   const { adapter, settings } = ctx
+  const isCurrentGeneration = () => generation === coreModuleGeneration
 
   if (settings.readingHistory?.persistence) {
     if (readingHistoryAutoStartTimer) {
@@ -348,19 +363,22 @@ export async function initReadingHistoryManager(ctx: ModulesContext): Promise<vo
     }
 
     const startRecording = (currentSettings: Settings) => {
-      if (modules.readingHistoryManager) return
+      if (!isCurrentGeneration() || modules.readingHistoryManager) return null
       modules.readingHistoryManager = new ReadingHistoryManager(
         adapter,
         currentSettings.readingHistory,
       )
       modules.readingHistoryManager.startRecording()
       modules.readingHistoryManager.cleanup()
+      return modules.readingHistoryManager
     }
 
     const skipAutoRestore = (await consumeClearAllFlag()) || consumeSkipReadingHistoryRestoreFlag()
+    if (!isCurrentGeneration()) return
     if (skipAutoRestore) {
       readingHistoryAutoStartTimer = setTimeout(() => {
         readingHistoryAutoStartTimer = null
+        if (!isCurrentGeneration()) return
         const currentSettings = getSettingsState()
         if (currentSettings.readingHistory?.persistence && !modules.readingHistoryManager) {
           startRecording(currentSettings)
@@ -369,20 +387,22 @@ export async function initReadingHistoryManager(ctx: ModulesContext): Promise<vo
       return
     }
 
-    startRecording(settings)
+    const readingHistoryManager = startRecording(settings)
+    if (!readingHistoryManager) return
 
     if (settings.readingHistory.autoRestore) {
-      const { showToast } = await import("~utils/toast")
-      modules.readingHistoryManager
+      readingHistoryManager
         .restoreProgress((msg) => showToast(msg, 3000))
         .then((restored) => {
-          if (restored) {
+          if (
+            isCurrentGeneration() &&
+            modules.readingHistoryManager === readingHistoryManager &&
+            restored
+          ) {
             showToast(t("restoredPosition"), 2000)
           }
         })
     }
-
-    modules.readingHistoryManager.cleanup()
   }
 }
 
@@ -426,11 +446,18 @@ export function initUserQueryMarkdownRenderer(ctx: ModulesContext): void {
  * 初始化所有核心模块
  */
 export async function initCoreModules(ctx: ModulesContext): Promise<ModuleInstances> {
+  destroyCoreModules()
+  const generation = coreModuleGeneration
+
   // 1. 主题管理 (优先应用)
   initThemeManager(ctx)
 
   // 延迟同步页面主题
-  setTimeout(() => syncHostThemeWithSettings(ctx), 1000)
+  hostThemeSyncTimer = setTimeout(() => {
+    hostThemeSyncTimer = null
+    if (generation !== coreModuleGeneration) return
+    void syncHostThemeWithSettings(ctx)
+  }, 1000)
 
   // 2. Markdown 修复
   initMarkdownFixer(ctx)
@@ -451,7 +478,8 @@ export async function initCoreModules(ctx: ModulesContext): Promise<ModuleInstan
   initUsageCounterManager(ctx)
 
   // 8. 阅读历史
-  await initReadingHistoryManager(ctx)
+  await initReadingHistoryManager(ctx, generation)
+  if (generation !== coreModuleGeneration) return modules
 
   // 9. 模型锁定
   initModelLocker(ctx)
@@ -464,6 +492,7 @@ export async function initCoreModules(ctx: ModulesContext): Promise<ModuleInstan
 
   // 12. AI 回复 Mermaid 渲染
   await initAssistantMermaidRenderer(ctx)
+  if (generation !== coreModuleGeneration) return modules
 
   // 13. Policy Retry Manager
   initPolicyRetryManager(ctx)
@@ -490,13 +519,17 @@ export function initPolicyRetryManager(ctx: ModulesContext): void {
 export function subscribeModuleUpdates(ctx: ModulesContext): () => void {
   const { adapter, siteId } = ctx
   let lastLanguage = getSettingsState().language
+  let active = true
 
-  return subscribeSettings((newSettings: Settings) => {
+  const unsubscribe = subscribeSettings((newSettings: Settings) => {
+    if (!active) return
     if (newSettings.language && newSettings.language !== lastLanguage) {
       lastLanguage = newSettings.language
-      setLanguage(newSettings.language)
-      modules.assistantMermaidRenderer?.refreshLocalizedTexts()
-      modules.layoutManager?.refreshLocalizedTexts()
+      void setLanguage(newSettings.language).then(() => {
+        if (!active) return
+        modules.assistantMermaidRenderer?.refreshLocalizedTexts()
+        modules.layoutManager?.refreshLocalizedTexts()
+      })
     }
 
     // 1. Theme Manager - 只更新主题预置
@@ -663,6 +696,11 @@ export function subscribeModuleUpdates(ctx: ModulesContext): () => void {
       )
     }
   })
+
+  return () => {
+    active = false
+    unsubscribe()
+  }
 }
 
 /**
@@ -673,9 +711,12 @@ export function initUrlChangeObserver(ctx: ModulesContext): () => void {
 
   let lastHref = window.location.href
   let lastPathname = window.location.pathname
+  let active = true
   let readingHistoryRestoreTimeoutId: ReturnType<typeof setTimeout> | null = null
+  const tabTitleUpdateTimers = new Set<ReturnType<typeof setTimeout>>()
 
-  const handleUrlChange = async () => {
+  const handleUrlChange = () => {
+    if (!active) return
     const currentHref = window.location.href
     if (currentHref === lastHref) return
 
@@ -703,21 +744,24 @@ export function initUrlChangeObserver(ctx: ModulesContext): () => void {
       readingHistoryRestoreTimeoutId = null
     }
 
-    if (modules.readingHistoryManager) {
-      modules.readingHistoryManager.stopRecording()
+    const readingHistoryManager = modules.readingHistoryManager
+    if (readingHistoryManager) {
+      readingHistoryManager.stopRecording()
       readingHistoryRestoreTimeoutId = setTimeout(async () => {
         readingHistoryRestoreTimeoutId = null
-        const { showToast } = await import("~utils/toast")
+        if (!active || modules.readingHistoryManager !== readingHistoryManager) return
         const shouldSkipRestore = consumeSkipReadingHistoryRestoreFlag()
         if (!shouldSkipRestore) {
-          const restored = await modules.readingHistoryManager?.restoreProgress((msg) =>
+          const restored = await readingHistoryManager.restoreProgress((msg) =>
             showToast(msg, 3000),
           )
-          if (restored) {
+          if (active && modules.readingHistoryManager === readingHistoryManager && restored) {
             showToast(t("restoredPosition"), 2000)
           }
         }
-        modules.readingHistoryManager?.startRecording()
+        if (active && modules.readingHistoryManager === readingHistoryManager) {
+          readingHistoryManager.startRecording()
+        }
       }, 1500)
     }
 
@@ -725,11 +769,18 @@ export function initUrlChangeObserver(ctx: ModulesContext): () => void {
     window.dispatchEvent(new Event("gh-url-change"))
 
     // 3. 标签页标题更新
-    if (modules.tabManager) {
-      modules.tabManager.resetConversationTitleCache()
-      ;[300, 800, 1500].forEach((delay) =>
-        setTimeout(() => modules.tabManager?.updateTabName(true), delay),
-      )
+    const tabManager = modules.tabManager
+    if (tabManager) {
+      tabManager.resetConversationTitleCache()
+      for (const delay of [300, 800, 1500]) {
+        const timer = setTimeout(() => {
+          tabTitleUpdateTimers.delete(timer)
+          if (active && modules.tabManager === tabManager) {
+            tabManager.updateTabName(true)
+          }
+        }, delay)
+        tabTitleUpdateTimers.add(timer)
+      }
     }
 
     // 4. Textarea 重新查找
@@ -763,18 +814,27 @@ export function initUrlChangeObserver(ctx: ModulesContext): () => void {
   history.pushState = patchedPushState
   history.replaceState = patchedReplaceState
 
-  // 兜底定时器
-  const fallbackIntervalId = window.setInterval(handleUrlChange, 1000)
+  const fallbackIntervalId = adapter.usesUrlPollingFallback()
+    ? window.setInterval(handleUrlChange, 1000)
+    : null
 
   return () => {
+    if (!active) return
+    active = false
     window.removeEventListener("popstate", handleUrlChange)
     window.removeEventListener("hashchange", handleUrlChange)
-    window.clearInterval(fallbackIntervalId)
+    if (fallbackIntervalId !== null) {
+      window.clearInterval(fallbackIntervalId)
+    }
 
     if (readingHistoryRestoreTimeoutId) {
       clearTimeout(readingHistoryRestoreTimeoutId)
       readingHistoryRestoreTimeoutId = null
     }
+    for (const timer of tabTitleUpdateTimers) {
+      clearTimeout(timer)
+    }
+    tabTitleUpdateTimers.clear()
 
     if (history.pushState === patchedPushState) {
       history.pushState = originalPushState
@@ -791,18 +851,7 @@ declare const __PLATFORM__: "extension" | "userscript" | undefined
  * 清除全部数据时的模块清理
  */
 export function handleClearAllData(): void {
-  if (readingHistoryAutoStartTimer) {
-    clearTimeout(readingHistoryAutoStartTimer)
-    readingHistoryAutoStartTimer = null
-  }
-  if (modules.readingHistoryManager) {
-    modules.readingHistoryManager.stopRecording()
-    modules.readingHistoryManager = null
-  }
-  if (modules.usageCounterManager) {
-    modules.usageCounterManager.destroy()
-    modules.usageCounterManager = null
-  }
+  destroyCoreModules()
 
   try {
     const isUserscript = typeof __PLATFORM__ !== "undefined" && __PLATFORM__ === "userscript"
@@ -815,6 +864,27 @@ export function handleClearAllData(): void {
   } catch (e) {
     console.warn("Failed to clear theme cache from localStorage:", e)
   }
+}
+
+/**
+ * 释放内容脚本 realm 中由 initCoreModules() 创建的全部实例。
+ * ThemeManager 是 App 与 core 共享的 window 单例，因此这里只停止宿主页监听，不销毁订阅者。
+ */
+export function destroyCoreModules(): void {
+  coreModuleGeneration += 1
+  if (hostThemeSyncTimer) {
+    clearTimeout(hostThemeSyncTimer)
+    hostThemeSyncTimer = null
+  }
+  if (readingHistoryAutoStartTimer) {
+    clearTimeout(readingHistoryAutoStartTimer)
+    readingHistoryAutoStartTimer = null
+  }
+
+  destroyModuleInstances(modules)
+
+  modules = createEmptyModuleInstances()
+  assistantMermaidInitPromise = null
 }
 
 /**

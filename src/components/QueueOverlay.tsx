@@ -12,6 +12,7 @@ import { createPortal } from "react-dom"
 import type { SiteAdapter } from "~adapters/base"
 import { CleanupIcon, ImportIcon, PromptQueueIcon } from "~components/icons"
 import { DialogOverlay, Tooltip } from "~components/ui"
+import { resolveAmbientPortalTarget, useOverlayPortalTarget } from "~components/ui/OverlayPortal"
 import { extractVariables } from "~components/VariableInputDialog"
 import { formatShortcut, normalizeShortcutBinding } from "~constants/shortcuts"
 import type { QueueDispatcher } from "~core/queue-dispatcher"
@@ -25,8 +26,6 @@ import { t } from "~utils/i18n"
 import { parseQueueBatchInput, splitQueueLines, type QueueBatchSplitMode } from "~utils/queue-batch"
 import { showToast } from "~utils/toast"
 
-import "~styles/queue-overlay.css"
-
 interface QueueOverlayProps {
   adapter: SiteAdapter
   dispatcher: QueueDispatcher
@@ -38,6 +37,8 @@ type QueueBatchSource = "text" | "library"
 type QueueLibraryMode = "single" | "line"
 
 export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher }) => {
+  const overlayPortalTarget = useOverlayPortalTarget()
+  const queuePortalTarget = resolveAmbientPortalTarget(overlayPortalTarget)
   const [isExpanded, setIsExpanded] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [inputValue, setInputValue] = useState("")
@@ -196,57 +197,116 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
 
   // ResizeObserver 精准监听输入框位置/大小变化
   useEffect(() => {
-    updatePosition()
-
     let observer: ResizeObserver | null = null
-    let targetEl: HTMLElement | null = null
+    let retryTimer: number | null = null
+    let scheduledFrame: number | null = null
 
-    const initObserver = () => {
-      targetEl = adapter.getTextareaElement()
+    const schedulePositionUpdate = () => {
+      if (scheduledFrame !== null) return
+      scheduledFrame = window.requestAnimationFrame(() => {
+        scheduledFrame = null
+        updatePosition()
+      })
+    }
+
+    const initObserver = (): boolean => {
+      const targetEl = adapter.getTextareaElement()
 
       if (targetEl) {
         const inputContainer = findInputContainer(targetEl)
-        observer = new ResizeObserver(() => {
-          updatePosition()
-        })
+        observer?.disconnect()
+        observer = new ResizeObserver(schedulePositionUpdate)
         observer.observe(targetEl)
         observer.observe(inputContainer)
         if (targetEl.parentElement) {
           observer.observe(targetEl.parentElement) // 监听父级尺寸变化
         }
+        schedulePositionUpdate()
+        return true
       }
+
+      return false
     }
 
-    // 初次尝试初始化
-    initObserver()
+    const scheduleObserverRetry = () => {
+      if (retryTimer !== null || document.hidden || observer) return
+      retryTimer = window.setTimeout(() => {
+        retryTimer = null
+        if (!initObserver()) scheduleObserverRetry()
+      }, 2000)
+    }
 
-    // 兜底轮询（防止页面动态加载输入框）
-    const intervalId = setInterval(() => {
-      updatePosition()
-      if (!observer && !targetEl) {
-        initObserver()
+    const resetObserver = () => {
+      observer?.disconnect()
+      observer = null
+      if (retryTimer !== null) {
+        window.clearTimeout(retryTimer)
+        retryTimer = null
       }
-    }, 2000)
+      if (!initObserver()) scheduleObserverRetry()
+    }
 
-    window.addEventListener("resize", updatePosition)
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        if (retryTimer !== null) {
+          window.clearTimeout(retryTimer)
+          retryTimer = null
+        }
+        return
+      }
+      if (!observer && !initObserver()) scheduleObserverRetry()
+      schedulePositionUpdate()
+    }
+
+    if (!initObserver()) scheduleObserverRetry()
+    window.addEventListener("resize", schedulePositionUpdate)
+    window.addEventListener("scroll", schedulePositionUpdate, true)
+    window.addEventListener("gh-url-change", resetObserver)
+    document.addEventListener("visibilitychange", handleVisibilityChange)
 
     return () => {
-      clearInterval(intervalId)
-      window.removeEventListener("resize", updatePosition)
-      if (observer) {
-        observer.disconnect()
-      }
+      if (retryTimer !== null) window.clearTimeout(retryTimer)
+      if (scheduledFrame !== null) window.cancelAnimationFrame(scheduledFrame)
+      window.removeEventListener("resize", schedulePositionUpdate)
+      window.removeEventListener("scroll", schedulePositionUpdate, true)
+      window.removeEventListener("gh-url-change", resetObserver)
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+      observer?.disconnect()
     }
   }, [updatePosition, adapter, findInputContainer])
 
   // ==================== 生成状态监控 ====================
 
   useEffect(() => {
-    const intervalId = setInterval(() => {
-      setIsGenerating(adapter.isGenerating())
-    }, 1000)
-    return () => clearInterval(intervalId)
-  }, [adapter])
+    if (!isExpanded) {
+      setIsGenerating(false)
+      return
+    }
+
+    let intervalId: number | null = null
+    const updateGeneratingState = () => setIsGenerating(adapter.isGenerating())
+    const stopPolling = () => {
+      if (intervalId === null) return
+      window.clearInterval(intervalId)
+      intervalId = null
+    }
+    const startPolling = () => {
+      if (document.hidden || intervalId !== null) return
+      updateGeneratingState()
+      intervalId = window.setInterval(updateGeneratingState, 1000)
+    }
+    const handleVisibilityChange = () => {
+      if (document.hidden) stopPolling()
+      else startPolling()
+    }
+
+    startPolling()
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+    return () => {
+      stopPolling()
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+    }
+  }, [adapter, isExpanded])
 
   // ==================== 自定义快捷键 ====================
 
@@ -490,14 +550,10 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
 
   // ==================== 渲染 ====================
 
-  if (!position) return null
+  if (!position || !queuePortalTarget) return null
 
   // 因为定位点(top, left)标志着组件要显示的右下角（紧贴输入框上方右侧）
   // 所以需要用 translate(-100%, -100%) 把组件从锚定点推上去靠左
-  // 为了保证能读取到 CSS 主题变量，我们需要找到含有主题类名的容器
-  // App 组件渲染内容在 .gh-root 下
-  const targetContainer = document.querySelector(".gh-root") || document.body
-
   const capsuleStyle: React.CSSProperties = {
     bottom: position.bottom,
     right: position.right,
@@ -524,7 +580,7 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
           </span>
         </div>
       </Tooltip>,
-      targetContainer,
+      queuePortalTarget,
     )
   }
 
@@ -578,7 +634,7 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
           <div className="gh-queue-list">
             {items.filter((i) => i.status === "pending" || i.status === "sending").length === 0 ? (
               <div className="gh-queue-empty">
-                队列为空，输入内容后按 {submitKeyDisplay} 发送或排队
+                {t("queueEmptyShortcut", { shortcut: submitKeyDisplay })}
               </div>
             ) : (
               items
@@ -773,7 +829,7 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
             {shortcutText && <span className="gh-queue-shortcut-hint">{shortcutText}</span>}
           </div>
         </div>,
-        targetContainer,
+        queuePortalTarget,
       )}
 
       {isBatchDialogOpen && (

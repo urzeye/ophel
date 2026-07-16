@@ -7,19 +7,16 @@ import React, {
   useSyncExternalStore,
 } from "react"
 
-import { getAdapter } from "~adapters/index"
+import type { SiteAdapter } from "~adapters/base"
 import { SITE_IDS } from "~constants/defaults"
 import {
-  ConversationManager,
-  type ConversationExportProgress,
   type ConversationExportStage,
   type ConversationSegmentedExportDraft,
   type ConversationSegmentedExportMode,
 } from "~core/conversation-manager"
 import { InlineBookmarkManager } from "~core/inline-bookmark-manager"
-import { OutlineManager, type OutlineNode } from "~core/outline-manager"
-import { AI_STUDIO_SHORTCUT_SYNC_EVENT, PromptManager } from "~core/prompt-manager"
-import { QueueDispatcher } from "~core/queue-dispatcher"
+import type { OutlineNode } from "~core/outline-manager"
+import { AI_STUDIO_SHORTCUT_SYNC_EVENT } from "~core/prompt-manager"
 import { QuickQuoteActions } from "~components/QuickQuoteActions"
 import { ensureGlobalThemeManager, type ThemeTransitionOrigin } from "~core/theme-manager"
 import { useEdgePeekController } from "~hooks/useEdgePeekController"
@@ -37,14 +34,15 @@ import { useConversationsStore } from "~stores/conversations-store"
 import { useFoldersStore } from "~stores/folders-store"
 import { usePromptsStore } from "~stores/prompts-store"
 import { APP_DISPLAY_NAME, APP_VERSION } from "~utils/config"
+import { registerClearAllDataTask } from "~utils/clear-all-event"
 import { DEFAULT_SETTINGS, type Prompt } from "~utils/storage"
 import {
+  EVENT_CLEAR_ALL_DATA,
   EVENT_EXTENSION_UPDATE_AVAILABLE,
   EVENT_PAGE_URL_CHANGE,
-  MSG_CLEAR_ALL_DATA,
 } from "~utils/messaging"
 import { showToast } from "~utils/toast"
-import { setLanguage, t } from "~utils/i18n"
+import { setLanguage, subscribeI18nChanges, t } from "~utils/i18n"
 import { getHighlightStyles, renderMarkdown } from "~utils/markdown"
 import { createSafeHTML } from "~utils/trusted-types"
 import { initCopyButtons, showCopySuccess } from "~utils/icons"
@@ -61,6 +59,9 @@ import { QuickButtons } from "./QuickButtons"
 import { SelectedPromptBar } from "./SelectedPromptBar"
 import { SegmentedExportDialog } from "./SegmentedExportDialog"
 import { SettingsModal } from "./SettingsModal"
+import { ExtensionUpdateNotice } from "./app/ExtensionUpdateNotice"
+import { prepareAppRuntimeForClearAll, stopAppRuntimeWriters } from "./app/runtime-lifecycle"
+import { useAppRuntimeManagers } from "./app/useAppRuntimeManagers"
 import { GlobalSearchOverlay } from "./global-search/GlobalSearchOverlay"
 import { GlobalSearchResultItemView } from "./global-search/GlobalSearchResultItemView"
 import {
@@ -178,7 +179,11 @@ const PASS_THROUGH_CONTROL_KEY_ALIASES = new Set(["Control", "Ctrl"])
 
 const hasPromptVariables = (content: string): boolean => /\{\{([^\s{}]+)\}\}/.test(content)
 
-export const App = () => {
+interface AppProps {
+  adapter: SiteAdapter
+}
+
+export const App: React.FC<AppProps> = ({ adapter }) => {
   // 读取设置 - 使用 Zustand Store
   const { settings, setSettings, updateDeepSetting, updateNestedSetting } = useSettingsStore()
   const isSettingsHydrated = useSettingsHydrated()
@@ -187,6 +192,8 @@ export const App = () => {
   // 订阅 _syncVersion 以在跨上下文同步时强制触发重渲染。
   useSettingsStore((s) => s._syncVersion)
   const [i18nRenderTick, setI18nRenderTick] = useState(0)
+
+  useEffect(() => subscribeI18nChanges(() => setI18nRenderTick((version) => version + 1)), [])
 
   const getLocalizedText = useCallback(
     (definition: LocalizedLabelDefinition) => {
@@ -403,64 +410,8 @@ export const App = () => {
     [getLocalizedText, getPageLabel, getSubTabLabel],
   )
 
-  // 单例实例
-  const adapter = useMemo(() => getAdapter(), [])
-
-  const promptManager = useMemo(() => {
-    return adapter ? new PromptManager(adapter) : null
-  }, [adapter])
-
-  const queueDispatcher = useMemo(() => {
-    return adapter && promptManager ? new QueueDispatcher(adapter, promptManager) : null
-  }, [adapter, promptManager])
-
-  // QueueDispatcher lifecycle
-  useEffect(() => {
-    if (!queueDispatcher) return
-    const isQueueEnabled = settings?.features?.prompts?.promptQueue ?? false
-    if (isQueueEnabled) {
-      queueDispatcher.start()
-    } else {
-      queueDispatcher.stop()
-    }
-    return () => queueDispatcher.stop()
-  }, [queueDispatcher, settings?.features?.prompts?.promptQueue])
-
-  const conversationManager = useMemo(() => {
-    return adapter ? new ConversationManager(adapter) : null
-  }, [adapter])
-  const [exportProgress, setExportProgress] = useState<ConversationExportProgress | null>(null)
-
-  useEffect(() => {
-    if (!conversationManager) {
-      setExportProgress(null)
-      return
-    }
-
-    setExportProgress(null)
-    return conversationManager.onExportProgress(setExportProgress)
-  }, [conversationManager])
-
-  const outlineManager = useMemo(() => {
-    if (!adapter) return null
-
-    // 使用 Zustand 的 updateDeepSetting
-    const handleExpandLevelChange = (level: number) => {
-      updateDeepSetting("features", "outline", "expandLevel", level)
-    }
-
-    const handleShowUserQueriesChange = (show: boolean) => {
-      updateDeepSetting("features", "outline", "showUserQueries", show)
-    }
-
-    return new OutlineManager(
-      adapter,
-      settings?.features?.outline ?? DEFAULT_SETTINGS.features.outline,
-      handleExpandLevelChange,
-      handleShowUserQueriesChange,
-    )
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- 只在 adapter 变化时重新创建
-  }, [adapter, updateDeepSetting])
+  const { promptManager, queueDispatcher, conversationManager, outlineManager, exportProgress } =
+    useAppRuntimeManagers({ adapter, settings, updateDeepSetting })
 
   // 面板展开状态：true 表示面板没有收进快捷按钮组，和悬浮/吸附模式无关
   const [isPanelExpanded, setIsPanelExpandedState] = useState(false)
@@ -2213,8 +2164,7 @@ export const App = () => {
   // 当设置中的语言变化时，同步更新 i18n
   useEffect(() => {
     if (isSettingsHydrated && settings?.language) {
-      setLanguage(settings.language)
-      setI18nRenderTick((prev) => prev + 1)
+      void setLanguage(settings.language)
     }
   }, [settings?.language, isSettingsHydrated])
 
@@ -2251,8 +2201,7 @@ export const App = () => {
   // 从 window 获取 main.ts 创建的全局 ThemeManager 实例
   // userscript 场景下 App 可能先于核心模块渲染，这里统一复用全局单例
   const themeManager = useMemo(() => {
-    const currentAdapter = getAdapter()
-    const siteId = currentAdapter?.getSiteId() || "_default"
+    const siteId = adapter.getSiteId()
     const fallbackTheme =
       settings?.theme?.sites?.[siteId as keyof typeof settings.theme.sites] ||
       settings?.theme?.sites?._default
@@ -2292,8 +2241,7 @@ export const App = () => {
       const sites = currentSettings?.theme?.sites || {}
 
       // 获取当前站点 ID
-      const currentAdapter = getAdapter()
-      const siteId = currentAdapter?.getSiteId() || "_default"
+      const siteId = adapter.getSiteId()
 
       // 确保站点配置有完整的默认值，但优先使用已有配置
       const existingSite = sites[siteId as keyof typeof sites] || sites._default
@@ -2324,7 +2272,7 @@ export const App = () => {
     return () => {
       themeManager.setOnModeChange(undefined)
     }
-  }, [themeManager, setSettings, isSettingsHydrated]) // 移除 settings?.theme 依赖，通过 ref 访问最新值
+  }, [adapter, themeManager, setSettings, isSettingsHydrated]) // 移除 settings?.theme 依赖，通过 ref 访问最新值
 
   const themeSites = settings?.theme?.sites
   const syncUnpin = settings?.features?.conversations?.syncUnpin
@@ -2353,8 +2301,7 @@ export const App = () => {
     if (!isSettingsHydrated) return // 等待 hydration 完成
 
     // 使用当前站点的配置而非 _default
-    const currentAdapter = getAdapter()
-    const siteId = currentAdapter?.getSiteId() || "_default"
+    const siteId = adapter.getSiteId()
     const siteTheme = themeSites?.[siteId as keyof typeof themeSites] || themeSites?._default
     const lightId = siteTheme?.lightStyleId
     const darkId = siteTheme?.darkStyleId
@@ -2362,7 +2309,7 @@ export const App = () => {
     if (lightId && darkId) {
       themeManager.setPresets(lightId, darkId)
     }
-  }, [themeSites, themeManager, isSettingsHydrated])
+  }, [adapter, themeSites, themeManager, isSettingsHydrated])
 
   // 监听自定义样式变化，同步到 ThemeManager
   useEffect(() => {
@@ -2417,37 +2364,21 @@ export const App = () => {
       // popstate / pushState / replaceState 时 dispatch "gh-url-change"。
       const onUrlChange = () => outlineManager.handleUrlChange()
       const onRefreshOutline = () => outlineManager.refresh()
+      const runtimeWriters = { conversationManager, outlineManager, queueDispatcher }
+      const prepareForClearAll = (event: Event) => {
+        registerClearAllDataTask(event, prepareAppRuntimeForClearAll(runtimeWriters))
+      }
       window.addEventListener("gh-url-change", onUrlChange)
       window.addEventListener("ophel:refreshOutline", onRefreshOutline)
+      window.addEventListener(EVENT_CLEAR_ALL_DATA, prepareForClearAll, { once: true })
       return () => {
         window.removeEventListener("gh-url-change", onUrlChange)
         window.removeEventListener("ophel:refreshOutline", onRefreshOutline)
-        conversationManager?.destroy()
+        window.removeEventListener(EVENT_CLEAR_ALL_DATA, prepareForClearAll)
+        stopAppRuntimeWriters(runtimeWriters)
       }
     }
-  }, [promptManager, conversationManager, outlineManager])
-
-  useEffect(() => {
-    if (!conversationManager || typeof chrome === "undefined") return
-
-    const handler = (
-      message: { type?: string } | undefined,
-      _sender: chrome.runtime.MessageSender,
-      sendResponse: (response: { success: boolean }) => void,
-    ) => {
-      if (message?.type === MSG_CLEAR_ALL_DATA) {
-        conversationManager.destroy()
-        sendResponse({ success: true })
-        return true
-      }
-      return false
-    }
-
-    chrome.runtime.onMessage.addListener(handler)
-    return () => {
-      chrome.runtime.onMessage.removeListener(handler)
-    }
-  }, [conversationManager])
+  }, [promptManager, queueDispatcher, conversationManager, outlineManager])
 
   useEffect(() => {
     const handleExtensionUpdateAvailable = (event: Event) => {
@@ -3132,10 +3063,6 @@ export const App = () => {
     />
   )
 
-  if (!adapter || !promptManager || !conversationManager || !outlineManager) {
-    return null
-  }
-
   const edgeTriggerMode = settings?.panel?.edgeTriggerMode ?? DEFAULT_SETTINGS.panel.edgeTriggerMode
   const shouldRenderEdgeHoverZone =
     isPanelExpanded &&
@@ -3191,6 +3118,7 @@ export const App = () => {
       />
 
       <QuickButtons
+        adapter={adapter}
         isPanelExpanded={isPanelExpanded}
         onPanelToggle={handlePanelToggle}
         onPanelLogoHoverStart={handlePanelLogoHoverStart}
@@ -3568,48 +3496,14 @@ export const App = () => {
         blockPageInteraction
       />
       {showExtensionUpdateNotice && (
-        <section className="gh-update-notice gh-interactive" role="status" aria-live="polite">
-          <button
-            type="button"
-            className="gh-update-notice-close"
-            aria-label={extensionUpdateCloseLabel}
-            onClick={handleDismissExtensionUpdateNotice}>
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round">
-              <path d="M18 6 6 18" />
-              <path d="m6 6 12 12" />
-            </svg>
-          </button>
-          <div className="gh-update-notice-kicker">
-            <svg
-              className="gh-update-notice-icon"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round">
-              <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
-            </svg>
-            {extensionUpdateKickerText}
-          </div>
-          <p className="gh-update-notice-message">{extensionUpdateDescription}</p>
-          <div className="gh-update-notice-actions">
-            <button
-              type="button"
-              className="gh-update-notice-button gh-update-notice-button--primary"
-              onClick={handleReloadAfterExtensionUpdate}>
-              {extensionUpdateActionLabel}
-            </button>
-          </div>
-        </section>
+        <ExtensionUpdateNotice
+          kicker={extensionUpdateKickerText}
+          description={extensionUpdateDescription}
+          actionLabel={extensionUpdateActionLabel}
+          closeLabel={extensionUpdateCloseLabel}
+          onReload={handleReloadAfterExtensionUpdate}
+          onDismiss={handleDismissExtensionUpdateNotice}
+        />
       )}
       <DisclaimerModal />
     </div>

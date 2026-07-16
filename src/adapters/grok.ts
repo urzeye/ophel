@@ -24,6 +24,7 @@ import {
 } from "~utils/export-assets"
 import { htmlToMarkdown, type ExportBundle, type ExportMessage } from "~utils/exporter"
 import { t } from "~utils/i18n"
+import { showToast } from "~utils/toast"
 
 import {
   SiteAdapter,
@@ -173,8 +174,6 @@ export class GrokAdapter extends SiteAdapter {
 
     if (viewAllBtn) {
       // 显示同步提示
-      const { showToast } = await import("~utils/toast")
-      const { t } = await import("~utils/i18n")
       showToast(t("grokSyncingConversations"))
       ;(viewAllBtn as HTMLElement).click()
 

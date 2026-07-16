@@ -4,10 +4,36 @@
  */
 
 import { MULTI_PROP_STORES, ZUSTAND_KEYS } from "~constants/defaults"
+import { runTrackedPersistenceWrite } from "~stores/chrome-adapter"
 import type { WebDAVProvider } from "~types/webdav"
 import { validateBackupData } from "~utils/backup-validator"
 import { APP_NAME } from "~utils/config"
 import { MSG_WEBDAV_REQUEST } from "~utils/messaging"
+
+interface GMWebDAVResponse {
+  status: number
+  statusText: string
+  responseText: string
+  responseHeaders?: string
+}
+
+interface GMWebDAVError {
+  statusText?: string
+}
+
+declare function GM_xmlhttpRequest(details: {
+  method: string
+  url: string
+  headers?: Record<string, string>
+  data?: string
+  onload: (response: GMWebDAVResponse) => void
+  onerror: (error: GMWebDAVError) => void
+  ontimeout: () => void
+}): void
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null
+}
 
 function safeDecodeURIComponent(str: string) {
   try {
@@ -256,7 +282,7 @@ function generateBackupFileName(): string {
 export interface SyncResult {
   success: boolean
   messageKey: string // 国际化键名
-  messageArgs?: Record<string, any> // 消息参数（如错误详情）
+  messageArgs?: Record<string, unknown> // 消息参数（如错误详情）
   timestamp?: number
 }
 
@@ -385,7 +411,7 @@ export class WebDAVSyncManager {
       await this.saveConfig({ lastSyncStatus: "syncing" })
 
       // 获取本地所有数据
-      const localData = await new Promise<Record<string, any>>((resolve) =>
+      const localData = await new Promise<Record<string, unknown>>((resolve) =>
         chrome.storage.local.get(null, resolve),
       )
 
@@ -400,17 +426,18 @@ export class WebDAVSyncManager {
 
             // 处理 Zustand persist 格式：提取 state 中的数据
             // 格式: { state: { settings: {...} | prompts: [...] | conversations: {...} }, version: 0 }
-            if (ZUSTAND_KEYS.includes(k) && parsed?.state) {
+            if (ZUSTAND_KEYS.includes(k) && isRecord(parsed) && isRecord(parsed.state)) {
+              const persistedState = parsed.state
               if (MULTI_PROP_STORES.includes(k)) {
                 // 多属性 store（如 conversations, readingHistory）：保留整个 state
                 // 避免丢失 lastUsedFolderId、lastCleanupRun 等辅助属性
-                parsed = parsed.state
-              } else if (parsed.state[k] !== undefined) {
+                parsed = persistedState
+              } else if (persistedState[k] !== undefined) {
                 // 单属性 store：直接提取 state 中与 key 同名的属性
-                parsed = parsed.state[k]
+                parsed = persistedState[k]
               } else {
                 // 兜底：保留整个 state 内容
-                parsed = parsed.state
+                parsed = persistedState
               }
             }
 
@@ -649,44 +676,50 @@ export class WebDAVSyncManager {
         }),
       )
 
-      await new Promise<void>((resolve, reject) =>
-        chrome.storage.local.set(dehydratedData, () =>
-          chrome.runtime.lastError ? reject(chrome.runtime.lastError) : resolve(),
-        ),
+      await runTrackedPersistenceWrite(
+        () =>
+          new Promise<void>((resolve, reject) =>
+            chrome.storage.local.set(dehydratedData, () =>
+              chrome.runtime.lastError ? reject(chrome.runtime.lastError) : resolve(),
+            ),
+          ),
       )
 
       // 3. 恢复当前 WebDAV 配置（保持用户当前的 WebDAV 设置）
       // 直接操作 storage 而非 setSettings()，避免触发 Zustand persist
-      await new Promise<void>((resolve, reject) => {
-        chrome.storage.local.get("settings", (result) => {
-          if (chrome.runtime.lastError) {
-            reject(chrome.runtime.lastError)
-            return
-          }
+      await runTrackedPersistenceWrite(
+        () =>
+          new Promise<void>((resolve, reject) => {
+            chrome.storage.local.get("settings", (result) => {
+              if (chrome.runtime.lastError) {
+                reject(chrome.runtime.lastError)
+                return
+              }
 
-          // 解析当前 storage 中的 settings（刚写入的备份数据）
-          let settingsWrapper = result.settings
-          if (typeof settingsWrapper === "string") {
-            try {
-              settingsWrapper = JSON.parse(settingsWrapper)
-            } catch {
-              // 解析失败，跳过 WebDAV 配置恢复
-              resolve()
-              return
-            }
-          }
+              // 解析当前 storage 中的 settings（刚写入的备份数据）
+              let settingsWrapper = result.settings
+              if (typeof settingsWrapper === "string") {
+                try {
+                  settingsWrapper = JSON.parse(settingsWrapper)
+                } catch {
+                  // 解析失败，跳过 WebDAV 配置恢复
+                  resolve()
+                  return
+                }
+              }
 
-          // 更新 webdav 配置
-          if (settingsWrapper?.state?.settings) {
-            settingsWrapper.state.settings.webdav = currentWebdavConfig
-          }
+              // 更新 webdav 配置
+              if (settingsWrapper?.state?.settings) {
+                settingsWrapper.state.settings.webdav = currentWebdavConfig
+              }
 
-          // 写回 storage
-          chrome.storage.local.set({ settings: JSON.stringify(settingsWrapper) }, () =>
-            chrome.runtime.lastError ? reject(chrome.runtime.lastError) : resolve(),
-          )
-        })
-      })
+              // 写回 storage
+              chrome.storage.local.set({ settings: JSON.stringify(settingsWrapper) }, () =>
+                chrome.runtime.lastError ? reject(chrome.runtime.lastError) : resolve(),
+              )
+            })
+          }),
+      )
 
       const now = Date.now()
       await this.saveConfig({ lastSyncTime: now, lastSyncStatus: "success" })
@@ -782,13 +815,12 @@ export class WebDAVSyncManager {
         requestHeaders["Authorization"] = `Basic ${credentials}`
       }
 
-      // @ts-ignore - GM_xmlhttpRequest 是油猴脚本 API
       GM_xmlhttpRequest({
         method,
         url,
         headers: requestHeaders,
         data: body || undefined,
-        onload: (response: any) => {
+        onload: (response) => {
           // 构造一个类 Response 对象返回
           resolve({
             ok: response.status >= 200 && response.status < 300,
@@ -810,7 +842,7 @@ export class WebDAVSyncManager {
             },
           } as unknown as Response)
         },
-        onerror: (error: any) => {
+        onerror: (error) => {
           reject(new Error(error.statusText || "GM_xmlhttpRequest failed"))
         },
         ontimeout: () => {
