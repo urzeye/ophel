@@ -9,9 +9,12 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### ✨ Improvements
+
+- **Claude windowed conversation layout** — Adapted to Claude's new windowed conversation structure, so the outline continues to aggregate entries across the virtualized list and exports collect the complete conversation. (#781)
+
 ### 🐛 Bug Fixes
 
-- **Claude long conversations** — Fixed incomplete outlines and exports after Claude introduced virtual scrolling, so messages remain available in the outline and full conversation content is collected across the virtualized history. (#781)
 - **Global shortcut URL** — Fixed issue where the global shortcut continued to open Gemini after setting a custom URL. (#778)
 
 ---
