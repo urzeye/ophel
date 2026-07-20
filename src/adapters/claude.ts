@@ -210,6 +210,7 @@ export class ClaudeAdapter extends SiteAdapter {
   private exportSnapshotRoot: HTMLElement | null = null
   private outlineCacheSessionKey = ""
   private outlineItemCache = new Map<string, ClaudeOutlineCacheEntry>()
+  private sortedCachedUserQueries: ClaudeOutlineCacheEntry[] | null = null
   private outlineScannedMessageIndexes = new Set<number>()
   // 全量滚动只用于当前会话的首次缓存回填；后续新增消息由已挂载行增量更新。
   private hasCompletedInitialVirtualOutlineScan = false
@@ -1473,6 +1474,7 @@ export class ClaudeAdapter extends SiteAdapter {
 
     this.outlineCacheSessionKey = sessionKey
     this.outlineItemCache.clear()
+    this.sortedCachedUserQueries = null
     this.outlineScannedMessageIndexes.clear()
     this.hasCompletedInitialVirtualOutlineScan = false
   }
@@ -1492,6 +1494,7 @@ export class ClaudeAdapter extends SiteAdapter {
 
   private updateClaudeOutlineCache(items: OutlineItem[]): void {
     this.ensureClaudeOutlineCacheSession()
+    this.sortedCachedUserQueries = null
     const headingOrderByMessage = new Map<number, number>()
 
     for (const item of items) {
@@ -2021,6 +2024,23 @@ export class ClaudeAdapter extends SiteAdapter {
     }
 
     return this.getScrollContainer()
+  }
+
+  findUserQueryElement(queryIndex: number, text: string): Element | null {
+    this.ensureClaudeOutlineCacheSession()
+    const cachedUserQueries =
+      this.sortedCachedUserQueries ??
+      Array.from(this.outlineItemCache.values())
+        .filter((entry) => entry.isUserQuery)
+        .sort((a, b) => a.messageIndex - b.messageIndex)
+    this.sortedCachedUserQueries = cachedUserQueries
+    const entry = cachedUserQueries[queryIndex - 1]
+
+    if (entry) {
+      return this.findClaudeOutlineTargetInMountedRow(entry)
+    }
+
+    return super.findUserQueryElement(queryIndex, text)
   }
 
   async resolveOutlineTarget(
