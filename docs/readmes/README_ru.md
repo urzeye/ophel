@@ -1,4 +1,4 @@
-﻿# Ophel Atlas 🚀
+# Ophel Atlas 🚀
 
 > Превратите AI-чаты в читаемые, навигационные и многоразовые документы
 
@@ -408,9 +408,9 @@ pnpm serve:userscript:assets   # Запуск сервера для статич
 <div align="center">
 <a href="https://github.com/urzeye/ophel/stargazers">
  <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/urzeye/ophel/main/assets/stars-dark.svg" />
-   <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/urzeye/ophel/main/assets/stars.svg" />
-   <img alt="Star History Chart" src="https://raw.githubusercontent.com/urzeye/ophel/main/assets/stars.svg" />
+   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/urzeye/ophel/star-data/assets/stars-dark.svg" />
+   <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/urzeye/ophel/star-data/assets/stars.svg" />
+   <img alt="Star History Chart" src="https://raw.githubusercontent.com/urzeye/ophel/star-data/assets/stars.svg" />
  </picture>
 </a>
 <p>

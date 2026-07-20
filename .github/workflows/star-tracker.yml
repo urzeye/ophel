@@ -13,6 +13,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          path: repo
+
+      - name: 从 star-data 分支恢复历史数据
+        run: |
+          git clone --branch star-data --depth 1 https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git /tmp/star-data
 
       - name: 获取当前 star 数量
         id: stars
@@ -21,18 +27,31 @@ jobs:
           GH_TOKEN: ${{ github.token }}
 
       - name: 生成 star 图表
-        run: node scripts/generate-star-chart.mjs
+        run: |
+          cd repo
+          mkdir -p docs/data docs/media/star-chart
+          cp /tmp/star-data/data/stars.json docs/data/stars.json 2>/dev/null || echo '[]' > docs/data/stars.json
+          node scripts/generate-star-chart.mjs
         env:
           STAR_COUNT: ${{ steps.stars.outputs.count }}
 
-      - name: 提交更新
+      - name: 推送到 star-data 分支
         run: |
+          cd repo
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          cp /tmp/star-data/data/stars.json /tmp/stars.json
+          cp docs/data/stars.json /tmp/new-stars.json
+          cp docs/media/star-chart/stars.svg /tmp/stars.svg
+          cp docs/media/star-chart/stars-dark.svg /tmp/stars-dark.svg
+          git branch -D star-data 2>/dev/null || true
+          git checkout --orphan star-data
+          git rm -rf --quiet . 2>/dev/null || true
+          mkdir -p data assets
+          cp /tmp/new-stars.json data/stars.json
+          cp /tmp/stars.json data/stars.json.old || true
+          cp /tmp/stars.svg assets/stars.svg
+          cp /tmp/stars-dark.svg assets/stars-dark.svg
           git add data/stars.json assets/stars.svg assets/stars-dark.svg
-          if git diff --staged --quiet; then
-            echo "数据未变化，跳过提交。"
-          else
-            git commit -m "chore: update star chart [skip ci]"
-            git push
-          fi
+          git commit -m "chore: update star chart [skip ci]"
+          git push --force origin star-data

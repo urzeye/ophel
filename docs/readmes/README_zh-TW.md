@@ -1,4 +1,4 @@
-﻿# Ophel Atlas 🚀
+# Ophel Atlas 🚀
 
 > 讓 AI 對話如文檔般可閱讀、導航、複用
 
@@ -416,9 +416,9 @@ pnpm serve:userscript:assets   # 本地啟動伺服器提供圖示/樣式等靜�
 <div align="center">
 <a href="https://github.com/urzeye/ophel/stargazers">
  <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/urzeye/ophel/main/assets/stars-dark.svg" />
-   <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/urzeye/ophel/main/assets/stars.svg" />
-   <img alt="Star History Chart" src="https://raw.githubusercontent.com/urzeye/ophel/main/assets/stars.svg" />
+   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/urzeye/ophel/star-data/assets/stars-dark.svg" />
+   <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/urzeye/ophel/star-data/assets/stars.svg" />
+   <img alt="Star History Chart" src="https://raw.githubusercontent.com/urzeye/ophel/star-data/assets/stars.svg" />
  </picture>
 </a>
 <p>
