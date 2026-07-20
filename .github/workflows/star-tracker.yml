@@ -1,0 +1,38 @@
+name: "⭐ Star History Tracker"
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  track:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: 获取当前 star 数量
+        id: stars
+        run: echo "count=$(gh api repos/${{ github.repository }} --jq '.stargazers_count')" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: 生成 star 图表
+        run: node scripts/generate-star-chart.mjs
+        env:
+          STAR_COUNT: ${{ steps.stars.outputs.count }}
+
+      - name: 提交更新
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/stars.json assets/stars.svg assets/stars-dark.svg
+          if git diff --staged --quiet; then
+            echo "数据未变化，跳过提交。"
+          else
+            git commit -m "chore: update star chart [skip ci]"
+            git push
+          fi

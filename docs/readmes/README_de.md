@@ -406,11 +406,11 @@ Tiefer Dank gilt den folgenden großartigen Personen. Eure Beiträge lassen dies
 ## ⭐ Star History
 
 <div align="center">
-<a href="https://star-history.com/#urzeye/ophel&Date">
+<a href="https://github.com/urzeye/ophel/stargazers">
  <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=urzeye/ophel&type=Date&theme=dark" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=urzeye/ophel&type=Date" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=urzeye/ophel&type=Date" />
+   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/urzeye/ophel/main/assets/stars-dark.svg" />
+   <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/urzeye/ophel/main/assets/stars.svg" />
+   <img alt="Star History Chart" src="https://raw.githubusercontent.com/urzeye/ophel/main/assets/stars.svg" />
  </picture>
 </a>
 <p>

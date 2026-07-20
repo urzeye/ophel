@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 280" width="800" height="280">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.02"/>
+    </linearGradient>
+    <style>
+      text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif; }
+      text.title { font-size: 13px; font-weight: 600; }
+      text.axis  { font-size: 10px; }
+      text.badge { font-size: 11px; }
+    </style>
+  </defs>
+
+  <rect width="800" height="280" fill="#ffffff"/>
+
+  <!-- 网格线 -->
+  <line x1="56.0" y1="236.0" x2="756" y2="236.0" stroke="#f1f5f9" stroke-width="1"/>
+  <line x1="56.0" y1="161.8" x2="756" y2="161.8" stroke="#f1f5f9" stroke-width="1"/>
+  <line x1="56.0" y1="98.2" x2="756" y2="98.2" stroke="#f1f5f9" stroke-width="1"/>
+  <line x1="56.0" y1="24.0" x2="756" y2="24.0" stroke="#f1f5f9" stroke-width="1"/>
+
+  <!-- Y 轴标签 -->
+  <text x="46" y="236.0" text-anchor="end" dominant-baseline="central" fill="#94a3b8" class="axis">870</text>
+  <text x="46" y="161.8" text-anchor="end" dominant-baseline="central" fill="#94a3b8" class="axis">877</text>
+  <text x="46" y="98.2" text-anchor="end" dominant-baseline="central" fill="#94a3b8" class="axis">883</text>
+  <text x="46" y="24.0" text-anchor="end" dominant-baseline="central" fill="#94a3b8" class="axis">890</text>
+
+  <!-- 面积填充 -->
+  
+
+  <!-- 折线 -->
+  
+
+  <!-- 数据点 -->
+  <circle cx="56.0" cy="87.6" r="2.5" fill="#3b82f6"/>
+
+  <!-- 最新数据点（大） -->
+  <circle cx="56.0" cy="87.6" r="4" fill="#3b82f6" stroke="#ffffff" stroke-width="2"/>
+
+  <!-- X 轴标签 -->
+  <text x="56.0" y="266" text-anchor="middle" fill="#94a3b8" class="axis">2026-07</text>
+
+  <!-- 标题 -->
+  <text x="56" y="16" fill="#1e293b" class="title">Star History</text>
+
+  <!-- 最新计数徽章 -->
+  <rect x="28.0" y="55.6" width="56" height="22" rx="11" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.2"/>
+  <text x="56.0" y="70.6" text-anchor="middle" fill="#3b82f6" class="badge">★ 884</text>
+</svg>
