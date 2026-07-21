@@ -208,24 +208,37 @@ export class ReadingHistoryManager {
       }
 
       this.ignoreScrollUntil = 0
+      this.lastSaveTime = 0
       this.cancelRestore()
       this.startRecording({ initialCooldownMs: 0 })
     }
 
-    window.addEventListener("pointerdown", this.userInteractionHandler, { passive: true })
-    window.addEventListener("wheel", this.userInteractionHandler, { passive: true })
-    window.addEventListener("touchmove", this.userInteractionHandler, { passive: true })
-    window.addEventListener("keydown", this.userInteractionHandler, { passive: true })
+    window.addEventListener("pointerdown", this.userInteractionHandler, {
+      capture: true,
+      passive: true,
+    })
+    window.addEventListener("wheel", this.userInteractionHandler, {
+      capture: true,
+      passive: true,
+    })
+    window.addEventListener("touchmove", this.userInteractionHandler, {
+      capture: true,
+      passive: true,
+    })
+    window.addEventListener("keydown", this.userInteractionHandler, {
+      capture: true,
+      passive: true,
+    })
     window.addEventListener(READING_HISTORY_USER_NAVIGATION_EVENT, this.userInteractionHandler)
   }
 
   private stopUserInteractionTracking() {
     if (!this.userInteractionHandler) return
 
-    window.removeEventListener("pointerdown", this.userInteractionHandler)
-    window.removeEventListener("wheel", this.userInteractionHandler)
-    window.removeEventListener("touchmove", this.userInteractionHandler)
-    window.removeEventListener("keydown", this.userInteractionHandler)
+    window.removeEventListener("pointerdown", this.userInteractionHandler, true)
+    window.removeEventListener("wheel", this.userInteractionHandler, true)
+    window.removeEventListener("touchmove", this.userInteractionHandler, true)
+    window.removeEventListener("keydown", this.userInteractionHandler, true)
     window.removeEventListener(READING_HISTORY_USER_NAVIGATION_EVENT, this.userInteractionHandler)
     this.userInteractionHandler = null
   }
@@ -271,8 +284,9 @@ export class ReadingHistoryManager {
       e.type === "visibilitychange" ||
       now - this.lastSaveTime > 1000
     ) {
-      this.saveProgress()
-      this.lastSaveTime = now
+      if (this.saveProgress()) {
+        this.lastSaveTime = now
+      }
     }
   }
 
@@ -361,21 +375,18 @@ export class ReadingHistoryManager {
     return ""
   }
 
-  private saveProgress() {
-    if (!this.isRecording) return
-    if (this.isRestoring) {
-      return
-    }
+  private saveProgress(): boolean {
+    if (!this.isRecording || this.isRestoring) return false
     const sessionId = this.getSessionId()
     // 检查会话一致性：如果当前 URL 的会话 ID 与记录时不一致，说明发生了切换但还没重置
     if (this.currentSessionId && sessionId && sessionId !== this.currentSessionId) {
-      return
+      return false
     }
     if (Date.now() < this.ignoreScrollUntil) {
-      return
+      return false
     }
     if (!this.canUseCurrentSession(sessionId)) {
-      return
+      return false
     }
 
     this.lockCurrentSessionId(sessionId)
@@ -389,10 +400,10 @@ export class ReadingHistoryManager {
       if (container) {
         const style = window.getComputedStyle(container)
         if (style.flexDirection !== "column-reverse") {
-          return
+          return false
         }
       } else {
-        return
+        return false
       }
     }
 
@@ -414,6 +425,7 @@ export class ReadingHistoryManager {
     }
 
     getReadingHistoryStore().savePosition(key, data)
+    return true
   }
 
   async restoreProgress(

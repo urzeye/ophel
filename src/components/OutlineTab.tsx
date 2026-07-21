@@ -1474,15 +1474,15 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
         // 高亮效果
         targetElement.classList.add("outline-highlight")
         setTimeout(() => targetElement?.classList.remove("outline-highlight"), 2000)
-      } else if (node.isGhost && node.scrollTop !== undefined) {
+      } else if (
+        node.isGhost &&
+        node.scrollTop !== undefined &&
+        manager.scrollToOutlinePosition(node.scrollTop)
+      ) {
         // Ghost 节点（收藏对应内容不存在）：使用保存的 scrollTop 回退
-        const scrollContainer = manager.getScrollContainer()
-        if (scrollContainer) {
-          scrollContainer.scrollTo({ top: node.scrollTop, behavior: "smooth" })
-          updateActiveIndex(node.index, node)
-          updateVisibleHighlightIndex(getVisibleHighlightIndex(node.index))
-          showToast(t("bookmarkContentMissing"), 3000)
-        }
+        updateActiveIndex(node.index, node)
+        updateVisibleHighlightIndex(getVisibleHighlightIndex(node.index))
+        showToast(t("bookmarkContentMissing"), 3000)
       }
     },
     [

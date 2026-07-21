@@ -1858,16 +1858,13 @@ export const App = () => {
           return
         }
 
-        if (item.outlineTarget.isGhost && item.outlineTarget.scrollTop !== undefined) {
-          const scrollContainer = outlineManager.getScrollContainer()
-          if (scrollContainer) {
-            scrollContainer.scrollTo({
-              top: item.outlineTarget.scrollTop,
-              behavior: "smooth",
-            })
-            showToast(t("bookmarkContentMissing"), 3000)
-            return
-          }
+        if (
+          item.outlineTarget.isGhost &&
+          item.outlineTarget.scrollTop !== undefined &&
+          outlineManager.scrollToOutlinePosition(item.outlineTarget.scrollTop)
+        ) {
+          showToast(t("bookmarkContentMissing"), 3000)
+          return
         }
 
         return

@@ -672,6 +672,15 @@ export class OutlineManager {
     this.siteAdapter.scrollToOutlineSourceTarget(element, this.activeSourceId)
   }
 
+  scrollToOutlinePosition(position: number, behavior: ScrollBehavior = "smooth"): boolean {
+    const container = this.getScrollContainer()
+    if (!container) return false
+
+    signalReadingHistoryUserNavigation()
+    container.scrollTo({ top: position, behavior })
+    return true
+  }
+
   getState() {
     // 根据是否开启用户提问，确定 minRelativeLevel
     const minRelativeLevel = this.settings.showUserQueries ? 0 : 1
