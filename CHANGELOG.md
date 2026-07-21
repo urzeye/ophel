@@ -15,7 +15,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
-- **Duplicate outline heading highlight** — Fixed an issue where virtualized conversations could rebind a heading to an earlier heading with the same level and text, causing scroll-follow highlighting to point to the wrong question.
+- **Duplicate outline heading highlight** — Fixed an issue where virtualized conversations could rebind a heading to an earlier heading with the same level and text, causing scroll-follow highlighting to point to the wrong question. (#798)
 - **Claude outline refresh after replies** — Fixed issue where sending a new message in a previously indexed long Claude conversation could restart the full outline scan and scroll through the conversation again; new replies now update the cached outline incrementally. (#785)
 - **Claude outline current-position highlight** — Fixed issue where the outline could highlight an earlier question when the visible Claude question began with the same text; current-position tracking now follows the exact question at that conversation position.
 
