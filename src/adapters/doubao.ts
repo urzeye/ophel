@@ -1798,6 +1798,26 @@ export class DoubaoAdapter extends SiteAdapter {
     return null
   }
 
+  resolveMountedOutlineTarget(
+    item: Pick<OutlineItem, "level" | "text" | "element" | "isUserQuery" | "id">,
+  ): Element | null {
+    if (item.element?.isConnected) return item.element
+    if (!item.id) return null
+
+    this.ensureOutlineCacheSession()
+    const entry = this.outlineItemCache.get(item.id)
+    if (
+      !entry ||
+      entry.level !== item.level ||
+      entry.text !== item.text ||
+      Boolean(entry.isUserQuery) !== Boolean(item.isUserQuery)
+    ) {
+      return null
+    }
+
+    return this.resolveCachedDoubaoOutlineTarget(item.id)
+  }
+
   async resolveOutlineTarget(
     item: Pick<OutlineItem, "level" | "text" | "isUserQuery" | "id">,
     queryIndex?: number,

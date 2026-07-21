@@ -1252,8 +1252,24 @@ export abstract class SiteAdapter {
   }
 
   /**
+   * 返回大纲项当前已挂载且身份确定的页面元素。
+   *
+   * 该方法用于滚动跟随等被动读取路径，必须保持同步且无副作用：不能滚动页面、
+   * 点击站点控件，或仅按可能重复的标题文本猜测目标。虚拟列表站点可基于稳定的
+   * 消息 ID、消息序号等信息覆写；无法确认身份时应返回 null，让调用方保留缓存位置。
+   */
+  resolveMountedOutlineTarget(
+    item: Pick<OutlineItem, "level" | "text" | "element" | "isUserQuery" | "id" | "navigationId">,
+    _queryIndex?: number,
+    _sourceId = "conversation",
+  ): Element | null {
+    return item.element?.isConnected ? item.element : null
+  }
+
+  /**
    * 解析大纲项对应的页面元素。
    * 默认仅做同步 DOM 查找，子类可覆盖以支持虚拟列表/原生导航等异步定位。
+   * 这是用户主动导航路径，允许站点适配器滚动虚拟列表或点击原生导航控件。
    */
   async resolveOutlineTarget(
     item: Pick<OutlineItem, "level" | "text" | "isUserQuery" | "id" | "navigationId">,

@@ -3176,6 +3176,24 @@ export class ChatGPTAdapter extends SiteAdapter {
     return null
   }
 
+  resolveMountedOutlineTarget(
+    item: Pick<OutlineItem, "level" | "text" | "element" | "isUserQuery" | "id" | "navigationId">,
+  ): Element | null {
+    if (item.element?.isConnected) return item.element
+
+    const cachedTarget = this.resolveCachedChatGPTOutlineTarget(item.id)
+    if (!cachedTarget?.isConnected) return null
+
+    if (item.isUserQuery) {
+      return cachedTarget.hasAttribute("data-turn-id-container") ? null : cachedTarget
+    }
+
+    const expectedTagName = `h${item.level}`
+    return cachedTarget.matches(expectedTagName) && cachedTarget.textContent?.trim() === item.text
+      ? cachedTarget
+      : null
+  }
+
   async resolveOutlineTarget(
     item: Pick<OutlineItem, "level" | "text" | "isUserQuery" | "id" | "navigationId">,
     queryIndex?: number,

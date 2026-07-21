@@ -642,22 +642,8 @@ export class OutlineManager {
     return this.siteAdapter.extractUserQueryText(element)
   }
 
-  /**
-   * 根据标题级别和文本查找元素（支持 Shadow DOM 穿透）
-   * 代理到 siteAdapter 以支持不同平台的实现
-   */
-  findElementByHeading(level: number, text: string): Element | null {
-    return this.siteAdapter.findElementByHeading(level, text)
-  }
-
-  /**
-   * 根据 queryIndex 和文本查找用户提问元素
-   * 用于大纲跳转时元素失效后的重新查找
-   * @param queryIndex 用户提问的序号（从 1 开始）
-   * @param text 用户提问文本（用于验证和回退搜索）
-   */
-  findUserQueryElement(queryIndex: number, text: string): Element | null {
-    return this.siteAdapter.findUserQueryElement(queryIndex, text)
+  private resolveMountedOutlineTarget(item: OutlineNode): Element | null {
+    return this.siteAdapter.resolveMountedOutlineTarget(item, item.queryIndex, this.activeSourceId)
   }
 
   async resolveOutlineTarget(
@@ -1293,18 +1279,9 @@ export class OutlineManager {
     this.flatNodes.forEach((node) => {
       if (node.isGhost) return
 
-      let element = node.element
-      if (!element || !element.isConnected) {
-        if (this.activeSourceId === "conversation") {
-          if (node.isUserQuery && node.level === 0 && node.queryIndex !== undefined) {
-            element = this.findUserQueryElement(node.queryIndex, node.text) as HTMLElement
-          } else {
-            element = this.findElementByHeading(node.level, node.text) as HTMLElement
-          }
-        }
-        if (element) {
-          node.element = element
-        }
+      const element = this.resolveMountedOutlineTarget(node)
+      if (element && node.element !== element) {
+        node.element = element
       }
 
       if (!element || !element.isConnected) {
