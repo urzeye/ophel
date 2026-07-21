@@ -112,17 +112,15 @@ const DOUBAO_EXPORT_ROLE_USER = "user"
 
 interface DoubaoVirtualMessageMeta {
   messageId: string | null
-  rowIndex: number
 }
 
 interface DoubaoOutlineCacheEntry {
   id: string
   level: number
   text: string
-  messageId: string | null
-  rowIndex: number
+  messageId: string
+  parentUserMessageId?: string
   scrollTop: number
-  orderInMessage: number
   headingMatchIndex?: number
   isUserQuery?: boolean
   isTruncated?: boolean
@@ -158,6 +156,8 @@ export class DoubaoAdapter extends SiteAdapter {
   private outlineCacheSessionKey = ""
   private outlineCacheTransitionEndAt = 0
   private outlineItemCache = new Map<string, DoubaoOutlineCacheEntry>()
+  private doubaoRelationsRaw = ""
+  private parentUserMessageIdByAssistant = new Map<string, string>()
   private exportMessagesCache: ExportMessage[] | null = null
   private exportBundleCache: ExportBundle | null = null
 
@@ -1551,6 +1551,8 @@ export class DoubaoAdapter extends SiteAdapter {
     const isFirstSession = this.outlineCacheSessionKey === ""
     this.outlineCacheSessionKey = sessionKey
     this.outlineItemCache.clear()
+    this.doubaoRelationsRaw = ""
+    this.parentUserMessageIdByAssistant.clear()
     this.outlineCacheTransitionEndAt = isFirstSession ? 0 : Date.now() + 1200
   }
 
@@ -1560,14 +1562,6 @@ export class DoubaoAdapter extends SiteAdapter {
 
   private getVirtualRow(element: Element | null): HTMLElement | null {
     return (element?.closest(VIRTUAL_ROW_SELECTOR) as HTMLElement | null) || null
-  }
-
-  private getVirtualRowIndex(row: HTMLElement | null, fallbackIndex: number): number {
-    if (!row) return fallbackIndex
-
-    const clsValue = row.style.getPropertyValue("--cls") || row.getAttribute("style") || ""
-    const match = clsValue.match(/r-(\d+)-/)
-    return match ? Number.parseInt(match[1], 10) : fallbackIndex
   }
 
   private getVirtualRowScrollTop(row: HTMLElement | null, fallbackTop: number): number {
@@ -1582,25 +1576,54 @@ export class DoubaoAdapter extends SiteAdapter {
     return Number.isFinite(directValue) ? Math.max(0, directValue) : fallbackTop
   }
 
-  private getVirtualMessageMeta(
-    unit: HTMLElement,
-    fallbackIndex: number,
-  ): DoubaoVirtualMessageMeta {
-    const row = this.getVirtualRow(unit)
-    const observedRow = row?.getAttribute("data-observe-row") || ""
-    const rowMessageId = observedRow.match(/^block_(.+)$/)?.[1] || null
-    const messageElement = unit.matches("[data-message-id]")
-      ? unit
-      : (unit.querySelector("[data-message-id]") as HTMLElement | null)
+  private getVirtualMessageMeta(unit: HTMLElement | null): DoubaoVirtualMessageMeta {
+    const messageElement =
+      unit && unit.matches("[data-message-id]")
+        ? unit
+        : (unit?.querySelector("[data-message-id]") as HTMLElement | null)
+    const messageId = messageElement?.getAttribute("data-message-id")?.trim() || null
 
-    return {
-      messageId: rowMessageId || messageElement?.getAttribute("data-message-id") || null,
-      rowIndex: this.getVirtualRowIndex(row, fallbackIndex),
-    }
+    return { messageId }
   }
 
-  private getOutlineMessageKey(meta: DoubaoVirtualMessageMeta): string {
-    return meta.messageId || `row:${meta.rowIndex}`
+  private refreshDoubaoMessageRelations(): void {
+    const sessionId = this.getSessionId()
+    if (this.doubaoRelationsRaw && !sessionId) {
+      this.doubaoRelationsRaw = ""
+      this.parentUserMessageIdByAssistant.clear()
+      return
+    }
+
+    const serialized = document.documentElement.dataset.ophelDoubaoMessageRelations || ""
+    if (serialized === this.doubaoRelationsRaw) return
+
+    this.doubaoRelationsRaw = serialized
+    this.parentUserMessageIdByAssistant.clear()
+    if (!serialized || !sessionId) return
+
+    try {
+      const snapshot = JSON.parse(serialized) as {
+        conversationId?: unknown
+        relations?: unknown
+      }
+      if (snapshot.conversationId !== sessionId || !Array.isArray(snapshot.relations)) return
+
+      for (const relation of snapshot.relations) {
+        if (!Array.isArray(relation) || relation.length !== 2) continue
+        const [assistantMessageId, userMessageId] = relation
+        if (
+          typeof assistantMessageId !== "string" ||
+          typeof userMessageId !== "string" ||
+          !assistantMessageId ||
+          !userMessageId
+        ) {
+          continue
+        }
+        this.parentUserMessageIdByAssistant.set(assistantMessageId, userMessageId)
+      }
+    } catch (error) {
+      console.warn("[Ophel] Failed to parse Doubao message relations", error)
+    }
   }
 
   private getElementVirtualScrollTop(container: HTMLElement, element: HTMLElement): number {
@@ -1630,10 +1653,10 @@ export class DoubaoAdapter extends SiteAdapter {
     meta: DoubaoVirtualMessageMeta,
     item: Pick<OutlineItem, "level" | "text" | "isUserQuery">,
     headingMatchIndex = 0,
-  ): string {
-    const messageKey = this.getOutlineMessageKey(meta)
-    if (item.isUserQuery) return `doubao:${messageKey}:user`
-    return `doubao:${messageKey}:h${item.level}:${headingMatchIndex}:${this.hashOutlineText(
+  ): string | null {
+    if (!meta.messageId) return null
+    if (item.isUserQuery) return `doubao:${meta.messageId}:user`
+    return `doubao:${meta.messageId}:h${item.level}:${headingMatchIndex}:${this.hashOutlineText(
       item.text,
     )}`
   }
@@ -1641,11 +1664,9 @@ export class DoubaoAdapter extends SiteAdapter {
   private trimOutlineCache(): void {
     if (this.outlineItemCache.size <= DOUBAO_OUTLINE_CACHE_MAX_ITEMS) return
 
-    const entries = Array.from(this.outlineItemCache.values()).sort((a, b) => {
-      if (a.rowIndex !== b.rowIndex) return a.rowIndex - b.rowIndex
-      return a.orderInMessage - b.orderInMessage
-    })
-
+    const entries = Array.from(this.outlineItemCache.values()).sort(
+      (a, b) => a.scrollTop - b.scrollTop,
+    )
     const keep = new Set(entries.slice(-DOUBAO_OUTLINE_CACHE_MAX_ITEMS).map((entry) => entry.id))
     for (const id of this.outlineItemCache.keys()) {
       if (!keep.has(id)) this.outlineItemCache.delete(id)
@@ -1653,10 +1674,10 @@ export class DoubaoAdapter extends SiteAdapter {
   }
 
   private clearOutlineCacheForMeta(meta: DoubaoVirtualMessageMeta): void {
+    if (!meta.messageId) return
+
     for (const [id, entry] of this.outlineItemCache) {
-      if (meta.messageId && entry.messageId === meta.messageId) {
-        this.outlineItemCache.delete(id)
-      } else if (!entry.messageId && entry.rowIndex === meta.rowIndex) {
+      if (entry.messageId === meta.messageId) {
         this.outlineItemCache.delete(id)
       }
     }
@@ -1669,9 +1690,17 @@ export class DoubaoAdapter extends SiteAdapter {
     includeUserQueries: boolean,
     showWordCount: boolean,
   ): OutlineItem[] {
-    if (this.outlineItemCache.size === 0) return currentItems
+    if (this.outlineItemCache.size === 0 && currentItems.length === 0) return []
 
-    const merged: OutlineItem[] = [...currentItems]
+    const merged = new Map<string, OutlineItem>()
+    const unkeyedCurrentItems: OutlineItem[] = []
+    for (const item of currentItems) {
+      if (item.id) {
+        merged.set(item.id, item)
+      } else {
+        unkeyedCurrentItems.push(item)
+      }
+    }
 
     for (const entry of this.outlineItemCache.values()) {
       if (currentIds.has(entry.id)) continue
@@ -1679,7 +1708,7 @@ export class DoubaoAdapter extends SiteAdapter {
       if (!entry.isUserQuery && entry.level > maxLevel) continue
       if (!entry.text.trim()) continue
 
-      merged.push({
+      merged.set(entry.id, {
         level: entry.level,
         text: entry.text,
         element: null,
@@ -1688,25 +1717,76 @@ export class DoubaoAdapter extends SiteAdapter {
         isTruncated: entry.isTruncated,
         wordCount: showWordCount ? entry.wordCount : undefined,
         scrollTop: entry.scrollTop,
+        doubaoMessageId: entry.messageId,
+        parentUserMessageId: entry.parentUserMessageId,
       } as OutlineItem & { scrollTop: number })
     }
 
-    return merged
-      .map((item, originalIndex) => {
-        const entry = item.id ? this.outlineItemCache.get(item.id) : undefined
-        return {
-          item,
-          originalIndex,
-          rowIndex: entry?.rowIndex ?? Number.MAX_SAFE_INTEGER,
-          orderInMessage: entry?.orderInMessage ?? originalIndex,
-        }
-      })
-      .sort((a, b) => {
-        if (a.rowIndex !== b.rowIndex) return a.rowIndex - b.rowIndex
-        if (a.orderInMessage !== b.orderInMessage) return a.orderInMessage - b.orderInMessage
-        return a.originalIndex - b.originalIndex
-      })
-      .map(({ item }) => item)
+    if (!includeUserQueries) {
+      return [...merged.values(), ...unkeyedCurrentItems].sort(
+        (a, b) => this.getOutlineItemScrollTop(a) - this.getOutlineItemScrollTop(b),
+      )
+    }
+
+    const userItemsByMessageId = new Map<string, OutlineItem>()
+    const replyHeadingsByUserMessageId = new Map<string, OutlineItem[]>()
+
+    for (const item of merged.values()) {
+      if (item.isUserQuery) {
+        const messageId = this.getOutlineItemMessageId(item)
+        if (messageId) userItemsByMessageId.set(messageId, item)
+        continue
+      }
+
+      const parentUserMessageId = this.getOutlineItemParentUserMessageId(item)
+      if (!parentUserMessageId) continue
+      const headings = replyHeadingsByUserMessageId.get(parentUserMessageId) || []
+      headings.push(item)
+      replyHeadingsByUserMessageId.set(parentUserMessageId, headings)
+    }
+
+    const result: OutlineItem[] = []
+    const sortedUserItems = Array.from(userItemsByMessageId.entries()).sort(
+      ([, a], [, b]) => this.getOutlineItemScrollTop(a) - this.getOutlineItemScrollTop(b),
+    )
+    for (const [userMessageId, userItem] of sortedUserItems) {
+      result.push(userItem)
+      const replyHeadings = replyHeadingsByUserMessageId.get(userMessageId)
+      if (!replyHeadings) continue
+      replyHeadings.sort(
+        (a, b) => this.getOutlineItemScrollTop(a) - this.getOutlineItemScrollTop(b),
+      )
+      result.push(...replyHeadings)
+    }
+
+    return result
+  }
+
+  private getOutlineItemMessageId(item: OutlineItem): string | null {
+    const runtimeItem = item as OutlineItem & { doubaoMessageId?: string }
+    if (runtimeItem.doubaoMessageId) return runtimeItem.doubaoMessageId
+
+    const entry = item.id ? this.outlineItemCache.get(item.id) : undefined
+    return entry?.messageId || null
+  }
+
+  private getOutlineItemParentUserMessageId(item: OutlineItem): string | null {
+    const runtimeItem = item as OutlineItem & { parentUserMessageId?: string }
+    if (runtimeItem.parentUserMessageId) return runtimeItem.parentUserMessageId
+
+    const entry = item.id ? this.outlineItemCache.get(item.id) : undefined
+    return (
+      (entry && this.parentUserMessageIdByAssistant.get(entry.messageId)) ||
+      entry?.parentUserMessageId ||
+      null
+    )
+  }
+
+  private getOutlineItemScrollTop(item: OutlineItem): number {
+    const runtimeItem = item as OutlineItem & { scrollTop?: number }
+    return typeof runtimeItem.scrollTop === "number"
+      ? runtimeItem.scrollTop
+      : Number.MAX_SAFE_INTEGER
   }
 
   private escapeAttributeValue(value: string): string {
@@ -1728,9 +1808,7 @@ export class DoubaoAdapter extends SiteAdapter {
       if (messageElement) return messageElement
     }
 
-    const rows = Array.from(container.querySelectorAll(VIRTUAL_ROW_SELECTOR)) as HTMLElement[]
-    const row = rows.find((candidate) => this.getVirtualRowIndex(candidate, -1) === entry.rowIndex)
-    return (row?.querySelector("[data-message-id]") as HTMLElement | null) || null
+    return null
   }
 
   private findHeadingInsideMessage(
@@ -1849,6 +1927,7 @@ export class DoubaoAdapter extends SiteAdapter {
     if (!container) return items
 
     this.ensureOutlineCacheSession()
+    this.refreshDoubaoMessageRelations()
 
     const currentIds = new Set<string>()
     const isInTransition = this.isInOutlineCacheTransition()
@@ -1856,17 +1935,12 @@ export class DoubaoAdapter extends SiteAdapter {
     const previousCacheEntries = new Map<string, DoubaoOutlineCacheEntry>()
 
     const prepareCacheRefresh = (meta: DoubaoVirtualMessageMeta) => {
-      if (isInTransition) return
+      if (isInTransition || !meta.messageId) return
 
-      const key = this.getOutlineMessageKey(meta)
-      if (refreshedCacheKeys.has(key)) return
-
-      refreshedCacheKeys.add(key)
+      if (refreshedCacheKeys.has(meta.messageId)) return
+      refreshedCacheKeys.add(meta.messageId)
       for (const [id, entry] of this.outlineItemCache) {
-        if (
-          (meta.messageId && entry.messageId === meta.messageId) ||
-          (!entry.messageId && entry.rowIndex === meta.rowIndex)
-        ) {
+        if (entry.messageId === meta.messageId) {
           previousCacheEntries.set(id, entry)
         }
       }
@@ -1877,15 +1951,26 @@ export class DoubaoAdapter extends SiteAdapter {
       item: OutlineItem,
       meta: DoubaoVirtualMessageMeta,
       scrollTop: number,
-      orderInMessage: number,
       headingMatchIndex?: number,
-    ) => {
+    ): boolean => {
       const id = this.buildOutlineItemId(meta, item, headingMatchIndex)
+      if (!id || !meta.messageId) return false
+
+      const parentUserMessageId = item.isUserQuery
+        ? undefined
+        : this.parentUserMessageIdByAssistant.get(meta.messageId)
       item.id = id
-      ;(item as OutlineItem & { scrollTop: number }).scrollTop = scrollTop
+      const runtimeItem = item as OutlineItem & {
+        scrollTop: number
+        doubaoMessageId: string
+        parentUserMessageId?: string
+      }
+      runtimeItem.scrollTop = scrollTop
+      runtimeItem.doubaoMessageId = meta.messageId
+      runtimeItem.parentUserMessageId = parentUserMessageId
       currentIds.add(id)
 
-      if (isInTransition) return
+      if (isInTransition) return true
 
       const cached = this.outlineItemCache.get(id) ?? previousCacheEntries.get(id)
       prepareCacheRefresh(meta)
@@ -1894,21 +1979,20 @@ export class DoubaoAdapter extends SiteAdapter {
         level: item.level,
         text: item.text,
         messageId: meta.messageId,
-        rowIndex: meta.rowIndex,
+        parentUserMessageId,
         scrollTop,
-        orderInMessage,
         headingMatchIndex,
         isUserQuery: item.isUserQuery,
         isTruncated: item.isTruncated,
         wordCount: item.wordCount ?? cached?.wordCount,
       })
+      return true
     }
 
     const collectHeadings = (
       root: ParentNode,
       meta: DoubaoVirtualMessageMeta,
       headingCounts: Map<string, number>,
-      nextOrderInMessage: () => number,
       parentBlock?: Element | null,
     ) => {
       const headings = Array.from(root.querySelectorAll("h1, h2, h3, h4, h5, h6"))
@@ -1947,28 +2031,21 @@ export class DoubaoAdapter extends SiteAdapter {
           element: heading as HTMLElement,
           wordCount,
         }
-        cacheCurrentItem(
+        const hasStableMessageId = cacheCurrentItem(
           item,
           meta,
           this.getElementVirtualScrollTop(container, heading as HTMLElement),
-          nextOrderInMessage(),
           headingMatchIndex,
         )
-        items.push(item)
+        if (hasStableMessageId || !includeUserQueries) {
+          items.push(item)
+        }
       })
     }
 
     const messageBlocks = Array.from(container.querySelectorAll(MESSAGE_BLOCK_SELECTOR)).filter(
       (block): block is HTMLElement => block instanceof HTMLElement,
     )
-
-    let pendingUserQuery: {
-      element: HTMLElement
-      text: string
-      meta: DoubaoVirtualMessageMeta
-      scrollTop: number
-    } | null = null
-
     const orderedUnits =
       messageBlocks.length > 0
         ? messageBlocks
@@ -1976,61 +2053,48 @@ export class DoubaoAdapter extends SiteAdapter {
             container.querySelectorAll(`${USER_QUERY_SELECTOR}, ${ASSISTANT_MESSAGE_SELECTOR}`),
           ).filter((message): message is HTMLElement => message instanceof HTMLElement)
 
-    orderedUnits.forEach((unit, unitIndex) => {
-      const meta = this.getVirtualMessageMeta(unit, unitIndex)
+    orderedUnits.forEach((unit) => {
       const userMessage = unit.matches(USER_QUERY_SELECTOR)
         ? unit
-        : (unit.querySelector(USER_QUERY_SELECTOR) as HTMLElement | null) ?? null
+        : (unit.querySelector(USER_QUERY_SELECTOR) as HTMLElement | null)
+      const assistantMessage = unit.matches(ASSISTANT_MESSAGE_SELECTOR)
+        ? unit
+        : (unit.querySelector(ASSISTANT_MESSAGE_SELECTOR) as HTMLElement | null)
+      const assistantRoots = assistantMessage ? this.getAssistantContentRoots(assistantMessage) : []
+      const aiWordCount =
+        showWordCount && assistantRoots.length > 0
+          ? assistantRoots.reduce((sum, root) => sum + (root.textContent?.length || 0), 0)
+          : undefined
 
       if (userMessage) {
         const text = this.extractUserQueryMarkdown(userMessage)
-        pendingUserQuery = text
-          ? {
-              element: userMessage,
-              text,
-              meta,
-              scrollTop: this.getElementVirtualScrollTop(container, userMessage),
-            }
-          : null
-      }
-
-      const assistantRoots = this.getAssistantContentRoots(unit)
-      if (assistantRoots.length === 0) {
-        return
-      }
-      prepareCacheRefresh(meta)
-
-      const aiWordCount = showWordCount
-        ? assistantRoots.reduce((sum, root) => sum + (root.textContent?.length || 0), 0)
-        : undefined
-
-      if (pendingUserQuery) {
-        const userItem: OutlineItem = {
-          level: 0,
-          text:
-            pendingUserQuery.text.length > 80
-              ? pendingUserQuery.text.slice(0, 80) + "..."
-              : pendingUserQuery.text,
-          element: pendingUserQuery.element,
-          isUserQuery: true,
-          isTruncated: pendingUserQuery.text.length > 80,
-          wordCount: aiWordCount,
-        }
-        cacheCurrentItem(userItem, pendingUserQuery.meta, pendingUserQuery.scrollTop, 0)
-        if (includeUserQueries) {
-          items.push(userItem)
+        if (text) {
+          const userItem: OutlineItem = {
+            level: 0,
+            text: text.length > 80 ? text.slice(0, 80) + "..." : text,
+            element: userMessage,
+            isUserQuery: true,
+            isTruncated: text.length > 80,
+            wordCount: aiWordCount,
+          }
+          const userMeta = this.getVirtualMessageMeta(userMessage)
+          const hasStableMessageId = cacheCurrentItem(
+            userItem,
+            userMeta,
+            this.getElementVirtualScrollTop(container, userMessage),
+          )
+          if (includeUserQueries && hasStableMessageId) {
+            items.push(userItem)
+          }
         }
       }
 
+      if (!assistantMessage || assistantRoots.length === 0) return
+
+      const assistantMeta = this.getVirtualMessageMeta(assistantMessage)
       const headingCounts = new Map<string, number>()
-      let headingOrder = 0
-      assistantRoots.forEach((root) =>
-        collectHeadings(root, meta, headingCounts, () => headingOrder++, root),
-      )
-      pendingUserQuery = null
+      assistantRoots.forEach((root) => collectHeadings(root, assistantMeta, headingCounts, root))
     })
-
-    if (isInTransition) return items
 
     this.trimOutlineCache()
     return this.mergeCachedOutlineItems(

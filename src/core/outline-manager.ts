@@ -6,6 +6,7 @@ import { useSettingsStore } from "~stores/settings-store"
 import { showToast } from "~utils/toast"
 import { t } from "~utils/i18n"
 import { signalReadingHistoryUserNavigation } from "~utils/reading-history-navigation"
+import { EVENT_DOUBAO_MESSAGE_RELATIONS } from "~utils/messaging"
 
 type ExtendedOutlineItem = OutlineItem & {
   isBookmarked?: boolean
@@ -249,10 +250,15 @@ export class OutlineManager {
   private routeChangeVersion = 0
 
   private handleMessage(event: MessageEvent) {
-    if (event.source !== window) return
-    // Imports needed: EVENT_MONITOR_START, EVENT_MONITOR_COMPLETE
-    // I will add them to the top of the file
     const { type } = event.data || {}
+    if (event.source !== window && type !== EVENT_DOUBAO_MESSAGE_RELATIONS) return
+
+    if (type === EVENT_DOUBAO_MESSAGE_RELATIONS) {
+      if (this.isActive && this.siteAdapter.getSiteId() === SITE_IDS.DOUBAO) {
+        this.refresh()
+      }
+      return
+    }
 
     if (type === "GH_MONITOR_START" /* EVENT_MONITOR_START */) {
       if (this.settings.autoUpdate) {

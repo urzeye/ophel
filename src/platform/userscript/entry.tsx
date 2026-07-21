@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client"
 
 import { USERSCRIPT_RESOURCE_DEFINITIONS } from "./resource-manifest"
 import { injectGeminiCanvasCodeBridge } from "./gemini-canvas-inject"
+import { initDoubaoMessageRelationsBridge } from "~core/doubao-message-relations-bridge"
 import { getInitialUserscriptLanguage, primeUserscriptLocales, subscribeI18nChanges } from "./i18n"
 import { injectScrollLock } from "./scroll-lock-inject"
 import { injectYuanbaoMonacoWrap } from "./yuanbao-monaco-wrap-inject"
@@ -354,6 +355,9 @@ window.ophelUserscriptInitialized = true
 
 // 注入滚动锁定 API 劫持到页面主世界
 // 等效于浏览器扩展中的 scroll-lock-main.ts (MAIN World content script)
+// 豆包消息关系必须在 document-start 时监听，避免漏掉首次历史会话响应。
+initDoubaoMessageRelationsBridge()
+
 // 必须在 document-start 时同步执行，在页面代码加载前劫持滚动 API
 // 否则 ChatGPT 等平台可能缓存原始 API 引用，导致位置锁被绕过
 injectScrollLock()
