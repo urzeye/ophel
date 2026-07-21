@@ -10,6 +10,8 @@
 
 import type { PlasmoCSConfig } from "plasmo"
 
+import { READING_HISTORY_RESTORE_TOKEN_ATTRIBUTE } from "~utils/reading-history-navigation"
+
 // 配置为主世界运行
 export const config: PlasmoCSConfig = {
   matches: ["https://gemini.google.com/*", "https://business.gemini.google/*"],
@@ -53,15 +55,29 @@ if (!window.__ophelIframeScrollInitialized) {
     if (event.source !== window) return
     if (event.data?.type !== "OPHEL_SCROLL_REQUEST") return
 
-    const { action, position } = event.data
+    const { action, position, requestId, restoreToken } = event.data
+    const respond = (result: {
+      success: boolean
+      scrollTop?: number
+      scrollHeight?: number
+      reason?: string
+    }) => {
+      window.postMessage({ type: "OPHEL_SCROLL_RESPONSE", requestId, ...result }, "*")
+    }
+
+    if (
+      typeof restoreToken === "string" &&
+      document.documentElement.getAttribute(READING_HISTORY_RESTORE_TOKEN_ATTRIBUTE) !==
+        restoreToken
+    ) {
+      respond({ success: false, reason: "canceled" })
+      return
+    }
+
     const container = getFlutterScrollContainer()
 
     if (!container) {
-      // 如果找不到 Flutter 容器，返回失败消息让 Content Script 使用普通滚动
-      window.postMessage(
-        { type: "OPHEL_SCROLL_RESPONSE", success: false, reason: "no_flutter_container" },
-        "*",
-      )
+      respond({ success: false, reason: "no_flutter_container" })
       return
     }
 
@@ -92,6 +108,6 @@ if (!window.__ophelIframeScrollInitialized) {
         result = { success: false }
     }
 
-    window.postMessage({ type: "OPHEL_SCROLL_RESPONSE", ...result }, "*")
+    respond(result)
   })
 }

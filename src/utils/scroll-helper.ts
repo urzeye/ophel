@@ -9,17 +9,24 @@
  */
 
 import type { SiteAdapter } from "~adapters/base"
+import {
+  READING_HISTORY_RESTORE_TOKEN_ATTRIBUTE,
+  signalReadingHistoryUserNavigation,
+} from "~utils/reading-history-navigation"
 
 // 平台检测
 declare const __PLATFORM__: "extension" | "userscript" | undefined
 const isUserscript = typeof __PLATFORM__ !== "undefined" && __PLATFORM__ === "userscript"
 
 interface ScrollResponse {
+  requestId?: string
   success: boolean
   scrollTop?: number
   scrollHeight?: number
   reason?: string
 }
+
+let scrollRequestSequence = 0
 
 function isColumnReverseScrollContainer(
   adapter: SiteAdapter | null,
@@ -98,12 +105,25 @@ function getFlutterScrollContainerDirect(): HTMLElement | null {
 function sendScrollRequest(
   action: "scrollToTop" | "scrollToBottom" | "scrollTo" | "getScrollInfo",
   position?: number,
+  options: { restoreToken?: string; signal?: AbortSignal } = {},
 ): Promise<ScrollResponse> {
+  const isRestoreTokenActive = () =>
+    !options.restoreToken ||
+    document.documentElement.getAttribute(READING_HISTORY_RESTORE_TOKEN_ATTRIBUTE) ===
+      options.restoreToken
+
+  if (options.signal?.aborted || !isRestoreTokenActive()) {
+    return Promise.resolve({ success: false, reason: "canceled" })
+  }
+
   // 油猴脚本：直接访问 Flutter 容器
   if (isUserscript) {
     const container = getFlutterScrollContainerDirect()
     if (!container) {
       return Promise.resolve({ success: false, reason: "no_flutter_container" })
+    }
+    if (options.signal?.aborted || !isRestoreTokenActive()) {
+      return Promise.resolve({ success: false, reason: "canceled" })
     }
 
     let result: ScrollResponse
@@ -135,26 +155,51 @@ function sendScrollRequest(
     return Promise.resolve(result)
   }
 
+  const requestId = `ophel-scroll-${Date.now()}-${++scrollRequestSequence}`
+
   // 浏览器插件：通过 postMessage 与 Main World 脚本通信
   return new Promise((resolve) => {
+    let settled = false
+    let timeoutId = 0
+
+    const finish = (result: ScrollResponse) => {
+      if (settled) return
+      settled = true
+      window.clearTimeout(timeoutId)
+      window.removeEventListener("message", handler)
+      options.signal?.removeEventListener("abort", handleAbort)
+      resolve(result)
+    }
     const handler = (event: MessageEvent) => {
       if (event.source !== window) return
-      if (event.data?.type === "OPHEL_SCROLL_RESPONSE") {
-        window.removeEventListener("message", handler)
-        resolve(event.data as ScrollResponse)
+      if (event.data?.type === "OPHEL_SCROLL_RESPONSE" && event.data?.requestId === requestId) {
+        finish(event.data as ScrollResponse)
       }
     }
+    const handleAbort = () => finish({ requestId, success: false, reason: "canceled" })
 
     window.addEventListener("message", handler)
+    options.signal?.addEventListener("abort", handleAbort, { once: true })
+    if (options.signal?.aborted || !isRestoreTokenActive()) {
+      handleAbort()
+      return
+    }
 
-    // 发送请求到 Main World
-    window.postMessage({ type: "OPHEL_SCROLL_REQUEST", action, position }, "*")
+    window.postMessage(
+      {
+        type: "OPHEL_SCROLL_REQUEST",
+        requestId,
+        action,
+        position,
+        restoreToken: options.restoreToken,
+      },
+      "*",
+    )
 
-    // 超时处理（100ms 后如果没有响应，认为 Main World 脚本未加载或无 Flutter 容器）
-    setTimeout(() => {
-      window.removeEventListener("message", handler)
-      resolve({ success: false, reason: "timeout" })
-    }, 100)
+    timeoutId = window.setTimeout(
+      () => finish({ requestId, success: false, reason: "timeout" }),
+      100,
+    )
   })
 }
 
@@ -180,17 +225,48 @@ export function getScrollContainer(adapter: SiteAdapter | null): HTMLElement | n
  * 智能滚动到顶部
  * 策略：先尝试 Main World 通信（处理 iframe 内滚动），失败后回退到本地适配器容器
  */
-export async function smartScrollToTop(adapter: SiteAdapter | null): Promise<{
+export async function smartScrollToTop(
+  adapter: SiteAdapter | null,
+  options: {
+    preserveReadingHistoryRestore?: boolean
+    restoreToken?: string
+    signal?: AbortSignal
+  } = {},
+): Promise<{
   container: HTMLElement
   previousScrollTop: number
   scrollHeight: number
 }> {
+  if (!options.preserveReadingHistoryRestore) {
+    signalReadingHistoryUserNavigation()
+  }
+
+  const currentContainer = adapter?.getScrollContainer() || document.documentElement
+  if (options.signal?.aborted) {
+    return {
+      container: currentContainer,
+      previousScrollTop: currentContainer.scrollTop,
+      scrollHeight: currentContainer.scrollHeight,
+    }
+  }
+
   // 首先尝试通过 Main World 处理 iframe 内滚动（图文并茂模式）
-  const infoResult = await sendScrollRequest("getScrollInfo")
+  const infoResult = await sendScrollRequest("getScrollInfo", undefined, options)
+  if (options.signal?.aborted) {
+    const latestContainer = adapter?.getScrollContainer() || currentContainer
+    return {
+      container: latestContainer,
+      previousScrollTop: latestContainer.scrollTop,
+      scrollHeight: latestContainer.scrollHeight,
+    }
+  }
   if (infoResult.success) {
     const previousScrollTop = infoResult.scrollTop || 0
     const scrollHeight = infoResult.scrollHeight || 0
-    await sendScrollRequest("scrollToTop")
+    const scrollResult = await sendScrollRequest("scrollToTop", undefined, options)
+    if (!scrollResult.success) {
+      return { container: currentContainer, previousScrollTop, scrollHeight }
+    }
     return { container: createFlutterScrollProxy(), previousScrollTop, scrollHeight }
   }
 
@@ -224,10 +300,16 @@ export async function smartScrollToTop(adapter: SiteAdapter | null): Promise<{
  * 智能滚动到底部
  * 策略：先尝试 Main World 通信（处理 iframe 内滚动），失败后回退到本地适配器容器
  */
-export async function smartScrollToBottom(adapter: SiteAdapter | null): Promise<{
+export async function smartScrollToBottom(
+  adapter: SiteAdapter | null,
+  options: { preserveReadingHistoryRestore?: boolean } = {},
+): Promise<{
   container: HTMLElement
   previousScrollTop: number
 }> {
+  if (!options.preserveReadingHistoryRestore) {
+    signalReadingHistoryUserNavigation()
+  }
   // 首先尝试通过 Main World 处理 iframe 内滚动（图文并茂模式）
   const infoResult = await sendScrollRequest("getScrollInfo")
   if (infoResult.success) {
@@ -264,11 +346,31 @@ export async function smartScrollToBottom(adapter: SiteAdapter | null): Promise<
 export async function smartScrollTo(
   adapter: SiteAdapter | null,
   position: number,
+  options: {
+    preservePositionLock?: boolean
+    preserveReadingHistoryRestore?: boolean
+    restoreToken?: string
+    signal?: AbortSignal
+  } = {},
 ): Promise<{ success: boolean; currentScrollTop: number }> {
+  if (!options.preserveReadingHistoryRestore) {
+    signalReadingHistoryUserNavigation()
+  }
+
+  const getCurrentScrollTop = () => adapter?.getScrollContainer()?.scrollTop ?? window.scrollY
+  if (options.signal?.aborted) {
+    return { success: false, currentScrollTop: getCurrentScrollTop() }
+  }
+
   // 首先尝试通过 Main World 处理
-  const result = await sendScrollRequest("scrollTo", position)
+  const result = await sendScrollRequest("scrollTo", position, options)
+  if (options.signal?.aborted) {
+    return { success: false, currentScrollTop: getCurrentScrollTop() }
+  }
   if (result.success) {
-    syncPositionLock(result.scrollTop || 0)
+    if (options.preservePositionLock) {
+      syncPositionLock(result.scrollTop || 0)
+    }
     return { success: true, currentScrollTop: result.scrollTop || 0 }
   }
 
@@ -277,7 +379,9 @@ export async function smartScrollTo(
 
   if (container && container.scrollHeight > container.clientHeight) {
     container.scrollTo({ top: position, behavior: "instant", ...{ __bypassLock: true } } as any)
-    syncPositionLock(container.scrollTop)
+    if (options.preservePositionLock) {
+      syncPositionLock(container.scrollTop)
+    }
     return { success: true, currentScrollTop: container.scrollTop }
   }
 
@@ -287,13 +391,15 @@ export async function smartScrollTo(
     behavior: "instant",
     ...{ __bypassLock: true },
   } as any)
-  syncPositionLock(document.documentElement.scrollTop)
+  if (options.preservePositionLock) {
+    syncPositionLock(document.documentElement.scrollTop)
+  }
   return { success: true, currentScrollTop: document.documentElement.scrollTop }
 }
 
 /**
- * 若阅读历史 Position Keeper 正在锁定位置，同步更新锁目标到新滚动位置
- * 这样 Position Keeper 继续保护新位置，不会跳回旧位置或被平台自动滚动覆盖
+ * 阅读历史恢复专用：将平台实际落点同步给 Position Keeper。
+ * 用户主动导航不调用此逻辑，避免自动恢复继续覆盖用户位置。
  */
 function syncPositionLock(scrollTop: number) {
   if (document.documentElement.dataset.ophelPositionLock !== undefined) {

@@ -21,6 +21,10 @@ export interface LoadHistoryOptions {
   onProgress?: (msg: string) => void
   /** 中断信号 */
   signal?: AbortSignal
+  /** 内部自动恢复调用保留当前恢复事务；用户主动调用保持默认 false */
+  preserveReadingHistoryRestore?: boolean
+  /** 跨世界校验当前恢复事务，阻止取消后迟到的主世界滚动 */
+  restoreToken?: string
   /** 允许短对话短路（仅用户主动点击时启用） */
   allowShortCircuit?: boolean
 }
@@ -94,11 +98,17 @@ export async function loadHistoryUntil(options: LoadHistoryOptions): Promise<Loa
     loadAll: _loadAll = false,
     onProgress,
     signal,
+    preserveReadingHistoryRestore = false,
+    restoreToken,
     allowShortCircuit = false,
   } = options
 
   // 获取初始滚动信息并滚动到顶部
-  let { previousScrollTop, container } = await smartScrollToTop(adapter)
+  let { previousScrollTop, container } = await smartScrollToTop(adapter, {
+    preserveReadingHistoryRestore,
+    restoreToken,
+    signal,
+  })
 
   // 检测 Flutter 模式
   const isFlutterMode = isFlutterProxy(container)
@@ -155,7 +165,7 @@ export async function loadHistoryUntil(options: LoadHistoryOptions): Promise<Loa
     container.dispatchEvent(new WheelEvent("wheel", { deltaY: -100, bubbles: true }))
 
     // 等待懒加载触发
-    await sleep(CONFIG.WAIT_MS)
+    await sleep(CONFIG.WAIT_MS, signal)
 
     // 再次检查中断
     if (signal?.aborted) {
@@ -362,6 +372,17 @@ function scrollLazyHistoryContainerToTop(container: HTMLElement, wheelDeltaY: nu
   window.dispatchEvent(new Event("scroll"))
 }
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms))
+function sleep(ms: number, signal?: AbortSignal): Promise<void> {
+  if (signal?.aborted) return Promise.resolve()
+
+  return new Promise((resolve) => {
+    const finish = () => {
+      clearTimeout(timeoutId)
+      signal?.removeEventListener("abort", finish)
+      resolve()
+    }
+    const timeoutId = setTimeout(finish, ms)
+    signal?.addEventListener("abort", finish, { once: true })
+    if (signal?.aborted) finish()
+  })
 }

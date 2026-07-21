@@ -5,6 +5,7 @@ import { useBookmarkStore, type Bookmark } from "~stores/bookmarks-store"
 import { useSettingsStore } from "~stores/settings-store"
 import { showToast } from "~utils/toast"
 import { t } from "~utils/i18n"
+import { signalReadingHistoryUserNavigation } from "~utils/reading-history-navigation"
 
 type ExtendedOutlineItem = OutlineItem & {
   isBookmarked?: boolean
@@ -667,6 +668,7 @@ export class OutlineManager {
   }
 
   scrollToOutlineTarget(element: HTMLElement): void {
+    signalReadingHistoryUserNavigation()
     this.siteAdapter.scrollToOutlineSourceTarget(element, this.activeSourceId)
   }
 

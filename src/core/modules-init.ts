@@ -673,7 +673,7 @@ export function initUrlChangeObserver(ctx: ModulesContext): () => void {
 
   let lastHref = window.location.href
   let lastPathname = window.location.pathname
-  let readingHistoryRestoreTimeoutId: ReturnType<typeof setTimeout> | null = null
+  let readingHistoryRestoreRequestId = 0
 
   const handleUrlChange = async () => {
     const currentHref = window.location.href
@@ -697,28 +697,41 @@ export function initUrlChangeObserver(ctx: ModulesContext): () => void {
     lastPathname = currentPathname
     console.warn("[Ophel] URL changed, reinitializing modules...")
 
-    // 1. 阅读历史：停止录制 → 延迟恢复并重启
-    if (readingHistoryRestoreTimeoutId) {
-      clearTimeout(readingHistoryRestoreTimeoutId)
-      readingHistoryRestoreTimeoutId = null
-    }
+    // 1. 阅读历史：停止录制 → 在可取消的稳定等待后恢复并重启
+    const restoreRequestId = ++readingHistoryRestoreRequestId
+    const readingHistoryManager = modules.readingHistoryManager
+    if (readingHistoryManager) {
+      readingHistoryManager.stopRecording()
+      const toastModulePromise = import("~utils/toast")
 
-    if (modules.readingHistoryManager) {
-      modules.readingHistoryManager.stopRecording()
-      readingHistoryRestoreTimeoutId = setTimeout(async () => {
-        readingHistoryRestoreTimeoutId = null
-        const { showToast } = await import("~utils/toast")
+      void (async () => {
         const shouldSkipRestore = consumeSkipReadingHistoryRestoreFlag()
+        let restored = false
+
         if (!shouldSkipRestore) {
-          const restored = await modules.readingHistoryManager?.restoreProgress((msg) =>
-            showToast(msg, 3000),
+          restored = await readingHistoryManager.restoreProgress(
+            (msg) => {
+              void toastModulePromise.then(({ showToast }) => showToast(msg, 3000))
+            },
+            { delayMs: 1500 },
           )
-          if (restored) {
-            showToast(t("restoredPosition"), 2000)
-          }
         }
-        modules.readingHistoryManager?.startRecording()
-      }, 1500)
+
+        if (
+          restoreRequestId !== readingHistoryRestoreRequestId ||
+          modules.readingHistoryManager !== readingHistoryManager
+        ) {
+          return
+        }
+
+        if (restored) {
+          const { showToast } = await toastModulePromise
+          if (restoreRequestId !== readingHistoryRestoreRequestId) return
+          showToast(t("restoredPosition"), 2000)
+        }
+
+        readingHistoryManager.startRecording()
+      })()
     }
 
     // 2. 大纲刷新 - 通过全局事件通知 App.tsx
@@ -771,10 +784,7 @@ export function initUrlChangeObserver(ctx: ModulesContext): () => void {
     window.removeEventListener("hashchange", handleUrlChange)
     window.clearInterval(fallbackIntervalId)
 
-    if (readingHistoryRestoreTimeoutId) {
-      clearTimeout(readingHistoryRestoreTimeoutId)
-      readingHistoryRestoreTimeoutId = null
-    }
+    readingHistoryRestoreRequestId++
 
     if (history.pushState === patchedPushState) {
       history.pushState = originalPushState

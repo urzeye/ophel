@@ -21,6 +21,7 @@ import {
 } from "~components/icons"
 import { Tooltip } from "~components/ui/Tooltip"
 import type { ConversationManager } from "~core/conversation-manager"
+import { signalReadingHistoryUserNavigation } from "~utils/reading-history-navigation"
 import type { OutlineManager, OutlineNode } from "~core/outline-manager"
 import type { OutlineSource } from "~adapters/base"
 import { useSettingsStore } from "~stores/settings-store"
@@ -1429,6 +1430,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
 
   const handleClick = useCallback(
     async (node: OutlineNode) => {
+      signalReadingHistoryUserNavigation()
       const jumpRequestId = ++jumpRequestIdRef.current
       clearLocateHighlight({ clearForceVisible: true })
       updateVisibleHighlightIndex(getVisibleHighlightIndex(activeIndexRef.current))
@@ -1468,15 +1470,6 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
         manager.scrollToOutlineTarget(targetElement as HTMLElement)
         updateActiveIndex(node.index, node)
         updateVisibleHighlightIndex(getVisibleHighlightIndex(node.index))
-
-        // 若阅读历史 Position Keeper 正在锁定位置，同步更新锁目标到新位置
-        // 这样 Position Keeper 继续保护新位置，不会跳回旧位置或被平台自动滚动覆盖
-        if (document.documentElement.dataset.ophelPositionLock !== undefined) {
-          const scrollContainer = manager.getScrollContainer()
-          if (scrollContainer) {
-            document.documentElement.dataset.ophelPositionLock = String(scrollContainer.scrollTop)
-          }
-        }
 
         // 高亮效果
         targetElement.classList.add("outline-highlight")

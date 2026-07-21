@@ -295,7 +295,7 @@ export function useShortcuts({
         }
 
         if (element && element.isConnected) {
-          element.scrollIntoView({ behavior: "smooth", block: "start" })
+          outlineManager.scrollToOutlineTarget(element as HTMLElement)
           const toastText = targetItem.text?.replace(/\s+/g, " ").trim() || t("locatingOutline")
           showToast(toastText, 1000, { className: "gh-toast--outline-nav", maxWidth: 360 })
         }

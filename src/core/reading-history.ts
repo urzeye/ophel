@@ -13,6 +13,10 @@ import {
 } from "~stores/reading-history-store"
 import { loadHistoryUntil } from "~utils/history-loader"
 import { t } from "~utils/i18n"
+import {
+  READING_HISTORY_RESTORE_TOKEN_ATTRIBUTE,
+  READING_HISTORY_USER_NAVIGATION_EVENT,
+} from "~utils/reading-history-navigation"
 import { smartScrollTo } from "~utils/scroll-helper"
 import type { Settings } from "~utils/storage"
 
@@ -33,6 +37,9 @@ export class ReadingHistoryManager {
   private listeningContainer: Element | null = null
   private scrollHandler: ((e: Event) => void) | null = null
   private userInteractionHandler: ((e: Event) => void) | null = null
+  private restoreAbortController: AbortController | null = null
+  private restoreStateResetTimer: number | null = null
+  private restoreToken: string | null = null
   private lastSaveTime = 0
   private ignoreScrollUntil = 0 // 初始化冷却期
   private positionKeeperRaF = 0 // 位置保持器的动画帧 ID
@@ -47,10 +54,14 @@ export class ReadingHistoryManager {
   /**
    * 等待 store hydration 完成
    */
-  async waitForHydration(timeoutMs = ReadingHistoryManager.HYDRATION_TIMEOUT_MS): Promise<boolean> {
+  async waitForHydration(
+    timeoutMs = ReadingHistoryManager.HYDRATION_TIMEOUT_MS,
+    signal?: AbortSignal,
+  ): Promise<boolean> {
     if (useReadingHistoryStore.getState()._hasHydrated) {
       return true
     }
+    if (signal?.aborted) return false
 
     return new Promise<boolean>((resolve) => {
       let resolved = false
@@ -61,6 +72,7 @@ export class ReadingHistoryManager {
         resolved = true
         window.clearTimeout(timeoutId)
         unsubscribe()
+        signal?.removeEventListener("abort", handleAbort)
         resolve(value)
       }
 
@@ -69,6 +81,12 @@ export class ReadingHistoryManager {
           finish(true)
         }
       })
+      const handleAbort = () => finish(false)
+      signal?.addEventListener("abort", handleAbort, { once: true })
+      if (signal?.aborted) {
+        handleAbort()
+        return
+      }
 
       timeoutId = window.setTimeout(() => {
         useReadingHistoryStore.setState({ _hasHydrated: true })
@@ -79,15 +97,19 @@ export class ReadingHistoryManager {
 
   updateSettings(settings: Settings["readingHistory"]) {
     this.settings = settings
-    if (!this.settings.persistence && this.isRecording) {
+    if (!this.settings.persistence) {
       this.stopRecording()
-    } else if (this.settings.persistence && !this.isRecording) {
-      this.startRecording()
+      return
     }
+
+    if (!this.settings.autoRestore) {
+      this.cancelRestore()
+    }
+    this.startRecording()
   }
 
-  startRecording() {
-    if (this.isRecording) return
+  startRecording(options: { initialCooldownMs?: number } = {}) {
+    if (!this.settings.persistence || this.isRecording) return
     this.isRecording = true
     this.currentSessionId = null
 
@@ -101,43 +123,12 @@ export class ReadingHistoryManager {
       this.listeningContainer = container
     }
 
-    // 设置 2 秒冷却期，防止 SPA 切换时的自动滚动被误记录
-    this.ignoreScrollUntil = Date.now() + 2000
+    // 默认保留 2 秒冷却期，防止 SPA 切换时的站点自动滚动被误记录。
+    // 用户主动接管恢复时传入 0，确保随后的新位置可以立即保存。
+    const initialCooldownMs = options.initialCooldownMs ?? 2000
+    this.ignoreScrollUntil = initialCooldownMs > 0 ? Date.now() + initialCooldownMs : 0
 
-    // 监听用户交互，一旦用户手动滚动，立即取消冷却和位置锁定
-    // 注意：不监听 pointerdown，因为点击大纲等 UI 操作不应中断 Position Keeper
-    // 大纲点击通过同步更新 DOM 属性的方式与 Position Keeper 协作
-    this.userInteractionHandler = (e: Event) => {
-      // 对于 keydown 事件，只响应会导致滚动的按键
-      if (e.type === "keydown") {
-        const key = (e as KeyboardEvent).key
-        const scrollKeys = ["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "]
-        if (!scrollKeys.includes(key)) return
-      }
-
-      // 忽略来自 Ophel 面板（Shadow DOM）内的 wheel/touchmove 事件
-      // 用户滚动大纲面板不应中断 Position Keeper
-      if (e.type === "wheel" || e.type === "touchmove") {
-        const source = e.composedPath?.()?.[0] as Element | undefined
-        if (source) {
-          const root = source.getRootNode?.()
-          // 事件来自 Shadow DOM（非 document），说明是 Ophel 面板内的滚动
-          if (root && root !== document) {
-            return
-          }
-        }
-      }
-
-      if (this.ignoreScrollUntil > 0) {
-        this.ignoreScrollUntil = 0
-      }
-      if (this.positionKeeperRaF) {
-        this.stopPositionKeeper()
-      }
-    }
-    window.addEventListener("wheel", this.userInteractionHandler, { passive: true })
-    window.addEventListener("touchmove", this.userInteractionHandler, { passive: true })
-    window.addEventListener("keydown", this.userInteractionHandler, { passive: true })
+    this.startUserInteractionTracking()
 
     window.addEventListener("scroll", this.scrollHandler, {
       capture: true,
@@ -150,7 +141,6 @@ export class ReadingHistoryManager {
   }
 
   stopRecording() {
-    if (!this.isRecording) return
     this.isRecording = false
     this.currentSessionId = null
 
@@ -167,13 +157,90 @@ export class ReadingHistoryManager {
       this.scrollHandler = null
     }
 
-    if (this.userInteractionHandler) {
-      window.removeEventListener("wheel", this.userInteractionHandler)
-      window.removeEventListener("touchmove", this.userInteractionHandler)
-      window.removeEventListener("keydown", this.userInteractionHandler)
-      this.userInteractionHandler = null
+    // 即使记录已停止，SPA 切换期间仍可能存在独立运行的恢复任务。
+    this.stopUserInteractionTracking()
+    this.cancelRestore()
+  }
+
+  private startUserInteractionTracking() {
+    if (this.userInteractionHandler) return
+
+    this.userInteractionHandler = (event: Event) => {
+      const isExplicitNavigation = event.type === READING_HISTORY_USER_NAVIGATION_EVENT
+
+      // loadHistoryUntil 会派发合成 wheel 事件来触发懒加载，不能把它当作用户输入。
+      if (!isExplicitNavigation && !event.isTrusted) return
+
+      if (event.type === "keydown") {
+        const source = event.composedPath?.()?.[0]
+        if (
+          source instanceof HTMLElement &&
+          (source.isContentEditable || source.matches("input, textarea, select"))
+        ) {
+          return
+        }
+
+        const scrollKeys = new Set([
+          "ArrowUp",
+          "ArrowDown",
+          "PageUp",
+          "PageDown",
+          "Home",
+          "End",
+          " ",
+          "Spacebar",
+        ])
+        if (!scrollKeys.has((event as KeyboardEvent).key)) return
+      }
+
+      // Ophel 面板内部操作不会改变正文位置，不应中断恢复。不能把所有 Shadow DOM
+      // 都视为 Ophel：Gemini Enterprise 等站点的正文也运行在第三方 Shadow Root 中。
+      // 大纲等正文导航会通过 READING_HISTORY_USER_NAVIGATION_EVENT 显式表达用户意图。
+      if (!isExplicitNavigation) {
+        const path = event.composedPath?.() || []
+        const isInsideOphelPanel = path.some(
+          (target) =>
+            target instanceof HTMLElement &&
+            (target.matches("plasmo-csui, #ophel-userscript-root") ||
+              target.classList.contains("gh-root")),
+        )
+        if (isInsideOphelPanel) return
+      }
+
+      this.ignoreScrollUntil = 0
+      this.cancelRestore()
+      this.startRecording({ initialCooldownMs: 0 })
     }
 
+    window.addEventListener("pointerdown", this.userInteractionHandler, { passive: true })
+    window.addEventListener("wheel", this.userInteractionHandler, { passive: true })
+    window.addEventListener("touchmove", this.userInteractionHandler, { passive: true })
+    window.addEventListener("keydown", this.userInteractionHandler, { passive: true })
+    window.addEventListener(READING_HISTORY_USER_NAVIGATION_EVENT, this.userInteractionHandler)
+  }
+
+  private stopUserInteractionTracking() {
+    if (!this.userInteractionHandler) return
+
+    window.removeEventListener("pointerdown", this.userInteractionHandler)
+    window.removeEventListener("wheel", this.userInteractionHandler)
+    window.removeEventListener("touchmove", this.userInteractionHandler)
+    window.removeEventListener("keydown", this.userInteractionHandler)
+    window.removeEventListener(READING_HISTORY_USER_NAVIGATION_EVENT, this.userInteractionHandler)
+    this.userInteractionHandler = null
+  }
+
+  private cancelRestore() {
+    this.restoreAbortController?.abort()
+    this.restoreAbortController = null
+    this.clearRestoreToken()
+
+    if (this.restoreStateResetTimer !== null) {
+      window.clearTimeout(this.restoreStateResetTimer)
+      this.restoreStateResetTimer = null
+    }
+
+    this.isRestoring = false
     this.stopPositionKeeper()
   }
 
@@ -230,21 +297,61 @@ export class ReadingHistoryManager {
     }
   }
 
+  private createRestoreToken(): string {
+    return typeof globalThis.crypto?.randomUUID === "function"
+      ? globalThis.crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`
+  }
+
+  private setRestoreToken(token: string) {
+    this.restoreToken = token
+    document.documentElement.setAttribute(READING_HISTORY_RESTORE_TOKEN_ATTRIBUTE, token)
+  }
+
+  private clearRestoreToken() {
+    if (
+      this.restoreToken &&
+      document.documentElement.getAttribute(READING_HISTORY_RESTORE_TOKEN_ATTRIBUTE) ===
+        this.restoreToken
+    ) {
+      document.documentElement.removeAttribute(READING_HISTORY_RESTORE_TOKEN_ATTRIBUTE)
+    }
+    this.restoreToken = null
+  }
+
+  private waitForAbortableDelay(delayMs: number, signal?: AbortSignal): Promise<void> {
+    if (signal?.aborted) return Promise.resolve()
+
+    return new Promise((resolve) => {
+      let timeoutId = 0
+      const finish = () => {
+        window.clearTimeout(timeoutId)
+        signal?.removeEventListener("abort", finish)
+        resolve()
+      }
+
+      timeoutId = window.setTimeout(finish, delayMs)
+      signal?.addEventListener("abort", finish, { once: true })
+      if (signal?.aborted) finish()
+    })
+  }
+
   private async waitForReadySessionId(
     timeoutMs = ReadingHistoryManager.SESSION_READY_TIMEOUT_MS,
+    signal?: AbortSignal,
   ): Promise<string> {
     const deadline = Date.now() + timeoutMs
 
-    while (Date.now() <= deadline) {
+    while (Date.now() <= deadline && !signal?.aborted) {
       const sessionId = this.getSessionId()
       if (this.canUseCurrentSession(sessionId)) {
         return sessionId
       }
 
-      await new Promise<void>((resolve) =>
-        window.setTimeout(resolve, ReadingHistoryManager.SESSION_READY_POLL_MS),
-      )
+      await this.waitForAbortableDelay(ReadingHistoryManager.SESSION_READY_POLL_MS, signal)
     }
+
+    if (signal?.aborted) return ""
 
     const sessionId = this.getSessionId()
     if (this.canUseCurrentSession(sessionId)) {
@@ -309,43 +416,63 @@ export class ReadingHistoryManager {
     getReadingHistoryStore().savePosition(key, data)
   }
 
-  async restoreProgress(onProgress?: (msg: string) => void): Promise<boolean> {
-    if (!this.settings.autoRestore) {
+  async restoreProgress(
+    onProgress?: (msg: string) => void,
+    options: { delayMs?: number } = {},
+  ): Promise<boolean> {
+    if (!this.settings.persistence || !this.settings.autoRestore) {
       return false
     }
 
-    // 确保 store 已 hydrated
-    await this.waitForHydration()
-
-    const sessionId = await this.waitForReadySessionId()
-    if (!sessionId) {
-      return false
-    }
-
-    this.lockCurrentSessionId(sessionId)
-
-    const key = this.getKey(sessionId)
-    const data = getReadingHistoryStore().getPosition(key)
-
-    if (!data) {
-      return false
-    }
-
-    // 开始恢复，暂停记录
+    this.cancelRestore()
+    const restoreController = new AbortController()
+    const restoreToken = this.createRestoreToken()
+    this.restoreAbortController = restoreController
+    this.setRestoreToken(restoreToken)
     this.isRestoring = true
+    this.startUserInteractionTracking()
 
-    // 用于跟踪是否已通过精确恢复或 Fast Path 完成
+    this.restoredTop = undefined
     let restoredSuccessfully = false
 
     try {
+      if (options.delayMs && options.delayMs > 0) {
+        await this.waitForAbortableDelay(options.delayMs, restoreController.signal)
+        if (restoreController.signal.aborted) return false
+      }
+
+      await this.waitForHydration(
+        ReadingHistoryManager.HYDRATION_TIMEOUT_MS,
+        restoreController.signal,
+      )
+      if (restoreController.signal.aborted) return false
+
+      const sessionId = await this.waitForReadySessionId(
+        ReadingHistoryManager.SESSION_READY_TIMEOUT_MS,
+        restoreController.signal,
+      )
+      if (!sessionId || restoreController.signal.aborted) {
+        return false
+      }
+
+      this.lockCurrentSessionId(sessionId)
+
+      const key = this.getKey(sessionId)
+      const data = getReadingHistoryStore().getPosition(key)
+
+      if (!data) {
+        return false
+      }
+
       // 1. 精确恢复：尝试通过内容锚点定位
       if (data.type && this.adapter.restoreScroll) {
         try {
           const contentRestored = await this.adapter.restoreScroll(data as any)
+          if (restoreController.signal.aborted) return false
+
           if (contentRestored) {
             const scrollContainer = this.adapter.getScrollContainer() || document.documentElement
             this.restoredTop = (scrollContainer as HTMLElement).scrollTop || window.scrollY
-            // 同步设置 DOM 属性，主世界立即可见，拦截平台自动滚动
             document.documentElement.dataset.ophelPositionLock = String(this.restoredTop)
             restoredSuccessfully = true
           }
@@ -360,48 +487,59 @@ export class ReadingHistoryManager {
         }
 
         try {
-          // 加载所有历史
           const result = await loadHistoryUntil({
             adapter: this.adapter,
             loadAll: true,
+            preserveReadingHistoryRestore: true,
+            restoreToken,
+            signal: restoreController.signal,
             onProgress: (msg) => {
               onProgress?.(`${t("exportLoading")} ${msg}`)
             },
           })
 
-          if (!result.success) {
+          if (!result.success || restoreController.signal.aborted) {
             return false
           }
 
-          // 计算新的滚动位置
-          // 注意：无需加上 heightAdded，因为 savedTop 本身就是相对于完整内容（或当时加载的内容）的绝对坐标
-          // 只有在"保持相对位置"（Anchor）且内容被挤下去时才需要修正，但这里我们是想"回到原来的绝对位置"
-          const newScrollTop = data.top!
-
-          // 同步设置 DOM 属性，主世界立即可见，拦截平台自动滚动
+          const newScrollTop = data.top
           document.documentElement.dataset.ophelPositionLock = String(newScrollTop)
 
-          // 滚动到目标位置（content script 的 scrollTo 走原始原型链，不受主世界劫持影响）
-          await smartScrollTo(this.adapter, newScrollTop)
+          await smartScrollTo(this.adapter, newScrollTop, {
+            preservePositionLock: true,
+            preserveReadingHistoryRestore: true,
+            restoreToken,
+            signal: restoreController.signal,
+          })
+          if (restoreController.signal.aborted) return false
+
           this.restoredTop = newScrollTop
           restoredSuccessfully = true
         } catch {
-          // 恢复失败，清除位置锁
-          delete document.documentElement.dataset.ophelPositionLock
           return false
         }
       }
 
       return restoredSuccessfully
     } finally {
-      // 立即启动位置保持器（无延迟），对抗平台自动滚动
-      if (restoredSuccessfully && this.restoredTop !== undefined) {
-        this.startPositionKeeper(this.restoredTop)
+      if (this.restoreAbortController === restoreController) {
+        this.restoreAbortController = null
+
+        if (
+          restoredSuccessfully &&
+          !restoreController.signal.aborted &&
+          this.restoredTop !== undefined
+        ) {
+          this.startPositionKeeper(this.restoredTop)
+        } else {
+          this.stopPositionKeeper()
+        }
+
+        this.restoreStateResetTimer = window.setTimeout(() => {
+          this.isRestoring = false
+          this.restoreStateResetTimer = null
+        }, 1000)
       }
-      // 延迟重置恢复标志，防止恢复过程中的滚动事件触发保存
-      setTimeout(() => {
-        this.isRestoring = false
-      }, 1000)
     }
   }
 
@@ -415,8 +553,8 @@ export class ReadingHistoryManager {
   /**
    * 启动位置保持器 (Position Keeper)
    * 使用 requestAnimationFrame 持续强制锁定滚动位置，对抗页面的自动滚动
-   * 用户交互（wheel/touchmove/keydown）会立即终止此锁定
-   * 不监听 pointerdown，以避免点击大纲等操作时误中断锁定
+   * 用户交互（pointerdown/wheel/touchmove/keydown）会立即终止此锁定
+   * 大纲跳转会显式发送导航事件，在滚动发生前释放锁定
    *
    * 自适应超时策略：
    * - 最短保持 minHoldMs（2秒）
@@ -459,7 +597,7 @@ export class ReadingHistoryManager {
 
       const container = this.adapter.getScrollContainer()
       if (container) {
-        // 检查 DOM 属性是否被外部更新（如大纲点击后同步更新了锁目标）
+        // 若恢复阶段根据平台实际落点修正了锁目标，Position Keeper 跟随最新值。
         const currentLockStr = document.documentElement.dataset.ophelPositionLock
         if (currentLockStr !== undefined) {
           const currentLock = Number(currentLockStr)
@@ -484,9 +622,11 @@ export class ReadingHistoryManager {
     if (this.positionKeeperRaF) {
       cancelAnimationFrame(this.positionKeeperRaF)
       this.positionKeeperRaF = 0
-      // 释放精确位置锁及清理拦截时间戳
-      delete document.documentElement.dataset.ophelPositionLock
-      delete document.documentElement.dataset.ophelPositionLockLastBlock
     }
+
+    // 恢复可能在 Position Keeper 启动前被取消，此时也必须释放主世界锁。
+    delete document.documentElement.dataset.ophelPositionLock
+    delete document.documentElement.dataset.ophelPositionLockLastBlock
+    this.clearRestoreToken()
   }
 }
