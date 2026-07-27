@@ -2810,6 +2810,8 @@
 
 .gh-prompt-platform-filter-menu {
   box-sizing: border-box;
+  width: 220px;
+  min-width: 0;
   max-width: min(220px, calc(100vw - 24px));
 }
 

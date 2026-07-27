@@ -2071,6 +2071,10 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     selectedPlatforms.length === 1 &&
     selectedPlatforms[0] === currentPlatform.id
   const isCustomPlatformFilter = selectedPlatforms.length > 0 && !isCurrentPlatformFilter
+  const selectedPlatform =
+    selectedPlatforms.length === 1
+      ? SUPPORTED_AI_PLATFORMS.find((platform) => platform.id === selectedPlatforms[0]) ?? null
+      : null
   const selectedPlatformNames = SUPPORTED_AI_PLATFORMS.filter((platform) =>
     selectedPlatforms.includes(platform.id),
   ).map((platform) => platform.name)
@@ -3147,8 +3151,8 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                       ? "1px solid var(--gh-primary, #4285f4)"
                       : "1px solid transparent",
                   }}>
-                  {isCurrentPlatformFilter && currentPlatform ? (
-                    <PlatformIcon name={currentPlatform.name} size={16} />
+                  {selectedPlatform ? (
+                    <PlatformIcon name={selectedPlatform.name} size={16} />
                   ) : (
                     <GlobeIcon size={14} />
                   )}
@@ -3198,7 +3202,6 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                       top: "calc(100% + 6px)",
                       right: 0,
                       zIndex: 21,
-                      minWidth: "180px",
                       maxHeight: "320px",
                       overflowY: "auto",
                       padding: "6px",
