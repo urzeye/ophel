@@ -1,14 +1,56 @@
 import React from "react"
 import { createPortal } from "react-dom"
 
-import { SUPPORTED_AI_PLATFORMS } from "~constants/defaults"
 import { Button } from "~components/ui"
+import { SUPPORTED_AI_PLATFORMS } from "~constants/defaults"
 import { OPHEL_HOVER_WIDTH_RETAIN_LAYER_PROPS } from "~utils/dom-toolkit"
 import { getHighlightStyles, renderMarkdown } from "~utils/markdown"
 import { showCopySuccess } from "~utils/icons"
 import { t } from "~utils/i18n"
 import type { Prompt } from "~utils/storage"
 import { createSafeHTML } from "~utils/trusted-types"
+
+import { PlatformIcon } from "./PlatformIcon"
+
+const PROMPT_EDITOR_PLATFORM_STYLES = `
+.gh-prompt-platform-chip {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: var(--gh-hover, #f3f4f6);
+  color: var(--gh-text-secondary, #6b7280);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+}
+
+.gh-prompt-platform-chip[aria-pressed="true"] {
+  border-color: var(--gh-primary, #4285f4);
+  background: var(--gh-primary, #4285f4);
+  color: var(--gh-text-on-primary, #ffffff);
+}
+
+.gh-prompt-platform-chip:hover {
+  filter: brightness(0.97);
+}
+
+.gh-prompt-platform-chip:active {
+  transform: translateY(1px);
+}
+
+.gh-prompt-platform-chip:focus-visible {
+  outline: 2px solid var(--gh-primary, #4285f4);
+  outline-offset: 2px;
+}
+`
 
 interface PromptEditorDialogProps {
   isOpen: boolean
@@ -54,6 +96,9 @@ export const PromptEditorDialog: React.FC<PromptEditorDialogProps> = ({
       }}>
       <div
         className="prompt-modal-content"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="gh-prompt-editor-title"
         onClick={(e) => e.stopPropagation()}
         style={{
           background: "var(--gh-bg, white)",
@@ -61,10 +106,14 @@ export const PromptEditorDialog: React.FC<PromptEditorDialogProps> = ({
           width: "90%",
           maxWidth: "500px",
           padding: "24px",
+          maxHeight: "calc(100vh - 32px)",
+          overflowY: "auto",
+          boxSizing: "border-box",
           animation: "slideUp 0.3s",
           boxShadow: "var(--gh-shadow, 0 20px 50px rgba(0,0,0,0.3))",
         }}>
         <div
+          id="gh-prompt-editor-title"
           style={{
             fontSize: "18px",
             fontWeight: 600,
@@ -168,7 +217,8 @@ export const PromptEditorDialog: React.FC<PromptEditorDialogProps> = ({
 
         {/* 适用平台（多选；不选表示所有平台） */}
         <div style={{ marginBottom: "16px" }}>
-          <label
+          <div
+            id="gh-prompt-platform-label"
             style={{
               display: "block",
               fontSize: "14px",
@@ -177,8 +227,9 @@ export const PromptEditorDialog: React.FC<PromptEditorDialogProps> = ({
               marginBottom: "6px",
             }}>
             {t("promptPlatformLabel")}
-          </label>
+          </div>
           <div
+            id="gh-prompt-platform-hint"
             style={{
               fontSize: "12px",
               color: "var(--gh-text-tertiary, #9ca3af)",
@@ -187,6 +238,9 @@ export const PromptEditorDialog: React.FC<PromptEditorDialogProps> = ({
             {t("promptPlatformHint")}
           </div>
           <div
+            role="group"
+            aria-labelledby="gh-prompt-platform-label"
+            aria-describedby="gh-prompt-platform-hint"
             style={{
               display: "flex",
               gap: "6px",
@@ -196,8 +250,11 @@ export const PromptEditorDialog: React.FC<PromptEditorDialogProps> = ({
             {SUPPORTED_AI_PLATFORMS.map((platform) => {
               const selected = editingPrompt?.platforms?.includes(platform.id) ?? false
               return (
-                <span
+                <button
+                  type="button"
                   key={platform.id}
+                  className="gh-prompt-platform-chip"
+                  aria-pressed={selected}
                   onClick={() => {
                     const current = editingPrompt?.platforms ?? []
                     const next = current.includes(platform.id)
@@ -207,29 +264,10 @@ export const PromptEditorDialog: React.FC<PromptEditorDialogProps> = ({
                       ...editingPrompt,
                       platforms: next.length > 0 ? next : undefined,
                     })
-                  }}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "4px",
-                    padding: "3px 9px",
-                    fontSize: "12px",
-                    background: selected
-                      ? "var(--gh-primary, #4285f4)"
-                      : "var(--gh-hover, #f3f4f6)",
-                    color: selected
-                      ? "var(--gh-text-on-primary, white)"
-                      : "var(--gh-text-secondary, #6b7280)",
-                    border: selected
-                      ? "1px solid var(--gh-primary, #4285f4)"
-                      : "1px solid transparent",
-                    borderRadius: "12px",
-                    cursor: "pointer",
-                    transition: "all 0.15s",
                   }}>
-                  <span style={{ fontSize: "13px" }}>{platform.icon}</span>
+                  <PlatformIcon name={platform.name} size={16} />
                   {platform.name}
-                </span>
+                </button>
               )
             })}
           </div>
@@ -343,6 +381,7 @@ export const PromptEditorDialog: React.FC<PromptEditorDialogProps> = ({
           </Button>
         </div>
       </div>
+      <style>{PROMPT_EDITOR_PLATFORM_STYLES}</style>
     </div>,
     document.body,
   )

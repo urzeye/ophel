@@ -32,6 +32,7 @@ import {
 } from "~components/VariableInputDialog"
 import { ChainIconPicker } from "~components/ChainIconPicker"
 import { ImportDialog } from "~components/prompts/ImportDialog"
+import { PlatformIcon } from "~components/prompts/PlatformIcon"
 import { PromptEditorDialog } from "~components/prompts/PromptEditorDialog"
 import { PromptPreviewModal } from "~components/prompts/PromptPreviewModal"
 import { usePromptDragSort } from "~components/prompts/usePromptDragSort"
@@ -1183,6 +1184,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
 
       setActiveLibraryView("prompts")
       setSelectedCategory(VIRTUAL_CATEGORY.ALL)
+      setSelectedPlatforms([])
       setSearchQuery("")
       onPromptSelect?.(null)
       setLocatedPromptId(targetPrompt.id)
@@ -1259,6 +1261,22 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   }, [loadData])
 
   useEffect(() => {
+    if (!platformFilterOpen) return
+
+    const handlePlatformFilterEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return
+
+      event.preventDefault()
+      event.stopPropagation()
+      setPlatformFilterOpen(false)
+      platformFilterButtonRef.current?.focus()
+    }
+
+    document.addEventListener("keydown", handlePlatformFilterEscape, true)
+    return () => document.removeEventListener("keydown", handlePlatformFilterEscape, true)
+  }, [platformFilterOpen])
+
+  useEffect(() => {
     return () => {
       if (clickTimerRef.current !== null) {
         window.clearTimeout(clickTimerRef.current)
@@ -1292,7 +1310,6 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
         .getPrompts()
         .filter((p) => p.lastUsedAt)
         .sort((a, b) => (b.lastUsedAt || 0) - (a.lastUsedAt || 0))
-        .slice(0, 10) // 只显示最近 10 个
 
       // 搜索过滤
       if (searchQuery) {
@@ -1308,6 +1325,10 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     // 平台筛选：叠加在分类/搜索之上的正交维度
     if (selectedPlatforms.length > 0) {
       filtered = filtered.filter((p) => matchesPromptPlatform(p, selectedPlatforms))
+    }
+
+    if (selectedCategory === VIRTUAL_CATEGORY.RECENT) {
+      filtered = filtered.slice(0, 10)
     }
 
     // 置顶的提示词优先显示（最近使用模式下不重排）
@@ -2037,13 +2058,13 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   }
 
   const filtered = getFilteredPrompts()
+  const isPromptReorderingEnabled =
+    selectedCategory !== VIRTUAL_CATEGORY.RECENT &&
+    !searchQuery.trim() &&
+    selectedPlatforms.length === 0
 
   const getPromptMoveTargets = (promptId: string) => {
-    if (
-      activeLibraryView !== "prompts" ||
-      selectedCategory === VIRTUAL_CATEGORY.RECENT ||
-      searchQuery.trim()
-    ) {
+    if (activeLibraryView !== "prompts" || !isPromptReorderingEnabled) {
       return { previous: null, next: null }
     }
 
@@ -3093,19 +3114,18 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                   ref={platformFilterButtonRef}
                   onClick={() => setPlatformFilterOpen((open) => !open)}
                   aria-label={t("promptPlatformFilter")}
+                  aria-haspopup="dialog"
+                  aria-expanded={platformFilterOpen}
+                  className="gh-prompt-platform-filter-btn"
                   style={{
-                    padding: "3px 6px",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    lineHeight: 1,
                     background:
                       selectedPlatforms.length > 0
                         ? "var(--gh-primary, #4285f4)"
                         : "var(--gh-hover, #f3f4f6)",
-                    borderRadius: "10px",
-                    color: selectedPlatforms.length > 0 ? "white" : "#4b5563",
-                    cursor: "pointer",
+                    color:
+                      selectedPlatforms.length > 0
+                        ? "var(--gh-text-on-primary, #ffffff)"
+                        : "var(--gh-text-secondary, #4b5563)",
                     border:
                       selectedPlatforms.length > 0
                         ? "1px solid var(--gh-primary, #4285f4)"
@@ -3150,7 +3170,9 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                     onClick={() => setPlatformFilterOpen(false)}
                   />
                   <div
-                    role="menu"
+                    role="dialog"
+                    aria-label={t("promptPlatformFilter")}
+                    className="gh-prompt-platform-filter-menu"
                     style={{
                       position: "absolute",
                       top: "calc(100% + 6px)",
@@ -3205,8 +3227,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                       return (
                         <button
                           type="button"
-                          role="menuitemcheckbox"
-                          aria-checked={checked}
+                          aria-pressed={checked}
                           key={platform.id}
                           onClick={() =>
                             setSelectedPlatforms((prev) =>
@@ -3215,21 +3236,11 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                                 : [...prev, platform.id],
                             )
                           }
+                          className="gh-prompt-platform-filter-option"
                           style={{
-                            width: "100%",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px",
-                            padding: "6px 8px",
-                            border: "none",
-                            borderRadius: "6px",
                             background: checked ? "var(--gh-hover, #f3f4f6)" : "transparent",
-                            color: "var(--gh-text, #1f2937)",
-                            fontSize: "13px",
-                            cursor: "pointer",
-                            textAlign: "left",
                           }}>
-                          <span style={{ fontSize: "14px", flexShrink: 0 }}>{platform.icon}</span>
+                          <PlatformIcon name={platform.name} size={18} />
                           <span
                             style={{
                               flex: 1,
@@ -3324,7 +3335,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                 className={`prompt-item ${isHighlighted ? "selected" : ""} ${isLocated ? "located" : ""} ${draggedId === p.id ? "dragging" : ""}`}
                 onClick={() => handlePromptClick(p)}
                 onDoubleClick={() => handlePromptDoubleClick(p)}
-                draggable
+                draggable={isPromptReorderingEnabled}
                 onDragStart={(e) => handleDragStart(e, p.id, e.currentTarget as HTMLDivElement)}
                 onDragOver={(e) => handleDragOver(e, p.id)}
                 onDragEnd={handleDragEnd}
