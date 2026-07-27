@@ -47,7 +47,7 @@ export const VariableInputDialog: React.FC<VariableInputDialogProps> = ({
       value: v.options ? v.options[0] : v.defaultValue ?? "",
     })),
   )
-  const firstInputRef = useRef<HTMLInputElement>(null)
+  const firstInputRef = useRef<HTMLTextAreaElement>(null)
 
   // 自动聚焦第一个输入框
   useEffect(() => {
@@ -90,7 +90,7 @@ export const VariableInputDialog: React.FC<VariableInputDialogProps> = ({
       closeOnOverlayClick={false}
       dialogClassName="prompt-modal-content"
       dialogStyle={{
-        width: "400px",
+        width: "520px",
         maxWidth: "90%",
         maxHeight: "80vh",
         display: "flex",
@@ -186,12 +186,12 @@ export const VariableInputDialog: React.FC<VariableInputDialogProps> = ({
                   ))}
                 </select>
               ) : (
-                /* 普通文本输入 */
-                <input
+                /* 普通文本输入（多行，保留粘贴内容的换行格式） */
+                <textarea
                   ref={index === 0 ? firstInputRef : undefined}
-                  type="text"
                   value={values[index]?.value ?? ""}
                   onChange={(e) => updateValue(index, e.target.value)}
+                  rows={4}
                   placeholder={
                     parsedVar.defaultValue
                       ? `${t("promptVariablePlaceholder")} (${t("default")}: ${parsedVar.defaultValue})`
@@ -203,10 +203,14 @@ export const VariableInputDialog: React.FC<VariableInputDialogProps> = ({
                     borderRadius: "6px",
                     border: "1px solid var(--gh-input-border, #d1d5db)",
                     fontSize: "14px",
+                    lineHeight: 1.5,
                     outline: "none",
                     background: "var(--gh-input-bg, white)",
                     color: "var(--gh-text, #374151)",
                     boxSizing: "border-box",
+                    resize: "vertical",
+                    minHeight: "80px",
+                    fontFamily: "inherit",
                     transition: "border-color 0.2s, box-shadow 0.2s",
                   }}
                   onFocus={(e) => {

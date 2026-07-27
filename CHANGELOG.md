@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### 🐛 Bug Fixes
+
+- **Prompt variable multiline input** — Fixed issue where pasting multi-line Markdown into a prompt variable collapsed it onto a single line because the input was single-line; variable text fields now use a multi-line box that preserves line breaks and formatting. (#801)
+
 ---
 
 ## [1.1.7] - 2026-07-22
