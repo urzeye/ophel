@@ -1,6 +1,7 @@
 import React from "react"
 import { createPortal } from "react-dom"
 
+import { SUPPORTED_AI_PLATFORMS } from "~constants/defaults"
 import { Button } from "~components/ui"
 import { OPHEL_HOVER_WIDTH_RETAIN_LAYER_PROPS } from "~utils/dom-toolkit"
 import { getHighlightStyles, renderMarkdown } from "~utils/markdown"
@@ -163,6 +164,75 @@ export const PromptEditorDialog: React.FC<PromptEditorDialogProps> = ({
               ))}
             </div>
           )}
+        </div>
+
+        {/* 适用平台（多选；不选表示所有平台） */}
+        <div style={{ marginBottom: "16px" }}>
+          <label
+            style={{
+              display: "block",
+              fontSize: "14px",
+              fontWeight: 500,
+              color: "var(--gh-text, #374151)",
+              marginBottom: "6px",
+            }}>
+            {t("promptPlatformLabel")}
+          </label>
+          <div
+            style={{
+              fontSize: "12px",
+              color: "var(--gh-text-tertiary, #9ca3af)",
+              marginBottom: "8px",
+            }}>
+            {t("promptPlatformHint")}
+          </div>
+          <div
+            style={{
+              display: "flex",
+              gap: "6px",
+              flexWrap: "wrap",
+              userSelect: "none",
+            }}>
+            {SUPPORTED_AI_PLATFORMS.map((platform) => {
+              const selected = editingPrompt?.platforms?.includes(platform.id) ?? false
+              return (
+                <span
+                  key={platform.id}
+                  onClick={() => {
+                    const current = editingPrompt?.platforms ?? []
+                    const next = current.includes(platform.id)
+                      ? current.filter((id) => id !== platform.id)
+                      : [...current, platform.id]
+                    setEditingPrompt({
+                      ...editingPrompt,
+                      platforms: next.length > 0 ? next : undefined,
+                    })
+                  }}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    padding: "3px 9px",
+                    fontSize: "12px",
+                    background: selected
+                      ? "var(--gh-primary, #4285f4)"
+                      : "var(--gh-hover, #f3f4f6)",
+                    color: selected
+                      ? "var(--gh-text-on-primary, white)"
+                      : "var(--gh-text-secondary, #6b7280)",
+                    border: selected
+                      ? "1px solid var(--gh-primary, #4285f4)"
+                      : "1px solid transparent",
+                    borderRadius: "12px",
+                    cursor: "pointer",
+                    transition: "all 0.15s",
+                  }}>
+                  <span style={{ fontSize: "13px" }}>{platform.icon}</span>
+                  {platform.name}
+                </span>
+              )
+            })}
+          </div>
         </div>
 
         {/* 内容 */}

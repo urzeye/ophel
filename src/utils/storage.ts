@@ -83,6 +83,7 @@ export interface Prompt {
   category: string
   pinned?: boolean // 是否置顶
   lastUsedAt?: number // 最近使用时间戳
+  platforms?: string[] // 适用平台（SITE_IDS 值）；空或未设置表示所有平台
 }
 
 // Claude SessionKey 管理

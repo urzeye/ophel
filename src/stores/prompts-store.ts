@@ -144,6 +144,18 @@ export const getCategories = (): string[] => {
   return Array.from(categories)
 }
 
+/**
+ * 判断提示词是否适用于给定的平台筛选集合
+ * - 筛选集合为空：不过滤，全部通过
+ * - 提示词未设置 platforms（通用）：始终通过
+ * - 否则：只要命中任一被选平台即通过
+ */
+export const matchesPromptPlatform = (prompt: Prompt, selectedPlatforms: string[]): boolean => {
+  if (selectedPlatforms.length === 0) return true
+  if (!prompt.platforms?.length) return true
+  return prompt.platforms.some((id) => selectedPlatforms.includes(id))
+}
+
 export const filterPrompts = (
   filter: string = "",
   category: string = VIRTUAL_CATEGORY.ALL,

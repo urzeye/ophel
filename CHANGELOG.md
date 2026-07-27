@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### 🚀 New Features
+
+- **Prompt platform filter** — Prompts now support optional platform assignment (e.g., ChatGPT, Gemini, Claude) via the editor dialog; a new globe icon in the category bar opens a multi-select filter popover with a badge count, so users can quickly narrow prompts to those relevant for a specific platform. (#802)
+
 ### 🐛 Bug Fixes
 
 - **Prompt variable multiline input** — Fixed issue where pasting multi-line Markdown into a prompt variable collapsed it onto a single line because the input was single-line; variable text fields now use an auto-resizing box that stays compact for short values and grows to preserve line breaks and formatting for long content. (#801)
