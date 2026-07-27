@@ -29,6 +29,7 @@ import {
 import { SparkleIcon } from "~components/icons/SparkleIcon"
 import { MagicCodex } from "~components/MagicCodex"
 import { TAB_IDS } from "~constants"
+import { SUPPORTED_AI_PLATFORMS } from "~constants/defaults"
 import { isMacOS } from "~constants/shortcuts"
 import { buildStructuredTips } from "~utils/build-structured-tips"
 import type { ConversationManager } from "~core/conversation-manager"
@@ -169,6 +170,28 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   const currentSettings = settings || DEFAULT_SETTINGS
   const tabOrder = currentSettings.features?.order || DEFAULT_SETTINGS.features.order
   const siteId = adapter?.getSiteId() || "_default"
+  const currentPromptPlatform = useMemo(
+    () => SUPPORTED_AI_PLATFORMS.find((platform) => platform.id === siteId) ?? null,
+    [siteId],
+  )
+  const defaultPromptPlatformFilter = useMemo(
+    () => (currentPromptPlatform ? [currentPromptPlatform.id] : []),
+    [currentPromptPlatform],
+  )
+  const [promptPlatformFiltersBySite, setPromptPlatformFiltersBySite] = useState<
+    Record<string, string[]>
+  >({})
+  const selectedPromptPlatforms = promptPlatformFiltersBySite[siteId] ?? defaultPromptPlatformFilter
+  const setSelectedPromptPlatforms = useCallback(
+    (next: React.SetStateAction<string[]>) => {
+      setPromptPlatformFiltersBySite((filters) => {
+        const current = filters[siteId] ?? defaultPromptPlatformFilter
+        const resolved = typeof next === "function" ? next(current) : next
+        return { ...filters, [siteId]: resolved }
+      })
+    },
+    [defaultPromptPlatformFilter, siteId],
+  )
   const siteTheme = getSiteTheme(currentSettings, siteId)
   const resolvedThemeMode = themeMode || (siteTheme.mode === "dark" ? "dark" : "light")
   const currentThemeStyleId =
@@ -1541,6 +1564,9 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             <PromptsTab
               manager={promptManager}
               adapter={adapter}
+              currentPlatform={currentPromptPlatform}
+              selectedPlatforms={selectedPromptPlatforms}
+              setSelectedPlatforms={setSelectedPromptPlatforms}
               selectedPromptId={selectedPromptId}
               onPromptSelect={onPromptSelect}
             />
