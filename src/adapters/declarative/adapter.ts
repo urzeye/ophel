@@ -129,11 +129,19 @@ const normalizeElementText = (element: Element | null): string | null => {
 /** 把已通过校验的 SitePack manifest 显式映射到现有 SiteAdapter API。 */
 export class DeclarativeAdapter extends SiteAdapter {
   private readonly conversationIdPattern: RegExp | null
+  private readonly sessionIdPattern: RegExp | null
+  private readonly newConversationPathPatterns: RegExp[] | null
 
   constructor(private readonly manifest: SitePackManifest) {
     super()
     this.conversationIdPattern = manifest.conversation
       ? new RegExp(manifest.conversation.idFrom.regex)
+      : null
+    this.sessionIdPattern = manifest.session?.idFromPathRegex
+      ? new RegExp(manifest.session.idFromPathRegex)
+      : null
+    this.newConversationPathPatterns = manifest.session?.newConversationPathPatterns
+      ? manifest.session.newConversationPathPatterns.map((pattern) => new RegExp(pattern))
       : null
   }
 
@@ -198,7 +206,7 @@ export class DeclarativeAdapter extends SiteAdapter {
     )
   }
 
-  private isSubmitButtonVisible(element: HTMLElement): boolean {
+  private isConfiguredElementVisible(element: Element): boolean {
     if (!element.isConnected) return false
     if (element.closest(".gh-main-panel, .gh-queue-panel")) return false
 
@@ -220,7 +228,7 @@ export class DeclarativeAdapter extends SiteAdapter {
       this.findAllElementsBySelector(selector).some(
         (element) =>
           element instanceof HTMLElement &&
-          this.isSubmitButtonVisible(element) &&
+          this.isConfiguredElementVisible(element) &&
           !this.isSubmitButtonDisabled(element),
       ),
     )
@@ -525,6 +533,47 @@ export class DeclarativeAdapter extends SiteAdapter {
 
     const targetUrl = this.buildConversationUrl(normalizedId)
     return targetUrl ? super.navigateToConversation(normalizedId, targetUrl) : false
+  }
+
+  isGenerating(): boolean {
+    return (this.manifest.generating?.existsSelectors ?? []).some((selector) =>
+      this.findAllElementsBySelector(selector).some((element) =>
+        this.isConfiguredElementVisible(element),
+      ),
+    )
+  }
+
+  getSessionId(): string {
+    if (!this.sessionIdPattern) return super.getSessionId()
+
+    return this.sessionIdPattern.exec(window.location.pathname)?.[1]?.trim() ?? ""
+  }
+
+  isNewConversation(): boolean {
+    if (!this.newConversationPathPatterns) return super.isNewConversation()
+
+    return this.newConversationPathPatterns.some((pattern) =>
+      pattern.test(window.location.pathname),
+    )
+  }
+
+  isSharePage(): boolean {
+    const sharePathPrefix = this.manifest.session?.sharePathPrefix
+    return sharePathPrefix === undefined
+      ? super.isSharePage()
+      : window.location.pathname.startsWith(sharePathPrefix)
+  }
+
+  getNewTabUrl(): string {
+    const newTabPath = this.manifest.session?.newTabPath
+    if (newTabPath === undefined) return super.getNewTabUrl()
+
+    const url = new URL(newTabPath, window.location.origin)
+    if (url.origin !== window.location.origin) {
+      throw new Error("Declarative SitePack newTabPath must remain on the current origin")
+    }
+
+    return url.href
   }
 
   getSubmitButtonSelectors(): string[] {
