@@ -16,6 +16,20 @@ const DEFAULT_THEME_COLORS = {
   secondary: "#1d4ed8",
 }
 
+const ZERO_WIDTH_EDITOR_MARKERS = /[\u200B\u200C\u200D\uFEFF]/g
+
+type TextControl = HTMLInputElement | HTMLTextAreaElement
+
+type ConfiguredEditor =
+  | { mode: "textarea"; editor: TextControl }
+  | { mode: "contenteditable"; editor: HTMLElement }
+
+const isTextControl = (element: HTMLElement): element is TextControl =>
+  element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement
+
+const getEditorText = (editor: HTMLElement): string =>
+  isTextControl(editor) ? editor.value : editor.textContent ?? ""
+
 const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 
 const createWildcardRegExp = (value: string): RegExp =>
@@ -106,8 +120,173 @@ export class DeclarativeAdapter extends SiteAdapter {
     return [...(this.manifest.selectors.textarea ?? [])]
   }
 
-  insertPrompt(_content: string): boolean {
-    return false
+  private getConfiguredEditor(): ConfiguredEditor | null {
+    const mode = this.manifest.input?.mode
+    if (!mode) return null
+
+    const editor = this.getTextareaElement()
+    if (!editor || !editor.isConnected) return null
+
+    if (mode === "textarea") {
+      return isTextControl(editor) ? { mode, editor } : null
+    }
+
+    return editor.isContentEditable ? { mode, editor } : null
+  }
+
+  private isEditorUpdateValid(
+    editor: HTMLElement,
+    content: string,
+    requireSubmitButton: boolean,
+  ): boolean {
+    if (!editor.isConnected) return false
+
+    const editorText = getEditorText(editor)
+    const contentMatches =
+      content.length > 0
+        ? editorText.includes(content)
+        : editorText.replace(ZERO_WIDTH_EDITOR_MARKERS, "").length === 0
+
+    return contentMatches && (!requireSubmitButton || this.hasReadySubmitButton())
+  }
+
+  private isSubmitButtonDisabled(element: HTMLElement): boolean {
+    const disableableElement = element as HTMLElement & { disabled?: boolean }
+    return (
+      disableableElement.disabled === true ||
+      element.hasAttribute("disabled") ||
+      element.getAttribute("aria-disabled") === "true" ||
+      element.getAttribute("data-disabled") === "true"
+    )
+  }
+
+  private isSubmitButtonVisible(element: HTMLElement): boolean {
+    if (!element.isConnected) return false
+    if (element.closest(".gh-main-panel, .gh-queue-panel")) return false
+
+    const style = window.getComputedStyle(element)
+    if (
+      style.display === "none" ||
+      style.visibility === "hidden" ||
+      Number.parseFloat(style.opacity || "1") === 0
+    ) {
+      return false
+    }
+
+    const rect = element.getBoundingClientRect()
+    return rect.width > 0 && rect.height > 0
+  }
+
+  private hasReadySubmitButton(): boolean {
+    return (this.manifest.selectors.submitButton ?? []).some((selector) =>
+      this.findAllElementsBySelector(selector).some(
+        (element) =>
+          element instanceof HTMLElement &&
+          this.isSubmitButtonVisible(element) &&
+          !this.isSubmitButtonDisabled(element),
+      ),
+    )
+  }
+
+  private setTextControlValue(editor: TextControl, content: string): boolean {
+    const prototype =
+      editor instanceof HTMLTextAreaElement
+        ? HTMLTextAreaElement.prototype
+        : HTMLInputElement.prototype
+    const setter = Object.getOwnPropertyDescriptor(prototype, "value")?.set
+    if (!setter) return false
+
+    try {
+      editor.focus()
+      setter.call(editor, content)
+      editor.dispatchEvent(
+        new InputEvent("input", { bubbles: true, composed: true, data: content }),
+      )
+      editor.dispatchEvent(new Event("change", { bubbles: true }))
+
+      if (
+        editor instanceof HTMLTextAreaElement ||
+        ["text", "search", "tel", "url", "password"].includes(editor.type)
+      ) {
+        editor.setSelectionRange(content.length, content.length)
+      }
+    } catch {
+      return false
+    }
+
+    return true
+  }
+
+  private selectAllEditorContent(editor: HTMLElement): boolean {
+    const selection = editor.ownerDocument.getSelection()
+    if (!selection) return false
+
+    try {
+      selection.selectAllChildren(editor)
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  private replaceContentEditableContent(
+    editor: HTMLElement,
+    content: string,
+    requireSubmitButton: boolean,
+  ): boolean {
+    editor.focus()
+
+    if (this.selectAllEditorContent(editor)) {
+      try {
+        editor.dispatchEvent(
+          new InputEvent("beforeinput", {
+            bubbles: true,
+            cancelable: true,
+            composed: true,
+            data: content,
+            inputType: "insertText",
+          }),
+        )
+      } catch {
+        // Unsupported beforeinput construction continues to the execCommand attempt.
+      }
+      if (this.isEditorUpdateValid(editor, content, requireSubmitButton)) return true
+    }
+
+    if (!this.selectAllEditorContent(editor)) return false
+
+    try {
+      editor.ownerDocument.execCommand("insertText", false, content)
+    } catch {
+      return false
+    }
+
+    return this.isEditorUpdateValid(editor, content, requireSubmitButton)
+  }
+
+  insertPrompt(content: string): boolean {
+    const configuredEditor = this.getConfiguredEditor()
+    if (!configuredEditor) return false
+
+    if (configuredEditor.mode === "contenteditable") {
+      return this.replaceContentEditableContent(configuredEditor.editor, content, true)
+    }
+
+    if (!this.setTextControlValue(configuredEditor.editor, content)) return false
+    return this.isEditorUpdateValid(configuredEditor.editor, content, true)
+  }
+
+  clearTextarea(): void {
+    const configuredEditor = this.getConfiguredEditor()
+    if (!configuredEditor) return
+
+    if (configuredEditor.mode === "contenteditable") {
+      this.replaceContentEditableContent(configuredEditor.editor, "", false)
+      return
+    }
+
+    if (!this.setTextControlValue(configuredEditor.editor, "")) return
+    if (!this.isEditorUpdateValid(configuredEditor.editor, "", false)) return
   }
 
   getConversationTitle(): string | null {
