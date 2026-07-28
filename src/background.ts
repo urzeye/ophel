@@ -31,6 +31,10 @@ import {
   MSG_WEBDAV_REQUEST,
   type ExtensionMessage,
 } from "~utils/messaging"
+import {
+  PERSISTED_SETTINGS_STORAGE_KEY,
+  readRemoteConfigAutoUpdate,
+} from "~utils/persisted-settings"
 import { localStorage, type Settings } from "~utils/storage"
 
 /**
@@ -65,7 +69,22 @@ const remoteConfigManager = createRuntimeRemoteConfigManager(
   extensionRegistryTransport,
 )
 
+async function shouldRunAutomaticRemoteConfig(): Promise<boolean> {
+  try {
+    const enabled = await readRemoteConfigAutoUpdate(extensionStorage)
+    if (!enabled) {
+      await chrome.alarms.clear(REMOTE_CONFIG_ALARM_NAME)
+    }
+    return enabled
+  } catch (error) {
+    await chrome.alarms.clear(REMOTE_CONFIG_ALARM_NAME)
+    throw error
+  }
+}
+
 async function runRemoteConfigCheck(force: boolean) {
+  if (!force && !(await shouldRunAutomaticRemoteConfig())) return null
+
   const result = await remoteConfigManager.checkForUpdates({ force })
   if (result.status === "failed") {
     console.warn("[Ophel] Remote config check failed:", result.error)
@@ -82,6 +101,11 @@ async function ensureRemoteConfigAlarm() {
   })
 }
 
+async function syncRemoteConfigAlarm() {
+  if (!(await shouldRunAutomaticRemoteConfig())) return
+  await ensureRemoteConfigAlarm()
+}
+
 function scheduleRemoteConfigCheck(force: boolean) {
   void runRemoteConfigCheck(force).catch((error) => {
     console.warn("[Ophel] Remote config check crashed:", error)
@@ -89,12 +113,17 @@ function scheduleRemoteConfigCheck(force: boolean) {
 }
 
 function scheduleRemoteConfigAlarmSetup() {
-  void ensureRemoteConfigAlarm().catch((error) => {
+  void syncRemoteConfigAlarm().catch((error) => {
     console.warn("[Ophel] Failed to initialize remote config alarm:", error)
   })
 }
 
 scheduleRemoteConfigAlarmSetup()
+
+chrome.storage.onChanged.addListener((changes, areaName) => {
+  if (areaName !== "local" || !changes[PERSISTED_SETTINGS_STORAGE_KEY]) return
+  scheduleRemoteConfigAlarmSetup()
+})
 
 // 通知 ID 格式："ophel|{tabId}|{windowId}|{uuid}"
 // 将 Tab 信息编码进 notifId，避免 MV3 Service Worker 重启后内存 Map 丢失
@@ -361,6 +390,10 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
       }
       ;(async () => {
         const result = await runRemoteConfigCheck(message.force ?? true)
+        if (!result) {
+          sendResponse({ success: true })
+          return
+        }
         sendResponse({
           success: result.status !== "failed",
           result,

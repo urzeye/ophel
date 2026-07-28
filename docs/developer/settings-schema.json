@@ -3,6 +3,10 @@
   "hasAgreedToTerms": false,
   "hasSeenOphelAdvancedGuide": false,
 
+  "remoteConfig": {
+    "autoUpdate": true
+  },
+
   "panel": {
     "panelExpanded": true,
     "panelMode": "floating",

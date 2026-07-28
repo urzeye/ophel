@@ -128,6 +128,11 @@ export interface Settings {
   hasAgreedToTerms: boolean // 用户是否同意免责声明
   hasSeenOphelAdvancedGuide?: boolean
 
+  // 适配配置远程更新
+  remoteConfig: {
+    autoUpdate: boolean
+  }
+
   // 面板行为
   panel: {
     panelExpanded: boolean // 面板是否展开（未收进快捷按钮组）

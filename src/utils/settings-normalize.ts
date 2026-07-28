@@ -259,6 +259,10 @@ export const normalizeSettings = (settings: SettingsInput): Settings => {
   return {
     ...DEFAULT_SETTINGS,
     ...rest,
+    remoteConfig: {
+      ...DEFAULT_SETTINGS.remoteConfig,
+      ...settings.remoteConfig,
+    },
     panel: normalizePanelSettings(settings.panel),
     content: normalizeContentSettings(settings.content),
     theme: {

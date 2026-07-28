@@ -77,6 +77,10 @@ export const DEFAULT_SETTINGS: Settings = {
   hasAgreedToTerms: false,
   hasSeenOphelAdvancedGuide: false,
 
+  remoteConfig: {
+    autoUpdate: true,
+  },
+
   panel: {
     panelExpanded: true,
     panelMode: "floating",

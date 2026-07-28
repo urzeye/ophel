@@ -374,7 +374,7 @@ async function init() {
   void import("./remote-config")
     .then(({ checkUserscriptRemoteConfigOnStartup }) => checkUserscriptRemoteConfigOnStartup())
     .then((result) => {
-      if (result.status === "failed") {
+      if (result?.status === "failed") {
         console.warn("[Ophel] Remote config check failed:", result.error)
       }
     })
