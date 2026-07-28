@@ -15,6 +15,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
+- **Doubao Zen Mode sidebar** — Fixed issue where enabling Zen Mode on Doubao left a visible sidebar placeholder because the old DOM selector no longer matched the updated sidebar structure; added the new container selector so the sidebar collapses completely. (#806)
 - **Prompt variable multiline input** — Fixed issue where pasting multi-line Markdown into a prompt variable collapsed it onto a single line because the input was single-line; variable text fields now use an auto-resizing box that stays compact for short values and grows to preserve line breaks and formatting for long content. (#801)
 
 ---
