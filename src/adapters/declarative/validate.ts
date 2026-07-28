@@ -38,6 +38,8 @@ export type SitePackValidationResult<T> =
 
 export interface SiteConfigValidationOptions {
   allowedPrivateSelectorKeys?: readonly string[]
+  requiredPrivateSelectorKeys?: readonly string[]
+  requiredCapabilities?: readonly SitePackCapability[]
 }
 
 type ValidationMode = "full" | "partial"
@@ -330,17 +332,6 @@ const validateStringArray = (
   return value.every((item) => typeof item === "string")
 }
 
-const validateSelector = (value: string, path: string, context: ValidationContext): void => {
-  if (value.length > SITE_PACK_MAX_SELECTOR_LENGTH) {
-    addError(
-      context,
-      path,
-      "too_large",
-      `Selector must not exceed ${SITE_PACK_MAX_SELECTOR_LENGTH} characters`,
-    )
-  }
-}
-
 const validateSelectorString = (
   value: unknown,
   path: string,
@@ -362,7 +353,6 @@ const validateSelectorArray = (
   validateStringArray(value, path, context, mode, {
     maxLength: SITE_PACK_MAX_SELECTOR_LENGTH,
     minItems,
-    itemValidator: validateSelector,
   })
 }
 
@@ -1182,11 +1172,25 @@ const validatePrivateSelectors = (
   context: ValidationContext,
   mode: ValidationMode,
   allowedKeys: ReadonlySet<string>,
+  requiredKeys: ReadonlySet<string>,
 ): void => {
   if (isDeletion(value, mode)) return
   if (!isPlainRecord(value)) {
     addError(context, path, "invalid_type", "Expected an object")
     return
+  }
+
+  if (mode === "full") {
+    for (const key of requiredKeys) {
+      if (!Object.prototype.hasOwnProperty.call(value, key)) {
+        addError(
+          context,
+          `${path}.${key}`,
+          "missing_required",
+          `Missing required private selector: ${key}`,
+        )
+      }
+    }
   }
 
   for (const [key, selector] of Object.entries(value)) {
@@ -1199,7 +1203,7 @@ const validatePrivateSelectors = (
     if (typeof selector === "string") {
       validateSelectorString(selector, selectorPath, context, "full")
     } else {
-      validateSelectorArray(selector, selectorPath, context, "full")
+      validateSelectorArray(selector, selectorPath, context, "full", 1)
     }
   }
 }
@@ -1291,6 +1295,28 @@ const validateCapabilityRequirements = (
       "capability_requirement",
       "Capability outline-user-queries also requires outline",
     )
+  }
+}
+
+const validateRequiredCapabilities = (
+  config: Record<string, unknown>,
+  path: string,
+  context: ValidationContext,
+  requiredCapabilities: readonly SitePackCapability[],
+): void => {
+  if (!Array.isArray(config.capabilities)) return
+  const declared = new Set(
+    config.capabilities.filter((value): value is string => typeof value === "string"),
+  )
+  for (const capability of requiredCapabilities) {
+    if (!declared.has(capability)) {
+      addError(
+        context,
+        `${path}.capabilities`,
+        "capability_requirement",
+        `Built-in capability cannot be removed: ${capability}`,
+      )
+    }
   }
 }
 
@@ -1529,6 +1555,10 @@ export function validateSitePackManifest(
 const getAllowedPrivateSelectorKeys = (options: SiteConfigValidationOptions): ReadonlySet<string> =>
   new Set(options.allowedPrivateSelectorKeys ?? [])
 
+const getRequiredPrivateSelectorKeys = (
+  options: SiteConfigValidationOptions,
+): ReadonlySet<string> => new Set(options.requiredPrivateSelectorKeys ?? [])
+
 const validateBuiltinConfigInto = (
   input: unknown,
   path: string,
@@ -1536,16 +1566,28 @@ const validateBuiltinConfigInto = (
   mode: ValidationMode,
   options: SiteConfigValidationOptions,
 ): void => {
+  const requiredPrivateSelectorKeys = getRequiredPrivateSelectorKeys(options)
+  const requiredConfigKeys =
+    mode === "full"
+      ? [
+          "capabilities",
+          "selectors",
+          ...(requiredPrivateSelectorKeys.size > 0 ? ["sitePrivateSelectors"] : []),
+        ]
+      : []
   const config = validateObject(
     input,
     path,
     context,
     [...CONFIG_KEYS, "sitePrivateSelectors"],
-    mode === "full" ? ["capabilities", "selectors"] : [],
+    requiredConfigKeys,
     "full",
   )
   if (!config) return
   validateConfigFields(config, path, context, mode)
+  if (mode === "full") {
+    validateRequiredCapabilities(config, path, context, options.requiredCapabilities ?? [])
+  }
   if (config.sitePrivateSelectors !== undefined) {
     validatePrivateSelectors(
       config.sitePrivateSelectors,
@@ -1553,6 +1595,7 @@ const validateBuiltinConfigInto = (
       context,
       mode,
       getAllowedPrivateSelectorKeys(options),
+      requiredPrivateSelectorKeys,
     )
   }
 }

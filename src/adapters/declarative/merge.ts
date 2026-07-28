@@ -1,4 +1,9 @@
-import type { BuiltinSiteConfig, SiteConfigOverride, SiteConfigPatch } from "./types"
+import type {
+  BuiltinSiteConfig,
+  SiteConfigOverride,
+  SiteConfigPatch,
+  SitePackCapability,
+} from "./types"
 import {
   compareSemanticVersions,
   isValidSemanticVersion,
@@ -43,6 +48,12 @@ export interface ResolveSiteConfigResult<T extends BuiltinSiteConfig> {
 
 export interface MergedConfigReceiver<T extends BuiltinSiteConfig = BuiltinSiteConfig> {
   applyMergedConfig(config: T): void
+}
+
+export interface ConfigurableBuiltinAdapter<T extends BuiltinSiteConfig = BuiltinSiteConfig>
+  extends MergedConfigReceiver<T> {
+  getBuiltinConfig(): T
+  getBuiltinConfigVersion(): number
 }
 
 export class SiteConfigResolutionError extends Error {
@@ -151,10 +162,13 @@ const applyValidatedOverride = <T extends BuiltinSiteConfig>(
   currentConfig: T,
   override: SiteConfigOverride,
   allowedPrivateSelectorKeys: readonly string[],
+  requiredCapabilities: readonly SitePackCapability[],
 ): { config: T; outcome: SiteConfigLayerOutcome } => {
   const candidate = deepMergeSiteConfig(currentConfig, override)
   const mergedValidation = validateBuiltinSiteConfig(candidate, {
     allowedPrivateSelectorKeys,
+    requiredPrivateSelectorKeys: allowedPrivateSelectorKeys,
+    requiredCapabilities,
   })
   if (!mergedValidation.valid) {
     return {
@@ -185,8 +199,11 @@ export function resolveSiteConfig<T extends BuiltinSiteConfig>(
   }
 
   const allowedPrivateSelectorKeys = getPrivateSelectorKeys(options.baseConfig)
+  const requiredCapabilities = [...options.baseConfig.capabilities]
   const baseValidation = validateBuiltinSiteConfig(options.baseConfig, {
     allowedPrivateSelectorKeys,
+    requiredPrivateSelectorKeys: allowedPrivateSelectorKeys,
+    requiredCapabilities,
   })
   if (!baseValidation.valid) {
     throw new SiteConfigResolutionError("Built-in site config is invalid", baseValidation.errors)
@@ -225,6 +242,7 @@ export function resolveSiteConfig<T extends BuiltinSiteConfig>(
           currentConfig,
           patch.config,
           allowedPrivateSelectorKeys,
+          requiredCapabilities,
         )
         currentConfig = applied.config
         remotePatchOutcome = {
@@ -250,6 +268,7 @@ export function resolveSiteConfig<T extends BuiltinSiteConfig>(
         currentConfig,
         overrideValidation.value,
         allowedPrivateSelectorKeys,
+        requiredCapabilities,
       )
       currentConfig = applied.config
       userOverrideOutcome = applied.outcome
@@ -269,6 +288,13 @@ export const supportsMergedConfig = (
   adapter !== null &&
   (typeof adapter === "object" || typeof adapter === "function") &&
   typeof (adapter as { applyMergedConfig?: unknown }).applyMergedConfig === "function"
+
+export const supportsBuiltinSiteConfig = (
+  adapter: unknown,
+): adapter is ConfigurableBuiltinAdapter<BuiltinSiteConfig> =>
+  supportsMergedConfig(adapter) &&
+  typeof (adapter as { getBuiltinConfig?: unknown }).getBuiltinConfig === "function" &&
+  typeof (adapter as { getBuiltinConfigVersion?: unknown }).getBuiltinConfigVersion === "function"
 
 /** 向已配置化的内置适配器注入解析后的配置；未配置化实例返回 false。 */
 export function applyMergedConfig(adapter: unknown, config: BuiltinSiteConfig): boolean {
