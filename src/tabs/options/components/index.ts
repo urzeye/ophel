@@ -6,3 +6,4 @@ export { SettingRow, ToggleRow, type SettingRowProps, type ToggleRowProps } from
 export { TabGroup, type TabGroupProps, type Tab } from "./TabGroup"
 export { PageTitle } from "./PageTitle"
 export { Icon, type IconProps } from "./Icon"
+export { RemoteConfigSettingsCard } from "./RemoteConfigSettingsCard"

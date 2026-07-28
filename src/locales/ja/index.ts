@@ -1673,6 +1673,41 @@ export const ja = {
   "featureTip-notifications-title": "生成完了通知",
   "featureTip-notifications-desc": "AI完了時にデスクトップ通知 — 応答を見逃すな",
   "featureTip-notifications-path": "機能 → 通知 → デスクトップ通知",
+  // アダプター設定の更新
+  remoteConfigTab: "設定更新",
+  remoteConfigSettingsTitle: "アダプター設定の更新",
+  remoteConfigSettingsDesc:
+    "サイトアダプター設定の自動更新、バージョン状態、ローカル復元を管理します",
+  remoteConfigAutoUpdateLabel: "アダプター設定を自動更新",
+  remoteConfigAutoUpdateDesc:
+    "初期設定では有効です。拡張機能は静的 CDN を最大 24 時間に 1 回確認します。",
+  remoteConfigCheckNowLabel: "今すぐ更新を確認",
+  remoteConfigCheckNowDesc: "自動更新がオフでも手動確認は利用できます。",
+  remoteConfigCheckNowButton: "今すぐ確認",
+  remoteConfigCheckingButton: "確認中…",
+  remoteConfigStatusLoading: "読み込み中…",
+  remoteConfigRegistryRevisionLabel: "レジストリリビジョン",
+  remoteConfigLastCheckLabel: "最終確認",
+  remoteConfigNeverChecked: "未確認",
+  remoteConfigNotAvailable: "利用不可",
+  remoteConfigActivePatchesLabel: "適用中のパッチ",
+  remoteConfigUsingBuiltin: "現在は組み込み設定を使用しています",
+  remoteConfigPatchVersionLabel: "パッチバージョン",
+  remoteConfigBaseVersionLabel: "組み込み設定バージョン",
+  remoteConfigResetBuiltinButton: "組み込み設定に戻す",
+  remoteConfigResettingButton: "復元中…",
+  remoteConfigPrivacyTitle: "プライバシー",
+  remoteConfigPrivacyDesc:
+    "更新確認は静的 CDN への GET リクエストのみを行い、会話内容、アカウント情報、その他のユーザーデータを含みません。",
+  remoteConfigCheckUpdated:
+    "新しいアダプター設定をダウンロードしました。対象の AI ページを再読み込みすると適用されます。",
+  remoteConfigCheckUpToDate: "アダプター設定は最新です。",
+  remoteConfigCheckFailed: "更新確認に失敗しました：{error}",
+  remoteConfigStateFailed: "設定更新の状態を読み込めませんでした：{error}",
+  remoteConfigResetSuccess: "{site} を組み込み設定に戻しました。",
+  remoteConfigResetFailed: "復元に失敗しました：{error}",
+  remoteConfigResetUnavailable: "復元できる有効な設定がありません。",
+
   discordCommunity: "Discord コミュニティ",
   discordDesc:
     "コミュニティに参加して、他のユーザーと交流したり、フィードバックを提供したり、最新情報を入手したりできます",

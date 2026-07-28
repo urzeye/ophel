@@ -1665,6 +1665,42 @@ Dê o código e depois um resumo de melhorias.`,
   "featureTip-notifications-desc":
     "Receba uma notificação na área de trabalho quando a IA terminar — nunca perca uma resposta",
   "featureTip-notifications-path": "Recursos → Alertas → Notificação na Área de Trabalho",
+  // Atualizações de configuração dos adaptadores
+  remoteConfigTab: "Atualizações",
+  remoteConfigSettingsTitle: "Atualizações de configuração dos adaptadores",
+  remoteConfigSettingsDesc:
+    "Gerencie atualizações automáticas, estado da versão e restauração local das configurações dos sites",
+  remoteConfigAutoUpdateLabel: "Atualizar automaticamente as configurações dos adaptadores",
+  remoteConfigAutoUpdateDesc:
+    "Ativado por padrão. A extensão verifica CDNs estáticas no máximo uma vez a cada 24 horas.",
+  remoteConfigCheckNowLabel: "Verificar atualizações agora",
+  remoteConfigCheckNowDesc:
+    "A verificação manual continua disponível quando as atualizações automáticas estão desativadas.",
+  remoteConfigCheckNowButton: "Verificar agora",
+  remoteConfigCheckingButton: "Verificando…",
+  remoteConfigStatusLoading: "Carregando…",
+  remoteConfigRegistryRevisionLabel: "Revisão do registro",
+  remoteConfigLastCheckLabel: "Última verificação",
+  remoteConfigNeverChecked: "Nunca verificado",
+  remoteConfigNotAvailable: "Indisponível",
+  remoteConfigActivePatchesLabel: "Patches ativos",
+  remoteConfigUsingBuiltin: "As configurações integradas estão em uso",
+  remoteConfigPatchVersionLabel: "Versão do patch",
+  remoteConfigBaseVersionLabel: "Versão da config. integrada",
+  remoteConfigResetBuiltinButton: "Restaurar integrada",
+  remoteConfigResettingButton: "Restaurando…",
+  remoteConfigPrivacyTitle: "Privacidade",
+  remoteConfigPrivacyDesc:
+    "A verificação de atualizações faz apenas solicitações GET a CDNs estáticas e não inclui conversas, dados da conta ou outros dados do usuário.",
+  remoteConfigCheckUpdated:
+    "Novas configurações foram baixadas. Atualize as páginas de IA correspondentes para aplicá-las.",
+  remoteConfigCheckUpToDate: "As configurações dos adaptadores estão atualizadas.",
+  remoteConfigCheckFailed: "Falha ao verificar atualizações: {error}",
+  remoteConfigStateFailed: "Não foi possível carregar o estado das atualizações: {error}",
+  remoteConfigResetSuccess: "{site} foi restaurado para a configuração integrada.",
+  remoteConfigResetFailed: "Falha ao restaurar: {error}",
+  remoteConfigResetUnavailable: "Não há configuração ativa para restaurar.",
+
   discordCommunity: "Comunidade Discord",
   discordDesc:
     "Junte-se à nossa comunidade para conversar com outros usuários, fornecer feedback e receber as últimas atualizações",

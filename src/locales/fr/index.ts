@@ -1688,6 +1688,42 @@ Donnez le code puis un résumé des améliorations.`,
   "featureTip-notifications-desc":
     "Notification bureau quand l’IA termine — ne manquez aucune réponse",
   "featureTip-notifications-path": "Fonctions → Alertes → Notification de Bureau",
+  // Mises à jour de configuration des adaptateurs
+  remoteConfigTab: "Mises à jour",
+  remoteConfigSettingsTitle: "Mises à jour de configuration des adaptateurs",
+  remoteConfigSettingsDesc:
+    "Gérer les mises à jour automatiques, l'état des versions et la restauration locale des configurations de sites",
+  remoteConfigAutoUpdateLabel: "Mettre à jour automatiquement les configurations des adaptateurs",
+  remoteConfigAutoUpdateDesc:
+    "Activé par défaut. L'extension vérifie les CDN statiques au maximum une fois toutes les 24 heures.",
+  remoteConfigCheckNowLabel: "Rechercher des mises à jour maintenant",
+  remoteConfigCheckNowDesc:
+    "La vérification manuelle reste disponible lorsque les mises à jour automatiques sont désactivées.",
+  remoteConfigCheckNowButton: "Vérifier maintenant",
+  remoteConfigCheckingButton: "Vérification…",
+  remoteConfigStatusLoading: "Chargement…",
+  remoteConfigRegistryRevisionLabel: "Révision du registre",
+  remoteConfigLastCheckLabel: "Dernière vérification",
+  remoteConfigNeverChecked: "Jamais vérifié",
+  remoteConfigNotAvailable: "Indisponible",
+  remoteConfigActivePatchesLabel: "Correctifs actifs",
+  remoteConfigUsingBuiltin: "Les configurations intégrées sont actuellement utilisées",
+  remoteConfigPatchVersionLabel: "Version du correctif",
+  remoteConfigBaseVersionLabel: "Version de config. intégrée",
+  remoteConfigResetBuiltinButton: "Restaurer l'intégrée",
+  remoteConfigResettingButton: "Restauration…",
+  remoteConfigPrivacyTitle: "Confidentialité",
+  remoteConfigPrivacyDesc:
+    "La vérification des mises à jour effectue uniquement des requêtes GET vers des CDN statiques et n'inclut ni conversations, ni informations de compte, ni autres données utilisateur.",
+  remoteConfigCheckUpdated:
+    "De nouvelles configurations ont été téléchargées. Actualisez les pages IA correspondantes pour les appliquer.",
+  remoteConfigCheckUpToDate: "Les configurations des adaptateurs sont à jour.",
+  remoteConfigCheckFailed: "Échec de la vérification des mises à jour : {error}",
+  remoteConfigStateFailed: "Impossible de charger l'état des mises à jour : {error}",
+  remoteConfigResetSuccess: "{site} a été restauré à sa configuration intégrée.",
+  remoteConfigResetFailed: "Échec de la restauration : {error}",
+  remoteConfigResetUnavailable: "Aucune configuration active ne peut être restaurée.",
+
   discordCommunity: "Communauté Discord",
   discordDesc:
     "Rejoignez notre communauté pour discuter avec d'autres utilisateurs, donner votre avis et obtenir les dernières nouvelles",

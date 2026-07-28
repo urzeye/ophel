@@ -1678,6 +1678,42 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   "featureTip-notifications-desc":
     "Desktop-Benachrichtigung wenn KI fertig ist — keine Antwort verpassen",
   "featureTip-notifications-path": "Funktionen → Hinweise → Desktop-Benachrichtigung",
+  // Aktualisierungen der Adapterkonfiguration
+  remoteConfigTab: "Konfig.-Updates",
+  remoteConfigSettingsTitle: "Aktualisierungen der Adapterkonfiguration",
+  remoteConfigSettingsDesc:
+    "Automatische Updates, Versionsstatus und lokale Rücksetzung von Website-Konfigurationen verwalten",
+  remoteConfigAutoUpdateLabel: "Adapterkonfigurationen automatisch aktualisieren",
+  remoteConfigAutoUpdateDesc:
+    "Standardmäßig aktiviert. Die Erweiterung prüft statische CDNs höchstens einmal alle 24 Stunden.",
+  remoteConfigCheckNowLabel: "Jetzt nach Updates suchen",
+  remoteConfigCheckNowDesc:
+    "Die manuelle Suche bleibt verfügbar, wenn automatische Updates deaktiviert sind.",
+  remoteConfigCheckNowButton: "Jetzt prüfen",
+  remoteConfigCheckingButton: "Wird geprüft…",
+  remoteConfigStatusLoading: "Wird geladen…",
+  remoteConfigRegistryRevisionLabel: "Registry-Revision",
+  remoteConfigLastCheckLabel: "Zuletzt geprüft",
+  remoteConfigNeverChecked: "Noch nie geprüft",
+  remoteConfigNotAvailable: "Nicht verfügbar",
+  remoteConfigActivePatchesLabel: "Aktive Patches",
+  remoteConfigUsingBuiltin: "Derzeit werden die integrierten Konfigurationen verwendet",
+  remoteConfigPatchVersionLabel: "Patch-Version",
+  remoteConfigBaseVersionLabel: "Version der integrierten Konfiguration",
+  remoteConfigResetBuiltinButton: "Auf integriert zurücksetzen",
+  remoteConfigResettingButton: "Wird zurückgesetzt…",
+  remoteConfigPrivacyTitle: "Datenschutz",
+  remoteConfigPrivacyDesc:
+    "Die Update-Prüfung sendet nur GET-Anfragen an statische CDNs und enthält keine Unterhaltungen, Kontodaten oder andere Nutzerdaten.",
+  remoteConfigCheckUpdated:
+    "Neue Adapterkonfigurationen wurden heruntergeladen. Laden Sie die passenden AI-Seiten neu, um sie anzuwenden.",
+  remoteConfigCheckUpToDate: "Ihre Adapterkonfigurationen sind aktuell.",
+  remoteConfigCheckFailed: "Update-Prüfung fehlgeschlagen: {error}",
+  remoteConfigStateFailed: "Status der Konfigurationsupdates konnte nicht geladen werden: {error}",
+  remoteConfigResetSuccess: "{site} wurde auf die integrierte Konfiguration zurückgesetzt.",
+  remoteConfigResetFailed: "Zurücksetzen fehlgeschlagen: {error}",
+  remoteConfigResetUnavailable: "Es gibt keine aktive Konfiguration zum Zurücksetzen.",
+
   discordCommunity: "Discord-Community",
   discordDesc:
     "Treten Sie unserer Community bei, um sich mit anderen Nutzern auszutauschen, Feedback zu geben und die neuesten Updates zu erhalten",

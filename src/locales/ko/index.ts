@@ -1657,6 +1657,41 @@ export const ko = {
   "featureTip-notifications-title": "생성 완료 알림",
   "featureTip-notifications-desc": "AI 완료 시 데스크탑 알림 — 응답을 놓치지 마세요",
   "featureTip-notifications-path": "기능 → 알림 → 데스크탑 알림",
+  // 어댑터 구성 업데이트
+  remoteConfigTab: "구성 업데이트",
+  remoteConfigSettingsTitle: "어댑터 구성 업데이트",
+  remoteConfigSettingsDesc:
+    "사이트 어댑터 구성의 자동 업데이트, 버전 상태 및 로컬 복원을 관리합니다",
+  remoteConfigAutoUpdateLabel: "어댑터 구성 자동 업데이트",
+  remoteConfigAutoUpdateDesc:
+    "기본적으로 켜져 있습니다. 확장 프로그램은 정적 CDN을 최대 24시간에 한 번 확인합니다.",
+  remoteConfigCheckNowLabel: "지금 업데이트 확인",
+  remoteConfigCheckNowDesc: "자동 업데이트가 꺼져 있어도 수동 확인은 사용할 수 있습니다.",
+  remoteConfigCheckNowButton: "지금 확인",
+  remoteConfigCheckingButton: "확인 중…",
+  remoteConfigStatusLoading: "불러오는 중…",
+  remoteConfigRegistryRevisionLabel: "레지스트리 리비전",
+  remoteConfigLastCheckLabel: "마지막 확인",
+  remoteConfigNeverChecked: "확인한 적 없음",
+  remoteConfigNotAvailable: "사용할 수 없음",
+  remoteConfigActivePatchesLabel: "활성 패치",
+  remoteConfigUsingBuiltin: "현재 기본 제공 구성을 사용 중입니다",
+  remoteConfigPatchVersionLabel: "패치 버전",
+  remoteConfigBaseVersionLabel: "기본 제공 구성 버전",
+  remoteConfigResetBuiltinButton: "기본 제공 구성으로 복원",
+  remoteConfigResettingButton: "복원 중…",
+  remoteConfigPrivacyTitle: "개인정보 보호",
+  remoteConfigPrivacyDesc:
+    "업데이트 확인은 정적 CDN에 GET 요청만 보내며 대화 내용, 계정 정보 또는 기타 사용자 데이터를 포함하지 않습니다.",
+  remoteConfigCheckUpdated:
+    "새 어댑터 구성을 다운로드했습니다. 해당 AI 페이지를 새로고침하면 적용됩니다.",
+  remoteConfigCheckUpToDate: "어댑터 구성이 최신 상태입니다.",
+  remoteConfigCheckFailed: "업데이트 확인 실패: {error}",
+  remoteConfigStateFailed: "구성 업데이트 상태를 불러오지 못했습니다: {error}",
+  remoteConfigResetSuccess: "{site}을(를) 기본 제공 구성으로 복원했습니다.",
+  remoteConfigResetFailed: "복원 실패: {error}",
+  remoteConfigResetUnavailable: "복원할 활성 구성이 없습니다.",
+
   discordCommunity: "Discord 커뮤니티",
   discordDesc:
     "커뮤니티에 참여하여 다른 사용자와 소통하고, 피드백을 제공하고, 최신 소식을 받아보세요",

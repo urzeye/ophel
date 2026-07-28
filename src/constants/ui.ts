@@ -155,6 +155,7 @@ export const SETTING_ID_ROUTE_MAP: Record<string, SettingRoute> = {
 } as const
 
 const SETTING_ID_ROUTE_RULES: SettingRouteRule[] = [
+  { prefix: "remote-config-", route: { page: NAV_IDS.GENERAL, subTab: "configUpdates" } },
   { prefix: "panel-", route: { page: NAV_IDS.GENERAL, subTab: "panel" } },
   { prefix: "quick-buttons-", route: { page: NAV_IDS.GENERAL, subTab: "shortcuts" } },
   { prefix: "tools-menu-", route: { page: NAV_IDS.GENERAL, subTab: "toolsMenu" } },
@@ -227,6 +228,7 @@ const SETTING_ID_ROUTE_RULES: SettingRouteRule[] = [
 ]
 
 export const SETTING_ID_ALIASES: Record<string, string> = {
+  "remoteConfig.autoUpdate": "remote-config-auto-update",
   "general.panel.panelMode": "panel-mode",
   "general.panel.edgeTriggerMode": "panel-edge-trigger-mode",
   "general.panel.defaultPosition": "panel-default-position",
@@ -345,6 +347,21 @@ const SHORTCUT_SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = Object.entries(SHOR
 )
 
 export const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
+  {
+    settingId: "remote-config-auto-update",
+    title: "自动更新适配配置",
+    keywords: ["remote config", "auto update", "adapter", "自动更新", "适配配置", "热修复"],
+  },
+  {
+    settingId: "remote-config-check-now",
+    title: "立即检查适配配置更新",
+    keywords: ["remote config", "check now", "manual update", "立即检查", "手动更新"],
+  },
+  {
+    settingId: "remote-config-active-patches",
+    title: "重置适配配置",
+    keywords: ["remote config", "patch", "reset", "built in", "补丁", "重置", "内置配置"],
+  },
   {
     settingId: "panel-mode",
     title: "面板模式",

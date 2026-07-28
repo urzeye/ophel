@@ -1748,6 +1748,42 @@ export const it = {
   "featureTip-notifications-desc":
     "Ricevi una notifica sul desktop quando l'intelligenza artificiale termina: non perdere mai una risposta",
   "featureTip-notifications-path": "Funzionalità → Avvisi → Notifica sul desktop",
+  // Aggiornamenti della configurazione degli adattatori
+  remoteConfigTab: "Aggiornamenti config.",
+  remoteConfigSettingsTitle: "Aggiornamenti della configurazione degli adattatori",
+  remoteConfigSettingsDesc:
+    "Gestisci aggiornamenti automatici, stato delle versioni e ripristino locale delle configurazioni dei siti",
+  remoteConfigAutoUpdateLabel: "Aggiorna automaticamente le configurazioni degli adattatori",
+  remoteConfigAutoUpdateDesc:
+    "Attivo per impostazione predefinita. L'estensione controlla i CDN statici al massimo ogni 24 ore.",
+  remoteConfigCheckNowLabel: "Controlla ora gli aggiornamenti",
+  remoteConfigCheckNowDesc:
+    "Il controllo manuale resta disponibile quando gli aggiornamenti automatici sono disattivati.",
+  remoteConfigCheckNowButton: "Controlla ora",
+  remoteConfigCheckingButton: "Controllo…",
+  remoteConfigStatusLoading: "Caricamento…",
+  remoteConfigRegistryRevisionLabel: "Revisione del registro",
+  remoteConfigLastCheckLabel: "Ultimo controllo",
+  remoteConfigNeverChecked: "Mai controllato",
+  remoteConfigNotAvailable: "Non disponibile",
+  remoteConfigActivePatchesLabel: "Patch attive",
+  remoteConfigUsingBuiltin: "Sono attualmente in uso le configurazioni integrate",
+  remoteConfigPatchVersionLabel: "Versione patch",
+  remoteConfigBaseVersionLabel: "Versione config. integrata",
+  remoteConfigResetBuiltinButton: "Ripristina integrata",
+  remoteConfigResettingButton: "Ripristino…",
+  remoteConfigPrivacyTitle: "Privacy",
+  remoteConfigPrivacyDesc:
+    "Il controllo degli aggiornamenti effettua solo richieste GET a CDN statici e non include conversazioni, dati dell'account o altri dati utente.",
+  remoteConfigCheckUpdated:
+    "Sono state scaricate nuove configurazioni. Aggiorna le pagine AI corrispondenti per applicarle.",
+  remoteConfigCheckUpToDate: "Le configurazioni degli adattatori sono aggiornate.",
+  remoteConfigCheckFailed: "Controllo aggiornamenti non riuscito: {error}",
+  remoteConfigStateFailed: "Impossibile caricare lo stato degli aggiornamenti: {error}",
+  remoteConfigResetSuccess: "{site} è stato ripristinato alla configurazione integrata.",
+  remoteConfigResetFailed: "Ripristino non riuscito: {error}",
+  remoteConfigResetUnavailable: "Non c'è alcuna configurazione attiva da ripristinare.",
+
   discordCommunity: "Comunità Discord",
   discordDesc:
     "Unisciti alla nostra community per chattare con altri utenti, fornire feedback e ricevere gli ultimi aggiornamenti",

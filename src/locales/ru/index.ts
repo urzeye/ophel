@@ -1669,6 +1669,42 @@ export const ru = {
   "featureTip-notifications-desc":
     "Получайте уведомление на рабочем столе, когда ИИ закончит ответ — ничего не пропустите",
   "featureTip-notifications-path": "Функции → Оповещения → Уведомление на раб. стол",
+  // Обновления конфигурации адаптеров
+  remoteConfigTab: "Обновления",
+  remoteConfigSettingsTitle: "Обновления конфигурации адаптеров",
+  remoteConfigSettingsDesc:
+    "Управление автоматическими обновлениями, версиями и локальным возвратом конфигураций сайтов",
+  remoteConfigAutoUpdateLabel: "Автоматически обновлять конфигурации адаптеров",
+  remoteConfigAutoUpdateDesc:
+    "Включено по умолчанию. Расширение проверяет статические CDN не чаще одного раза в 24 часа.",
+  remoteConfigCheckNowLabel: "Проверить обновления сейчас",
+  remoteConfigCheckNowDesc:
+    "Ручная проверка доступна даже при отключённых автоматических обновлениях.",
+  remoteConfigCheckNowButton: "Проверить сейчас",
+  remoteConfigCheckingButton: "Проверка…",
+  remoteConfigStatusLoading: "Загрузка…",
+  remoteConfigRegistryRevisionLabel: "Ревизия реестра",
+  remoteConfigLastCheckLabel: "Последняя проверка",
+  remoteConfigNeverChecked: "Ещё не проверялось",
+  remoteConfigNotAvailable: "Недоступно",
+  remoteConfigActivePatchesLabel: "Активные патчи",
+  remoteConfigUsingBuiltin: "Сейчас используются встроенные конфигурации",
+  remoteConfigPatchVersionLabel: "Версия патча",
+  remoteConfigBaseVersionLabel: "Версия встроенной конфигурации",
+  remoteConfigResetBuiltinButton: "Вернуть встроенную",
+  remoteConfigResettingButton: "Возврат…",
+  remoteConfigPrivacyTitle: "Конфиденциальность",
+  remoteConfigPrivacyDesc:
+    "Проверка обновлений выполняет только GET-запросы к статическим CDN и не передаёт переписки, данные аккаунта или другие пользовательские данные.",
+  remoteConfigCheckUpdated:
+    "Новые конфигурации загружены. Обновите соответствующие страницы AI, чтобы применить их.",
+  remoteConfigCheckUpToDate: "Конфигурации адаптеров актуальны.",
+  remoteConfigCheckFailed: "Не удалось проверить обновления: {error}",
+  remoteConfigStateFailed: "Не удалось загрузить состояние обновлений: {error}",
+  remoteConfigResetSuccess: "Для {site} восстановлена встроенная конфигурация.",
+  remoteConfigResetFailed: "Не удалось выполнить возврат: {error}",
+  remoteConfigResetUnavailable: "Нет активной конфигурации для возврата.",
+
   discordCommunity: "Сообщество Discord",
   discordDesc:
     "Присоединяйтесь к нашему сообществу, чтобы общаться с другими пользователями, оставлять отзывы и получать последние новости",

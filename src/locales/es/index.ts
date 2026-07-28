@@ -1671,6 +1671,42 @@ Dame el código y luego un resumen de mejoras.`,
   "featureTip-notifications-desc":
     "Notificación de escritorio cuando la IA termina — no te pierdas respuestas",
   "featureTip-notifications-path": "Funciones → Avisos → Notificación Escritorio",
+  // Actualizaciones de configuración de adaptadores
+  remoteConfigTab: "Actualizaciones",
+  remoteConfigSettingsTitle: "Actualizaciones de configuración de adaptadores",
+  remoteConfigSettingsDesc:
+    "Gestiona las actualizaciones automáticas, el estado de versión y la restauración local de las configuraciones de sitios",
+  remoteConfigAutoUpdateLabel: "Actualizar automáticamente las configuraciones de adaptadores",
+  remoteConfigAutoUpdateDesc:
+    "Activado de forma predeterminada. La extensión consulta CDN estáticas como máximo una vez cada 24 horas.",
+  remoteConfigCheckNowLabel: "Buscar actualizaciones ahora",
+  remoteConfigCheckNowDesc:
+    "La búsqueda manual sigue disponible cuando las actualizaciones automáticas están desactivadas.",
+  remoteConfigCheckNowButton: "Buscar ahora",
+  remoteConfigCheckingButton: "Buscando…",
+  remoteConfigStatusLoading: "Cargando…",
+  remoteConfigRegistryRevisionLabel: "Revisión del registro",
+  remoteConfigLastCheckLabel: "Última búsqueda",
+  remoteConfigNeverChecked: "Nunca comprobado",
+  remoteConfigNotAvailable: "No disponible",
+  remoteConfigActivePatchesLabel: "Parches activos",
+  remoteConfigUsingBuiltin: "Actualmente se usan las configuraciones integradas",
+  remoteConfigPatchVersionLabel: "Versión del parche",
+  remoteConfigBaseVersionLabel: "Versión de config. integrada",
+  remoteConfigResetBuiltinButton: "Restaurar integrada",
+  remoteConfigResettingButton: "Restaurando…",
+  remoteConfigPrivacyTitle: "Privacidad",
+  remoteConfigPrivacyDesc:
+    "La búsqueda de actualizaciones solo realiza solicitudes GET a CDN estáticas y no incluye conversaciones, datos de cuenta ni otros datos del usuario.",
+  remoteConfigCheckUpdated:
+    "Se descargaron nuevas configuraciones. Actualiza las páginas de IA correspondientes para aplicarlas.",
+  remoteConfigCheckUpToDate: "Las configuraciones de adaptadores están actualizadas.",
+  remoteConfigCheckFailed: "Error al buscar actualizaciones: {error}",
+  remoteConfigStateFailed: "No se pudo cargar el estado de las actualizaciones: {error}",
+  remoteConfigResetSuccess: "{site} se restauró a su configuración integrada.",
+  remoteConfigResetFailed: "Error al restaurar: {error}",
+  remoteConfigResetUnavailable: "No hay ninguna configuración activa para restaurar.",
+
   discordCommunity: "Comunidad de Discord",
   discordDesc:
     "Únete a nuestra comunidad para hablar con otros usuarios, enviar comentarios y obtener las últimas noticias",

@@ -1684,6 +1684,41 @@ Please output the optimized code block directly, followed by a brief summary of 
   "featureTip-notifications-desc":
     "Get a desktop notification when AI finishes — never miss a response",
   "featureTip-notifications-path": "Features → Alerts → Desktop Notification",
+  // Adapter configuration updates
+  remoteConfigTab: "Config Updates",
+  remoteConfigSettingsTitle: "Adapter Configuration Updates",
+  remoteConfigSettingsDesc:
+    "Manage automatic updates, version status, and local rollback for site adapter configurations",
+  remoteConfigAutoUpdateLabel: "Automatically update adapter configurations",
+  remoteConfigAutoUpdateDesc:
+    "Enabled by default. The extension checks static CDNs at most once every 24 hours.",
+  remoteConfigCheckNowLabel: "Check for updates now",
+  remoteConfigCheckNowDesc: "Manual checks remain available when automatic updates are off.",
+  remoteConfigCheckNowButton: "Check now",
+  remoteConfigCheckingButton: "Checking…",
+  remoteConfigStatusLoading: "Loading…",
+  remoteConfigRegistryRevisionLabel: "Registry revision",
+  remoteConfigLastCheckLabel: "Last checked",
+  remoteConfigNeverChecked: "Never checked",
+  remoteConfigNotAvailable: "Not available",
+  remoteConfigActivePatchesLabel: "Active patches",
+  remoteConfigUsingBuiltin: "Built-in configurations are currently in use",
+  remoteConfigPatchVersionLabel: "Patch version",
+  remoteConfigBaseVersionLabel: "Built-in config version",
+  remoteConfigResetBuiltinButton: "Reset to built-in",
+  remoteConfigResettingButton: "Resetting…",
+  remoteConfigPrivacyTitle: "Privacy",
+  remoteConfigPrivacyDesc:
+    "Update checks only make GET requests to static CDNs. They do not include conversations, account details, or other user data.",
+  remoteConfigCheckUpdated:
+    "New adapter configurations were downloaded. Refresh the matching AI pages to apply them.",
+  remoteConfigCheckUpToDate: "Your adapter configurations are up to date.",
+  remoteConfigCheckFailed: "Update check failed: {error}",
+  remoteConfigStateFailed: "Could not load configuration update status: {error}",
+  remoteConfigResetSuccess: "{site} was reset to its built-in configuration.",
+  remoteConfigResetFailed: "Reset failed: {error}",
+  remoteConfigResetUnavailable: "There is no active configuration to reset.",
+
   discordCommunity: "Discord Community",
   discordDesc:
     "Join our community to chat with other users, provide feedback, and get the latest updates",

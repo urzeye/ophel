@@ -620,6 +620,18 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
+@media (max-width: 640px) {
+  .settings-tab-group {
+    flex-wrap: wrap;
+  }
+
+  .settings-tab-item {
+    flex: 1 1 120px;
+    min-width: 0;
+    padding-inline: 10px;
+  }
+}
+
 /* ==================== 设置卡片 ==================== */
 
 .settings-card {
@@ -754,6 +766,208 @@
 
 .settings-row.disabled.disabled-clickable .settings-row-control {
   pointer-events: none;
+}
+
+/* ==================== 适配配置更新 ==================== */
+
+.remote-config-settings-card {
+  overflow: hidden;
+}
+
+.remote-config-action-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 42%, var(--gh-input-border, #d1d5db));
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--gh-primary, #4285f4) 12%, transparent);
+}
+
+.remote-config-action-button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.remote-config-action-button:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 42%, transparent);
+  outline-offset: 2px;
+}
+
+.remote-config-refresh-icon {
+  flex-shrink: 0;
+}
+
+.remote-config-refresh-icon.spinning {
+  animation: remote-config-spin 0.9s linear infinite;
+}
+
+@keyframes remote-config-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.remote-config-feedback {
+  margin: 4px 0 16px;
+  padding: 10px 12px;
+  border: 1px solid var(--gh-card-border, #e5e7eb);
+  border-radius: 10px;
+  background: var(--gh-bg-secondary, #f9fafb);
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.remote-config-feedback.success {
+  border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 30%, transparent);
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 8%, var(--gh-card-bg, #ffffff));
+  color: var(--gh-primary, #4285f4);
+}
+
+.remote-config-feedback.error {
+  border-color: color-mix(in srgb, var(--gh-danger, #ef4444) 32%, transparent);
+  background: color-mix(in srgb, var(--gh-danger, #ef4444) 7%, var(--gh-card-bg, #ffffff));
+  color: var(--gh-text-danger, #ef4444);
+}
+
+.remote-config-metadata {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 4px 0 18px;
+}
+
+.remote-config-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--gh-bg-secondary, #f9fafb);
+}
+
+.remote-config-meta-item span {
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 11px;
+}
+
+.remote-config-meta-item strong {
+  color: var(--gh-text, #374151);
+  font-size: 13px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.remote-config-patches {
+  margin-top: 4px;
+}
+
+.remote-config-patches h3 {
+  margin: 0 0 10px;
+  color: var(--gh-text, #374151);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.remote-config-empty-state {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--gh-bg-secondary, #f9fafb);
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 12px;
+}
+
+.remote-config-empty-state > span:first-child {
+  flex-shrink: 0;
+}
+
+.remote-config-patch-list {
+  border-top: 1px solid var(--gh-card-border, #e5e7eb);
+}
+
+.remote-config-patch-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--gh-card-border, #e5e7eb);
+}
+
+.remote-config-patch-info {
+  min-width: 0;
+}
+
+.remote-config-patch-info > strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--gh-text, #374151);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.remote-config-patch-versions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 11px;
+}
+
+.remote-config-privacy-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 20%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 5%, var(--gh-card-bg, #ffffff));
+  color: var(--gh-text-secondary, #6b7280);
+}
+
+.remote-config-privacy-note > span:first-child {
+  flex-shrink: 0;
+  color: var(--gh-primary, #4285f4);
+}
+
+.remote-config-privacy-note strong {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--gh-text, #374151);
+  font-size: 12px;
+}
+
+.remote-config-privacy-note p {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+  .remote-config-metadata {
+    grid-template-columns: 1fr;
+  }
+
+  .remote-config-patch-item {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .remote-config-action-button,
+  .remote-config-refresh-icon {
+    transition: none !important;
+    animation: none !important;
+  }
+
+  .remote-config-action-button:hover:not(:disabled),
+  .remote-config-action-button:active:not(:disabled) {
+    transform: none;
+  }
 }
 
 .settings-panel-mode-accordion,
