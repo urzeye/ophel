@@ -2797,7 +2797,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  border: 1px solid transparent;
   border-radius: 8px;
+  background: var(--gh-hover, #f3f4f6);
+  color: var(--gh-text-secondary, #4b5563);
   line-height: 1;
   cursor: pointer;
 }

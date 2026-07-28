@@ -76,7 +76,12 @@ const PROMPT_EDITOR_STYLES = `
 }
 
 .gh-prompt-platform-picker-panel {
-  margin-top: 8px;
+  position: fixed;
+  z-index: 2147483647;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   padding: 10px;
   border: 1px solid var(--gh-border, #d1d5db);
   border-radius: 10px;
@@ -148,10 +153,12 @@ const PROMPT_EDITOR_STYLES = `
 }
 
 .gh-prompt-platform-options {
+  min-height: 0;
+  flex: 1;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
   gap: 6px;
-  max-height: 210px;
   overflow-y: auto;
   overscroll-behavior: contain;
 }
@@ -277,6 +284,18 @@ interface PromptEditorDialogProps {
   onSave: () => void
 }
 
+interface PlatformPickerPosition {
+  top: number
+  left: number
+  width: number
+  height: number
+  placement: "top" | "bottom"
+}
+
+const PLATFORM_PICKER_GAP = 8
+const PLATFORM_PICKER_VIEWPORT_PADDING = 12
+const PLATFORM_PICKER_PREFERRED_HEIGHT = 320
+
 export const PromptEditorDialog: React.FC<PromptEditorDialogProps> = ({
   isOpen,
   editingPrompt,
@@ -290,16 +309,105 @@ export const PromptEditorDialog: React.FC<PromptEditorDialogProps> = ({
 }) => {
   const [isPlatformPickerOpen, setIsPlatformPickerOpen] = React.useState(false)
   const [platformSearchQuery, setPlatformSearchQuery] = React.useState("")
+  const [platformPickerPosition, setPlatformPickerPosition] =
+    React.useState<PlatformPickerPosition | null>(null)
   const platformPickerRef = React.useRef<HTMLDivElement>(null)
+  const platformPickerPanelRef = React.useRef<HTMLDivElement>(null)
   const platformPickerTriggerRef = React.useRef<HTMLButtonElement>(null)
   const platformSearchInputRef = React.useRef<HTMLInputElement>(null)
+
+  const updatePlatformPickerPosition = React.useCallback(() => {
+    const trigger = platformPickerTriggerRef.current
+    if (!trigger) return
+
+    const triggerRect = trigger.getBoundingClientRect()
+    const visualViewport = window.visualViewport
+    const viewportTop = visualViewport?.offsetTop ?? 0
+    const viewportLeft = visualViewport?.offsetLeft ?? 0
+    const viewportWidth = visualViewport?.width ?? window.innerWidth
+    const viewportHeight = visualViewport?.height ?? window.innerHeight
+    const viewportRight = viewportLeft + viewportWidth
+    const viewportBottom = viewportTop + viewportHeight
+    const availableWidth = Math.max(0, viewportWidth - PLATFORM_PICKER_VIEWPORT_PADDING * 2)
+    const width = Math.min(triggerRect.width, availableWidth)
+    const left = Math.min(
+      Math.max(triggerRect.left, viewportLeft + PLATFORM_PICKER_VIEWPORT_PADDING),
+      viewportRight - width - PLATFORM_PICKER_VIEWPORT_PADDING,
+    )
+    const spaceBelow = Math.max(
+      0,
+      viewportBottom - triggerRect.bottom - PLATFORM_PICKER_GAP - PLATFORM_PICKER_VIEWPORT_PADDING,
+    )
+    const spaceAbove = Math.max(
+      0,
+      triggerRect.top - viewportTop - PLATFORM_PICKER_GAP - PLATFORM_PICKER_VIEWPORT_PADDING,
+    )
+    const placement =
+      spaceBelow >= PLATFORM_PICKER_PREFERRED_HEIGHT || spaceBelow >= spaceAbove ? "bottom" : "top"
+    const availableHeight = placement === "bottom" ? spaceBelow : spaceAbove
+    const height = Math.min(PLATFORM_PICKER_PREFERRED_HEIGHT, availableHeight)
+    const rawTop =
+      placement === "bottom"
+        ? triggerRect.bottom + PLATFORM_PICKER_GAP
+        : triggerRect.top - PLATFORM_PICKER_GAP - height
+    const top = Math.min(
+      Math.max(rawTop, viewportTop + PLATFORM_PICKER_VIEWPORT_PADDING),
+      viewportBottom - height - PLATFORM_PICKER_VIEWPORT_PADDING,
+    )
+    const nextPosition: PlatformPickerPosition = {
+      top: Math.round(top),
+      left: Math.round(left),
+      width: Math.round(width),
+      height: Math.round(height),
+      placement,
+    }
+
+    setPlatformPickerPosition((current) =>
+      current &&
+      current.top === nextPosition.top &&
+      current.left === nextPosition.left &&
+      current.width === nextPosition.width &&
+      current.height === nextPosition.height &&
+      current.placement === nextPosition.placement
+        ? current
+        : nextPosition,
+    )
+  }, [])
 
   React.useEffect(() => {
     if (!isOpen) {
       setIsPlatformPickerOpen(false)
       setPlatformSearchQuery("")
+      setPlatformPickerPosition(null)
     }
   }, [isOpen])
+
+  React.useLayoutEffect(() => {
+    if (!isPlatformPickerOpen) {
+      setPlatformPickerPosition(null)
+      return
+    }
+
+    let positionFrame = 0
+    const schedulePositionUpdate = () => {
+      window.cancelAnimationFrame(positionFrame)
+      positionFrame = window.requestAnimationFrame(updatePlatformPickerPosition)
+    }
+
+    updatePlatformPickerPosition()
+    window.addEventListener("resize", schedulePositionUpdate)
+    window.addEventListener("scroll", schedulePositionUpdate, true)
+    window.visualViewport?.addEventListener("resize", schedulePositionUpdate)
+    window.visualViewport?.addEventListener("scroll", schedulePositionUpdate)
+
+    return () => {
+      window.cancelAnimationFrame(positionFrame)
+      window.removeEventListener("resize", schedulePositionUpdate)
+      window.removeEventListener("scroll", schedulePositionUpdate, true)
+      window.visualViewport?.removeEventListener("resize", schedulePositionUpdate)
+      window.visualViewport?.removeEventListener("scroll", schedulePositionUpdate)
+    }
+  }, [isPlatformPickerOpen, updatePlatformPickerPosition])
 
   React.useEffect(() => {
     if (!isPlatformPickerOpen) return
@@ -309,6 +417,7 @@ export const PromptEditorDialog: React.FC<PromptEditorDialogProps> = ({
     })
     const handlePointerDown = (event: PointerEvent) => {
       if (platformPickerRef.current?.contains(event.target as Node)) return
+      if (platformPickerPanelRef.current?.contains(event.target as Node)) return
       setIsPlatformPickerOpen(false)
       setPlatformSearchQuery("")
     }
@@ -535,68 +644,81 @@ export const PromptEditorDialog: React.FC<PromptEditorDialogProps> = ({
               />
             </button>
 
-            {isPlatformPickerOpen && (
-              <div
-                id="gh-prompt-platform-picker-panel"
-                className="gh-prompt-platform-picker-panel"
-                role="group"
-                aria-labelledby="gh-prompt-platform-label">
-                <div className="gh-prompt-platform-search">
-                  <SearchIcon size={15} aria-hidden="true" />
-                  <input
-                    ref={platformSearchInputRef}
-                    type="search"
-                    value={platformSearchQuery}
-                    onChange={(event) => setPlatformSearchQuery(event.target.value)}
-                    placeholder={t("promptPlatformSearch")}
-                    aria-label={t("promptPlatformSearch")}
-                    autoComplete="off"
-                    spellCheck={false}
-                  />
-                </div>
-                <button
-                  type="button"
-                  className="gh-prompt-platform-all"
-                  aria-pressed={selectedPlatformIds.length === 0}
-                  onClick={() => {
-                    setEditingPrompt({ ...editingPrompt, platforms: undefined })
+            {isPlatformPickerOpen &&
+              platformPickerPosition &&
+              createPortal(
+                <div
+                  ref={platformPickerPanelRef}
+                  id="gh-prompt-platform-picker-panel"
+                  className="gh-prompt-platform-picker-panel gh-interactive"
+                  {...OPHEL_HOVER_WIDTH_RETAIN_LAYER_PROPS}
+                  role="group"
+                  aria-labelledby="gh-prompt-platform-label"
+                  data-placement={platformPickerPosition.placement}
+                  style={{
+                    top: `${platformPickerPosition.top}px`,
+                    left: `${platformPickerPosition.left}px`,
+                    width: `${platformPickerPosition.width}px`,
+                    height: `${platformPickerPosition.height}px`,
+                    pointerEvents: "auto",
                   }}>
-                  <GlobeIcon size={16} />
-                  <span>{t("promptPlatformAll")}</span>
-                  {selectedPlatformIds.length === 0 && <CheckIcon size={15} />}
-                </button>
+                  <div className="gh-prompt-platform-search">
+                    <SearchIcon size={15} aria-hidden="true" />
+                    <input
+                      ref={platformSearchInputRef}
+                      type="search"
+                      value={platformSearchQuery}
+                      onChange={(event) => setPlatformSearchQuery(event.target.value)}
+                      placeholder={t("promptPlatformSearch")}
+                      aria-label={t("promptPlatformSearch")}
+                      autoComplete="off"
+                      spellCheck={false}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    className="gh-prompt-platform-all"
+                    aria-pressed={selectedPlatformIds.length === 0}
+                    onClick={() => {
+                      setEditingPrompt({ ...editingPrompt, platforms: undefined })
+                    }}>
+                    <GlobeIcon size={16} />
+                    <span>{t("promptPlatformAll")}</span>
+                    {selectedPlatformIds.length === 0 && <CheckIcon size={15} />}
+                  </button>
 
-                <div className="gh-prompt-platform-options">
-                  {filteredPlatforms.length === 0 ? (
-                    <div className="gh-prompt-platform-empty">{t("promptPlatformNoMatches")}</div>
-                  ) : (
-                    filteredPlatforms.map((platform) => {
-                      const selected = selectedPlatformIds.includes(platform.id)
-                      return (
-                        <button
-                          type="button"
-                          key={platform.id}
-                          className="gh-prompt-platform-option"
-                          aria-pressed={selected}
-                          onClick={() => {
-                            const next = selected
-                              ? selectedPlatformIds.filter((id) => id !== platform.id)
-                              : [...selectedPlatformIds, platform.id]
-                            setEditingPrompt({
-                              ...editingPrompt,
-                              platforms: next.length > 0 ? next : undefined,
-                            })
-                          }}>
-                          <PlatformIcon name={platform.name} size={16} />
-                          <span>{platform.name}</span>
-                          {selected && <CheckIcon size={15} />}
-                        </button>
-                      )
-                    })
-                  )}
-                </div>
-              </div>
-            )}
+                  <div className="gh-prompt-platform-options">
+                    {filteredPlatforms.length === 0 ? (
+                      <div className="gh-prompt-platform-empty">{t("promptPlatformNoMatches")}</div>
+                    ) : (
+                      filteredPlatforms.map((platform) => {
+                        const selected = selectedPlatformIds.includes(platform.id)
+                        return (
+                          <button
+                            type="button"
+                            key={platform.id}
+                            className="gh-prompt-platform-option"
+                            aria-pressed={selected}
+                            onClick={() => {
+                              const next = selected
+                                ? selectedPlatformIds.filter((id) => id !== platform.id)
+                                : [...selectedPlatformIds, platform.id]
+                              setEditingPrompt({
+                                ...editingPrompt,
+                                platforms: next.length > 0 ? next : undefined,
+                              })
+                            }}>
+                            <PlatformIcon name={platform.name} size={16} />
+                            <span>{platform.name}</span>
+                            {selected && <CheckIcon size={15} />}
+                          </button>
+                        )
+                      })
+                    )}
+                  </div>
+                </div>,
+                document.body,
+              )}
           </div>
         </div>
 

@@ -34,6 +34,7 @@ import { ChainIconPicker } from "~components/ChainIconPicker"
 import { ImportDialog } from "~components/prompts/ImportDialog"
 import { PlatformIcon } from "~components/prompts/PlatformIcon"
 import { PromptEditorDialog } from "~components/prompts/PromptEditorDialog"
+import { PromptPlatformSummary } from "~components/prompts/PromptPlatformSummary"
 import { PromptPreviewModal } from "~components/prompts/PromptPreviewModal"
 import { usePromptDragSort } from "~components/prompts/usePromptDragSort"
 import { VIRTUAL_CATEGORY } from "~constants"
@@ -2925,6 +2926,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
       prompt={previewModal.prompt}
       previewRef={modalPreviewRef}
       onClose={closePreviewModal}
+      currentPlatformId={currentPlatform?.id}
       getCategoryColorIndex={getCategoryColorIndex}
       getResolvedCategoryColor={getResolvedCategoryColor}
     />
@@ -3139,18 +3141,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                   aria-label={platformFilterAccessibleLabel}
                   aria-haspopup="dialog"
                   aria-expanded={platformFilterOpen}
-                  className="gh-prompt-platform-filter-btn"
-                  style={{
-                    background: isCustomPlatformFilter
-                      ? "var(--gh-primary, #4285f4)"
-                      : "var(--gh-hover, #f3f4f6)",
-                    color: isCustomPlatformFilter
-                      ? "var(--gh-text-on-primary, #ffffff)"
-                      : "var(--gh-text-secondary, #4b5563)",
-                    border: isCustomPlatformFilter
-                      ? "1px solid var(--gh-primary, #4285f4)"
-                      : "1px solid transparent",
-                  }}>
+                  className="gh-prompt-platform-filter-btn">
                   {selectedPlatform ? (
                     <PlatformIcon name={selectedPlatform.name} size={16} />
                   ) : (
@@ -3443,17 +3434,31 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                     }}>
                     {p.title}
                   </div>
-                  <span
+                  <div
                     style={{
-                      fontSize: "11px",
-                      padding: "2px 6px",
-                      background: "var(--gh-hover, #f3f4f6)",
-                      borderRadius: "4px",
-                      color: "var(--gh-text-secondary, #6b7280)",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
                       flexShrink: 0,
                     }}>
-                    {p.category || t("uncategorized")}
-                  </span>
+                    <PromptPlatformSummary
+                      platforms={p.platforms}
+                      maxVisible={3}
+                      iconSize={14}
+                      currentPlatformId={currentPlatform?.id}
+                    />
+                    <span
+                      style={{
+                        fontSize: "11px",
+                        padding: "2px 6px",
+                        background: "var(--gh-hover, #f3f4f6)",
+                        borderRadius: "4px",
+                        color: "var(--gh-text-secondary, #6b7280)",
+                        flexShrink: 0,
+                      }}>
+                      {p.category || t("uncategorized")}
+                    </span>
+                  </div>
                 </div>
 
                 {/* 内容预览 */}

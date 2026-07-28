@@ -2,6 +2,7 @@ import React from "react"
 import { createPortal } from "react-dom"
 
 import { ClearIcon } from "~components/icons"
+import { PromptPlatformSummary } from "~components/prompts/PromptPlatformSummary"
 import { OPHEL_HOVER_WIDTH_RETAIN_LAYER_PROPS } from "~utils/dom-toolkit"
 import { showCopySuccess } from "~utils/icons"
 import { t } from "~utils/i18n"
@@ -14,6 +15,7 @@ interface PromptPreviewModalProps {
   prompt: Prompt | null
   previewRef: React.RefObject<HTMLDivElement>
   onClose: () => void
+  currentPlatformId?: string | null
   getCategoryColorIndex: (categoryName: string) => number
   getResolvedCategoryColor: (colorIndex: number) => string
 }
@@ -90,6 +92,7 @@ const PROMPT_PREVIEW_MODAL_STYLES = `
 
 .gh-prompt-preview-title-block {
   min-width: 0;
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 0;
@@ -267,6 +270,7 @@ export const PromptPreviewModal = ({
   prompt,
   previewRef,
   onClose,
+  currentPlatformId,
   getCategoryColorIndex,
   getResolvedCategoryColor,
 }: PromptPreviewModalProps) => {
@@ -305,6 +309,13 @@ export const PromptPreviewModal = ({
                   {categoryLabel}
                 </span>
               </div>
+              <PromptPlatformSummary
+                platforms={prompt.platforms}
+                iconSize={16}
+                currentPlatformId={currentPlatformId}
+                fitAvailableWidth
+                style={{ marginTop: "8px" }}
+              />
             </div>
             <button
               type="button"
