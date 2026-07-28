@@ -1,5 +1,7 @@
 import { resources } from "~locales/resources"
 
+type I18nChangeListener = () => void
+
 // 初始化根据浏览器语言设置
 const getBrowserLang = () => {
   if (typeof navigator === "undefined") return "en"
@@ -18,13 +20,19 @@ const getBrowserLang = () => {
 }
 
 let currentLang: string = getBrowserLang()
+const listeners = new Set<I18nChangeListener>()
+
+export function subscribeI18nChanges(listener: I18nChangeListener): () => void {
+  listeners.add(listener)
+  return () => listeners.delete(listener)
+}
 
 export function setLanguage(lang: string) {
-  if (lang === "auto") {
-    currentLang = getBrowserLang()
-  } else {
-    currentLang = lang
-  }
+  const nextLang = lang === "auto" ? getBrowserLang() : lang
+  if (nextLang === currentLang) return
+
+  currentLang = nextLang
+  listeners.forEach((listener) => listener())
 }
 
 // 获取当前实际生效的语言（用于 UI 高亮显示）

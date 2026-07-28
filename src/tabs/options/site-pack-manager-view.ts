@@ -1,3 +1,4 @@
+import { resolveSitePackDescription, resolveSitePackName } from "~adapters/declarative/localization"
 import type { SitePackManifest } from "~adapters/declarative/types"
 import {
   SITE_PACK_MAX_BYTES,
@@ -28,6 +29,7 @@ export type SitePackImportParseResult =
 export const buildRegistrySitePackViews = (
   remoteState: RemoteConfigState | null,
   installedPacks: readonly InstalledSitePack[],
+  language: string,
 ): RegistrySitePackView[] => {
   const active = remoteState?.active
   if (!active) return []
@@ -37,6 +39,7 @@ export const buildRegistrySitePackViews = (
   return active.index.packs
     .map((entry): RegistrySitePackView => {
       const cached = active.packs[entry.id]
+      const description = cached ? resolveSitePackDescription(cached.manifest, language) : undefined
       const availability: RegistrySitePackAvailability = entry.disabled
         ? "disabled"
         : cached
@@ -45,8 +48,8 @@ export const buildRegistrySitePackViews = (
 
       return {
         id: entry.id,
-        name: cached?.manifest.name ?? entry.id,
-        ...(cached?.manifest.description ? { description: cached.manifest.description } : {}),
+        name: cached ? resolveSitePackName(cached.manifest, language) : entry.id,
+        ...(description ? { description } : {}),
         latestVersion: entry.version,
         ...(cached ? { availableVersion: cached.manifest.version } : {}),
         minAppVersion: entry.minAppVersion,

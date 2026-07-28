@@ -12,9 +12,11 @@ import {
   type ZenModeConfig,
 } from "../base"
 import type { SitePackCapability } from "../feature-capabilities"
+import { getCurrentLang } from "~utils/i18n"
 
-import type { SitePackManifest } from "./types"
+import { resolveSitePackName } from "./localization"
 import { siteMatchPatternMatchesUrl } from "./match-pattern"
+import type { SitePackManifest } from "./types"
 
 const DEFAULT_THEME_COLORS = {
   primary: "#2563eb",
@@ -124,7 +126,7 @@ export class DeclarativeAdapter extends SiteAdapter {
   }
 
   getName(): string {
-    return this.manifest.name
+    return resolveSitePackName(this.manifest, getCurrentLang())
   }
 
   getThemeColors(): { primary: string; secondary: string } {

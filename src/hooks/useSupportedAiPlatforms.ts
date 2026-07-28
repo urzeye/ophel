@@ -3,6 +3,7 @@ import { useEffect, useState } from "react"
 import type { SupportedAiPlatform } from "~constants/defaults"
 import { getSupportedAiPlatforms, loadSupportedAiPlatforms } from "~core/platform-catalog"
 import { platform } from "~platform"
+import { subscribeI18nChanges } from "~utils/i18n"
 
 export function useSupportedAiPlatforms(): readonly SupportedAiPlatform[] {
   const [platforms, setPlatforms] =
@@ -10,11 +11,15 @@ export function useSupportedAiPlatforms(): readonly SupportedAiPlatform[] {
 
   useEffect(() => {
     let active = true
-    void loadSupportedAiPlatforms(platform.storage).then((nextPlatforms) => {
-      if (active) setPlatforms(nextPlatforms)
+    const stopI18nWatch = subscribeI18nChanges(() => {
+      if (active) setPlatforms(getSupportedAiPlatforms())
+    })
+    void loadSupportedAiPlatforms(platform.storage).then(() => {
+      if (active) setPlatforms(getSupportedAiPlatforms())
     })
     return () => {
       active = false
+      stopI18nWatch()
     }
   }, [])
 

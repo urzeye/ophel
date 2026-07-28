@@ -1,5 +1,13 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react"
 
+import { resolveSitePackDescription, resolveSitePackName } from "~adapters/declarative/localization"
 import type { SitePackManifest } from "~adapters/declarative/types"
 import { SITE_PACK_MAX_BYTES, type SitePackValidationError } from "~adapters/declarative/validate"
 import { DeleteIcon, ImportIcon, InfoIcon, JSONFileIcon, RefreshIcon } from "~components/icons"
@@ -18,7 +26,7 @@ import {
 } from "~core/remote-config-types"
 import { platform } from "~platform"
 import { PageTitle } from "~tabs/options/components"
-import { t } from "~utils/i18n"
+import { getCurrentLang, subscribeI18nChanges, t } from "~utils/i18n"
 
 import {
   buildRegistrySitePackViews,
@@ -239,6 +247,7 @@ const getRegistryAvailabilityTone = (
 }
 
 const SitePacksPage: React.FC = () => {
+  const currentLanguage = useSyncExternalStore(subscribeI18nChanges, getCurrentLang, getCurrentLang)
   const packManager = useMemo(() => createRuntimePackManager(platform.storage), [])
   const pageRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -285,18 +294,19 @@ const SitePacksPage: React.FC = () => {
     () =>
       [...installedPacks].sort(
         (left, right) =>
-          left.manifest.name.localeCompare(right.manifest.name) ||
-          left.manifest.id.localeCompare(right.manifest.id),
+          resolveSitePackName(left.manifest, currentLanguage).localeCompare(
+            resolveSitePackName(right.manifest, currentLanguage),
+          ) || left.manifest.id.localeCompare(right.manifest.id),
       ),
-    [installedPacks],
+    [currentLanguage, installedPacks],
   )
   const installedById = useMemo(
     () => new Map(installedPacks.map((pack) => [pack.manifest.id, pack] as const)),
     [installedPacks],
   )
   const registryViews = useMemo(
-    () => buildRegistrySitePackViews(remoteState, installedPacks),
-    [installedPacks, remoteState],
+    () => buildRegistrySitePackViews(remoteState, installedPacks, currentLanguage),
+    [currentLanguage, installedPacks, remoteState],
   )
   const isRegistryBusy = useMemo(() => Array.from(busyKeys).some(isRegistryBusyKey), [busyKeys])
   const isImportBusy = useMemo(
@@ -390,7 +400,7 @@ const SitePacksPage: React.FC = () => {
       setFeedback({
         tone: "success",
         message: t("sitePacksStateChanged", {
-          name: pack.manifest.name,
+          name: resolveSitePackName(pack.manifest, getCurrentLang()),
           state: t(nextEnabled ? "sitePacksEnabledState" : "sitePacksDisabledState"),
         }),
       })
@@ -429,14 +439,16 @@ const SitePacksPage: React.FC = () => {
           setFeedback({
             tone: "success",
             message: t("sitePacksPackUpdated", {
-              name: nextPack.manifest.name,
+              name: resolveSitePackName(nextPack.manifest, getCurrentLang()),
               version: String(nextPack.manifest.version),
             }),
           })
         } else {
           setFeedback({
             tone: "neutral",
-            message: t("sitePacksPackUpToDate", { name: targetPack.manifest.name }),
+            message: t("sitePacksPackUpToDate", {
+              name: resolveSitePackName(targetPack.manifest, getCurrentLang()),
+            }),
           })
         }
       } else {
@@ -472,7 +484,9 @@ const SitePacksPage: React.FC = () => {
       setFeedback({
         tone: "success",
         message: t(isUpdate ? "sitePacksUpdatedSuccess" : "sitePacksSavedSuccess", {
-          name: result.pack?.manifest.name ?? view.name,
+          name: result.pack
+            ? resolveSitePackName(result.pack.manifest, getCurrentLang())
+            : view.name,
         }),
       })
     } catch (error) {
@@ -537,7 +551,10 @@ const SitePacksPage: React.FC = () => {
         setFeedback({
           tone: "success",
           message: t(confirmation.isUpdate ? "sitePacksUpdatedSuccess" : "sitePacksSavedSuccess", {
-            name: result.pack?.manifest.name ?? confirmation.manifest.name,
+            name: resolveSitePackName(
+              result.pack?.manifest ?? confirmation.manifest,
+              getCurrentLang(),
+            ),
           }),
         })
         setConfirmation(null)
@@ -557,7 +574,9 @@ const SitePacksPage: React.FC = () => {
       await loadInstalledPacks()
       setFeedback({
         tone: "success",
-        message: t("sitePacksRemovedSuccess", { name: confirmation.pack.manifest.name }),
+        message: t("sitePacksRemovedSuccess", {
+          name: resolveSitePackName(confirmation.pack.manifest, getCurrentLang()),
+        }),
       })
       setConfirmation(null)
     } catch (error) {
@@ -600,6 +619,8 @@ const SitePacksPage: React.FC = () => {
     const canToggleOn = pack.source === "local" || pack.registryStatus === "available"
     const toggleDisabled = isBusy || (!pack.enabled && !canToggleOn)
     const firstMatch = pack.manifest.matches[0]
+    const name = resolveSitePackName(pack.manifest, currentLanguage)
+    const description = resolveSitePackDescription(pack.manifest, currentLanguage)
 
     return (
       <div className="settings-pack-item" key={packId}>
@@ -608,16 +629,14 @@ const SitePacksPage: React.FC = () => {
         </div>
         <div className="settings-pack-info">
           <div className="settings-pack-title-line">
-            <strong>{pack.manifest.name}</strong>
+            <strong>{name}</strong>
             <span className="settings-pack-badge neutral">
               {t(pack.source === "registry" ? "sitePacksSourceRegistry" : "sitePacksSourceLocal")}
             </span>
             {status && <span className={`settings-pack-badge ${status.tone}`}>{status.label}</span>}
           </div>
           <div className="settings-pack-id">{packId}</div>
-          {pack.manifest.description && (
-            <p className="settings-pack-description">{pack.manifest.description}</p>
-          )}
+          {description && <p className="settings-pack-description">{description}</p>}
           <div className="settings-pack-meta">
             <span>
               {t("version")} {pack.manifest.version}
@@ -633,7 +652,7 @@ const SitePacksPage: React.FC = () => {
               size="sm"
               checked={pack.enabled}
               disabled={toggleDisabled}
-              ariaLabel={`${pack.manifest.name}: ${t("sitePacksEnabledLabel")}`}
+              ariaLabel={`${name}: ${t("sitePacksEnabledLabel")}`}
               onChange={() => void handleToggleEnabled(pack)}
             />
           </div>
@@ -906,7 +925,7 @@ const SitePacksPage: React.FC = () => {
           <p>{t("sitePacksImportRisk")}</p>
           <p>
             {t("sitePacksImportSummary", {
-              name: confirmation.manifest.name,
+              name: resolveSitePackName(confirmation.manifest, currentLanguage),
               id: confirmation.manifest.id,
               version: String(confirmation.manifest.version),
               matches: String(confirmation.manifest.matches.length),
@@ -926,7 +945,11 @@ const SitePacksPage: React.FC = () => {
           restoreFocusFallback={getConfirmationFocusFallback}
           onConfirm={() => void handleConfirmAction()}
           onCancel={closeConfirmation}>
-          <p>{t("sitePacksUninstallConfirmDesc", { name: confirmation.pack.manifest.name })}</p>
+          <p>
+            {t("sitePacksUninstallConfirmDesc", {
+              name: resolveSitePackName(confirmation.pack.manifest, currentLanguage),
+            })}
+          </p>
           <p>{t("sitePacksUninstallKeepData")}</p>
         </SitePackConfirmationDialog>
       )}
