@@ -1,0 +1,94 @@
+name: "📦 Publish SitePack Registry"
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "registry/**"
+      - "src/adapters/declarative/**"
+      - "src/adapters/zai-config.ts"
+      - "src/core/builtin-config-registry.ts"
+      - "src/core/remote-config-constants.ts"
+      - "src/core/remote-config-types.ts"
+      - ".github/workflows/registry-dist.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: registry-dist
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    name: Validate and publish registry-dist
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate registry sources
+        run: pnpm registry:validate
+
+      - name: Load previous registry-dist
+        id: previous
+        shell: bash
+        run: |
+          set +e
+          git ls-remote --exit-code --heads origin registry-dist >/dev/null 2>&1
+          STATUS=$?
+          set -e
+          case "$STATUS" in
+            0)
+              git fetch origin registry-dist
+              git worktree add --detach .registry-dist origin/registry-dist
+              echo "directory=$GITHUB_WORKSPACE/.registry-dist" >> "$GITHUB_OUTPUT"
+              ;;
+            2)
+              echo "directory=" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "Failed to query registry-dist branch (exit $STATUS)" >&2
+              exit "$STATUS"
+              ;;
+          esac
+
+      - name: Build immutable registry dist
+        shell: bash
+        env:
+          PREVIOUS_DIRECTORY: ${{ steps.previous.outputs.directory }}
+        run: |
+          REVISION=$(git rev-list --count HEAD)
+          GENERATED_AT=$(($(git show -s --format=%ct HEAD) * 1000))
+          if [ -n "$PREVIOUS_DIRECTORY" ]; then
+            pnpm registry:build -- --revision "$REVISION" --generated-at "$GENERATED_AT" --previous-dir "$PREVIOUS_DIRECTORY"
+          else
+            pnpm registry:build -- --revision "$REVISION" --generated-at "$GENERATED_AT"
+          fi
+
+      - name: Publish registry-dist branch
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: registry-dist
+          publish_dir: registry/dist
+          force_orphan: true
+          keep_files: true
+          user_name: "github-actions[bot]"
+          user_email: "github-actions[bot]@users.noreply.github.com"
+          commit_message: "Publish registry from ${{ github.sha }} [skip ci]"

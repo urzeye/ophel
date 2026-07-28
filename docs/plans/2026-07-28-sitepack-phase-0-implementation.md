@@ -25,3 +25,51 @@
 - 第一批：SitePack schema、校验器、合并器基础层。
 - 第二批：RemoteConfigManager 与 registry transport/存储骨架。
 - 第三批：registry dist 构建或 Z.ai 配置化，按第一批接口稳定性选择较小闭环。
+
+## P0-06：Registry dist 构建与发布
+
+### Task 1：统一内置配置描述符
+
+**文件：**
+
+- 新增 `src/core/builtin-config-registry.ts`
+- 修改 `src/core/remote-config-runtime.ts`
+
+**步骤：**
+
+1. 将 Z.ai 的 `siteId`、`configVersion`、`baseConfig` 描述符抽到零浏览器依赖模块。
+2. RemoteConfigManager 运行时和 registry 校验脚本共同读取该描述符，避免维护两份 patch 白名单与 baseConfigVersion 真值。
+3. 运行 `pnpm typecheck`，预期无新增错误。
+
+### Task 2：实现源文件校验与不可变 dist 构建
+
+**文件：**
+
+- 新增 `registry/README.md`
+- 新增 `registry/sites/.gitkeep`
+- 新增 `registry/patches/.gitkeep`
+- 新增 `registry/scripts/validate.mjs`
+- 新增 `registry/scripts/build-dist.mjs`
+- 修改 `package.json`、`pnpm-lock.yaml`、`.gitignore`
+
+**步骤：**
+
+1. 增加 `tsx` 开发依赖和 `registry:validate`、`registry:build` scripts。
+2. `validate.mjs` 直接导入 `src/adapters/declarative/validate.ts`，校验全部 JSON；patch 额外通过共享内置描述符做私有 selector 白名单、baseConfigVersion 与合并结果校验。
+3. `build-dist.mjs` 将验证后的 JSON 规范化写入 `packs/<id>/<version>.json` 或 `patches/<siteId>/<patchVersion>.json`，对写出的确切字节计算 SHA-256，并生成排序稳定的 `index.json`。
+4. 构建接收单调 `registryRevision`，若提供旧 dist，则拒绝 revision 回退或同一不可变路径字节变化。
+5. 用临时 fixture 运行校验和构建冒烟，预期合法包/patch 生成正确索引，非法输入与不可变覆盖显式失败。
+
+### Task 3：发布 registry-dist 分支
+
+**文件：**
+
+- 新增 `.github/workflows/registry-dist.yml`
+- 修改 `docs/developer/site-adapter-pluginization-tasks.csv`
+
+**步骤：**
+
+1. main 分支相关路径变更时安装依赖并运行 `pnpm registry:validate`。
+2. 使用 main 的 Git commit count 作为单调 revision，读取现有 `registry-dist` 做不可变校验。
+3. 构建后以 orphan/force-push 方式更新 `registry-dist`，同时保留历史不可变 artifact。
+4. 本地运行格式、Lint、类型检查、registry 构建和双形态应用构建；审查 diff 后提交推送。
