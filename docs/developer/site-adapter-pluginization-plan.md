@@ -559,7 +559,7 @@ pack 的 `matches` 是静态声明（禁通配、≤10 条），无法覆盖 Ope
 - `theme.primary/secondary`：仅接受 `^#[0-9a-fA-F]{3,8}$` 颜色字面量。
 - `id`：`^[a-z0-9-]{2,40}$`。
 - `extraCss`：v1 采用归一化黑名单（§8.1）+ 长度上限 + registry 人工审核 + 本地导入风险弹窗；属性/值允许列表作为 v2 加固项（残余风险已记录，Phase 4 评估）。
-- 校验实现优先用手写轻量校验器（避免引入 ajv 增加包体；`effect` 已在依赖中，若用 `effect/Schema` 需评估 bundle 影响后决定，二选一在 P0-01 定案）。
+- **P0-01 技术定案**：采用手写轻量 TypeScript 校验器，不引入 Ajv 或 `effect/Schema`。实现保持零浏览器依赖，由运行时与 registry Node 校验脚本直接复用同一 `validate.ts`，避免额外 bundle 成本和规则漂移。
 
 ---
 
