@@ -33,79 +33,12 @@ import {
   type OutlineItem,
   type PanelAvoidanceConfig,
 } from "./base"
+import type { BuiltinSiteConfig } from "./declarative"
+import { IMA_CONFIG, IMA_CONFIG_VERSION, type ImaSiteConfig } from "./ima-config"
 
 const IMA_HOSTNAME = "ima.qq.com"
 const IMA_CHAT_PATH_PATTERN = /^\/chat\/([a-z0-9]+)(?:\/|$)/i
 const IMA_CID_STORAGE_KEY = "ima-official-website-uid"
-
-const IMA_SCROLL_CONTAINER_SELECTOR = "#scrollContainer"
-const IMA_RESPONSE_CONTAINER_SELECTOR = `${IMA_SCROLL_CONTAINER_SELECTOR} [class*="scrollWrap"]`
-const IMA_LEGACY_USER_BUBBLE_CONTAINER_SELECTOR = 'div[class*="userBubbleContainer"]'
-const IMA_USER_BUBBLE_WRAP_SELECTOR = 'div[class*="userBubbleWrap"]'
-const IMA_USER_BUBBLE_CONTAINER_SELECTOR = [
-  IMA_LEGACY_USER_BUBBLE_CONTAINER_SELECTOR,
-  IMA_USER_BUBBLE_WRAP_SELECTOR,
-].join(", ")
-const IMA_LEGACY_USER_BUBBLE_SELECTOR = `${IMA_LEGACY_USER_BUBBLE_CONTAINER_SELECTOR} [class*="userBubble"]`
-const IMA_USER_MAIN_BUBBLE_SELECTOR = '[class*="chatMainBubble"]'
-const IMA_USER_BUBBLE_SELECTOR = [
-  IMA_LEGACY_USER_BUBBLE_SELECTOR,
-  `${IMA_USER_BUBBLE_WRAP_SELECTOR} ${IMA_USER_MAIN_BUBBLE_SELECTOR}`,
-].join(", ")
-const IMA_USER_TEXT_SELECTOR = [
-  `${IMA_LEGACY_USER_BUBBLE_SELECTOR} [class*="content"]`,
-  IMA_USER_MAIN_BUBBLE_SELECTOR,
-].join(", ")
-const IMA_AI_CONTAINER_SELECTOR = 'div[class*="aiContainer"]'
-const IMA_AI_BUBBLE_SELECTOR = `${IMA_AI_CONTAINER_SELECTOR} [class*="bubble"]`
-const IMA_MARKDOWN_CONTENT_SELECTOR = '[class*="markdown"]'
-const IMA_MARKDOWN_SELECTOR = `${IMA_AI_BUBBLE_SELECTOR} ${IMA_MARKDOWN_CONTENT_SELECTOR}`
-const IMA_THINKING_SELECTOR = '[class*="thinking"]'
-const IMA_THINKING_TITLE_SELECTOR =
-  '[class*="tipsWrap"], [class*="thinkingTitle"], [class*="thinkingHeader"]'
-const IMA_INLINE_REFERENCE_SELECTOR =
-  '.system-copy-exclude, [x-noteelement="excluded"], [x-copyelement="copy-exclude"]'
-const IMA_EXPORT_DECORATION_SELECTOR = [
-  ".gh-root",
-  ".gh-user-query-markdown",
-  ".gh-inline-bookmark",
-  IMA_INLINE_REFERENCE_SELECTOR,
-  "button",
-  "[role='button']",
-  "svg",
-  "[aria-hidden='true']",
-  "style",
-  "script",
-].join(", ")
-const IMA_USER_ATTACHMENT_CONTAINER_SELECTOR =
-  '[class*="attachmentContainer"], [class*="attachmentWrap"]'
-const IMA_USER_ATTACHMENT_SCOPE_SELECTOR = `:is(${IMA_USER_ATTACHMENT_CONTAINER_SELECTOR})`
-const IMA_USER_ATTACHMENT_IMAGE_SELECTOR = [
-  `${IMA_USER_ATTACHMENT_SCOPE_SELECTOR} img`,
-  '[class*="imgWrap"] img',
-].join(", ")
-const IMA_USER_ATTACHMENT_FILE_SELECTOR = [
-  `${IMA_USER_ATTACHMENT_SCOPE_SELECTOR} [class*="itemWrap"]`,
-  `${IMA_USER_ATTACHMENT_SCOPE_SELECTOR} [class*="file"]`,
-  `${IMA_USER_ATTACHMENT_SCOPE_SELECTOR} [class*="doc"]`,
-  `${IMA_USER_ATTACHMENT_SCOPE_SELECTOR} a[href]`,
-  `${IMA_USER_ATTACHMENT_SCOPE_SELECTOR} [data-file-id]`,
-  `${IMA_USER_ATTACHMENT_SCOPE_SELECTOR} [data-doc-id]`,
-  `${IMA_USER_ATTACHMENT_SCOPE_SELECTOR} [data-resource-id]`,
-].join(", ")
-const IMA_ASSISTANT_GENERATED_IMAGE_SELECTOR = [
-  `${IMA_AI_BUBBLE_SELECTOR} [class*="imagesWrapper"] img`,
-  `${IMA_AI_BUBBLE_SELECTOR} [id^="image-toolkit-"] img`,
-  `${IMA_AI_BUBBLE_SELECTOR} [class*="bigImg"] img`,
-  `${IMA_AI_BUBBLE_SELECTOR} ${IMA_MARKDOWN_CONTENT_SELECTOR} img`,
-].join(", ")
-const IMA_ASSISTANT_GENERATED_IMAGE_CARD_SELECTOR = [
-  '[class*="imagesWrapper"]',
-  '[id^="image-toolkit-"]',
-  ".t-image__wrapper",
-  "picture",
-  "img",
-].join(", ")
 const IMA_ATTACHMENT_SOURCE_ATTRS = [
   "href",
   "src",
@@ -122,35 +55,6 @@ const IMA_ATTACHMENT_SOURCE_ATTRS = [
   "data-image-url",
   "data-image-src",
 ]
-const IMA_INPUT_SELECTOR =
-  '#tagTextarea [contenteditable="true"], [class*="chatInputContainer"] .tiptap.ProseMirror'
-const IMA_SEND_BUTTON_SELECTOR = '[class*="sendBtnWrap"]'
-const IMA_SEND_DISABLED_SELECTOR = '.icon-send-disable-big, [class*="sendDisableIcon"]'
-const IMA_STOP_BUTTON_SELECTOR = 'div[class*="stopButton"], [class*="stopButton"]'
-const IMA_STOP_BUTTON_CLICKABLE_SELECTOR = [
-  'div[class*="stopButton"] > div',
-  '[class*="stopButton"][role="button"]',
-  'button[class*="stopButton"]',
-  '[class*="stopButton"]',
-].join(", ")
-const IMA_NEW_CHAT_BUTTON_SELECTOR = '[class*="newChatWrap"]'
-const IMA_ACTIVE_HISTORY_TITLE_SELECTOR =
-  '[class*="historyListWrap"] [class*="itemWrap"][class*="highLight"] [class*="main"]'
-const IMA_HISTORY_SCROLL_SELECTOR = "#HistoryScrollContainer"
-const IMA_MODEL_BUTTON_SELECTOR =
-  '[class*="currentChoiceWrap"], [class*="modelSelectionWrap"], [class*="modelSelectionText"]'
-const IMA_MODEL_TEXT_SELECTOR = '[class*="modelSelectionText"]'
-const IMA_MODEL_MENU_ITEM_SELECTOR =
-  '.modelDropdown .t-dropdown__item, .modelDropdown [class*="modelOption"], .t-popup .modelDropdown .t-dropdown__item'
-const IMA_FOOT_TIPS_SELECTOR = '[class*="footTips"]'
-const IMA_PAGE_CONTENT_SELECTOR = ".expandable-sidebar-panel-sidebar ~ [class*='_content_']"
-const IMA_MAIN_AREA_SELECTOR = '[class*="mainArea"]'
-const IMA_NEW_CHAT_CONTAINER_SELECTOR =
-  '[class*="mainContainer"] > [class*="container"]:has(> [class*="centerContent"])'
-const IMA_NEW_CHAT_CONTENT_SELECTOR = `${IMA_PAGE_CONTENT_SELECTOR} ${IMA_NEW_CHAT_CONTAINER_SELECTOR}`
-const IMA_CHAT_INPUT_CONTAINER_SELECTOR = '[class*="chatInputContainer"]'
-const IMA_CHAT_PAGE_INPUT_CONTAINER_SELECTOR = `body:not(:has([class*="centerContent"])) ${IMA_CHAT_INPUT_CONTAINER_SELECTOR}`
-const IMA_EDITOR_CONTAINER_SELECTOR = '[class*="chatInputContainer"] [class*="editorContainer"]'
 
 const MAX_OUTLINE_TEXT_LENGTH = 80
 
@@ -169,6 +73,7 @@ interface ImaAssistantImage {
 }
 
 export class ImaAdapter extends SiteAdapter {
+  private config: ImaSiteConfig = IMA_CONFIG
   private exportIncludeThoughts: boolean | undefined = undefined
 
   match(): boolean {
@@ -181,6 +86,18 @@ export class ImaAdapter extends SiteAdapter {
 
   getName(): string {
     return "ima"
+  }
+
+  getBuiltinConfig(): ImaSiteConfig {
+    return IMA_CONFIG
+  }
+
+  getBuiltinConfigVersion(): number {
+    return IMA_CONFIG_VERSION
+  }
+
+  applyMergedConfig(config: BuiltinSiteConfig): void {
+    this.config = config as ImaSiteConfig
   }
 
   getThemeColors(): { primary: string; secondary: string } {
@@ -256,13 +173,17 @@ export class ImaAdapter extends SiteAdapter {
   }
 
   getTextareaSelectors(): string[] {
-    return [IMA_INPUT_SELECTOR]
+    return [...this.config.selectors.textarea]
   }
 
   isValidTextarea(element: HTMLElement): boolean {
     if (!super.isValidTextarea(element)) return false
     if (!element.isContentEditable) return false
-    return !!element.closest("#tagTextarea, [class*='chatInputContainer']")
+    return !!element.closest(this.config.sitePrivateSelectors.inputScope)
+  }
+
+  getSubmitKeyConfig(): { key: "Enter" | "Ctrl+Enter" } {
+    return { key: this.config.input.submitKey ?? "Enter" }
   }
 
   insertPrompt(content: string): boolean {
@@ -307,21 +228,23 @@ export class ImaAdapter extends SiteAdapter {
   }
 
   getSubmitButtonSelectors(): string[] {
-    return [IMA_SEND_BUTTON_SELECTOR]
+    return [this.config.sitePrivateSelectors.submitButton]
   }
 
   findSubmitButton(editor: HTMLElement | null): HTMLElement | null {
     const scopes = [
-      editor?.closest("#tagTextarea"),
-      editor?.closest('[class*="chatInputContainer"]'),
-      document.querySelector('[class*="chatInputContainer"]'),
+      editor?.closest(this.config.sitePrivateSelectors.tagTextarea),
+      editor?.closest(this.config.sitePrivateSelectors.chatInputContainer),
+      document.querySelector(this.config.sitePrivateSelectors.chatInputContainer),
       document.body,
     ].filter(Boolean) as ParentNode[]
 
     for (const scope of scopes) {
-      const button = scope.querySelector(IMA_SEND_BUTTON_SELECTOR) as HTMLElement | null
+      const button = scope.querySelector(
+        this.config.sitePrivateSelectors.submitButton,
+      ) as HTMLElement | null
       if (!button || !this.isVisibleElement(button)) continue
-      if (button.querySelector(IMA_SEND_DISABLED_SELECTOR)) continue
+      if (button.querySelector(this.config.sitePrivateSelectors.submitDisabled)) continue
       return button
     }
 
@@ -329,28 +252,28 @@ export class ImaAdapter extends SiteAdapter {
   }
 
   getNewChatButtonSelectors(): string[] {
-    return [IMA_NEW_CHAT_BUTTON_SELECTOR]
+    return [...this.config.selectors.newChatButton]
   }
 
   getSidebarScrollContainer(): Element | null {
-    return document.querySelector(IMA_HISTORY_SCROLL_SELECTOR)
+    return document.querySelector(this.config.sitePrivateSelectors.sidebarScrollContainer)
   }
 
   getScrollContainer(): HTMLElement | null {
-    const container = document.querySelector(IMA_SCROLL_CONTAINER_SELECTOR)
+    const container = document.querySelector(this.config.sitePrivateSelectors.scrollContainer)
     return container instanceof HTMLElement ? container : null
   }
 
   getResponseContainerSelector(): string {
-    return IMA_RESPONSE_CONTAINER_SELECTOR
+    return this.config.selectors.responseContainer
   }
 
   getChatContentSelectors(): string[] {
-    return [IMA_USER_BUBBLE_CONTAINER_SELECTOR, IMA_AI_CONTAINER_SELECTOR]
+    return [...this.config.selectors.chatContent]
   }
 
   getUserQuerySelector(): string | null {
-    return IMA_USER_BUBBLE_CONTAINER_SELECTOR
+    return this.config.selectors.userQuery
   }
 
   extractUserQueryText(element: Element): string {
@@ -400,7 +323,7 @@ export class ImaAdapter extends SiteAdapter {
   }
 
   getLatestReplyText(): string | null {
-    const replies = document.querySelectorAll(IMA_AI_CONTAINER_SELECTOR)
+    const replies = document.querySelectorAll(this.config.selectors.assistantResponse)
     const last = replies[replies.length - 1]
     if (!last) return null
 
@@ -410,19 +333,17 @@ export class ImaAdapter extends SiteAdapter {
 
   extractOutline(maxLevel = 6, includeUserQueries = false, showWordCount = false): OutlineItem[] {
     const container =
-      document.querySelector(IMA_RESPONSE_CONTAINER_SELECTOR) ||
-      document.querySelector(IMA_SCROLL_CONTAINER_SELECTOR)
+      document.querySelector(this.config.selectors.responseContainer) ||
+      document.querySelector(this.config.sitePrivateSelectors.scrollContainer)
     if (!container) return []
 
     const outline: OutlineItem[] = []
     const blocks = Array.from(
-      container.querySelectorAll(
-        `${IMA_USER_BUBBLE_CONTAINER_SELECTOR}, ${IMA_AI_CONTAINER_SELECTOR}`,
-      ),
+      container.querySelectorAll(this.config.selectors.chatContent.join(", ")),
     ).filter((element) => !element.closest(".gh-root"))
 
     blocks.forEach((block, blockIndex) => {
-      if (block.matches(IMA_USER_BUBBLE_CONTAINER_SELECTOR)) {
+      if (block.matches(this.config.selectors.userQuery)) {
         if (!includeUserQueries) return
 
         const text = this.extractUserQueryText(block)
@@ -432,7 +353,7 @@ export class ImaAdapter extends SiteAdapter {
         if (showWordCount) {
           const nextAssistant = blocks
             .slice(blockIndex + 1)
-            .find((element) => element.matches(IMA_AI_CONTAINER_SELECTOR))
+            .find((element) => element.matches(this.config.selectors.assistantResponse))
           wordCount = nextAssistant ? this.extractAssistantResponseText(nextAssistant).length : 0
         }
 
@@ -488,12 +409,7 @@ export class ImaAdapter extends SiteAdapter {
   }
 
   getExportConfig(): ExportConfig | null {
-    return {
-      userQuerySelector: IMA_USER_BUBBLE_CONTAINER_SELECTOR,
-      assistantResponseSelector: IMA_AI_CONTAINER_SELECTOR,
-      turnSelector: null,
-      useShadowDOM: false,
-    }
+    return { ...this.config.export }
   }
 
   async prepareConversationExport(context: ExportLifecycleContext): Promise<unknown> {
@@ -524,7 +440,7 @@ export class ImaAdapter extends SiteAdapter {
   }
 
   getStopButtonSelectors(): string[] {
-    return [IMA_STOP_BUTTON_CLICKABLE_SELECTOR]
+    return [...this.config.selectors.stopButton]
   }
 
   stopGeneration(): boolean {
@@ -537,19 +453,28 @@ export class ImaAdapter extends SiteAdapter {
 
   getNetworkMonitorConfig(): NetworkMonitorConfig {
     return {
-      // ima 对话使用 SSE 流式接口：POST /cgi-bin/assistant/qa
-      urlPatterns: ["/cgi-bin/assistant/qa"],
-      urlPathEndsWith: ["/cgi-bin/assistant/qa"],
-      silenceThreshold: 2000,
+      ...this.config.networkMonitor,
+      urlPatterns: [...this.config.networkMonitor.urlPatterns],
+      urlPathEndsWith: this.config.networkMonitor.urlPathEndsWith
+        ? [...this.config.networkMonitor.urlPathEndsWith]
+        : undefined,
+      requestBodyRules: this.config.networkMonitor.requestBodyRules?.map((rule) => ({
+        ...rule,
+        metadata: { ...rule.metadata },
+      })),
     }
   }
 
   getModelName(): string | null {
-    const textNode = this.findVisibleElementBySelectors([IMA_MODEL_TEXT_SELECTOR])
+    const textNode = this.findVisibleElementBySelectors([
+      this.config.sitePrivateSelectors.modelText,
+    ])
     const text = textNode?.innerText?.trim() || textNode?.textContent?.trim() || ""
     if (text) return text.split("\n")[0].trim()
 
-    const button = this.findVisibleElementBySelectors([IMA_MODEL_BUTTON_SELECTOR])
+    const button = this.findVisibleElementBySelectors(
+      this.config.modelSwitcher.selectorButtonSelectors,
+    )
     const buttonText = button?.innerText?.trim() || button?.textContent?.trim() || ""
     return buttonText ? buttonText.split("\n")[0].trim() : null
   }
@@ -560,12 +485,12 @@ export class ImaAdapter extends SiteAdapter {
 
   getModelSwitcherConfig(keyword: string): ModelSwitcherConfig | null {
     return {
+      ...this.config.modelSwitcher,
       targetModelKeyword: keyword,
-      selectorButtonSelectors: [IMA_MODEL_BUTTON_SELECTOR, IMA_MODEL_TEXT_SELECTOR],
-      menuItemSelector: IMA_MODEL_MENU_ITEM_SELECTOR,
-      menuRenderDelay: 200,
-      checkInterval: 1000,
-      maxAttempts: 10,
+      selectorButtonSelectors: [...this.config.modelSwitcher.selectorButtonSelectors],
+      subMenuTriggers: this.config.modelSwitcher.subMenuTriggers
+        ? [...this.config.modelSwitcher.subMenuTriggers]
+        : undefined,
     }
   }
 
@@ -581,55 +506,37 @@ export class ImaAdapter extends SiteAdapter {
   }
 
   getWidthSelectors() {
-    return [
-      {
-        selector: IMA_SCROLL_CONTAINER_SELECTOR,
-        property: "max-width",
-        extraCss: "width: 100% !important;",
-        noCenter: true,
-      },
-      {
-        selector: IMA_RESPONSE_CONTAINER_SELECTOR,
-        property: "max-width",
-        extraCss: "width: 100% !important;",
-        noCenter: true,
-      },
-      {
-        selector: '[class*="_chatInputContainer_"] [class*="_editorContainer_"]',
-        property: "max-width",
-        extraCss: "width: 100vw !important; margin: 0 auto;",
-      },
-    ]
+    return this.config.widthSelectors.map((selector) => ({ ...selector }))
   }
 
   getPanelAvoidanceConfig(): PanelAvoidanceConfig {
     return {
-      scopeSelector: IMA_PAGE_CONTENT_SELECTOR,
+      scopeSelector: this.config.sitePrivateSelectors.pageContent,
       widthSelectors: [
         {
-          selector: IMA_RESPONSE_CONTAINER_SELECTOR,
+          selector: this.config.selectors.responseContainer,
           property: "width",
           extraCss: "max-width: 100% !important; min-width: 0 !important;",
         },
         {
-          selector: IMA_EDITOR_CONTAINER_SELECTOR,
+          selector: this.config.sitePrivateSelectors.editorContainer,
           property: "width",
           extraCss: "max-width: 100% !important; min-width: 0 !important;",
         },
       ],
       insetSelectors: [
         {
-          selector: IMA_MAIN_AREA_SELECTOR,
+          selector: this.config.sitePrivateSelectors.mainArea,
           extraCss:
             "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
         },
         {
-          selector: IMA_CHAT_PAGE_INPUT_CONTAINER_SELECTOR,
+          selector: this.config.sitePrivateSelectors.chatPageInputContainer,
           extraCss:
             "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
         },
         {
-          selector: IMA_NEW_CHAT_CONTENT_SELECTOR,
+          selector: this.config.sitePrivateSelectors.newChatContent,
           insetMode: "edge",
           extraCss:
             "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
@@ -641,45 +548,48 @@ export class ImaAdapter extends SiteAdapter {
   }
 
   getUserQueryWidthSelectors(): Array<{ selector: string; property: string }> {
-    return [{ selector: IMA_USER_BUBBLE_SELECTOR, property: "max-width" }]
+    return [
+      {
+        selector: this.config.sitePrivateSelectors.userQueryWidth,
+        property: "max-width",
+      },
+    ]
   }
 
   getZenModeConfig() {
+    const { hide, rootClass, styles } = this.config.zenMode
     return {
-      hide: [".expandable-sidebar-panel-sidebar"],
+      ...(hide ? { hide: [...hide] } : {}),
+      ...(rootClass ? { rootClass: { ...rootClass } } : {}),
+      ...(styles ? { styles: styles.map((style) => ({ ...style })) } : {}),
     }
   }
 
   getCleanModeConfig() {
+    const { hide, rootClass, styles } = this.config.cleanMode
     return {
-      hide: [
-        '[class*="_downloadContainer_"]',
-        IMA_FOOT_TIPS_SELECTOR,
-        '[class*="_activityBanner"]',
-        '[class*="_activityBannerContent"]',
-        '[class*="_qaDownloadGuide"]',
-      ],
+      ...(hide ? { hide: [...hide] } : {}),
+      ...(rootClass ? { rootClass: { ...rootClass } } : {}),
+      ...(styles ? { styles: styles.map((style) => ({ ...style })) } : {}),
     }
   }
 
   private extractImaExportMessages(collector?: ExportAssetCollector): ExportMessage[] {
     const root =
-      (document.querySelector(IMA_RESPONSE_CONTAINER_SELECTOR) as ParentNode | null) ||
-      (document.querySelector(IMA_SCROLL_CONTAINER_SELECTOR) as ParentNode | null) ||
+      (document.querySelector(this.config.selectors.responseContainer) as ParentNode | null) ||
+      (document.querySelector(
+        this.config.sitePrivateSelectors.scrollContainer,
+      ) as ParentNode | null) ||
       document.body
     const blocks = this.collectTopLevelBlocks(
-      Array.from(
-        root.querySelectorAll(
-          `${IMA_USER_BUBBLE_CONTAINER_SELECTOR}, ${IMA_AI_CONTAINER_SELECTOR}`,
-        ),
-      ),
+      Array.from(root.querySelectorAll(this.config.selectors.chatContent.join(", "))),
     )
       .filter((element) => !this.shouldSkipExportElement(element))
       .sort((left, right) => this.compareDomOrder(left, right))
 
     return blocks
       .map((element): ExportMessage => {
-        const role = element.matches(IMA_USER_BUBBLE_CONTAINER_SELECTOR) ? "user" : "assistant"
+        const role = element.matches(this.config.selectors.userQuery) ? "user" : "assistant"
         const content =
           role === "user"
             ? this.extractUserQueryExportContentWithAssets(element, collector)
@@ -729,10 +639,12 @@ export class ImaAdapter extends SiteAdapter {
 
     clone
       .querySelectorAll(
-        `${IMA_EXPORT_DECORATION_SELECTOR}, ${IMA_ASSISTANT_GENERATED_IMAGE_CARD_SELECTOR}`,
+        `${this.config.sitePrivateSelectors.exportDecoration}, ${this.config.sitePrivateSelectors.assistantGeneratedImageCards}`,
       )
       .forEach((node) => node.remove())
-    clone.querySelectorAll(IMA_THINKING_SELECTOR).forEach((node) => node.remove())
+    clone
+      .querySelectorAll(this.config.sitePrivateSelectors.thinking)
+      .forEach((node) => node.remove())
 
     const markdownRoot = this.findAssistantMarkdownRoot(clone)
     const markdownSource =
@@ -764,13 +676,19 @@ export class ImaAdapter extends SiteAdapter {
       attachments.push(attachment)
     }
 
-    this.queryElementsIncludingSelf(scope, IMA_USER_ATTACHMENT_IMAGE_SELECTOR).forEach((node) => {
+    this.queryElementsIncludingSelf(
+      scope,
+      this.config.sitePrivateSelectors.userAttachmentImages,
+    ).forEach((node) => {
       if (node instanceof HTMLImageElement) {
         addAttachment(this.extractImaUserImageAttachment(node))
       }
     })
 
-    this.queryElementsIncludingSelf(scope, IMA_USER_ATTACHMENT_FILE_SELECTOR).forEach((card) => {
+    this.queryElementsIncludingSelf(
+      scope,
+      this.config.sitePrivateSelectors.userAttachmentFiles.join(", "),
+    ).forEach((card) => {
       addAttachment(this.extractImaUserFileAttachment(card))
     })
 
@@ -799,7 +717,7 @@ export class ImaAdapter extends SiteAdapter {
   private extractImaUserFileAttachment(card: Element): ImaUserAttachment | null {
     if (
       card instanceof HTMLImageElement ||
-      card.closest('[class*="imgWrap"], [id^="image-toolkit-"]') ||
+      card.closest(this.config.sitePrivateSelectors.userAttachmentImageCard) ||
       card.querySelector("img")
     ) {
       return null
@@ -848,26 +766,27 @@ export class ImaAdapter extends SiteAdapter {
     const images: ImaAssistantImage[] = []
     const seen = new Set<string>()
 
-    this.queryElementsIncludingSelf(contentRoot, IMA_ASSISTANT_GENERATED_IMAGE_SELECTOR).forEach(
-      (node) => {
-        if (!(node instanceof HTMLImageElement)) return
-        if (node.closest(".gh-root, .gh-user-query-markdown")) return
+    this.queryElementsIncludingSelf(
+      contentRoot,
+      this.config.sitePrivateSelectors.assistantGeneratedImages,
+    ).forEach((node) => {
+      if (!(node instanceof HTMLImageElement)) return
+      if (node.closest(".gh-root, .gh-user-query-markdown")) return
 
-        const source = this.extractImaImageSource(node)
-        const sourceKey = getExportAttachmentSourceKey(source)
-        if (!source || seen.has(sourceKey)) return
+      const source = this.extractImaImageSource(node)
+      const sourceKey = getExportAttachmentSourceKey(source)
+      if (!source || seen.has(sourceKey)) return
 
-        seen.add(sourceKey)
-        images.push({
-          source,
-          alt:
-            node.alt?.trim() ||
-            node.getAttribute("aria-label")?.trim() ||
-            `generated image ${images.length + 1}`,
-          extensionHint: this.extractImaImageExtensionHint(node),
-        })
-      },
-    )
+      seen.add(sourceKey)
+      images.push({
+        source,
+        alt:
+          node.alt?.trim() ||
+          node.getAttribute("aria-label")?.trim() ||
+          `generated image ${images.length + 1}`,
+        extensionHint: this.extractImaImageExtensionHint(node),
+      })
+    })
 
     return images
   }
@@ -991,7 +910,9 @@ export class ImaAdapter extends SiteAdapter {
 
   private extractCleanTextParts(root: Element): string[] {
     const clone = root.cloneNode(true) as HTMLElement
-    clone.querySelectorAll(IMA_EXPORT_DECORATION_SELECTOR).forEach((node) => node.remove())
+    clone
+      .querySelectorAll(this.config.sitePrivateSelectors.exportDecoration)
+      .forEach((node) => node.remove())
     clone.querySelectorAll("img").forEach((node) => node.remove())
 
     const parts: string[] = []
@@ -1044,17 +965,19 @@ export class ImaAdapter extends SiteAdapter {
   }
 
   private findUserMessageScope(element: Element): Element {
-    if (element.matches(IMA_USER_BUBBLE_CONTAINER_SELECTOR)) return element
-    return element.closest(IMA_USER_BUBBLE_CONTAINER_SELECTOR) || element
+    if (element.matches(this.config.selectors.userQuery)) return element
+    return element.closest(this.config.selectors.userQuery) || element
   }
 
   private findAssistantBubbleRoot(element: Element): HTMLElement | null {
-    if (element.matches(IMA_AI_BUBBLE_SELECTOR)) return element as HTMLElement
+    if (element.matches(this.config.sitePrivateSelectors.assistantBubble)) {
+      return element as HTMLElement
+    }
 
-    const bubble = element.querySelector(IMA_AI_BUBBLE_SELECTOR)
+    const bubble = element.querySelector(this.config.sitePrivateSelectors.assistantBubble)
     if (bubble instanceof HTMLElement) return bubble
 
-    const fallback = element.querySelector('[class*="bubble"]')
+    const fallback = element.querySelector(this.config.sitePrivateSelectors.assistantBubbleFallback)
     if (fallback instanceof HTMLElement) return fallback
 
     return element instanceof HTMLElement ? element : null
@@ -1097,24 +1020,30 @@ export class ImaAdapter extends SiteAdapter {
   }
 
   private getActiveHistoryTitle(): string | null {
-    const title = document.querySelector(IMA_ACTIVE_HISTORY_TITLE_SELECTOR)
+    const title = document.querySelector(this.config.sitePrivateSelectors.activeHistoryTitle)
     const text = title?.textContent?.trim() || ""
     return text || null
   }
 
   private findUserContentRoot(element: Element): Element | null {
-    if (element.matches(IMA_USER_TEXT_SELECTOR)) return element
-    return element.querySelector(IMA_USER_TEXT_SELECTOR) || element.querySelector("p") || element
+    if (element.matches(this.config.sitePrivateSelectors.userText)) return element
+    return (
+      element.querySelector(this.config.sitePrivateSelectors.userText) ||
+      element.querySelector("p") ||
+      element
+    )
   }
 
   private findAssistantMarkdownRoot(element: Element): Element | null {
-    if (element.matches(IMA_MARKDOWN_SELECTOR)) return element
-    return element.querySelector(IMA_MARKDOWN_SELECTOR)
+    if (element.matches(this.config.sitePrivateSelectors.assistantMarkdown)) return element
+    return element.querySelector(this.config.sitePrivateSelectors.assistantMarkdown)
   }
 
   private extractHeadingText(heading: Element): string {
     const clone = heading.cloneNode(true) as HTMLElement
-    clone.querySelectorAll(IMA_INLINE_REFERENCE_SELECTOR).forEach((node) => node.remove())
+    clone
+      .querySelectorAll(this.config.sitePrivateSelectors.inlineReference)
+      .forEach((node) => node.remove())
     return this.extractTextWithLineBreaks(clone).trim()
   }
 
@@ -1126,14 +1055,16 @@ export class ImaAdapter extends SiteAdapter {
   }
 
   private extractThoughtBlockquotes(element: Element): string[] {
-    const thoughtNodes = Array.from(element.querySelectorAll(IMA_THINKING_SELECTOR))
+    const thoughtNodes = Array.from(
+      element.querySelectorAll(this.config.sitePrivateSelectors.thinking),
+    )
     const blocks: string[] = []
 
     for (const thought of thoughtNodes) {
       const clone = thought.cloneNode(true) as HTMLElement
       clone
         .querySelectorAll(
-          `${IMA_THINKING_TITLE_SELECTOR}, button, [role='button'], svg, [aria-hidden='true']`,
+          `${this.config.sitePrivateSelectors.thinkingTitle}, button, [role='button'], svg, [aria-hidden='true']`,
         )
         .forEach((node) => node.remove())
 
@@ -1262,7 +1193,9 @@ export class ImaAdapter extends SiteAdapter {
   }
 
   private findStopButton(): HTMLElement | null {
-    const candidates = Array.from(document.querySelectorAll(IMA_STOP_BUTTON_SELECTOR))
+    const candidates = Array.from(
+      document.querySelectorAll(this.config.generating.existsSelectors.join(", ")),
+    )
 
     for (const candidate of candidates) {
       if (!(candidate instanceof HTMLElement) || !this.isVisibleElement(candidate)) {
@@ -1270,8 +1203,9 @@ export class ImaAdapter extends SiteAdapter {
       }
 
       const clickableCandidates = [
-        candidate.querySelector(":scope > div"),
-        candidate.querySelector('[class*="container"]'),
+        ...this.config.sitePrivateSelectors.stopButtonChildren.map((selector) =>
+          candidate.querySelector(selector),
+        ),
         candidate,
       ]
 
