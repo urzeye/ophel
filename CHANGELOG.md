@@ -19,13 +19,14 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
-- **ChatGPT panel avoidance input width** — Fixed issue where the smart avoidance feature caused ChatGPT's input box to become excessively narrow after the site's 2025 redesign, because the composer input area was nested inside the thread container and shared the same `max-w-(--thread-content-max-width)` class with conversation content; the avoidance CSS now distinguishes thread content from composer containers using targeted selectors, and the width rules are split into independent entries so a selector failure in one does not cascade to others.
-- **Doubao Zen Mode sidebar** — Fixed issue where enabling Zen Mode on Doubao left a visible sidebar placeholder because the old DOM selector no longer matched the updated sidebar structure; added the new container selector so the sidebar collapses completely. (#806)
 - **Prompt variable multiline input** — Fixed issue where pasting multi-line Markdown into a prompt variable collapsed it onto a single line because the input was single-line; variable text fields now use an auto-resizing box that stays compact for short values and grows to preserve line breaks and formatting for long content. (#801)
+
+* **ChatGPT panel avoidance input width** — Fixed issue where the smart avoidance feature caused ChatGPT's input box to become excessively narrow after the site's 2025 redesign, because the composer input area was nested inside the thread container and shared the same `max-w-(--thread-content-max-width)` class with conversation content; the avoidance CSS now distinguishes thread content from composer containers using targeted selectors, and the width rules are split into independent entries so a selector failure in one does not cascade to others.
+* **Doubao Zen Mode sidebar** — Fixed issue where enabling Zen Mode on Doubao left a visible sidebar placeholder because the old DOM selector no longer matched the updated sidebar structure; added the new container selector so the sidebar collapses completely. (#806)
 
 ---
 
-## [1.1.7] - 2026-07-22
+## [1.1.7][1.1.7] - 2026-07-22
 
 ### ✨ Improvements
 
@@ -38,7 +39,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.1.6] - 2026-07-16
+## [1.1.6][1.1.6] - 2026-07-16
 
 ### ✨ Improvements
 
@@ -52,7 +53,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.1.5] - 2026-07-09
+## [1.1.5][1.1.5] - 2026-07-09
 
 ### 🚀 New Features
 
@@ -65,7 +66,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.1.4] - 2026-07-06
+## [1.1.4][1.1.4] - 2026-07-06
 
 ### 🚀 New Features
 
