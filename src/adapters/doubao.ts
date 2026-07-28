@@ -528,7 +528,7 @@ export class DoubaoAdapter extends SiteAdapter {
 
   getZenModeConfig() {
     return {
-      hide: ["nav", ".container-qOgFQp"],
+      hide: ["nav", ".container-qOgFQp", ".container-hzjmF1"],
     }
   }
 

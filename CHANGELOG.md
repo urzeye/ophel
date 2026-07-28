@@ -11,7 +11,26 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.1.7] - 2026-07-22
+## [1.1.8] - 2026-07-28
+
+### 🚀 New Features
+
+- **Prompt platform filter** — Prompts now support optional platform assignment (e.g., ChatGPT, Gemini, Claude) via the editor dialog; a new globe icon in the category bar opens a multi-select filter popover with a badge count, so users can quickly narrow prompts to those relevant for a specific platform. (#802)
+
+### ✨ Improvements
+
+- **Prompt queue overlay z-index** — Lowered the queue capsule and panel z-index from 99998/99999 to 9998/9999 so the floating bar no longer blocks the main panel, magic codex viewer, and import/preview dialogs.
+
+### 🐛 Bug Fixes
+
+- **Prompt variable multiline input** — Fixed issue where pasting multi-line Markdown into a prompt variable collapsed it onto a single line because the input was single-line; variable text fields now use an auto-resizing box that stays compact for short values and grows to preserve line breaks and formatting for long content. (#801)
+
+* **ChatGPT panel avoidance input width** — Fixed issue where the smart avoidance feature caused ChatGPT's input box to become excessively narrow after the site's 2026 redesign.
+* **Doubao Zen Mode sidebar** — Fixed issue where enabling Zen Mode on Doubao left a visible sidebar placeholder because the old DOM selector no longer matched the updated sidebar structure; added the new container selector so the sidebar collapses completely. (#806)
+
+---
+
+## [1.1.7][1.1.7] - 2026-07-22
 
 ### ✨ Improvements
 
@@ -24,7 +43,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.1.6] - 2026-07-16
+## [1.1.6][1.1.6] - 2026-07-16
 
 ### ✨ Improvements
 
@@ -38,7 +57,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.1.5] - 2026-07-09
+## [1.1.5][1.1.5] - 2026-07-09
 
 ### 🚀 New Features
 
@@ -51,7 +70,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.1.4] - 2026-07-06
+## [1.1.4][1.1.4] - 2026-07-06
 
 ### 🚀 New Features
 
@@ -1341,6 +1360,7 @@ This is the first official release of Ophel, providing comprehensive enhancement
 
 ---
 
+[1.1.8]: https://github.com/urzeye/ophel/releases/tag/v1.1.8
 [1.1.7]: https://github.com/urzeye/ophel/releases/tag/v1.1.7
 [1.1.6]: https://github.com/urzeye/ophel/releases/tag/v1.1.6
 [1.1.5]: https://github.com/urzeye/ophel/releases/tag/v1.1.5

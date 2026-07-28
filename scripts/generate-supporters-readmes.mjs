@@ -92,19 +92,15 @@ function resolveAvatarPath(readmePath, avatar) {
 }
 
 /**
- * 当 avatar 未设置时，用 DiceBear identicon 按名字+来源+日期生成确定性头像
+ * 当 avatar 未设置时，按姓名、来源、日期和备注生成确定性的 DiceBear 头像
  * 避免大量 "anonymous" 用户共享同一头像
  */
 function getAvatarUrl(name, avatar, source, date, remark) {
   if (avatar) return avatar
 
-  // 特殊处理 anonymous - 提供一个统一的、专属的“神秘守护者”形象
-  if (!name || name.toLowerCase() === "anonymous") {
-    return `https://api.dicebear.com/7.x/bottts/svg?seed=Lucky&radius=20&backgroundColor=f1f5f9`
-  }
-
-  // 即使名字重复，结合源、日期甚至备注(赞助金额/寄语等)，也能保证每个人的机器人独一无二！
-  const seed = encodeURIComponent(`${name}|${source || ""}|${date || ""}|${remark || ""}`)
+  const seed = encodeURIComponent(
+    `${name || "anonymous"}|${source || ""}|${date || ""}|${remark || ""}`,
+  )
   return `https://api.dicebear.com/7.x/bottts/svg?seed=${seed}&radius=20&backgroundColor=f1f5f9`
 }
 

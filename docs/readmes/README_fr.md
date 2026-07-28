@@ -206,7 +206,7 @@
       <sub><b>**南</b></sub>
     </td>
     <td align="center" valign="top" width="14.28%">
-      <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Lucky&amp;radius=20&amp;backgroundColor=f1f5f9" width="84px;" alt="anonymous" /><br />
+      <img src="https://api.dicebear.com/7.x/bottts/svg?seed=anonymous%7Calipay%7C2026-04-09%7C%EF%BF%A510&amp;radius=20&amp;backgroundColor=f1f5f9" width="84px;" alt="anonymous" /><br />
       <sub><b>anonymous</b></sub>
     </td>
     <td align="center" valign="top" width="14.28%">
@@ -250,6 +250,10 @@
     <td align="center" valign="top" width="14.28%">
       <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Count%20Basil%7Cko-fi%7C2026-06-29%7C%2420&amp;radius=20&amp;backgroundColor=f1f5f9" width="84px;" alt="Count Basil" /><br />
       <sub><b>Count Basil</b></sub>
+    </td>
+    <td align="center" valign="top" width="14.28%">
+      <img src="https://api.dicebear.com/7.x/bottts/svg?seed=anonymous%7Cwechat%7C2026-07-22%7C%EF%BF%A53&amp;radius=20&amp;backgroundColor=f1f5f9" width="84px;" alt="anonymous" /><br />
+      <sub><b>anonymous</b></sub>
     </td>
   </tr>
   </tbody>

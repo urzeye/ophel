@@ -36,6 +36,33 @@ interface VariableInputDialogProps {
   onCancel: () => void
 }
 
+// textarea 自适应高度的上限，超过后出现滚动条
+const MAX_TEXTAREA_HEIGHT = 200
+
+// 变量输入框的细滚动条样式（内联 <style> 注入到 Shadow DOM 内生效）
+const VARIABLE_TEXTAREA_STYLES = `
+.gh-var-textarea {
+  scrollbar-width: thin;
+  scrollbar-color: var(--gh-border, #d1d5db) transparent;
+}
+.gh-var-textarea::-webkit-scrollbar {
+  width: 8px;
+}
+.gh-var-textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+.gh-var-textarea::-webkit-scrollbar-thumb {
+  background: var(--gh-border, #d1d5db);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.gh-var-textarea::-webkit-scrollbar-thumb:hover {
+  background: var(--gh-text-secondary, #9ca3af);
+  background-clip: padding-box;
+}
+`
+
 export const VariableInputDialog: React.FC<VariableInputDialogProps> = ({
   variables,
   onConfirm,
@@ -47,7 +74,7 @@ export const VariableInputDialog: React.FC<VariableInputDialogProps> = ({
       value: v.options ? v.options[0] : v.defaultValue ?? "",
     })),
   )
-  const firstInputRef = useRef<HTMLInputElement>(null)
+  const firstInputRef = useRef<HTMLTextAreaElement>(null)
 
   // 自动聚焦第一个输入框
   useEffect(() => {
@@ -55,6 +82,13 @@ export const VariableInputDialog: React.FC<VariableInputDialogProps> = ({
       firstInputRef.current?.focus()
     }, 100)
   }, [])
+
+  // 自适应高度：短内容保持单行观感，多行/长文本自动增高到上限后滚动
+  const autoResize = (el: HTMLTextAreaElement | null) => {
+    if (!el) return
+    el.style.height = "auto"
+    el.style.height = `${Math.min(el.scrollHeight, MAX_TEXTAREA_HEIGHT)}px`
+  }
 
   const handleSubmit = () => {
     const result: Record<string, string> = {}
@@ -90,7 +124,7 @@ export const VariableInputDialog: React.FC<VariableInputDialogProps> = ({
       closeOnOverlayClick={false}
       dialogClassName="prompt-modal-content"
       dialogStyle={{
-        width: "400px",
+        width: "520px",
         maxWidth: "90%",
         maxHeight: "80vh",
         display: "flex",
@@ -102,6 +136,7 @@ export const VariableInputDialog: React.FC<VariableInputDialogProps> = ({
       <div
         onKeyDown={handleKeyDown}
         style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
+        <style>{VARIABLE_TEXTAREA_STYLES}</style>
         {/* 标题 */}
         <div
           style={{
@@ -186,12 +221,19 @@ export const VariableInputDialog: React.FC<VariableInputDialogProps> = ({
                   ))}
                 </select>
               ) : (
-                /* 普通文本输入 */
-                <input
-                  ref={index === 0 ? firstInputRef : undefined}
-                  type="text"
+                /* 普通文本输入（自适应高度：短内容保持单行观感，多行/长文本自动增高后滚动） */
+                <textarea
+                  className="gh-var-textarea"
+                  ref={(el) => {
+                    if (index === 0) firstInputRef.current = el
+                    autoResize(el)
+                  }}
                   value={values[index]?.value ?? ""}
-                  onChange={(e) => updateValue(index, e.target.value)}
+                  onChange={(e) => {
+                    updateValue(index, e.target.value)
+                    autoResize(e.target)
+                  }}
+                  rows={1}
                   placeholder={
                     parsedVar.defaultValue
                       ? `${t("promptVariablePlaceholder")} (${t("default")}: ${parsedVar.defaultValue})`
@@ -203,10 +245,15 @@ export const VariableInputDialog: React.FC<VariableInputDialogProps> = ({
                     borderRadius: "6px",
                     border: "1px solid var(--gh-input-border, #d1d5db)",
                     fontSize: "14px",
+                    lineHeight: 1.5,
                     outline: "none",
                     background: "var(--gh-input-bg, white)",
                     color: "var(--gh-text, #374151)",
                     boxSizing: "border-box",
+                    resize: "none",
+                    maxHeight: `${MAX_TEXTAREA_HEIGHT}px`,
+                    overflowY: "auto",
+                    fontFamily: "inherit",
                     transition: "border-color 0.2s, box-shadow 0.2s",
                   }}
                   onFocus={(e) => {

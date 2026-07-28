@@ -2790,6 +2790,58 @@
   background: var(--gh-bg, #ffffff) !important;
 }
 
+.gh-prompt-platform-filter-btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: var(--gh-hover, #f3f4f6);
+  color: var(--gh-text-secondary, #4b5563);
+  line-height: 1;
+  cursor: pointer;
+}
+
+.gh-prompt-platform-filter-btn:focus-visible,
+.gh-prompt-platform-filter-option:focus-visible {
+  outline: 2px solid var(--gh-primary, #4285f4);
+  outline-offset: 2px;
+}
+
+.gh-prompt-platform-filter-menu {
+  box-sizing: border-box;
+  width: 220px;
+  min-width: 0;
+  max-width: min(220px, calc(100vw - 24px));
+}
+
+.gh-prompt-platform-filter-option {
+  width: 100%;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 6px;
+  color: var(--gh-text, #1f2937);
+  font-size: 13px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.gh-prompt-platform-filter-option:hover {
+  filter: brightness(0.97);
+}
+
+.gh-prompt-platform-filter-option:active,
+.gh-prompt-platform-filter-btn:active {
+  transform: translateY(1px);
+}
+
 .gh-prompt-library-switch {
   display: inline-flex;
   flex: 0 0 auto;

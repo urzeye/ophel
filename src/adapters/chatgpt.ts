@@ -150,8 +150,18 @@ const CHATGPT_NATIVE_TOC_PROMPT_LABEL_RE = /^Prompt\s+\d+$/i
 const CHATGPT_CODEX_TASK_MARKDOWN_SELECTOR = ".markdown.markdown-new-styling"
 const CHATGPT_CODEX_TASK_USER_QUERY_SELECTOR = ".self-end.bg-token-bg-tertiary .whitespace-pre-wrap"
 const CHATGPT_LAYOUT_SCOPE_SELECTOR = "main#main"
-const CHATGPT_THREAD_WIDTH_SELECTOR =
-  '#thread [class*="thread-content-max-width"], #thread [style*="--thread-content-max-width"], main#main form[data-type="unified-composer"], main#main #composer-background'
+
+// ChatGPT 新版（2025 重设计）将 Composer 输入区嵌套在 #thread 内部，
+// 与对话内容共用 max-w-(--thread-content-max-width) 容器（Tailwind v4）。
+// 避让时需区分 thread 内容容器与 composer 容器：
+// - thread 内容 max-w 容器：排除包含 composer form 的，避免重复约束
+// - composer 区：仅约束 form 本身，不约束其外层的 max-w 容器
+const CHATGPT_THREAD_CONTENT_MAX_WIDTH_SELECTOR =
+  '#thread [class*="thread-content-max-width"]:not(:has(form[data-type="unified-composer"]))'
+const CHATGPT_THREAD_WIDTH_LEGACY_SELECTOR =
+  '#thread [style*="--thread-content-max-width"]:not(:has(form[data-type="unified-composer"]))'
+const CHATGPT_COMPOSER_FORM_WIDTH_SELECTOR = 'main#main form[data-type="unified-composer"]'
+
 // ChatGPT 的新对话提示卡片内层横向滚动行也带 px-(--thread-content-margin)；
 // 这里只命中同时定义该变量的外层节点，避免把卡片行也塞进安全区 padding。
 const CHATGPT_THREAD_SAFE_AREA_SELECTOR =
@@ -1043,7 +1053,8 @@ export class ChatGPTAdapter extends SiteAdapter {
 
   getWidthSelectors() {
     // ChatGPT 使用 CSS 变量 --thread-content-max-width 控制内容宽度
-    // 选择器匹配带有该变量的容器
+    // 新版将 Composer 也嵌套在 #thread 内，共用 max-w-(--thread-content-max-width) 容器，
+    // 因此不添加 :not(:has(...)) 排除——页面宽度模式下 composer 与对话内容应保持相同的宽度约束。
     return [
       { selector: '[class*="thread-content-max-width"]', property: "max-width" },
       { selector: '[style*="--thread-content-max-width"]', property: "max-width" },
@@ -1078,7 +1089,17 @@ export class ChatGPTAdapter extends SiteAdapter {
       obstacleSelectors: [CHATGPT_PANEL_OBSTACLE_SELECTOR],
       widthSelectors: [
         {
-          selector: CHATGPT_THREAD_WIDTH_SELECTOR,
+          selector: CHATGPT_THREAD_CONTENT_MAX_WIDTH_SELECTOR,
+          property: "max-width",
+          extraCss: "width: 100% !important; min-width: 0 !important;",
+        },
+        {
+          selector: CHATGPT_THREAD_WIDTH_LEGACY_SELECTOR,
+          property: "max-width",
+          extraCss: "width: 100% !important; min-width: 0 !important;",
+        },
+        {
+          selector: CHATGPT_COMPOSER_FORM_WIDTH_SELECTOR,
           property: "max-width",
           extraCss: "width: 100% !important; min-width: 0 !important;",
         },

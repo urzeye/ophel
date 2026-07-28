@@ -13,6 +13,7 @@ import {
   EditIcon,
   ExportIcon,
   EyeIcon,
+  GlobeIcon,
   ImportIcon,
   MoreHorizontalIcon,
   PinIcon,
@@ -31,15 +32,19 @@ import {
 } from "~components/VariableInputDialog"
 import { ChainIconPicker } from "~components/ChainIconPicker"
 import { ImportDialog } from "~components/prompts/ImportDialog"
+import { PlatformIcon } from "~components/prompts/PlatformIcon"
 import { PromptEditorDialog } from "~components/prompts/PromptEditorDialog"
+import { PromptPlatformSummary } from "~components/prompts/PromptPlatformSummary"
 import { PromptPreviewModal } from "~components/prompts/PromptPreviewModal"
 import { usePromptDragSort } from "~components/prompts/usePromptDragSort"
 import { VIRTUAL_CATEGORY } from "~constants"
 import { CHAIN_ICON_PRESETS } from "~constants/chain-icons"
+import { SUPPORTED_AI_PLATFORMS, type SupportedAiPlatform } from "~constants/defaults"
 import type { PromptChain, PromptChainStep } from "~core/prompt-action-types"
 import { enqueuePrompt, sendOrQueuePrompt } from "~core/prompt-actions"
 import type { PromptManager } from "~core/prompt-manager"
 import { usePromptChainsStore } from "~stores/prompt-chains-store"
+import { matchesPromptPlatform } from "~stores/prompts-store"
 import { useSettingsStore } from "~stores/settings-store"
 import { APP_NAME } from "~utils/config"
 import { t } from "~utils/i18n"
@@ -53,6 +58,9 @@ import { createSafeHTML } from "~utils/trusted-types"
 interface PromptsTabProps {
   manager: PromptManager
   adapter?: SiteAdapter | null
+  currentPlatform: SupportedAiPlatform | null
+  selectedPlatforms: string[]
+  setSelectedPlatforms: React.Dispatch<React.SetStateAction<string[]>>
   onPromptSelect?: (prompt: Prompt | null) => void
   selectedPromptId?: string | null
 }
@@ -914,7 +922,9 @@ const isPromptLike = (value: unknown): value is Prompt => {
     typeof value.content === "string" &&
     typeof value.category === "string" &&
     (value.pinned === undefined || typeof value.pinned === "boolean") &&
-    (value.lastUsedAt === undefined || typeof value.lastUsedAt === "number")
+    (value.lastUsedAt === undefined || typeof value.lastUsedAt === "number") &&
+    (value.platforms === undefined ||
+      (Array.isArray(value.platforms) && value.platforms.every((id) => typeof id === "string")))
   )
 }
 
@@ -992,6 +1002,9 @@ const getResolvedCategoryColor = (colorIndex: number): string => {
 export const PromptsTab: React.FC<PromptsTabProps> = ({
   manager,
   adapter,
+  currentPlatform,
+  selectedPlatforms,
+  setSelectedPlatforms,
   onPromptSelect,
   selectedPromptId,
 }) => {
@@ -1015,6 +1028,8 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   const [categories, setCategories] = useState<string[]>([])
   const [selectedCategory, setSelectedCategory] = useState<string>(VIRTUAL_CATEGORY.ALL)
   const [searchQuery, setSearchQuery] = useState("")
+  const [platformFilterOpen, setPlatformFilterOpen] = useState(false)
+  const platformFilterButtonRef = useRef<HTMLButtonElement>(null)
   const [activeLibraryView, setActiveLibraryView] = useState<PromptLibraryView>("prompts")
   const chains = usePromptChainsStore((state) => state.chains)
   const addChain = usePromptChainsStore((state) => state.addChain)
@@ -1174,12 +1189,13 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
 
       setActiveLibraryView("prompts")
       setSelectedCategory(VIRTUAL_CATEGORY.ALL)
+      setSelectedPlatforms([])
       setSearchQuery("")
       onPromptSelect?.(null)
       setLocatedPromptId(targetPrompt.id)
       return true
     },
-    [manager, onPromptSelect],
+    [manager, onPromptSelect, setSelectedPlatforms],
   )
 
   useEffect(() => {
@@ -1250,6 +1266,22 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   }, [loadData])
 
   useEffect(() => {
+    if (!platformFilterOpen) return
+
+    const handlePlatformFilterEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return
+
+      event.preventDefault()
+      event.stopPropagation()
+      setPlatformFilterOpen(false)
+      platformFilterButtonRef.current?.focus()
+    }
+
+    document.addEventListener("keydown", handlePlatformFilterEscape, true)
+    return () => document.removeEventListener("keydown", handlePlatformFilterEscape, true)
+  }, [platformFilterOpen])
+
+  useEffect(() => {
     return () => {
       if (clickTimerRef.current !== null) {
         window.clearTimeout(clickTimerRef.current)
@@ -1283,7 +1315,6 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
         .getPrompts()
         .filter((p) => p.lastUsedAt)
         .sort((a, b) => (b.lastUsedAt || 0) - (a.lastUsedAt || 0))
-        .slice(0, 10) // 只显示最近 10 个
 
       // 搜索过滤
       if (searchQuery) {
@@ -1294,6 +1325,15 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
       }
     } else {
       filtered = manager.filterPrompts(searchQuery, selectedCategory)
+    }
+
+    // 平台筛选：叠加在分类/搜索之上的正交维度
+    if (selectedPlatforms.length > 0) {
+      filtered = filtered.filter((p) => matchesPromptPlatform(p, selectedPlatforms))
+    }
+
+    if (selectedCategory === VIRTUAL_CATEGORY.RECENT) {
+      filtered = filtered.slice(0, 10)
     }
 
     // 置顶的提示词优先显示（最近使用模式下不重排）
@@ -1827,6 +1867,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
         content: p.content,
         category: p.category,
         pinned: p.pinned,
+        platforms: p.platforms,
       })
     })
 
@@ -1837,6 +1878,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
         content: p.content,
         category: p.category,
         pinned: p.pinned,
+        platforms: p.platforms,
       })
     })
 
@@ -1880,6 +1922,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
         title: editingPrompt.title,
         content: editingPrompt.content,
         category: newCategory,
+        platforms: editingPrompt.platforms?.length ? editingPrompt.platforms : undefined,
       })
       showToast(t("promptUpdated"))
 
@@ -1892,6 +1935,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
         title: editingPrompt.title!,
         content: editingPrompt.content!,
         category: newCategory,
+        platforms: editingPrompt.platforms?.length ? editingPrompt.platforms : undefined,
       })
       showToast(t("promptAdded"))
     }
@@ -2019,13 +2063,32 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   }
 
   const filtered = getFilteredPrompts()
+  const isPromptReorderingEnabled =
+    selectedCategory !== VIRTUAL_CATEGORY.RECENT &&
+    !searchQuery.trim() &&
+    selectedPlatforms.length === 0
+  const isCurrentPlatformFilter =
+    currentPlatform !== null &&
+    selectedPlatforms.length === 1 &&
+    selectedPlatforms[0] === currentPlatform.id
+  const isCustomPlatformFilter = selectedPlatforms.length > 0 && !isCurrentPlatformFilter
+  const selectedPlatform =
+    selectedPlatforms.length === 1
+      ? SUPPORTED_AI_PLATFORMS.find((platform) => platform.id === selectedPlatforms[0]) ?? null
+      : null
+  const selectedPlatformNames = SUPPORTED_AI_PLATFORMS.filter((platform) =>
+    selectedPlatforms.includes(platform.id),
+  ).map((platform) => platform.name)
+  const platformFilterSummary =
+    isCurrentPlatformFilter && currentPlatform
+      ? `${t("promptPlatformCurrent")} · ${currentPlatform.name}`
+      : selectedPlatforms.length === 0
+        ? t("promptPlatformAll")
+        : selectedPlatformNames.join(", ")
+  const platformFilterAccessibleLabel = `${t("promptPlatformFilter")}: ${platformFilterSummary}`
 
   const getPromptMoveTargets = (promptId: string) => {
-    if (
-      activeLibraryView !== "prompts" ||
-      selectedCategory === VIRTUAL_CATEGORY.RECENT ||
-      searchQuery.trim()
-    ) {
+    if (activeLibraryView !== "prompts" || !isPromptReorderingEnabled) {
       return { previous: null, next: null }
     }
 
@@ -2863,6 +2926,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
       prompt={previewModal.prompt}
       previewRef={modalPreviewRef}
       onClose={closePreviewModal}
+      currentPlatformId={currentPlatform?.id}
       getCategoryColorIndex={getCategoryColorIndex}
       getResolvedCategoryColor={getResolvedCategoryColor}
     />
@@ -3067,6 +3131,191 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
               flexShrink: 0,
               borderLeft: "1px solid var(--gh-border, #e5e7eb)",
             }}>
+            {/* 平台筛选（当前平台默认；自定义筛选显示角标计数） */}
+            <div style={{ position: "relative", display: "inline-flex" }}>
+              <Tooltip content={platformFilterAccessibleLabel}>
+                <button
+                  type="button"
+                  ref={platformFilterButtonRef}
+                  onClick={() => setPlatformFilterOpen((open) => !open)}
+                  aria-label={platformFilterAccessibleLabel}
+                  aria-haspopup="dialog"
+                  aria-expanded={platformFilterOpen}
+                  className="gh-prompt-platform-filter-btn">
+                  {selectedPlatform ? (
+                    <PlatformIcon name={selectedPlatform.name} size={16} />
+                  ) : (
+                    <GlobeIcon size={14} />
+                  )}
+                </button>
+              </Tooltip>
+              {isCustomPlatformFilter && (
+                <span
+                  aria-hidden="true"
+                  style={{
+                    position: "absolute",
+                    top: "-4px",
+                    right: "-4px",
+                    minWidth: "14px",
+                    height: "14px",
+                    padding: "0 3px",
+                    boxSizing: "border-box",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: "999px",
+                    background: "var(--gh-danger, #ef4444)",
+                    color: "white",
+                    fontSize: "9px",
+                    fontWeight: 700,
+                    lineHeight: 1,
+                    pointerEvents: "none",
+                  }}>
+                  {selectedPlatforms.length}
+                </span>
+              )}
+              {platformFilterOpen && (
+                <>
+                  <div
+                    style={{
+                      position: "fixed",
+                      inset: 0,
+                      zIndex: 20,
+                    }}
+                    onClick={() => setPlatformFilterOpen(false)}
+                  />
+                  <div
+                    role="dialog"
+                    aria-label={t("promptPlatformFilter")}
+                    className="gh-prompt-platform-filter-menu"
+                    style={{
+                      position: "absolute",
+                      top: "calc(100% + 6px)",
+                      right: 0,
+                      zIndex: 21,
+                      maxHeight: "320px",
+                      overflowY: "auto",
+                      padding: "6px",
+                      background: "var(--gh-bg, #ffffff)",
+                      border: "1px solid var(--gh-border, #e5e7eb)",
+                      borderRadius: "10px",
+                      boxShadow: "var(--gh-shadow, 0 8px 24px rgba(0,0,0,0.15))",
+                      scrollbarWidth: "thin",
+                    }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: "8px",
+                        padding: "4px 8px 6px",
+                        borderBottom: "1px solid var(--gh-border, #e5e7eb)",
+                        marginBottom: "4px",
+                      }}>
+                      <span
+                        style={{
+                          fontSize: "12px",
+                          fontWeight: 600,
+                          color: "var(--gh-text-secondary, #6b7280)",
+                        }}>
+                        {t("promptPlatformFilter")}
+                      </span>
+                    </div>
+                    {currentPlatform && (
+                      <button
+                        type="button"
+                        aria-pressed={isCurrentPlatformFilter}
+                        onClick={() => setSelectedPlatforms([currentPlatform.id])}
+                        className="gh-prompt-platform-filter-option"
+                        style={{
+                          background: isCurrentPlatformFilter
+                            ? "var(--gh-hover, #f3f4f6)"
+                            : "transparent",
+                        }}>
+                        <PlatformIcon name={currentPlatform.name} size={18} />
+                        <span
+                          style={{
+                            flex: 1,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}>
+                          {t("promptPlatformCurrent")} · {currentPlatform.name}
+                        </span>
+                        {isCurrentPlatformFilter && (
+                          <CheckIcon size={14} color="var(--gh-primary, #4285f4)" />
+                        )}
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      aria-pressed={selectedPlatforms.length === 0}
+                      onClick={() => setSelectedPlatforms([])}
+                      className="gh-prompt-platform-filter-option"
+                      style={{
+                        background:
+                          selectedPlatforms.length === 0
+                            ? "var(--gh-hover, #f3f4f6)"
+                            : "transparent",
+                      }}>
+                      <GlobeIcon size={18} />
+                      <span
+                        style={{
+                          flex: 1,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}>
+                        {t("promptPlatformAll")}
+                      </span>
+                      {selectedPlatforms.length === 0 && (
+                        <CheckIcon size={14} color="var(--gh-primary, #4285f4)" />
+                      )}
+                    </button>
+                    <div
+                      role="separator"
+                      style={{
+                        height: "1px",
+                        margin: "4px 8px",
+                        background: "var(--gh-border, #e5e7eb)",
+                      }}
+                    />
+                    {SUPPORTED_AI_PLATFORMS.map((platform) => {
+                      const checked = selectedPlatforms.includes(platform.id)
+                      return (
+                        <button
+                          type="button"
+                          aria-pressed={checked}
+                          key={platform.id}
+                          onClick={() =>
+                            setSelectedPlatforms((prev) =>
+                              prev.includes(platform.id)
+                                ? prev.filter((id) => id !== platform.id)
+                                : [...prev, platform.id],
+                            )
+                          }
+                          className="gh-prompt-platform-filter-option"
+                          style={{
+                            background: checked ? "var(--gh-hover, #f3f4f6)" : "transparent",
+                          }}>
+                          <PlatformIcon name={platform.name} size={18} />
+                          <span
+                            style={{
+                              flex: 1,
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}>
+                            {platform.name}
+                          </span>
+                          {checked && <CheckIcon size={14} color="var(--gh-primary, #4285f4)" />}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
             {/* ⭐ 最近使用（仅图标） */}
             <Tooltip content={t("promptRecentUsed")}>
               <span
@@ -3144,7 +3393,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                 className={`prompt-item ${isHighlighted ? "selected" : ""} ${isLocated ? "located" : ""} ${draggedId === p.id ? "dragging" : ""}`}
                 onClick={() => handlePromptClick(p)}
                 onDoubleClick={() => handlePromptDoubleClick(p)}
-                draggable
+                draggable={isPromptReorderingEnabled}
                 onDragStart={(e) => handleDragStart(e, p.id, e.currentTarget as HTMLDivElement)}
                 onDragOver={(e) => handleDragOver(e, p.id)}
                 onDragEnd={handleDragEnd}
@@ -3185,17 +3434,31 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                     }}>
                     {p.title}
                   </div>
-                  <span
+                  <div
                     style={{
-                      fontSize: "11px",
-                      padding: "2px 6px",
-                      background: "var(--gh-hover, #f3f4f6)",
-                      borderRadius: "4px",
-                      color: "var(--gh-text-secondary, #6b7280)",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
                       flexShrink: 0,
                     }}>
-                    {p.category || t("uncategorized")}
-                  </span>
+                    <PromptPlatformSummary
+                      platforms={p.platforms}
+                      maxVisible={3}
+                      iconSize={14}
+                      currentPlatformId={currentPlatform?.id}
+                    />
+                    <span
+                      style={{
+                        fontSize: "11px",
+                        padding: "2px 6px",
+                        background: "var(--gh-hover, #f3f4f6)",
+                        borderRadius: "4px",
+                        color: "var(--gh-text-secondary, #6b7280)",
+                        flexShrink: 0,
+                      }}>
+                      {p.category || t("uncategorized")}
+                    </span>
+                  </div>
                 </div>
 
                 {/* 内容预览 */}
