@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "id": "duck-ai",
+  "version": 1,
+  "minAppVersion": "1.1.8",
+  "name": "Duck.ai",
+  "nameI18n": {
+    "zh-CN": "Duck.ai",
+    "zh-TW": "Duck.ai",
+    "en": "Duck.ai",
+    "ja": "Duck.ai",
+    "ko": "Duck.ai",
+    "it": "Duck.ai",
+    "de": "Duck.ai",
+    "es": "Duck.ai",
+    "fr": "Duck.ai",
+    "pt-BR": "Duck.ai",
+    "ru": "Duck.ai"
+  },
+  "description": "Adds Ophel outlines, export, generation controls, layout tools, and prompt insertion to Duck.ai.",
+  "descriptionI18n": {
+    "zh-CN": "为 Duck.ai 添加 Ophel 大纲、导出、生成控制、页面布局和提示词插入功能。",
+    "zh-TW": "為 Duck.ai 加入 Ophel 大綱、匯出、生成控制、頁面版面與提示詞插入功能。",
+    "en": "Adds Ophel outlines, export, generation controls, layout tools, and prompt insertion to Duck.ai.",
+    "ja": "Duck.ai に Ophel のアウトライン、エクスポート、生成制御、レイアウト調整、プロンプト挿入機能を追加します。",
+    "ko": "Duck.ai에 Ophel의 개요, 내보내기, 생성 제어, 레이아웃 조정 및 프롬프트 삽입 기능을 추가합니다.",
+    "it": "Aggiunge a Duck.ai le funzioni Ophel per struttura, esportazione, controllo della generazione, layout e inserimento dei prompt.",
+    "de": "Ergänzt Duck.ai um Ophel-Funktionen für Gliederung, Export, Generierungssteuerung, Layout und Prompt-Einfügung.",
+    "es": "Añade a Duck.ai las funciones de Ophel para esquema, exportación, control de generación, diseño e inserción de prompts.",
+    "fr": "Ajoute à Duck.ai les fonctions Ophel de plan, d’exportation, de contrôle de la génération, de mise en page et d’insertion de prompts.",
+    "pt-BR": "Adiciona ao Duck.ai os recursos do Ophel para estrutura, exportação, controle de geração, layout e inserção de prompts.",
+    "ru": "Добавляет в Duck.ai функции Ophel для структуры, экспорта, управления генерацией, настройки ширины и вставки промптов."
+  },
+  "matches": ["https://duck.ai/*"],
+  "capabilities": [
+    "outline",
+    "outline-user-queries",
+    "export-basic",
+    "generation-detect",
+    "new-chat",
+    "stop-generation",
+    "width",
+    "zen",
+    "prompt-insert"
+  ],
+  "selectors": {
+    "textarea": ["textarea[name='user-prompt']"],
+    "submitButton": ["[data-testid='duckai-chat-input'] button[type='submit']"],
+    "responseContainer": "section:has([data-testid='duckai-chat-input'])",
+    "userQuery": "[data-testid='user-message']",
+    "assistantResponse": "[data-activeresponse='true'] > :nth-child(2)",
+    "newChatButton": [
+      "[data-testid='duckai-sidebar'] > div > div:has([role='search']) + div button[type='button']"
+    ],
+    "stopButton": [
+      "[data-testid='duckai-chat-input'] div:has(> button[type='submit']) + div > button[type='button']"
+    ]
+  },
+  "input": {
+    "mode": "textarea",
+    "submitKey": "Enter"
+  },
+  "generating": {
+    "existsSelectors": [
+      "[data-testid='duckai-chat-input'] div:has(> button[type='submit']) + div > button[type='button']"
+    ]
+  },
+  "export": {
+    "userQuerySelector": "[data-testid='user-message']",
+    "assistantResponseSelector": "[data-activeresponse='true'] > :nth-child(2)",
+    "turnSelector": null,
+    "useShadowDOM": false
+  },
+  "zenMode": {
+    "hide": ["[data-testid='duckai-sidebar']", "[data-testid='duckai-top-toolbar']"]
+  },
+  "widthSelectors": [
+    {
+      "selector": "section:has([data-testid='duckai-chat-input']) div:has(> [data-testid='user-message'])",
+      "property": "max-width",
+      "extraCss": "width: 100% !important; box-sizing: border-box !important;"
+    },
+    {
+      "selector": "form:has([data-testid='duckai-chat-input'])",
+      "property": "max-width",
+      "extraCss": "width: 100% !important; box-sizing: border-box !important;"
+    }
+  ]
+}
