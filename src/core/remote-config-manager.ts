@@ -10,13 +10,11 @@ import {
 
 import {
   createEmptyRemoteConfigChangeSummary,
-  createEmptyRemoteConfigState,
   DEFAULT_REMOTE_CONFIG_SOURCES,
   isAppVersionCompatible,
   REMOTE_CONFIG_CHECK_INTERVAL_MS,
   REMOTE_CONFIG_MAX_INDEX_BYTES,
   REMOTE_CONFIG_STORAGE_KEY,
-  REMOTE_CONFIG_STORAGE_SCHEMA_VERSION,
   validateRemoteConfigRegistryIndex,
   type BuiltinConfigDescriptor,
   type CachedSiteConfigPatch,
@@ -32,7 +30,11 @@ import {
   type RemoteConfigStorage,
   type ResolveBuiltinConfig,
 } from "./remote-config-types"
+import { isCachedSiteConfigPatchShape, isCachedSitePackShape } from "./remote-config-cache"
+import { loadRemoteConfigState } from "./remote-config-state"
 
+export * from "./remote-config-cache"
+export * from "./remote-config-state"
 export * from "./remote-config-types"
 
 export interface RemoteConfigManagerOptions {
@@ -63,21 +65,7 @@ interface SourceCheckResult extends CandidateBuildResult {
   sourceUrl: string
 }
 
-class RemoteConfigStateError extends Error {
-  constructor(message: string) {
-    super(message)
-    this.name = "RemoteConfigStateError"
-  }
-}
-
-const isPlainRecord = (value: unknown): value is Record<string, unknown> => {
-  if (value === null || typeof value !== "object" || Array.isArray(value)) return false
-  const prototype = Object.getPrototypeOf(value)
-  return prototype === Object.prototype || prototype === null
-}
-
 const SITE_ID_PATTERN = /^[a-z0-9-]{2,40}$/
-const MIN_UNIX_MILLISECONDS = 1_000_000_000_000
 
 const toErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : String(error)
@@ -205,150 +193,6 @@ const sameIgnoredPatches = (
   const leftKeys = Object.keys(left)
   const rightKeys = Object.keys(right)
   return leftKeys.length === rightKeys.length && leftKeys.every((key) => right[key] === left[key])
-}
-
-const validateStoredTimestamp = (value: unknown, path: string): number | undefined => {
-  if (value === undefined) return undefined
-  if (!Number.isSafeInteger(value) || (value as number) < MIN_UNIX_MILLISECONDS) {
-    throw new RemoteConfigStateError(`${path} must be a Unix millisecond timestamp`)
-  }
-  return value as number
-}
-
-const parseIgnoredPatches = (value: unknown): Record<string, number> => {
-  if (!isPlainRecord(value)) {
-    throw new RemoteConfigStateError("ignoredPatches must be an object")
-  }
-  const ignored: Record<string, number> = {}
-  for (const [siteId, patchVersion] of Object.entries(value)) {
-    if (!SITE_ID_PATTERN.test(siteId)) {
-      throw new RemoteConfigStateError(`ignoredPatches contains an invalid site id: ${siteId}`)
-    }
-    if (!Number.isSafeInteger(patchVersion) || (patchVersion as number) < 1) {
-      throw new RemoteConfigStateError(`ignoredPatches.${siteId} must be a positive integer`)
-    }
-    ignored[siteId] = patchVersion as number
-  }
-  return ignored
-}
-
-const parseStoredSnapshot = (value: unknown): RemoteConfigSnapshot | undefined => {
-  if (value === undefined) return undefined
-  if (!isPlainRecord(value)) {
-    throw new RemoteConfigStateError("active snapshot must be an object")
-  }
-  if (typeof value.sourceUrl !== "string") {
-    throw new RemoteConfigStateError("active.sourceUrl must be a string")
-  }
-  const index = validateRemoteConfigRegistryIndex(value.index)
-  if (!isPlainRecord(value.packs) || !isPlainRecord(value.patches)) {
-    throw new RemoteConfigStateError("active artifact maps must be objects")
-  }
-  return {
-    sourceUrl: value.sourceUrl,
-    index,
-    packs: value.packs as Record<string, CachedSitePack>,
-    patches: value.patches as Record<string, CachedSiteConfigPatch>,
-  }
-}
-
-const parseStoredState = (value: unknown): RemoteConfigState => {
-  if (value === undefined) return createEmptyRemoteConfigState()
-  if (!isPlainRecord(value)) {
-    throw new RemoteConfigStateError("Remote config state must be an object")
-  }
-  if (value.storageSchemaVersion !== REMOTE_CONFIG_STORAGE_SCHEMA_VERSION) {
-    throw new RemoteConfigStateError(
-      `Unsupported remote config storage schema: ${String(value.storageSchemaVersion)}`,
-    )
-  }
-
-  const state: RemoteConfigState = {
-    storageSchemaVersion: REMOTE_CONFIG_STORAGE_SCHEMA_VERSION,
-    ignoredPatches: parseIgnoredPatches(value.ignoredPatches),
-  }
-  const active = parseStoredSnapshot(value.active)
-  const lastCheckAt = validateStoredTimestamp(value.lastCheckAt, "lastCheckAt")
-  const lastSuccessAt = validateStoredTimestamp(value.lastSuccessAt, "lastSuccessAt")
-  if (active) state.active = active
-  if (lastCheckAt !== undefined) state.lastCheckAt = lastCheckAt
-  if (lastSuccessAt !== undefined) state.lastSuccessAt = lastSuccessAt
-  if (value.lastError !== undefined && !isPlainRecord(value.lastError)) {
-    throw new RemoteConfigStateError("lastError must be an object")
-  }
-  if (isPlainRecord(value.lastError)) {
-    const at = validateStoredTimestamp(value.lastError.at, "lastError.at")
-    const message = value.lastError.message
-    const sources = value.lastError.sources
-    if (
-      at !== undefined &&
-      typeof message === "string" &&
-      Array.isArray(sources) &&
-      sources.every(
-        (source) =>
-          isPlainRecord(source) &&
-          typeof source.sourceUrl === "string" &&
-          typeof source.message === "string",
-      )
-    ) {
-      state.lastError = {
-        at,
-        message,
-        sources: sources as RemoteConfigSourceFailure[],
-      }
-    } else {
-      throw new RemoteConfigStateError("lastError is malformed")
-    }
-  }
-  return state
-}
-
-export async function loadRemoteConfigState(
-  storage: RemoteConfigStorage,
-): Promise<RemoteConfigState> {
-  return parseStoredState(await storage.get<unknown>(REMOTE_CONFIG_STORAGE_KEY))
-}
-
-export async function loadActiveSiteConfigPatch(
-  storage: RemoteConfigStorage,
-  siteId: string,
-): Promise<SiteConfigPatch | undefined> {
-  const state = await loadRemoteConfigState(storage)
-  const cached = state.active?.patches[siteId]
-  return isCachedSiteConfigPatchShape(cached) ? cached.patch : undefined
-}
-
-const isCachedSitePackShape = (value: unknown): value is CachedSitePack => {
-  if (!isPlainRecord(value) || !isPlainRecord(value.index) || !isPlainRecord(value.manifest)) {
-    return false
-  }
-  const index = value.index
-  return (
-    typeof index.id === "string" &&
-    Number.isSafeInteger(index.version) &&
-    typeof index.minAppVersion === "string" &&
-    Array.isArray(index.matches) &&
-    typeof index.file === "string" &&
-    typeof index.sha256 === "string" &&
-    typeof index.disabled === "boolean"
-  )
-}
-
-const isCachedSiteConfigPatchShape = (value: unknown): value is CachedSiteConfigPatch => {
-  if (!isPlainRecord(value) || !isPlainRecord(value.index) || !isPlainRecord(value.patch)) {
-    return false
-  }
-  const index = value.index
-  return (
-    typeof index.targetSiteId === "string" &&
-    Number.isSafeInteger(index.patchVersion) &&
-    Number.isSafeInteger(index.baseConfigVersion) &&
-    typeof index.minAppVersion === "string" &&
-    (index.maxAppVersion === undefined || typeof index.maxAppVersion === "string") &&
-    typeof index.file === "string" &&
-    typeof index.sha256 === "string" &&
-    typeof index.disabled === "boolean"
-  )
 }
 
 const validatePackMetadata = (manifest: SitePackManifest, entry: RegistryPackIndexEntry): void => {

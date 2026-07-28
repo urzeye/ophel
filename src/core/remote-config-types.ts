@@ -1,18 +1,11 @@
 import type { BuiltinSiteConfig, SiteConfigPatch, SitePackManifest } from "~adapters/declarative"
 import { compareSemanticVersions, isValidSemanticVersion } from "~adapters/declarative"
 
-export const REMOTE_CONFIG_STORAGE_KEY = "sitepacks/remote-state"
-export const REMOTE_CONFIG_STORAGE_SCHEMA_VERSION = 1 as const
-export const REMOTE_CONFIG_INDEX_SCHEMA_VERSION = 1 as const
-export const REMOTE_CONFIG_CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000
-export const REMOTE_CONFIG_ALARM_NAME = "ophel-remote-config-check"
-export const REMOTE_CONFIG_ALARM_PERIOD_MINUTES = 24 * 60
-export const REMOTE_CONFIG_MAX_INDEX_BYTES = 512 * 1024
+import { REMOTE_CONFIG_INDEX_SCHEMA_VERSION } from "./remote-config-constants"
+import { REMOTE_CONFIG_STORAGE_SCHEMA_VERSION } from "./remote-config-storage-constants"
 
-export const DEFAULT_REMOTE_CONFIG_SOURCES = [
-  "https://cdn.jsdelivr.net/gh/urzeye/ophel@registry-dist/index.json",
-  "https://raw.githubusercontent.com/urzeye/ophel/registry-dist/index.json",
-] as const
+export * from "./remote-config-constants"
+export * from "./remote-config-storage-constants"
 
 export interface RegistryPackIndexEntry {
   id: string

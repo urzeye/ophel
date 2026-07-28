@@ -7,7 +7,7 @@
 
 import type { PlasmoCSConfig } from "plasmo"
 
-import { getAdapter } from "~adapters"
+import { getAdapter, initAdapterRegistry } from "~adapters"
 import { DEFAULT_FOLDERS, SITE_IDS, getDefaultPromptChains, getDefaultPrompts } from "~constants"
 import {
   initCoreModules,
@@ -448,8 +448,7 @@ export const config: PlasmoCSConfig = {
   run_at: "document_idle",
 }
 
-// 防止重复初始化
-if (!window.ophelInitialized) {
+function initializeOphel() {
   window.ophelInitialized = true
 
   const adapter = getAdapter()
@@ -554,3 +553,13 @@ if (!window.ophelInitialized) {
     console.warn("[Ophel] No adapter found for:", window.location.hostname)
   }
 }
+
+async function bootstrapOphel() {
+  await initAdapterRegistry()
+  if (window.ophelInitialized) return
+  initializeOphel()
+}
+
+void bootstrapOphel().catch((error) => {
+  console.error("[Ophel] Failed to initialize adapter registry:", error)
+})

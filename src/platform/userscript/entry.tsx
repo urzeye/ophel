@@ -382,14 +382,19 @@ async function init() {
       console.warn("[Ophel] Failed to start remote config check:", error)
     })
 
-  const [{ getAdapter }, { App }, { initNetworkMonitor }, { initGeminiTitleGuard }] =
-    await Promise.all([
-      import("~adapters"),
-      import("~components/App"),
-      import("~core/network-monitor"),
-      import("~core/gemini-title-guard"),
-    ])
+  const [
+    { getAdapter, initAdapterRegistry },
+    { App },
+    { initNetworkMonitor },
+    { initGeminiTitleGuard },
+  ] = await Promise.all([
+    import("~adapters"),
+    import("~components/App"),
+    import("~core/network-monitor"),
+    import("~core/gemini-title-guard"),
+  ])
 
+  await initAdapterRegistry()
   initGeminiTitleGuard()
 
   const adapter = getAdapter()
