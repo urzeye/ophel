@@ -73,6 +73,14 @@ export const platform: Platform = {
     },
   },
 
+  sitePacks: {
+    async ensureOrigins() {
+      return "unsupported"
+    },
+
+    async reconcile() {},
+  },
+
   async fetch(url: string, options?: FetchOptions): Promise<FetchResponse> {
     return new Promise((resolve, reject) => {
       GM_xmlhttpRequest({

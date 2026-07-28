@@ -8,6 +8,9 @@ interface ParsedSiteMatchPattern {
   pathPattern: string
 }
 
+const SITE_MATCH_PATTERN_ORIGIN_PATTERN =
+  /^https:\/\/(?:\*\.)?(?:\[[0-9a-f:.]+\]|[a-z0-9-]+(?:\.[a-z0-9-]+)*)(?::\d{1,5})?\/\*$/i
+
 const parseSiteMatchPattern = (pattern: string): ParsedSiteMatchPattern => {
   const match = /^https:\/\/([^/]+)(\/.*)$/.exec(pattern)
   if (!match) {
@@ -66,6 +69,25 @@ export const siteMatchPatternOrigin = (pattern: string): string => {
   const { authority } = parseSiteMatchPattern(pattern)
   const concreteAuthority = authority.startsWith("*.") ? authority.slice(2) : authority
   return new URL(`https://${concreteAuthority}/`).origin
+}
+
+/** 检查动态授权页收到的值是否为受支持的 HTTPS origin 级匹配。 */
+export const isSiteMatchPatternOriginPattern = (pattern: string): boolean => {
+  if (!SITE_MATCH_PATTERN_ORIGIN_PATTERN.test(pattern)) return false
+  const { authority } = parseSiteMatchPattern(pattern)
+  const concreteAuthority = authority.startsWith("*.") ? authority.slice(2) : authority
+  try {
+    new URL(`https://${concreteAuthority}/`)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/** 从已校验 match pattern 取得动态授权/注册使用的 origin 级匹配。 */
+export const siteMatchPatternOriginPattern = (pattern: string): string => {
+  const { authority } = parseSiteMatchPattern(pattern)
+  return `https://${authority.toLowerCase()}/*`
 }
 
 /** Registry CI 与运行时安装冲突检查共用的 host 重叠语义。 */

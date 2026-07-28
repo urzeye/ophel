@@ -64,6 +64,10 @@ export const es = {
     "Actualice el registro para buscar paquetes de la comunidad disponibles.",
   sitePacksLoadFailed: "No se pudieron cargar los paquetes de sitios: {error}",
   sitePacksOperationFailed: "Falló la operación del paquete de sitio: {error}",
+  sitePacksPermissionTitle: "¿Permitir el acceso del paquete de sitio?",
+  sitePacksPermissionDesc: 'Ophel necesita ejecutar "{name}" en estos sitios: {origins}',
+  sitePacksPermissionDenied:
+    'No se concedió acceso a los sitios para "{name}", por lo que el paquete permanece desactivado.',
   sitePacksInvalidFile: "Este archivo JSON no es un SitePack válido.",
   sitePacksValidationErrorsTitle: "Detalles de validación",
   sitePacksStoredIssuesTitle: "Problemas de los paquetes guardados",

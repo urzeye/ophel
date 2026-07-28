@@ -13,8 +13,10 @@ import type {
 } from "../types"
 import {
   MSG_CHECK_REMOTE_CONFIG,
+  MSG_ENSURE_SITE_PACK_ORIGINS,
   MSG_GET_REMOTE_CONFIG_STATE,
   MSG_IGNORE_REMOTE_CONFIG_PATCH,
+  MSG_RECONCILE_SITE_PACK_REGISTRATIONS,
   sendToBackground,
 } from "~utils/messaging"
 import { extensionStorage } from "./storage"
@@ -61,6 +63,30 @@ export const platform: Platform = {
         throw new Error(response.error || "Failed to reset remote config site")
       }
       return true
+    },
+  },
+
+  sitePacks: {
+    async ensureOrigins(packId) {
+      const response = await sendToBackground({
+        type: MSG_ENSURE_SITE_PACK_ORIGINS,
+        packId,
+      })
+      if (!response.success) {
+        throw new Error(response.error || "Failed to authorize SitePack origins")
+      }
+      if (response.granted === true) return "ready"
+      if (response.granted === false) return "denied"
+      throw new Error("SitePack origin authorization returned no result")
+    },
+
+    async reconcile() {
+      const response = await sendToBackground({
+        type: MSG_RECONCILE_SITE_PACK_REGISTRATIONS,
+      })
+      if (!response.success) {
+        throw new Error(response.error || "Failed to reconcile SitePack registrations")
+      }
     },
   },
 

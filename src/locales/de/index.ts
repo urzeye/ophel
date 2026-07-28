@@ -65,6 +65,10 @@ export const de = {
     "Die Registry aktualisieren, um nach verfügbaren Community-Paketen zu suchen.",
   sitePacksLoadFailed: "Site-Pakete konnten nicht geladen werden: {error}",
   sitePacksOperationFailed: "Site-Paket-Aktion fehlgeschlagen: {error}",
+  sitePacksPermissionTitle: "Site-Paket-Zugriff erlauben?",
+  sitePacksPermissionDesc: 'Ophel muss "{name}" auf folgenden Sites ausführen: {origins}',
+  sitePacksPermissionDenied:
+    'Der Site-Zugriff für "{name}" wurde nicht gewährt; das Paket bleibt deaktiviert.',
   sitePacksInvalidFile: "Diese JSON-Datei ist kein gültiges SitePack.",
   sitePacksValidationErrorsTitle: "Validierungsdetails",
   sitePacksStoredIssuesTitle: "Probleme gespeicherter Pakete",

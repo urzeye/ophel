@@ -1,4 +1,8 @@
 import { DEFAULT_SHORTCUTS_SETTINGS } from "~constants/shortcuts"
+import {
+  INSTALLED_SITE_PACKS_STORAGE_KEY,
+  isInstalledSitePackEffectivelyEnabled,
+} from "~core/pack-manager"
 import { createRuntimePackManager } from "~core/pack-manager-runtime"
 import { createRuntimeRemoteConfigManager } from "~core/remote-config-runtime"
 import {
@@ -6,6 +10,7 @@ import {
   REMOTE_CONFIG_ALARM_PERIOD_MINUTES,
 } from "~core/remote-config-types"
 import { extensionRegistryTransport } from "~platform/extension/registry-transport"
+import { createRuntimeSitePackRegistrationManager } from "~platform/extension/site-pack-registration-runtime"
 import { extensionStorage } from "~platform/extension/storage"
 import { APP_DISPLAY_NAME } from "~utils/config"
 import {
@@ -14,6 +19,7 @@ import {
   MSG_CHECK_PERMISSION,
   MSG_CHECK_PERMISSIONS,
   MSG_CHECK_REMOTE_CONFIG,
+  MSG_ENSURE_SITE_PACK_ORIGINS,
   MSG_EXTENSION_UPDATE_AVAILABLE,
   MSG_FOCUS_TAB,
   MSG_GET_AISTUDIO_MODELS,
@@ -23,6 +29,7 @@ import {
   MSG_OPEN_OPTIONS_PAGE,
   MSG_OPEN_URL,
   MSG_PROXY_FETCH,
+  MSG_RECONCILE_SITE_PACK_REGISTRATIONS,
   MSG_REQUEST_PERMISSIONS,
   MSG_RESTORE_DATA,
   MSG_RESET_REMOTE_CONFIG_SITE,
@@ -50,28 +57,44 @@ import { localStorage, type Settings } from "~utils/storage"
  * - 代理请求（图片 Base64 转换等）
  */
 
-const OPHEL_TARGET_URLS = [
-  "https://gemini.google.com/*",
-  "https://business.gemini.google/*",
-  "https://aistudio.google.com/*",
-  "https://grok.com/*",
-  "https://chat.openai.com/*",
-  "https://chatgpt.com/*",
-  "https://claude.ai/*",
-  "https://www.doubao.com/*",
-  "https://ima.qq.com/*",
-  "https://chat.deepseek.com/*",
-  "https://chatglm.cn/*",
-  "https://chat.qwen.ai/*",
-  "https://yuanbao.tencent.com/*",
-  "https://chat.z.ai/*",
-]
+const STATIC_OPHEL_TARGET_URLS = Array.from(
+  new Set(
+    (chrome.runtime.getManifest().content_scripts ?? []).flatMap((script) => script.matches ?? []),
+  ),
+)
 
 const remoteConfigManager = createRuntimeRemoteConfigManager(
   extensionStorage,
   extensionRegistryTransport,
 )
 const packManager = createRuntimePackManager(extensionStorage)
+const sitePackRegistrationManager = createRuntimeSitePackRegistrationManager(packManager)
+
+let sitePackReconciliationScheduled = false
+
+function scheduleSitePackRegistrationReconciliation(reason: string) {
+  if (sitePackReconciliationScheduled) return
+  sitePackReconciliationScheduled = true
+  queueMicrotask(() => {
+    sitePackReconciliationScheduled = false
+    void sitePackRegistrationManager
+      .reconcile()
+      .then((result) => {
+        for (const issue of result.packIssues) {
+          console.warn("[Ophel] SitePack registration ignored an invalid pack:", issue)
+        }
+        if (result.missingPermissionOrigins.length > 0) {
+          console.warn(
+            "[Ophel] SitePack origins are installed but not authorized:",
+            result.missingPermissionOrigins,
+          )
+        }
+      })
+      .catch((error) => {
+        console.error(`[Ophel] Failed to reconcile SitePack registrations (${reason}):`, error)
+      })
+  })
+}
 
 async function syncInstalledRegistryPacks(): Promise<void> {
   try {
@@ -136,10 +159,14 @@ function scheduleRemoteConfigAlarmSetup() {
 }
 
 scheduleRemoteConfigAlarmSetup()
+setTimeout(() => scheduleSitePackRegistrationReconciliation("background-init"), 0)
 
 chrome.storage.onChanged.addListener((changes, areaName) => {
-  if (areaName !== "local" || !changes[PERSISTED_SETTINGS_STORAGE_KEY]) return
-  scheduleRemoteConfigAlarmSetup()
+  if (areaName !== "local") return
+  if (changes[PERSISTED_SETTINGS_STORAGE_KEY]) scheduleRemoteConfigAlarmSetup()
+  if (changes[INSTALLED_SITE_PACKS_STORAGE_KEY]) {
+    scheduleSitePackRegistrationReconciliation("installed-packs-changed")
+  }
 })
 
 // 通知 ID 格式："ophel|{tabId}|{windowId}|{uuid}"
@@ -183,7 +210,15 @@ if (chrome.notifications?.onClicked) {
 }
 
 async function queryOphelTabs() {
-  return chrome.tabs.query({ url: OPHEL_TARGET_URLS })
+  let dynamicMatches: string[] = []
+  try {
+    dynamicMatches = await sitePackRegistrationManager.getRegisteredMatchPatterns()
+  } catch (error) {
+    console.error("[Ophel] Failed to load dynamic SitePack tab targets:", error)
+  }
+  return chrome.tabs.query({
+    url: Array.from(new Set([...STATIC_OPHEL_TARGET_URLS, ...dynamicMatches])),
+  })
 }
 
 async function broadcastToOphelTabs(message: ExtensionMessage) {
@@ -207,10 +242,12 @@ chrome.runtime.onInstalled.addListener(() => {
   setupDynamicRules()
   scheduleRemoteConfigAlarmSetup()
   scheduleRemoteConfigCheck(false)
+  scheduleSitePackRegistrationReconciliation("runtime-installed")
 })
 
 chrome.runtime.onStartup.addListener(() => {
   scheduleRemoteConfigAlarmSetup()
+  scheduleSitePackRegistrationReconciliation("runtime-startup")
 })
 
 chrome.alarms.onAlarm.addListener((alarm) => {
@@ -234,6 +271,7 @@ chrome.runtime.onUpdateAvailable.addListener((details) => {
 
 // 监听权限移除
 chrome.permissions.onRemoved.addListener(async (removed) => {
+  scheduleSitePackRegistrationReconciliation("permission-removed")
   if (removed.origins && removed.origins.includes("<all_urls>")) {
     // 获取当前设置
     const settings = await localStorage.get<Settings>("settings")
@@ -243,6 +281,12 @@ chrome.permissions.onRemoved.addListener(async (removed) => {
       await localStorage.set("settings", settings)
     }
   }
+})
+
+chrome.permissions.onAdded.addListener((added) => {
+  // 单个 SitePack origin 由授权消息按实际启用状态对账，避免抢在 UI 启用前撤回权限。
+  if (!added.origins?.includes("<all_urls>")) return
+  scheduleSitePackRegistrationReconciliation("permission-added")
 })
 
 interface PersistedSettingsEnvelope {
@@ -547,6 +591,46 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
           sendResponse({ success: true, hasPermission })
         } catch (err) {
           console.error("Permissions check failed:", err)
+          sendResponse({ success: false, error: (err as Error).message })
+        }
+      })()
+      break
+
+    case MSG_ENSURE_SITE_PACK_ORIGINS:
+      if (typeof message.packId !== "string" || message.packId.length === 0) {
+        sendResponse({ success: false, error: "packId must be a non-empty string" })
+        break
+      }
+      ;(async () => {
+        try {
+          const result = await sitePackRegistrationManager.ensurePackOrigins(message.packId)
+          const snapshot = await packManager.getSnapshot()
+          const pack = snapshot.packs.find((candidate) => candidate.manifest.id === message.packId)
+          if (pack && isInstalledSitePackEffectivelyEnabled(pack)) {
+            if (!result.granted) {
+              await packManager.setEnabled(message.packId, false)
+            }
+            await sitePackRegistrationManager.reconcile()
+          }
+          sendResponse({ success: true, ...result })
+        } catch (err) {
+          console.error("SitePack origin permission request failed:", err)
+          sendResponse({ success: false, error: (err as Error).message })
+        }
+      })()
+      break
+
+    case MSG_RECONCILE_SITE_PACK_REGISTRATIONS:
+      ;(async () => {
+        try {
+          const result = await sitePackRegistrationManager.reconcile()
+          sendResponse({
+            success: true,
+            activeOrigins: result.activeOrigins,
+            missingPermissionOrigins: result.missingPermissionOrigins,
+          })
+        } catch (err) {
+          console.error("SitePack registration reconciliation failed:", err)
           sendResponse({ success: false, error: (err as Error).message })
         }
       })()

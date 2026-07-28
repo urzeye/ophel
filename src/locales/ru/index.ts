@@ -64,6 +64,10 @@ export const ru = {
   sitePacksRegistryEmptyDesc: "Обновите каталог, чтобы проверить доступные пакеты сообщества.",
   sitePacksLoadFailed: "Не удалось загрузить пакеты сайтов: {error}",
   sitePacksOperationFailed: "Не удалось выполнить операцию с пакетом сайта: {error}",
+  sitePacksPermissionTitle: "Разрешить пакету сайтов доступ?",
+  sitePacksPermissionDesc: "Ophel требуется запускать «{name}» на следующих сайтах: {origins}",
+  sitePacksPermissionDenied:
+    "Доступ к сайтам для «{name}» не предоставлен, поэтому пакет остаётся отключённым.",
   sitePacksInvalidFile: "Этот JSON-файл не является допустимым SitePack.",
   sitePacksValidationErrorsTitle: "Сведения о проверке",
   sitePacksStoredIssuesTitle: "Проблемы сохранённых пакетов",

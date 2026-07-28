@@ -65,6 +65,10 @@ export const fr = {
     "Actualisez le registre pour rechercher les packs communautaires disponibles.",
   sitePacksLoadFailed: "Impossible de charger les packs de sites : {error}",
   sitePacksOperationFailed: "Échec de l'opération sur le pack de site : {error}",
+  sitePacksPermissionTitle: "Autoriser l’accès au pack de site ?",
+  sitePacksPermissionDesc: "Ophel doit exécuter « {name} » sur les sites suivants : {origins}",
+  sitePacksPermissionDenied:
+    "L’accès aux sites n’a pas été accordé à « {name} » ; le pack reste donc désactivé.",
   sitePacksInvalidFile: "Ce fichier JSON n'est pas un SitePack valide.",
   sitePacksValidationErrorsTitle: "Détails de validation",
   sitePacksStoredIssuesTitle: "Problèmes des packs enregistrés",

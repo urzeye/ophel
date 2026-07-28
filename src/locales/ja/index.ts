@@ -64,6 +64,10 @@ export const ja = {
     "レジストリを更新して、利用可能なコミュニティパックを確認してください。",
   sitePacksLoadFailed: "サイトパックを読み込めませんでした：{error}",
   sitePacksOperationFailed: "サイトパックの操作に失敗しました：{error}",
+  sitePacksPermissionTitle: "サイトパックにアクセスを許可しますか？",
+  sitePacksPermissionDesc: "Ophel が「{name}」を次のサイトで実行するには許可が必要です：{origins}",
+  sitePacksPermissionDenied:
+    "「{name}」のサイトアクセスは許可されなかったため、パックは無効のままです。",
   sitePacksInvalidFile: "この JSON ファイルは有効な SitePack ではありません。",
   sitePacksValidationErrorsTitle: "検証の詳細",
   sitePacksStoredIssuesTitle: "保存済みパックの問題",

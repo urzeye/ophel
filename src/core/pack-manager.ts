@@ -232,7 +232,7 @@ const mergeIssues = (...groups: PackManagerIssue[][]): PackManagerIssue[] => {
   return Array.from(merged.values())
 }
 
-const isEffectivelyEnabled = (pack: InstalledSitePack): boolean =>
+export const isInstalledSitePackEffectivelyEnabled = (pack: InstalledSitePack): boolean =>
   pack.enabled && (pack.source === "local" || pack.registryStatus === "available")
 
 export class PackManager {
@@ -577,7 +577,7 @@ export class PackManager {
     return {
       storageSchemaVersion: INSTALLED_SITE_PACKS_STORAGE_SCHEMA_VERSION,
       packs: parsed.packs
-        .filter((pack) => !enabledOnly || isEffectivelyEnabled(pack))
+        .filter((pack) => !enabledOnly || isInstalledSitePackEffectivelyEnabled(pack))
         .map(cloneInstalledPack),
       issues: parsed.issues,
     }

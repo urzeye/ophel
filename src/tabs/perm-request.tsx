@@ -3,10 +3,11 @@
  * 专用于请求可选权限，尺寸小（400x300），授权后自动关闭
  *
  * URL 参数：
- * - type: webdav | tabs | notifications | watermark
+ * - type: allUrls | notifications | cookies | sitePack
  */
 import React, { useEffect, useState } from "react"
 
+import { isSiteMatchPatternOriginPattern } from "~adapters/declarative/match-pattern"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
 import { getPlatformFontFamily } from "~utils/font"
 import { setLanguage, t } from "~utils/i18n"
@@ -28,18 +29,21 @@ const PERMISSION_CONFIGS = {
   allUrls: {
     titleKey: "permAllUrlsTitle",
     descKey: "permAllUrlsDesc",
+    deniedKey: "permissionDenied",
     origins: ["<all_urls>"],
     permissions: [] as string[],
   },
   notifications: {
     titleKey: "permNotifyTitle",
     descKey: "permNotifyDesc",
+    deniedKey: "permissionDenied",
     origins: [] as string[],
     permissions: ["notifications"],
   },
   cookies: {
     titleKey: "permCookiesTitle",
     descKey: "permCookiesDesc",
+    deniedKey: "permissionDenied",
     origins: [] as string[],
     permissions: ["cookies"],
   },
@@ -47,14 +51,41 @@ const PERMISSION_CONFIGS = {
 
 type PermissionType = keyof typeof PERMISSION_CONFIGS
 
+interface PermissionRequestConfig {
+  titleKey: string
+  descKey: string
+  deniedKey: string
+  descParams?: Record<string, string>
+  origins: string[]
+  permissions: string[]
+}
+
+const readPermissionRequestConfig = (): PermissionRequestConfig => {
+  const params = new URLSearchParams(window.location.search)
+  if (params.get("type") === "sitePack") {
+    const origins = Array.from(
+      new Set(params.getAll("origin").filter(isSiteMatchPatternOriginPattern)),
+    ).sort((left, right) => left.localeCompare(right))
+    return {
+      titleKey: "sitePacksPermissionTitle",
+      descKey: "sitePacksPermissionDesc",
+      deniedKey: "sitePacksPermissionDenied",
+      descParams: {
+        name: params.get("name")?.trim() || "SitePack",
+        origins: origins.join(", "),
+      },
+      origins,
+      permissions: [],
+    }
+  }
+
+  const type = params.get("type") as PermissionType
+  return PERMISSION_CONFIGS[type && type in PERMISSION_CONFIGS ? type : "allUrls"]
+}
+
 const PermissionRequestPage: React.FC = () => {
   const [status, setStatus] = useState<"pending" | "granted" | "denied">("pending")
-  // 优先从 URL 参数获取权限类型
-  const [permType, setPermType] = useState<PermissionType>(() => {
-    const params = new URLSearchParams(window.location.search)
-    const type = params.get("type") as PermissionType
-    return type && type in PERMISSION_CONFIGS ? type : "allUrls"
-  })
+  const [config] = useState(readPermissionRequestConfig)
   const [_langReady, setLangReady] = useState(false)
   const { settings } = useSettingsStore()
   const isHydrated = useSettingsHydrated()
@@ -80,20 +111,12 @@ const PermissionRequestPage: React.FC = () => {
     }
   }, [])
 
-  // 解析 URL 参数
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const type = params.get("type") as PermissionType
-    if (type && PERMISSION_CONFIGS[type]) {
-      setPermType(type)
-    }
-  }, [])
-
-  const config = PERMISSION_CONFIGS[permType]
-
   // 请求权限
   const handleRequest = async () => {
     try {
+      if (config.origins.length === 0 && config.permissions.length === 0) {
+        throw new Error("Permission request contains no valid permissions")
+      }
       console.warn("[PermRequest] Requesting permissions:", {
         origins: config.origins,
         permissions: config.permissions,
@@ -175,7 +198,7 @@ const PermissionRequestPage: React.FC = () => {
                 marginBottom: "24px",
                 lineHeight: 1.5,
               }}>
-              {t(config.descKey)}
+              {t(config.descKey, config.descParams)}
             </p>
 
             {/* 按钮 */}
@@ -242,7 +265,7 @@ const PermissionRequestPage: React.FC = () => {
                 fontWeight: 600,
                 color: "#ef4444",
               }}>
-              {t("permissionDenied")}
+              {t(config.deniedKey, config.descParams)}
             </h1>
           </>
         )}

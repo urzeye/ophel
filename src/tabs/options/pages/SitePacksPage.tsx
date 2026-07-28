@@ -14,6 +14,7 @@ import { DeleteIcon, ImportIcon, InfoIcon, JSONFileIcon, RefreshIcon } from "~co
 import { Button, Switch } from "~components/ui"
 import {
   INSTALLED_SITE_PACKS_STORAGE_KEY,
+  isInstalledSitePackEffectivelyEnabled,
   PackManagerError,
   type InstalledSitePack,
   type PackManagerIssue,
@@ -389,13 +390,77 @@ const SitePacksPage: React.FC = () => {
     })
   }, [])
 
+  const setPermissionDeniedFeedback = useCallback((pack: InstalledSitePack) => {
+    setFeedback({
+      tone: "error",
+      message: t("sitePacksPermissionDenied", {
+        name: resolveSitePackName(pack.manifest, getCurrentLang()),
+      }),
+    })
+  }, [])
+
+  const rollbackRuntimeActivation = useCallback(
+    async (packIds: readonly string[], activationError: unknown): Promise<never> => {
+      try {
+        for (const packId of new Set(packIds)) {
+          await packManager.setEnabled(packId, false)
+        }
+        await platform.sitePacks.reconcile()
+      } catch (rollbackError) {
+        throw new Error(
+          `SitePack activation failed: ${getErrorMessage(activationError)}; rollback failed: ${getErrorMessage(rollbackError)}`,
+        )
+      }
+      throw activationError
+    },
+    [packManager],
+  )
+
+  const prepareInstalledPacksRuntime = useCallback(
+    async (packs: readonly InstalledSitePack[]): Promise<InstalledSitePack[]> => {
+      const effectivePacks = packs.filter(isInstalledSitePackEffectivelyEnabled)
+      const deniedPacks: InstalledSitePack[] = []
+      try {
+        for (const pack of effectivePacks) {
+          const permission = await platform.sitePacks.ensureOrigins(pack.manifest.id)
+          if (permission !== "denied") continue
+          await packManager.setEnabled(pack.manifest.id, false)
+          deniedPacks.push(pack)
+        }
+        await platform.sitePacks.reconcile()
+        return deniedPacks
+      } catch (error) {
+        await rollbackRuntimeActivation(
+          effectivePacks.map((pack) => pack.manifest.id),
+          error,
+        )
+      }
+    },
+    [packManager, rollbackRuntimeActivation],
+  )
+
   const handleToggleEnabled = async (pack: InstalledSitePack) => {
     const nextEnabled = !pack.enabled
     const key = `toggle:${pack.manifest.id}`
     if (!beginBusy(key)) return
     setFeedback(null)
     try {
-      await packManager.setEnabled(pack.manifest.id, nextEnabled)
+      if (nextEnabled) {
+        const permission = await platform.sitePacks.ensureOrigins(pack.manifest.id)
+        if (permission === "denied") {
+          setPermissionDeniedFeedback(pack)
+          return
+        }
+        try {
+          await packManager.setEnabled(pack.manifest.id, true)
+          await platform.sitePacks.reconcile()
+        } catch (error) {
+          await rollbackRuntimeActivation([pack.manifest.id], error)
+        }
+      } else {
+        await packManager.setEnabled(pack.manifest.id, false)
+        await platform.sitePacks.reconcile()
+      }
       await loadInstalledPacks()
       setFeedback({
         tone: "success",
@@ -405,6 +470,7 @@ const SitePacksPage: React.FC = () => {
         }),
       })
     } catch (error) {
+      await loadInstalledPacks()
       setOperationError(error)
     } finally {
       endBusy(key)
@@ -424,9 +490,16 @@ const SitePacksPage: React.FC = () => {
         throw new Error(result.error || t("remoteConfigNotAvailable"))
       }
       const syncResult = await packManager.syncRegistryPacks()
+      const postSyncSnapshot = await packManager.getSnapshot()
+      const deniedPacks = await prepareInstalledPacksRuntime(postSyncSnapshot.packs)
       const [snapshot] = await Promise.all([loadInstalledPacks(), loadRegistryState()])
       if (syncResult.issues.length > 0) {
         setSnapshotIssues((current) => mergePackManagerIssues(current, syncResult.issues))
+      }
+
+      if (deniedPacks.length > 0) {
+        setPermissionDeniedFeedback(deniedPacks[0])
+        return result
       }
 
       if (targetPack) {
@@ -480,7 +553,13 @@ const SitePacksPage: React.FC = () => {
     setFeedback(null)
     try {
       const result = await packManager.installFromRegistry(view.id)
+      if (!result.pack) throw new Error(`Installed SitePack not found after install: ${view.id}`)
+      const deniedPacks = await prepareInstalledPacksRuntime([result.pack])
       await loadInstalledPacks()
+      if (deniedPacks.length > 0) {
+        setPermissionDeniedFeedback(deniedPacks[0])
+        return
+      }
       setFeedback({
         tone: "success",
         message: t(isUpdate ? "sitePacksUpdatedSuccess" : "sitePacksSavedSuccess", {
@@ -547,7 +626,16 @@ const SitePacksPage: React.FC = () => {
       if (!beginBusy(key)) return
       try {
         const result = await packManager.installLocal(confirmation.manifest)
+        if (!result.pack) {
+          throw new Error(`Installed SitePack not found after import: ${confirmation.manifest.id}`)
+        }
+        const deniedPacks = await prepareInstalledPacksRuntime([result.pack])
         await loadInstalledPacks()
+        setConfirmation(null)
+        if (deniedPacks.length > 0) {
+          setPermissionDeniedFeedback(deniedPacks[0])
+          return
+        }
         setFeedback({
           tone: "success",
           message: t(confirmation.isUpdate ? "sitePacksUpdatedSuccess" : "sitePacksSavedSuccess", {
@@ -557,7 +645,6 @@ const SitePacksPage: React.FC = () => {
             ),
           }),
         })
-        setConfirmation(null)
       } catch (error) {
         setConfirmation(null)
         setOperationError(error)
@@ -571,6 +658,7 @@ const SitePacksPage: React.FC = () => {
     if (!beginBusy(key)) return
     try {
       await packManager.uninstall(confirmation.pack.manifest.id)
+      await platform.sitePacks.reconcile()
       await loadInstalledPacks()
       setFeedback({
         tone: "success",

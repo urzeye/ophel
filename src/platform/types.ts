@@ -95,6 +95,13 @@ export interface PlatformRemoteConfig {
   resetSite(siteId: string, patchVersion?: number): Promise<boolean>
 }
 
+export type SitePackOriginPermissionResult = "ready" | "denied" | "unsupported"
+
+export interface PlatformSitePacks {
+  ensureOrigins(packId: string): Promise<SitePackOriginPermissionResult>
+  reconcile(): Promise<void>
+}
+
 /**
  * 平台能力接口
  */
@@ -113,6 +120,11 @@ export interface Platform {
    * 适配配置远程更新
    */
   readonly remoteConfig: PlatformRemoteConfig
+
+  /**
+   * SitePack 域名授权与动态脚本注册
+   */
+  readonly sitePacks: PlatformSitePacks
 
   /**
    * 发起网络请求（绕过 CORS）

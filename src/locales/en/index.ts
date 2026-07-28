@@ -60,6 +60,10 @@ export const en = {
   sitePacksRegistryEmptyDesc: "Refresh the registry to check for available community packs.",
   sitePacksLoadFailed: "Could not load site packs: {error}",
   sitePacksOperationFailed: "Site pack operation failed: {error}",
+  sitePacksPermissionTitle: "Allow site pack access?",
+  sitePacksPermissionDesc: 'Ophel needs to run "{name}" on: {origins}',
+  sitePacksPermissionDenied:
+    'Site access for "{name}" was not granted, so the pack remains disabled.',
   sitePacksInvalidFile: "This JSON file is not a valid SitePack.",
   sitePacksValidationErrorsTitle: "Validation details",
   sitePacksStoredIssuesTitle: "Stored pack issues",

@@ -146,6 +146,30 @@ export interface BasicBackgroundResponse {
   error?: string
 }
 
+export const MSG_ENSURE_SITE_PACK_ORIGINS = "ENSURE_SITE_PACK_ORIGINS"
+
+export interface EnsureSitePackOriginsMessage {
+  type: typeof MSG_ENSURE_SITE_PACK_ORIGINS
+  packId: string
+}
+
+export interface EnsureSitePackOriginsResponse extends BasicBackgroundResponse {
+  granted?: boolean
+  origins?: string[]
+  missingOrigins?: string[]
+}
+
+export const MSG_RECONCILE_SITE_PACK_REGISTRATIONS = "RECONCILE_SITE_PACK_REGISTRATIONS"
+
+export interface ReconcileSitePackRegistrationsMessage {
+  type: typeof MSG_RECONCILE_SITE_PACK_REGISTRATIONS
+}
+
+export interface ReconcileSitePackRegistrationsResponse extends BasicBackgroundResponse {
+  activeOrigins?: string[]
+  missingPermissionOrigins?: string[]
+}
+
 // 撤销权限
 export const MSG_REVOKE_PERMISSIONS = "REVOKE_PERMISSIONS"
 
@@ -255,6 +279,8 @@ export type ExtensionMessage =
   | CheckPermissionMessage
   | CheckPermissionsMessage
   | RequestPermissionsMessage
+  | EnsureSitePackOriginsMessage
+  | ReconcileSitePackRegistrationsMessage
   | RevokePermissionsMessage
   | OpenOptionsPageMessage
   | OpenUrlMessage
@@ -307,6 +333,8 @@ interface BackgroundResponseMap {
   [MSG_CHECK_PERMISSION]: PermissionCheckResponse
   [MSG_CHECK_PERMISSIONS]: PermissionCheckResponse
   [MSG_REQUEST_PERMISSIONS]: BasicBackgroundResponse
+  [MSG_ENSURE_SITE_PACK_ORIGINS]: EnsureSitePackOriginsResponse
+  [MSG_RECONCILE_SITE_PACK_REGISTRATIONS]: ReconcileSitePackRegistrationsResponse
   [MSG_CHECK_CLAUDE_GENERATING]: CheckClaudeGeneratingResponse
   [MSG_GET_AISTUDIO_MODELS]: AIStudioModelsResponse
 }

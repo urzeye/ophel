@@ -60,6 +60,11 @@ export const ko = {
   sitePacksRegistryEmptyDesc: "레지스트리를 새로고침하여 사용 가능한 커뮤니티 팩을 확인하세요.",
   sitePacksLoadFailed: "사이트 팩을 불러올 수 없습니다: {error}",
   sitePacksOperationFailed: "사이트 팩 작업에 실패했습니다: {error}",
+  sitePacksPermissionTitle: "사이트 팩의 사이트 접근을 허용할까요?",
+  sitePacksPermissionDesc:
+    'Ophel에서 "{name}"을(를) 다음 사이트에서 실행하려면 권한이 필요합니다: {origins}',
+  sitePacksPermissionDenied:
+    '"{name}"의 사이트 접근 권한이 허용되지 않아 팩이 비활성화 상태로 유지됩니다.',
   sitePacksInvalidFile: "이 JSON 파일은 유효한 SitePack이 아닙니다.",
   sitePacksValidationErrorsTitle: "검증 세부 정보",
   sitePacksStoredIssuesTitle: "저장된 팩 문제",
