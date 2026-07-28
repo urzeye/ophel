@@ -153,6 +153,8 @@ export interface SitePackManifest {
   /** 可选多语名称，如 { "zh-CN": "...", "en": "..." } */
   nameI18n?: Record<string, string>
   description?: string
+  /** 可选多语描述；消费回退链：当前语言 → en → description（P1-12） */
+  descriptionI18n?: Record<string, string>
   /** match pattern 数组：必须 https、禁止 <all_urls> 与顶层通配、每包 ≤ 10 条。
    *  通用 ChatUI 包（自部署实例域名不可预知）允许为空数组，此时必须提供 detect，
    *  且仅在用户显式绑定的域名上激活（§6.9 用户级域名绑定）。 */
@@ -172,9 +174,11 @@ export interface SitePackManifest {
   export?: ExportConfig                          // 复用 base.ts 现有接口
   zenMode?: ZenModeConfig                        // 复用（extraCss 受 §8 限制）
   cleanMode?: ZenModeConfig
-  widthSelectors?: WidthSelectorConfig[]         // 复用（transformValue 函数字段除外）
+  widthSelectors?: Omit<WidthSelectorConfig, "transformValue">[]  // 函数字段不可 JSON 化，类型层排除
   mermaidSupport?: "native" | "fallback"
   quickQuote?: "enabled" | "native" | "disabled" // 缺省 disabled
+  /** 宿主主题联动，缺省 false（能力矩阵 §4.2）；true 时需配 hostThemeToggle 声明 */
+  supportsHostThemeSync?: boolean
 }
 
 export type SitePackCapability =
@@ -190,7 +194,8 @@ export interface SiteDetectRule {
 }
 
 export interface SitePackSelectors {
-  textarea: string[]                 // 必填
+  /** 声明 prompt-insert 能力时必填；纯只读包（仅 outline/zen）可省略 */
+  textarea?: string[]
   submitButton?: string[]
   responseContainer?: string         // 大纲/观察目标容器
   chatContent?: string[]             // 消息级元素（滚动锚点/书签）
@@ -308,17 +313,23 @@ registry/
 
 ### 6.2 AdapterRegistry 与启动时序（关键设计）
 
-`getAdapter()` 有 9 处同步调用（`App.tsx`、`QuickButtons.tsx` 等），**不改签名、不 async 化**。改为入口预加载：
+`getAdapter()` 有 9 处同步调用（`App.tsx`、`QuickButtons.tsx` 等），**不改签名、不 async 化**。改为入口预加载 + **registryReady 门闩**：
 
 ```ts
 // adapters/index.ts（改造后）
 const builtinAdapters: SiteAdapter[] = [/* 现有 15 个，顺序不变 */]
 let dynamicAdapters: SiteAdapter[] = []
+let _registryReady: Promise<void> | null = null
 
-/** 入口 bundle 启动时 await 一次：读 storage 中已启用 pack + patch 合并结果 */
-export async function initAdapterRegistry(): Promise<void> {
-  dynamicAdapters = await loadEnabledPacks()  // 校验失败的包跳过并记录
+/** 入口 bundle 启动时 await 一次：① 读缓存 patch 注入内置适配器；② 读已启用 pack 实例化 */
+export function initAdapterRegistry(): Promise<void> {
+  return (_registryReady ??= (async () => {
+    const merged = await loadCachedPatches()                 // Phase 0：内置 patch 合并结果
+    for (const a of builtinAdapters) applyMergedConfig(a, merged[a.getSiteId()])
+    dynamicAdapters = await loadEnabledPacks()               // Phase 1：动态包；校验失败跳过并记录
+  })())
 }
+export const registryReady = () => _registryReady ?? Promise.resolve()
 
 export function getAdapter(): SiteAdapter | null {
   for (const a of builtinAdapters) if (a.match()) return a      // 内置优先，零成本短路
@@ -327,8 +338,12 @@ export function getAdapter(): SiteAdapter | null {
 }
 ```
 
+- **两段能力分属两个阶段**（回应"阶段依赖不闭环"）：Phase 0 只需 `loadCachedPatches()` + 内置注入这一段（P0-13"内置 patch 启动门闩"），使 zai 热修在 Phase 0 即可端到端生效，**不依赖动态包加载**；`loadEnabledPacks()` 是 Phase 1 才引入的第二段。二者共用同一 `initAdapterRegistry()` 但可分期落地。
 - 需要 await 的入口：`src/contents/main.ts`、`src/contents/ui-entry.tsx`、`src/platform/userscript/entry.tsx`（各 bundle 模块实例独立，须各自初始化）。`monitor-entry.ts` 若消费 adapter 同样处理。
-- **匹配冲突规则**：内置 > 用户本地包 > registry 包；一个 origin 同时只允许启用一个 pack（安装时检查并提示）；v1 禁止 pack 声明与内置站点重叠的 matches（CI 拒绝）——修改内置站点的唯一通道是 patch。
+- **启动竞态**（回应现状 `App.tsx:407` 空依赖 `useMemo`、`main.ts:455` 一次性 + `ophelInitialized` 守卫，首次 `null` 不会恢复）：
+  - `main.ts` / `ui-entry.tsx` 的 bootstrap 首行 `await initAdapterRegistry()` 后再执行 `getAdapter()` 与挂载；Plasmo UI 入口在 registry 就绪前**不渲染 App**（用一层 gate 组件 await `registryReady()`）。
+  - detect 型激活依赖 DOM 特征，可能在 `document_idle` 时尚未渲染 → 需在门闩内提供**有限时长的 MutationObserver 重试**（上限时长 + 次数），超时仍未命中则显式记录（供健康自检），不无限观察。
+- **匹配冲突规则**：内置 > 用户 explicit 绑定 > registry detect 命中 > pack 静态 matches（详见 §6.9.1）；一个 origin 同时只激活一个 adapter；v1 禁止 pack 声明与内置站点重叠的 matches（CI 拒绝）——修改内置站点的唯一通道是 patch。
 
 ### 6.3 DeclarativeAdapter 方法映射
 
@@ -338,8 +353,10 @@ export function getAdapter(): SiteAdapter | null {
 | --- | --- | --- |
 | 直接映射 | `match`（matches + detect）、`getSiteId`（`"pack:" + id`）、`getName/getThemeColors/getTextareaSelectors/getSubmitButtonSelectors/getNewChatButtonSelectors/getStopButtonSelectors/getResponseContainerSelector/getChatContentSelectors/getUserQuerySelector/getExportConfig/getNetworkMonitorConfig/getModelSwitcherConfig/getZenModeConfig/getCleanModeConfig/getWidthSelectors/getSubmitKeyConfig/getQuickQuoteSupportMode/getAssistantMermaidSupportMode` | 读 manifest 字段返回 |
 | 基类通用实现直接继承 | `findTextarea/lockModel/startNewConversation/stopGeneration/loadAllConversations/getVisibleAnchorElement/restoreScroll/getLastCodeBlockText/getSessionName` 等 | 无需覆盖 |
-| DSL 原语驱动 | `insertPrompt/clearTextarea`（input.mode 双策略：textarea 走 value setter + input 事件；contenteditable 见下方专项说明）；`extractOutline`（responseContainer 内 h1-h6 + userQuery，文档序排序、排除 `.gh-` 容器、复用基类字数统计）；`getConversationList/getConversationObserverConfig/navigateToConversation`（由 `conversation` 字段映射生成 extractInfo/getTitleElement 闭包）；`isGenerating`（existsSelectors 可见性）；`isNewConversation/getSessionId/isSharePage/getNewTabUrl`（session 配置） | Phase 1 逐个实现 |
+| DSL 原语驱动 | `insertPrompt/clearTextarea`（input.mode 双策略：textarea 走 value setter + input 事件；contenteditable 见下方专项说明）；`extractOutline`（responseContainer 内 h1-h6 + userQuery，文档序排序、排除 `.gh-` 容器、复用基类字数统计）；`getConversationList/getConversationObserverConfig/navigateToConversation`（由 `conversation` 字段映射生成 extractInfo/getTitleElement 闭包）；`getConversationTitle`（`conversation.activeMatch` 定位当前项 + `titleSelector` 取标题，兜底走基类 `extractConversationTitleFromDocumentTitle`）；`isGenerating`（existsSelectors 可见性）；`isNewConversation/getSessionId/isSharePage/getNewTabUrl`（session 配置） | Phase 1 逐个实现 |
 | 不支持（保持基类缺省） | `deleteConversationOnSite/extractExportBundle/extractFormulaCopySource/toggleTheme` 等 | 返回缺省值，UI 按 capabilities 隐藏入口 |
+
+> **abstract 方法齐备性**：`SiteAdapter` 的 `abstract` 方法（如 `getConversationTitle()`）DeclarativeAdapter **必须全部显式实现**，否则 TS 编译不过。P1-01 需先枚举 base.ts 全部 abstract 成员，逐一归入上表某一类，不允许遗漏。
 
 **contenteditable 输入专项（L2 命门，P1-02 首日 spike）**：`execCommand("insertText")` 已废弃，且在 Lexical（ChatGPT 即是）、ProseMirror、Slate 等受控编辑器上常出现"文字可见但框架状态未同步，发送为空"；直接改 `textContent` 更会破坏编辑器内部状态。策略：
 
@@ -355,7 +372,26 @@ export function getAdapter(): SiteAdapter | null {
 最终 config = deepMerge(内置默认值, 远端 patch, 用户本地覆盖)
 ```
 
-合并规则（必须写成单测锁定）：**对象深合并；数组整体替换（不做元素级合并，避免歧义）；显式 `null` 表示删除该键**。patch 文件结构 = `{ targetSiteId, patchVersion, minAppVersion, config: <SitePack 同构局部字段> }`。
+合并规则（必须写成单测锁定）：**对象深合并；数组整体替换（不做元素级合并，避免歧义）；显式 `null` 表示删除该键**。
+
+**patch 结构与版本兼容**（回应"旧缓存 patch 覆盖新版内置修复"）：
+
+```jsonc
+{
+  "targetSiteId": "zai",
+  "patchSchemaVersion": 1,       // patch DSL 版本
+  "patchVersion": 2,             // 自身版本，整数递增
+  "baseConfigVersion": 3,        // 目标内置 config 的版本；不匹配则不应用（防止改版后覆盖回旧值）
+  "minAppVersion": "1.1.8",
+  "maxAppVersion": "1.3.0",      // 可选：内置已修复后用上界淘汰旧 patch
+  "config": { /* SitePack 同构局部字段 + 该站私有 selector 白名单 */ }
+}
+```
+
+- 每个已配置化内置站点带一个单调递增的 `configVersion` 常量；patch 的 `baseConfigVersion` 必须等于当前内置值才应用，否则跳过并记日志。**新版扩展内置修复即 bump configVersion，旧 patch 自动失效**，无需等云端下线。
+- **两级校验**：先校验 patch 局部合法（同 §8.2 白名单），再对 `deepMerge` **合并结果**做完整 SitePack 校验——防止"局部 patch 合法但删了必填键导致合并结果非法"。
+
+**L1 热修覆盖范围（回应"热修范围高估"）**：现有 zai 等站的易变 selector（`THINKING_CONTAINER_SELECTOR`、附件卡片、导出容器、`toggleTheme` 目标等）**不在公共 SitePack schema 内**，是改版重灾区。因此内置站点配置化时，除公共 schema 字段外，额外抽出一份**该站点私有 selector 白名单**（`sitePrivateSelectors: Record<string, string | string[]>`，键为该站点已知的私有 selector 名，运行时读取处改为查此表）。patch 的 `config.sitePrivateSelectors` 只允许覆盖该站已登记的键（CI 按站点 allowlist 校验），使思维链/附件/导出 selector 同样可热修，而不放开任意键。**每个内置站点的热修覆盖矩阵在其配置化 PR 中显式列出**（哪些 selector 可热修、哪些仍需发版）。
 
 L1 侧接入方式：每个已配置化的内置适配器把 selector 等纯数据抽为文件内 `const XXX_CONFIG: SitePackSelectors & …` 常量，方法体从 `this.config` 读取。**未配置化的适配器完全不受影响**（渐进迁移）。
 
@@ -372,42 +408,64 @@ L1 侧接入方式：每个已配置化的内置适配器把 selector 等纯数�
 - **源**（按顺序 fallback）：
   1. `https://cdn.jsdelivr.net/gh/urzeye/ophel@registry-dist/index.json`
   2. `https://raw.githubusercontent.com/urzeye/ophel/registry-dist/index.json`
-- **流程**：拉 `index.json`（小文件）→ 与本地缓存版本 diff → 仅拉取有更新的包/patch 文件 → 对照 index 中的 **sha256 校验** → 写入 platform storage → 通知 AdapterRegistry 下次加载生效（当前页提示"刷新后生效"）。
-- **节奏**：扩展端 background `chrome.alarms` 每 24h；userscript 端启动时节流检查（间隔 ≥ 24h）；设置页"立即检查"按钮直连该流程。
-- **平台抽象**：扩展走 background `fetch`（CDN 域名无需 host 权限即可 fetch？——**不行，跨域 fetch 需要权限或 CORS**；jsDelivr/raw 均带 `Access-Control-Allow-Origin: *`，content/background fetch 可直接使用，无需新增 host 权限）；userscript 走 `GM_xmlhttpRequest`（`@connect: *` 已开放）。
-- **降级**：两源均失败 → 静默使用本地缓存，设置页显示上次成功时间。
-- **快速止损（kill-switch）**：错误 patch 影响面大于错误 pack（会改坏内置站点），仅靠"发 revert patch"回滚太慢且依赖拉取节奏。补两条通道：
-  1. `index.json` 的 patch/pack 条目支持 `"disabled": true`：客户端拉到 index 即让对应缓存条目失效，无需下发新文件、无需等用户重装；
-  2. 设置页站点级提供「重置为内置配置」按钮：清除该站点已缓存 patch 并即时回退内置默认值（刷新后生效），让用户不依赖云端自救。
+- **流程**：拉 `index.json`（小文件）→ **`registryRevision` 单调校验**（低于本地缓存版本视为 CDN 陈旧缓存，忽略并改用备源；防 jsDelivr 返回"成功但过期"导致 fallback 永不触发）→ 与本地缓存 diff → 仅拉取有更新的包/patch 文件（不可变版本路径，§7.1）→ 对照 index 中的 **sha256 校验** → 两级校验（§6.4：局部 + 合并结果）→ **全部通过后原子写入 active 快照**；任一环节失败则保留 **last-known-good**（哈希合法但运行时校验失败的新包不得覆盖旧工作版本）→ 通知 AdapterRegistry 下次加载生效（当前页提示"刷新后生效"）。
+- **节奏**：扩展端 background `chrome.alarms` 每 24h（manifest `permissions` 需增 `"alarms"`，无权限警告；当前源 manifest 没有该权限）；userscript 端启动时节流检查（间隔 ≥ 24h）；设置页"立即检查"按钮直连该流程。
+- **独立 registry transport（不复用 `platform.fetch`）**：现有扩展端 `platform.fetch()` 走 `MSG_PROXY_FETCH`，background 侧 `credentials: "include"` 且把响应转成 Data URL（为图片代理设计，`background.ts:300`），无法用于 registry JSON。新建独立通道：扩展端 background **原生 `fetch`**（`credentials: "omit"`；jsDelivr/raw 均带 `Access-Control-Allow-Origin: *`，无需新增 host 权限），options/content 侧经 `src/utils/messaging.ts` 新增常量请求 background 执行检查；userscript 端走 `GM_xmlhttpRequest`（`@connect: *` 已开放）。
+- **降级**：两源均失败 → 静默使用本地缓存（last-known-good），设置页显示上次成功时间。
+- **快速止损（kill-switch）**：错误 patch 影响面大于错误 pack（会改坏内置站点），仅靠"发 revert patch"回滚太慢且依赖拉取节奏。三条通道：
+  1. `index.json` 的 patch/pack 条目支持 `"disabled": true`：客户端下次拉到 index 即让对应缓存条目失效（**非即时**：受 24h 轮询与 CDN 缓存影响，发布后需 purge jsDelivr 缓存）；
+  2. 设置页站点级提供「重置为内置配置」按钮：清除该站点已缓存 patch 并即时回退内置默认值（刷新后生效），同时记录 `(targetSiteId, patchVersion)` **本地忽略标记**——防止下一轮自动更新把同一坏 patch 重新拉回；更高的 `patchVersion` 发布后忽略标记自动解除；
+  3. dev 构建允许通过设置覆盖 registry 源 URL（仅 dev），用于 staging 演练与止损验证（P0-11）。
+- **时间字段约定**：storage 与 index 中所有时间字段（`generatedAt`、`lastCheck` 等）一律使用 **Unix 毫秒时间戳（number）**，不使用 ISO `T/Z` 字符串。
 
 ### 6.6 PackManager
 
 - 安装来源：registry 浏览列表 / 本地 JSON 文件导入（导入必须过 validate + 风险确认弹窗）。
-- 存储 key（platform storage）：`sitepacks/installed`（包体 + 元数据：来源、安装时间、启用状态）、`sitepacks/remote-state`（index 缓存、lastCheck）、`siteconfig/overrides`（用户本地覆盖，远期）。预留 `storageSchemaVersion` 做迁移。
+- 存储 key（platform storage）：`sitepacks/installed`（包体 + 元数据：来源、安装时间、启用状态）、`sitepacks/origin-bindings`（用户级域名绑定，§6.9.1）、`sitepacks/remote-state`（index 缓存、lastCheck、last-known-good、本地忽略标记）、`siteconfig/overrides`（用户本地覆盖，远期）。预留 `storageSchemaVersion` 做迁移。
 - 更新策略：registry 来源的包随 RemoteConfigManager 自动更新（可关）；本地导入的包不自动更新。
-- 卸载：清理包体 + 该站点 settings 残留提示（可选保留）+ 动态注册的内容脚本注销（Phase 2）。
+- 卸载：清理包体 + 该站点 settings/会话数据残留提示（可选保留）+ 按引用计数注销动态注册的内容脚本（Phase 2）。
+- **数据生命周期闭环（回应"备份仅覆盖固定 Zustand keys"）**：本地导入包、`origin-bindings`、用户覆盖均属**用户数据**，但现有备份只处理 `ZUSTAND_KEYS` 固定 7 项（`defaults.ts:11`）。需单列任务（P1-16）规定：
+  - 本地包 + 绑定纳入备份/WebDAV 同步范围（**registry 远端缓存 `remote-state` 排除在备份外**，可重新拉取）；
+  - 恢复到另一浏览器时，动态域名权限需重新申请（授权不可随数据迁移）；
+  - "清除全部数据"必须先注销动态注册脚本、再清存储；
+  - 备份 schema 版本化与旧备份兼容迁移。
 
 ### 6.7 capabilities 与 UI 联动
 
-- `DeclarativeAdapter.getCapabilities()` 返回 manifest 声明；同时新增细粒度查询 `hasCapability(cap)`（内置适配器缺省全量返回 true，保持现状）。
-- 改造点：`SiteSettingsPage.tsx`（各设置卡片按能力显隐）、面板 `QuickButtons`/`MainPanel` 功能按钮、`ConversationsTab`（无 `conversation-list` 时隐藏站点会话区）。
+- **不复用现有 `getCapabilities()`**：`SiteAdapter.getCapabilities(): AdapterCapabilities` 已存在且返回 `{ layout?: LayoutCapability }`，被 `LayoutManager`（`layout-manager.ts:111`）实际消费——语义是"结构化能力对象"，不能改成字符串能力集合。新增独立方法 `getFeatureCapabilities(): Set<SitePackCapability>`（或 `hasFeature(cap)`）承载 §4.2 的功能开关，与 `getCapabilities()` 并存互不干扰。
+- **内置适配器不能缺省全量 true**：现状已有 5 个站点不支持会话管理（`ConversationsTab.tsx:165`：ChatGLM/Z.ai/Qianwen/Qwen Studio/ima）。为 15 个内置适配器建**真实能力表**（每站显式声明支持的 feature 集合，迁移期可先用现有 `unsupportedSiteLabels` 等既有判断反推），`getFeatureCapabilities()` 返回该表；DeclarativeAdapter 返回 manifest 声明。
+- 改造点：`SiteSettingsPage.tsx`（各设置卡片按能力显隐）、面板 `QuickButtons`/`MainPanel` 功能按钮、`ConversationsTab`（无 `conversation-list` 时隐藏站点会话区，取代现有 `unsupportedSiteLabels` 硬编码）。
 - 分级文案：L2 站点设置页顶部显示"社区适配包（核心功能）"徽标 + 说明链接，管理预期。
 
-### 6.8 动态 siteId 全链路
+### 6.8 站点身份与动态 siteId 全链路
 
-- `getSiteId()` 返回 `"pack:duck-ai"` 形式，天然避开内置 id 冲突。
-- 排查 33 个耦合文件：settings 各处 `Record<siteId, T>` 结构本身兼容任意 string key，重点是放宽收紧类型（如 `SiteSettingsPage.tsx:343` 的 `keyof typeof settings.layout.cleanMode` → `string`）与新增 `isBuiltinSiteId()` 工具。
+**站点实例身份（回应"通用包多实例数据串线"）**：同一通用包（如 `pack:open-webui`）可绑定多个自部署 origin，若仅用 `getSiteId() = "pack:open-webui"` 作数据键，不同实例会**共享主题/设置/阅读历史/会话归属**；更严重的是 `conversations-store.ts:64` 直接以原始 `conv.id` 为键，两个实例出现相同会话 ID 会**互相覆盖**。因此区分三层身份：
+
+| 概念 | 含义 | 用途 |
+| --- | --- | --- |
+| `packId` | `"pack:open-webui"` | 适配实现与更新身份（一个包一份代码/配置） |
+| `siteInstanceKey` | `packId` + `origin`（内置站点即 siteId 本身） | 设置/主题/阅读历史/会话归属的**数据分区键** |
+| 会话存储键 | `siteInstanceKey` + 原始会话 ID 的复合键 | 防跨实例会话 ID 碰撞覆盖 |
+
+- 内置站点 `siteInstanceKey === siteId`，行为不变；仅通用包（多 origin）需要复合键。
+- **这涉及现有会话/设置 store 的键结构变更与数据迁移**，不是 P1-08"放宽 siteId 类型"能覆盖的，单列任务（P1-15）并预留 storageSchemaVersion 迁移。
+
+**动态 siteId 类型放宽**：
+
+- 排查 33 个耦合文件：settings 各处 `Record<siteId, T>` 结构本身兼容任意 string key，重点是放宽收紧类型（如 `SiteSettingsPage.tsx` 的 `keyof typeof …` → `string`）与新增 `isBuiltinSiteId()` 工具。
 - `SUPPORTED_AI_PLATFORMS`（全局搜索/会话归属使用）：PackManager 提供 `getDynamicPlatforms()` 合并进消费方；图标缺省用站点 favicon（`https://{host}/favicon.ico`）+ 首字母兜底。
 
 ### 6.9 新域名激活（Phase 2）
 
-**扩展端**（动态注册，合规）：
+**扩展端**（动态注册，合规；基础能力已前移至 P1-17，本节为完整形态）：
 
-1. manifest `permissions` 增加 `"scripting"`（无权限警告）。
-2. 安装含未授权域名的 pack → 复用 `perm-request.tsx` 请求 origin（`optional_host_permissions: ["<all_urls>"]` 已具备）。
-3. background 从 `chrome.runtime.getManifest().content_scripts` 读取 `main` / `ui-entry` / `monitor-entry` / `scroll-lock-main` 对应的 js/css 产物路径，`chrome.scripting.registerContentScripts({ id, matches, js, css, runAt, persistAcrossSessions: true })` 注册到新 origin——**不依赖构建产物文件名稳定性**。
-4. 启动时校验动态注册列表与已装包一致（`getRegisteredContentScripts` 对账）；卸载包/撤销权限时注销。
-5. Firefox 验证项：MV3 下 host permission 全部默认 optional，授权交互与 Chrome 不同，需专项回归（任务 P2-09）。
+1. `scripting` 权限**已由 Plasmo 自动注入**（MAIN world 脚本注册需要），无需手动增加；host 访问靠已有的 `optional_host_permissions: ["<all_urls>"]` 运行时授权。
+2. 安装含未授权域名的 pack → 复用 `perm-request.tsx` 请求 origin。
+3. **两类脚本分开处理**（Plasmo 构建事实）：普通 ISOLATED world 内容脚本（`main` / `ui-entry`）在 `chrome.runtime.getManifest().content_scripts` 中，可读取 js/css 产物路径；MAIN world 脚本（`monitor-entry` / `scroll-lock-main` 等）**不在 manifest**，由 Plasmo 生成的 `static/background/main-world-scripts.ts` 经 `registerContentScripts` 注册，产物路径需从该注册表取得。动态注册时按 **world × runAt 分组**生成注册项（`persistAcrossSessions: true`），**注入单位是 origin 而非 pack**（detect 池多个 pack 共享同一 origin 时只注入一套脚本）。
+4. **引用计数**：一个 origin 可能被多个绑定/包引用；卸载单个 pack 只减少计数，计数归零才注销注册与提示撤权。启动时对账（`getRegisteredContentScripts` 与绑定表一致性校验）。
+5. `background.ts` 的 `OPHEL_TARGET_URLS` 等硬编码站点列表改为"静态列表 + 动态绑定合并"。
+6. 验证 `web_accessible_resources`（KaTeX 字体等，matches 已是 `<all_urls>`）在动态 origin 上可加载（P1-17 spike 项）。
+7. Firefox 验证项：MV3 下 host permission 全部默认 optional，授权交互与 Chrome 不同，需专项回归（任务 P2-09）。
 
 **userscript 端**（无法运行时扩 `@match`）：提供设置页指引 + 文档，教用户在 Tampermonkey「设置 → 包含/排除」加 User matches；检测到已装 pack 的域名未被覆盖时展示带复制按钮的提示。
 
@@ -442,19 +500,23 @@ pack 的 `matches` 是静态声明（禁通配、≤10 条），无法覆盖 Ope
 
 ### 7.1 目录与发布
 
-- 源文件在 `main` 分支 `registry/` 目录（§6.1）；push 到 main 触发 GH Actions：`validate.mjs` 全量校验 → `build-dist.mjs` 生成 `index.json`（含每个文件的 version/matches/sha256/minAppVersion 摘要）→ **强制推送到 `registry-dist` 分支**（独立分支：jsDelivr 缓存可单独 purge，registry 更新不产生 main 提交噪音、不触发 release 流程）。
+- 源文件在 `main` 分支 `registry/` 目录（§6.1）；push 到 main 触发 GH Actions：`validate.mjs` 全量校验 → `build-dist.mjs` 生成 `index.json`（含每个文件的 version/matches/sha256/minAppVersion 摘要 + 单调 `registryRevision`）→ **强制推送到 `registry-dist` 分支**（独立分支：jsDelivr 缓存可单独 purge，registry 更新不产生 main 提交噪音、不触发 release 流程）。
+- **不可变发布**（回应"可变分支混合读取"）：包/patch 写入按版本命名的不可变路径（如 `packs/duck-ai/3.json`），`index` 引用固定路径；客户端按 `registryRevision` 判断是否需要刷新，避免 index 与包文件读到不同 commit。
 - `index.json` 结构：
 
 ```json
 {
-  "generatedAt": "2026-07-22T00:00:00Z",
+  "generatedAt": 1784678400000,
   "schemaVersion": 1,
-  "packs": [{ "id": "duck-ai", "version": 3, "minAppVersion": "1.2.0", "matches": ["https://duck.ai/*"], "file": "sites/duck-ai.json", "sha256": "…" }],
-  "patches": [{ "targetSiteId": "zai", "patchVersion": 2, "minAppVersion": "1.1.8", "file": "patches/zai.json", "sha256": "…", "disabled": false }]
+  "registryRevision": 42,
+  "packs": [{ "id": "duck-ai", "version": 3, "minAppVersion": "1.2.0", "matches": ["https://duck.ai/*"], "file": "packs/duck-ai/3.json", "sha256": "…", "disabled": false }],
+  "patches": [{ "targetSiteId": "zai", "patchVersion": 2, "baseConfigVersion": 3, "minAppVersion": "1.1.8", "maxAppVersion": "1.3.0", "file": "patches/zai/2.json", "sha256": "…", "disabled": false }]
 }
 ```
 
-- `disabled: true` 为紧急止损开关（§6.5）：客户端拉到即让对应缓存条目失效，用于问题 patch/pack 的即时下线。
+- 时间字段一律 Unix 毫秒时间戳（§6.5 约定），不使用 ISO `T/Z` 字符串。
+
+- `disabled: true` 为紧急止损开关（§6.5，非即时，受轮询 + CDN 缓存约束）：客户端下次拉到即让对应缓存条目失效，用于问题 patch/pack 的下线。
 
 ### 7.2 贡献流程
 
@@ -484,15 +546,19 @@ pack 的 `matches` 是静态声明（禁通配、≤10 条），无法覆盖 Ope
 | 恶意本地导入包 | 用户导入第三方 JSON | 同一校验器 + 风险确认弹窗（明示：适配包可修改页面样式与 Ophel 在该站点的行为，仅导入可信来源）|
 | 表达力蠕变演变为远程代码 | schema 演进 | §3 红线：schema 永不加脚本/表达式字段，PR 审核硬性拒绝 |
 | 域名劫持内置站点 | pack matches 覆盖内置域名 | CI + 运行时双重拒绝；修改内置只能走 patch 通道 |
+| confused-deputy：远程 selector 驱动自动点击宿主危险按钮 | `newChatButton`/`stopButton`/`submitButton` 等被指向"删除会话/账户/发送"类元素并被自动触发 | 自动 `click()` 仅限白名单语义按钮，且限定在 §4.2 声明的能力范围内；导出/删除等破坏性操作永不由 L2 声明式自动触发（保持 L1 专属）；向导/健康自检对"选择器指向 body/大范围容器"给出告警 |
 
-### 8.2 校验器统一约束（`validate.ts` 与 `registry/scripts/validate.mjs` 共用规则）
+### 8.2 校验器统一约束（单一实现源）
 
+- **单一真值源**：TS 类型（`types.ts`）+ 运行时校验（`validate.ts`）+ CI 校验 + JSON Schema 四者若各自维护必然漂移。约定：`validate.ts` 写成**零浏览器依赖的纯模块**，`registry/scripts/validate.mjs` 直接 import 同一模块执行（tsx/esbuild 跑 TS 即可），**不重写规则**；JSON Schema（P0-03）仅作编辑器提示的派生物，CI 用示例包对两者做交叉一致性检查。
 - 包文件 ≤ 64KB；数组字段长度 ≤ 50；选择器字符串 ≤ 500 字符。
 - 未知键一律拒绝（白名单制，防止未来字段被老版本静默误读）。
 - **patch 与 pack 走同一校验器**：patch 的 `config` 局部字段（含 extraCss、regex）攻击面与 pack 相同，CI 与运行时均复用 `validate.ts` 同一套白名单与约束，不允许旁路。
 - `matches`：`^https://`、禁 `<all_urls>`/`https://*/*`、≤ 10 条；允许空数组，但空 matches 必须同时提供 `detect`（通用 ChatUI 包，仅经用户域名绑定激活，见 §6.9.1）。
-- `urlTemplate`/`newTabPath` 必须以 `/` 开头（锁定同源）。
+- `urlTemplate`/`newTabPath`：以单个 `/` 开头且第二字符不得为 `/`（拦截 `//evil.example` 协议相对 URL）；运行时以 `new URL(filled, location.origin)` 构造后**断言 `origin` 与当前页一致**才导航；`{id}` 填充值经 `encodeURIComponent`。
+- `theme.primary/secondary`：仅接受 `^#[0-9a-fA-F]{3,8}$` 颜色字面量。
 - `id`：`^[a-z0-9-]{2,40}$`。
+- `extraCss`：v1 采用归一化黑名单（§8.1）+ 长度上限 + registry 人工审核 + 本地导入风险弹窗；属性/值允许列表作为 v2 加固项（残余风险已记录，Phase 4 评估）。
 - 校验实现优先用手写轻量校验器（避免引入 ajv 增加包体；`effect` 已在依赖中，若用 `effect/Schema` 需评估 bundle 影响后决定，二选一在 P0-01 定案）。
 
 ---
@@ -504,7 +570,7 @@ pack 的 `matches` 是静态声明（禁通配、≤10 条），无法覆盖 Ope
 ### Phase 0：Schema 地基 + 云端热修通道（性价比最高，先行）
 
 - **前置**：项目当前无正式测试体系，而校验器/合并器的 DoD 依赖单测 → 新增 P0-00 引入 vitest 最小测试基建（仅针对纯逻辑模块，不做 UI 测试），避免 P0-02 被迫顺手搭基建、diff 失焦。
-- **范围**：测试基建、schema 类型与校验器、三层合并器、RemoteConfigManager（含 disabled 止损开关）、registry 目录与 CI、zai 单站配置化试点、设置页更新区块（含站点级"重置为内置配置"）。
+- **范围**：测试基建、schema 类型与校验器（单一实现源）、三层合并器（含 patch 版本兼容）、RemoteConfigManager（独立 transport、`alarms` 权限、last-known-good、disabled 止损、本地忽略标记）、**内置 patch 启动门闩（P0-13：`initAdapterRegistry()` 第一段 + 三入口 await，使热修在本阶段端到端生效）**、registry 目录与 CI（不可变发布）、zai 单站配置化试点、设置页更新区块（含站点级"重置为内置配置"）。
 - **不做**：DeclarativeAdapter、新站点、任何 UI 大改。为控制单人项目 Phase 0 体量（原 ~21.5 人日），以下任务后移：JSON Schema 文件（原 P0-03）与贡献者文档（原 P0-12）并入 Phase 1 registry 开放（P1-11）；ima 第二试点（原 P0-09）移至 Phase 1 初，作为迁移手册的通用性验证。
 - **验收（DoD）**：
   1. zai 配置化后全功能回归通过（行为零变化）；
@@ -514,21 +580,22 @@ pack 的 `matches` 是静态声明（禁通配、≤10 条），无法覆盖 Ope
 
 ### Phase 1：DeclarativeAdapter + SitePack 安装闭环
 
-- **范围**：DeclarativeAdapter 全部映射、AdapterRegistry 启动时序、PackManager、动态 siteId 放宽、capabilities UI 联动、适配包管理页、首个官方包（Duck.ai，回应 #184 社区请求）。
+- **范围**：DeclarativeAdapter 全部映射（含全部 abstract 方法）、AdapterRegistry 动态包加载段 + registryReady 门闩、PackManager、动态 siteId 放宽、**站点实例身份与数据迁移（P1-15）**、**数据生命周期/备份闭环（P1-16）**、`getFeatureCapabilities` 独立能力 API + 内置真实能力表、capabilities UI 联动、适配包管理页、首个官方包（Duck.ai，回应 #184 社区请求）。
+- **最小动态注入前移**：Duck.ai 是全新域名，现有内容脚本只注入硬编码站点。因此把**扩展端最小动态授权 + origin 级脚本注册**（原 Phase 2 的 P2-01/P2-02 核心）前移为 Phase 1 依赖（P1-17），否则 Duck.ai 无法在真实浏览器激活、DoD 不成立。detect 池、通用包、多 origin 等复杂能力仍留 Phase 2。
 - **验收（DoD）**：
-  1. Duck.ai 以纯 JSON 从设置页安装后，能力矩阵 ✅ 项全部可用（大纲/插入发送/宽度/Zen/基础导出/新对话/停止/生成检测）；
-  2. 未声明能力在设置页与面板完全不可见，站点设置页显示"社区适配包"分级徽标；
-  3. 本地导入非法包被校验器拒绝并给出可读错误；合法包需经风险确认。
-- **风险**：contenteditable 插入策略成功率（§6.3 专项）→ P1-02 首日 spike 验证编辑器框架矩阵，结论回写能力矩阵；动态 siteId 放宽遗漏（157 处引用）→ 专项任务 P1-08 逐文件排查 + typecheck 把关 + 用 `pack:` 前缀假 id 做设置读写/主题/备份恢复/全局搜索全链路冒烟。
+  1. Duck.ai 以纯 JSON 从设置页安装 → 授权域名 → 动态注册 → 刷新后能力矩阵 ✅ 项全部可用（大纲/插入发送/宽度/Zen/基础导出/新对话/停止/生成检测）；
+  2. 未声明能力在设置页与面板完全不可见（走 `getFeatureCapabilities`），内置站点 UI 无任何变化（含现有 5 个不支持会话管理站点行为不变），站点设置页显示"社区适配包"分级徽标；
+  3. 本地导入非法包被校验器拒绝并给出可读错误；合法包需经风险确认；导入包 + 绑定纳入备份，清除数据时先注销动态脚本。
+- **风险**：contenteditable 插入策略成功率（§6.3 专项）→ P1-02 首日 spike 验证编辑器框架矩阵，结论回写能力矩阵；动态 siteId 放宽遗漏（157 处引用）→ P1-08 逐文件排查 + typecheck + 用 `pack:` 前缀假 id 全链路运行时冒烟；启动竞态 → registryReady 门闩 + App 延迟渲染（§6.2）；会话/设置键结构迁移影响存量数据 → P1-15 迁移单测 + 旧数据兼容。
 
-### Phase 2：自定义域名 + 通用 ChatUI 包 + 健康自检
+### Phase 2：自定义域名（通用场景）+ 通用 ChatUI 包 + 健康自检
 
-- **范围**：`scripting` 权限与动态注册、授权流程、用户级域名绑定表（§6.9.1）、userscript 指引、detect 探测原语、Open WebUI / LobeChat / LibreChat / NextChat 官方包、HealthCheckManager、跨浏览器回归。
+- **范围**：detect 探测原语与延迟激活（MutationObserver 重试）、多 origin 通用包、origin 级注册的**引用计数**与 `OPHEL_TARGET_URLS` 动态化、userscript 指引、Open WebUI / LobeChat / LibreChat / NextChat 官方包、HealthCheckManager、跨浏览器回归。（`scripting` 权限已由 Plasmo 自动注入，非本阶段新增；基础动态注册已在 P1-17 落地，本阶段扩展到多包/detect。）
 - **验收（DoD）**：
-  1. 扩展端用户可添加任意 https 域名并安装 pack，重启浏览器后注册持久有效，卸载包后注册与权限清理干净；
-  2. Open WebUI/LobeChat 包（`matches: []` + detect，经用户域名绑定激活）在各自 demo 实例上核心能力可用（一份包覆盖任意自部署域名）；同一域名多包 detect 命中时按 §6.9.1 优先级激活且可切换；
-  3. 人为破坏 selector 后，两次加载内出现失效提示，且 [检查配置更新] 可在 patch 发布后自动恢复。
-- **风险**：Firefox 动态注册/授权差异 → 专项验证任务；Plasmo manifest 读取产物路径为关键假设，P2-01 首日先做 spike 验证。
+  1. 扩展端用户可添加任意 https 域名并安装 pack，重启浏览器后注册持久有效；一个 origin 被多包绑定时脚本只注入一套，卸载单个包按引用计数保留仍被使用的注册，全部解绑后注册与权限清理干净；
+  2. Open WebUI/LobeChat 包（`matches: []` + detect，经用户域名绑定激活）在各自 demo 实例上核心能力可用；同一域名多包 detect 命中时按 §6.9.1 优先级激活且可切换；detect 依赖的 DOM 延迟渲染时在门闩重试窗口内仍能激活；
+  3. 人为破坏 selector 后，两次加载内出现失效提示（区分"包过旧"与"站点改版"），且 [检查配置更新] 可在 patch 发布后自动恢复。
+- **风险**：Firefox 动态注册/授权差异 → 专项验证任务；MAIN world 脚本不在 `content_scripts` 而在 background 注册表、需按 world/runAt 分组注册 → P2-01 首日 spike 验证（含 `web_accessible_resources` 对动态 origin 生效性）。
 
 ### Phase 3：适配向导 + 存量配置化收尾
 
@@ -574,6 +641,8 @@ Phase 0 ──→ Phase 1 ──→ Phase 2 ──→ Phase 3 ──→ Phase 4(
 | `src/adapters/zai.ts`、`ima.ts`（试点）→ 其余 13 站 | selector 抽为 config 常量 + `resolveSiteConfig` 合并 | P0 / P3 |
 | `src/constants/defaults.ts` | `SITE_IDS` 保留；新增 `isBuiltinSiteId()`；`SUPPORTED_AI_PLATFORMS` 支持动态合并 | P1 |
 | `src/tabs/options/pages/SiteSettingsPage.tsx` 等 | siteId 类型放宽为 string；按 capabilities 显隐 | P1 |
-| `package.json` manifest | `permissions` 增 `"scripting"` | P2 |
-| `src/background.ts` | RemoteConfigManager 定时任务、动态注册模块 | P0 / P2 |
+| `package.json` manifest | `permissions` 增 `"alarms"`（`scripting` 已由 Plasmo 因 MAIN world 脚本自动注入，无需手动加） | P0 |
+| `src/background.ts` | RemoteConfigManager 定时任务与 registry transport（P0）；`OPHEL_TARGET_URLS` 动态合并 + 动态注册模块（P1-17 基础 / P2 多包扩展） | P0 / P1 / P2 |
+| `src/stores/conversations-store.ts` 等 | 站点实例身份复合键与存量数据迁移（§6.8） | P1 |
+| `src/constants/defaults.ts`（`ZUSTAND_KEYS`） | 本地包与域名绑定纳入备份/恢复范围（§6.6） | P1 |
 | `.github/workflows/` | registry 校验 + dist 发布 workflow | P0 |
