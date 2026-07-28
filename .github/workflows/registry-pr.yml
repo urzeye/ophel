@@ -7,6 +7,8 @@ on:
     paths:
       - "registry/sites/**"
       - "registry/patches/**"
+      - "registry/schema/**"
+      - "registry/examples/**"
 
 permissions:
   contents: read

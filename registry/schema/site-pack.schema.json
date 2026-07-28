@@ -1,0 +1,872 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/urzeye/ophel/main/registry/schema/site-pack.schema.json",
+  "title": "Ophel SitePack Manifest",
+  "description": "Editor and CI schema for declarative Ophel SitePack manifests. Runtime validation remains authoritative for regex, CSS, match-host, and serialized-size safety checks.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "id",
+    "version",
+    "minAppVersion",
+    "name",
+    "matches",
+    "capabilities",
+    "selectors"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1,
+      "description": "SitePack schema version supported by this manifest."
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]{2,40}$",
+      "description": "Globally unique lowercase SitePack identifier."
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Positive, monotonically increasing SitePack version."
+    },
+    "minAppVersion": {
+      "$ref": "#/definitions/semanticVersion"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "nameI18n": {
+      "$ref": "#/definitions/i18nRecord"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 4000
+    },
+    "descriptionI18n": {
+      "$ref": "#/definitions/i18nRecord"
+    },
+    "matches": {
+      "type": "array",
+      "maxItems": 10,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/definitions/matchPattern"
+      }
+    },
+    "detect": {
+      "type": "array",
+      "maxItems": 50,
+      "items": {
+        "$ref": "#/definitions/detectRule"
+      }
+    },
+    "theme": {
+      "$ref": "#/definitions/theme"
+    },
+    "capabilities": {
+      "$ref": "#/definitions/capabilities"
+    },
+    "selectors": {
+      "$ref": "#/definitions/selectors"
+    },
+    "input": {
+      "$ref": "#/definitions/input"
+    },
+    "conversation": {
+      "$ref": "#/definitions/conversation"
+    },
+    "generating": {
+      "$ref": "#/definitions/generating"
+    },
+    "session": {
+      "$ref": "#/definitions/session"
+    },
+    "networkMonitor": {
+      "$ref": "#/definitions/networkMonitor"
+    },
+    "modelSwitcher": {
+      "$ref": "#/definitions/modelSwitcher"
+    },
+    "export": {
+      "$ref": "#/definitions/exportConfig"
+    },
+    "zenMode": {
+      "$ref": "#/definitions/zenMode"
+    },
+    "cleanMode": {
+      "$ref": "#/definitions/zenMode"
+    },
+    "widthSelectors": {
+      "$ref": "#/definitions/widthSelectors"
+    },
+    "mermaidSupport": {
+      "type": "string",
+      "enum": ["native", "fallback"]
+    },
+    "quickQuote": {
+      "type": "string",
+      "enum": ["enabled", "native", "disabled"]
+    },
+    "supportsHostThemeSync": {
+      "type": "boolean"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "matches": {
+            "maxItems": 0
+          }
+        }
+      },
+      "then": {
+        "required": ["detect"],
+        "properties": {
+          "detect": {
+            "minItems": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "capabilities": {
+            "contains": {
+              "const": "outline"
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "selectors": {
+            "required": ["responseContainer"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "capabilities": {
+            "contains": {
+              "const": "outline-user-queries"
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "capabilities": {
+            "contains": {
+              "const": "outline"
+            }
+          },
+          "selectors": {
+            "required": ["userQuery"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "capabilities": {
+            "contains": {
+              "const": "conversation-list"
+            }
+          }
+        }
+      },
+      "then": {
+        "required": ["conversation"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "capabilities": {
+            "contains": {
+              "const": "export-basic"
+            }
+          }
+        }
+      },
+      "then": {
+        "required": ["export"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "capabilities": {
+            "contains": {
+              "const": "model-lock"
+            }
+          }
+        }
+      },
+      "then": {
+        "required": ["modelSwitcher"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "capabilities": {
+            "contains": {
+              "const": "generation-detect"
+            }
+          }
+        }
+      },
+      "then": {
+        "anyOf": [
+          {
+            "required": ["generating"]
+          },
+          {
+            "required": ["networkMonitor"]
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "capabilities": {
+            "contains": {
+              "const": "new-chat"
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "selectors": {
+            "required": ["newChatButton"],
+            "properties": {
+              "newChatButton": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "capabilities": {
+            "contains": {
+              "const": "stop-generation"
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "selectors": {
+            "required": ["stopButton"],
+            "properties": {
+              "stopButton": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "capabilities": {
+            "contains": {
+              "const": "width"
+            }
+          }
+        }
+      },
+      "then": {
+        "required": ["widthSelectors"],
+        "properties": {
+          "widthSelectors": {
+            "minItems": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "capabilities": {
+            "contains": {
+              "const": "zen"
+            }
+          }
+        }
+      },
+      "then": {
+        "required": ["zenMode"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "capabilities": {
+            "contains": {
+              "const": "clean"
+            }
+          }
+        }
+      },
+      "then": {
+        "required": ["cleanMode"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "capabilities": {
+            "contains": {
+              "const": "prompt-insert"
+            }
+          }
+        }
+      },
+      "then": {
+        "required": ["input"],
+        "properties": {
+          "selectors": {
+            "required": ["textarea"],
+            "properties": {
+              "textarea": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "capabilities": {
+            "contains": {
+              "const": "reading-history"
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "selectors": {
+            "required": ["chatContent"],
+            "properties": {
+              "chatContent": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "definitions": {
+    "semanticVersion": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-((?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\\+([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?$",
+      "description": "Semantic version accepted by the runtime validator."
+    },
+    "i18nRecord": {
+      "type": "object",
+      "propertyNames": {
+        "allOf": [
+          {
+            "minLength": 1,
+            "maxLength": 35
+          },
+          {
+            "not": {
+              "enum": ["__proto__", "prototype", "constructor"]
+            }
+          }
+        ]
+      },
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "selector": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "selectorArray": {
+      "type": "array",
+      "maxItems": 50,
+      "items": {
+        "$ref": "#/definitions/selector"
+      }
+    },
+    "nonEmptySelectorArray": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/selectorArray"
+        },
+        {
+          "minItems": 1
+        }
+      ]
+    },
+    "regularExpression": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "Must also compile as JavaScript RegExp and pass safe-regex2 runtime checks."
+    },
+    "regularExpressionArray": {
+      "type": "array",
+      "maxItems": 50,
+      "items": {
+        "$ref": "#/definitions/regularExpression"
+      }
+    },
+    "sameOriginPath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500,
+      "pattern": "^/(?!/)",
+      "description": "Same-origin path beginning with exactly one slash."
+    },
+    "cssValue": {
+      "type": "string",
+      "maxLength": 2000,
+      "description": "Runtime validation additionally blocks normalized url(), @import, expression(), and javascript: tokens."
+    },
+    "matchPattern": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500,
+      "pattern": "^https://",
+      "not": {
+        "enum": ["https://*/*"]
+      },
+      "description": "HTTPS extension match pattern. Runtime validation also rejects malformed and top-level host wildcards."
+    },
+    "detectRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "selectorExists": {
+          "$ref": "#/definitions/selector"
+        },
+        "metaGenerator": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        }
+      },
+      "anyOf": [
+        {
+          "required": ["selectorExists"]
+        },
+        {
+          "required": ["metaGenerator"]
+        }
+      ]
+    },
+    "theme": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["primary", "secondary"],
+      "properties": {
+        "primary": {
+          "$ref": "#/definitions/hexColor"
+        },
+        "secondary": {
+          "$ref": "#/definitions/hexColor"
+        }
+      }
+    },
+    "hexColor": {
+      "type": "string",
+      "pattern": "^#[0-9a-fA-F]{3,8}$"
+    },
+    "capabilities": {
+      "type": "array",
+      "maxItems": 50,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "outline",
+          "outline-user-queries",
+          "conversation-list",
+          "export-basic",
+          "model-lock",
+          "generation-detect",
+          "new-chat",
+          "stop-generation",
+          "width",
+          "zen",
+          "clean",
+          "prompt-insert",
+          "reading-history"
+        ]
+      }
+    },
+    "selectors": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "textarea": {
+          "$ref": "#/definitions/selectorArray"
+        },
+        "submitButton": {
+          "$ref": "#/definitions/selectorArray"
+        },
+        "responseContainer": {
+          "$ref": "#/definitions/selector"
+        },
+        "chatContent": {
+          "$ref": "#/definitions/selectorArray"
+        },
+        "userQuery": {
+          "$ref": "#/definitions/selector"
+        },
+        "assistantResponse": {
+          "$ref": "#/definitions/selector"
+        },
+        "newChatButton": {
+          "$ref": "#/definitions/selectorArray"
+        },
+        "stopButton": {
+          "$ref": "#/definitions/selectorArray"
+        },
+        "scrollContainer": {
+          "$ref": "#/definitions/selectorArray"
+        },
+        "sidebarScrollContainer": {
+          "$ref": "#/definitions/selector"
+        }
+      }
+    },
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode"],
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["textarea", "contenteditable"]
+        },
+        "submitKey": {
+          "type": "string",
+          "enum": ["Enter", "Ctrl+Enter"]
+        }
+      }
+    },
+    "conversation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["itemSelector", "idFrom", "urlTemplate"],
+      "properties": {
+        "itemSelector": {
+          "$ref": "#/definitions/selector"
+        },
+        "idFrom": {
+          "$ref": "#/definitions/conversationIdSource"
+        },
+        "titleSelector": {
+          "$ref": "#/definitions/selector"
+        },
+        "urlTemplate": {
+          "$ref": "#/definitions/sameOriginPath"
+        },
+        "activeMatch": {
+          "$ref": "#/definitions/selector"
+        },
+        "navigationStrategy": {
+          "type": "string",
+          "enum": ["click-item", "location"]
+        },
+        "shadow": {
+          "type": "boolean"
+        }
+      }
+    },
+    "conversationIdSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["regex"],
+      "properties": {
+        "attr": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "regex": {
+          "$ref": "#/definitions/regularExpression"
+        }
+      }
+    },
+    "generating": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["existsSelectors"],
+      "properties": {
+        "existsSelectors": {
+          "$ref": "#/definitions/nonEmptySelectorArray"
+        }
+      }
+    },
+    "session": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "idFromPathRegex": {
+          "$ref": "#/definitions/regularExpression"
+        },
+        "newConversationPathPatterns": {
+          "$ref": "#/definitions/regularExpressionArray"
+        },
+        "sharePathPrefix": {
+          "$ref": "#/definitions/sameOriginPath"
+        },
+        "newTabPath": {
+          "$ref": "#/definitions/sameOriginPath"
+        }
+      }
+    },
+    "networkMonitor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["urlPatterns", "silenceThreshold"],
+      "properties": {
+        "urlPatterns": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 50,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        },
+        "urlPathEndsWith": {
+          "type": "array",
+          "maxItems": 50,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        },
+        "silenceThreshold": {
+          "type": "number",
+          "minimum": 0
+        },
+        "requestBodyRules": {
+          "type": "array",
+          "maxItems": 50,
+          "items": {
+            "$ref": "#/definitions/networkRequestBodyRule"
+          }
+        }
+      }
+    },
+    "networkRequestBodyRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "field", "metadata"],
+      "properties": {
+        "type": {
+          "const": "json-field-exists"
+        },
+        "field": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "metadata": {
+          "type": "object",
+          "propertyNames": {
+            "not": {
+              "enum": ["__proto__", "prototype", "constructor"]
+            }
+          },
+          "additionalProperties": {
+            "type": ["string", "number", "boolean", "null"]
+          }
+        }
+      }
+    },
+    "modelSwitcher": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["selectorButtonSelectors", "menuItemSelector"],
+      "properties": {
+        "selectorButtonSelectors": {
+          "$ref": "#/definitions/nonEmptySelectorArray"
+        },
+        "menuItemSelector": {
+          "$ref": "#/definitions/selector"
+        },
+        "checkInterval": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxAttempts": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "menuRenderDelay": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "subMenuTriggers": {
+          "type": "array",
+          "maxItems": 50,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "subMenuSelector": {
+          "$ref": "#/definitions/selector"
+        }
+      }
+    },
+    "exportConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "userQuerySelector",
+        "assistantResponseSelector",
+        "turnSelector",
+        "useShadowDOM"
+      ],
+      "properties": {
+        "userQuerySelector": {
+          "$ref": "#/definitions/selector"
+        },
+        "assistantResponseSelector": {
+          "$ref": "#/definitions/selector"
+        },
+        "turnSelector": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/selector"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "useShadowDOM": {
+          "type": "boolean"
+        }
+      }
+    },
+    "zenMode": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "hide": {
+          "$ref": "#/definitions/selectorArray"
+        },
+        "rootClass": {
+          "$ref": "#/definitions/zenRootClass"
+        },
+        "styles": {
+          "type": "array",
+          "maxItems": 50,
+          "items": {
+            "$ref": "#/definitions/zenStyle"
+          }
+        }
+      }
+    },
+    "zenRootClass": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["selector", "className"],
+      "properties": {
+        "selector": {
+          "$ref": "#/definitions/selector"
+        },
+        "className": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        }
+      }
+    },
+    "zenStyle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["selector", "property", "value"],
+      "properties": {
+        "selector": {
+          "$ref": "#/definitions/selector"
+        },
+        "property": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "value": {
+          "$ref": "#/definitions/cssValue"
+        },
+        "globalSelector": {
+          "$ref": "#/definitions/selector"
+        },
+        "extraCss": {
+          "$ref": "#/definitions/cssValue"
+        }
+      }
+    },
+    "widthSelectors": {
+      "type": "array",
+      "maxItems": 50,
+      "items": {
+        "$ref": "#/definitions/widthSelector"
+      }
+    },
+    "widthSelector": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["selector", "property"],
+      "properties": {
+        "selector": {
+          "$ref": "#/definitions/selector"
+        },
+        "property": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "globalSelector": {
+          "$ref": "#/definitions/selector"
+        },
+        "value": {
+          "$ref": "#/definitions/cssValue"
+        },
+        "extraCss": {
+          "$ref": "#/definitions/cssValue"
+        },
+        "noCenter": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

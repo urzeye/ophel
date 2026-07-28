@@ -1,13 +1,109 @@
 # Ophel SitePack Registry
 
-`registry/sites/` 保存当前版本的声明式 SitePack，`registry/patches/` 保存内置适配器配置 patch。两类源文件都必须是现有 TypeScript 运行时校验器可接受的 JSON；构建脚本不会维护第二套规则。
+`registry/sites/` 保存社区可贡献的声明式 SitePack，`registry/patches/` 保存内置适配器的配置热修。两类文件都只能包含 JSON 数据，不能包含脚本、表达式或可执行代码。
 
-## 文件约定
+SitePack 的 TypeScript 运行时校验器是安全与兼容性的最终真值。`registry/schema/site-pack.schema.json` 用于编辑器提示和 CI 结构校验；registry 脚本会让每个 SitePack 同时通过 JSON Schema 与运行时校验器，避免只依赖其中一套规则。
+
+## 提交 SitePack
+
+1. 复制 `registry/examples/site-pack.example.json` 到 `registry/sites/<id>.json`。
+2. 删除不需要的可选配置，只声明已经在目标站点验证过的 `capabilities`。
+3. 使用稳定的属性和 DOM 结构编写选择器，避免易变 class、纯展示文案或单语言文本。
+4. 运行 `pnpm registry:validate` 和 `pnpm registry:build`。
+5. 使用 [SitePack PR 模板](../.github/PULL_REQUEST_TEMPLATE/site-pack.md) 提交站点、测试环境、功能证据和截图。
+
+仓库的 `.vscode/settings.json` 已把 `registry/sites/*.json` 映射到本地 JSON Schema。不要在 manifest 中加入 `$schema`：SitePack 使用严格未知键拒绝策略，运行时会拒绝该字段。
+
+### 核心字段
+
+| 字段                   | 要求                                                                                            |
+| ---------------------- | ----------------------------------------------------------------------------------------------- |
+| `schemaVersion`        | 当前固定为 `1`。                                                                                |
+| `id`                   | 全局唯一，匹配 `^[a-z0-9-]{2,40}$`，且不能与内置站点 ID 冲突。                                  |
+| `version`              | 正整数；每次修改已发布包都必须递增，不能复用旧版本号。                                          |
+| `minAppVersion`        | 最早理解这些字段并完成过验证的 Ophel SemVer 版本。                                              |
+| `name` / `description` | 默认展示文本；可用 `nameI18n` / `descriptionI18n` 提供多语映射。                                |
+| `matches`              | 最多 10 条 HTTPS match pattern；禁止全局匹配、顶层通配及与内置/现有包重叠。                     |
+| `detect`               | 可选 DOM 特征。`matches` 为空时至少提供一条；此类自部署站点包需配合后续自定义域名绑定能力激活。 |
+| `capabilities`         | 用户界面能力契约，只能声明已经提供所需字段并在真实页面验证的能力。                              |
+| `selectors`            | 通用页面选择器集合；各字符串最长 500 字符，普通数组最多 50 项。                                 |
+
+### 能力与必需配置
+
+| Capability             | 必需字段                            |
+| ---------------------- | ----------------------------------- |
+| `outline`              | `selectors.responseContainer`       |
+| `outline-user-queries` | `outline` + `selectors.userQuery`   |
+| `conversation-list`    | `conversation`                      |
+| `export-basic`         | `export`                            |
+| `model-lock`           | `modelSwitcher`                     |
+| `generation-detect`    | `generating` 或 `networkMonitor`    |
+| `new-chat`             | 非空 `selectors.newChatButton`      |
+| `stop-generation`      | 非空 `selectors.stopButton`         |
+| `width`                | 非空 `widthSelectors`               |
+| `zen`                  | `zenMode`                           |
+| `clean`                | `cleanMode`                         |
+| `prompt-insert`        | 非空 `selectors.textarea` + `input` |
+| `reading-history`      | 非空 `selectors.chatContent`        |
+
+### 配置分组
+
+- `input`：输入元素类型与提交快捷键。
+- `conversation`：会话列表项、ID 捕获正则、标题和同源跳转模板。
+- `generating` / `networkMonitor`：DOM 或网络生成状态检测。
+- `session`：会话 ID、新对话页、分享页和新标签页路径。
+- `modelSwitcher`：模型菜单按钮、菜单项和可选子菜单规则。
+- `export`：用户消息、助手消息、轮次容器及 Shadow DOM 标记。
+- `zenMode` / `cleanMode`：隐藏选择器、根 class 和受限样式规则。
+- `widthSelectors`：可调整宽度的目标与受限 CSS 值。
+- `mermaidSupport` / `quickQuote` / `supportsHostThemeSync`：通用行为开关。
+
+完整字段、类型、长度和条件约束以 [`site-pack.schema.json`](schema/site-pack.schema.json) 与 `src/adapters/declarative/validate.ts` 为准；两者冲突时，以运行时校验器为准并同步修正 Schema。
+
+## 安全约束
+
+- 单个 SitePack JSON 序列化后不得超过 64 KiB；普通数组最多 50 项。
+- 正则最长 200 字符，必须可编译并通过 `safe-regex2` 检查。
+- `urlTemplate`、`sharePathPrefix`、`newTabPath` 必须以单个 `/` 开头并保持同源。
+- 远程 CSS 会在解码转义、移除注释和归一化后拒绝 `url(`、`@import`、`expression(`、`javascript:`。
+- 不得提交令牌、Cookie、账号、内部 URL、用户数据或任何秘密。
+- 不得用 SitePack 覆盖内置站点；内置站点改版应走 patch。
+- 不得新增脚本、JavaScript 表达式、远程资源加载或破坏性自动操作字段。
+
+## 提交内置适配器 patch
+
+Patch 只用于已经配置化的内置适配器 selector/纯配置热修，文件放在 `registry/patches/<site-id>.json`。基本结构为：
+
+```json
+{
+  "targetSiteId": "zai",
+  "patchSchemaVersion": 1,
+  "patchVersion": 2,
+  "baseConfigVersion": 1,
+  "minAppVersion": "1.1.8",
+  "maxAppVersion": "1.2.0",
+  "config": {
+    "selectors": {
+      "responseContainer": "main[data-chat]"
+    }
+  }
+}
+```
+
+- `targetSiteId` 必须已有可配置内置描述符；不能借 patch 新增站点。
+- `patchVersion` 正整数单调递增，`baseConfigVersion` 必须等于当前内置配置版本。
+- `config` 使用对象递归覆盖、数组整体替换、`null` 删除键；合并结果仍须是完整合法配置。
+- `sitePrivateSelectors` 只能修改目标站点已登记的白名单键。
+- 临时兼容修复可设置 `maxAppVersion`；内置修复发布并提升 `baseConfigVersion` 后旧 patch 会自动失效。
+- Patch PR 使用常规 PR 模板，并按[审核清单](../docs/developer/site-pack-review-checklist.md#内置适配器-patch-审核)提供受影响能力的真实站点回归结果。
+
+## 文件与发布约定
 
 - 普通文件使用 `*.json`。
 - 需要通过 registry kill switch 停用的当前版本改名为 `*.disabled.json`；JSON 内容本身不增加 `disabled` 字段。
 - 同一 pack `id` 或 patch `targetSiteId` 只能存在一份当前源文件。
 - 版本升级时修改当前源文件中的 `version` / `patchVersion`。发布分支会保留旧版本的不可变路径。
+- `registry/examples/` 仅保存校验与创作示例，不会进入发布索引。
 
 ## 本地命令
 
@@ -16,7 +112,7 @@ pnpm registry:validate
 pnpm registry:build
 ```
 
-PR 校验 workflow 会从受信任的主分支脚本读取 PR 中的源文件；本地复现时可指定候选目录：
+PR 校验 workflow 会从受信任的主分支脚本读取 PR 中的 registry 数据；本地复现时可指定候选目录：
 
 ```bash
 pnpm registry:validate -- --registry-root /path/to/registry

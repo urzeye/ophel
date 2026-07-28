@@ -2,6 +2,7 @@ import { lstat, readdir, readFile } from "node:fs/promises"
 import path from "node:path"
 import { fileURLToPath, pathToFileURL } from "node:url"
 
+import Ajv from "ajv"
 import safeRegex from "safe-regex2"
 
 import { siteMatchPatternsOverlap } from "../../src/adapters/declarative/match-pattern.ts"
@@ -19,6 +20,8 @@ const SCRIPT_DIRECTORY = path.dirname(fileURLToPath(import.meta.url))
 
 export const DEFAULT_REGISTRY_ROOT = path.resolve(SCRIPT_DIRECTORY, "..")
 
+const SITE_PACK_SCHEMA_PATH = path.join("schema", "site-pack.schema.json")
+const SITE_PACK_EXAMPLE_PATH = path.join("examples", "site-pack.example.json")
 const regexValidationOptions = { regexSafetyCheck: safeRegex }
 const builtinSiteIds = new Set(Object.values(SITE_IDS))
 const builtinMetadataIds = SUPPORTED_AI_PLATFORMS.map((platform) => platform.id)
@@ -41,6 +44,36 @@ const formatIssue = (sourcePath, fieldPath, code, message) =>
 
 const formatValidationErrors = (sourcePath, errors) =>
   errors.map((error) => formatIssue(sourcePath, error.path, error.code, error.message)).join("\n")
+
+const escapeJsonPointerSegment = (value) => value.replaceAll("~", "~0").replaceAll("/", "~1")
+
+const getSchemaErrorPath = (error) => {
+  let instancePath = error.instancePath ?? ""
+  const property =
+    error.keyword === "required"
+      ? error.params.missingProperty
+      : error.keyword === "additionalProperties"
+        ? error.params.additionalProperty
+        : error.keyword === "propertyNames"
+          ? error.params.propertyName
+          : undefined
+  if (typeof property === "string") {
+    instancePath += `/${escapeJsonPointerSegment(property)}`
+  }
+  return instancePath ? `$${instancePath}` : "$"
+}
+
+const formatSchemaValidationErrors = (sourcePath, errors = []) =>
+  errors
+    .map((error) =>
+      formatIssue(
+        sourcePath,
+        getSchemaErrorPath(error),
+        `schema_${error.keyword}`,
+        error.message ?? "JSON Schema validation failed",
+      ),
+    )
+    .join("\n")
 
 const getErrorMessage = (error) => (error instanceof Error ? error.message : String(error))
 
@@ -70,6 +103,65 @@ const parseJsonFile = async ({ sourcePath, displayPath }) => {
   }
 }
 
+const parseRequiredJsonFile = async (source) => {
+  const stats = await lstat(source.sourcePath)
+  if (!stats.isFile() || stats.isSymbolicLink()) {
+    throw new Error(
+      formatIssue(source.displayPath, "$", "invalid_source", "Expected a regular JSON file"),
+    )
+  }
+  return parseJsonFile(source)
+}
+
+const loadSitePackSchemaValidator = async (registryRoot) => {
+  const source = {
+    sourcePath: path.join(registryRoot, SITE_PACK_SCHEMA_PATH),
+    displayPath: SITE_PACK_SCHEMA_PATH.replaceAll(path.sep, "/"),
+  }
+  const schema = await parseRequiredJsonFile(source)
+  try {
+    const ajv = new Ajv({
+      allErrors: true,
+      strict: true,
+      // Conditional dependencies refer to types/properties declared by root definitions.
+      strictTypes: false,
+      strictRequired: false,
+      allowUnionTypes: true,
+    })
+    return ajv.compile(schema)
+  } catch (error) {
+    throw new Error(
+      formatIssue(source.displayPath, "$", "invalid_schema", getErrorMessage(error)),
+      { cause: error },
+    )
+  }
+}
+
+const validateSitePackInput = (input, sourcePath, schemaValidator) => {
+  const schemaValid = schemaValidator(input)
+  const runtimeResult = validateSitePackManifest(input, regexValidationOptions)
+  const errors = []
+  if (!schemaValid) {
+    errors.push(formatSchemaValidationErrors(sourcePath, schemaValidator.errors))
+  }
+  if (!runtimeResult.valid) {
+    errors.push(formatValidationErrors(sourcePath, runtimeResult.errors))
+  }
+  if (errors.length > 0) {
+    throw new Error(errors.filter(Boolean).join("\n"))
+  }
+  return runtimeResult.value
+}
+
+const validateSitePackExample = async (registryRoot, schemaValidator) => {
+  const source = {
+    sourcePath: path.join(registryRoot, SITE_PACK_EXAMPLE_PATH),
+    displayPath: SITE_PACK_EXAMPLE_PATH.replaceAll(path.sep, "/"),
+  }
+  const input = await parseRequiredJsonFile(source)
+  validateSitePackInput(input, source.displayPath, schemaValidator)
+}
+
 const readSourceFiles = async (directory) => {
   const directoryStats = await lstat(directory)
   if (!directoryStats.isDirectory() || directoryStats.isSymbolicLink()) {
@@ -95,13 +187,10 @@ const readSourceFiles = async (directory) => {
   return sources
 }
 
-const validatePackSource = async (source) => {
+const validatePackSource = async (source, schemaValidator) => {
   const input = await parseJsonFile(source)
-  const result = validateSitePackManifest(input, regexValidationOptions)
-  if (!result.valid) {
-    throw new Error(formatValidationErrors(source.displayPath, result.errors))
-  }
-  return { ...source, manifest: result.value }
+  const manifest = validateSitePackInput(input, source.displayPath, schemaValidator)
+  return { ...source, manifest }
 }
 
 const validatePatchSource = async (source) => {
@@ -259,12 +348,14 @@ export async function loadValidatedRegistrySources({ registryRoot = DEFAULT_REGI
   const resolvedRegistryRoot = path.resolve(registryRoot)
   const sitesDirectory = path.join(resolvedRegistryRoot, "sites")
   const patchesDirectory = path.join(resolvedRegistryRoot, "patches")
+  const sitePackSchemaValidator = await loadSitePackSchemaValidator(resolvedRegistryRoot)
+  await validateSitePackExample(resolvedRegistryRoot, sitePackSchemaValidator)
   const [packFiles, patchFiles] = await Promise.all([
     readSourceFiles(sitesDirectory),
     readSourceFiles(patchesDirectory),
   ])
   const [packResults, patchResults] = await Promise.all([
-    validateSources(packFiles, validatePackSource),
+    validateSources(packFiles, (source) => validatePackSource(source, sitePackSchemaValidator)),
     validateSources(patchFiles, validatePatchSource),
   ])
 
@@ -294,7 +385,7 @@ if (isMainModule) {
   loadValidatedRegistrySources(options)
     .then(({ packs, patches }) => {
       console.warn(
-        `[registry] validated ${packs.length} SitePack(s) and ${patches.length} patch(es)`,
+        `[registry] validated schema example, ${packs.length} SitePack(s), and ${patches.length} patch(es)`,
       )
     })
     .catch((error) => {

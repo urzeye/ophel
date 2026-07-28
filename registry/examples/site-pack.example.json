@@ -1,0 +1,152 @@
+{
+  "schemaVersion": 1,
+  "id": "example-chat",
+  "version": 1,
+  "minAppVersion": "1.1.8",
+  "name": "Example Chat",
+  "nameI18n": {
+    "en": "Example Chat",
+    "zh-CN": "示例对话站点"
+  },
+  "description": "A comprehensive synthetic SitePack used for validation and as a contribution template.",
+  "descriptionI18n": {
+    "en": "A comprehensive synthetic SitePack used for validation and as a contribution template.",
+    "zh-CN": "用于校验和贡献模板的完整虚构 SitePack。"
+  },
+  "matches": ["https://chat.example.com/*"],
+  "detect": [
+    {
+      "selectorExists": "main[data-example-chat]"
+    },
+    {
+      "metaGenerator": "Example Chat"
+    }
+  ],
+  "theme": {
+    "primary": "#1d4ed8",
+    "secondary": "#f8fafc"
+  },
+  "capabilities": [
+    "outline",
+    "outline-user-queries",
+    "conversation-list",
+    "export-basic",
+    "model-lock",
+    "generation-detect",
+    "new-chat",
+    "stop-generation",
+    "width",
+    "zen",
+    "clean",
+    "prompt-insert",
+    "reading-history"
+  ],
+  "selectors": {
+    "textarea": ["textarea[data-prompt]"],
+    "submitButton": ["button[data-action='send']"],
+    "responseContainer": "main[data-example-chat]",
+    "chatContent": ["article[data-message]"],
+    "userQuery": "article[data-message='user']",
+    "assistantResponse": "article[data-message='assistant']",
+    "newChatButton": ["button[data-action='new-chat']"],
+    "stopButton": ["button[data-action='stop']"],
+    "scrollContainer": ["main[data-example-chat]"],
+    "sidebarScrollContainer": "nav[data-conversations]"
+  },
+  "input": {
+    "mode": "textarea",
+    "submitKey": "Enter"
+  },
+  "conversation": {
+    "itemSelector": "nav[data-conversations] a[data-conversation-id]",
+    "idFrom": {
+      "attr": "data-conversation-id",
+      "regex": "^([a-z0-9-]+)$"
+    },
+    "titleSelector": "[data-conversation-title]",
+    "urlTemplate": "/chat/{id}",
+    "activeMatch": "[aria-current='page']",
+    "navigationStrategy": "click-item",
+    "shadow": false
+  },
+  "generating": {
+    "existsSelectors": ["button[data-action='stop']"]
+  },
+  "session": {
+    "idFromPathRegex": "^/chat/([^/?#]+)$",
+    "newConversationPathPatterns": ["^/$", "^/new$"],
+    "sharePathPrefix": "/share/",
+    "newTabPath": "/"
+  },
+  "networkMonitor": {
+    "urlPatterns": ["/api/chat"],
+    "urlPathEndsWith": ["/completion"],
+    "silenceThreshold": 800,
+    "requestBodyRules": [
+      {
+        "type": "json-field-exists",
+        "field": "messages",
+        "metadata": {
+          "source": "example",
+          "streaming": true,
+          "priority": 1,
+          "note": null
+        }
+      }
+    ]
+  },
+  "modelSwitcher": {
+    "selectorButtonSelectors": ["button[data-model-selector]"],
+    "menuItemSelector": "[role='menuitem'][data-model]",
+    "checkInterval": 250,
+    "maxAttempts": 20,
+    "menuRenderDelay": 100,
+    "subMenuTriggers": ["More models"],
+    "subMenuSelector": "[role='menuitem'][aria-haspopup='menu']"
+  },
+  "export": {
+    "userQuerySelector": "article[data-message='user']",
+    "assistantResponseSelector": "article[data-message='assistant']",
+    "turnSelector": null,
+    "useShadowDOM": false
+  },
+  "zenMode": {
+    "hide": ["header", "nav[data-conversations]"],
+    "rootClass": {
+      "selector": "html",
+      "className": "ophel-example-zen"
+    },
+    "styles": [
+      {
+        "selector": "main[data-example-chat]",
+        "property": "max-width",
+        "value": "72rem",
+        "globalSelector": "body",
+        "extraCss": "margin-inline: auto;"
+      }
+    ]
+  },
+  "cleanMode": {
+    "hide": ["aside[data-promotions]"],
+    "styles": [
+      {
+        "selector": "footer[data-disclaimer]",
+        "property": "display",
+        "value": "none"
+      }
+    ]
+  },
+  "widthSelectors": [
+    {
+      "selector": "main[data-example-chat]",
+      "property": "max-width",
+      "globalSelector": "body",
+      "value": "var(--ophel-content-width)",
+      "extraCss": "margin-inline: auto;",
+      "noCenter": false
+    }
+  ],
+  "mermaidSupport": "fallback",
+  "quickQuote": "enabled",
+  "supportsHostThemeSync": false
+}

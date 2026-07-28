@@ -24,6 +24,7 @@ All types of contributions are encouraged and valued. See the [Table of Contents
     - [Suggesting Enhancements](#suggesting-enhancements)
       - [Before Submitting an Enhancement](#before-submitting-an-enhancement)
       - [How Do I Submit a Good Enhancement Suggestion?](#how-do-i-submit-a-good-enhancement-suggestion)
+    - [Contributing a SitePack](#contributing-a-sitepack)
     - [Your First Code Contribution](#your-first-code-contribution)
       - [Setup](#setup)
       - [Development](#development)
@@ -121,6 +122,21 @@ Enhancement suggestions are tracked as [GitHub issues](https://github.com/urzeye
 - **Describe the current behavior** and **explain which behavior you expected to see instead** and why. At this point you can also tell which alternatives do not work for you.
 - You may want to include screenshots or screen recordings which help you demonstrate the steps or point out the part which the suggestion is related to.
 - **Explain why this enhancement would be useful** to most Ophel users. You may also want to point out the other projects that solved it better and which could serve as inspiration.
+
+### Contributing a SitePack
+
+SitePacks add declarative support for an AI chat site with reviewed JSON data instead of executable adapter code. Read the complete [SitePack registry guide](../registry/README.md) and the [maintainer review checklist](../docs/developer/site-pack-review-checklist.md) before starting.
+
+1. Copy `registry/examples/site-pack.example.json` to `registry/sites/<id>.json`.
+2. Remove unused optional fields and declare only capabilities you have tested on the real site.
+3. Prefer stable `data-*`, `aria-*`, semantic, or structural selectors. Avoid generated classes and language-specific visible text.
+4. Set `version` to a positive integer and `minAppVersion` to the earliest compatible Ophel version you tested.
+5. Run `pnpm registry:validate` and `pnpm registry:build` locally.
+6. Open the pull request with the [dedicated SitePack template](PULL_REQUEST_TEMPLATE/site-pack.md), including tested URLs, browser and Ophel versions, capability evidence, and screenshots.
+
+Do not add a `$schema` property to the manifest; the repository maps the local schema through VS Code settings, while runtime manifests reject unknown keys. SitePacks must never contain scripts, expressions, secrets, remote CSS resources, destructive automation, global host patterns, or matches that overlap built-in sites.
+
+Selector-only hotfixes for an existing built-in adapter belong in `registry/patches/`, not `registry/sites/`. Patch targets and private selector keys must already be exposed by the built-in configuration descriptor; see the patch section of the registry guide for merge and version rules.
 
 ### Your First Code Contribution
 

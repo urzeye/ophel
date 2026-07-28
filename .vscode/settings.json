@@ -22,5 +22,12 @@
 	"files.exclude": {},
 	"[markdown]": {
 		"editor.defaultFormatter": "yzhang.markdown-all-in-one"
-	}
+	},
+	// SitePack：通过工作区映射提供补全；manifest 本身不能加入运行时未知的 $schema 键
+	"json.schemas": [
+		{
+			"fileMatch": ["/registry/sites/*.json", "/registry/examples/*.json"],
+			"url": "./registry/schema/site-pack.schema.json"
+		}
+	]
 }
