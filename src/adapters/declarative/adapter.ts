@@ -4,6 +4,7 @@ import {
   type ExportConfig,
   type ModelSwitcherConfig,
   type NetworkMonitorConfig,
+  type OutlineItem,
   type QuickQuoteSupportMode,
   type WidthSelectorConfig,
   type ZenModeConfig,
@@ -24,11 +25,41 @@ type ConfiguredEditor =
   | { mode: "textarea"; editor: TextControl }
   | { mode: "contenteditable"; editor: HTMLElement }
 
+interface OutlineCandidate {
+  element: Element
+  level: number
+  text: string
+  isUserQuery: boolean
+}
+
 const isTextControl = (element: HTMLElement): element is TextControl =>
   element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement
 
 const getEditorText = (editor: HTMLElement): string =>
   isTextControl(editor) ? editor.value : editor.textContent ?? ""
+
+const compareDomOrder = (left: Element, right: Element): number => {
+  if (left === right) return 0
+
+  const position = left.compareDocumentPosition(right)
+  if (position & Node.DOCUMENT_POSITION_FOLLOWING) return -1
+  if (position & Node.DOCUMENT_POSITION_PRECEDING) return 1
+  return 0
+}
+
+const isInsideOphelContainer = (element: Element, boundary: Element): boolean => {
+  let current: Element | null = element
+
+  while (current) {
+    if (Array.from(current.classList).some((className) => className.startsWith("gh-"))) {
+      return true
+    }
+    if (current === boundary) break
+    current = current.parentElement
+  }
+
+  return false
+}
 
 const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 
@@ -287,6 +318,91 @@ export class DeclarativeAdapter extends SiteAdapter {
 
     if (!this.setTextControlValue(configuredEditor.editor, "")) return
     if (!this.isEditorUpdateValid(configuredEditor.editor, "", false)) return
+  }
+
+  private getOutlineCandidates(
+    maxLevel: number,
+  ): { container: HTMLElement; candidates: OutlineCandidate[] } | null {
+    const responseContainerSelector = this.manifest.selectors.responseContainer
+    if (!responseContainerSelector) return null
+
+    const container = this.findElementBySelectors([responseContainerSelector])
+    if (!container) return null
+
+    const normalizedMaxLevel = Math.min(Math.max(Math.floor(maxLevel), 1), 6)
+    const selectors = Array.from({ length: normalizedMaxLevel }, (_, index) => `h${index + 1}`)
+    const userQuerySelector = this.manifest.selectors.userQuery
+    if (userQuerySelector) selectors.push(userQuerySelector)
+
+    const candidates = Array.from(container.querySelectorAll(selectors.join(", ")))
+      .filter((element) => !isInsideOphelContainer(element, container))
+      .map((element): OutlineCandidate | null => {
+        const isUserQuery = userQuerySelector ? element.matches(userQuerySelector) : false
+        if (isUserQuery) {
+          return {
+            element,
+            level: 0,
+            text: this.extractUserQueryText(element),
+            isUserQuery: true,
+          }
+        }
+
+        const level = Number.parseInt(element.tagName.slice(1), 10)
+        const text = element.textContent?.trim() || ""
+        if (Number.isNaN(level) || !text) return null
+
+        return { element, level, text, isUserQuery: false }
+      })
+      .filter((candidate): candidate is OutlineCandidate => candidate !== null)
+      .sort((left, right) => compareDomOrder(left.element, right.element))
+
+    return { container, candidates }
+  }
+
+  private getNextOutlineBoundary(
+    candidates: OutlineCandidate[],
+    currentIndex: number,
+  ): Element | null {
+    const current = candidates[currentIndex]
+
+    for (let index = currentIndex + 1; index < candidates.length; index += 1) {
+      const candidate = candidates[index]
+      if (candidate.isUserQuery) return candidate.element
+      if (!current.isUserQuery && candidate.level <= current.level) return candidate.element
+    }
+
+    return null
+  }
+
+  extractOutline(maxLevel = 6, includeUserQueries = false, showWordCount = false): OutlineItem[] {
+    const context = this.getOutlineCandidates(maxLevel)
+    if (!context) return []
+
+    const { candidates, container } = context
+    const outline: OutlineItem[] = []
+
+    candidates.forEach((candidate, index) => {
+      if (candidate.isUserQuery && (!includeUserQueries || !candidate.text)) return
+
+      const item: OutlineItem = {
+        level: candidate.level,
+        text: candidate.text,
+        element: candidate.element,
+        ...(candidate.isUserQuery ? { isUserQuery: true } : {}),
+      }
+
+      if (showWordCount) {
+        item.wordCount = this.calculateRangeWordCount(
+          candidate.element,
+          this.getNextOutlineBoundary(candidates, index),
+          container,
+        )
+      }
+
+      outline.push(item)
+    })
+
+    return outline
   }
 
   getConversationTitle(): string | null {
