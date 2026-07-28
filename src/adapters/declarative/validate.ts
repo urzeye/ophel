@@ -23,6 +23,7 @@ export type SitePackValidationErrorCode =
   | "too_large"
   | "duplicate_value"
   | "invalid_pattern"
+  | "unsafe_regex"
   | "unsafe_css"
   | "capability_requirement"
 
@@ -36,7 +37,11 @@ export type SitePackValidationResult<T> =
   | { valid: true; value: T; errors: [] }
   | { valid: false; errors: SitePackValidationError[] }
 
-export interface SiteConfigValidationOptions {
+export interface SitePackValidationOptions {
+  regexSafetyCheck?: (pattern: string) => boolean
+}
+
+export interface SiteConfigValidationOptions extends SitePackValidationOptions {
   allowedPrivateSelectorKeys?: readonly string[]
   requiredPrivateSelectorKeys?: readonly string[]
   requiredCapabilities?: readonly SitePackCapability[]
@@ -46,7 +51,13 @@ type ValidationMode = "full" | "partial"
 
 interface ValidationContext {
   errors: SitePackValidationError[]
+  regexSafetyCheck?: (pattern: string) => boolean
 }
+
+const createValidationContext = (options: SitePackValidationOptions = {}): ValidationContext => ({
+  errors: [],
+  regexSafetyCheck: options.regexSafetyCheck,
+})
 
 interface StringValidationOptions {
   allowEmpty?: boolean
@@ -370,6 +381,21 @@ const validateRegex = (value: string, path: string, context: ValidationContext):
     new RegExp(value)
   } catch {
     addError(context, path, "invalid_pattern", "Regular expression could not be compiled")
+    return
+  }
+  if (context.regexSafetyCheck) {
+    try {
+      if (!context.regexSafetyCheck(value)) {
+        addError(
+          context,
+          path,
+          "unsafe_regex",
+          "Regular expression may cause excessive backtracking",
+        )
+      }
+    } catch {
+      addError(context, path, "unsafe_regex", "Regular expression could not be analyzed safely")
+    }
   }
 }
 
@@ -1462,8 +1488,9 @@ const validateDetectRules = (value: unknown, path: string, context: ValidationCo
 
 export function validateSitePackManifest(
   input: unknown,
+  options: SitePackValidationOptions = {},
 ): SitePackValidationResult<SitePackManifest> {
-  const context: ValidationContext = { errors: [] }
+  const context = createValidationContext(options)
   validateSerializedSize(input, "$", context)
   const manifest = validateObject(
     input,
@@ -1604,7 +1631,7 @@ export function validateBuiltinSiteConfig(
   input: unknown,
   options: SiteConfigValidationOptions = {},
 ): SitePackValidationResult<BuiltinSiteConfig> {
-  const context: ValidationContext = { errors: [] }
+  const context = createValidationContext(options)
   validateBuiltinConfigInto(input, "$", context, "full", options)
   return finishValidation(input, context)
 }
@@ -1613,7 +1640,7 @@ export function validateSiteConfigOverride(
   input: unknown,
   options: SiteConfigValidationOptions = {},
 ): SitePackValidationResult<SiteConfigOverride> {
-  const context: ValidationContext = { errors: [] }
+  const context = createValidationContext(options)
   validateSerializedSize(input, "$", context)
   validateBuiltinConfigInto(input, "$", context, "partial", options)
   return finishValidation(input, context)
@@ -1623,7 +1650,7 @@ export function validateSiteConfigPatch(
   input: unknown,
   options: SiteConfigValidationOptions = {},
 ): SitePackValidationResult<SiteConfigPatch> {
-  const context: ValidationContext = { errors: [] }
+  const context = createValidationContext(options)
   validateSerializedSize(input, "$", context)
   const patch = validateObject(
     input,

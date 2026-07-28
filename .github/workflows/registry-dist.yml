@@ -7,9 +7,12 @@ on:
       - "registry/**"
       - "src/adapters/declarative/**"
       - "src/adapters/zai-config.ts"
+      - "src/constants/defaults.ts"
       - "src/core/builtin-config-registry.ts"
       - "src/core/remote-config-constants.ts"
       - "src/core/remote-config-types.ts"
+      - "package.json"
+      - "pnpm-lock.yaml"
       - ".github/workflows/registry-dist.yml"
   workflow_dispatch:
 

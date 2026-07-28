@@ -73,3 +73,18 @@
 2. 使用 main 的 Git commit count 作为单调 revision，读取现有 `registry-dist` 做不可变校验。
 3. 构建后以 orphan/force-push 方式更新 `registry-dist`，同时保留历史不可变 artifact。
 4. 本地运行格式、Lint、类型检查、registry 构建和双形态应用构建；审查 diff 后提交推送。
+
+## P0-07：Registry PR 校验
+
+**文件：**
+
+- 新增 `.github/workflows/registry-pr.yml`
+- 修改 `registry/scripts/validate.mjs`、`src/adapters/declarative/validate.ts`
+- 修改 `src/constants/defaults.ts`、`src/constants/index.ts`、`package.json`、`pnpm-lock.yaml`
+
+**步骤：**
+
+1. 复用运行时校验器，并在 registry 校验时注入 `safe-regex2`，覆盖所有正则字段；CSS 黑名单继续由同一校验器执行。
+2. 以 `SITE_IDS` 与集中维护的内置 match patterns 拒绝 id/域名冲突，并对 registry 内 SitePack 做 origin 级重叠检查。
+3. 使用 `pull_request_target` 只执行主分支可信脚本，将 PR head 仅作为 registry JSON 工作树读取；校验结果更新为单条可读 PR 评论。
+4. 用临时 fixture 验证 schema、正则、CSS、内置冲突、包间重叠和重复 id 均能失败并定位到字段。

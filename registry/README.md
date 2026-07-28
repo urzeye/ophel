@@ -16,4 +16,10 @@ pnpm registry:validate
 pnpm registry:build
 ```
 
+PR 校验 workflow 会从受信任的主分支脚本读取 PR 中的源文件；本地复现时可指定候选目录：
+
+```bash
+pnpm registry:validate -- --registry-root /path/to/registry
+```
+
 生成物写入 `registry/dist/`，只用于本地检查和 `registry-dist` 分支发布，不提交到 main。

@@ -1,54 +1,108 @@
-import { readdir, readFile } from "node:fs/promises"
+import { lstat, readdir, readFile } from "node:fs/promises"
 import path from "node:path"
 import { fileURLToPath, pathToFileURL } from "node:url"
+
+import safeRegex from "safe-regex2"
 
 import { resolveSiteConfig } from "../../src/adapters/declarative/merge.ts"
 import {
   validateSiteConfigPatch,
   validateSitePackManifest,
 } from "../../src/adapters/declarative/validate.ts"
+import { SITE_IDS, SUPPORTED_AI_PLATFORMS } from "../../src/constants/defaults.ts"
 import { resolveBuiltinConfig } from "../../src/core/builtin-config-registry.ts"
 
 const SCRIPT_DIRECTORY = path.dirname(fileURLToPath(import.meta.url))
 
 export const DEFAULT_REGISTRY_ROOT = path.resolve(SCRIPT_DIRECTORY, "..")
 
-const formatValidationErrors = (sourcePath, errors) =>
-  errors.map((error) => `  ${sourcePath}:${error.path} [${error.code}] ${error.message}`).join("\n")
+const regexValidationOptions = { regexSafetyCheck: safeRegex }
+const builtinSiteIds = new Set(Object.values(SITE_IDS))
+const builtinMetadataIds = SUPPORTED_AI_PLATFORMS.map((platform) => platform.id)
+const builtinMatches = SUPPORTED_AI_PLATFORMS.flatMap(({ id: siteId, matchPatterns }) =>
+  matchPatterns.map((pattern) => ({ siteId, pattern })),
+)
 
-const parseJsonFile = async (sourcePath) => {
+if (new Set(builtinMetadataIds).size !== builtinMetadataIds.length) {
+  throw new Error("Duplicate built-in site metadata")
+}
+const missingBuiltinSiteMetadata = [...builtinSiteIds].filter(
+  (siteId) => !builtinMetadataIds.includes(siteId),
+)
+if (missingBuiltinSiteMetadata.length > 0) {
+  throw new Error(`Missing built-in site metadata: ${missingBuiltinSiteMetadata.join(", ")}`)
+}
+
+const formatIssue = (sourcePath, fieldPath, code, message) =>
+  `${sourcePath}:${fieldPath} [${code}] ${message}`
+
+const formatValidationErrors = (sourcePath, errors) =>
+  errors.map((error) => formatIssue(sourcePath, error.path, error.code, error.message)).join("\n")
+
+const getErrorMessage = (error) => (error instanceof Error ? error.message : String(error))
+
+const parseArguments = (args) => {
+  const options = {}
+  for (let index = 0; index < args.length; index += 1) {
+    const argument = args[index]
+    const value = args[index + 1]
+    if (!value || value.startsWith("--")) {
+      throw new TypeError(`Missing value for ${argument}`)
+    }
+    if (argument === "--registry-root") options.registryRoot = path.resolve(value)
+    else throw new TypeError(`Unknown argument: ${argument}`)
+    index += 1
+  }
+  return options
+}
+
+const parseJsonFile = async ({ sourcePath, displayPath }) => {
   const sourceText = await readFile(sourcePath, "utf8")
   try {
     return JSON.parse(sourceText)
   } catch (error) {
-    throw new Error(`${sourcePath}: invalid JSON: ${error.message}`, { cause: error })
+    throw new Error(formatIssue(displayPath, "$", "invalid_json", getErrorMessage(error)), {
+      cause: error,
+    })
   }
 }
 
 const readSourceFiles = async (directory) => {
-  const entries = await readdir(directory, { withFileTypes: true })
-  return entries
-    .filter((entry) => entry.isFile() && entry.name.endsWith(".json"))
-    .sort((left, right) => left.name.localeCompare(right.name))
-    .map((entry) => ({
-      sourcePath: path.join(directory, entry.name),
-      disabled: entry.name.endsWith(".disabled.json"),
-    }))
-}
-
-const validatePackSource = async ({ sourcePath, disabled }) => {
-  const input = await parseJsonFile(sourcePath)
-  const result = validateSitePackManifest(input)
-  if (!result.valid) {
-    throw new Error(
-      `SitePack validation failed:\n${formatValidationErrors(sourcePath, result.errors)}`,
-    )
+  const directoryStats = await lstat(directory)
+  if (!directoryStats.isDirectory() || directoryStats.isSymbolicLink()) {
+    throw new Error(`${directory}: registry source path must be a real directory`)
   }
-  return { sourcePath, disabled, manifest: result.value }
+
+  const entries = await readdir(directory, { withFileTypes: true })
+  const sources = []
+  for (const entry of entries.sort((left, right) => left.name.localeCompare(right.name))) {
+    if (!entry.name.endsWith(".json")) continue
+    const displayPath = `${path.basename(directory)}/${entry.name}`
+    if (!entry.isFile()) {
+      throw new Error(
+        formatIssue(displayPath, "$", "invalid_source", "Registry JSON must be a regular file"),
+      )
+    }
+    sources.push({
+      sourcePath: path.join(directory, entry.name),
+      displayPath,
+      disabled: entry.name.endsWith(".disabled.json"),
+    })
+  }
+  return sources
 }
 
-const validatePatchSource = async ({ sourcePath, disabled }) => {
-  const input = await parseJsonFile(sourcePath)
+const validatePackSource = async (source) => {
+  const input = await parseJsonFile(source)
+  const result = validateSitePackManifest(input, regexValidationOptions)
+  if (!result.valid) {
+    throw new Error(formatValidationErrors(source.displayPath, result.errors))
+  }
+  return { ...source, manifest: result.value }
+}
+
+const validatePatchSource = async (source) => {
+  const input = await parseJsonFile(source)
   const targetSiteId =
     input !== null && typeof input === "object" && typeof input.targetSiteId === "string"
       ? input.targetSiteId
@@ -57,15 +111,21 @@ const validatePatchSource = async ({ sourcePath, disabled }) => {
   const allowedPrivateSelectorKeys = descriptor
     ? Object.keys(descriptor.baseConfig.sitePrivateSelectors ?? {})
     : []
-  const result = validateSiteConfigPatch(input, { allowedPrivateSelectorKeys })
+  const result = validateSiteConfigPatch(input, {
+    allowedPrivateSelectorKeys,
+    ...regexValidationOptions,
+  })
   if (!result.valid) {
-    throw new Error(
-      `Patch validation failed:\n${formatValidationErrors(sourcePath, result.errors)}`,
-    )
+    throw new Error(formatValidationErrors(source.displayPath, result.errors))
   }
   if (!descriptor) {
     throw new Error(
-      `${sourcePath}: no configurable built-in adapter is registered for ${result.value.targetSiteId}`,
+      formatIssue(
+        source.displayPath,
+        "$.targetSiteId",
+        "unknown_builtin_site",
+        `No configurable built-in adapter is registered for ${result.value.targetSiteId}`,
+      ),
     )
   }
 
@@ -77,56 +137,171 @@ const validatePatchSource = async ({ sourcePath, disabled }) => {
     remotePatch: result.value,
   })
   if (resolved.remotePatch.status !== "applied") {
-    const details = resolved.remotePatch.errors
-      ? `\n${formatValidationErrors(sourcePath, resolved.remotePatch.errors)}`
-      : `: ${resolved.remotePatch.reason ?? resolved.remotePatch.status}`
+    if (resolved.remotePatch.errors) {
+      throw new Error(formatValidationErrors(source.displayPath, resolved.remotePatch.errors))
+    }
     throw new Error(
-      `${sourcePath}: patch cannot be applied to the current built-in config${details}`,
+      formatIssue(
+        source.displayPath,
+        "$",
+        "patch_not_applicable",
+        resolved.remotePatch.reason ?? resolved.remotePatch.status,
+      ),
     )
   }
 
-  return { sourcePath, disabled, patch: result.value }
+  return { ...source, patch: result.value }
 }
 
-const assertUniqueSources = (packs, patches) => {
+const validateSources = async (sources, validator) => {
+  const settled = await Promise.allSettled(sources.map(validator))
+  const values = []
+  const errors = []
+  for (const result of settled) {
+    if (result.status === "fulfilled") values.push(result.value)
+    else errors.push(getErrorMessage(result.reason))
+  }
+  return { values, errors }
+}
+
+const parseMatchHost = (pattern) => {
+  const authority = /^https:\/\/([^/]+)\//.exec(pattern)?.[1].toLowerCase()
+  if (!authority) throw new Error(`Validated match pattern could not be parsed: ${pattern}`)
+
+  const host = authority.startsWith("[")
+    ? authority.slice(0, authority.indexOf("]") + 1)
+    : authority.replace(/:\d+$/, "")
+  const wildcard = host.startsWith("*.")
+  return { host: wildcard ? host.slice(2) : host, wildcard }
+}
+
+const isSameOrSubdomain = (candidate, parent) =>
+  candidate === parent || candidate.endsWith(`.${parent}`)
+
+export const matchPatternsOverlap = (leftPattern, rightPattern) => {
+  const left = parseMatchHost(leftPattern)
+  const right = parseMatchHost(rightPattern)
+  if (left.host === right.host) return true
+  if (left.wildcard && isSameOrSubdomain(right.host, left.host)) return true
+  if (right.wildcard && isSameOrSubdomain(left.host, right.host)) return true
+  return false
+}
+
+const collectRegistryPolicyErrors = (packs, patches) => {
+  const errors = []
   const packIds = new Map()
   for (const source of packs) {
-    const previous = packIds.get(source.manifest.id)
+    const { id, matches } = source.manifest
+    const previous = packIds.get(id)
     if (previous) {
-      throw new Error(
-        `Duplicate SitePack id ${source.manifest.id}: ${previous} and ${source.sourcePath}`,
+      errors.push(
+        formatIssue(
+          source.displayPath,
+          "$.id",
+          "duplicate_id",
+          `SitePack id ${id} is already declared by ${previous}`,
+        ),
+      )
+    } else {
+      packIds.set(id, source.displayPath)
+    }
+    if (builtinSiteIds.has(id)) {
+      errors.push(
+        formatIssue(
+          source.displayPath,
+          "$.id",
+          "builtin_id_conflict",
+          `SitePack id ${id} conflicts with an internal SITE_IDS value`,
+        ),
       )
     }
-    packIds.set(source.manifest.id, source.sourcePath)
+
+    matches.forEach((pattern, matchIndex) => {
+      for (const builtin of builtinMatches) {
+        if (!matchPatternsOverlap(pattern, builtin.pattern)) continue
+        errors.push(
+          formatIssue(
+            source.displayPath,
+            `$.matches[${matchIndex}]`,
+            "builtin_match_conflict",
+            `Match ${pattern} overlaps built-in site ${builtin.siteId} (${builtin.pattern})`,
+          ),
+        )
+        break
+      }
+    })
+  }
+
+  for (let leftIndex = 0; leftIndex < packs.length; leftIndex += 1) {
+    const left = packs[leftIndex]
+    for (let rightIndex = leftIndex + 1; rightIndex < packs.length; rightIndex += 1) {
+      const right = packs[rightIndex]
+      for (let matchIndex = 0; matchIndex < right.manifest.matches.length; matchIndex += 1) {
+        const rightPattern = right.manifest.matches[matchIndex]
+        const leftPattern = left.manifest.matches.find((pattern) =>
+          matchPatternsOverlap(pattern, rightPattern),
+        )
+        if (!leftPattern) continue
+        errors.push(
+          formatIssue(
+            right.displayPath,
+            `$.matches[${matchIndex}]`,
+            "registry_match_conflict",
+            `Match ${rightPattern} overlaps ${left.displayPath} (${leftPattern})`,
+          ),
+        )
+      }
+    }
   }
 
   const patchTargets = new Map()
   for (const source of patches) {
-    const previous = patchTargets.get(source.patch.targetSiteId)
+    const target = source.patch.targetSiteId
+    const previous = patchTargets.get(target)
     if (previous) {
-      throw new Error(
-        `Duplicate patch target ${source.patch.targetSiteId}: ${previous} and ${source.sourcePath}`,
+      errors.push(
+        formatIssue(
+          source.displayPath,
+          "$.targetSiteId",
+          "duplicate_patch_target",
+          `Patch target ${target} is already declared by ${previous}`,
+        ),
       )
+    } else {
+      patchTargets.set(target, source.displayPath)
     }
-    patchTargets.set(source.patch.targetSiteId, source.sourcePath)
   }
+
+  return errors
 }
 
 export async function loadValidatedRegistrySources({ registryRoot = DEFAULT_REGISTRY_ROOT } = {}) {
-  const sitesDirectory = path.join(registryRoot, "sites")
-  const patchesDirectory = path.join(registryRoot, "patches")
+  const resolvedRegistryRoot = path.resolve(registryRoot)
+  const sitesDirectory = path.join(resolvedRegistryRoot, "sites")
+  const patchesDirectory = path.join(resolvedRegistryRoot, "patches")
   const [packFiles, patchFiles] = await Promise.all([
     readSourceFiles(sitesDirectory),
     readSourceFiles(patchesDirectory),
   ])
-  const [packs, patches] = await Promise.all([
-    Promise.all(packFiles.map(validatePackSource)),
-    Promise.all(patchFiles.map(validatePatchSource)),
+  const [packResults, patchResults] = await Promise.all([
+    validateSources(packFiles, validatePackSource),
+    validateSources(patchFiles, validatePatchSource),
   ])
 
-  packs.sort((left, right) => left.manifest.id.localeCompare(right.manifest.id))
-  patches.sort((left, right) => left.patch.targetSiteId.localeCompare(right.patch.targetSiteId))
-  assertUniqueSources(packs, patches)
+  const packs = packResults.values.sort((left, right) =>
+    left.manifest.id.localeCompare(right.manifest.id),
+  )
+  const patches = patchResults.values.sort((left, right) =>
+    left.patch.targetSiteId.localeCompare(right.patch.targetSiteId),
+  )
+  const errors = [
+    ...packResults.errors,
+    ...patchResults.errors,
+    ...collectRegistryPolicyErrors(packs, patches),
+  ]
+  if (errors.length > 0) {
+    throw new Error(`Registry validation failed:\n${errors.join("\n")}`)
+  }
   return { packs, patches }
 }
 
@@ -135,14 +310,15 @@ const isMainModule =
   pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url
 
 if (isMainModule) {
-  loadValidatedRegistrySources()
+  const options = parseArguments(process.argv.slice(2))
+  loadValidatedRegistrySources(options)
     .then(({ packs, patches }) => {
       console.warn(
         `[registry] validated ${packs.length} SitePack(s) and ${patches.length} patch(es)`,
       )
     })
     .catch((error) => {
-      console.error("[registry] validation failed:", error)
+      console.error(`[registry] validation failed\n${getErrorMessage(error)}`)
       process.exitCode = 1
     })
 }

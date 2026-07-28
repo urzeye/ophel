@@ -49,6 +49,7 @@ export {
   BATCH_TEST_CONFIG,
   QUICK_QUOTE_REPLY_CHAIN_ID,
   SITE_IDS,
+  type BuiltinSiteId,
   type Folder,
 } from "./defaults"
 

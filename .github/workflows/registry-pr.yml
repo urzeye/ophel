@@ -1,0 +1,131 @@
+name: "🔎 Validate SitePack Registry PR"
+
+on:
+  pull_request_target:
+    branches: ["main"]
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - "registry/sites/**"
+      - "registry/patches/**"
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: registry-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate registry sources
+    runs-on: ubuntu-latest
+    steps:
+      # Security: pull_request_target has a writable token, so only base-branch code is executed.
+      - name: Checkout trusted base revision
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install trusted dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Prepare candidate registry files
+        shell: bash
+        env:
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          git fetch --no-tags --depth=1 origin "pull/$PR_NUMBER/head"
+          ACTUAL_HEAD=$(git rev-parse FETCH_HEAD)
+          if [ "$ACTUAL_HEAD" != "$EXPECTED_HEAD" ]; then
+            echo "PR head changed while validation was starting; wait for the next run." >&2
+            exit 1
+          fi
+          git worktree add --detach "$RUNNER_TEMP/registry-pr" FETCH_HEAD
+
+      - name: Validate candidate registry
+        id: registry_validation
+        shell: bash
+        env:
+          NO_COLOR: "1"
+        run: |
+          set +e
+          pnpm registry:validate -- --registry-root "$RUNNER_TEMP/registry-pr/registry" > "$RUNNER_TEMP/registry-validation.log" 2>&1
+          STATUS=$?
+          set -e
+          if [ "$STATUS" -eq 0 ]; then
+            echo "result=success" >> "$GITHUB_OUTPUT"
+          else
+            echo "result=failure" >> "$GITHUB_OUTPUT"
+          fi
+          echo "exit_code=$STATUS" >> "$GITHUB_OUTPUT"
+
+      - name: Update PR validation comment
+        if: always()
+        uses: actions/github-script@v8
+        env:
+          VALIDATION_LOG: ${{ runner.temp }}/registry-validation.log
+          VALIDATION_RESULT: ${{ steps.registry_validation.outputs.result }}
+        with:
+          script: |
+            const fs = require("node:fs");
+            const marker = "<!-- ophel-registry-validation -->";
+            const result = process.env.VALIDATION_RESULT;
+            const logPath = process.env.VALIDATION_LOG;
+            const rawLog = logPath && fs.existsSync(logPath) ? fs.readFileSync(logPath, "utf8") : "";
+            const maxLogLength = 50000;
+            const truncated = rawLog.length > maxLogLength;
+            const visibleLog = rawLog.slice(0, maxLogLength);
+            const escapeHtml = (value) =>
+              value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+
+            let body;
+            if (result === "success") {
+              body = `${marker}\n### Registry validation passed ✅\n\nAll SitePack and patch sources satisfy the schema, safety, ID, and match-conflict checks.`;
+            } else if (result === "failure") {
+              const suffix = truncated ? "\n… output truncated; inspect the workflow log for the remainder." : "";
+              body = `${marker}\n### Registry validation failed ❌\n\nFix the fields reported below and push a new commit.\n\n<details open><summary>Validation errors</summary>\n\n<pre>${escapeHtml(visibleLog + suffix)}</pre>\n</details>`;
+            } else {
+              body = `${marker}\n### Registry validation did not complete ⚠️\n\nThe validation job stopped before producing a report. Inspect the workflow log and rerun the check.`;
+            }
+
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              per_page: 100,
+            });
+            const existing = comments.find(
+              (comment) => comment.user?.type === "Bot" && comment.body?.startsWith(marker),
+            );
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+      - name: Fail when registry validation failed
+        if: always() && steps.registry_validation.outputs.result != 'success'
+        run: exit 1
