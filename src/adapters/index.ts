@@ -4,7 +4,9 @@
  * 根据当前页面 URL 自动选择合适的适配器
  */
 
+import type { PackManagerSnapshot } from "~core/pack-manager"
 import { loadActiveSiteConfigPatch } from "~core/remote-config-cache"
+import { createRuntimePackManager } from "~core/pack-manager-runtime"
 import { platform } from "~platform"
 import { APP_VERSION } from "~utils/config"
 
@@ -22,6 +24,7 @@ import { ImaAdapter } from "./ima"
 import { KimiAdapter } from "./kimi"
 import {
   applyMergedConfig,
+  DeclarativeAdapter,
   resolveSiteConfig,
   supportsBuiltinSiteConfig,
   type SiteConfigPatch,
@@ -49,6 +52,7 @@ const builtinAdapters: SiteAdapter[] = [
   new YuanbaoAdapter(),
   new ZaiAdapter(),
 ]
+let dynamicAdapters: SiteAdapter[] = []
 
 let registryInitialization: Promise<void> | null = null
 
@@ -83,13 +87,48 @@ async function applyCachedBuiltinPatches(): Promise<void> {
   }
 }
 
-/** 在任何同步 getAdapter() 消费前加载并注入内置站点缓存 patch。 */
-export function initAdapterRegistry(): Promise<void> {
-  return (registryInitialization ??= applyCachedBuiltinPatches())
+async function loadDynamicAdapters(): Promise<SiteAdapter[]> {
+  let snapshot: PackManagerSnapshot
+  try {
+    snapshot = await createRuntimePackManager(platform.storage).getEnabledPacks()
+  } catch (error) {
+    console.error(
+      "[Ophel] Failed to load installed SitePacks; continuing with built-in adapters:",
+      error,
+    )
+    return []
+  }
+
+  for (const issue of snapshot.issues) {
+    console.warn("[Ophel] SitePack registry issue:", issue)
+  }
+
+  const adapters: SiteAdapter[] = []
+  for (const pack of snapshot.packs) {
+    try {
+      adapters.push(new DeclarativeAdapter(pack.manifest))
+    } catch (error) {
+      console.error(
+        `[Ophel] Failed to initialize SitePack ${pack.manifest.id}; skipping package:`,
+        error,
+      )
+    }
+  }
+  return adapters
 }
 
-/** 供 UI gate 等只等待、不重复创建初始化任务的入口使用。 */
-export const registryReady = (): Promise<void> => registryInitialization ?? Promise.resolve()
+async function initializeAdapterRegistry(): Promise<void> {
+  await applyCachedBuiltinPatches()
+  dynamicAdapters = await loadDynamicAdapters()
+}
+
+/** 在任何同步 getAdapter() 消费前加载内置 patch 与已启用 SitePack。 */
+export function initAdapterRegistry(): Promise<void> {
+  return (registryInitialization ??= initializeAdapterRegistry())
+}
+
+/** 供 UI gate 等等待同一个初始化任务的入口使用。 */
+export const registryReady = (): Promise<void> => initAdapterRegistry()
 
 /** 清除远程 patch 后，立即让已配置化内置适配器回到内置配置。 */
 export function resetBuiltinSiteConfig(siteId: string): boolean {
@@ -103,6 +142,11 @@ export function resetBuiltinSiteConfig(siteId: string): boolean {
  */
 export function getAdapter(): SiteAdapter | null {
   for (const adapter of builtinAdapters) {
+    if (adapter.match()) {
+      return adapter
+    }
+  }
+  for (const adapter of dynamicAdapters) {
     if (adapter.match()) {
       return adapter
     }

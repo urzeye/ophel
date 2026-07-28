@@ -5,7 +5,7 @@ import settingsCssText from "data-text:~styles/settings.css"
 import type { PlasmoCSConfig, PlasmoMountShadowHost } from "plasmo"
 import React from "react"
 
-import { initAdapterRegistry, registryReady } from "~adapters"
+import { registryReady } from "~adapters"
 import { App } from "~components/App"
 import { applyOphelPlatformFontClass } from "~utils/font"
 
@@ -132,7 +132,6 @@ const PlasmoApp = () => {
 
   React.useEffect(() => {
     let mounted = true
-    void initAdapterRegistry()
     void registryReady()
       .then(() => {
         if (mounted) setIsRegistryReady(true)
