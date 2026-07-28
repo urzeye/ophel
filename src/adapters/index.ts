@@ -91,6 +91,13 @@ export function initAdapterRegistry(): Promise<void> {
 /** 供 UI gate 等只等待、不重复创建初始化任务的入口使用。 */
 export const registryReady = (): Promise<void> => registryInitialization ?? Promise.resolve()
 
+/** 清除远程 patch 后，立即让已配置化内置适配器回到内置配置。 */
+export function resetBuiltinSiteConfig(siteId: string): boolean {
+  const adapter = builtinAdapters.find((candidate) => candidate.getSiteId() === siteId)
+  if (!adapter || !supportsBuiltinSiteConfig(adapter)) return false
+  return applyMergedConfig(adapter, adapter.getBuiltinConfig())
+}
+
 /**
  * 获取当前页面匹配的适配器
  */

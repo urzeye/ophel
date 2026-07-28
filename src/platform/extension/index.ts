@@ -11,6 +11,12 @@ import type {
   Platform,
   PlatformCapability,
 } from "../types"
+import {
+  MSG_CHECK_REMOTE_CONFIG,
+  MSG_GET_REMOTE_CONFIG_STATE,
+  MSG_IGNORE_REMOTE_CONFIG_PATCH,
+  sendToBackground,
+} from "~utils/messaging"
 import { extensionStorage } from "./storage"
 
 export { extensionStorage }
@@ -29,6 +35,34 @@ export const platform: Platform = {
   type: "extension",
 
   storage: extensionStorage,
+
+  remoteConfig: {
+    async getState() {
+      const response = await sendToBackground({ type: MSG_GET_REMOTE_CONFIG_STATE })
+      if (!response.success || !response.state) {
+        throw new Error(response.error || "Failed to load remote config state")
+      }
+      return response.state
+    },
+
+    async checkForUpdates() {
+      const response = await sendToBackground({ type: MSG_CHECK_REMOTE_CONFIG, force: true })
+      if (response.result) return response.result
+      throw new Error(response.error || "Remote config check returned no result")
+    },
+
+    async resetSite(siteId, patchVersion) {
+      const response = await sendToBackground({
+        type: MSG_IGNORE_REMOTE_CONFIG_PATCH,
+        siteId,
+        patchVersion,
+      })
+      if (!response.success) {
+        throw new Error(response.error || "Failed to reset remote config site")
+      }
+      return true
+    },
+  },
 
   async fetch(url: string, options?: FetchOptions): Promise<FetchResponse> {
     // 通过 background 代理请求

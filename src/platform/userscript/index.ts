@@ -56,6 +56,23 @@ export const platform: Platform = {
 
   storage: userscriptStorage,
 
+  remoteConfig: {
+    async getState() {
+      const { getUserscriptRemoteConfigState } = await import("./remote-config")
+      return getUserscriptRemoteConfigState()
+    },
+
+    async checkForUpdates() {
+      const { checkUserscriptRemoteConfigNow } = await import("./remote-config")
+      return checkUserscriptRemoteConfigNow()
+    },
+
+    async resetSite(siteId, patchVersion) {
+      const { resetUserscriptRemotePatch } = await import("./remote-config")
+      return resetUserscriptRemotePatch(siteId, patchVersion)
+    },
+  },
+
   async fetch(url: string, options?: FetchOptions): Promise<FetchResponse> {
     return new Promise((resolve, reject) => {
       GM_xmlhttpRequest({

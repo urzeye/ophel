@@ -4,6 +4,8 @@
  * 定义平台能力接口，用于同时支持浏览器扩展和油猴脚本
  */
 
+import type { RemoteConfigCheckResult, RemoteConfigState } from "~core/remote-config-types"
+
 /**
  * 存储接口
  */
@@ -85,6 +87,15 @@ export interface ClaudeTestResult {
 }
 
 /**
+ * 适配配置远程更新接口
+ */
+export interface PlatformRemoteConfig {
+  getState(): Promise<RemoteConfigState>
+  checkForUpdates(): Promise<RemoteConfigCheckResult>
+  resetSite(siteId: string, patchVersion?: number): Promise<boolean>
+}
+
+/**
  * 平台能力接口
  */
 export interface Platform {
@@ -97,6 +108,11 @@ export interface Platform {
    * 存储接口
    */
   readonly storage: PlatformStorage
+
+  /**
+   * 适配配置远程更新
+   */
+  readonly remoteConfig: PlatformRemoteConfig
 
   /**
    * 发起网络请求（绕过 CORS）

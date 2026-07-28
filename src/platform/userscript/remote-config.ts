@@ -17,5 +17,12 @@ export const checkUserscriptRemoteConfigOnStartup = async () => {
 export const checkUserscriptRemoteConfigNow = () =>
   remoteConfigManager.checkForUpdates({ force: true })
 
-export const ignoreUserscriptRemotePatch = (siteId: string, patchVersion?: number) =>
-  remoteConfigManager.ignorePatch(siteId, { patchVersion })
+export const getUserscriptRemoteConfigState = () => remoteConfigManager.getState()
+
+export const resetUserscriptRemotePatch = async (siteId: string, patchVersion?: number) => {
+  const ignored = await remoteConfigManager.ignorePatch(siteId, { patchVersion })
+  if (!ignored) return false
+
+  const { resetBuiltinSiteConfig } = await import("~adapters")
+  return resetBuiltinSiteConfig(siteId)
+}

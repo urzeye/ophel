@@ -30,6 +30,7 @@ export { platform }
 export type {
   Platform,
   PlatformStorage,
+  PlatformRemoteConfig,
   PlatformCapability,
   FetchOptions,
   FetchResponse,

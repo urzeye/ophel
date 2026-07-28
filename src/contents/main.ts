@@ -7,7 +7,7 @@
 
 import type { PlasmoCSConfig } from "plasmo"
 
-import { getAdapter, initAdapterRegistry } from "~adapters"
+import { getAdapter, initAdapterRegistry, resetBuiltinSiteConfig } from "~adapters"
 import { DEFAULT_FOLDERS, SITE_IDS, getDefaultPromptChains, getDefaultPrompts } from "~constants"
 import {
   initCoreModules,
@@ -30,6 +30,7 @@ import {
   MSG_CLEAR_ALL_DATA,
   MSG_EXTENSION_UPDATE_AVAILABLE,
   MSG_RESTORE_DATA,
+  MSG_RESET_REMOTE_CONFIG_SITE,
   MSG_START_NEW_CONVERSATION,
 } from "~utils/messaging"
 
@@ -506,6 +507,15 @@ function initializeOphel() {
           // 收到恢复数据的广播时，刷新页面使得数据从 Storage 重新读取并保证 Zustand hydration 最新的内容
           window.location.reload()
           sendResponse({ success: true })
+          return true
+        }
+
+        if (message.type === MSG_RESET_REMOTE_CONFIG_SITE) {
+          const reset = resetBuiltinSiteConfig(message.siteId)
+          sendResponse({
+            success: reset,
+            ...(reset ? {} : { error: `No configurable built-in adapter for ${message.siteId}` }),
+          })
           return true
         }
 
