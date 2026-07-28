@@ -1,6 +1,8 @@
 import {
   SiteAdapter,
   type AssistantMermaidSupportMode,
+  type ConversationInfo,
+  type ConversationObserverConfig,
   type ExportConfig,
   type ModelSwitcherConfig,
   type NetworkMonitorConfig,
@@ -126,8 +128,13 @@ const normalizeElementText = (element: Element | null): string | null => {
 
 /** 把已通过校验的 SitePack manifest 显式映射到现有 SiteAdapter API。 */
 export class DeclarativeAdapter extends SiteAdapter {
+  private readonly conversationIdPattern: RegExp | null
+
   constructor(private readonly manifest: SitePackManifest) {
     super()
+    this.conversationIdPattern = manifest.conversation
+      ? new RegExp(manifest.conversation.idFrom.regex)
+      : null
   }
 
   match(): boolean {
@@ -407,20 +414,117 @@ export class DeclarativeAdapter extends SiteAdapter {
 
   getConversationTitle(): string | null {
     const { conversation } = this.manifest
-    if (conversation?.activeMatch) {
-      const activeItem = document.querySelector(conversation.activeMatch)
+    const activeMatch = conversation?.activeMatch
+    if (activeMatch) {
+      const activeItem = this.getConversationItems().find((item) => item.matches(activeMatch))
       if (activeItem) {
-        const titleElement = conversation.titleSelector
-          ? activeItem.matches(conversation.titleSelector)
-            ? activeItem
-            : activeItem.querySelector(conversation.titleSelector)
-          : activeItem
-        const title = normalizeElementText(titleElement)
+        const title = normalizeElementText(this.getConversationTitleElement(activeItem))
         if (title) return title
       }
     }
 
     return this.getDocumentConversationTitle()
+  }
+
+  private getConversationItems(): Element[] {
+    const { conversation } = this.manifest
+    if (!conversation) return []
+
+    return conversation.shadow
+      ? this.findAllElementsBySelector(conversation.itemSelector)
+      : Array.from(document.querySelectorAll(conversation.itemSelector))
+  }
+
+  private getConversationId(item: Element): string | null {
+    const { conversation } = this.manifest
+    if (!conversation || !this.conversationIdPattern) return null
+
+    const source = item.getAttribute(conversation.idFrom.attr ?? "href")
+    if (!source) return null
+
+    const id = this.conversationIdPattern.exec(source)?.[1]?.trim()
+    return id || null
+  }
+
+  private getConversationTitleElement(item: Element): Element | null {
+    const titleSelector = this.manifest.conversation?.titleSelector
+    if (!titleSelector) return item
+    return item.matches(titleSelector) ? item : item.querySelector(titleSelector)
+  }
+
+  private buildConversationUrl(id: string): string | null {
+    const { conversation } = this.manifest
+    if (!conversation) return null
+
+    const path = conversation.urlTemplate.split("{id}").join(encodeURIComponent(id))
+    try {
+      const url = new URL(path, window.location.origin)
+      return url.origin === window.location.origin ? url.href : null
+    } catch {
+      return null
+    }
+  }
+
+  private extractConversationInfo(item: Element): ConversationInfo | null {
+    const { conversation } = this.manifest
+    if (!conversation) return null
+
+    const id = this.getConversationId(item)
+    if (!id) return null
+
+    const url = this.buildConversationUrl(id)
+    if (!url) return null
+
+    return {
+      id,
+      title: normalizeElementText(this.getConversationTitleElement(item)) ?? "",
+      url,
+      ...(conversation.activeMatch ? { isActive: item.matches(conversation.activeMatch) } : {}),
+    }
+  }
+
+  getConversationList(): ConversationInfo[] {
+    const conversations = new Map<string, ConversationInfo>()
+
+    for (const item of this.getConversationItems()) {
+      const info = this.extractConversationInfo(item)
+      if (info && !conversations.has(info.id)) {
+        conversations.set(info.id, info)
+      }
+    }
+
+    return Array.from(conversations.values())
+  }
+
+  getConversationObserverConfig(): ConversationObserverConfig | null {
+    const { conversation } = this.manifest
+    if (!conversation) return null
+
+    return {
+      selector: conversation.itemSelector,
+      shadow: conversation.shadow ?? false,
+      extractInfo: (item) => this.extractConversationInfo(item),
+      getTitleElement: (item) => this.getConversationTitleElement(item),
+    }
+  }
+
+  navigateToConversation(id: string, _url?: string): boolean {
+    const { conversation } = this.manifest
+    const normalizedId = id.trim()
+    if (!conversation || !normalizedId) return false
+
+    if ((conversation.navigationStrategy ?? "click-item") === "click-item") {
+      const item = this.getConversationItems().find(
+        (candidate) => this.getConversationId(candidate) === normalizedId,
+      )
+      if (item instanceof HTMLElement) {
+        this.simulateClick(item)
+        return true
+      }
+    }
+
+    const targetUrl = this.buildConversationUrl(normalizedId)
+    return targetUrl ? super.navigateToConversation(normalizedId, targetUrl) : false
   }
 
   getSubmitButtonSelectors(): string[] {
