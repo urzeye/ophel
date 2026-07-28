@@ -1,17 +1,16 @@
 import React from "react"
 import { createPortal } from "react-dom"
 
+import { PlatformIcon } from "~components/PlatformIcon"
 import { CheckIcon, ChevronDownIcon, GlobeIcon, SearchIcon } from "~components/icons"
 import { Button } from "~components/ui"
-import { SUPPORTED_AI_PLATFORMS } from "~constants/defaults"
+import { useSupportedAiPlatforms } from "~hooks/useSupportedAiPlatforms"
 import { OPHEL_HOVER_WIDTH_RETAIN_LAYER_PROPS } from "~utils/dom-toolkit"
 import { getHighlightStyles, renderMarkdown } from "~utils/markdown"
 import { showCopySuccess } from "~utils/icons"
 import { t } from "~utils/i18n"
 import type { Prompt } from "~utils/storage"
 import { createSafeHTML } from "~utils/trusted-types"
-
-import { PlatformIcon } from "./PlatformIcon"
 
 const PROMPT_EDITOR_STYLES = `
 .gh-prompt-platform-picker-trigger {
@@ -307,6 +306,7 @@ export const PromptEditorDialog: React.FC<PromptEditorDialogProps> = ({
   onClose,
   onSave,
 }) => {
+  const supportedPlatforms = useSupportedAiPlatforms()
   const [isPlatformPickerOpen, setIsPlatformPickerOpen] = React.useState(false)
   const [platformSearchQuery, setPlatformSearchQuery] = React.useState("")
   const [platformPickerPosition, setPlatformPickerPosition] =
@@ -442,15 +442,15 @@ export const PromptEditorDialog: React.FC<PromptEditorDialogProps> = ({
   if (!isOpen) return null
 
   const selectedPlatformIds = editingPrompt?.platforms ?? []
-  const selectedPlatforms = SUPPORTED_AI_PLATFORMS.filter((platform) =>
+  const selectedPlatforms = supportedPlatforms.filter((platform) =>
     selectedPlatformIds.includes(platform.id),
   )
   const normalizedPlatformSearch = platformSearchQuery.trim().toLowerCase()
   const filteredPlatforms = normalizedPlatformSearch
-    ? SUPPORTED_AI_PLATFORMS.filter((platform) =>
+    ? supportedPlatforms.filter((platform) =>
         platform.name.toLowerCase().includes(normalizedPlatformSearch),
       )
-    : SUPPORTED_AI_PLATFORMS
+    : supportedPlatforms
 
   return createPortal(
     <div
@@ -625,7 +625,7 @@ export const PromptEditorDialog: React.FC<PromptEditorDialogProps> = ({
                   </>
                 ) : (
                   <>
-                    <PlatformIcon name={selectedPlatforms[0].name} size={16} />
+                    <PlatformIcon platform={selectedPlatforms[0]} size={16} />
                     <span className="gh-prompt-platform-summary-name">
                       {selectedPlatforms[0].name}
                     </span>
@@ -708,7 +708,7 @@ export const PromptEditorDialog: React.FC<PromptEditorDialogProps> = ({
                                 platforms: next.length > 0 ? next : undefined,
                               })
                             }}>
-                            <PlatformIcon name={platform.name} size={16} />
+                            <PlatformIcon platform={platform} size={16} />
                             <span>{platform.name}</span>
                             {selected && <CheckIcon size={15} />}
                           </button>

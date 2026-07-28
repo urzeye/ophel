@@ -1,17 +1,8 @@
 import type { ShortcutsSettings } from "~constants/shortcuts"
 import type { WebDAVProvider } from "~types/webdav"
 
-// 站点 ID 类型
-export type SiteId =
-  | "gemini"
-  | "gemini-enterprise"
-  | "aistudio"
-  | "doubao"
-  | "ima"
-  | "deepseek"
-  | "yuanbao"
-  | "zai"
-  | "_default"
+// 内置与动态 SitePack 共用的站点 ID 类型
+export type SiteId = string
 
 // 主题模式
 export type ThemeMode = "light" | "dark" | "system"
@@ -174,7 +165,7 @@ export interface Settings {
   // 主题（按站点独立 + 共享自定义样式）
   theme: {
     syncNativePageTheme: boolean
-    sites: Partial<Record<SiteId, SiteThemeConfig>>
+    sites: Record<string, SiteThemeConfig>
     customStyles: CustomStyle[] // 自定义样式列表
   }
 

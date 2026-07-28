@@ -13,6 +13,7 @@ import {
 } from "../base"
 
 import type { SitePackManifest } from "./types"
+import { siteMatchPatternMatchesUrl } from "./match-pattern"
 
 const DEFAULT_THEME_COLORS = {
   primary: "#2563eb",
@@ -61,41 +62,6 @@ const isInsideOphelContainer = (element: Element, boundary: Element): boolean =>
   }
 
   return false
-}
-
-const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-
-const createWildcardRegExp = (value: string): RegExp =>
-  new RegExp(`^${value.split("*").map(escapeRegExp).join(".*")}$`)
-
-const hasExplicitPort = (authority: string): boolean =>
-  authority.startsWith("[") ? /\]:\d+$/.test(authority) : /:\d+$/.test(authority)
-
-const matchesAuthority = (url: URL, authority: string): boolean => {
-  const normalizedAuthority = authority.toLowerCase()
-  const wildcard = normalizedAuthority.startsWith("*.")
-  const concreteAuthority = wildcard ? normalizedAuthority.slice(2) : normalizedAuthority
-  const baseUrl = new URL(`https://${concreteAuthority}/`)
-  const hostname = url.hostname.toLowerCase()
-  const baseHostname = baseUrl.hostname.toLowerCase()
-  const hostnameMatches = wildcard
-    ? hostname === baseHostname || hostname.endsWith(`.${baseHostname}`)
-    : hostname === baseHostname
-  const portMatches = !hasExplicitPort(concreteAuthority) || url.port === baseUrl.port
-
-  return hostnameMatches && portMatches
-}
-
-const matchesSitePackPattern = (url: URL, pattern: string): boolean => {
-  if (url.protocol !== "https:") return false
-
-  const match = /^https:\/\/([^/]+)(\/.*)$/.exec(pattern)
-  if (!match) return false
-
-  const [, authority, pathPattern] = match
-  if (!matchesAuthority(url, authority)) return false
-
-  return createWildcardRegExp(pathPattern).test(`${url.pathname}${url.search}`)
 }
 
 const cloneZenModeConfig = (config: ZenModeConfig): ZenModeConfig => {
@@ -147,7 +113,7 @@ export class DeclarativeAdapter extends SiteAdapter {
 
   match(): boolean {
     const url = new URL(window.location.href)
-    return this.manifest.matches.some((pattern) => matchesSitePackPattern(url, pattern))
+    return this.manifest.matches.some((pattern) => siteMatchPatternMatchesUrl(url, pattern))
   }
 
   getSiteId(): string {

@@ -1,11 +1,19 @@
-import { siteMatchPatternsOverlap } from "~adapters/declarative/match-pattern"
+import {
+  siteMatchPatternOrigin,
+  siteMatchPatternsOverlap,
+} from "~adapters/declarative/match-pattern"
 import type { SitePackManifest } from "~adapters/declarative/types"
 import {
   isValidSemanticVersion,
   validateSitePackManifest,
   type SitePackValidationError,
 } from "~adapters/declarative/validate"
-import { SITE_IDS, SUPPORTED_AI_PLATFORMS } from "~constants/defaults"
+import {
+  createSupportedAiPlatform,
+  isBuiltinSiteId,
+  SUPPORTED_AI_PLATFORMS,
+  type SupportedAiPlatform,
+} from "~constants/defaults"
 
 import { isCachedSitePackShape } from "./remote-config-cache"
 import { loadRemoteConfigState } from "./remote-config-state"
@@ -22,7 +30,6 @@ export const INSTALLED_SITE_PACKS_STORAGE_SCHEMA_VERSION = 1 as const
 
 const MIN_UNIX_MILLISECONDS = 1_000_000_000_000
 const SITE_PACK_ID_PATTERN = /^[a-z0-9-]{2,40}$/
-const BUILTIN_SITE_IDS = new Set<string>(Object.values(SITE_IDS))
 const BUILTIN_MATCHES = SUPPORTED_AI_PLATFORMS.flatMap(({ id, matchPatterns }) =>
   matchPatterns.map((pattern) => ({ siteId: id, pattern })),
 )
@@ -38,6 +45,27 @@ export interface InstalledSitePack {
   enabled: boolean
   registryStatus?: RegistryPackStatus
 }
+
+const getPlatformInitial = (name: string): string =>
+  Array.from(name.trim())[0]?.toUpperCase() ?? "?"
+
+export const getDynamicPlatforms = (packs: readonly InstalledSitePack[]): SupportedAiPlatform[] =>
+  packs.map(({ manifest }) => {
+    const url = manifest.matches[0] ? siteMatchPatternOrigin(manifest.matches[0]) : ""
+    return createSupportedAiPlatform(
+      {
+        id: `pack:${manifest.id}`,
+        name: manifest.name,
+        matchPatterns: manifest.matches,
+        url,
+        icon: getPlatformInitial(manifest.name),
+        ...(url ? { faviconUrl: new URL("/favicon.ico", url).href } : {}),
+      },
+      {
+        allowEmptyMatchPatterns: true,
+      },
+    )
+  })
 
 interface StoredInstalledSitePacksState {
   storageSchemaVersion: typeof INSTALLED_SITE_PACKS_STORAGE_SCHEMA_VERSION
@@ -496,7 +524,7 @@ export class PackManager {
   }
 
   private assertNoBuiltinConflict(manifest: SitePackManifest): void {
-    if (BUILTIN_SITE_IDS.has(manifest.id)) {
+    if (isBuiltinSiteId(manifest.id)) {
       throw new PackManagerError(
         "builtin-id-conflict",
         `SitePack id ${manifest.id} conflicts with a built-in site id`,

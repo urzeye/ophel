@@ -18,7 +18,7 @@ import {
 import { APPEARANCE_TAB_IDS } from "~constants"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
-import type { CustomStyle } from "~utils/storage"
+import { getSiteTheme, type CustomStyle } from "~utils/storage"
 import {
   darkPresets,
   lightPresets,
@@ -107,9 +107,7 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
   const [editingStyle, setEditingStyle] = useState<CustomStyle | null>(null)
 
   // 获取当前站点的主题配置
-  const currentTheme =
-    settings?.theme?.sites?.[siteId as keyof typeof settings.theme.sites] ||
-    settings?.theme?.sites?._default
+  const currentTheme = settings ? getSiteTheme(settings, siteId) : undefined
 
   if (!settings) return null
 
@@ -128,13 +126,13 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
     }
 
     // 更新样式 ID
-    const sites = settings?.theme?.sites || {}
-    const currentSite = sites[siteId as keyof typeof sites] || sites._default || {}
+    const sites = settings.theme.sites
+    const currentSite = getSiteTheme(settings, siteId)
     setSettings({
       theme: {
         ...settings?.theme,
         sites: {
-          ...settings?.theme?.sites,
+          ...sites,
           [siteId]: {
             ...currentSite,
             ...(isSystemMode ? {} : { mode: "light" }),
@@ -155,13 +153,13 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
     }
 
     // 更新样式 ID
-    const sites = settings?.theme?.sites || {}
-    const currentSite = sites[siteId as keyof typeof sites] || sites._default || {}
+    const sites = settings.theme.sites
+    const currentSite = getSiteTheme(settings, siteId)
     setSettings({
       theme: {
         ...settings?.theme,
         sites: {
-          ...settings?.theme?.sites,
+          ...sites,
           [siteId]: {
             ...currentSite,
             ...(isSystemMode ? {} : { mode: "dark" }),

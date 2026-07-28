@@ -4,9 +4,10 @@
  * 根据当前页面 URL 自动选择合适的适配器
  */
 
-import type { PackManagerSnapshot } from "~core/pack-manager"
+import type { InstalledSitePack, PackManagerSnapshot } from "~core/pack-manager"
 import { loadActiveSiteConfigPatch } from "~core/remote-config-cache"
 import { createRuntimePackManager } from "~core/pack-manager-runtime"
+import { primeDynamicPlatforms } from "~core/platform-catalog"
 import { platform } from "~platform"
 import { APP_VERSION } from "~utils/config"
 
@@ -87,7 +88,12 @@ async function applyCachedBuiltinPatches(): Promise<void> {
   }
 }
 
-async function loadDynamicAdapters(): Promise<SiteAdapter[]> {
+interface DynamicAdapterLoadResult {
+  adapters: SiteAdapter[]
+  packs: InstalledSitePack[]
+}
+
+async function loadDynamicAdapters(): Promise<DynamicAdapterLoadResult> {
   let snapshot: PackManagerSnapshot
   try {
     snapshot = await createRuntimePackManager(platform.storage).getEnabledPacks()
@@ -96,7 +102,7 @@ async function loadDynamicAdapters(): Promise<SiteAdapter[]> {
       "[Ophel] Failed to load installed SitePacks; continuing with built-in adapters:",
       error,
     )
-    return []
+    return { adapters: [], packs: [] }
   }
 
   for (const issue of snapshot.issues) {
@@ -104,9 +110,11 @@ async function loadDynamicAdapters(): Promise<SiteAdapter[]> {
   }
 
   const adapters: SiteAdapter[] = []
+  const packs: InstalledSitePack[] = []
   for (const pack of snapshot.packs) {
     try {
       adapters.push(new DeclarativeAdapter(pack.manifest))
+      packs.push(pack)
     } catch (error) {
       console.error(
         `[Ophel] Failed to initialize SitePack ${pack.manifest.id}; skipping package:`,
@@ -114,12 +122,14 @@ async function loadDynamicAdapters(): Promise<SiteAdapter[]> {
       )
     }
   }
-  return adapters
+  return { adapters, packs }
 }
 
 async function initializeAdapterRegistry(): Promise<void> {
   await applyCachedBuiltinPatches()
-  dynamicAdapters = await loadDynamicAdapters()
+  const dynamic = await loadDynamicAdapters()
+  dynamicAdapters = dynamic.adapters
+  primeDynamicPlatforms(dynamic.packs)
 }
 
 /** 在任何同步 getAdapter() 消费前加载内置 patch 与已启用 SitePack。 */

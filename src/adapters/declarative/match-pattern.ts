@@ -3,11 +3,21 @@ interface MatchPatternHost {
   wildcard: boolean
 }
 
-const parseMatchPatternHost = (pattern: string): MatchPatternHost => {
-  const authority = /^https:\/\/([^/]+)\//.exec(pattern)?.[1].toLowerCase()
-  if (!authority) {
+interface ParsedSiteMatchPattern {
+  authority: string
+  pathPattern: string
+}
+
+const parseSiteMatchPattern = (pattern: string): ParsedSiteMatchPattern => {
+  const match = /^https:\/\/([^/]+)(\/.*)$/.exec(pattern)
+  if (!match) {
     throw new TypeError(`Validated match pattern could not be parsed: ${pattern}`)
   }
+  return { authority: match[1], pathPattern: match[2] }
+}
+
+const parseMatchPatternHost = (pattern: string): MatchPatternHost => {
+  const authority = parseSiteMatchPattern(pattern).authority.toLowerCase()
 
   const host = authority.startsWith("[")
     ? authority.slice(0, authority.indexOf("]") + 1)
@@ -18,6 +28,45 @@ const parseMatchPatternHost = (pattern: string): MatchPatternHost => {
 
 const isSameOrSubdomain = (candidate: string, parent: string): boolean =>
   candidate === parent || candidate.endsWith(`.${parent}`)
+
+const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+
+const createWildcardRegExp = (value: string): RegExp =>
+  new RegExp(`^${value.split("*").map(escapeRegExp).join(".*")}$`)
+
+const hasExplicitPort = (authority: string): boolean =>
+  authority.startsWith("[") ? /\]:\d+$/.test(authority) : /:\d+$/.test(authority)
+
+const matchesAuthority = (url: URL, authority: string): boolean => {
+  const normalizedAuthority = authority.toLowerCase()
+  const wildcard = normalizedAuthority.startsWith("*.")
+  const concreteAuthority = wildcard ? normalizedAuthority.slice(2) : normalizedAuthority
+  const baseUrl = new URL(`https://${concreteAuthority}/`)
+  const hostname = url.hostname.toLowerCase()
+  const baseHostname = baseUrl.hostname.toLowerCase()
+  const hostnameMatches = wildcard
+    ? hostname === baseHostname || hostname.endsWith(`.${baseHostname}`)
+    : hostname === baseHostname
+  const portMatches = !hasExplicitPort(concreteAuthority) || url.port === baseUrl.port
+
+  return hostnameMatches && portMatches
+}
+
+/** 已校验 match pattern 对 URL 的运行时匹配语义。 */
+export const siteMatchPatternMatchesUrl = (url: URL, pattern: string): boolean => {
+  if (url.protocol !== "https:") return false
+
+  const { authority, pathPattern } = parseSiteMatchPattern(pattern)
+  if (!matchesAuthority(url, authority)) return false
+  return createWildcardRegExp(pathPattern).test(`${url.pathname}${url.search}`)
+}
+
+/** 从已校验 match pattern 取得可展示/取 favicon 的具体 origin。 */
+export const siteMatchPatternOrigin = (pattern: string): string => {
+  const { authority } = parseSiteMatchPattern(pattern)
+  const concreteAuthority = authority.startsWith("*.") ? authority.slice(2) : authority
+  return new URL(`https://${concreteAuthority}/`).origin
+}
 
 /** Registry CI 与运行时安装冲突检查共用的 host 重叠语义。 */
 export const siteMatchPatternsOverlap = (leftPattern: string, rightPattern: string): boolean => {

@@ -1,11 +1,10 @@
 import React, { useLayoutEffect, useRef, useState } from "react"
 
+import { PlatformIcon } from "~components/PlatformIcon"
 import { GlobeIcon } from "~components/icons"
 import { Tooltip } from "~components/ui"
-import { SUPPORTED_AI_PLATFORMS } from "~constants/defaults"
+import { useSupportedAiPlatforms } from "~hooks/useSupportedAiPlatforms"
 import { t } from "~utils/i18n"
-
-import { PlatformIcon } from "./PlatformIcon"
 
 interface PromptPlatformSummaryProps {
   platforms?: string[]
@@ -63,10 +62,11 @@ export const PromptPlatformSummary: React.FC<PromptPlatformSummaryProps> = ({
   currentPlatformId,
   fitAvailableWidth = false,
 }) => {
+  const supportedPlatforms = useSupportedAiPlatforms()
   const isAllPlatforms = !platforms?.length
-  const resolvedPlatforms = SUPPORTED_AI_PLATFORMS.filter((platform) =>
-    platforms?.includes(platform.id),
-  ).sort((a, b) => Number(b.id === currentPlatformId) - Number(a.id === currentPlatformId))
+  const resolvedPlatforms = supportedPlatforms
+    .filter((platform) => platforms?.includes(platform.id))
+    .sort((a, b) => Number(b.id === currentPlatformId) - Number(a.id === currentPlatformId))
   const fitContainerRef = useRef<HTMLSpanElement>(null)
   const [fittedVisibleCount, setFittedVisibleCount] = useState<number | null>(null)
   const visibleLimit = Math.max(
@@ -144,7 +144,7 @@ export const PromptPlatformSummary: React.FC<PromptPlatformSummaryProps> = ({
               key={platform.id}
               aria-hidden="true"
               style={{ ...ICON_STYLE, width: iconSize, height: iconSize }}>
-              <PlatformIcon name={platform.name} size={iconSize} />
+              <PlatformIcon platform={platform} size={iconSize} />
             </span>
           ))
         )}

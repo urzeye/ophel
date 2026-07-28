@@ -29,7 +29,6 @@ import {
 import { SparkleIcon } from "~components/icons/SparkleIcon"
 import { MagicCodex } from "~components/MagicCodex"
 import { TAB_IDS } from "~constants"
-import { SUPPORTED_AI_PLATFORMS } from "~constants/defaults"
 import { isMacOS } from "~constants/shortcuts"
 import { buildStructuredTips } from "~utils/build-structured-tips"
 import type { ConversationManager } from "~core/conversation-manager"
@@ -37,6 +36,7 @@ import type { OutlineManager } from "~core/outline-manager"
 import type { PromptManager } from "~core/prompt-manager"
 import type { ThemeTransitionOrigin } from "~core/theme-manager"
 import { useDraggable } from "~hooks/useDraggable"
+import { useSupportedAiPlatforms } from "~hooks/useSupportedAiPlatforms"
 import { useSettingsStore } from "~stores/settings-store"
 import { attachEditableKeyboardFocusGuard, hasOphelHoverWidthRetainLayer } from "~utils/dom-toolkit"
 import { loadHistoryUntil } from "~utils/history-loader"
@@ -170,9 +170,10 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   const currentSettings = settings || DEFAULT_SETTINGS
   const tabOrder = currentSettings.features?.order || DEFAULT_SETTINGS.features.order
   const siteId = adapter?.getSiteId() || "_default"
+  const supportedPlatforms = useSupportedAiPlatforms()
   const currentPromptPlatform = useMemo(
-    () => SUPPORTED_AI_PLATFORMS.find((platform) => platform.id === siteId) ?? null,
-    [siteId],
+    () => supportedPlatforms.find((platform) => platform.id === siteId) ?? null,
+    [siteId, supportedPlatforms],
   )
   const defaultPromptPlatformFilter = useMemo(
     () => (currentPromptPlatform ? [currentPromptPlatform.id] : []),

@@ -11,7 +11,6 @@ import type {
   PageWidthConfig,
   PanelAvoidanceSettings,
   Settings,
-  SiteId,
   SiteThemeConfig,
   ZenModeConfig,
 } from "~types/settings"
@@ -22,7 +21,7 @@ import type {
 export function getSiteTheme(settings: Settings, siteId: string): SiteThemeConfig {
   const sites = settings.theme?.sites
   if (sites && siteId in sites) {
-    return sites[siteId as SiteId]
+    return sites[siteId]
   }
   return sites?._default ?? DEFAULT_SITE_THEME
 }

@@ -37,7 +37,7 @@ import { useConversationsStore } from "~stores/conversations-store"
 import { useFoldersStore } from "~stores/folders-store"
 import { usePromptsStore } from "~stores/prompts-store"
 import { APP_DISPLAY_NAME, APP_VERSION } from "~utils/config"
-import { DEFAULT_SETTINGS, type Prompt } from "~utils/storage"
+import { DEFAULT_SETTINGS, getSiteTheme, type Prompt } from "~utils/storage"
 import {
   EVENT_EXTENSION_UPDATE_AVAILABLE,
   EVENT_PAGE_URL_CHANGE,
@@ -2250,9 +2250,7 @@ export const App = () => {
   const themeManager = useMemo(() => {
     const currentAdapter = getAdapter()
     const siteId = currentAdapter?.getSiteId() || "_default"
-    const fallbackTheme =
-      settings?.theme?.sites?.[siteId as keyof typeof settings.theme.sites] ||
-      settings?.theme?.sites?._default
+    const fallbackTheme = settings ? getSiteTheme(settings, siteId) : undefined
 
     return ensureGlobalThemeManager({
       mode: fallbackTheme?.mode || "light",
@@ -2293,7 +2291,7 @@ export const App = () => {
       const siteId = currentAdapter?.getSiteId() || "_default"
 
       // 确保站点配置有完整的默认值，但优先使用已有配置
-      const existingSite = sites[siteId as keyof typeof sites] || sites._default
+      const existingSite = currentSettings ? getSiteTheme(currentSettings, siteId) : sites._default
       const siteConfig = {
         lightStyleId: "google-gradient",
         darkStyleId: "classic-dark",
@@ -2352,7 +2350,7 @@ export const App = () => {
     // 使用当前站点的配置而非 _default
     const currentAdapter = getAdapter()
     const siteId = currentAdapter?.getSiteId() || "_default"
-    const siteTheme = themeSites?.[siteId as keyof typeof themeSites] || themeSites?._default
+    const siteTheme = themeSites?.[siteId] || themeSites?._default
     const lightId = siteTheme?.lightStyleId
     const darkId = siteTheme?.darkStyleId
 

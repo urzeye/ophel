@@ -7,7 +7,8 @@ import React, { useCallback, useEffect, useState } from "react"
 
 import { FeaturesIcon } from "~components/icons"
 import { Button, NumberInput, PlaceholderInput, SelectDropdown } from "~components/ui"
-import { FEATURES_TAB_IDS, NOTIFICATION_SOUND_PRESETS, SITE_IDS } from "~constants"
+import { FEATURES_TAB_IDS, NOTIFICATION_SOUND_PRESETS } from "~constants"
+import { useSupportedAiPlatforms } from "~hooks/useSupportedAiPlatforms"
 import { platform } from "~platform"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
@@ -81,6 +82,7 @@ const LazyInput: React.FC<LazyInputProps> = ({
 }
 
 const UsageHistoryChart: React.FC<{ siteId: string }> = ({ siteId }) => {
+  const supportedPlatforms = useSupportedAiPlatforms()
   const [granularity, setGranularity] = useState<UsageHistoryGranularity>("day")
   const [metric, setMetric] = useState<UsageHistoryMetric>("requestTokens")
   const [selectedSiteId, setSelectedSiteId] = useState<string>(
@@ -94,22 +96,9 @@ const UsageHistoryChart: React.FC<{ siteId: string }> = ({ siteId }) => {
   const siteOptions = React.useMemo(
     () => [
       { id: "all", label: t("usageMonitorChartSiteAll") },
-      { id: SITE_IDS.GEMINI, label: "Gemini" },
-      { id: SITE_IDS.GEMINI_ENTERPRISE, label: "Gemini Enterprise" },
-      { id: SITE_IDS.CHATGPT, label: "ChatGPT" },
-      { id: SITE_IDS.CLAUDE, label: "Claude" },
-      { id: SITE_IDS.GROK, label: "Grok" },
-      { id: SITE_IDS.AISTUDIO, label: "AI Studio" },
-      { id: SITE_IDS.DEEPSEEK, label: "DeepSeek" },
-      { id: SITE_IDS.DOUBAO, label: "Doubao" },
-      { id: SITE_IDS.IMA, label: "ima" },
-      { id: SITE_IDS.CHATGLM, label: "ChatGLM" },
-      { id: SITE_IDS.KIMI, label: "Kimi" },
-      { id: SITE_IDS.QIANWEN, label: "Qianwen" },
-      { id: SITE_IDS.QWENAI, label: "Qwen Studio" },
-      { id: SITE_IDS.ZAI, label: "Z.ai" },
+      ...supportedPlatforms.map((site) => ({ id: site.id, label: site.name })),
     ],
-    [],
+    [supportedPlatforms],
   )
 
   const selectedSiteLabel =

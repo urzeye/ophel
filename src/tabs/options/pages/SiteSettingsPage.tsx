@@ -12,6 +12,13 @@ import { platform } from "~platform"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
 import { MSG_CHECK_PERMISSIONS, MSG_REQUEST_PERMISSIONS, sendToBackground } from "~utils/messaging"
+import {
+  getSiteCleanMode,
+  getSitePageWidth,
+  getSitePanelAvoidance,
+  getSiteUserQueryWidth,
+  getSiteZenMode,
+} from "~utils/storage"
 import { showToast, showToastThrottled } from "~utils/toast"
 
 import { PageTitle, SettingCard, SettingRow, TabGroup, ToggleRow } from "../components"
@@ -75,16 +82,15 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
   const supportsPanelAvoidance = PANEL_AVOIDANCE_SUPPORTED_SITE_IDS.has(siteId)
 
   // 宽度布局相关状态
-  const currentPageWidth =
-    settings?.layout?.pageWidth?.[siteId as keyof typeof settings.layout.pageWidth] ||
-    settings?.layout?.pageWidth?._default
-  const currentUserQueryWidth =
-    settings?.layout?.userQueryWidth?.[siteId as keyof typeof settings.layout.userQueryWidth] ||
-    settings?.layout?.userQueryWidth?._default
-  const currentZenMode = settings?.layout?.zenMode?.[siteId] ||
-    settings?.layout?.zenMode?._default || { enabled: false, showExitButton: true }
-  const currentPanelAvoidance = settings?.layout?.panelAvoidance?.[siteId] ||
-    settings?.layout?.panelAvoidance?._default || { enabled: true }
+  const currentPageWidth = settings ? getSitePageWidth(settings, siteId) : undefined
+  const currentUserQueryWidth = settings ? getSiteUserQueryWidth(settings, siteId) : undefined
+  const currentZenMode = settings
+    ? getSiteZenMode(settings, siteId)
+    : { enabled: false, showExitButton: true }
+  const currentCleanMode = settings ? getSiteCleanMode(settings, siteId) : { enabled: true }
+  const currentPanelAvoidance = settings
+    ? getSitePanelAvoidance(settings, siteId)
+    : { enabled: true }
   const panelAvoidanceTitle = (
     <span className="settings-card-title-with-badge">
       <span>{t("panelAvoidanceTitle")}</span>
@@ -339,15 +345,8 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
               label={t("cleanModeLabel")}
               description={t("cleanModeDesc")}
               settingId="layout-clean-mode-enabled"
-              checked={
-                settings.layout?.cleanMode?.[siteId as keyof typeof settings.layout.cleanMode]
-                  ?.enabled ?? true
-              }
+              checked={currentCleanMode.enabled}
               onChange={() => {
-                const currentCleanMode = settings.layout?.cleanMode?.[
-                  siteId as keyof typeof settings.layout.cleanMode
-                ] || { enabled: true }
-
                 setSettings({
                   layout: {
                     ...settings.layout,

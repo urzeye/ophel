@@ -4,6 +4,7 @@
  */
 import React from "react"
 
+import { PlatformIcon } from "~components/PlatformIcon"
 import {
   AboutIcon,
   ChromeIcon,
@@ -20,9 +21,8 @@ import {
   StarIcon,
 } from "~components/icons"
 import { SparkleIcon } from "~components/icons/SparkleIcon"
-import { SUPPORTED_AI_PLATFORMS } from "~constants/defaults"
-import { SITE_ICONS } from "~constants/site-icons"
 import { STORE_LINKS } from "~constants/store-links"
+import { useSupportedAiPlatforms } from "~hooks/useSupportedAiPlatforms"
 import { APP_DISPLAY_NAME, APP_ICON_URL, APP_VERSION } from "~utils/config"
 import { t } from "~utils/i18n"
 
@@ -33,7 +33,8 @@ interface AboutPageProps {
 }
 
 const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
-  const supportedPlatformsCount = String(SUPPORTED_AI_PLATFORMS.length)
+  const supportedPlatforms = useSupportedAiPlatforms()
+  const supportedPlatformsCount = String(supportedPlatforms.length)
   return (
     <div>
       <PageTitle title={t("navAbout")} Icon={AboutIcon} />
@@ -269,7 +270,7 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
           <span className="about-platforms-count">{supportedPlatformsCount}</span>
         </div>
         <div className="about-platforms-grid">
-          {SUPPORTED_AI_PLATFORMS.map((platform) => (
+          {supportedPlatforms.map((platform) => (
             <a
               key={platform.id}
               href={platform.url}
@@ -277,17 +278,12 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
               rel="noopener noreferrer"
               className="about-platform-chip"
               title={platform.url}>
-              {SITE_ICONS[platform.name] ? (
-                <img
-                  src={SITE_ICONS[platform.name]}
-                  alt={platform.name}
-                  className="about-platform-chip-icon"
-                />
-              ) : (
-                <span className="about-platform-chip-emoji" aria-hidden="true">
-                  {platform.icon}
-                </span>
-              )}
+              <PlatformIcon
+                platform={platform}
+                size={18}
+                className="about-platform-chip-icon"
+                fallbackClassName="about-platform-chip-emoji"
+              />
               <span>{platform.name}</span>
             </a>
           ))}

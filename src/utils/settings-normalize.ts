@@ -154,10 +154,9 @@ const normalizeSiteThemeRecord = (record: SiteThemeRecord | undefined): SiteThem
   ])
 
   siteIds.forEach((siteId) => {
-    result[siteId as keyof SiteThemeRecord] = {
-      ...(DEFAULT_SETTINGS.theme.sites[siteId as keyof SiteThemeRecord] ??
-        DEFAULT_SETTINGS.theme.sites._default),
-      ...(record?.[siteId as keyof SiteThemeRecord] ?? {}),
+    result[siteId] = {
+      ...(DEFAULT_SETTINGS.theme.sites[siteId] ?? DEFAULT_SETTINGS.theme.sites._default),
+      ...(record?.[siteId] ?? {}),
     }
   })
 

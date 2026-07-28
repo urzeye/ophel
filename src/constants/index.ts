@@ -49,8 +49,10 @@ export {
   BATCH_TEST_CONFIG,
   QUICK_QUOTE_REPLY_CHAIN_ID,
   SITE_IDS,
+  isBuiltinSiteId,
   type BuiltinSiteId,
   type Folder,
+  type SupportedAiPlatform,
 } from "./defaults"
 
 // 提示词模块

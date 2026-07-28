@@ -10,6 +10,7 @@ import {
 import { Tooltip } from "~components/ui/Tooltip"
 import { useSettingsStore } from "~stores/settings-store"
 import { getEffectiveLanguage, setLanguage, t } from "~utils/i18n"
+import { getSiteTheme } from "~utils/storage"
 
 import { LanguageMenu } from "./LanguageMenu"
 
@@ -26,11 +27,7 @@ export const SidebarFooter = ({ siteId = "_default" }: { siteId?: string }) => {
     themeManager?.subscribe ?? (() => () => {}),
     themeManager?.getSnapshot ?? (() => "light" as const),
   )
-  const themeSites = settings?.theme?.sites
-  const siteTheme =
-    themeSites && siteId in themeSites
-      ? themeSites[siteId as keyof typeof themeSites]
-      : themeSites?._default
+  const siteTheme = settings ? getSiteTheme(settings, siteId) : undefined
   const currentThemePreference = siteTheme?.mode || "light"
 
   // 切换主题模式
@@ -46,7 +43,7 @@ export const SidebarFooter = ({ siteId = "_default" }: { siteId?: string }) => {
     } else {
       // 尝试调用 themeManager，如果失败则手动更新 settings
       const sites = settings?.theme?.sites || {}
-      const currentSite = sites[siteId as keyof typeof sites] || sites._default || {}
+      const currentSite = settings ? getSiteTheme(settings, siteId) : undefined
 
       setSettings({
         theme: {

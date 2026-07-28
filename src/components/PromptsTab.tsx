@@ -31,18 +31,19 @@ import {
   VariableInputDialog,
 } from "~components/VariableInputDialog"
 import { ChainIconPicker } from "~components/ChainIconPicker"
+import { PlatformIcon } from "~components/PlatformIcon"
 import { ImportDialog } from "~components/prompts/ImportDialog"
-import { PlatformIcon } from "~components/prompts/PlatformIcon"
 import { PromptEditorDialog } from "~components/prompts/PromptEditorDialog"
 import { PromptPlatformSummary } from "~components/prompts/PromptPlatformSummary"
 import { PromptPreviewModal } from "~components/prompts/PromptPreviewModal"
 import { usePromptDragSort } from "~components/prompts/usePromptDragSort"
 import { VIRTUAL_CATEGORY } from "~constants"
 import { CHAIN_ICON_PRESETS } from "~constants/chain-icons"
-import { SUPPORTED_AI_PLATFORMS, type SupportedAiPlatform } from "~constants/defaults"
+import type { SupportedAiPlatform } from "~constants/defaults"
 import type { PromptChain, PromptChainStep } from "~core/prompt-action-types"
 import { enqueuePrompt, sendOrQueuePrompt } from "~core/prompt-actions"
 import type { PromptManager } from "~core/prompt-manager"
+import { useSupportedAiPlatforms } from "~hooks/useSupportedAiPlatforms"
 import { usePromptChainsStore } from "~stores/prompt-chains-store"
 import { matchesPromptPlatform } from "~stores/prompts-store"
 import { useSettingsStore } from "~stores/settings-store"
@@ -1009,6 +1010,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   selectedPromptId,
 }) => {
   const DOUBLE_CLICK_DELAY_MS = 340
+  const supportedPlatforms = useSupportedAiPlatforms()
 
   const doubleClickToSend = useSettingsStore(
     (state) => state.settings.features?.prompts?.doubleClickToSend ?? false,
@@ -2074,11 +2076,11 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   const isCustomPlatformFilter = selectedPlatforms.length > 0 && !isCurrentPlatformFilter
   const selectedPlatform =
     selectedPlatforms.length === 1
-      ? SUPPORTED_AI_PLATFORMS.find((platform) => platform.id === selectedPlatforms[0]) ?? null
+      ? supportedPlatforms.find((platform) => platform.id === selectedPlatforms[0]) ?? null
       : null
-  const selectedPlatformNames = SUPPORTED_AI_PLATFORMS.filter((platform) =>
-    selectedPlatforms.includes(platform.id),
-  ).map((platform) => platform.name)
+  const selectedPlatformNames = supportedPlatforms
+    .filter((platform) => selectedPlatforms.includes(platform.id))
+    .map((platform) => platform.name)
   const platformFilterSummary =
     isCurrentPlatformFilter && currentPlatform
       ? `${t("promptPlatformCurrent")} · ${currentPlatform.name}`
@@ -3143,7 +3145,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                   aria-expanded={platformFilterOpen}
                   className="gh-prompt-platform-filter-btn">
                   {selectedPlatform ? (
-                    <PlatformIcon name={selectedPlatform.name} size={16} />
+                    <PlatformIcon platform={selectedPlatform} size={16} />
                   ) : (
                     <GlobeIcon size={14} />
                   )}
@@ -3232,7 +3234,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                             ? "var(--gh-hover, #f3f4f6)"
                             : "transparent",
                         }}>
-                        <PlatformIcon name={currentPlatform.name} size={18} />
+                        <PlatformIcon platform={currentPlatform} size={18} />
                         <span
                           style={{
                             flex: 1,
@@ -3280,7 +3282,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                         background: "var(--gh-border, #e5e7eb)",
                       }}
                     />
-                    {SUPPORTED_AI_PLATFORMS.map((platform) => {
+                    {supportedPlatforms.map((platform) => {
                       const checked = selectedPlatforms.includes(platform.id)
                       return (
                         <button
@@ -3298,7 +3300,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                           style={{
                             background: checked ? "var(--gh-hover, #f3f4f6)" : "transparent",
                           }}>
-                          <PlatformIcon name={platform.name} size={18} />
+                          <PlatformIcon platform={platform} size={18} />
                           <span
                             style={{
                               flex: 1,
