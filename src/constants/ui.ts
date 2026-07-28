@@ -37,6 +37,7 @@ export const NAV_IDS = {
   APPEARANCE: "appearance",
   FEATURES: "features",
   SITE_SETTINGS: "siteSettings",
+  SITE_PACKS: "sitePacks",
   GLOBAL_SEARCH: "globalSearch",
   SHORTCUTS: "shortcuts",
   BACKUP: "backup",

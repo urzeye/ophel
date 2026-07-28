@@ -18,6 +18,7 @@ export const it = {
   // ======== Options Page Navigation ========
   navGeneral: "Generale",
   navSiteSettings: "Configurazione del sito",
+  navSitePacks: "Pacchetti sito",
   navGlobalSearch: "Ricerca globale",
   navAppearance: "Aspetto",
   navPageContent: "Pagina e contenuto",
@@ -32,6 +33,62 @@ export const it = {
   communitySitePackBadge: "Pacchetto adattatore della community (funzioni principali)",
   communitySitePackDesc:
     "Questo sito è fornito da un pacchetto adattatore della community. Vengono mostrate solo le funzioni dichiarate e supportate.",
+
+  // SitePack Manager
+  sitePacksPageDesc: "Installa e gestisci i pacchetti adattatore della community",
+  sitePacksInstalledTitle: "Pacchetti installati",
+  sitePacksInstalledDesc:
+    "Attiva, aggiorna o rimuovi i pacchetti adattatore salvati su questo dispositivo.",
+  sitePacksRegistryTitle: "Registro della community",
+  sitePacksRegistryDesc:
+    "Esplora i pacchetti adattatore memorizzati dal registro ufficiale della community.",
+  sitePacksLocalImportTitle: "Importazione JSON locale",
+  sitePacksLocalImportDesc: "Importa da questo dispositivo un manifest SitePack attendibile.",
+  sitePacksCheckUpdates: "Controlla aggiornamenti",
+  sitePacksRefreshRegistry: "Aggiorna registro",
+  sitePacksInstall: "Installa",
+  sitePacksUpdate: "Aggiorna",
+  sitePacksUninstall: "Disinstalla",
+  sitePacksInstalledBadge: "Installato",
+  sitePacksEnabledLabel: "Attivo",
+  sitePacksSourceRegistry: "Registro",
+  sitePacksSourceLocal: "Importazione locale",
+  sitePacksStatusAvailable: "Disponibile",
+  sitePacksStatusDisabled: "Disattivato",
+  sitePacksStatusIncompatible: "Non compatibile",
+  sitePacksNoInstalled: "Nessun pacchetto sito installato",
+  sitePacksNoInstalledDesc:
+    "Installa dal registro oppure importa un file JSON locale da una fonte attendibile.",
+  sitePacksRegistryEmpty: "Nessun pacchetto nella cache del registro",
+  sitePacksRegistryEmptyDesc:
+    "Aggiorna il registro per verificare i pacchetti della community disponibili.",
+  sitePacksLoadFailed: "Impossibile caricare i pacchetti sito: {error}",
+  sitePacksOperationFailed: "Operazione sul pacchetto sito non riuscita: {error}",
+  sitePacksInvalidFile: "Questo file JSON non è un SitePack valido.",
+  sitePacksValidationErrorsTitle: "Dettagli della convalida",
+  sitePacksStoredIssuesTitle: "Problemi dei pacchetti salvati",
+  sitePacksImportConfirmTitle: "Importare questo pacchetto sito?",
+  sitePacksImportRisk:
+    "I pacchetti sito possono modificare lo stile delle pagine e il comportamento di Ophel sui siti corrispondenti. Importa solo pacchetti da fonti attendibili.",
+  sitePacksImportSummary:
+    "{name} ({id}), versione {version}, {matches} schemi di corrispondenza dei siti.",
+  sitePacksUninstallConfirmTitle: "Disinstallare questo pacchetto sito?",
+  sitePacksUninstallConfirmDesc: "Rimuovere {name} da questo dispositivo?",
+  sitePacksUninstallKeepData:
+    "Le impostazioni dei siti e i dati delle conversazioni restano salvati.",
+  sitePacksSavedSuccess: "{name} è stato installato.",
+  sitePacksUpdatedSuccess: "{name} è stato aggiornato.",
+  sitePacksRemovedSuccess: "{name} è stato disinstallato.",
+  sitePacksStateChanged: "{name}: ora {state}.",
+  sitePacksEnabledState: "attivo",
+  sitePacksDisabledState: "disattivato",
+  sitePacksPackUpToDate: "{name} è aggiornato.",
+  sitePacksPackUpdated: "{name} è stato aggiornato alla versione {version}.",
+  sitePacksChangesApplyHint:
+    "Le modifiche vengono salvate subito. Prima che l'adattatore diventi attivo, le pagine corrispondenti potrebbero richiedere un'autorizzazione e un aggiornamento.",
+  sitePacksLocalUpdateHint: "Aggiorna importando un file JSON locale più recente",
+  sitePacksRequiresNewerApp: "Richiede Ophel {version} o versione successiva",
+  sitePacksMatchesCount: "{count} schemi di corrispondenza",
 
   generalPageDesc: "Configura il comportamento e l'interfaccia dell'estensione",
   appearancePageDesc: "Personalizza stili e temi visivi",

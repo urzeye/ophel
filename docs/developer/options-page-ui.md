@@ -19,6 +19,7 @@
 - 外观主题：`AppearancePage`
 - 功能模块：`FeaturesPage`
 - 站点配置：`SiteSettingsPage`
+- 站点适配包：`SitePacksPage`
 - 全局搜索：`GlobalSearchPage`
 - 快捷键位：`ShortcutsPage`
 - 数据管理：`BackupPage`
@@ -34,6 +35,7 @@
 - 基本设置：`GeneralPage`
 - 功能模块：`FeaturesPage`
 - 站点设置：`SiteSettingsPage`
+- 站点适配包：`SitePacksPage`
 - 外观主题：`AppearancePage`
 - 备份与同步：`BackupPage`
 - 权限管理：`PermissionsPage`
@@ -52,6 +54,7 @@
 - `GeneralPage`：语言、面板行为、快捷按钮、工具箱菜单。
 - `FeaturesPage`：大纲、会话、提示词、标签页行为、提醒、内容增强、阅读历史和用量统计。
 - `SiteSettingsPage`：页面布局、模型锁定、Gemini/AI Studio/ChatGPT/Claude 等站点专属设置。
+- `SitePacksPage`：已安装适配包、社区 registry 浏览、更新/启停/卸载和本地 JSON 风险确认导入。
 - `GlobalSearchPage`：全局搜索触发方式、模糊搜索和提示词回车行为。
 - `ShortcutsPage`：快捷键总开关、全局 URL 和各动作绑定。
 - `AppearancePage`：主题同步、预置主题和自定义样式。
@@ -65,6 +68,7 @@
 - 扩展端使用 `chrome.storage.local`；油猴端使用平台存储适配器，GM API 的同步读取不要包成 Promise。
 - `settings-store.ts` 监听跨上下文 storage 变化，并通过 `_syncVersion` 触发 UI 更新。
 - 旧数据兼容集中在 `normalizeSettings()`：旧快捷按钮字段会迁移到 `quickButtons`；已移除的未实现设置不应继续进入当前设置结构。
+- `SitePacksPage` 不进入设置 store：已安装包继续由 `PackManager` 读写 `sitepacks/installed`，社区目录继续使用 `sitepacks/remote-state`，两者通过平台存储接口兼容扩展与油猴脚本。
 
 ## 5. 样式与主题约束
 

@@ -7,6 +7,7 @@ export interface SwitchProps {
   checked: boolean
   onChange: (checked: boolean) => void
   disabled?: boolean
+  ariaLabel?: string
   /** 尺寸: sm=32x18, md=36x20 */
   size?: "sm" | "md"
 }
@@ -19,6 +20,7 @@ export const Switch: React.FC<SwitchProps> = ({
   checked,
   onChange,
   disabled = false,
+  ariaLabel,
   size = "md",
 }) => {
   // 尺寸配置
@@ -26,6 +28,7 @@ export const Switch: React.FC<SwitchProps> = ({
 
   return (
     <label
+      className="gh-switch"
       style={{
         position: "relative",
         display: "inline-block",
@@ -34,13 +37,16 @@ export const Switch: React.FC<SwitchProps> = ({
         flexShrink: 0,
       }}>
       <input
+        className="gh-switch-input"
         type="checkbox"
         checked={checked}
         onChange={() => onChange(!checked)}
         disabled={disabled}
+        aria-label={ariaLabel}
         style={{ opacity: 0, width: 0, height: 0, position: "absolute" }}
       />
       <span
+        className="gh-switch-track"
         style={{
           position: "absolute",
           cursor: disabled ? "not-allowed" : "pointer",
@@ -55,6 +61,7 @@ export const Switch: React.FC<SwitchProps> = ({
           transition: "background-color 0.3s",
         }}>
         <span
+          className="gh-switch-thumb"
           style={{
             position: "absolute",
             height: `${dimensions.thumb}px`,

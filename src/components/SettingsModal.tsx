@@ -12,6 +12,7 @@ import {
   ClearIcon,
   FeaturesIcon,
   GeneralIcon,
+  JSONFileIcon,
   KeyboardIcon,
   MaximizeIcon,
   PageContentIcon,
@@ -34,6 +35,7 @@ import GlobalSearchPage from "~tabs/options/pages/GlobalSearchPage"
 import GeneralPage from "~tabs/options/pages/GeneralPage"
 import PermissionsPage from "~tabs/options/pages/PermissionsPage"
 import ShortcutsPage from "~tabs/options/pages/ShortcutsPage"
+import SitePacksPage from "~tabs/options/pages/SitePacksPage"
 import SiteSettingsPage from "~tabs/options/pages/SiteSettingsPage"
 import { APP_DISPLAY_NAME, APP_ICON_URL } from "~utils/config"
 import { attachEditableKeyboardFocusGuard, OPHEL_INTERACTION_LAYER_PROPS } from "~utils/dom-toolkit"
@@ -94,6 +96,12 @@ const NAV_ITEMS = [
     Icon: PageContentIcon,
     labelKey: "navSiteSettings",
     label: "站点配置",
+  },
+  {
+    id: NAV_IDS.SITE_PACKS,
+    Icon: JSONFileIcon,
+    labelKey: "navSitePacks",
+    label: "站点适配包",
   },
   {
     id: NAV_IDS.GLOBAL_SEARCH,
@@ -397,6 +405,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             }
           />
         )
+      case NAV_IDS.SITE_PACKS:
+        return <SitePacksPage />
       case NAV_IDS.APPEARANCE:
         return <AppearancePage siteId={siteId} initialTab={initialSubTab} />
       case NAV_IDS.FEATURES:

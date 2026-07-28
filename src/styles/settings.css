@@ -730,6 +730,15 @@
   margin-bottom: 16px;
 }
 
+.gh-switch-input:focus-visible + .gh-switch-track {
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 48%, transparent);
+  outline-offset: 2px;
+}
+
+.gh-switch-input:disabled + .gh-switch-track {
+  opacity: 0.62;
+}
+
 /* ==================== 设置行 ==================== */
 
 .settings-row {
@@ -1018,6 +1027,506 @@
 
   .remote-config-action-button:hover:not(:disabled),
   .remote-config-action-button:active:not(:disabled) {
+    transform: none;
+  }
+}
+
+/* ==================== 站点适配包管理 ==================== */
+
+.settings-pack-page {
+  width: 100%;
+}
+
+.settings-pack-section {
+  min-width: 0;
+}
+
+.settings-pack-section-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.settings-pack-section-header > div {
+  min-width: 0;
+}
+
+.settings-pack-section-header h2 {
+  margin: 0 0 4px;
+  color: var(--gh-text, #374151);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.settings-pack-section-header p {
+  margin: 0;
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.settings-pack-feedback,
+.settings-pack-inline-error,
+.settings-pack-issues {
+  margin-bottom: 16px;
+  padding: 11px 13px;
+  border: 1px solid var(--gh-card-border, #e5e7eb);
+  border-radius: 10px;
+  background: var(--gh-bg-secondary, #f9fafb);
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 12px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.settings-pack-feedback.success {
+  border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 30%, transparent);
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 8%, var(--gh-card-bg, #ffffff));
+  color: var(--gh-primary, #4285f4);
+}
+
+.settings-pack-feedback.error,
+.settings-pack-inline-error,
+.settings-pack-issues {
+  border-color: color-mix(in srgb, var(--gh-danger, #ef4444) 30%, transparent);
+  background: color-mix(in srgb, var(--gh-danger, #ef4444) 7%, var(--gh-card-bg, #ffffff));
+  color: var(--gh-text-danger, #ef4444);
+}
+
+.settings-pack-inline-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.settings-pack-validation-details,
+.settings-pack-issues {
+  margin-top: 10px;
+}
+
+.settings-pack-validation-details strong,
+.settings-pack-issues > strong {
+  display: block;
+  margin-bottom: 6px;
+  color: inherit;
+  font-size: 12px;
+}
+
+.settings-pack-validation-details ul,
+.settings-pack-issues ul {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  padding-left: 18px;
+}
+
+.settings-pack-validation-details li,
+.settings-pack-issues li {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 5px 8px;
+}
+
+.settings-pack-validation-details code,
+.settings-pack-issues code,
+.settings-pack-dialog-file {
+  border-radius: 5px;
+  background: color-mix(in srgb, currentColor 8%, transparent);
+  color: inherit;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+}
+
+.settings-pack-validation-details code,
+.settings-pack-issues code {
+  padding: 1px 5px;
+}
+
+.settings-pack-list {
+  border-top: 1px solid var(--gh-card-border, #e5e7eb);
+}
+
+.settings-pack-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--gh-card-border, #e5e7eb);
+}
+
+.settings-pack-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 20%, transparent);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 7%, var(--gh-bg-secondary, #f9fafb));
+  color: var(--gh-primary, #4285f4);
+}
+
+.settings-pack-info {
+  min-width: 0;
+}
+
+.settings-pack-title-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px 7px;
+}
+
+.settings-pack-title-line > strong {
+  min-width: 0;
+  color: var(--gh-text, #374151);
+  font-size: 13px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.settings-pack-id {
+  margin-top: 2px;
+  color: var(--gh-text-tertiary, #9ca3af);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10px;
+  overflow-wrap: anywhere;
+}
+
+.settings-pack-description {
+  display: -webkit-box;
+  margin: 5px 0 0;
+  overflow: hidden;
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 12px;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.settings-pack-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-top: 6px;
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 10px;
+}
+
+.settings-pack-meta span {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings-pack-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 18px;
+  padding: 0 6px;
+  border: 1px solid var(--gh-card-border, #e5e7eb);
+  border-radius: 999px;
+  background: var(--gh-bg-secondary, #f9fafb);
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.settings-pack-badge.success {
+  border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 28%, transparent);
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 8%, var(--gh-card-bg, #ffffff));
+  color: var(--gh-primary, #4285f4);
+}
+
+.settings-pack-badge.warning {
+  border-color: color-mix(in srgb, var(--gh-text-secondary, #6b7280) 30%, transparent);
+  background: color-mix(in srgb, var(--gh-text-secondary, #6b7280) 7%, var(--gh-card-bg, #ffffff));
+  color: var(--gh-text-secondary, #6b7280);
+}
+
+.settings-pack-badge.danger {
+  border-color: color-mix(in srgb, var(--gh-danger, #ef4444) 32%, transparent);
+  background: color-mix(in srgb, var(--gh-danger, #ef4444) 7%, var(--gh-card-bg, #ffffff));
+  color: var(--gh-text-danger, #ef4444);
+}
+
+.settings-pack-controls {
+  display: flex;
+  align-items: flex-end;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.settings-pack-switch-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 11px;
+}
+
+.settings-pack-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.settings-pack-action-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 40%, var(--gh-input-border, #d1d5db));
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--gh-primary, #4285f4) 10%, transparent);
+}
+
+.settings-pack-action-button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.settings-pack-action-button:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 42%, transparent);
+  outline-offset: 2px;
+}
+
+.settings-pack-action-button .spinning {
+  animation: settings-pack-spin 0.9s linear infinite;
+}
+
+@keyframes settings-pack-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.settings-pack-empty-state {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 58px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--gh-bg-secondary, #f9fafb);
+  color: var(--gh-text-secondary, #6b7280);
+}
+
+.settings-pack-empty-state > svg {
+  flex-shrink: 0;
+  color: var(--gh-primary, #4285f4);
+}
+
+.settings-pack-empty-state > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.settings-pack-empty-state strong {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--gh-text, #374151);
+  font-size: 12px;
+}
+
+.settings-pack-empty-state p {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.settings-pack-skeleton {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+.settings-pack-skeleton-icon,
+.settings-pack-skeleton-lines span {
+  background: linear-gradient(
+    90deg,
+    var(--gh-bg-secondary, #f3f4f6) 20%,
+    var(--gh-hover, #e5e7eb) 50%,
+    var(--gh-bg-secondary, #f3f4f6) 80%
+  );
+  background-size: 200% 100%;
+  animation: settings-pack-skeleton 1.2s ease-in-out infinite;
+}
+
+.settings-pack-skeleton-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+}
+
+.settings-pack-skeleton-lines {
+  display: grid;
+  gap: 7px;
+}
+
+.settings-pack-skeleton-lines span {
+  display: block;
+  width: min(240px, 70%);
+  height: 10px;
+  border-radius: 999px;
+}
+
+.settings-pack-skeleton-lines span:last-child {
+  width: min(340px, 92%);
+  height: 8px;
+}
+
+@keyframes settings-pack-skeleton {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+.settings-pack-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.settings-pack-activation-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-top: 4px;
+  padding: 11px 13px;
+  border: 1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 20%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 5%, var(--gh-card-bg, #ffffff));
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.settings-pack-activation-note svg {
+  flex-shrink: 0;
+  color: var(--gh-primary, #4285f4);
+}
+
+.settings-pack-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10020;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: var(--gh-overlay-bg, rgba(15, 23, 42, 0.48));
+  backdrop-filter: blur(5px);
+}
+
+.settings-pack-dialog {
+  width: min(460px, 100%);
+  max-height: min(78vh, 620px);
+  overflow: auto;
+  padding: 20px;
+  border: 1px solid var(--gh-card-border, #e5e7eb);
+  border-radius: 13px;
+  background: var(--gh-bg, #ffffff);
+  box-shadow: var(--gh-shadow-lg, 0 20px 50px rgba(0, 0, 0, 0.28));
+}
+
+.settings-pack-dialog h2 {
+  margin: 0 0 10px;
+  color: var(--gh-text, #1f2937);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.settings-pack-dialog-content {
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.settings-pack-dialog-content p {
+  margin: 0 0 10px;
+}
+
+.settings-pack-dialog-file {
+  display: block;
+  padding: 7px 9px;
+  background: var(--gh-bg-secondary, #f9fafb);
+  color: var(--gh-text, #374151);
+  overflow-wrap: anywhere;
+}
+
+.settings-pack-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+@media (max-width: 760px) {
+  .settings-pack-section-header,
+  .settings-pack-inline-error {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .settings-pack-section-header > button,
+  .settings-pack-inline-error > button {
+    align-self: flex-start;
+  }
+
+  .settings-pack-item {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: flex-start;
+  }
+
+  .settings-pack-controls {
+    grid-column: 1 / -1;
+    align-items: stretch;
+    flex-direction: row;
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 520px) {
+  .settings-pack-controls,
+  .settings-pack-actions,
+  .settings-pack-empty-state {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .settings-pack-switch-control {
+    justify-content: space-between;
+  }
+
+  .settings-pack-actions > button,
+  .settings-pack-empty-state > button {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .settings-pack-action-button,
+  .settings-pack-action-button .spinning,
+  .settings-pack-skeleton-icon,
+  .settings-pack-skeleton-lines span,
+  .gh-switch-track,
+  .gh-switch-thumb {
+    transition: none !important;
+    animation: none !important;
+  }
+
+  .settings-pack-action-button:hover:not(:disabled),
+  .settings-pack-action-button:active:not(:disabled) {
     transform: none;
   }
 }

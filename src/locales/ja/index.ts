@@ -18,6 +18,7 @@ export const ja = {
   // ======== Options Page Navigation ========
   navGeneral: "基本設定",
   navSiteSettings: "サイト設定",
+  navSitePacks: "サイトパック",
   navGlobalSearch: "グローバル検索",
   navAppearance: "外観",
   navPageContent: "ページと内容",
@@ -32,6 +33,60 @@ export const ja = {
   communitySitePackBadge: "コミュニティアダプターパック（コア機能）",
   communitySitePackDesc:
     "このサイトはコミュニティアダプターパックによって提供され、宣言済みで対応している機能のみ表示されます。",
+
+  // SitePack Manager
+  sitePacksPageDesc: "コミュニティのサイトアダプターパックをインストール・管理します",
+  sitePacksInstalledTitle: "インストール済みパック",
+  sitePacksInstalledDesc:
+    "このデバイスに保存されたアダプターパックの有効化、更新、削除を行います。",
+  sitePacksRegistryTitle: "コミュニティレジストリ",
+  sitePacksRegistryDesc:
+    "公式コミュニティレジストリからキャッシュされたアダプターパックを表示します。",
+  sitePacksLocalImportTitle: "ローカル JSON のインポート",
+  sitePacksLocalImportDesc: "信頼できる SitePack マニフェストをこのデバイスから読み込みます。",
+  sitePacksCheckUpdates: "更新を確認",
+  sitePacksRefreshRegistry: "レジストリを更新",
+  sitePacksInstall: "インストール",
+  sitePacksUpdate: "更新",
+  sitePacksUninstall: "アンインストール",
+  sitePacksInstalledBadge: "インストール済み",
+  sitePacksEnabledLabel: "有効",
+  sitePacksSourceRegistry: "レジストリ",
+  sitePacksSourceLocal: "ローカルインポート",
+  sitePacksStatusAvailable: "利用可能",
+  sitePacksStatusDisabled: "無効",
+  sitePacksStatusIncompatible: "非対応",
+  sitePacksNoInstalled: "サイトパックはまだインストールされていません",
+  sitePacksNoInstalledDesc:
+    "レジストリからインストールするか、信頼できるローカル JSON ファイルを読み込んでください。",
+  sitePacksRegistryEmpty: "レジストリのキャッシュにパックがありません",
+  sitePacksRegistryEmptyDesc:
+    "レジストリを更新して、利用可能なコミュニティパックを確認してください。",
+  sitePacksLoadFailed: "サイトパックを読み込めませんでした：{error}",
+  sitePacksOperationFailed: "サイトパックの操作に失敗しました：{error}",
+  sitePacksInvalidFile: "この JSON ファイルは有効な SitePack ではありません。",
+  sitePacksValidationErrorsTitle: "検証の詳細",
+  sitePacksStoredIssuesTitle: "保存済みパックの問題",
+  sitePacksImportConfirmTitle: "このサイトパックをインポートしますか？",
+  sitePacksImportRisk:
+    "サイトパックは一致するサイトのページスタイルや Ophel の動作を変更できます。信頼できる提供元のパックだけを読み込んでください。",
+  sitePacksImportSummary: "{name}（{id}）、バージョン {version}、マッチパターン {matches} 件。",
+  sitePacksUninstallConfirmTitle: "このサイトパックをアンインストールしますか？",
+  sitePacksUninstallConfirmDesc: "{name} をこのデバイスから削除しますか？",
+  sitePacksUninstallKeepData: "サイト設定と会話データは保持されます。",
+  sitePacksSavedSuccess: "{name} をインストールしました。",
+  sitePacksUpdatedSuccess: "{name} を更新しました。",
+  sitePacksRemovedSuccess: "{name} をアンインストールしました。",
+  sitePacksStateChanged: "{name} を{state}にしました。",
+  sitePacksEnabledState: "有効",
+  sitePacksDisabledState: "無効",
+  sitePacksPackUpToDate: "{name} は最新です。",
+  sitePacksPackUpdated: "{name} をバージョン {version} に更新しました。",
+  sitePacksChangesApplyHint:
+    "変更はすぐに保存されます。アダプターを有効にするには、一致するページで権限の付与と再読み込みが必要な場合があります。",
+  sitePacksLocalUpdateHint: "新しいローカル JSON ファイルを読み込んで更新",
+  sitePacksRequiresNewerApp: "Ophel {version} 以降が必要です",
+  sitePacksMatchesCount: "{count} 件のマッチパターン",
 
   generalPageDesc: "拡張機能の動作とインターフェースの設定",
   appearancePageDesc: "視覚スタイルとテーマのカスタマイズ",

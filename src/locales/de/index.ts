@@ -18,6 +18,7 @@ export const de = {
   // ======== Options Page Navigation ========
   navGeneral: "Allgemein",
   navSiteSettings: "Websites",
+  navSitePacks: "Site-Pakete",
   navGlobalSearch: "Globale Suche",
   navAppearance: "Erscheinungsbild",
   navPageContent: "Inhalt",
@@ -32,6 +33,61 @@ export const de = {
   communitySitePackBadge: "Community-Adapterpaket (Kernfunktionen)",
   communitySitePackDesc:
     "Diese Website wird durch ein Community-Adapterpaket unterstützt. Es werden nur deklarierte und unterstützte Funktionen angezeigt.",
+
+  // SitePack Manager
+  sitePacksPageDesc: "Community-Adapterpakete installieren und verwalten",
+  sitePacksInstalledTitle: "Installierte Pakete",
+  sitePacksInstalledDesc:
+    "Auf diesem Gerät gespeicherte Adapterpakete aktivieren, aktualisieren oder entfernen.",
+  sitePacksRegistryTitle: "Community-Registry",
+  sitePacksRegistryDesc:
+    "Adapterpakete durchsuchen, die aus der offiziellen Community-Registry zwischengespeichert wurden.",
+  sitePacksLocalImportTitle: "Lokaler JSON-Import",
+  sitePacksLocalImportDesc:
+    "Ein vertrauenswürdiges SitePack-Manifest von diesem Gerät importieren.",
+  sitePacksCheckUpdates: "Nach Updates suchen",
+  sitePacksRefreshRegistry: "Registry aktualisieren",
+  sitePacksInstall: "Installieren",
+  sitePacksUpdate: "Aktualisieren",
+  sitePacksUninstall: "Deinstallieren",
+  sitePacksInstalledBadge: "Installiert",
+  sitePacksEnabledLabel: "Aktiviert",
+  sitePacksSourceRegistry: "Registry",
+  sitePacksSourceLocal: "Lokaler Import",
+  sitePacksStatusAvailable: "Verfügbar",
+  sitePacksStatusDisabled: "Deaktiviert",
+  sitePacksStatusIncompatible: "Nicht kompatibel",
+  sitePacksNoInstalled: "Keine Site-Pakete installiert",
+  sitePacksNoInstalledDesc:
+    "Aus der Registry installieren oder eine vertrauenswürdige lokale JSON-Datei importieren.",
+  sitePacksRegistryEmpty: "Keine Pakete im Registry-Cache",
+  sitePacksRegistryEmptyDesc:
+    "Die Registry aktualisieren, um nach verfügbaren Community-Paketen zu suchen.",
+  sitePacksLoadFailed: "Site-Pakete konnten nicht geladen werden: {error}",
+  sitePacksOperationFailed: "Site-Paket-Aktion fehlgeschlagen: {error}",
+  sitePacksInvalidFile: "Diese JSON-Datei ist kein gültiges SitePack.",
+  sitePacksValidationErrorsTitle: "Validierungsdetails",
+  sitePacksStoredIssuesTitle: "Probleme gespeicherter Pakete",
+  sitePacksImportConfirmTitle: "Dieses Site-Paket importieren?",
+  sitePacksImportRisk:
+    "Site-Pakete können Seitenstile und das Verhalten von Ophel auf passenden Websites verändern. Importieren Sie nur Pakete aus vertrauenswürdigen Quellen.",
+  sitePacksImportSummary: "{name} ({id}), Version {version}, passt auf {matches} Website-Muster.",
+  sitePacksUninstallConfirmTitle: "Dieses Site-Paket deinstallieren?",
+  sitePacksUninstallConfirmDesc: "{name} von diesem Gerät entfernen?",
+  sitePacksUninstallKeepData: "Website-Einstellungen und Gesprächsdaten bleiben erhalten.",
+  sitePacksSavedSuccess: "{name} wurde installiert.",
+  sitePacksUpdatedSuccess: "{name} wurde aktualisiert.",
+  sitePacksRemovedSuccess: "{name} wurde deinstalliert.",
+  sitePacksStateChanged: "{name} ist jetzt {state}.",
+  sitePacksEnabledState: "aktiviert",
+  sitePacksDisabledState: "deaktiviert",
+  sitePacksPackUpToDate: "{name} ist aktuell.",
+  sitePacksPackUpdated: "{name} wurde auf Version {version} aktualisiert.",
+  sitePacksChangesApplyHint:
+    "Änderungen werden sofort gespeichert. Passende Seiten benötigen eventuell eine Berechtigung und ein Neuladen, bevor der Adapter aktiv wird.",
+  sitePacksLocalUpdateHint: "Durch Import einer neueren lokalen JSON-Datei aktualisieren",
+  sitePacksRequiresNewerApp: "Erfordert Ophel {version} oder neuer",
+  sitePacksMatchesCount: "{count} passende Muster",
 
   generalPageDesc: "Verhalten der Erweiterung konfigurieren",
   appearancePageDesc: "Visuelle Stile und Themes anpassen",

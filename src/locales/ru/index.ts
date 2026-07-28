@@ -18,6 +18,7 @@ export const ru = {
   // ======== Options Page Navigation ========
   navGeneral: "Общие",
   navSiteSettings: "Сайты",
+  navSitePacks: "Пакеты сайтов",
   navGlobalSearch: "Глобальный поиск",
   navAppearance: "Вид",
   navPageContent: "Контент",
@@ -32,6 +33,60 @@ export const ru = {
   communitySitePackBadge: "Пакет адаптера сообщества (основные функции)",
   communitySitePackDesc:
     "Этот сайт поддерживается пакетом адаптера сообщества. Отображаются только заявленные и поддерживаемые функции.",
+
+  // SitePack Manager
+  sitePacksPageDesc: "Установка и управление пакетами адаптеров сообщества",
+  sitePacksInstalledTitle: "Установленные пакеты",
+  sitePacksInstalledDesc:
+    "Включайте, обновляйте или удаляйте пакеты адаптеров, сохранённые на этом устройстве.",
+  sitePacksRegistryTitle: "Каталог сообщества",
+  sitePacksRegistryDesc:
+    "Просматривайте пакеты адаптеров, сохранённые из официального каталога сообщества.",
+  sitePacksLocalImportTitle: "Импорт локального JSON",
+  sitePacksLocalImportDesc:
+    "Импортируйте с этого устройства манифест SitePack из надёжного источника.",
+  sitePacksCheckUpdates: "Проверить обновления",
+  sitePacksRefreshRegistry: "Обновить каталог",
+  sitePacksInstall: "Установить",
+  sitePacksUpdate: "Обновить",
+  sitePacksUninstall: "Удалить",
+  sitePacksInstalledBadge: "Установлен",
+  sitePacksEnabledLabel: "Включён",
+  sitePacksSourceRegistry: "Каталог",
+  sitePacksSourceLocal: "Локальный импорт",
+  sitePacksStatusAvailable: "Доступен",
+  sitePacksStatusDisabled: "Отключён",
+  sitePacksStatusIncompatible: "Несовместим",
+  sitePacksNoInstalled: "Пакеты сайтов не установлены",
+  sitePacksNoInstalledDesc:
+    "Установите пакет из каталога или импортируйте надёжный локальный JSON-файл.",
+  sitePacksRegistryEmpty: "В кэше каталога нет пакетов",
+  sitePacksRegistryEmptyDesc: "Обновите каталог, чтобы проверить доступные пакеты сообщества.",
+  sitePacksLoadFailed: "Не удалось загрузить пакеты сайтов: {error}",
+  sitePacksOperationFailed: "Не удалось выполнить операцию с пакетом сайта: {error}",
+  sitePacksInvalidFile: "Этот JSON-файл не является допустимым SitePack.",
+  sitePacksValidationErrorsTitle: "Сведения о проверке",
+  sitePacksStoredIssuesTitle: "Проблемы сохранённых пакетов",
+  sitePacksImportConfirmTitle: "Импортировать этот пакет сайта?",
+  sitePacksImportRisk:
+    "Пакеты сайтов могут изменять стили страниц и поведение Ophel на подходящих сайтах. Импортируйте пакеты только из надёжных источников.",
+  sitePacksImportSummary: "{name} ({id}), версия {version}, шаблонов сайтов: {matches}.",
+  sitePacksUninstallConfirmTitle: "Удалить этот пакет сайта?",
+  sitePacksUninstallConfirmDesc: "Удалить {name} с этого устройства?",
+  sitePacksUninstallKeepData: "Настройки сайтов и данные разговоров будут сохранены.",
+  sitePacksSavedSuccess: "Пакет {name} установлен.",
+  sitePacksUpdatedSuccess: "Пакет {name} обновлён.",
+  sitePacksRemovedSuccess: "Пакет {name} удалён.",
+  sitePacksStateChanged: "{name}: теперь {state}.",
+  sitePacksEnabledState: "включён",
+  sitePacksDisabledState: "отключён",
+  sitePacksPackUpToDate: "{name} уже обновлён до последней версии.",
+  sitePacksPackUpdated: "{name} обновлён до версии {version}.",
+  sitePacksChangesApplyHint:
+    "Изменения сохраняются сразу. До активации адаптера подходящим страницам могут потребоваться разрешение и перезагрузка.",
+  sitePacksLocalUpdateHint: "Для обновления импортируйте более новый локальный JSON-файл",
+  sitePacksRequiresNewerApp: "Требуется Ophel {version} или новее",
+  sitePacksMatchesCount: "Шаблонов соответствия: {count}",
 
   generalPageDesc: "Настройте поведение расширения и интерфейс",
   appearancePageDesc: "Персонализация стилей и тем",

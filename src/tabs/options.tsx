@@ -10,6 +10,7 @@ import {
   BackupIcon,
   FeaturesIcon,
   GeneralIcon,
+  JSONFileIcon,
   PageContentIcon,
   PermissionsIcon,
 } from "~components/icons"
@@ -28,6 +29,7 @@ import FeaturesPage from "./options/pages/FeaturesPage"
 // 页面组件
 import GeneralPage from "./options/pages/GeneralPage"
 import PermissionsPage from "./options/pages/PermissionsPage"
+import SitePacksPage from "./options/pages/SitePacksPage"
 import SiteSettingsPage from "./options/pages/SiteSettingsPage"
 // 样式
 import "./options.css"
@@ -51,6 +53,12 @@ const NAV_ITEMS = [
     Icon: PageContentIcon,
     labelKey: "navSiteSettings",
     label: "站点设置",
+  },
+  {
+    id: "sitePacks",
+    Icon: JSONFileIcon,
+    labelKey: "navSitePacks",
+    label: "站点适配包",
   },
   {
     id: "appearance",
@@ -228,6 +236,8 @@ const OptionsPage = () => {
         return <AppearancePage siteId={siteId} initialTab={initialSubTab} />
       case "siteSettings":
         return <SiteSettingsPage siteId={siteId} initialTab={initialSubTab} />
+      case "sitePacks":
+        return <SitePacksPage />
       case "features":
         return <FeaturesPage siteId={siteId} initialTab={initialSubTab} />
       case "permissions":
