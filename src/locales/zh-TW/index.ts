@@ -28,6 +28,8 @@ export const zhTW = {
   // ======== Options 頁面標題與描述 ========
   // Site Settings
   siteSettingsPageDesc: "配置站點相關的頁面佈局和內容處理",
+  communitySitePackBadge: "社群適配包（核心功能）",
+  communitySitePackDesc: "此站點由社群適配包提供，只顯示適配包已宣告並支援的功能。",
 
   generalPageDesc: "配置擴充功能的基本行為和介面",
   appearancePageDesc: "自定義擴充功能的視覺樣式和主題",

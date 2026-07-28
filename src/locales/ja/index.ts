@@ -29,6 +29,9 @@ export const ja = {
   // ======== Options Page Titles & Descriptions ========
   // Site Settings
   siteSettingsPageDesc: "サイトごとのレイアウトとコンテンツ処理の設定",
+  communitySitePackBadge: "コミュニティアダプターパック（コア機能）",
+  communitySitePackDesc:
+    "このサイトはコミュニティアダプターパックによって提供され、宣言済みで対応している機能のみ表示されます。",
 
   generalPageDesc: "拡張機能の動作とインターフェースの設定",
   appearancePageDesc: "視覚スタイルとテーマのカスタマイズ",

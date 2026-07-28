@@ -5,24 +5,12 @@ import type {
   WidthSelectorConfig,
   ZenModeConfig,
 } from "../base"
+import type { SitePackCapability as AdapterFeatureCapability } from "../feature-capabilities"
 
 export const SITE_PACK_SCHEMA_VERSION = 1 as const
 export const SITE_CONFIG_PATCH_SCHEMA_VERSION = 1 as const
 
-export type SitePackCapability =
-  | "outline"
-  | "outline-user-queries"
-  | "conversation-list"
-  | "export-basic"
-  | "model-lock"
-  | "generation-detect"
-  | "new-chat"
-  | "stop-generation"
-  | "width"
-  | "zen"
-  | "clean"
-  | "prompt-insert"
-  | "reading-history"
+export type SitePackCapability = AdapterFeatureCapability
 
 export interface SiteDetectRule {
   /** 页面存在该选择器即判定命中。 */

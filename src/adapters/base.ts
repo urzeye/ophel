@@ -12,6 +12,8 @@ import { createExportAssetCollector, type ExportAssetCollector } from "~utils/ex
 import type { ExportBundle, ExportFormat, ExportMessage } from "~utils/exporter"
 import type { ExportPackaging } from "~utils/storage"
 
+import { getBuiltinFeatureCapabilities, type SitePackCapability } from "./feature-capabilities"
+
 // ==================== 类型定义 ====================
 
 export type { MarkdownFixerConfig }
@@ -652,6 +654,15 @@ export abstract class SiteAdapter {
   /** 返回站点声明式能力；默认空对象，未迁移站点继续使用旧方法。 */
   getCapabilities(): AdapterCapabilities {
     return {}
+  }
+
+  /** 返回功能入口能力；与 LayoutManager 使用的 getCapabilities() 保持独立。 */
+  getFeatureCapabilities(): Set<SitePackCapability> {
+    return getBuiltinFeatureCapabilities(this.getSiteId())
+  }
+
+  hasFeatureCapability(capability: SitePackCapability): boolean {
+    return this.getFeatureCapabilities().has(capability)
   }
 
   // ==================== 页面宽度控制 ====================

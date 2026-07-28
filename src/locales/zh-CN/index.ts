@@ -27,6 +27,8 @@ export const zhCN = {
   // ======== Options 页面标题与描述 ========
   // Site Settings
   siteSettingsPageDesc: "配置站点相关的页面布局和内容处理",
+  communitySitePackBadge: "社区适配包（核心功能）",
+  communitySitePackDesc: "此站点由社区适配包提供，仅显示适配包已声明并支持的功能。",
 
   generalPageDesc: "配置扩展的基本行为和界面",
   appearancePageDesc: "自定义扩展的视觉样式和主题",

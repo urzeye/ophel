@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react"
 
 import { RefreshIcon } from "~components/icons"
 import { Switch, Tooltip } from "~components/ui"
-import { SITE_IDS } from "~constants"
+import { SITE_IDS, isBuiltinSiteId } from "~constants"
 import { platform } from "~platform"
 import { useSettingsStore } from "~stores/settings-store"
 import { SettingCard } from "~tabs/options/components"
@@ -278,7 +278,15 @@ const AIStudioModelLockRow: React.FC<{
   )
 }
 
-const ModelLockSettingsContent: React.FC = () => {
+interface ModelLockSettingsContentProps {
+  siteId?: string
+  siteName?: string
+}
+
+const ModelLockSettingsContent: React.FC<ModelLockSettingsContentProps> = ({
+  siteId,
+  siteName,
+}) => {
   const { settings, setSettings } = useSettingsStore()
   const prerequisiteToastTemplate = t("enablePrerequisiteToast")
   const modelLockLabel = t("modelLockTitle")
@@ -286,6 +294,22 @@ const ModelLockSettingsContent: React.FC = () => {
     showToastThrottled(prerequisiteToastTemplate.replace("{setting}", label), 2000, {}, 1500, label)
 
   if (!settings) return null
+
+  if (siteId && !isBuiltinSiteId(siteId)) {
+    return (
+      <SettingCard title={t("modelLockTitle")} description={t("modelLockDesc")}>
+        <ModelLockRow
+          label={siteName || siteId}
+          siteKey={siteId}
+          settings={settings}
+          setSettings={setSettings}
+          placeholder={t("modelKeywordPlaceholder")}
+          onDisabledClick={() => showPrerequisiteToast(modelLockLabel)}
+          settingId="model-lock-community-site-pack"
+        />
+      </SettingCard>
+    )
+  }
 
   return (
     <SettingCard title={t("modelLockTitle")} description={t("modelLockDesc")}>

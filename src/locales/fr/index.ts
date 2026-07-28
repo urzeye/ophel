@@ -29,6 +29,9 @@ export const fr = {
   // ======== Options Page Titles & Descriptions ========
   // Site Settings
   siteSettingsPageDesc: "Configurer la mise en page et le traitement par site",
+  communitySitePackBadge: "Pack d'adaptation communautaire (fonctions principales)",
+  communitySitePackDesc:
+    "Ce site est pris en charge par un pack d'adaptation communautaire. Seules les fonctions déclarées et compatibles sont affichées.",
 
   generalPageDesc: "Configurer le comportement de l'extension",
   appearancePageDesc: "Personnaliser les styles visuels et les thèmes",

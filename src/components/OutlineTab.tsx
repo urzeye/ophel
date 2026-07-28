@@ -38,6 +38,7 @@ interface OutlineTabProps {
   conversationManager: ConversationManager
   onJumpBefore?: () => void
   isCodexOpen?: boolean
+  showUserQueryToggle?: boolean
 }
 
 const countOutlineNodes = (nodes: OutlineNode[]): number => {
@@ -703,6 +704,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
   conversationManager,
   onJumpBefore,
   isCodexOpen = false,
+  showUserQueryToggle = true,
 }) => {
   // 获取设置 - 使用 Zustand Store
   const { settings } = useSettingsStore()
@@ -1754,16 +1756,18 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
         <div className="gh-panel-toolbar">
           <div className="gh-panel-toolbar-group">
             {/* Group Mode */}
-            <Tooltip content={t("outlineShowUserQueries")}>
-              <button
-                type="button"
-                onClick={handleGroupModeToggle}
-                aria-label={t("outlineShowUserQueries")}
-                aria-pressed={showUserQueries}
-                className={`outline-toolbar-btn ${showUserQueries ? "active-subtle" : ""}`}>
-                <UserQueryIcon size={15} />
-              </button>
-            </Tooltip>
+            {showUserQueryToggle && (
+              <Tooltip content={t("outlineShowUserQueries")}>
+                <button
+                  type="button"
+                  onClick={handleGroupModeToggle}
+                  aria-label={t("outlineShowUserQueries")}
+                  aria-pressed={showUserQueries}
+                  className={`outline-toolbar-btn ${showUserQueries ? "active-subtle" : ""}`}>
+                  <UserQueryIcon size={15} />
+                </button>
+              </Tooltip>
+            )}
 
             {/* Bookmark Mode Toggle */}
             <Tooltip content={t("bookmarkMode")}>

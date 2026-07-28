@@ -29,6 +29,9 @@ export const ko = {
   // ======== Options Page Titles & Descriptions ========
   // Site Settings
   siteSettingsPageDesc: "사이트별 레이아웃 및 콘텐츠 처리 구성",
+  communitySitePackBadge: "커뮤니티 어댑터 팩(핵심 기능)",
+  communitySitePackDesc:
+    "이 사이트는 커뮤니티 어댑터 팩으로 제공되며, 선언되고 지원되는 기능만 표시됩니다.",
 
   generalPageDesc: "확장 프로그램 동작 및 인터페이스 구성",
   appearancePageDesc: "시각적 스타일 및 테마 사용자 정의",

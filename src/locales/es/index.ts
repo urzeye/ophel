@@ -29,6 +29,9 @@ export const es = {
   // ======== Options Page Titles & Descriptions ========
   // Site Settings
   siteSettingsPageDesc: "Configurar diseño y procesamiento por sitio",
+  communitySitePackBadge: "Paquete adaptador de la comunidad (funciones principales)",
+  communitySitePackDesc:
+    "Este sitio funciona mediante un paquete adaptador de la comunidad. Solo se muestran las funciones declaradas y compatibles.",
 
   generalPageDesc: "Configurar el comportamiento de la extensión",
   appearancePageDesc: "Personalizar estilos visuales y temas",

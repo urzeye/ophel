@@ -6,6 +6,7 @@ import type {
   SitePackManifest,
 } from "./types"
 import { SITE_CONFIG_PATCH_SCHEMA_VERSION, SITE_PACK_SCHEMA_VERSION } from "./types"
+import { SITE_PACK_CAPABILITIES as SITE_PACK_CAPABILITY_VALUES } from "../feature-capabilities"
 
 export const SITE_PACK_MAX_BYTES = 64 * 1024
 export const SITE_PACK_MAX_ARRAY_ITEMS = 50
@@ -80,21 +81,7 @@ interface SemanticVersion {
 
 const DANGEROUS_OBJECT_KEYS = new Set(["__proto__", "prototype", "constructor"])
 
-const SITE_PACK_CAPABILITIES = new Set<SitePackCapability>([
-  "outline",
-  "outline-user-queries",
-  "conversation-list",
-  "export-basic",
-  "model-lock",
-  "generation-detect",
-  "new-chat",
-  "stop-generation",
-  "width",
-  "zen",
-  "clean",
-  "prompt-insert",
-  "reading-history",
-])
+const SITE_PACK_CAPABILITIES = new Set<SitePackCapability>(SITE_PACK_CAPABILITY_VALUES)
 
 const CONFIG_KEYS = [
   "theme",

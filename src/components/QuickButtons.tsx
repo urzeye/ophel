@@ -8,11 +8,18 @@ import React, {
   useSyncExternalStore,
 } from "react"
 
+import type { SitePackCapability } from "~adapters/feature-capabilities"
 import { getAdapter } from "~adapters/index"
 import { ThemeDarkIcon, ThemeLightIcon, EyeClosedIcon } from "~components/icons"
 import { LoadingOverlay } from "~components/LoadingOverlay"
 import { Tooltip } from "~components/ui/Tooltip"
-import { COLLAPSED_BUTTON_DEFS, TOOLS_MENU_IDS, TOOLS_MENU_ITEMS } from "~constants"
+import {
+  COLLAPSED_BUTTON_DEFS,
+  TOOLS_MENU_IDS,
+  TOOLS_MENU_ITEMS,
+  isBuiltinSiteId,
+  type ToolsMenuId,
+} from "~constants"
 import type { ThemeTransitionOrigin } from "~core/theme-manager"
 import { anchorStore } from "~stores/anchor-store"
 import { useSettingsStore } from "~stores/settings-store"
@@ -96,6 +103,20 @@ const LEAVE_WINDOW_RETAIN_MS = 1500
 // 感应距离为 0 时，鼠标须在水滴上停留该时长才展开（防止划过触发）
 const HOVER_DWELL_MS = 300
 
+const COLLAPSED_BUTTON_CAPABILITY_REQUIREMENTS: Partial<Record<string, SitePackCapability>> = {
+  zenMode: "zen",
+}
+
+const TOOLS_MENU_CAPABILITY_REQUIREMENTS: Partial<Record<ToolsMenuId, SitePackCapability>> = {
+  [TOOLS_MENU_IDS.EXPORT]: "export-basic",
+  [TOOLS_MENU_IDS.SEGMENTED_EXPORT]: "export-basic",
+  [TOOLS_MENU_IDS.COPY_MARKDOWN]: "export-basic",
+  [TOOLS_MENU_IDS.MOVE]: "conversation-list",
+  [TOOLS_MENU_IDS.SET_TAG]: "conversation-list",
+  [TOOLS_MENU_IDS.MODEL_LOCK]: "model-lock",
+  [TOOLS_MENU_IDS.CLEANUP]: "outline",
+}
+
 export const QuickButtons: React.FC<QuickButtonsProps> = ({
   isPanelExpanded,
   onPanelToggle,
@@ -141,6 +162,30 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   const persistedGroupPosition = quickButtonsSettings.position ?? null
   const proximityRadius = quickButtonsSettings.proximityRadius ?? 150
   const siteId = adapter?.getSiteId() || "_default"
+  const featureCapabilities = useMemo(
+    () => adapter?.getFeatureCapabilities() ?? new Set<SitePackCapability>(),
+    [adapter],
+  )
+  const enforceFeatureCapabilities = Boolean(adapter && !isBuiltinSiteId(siteId))
+  const supportsCapability = useCallback(
+    (capability: SitePackCapability) =>
+      !enforceFeatureCapabilities || featureCapabilities.has(capability),
+    [enforceFeatureCapabilities, featureCapabilities],
+  )
+  const isCollapsedButtonSupported = useCallback(
+    (id: string) => {
+      const capability = COLLAPSED_BUTTON_CAPABILITY_REQUIREMENTS[id]
+      return !capability || supportsCapability(capability)
+    },
+    [supportsCapability],
+  )
+  const isToolsMenuItemSupported = useCallback(
+    (id: ToolsMenuId) => {
+      const capability = TOOLS_MENU_CAPABILITY_REQUIREMENTS[id]
+      return !capability || supportsCapability(capability)
+    },
+    [supportsCapability],
+  )
   const siteTheme = getSiteTheme(currentSettings, siteId)
   const resolvedThemeMode = themeMode || (siteTheme.mode === "dark" ? "dark" : "light")
   const panelSparkleColor = resolvedThemeMode === "dark" ? "brand" : "currentColor"
@@ -330,6 +375,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     for (const btnConfig of collapsedButtonsOrder) {
       // manualAnchor 暂时禁用，跳过
       if (btnConfig.id === "manualAnchor") continue
+      if (!isCollapsedButtonSupported(btnConfig.id)) continue
       const def = COLLAPSED_BUTTON_DEFS[btnConfig.id]
       if (!def) continue
       const isEnabled = def.canToggle ? btnConfig.enabled : true
@@ -349,6 +395,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     isPanelExpanded,
     collapsedButtonsOrder,
     currentSettings.panel?.panelMode,
+    isCollapsedButtonSupported,
     quickButtonsSettings.hideWhenPanelOpen,
   ])
 
@@ -713,6 +760,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     },
     zenMode: (e) => {
       e?.stopPropagation()
+      if (!supportsCapability("zen")) return
       const siteId = adapter?.getSiteId() || "_default"
       const currentZenMode = getSiteZenMode(settings || DEFAULT_SETTINGS, siteId)
       const newZenEnabled = !currentZenMode.enabled
@@ -721,7 +769,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
         [siteId]: { ...currentZenMode, enabled: newZenEnabled },
       })
       // 开启禅模式时自动开启净化模式，关闭禅模式时不变净化模式
-      if (newZenEnabled) {
+      if (newZenEnabled && supportsCapability("clean")) {
         const currentCleanMode = settings?.layout?.cleanMode?.[siteId] ?? { enabled: true }
         updateNestedSetting("layout", "cleanMode", {
           ...(settings?.layout?.cleanMode ?? {}),
@@ -742,6 +790,8 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     def: (typeof COLLAPSED_BUTTON_DEFS)[string],
     enabled: boolean,
   ) => {
+    if (!isCollapsedButtonSupported(id)) return null
+
     const isPanelOnly = def.isPanelOnly
     const isDisabled = !enabled
     const isFloatingToolbarBtn = id === "floatingToolbar"
@@ -879,6 +929,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
         if (btnConfig.id === "manualAnchor") return null
         const def = COLLAPSED_BUTTON_DEFS[btnConfig.id]
         if (!def) return null
+        if (!isCollapsedButtonSupported(btnConfig.id)) return null
 
         const isEnabled = def.canToggle ? btnConfig.enabled : true
         if (!isEnabled) return null
@@ -954,6 +1005,8 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     const enabledSet = new Set(enabledIds)
 
     for (const item of TOOLS_MENU_ITEMS) {
+      if (!isToolsMenuItemSupported(item.id as ToolsMenuId)) continue
+
       // Settings 按钮始终显示
       const isVisible = item.isSystem || enabledSet.has(item.id)
       if (!isVisible) continue

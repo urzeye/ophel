@@ -13,7 +13,6 @@ import type {
   Folder,
   Tag,
 } from "~core/conversation-manager"
-import { SITE_IDS } from "~constants"
 import { platform } from "~platform"
 import { useConversationsStore } from "~stores/conversations-store"
 import { useFoldersStore } from "~stores/folders-store"
@@ -162,14 +161,6 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
   manager,
   onInteractionStateChange,
 }) => {
-  const unsupportedSiteLabels: Record<string, string> = {
-    [SITE_IDS.CHATGLM]: "ChatGLM",
-    [SITE_IDS.ZAI]: "Z.ai",
-    [SITE_IDS.QIANWEN]: "Qianwen",
-    [SITE_IDS.QWENAI]: "Qwen Studio",
-    [SITE_IDS.IMA]: "ima",
-  }
-
   // 设置 - 使用 Zustand store，确保设置变更实时生效
   const { settings } = useSettingsStore()
   const conversationsStoreSnapshot = useConversationsStore((state) => state.conversations)
@@ -200,9 +191,8 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
   const [isNarrowLayout, setIsNarrowLayout] = useState(false)
   const currentLang = getCurrentLang()
 
-  const siteId = manager.siteAdapter?.getSiteId?.()
-  const isConversationUnsupported = !!(siteId && unsupportedSiteLabels[siteId])
-  const unsupportedSiteLabel = siteId ? unsupportedSiteLabels[siteId] || siteId : ""
+  const isConversationUnsupported = !manager.siteAdapter.hasFeatureCapability("conversation-list")
+  const unsupportedSiteLabel = manager.siteAdapter.getName() || manager.siteAdapter.getSiteId()
   const unsupportedTitle = t("conversationsUnsupportedTitle", { site: unsupportedSiteLabel })
   const unsupportedDesc = t("conversationsUnsupportedDesc")
   const unsupportedSync = t("conversationsUnsupportedSync", { site: unsupportedSiteLabel })

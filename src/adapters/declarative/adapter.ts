@@ -11,6 +11,7 @@ import {
   type WidthSelectorConfig,
   type ZenModeConfig,
 } from "../base"
+import type { SitePackCapability } from "../feature-capabilities"
 
 import type { SitePackManifest } from "./types"
 import { siteMatchPatternMatchesUrl } from "./match-pattern"
@@ -97,9 +98,11 @@ export class DeclarativeAdapter extends SiteAdapter {
   private readonly conversationIdPattern: RegExp | null
   private readonly sessionIdPattern: RegExp | null
   private readonly newConversationPathPatterns: RegExp[] | null
+  private readonly featureCapabilities: ReadonlySet<SitePackCapability>
 
   constructor(private readonly manifest: SitePackManifest) {
     super()
+    this.featureCapabilities = new Set(manifest.capabilities)
     this.conversationIdPattern = manifest.conversation
       ? new RegExp(manifest.conversation.idFrom.regex)
       : null
@@ -126,6 +129,10 @@ export class DeclarativeAdapter extends SiteAdapter {
 
   getThemeColors(): { primary: string; secondary: string } {
     return { ...(this.manifest.theme ?? DEFAULT_THEME_COLORS) }
+  }
+
+  getFeatureCapabilities(): Set<SitePackCapability> {
+    return new Set(this.featureCapabilities)
   }
 
   getTextareaSelectors(): string[] {

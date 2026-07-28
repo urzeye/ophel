@@ -29,6 +29,9 @@ export const en = {
   // ======== Options Page Titles & Descriptions ========
   // Site Settings
   siteSettingsPageDesc: "Configure site-specific layout and content processing",
+  communitySitePackBadge: "Community adapter pack (core features)",
+  communitySitePackDesc:
+    "This site is provided by a community adapter pack. Only declared and supported features are shown.",
 
   generalPageDesc: "Configure extension behavior and interface",
   appearancePageDesc: "Customize visual styles and themes",

@@ -1,3 +1,5 @@
+import { SITE_IDS } from "~constants/defaults"
+
 import type { ExportConfig, ModelSwitcherConfig, WidthSelectorConfig, ZenModeConfig } from "./base"
 import type {
   BuiltinSiteConfig,
@@ -6,6 +8,7 @@ import type {
   SitePackSelectors,
   SitePrivateSelectors,
 } from "./declarative"
+import { BUILTIN_FEATURE_CAPABILITIES } from "./feature-capabilities"
 
 interface ZaiSiteSelectors extends SitePackSelectors {
   textarea: string[]
@@ -127,19 +130,7 @@ const createZaiConfig = (): ZaiSiteConfig => {
   const blockquote = "blockquote"
 
   return {
-    capabilities: [
-      "outline",
-      "outline-user-queries",
-      "export-basic",
-      "model-lock",
-      "generation-detect",
-      "new-chat",
-      "stop-generation",
-      "width",
-      "zen",
-      "prompt-insert",
-      "reading-history",
-    ],
+    capabilities: [...BUILTIN_FEATURE_CAPABILITIES[SITE_IDS.ZAI]],
     selectors: {
       textarea: ["#chat-input", "textarea#chat-input"],
       responseContainer: chatScrollContainer,

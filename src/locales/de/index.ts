@@ -29,6 +29,9 @@ export const de = {
   // ======== Options Page Titles & Descriptions ========
   // Site Settings
   siteSettingsPageDesc: "Layout und Verarbeitung pro Website konfigurieren",
+  communitySitePackBadge: "Community-Adapterpaket (Kernfunktionen)",
+  communitySitePackDesc:
+    "Diese Website wird durch ein Community-Adapterpaket unterstützt. Es werden nur deklarierte und unterstützte Funktionen angezeigt.",
 
   generalPageDesc: "Verhalten der Erweiterung konfigurieren",
   appearancePageDesc: "Visuelle Stile und Themes anpassen",

@@ -9,6 +9,7 @@ import React, {
 } from "react"
 
 import type { SiteAdapter } from "~adapters/base"
+import type { SitePackCapability } from "~adapters/feature-capabilities"
 import {
   AnchorIcon,
   ConversationIcon,
@@ -28,7 +29,7 @@ import {
 } from "~components/icons"
 import { SparkleIcon } from "~components/icons/SparkleIcon"
 import { MagicCodex } from "~components/MagicCodex"
-import { TAB_IDS } from "~constants"
+import { TAB_IDS, isBuiltinSiteId } from "~constants"
 import { isMacOS } from "~constants/shortcuts"
 import { buildStructuredTips } from "~utils/build-structured-tips"
 import type { ConversationManager } from "~core/conversation-manager"
@@ -130,6 +131,12 @@ const PANEL_DEFAULT_HOVER_WIDTH = 520
 const HOVER_WIDTH_POINTER_QUERY = "(hover: hover) and (pointer: fine)"
 const HOVER_WIDTH_RELEASE_DELAY_MS = 160
 
+const PANEL_TAB_CAPABILITIES: Partial<Record<string, SitePackCapability>> = {
+  [TAB_IDS.PROMPTS]: "prompt-insert",
+  [TAB_IDS.CONVERSATIONS]: "conversation-list",
+  [TAB_IDS.OUTLINE]: "outline",
+}
+
 const clampPanelWidth = (value: number) =>
   Math.min(PANEL_MAX_WIDTH, Math.max(PANEL_MIN_WIDTH, Math.round(value)))
 
@@ -170,6 +177,40 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   const currentSettings = settings || DEFAULT_SETTINGS
   const tabOrder = currentSettings.features?.order || DEFAULT_SETTINGS.features.order
   const siteId = adapter?.getSiteId() || "_default"
+  const featureCapabilities = useMemo(
+    () => adapter?.getFeatureCapabilities() ?? new Set<SitePackCapability>(),
+    [adapter],
+  )
+  const enforceFeatureCapabilities = Boolean(adapter && !isBuiltinSiteId(siteId))
+  const visibleTabs = useMemo(
+    () =>
+      tabOrder.filter((tabId) => {
+        if (tabId === TAB_IDS.SETTINGS) return false
+        if (tabId === TAB_IDS.PROMPTS && currentSettings.features?.prompts?.enabled === false) {
+          return false
+        }
+        if (
+          tabId === TAB_IDS.CONVERSATIONS &&
+          currentSettings.features?.conversations?.enabled === false
+        ) {
+          return false
+        }
+        if (tabId === TAB_IDS.OUTLINE && currentSettings.features?.outline?.enabled === false) {
+          return false
+        }
+
+        const requiredCapability = PANEL_TAB_CAPABILITIES[tabId]
+        return (
+          !enforceFeatureCapabilities ||
+          !requiredCapability ||
+          featureCapabilities.has(requiredCapability)
+        )
+      }),
+    [currentSettings.features, enforceFeatureCapabilities, featureCapabilities, tabOrder],
+  )
+  const canOpenNewTab = !enforceFeatureCapabilities || featureCapabilities.has("new-chat")
+  const canShowOutlineUserQueries =
+    !enforceFeatureCapabilities || featureCapabilities.has("outline-user-queries")
   const supportedPlatforms = useSupportedAiPlatforms()
   const currentPromptPlatform = useMemo(
     () => supportedPlatforms.find((platform) => platform.id === siteId) ?? null,
@@ -784,17 +825,10 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     setShowCodex(false)
   }, [])
 
-  // 获取排序后的首个 tab
-  // tabOrder 是 string[]，数组顺序就是显示顺序
-  const getFirstTab = (order: string[]): string => {
-    if (order && order.length > 0) {
-      return order[0]
-    }
-    return TAB_IDS.PROMPTS
-  }
-
   // 初始化 activeTab（先用默认值，等 settings 加载后更新）
-  const [activeTab, setActiveTab] = useState<string>(TAB_IDS.PROMPTS)
+  const [activeTab, setActiveTab] = useState<string>(() =>
+    visibleTabs.includes(TAB_IDS.PROMPTS) ? TAB_IDS.PROMPTS : visibleTabs[0] ?? "",
+  )
   const [isInitialized, setIsInitialized] = useState(false)
   const [draggedPanelTab, setDraggedPanelTab] = useState<string | null>(null)
   const [dragOverPanelTab, setDragOverPanelTab] = useState<string | null>(null)
@@ -803,33 +837,35 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   // settings 加载完成后，设置为用户设置的首个 tab
   useEffect(() => {
     if (settings && !isInitialized) {
-      setActiveTab(getFirstTab(settings.features?.order))
+      setActiveTab(visibleTabs[0] ?? "")
       setIsInitialized(true)
     }
-  }, [settings, isInitialized])
+  }, [settings, isInitialized, visibleTabs])
 
-  // 当 tabOrder 变化时，如果当前 activeTab 不在列表中，则切换到首个 tab
+  // 当设置或能力变化时，如果当前 activeTab 不可见，则切换到首个可见 tab
   useEffect(() => {
-    if (isInitialized && tabOrder && tabOrder.length > 0) {
-      if (!tabOrder.includes(activeTab)) {
-        setActiveTab(getFirstTab(tabOrder))
-      }
+    if (isInitialized && !visibleTabs.includes(activeTab)) {
+      setActiveTab(visibleTabs[0] ?? "")
     }
-  }, [tabOrder, isInitialized, activeTab])
+  }, [visibleTabs, isInitialized, activeTab])
 
   // 监听快捷键触发的 tab 切换事件
   useEffect(() => {
     const handleSwitchToOutline = () => {
-      setActiveTab(TAB_IDS.OUTLINE)
+      if (visibleTabs.includes(TAB_IDS.OUTLINE)) {
+        setActiveTab(TAB_IDS.OUTLINE)
+      }
     }
     const handleSwitchToConversations = () => {
-      setActiveTab(TAB_IDS.CONVERSATIONS)
+      if (visibleTabs.includes(TAB_IDS.CONVERSATIONS)) {
+        setActiveTab(TAB_IDS.CONVERSATIONS)
+      }
     }
 
     const handleSwitchTab = (e: CustomEvent<{ index: number }>) => {
       const idx = e.detail?.index
-      if (typeof idx === "number" && tabOrder[idx]) {
-        setActiveTab(tabOrder[idx])
+      if (typeof idx === "number" && visibleTabs[idx]) {
+        setActiveTab(visibleTabs[idx])
       }
     }
 
@@ -844,7 +880,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
       window.removeEventListener("ophel:locateConversation", handleSwitchToConversations)
       window.removeEventListener("ophel:switchTab", handleSwitchTab as EventListener)
     }
-  }, [tabOrder])
+  }, [visibleTabs])
 
   // 防止原生站点在面板输入时抢占焦点或吞掉按键
   useEffect(() => {
@@ -1145,21 +1181,6 @@ export const MainPanel: React.FC<MainPanelProps> = ({
 
   if (!isOpen) return null
 
-  // 过滤出启用的 Tab（设置页通过 header 按钮进入，不在 tab 栏显示）
-  const visibleTabs = tabOrder.filter((tabId) => {
-    if (tabId === TAB_IDS.SETTINGS) return false // 设置在 header 中
-    // 检查每个 Tab 的 enabled 状态
-    if (tabId === TAB_IDS.PROMPTS && currentSettings.features?.prompts?.enabled === false)
-      return false
-    if (
-      tabId === TAB_IDS.CONVERSATIONS &&
-      currentSettings.features?.conversations?.enabled === false
-    )
-      return false
-    if (tabId === TAB_IDS.OUTLINE && currentSettings.features?.outline?.enabled === false)
-      return false
-    return true
-  })
   const canDragPanelTabs = visibleTabs.length > 1
 
   const resetPanelTabDragState = () => {
@@ -1435,7 +1456,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             )}
 
             {/* 新标签页按钮 - 受 openInNewTab 设置控制 */}
-            {currentSettings.tab?.openInNewTab && (
+            {currentSettings.tab?.openInNewTab && canOpenNewTab && (
               <Tooltip content={t("newTabTooltip")}>
                 <button
                   type="button"
@@ -1556,37 +1577,40 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         </div>
 
         {/* Content - 内容区 */}
-        <div
-          id={`gh-panel-tabpanel-${activeTab}`}
-          className="gh-panel-content"
-          role="tabpanel"
-          aria-labelledby={`gh-panel-tab-${activeTab}`}>
-          {activeTab === TAB_IDS.PROMPTS && (
-            <PromptsTab
-              manager={promptManager}
-              adapter={adapter}
-              currentPlatform={currentPromptPlatform}
-              selectedPlatforms={selectedPromptPlatforms}
-              setSelectedPlatforms={setSelectedPromptPlatforms}
-              selectedPromptId={selectedPromptId}
-              onPromptSelect={onPromptSelect}
-            />
-          )}
-          {activeTab === TAB_IDS.CONVERSATIONS && (
-            <ConversationsTab
-              manager={conversationManager}
-              onInteractionStateChange={onInteractionStateChange}
-            />
-          )}
-          {activeTab === TAB_IDS.OUTLINE && (
-            <OutlineTab
-              manager={outlineManager}
-              conversationManager={conversationManager}
-              onJumpBefore={saveAnchor}
-              isCodexOpen={showCodex}
-            />
-          )}
-        </div>
+        {visibleTabs.includes(activeTab) && (
+          <div
+            id={`gh-panel-tabpanel-${activeTab}`}
+            className="gh-panel-content"
+            role="tabpanel"
+            aria-labelledby={`gh-panel-tab-${activeTab}`}>
+            {activeTab === TAB_IDS.PROMPTS && (
+              <PromptsTab
+                manager={promptManager}
+                adapter={adapter}
+                currentPlatform={currentPromptPlatform}
+                selectedPlatforms={selectedPromptPlatforms}
+                setSelectedPlatforms={setSelectedPromptPlatforms}
+                selectedPromptId={selectedPromptId}
+                onPromptSelect={onPromptSelect}
+              />
+            )}
+            {activeTab === TAB_IDS.CONVERSATIONS && (
+              <ConversationsTab
+                manager={conversationManager}
+                onInteractionStateChange={onInteractionStateChange}
+              />
+            )}
+            {activeTab === TAB_IDS.OUTLINE && (
+              <OutlineTab
+                manager={outlineManager}
+                conversationManager={conversationManager}
+                onJumpBefore={saveAnchor}
+                isCodexOpen={showCodex}
+                showUserQueryToggle={canShowOutlineUserQueries}
+              />
+            )}
+          </div>
+        )}
 
         {/* Footer - 底部固定按钮 */}
         <div className="gh-panel-footer">

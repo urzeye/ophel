@@ -4,6 +4,7 @@
  */
 import React, { useEffect, useRef, useState } from "react"
 
+import type { SiteAdapter } from "~adapters/base"
 import {
   AboutIcon,
   AppearanceIcon,
@@ -114,7 +115,7 @@ const NAV_ITEMS = [
 interface SettingsModalProps {
   isOpen: boolean
   onClose: () => void
-  siteId: string
+  adapter: SiteAdapter
   onOpenReleaseNotes?: () => void
   onPanelHoverWidthPreviewChange?: (isActive: boolean) => void
 }
@@ -122,10 +123,11 @@ interface SettingsModalProps {
 export const SettingsModal: React.FC<SettingsModalProps> = ({
   isOpen,
   onClose,
-  siteId,
+  adapter,
   onOpenReleaseNotes,
   onPanelHoverWidthPreviewChange,
 }) => {
+  const siteId = adapter.getSiteId()
   const [activePage, setActivePage] = useState<string>(NAV_IDS.GENERAL)
   const [initialSubTab, setInitialSubTab] = useState<string | undefined>(undefined)
   const [locateRequest, setLocateRequest] = useState<{ settingId: string; token: number } | null>(
@@ -388,8 +390,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         return (
           <SiteSettingsPage
             siteId={siteId}
+            adapter={adapter}
             initialTab={initialSubTab}
-            modelLockContent={<ModelLockSettingsContent />}
+            modelLockContent={
+              <ModelLockSettingsContent siteId={siteId} siteName={adapter.getName()} />
+            }
           />
         )
       case NAV_IDS.APPEARANCE:

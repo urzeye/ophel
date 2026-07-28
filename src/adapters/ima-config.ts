@@ -1,3 +1,5 @@
+import { SITE_IDS } from "~constants/defaults"
+
 import type {
   ExportConfig,
   ModelSwitcherConfig,
@@ -12,6 +14,7 @@ import type {
   SitePackSelectors,
   SitePrivateSelectors,
 } from "./declarative"
+import { BUILTIN_FEATURE_CAPABILITIES } from "./feature-capabilities"
 
 interface ImaSiteSelectors extends SitePackSelectors {
   textarea: string[]
@@ -145,20 +148,7 @@ const createImaConfig = (): ImaSiteConfig => {
     '[class*="mainContainer"] > [class*="container"]:has(> [class*="centerContent"])'
 
   return {
-    capabilities: [
-      "outline",
-      "outline-user-queries",
-      "export-basic",
-      "model-lock",
-      "generation-detect",
-      "new-chat",
-      "stop-generation",
-      "width",
-      "zen",
-      "clean",
-      "prompt-insert",
-      "reading-history",
-    ],
+    capabilities: [...BUILTIN_FEATURE_CAPABILITIES[SITE_IDS.IMA]],
     selectors: {
       textarea: [input],
       responseContainer,

@@ -29,6 +29,9 @@ export const ru = {
   // ======== Options Page Titles & Descriptions ========
   // Site Settings
   siteSettingsPageDesc: "Настройка макета и обработки контента для каждого сайта",
+  communitySitePackBadge: "Пакет адаптера сообщества (основные функции)",
+  communitySitePackDesc:
+    "Этот сайт поддерживается пакетом адаптера сообщества. Отображаются только заявленные и поддерживаемые функции.",
 
   generalPageDesc: "Настройте поведение расширения и интерфейс",
   appearancePageDesc: "Персонализация стилей и тем",

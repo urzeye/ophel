@@ -3235,7 +3235,7 @@ export const App = () => {
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={closeSettingsModal}
-        siteId={adapter.getSiteId()}
+        adapter={adapter}
         onOpenReleaseNotes={canShowCurrentReleaseNotes ? openReleaseNotes : undefined}
         onPanelHoverWidthPreviewChange={setIsHoverWidthSettingsPreviewActive}
       />
