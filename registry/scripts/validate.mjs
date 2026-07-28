@@ -4,6 +4,7 @@ import { fileURLToPath, pathToFileURL } from "node:url"
 
 import safeRegex from "safe-regex2"
 
+import { siteMatchPatternsOverlap } from "../../src/adapters/declarative/match-pattern.ts"
 import { resolveSiteConfig } from "../../src/adapters/declarative/merge.ts"
 import {
   validateSiteConfigPatch,
@@ -11,6 +12,8 @@ import {
 } from "../../src/adapters/declarative/validate.ts"
 import { SITE_IDS, SUPPORTED_AI_PLATFORMS } from "../../src/constants/defaults.ts"
 import { resolveBuiltinConfig } from "../../src/core/builtin-config-registry.ts"
+
+export { siteMatchPatternsOverlap as matchPatternsOverlap }
 
 const SCRIPT_DIRECTORY = path.dirname(fileURLToPath(import.meta.url))
 
@@ -164,29 +167,6 @@ const validateSources = async (sources, validator) => {
   return { values, errors }
 }
 
-const parseMatchHost = (pattern) => {
-  const authority = /^https:\/\/([^/]+)\//.exec(pattern)?.[1].toLowerCase()
-  if (!authority) throw new Error(`Validated match pattern could not be parsed: ${pattern}`)
-
-  const host = authority.startsWith("[")
-    ? authority.slice(0, authority.indexOf("]") + 1)
-    : authority.replace(/:\d+$/, "")
-  const wildcard = host.startsWith("*.")
-  return { host: wildcard ? host.slice(2) : host, wildcard }
-}
-
-const isSameOrSubdomain = (candidate, parent) =>
-  candidate === parent || candidate.endsWith(`.${parent}`)
-
-export const matchPatternsOverlap = (leftPattern, rightPattern) => {
-  const left = parseMatchHost(leftPattern)
-  const right = parseMatchHost(rightPattern)
-  if (left.host === right.host) return true
-  if (left.wildcard && isSameOrSubdomain(right.host, left.host)) return true
-  if (right.wildcard && isSameOrSubdomain(left.host, right.host)) return true
-  return false
-}
-
 const collectRegistryPolicyErrors = (packs, patches) => {
   const errors = []
   const packIds = new Map()
@@ -218,7 +198,7 @@ const collectRegistryPolicyErrors = (packs, patches) => {
 
     matches.forEach((pattern, matchIndex) => {
       for (const builtin of builtinMatches) {
-        if (!matchPatternsOverlap(pattern, builtin.pattern)) continue
+        if (!siteMatchPatternsOverlap(pattern, builtin.pattern)) continue
         errors.push(
           formatIssue(
             source.displayPath,
@@ -239,7 +219,7 @@ const collectRegistryPolicyErrors = (packs, patches) => {
       for (let matchIndex = 0; matchIndex < right.manifest.matches.length; matchIndex += 1) {
         const rightPattern = right.manifest.matches[matchIndex]
         const leftPattern = left.manifest.matches.find((pattern) =>
-          matchPatternsOverlap(pattern, rightPattern),
+          siteMatchPatternsOverlap(pattern, rightPattern),
         )
         if (!leftPattern) continue
         errors.push(

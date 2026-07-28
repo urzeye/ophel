@@ -1,4 +1,5 @@
 import { DEFAULT_SHORTCUTS_SETTINGS } from "~constants/shortcuts"
+import { createRuntimePackManager } from "~core/pack-manager-runtime"
 import { createRuntimeRemoteConfigManager } from "~core/remote-config-runtime"
 import {
   REMOTE_CONFIG_ALARM_NAME,
@@ -70,6 +71,18 @@ const remoteConfigManager = createRuntimeRemoteConfigManager(
   extensionStorage,
   extensionRegistryTransport,
 )
+const packManager = createRuntimePackManager(extensionStorage)
+
+async function syncInstalledRegistryPacks(): Promise<void> {
+  try {
+    const result = await packManager.syncRegistryPacks()
+    if (result.issues.length > 0) {
+      console.warn("[Ophel] Installed SitePack sync issues:", result.issues)
+    }
+  } catch (error) {
+    console.error("[Ophel] Failed to sync installed SitePacks:", error)
+  }
+}
 
 async function shouldRunAutomaticRemoteConfig(): Promise<boolean> {
   try {
@@ -90,6 +103,8 @@ async function runRemoteConfigCheck(force: boolean) {
   const result = await remoteConfigManager.checkForUpdates({ force })
   if (result.status === "failed") {
     console.warn("[Ophel] Remote config check failed:", result.error)
+  } else {
+    await syncInstalledRegistryPacks()
   }
   return result
 }

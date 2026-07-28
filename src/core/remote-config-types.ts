@@ -1,5 +1,9 @@
-import type { BuiltinSiteConfig, SiteConfigPatch, SitePackManifest } from "~adapters/declarative"
-import { compareSemanticVersions, isValidSemanticVersion } from "~adapters/declarative"
+import type {
+  BuiltinSiteConfig,
+  SiteConfigPatch,
+  SitePackManifest,
+} from "~adapters/declarative/types"
+import { compareSemanticVersions, isValidSemanticVersion } from "~adapters/declarative/validate"
 
 import { REMOTE_CONFIG_INDEX_SCHEMA_VERSION } from "./remote-config-constants"
 import { REMOTE_CONFIG_STORAGE_SCHEMA_VERSION } from "./remote-config-storage-constants"
