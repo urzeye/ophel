@@ -1,4 +1,5 @@
 import type { NetworkMonitorRequestBodyRule } from "~adapters/base"
+import type { RemoteConfigCheckResult } from "~core/remote-config-types"
 
 /**
  * Messaging Protocol Definitions
@@ -32,6 +33,33 @@ export interface ProxyFetchPayload {
 
 export interface ProxyFetchMessage extends ProxyFetchPayload {
   type: typeof MSG_PROXY_FETCH
+}
+
+export const MSG_CHECK_REMOTE_CONFIG = "CHECK_REMOTE_CONFIG"
+
+export interface CheckRemoteConfigPayload {
+  force?: boolean
+}
+
+export interface CheckRemoteConfigMessage extends CheckRemoteConfigPayload {
+  type: typeof MSG_CHECK_REMOTE_CONFIG
+}
+
+export interface CheckRemoteConfigResponse {
+  success: boolean
+  result?: RemoteConfigCheckResult
+  error?: string
+}
+
+export const MSG_IGNORE_REMOTE_CONFIG_PATCH = "IGNORE_REMOTE_CONFIG_PATCH"
+
+export interface IgnoreRemoteConfigPatchPayload {
+  siteId: string
+  patchVersion?: number
+}
+
+export interface IgnoreRemoteConfigPatchMessage extends IgnoreRemoteConfigPatchPayload {
+  type: typeof MSG_IGNORE_REMOTE_CONFIG_PATCH
 }
 
 // WebDAV 代理请求（绕过 CORS）
@@ -197,6 +225,8 @@ export type ExtensionMessage =
   | ShowNotificationMessage
   | FocusTabMessage
   | ProxyFetchMessage
+  | CheckRemoteConfigMessage
+  | IgnoreRemoteConfigPatchMessage
   | WebDAVRequestMessage
   | CheckPermissionMessage
   | CheckPermissionsMessage
@@ -247,6 +277,8 @@ export interface AIStudioModelsResponse {
 }
 
 interface BackgroundResponseMap {
+  [MSG_CHECK_REMOTE_CONFIG]: CheckRemoteConfigResponse
+  [MSG_IGNORE_REMOTE_CONFIG_PATCH]: BasicBackgroundResponse
   [MSG_CHECK_PERMISSION]: PermissionCheckResponse
   [MSG_CHECK_PERMISSIONS]: PermissionCheckResponse
   [MSG_REQUEST_PERMISSIONS]: BasicBackgroundResponse

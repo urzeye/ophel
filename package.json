@@ -107,6 +107,7 @@
     },
     "permissions": [
       "storage",
+      "alarms",
       "declarativeNetRequestWithHostAccess"
     ],
     "optional_permissions": [

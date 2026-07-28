@@ -1,14 +1,23 @@
 import { DEFAULT_SHORTCUTS_SETTINGS } from "~constants/shortcuts"
+import { createRuntimeRemoteConfigManager } from "~core/remote-config-runtime"
+import {
+  REMOTE_CONFIG_ALARM_NAME,
+  REMOTE_CONFIG_ALARM_PERIOD_MINUTES,
+} from "~core/remote-config-types"
+import { extensionRegistryTransport } from "~platform/extension/registry-transport"
+import { extensionStorage } from "~platform/extension/storage"
 import { APP_DISPLAY_NAME } from "~utils/config"
 import {
   MSG_CLEAR_ALL_DATA,
   MSG_CHECK_CLAUDE_GENERATING,
   MSG_CHECK_PERMISSION,
   MSG_CHECK_PERMISSIONS,
+  MSG_CHECK_REMOTE_CONFIG,
   MSG_EXTENSION_UPDATE_AVAILABLE,
   MSG_FOCUS_TAB,
   MSG_GET_AISTUDIO_MODELS,
   MSG_GET_CLAUDE_SESSION_KEY,
+  MSG_IGNORE_REMOTE_CONFIG_PATCH,
   MSG_OPEN_OPTIONS_PAGE,
   MSG_OPEN_URL,
   MSG_PROXY_FETCH,
@@ -50,6 +59,42 @@ const OPHEL_TARGET_URLS = [
   "https://yuanbao.tencent.com/*",
   "https://chat.z.ai/*",
 ]
+
+const remoteConfigManager = createRuntimeRemoteConfigManager(
+  extensionStorage,
+  extensionRegistryTransport,
+)
+
+async function runRemoteConfigCheck(force: boolean) {
+  const result = await remoteConfigManager.checkForUpdates({ force })
+  if (result.status === "failed") {
+    console.warn("[Ophel] Remote config check failed:", result.error)
+  }
+  return result
+}
+
+async function ensureRemoteConfigAlarm() {
+  const alarm = await chrome.alarms.get(REMOTE_CONFIG_ALARM_NAME)
+  if (alarm?.periodInMinutes === REMOTE_CONFIG_ALARM_PERIOD_MINUTES) return
+  await chrome.alarms.create(REMOTE_CONFIG_ALARM_NAME, {
+    delayInMinutes: 1,
+    periodInMinutes: REMOTE_CONFIG_ALARM_PERIOD_MINUTES,
+  })
+}
+
+function scheduleRemoteConfigCheck(force: boolean) {
+  void runRemoteConfigCheck(force).catch((error) => {
+    console.warn("[Ophel] Remote config check crashed:", error)
+  })
+}
+
+function scheduleRemoteConfigAlarmSetup() {
+  void ensureRemoteConfigAlarm().catch((error) => {
+    console.warn("[Ophel] Failed to initialize remote config alarm:", error)
+  })
+}
+
+scheduleRemoteConfigAlarmSetup()
 
 // 通知 ID 格式："ophel|{tabId}|{windowId}|{uuid}"
 // 将 Tab 信息编码进 notifId，避免 MV3 Service Worker 重启后内存 Map 丢失
@@ -114,6 +159,18 @@ async function broadcastToOphelTabs(message: ExtensionMessage) {
 // 监听扩展安装/更新
 chrome.runtime.onInstalled.addListener(() => {
   setupDynamicRules()
+  scheduleRemoteConfigAlarmSetup()
+  scheduleRemoteConfigCheck(false)
+})
+
+chrome.runtime.onStartup.addListener(() => {
+  scheduleRemoteConfigAlarmSetup()
+})
+
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === REMOTE_CONFIG_ALARM_NAME) {
+    scheduleRemoteConfigCheck(false)
+  }
 })
 
 chrome.runtime.onUpdateAvailable.addListener((details) => {
@@ -295,6 +352,37 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
         void focusTab(sender.tab.id)
       }
       sendResponse({ success: true })
+      break
+
+    case MSG_CHECK_REMOTE_CONFIG:
+      if (message.force !== undefined && typeof message.force !== "boolean") {
+        sendResponse({ success: false, error: "force must be a boolean" })
+        break
+      }
+      ;(async () => {
+        const result = await runRemoteConfigCheck(message.force ?? true)
+        sendResponse({
+          success: result.status !== "failed",
+          result,
+          ...(result.error ? { error: result.error } : {}),
+        })
+      })().catch((error) => {
+        sendResponse({ success: false, error: (error as Error).message })
+      })
+      break
+
+    case MSG_IGNORE_REMOTE_CONFIG_PATCH:
+      ;(async () => {
+        const ignored = await remoteConfigManager.ignorePatch(message.siteId, {
+          patchVersion: message.patchVersion,
+        })
+        sendResponse({
+          success: ignored,
+          ...(ignored ? {} : { error: "No active patch version to ignore" }),
+        })
+      })().catch((error) => {
+        sendResponse({ success: false, error: (error as Error).message })
+      })
       break
 
     case MSG_PROXY_FETCH:

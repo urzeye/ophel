@@ -22,6 +22,7 @@ import {
   getDefaultPromptChains,
   getDefaultPrompts,
 } from "~constants/defaults"
+import { REMOTE_CONFIG_STORAGE_KEY } from "~core/remote-config-types"
 import {
   WEBDAV_PROVIDER_PRESETS,
   detectProviderFromUrl,
@@ -472,25 +473,27 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
         )
         // 过滤和处理数据
         const hydratedData = Object.fromEntries(
-          Object.entries(localData).map(([k, v]) => {
-            try {
-              let parsed = typeof v === "string" ? JSON.parse(v) : v
-              if (ZUSTAND_KEYS.includes(k) && parsed?.state) {
-                if (MULTI_PROP_STORES.includes(k)) {
-                  // 多属性 store：保留整个 state（含 lastUsedFolderId 等辅助属性）
-                  parsed = parsed.state
-                } else if (parsed.state[k] !== undefined) {
-                  // 单属性 store：直接提取主数据
-                  parsed = parsed.state[k]
-                } else {
-                  parsed = parsed.state
+          Object.entries(localData)
+            .filter(([key]) => key !== REMOTE_CONFIG_STORAGE_KEY)
+            .map(([k, v]) => {
+              try {
+                let parsed = typeof v === "string" ? JSON.parse(v) : v
+                if (ZUSTAND_KEYS.includes(k) && parsed?.state) {
+                  if (MULTI_PROP_STORES.includes(k)) {
+                    // 多属性 store：保留整个 state（含 lastUsedFolderId 等辅助属性）
+                    parsed = parsed.state
+                  } else if (parsed.state[k] !== undefined) {
+                    // 单属性 store：直接提取主数据
+                    parsed = parsed.state[k]
+                  } else {
+                    parsed = parsed.state
+                  }
                 }
+                return [k, parsed]
+              } catch {
+                return [k, v]
               }
-              return [k, parsed]
-            } catch {
-              return [k, v]
-            }
-          }),
+            }),
         )
         exportData = {
           version: 3,

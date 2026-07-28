@@ -4,6 +4,7 @@
  */
 
 import { MULTI_PROP_STORES, ZUSTAND_KEYS } from "~constants/defaults"
+import { REMOTE_CONFIG_STORAGE_KEY } from "~core/remote-config-types"
 import type { WebDAVProvider } from "~types/webdav"
 import { validateBackupData } from "~utils/backup-validator"
 import { APP_NAME } from "~utils/config"
@@ -394,31 +395,33 @@ export class WebDAVSyncManager {
       // Hydrate data：解析 JSON 字符串，并提取 Zustand persist 格式中的实际数据
       // 扁平化导出：移除 state 层，直接导出数据
       const hydratedData = Object.fromEntries(
-        Object.entries(localData).map(([k, v]) => {
-          try {
-            let parsed = typeof v === "string" ? JSON.parse(v) : v
+        Object.entries(localData)
+          .filter(([key]) => key !== REMOTE_CONFIG_STORAGE_KEY)
+          .map(([k, v]) => {
+            try {
+              let parsed = typeof v === "string" ? JSON.parse(v) : v
 
-            // 处理 Zustand persist 格式：提取 state 中的数据
-            // 格式: { state: { settings: {...} | prompts: [...] | conversations: {...} }, version: 0 }
-            if (ZUSTAND_KEYS.includes(k) && parsed?.state) {
-              if (MULTI_PROP_STORES.includes(k)) {
-                // 多属性 store（如 conversations, readingHistory）：保留整个 state
-                // 避免丢失 lastUsedFolderId、lastCleanupRun 等辅助属性
-                parsed = parsed.state
-              } else if (parsed.state[k] !== undefined) {
-                // 单属性 store：直接提取 state 中与 key 同名的属性
-                parsed = parsed.state[k]
-              } else {
-                // 兜底：保留整个 state 内容
-                parsed = parsed.state
+              // 处理 Zustand persist 格式：提取 state 中的数据
+              // 格式: { state: { settings: {...} | prompts: [...] | conversations: {...} }, version: 0 }
+              if (ZUSTAND_KEYS.includes(k) && parsed?.state) {
+                if (MULTI_PROP_STORES.includes(k)) {
+                  // 多属性 store（如 conversations, readingHistory）：保留整个 state
+                  // 避免丢失 lastUsedFolderId、lastCleanupRun 等辅助属性
+                  parsed = parsed.state
+                } else if (parsed.state[k] !== undefined) {
+                  // 单属性 store：直接提取 state 中与 key 同名的属性
+                  parsed = parsed.state[k]
+                } else {
+                  // 兜底：保留整个 state 内容
+                  parsed = parsed.state
+                }
               }
-            }
 
-            return [k, parsed]
-          } catch {
-            return [k, v]
-          }
-        }),
+              return [k, parsed]
+            } catch {
+              return [k, v]
+            }
+          }),
       )
 
       const exportData = {

@@ -1,12 +1,14 @@
 import React from "react"
 import ReactDOM from "react-dom/client"
 
+import { REMOTE_CONFIG_STORAGE_KEY } from "~core/remote-config-types"
+import { applyOphelPlatformFontClass } from "~utils/font"
+
 import { USERSCRIPT_RESOURCE_DEFINITIONS } from "./resource-manifest"
 import { injectGeminiCanvasCodeBridge } from "./gemini-canvas-inject"
 import { getInitialUserscriptLanguage, primeUserscriptLocales, subscribeI18nChanges } from "./i18n"
 import { injectScrollLock } from "./scroll-lock-inject"
 import { injectYuanbaoMonacoWrap } from "./yuanbao-monaco-wrap-inject"
-import { applyOphelPlatformFontClass } from "~utils/font"
 
 const USERSCRIPT_OBJECT_URLS = new Set<string>()
 
@@ -214,6 +216,7 @@ if (typeof chrome === "undefined" || !chrome.storage) {
     "ophel:clearAllFlag",
     "ophel:restoreFlag",
   ]
+  const CLEARABLE_STORAGE_KEYS = [...KNOWN_STORAGE_KEYS, REMOTE_CONFIG_STORAGE_KEY]
 
   userscriptWindow.chrome = {
     storage: {
@@ -257,8 +260,8 @@ if (typeof chrome === "undefined" || !chrome.storage) {
           callback?.()
         },
         clear: (callback?: () => void) => {
-          // 遍历所有已知的 storage keys 并删除
-          for (const key of KNOWN_STORAGE_KEYS) {
+          // remote-state 不参与 get(null) 备份，但清除全部数据时仍需删除。
+          for (const key of CLEARABLE_STORAGE_KEYS) {
             GM_deleteValue(key)
           }
           callback?.()
@@ -304,7 +307,7 @@ if (typeof chrome === "undefined" || !chrome.storage) {
           callback?.()
         },
         clear: (callback?: () => void) => {
-          for (const key of KNOWN_STORAGE_KEYS) {
+          for (const key of CLEARABLE_STORAGE_KEYS) {
             GM_deleteValue(key)
           }
           callback?.()
@@ -368,6 +371,17 @@ injectYuanbaoMonacoWrap()
  * document-start 时 DOM 尚未就绪，需等待 document.readyState 变化
  */
 async function init() {
+  void import("./remote-config")
+    .then(({ checkUserscriptRemoteConfigOnStartup }) => checkUserscriptRemoteConfigOnStartup())
+    .then((result) => {
+      if (result.status === "failed") {
+        console.warn("[Ophel] Remote config check failed:", result.error)
+      }
+    })
+    .catch((error) => {
+      console.warn("[Ophel] Failed to start remote config check:", error)
+    })
+
   const [{ getAdapter }, { App }, { initNetworkMonitor }, { initGeminiTitleGuard }] =
     await Promise.all([
       import("~adapters"),
