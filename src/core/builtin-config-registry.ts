@@ -1,3 +1,4 @@
+import { CHATGLM_CONFIG, CHATGLM_CONFIG_VERSION } from "~adapters/chatglm-config"
 import { IMA_CONFIG, IMA_CONFIG_VERSION } from "~adapters/ima-config"
 import { KIMI_CONFIG, KIMI_CONFIG_VERSION } from "~adapters/kimi-config"
 import { QIANWEN_CONFIG, QIANWEN_CONFIG_VERSION } from "~adapters/qianwen-config"
@@ -8,6 +9,14 @@ import { SITE_IDS } from "~constants/defaults"
 import type { BuiltinConfigDescriptor, ResolveBuiltinConfig } from "./remote-config-types"
 
 const BUILTIN_CONFIG_DESCRIPTORS = new Map<string, BuiltinConfigDescriptor>([
+  [
+    SITE_IDS.CHATGLM,
+    {
+      siteId: SITE_IDS.CHATGLM,
+      configVersion: CHATGLM_CONFIG_VERSION,
+      baseConfig: CHATGLM_CONFIG,
+    },
+  ],
   [
     SITE_IDS.IMA,
     {

@@ -25,6 +25,8 @@ import {
   type OutlineItem,
   type PanelAvoidanceConfig,
 } from "./base"
+import type { BuiltinSiteConfig } from "./declarative"
+import { CHATGLM_CONFIG, CHATGLM_CONFIG_VERSION, type ChatGLMSiteConfig } from "./chatglm-config"
 
 const CHATGLM_HOSTS = new Set(["chatglm.cn"])
 const SESSION_ID_PARAM = "cid"
@@ -38,55 +40,6 @@ const SKIN_MODE_MAP: Record<"light" | "dark" | "system", string> = {
   dark: "2",
   system: "3",
 }
-const USER_MENU_BUTTON_SELECTORS = [
-  ".userInfoBar-header .me-icon",
-  ".userInfoBar-header .me",
-  ".userInfoBar-header img.avatar",
-]
-const THEME_ENTRY_SELECTOR = ".themes"
-const THEME_POPOVER_SELECTOR = ".theme-popper"
-const THEME_OPTION_SELECTOR = ".selecttheme-list"
-
-const RESPONSE_CONTAINER_SELECTOR = ".conversation-list"
-const CONVERSATION_SCOPE_SELECTOR = ".conversation-container"
-const CONVERSATION_INNER_SELECTOR = ".conversation-inner"
-const NEW_CHAT_GUIDE_SAFE_AREA_SELECTOR = ".init-page .main-chat-guide-container"
-const CANVAS_LAYOUT_SCOPE_SELECTOR = "section.el-container:has(> .code-preview-tabs)"
-const CANVAS_PREVIEW_SAFE_AREA_SELECTOR = ".code-preview-tabs"
-const CONVERSATION_ITEM_SELECTOR = ".conversation-item"
-const USER_QUERY_SELECTOR = ".conversation.question"
-const USER_TEXT_SELECTOR = ".question-txt"
-const ASSISTANT_RESPONSE_SELECTOR = ".answer-content-wrap"
-const ASSISTANT_MARKDOWN_SELECTOR = ".answer-content-wrap .markdown-body"
-const THINKING_CONTAINER_SELECTOR = [
-  ".advance-thinking",
-  ".advance-thinking-area",
-  ".advanced-thinking",
-  ".advanced-thinking-data",
-  ".text-advance-thinking-content",
-  ".thinking-chain-container",
-  ".thinking-block",
-  ".thinking-content",
-  ".thinking-item",
-  "[class*='thinking']",
-  "[class*='think']",
-  "[class*='reason']",
-  "[class*='cot']",
-].join(", ")
-const EXPORT_DECORATION_SELECTOR = [
-  ".gh-root",
-  ".gh-user-query-markdown",
-  ".assistant-name",
-  ".interact-container",
-  ".code-no-artifacts .top-outer",
-  ".code-no-artifacts .copy-button",
-  "button",
-  "[role='button']",
-  "svg",
-  "[aria-hidden='true']",
-  "style",
-  "script",
-].join(", ")
 const CHATGLM_ATTACHMENT_SOURCE_ATTRS = [
   "href",
   "src",
@@ -101,18 +54,6 @@ const CHATGLM_ATTACHMENT_SOURCE_ATTRS = [
   "data-image-url",
   "data-image-src",
 ]
-
-const TEXTAREA_SELECTORS = [
-  "#search-input-box textarea",
-  ".main-chat-search #search-input-box textarea",
-  ".main-chat-search textarea",
-]
-
-const SUBMIT_BUTTON_SELECTOR = ".enter-icon-container"
-const CONVERSATION_MESSAGE_WIDTH_SELECTOR =
-  ".dialogue .detail .item, .dialogue .detail .item.item, .dialogue .detail .item.item.item"
-const CONVERSATION_MARKDOWN_WIDTH_SELECTOR =
-  ".markdown-body, .markdown-body.markdown-body, .answer-content-wrap .markdown-body"
 
 interface ChatGLMApiAttachment {
   file_name?: string
@@ -201,6 +142,7 @@ interface ChatGLMExportAttachment {
 }
 
 export class ChatGLMAdapter extends SiteAdapter {
+  private config: ChatGLMSiteConfig = CHATGLM_CONFIG
   private exportIncludeThoughtsOverride: boolean | null = null
   private exportApiMessages: ChatGLMApiMessage[] | null = null
 
@@ -216,23 +158,28 @@ export class ChatGLMAdapter extends SiteAdapter {
     return "智谱清言"
   }
 
+  getBuiltinConfig(): ChatGLMSiteConfig {
+    return CHATGLM_CONFIG
+  }
+
+  getBuiltinConfigVersion(): number {
+    return CHATGLM_CONFIG_VERSION
+  }
+
+  applyMergedConfig(config: BuiltinSiteConfig): void {
+    this.config = config as ChatGLMSiteConfig
+  }
+
   getThemeColors(): { primary: string; secondary: string } {
     return { primary: "#2454FF", secondary: "#1F46D6" }
   }
 
   getQuickQuoteSupportMode() {
-    return "native" as const
+    return this.config.quickQuote
   }
 
   getNativeQuotePopoverSelectors(): string[] {
-    return [
-      // 部分类名匹配（容错，但可能不够精确）
-      '[class*="quote-button"]',
-      '[class*="reference-button"]',
-      // aria-label 匹配（多语言友好，但依赖站点实现）
-      '[aria-label*="引用"]',
-      '[aria-label*="quote"]',
-    ]
+    return [...this.config.sitePrivateSelectors.nativeQuotePopover]
   }
 
   async toggleTheme(targetMode: "light" | "dark" | "system"): Promise<boolean> {
@@ -264,14 +211,8 @@ export class ChatGLMAdapter extends SiteAdapter {
       if (document.documentElement) targets.add(document.documentElement)
       if (document.body) targets.add(document.body)
 
-      const rootCandidates = [
-        document.querySelector("#app"),
-        document.querySelector("[data-v-app]"),
-        document.querySelector(".app"),
-        document.querySelector(".app-container"),
-      ]
-
-      for (const candidate of rootCandidates) {
+      for (const selector of this.config.sitePrivateSelectors.themeRootCandidates) {
+        const candidate = document.querySelector(selector)
         if (candidate instanceof HTMLElement) {
           targets.add(candidate)
         }
@@ -313,12 +254,15 @@ export class ChatGLMAdapter extends SiteAdapter {
   }
 
   private async applyThemeByClick(targetMode: "light" | "dark" | "system"): Promise<boolean> {
-    const trigger = this.findVisibleElement(USER_MENU_BUTTON_SELECTORS)
+    const trigger = this.findVisibleElement(this.config.sitePrivateSelectors.themeUserMenuButtons)
     if (!trigger) return false
     this.simulateClick(trigger)
     await this.delay(120)
 
-    const themeEntry = await this.waitForVisibleElement(THEME_ENTRY_SELECTOR, 1500)
+    const themeEntry = await this.waitForVisibleElement(
+      this.config.sitePrivateSelectors.themeEntry,
+      1500,
+    )
     if (!themeEntry) return false
     this.simulateClick(themeEntry)
     await this.delay(120)
@@ -342,11 +286,12 @@ export class ChatGLMAdapter extends SiteAdapter {
   }
 
   private resolveClickable(element: HTMLElement): HTMLElement {
-    const clickable =
-      element.closest(".me-icon") ||
-      element.closest(".me") ||
-      element.closest(".userInfoBar-header")
-    return (clickable as HTMLElement) || element
+    for (const selector of this.config.sitePrivateSelectors.themeClickable) {
+      const clickable = element.closest(selector)
+      if (clickable instanceof HTMLElement) return clickable
+    }
+
+    return element
   }
 
   private async waitForVisibleElement(
@@ -386,13 +331,8 @@ export class ChatGLMAdapter extends SiteAdapter {
   }
 
   private collectThemeOptions(): HTMLElement[] {
-    const selectors = [
-      `${THEME_POPOVER_SELECTOR} ${THEME_OPTION_SELECTOR}`,
-      `.selecttheme ${THEME_OPTION_SELECTOR}`,
-      THEME_OPTION_SELECTOR,
-    ]
     const options = new Set<HTMLElement>()
-    for (const selector of selectors) {
+    for (const selector of this.config.sitePrivateSelectors.themeOptionCandidates) {
       const elements = document.querySelectorAll(selector)
       for (const element of Array.from(elements)) {
         if (!(element instanceof HTMLElement)) continue
@@ -421,7 +361,11 @@ export class ChatGLMAdapter extends SiteAdapter {
   }
 
   getTextareaSelectors(): string[] {
-    return TEXTAREA_SELECTORS
+    return [...this.config.selectors.textarea]
+  }
+
+  getSubmitKeyConfig(): { key: "Enter" | "Ctrl+Enter" } {
+    return { key: this.config.input.submitKey ?? "Enter" }
   }
 
   insertPrompt(content: string): boolean {
@@ -479,7 +423,7 @@ export class ChatGLMAdapter extends SiteAdapter {
   }
 
   getNewChatButtonSelectors(): string[] {
-    return [".new-session", 'div[class~="new-session"]']
+    return [...this.config.selectors.newChatButton]
   }
 
   getNewTabUrl(): string {
@@ -518,7 +462,7 @@ export class ChatGLMAdapter extends SiteAdapter {
 
   getConversationTitle(): string | null {
     // 自有页面：<p class="conversation-name ...">打印hello代码</p>
-    const nameEl = document.querySelector(".conversation-name")
+    const nameEl = document.querySelector(this.config.sitePrivateSelectors.conversationTitle)
     if (nameEl) {
       const name = nameEl.textContent?.trim()
       if (name) return name
@@ -527,44 +471,45 @@ export class ChatGLMAdapter extends SiteAdapter {
   }
 
   getSubmitButtonSelectors(): string[] {
-    return [`${SUBMIT_BUTTON_SELECTOR}:not(.empty)`]
+    return [...this.config.selectors.submitButton]
   }
 
   findSubmitButton(): HTMLElement | null {
-    const button = document.querySelector(SUBMIT_BUTTON_SELECTOR) as HTMLElement | null
-    if (!button || button.classList.contains("empty")) return null
+    const button = document.querySelector(
+      this.config.sitePrivateSelectors.submitButton,
+    ) as HTMLElement | null
+    if (!button || button.matches(this.config.sitePrivateSelectors.submitButtonDisabled)) {
+      return null
+    }
     if (button.offsetParent === null) return null
     return button
   }
 
   getScrollContainer(): HTMLElement | null {
-    const list = document.querySelector(RESPONSE_CONTAINER_SELECTOR) as HTMLElement | null
-    if (list && list.scrollHeight > list.clientHeight) {
-      return list
-    }
-
-    const chatScroll = document.querySelector(".chatScrollContainer") as HTMLElement | null
-    if (chatScroll && chatScroll.scrollHeight > chatScroll.clientHeight) {
-      return chatScroll
+    for (const selector of this.config.selectors.scrollContainer) {
+      const container = document.querySelector(selector) as HTMLElement | null
+      if (container && container.scrollHeight > container.clientHeight) {
+        return container
+      }
     }
 
     return super.getScrollContainer()
   }
 
   getResponseContainerSelector(): string {
-    return RESPONSE_CONTAINER_SELECTOR
+    return this.config.selectors.responseContainer
   }
 
   getChatContentSelectors(): string[] {
-    return [ASSISTANT_MARKDOWN_SELECTOR, USER_TEXT_SELECTOR]
+    return [...this.config.selectors.chatContent]
   }
 
   getUserQuerySelector(): string {
-    return USER_QUERY_SELECTOR
+    return this.config.selectors.userQuery
   }
 
   extractUserQueryText(element: Element): string {
-    const content = element.querySelector(USER_TEXT_SELECTOR) || element
+    const content = element.querySelector(this.config.sitePrivateSelectors.userText) || element
     return this.extractTextWithLineBreaks(content).trim()
   }
 
@@ -577,7 +522,9 @@ export class ChatGLMAdapter extends SiteAdapter {
   }
 
   replaceUserQueryContent(element: Element, html: string): boolean {
-    const contentRoot = element.querySelector(USER_TEXT_SELECTOR) as HTMLElement | null
+    const contentRoot = element.querySelector(
+      this.config.sitePrivateSelectors.userText,
+    ) as HTMLElement | null
     if (!contentRoot) return false
 
     if (element.querySelector(".gh-user-query-markdown")) {
@@ -602,7 +549,9 @@ export class ChatGLMAdapter extends SiteAdapter {
 
     contentRoot.style.display = "none"
 
-    const collapseButton = element.querySelector(".collapse-button-bg") as HTMLElement | null
+    const collapseButton = element.querySelector(
+      this.config.sitePrivateSelectors.collapseButton,
+    ) as HTMLElement | null
     if (collapseButton) {
       collapseButton.style.display = "none"
     }
@@ -616,7 +565,8 @@ export class ChatGLMAdapter extends SiteAdapter {
   }
 
   getLatestReplyText(): string | null {
-    const container = document.querySelector(RESPONSE_CONTAINER_SELECTOR) || document.body
+    const container =
+      document.querySelector(this.config.selectors.responseContainer) || document.body
     const replies = this.collectChatGLMAssistantExportElements(container)
     const last = replies[replies.length - 1]
     if (!last) return null
@@ -626,22 +576,24 @@ export class ChatGLMAdapter extends SiteAdapter {
   }
 
   extractOutline(maxLevel = 6, includeUserQueries = false, showWordCount = false): OutlineItem[] {
-    const container = document.querySelector(RESPONSE_CONTAINER_SELECTOR)
+    const container = document.querySelector(this.config.selectors.responseContainer)
     if (!container) return []
 
     const outline: OutlineItem[] = []
-    const items = Array.from(container.querySelectorAll(CONVERSATION_ITEM_SELECTOR))
+    const items = Array.from(
+      container.querySelectorAll(this.config.sitePrivateSelectors.conversationItem),
+    )
 
     const findNextAssistantMarkdown = (startIndex: number): Element | null => {
       for (let i = startIndex + 1; i < items.length; i++) {
-        const candidate = items[i].querySelector(ASSISTANT_MARKDOWN_SELECTOR)
+        const candidate = items[i].querySelector(this.config.sitePrivateSelectors.assistantMarkdown)
         if (candidate) return candidate
       }
       return null
     }
 
     items.forEach((item, itemIndex) => {
-      const userRoot = item.querySelector(USER_QUERY_SELECTOR)
+      const userRoot = item.querySelector(this.config.selectors.userQuery)
       if (userRoot) {
         if (includeUserQueries) {
           const text = this.extractUserQueryMarkdown(userRoot)
@@ -667,7 +619,9 @@ export class ChatGLMAdapter extends SiteAdapter {
         }
       }
 
-      const markdownBlocks = item.querySelectorAll(ASSISTANT_MARKDOWN_SELECTOR)
+      const markdownBlocks = item.querySelectorAll(
+        this.config.sitePrivateSelectors.assistantMarkdown,
+      )
       if (!markdownBlocks.length) return
 
       markdownBlocks.forEach((markdown) => {
@@ -709,12 +663,7 @@ export class ChatGLMAdapter extends SiteAdapter {
   }
 
   getExportConfig(): ExportConfig {
-    return {
-      userQuerySelector: USER_QUERY_SELECTOR,
-      assistantResponseSelector: ASSISTANT_RESPONSE_SELECTOR,
-      turnSelector: null,
-      useShadowDOM: false,
-    }
+    return { ...this.config.export }
   }
 
   async prepareConversationExport(context: ExportLifecycleContext): Promise<unknown> {
@@ -969,10 +918,11 @@ export class ChatGLMAdapter extends SiteAdapter {
   }
 
   private extractChatGLMDomExportMessages(collector?: ExportAssetCollector): ExportMessage[] {
-    const container = document.querySelector(RESPONSE_CONTAINER_SELECTOR) || document.body
+    const container =
+      document.querySelector(this.config.selectors.responseContainer) || document.body
     const assistantElements = this.collectChatGLMAssistantExportElements(container)
     const blocks = [
-      ...Array.from(container.querySelectorAll(USER_QUERY_SELECTOR)).map((element) => ({
+      ...Array.from(container.querySelectorAll(this.config.selectors.userQuery)).map((element) => ({
         role: "user" as const,
         element,
       })),
@@ -1009,18 +959,22 @@ export class ChatGLMAdapter extends SiteAdapter {
     const elements: Element[] = []
     const seen = new Set<Element>()
     const candidates = Array.from(
-      container.querySelectorAll(`${ASSISTANT_RESPONSE_SELECTOR}, ${THINKING_CONTAINER_SELECTOR}`),
+      container.querySelectorAll(
+        `${this.config.selectors.assistantResponse}, ${this.config.sitePrivateSelectors.thinkingContainer}`,
+      ),
     )
 
     candidates.forEach((candidate) => {
       if (candidate.closest(".gh-root, .gh-user-query-markdown")) return
 
       const thoughtRoot = this.findChatGLMThoughtRoot(candidate)
-      const containingAnswer = thoughtRoot?.closest(ASSISTANT_RESPONSE_SELECTOR)
+      const containingAnswer = thoughtRoot?.closest(this.config.selectors.assistantResponse)
       if (thoughtRoot && containingAnswer && containingAnswer !== thoughtRoot) return
 
       const target = thoughtRoot || candidate
-      if (!thoughtRoot && candidate.closest(THINKING_CONTAINER_SELECTOR)) return
+      if (!thoughtRoot && candidate.closest(this.config.sitePrivateSelectors.thinkingContainer)) {
+        return
+      }
       if (seen.has(target)) return
 
       seen.add(target)
@@ -1031,15 +985,17 @@ export class ChatGLMAdapter extends SiteAdapter {
   }
 
   private findChatGLMThoughtRoot(element: Element): Element | null {
-    let root: Element | null = element.matches(THINKING_CONTAINER_SELECTOR)
+    let root: Element | null = element.matches(this.config.sitePrivateSelectors.thinkingContainer)
       ? element
-      : element.closest(THINKING_CONTAINER_SELECTOR)
+      : element.closest(this.config.sitePrivateSelectors.thinkingContainer)
     if (!root) return null
 
-    let parent = root.parentElement?.closest(THINKING_CONTAINER_SELECTOR) || null
+    let parent =
+      root.parentElement?.closest(this.config.sitePrivateSelectors.thinkingContainer) || null
     while (parent) {
       root = parent
-      parent = root.parentElement?.closest(THINKING_CONTAINER_SELECTOR) || null
+      parent =
+        root.parentElement?.closest(this.config.sitePrivateSelectors.thinkingContainer) || null
     }
 
     return root
@@ -1067,23 +1023,27 @@ export class ChatGLMAdapter extends SiteAdapter {
     collector?: ExportAssetCollector,
   ): string {
     const includeThoughts = this.shouldIncludeThoughtsInExport()
-    const isThoughtOnlyElement = element.matches(THINKING_CONTAINER_SELECTOR)
+    const isThoughtOnlyElement = element.matches(this.config.sitePrivateSelectors.thinkingContainer)
     const clone = element.cloneNode(true) as HTMLElement
     const thoughtResult = this.extractThoughtBlockquotes(clone)
     const thoughtBlocks = includeThoughts ? thoughtResult.blocks : []
     if (isThoughtOnlyElement) return thoughtBlocks.join("\n\n")
 
     thoughtResult.removalNodes.forEach((node) => node.remove())
-    clone.querySelectorAll(THINKING_CONTAINER_SELECTOR).forEach((node) => node.remove())
+    clone
+      .querySelectorAll(this.config.sitePrivateSelectors.thinkingContainer)
+      .forEach((node) => node.remove())
 
     const imageMarkdown = this.extractChatGLMAssistantImageMarkdown(element, collector)
-    const markdownRoot = clone.matches(ASSISTANT_RESPONSE_SELECTOR)
+    const markdownRoot = clone.matches(this.config.selectors.assistantResponse)
       ? clone
-      : clone.matches(".markdown-body")
+      : clone.matches(this.config.sitePrivateSelectors.markdownBody)
         ? clone
-        : clone.querySelector(".markdown-body") || clone
+        : clone.querySelector(this.config.sitePrivateSelectors.markdownBody) || clone
     const bodyClone = markdownRoot.cloneNode(true) as HTMLElement
-    bodyClone.querySelectorAll(EXPORT_DECORATION_SELECTOR).forEach((node) => node.remove())
+    bodyClone
+      .querySelectorAll(this.config.sitePrivateSelectors.exportDecoration)
+      .forEach((node) => node.remove())
     bodyClone.querySelectorAll("img").forEach((node) => {
       if (node instanceof HTMLImageElement && this.isExportableChatGLMImage(node)) {
         node.remove()
@@ -1116,9 +1076,9 @@ export class ChatGLMAdapter extends SiteAdapter {
   }
 
   private extractChatGLMUserAttachmentsFromDom(element: Element): ChatGLMExportAttachment[] {
-    const scope = element.matches(USER_QUERY_SELECTOR)
+    const scope = element.matches(this.config.selectors.userQuery)
       ? element
-      : element.closest(USER_QUERY_SELECTOR)
+      : element.closest(this.config.selectors.userQuery)
     if (!scope) return []
 
     const attachments: ChatGLMExportAttachment[] = []
@@ -1138,7 +1098,7 @@ export class ChatGLMAdapter extends SiteAdapter {
     })
 
     const candidates = Array.from(
-      scope.querySelectorAll("a[href], button, [class*='file'], [class*='image-with-text']"),
+      scope.querySelectorAll(this.config.sitePrivateSelectors.userAttachmentCandidates),
     )
     candidates.forEach((candidate) => {
       if (candidate.closest(".gh-root, .gh-user-query-markdown")) return
@@ -1169,7 +1129,7 @@ export class ChatGLMAdapter extends SiteAdapter {
 
   private extractChatGLMAttachmentNameFromElement(element: Element): string {
     const text = this.extractTextWithLineBreaks(
-      element.closest("button, a, [class*='file']") || element,
+      element.closest(this.config.sitePrivateSelectors.attachmentNameRoot) || element,
     )
     return this.extractChatGLMAttachmentNameFromText(text)
   }
@@ -1260,23 +1220,22 @@ export class ChatGLMAdapter extends SiteAdapter {
     removalNodes: Element[]
   } {
     const candidates = [
-      ...(element.matches(THINKING_CONTAINER_SELECTOR) ? [element] : []),
-      ...Array.from(element.querySelectorAll(THINKING_CONTAINER_SELECTOR)),
+      ...(element.matches(this.config.sitePrivateSelectors.thinkingContainer) ? [element] : []),
+      ...Array.from(element.querySelectorAll(this.config.sitePrivateSelectors.thinkingContainer)),
     ]
     const thoughtNodes = candidates.filter(
-      (node) => !node.parentElement?.closest(THINKING_CONTAINER_SELECTOR),
+      (node) => !node.parentElement?.closest(this.config.sitePrivateSelectors.thinkingContainer),
     )
 
     const blocks: string[] = []
     const removalNodes: Element[] = []
 
     thoughtNodes.forEach((node) => {
-      const target =
-        node.querySelector(
-          "blockquote[slot='content'], blockquote, .text-advance-thinking-content .markdown-body, .thinking-content .markdown-body, .advance-thinking-area .markdown-body, .markdown-body",
-        ) || node
+      const target = node.querySelector(this.config.sitePrivateSelectors.thoughtContent) || node
       const clone = target.cloneNode(true) as HTMLElement
-      clone.querySelectorAll(EXPORT_DECORATION_SELECTOR).forEach((child) => child.remove())
+      clone
+        .querySelectorAll(this.config.sitePrivateSelectors.exportDecoration)
+        .forEach((child) => child.remove())
 
       const wrapper = document.createElement("div")
       Array.from(clone.childNodes).forEach((child) => wrapper.appendChild(child.cloneNode(true)))
@@ -1337,8 +1296,7 @@ export class ChatGLMAdapter extends SiteAdapter {
   }
 
   private isChatGLMAvatarImage(image: HTMLImageElement): boolean {
-    if (image.classList.contains("user-img") || image.classList.contains("avatar")) return true
-    if (image.closest(".user-img, .avatar, .user-avatar, .userInfoBar-header")) return true
+    if (image.closest(this.config.sitePrivateSelectors.avatar)) return true
 
     const source = image.currentSrc || image.src || image.getAttribute("src") || ""
     return /\/wechat_avatar\//i.test(source)
@@ -1453,17 +1411,7 @@ export class ChatGLMAdapter extends SiteAdapter {
   }
 
   isGenerating(): boolean {
-    const selectors = [
-      ".enter.searching .enter-icon-container", // 输入区域的停止按钮容器
-      ".stop-generate",
-      ".stop-stream-tip",
-      ".answer-content-wrap .generating-icon",
-      ".enter-icon-container.stop",
-      ".enter.searching",
-      ".enter.is-main-chat.searching",
-    ]
-
-    for (const selector of selectors) {
+    for (const selector of this.config.generating.existsSelectors) {
       const el = document.querySelector(selector) as HTMLElement | null
       if (el && el.offsetParent !== null) return true
     }
@@ -1472,29 +1420,11 @@ export class ChatGLMAdapter extends SiteAdapter {
   }
 
   getStopButtonSelectors(): string[] {
-    return [
-      ".enter.searching .enter-icon-container", // 输入区域的停止按钮容器（优先）
-      ".stop-generate",
-      ".stop-stream-tip",
-      ".answer-content-wrap .generating-icon",
-      ".enter-icon-container.stop",
-      ".enter.searching", // 兜底：外层 div
-      ".enter.is-main-chat.searching",
-    ]
+    return [...this.config.selectors.stopButton]
   }
 
   getModelName(): string | null {
-    const selectors = [
-      ".wrapper-title .showHideText",
-      ".wrapper-title .wrapper-title-innerText",
-      ".wrapper-title",
-      ".selected-model-info .model-select-name",
-      ".model-select-container .model-select-name",
-      ".model-select-list .model-select-item.selected .model-select-name",
-      ".model-select-name",
-    ]
-
-    for (const selector of selectors) {
+    for (const selector of this.config.sitePrivateSelectors.modelName) {
       const elements = document.querySelectorAll(selector)
       for (const element of Array.from(elements)) {
         const text = element.textContent?.trim()
@@ -1508,7 +1438,7 @@ export class ChatGLMAdapter extends SiteAdapter {
     }
 
     // 兜底：寻找第一个非空模型名
-    for (const selector of selectors) {
+    for (const selector of this.config.sitePrivateSelectors.modelName) {
       const element = document.querySelector(selector)
       const text = element?.textContent?.trim()
       if (text) return text.split("\n")[0].trim()
@@ -1519,123 +1449,66 @@ export class ChatGLMAdapter extends SiteAdapter {
 
   getModelSwitcherConfig(keyword: string): ModelSwitcherConfig | null {
     return {
+      ...this.config.modelSwitcher,
       targetModelKeyword: keyword,
-      selectorButtonSelectors: [
-        ".wrapper-title",
-        ".wrapper-title .showHideText",
-        ".model-select-icon-container",
-        ".selected-model-info",
-        ".model-select-container",
-      ],
-      menuItemSelector: ".model-select-list .model-select-item",
-      menuRenderDelay: 150,
-      checkInterval: 1000,
-      maxAttempts: 10,
+      selectorButtonSelectors: [...this.config.modelSwitcher.selectorButtonSelectors],
+      subMenuTriggers: this.config.modelSwitcher.subMenuTriggers
+        ? [...this.config.modelSwitcher.subMenuTriggers]
+        : undefined,
     }
   }
 
   getNetworkMonitorConfig(): NetworkMonitorConfig {
     return {
-      urlPatterns: ["/chatglm/backend-api/assistant/stream"],
-      silenceThreshold: 2000,
+      ...this.config.networkMonitor,
+      urlPatterns: [...this.config.networkMonitor.urlPatterns],
+      urlPathEndsWith: this.config.networkMonitor.urlPathEndsWith
+        ? [...this.config.networkMonitor.urlPathEndsWith]
+        : undefined,
+      requestBodyRules: this.config.networkMonitor.requestBodyRules?.map((rule) => ({
+        ...rule,
+        metadata: { ...rule.metadata },
+      })),
     }
   }
 
   getWidthSelectors() {
-    const codeBlockStretchCss = [
-      "width: 100% !important;",
-      "margin-left: 0 !important;",
-      "margin-right: 0 !important;",
-      "box-sizing: border-box !important;",
-    ].join(" ")
-
-    return [
-      { selector: ".conversation-container", property: "max-width" },
-      { selector: ".conversation-inner", property: "max-width" },
-      { selector: ".conversation-list", property: "max-width" },
-      {
-        selector: CONVERSATION_MESSAGE_WIDTH_SELECTOR,
-        property: "max-width",
-      },
-      {
-        selector: CONVERSATION_MARKDOWN_WIDTH_SELECTOR,
-        property: "max-width",
-      },
-      {
-        selector: ".code-no-artifacts .markdown-body.md-code, .code-no-artifacts .md-code",
-        property: "max-width",
-        value: "100%",
-        extraCss: codeBlockStretchCss,
-        noCenter: true,
-      },
-      {
-        selector:
-          ".code-no-artifacts .markdown-body.md-code > .language, .code-no-artifacts .markdown-body.md-code pre",
-        property: "max-width",
-        value: "100%",
-        extraCss: "width: 100% !important; box-sizing: border-box !important;",
-        noCenter: true,
-      },
-      {
-        selector: ".markdown-body table, .answer-content-wrap .markdown-body table",
-        property: "width",
-        value: "100%",
-        extraCss:
-          "table-layout: fixed !important; display: table !important; min-width: 100% !important;",
-        noCenter: true,
-      },
-      {
-        selector: ".markdown-body table th, .markdown-body table td",
-        property: "min-width",
-        value: "0",
-        noCenter: true,
-      },
-      { selector: ".conversation-list", property: "width", value: "100%" },
-      {
-        selector: ".conversation-bottom",
-        property: "max-width",
-        extraCss: "flex: 1 !important;",
-      },
-      {
-        selector: ".component-box-new",
-        property: "max-width",
-      },
-    ]
+    return this.config.widthSelectors.map((selector) => ({ ...selector }))
   }
 
   getPanelAvoidanceConfig(): PanelAvoidanceConfig {
     return {
-      scopeSelector: CONVERSATION_SCOPE_SELECTOR,
+      scopeSelector: this.config.sitePrivateSelectors.conversationScope,
       widthSelectors: [
         {
-          selector: RESPONSE_CONTAINER_SELECTOR,
+          selector: this.config.selectors.responseContainer,
           property: "max-width",
           extraCss: "width: 100% !important; min-width: 0 !important;",
         },
         {
-          selector: CONVERSATION_MESSAGE_WIDTH_SELECTOR,
+          selector: this.config.sitePrivateSelectors.messageWidth,
           property: "max-width",
           extraCss: "width: 100% !important; min-width: 0 !important;",
         },
         {
-          selector: CONVERSATION_MARKDOWN_WIDTH_SELECTOR,
+          selector: this.config.sitePrivateSelectors.markdownWidth,
           property: "max-width",
           extraCss: "min-width: 0 !important;",
         },
       ],
       insetSelectors: [
         {
-          selector: CONVERSATION_INNER_SELECTOR,
+          selector: this.config.sitePrivateSelectors.conversationInner,
           extraCss: "box-sizing: border-box;",
         },
         {
-          selector: NEW_CHAT_GUIDE_SAFE_AREA_SELECTOR,
+          selector: this.config.sitePrivateSelectors.newChatGuideSafeArea,
           insetMode: "edge",
           extraCss: "box-sizing: border-box;",
         },
         {
-          selector: CANVAS_PREVIEW_SAFE_AREA_SELECTOR,
-          scopeSelector: CANVAS_LAYOUT_SCOPE_SELECTOR,
+          selector: this.config.sitePrivateSelectors.canvasPreviewSafeArea,
+          scopeSelector: this.config.sitePrivateSelectors.canvasLayoutScope,
           applySide: "right",
           insetMode: "edge",
           extraCss: "box-sizing: border-box; min-width: 0;",
@@ -1647,14 +1520,20 @@ export class ChatGLMAdapter extends SiteAdapter {
   }
 
   getZenModeConfig() {
+    const { hide, rootClass, styles } = this.config.zenMode
     return {
-      hide: [".el-aside"],
+      ...(hide ? { hide: [...hide] } : {}),
+      ...(rootClass ? { rootClass: { ...rootClass } } : {}),
+      ...(styles ? { styles: styles.map((style) => ({ ...style })) } : {}),
     }
   }
 
   getCleanModeConfig() {
+    const { hide, rootClass, styles } = this.config.cleanMode
     return {
-      hide: [".policy-wrap, .policy-wrap *", ".vip-btn", ".slogan-banner"],
+      ...(hide ? { hide: [...hide] } : {}),
+      ...(rootClass ? { rootClass: { ...rootClass } } : {}),
+      ...(styles ? { styles: styles.map((style) => ({ ...style })) } : {}),
     }
   }
 }
