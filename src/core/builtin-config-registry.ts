@@ -1,4 +1,5 @@
 import { CHATGLM_CONFIG, CHATGLM_CONFIG_VERSION } from "~adapters/chatglm-config"
+import { DEEPSEEK_CONFIG, DEEPSEEK_CONFIG_VERSION } from "~adapters/deepseek-config"
 import { IMA_CONFIG, IMA_CONFIG_VERSION } from "~adapters/ima-config"
 import { KIMI_CONFIG, KIMI_CONFIG_VERSION } from "~adapters/kimi-config"
 import { QIANWEN_CONFIG, QIANWEN_CONFIG_VERSION } from "~adapters/qianwen-config"
@@ -15,6 +16,14 @@ const BUILTIN_CONFIG_DESCRIPTORS = new Map<string, BuiltinConfigDescriptor>([
       siteId: SITE_IDS.CHATGLM,
       configVersion: CHATGLM_CONFIG_VERSION,
       baseConfig: CHATGLM_CONFIG,
+    },
+  ],
+  [
+    SITE_IDS.DEEPSEEK,
+    {
+      siteId: SITE_IDS.DEEPSEEK,
+      configVersion: DEEPSEEK_CONFIG_VERSION,
+      baseConfig: DEEPSEEK_CONFIG,
     },
   ],
   [

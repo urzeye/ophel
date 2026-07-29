@@ -34,40 +34,19 @@ import {
   type SiteDeleteConversationResult,
   type ZenModeConfig,
 } from "./base"
+import {
+  DEEPSEEK_CONFIG,
+  DEEPSEEK_CONFIG_VERSION,
+  type DeepSeekSiteConfig,
+} from "./deepseek-config"
+import type { BuiltinSiteConfig } from "./declarative"
 
 const CHAT_PATH_PATTERN = /\/a\/chat\/s\/([a-z0-9-]+)/i
 const SHARE_PATH_PATTERN = /\/share\/([a-z0-9-]+)/i
 const TOKEN_STORAGE_PREFIX = "__tea_cache_tokens_"
 const THEME_STORAGE_KEY = "__appKit_@deepseek/chat_themePreference"
 const USER_TOKEN_STORAGE_KEY = "userToken"
-const CONVERSATION_LINK_SELECTOR = 'a[href*="/a/chat/s/"]'
-const MESSAGE_SELECTOR = ".ds-message"
-const ASSISTANT_MESSAGE_SELECTOR = `${MESSAGE_SELECTOR}:has(.ds-markdown)`
 const OUTLINE_HEADING_SELECTOR = "h1, h2, h3, h4, h5, h6"
-const USER_MESSAGE_SELECTOR = ".ds-message:not(:has(.ds-markdown))"
-const THOUGHT_CONTAINER_SELECTOR = ".ds-think-content"
-const RESPONSE_CONTAINER_SELECTOR =
-  'main .ds-scroll-area:has(.ds-message), [role="main"] .ds-scroll-area:has(.ds-message), .ds-scroll-area:has(.ds-message)'
-const MESSAGE_LAYOUT_WIDTH_SCOPE_SELECTOR = ":root"
-const MESSAGE_LAYOUT_SCOPE_SELECTOR =
-  ":is(.ds-virtual-list:has(.ds-message), .ds-virtual-list:has(textarea.ds-scroll-area))"
-const NEW_CHAT_LAYOUT_SCOPE_SELECTOR =
-  "#root > div:has(textarea.ds-scroll-area):not(:has(.ds-message))"
-const CANVAS_LAYOUT_SCOPE_SELECTOR =
-  '#root > div:has(.ds-virtual-list):has(div[aria-hidden="false"] iframe)'
-const CANVAS_PREVIEW_SAFE_AREA_SELECTOR = 'div[aria-hidden="false"]:has(iframe) .ds-scroll-area'
-const PANEL_AVOIDANCE_SCOPE_SELECTOR = [
-  MESSAGE_LAYOUT_SCOPE_SELECTOR,
-  NEW_CHAT_LAYOUT_SCOPE_SELECTOR,
-].join(", ")
-const MESSAGE_LIST_ITEMS_SELECTOR = `${MESSAGE_LAYOUT_SCOPE_SELECTOR} .ds-virtual-list-items`
-const MESSAGE_COMPOSER_SELECTOR = `${MESSAGE_LAYOUT_SCOPE_SELECTOR} > div:has(textarea.ds-scroll-area)`
-const USER_MESSAGE_CONTENT_SELECTOR = [
-  `${USER_MESSAGE_SELECTOR} > .gh-inline-bookmark + div`,
-  `${USER_MESSAGE_SELECTOR} > div:not(.gh-user-query-raw):not(.gh-user-query-markdown):not(.ds-focus-ring)`,
-  `${USER_MESSAGE_SELECTOR} > div.gh-user-query-markdown`,
-].join(", ")
-const CHAT_COMPLETION_API_PATTERN = "/api/v0/chat/completion"
 const CHAT_DELETE_API_PATH = "/api/v0/chat_session/delete"
 const DEEPSEEK_HOME_URL = "https://chat.deepseek.com/"
 const DELETE_REFRESH_STORAGE_KEY = "gh.deepseek.delete.refresh"
@@ -77,9 +56,6 @@ const DEEPSEEK_EXPORT_ROLE_USER = "user"
 const DEEPSEEK_EXPORT_ROLE_ASSISTANT = "assistant"
 const DEEPSEEK_EXPORT_USER_SELECTOR = `[${DEEPSEEK_EXPORT_ROOT_ATTR}="1"] [${DEEPSEEK_EXPORT_ROLE_ATTR}="${DEEPSEEK_EXPORT_ROLE_USER}"]`
 const DEEPSEEK_EXPORT_ASSISTANT_SELECTOR = `[${DEEPSEEK_EXPORT_ROOT_ATTR}="1"] [${DEEPSEEK_EXPORT_ROLE_ATTR}="${DEEPSEEK_EXPORT_ROLE_ASSISTANT}"]`
-const STOP_ICON_PATH_PREFIX = "M2 4.88"
-const SEND_ICON_PATH =
-  "M8.3125 0.981587C8.66767 1.0545 8.97902 1.20558 9.2627 1.43374C9.48724 1.61438 9.73029 1.85933 9.97949 2.10854L14.707 6.83608L13.293 8.25014L9 3.95717V15.0431H7V3.95717L2.70703 8.25014L1.29297 6.83608L6.02051 2.10854C6.26971 1.85933 6.51277 1.61438 6.7373 1.43374C6.97662 1.24126 7.28445 1.04542 7.6875 0.981587C7.8973 0.94841 8.1031 0.956564 8.3125 0.981587Z"
 const NATIVE_OUTLINE_SETTLE_MS = 120
 const USER_QUERY_REVEAL_TIMEOUT_MS = 3200
 const USER_QUERY_REVEAL_INTERVAL_MS = 80
@@ -117,6 +93,7 @@ interface DeepSeekUserAttachment {
 }
 
 export class DeepSeekAdapter extends SiteAdapter {
+  private config: DeepSeekSiteConfig = DEEPSEEK_CONFIG
   private nativeOutlineCache: DeepSeekNativeOutlineCache | null = null
   private nativeOutlineRevealRequestId = 0
   private exportSnapshotRoot: HTMLElement | null = null
@@ -140,6 +117,18 @@ export class DeepSeekAdapter extends SiteAdapter {
     return "DeepSeek"
   }
 
+  getBuiltinConfig(): DeepSeekSiteConfig {
+    return DEEPSEEK_CONFIG
+  }
+
+  getBuiltinConfigVersion(): number {
+    return DEEPSEEK_CONFIG_VERSION
+  }
+
+  applyMergedConfig(config: BuiltinSiteConfig): void {
+    this.config = config as DeepSeekSiteConfig
+  }
+
   getThemeColors(): { primary: string; secondary: string } {
     return { primary: "#4b6bfe", secondary: "#3a5ae0" }
   }
@@ -149,12 +138,15 @@ export class DeepSeekAdapter extends SiteAdapter {
   }
 
   getTextareaSelectors(): string[] {
-    return [
-      'textarea[placeholder*="DeepSeek"]',
-      'textarea[placeholder*="deepseek"]',
-      "textarea.ds-scroll-area",
-      "form textarea",
-    ]
+    return [...this.config.selectors.textarea]
+  }
+
+  getSubmitKeyConfig(): { key: "Enter" | "Ctrl+Enter" } {
+    return { key: this.config.input.submitKey ?? "Enter" }
+  }
+
+  getQuickQuoteSupportMode() {
+    return this.config.quickQuote
   }
 
   insertPrompt(content: string): boolean {
@@ -255,7 +247,7 @@ export class DeepSeekAdapter extends SiteAdapter {
 
   getConversationList(): ConversationInfo[] {
     const cid = this.getCurrentCid() || undefined
-    const links = document.querySelectorAll(CONVERSATION_LINK_SELECTOR)
+    const links = document.querySelectorAll(this.config.conversation.itemSelector)
     const map = new Map<string, ConversationInfo>()
 
     links.forEach((link) => {
@@ -270,8 +262,8 @@ export class DeepSeekAdapter extends SiteAdapter {
 
   getConversationObserverConfig(): ConversationObserverConfig {
     return {
-      selector: CONVERSATION_LINK_SELECTOR,
-      shadow: false,
+      selector: this.config.conversation.itemSelector,
+      shadow: this.config.conversation.shadow ?? false,
       extractInfo: (el) => this.extractConversationInfo(el, this.getCurrentCid() || undefined),
       getTitleElement: (el) => this.findTitleElement(el),
     }
@@ -352,48 +344,66 @@ export class DeepSeekAdapter extends SiteAdapter {
     }
 
     const sessionId = this.getSessionId()
+    const conversationLink = this.config.conversation.itemSelector
+    const activeMatch = this.config.conversation.activeMatch
     const activeLink =
       (sessionId
-        ? document.querySelector(`${CONVERSATION_LINK_SELECTOR}[href*="/a/chat/s/${sessionId}"]`)
-        : null) || document.querySelector(`${CONVERSATION_LINK_SELECTOR}[aria-current="page"]`)
+        ? document.querySelector(`${conversationLink}[href*="/a/chat/s/${sessionId}"]`)
+        : null) ||
+      (activeMatch
+        ? Array.from(document.querySelectorAll(conversationLink)).find((link) =>
+            link.matches(activeMatch),
+          )
+        : null)
 
     if (!activeLink) return null
     return this.extractConversationTitle(activeLink)
   }
 
   navigateToConversation(id: string, url?: string): boolean {
-    const link = document.querySelector(
-      `${CONVERSATION_LINK_SELECTOR}[href*="/a/chat/s/${id}"]`,
-    ) as HTMLElement | null
+    if ((this.config.conversation.navigationStrategy ?? "click-item") !== "location") {
+      const conversationLink = this.config.conversation.itemSelector
+      const link = document.querySelector(
+        `${conversationLink}[href*="/a/chat/s/${id}"]`,
+      ) as HTMLElement | null
 
-    if (link) {
-      link.click()
-      return true
+      if (link) {
+        link.click()
+        return true
+      }
     }
 
-    return super.navigateToConversation(id, url || `https://chat.deepseek.com/a/chat/s/${id}`)
+    const path = this.config.conversation.urlTemplate.replace("{id}", encodeURIComponent(id))
+    return super.navigateToConversation(id, url || new URL(path, DEEPSEEK_HOME_URL).toString())
   }
 
   getSidebarScrollContainer(): Element | null {
-    const firstLink = document.querySelector(CONVERSATION_LINK_SELECTOR)
-    return firstLink?.closest(".ds-scroll-area") || null
+    const firstLink = document.querySelector(this.config.conversation.itemSelector)
+    return firstLink?.closest(this.config.sitePrivateSelectors.sidebarScrollArea) || null
   }
 
   getZenModeConfig() {
+    const { hide, rootClass, styles } = this.config.zenMode
     return {
-      hide: [".dc04ec1d", "._0fcaa63"],
+      ...(hide ? { hide: [...hide] } : {}),
+      ...(rootClass ? { rootClass: { ...rootClass } } : {}),
+      ...(styles ? { styles: styles.map((style) => ({ ...style })) } : {}),
     }
   }
 
   getCleanModeConfig(): ZenModeConfig | null {
+    const { hide, rootClass, styles } = this.config.cleanMode
     return {
-      hide: ["._0fcaa63"],
+      ...(hide ? { hide: [...hide] } : {}),
+      ...(rootClass ? { rootClass: { ...rootClass } } : {}),
+      ...(styles ? { styles: styles.map((style) => ({ ...style })) } : {}),
     }
   }
 
   getScrollContainer(): HTMLElement | null {
-    const topLevelMessages = Array.from(document.querySelectorAll(MESSAGE_SELECTOR)).filter(
-      (message) => !message.parentElement?.closest(MESSAGE_SELECTOR),
+    const messageSelector = this.config.sitePrivateSelectors.message
+    const topLevelMessages = Array.from(document.querySelectorAll(messageSelector)).filter(
+      (message) => !message.parentElement?.closest(messageSelector),
     )
     const fromMessages = this.pickBestScrollableAncestor(topLevelMessages)
     if (fromMessages) {
@@ -401,17 +411,19 @@ export class DeepSeekAdapter extends SiteAdapter {
     }
 
     const fallbackRoots = Array.from(
-      document.querySelectorAll(`${ASSISTANT_MESSAGE_SELECTOR}, ${USER_MESSAGE_SELECTOR}`),
+      document.querySelectorAll(
+        `${this.config.selectors.assistantResponse}, ${this.config.selectors.userQuery}`,
+      ),
     ).filter((element) => !element.closest(".gh-root, .gh-table-container"))
     return this.pickBestScrollableAncestor(fallbackRoots)
   }
 
   getResponseContainerSelector(): string {
-    return RESPONSE_CONTAINER_SELECTOR
+    return this.config.selectors.responseContainer
   }
 
   getUserQuerySelector(): string {
-    return USER_MESSAGE_SELECTOR
+    return this.config.selectors.userQuery
   }
 
   findUserQueryElement(queryIndex: number, text: string): Element | null {
@@ -433,7 +445,7 @@ export class DeepSeekAdapter extends SiteAdapter {
   }
 
   getChatContentSelectors(): string[] {
-    return [ASSISTANT_MESSAGE_SELECTOR, USER_MESSAGE_SELECTOR]
+    return [...this.config.selectors.chatContent]
   }
 
   scrollToOutlineTarget(element: HTMLElement): void {
@@ -458,7 +470,7 @@ export class DeepSeekAdapter extends SiteAdapter {
 
     clone
       .querySelectorAll(
-        ".gh-user-query-markdown, button, [role=button], svg, .ds-icon-button, [aria-hidden=true]",
+        `.gh-user-query-markdown, button, [role=button], svg, ${this.config.sitePrivateSelectors.iconButton}, [aria-hidden=true]`,
       )
       .forEach((node) => node.remove())
 
@@ -535,8 +547,9 @@ export class DeepSeekAdapter extends SiteAdapter {
 
     const outline: OutlineItem[] = []
     const domUserQueries: OutlineItem[] = []
-    const messages = Array.from(container.querySelectorAll(MESSAGE_SELECTOR)).filter(
-      (message) => !message.parentElement?.closest(MESSAGE_SELECTOR),
+    const messageSelector = this.config.sitePrivateSelectors.message
+    const messages = Array.from(container.querySelectorAll(messageSelector)).filter(
+      (message) => !message.parentElement?.closest(messageSelector),
     )
 
     messages.forEach((message, index) => {
@@ -661,12 +674,7 @@ export class DeepSeekAdapter extends SiteAdapter {
       }
     }
 
-    return {
-      userQuerySelector: USER_MESSAGE_SELECTOR,
-      assistantResponseSelector: ASSISTANT_MESSAGE_SELECTOR,
-      turnSelector: null,
-      useShadowDOM: false,
-    }
+    return { ...this.config.export }
   }
 
   async prepareConversationExport(context: ExportLifecycleContext): Promise<unknown> {
@@ -797,10 +805,7 @@ export class DeepSeekAdapter extends SiteAdapter {
   }
 
   getSubmitButtonSelectors(): string[] {
-    return [
-      `div[role="button"].ds-icon-button:has(svg path[d="${SEND_ICON_PATH}"])`,
-      `button.ds-icon-button:has(svg path[d="${SEND_ICON_PATH}"])`,
-    ]
+    return [...this.config.selectors.submitButton]
   }
 
   findSubmitButton(editor: HTMLElement | null): HTMLElement | null {
@@ -830,41 +835,29 @@ export class DeepSeekAdapter extends SiteAdapter {
   }
 
   getNewChatButtonSelectors(): string[] {
-    return ['a[href="/a/chat"]', 'a[href="/a/chat/"]']
+    return [...this.config.selectors.newChatButton]
   }
 
   getWidthSelectors() {
-    return [
-      {
-        // DeepSeek 输入区与消息区都会读取同一个 --message-list-max-width，
-        selector: MESSAGE_LAYOUT_WIDTH_SCOPE_SELECTOR,
-        property: "--message-list-max-width",
-        noCenter: true,
-      },
-      {
-        selector: MESSAGE_LIST_ITEMS_SELECTOR,
-        property: "--message-list-max-width",
-        noCenter: true,
-      },
-    ]
+    return this.config.widthSelectors.map((selector) => ({ ...selector }))
   }
 
   getPanelAvoidanceConfig(): PanelAvoidanceConfig {
     return {
-      scopeSelector: PANEL_AVOIDANCE_SCOPE_SELECTOR,
+      scopeSelector: this.config.sitePrivateSelectors.panelAvoidanceScope,
       widthSelectors: this.getWidthSelectors(),
       insetSelectors: [
-        { selector: MESSAGE_LIST_ITEMS_SELECTOR },
-        { selector: MESSAGE_COMPOSER_SELECTOR },
+        { selector: this.config.sitePrivateSelectors.messageListItems },
+        { selector: this.config.sitePrivateSelectors.messageComposer },
         {
-          selector: NEW_CHAT_LAYOUT_SCOPE_SELECTOR,
-          scopeSelector: NEW_CHAT_LAYOUT_SCOPE_SELECTOR,
+          selector: this.config.sitePrivateSelectors.newChatLayoutScope,
+          scopeSelector: this.config.sitePrivateSelectors.newChatLayoutScope,
           insetMode: "edge",
           extraCss: "box-sizing: border-box !important; min-width: 0 !important;",
         },
         {
-          selector: CANVAS_PREVIEW_SAFE_AREA_SELECTOR,
-          scopeSelector: CANVAS_LAYOUT_SCOPE_SELECTOR,
+          selector: this.config.sitePrivateSelectors.canvasPreviewSafeArea,
+          scopeSelector: this.config.sitePrivateSelectors.canvasLayoutScope,
           applySide: "right",
           insetMode: "edge",
           extraCss: "box-sizing: border-box !important; min-width: 0 !important;",
@@ -889,7 +882,7 @@ export class DeepSeekAdapter extends SiteAdapter {
     return [
       {
         // 用户问题内容节点使用随机哈希类名，改为匹配 ds-message 下稳定的直接内容 div。
-        selector: USER_MESSAGE_CONTENT_SELECTOR,
+        selector: this.config.sitePrivateSelectors.userMessageContent,
         property: "width",
         extraCss: userQueryWidthCss,
         noCenter: true,
@@ -899,11 +892,11 @@ export class DeepSeekAdapter extends SiteAdapter {
 
   isGenerating(): boolean {
     const buttons = this.findComposerButtons()
+    const selector = this.config.generating.existsSelectors.join(", ")
+    if (!selector) return false
 
     for (const button of buttons) {
-      const path = button.querySelector("svg path")
-      const d = path?.getAttribute("d") || ""
-      if (d.startsWith(STOP_ICON_PATH_PREFIX)) {
+      if (button.matches(selector)) {
         return true
       }
     }
@@ -912,14 +905,13 @@ export class DeepSeekAdapter extends SiteAdapter {
   }
 
   getStopButtonSelectors(): string[] {
-    return [
-      `div[role="button"].ds-icon-button:has(svg path[d^="${STOP_ICON_PATH_PREFIX}"])`,
-      `button.ds-icon-button:has(svg path[d^="${STOP_ICON_PATH_PREFIX}"])`,
-    ]
+    return [...this.config.selectors.stopButton]
   }
 
   getModelName(): string | null {
-    const selectedButtons = Array.from(document.querySelectorAll(".ds-toggle-button--selected"))
+    const selectedButtons = Array.from(
+      document.querySelectorAll(this.config.sitePrivateSelectors.selectedModel),
+    )
       .map(
         (button) => (button as HTMLElement).innerText?.trim() || button.textContent?.trim() || "",
       )
@@ -934,11 +926,15 @@ export class DeepSeekAdapter extends SiteAdapter {
 
   getNetworkMonitorConfig(): NetworkMonitorConfig {
     return {
-      // DeepSeek 生成走 SSE 流式接口：/api/v0/chat/completion
-      // 只匹配这个接口，避免把会话列表、重命名等普通请求误判为生成任务。
-      urlPatterns: [CHAT_COMPLETION_API_PATTERN],
-      // 流结束后等待一个很短的静默窗口，让 DOM/标题状态完成收敛。
-      silenceThreshold: 500,
+      ...this.config.networkMonitor,
+      urlPatterns: [...this.config.networkMonitor.urlPatterns],
+      urlPathEndsWith: this.config.networkMonitor.urlPathEndsWith
+        ? [...this.config.networkMonitor.urlPathEndsWith]
+        : undefined,
+      requestBodyRules: this.config.networkMonitor.requestBodyRules?.map((rule) => ({
+        ...rule,
+        metadata: { ...rule.metadata },
+      })),
     }
   }
 
@@ -1004,9 +1000,7 @@ export class DeepSeekAdapter extends SiteAdapter {
     const buttons: HTMLElement[] = []
 
     for (const scope of scopes) {
-      const found = scope.querySelectorAll(
-        'div[role="button"].ds-icon-button, button.ds-icon-button, .ds-icon-button[aria-disabled="false"]',
-      )
+      const found = scope.querySelectorAll(this.config.sitePrivateSelectors.composerButton)
       for (const button of Array.from(found)) {
         const el = button as HTMLElement
         if (el.offsetParent === null || seen.has(el)) continue
@@ -1086,9 +1080,9 @@ export class DeepSeekAdapter extends SiteAdapter {
     const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0
     const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0
     const rect = element.getBoundingClientRect()
-    const messageCount = element.querySelectorAll(MESSAGE_SELECTOR).length
-    const userCount = element.querySelectorAll(USER_MESSAGE_SELECTOR).length
-    const assistantCount = element.querySelectorAll(ASSISTANT_MESSAGE_SELECTOR).length
+    const messageCount = element.querySelectorAll(this.config.sitePrivateSelectors.message).length
+    const userCount = element.querySelectorAll(this.config.selectors.userQuery).length
+    const assistantCount = element.querySelectorAll(this.config.selectors.assistantResponse).length
 
     let score = 0
 
@@ -1108,7 +1102,10 @@ export class DeepSeekAdapter extends SiteAdapter {
       score += 350
     }
 
-    if (element.matches("main, [role='main']") || element.closest("main, [role='main']")) {
+    if (
+      element.matches(this.config.sitePrivateSelectors.mainRegion) ||
+      element.closest(this.config.sitePrivateSelectors.mainRegion)
+    ) {
       score += 250
     }
 
@@ -1304,12 +1301,14 @@ export class DeepSeekAdapter extends SiteAdapter {
   }
 
   private findNativeOutlineList(): HTMLElement | null {
-    const candidates = Array.from(document.querySelectorAll(".ds-virtual-list")).filter(
+    const candidates = Array.from(
+      document.querySelectorAll(this.config.sitePrivateSelectors.nativeOutlineList),
+    ).filter(
       (candidate) =>
         candidate instanceof HTMLElement &&
-        candidate.querySelector(".ds-virtual-list-items, .ds-virtual-list-visible-items") &&
-        !candidate.querySelector(CONVERSATION_LINK_SELECTOR) &&
-        !candidate.closest("aside, nav"),
+        candidate.querySelector(this.config.sitePrivateSelectors.nativeOutlineContentRoots) &&
+        !candidate.querySelector(this.config.conversation.itemSelector) &&
+        !candidate.closest(this.config.sitePrivateSelectors.nativeOutlineExcludedAncestor),
     ) as HTMLElement[]
 
     let best: HTMLElement | null = null
@@ -1319,15 +1318,15 @@ export class DeepSeekAdapter extends SiteAdapter {
       const rect = candidate.getBoundingClientRect()
       let score = 0
 
-      if (candidate.closest('[style*="--scroll-nav-page-padding"]')) {
+      if (candidate.closest(this.config.sitePrivateSelectors.nativeOutlinePaddingScope)) {
         score += 2500
       }
 
-      if (candidate.closest("main, [role='main']")) {
+      if (candidate.closest(this.config.sitePrivateSelectors.mainRegion)) {
         score += 600
       }
 
-      if (candidate.querySelector(".ds-virtual-list-visible-items")) {
+      if (candidate.querySelector(this.config.sitePrivateSelectors.nativeOutlineVisibleItems)) {
         score += 400
       }
 
@@ -1343,7 +1342,7 @@ export class DeepSeekAdapter extends SiteAdapter {
         score += 300
       }
 
-      if (candidate.querySelector(MESSAGE_SELECTOR)) {
+      if (candidate.querySelector(this.config.sitePrivateSelectors.message)) {
         score -= 1500
       }
 
@@ -1359,9 +1358,11 @@ export class DeepSeekAdapter extends SiteAdapter {
   private findNativeOutlineScrollContainer(list: HTMLElement): HTMLElement | null {
     const candidates = [
       list,
-      list.closest(".ds-scroll-area"),
+      list.closest(this.config.sitePrivateSelectors.sidebarScrollArea),
       list.parentElement,
-      list.closest('[style*="--scroll-nav-page-padding"]')?.querySelector(".ds-scroll-area"),
+      list
+        .closest(this.config.sitePrivateSelectors.nativeOutlinePaddingScope)
+        ?.querySelector(this.config.sitePrivateSelectors.sidebarScrollArea),
     ].filter((candidate): candidate is HTMLElement => candidate instanceof HTMLElement)
 
     let best: HTMLElement | null = null
@@ -1373,8 +1374,8 @@ export class DeepSeekAdapter extends SiteAdapter {
         candidate.scrollHeight > candidate.clientHeight + 8 ||
         style.overflowY === "auto" ||
         style.overflowY === "scroll" ||
-        candidate.classList.contains("ds-virtual-list") ||
-        candidate.classList.contains("ds-scroll-area")
+        candidate.matches(this.config.sitePrivateSelectors.nativeOutlineList) ||
+        candidate.matches(this.config.sitePrivateSelectors.sidebarScrollArea)
 
       if (!canScroll || candidate.clientHeight <= 0) {
         return
@@ -1382,8 +1383,8 @@ export class DeepSeekAdapter extends SiteAdapter {
 
       let score = 0
       if (candidate === list) score += 500
-      if (candidate.classList.contains("ds-virtual-list")) score += 350
-      if (candidate.classList.contains("ds-scroll-area")) score += 250
+      if (candidate.matches(this.config.sitePrivateSelectors.nativeOutlineList)) score += 350
+      if (candidate.matches(this.config.sitePrivateSelectors.sidebarScrollArea)) score += 250
       score += Math.min(candidate.scrollHeight - candidate.clientHeight, 2000)
 
       if (score > bestScore) {
@@ -1400,8 +1401,12 @@ export class DeepSeekAdapter extends SiteAdapter {
     list: HTMLElement,
     scrollContainer: HTMLElement | null,
   ): string {
-    const itemsRoot = list.querySelector(".ds-virtual-list-items") as HTMLElement | null
-    const visibleRoot = list.querySelector(".ds-virtual-list-visible-items")
+    const itemsRoot = list.querySelector(
+      this.config.sitePrivateSelectors.nativeOutlineItems,
+    ) as HTMLElement | null
+    const visibleRoot = list.querySelector(
+      this.config.sitePrivateSelectors.nativeOutlineVisibleItems,
+    )
     const scrollHost = scrollContainer || list
 
     return [
@@ -1461,8 +1466,12 @@ export class DeepSeekAdapter extends SiteAdapter {
 
   private readVisibleNativeOutlineEntries(list: HTMLElement): DeepSeekNativeOutlineEntry[] {
     const visibleRoot =
-      (list.querySelector(".ds-virtual-list-visible-items") as HTMLElement | null) ||
-      (list.querySelector(".ds-virtual-list-items") as HTMLElement | null)
+      (list.querySelector(
+        this.config.sitePrivateSelectors.nativeOutlineVisibleItems,
+      ) as HTMLElement | null) ||
+      (list.querySelector(
+        this.config.sitePrivateSelectors.nativeOutlineItems,
+      ) as HTMLElement | null)
     if (!visibleRoot) {
       return []
     }
@@ -1724,8 +1733,12 @@ export class DeepSeekAdapter extends SiteAdapter {
     text: string,
   ): HTMLElement | null {
     const visibleRoot =
-      (list.querySelector(".ds-virtual-list-visible-items") as HTMLElement | null) ||
-      (list.querySelector(".ds-virtual-list-items") as HTMLElement | null)
+      (list.querySelector(
+        this.config.sitePrivateSelectors.nativeOutlineVisibleItems,
+      ) as HTMLElement | null) ||
+      (list.querySelector(
+        this.config.sitePrivateSelectors.nativeOutlineItems,
+      ) as HTMLElement | null)
     if (!visibleRoot) {
       return null
     }
@@ -1789,9 +1802,10 @@ export class DeepSeekAdapter extends SiteAdapter {
   }
 
   private getVisibleUserQueryElements(): Element[] {
-    return Array.from(document.querySelectorAll(USER_MESSAGE_SELECTOR)).filter(
+    const messageSelector = this.config.sitePrivateSelectors.message
+    return Array.from(document.querySelectorAll(this.config.selectors.userQuery)).filter(
       (element) =>
-        element instanceof HTMLElement && !element.parentElement?.closest(MESSAGE_SELECTOR),
+        element instanceof HTMLElement && !element.parentElement?.closest(messageSelector),
     )
   }
 
@@ -1970,11 +1984,11 @@ export class DeepSeekAdapter extends SiteAdapter {
   }
 
   private resolveUserMessageElement(element: Element): HTMLElement | null {
-    if (element.matches(USER_MESSAGE_SELECTOR)) {
+    if (element.matches(this.config.selectors.userQuery)) {
       return element as HTMLElement
     }
 
-    const message = element.closest(USER_MESSAGE_SELECTOR)
+    const message = element.closest(this.config.selectors.userQuery)
     return message instanceof HTMLElement ? message : null
   }
 
@@ -2157,7 +2171,11 @@ export class DeepSeekAdapter extends SiteAdapter {
     if (element.matches(".gh-inline-bookmark, .gh-user-query-raw, .gh-user-query-markdown")) {
       return false
     }
-    if (element.matches("button, [role=button], .ds-icon-button, .ds-focus-ring")) {
+    if (
+      element.matches(
+        `button, [role=button], ${this.config.sitePrivateSelectors.iconButton}, ${this.config.sitePrivateSelectors.focusRing}`,
+      )
+    ) {
       return false
     }
     if (element.querySelector("img")) return true
@@ -2407,16 +2425,19 @@ export class DeepSeekAdapter extends SiteAdapter {
   }
 
   private resolveAssistantMessageElement(element: Element): HTMLElement | null {
-    if (element.matches(MESSAGE_SELECTOR)) {
+    if (element.matches(this.config.sitePrivateSelectors.message)) {
       return element as HTMLElement
     }
 
-    const message = element.closest(MESSAGE_SELECTOR)
+    const message = element.closest(this.config.sitePrivateSelectors.message)
     return message instanceof HTMLElement ? message : null
   }
 
   private resolveAssistantBodyMarkdownElement(element: Element): HTMLElement | null {
-    if (element.matches(".ds-markdown") && !this.isThoughtMarkdownElement(element)) {
+    if (
+      element.matches(this.config.sitePrivateSelectors.assistantMarkdown) &&
+      !this.isThoughtMarkdownElement(element)
+    ) {
       return element as HTMLElement
     }
 
@@ -2429,7 +2450,9 @@ export class DeepSeekAdapter extends SiteAdapter {
   }
 
   private getAssistantBodyMarkdown(message: Element): HTMLElement | null {
-    const markdowns = Array.from(message.querySelectorAll(".ds-markdown")).filter(
+    const markdowns = Array.from(
+      message.querySelectorAll(this.config.sitePrivateSelectors.assistantMarkdown),
+    ).filter(
       (markdown): markdown is HTMLElement =>
         markdown instanceof HTMLElement && !this.isThoughtMarkdownElement(markdown),
     )
@@ -2438,12 +2461,14 @@ export class DeepSeekAdapter extends SiteAdapter {
   }
 
   private isThoughtMarkdownElement(element: Element): boolean {
-    return element.closest(THOUGHT_CONTAINER_SELECTOR) !== null
+    return element.closest(this.config.sitePrivateSelectors.thoughtContainer) !== null
   }
 
   private extractThoughtBlockquotesFromMessage(message: Element): string[] {
     const thoughtMarkdowns = Array.from(
-      message.querySelectorAll(`${THOUGHT_CONTAINER_SELECTOR} .ds-markdown`),
+      message.querySelectorAll(
+        `${this.config.sitePrivateSelectors.thoughtContainer} ${this.config.sitePrivateSelectors.assistantMarkdown}`,
+      ),
     ).filter((markdown): markdown is HTMLElement => markdown instanceof HTMLElement)
 
     const blocks: string[] = []
@@ -2461,7 +2486,7 @@ export class DeepSeekAdapter extends SiteAdapter {
     const clone = element.cloneNode(true) as HTMLElement
     clone
       .querySelectorAll(
-        'button, [role="button"], svg, .ds-icon-button, .ds-focus-ring, [aria-hidden="true"]',
+        `button, [role="button"], svg, ${this.config.sitePrivateSelectors.iconButton}, ${this.config.sitePrivateSelectors.focusRing}, [aria-hidden="true"]`,
       )
       .forEach((node) => node.remove())
 
@@ -2480,12 +2505,12 @@ export class DeepSeekAdapter extends SiteAdapter {
   }
 
   private getVisibleAssistantMessages(container: ParentNode): HTMLElement[] {
-    return Array.from(container.querySelectorAll(ASSISTANT_MESSAGE_SELECTOR)).filter(
+    return Array.from(container.querySelectorAll(this.config.selectors.assistantResponse)).filter(
       (message): message is HTMLElement =>
         message instanceof HTMLElement &&
         !message.closest(`[${DEEPSEEK_EXPORT_ROOT_ATTR}]`) &&
         !message.closest(".gh-root") &&
-        !message.parentElement?.closest(MESSAGE_SELECTOR),
+        !message.parentElement?.closest(this.config.sitePrivateSelectors.message),
     )
   }
 
@@ -2549,7 +2574,9 @@ export class DeepSeekAdapter extends SiteAdapter {
 
       const clone = candidate.cloneNode(true) as HTMLElement
       clone
-        .querySelectorAll('button, [role="button"], svg, .ds-icon-button, [aria-hidden="true"]')
+        .querySelectorAll(
+          `button, [role="button"], svg, ${this.config.sitePrivateSelectors.iconButton}, [aria-hidden="true"]`,
+        )
         .forEach((node) => node.remove())
 
       const text = clone.textContent?.replace(/\r\n/g, "\n").replace(/\n+$/, "") || ""
@@ -2565,11 +2592,12 @@ export class DeepSeekAdapter extends SiteAdapter {
     container: ParentNode,
     collector?: ExportAssetCollector,
   ): DeepSeekExportMessageSnapshot[] {
-    const messages = Array.from(container.querySelectorAll(MESSAGE_SELECTOR)).filter(
+    const messageSelector = this.config.sitePrivateSelectors.message
+    const messages = Array.from(container.querySelectorAll(messageSelector)).filter(
       (message): message is HTMLElement =>
         message instanceof HTMLElement &&
         !message.closest(`[${DEEPSEEK_EXPORT_ROOT_ATTR}]`) &&
-        !message.parentElement?.closest(MESSAGE_SELECTOR),
+        !message.parentElement?.closest(messageSelector),
     )
 
     return messages
@@ -2890,15 +2918,17 @@ export class DeepSeekAdapter extends SiteAdapter {
   }
 
   private extractConversationInfo(el: Element, cid?: string): ConversationInfo | null {
-    const href = el.getAttribute("href") || ""
-    const match = href.match(CHAT_PATH_PATTERN)
+    const href = el.getAttribute(this.config.conversation.idFrom.attr ?? "href") || ""
+    const match = href.match(new RegExp(this.config.conversation.idFrom.regex, "i"))
     if (!match) return null
 
     const id = match[1]
     const title = this.extractConversationTitle(el)
     const url = new URL(href, window.location.origin).toString()
     const isActive =
-      el.getAttribute("aria-current") === "page" ||
+      (this.config.conversation.activeMatch
+        ? el.matches(this.config.conversation.activeMatch)
+        : false) ||
       new URL(url).pathname === window.location.pathname ||
       id === this.getSessionId()
 
@@ -2913,9 +2943,10 @@ export class DeepSeekAdapter extends SiteAdapter {
   }
 
   private getShareConversationTitle(): string | null {
-    const firstUserMessage = Array.from(document.querySelectorAll(USER_MESSAGE_SELECTOR)).find(
-      (message) => !message.parentElement?.closest(MESSAGE_SELECTOR),
-    )
+    const messageSelector = this.config.sitePrivateSelectors.message
+    const firstUserMessage = Array.from(
+      document.querySelectorAll(this.config.selectors.userQuery),
+    ).find((message) => !message.parentElement?.closest(messageSelector))
     const firstUserText = firstUserMessage ? this.extractUserQueryText(firstUserMessage) : ""
     const normalizedUserText = this.normalizeOutlineText(firstUserText)
 
@@ -2926,7 +2957,7 @@ export class DeepSeekAdapter extends SiteAdapter {
     }
 
     const metaTitle = document
-      .querySelector('meta[property="og:title"], meta[name="twitter:title"]')
+      .querySelector(this.config.sitePrivateSelectors.shareTitleMeta)
       ?.getAttribute("content")
       ?.replace(/\s*[-|]\s*DeepSeek$/i, "")
       ?.trim()
@@ -2956,7 +2987,7 @@ export class DeepSeekAdapter extends SiteAdapter {
     if (!header) return false
 
     const hasElementChildren = header.children.length > 0
-    const hasFocusRing = header.querySelector(":scope > .ds-focus-ring, .ds-focus-ring") !== null
+    const hasFocusRing = header.querySelector(this.config.sitePrivateSelectors.focusRing) !== null
     const hasSpan = header.querySelector(":scope > span, span") !== null
 
     return hasElementChildren && hasFocusRing && hasSpan
@@ -2987,7 +3018,7 @@ export class DeepSeekAdapter extends SiteAdapter {
   }
 
   private isConversationLink(element: Element): boolean {
-    return element.matches(CONVERSATION_LINK_SELECTOR)
+    return element.matches(this.config.conversation.itemSelector)
   }
 
   private extractConversationTitle(el: Element): string {
@@ -3012,8 +3043,10 @@ export class DeepSeekAdapter extends SiteAdapter {
     const directChildren = Array.from(el.children)
     const directTitleChild = directChildren.find((child) => {
       if (!(child instanceof HTMLElement)) return false
-      if (child.classList.contains("ds-focus-ring")) return false
-      if (child.querySelector('[role="button"], .ds-icon-button')) return false
+      if (child.matches(this.config.sitePrivateSelectors.focusRing)) return false
+      if (child.querySelector(`[role="button"], ${this.config.sitePrivateSelectors.iconButton}`)) {
+        return false
+      }
       return !!child.innerText?.trim()
     })
     if (directTitleChild) return directTitleChild
@@ -3044,7 +3077,7 @@ export class DeepSeekAdapter extends SiteAdapter {
 
   private isLikelyUserMessageDecoration(element: Element): boolean {
     return element.matches(
-      ".gh-inline-bookmark, .gh-user-query-raw, .gh-user-query-markdown, button, [role=button], .ds-icon-button, .ds-focus-ring",
+      `.gh-inline-bookmark, .gh-user-query-raw, .gh-user-query-markdown, button, [role=button], ${this.config.sitePrivateSelectors.iconButton}, ${this.config.sitePrivateSelectors.focusRing}`,
     )
   }
 }
