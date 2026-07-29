@@ -6,7 +6,7 @@ Z.ai 是内置配置热修的首个试点，当前 `configVersion` 为 `1`。适
 
 | 范围 | 配置字段 | 影响功能 |
 | --- | --- | --- |
-| 输入与发送 | `selectors.textarea`、`sitePrivateSelectors.submitButton`、`input` | Prompt 插入、发送按钮识别、发送快捷键 |
+| 输入与发送 | `selectors.textarea`、`sitePrivateSelectors.submitButton`、`input.submitKey` | Prompt 插入、发送按钮识别、发送快捷键 |
 | 消息与大纲 | `selectors.responseContainer`、`selectors.chatContent`、`selectors.userQuery`、`sitePrivateSelectors.assistantMarkdown`、`assistantBody` | 消息容器、阅读锚点、用户提问与 AI 回复识别、大纲和字数统计 |
 | 新对话与生成状态 | `selectors.newChatButton`、`selectors.stopButton`、`generating.existsSelectors` | 新对话、停止生成、生成状态检测 |
 | 模型选择 | `modelSwitcher.*` | 当前模型识别、模型菜单与子菜单选择 |
@@ -23,6 +23,7 @@ Z.ai 是内置配置热修的首个试点，当前 `configVersion` 为 `1`。适
 ## 仍需随应用发版
 
 - 站点 hostname、会话/分享路径正则和新标签页 URL。
+- 输入控件类型与插入算法；`input.mode` 变化需要同步修改命令式输入实现。
 - Z.ai API 路径、响应结构、会话 ID 与消息 ID 解析算法。
 - localStorage key、主题 class 切换流程和亮暗主题颜色值。
 - 附件 URL 属性列表、文件名/类型/大小解析和资源下载逻辑。
@@ -30,3 +31,7 @@ Z.ai 是内置配置热修的首个试点，当前 `configVersion` 为 `1`。适
 - Ophel 自身 `.gh-*` 标记与清理规则；这些不是宿主站点选择器。
 
 当上述命令式行为或内置默认配置需要修复时，应正常发版并递增 `ZAI_CONFIG_VERSION`；旧 `baseConfigVersion` patch 会自动失效。
+
+## 自动化与手工验收
+
+`src/adapters/zai-config.test.ts` 锁定默认配置映射、合法 patch 动态生效、返回值防御性复制，以及全部私有 selector 白名单键存在运行时消费点。P0-08 仍需在真实 Z.ai 页面完成输入、生成、大纲、导出、附件、会话、模型、宽度、Zen、主题与面板避让手工回归后才能标记完成。
