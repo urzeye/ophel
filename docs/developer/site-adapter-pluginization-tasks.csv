@@ -1,5 +1,5 @@
 ﻿任务ID,阶段,模块,任务名称,详细说明,依赖任务,规模,预估人日,优先级,交付物/验收标准,状态
-"P0-00","Phase 0","基建","vitest 最小测试基建","项目当前无正式测试体系，为校验器/合并器等纯逻辑模块引入 vitest 最小配置（不做 UI 测试）；package.json test script、CI 接入","","S","0.5","高","pnpm test 可运行示例用例；CI 执行测试","未开始"
+"P0-00","Phase 0","基建","vitest 最小测试基建","项目当前无正式测试体系，为校验器/合并器等纯逻辑模块引入 vitest 最小配置（不做 UI 测试）；package.json test script、CI 接入","","S","0.5","高","pnpm test 可运行示例用例；CI 执行测试","已完成"
 "P0-01","Phase 0","Schema","SitePack v1 类型定义","新建 src/adapters/declarative/types.ts：SitePackManifest/SitePackSelectors/conversation/generating/session 等全字段 TS 类型与注释；最大化复用 base.ts 现有 Config 接口形状；matches 允许空数组（通用包，必须配 detect，§6.9.1）；同时定案运行时校验技术选型（手写轻量校验 vs effect/Schema，评估 bundle 影响）","","M","2","高","类型文件合入且通过 typecheck；校验选型结论记录在方案文档","已完成"
 "P0-02","Phase 0","Schema","运行时校验器","src/adapters/declarative/validate.ts：白名单键（未知键拒绝）、类型与长度/数量上限、matches 规则（https/禁通配/≤10/空数组须配 detect）、正则编译与长度≤200、CSS 黑名单（归一化含转义解码后匹配 url(/@import/expression(/javascript:）、capabilities 与字段齐备性校验；patch 的 config 局部字段复用同一校验器（不允许旁路）；输出结构化错误信息","P0-00,P0-01","M","2","高","单元测试覆盖全部非法样例（§8.2 每条规则至少 1 正 1 反用例，含 CSS 转义绕过样例）","进行中"
 "P0-03","Phase 1","Schema","JSON Schema 文件（自 Phase 0 后移）","registry/schema/site-pack.schema.json 与 TS 类型同步维护，供 CI 校验与编辑器智能提示；README 注明两者同步要求；随 P1-11 registry 开放一并交付","P0-01","S","1","中","schema 文件可被编辑器识别；示例包通过校验","已完成"
