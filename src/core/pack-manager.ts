@@ -25,8 +25,9 @@ import {
   type RemoteConfigState,
   type RemoteConfigStorage,
 } from "./remote-config-types"
+import { INSTALLED_SITE_PACKS_STORAGE_KEY } from "./site-pack-storage-constants"
 
-export const INSTALLED_SITE_PACKS_STORAGE_KEY = "sitepacks/installed"
+export { INSTALLED_SITE_PACKS_STORAGE_KEY } from "./site-pack-storage-constants"
 export const INSTALLED_SITE_PACKS_STORAGE_SCHEMA_VERSION = 1 as const
 
 const MIN_UNIX_MILLISECONDS = 1_000_000_000_000

@@ -8,6 +8,7 @@ import React, {
 } from "react"
 
 import { resolveSitePackDescription, resolveSitePackName } from "~adapters/declarative/localization"
+import { siteMatchPatternOriginPattern } from "~adapters/declarative/match-pattern"
 import type { SitePackManifest } from "~adapters/declarative/types"
 import { SITE_PACK_MAX_BYTES, type SitePackValidationError } from "~adapters/declarative/validate"
 import { DeleteIcon, ImportIcon, InfoIcon, JSONFileIcon, RefreshIcon } from "~components/icons"
@@ -25,7 +26,7 @@ import {
   type RemoteConfigState,
   type RemoteConfigCheckResult,
 } from "~core/remote-config-types"
-import { platform } from "~platform"
+import { platform, type SitePackRuntimeStatus } from "~platform"
 import { PageTitle } from "~tabs/options/components"
 import { getCurrentLang, subscribeI18nChanges, t } from "~utils/i18n"
 
@@ -203,7 +204,13 @@ const getValidationErrors = (error: unknown): SitePackValidationError[] | undefi
   error instanceof PackManagerError ? error.validationErrors : undefined
 
 const getBusyPackId = (key: string): string | null => {
-  for (const prefix of ["toggle:", "update:", "install:", "confirm:import:"] as const) {
+  for (const prefix of [
+    "toggle:",
+    "update:",
+    "install:",
+    "permission:",
+    "confirm:import:",
+  ] as const) {
     if (key.startsWith(prefix)) return key.slice(prefix.length)
   }
   const uninstallPrefix = "confirm:uninstall:"
@@ -257,10 +264,16 @@ const SitePacksPage: React.FC = () => {
   const [installedPacks, setInstalledPacks] = useState<InstalledSitePack[]>([])
   const [snapshotIssues, setSnapshotIssues] = useState<PackManagerIssue[]>([])
   const [remoteState, setRemoteState] = useState<RemoteConfigState | null>(null)
+  const [runtimeStatus, setRuntimeStatus] = useState<SitePackRuntimeStatus>({
+    activeOrigins: [],
+    missingPermissionOrigins: [],
+  })
   const [isInstalledLoading, setIsInstalledLoading] = useState(true)
   const [isRegistryLoading, setIsRegistryLoading] = useState(true)
+  const [isRuntimeLoading, setIsRuntimeLoading] = useState(true)
   const [installedError, setInstalledError] = useState<string | null>(null)
   const [registryError, setRegistryError] = useState<string | null>(null)
+  const [runtimeError, setRuntimeError] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<FeedbackState | null>(null)
   const [busyKeys, setBusyKeys] = useState<ReadonlySet<string>>(() => new Set())
   const [confirmation, setConfirmation] = useState<ConfirmationState | null>(null)
@@ -309,6 +322,17 @@ const SitePacksPage: React.FC = () => {
     () => buildRegistrySitePackViews(remoteState, installedPacks, currentLanguage),
     [currentLanguage, installedPacks, remoteState],
   )
+  const permissionReviewPacks = useMemo(() => {
+    const missingOrigins = new Set(runtimeStatus.missingPermissionOrigins)
+    if (missingOrigins.size === 0) return []
+    return sortedInstalledPacks.filter(
+      (pack) =>
+        isInstalledSitePackEffectivelyEnabled(pack) &&
+        pack.manifest.matches.some((match) =>
+          missingOrigins.has(siteMatchPatternOriginPattern(match)),
+        ),
+    )
+  }, [runtimeStatus.missingPermissionOrigins, sortedInstalledPacks])
   const isRegistryBusy = useMemo(() => Array.from(busyKeys).some(isRegistryBusyKey), [busyKeys])
   const isImportBusy = useMemo(
     () =>
@@ -362,13 +386,35 @@ const SitePacksPage: React.FC = () => {
     }
   }, [])
 
+  const syncRuntimeStatus = useCallback(async () => {
+    const status = await platform.sitePacks.reconcile()
+    setRuntimeStatus(status)
+    setRuntimeError(null)
+    return status
+  }, [])
+
+  const loadRuntimeStatus = useCallback(
+    async (showLoading = false) => {
+      if (showLoading) setIsRuntimeLoading(true)
+      try {
+        return await syncRuntimeStatus()
+      } catch (error) {
+        setRuntimeError(t("sitePacksOperationFailed", { error: getErrorMessage(error) }))
+        return null
+      } finally {
+        if (showLoading) setIsRuntimeLoading(false)
+      }
+    },
+    [syncRuntimeStatus],
+  )
+
   useEffect(() => {
-    void Promise.all([loadInstalledPacks(true), loadRegistryState(true)])
-  }, [loadInstalledPacks, loadRegistryState])
+    void Promise.all([loadInstalledPacks(true), loadRegistryState(true), loadRuntimeStatus(true)])
+  }, [loadInstalledPacks, loadRegistryState, loadRuntimeStatus])
 
   useEffect(() => {
     const stopInstalledWatch = platform.storage.watch(INSTALLED_SITE_PACKS_STORAGE_KEY, () => {
-      void loadInstalledPacks()
+      void Promise.all([loadInstalledPacks(), loadRuntimeStatus()])
     })
     const stopRegistryWatch = platform.storage.watch(REMOTE_CONFIG_STORAGE_KEY, () => {
       void loadRegistryState()
@@ -377,7 +423,7 @@ const SitePacksPage: React.FC = () => {
       stopInstalledWatch()
       stopRegistryWatch()
     }
-  }, [loadInstalledPacks, loadRegistryState])
+  }, [loadInstalledPacks, loadRegistryState, loadRuntimeStatus])
 
   const closeConfirmation = useCallback(() => setConfirmation(null), [])
 
@@ -405,7 +451,7 @@ const SitePacksPage: React.FC = () => {
         for (const packId of new Set(packIds)) {
           await packManager.setEnabled(packId, false)
         }
-        await platform.sitePacks.reconcile()
+        await syncRuntimeStatus()
       } catch (rollbackError) {
         throw new Error(
           `SitePack activation failed: ${getErrorMessage(activationError)}; rollback failed: ${getErrorMessage(rollbackError)}`,
@@ -413,7 +459,7 @@ const SitePacksPage: React.FC = () => {
       }
       throw activationError
     },
-    [packManager],
+    [packManager, syncRuntimeStatus],
   )
 
   const prepareInstalledPacksRuntime = useCallback(
@@ -427,7 +473,7 @@ const SitePacksPage: React.FC = () => {
           await packManager.setEnabled(pack.manifest.id, false)
           deniedPacks.push(pack)
         }
-        await platform.sitePacks.reconcile()
+        await syncRuntimeStatus()
         return deniedPacks
       } catch (error) {
         await rollbackRuntimeActivation(
@@ -436,7 +482,7 @@ const SitePacksPage: React.FC = () => {
         )
       }
     },
-    [packManager, rollbackRuntimeActivation],
+    [packManager, rollbackRuntimeActivation, syncRuntimeStatus],
   )
 
   const handleToggleEnabled = async (pack: InstalledSitePack) => {
@@ -453,13 +499,13 @@ const SitePacksPage: React.FC = () => {
         }
         try {
           await packManager.setEnabled(pack.manifest.id, true)
-          await platform.sitePacks.reconcile()
+          await syncRuntimeStatus()
         } catch (error) {
           await rollbackRuntimeActivation([pack.manifest.id], error)
         }
       } else {
         await packManager.setEnabled(pack.manifest.id, false)
-        await platform.sitePacks.reconcile()
+        await syncRuntimeStatus()
       }
       await loadInstalledPacks()
       setFeedback({
@@ -471,6 +517,27 @@ const SitePacksPage: React.FC = () => {
       })
     } catch (error) {
       await loadInstalledPacks()
+      setOperationError(error)
+    } finally {
+      endBusy(key)
+    }
+  }
+
+  const handleReauthorizePack = async (pack: InstalledSitePack) => {
+    const key = `permission:${pack.manifest.id}`
+    if (!beginBusy(key)) return
+    setFeedback(null)
+    try {
+      const permission = await platform.sitePacks.ensureOrigins(pack.manifest.id)
+      if (permission === "denied") {
+        await Promise.all([loadInstalledPacks(), loadRuntimeStatus()])
+        setPermissionDeniedFeedback(pack)
+        return
+      }
+      await Promise.all([loadInstalledPacks(), syncRuntimeStatus()])
+      setFeedback({ tone: "success", message: t("permissionGranted") })
+    } catch (error) {
+      await Promise.all([loadInstalledPacks(), loadRuntimeStatus()])
       setOperationError(error)
     } finally {
       endBusy(key)
@@ -658,7 +725,7 @@ const SitePacksPage: React.FC = () => {
     if (!beginBusy(key)) return
     try {
       await packManager.uninstall(confirmation.pack.manifest.id)
-      await platform.sitePacks.reconcile()
+      await syncRuntimeStatus()
       await loadInstalledPacks()
       setFeedback({
         tone: "success",
@@ -852,9 +919,38 @@ const SitePacksPage: React.FC = () => {
       ref={pageRef}
       className="settings-pack-page"
       tabIndex={-1}
-      aria-busy={isInstalledLoading || isRegistryLoading}>
+      aria-busy={isInstalledLoading || isRegistryLoading || isRuntimeLoading}>
       <PageTitle title={t("navSitePacks")} Icon={JSONFileIcon} />
       <p className="settings-page-desc">{t("sitePacksPageDesc")}</p>
+
+      {permissionReviewPacks.length > 0 && (
+        <div className="settings-pack-permission-review" role="alert">
+          <InfoIcon size={18} />
+          <div className="settings-pack-permission-review-content">
+            <strong>{t("sitePacksPermissionReviewTitle")}</strong>
+            <p>{t("sitePacksPermissionReviewDesc")}</p>
+            <div className="settings-pack-permission-review-actions">
+              {permissionReviewPacks.map((pack) => {
+                const name = resolveSitePackName(pack.manifest, currentLanguage)
+                return (
+                  <div className="settings-pack-permission-review-item" key={pack.manifest.id}>
+                    <span>{name}</span>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="primary"
+                      disabled={isPackBusy(pack.manifest.id)}
+                      aria-label={`${t("allow")}: ${name}`}
+                      onClick={() => void handleReauthorizePack(pack)}>
+                      {t("allow")}
+                    </Button>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       {renderFeedback()}
 
@@ -876,6 +972,19 @@ const SitePacksPage: React.FC = () => {
               size="sm"
               variant="secondary"
               onClick={() => void loadInstalledPacks(true)}>
+              {t("refresh")}
+            </Button>
+          </div>
+        )}
+
+        {runtimeError && (
+          <div className="settings-pack-inline-error" role="alert">
+            <span>{runtimeError}</span>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              onClick={() => void loadRuntimeStatus(true)}>
               {t("refresh")}
             </Button>
           </div>

@@ -17,11 +17,17 @@ export const ZUSTAND_KEYS: string[] = [
   "tags",
   "conversations",
   "readingHistory",
+  "claudeSessionKeys",
 ]
 
 // 多属性 Store（导入时需要特殊处理）
 // 这些 store 的 state 中包含多个属性，不只是与 key 同名的主数据
-export const MULTI_PROP_STORES: string[] = ["conversations", "readingHistory"]
+export const MULTI_PROP_STORES: string[] = [
+  "promptChains",
+  "conversations",
+  "readingHistory",
+  "claudeSessionKeys",
+]
 
 // ==================== 默认提示词 ====================
 // 返回国际化后的默认提示词

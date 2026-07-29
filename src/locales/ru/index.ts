@@ -68,6 +68,9 @@ export const ru = {
   sitePacksPermissionDesc: "Ophel требуется запускать «{name}» на следующих сайтах: {origins}",
   sitePacksPermissionDenied:
     "Доступ к сайтам для «{name}» не предоставлен, поэтому пакет остаётся отключённым.",
+  sitePacksPermissionReviewTitle: "Повторно разрешить восстановленные пакеты",
+  sitePacksPermissionReviewDesc:
+    "Разрешения браузера для сайтов не входят в резервную копию. Снова предоставьте доступ активным пакетам ниже, чтобы включить их.",
   sitePacksInvalidFile: "Этот JSON-файл не является допустимым SitePack.",
   sitePacksValidationErrorsTitle: "Сведения о проверке",
   sitePacksStoredIssuesTitle: "Проблемы сохранённых пакетов",

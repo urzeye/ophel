@@ -18,6 +18,8 @@ import {
 } from "~core/modules-init"
 import { APP_DISPLAY_NAME } from "~utils/config"
 import { INTER_LOCAL_FONT_FACE, getPlatformFontFamily } from "~utils/font"
+import { useBookmarkStore } from "~stores/bookmarks-store"
+import { useClaudeSessionKeysStore } from "~stores/claude-sessionkeys-store"
 import { useConversationsStore } from "~stores/conversations-store"
 import { useFoldersStore } from "~stores/folders-store"
 import { usePromptChainsStore } from "~stores/prompt-chains-store"
@@ -42,6 +44,8 @@ const resetAllStores = () => {
   useTagsStore.setState({ tags: [] })
   useConversationsStore.setState({ conversations: {}, lastUsedFolderId: "inbox" })
   useReadingHistoryStore.setState({ history: {}, lastCleanupRun: 0 })
+  useBookmarkStore.getState().clearAllBookmarks()
+  useClaudeSessionKeysStore.setState({ keys: [], currentKeyId: "" })
 }
 
 const OPHEL_EXTENSION_UPDATE_FALLBACK_ID = "ophel-extension-update-fallback"

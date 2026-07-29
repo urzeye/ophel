@@ -15,14 +15,13 @@ import {
   InfoIcon,
 } from "~components/icons"
 import { ConfirmDialog, Tooltip } from "~components/ui"
+import { DEFAULT_FOLDERS, getDefaultPromptChains, getDefaultPrompts } from "~constants/defaults"
 import {
-  DEFAULT_FOLDERS,
-  MULTI_PROP_STORES,
-  ZUSTAND_KEYS,
-  getDefaultPromptChains,
-  getDefaultPrompts,
-} from "~constants/defaults"
-import { REMOTE_CONFIG_STORAGE_KEY } from "~core/remote-config-types"
+  createBackupDocument,
+  normalizeBackupDocument,
+  restoreBackupDocument,
+  type BackupType,
+} from "~core/backup-codec"
 import {
   WEBDAV_PROVIDER_PRESETS,
   detectProviderFromUrl,
@@ -32,6 +31,8 @@ import {
   type WebDAVProvider,
 } from "~core/webdav-sync"
 import { platform } from "~platform"
+import { useBookmarkStore } from "~stores/bookmarks-store"
+import { useClaudeSessionKeysStore } from "~stores/claude-sessionkeys-store"
 import { useConversationsStore } from "~stores/conversations-store"
 import { useFoldersStore } from "~stores/folders-store"
 import { usePromptChainsStore } from "~stores/prompt-chains-store"
@@ -46,6 +47,7 @@ import {
   MSG_CLEAR_ALL_DATA,
   MSG_REQUEST_PERMISSIONS,
   MSG_RESTORE_DATA,
+  sendToBackground,
 } from "~utils/messaging"
 import { CLEAR_ALL_FLAG_KEY, DEFAULT_SETTINGS, RESTORE_FLAG_KEY } from "~utils/storage"
 import { showToast as showDomToast } from "~utils/toast"
@@ -86,8 +88,21 @@ const formatBackupTypeLabel = (type: unknown): string => {
   return String(type || t("unknown"))
 }
 
-const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value) && typeof value === "object" && !Array.isArray(value)
+const notifyRestoreContexts = async (): Promise<string[]> => {
+  if (platform.type !== "extension" || typeof chrome === "undefined") return []
+
+  await platform.storage.set(RESTORE_FLAG_KEY, Date.now())
+  const response = await sendToBackground({ type: MSG_RESTORE_DATA })
+  if (!response.success) {
+    throw new Error(response.error || "Failed to notify pages after backup restore")
+  }
+  return response.missingPermissionOrigins ?? []
+}
+
+const getRestoreSuccessMessage = (message: string, missingPermissionOrigins: readonly string[]) =>
+  missingPermissionOrigins.length > 0
+    ? `${message} ${t("sitePacksPermissionReviewTitle")}`
+    : message
 
 // ==================== 远程备份列表模态框 (保持原有逻辑) ====================
 const RemoteBackupModal: React.FC<{
@@ -139,18 +154,14 @@ const RemoteBackupModal: React.FC<{
           const manager = getWebDAVSyncManager()
           const result = await manager.download(file.name)
           if (result.success) {
-            try {
-              if (platform.type === "extension" && typeof chrome !== "undefined") {
-                await platform.storage.set(RESTORE_FLAG_KEY, Date.now())
-                await chrome.runtime.sendMessage({ type: MSG_RESTORE_DATA })
-              }
-            } catch {
-              // ignore
-            }
-            showDomToast(t("restoreSuccess"))
-            setTimeout(() => {
-              onRestore()
-            }, 1500)
+            const missingPermissionOrigins = await notifyRestoreContexts()
+            showDomToast(getRestoreSuccessMessage(t("restoreSuccess"), missingPermissionOrigins))
+            setTimeout(
+              () => {
+                onRestore()
+              },
+              missingPermissionOrigins.length > 0 ? 2500 : 1500,
+            )
           } else {
             showDomToast(t("restoreError"))
             setLoading(false)
@@ -439,129 +450,17 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
 
   if (!settings) return null
 
-  const writeStorageUpdates = async (updates: Record<string, unknown>) => {
-    await new Promise<void>((resolve, reject) =>
-      chrome.storage.local.set(updates, () =>
-        chrome.runtime.lastError ? reject(chrome.runtime.lastError) : resolve(),
-      ),
-    )
-  }
-
-  const notifyPagesToReload = async () => {
-    try {
-      if (platform.type === "extension" && typeof chrome !== "undefined") {
-        await platform.storage.set(RESTORE_FLAG_KEY, Date.now())
-        await chrome.runtime.sendMessage({ type: MSG_RESTORE_DATA })
-      }
-    } catch {
-      // ignore
-    }
-  }
-
   // -------------------- 导出功能 --------------------
 
-  const handleExport = async (type: "full" | "prompts" | "settings") => {
+  const handleExport = async (type: BackupType) => {
     try {
-      let exportData: Record<string, unknown> = {}
-      const timestamp = new Date().toISOString()
+      const exportData = await createBackupDocument(platform.storage, type)
+      const timestamp = exportData.timestamp
       let filename = `ophel-backup-${timestamp.slice(0, 10)}.json`
 
-      if (type === "full") {
-        // 1. 完整导出
-        const localData = await new Promise<Record<string, unknown>>((resolve) =>
-          chrome.storage.local.get(null, resolve),
-        )
-        // 过滤和处理数据
-        const hydratedData = Object.fromEntries(
-          Object.entries(localData)
-            .filter(([key]) => key !== REMOTE_CONFIG_STORAGE_KEY)
-            .map(([k, v]) => {
-              try {
-                let parsed = typeof v === "string" ? JSON.parse(v) : v
-                if (ZUSTAND_KEYS.includes(k) && parsed?.state) {
-                  if (MULTI_PROP_STORES.includes(k)) {
-                    // 多属性 store：保留整个 state（含 lastUsedFolderId 等辅助属性）
-                    parsed = parsed.state
-                  } else if (parsed.state[k] !== undefined) {
-                    // 单属性 store：直接提取主数据
-                    parsed = parsed.state[k]
-                  } else {
-                    parsed = parsed.state
-                  }
-                }
-                return [k, parsed]
-              } catch {
-                return [k, v]
-              }
-            }),
-        )
-        exportData = {
-          version: 3,
-          timestamp,
-          type: "full",
-          data: hydratedData,
-        }
-      } else if (type === "prompts") {
-        // 2. 仅提示词导出 (KEY: prompts + promptChains)
-        // 注意：不包含 folders 和 tags，按需求
-        const raw = await new Promise<Record<string, unknown>>((resolve) =>
-          chrome.storage.local.get(["prompts", "promptChains"], resolve),
-        )
-        // 解析 Zustand 结构
-        let promptsData = []
-        let promptChainsData: unknown = []
-        try {
-          const parsed = typeof raw.prompts === "string" ? JSON.parse(raw.prompts) : raw.prompts
-          if (parsed?.state?.prompts) {
-            promptsData = parsed.state.prompts
-          }
-
-          const parsedChains =
-            typeof raw.promptChains === "string" ? JSON.parse(raw.promptChains) : raw.promptChains
-          const promptChainsState = parsedChains?.state
-          if (isObjectRecord(promptChainsState) && Array.isArray(promptChainsState.chains)) {
-            promptChainsData =
-              typeof promptChainsState.defaultChainsVersion === "number"
-                ? {
-                    chains: promptChainsState.chains,
-                    defaultChainsVersion: promptChainsState.defaultChainsVersion,
-                  }
-                : promptChainsState.chains
-          }
-        } catch (e) {
-          console.error(e)
-        }
-
-        exportData = {
-          version: 3,
-          timestamp,
-          type: "prompts",
-          data: { prompts: promptsData, promptChains: promptChainsData },
-        }
+      if (type === "prompts") {
         filename = `ophel-prompts-${timestamp.slice(0, 10)}.json`
       } else if (type === "settings") {
-        // 3. 仅设置导出 (KEY: settings)
-        const raw = await new Promise<Record<string, unknown>>((resolve) =>
-          chrome.storage.local.get("settings", resolve),
-        )
-        let settingsData = {}
-        try {
-          const parsed = typeof raw.settings === "string" ? JSON.parse(raw.settings) : raw.settings
-          if (parsed?.state?.settings) {
-            settingsData = parsed.state.settings
-          } else if (parsed?.state) {
-            settingsData = parsed.state
-          }
-        } catch (e) {
-          console.error(e)
-        }
-
-        exportData = {
-          version: 3,
-          timestamp,
-          type: "settings",
-          data: { settings: settingsData }, // 此处 settings 对应 settings store key
-        }
         filename = `ophel-settings-${timestamp.slice(0, 10)}.json`
       }
 
@@ -585,15 +484,16 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
 
   const processImport = async (jsonString: string) => {
     try {
-      const data = JSON.parse(jsonString)
+      const parsedData = JSON.parse(jsonString)
 
       // 数据格式验证
-      const validation = validateBackupData(data)
+      const validation = validateBackupData(parsedData)
       if (!validation.valid) {
         console.error("Backup validation failed:", validation.errorKeys)
         showDomToast(t("invalidBackupFile"))
         return
       }
+      const data = normalizeBackupDocument(parsedData)
 
       setConfirmConfig({
         show: true,
@@ -635,89 +535,14 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
         onConfirm: async () => {
           setConfirmConfig((prev) => ({ ...prev, show: false }))
           try {
-            // 数据回填逻辑 (Rehydration)
-            const updates: Record<string, unknown> = {}
+            await restoreBackupDocument(platform.storage, data)
+            const missingPermissionOrigins = await notifyRestoreContexts()
 
-            Object.entries(data.data).forEach(([k, v]) => {
-              if (v === null || v === undefined) return
-
-              // 只导入存在的 key，避免污染
-              // 如果是 prompts 导出，data.data 只包含 prompts
-
-              if (ZUSTAND_KEYS.includes(k)) {
-                // 构建 Zustand persist 结构
-                let stateContent = v
-                // 针对 multi-prop stores 的特殊处理 (如 conversations)
-                if (MULTI_PROP_STORES.includes(k)) {
-                  // 通过检查 v 中是否包含与 store 同名的属性来区分格式
-                  if (typeof v === "object" && !Array.isArray(v)) {
-                    const obj = v as Record<string, unknown>
-                    if (k === "conversations" && obj.conversations !== undefined) {
-                      // 已包装格式：{ conversations: {...}, lastUsedFolderId: "..." }
-                      stateContent = v
-                    } else if (
-                      k === "readingHistory" &&
-                      (obj.history !== undefined || obj.lastCleanupRun !== undefined)
-                    ) {
-                      // 已包装格式：{ history: {...}, lastCleanupRun: number }
-                      stateContent = v
-                    } else {
-                      // 扁平化格式（旧版本导出）
-                      stateContent = k === "readingHistory" ? { history: v } : { [k]: v }
-                    }
-                  } else {
-                    // 扁平化格式（旧版本导出）：v 直接是主数据
-                    stateContent = k === "readingHistory" ? { history: v } : { [k]: v }
-                  }
-                } else if (k === "promptChains") {
-                  if (Array.isArray(v)) {
-                    stateContent = { chains: v }
-                  } else if (isObjectRecord(v)) {
-                    const state = v.state
-                    if (isObjectRecord(state) && Array.isArray(state.chains)) {
-                      stateContent = state
-                    } else if (v.chains !== undefined) {
-                      stateContent = v
-                    } else {
-                      stateContent = { chains: [] }
-                    }
-                  } else {
-                    stateContent = { chains: [] }
-                  }
-                } else {
-                  // prompts, settings 等通常 state key = store name
-                  // 但旧版本可能不同，这里统一假设 state = { [key]: value } 是安全的默认值
-                  // 实际上 store 定义是 { prompts: [...] }
-                  // 导出的 v 就是 [...] (array) 或者 object
-                  // 如果 v 是 array (prompts list)，这里需要包装成 { prompts: v }
-                  if (k === "prompts" && Array.isArray(v)) {
-                    stateContent = { prompts: v }
-                  } else if (k === "settings" && !v["settings"]) {
-                    // settings store 结构是 { settings: {...}, ...actions }
-                    // 导出的 v 是 settings 对象本身
-                    stateContent = { settings: v }
-                  } else {
-                    // 兜底
-                    stateContent = { [k]: v }
-                  }
-                }
-
-                updates[k] = JSON.stringify({ state: stateContent, version: 0 })
-              } else {
-                // 普通数据
-                if (typeof v === "object") {
-                  updates[k] = JSON.stringify(v)
-                } else {
-                  updates[k] = v
-                }
-              }
-            })
-
-            await writeStorageUpdates(updates)
-            await notifyPagesToReload()
-
-            showDomToast(t("importSuccess"))
-            setTimeout(() => window.location.reload(), 1000)
+            showDomToast(getRestoreSuccessMessage(t("importSuccess"), missingPermissionOrigins))
+            setTimeout(
+              () => window.location.reload(),
+              missingPermissionOrigins.length > 0 ? 2500 : 1000,
+            )
           } catch (err) {
             console.error("[Backup] import storage write failed:", err)
             showDomToast(`${t("importError")}${getErrorMessage(err)}`)
@@ -755,6 +580,8 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
     useTagsStore.setState({ tags: [] })
     useConversationsStore.setState({ conversations: {}, lastUsedFolderId: "inbox" })
     useReadingHistoryStore.setState({ history: {}, lastCleanupRun: 0 })
+    useBookmarkStore.getState().clearAllBookmarks()
+    useClaudeSessionKeysStore.setState({ keys: [], currentKeyId: "" })
   }
 
   // 清除数据
@@ -768,10 +595,9 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
         setConfirmConfig((prev) => ({ ...prev, show: false }))
         try {
           if (platform.type === "extension" && typeof chrome !== "undefined") {
-            try {
-              await chrome.runtime.sendMessage({ type: MSG_CLEAR_ALL_DATA })
-            } catch {
-              // 忽略消息发送失败
+            const response = await sendToBackground({ type: MSG_CLEAR_ALL_DATA })
+            if (!response.success) {
+              throw new Error(response.error || "Failed to clean up SitePack runtime data")
             }
           }
 

@@ -87,6 +87,10 @@ export const platform: Platform = {
       if (!response.success) {
         throw new Error(response.error || "Failed to reconcile SitePack registrations")
       }
+      return {
+        activeOrigins: response.activeOrigins ?? [],
+        missingPermissionOrigins: response.missingPermissionOrigins ?? [],
+      }
     },
   },
 

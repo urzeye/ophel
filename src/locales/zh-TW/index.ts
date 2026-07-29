@@ -61,6 +61,9 @@ export const zhTW = {
   sitePacksPermissionTitle: "允許適配包存取網站？",
   sitePacksPermissionDesc: "Ophel 需要在以下網站執行「{name}」：{origins}",
   sitePacksPermissionDenied: "未授予「{name}」的網站存取權限，適配包已維持停用。",
+  sitePacksPermissionReviewTitle: "重新授權已還原的適配包",
+  sitePacksPermissionReviewDesc:
+    "瀏覽器不會隨備份移轉網站權限。請為下列已啟用適配包重新授權，授權後即可恢復運作。",
   sitePacksInvalidFile: "此 JSON 檔案不是有效的 SitePack。",
   sitePacksValidationErrorsTitle: "驗證詳情",
   sitePacksStoredIssuesTitle: "已儲存適配包的問題",

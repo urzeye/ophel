@@ -32,6 +32,7 @@ export type {
   PlatformStorage,
   PlatformRemoteConfig,
   PlatformSitePacks,
+  SitePackRuntimeStatus,
   SitePackOriginPermissionResult,
   PlatformCapability,
   FetchOptions,

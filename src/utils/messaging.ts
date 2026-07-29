@@ -218,11 +218,21 @@ export interface ClearAllDataMessage {
   type: typeof MSG_CLEAR_ALL_DATA
 }
 
+export interface ClearAllDataResponse extends BasicBackgroundResponse {
+  tabs?: number
+}
+
 // 恢复备份数据（通知各上下文重载页面以加载最新数据）
 export const MSG_RESTORE_DATA = "RESTORE_DATA"
 
 export interface RestoreDataMessage {
   type: typeof MSG_RESTORE_DATA
+}
+
+export interface RestoreDataResponse extends BasicBackgroundResponse {
+  tabs?: number
+  activeOrigins?: string[]
+  missingPermissionOrigins?: string[]
 }
 
 // 设置Claude SessionKey Cookie
@@ -335,6 +345,8 @@ interface BackgroundResponseMap {
   [MSG_REQUEST_PERMISSIONS]: BasicBackgroundResponse
   [MSG_ENSURE_SITE_PACK_ORIGINS]: EnsureSitePackOriginsResponse
   [MSG_RECONCILE_SITE_PACK_REGISTRATIONS]: ReconcileSitePackRegistrationsResponse
+  [MSG_CLEAR_ALL_DATA]: ClearAllDataResponse
+  [MSG_RESTORE_DATA]: RestoreDataResponse
   [MSG_CHECK_CLAUDE_GENERATING]: CheckClaudeGeneratingResponse
   [MSG_GET_AISTUDIO_MODELS]: AIStudioModelsResponse
 }

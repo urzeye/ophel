@@ -3,10 +3,14 @@
  * 支持将本地数据同步到 WebDAV 服务器（如坚果云、Nextcloud 等）
  */
 
-import { MULTI_PROP_STORES, ZUSTAND_KEYS } from "~constants/defaults"
-import { REMOTE_CONFIG_STORAGE_KEY } from "~core/remote-config-types"
+import {
+  createBackupDocument,
+  normalizeBackupDocument,
+  restoreBackupDocument,
+  type BackupDocument,
+} from "~core/backup-codec"
+import { platform } from "~platform"
 import type { WebDAVProvider } from "~types/webdav"
-import { validateBackupData } from "~utils/backup-validator"
 import { APP_NAME } from "~utils/config"
 import { MSG_WEBDAV_REQUEST } from "~utils/messaging"
 
@@ -17,6 +21,9 @@ function safeDecodeURIComponent(str: string) {
     return str
   }
 }
+
+const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === "object" && !Array.isArray(value)
 
 function getElementTextByLocalName(parent: Element, localName: string): string | null {
   const element = parent.getElementsByTagNameNS("*", localName)[0]
@@ -385,50 +392,7 @@ export class WebDAVSyncManager {
     try {
       await this.saveConfig({ lastSyncStatus: "syncing" })
 
-      // 获取本地所有数据
-      const localData = await new Promise<Record<string, any>>((resolve) =>
-        chrome.storage.local.get(null, resolve),
-      )
-
-      // Zustand persist 使用的 storage keys (从 constants/defaults.ts 导入)
-
-      // Hydrate data：解析 JSON 字符串，并提取 Zustand persist 格式中的实际数据
-      // 扁平化导出：移除 state 层，直接导出数据
-      const hydratedData = Object.fromEntries(
-        Object.entries(localData)
-          .filter(([key]) => key !== REMOTE_CONFIG_STORAGE_KEY)
-          .map(([k, v]) => {
-            try {
-              let parsed = typeof v === "string" ? JSON.parse(v) : v
-
-              // 处理 Zustand persist 格式：提取 state 中的数据
-              // 格式: { state: { settings: {...} | prompts: [...] | conversations: {...} }, version: 0 }
-              if (ZUSTAND_KEYS.includes(k) && parsed?.state) {
-                if (MULTI_PROP_STORES.includes(k)) {
-                  // 多属性 store（如 conversations, readingHistory）：保留整个 state
-                  // 避免丢失 lastUsedFolderId、lastCleanupRun 等辅助属性
-                  parsed = parsed.state
-                } else if (parsed.state[k] !== undefined) {
-                  // 单属性 store：直接提取 state 中与 key 同名的属性
-                  parsed = parsed.state[k]
-                } else {
-                  // 兜底：保留整个 state 内容
-                  parsed = parsed.state
-                }
-              }
-
-              return [k, parsed]
-            } catch {
-              return [k, v]
-            }
-          }),
-      )
-
-      const exportData = {
-        version: 3, // 升级版本号
-        timestamp: new Date().toISOString(),
-        data: hydratedData,
-      }
+      const exportData = await createBackupDocument(platform.storage, "full")
 
       // 上传到 WebDAV（使用动态生成的文件名）
       const fileName = generateBackupFileName()
@@ -551,6 +515,7 @@ export class WebDAVSyncManager {
       return { success: false, messageKey: "webdavConfigIncomplete" }
     }
 
+    let restoreWriteStarted = false
     try {
       await this.saveConfig({ lastSyncStatus: "syncing" })
 
@@ -578,124 +543,44 @@ export class WebDAVSyncManager {
       }
 
       const text = await response.text()
-      const backupData = JSON.parse(text)
-
-      // 基础格式和数据类型校验
-      const validation = validateBackupData(backupData)
-      if (!validation.valid) {
-        console.error("Backup validation failed:", validation.errorKeys)
+      let backupData: BackupDocument
+      try {
+        backupData = normalizeBackupDocument(JSON.parse(text))
+      } catch (error) {
+        console.error("Backup validation failed:", error)
         await this.saveConfig({ lastSyncStatus: "failed" })
         return { success: false, messageKey: "webdavInvalidFormat" }
       }
 
-      // 1. 保存当前的WebDAV配置(避免被备份数据覆盖)
       const currentWebdavConfig = this.config
-
-      // Zustand persist 使用的 storage keys 和多属性 store (从 constants/defaults.ts 导入)
-
-      // 2. Dehydrate: 将对象序列化回 Zustand persist 格式
-      const dehydratedData = Object.fromEntries(
-        Object.entries(backupData.data).map(([k, v]) => {
-          if (v === null || v === undefined) {
-            return [k, v]
-          }
-
-          // 处理 Zustand stores
-          if (ZUSTAND_KEYS.includes(k)) {
-            let state: Record<string, unknown>
-            if (MULTI_PROP_STORES.includes(k)) {
-              // 多属性 store（如 conversations, readingHistory）
-              // 通过检查 v 中是否包含与 store 同名的属性来区分格式
-              if (typeof v === "object" && !Array.isArray(v)) {
-                const obj = v as Record<string, unknown>
-                if (k === "conversations" && obj.conversations !== undefined) {
-                  // 已包装格式：{ conversations: {...}, lastUsedFolderId: "..." }
-                  state = obj
-                } else if (
-                  k === "readingHistory" &&
-                  (obj.history !== undefined || obj.lastCleanupRun !== undefined)
-                ) {
-                  // 已包装格式：{ history: {...}, lastCleanupRun: number }
-                  state = obj
-                } else {
-                  // 扁平化格式（旧版本导出）
-                  state = k === "readingHistory" ? { history: v } : { [k]: v }
-                }
-              } else {
-                // 扁平化格式（旧版本导出）：v 直接是主数据
-                state = k === "readingHistory" ? { history: v } : { [k]: v }
-              }
-            } else if (k === "promptChains") {
-              if (Array.isArray(v)) {
-                state = { chains: v }
-              } else if (
-                typeof v === "object" &&
-                !Array.isArray(v) &&
-                (v as Record<string, unknown>).chains !== undefined
-              ) {
-                state = v as Record<string, unknown>
-              } else {
-                state = { chains: [] }
-              }
-            } else {
-              // 单属性 store
-              state = { [k]: v }
-            }
-            return [k, JSON.stringify({ state, version: 0 })]
-          }
-
-          // 非 Zustand stores，直接序列化
-          if (typeof v === "object") {
-            return [k, JSON.stringify(v)]
-          }
-          return [k, v]
-        }),
-      )
-
-      await new Promise<void>((resolve, reject) =>
-        chrome.storage.local.set(dehydratedData, () =>
-          chrome.runtime.lastError ? reject(chrome.runtime.lastError) : resolve(),
-        ),
-      )
-
-      // 3. 恢复当前 WebDAV 配置（保持用户当前的 WebDAV 设置）
-      // 直接操作 storage 而非 setSettings()，避免触发 Zustand persist
-      await new Promise<void>((resolve, reject) => {
-        chrome.storage.local.get("settings", (result) => {
-          if (chrome.runtime.lastError) {
-            reject(chrome.runtime.lastError)
-            return
-          }
-
-          // 解析当前 storage 中的 settings（刚写入的备份数据）
-          let settingsWrapper = result.settings
-          if (typeof settingsWrapper === "string") {
-            try {
-              settingsWrapper = JSON.parse(settingsWrapper)
-            } catch {
-              // 解析失败，跳过 WebDAV 配置恢复
-              resolve()
-              return
-            }
-          }
-
-          // 更新 webdav 配置
-          if (settingsWrapper?.state?.settings) {
-            settingsWrapper.state.settings.webdav = currentWebdavConfig
-          }
-
-          // 写回 storage
-          chrome.storage.local.set({ settings: JSON.stringify(settingsWrapper) }, () =>
-            chrome.runtime.lastError ? reject(chrome.runtime.lastError) : resolve(),
-          )
-        })
-      })
-
       const now = Date.now()
-      await this.saveConfig({ lastSyncTime: now, lastSyncStatus: "success" })
+      const nextWebdavConfig: WebDAVConfig = {
+        ...currentWebdavConfig,
+        lastSyncTime: now,
+        lastSyncStatus: "success",
+      }
+      const restoredSettings = backupData.data.settings
+      if (isObjectRecord(restoredSettings)) {
+        backupData.data.settings = {
+          ...restoredSettings,
+          webdav: nextWebdavConfig,
+        }
+      }
+
+      restoreWriteStarted = true
+      await restoreBackupDocument(platform.storage, backupData)
+      if (isObjectRecord(restoredSettings)) {
+        this.config = nextWebdavConfig
+      } else {
+        await this.saveConfig({ lastSyncTime: now, lastSyncStatus: "success" })
+      }
       return { success: true, messageKey: "webdavDownloadSuccess", timestamp: now }
     } catch (err) {
-      await this.saveConfig({ lastSyncStatus: "failed" })
+      if (restoreWriteStarted) {
+        this.config = { ...this.config, lastSyncStatus: "failed" }
+      } else {
+        await this.saveConfig({ lastSyncStatus: "failed" })
+      }
       return {
         success: false,
         messageKey: "webdavDownloadFailed",

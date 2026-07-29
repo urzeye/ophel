@@ -1,7 +1,7 @@
 import React from "react"
 import ReactDOM from "react-dom/client"
 
-import { REMOTE_CONFIG_STORAGE_KEY } from "~core/remote-config-types"
+import { BACKUP_EXCLUDED_STORAGE_KEYS, BACKUP_USER_DATA_STORAGE_KEYS } from "~core/backup-codec"
 import { applyOphelPlatformFontClass } from "~utils/font"
 
 import { USERSCRIPT_RESOURCE_DEFINITIONS } from "./resource-manifest"
@@ -203,20 +203,18 @@ declare function GM_deleteValue(key: string): void
 if (typeof chrome === "undefined" || !chrome.storage) {
   // 创建 chrome.storage.local polyfill
   // 定义所有已知的 storage keys（用于 get(null) 时获取全部数据）
-  const KNOWN_STORAGE_KEYS = [
-    "settings",
-    "prompts",
-    "promptChains",
-    "folders",
-    "tags",
-    "readingHistory",
-    "claudeSessionKeys",
-    "conversations",
-    "ophel:releaseNotesState",
-    "ophel:clearAllFlag",
-    "ophel:restoreFlag",
-  ]
-  const CLEARABLE_STORAGE_KEYS = [...KNOWN_STORAGE_KEYS, REMOTE_CONFIG_STORAGE_KEY]
+  const KNOWN_STORAGE_KEYS = Array.from(
+    new Set([
+      ...BACKUP_USER_DATA_STORAGE_KEYS,
+      "ophel:global-search-shortcut-nudge:v1",
+      "ophel:releaseNotesState",
+      "ophel:clearAllFlag",
+      "ophel:restoreFlag",
+    ]),
+  )
+  const CLEARABLE_STORAGE_KEYS = Array.from(
+    new Set([...KNOWN_STORAGE_KEYS, ...BACKUP_EXCLUDED_STORAGE_KEYS]),
+  )
 
   userscriptWindow.chrome = {
     storage: {

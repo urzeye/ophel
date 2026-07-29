@@ -97,9 +97,14 @@ export interface PlatformRemoteConfig {
 
 export type SitePackOriginPermissionResult = "ready" | "denied" | "unsupported"
 
+export interface SitePackRuntimeStatus {
+  activeOrigins: string[]
+  missingPermissionOrigins: string[]
+}
+
 export interface PlatformSitePacks {
   ensureOrigins(packId: string): Promise<SitePackOriginPermissionResult>
-  reconcile(): Promise<void>
+  reconcile(): Promise<SitePackRuntimeStatus>
 }
 
 /**

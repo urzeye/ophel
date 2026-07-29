@@ -68,6 +68,9 @@ export const ja = {
   sitePacksPermissionDesc: "Ophel が「{name}」を次のサイトで実行するには許可が必要です：{origins}",
   sitePacksPermissionDenied:
     "「{name}」のサイトアクセスは許可されなかったため、パックは無効のままです。",
+  sitePacksPermissionReviewTitle: "復元したサイトパックを再承認",
+  sitePacksPermissionReviewDesc:
+    "ブラウザーのサイト権限はバックアップに含まれません。以下の有効なパックを再承認すると、再び利用できます。",
   sitePacksInvalidFile: "この JSON ファイルは有効な SitePack ではありません。",
   sitePacksValidationErrorsTitle: "検証の詳細",
   sitePacksStoredIssuesTitle: "保存済みパックの問題",

@@ -4,9 +4,10 @@ import {
 } from "~adapters/declarative/match-pattern"
 import type { InstalledSitePack, PackManager, PackManagerIssue } from "~core/pack-manager"
 import { isInstalledSitePackEffectivelyEnabled } from "~core/pack-manager"
+import { SITE_PACK_REGISTRATION_STATE_STORAGE_KEY } from "~core/site-pack-storage-constants"
 import type { PlatformStorage } from "~platform/types"
 
-export const SITE_PACK_REGISTRATION_STATE_STORAGE_KEY = "sitepacks/extension-runtime"
+export { SITE_PACK_REGISTRATION_STATE_STORAGE_KEY } from "~core/site-pack-storage-constants"
 export const SITE_PACK_REGISTRATION_STATE_SCHEMA_VERSION = 1 as const
 export const SITE_PACK_DYNAMIC_SCRIPT_ID_PREFIX = "ophel-sitepack-"
 
@@ -71,6 +72,11 @@ export interface ReconcileSitePackRegistrationsResult {
   missingPermissionOrigins: string[]
   registrations: chrome.scripting.RegisteredContentScript[]
   packIssues: PackManagerIssue[]
+}
+
+export interface ClearSitePackRegistrationsResult {
+  unregisteredScriptIds: string[]
+  revokedOrigins: string[]
 }
 
 const isPlainRecord = (value: unknown): value is Record<string, unknown> => {
@@ -424,6 +430,32 @@ export const createSitePackRegistrationManager = (options: SitePackRegistrationM
     }
   }
 
+  const clearAllInternal = async (): Promise<ClearSitePackRegistrationsResult> => {
+    const registeredScripts = await options.scripting.getRegisteredContentScripts()
+    const unregisteredScriptIds = registeredScripts
+      .filter((script) => script.id.startsWith(SITE_PACK_DYNAMIC_SCRIPT_ID_PREFIX))
+      .map((script) => script.id)
+      .sort((left, right) => left.localeCompare(right))
+
+    if (unregisteredScriptIds.length > 0) {
+      await options.scripting.unregisterContentScripts({ ids: unregisteredScriptIds })
+    }
+
+    const state = await loadState()
+    const revokedOrigins: string[] = []
+    for (const origin of state.managedOrigins) {
+      if (!(await hasOriginPermission(origin))) continue
+      const removed = await options.permissions.remove([origin])
+      if (!removed && (await hasOriginPermission(origin))) {
+        throw new Error(`Failed to revoke SitePack-managed origin permission: ${origin}`)
+      }
+      revokedOrigins.push(origin)
+    }
+
+    await options.storage.remove(SITE_PACK_REGISTRATION_STATE_STORAGE_KEY)
+    return { unregisteredScriptIds, revokedOrigins }
+  }
+
   return {
     ensurePackOrigins(packId: string): Promise<EnsureSitePackOriginsResult> {
       return enqueue(() => ensurePackOriginsInternal(packId))
@@ -431,6 +463,10 @@ export const createSitePackRegistrationManager = (options: SitePackRegistrationM
 
     reconcile(): Promise<ReconcileSitePackRegistrationsResult> {
       return enqueue(reconcileInternal)
+    },
+
+    clearAll(): Promise<ClearSitePackRegistrationsResult> {
+      return enqueue(clearAllInternal)
     },
 
     async getRegisteredMatchPatterns(): Promise<string[]> {

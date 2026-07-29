@@ -1095,6 +1095,66 @@
   color: var(--gh-text-danger, #ef4444);
 }
 
+.settings-pack-permission-review {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 28%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 7%, var(--gh-card-bg, #ffffff));
+  color: var(--gh-text, #1f2937);
+}
+
+.settings-pack-permission-review > svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--gh-primary, #4285f4);
+}
+
+.settings-pack-permission-review-content {
+  min-width: 0;
+  flex: 1;
+}
+
+.settings-pack-permission-review-content > strong {
+  display: block;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.settings-pack-permission-review-content > p {
+  margin: 4px 0 10px;
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.settings-pack-permission-review-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.settings-pack-permission-review-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.settings-pack-permission-review-item > span {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--gh-text, #1f2937);
+  font-size: 12px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .settings-pack-inline-error {
   display: flex;
   align-items: center;
@@ -1481,6 +1541,11 @@
   .settings-pack-section-header > button,
   .settings-pack-inline-error > button {
     align-self: flex-start;
+  }
+
+  .settings-pack-permission-review-item {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .settings-pack-item {

@@ -1,4 +1,7 @@
 import { platform } from "~platform"
+import { USAGE_MONITOR_STORAGE_KEY } from "~constants/storage-keys"
+
+export { USAGE_MONITOR_STORAGE_KEY } from "~constants/storage-keys"
 
 export interface UsageCounterRecord {
   count: number
@@ -48,8 +51,6 @@ export interface UsageHistoryBucket {
   maxRoundTripTokens: number
   maxLoadedOutputTokens: number
 }
-
-export const USAGE_MONITOR_STORAGE_KEY = "ophel:usageMonitor"
 
 const MAX_EVENT_COUNT = 4000
 const MAX_EVENT_AGE_MS = 400 * 24 * 60 * 60 * 1000

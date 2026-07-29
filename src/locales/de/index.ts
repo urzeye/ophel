@@ -69,6 +69,9 @@ export const de = {
   sitePacksPermissionDesc: 'Ophel muss "{name}" auf folgenden Sites ausführen: {origins}',
   sitePacksPermissionDenied:
     'Der Site-Zugriff für "{name}" wurde nicht gewährt; das Paket bleibt deaktiviert.',
+  sitePacksPermissionReviewTitle: "Wiederhergestellte Site-Packs erneut autorisieren",
+  sitePacksPermissionReviewDesc:
+    "Browser-Berechtigungen für Websites sind nicht in Backups enthalten. Erteile den unten aktivierten Packs erneut Zugriff, um sie wieder zu aktivieren.",
   sitePacksInvalidFile: "Diese JSON-Datei ist kein gültiges SitePack.",
   sitePacksValidationErrorsTitle: "Validierungsdetails",
   sitePacksStoredIssuesTitle: "Probleme gespeicherter Pakete",

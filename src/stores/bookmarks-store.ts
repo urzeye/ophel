@@ -1,6 +1,8 @@
 import { create } from "zustand"
 import { createJSONStorage, persist } from "zustand/middleware"
 
+import { BOOKMARKS_STORAGE_KEY } from "~constants/storage-keys"
+
 import { chromeStorageAdapter } from "./chrome-adapter"
 import type { OutlineItem } from "~adapters/base"
 
@@ -47,7 +49,7 @@ interface BookmarkStore {
 // 扁平化 storage adapter：直接存储 bookmarks 数组到根节点
 const flatBookmarkStorage = {
   getItem: async (_name: string) => {
-    const data = await chromeStorageAdapter.getItem("bookmarks")
+    const data = await chromeStorageAdapter.getItem(BOOKMARKS_STORAGE_KEY)
     if (data) {
       return JSON.stringify({ state: { bookmarks: JSON.parse(data) }, version: 0 })
     }
@@ -56,10 +58,10 @@ const flatBookmarkStorage = {
   setItem: async (_name: string, value: string) => {
     const parsed = JSON.parse(value)
     const bookmarks = parsed.state?.bookmarks || []
-    await chromeStorageAdapter.setItem("bookmarks", JSON.stringify(bookmarks))
+    await chromeStorageAdapter.setItem(BOOKMARKS_STORAGE_KEY, JSON.stringify(bookmarks))
   },
   removeItem: async (_name: string) => {
-    await chromeStorageAdapter.removeItem("bookmarks")
+    await chromeStorageAdapter.removeItem(BOOKMARKS_STORAGE_KEY)
   },
 }
 
@@ -131,7 +133,7 @@ export const useBookmarkStore = create<BookmarkStore>()(
       },
     }),
     {
-      name: "bookmarks", // 存储键名
+      name: BOOKMARKS_STORAGE_KEY,
       storage: createJSONStorage(() => flatBookmarkStorage),
     },
   ),

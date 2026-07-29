@@ -64,6 +64,9 @@ export const en = {
   sitePacksPermissionDesc: 'Ophel needs to run "{name}" on: {origins}',
   sitePacksPermissionDenied:
     'Site access for "{name}" was not granted, so the pack remains disabled.',
+  sitePacksPermissionReviewTitle: "Reauthorize restored site packs",
+  sitePacksPermissionReviewDesc:
+    "Browser site permissions are not included in backups. Grant access again for the enabled packs below to reactivate them.",
   sitePacksInvalidFile: "This JSON file is not a valid SitePack.",
   sitePacksValidationErrorsTitle: "Validation details",
   sitePacksStoredIssuesTitle: "Stored pack issues",

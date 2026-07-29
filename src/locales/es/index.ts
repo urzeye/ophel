@@ -68,6 +68,9 @@ export const es = {
   sitePacksPermissionDesc: 'Ophel necesita ejecutar "{name}" en estos sitios: {origins}',
   sitePacksPermissionDenied:
     'No se concedió acceso a los sitios para "{name}", por lo que el paquete permanece desactivado.',
+  sitePacksPermissionReviewTitle: "Volver a autorizar los paquetes restaurados",
+  sitePacksPermissionReviewDesc:
+    "Los permisos de sitios del navegador no se incluyen en las copias de seguridad. Vuelve a conceder acceso a los paquetes activos de abajo para reactivarlos.",
   sitePacksInvalidFile: "Este archivo JSON no es un SitePack válido.",
   sitePacksValidationErrorsTitle: "Detalles de validación",
   sitePacksStoredIssuesTitle: "Problemas de los paquetes guardados",

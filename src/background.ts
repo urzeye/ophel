@@ -209,21 +209,29 @@ if (chrome.notifications?.onClicked) {
   })
 }
 
-async function queryOphelTabs() {
-  let dynamicMatches: string[] = []
-  try {
-    dynamicMatches = await sitePackRegistrationManager.getRegisteredMatchPatterns()
-  } catch (error) {
-    console.error("[Ophel] Failed to load dynamic SitePack tab targets:", error)
+async function queryOphelTabs(dynamicMatches?: readonly string[]) {
+  let resolvedDynamicMatches = dynamicMatches
+  if (resolvedDynamicMatches === undefined) {
+    try {
+      resolvedDynamicMatches = await sitePackRegistrationManager.getRegisteredMatchPatterns()
+    } catch (error) {
+      console.error("[Ophel] Failed to load dynamic SitePack tab targets:", error)
+      resolvedDynamicMatches = []
+    }
   }
   return chrome.tabs.query({
-    url: Array.from(new Set([...STATIC_OPHEL_TARGET_URLS, ...dynamicMatches])),
+    url: Array.from(new Set([...STATIC_OPHEL_TARGET_URLS, ...resolvedDynamicMatches])),
   })
 }
 
 async function broadcastToOphelTabs(message: ExtensionMessage) {
   const tabs = await queryOphelTabs()
 
+  await broadcastToTabs(tabs, message)
+  return tabs
+}
+
+async function broadcastToTabs(tabs: chrome.tabs.Tab[], message: ExtensionMessage) {
   await Promise.all(
     tabs
       .filter((tab) => tab.id)
@@ -233,8 +241,6 @@ async function broadcastToOphelTabs(message: ExtensionMessage) {
         }),
       ),
   )
-
-  return tabs
 }
 
 // 监听扩展安装/更新
@@ -744,10 +750,13 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
     case MSG_CLEAR_ALL_DATA:
       ;(async () => {
         try {
-          const tabs = await broadcastToOphelTabs({ type: MSG_CLEAR_ALL_DATA })
+          const dynamicMatches = await sitePackRegistrationManager.getRegisteredMatchPatterns()
+          const tabs = await queryOphelTabs(dynamicMatches)
+          await sitePackRegistrationManager.clearAll()
+          await broadcastToTabs(tabs, { type: MSG_CLEAR_ALL_DATA })
           sendResponse({ success: true, tabs: tabs.length })
         } catch (err) {
-          console.error("Broadcast clear all data failed:", err)
+          console.error("Clear all data runtime cleanup failed:", err)
           sendResponse({ success: false, error: (err as Error).message })
         }
       })()
@@ -756,10 +765,17 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
     case MSG_RESTORE_DATA:
       ;(async () => {
         try {
-          const tabs = await broadcastToOphelTabs({ type: MSG_RESTORE_DATA })
-          sendResponse({ success: true, tabs: tabs.length })
+          const registrationResult = await sitePackRegistrationManager.reconcile()
+          const tabs = await queryOphelTabs(registrationResult.activeOrigins)
+          await broadcastToTabs(tabs, { type: MSG_RESTORE_DATA })
+          sendResponse({
+            success: true,
+            tabs: tabs.length,
+            activeOrigins: registrationResult.activeOrigins,
+            missingPermissionOrigins: registrationResult.missingPermissionOrigins,
+          })
         } catch (err) {
-          console.error("Broadcast restore data failed:", err)
+          console.error("Restore data reconciliation failed:", err)
           sendResponse({ success: false, error: (err as Error).message })
         }
       })()

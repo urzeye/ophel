@@ -60,6 +60,9 @@ export const zhCN = {
   sitePacksPermissionTitle: "允许适配包访问站点？",
   sitePacksPermissionDesc: "Ophel 需要在以下站点运行“{name}”：{origins}",
   sitePacksPermissionDenied: "未授予“{name}”的站点访问权限，适配包已保持禁用。",
+  sitePacksPermissionReviewTitle: "重新授权已恢复的适配包",
+  sitePacksPermissionReviewDesc:
+    "浏览器不会随备份迁移站点权限。请为下列已启用适配包重新授权，授权后即可恢复运行。",
   sitePacksInvalidFile: "此 JSON 文件不是有效的 SitePack。",
   sitePacksValidationErrorsTitle: "校验详情",
   sitePacksStoredIssuesTitle: "已存储适配包的问题",

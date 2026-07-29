@@ -78,7 +78,9 @@ export const platform: Platform = {
       return "unsupported"
     },
 
-    async reconcile() {},
+    async reconcile() {
+      return { activeOrigins: [], missingPermissionOrigins: [] }
+    },
   },
 
   async fetch(url: string, options?: FetchOptions): Promise<FetchResponse> {

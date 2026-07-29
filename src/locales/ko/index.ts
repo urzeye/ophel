@@ -65,6 +65,9 @@ export const ko = {
     'Ophel에서 "{name}"을(를) 다음 사이트에서 실행하려면 권한이 필요합니다: {origins}',
   sitePacksPermissionDenied:
     '"{name}"의 사이트 접근 권한이 허용되지 않아 팩이 비활성화 상태로 유지됩니다.',
+  sitePacksPermissionReviewTitle: "복원한 사이트 팩 다시 승인",
+  sitePacksPermissionReviewDesc:
+    "브라우저 사이트 권한은 백업에 포함되지 않습니다. 아래의 활성 팩을 다시 승인하면 다시 사용할 수 있습니다.",
   sitePacksInvalidFile: "이 JSON 파일은 유효한 SitePack이 아닙니다.",
   sitePacksValidationErrorsTitle: "검증 세부 정보",
   sitePacksStoredIssuesTitle: "저장된 팩 문제",
