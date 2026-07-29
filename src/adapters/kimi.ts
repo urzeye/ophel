@@ -31,6 +31,8 @@ import {
   type PanelAvoidanceConfig,
   type SiteDeleteConversationResult,
 } from "./base"
+import type { BuiltinSiteConfig } from "./declarative"
+import { KIMI_CONFIG, KIMI_CONFIG_VERSION, type KimiSiteConfig } from "./kimi-config"
 
 const CHAT_PATH_PATTERN = /^\/chat\/([a-z0-9-]+)(?:\/|$)/i
 const SHARE_PATH_PATTERN = /^\/(?:share|kimiplus)\/([a-z0-9-]+)(?:\/|$)/i
@@ -61,71 +63,6 @@ const KIMI_TOKEN_FIELD_KEYS = [
 const JWT_TOKEN_REGEX = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/
 const TOKEN_KEYWORD_REGEX = /(token|auth|jwt|tea)/i
 
-const SIDEBAR_CONVERSATION_SELECTOR = "a.chat-info-item, a.next-sidebar-history-item__link"
-const HISTORY_PAGE_CONVERSATION_SELECTOR = "a.history-link"
-const CONVERSATION_SELECTOR = `${SIDEBAR_CONVERSATION_SELECTOR}, ${HISTORY_PAGE_CONVERSATION_SELECTOR}`
-const HISTORY_CONTAINER_SELECTOR = ".history-part"
-const HISTORY_PAGE_LIST_SELECTOR = ".history .group-list-container"
-const CONVERSATION_TITLE_SELECTOR = "span.chat-name, .next-sidebar-history-item__title"
-const HISTORY_TITLE_SELECTOR = ".history-chat .title-wrapper .title"
-const NEXT_SIDEBAR_BODY_SELECTOR = ".next-sidebar__body"
-const NEXT_SIDEBAR_HISTORY_LIST_SELECTOR = ".next-sidebar-history-list"
-const NEXT_SIDEBAR_HISTORY_ITEMS_SELECTOR = ".next-sidebar-history-list__items"
-
-const CHAT_LIST_SELECTOR = ".chat-content-list"
-const SHARE_LIST_SELECTOR = ".share-content-list"
-const RESPONSE_LIST_SELECTOR = `${CHAT_LIST_SELECTOR}, ${SHARE_LIST_SELECTOR}`
-const NEW_CHAT_LAYOUT_SCOPE_SELECTOR =
-  "body:not(:has(.chat-detail-content)) #chat-container.layout-content"
-const CHAT_LAYOUT_SCOPE_SELECTOR = `.chat-detail-content, ${NEW_CHAT_LAYOUT_SCOPE_SELECTOR}`
-const CHAT_DETAIL_MAIN_SELECTOR = ".chat-detail-main"
-const CHAT_CONTENT_CONTAINER_SELECTOR = ".chat-content-container"
-const CHAT_ACTION_CONTAINER_SELECTOR = ".chat-action .bottom-action-container"
-const CHAT_EDITOR_SELECTOR = ".chat-editor"
-const KIMI_SIDEBAR_SLOT_SELECTOR = ".sidebar-slot.sidebar-slot--interactive"
-const KIMI_MAIN_SELECTOR = ".app.has-sidebar .main"
-const SHARE_SCROLL_CONTAINER_SELECTOR = ".share-detail"
-const CHAT_LIST_WIDTH_SELECTOR = [
-  CHAT_LIST_SELECTOR,
-  `${CHAT_LIST_SELECTOR}${CHAT_LIST_SELECTOR}`,
-  `${CHAT_LIST_SELECTOR}${CHAT_LIST_SELECTOR}${CHAT_LIST_SELECTOR}`,
-  `.chat-detail-content ${CHAT_LIST_SELECTOR}`,
-  `.chat-detail-content ${CHAT_LIST_SELECTOR}${CHAT_LIST_SELECTOR}`,
-].join(", ")
-const CHAT_ITEM_SELECTOR = ".chat-content-item"
-const USER_ITEM_SELECTOR = ".chat-content-item-user"
-const ASSISTANT_ITEM_SELECTOR = ".chat-content-item-assistant"
-const USER_SEGMENT_SELECTOR = ".segment.segment-user"
-const ASSISTANT_SEGMENT_SELECTOR = ".segment.segment-assistant"
-const USER_QUERY_WRAPPER_SELECTOR = [
-  ".segment-user .segment-content",
-  `${USER_ITEM_SELECTOR} .segment-content`,
-  ".segment-container:has(.user-content) > .segment-content",
-].join(", ")
-const USER_CONTENT_SELECTOR = [
-  ".segment-user .segment-content-box",
-  `${USER_ITEM_SELECTOR} .segment-content-box`,
-  ".segment-content-box:has(> .user-content)",
-].join(", ")
-const USER_QUERY_CONTENT_SELECTOR = [
-  ".segment-user .user-content",
-  `${USER_ITEM_SELECTOR} .user-content`,
-  ".segment-content-box > .user-content",
-].join(", ")
-const ASSISTANT_BODY_MARKDOWN_SELECTOR = [
-  ".segment-assistant .segment-content-box > .markdown-container > .markdown",
-  `${ASSISTANT_ITEM_SELECTOR} .segment-content-box > .markdown-container > .markdown`,
-].join(", ")
-const KIMI_THINKING_CONTAINER_SELECTOR =
-  ".toolcall-container.thinking-container, .thinking-container"
-const KIMI_TOOLCALL_CONTAINER_SELECTOR = ".toolcall-container, .container-block"
-const KIMI_EXPORT_DECORATION_SELECTOR =
-  "button, [role='button'], svg, canvas, [aria-hidden='true'], .segment-avatar, .okc-cards-container"
-const KIMI_USER_ATTACHMENT_LIST_SELECTOR = ".attachment-list"
-const KIMI_USER_ATTACHMENT_IMAGE_SELECTOR =
-  ".attachment-list-image img, .image-thumbnail img.image-main, .image-wrapper img.image-main"
-const KIMI_USER_FILE_CARD_SELECTOR = ".attachment-list-file .file-card-container"
-
 const THEME_STORAGE_KEY = "CUSTOM_THEME"
 const FULL_LIST_SNAPSHOT_TTL_MS = 15_000
 const FULL_LIST_SNAPSHOT_MAX_USES = 6
@@ -137,6 +74,7 @@ const KIMI_DELETE_REASON = {
 } as const
 
 export class KimiAdapter extends SiteAdapter {
+  private config: KimiSiteConfig = KIMI_CONFIG
   private deleteReloadScheduled = false
   private loggedMissingDeleteToken = false
   private fullListSnapshot: ConversationInfo[] = []
@@ -158,6 +96,18 @@ export class KimiAdapter extends SiteAdapter {
 
   getName(): string {
     return "Kimi"
+  }
+
+  getBuiltinConfig(): KimiSiteConfig {
+    return KIMI_CONFIG
+  }
+
+  getBuiltinConfigVersion(): number {
+    return KIMI_CONFIG_VERSION
+  }
+
+  applyMergedConfig(config: BuiltinSiteConfig): void {
+    this.config = config as KimiSiteConfig
   }
 
   getThemeColors(): { primary: string; secondary: string } {
@@ -264,7 +214,7 @@ export class KimiAdapter extends SiteAdapter {
   }
 
   private collectConversationListFromDom(): ConversationInfo[] {
-    const links = document.querySelectorAll(CONVERSATION_SELECTOR)
+    const links = this.getConversationItems()
     if (links.length === 0) return []
 
     const cid = this.getCurrentCid() || undefined
@@ -281,26 +231,24 @@ export class KimiAdapter extends SiteAdapter {
   }
 
   getConversationObserverConfig(): ConversationObserverConfig {
+    const titleSelector = this.config.conversation.titleSelector
     return {
-      selector: CONVERSATION_SELECTOR,
-      shadow: false,
+      selector: this.config.conversation.itemSelector,
+      shadow: this.config.conversation.shadow ?? false,
       extractInfo: (el) => this.extractConversationInfo(el, this.getCurrentCid() || undefined),
       getTitleElement: (el) =>
-        el.querySelector(`${CONVERSATION_TITLE_SELECTOR}, ${HISTORY_TITLE_SELECTOR}`) || el,
+        titleSelector
+          ? el.matches(titleSelector)
+            ? el
+            : el.querySelector(titleSelector) || el
+          : el,
     }
   }
 
   getSidebarScrollContainer(): Element | null {
-    const candidates = [
-      document.querySelector(HISTORY_PAGE_LIST_SELECTOR),
-      document.querySelector(HISTORY_CONTAINER_SELECTOR),
-      document.querySelector(".history .usage-content"),
-      document.querySelector(".history .content"),
-      document.querySelector(".history"),
-      document.querySelector(NEXT_SIDEBAR_HISTORY_ITEMS_SELECTOR),
-      document.querySelector(NEXT_SIDEBAR_HISTORY_LIST_SELECTOR),
-      document.querySelector(NEXT_SIDEBAR_BODY_SELECTOR),
-    ].filter(Boolean) as Element[]
+    const candidates = this.config.sitePrivateSelectors.historyScrollCandidates
+      .map((selector) => document.querySelector(selector))
+      .filter(Boolean) as Element[]
 
     for (const candidate of candidates) {
       const scrollable = this.findScrollableParent(candidate)
@@ -308,7 +256,7 @@ export class KimiAdapter extends SiteAdapter {
       if (candidate instanceof HTMLElement && candidate.scrollHeight > candidate.clientHeight) {
         return candidate
       }
-      if (candidate.matches(NEXT_SIDEBAR_BODY_SELECTOR)) return candidate
+      if (candidate.matches(this.config.sitePrivateSelectors.nextSidebarBody)) return candidate
     }
 
     return null
@@ -330,7 +278,7 @@ export class KimiAdapter extends SiteAdapter {
         container.dispatchEvent(new Event("scroll", { bubbles: true }))
         await new Promise((resolve) => setTimeout(resolve, 500))
 
-        const count = document.querySelectorAll(CONVERSATION_SELECTOR).length
+        const count = this.getConversationItems().length
         if (count === lastCount) {
           stableRounds++
         } else {
@@ -411,6 +359,10 @@ export class KimiAdapter extends SiteAdapter {
 
   navigateToConversation(id: string, url?: string): boolean {
     const targetUrl = this.buildConversationUrl(id, url)
+    if ((this.config.conversation.navigationStrategy ?? "click-item") === "location") {
+      return super.navigateToConversation(id, targetUrl)
+    }
+
     const link = this.findConversationLinkById(id)
     if (link) {
       const beforeSessionId = this.getSessionId()
@@ -432,7 +384,9 @@ export class KimiAdapter extends SiteAdapter {
   }
 
   getConversationTitle(): string | null {
-    const headerTitle = document.querySelector(".chat-header-content h2")?.textContent?.trim()
+    const headerTitle = document
+      .querySelector(this.config.sitePrivateSelectors.conversationHeaderTitle)
+      ?.textContent?.trim()
     if (headerTitle) return headerTitle
 
     const activeLink = this.getActiveConversationLink()
@@ -454,18 +408,18 @@ export class KimiAdapter extends SiteAdapter {
   }
 
   getTextareaSelectors(): string[] {
-    return [
-      '.chat-input-editor[data-lexical-editor="true"]',
-      '.chat-input-editor[contenteditable="true"]',
-      '[role="textbox"].chat-input-editor',
-    ]
+    return [...this.config.selectors.textarea]
   }
 
   isValidTextarea(element: HTMLElement): boolean {
     if (element.offsetParent === null) return false
     if (!element.isContentEditable) return false
     if (element.closest(".gh-main-panel") || element.closest(".gh-queue-panel")) return false
-    return !!element.closest(".chat-input-editor-container")
+    return !!element.closest(this.config.sitePrivateSelectors.inputScope)
+  }
+
+  getSubmitKeyConfig(): { key: "Enter" | "Ctrl+Enter" } {
+    return { key: this.config.input.submitKey ?? "Enter" }
   }
 
   insertPrompt(content: string): boolean {
@@ -633,26 +587,26 @@ export class KimiAdapter extends SiteAdapter {
   }
 
   getSubmitButtonSelectors(): string[] {
-    return [".send-button-container:not(.disabled):not(.stop)"]
+    return [...this.config.selectors.submitButton]
   }
 
   findSubmitButton(editor: HTMLElement | null): HTMLElement | null {
     const scopes = [
-      editor?.closest(".chat-editor"),
-      editor?.closest(".chat-input-editor-container"),
+      editor?.closest(this.config.sitePrivateSelectors.editorScope),
+      editor?.closest(this.config.sitePrivateSelectors.inputScope),
       editor?.parentElement,
       document.body,
     ].filter(Boolean) as ParentNode[]
 
     const seen = new Set<HTMLElement>()
     for (const scope of scopes) {
-      const buttons = scope.querySelectorAll(".send-button-container")
+      const buttons = scope.querySelectorAll(this.config.sitePrivateSelectors.submitButtonContainer)
       for (const btn of Array.from(buttons)) {
         const button = btn as HTMLElement
         if (seen.has(button)) continue
         seen.add(button)
         if (button.offsetParent === null) continue
-        if (button.classList.contains("disabled") || button.classList.contains("stop")) continue
+        if (button.matches(this.config.sitePrivateSelectors.submitButtonDisabled)) continue
         return button
       }
     }
@@ -662,20 +616,22 @@ export class KimiAdapter extends SiteAdapter {
 
   getScrollContainer(): HTMLElement | null {
     const shareDetail = document.querySelector(
-      SHARE_SCROLL_CONTAINER_SELECTOR,
+      this.config.sitePrivateSelectors.shareScrollContainer,
     ) as HTMLElement | null
     if (shareDetail && shareDetail.scrollHeight > shareDetail.clientHeight) {
       return shareDetail
     }
 
-    const detail = document.querySelector(".chat-detail-content") as HTMLElement | null
+    const detail = document.querySelector(
+      this.config.sitePrivateSelectors.chatDetailScrollContainer,
+    ) as HTMLElement | null
     if (detail && detail.scrollHeight > detail.clientHeight) {
       return detail
     }
 
-    const content = document.querySelector(".chat-content-container")
+    const content = document.querySelector(this.config.sitePrivateSelectors.chatContentContainer)
     const scrollable = this.findScrollableParent(content)
-    if (scrollable && !scrollable.closest(HISTORY_CONTAINER_SELECTOR)) {
+    if (scrollable && !scrollable.closest(this.config.sitePrivateSelectors.historyContainer)) {
       return scrollable
     }
 
@@ -683,19 +639,19 @@ export class KimiAdapter extends SiteAdapter {
   }
 
   getResponseContainerSelector(): string {
-    return RESPONSE_LIST_SELECTOR
+    return this.config.selectors.responseContainer
   }
 
   getChatContentSelectors(): string[] {
-    return [ASSISTANT_BODY_MARKDOWN_SELECTOR, USER_CONTENT_SELECTOR]
+    return [...this.config.selectors.chatContent]
   }
 
   getUserQuerySelector(): string {
-    return USER_SEGMENT_SELECTOR
+    return this.config.selectors.userQuery
   }
 
   extractUserQueryText(element: Element): string {
-    const contentBox = element.querySelector(".segment-content-box")
+    const contentBox = element.querySelector(this.config.sitePrivateSelectors.userContentBox)
     return this.extractTextWithLineBreaks(contentBox || element).trim()
   }
 
@@ -712,7 +668,9 @@ export class KimiAdapter extends SiteAdapter {
       return false
     }
 
-    const contentBox = element.querySelector(".segment-content-box") as HTMLElement | null
+    const contentBox = element.querySelector(
+      this.config.sitePrivateSelectors.userContentBox,
+    ) as HTMLElement | null
     if (!contentBox) return false
 
     const rendered = document.createElement("div")
@@ -731,12 +689,16 @@ export class KimiAdapter extends SiteAdapter {
 
   extractAssistantResponseText(element: Element): string {
     const clone = element.cloneNode(true) as HTMLElement
-    clone.querySelectorAll(KIMI_EXPORT_DECORATION_SELECTOR).forEach((node) => node.remove())
+    clone
+      .querySelectorAll(this.config.sitePrivateSelectors.exportDecoration)
+      .forEach((node) => node.remove())
 
     const includeThoughts = this.shouldIncludeThoughtsInExport()
     const thoughtBlocks = includeThoughts ? this.extractThoughtBlockquotes(clone) : []
 
-    clone.querySelectorAll(KIMI_TOOLCALL_CONTAINER_SELECTOR).forEach((node) => node.remove())
+    clone
+      .querySelectorAll(this.config.sitePrivateSelectors.toolcallContainer)
+      .forEach((node) => node.remove())
 
     const bodyRoot = this.findAssistantBodyMarkdownRoot(clone)
     if (!bodyRoot) {
@@ -753,7 +715,9 @@ export class KimiAdapter extends SiteAdapter {
   }
 
   getLatestReplyText(): string | null {
-    const replies = document.querySelectorAll(ASSISTANT_BODY_MARKDOWN_SELECTOR)
+    const replies = document.querySelectorAll(
+      this.config.sitePrivateSelectors.assistantBodyMarkdown,
+    )
     if (replies.length === 0) return null
     const last = replies[replies.length - 1]
     const text = this.extractAssistantResponseText(last)
@@ -761,7 +725,7 @@ export class KimiAdapter extends SiteAdapter {
   }
 
   extractOutline(maxLevel = 6, includeUserQueries = false, showWordCount = false): OutlineItem[] {
-    const container = document.querySelector(RESPONSE_LIST_SELECTOR)
+    const container = document.querySelector(this.config.selectors.responseContainer)
     if (!container) return []
 
     const outline: OutlineItem[] = []
@@ -769,14 +733,14 @@ export class KimiAdapter extends SiteAdapter {
 
     items.forEach((item, itemIndex) => {
       const isUserItem =
-        item.matches(USER_ITEM_SELECTOR) ||
-        item.matches(USER_SEGMENT_SELECTOR) ||
-        item.querySelector(USER_SEGMENT_SELECTOR)
+        item.matches(this.config.sitePrivateSelectors.userItem) ||
+        item.matches(this.config.selectors.userQuery) ||
+        item.querySelector(this.config.selectors.userQuery)
 
       if (isUserItem) {
         if (!includeUserQueries) return
 
-        const userRoot = item.querySelector(USER_SEGMENT_SELECTOR) || item
+        const userRoot = item.querySelector(this.config.selectors.userQuery) || item
         const text = this.extractUserQueryMarkdown(userRoot)
         if (!text) return
 
@@ -798,9 +762,9 @@ export class KimiAdapter extends SiteAdapter {
       }
 
       if (
-        !item.matches(ASSISTANT_ITEM_SELECTOR) &&
-        !item.matches(ASSISTANT_SEGMENT_SELECTOR) &&
-        !item.querySelector(ASSISTANT_BODY_MARKDOWN_SELECTOR)
+        !item.matches(this.config.sitePrivateSelectors.assistantItem) &&
+        !item.matches(this.config.selectors.assistantResponse) &&
+        !item.querySelector(this.config.sitePrivateSelectors.assistantBodyMarkdown)
       ) {
         return
       }
@@ -843,12 +807,7 @@ export class KimiAdapter extends SiteAdapter {
   }
 
   getExportConfig(): ExportConfig {
-    return {
-      userQuerySelector: USER_SEGMENT_SELECTOR,
-      assistantResponseSelector: ASSISTANT_SEGMENT_SELECTOR,
-      turnSelector: null,
-      useShadowDOM: false,
-    }
+    return { ...this.config.export }
   }
 
   async extractExportMessages(_context: ExportLifecycleContext): Promise<ExportMessage[] | null> {
@@ -875,51 +834,49 @@ export class KimiAdapter extends SiteAdapter {
   }
 
   isGenerating(): boolean {
-    const stopButtons = document.querySelectorAll(".send-button-container.stop")
-    for (const btn of Array.from(stopButtons)) {
-      if ((btn as HTMLElement).offsetParent !== null) return true
-    }
-
-    const stopIcons = document.querySelectorAll('.send-button-container svg[name="stop"]')
-    for (const icon of Array.from(stopIcons)) {
-      const container = icon.closest(".send-button-container") as HTMLElement | null
-      if (container && container.offsetParent !== null) return true
+    for (const selector of this.config.generating.existsSelectors) {
+      const targets = document.querySelectorAll(selector)
+      for (const target of Array.from(targets)) {
+        const visibleTarget =
+          target.closest(this.config.sitePrivateSelectors.submitButtonContainer) || target
+        if (visibleTarget instanceof HTMLElement && visibleTarget.offsetParent !== null) return true
+      }
     }
 
     return false
   }
 
   getStopButtonSelectors(): string[] {
-    return [".send-button-container.stop", '.send-button-container:has(svg[name="stop"])']
+    return [...this.config.selectors.stopButton]
   }
 
   getModelName(): string | null {
-    const el = document.querySelector(".current-model .model-name .name")
+    const el = document.querySelector(this.config.sitePrivateSelectors.modelName)
     return el?.textContent?.trim() || null
   }
 
   getModelSwitcherConfig(keyword: string): ModelSwitcherConfig | null {
     return {
+      ...this.config.modelSwitcher,
       targetModelKeyword: keyword,
-      selectorButtonSelectors: [".current-model.active .model-name", ".current-model .model-name"],
-      menuItemSelector: [
-        '[role="menuitem"]',
-        '[role="option"]',
-        ".n-base-select-option",
-        ".n-dropdown-option",
-        ".model-item",
-        ".model-option",
-      ].join(", "),
-      checkInterval: 1000,
-      maxAttempts: 15,
-      menuRenderDelay: 350,
+      selectorButtonSelectors: [...this.config.modelSwitcher.selectorButtonSelectors],
+      subMenuTriggers: this.config.modelSwitcher.subMenuTriggers
+        ? [...this.config.modelSwitcher.subMenuTriggers]
+        : undefined,
     }
   }
 
   getNetworkMonitorConfig(): NetworkMonitorConfig {
     return {
-      urlPatterns: ["apiv2/kimi.gateway.chat.v1.ChatService/Chat"],
-      silenceThreshold: 2000,
+      ...this.config.networkMonitor,
+      urlPatterns: [...this.config.networkMonitor.urlPatterns],
+      urlPathEndsWith: this.config.networkMonitor.urlPathEndsWith
+        ? [...this.config.networkMonitor.urlPathEndsWith]
+        : undefined,
+      requestBodyRules: this.config.networkMonitor.requestBodyRules?.map((rule) => ({
+        ...rule,
+        metadata: { ...rule.metadata },
+      })),
     }
   }
 
@@ -947,83 +904,45 @@ export class KimiAdapter extends SiteAdapter {
   }
 
   getNewChatButtonSelectors(): string[] {
-    return [
-      "a.new-chat-btn",
-      'a.new-chat-btn[href="/"]',
-      'a.new-chat-btn[href="https://www.kimi.com/"]',
-    ]
+    return [...this.config.selectors.newChatButton]
   }
 
   getWidthSelectors() {
-    return [
-      {
-        selector: CHAT_LAYOUT_SCOPE_SELECTOR,
-        property: "width",
-        value: "100%",
-        noCenter: true,
-        extraCss: "max-width: 100% !important; min-width: 0 !important;",
-      },
-      {
-        selector: CHAT_CONTENT_CONTAINER_SELECTOR,
-        property: "max-width",
-        extraCss: "width: 100% !important; min-width: 0 !important;",
-      },
-      {
-        // 不依赖 Vue scoped data-v-*，通过提高 class 选择器优先级覆盖站点限宽规则
-        selector: CHAT_LIST_WIDTH_SELECTOR,
-        property: "max-width",
-        value: "100%",
-        noCenter: true,
-        extraCss:
-          "width: 100% !important; min-width: 0 !important; padding-left: 0 !important; padding-right: 0 !important;",
-      },
-      {
-        // 同步覆盖 width，避免仅修改 max-width 仍被布局约束
-        selector: CHAT_LIST_WIDTH_SELECTOR,
-        property: "width",
-        value: "100%",
-        noCenter: true,
-      },
-      {
-        // 输入框宽度
-        selector: CHAT_EDITOR_SELECTOR,
-        property: "max-width",
-      },
-    ]
+    return this.config.widthSelectors.map((selector) => ({ ...selector }))
   }
 
   getPanelAvoidanceConfig(): PanelAvoidanceConfig {
     return {
-      scopeSelector: CHAT_LAYOUT_SCOPE_SELECTOR,
+      scopeSelector: this.config.sitePrivateSelectors.chatLayoutScope,
       widthSelectors: [
         {
-          selector: CHAT_CONTENT_CONTAINER_SELECTOR,
+          selector: this.config.sitePrivateSelectors.chatContentContainer,
           property: "max-width",
           extraCss: "width: 100% !important; min-width: 0 !important;",
         },
         {
-          selector: CHAT_LIST_WIDTH_SELECTOR,
+          selector: this.config.sitePrivateSelectors.chatListWidth,
           property: "max-width",
           extraCss: "width: 100% !important; min-width: 0 !important;",
         },
         {
-          selector: CHAT_ACTION_CONTAINER_SELECTOR,
+          selector: this.config.sitePrivateSelectors.chatActionContainer,
           property: "max-width",
           extraCss: "width: 100% !important;",
         },
         {
-          selector: CHAT_EDITOR_SELECTOR,
+          selector: this.config.sitePrivateSelectors.chatEditor,
           property: "max-width",
           extraCss: "width: 100% !important; min-width: 0 !important;",
         },
       ],
       insetSelectors: [
         {
-          selector: CHAT_DETAIL_MAIN_SELECTOR,
+          selector: this.config.sitePrivateSelectors.chatDetailMain,
           extraCss: "box-sizing: border-box;",
         },
         {
-          selector: NEW_CHAT_LAYOUT_SCOPE_SELECTOR,
+          selector: this.config.sitePrivateSelectors.newChatLayoutScope,
           insetMode: "edge",
           extraCss: "box-sizing: border-box;",
         },
@@ -1060,20 +979,20 @@ export class KimiAdapter extends SiteAdapter {
 
     return [
       {
-        selector: USER_QUERY_WRAPPER_SELECTOR,
+        selector: this.config.sitePrivateSelectors.userQueryWrapper,
         property: "width",
         extraCss: wrapperCss,
         noCenter: true,
       },
       {
-        selector: USER_CONTENT_SELECTOR,
+        selector: this.config.sitePrivateSelectors.userContent,
         property: "width",
         value: "100%",
         extraCss: contentBoxCss,
         noCenter: true,
       },
       {
-        selector: USER_QUERY_CONTENT_SELECTOR,
+        selector: this.config.sitePrivateSelectors.userQueryContent,
         property: "width",
         value: "100%",
         extraCss: contentCss,
@@ -1083,41 +1002,35 @@ export class KimiAdapter extends SiteAdapter {
   }
 
   getZenModeConfig() {
+    const { hide, rootClass, styles } = this.config.zenMode
     return {
-      hide: [KIMI_SIDEBAR_SLOT_SELECTOR],
-      styles: [
-        {
-          selector: KIMI_MAIN_SELECTOR,
-          property: "--kimi-sidebar-main-offset",
-          value: "6px",
-        },
-      ],
+      ...(hide ? { hide: [...hide] } : {}),
+      ...(rootClass ? { rootClass: { ...rootClass } } : {}),
+      ...(styles ? { styles: styles.map((style) => ({ ...style })) } : {}),
     }
   }
 
   getCleanModeConfig() {
+    const { hide, rootClass, styles } = this.config.cleanMode
     return {
-      hide: [
-        ".chat-bottom .legal-footer, .legal-footer",
-        ".membership-upgrade",
-        ".download-app-btn",
-        ".activity-area",
-      ],
+      ...(hide ? { hide: [...hide] } : {}),
+      ...(rootClass ? { rootClass: { ...rootClass } } : {}),
+      ...(styles ? { styles: styles.map((style) => ({ ...style })) } : {}),
     }
   }
 
   getMarkdownFixerConfig(): MarkdownFixerConfig {
     return {
-      selector: ".segment-assistant .markdown p",
+      selector: this.config.sitePrivateSelectors.markdownFixerParagraph,
       fixSpanContent: false,
       shouldSkip: (element: HTMLElement) => {
         if (!this.isGenerating()) return false
 
-        const currentAssistant = element.closest(".segment-assistant")
+        const currentAssistant = element.closest(this.config.selectors.assistantResponse)
         if (!currentAssistant) return false
 
         const allAssistants = document.querySelectorAll(
-          `${ASSISTANT_ITEM_SELECTOR} .segment-assistant`,
+          this.config.sitePrivateSelectors.lastAssistant,
         )
         const lastAssistant = allAssistants[allAssistants.length - 1]
         return currentAssistant === lastAssistant
@@ -1523,32 +1436,38 @@ export class KimiAdapter extends SiteAdapter {
   }
 
   private extractConversationInfo(el: Element, cid?: string): ConversationInfo | null {
-    const href = el.getAttribute("href") || ""
-    const id = this.extractConversationIdFromHref(href)
+    const source = el.getAttribute(this.config.conversation.idFrom.attr ?? "href") || ""
+    const id = this.extractConversationIdFromHref(source)
     if (!id) return null
 
     const title = this.extractConversationTitle(el)
     const isActive =
       id === this.getSessionId() ||
-      el.classList.contains("router-link-active") ||
-      el.classList.contains("router-link-exact-active")
-    const isPinned = !!el.querySelector("svg.pinned, .pinned, .next-sidebar-history-item__pinned")
+      (this.config.conversation.activeMatch
+        ? el.matches(this.config.conversation.activeMatch)
+        : false)
+    const isPinned = !!el.querySelector(this.config.sitePrivateSelectors.pinnedConversation)
+    const conversationPath = this.config.conversation.urlTemplate
+      .split("{id}")
+      .join(encodeURIComponent(id))
 
     return {
       id,
       cid,
       title,
-      url: `https://www.kimi.com/chat/${id}`,
+      url: new URL(conversationPath, window.location.origin).toString(),
       isActive,
       isPinned,
     }
   }
 
   private extractConversationTitle(el: Element): string {
-    const title =
-      el.querySelector(CONVERSATION_TITLE_SELECTOR)?.textContent?.trim() ||
-      el.querySelector(HISTORY_TITLE_SELECTOR)?.textContent?.trim() ||
-      ""
+    const title = this.config.conversation.titleSelector
+      ? (el.matches(this.config.conversation.titleSelector)
+          ? el
+          : el.querySelector(this.config.conversation.titleSelector)
+        )?.textContent?.trim() || ""
+      : el.textContent?.trim() || ""
     if (title) return title
 
     const fallback = el.textContent?.replace(/\s+/g, " ").trim() || ""
@@ -1558,9 +1477,13 @@ export class KimiAdapter extends SiteAdapter {
   private extractConversationIdFromHref(href: string): string | null {
     if (!href) return null
 
+    const pattern = new RegExp(this.config.conversation.idFrom.regex, "i")
+    const directMatch = href.match(pattern)
+    if (directMatch?.[1]) return directMatch[1]
+
     try {
       const url = new URL(href, window.location.origin)
-      const match = url.pathname.match(CHAT_PATH_PATTERN)
+      const match = url.pathname.match(pattern)
       return match ? match[1] : null
     } catch {
       return null
@@ -1582,15 +1505,20 @@ export class KimiAdapter extends SiteAdapter {
       }
     }
 
-    return new URL(`/chat/${id}?chat_enter_method=history`, window.location.origin).toString()
+    const conversationPath = this.config.conversation.urlTemplate
+      .split("{id}")
+      .join(encodeURIComponent(id))
+    const target = new URL(conversationPath, window.location.origin)
+    target.searchParams.set("chat_enter_method", "history")
+    return target.toString()
   }
 
   private findConversationLinkById(id: string): HTMLElement | null {
-    const links = document.querySelectorAll(CONVERSATION_SELECTOR)
+    const links = this.getConversationItems()
 
     for (const link of Array.from(links)) {
-      const href = link.getAttribute("href") || ""
-      if (this.extractConversationIdFromHref(href) === id) {
+      const source = link.getAttribute(this.config.conversation.idFrom.attr ?? "href") || ""
+      if (this.extractConversationIdFromHref(source) === id) {
         return link as HTMLElement
       }
     }
@@ -1642,9 +1570,12 @@ export class KimiAdapter extends SiteAdapter {
   }
 
   private getActiveConversationLink(): Element | null {
-    const activeLink = document.querySelector(
-      `${SIDEBAR_CONVERSATION_SELECTOR}.router-link-active, ${SIDEBAR_CONVERSATION_SELECTOR}.router-link-exact-active`,
-    )
+    if (this.config.conversation.shadow && this.config.conversation.activeMatch) {
+      const activeMatch = this.config.conversation.activeMatch
+      return this.getConversationItems().find((item) => item.matches(activeMatch)) || null
+    }
+
+    const activeLink = document.querySelector(this.config.sitePrivateSelectors.activeConversation)
     if (activeLink) return activeLink
 
     if (window.location.pathname === "/" || window.location.pathname === "") return null
@@ -1657,27 +1588,33 @@ export class KimiAdapter extends SiteAdapter {
     return pathname === "/chat/history" || pathname.startsWith("/chat/history/")
   }
 
+  private getConversationItems(): Element[] {
+    return this.config.conversation.shadow
+      ? this.findAllElementsBySelector(this.config.conversation.itemSelector)
+      : Array.from(document.querySelectorAll(this.config.conversation.itemSelector))
+  }
+
   private async openMoreHistoryView(): Promise<void> {
     if (this.isHistoryPath()) return
 
     const moreHistoryLink = document.querySelector(
-      [
-        'a.more-history[href*="/chat/history"]',
-        'a.nav-item.more-history[href*="/chat/history"]',
-        'a.next-sidebar__section-text-action[href*="/chat/history"]',
-      ].join(", "),
+      this.config.sitePrivateSelectors.moreHistoryLink,
     ) as HTMLElement | null
     if (!moreHistoryLink) return
 
     const beforePath = window.location.pathname
-    const beforeCount = document.querySelectorAll(SIDEBAR_CONVERSATION_SELECTOR).length
+    const beforeCount = document.querySelectorAll(
+      this.config.sitePrivateSelectors.sidebarConversation,
+    ).length
 
     moreHistoryLink.click()
 
     const timeoutAt = Date.now() + 3000
     while (Date.now() < timeoutAt) {
       const currentPath = window.location.pathname
-      const currentCount = document.querySelectorAll(SIDEBAR_CONVERSATION_SELECTOR).length
+      const currentCount = document.querySelectorAll(
+        this.config.sitePrivateSelectors.sidebarConversation,
+      ).length
       if (currentPath !== beforePath || currentCount > beforeCount) {
         return
       }
@@ -1689,17 +1626,14 @@ export class KimiAdapter extends SiteAdapter {
     if (!this.isHistoryPath()) return
 
     const closeTarget = document.querySelector(
-      [
-        ".header-right .close-button-container",
-        ".header-right .close-button",
-        ".history .header-right .close-button-container",
-        ".history .header-right .close-button",
-      ].join(", "),
+      this.config.sitePrivateSelectors.closeHistory,
     ) as HTMLElement | null
     if (!closeTarget) return
 
     const clickable =
-      (closeTarget.closest(".close-button-container") as HTMLElement | null) || closeTarget
+      (closeTarget.closest(
+        this.config.sitePrivateSelectors.closeButtonContainer,
+      ) as HTMLElement | null) || closeTarget
 
     this.simulateClick(clickable)
     if (await this.waitForHistoryClosed(900)) return
@@ -1827,7 +1761,7 @@ export class KimiAdapter extends SiteAdapter {
   }
 
   private extractKimiExportMessages(collector?: ExportAssetCollector): ExportMessage[] {
-    const container = document.querySelector(RESPONSE_LIST_SELECTOR)
+    const container = document.querySelector(this.config.selectors.responseContainer)
     if (!container) return []
 
     const messages: ExportMessage[] = []
@@ -1856,17 +1790,17 @@ export class KimiAdapter extends SiteAdapter {
   }
 
   private findKimiUserMessageRoot(element: Element): Element | null {
-    if (element.matches(USER_SEGMENT_SELECTOR)) return element
-    return element.querySelector(USER_SEGMENT_SELECTOR)
+    if (element.matches(this.config.selectors.userQuery)) return element
+    return element.querySelector(this.config.selectors.userQuery)
   }
 
   private findKimiAssistantMessageRoot(element: Element): Element | null {
-    if (element.matches(ASSISTANT_SEGMENT_SELECTOR)) return element
-    const segment = element.querySelector(ASSISTANT_SEGMENT_SELECTOR)
+    if (element.matches(this.config.selectors.assistantResponse)) return element
+    const segment = element.querySelector(this.config.selectors.assistantResponse)
     if (segment) return segment
 
     const markdown = this.findAssistantBodyMarkdownRoot(element)
-    return markdown?.closest(ASSISTANT_SEGMENT_SELECTOR) || null
+    return markdown?.closest(this.config.selectors.assistantResponse) || null
   }
 
   private extractKimiUserQueryExportContent(
@@ -1889,10 +1823,14 @@ export class KimiAdapter extends SiteAdapter {
 
   private extractKimiUserBodyMarkdown(element: Element): string {
     const clone = element.cloneNode(true) as HTMLElement
-    clone.querySelectorAll(KIMI_USER_ATTACHMENT_LIST_SELECTOR).forEach((node) => node.remove())
-    clone.querySelectorAll(KIMI_EXPORT_DECORATION_SELECTOR).forEach((node) => node.remove())
+    clone
+      .querySelectorAll(this.config.sitePrivateSelectors.userAttachmentList)
+      .forEach((node) => node.remove())
+    clone
+      .querySelectorAll(this.config.sitePrivateSelectors.exportDecoration)
+      .forEach((node) => node.remove())
 
-    const contentBox = clone.querySelector(".segment-content-box")
+    const contentBox = clone.querySelector(this.config.sitePrivateSelectors.userContentBox)
     return this.extractTextWithLineBreaks(contentBox || clone).trim()
   }
 
@@ -1900,9 +1838,9 @@ export class KimiAdapter extends SiteAdapter {
     element: Element,
     collector?: ExportAssetCollector,
   ): string[] {
-    const images = Array.from(element.querySelectorAll(KIMI_USER_ATTACHMENT_IMAGE_SELECTOR)).filter(
-      (node): node is HTMLImageElement => node instanceof HTMLImageElement,
-    )
+    const images = Array.from(
+      element.querySelectorAll(this.config.sitePrivateSelectors.userAttachmentImage),
+    ).filter((node): node is HTMLImageElement => node instanceof HTMLImageElement)
     const seenSources = new Set<string>()
     const imageMarkdown: string[] = []
 
@@ -1956,7 +1894,9 @@ export class KimiAdapter extends SiteAdapter {
     element: Element,
     collector?: ExportAssetCollector,
   ): string[] {
-    const cards = Array.from(element.querySelectorAll(KIMI_USER_FILE_CARD_SELECTOR))
+    const cards = Array.from(
+      element.querySelectorAll(this.config.sitePrivateSelectors.userFileCard),
+    )
     const seenFiles = new Set<string>()
     const fileMarkdown: string[] = []
 
@@ -1988,7 +1928,7 @@ export class KimiAdapter extends SiteAdapter {
 
   private extractKimiFileName(card: Element): string {
     const candidates = [
-      card.querySelector(".file-card-info-name")?.textContent || "",
+      card.querySelector(this.config.sitePrivateSelectors.userFileName)?.textContent || "",
       card.getAttribute("download") || "",
       card.getAttribute("title") || "",
       card.getAttribute("aria-label") || "",
@@ -2006,11 +1946,21 @@ export class KimiAdapter extends SiteAdapter {
   }
 
   private extractKimiFileType(card: Element): string {
-    return card.querySelector(".file-ext")?.textContent?.replace(/\s+/g, " ").trim() || ""
+    return (
+      card
+        .querySelector(this.config.sitePrivateSelectors.userFileType)
+        ?.textContent?.replace(/\s+/g, " ")
+        .trim() || ""
+    )
   }
 
   private extractKimiFileSize(card: Element): string {
-    return card.querySelector(".file-size")?.textContent?.replace(/\s+/g, " ").trim() || ""
+    return (
+      card
+        .querySelector(this.config.sitePrivateSelectors.userFileSize)
+        ?.textContent?.replace(/\s+/g, " ")
+        .trim() || ""
+    )
   }
 
   private formatKimiFileLabel(name: string, type: string, size: string): string {
@@ -2028,8 +1978,8 @@ export class KimiAdapter extends SiteAdapter {
   }
 
   private extractKimiFileHref(card: Element): string {
-    const links = Array.from(card.querySelectorAll("a[href]"))
-    const parentLink = card.closest("a[href]")
+    const links = Array.from(card.querySelectorAll(this.config.sitePrivateSelectors.fileLink))
+    const parentLink = card.closest(this.config.sitePrivateSelectors.fileLink)
     if (parentLink) links.unshift(parentLink)
 
     for (const link of links) {
@@ -2062,17 +2012,20 @@ export class KimiAdapter extends SiteAdapter {
   }
 
   private findAssistantBodyMarkdownRoot(element: Element): Element | null {
-    if (element.matches(".markdown") && !this.isInsideAssistantToolcall(element)) {
+    if (
+      element.matches(this.config.sitePrivateSelectors.markdown) &&
+      !this.isInsideAssistantToolcall(element)
+    ) {
       return element
     }
 
-    const directBody = element.querySelector(ASSISTANT_BODY_MARKDOWN_SELECTOR)
+    const directBody = element.querySelector(this.config.sitePrivateSelectors.assistantBodyMarkdown)
     if (directBody && !this.isInsideAssistantToolcall(directBody)) {
       return directBody
     }
 
     return (
-      Array.from(element.querySelectorAll(".markdown")).find(
+      Array.from(element.querySelectorAll(this.config.sitePrivateSelectors.markdown)).find(
         (markdown) => !this.isInsideAssistantToolcall(markdown),
       ) || null
     )
@@ -2080,22 +2033,26 @@ export class KimiAdapter extends SiteAdapter {
 
   private isInsideAssistantToolcall(element: Element): boolean {
     return (
-      element.closest(KIMI_TOOLCALL_CONTAINER_SELECTOR) !== null ||
-      element.closest(".markdown-container.toolcall-content-text") !== null
+      element.closest(this.config.sitePrivateSelectors.toolcallContainer) !== null ||
+      element.closest(this.config.sitePrivateSelectors.toolcallContentMarkdown) !== null
     )
   }
 
   private extractThoughtBlockquotes(element: Element): string[] {
     const thoughtNodes = this.collectTopLevelBlocks(
-      Array.from(element.querySelectorAll(KIMI_THINKING_CONTAINER_SELECTOR)),
+      Array.from(element.querySelectorAll(this.config.sitePrivateSelectors.thinkingContainer)),
     )
     const blocks: string[] = []
 
     for (const thought of thoughtNodes) {
       const clone = thought.cloneNode(true) as HTMLElement
-      clone.querySelectorAll(KIMI_EXPORT_DECORATION_SELECTOR).forEach((node) => node.remove())
+      clone
+        .querySelectorAll(this.config.sitePrivateSelectors.exportDecoration)
+        .forEach((node) => node.remove())
 
-      const contentMarkdowns = Array.from(clone.querySelectorAll(".markdown"))
+      const contentMarkdowns = Array.from(
+        clone.querySelectorAll(this.config.sitePrivateSelectors.markdown),
+      )
       const content =
         contentMarkdowns.length > 0
           ? contentMarkdowns
@@ -2131,19 +2088,19 @@ export class KimiAdapter extends SiteAdapter {
   }
 
   private getChatItems(container: Element): Element[] {
-    const directItems = Array.from(container.querySelectorAll(CHAT_ITEM_SELECTOR)).filter(
-      (item) => !item.parentElement?.closest(CHAT_ITEM_SELECTOR),
-    )
+    const directItems = Array.from(
+      container.querySelectorAll(this.config.sitePrivateSelectors.chatItem),
+    ).filter((item) => !item.parentElement?.closest(this.config.sitePrivateSelectors.chatItem))
     if (directItems.length > 0) return directItems
 
     return Array.from(container.children).filter(
       (child) =>
-        child.matches(USER_ITEM_SELECTOR) ||
-        child.matches(ASSISTANT_ITEM_SELECTOR) ||
-        child.matches(USER_SEGMENT_SELECTOR) ||
-        child.matches(ASSISTANT_SEGMENT_SELECTOR) ||
-        child.querySelector(USER_SEGMENT_SELECTOR) !== null ||
-        child.querySelector(ASSISTANT_BODY_MARKDOWN_SELECTOR) !== null,
+        child.matches(this.config.sitePrivateSelectors.userItem) ||
+        child.matches(this.config.sitePrivateSelectors.assistantItem) ||
+        child.matches(this.config.selectors.userQuery) ||
+        child.matches(this.config.selectors.assistantResponse) ||
+        child.querySelector(this.config.selectors.userQuery) !== null ||
+        child.querySelector(this.config.sitePrivateSelectors.assistantBodyMarkdown) !== null,
     )
   }
 

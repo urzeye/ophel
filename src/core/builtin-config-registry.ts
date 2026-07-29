@@ -1,4 +1,5 @@
 import { IMA_CONFIG, IMA_CONFIG_VERSION } from "~adapters/ima-config"
+import { KIMI_CONFIG, KIMI_CONFIG_VERSION } from "~adapters/kimi-config"
 import { ZAI_CONFIG, ZAI_CONFIG_VERSION } from "~adapters/zai-config"
 import { SITE_IDS } from "~constants/defaults"
 
@@ -11,6 +12,14 @@ const BUILTIN_CONFIG_DESCRIPTORS = new Map<string, BuiltinConfigDescriptor>([
       siteId: SITE_IDS.IMA,
       configVersion: IMA_CONFIG_VERSION,
       baseConfig: IMA_CONFIG,
+    },
+  ],
+  [
+    SITE_IDS.KIMI,
+    {
+      siteId: SITE_IDS.KIMI,
+      configVersion: KIMI_CONFIG_VERSION,
+      baseConfig: KIMI_CONFIG,
     },
   ],
   [
