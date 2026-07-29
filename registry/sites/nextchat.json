@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "id": "nextchat",
+  "version": 1,
+  "minAppVersion": "1.1.8",
+  "name": "NextChat",
+  "nameI18n": {
+    "zh-CN": "NextChat",
+    "zh-TW": "NextChat",
+    "en": "NextChat",
+    "ja": "NextChat",
+    "ko": "NextChat",
+    "it": "NextChat",
+    "de": "NextChat",
+    "es": "NextChat",
+    "fr": "NextChat",
+    "pt-BR": "NextChat",
+    "ru": "NextChat"
+  },
+  "description": "Adds Ophel outlines, basic export, Zen Mode, new chat, and prompt insertion to NextChat instances.",
+  "descriptionI18n": {
+    "zh-CN": "为 NextChat 实例添加 Ophel 大纲、基础导出、禅模式、新对话和提示词插入功能。",
+    "zh-TW": "為 NextChat 實例加入 Ophel 大綱、基本匯出、禪模式、新對話與提示詞插入功能。",
+    "en": "Adds Ophel outlines, basic export, Zen Mode, new chat, and prompt insertion to NextChat instances.",
+    "ja": "NextChat に、Ophel のアウトライン、基本エクスポート、Zen モード、新規チャット、プロンプト挿入機能を追加します。",
+    "ko": "NextChat 인스턴스에 Ophel의 개요, 기본 내보내기, Zen 모드, 새 채팅 및 프롬프트 삽입 기능을 추가합니다.",
+    "it": "Aggiunge alle istanze NextChat le funzioni Ophel per struttura, esportazione di base, modalità Zen, nuova chat e inserimento dei prompt.",
+    "de": "Ergänzt NextChat-Instanzen um Ophel-Funktionen für Gliederung, Basisexport, Zen-Modus, neuen Chat und Prompt-Einfügung.",
+    "es": "Añade a las instancias de NextChat las funciones de Ophel para esquema, exportación básica, modo zen, nueva conversación e inserción de prompts.",
+    "fr": "Ajoute aux instances NextChat les fonctions Ophel de plan, d’exportation de base, de mode Zen, de nouvelle discussion et d’insertion de prompts.",
+    "pt-BR": "Adiciona às instâncias do NextChat os recursos do Ophel para estrutura, exportação básica, modo Zen, nova conversa e inserção de prompts.",
+    "ru": "Добавляет в экземпляры NextChat функции Ophel для структуры, базового экспорта, режима Zen, нового чата и вставки промптов."
+  },
+  "matches": [],
+  "detect": [
+    {
+      "selectorExists": "html:has(head meta[name='config']):has(body #app-body #chat-input):has(body #app-body [class*='_chat-input-send__'])"
+    }
+  ],
+  "capabilities": [
+    "outline",
+    "outline-user-queries",
+    "export-basic",
+    "new-chat",
+    "zen",
+    "prompt-insert"
+  ],
+  "selectors": {
+    "textarea": ["#chat-input"],
+    "submitButton": ["#app-body [class*='_chat-input-send__']"],
+    "responseContainer": "#app-body [class*='_chat-body__']",
+    "userQuery": "#app-body [class*='_chat-message-user__'] [class*='_chat-message-item__']",
+    "assistantResponse": "#app-body [class*='_chat-message__']:not([class*='_chat-message-user__']) [class*='_chat-message-item__']",
+    "newChatButton": [
+      "[class*='_sidebar-tail__'] > [class*='_sidebar-actions__']:last-child button"
+    ],
+    "scrollContainer": ["#app-body [class*='_chat-body__']"]
+  },
+  "input": {
+    "mode": "textarea",
+    "submitKey": "Enter"
+  },
+  "export": {
+    "userQuerySelector": "#app-body [class*='_chat-message-user__'] [class*='_chat-message-item__']",
+    "assistantResponseSelector": "#app-body [class*='_chat-message__']:not([class*='_chat-message-user__']) [class*='_chat-message-item__']",
+    "turnSelector": "#app-body [class*='_chat-message__'], #app-body [class*='_chat-message-user__']",
+    "useShadowDOM": false
+  },
+  "zenMode": {
+    "hide": ["div:has(> #app-body) > [class*='_sidebar__']", "#app-body .window-header"]
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "id": "librechat",
+  "version": 1,
+  "minAppVersion": "1.1.8",
+  "name": "LibreChat",
+  "nameI18n": {
+    "zh-CN": "LibreChat",
+    "zh-TW": "LibreChat",
+    "en": "LibreChat",
+    "ja": "LibreChat",
+    "ko": "LibreChat",
+    "it": "LibreChat",
+    "de": "LibreChat",
+    "es": "LibreChat",
+    "fr": "LibreChat",
+    "pt-BR": "LibreChat",
+    "ru": "LibreChat"
+  },
+  "description": "Adds Ophel outlines, basic export, generation detection and stopping, Zen Mode, new chat, and prompt insertion to LibreChat instances.",
+  "descriptionI18n": {
+    "zh-CN": "为 LibreChat 实例添加 Ophel 大纲、基础导出、生成检测与停止、禅模式、新对话和提示词插入功能。",
+    "zh-TW": "為 LibreChat 實例加入 Ophel 大綱、基本匯出、生成偵測與停止、禪模式、新對話與提示詞插入功能。",
+    "en": "Adds Ophel outlines, basic export, generation detection and stopping, Zen Mode, new chat, and prompt insertion to LibreChat instances.",
+    "ja": "LibreChat に、Ophel のアウトライン、基本エクスポート、生成の検出と停止、Zen モード、新規チャット、プロンプト挿入機能を追加します。",
+    "ko": "LibreChat 인스턴스에 Ophel의 개요, 기본 내보내기, 생성 감지 및 중지, Zen 모드, 새 채팅 및 프롬프트 삽입 기능을 추가합니다.",
+    "it": "Aggiunge alle istanze LibreChat le funzioni Ophel per struttura, esportazione di base, rilevamento e arresto della generazione, modalità Zen, nuova chat e inserimento dei prompt.",
+    "de": "Ergänzt LibreChat-Instanzen um Ophel-Funktionen für Gliederung, Basisexport, Erkennung und Stoppen der Generierung, Zen-Modus, neuen Chat und Prompt-Einfügung.",
+    "es": "Añade a las instancias de LibreChat las funciones de Ophel para esquema, exportación básica, detección y detención de la generación, modo zen, nueva conversación e inserción de prompts.",
+    "fr": "Ajoute aux instances LibreChat les fonctions Ophel de plan, d’exportation de base, de détection et d’arrêt de la génération, de mode Zen, de nouvelle discussion et d’insertion de prompts.",
+    "pt-BR": "Adiciona às instâncias do LibreChat os recursos do Ophel para estrutura, exportação básica, detecção e interrupção da geração, modo Zen, nova conversa e inserção de prompts.",
+    "ru": "Добавляет в экземпляры LibreChat функции Ophel для структуры, базового экспорта, отслеживания и остановки генерации, режима Zen, нового чата и вставки промптов."
+  },
+  "matches": [],
+  "detect": [
+    {
+      "selectorExists": "form:has([data-testid='text-input']):has(#send-button)"
+    }
+  ],
+  "capabilities": [
+    "outline",
+    "outline-user-queries",
+    "export-basic",
+    "generation-detect",
+    "new-chat",
+    "stop-generation",
+    "zen",
+    "prompt-insert"
+  ],
+  "selectors": {
+    "textarea": ["[data-testid='text-input']"],
+    "submitButton": ["[data-testid='send-button']"],
+    "responseContainer": "main[role='main'] .scrollbar-gutter-stable:has(.message-render)",
+    "userQuery": "main[role='main'] .message-render > .user-turn .message-content",
+    "assistantResponse": "main[role='main'] .message-render > .agent-turn .message-content",
+    "newChatButton": ["[data-testid='new-chat-button']"],
+    "stopButton": ["[data-testid='stop-generation-button']"],
+    "scrollContainer": ["main[role='main'] .scrollbar-gutter-stable:has(.message-render)"]
+  },
+  "input": {
+    "mode": "textarea",
+    "submitKey": "Enter"
+  },
+  "generating": {
+    "existsSelectors": [
+      "[data-testid='stop-generation-button']",
+      "main[role='main'] .message-content.submitting"
+    ]
+  },
+  "session": {
+    "idFromPathRegex": "^/c/([^/?#]+)$",
+    "newConversationPathPatterns": ["^/$", "^/c/new$"],
+    "sharePathPrefix": "/share/",
+    "newTabPath": "/c/new"
+  },
+  "export": {
+    "userQuerySelector": "main[role='main'] .message-render > .user-turn > :last-child > :first-child",
+    "assistantResponseSelector": "main[role='main'] .message-render > .agent-turn > :last-child > :first-child",
+    "turnSelector": "main[role='main'] .message-render",
+    "useShadowDOM": false
+  },
+  "zenMode": {
+    "hide": [
+      "aside:has([data-testid='new-chat-button'])",
+      "div.fixed:has([data-testid='new-chat-button']):has([data-testid='close-sidebar-button'])",
+      "main[role='main'] > div > div.absolute.top-0"
+    ]
+  }
+}
