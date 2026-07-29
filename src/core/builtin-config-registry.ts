@@ -1,4 +1,5 @@
 import { CHATGLM_CONFIG, CHATGLM_CONFIG_VERSION } from "~adapters/chatglm-config"
+import { CHATGPT_CONFIG, CHATGPT_CONFIG_VERSION } from "~adapters/chatgpt-config"
 import { DEEPSEEK_CONFIG, DEEPSEEK_CONFIG_VERSION } from "~adapters/deepseek-config"
 import { DOUBAO_CONFIG, DOUBAO_CONFIG_VERSION } from "~adapters/doubao-config"
 import { GROK_CONFIG, GROK_CONFIG_VERSION } from "~adapters/grok-config"
@@ -23,6 +24,14 @@ const BUILTIN_CONFIG_DESCRIPTORS = new Map<string, BuiltinConfigDescriptor>([
       siteId: SITE_IDS.CHATGLM,
       configVersion: CHATGLM_CONFIG_VERSION,
       baseConfig: CHATGLM_CONFIG,
+    },
+  ],
+  [
+    SITE_IDS.CHATGPT,
+    {
+      siteId: SITE_IDS.CHATGPT,
+      configVersion: CHATGPT_CONFIG_VERSION,
+      baseConfig: CHATGPT_CONFIG,
     },
   ],
   [

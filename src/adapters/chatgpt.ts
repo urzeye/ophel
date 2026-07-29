@@ -30,6 +30,8 @@ import {
   type SiteDeleteConversationResult,
   type ZenModeConfig,
 } from "./base"
+import type { BuiltinSiteConfig } from "./declarative"
+import { CHATGPT_CONFIG, CHATGPT_CONFIG_VERSION, type ChatGPTSiteConfig } from "./chatgpt-config"
 
 const DEFAULT_TITLE = "ChatGPT"
 
@@ -111,20 +113,7 @@ const KNOWN_LANGUAGES = new Set([
   "wasm",
 ])
 
-const CHATGPT_MODEL_SELECTOR_BUTTON_SELECTORS = [
-  // 新版 ChatGPT（2025 改版）：Composer 区域的 Pill 模型切换按钮
-  'button[class*="__composer-pill"][aria-haspopup="menu"]',
-] as const
-
 const CHATGPT_MODEL_LOCK_REENTRY_COOLDOWN_MS = 1_200
-const CHATGPT_MODEL_MENU_SELECTOR =
-  '[data-radix-popper-content-wrapper] [role="menu"][data-radix-menu-content]'
-// 新版菜单项 role 为 menuitemradio，data-testid^="model-switcher-" 仍保留
-const CHATGPT_MODEL_MENU_ITEM_SELECTOR = `${CHATGPT_MODEL_MENU_SELECTOR} [data-testid^="model-switcher-"]`
-const CHATGPT_SPONSORED_AD_SELECTOR =
-  'div.border-token-border-default.border-t.py-4.text-sm:has(button[aria-label="Ad options"]):has([role="link"][tabindex="0"])'
-const CHATGPT_CONVERSATION_LINK_SELECTOR = 'a[data-sidebar-item="true"][href^="/c/"]'
-const CHATGPT_CONVERSATION_ID_RE = /^\/c\/([a-z0-9-]+)(?:[/?#]|$)/i
 
 // ==================== 导出快照 ====================
 // ChatGPT 长会话采用虚拟滚动：滚出视口的消息内容会被卸载，
@@ -142,43 +131,9 @@ const CHATGPT_EXPORT_ROLE_ASSISTANT = "assistant"
 const CHATGPT_EXPORT_TURN_SELECTOR = `[${CHATGPT_EXPORT_ROOT_ATTR}="1"] [${CHATGPT_EXPORT_TURN_ATTR}="1"]`
 const CHATGPT_EXPORT_USER_SELECTOR = `[${CHATGPT_EXPORT_ROOT_ATTR}="1"] [${CHATGPT_EXPORT_ROLE_ATTR}="${CHATGPT_EXPORT_ROLE_USER}"]`
 const CHATGPT_EXPORT_ASSISTANT_SELECTOR = `[${CHATGPT_EXPORT_ROOT_ATTR}="1"] [${CHATGPT_EXPORT_ROLE_ATTR}="${CHATGPT_EXPORT_ROLE_ASSISTANT}"]`
-const CHATGPT_DEEP_RESEARCH_IFRAME_SELECTOR =
-  'iframe[title="internal://deep-research"], iframe[src*="connector_openai_deep_research"]'
 const CHATGPT_NATIVE_TOC_ID_PREFIX = "chatgpt-native-user-query::"
 const CHATGPT_NATIVE_TOC_ID_RE = /^chatgpt-native-user-query::(\d+)::/
 const CHATGPT_NATIVE_TOC_PROMPT_LABEL_RE = /^Prompt\s+\d+$/i
-const CHATGPT_CODEX_TASK_MARKDOWN_SELECTOR = ".markdown.markdown-new-styling"
-const CHATGPT_CODEX_TASK_USER_QUERY_SELECTOR = ".self-end.bg-token-bg-tertiary .whitespace-pre-wrap"
-const CHATGPT_LAYOUT_SCOPE_SELECTOR = "main#main"
-
-// ChatGPT 新版（2025 重设计）将 Composer 输入区嵌套在 #thread 内部，
-// 与对话内容共用 max-w-(--thread-content-max-width) 容器（Tailwind v4）。
-// 避让时需区分 thread 内容容器与 composer 容器：
-// - thread 内容 max-w 容器：排除包含 composer form 的，避免重复约束
-// - composer 区：仅约束 form 本身，不约束其外层的 max-w 容器
-const CHATGPT_THREAD_CONTENT_MAX_WIDTH_SELECTOR =
-  '#thread [class*="thread-content-max-width"]:not(:has(form[data-type="unified-composer"]))'
-const CHATGPT_THREAD_WIDTH_LEGACY_SELECTOR =
-  '#thread [style*="--thread-content-max-width"]:not(:has(form[data-type="unified-composer"]))'
-const CHATGPT_COMPOSER_FORM_WIDTH_SELECTOR = 'main#main form[data-type="unified-composer"]'
-
-// ChatGPT 的新对话提示卡片内层横向滚动行也带 px-(--thread-content-margin)；
-// 这里只命中同时定义该变量的外层节点，避免把卡片行也塞进安全区 padding。
-const CHATGPT_THREAD_SAFE_AREA_SELECTOR =
-  '#thread [class*="--thread-content-margin:"][class*="px-(--thread-content-margin)"]'
-const CHATGPT_NEW_CHAT_HEADING_SAFE_AREA_SELECTOR =
-  "#thread .relative.basis-auto.flex-col.shrink.flex.justify-end:has(h1)"
-const CHATGPT_CANVAS_DIALOG_SAFE_AREA_SELECTOR =
-  'main#main [role="dialog"][class*="fixed"][class*="inset-0"]:has(.cm-editor)'
-const CHATGPT_LIBRARY_DIALOG_SELECTOR = '[role="dialog"]:has([data-testid="fullscreen-shell-body"])'
-const CHATGPT_LIBRARY_SHELL_SELECTOR = `${CHATGPT_LIBRARY_DIALOG_SELECTOR} [data-testid="fullscreen-shell-body"]`
-const CHATGPT_LIBRARY_EDITOR_WIDTH_SELECTOR = `${CHATGPT_LIBRARY_SHELL_SELECTOR} div:has(> .ProseMirror.markdown.prose)`
-const CHATGPT_LIBRARY_COMPOSER_WRAPPER_SELECTOR = `${CHATGPT_LIBRARY_DIALOG_SELECTOR} div.fixed[class*="start-1/2"]:has(> form[class*="group/composer"])`
-const CHATGPT_LIBRARY_COMPOSER_FORM_SELECTOR = `${CHATGPT_LIBRARY_SHELL_SELECTOR} ~ * form[class*="group/composer"]`
-const CHATGPT_PANEL_OBSTACLE_SELECTOR = [
-  CHATGPT_DEEP_RESEARCH_IFRAME_SELECTOR,
-  "#stage-slideover-sidebar",
-].join(", ")
 
 interface ChatGPTExportMessageSnapshot {
   role: "user" | "assistant"
@@ -230,6 +185,7 @@ interface ChatGPTOutlineWordCountCacheEntry {
 }
 
 export class ChatGPTAdapter extends SiteAdapter {
+  private config: ChatGPTSiteConfig = CHATGPT_CONFIG
   private sessionAccessToken: string | null = null
   private sessionAccessTokenExpiresAt = 0
   private lastModelLockAttemptAt = 0
@@ -273,6 +229,18 @@ export class ChatGPTAdapter extends SiteAdapter {
     return "ChatGPT"
   }
 
+  getBuiltinConfig(): ChatGPTSiteConfig {
+    return CHATGPT_CONFIG
+  }
+
+  getBuiltinConfigVersion(): number {
+    return CHATGPT_CONFIG_VERSION
+  }
+
+  applyMergedConfig(config: BuiltinSiteConfig): void {
+    this.config = config as ChatGPTSiteConfig
+  }
+
   getThemeColors(): { primary: string; secondary: string } {
     return { primary: "#10a37f", secondary: "#1a7f64" }
   }
@@ -282,17 +250,15 @@ export class ChatGPTAdapter extends SiteAdapter {
   }
 
   getQuickQuoteSupportMode() {
-    return "native" as const
+    return this.config.quickQuote
   }
 
   getNativeQuotePopoverSelectors(): string[] {
-    return [
-      // 根据实际 HTML 结构定位原生悬浮框
-      'div[aria-live="polite"].start-0.top-0.select-none.absolute',
-      'div[style*="transform: translate3d"] .shadow-long',
-      // 按钮特征（多语言兼容）
-      "button.btn-secondary.rounded-none.border-none",
-    ]
+    return [...this.config.sitePrivateSelectors.nativeQuotePopover]
+  }
+
+  supportsHostThemeSync(): boolean {
+    return this.config.supportsHostThemeSync
   }
 
   getNewTabUrl(): string {
@@ -342,24 +308,34 @@ export class ChatGPTAdapter extends SiteAdapter {
   // ==================== 会话管理 ====================
 
   private getChatGPTConversationLinks(): HTMLAnchorElement[] {
-    return Array.from(document.querySelectorAll(CHATGPT_CONVERSATION_LINK_SELECTOR)).filter(
+    return Array.from(document.querySelectorAll(this.config.conversation.itemSelector)).filter(
       (el): el is HTMLAnchorElement =>
         el.tagName.toLowerCase() === "a" && Boolean(this.getChatGPTConversationId(el)),
     )
   }
 
   private getChatGPTConversationId(el: Element): string | null {
-    const href = el.getAttribute("href") || ""
-    return href.match(CHATGPT_CONVERSATION_ID_RE)?.[1] || null
+    const href = el.getAttribute(this.config.conversation.idFrom.attr ?? "href") || ""
+    return href.match(new RegExp(this.config.conversation.idFrom.regex, "i"))?.[1] || null
+  }
+
+  private getChatGPTConversationPath(id: string): string {
+    return this.config.conversation.urlTemplate.replace("{id}", id)
   }
 
   private getChatGPTConversationTitleElement(el: Element): Element | null {
-    return (
-      el.querySelector(".truncate [dir='auto']") ||
-      el.querySelector(".truncate span") ||
-      el.querySelector(".truncate") ||
-      el.querySelector("span")
-    )
+    const primarySelector = this.config.conversation.titleSelector
+    if (primarySelector) {
+      const primary = el.querySelector(primarySelector)
+      if (primary) return primary
+    }
+
+    for (const selector of this.config.sitePrivateSelectors.conversationTitleFallback) {
+      const fallback = el.querySelector(selector)
+      if (fallback) return fallback
+    }
+
+    return null
   }
 
   private extractConversationInfoFromLink(el: Element, cid?: string): ConversationInfo | null {
@@ -368,27 +344,33 @@ export class ChatGPTAdapter extends SiteAdapter {
 
     const titleEl = this.getChatGPTConversationTitleElement(el)
     const title = titleEl?.textContent?.trim() || ""
-    const isActive = el.hasAttribute("data-active")
+    const isActive = this.config.conversation.activeMatch
+      ? el.matches(this.config.conversation.activeMatch)
+      : false
+    const path = this.getChatGPTConversationPath(id)
 
     return {
       id,
       cid,
       title,
-      url: `https://chatgpt.com/c/${id}`,
+      url: new URL(path, this.getNewTabUrl()).href,
       isActive,
       isPinned: this.isChatGPTConversationPinned(el),
     }
   }
 
   private isChatGPTConversationPinned(el: Element): boolean {
-    const history = document.querySelector("#history")
+    const privateSelectors = this.config.sitePrivateSelectors
+    const historySelector = this.config.selectors.sidebarScrollContainer
+    const history = historySelector ? document.querySelector(historySelector) : null
     if (history && !history.contains(el)) {
       return true
     }
 
     // 旧版 ChatGPT：置顶项仍在 #history 内，但 trailing 区域会多一个置顶图标。
-    const trailingPair = el.querySelector(".trailing-pair")
-    const trailingIcons = trailingPair?.querySelectorAll(".trailing svg") || []
+    const trailingPair = el.querySelector(privateSelectors.conversationPinnedTrailingPair)
+    const trailingIcons =
+      trailingPair?.querySelectorAll(privateSelectors.conversationPinnedTrailingIcon) || []
     return trailingIcons.length > 1
   }
 
@@ -409,7 +391,8 @@ export class ChatGPTAdapter extends SiteAdapter {
 
   getSidebarScrollContainer(): Element | null {
     // 侧边栏滚动容器 - 通过 #history 向上查找最近的 nav 元素
-    const history = document.querySelector("#history")
+    const historySelector = this.config.selectors.sidebarScrollContainer
+    const history = historySelector ? document.querySelector(historySelector) : null
     if (history) {
       const nav = history.closest("nav")
       if (nav) return nav
@@ -422,8 +405,8 @@ export class ChatGPTAdapter extends SiteAdapter {
 
   getConversationObserverConfig(): ConversationObserverConfig {
     return {
-      selector: CHATGPT_CONVERSATION_LINK_SELECTOR,
-      shadow: false,
+      selector: this.config.conversation.itemSelector,
+      shadow: this.config.conversation.shadow ?? false,
       extractInfo: (el) => {
         const cid = this.getCurrentCid() || undefined
         return this.extractConversationInfoFromLink(el, cid)
@@ -436,7 +419,7 @@ export class ChatGPTAdapter extends SiteAdapter {
     // 通过 href 属性查找侧边栏链接
     const sidebarLink = this.findConversationRow(id)
 
-    if (sidebarLink) {
+    if (sidebarLink && this.config.conversation.navigationStrategy === "click-item") {
       sidebarLink.click()
       return true
     }
@@ -771,7 +754,7 @@ export class ChatGPTAdapter extends SiteAdapter {
   }
 
   private findConversationRow(id: string): HTMLElement | null {
-    const targetHref = `/c/${id}`
+    const targetHref = this.getChatGPTConversationPath(id)
     return (
       this.getChatGPTConversationLinks().find((link) => link.getAttribute("href") === targetHref) ||
       null
@@ -782,14 +765,7 @@ export class ChatGPTAdapter extends SiteAdapter {
     row: HTMLElement,
     id: string,
   ): Promise<HTMLElement | null> {
-    const actionSelectors = [
-      'button[aria-haspopup="menu"]',
-      'button[aria-label*="More"]',
-      'button[aria-label*="more"]',
-      'button[aria-label*="更多"]',
-      'button[data-testid*="menu"]',
-      ".trailing button",
-    ].join(", ")
+    const actionSelectors = this.config.sitePrivateSelectors.conversationActionButton
 
     const itemContainer = this.findConversationItemContainer(row, id)
     const rawCandidates = [
@@ -820,13 +796,13 @@ export class ChatGPTAdapter extends SiteAdapter {
   }
 
   private findConversationItemContainer(row: HTMLElement, id: string): HTMLElement | null {
-    const targetHref = `/c/${id}`
+    const targetHref = this.getChatGPTConversationPath(id)
     let current: HTMLElement | null = row
     let fallback: HTMLElement | null = null
 
     for (let depth = 0; depth < 8 && current; depth++) {
       const links = Array.from(
-        current.querySelectorAll('a[data-sidebar-item="true"][href^="/c/"]'),
+        current.querySelectorAll(this.config.conversation.itemSelector),
       ) as HTMLAnchorElement[]
       const hasTargetLink = links.some((link) => link.getAttribute("href") === targetHref)
       if (hasTargetLink) {
@@ -835,7 +811,7 @@ export class ChatGPTAdapter extends SiteAdapter {
         }
 
         const hasActionButton = !!current.querySelector(
-          'button[aria-haspopup="menu"], .trailing button',
+          this.config.sitePrivateSelectors.conversationActionIndicator,
         )
         if (links.length === 1 && hasActionButton) {
           return current
@@ -870,11 +846,11 @@ export class ChatGPTAdapter extends SiteAdapter {
   ): boolean {
     if (!container.contains(button)) return false
 
-    const targetHref = `/c/${id}`
+    const targetHref = this.getChatGPTConversationPath(id)
     const owner = button.closest("li")
     if (owner) {
       const ownerLinks = Array.from(
-        owner.querySelectorAll('a[data-sidebar-item="true"][href^="/c/"]'),
+        owner.querySelectorAll(this.config.conversation.itemSelector),
       ) as HTMLAnchorElement[]
       if (
         ownerLinks.length === 1 &&
@@ -886,7 +862,7 @@ export class ChatGPTAdapter extends SiteAdapter {
     }
 
     const linksInContainer = Array.from(
-      container.querySelectorAll('a[data-sidebar-item="true"][href^="/c/"]'),
+      container.querySelectorAll(this.config.conversation.itemSelector),
     ) as HTMLAnchorElement[]
     return linksInContainer.length === 1 && linksInContainer[0].getAttribute("href") === targetHref
   }
@@ -898,7 +874,9 @@ export class ChatGPTAdapter extends SiteAdapter {
       if (controlled) return controlled
     }
 
-    const visibleMenus = Array.from(document.querySelectorAll('[role="menu"]')) as HTMLElement[]
+    const visibleMenus = Array.from(
+      document.querySelectorAll(this.config.sitePrivateSelectors.conversationMenu),
+    ) as HTMLElement[]
     let nearest: HTMLElement | null = null
     let nearestDistance = Number.POSITIVE_INFINITY
     const triggerRect = trigger.getBoundingClientRect()
@@ -929,15 +907,11 @@ export class ChatGPTAdapter extends SiteAdapter {
       const menuScope = this.getMenuContainerFromTrigger(menuTrigger)
       const scopedMenuItems = menuScope
         ? (Array.from(
-            menuScope.querySelectorAll(
-              '[role="menuitem"], [data-radix-collection-item][role="menuitem"]',
-            ),
+            menuScope.querySelectorAll(this.config.sitePrivateSelectors.conversationMenuItem),
           ) as HTMLElement[])
         : []
       const fallbackMenuItems = Array.from(
-        document.querySelectorAll(
-          '[role="menuitem"], [data-radix-collection-item][role="menuitem"]',
-        ),
+        document.querySelectorAll(this.config.sitePrivateSelectors.conversationMenuItem),
       ) as HTMLElement[]
       const menuItems = scopedMenuItems.length > 0 ? scopedMenuItems : fallbackMenuItems
 
@@ -1006,9 +980,10 @@ export class ChatGPTAdapter extends SiteAdapter {
 
   getConversationTitle(): string | null {
     // 从侧边栏获取当前选中项
-    const selected = this.getChatGPTConversationLinks().find((link) =>
-      link.hasAttribute("data-active"),
-    )
+    const activeMatch = this.config.conversation.activeMatch
+    const selected = activeMatch
+      ? this.getChatGPTConversationLinks().find((link) => link.matches(activeMatch))
+      : undefined
     const title = selected
       ? this.getChatGPTConversationTitleElement(selected)?.textContent?.trim()
       : null
@@ -1017,12 +992,7 @@ export class ChatGPTAdapter extends SiteAdapter {
   }
 
   getNewChatButtonSelectors(): string[] {
-    return [
-      '[data-testid="create-new-chat-button"]',
-      'a[href="/"]',
-      'button[aria-label="New chat"]',
-      'button[aria-label="新对话"]',
-    ]
+    return [...this.config.selectors.newChatButton]
   }
 
   getLatestReplyText(): string | null {
@@ -1030,15 +1000,15 @@ export class ChatGPTAdapter extends SiteAdapter {
     if (!container) return null
 
     // ChatGPT 的回复通常在 [data-message-author-role="assistant"] 中
-    const responses = container.querySelectorAll('[data-message-author-role="assistant"]')
+    const responses = container.querySelectorAll(this.config.selectors.assistantResponse)
     if (responses.length === 0) return null
 
     const lastResponse = responses[responses.length - 1]
     const markdownContainer =
-      lastResponse.querySelector(".markdown, .prose, [class*='prose']") || lastResponse
+      lastResponse.querySelector(this.config.sitePrivateSelectors.assistantMarkdown) || lastResponse
     const clone = markdownContainer.cloneNode(true) as HTMLElement
     clone
-      .querySelectorAll('.sr-only, button, [role="button"], svg, [aria-hidden="true"]')
+      .querySelectorAll(this.config.sitePrivateSelectors.exportCleanup)
       .forEach((node) => node.remove())
 
     const markdown = htmlToMarkdown(clone).trim()
@@ -1052,23 +1022,7 @@ export class ChatGPTAdapter extends SiteAdapter {
   // ==================== 页面宽度控制 ====================
 
   getWidthSelectors() {
-    // ChatGPT 使用 CSS 变量 --thread-content-max-width 控制内容宽度
-    // 新版将 Composer 也嵌套在 #thread 内，共用 max-w-(--thread-content-max-width) 容器，
-    // 因此不添加 :not(:has(...)) 排除——页面宽度模式下 composer 与对话内容应保持相同的宽度约束。
-    return [
-      { selector: '[class*="thread-content-max-width"]', property: "max-width" },
-      { selector: '[style*="--thread-content-max-width"]', property: "max-width" },
-      {
-        selector: CHATGPT_LIBRARY_EDITOR_WIDTH_SELECTOR,
-        property: "max-width",
-        extraCss: "width: 100% !important; min-width: 0 !important;",
-      },
-      {
-        selector: CHATGPT_LIBRARY_COMPOSER_WRAPPER_SELECTOR,
-        property: "width",
-        extraCss: "max-width: calc(100vw - 32px) !important; min-width: 0 !important;",
-      },
-    ]
+    return this.config.widthSelectors.map((selector) => ({ ...selector }))
   }
 
   getUserQueryWidthSelectors() {
@@ -1076,7 +1030,7 @@ export class ChatGPTAdapter extends SiteAdapter {
     // 需要在 :root 级别设置变量，然后会自动应用到 .user-message-bubble-color
     return [
       {
-        selector: ":root",
+        selector: this.config.sitePrivateSelectors.userQueryWidthRoot,
         property: "--user-chat-width",
         noCenter: true,
       },
@@ -1084,57 +1038,58 @@ export class ChatGPTAdapter extends SiteAdapter {
   }
 
   getPanelAvoidanceConfig(): PanelAvoidanceConfig {
+    const privateSelectors = this.config.sitePrivateSelectors
     return {
-      scopeSelector: CHATGPT_LAYOUT_SCOPE_SELECTOR,
-      obstacleSelectors: [CHATGPT_PANEL_OBSTACLE_SELECTOR],
+      scopeSelector: privateSelectors.panelScope,
+      obstacleSelectors: [...privateSelectors.panelObstacle],
       widthSelectors: [
         {
-          selector: CHATGPT_THREAD_CONTENT_MAX_WIDTH_SELECTOR,
+          selector: privateSelectors.panelThreadContentWidth,
           property: "max-width",
           extraCss: "width: 100% !important; min-width: 0 !important;",
         },
         {
-          selector: CHATGPT_THREAD_WIDTH_LEGACY_SELECTOR,
+          selector: privateSelectors.panelThreadLegacyWidth,
           property: "max-width",
           extraCss: "width: 100% !important; min-width: 0 !important;",
         },
         {
-          selector: CHATGPT_COMPOSER_FORM_WIDTH_SELECTOR,
+          selector: privateSelectors.panelComposerFormWidth,
           property: "max-width",
           extraCss: "width: 100% !important; min-width: 0 !important;",
         },
         {
-          selector: CHATGPT_LIBRARY_COMPOSER_FORM_SELECTOR,
+          selector: privateSelectors.panelLibraryComposerFormWidth,
           property: "max-width",
           extraCss: "width: 100% !important; min-width: 0 !important;",
         },
       ],
       insetSelectors: [
         {
-          selector: CHATGPT_NEW_CHAT_HEADING_SAFE_AREA_SELECTOR,
+          selector: privateSelectors.panelNewChatHeadingInset,
           insetMode: "edge",
           extraCss:
             "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
         },
         {
-          selector: CHATGPT_THREAD_SAFE_AREA_SELECTOR,
+          selector: privateSelectors.panelThreadInset,
           insetMode: "edge",
           extraCss:
             "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
         },
         {
-          selector: CHATGPT_CANVAS_DIALOG_SAFE_AREA_SELECTOR,
+          selector: privateSelectors.panelCanvasDialogInset,
           applySide: "right",
           insetMode: "edge",
           extraCss: "box-sizing: border-box !important; min-width: 0 !important;",
         },
         {
-          selector: CHATGPT_LIBRARY_SHELL_SELECTOR,
+          selector: privateSelectors.panelLibraryShellInset,
           insetMode: "edge",
           extraCss: "box-sizing: border-box !important; min-width: 0 !important;",
         },
         {
-          selector: CHATGPT_LIBRARY_COMPOSER_WRAPPER_SELECTOR,
+          selector: privateSelectors.panelLibraryComposerWrapperInset,
           leftProperty: "left",
           rightProperty: "right",
           insetMode: "edge",
@@ -1148,33 +1103,35 @@ export class ChatGPTAdapter extends SiteAdapter {
   }
 
   getZenModeConfig() {
-    return {
-      hide: ["#stage-slideover-sidebar", "div.select-none:has(> .pointer-events-auto)"],
-    }
+    return this.cloneZenModeConfig(this.config.zenMode)
   }
 
   getCleanModeConfig(): ZenModeConfig | null {
+    return this.cloneZenModeConfig(this.config.cleanMode)
+  }
+
+  private cloneZenModeConfig(config: ZenModeConfig): ZenModeConfig {
+    const { hide, rootClass, styles } = config
     return {
-      hide: ["div.select-none:has(> .pointer-events-auto)", CHATGPT_SPONSORED_AD_SELECTOR],
+      ...(hide ? { hide: [...hide] } : {}),
+      ...(rootClass ? { rootClass: { ...rootClass } } : {}),
+      ...(styles ? { styles: styles.map((style) => ({ ...style })) } : {}),
     }
   }
 
   getMarkdownFixerConfig(): MarkdownFixerConfig {
     return {
-      selector: '[data-message-author-role="assistant"] p',
+      selector: this.config.sitePrivateSelectors.markdownFixerParagraph,
       fixSpanContent: false,
       shouldSkip: (element) => {
         if (!this.isGenerating()) return false
 
         // 查找当前元素所属的消息容器
-        const messageContainer = element.closest('[data-message-author-role="assistant"]')
+        const messageContainer = element.closest(this.config.selectors.assistantResponse)
         if (!messageContainer) return false
 
         // 查找页面上最后一个 AI 消息容器（即正在生成的那个）
-        const allMessages = document.querySelectorAll(
-          this.getChatContentSelectors().find((s) => s.includes("assistant")) ||
-            '[data-message-author-role="assistant"]',
-        )
+        const allMessages = document.querySelectorAll(this.config.selectors.assistantResponse)
         const lastMessage = allMessages[allMessages.length - 1]
 
         // 如果当前元素位于正在生成的消息中，强制跳过（等待生成结束后通过重试机制修复）
@@ -1186,21 +1143,21 @@ export class ChatGPTAdapter extends SiteAdapter {
   // ==================== 输入框操作 ====================
 
   getTextareaSelectors(): string[] {
-    return ["#prompt-textarea", 'textarea[data-id="root"]', '[contenteditable="true"]']
+    return [...this.config.selectors.textarea]
+  }
+
+  getSubmitKeyConfig(): { key: "Enter" | "Ctrl+Enter" } {
+    return { key: this.config.input.submitKey ?? "Enter" }
   }
 
   getSubmitButtonSelectors(): string[] {
-    return [
-      '[data-testid="send-button"]',
-      'button[aria-label="Send prompt"]',
-      'button[aria-label="发送"]',
-    ]
+    return [...this.config.selectors.submitButton]
   }
 
   isValidTextarea(element: HTMLElement): boolean {
     if (element.offsetParent === null) return false
     if (element.closest(".gh-main-panel")) return false
-    return element.id === "prompt-textarea" || element.getAttribute("contenteditable") === "true"
+    return element.matches(this.config.sitePrivateSelectors.validTextarea)
   }
 
   insertPrompt(content: string): boolean {
@@ -1258,9 +1215,9 @@ export class ChatGPTAdapter extends SiteAdapter {
   getScrollContainer(): HTMLElement | null {
     // ChatGPT 聊天内容的滚动容器
     // 查找具有 scrollbar-gutter 样式的 div，或父元素带有 @container/main 的子元素
-    const container = document.querySelector(
-      '[class*="scrollbar-gutter"], [class*="@container/main"] > div',
-    ) as HTMLElement
+    const container = this.config.selectors.scrollContainer
+      .map((selector) => document.querySelector(selector))
+      .find((element): element is HTMLElement => element instanceof HTMLElement)
     if (container && container.scrollHeight > container.clientHeight) {
       return container
     }
@@ -1287,28 +1244,21 @@ export class ChatGPTAdapter extends SiteAdapter {
   }
 
   getResponseContainerSelector(): string {
-    // ChatGPT 聊天内容区域 - 常规对话使用 #thread/main#main。
-    // Codex Cloud task 页（/codex/cloud/tasks/task_* 和 /s/cd_*）没有 main/#thread，
-    // 只暴露官方 markdown 容器。
-    return `#thread, main#main, ${CHATGPT_CODEX_TASK_MARKDOWN_SELECTOR}`
+    return this.config.selectors.responseContainer
   }
 
   getChatContentSelectors(): string[] {
-    return [
-      '[data-message-author-role="assistant"]',
-      '[data-message-author-role="user"]',
-      ".markdown",
-    ]
+    return [...this.config.selectors.chatContent]
   }
 
   // ==================== 大纲提取 ====================
 
   getUserQuerySelector(): string {
     if (this.isCodexTaskPage()) {
-      return `[data-message-author-role="user"], ${CHATGPT_CODEX_TASK_USER_QUERY_SELECTOR}`
+      return `${this.config.selectors.userQuery}, ${this.config.sitePrivateSelectors.codexTaskUserQuery}`
     }
 
-    return '[data-message-author-role="user"]'
+    return this.config.selectors.userQuery
   }
 
   private isCodexTaskPage(): boolean {
@@ -1318,11 +1268,11 @@ export class ChatGPTAdapter extends SiteAdapter {
   private getCodexTaskOutlineContainer(): Element | null {
     if (!this.isCodexTaskPage()) return null
 
-    const markdown = document.querySelector(CHATGPT_CODEX_TASK_MARKDOWN_SELECTOR)
+    const markdown = document.querySelector(this.config.sitePrivateSelectors.codexTaskMarkdown)
     if (!markdown) return null
 
     const parent = markdown.parentElement
-    if (parent?.querySelector(CHATGPT_CODEX_TASK_USER_QUERY_SELECTOR)) {
+    if (parent?.querySelector(this.config.sitePrivateSelectors.codexTaskUserQuery)) {
       return parent
     }
 
@@ -1337,9 +1287,10 @@ export class ChatGPTAdapter extends SiteAdapter {
   }
 
   extractUserQueryText(element: Element): string {
-    const textContainer = element.matches(".whitespace-pre-wrap")
+    const userQueryTextSelector = this.config.sitePrivateSelectors.userQueryText
+    const textContainer = element.matches(userQueryTextSelector)
       ? element
-      : element.querySelector(".whitespace-pre-wrap")
+      : element.querySelector(userQueryTextSelector)
 
     if (textContainer) {
       return this.extractTextWithLineBreaks(textContainer).trim()
@@ -1349,13 +1300,13 @@ export class ChatGPTAdapter extends SiteAdapter {
   }
 
   extractUserQueryMarkdown(element: Element): string {
-    const textContainer = element.querySelector(".whitespace-pre-wrap")
+    const textContainer = element.querySelector(this.config.sitePrivateSelectors.userQueryText)
     if (!textContainer) {
       return this.extractUserQueryText(element).trim()
     }
 
     const clone = textContainer.cloneNode(true) as HTMLElement
-    clone.querySelectorAll(".sr-only").forEach((node) => node.remove())
+    clone.querySelectorAll(this.config.sitePrivateSelectors.srOnly).forEach((node) => node.remove())
 
     // 纠正 ChatGPT 官方对用户问题中代码块的不规范渲染：
     // 新版 ChatGPT 可能会把 ```yaml 渲染为 <code>yaml\nflag: false</code> 且无 language-* 类名。
@@ -1414,7 +1365,7 @@ export class ChatGPTAdapter extends SiteAdapter {
    * ChatGPT 使用 .sr-only 类标记屏幕阅读器辅助文本
    */
   private shouldSkipElement(element: Element): boolean {
-    return element.classList.contains("sr-only")
+    return element.matches(this.config.sitePrivateSelectors.srOnly)
   }
 
   /**
@@ -1481,7 +1432,7 @@ export class ChatGPTAdapter extends SiteAdapter {
   replaceUserQueryContent(element: Element, html: string): boolean {
     // ChatGPT 用户消息结构：
     // .user-message-bubble-color > .whitespace-pre-wrap (原文本)
-    const textContainer = element.querySelector(".whitespace-pre-wrap")
+    const textContainer = element.querySelector(this.config.sitePrivateSelectors.userQueryText)
     if (!textContainer) return false
 
     // 检查是否已经处理过
@@ -1512,16 +1463,11 @@ export class ChatGPTAdapter extends SiteAdapter {
       }
     }
 
-    return {
-      userQuerySelector: '[data-message-author-role="user"]',
-      assistantResponseSelector: '[data-message-author-role="assistant"]',
-      turnSelector: '[data-testid^="conversation-turn"]',
-      useShadowDOM: false,
-    }
+    return { ...this.config.export }
   }
 
   getAssistantMermaidSupportMode() {
-    return "native" as const
+    return this.config.mermaidSupport
   }
 
   // ==================== 导出生命周期 ====================
@@ -1581,6 +1527,10 @@ export class ChatGPTAdapter extends SiteAdapter {
   ): Promise<void> {
     this.clearExportSnapshot()
     this.exportBundle = null
+  }
+
+  private getAuthorMessageSelector(): string {
+    return [this.config.selectors.userQuery, this.config.selectors.assistantResponse].join(", ")
   }
 
   /**
@@ -1705,7 +1655,7 @@ export class ChatGPTAdapter extends SiteAdapter {
     // 用响应容器选择器作为查询根更稳。
     const root: ParentNode = document.querySelector(this.getResponseContainerSelector()) || document
     const candidates = Array.from(
-      root.querySelectorAll('section[data-turn], [data-testid^="conversation-turn"]'),
+      root.querySelectorAll(this.config.sitePrivateSelectors.exportTurnContainer),
     ).filter((element): element is HTMLElement => {
       if (!(element instanceof HTMLElement)) return false
       if (element.closest(`[${CHATGPT_EXPORT_ROOT_ATTR}]`)) return false
@@ -1723,7 +1673,7 @@ export class ChatGPTAdapter extends SiteAdapter {
 
   /** turn 是否已挂载真实内容（不是只剩 shell）。 */
   private turnHasMountedMessage(turn: HTMLElement): boolean {
-    const message = turn.querySelector("[data-message-author-role]")
+    const message = turn.querySelector(this.config.sitePrivateSelectors.exportMountedMessage)
     if (message instanceof HTMLElement) {
       if (message.textContent && message.textContent.trim()) {
         return true
@@ -1797,9 +1747,9 @@ export class ChatGPTAdapter extends SiteAdapter {
         : Number.MAX_SAFE_INTEGER
 
     // user query：用 data-message-id 作为缓存 key，与 extractOutline 同结构
-    const userMessages = Array.from(
-      turn.querySelectorAll('[data-message-author-role="user"]'),
-    ).filter((element): element is HTMLElement => element instanceof HTMLElement)
+    const userMessages = Array.from(turn.querySelectorAll(this.config.selectors.userQuery)).filter(
+      (element): element is HTMLElement => element instanceof HTMLElement,
+    )
     for (const message of userMessages) {
       const msgId =
         message.getAttribute("data-message-id") ||
@@ -1828,7 +1778,7 @@ export class ChatGPTAdapter extends SiteAdapter {
 
     // assistant 内的 heading：ID 形如 `msgId::tag-text::count`
     const assistantMessages = Array.from(
-      turn.querySelectorAll('[data-message-author-role="assistant"]'),
+      turn.querySelectorAll(this.config.selectors.assistantResponse),
     ).filter((element): element is HTMLElement => element instanceof HTMLElement)
     for (const message of assistantMessages) {
       const msgId =
@@ -1876,11 +1826,7 @@ export class ChatGPTAdapter extends SiteAdapter {
     const turns = this.findExportTurnContainers(container)
     if (turns.length === 0) {
       // 极端兜底：找不到 turn 包装层时按扁平 message 抓取（最少不会漏内容）
-      return Array.from(
-        container.querySelectorAll(
-          '[data-message-author-role="user"], [data-message-author-role="assistant"]',
-        ),
-      )
+      return Array.from(container.querySelectorAll(this.getAuthorMessageSelector()))
         .filter((element): element is HTMLElement => {
           if (!(element instanceof HTMLElement)) return false
           if (element.closest(`[${CHATGPT_EXPORT_ROOT_ATTR}]`)) return false
@@ -1906,7 +1852,7 @@ export class ChatGPTAdapter extends SiteAdapter {
    */
   private findExportTurnContainers(container: ParentNode): HTMLElement[] {
     const candidates = Array.from(
-      container.querySelectorAll('section[data-turn], [data-testid^="conversation-turn"]'),
+      container.querySelectorAll(this.config.sitePrivateSelectors.exportTurnContainer),
     ).filter((element): element is HTMLElement => {
       if (!(element instanceof HTMLElement)) return false
       if (element.closest(`[${CHATGPT_EXPORT_ROOT_ATTR}]`)) return false
@@ -2039,18 +1985,16 @@ export class ChatGPTAdapter extends SiteAdapter {
    * 收集这个 turn 直接归属的 author-role 节点（不包含嵌套子 turn 的节点）。
    */
   private collectOwnAuthorMessagesForTurn(turn: HTMLElement): HTMLElement[] {
-    return Array.from(
-      turn.querySelectorAll(
-        '[data-message-author-role="user"], [data-message-author-role="assistant"]',
-      ),
-    ).filter((element): element is HTMLElement => {
-      if (!(element instanceof HTMLElement)) return false
-      if (element.closest(`[${CHATGPT_EXPORT_ROOT_ATTR}]`)) return false
-      if (element.closest(".gh-root, .gh-main-panel")) return false
-      // 仅保留祖先链中最近的 turn 就是当前 turn 的元素
-      const innerTurn = element.closest('section[data-turn], [data-testid^="conversation-turn"]')
-      return innerTurn === turn
-    })
+    return Array.from(turn.querySelectorAll(this.getAuthorMessageSelector())).filter(
+      (element): element is HTMLElement => {
+        if (!(element instanceof HTMLElement)) return false
+        if (element.closest(`[${CHATGPT_EXPORT_ROOT_ATTR}]`)) return false
+        if (element.closest(".gh-root, .gh-main-panel")) return false
+        // 仅保留祖先链中最近的 turn 就是当前 turn 的元素
+        const innerTurn = element.closest(this.config.sitePrivateSelectors.exportTurnContainer)
+        return innerTurn === turn
+      },
+    )
   }
 
   private extractExportMessageSnapshot(
@@ -2081,7 +2025,7 @@ export class ChatGPTAdapter extends SiteAdapter {
 
     // 从父链中找最近的 conversation-turn-N 作为稳定排序键
     const ownerTurn = message.closest(
-      'section[data-turn], [data-testid^="conversation-turn"]',
+      this.config.sitePrivateSelectors.exportTurnContainer,
     ) as HTMLElement | null
     const order = ownerTurn ? this.getExportTurnSortIndex(ownerTurn) : Number.MAX_SAFE_INTEGER
 
@@ -2099,10 +2043,10 @@ export class ChatGPTAdapter extends SiteAdapter {
   private extractAssistantResponseTextFromLiveDom(element: Element): string {
     // 优先抓 .markdown / .prose 容器的内容
     const markdownContainer =
-      element.querySelector(".markdown, .prose, [class*='prose']") || element
+      element.querySelector(this.config.sitePrivateSelectors.assistantMarkdown) || element
     const clone = markdownContainer.cloneNode(true) as HTMLElement
     clone
-      .querySelectorAll('.sr-only, button, [role="button"], svg, [aria-hidden="true"]')
+      .querySelectorAll(this.config.sitePrivateSelectors.exportCleanup)
       .forEach((node) => node.remove())
 
     const markdown = htmlToMarkdown(clone).trim()
@@ -2149,7 +2093,10 @@ export class ChatGPTAdapter extends SiteAdapter {
     const images = this.getChatGPTExportImages(element).filter((node): node is HTMLImageElement => {
       if (!(node instanceof HTMLImageElement)) return false
       if (!this.isExportableChatGPTImage(node)) return false
-      if (options.onlyOutsideAuthorMessages && node.closest("[data-message-author-role]")) {
+      if (
+        options.onlyOutsideAuthorMessages &&
+        node.closest(this.config.sitePrivateSelectors.exportMountedMessage)
+      ) {
         return false
       }
       return true
@@ -2180,7 +2127,7 @@ export class ChatGPTAdapter extends SiteAdapter {
 
   private getChatGPTExportImages(element: Element): HTMLImageElement[] {
     const imagegenImages = Array.from(
-      element.querySelectorAll('[class*="imagegen-image"], [data-testid*="image-gen"]'),
+      element.querySelectorAll(this.config.sitePrivateSelectors.exportImageContainer),
     )
       .map((container) => {
         const images = Array.from(container.querySelectorAll("img")).filter(
@@ -2210,7 +2157,7 @@ export class ChatGPTAdapter extends SiteAdapter {
     collector?: ExportAssetCollector | null,
   ): string[] {
     const fileTiles = Array.from(
-      element.querySelectorAll('[role="group"][aria-label], [class*="file-tile"]'),
+      element.querySelectorAll(this.config.sitePrivateSelectors.exportFileTile),
     ).filter((node): node is HTMLElement => node instanceof HTMLElement)
     const seenFiles = new Set<string>()
     const fileMarkdown: string[] = []
@@ -2262,7 +2209,7 @@ export class ChatGPTAdapter extends SiteAdapter {
   }
 
   private getDeepResearchIframe(root: Element): HTMLIFrameElement | null {
-    const iframe = root.querySelector(CHATGPT_DEEP_RESEARCH_IFRAME_SELECTOR)
+    const iframe = root.querySelector(this.config.sitePrivateSelectors.deepResearchIframe)
     return iframe instanceof HTMLIFrameElement ? iframe : null
   }
 
@@ -2292,8 +2239,10 @@ export class ChatGPTAdapter extends SiteAdapter {
   private extractChatGPTFileName(tile: Element): string {
     const candidates = [
       tile.getAttribute("aria-label") || "",
-      tile.querySelector("[aria-label]")?.getAttribute("aria-label") || "",
-      tile.querySelector(".truncate.font-semibold")?.textContent || "",
+      tile
+        .querySelector(this.config.sitePrivateSelectors.exportFileLabel)
+        ?.getAttribute("aria-label") || "",
+      tile.querySelector(this.config.sitePrivateSelectors.exportFileName)?.textContent || "",
       tile.textContent || "",
     ]
       .map((value) => value.replace(/\s+/g, " ").trim())
@@ -2421,20 +2370,16 @@ export class ChatGPTAdapter extends SiteAdapter {
 
   private isNativeTocButton(button: Element): button is HTMLElement {
     if (!(button instanceof HTMLElement)) return false
-    if (button.tagName.toLowerCase() !== "button") return false
-
     const label = this.normalizeNativeTocText(button.getAttribute("aria-label") || "")
-    if (!label) return false
-
-    const className = String(button.className || "")
-    return className.includes("h-0.5") && className.includes("w-4.5")
+    return Boolean(label) && button.matches(this.config.sitePrivateSelectors.nativeTocButton)
   }
 
   private getNativeTocButtons(): HTMLElement[] {
-    const rails = Array.from(document.querySelectorAll(".no-scrollbar"))
+    const privateSelectors = this.config.sitePrivateSelectors
+    const rails = Array.from(document.querySelectorAll(privateSelectors.nativeTocRail))
     const railButtons = rails
       .map((rail) =>
-        Array.from(rail.querySelectorAll("button[aria-label]")).filter(
+        Array.from(rail.querySelectorAll(privateSelectors.nativeTocButton)).filter(
           (button): button is HTMLElement => this.isNativeTocButton(button),
         ),
       )
@@ -2456,16 +2401,16 @@ export class ChatGPTAdapter extends SiteAdapter {
     const firstButton = buttons[0]
     if (!firstButton) return []
 
-    const rail = firstButton.closest(".no-scrollbar")
-    return [
-      rail,
-      rail?.parentElement,
-      firstButton.closest(".relative.flex.items-start"),
-      firstButton.closest(".fixed"),
-      firstButton,
-    ].filter((element, index, all): element is HTMLElement => {
-      return element instanceof HTMLElement && all.indexOf(element) === index
-    })
+    const privateSelectors = this.config.sitePrivateSelectors
+    const rail = firstButton.closest(privateSelectors.nativeTocRail)
+    const ancestors = privateSelectors.nativeTocHoverAncestor.map((selector) =>
+      firstButton.closest(selector),
+    )
+    return [rail, rail?.parentElement, ...ancestors, firstButton].filter(
+      (element, index, all): element is HTMLElement => {
+        return element instanceof HTMLElement && all.indexOf(element) === index
+      },
+    )
   }
 
   private getNativeTocButtonElementSignature(buttons: HTMLElement[]): string {
@@ -2648,22 +2593,14 @@ export class ChatGPTAdapter extends SiteAdapter {
     }
 
     const firstButton = buttons[0]
+    const privateSelectors = this.config.sitePrivateSelectors
     const scope =
-      firstButton?.closest(".no-scrollbar")?.parentElement ||
-      firstButton?.closest(".relative.flex.items-start") ||
-      firstButton?.closest(".fixed")
+      firstButton?.closest(privateSelectors.nativeTocRail)?.parentElement ||
+      privateSelectors.nativeTocHoverAncestor
+        .map((selector) => firstButton?.closest(selector))
+        .find((element): element is Element => element instanceof Element)
     const titleElements = scope
-      ? Array.from(
-          scope.querySelectorAll(
-            [
-              "button[data-fill] [title]",
-              'button[class*="__menu-item"] [title]',
-              "ul button [title]",
-              "[role='menu'] [title]",
-              ".absolute [title]",
-            ].join(", "),
-          ),
-        )
+      ? Array.from(scope.querySelectorAll(privateSelectors.nativeTocTitleElement.join(", ")))
       : []
     const seen = new Set<Element>()
     const uniqueTitleElements = titleElements.filter((element) => {
@@ -2740,7 +2677,7 @@ export class ChatGPTAdapter extends SiteAdapter {
         text,
         button,
         element: canBindElement ? visibleCandidates[0] : null,
-        isActive: button.hasAttribute("data-toc-active"),
+        isActive: button.matches(this.config.sitePrivateSelectors.nativeTocActive),
       })
     })
 
@@ -2760,13 +2697,15 @@ export class ChatGPTAdapter extends SiteAdapter {
       text: "",
       button,
       element: null,
-      isActive: button.hasAttribute("data-toc-active"),
+      isActive: button.matches(this.config.sitePrivateSelectors.nativeTocActive),
     }
   }
 
   private getActiveNativeTocIndex(): number | null {
     const buttons = this.getNativeTocButtons()
-    const activeButton = buttons.find((button) => button.hasAttribute("data-toc-active"))
+    const activeButton = buttons.find((button) =>
+      button.matches(this.config.sitePrivateSelectors.nativeTocActive),
+    )
     if (!activeButton) return null
 
     const fallbackIndex = buttons.indexOf(activeButton)
@@ -3286,7 +3225,7 @@ export class ChatGPTAdapter extends SiteAdapter {
       ? Array.from(container.querySelectorAll(userQuerySelector))
       : []
     const allAssistants = showWordCount
-      ? Array.from(container.querySelectorAll('[data-message-author-role="assistant"]'))
+      ? Array.from(container.querySelectorAll(this.config.selectors.assistantResponse))
       : []
     const textSignatureCache = new WeakMap<Element, string>()
     const getTextSignature = (element: Element | null): string => {
@@ -3337,14 +3276,21 @@ export class ChatGPTAdapter extends SiteAdapter {
             }
 
             // 获取 markdown 内容容器
-            const markdownContent = assistant.querySelector(".markdown, .prose, [class*='prose']")
+            const markdownContent = assistant.querySelector(
+              this.config.sitePrivateSelectors.assistantMarkdown,
+            )
             if (markdownContent) {
               totalText += markdownContent.textContent || ""
             } else {
               // 回退：获取整个 assistant 的文本，但排除可能的标题
               const clone = assistant.cloneNode(true) as Element
               // 移除可能的发言人标签
-              const srOnly = clone.querySelectorAll(".sr-only, [class*='sr-only']")
+              const srOnly = clone.querySelectorAll(
+                [
+                  this.config.sitePrivateSelectors.srOnly,
+                  this.config.sitePrivateSelectors.srOnlyFallback,
+                ].join(", "),
+              )
               srOnly.forEach((el) => el.remove())
               totalText += clone.textContent || ""
             }
@@ -3352,7 +3298,8 @@ export class ChatGPTAdapter extends SiteAdapter {
 
           if (!totalText && this.isCodexTaskPage()) {
             totalText =
-              container.querySelector(CHATGPT_CODEX_TASK_MARKDOWN_SELECTOR)?.textContent || ""
+              container.querySelector(this.config.sitePrivateSelectors.codexTaskMarkdown)
+                ?.textContent || ""
           }
 
           const text = totalText.trim()
@@ -3611,21 +3558,15 @@ export class ChatGPTAdapter extends SiteAdapter {
   // ==================== 生成状态检测 ====================
 
   isGenerating(): boolean {
-    return this.findVisibleElementBySelectors(this.getStopButtonSelectors()) !== null
+    return this.findVisibleElementBySelectors([...this.config.generating.existsSelectors]) !== null
   }
 
   getStopButtonSelectors(): string[] {
-    return [
-      '[data-testid="stop-button"]',
-      'form[data-type="unified-composer"] #composer-submit-button[aria-label*="Stop"]',
-      'form[data-type="unified-composer"] #composer-submit-button[aria-label*="停止"]',
-      'form[data-type="unified-composer"] button.composer-submit-btn[aria-label*="Stop"]',
-      'form[data-type="unified-composer"] button.composer-submit-btn[aria-label*="停止"]',
-    ]
+    return [...this.config.selectors.stopButton]
   }
 
   private findModelSelectorButton(): HTMLElement | null {
-    return this.findElementBySelectors([...CHATGPT_MODEL_SELECTOR_BUTTON_SELECTORS])
+    return this.findElementBySelectors([...this.config.modelSwitcher.selectorButtonSelectors])
   }
 
   private getModelStateContextKey(): string {
@@ -3635,16 +3576,17 @@ export class ChatGPTAdapter extends SiteAdapter {
   }
 
   private getLatestMessageModelSlug(): string | null {
-    const nodes = document.querySelectorAll("[data-message-model-slug]")
+    const nodes = document.querySelectorAll(this.config.sitePrivateSelectors.modelMessageSlug)
     const lastMsg = nodes[nodes.length - 1]
     return lastMsg?.getAttribute("data-message-model-slug")?.trim() || null
   }
 
   private readModelStateFromOpenMenu(): { name: string | null; slug: string | null } | null {
-    const menu = document.querySelector(CHATGPT_MODEL_MENU_SELECTOR)
+    const privateSelectors = this.config.sitePrivateSelectors
+    const menu = document.querySelector(privateSelectors.modelMenu)
     if (!this.isVisible(menu)) return null
 
-    const items = Array.from(document.querySelectorAll(CHATGPT_MODEL_MENU_ITEM_SELECTOR))
+    const items = Array.from(document.querySelectorAll(privateSelectors.modelMenuItem))
     if (items.length === 0) return null
 
     let selectedName: string | null = null
@@ -3659,7 +3601,7 @@ export class ChatGPTAdapter extends SiteAdapter {
 
       // 名称：菜单项结构为 <span class="flex min-w-0 ...">Instant<span ...></span></span>
       // 模型名是 .min-w-0 span 的直接文本节点，不能直接用 textContent（会包含子 span 文本）
-      const nameSpan = item.querySelector(".min-w-0")
+      const nameSpan = item.querySelector(privateSelectors.modelNameContainer)
       const name = nameSpan
         ? Array.from(nameSpan.childNodes)
             .filter((n) => n.nodeType === Node.TEXT_NODE)
@@ -3675,7 +3617,7 @@ export class ChatGPTAdapter extends SiteAdapter {
 
       // 选中判断：依次尝试多种 Radix / 自定义指示器
       const isSelected =
-        Boolean(item.querySelector(".trailing svg, .trailing use")) ||
+        Boolean(item.querySelector(privateSelectors.modelSelectedIndicator)) ||
         item.getAttribute("data-state") === "checked" ||
         item.getAttribute("aria-checked") === "true" ||
         item.getAttribute("aria-selected") === "true"
@@ -3702,7 +3644,9 @@ export class ChatGPTAdapter extends SiteAdapter {
   private extractModelNameFromSelectorButton(modelBtn: HTMLElement): string | null {
     // Pill 按钮直接在 truncate span 中显示当前模型名（如 "Instant", "Thinking"）
     return (
-      modelBtn.querySelector("span.truncate, span[class*='truncate']")?.textContent?.trim() || null
+      modelBtn
+        .querySelector(this.config.sitePrivateSelectors.modelSelectorName)
+        ?.textContent?.trim() || null
     )
   }
 
@@ -3763,19 +3707,19 @@ export class ChatGPTAdapter extends SiteAdapter {
   }
 
   getNetworkMonitorConfig(): NetworkMonitorConfig {
+    const { urlPatterns, urlPathEndsWith, requestBodyRules, ...config } = this.config.networkMonitor
     return {
-      urlPatterns: ["backend-api/f/conversation"],
-      urlPathEndsWith: ["backend-api/f/conversation"],
-      silenceThreshold: 3000,
-      requestBodyRules: [
-        {
-          type: "json-field-exists",
-          field: "thinking_effort",
-          metadata: {
-            domCompletionRequired: true,
-          },
-        },
-      ],
+      ...config,
+      urlPatterns: [...urlPatterns],
+      ...(urlPathEndsWith ? { urlPathEndsWith: [...urlPathEndsWith] } : {}),
+      ...(requestBodyRules
+        ? {
+            requestBodyRules: requestBodyRules.map((rule) => ({
+              ...rule,
+              metadata: { ...rule.metadata },
+            })),
+          }
+        : {}),
     }
   }
 
@@ -3844,15 +3788,12 @@ export class ChatGPTAdapter extends SiteAdapter {
   }
 
   getModelSwitcherConfig(keyword: string): ModelSwitcherConfig {
+    const config = this.config.modelSwitcher
     return {
       targetModelKeyword: keyword,
-      selectorButtonSelectors: [...CHATGPT_MODEL_SELECTOR_BUTTON_SELECTORS],
-      // 新版 ChatGPT：模型选项 role 为 menuitemradio，data-testid^="model-switcher-" 精确匹配
-      menuItemSelector:
-        '[data-radix-collection-item][data-testid^="model-switcher-"], [role="menuitemradio"][data-testid^="model-switcher-"], [role="menuitem"][data-testid^="model-switcher-"]',
-      checkInterval: 1000,
-      maxAttempts: 15,
-      menuRenderDelay: 500, // ChatGPT 菜单渲染较慢，增加延迟
+      ...config,
+      selectorButtonSelectors: [...config.selectorButtonSelectors],
+      ...(config.subMenuTriggers ? { subMenuTriggers: [...config.subMenuTriggers] } : {}),
     }
   }
 
@@ -3863,7 +3804,7 @@ export class ChatGPTAdapter extends SiteAdapter {
    */
   protected simulateClick(element: HTMLElement): void {
     const isModelSelectorTrigger = element.matches(
-      'button[class*="__composer-pill"][aria-haspopup="menu"]',
+      this.config.modelSwitcher.selectorButtonSelectors.join(", "),
     )
 
     if (isModelSelectorTrigger) {
