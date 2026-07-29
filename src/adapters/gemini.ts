@@ -78,7 +78,10 @@ import {
   type OutlineSource,
   type PanelAvoidanceConfig,
   type SiteDeleteConversationResult,
+  type ZenModeConfig,
 } from "./base"
+import type { BuiltinSiteConfig } from "./declarative"
+import { GEMINI_CONFIG, GEMINI_CONFIG_VERSION, type GeminiSiteConfig } from "./gemini-config"
 
 const GEMINI_DELETE_REASON = {
   UI_FAILED: "delete_ui_failed",
@@ -114,75 +117,12 @@ const GEMINI_CANCEL_KEYWORDS = [
 ]
 
 const GEMINI_EXPORT_IMAGE_SRC_ATTR = "data-ophel-export-image-src"
+const GEMINI_OPHEL_ASSISTANT_EXPORT_NOISE_SELECTOR = ".gh-inline-bookmark, .gh-table-copy-btn"
 const GEMINI_EMAIL_REGEX = /([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})/i
 const GEMINI_ACCOUNT_HINT_REGEX =
   /(google|account|账号|帳號|conta|compte|cuenta|konto|アカウント|계정|учет)/i
 const GEMINI_UNAVAILABLE_SHARED_FILE_HINT_REGEX =
   /(unable|cannot|can't|can not|无法|無法|不可).*(view|preview|download|共享|分享|shared|查看|预览|預覽|下载|下載)|shared.*(file|download|preview)|共享对话中的文件|共享對話中的文件/i
-const GEMINI_EXPORT_IMAGE_SCOPE_SELECTOR = [
-  ".attachment-container.generated-images",
-  "response-element",
-  "generated-image",
-  "single-image.generated-image",
-  ".image-container.replace-fife-images-at-export",
-  "[data-image-attachment-index]",
-].join(", ")
-const GEMINI_USER_QUERY_IMAGE_SELECTOR = [
-  "user-query img[data-test-id='uploaded-img']",
-  "user-query .preview-image",
-].join(", ")
-const GEMINI_UPLOADED_FILE_SELECTOR = '[data-test-id="uploaded-file"]'
-const GEMINI_SHARE_TURN_SELECTOR = "share-landing-page .share-turn-viewer"
-const GEMINI_SHARE_ASSISTANT_MARKDOWN_SELECTOR = "message-content .markdown"
-const GEMINI_DEEP_RESEARCH_DOCUMENT_SHARE_SELECTOR =
-  'share-landing-page immersive-share-landing-page structured-content-container[data-test-id="deep-research-block"]'
-const GEMINI_DEEP_RESEARCH_ARTIFACT_SHARE_SELECTOR =
-  'share-landing-page structured-content-container[data-test-id="immersive-artifact-content"]'
-const GEMINI_DEEP_RESEARCH_MARKDOWN_SELECTOR = GEMINI_SHARE_ASSISTANT_MARKDOWN_SELECTOR
-const GEMINI_DEEP_RESEARCH_CONFIRMATION_SELECTOR = "deep-research-confirmation-widget"
-const GEMINI_DEEP_RESEARCH_IMMERSIVE_PANEL_SELECTOR =
-  "immersive-panel deep-research-immersive-panel"
-const GEMINI_DEEP_RESEARCH_PANEL_MARKDOWN_SELECTOR =
-  "#extended-response-markdown-content, message-content .markdown"
-const GEMINI_DEEP_RESEARCH_APP_DOCUMENT_MARKDOWN_SELECTOR = [
-  `${GEMINI_DEEP_RESEARCH_IMMERSIVE_PANEL_SELECTOR} #extended-response-markdown-content`,
-  `${GEMINI_DEEP_RESEARCH_IMMERSIVE_PANEL_SELECTOR} message-content .markdown`,
-].join(", ")
-const GEMINI_DEEP_RESEARCH_APP_DOCUMENT_TRIGGER_SELECTOR =
-  'model-response [data-test-id="gem-processing-card"], model-response immersive-entry-chip'
-const GEMINI_DEEP_RESEARCH_ICON_SELECTOR = [
-  'mat-icon[data-mat-icon-name="travel_explore"]',
-  'mat-icon[fonticon="travel_explore"]',
-].join(", ")
-const GEMINI_DEEP_RESEARCH_DOCUMENT_SHARE_FOOTER_SELECTOR =
-  'share-landing-page immersive-share-landing-page .page:has(structured-content-container[data-test-id="deep-research-block"]) > .footer'
-const GEMINI_CANVAS_CODE_ICON_SELECTOR = [
-  'mat-icon[fonticon="code_blocks"]',
-  'mat-icon[data-mat-icon-name="code_blocks"]',
-].join(", ")
-const GEMINI_CANVAS_DOCUMENT_ICON_SELECTOR = [
-  'mat-icon[fonticon="article"]',
-  'mat-icon[data-mat-icon-name="article"]',
-].join(", ")
-const GEMINI_CANVAS_CARD_SELECTOR = '[data-test-id="gem-processing-card"]'
-const GEMINI_CANVAS_CODE_IMMERSIVE_PANEL_SELECTOR = "immersive-panel code-immersive-panel"
-const GEMINI_CANVAS_DOCUMENT_IMMERSIVE_PANEL_SELECTOR =
-  "immersive-panel extended-response-panel:has(canvas-create-button)"
-const GEMINI_CANVAS_IMMERSIVE_PANEL_SELECTOR = [
-  GEMINI_CANVAS_CODE_IMMERSIVE_PANEL_SELECTOR,
-  GEMINI_CANVAS_DOCUMENT_IMMERSIVE_PANEL_SELECTOR,
-].join(", ")
-const GEMINI_CANVAS_SHARE_ARTIFACT_SELECTOR = "share-landing-page .immersive-artifact-container"
-const GEMINI_CANVAS_CODE_TAB_SELECTOR = 'mat-button-toggle[value="code"]'
-const GEMINI_CANVAS_TAB_GROUP_SELECTOR = "mat-button-toggle-group.tab-group"
-const GEMINI_CANVAS_CODE_BLOCK_SELECTOR = "code-block"
-const GEMINI_CANVAS_CODE_EDITOR_SELECTOR = 'xap-code-editor[data-test-id="code-editor"]'
-const GEMINI_CANVAS_DOCUMENT_MARKDOWN_SELECTOR = [
-  "#extended-response-markdown-content .ProseMirror",
-  'immersive-editor[data-test-id="immersive-editor"] .ProseMirror',
-  "immersive-editor .ProseMirror",
-  "#extended-response-markdown-content",
-].join(", ")
 const GEMINI_CANVAS_CODE_REQUEST_TIMEOUT_MS = 900
 const GEMINI_PANEL_MARKDOWN_ACTIONS_CLASS = "gh-gemini-panel-markdown-actions"
 const GEMINI_PANEL_MARKDOWN_ACTION_CLASS = "gh-gemini-panel-markdown-action"
@@ -190,37 +130,6 @@ const GEMINI_PANEL_MARKDOWN_ACTIONS_STYLE_ID = "gh-gemini-panel-markdown-actions
 const GEMINI_DEEP_RESEARCH_PANEL_ACTIONS_ATTR = "data-ophel-deep-research-panel-actions"
 const GEMINI_CANVAS_PANEL_ACTIONS_ATTR = "data-ophel-canvas-panel-actions"
 const GEMINI_DOCUMENT_OUTLINE_SOURCE_ID = "document"
-const GEMINI_ASSISTANT_EXPORT_NOISE_SELECTOR = [
-  ".cdk-visually-hidden",
-  "model-thoughts",
-  "immersive-entry-chip",
-  "gem-processing-card",
-  '[data-test-id="gem-processing-card"]',
-  '[data-test-id="time-estimation-message"]',
-  ".time-estimation-message",
-  "source-footnote",
-  "sources-carousel-inline",
-  "sources-carousel",
-  ".gh-inline-bookmark",
-  ".gh-table-copy-btn",
-  "mat-icon",
-  "share-button",
-  "copy-button",
-  "download-generated-image-button",
-  ".generated-image-controls",
-  ".loader",
-].join(", ")
-const GEMINI_DECORATIVE_IMAGE_SELECTOR = [
-  "img.katex-svg",
-  "img.favicon",
-  "img.google-icon",
-  'img[data-test-id="favicon"]',
-  'img[data-test-id="file-icon"]',
-  'img[data-test-id="luminous-file-icon"]',
-  'img[src*="faviconV2"]',
-  'img[src*="drive-thirdparty.googleusercontent.com/32/type/"]',
-  'img[src*="google_logo_icon"]',
-].join(", ")
 
 interface GeminiMyStuffLocator {
   kind: GeminiMyStuffKind
@@ -233,6 +142,7 @@ interface GeminiMyStuffLocator {
 
 interface GeminiMyStuffEnhancerOptions {
   getUserPathPrefix: () => string
+  getConfig: () => GeminiSiteConfig
 }
 
 interface GeminiExportLifecycleState {
@@ -259,87 +169,7 @@ const GEMINI_MYSTUFF_SYNC_TIMEOUT_MS = 12000
 const GEMINI_MYSTUFF_ROUTE_EVENT = "gh-url-change"
 const GEMINI_GOOGLEUSERCONTENT_HOST_REGEX = /^https:\/\/lh\d+\.googleusercontent\.com\//i
 const GEMINI_MYSTUFF_TOOLTIP_DELAY_MS = 300
-const GEMINI_CHATS_EXPANDABLE_SECTION_SELECTOR =
-  'expandable-section[data-test-id="chats-expandable-section"]'
-const GEMINI_CHATS_EXPANDABLE_SECTION_FALLBACK_SELECTOR = 'expandable-section[storagekey="chats"]'
-const GEMINI_CONVERSATION_ITEM_SELECTOR = 'gem-nav-list-item[data-test-id="conversation"]'
-const GEMINI_MARKDOWN_FIXER_SOURCE_ATTRIBUTE_KEYWORDS = [
-  "source",
-  "sources",
-  "citation",
-  "citations",
-  "reference",
-  "references",
-  "grounding",
-  "footnote",
-  "link",
-  "fonte",
-  "fontes",
-  "fuente",
-  "fuentes",
-  "quelle",
-  "quellen",
-  "referencia",
-  "referencias",
-  "referência",
-  "referências",
-  "riferimento",
-  "riferimenti",
-  "来源",
-  "引用",
-  "链接",
-  "出典",
-  "参照",
-  "출처",
-  "참조",
-  "источник",
-  "источники",
-  "ссылка",
-  "ссылки",
-]
-const GEMINI_MARKDOWN_FIXER_SOURCE_SELECTOR = [
-  "source-chip",
-  "source-card",
-  "source-footnote",
-  "citation-source",
-  "citation-chip",
-  "citation-marker",
-  "grounding-chip",
-  "grounding-source",
-  "web-source",
-  "[data-source]",
-  "[data-source-id]",
-  "[data-citation]",
-  "[data-citation-id]",
-  "[data-ved]",
-  "[decode-data-ved]",
-  "[cdkoverlayorigin]",
-  "[mattooltip]",
-  "[data-mdc-tooltip]",
-  "mat-icon[fonticon]",
-  "mat-icon[data-mat-icon-name]",
-  "[fonticon*='link' i]",
-  "[data-mat-icon-name*='link' i]",
-  "sup a",
-  "sup button",
-  "sup [role='button']",
-  ...GEMINI_MARKDOWN_FIXER_SOURCE_ATTRIBUTE_KEYWORDS.flatMap((keyword) => [
-    `[aria-label*='${keyword}' i]`,
-    `[title*='${keyword}' i]`,
-    `[data-test-id*='${keyword}' i]`,
-  ]),
-].join(",")
-const GEMINI_LAYOUT_SCOPE_SELECTOR =
-  "bard-sidenav-content, body:not(:has(bard-sidenav-content)) main.chat-app"
-const GEMINI_IMMERSIVE_LAYOUT_SELECTOR = "chat-window.immersives-mode:not(.mobile-device)"
-const GEMINI_CHAT_COLUMN_SCOPE_SELECTOR = "chat-window .chat-container"
 const GEMINI_IMMERSIVE_LAYOUT_RIGHT_INSET_VAR = "--ophel-gemini-immersive-right-inset"
-const GEMINI_MESSAGE_WIDTH_SELECTOR = ".conversation-container"
-const GEMINI_MESSAGE_SAFE_AREA_SELECTOR = "infinite-scroller.chat-history"
-const GEMINI_INPUT_WIDTH_SELECTOR = ".input-area-container"
-const GEMINI_INPUT_SAFE_AREA_SELECTOR = "input-container"
-const GEMINI_NEW_CHAT_INPUT_SAFE_AREA_SELECTOR =
-  "chat-window.center-input-layout .input-area-container.is-zero-state"
 
 class GeminiMyStuffEnhancer {
   private started = false
@@ -368,9 +198,11 @@ class GeminiMyStuffEnhancer {
     this.started = true
 
     this.injectStyles()
-    DOMToolkit.each(".library-item-card", (element) => this.enhanceMediaCard(element), {
-      shadow: true,
-    })
+    DOMToolkit.each(
+      this.options.getConfig().sitePrivateSelectors.myStuffMediaCard,
+      (element) => this.enhanceMediaCard(element),
+      { shadow: true },
+    )
 
     document.addEventListener("click", this.handleDocumentClick, true)
     window.addEventListener("message", this.handleWindowMessage)
@@ -408,7 +240,9 @@ class GeminiMyStuffEnhancer {
       `[${GEMINI_MYSTUFF_OPEN_BUTTON_ATTR}="1"]`,
     ) as HTMLElement | null
     if (actionButton) {
-      const mediaHost = actionButton.closest("library-item-card")
+      const mediaHost = actionButton.closest(
+        this.options.getConfig().sitePrivateSelectors.myStuffMediaHost,
+      )
       if (!mediaHost) return
       this.preventNativeNavigation(event)
       this.dismissActionButtonVisualState(actionButton)
@@ -416,12 +250,14 @@ class GeminiMyStuffEnhancer {
       return
     }
 
-    if (target.closest("library-item-card")) {
+    if (target.closest(this.options.getConfig().sitePrivateSelectors.myStuffMediaHost)) {
       // 媒体卡本体点击交回 Gemini 原生逻辑处理
       return
     }
 
-    const documentHost = target.closest("library-list-item")
+    const documentHost = target.closest(
+      this.options.getConfig().sitePrivateSelectors.myStuffDocumentHost,
+    )
     if (documentHost) {
       this.preventNativeNavigation(event)
       void this.openHostInNewTab(documentHost, "document", this.preparePendingTab())
@@ -449,11 +285,13 @@ class GeminiMyStuffEnhancer {
   private injectStyles(): void {
     if (document.getElementById(GEMINI_MYSTUFF_STYLE_ID)) return
 
+    const privateSelectors = this.options.getConfig().sitePrivateSelectors
+
     const style = document.createElement("style")
     style.id = GEMINI_MYSTUFF_STYLE_ID
     style.textContent = `
-      .${GEMINI_MYSTUFF_ACTIVE_CLASS} library-item-card .library-item-card,
-      .${GEMINI_MYSTUFF_ACTIVE_CLASS} .library-item-card-container {
+      .${GEMINI_MYSTUFF_ACTIVE_CLASS} ${privateSelectors.myStuffMediaHost} ${privateSelectors.myStuffMediaCard},
+      .${GEMINI_MYSTUFF_ACTIVE_CLASS} ${privateSelectors.myStuffMediaCardContainer} {
         position: relative;
       }
 
@@ -485,12 +323,12 @@ class GeminiMyStuffEnhancer {
         z-index: 3;
       }
 
-      .${GEMINI_MYSTUFF_ACTIVE_CLASS} library-item-card:hover .${GEMINI_MYSTUFF_OPEN_BUTTON_CLASS},
-      .${GEMINI_MYSTUFF_ACTIVE_CLASS} library-item-card:focus-within .${GEMINI_MYSTUFF_OPEN_BUTTON_CLASS},
-      .${GEMINI_MYSTUFF_ACTIVE_CLASS} .library-item-card:hover .${GEMINI_MYSTUFF_OPEN_BUTTON_CLASS},
-      .${GEMINI_MYSTUFF_ACTIVE_CLASS} .library-item-card:focus-within .${GEMINI_MYSTUFF_OPEN_BUTTON_CLASS},
-      .${GEMINI_MYSTUFF_ACTIVE_CLASS} .library-item-card-container:hover .${GEMINI_MYSTUFF_OPEN_BUTTON_CLASS},
-      .${GEMINI_MYSTUFF_ACTIVE_CLASS} .library-item-card-container:focus-within .${GEMINI_MYSTUFF_OPEN_BUTTON_CLASS} {
+      .${GEMINI_MYSTUFF_ACTIVE_CLASS} ${privateSelectors.myStuffMediaHost}:hover .${GEMINI_MYSTUFF_OPEN_BUTTON_CLASS},
+      .${GEMINI_MYSTUFF_ACTIVE_CLASS} ${privateSelectors.myStuffMediaHost}:focus-within .${GEMINI_MYSTUFF_OPEN_BUTTON_CLASS},
+      .${GEMINI_MYSTUFF_ACTIVE_CLASS} ${privateSelectors.myStuffMediaCard}:hover .${GEMINI_MYSTUFF_OPEN_BUTTON_CLASS},
+      .${GEMINI_MYSTUFF_ACTIVE_CLASS} ${privateSelectors.myStuffMediaCard}:focus-within .${GEMINI_MYSTUFF_OPEN_BUTTON_CLASS},
+      .${GEMINI_MYSTUFF_ACTIVE_CLASS} ${privateSelectors.myStuffMediaCardContainer}:hover .${GEMINI_MYSTUFF_OPEN_BUTTON_CLASS},
+      .${GEMINI_MYSTUFF_ACTIVE_CLASS} ${privateSelectors.myStuffMediaCardContainer}:focus-within .${GEMINI_MYSTUFF_OPEN_BUTTON_CLASS} {
         opacity: 1;
         pointer-events: auto;
         transform: translateY(0);
@@ -538,16 +376,19 @@ class GeminiMyStuffEnhancer {
 
   private enhanceExistingMediaCards(): void {
     document
-      .querySelectorAll(".library-item-card")
+      .querySelectorAll(this.options.getConfig().sitePrivateSelectors.myStuffMediaCard)
       .forEach((element) => this.enhanceMediaCard(element))
   }
 
   private enhanceMediaCard(element: Element): void {
     if (!this.isMyStuffPath()) return
 
-    const host = element.closest("library-item-card")
+    const privateSelectors = this.options.getConfig().sitePrivateSelectors
+    const host = element.closest(privateSelectors.myStuffMediaHost)
     const card = (
-      element.matches(".library-item-card") ? element : element.querySelector(".library-item-card")
+      element.matches(privateSelectors.myStuffMediaCard)
+        ? element
+        : element.querySelector(privateSelectors.myStuffMediaCard)
     ) as HTMLElement | null
     if (!host || !card) return
 
@@ -750,9 +591,10 @@ class GeminiMyStuffEnhancer {
   }
 
   private extractLocator(host: Element, kind: GeminiMyStuffKind): GeminiMyStuffLocator {
+    const privateSelectors = this.options.getConfig().sitePrivateSelectors
     const jslogHost =
-      (host.closest("[jslog]") as HTMLElement | null) ||
-      (host.querySelector("[jslog]") as HTMLElement | null)
+      (host.closest(privateSelectors.myStuffJslogHost) as HTMLElement | null) ||
+      (host.querySelector(privateSelectors.myStuffJslogHost) as HTMLElement | null)
     const jslog = jslogHost?.getAttribute("jslog") || ""
     const jslogMeta = this.extractJslogMeta(jslog)
 
@@ -783,12 +625,14 @@ class GeminiMyStuffEnhancer {
   }
 
   private extractTitle(host: Element): string {
-    const titleElement = host.querySelector(".title, .gds-title-m, .text-content .title")
+    const titleElement = host.querySelector(
+      this.options.getConfig().sitePrivateSelectors.myStuffTitle,
+    )
     return titleElement?.textContent?.trim() || ""
   }
 
   private extractThumbnailUrl(host: Element): string {
-    const image = host.querySelector("img")
+    const image = host.querySelector(this.options.getConfig().sitePrivateSelectors.myStuffThumbnail)
     if (!(image instanceof HTMLImageElement)) return ""
     return this.normalizeThumbnailUrl(image.currentSrc || image.src || "")
   }
@@ -951,6 +795,7 @@ interface GeminiOutlineWordCountCacheEntry {
 }
 
 export class GeminiAdapter extends SiteAdapter {
+  private config: GeminiSiteConfig = GEMINI_CONFIG
   private cachedAccountEmail: string | null = null
   private accountEmailLastDetectAt = 0
   private myStuffEnhancer: GeminiMyStuffEnhancer | null = null
@@ -992,12 +837,7 @@ export class GeminiAdapter extends SiteAdapter {
     this.accountEmailLastDetectAt = now
 
     const attrs = ["aria-label", "title", "data-email", "data-identifier"] as const
-    const selectors = [
-      "[data-email]",
-      '[data-identifier*="@"]',
-      '[aria-label*="@"]',
-      '[title*="@"]',
-    ]
+    const selectors = this.config.sitePrivateSelectors.accountIdentity
 
     const nodes = new Set<Element>()
     selectors.forEach((selector) => {
@@ -1023,7 +863,7 @@ export class GeminiAdapter extends SiteAdapter {
 
     this.injectGeminiPanelMarkdownActionStyles()
     this.deepResearchPanelWatchStop = DOMToolkit.each(
-      GEMINI_DEEP_RESEARCH_IMMERSIVE_PANEL_SELECTOR,
+      this.config.sitePrivateSelectors.deepResearchPanel,
       (panel) => this.watchDeepResearchPanel(panel),
       { shadow: true },
     )
@@ -1034,7 +874,7 @@ export class GeminiAdapter extends SiteAdapter {
 
     this.injectGeminiPanelMarkdownActionStyles()
     this.canvasPanelWatchStop = DOMToolkit.each(
-      GEMINI_CANVAS_IMMERSIVE_PANEL_SELECTOR,
+      this.getGeminiCanvasPanelSelector(),
       (panel) => this.watchGeminiCanvasPanel(panel),
       { shadow: true },
     )
@@ -1159,8 +999,9 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   private syncDeepResearchPanelActions(panel: Element): void {
+    const privateSelectors = this.config.sitePrivateSelectors
     const markdown = this.getDeepResearchPanelMarkdownElement(panel)
-    const toolbarActions = panel.querySelector("toolbar .action-buttons")
+    const toolbarActions = panel.querySelector(privateSelectors.panelToolbarActions)
     if (!(toolbarActions instanceof HTMLElement) || !markdown) {
       this.removeDeepResearchPanelActions(panel)
       return
@@ -1175,7 +1016,9 @@ export class GeminiAdapter extends SiteAdapter {
     }
 
     const actions = this.createDeepResearchPanelActions(panel)
-    const exportButton = toolbarActions.querySelector('[data-test-id="export-menu-button"]')
+    const exportButton = toolbarActions.querySelector(
+      privateSelectors.deepResearchPanelExportButton,
+    )
     if (exportButton?.parentElement === toolbarActions) {
       toolbarActions.insertBefore(actions, exportButton)
     } else {
@@ -1186,7 +1029,8 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   private syncGeminiCanvasPanelActions(panel: Element): void {
-    const toolbarActions = panel.querySelector("toolbar .action-buttons")
+    const privateSelectors = this.config.sitePrivateSelectors
+    const toolbarActions = panel.querySelector(privateSelectors.panelToolbarActions)
     if (
       !(toolbarActions instanceof HTMLElement) ||
       !this.hasGeminiCanvasPanelExportSurface(panel)
@@ -1204,7 +1048,7 @@ export class GeminiAdapter extends SiteAdapter {
     }
 
     const actions = this.createGeminiCanvasPanelActions(panel)
-    const downloadButton = toolbarActions.querySelector('[data-test-id="download-preview-button"]')
+    const downloadButton = toolbarActions.querySelector(privateSelectors.canvasPanelDownloadButton)
     if (downloadButton?.parentElement === toolbarActions) {
       toolbarActions.insertBefore(actions, downloadButton)
     } else {
@@ -1465,20 +1309,26 @@ export class GeminiAdapter extends SiteAdapter {
     return (
       this.getGeminiCanvasDocumentMarkdownElement(panel) !== null ||
       this.findGeminiCanvasCodeBlock(panel) !== null ||
-      panel.querySelector(GEMINI_CANVAS_CODE_EDITOR_SELECTOR) !== null ||
+      panel.querySelector(this.config.sitePrivateSelectors.canvasCodeEditor) !== null ||
       this.findGeminiCanvasCodeTab(panel) !== null
     )
   }
 
   private getDeepResearchPanelMarkdownElement(panel: Element): Element | null {
+    const privateSelectors = this.config.sitePrivateSelectors
     const candidates = Array.from(
-      panel.querySelectorAll(GEMINI_DEEP_RESEARCH_PANEL_MARKDOWN_SELECTOR),
+      panel.querySelectorAll(privateSelectors.deepResearchPanelMarkdown.join(", ")),
     )
-    return candidates.find((candidate) => candidate.closest("thinking-panel") === null) || null
+    return (
+      candidates.find((candidate) => candidate.closest(privateSelectors.panelThinking) === null) ||
+      null
+    )
   }
 
   private getDeepResearchPanelTitle(panel: Element): string | null {
-    const toolbarTitle = this.getNormalizedText(panel.querySelector("toolbar h2.title-text"))
+    const toolbarTitle = this.getNormalizedText(
+      panel.querySelector(this.config.sitePrivateSelectors.panelToolbarTitle),
+    )
     if (toolbarTitle) return toolbarTitle
 
     const heading = this.getNormalizedText(
@@ -1488,8 +1338,15 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   private getGeminiCanvasPanelTitle(panel: Element): string | null {
-    const title = this.getNormalizedText(panel.querySelector("toolbar h2.title-text, .title-text"))
+    const title = this.getNormalizedText(
+      panel.querySelector(this.config.sitePrivateSelectors.canvasPanelTitle),
+    )
     return title || null
+  }
+
+  private getGeminiCanvasPanelSelector(): string {
+    const privateSelectors = this.config.sitePrivateSelectors
+    return [privateSelectors.canvasCodePanel, privateSelectors.canvasDocumentPanel].join(", ")
   }
 
   private extractEmailFromAttr(
@@ -1529,12 +1386,32 @@ export class GeminiAdapter extends SiteAdapter {
     return "Gemini"
   }
 
+  getBuiltinConfig(): GeminiSiteConfig {
+    return GEMINI_CONFIG
+  }
+
+  getBuiltinConfigVersion(): number {
+    return GEMINI_CONFIG_VERSION
+  }
+
+  applyMergedConfig(config: BuiltinSiteConfig): void {
+    this.config = config as GeminiSiteConfig
+  }
+
   getThemeColors(): { primary: string; secondary: string } {
     return { primary: "#4285f4", secondary: "#34a853" }
   }
 
   getNativeThemeCss(): string | null {
     return geminiNativeThemeCss
+  }
+
+  getQuickQuoteSupportMode() {
+    return this.config.quickQuote
+  }
+
+  supportsHostThemeSync(): boolean {
+    return this.config.supportsHostThemeSync
   }
 
   getNewTabUrl(): string {
@@ -1567,8 +1444,9 @@ export class GeminiAdapter extends SiteAdapter {
   // ==================== 会话管理 ====================
 
   getConversationList(): ConversationInfo[] {
+    const { conversation, sitePrivateSelectors } = this.config
     const items =
-      (DOMToolkit.query(GEMINI_CONVERSATION_ITEM_SELECTOR, {
+      (DOMToolkit.query(conversation.itemSelector, {
         all: true,
       }) as Element[]) || []
     const cid = this.getCurrentCid()
@@ -1576,19 +1454,24 @@ export class GeminiAdapter extends SiteAdapter {
     return Array.from(items)
       .map((el) => {
         // 新版侧边栏：jslog 在内部 <a> 上，标题在 .title-text 中
-        const anchor = el.querySelector("a")
-        const jslog = anchor?.getAttribute("jslog") || el.getAttribute("jslog") || ""
-        const idMatch = jslog.match(/\["c_([^"]+)"/)
-        const id = idMatch ? idMatch[1] : ""
-        const title = el.querySelector(".title-text")?.textContent?.trim() || ""
-        const isPinned = !!el.querySelector('mat-icon[fonticon="push_pin"]')
-        const isActive = anchor?.classList.contains("mdc-list-item--activated") || false
+        const anchor = el.querySelector(sitePrivateSelectors.conversationAnchor)
+        const idAttribute = conversation.idFrom.attr ?? "href"
+        const idSignal = anchor?.getAttribute(idAttribute) || el.getAttribute(idAttribute) || ""
+        const id = this.extractConversationIdFromSignal(idSignal)
+        const title = conversation.titleSelector
+          ? el.querySelector(conversation.titleSelector)?.textContent?.trim() || ""
+          : ""
+        const isPinned = !!el.querySelector(sitePrivateSelectors.conversationPinnedIcon)
+        const isActive = conversation.activeMatch
+          ? anchor?.matches(conversation.activeMatch) || false
+          : false
+        const path = conversation.urlTemplate.replace("{id}", id)
 
         return {
           id,
           cid,
           title,
-          url: id ? `https://gemini.google.com${prefix}/app/${id}` : "",
+          url: id ? `https://gemini.google.com${prefix}${path}` : "",
           isActive,
           isPinned,
         }
@@ -1667,9 +1550,10 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   private getChatsExpandableSection(): HTMLElement | null {
+    const privateSelectors = this.config.sitePrivateSelectors
     const selectors = [
-      GEMINI_CHATS_EXPANDABLE_SECTION_SELECTOR,
-      GEMINI_CHATS_EXPANDABLE_SECTION_FALLBACK_SELECTOR,
+      privateSelectors.chatsExpandableSection,
+      privateSelectors.chatsExpandableSectionFallback,
     ]
 
     for (const selector of selectors) {
@@ -1677,10 +1561,8 @@ export class GeminiAdapter extends SiteAdapter {
       if (section instanceof HTMLElement) return section
     }
 
-    const conversationList = document.querySelector(
-      'conversations-list[data-test-id="all-conversations"]',
-    )
-    const section = conversationList?.closest("expandable-section")
+    const conversationList = document.querySelector(privateSelectors.conversationList)
+    const section = conversationList?.closest(privateSelectors.chatsExpandableSectionHost)
     if (section instanceof HTMLElement) return section
 
     const firstExpandableSection = document.getElementsByTagName("expandable-section")[0]
@@ -1688,13 +1570,15 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   private isConversationHistoryLoading(): boolean {
-    const loadingSpinner = document.querySelector('[data-test-id="loading-history-spinner"]')
+    const loadingSpinner = document.querySelector(
+      this.config.sitePrivateSelectors.historyLoadingSpinner,
+    )
     return loadingSpinner instanceof HTMLElement && this.isVisible(loadingSpinner)
   }
 
   private getLoadedGeminiConversationCount(): number {
     const conversations =
-      (DOMToolkit.query(GEMINI_CONVERSATION_ITEM_SELECTOR, {
+      (DOMToolkit.query(this.config.conversation.itemSelector, {
         all: true,
         shadow: true,
       }) as Element[]) || []
@@ -1718,12 +1602,13 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   private getChatsScrollableContainer(): Element | null {
+    const privateSelectors = this.config.sitePrivateSelectors
     const anchor = document.querySelector(
       [
-        'conversations-list[data-test-id="all-conversations"]',
-        GEMINI_CHATS_EXPANDABLE_SECTION_SELECTOR,
-        GEMINI_CHATS_EXPANDABLE_SECTION_FALLBACK_SELECTOR,
-        GEMINI_CONVERSATION_ITEM_SELECTOR,
+        this.config.selectors.sidebarScrollContainer,
+        privateSelectors.chatsExpandableSection,
+        privateSelectors.chatsExpandableSectionFallback,
+        this.config.conversation.itemSelector,
       ].join(","),
     )
     if (!(anchor instanceof HTMLElement)) return null
@@ -1748,37 +1633,46 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   getConversationObserverConfig(): ConversationObserverConfig {
+    const { conversation, sitePrivateSelectors } = this.config
     return {
-      selector: 'gem-nav-list-item[data-test-id="conversation"]',
-      shadow: false,
+      selector: conversation.itemSelector,
+      shadow: conversation.shadow ?? false,
       extractInfo: (el) => {
         // 新版侧边栏：jslog 在内部 <a> 上，标题在 .title-text 中
-        const anchor = el.querySelector("a")
-        const jslog = anchor?.getAttribute("jslog") || el.getAttribute("jslog") || ""
-        const idMatch = jslog.match(/\["c_([^"]+)"/)
-        const id = idMatch ? idMatch[1] : ""
+        const anchor = el.querySelector(sitePrivateSelectors.conversationAnchor)
+        const idAttribute = conversation.idFrom.attr ?? "href"
+        const idSignal = anchor?.getAttribute(idAttribute) || el.getAttribute(idAttribute) || ""
+        const id = this.extractConversationIdFromSignal(idSignal)
         if (!id) return null
-        const title = el.querySelector(".title-text")?.textContent?.trim() || ""
-        const isPinned = !!el.querySelector('mat-icon[fonticon="push_pin"]')
+        const title = conversation.titleSelector
+          ? el.querySelector(conversation.titleSelector)?.textContent?.trim() || ""
+          : ""
+        const isPinned = !!el.querySelector(sitePrivateSelectors.conversationPinnedIcon)
         const cid = this.getCurrentCid()
         const prefix = this.getUserPathPrefix()
+        const path = conversation.urlTemplate.replace("{id}", id)
         return {
           id,
           cid,
           title,
-          url: `https://gemini.google.com${prefix}/app/${id}`,
+          url: `https://gemini.google.com${prefix}${path}`,
           isPinned,
         }
       },
-      getTitleElement: (el) => el.querySelector(".title-text") || el,
+      getTitleElement: (el) =>
+        (conversation.titleSelector && el.querySelector(conversation.titleSelector)) || el,
     }
   }
 
   navigateToConversation(id: string, url?: string): boolean {
-    // 新版侧边栏：通过 jslog 属性在内部 <a> 上查找会话元素
-    const anchor = document.querySelector(
-      `gem-nav-list-item[data-test-id="conversation"] a[jslog*="${id}"]`,
-    ) as HTMLElement | null
+    if (this.config.conversation.navigationStrategy === "location") {
+      return super.navigateToConversation(id, url)
+    }
+
+    // 新版侧边栏：通过配置化会话信号定位行，再点击内部链接。
+    const privateSelectors = this.config.sitePrivateSelectors
+    const row = this.findConversationRow(id)
+    const anchor = row?.querySelector(privateSelectors.conversationAnchor) as HTMLElement | null
     if (anchor) {
       anchor.click()
       return true
@@ -1945,7 +1839,7 @@ export class GeminiAdapter extends SiteAdapter {
     const expected = this.normalizeConversationId(id)
     // 新版侧边栏：使用 gem-nav-list-item
     const rows = this.findAllElementsBySelector(
-      'gem-nav-list-item[data-test-id="conversation"]',
+      this.config.conversation.itemSelector,
     ) as HTMLElement[]
     for (const row of rows) {
       const rowId = this.normalizeConversationId(this.extractConversationIdFromElement(row))
@@ -1963,7 +1857,7 @@ export class GeminiAdapter extends SiteAdapter {
     for (const selector of hrefCandidates) {
       const anchor = document.querySelector(selector) as HTMLElement | null
       if (!anchor) continue
-      const container = (anchor.closest('gem-nav-list-item[data-test-id="conversation"]') ||
+      const container = (anchor.closest(this.config.conversation.itemSelector) ||
         anchor.closest("li") ||
         anchor.parentElement) as HTMLElement | null
       if (container) return container
@@ -1975,10 +1869,15 @@ export class GeminiAdapter extends SiteAdapter {
   private extractConversationIdFromElement(element: Element | null): string {
     if (!element) return ""
     // 新版侧边栏：jslog 在内部 <a> 上
-    const anchor = element.querySelector("a")
-    const jslog = anchor?.getAttribute("jslog") || element.getAttribute("jslog") || ""
-    const idMatch = jslog.match(/\["c_([^"]+)"/)
-    return idMatch ? idMatch[1] : ""
+    const anchor = element.querySelector(this.config.sitePrivateSelectors.conversationAnchor)
+    const idAttribute = this.config.conversation.idFrom.attr ?? "href"
+    const idSignal = anchor?.getAttribute(idAttribute) || element.getAttribute(idAttribute) || ""
+    return this.extractConversationIdFromSignal(idSignal)
+  }
+
+  private extractConversationIdFromSignal(signal: string): string {
+    const match = signal.match(new RegExp(this.config.conversation.idFrom.regex))
+    return match?.[1] || ""
   }
 
   private normalizeConversationId(id: string): string {
@@ -2004,18 +1903,7 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   private async findConversationMenuButton(row: HTMLElement): Promise<HTMLElement | null> {
-    const actionSelectors = [
-      'button[aria-haspopup="menu"]',
-      'button[aria-label*="More"]',
-      'button[aria-label*="more"]',
-      'button[aria-label*="更多"]',
-      'button[aria-label*="选项"]',
-      'button[title*="More"]',
-      'button[title*="more"]',
-      'button[data-test-id*="menu"]',
-      'button[data-testid*="menu"]',
-      "button",
-    ].join(", ")
+    const actionSelectors = this.config.sitePrivateSelectors.conversationActionButton
 
     for (let attempt = 0; attempt < 12; attempt++) {
       const scopes = this.getMenuSearchScopes(row)
@@ -2032,9 +1920,7 @@ export class GeminiAdapter extends SiteAdapter {
       if (candidates.length > 0) {
         const moreIconButton = candidates.find((candidate) => {
           return (
-            candidate.querySelector(
-              'mat-icon[fonticon="more_vert"], mat-icon[fonticon="more_horiz"]',
-            ) !== null
+            candidate.querySelector(this.config.sitePrivateSelectors.conversationMoreIcon) !== null
           )
         })
         if (moreIconButton) return moreIconButton
@@ -2107,7 +1993,7 @@ export class GeminiAdapter extends SiteAdapter {
         if (!this.isVisible(item)) continue
 
         const deleteIcon = item.querySelector(
-          'mat-icon[fonticon="delete"], mat-icon[data-mat-icon-name="delete"]',
+          this.config.sitePrivateSelectors.conversationDeleteIcon,
         )
         if (deleteIcon) return item
 
@@ -2142,7 +2028,7 @@ export class GeminiAdapter extends SiteAdapter {
     trigger: HTMLElement,
     menuRoot?: HTMLElement | null,
   ): HTMLElement[] {
-    const selectors = '[role="menuitem"], [role="menu"] button, .mat-mdc-menu-panel button'
+    const selectors = this.config.sitePrivateSelectors.conversationMenuAction
     const results: HTMLElement[] = []
 
     if (menuRoot) {
@@ -2185,7 +2071,7 @@ export class GeminiAdapter extends SiteAdapter {
 
   private findVisibleMenuContainer(): HTMLElement | null {
     const menus = Array.from(
-      document.querySelectorAll('[role="menu"], .mat-mdc-menu-panel, .mat-menu-panel'),
+      document.querySelectorAll(this.config.sitePrivateSelectors.conversationMenuContainer),
     ) as HTMLElement[]
     const visible = menus.filter((menu) => this.isVisible(menu))
     if (visible.length === 0) return null
@@ -2207,7 +2093,7 @@ export class GeminiAdapter extends SiteAdapter {
       const dialog = this.findVisibleDialog()
 
       const explicitConfirm = dialog?.querySelector(
-        'button[data-test-id="confirm-button"], button[data-testid="confirm-button"]',
+        this.config.sitePrivateSelectors.conversationConfirmButton,
       ) as HTMLElement | null
       if (explicitConfirm && this.isVisible(explicitConfirm)) {
         return explicitConfirm
@@ -2247,7 +2133,7 @@ export class GeminiAdapter extends SiteAdapter {
 
   private findVisibleDialog(): HTMLElement | null {
     const dialogs = Array.from(
-      document.querySelectorAll('[role="dialog"], mat-dialog-container, .mat-mdc-dialog-container'),
+      document.querySelectorAll(this.config.sitePrivateSelectors.conversationDialog),
     ) as HTMLElement[]
     return dialogs.find((dialog) => this.isVisible(dialog)) || null
   }
@@ -2374,7 +2260,9 @@ export class GeminiAdapter extends SiteAdapter {
 
   getSessionName(): string | null {
     // 新版侧边栏：激活项标题在 a.mdc-list-item--activated .title-text 中
-    const activeTitle = document.querySelector("a.mdc-list-item--activated .title-text")
+    const activeTitle = document.querySelector(
+      this.config.sitePrivateSelectors.conversationActiveTitle,
+    )
     if (activeTitle) {
       const name = activeTitle.textContent?.trim()
       if (name) return name
@@ -2384,7 +2272,7 @@ export class GeminiAdapter extends SiteAdapter {
       return deepResearchDocumentTitle
     }
     // 分享页面（/share/...）：标题在 h1.headline 中，如 <h1 class="headline gds-headline-m"><strong>询问模型身份</strong></h1>
-    const shareTitle = document.querySelector("h1.headline, h1[class*='headline']")
+    const shareTitle = document.querySelector(this.config.sitePrivateSelectors.shareTitle)
     if (shareTitle) {
       const name = shareTitle.textContent?.trim()
       if (name) return name
@@ -2414,7 +2302,9 @@ export class GeminiAdapter extends SiteAdapter {
 
   getConversationTitle(): string | null {
     // 新版侧边栏：激活项标题
-    const activeTitle = document.querySelector("a.mdc-list-item--activated .title-text")
+    const activeTitle = document.querySelector(
+      this.config.sitePrivateSelectors.conversationActiveTitle,
+    )
     if (activeTitle) {
       const title = activeTitle.textContent?.trim()
       if (title) return title
@@ -2424,17 +2314,7 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   getNewChatButtonSelectors(): string[] {
-    return [
-      'gem-nav-list-item[data-test-id="new-chat-button"] a',
-      '[aria-label="New chat"]',
-      '[aria-label="新对话"]',
-      '[aria-label="发起新对话"]',
-      '[data-testid="new-chat-button"]',
-      '[data-test-id="new-chat-button"]',
-      '[data-test-id="expanded-button"]',
-      '[data-test-id="temp-chat-button"]',
-      'button[aria-label="临时对话"]',
-    ]
+    return [...this.config.selectors.newChatButton]
   }
 
   getLatestReplyText(): string | null {
@@ -2442,7 +2322,7 @@ export class GeminiAdapter extends SiteAdapter {
     if (!container) return null
 
     // 查找所有的 model-response
-    const responses = container.querySelectorAll("model-response")
+    const responses = container.querySelectorAll(this.config.selectors.assistantResponse)
     if (responses.length === 0) return null
 
     const lastResponse = responses[responses.length - 1]
@@ -2455,82 +2335,38 @@ export class GeminiAdapter extends SiteAdapter {
   // ==================== 页面宽度控制 ====================
 
   getWidthSelectors() {
-    return [
-      {
-        selector: GEMINI_MESSAGE_WIDTH_SELECTOR,
-        property: "max-width",
-        extraCss: "width: 100% !important; min-width: 0 !important;",
-      },
-      {
-        selector: GEMINI_INPUT_WIDTH_SELECTOR,
-        property: "max-width",
-        extraCss: "width: 100% !important; min-width: 0 !important;",
-      },
-      // 表格容器随页面加宽（覆盖 Gemini 的 max-width 限制）
-      {
-        selector: ".table-block.new-table-style",
-        property: "max-width",
-        value: "100%",
-        noCenter: true,
-        extraCss: "width: 100% !important;",
-      },
-      // 用户消息右对齐
-      {
-        selector: "user-query",
-        property: "max-width",
-        value: "100%",
-        noCenter: true,
-        extraCss: "display: flex !important; justify-content: flex-end !important;",
-      },
-      {
-        selector: ".user-query-container",
-        property: "max-width",
-        value: "100%",
-        noCenter: true,
-        extraCss: "justify-content: flex-end !important;",
-      },
-    ]
+    return this.config.widthSelectors.map((selector) => ({ ...selector }))
   }
 
   getPanelAvoidanceConfig(): PanelAvoidanceConfig {
+    const privateSelectors = this.config.sitePrivateSelectors
     return {
-      scopeSelector: GEMINI_LAYOUT_SCOPE_SELECTOR,
-      widthSelectors: [
-        {
-          selector: GEMINI_MESSAGE_WIDTH_SELECTOR,
-          property: "max-width",
-          extraCss: "width: 100% !important; min-width: 0 !important;",
-        },
-        {
-          selector: GEMINI_INPUT_WIDTH_SELECTOR,
-          property: "max-width",
-          extraCss: "width: 100% !important; min-width: 0 !important;",
-        },
-      ],
+      scopeSelector: privateSelectors.layoutScope,
+      widthSelectors: this.config.widthSelectors.slice(0, 2).map((selector) => ({ ...selector })),
       insetSelectors: [
         {
-          selector: GEMINI_IMMERSIVE_LAYOUT_SELECTOR,
-          scopeSelector: GEMINI_LAYOUT_SCOPE_SELECTOR,
+          selector: privateSelectors.immersiveLayout,
+          scopeSelector: privateSelectors.layoutScope,
           applySide: "right",
           insetMode: "edge",
           rightProperty: GEMINI_IMMERSIVE_LAYOUT_RIGHT_INSET_VAR,
           extraCss: `margin-right: max(0px, calc(var(${GEMINI_IMMERSIVE_LAYOUT_RIGHT_INSET_VAR}, 0px) - var(--gem-sys-spacing--xxl, 24px))) !important; box-sizing: border-box; min-width: 0 !important;`,
         },
         {
-          selector: GEMINI_MESSAGE_SAFE_AREA_SELECTOR,
-          scopeSelector: GEMINI_CHAT_COLUMN_SCOPE_SELECTOR,
+          selector: privateSelectors.messageSafeArea,
+          scopeSelector: privateSelectors.chatColumnScope,
           extraCss:
             "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
         },
         {
-          selector: GEMINI_INPUT_SAFE_AREA_SELECTOR,
-          scopeSelector: GEMINI_CHAT_COLUMN_SCOPE_SELECTOR,
+          selector: privateSelectors.inputSafeArea,
+          scopeSelector: privateSelectors.chatColumnScope,
           extraCss:
             "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
         },
         {
-          selector: GEMINI_NEW_CHAT_INPUT_SAFE_AREA_SELECTOR,
-          scopeSelector: GEMINI_LAYOUT_SCOPE_SELECTOR,
+          selector: privateSelectors.newChatInputSafeArea,
+          scopeSelector: privateSelectors.layoutScope,
           insetMode: "edge",
           leftProperty: "left",
           rightProperty: "right",
@@ -2546,7 +2382,7 @@ export class GeminiAdapter extends SiteAdapter {
   getUserQueryWidthSelectors() {
     return [
       {
-        selector: ".user-query-bubble-with-background:not(.edit-mode)",
+        selector: this.config.sitePrivateSelectors.userQueryWidth,
         property: "max-width",
         noCenter: true, // 用户问题不需要居中
       },
@@ -2554,64 +2390,58 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   getZenModeConfig() {
-    return {
-      hide: ["bard-sidenav", "div.sidenav-with-history-container"],
-    }
+    return this.cloneZenModeConfig(this.config.zenMode)
   }
 
   getCleanModeConfig() {
+    return this.cloneZenModeConfig(this.config.cleanMode)
+  }
+
+  private cloneZenModeConfig(config: ZenModeConfig): ZenModeConfig {
+    const { hide, rootClass, styles } = config
     return {
-      hide: [
-        "hallucination-disclaimer",
-        "g1-dynamic-upsell-button",
-        ".share-viewer_footer_disclaimer",
-        GEMINI_DEEP_RESEARCH_DOCUMENT_SHARE_FOOTER_SELECTOR,
-      ],
+      ...(hide ? { hide: [...hide] } : {}),
+      ...(rootClass ? { rootClass: { ...rootClass } } : {}),
+      ...(styles ? { styles: styles.map((style) => ({ ...style })) } : {}),
     }
   }
 
   getMarkdownFixerConfig(): MarkdownFixerConfig {
     return {
-      selector: "message-content p",
+      selector: this.config.sitePrivateSelectors.markdownFixerParagraph,
       fixSpanContent: false,
       shouldIgnore: (element) => this.shouldIgnoreMarkdownFixElement(element),
     }
   }
 
   private shouldIgnoreMarkdownFixElement(element: HTMLElement): boolean {
-    return element.querySelector(GEMINI_MARKDOWN_FIXER_SOURCE_SELECTOR) !== null
+    return this.config.sitePrivateSelectors.markdownFixerSource.some(
+      (selector) => element.querySelector(selector) !== null,
+    )
   }
 
   getAssistantMermaidSupportMode() {
-    return "fallback" as const
+    return this.config.mermaidSupport
   }
 
   // ==================== 输入框操作 ====================
 
   getTextareaSelectors(): string[] {
-    return [
-      'div[contenteditable="true"].ql-editor',
-      'div[contenteditable="true"]',
-      '[role="textbox"]',
-      '[aria-label*="Enter a prompt"]',
-    ]
+    return [...this.config.selectors.textarea]
+  }
+
+  getSubmitKeyConfig(): { key: "Enter" | "Ctrl+Enter" } {
+    return { key: this.config.input.submitKey ?? "Enter" }
   }
 
   getSubmitButtonSelectors(): string[] {
-    return [
-      'button[aria-label*="Send"]',
-      'button[aria-label*="发送"]',
-      ".send-button",
-      '[data-testid*="send"]',
-    ]
+    return [...this.config.selectors.submitButton]
   }
 
   isValidTextarea(element: HTMLElement): boolean {
     if (element.offsetParent === null) return false
-    const isContentEditable = element.getAttribute("contenteditable") === "true"
-    const isTextbox = element.getAttribute("role") === "textbox"
     if (element.closest(".gh-main-panel")) return false
-    return isContentEditable || isTextbox || element.classList.contains("ql-editor")
+    return element.matches(this.config.sitePrivateSelectors.validTextarea)
   }
 
   insertPrompt(content: string): boolean {
@@ -2664,32 +2494,32 @@ export class GeminiAdapter extends SiteAdapter {
 
   getScrollContainer(): HTMLElement | null {
     if (this.isSharePage()) {
-      return document.querySelector("div.content-container") as HTMLElement
+      return document.querySelector(
+        this.config.sitePrivateSelectors.shareResponseContainer,
+      ) as HTMLElement
     }
-    return document.querySelector("infinite-scroller.chat-history") as HTMLElement
+    return (
+      this.config.selectors.scrollContainer
+        .map((selector) => document.querySelector(selector))
+        .find((element): element is HTMLElement => element instanceof HTMLElement) || null
+    )
   }
 
   getResponseContainerSelector(): string {
     if (this.isSharePage()) {
-      return "div.content-container"
+      return this.config.sitePrivateSelectors.shareResponseContainer
     }
-    return "infinite-scroller.chat-history"
+    return this.config.selectors.responseContainer
   }
 
   getChatContentSelectors(): string[] {
-    return [
-      ".model-response-container",
-      "model-response",
-      ".response-container",
-      "[data-message-id]",
-      "message-content",
-    ]
+    return [...this.config.selectors.chatContent]
   }
 
   // ==================== 大纲提取 ====================
 
   getUserQuerySelector(): string {
-    return "user-query"
+    return this.config.selectors.userQuery
   }
 
   getOutlineSources(): OutlineSource[] {
@@ -2738,14 +2568,14 @@ export class GeminiAdapter extends SiteAdapter {
    */
   private sanitizeUserQueryElement(element: Element): Element {
     const clone = element.cloneNode(true) as Element
-    const hiddenNodes = clone.querySelectorAll(".cdk-visually-hidden")
+    const hiddenNodes = clone.querySelectorAll(this.config.sitePrivateSelectors.visuallyHidden)
     hiddenNodes.forEach((node) => node.remove())
     return clone
   }
 
   extractUserQueryText(element: Element): string {
     const sanitized = this.sanitizeUserQueryElement(element)
-    const queryText = sanitized.querySelector(".query-text")
+    const queryText = sanitized.querySelector(this.config.sitePrivateSelectors.userQueryText)
     const target = queryText || sanitized
     return this.extractTextWithLineBreaks(target)
   }
@@ -2756,7 +2586,7 @@ export class GeminiAdapter extends SiteAdapter {
    */
   extractUserQueryMarkdown(element: Element): string {
     const sanitized = this.sanitizeUserQueryElement(element)
-    const lines = sanitized.querySelectorAll(".query-text-line")
+    const lines = sanitized.querySelectorAll(this.config.sitePrivateSelectors.userQueryLine)
     if (lines.length === 0) {
       // 回退：使用 extractUserQueryText
       return this.extractUserQueryText(sanitized)
@@ -2874,11 +2704,16 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   private getExportHistoryLoadSignature(container: HTMLElement): string {
+    const privateSelectors = this.config.sitePrivateSelectors
+    const messageSelector = [
+      this.config.selectors.userQuery,
+      this.config.selectors.assistantResponse,
+    ].join(", ")
     const root =
       document.querySelector(this.getResponseContainerSelector()) || this.getScrollContainer()
     const messages = root
-      ? Array.from(root.querySelectorAll("user-query, model-response")).filter(
-          (element) => !element.closest("immersive-panel"),
+      ? Array.from(root.querySelectorAll(messageSelector)).filter(
+          (element) => !element.closest(privateSelectors.immersivePanel),
         )
       : []
 
@@ -2896,7 +2731,7 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   private getExportHistoryMessageMarker(element: Element): string {
-    const source = element.closest("message-content, .conversation-turn") || element
+    const source = element.closest(this.config.sitePrivateSelectors.exportMessageSource) || element
     const id =
       source.id ||
       source.getAttribute("data-message-id") ||
@@ -2927,12 +2762,17 @@ export class GeminiAdapter extends SiteAdapter {
   private async prepareImagesForExport(context: ExportLifecycleContext): Promise<void> {
     this.clearPreparedExportImageMetadata()
 
+    const privateSelectors = this.config.sitePrivateSelectors
+    const userQueryImages = privateSelectors.userQueryImage.map(
+      (selector) => `${this.config.selectors.userQuery} ${selector}`,
+    )
+
     const images = Array.from(
       document.querySelectorAll(
         [
-          "model-response img",
-          `share-landing-page ${GEMINI_SHARE_ASSISTANT_MARKDOWN_SELECTOR} img`,
-          GEMINI_USER_QUERY_IMAGE_SELECTOR,
+          `${this.config.selectors.assistantResponse} img`,
+          `${privateSelectors.sharePage} ${privateSelectors.shareAssistantMarkdown} img`,
+          ...userQueryImages,
         ].join(", "),
       ),
     ).filter((node): node is HTMLImageElement => node instanceof HTMLImageElement)
@@ -2959,7 +2799,7 @@ export class GeminiAdapter extends SiteAdapter {
     collector?: GeminiExportAssetCollector,
   ): string[] {
     const images = Array.from(
-      element.querySelectorAll("img[data-test-id='uploaded-img'], .preview-image"),
+      element.querySelectorAll(this.config.sitePrivateSelectors.userQueryImage.join(", ")),
     ).filter((node): node is HTMLImageElement => node instanceof HTMLImageElement)
     const imageMarkdown: string[] = []
     const seenSources = new Set<string>()
@@ -3065,7 +2905,9 @@ export class GeminiAdapter extends SiteAdapter {
     element: Element,
     collector?: GeminiExportAssetCollector,
   ): string[] {
-    const files = Array.from(element.querySelectorAll(GEMINI_UPLOADED_FILE_SELECTOR))
+    const files = Array.from(
+      element.querySelectorAll(this.config.sitePrivateSelectors.uploadedFile),
+    )
     const fileMarkdown: string[] = []
     const seenFiles = new Set<string>()
 
@@ -3096,9 +2938,11 @@ export class GeminiAdapter extends SiteAdapter {
     sanitizedElement: Element,
     collector: GeminiExportAssetCollector,
   ): Promise<string[]> {
-    const sourceFiles = Array.from(sourceElement.querySelectorAll(GEMINI_UPLOADED_FILE_SELECTOR))
+    const sourceFiles = Array.from(
+      sourceElement.querySelectorAll(this.config.sitePrivateSelectors.uploadedFile),
+    )
     const sanitizedFiles = Array.from(
-      sanitizedElement.querySelectorAll(GEMINI_UPLOADED_FILE_SELECTOR),
+      sanitizedElement.querySelectorAll(this.config.sitePrivateSelectors.uploadedFile),
     )
     const fileMarkdown: string[] = []
     const seenFiles = new Set<string>()
@@ -3178,7 +3022,7 @@ export class GeminiAdapter extends SiteAdapter {
     const trigger = this.getUserQueryFilePreviewTrigger(file)
     if (!trigger) return null
 
-    const previousViewer = document.querySelector("immersive-panel .drive-viewer")
+    const previousViewer = document.querySelector(this.config.sitePrivateSelectors.driveViewer)
     trigger.scrollIntoView({ block: "center", inline: "nearest", behavior: "auto" })
     await new Promise((resolve) => setTimeout(resolve, 50))
     this.simulateClick(trigger)
@@ -3192,10 +3036,10 @@ export class GeminiAdapter extends SiteAdapter {
         console.warn("[GeminiAdapter] Failed to extract uploaded file viewer document", {
           name: fallbackName,
           viewerTextContainers: document.querySelectorAll(
-            "immersive-panel .drive-viewer-text-content",
+            `${this.config.sitePrivateSelectors.immersivePanel} ${this.config.sitePrivateSelectors.driveViewerTextContent}`,
           ).length,
           visibleViewers: Array.from(
-            document.querySelectorAll("immersive-panel .drive-viewer"),
+            document.querySelectorAll(this.config.sitePrivateSelectors.driveViewer),
           ).filter((panel) => this.isVisible(panel)).length,
         })
       }
@@ -3230,7 +3074,9 @@ export class GeminiAdapter extends SiteAdapter {
   ): Promise<Element | null> {
     const startedAt = Date.now()
     while (Date.now() - startedAt < timeoutMs) {
-      const viewers = Array.from(document.querySelectorAll("immersive-panel .drive-viewer"))
+      const viewers = Array.from(
+        document.querySelectorAll(this.config.sitePrivateSelectors.driveViewer),
+      )
       const viewer = viewers.find((candidate) => candidate !== previousViewer)
       if (viewer) return viewer
       if (!previousViewer && viewers[0]) return viewers[0]
@@ -3250,7 +3096,8 @@ export class GeminiAdapter extends SiteAdapter {
       const contentElement = this.findActiveDriveViewerTextContent(expectedName) || null
       const content = this.decodeDriveViewerText(contentElement?.textContent || "")
       if (content) {
-        const owner = contentElement?.closest(".drive-viewer") || viewer
+        const owner =
+          contentElement?.closest(this.config.sitePrivateSelectors.driveViewerOwner) || viewer
         return {
           name: this.extractDriveViewerDocumentName(owner),
           mimeType: this.extractDriveViewerDocumentMimeType(owner),
@@ -3258,9 +3105,9 @@ export class GeminiAdapter extends SiteAdapter {
         }
       }
 
-      const error = Array.from(viewer.querySelectorAll(".drive-viewer-msg-error")).find((node) =>
-        this.isVisible(node),
-      )
+      const error = Array.from(
+        viewer.querySelectorAll(this.config.sitePrivateSelectors.driveViewerError),
+      ).find((node) => this.isVisible(node))
       if (error) {
         return null
       }
@@ -3272,7 +3119,9 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   private findActiveDriveViewerTextContent(expectedName: string): Element | null {
-    const panels = Array.from(document.querySelectorAll("immersive-panel .drive-viewer"))
+    const panels = Array.from(
+      document.querySelectorAll(this.config.sitePrivateSelectors.driveViewer),
+    )
     const expectedBaseName = expectedName.replace(/\.[A-Za-z0-9]{1,10}$/, "")
 
     const matchingPanel =
@@ -3288,7 +3137,7 @@ export class GeminiAdapter extends SiteAdapter {
 
     const candidates = Array.from(
       (matchingPanel || document).querySelectorAll(
-        ".drive-viewer-text-content pre, .drive-viewer-text-content",
+        this.config.sitePrivateSelectors.driveViewerTextCandidate,
       ),
     )
 
@@ -3306,7 +3155,7 @@ export class GeminiAdapter extends SiteAdapter {
   private extractDriveViewerDocumentName(viewer: Element): string {
     const info = this.parseDriveActiveItemInfo(viewer)
     const toolstripName = this.getNormalizedText(
-      viewer.querySelector(".drive-viewer-toolstrip-name"),
+      viewer.querySelector(this.config.sitePrivateSelectors.driveViewerName),
     )
     return info?.title || toolstripName || ""
   }
@@ -3317,7 +3166,7 @@ export class GeminiAdapter extends SiteAdapter {
 
   private parseDriveActiveItemInfo(viewer: Element): { title?: string; mimeType?: string } | null {
     const info = Array.from(
-      viewer.querySelectorAll('[id="drive-active-item-info"], div[style*="display:none"]'),
+      viewer.querySelectorAll(this.config.sitePrivateSelectors.driveActiveItemInfo),
     )
       .map((node) => node.textContent?.trim() || "")
       .find((text) => text.startsWith("{") && text.includes('"title"'))
@@ -3332,7 +3181,9 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   private async closeDriveViewer(viewer: Element): Promise<void> {
-    const closeButton = viewer.querySelector(".drive-viewer-close-button")
+    const closeButton = viewer.querySelector(
+      this.config.sitePrivateSelectors.driveViewerCloseButton,
+    )
     if (closeButton instanceof HTMLElement) {
       this.simulateClick(closeButton)
       await new Promise((resolve) => setTimeout(resolve, 150))
@@ -3482,17 +3333,17 @@ export class GeminiAdapter extends SiteAdapter {
     const ariaName = this.extractUserQueryFileAriaName(file)
     if (ariaName) return ariaName
 
-    const visibleCandidates = [
-      this.getNormalizedText(file.querySelector('[data-test-id="filename-label"]')),
-      this.getNormalizedText(file.querySelector(".filename-label")),
-      this.getNormalizedText(file.querySelector(".new-file-name")),
-    ]
+    const visibleCandidates = this.config.sitePrivateSelectors.uploadedFileName.map((selector) =>
+      this.getNormalizedText(file.querySelector(selector)),
+    )
 
     return visibleCandidates.find(Boolean) || ""
   }
 
   private extractUserQueryFileAriaName(file: Element): string {
-    const candidates = Array.from(file.querySelectorAll("a[aria-label], button[aria-label]"))
+    const candidates = Array.from(
+      file.querySelectorAll(this.config.sitePrivateSelectors.uploadedFileAriaAction),
+    )
       .map((node) => node.getAttribute("aria-label") || "")
       .map((value) => value.replace(/\s+/g, " ").trim())
       .filter(Boolean)
@@ -3504,10 +3355,14 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   private extractUserQueryFileType(file: Element): string {
-    const explicitType = this.getNormalizedText(file.querySelector(".new-file-type"))
+    const explicitType = this.getNormalizedText(
+      file.querySelector(this.config.sitePrivateSelectors.uploadedFileType),
+    )
     if (explicitType) return explicitType
 
-    const iconAlt = file.querySelector('[data-test-id="luminous-file-icon"]')?.getAttribute("alt")
+    const iconAlt = file
+      .querySelector(this.config.sitePrivateSelectors.uploadedFileIcon)
+      ?.getAttribute("alt")
     return (iconAlt || "")
       .replace(/icon|图标|圖標|アイコン|아이콘|símbolo|ícone|symbol|значок/gi, "")
       .replace(/\s+/g, " ")
@@ -3602,11 +3457,15 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   private shouldTryWatermarkRemovalForExport(image: HTMLImageElement): boolean {
-    if (image.closest("user-query")) return false
-    if (image.closest("model-response")) {
-      return image.closest(GEMINI_EXPORT_IMAGE_SCOPE_SELECTOR) !== null
+    const privateSelectors = this.config.sitePrivateSelectors
+    if (image.closest(this.config.selectors.userQuery)) return false
+    if (image.closest(this.config.selectors.assistantResponse)) {
+      return image.closest(privateSelectors.exportImageScope.join(", ")) !== null
     }
-    return image.closest(`share-landing-page ${GEMINI_SHARE_ASSISTANT_MARKDOWN_SELECTOR}`) !== null
+    return (
+      image.closest(`${privateSelectors.sharePage} ${privateSelectors.shareAssistantMarkdown}`) !==
+      null
+    )
   }
 
   private getDisplayedProcessedImageDataUrl(image: HTMLImageElement): string {
@@ -3662,7 +3521,7 @@ export class GeminiAdapter extends SiteAdapter {
     return (
       context.format === "markdown" &&
       context.packaging === "markdown" &&
-      image.closest("user-query") !== null
+      image.closest(this.config.selectors.userQuery) !== null
     )
   }
 
@@ -3795,7 +3654,12 @@ export class GeminiAdapter extends SiteAdapter {
    */
   private sanitizeAssistantExportElement(element: Element): Element {
     const clone = element.cloneNode(true) as Element
-    clone.querySelectorAll(GEMINI_ASSISTANT_EXPORT_NOISE_SELECTOR).forEach((node) => node.remove())
+    clone
+      .querySelectorAll(this.config.sitePrivateSelectors.assistantExportNoise.join(", "))
+      .forEach((node) => node.remove())
+    clone
+      .querySelectorAll(GEMINI_OPHEL_ASSISTANT_EXPORT_NOISE_SELECTOR)
+      .forEach((node) => node.remove())
     this.normalizeDeepResearchConfirmationWidgetsForExport(clone)
     this.normalizeAssistantGeneratedImagesForExport(clone)
 
@@ -3803,11 +3667,14 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   private normalizeDeepResearchConfirmationWidgetsForExport(root: Element): void {
-    root.querySelectorAll(GEMINI_DEEP_RESEARCH_CONFIRMATION_SELECTOR).forEach((widget) => {
+    const privateSelectors = this.config.sitePrivateSelectors
+    root.querySelectorAll(privateSelectors.deepResearchConfirmation).forEach((widget) => {
       const replacement = document.createElement("div")
       replacement.className = "ophel-gemini-deep-research-plan"
 
-      const title = this.getNormalizedText(widget.querySelector('[data-test-id="title"]'))
+      const title = this.getNormalizedText(
+        widget.querySelector(privateSelectors.deepResearchConfirmationTitle),
+      )
       if (title) {
         const heading = document.createElement("h3")
         heading.textContent = title
@@ -3815,7 +3682,7 @@ export class GeminiAdapter extends SiteAdapter {
       }
 
       const steps = Array.from(
-        widget.querySelectorAll('[data-test-id="research-steps"] .research-step'),
+        widget.querySelectorAll(privateSelectors.deepResearchConfirmationSteps),
       )
       steps.forEach((step, index) => {
         const stepTitle = this.extractDeepResearchStepTitle(step)
@@ -3826,7 +3693,7 @@ export class GeminiAdapter extends SiteAdapter {
         }
 
         const description = this.normalizeExportMultilineText(
-          step.querySelector(".research-step-description")?.textContent || "",
+          step.querySelector(privateSelectors.deepResearchStepDescription)?.textContent || "",
         )
         if (description) {
           const paragraph = document.createElement("p")
@@ -3842,7 +3709,9 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   private extractDeepResearchStepTitle(step: Element): string {
-    const titleContainer = step.querySelector(".research-step-title")
+    const titleContainer = step.querySelector(
+      this.config.sitePrivateSelectors.deepResearchStepTitle,
+    )
     const titleElement = Array.from(titleContainer?.children || []).find(
       (child) => child.tagName.toLowerCase() !== "mat-icon",
     )
@@ -3865,7 +3734,10 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   private normalizeAssistantGeneratedImagesForExport(root: Element): void {
-    root.querySelectorAll(GEMINI_DECORATIVE_IMAGE_SELECTOR).forEach((node) => node.remove())
+    const privateSelectors = this.config.sitePrivateSelectors
+    root
+      .querySelectorAll(privateSelectors.decorativeImage.join(", "))
+      .forEach((node) => node.remove())
 
     root.querySelectorAll(`img[${GEMINI_EXPORT_IMAGE_SRC_ATTR}]`).forEach((node) => {
       if (!(node instanceof HTMLImageElement)) return
@@ -3878,29 +3750,27 @@ export class GeminiAdapter extends SiteAdapter {
       node.removeAttribute(GEMINI_EXPORT_IMAGE_SRC_ATTR)
     })
 
+    const generatedImageButtons = `${privateSelectors.exportImageScope.join(", ")} ${privateSelectors.generatedImageButton}`
+
+    root.querySelectorAll(generatedImageButtons).forEach((node) => {
+      if (!(node instanceof HTMLButtonElement) || !node.parentNode) return
+
+      const image = node.querySelector("img")
+      if (!(image instanceof HTMLImageElement)) return
+
+      const replacement = image.cloneNode(true) as HTMLImageElement
+      const preparedSrc = replacement.getAttribute(GEMINI_EXPORT_IMAGE_SRC_ATTR) || ""
+      if (preparedSrc) {
+        replacement.setAttribute("src", preparedSrc)
+        replacement.removeAttribute("srcset")
+        replacement.removeAttribute(GEMINI_EXPORT_IMAGE_SRC_ATTR)
+      }
+
+      node.replaceWith(replacement)
+    })
+
     root
-      .querySelectorAll(`${GEMINI_EXPORT_IMAGE_SCOPE_SELECTOR} button.image-button`)
-      .forEach((node) => {
-        if (!(node instanceof HTMLButtonElement) || !node.parentNode) return
-
-        const image = node.querySelector("img")
-        if (!(image instanceof HTMLImageElement)) return
-
-        const replacement = image.cloneNode(true) as HTMLImageElement
-        const preparedSrc = replacement.getAttribute(GEMINI_EXPORT_IMAGE_SRC_ATTR) || ""
-        if (preparedSrc) {
-          replacement.setAttribute("src", preparedSrc)
-          replacement.removeAttribute("srcset")
-          replacement.removeAttribute(GEMINI_EXPORT_IMAGE_SRC_ATTR)
-        }
-
-        node.replaceWith(replacement)
-      })
-
-    root
-      .querySelectorAll(
-        "share-button, copy-button, download-generated-image-button, .generated-image-controls, .loader",
-      )
+      .querySelectorAll(privateSelectors.generatedImageControls.join(", "))
       .forEach((node) => node.remove())
   }
 
@@ -3912,24 +3782,25 @@ export class GeminiAdapter extends SiteAdapter {
     if (this.isInRenderedMarkdownContainer(heading)) return true
 
     // 仅过滤 Gemini 注入的辅助可访问性标题，避免误杀正常 Markdown 标题
-    if (heading.classList.contains("cdk-visually-hidden")) return true
+    if (heading.matches(this.config.sitePrivateSelectors.visuallyHidden)) return true
 
     return false
   }
 
   private getDeepResearchDocumentOutlineRoot(): Element | null {
+    const privateSelectors = this.config.sitePrivateSelectors
     const appDocument = this.getDeepResearchAppDocumentElement()
     if (appDocument) return appDocument
 
     if (this.isDeepResearchDocumentSharePage()) {
       return document.querySelector(
-        `${GEMINI_DEEP_RESEARCH_DOCUMENT_SHARE_SELECTOR} ${GEMINI_DEEP_RESEARCH_MARKDOWN_SELECTOR}`,
+        `${privateSelectors.deepResearchDocumentShare} ${privateSelectors.shareAssistantMarkdown}`,
       )
     }
 
     if (this.isDeepResearchConversationSharePage()) {
       return document.querySelector(
-        `${GEMINI_DEEP_RESEARCH_ARTIFACT_SHARE_SELECTOR} ${GEMINI_DEEP_RESEARCH_MARKDOWN_SELECTOR}`,
+        `${privateSelectors.deepResearchArtifactShare} ${privateSelectors.shareAssistantMarkdown}`,
       )
     }
 
@@ -4077,20 +3948,23 @@ export class GeminiAdapter extends SiteAdapter {
   private async extractGeminiConversationMessages(
     collector?: GeminiExportAssetCollector,
   ): Promise<ExportMessage[] | null> {
+    const privateSelectors = this.config.sitePrivateSelectors
     const root =
       document.querySelector(this.getResponseContainerSelector()) || this.getScrollContainer()
     if (!root) return null
 
-    const messageElements = Array.from(root.querySelectorAll("user-query, model-response")).sort(
-      (left, right) => this.compareDomOrder(left, right),
-    )
+    const messageElements = Array.from(
+      root.querySelectorAll(
+        [this.config.selectors.userQuery, this.config.selectors.assistantResponse].join(", "),
+      ),
+    ).sort((left, right) => this.compareDomOrder(left, right))
     if (messageElements.length === 0) return null
 
     const messages: ExportMessage[] = []
     for (const element of messageElements) {
-      if (element.closest("immersive-panel")) continue
+      if (element.closest(privateSelectors.immersivePanel)) continue
 
-      const role = element.tagName.toLowerCase() === "user-query" ? "user" : "assistant"
+      const role = element.matches(this.config.selectors.userQuery) ? "user" : "assistant"
       const content =
         role === "user"
           ? (collector
@@ -4283,7 +4157,7 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   private isDecorativeExportImage(image: HTMLImageElement): boolean {
-    if (image.matches(GEMINI_DECORATIVE_IMAGE_SELECTOR)) return true
+    if (image.matches(this.config.sitePrivateSelectors.decorativeImage.join(", "))) return true
 
     const source = this.getPreparedExportImageSrc(image)
     if (!source) return true
@@ -4317,19 +4191,22 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   private getGeminiCanvasCardsFromResponse(element: Element): HTMLElement[] {
-    return Array.from(element.querySelectorAll(GEMINI_CANVAS_CARD_SELECTOR)).filter(
+    return Array.from(element.querySelectorAll(this.config.sitePrivateSelectors.canvasCard)).filter(
       (node): node is HTMLElement => node instanceof HTMLElement && this.isGeminiCanvasCard(node),
     )
   }
 
   private getGeminiCanvasShareArtifactElements(root: ParentNode): HTMLElement[] {
+    const privateSelectors = this.config.sitePrivateSelectors
     const candidates = new Set<Element>()
-    if (root instanceof Element && root.classList.contains("immersive-artifact-container")) {
+    if (root instanceof Element && root.matches(privateSelectors.canvasArtifactContainer)) {
       candidates.add(root)
     }
 
     root
-      .querySelectorAll(`${GEMINI_CANVAS_SHARE_ARTIFACT_SELECTOR}, .immersive-artifact-container`)
+      .querySelectorAll(
+        `${privateSelectors.canvasShareArtifact}, ${privateSelectors.canvasArtifactContainer}`,
+      )
       .forEach((element) => candidates.add(element))
 
     return Array.from(candidates).filter(
@@ -4338,9 +4215,10 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   private isGeminiCanvasCard(card: HTMLElement): boolean {
+    const privateSelectors = this.config.sitePrivateSelectors
     return (
-      card.querySelector(GEMINI_CANVAS_CODE_ICON_SELECTOR) !== null ||
-      card.querySelector(GEMINI_CANVAS_DOCUMENT_ICON_SELECTOR) !== null
+      card.querySelector(privateSelectors.canvasCodeIcon.join(", ")) !== null ||
+      card.querySelector(privateSelectors.canvasDocumentIcon.join(", ")) !== null
     )
   }
 
@@ -4443,7 +4321,7 @@ export class GeminiAdapter extends SiteAdapter {
 
   private isGeminiCanvasDocumentScope(scope: ParentNode): boolean {
     if (!(scope instanceof Element)) return false
-    return scope.closest(GEMINI_CANVAS_DOCUMENT_IMMERSIVE_PANEL_SELECTOR) !== null
+    return scope.closest(this.config.sitePrivateSelectors.canvasDocumentPanel) !== null
   }
 
   private extractGeminiCanvasDocumentMarkdown(
@@ -4455,11 +4333,15 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   private getGeminiCanvasDocumentMarkdownElement(scope: ParentNode): Element | null {
-    const candidates = Array.from(scope.querySelectorAll(GEMINI_CANVAS_DOCUMENT_MARKDOWN_SELECTOR))
+    const privateSelectors = this.config.sitePrivateSelectors
+    const candidates = Array.from(
+      scope.querySelectorAll(privateSelectors.canvasDocumentMarkdown.join(", ")),
+    )
     return (
       candidates.find(
         (candidate) =>
-          candidate.closest("thinking-panel") === null && Boolean(candidate.textContent?.trim()),
+          candidate.closest(privateSelectors.panelThinking) === null &&
+          Boolean(candidate.textContent?.trim()),
       ) || null
     )
   }
@@ -4490,7 +4372,7 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   private getGeminiCanvasPanelElement(): HTMLElement | null {
-    const panel = document.querySelector(GEMINI_CANVAS_IMMERSIVE_PANEL_SELECTOR)
+    const panel = document.querySelector(this.getGeminiCanvasPanelSelector())
     return panel instanceof HTMLElement ? panel : null
   }
 
@@ -4520,7 +4402,7 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   private getGeminiCanvasCardClickTargets(card: HTMLElement): HTMLElement[] {
-    const chip = card.closest("immersive-entry-chip")
+    const chip = card.closest(this.config.sitePrivateSelectors.canvasEntryChip)
     const candidates = [card, chip].filter(
       (candidate): candidate is HTMLElement => candidate instanceof HTMLElement,
     )
@@ -4556,7 +4438,7 @@ export class GeminiAdapter extends SiteAdapter {
 
   private async closeGeminiCanvasPanel(): Promise<void> {
     const closeButton = this.getGeminiCanvasPanelElement()?.querySelector(
-      'toolbar [data-test-id="close-button"]',
+      this.config.sitePrivateSelectors.canvasPanelCloseButton,
     )
     if (!(closeButton instanceof HTMLElement)) return
 
@@ -4571,7 +4453,7 @@ export class GeminiAdapter extends SiteAdapter {
       return this.waitForGeminiCanvasCodeSurface(scope, codeTab, 1500)
     }
 
-    const button = codeTab.querySelector("button")
+    const button = codeTab.querySelector(this.config.sitePrivateSelectors.canvasTabButton)
     const target = button instanceof HTMLElement ? button : codeTab
     this.simulateClick(target)
 
@@ -4607,19 +4489,20 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   private findGeminiCanvasCodeTab(scope: ParentNode): HTMLElement | null {
-    const explicit = scope.querySelector(GEMINI_CANVAS_CODE_TAB_SELECTOR)
+    const privateSelectors = this.config.sitePrivateSelectors
+    const explicit = scope.querySelector(privateSelectors.canvasCodeTab)
     if (explicit instanceof HTMLElement) return explicit
 
-    const groups = Array.from(scope.querySelectorAll(GEMINI_CANVAS_TAB_GROUP_SELECTOR))
+    const groups = Array.from(scope.querySelectorAll(privateSelectors.canvasTabGroup))
     for (const group of groups) {
       if (
-        !group.closest(GEMINI_CANVAS_IMMERSIVE_PANEL_SELECTOR) &&
-        !group.closest(".immersive-artifact-container")
+        !group.closest(this.getGeminiCanvasPanelSelector()) &&
+        !group.closest(privateSelectors.canvasArtifactContainer)
       ) {
         continue
       }
 
-      const toggles = Array.from(group.querySelectorAll("mat-button-toggle")).filter(
+      const toggles = Array.from(group.querySelectorAll(privateSelectors.canvasTabToggle)).filter(
         (node): node is HTMLElement => node instanceof HTMLElement,
       )
       if (toggles.length >= 2) {
@@ -4632,8 +4515,9 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   private isGeminiCanvasCodeTabSelected(tab: HTMLElement): boolean {
-    if (tab.classList.contains("mat-button-toggle-checked")) return true
-    const button = tab.querySelector("button[role='radio']")
+    const privateSelectors = this.config.sitePrivateSelectors
+    if (tab.matches(privateSelectors.canvasTabSelected)) return true
+    const button = tab.querySelector(privateSelectors.canvasTabRadio)
     return button?.getAttribute("aria-checked") === "true"
   }
 
@@ -4662,21 +4546,25 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   private findGeminiCanvasCodeBlock(scope: ParentNode): HTMLElement | null {
-    if (scope instanceof HTMLElement && scope.matches("code-block")) {
+    const selector = this.config.sitePrivateSelectors.canvasCodeBlock
+    if (scope instanceof HTMLElement && scope.matches(selector)) {
       return scope
     }
 
-    const block = scope.querySelector(GEMINI_CANVAS_CODE_BLOCK_SELECTOR)
+    const block = scope.querySelector(selector)
     return block instanceof HTMLElement ? block : null
   }
 
   private findGeminiCanvasCodeEditor(scope: ParentNode): HTMLElement | null {
-    if (scope instanceof HTMLElement && scope.matches(GEMINI_CANVAS_CODE_EDITOR_SELECTOR)) {
-      return scope.classList.contains("hidden") ? null : scope
+    const privateSelectors = this.config.sitePrivateSelectors
+    if (scope instanceof HTMLElement && scope.matches(privateSelectors.canvasCodeEditor)) {
+      return scope.matches(privateSelectors.canvasHidden) ? null : scope
     }
 
-    const editor = scope.querySelector(GEMINI_CANVAS_CODE_EDITOR_SELECTOR)
-    if (!(editor instanceof HTMLElement) || editor.classList.contains("hidden")) return null
+    const editor = scope.querySelector(privateSelectors.canvasCodeEditor)
+    if (!(editor instanceof HTMLElement) || editor.matches(privateSelectors.canvasHidden)) {
+      return null
+    }
     return editor
   }
 
@@ -4684,7 +4572,7 @@ export class GeminiAdapter extends SiteAdapter {
     codeBlock: HTMLElement,
     fallbackTitle: string,
   ): GeminiCanvasCodeArtifact | null {
-    const codeElement = codeBlock.querySelector('[data-test-id="code-content"], pre code, code')
+    const codeElement = codeBlock.querySelector(this.config.sitePrivateSelectors.canvasCodeContent)
     const code = this.normalizeGeminiCanvasCode(
       this.extractTextWithLineBreaks(codeElement || codeBlock),
     )
@@ -4718,7 +4606,10 @@ export class GeminiAdapter extends SiteAdapter {
   private async extractGeminiCanvasMainWorldMonacoCode(editor: HTMLElement): Promise<string> {
     if (!document.documentElement.hasAttribute("data-ophel-gemini-canvas-main")) return ""
 
-    const editorUri = editor.querySelector(".monaco-editor")?.getAttribute("data-uri") || ""
+    const editorUri =
+      editor
+        .querySelector(this.config.sitePrivateSelectors.canvasMonacoEditor)
+        ?.getAttribute("data-uri") || ""
     if (!editorUri) return ""
 
     const requestId = `ophel-gemini-canvas-${Date.now()}-${Math.random().toString(36).slice(2)}`
@@ -4776,7 +4667,10 @@ export class GeminiAdapter extends SiteAdapter {
     const models = monacoWindow.monaco?.editor?.getModels?.()
     if (!models?.length) return ""
 
-    const editorUri = editor.querySelector(".monaco-editor")?.getAttribute("data-uri") || ""
+    const editorUri =
+      editor
+        .querySelector(this.config.sitePrivateSelectors.canvasMonacoEditor)
+        ?.getAttribute("data-uri") || ""
     const matchingModel = models.find((model) => {
       const candidate = model as { uri?: { toString?: () => string } }
       return editorUri && candidate.uri?.toString?.() === editorUri
@@ -4789,12 +4683,12 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   private async extractGeminiCanvasRenderedMonacoCode(editor: HTMLElement): Promise<string> {
-    const textarea = editor.querySelector("textarea.inputarea")
+    const textarea = editor.querySelector(this.config.sitePrivateSelectors.canvasMonacoTextarea)
     if (textarea instanceof HTMLTextAreaElement && textarea.value.trim()) {
       return this.normalizeGeminiCanvasCode(textarea.value)
     }
 
-    const scrollable = editor.querySelector(".monaco-scrollable-element")
+    const scrollable = editor.querySelector(this.config.sitePrivateSelectors.canvasMonacoScrollable)
     if (!(scrollable instanceof HTMLElement)) {
       return this.normalizeGeminiCanvasCode(
         this.extractGeminiCanvasVisibleMonacoLines(editor).join("\n"),
@@ -4826,9 +4720,9 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   private extractGeminiCanvasVisibleMonacoLines(editor: HTMLElement): string[] {
-    const lineElements = Array.from(editor.querySelectorAll(".view-lines .view-line")).filter(
-      (node): node is HTMLElement => node instanceof HTMLElement,
-    )
+    const lineElements = Array.from(
+      editor.querySelectorAll(this.config.sitePrivateSelectors.canvasMonacoLine),
+    ).filter((node): node is HTMLElement => node instanceof HTMLElement)
 
     return lineElements
       .sort((left, right) => this.getElementTop(left) - this.getElementTop(right))
@@ -4837,7 +4731,7 @@ export class GeminiAdapter extends SiteAdapter {
 
   private getGeminiCanvasMonacoContentHeight(editor: HTMLElement): number {
     const heightCandidates = Array.from(
-      editor.querySelectorAll(".view-lines, .margin, .lines-content"),
+      editor.querySelectorAll(this.config.sitePrivateSelectors.canvasMonacoContentHeight),
     ).flatMap((element) => {
       if (!(element instanceof HTMLElement)) return []
       return [
@@ -4883,15 +4777,16 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   private extractGeminiCanvasTitle(element: Element, fallback = "Gemini Canvas"): string {
+    const privateSelectors = this.config.sitePrivateSelectors
     const title =
-      element.querySelector(".title-text, .card-title")?.textContent?.trim() ||
+      element.querySelector(privateSelectors.canvasTitle)?.textContent?.trim() ||
       element
-        .closest(".immersive-artifact-container")
-        ?.querySelector(".title-text")
+        .closest(privateSelectors.canvasArtifactContainer)
+        ?.querySelector(privateSelectors.canvasNestedTitle)
         ?.textContent?.trim() ||
       element
-        .closest(GEMINI_CANVAS_IMMERSIVE_PANEL_SELECTOR)
-        ?.querySelector(".title-text")
+        .closest(this.getGeminiCanvasPanelSelector())
+        ?.querySelector(privateSelectors.canvasNestedTitle)
         ?.textContent?.trim() ||
       fallback
 
@@ -4899,10 +4794,11 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   private extractGeminiCanvasCodeLanguage(element: Element): string {
+    const privateSelectors = this.config.sitePrivateSelectors
     const label =
-      element.querySelector(".code-block-decoration span")?.textContent ||
-      element.closest("[data-mode-id]")?.getAttribute("data-mode-id") ||
-      element.querySelector("[data-mode-id]")?.getAttribute("data-mode-id") ||
+      element.querySelector(privateSelectors.canvasCodeLanguage)?.textContent ||
+      element.closest(privateSelectors.canvasMode)?.getAttribute("data-mode-id") ||
+      element.querySelector(privateSelectors.canvasMode)?.getAttribute("data-mode-id") ||
       ""
     const normalized = label.split(/\r?\n/)[0]?.trim().toLowerCase() || ""
     return normalized.replace(/[^a-z0-9_#+.-]/g, "")
@@ -4965,17 +4861,21 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   private isDeepResearchAppPage(): boolean {
+    const privateSelectors = this.config.sitePrivateSelectors
     return (
       !this.isSharePage() &&
       (this.getDeepResearchAppDocumentElement() !== null ||
         this.getDeepResearchAppDocumentTrigger() !== null ||
-        document.querySelector(`model-response ${GEMINI_DEEP_RESEARCH_CONFIRMATION_SELECTOR}`) !==
-          null)
+        document.querySelector(
+          `${this.config.selectors.assistantResponse} ${privateSelectors.deepResearchConfirmation}`,
+        ) !== null)
     )
   }
 
   private getDeepResearchAppDocumentElement(): Element | null {
-    return document.querySelector(GEMINI_DEEP_RESEARCH_APP_DOCUMENT_MARKDOWN_SELECTOR)
+    return document.querySelector(
+      this.config.sitePrivateSelectors.deepResearchAppDocumentMarkdown.join(", "),
+    )
   }
 
   private hasDeepResearchAppDocumentTrigger(): boolean {
@@ -4983,17 +4883,18 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   private getDeepResearchAppDocumentTrigger(): HTMLElement | null {
+    const privateSelectors = this.config.sitePrivateSelectors
     const candidates = Array.from(
-      document.querySelectorAll(GEMINI_DEEP_RESEARCH_APP_DOCUMENT_TRIGGER_SELECTOR),
+      document.querySelectorAll(privateSelectors.deepResearchAppTrigger),
     ).filter((node): node is HTMLElement => node instanceof HTMLElement)
 
     return (
       candidates.find((candidate) => {
-        const card = candidate.matches('[data-test-id="gem-processing-card"]')
+        const card = candidate.matches(privateSelectors.canvasCard)
           ? candidate
-          : candidate.querySelector('[data-test-id="gem-processing-card"]')
-        if (!card?.querySelector(GEMINI_DEEP_RESEARCH_ICON_SELECTOR)) return false
-        return candidate.closest("model-response") !== null
+          : candidate.querySelector(privateSelectors.canvasCard)
+        if (!card?.querySelector(privateSelectors.deepResearchIcon.join(", "))) return false
+        return candidate.closest(this.config.selectors.assistantResponse) !== null
       }) || null
     )
   }
@@ -5007,9 +4908,9 @@ export class GeminiAdapter extends SiteAdapter {
     trigger.click()
     if (await this.waitForDeepResearchAppDocumentElement()) return true
 
-    const card = trigger.matches('[data-test-id="gem-processing-card"]')
+    const card = trigger.matches(this.config.sitePrivateSelectors.canvasCard)
       ? trigger
-      : trigger.querySelector('[data-test-id="gem-processing-card"]')
+      : trigger.querySelector(this.config.sitePrivateSelectors.canvasCard)
     if (card instanceof HTMLElement && card !== trigger) {
       card.click()
       return this.waitForDeepResearchAppDocumentElement()
@@ -5020,7 +4921,7 @@ export class GeminiAdapter extends SiteAdapter {
 
   private async closeDeepResearchAppDocumentPanel(): Promise<void> {
     const closeButton = document.querySelector(
-      `${GEMINI_DEEP_RESEARCH_IMMERSIVE_PANEL_SELECTOR} [data-test-id="close-button"], immersive-panel [data-test-id="close-button"]`,
+      this.config.sitePrivateSelectors.deepResearchPanelCloseButton,
     )
     if (!(closeButton instanceof HTMLElement)) return
 
@@ -5050,26 +4951,30 @@ export class GeminiAdapter extends SiteAdapter {
   private isDeepResearchDocumentSharePage(): boolean {
     return (
       this.isSharePage() &&
-      document.querySelector(GEMINI_DEEP_RESEARCH_DOCUMENT_SHARE_SELECTOR) !== null
+      document.querySelector(this.config.sitePrivateSelectors.deepResearchDocumentShare) !== null
     )
   }
 
   private isDeepResearchConversationSharePage(): boolean {
     return (
       this.isSharePage() &&
-      document.querySelector(GEMINI_DEEP_RESEARCH_ARTIFACT_SHARE_SELECTOR) !== null
+      document.querySelector(this.config.sitePrivateSelectors.deepResearchArtifactShare) !== null
     )
   }
 
   private isGeminiConversationSharePage(): boolean {
-    return this.isSharePage() && document.querySelector(GEMINI_SHARE_TURN_SELECTOR) !== null
+    return (
+      this.isSharePage() &&
+      document.querySelector(this.config.sitePrivateSelectors.shareTurn) !== null
+    )
   }
 
   private extractDeepResearchDocumentShareMessages(
     collector?: GeminiExportAssetCollector,
   ): ExportMessage[] {
+    const privateSelectors = this.config.sitePrivateSelectors
     const markdown = document.querySelector(
-      `${GEMINI_DEEP_RESEARCH_DOCUMENT_SHARE_SELECTOR} ${GEMINI_DEEP_RESEARCH_MARKDOWN_SELECTOR}`,
+      `${privateSelectors.deepResearchDocumentShare} ${privateSelectors.shareAssistantMarkdown}`,
     )
     const content = markdown ? this.extractAssistantResponseTextWithAssets(markdown, collector) : ""
     const exportContent =
@@ -5086,6 +4991,7 @@ export class GeminiAdapter extends SiteAdapter {
   private async extractDeepResearchAppMessages(
     collector?: GeminiExportAssetCollector,
   ): Promise<ExportMessage[]> {
+    const privateSelectors = this.config.sitePrivateSelectors
     const documentElement = this.getDeepResearchAppDocumentElement()
     if (this.hasDeepResearchAppDocumentTrigger() && !documentElement) {
       console.warn("[GeminiAdapter] Deep Research report panel is not available for export")
@@ -5096,14 +5002,16 @@ export class GeminiAdapter extends SiteAdapter {
     const collectedElements = new Set<Element>()
     const root = this.getScrollContainer() || document
 
-    const messageElements = Array.from(root.querySelectorAll("user-query, model-response")).sort(
-      (left, right) => this.compareDomOrder(left, right),
-    )
+    const messageElements = Array.from(
+      root.querySelectorAll(
+        [this.config.selectors.userQuery, this.config.selectors.assistantResponse].join(", "),
+      ),
+    ).sort((left, right) => this.compareDomOrder(left, right))
 
     for (const element of messageElements) {
-      if (element.closest("immersive-panel")) continue
+      if (element.closest(privateSelectors.immersivePanel)) continue
 
-      const role = element.tagName.toLowerCase() === "user-query" ? "user" : "assistant"
+      const role = element.matches(this.config.selectors.userQuery) ? "user" : "assistant"
       const content =
         role === "user"
           ? (collector
@@ -5135,7 +5043,7 @@ export class GeminiAdapter extends SiteAdapter {
     element: Element,
     collector?: GeminiExportAssetCollector,
   ): string {
-    const markdown = element.querySelector(GEMINI_DEEP_RESEARCH_MARKDOWN_SELECTOR)
+    const markdown = element.querySelector(this.config.sitePrivateSelectors.shareAssistantMarkdown)
     return this.extractAssistantResponseTextWithAssets(markdown || element, collector)
   }
 
@@ -5163,18 +5071,19 @@ export class GeminiAdapter extends SiteAdapter {
     messages: ExportMessage[]
     collectedElements: Set<Element>
   }> {
+    const privateSelectors = this.config.sitePrivateSelectors
     const messages: ExportMessage[] = []
     const collectedElements = new Set<Element>()
-    const turns = Array.from(document.querySelectorAll(GEMINI_SHARE_TURN_SELECTOR))
+    const turns = Array.from(document.querySelectorAll(privateSelectors.shareTurn))
 
     for (const turn of turns) {
       let canvasArtifactsAdded = false
       const turnMessages = [
-        ...Array.from(turn.querySelectorAll("user-query")).map((element) => ({
+        ...Array.from(turn.querySelectorAll(this.config.selectors.userQuery)).map((element) => ({
           role: "user" as const,
           element,
         })),
-        ...Array.from(turn.querySelectorAll(GEMINI_SHARE_ASSISTANT_MARKDOWN_SELECTOR)).map(
+        ...Array.from(turn.querySelectorAll(privateSelectors.shareAssistantMarkdown)).map(
           (element) => ({
             role: "assistant" as const,
             element,
@@ -5221,9 +5130,10 @@ export class GeminiAdapter extends SiteAdapter {
     collectedElements: Set<Element>,
     collector?: GeminiExportAssetCollector,
   ): ExportMessage[] {
+    const privateSelectors = this.config.sitePrivateSelectors
     return Array.from(
       document.querySelectorAll(
-        `${GEMINI_DEEP_RESEARCH_ARTIFACT_SHARE_SELECTOR} ${GEMINI_DEEP_RESEARCH_MARKDOWN_SELECTOR}`,
+        `${privateSelectors.deepResearchArtifactShare} ${privateSelectors.shareAssistantMarkdown}`,
       ),
     ).flatMap((element) => {
       if (collectedElements.has(element)) return []
@@ -5287,12 +5197,16 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   private getDeepResearchDocumentShareTitle(): string | null {
-    const title = document.querySelector(`${GEMINI_DEEP_RESEARCH_DOCUMENT_SHARE_SELECTOR} h1`)
+    const title = document.querySelector(
+      `${this.config.sitePrivateSelectors.deepResearchDocumentShare} h1`,
+    )
     return title?.textContent?.trim() || null
   }
 
   private getDeepResearchArtifactShareTitle(): string | null {
-    const title = document.querySelector(`${GEMINI_DEEP_RESEARCH_ARTIFACT_SHARE_SELECTOR} h1`)
+    const title = document.querySelector(
+      `${this.config.sitePrivateSelectors.deepResearchArtifactShare} h1`,
+    )
     return title?.textContent?.trim() || null
   }
 
@@ -5301,7 +5215,7 @@ export class GeminiAdapter extends SiteAdapter {
    * Gemini 标准版：隐藏 .query-text 并插入渲染容器
    */
   replaceUserQueryContent(element: Element, html: string): boolean {
-    const textContainer = element.querySelector(".query-text")
+    const textContainer = element.querySelector(this.config.sitePrivateSelectors.userQueryText)
     if (!textContainer) return false
 
     // 检查是否已经处理过
@@ -5340,22 +5254,18 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   getExportConfig(): ExportConfig {
-    return {
-      userQuerySelector: "user-query",
-      assistantResponseSelector: "model-response, .model-response-container .markdown",
-      turnSelector: ".conversation-turn",
-      useShadowDOM: false,
-    }
+    return { ...this.config.export }
   }
 
   extractOutline(maxLevel = 6, includeUserQueries = false, showWordCount = false): OutlineItem[] {
+    const privateSelectors = this.config.sitePrivateSelectors
     const outline: OutlineItem[] = []
     const container = document.querySelector(this.getResponseContainerSelector())
     if (!container) return outline
 
     // 辅助函数：提取 AI 回复的消息 ID
     const getMessageId = (el: Element): string | null => {
-      const msgContent = el.closest("message-content")
+      const msgContent = el.closest(privateSelectors.outlineMessageContent)
       if (msgContent && msgContent.id) {
         const match = msgContent.id.match(/(r_[a-f0-9]+)/)
         if (match) return match[1]
@@ -5365,7 +5275,7 @@ export class GeminiAdapter extends SiteAdapter {
 
     // 辅助函数：提取用户提问的消息 ID
     const getUserQueryId = (el: Element): string | null => {
-      const btn = el.querySelector('button[jslog*="BardVeMetadataKey"]')
+      const btn = el.querySelector(privateSelectors.outlineUserMetadataButton)
       if (btn) {
         const jslog = btn.getAttribute("jslog") || ""
         const match = jslog.match(/BardVeMetadataKey.*?["'](r_[a-f0-9]+)["']/)
@@ -5426,17 +5336,18 @@ export class GeminiAdapter extends SiteAdapter {
           let totalLength = 0
 
           while (current) {
-            const tagName = current.tagName.toLowerCase()
-            if (tagName === "user-query") {
+            if (current.matches(userQuerySelector)) {
               break // 遇到下一个用户提问，结束
             }
 
-            if (tagName === "model-response") {
+            if (current.matches(this.config.selectors.assistantResponse)) {
               // 获取 markdown 内容（排除思维链 model-thoughts）
-              const markdownContent = current.querySelector(".model-response-text, message-content")
+              const markdownContent = current.querySelector(
+                privateSelectors.outlineAssistantMarkdown,
+              )
               if (markdownContent) {
                 // 计算文本长度时排除思维链内容
-                const thoughts = current.querySelector("model-thoughts")
+                const thoughts = current.querySelector(privateSelectors.outlineThoughts)
                 const thoughtsLength = thoughts?.textContent?.trim().length || 0
                 const totalText = markdownContent.textContent?.trim().length || 0
                 totalLength += Math.max(0, totalText - thoughtsLength)
@@ -5450,7 +5361,7 @@ export class GeminiAdapter extends SiteAdapter {
         }
 
         // 对于标题（Heading），使用基类的 Range 工具方法
-        const messageContent = startEl.closest("message-content")
+        const messageContent = startEl.closest(privateSelectors.outlineMessageContent)
         const count = this.calculateRangeWordCount(startEl, nextEl, messageContent || container)
         this.outlineWordCountCache.set(startEl, { signature, count })
         return count
@@ -5524,7 +5435,7 @@ export class GeminiAdapter extends SiteAdapter {
     allElements.forEach((element, index) => {
       const tagName = element.tagName.toLowerCase()
 
-      if (tagName === "user-query") {
+      if (element.matches(userQuerySelector)) {
         let queryText = this.extractUserQueryText(element)
         let isTruncated = false
         if (queryText.length > 200) {
@@ -5575,7 +5486,7 @@ export class GeminiAdapter extends SiteAdapter {
               const candidate = allElements[i]
               const candidateTagName = candidate.tagName.toLowerCase()
 
-              if (candidateTagName === "user-query") {
+              if (candidate.matches(userQuerySelector)) {
                 nextBoundaryEl = candidate
                 break
               }
@@ -5602,12 +5513,14 @@ export class GeminiAdapter extends SiteAdapter {
   // ==================== 生成状态检测 ====================
 
   isGenerating(): boolean {
-    const stopIcon = document.querySelector('mat-icon[fonticon="stop"]')
-    return stopIcon !== null && (stopIcon as HTMLElement).offsetParent !== null
+    return this.config.generating.existsSelectors.some((selector) => {
+      const element = document.querySelector(selector)
+      return element instanceof HTMLElement && element.offsetParent !== null
+    })
   }
 
   getStopButtonSelectors(): string[] {
-    return ['button:has(mat-icon[fonticon="stop"])', 'mat-icon[fonticon="stop"]']
+    return [...this.config.selectors.stopButton]
   }
 
   requiresDomConfirmationForNetworkGeneration(): boolean {
@@ -5615,7 +5528,7 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   getModelName(): string | null {
-    const switchLabel = document.querySelector(".input-area-switch-label")
+    const switchLabel = document.querySelector(this.config.sitePrivateSelectors.modelName)
     if (switchLabel) {
       const firstSpan = switchLabel.querySelector("span")
       if (firstSpan?.textContent) {
@@ -5629,9 +5542,19 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   getNetworkMonitorConfig(): NetworkMonitorConfig {
+    const { urlPatterns, urlPathEndsWith, requestBodyRules, ...config } = this.config.networkMonitor
     return {
-      urlPatterns: ["BardFrontendService", "StreamGenerate"],
-      silenceThreshold: 3000,
+      ...config,
+      urlPatterns: [...urlPatterns],
+      ...(urlPathEndsWith ? { urlPathEndsWith: [...urlPathEndsWith] } : {}),
+      ...(requestBodyRules
+        ? {
+            requestBodyRules: requestBodyRules.map((rule) => ({
+              ...rule,
+              metadata: { ...rule.metadata },
+            })),
+          }
+        : {}),
     }
   }
 
@@ -5643,6 +5566,7 @@ export class GeminiAdapter extends SiteAdapter {
     if (!this.myStuffEnhancer) {
       this.myStuffEnhancer = new GeminiMyStuffEnhancer({
         getUserPathPrefix: () => this.getUserPathPrefix(),
+        getConfig: () => this.config,
       })
       this.myStuffEnhancer.start()
     }
@@ -5658,19 +5582,12 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   getModelSwitcherConfig(keyword: string): ModelSwitcherConfig {
+    const config = this.config.modelSwitcher
     return {
       targetModelKeyword: keyword,
-      selectorButtonSelectors: [
-        ".input-area-switch-label",
-        ".model-selector",
-        '[data-test-id="model-selector"]',
-        '[aria-label*="model"]',
-        'button[aria-haspopup="menu"]',
-      ],
-      menuItemSelector: '.mode-title, [role="menuitem"], [role="option"]',
-      checkInterval: 1000,
-      maxAttempts: 15,
-      menuRenderDelay: 300,
+      ...config,
+      selectorButtonSelectors: [...config.selectorButtonSelectors],
+      ...(config.subMenuTriggers ? { subMenuTriggers: [...config.subMenuTriggers] } : {}),
     }
   }
 

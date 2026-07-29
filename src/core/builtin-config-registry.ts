@@ -4,6 +4,7 @@ import { CLAUDE_CONFIG, CLAUDE_CONFIG_VERSION } from "~adapters/claude-config"
 import { DEEPSEEK_CONFIG, DEEPSEEK_CONFIG_VERSION } from "~adapters/deepseek-config"
 import { DOUBAO_CONFIG, DOUBAO_CONFIG_VERSION } from "~adapters/doubao-config"
 import { GROK_CONFIG, GROK_CONFIG_VERSION } from "~adapters/grok-config"
+import { GEMINI_CONFIG, GEMINI_CONFIG_VERSION } from "~adapters/gemini-config"
 import {
   GEMINI_ENTERPRISE_CONFIG,
   GEMINI_ENTERPRISE_CONFIG_VERSION,
@@ -65,6 +66,14 @@ const BUILTIN_CONFIG_DESCRIPTORS = new Map<string, BuiltinConfigDescriptor>([
       siteId: SITE_IDS.GROK,
       configVersion: GROK_CONFIG_VERSION,
       baseConfig: GROK_CONFIG,
+    },
+  ],
+  [
+    SITE_IDS.GEMINI,
+    {
+      siteId: SITE_IDS.GEMINI,
+      configVersion: GEMINI_CONFIG_VERSION,
+      baseConfig: GEMINI_CONFIG,
     },
   ],
   [
