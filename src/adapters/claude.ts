@@ -35,7 +35,10 @@ import {
   type OutlineSource,
   type PanelAvoidanceConfig,
   type SiteDeleteConversationResult,
+  type ZenModeConfig,
 } from "./base"
+import { CLAUDE_CONFIG, CLAUDE_CONFIG_VERSION, type ClaudeSiteConfig } from "./claude-config"
+import type { BuiltinSiteConfig } from "./declarative"
 
 const CLAUDE_DELETE_REASON = {
   UI_FAILED: "delete_ui_failed",
@@ -84,30 +87,6 @@ const CLAUDE_INLINE_MATH_PATTERNS = [
 ]
 
 const CLAUDE_DOCUMENT_OUTLINE_SOURCE_ID = "document"
-const CLAUDE_DOCUMENT_ROOT_SELECTOR = "#wiggle-file-content"
-const CLAUDE_RESPONSE_MARKDOWN_SELECTOR = ".standard-markdown, .progressive-markdown"
-const CLAUDE_ARTIFACT_CELL_SELECTOR = ".artifact-block-cell"
-const CLAUDE_USER_FILE_THUMBNAIL_SELECTOR = '[data-testid="file-thumbnail"]'
-const CLAUDE_THOUGHT_TOGGLE_SELECTOR = "button[aria-expanded]"
-const CLAUDE_THOUGHT_STATUS_SELECTOR = 'span[role="status"][aria-live="polite"]'
-const CLAUDE_LAYOUT_SCOPE_SELECTOR = "#main-content"
-const CLAUDE_CHAT_COLUMN_SCOPE_SELECTOR = `${CLAUDE_LAYOUT_SCOPE_SELECTOR} div:has(> [data-testid="page-header"]):has(> [data-autoscroll-container="true"])`
-const CLAUDE_PANEL_AVOIDANCE_SCOPE_SELECTOR = [
-  CLAUDE_CHAT_COLUMN_SCOPE_SELECTOR,
-  `${CLAUDE_LAYOUT_SCOPE_SELECTOR}:not(:has([data-autoscroll-container="true"]))`,
-].join(", ")
-const CLAUDE_CONTENT_WIDTH_SELECTORS = ["#main-content .max-w-3xl", "#main-content .max-w-4xl"]
-const CLAUDE_SCROLL_SAFE_AREA_SELECTOR = '#main-content [data-autoscroll-container="true"]'
-const CLAUDE_NEW_CHAT_SAFE_AREA_SELECTOR =
-  '#main-content:has(.ProseMirror):not(:has([data-autoscroll-container="true"]))'
-const CLAUDE_CANVAS_PANEL_SCOPE_SELECTOR = `${CLAUDE_LAYOUT_SCOPE_SELECTOR} [data-testid="chat-stale-nav-inert"] > div > div:not([aria-hidden="true"]):has([data-skill-file-viewer="true"])`
-const CLAUDE_PANEL_OBSTACLE_SELECTOR = [
-  CLAUDE_DOCUMENT_ROOT_SELECTOR,
-  '[data-testid="artifact-panel"]',
-  '[data-testid="artifact-sidebar"]',
-].join(", ")
-const CLAUDE_VIRTUAL_SIZER_SELECTOR = "[data-rocksteady-sizer]"
-const CLAUDE_VIRTUAL_ROW_SELECTOR = "[data-rs-index][data-index]"
 const CLAUDE_EXPORT_ROOT_ATTR = "data-gh-claude-export-root"
 
 interface ClaudeExportLifecycleState {
@@ -200,6 +179,7 @@ interface ClaudeOutlineCacheEntry {
 }
 
 export class ClaudeAdapter extends SiteAdapter {
+  private config: ClaudeSiteConfig = CLAUDE_CONFIG
   private activeOrganizationId: string | null = null
   private activeOrganizationIdExpiresAt = 0
   private exportDocumentCache: ClaudeDocumentExportCacheEntry[] = []
@@ -233,17 +213,33 @@ export class ClaudeAdapter extends SiteAdapter {
     return "Claude"
   }
 
+  getBuiltinConfig(): ClaudeSiteConfig {
+    return CLAUDE_CONFIG
+  }
+
+  getBuiltinConfigVersion(): number {
+    return CLAUDE_CONFIG_VERSION
+  }
+
+  applyMergedConfig(config: BuiltinSiteConfig): void {
+    this.config = config as ClaudeSiteConfig
+  }
+
   getThemeColors(): { primary: string; secondary: string } {
     // Claude 品牌色 (Terracotta/Orange)
     return { primary: "#d97757", secondary: "#c66045" }
   }
 
   getQuickQuoteSupportMode() {
-    return "native" as const
+    return this.config.quickQuote
   }
 
   getNativeQuotePopoverSelectors(): string[] {
-    return ['[data-selection-tooltip="true"]']
+    return [...this.config.sitePrivateSelectors.nativeQuotePopover]
+  }
+
+  supportsHostThemeSync(): boolean {
+    return this.config.supportsHostThemeSync
   }
 
   getNewTabUrl(): string {
@@ -270,66 +266,62 @@ export class ClaudeAdapter extends SiteAdapter {
 
   // ==================== 会话管理 ====================
 
+  private getClaudeConversationItems(root: ParentNode = document): Element[] {
+    return Array.from(root.querySelectorAll(this.config.conversation.itemSelector))
+  }
+
+  private getClaudeConversationId(element: Element): string | null {
+    const idFrom = this.config.conversation.idFrom
+    const rawValue = element.getAttribute(idFrom.attr ?? "href") || ""
+    return rawValue.match(new RegExp(idFrom.regex, "i"))?.[1] || null
+  }
+
+  private getClaudeConversationTitleElement(element: ParentNode): Element | null {
+    const selector = this.config.conversation.titleSelector
+    return selector ? element.querySelector(selector) : null
+  }
+
+  private isClaudeConversationPinned(element: Element): boolean {
+    const privateSelectors = this.config.sitePrivateSelectors
+    const groupContainer = element.closest(privateSelectors.conversationGroup)
+    if (!groupContainer) return false
+
+    const heading = groupContainer.querySelector(privateSelectors.conversationGroupHeading)
+    const isNonCollapsible = heading !== null && !heading.hasAttribute("role")
+    const list = groupContainer.querySelector(privateSelectors.conversationGroupList)
+    const hasPinnedList = list?.matches(privateSelectors.conversationPinnedList) ?? false
+    return isNonCollapsible || hasPinnedList
+  }
+
+  private getClaudeConversationPath(id: string): string {
+    return this.config.conversation.urlTemplate.replace("{id}", id)
+  }
+
+  private extractClaudeConversationInfo(element: Element): ConversationInfo | null {
+    const id = this.getClaudeConversationId(element)
+    if (!id) return null
+
+    const href = element.getAttribute("href") || this.getClaudeConversationPath(id)
+    return {
+      id,
+      title: this.getClaudeConversationTitleElement(element)?.textContent?.trim() || "",
+      url: new URL(href, this.getNewTabUrl()).href,
+      isActive: window.location.href.includes(id),
+      isPinned: this.isClaudeConversationPinned(element),
+    }
+  }
+
   getConversationList(): ConversationInfo[] {
-    // 侧边栏会话列表
-    // Selector: a[data-dd-action-name="sidebar-chat-item"]
-    const items = document.querySelectorAll('a[data-dd-action-name="sidebar-chat-item"]')
-
-    return Array.from(items)
-      .map((el) => {
-        const href = el.getAttribute("href") || ""
-        // href 格式: /chat/c44e44c0-913a-4fbe-b4f8-d346fd0b7eff
-        const idMatch = href.match(/\/chat\/([a-f0-9-]+)/)
-        const id = idMatch ? idMatch[1] : ""
-
-        // 标题在 span 中
-        const titleSpan = el.querySelector("span.truncate")
-        const title = titleSpan?.textContent?.trim() || ""
-
-        // 激活状态: 检查是否有激活样式或aria-current (需验证,暂时简单判断URL)
-        const isActive = window.location.href.includes(id)
-
-        // 判断是否收藏(Starred):
-        // 核心特征:
-        // 1. Starred分组的h3没有role="button"(不可折叠)
-        // 2. Starred分组的ul有-mx-1.5类
-        // 通过语义化属性判断,比纯样式类更稳定,不依赖文字内容,支持国际化
-        let isPinned = false
-        const groupContainer = el.closest("div.flex.flex-col")
-        if (groupContainer) {
-          // 检查1: h3是否没有role属性(Starred不可折叠,Recents有role="button")
-          const h3 = groupContainer.querySelector("h3")
-          const isNonCollapsible = h3 && !h3.hasAttribute("role")
-
-          // 检查2: ul是否有Starred特有的-mx-1.5类
-          const ul = groupContainer.querySelector("ul")
-          const hasStarredClass = ul?.classList.contains("-mx-1.5")
-
-          // 任一条件满足即为收藏会话
-          isPinned = isNonCollapsible || hasStarredClass
-        }
-
-        return {
-          id,
-          title,
-          url: href.startsWith("http") ? href : `https://claude.ai${href}`,
-          isActive,
-          isPinned,
-        }
-      })
-      .filter((c) => c.id)
+    return this.getClaudeConversationItems()
+      .map((element) => this.extractClaudeConversationInfo(element))
+      .filter((conversation): conversation is ConversationInfo => conversation !== null)
   }
 
   getSidebarScrollContainer(): Element | null {
-    // 侧边栏导航容器
-    const nav = document.querySelector("nav")
-    if (nav) {
-      // 侧边栏通常在 nav 内的某个可滚动 div 中
-      // 根据 structure: nav > div > div > div[class*="overflow-y-auto"]
-      const scrollable = nav.querySelector("div.overflow-y-auto")
-      return scrollable || nav
-    }
-    return null
+    const sidebar = document.querySelector(this.config.selectors.sidebarScrollContainer)
+    if (!sidebar) return null
+
+    return sidebar.querySelector(this.config.sitePrivateSelectors.sidebarScrollFallback) || sidebar
   }
 
   async deleteConversationOnSite(
@@ -756,24 +748,14 @@ export class ClaudeAdapter extends SiteAdapter {
   }
 
   private findConversationRow(id: string): HTMLElement | null {
-    return document.querySelector(
-      `a[data-dd-action-name="sidebar-chat-item"][href="/chat/${id}"], a[data-dd-action-name="sidebar-chat-item"][href$="/chat/${id}"], a[data-dd-action-name="sidebar-chat-item"][href*="/chat/${id}?"]`,
-    ) as HTMLElement | null
+    return (this.getClaudeConversationItems().find(
+      (element) => this.getClaudeConversationId(element) === id,
+    ) || null) as HTMLElement | null
   }
 
   private async findConversationMenuButton(row: HTMLElement): Promise<HTMLElement | null> {
     const owner = (row.closest("li") || row.parentElement || row) as HTMLElement
-    const menuSelector = [
-      'button[aria-haspopup="menu"]',
-      'button[data-testid*="menu"]',
-      'button[aria-label*="more"]',
-      'button[aria-label*="More"]',
-      'button[aria-label*="options"]',
-      'button[aria-label*="Options"]',
-      'button[aria-label*="更多"]',
-      'button[aria-label*="选项"]',
-      'button[aria-label*="選項"]',
-    ].join(", ")
+    const menuSelector = this.config.sitePrivateSelectors.conversationActionButton
 
     for (let attempt = 0; attempt < 10; attempt++) {
       owner.dispatchEvent(new MouseEvent("mouseenter", { bubbles: true }))
@@ -809,7 +791,7 @@ export class ClaudeAdapter extends SiteAdapter {
     }
 
     const menus = Array.from(
-      document.querySelectorAll('[role="menu"], [data-radix-menu-content], [data-state="open"]'),
+      document.querySelectorAll(this.config.sitePrivateSelectors.conversationMenu),
     ) as HTMLElement[]
     const visibleMenus = menus.filter((menu) => this.isVisible(menu))
     if (visibleMenus.length === 0) return null
@@ -824,9 +806,13 @@ export class ClaudeAdapter extends SiteAdapter {
     while (Date.now() - start < timeout) {
       const menuScope = this.getMenuScopeFromTrigger(menuTrigger)
       const rawItems = menuScope
-        ? (Array.from(menuScope.querySelectorAll('[role="menuitem"], button')) as HTMLElement[])
+        ? (Array.from(
+            menuScope.querySelectorAll(this.config.sitePrivateSelectors.conversationMenuItem),
+          ) as HTMLElement[])
         : (Array.from(
-            document.querySelectorAll('[role="menuitem"], [role="menu"] button'),
+            document.querySelectorAll(
+              this.config.sitePrivateSelectors.conversationMenuItemFallback,
+            ),
           ) as HTMLElement[])
 
       for (const item of rawItems) {
@@ -864,7 +850,7 @@ export class ClaudeAdapter extends SiteAdapter {
 
   private findVisibleDialog(): HTMLElement | null {
     const dialogs = Array.from(
-      document.querySelectorAll('[role="dialog"], [aria-modal="true"], [data-state="open"]'),
+      document.querySelectorAll(this.config.sitePrivateSelectors.conversationDialog),
     ) as HTMLElement[]
     return dialogs.find((dialog) => this.isVisible(dialog)) || null
   }
@@ -945,26 +931,22 @@ export class ClaudeAdapter extends SiteAdapter {
   // ==================== 输入框操作 ====================
 
   getTextareaSelectors(): string[] {
-    return ['[contenteditable="true"]', ".ProseMirror", 'div[role="textbox"]']
+    return [...this.config.selectors.textarea]
   }
 
   getSubmitButtonSelectors(): string[] {
-    return [
-      'button[aria-label="Send Message"]',
-      'button[data-testid="send-button"]',
-      'button[aria-label="Send"]',
-    ]
+    return [...this.config.selectors.submitButton]
+  }
+
+  getSubmitKeyConfig(): { key: "Enter" | "Ctrl+Enter" } {
+    return { key: this.config.input.submitKey ?? "Enter" }
   }
 
   isValidTextarea(element: HTMLElement): boolean {
     if (element.offsetParent === null) return false
     if (element.closest(".gh-main-panel")) return false
 
-    const isContentEditable = element.getAttribute("contenteditable") === "true"
-    const isProseMirror = element.classList.contains("ProseMirror")
-    const isTextbox = element.getAttribute("role") === "textbox"
-
-    return isContentEditable || isProseMirror || isTextbox
+    return element.matches(this.config.sitePrivateSelectors.validTextarea)
   }
 
   insertPrompt(content: string): boolean {
@@ -1006,23 +988,20 @@ export class ClaudeAdapter extends SiteAdapter {
   }
 
   getConversationTitle(): string | null {
-    // 尝试获取侧边栏激活项的标题
-    // Selector: a[data-dd-action-name="sidebar-chat-item"] active??
-    // 暂时通过 URL 匹配来找 active
     const currentId = this.getSessionId()
-    if (currentId && currentId !== "default") {
-      const activeItem = document.querySelector(`a[href*="${currentId}"]`)
-      if (activeItem) {
-        return activeItem.querySelector("span.truncate")?.textContent?.trim() || null
-      }
-    }
-    return null
+    if (!currentId || currentId === "default") return null
+
+    const activeItem = this.findConversationRow(currentId)
+    if (!activeItem) return null
+    return this.getClaudeConversationTitleElement(activeItem)?.textContent?.trim() || null
   }
 
   private findClaudeScrollContainer(): HTMLElement | null {
     const conversationAnchor = Array.from(
-      document.querySelectorAll('.font-claude-response, [data-testid="user-message"]'),
-    ).find((element) => !element.closest(CLAUDE_DOCUMENT_ROOT_SELECTOR)) as HTMLElement | undefined
+      document.querySelectorAll(this.config.selectors.chatContent.join(", ")),
+    ).find((element) => !element.closest(this.config.sitePrivateSelectors.documentRoot)) as
+      | HTMLElement
+      | undefined
 
     const isScrollable = (element: HTMLElement | null): boolean => {
       if (!element) return false
@@ -1046,13 +1025,7 @@ export class ClaudeAdapter extends SiteAdapter {
       current = current.parentElement as HTMLElement | null
     }
 
-    const selectors = [
-      '[data-autoscroll-container="true"]',
-      "#main-content .overflow-y-scroll",
-      "#root .overflow-y-auto.overflow-x-hidden",
-    ]
-
-    for (const selector of selectors) {
+    for (const selector of this.config.selectors.scrollContainer) {
       const container = document.querySelector(selector) as HTMLElement | null
       if (isScrollable(container)) {
         return container
@@ -1092,7 +1065,7 @@ export class ClaudeAdapter extends SiteAdapter {
   }
 
   getChatContentSelectors(): string[] {
-    return ['div[data-testid="user-message"]', "div.font-claude-response"]
+    return [...this.config.selectors.chatContent]
   }
 
   private isClaudeDocumentPanelOpen(): boolean {
@@ -1100,30 +1073,33 @@ export class ClaudeAdapter extends SiteAdapter {
   }
 
   private getClaudeDocumentRoot(): HTMLElement | null {
-    return (Array.from(document.querySelectorAll(CLAUDE_DOCUMENT_ROOT_SELECTOR)).find(
-      (root) => !root.closest('[aria-hidden="true"]'),
+    const privateSelectors = this.config.sitePrivateSelectors
+    return (Array.from(document.querySelectorAll(privateSelectors.documentRoot)).find(
+      (root) => !root.closest(privateSelectors.hiddenAncestor),
     ) || null) as HTMLElement | null
   }
 
   private getClaudeDocumentMarkdownElement(): Element | null {
     return (
-      this.getClaudeDocumentRoot()?.querySelector(".standard-markdown, .progressive-markdown") ||
-      null
+      this.getClaudeDocumentRoot()?.querySelector(
+        this.config.sitePrivateSelectors.responseMarkdown,
+      ) || null
     )
   }
 
   private getClaudeDocumentPanelTitle(): string | null {
+    const privateSelectors = this.config.sitePrivateSelectors
     const root = this.getClaudeDocumentRoot()
-    const viewer = root?.closest('[data-skill-file-viewer="true"]')
+    const viewer = root?.closest(privateSelectors.documentViewer)
     let current = viewer?.parentElement || null
 
     while (current && current !== document.body) {
-      const panelTitle = current.querySelector("h2[title]")
+      const panelTitle = current.querySelector(privateSelectors.documentPanelTitle)
       const title =
         panelTitle?.getAttribute("title")?.trim() || panelTitle?.textContent?.trim() || ""
       if (title) return title
 
-      if (current.querySelector('button[aria-label="Go back"]')) break
+      if (current.querySelector(privateSelectors.documentBackButton)) break
       current = current.parentElement
     }
 
@@ -1135,12 +1111,14 @@ export class ClaudeAdapter extends SiteAdapter {
     if (panelTitle) return panelTitle
 
     const contentTitle =
-      this.getClaudeDocumentRoot()?.querySelector("h1")?.textContent?.trim() || ""
+      this.getClaudeDocumentRoot()
+        ?.querySelector(this.config.sitePrivateSelectors.documentContentTitle)
+        ?.textContent?.trim() || ""
     return contentTitle || null
   }
 
   private getClaudeArtifactCells(root: ParentNode = document): Element[] {
-    return Array.from(root.querySelectorAll(CLAUDE_ARTIFACT_CELL_SELECTOR))
+    return Array.from(root.querySelectorAll(this.config.sitePrivateSelectors.artifactCell))
   }
 
   private getClaudeDocumentArtifactCells(root: ParentNode = document): Element[] {
@@ -1152,24 +1130,29 @@ export class ClaudeAdapter extends SiteAdapter {
   }
 
   private getClaudeArtifactMetadata(artifact: Element): string {
-    return artifact.querySelector(".text-text-400")?.textContent?.trim() || ""
+    return (
+      artifact
+        .querySelector(this.config.sitePrivateSelectors.artifactMetadata)
+        ?.textContent?.trim() || ""
+    )
   }
 
   private getClaudeArtifactTitle(artifact: Element): string {
-    const title = artifact.querySelector(".line-clamp-1")?.textContent?.trim() || ""
+    const title =
+      artifact.querySelector(this.config.sitePrivateSelectors.artifactTitle)?.textContent?.trim() ||
+      ""
     return title || "Document"
   }
 
   private getClaudeArtifactButton(artifact: Element): HTMLElement | null {
-    const container =
-      artifact.closest(".group\\/artifact-block, [class*='group/artifact-block']") ||
-      artifact.parentElement
+    const privateSelectors = this.config.sitePrivateSelectors
+    const container = artifact.closest(privateSelectors.artifactContainer) || artifact.parentElement
     if (!container) return null
 
     const button =
       Array.from(container.children).find((child) => child.matches("button")) ||
-      container.querySelector('button[aria-label="View Document"]') ||
-      artifact.querySelector('button[aria-label="View Document"]')
+      container.querySelector(privateSelectors.artifactViewButton) ||
+      artifact.querySelector(privateSelectors.artifactViewButton)
     return button instanceof HTMLElement ? button : null
   }
 
@@ -1178,7 +1161,7 @@ export class ClaudeAdapter extends SiteAdapter {
       return artifact
     }
 
-    const snapshotRow = artifact.closest(CLAUDE_VIRTUAL_ROW_SELECTOR)
+    const snapshotRow = artifact.closest(this.config.sitePrivateSelectors.virtualRow)
     const messageIndex = snapshotRow ? this.parseClaudeVirtualMessageIndex(snapshotRow) : null
     if (!snapshotRow || messageIndex === null) return null
 
@@ -1284,7 +1267,9 @@ export class ClaudeAdapter extends SiteAdapter {
   private async closeClaudeDocumentPanel(): Promise<void> {
     if (!this.isClaudeDocumentPanelOpen()) return
 
-    const backButton = this.findClaudeDocumentPanelButton('button[aria-label="Go back"]')
+    const backButton = this.findClaudeDocumentPanelButton(
+      this.config.sitePrivateSelectors.documentBackButton,
+    )
     if (!(backButton instanceof HTMLElement)) {
       throw new Error("Claude document panel could not be closed: back button not found")
     }
@@ -1315,25 +1300,22 @@ export class ClaudeAdapter extends SiteAdapter {
   // ==================== 模型管理 ====================
 
   getModelName(): string | null {
-    // 尝试从模型选择器获取
-    const selectorBtn = document.querySelector('button[data-testid="model-selector-dropdown"]')
-    if (selectorBtn && selectorBtn.textContent) {
-      return selectorBtn.textContent.trim()
+    for (const selector of this.config.modelSwitcher.selectorButtonSelectors) {
+      const selectorButton = document.querySelector(selector)
+      const name = selectorButton?.textContent?.trim()
+      if (name) return name
     }
     return null
   }
 
   getModelSwitcherConfig(keyword: string): ModelSwitcherConfig {
     return {
+      ...this.config.modelSwitcher,
       targetModelKeyword: keyword,
-      selectorButtonSelectors: ['button[data-testid="model-selector-dropdown"]'],
-      menuItemSelector: '[role="menuitem"], [role="menuitemradio"]',
-      checkInterval: 1000,
-      maxAttempts: 20,
-      // 语言无关：通过 aria-haspopup 检测子菜单触发器
-      subMenuSelector: '[aria-haspopup="menu"]',
-      // 文字备选（多语言）
-      subMenuTriggers: ["more models", "更多模型"],
+      selectorButtonSelectors: [...this.config.modelSwitcher.selectorButtonSelectors],
+      subMenuTriggers: this.config.modelSwitcher.subMenuTriggers
+        ? [...this.config.modelSwitcher.subMenuTriggers]
+        : undefined,
     }
   }
 
@@ -1384,11 +1366,12 @@ export class ClaudeAdapter extends SiteAdapter {
 
     const role = element.getAttribute("role")
     const text = (element.textContent || "").toLowerCase()
+    const subMenuSelector = this.config.modelSwitcher.subMenuSelector
+    const subMenuTriggers = this.config.modelSwitcher.subMenuTriggers ?? []
     const isSubMenuTrigger =
       role === "menuitem" &&
-      (element.matches('[aria-haspopup="menu"]') ||
-        text.includes("more models") ||
-        text.includes("更多模型"))
+      ((subMenuSelector ? element.matches(subMenuSelector) : false) ||
+        subMenuTriggers.some((trigger) => text.includes(trigger.toLowerCase())))
     if (isSubMenuTrigger) return
 
     dispatchPointer("pointerdown")
@@ -1401,7 +1384,7 @@ export class ClaudeAdapter extends SiteAdapter {
   // ==================== 杂项 ====================
 
   getNewChatButtonSelectors(): string[] {
-    return ['a[data-dd-action-name="sidebar-new-item"]', 'a[href="/new"]']
+    return [...this.config.selectors.newChatButton]
   }
 
   getDefaultLockSettings(): { enabled: boolean; keyword: string } {
@@ -1425,16 +1408,17 @@ export class ClaudeAdapter extends SiteAdapter {
   }
 
   private getClaudeVirtualRows(root: ParentNode = document): HTMLElement[] {
-    return Array.from(root.querySelectorAll(CLAUDE_VIRTUAL_ROW_SELECTOR)).filter(
+    const privateSelectors = this.config.sitePrivateSelectors
+    return Array.from(root.querySelectorAll(privateSelectors.virtualRow)).filter(
       (element): element is HTMLElement =>
         element instanceof HTMLElement &&
         element.closest(`[${CLAUDE_EXPORT_ROOT_ATTR}]`) === null &&
-        element.closest(CLAUDE_VIRTUAL_SIZER_SELECTOR) !== null,
+        element.closest(privateSelectors.virtualSizer) !== null,
     )
   }
 
   private getClaudeVirtualMessageIndex(element: Element | null): number | null {
-    const row = element?.closest(CLAUDE_VIRTUAL_ROW_SELECTOR)
+    const row = element?.closest(this.config.sitePrivateSelectors.virtualRow)
     if (!row || row.closest(`[${CLAUDE_EXPORT_ROOT_ATTR}]`)) return null
 
     return this.parseClaudeVirtualMessageIndex(row)
@@ -1450,7 +1434,7 @@ export class ClaudeAdapter extends SiteAdapter {
 
   private getClaudeVirtualMessageCount(): number | null {
     for (const row of this.getClaudeVirtualRows()) {
-      const article = row.querySelector('[role="article"][aria-setsize]')
+      const article = row.querySelector(this.config.sitePrivateSelectors.virtualArticle)
       const rawSize = article?.getAttribute("aria-setsize")
       if (!rawSize || !/^\d+$/.test(rawSize)) continue
 
@@ -1463,7 +1447,7 @@ export class ClaudeAdapter extends SiteAdapter {
 
   private isClaudeVirtualConversation(): boolean {
     return (
-      document.querySelector(CLAUDE_VIRTUAL_SIZER_SELECTOR) !== null &&
+      document.querySelector(this.config.sitePrivateSelectors.virtualSizer) !== null &&
       this.getClaudeVirtualRows().length > 0
     )
   }
@@ -1812,8 +1796,8 @@ export class ClaudeAdapter extends SiteAdapter {
       ? Array.from(outlineRoot.querySelectorAll(userQuerySelector))
       : []
     const allResponses = showWordCount
-      ? Array.from(outlineRoot.querySelectorAll(".font-claude-response")).filter(
-          (response) => !response.closest(CLAUDE_DOCUMENT_ROOT_SELECTOR),
+      ? Array.from(outlineRoot.querySelectorAll(this.config.selectors.assistantResponse)).filter(
+          (response) => !response.closest(this.config.sitePrivateSelectors.documentRoot),
         )
       : []
     const textSignatureCache = new WeakMap<Node, string>()
@@ -1871,7 +1855,7 @@ export class ClaudeAdapter extends SiteAdapter {
 
           // 获取 markdown 内容（排除思维链）
           const markdownContent = response.querySelector(
-            ".standard-markdown, .progressive-markdown",
+            this.config.sitePrivateSelectors.responseMarkdown,
           )
           if (markdownContent) {
             const rawText = markdownContent.textContent?.trim() || ""
@@ -1887,8 +1871,8 @@ export class ClaudeAdapter extends SiteAdapter {
     // Claude 对话大纲只收 AI 回复里的标题；侧边栏、导航等页面标题不应进入对话大纲。
     const headings = Array.from(outlineRoot.querySelectorAll("h1, h2, h3, h4, h5, h6")).filter(
       (heading) =>
-        !heading.closest(CLAUDE_DOCUMENT_ROOT_SELECTOR) &&
-        heading.closest(".font-claude-response") !== null,
+        !heading.closest(this.config.sitePrivateSelectors.documentRoot) &&
+        heading.closest(this.config.selectors.assistantResponse) !== null,
     )
 
     headings.forEach((h, index) => {
@@ -1896,11 +1880,11 @@ export class ClaudeAdapter extends SiteAdapter {
       if (level > maxLevel) return
 
       // 跳过侧边栏分组标题
-      if (h.classList.contains("pointer-events-none")) return
+      if (h.matches(this.config.sitePrivateSelectors.outlineIgnoredHeading)) return
 
       // 跳过屏幕阅读器专用元素（如 "You said:" / "Claude responded:" 提示文本）
       // 使用类名定位而非文本匹配，以支持多语言
-      if (h.classList.contains("sr-only")) return
+      if (h.matches(this.config.sitePrivateSelectors.srOnly)) return
 
       const text = h.textContent?.trim() || ""
       if (!text) return
@@ -1926,7 +1910,7 @@ export class ClaudeAdapter extends SiteAdapter {
         }
 
         // 使用 Range 方法计算字数（排除思维链）
-        const responseContainer = h.closest(".font-claude-response")
+        const responseContainer = h.closest(this.config.selectors.assistantResponse)
         if (responseContainer) {
           const signature = [
             "heading",
@@ -1948,7 +1932,7 @@ export class ClaudeAdapter extends SiteAdapter {
 
     // 可选：包含用户问题
     if (includeUserQueries) {
-      const userQueries = outlineRoot.querySelectorAll('[data-testid="user-message"]')
+      const userQueries = outlineRoot.querySelectorAll(this.config.selectors.userQuery)
       userQueries.forEach((el) => {
         const text = el.textContent?.trim() || ""
         if (!text) return
@@ -2006,7 +1990,10 @@ export class ClaudeAdapter extends SiteAdapter {
   }
 
   private shouldSkipClaudeDocumentHeading(heading: Element): boolean {
-    return heading.classList.contains("sr-only") || this.isInRenderedMarkdownContainer(heading)
+    return (
+      heading.matches(this.config.sitePrivateSelectors.srOnly) ||
+      this.isInRenderedMarkdownContainer(heading)
+    )
   }
 
   private findClaudeDocumentHeading(level: number, text: string): Element | null {
@@ -2103,9 +2090,9 @@ export class ClaudeAdapter extends SiteAdapter {
 
     const headings = Array.from(row.querySelectorAll("h1, h2, h3, h4, h5, h6")).filter(
       (heading) =>
-        !heading.classList.contains("sr-only") &&
-        !heading.closest(CLAUDE_DOCUMENT_ROOT_SELECTOR) &&
-        heading.closest(".font-claude-response") !== null,
+        !heading.matches(this.config.sitePrivateSelectors.srOnly) &&
+        !heading.closest(this.config.sitePrivateSelectors.documentRoot) &&
+        heading.closest(this.config.selectors.assistantResponse) !== null,
     )
     return headings[entry.orderInMessage - 1] || null
   }
@@ -2128,58 +2115,54 @@ export class ClaudeAdapter extends SiteAdapter {
   // ==================== 生成状态 ====================
 
   isGenerating(): boolean {
-    // 方法1: 检查 Stop 按钮 (aria-label="Stop response")
-    const stopBtn = document.querySelector('button[aria-label="Stop response"]')
-    if (stopBtn) return true
-
-    // 方法2: 检查流式输出指示器
-    const streaming = document.querySelector('[class*="streaming"], [class*="typing"]')
-    if (streaming) return true
-
-    return false
+    return this.config.generating.existsSelectors.some(
+      (selector) => document.querySelector(selector) !== null,
+    )
   }
 
   getStopButtonSelectors(): string[] {
-    return ['button[aria-label="Stop response"]']
+    return [...this.config.selectors.stopButton]
   }
 
   getNetworkMonitorConfig(): NetworkMonitorConfig {
+    const { urlPatterns, urlPathEndsWith, requestBodyRules, ...config } = this.config.networkMonitor
     return {
-      // Claude API 请求模式
-      // 精确匹配路径以 /completion 结尾的端点（如 /api/organizations/.../chat_conversations/.../completion）
-      // 使用 urlPathEndsWith 而非 urlPatterns，避免误匹配 Claude.ai 的后台轮询请求（如 /api/chat_conversations、/api/feature_flags 等）
-      // 这些后台轮询 URL 也包含 "/api/"，若用 urlPatterns 的 OR 逻辑会不断触发误通知
-      urlPatterns: ["/api/"],
-      urlPathEndsWith: ["/completion"],
-      silenceThreshold: 500,
+      ...config,
+      urlPatterns: [...urlPatterns],
+      ...(urlPathEndsWith ? { urlPathEndsWith: [...urlPathEndsWith] } : {}),
+      ...(requestBodyRules
+        ? {
+            requestBodyRules: requestBodyRules.map((rule) => ({
+              ...rule,
+              metadata: { ...rule.metadata },
+            })),
+          }
+        : {}),
     }
   }
 
   // ==================== 导出功能 ====================
 
   getExportConfig(): ExportConfig {
-    return {
-      userQuerySelector: '[data-testid="user-message"]',
-      assistantResponseSelector: ".font-claude-response",
-      turnSelector: null, // Claude 不使用 turn 容器
-      useShadowDOM: false,
-    }
+    return { ...this.config.export }
   }
 
   getAssistantMermaidSupportMode() {
-    return "native" as const
+    return this.config.mermaidSupport
   }
 
   getLatestReplyText(): string | null {
-    const responses = Array.from(document.querySelectorAll(".font-claude-response")).filter(
-      (element) => !element.closest(CLAUDE_DOCUMENT_ROOT_SELECTOR),
-    )
+    const responses = Array.from(
+      document.querySelectorAll(this.config.selectors.assistantResponse),
+    ).filter((element) => !element.closest(this.config.sitePrivateSelectors.documentRoot))
     if (responses.length === 0) return null
 
     const lastResponse = responses[responses.length - 1]
 
     // 过滤掉Artifact卡片,只提取.standard-markdown或.progressive-markdown
-    const markdownContent = lastResponse.querySelector(".standard-markdown, .progressive-markdown")
+    const markdownContent = lastResponse.querySelector(
+      this.config.sitePrivateSelectors.responseMarkdown,
+    )
     if (markdownContent) {
       const markdown = htmlToMarkdown(markdownContent).trim()
       return markdown || markdownContent.textContent?.trim() || null
@@ -2190,7 +2173,7 @@ export class ClaudeAdapter extends SiteAdapter {
   }
 
   getResponseContainerSelector(): string {
-    return ".font-claude-response"
+    return this.config.selectors.responseContainer
   }
 
   async prepareConversationExport(context: ExportLifecycleContext): Promise<unknown> {
@@ -2379,7 +2362,7 @@ export class ClaudeAdapter extends SiteAdapter {
   // ==================== 用户问题处理 ====================
 
   getUserQuerySelector(): string {
-    return '[data-testid="user-message"]'
+    return this.config.selectors.userQuery
   }
 
   extractUserQueryText(element: Element): string {
@@ -2406,7 +2389,7 @@ export class ClaudeAdapter extends SiteAdapter {
     // 我们需要提取需要增强的 <p> 元素的文本
 
     // 检查是否有包含未渲染 Markdown 的 <p> 元素
-    const textParagraphs = element.querySelectorAll("p.whitespace-pre-wrap")
+    const textParagraphs = element.querySelectorAll(this.config.sitePrivateSelectors.userQueryText)
     if (textParagraphs.length === 0) {
       return ""
     }
@@ -2441,7 +2424,7 @@ export class ClaudeAdapter extends SiteAdapter {
       return false
     }
 
-    const textParagraphs = element.querySelectorAll("p.whitespace-pre-wrap")
+    const textParagraphs = element.querySelectorAll(this.config.sitePrivateSelectors.userQueryText)
     if (textParagraphs.length === 0) return false
 
     let hasChanges = false
@@ -2510,7 +2493,8 @@ export class ClaudeAdapter extends SiteAdapter {
   }
 
   private getClaudeUserMessageContainer(userMessage: Element): Element | null {
-    const bubble = userMessage.closest('[data-user-message-bubble="true"]')
+    const privateSelectors = this.config.sitePrivateSelectors
+    const bubble = userMessage.closest(privateSelectors.userMessageBubble)
     if (!bubble) return userMessage
 
     let best: Element | null = null
@@ -2518,11 +2502,11 @@ export class ClaudeAdapter extends SiteAdapter {
     while (
       current &&
       current !== document.body &&
-      !current.matches(".font-claude-response, main, [role='main']")
+      !current.matches(privateSelectors.userMessageBoundary)
     ) {
       if (current.querySelectorAll(this.getUserQuerySelector()).length > 1) break
       if (
-        current.querySelector(CLAUDE_USER_FILE_THUMBNAIL_SELECTOR) ||
+        current.querySelector(privateSelectors.userFileThumbnail) ||
         current.querySelector("img")
       ) {
         best = current
@@ -2537,11 +2521,12 @@ export class ClaudeAdapter extends SiteAdapter {
   private extractClaudeUserImageAttachments(container: Element): ClaudeUserAttachment[] {
     const images = Array.from(container.querySelectorAll("img")).filter(
       (node): node is HTMLImageElement =>
-        node instanceof HTMLImageElement && !node.closest(CLAUDE_DOCUMENT_ROOT_SELECTOR),
+        node instanceof HTMLImageElement &&
+        !node.closest(this.config.sitePrivateSelectors.documentRoot),
     )
 
     return images.flatMap((image) => {
-      if (image.closest(CLAUDE_USER_FILE_THUMBNAIL_SELECTOR)) return []
+      if (image.closest(this.config.sitePrivateSelectors.userFileThumbnail)) return []
 
       const source = normalizeExportAssetUrl(
         image.currentSrc || image.src || image.getAttribute("src") || "",
@@ -2561,7 +2546,9 @@ export class ClaudeAdapter extends SiteAdapter {
   }
 
   private extractClaudeUserFileAttachments(container: Element): ClaudeUserAttachment[] {
-    const files = Array.from(container.querySelectorAll(CLAUDE_USER_FILE_THUMBNAIL_SELECTOR))
+    const files = Array.from(
+      container.querySelectorAll(this.config.sitePrivateSelectors.userFileThumbnail),
+    )
 
     return files.flatMap((file) => {
       const name = this.extractClaudeUserFileName(file)
@@ -2849,9 +2836,9 @@ export class ClaudeAdapter extends SiteAdapter {
     const messages: ExportMessage[] = []
     const root = this.getOutlineRoot()
     const userMessages = Array.from(root.querySelectorAll(this.getUserQuerySelector()))
-    const assistantMessages = Array.from(root.querySelectorAll(".font-claude-response")).filter(
-      (element) => !element.closest(CLAUDE_DOCUMENT_ROOT_SELECTOR),
-    )
+    const assistantMessages = Array.from(
+      root.querySelectorAll(this.config.selectors.assistantResponse),
+    ).filter((element) => !element.closest(this.config.sitePrivateSelectors.documentRoot))
 
     const maxLen = Math.max(userMessages.length, assistantMessages.length)
     for (let index = 0; index < maxLen; index += 1) {
@@ -2893,8 +2880,11 @@ export class ClaudeAdapter extends SiteAdapter {
         if (content) messages.push({ role: "user", content })
       }
 
-      const assistantMessage = row.querySelector(".font-claude-response")
-      if (assistantMessage && !assistantMessage.closest(CLAUDE_DOCUMENT_ROOT_SELECTOR)) {
+      const assistantMessage = row.querySelector(this.config.selectors.assistantResponse)
+      if (
+        assistantMessage &&
+        !assistantMessage.closest(this.config.sitePrivateSelectors.documentRoot)
+      ) {
         const content = this.extractClaudeAssistantResponseTextWithDocuments(
           assistantMessage,
           collector,
@@ -2921,7 +2911,7 @@ export class ClaudeAdapter extends SiteAdapter {
     const blocks = this.getClaudeAssistantExportBlocks(element)
 
     blocks.forEach((block) => {
-      if (block.matches(CLAUDE_ARTIFACT_CELL_SELECTOR)) {
+      if (block.matches(this.config.sitePrivateSelectors.artifactCell)) {
         parts.push(this.formatClaudeArtifactExportContent(block, collector))
         return
       }
@@ -2945,20 +2935,16 @@ export class ClaudeAdapter extends SiteAdapter {
   }
 
   private getClaudeAssistantExportBlocks(element: Element): Element[] {
-    const candidates = Array.from(
-      element.querySelectorAll(
-        `${CLAUDE_RESPONSE_MARKDOWN_SELECTOR}, ${CLAUDE_ARTIFACT_CELL_SELECTOR}`,
-      ),
-    ).filter(
+    const privateSelectors = this.config.sitePrivateSelectors
+    const contentSelector = `${privateSelectors.responseMarkdown}, ${privateSelectors.artifactCell}`
+    const candidates = Array.from(element.querySelectorAll(contentSelector)).filter(
       (block) =>
-        !block.closest(CLAUDE_DOCUMENT_ROOT_SELECTOR) &&
-        (block.matches(CLAUDE_ARTIFACT_CELL_SELECTOR) || !this.isInsideClaudeThoughtBlock(block)),
+        !block.closest(privateSelectors.documentRoot) &&
+        (block.matches(privateSelectors.artifactCell) || !this.isInsideClaudeThoughtBlock(block)),
     )
 
     return candidates.filter((block) => {
-      const parentBlock = block.parentElement?.closest(
-        `${CLAUDE_RESPONSE_MARKDOWN_SELECTOR}, ${CLAUDE_ARTIFACT_CELL_SELECTOR}`,
-      )
+      const parentBlock = block.parentElement?.closest(contentSelector)
       return !parentBlock || !element.contains(parentBlock)
     })
   }
@@ -2969,7 +2955,9 @@ export class ClaudeAdapter extends SiteAdapter {
   ): Element {
     const sourceArtifacts = this.getClaudeArtifactCells(block)
     const clone = block.cloneNode(true) as Element
-    const artifacts = Array.from(clone.querySelectorAll(CLAUDE_ARTIFACT_CELL_SELECTOR))
+    const artifacts = Array.from(
+      clone.querySelectorAll(this.config.sitePrivateSelectors.artifactCell),
+    )
 
     artifacts.forEach((artifact, index) => {
       const sourceArtifact = sourceArtifacts[index] || artifact
@@ -3053,7 +3041,7 @@ export class ClaudeAdapter extends SiteAdapter {
   private restoreClaudeThoughtBlocksAfterExport(state: ClaudeExportLifecycleState): void {
     state.thoughtContainersExpandedForExport?.forEach((container) => {
       if (!container.isConnected) return
-      const button = container.querySelector(CLAUDE_THOUGHT_TOGGLE_SELECTOR)
+      const button = container.querySelector(this.config.sitePrivateSelectors.thoughtToggle)
       if (!(button instanceof HTMLElement)) return
       if (button.getAttribute("aria-expanded") !== "true") return
       this.simulateClick(button)
@@ -3061,31 +3049,34 @@ export class ClaudeAdapter extends SiteAdapter {
   }
 
   private getClaudeThoughtToggleButtons(root: ParentNode = document): HTMLElement[] {
-    return Array.from(root.querySelectorAll(CLAUDE_THOUGHT_TOGGLE_SELECTOR)).filter(
+    return Array.from(root.querySelectorAll(this.config.sitePrivateSelectors.thoughtToggle)).filter(
       (button): button is HTMLElement =>
         button instanceof HTMLElement && this.isClaudeThoughtToggleButton(button),
     )
   }
 
   private isClaudeThoughtToggleButton(button: HTMLElement): boolean {
-    if (!button.closest(".font-claude-response")) return false
+    if (!button.closest(this.config.selectors.assistantResponse)) return false
 
     const container = this.getClaudeThoughtBlockContainer(button)
     if (!container) return false
 
-    const statusText = container.querySelector(CLAUDE_THOUGHT_STATUS_SELECTOR)?.textContent?.trim()
+    const statusText = container
+      .querySelector(this.config.sitePrivateSelectors.thoughtStatus)
+      ?.textContent?.trim()
     return Boolean(statusText)
   }
 
   private getClaudeThoughtBlockContainer(element: Element): HTMLElement | null {
-    const response = element.closest(".font-claude-response")
+    const privateSelectors = this.config.sitePrivateSelectors
+    const response = element.closest(this.config.selectors.assistantResponse)
     let current = element.parentElement
 
     while (current && current !== response && current !== document.body) {
       const hasStatus = Array.from(current.children).some((child) =>
-        child.matches(CLAUDE_THOUGHT_STATUS_SELECTOR),
+        child.matches(privateSelectors.thoughtStatus),
       )
-      const hasToggle = current.querySelector(CLAUDE_THOUGHT_TOGGLE_SELECTOR) !== null
+      const hasToggle = current.querySelector(privateSelectors.thoughtToggle) !== null
       if (hasStatus && hasToggle) {
         return current
       }
@@ -3100,9 +3091,9 @@ export class ClaudeAdapter extends SiteAdapter {
   }
 
   private captureClaudeThoughtBlocksForExport(): void {
-    const responses = Array.from(document.querySelectorAll(".font-claude-response")).filter(
-      (element) => !element.closest(CLAUDE_DOCUMENT_ROOT_SELECTOR),
-    )
+    const responses = Array.from(
+      document.querySelectorAll(this.config.selectors.assistantResponse),
+    ).filter((element) => !element.closest(this.config.sitePrivateSelectors.documentRoot))
 
     responses.forEach((response, index) => {
       const blocks = this.extractClaudeThoughtBlockquotes(response)
@@ -3130,7 +3121,7 @@ export class ClaudeAdapter extends SiteAdapter {
     const cached = this.exportThoughtBlocks.get(element)
     if (cached) return cached
 
-    const response = element.closest(".font-claude-response")
+    const response = element.closest(this.config.selectors.assistantResponse)
     if (response) {
       const responseCached = this.exportThoughtBlocks.get(response)
       if (responseCached) return responseCached
@@ -3146,13 +3137,13 @@ export class ClaudeAdapter extends SiteAdapter {
   }
 
   private getClaudeAssistantResponseIndex(element: Element): number {
-    const response = element.matches(".font-claude-response")
+    const response = element.matches(this.config.selectors.assistantResponse)
       ? element
-      : element.closest(".font-claude-response")
+      : element.closest(this.config.selectors.assistantResponse)
     if (!response) return -1
 
-    return Array.from(document.querySelectorAll(".font-claude-response"))
-      .filter((candidate) => !candidate.closest(CLAUDE_DOCUMENT_ROOT_SELECTOR))
+    return Array.from(document.querySelectorAll(this.config.selectors.assistantResponse))
+      .filter((candidate) => !candidate.closest(this.config.sitePrivateSelectors.documentRoot))
       .indexOf(response)
   }
 
@@ -3170,7 +3161,9 @@ export class ClaudeAdapter extends SiteAdapter {
       if (!markdown) return
 
       const title =
-        container.querySelector(CLAUDE_THOUGHT_STATUS_SELECTOR)?.textContent?.trim() || ""
+        container
+          .querySelector(this.config.sitePrivateSelectors.thoughtStatus)
+          ?.textContent?.trim() || ""
       blocks.push(this.formatAsThoughtBlockquote(markdown, title))
     })
 
@@ -3178,9 +3171,10 @@ export class ClaudeAdapter extends SiteAdapter {
   }
 
   private extractClaudeThoughtMarkdown(container: Element): string {
+    const privateSelectors = this.config.sitePrivateSelectors
     const clone = container.cloneNode(true) as HTMLElement
     clone
-      .querySelectorAll(`${CLAUDE_THOUGHT_TOGGLE_SELECTOR}, ${CLAUDE_THOUGHT_STATUS_SELECTOR}, svg`)
+      .querySelectorAll(`${privateSelectors.thoughtToggle}, ${privateSelectors.thoughtStatus}, svg`)
       .forEach((node) => node.remove())
 
     return htmlToMarkdown(clone).trim() || this.extractTextWithLineBreaks(clone).trim()
@@ -3243,46 +3237,19 @@ export class ClaudeAdapter extends SiteAdapter {
 
   getConversationObserverConfig(): ConversationObserverConfig {
     return {
-      selector: 'a[data-dd-action-name="sidebar-chat-item"]',
-      shadow: false,
-      extractInfo: (el: Element): ConversationInfo | null => {
-        const href = el.getAttribute("href") || ""
-        const idMatch = href.match(/\/chat\/([a-f0-9-]+)/)
-        const id = idMatch ? idMatch[1] : ""
-        if (!id) return null
-
-        const titleSpan = el.querySelector("span.truncate")
-        const title = titleSpan?.textContent?.trim() || ""
-
-        // 判断是否收藏(与getConversationList逻辑一致)
-        let isPinned = false
-        const groupContainer = el.closest("div.flex.flex-col")
-        if (groupContainer) {
-          const h3 = groupContainer.querySelector("h3")
-          const isNonCollapsible = h3 && !h3.hasAttribute("role")
-          const ul = groupContainer.querySelector("ul")
-          const hasStarredClass = ul?.classList.contains("-mx-1.5")
-          isPinned = isNonCollapsible || hasStarredClass
-        }
-
-        return {
-          id,
-          title,
-          url: `https://claude.ai${href}`,
-          isActive: window.location.href.includes(id),
-          isPinned,
-        }
-      },
+      selector: this.config.conversation.itemSelector,
+      shadow: this.config.conversation.shadow ?? false,
+      extractInfo: (el: Element): ConversationInfo | null => this.extractClaudeConversationInfo(el),
       getTitleElement: (el: Element): Element | null => {
-        return el.querySelector("span.truncate")
+        return this.getClaudeConversationTitleElement(el)
       },
     }
   }
 
   navigateToConversation(id: string, url?: string): boolean {
-    const targetUrl = url || `https://claude.ai/chat/${id}`
-    const link = document.querySelector(`a[href*="${id}"]`) as HTMLAnchorElement
-    if (link) {
+    const targetUrl = url || new URL(this.getClaudeConversationPath(id), this.getNewTabUrl()).href
+    const link = this.findConversationRow(id)
+    if (link && this.config.conversation.navigationStrategy === "click-item") {
       link.click()
       return true
     }
@@ -3314,33 +3281,32 @@ export class ClaudeAdapter extends SiteAdapter {
   }
 
   getWidthSelectors() {
-    return CLAUDE_CONTENT_WIDTH_SELECTORS.map((selector) => ({
-      selector,
-      property: "max-width",
+    return this.config.widthSelectors.map((selector) => ({
+      ...selector,
       transformValue: (width: string) => this.normalizeContentMaxWidth(width),
-      extraCss: "width: 100% !important; min-width: 0 !important;",
     }))
   }
 
   getPanelAvoidanceConfig(): PanelAvoidanceConfig {
+    const privateSelectors = this.config.sitePrivateSelectors
     return {
-      scopeSelector: CLAUDE_PANEL_AVOIDANCE_SCOPE_SELECTOR,
-      obstacleSelectors: [CLAUDE_PANEL_OBSTACLE_SELECTOR],
+      scopeSelector: privateSelectors.panelScope,
+      obstacleSelectors: [privateSelectors.panelObstacle],
       widthSelectors: this.getWidthSelectors(),
       insetSelectors: [
         {
-          selector: CLAUDE_SCROLL_SAFE_AREA_SELECTOR,
+          selector: privateSelectors.panelScrollSafeArea,
           extraCss: "box-sizing: border-box; width: 100% !important; min-width: 0 !important;",
         },
         {
-          selector: CLAUDE_NEW_CHAT_SAFE_AREA_SELECTOR,
-          scopeSelector: CLAUDE_LAYOUT_SCOPE_SELECTOR,
+          selector: privateSelectors.panelNewChatSafeArea,
+          scopeSelector: privateSelectors.layoutScope,
           insetMode: "edge",
           extraCss: "box-sizing: border-box; width: 100% !important; min-width: 0 !important;",
         },
         {
-          selector: CLAUDE_CANVAS_PANEL_SCOPE_SELECTOR,
-          scopeSelector: CLAUDE_CANVAS_PANEL_SCOPE_SELECTOR,
+          selector: privateSelectors.panelCanvasScope,
+          scopeSelector: privateSelectors.panelCanvasScope,
           obstacleSelectors: [],
           applySide: "right",
           insetMode: "edge",
@@ -3354,19 +3320,29 @@ export class ClaudeAdapter extends SiteAdapter {
   }
 
   getZenModeConfig() {
-    return {
-      hide: ['nav:has(a[data-dd-action-name="sidebar-chat-item"])'],
-    }
+    return this.cloneZenModeConfig(this.config.zenMode)
   }
 
   getCleanModeConfig() {
+    return this.cloneZenModeConfig(this.config.cleanMode)
+  }
+
+  private cloneZenModeConfig(config: ZenModeConfig): ZenModeConfig {
+    const { hide, rootClass, styles } = config
     return {
-      hide: ['[data-disclaimer="true"]'],
+      ...(hide ? { hide: [...hide] } : {}),
+      ...(rootClass ? { rootClass: { ...rootClass } } : {}),
+      ...(styles ? { styles: styles.map((style) => ({ ...style })) } : {}),
     }
   }
 
   getUserQueryWidthSelectors() {
-    return [{ selector: '[data-testid="user-message"]', property: "max-width" }]
+    return [
+      {
+        selector: this.config.sitePrivateSelectors.userQueryWidth,
+        property: "max-width",
+      },
+    ]
   }
 
   // ==================== 主题切换 ====================
