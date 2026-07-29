@@ -112,8 +112,14 @@ export const ru = {
   sitePacksBindingDetectPool: "Общий пул обнаружения",
   sitePacksBindingPermissionDenied:
     "Разрешение для {origin} не предоставлено, поэтому привязка не сохранена.",
-  sitePacksBindingUserscriptHint:
-    "Сохранено. В менеджере userscript этот домен также нужно добавить в список совпадений скрипта.",
+  sitePacksUserscriptCoverageTitle: "Добавьте правила совпадения userscript",
+  sitePacksUserscriptCoverageDesc:
+    "В {manager} не хватает правил SitePack: {count}. Скопируйте правила ниже перед открытием этих сайтов.",
+  sitePacksUserscriptManagerUnknown: "Текущий менеджер userscript",
+  sitePacksUserscriptStepOpen: "Откройте настройки скрипта Ophel в менеджере userscript.",
+  sitePacksUserscriptStepAdd:
+    "Добавьте каждое скопированное правило в пользовательские совпадения (Tampermonkey: Настройки → Включения/исключения → Пользовательские совпадения).",
+  sitePacksUserscriptStepReload: "Сохраните настройки и перезагрузите каждый целевой сайт.",
   sitePacksBindingPackRequired: "Для явного режима выберите установленный SitePack.",
   sitePacksBindingDetectRequired:
     "Перед использованием режима обнаружения установите SitePack с правилами обнаружения.",

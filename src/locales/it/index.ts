@@ -114,8 +114,14 @@ export const it = {
   sitePacksBindingDetectPool: "Pool di rilevamento condiviso",
   sitePacksBindingPermissionDenied:
     "Il permesso per {origin} non è stato concesso, quindi il collegamento non è stato salvato.",
-  sitePacksBindingUserscriptHint:
-    "Salvato. I gestori userscript devono comunque includere questo dominio nell'elenco di corrispondenze dello script.",
+  sitePacksUserscriptCoverageTitle: "Aggiungi le regole di corrispondenza userscript",
+  sitePacksUserscriptCoverageDesc:
+    "In {manager} mancano {count} regole di corrispondenza SitePack. Copia le regole seguenti prima di aprire i siti interessati.",
+  sitePacksUserscriptManagerUnknown: "Il gestore userscript corrente",
+  sitePacksUserscriptStepOpen: "Apri le impostazioni dello script Ophel nel gestore userscript.",
+  sitePacksUserscriptStepAdd:
+    "Aggiungi ogni regola copiata alle corrispondenze personalizzate (Tampermonkey: Impostazioni → Inclusioni/Esclusioni → Corrispondenze utente).",
+  sitePacksUserscriptStepReload: "Salva le impostazioni e ricarica ogni sito di destinazione.",
   sitePacksBindingPackRequired: "Scegli un SitePack installato per la modalità pack esplicito.",
   sitePacksBindingDetectRequired:
     "Installa un SitePack con regole di rilevamento prima di usare questa modalità.",

@@ -175,6 +175,19 @@
 
 </details>
 
+<details>
+<summary><strong>FAQ: How do custom SitePack domains work in the userscript build?</strong></summary>
+
+Userscript managers cannot let Ophel add new `@match` entries automatically. After binding a custom origin under **Settings → SitePacks**, copy every rule shown in the userscript access notice and add it through your manager:
+
+- **Tampermonkey:** open the Ophel script, select **Settings → Includes/Excludes → User matches**, add the copied rules, and save.
+- **Violentmonkey:** open the Ophel script settings and add the rules under its custom `@match` rules.
+- **ScriptCat:** open the script settings and add the rules under user/custom match rules; the label can vary by ScriptCat version.
+
+Reload each target site after saving. Prefer manager-side custom rules over editing Ophel's metadata header directly: custom rules are retained when the userscript updates.
+
+</details>
+
 ## 🙌 Support Ophel Atlas
 
 <!-- supporters:start -->

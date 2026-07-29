@@ -11,7 +11,14 @@ import { resolveSitePackDescription, resolveSitePackName } from "~adapters/decla
 import { siteMatchPatternOriginPatternCovers } from "~adapters/declarative/match-pattern"
 import type { SitePackManifest } from "~adapters/declarative/types"
 import { SITE_PACK_MAX_BYTES, type SitePackValidationError } from "~adapters/declarative/validate"
-import { DeleteIcon, ImportIcon, InfoIcon, JSONFileIcon, RefreshIcon } from "~components/icons"
+import {
+  CopyIcon,
+  DeleteIcon,
+  ImportIcon,
+  InfoIcon,
+  JSONFileIcon,
+  RefreshIcon,
+} from "~components/icons"
 import { Button, Input, SelectDropdown, Switch, type SelectDropdownOption } from "~components/ui"
 import {
   INSTALLED_SITE_PACKS_STORAGE_KEY,
@@ -27,7 +34,11 @@ import {
   type SitePackOriginBinding,
   type SitePackOriginBindingsState,
 } from "~core/site-pack-origin-bindings"
-import { sitePackBindingOriginPattern } from "~core/site-pack-origin-references"
+import {
+  collapseCoveredSitePackOriginPatterns,
+  deriveSitePackOriginReferences,
+  sitePackBindingOriginPattern,
+} from "~core/site-pack-origin-references"
 import { SITE_PACK_ORIGIN_BINDINGS_STORAGE_KEY } from "~core/site-pack-storage-constants"
 import {
   REMOTE_CONFIG_STORAGE_KEY,
@@ -35,6 +46,10 @@ import {
   type RemoteConfigCheckResult,
 } from "~core/remote-config-types"
 import { platform, type SitePackRuntimeStatus } from "~platform"
+import {
+  getCurrentUserscriptMatchCoverageInfo,
+  userscriptMatchPatternsCoverOriginPattern,
+} from "~platform/userscript-match-coverage"
 import { PageTitle } from "~tabs/options/components"
 import { getCurrentLang, subscribeI18nChanges, t } from "~utils/i18n"
 
@@ -295,6 +310,7 @@ const SitePacksPage: React.FC = () => {
   const [bindingOrigin, setBindingOrigin] = useState("")
   const [bindingMode, setBindingMode] = useState<SitePackOriginBinding["mode"]>("explicit")
   const [bindingPackId, setBindingPackId] = useState("")
+  const [copiedUserscriptPattern, setCopiedUserscriptPattern] = useState<string | null>(null)
 
   const beginBusy = useCallback((key: string): boolean => {
     const current = busyKeysRef.current
@@ -362,6 +378,27 @@ const SitePacksPage: React.FC = () => {
       Object.entries(originBindings.bindings).sort(([left], [right]) => left.localeCompare(right)),
     [originBindings.bindings],
   )
+  const userscriptMatchInfo = useMemo(
+    () => (platform.type === "userscript" ? getCurrentUserscriptMatchCoverageInfo() : null),
+    [],
+  )
+  const requiredUserscriptOriginPatterns = useMemo(() => {
+    if (platform.type !== "userscript") return []
+    const references = deriveSitePackOriginReferences(installedPacks, originBindings)
+    return collapseCoveredSitePackOriginPatterns(
+      references.originReferences.map(({ originPattern }) => originPattern),
+    )
+  }, [installedPacks, originBindings])
+  const missingUserscriptOriginPatterns = useMemo(() => {
+    if (!userscriptMatchInfo) return []
+    return requiredUserscriptOriginPatterns.filter(
+      (originPattern) =>
+        !userscriptMatchPatternsCoverOriginPattern(
+          userscriptMatchInfo.matchPatterns,
+          originPattern,
+        ),
+    )
+  }, [requiredUserscriptOriginPatterns, userscriptMatchInfo])
   const canonicalFormOrigin = useMemo(() => {
     try {
       return canonicalizeSitePackBindingOrigin(bindingOrigin)
@@ -603,11 +640,7 @@ const SitePacksPage: React.FC = () => {
       await loadOriginBindings()
       shouldRollback = false
       setBindingOrigin(origin)
-      setFeedback({
-        tone: permission === "unsupported" ? "neutral" : "success",
-        message:
-          permission === "unsupported" ? t("sitePacksBindingUserscriptHint") : t("saveSuccess"),
-      })
+      setFeedback({ tone: "success", message: t("saveSuccess") })
     } catch (error) {
       if (shouldRollback && origin) {
         try {
@@ -642,6 +675,16 @@ const SitePacksPage: React.FC = () => {
       setOperationError(error)
     } finally {
       endBusy(key)
+    }
+  }
+
+  const handleCopyUserscriptPattern = async (pattern: string) => {
+    try {
+      await navigator.clipboard.writeText(pattern)
+      setCopiedUserscriptPattern(pattern)
+    } catch (error) {
+      console.error("Failed to copy userscript match pattern:", error)
+      setFeedback({ tone: "error", message: t("copyFailed") })
     }
   }
 
@@ -1387,12 +1430,49 @@ const SitePacksPage: React.FC = () => {
               {t("sitePacksBindingDetectUnavailable")}
             </p>
           )}
-          {platform.type === "userscript" && (
-            <p className="settings-pack-binding-hint warning">
-              {t("sitePacksBindingUserscriptHint")}
-            </p>
-          )}
         </form>
+
+        {userscriptMatchInfo && missingUserscriptOriginPatterns.length > 0 && (
+          <aside className="settings-pack-userscript-guide" role="status" aria-live="polite">
+            <div className="settings-pack-userscript-guide-header">
+              <InfoIcon size={18} />
+              <div>
+                <strong>{t("sitePacksUserscriptCoverageTitle")}</strong>
+                <p>
+                  {t("sitePacksUserscriptCoverageDesc", {
+                    count: String(missingUserscriptOriginPatterns.length),
+                    manager:
+                      userscriptMatchInfo.managerName ?? t("sitePacksUserscriptManagerUnknown"),
+                  })}
+                </p>
+              </div>
+            </div>
+
+            <div className="settings-pack-userscript-pattern-list">
+              {missingUserscriptOriginPatterns.map((pattern) => (
+                <div className="settings-pack-userscript-pattern" key={pattern}>
+                  <code>{pattern}</code>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    className="settings-pack-action-button settings-pack-userscript-copy"
+                    aria-label={`${t("copy")}: ${pattern}`}
+                    onClick={() => void handleCopyUserscriptPattern(pattern)}>
+                    <CopyIcon size={13} />
+                    {copiedUserscriptPattern === pattern ? t("copied") : t("copy")}
+                  </Button>
+                </div>
+              ))}
+            </div>
+
+            <ol className="settings-pack-userscript-steps">
+              <li>{t("sitePacksUserscriptStepOpen")}</li>
+              <li>{t("sitePacksUserscriptStepAdd")}</li>
+              <li>{t("sitePacksUserscriptStepReload")}</li>
+            </ol>
+          </aside>
+        )}
 
         {isBindingsLoading ? (
           <SitePackListSkeleton />

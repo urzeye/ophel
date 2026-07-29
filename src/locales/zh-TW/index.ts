@@ -101,7 +101,14 @@ export const zhTW = {
   sitePacksBindingDetectUnavailable: "已安裝的適配包宣告偵測規則後，才能使用偵測模式。",
   sitePacksBindingDetectPool: "共用偵測池",
   sitePacksBindingPermissionDenied: "未授予 {origin} 的權限，因此未儲存繫結。",
-  sitePacksBindingUserscriptHint: "已儲存。油猴腳本仍需在腳本管理器的比對規則中加入此網域。",
+  sitePacksUserscriptCoverageTitle: "補充油猴比對規則",
+  sitePacksUserscriptCoverageDesc:
+    "{manager} 尚未涵蓋 {count} 個適配包網域規則。請先複製下列規則，再開啟對應網站。",
+  sitePacksUserscriptManagerUnknown: "目前的腳本管理器",
+  sitePacksUserscriptStepOpen: "開啟腳本管理器中的 Ophel 腳本設定。",
+  sitePacksUserscriptStepAdd:
+    "將每個規則加入自訂比對項目（Tampermonkey：設定 → 包含/排除 → 使用者比對）。",
+  sitePacksUserscriptStepReload: "儲存設定，然後重新載入對應網站。",
   sitePacksBindingPackRequired: "請在指定適配包模式選擇一個已安裝的適配包。",
   sitePacksBindingDetectRequired: "請先安裝宣告偵測規則的適配包，再使用偵測模式。",
   sitePacksBindingReferences: "{count} 個引用",

@@ -108,8 +108,14 @@ export const en = {
   sitePacksBindingDetectPool: "Shared detect pool",
   sitePacksBindingPermissionDenied:
     "Permission for {origin} was not granted, so the binding was not saved.",
-  sitePacksBindingUserscriptHint:
-    "Saved. Userscript managers still need this domain in the script's match list.",
+  sitePacksUserscriptCoverageTitle: "Add userscript match rules",
+  sitePacksUserscriptCoverageDesc:
+    "{manager} is missing {count} SitePack match rules. Copy the rules below before opening those sites.",
+  sitePacksUserscriptManagerUnknown: "Your userscript manager",
+  sitePacksUserscriptStepOpen: "Open the Ophel script settings in your userscript manager.",
+  sitePacksUserscriptStepAdd:
+    "Add every copied rule under custom match rules (Tampermonkey: Settings → Includes/Excludes → User matches).",
+  sitePacksUserscriptStepReload: "Save the settings, then reload each target site.",
   sitePacksBindingPackRequired: "Choose an installed SitePack for explicit mode.",
   sitePacksBindingDetectRequired: "Install a SitePack with detect rules before using detect mode.",
   sitePacksBindingReferences: "{count} references",

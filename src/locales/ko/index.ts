@@ -108,8 +108,14 @@ export const ko = {
     "설치된 팩에 감지 규칙이 선언되어야 감지 모드를 사용할 수 있습니다.",
   sitePacksBindingDetectPool: "공유 감지 풀",
   sitePacksBindingPermissionDenied: "{origin} 권한이 허용되지 않아 연결을 저장하지 않았습니다.",
-  sitePacksBindingUserscriptHint:
-    "저장되었습니다. 사용자 스크립트 관리자에서도 이 도메인을 스크립트 일치 목록에 추가해야 합니다.",
+  sitePacksUserscriptCoverageTitle: "사용자 스크립트 일치 규칙 추가",
+  sitePacksUserscriptCoverageDesc:
+    "{manager}에 SitePack 일치 규칙 {count}개가 없습니다. 해당 사이트를 열기 전에 아래 규칙을 복사하세요.",
+  sitePacksUserscriptManagerUnknown: "현재 사용자 스크립트 관리자",
+  sitePacksUserscriptStepOpen: "사용자 스크립트 관리자에서 Ophel 스크립트 설정을 엽니다.",
+  sitePacksUserscriptStepAdd:
+    "복사한 모든 규칙을 사용자 지정 일치 규칙에 추가합니다(Tampermonkey: 설정 → 포함/제외 → 사용자 일치).",
+  sitePacksUserscriptStepReload: "설정을 저장한 뒤 각 대상 사이트를 다시 불러옵니다.",
   sitePacksBindingPackRequired: "팩 지정 모드에서 설치된 SitePack을 선택하세요.",
   sitePacksBindingDetectRequired:
     "감지 모드를 사용하기 전에 감지 규칙이 있는 SitePack을 설치하세요.",

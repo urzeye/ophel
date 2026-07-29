@@ -112,8 +112,14 @@ export const ja = {
   sitePacksBindingDetectPool: "共有検出プール",
   sitePacksBindingPermissionDenied:
     "{origin} の権限が許可されなかったため、割り当ては保存されませんでした。",
-  sitePacksBindingUserscriptHint:
-    "保存しました。ユーザースクリプト管理画面でも、このドメインをスクリプトのマッチリストに追加する必要があります。",
+  sitePacksUserscriptCoverageTitle: "ユーザースクリプトのマッチルールを追加",
+  sitePacksUserscriptCoverageDesc:
+    "{manager} には SitePack 用のマッチルールが {count} 件不足しています。対象サイトを開く前に、以下のルールをコピーしてください。",
+  sitePacksUserscriptManagerUnknown: "現在のユーザースクリプト管理ツール",
+  sitePacksUserscriptStepOpen: "ユーザースクリプト管理ツールで Ophel のスクリプト設定を開きます。",
+  sitePacksUserscriptStepAdd:
+    "コピーしたルールをカスタムマッチに追加します（Tampermonkey：設定 → Includes/Excludes → User matches）。",
+  sitePacksUserscriptStepReload: "設定を保存し、対象サイトを再読み込みします。",
   sitePacksBindingPackRequired: "パック指定モードでは、インストール済みパックを選択してください。",
   sitePacksBindingDetectRequired:
     "検出モードを使うには、検出ルールを持つ SitePack をインストールしてください。",

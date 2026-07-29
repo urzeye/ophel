@@ -114,8 +114,15 @@ export const es = {
   sitePacksBindingDetectPool: "Grupo de detección compartido",
   sitePacksBindingPermissionDenied:
     "No se concedió el permiso para {origin}, así que no se guardó el vínculo.",
-  sitePacksBindingUserscriptHint:
-    "Guardado. Los gestores de userscripts también deben incluir este dominio en la lista de coincidencias del script.",
+  sitePacksUserscriptCoverageTitle: "Añadir reglas de coincidencia del userscript",
+  sitePacksUserscriptCoverageDesc:
+    "A {manager} le faltan {count} reglas de coincidencia de SitePack. Copia las reglas siguientes antes de abrir esos sitios.",
+  sitePacksUserscriptManagerUnknown: "El gestor de userscripts actual",
+  sitePacksUserscriptStepOpen:
+    "Abre la configuración del script Ophel en el gestor de userscripts.",
+  sitePacksUserscriptStepAdd:
+    "Añade cada regla copiada a las coincidencias personalizadas (Tampermonkey: Configuración → Inclusiones/Exclusiones → Coincidencias de usuario).",
+  sitePacksUserscriptStepReload: "Guarda la configuración y vuelve a cargar cada sitio de destino.",
   sitePacksBindingPackRequired: "Elige un SitePack instalado para el modo explícito.",
   sitePacksBindingDetectRequired:
     "Instala un SitePack con reglas de detección antes de usar este modo.",

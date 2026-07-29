@@ -1464,6 +1464,91 @@
   color: var(--gh-text-danger, #b45309);
 }
 
+.settings-pack-userscript-guide {
+  display: grid;
+  gap: 12px;
+  margin: 0 0 16px;
+  padding: 14px;
+  border: 1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 32%, var(--gh-card-border));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 7%, var(--gh-bg-secondary));
+}
+
+.settings-pack-userscript-guide-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  color: var(--gh-text, #374151);
+}
+
+.settings-pack-userscript-guide-header > svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: var(--gh-primary, #4285f4);
+}
+
+.settings-pack-userscript-guide-header > div {
+  min-width: 0;
+}
+
+.settings-pack-userscript-guide-header strong {
+  display: block;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.settings-pack-userscript-guide-header p {
+  margin: 3px 0 0;
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.settings-pack-userscript-pattern-list {
+  display: grid;
+  gap: 8px;
+}
+
+.settings-pack-userscript-pattern {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.settings-pack-userscript-pattern code {
+  min-width: 0;
+  padding: 7px 9px;
+  border: 1px solid var(--gh-input-border, #d1d5db);
+  border-radius: 7px;
+  background: var(--gh-input-bg, var(--gh-bg, #ffffff));
+  color: var(--gh-text, #374151);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+
+.settings-pack-userscript-copy {
+  min-width: 74px;
+  min-height: 32px;
+  white-space: nowrap;
+}
+
+.settings-pack-userscript-copy:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 36%, transparent);
+  outline-offset: 2px;
+}
+
+.settings-pack-userscript-steps {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-left: 22px;
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
 .settings-pack-binding-list {
   border-top: 1px solid var(--gh-card-border, #e5e7eb);
 }
@@ -1696,8 +1781,13 @@
     grid-template-columns: 1fr;
   }
 
+  .settings-pack-userscript-pattern {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .settings-pack-binding-submit,
-  .settings-pack-binding-item > button {
+  .settings-pack-binding-item > button,
+  .settings-pack-userscript-copy {
     width: 100%;
   }
 }

@@ -113,8 +113,14 @@ export const de = {
   sitePacksBindingDetectPool: "Gemeinsamer Erkennungspool",
   sitePacksBindingPermissionDenied:
     "Die Berechtigung für {origin} wurde nicht erteilt; die Verknüpfung wurde nicht gespeichert.",
-  sitePacksBindingUserscriptHint:
-    "Gespeichert. Userscript-Manager müssen diese Domain weiterhin in die Match-Liste des Scripts aufnehmen.",
+  sitePacksUserscriptCoverageTitle: "Userscript-Match-Regeln hinzufügen",
+  sitePacksUserscriptCoverageDesc:
+    "In {manager} fehlen {count} SitePack-Match-Regeln. Kopiere die folgenden Regeln, bevor du die betroffenen Websites öffnest.",
+  sitePacksUserscriptManagerUnknown: "Der aktuelle Userscript-Manager",
+  sitePacksUserscriptStepOpen: "Öffne die Einstellungen des Ophel-Scripts im Userscript-Manager.",
+  sitePacksUserscriptStepAdd:
+    "Füge jede kopierte Regel zu den benutzerdefinierten Match-Regeln hinzu (Tampermonkey: Einstellungen → Einschließen/Ausschließen → Benutzer-Matches).",
+  sitePacksUserscriptStepReload: "Speichere die Einstellungen und lade jede Zielwebsite neu.",
   sitePacksBindingPackRequired: "Wähle für den expliziten Modus ein installiertes SitePack aus.",
   sitePacksBindingDetectRequired:
     "Installiere vor dem Erkennungsmodus ein SitePack mit Erkennungsregeln.",

@@ -99,7 +99,14 @@ export const zhCN = {
   sitePacksBindingDetectUnavailable: "安装的适配包声明探测规则后，才能使用探测模式。",
   sitePacksBindingDetectPool: "共享探测池",
   sitePacksBindingPermissionDenied: "未授予 {origin} 的权限，因此没有保存绑定。",
-  sitePacksBindingUserscriptHint: "已保存。油猴脚本仍需在脚本管理器的匹配规则中加入此域名。",
+  sitePacksUserscriptCoverageTitle: "补充油猴匹配规则",
+  sitePacksUserscriptCoverageDesc:
+    "{manager} 尚未覆盖 {count} 条适配包域名规则。请复制下列规则后再打开对应站点。",
+  sitePacksUserscriptManagerUnknown: "当前脚本管理器",
+  sitePacksUserscriptStepOpen: "打开脚本管理器中的 Ophel 脚本设置。",
+  sitePacksUserscriptStepAdd:
+    "将每条规则加入自定义匹配项（Tampermonkey：设置 → 包含/排除 → 用户匹配）。",
+  sitePacksUserscriptStepReload: "保存设置，然后重新加载对应站点。",
   sitePacksBindingPackRequired: "请为指定适配包模式选择一个已安装的适配包。",
   sitePacksBindingDetectRequired: "请先安装声明探测规则的适配包，再使用探测模式。",
   sitePacksBindingReferences: "{count} 条引用",

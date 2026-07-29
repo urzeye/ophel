@@ -115,8 +115,15 @@ export const fr = {
   sitePacksBindingDetectPool: "Pool de détection partagé",
   sitePacksBindingPermissionDenied:
     "L'autorisation pour {origin} n'a pas été accordée ; l'association n'a pas été enregistrée.",
-  sitePacksBindingUserscriptHint:
-    "Enregistré. Les gestionnaires userscript doivent aussi ajouter ce domaine à la liste des correspondances du script.",
+  sitePacksUserscriptCoverageTitle: "Ajouter les règles de correspondance du userscript",
+  sitePacksUserscriptCoverageDesc:
+    "Il manque {count} règles de correspondance SitePack dans {manager}. Copiez les règles ci-dessous avant d'ouvrir les sites concernés.",
+  sitePacksUserscriptManagerUnknown: "Le gestionnaire userscript actuel",
+  sitePacksUserscriptStepOpen:
+    "Ouvrez les paramètres du script Ophel dans le gestionnaire userscript.",
+  sitePacksUserscriptStepAdd:
+    "Ajoutez chaque règle copiée aux correspondances personnalisées (Tampermonkey : Paramètres → Inclusions/Exclusions → Correspondances utilisateur).",
+  sitePacksUserscriptStepReload: "Enregistrez les paramètres, puis rechargez chaque site cible.",
   sitePacksBindingPackRequired: "Choisissez un SitePack installé pour le mode explicite.",
   sitePacksBindingDetectRequired:
     "Installez un SitePack avec des règles de détection avant d'utiliser ce mode.",
