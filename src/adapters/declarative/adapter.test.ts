@@ -35,6 +35,43 @@ afterEach(() => {
 })
 
 describe("DeclarativeAdapter direct mappings", () => {
+  it("partitions SitePack data by runtime origin and claims only one exact static origin", () => {
+    const manifest = createMinimalManifest()
+    manifest.matches = ["https://minimal.example.com/chat/*", "https://minimal.example.com/share/*"]
+    vi.stubGlobal("window", {
+      location: new URL("https://minimal.example.com/chat/thread-1"),
+    })
+    const adapter = new DeclarativeAdapter(manifest)
+
+    expect(adapter.getSiteInstanceKey()).toBe("pack:minimal-pack@https://minimal.example.com")
+    expect(adapter.canClaimLegacySiteData()).toBe(true)
+  })
+
+  it("does not let ambiguous or bound SitePack instances claim shared legacy data", () => {
+    vi.stubGlobal("window", { location: new URL("https://chat.example.com/thread-1") })
+
+    const wildcardManifest = createMinimalManifest()
+    wildcardManifest.matches = ["https://*.example.com/*"]
+    expect(new DeclarativeAdapter(wildcardManifest).canClaimLegacySiteData()).toBe(false)
+
+    const multiOriginManifest = createMinimalManifest()
+    multiOriginManifest.matches = ["https://chat.example.com/*", "https://other.example.com/*"]
+    expect(new DeclarativeAdapter(multiOriginManifest).canClaimLegacySiteData()).toBe(false)
+
+    const exactManifest = createMinimalManifest()
+    exactManifest.matches = ["https://chat.example.com/*"]
+    expect(
+      new DeclarativeAdapter(exactManifest, {
+        explicitOrigin: "https://chat.example.com",
+      }).canClaimLegacySiteData(),
+    ).toBe(false)
+    expect(
+      new DeclarativeAdapter(exactManifest, {
+        detectedOrigin: "https://chat.example.com",
+      }).canClaimLegacySiteData(),
+    ).toBe(false)
+  })
+
   it("maps identity, localization, theme, and capabilities defensively", () => {
     const manifest = createFullManifest()
     const adapter = new DeclarativeAdapter(manifest)
