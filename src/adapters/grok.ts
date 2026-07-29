@@ -38,6 +38,8 @@ import {
   type PanelAvoidanceConfig,
   type SiteDeleteConversationResult,
 } from "./base"
+import { GROK_CONFIG, GROK_CONFIG_VERSION, type GrokSiteConfig } from "./grok-config"
+import type { BuiltinSiteConfig } from "./declarative"
 
 const PIN_ICON_PATH_SIGNATURES = [
   "M13 21L12 23L11 21V16H4.5V13.7129L4.65234 13.4697L6.95801 9.78027L6.41797 5.99512C6.11675 3.8866 7.75289 2 9.88281 2H14.1172C16.2471 2 17.8832 3.8866 17.582 5.99512L17.041 9.78027L19.5 13.7129V16H13V21Z",
@@ -65,14 +67,6 @@ const DELETE_KEYWORDS = [
 ]
 
 const CONFIRM_KEYWORDS = ["confirm", "ok", "yes", "确定", "確認", "确认", "確定", "check"]
-const GROK_APP_SCOPE_SELECTOR = "#grok-app-root"
-const GROK_LAYOUT_SCOPE_SELECTOR = "main[data-mcp-app-fullscreen-container]"
-const GROK_CONTENT_WIDTH_SELECTOR = '[class*="[--content-max-width:"]'
-const GROK_INLINE_CONTENT_WIDTH_SELECTOR = '[style*="--content-max-width"]'
-const GROK_CHAT_SAFE_AREA_SELECTOR = `${GROK_LAYOUT_SCOPE_SELECTOR} [class*="overflow-y-auto"][class*="px-gutter"]`
-const GROK_NEW_CHAT_LOGO_SAFE_AREA_SELECTOR = `${GROK_LAYOUT_SCOPE_SELECTOR} .flex.flex-col.items-center.justify-center.w-full.max-w-breakout:has(svg[variant="hero"])`
-const GROK_INPUT_SAFE_AREA_SELECTOR = `${GROK_LAYOUT_SCOPE_SELECTOR} .absolute.inset-x-0.bottom-0.mx-auto.max-w-breakout`
-const GROK_CANVAS_SAFE_AREA_SELECTOR = `${GROK_APP_SCOPE_SELECTOR} aside:has(iframe.w-full.flex-1)`
 
 interface GrokUserAttachment {
   kind: "image" | "file"
@@ -95,6 +89,8 @@ interface GrokShareResponseItem {
 }
 
 export class GrokAdapter extends SiteAdapter {
+  private config: GrokSiteConfig = GROK_CONFIG
+
   match(): boolean {
     // 匹配 grok.com 独立站点
     const hostname = window.location.hostname
@@ -109,6 +105,18 @@ export class GrokAdapter extends SiteAdapter {
     return "Grok"
   }
 
+  getBuiltinConfig(): GrokSiteConfig {
+    return GROK_CONFIG
+  }
+
+  getBuiltinConfigVersion(): number {
+    return GROK_CONFIG_VERSION
+  }
+
+  applyMergedConfig(config: BuiltinSiteConfig): void {
+    this.config = config as GrokSiteConfig
+  }
+
   getThemeColors(): { primary: string; secondary: string } {
     // Grok 官方主题色
     return { primary: "#f39c12", secondary: "#1e1f22" }
@@ -119,19 +127,11 @@ export class GrokAdapter extends SiteAdapter {
   }
 
   getQuickQuoteSupportMode() {
-    return "native" as const
+    return this.config.quickQuote
   }
 
   getNativeQuotePopoverSelectors(): string[] {
-    return [
-      // 根据实际 HTML 结构：圆角悬浮容器
-      ".absolute.bg-surface-l2.p-1.rounded-full.shadow-lg",
-      ".absolute.bg-surface-l2.p-1.rounded-full",
-      // SVG 图标特征（引用图标）
-      "button svg.lucide-text-quote",
-      // 按钮容器
-      ".absolute.bg-surface-l2.p-1.rounded-full button",
-    ]
+    return [...this.config.sitePrivateSelectors.nativeQuotePopover]
   }
 
   getNewTabUrl(): string {
@@ -161,15 +161,13 @@ export class GrokAdapter extends SiteAdapter {
   private reloadScheduled = false
 
   async loadAllConversations(): Promise<void> {
-    const sidebar = document.querySelector('[data-sidebar="content"]')
+    const sidebar = document.querySelector(this.config.sitePrivateSelectors.sidebarScrollContainer)
     if (!sidebar) return
 
     // 使用 CSS 类特征定位"查看全部"按钮，避免依赖文本
     // 特征：button, w-full, justify-start, text-xs, text-secondary
     // 这些 Tailwind 类名描述了按钮的视觉样式（全宽、左对齐、小字体、次要颜色），相对稳定
-    const viewAllBtn = sidebar.querySelector(
-      "button.w-full.justify-start.text-xs.text-secondary.font-semibold",
-    )
+    const viewAllBtn = sidebar.querySelector(this.config.sitePrivateSelectors.viewAllButton)
 
     if (viewAllBtn) {
       // 显示同步提示
@@ -182,7 +180,7 @@ export class GrokAdapter extends SiteAdapter {
       let cmdkList: Element | null = null
       for (let i = 0; i < 30; i++) {
         await new Promise((resolve) => setTimeout(resolve, 100))
-        cmdkList = document.querySelector('[cmdk-list-sizer=""], [cmdk-list]')
+        cmdkList = document.querySelector(this.config.sitePrivateSelectors.cmdkList)
         if (cmdkList) break
       }
 
@@ -227,13 +225,14 @@ export class GrokAdapter extends SiteAdapter {
   /** 缓存弹窗中的会话数据 */
   private cacheDialogConversations(): void {
     const cache = new Map<string, ConversationInfo>()
+    const conversation = this.config.conversation
 
     // 扫描所有 cmdk 对话框中的会话链接
-    const allLinks = document.querySelectorAll('a[href^="/c/"]')
+    const allLinks = document.querySelectorAll(conversation.itemSelector)
     allLinks.forEach((link) => {
       if (this.isCmdkActionItem(link)) return
 
-      const href = link.getAttribute("href")
+      const href = link.getAttribute(conversation.idFrom.attr ?? "href")
       if (!href) return
 
       const id = this.extractConversationIdFromHref(href)
@@ -245,11 +244,12 @@ export class GrokAdapter extends SiteAdapter {
       const isPinned = false
 
       // 识别 cmdk 对话框项
-      const cmdkItem = link.closest("[cmdk-item]")
+      const cmdkItem = link.closest(this.config.sitePrivateSelectors.cmdkItem)
       if (cmdkItem) {
-        const titleSpan = cmdkItem.querySelector("span.truncate")
+        const titleSpan = cmdkItem.querySelector(this.config.sitePrivateSelectors.cmdkTitle)
         title = titleSpan?.textContent?.trim() || title
-        isActive = cmdkItem.querySelector('[class*="border-border-l2"]') !== null
+        isActive =
+          cmdkItem.querySelector(this.config.sitePrivateSelectors.cmdkActiveIndicator) !== null
       } else {
         title = link.textContent?.trim() || title
       }
@@ -270,26 +270,30 @@ export class GrokAdapter extends SiteAdapter {
 
   getConversationList(): ConversationInfo[] {
     const conversationMap = new Map<string, ConversationInfo>()
+    const conversation = this.config.conversation
+    const privateSelectors = this.config.sitePrivateSelectors
 
     // 1. 优先扫描侧边栏（获取置顶状态）
-    const sidebar = document.querySelector('[data-sidebar="content"]')
+    const sidebar = document.querySelector(privateSelectors.sidebarScrollContainer)
     if (sidebar) {
-      const groups = sidebar.querySelectorAll('[data-sidebar="group"]')
+      const groups = sidebar.querySelectorAll(privateSelectors.sidebarGroup)
       groups.forEach((group) => {
         // 侧边栏中的链接
-        const links = group.querySelectorAll('a[href^="/c/"]')
+        const links = group.querySelectorAll(conversation.itemSelector)
         if (links.length === 0) return
 
         links.forEach((link) => {
-          const href = link.getAttribute("href")
+          const href = link.getAttribute(conversation.idFrom.attr ?? "href")
           if (!href) return
 
           const id = this.extractConversationIdFromHref(href)
           if (!id) return
           // 侧边栏标题提取：a > span
-          const titleSpan = link.querySelector("span.flex-1, span.truncate, span")
+          const titleSpan = conversation.titleSelector
+            ? link.querySelector(conversation.titleSelector)
+            : null
           const title = titleSpan?.textContent?.trim() || link.textContent?.trim() || "New Chat"
-          const isActive = link.classList.contains("bg-button-ghost-hover")
+          const isActive = conversation.activeMatch ? link.matches(conversation.activeMatch) : false
           const isPinned = this.isPinnedSidebarConversation(link)
 
           conversationMap.set(id, {
@@ -305,11 +309,11 @@ export class GrokAdapter extends SiteAdapter {
 
     // 2. 扫描所有会话链接（补充对话框中的会话）
     // 这能捕获"查看全部"对话框中的会话，无论选择器细节如何
-    const allLinks = document.querySelectorAll('a[href^="/c/"]')
+    const allLinks = document.querySelectorAll(conversation.itemSelector)
     allLinks.forEach((link) => {
       if (this.isCmdkActionItem(link)) return
 
-      const href = link.getAttribute("href")
+      const href = link.getAttribute(conversation.idFrom.attr ?? "href")
       if (!href) return
 
       const id = this.extractConversationIdFromHref(href)
@@ -323,13 +327,13 @@ export class GrokAdapter extends SiteAdapter {
 
       // 尝试识别 cmdk 对话框项
       // 结构: div[cmdk-item] > a (empty) + div > ... > span.truncate
-      const cmdkItem = link.closest("[cmdk-item]")
+      const cmdkItem = link.closest(privateSelectors.cmdkItem)
       if (cmdkItem) {
         // 对话框标题提取：cmdk-item 内部查找
-        const titleSpan = cmdkItem.querySelector("span.truncate")
+        const titleSpan = cmdkItem.querySelector(privateSelectors.cmdkTitle)
         title = titleSpan?.textContent?.trim() || title
         // 对话框激活状态：检查 current 标签
-        isActive = cmdkItem.querySelector('[class*="border-border-l2"]') !== null
+        isActive = cmdkItem.querySelector(privateSelectors.cmdkActiveIndicator) !== null
       } else {
         // 其他情况的回退提取
         title = link.textContent?.trim() || title
@@ -357,45 +361,53 @@ export class GrokAdapter extends SiteAdapter {
   }
 
   getSidebarScrollContainer(): Element | null {
-    // 侧边栏内容区域使用 data-sidebar="content" 属性
-    return document.querySelector('[data-sidebar="content"]')
+    return document.querySelector(this.config.sitePrivateSelectors.sidebarScrollContainer)
   }
 
   getZenModeConfig() {
+    const { hide, rootClass, styles } = this.config.zenMode
     return {
-      hide: [".text-sidebar-foreground", '[data-sidebar="sidebar"]'],
+      ...(hide ? { hide: [...hide] } : {}),
+      ...(rootClass ? { rootClass: { ...rootClass } } : {}),
+      ...(styles ? { styles: styles.map((style) => ({ ...style })) } : {}),
     }
   }
 
   getConversationObserverConfig(): ConversationObserverConfig | null {
+    const conversation = this.config.conversation
+    const privateSelectors = this.config.sitePrivateSelectors
+    const sidebarSelector = privateSelectors.sidebarScrollContainer
+    const itemSelector = `:is(${conversation.itemSelector})`
+
     return {
       // 同时匹配侧边栏和 cmdk 对话框中的会话链接
       // - 侧边栏：[data-sidebar="content"] a[href^="/c/"]
       // - 对话框：[cmdk-item][data-value^="conversation:"] a[href^="/c/"]
-      selector:
-        '[data-sidebar="content"] a[href^="/c/"], [cmdk-item][data-value^="conversation:"] a[href^="/c/"]',
+      selector: `${sidebarSelector} ${itemSelector}, ${privateSelectors.cmdkConversationItem} ${itemSelector}`,
       shadow: false,
       extractInfo: (el: Element) => {
-        const href = el.getAttribute("href")
+        const href = el.getAttribute(conversation.idFrom.attr ?? "href")
         if (!href) return null
         const id = this.extractConversationIdFromHref(href)
         if (!id) return null
 
         // 判断来源：侧边栏还是对话框
-        const isFromSidebar = !!el.closest('[data-sidebar="content"]')
-        const isFromCmdk = !!el.closest("[cmdk-item]")
+        const isFromSidebar = !!el.closest(sidebarSelector)
+        const isFromCmdk = !!el.closest(privateSelectors.cmdkItem)
 
         let title = ""
         let isPinned = false
 
         if (isFromSidebar) {
-          const titleSpan = el.querySelector("span.flex-1, span.truncate, span")
+          const titleSpan = conversation.titleSelector
+            ? el.querySelector(conversation.titleSelector)
+            : null
           title = titleSpan?.textContent?.trim() || el.textContent?.trim() || ""
           // 通过左侧置顶图标判断（未置顶项没有 icon）
           isPinned = this.isPinnedSidebarConversation(el)
         } else if (isFromCmdk) {
-          const cmdkItem = el.closest("[cmdk-item]")
-          const titleSpan = cmdkItem?.querySelector("span.truncate")
+          const cmdkItem = el.closest(privateSelectors.cmdkItem)
+          const titleSpan = cmdkItem?.querySelector(privateSelectors.cmdkTitle)
           title = titleSpan?.textContent?.trim() || ""
           isPinned = false // 对话框中无法判断置顶
         }
@@ -404,12 +416,12 @@ export class GrokAdapter extends SiteAdapter {
       },
       getTitleElement: (el: Element) => {
         // 优先从对话框 cmdk-item 中找
-        const cmdkItem = el.closest("[cmdk-item]")
+        const cmdkItem = el.closest(privateSelectors.cmdkItem)
         if (cmdkItem) {
-          return cmdkItem.querySelector("span.truncate") || el
+          return cmdkItem.querySelector(privateSelectors.cmdkTitle) || el
         }
         // 否则从侧边栏找
-        return el.querySelector("span.flex-1, span.truncate, span") || el
+        return (conversation.titleSelector && el.querySelector(conversation.titleSelector)) || el
       },
     }
   }
@@ -419,8 +431,10 @@ export class GrokAdapter extends SiteAdapter {
       window.location.href = url
       return true
     }
-    // 使用正确的 /c/ 路径格式
-    window.location.href = `/c/${id}`
+    window.location.href = this.config.conversation.urlTemplate.replace(
+      "{id}",
+      encodeURIComponent(id),
+    )
     return true
   }
 
@@ -703,16 +717,16 @@ export class GrokAdapter extends SiteAdapter {
   }
 
   private getViewAllButton(): HTMLElement | null {
-    const sidebar = document.querySelector('[data-sidebar="content"]')
+    const sidebar = document.querySelector(this.config.sitePrivateSelectors.sidebarScrollContainer)
     if (!sidebar) return null
 
     return sidebar.querySelector(
-      "button.w-full.justify-start.text-xs.text-secondary.font-semibold",
+      this.config.sitePrivateSelectors.viewAllButton,
     ) as HTMLElement | null
   }
 
   private getCmdkListElement(): HTMLElement | null {
-    return document.querySelector('[cmdk-list-sizer=""], [cmdk-list]') as HTMLElement | null
+    return document.querySelector(this.config.sitePrivateSelectors.cmdkList) as HTMLElement | null
   }
 
   private closeConversationDialog(): void {
@@ -786,21 +800,21 @@ export class GrokAdapter extends SiteAdapter {
   }
 
   private findConversationAnchors(id: string): HTMLAnchorElement[] {
-    const selector = [`a[href="/c/${id}"]`, `a[href$="/c/${id}"]`, `a[href*="/c/${id}?"]`].join(
-      ", ",
+    const elements = Array.from(document.querySelectorAll("a")).filter(
+      (element): element is HTMLAnchorElement => element instanceof HTMLAnchorElement,
     )
-
-    const elements = Array.from(document.querySelectorAll(selector)) as HTMLAnchorElement[]
+    const sourceAttribute = this.config.conversation.idFrom.attr ?? "href"
     return elements.filter(
-      (element) => this.extractConversationIdFromHref(element.getAttribute("href")) === id,
+      (element) => this.extractConversationIdFromHref(element.getAttribute(sourceAttribute)) === id,
     )
   }
 
   private getConversationItemContainer(anchor: HTMLAnchorElement): HTMLElement {
+    const privateSelectors = this.config.sitePrivateSelectors
     const candidates = [
-      anchor.closest("[cmdk-item]"),
-      anchor.closest('[data-sidebar="menu-button"]'),
-      anchor.closest('[data-sidebar="menu-item"]'),
+      anchor.closest(privateSelectors.cmdkItem),
+      anchor.closest(privateSelectors.sidebarMenuButton),
+      anchor.closest(privateSelectors.sidebarMenuItem),
       anchor.closest("li"),
       anchor.parentElement,
       anchor,
@@ -880,11 +894,12 @@ export class GrokAdapter extends SiteAdapter {
 
   private getScopedActionContainers(item: HTMLElement): ParentNode[] {
     const result: ParentNode[] = [item]
+    const privateSelectors = this.config.sitePrivateSelectors
     const maybeContainers = [
       item.parentElement,
-      item.closest("[cmdk-item]"),
-      item.closest('[role="dialog"]'),
-      item.closest("[cmdk-root]"),
+      item.closest(privateSelectors.cmdkItem),
+      item.closest(privateSelectors.actionDialog),
+      item.closest(privateSelectors.cmdkRoot),
       this.getCmdkListElement(),
     ]
 
@@ -1000,7 +1015,7 @@ export class GrokAdapter extends SiteAdapter {
 
   private getIconSignal(element: HTMLElement): string {
     const iconNodes = Array.from(
-      element.querySelectorAll("svg, path, use, [data-icon], [class*='icon'], [aria-label]"),
+      element.querySelectorAll(this.config.sitePrivateSelectors.actionIconNodes),
     ) as HTMLElement[]
 
     const parts = iconNodes.map((node) => {
@@ -1041,25 +1056,25 @@ export class GrokAdapter extends SiteAdapter {
   private extractConversationIdFromHref(href: string | null): string | null {
     if (!href) return null
 
-    const match = href.match(/\/c\/([a-zA-Z0-9-]+)/)
+    const match = href.match(new RegExp(this.config.conversation.idFrom.regex))
     return match ? match[1] : null
   }
 
   private isPinnedSidebarConversation(element: Element): boolean {
-    if (!element.closest('[data-sidebar="content"]')) return false
+    if (!element.closest(this.config.sitePrivateSelectors.sidebarScrollContainer)) return false
 
-    const anchor = element.closest('a[href^="/c/"]') ?? element
+    const anchor = element.closest(this.config.conversation.itemSelector) ?? element
     if (!this.hasPinnedIcon(anchor)) return false
 
-    const item = anchor.closest('[data-sidebar="menu-item"]')
-    const menu = anchor.closest('[data-sidebar="menu"]')
+    const item = anchor.closest(this.config.sitePrivateSelectors.sidebarMenuItem)
+    const menu = anchor.closest(this.config.sitePrivateSelectors.sidebarMenu)
     if (!item || !menu) return true
 
     return this.isPinnedSectionItem(item)
   }
 
   private hasPinnedIcon(anchor: Element): boolean {
-    const icon = anchor.querySelector('[data-sidebar="icon"] svg')
+    const icon = anchor.querySelector(this.config.sitePrivateSelectors.sidebarIcon)
     if (!icon) return false
     if (!this.isDomElementVisible(icon)) return false
 
@@ -1076,7 +1091,7 @@ export class GrokAdapter extends SiteAdapter {
   private isPinnedSectionItem(item: Element): boolean {
     let sibling = item.previousElementSibling
     while (sibling) {
-      if (!sibling.matches('[data-sidebar="menu-item"]')) {
+      if (!sibling.matches(this.config.sitePrivateSelectors.sidebarMenuItem)) {
         return false
       }
       sibling = sibling.previousElementSibling
@@ -1085,13 +1100,13 @@ export class GrokAdapter extends SiteAdapter {
   }
 
   private isCmdkActionItem(element: Element): boolean {
-    const cmdkItem = element.closest("[cmdk-item]")
+    const cmdkItem = element.closest(this.config.sitePrivateSelectors.cmdkItem)
     if (!cmdkItem) return false
 
     const itemValue = (cmdkItem.getAttribute("data-value") || "").toLowerCase()
     if (itemValue.startsWith("action:")) return true
 
-    const group = cmdkItem.closest("[cmdk-group]")
+    const group = cmdkItem.closest(this.config.sitePrivateSelectors.cmdkGroup)
     if (!group) return false
 
     const groupValue = (group.getAttribute("data-value") || "").replace(/\s+/g, "").toLowerCase()
@@ -1131,17 +1146,21 @@ export class GrokAdapter extends SiteAdapter {
       return matched.title.trim()
     }
 
-    const activeLink = document.querySelector(
-      `[data-sidebar="content"] a[href="/c/${sessionId}"], a[href="/c/${sessionId}"]`,
-    )
+    const anchors = this.findConversationAnchors(sessionId)
+    const activeLink =
+      anchors.find((anchor) =>
+        anchor.closest(this.config.sitePrivateSelectors.sidebarScrollContainer),
+      ) || anchors[0]
     if (!activeLink) return null
 
-    const title = activeLink.querySelector("span.flex-1, span.truncate, span")?.textContent?.trim()
+    const title = this.config.conversation.titleSelector
+      ? activeLink.querySelector(this.config.conversation.titleSelector)?.textContent?.trim()
+      : ""
     return title || activeLink.textContent?.trim() || null
   }
 
   private getConversationTitleFromPage(): string | null {
-    const titleEl = document.querySelector(".conversation-title")
+    const titleEl = document.querySelector(this.config.sitePrivateSelectors.conversationTitle)
     const name = titleEl?.textContent?.trim()
     return name || null
   }
@@ -1174,30 +1193,24 @@ export class GrokAdapter extends SiteAdapter {
   }
 
   getNewChatButtonSelectors(): string[] {
-    // 新对话按钮通常在侧边栏顶部
-    return [
-      'a[href="/"]',
-      '[data-sidebar="header"] a',
-      'button[aria-label*="新"]',
-      'button[aria-label*="New"]',
-    ]
+    return [...this.config.selectors.newChatButton]
   }
 
   getLatestReplyText(): string | null {
-    // AI 回复：没有 rounded-br-lg 的 .message-bubble（用户消息有此类）
-    const aiMessages = document.querySelectorAll(".message-bubble:not(.rounded-br-lg)")
+    const aiMessages = document.querySelectorAll(this.config.selectors.assistantResponse)
     if (aiMessages.length === 0) return null
 
     // 获取最后一个 AI 回复
     const lastMessage = aiMessages[aiMessages.length - 1]
 
-    // 从 .response-content-markdown 提取内容
-    const contentContainer = lastMessage.querySelector(".response-content-markdown")
+    const contentContainer = lastMessage.querySelector(
+      this.config.sitePrivateSelectors.responseMarkdown,
+    )
     if (contentContainer) {
       const clone = contentContainer.cloneNode(true) as HTMLElement
-      clone
-        .querySelectorAll('button, [role="button"], svg, [aria-hidden="true"]')
-        .forEach((node) => node.remove())
+      clone.querySelectorAll(this.config.sitePrivateSelectors.exportDecoration).forEach((node) => {
+        node.remove()
+      })
 
       const markdown = htmlToMarkdown(clone).trim()
       if (markdown) {
@@ -1233,42 +1246,35 @@ export class GrokAdapter extends SiteAdapter {
     // Grok 使用 CSS 变量 --content-max-width 控制主内容区域宽度
     // 该变量定义在包含响应式断点的外层容器上。
     // 不能命中内部的 max-w-[--content-max-width] 消费节点，否则会造成最新消息宽度异常收缩。
-    return [
-      {
-        selector: GROK_CONTENT_WIDTH_SELECTOR,
-        property: "--content-max-width",
-        transformValue: (width) => this.normalizeContentMaxWidth(width),
-      },
-      {
-        selector: GROK_INLINE_CONTENT_WIDTH_SELECTOR,
-        property: "--content-max-width",
-        transformValue: (width) => this.normalizeContentMaxWidth(width),
-      },
-    ]
+    return this.config.widthSelectors.map((selector) => ({
+      ...selector,
+      transformValue: (width: string) => this.normalizeContentMaxWidth(width),
+    }))
   }
 
   getPanelAvoidanceConfig(): PanelAvoidanceConfig {
+    const privateSelectors = this.config.sitePrivateSelectors
     return {
-      scopeSelector: GROK_LAYOUT_SCOPE_SELECTOR,
+      scopeSelector: privateSelectors.panelAvoidanceScope,
       widthSelectors: this.getWidthSelectors(),
       insetSelectors: [
         {
-          selector: GROK_CHAT_SAFE_AREA_SELECTOR,
+          selector: privateSelectors.chatSafeArea,
           extraCss: "box-sizing: border-box; width: 100% !important; min-width: 0 !important;",
         },
         {
-          selector: GROK_NEW_CHAT_LOGO_SAFE_AREA_SELECTOR,
+          selector: privateSelectors.newChatLogoSafeArea,
           extraCss:
             "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
         },
         {
-          selector: GROK_INPUT_SAFE_AREA_SELECTOR,
+          selector: privateSelectors.inputSafeArea,
           extraCss:
             "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
         },
         {
-          selector: GROK_CANVAS_SAFE_AREA_SELECTOR,
-          scopeSelector: GROK_APP_SCOPE_SELECTOR,
+          selector: privateSelectors.canvasSafeArea,
+          scopeSelector: privateSelectors.appLayoutScope,
           applySide: "right",
           insetMode: "edge",
           extraCss:
@@ -1285,7 +1291,7 @@ export class GrokAdapter extends SiteAdapter {
     // 默认有 max-w-[100%] 和响应式 @sm/mainview:max-w-[90%]
     return [
       {
-        selector: ".message-bubble.rounded-br-lg",
+        selector: this.config.selectors.userQuery,
         property: "max-width",
         // LayoutManager 默认会为用户提问追加左右 auto 居中。
         // Grok 的用户气泡需要保持右对齐，否则加宽后会跑到中间。
@@ -1298,22 +1304,15 @@ export class GrokAdapter extends SiteAdapter {
   // ==================== 输入框操作 ====================
 
   getTextareaSelectors(): string[] {
-    // Grok 使用 Tiptap 富文本编辑器
-    return [
-      ".tiptap.ProseMirror[contenteditable='true']",
-      '[contenteditable="true"].ProseMirror',
-      ".query-bar [contenteditable='true']",
-      "form [contenteditable='true']",
-    ]
+    return [...this.config.selectors.textarea]
   }
 
   getSubmitButtonSelectors(): string[] {
-    // 发送按钮是 type="submit" 的按钮
-    return [
-      'button[type="submit"]',
-      'form button[type="submit"]',
-      '.query-bar button[type="submit"]',
-    ]
+    return [...this.config.selectors.submitButton]
+  }
+
+  getSubmitKeyConfig(): { key: "Enter" | "Ctrl+Enter" } {
+    return { key: this.config.input.submitKey ?? "Enter" }
   }
 
   isValidTextarea(element: HTMLElement): boolean {
@@ -1375,10 +1374,12 @@ export class GrokAdapter extends SiteAdapter {
 
   getScrollContainer(): HTMLElement | null {
     // 主内容区域的滚动容器
-    const main = document.querySelector("main")
+    const main = document.querySelector(this.config.selectors.responseContainer)
     if (main) {
       // 查找可滚动的子元素
-      const scrollable = main.querySelector('[class*="overflow-auto"]') as HTMLElement
+      const scrollable = main.querySelector(
+        this.config.sitePrivateSelectors.mainScrollContainer,
+      ) as HTMLElement
       if (scrollable && scrollable.scrollHeight > scrollable.clientHeight) {
         return scrollable
       }
@@ -1390,7 +1391,7 @@ export class GrokAdapter extends SiteAdapter {
 
     // 回退：查找任何大的可滚动容器
     const containers = document.querySelectorAll(
-      '[class*="overflow-y-auto"], [class*="overflow-auto"]',
+      this.config.sitePrivateSelectors.fallbackScrollContainers,
     )
     for (const container of Array.from(containers)) {
       const el = container as HTMLElement
@@ -1403,24 +1404,23 @@ export class GrokAdapter extends SiteAdapter {
   }
 
   getResponseContainerSelector(): string {
-    return "main"
+    return this.config.selectors.responseContainer
   }
 
   getChatContentSelectors(): string[] {
-    // 消息内容使用 prose 类名
-    return ['[class*="prose"]', '[dir="ltr"]']
+    return [...this.config.selectors.chatContent]
   }
 
   // ==================== 大纲提取 ====================
 
   getUserQuerySelector(): string {
-    // 用户消息气泡特征：.message-bubble 且有右下角圆角 rounded-br-lg
-    // 这是区分用户消息和 AI 消息的关键特征
-    return ".message-bubble.rounded-br-lg"
+    return this.config.selectors.userQuery
   }
 
   private cloneUserQuerySource(element: Element): HTMLElement | null {
-    const markdownContainer = element.querySelector(".response-content-markdown")
+    const markdownContainer = element.querySelector(
+      this.config.sitePrivateSelectors.responseMarkdown,
+    )
     if (!markdownContainer) {
       return null
     }
@@ -1432,19 +1432,11 @@ export class GrokAdapter extends SiteAdapter {
   }
 
   private isLikelyInlineCodeSpan(element: HTMLElement): boolean {
-    if (element.tagName.toLowerCase() !== "span") {
-      return false
-    }
-
     if (element.childElementCount > 0) {
       return false
     }
 
-    const className = element.getAttribute("class") || ""
-    const hasMonoFont = /(^|\s)!?font-mono(\s|$)/.test(className)
-    const hasCodeChipShape = /(^|\s)rounded-sm(\s|$)/.test(className)
-
-    return hasMonoFont && hasCodeChipShape
+    return element.matches(this.config.sitePrivateSelectors.inlineCodeSpan)
   }
 
   private normalizeUserQueryMarkdownSource(source: HTMLElement): HTMLElement {
@@ -1520,14 +1512,18 @@ export class GrokAdapter extends SiteAdapter {
   }
 
   private getGrokExportMessageItems(root: ParentNode): Element[] {
-    const responseContainers = Array.from(root.querySelectorAll('[id^="response-"]')).filter(
-      (element) => element.querySelector(".message-bubble") && !element.closest(".gh-main-panel"),
+    const privateSelectors = this.config.sitePrivateSelectors
+    const responseContainers = Array.from(
+      root.querySelectorAll(privateSelectors.responseRoot),
+    ).filter(
+      (element) =>
+        element.querySelector(privateSelectors.messageBubble) && !element.closest(".gh-main-panel"),
     )
     if (responseContainers.length > 0) {
       return responseContainers
     }
 
-    return Array.from(root.querySelectorAll(".message-bubble")).filter(
+    return Array.from(root.querySelectorAll(privateSelectors.messageBubble)).filter(
       (element) => !element.closest(".gh-main-panel"),
     )
   }
@@ -1539,7 +1535,7 @@ export class GrokAdapter extends SiteAdapter {
   }
 
   private findGrokAssistantMessageRoot(element: Element): Element | null {
-    const selector = ".message-bubble:not(.rounded-br-lg)"
+    const selector = this.config.selectors.assistantResponse
     if (element.matches(selector)) return element
     return element.querySelector(selector)
   }
@@ -1587,9 +1583,10 @@ export class GrokAdapter extends SiteAdapter {
   }
 
   private extractGrokAssistantBodyMarkdown(element: Element): string {
-    const source = element.matches(".response-content-markdown")
+    const responseMarkdown = this.config.sitePrivateSelectors.responseMarkdown
+    const source = element.matches(responseMarkdown)
       ? element
-      : element.querySelector(".response-content-markdown") || element
+      : element.querySelector(responseMarkdown) || element
     const clone = source.cloneNode(true) as HTMLElement
 
     this.removeGrokExportDecorations(clone, { removeImages: true })
@@ -1604,13 +1601,7 @@ export class GrokAdapter extends SiteAdapter {
     root: HTMLElement,
     options: { removeImages?: boolean } = {},
   ): void {
-    const selectors = [
-      "button",
-      '[role="button"]',
-      "svg",
-      '[aria-hidden="true"]',
-      ".gh-user-query-markdown",
-    ]
+    const selectors = [this.config.sitePrivateSelectors.exportDecoration, ".gh-user-query-markdown"]
     if (options.removeImages) {
       selectors.push("img", "picture", "video")
     }
@@ -1620,9 +1611,7 @@ export class GrokAdapter extends SiteAdapter {
 
   private removeGrokUserAttachmentNodes(root: HTMLElement): void {
     const candidates = Array.from(
-      root.querySelectorAll(
-        'a[href], [role="group"], [aria-label], [title], [class*="file"], [class*="attachment"]',
-      ),
+      root.querySelectorAll(this.config.sitePrivateSelectors.attachmentCardCandidates),
     )
 
     candidates.forEach((node) => {
@@ -1695,7 +1684,7 @@ export class GrokAdapter extends SiteAdapter {
   }
 
   private extractGrokResponseId(element: Element): string {
-    const response = element.closest('[id^="response-"]')
+    const response = element.closest(this.config.sitePrivateSelectors.responseRoot)
     const id = response?.id || (element.id.startsWith("response-") ? element.id : "")
     return id.replace(/^response-/, "")
   }
@@ -1708,12 +1697,14 @@ export class GrokAdapter extends SiteAdapter {
       return attachmentScope
     }
 
-    const responseContainer = element.closest('[id^="response-"]')
+    const responseContainer = element.closest(this.config.sitePrivateSelectors.responseRoot)
     if (responseContainer instanceof HTMLElement) {
       return responseContainer
     }
 
-    const nearestMessageContainer = element.closest(".message-bubble")?.parentElement
+    const nearestMessageContainer = element.closest(
+      this.config.sitePrivateSelectors.messageBubble,
+    )?.parentElement
     if (nearestMessageContainer instanceof HTMLElement) {
       return nearestMessageContainer
     }
@@ -1746,9 +1737,7 @@ export class GrokAdapter extends SiteAdapter {
 
   private extractGrokUserFileAttachments(message: Element): GrokUserAttachment[] {
     const cards = Array.from(
-      message.querySelectorAll(
-        'a[href], [role="group"], [aria-label], [title], [class*="file"], [class*="attachment"]',
-      ),
+      message.querySelectorAll(this.config.sitePrivateSelectors.attachmentCardCandidates),
     ).filter((node) => this.isLikelyGrokAttachmentCard(node, message))
 
     return cards.flatMap((card) => {
@@ -1775,7 +1764,7 @@ export class GrokAdapter extends SiteAdapter {
     if (card === message) return false
     if (card.closest(".gh-user-query-markdown")) return false
     if (card.closest("pre, code")) return false
-    if (card.closest(".response-content-markdown p")) return false
+    if (card.closest(`${this.config.sitePrivateSelectors.responseMarkdown} p`)) return false
 
     const name = this.extractGrokAttachmentCardName(card)
     if (!name) return false
@@ -2023,7 +2012,9 @@ export class GrokAdapter extends SiteAdapter {
     // Grok 用户消息结构：
     // .message-bubble.rounded-br-lg > div.relative > div.relative > .response-content-markdown
     // 内部直接是 <p> 标签，没有 .whitespace-pre-wrap 容器
-    const markdownContainer = element.querySelector(".response-content-markdown")
+    const markdownContainer = element.querySelector(
+      this.config.sitePrivateSelectors.responseMarkdown,
+    )
     if (!markdownContainer) return false
 
     // 检查是否已经处理过
@@ -2054,14 +2045,7 @@ export class GrokAdapter extends SiteAdapter {
   }
 
   getExportConfig(): ExportConfig | null {
-    // 配置导出功能
-    return {
-      userQuerySelector: this.getUserQuerySelector(),
-      // AI 回复：没有 rounded-br-lg 的 .message-bubble（用户消息有此类）
-      assistantResponseSelector: ".message-bubble:not(.rounded-br-lg) .response-content-markdown",
-      turnSelector: "", // 不使用 turn 选择器，直接通过 user/assistant 选择器匹配
-      useShadowDOM: false,
-    }
+    return { ...this.config.export }
   }
 
   async prepareConversationExport(_context: ExportLifecycleContext): Promise<unknown> {
@@ -2199,7 +2183,7 @@ export class GrokAdapter extends SiteAdapter {
     // 辅助：获取消息 ID (Response ID)
     const getResponseId = (el: Element): string | null => {
       // 往上找 id 以 response- 开头的 div
-      const responseDiv = el.closest('[id^="response-"]')
+      const responseDiv = el.closest(this.config.sitePrivateSelectors.responseRoot)
       if (responseDiv) {
         return responseDiv.id
       }
@@ -2221,7 +2205,7 @@ export class GrokAdapter extends SiteAdapter {
     const calculateUserQueryWordCount = (startEl: Element): number => {
       // Grok 结构：用户消息和 AI 消息各自在独立的 #response-{id} 容器中
       // 需要先找到父容器，然后遍历父容器的 siblings
-      const parentContainer = startEl.closest('[id^="response-"]')
+      const parentContainer = startEl.closest(this.config.sitePrivateSelectors.responseRoot)
       if (!parentContainer) return 0
 
       let current = parentContainer.nextElementSibling
@@ -2235,9 +2219,11 @@ export class GrokAdapter extends SiteAdapter {
         }
 
         // 查找 AI 回复内容：没有 rounded-br-lg 的 message-bubble
-        const aiMessage = current.querySelector(".message-bubble:not(.rounded-br-lg)")
+        const aiMessage = current.querySelector(this.config.selectors.assistantResponse)
         if (aiMessage) {
-          const markdownContent = aiMessage.querySelector(".response-content-markdown")
+          const markdownContent = aiMessage.querySelector(
+            this.config.sitePrivateSelectors.responseMarkdown,
+          )
           if (markdownContent) {
             totalLength += markdownContent.textContent?.trim().length || 0
           }
@@ -2249,7 +2235,7 @@ export class GrokAdapter extends SiteAdapter {
       // Fallback：如果没有找到任何内容（可能是最后一条消息正在生成中）
       // 尝试从整个 container 中查找跟在当前用户消息之后的 AI 回复
       if (totalLength === 0) {
-        const allAiMessages = container.querySelectorAll(".message-bubble:not(.rounded-br-lg)")
+        const allAiMessages = container.querySelectorAll(this.config.selectors.assistantResponse)
         for (const aiMsg of Array.from(allAiMessages)) {
           // 检查这个 AI 消息是否在 startEl 之后
           const positionToStart = startEl.compareDocumentPosition(aiMsg)
@@ -2265,7 +2251,9 @@ export class GrokAdapter extends SiteAdapter {
             if (!isBeforeEnd) continue
           }
 
-          const markdownContent = aiMsg.querySelector(".response-content-markdown")
+          const markdownContent = aiMsg.querySelector(
+            this.config.sitePrivateSelectors.responseMarkdown,
+          )
           if (markdownContent) {
             totalLength += markdownContent.textContent?.trim().length || 0
           }
@@ -2312,7 +2300,7 @@ export class GrokAdapter extends SiteAdapter {
               }
             }
             // 查找所属的 response container
-            const responseContainer = heading.closest('[id^="response-"]')
+            const responseContainer = heading.closest(this.config.sitePrivateSelectors.responseRoot)
             item.wordCount = this.calculateRangeWordCount(
               heading,
               nextBoundaryEl,
@@ -2402,7 +2390,7 @@ export class GrokAdapter extends SiteAdapter {
               }
             }
 
-            const responseContainer = element.closest('[id^="response-"]')
+            const responseContainer = element.closest(this.config.sitePrivateSelectors.responseRoot)
             item.wordCount = this.calculateRangeWordCount(
               element,
               nextBoundaryEl,
@@ -2421,33 +2409,26 @@ export class GrokAdapter extends SiteAdapter {
   // ==================== 生成状态检测 ====================
 
   isGenerating(): boolean {
-    // 检查是否有停止按钮可见
-    const stopButton = document.querySelector(
-      'button[aria-label*="停止"], button[aria-label*="Stop"]',
-    )
-    if (stopButton && (stopButton as HTMLElement).offsetParent !== null) {
-      return true
-    }
-
-    // 检查是否有加载动画
-    const loading = document.querySelector('[class*="loading"], [class*="animate-pulse"]')
-    if (loading && (loading as HTMLElement).offsetParent !== null) {
-      return true
+    for (const selector of this.config.generating.existsSelectors) {
+      const indicator = document.querySelector(selector)
+      if (indicator && (indicator as HTMLElement).offsetParent !== null) {
+        return true
+      }
     }
 
     return false
   }
 
   getStopButtonSelectors(): string[] {
-    return ['button[aria-label*="停止"]', 'button[aria-label*="Stop"]']
+    return [...this.config.selectors.stopButton]
   }
 
   getModelName(): string | null {
-    // 使用稳定的模型选择器按钮 ID
-    const modelBtn = document.querySelector("#model-select-trigger")
+    const modelBtn = document.querySelector(
+      this.config.modelSwitcher.selectorButtonSelectors.join(", "),
+    )
     if (modelBtn) {
-      // 模型名称在按钮内部的 span 中
-      const span = modelBtn.querySelector(".font-semibold")
+      const span = modelBtn.querySelector(this.config.sitePrivateSelectors.modelName)
       if (span) {
         return span.textContent?.trim() || null
       }
@@ -2457,13 +2438,19 @@ export class GrokAdapter extends SiteAdapter {
   }
 
   getNetworkMonitorConfig(): NetworkMonitorConfig | null {
-    // 精准匹配 Grok 的流式 API 路径
-    // 接口格式：/rest/app-chat/conversations/{id}/responses
-    // 该接口使用 NDJSON 流式输出，通过 isSoftStop: true 标记生成结束
+    const { urlPatterns, urlPathEndsWith, requestBodyRules, ...config } = this.config.networkMonitor
     return {
-      urlPatterns: ["/rest/app-chat/conversations/"],
-      urlPathEndsWith: ["/responses"],
-      silenceThreshold: 500,
+      ...config,
+      urlPatterns: [...urlPatterns],
+      ...(urlPathEndsWith ? { urlPathEndsWith: [...urlPathEndsWith] } : {}),
+      ...(requestBodyRules
+        ? {
+            requestBodyRules: requestBodyRules.map((rule) => ({
+              ...rule,
+              metadata: { ...rule.metadata },
+            })),
+          }
+        : {}),
     }
   }
 
@@ -2474,13 +2461,14 @@ export class GrokAdapter extends SiteAdapter {
   }
 
   getModelSwitcherConfig(keyword: string): ModelSwitcherConfig | null {
+    const { selectorButtonSelectors, menuItemSelector, subMenuTriggers, ...config } =
+      this.config.modelSwitcher
     return {
+      ...config,
       targetModelKeyword: keyword,
-      selectorButtonSelectors: ["#model-select-trigger"],
-      menuItemSelector: '[role="menuitem"], [role="option"]',
-      checkInterval: 1000,
-      maxAttempts: 15,
-      menuRenderDelay: 500,
+      selectorButtonSelectors: [...selectorButtonSelectors],
+      menuItemSelector,
+      ...(subMenuTriggers ? { subMenuTriggers: [...subMenuTriggers] } : {}),
     }
   }
 
