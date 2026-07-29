@@ -35,7 +35,7 @@
 "P2-03","Phase 2","Userscript","油猴自定义域名指引","userscript 无法运行时扩 @match：设置页检测已装 pack 域名未被覆盖时展示指引（TM 用户匹配教程+域名复制按钮）；文档 FAQ 补充 TM/VM/ScriptCat 差异","P1-10","S","1","中","指引在 TM 实测可让用户 3 步内完成域名添加","未开始"
 "P2-04","Phase 2","Adapter","detect 探测原语","SiteDetectRule（selectorExists/metaGenerator）实现：在用户绑定的域名（detect 探测池）上按 DOM 特征激活 pack（用于同构开源 ChatUI，matches 允许为空）；多包命中时按 §6.9.1 优先级（explicit 绑定>detect 命中按安装序）激活并支持切换；含 matches 的包语义为 matches 命中且 detect 任一命中","P1-01,P2-02","M","2","中","特征命中/不命中激活行为正确；多包命中优先级与切换可用；不影响纯 matches 包","进行中"
 "P2-05","Phase 2","Packs","Open WebUI 官方包","含 detect 特征的 SitePack；在官方 demo 实例验证核心能力（大纲/插入/生成检测/新对话/Zen/导出基础）","P2-04","M","2","中","包合入 registry；demo 实例验证记录","进行中"
-"P2-06","Phase 2","Packs","LobeChat 官方包","同 P2-05","P2-04","M","1.5","中","包合入 registry；demo 实例验证记录","未开始"
+"P2-06","Phase 2","Packs","LobeChat 官方包","同 P2-05","P2-04","M","1.5","中","包合入 registry；demo 实例验证记录","进行中"
 "P2-07","Phase 2","Packs","LibreChat 与 NextChat 官方包","同 P2-05，两个包","P2-04","M","2","低","包合入 registry；demo 实例验证记录","未开始"
 "P2-08","Phase 2","Core","HealthCheckManager 健康自检","激活后延迟 8s 检查核心选择器命中（textarea/responseContainer/会话页 chatContent）；新对话页豁免；连续 2 次加载失败才提示；面板黄条提示分因：L2 包版本落后 registry→提示更新可装，最新或本地导入包→提示站点可能改版并引导报告；+[检查配置更新][报告问题（预填 issue 模板：站点/版本/失效选择器）]；内置与 L2 通用","P1-06","M","3","中","人为破坏 selector 两次加载内出现提示；patch 发布后检查更新可自动恢复；提示分因正确（本地导入包不误导）；无误报（新对话页/慢加载）","未开始"
 "P2-09","Phase 2","QA","跨浏览器与多管理器回归","Chrome/Edge/Firefox：动态注册+授权+卸载清理全流程（重点 Firefox MV3 host 权限默认 optional 的交互差异）；userscript 在 TM/VM/ScriptCat 冒烟","P2-01,P2-02","M","2","中","三浏览器回归清单通过；差异与已知问题记录进 troubleshooting 文档","未开始"
