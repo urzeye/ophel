@@ -1,12 +1,11 @@
+import { resolveSiteConfig } from "~adapters/declarative/merge"
+import type { SiteConfigPatch, SitePackManifest } from "~adapters/declarative/types"
 import {
-  resolveSiteConfig,
   SITE_PACK_MAX_BYTES,
   isValidSemanticVersion,
   validateSiteConfigPatch,
   validateSitePackManifest,
-  type SiteConfigPatch,
-  type SitePackManifest,
-} from "~adapters/declarative"
+} from "~adapters/declarative/validate"
 
 import {
   createEmptyRemoteConfigChangeSummary,

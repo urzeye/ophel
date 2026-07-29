@@ -1,4 +1,4 @@
-import type { SiteConfigPatch } from "~adapters/declarative"
+import type { SiteConfigPatch } from "~adapters/declarative/types"
 
 import {
   REMOTE_CONFIG_STORAGE_KEY,
