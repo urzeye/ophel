@@ -2,6 +2,10 @@ import { CHATGLM_CONFIG, CHATGLM_CONFIG_VERSION } from "~adapters/chatglm-config
 import { DEEPSEEK_CONFIG, DEEPSEEK_CONFIG_VERSION } from "~adapters/deepseek-config"
 import { DOUBAO_CONFIG, DOUBAO_CONFIG_VERSION } from "~adapters/doubao-config"
 import { GROK_CONFIG, GROK_CONFIG_VERSION } from "~adapters/grok-config"
+import {
+  GEMINI_ENTERPRISE_CONFIG,
+  GEMINI_ENTERPRISE_CONFIG_VERSION,
+} from "~adapters/gemini-enterprise-config"
 import { IMA_CONFIG, IMA_CONFIG_VERSION } from "~adapters/ima-config"
 import { KIMI_CONFIG, KIMI_CONFIG_VERSION } from "~adapters/kimi-config"
 import { QIANWEN_CONFIG, QIANWEN_CONFIG_VERSION } from "~adapters/qianwen-config"
@@ -43,6 +47,14 @@ const BUILTIN_CONFIG_DESCRIPTORS = new Map<string, BuiltinConfigDescriptor>([
       siteId: SITE_IDS.GROK,
       configVersion: GROK_CONFIG_VERSION,
       baseConfig: GROK_CONFIG,
+    },
+  ],
+  [
+    SITE_IDS.GEMINI_ENTERPRISE,
+    {
+      siteId: SITE_IDS.GEMINI_ENTERPRISE,
+      configVersion: GEMINI_ENTERPRISE_CONFIG_VERSION,
+      baseConfig: GEMINI_ENTERPRISE_CONFIG,
     },
   ],
   [

@@ -19,7 +19,14 @@ import {
   type OutlineItem,
   type PanelAvoidanceConfig,
   type SiteDeleteConversationResult,
+  type ZenModeConfig,
 } from "./base"
+import type { BuiltinSiteConfig } from "./declarative"
+import {
+  GEMINI_ENTERPRISE_CONFIG,
+  GEMINI_ENTERPRISE_CONFIG_VERSION,
+  type GeminiEnterpriseSiteConfig,
+} from "./gemini-enterprise-config"
 
 const GEMINI_ENTERPRISE_DELETE_REASON = {
   UI_FAILED: "delete_ui_failed",
@@ -53,13 +60,54 @@ const GEMINI_ENTERPRISE_CANCEL_KEYWORDS = [
 ]
 
 export class GeminiEnterpriseAdapter extends SiteAdapter {
+  private config: GeminiEnterpriseSiteConfig = GEMINI_ENTERPRISE_CONFIG
   // 存储 clearOnInit 配置
   private clearOnInit = false
 
   private cloneWithoutSrOnly(element: Element): Element {
     const clone = element.cloneNode(true) as Element
-    clone.querySelectorAll(".sr-only").forEach((node) => node.remove())
+    clone.querySelectorAll(this.config.sitePrivateSelectors.srOnly).forEach((node) => node.remove())
     return clone
+  }
+
+  private queryFirst(root: ParentNode, selectors: readonly string[]): Element | null {
+    for (const selector of selectors) {
+      const element = root.querySelector(selector)
+      if (element) return element
+    }
+    return null
+  }
+
+  private getConversationButton(element: ParentNode): Element | null {
+    return this.queryFirst(element, this.config.sitePrivateSelectors.conversationButton)
+  }
+
+  private getConversationTitleElement(element: ParentNode): Element | null {
+    const selector = this.config.conversation.titleSelector
+    return selector ? element.querySelector(selector) : null
+  }
+
+  private getConversationMenuButtonElement(element: ParentNode): HTMLElement | null {
+    const privateSelectors = this.config.sitePrivateSelectors
+    return (
+      (element.querySelector(privateSelectors.conversationMenuButton) as HTMLElement | null) ||
+      (element.querySelector(privateSelectors.conversationMenuButtonFallback) as HTMLElement | null)
+    )
+  }
+
+  private isConversationActive(button: Element, includeAria = true): boolean {
+    const privateSelectors = this.config.sitePrivateSelectors
+    return (
+      button.matches(privateSelectors.conversationActive) ||
+      (includeAria && button.matches(privateSelectors.conversationAriaActive))
+    )
+  }
+
+  private getConversationUrl(id: string, cid = this.getCurrentCid()): string {
+    const path = cid
+      ? `/home/cid/${cid}/r/session/${id}`
+      : this.config.conversation.urlTemplate.replace("{id}", id)
+    return new URL(path, this.getNewTabUrl()).href
   }
 
   match(): boolean {
@@ -74,8 +122,28 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
     return "Gemini Enterprise"
   }
 
+  getBuiltinConfig(): GeminiEnterpriseSiteConfig {
+    return GEMINI_ENTERPRISE_CONFIG
+  }
+
+  getBuiltinConfigVersion(): number {
+    return GEMINI_ENTERPRISE_CONFIG_VERSION
+  }
+
+  applyMergedConfig(config: BuiltinSiteConfig): void {
+    this.config = config as GeminiEnterpriseSiteConfig
+  }
+
   getThemeColors(): { primary: string; secondary: string } {
     return { primary: "#4285f4", secondary: "#34a853" }
+  }
+
+  getQuickQuoteSupportMode() {
+    return this.config.quickQuote
+  }
+
+  supportsHostThemeSync(): boolean {
+    return this.config.supportsHostThemeSync
   }
 
   getNewTabUrl(): string {
@@ -110,22 +178,19 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
   // ==================== 会话管理 ====================
 
   getSessionName(): string | null {
-    const conversations = DOMToolkit.query(".conversation", {
+    const conversations = DOMToolkit.query(this.config.conversation.itemSelector, {
       all: true,
-      shadow: true,
+      shadow: this.config.conversation.shadow ?? true,
     }) as Element[]
 
     for (const conv of conversations) {
-      const button = conv.querySelector("button.list-item") || conv.querySelector("button")
+      const button = this.getConversationButton(conv)
       if (!button) continue
 
-      const isActive =
-        button.classList.contains("selected") ||
-        button.classList.contains("active") ||
-        button.getAttribute("aria-selected") === "true"
+      const isActive = this.isConversationActive(button)
 
       if (isActive) {
-        const titleEl = button.querySelector(".conversation-title")
+        const titleEl = this.getConversationTitleElement(button)
         if (titleEl) {
           const name = titleEl.textContent?.trim()
           if (name) return name
@@ -137,65 +202,44 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
   }
 
   getConversationTitle(): string | null {
-    const items = DOMToolkit.query(".conversation", {
+    const items = DOMToolkit.query(this.config.conversation.itemSelector, {
       all: true,
-      shadow: true,
+      shadow: this.config.conversation.shadow ?? true,
     }) as Element[]
     for (const el of items) {
-      const button = el.querySelector("button.list-item") || el.querySelector("button")
-      if (
-        button &&
-        (button.classList.contains("selected") || button.classList.contains("active"))
-      ) {
-        return button.querySelector(".conversation-title")?.textContent?.trim() || null
+      const button = this.getConversationButton(el)
+      if (button && this.isConversationActive(button, false)) {
+        return this.getConversationTitleElement(button)?.textContent?.trim() || null
       }
     }
     return null
   }
 
   getConversationList(): ConversationInfo[] {
-    const items = DOMToolkit.query(".conversation", {
+    const items = DOMToolkit.query(this.config.conversation.itemSelector, {
       all: true,
-      shadow: true,
+      shadow: this.config.conversation.shadow ?? true,
     }) as Element[]
     const cid = this.getCurrentCid()
 
     return Array.from(items)
       .map((el) => {
-        const button = el.querySelector("button.list-item") || el.querySelector("button")
+        const button = this.getConversationButton(el)
         if (!button) return null
 
-        // 从操作菜单按钮 ID 提取 Session ID
-        // 会话格式: menu-8823153884416423953 (纯数字)
-        // 智能体格式: menu-deep_research (包含字母/下划线)
-        const menuBtn = button.querySelector(".conversation-action-menu-button")
-        let id = ""
-        if (menuBtn && menuBtn.id && menuBtn.id.startsWith("menu-")) {
-          id = menuBtn.id.replace("menu-", "")
-        }
+        const id = this.extractConversationIdFromElement(button)
+        if (!id) return null
 
-        // 关键过滤：真正的会话 ID 是纯数字，智能体 ID 包含字母
-        if (!id || !/^\d+$/.test(id)) return null
-
-        const titleEl = button.querySelector(".conversation-title")
+        const titleEl = this.getConversationTitleElement(button)
         const title = titleEl ? titleEl.textContent?.trim() || "" : ""
 
-        const isActive =
-          button.classList.contains("selected") ||
-          button.classList.contains("active") ||
-          button.getAttribute("aria-selected") === "true"
-
-        // 构建完整 URL
-        let url = `https://business.gemini.google/session/${id}`
-        if (cid) {
-          url = `https://business.gemini.google/home/cid/${cid}/r/session/${id}`
-        }
+        const isActive = this.isConversationActive(button)
 
         return {
           id,
           cid,
           title,
-          url,
+          url: this.getConversationUrl(id, cid),
           isActive,
         }
       })
@@ -204,22 +248,28 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
 
   getLatestReplyText(): string | null {
     // 1. 找到 ucs-conversation 元素
-    const ucsConversation = DOMToolkit.query("ucs-conversation", { shadow: true }) as Element | null
+    const ucsConversation = DOMToolkit.query(this.config.sitePrivateSelectors.conversationRoot, {
+      shadow: true,
+    }) as Element | null
     if (!ucsConversation || !ucsConversation.shadowRoot) return null
 
     // 2. 在 Shadow Root 中查找 .main
-    const main = ucsConversation.shadowRoot.querySelector(".main")
+    const main = ucsConversation.shadowRoot.querySelector(
+      this.config.sitePrivateSelectors.conversationMain,
+    )
     if (!main) return null
 
     // 3. 查找所有轮次
-    const turns = main.querySelectorAll(".turn")
+    const turnSelector = this.config.export.turnSelector
+    if (!turnSelector) return null
+    const turns = main.querySelectorAll(turnSelector)
     if (turns.length === 0) return null
 
     // 4. 获取最后一个轮次
     const lastTurn = turns[turns.length - 1]
 
     // 5. 查找 AI 回复容器 (ucs-summary)
-    const ucsSummary = lastTurn.querySelector("ucs-summary")
+    const ucsSummary = lastTurn.querySelector(this.config.selectors.assistantResponse)
     if (!ucsSummary) return null
 
     // 6. 提取 Markdown 文档元素
@@ -240,27 +290,28 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
 
   getSidebarScrollContainer(): Element | null {
     return (
-      (DOMToolkit.query(".conversation-list", { shadow: true }) as Element) ||
-      (DOMToolkit.query("mat-sidenav", { shadow: true }) as Element)
+      (DOMToolkit.query(this.config.selectors.sidebarScrollContainer, {
+        shadow: true,
+      }) as Element) ||
+      (DOMToolkit.query(this.config.sitePrivateSelectors.sidebarScrollFallback, {
+        shadow: true,
+      }) as Element)
     )
   }
 
   getConversationObserverConfig(): ConversationObserverConfig {
+    const conversation = this.config.conversation
     return {
-      selector: ".conversation",
-      shadow: true,
+      selector: conversation.itemSelector,
+      shadow: conversation.shadow ?? true,
       extractInfo: (el) => {
-        const button = el.querySelector("button.list-item") || el.querySelector("button")
+        const button = this.getConversationButton(el)
         if (!button) return null
 
-        // 从操作菜单按钮 ID 提取 Session ID（与 getConversationList 保持一致）
-        const menuBtn = button.querySelector(".conversation-action-menu-button")
-        if (!menuBtn || !menuBtn.id?.startsWith("menu-")) return null
+        const id = this.extractConversationIdFromElement(button)
+        if (!id) return null
 
-        const id = menuBtn.id.replace("menu-", "")
-        if (!/^\d+$/.test(id)) return null // 排除智能体（ID 包含字母）
-
-        const titleEl = button.querySelector(".conversation-title")
+        const titleEl = this.getConversationTitleElement(button)
         const title = titleEl?.textContent?.trim() || ""
         const cid = this.getCurrentCid()
 
@@ -268,30 +319,27 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
           id,
           cid,
           title,
-          url: `https://business.gemini.google/home/cid/${cid}/r/session/${id}`,
+          url: new URL(`/home/cid/${cid}/r/session/${id}`, this.getNewTabUrl()).href,
         }
       },
       getTitleElement: (el) => {
-        const button = el.querySelector("button.list-item") || el.querySelector("button")
-        return button?.querySelector(".conversation-title") || el
+        const button = this.getConversationButton(el)
+        return (button ? this.getConversationTitleElement(button) : null) || el
       },
     }
   }
 
   navigateToConversation(id: string, url?: string): boolean {
     // 通过菜单按钮 ID 查找侧边栏会话元素
-    const conversations = DOMToolkit.query(".conversation", {
+    const conversations = DOMToolkit.query(this.config.conversation.itemSelector, {
       all: true,
-      shadow: true,
+      shadow: this.config.conversation.shadow ?? true,
     }) as Element[] | null
 
-    if (conversations) {
+    if (conversations && this.config.conversation.navigationStrategy === "click-item") {
       for (const convEl of Array.from(conversations)) {
-        const menuBtn =
-          convEl.querySelector(`#menu-${id}`) ||
-          convEl.querySelector(`.conversation-action-menu-button[id="menu-${id}"]`)
-        if (menuBtn) {
-          const btn = convEl.querySelector("button.list-item") || convEl.querySelector("button")
+        if (this.extractConversationIdFromElement(convEl) === id) {
+          const btn = this.getConversationButton(convEl)
           if (btn) (btn as HTMLElement).click()
           else (convEl as HTMLElement).click()
           return true
@@ -443,7 +491,9 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
 
   private findConversationRow(id: string): HTMLElement | null {
     const expected = id.trim()
-    const rows = this.findAllElementsBySelector(".conversation") as HTMLElement[]
+    const rows = this.findAllElementsBySelector(
+      this.config.conversation.itemSelector,
+    ) as HTMLElement[]
     for (const row of rows) {
       const rowId = this.extractConversationIdFromElement(row)
       if (rowId && rowId === expected) {
@@ -461,7 +511,7 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
     for (const selector of hrefCandidates) {
       const anchor = DOMToolkit.query(selector, { shadow: true }) as HTMLElement | null
       if (!anchor) continue
-      const container = (anchor.closest(".conversation") ||
+      const container = (anchor.closest(this.config.conversation.itemSelector) ||
         anchor.closest("li") ||
         anchor.parentElement) as HTMLElement | null
       if (container) return container
@@ -473,27 +523,17 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
   private extractConversationIdFromElement(element: Element | null): string {
     if (!element) return ""
 
-    const menuBtn = element.querySelector(
-      '.conversation-action-menu-button[id^="menu-"], button[id^="menu-"]',
-    ) as HTMLElement | null
-    if (!menuBtn?.id?.startsWith("menu-")) return ""
+    const menuBtn = this.getConversationMenuButtonElement(element)
+    if (!menuBtn) return ""
 
-    const id = menuBtn.id.replace("menu-", "")
+    const value = menuBtn.getAttribute(this.config.conversation.idFrom.attr ?? "id") || ""
+    const id = new RegExp(this.config.conversation.idFrom.regex).exec(value)?.[1] || ""
     return /^\d+$/.test(id) ? id : ""
   }
 
   private async findConversationMenuButton(row: HTMLElement): Promise<HTMLElement | null> {
-    const actionSelectors = [
-      ".conversation-action-menu-button",
-      'button[id^="menu-"]',
-      'button[aria-haspopup="menu"]',
-      'button[aria-label*="More"]',
-      'button[aria-label*="more"]',
-      'button[aria-label*="更多"]',
-      'button[title*="More"]',
-      'button[title*="more"]',
-      "button",
-    ].join(", ")
+    const privateSelectors = this.config.sitePrivateSelectors
+    const actionSelectors = privateSelectors.conversationActionButton
 
     const rowId = this.extractConversationIdFromElement(row)
 
@@ -516,11 +556,7 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
         }
 
         const menuIconCandidate = candidates.find((candidate) => {
-          return (
-            candidate.querySelector(
-              'mat-icon[fonticon="more_vert"], mat-icon[fonticon="more_horiz"], md-icon',
-            ) !== null
-          )
+          return candidate.querySelector(privateSelectors.conversationMenuIcon) !== null
         })
         if (menuIconCandidate) return menuIconCandidate
 
@@ -614,8 +650,7 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
     trigger: HTMLElement,
     menuRoot?: HTMLElement | null,
   ): HTMLElement[] {
-    const selectors =
-      'md-menu-item, [role="menuitem"], [role="menu"] button, .mat-mdc-menu-panel button'
+    const selectors = this.config.sitePrivateSelectors.conversationMenuAction
     const results: HTMLElement[] = []
 
     if (menuRoot) {
@@ -658,7 +693,7 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
 
   private findVisibleMenuContainer(): HTMLElement | null {
     const menus = this.findAllElementsBySelector(
-      'md-menu-surface, .menu[popover], .mat-mdc-menu-panel, [role="menu"]',
+      this.config.sitePrivateSelectors.conversationMenuContainer,
     ) as HTMLElement[]
     const visible = menus.filter((menu) => this.isVisible(menu))
     if (visible.length === 0) return null
@@ -762,55 +797,28 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
   }
 
   getNewChatButtonSelectors(): string[] {
-    return [
-      ".chat-button.list-item",
-      'button[aria-label="New chat"]',
-      'button[aria-label="新对话"]',
-    ]
+    return [...this.config.selectors.newChatButton]
   }
 
   // ==================== 页面宽度控制 ====================
 
   getWidthSelectors() {
-    // 辅助函数：生成带 scoped globalSelector 的配置
-    const config = (selector: string, value?: string, extraCss?: string, noCenter = false) => ({
-      selector,
-      globalSelector: `mat-sidenav-content ${selector}`, // 全局样式只针对主内容区
-      property: "max-width",
-      value,
-      extraCss,
-      noCenter,
-    })
-
-    return [
-      // 容器强制 100%，不需要居中（它们应该填充可用空间）
-      config("mat-sidenav-content", "100%", undefined, true),
-      config(".main.chat-mode", "100%", undefined, true),
-
-      // 内容区域跟随配置（需要居中）
-      config("ucs-summary"),
-      config("ucs-conversation"),
-      config("ucs-search-bar"),
-      config(".summary-container.expanded"),
-      config(".conversation-container"),
-
-      // 输入框容器：不居中，使用 left/right 定位
-      config(".input-area-container", undefined, "left: 0 !important; right: 0 !important;", true),
-    ]
+    return this.config.widthSelectors.map((selector) => ({ ...selector }))
   }
 
   getPanelAvoidanceConfig(): PanelAvoidanceConfig {
+    const privateSelectors = this.config.sitePrivateSelectors
     return {
-      scopeSelector: "mat-sidenav-content, .main.chat-mode",
+      scopeSelector: privateSelectors.panelScope,
       widthSelectors: this.getWidthSelectors(),
       insetSelectors: [
         {
-          selector: "mat-sidenav-content, .main.chat-mode",
+          selector: privateSelectors.panelScope,
           extraCss:
             "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
         },
         {
-          selector: ".input-area-container",
+          selector: privateSelectors.inputArea,
           extraCss:
             "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
         },
@@ -822,55 +830,48 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
 
   /** 用户问题宽度选择器（Shadow DOM 内部，需要高优先级覆盖 :host([spk2])）*/
   getUserQueryWidthSelectors() {
-    return [
-      {
-        // 使用与原始样式相同的 :host([spk2]) 模式以获得相同优先级
-        selector: ".question-block .question-wrapper",
-        property: "max-width",
-        noCenter: true,
-      },
-    ]
+    return this.config.sitePrivateSelectors.userQueryWidth.map((selector) => ({
+      selector,
+      property: "max-width",
+      noCenter: true,
+    }))
   }
 
-  getZenModeConfig() {
+  private cloneZenModeConfig(config: ZenModeConfig): ZenModeConfig {
+    const { hide, rootClass, styles } = config
     return {
-      hide: ["ucs-nav-panel"],
+      ...(hide ? { hide: [...hide] } : {}),
+      ...(rootClass ? { rootClass: { ...rootClass } } : {}),
+      ...(styles ? { styles: styles.map((style) => ({ ...style })) } : {}),
     }
   }
 
-  getCleanModeConfig() {
-    return {
-      hide: [".disclaimer"],
-    }
+  getZenModeConfig(): ZenModeConfig {
+    return this.cloneZenModeConfig(this.config.zenMode)
+  }
+
+  getCleanModeConfig(): ZenModeConfig {
+    return this.cloneZenModeConfig(this.config.cleanMode)
   }
 
   // ==================== 输入框操作 ====================
 
   getTextareaSelectors(): string[] {
-    return [
-      "div.ProseMirror",
-      ".ProseMirror",
-      '[contenteditable="true"]:not([type="search"])',
-      '[role="textbox"]',
-      'textarea:not([type="search"])',
-    ]
+    return [...this.config.selectors.textarea]
+  }
+
+  getSubmitKeyConfig(): { key: "Enter" | "Ctrl+Enter" } {
+    return { key: this.config.input.submitKey ?? "Enter" }
   }
 
   getSubmitButtonSelectors(): string[] {
-    return [
-      'button[aria-label*="Submit"]',
-      'button[aria-label*="提交"]',
-      'button[aria-label*="发送"]',
-      'button[aria-label*="Send"]',
-      ".send-button",
-      '[data-testid*="send"]',
-    ]
+    return [...this.config.selectors.submitButton]
   }
 
   isValidTextarea(element: HTMLElement): boolean {
     // 排除搜索框
     if ((element as HTMLInputElement).type === "search") return false
-    if (element.classList.contains("main-input")) return false
+    if (element.matches(this.config.sitePrivateSelectors.textareaHostExclusion)) return false
     if (element.getAttribute("aria-label")?.includes("搜索")) return false
     if ((element as HTMLInputElement).placeholder?.includes("搜索")) return false
     // 排除脚本自己的 UI
@@ -1063,11 +1064,11 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
   // ==================== 滚动容器 ====================
 
   getScrollContainer(): HTMLElement | null {
-    // 使用 .chat-mode-scroller 精确选择器，排除侧边栏
-    const container = DOMToolkit.query(".chat-mode-scroller", { shadow: true }) as HTMLElement
-
-    if (container && container.scrollHeight > container.clientHeight) {
-      return container
+    for (const selector of this.config.selectors.scrollContainer) {
+      const container = DOMToolkit.query(selector, { shadow: true }) as HTMLElement
+      if (container && container.scrollHeight > container.clientHeight) {
+        return container
+      }
     }
 
     // 回退到基类
@@ -1095,24 +1096,18 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
   }
 
   getResponseContainerSelector(): string {
-    return ".conversation-container"
+    return this.config.selectors.responseContainer
   }
 
   getChatContentSelectors(): string[] {
-    return [
-      ".model-response-container",
-      ".message-content",
-      "[data-message-id]",
-      "ucs-conversation-message", // 企业版特定
-      ".conversation-message",
-    ]
+    return [...this.config.selectors.chatContent]
   }
 
   // ==================== 大纲提取 ====================
 
   /** Gemini Enterprise: .question-block 是用户提问的容器 */
   getUserQuerySelector(): string {
-    return ".question-block"
+    return this.config.selectors.userQuery
   }
 
   /**
@@ -1121,13 +1116,15 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
    */
   extractUserQueryText(element: Element): string {
     // 查找 ucs-fast-markdown 元素
-    const markdown = element.querySelector("ucs-fast-markdown")
+    const markdown = element.querySelector(this.config.sitePrivateSelectors.markdownHost)
     if (!markdown || !markdown.shadowRoot) {
       return this.extractTextWithLineBreaks(element)
     }
 
     // 在 Shadow DOM 中查找完整文本
-    const markdownDoc = markdown.shadowRoot.querySelector(".markdown-document")
+    const markdownDoc = markdown.shadowRoot.querySelector(
+      this.config.sitePrivateSelectors.markdownDocument,
+    )
     if (markdownDoc) {
       return this.extractTextWithLineBreaks(markdownDoc)
     }
@@ -1156,12 +1153,14 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
    * 需要按段落提取并用换行符连接还原原始 Markdown
    */
   extractUserQueryMarkdown(element: Element): string {
-    const markdown = element.querySelector("ucs-fast-markdown")
+    const markdown = element.querySelector(this.config.sitePrivateSelectors.markdownHost)
     if (!markdown || !markdown.shadowRoot) {
       return element.textContent?.trimEnd() || ""
     }
 
-    const markdownDoc = markdown.shadowRoot.querySelector(".markdown-document")
+    const markdownDoc = markdown.shadowRoot.querySelector(
+      this.config.sitePrivateSelectors.markdownDocument,
+    )
     if (!markdownDoc) {
       return element.textContent?.trimEnd() || ""
     }
@@ -1181,10 +1180,12 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
    * Gemini Enterprise：在 Shadow DOM 中隐藏原内容并插入渲染容器
    */
   replaceUserQueryContent(element: Element, html: string): boolean {
-    const markdown = element.querySelector("ucs-fast-markdown")
+    const markdown = element.querySelector(this.config.sitePrivateSelectors.markdownHost)
     if (!markdown || !markdown.shadowRoot) return false
 
-    const markdownDoc = markdown.shadowRoot.querySelector(".markdown-document")
+    const markdownDoc = markdown.shadowRoot.querySelector(
+      this.config.sitePrivateSelectors.markdownDocument,
+    )
     if (!markdownDoc) return false
 
     // 检查是否已经处理过
@@ -1227,7 +1228,9 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
 
       // 在当前层级查找 .markdown-document
       if ("querySelector" in searchRoot) {
-        const markdownDoc = searchRoot.querySelector(".markdown-document")
+        const markdownDoc = searchRoot.querySelector(
+          this.config.sitePrivateSelectors.markdownDocument,
+        )
         if (markdownDoc) return markdownDoc
       }
 
@@ -1280,7 +1283,7 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
           if (this.isInRenderedMarkdownContainer(heading)) return
 
           // 只匹配包含 data-markdown-start-index 的标题（排除 logo 等非 AI 回复内容）
-          const spans = heading.querySelectorAll("span[data-markdown-start-index]")
+          const spans = heading.querySelectorAll(this.config.sitePrivateSelectors.headingMarker)
           if (spans.length > 0) {
             const level = parseInt(heading.tagName[1], 10)
             const text = Array.from(spans)
@@ -1352,7 +1355,9 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
           if (!item.element) return
 
           // 找到标题所在的 .markdown-document 容器
-          const markdownDoc = item.element.closest(".markdown-document")
+          const markdownDoc = item.element.closest(
+            this.config.sitePrivateSelectors.markdownDocument,
+          )
           if (markdownDoc) {
             // 找到下一个同级或更高级别的标题作为边界
             let nextBoundaryEl: Element | null = null
@@ -1375,7 +1380,9 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
     // 每个 .turn 包含 .question-block（用户提问）和 ucs-summary（AI 回复）
 
     // 1. 找到 ucs-conversation 元素
-    const ucsConversation = DOMToolkit.query("ucs-conversation", { shadow: true }) as Element | null
+    const ucsConversation = DOMToolkit.query(this.config.sitePrivateSelectors.conversationRoot, {
+      shadow: true,
+    }) as Element | null
     if (!ucsConversation || !ucsConversation.shadowRoot) {
       // 回退：如果找不到 ucs-conversation，使用原有逻辑
       this.findHeadingsInShadowDOM(document, outline, maxLevel, 0)
@@ -1383,13 +1390,17 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
     }
 
     // 2. 在 ucs-conversation 的 Shadow Root 中查找 .main 下的所有 .turn
-    const main = ucsConversation.shadowRoot.querySelector(".main")
+    const main = ucsConversation.shadowRoot.querySelector(
+      this.config.sitePrivateSelectors.conversationMain,
+    )
     if (!main) {
       this.findHeadingsInShadowDOM(document, outline, maxLevel, 0)
       return outline
     }
 
-    const turnContainers = main.querySelectorAll(".turn")
+    const turnSelector = this.config.export.turnSelector
+    if (!turnSelector) return outline
+    const turnContainers = main.querySelectorAll(turnSelector)
 
     // 3. 遍历每个轮次
     turnContainers.forEach((turn) => {
@@ -1402,8 +1413,8 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
       const turnId = idMatch ? idMatch[1] : undefined
 
       // 3.1 在轮次中查找用户提问 (.question-block)
-      const questionBlock = turn.querySelector(".question-block")
-      const ucsSummary = turn.querySelector("ucs-summary")
+      const questionBlock = turn.querySelector(this.config.selectors.userQuery)
+      const ucsSummary = turn.querySelector(this.config.selectors.assistantResponse)
 
       if (questionBlock) {
         let queryText = this.extractUserQueryText(questionBlock)
@@ -1485,29 +1496,24 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
   }
 
   getExportConfig(): ExportConfig {
-    return {
-      userQuerySelector: ".question-block",
-      assistantResponseSelector: "ucs-summary",
-      turnSelector: ".turn",
-      useShadowDOM: true,
-    }
+    return { ...this.config.export }
   }
 
   getAssistantMermaidSupportMode() {
-    return "fallback" as const
+    return this.config.mermaidSupport
   }
 
   getAssistantMermaidBlocks(root: ParentNode): AssistantMermaidBlock[] {
     const summaryRoot =
       root instanceof Element
-        ? root.matches("ucs-summary")
+        ? root.matches(this.config.selectors.assistantResponse)
           ? root
-          : ((root.closest("ucs-summary") ||
-              DOMToolkit.query("ucs-summary", {
+          : ((root.closest(this.config.selectors.assistantResponse) ||
+              DOMToolkit.query(this.config.selectors.assistantResponse, {
                 parent: root,
                 shadow: true,
               })) as Element | null)
-        : (DOMToolkit.query("ucs-summary", {
+        : (DOMToolkit.query(this.config.selectors.assistantResponse, {
             parent: root as Node,
             shadow: true,
           }) as Element | null) || null
@@ -1529,21 +1535,11 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
     const findInShadow = (root: Document | ShadowRoot, depth = 0): boolean => {
       if (depth > 10) return false
 
-      // 检查当前层级
-      const stopButton = root.querySelector(
-        'button[aria-label*="Stop"], button[aria-label*="停止"], ' +
-          '[data-test-id="stop-button"], .stop-button, md-icon-button[aria-label*="Stop"]',
-      )
-      if (stopButton && (stopButton as HTMLElement).offsetParent !== null) {
-        return true
-      }
-
-      const spinner = root.querySelector(
-        'mat-spinner, md-spinner, .loading-spinner, [role="progressbar"], ' +
-          ".generating-indicator, .response-loading",
-      )
-      if (spinner && (spinner as HTMLElement).offsetParent !== null) {
-        return true
+      for (const selector of this.config.generating.existsSelectors) {
+        const indicator = root.querySelector(selector)
+        if (indicator && (indicator as HTMLElement).offsetParent !== null) {
+          return true
+        }
       }
 
       // 递归搜索 Shadow DOM
@@ -1562,13 +1558,7 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
   }
 
   getStopButtonSelectors(): string[] {
-    return [
-      'button[aria-label*="Stop"]',
-      'button[aria-label*="停止"]',
-      '[data-test-id="stop-button"]',
-      ".stop-button",
-      'md-icon-button[aria-label*="Stop"]',
-    ]
+    return [...this.config.selectors.stopButton]
   }
 
   requiresDomConfirmationForNetworkGeneration(): boolean {
@@ -1581,15 +1571,7 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
       if (depth > 10) return null
 
       // 检查模型选择器
-      const modelSelectors = [
-        "#model-selector-menu-anchor",
-        ".action-model-selector",
-        ".model-selector",
-        '[data-test-id="model-selector"]',
-        ".current-model",
-      ]
-
-      for (const selector of modelSelectors) {
+      for (const selector of this.config.sitePrivateSelectors.modelName) {
         const el = root.querySelector(selector)
         if (el && el.textContent) {
           const text = el.textContent.trim()
@@ -1619,9 +1601,19 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
   }
 
   getNetworkMonitorConfig(): NetworkMonitorConfig {
+    const { urlPatterns, urlPathEndsWith, requestBodyRules, ...config } = this.config.networkMonitor
     return {
-      urlPatterns: ["widgetStreamAssist"],
-      silenceThreshold: 3000,
+      ...config,
+      urlPatterns: [...urlPatterns],
+      ...(urlPathEndsWith ? { urlPathEndsWith: [...urlPathEndsWith] } : {}),
+      ...(requestBodyRules
+        ? {
+            requestBodyRules: requestBodyRules.map((rule) => ({
+              ...rule,
+              metadata: { ...rule.metadata },
+            })),
+          }
+        : {}),
     }
   }
 
@@ -1653,10 +1645,8 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
 
   /** 排除侧边栏中的 Shadow DOM 样式注入 */
   shouldInjectIntoShadow(host: Element): boolean {
-    return !(
-      host.closest("mat-sidenav") ||
-      host.closest("mat-drawer") ||
-      host.closest('[class*="bg-sidebar"]')
+    return !this.config.sitePrivateSelectors.shadowInjectionExclusion.some((selector) =>
+      host.closest(selector),
     )
   }
 
@@ -1667,13 +1657,16 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
     for (let i = 0; i < maxIterations; i++) {
       // 查找所有按钮（穿透 Shadow DOM）
       const allBtns =
-        (DOMToolkit.query("button.show-more", { all: true, shadow: true }) as Element[]) || []
+        (DOMToolkit.query(this.config.sitePrivateSelectors.showMoreButton, {
+          all: true,
+          shadow: true,
+        }) as Element[]) || []
 
       // 过滤出未展开的按钮（icon 没有 more-visible class）
       const expandBtns = allBtns.filter((btn) => {
-        const icon = btn.querySelector(".show-more-icon")
+        const icon = btn.querySelector(this.config.sitePrivateSelectors.showMoreIcon)
         // 已展开的按钮 icon 有 more-visible class
-        return icon && !icon.classList.contains("more-visible")
+        return icon && !icon.matches(this.config.sitePrivateSelectors.showMoreExpandedIcon)
       })
 
       if (expandBtns.length === 0) {
@@ -1697,13 +1690,12 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
   }
 
   getModelSwitcherConfig(keyword: string): ModelSwitcherConfig {
+    const { selectorButtonSelectors, subMenuTriggers, ...config } = this.config.modelSwitcher
     return {
+      ...config,
       targetModelKeyword: keyword || "3 Pro",
-      selectorButtonSelectors: ["#model-selector-menu-anchor", ".action-model-selector"],
-      menuItemSelector: "md-menu-item",
-      checkInterval: 1500,
-      maxAttempts: 20,
-      menuRenderDelay: 500,
+      selectorButtonSelectors: [...selectorButtonSelectors],
+      ...(subMenuTriggers ? { subMenuTriggers: [...subMenuTriggers] } : {}),
     }
   }
 
@@ -1722,13 +1714,10 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
 
       // 查找所有可能的菜单容器
       try {
-        const menus = DOMToolkit.query(
-          '.menu[popover], md-menu-surface, .mat-menu-panel, [role="menu"]',
-          {
-            all: true,
-            shadow: true,
-          },
-        ) as Element[]
+        const menus = DOMToolkit.query(this.config.sitePrivateSelectors.themeMenu, {
+          all: true,
+          shadow: true,
+        }) as Element[]
         menus.forEach((el) => {
           const htmlEl = el as HTMLElement
           // 强制隐藏，不留余地
@@ -1751,10 +1740,14 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
 
     try {
       // 2. 找到并点击设置按钮
-      let settingsBtn = DOMToolkit.query(".settings-button", { shadow: true }) as HTMLElement
+      let settingsBtn = DOMToolkit.query(this.config.sitePrivateSelectors.settingsButton, {
+        shadow: true,
+      }) as HTMLElement
 
       if (!settingsBtn) {
-        console.error("[GeminiEnterpriseAdapter] Settings button not found (.settings-button)")
+        console.error(
+          `[GeminiEnterpriseAdapter] Settings button not found (${this.config.sitePrivateSelectors.settingsButton})`,
+        )
         return false
       } else {
         if (typeof settingsBtn.click === "function") {
@@ -1777,12 +1770,15 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
           targetMode === "system" ? "computer" : targetMode === "dark" ? "dark_mode" : "light_mode"
 
         // Query all md-primary-tab in the document
-        const tabs = DOMToolkit.query("md-primary-tab", { all: true, shadow: true }) as Element[]
+        const tabs = DOMToolkit.query(this.config.sitePrivateSelectors.themeTab, {
+          all: true,
+          shadow: true,
+        }) as Element[]
 
         for (const tab of tabs) {
           const icon =
-            tab.querySelector("md-icon") ||
-            (DOMToolkit.query("md-icon", {
+            tab.querySelector(this.config.sitePrivateSelectors.themeIcon) ||
+            (DOMToolkit.query(this.config.sitePrivateSelectors.themeIcon, {
               parent: tab,
               shadow: true,
             }) as Element)
