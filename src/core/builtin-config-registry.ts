@@ -1,3 +1,4 @@
+import { AISTUDIO_CONFIG, AISTUDIO_CONFIG_VERSION } from "~adapters/aistudio-config"
 import { CHATGLM_CONFIG, CHATGLM_CONFIG_VERSION } from "~adapters/chatglm-config"
 import { CHATGPT_CONFIG, CHATGPT_CONFIG_VERSION } from "~adapters/chatgpt-config"
 import { CLAUDE_CONFIG, CLAUDE_CONFIG_VERSION } from "~adapters/claude-config"
@@ -20,6 +21,14 @@ import { SITE_IDS } from "~constants/defaults"
 import type { BuiltinConfigDescriptor, ResolveBuiltinConfig } from "./remote-config-types"
 
 const BUILTIN_CONFIG_DESCRIPTORS = new Map<string, BuiltinConfigDescriptor>([
+  [
+    SITE_IDS.AISTUDIO,
+    {
+      siteId: SITE_IDS.AISTUDIO,
+      configVersion: AISTUDIO_CONFIG_VERSION,
+      baseConfig: AISTUDIO_CONFIG,
+    },
+  ],
   [
     SITE_IDS.CHATGLM,
     {

@@ -31,10 +31,18 @@ import {
   type ExportConfig,
   type ExportLifecycleContext,
   type MarkdownFixerConfig,
+  type ModelSwitcherConfig,
   type OutlineItem,
   type PanelAvoidanceConfig,
   type SiteDeleteConversationResult,
+  type ZenModeConfig,
 } from "./base"
+import {
+  AISTUDIO_CONFIG,
+  AISTUDIO_CONFIG_VERSION,
+  type AIStudioSiteConfig,
+} from "./aistudio-config"
+import type { BuiltinSiteConfig } from "./declarative"
 
 const AISTUDIO_DELETE_REASON = {
   UI_FAILED: "delete_ui_failed",
@@ -78,10 +86,6 @@ const AISTUDIO_RPC_SERVICE_PATH =
   "/$rpc/google.internal.alkali.applications.makersuite.v1.MakerSuiteService"
 const AISTUDIO_DELETE_PROMPT_METHOD = "DeletePrompt"
 const AISTUDIO_FALLBACK_RPC_ORIGIN = "https://alkalimakersuite-pa.clients6.google.com"
-const AISTUDIO_TURN_SELECTOR = "ms-chat-turn"
-const AISTUDIO_ASSISTANT_FRAGMENT_SELECTOR = ".chat-turn-container.model, .model-prompt-container"
-const AISTUDIO_ASSISTANT_SELECTOR = ".chat-turn-container.model"
-const AISTUDIO_THOUGHT_SELECTOR = "ms-thought-chunk"
 const AISTUDIO_EXPORT_ROOT_ATTR = "data-gh-aistudio-export-root"
 const AISTUDIO_EXPORT_TURN_ATTR = "data-gh-aistudio-export-turn"
 const AISTUDIO_EXPORT_ROLE_ATTR = "data-gh-aistudio-export-role"
@@ -90,30 +94,6 @@ const AISTUDIO_EXPORT_ROLE_ASSISTANT = "assistant"
 const AISTUDIO_EXPORT_TURN_SELECTOR = `[${AISTUDIO_EXPORT_ROOT_ATTR}="1"] [${AISTUDIO_EXPORT_TURN_ATTR}="1"]`
 const AISTUDIO_EXPORT_USER_SELECTOR = `[${AISTUDIO_EXPORT_ROOT_ATTR}="1"] [${AISTUDIO_EXPORT_ROLE_ATTR}="${AISTUDIO_EXPORT_ROLE_USER}"]`
 const AISTUDIO_EXPORT_ASSISTANT_SELECTOR = `[${AISTUDIO_EXPORT_ROOT_ATTR}="1"] [${AISTUDIO_EXPORT_ROLE_ATTR}="${AISTUDIO_EXPORT_ROLE_ASSISTANT}"]`
-const AISTUDIO_LIBRARY_ROOT_SELECTOR = "ms-library-table"
-const AISTUDIO_LIBRARY_CONVERSATION_LINK_SELECTOR = [
-  'ms-library-table table a[href*="/prompts/"]:not([href*="new_chat"])',
-  'ms-library-table .prompt-card a[href*="/prompts/"]:not([href*="new_chat"])',
-].join(", ")
-const AISTUDIO_LIBRARY_EMPTY_STATE_SELECTOR = [
-  "ms-library-table .empty-state",
-  'ms-library-table [class*="empty" i]',
-  'ms-library-table [class*="no-results" i]',
-  'ms-library-table [class*="no-prompts" i]',
-  'ms-library-table [data-test-id*="empty" i]',
-  'ms-library-table [aria-label*="empty" i]',
-].join(", ")
-const AISTUDIO_LAYOUT_SCOPE_SELECTOR = ".chunk-editor-main"
-const AISTUDIO_EDITOR_SCOPE_SELECTOR = "ms-chunk-editor"
-const AISTUDIO_CHAT_CONTENT_WIDTH_SELECTOR = ".chunk-editor-main .chat-session-content"
-const AISTUDIO_CHAT_TURN_WIDTH_SELECTOR = ".chunk-editor-main .chat-turn-container"
-const AISTUDIO_PROMPT_BOX_WIDTH_SELECTOR = ".chunk-editor-main footer ms-prompt-box"
-const AISTUDIO_CHAT_SAFE_AREA_SELECTOR = ".chunk-editor-main .chat-container .chat-view-container"
-const AISTUDIO_PROMPT_SAFE_AREA_SELECTOR = ".chunk-editor-main footer"
-const AISTUDIO_PANEL_OBSTACLE_SELECTOR = [
-  ".ms-sliding-right-panel-dialog",
-  "mat-dialog-container.mat-mdc-dialog-container",
-].join(", ")
 
 interface AIStudioExportMessageSnapshot {
   role: "user" | "assistant"
@@ -144,6 +124,8 @@ interface AIStudioOutlineSortEntry {
 }
 
 export class AIStudioAdapter extends SiteAdapter {
+  private config: AIStudioSiteConfig = AISTUDIO_CONFIG
+
   // ==================== 缓存属性 ====================
 
   // 缓存从 library 页面抓取的会话列表
@@ -169,6 +151,18 @@ export class AIStudioAdapter extends SiteAdapter {
 
   getName(): string {
     return "AI Studio"
+  }
+
+  getBuiltinConfig(): AIStudioSiteConfig {
+    return AISTUDIO_CONFIG
+  }
+
+  getBuiltinConfigVersion(): number {
+    return AISTUDIO_CONFIG_VERSION
+  }
+
+  applyMergedConfig(config: BuiltinSiteConfig): void {
+    this.config = config as AIStudioSiteConfig
   }
 
   getThemeColors(): { primary: string; secondary: string } {
@@ -235,20 +229,21 @@ export class AIStudioAdapter extends SiteAdapter {
   }
 
   private findUserQueryElementByTurnId(turnId: string): Element | null {
+    const privateSelectors = this.config.sitePrivateSelectors
     const turnControlId = this.getTurnControlId(turnId)
     if (!turnControlId) return null
 
     const directTurn = document.getElementById(turnControlId)
-    const directUserQuery = directTurn?.querySelector(".chat-turn-container.user")
+    const directUserQuery = directTurn?.querySelector(this.config.selectors.userQuery)
     if (directUserQuery) {
       return directUserQuery
     }
 
     const normalizedTurnId = this.normalizeTurnId(turnId)
-    const candidates = Array.from(document.querySelectorAll(".chat-turn-container.user"))
+    const candidates = Array.from(document.querySelectorAll(this.config.selectors.userQuery))
     return (
       candidates.find((candidate) => {
-        const candidateTurnId = candidate.closest("ms-chat-turn")?.id || ""
+        const candidateTurnId = candidate.closest(privateSelectors.turn)?.id || ""
         return this.normalizeTurnId(candidateTurnId) === normalizedTurnId
       }) || null
     )
@@ -256,14 +251,7 @@ export class AIStudioAdapter extends SiteAdapter {
 
   private getScrollbarQueryEntries(): AIStudioScrollbarQueryEntry[] {
     const buttons = Array.from(
-      document.querySelectorAll(
-        [
-          "ms-items-scrollbar button[aria-controls]",
-          "ms-items-scrollbar button[data-test-item-id]",
-          "ms-prompt-scrollbar button[aria-controls]",
-          "ms-prompt-scrollbar button[data-test-item-id]",
-        ].join(", "),
-      ),
+      document.querySelectorAll(this.config.sitePrivateSelectors.scrollbarButton),
     ).filter((button): button is HTMLElement => button instanceof HTMLElement)
 
     const seenTurnIds = new Set<string>()
@@ -359,15 +347,14 @@ export class AIStudioAdapter extends SiteAdapter {
   }
 
   private getCurrentConversationTitleFromSources(): string | null {
+    const privateSelectors = this.config.sitePrivateSelectors
     const sessionId = this.getSessionId()
     if (!sessionId) return null
 
     // ① 页面 H1 标题——自有 + 分享页面最权威的来源，不受侧边栏改版 / 链接污染影响。
     //    自有页：<div class="page-title"><h1 class="mode-title ...">Hello</h1></div>
     //    分享页：<h1 class="page-title mode-title ...">IoT平台规划</h1>
-    const pageHeading = document.querySelector(
-      "h1[class*='mode-title'], h1.page-title, .page-title h1",
-    )
+    const pageHeading = document.querySelector(privateSelectors.pageHeading)
     const headingText = pageHeading?.textContent?.trim()
     if (headingText) {
       return headingText
@@ -383,8 +370,8 @@ export class AIStudioAdapter extends SiteAdapter {
 
     // ③ 最终回退：侧边栏内的特定链接（使用精确选择器，避免
     //    a[href*="/prompts/..."] 误匹配分享按钮等无关元素）
-    const link = document.querySelector(
-      `a.prompt-link[href*="/prompts/${sessionId}"], a.name-btn[href*="/prompts/${sessionId}"]`,
+    const link = Array.from(document.querySelectorAll(privateSelectors.sidebarTitleLink)).find(
+      (candidate) => candidate.getAttribute("href")?.includes(`/prompts/${sessionId}`),
     )
     const title = link?.textContent?.trim()
     return title || null
@@ -401,23 +388,11 @@ export class AIStudioAdapter extends SiteAdapter {
   // ==================== 输入框操作 ====================
 
   getTextareaSelectors(): string[] {
-    // AI Studio 使用标准 textarea，有 cdk-textarea-autosize 类
-    return [
-      "textarea.textarea",
-      "textarea.cdk-textarea-autosize",
-      'textarea[placeholder*="prompt"]',
-      'textarea[placeholder*="Start typing"]',
-    ]
+    return [...this.config.selectors.textarea]
   }
 
   getSubmitButtonSelectors(): string[] {
-    // Use the submit button inside ms-run-button to avoid matching unrelated primary buttons
-    return [
-      'ms-run-button button[type="submit"]',
-      'ms-run-button.supports-add-instead-of-run button[type="submit"]',
-      'button[ms-button][type="submit"]',
-      'button.ms-button-primary[type="submit"]',
-    ]
+    return [...this.config.selectors.submitButton]
   }
 
   /**
@@ -428,26 +403,29 @@ export class AIStudioAdapter extends SiteAdapter {
    * - 其他值表示 Enter 发送
    */
   getSubmitKeyConfig(): { key: "Enter" | "Ctrl+Enter" } {
+    const fallbackKey = this.config.input.submitKey || "Enter"
     try {
       const prefStr = localStorage.getItem("aiStudioUserPreference")
-      if (!prefStr) return { key: "Enter" }
+      if (!prefStr) return { key: fallbackKey }
 
       const pref = JSON.parse(prefStr)
       // enterKeyBehavior: 2 表示 Ctrl+Enter 发送
       if (pref.enterKeyBehavior === 2) {
         return { key: "Ctrl+Enter" }
       }
-      return { key: "Enter" }
+      return { key: fallbackKey }
     } catch {
-      return { key: "Enter" }
+      return { key: fallbackKey }
     }
   }
 
   isValidTextarea(element: HTMLElement): boolean {
     if (element.offsetParent === null) return false
     if (element.closest(".gh-main-panel")) return false
-    // 必须是 textarea 元素
-    return element.tagName.toLowerCase() === "textarea"
+    return (
+      this.config.input.mode === "textarea" &&
+      element.matches(this.config.sitePrivateSelectors.validTextarea)
+    )
   }
 
   insertPrompt(content: string): boolean {
@@ -498,28 +476,10 @@ export class AIStudioAdapter extends SiteAdapter {
   // ==================== 滚动容器 ====================
 
   getScrollContainer(): HTMLElement | null {
-    // 聊天区域滚动容器
-    // AI Studio 使用 virtual-scroll 或 overflow-auto 容器
-    const candidates = [
-      ".chat-container",
-      ".virtual-scroll-container",
-      '[class*="scroll"]',
-      'main [style*="overflow"]',
-    ]
-
-    for (const selector of candidates) {
+    for (const selector of this.config.selectors.scrollContainer) {
       const container = document.querySelector(selector) as HTMLElement
       if (container && container.scrollHeight > container.clientHeight) {
         return container
-      }
-    }
-
-    // 回退：查找 main 元素内的可滚动容器
-    const main = document.querySelector("main")
-    if (main) {
-      const scrollable = main.querySelector('[class*="overflow"]') as HTMLElement
-      if (scrollable && scrollable.scrollHeight > scrollable.clientHeight) {
-        return scrollable
       }
     }
 
@@ -527,60 +487,42 @@ export class AIStudioAdapter extends SiteAdapter {
   }
 
   getResponseContainerSelector(): string {
-    return ".chat-container, main"
+    return this.config.selectors.responseContainer
   }
 
   getChatContentSelectors(): string[] {
-    return [".chat-turn-container", '[class*="message"]', '[class*="response"]']
+    return [...this.config.selectors.chatContent]
   }
 
   getWidthSelectors() {
-    return [
-      // 主聊天内容容器
-      { selector: ".chat-session-content", property: "max-width" },
-      // 每个对话轮次容器
-      { selector: ".chat-turn-container", property: "max-width" },
-      // 底部输入框；智能避让关闭时也要跟随页面宽度控制
-      {
-        selector: AISTUDIO_PROMPT_BOX_WIDTH_SELECTOR,
-        property: "max-width",
-        extraCss: "width: 100% !important; min-width: 0 !important;",
-      },
-      // 表格默认 width:auto，开启页面加宽后仍不会拉伸
-      {
-        selector: ".table-container > table",
-        property: "width",
-        value: "100%",
-        noCenter: true,
-        extraCss: "min-width: 100% !important;",
-      },
-    ]
+    return this.config.widthSelectors.map((selector) => ({ ...selector }))
   }
 
   getPanelAvoidanceConfig(): PanelAvoidanceConfig {
+    const privateSelectors = this.config.sitePrivateSelectors
     return {
       // AI Studio 的右侧 Run settings 是 ms-chunk-editor 的 flex 子节点。
       // 聊天主区域独立计算正文避让，父级 editor 单独预留右侧空间，避免把透明设置栏叠到聊天区。
-      scopeSelector: AISTUDIO_LAYOUT_SCOPE_SELECTOR,
-      obstacleSelectors: [AISTUDIO_PANEL_OBSTACLE_SELECTOR],
+      scopeSelector: privateSelectors.layoutScope,
+      obstacleSelectors: [privateSelectors.modelSidebar],
       widthSelectors: [
         {
-          selector: AISTUDIO_CHAT_CONTENT_WIDTH_SELECTOR,
+          selector: privateSelectors.panelChatContentWidth,
           property: "max-width",
           extraCss: "width: 100% !important; min-width: 0 !important;",
         },
         {
-          selector: AISTUDIO_CHAT_TURN_WIDTH_SELECTOR,
+          selector: privateSelectors.panelChatTurnWidth,
           property: "max-width",
           extraCss: "width: 100% !important; min-width: 0 !important;",
         },
         {
-          selector: AISTUDIO_PROMPT_BOX_WIDTH_SELECTOR,
+          selector: privateSelectors.panelPromptBoxWidth,
           property: "max-width",
           extraCss: "width: 100% !important; min-width: 0 !important;",
         },
         {
-          selector: ".chunk-editor-main .table-container > table",
+          selector: privateSelectors.panelTableWidth,
           property: "width",
           value: "100%",
           noCenter: true,
@@ -589,20 +531,20 @@ export class AIStudioAdapter extends SiteAdapter {
       ],
       insetSelectors: [
         {
-          selector: AISTUDIO_CHAT_SAFE_AREA_SELECTOR,
+          selector: privateSelectors.panelChatSafeArea,
           insetMode: "edge",
           extraCss:
             "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
         },
         {
-          selector: AISTUDIO_PROMPT_SAFE_AREA_SELECTOR,
+          selector: privateSelectors.panelPromptSafeArea,
           insetMode: "edge",
           extraCss:
             "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
         },
         {
-          selector: AISTUDIO_EDITOR_SCOPE_SELECTOR,
-          scopeSelector: AISTUDIO_EDITOR_SCOPE_SELECTOR,
+          selector: privateSelectors.editorScope,
+          scopeSelector: privateSelectors.editorScope,
           applySide: "right",
           insetMode: "edge",
           extraCss: "box-sizing: border-box !important; min-width: 0 !important;",
@@ -614,35 +556,38 @@ export class AIStudioAdapter extends SiteAdapter {
   }
 
   getZenModeConfig() {
-    return {
-      hide: ["ms-navbar", "ms-navbar-v2", "ms-right-side-panel"],
-    }
+    return this.cloneZenModeConfig(this.config.zenMode)
   }
 
   getCleanModeConfig() {
-    return {
-      hide: ["ms-hallucinations-disclaimer"],
-    }
+    return this.cloneZenModeConfig(this.config.cleanMode)
   }
 
   getMarkdownFixerConfig(): MarkdownFixerConfig {
     return {
-      selector: "ms-cmark-node span.ng-star-inserted",
+      selector: this.config.sitePrivateSelectors.markdownFixerTarget,
       fixSpanContent: true,
     }
   }
 
-  private getAIStudioModelSelectorButton(requireVisible = false): HTMLElement | null {
-    const selectors = ["button.model-selector-card", ".model-selector-card"]
+  private cloneZenModeConfig(config: ZenModeConfig): ZenModeConfig {
+    const { hide, rootClass, styles } = config
+    return {
+      ...(hide ? { hide: [...hide] } : {}),
+      ...(rootClass ? { rootClass: { ...rootClass } } : {}),
+      ...(styles ? { styles: styles.map((style) => ({ ...style })) } : {}),
+    }
+  }
 
-    for (const selector of selectors) {
+  private getAIStudioModelSelectorButton(requireVisible = false): HTMLElement | null {
+    for (const selector of this.config.modelSwitcher.selectorButtonSelectors) {
       const candidate = document.querySelector(selector)
       if (candidate instanceof HTMLElement && (!requireVisible || this.isVisible(candidate))) {
         return candidate
       }
     }
 
-    const modelName = document.querySelector('[data-test-id="model-name"]')
+    const modelName = document.querySelector(this.config.sitePrivateSelectors.modelNameMarker)
     const modelButton = modelName?.closest("button")
     return modelButton instanceof HTMLElement && (!requireVisible || this.isVisible(modelButton))
       ? modelButton
@@ -650,10 +595,22 @@ export class AIStudioAdapter extends SiteAdapter {
   }
 
   private getRunSettingsToggleButton(requireVisible = false): HTMLElement | null {
-    const toggleButton = document.querySelector('button[aria-label="Toggle run settings panel"]')
+    const toggleButton = document.querySelector(
+      this.config.sitePrivateSelectors.runSettingsToggleButton,
+    )
     return toggleButton instanceof HTMLElement && (!requireVisible || this.isVisible(toggleButton))
       ? toggleButton
       : null
+  }
+
+  getModelSwitcherConfig(keyword: string): ModelSwitcherConfig {
+    const config = this.config.modelSwitcher
+    return {
+      targetModelKeyword: keyword,
+      ...config,
+      selectorButtonSelectors: [...config.selectorButtonSelectors],
+      ...(config.subMenuTriggers ? { subMenuTriggers: [...config.subMenuTriggers] } : {}),
+    }
   }
 
   clickModelSelector(): boolean {
@@ -687,8 +644,8 @@ export class AIStudioAdapter extends SiteAdapter {
   lockModel(keyword: string, onSuccess?: () => void): void {
     if (!keyword) return
 
-    const maxAttempts = 10
-    const checkInterval = 1000
+    const maxAttempts = this.config.modelSwitcher.maxAttempts ?? 10
+    const checkInterval = this.config.modelSwitcher.checkInterval ?? 1000
     let attempts = 0
 
     const waitForButton = setInterval(async () => {
@@ -718,7 +675,7 @@ export class AIStudioAdapter extends SiteAdapter {
 
         if (targetBtn) {
           // 3.1 提取模型名称并缓存 (解决面板收起后无法获取模型名的问题)
-          const nameEl = targetBtn.querySelector("div > div > div > span:first-child")
+          const nameEl = targetBtn.querySelector(this.config.sitePrivateSelectors.modelCardName)
           const displayName = nameEl?.textContent?.trim() || keyword
           const sessionId = this.getSessionId()
           if (sessionId) {
@@ -738,7 +695,7 @@ export class AIStudioAdapter extends SiteAdapter {
               // 稍作延迟等待 UI 稳定
               setTimeout(() => {
                 const closeRunSettingsBtn = document.querySelector(
-                  'button[aria-label="Close run settings panel"]',
+                  this.config.sitePrivateSelectors.runSettingsCloseButton,
                 ) as HTMLElement
                 if (closeRunSettingsBtn) {
                   closeRunSettingsBtn.click()
@@ -804,7 +761,7 @@ export class AIStudioAdapter extends SiteAdapter {
       // 如果是为了抓取而打开了面板，记得恢复
       if (wasCollapsed) {
         const closeRunSettingsBtn = document.querySelector(
-          'button[aria-label="Close run settings panel"]',
+          this.config.sitePrivateSelectors.runSettingsCloseButton,
         ) as HTMLElement
         if (closeRunSettingsBtn) closeRunSettingsBtn.click()
       }
@@ -825,7 +782,7 @@ export class AIStudioAdapter extends SiteAdapter {
       // 稍作延迟等待侧边栏关闭动画
       setTimeout(() => {
         const closeRunSettingsBtn = document.querySelector(
-          'button[aria-label="Close run settings panel"]',
+          this.config.sitePrivateSelectors.runSettingsCloseButton,
         ) as HTMLElement
         if (closeRunSettingsBtn) {
           closeRunSettingsBtn.click()
@@ -847,12 +804,12 @@ export class AIStudioAdapter extends SiteAdapter {
     while (Date.now() - start < maxWait) {
       // 查找侧边栏容器（使用实际 DOM 结构）
       const sidebar = document.querySelector(
-        ".ms-sliding-right-panel-dialog, mat-dialog-container.mat-mdc-dialog-container",
+        this.config.sitePrivateSelectors.modelSidebar,
       ) as HTMLElement
 
       if (sidebar) {
         // 等待模型列表项加载
-        await new Promise((r) => setTimeout(r, 300))
+        await new Promise((r) => setTimeout(r, this.config.modelSwitcher.menuRenderDelay ?? 300))
         return sidebar
       }
 
@@ -867,7 +824,7 @@ export class AIStudioAdapter extends SiteAdapter {
    */
   private async ensureAllModelsCategory(sidebar: HTMLElement): Promise<void> {
     const categoryButtons = Array.from(
-      sidebar.querySelectorAll("[data-test-category-button]"),
+      sidebar.querySelectorAll(this.config.sitePrivateSelectors.modelCategoryButton),
     ) as HTMLElement[]
     if (categoryButtons.length === 0) return
 
@@ -890,7 +847,7 @@ export class AIStudioAdapter extends SiteAdapter {
     const models: { id: string; name: string }[] = []
 
     // 从模型选项容器中提取模型卡片
-    const modelCards = sidebar.querySelectorAll(".model-options-container button.content-button")
+    const modelCards = sidebar.querySelectorAll(this.config.modelSwitcher.menuItemSelector)
 
     modelCards.forEach((card) => {
       // 从按钮 id 属性提取模型 ID，格式: model-carousel-row-models/{model-id}
@@ -898,7 +855,7 @@ export class AIStudioAdapter extends SiteAdapter {
       const modelId = btnId.replace("model-carousel-row-", "").replace("models/", "")
 
       // 从指定的 span 元素提取干净的显示名称（避免获取描述等内容）
-      const nameEl = card.querySelector("div > div > div > span:first-child")
+      const nameEl = card.querySelector(this.config.sitePrivateSelectors.modelCardName)
       const displayName = nameEl?.textContent?.trim() || modelId
 
       if (modelId && displayName) {
@@ -914,7 +871,9 @@ export class AIStudioAdapter extends SiteAdapter {
    */
   private closeModelSidebar(): void {
     // 方法1: 点击关闭按钮（使用稳定的 data-test 选择器）
-    const closeBtn = document.querySelector("button[data-test-close-button]") as HTMLElement
+    const closeBtn = document.querySelector(
+      this.config.sitePrivateSelectors.modelSidebarCloseButton,
+    ) as HTMLElement
     if (closeBtn) {
       closeBtn.click()
       return
@@ -965,16 +924,15 @@ export class AIStudioAdapter extends SiteAdapter {
    * 优先寻找页面内的 Angular 路由链接，回退到 history.pushState + popstate
    */
   private async navigateToLibraryViaSpa(): Promise<boolean> {
+    const privateSelectors = this.config.sitePrivateSelectors
     // 方法 1: 仅在导航容器（ms-navbar-v2）内查找 /library 链接，
     // 或链接本身带有 Angular routerLink 属性，确保是 SPA 路由链接而非普通 <a>
-    const scopedLink = document.querySelector(
-      'ms-navbar-v2 a[href="/library"]',
-    ) as HTMLAnchorElement | null
-    const fallbackLink = document.querySelector('a[href="/library"]') as HTMLAnchorElement | null
-    const candidate = scopedLink ?? fallbackLink
+    const candidate = privateSelectors.libraryNavigationLink
+      .map((selector) => document.querySelector(selector))
+      .find((element): element is HTMLAnchorElement => element instanceof HTMLAnchorElement)
     const isRouterLink =
       !!candidate &&
-      (!!candidate.closest("ms-navbar-v2") ||
+      (!!candidate.closest(this.config.selectors.sidebarScrollContainer) ||
         candidate.hasAttribute("routerlink") ||
         candidate.hasAttribute("ng-reflect-router-link"))
 
@@ -1014,7 +972,7 @@ export class AIStudioAdapter extends SiteAdapter {
   private extractLibraryConversations(): ConversationInfo[] {
     const conversations = new Map<string, ConversationInfo>()
     const links = Array.from(
-      document.querySelectorAll(AISTUDIO_LIBRARY_CONVERSATION_LINK_SELECTOR),
+      document.querySelectorAll(this.config.conversation.itemSelector),
     ) as HTMLAnchorElement[]
 
     links.forEach((link) => {
@@ -1027,46 +985,45 @@ export class AIStudioAdapter extends SiteAdapter {
   }
 
   private getLibraryContentElement(): Element | null {
+    const privateSelectors = this.config.sitePrivateSelectors
     return (
-      document.querySelector(`${AISTUDIO_LIBRARY_ROOT_SELECTOR} table`) ||
-      document.querySelector(`${AISTUDIO_LIBRARY_ROOT_SELECTOR} .prompt-cards-container`) ||
-      document.querySelector(AISTUDIO_LIBRARY_CONVERSATION_LINK_SELECTOR) ||
+      document.querySelector(privateSelectors.libraryTable) ||
+      document.querySelector(privateSelectors.libraryMobileCards) ||
+      document.querySelector(this.config.conversation.itemSelector) ||
       this.getLibraryEmptyStateElement()
     )
   }
 
   private getLibraryEmptyStateElement(): HTMLElement | null {
     const candidates = Array.from(
-      document.querySelectorAll(AISTUDIO_LIBRARY_EMPTY_STATE_SELECTOR),
+      document.querySelectorAll(this.config.sitePrivateSelectors.libraryEmptyState),
     ) as HTMLElement[]
     return candidates.find((candidate) => this.isVisible(candidate)) || null
   }
 
   private getLibraryScrollContainer(): Element | null {
-    const tableWrapper = document.querySelector(
-      `${AISTUDIO_LIBRARY_ROOT_SELECTOR} .lib-table-wrapper`,
-    )
+    const privateSelectors = this.config.sitePrivateSelectors
+    const tableWrapper = document.querySelector(privateSelectors.libraryTableWrapper)
     if (tableWrapper) return tableWrapper
 
-    const mobileCards = document.querySelector(
-      `${AISTUDIO_LIBRARY_ROOT_SELECTOR} .prompt-cards-container`,
-    )
+    const mobileCards = document.querySelector(privateSelectors.libraryMobileCards)
     if (mobileCards) {
       return document.scrollingElement || document.documentElement || mobileCards
     }
 
-    return document.querySelector(AISTUDIO_LIBRARY_ROOT_SELECTOR)
+    return document.querySelector(privateSelectors.libraryRoot)
   }
 
   private extractLibraryConversationInfo(link: HTMLAnchorElement): ConversationInfo | null {
-    const href = link.getAttribute("href") || ""
+    const hrefAttribute = this.config.conversation.idFrom.attr || "href"
+    const href = link.getAttribute(hrefAttribute) || ""
     if (!href || href.includes("new_chat")) return null
 
-    const match = href.match(/\/prompts\/([^/?#]+)/)
+    const match = href.match(new RegExp(this.config.conversation.idFrom.regex))
     if (!match) return null
 
     const id = match[1]
-    const card = link.closest(".prompt-card") as HTMLElement | null
+    const card = link.closest(this.config.sitePrivateSelectors.libraryCard) as HTMLElement | null
     const cardLabel = card
       ?.getAttribute("aria-label")
       ?.replace(/^Open\s+/i, "")
@@ -1093,14 +1050,16 @@ export class AIStudioAdapter extends SiteAdapter {
     const conversationMap = new Map<string, ConversationInfo>()
 
     // 从侧边栏历史记录提取
-    const historyLinks = document.querySelectorAll('a[href*="/prompts/"]')
+    const historyLinks = document.querySelectorAll(
+      this.config.sitePrivateSelectors.sidebarConversationLink,
+    )
 
     historyLinks.forEach((link) => {
-      const href = link.getAttribute("href")
+      const href = link.getAttribute(this.config.conversation.idFrom.attr || "href")
       if (!href || href.includes("new_chat")) return
 
       // 提取 ID
-      const match = href.match(/\/prompts\/([^/]+)/)
+      const match = href.match(new RegExp(this.config.conversation.idFrom.regex))
       if (!match) return
 
       const id = match[1]
@@ -1150,7 +1109,7 @@ export class AIStudioAdapter extends SiteAdapter {
     // 否则首次安装或会话列表为空时的自动全量同步（autoFullSync）会被永久阻塞。
     // 这里返回稳定宿主容器作为就绪信号，而非直接返回 null。
     return (
-      document.querySelector("ms-navbar-v2") ||
+      document.querySelector(this.config.selectors.sidebarScrollContainer) ||
       document.querySelector("main") ||
       document.body ||
       null
@@ -1162,8 +1121,8 @@ export class AIStudioAdapter extends SiteAdapter {
     // 会话列表仅通过 /library 页面获取，无需 DOM 观察器
     if (window.location.pathname === "/library") {
       return {
-        selector: AISTUDIO_LIBRARY_CONVERSATION_LINK_SELECTOR,
-        shadow: false,
+        selector: this.config.conversation.itemSelector,
+        shadow: this.config.conversation.shadow ?? false,
         extractInfo: (el: Element) => {
           return this.extractLibraryConversationInfo(el as HTMLAnchorElement)
         },
@@ -1176,16 +1135,21 @@ export class AIStudioAdapter extends SiteAdapter {
 
   navigateToConversation(id: string, url?: string): boolean {
     // 优先在 ms-library-table 内查找，避免误命中页面其他区域的同 URL 链接
-    const link = document.querySelector(
-      `${AISTUDIO_LIBRARY_ROOT_SELECTOR} a[href*="/prompts/${id}"]:not([href*="new_chat"])`,
-    ) as HTMLAnchorElement | null
+    const link = this.findConversationLinkById(this.config.conversation.itemSelector, id)
     if (link) {
       link.click()
       return true
     }
     // 降级：硬跳转
-    window.location.href = url || `/prompts/${id}`
+    window.location.href = url || this.config.conversation.urlTemplate.replace("{id}", id)
     return true
+  }
+
+  private findConversationLinkById(selector: string, id: string): HTMLAnchorElement | null {
+    const links = Array.from(document.querySelectorAll(selector)).filter(
+      (element): element is HTMLAnchorElement => element instanceof HTMLAnchorElement,
+    )
+    return links.find((link) => this.extractLibraryConversationInfo(link)?.id === id) || null
   }
 
   // ==================== 大纲提取 ====================
@@ -1554,30 +1518,28 @@ export class AIStudioAdapter extends SiteAdapter {
       )
     }
 
-    const selectors = [
-      `a.prompt-link[href*="/prompts/${id}"]`,
-      `a.name-btn[href*="/prompts/${id}"]`,
-      `a.name-link[href*="/prompts/${id}"]`,
-      `a[href*="/prompts/${id}"]`,
-    ]
-    selectors.forEach((selector) => {
-      const anchors = Array.from(document.querySelectorAll(selector)) as HTMLElement[]
-      anchors.forEach((anchor) => {
-        const container =
-          (anchor.closest("tr") as HTMLElement | null) ||
-          (anchor.closest("li") as HTMLElement | null) ||
-          (anchor.closest("mat-row") as HTMLElement | null) ||
-          (anchor.closest(".prompt-card") as HTMLElement | null) ||
-          anchor
-        container.remove()
-      })
+    const anchors = Array.from(
+      document.querySelectorAll(this.config.sitePrivateSelectors.conversationVisibilityLink),
+    ).filter(
+      (element): element is HTMLAnchorElement =>
+        element instanceof HTMLAnchorElement &&
+        this.extractLibraryConversationInfo(element)?.id === id,
+    )
+    anchors.forEach((anchor) => {
+      const container =
+        this.findClosestElement(
+          anchor,
+          this.config.sitePrivateSelectors.conversationRemovalContainer,
+        ) || anchor
+      container.remove()
     })
   }
 
   private isConversationVisible(id: string): boolean {
     return Boolean(
-      document.querySelector(
-        `a.prompt-link[href*="/prompts/${id}"], a.name-btn[href*="/prompts/${id}"], a.name-link[href*="/prompts/${id}"], a[href*="/prompts/${id}"]`,
+      this.findConversationLinkById(
+        this.config.sitePrivateSelectors.conversationVisibilityLink,
+        id,
       ),
     )
   }
@@ -1651,14 +1613,10 @@ export class AIStudioAdapter extends SiteAdapter {
   private async findLibraryRowByPromptId(id: string, timeout = 1200): Promise<HTMLElement | null> {
     const start = Date.now()
     while (Date.now() - start < timeout) {
-      const anchor = document.querySelector(
-        `${AISTUDIO_LIBRARY_ROOT_SELECTOR} a[href*="/prompts/${id}"]:not([href*="new_chat"])`,
-      ) as HTMLElement | null
+      const anchor = this.findConversationLinkById(this.config.conversation.itemSelector, id)
       if (anchor) {
-        const row = (anchor.closest("tr") ||
-          anchor.closest("mat-row") ||
-          anchor.closest(".prompt-card") ||
-          anchor) as HTMLElement
+        const row =
+          this.findClosestElement(anchor, this.config.sitePrivateSelectors.libraryRow) || anchor
         if (row && this.isVisible(row)) return row
       }
       await this.sleep(80)
@@ -1666,19 +1624,18 @@ export class AIStudioAdapter extends SiteAdapter {
     return null
   }
 
-  private findLibraryRowMenuButton(row: HTMLElement): HTMLElement | null {
-    const selector = [
-      'button[aria-haspopup="menu"]',
-      'button[aria-label*="More"]',
-      'button[aria-label*="more"]',
-      'button[aria-label*="更多"]',
-      'button[aria-label*="更多选项"]',
-      'button[aria-label*="选项"]',
-      'button[title*="More"]',
-      'button[title*="more"]',
-    ].join(", ")
+  private findClosestElement(element: Element, selectors: string[]): HTMLElement | null {
+    for (const selector of selectors) {
+      const candidate = element.closest(selector)
+      if (candidate instanceof HTMLElement) return candidate
+    }
+    return null
+  }
 
-    const candidates = Array.from(row.querySelectorAll(selector)) as HTMLElement[]
+  private findLibraryRowMenuButton(row: HTMLElement): HTMLElement | null {
+    const candidates = Array.from(
+      row.querySelectorAll(this.config.sitePrivateSelectors.conversationMenuButton),
+    ) as HTMLElement[]
     const visible = candidates.filter((item) => this.isVisible(item))
     if (visible.length > 0) {
       return visible.sort(
@@ -1698,9 +1655,7 @@ export class AIStudioAdapter extends SiteAdapter {
     const start = Date.now()
     while (Date.now() - start < timeout) {
       const menuItems = Array.from(
-        document.querySelectorAll(
-          '[role="menuitem"], [role="menu"] button, .mat-mdc-menu-panel button',
-        ),
+        document.querySelectorAll(this.config.sitePrivateSelectors.conversationMenuItem),
       ) as HTMLElement[]
 
       for (const item of menuItems) {
@@ -1738,7 +1693,7 @@ export class AIStudioAdapter extends SiteAdapter {
 
   private findVisibleDialog(): HTMLElement | null {
     const dialogs = Array.from(
-      document.querySelectorAll('[role="dialog"], mat-dialog-container, .mat-mdc-dialog-container'),
+      document.querySelectorAll(this.config.sitePrivateSelectors.conversationDialog),
     ) as HTMLElement[]
     return dialogs.find((dialog) => this.isVisible(dialog)) || null
   }
@@ -1786,13 +1741,15 @@ export class AIStudioAdapter extends SiteAdapter {
   }
 
   getUserQuerySelector(): string {
-    // 用户消息容器 - 只使用顶级容器，避免父子级重复匹配
-    // AI Studio DOM 结构：.chat-turn-container.user > .user-prompt-container > .turn-content > ms-prompt-chunk
-    return ".chat-turn-container.user"
+    return this.config.selectors.userQuery
   }
 
   getQuickQuoteSupportMode() {
-    return "disabled" as const
+    return this.config.quickQuote
+  }
+
+  supportsHostThemeSync(): boolean {
+    return this.config.supportsHostThemeSync
   }
 
   findUserQueryElement(queryIndex: number, text: string): Element | null {
@@ -1829,7 +1786,7 @@ export class AIStudioAdapter extends SiteAdapter {
 
     // 尝试提取 Turn ID (用于缓存键)
     // 结构: ms-chat-turn[id="..."] > .chat-turn-container
-    const turnId = element.closest("ms-chat-turn")?.id
+    const turnId = element.closest(this.config.sitePrivateSelectors.turn)?.id
     let extractedText = ""
 
     // AI Studio 用户消息结构：
@@ -1853,13 +1810,11 @@ export class AIStudioAdapter extends SiteAdapter {
       // "downloadfullscreen"）。注意：**不**在这里输出 `[Image: alt]` 占位——
       // 用户要求大纲只显示文字内容，与 AI Studio 原生时间线保持一致；纯附件
       // turn 让后面的 sidebar fallback 接管文字摘要（或者干脆留空）。
-      const turnContent = element.querySelector(".turn-content")
+      const turnContent = element.querySelector(this.config.sitePrivateSelectors.turnContent)
       if (turnContent) {
         const clone = turnContent.cloneNode(true) as Element
         clone
-          .querySelectorAll(
-            '.author-label, .actions-container, button, [role="button"], svg, [aria-hidden="true"], ms-image-chunk, ms-file-chunk',
-          )
+          .querySelectorAll(this.config.sitePrivateSelectors.userContentNoise)
           .forEach((node) => node.remove())
         extractedText = (clone.textContent || "").trim()
       } else {
@@ -1902,9 +1857,7 @@ export class AIStudioAdapter extends SiteAdapter {
     const contentChunk = this.findUserContentChunk(element)
     const source = (contentChunk || element).cloneNode(true) as HTMLElement
     source
-      .querySelectorAll(
-        '.author-label, .actions-container, button, [role="button"], svg, [aria-hidden="true"], ms-image-chunk, ms-file-chunk',
-      )
+      .querySelectorAll(this.config.sitePrivateSelectors.userContentNoise)
       .forEach((node) => node.remove())
 
     this.normalizeAssistantExportDom(source)
@@ -1967,9 +1920,9 @@ export class AIStudioAdapter extends SiteAdapter {
   }
 
   private extractAIStudioUserImageAttachments(element: Element): AIStudioUserAttachment[] {
-    const images = Array.from(element.querySelectorAll("ms-image-chunk img")).filter(
-      (node): node is HTMLImageElement => node instanceof HTMLImageElement,
-    )
+    const images = Array.from(
+      element.querySelectorAll(this.config.sitePrivateSelectors.userImageAttachment),
+    ).filter((node): node is HTMLImageElement => node instanceof HTMLImageElement)
 
     return images.flatMap((image) => {
       const source = this.extractAIStudioImageSource(image)
@@ -2004,7 +1957,9 @@ export class AIStudioAdapter extends SiteAdapter {
   }
 
   private extractAIStudioUserFileAttachments(element: Element): AIStudioUserAttachment[] {
-    const files = Array.from(element.querySelectorAll("ms-file-chunk"))
+    const files = Array.from(
+      element.querySelectorAll(this.config.sitePrivateSelectors.userFileAttachment),
+    )
 
     return files.flatMap((file) => {
       const name = this.extractAIStudioFileName(file)
@@ -2023,7 +1978,8 @@ export class AIStudioAdapter extends SiteAdapter {
   }
 
   private extractAIStudioFileName(file: Element): string {
-    const nameElement = file.querySelector(".name")
+    const privateSelectors = this.config.sitePrivateSelectors
+    const nameElement = file.querySelector(privateSelectors.userFileName)
     const title = nameElement?.getAttribute("title")?.trim()
     if (title) return title
 
@@ -2032,12 +1988,14 @@ export class AIStudioAdapter extends SiteAdapter {
 
     const ariaLabel =
       file.getAttribute("aria-label") ||
-      file.querySelector("[aria-label]")?.getAttribute("aria-label")
+      file.querySelector(privateSelectors.userFileAriaLabel)?.getAttribute("aria-label")
     return ariaLabel?.split(",")[0]?.trim() || ""
   }
 
   private extractAIStudioFileDetails(file: Element): string {
-    const details = Array.from(file.querySelectorAll(".token-count"))
+    const details = Array.from(
+      file.querySelectorAll(this.config.sitePrivateSelectors.userFileDetails),
+    )
       .map((node) => node.textContent?.replace(/\s+/g, " ").trim() || "")
       .find(Boolean)
 
@@ -2045,9 +2003,9 @@ export class AIStudioAdapter extends SiteAdapter {
   }
 
   private extractAIStudioFileSource(file: Element): string {
-    const links = Array.from(file.querySelectorAll("a[href]")).filter(
-      (node): node is HTMLAnchorElement => node instanceof HTMLAnchorElement,
-    )
+    const links = Array.from(
+      file.querySelectorAll(this.config.sitePrivateSelectors.userFileLink),
+    ).filter((node): node is HTMLAnchorElement => node instanceof HTMLAnchorElement)
 
     for (const link of links) {
       const source = normalizeExportAssetUrl(link.href || link.getAttribute("href") || "")
@@ -2121,9 +2079,10 @@ export class AIStudioAdapter extends SiteAdapter {
   }
 
   private getNextTurnContextForUserQuery(element: Element): string | undefined {
-    const currentTurn = element.closest("ms-chat-turn")
+    const turnSelector = this.config.sitePrivateSelectors.turn
+    const currentTurn = element.closest(turnSelector)
     const nextTurn = currentTurn?.nextElementSibling
-    if (!nextTurn || nextTurn.tagName.toLowerCase() !== "ms-chat-turn") {
+    if (!nextTurn || !nextTurn.matches(turnSelector)) {
       return undefined
     }
 
@@ -2132,17 +2091,18 @@ export class AIStudioAdapter extends SiteAdapter {
   }
 
   private findPreviousUserTurnIdForElement(element: Element): string | null {
-    const currentTurn = element.closest("ms-chat-turn")
+    const privateSelectors = this.config.sitePrivateSelectors
+    const currentTurn = element.closest(privateSelectors.turn)
     if (!currentTurn) return null
 
-    const sameTurnUserQuery = currentTurn.querySelector(".chat-turn-container.user")
+    const sameTurnUserQuery = currentTurn.querySelector(this.config.selectors.userQuery)
     if (sameTurnUserQuery && !sameTurnUserQuery.contains(element)) {
       return this.normalizeTurnId(currentTurn.id)
     }
 
     let previousTurn = currentTurn.previousElementSibling
     while (previousTurn) {
-      const previousUserQuery = previousTurn.querySelector(".chat-turn-container.user")
+      const previousUserQuery = previousTurn.querySelector(this.config.selectors.userQuery)
       if (previousUserQuery) {
         return this.normalizeTurnId(previousTurn.id)
       }
@@ -2153,14 +2113,7 @@ export class AIStudioAdapter extends SiteAdapter {
   }
 
   private findUserContentChunk(element: Element): Element | null {
-    const selectors = [
-      "ms-text-chunk",
-      "ms-prompt-chunk.text-chunk",
-      "ms-prompt-chunk",
-      "ms-cmark-node.cmark-node.user-chunk",
-    ]
-
-    for (const selector of selectors) {
+    for (const selector of this.config.sitePrivateSelectors.userContentChunk) {
       const candidate = element.querySelector(selector)
       if (!candidate) continue
 
@@ -2184,9 +2137,7 @@ export class AIStudioAdapter extends SiteAdapter {
   private extractCleanTextFromChunk(chunk: Element): string {
     const clone = chunk.cloneNode(true) as Element
     clone
-      .querySelectorAll(
-        '.actions-container, button, [role="button"], svg, [aria-hidden="true"], ms-image-chunk, ms-file-chunk',
-      )
+      .querySelectorAll(this.config.sitePrivateSelectors.userContentNoise)
       .forEach((n) => n.remove())
     return this.extractTextWithLineBreaks(clone).trim()
   }
@@ -2202,16 +2153,12 @@ export class AIStudioAdapter extends SiteAdapter {
     }
 
     return {
-      userQuerySelector: this.getUserQuerySelector(),
-      // AI 回复容器 - 同样只用顶级容器
-      assistantResponseSelector: AISTUDIO_ASSISTANT_SELECTOR,
-      turnSelector: null,
-      useShadowDOM: false,
+      ...this.config.export,
     }
   }
 
   getAssistantMermaidSupportMode() {
-    return "fallback" as const
+    return this.config.mermaidSupport
   }
 
   async prepareConversationExport(context: ExportLifecycleContext): Promise<unknown> {
@@ -2265,16 +2212,18 @@ export class AIStudioAdapter extends SiteAdapter {
 
   extractOutline(maxLevel = 6, includeUserQueries = false, showWordCount = false): OutlineItem[] {
     const outline: OutlineItem[] = []
+    const privateSelectors = this.config.sitePrivateSelectors
 
     // AI Studio 整个 main 区域都可能是滚动容器，或者 .chat-container
-    const container = document.querySelector(".chat-container") || document.querySelector("main")
+    const container =
+      document.querySelector(privateSelectors.outlineContainer) || document.querySelector("main")
     if (!container) return outline
 
     // 辅助函数：提取 ms-chat-turn 的 ID
     // 格式: turn-XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
     // 返回 UUID 部分
     const getTurnId = (el: Element): string | null => {
-      const turn = el.closest("ms-chat-turn")
+      const turn = el.closest(privateSelectors.turn)
       if (turn && turn.id) {
         // 移除 "turn-" 前缀
         return turn.id.replace(/^turn-/, "")
@@ -2302,7 +2251,7 @@ export class AIStudioAdapter extends SiteAdapter {
     const calculateUserQueryWordCount = (startEl: Element): number => {
       // AI Studio 结构：每个对话轮次在 ms-chat-turn 中
       // 用户消息和 AI 回复各自在不同的 ms-chat-turn 中
-      const currentTurn = startEl.closest("ms-chat-turn")
+      const currentTurn = startEl.closest(privateSelectors.turn)
       if (!currentTurn) return 0
 
       // 使用 turn ID 作为缓存键
@@ -2320,16 +2269,14 @@ export class AIStudioAdapter extends SiteAdapter {
         }
 
         // 查找 AI 回复内容：在 .model 容器中查找 ms-cmark-node（排除思维链）
-        const modelContainer = current.querySelector(
-          ".chat-turn-container.model, .chat-turn-container:not(.user)",
-        )
+        const modelContainer = current.querySelector(privateSelectors.outlineAssistantContainer)
         if (modelContainer) {
           // AI Studio 使用 ms-cmark-node 渲染 Markdown
           // 需要排除 ms-thought-chunk 内的思维链内容
-          const allMarkdownNodes = modelContainer.querySelectorAll("ms-cmark-node")
+          const allMarkdownNodes = modelContainer.querySelectorAll(privateSelectors.markdownNode)
           for (const node of Array.from(allMarkdownNodes)) {
             // 跳过思维链内的内容
-            if (node.closest("ms-thought-chunk")) continue
+            if (node.closest(privateSelectors.thoughtChunk)) continue
 
             const textLength = node.textContent?.trim().length || 0
             if (textLength > 0) {
@@ -2364,7 +2311,8 @@ export class AIStudioAdapter extends SiteAdapter {
       const headings = Array.from(container.querySelectorAll(headingSelectors.join(", ")))
       headings.forEach((heading, index) => {
         // AI Studio 可能把 input 内的 h1 也选出来，需要过滤
-        if (heading.closest("textarea") || heading.closest(".user-prompt-container")) return
+        if (heading.closest("textarea") || heading.closest(privateSelectors.userPromptContainer))
+          return
         if (this.isInRenderedMarkdownContainer(heading)) return
 
         const level = parseInt(heading.tagName.charAt(1), 10)
@@ -2394,7 +2342,7 @@ export class AIStudioAdapter extends SiteAdapter {
               }
             }
             // 查找所属的 ms-chat-turn
-            const turnContainer = heading.closest("ms-chat-turn")
+            const turnContainer = heading.closest(privateSelectors.turn)
             item.wordCount = this.calculateRangeWordCount(
               heading,
               nextBoundaryEl,
@@ -2420,7 +2368,7 @@ export class AIStudioAdapter extends SiteAdapter {
       const sortedEntries: AIStudioOutlineSortEntry[] = []
 
       const getElementRenderOrder = (element: Element): number => {
-        const target = (element.closest("ms-chat-turn") || element) as HTMLElement
+        const target = (element.closest(privateSelectors.turn) || element) as HTMLElement
         const targetRect = target.getBoundingClientRect()
         if (container instanceof HTMLElement) {
           const containerRect = container.getBoundingClientRect()
@@ -2439,10 +2387,8 @@ export class AIStudioAdapter extends SiteAdapter {
         }))
         .sort((left, right) => left.renderOrder - right.renderOrder)
 
-      const activeScrollbarEntry = scrollbarEntries.find(
-        (entry) =>
-          entry.button.getAttribute("aria-pressed") === "true" ||
-          entry.button.classList.contains("ms-button-active"),
+      const activeScrollbarEntry = scrollbarEntries.find((entry) =>
+        entry.button.matches(privateSelectors.activeScrollbarButton),
       )
 
       const estimateUserOrderForHeading = (heading: Element): number => {
@@ -2482,7 +2428,8 @@ export class AIStudioAdapter extends SiteAdapter {
 
       const headingElements = Array.from(container.querySelectorAll(headingSelectors.join(", ")))
       headingElements.forEach((heading, headingIndex) => {
-        if (heading.closest(".user-prompt-container") || heading.closest("textarea")) return
+        if (heading.closest(privateSelectors.userPromptContainer) || heading.closest("textarea"))
+          return
         if (this.isInRenderedMarkdownContainer(heading)) return
 
         const tagName = heading.tagName.toLowerCase()
@@ -2515,7 +2462,7 @@ export class AIStudioAdapter extends SiteAdapter {
             }
           }
 
-          const turnContainer = heading.closest("ms-chat-turn")
+          const turnContainer = heading.closest(privateSelectors.turn)
           item.wordCount = this.calculateRangeWordCount(
             heading,
             nextBoundaryEl,
@@ -2546,11 +2493,10 @@ export class AIStudioAdapter extends SiteAdapter {
       const tagName = element.tagName.toLowerCase()
       // 注意：.chat-turn-container.user 是个 div
       // 所以我们通过 class 来判断是否是 User Query
-      const isUserQuery =
-        element.classList.contains("user") && element.classList.contains("chat-turn-container")
+      const isUserQuery = element.matches(userQuerySelector)
 
       if (isUserQuery) {
-        const currentTurn = element.closest("ms-chat-turn")
+        const currentTurn = element.closest(privateSelectors.turn)
         const item = this.createAIStudioUserQueryOutlineItem(
           this.extractUserQueryText(element),
           element,
@@ -2561,7 +2507,8 @@ export class AIStudioAdapter extends SiteAdapter {
         outline.push(item)
       } else if (/^h[1-6]$/.test(tagName)) {
         // 过滤：避免提取到用户提问里的标题（虽然上面已经针对 .user 容器做了处理，但双重保险）
-        if (element.closest(".user-prompt-container") || element.closest("textarea")) return
+        if (element.closest(privateSelectors.userPromptContainer) || element.closest("textarea"))
+          return
         if (this.isInRenderedMarkdownContainer(element)) return
 
         const level = parseInt(tagName.charAt(1), 10)
@@ -2579,10 +2526,7 @@ export class AIStudioAdapter extends SiteAdapter {
               const candidateTagName = candidate.tagName.toLowerCase()
 
               // 遇到用户提问时停止
-              if (
-                candidate.classList.contains("user") &&
-                candidate.classList.contains("chat-turn-container")
-              ) {
+              if (candidate.matches(userQuerySelector)) {
                 nextBoundaryEl = candidate
                 break
               }
@@ -2596,7 +2540,7 @@ export class AIStudioAdapter extends SiteAdapter {
               }
             }
 
-            const turnContainer = element.closest("ms-chat-turn")
+            const turnContainer = element.closest(privateSelectors.turn)
             item.wordCount = this.calculateRangeWordCount(
               element,
               nextBoundaryEl,
@@ -2648,10 +2592,11 @@ export class AIStudioAdapter extends SiteAdapter {
   // ==================== 生成状态检测 ====================
 
   isGenerating(): boolean {
+    const privateSelectors = this.config.sitePrivateSelectors
     // AI Studio 生成状态检测（多语言兼容，不依赖按钮文字）
     // 逻辑：当 ms-run-button 组件存在时，表示 AI 没有在生成
     //      当组件不存在（被替换为停止按钮）时，表示正在生成
-    const runButton = document.querySelector("ms-run-button")
+    const runButton = document.querySelector(privateSelectors.runButton)
     if (runButton) {
       // 运行按钮存在，检查是否可见（offsetParent 不为 null）
       // 如果可见，说明未在生成
@@ -2661,19 +2606,11 @@ export class AIStudioAdapter extends SiteAdapter {
     }
 
     // 补充检测：检查是否有停止按钮（通常是 ms-stop-button 或带 stop 图标的按钮）
-    const stopIndicators = [
-      "ms-stop-button",
-      'button mat-icon[fonticon="stop"]',
-      'button .material-symbols-outlined:not([class*="keyboard"])',
-      ".mat-progress-spinner",
-      ".mat-progress-bar",
-    ]
-
-    for (const selector of stopIndicators) {
+    for (const selector of this.config.generating.existsSelectors) {
       const el = document.querySelector(selector)
       if (el && (el as HTMLElement).offsetParent !== null) {
         // 对于 .material-symbols-outlined，需要排除 keyboard_return 图标
-        if (selector.includes("material-symbols-outlined")) {
+        if (el.matches(privateSelectors.generationTextStopIndicator)) {
           const text = el.textContent?.trim()
           if (text === "stop" || text === "stop_circle") {
             return true
@@ -2688,11 +2625,7 @@ export class AIStudioAdapter extends SiteAdapter {
   }
 
   getStopButtonSelectors(): string[] {
-    return [
-      "ms-stop-button",
-      'button:has(mat-icon[fonticon="stop"])',
-      'button mat-icon[fonticon="stop"]',
-    ]
+    return [...this.config.selectors.stopButton]
   }
 
   // ==================== 模型名称获取 ====================
@@ -2702,7 +2635,9 @@ export class AIStudioAdapter extends SiteAdapter {
     // 1. 尝试从 DOM 获取 (最准确)
     const selectorBtn = this.getAIStudioModelSelectorButton()
     if (selectorBtn) {
-      const titleSpan = selectorBtn.querySelector("span.title") || selectorBtn.querySelector("span")
+      const titleSpan = this.config.sitePrivateSelectors.modelNameText
+        .map((selector) => selectorBtn.querySelector(selector))
+        .find(Boolean)
       const name = titleSpan?.textContent?.trim()
       if (name) {
         // 更新缓存
@@ -2760,7 +2695,9 @@ export class AIStudioAdapter extends SiteAdapter {
       ? this.extractThoughtBlockquotesFromElement(sanitized)
       : []
 
-    sanitized.querySelectorAll(AISTUDIO_THOUGHT_SELECTOR).forEach((node) => node.remove())
+    sanitized
+      .querySelectorAll(this.config.sitePrivateSelectors.thoughtChunk)
+      .forEach((node) => node.remove())
 
     const normalizedBody = this.extractAssistantResponseMarkdown(sanitized).trim()
     if (thoughtBlocks.length > 0) {
@@ -2775,7 +2712,7 @@ export class AIStudioAdapter extends SiteAdapter {
     const clone = element.cloneNode(true) as HTMLElement
     clone
       .querySelectorAll(
-        `${AISTUDIO_THOUGHT_SELECTOR}, .author-label, .actions-container, button, [role="button"], svg, [aria-hidden="true"]`,
+        `${this.config.sitePrivateSelectors.thoughtChunk}, ${this.config.sitePrivateSelectors.assistantContentNoise}`,
       )
       .forEach((node) => node.remove())
 
@@ -2797,7 +2734,9 @@ export class AIStudioAdapter extends SiteAdapter {
   }
 
   private extractThoughtBlockquotesFromElement(element: Element): string[] {
-    const thoughtChunks = Array.from(element.querySelectorAll(AISTUDIO_THOUGHT_SELECTOR))
+    const thoughtChunks = Array.from(
+      element.querySelectorAll(this.config.sitePrivateSelectors.thoughtChunk),
+    )
     const blocks: string[] = []
 
     thoughtChunks.forEach((chunk) => {
@@ -2812,9 +2751,7 @@ export class AIStudioAdapter extends SiteAdapter {
   private extractThoughtMarkdown(element: Element): string {
     const clone = element.cloneNode(true) as HTMLElement
     clone
-      .querySelectorAll(
-        '.author-label, .actions-container, button, [role="button"], svg, [aria-hidden="true"]',
-      )
+      .querySelectorAll(this.config.sitePrivateSelectors.assistantContentNoise)
       .forEach((node) => node.remove())
 
     this.normalizeAssistantExportDom(clone)
@@ -2835,7 +2772,7 @@ export class AIStudioAdapter extends SiteAdapter {
   }
 
   private unwrapCmarkNodes(root: HTMLElement): void {
-    const nodes = Array.from(root.querySelectorAll("ms-cmark-node"))
+    const nodes = Array.from(root.querySelectorAll(this.config.sitePrivateSelectors.markdownNode))
     nodes.forEach((node) => {
       if (!(node instanceof HTMLElement) || !node.parentNode) return
       node.replaceWith(...Array.from(node.childNodes))
@@ -2843,7 +2780,7 @@ export class AIStudioAdapter extends SiteAdapter {
   }
 
   private replaceInlineCodeSpans(root: HTMLElement): void {
-    root.querySelectorAll(".inline-code").forEach((node) => {
+    root.querySelectorAll(this.config.sitePrivateSelectors.inlineCode).forEach((node) => {
       if (!(node instanceof HTMLElement)) return
       if (node.tagName.toLowerCase() === "code") return
 
@@ -2854,11 +2791,12 @@ export class AIStudioAdapter extends SiteAdapter {
   }
 
   private replaceKatexComponents(root: HTMLElement): void {
-    root.querySelectorAll("ms-katex").forEach((node) => {
+    root.querySelectorAll(this.config.sitePrivateSelectors.katex).forEach((node) => {
       if (!(node instanceof HTMLElement)) return
 
       const latex =
-        node.querySelector('annotation[encoding="application/x-tex"]')?.textContent?.trim() || ""
+        node.querySelector(this.config.sitePrivateSelectors.katexAnnotation)?.textContent?.trim() ||
+        ""
       if (!latex) {
         return
       }
@@ -2871,7 +2809,7 @@ export class AIStudioAdapter extends SiteAdapter {
   }
 
   private replaceCodeBlockComponents(root: HTMLElement): void {
-    root.querySelectorAll("ms-code-block").forEach((node) => {
+    root.querySelectorAll(this.config.sitePrivateSelectors.codeBlock).forEach((node) => {
       if (!(node instanceof HTMLElement)) return
 
       const extracted = this.extractCodeBlockFromComponent(node)
@@ -2893,9 +2831,9 @@ export class AIStudioAdapter extends SiteAdapter {
   private extractCodeBlockFromComponent(
     element: HTMLElement,
   ): { language: string; code: string } | null {
-    const codeElement =
-      (element.querySelector("pre code") as HTMLElement | null) ||
-      (element.querySelector("pre") as HTMLElement | null)
+    const codeElement = this.config.sitePrivateSelectors.codeBlockContent
+      .map((selector) => element.querySelector(selector))
+      .find((candidate): candidate is HTMLElement => candidate instanceof HTMLElement)
 
     const code = codeElement?.textContent?.replace(/\r\n/g, "\n").replace(/\n+$/, "") || ""
     if (!code.trim()) {
@@ -2905,8 +2843,7 @@ export class AIStudioAdapter extends SiteAdapter {
     const languageCandidates = [
       element.getAttribute("data-test-language"),
       element.getAttribute("data-language"),
-      element.querySelector(".mat-expansion-panel-header-title .ng-star-inserted:last-child")
-        ?.textContent,
+      element.querySelector(this.config.sitePrivateSelectors.codeBlockLanguage)?.textContent,
     ]
 
     const language =
@@ -2928,9 +2865,7 @@ export class AIStudioAdapter extends SiteAdapter {
     this.exportIncludeThoughtsOverride = false
 
     // AI 回复容器
-    const aiMessages = document.querySelectorAll(
-      `${AISTUDIO_ASSISTANT_SELECTOR}, .model-prompt-container`,
-    )
+    const aiMessages = document.querySelectorAll(this.config.sitePrivateSelectors.assistantFragment)
 
     try {
       for (let i = aiMessages.length - 1; i >= 0; i -= 1) {
@@ -2973,9 +2908,10 @@ export class AIStudioAdapter extends SiteAdapter {
     scrollContainer: HTMLElement,
     collector?: ExportAssetCollector,
   ): Promise<AIStudioExportMessageSnapshot[]> {
+    const privateSelectors = this.config.sitePrivateSelectors
     const allTurns = Array.from(
-      (scrollContainer.querySelector("ms-chat-session") || document).querySelectorAll(
-        AISTUDIO_TURN_SELECTOR,
+      (scrollContainer.querySelector(privateSelectors.chatSession) || document).querySelectorAll(
+        privateSelectors.turn,
       ),
     ).filter((turn): turn is HTMLElement => {
       if (!(turn instanceof HTMLElement)) return false
@@ -3088,7 +3024,7 @@ export class AIStudioAdapter extends SiteAdapter {
         }
 
         const modelContainer = turn.querySelector(
-          ".chat-turn-container.model",
+          this.config.selectors.assistantResponse,
         ) as HTMLElement | null
         if (!modelContainer) continue
 
@@ -3160,8 +3096,8 @@ export class AIStudioAdapter extends SiteAdapter {
     let pendingUserGroupHead: HTMLElement | null = null
     for (let i = 0; i < allTurns.length; i += 1) {
       const turn = allTurns[i]
-      const isUser = !!turn.querySelector(".chat-turn-container.user")
-      const isModel = !!turn.querySelector(".chat-turn-container.model")
+      const isUser = !!turn.querySelector(this.config.selectors.userQuery)
+      const isModel = !!turn.querySelector(this.config.selectors.assistantResponse)
 
       if (isUser) {
         if (!pendingUserGroupHead) pendingUserGroupHead = turn
@@ -3186,7 +3122,9 @@ export class AIStudioAdapter extends SiteAdapter {
     // 找 missing assistant：reply model turn（非 thought-only）的 id 不在 collected。
     const missingAssistantTurns: HTMLElement[] = []
     for (const turn of allTurns) {
-      const modelContainer = turn.querySelector(".chat-turn-container.model") as HTMLElement | null
+      const modelContainer = turn.querySelector(
+        this.config.selectors.assistantResponse,
+      ) as HTMLElement | null
       if (!modelContainer) continue
       if (this.isThoughtOnlyModelTurn(modelContainer)) continue
       const id = turn.id || `idx:${allTurns.indexOf(turn)}`
@@ -3206,7 +3144,7 @@ export class AIStudioAdapter extends SiteAdapter {
       const groupTurns: HTMLElement[] = []
       for (let j = headIdx; j < allTurns.length; j += 1) {
         const t = allTurns[j]
-        if (!t.querySelector(".chat-turn-container.user")) break
+        if (!t.querySelector(this.config.selectors.userQuery)) break
         groupTurns.push(t)
       }
 
@@ -3246,7 +3184,7 @@ export class AIStudioAdapter extends SiteAdapter {
       // 向前找连续的 thought-only model turn
       for (let j = replyIdx - 1; j >= 0; j -= 1) {
         const t = allTurns[j]
-        const mc = t.querySelector(".chat-turn-container.model") as HTMLElement | null
+        const mc = t.querySelector(this.config.selectors.assistantResponse) as HTMLElement | null
         if (!mc || !this.isThoughtOnlyModelTurn(mc)) break
         groupTurns.unshift(t)
       }
@@ -3288,13 +3226,10 @@ export class AIStudioAdapter extends SiteAdapter {
    * （text / thought / image / file）才算挂载好。
    */
   private turnHasMountedContent(turn: HTMLElement): boolean {
-    const promptChunk = turn.querySelector("ms-prompt-chunk")
+    const privateSelectors = this.config.sitePrivateSelectors
+    const promptChunk = turn.querySelector(privateSelectors.promptChunk)
     if (!promptChunk) return false
-    if (
-      promptChunk.querySelector(
-        "ms-text-chunk, ms-thought-chunk, ms-image-chunk, ms-file-chunk, img",
-      )
-    ) {
+    if (promptChunk.querySelector(privateSelectors.mountedContent)) {
       return true
     }
     // 罕见 fallback：自定义 chunk 类型——若 prompt-chunk 已有较长 textContent 也算
@@ -3338,9 +3273,13 @@ export class AIStudioAdapter extends SiteAdapter {
    * 见 demo.html turn 2 (thought-only) vs turn 3 (reply) 的结构对比。
    */
   private isThoughtOnlyModelTurn(modelContainer: HTMLElement): boolean {
-    const textChunks = Array.from(modelContainer.querySelectorAll("ms-text-chunk"))
+    const textChunks = Array.from(
+      modelContainer.querySelectorAll(this.config.sitePrivateSelectors.textChunk),
+    )
     if (textChunks.length === 0) return true
-    return textChunks.every((chunk) => chunk.closest(AISTUDIO_THOUGHT_SELECTOR) !== null)
+    return textChunks.every(
+      (chunk) => chunk.closest(this.config.sitePrivateSelectors.thoughtChunk) !== null,
+    )
   }
 
   /**
@@ -3359,7 +3298,9 @@ export class AIStudioAdapter extends SiteAdapter {
 
     const parts: string[] = []
     for (const turn of turns) {
-      const modelContainer = turn.querySelector(".chat-turn-container.model") as HTMLElement | null
+      const modelContainer = turn.querySelector(
+        this.config.selectors.assistantResponse,
+      ) as HTMLElement | null
       if (!modelContainer) continue
 
       if (this.isThoughtOnlyModelTurn(modelContainer)) {
@@ -3436,7 +3377,9 @@ export class AIStudioAdapter extends SiteAdapter {
     container: ParentNode,
     collector?: ExportAssetCollector,
   ): AIStudioExportMessageSnapshot[] {
-    const turns = Array.from(container.querySelectorAll(AISTUDIO_TURN_SELECTOR)).filter(
+    const turns = Array.from(
+      container.querySelectorAll(this.config.sitePrivateSelectors.turn),
+    ).filter(
       (turn): turn is HTMLElement =>
         turn instanceof HTMLElement && !turn.closest(`[${AISTUDIO_EXPORT_ROOT_ATTR}]`),
     )
@@ -3501,28 +3444,30 @@ export class AIStudioAdapter extends SiteAdapter {
   }
 
   private getUserContainerForTurn(turn: HTMLElement): HTMLElement | null {
-    const candidates = Array.from(turn.querySelectorAll(".chat-turn-container.user")).filter(
+    const turnSelector = this.config.sitePrivateSelectors.turn
+    const candidates = Array.from(turn.querySelectorAll(this.config.selectors.userQuery)).filter(
       (element): element is HTMLElement =>
-        element instanceof HTMLElement && element.closest(AISTUDIO_TURN_SELECTOR) === turn,
+        element instanceof HTMLElement && element.closest(turnSelector) === turn,
     )
     return candidates[0] || null
   }
 
   private getAssistantFragmentsForTurn(turn: HTMLElement): HTMLElement[] {
-    return Array.from(turn.querySelectorAll(AISTUDIO_ASSISTANT_FRAGMENT_SELECTOR)).filter(
+    const privateSelectors = this.config.sitePrivateSelectors
+    return Array.from(turn.querySelectorAll(privateSelectors.assistantFragment)).filter(
       (element): element is HTMLElement => {
         if (!(element instanceof HTMLElement)) return false
-        if (element.closest(AISTUDIO_TURN_SELECTOR) !== turn) return false
+        if (element.closest(privateSelectors.turn) !== turn) return false
 
-        const parentFragment = element.parentElement?.closest(AISTUDIO_ASSISTANT_FRAGMENT_SELECTOR)
-        return parentFragment?.closest(AISTUDIO_TURN_SELECTOR) !== turn
+        const parentFragment = element.parentElement?.closest(privateSelectors.assistantFragment)
+        return parentFragment?.closest(privateSelectors.turn) !== turn
       },
     )
   }
 
   private getExportTurnKey(message: Element, role: "user" | "assistant", content: string): string {
     const turnId = message
-      .closest("ms-chat-turn")
+      .closest(this.config.sitePrivateSelectors.turn)
       ?.id?.replace(/^turn-/, "")
       .trim()
     if (turnId) {
@@ -3753,13 +3698,7 @@ export class AIStudioAdapter extends SiteAdapter {
   // ==================== 新对话按钮 ====================
 
   getNewChatButtonSelectors(): string[] {
-    // AI Studio 新对话按钮选择器（多语言兼容，不依赖按钮文字）
-    // 使用 iconname="add" 属性和 material icon 定位
-    return [
-      'button[iconname="add"]',
-      'button[data-test-clear="outside"]',
-      'button .material-symbols-outlined[aria-hidden="true"]', // 包含 add 图标的按钮
-    ]
+    return [...this.config.selectors.newChatButton]
   }
 
   // ==================== 主题切换 ====================
@@ -3808,7 +3747,7 @@ export class AIStudioAdapter extends SiteAdapter {
       // 通知 Angular：尝试触发变更检测
       // AI Studio 可能需要刷新页面才能完全应用主题
       // 但我们先尝试无刷新方式
-      const appRoot = document.querySelector("app-root, ms-app, body")
+      const appRoot = document.querySelector(this.config.sitePrivateSelectors.themeEventTarget)
       if (appRoot) {
         appRoot.dispatchEvent(new CustomEvent("themechange", { detail: { theme: targetMode } }))
       }
