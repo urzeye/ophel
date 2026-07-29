@@ -113,6 +113,12 @@ export const en = {
   sitePacksBindingPackRequired: "Choose an installed SitePack for explicit mode.",
   sitePacksBindingDetectRequired: "Install a SitePack with detect rules before using detect mode.",
   sitePacksBindingReferences: "{count} references",
+  sitePackDetectMultipleTitle: "Multiple SitePacks detected",
+  sitePackDetectMultipleDesc:
+    "Using “{name}”. If this is not the right match, pin another detected SitePack.",
+  sitePackDetectSelectLabel: "Choose a detected SitePack",
+  sitePackDetectSwitch: "Switch and reload",
+  sitePackDetectSwitching: "Switching…",
 
   generalPageDesc: "Configure extension behavior and interface",
   appearancePageDesc: "Customize visual styles and themes",

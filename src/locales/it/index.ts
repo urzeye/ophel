@@ -120,6 +120,12 @@ export const it = {
   sitePacksBindingDetectRequired:
     "Installa un SitePack con regole di rilevamento prima di usare questa modalità.",
   sitePacksBindingReferences: "{count} riferimenti",
+  sitePackDetectMultipleTitle: "Rilevati più SitePack",
+  sitePackDetectMultipleDesc:
+    "È in uso “{name}”. Se non è la corrispondenza corretta, fissa un altro SitePack rilevato.",
+  sitePackDetectSelectLabel: "Scegli un SitePack rilevato",
+  sitePackDetectSwitch: "Cambia e ricarica",
+  sitePackDetectSwitching: "Cambio in corso…",
 
   generalPageDesc: "Configura il comportamento e l'interfaccia dell'estensione",
   appearancePageDesc: "Personalizza stili e temi visivi",

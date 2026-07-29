@@ -8,6 +8,7 @@ import React, {
   useSyncExternalStore,
 } from "react"
 
+import type { SitePackDetectionState } from "~adapters"
 import type { SiteAdapter } from "~adapters/base"
 import type { SitePackCapability } from "~adapters/feature-capabilities"
 import {
@@ -52,6 +53,7 @@ import { ConversationsTab } from "./ConversationsTab"
 import { LoadingOverlay } from "./LoadingOverlay"
 import { OutlineTab } from "./OutlineTab"
 import { PromptsTab } from "./PromptsTab"
+import { SitePackDetectionNotice } from "./SitePackDetectionNotice"
 import { Tooltip } from "~components/ui/Tooltip"
 
 interface MainPanelProps {
@@ -64,6 +66,8 @@ interface MainPanelProps {
   conversationManager: ConversationManager
   outlineManager: OutlineManager
   adapter?: SiteAdapter | null
+  sitePackDetection?: SitePackDetectionState | null
+  onSwitchDetectedSitePack?: (packId: string) => Promise<void>
   onThemeToggle?: (event?: ThemeTransitionOrigin) => void
   themeMode?: "light" | "dark"
   selectedPromptId?: string | null
@@ -150,6 +154,8 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   conversationManager,
   outlineManager,
   adapter,
+  sitePackDetection = null,
+  onSwitchDetectedSitePack,
   onThemeToggle,
   themeMode,
   selectedPromptId,
@@ -1529,6 +1535,12 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             {t("tip1", { modifier: isMacOS() ? "⌘ Cmd" : "Ctrl" })}
           </span>
         </div>
+        {onSwitchDetectedSitePack && (
+          <SitePackDetectionNotice
+            detection={sitePackDetection}
+            onSwitch={onSwitchDetectedSitePack}
+          />
+        )}
         <div className="gh-panel-tabs" role="tablist" aria-label={t("panelTitle")}>
           {visibleTabs.map((tab) => {
             let IconComp: React.FC<{ size?: number }> | null = null

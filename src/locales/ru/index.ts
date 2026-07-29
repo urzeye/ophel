@@ -118,6 +118,12 @@ export const ru = {
   sitePacksBindingDetectRequired:
     "Перед использованием режима обнаружения установите SitePack с правилами обнаружения.",
   sitePacksBindingReferences: "Ссылок: {count}",
+  sitePackDetectMultipleTitle: "Обнаружено несколько SitePack",
+  sitePackDetectMultipleDesc:
+    "Сейчас используется «{name}». Если это не тот вариант, закрепите другой обнаруженный SitePack.",
+  sitePackDetectSelectLabel: "Выбрать обнаруженный SitePack",
+  sitePackDetectSwitch: "Переключить и обновить",
+  sitePackDetectSwitching: "Переключение…",
 
   generalPageDesc: "Настройте поведение расширения и интерфейс",
   appearancePageDesc: "Персонализация стилей и тем",

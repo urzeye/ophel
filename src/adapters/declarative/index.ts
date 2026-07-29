@@ -1,4 +1,5 @@
 export * from "./adapter"
+export * from "./detect"
 export * from "./match-pattern"
 export * from "./merge"
 export * from "./types"

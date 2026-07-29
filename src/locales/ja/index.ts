@@ -118,6 +118,12 @@ export const ja = {
   sitePacksBindingDetectRequired:
     "検出モードを使うには、検出ルールを持つ SitePack をインストールしてください。",
   sitePacksBindingReferences: "{count} 件の参照",
+  sitePackDetectMultipleTitle: "複数の SitePack を検出しました",
+  sitePackDetectMultipleDesc:
+    "現在は「{name}」を使用しています。正しくない場合は、別の検出済み SitePack を固定できます。",
+  sitePackDetectSelectLabel: "検出済み SitePack を選択",
+  sitePackDetectSwitch: "切り替えて再読み込み",
+  sitePackDetectSwitching: "切り替え中…",
 
   generalPageDesc: "拡張機能の動作とインターフェースの設定",
   appearancePageDesc: "視覚スタイルとテーマのカスタマイズ",

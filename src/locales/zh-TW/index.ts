@@ -105,6 +105,11 @@ export const zhTW = {
   sitePacksBindingPackRequired: "請在指定適配包模式選擇一個已安裝的適配包。",
   sitePacksBindingDetectRequired: "請先安裝宣告偵測規則的適配包，再使用偵測模式。",
   sitePacksBindingReferences: "{count} 個引用",
+  sitePackDetectMultipleTitle: "偵測到多個適配包",
+  sitePackDetectMultipleDesc: "目前使用「{name}」。如果辨識不正確，可以固定為其他命中的適配包。",
+  sitePackDetectSelectLabel: "選擇偵測到的適配包",
+  sitePackDetectSwitch: "切換並重新整理",
+  sitePackDetectSwitching: "切換中…",
 
   generalPageDesc: "配置擴充功能的基本行為和介面",
   appearancePageDesc: "自定義擴充功能的視覺樣式和主題",

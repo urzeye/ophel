@@ -40,6 +40,7 @@ interface OutlineCandidate {
 
 export interface DeclarativeAdapterOptions {
   explicitOrigin?: string
+  detectedOrigin?: string
 }
 
 const isTextControl = (element: HTMLElement): element is TextControl =>
@@ -106,13 +107,18 @@ export class DeclarativeAdapter extends SiteAdapter {
   private readonly newConversationPathPatterns: RegExp[] | null
   private readonly featureCapabilities: ReadonlySet<SitePackCapability>
   private readonly explicitOrigin?: string
+  private readonly detectedOrigin?: string
 
   constructor(
     private readonly manifest: SitePackManifest,
     options: DeclarativeAdapterOptions = {},
   ) {
     super()
+    if (options.explicitOrigin !== undefined && options.detectedOrigin !== undefined) {
+      throw new TypeError("Declarative adapter cannot be both explicit and detected")
+    }
     this.explicitOrigin = options.explicitOrigin
+    this.detectedOrigin = options.detectedOrigin
     this.featureCapabilities = new Set(manifest.capabilities)
     this.conversationIdPattern = manifest.conversation
       ? new RegExp(manifest.conversation.idFrom.regex)
@@ -128,6 +134,13 @@ export class DeclarativeAdapter extends SiteAdapter {
   match(): boolean {
     const url = new URL(window.location.href)
     if (this.explicitOrigin !== undefined) return url.origin === this.explicitOrigin
+    if (this.detectedOrigin !== undefined) {
+      return (
+        url.origin === this.detectedOrigin &&
+        (this.manifest.matches.length === 0 ||
+          this.manifest.matches.some((pattern) => siteMatchPatternMatchesUrl(url, pattern)))
+      )
+    }
     return this.manifest.matches.some((pattern) => siteMatchPatternMatchesUrl(url, pattern))
   }
 
@@ -136,7 +149,7 @@ export class DeclarativeAdapter extends SiteAdapter {
   }
 
   canClaimLegacySiteData(): boolean {
-    if (this.explicitOrigin !== undefined) return false
+    if (this.explicitOrigin !== undefined || this.detectedOrigin !== undefined) return false
     if (
       this.manifest.matches.length === 0 ||
       this.manifest.matches.some((match) => /^https:\/\/\*\./i.test(match))

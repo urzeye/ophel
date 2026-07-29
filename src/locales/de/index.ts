@@ -119,6 +119,12 @@ export const de = {
   sitePacksBindingDetectRequired:
     "Installiere vor dem Erkennungsmodus ein SitePack mit Erkennungsregeln.",
   sitePacksBindingReferences: "{count} Referenzen",
+  sitePackDetectMultipleTitle: "Mehrere SitePacks erkannt",
+  sitePackDetectMultipleDesc:
+    "Aktuell wird „{name}“ verwendet. Wenn dies nicht passt, kannst du ein anderes erkanntes SitePack festlegen.",
+  sitePackDetectSelectLabel: "Erkanntes SitePack auswählen",
+  sitePackDetectSwitch: "Wechseln und neu laden",
+  sitePackDetectSwitching: "Wird gewechselt…",
 
   generalPageDesc: "Verhalten der Erweiterung konfigurieren",
   appearancePageDesc: "Visuelle Stile und Themes anpassen",

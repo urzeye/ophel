@@ -120,6 +120,12 @@ export const es = {
   sitePacksBindingDetectRequired:
     "Instala un SitePack con reglas de detección antes de usar este modo.",
   sitePacksBindingReferences: "{count} referencias",
+  sitePackDetectMultipleTitle: "Se detectaron varios SitePack",
+  sitePackDetectMultipleDesc:
+    "Se está usando “{name}”. Si no es la coincidencia correcta, fija otro SitePack detectado.",
+  sitePackDetectSelectLabel: "Elegir un SitePack detectado",
+  sitePackDetectSwitch: "Cambiar y recargar",
+  sitePackDetectSwitching: "Cambiando…",
 
   generalPageDesc: "Configurar el comportamiento de la extensión",
   appearancePageDesc: "Personalizar estilos visuales y temas",

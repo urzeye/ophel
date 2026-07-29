@@ -114,6 +114,12 @@ export const ko = {
   sitePacksBindingDetectRequired:
     "감지 모드를 사용하기 전에 감지 규칙이 있는 SitePack을 설치하세요.",
   sitePacksBindingReferences: "참조 {count}개",
+  sitePackDetectMultipleTitle: "여러 SitePack이 감지되었습니다",
+  sitePackDetectMultipleDesc:
+    "현재 “{name}”을 사용 중입니다. 올바른 일치 항목이 아니면 다른 감지된 SitePack을 고정할 수 있습니다.",
+  sitePackDetectSelectLabel: "감지된 SitePack 선택",
+  sitePackDetectSwitch: "전환 후 새로 고침",
+  sitePackDetectSwitching: "전환 중…",
 
   generalPageDesc: "확장 프로그램 동작 및 인터페이스 구성",
   appearancePageDesc: "시각적 스타일 및 테마 사용자 정의",

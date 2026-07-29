@@ -103,6 +103,11 @@ export const zhCN = {
   sitePacksBindingPackRequired: "请为指定适配包模式选择一个已安装的适配包。",
   sitePacksBindingDetectRequired: "请先安装声明探测规则的适配包，再使用探测模式。",
   sitePacksBindingReferences: "{count} 条引用",
+  sitePackDetectMultipleTitle: "检测到多个适配包",
+  sitePackDetectMultipleDesc: "当前使用“{name}”。如果识别不正确，可以固定为其他命中的适配包。",
+  sitePackDetectSelectLabel: "选择探测到的适配包",
+  sitePackDetectSwitch: "切换并刷新",
+  sitePackDetectSwitching: "切换中…",
 
   generalPageDesc: "配置扩展的基本行为和界面",
   appearancePageDesc: "自定义扩展的视觉样式和主题",

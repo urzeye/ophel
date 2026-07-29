@@ -121,6 +121,12 @@ export const fr = {
   sitePacksBindingDetectRequired:
     "Installez un SitePack avec des règles de détection avant d'utiliser ce mode.",
   sitePacksBindingReferences: "{count} références",
+  sitePackDetectMultipleTitle: "Plusieurs SitePack détectés",
+  sitePackDetectMultipleDesc:
+    "« {name} » est utilisé. Si ce n’est pas la bonne correspondance, fixez un autre SitePack détecté.",
+  sitePackDetectSelectLabel: "Choisir un SitePack détecté",
+  sitePackDetectSwitch: "Changer et recharger",
+  sitePackDetectSwitching: "Changement en cours…",
 
   generalPageDesc: "Configurer le comportement de l'extension",
   appearancePageDesc: "Personnaliser les styles visuels et les thèmes",
