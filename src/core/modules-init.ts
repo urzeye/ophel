@@ -45,6 +45,7 @@ export interface ModulesContext {
   adapter: SiteAdapter
   settings: Settings
   siteId: string
+  siteInstanceKey: string
 }
 
 /**
@@ -148,8 +149,8 @@ export async function initAssistantMermaidRenderer(ctx: ModulesContext): Promise
  * 初始化主题管理器
  */
 export function initThemeManager(ctx: ModulesContext): ThemeManager {
-  const { adapter, settings, siteId } = ctx
-  const siteTheme = getSiteTheme(settings, siteId)
+  const { adapter, settings, siteInstanceKey } = ctx
+  const siteTheme = getSiteTheme(settings, siteInstanceKey)
 
   const themeManager = ensureGlobalThemeManager({
     mode: siteTheme.mode,
@@ -170,8 +171,8 @@ export function initThemeManager(ctx: ModulesContext): ThemeManager {
  * (恢复备份后，面板主题会正确应用，但宿主页本身的主题可能不一致)
  */
 export async function syncHostThemeWithSettings(ctx: ModulesContext): Promise<void> {
-  const { adapter, settings, siteId } = ctx
-  const siteTheme = getSiteTheme(settings, siteId)
+  const { adapter, settings, siteInstanceKey } = ctx
+  const siteTheme = getSiteTheme(settings, siteInstanceKey)
   if (siteTheme.mode === "system" && modules.themeManager) {
     await modules.themeManager.setMode("system")
     return
@@ -252,17 +253,17 @@ export function initMarkdownFixer(ctx: ModulesContext): void {
  * 初始化布局管理器
  */
 export function initLayoutManager(ctx: ModulesContext): void {
-  const { adapter, settings, siteId } = ctx
-  const sitePageWidth = getSitePageWidth(settings, siteId)
-  const siteUserQueryWidth = getSiteUserQueryWidth(settings, siteId)
-  const siteZenMode = getSiteZenMode(settings, siteId)
+  const { adapter, settings, siteInstanceKey } = ctx
+  const sitePageWidth = getSitePageWidth(settings, siteInstanceKey)
+  const siteUserQueryWidth = getSiteUserQueryWidth(settings, siteInstanceKey)
+  const siteZenMode = getSiteZenMode(settings, siteInstanceKey)
   const zenModeEnabled = siteZenMode.enabled
-  const siteCleanMode = getSiteCleanMode(settings, siteId)
+  const siteCleanMode = getSiteCleanMode(settings, siteInstanceKey)
   const hasCleanConfig = !!adapter.getCleanModeConfig()
   const cleanModeEnabled = hasCleanConfig && siteCleanMode.enabled
   const hasPanelAvoidanceConfig = !!adapter.getPanelAvoidanceConfig()
   const panelAvoidanceEnabled =
-    hasPanelAvoidanceConfig && getSitePanelAvoidance(settings, siteId).enabled
+    hasPanelAvoidanceConfig && getSitePanelAvoidance(settings, siteInstanceKey).enabled
 
   if (
     sitePageWidth?.enabled ||
@@ -390,8 +391,8 @@ export async function initReadingHistoryManager(ctx: ModulesContext): Promise<vo
  * 初始化模型锁定器
  */
 export function initModelLocker(ctx: ModulesContext): void {
-  const { adapter, settings, siteId } = ctx
-  const siteModelConfig = getSiteModelLock(settings, siteId)
+  const { adapter, settings, siteInstanceKey } = ctx
+  const siteModelConfig = getSiteModelLock(settings, siteInstanceKey)
 
   modules.modelLocker = new ModelLocker(adapter, siteModelConfig)
   if (siteModelConfig.enabled && siteModelConfig.keyword) {
@@ -488,7 +489,7 @@ export function initPolicyRetryManager(ctx: ModulesContext): void {
  * 订阅设置变化，动态更新模块
  */
 export function subscribeModuleUpdates(ctx: ModulesContext): () => void {
-  const { adapter, siteId } = ctx
+  const { adapter, siteId, siteInstanceKey } = ctx
   let lastLanguage = getSettingsState().language
 
   return subscribeSettings((newSettings: Settings) => {
@@ -500,7 +501,7 @@ export function subscribeModuleUpdates(ctx: ModulesContext): () => void {
     }
 
     // 1. Theme Manager - 只更新主题预置
-    const newSiteTheme = getSiteTheme(newSettings, siteId)
+    const newSiteTheme = getSiteTheme(newSettings, siteInstanceKey)
     if (newSiteTheme && modules.themeManager) {
       modules.themeManager.setNativeThemeOverrideEnabled(
         newSettings.theme?.syncNativePageTheme ?? true,
@@ -512,7 +513,7 @@ export function subscribeModuleUpdates(ctx: ModulesContext): () => void {
     }
 
     // 2. Model Locker update
-    const newModelConfig = getSiteModelLock(newSettings, siteId)
+    const newModelConfig = getSiteModelLock(newSettings, siteInstanceKey)
     if (newModelConfig && modules.modelLocker) {
       modules.modelLocker.updateConfig(newModelConfig)
     }
@@ -536,16 +537,16 @@ export function subscribeModuleUpdates(ctx: ModulesContext): () => void {
     }
 
     // 5. Layout Manager update
-    const newSitePageWidth = getSitePageWidth(newSettings, siteId)
-    const newUserQueryWidth = getSiteUserQueryWidth(newSettings, siteId)
-    const newSiteZenMode = getSiteZenMode(newSettings, siteId)
+    const newSitePageWidth = getSitePageWidth(newSettings, siteInstanceKey)
+    const newUserQueryWidth = getSiteUserQueryWidth(newSettings, siteInstanceKey)
+    const newSiteZenMode = getSiteZenMode(newSettings, siteInstanceKey)
     const newZenModeEnabled = newSiteZenMode.enabled
-    const newSiteCleanMode = getSiteCleanMode(newSettings, siteId)
+    const newSiteCleanMode = getSiteCleanMode(newSettings, siteInstanceKey)
     const hasCleanConfig = !!adapter.getCleanModeConfig()
     const newCleanModeEnabled = hasCleanConfig && newSiteCleanMode.enabled
     const hasPanelAvoidanceConfig = !!adapter.getPanelAvoidanceConfig()
     const panelAvoidanceEnabled =
-      hasPanelAvoidanceConfig && getSitePanelAvoidance(newSettings, siteId).enabled
+      hasPanelAvoidanceConfig && getSitePanelAvoidance(newSettings, siteInstanceKey).enabled
 
     if (modules.layoutManager) {
       modules.layoutManager.updateConfig(newSitePageWidth)
@@ -648,6 +649,7 @@ export function subscribeModuleUpdates(ctx: ModulesContext): () => void {
       adapter,
       settings: newSettings,
       siteId,
+      siteInstanceKey,
     }).catch((error) => {
       console.error("[Ophel] Assistant Mermaid renderer update failed:", error)
     })

@@ -8,6 +8,7 @@ import { create } from "zustand"
 import { createJSONStorage, persist } from "zustand/middleware"
 
 import type { Conversation } from "~core/conversation/types"
+import { createSiteScopedStorageKey, resolvePersistedSiteInstanceKey } from "~utils/site-identity"
 
 import { chromeStorageAdapter } from "./chrome-adapter"
 
@@ -23,6 +24,16 @@ interface ConversationBatchChanges {
   updates?: ConversationUpdateEntry[]
   deleteIds?: string[]
   lastUsedFolderId?: string
+}
+
+interface PersistedConversationsState {
+  conversations?: Record<string, unknown>
+  lastUsedFolderId?: unknown
+}
+
+export interface ConversationsMigrationResult {
+  state: PersistedConversationsState
+  warnings: string[]
 }
 
 interface ConversationsState {
@@ -49,6 +60,101 @@ interface ConversationsState {
 
 // Captured set for safe hydration (avoids referencing store variable before assignment in sync hydration)
 let _completeHydration: (() => void) | null = null
+export const CONVERSATIONS_STORAGE_SCHEMA_VERSION = 1
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value)
+
+const getConversationUpdatedAt = (value: unknown): number => {
+  if (!isRecord(value)) return 0
+  return typeof value.updatedAt === "number" && Number.isFinite(value.updatedAt)
+    ? value.updatedAt
+    : 0
+}
+
+const getConversationStorageKey = (conversation: Conversation): string => {
+  const siteInstanceKey = resolvePersistedSiteInstanceKey(conversation)
+  if (!siteInstanceKey) {
+    throw new Error(`Conversation ${conversation.id} is missing a resolvable site instance key`)
+  }
+  return createSiteScopedStorageKey(siteInstanceKey, conversation.id)
+}
+
+export const migrateConversationsStorageState = (
+  persistedState: unknown,
+): ConversationsMigrationResult => {
+  if (!isRecord(persistedState)) {
+    return { state: {}, warnings: [] }
+  }
+
+  const source = persistedState as PersistedConversationsState
+  if (!isRecord(source.conversations)) {
+    return { state: source, warnings: [] }
+  }
+
+  const conversations: Record<string, unknown> = {}
+  const warnings: string[] = []
+
+  Object.entries(source.conversations).forEach(([legacyStorageKey, value]) => {
+    if (!isRecord(value) || typeof value.id !== "string" || value.id.length === 0) {
+      conversations[legacyStorageKey] = value
+      warnings.push(`Preserved invalid conversation record at ${legacyStorageKey}`)
+      return
+    }
+
+    const siteInstanceKey = resolvePersistedSiteInstanceKey({
+      siteId: typeof value.siteId === "string" ? value.siteId : null,
+      siteInstanceKey: typeof value.siteInstanceKey === "string" ? value.siteInstanceKey : null,
+      url: typeof value.url === "string" ? value.url : null,
+    })
+
+    if (!siteInstanceKey) {
+      conversations[legacyStorageKey] = value
+      warnings.push(`Preserved unresolved conversation record at ${legacyStorageKey}`)
+      return
+    }
+
+    const nextConversation = { ...value, siteInstanceKey }
+    const storageKey = createSiteScopedStorageKey(siteInstanceKey, value.id)
+    const existing = conversations[storageKey]
+
+    if (
+      !existing ||
+      getConversationUpdatedAt(nextConversation) >= getConversationUpdatedAt(existing)
+    ) {
+      conversations[storageKey] = nextConversation
+    }
+    if (existing) {
+      warnings.push(`Resolved duplicate conversation storage key ${storageKey}`)
+    }
+  })
+
+  return {
+    state: {
+      ...source,
+      conversations,
+    },
+    warnings,
+  }
+}
+
+export const getConversationsForSiteInstance = (
+  conversations: Record<string, Conversation>,
+  siteInstanceKey: string,
+): Record<string, Conversation> => {
+  const result: Record<string, Conversation> = {}
+
+  Object.values(conversations).forEach((conversation) => {
+    if (resolvePersistedSiteInstanceKey(conversation) !== siteInstanceKey) return
+
+    const existing = result[conversation.id]
+    if (!existing || (conversation.updatedAt || 0) >= (existing.updatedAt || 0)) {
+      result[conversation.id] = conversation
+    }
+  })
+
+  return result
+}
 
 export const useConversationsStore = create<ConversationsState>()(
   persist(
@@ -60,9 +166,12 @@ export const useConversationsStore = create<ConversationsState>()(
         _hasHydrated: false,
 
         addConversation: (conv) =>
-          set((state) => ({
-            conversations: { ...state.conversations, [conv.id]: conv },
-          })),
+          set((state) => {
+            const storageKey = getConversationStorageKey(conv)
+            return {
+              conversations: { ...state.conversations, [storageKey]: conv },
+            }
+          }),
 
         updateConversation: (id, updates) =>
           set((state) => {
@@ -111,7 +220,7 @@ export const useConversationsStore = create<ConversationsState>()(
 
             upserts?.forEach((conversation) => {
               const nextConversations = ensureWritableConversations()
-              nextConversations[conversation.id] = conversation
+              nextConversations[getConversationStorageKey(conversation)] = conversation
               changed = true
             })
 
@@ -206,6 +315,18 @@ export const useConversationsStore = create<ConversationsState>()(
     {
       name: "conversations", // chrome.storage key
       storage: createJSONStorage(() => chromeStorageAdapter),
+      version: CONVERSATIONS_STORAGE_SCHEMA_VERSION,
+      migrate: (persistedState, version) => {
+        if (version > CONVERSATIONS_STORAGE_SCHEMA_VERSION) {
+          throw new Error(`Unsupported conversations storage schema: ${version}`)
+        }
+
+        const migration = migrateConversationsStorageState(persistedState)
+        migration.warnings.forEach((warning) => {
+          console.warn(`[Ophel] ${warning}`)
+        })
+        return migration.state as ConversationsState
+      },
       partialize: (state) => ({
         conversations: state.conversations,
         lastUsedFolderId: state.lastUsedFolderId,

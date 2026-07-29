@@ -15,6 +15,7 @@ export interface Tag {
 
 export interface Conversation extends ConversationInfo {
   siteId: string
+  siteInstanceKey: string
   folderId: string
   createdAt: number
   updatedAt: number

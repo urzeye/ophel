@@ -103,6 +103,74 @@ type WidthConfigKind = "PAGE_WIDTH" | "USER_QUERY_WIDTH"
 type SiteThemeRecord = NonNullable<Settings["theme"]["sites"]>
 type SiteConfigRecord<T> = Record<string, Partial<T>>
 
+const migrateSiteRecordKey = <T>(
+  record: Record<string, T> | undefined,
+  legacySiteId: string,
+  siteInstanceKey: string,
+): { record: Record<string, T> | undefined; changed: boolean } => {
+  if (!record || !Object.prototype.hasOwnProperty.call(record, legacySiteId)) {
+    return { record, changed: false }
+  }
+
+  const next = { ...record }
+  if (!Object.prototype.hasOwnProperty.call(next, siteInstanceKey)) {
+    next[siteInstanceKey] = next[legacySiteId]
+  }
+  delete next[legacySiteId]
+  return { record: next, changed: true }
+}
+
+export const migrateLegacySiteSettings = (
+  settings: Settings,
+  legacySiteId: string,
+  siteInstanceKey: string,
+): Settings => {
+  if (!legacySiteId || legacySiteId === siteInstanceKey) return settings
+
+  const themeSites = migrateSiteRecordKey(settings.theme.sites, legacySiteId, siteInstanceKey)
+  const pageWidth = migrateSiteRecordKey(settings.layout.pageWidth, legacySiteId, siteInstanceKey)
+  const userQueryWidth = migrateSiteRecordKey(
+    settings.layout.userQueryWidth,
+    legacySiteId,
+    siteInstanceKey,
+  )
+  const zenMode = migrateSiteRecordKey(settings.layout.zenMode, legacySiteId, siteInstanceKey)
+  const cleanMode = migrateSiteRecordKey(settings.layout.cleanMode, legacySiteId, siteInstanceKey)
+  const panelAvoidance = migrateSiteRecordKey(
+    settings.layout.panelAvoidance,
+    legacySiteId,
+    siteInstanceKey,
+  )
+  const modelLock = migrateSiteRecordKey(settings.modelLock, legacySiteId, siteInstanceKey)
+  const changed =
+    themeSites.changed ||
+    pageWidth.changed ||
+    userQueryWidth.changed ||
+    zenMode.changed ||
+    cleanMode.changed ||
+    panelAvoidance.changed ||
+    modelLock.changed
+
+  if (!changed) return settings
+
+  return normalizeSettings({
+    ...settings,
+    theme: {
+      ...settings.theme,
+      sites: themeSites.record ?? settings.theme.sites,
+    },
+    layout: {
+      ...settings.layout,
+      pageWidth: pageWidth.record ?? settings.layout.pageWidth,
+      userQueryWidth: userQueryWidth.record ?? settings.layout.userQueryWidth,
+      zenMode: zenMode.record,
+      cleanMode: cleanMode.record,
+      panelAvoidance: panelAvoidance.record,
+    },
+    modelLock: modelLock.record ?? settings.modelLock,
+  })
+}
+
 const clamp = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value))
 

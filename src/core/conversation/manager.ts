@@ -7,7 +7,11 @@ import type {
   SiteDeleteConversationResult,
 } from "~adapters/base"
 import { SITE_IDS, type Folder } from "~constants"
-import { getConversationsStore, useConversationsStore } from "~stores/conversations-store"
+import {
+  getConversationsForSiteInstance,
+  getConversationsStore,
+  useConversationsStore,
+} from "~stores/conversations-store"
 import { getFoldersStore, useFoldersStore } from "~stores/folders-store"
 import { useSettingsStore } from "~stores/settings-store"
 import { getTagsStore, useTagsStore } from "~stores/tags-store"
@@ -30,6 +34,7 @@ import {
   htmlToMarkdown,
 } from "~utils/exporter"
 import { getAllLocalizedTexts, t } from "~utils/i18n"
+import { createSiteScopedStorageKey, resolvePersistedSiteInstanceKey } from "~utils/site-identity"
 import { consumeRestoreFlag, type ExportPackaging } from "~utils/storage"
 import { showToast } from "~utils/toast"
 
@@ -161,8 +166,24 @@ export class ConversationManager {
     return getFoldersStore().folders
   }
 
-  private get conversations(): Record<string, Conversation> {
+  private get storedConversations(): Record<string, Conversation> {
     return getConversationsStore().conversations
+  }
+
+  private get siteInstanceKey(): string {
+    return this.siteAdapter.getSiteInstanceKey()
+  }
+
+  private getConversationStorageKey(conversationId: string): string {
+    return createSiteScopedStorageKey(this.siteInstanceKey, conversationId)
+  }
+
+  private isCurrentSiteInstance(conv: Conversation): boolean {
+    return resolvePersistedSiteInstanceKey(conv) === this.siteInstanceKey
+  }
+
+  private get conversations(): Record<string, Conversation> {
+    return getConversationsForSiteInstance(this.storedConversations, this.siteInstanceKey)
   }
 
   private get lastUsedFolderId(): string {
@@ -236,7 +257,7 @@ export class ConversationManager {
   // Gemini 老数据迁移：数字 cid(0/1/2...) -> 当前邮箱 cid
   private tryMigrateGeminiLegacyCidToEmail(): GeminiCidMigrationResult {
     if (this.siteAdapter.getSiteId() !== SITE_IDS.GEMINI) return "noop"
-    const all = this.conversations
+    const all = this.storedConversations
     const geminiEntries = Object.entries(all).filter(([_, conv]) => this.isGeminiConversation(conv))
     if (geminiEntries.length === 0) return "noop"
 
@@ -268,11 +289,11 @@ export class ConversationManager {
     const nextConversations: Record<string, Conversation> = { ...all }
     const userPathPrefix = this.getGeminiUserPathPrefix()
 
-    toMigrate.forEach(([id, conv]) => {
-      nextConversations[id] = {
+    toMigrate.forEach(([storageKey, conv]) => {
+      nextConversations[storageKey] = {
         ...conv,
         cid: currentCid,
-        url: this.buildGeminiConversationUrl(id, userPathPrefix),
+        url: this.buildGeminiConversationUrl(conv.id, userPathPrefix),
       }
     })
 
@@ -595,6 +616,7 @@ export class ConversationManager {
       getConversationsStore().addConversation({
         id: info.id,
         siteId: this.siteAdapter.getSiteId(),
+        siteInstanceKey: this.siteInstanceKey,
         cid: info.cid,
         title: info.title,
         url: info.url,
@@ -608,6 +630,11 @@ export class ConversationManager {
       // 更新现有会话
       let needsUpdate = false
       const updates: Partial<Conversation> = {}
+
+      if (existing.siteInstanceKey !== this.siteInstanceKey) {
+        updates.siteInstanceKey = this.siteInstanceKey
+        needsUpdate = true
+      }
 
       if (info.title && info.title !== existing.title) {
         updates.title = info.title
@@ -635,7 +662,7 @@ export class ConversationManager {
       }
 
       if (needsUpdate) {
-        getConversationsStore().updateConversation(info.id, updates)
+        getConversationsStore().updateConversation(this.getConversationStorageKey(info.id), updates)
         this.notifyDataChange()
       }
     }
@@ -667,7 +694,9 @@ export class ConversationManager {
           } else {
             // 检测标题变更
             if (info.title && info.title !== existing.title) {
-              getConversationsStore().updateConversation(info.id, { title: info.title })
+              getConversationsStore().updateConversation(this.getConversationStorageKey(info.id), {
+                title: info.title,
+              })
               this.notifyDataChange()
             }
           }
@@ -725,7 +754,7 @@ export class ConversationManager {
       }
 
       if (needsUpdate) {
-        getConversationsStore().updateConversation(id, updates)
+        getConversationsStore().updateConversation(this.getConversationStorageKey(id), updates)
         this.notifyDataChange()
       }
     })
@@ -810,7 +839,7 @@ export class ConversationManager {
       .map((id): ConversationDeleteTarget | null => {
         const conv = this.conversations[id]
         if (!conv) return null
-        if (conv.siteId && conv.siteId !== this.siteAdapter.getSiteId()) return null
+        if (!this.isCurrentSiteInstance(conv)) return null
         return {
           id: conv.id,
           title: conv.title,
@@ -869,7 +898,7 @@ export class ConversationManager {
       }
 
       if (exists) {
-        getConversationsStore().deleteConversation(id)
+        getConversationsStore().deleteConversation(this.getConversationStorageKey(id))
         localDeletedCount++
       }
 
@@ -900,7 +929,7 @@ export class ConversationManager {
   }
 
   moveConversation(id: string, targetFolderId: string) {
-    getConversationsStore().moveToFolder(id, targetFolderId)
+    getConversationsStore().moveToFolder(this.getConversationStorageKey(id), targetFolderId)
   }
 
   setLastUsedFolder(folderId: string) {
@@ -928,23 +957,25 @@ export class ConversationManager {
   }
 
   setConversationTags(convId: string, tagIds: string[]) {
-    getConversationsStore().setConversationTags(convId, tagIds)
+    getConversationsStore().setConversationTags(this.getConversationStorageKey(convId), tagIds)
   }
 
   // ================= Conversation Operations Extended =================
 
   togglePin(convId: string): boolean {
-    return getConversationsStore().togglePin(convId)
+    return getConversationsStore().togglePin(this.getConversationStorageKey(convId))
   }
 
   renameConversation(convId: string, newTitle: string) {
     if (newTitle) {
-      getConversationsStore().updateConversation(convId, { title: newTitle })
+      getConversationsStore().updateConversation(this.getConversationStorageKey(convId), {
+        title: newTitle,
+      })
     }
   }
 
   updateConversation(convId: string, updates: Partial<Conversation>) {
-    getConversationsStore().updateConversation(convId, updates)
+    getConversationsStore().updateConversation(this.getConversationStorageKey(convId), updates)
   }
 
   getConversation(convId: string): Conversation | undefined {
@@ -997,8 +1028,7 @@ export class ConversationManager {
     const deleteIds: string[] = []
 
     sidebarItems.forEach((item) => {
-      const storageKey = item.id
-      const existing = conversations[storageKey]
+      const existing = conversations[item.id]
 
       if (existing) {
         // 更新已有会话
@@ -1020,13 +1050,20 @@ export class ConversationManager {
           updates.siteId = this.siteAdapter.getSiteId()
           needsUpdate = true
         }
+        if (existing.siteInstanceKey !== this.siteInstanceKey) {
+          updates.siteInstanceKey = this.siteInstanceKey
+          needsUpdate = true
+        }
         if (item.cid && !existing.cid) {
           updates.cid = item.cid
           needsUpdate = true
         }
 
         if (needsUpdate) {
-          updateEntries.push({ id: storageKey, updates })
+          updateEntries.push({
+            id: this.getConversationStorageKey(item.id),
+            updates,
+          })
           updatedCount++
         }
       } else {
@@ -1034,6 +1071,7 @@ export class ConversationManager {
         upserts.push({
           id: item.id,
           siteId: this.siteAdapter.getSiteId(),
+          siteInstanceKey: this.siteInstanceKey,
           cid: item.cid,
           title: item.title,
           url: item.url,
@@ -1047,15 +1085,13 @@ export class ConversationManager {
     })
 
     if (options.syncDeleted) {
-      const currentSiteId = this.siteAdapter.getSiteId()
       const currentCid = this.siteAdapter.getCurrentCid?.() || null
 
       Object.entries(conversations).forEach(([id, conv]) => {
-        if (conv.siteId !== currentSiteId) return
         if (!this.matchesCid(conv, currentCid)) return
         if (sidebarIds.has(id)) return
 
-        deleteIds.push(id)
+        deleteIds.push(this.getConversationStorageKey(id))
         deletedCount++
       })
     }
@@ -1074,10 +1110,7 @@ export class ConversationManager {
    * 检查会话是否属于当前站点和团队
    */
   matchesCid(conv: Conversation, currentCid: string | null): boolean {
-    const currentSiteId = this.siteAdapter.getSiteId()
-    if (conv.siteId && conv.siteId !== currentSiteId) {
-      return false
-    }
+    if (!this.isCurrentSiteInstance(conv)) return false
     if (!currentCid) return !conv.cid
     if (!conv.cid) return true
     return conv.cid === currentCid
@@ -1413,6 +1446,11 @@ export class ConversationManager {
       const updates: Partial<Conversation> = {}
       let needsUpdate = false
 
+      if (existing.siteInstanceKey !== this.siteInstanceKey) {
+        updates.siteInstanceKey = this.siteInstanceKey
+        needsUpdate = true
+      }
+
       if (!existing.title?.trim() && title !== existing.title) {
         updates.title = title
         needsUpdate = true
@@ -1434,7 +1472,7 @@ export class ConversationManager {
       }
 
       if (needsUpdate) {
-        getConversationsStore().updateConversation(convId, updates)
+        getConversationsStore().updateConversation(this.getConversationStorageKey(convId), updates)
         this.notifyDataChange()
         const updatedConversation = {
           ...existing,
@@ -1453,6 +1491,7 @@ export class ConversationManager {
     const fallbackConversation: Conversation = {
       id: convId,
       siteId: this.siteAdapter.getSiteId(),
+      siteInstanceKey: this.siteInstanceKey,
       cid,
       title,
       url,

@@ -113,6 +113,14 @@ export {
   getSiteUserQueryWidth,
   getSiteZenMode,
 } from "~utils/settings-selectors"
+export {
+  createSiteInstanceKey,
+  createSiteScopedStorageKey,
+  isSitePackSiteId,
+  normalizeSiteOrigin,
+  resolvePersistedSiteInstanceKey,
+  tryNormalizeSiteOrigin,
+} from "~utils/site-identity"
 
 function getRawStorageValue<T>(key: string): Promise<T | undefined> {
   if (isUserscript) {

@@ -91,7 +91,7 @@ const userscriptStorageAdapter: StateStorage = {
 /**
  * 浏览器扩展存储适配器
  *
- * Zustand persist 存储格式: { state: { [storeName]: ... }, version: 0 }
+ * Zustand persist 存储格式: { state: { [storeName]: ... }, version: number }
  */
 const extensionStorageAdapter: StateStorage = {
   getItem: async (name: string): Promise<string | null> => {

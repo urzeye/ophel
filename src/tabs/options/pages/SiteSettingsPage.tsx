@@ -28,6 +28,7 @@ import ClaudeSettings from "./ClaudeSettings"
 
 interface SiteSettingsPageProps {
   siteId: string
+  siteInstanceKey?: string
   adapter?: SiteAdapter | null
   initialTab?: string
   modelLockContent?: React.ReactNode
@@ -63,6 +64,7 @@ const PANEL_AVOIDANCE_SUPPORTED_SITE_IDS = new Set<string>([
 
 const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
   siteId,
+  siteInstanceKey = siteId,
   adapter,
   initialTab,
   modelLockContent,
@@ -108,14 +110,18 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
   const supportsCleanMode = supportsFeature("clean")
 
   // 宽度布局相关状态
-  const currentPageWidth = settings ? getSitePageWidth(settings, siteId) : undefined
-  const currentUserQueryWidth = settings ? getSiteUserQueryWidth(settings, siteId) : undefined
+  const currentPageWidth = settings ? getSitePageWidth(settings, siteInstanceKey) : undefined
+  const currentUserQueryWidth = settings
+    ? getSiteUserQueryWidth(settings, siteInstanceKey)
+    : undefined
   const currentZenMode = settings
-    ? getSiteZenMode(settings, siteId)
+    ? getSiteZenMode(settings, siteInstanceKey)
     : { enabled: false, showExitButton: true }
-  const currentCleanMode = settings ? getSiteCleanMode(settings, siteId) : { enabled: true }
+  const currentCleanMode = settings
+    ? getSiteCleanMode(settings, siteInstanceKey)
+    : { enabled: true }
   const currentPanelAvoidance = settings
-    ? getSitePanelAvoidance(settings, siteId)
+    ? getSitePanelAvoidance(settings, siteInstanceKey)
     : { enabled: true }
   const panelAvoidanceTitle = (
     <span className="settings-card-title-with-badge">
@@ -154,7 +160,7 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
         ...settings.layout,
         [key]: {
           ...settings.layout?.[key],
-          [siteId]: {
+          [siteInstanceKey]: {
             ...current,
             value: String(nextValue),
             unit: "%",
@@ -229,7 +235,7 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
                       ...settings.layout,
                       panelAvoidance: {
                         ...settings.layout?.panelAvoidance,
-                        [siteId]: {
+                        [siteInstanceKey]: {
                           ...currentPanelAvoidance,
                           enabled: !currentPanelAvoidance.enabled,
                         },
@@ -256,7 +262,7 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
                       ...settings?.layout,
                       pageWidth: {
                         ...settings?.layout?.pageWidth,
-                        [siteId]: { ...current, enabled: !current.enabled },
+                        [siteInstanceKey]: { ...current, enabled: !current.enabled },
                       },
                     },
                   })
@@ -305,7 +311,7 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
                       ...settings?.layout,
                       userQueryWidth: {
                         ...settings?.layout?.userQueryWidth,
-                        [siteId]: { ...current, enabled: !current.enabled },
+                        [siteInstanceKey]: { ...current, enabled: !current.enabled },
                       },
                     },
                   })
@@ -349,7 +355,7 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
                     ...settings.layout,
                     zenMode: {
                       ...settings.layout?.zenMode,
-                      [siteId]: {
+                      [siteInstanceKey]: {
                         ...currentZenMode,
                         enabled: newZenEnabled,
                       },
@@ -359,7 +365,7 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
                   if (newZenEnabled && supportsCleanMode) {
                     updatedLayout.cleanMode = {
                       ...settings.layout?.cleanMode,
-                      [siteId]: { enabled: true },
+                      [siteInstanceKey]: { enabled: true },
                     }
                   }
                   setSettings({ layout: updatedLayout })
@@ -376,7 +382,7 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
                       ...settings.layout,
                       zenMode: {
                         ...settings.layout?.zenMode,
-                        [siteId]: {
+                        [siteInstanceKey]: {
                           ...currentZenMode,
                           showExitButton: !(currentZenMode.showExitButton ?? true),
                         },
@@ -402,7 +408,7 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
                       ...settings.layout,
                       cleanMode: {
                         ...settings.layout?.cleanMode,
-                        [siteId]: {
+                        [siteInstanceKey]: {
                           ...currentCleanMode,
                           enabled: !currentCleanMode.enabled,
                         },

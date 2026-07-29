@@ -177,6 +177,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   const currentSettings = settings || DEFAULT_SETTINGS
   const tabOrder = currentSettings.features?.order || DEFAULT_SETTINGS.features.order
   const siteId = adapter?.getSiteId() || "_default"
+  const siteInstanceKey = adapter?.getSiteInstanceKey() || "_default"
   const featureCapabilities = useMemo(
     () => adapter?.getFeatureCapabilities() ?? new Set<SitePackCapability>(),
     [adapter],
@@ -234,7 +235,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     },
     [defaultPromptPlatformFilter, siteId],
   )
-  const siteTheme = getSiteTheme(currentSettings, siteId)
+  const siteTheme = getSiteTheme(currentSettings, siteInstanceKey)
   const resolvedThemeMode = themeMode || (siteTheme.mode === "dark" ? "dark" : "light")
   const currentThemeStyleId =
     resolvedThemeMode === "light"

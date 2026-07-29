@@ -9,12 +9,17 @@ import { create } from "zustand"
 import { createJSONStorage, persist, type StateStorage } from "zustand/middleware"
 
 import { DEFAULT_SETTINGS, type Settings } from "~utils/storage"
-import { normalizeSettings, type SettingsInput } from "~utils/settings-normalize"
+import {
+  migrateLegacySiteSettings,
+  normalizeSettings,
+  type SettingsInput,
+} from "~utils/settings-normalize"
 
 import { chromeStorageAdapter } from "./chrome-adapter"
 
 let isUpdatingFromStorage = false
 let skippedPersistWrites = 0
+export const SETTINGS_STORAGE_SCHEMA_VERSION = 1
 
 const releaseSkippedPersistWrite = () => {
   const release = () => {
@@ -240,6 +245,13 @@ export const useSettingsStore = create<SettingsState>()(
     {
       name: "settings", // chrome.storage key
       storage: createJSONStorage(() => storageAdapter),
+      version: SETTINGS_STORAGE_SCHEMA_VERSION,
+      migrate: (persistedState, version) => {
+        if (version > SETTINGS_STORAGE_SCHEMA_VERSION) {
+          throw new Error(`Unsupported settings storage schema: ${version}`)
+        }
+        return persistedState as SettingsState
+      },
       // 只持久化 settings，不持久化 _hasHydrated
       partialize: (state) => ({ settings: state.persistedSettings }),
       // 自定义 merge，确保 hydration 后 settings / persistedSettings 同步一致，
@@ -319,6 +331,15 @@ export const getSettingsState = () => useSettingsStore.getState().settings
  */
 export const setSettingsState = (settings: Partial<Settings>) =>
   useSettingsStore.getState().setSettings(settings)
+
+export const claimLegacySiteSettings = (legacySiteId: string, siteInstanceKey: string): boolean => {
+  const store = useSettingsStore.getState()
+  const migrated = migrateLegacySiteSettings(store.persistedSettings, legacySiteId, siteInstanceKey)
+  if (migrated === store.persistedSettings) return false
+
+  store.setSettings(migrated)
+  return true
+}
 
 /**
  * 订阅 settings 变化（用于 main.ts 等非 React 模块）

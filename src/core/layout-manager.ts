@@ -1165,10 +1165,10 @@ export class LayoutManager {
   }
 
   private handleZenModeExit = () => {
-    const siteId = this.siteAdapter.getSiteId()
+    const siteInstanceKey = this.siteAdapter.getSiteInstanceKey()
     const nextZenMode = { ...this.zenModeConfig, enabled: false }
     this.updateZenMode(nextZenMode)
-    useSettingsStore.getState().updateDeepSetting("layout", "zenMode", siteId, nextZenMode)
+    useSettingsStore.getState().updateDeepSetting("layout", "zenMode", siteInstanceKey, nextZenMode)
   }
 
   // ==================== 国际化支持 ====================

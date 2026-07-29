@@ -33,6 +33,7 @@ interface ReadingHistoryState {
   // Actions
   savePosition: (key: string, position: ReadingPosition) => void
   getPosition: (key: string) => ReadingPosition | undefined
+  claimPosition: (legacyKey: string, key: string) => ReadingPosition | undefined
   cleanup: (days: number) => void
   setHasHydrated: (state: boolean) => void
 }
@@ -41,6 +42,7 @@ interface ReadingHistoryState {
 
 // Captured set for safe hydration (avoids referencing store variable before assignment in sync hydration)
 let _completeHydration: (() => void) | null = null
+export const READING_HISTORY_STORAGE_SCHEMA_VERSION = 1
 
 export const useReadingHistoryStore = create<ReadingHistoryState>()(
   persist(
@@ -58,6 +60,18 @@ export const useReadingHistoryStore = create<ReadingHistoryState>()(
 
         getPosition: (key) => {
           return get().history[key]
+        },
+
+        claimPosition: (legacyKey, key) => {
+          const state = get()
+          const current = state.history[key]
+          const legacy = state.history[legacyKey]
+          if (!legacy) return current
+
+          const history = { ...state.history, [key]: current ?? legacy }
+          delete history[legacyKey]
+          set({ history })
+          return history[key]
         },
 
         cleanup: (days) => {
@@ -94,6 +108,13 @@ export const useReadingHistoryStore = create<ReadingHistoryState>()(
     {
       name: "readingHistory", // chrome.storage key
       storage: createJSONStorage(() => chromeStorageAdapter),
+      version: READING_HISTORY_STORAGE_SCHEMA_VERSION,
+      migrate: (persistedState, version) => {
+        if (version > READING_HISTORY_STORAGE_SCHEMA_VERSION) {
+          throw new Error(`Unsupported reading history storage schema: ${version}`)
+        }
+        return persistedState as ReadingHistoryState
+      },
       partialize: (state) => ({
         history: state.history,
         lastCleanupRun: state.lastCleanupRun,

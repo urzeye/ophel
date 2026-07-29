@@ -23,7 +23,7 @@ import { useFoldersStore } from "~stores/folders-store"
 import { usePromptChainsStore } from "~stores/prompt-chains-store"
 import { usePromptsStore } from "~stores/prompts-store"
 import { useReadingHistoryStore } from "~stores/reading-history-store"
-import { getSettingsState, useSettingsStore } from "~stores/settings-store"
+import { claimLegacySiteSettings, getSettingsState, useSettingsStore } from "~stores/settings-store"
 import { useTagsStore } from "~stores/tags-store"
 import {
   EVENT_EXTENSION_UPDATE_AVAILABLE,
@@ -476,12 +476,15 @@ function initializeOphel() {
         })
       })
 
-      // 获取用户设置
-      const settings = getSettingsState()
       const siteId = adapter.getSiteId()
+      const siteInstanceKey = adapter.getSiteInstanceKey()
+      if (adapter.canClaimLegacySiteData()) {
+        claimLegacySiteSettings(siteId, siteInstanceKey)
+      }
+      const settings = getSettingsState()
 
       // 创建模块上下文
-      const ctx: ModulesContext = { adapter, settings, siteId }
+      const ctx: ModulesContext = { adapter, settings, siteId, siteInstanceKey }
 
       // 初始化所有核心模块
       await initCoreModules(ctx)

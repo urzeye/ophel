@@ -18,6 +18,7 @@ import {
   READING_HISTORY_USER_NAVIGATION_EVENT,
 } from "~utils/reading-history-navigation"
 import { smartScrollTo } from "~utils/scroll-helper"
+import { createSiteScopedStorageKey } from "~utils/site-identity"
 import type { Settings } from "~utils/storage"
 
 // 重新导出类型供其他模块使用
@@ -292,8 +293,20 @@ export class ReadingHistoryManager {
 
   private getKey(sessionId = this.getSessionId()): string {
     const normalizedSessionId = sessionId || "unknown"
-    const siteId = this.adapter.getSiteId()
-    return `${siteId}:${normalizedSessionId}`
+    return createSiteScopedStorageKey(this.adapter.getSiteInstanceKey(), normalizedSessionId)
+  }
+
+  private getLegacyKey(sessionId = this.getSessionId()): string {
+    const normalizedSessionId = sessionId || "unknown"
+    return `${this.adapter.getSiteId()}:${normalizedSessionId}`
+  }
+
+  private claimLegacyPosition(sessionId: string): ReadingPosition | undefined {
+    const store = getReadingHistoryStore()
+    const key = this.getKey(sessionId)
+    const current = store.getPosition(key)
+    if (!this.adapter.canClaimLegacySiteData()) return current
+    return store.claimPosition(this.getLegacyKey(sessionId), key)
   }
 
   private getSessionId(): string {
@@ -408,6 +421,7 @@ export class ReadingHistoryManager {
     }
 
     const key = this.getKey(sessionId)
+    this.claimLegacyPosition(sessionId)
 
     let anchorInfo = {}
     try {
@@ -469,8 +483,7 @@ export class ReadingHistoryManager {
 
       this.lockCurrentSessionId(sessionId)
 
-      const key = this.getKey(sessionId)
-      const data = getReadingHistoryStore().getPosition(key)
+      const data = this.claimLegacyPosition(sessionId)
 
       if (!data) {
         return false

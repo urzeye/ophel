@@ -34,6 +34,7 @@ import {
 } from "~utils/scroll-helper"
 import {
   DEFAULT_SETTINGS,
+  getSiteCleanMode,
   getSiteTheme,
   getSiteZenMode,
   type QuickButtonsPosition,
@@ -162,6 +163,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   const persistedGroupPosition = quickButtonsSettings.position ?? null
   const proximityRadius = quickButtonsSettings.proximityRadius ?? 150
   const siteId = adapter?.getSiteId() || "_default"
+  const siteInstanceKey = adapter?.getSiteInstanceKey() || "_default"
   const featureCapabilities = useMemo(
     () => adapter?.getFeatureCapabilities() ?? new Set<SitePackCapability>(),
     [adapter],
@@ -186,7 +188,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     },
     [supportsCapability],
   )
-  const siteTheme = getSiteTheme(currentSettings, siteId)
+  const siteTheme = getSiteTheme(currentSettings, siteInstanceKey)
   const resolvedThemeMode = themeMode || (siteTheme.mode === "dark" ? "dark" : "light")
   const panelSparkleColor = resolvedThemeMode === "dark" ? "brand" : "currentColor"
 
@@ -761,19 +763,18 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     zenMode: (e) => {
       e?.stopPropagation()
       if (!supportsCapability("zen")) return
-      const siteId = adapter?.getSiteId() || "_default"
-      const currentZenMode = getSiteZenMode(settings || DEFAULT_SETTINGS, siteId)
+      const currentZenMode = getSiteZenMode(settings || DEFAULT_SETTINGS, siteInstanceKey)
       const newZenEnabled = !currentZenMode.enabled
       updateNestedSetting("layout", "zenMode", {
         ...(settings?.layout?.zenMode ?? {}),
-        [siteId]: { ...currentZenMode, enabled: newZenEnabled },
+        [siteInstanceKey]: { ...currentZenMode, enabled: newZenEnabled },
       })
       // 开启禅模式时自动开启净化模式，关闭禅模式时不变净化模式
       if (newZenEnabled && supportsCapability("clean")) {
-        const currentCleanMode = settings?.layout?.cleanMode?.[siteId] ?? { enabled: true }
+        const currentCleanMode = getSiteCleanMode(settings || DEFAULT_SETTINGS, siteInstanceKey)
         updateNestedSetting("layout", "cleanMode", {
           ...(settings?.layout?.cleanMode ?? {}),
-          [siteId]: { ...currentCleanMode, enabled: true },
+          [siteInstanceKey]: { ...currentCleanMode, enabled: true },
         })
       }
     },
@@ -797,7 +798,8 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     const isFloatingToolbarBtn = id === "floatingToolbar"
     const isZenModeBtn = id === "zenMode"
     // Check if Zen mode is active
-    const isZenModeActive = isZenModeBtn && Boolean(settings?.layout?.zenMode?.[siteId]?.enabled)
+    const isZenModeActive =
+      isZenModeBtn && getSiteZenMode(settings || DEFAULT_SETTINGS, siteInstanceKey).enabled
 
     // Animation: Active state
     const isActive = isFloatingToolbarBtn ? isToolsMenuOpen : isZenModeActive

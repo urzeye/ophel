@@ -15,7 +15,7 @@ import type { SitePackCapability } from "../feature-capabilities"
 import { getCurrentLang } from "~utils/i18n"
 
 import { resolveSitePackName } from "./localization"
-import { siteMatchPatternMatchesUrl } from "./match-pattern"
+import { siteMatchPatternMatchesUrl, siteMatchPatternOrigin } from "./match-pattern"
 import type { SitePackManifest } from "./types"
 
 const DEFAULT_THEME_COLORS = {
@@ -123,6 +123,18 @@ export class DeclarativeAdapter extends SiteAdapter {
 
   getSiteId(): string {
     return `pack:${this.manifest.id}`
+  }
+
+  canClaimLegacySiteData(): boolean {
+    if (
+      this.manifest.matches.length === 0 ||
+      this.manifest.matches.some((match) => /^https:\/\/\*\./i.test(match))
+    ) {
+      return false
+    }
+
+    const origins = new Set(this.manifest.matches.map(siteMatchPatternOrigin))
+    return origins.size === 1 && origins.has(window.location.origin)
   }
 
   getName(): string {

@@ -513,14 +513,15 @@ export function useShortcuts({
   const toggleZenMode = useCallback(() => {
     if (!adapter) return
 
-    const siteId = adapter.getSiteId()
+    const siteInstanceKey = adapter.getSiteInstanceKey()
     const liveSettings = useSettingsStore.getState().settings
-    const currentZenMode = getSiteZenMode(liveSettings, siteId)
+    const currentZenMode = getSiteZenMode(liveSettings, siteInstanceKey)
     const nextEnabled = !currentZenMode.enabled
 
-    useSettingsStore
-      .getState()
-      .updateDeepSetting("layout", "zenMode", siteId, { ...currentZenMode, enabled: nextEnabled })
+    useSettingsStore.getState().updateDeepSetting("layout", "zenMode", siteInstanceKey, {
+      ...currentZenMode,
+      enabled: nextEnabled,
+    })
 
     showToast(t(nextEnabled ? "zenModeEnabledToast" : "zenModeDisabledToast"))
   }, [adapter])

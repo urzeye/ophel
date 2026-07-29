@@ -511,7 +511,9 @@ async function init() {
   await mountUserscriptApp()
 
   // 等待 Zustand hydration 完成后初始化核心模块
-  const { useSettingsStore, getSettingsState } = await import("~stores/settings-store")
+  const { useSettingsStore, getSettingsState, claimLegacySiteSettings } = await import(
+    "~stores/settings-store"
+  )
   const { useConversationsStore } = await import("~stores/conversations-store")
   const { useFoldersStore } = await import("~stores/folders-store")
   const { useTagsStore } = await import("~stores/tags-store")
@@ -568,16 +570,19 @@ async function init() {
     waitForHydration(useReadingHistoryStore),
   ])
 
-  // 获取用户设置
-  const settings = getSettingsState()
   const siteId = adapter.getSiteId()
+  const siteInstanceKey = adapter.getSiteInstanceKey()
+  if (adapter.canClaimLegacySiteData()) {
+    claimLegacySiteSettings(siteId, siteInstanceKey)
+  }
+  const settings = getSettingsState()
 
   // ========== 初始化所有核心模块（使用共享模块） ==========
   const { initCoreModules, subscribeModuleUpdates, initUrlChangeObserver } = await import(
     "~core/modules-init"
   )
 
-  const ctx = { adapter, settings, siteId }
+  const ctx = { adapter, settings, siteId, siteInstanceKey }
 
   await initCoreModules(ctx)
 

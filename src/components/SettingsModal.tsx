@@ -136,6 +136,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onPanelHoverWidthPreviewChange,
 }) => {
   const siteId = adapter.getSiteId()
+  const siteInstanceKey = adapter.getSiteInstanceKey()
   const [activePage, setActivePage] = useState<string>(NAV_IDS.GENERAL)
   const [initialSubTab, setInitialSubTab] = useState<string | undefined>(undefined)
   const [locateRequest, setLocateRequest] = useState<{ settingId: string; token: number } | null>(
@@ -398,17 +399,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         return (
           <SiteSettingsPage
             siteId={siteId}
+            siteInstanceKey={siteInstanceKey}
             adapter={adapter}
             initialTab={initialSubTab}
             modelLockContent={
-              <ModelLockSettingsContent siteId={siteId} siteName={adapter.getName()} />
+              <ModelLockSettingsContent siteId={siteInstanceKey} siteName={adapter.getName()} />
             }
           />
         )
       case NAV_IDS.SITE_PACKS:
         return <SitePacksPage />
       case NAV_IDS.APPEARANCE:
-        return <AppearancePage siteId={siteId} initialTab={initialSubTab} />
+        return <AppearancePage siteId={siteInstanceKey} initialTab={initialSubTab} />
       case NAV_IDS.FEATURES:
         return <FeaturesPage siteId={siteId} initialTab={initialSubTab} />
       case NAV_IDS.GLOBAL_SEARCH:
@@ -503,7 +505,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </nav>
 
           {/* 侧边栏底部快捷设置 */}
-          <SidebarFooter siteId={siteId} />
+          <SidebarFooter siteId={siteInstanceKey} />
         </aside>
 
         {/* 内容区 */}

@@ -10,6 +10,7 @@ import { extractConversationTitleFromDocumentTitle } from "~utils/conversation-t
 import { DOMToolkit } from "~utils/dom-toolkit"
 import { createExportAssetCollector, type ExportAssetCollector } from "~utils/export-assets"
 import type { ExportBundle, ExportFormat, ExportMessage } from "~utils/exporter"
+import { createSiteInstanceKey } from "~utils/site-identity"
 import type { ExportPackaging } from "~utils/storage"
 
 import { getBuiltinFeatureCapabilities, type SitePackCapability } from "./feature-capabilities"
@@ -379,8 +380,19 @@ export abstract class SiteAdapter {
   /** 检测当前页面是否匹配该站点 */
   abstract match(): boolean
 
-  /** 返回站点标识符（用于配置存储） */
+  /** 返回适配器/站点包标识符（用于能力、行为与更新身份） */
   abstract getSiteId(): string
+
+  /** 返回当前站点实例的数据分区键；内置站点保持与 siteId 相同。 */
+  getSiteInstanceKey(): string {
+    const origin = typeof window !== "undefined" ? window.location.origin : undefined
+    return createSiteInstanceKey(this.getSiteId(), origin)
+  }
+
+  /** 当前实例是否能安全接管旧版仅按 siteId 保存的数据。 */
+  canClaimLegacySiteData(): boolean {
+    return this.getSiteInstanceKey() === this.getSiteId()
+  }
 
   /** 返回站点显示名称 */
   abstract getName(): string
