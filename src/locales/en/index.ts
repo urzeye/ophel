@@ -94,12 +94,55 @@ export const en = {
   siteAdapterWizardCapabilityHistory: "Reading history",
   siteAdapterWizardCapabilityNewChat: "New conversation",
   siteAdapterWizardConversationCaptured:
-    "Conversation item captured; link rules will be completed when saving.",
+    "Conversation item captured; it will stay out of the pack until ID and link rules are known.",
   siteAdapterWizardCompleteTitle: "The adapter draft is ready",
   siteAdapterWizardCompleteDesc:
     "The required page elements pass validation and the outline preview is available.",
-  siteAdapterWizardSaveLater:
-    "Saving, installing, and exporting this draft will be added in the next stage.",
+  siteAdapterWizardPublishEyebrow: "Save & contribute",
+  siteAdapterWizardPublishTitle: "Publish this adapter",
+  siteAdapterWizardPublishDesc:
+    "Review the generated metadata, then save locally or export the same validated JSON.",
+  siteAdapterWizardPublishNameLabel: "Site name",
+  siteAdapterWizardPublishIdLabel: "Pack ID",
+  siteAdapterWizardPublishIdHint: "Lowercase letters, numbers, and hyphens",
+  siteAdapterWizardPublishVersionHint: "Increase this when updating the same pack",
+  siteAdapterWizardPublishOriginLabel: "Exact origin",
+  siteAdapterWizardPublishMinVersionLabel: "Minimum Ophel version",
+  siteAdapterWizardPublishConversationOmitted:
+    "The conversation item is not included because its ID and URL rules cannot be derived safely.",
+  siteAdapterWizardPublishDraftInvalid:
+    "A required selection is no longer valid. Return to that step and select it again.",
+  siteAdapterWizardPublishHttpsRequired: "SitePacks can only be created for an HTTPS origin.",
+  siteAdapterWizardPublishManifestInvalid: "The generated SitePack is invalid.",
+  siteAdapterWizardPublishNameInvalid: "Enter a site name.",
+  siteAdapterWizardPublishIdInvalid:
+    "Use 2–40 lowercase letters, numbers, or hyphens for the pack ID.",
+  siteAdapterWizardPublishVersionInvalid: "Version must be a positive whole number.",
+  siteAdapterWizardPublishAppVersionInvalid:
+    "The current Ophel version cannot be used as a valid minimum version.",
+  siteAdapterWizardPublishManifestInvalidField: "Check the generated field: {field}",
+  siteAdapterWizardPublishVersionConflict:
+    "This ID and version already contain different content. Increase the version and try again.",
+  siteAdapterWizardPublishSourceConflict:
+    "This pack ID is already installed from another source. Choose a different ID.",
+  siteAdapterWizardPublishMatchConflict:
+    "This origin conflicts with a built-in or installed SitePack.",
+  siteAdapterWizardPublishSaveFailed:
+    "The SitePack could not be saved. Check the metadata and try again.",
+  siteAdapterWizardPublishPermissionDenied:
+    "Site access was not granted, so the saved pack was disabled.",
+  siteAdapterWizardPublishSaved: '"{name}" was saved locally. Reload this page to activate it.',
+  siteAdapterWizardPublishDownloaded: "The validated SitePack JSON was downloaded.",
+  siteAdapterWizardPublishContributionOpened:
+    "JSON copied. The prefilled GitHub contribution page is open.",
+  siteAdapterWizardPublishOpenFailed:
+    "JSON was copied, but GitHub could not be opened. Open the repository and paste it manually.",
+  siteAdapterWizardPublishReloadTitle: "Reload required",
+  siteAdapterWizardPublishReloadDesc:
+    "The pack is stored and registered. Reload so all adapter modules start from a clean page lifecycle.",
+  siteAdapterWizardPublishOpening: "Opening GitHub…",
+  siteAdapterWizardPublishGithub: "Copy JSON & open GitHub",
+  siteAdapterWizardPublishSaving: "Saving…",
   siteAdapterWizardStartOver: "Start over",
   siteAdapterWizardDone: "Done",
   siteAdapterWizardBack: "Back",

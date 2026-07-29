@@ -92,11 +92,56 @@ export const ru = {
   siteAdapterWizardCapabilityHistory: "История чтения",
   siteAdapterWizardCapabilityNewChat: "Новый диалог",
   siteAdapterWizardConversationCaptured:
-    "Элемент диалога сохранён; правила ссылок будут дополнены при сохранении.",
+    "Элемент диалога сохранён; он не войдёт в пакет, пока не будут известны правила ID и ссылок.",
   siteAdapterWizardCompleteTitle: "Черновик адаптера готов",
   siteAdapterWizardCompleteDesc:
     "Обязательные элементы прошли проверку, структура диалога доступна для просмотра.",
-  siteAdapterWizardSaveLater: "Сохранение, установка и экспорт будут добавлены на следующем этапе.",
+  siteAdapterWizardPublishEyebrow: "Сохранение и вклад",
+  siteAdapterWizardPublishTitle: "Опубликовать этот адаптер",
+  siteAdapterWizardPublishDesc:
+    "Проверьте созданные метаданные, затем сохраните пакет локально или экспортируйте тот же проверенный JSON.",
+  siteAdapterWizardPublishNameLabel: "Название сайта",
+  siteAdapterWizardPublishIdLabel: "ID пакета",
+  siteAdapterWizardPublishIdHint: "Строчные буквы, цифры и дефисы",
+  siteAdapterWizardPublishVersionHint: "Увеличивайте при обновлении того же пакета",
+  siteAdapterWizardPublishOriginLabel: "Точный origin",
+  siteAdapterWizardPublishMinVersionLabel: "Минимальная версия Ophel",
+  siteAdapterWizardPublishConversationOmitted:
+    "Элемент диалога не включён, поскольку правила его ID и URL нельзя безопасно вывести.",
+  siteAdapterWizardPublishDraftInvalid:
+    "Обязательный выбранный элемент больше недействителен. Вернитесь к этому шагу и выберите его снова.",
+  siteAdapterWizardPublishHttpsRequired: "SitePack можно создать только для HTTPS origin.",
+  siteAdapterWizardPublishManifestInvalid: "Созданный SitePack недействителен.",
+  siteAdapterWizardPublishNameInvalid: "Введите название сайта.",
+  siteAdapterWizardPublishIdInvalid:
+    "ID пакета должен содержать 2–40 строчных букв, цифр или дефисов.",
+  siteAdapterWizardPublishVersionInvalid: "Версия должна быть положительным целым числом.",
+  siteAdapterWizardPublishAppVersionInvalid:
+    "Текущую версию Ophel нельзя использовать как корректную минимальную версию.",
+  siteAdapterWizardPublishManifestInvalidField: "Проверьте созданное поле: {field}",
+  siteAdapterWizardPublishVersionConflict:
+    "Для этого ID и версии уже сохранено другое содержимое. Увеличьте версию и повторите попытку.",
+  siteAdapterWizardPublishSourceConflict:
+    "Этот ID пакета уже установлен из другого источника. Выберите другой ID.",
+  siteAdapterWizardPublishMatchConflict:
+    "Этот origin конфликтует со встроенным или установленным SitePack.",
+  siteAdapterWizardPublishSaveFailed:
+    "Не удалось сохранить SitePack. Проверьте метаданные и повторите попытку.",
+  siteAdapterWizardPublishPermissionDenied:
+    "Доступ к сайту не предоставлен, поэтому сохранённый пакет был отключён.",
+  siteAdapterWizardPublishSaved:
+    "«{name}» сохранён локально. Перезагрузите страницу, чтобы активировать его.",
+  siteAdapterWizardPublishDownloaded: "Проверенный JSON SitePack загружен.",
+  siteAdapterWizardPublishContributionOpened:
+    "JSON скопирован. Открыта предварительно заполненная страница вклада на GitHub.",
+  siteAdapterWizardPublishOpenFailed:
+    "JSON скопирован, но открыть GitHub не удалось. Откройте репозиторий и вставьте содержимое вручную.",
+  siteAdapterWizardPublishReloadTitle: "Требуется перезагрузка",
+  siteAdapterWizardPublishReloadDesc:
+    "Пакет сохранён и зарегистрирован. Перезагрузите страницу, чтобы все модули адаптера запустились с полным жизненным циклом страницы.",
+  siteAdapterWizardPublishOpening: "Открытие GitHub…",
+  siteAdapterWizardPublishGithub: "Скопировать JSON и открыть GitHub",
+  siteAdapterWizardPublishSaving: "Сохранение…",
   siteAdapterWizardStartOver: "Начать заново",
   siteAdapterWizardDone: "Готово",
   siteAdapterWizardBack: "Назад",

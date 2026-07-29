@@ -98,12 +98,57 @@ export const de = {
   siteAdapterWizardCapabilityHistory: "Leseverlauf",
   siteAdapterWizardCapabilityNewChat: "Neue Unterhaltung",
   siteAdapterWizardConversationCaptured:
-    "Gesprächseintrag erfasst; Linkregeln werden beim Speichern ergänzt.",
+    "Gesprächseintrag erfasst; er bleibt aus dem Paket, bis ID- und Linkregeln bekannt sind.",
   siteAdapterWizardCompleteTitle: "Der Adapterentwurf ist bereit",
   siteAdapterWizardCompleteDesc:
     "Die erforderlichen Seitenelemente sind gültig und die Gliederung kann angezeigt werden.",
-  siteAdapterWizardSaveLater:
-    "Speichern, Installieren und Exportieren folgen in der nächsten Stufe.",
+  siteAdapterWizardPublishEyebrow: "Speichern & beitragen",
+  siteAdapterWizardPublishTitle: "Diesen Adapter veröffentlichen",
+  siteAdapterWizardPublishDesc:
+    "Prüfe die erzeugten Metadaten und speichere das Paket lokal oder exportiere dasselbe validierte JSON.",
+  siteAdapterWizardPublishNameLabel: "Website-Name",
+  siteAdapterWizardPublishIdLabel: "Paket-ID",
+  siteAdapterWizardPublishIdHint: "Kleinbuchstaben, Zahlen und Bindestriche",
+  siteAdapterWizardPublishVersionHint: "Bei Aktualisierungen desselben Pakets erhöhen",
+  siteAdapterWizardPublishOriginLabel: "Exakte Domain",
+  siteAdapterWizardPublishMinVersionLabel: "Minimale Ophel-Version",
+  siteAdapterWizardPublishConversationOmitted:
+    "Der Gesprächseintrag wird nicht aufgenommen, da seine ID- und URL-Regeln nicht sicher abgeleitet werden können.",
+  siteAdapterWizardPublishDraftInvalid:
+    "Eine erforderliche Auswahl ist nicht mehr gültig. Kehre zu diesem Schritt zurück und wähle sie erneut aus.",
+  siteAdapterWizardPublishHttpsRequired:
+    "SitePacks können nur für eine HTTPS-Domain erstellt werden.",
+  siteAdapterWizardPublishManifestInvalid: "Das erzeugte SitePack ist ungültig.",
+  siteAdapterWizardPublishNameInvalid: "Gib einen Website-Namen ein.",
+  siteAdapterWizardPublishIdInvalid:
+    "Die Paket-ID muss aus 2–40 Kleinbuchstaben, Zahlen oder Bindestrichen bestehen.",
+  siteAdapterWizardPublishVersionInvalid: "Die Version muss eine positive ganze Zahl sein.",
+  siteAdapterWizardPublishAppVersionInvalid:
+    "Die aktuelle Ophel-Version ist keine gültige Mindestversion.",
+  siteAdapterWizardPublishManifestInvalidField: "Prüfe das erzeugte Feld: {field}",
+  siteAdapterWizardPublishVersionConflict:
+    "Diese ID und Version enthalten bereits andere Inhalte. Erhöhe die Version und versuche es erneut.",
+  siteAdapterWizardPublishSourceConflict:
+    "Diese Paket-ID ist bereits aus einer anderen Quelle installiert. Wähle eine andere ID.",
+  siteAdapterWizardPublishMatchConflict:
+    "Diese Domain überschneidet sich mit einem integrierten oder installierten SitePack.",
+  siteAdapterWizardPublishSaveFailed:
+    "Das SitePack konnte nicht gespeichert werden. Prüfe die Metadaten und versuche es erneut.",
+  siteAdapterWizardPublishPermissionDenied:
+    "Der Website-Zugriff wurde nicht erlaubt; das gespeicherte Paket wurde deaktiviert.",
+  siteAdapterWizardPublishSaved:
+    "„{name}“ wurde lokal gespeichert. Lade diese Seite neu, um es zu aktivieren.",
+  siteAdapterWizardPublishDownloaded: "Das validierte SitePack-JSON wurde heruntergeladen.",
+  siteAdapterWizardPublishContributionOpened:
+    "JSON kopiert. Die vorausgefüllte GitHub-Beitragsseite wurde geöffnet.",
+  siteAdapterWizardPublishOpenFailed:
+    "JSON wurde kopiert, aber GitHub konnte nicht geöffnet werden. Öffne das Repository und füge den Inhalt manuell ein.",
+  siteAdapterWizardPublishReloadTitle: "Neu laden erforderlich",
+  siteAdapterWizardPublishReloadDesc:
+    "Das Paket ist gespeichert und registriert. Lade neu, damit alle Adaptermodule mit einem vollständigen Seitenzyklus starten.",
+  siteAdapterWizardPublishOpening: "GitHub wird geöffnet…",
+  siteAdapterWizardPublishGithub: "JSON kopieren & GitHub öffnen",
+  siteAdapterWizardPublishSaving: "Wird gespeichert…",
   siteAdapterWizardStartOver: "Neu beginnen",
   siteAdapterWizardDone: "Fertig",
   siteAdapterWizardBack: "Zurück",

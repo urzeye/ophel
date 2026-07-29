@@ -90,11 +90,56 @@ export const ja = {
   siteAdapterWizardCapabilityHistory: "閲覧履歴",
   siteAdapterWizardCapabilityNewChat: "新しい会話",
   siteAdapterWizardConversationCaptured:
-    "会話項目を記録しました。リンク規則は保存時に完成させます。",
+    "会話項目を記録しました。ID とリンク規則が確定するまではパックに含めません。",
   siteAdapterWizardCompleteTitle: "アダプターの下書きが完成しました",
   siteAdapterWizardCompleteDesc:
     "必須のページ要素が検証に合格し、会話アウトラインをプレビューできます。",
-  siteAdapterWizardSaveLater: "下書きの保存、インストール、書き出しは次の段階で追加されます。",
+  siteAdapterWizardPublishEyebrow: "保存と共有",
+  siteAdapterWizardPublishTitle: "このアダプターを公開",
+  siteAdapterWizardPublishDesc:
+    "生成されたメタデータを確認し、ローカルに保存するか、同じ検証済み JSON を書き出します。",
+  siteAdapterWizardPublishNameLabel: "サイト名",
+  siteAdapterWizardPublishIdLabel: "パック ID",
+  siteAdapterWizardPublishIdHint: "小文字、数字、ハイフンのみ",
+  siteAdapterWizardPublishVersionHint: "同じパックを更新するときは増やしてください",
+  siteAdapterWizardPublishOriginLabel: "正確なオリジン",
+  siteAdapterWizardPublishMinVersionLabel: "最小 Ophel バージョン",
+  siteAdapterWizardPublishConversationOmitted:
+    "会話 ID と URL 規則を安全に推定できないため、会話項目はパックに含まれません。",
+  siteAdapterWizardPublishDraftInvalid:
+    "必須の選択項目が無効になりました。その手順に戻って選択し直してください。",
+  siteAdapterWizardPublishHttpsRequired: "SitePack は HTTPS オリジンに対してのみ作成できます。",
+  siteAdapterWizardPublishManifestInvalid: "生成された SitePack は無効です。",
+  siteAdapterWizardPublishNameInvalid: "サイト名を入力してください。",
+  siteAdapterWizardPublishIdInvalid:
+    "パック ID は 2〜40 文字の小文字、数字、ハイフンで指定してください。",
+  siteAdapterWizardPublishVersionInvalid: "バージョンは正の整数で指定してください。",
+  siteAdapterWizardPublishAppVersionInvalid:
+    "現在の Ophel バージョンを有効な最小バージョンとして使用できません。",
+  siteAdapterWizardPublishManifestInvalidField: "生成されたフィールドを確認してください：{field}",
+  siteAdapterWizardPublishVersionConflict:
+    "この ID とバージョンには別の内容が既にあります。バージョンを上げて再試行してください。",
+  siteAdapterWizardPublishSourceConflict:
+    "このパック ID は別の提供元からインストール済みです。別の ID を選んでください。",
+  siteAdapterWizardPublishMatchConflict:
+    "このオリジンは内蔵またはインストール済みの SitePack と競合します。",
+  siteAdapterWizardPublishSaveFailed:
+    "SitePack を保存できませんでした。メタデータを確認して再試行してください。",
+  siteAdapterWizardPublishPermissionDenied:
+    "サイトへのアクセスが許可されなかったため、保存したパックを無効にしました。",
+  siteAdapterWizardPublishSaved:
+    "「{name}」をローカルに保存しました。このページを再読み込みすると有効になります。",
+  siteAdapterWizardPublishDownloaded: "検証済みの SitePack JSON をダウンロードしました。",
+  siteAdapterWizardPublishContributionOpened:
+    "JSON をコピーし、入力済みの GitHub コントリビューションページを開きました。",
+  siteAdapterWizardPublishOpenFailed:
+    "JSON はコピーしましたが GitHub を開けませんでした。リポジトリを開いて手動で貼り付けてください。",
+  siteAdapterWizardPublishReloadTitle: "再読み込みが必要です",
+  siteAdapterWizardPublishReloadDesc:
+    "パックは保存・登録済みです。すべてのアダプターモジュールを完全なページライフサイクルで開始するため、再読み込みしてください。",
+  siteAdapterWizardPublishOpening: "GitHub を開いています…",
+  siteAdapterWizardPublishGithub: "JSON をコピーして GitHub を開く",
+  siteAdapterWizardPublishSaving: "保存しています…",
   siteAdapterWizardStartOver: "最初からやり直す",
   siteAdapterWizardDone: "完了",
   siteAdapterWizardBack: "戻る",

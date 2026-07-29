@@ -7,19 +7,36 @@ import {
 import { ElementPickerBusyError, startElementPicker } from "~core/element-picker-controller"
 import {
   SITE_ADAPTER_WIZARD_STEPS,
+  buildSiteAdapterWizardPack,
   buildSiteAdapterWizardConfigPreview,
   buildSiteAdapterWizardOutlinePreview,
   createEmptySiteAdapterWizardDraft,
+  createSiteAdapterWizardPackMetadata,
   normalizeSiteAdapterWizardTarget,
   updateSiteAdapterWizardSelection,
   validateSiteAdapterWizardDraft,
   type SiteAdapterWizardDraft,
+  type SiteAdapterWizardPackBuildResult,
   type SiteAdapterWizardStepId,
   type SiteAdapterWizardValidationIssue,
 } from "~core/site-adapter-wizard"
+import { PackManagerError } from "~core/pack-manager"
+import { createRuntimePackManager } from "~core/pack-manager-runtime"
+import { platform } from "~platform"
+import { APP_VERSION } from "~utils/config"
+import { downloadFile } from "~utils/exporter"
 import { t } from "~utils/i18n"
 
-import { CheckIcon, ClearIcon, LocateIcon, SparkleIcon } from "./icons"
+import {
+  CheckIcon,
+  ClearIcon,
+  DownloadIcon,
+  GithubIcon,
+  LocateIcon,
+  RefreshIcon,
+  SaveIcon,
+  SparkleIcon,
+} from "./icons"
 
 const VALIDATION_ISSUE_KEYS: Record<SiteAdapterWizardValidationIssue, string> = {
   "selector-missing": "siteAdapterWizardIssueMissing",
@@ -52,6 +69,20 @@ const CAPABILITY_LABEL_KEYS = {
 
 const DOM_REFRESH_DELAY_MS = 180
 
+type SiteAdapterWizardPublishAction = "save" | "download" | "github"
+type SiteAdapterWizardPublishTone = "success" | "warning" | "error"
+
+interface SiteAdapterWizardPublishForm {
+  name: string
+  id: string
+  version: string
+}
+
+interface SiteAdapterWizardPublishFeedback {
+  tone: SiteAdapterWizardPublishTone
+  message: string
+}
+
 const getCapabilityLabel = (capability: string): string => {
   const key = CAPABILITY_LABEL_KEYS[capability as keyof typeof CAPABILITY_LABEL_KEYS]
   return key ? t(key) : capability
@@ -60,6 +91,64 @@ const getCapabilityLabel = (capability: string): string => {
 const hasDraftProgress = (draft: SiteAdapterWizardDraft, activeStepIndex: number): boolean =>
   activeStepIndex > 0 || Object.keys(draft.selections).length > 0
 
+const createPublishForm = (): SiteAdapterWizardPublishForm => {
+  const metadata = createSiteAdapterWizardPackMetadata(document, new URL(window.location.href))
+  return {
+    name: metadata.name,
+    id: metadata.id,
+    version: String(metadata.version),
+  }
+}
+
+const parsePackVersion = (value: string): number => {
+  const normalized = value.trim()
+  if (!/^[1-9]\d*$/.test(normalized)) return Number.NaN
+  return Number(normalized)
+}
+
+const getPackBuildErrorMessage = (result: SiteAdapterWizardPackBuildResult): string | null => {
+  if (result.valid === true) return null
+  const issue = result.issue
+  if (issue.code === "required-steps-invalid") {
+    return t("siteAdapterWizardPublishDraftInvalid")
+  }
+  if (issue.code === "https-required") {
+    return t("siteAdapterWizardPublishHttpsRequired")
+  }
+
+  const firstError = issue.errors[0]
+  if (!firstError) return t("siteAdapterWizardPublishManifestInvalid")
+  if (firstError.path === "$.name") return t("siteAdapterWizardPublishNameInvalid")
+  if (firstError.path === "$.id") return t("siteAdapterWizardPublishIdInvalid")
+  if (firstError.path === "$.version") return t("siteAdapterWizardPublishVersionInvalid")
+  if (firstError.path === "$.minAppVersion") {
+    return t("siteAdapterWizardPublishAppVersionInvalid")
+  }
+  if (firstError.path.startsWith("$.matches")) {
+    return t("siteAdapterWizardPublishHttpsRequired")
+  }
+  return t("siteAdapterWizardPublishManifestInvalidField", { field: firstError.path })
+}
+
+const getPublishOperationErrorMessage = (error: unknown): string => {
+  if (error instanceof PackManagerError) {
+    if (error.code === "version-reuse" || error.code === "version-rollback") {
+      return t("siteAdapterWizardPublishVersionConflict")
+    }
+    if (error.code === "source-conflict") {
+      return t("siteAdapterWizardPublishSourceConflict")
+    }
+    if (
+      error.code === "builtin-id-conflict" ||
+      error.code === "builtin-match-conflict" ||
+      error.code === "installed-match-conflict"
+    ) {
+      return t("siteAdapterWizardPublishMatchConflict")
+    }
+  }
+  return t("siteAdapterWizardPublishSaveFailed")
+}
+
 export function SiteAdapterWizard() {
   const [isOpen, setIsOpen] = useState(false)
   const [isPicking, setIsPicking] = useState(false)
@@ -67,6 +156,13 @@ export function SiteAdapterWizard() {
   const [draft, setDraft] = useState<SiteAdapterWizardDraft>(createEmptySiteAdapterWizardDraft)
   const [pickerError, setPickerError] = useState<string | null>(null)
   const [domRevision, setDomRevision] = useState(0)
+  const [publishForm, setPublishForm] = useState<SiteAdapterWizardPublishForm>(createPublishForm)
+  const [publishAction, setPublishAction] = useState<SiteAdapterWizardPublishAction | null>(null)
+  const [publishFeedback, setPublishFeedback] = useState<SiteAdapterWizardPublishFeedback | null>(
+    null,
+  )
+  const [savedPackJson, setSavedPackJson] = useState<string | null>(null)
+  const packManager = useMemo(() => createRuntimePackManager(platform.storage), [])
 
   const isComplete = activeStepIndex >= SITE_ADAPTER_WIZARD_STEPS.length
   const activeStep = isComplete ? null : SITE_ADAPTER_WIZARD_STEPS[activeStepIndex]
@@ -111,6 +207,20 @@ export function SiteAdapterWizard() {
     () => buildSiteAdapterWizardConfigPreview(draft, validations),
     [draft, validations],
   )
+  const packBuild = useMemo(() => {
+    void domRevision
+    return buildSiteAdapterWizardPack({
+      draft,
+      metadata: {
+        name: publishForm.name,
+        id: publishForm.id,
+        version: parsePackVersion(publishForm.version),
+      },
+      pageUrl: new URL(window.location.href),
+      appVersion: APP_VERSION,
+    })
+  }, [domRevision, draft, publishForm])
+  const packBuildError = getPackBuildErrorMessage(packBuild)
   const firstInvalidRequiredStepIndex = SITE_ADAPTER_WIZARD_STEPS.findIndex(
     (step) => !step.optional && validations[step.id].status !== "valid",
   )
@@ -119,6 +229,13 @@ export function SiteAdapterWizard() {
     if (!isComplete || firstInvalidRequiredStepIndex === -1) return
     setActiveStepIndex(firstInvalidRequiredStepIndex)
   }, [firstInvalidRequiredStepIndex, isComplete])
+
+  useEffect(() => {
+    if (!savedPackJson) return
+    if (packBuild.valid && packBuild.json === savedPackJson) return
+    setSavedPackJson(null)
+    setPublishFeedback(null)
+  }, [packBuild, savedPackJson])
 
   const handlePick = useCallback(async () => {
     if (!activeStep || isPicking) return
@@ -202,10 +319,131 @@ export function SiteAdapterWizard() {
     setActiveStepIndex((index) => Math.max(0, index - 1))
   }, [])
 
+  const updatePublishForm = useCallback(
+    (field: keyof SiteAdapterWizardPublishForm, value: string) => {
+      setPublishFeedback(null)
+      setPublishForm((current) => ({ ...current, [field]: value }))
+    },
+    [],
+  )
+
+  const handleSavePack = useCallback(async () => {
+    if (!packBuild.valid || publishAction) return
+
+    setPublishAction("save")
+    setPublishFeedback(null)
+    try {
+      const result = await packManager.installLocal(packBuild.manifest)
+      if (!result.pack) {
+        throw new Error(`Installed SitePack not found after save: ${packBuild.manifest.id}`)
+      }
+
+      const packId = result.pack.manifest.id
+      const permissionDeniedError = new Error(`SitePack origin permission denied: ${packId}`)
+      try {
+        const permission = await platform.sitePacks.ensureOrigins(packId)
+        if (permission === "denied") throw permissionDeniedError
+        await platform.sitePacks.reconcile()
+      } catch (activationError) {
+        try {
+          await packManager.setEnabled(packId, false)
+          await platform.sitePacks.reconcile()
+        } catch (rollbackError) {
+          throw new Error(
+            `SitePack activation preparation failed: ${String(activationError)}; rollback failed: ${String(rollbackError)}`,
+          )
+        }
+        if (activationError === permissionDeniedError) {
+          setPublishFeedback({
+            tone: "error",
+            message: t("siteAdapterWizardPublishPermissionDenied"),
+          })
+          return
+        }
+        throw activationError
+      }
+
+      setSavedPackJson(packBuild.json)
+      setPublishFeedback({
+        tone: "success",
+        message: t("siteAdapterWizardPublishSaved", { name: packBuild.manifest.name }),
+      })
+    } catch (error) {
+      console.error("[Ophel] Failed to save wizard SitePack:", error)
+      setPublishFeedback({ tone: "error", message: getPublishOperationErrorMessage(error) })
+    } finally {
+      setPublishAction(null)
+    }
+  }, [packBuild, packManager, publishAction])
+
+  const handleDownloadPack = useCallback(async () => {
+    if (!packBuild.valid || publishAction) return
+
+    setPublishAction("download")
+    setPublishFeedback(null)
+    const downloaded = await downloadFile(
+      packBuild.json,
+      packBuild.filename,
+      "application/json;charset=utf-8",
+    )
+    setPublishFeedback({
+      tone: downloaded ? "success" : "error",
+      message: t(downloaded ? "siteAdapterWizardPublishDownloaded" : "exportFailed"),
+    })
+    setPublishAction(null)
+  }, [packBuild, publishAction])
+
+  const handleOpenContribution = useCallback(async () => {
+    if (!packBuild.valid || publishAction) return
+
+    setPublishAction("github")
+    setPublishFeedback(null)
+    if (!navigator.clipboard?.writeText) {
+      setPublishFeedback({
+        tone: "error",
+        message: t("copyFailed"),
+      })
+      setPublishAction(null)
+      return
+    }
+
+    try {
+      await navigator.clipboard.writeText(packBuild.json)
+    } catch (error) {
+      console.error("[Ophel] Failed to copy wizard SitePack JSON:", error)
+      setPublishFeedback({
+        tone: "error",
+        message: t("copyFailed"),
+      })
+      setPublishAction(null)
+      return
+    }
+
+    try {
+      platform.openTab(packBuild.contributionUrl)
+      setPublishFeedback({
+        tone: "success",
+        message: t("siteAdapterWizardPublishContributionOpened"),
+      })
+    } catch (error) {
+      console.error("[Ophel] Failed to open SitePack contribution page:", error)
+      setPublishFeedback({
+        tone: "warning",
+        message: t("siteAdapterWizardPublishOpenFailed"),
+      })
+    } finally {
+      setPublishAction(null)
+    }
+  }, [packBuild, publishAction])
+
   const resetWizard = useCallback(() => {
     setDraft(createEmptySiteAdapterWizardDraft())
     setActiveStepIndex(0)
     setPickerError(null)
+    setPublishForm(createPublishForm())
+    setPublishAction(null)
+    setPublishFeedback(null)
+    setSavedPackJson(null)
   }, [])
 
   if (isPicking) return null
@@ -461,12 +699,135 @@ export function SiteAdapterWizard() {
           </span>
           <h3>{t("siteAdapterWizardCompleteTitle")}</h3>
           <p>{t("siteAdapterWizardCompleteDesc")}</p>
-          <p className="gh-site-adapter-wizard-next-stage">{t("siteAdapterWizardSaveLater")}</p>
+          <div className="gh-site-adapter-wizard-publish">
+            <div className="gh-site-adapter-wizard-publish-heading">
+              <span>{t("siteAdapterWizardPublishEyebrow")}</span>
+              <h4>{t("siteAdapterWizardPublishTitle")}</h4>
+              <p>{t("siteAdapterWizardPublishDesc")}</p>
+            </div>
+
+            <div className="gh-site-adapter-wizard-publish-fields">
+              <label>
+                <span>{t("siteAdapterWizardPublishNameLabel")}</span>
+                <input
+                  type="text"
+                  value={publishForm.name}
+                  maxLength={200}
+                  autoComplete="off"
+                  onChange={(event) => updatePublishForm("name", event.target.value)}
+                />
+              </label>
+              <div className="gh-site-adapter-wizard-publish-field-row">
+                <label>
+                  <span>{t("siteAdapterWizardPublishIdLabel")}</span>
+                  <input
+                    type="text"
+                    value={publishForm.id}
+                    maxLength={40}
+                    spellCheck={false}
+                    autoComplete="off"
+                    onChange={(event) => updatePublishForm("id", event.target.value)}
+                  />
+                  <small>{t("siteAdapterWizardPublishIdHint")}</small>
+                </label>
+                <label>
+                  <span>{t("version")}</span>
+                  <input
+                    type="number"
+                    value={publishForm.version}
+                    min={1}
+                    step={1}
+                    inputMode="numeric"
+                    onChange={(event) => updatePublishForm("version", event.target.value)}
+                  />
+                  <small>{t("siteAdapterWizardPublishVersionHint")}</small>
+                </label>
+              </div>
+            </div>
+
+            <dl className="gh-site-adapter-wizard-publish-facts">
+              <div>
+                <dt>{t("siteAdapterWizardPublishOriginLabel")}</dt>
+                <dd>{new URL(window.location.href).origin}</dd>
+              </div>
+              <div>
+                <dt>{t("siteAdapterWizardPublishMinVersionLabel")}</dt>
+                <dd>{APP_VERSION}</dd>
+              </div>
+            </dl>
+
+            {configPreview.conversationItemSelector && (
+              <p className="gh-site-adapter-wizard-publish-note">
+                {t("siteAdapterWizardPublishConversationOmitted")}
+              </p>
+            )}
+
+            {packBuildError && (
+              <p className="gh-site-adapter-wizard-publish-feedback is-error" role="alert">
+                {packBuildError}
+              </p>
+            )}
+            {publishFeedback && (
+              <p
+                className={`gh-site-adapter-wizard-publish-feedback is-${publishFeedback.tone}`}
+                role={publishFeedback.tone === "error" ? "alert" : "status"}
+                aria-live="polite">
+                {publishFeedback.message}
+              </p>
+            )}
+
+            {savedPackJson && (
+              <div className="gh-site-adapter-wizard-reload-callout">
+                <div>
+                  <strong>{t("siteAdapterWizardPublishReloadTitle")}</strong>
+                  <p>{t("siteAdapterWizardPublishReloadDesc")}</p>
+                </div>
+                <button
+                  type="button"
+                  className="is-primary"
+                  onClick={() => window.location.reload()}>
+                  <RefreshIcon size={14} />
+                  {t("extensionUpdateNoticeAction")}
+                </button>
+              </div>
+            )}
+
+            <div className="gh-site-adapter-wizard-publish-actions">
+              <button
+                type="button"
+                className="is-secondary"
+                disabled={!packBuild.valid || publishAction !== null}
+                onClick={() => void handleDownloadPack()}>
+                <DownloadIcon size={15} />
+                {t(publishAction === "download" ? "exportOverlayDownloading" : "webdavDownloadBtn")}
+              </button>
+              <button
+                type="button"
+                className="is-secondary"
+                disabled={!packBuild.valid || publishAction !== null}
+                onClick={() => void handleOpenContribution()}>
+                <GithubIcon size={15} />
+                {t(
+                  publishAction === "github"
+                    ? "siteAdapterWizardPublishOpening"
+                    : "siteAdapterWizardPublishGithub",
+                )}
+              </button>
+              <button
+                type="button"
+                className="is-primary"
+                disabled={!packBuild.valid || publishAction !== null}
+                onClick={() => void handleSavePack()}>
+                <SaveIcon size={15} />
+                {t(publishAction === "save" ? "siteAdapterWizardPublishSaving" : "save")}
+              </button>
+            </div>
+          </div>
           <div className="gh-site-adapter-wizard-complete-actions">
-            <button type="button" className="is-secondary" onClick={resetWizard}>
+            <button type="button" className="is-ghost" onClick={resetWizard}>
               {t("siteAdapterWizardStartOver")}
             </button>
-            <button type="button" className="is-primary" onClick={() => setIsOpen(false)}>
+            <button type="button" className="is-secondary" onClick={() => setIsOpen(false)}>
               {t("siteAdapterWizardDone")}
             </button>
           </div>

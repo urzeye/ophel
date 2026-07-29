@@ -90,11 +90,54 @@ export const ko = {
   siteAdapterWizardCapabilityHistory: "읽기 기록",
   siteAdapterWizardCapabilityNewChat: "새 대화",
   siteAdapterWizardConversationCaptured:
-    "대화 항목을 기록했습니다. 링크 규칙은 저장할 때 완성됩니다.",
+    "대화 항목을 기록했습니다. ID와 링크 규칙이 확인되기 전까지는 팩에 포함하지 않습니다.",
   siteAdapterWizardCompleteTitle: "어댑터 초안이 준비되었습니다",
   siteAdapterWizardCompleteDesc:
     "필수 페이지 요소가 검증을 통과했고 대화 개요를 미리 볼 수 있습니다.",
-  siteAdapterWizardSaveLater: "초안 저장, 설치 및 내보내기는 다음 단계에서 추가됩니다.",
+  siteAdapterWizardPublishEyebrow: "저장 및 기여",
+  siteAdapterWizardPublishTitle: "이 어댑터 게시",
+  siteAdapterWizardPublishDesc:
+    "생성된 메타데이터를 확인한 뒤 로컬에 저장하거나 동일한 검증 JSON을 내보내세요.",
+  siteAdapterWizardPublishNameLabel: "사이트 이름",
+  siteAdapterWizardPublishIdLabel: "팩 ID",
+  siteAdapterWizardPublishIdHint: "영문 소문자, 숫자, 하이픈만 사용",
+  siteAdapterWizardPublishVersionHint: "같은 팩을 업데이트할 때 값을 올리세요",
+  siteAdapterWizardPublishOriginLabel: "정확한 오리진",
+  siteAdapterWizardPublishMinVersionLabel: "최소 Ophel 버전",
+  siteAdapterWizardPublishConversationOmitted:
+    "대화 ID와 URL 규칙을 안전하게 추론할 수 없어 대화 항목은 팩에 포함되지 않습니다.",
+  siteAdapterWizardPublishDraftInvalid:
+    "필수 선택 항목이 더 이상 유효하지 않습니다. 해당 단계로 돌아가 다시 선택하세요.",
+  siteAdapterWizardPublishHttpsRequired: "SitePack은 HTTPS 오리진에 대해서만 만들 수 있습니다.",
+  siteAdapterWizardPublishManifestInvalid: "생성된 SitePack이 유효하지 않습니다.",
+  siteAdapterWizardPublishNameInvalid: "사이트 이름을 입력하세요.",
+  siteAdapterWizardPublishIdInvalid: "팩 ID는 2~40자의 영문 소문자, 숫자 또는 하이픈이어야 합니다.",
+  siteAdapterWizardPublishVersionInvalid: "버전은 양의 정수여야 합니다.",
+  siteAdapterWizardPublishAppVersionInvalid:
+    "현재 Ophel 버전을 유효한 최소 버전으로 사용할 수 없습니다.",
+  siteAdapterWizardPublishManifestInvalidField: "생성된 필드를 확인하세요: {field}",
+  siteAdapterWizardPublishVersionConflict:
+    "이 ID와 버전에 다른 내용이 이미 있습니다. 버전을 올린 뒤 다시 시도하세요.",
+  siteAdapterWizardPublishSourceConflict:
+    "이 팩 ID는 다른 출처에서 이미 설치되었습니다. 다른 ID를 선택하세요.",
+  siteAdapterWizardPublishMatchConflict: "이 오리진은 내장 또는 설치된 SitePack과 충돌합니다.",
+  siteAdapterWizardPublishSaveFailed:
+    "SitePack을 저장할 수 없습니다. 메타데이터를 확인하고 다시 시도하세요.",
+  siteAdapterWizardPublishPermissionDenied:
+    "사이트 접근 권한이 허용되지 않아 저장된 팩을 비활성화했습니다.",
+  siteAdapterWizardPublishSaved:
+    '"{name}"을 로컬에 저장했습니다. 이 페이지를 새로고침하면 활성화됩니다.',
+  siteAdapterWizardPublishDownloaded: "검증된 SitePack JSON을 다운로드했습니다.",
+  siteAdapterWizardPublishContributionOpened:
+    "JSON을 복사하고 미리 채운 GitHub 기여 페이지를 열었습니다.",
+  siteAdapterWizardPublishOpenFailed:
+    "JSON은 복사했지만 GitHub를 열 수 없습니다. 저장소를 열어 직접 붙여 넣으세요.",
+  siteAdapterWizardPublishReloadTitle: "새로고침이 필요합니다",
+  siteAdapterWizardPublishReloadDesc:
+    "팩이 저장되고 등록되었습니다. 모든 어댑터 모듈이 완전한 페이지 수명 주기로 시작하도록 새로고침하세요.",
+  siteAdapterWizardPublishOpening: "GitHub 여는 중…",
+  siteAdapterWizardPublishGithub: "JSON 복사 후 GitHub 열기",
+  siteAdapterWizardPublishSaving: "저장 중…",
   siteAdapterWizardStartOver: "처음부터 다시",
   siteAdapterWizardDone: "완료",
   siteAdapterWizardBack: "이전",

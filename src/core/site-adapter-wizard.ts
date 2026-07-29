@@ -1,5 +1,14 @@
 import type { SitePackCapability } from "~adapters/feature-capabilities"
-import type { SitePackConfig } from "~adapters/declarative/types"
+import {
+  SITE_PACK_SCHEMA_VERSION,
+  isValidSitePackId,
+  type SitePackConfig,
+  type SitePackManifest,
+} from "~adapters/declarative/types"
+import {
+  validateSitePackManifest,
+  type SitePackValidationError,
+} from "~adapters/declarative/validate"
 import {
   validateSelectorForElement,
   type SelectorValidationResult,
@@ -114,6 +123,36 @@ export interface SiteAdapterWizardConfigPreview {
   readonly conversationItemSelector: string | null
 }
 
+export interface SiteAdapterWizardPackMetadata {
+  readonly name: string
+  readonly id: string
+  readonly version: number
+}
+
+export type SiteAdapterWizardPackBuildIssue =
+  | {
+      readonly code: "required-steps-invalid"
+      readonly stepId: SiteAdapterWizardStepId
+    }
+  | { readonly code: "https-required" }
+  | {
+      readonly code: "manifest-invalid"
+      readonly errors: readonly SitePackValidationError[]
+    }
+
+export type SiteAdapterWizardPackBuildResult =
+  | {
+      readonly valid: true
+      readonly manifest: SitePackManifest
+      readonly json: string
+      readonly filename: string
+      readonly contributionUrl: string
+    }
+  | {
+      readonly valid: false
+      readonly issue: SiteAdapterWizardPackBuildIssue
+    }
+
 const MESSAGE_STEP_IDS = new Set<SiteAdapterWizardStepId>(["userQuery", "assistantResponse"])
 
 const CLICK_TARGET_SELECTOR =
@@ -121,10 +160,61 @@ const CLICK_TARGET_SELECTOR =
 const TEXT_INPUT_SELECTOR =
   'textarea, input:not([type]), input[type="text"], input[type="search"], input[type="email"], input[type="url"], input[type="tel"], input[type="password"], [contenteditable]'
 const PREVIEW_TEXT_LIMIT = 120
+const SITE_PACK_NAME_MAX_LENGTH = 200
+const SITE_PACK_ID_MAX_LENGTH = 40
+const SITE_PACK_CONTRIBUTION_BASE_URL = "https://github.com/urzeye/ophel/new/main/registry/sites"
 
 export const createEmptySiteAdapterWizardDraft = (): SiteAdapterWizardDraft => ({
   selections: {},
 })
+
+const normalizePackName = (value: string): string =>
+  value.replace(/\s+/g, " ").trim().slice(0, SITE_PACK_NAME_MAX_LENGTH)
+
+const getSiteMetadataContent = (documentRoot: Document, selector: string): string => {
+  const content = documentRoot.querySelector<HTMLMetaElement>(selector)?.content
+  return normalizePackName(content ?? "")
+}
+
+const formatHostnameAsName = (hostname: string): string => {
+  const normalized = hostname
+    .replace(/^www\./i, "")
+    .replace(/[._-]+/g, " ")
+    .trim()
+  if (!normalized) return "Site adapter"
+  return normalized.replace(/\b[a-z]/g, (letter) => letter.toUpperCase())
+}
+
+export const generateSiteAdapterWizardPackId = (hostname: string): string => {
+  const normalized = hostname
+    .replace(/^www\./i, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+
+  const candidate = normalized.slice(0, SITE_PACK_ID_MAX_LENGTH).replace(/-+$/g, "")
+  if (isValidSitePackId(candidate)) return candidate
+
+  const fallback = `site-${candidate || "adapter"}`
+    .slice(0, SITE_PACK_ID_MAX_LENGTH)
+    .replace(/-+$/g, "")
+  return isValidSitePackId(fallback) ? fallback : "site-adapter"
+}
+
+export const createSiteAdapterWizardPackMetadata = (
+  documentRoot: Document,
+  pageUrl: URL,
+): SiteAdapterWizardPackMetadata => {
+  const metadataName =
+    getSiteMetadataContent(documentRoot, 'meta[name="application-name"]') ||
+    getSiteMetadataContent(documentRoot, 'meta[property="og:site_name"]')
+
+  return {
+    name: metadataName || formatHostnameAsName(pageUrl.hostname),
+    id: generateSiteAdapterWizardPackId(pageUrl.hostname),
+    version: 1,
+  }
+}
 
 export const updateSiteAdapterWizardSelection = (
   draft: SiteAdapterWizardDraft,
@@ -455,5 +545,69 @@ export const buildSiteAdapterWizardConfigPreview = (
       validations.conversationItem.status === "valid" && conversationItem
         ? conversationItem.selector.trim()
         : null,
+  }
+}
+
+export const serializeSiteAdapterWizardManifest = (manifest: SitePackManifest): string =>
+  `${JSON.stringify(manifest, null, 2)}\n`
+
+export const buildSiteAdapterWizardContributionUrl = (
+  manifest: SitePackManifest,
+  json = serializeSiteAdapterWizardManifest(manifest),
+): string => {
+  const url = new URL(SITE_PACK_CONTRIBUTION_BASE_URL)
+  url.searchParams.set("filename", `${manifest.id}.json`)
+  url.searchParams.set("value", json)
+  url.searchParams.set("message", `feat(registry): add ${manifest.id} SitePack`)
+  return url.href
+}
+
+export const buildSiteAdapterWizardPack = (input: {
+  readonly draft: SiteAdapterWizardDraft
+  readonly metadata: SiteAdapterWizardPackMetadata
+  readonly pageUrl: URL
+  readonly appVersion: string
+}): SiteAdapterWizardPackBuildResult => {
+  const validations = validateSiteAdapterWizardDraft(input.draft)
+  const invalidRequiredStep = SITE_ADAPTER_WIZARD_STEPS.find(
+    (step) => !step.optional && validations[step.id].status !== "valid",
+  )
+  if (invalidRequiredStep) {
+    return {
+      valid: false,
+      issue: { code: "required-steps-invalid", stepId: invalidRequiredStep.id },
+    }
+  }
+
+  if (input.pageUrl.protocol !== "https:") {
+    return { valid: false, issue: { code: "https-required" } }
+  }
+
+  const preview = buildSiteAdapterWizardConfigPreview(input.draft, validations)
+  const candidate: SitePackManifest = {
+    schemaVersion: SITE_PACK_SCHEMA_VERSION,
+    id: input.metadata.id.trim(),
+    version: input.metadata.version,
+    minAppVersion: input.appVersion,
+    name: normalizePackName(input.metadata.name),
+    matches: [`https://${input.pageUrl.host.toLowerCase()}/*`],
+    ...preview.config,
+  }
+  const validation = validateSitePackManifest(candidate)
+  if (!validation.valid) {
+    return {
+      valid: false,
+      issue: { code: "manifest-invalid", errors: validation.errors },
+    }
+  }
+
+  const manifest = validation.value
+  const json = serializeSiteAdapterWizardManifest(manifest)
+  return {
+    valid: true,
+    manifest,
+    json,
+    filename: `${manifest.id}.json`,
+    contributionUrl: buildSiteAdapterWizardContributionUrl(manifest, json),
   }
 }

@@ -95,12 +95,57 @@ export const fr = {
   siteAdapterWizardCapabilityHistory: "Historique de lecture",
   siteAdapterWizardCapabilityNewChat: "Nouvelle conversation",
   siteAdapterWizardConversationCaptured:
-    "Élément de conversation enregistré ; les règles de lien seront complétées à l'enregistrement.",
+    "Élément de conversation enregistré ; il restera hors du pack tant que ses règles d'ID et de lien ne sont pas connues.",
   siteAdapterWizardCompleteTitle: "Le brouillon de l'adaptateur est prêt",
   siteAdapterWizardCompleteDesc:
     "Les éléments requis sont valides et le plan de conversation est disponible.",
-  siteAdapterWizardSaveLater:
-    "L'enregistrement, l'installation et l'export seront ajoutés à l'étape suivante.",
+  siteAdapterWizardPublishEyebrow: "Enregistrer et contribuer",
+  siteAdapterWizardPublishTitle: "Publier cet adaptateur",
+  siteAdapterWizardPublishDesc:
+    "Vérifiez les métadonnées générées, puis enregistrez le pack localement ou exportez le même JSON validé.",
+  siteAdapterWizardPublishNameLabel: "Nom du site",
+  siteAdapterWizardPublishIdLabel: "ID du pack",
+  siteAdapterWizardPublishIdHint: "Lettres minuscules, chiffres et tirets",
+  siteAdapterWizardPublishVersionHint: "Augmentez-la lors de la mise à jour du même pack",
+  siteAdapterWizardPublishOriginLabel: "Origine exacte",
+  siteAdapterWizardPublishMinVersionLabel: "Version minimale d'Ophel",
+  siteAdapterWizardPublishConversationOmitted:
+    "L'élément de conversation n'est pas inclus, car ses règles d'ID et d'URL ne peuvent pas être déduites de façon sûre.",
+  siteAdapterWizardPublishDraftInvalid:
+    "Une sélection obligatoire n'est plus valide. Revenez à cette étape et sélectionnez-la de nouveau.",
+  siteAdapterWizardPublishHttpsRequired:
+    "Les SitePacks ne peuvent être créés que pour une origine HTTPS.",
+  siteAdapterWizardPublishManifestInvalid: "Le SitePack généré n'est pas valide.",
+  siteAdapterWizardPublishNameInvalid: "Saisissez un nom de site.",
+  siteAdapterWizardPublishIdInvalid:
+    "L'ID doit contenir 2 à 40 lettres minuscules, chiffres ou tirets.",
+  siteAdapterWizardPublishVersionInvalid: "La version doit être un entier positif.",
+  siteAdapterWizardPublishAppVersionInvalid:
+    "La version actuelle d'Ophel ne peut pas servir de version minimale valide.",
+  siteAdapterWizardPublishManifestInvalidField: "Vérifiez le champ généré : {field}",
+  siteAdapterWizardPublishVersionConflict:
+    "Cet ID et cette version contiennent déjà un autre contenu. Augmentez la version et réessayez.",
+  siteAdapterWizardPublishSourceConflict:
+    "Cet ID de pack est déjà installé depuis une autre source. Choisissez un autre ID.",
+  siteAdapterWizardPublishMatchConflict:
+    "Cette origine entre en conflit avec un SitePack intégré ou installé.",
+  siteAdapterWizardPublishSaveFailed:
+    "Le SitePack n'a pas pu être enregistré. Vérifiez les métadonnées et réessayez.",
+  siteAdapterWizardPublishPermissionDenied:
+    "L'accès au site n'a pas été accordé ; le pack enregistré a donc été désactivé.",
+  siteAdapterWizardPublishSaved:
+    "« {name} » a été enregistré localement. Rechargez cette page pour l’activer.",
+  siteAdapterWizardPublishDownloaded: "Le JSON validé du SitePack a été téléchargé.",
+  siteAdapterWizardPublishContributionOpened:
+    "JSON copié. La page de contribution GitHub préremplie est ouverte.",
+  siteAdapterWizardPublishOpenFailed:
+    "Le JSON a été copié, mais GitHub n'a pas pu être ouvert. Ouvrez le dépôt et collez-le manuellement.",
+  siteAdapterWizardPublishReloadTitle: "Rechargement requis",
+  siteAdapterWizardPublishReloadDesc:
+    "Le pack est enregistré et inscrit. Rechargez la page afin que tous les modules de l'adaptateur démarrent avec un cycle de page complet.",
+  siteAdapterWizardPublishOpening: "Ouverture de GitHub…",
+  siteAdapterWizardPublishGithub: "Copier le JSON et ouvrir GitHub",
+  siteAdapterWizardPublishSaving: "Enregistrement…",
   siteAdapterWizardStartOver: "Recommencer",
   siteAdapterWizardDone: "Terminé",
   siteAdapterWizardBack: "Retour",
