@@ -54,6 +54,7 @@ import { isLikelyMobileDevice } from "~utils/device"
 
 import { ConfirmDialog, FolderSelectDialog, TagManagerDialog } from "./ConversationDialogs"
 import { DisclaimerModal } from "./DisclaimerModal"
+import { ElementPickerOverlay } from "./ElementPickerOverlay"
 import { LoadingOverlay } from "./LoadingOverlay"
 import { MainPanel } from "./MainPanel"
 import { QueueOverlay } from "./QueueOverlay"
@@ -3140,7 +3141,11 @@ export const App = () => {
   )
 
   if (!adapter || !promptManager || !conversationManager || !outlineManager) {
-    return null
+    return (
+      <div className="gh-root">
+        <ElementPickerOverlay />
+      </div>
+    )
   }
 
   const edgeTriggerMode = settings?.panel?.edgeTriggerMode ?? DEFAULT_SETTINGS.panel.edgeTriggerMode
@@ -3154,6 +3159,7 @@ export const App = () => {
 
   return (
     <div className={`gh-root ${isPassThrough ? "gh-pass-through" : ""}`}>
+      <ElementPickerOverlay />
       {shouldRenderEdgeHoverZone && edgeSnapState && (
         <div
           aria-hidden="true"

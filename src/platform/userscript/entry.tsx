@@ -397,12 +397,10 @@ async function init() {
 
   const adapter = getAdapter()
 
-  if (!adapter) {
-    return
+  if (adapter) {
+    // 初始化适配器
+    adapter.afterPropertiesSet({})
   }
-
-  // 初始化适配器
-  adapter.afterPropertiesSet({})
 
   let mountObserver: MutationObserver | null = null
   let mountInterval: number | null = null
@@ -507,6 +505,12 @@ async function init() {
   }
 
   await mountUserscriptApp()
+  window.addEventListener("unload", cleanupMountWatchers)
+  window.addEventListener("unload", cleanupUserscriptObjectUrls)
+
+  if (!adapter) {
+    return
+  }
 
   // 等待 Zustand hydration 完成后初始化核心模块
   const { useSettingsStore, getSettingsState, claimLegacySiteSettings } = await import(
@@ -594,9 +598,6 @@ async function init() {
   // 初始化 URL 变化监听 (SPA 导航)
   const cleanupUrlChangeObserver = initUrlChangeObserver(ctx)
   window.addEventListener("unload", cleanupUrlChangeObserver, { once: true })
-
-  window.addEventListener("unload", cleanupMountWatchers)
-  window.addEventListener("unload", cleanupUserscriptObjectUrls)
 }
 
 // 启动：document-start 时 DOM 未就绪，需等待

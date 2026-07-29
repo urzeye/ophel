@@ -13,6 +13,10 @@ export const zhCN = {
   tabPrompts: "提示词",
   tabSettings: "设置",
 
+  elementPickerInstruction: "将指针移到页面元素上，然后单击选择",
+  elementPickerCancelHint: "按 Esc 取消",
+  elementPickerIframeUnsupported: "嵌入式页面（iframe）内的元素暂不支持拾取，请选择框架外的元素。",
+
   // ======== Options 页面导航 ========
   navGeneral: "基本设置",
   navSiteSettings: "站点配置",

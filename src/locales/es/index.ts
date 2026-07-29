@@ -15,6 +15,12 @@ export const es = {
   tabPrompts: "Indicaciones",
   tabSettings: "Ajustes",
 
+  elementPickerInstruction:
+    "Mueve el puntero sobre un elemento de la página y haz clic para seleccionarlo",
+  elementPickerCancelHint: "Pulsa Esc para cancelar",
+  elementPickerIframeUnsupported:
+    "No se pueden seleccionar elementos dentro de marcos incrustados (iframe). Elige un elemento fuera del marco.",
+
   // ======== Options Page Navigation ========
   navGeneral: "General",
   navSiteSettings: "Sitios",

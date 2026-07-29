@@ -15,6 +15,11 @@ export const ru = {
   tabPrompts: "Промпты",
   tabSettings: "Настройки",
 
+  elementPickerInstruction: "Наведите указатель на элемент страницы и щёлкните, чтобы выбрать его",
+  elementPickerCancelHint: "Нажмите Esc для отмены",
+  elementPickerIframeUnsupported:
+    "Элементы внутри встроенных фреймов (iframe) выбрать нельзя. Выберите элемент за пределами фрейма.",
+
   // ======== Options Page Navigation ========
   navGeneral: "Общие",
   navSiteSettings: "Сайты",

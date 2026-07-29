@@ -15,6 +15,11 @@ export const ko = {
   tabPrompts: "프롬프트",
   tabSettings: "설정",
 
+  elementPickerInstruction: "페이지 요소 위로 포인터를 이동한 다음 클릭하여 선택하세요",
+  elementPickerCancelHint: "Esc를 눌러 취소",
+  elementPickerIframeUnsupported:
+    "임베디드 프레임(iframe) 내부 요소는 선택할 수 없습니다. 프레임 밖의 요소를 선택하세요.",
+
   // ======== Options Page Navigation ========
   navGeneral: "일반 설정",
   navSiteSettings: "사이트 설정",

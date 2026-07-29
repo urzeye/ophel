@@ -15,6 +15,11 @@ export const ja = {
   tabPrompts: "プロンプト",
   tabSettings: "設定",
 
+  elementPickerInstruction: "ページ要素にポインターを合わせ、クリックして選択します",
+  elementPickerCancelHint: "Esc キーでキャンセル",
+  elementPickerIframeUnsupported:
+    "埋め込みフレーム（iframe）内の要素は選択できません。フレーム外の要素を選んでください。",
+
   // ======== Options Page Navigation ========
   navGeneral: "基本設定",
   navSiteSettings: "サイト設定",

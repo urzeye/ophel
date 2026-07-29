@@ -52,6 +52,140 @@
   pointer-events: auto;
 }
 
+/* ============= 元素拾取 Overlay ============= */
+.gh-element-picker-overlay {
+  position: fixed;
+  z-index: 2147483000;
+  inset: 0;
+  pointer-events: none;
+  color: var(--gh-text, #1f2937);
+  isolation: isolate;
+}
+
+.gh-element-picker-highlight,
+.gh-element-picker-iframe-guard {
+  position: fixed;
+  top: 0;
+  left: 0;
+  box-sizing: border-box;
+  transform-origin: top left;
+}
+
+.gh-element-picker-highlight {
+  z-index: 1;
+  border: 2px solid var(--gh-primary, #4285f4);
+  border-radius: 6px;
+  background: rgba(66, 133, 244, 0.14);
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 16%, transparent);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--gh-bg, #ffffff) 78%, transparent) inset,
+    0 0 0 3px color-mix(in srgb, var(--gh-primary, #4285f4) 18%, transparent),
+    0 10px 28px rgba(15, 23, 42, 0.16);
+  pointer-events: none;
+  transition:
+    width 60ms linear,
+    height 60ms linear,
+    transform 60ms linear;
+  will-change: width, height, transform;
+}
+
+.gh-element-picker-highlight.is-unsupported {
+  border-color: var(--gh-danger, #ef4444);
+  background: rgba(239, 68, 68, 0.12);
+  background: color-mix(in srgb, var(--gh-danger, #ef4444) 14%, transparent);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--gh-bg, #ffffff) 78%, transparent) inset,
+    0 0 0 3px color-mix(in srgb, var(--gh-danger, #ef4444) 18%, transparent),
+    0 10px 28px rgba(15, 23, 42, 0.16);
+}
+
+.gh-element-picker-iframe-guard {
+  z-index: 3;
+  border-radius: 6px;
+  background: transparent;
+  cursor: not-allowed;
+  pointer-events: auto;
+}
+
+.gh-root.gh-pass-through .gh-element-picker-iframe-guard {
+  pointer-events: auto !important;
+  opacity: 1 !important;
+}
+
+.gh-element-picker-instructions {
+  position: fixed;
+  z-index: 4;
+  top: max(16px, env(safe-area-inset-top));
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-sizing: border-box;
+  max-width: min(680px, calc(100vw - 32px));
+  min-height: 42px;
+  padding: 9px 13px;
+  border: 1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 28%, var(--gh-border, #e5e7eb));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--gh-bg, #ffffff) 94%, transparent);
+  color: var(--gh-text, #1f2937);
+  box-shadow: var(--gh-shadow, 0 10px 40px rgba(0, 0, 0, 0.15));
+  font-family: var(--gh-font-family);
+  font-size: 13px;
+  line-height: 1.35;
+  pointer-events: none;
+  transform: translateX(-50%);
+  animation: gh-element-picker-enter 160ms ease-out;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+.gh-element-picker-instructions.is-unsupported {
+  border-color: color-mix(in srgb, var(--gh-danger, #ef4444) 34%, var(--gh-border, #e5e7eb));
+}
+
+.gh-element-picker-tag {
+  flex: 0 0 auto;
+  max-width: 150px;
+  overflow: hidden;
+  padding: 3px 7px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 12%, var(--gh-bg-secondary, #f9fafb));
+  color: var(--gh-primary, #4285f4);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 11px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gh-element-picker-instructions.is-unsupported .gh-element-picker-tag {
+  background: color-mix(in srgb, var(--gh-danger, #ef4444) 11%, var(--gh-bg-secondary, #f9fafb));
+  color: var(--gh-danger, #ef4444);
+}
+
+.gh-element-picker-message {
+  min-width: 0;
+  font-weight: 600;
+}
+
+.gh-element-picker-hint {
+  flex: 0 0 auto;
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+@keyframes gh-element-picker-enter {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -6px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
 /* ============= 已选提示词悬浮条 ============= */
 .selected-prompt-bar {
   display: flex;
@@ -2765,6 +2899,7 @@
   .gh-site-pack-detect-switch,
   .gh-update-notice-button,
   .gh-update-notice-close,
+  .gh-element-picker-highlight,
   .selected-prompt-bar,
   .ophel-tooltip {
     transition: none !important;
@@ -2783,6 +2918,7 @@
   .gh-site-pack-detect-notice,
   .gh-update-notice-icon,
   .gh-panel-brand-unread,
+  .gh-element-picker-instructions,
   .selected-prompt-bar,
   .ophel-tooltip {
     animation: none !important;

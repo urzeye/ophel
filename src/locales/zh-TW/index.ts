@@ -14,6 +14,10 @@ export const zhTW = {
   tabPrompts: "提示詞",
   tabSettings: "設置",
 
+  elementPickerInstruction: "將游標移到頁面元素上，然後按一下選取",
+  elementPickerCancelHint: "按 Esc 取消",
+  elementPickerIframeUnsupported: "嵌入頁面（iframe）內的元素暫不支援選取，請選擇框架外的元素。",
+
   // ======== Options 頁面導航 ========
   navGeneral: "基本設定",
   navSiteSettings: "站點配置",

@@ -15,6 +15,12 @@ export const it = {
   tabPrompts: "Suggerimenti",
   tabSettings: "Impostazioni",
 
+  elementPickerInstruction:
+    "Sposta il puntatore su un elemento della pagina, quindi fai clic per selezionarlo",
+  elementPickerCancelHint: "Premi Esc per annullare",
+  elementPickerIframeUnsupported:
+    "Gli elementi nei riquadri incorporati (iframe) non possono essere selezionati. Scegli un elemento esterno al riquadro.",
+
   // ======== Options Page Navigation ========
   navGeneral: "Generale",
   navSiteSettings: "Configurazione del sito",

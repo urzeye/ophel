@@ -15,6 +15,12 @@ export const pt = {
   tabPrompts: "Comandos",
   tabSettings: "Ajustes",
 
+  elementPickerInstruction:
+    "Mova o ponteiro sobre um elemento da página e clique para selecioná-lo",
+  elementPickerCancelHint: "Pressione Esc para cancelar",
+  elementPickerIframeUnsupported:
+    "Elementos dentro de quadros incorporados (iframes) não podem ser selecionados. Escolha um elemento fora do quadro.",
+
   // ======== Options Page Navigation ========
   navGeneral: "Geral",
   navSiteSettings: "Sites",

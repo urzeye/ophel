@@ -15,6 +15,12 @@ export const fr = {
   tabPrompts: "Invites",
   tabSettings: "Réglages",
 
+  elementPickerInstruction:
+    "Placez le pointeur sur un élément de la page, puis cliquez pour le sélectionner",
+  elementPickerCancelHint: "Appuyez sur Échap pour annuler",
+  elementPickerIframeUnsupported:
+    "Les éléments contenus dans les cadres intégrés (iframe) ne peuvent pas être sélectionnés. Choisissez un élément hors du cadre.",
+
   // ======== Options Page Navigation ========
   navGeneral: "Général",
   navSiteSettings: "Sites",

@@ -15,6 +15,12 @@ export const de = {
   tabPrompts: "Prompt-Bibliothek",
   tabSettings: "Einstellungen",
 
+  elementPickerInstruction:
+    "Bewege den Zeiger über ein Seitenelement und klicke, um es auszuwählen",
+  elementPickerCancelHint: "Drücke Esc zum Abbrechen",
+  elementPickerIframeUnsupported:
+    "Elemente in eingebetteten Frames (iframes) können nicht ausgewählt werden. Wähle ein Element außerhalb des Frames.",
+
   // ======== Options Page Navigation ========
   navGeneral: "Allgemein",
   navSiteSettings: "Websites",

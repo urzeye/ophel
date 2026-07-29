@@ -15,6 +15,11 @@ export const en = {
   tabPrompts: "Prompts",
   tabSettings: "Settings",
 
+  elementPickerInstruction: "Move over a page element, then click to select it",
+  elementPickerCancelHint: "Press Esc to cancel",
+  elementPickerIframeUnsupported:
+    "Elements inside embedded frames (iframes) cannot be selected. Choose an element outside the frame.",
+
   // ======== Options Page Navigation ========
   navGeneral: "General",
   navSiteSettings: "Site Config",
