@@ -1,6 +1,7 @@
 import { IMA_CONFIG, IMA_CONFIG_VERSION } from "~adapters/ima-config"
 import { KIMI_CONFIG, KIMI_CONFIG_VERSION } from "~adapters/kimi-config"
 import { QIANWEN_CONFIG, QIANWEN_CONFIG_VERSION } from "~adapters/qianwen-config"
+import { YUANBAO_CONFIG, YUANBAO_CONFIG_VERSION } from "~adapters/yuanbao-config"
 import { ZAI_CONFIG, ZAI_CONFIG_VERSION } from "~adapters/zai-config"
 import { SITE_IDS } from "~constants/defaults"
 
@@ -29,6 +30,14 @@ const BUILTIN_CONFIG_DESCRIPTORS = new Map<string, BuiltinConfigDescriptor>([
       siteId: SITE_IDS.QIANWEN,
       configVersion: QIANWEN_CONFIG_VERSION,
       baseConfig: QIANWEN_CONFIG,
+    },
+  ],
+  [
+    SITE_IDS.YUANBAO,
+    {
+      siteId: SITE_IDS.YUANBAO,
+      configVersion: YUANBAO_CONFIG_VERSION,
+      baseConfig: YUANBAO_CONFIG,
     },
   ],
   [

@@ -36,71 +36,13 @@ import {
   type PanelAvoidanceConfig,
   type SiteDeleteConversationResult,
 } from "./base"
+import type { BuiltinSiteConfig } from "./declarative"
+import { YUANBAO_CONFIG, YUANBAO_CONFIG_VERSION, type YuanbaoSiteConfig } from "./yuanbao-config"
 
 const HOSTNAME = "yuanbao.tencent.com"
 const CHAT_PATH_PATTERN = /^\/chat\/([^/?#]+)(?:\/([^/?#]+))?/
 const THEME_STORAGE_KEY = "yb_web_theme_mode"
 const USER_ID_STORAGE_KEY = "yb_user_id"
-
-const TEXTAREA_SELECTOR =
-  '.agent-dialogue__content--common__input .ql-editor[contenteditable="true"], #search-bar .ql-editor[contenteditable="true"], .ql-editor[contenteditable="true"]'
-const SUBMIT_BUTTON_SELECTOR = "#yuanbao-send-btn, a.style__send-btn___RwTm5"
-const NEW_CHAT_BUTTON_SELECTOR = '.yb-common-nav__trigger[data-desc="new-chat"]'
-const STOP_BUTTON_SELECTOR = "a.style__send-btn___RwTm5"
-
-const SIDEBAR_SCROLL_SELECTOR = ".yb-nav__content"
-const CONVERSATION_ITEM_SELECTOR = ".yb-recent-conv-list__item"
-const ACTIVE_CONVERSATION_SELECTOR = ".yb-recent-conv-list__item.active"
-const CONVERSATION_TITLE_SELECTOR =
-  ".yb-recent-conv-list__item-name[data-item-name], .yb-recent-conv-list__item-name, [data-item-id][data-item-name]"
-const CONVERSATION_PINNED_SELECTOR =
-  ".yb-recent-conv-list__item-name.isTop, .yb-recent-conv-list__chat-top .icon-yb-ic_pin_16"
-
-const RESPONSE_SCROLL_SELECTOR =
-  "#chat-content .agent-chat__list__content-wrapper, .agent-chat__list__content-wrapper"
-const RESPONSE_CONTAINER_SELECTOR =
-  "#chat-content .agent-chat__list__content, .agent-chat__list__content"
-const USER_MESSAGE_SELECTOR = ".agent-chat__list__item--human"
-const ASSISTANT_MESSAGE_SELECTOR = ".agent-chat__list__item--ai"
-const USER_TEXT_SELECTOR =
-  ".agent-chat__bubble--human .hyc-content-text, .agent-chat__bubble--human .agent-chat__bubble__content"
-const ASSISTANT_MARKDOWN_SELECTOR =
-  ".agent-chat__list__item--ai .hyc-common-markdown-style, .agent-chat__list__item--ai .hyc-content-md-done"
-const ASSISTANT_TOOLBAR_SELECTOR =
-  ".agent-chat__toolbar, .agent-chat__toolbar_new, .agent-chat__question-toolbar, .hyc-common-markdown__code__hd__r"
-const ASSISTANT_DECORATION_SELECTOR =
-  ".hyc-card-box-process-list, .hyc-common-markdown__replace-appCard"
-const USER_ATTACHMENT_IMAGE_SELECTOR = [
-  ".hyc-component-multi-modal__image img",
-  ".agent-chat__bubble--human .hyc-content-img img",
-].join(", ")
-const USER_ATTACHMENT_FILE_SELECTOR = [
-  ".hyc-component-multi-modal__file",
-  ".hyc-component-multi-modal__doc",
-  ".hyc-component-multi-modal__document",
-  ".hyc-content-file",
-  ".hyc-content-doc",
-  ".hyc-file-card",
-  ".hyc-doc-card",
-  "[data-file-id]",
-  "[data-doc-id]",
-  "[data-resource-id]",
-  "a[href*='/api/resource/download']",
-  ".agent-chat__bubble--human [class*='file']",
-  ".agent-chat__bubble--human [class*='doc']",
-].join(", ")
-const ASSISTANT_GENERATED_IMAGE_SELECTOR = [
-  '[data-card-type="image"] img',
-  '[data-box-type="loadingImage"] img',
-  ".hyc-media-box--loadingImage img",
-  ".loading-image-box img",
-].join(", ")
-const ASSISTANT_GENERATED_IMAGE_CARD_SELECTOR = [
-  '[data-card-type="image"]',
-  '[data-box-type="loadingImage"]',
-  ".hyc-media-box--loadingImage",
-  ".loading-image-box",
-].join(", ")
 const ATTACHMENT_SOURCE_ATTRS = [
   "href",
   "src",
@@ -117,76 +59,6 @@ const ATTACHMENT_SOURCE_ATTRS = [
   "data-image-url",
   "data-image-src",
 ]
-const MODEL_BUTTON_SELECTOR = ".ybc-model-select-button"
-const MODEL_TEXT_SELECTOR = ".ybc-model-select-button .t-button__text"
-const MODEL_MENU_ITEM_SELECTOR =
-  ".ybc-model-select-dropdown-popup .t-dropdown__item, .ybc-model-select-dropdown .t-dropdown__item, .t-popup .t-dropdown__item"
-const DISCLAIMER_SELECTOR = ".agent-dialogue__content-copyright"
-const THOUGHT_MARKDOWN_SELECTOR = [
-  ".hyc-component-reasoner__think-content .hyc-common-markdown-style",
-  ".hyc-component-deepsearch-cot__think__content__item .hyc-common-markdown-style",
-  ".hyc-common-markdown-style-cot",
-].join(", ")
-const THOUGHT_CONTAINER_SELECTOR = [
-  ".hyc-component-reasoner__think",
-  ".hyc-component-deepsearch-cot__think",
-  ".hyc-common-markdown-style-cot",
-].join(", ")
-const ASSISTANT_REASONER_BODY_SELECTORS = [
-  ".hyc-component-reasoner__text .hyc-common-markdown-style",
-  ".hyc-component-reasoner__text .hyc-content-md-done",
-  ".hyc-component-reasoner__text",
-]
-const DROPDOWN_MENU_SELECTOR = [
-  ".t-dropdown__menu",
-  ".t-dropdown__submenu",
-  ".t-dropdown",
-  ".t-popup",
-  ".t-popup__content",
-  ".t-popup__content__inner",
-  '[role="menu"]',
-  '[role="listbox"]',
-].join(", ")
-const DROPDOWN_ITEM_SELECTOR = [
-  ".t-dropdown__item",
-  ".yb-dropdown__item",
-  '[role="menuitem"]',
-  '[role="option"]',
-].join(", ")
-const CONVERSATION_MENU_TRIGGER_SELECTOR = [
-  '[aria-haspopup="menu"]',
-  '[aria-haspopup="listbox"]',
-  ".icon-yb-ic_ellipsis",
-  ".icon-yb-ic_more_vert",
-  ".icon-yb-ic_more_vert_16",
-  ".icon-yb-ic_delete",
-  ".icon-yb-ic_delete_16",
-  ".icon-yb-ic_delete_20",
-  ".icon-more",
-  ".icon-del",
-  ".icon-delete",
-  ".icon-menu",
-  "button",
-  '[role="button"]',
-].join(", ")
-const DIALOG_SELECTOR = '.t-dialog, [role="dialog"]'
-const DIALOG_BUTTON_SELECTOR =
-  '.t-dialog button, .t-dialog [role="button"], [role="dialog"] button, [role="dialog"] [role="button"]'
-const YUANBAO_WIDTH_MAX_VAR = "--hunyuan-chat-list-max-width"
-const YUANBAO_WIDTH_VAR = "--hunyuan-chat-list-width"
-const YUANBAO_SPLIT_PANE_SELECTOR = ".agent-dialogue__content-split-pane--show"
-const YUANBAO_LAYOUT_SCOPE_SELECTOR = [
-  ".yb-layout__content",
-  ".yb-layout__content-skeleton",
-  YUANBAO_SPLIT_PANE_SELECTOR,
-].join(", ")
-const YUANBAO_CHAT_COLUMN_SCOPE_SELECTOR = [
-  `${YUANBAO_SPLIT_PANE_SELECTOR} > .Pane1`,
-  ".agent-dialogue__content--common",
-].join(", ")
-const YUANBAO_CANVAS_PANE_SELECTOR = `${YUANBAO_SPLIT_PANE_SELECTOR} > .Pane2:has(#yuanbao-canvas-container)`
-const YUANBAO_CHAT_CONTENT_SELECTOR = ".agent-dialogue__content--common__content"
-const YUANBAO_CHAT_INPUT_SELECTOR = ".agent-dialogue__content--common__input"
 
 const DELETE_TEXT_PATTERN = /删除|delete/i
 const CONFIRM_TEXT_PATTERN = /删除|确认|确定|delete|confirm/i
@@ -215,6 +87,7 @@ interface YuanbaoAssistantImage {
 }
 
 export class YuanbaoAdapter extends SiteAdapter {
+  private config: YuanbaoSiteConfig = YUANBAO_CONFIG
   private exportIncludeThoughtsOverride: boolean | null = null
 
   match(): boolean {
@@ -229,6 +102,18 @@ export class YuanbaoAdapter extends SiteAdapter {
     return "元宝"
   }
 
+  getBuiltinConfig(): YuanbaoSiteConfig {
+    return YUANBAO_CONFIG
+  }
+
+  getBuiltinConfigVersion(): number {
+    return YUANBAO_CONFIG_VERSION
+  }
+
+  applyMergedConfig(config: BuiltinSiteConfig): void {
+    this.config = config as YuanbaoSiteConfig
+  }
+
   getThemeColors(): { primary: string; secondary: string } {
     return { primary: "#1677ff", secondary: "#0b5bd3" }
   }
@@ -238,15 +123,19 @@ export class YuanbaoAdapter extends SiteAdapter {
   }
 
   getTextareaSelectors(): string[] {
-    return [TEXTAREA_SELECTOR]
+    return [...this.config.selectors.textarea]
   }
 
   isValidTextarea(element: HTMLElement): boolean {
     if (!super.isValidTextarea(element)) return false
     return (
       element.getAttribute("contenteditable") === "true" &&
-      !!element.closest(".agent-dialogue__content--common__input")
+      !!element.closest(this.config.sitePrivateSelectors.inputContainer)
     )
+  }
+
+  getSubmitKeyConfig(): { key: "Enter" | "Ctrl+Enter" } {
+    return { key: this.config.input.submitKey ?? "Enter" }
   }
 
   insertPrompt(content: string): boolean {
@@ -349,21 +238,25 @@ export class YuanbaoAdapter extends SiteAdapter {
   }
 
   getSubmitButtonSelectors(): string[] {
-    return [SUBMIT_BUTTON_SELECTOR]
+    return [...this.config.selectors.submitButton]
   }
 
   findSubmitButton(): HTMLElement | null {
-    const primary = document.querySelector("#yuanbao-send-btn") as HTMLElement | null
+    const primary = document.querySelector(
+      this.config.sitePrivateSelectors.primarySubmitButton,
+    ) as HTMLElement | null
     if (this.isVisibleElement(primary) && !this.isDisabledActionButton(primary)) {
       return primary
     }
 
-    const candidates = Array.from(document.querySelectorAll(SUBMIT_BUTTON_SELECTOR))
-    for (const candidate of candidates) {
-      const button = candidate as HTMLElement
-      if (!this.isVisibleElement(button)) continue
-      if (this.isDisabledActionButton(button) || this.isStopLikeButton(button)) continue
-      return button
+    for (const selector of this.config.selectors.submitButton) {
+      const candidates = Array.from(document.querySelectorAll(selector))
+      for (const candidate of candidates) {
+        const button = candidate as HTMLElement
+        if (!this.isVisibleElement(button)) continue
+        if (this.isDisabledActionButton(button) || this.isStopLikeButton(button)) continue
+        return button
+      }
     }
 
     return null
@@ -390,7 +283,7 @@ export class YuanbaoAdapter extends SiteAdapter {
 
   getNewTabUrl(): string {
     const agentId = this.getAgentId()
-    return agentId ? `https://${HOSTNAME}/chat/${agentId}` : `https://${HOSTNAME}/`
+    return agentId ? this.buildConfiguredConversationUrl(agentId) : `https://${HOSTNAME}/`
   }
 
   getSessionName(): string | null {
@@ -429,7 +322,7 @@ export class YuanbaoAdapter extends SiteAdapter {
   }
 
   getConversationTitle(): string | null {
-    const active = document.querySelector(ACTIVE_CONVERSATION_SELECTOR)
+    const active = this.findActiveConversationElement()
     return active ? this.extractConversationTitle(active) : null
   }
 
@@ -437,7 +330,7 @@ export class YuanbaoAdapter extends SiteAdapter {
     const current = super.getCurrentConversationInfo()
     if (!current) return null
 
-    const active = document.querySelector(ACTIVE_CONVERSATION_SELECTOR)
+    const active = this.findActiveConversationElement()
     const activeInfo = active
       ? this.extractConversationInfo(active, this.getCurrentCid() || undefined)
       : null
@@ -458,10 +351,9 @@ export class YuanbaoAdapter extends SiteAdapter {
 
   getConversationList(): ConversationInfo[] {
     const cid = this.getCurrentCid() || undefined
-    const items = document.querySelectorAll(CONVERSATION_ITEM_SELECTOR)
     const map = new Map<string, ConversationInfo>()
 
-    items.forEach((item) => {
+    this.getConversationElements().forEach((item) => {
       const info = this.extractConversationInfo(item, cid)
       if (info) {
         map.set(info.id, info)
@@ -473,23 +365,27 @@ export class YuanbaoAdapter extends SiteAdapter {
 
   getConversationObserverConfig(): ConversationObserverConfig | null {
     return {
-      selector: CONVERSATION_ITEM_SELECTOR,
-      shadow: false,
+      selector: this.config.conversation.itemSelector,
+      shadow: this.config.conversation.shadow ?? false,
       extractInfo: (el) => this.extractConversationInfo(el, this.getCurrentCid() || undefined),
-      getTitleElement: (el) => el.querySelector(CONVERSATION_TITLE_SELECTOR) || el,
+      getTitleElement: (el) => this.findConversationTitleElement(el) || el,
     }
   }
 
   getSidebarScrollContainer(): Element | null {
-    return document.querySelector(SIDEBAR_SCROLL_SELECTOR)
+    return document.querySelector(this.config.selectors.sidebarScrollContainer)
   }
 
   navigateToConversation(id: string, url?: string): boolean {
+    if (this.config.conversation.navigationStrategy === "location") {
+      return super.navigateToConversation(id, url || this.buildConversationUrl(id))
+    }
+
     const beforeState = this.captureConversationNavigationState()
     const row = this.findConversationRowById(id)
 
     if (row) {
-      const titleElement = row.querySelector(CONVERSATION_TITLE_SELECTOR) as HTMLElement | null
+      const titleElement = this.findConversationTitleElement(row)
       const clickable =
         this.resolveClickableTarget(titleElement) ||
         (row.querySelector("a[href]") as HTMLElement | null) ||
@@ -555,13 +451,8 @@ export class YuanbaoAdapter extends SiteAdapter {
   }
 
   getScrollContainer(): HTMLElement | null {
-    const candidates = [
-      document.querySelector(RESPONSE_SCROLL_SELECTOR),
-      document.querySelector(RESPONSE_CONTAINER_SELECTOR),
-      document.querySelector("#chat-content"),
-    ]
-
-    for (const candidate of candidates) {
+    for (const selector of this.config.selectors.scrollContainer) {
+      const candidate = document.querySelector(selector)
       if (!(candidate instanceof HTMLElement)) continue
 
       if (candidate.scrollHeight > candidate.clientHeight) {
@@ -576,15 +467,15 @@ export class YuanbaoAdapter extends SiteAdapter {
   }
 
   getResponseContainerSelector(): string {
-    return RESPONSE_CONTAINER_SELECTOR
+    return this.config.selectors.responseContainer
   }
 
   getChatContentSelectors(): string[] {
-    return [USER_MESSAGE_SELECTOR, ASSISTANT_MESSAGE_SELECTOR]
+    return [...this.config.selectors.chatContent]
   }
 
   getUserQuerySelector(): string | null {
-    return USER_MESSAGE_SELECTOR
+    return this.config.selectors.userQuery
   }
 
   extractUserQueryText(element: Element): string {
@@ -593,7 +484,7 @@ export class YuanbaoAdapter extends SiteAdapter {
 
     const clone = contentRoot.cloneNode(true) as HTMLElement
     clone
-      .querySelectorAll(".gh-user-query-markdown, button, [role='button'], svg, input, label")
+      .querySelectorAll(this.config.sitePrivateSelectors.userTextDecoration)
       .forEach((node) => node.remove())
 
     return this.extractTextWithLineBreaks(clone).trim()
@@ -632,22 +523,24 @@ export class YuanbaoAdapter extends SiteAdapter {
   }
 
   getLatestReplyText(): string | null {
-    const replies = document.querySelectorAll(ASSISTANT_MESSAGE_SELECTOR)
+    const replies = document.querySelectorAll(this.config.selectors.assistantResponse)
     const last = replies[replies.length - 1]
     return last ? this.extractAssistantResponseText(last) : null
   }
 
   extractOutline(maxLevel = 6, includeUserQueries = false, showWordCount = false): OutlineItem[] {
     const container =
-      document.querySelector(RESPONSE_CONTAINER_SELECTOR) || this.getScrollContainer() || document
+      document.querySelector(this.config.selectors.responseContainer) ||
+      this.getScrollContainer() ||
+      document
     const blocks = Array.from(
-      container.querySelectorAll(`${USER_MESSAGE_SELECTOR}, ${ASSISTANT_MESSAGE_SELECTOR}`),
+      container.querySelectorAll(this.config.selectors.chatContent.join(", ")),
     ).filter((element) => !element.closest(".gh-root"))
 
     const items: OutlineItem[] = []
 
     blocks.forEach((block, blockIndex) => {
-      if (block.matches(USER_MESSAGE_SELECTOR)) {
+      if (block.matches(this.config.selectors.userQuery)) {
         if (!includeUserQueries) return
 
         const text = this.extractUserQueryText(block)
@@ -657,7 +550,7 @@ export class YuanbaoAdapter extends SiteAdapter {
         if (showWordCount) {
           const nextAssistant = blocks
             .slice(blockIndex + 1)
-            .find((element) => element.matches(ASSISTANT_MESSAGE_SELECTOR))
+            .find((element) => element.matches(this.config.selectors.assistantResponse))
           wordCount = nextAssistant ? this.extractAssistantPlainText(nextAssistant).length : 0
         }
 
@@ -713,12 +606,7 @@ export class YuanbaoAdapter extends SiteAdapter {
   }
 
   getExportConfig(): ExportConfig | null {
-    return {
-      userQuerySelector: USER_MESSAGE_SELECTOR,
-      assistantResponseSelector: ASSISTANT_MESSAGE_SELECTOR,
-      turnSelector: null,
-      useShadowDOM: false,
-    }
+    return { ...this.config.export }
   }
 
   async prepareConversationExport(context: ExportLifecycleContext): Promise<unknown> {
@@ -749,7 +637,7 @@ export class YuanbaoAdapter extends SiteAdapter {
   }
 
   getStopButtonSelectors(): string[] {
-    return [STOP_BUTTON_SELECTOR]
+    return [...this.config.selectors.stopButton]
   }
 
   stopGeneration(): boolean {
@@ -762,45 +650,40 @@ export class YuanbaoAdapter extends SiteAdapter {
 
   getNetworkMonitorConfig(): NetworkMonitorConfig {
     return {
-      urlPatterns: ["/api/chat/"],
-      silenceThreshold: 2000,
+      ...this.config.networkMonitor,
+      urlPatterns: [...this.config.networkMonitor.urlPatterns],
+      urlPathEndsWith: this.config.networkMonitor.urlPathEndsWith
+        ? [...this.config.networkMonitor.urlPathEndsWith]
+        : undefined,
+      requestBodyRules: this.config.networkMonitor.requestBodyRules?.map((rule) => ({
+        ...rule,
+        metadata: { ...rule.metadata },
+      })),
     }
   }
 
   getWidthSelectors() {
-    return [
-      {
-        selector: ":root",
-        property: YUANBAO_WIDTH_MAX_VAR,
-        noCenter: true,
-      },
-      {
-        selector: ":root",
-        property: YUANBAO_WIDTH_VAR,
-        value: `min(100%, var(${YUANBAO_WIDTH_MAX_VAR}))`,
-        noCenter: true,
-      },
-    ]
+    return this.config.widthSelectors.map((selector) => ({ ...selector }))
   }
 
   getPanelAvoidanceConfig(): PanelAvoidanceConfig {
     return {
-      scopeSelector: YUANBAO_LAYOUT_SCOPE_SELECTOR,
+      scopeSelector: this.config.sitePrivateSelectors.layoutScope,
       widthSelectors: this.getWidthSelectors(),
       insetSelectors: [
         {
-          selector: YUANBAO_CHAT_CONTENT_SELECTOR,
-          scopeSelector: YUANBAO_CHAT_COLUMN_SCOPE_SELECTOR,
+          selector: this.config.sitePrivateSelectors.chatContent,
+          scopeSelector: this.config.sitePrivateSelectors.chatColumnScope,
           extraCss: "box-sizing: border-box;",
         },
         {
-          selector: YUANBAO_CHAT_INPUT_SELECTOR,
-          scopeSelector: YUANBAO_CHAT_COLUMN_SCOPE_SELECTOR,
+          selector: this.config.sitePrivateSelectors.inputContainer,
+          scopeSelector: this.config.sitePrivateSelectors.chatColumnScope,
           extraCss: "box-sizing: border-box;",
         },
         {
-          selector: YUANBAO_CANVAS_PANE_SELECTOR,
-          scopeSelector: YUANBAO_LAYOUT_SCOPE_SELECTOR,
+          selector: this.config.sitePrivateSelectors.canvasPane,
+          scopeSelector: this.config.sitePrivateSelectors.layoutScope,
           applySide: "right",
           insetMode: "edge",
           rightProperty: "margin-right",
@@ -833,7 +716,10 @@ export class YuanbaoAdapter extends SiteAdapter {
   }
 
   getModelName(): string | null {
-    const textNode = document.querySelector(MODEL_TEXT_SELECTOR)
+    const modelTextSelector =
+      this.config.modelSwitcher.selectorButtonSelectors[1] ||
+      this.config.modelSwitcher.selectorButtonSelectors[0]
+    const textNode = modelTextSelector ? document.querySelector(modelTextSelector) : null
     const text = textNode?.textContent?.trim() || ""
     return text || null
   }
@@ -844,41 +730,34 @@ export class YuanbaoAdapter extends SiteAdapter {
 
   getModelSwitcherConfig(keyword: string): ModelSwitcherConfig | null {
     return {
+      ...this.config.modelSwitcher,
       targetModelKeyword: keyword,
-      selectorButtonSelectors: [MODEL_BUTTON_SELECTOR, MODEL_TEXT_SELECTOR],
-      menuItemSelector: MODEL_MENU_ITEM_SELECTOR,
-      checkInterval: 1000,
-      maxAttempts: 10,
-      menuRenderDelay: 200,
+      selectorButtonSelectors: [...this.config.modelSwitcher.selectorButtonSelectors],
+      subMenuTriggers: this.config.modelSwitcher.subMenuTriggers
+        ? [...this.config.modelSwitcher.subMenuTriggers]
+        : undefined,
     }
   }
 
   getNewChatButtonSelectors(): string[] {
-    return [NEW_CHAT_BUTTON_SELECTOR]
+    return [...this.config.selectors.newChatButton]
   }
 
   getZenModeConfig() {
+    const { hide, rootClass, styles } = this.config.zenMode
     return {
-      hide: [".yb-nav__content-wrapper", ".yb-nav-fixed.yb-nav-fixed--pc-ctx"],
-      styles: [
-        {
-          selector: ".agent-dialogue__content--common__input-box",
-          property: "padding-bottom",
-          value: "0",
-        },
-        {
-          selector:
-            ".yb-nav--push.yb-nav--open~.yb-layout__content, .yb-nav--push.yb-nav--open~.yb-layout__content-skeleton",
-          property: "margin-left",
-          value: "0",
-        },
-      ],
+      ...(hide ? { hide: [...hide] } : {}),
+      ...(rootClass ? { rootClass: { ...rootClass } } : {}),
+      ...(styles ? { styles: styles.map((style) => ({ ...style })) } : {}),
     }
   }
 
   getCleanModeConfig() {
+    const { hide, rootClass, styles } = this.config.cleanMode
     return {
-      hide: [DISCLAIMER_SELECTOR, ".yb__pc_download", ".agent-dialogue__tool"],
+      ...(hide ? { hide: [...hide] } : {}),
+      ...(rootClass ? { rootClass: { ...rootClass } } : {}),
+      ...(styles ? { styles: styles.map((style) => ({ ...style })) } : {}),
     }
   }
 
@@ -886,30 +765,47 @@ export class YuanbaoAdapter extends SiteAdapter {
     const pathMatch = window.location.pathname.match(CHAT_PATH_PATTERN)
     if (pathMatch?.[1]) return pathMatch[1]
 
-    const attrValue =
-      document
-        .querySelector(`${CONVERSATION_ITEM_SELECTOR}[dt-agent-id]`)
-        ?.getAttribute("dt-agent-id") ||
-      document.querySelector("[dt-agent-id]")?.getAttribute("dt-agent-id")
+    for (const selector of this.config.sitePrivateSelectors.agentId) {
+      const attrValue = document.querySelector(selector)?.getAttribute("dt-agent-id")
+      if (attrValue?.trim()) return attrValue.trim()
+    }
 
-    return attrValue?.trim() || null
+    return null
+  }
+
+  private buildConfiguredConversationUrl(id: string): string {
+    const path = this.config.conversation.urlTemplate.split("{id}").join(id)
+    return `https://${HOSTNAME}${path}`
   }
 
   private buildConversationUrl(sessionId: string): string {
     const agentId = this.getAgentId()
-    return agentId ? `https://${HOSTNAME}/chat/${agentId}/${sessionId}` : `https://${HOSTNAME}/`
+    return agentId
+      ? this.buildConfiguredConversationUrl(`${agentId}/${sessionId}`)
+      : `https://${HOSTNAME}/`
+  }
+
+  private getConversationElements(): Element[] {
+    const { itemSelector, shadow } = this.config.conversation
+    return shadow
+      ? this.findAllElementsBySelector(itemSelector)
+      : Array.from(document.querySelectorAll(itemSelector))
+  }
+
+  private findActiveConversationElement(): Element | null {
+    const activeMatch = this.config.conversation.activeMatch
+    if (!activeMatch) return null
+
+    return this.getConversationElements().find((item) => item.matches(activeMatch)) || null
   }
 
   private extractConversationInfo(el: Element, cid?: string): ConversationInfo | null {
     const container =
-      (el.closest(CONVERSATION_ITEM_SELECTOR) as HTMLElement | null) ||
-      (el.matches(CONVERSATION_ITEM_SELECTOR) ? (el as HTMLElement) : null)
+      (el.closest(this.config.conversation.itemSelector) as HTMLElement | null) ||
+      (el.matches(this.config.conversation.itemSelector) ? (el as HTMLElement) : null)
     if (!container) return null
 
-    const id =
-      container.getAttribute("dt-cid") ||
-      container.querySelector("[data-item-id]")?.getAttribute("data-item-id") ||
-      ""
+    const id = this.extractConversationId(container)
     if (!id) return null
 
     const title = this.extractConversationTitle(container)
@@ -920,13 +816,35 @@ export class YuanbaoAdapter extends SiteAdapter {
       title,
       url,
       cid,
-      isActive: container.classList.contains("active"),
+      isActive: this.config.conversation.activeMatch
+        ? container.matches(this.config.conversation.activeMatch)
+        : undefined,
       isPinned: this.isPinnedConversation(container),
     }
   }
 
+  private extractConversationId(container: Element): string {
+    const { attr = "href", regex } = this.config.conversation.idFrom
+    const source = container.getAttribute(attr)
+    const primaryId = source ? new RegExp(regex).exec(source)?.[1] || "" : ""
+    if (primaryId) return primaryId
+
+    return (
+      container
+        .querySelector(this.config.sitePrivateSelectors.conversationFallbackId)
+        ?.getAttribute("data-item-id") || ""
+    )
+  }
+
+  private findConversationTitleElement(element: Element): HTMLElement | null {
+    const titleSelector = this.config.conversation.titleSelector
+    if (!titleSelector) return null
+    if (element.matches(titleSelector)) return element as HTMLElement
+    return element.querySelector(titleSelector) as HTMLElement | null
+  }
+
   private extractConversationTitle(element: Element): string {
-    const titleElement = element.querySelector(CONVERSATION_TITLE_SELECTOR) as HTMLElement | null
+    const titleElement = this.findConversationTitleElement(element)
     const attrTitle =
       titleElement?.getAttribute("data-item-name") || titleElement?.dataset?.itemName
     const text = attrTitle || titleElement?.textContent || ""
@@ -934,7 +852,7 @@ export class YuanbaoAdapter extends SiteAdapter {
   }
 
   private isPinnedConversation(element: Element): boolean {
-    return element.querySelector(CONVERSATION_PINNED_SELECTOR) !== null
+    return element.querySelector(this.config.sitePrivateSelectors.conversationPinned) !== null
   }
 
   private findScrollableParent(element: Element | null): HTMLElement | null {
@@ -954,8 +872,10 @@ export class YuanbaoAdapter extends SiteAdapter {
 
   private findUserContentRoot(element: Element): HTMLElement | null {
     return (
-      (element.querySelector(USER_TEXT_SELECTOR) as HTMLElement | null) ||
-      (element.querySelector(".agent-chat__bubble__content") as HTMLElement | null) ||
+      (element.querySelector(this.config.sitePrivateSelectors.userText) as HTMLElement | null) ||
+      (element.querySelector(
+        this.config.sitePrivateSelectors.bubbleContent,
+      ) as HTMLElement | null) ||
       (element as HTMLElement)
     )
   }
@@ -968,8 +888,12 @@ export class YuanbaoAdapter extends SiteAdapter {
     if (markdownRoot) return markdownRoot as HTMLElement
 
     return (
-      (element.querySelector(".agent-chat__speech-text") as HTMLElement | null) ||
-      (element.querySelector(".agent-chat__bubble__content") as HTMLElement | null) ||
+      (element.querySelector(
+        this.config.sitePrivateSelectors.assistantSpeechText,
+      ) as HTMLElement | null) ||
+      (element.querySelector(
+        this.config.sitePrivateSelectors.bubbleContent,
+      ) as HTMLElement | null) ||
       (element as HTMLElement)
     )
   }
@@ -977,32 +901,37 @@ export class YuanbaoAdapter extends SiteAdapter {
   private findAssistantMarkdownRoot(element: Element): Element | null {
     const reasonerBody = this.findFirstAssistantNodeOutsideThoughts(
       element,
-      ASSISTANT_REASONER_BODY_SELECTORS.slice(0, 2),
+      this.config.sitePrivateSelectors.assistantReasonerBody.slice(0, 2),
     )
     if (reasonerBody) return reasonerBody
 
-    if (element.matches(ASSISTANT_MARKDOWN_SELECTOR) && !this.isThoughtElement(element)) {
+    if (
+      element.matches(this.config.sitePrivateSelectors.assistantMarkdown) &&
+      !this.isThoughtElement(element)
+    ) {
       return element
     }
 
-    const markdownRoots = Array.from(element.querySelectorAll(ASSISTANT_MARKDOWN_SELECTOR))
+    const markdownRoots = Array.from(
+      element.querySelectorAll(this.config.sitePrivateSelectors.assistantMarkdown),
+    )
     return markdownRoots.find((node) => !this.isThoughtElement(node)) || markdownRoots[0] || null
   }
 
   private extractYuanbaoExportMessages(collector?: ExportAssetCollector): ExportMessage[] {
     const root =
-      (document.querySelector(RESPONSE_CONTAINER_SELECTOR) as ParentNode | null) ||
+      (document.querySelector(this.config.selectors.responseContainer) as ParentNode | null) ||
       this.getScrollContainer() ||
       document.body
     const blocks = this.collectTopLevelBlocks(
-      Array.from(root.querySelectorAll(`${USER_MESSAGE_SELECTOR}, ${ASSISTANT_MESSAGE_SELECTOR}`)),
+      Array.from(root.querySelectorAll(this.config.selectors.chatContent.join(", "))),
     )
       .filter((element) => !this.shouldSkipExportElement(element))
       .sort((left, right) => this.compareDomOrder(left, right))
 
     return blocks
       .map((element): ExportMessage => {
-        const role = element.matches(USER_MESSAGE_SELECTOR) ? "user" : "assistant"
+        const role = element.matches(this.config.selectors.userQuery) ? "user" : "assistant"
         const content =
           role === "user"
             ? this.extractUserQueryExportContentWithAssets(element, collector)
@@ -1049,18 +978,13 @@ export class YuanbaoAdapter extends SiteAdapter {
     const includeThoughts = this.shouldIncludeThoughtsInExport()
     const clone = element.cloneNode(true) as HTMLElement
     clone
-      .querySelectorAll(
-        [
-          ASSISTANT_DECORATION_SELECTOR,
-          ASSISTANT_TOOLBAR_SELECTOR,
-          ASSISTANT_GENERATED_IMAGE_CARD_SELECTOR,
-        ].join(", "),
-      )
+      .querySelectorAll(this.config.sitePrivateSelectors.assistantExportDecoration)
       .forEach((node) => node.remove())
-    clone.querySelectorAll("button, [role='button'], svg").forEach((node) => node.remove())
 
     const thoughtBlocks = includeThoughts ? this.extractThoughtBlockquotes(clone) : []
-    clone.querySelectorAll(THOUGHT_CONTAINER_SELECTOR).forEach((node) => node.remove())
+    clone
+      .querySelectorAll(this.config.sitePrivateSelectors.thoughtContainer)
+      .forEach((node) => node.remove())
 
     const bodyRoot = this.findAssistantBodyRoot(clone) || clone
     const markdown = htmlToMarkdown(bodyRoot).trim()
@@ -1087,13 +1011,16 @@ export class YuanbaoAdapter extends SiteAdapter {
       attachments.push(attachment)
     }
 
-    scope.querySelectorAll(USER_ATTACHMENT_IMAGE_SELECTOR).forEach((node) => {
+    scope.querySelectorAll(this.config.sitePrivateSelectors.userAttachmentImage).forEach((node) => {
       if (node instanceof HTMLImageElement) {
         addAttachment(this.extractYuanbaoUserImageAttachment(node))
       }
     })
 
-    this.queryElementsIncludingSelf(scope, USER_ATTACHMENT_FILE_SELECTOR).forEach((card) => {
+    this.queryElementsIncludingSelf(
+      scope,
+      this.config.sitePrivateSelectors.userAttachmentFile,
+    ).forEach((card) => {
       addAttachment(this.extractYuanbaoUserFileAttachment(card))
     })
 
@@ -1120,7 +1047,7 @@ export class YuanbaoAdapter extends SiteAdapter {
   }
 
   private extractYuanbaoUserFileAttachment(card: Element): YuanbaoUserAttachment | null {
-    if (card.closest(".hyc-component-multi-modal__image, .hyc-content-img")) {
+    if (card.closest(this.config.sitePrivateSelectors.userImageContainer)) {
       return null
     }
 
@@ -1167,25 +1094,26 @@ export class YuanbaoAdapter extends SiteAdapter {
     const images: YuanbaoAssistantImage[] = []
     const seen = new Set<string>()
 
-    this.queryElementsIncludingSelf(contentRoot, ASSISTANT_GENERATED_IMAGE_SELECTOR).forEach(
-      (node) => {
-        if (!(node instanceof HTMLImageElement)) return
+    this.queryElementsIncludingSelf(
+      contentRoot,
+      this.config.sitePrivateSelectors.assistantGeneratedImage,
+    ).forEach((node) => {
+      if (!(node instanceof HTMLImageElement)) return
 
-        const source = this.extractYuanbaoImageSource(node)
-        const sourceKey = getExportAttachmentSourceKey(source)
-        if (!source || seen.has(sourceKey)) return
+      const source = this.extractYuanbaoImageSource(node)
+      const sourceKey = getExportAttachmentSourceKey(source)
+      if (!source || seen.has(sourceKey)) return
 
-        seen.add(sourceKey)
-        images.push({
-          source,
-          alt:
-            node.alt?.trim() ||
-            node.getAttribute("aria-label")?.trim() ||
-            `generated image ${images.length + 1}`,
-          extensionHint: this.extractYuanbaoImageExtensionHint(node),
-        })
-      },
-    )
+      seen.add(sourceKey)
+      images.push({
+        source,
+        alt:
+          node.alt?.trim() ||
+          node.getAttribute("aria-label")?.trim() ||
+          `generated image ${images.length + 1}`,
+        extensionHint: this.extractYuanbaoImageExtensionHint(node),
+      })
+    })
 
     return images
   }
@@ -1203,7 +1131,8 @@ export class YuanbaoAdapter extends SiteAdapter {
   }
 
   private extractYuanbaoImageSource(image: HTMLImageElement): string {
-    const cardUrl = image.closest("[data-card-url]")?.getAttribute("data-card-url") || ""
+    const cardUrl =
+      image.closest(this.config.sitePrivateSelectors.assetCard)?.getAttribute("data-card-url") || ""
     const candidates = [
       cardUrl,
       image.currentSrc || "",
@@ -1287,7 +1216,8 @@ export class YuanbaoAdapter extends SiteAdapter {
         image.src || "",
         image.getAttribute("src") || "",
         image.getAttribute("data-src") || "",
-        image.closest("[data-card-url]")?.getAttribute("data-card-url") || "",
+        image.closest(this.config.sitePrivateSelectors.assetCard)?.getAttribute("data-card-url") ||
+          "",
         image.alt || "",
       ]
         .map((value) => extractExportExtensionFromUrl(value) || extractExportExtension(value))
@@ -1296,8 +1226,8 @@ export class YuanbaoAdapter extends SiteAdapter {
   }
 
   private findUserMessageScope(element: Element): Element {
-    if (element.matches(USER_MESSAGE_SELECTOR)) return element
-    return element.closest(USER_MESSAGE_SELECTOR) || element
+    if (element.matches(this.config.selectors.userQuery)) return element
+    return element.closest(this.config.selectors.userQuery) || element
   }
 
   private shouldSkipExportElement(element: Element): boolean {
@@ -1339,9 +1269,7 @@ export class YuanbaoAdapter extends SiteAdapter {
   private extractCleanTextParts(root: Element): string[] {
     const clone = root.cloneNode(true) as HTMLElement
     clone
-      .querySelectorAll(
-        ".gh-user-query-markdown, button, [role='button'], svg, [aria-hidden='true'], style, script",
-      )
+      .querySelectorAll(this.config.sitePrivateSelectors.cleanTextDecoration)
       .forEach((node) => node.remove())
 
     const parts: string[] = []
@@ -1390,35 +1318,38 @@ export class YuanbaoAdapter extends SiteAdapter {
 
     const clone = contentRoot.cloneNode(true) as HTMLElement
     clone
-      .querySelectorAll(`${ASSISTANT_DECORATION_SELECTOR}, ${ASSISTANT_TOOLBAR_SELECTOR}`)
+      .querySelectorAll(this.config.sitePrivateSelectors.assistantPlainTextDecoration)
       .forEach((node) => node.remove())
-    clone.querySelectorAll("button, [role='button'], svg").forEach((node) => node.remove())
     return this.extractTextWithLineBreaks(clone).trim()
   }
 
   private extractHeadingText(heading: Element): string {
     const clone = heading.cloneNode(true) as HTMLElement
-    clone.querySelectorAll("button, [role='button'], svg").forEach((node) => node.remove())
+    clone
+      .querySelectorAll(this.config.sitePrivateSelectors.headingDecoration)
+      .forEach((node) => node.remove())
     return this.extractTextWithLineBreaks(clone).trim()
   }
 
   private findAssistantBodyRoot(element: Element): HTMLElement | null {
     const reasonerBody = this.findFirstAssistantNodeOutsideThoughts(
       element,
-      ASSISTANT_REASONER_BODY_SELECTORS,
+      this.config.sitePrivateSelectors.assistantReasonerBody,
     )
     if (reasonerBody) return reasonerBody
 
     const markdownRoot = this.findAssistantMarkdownRoot(element)
     if (markdownRoot instanceof HTMLElement) return markdownRoot
 
-    const speechText = element.querySelector(".agent-chat__speech-text") as HTMLElement | null
+    const speechText = element.querySelector(
+      this.config.sitePrivateSelectors.assistantSpeechText,
+    ) as HTMLElement | null
     if (speechText && !this.isThoughtElement(speechText)) {
       return speechText
     }
 
     const bubbleContent = element.querySelector(
-      ".agent-chat__bubble__content",
+      this.config.sitePrivateSelectors.bubbleContent,
     ) as HTMLElement | null
     if (bubbleContent && !this.isThoughtElement(bubbleContent)) {
       return bubbleContent
@@ -1436,17 +1367,17 @@ export class YuanbaoAdapter extends SiteAdapter {
   }
 
   private extractThoughtBlockquotes(element: Element): string[] {
-    const nodes = Array.from(element.querySelectorAll(THOUGHT_MARKDOWN_SELECTOR)).filter(
-      (node) => !node.parentElement?.closest(THOUGHT_MARKDOWN_SELECTOR),
+    const nodes = Array.from(
+      element.querySelectorAll(this.config.sitePrivateSelectors.thoughtMarkdown),
+    ).filter(
+      (node) => !node.parentElement?.closest(this.config.sitePrivateSelectors.thoughtMarkdown),
     )
     const blocks: string[] = []
 
     for (const node of nodes) {
       const clone = node.cloneNode(true) as HTMLElement
       clone
-        .querySelectorAll(
-          `${ASSISTANT_TOOLBAR_SELECTOR}, button, [role='button'], svg, [aria-hidden='true']`,
-        )
+        .querySelectorAll(this.config.sitePrivateSelectors.thoughtDecoration)
         .forEach((child) => child.remove())
 
       const markdown = (htmlToMarkdown(clone) || this.extractTextWithLineBreaks(clone)).trim()
@@ -1483,19 +1414,13 @@ export class YuanbaoAdapter extends SiteAdapter {
   }
 
   private isThoughtElement(element: Element): boolean {
-    return element.closest(THOUGHT_CONTAINER_SELECTOR) !== null
+    return element.closest(this.config.sitePrivateSelectors.thoughtContainer) !== null
   }
 
   private findConversationRowById(id: string): HTMLElement | null {
-    const direct = document.querySelector(
-      `${CONVERSATION_ITEM_SELECTOR}[dt-cid="${id}"]`,
-    ) as HTMLElement | null
-    if (direct) return direct
-
-    const items = Array.from(document.querySelectorAll(CONVERSATION_ITEM_SELECTOR))
+    const items = this.getConversationElements()
     for (const item of items) {
-      const info = this.extractConversationInfo(item, this.getCurrentCid() || undefined)
-      if (info?.id === id) {
+      if (this.extractConversationId(item) === id) {
         return item as HTMLElement
       }
     }
@@ -1552,7 +1477,7 @@ export class YuanbaoAdapter extends SiteAdapter {
   }
 
   private revealConversationActions(row: HTMLElement): void {
-    const title = row.querySelector(CONVERSATION_TITLE_SELECTOR) as HTMLElement | null
+    const title = this.findConversationTitleElement(row)
     const targets = [row, title].filter(
       (element): element is HTMLElement => element instanceof HTMLElement,
     )
@@ -1598,7 +1523,9 @@ export class YuanbaoAdapter extends SiteAdapter {
     row: HTMLElement,
     preferredTrigger?: HTMLElement | null,
   ): HTMLElement[] {
-    const candidates = Array.from(row.querySelectorAll(CONVERSATION_MENU_TRIGGER_SELECTOR))
+    const candidates = Array.from(
+      row.querySelectorAll(this.config.sitePrivateSelectors.conversationMenuTrigger),
+    )
     const scoredCandidates: Array<{ element: HTMLElement; score: number }> = []
     const seen = new Set<HTMLElement>()
 
@@ -1623,8 +1550,13 @@ export class YuanbaoAdapter extends SiteAdapter {
   }
 
   private getConversationActionScore(candidate: HTMLElement): number {
-    if (candidate.closest(CONVERSATION_TITLE_SELECTOR)) return Number.NEGATIVE_INFINITY
-    if (candidate.closest(".t-checkbox, [role='checkbox']")) return Number.NEGATIVE_INFINITY
+    const titleSelector = this.config.conversation.titleSelector
+    if (titleSelector && candidate.closest(titleSelector)) {
+      return Number.NEGATIVE_INFINITY
+    }
+    if (candidate.closest(this.config.sitePrivateSelectors.conversationActionExclusion)) {
+      return Number.NEGATIVE_INFINITY
+    }
     if (candidate.matches("input, label")) return Number.NEGATIVE_INFINITY
 
     const signal = this.getConversationActionSignal(candidate)
@@ -1636,7 +1568,9 @@ export class YuanbaoAdapter extends SiteAdapter {
     if (/(delete|删除)/i.test(signal)) score += 45
     if (/(action|operate|dropdown|popup)/i.test(signal)) score += 15
     if (candidate.matches("button, [role='button']")) score += 10
-    if (candidate.querySelector(".iconfont-yb, .yb-icon, svg")) score += 5
+    if (candidate.querySelector(this.config.sitePrivateSelectors.conversationActionIcon)) {
+      score += 5
+    }
     if (style.pointerEvents !== "none") score += 5
     if (this.isVisibleElement(candidate)) score += 30
 
@@ -1707,7 +1641,9 @@ export class YuanbaoAdapter extends SiteAdapter {
       }
     }
 
-    const menus = Array.from(document.querySelectorAll(DROPDOWN_MENU_SELECTOR)).filter(
+    const menus = Array.from(
+      document.querySelectorAll(this.config.sitePrivateSelectors.dropdownMenu),
+    ).filter(
       (menu): menu is HTMLElement =>
         menu instanceof HTMLElement &&
         this.isVisibleElement(menu) &&
@@ -1721,8 +1657,8 @@ export class YuanbaoAdapter extends SiteAdapter {
   }
 
   private isDropdownMenuContainer(element: HTMLElement): boolean {
-    if (element.matches(DROPDOWN_ITEM_SELECTOR)) return true
-    return !!element.querySelector(DROPDOWN_ITEM_SELECTOR)
+    if (element.matches(this.config.sitePrivateSelectors.dropdownItem)) return true
+    return !!element.querySelector(this.config.sitePrivateSelectors.dropdownItem)
   }
 
   private async waitForDeleteMenuItem(
@@ -1732,7 +1668,9 @@ export class YuanbaoAdapter extends SiteAdapter {
     const start = Date.now()
 
     while (Date.now() - start < timeout) {
-      const items = Array.from(menu.querySelectorAll(DROPDOWN_ITEM_SELECTOR)).filter(
+      const items = Array.from(
+        menu.querySelectorAll(this.config.sitePrivateSelectors.dropdownItem),
+      ).filter(
         (item): item is HTMLElement => item instanceof HTMLElement && this.isVisibleElement(item),
       )
 
@@ -1764,7 +1702,7 @@ export class YuanbaoAdapter extends SiteAdapter {
 
   private findVisibleDialog(): HTMLElement | null {
     return (
-      Array.from(document.querySelectorAll(DIALOG_SELECTOR)).find(
+      Array.from(document.querySelectorAll(this.config.sitePrivateSelectors.dialog)).find(
         (element): element is HTMLElement =>
           element instanceof HTMLElement && this.isVisibleElement(element),
       ) || null
@@ -1778,7 +1716,9 @@ export class YuanbaoAdapter extends SiteAdapter {
     const start = Date.now()
 
     while (Date.now() - start < timeout) {
-      const buttons = Array.from(dialog.querySelectorAll(DIALOG_BUTTON_SELECTOR)).filter(
+      const buttons = Array.from(
+        dialog.querySelectorAll(this.config.sitePrivateSelectors.dialogButton),
+      ).filter(
         (button): button is HTMLElement =>
           button instanceof HTMLElement && this.isVisibleElement(button),
       )
@@ -1801,9 +1741,9 @@ export class YuanbaoAdapter extends SiteAdapter {
     const start = Date.now()
 
     while (Date.now() - start < timeout) {
-      const dialog = Array.from(document.querySelectorAll(DIALOG_SELECTOR)).find(
-        (element) => element instanceof HTMLElement && this.isVisibleElement(element),
-      )
+      const dialog = Array.from(
+        document.querySelectorAll(this.config.sitePrivateSelectors.dialog),
+      ).find((element) => element instanceof HTMLElement && this.isVisibleElement(element))
       if (!dialog) return true
 
       await this.sleep(80)
@@ -1858,11 +1798,13 @@ export class YuanbaoAdapter extends SiteAdapter {
   }
 
   private findStopButton(): HTMLElement | null {
-    const candidates = Array.from(document.querySelectorAll(STOP_BUTTON_SELECTOR))
-    for (const candidate of candidates) {
-      const button = candidate as HTMLElement
-      if (!this.isVisibleElement(button)) continue
-      if (this.isStopLikeButton(button)) return button
+    for (const selector of this.config.generating.existsSelectors) {
+      const candidates = Array.from(document.querySelectorAll(selector))
+      for (const candidate of candidates) {
+        const button = candidate as HTMLElement
+        if (!this.isVisibleElement(button)) continue
+        if (this.isStopLikeButton(button)) return button
+      }
     }
     return null
   }
@@ -1879,8 +1821,8 @@ export class YuanbaoAdapter extends SiteAdapter {
 
   private isStopLikeButton(button: HTMLElement | null): boolean {
     if (!(button instanceof HTMLElement)) return false
-    if (button.querySelector("span.icon-send, .icon-send")) return false
-    if (button.querySelector("rect")) return true
+    if (button.querySelector(this.config.sitePrivateSelectors.sendIcon)) return false
+    if (button.querySelector(this.config.sitePrivateSelectors.stopIcon)) return true
 
     const text = button.innerText?.trim() || button.textContent?.trim() || ""
     return /停止|stop/i.test(text)
