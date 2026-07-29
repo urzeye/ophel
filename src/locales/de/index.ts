@@ -21,6 +21,96 @@ export const de = {
   elementPickerIframeUnsupported:
     "Elemente in eingebetteten Frames (iframes) können nicht ausgewählt werden. Wähle ein Element außerhalb des Frames.",
 
+  // Assistent für Website-Adapter
+  siteAdapterWizardLauncher: "Adapter für diese Website erstellen",
+  siteAdapterWizardResume: "Adapter-Einrichtung fortsetzen",
+  siteAdapterWizardTitle: "Website-Adapter einrichten",
+  siteAdapterWizardSubtitle: "Seitenelemente auswählen und die Gliederung live prüfen.",
+  siteAdapterWizardProgress: "Schritt {current} von {total}",
+  siteAdapterWizardProgressLabel: "Fortschritt der Adapter-Einrichtung",
+  siteAdapterWizardOptional: "Optional",
+  siteAdapterWizardPick: "Auf der Seite auswählen",
+  siteAdapterWizardRepick: "Erneut auswählen",
+  siteAdapterWizardSelectorLabel: "Elementselektor",
+  siteAdapterWizardSelectorGenerated: "Automatisch erzeugt",
+  siteAdapterWizardSelectorManual: "Manuell bearbeitet",
+  siteAdapterWizardSelectorPlaceholder: "CSS-Selektor eingeben",
+  siteAdapterWizardPickFirst: "Wähle zuerst ein Element auf der Seite aus",
+  siteAdapterWizardPickerBusy: "Eine andere Elementauswahl ist bereits aktiv.",
+  siteAdapterWizardIssueMissing: "Wähle ein Element aus oder gib seinen Selektor ein.",
+  siteAdapterWizardIssueDisconnected:
+    "Das ausgewählte Element ist nicht mehr auf der Seite. Wähle es erneut aus.",
+  siteAdapterWizardIssueInvalid: "Dieser Selektor hat eine ungültige Syntax.",
+  siteAdapterWizardIssueTooLong: "Dieser Selektor ist für ein SitePack zu lang.",
+  siteAdapterWizardIssueNoMatch: "Dieser Selektor trifft derzeit auf kein Element zu.",
+  siteAdapterWizardIssueTargetMismatch:
+    "Dieser Selektor enthält das ausgewählte Element nicht mehr.",
+  siteAdapterWizardIssueNotUnique: "Dieses Steuerelement darf nur auf ein Element zutreffen.",
+  siteAdapterWizardIssueUnsupportedInput:
+    "Wähle ein Textfeld oder einen bearbeitbaren Eingabebereich.",
+  siteAdapterWizardIssueContainerMissing: "Wähle zuerst einen gültigen Gesprächscontainer.",
+  siteAdapterWizardIssueOutsideContainer:
+    "Alle passenden Nachrichten müssen im ausgewählten Gesprächscontainer liegen.",
+  siteAdapterWizardGenerateDisconnected:
+    "Das Element änderte sich, bevor ein Selektor erstellt werden konnte.",
+  siteAdapterWizardGenerateOutsideRoot:
+    "Dieses Element ist vom aktuellen Seitenstamm nicht erreichbar.",
+  siteAdapterWizardGenerateManual:
+    "Es konnte kein stabiler Selektor erzeugt werden. Gib ihn manuell ein oder wähle ein eindeutigeres Element.",
+  siteAdapterWizardStepReady: "Dieser Schritt ist bereit.",
+  siteAdapterWizardMatchCount: "{count} Treffer",
+  siteAdapterWizardUnique: "Eindeutig",
+  siteAdapterWizardShared: "Mehrfach",
+  siteAdapterWizardContained: "Im Container",
+  siteAdapterWizardStepTextareaTitle: "Nachrichteneingabe",
+  siteAdapterWizardStepTextareaDesc: "Wähle das Feld, in das du eine Nachricht eingibst.",
+  siteAdapterWizardStepSubmitTitle: "Senden-Schaltfläche",
+  siteAdapterWizardStepSubmitDesc: "Wähle die Schaltfläche, die die aktuelle Nachricht sendet.",
+  siteAdapterWizardStepContainerTitle: "Gesprächscontainer",
+  siteAdapterWizardStepContainerDesc:
+    "Wähle den Bereich mit den Nachrichten der aktuellen Unterhaltung.",
+  siteAdapterWizardStepUserTitle: "Benutzernachricht",
+  siteAdapterWizardStepUserDesc:
+    "Wähle eine eigene Nachricht. Ein mehrfach passender Selektor kann alle Benutzernachrichten erfassen.",
+  siteAdapterWizardStepAssistantTitle: "KI-Antwort",
+  siteAdapterWizardStepAssistantDesc:
+    "Wähle eine KI-Antwort. Ein mehrfach passender Selektor kann alle KI-Antworten erfassen.",
+  siteAdapterWizardStepConversationTitle: "Eintrag in der Gesprächsliste",
+  siteAdapterWizardStepConversationDesc:
+    "Optional: Wähle einen Eintrag im Verlauf oder in der Seitenleiste.",
+  siteAdapterWizardStepNewChatTitle: "Schaltfläche für neuen Chat",
+  siteAdapterWizardStepNewChatDesc: "Optional: Wähle das Steuerelement für eine neue Unterhaltung.",
+  siteAdapterWizardPreviewEyebrow: "Live-Vorschau",
+  siteAdapterWizardPreviewTitle: "Gesprächsgliederung",
+  siteAdapterWizardPreviewReady: "Bereit",
+  siteAdapterWizardPreviewEmpty:
+    "Wähle gültige Benutzer- und KI-Nachrichten, um hier die Gliederung zu sehen.",
+  siteAdapterWizardPreviewNoText: "Dieses Element enthält keinen lesbaren Text",
+  siteAdapterWizardUser: "Benutzer",
+  siteAdapterWizardAssistant: "KI",
+  siteAdapterWizardCapabilitiesTitle: "Verfügbare Funktionen",
+  siteAdapterWizardCapabilitiesEmpty:
+    "Funktionen erscheinen, sobald die Pflichtauswahl gültig ist.",
+  siteAdapterWizardCapabilityPrompt: "Prompt-Einfügung",
+  siteAdapterWizardCapabilityOutline: "Gesprächsgliederung",
+  siteAdapterWizardCapabilityUserQueries: "Benutzerfragen in der Gliederung",
+  siteAdapterWizardCapabilityExport: "Basisexport",
+  siteAdapterWizardCapabilityHistory: "Leseverlauf",
+  siteAdapterWizardCapabilityNewChat: "Neue Unterhaltung",
+  siteAdapterWizardConversationCaptured:
+    "Gesprächseintrag erfasst; Linkregeln werden beim Speichern ergänzt.",
+  siteAdapterWizardCompleteTitle: "Der Adapterentwurf ist bereit",
+  siteAdapterWizardCompleteDesc:
+    "Die erforderlichen Seitenelemente sind gültig und die Gliederung kann angezeigt werden.",
+  siteAdapterWizardSaveLater:
+    "Speichern, Installieren und Exportieren folgen in der nächsten Stufe.",
+  siteAdapterWizardStartOver: "Neu beginnen",
+  siteAdapterWizardDone: "Fertig",
+  siteAdapterWizardBack: "Zurück",
+  siteAdapterWizardNext: "Weiter",
+  siteAdapterWizardSkip: "Überspringen",
+  siteAdapterWizardFinish: "Einrichtung abschließen",
+
   // ======== Options Page Navigation ========
   navGeneral: "Allgemein",
   navSiteSettings: "Websites",

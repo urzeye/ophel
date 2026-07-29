@@ -20,6 +20,93 @@ export const en = {
   elementPickerIframeUnsupported:
     "Elements inside embedded frames (iframes) cannot be selected. Choose an element outside the frame.",
 
+  // Site adapter wizard
+  siteAdapterWizardLauncher: "Create an adapter for this site",
+  siteAdapterWizardResume: "Resume adapter setup",
+  siteAdapterWizardTitle: "Site adapter setup",
+  siteAdapterWizardSubtitle: "Select page elements and check the live outline.",
+  siteAdapterWizardProgress: "Step {current} of {total}",
+  siteAdapterWizardProgressLabel: "Adapter setup progress",
+  siteAdapterWizardOptional: "Optional",
+  siteAdapterWizardPick: "Select on page",
+  siteAdapterWizardRepick: "Select again",
+  siteAdapterWizardSelectorLabel: "Element selector",
+  siteAdapterWizardSelectorGenerated: "Generated automatically",
+  siteAdapterWizardSelectorManual: "Edited manually",
+  siteAdapterWizardSelectorPlaceholder: "Enter a CSS selector",
+  siteAdapterWizardPickFirst: "Select an element on the page first",
+  siteAdapterWizardPickerBusy: "Another element selection is already active.",
+  siteAdapterWizardIssueMissing: "Select an element or enter its selector.",
+  siteAdapterWizardIssueDisconnected:
+    "The selected element is no longer on the page. Select it again.",
+  siteAdapterWizardIssueInvalid: "This selector has invalid syntax.",
+  siteAdapterWizardIssueTooLong: "This selector is too long for a SitePack.",
+  siteAdapterWizardIssueNoMatch: "This selector does not match any current element.",
+  siteAdapterWizardIssueTargetMismatch: "This selector no longer includes the selected element.",
+  siteAdapterWizardIssueNotUnique: "This control must match exactly one element.",
+  siteAdapterWizardIssueUnsupportedInput: "Select a text box or an editable input area.",
+  siteAdapterWizardIssueContainerMissing: "Select a valid conversation container first.",
+  siteAdapterWizardIssueOutsideContainer:
+    "Every matching message must be inside the selected conversation container.",
+  siteAdapterWizardGenerateDisconnected: "The element changed before a selector could be created.",
+  siteAdapterWizardGenerateOutsideRoot:
+    "This element cannot be reached from the current page root.",
+  siteAdapterWizardGenerateManual:
+    "A stable selector could not be generated. Enter one manually or select a more specific element.",
+  siteAdapterWizardStepReady: "This step is ready.",
+  siteAdapterWizardMatchCount: "{count} matches",
+  siteAdapterWizardUnique: "Unique",
+  siteAdapterWizardShared: "Repeated",
+  siteAdapterWizardContained: "Inside container",
+  siteAdapterWizardStepTextareaTitle: "Message input",
+  siteAdapterWizardStepTextareaDesc: "Select the box where you type a message.",
+  siteAdapterWizardStepSubmitTitle: "Send button",
+  siteAdapterWizardStepSubmitDesc: "Select the button that sends the current message.",
+  siteAdapterWizardStepContainerTitle: "Conversation container",
+  siteAdapterWizardStepContainerDesc:
+    "Select the area that contains the current conversation messages.",
+  siteAdapterWizardStepUserTitle: "User message",
+  siteAdapterWizardStepUserDesc:
+    "Select one of your messages. A repeated selector may cover all user messages.",
+  siteAdapterWizardStepAssistantTitle: "AI response",
+  siteAdapterWizardStepAssistantDesc:
+    "Select one AI response. A repeated selector may cover all AI responses.",
+  siteAdapterWizardStepConversationTitle: "Conversation list item",
+  siteAdapterWizardStepConversationDesc:
+    "Optionally select one item in the conversation history or sidebar.",
+  siteAdapterWizardStepNewChatTitle: "New chat button",
+  siteAdapterWizardStepNewChatDesc: "Optionally select the control that starts a new conversation.",
+  siteAdapterWizardPreviewEyebrow: "Live preview",
+  siteAdapterWizardPreviewTitle: "Conversation outline",
+  siteAdapterWizardPreviewReady: "Ready",
+  siteAdapterWizardPreviewEmpty:
+    "Select valid user and AI message elements to preview the outline here.",
+  siteAdapterWizardPreviewNoText: "No readable text in this element",
+  siteAdapterWizardUser: "User",
+  siteAdapterWizardAssistant: "AI",
+  siteAdapterWizardCapabilitiesTitle: "Available capabilities",
+  siteAdapterWizardCapabilitiesEmpty:
+    "Capabilities appear as the required selections become valid.",
+  siteAdapterWizardCapabilityPrompt: "Prompt insertion",
+  siteAdapterWizardCapabilityOutline: "Conversation outline",
+  siteAdapterWizardCapabilityUserQueries: "User questions in outline",
+  siteAdapterWizardCapabilityExport: "Basic export",
+  siteAdapterWizardCapabilityHistory: "Reading history",
+  siteAdapterWizardCapabilityNewChat: "New conversation",
+  siteAdapterWizardConversationCaptured:
+    "Conversation item captured; link rules will be completed when saving.",
+  siteAdapterWizardCompleteTitle: "The adapter draft is ready",
+  siteAdapterWizardCompleteDesc:
+    "The required page elements pass validation and the outline preview is available.",
+  siteAdapterWizardSaveLater:
+    "Saving, installing, and exporting this draft will be added in the next stage.",
+  siteAdapterWizardStartOver: "Start over",
+  siteAdapterWizardDone: "Done",
+  siteAdapterWizardBack: "Back",
+  siteAdapterWizardNext: "Next",
+  siteAdapterWizardSkip: "Skip",
+  siteAdapterWizardFinish: "Finish",
+
   // ======== Options Page Navigation ========
   navGeneral: "General",
   navSiteSettings: "Site Config",

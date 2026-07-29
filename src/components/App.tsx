@@ -63,6 +63,7 @@ import { QuickButtons } from "./QuickButtons"
 import { SelectedPromptBar } from "./SelectedPromptBar"
 import { SegmentedExportDialog } from "./SegmentedExportDialog"
 import { SettingsModal } from "./SettingsModal"
+import { SiteAdapterWizard } from "./SiteAdapterWizard"
 import { GlobalSearchOverlay } from "./global-search/GlobalSearchOverlay"
 import { GlobalSearchResultItemView } from "./global-search/GlobalSearchResultItemView"
 import {
@@ -3144,6 +3145,7 @@ export const App = () => {
     return (
       <div className="gh-root">
         <ElementPickerOverlay />
+        <SiteAdapterWizard />
       </div>
     )
   }

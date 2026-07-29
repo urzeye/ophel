@@ -21,6 +21,93 @@ export const es = {
   elementPickerIframeUnsupported:
     "No se pueden seleccionar elementos dentro de marcos incrustados (iframe). Elige un elemento fuera del marco.",
 
+  // Asistente de adaptador del sitio
+  siteAdapterWizardLauncher: "Crear un adaptador para este sitio",
+  siteAdapterWizardResume: "Continuar la configuración",
+  siteAdapterWizardTitle: "Configuración del adaptador",
+  siteAdapterWizardSubtitle: "Selecciona elementos y comprueba el esquema en tiempo real.",
+  siteAdapterWizardProgress: "Paso {current} de {total}",
+  siteAdapterWizardProgressLabel: "Progreso de configuración del adaptador",
+  siteAdapterWizardOptional: "Opcional",
+  siteAdapterWizardPick: "Seleccionar en la página",
+  siteAdapterWizardRepick: "Volver a seleccionar",
+  siteAdapterWizardSelectorLabel: "Selector del elemento",
+  siteAdapterWizardSelectorGenerated: "Generado automáticamente",
+  siteAdapterWizardSelectorManual: "Editado manualmente",
+  siteAdapterWizardSelectorPlaceholder: "Introduce un selector CSS",
+  siteAdapterWizardPickFirst: "Primero selecciona un elemento en la página",
+  siteAdapterWizardPickerBusy: "Ya hay otra selección de elemento activa.",
+  siteAdapterWizardIssueMissing: "Selecciona un elemento o introduce su selector.",
+  siteAdapterWizardIssueDisconnected:
+    "El elemento ya no está en la página. Vuelve a seleccionarlo.",
+  siteAdapterWizardIssueInvalid: "La sintaxis de este selector no es válida.",
+  siteAdapterWizardIssueTooLong: "Este selector es demasiado largo para un SitePack.",
+  siteAdapterWizardIssueNoMatch: "Este selector no coincide con ningún elemento actual.",
+  siteAdapterWizardIssueTargetMismatch: "Este selector ya no incluye el elemento seleccionado.",
+  siteAdapterWizardIssueNotUnique: "Este control debe coincidir con un solo elemento.",
+  siteAdapterWizardIssueUnsupportedInput: "Selecciona un cuadro de texto o un área editable.",
+  siteAdapterWizardIssueContainerMissing:
+    "Primero selecciona un contenedor de conversación válido.",
+  siteAdapterWizardIssueOutsideContainer:
+    "Todos los mensajes coincidentes deben estar dentro del contenedor seleccionado.",
+  siteAdapterWizardGenerateDisconnected: "El elemento cambió antes de poder crear el selector.",
+  siteAdapterWizardGenerateOutsideRoot:
+    "No se puede acceder a este elemento desde la raíz de la página.",
+  siteAdapterWizardGenerateManual:
+    "No se pudo generar un selector estable. Introdúcelo manualmente o elige un elemento más específico.",
+  siteAdapterWizardStepReady: "Este paso está listo.",
+  siteAdapterWizardMatchCount: "{count} coincidencias",
+  siteAdapterWizardUnique: "Único",
+  siteAdapterWizardShared: "Repetido",
+  siteAdapterWizardContained: "Dentro del contenedor",
+  siteAdapterWizardStepTextareaTitle: "Entrada de mensajes",
+  siteAdapterWizardStepTextareaDesc: "Selecciona el cuadro donde escribes un mensaje.",
+  siteAdapterWizardStepSubmitTitle: "Botón Enviar",
+  siteAdapterWizardStepSubmitDesc: "Selecciona el botón que envía el mensaje actual.",
+  siteAdapterWizardStepContainerTitle: "Contenedor de conversación",
+  siteAdapterWizardStepContainerDesc: "Selecciona el área que contiene los mensajes actuales.",
+  siteAdapterWizardStepUserTitle: "Mensaje del usuario",
+  siteAdapterWizardStepUserDesc:
+    "Selecciona uno de tus mensajes. Un selector repetido puede cubrir todos los mensajes del usuario.",
+  siteAdapterWizardStepAssistantTitle: "Respuesta de la IA",
+  siteAdapterWizardStepAssistantDesc:
+    "Selecciona una respuesta de la IA. Un selector repetido puede cubrir todas las respuestas.",
+  siteAdapterWizardStepConversationTitle: "Elemento de la lista de conversaciones",
+  siteAdapterWizardStepConversationDesc:
+    "Opcional: selecciona un elemento del historial o de la barra lateral.",
+  siteAdapterWizardStepNewChatTitle: "Botón de nueva conversación",
+  siteAdapterWizardStepNewChatDesc:
+    "Opcional: selecciona el control que inicia una conversación nueva.",
+  siteAdapterWizardPreviewEyebrow: "Vista previa en vivo",
+  siteAdapterWizardPreviewTitle: "Esquema de la conversación",
+  siteAdapterWizardPreviewReady: "Listo",
+  siteAdapterWizardPreviewEmpty:
+    "Selecciona mensajes válidos del usuario y de la IA para ver aquí el esquema.",
+  siteAdapterWizardPreviewNoText: "Este elemento no contiene texto legible",
+  siteAdapterWizardUser: "Usuario",
+  siteAdapterWizardAssistant: "IA",
+  siteAdapterWizardCapabilitiesTitle: "Funciones disponibles",
+  siteAdapterWizardCapabilitiesEmpty:
+    "Las funciones aparecerán al validar las selecciones obligatorias.",
+  siteAdapterWizardCapabilityPrompt: "Inserción de prompts",
+  siteAdapterWizardCapabilityOutline: "Esquema de conversación",
+  siteAdapterWizardCapabilityUserQueries: "Preguntas del usuario en el esquema",
+  siteAdapterWizardCapabilityExport: "Exportación básica",
+  siteAdapterWizardCapabilityHistory: "Historial de lectura",
+  siteAdapterWizardCapabilityNewChat: "Nueva conversación",
+  siteAdapterWizardConversationCaptured:
+    "Elemento de conversación registrado; las reglas de enlace se completarán al guardar.",
+  siteAdapterWizardCompleteTitle: "El borrador del adaptador está listo",
+  siteAdapterWizardCompleteDesc:
+    "Los elementos obligatorios son válidos y el esquema de conversación está disponible.",
+  siteAdapterWizardSaveLater: "Guardar, instalar y exportar se añadirá en la siguiente etapa.",
+  siteAdapterWizardStartOver: "Empezar de nuevo",
+  siteAdapterWizardDone: "Listo",
+  siteAdapterWizardBack: "Atrás",
+  siteAdapterWizardNext: "Siguiente",
+  siteAdapterWizardSkip: "Omitir",
+  siteAdapterWizardFinish: "Finalizar configuración",
+
   // ======== Options Page Navigation ========
   navGeneral: "General",
   navSiteSettings: "Sitios",
