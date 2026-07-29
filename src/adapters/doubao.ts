@@ -30,6 +30,7 @@ import { t } from "~utils/i18n"
 
 import {
   SiteAdapter,
+  type AnchorData,
   type ConversationDeleteTarget,
   type ConversationInfo,
   type ConversationObserverConfig,
@@ -38,57 +39,15 @@ import {
   type ModelSwitcherConfig,
   type OutlineItem,
   type PanelAvoidanceConfig,
-  type AnchorData,
   type SiteDeleteConversationResult,
   type WidthSelectorConfig,
   type ZenModeConfig,
 } from "./base"
+import type { BuiltinSiteConfig } from "./declarative"
+import { DOUBAO_CONFIG, DOUBAO_CONFIG_VERSION, type DoubaoSiteConfig } from "./doubao-config"
 
 /** 匹配 /chat/{id}、/code/chat/{id} 或 /thread/{id}，捕获对话 ID */
 const conversationPathPattern = /^(?:(?:\/code)?\/chat|\/thread)\/([^/?#]+)/
-const SIDEBAR_ROOT_SELECTOR = "#flow_chat_sidebar"
-const SIDEBAR_HISTORY_SELECTOR = `${SIDEBAR_ROOT_SELECTOR} [data-history-container="true"]`
-const CONVERSATION_ROW_SELECTOR = `${SIDEBAR_ROOT_SELECTOR} a[id^="conversation_"][href*="/chat/"]`
-const CONVERSATION_TITLE_SELECTOR = '[class*="overallTitle-"], [class*="title-"]'
-const NEW_CHAT_BUTTON_SELECTOR = `${SIDEBAR_ROOT_SELECTOR} > div:nth-child(2)`
-const VIRTUAL_SCROLL_SELECTOR = '[class*="v_list_scroller"]'
-const VIRTUAL_ROW_SELECTOR = ".v_list_row"
-const VIRTUAL_SCROLL_HOLDER_SELECTOR = '[data-name="scroll_holder"]'
-const DOUBAO_MAIN_SELECTOR = '[data-container-name="main"]'
-const DOUBAO_CONTENT_WIDTH_ROOT_SELECTOR = "#chat-route-layout"
-const DOUBAO_CONTENT_WIDTH_SELECTOR = `${DOUBAO_MAIN_SELECTOR} .max-w-\\(--content-max-width\\)`
-const DOUBAO_CONTENT_WIDTH_VAR_SELECTOR = `${DOUBAO_MAIN_SELECTOR} .max-w-\\[var\\(--content-max-width\\)\\]`
-const DOUBAO_CONTENT_COLUMN_SELECTOR = `${DOUBAO_MAIN_SELECTOR} .flex.h-full.min-h-0.w-full.flex-1.flex-col:has(${VIRTUAL_SCROLL_SELECTOR}):has([class*="input-content-container"])`
-const DOUBAO_NEW_CHAT_SAFE_AREA_SELECTOR = `${DOUBAO_MAIN_SELECTOR} [class*="-mt-[var(--header-height)]"][class*="flex-grow"][class*="items-center"]:has([class*="input-content-container"])`
-const DOUBAO_CANVAS_SCOPE_SELECTOR = "aside:has(.code-canvas)"
-const DOUBAO_CANVAS_SAFE_AREA_SELECTOR = `${DOUBAO_CANVAS_SCOPE_SELECTOR} .code-canvas`
-const SHARE_MESSAGE_LIST_SELECTOR = '[class*="message-list-root-"]'
-const MESSAGE_BLOCK_SELECTOR = '[data-target-id="message-box-target-id"]'
-const USER_QUERY_SELECTOR = "[data-message-id].justify-end"
-const LEGACY_USER_QUERY_TEXT_SELECTOR =
-  ".whitespace-pre-wrap.wrap-anywhere:not(.gh-user-query-markdown)"
-const RENDERED_USER_QUERY_MARKDOWN_SELECTOR = ".md-box-root:not(.gh-user-query-markdown)"
-const USER_QUERY_TEXT_CONTAINER_SELECTORS = [
-  // 旧版豆包用户气泡保留原始输入文本，历史会话依赖这个结构。
-  LEGACY_USER_QUERY_TEXT_SELECTOR,
-  // 新版豆包用户气泡改用 md-box 渲染正文，外层 data-message-id/justify-end 仍稳定。
-  RENDERED_USER_QUERY_MARKDOWN_SELECTOR,
-] as const
-const USER_QUERY_TEXT_CONTAINER_SELECTOR = USER_QUERY_TEXT_CONTAINER_SELECTORS.join(", ")
-const USER_QUERY_TEXT_SELECTOR = USER_QUERY_TEXT_CONTAINER_SELECTORS.map(
-  (selector) => `${USER_QUERY_SELECTOR} ${selector}`,
-).join(", ")
-const ASSISTANT_MESSAGE_SELECTOR = "[data-message-id]:not(.justify-end)"
-const ASSISTANT_MARKDOWN_SELECTORS = [".flow-markdown-body", ".md-box-root"] as const
-const ASSISTANT_MARKDOWN_SELECTOR = ASSISTANT_MARKDOWN_SELECTORS.join(", ")
-const ASSISTANT_CONTENT_SELECTOR = ASSISTANT_MARKDOWN_SELECTORS.map(
-  (selector) => `${ASSISTANT_MESSAGE_SELECTOR} ${selector}`,
-).join(", ")
-const DOUBAO_USER_ATTACHMENT_BLOCK_SELECTOR = '[data-plugin-identifier="block_type:10052"]'
-const DOUBAO_USER_ATTACHMENT_CARD_SELECTOR = '[data-available="true"]'
-const DOUBAO_GENERATED_IMAGE_BLOCK_SELECTOR = '[data-plugin-identifier="block_type:2074"]'
-const DOUBAO_IMAGE_WRAPPER_SELECTOR =
-  '[class*="image-wrapper"], [class*="image-box-grid-item"], [class*="image-box-grid"]'
 const DOUBAO_ATTACHMENT_SOURCE_ATTRS = [
   "href",
   "src",
@@ -155,6 +114,7 @@ interface DoubaoExportMessageSnapshot {
 }
 
 export class DoubaoAdapter extends SiteAdapter {
+  private config: DoubaoSiteConfig = DOUBAO_CONFIG
   private outlineCacheSessionKey = ""
   private outlineCacheTransitionEndAt = 0
   private outlineItemCache = new Map<string, DoubaoOutlineCacheEntry>()
@@ -175,34 +135,40 @@ export class DoubaoAdapter extends SiteAdapter {
     return "豆包"
   }
 
+  getBuiltinConfig(): DoubaoSiteConfig {
+    return DOUBAO_CONFIG
+  }
+
+  getBuiltinConfigVersion(): number {
+    return DOUBAO_CONFIG_VERSION
+  }
+
+  applyMergedConfig(config: BuiltinSiteConfig): void {
+    this.config = config as DoubaoSiteConfig
+  }
+
   getThemeColors(): { primary: string; secondary: string } {
     return { primary: "#315efb", secondary: "#0f6eff" }
   }
 
   getQuickQuoteSupportMode() {
-    return "native" as const
+    return this.config.quickQuote
   }
 
   getNativeQuotePopoverSelectors(): string[] {
-    return [
-      // 根据实际 HTML：data 属性定位工具栏容器
-      '[data-word-selection-toolbar="true"]',
-      // CSS Modules 类名（可能变化，作为后备）
-      ".toolContainer-tlVomx",
-      ".toolItem-C_B5bD",
-    ]
+    return [...this.config.sitePrivateSelectors.nativeQuotePopover]
   }
 
   supportsHostThemeSync(): boolean {
-    return false
+    return this.config.supportsHostThemeSync
   }
 
   getTextareaSelectors(): string[] {
-    return [
-      '[data-slate-editor="true"]',
-      'textarea[data-testid="chat_input_input"]',
-      "textarea.semi-input-textarea",
-    ]
+    return [...this.config.selectors.textarea]
+  }
+
+  getSubmitKeyConfig(): { key: "Enter" | "Ctrl+Enter" } {
+    return { key: this.config.input.submitKey ?? "Enter" }
   }
 
   insertPrompt(content: string): boolean {
@@ -234,7 +200,7 @@ export class DoubaoAdapter extends SiteAdapter {
         // 如果选取依旧没能落入文本节点，某些富文本会拒绝 paste
         // Slate.js 的 placeholder 使用 data-slate-placeholder="true"
         // 它的空状态真正可输入的位置是 data-slate-zero-width="n" 的兄弟或直接在 element 下
-        const slateNode = el.querySelector('[data-slate-node="element"]')
+        const slateNode = el.querySelector(this.config.sitePrivateSelectors.slateElement)
         if (slateNode && selection.rangeCount > 0) {
           const range = document.createRange()
           range.selectNodeContents(slateNode)
@@ -315,7 +281,9 @@ export class DoubaoAdapter extends SiteAdapter {
   }
 
   private extractConversationId(link: HTMLAnchorElement): string | null {
-    const rowId = link.id.match(/^conversation_(.+)$/)?.[1]
+    const { attr = "href", regex } = this.config.conversation.idFrom
+    const source = link.getAttribute(attr) || ""
+    const rowId = new RegExp(regex).exec(source)?.[1]?.trim()
     if (rowId) return rowId
 
     const href = link.getAttribute("href") || ""
@@ -324,8 +292,9 @@ export class DoubaoAdapter extends SiteAdapter {
   }
 
   private extractConversationTitle(link: HTMLAnchorElement): string {
+    const titleSelector = this.config.conversation.titleSelector
     const titleElement =
-      (link.querySelector(CONVERSATION_TITLE_SELECTOR) as HTMLElement | null) ||
+      (titleSelector ? (link.querySelector(titleSelector) as HTMLElement | null) : null) ||
       Array.from(link.querySelectorAll("span")).find((span) => span.textContent?.trim()) ||
       null
 
@@ -333,11 +302,25 @@ export class DoubaoAdapter extends SiteAdapter {
   }
 
   private getConversationRows(root: ParentNode = document): HTMLAnchorElement[] {
-    return Array.from(root.querySelectorAll(CONVERSATION_ROW_SELECTOR)) as HTMLAnchorElement[]
+    return Array.from(
+      root.querySelectorAll(this.config.conversation.itemSelector),
+    ) as HTMLAnchorElement[]
   }
 
   private getHistoryContainer(): HTMLElement | null {
-    return document.querySelector(SIDEBAR_HISTORY_SELECTOR) as HTMLElement | null
+    return document.querySelector(
+      this.config.sitePrivateSelectors.historyContainer,
+    ) as HTMLElement | null
+  }
+
+  private isConversationActive(link: HTMLAnchorElement): boolean {
+    const activeMatch = this.config.conversation.activeMatch
+    return activeMatch ? link.matches(activeMatch) : false
+  }
+
+  private getConversationUrl(id: string): string {
+    const path = this.config.conversation.urlTemplate.replace("{id}", id)
+    return new URL(path, window.location.origin).href
   }
 
   private findScrollableAncestor(start: Element | null): HTMLElement | null {
@@ -367,11 +350,7 @@ export class DoubaoAdapter extends SiteAdapter {
     const rows = this.getConversationRows()
 
     return (
-      rows.find((row) => row.getAttribute("aria-current") === "page") ||
-      rows.find(
-        (row) =>
-          row.className.includes("active-link-") || row.className.includes("e2e-test-active"),
-      ) ||
+      rows.find((row) => this.isConversationActive(row)) ||
       rows.find((row) => this.extractConversationId(row) === currentSessionId) ||
       null
     )
@@ -379,17 +358,18 @@ export class DoubaoAdapter extends SiteAdapter {
 
   private getVirtualScrollContainer(): HTMLElement | null {
     const candidates = Array.from(
-      document.querySelectorAll(VIRTUAL_SCROLL_SELECTOR),
+      document.querySelectorAll(this.config.selectors.responseContainer),
     ) as HTMLElement[]
+    const privateSelectors = this.config.sitePrivateSelectors
 
     return (
       candidates.find((candidate) => {
         if (!candidate.isConnected) return false
 
         const hasVirtualList =
-          candidate.querySelector(VIRTUAL_SCROLL_HOLDER_SELECTOR) ||
-          candidate.querySelector(VIRTUAL_ROW_SELECTOR) ||
-          candidate.querySelector(MESSAGE_BLOCK_SELECTOR)
+          candidate.querySelector(privateSelectors.virtualScrollHolder) ||
+          candidate.querySelector(privateSelectors.virtualRow) ||
+          candidate.querySelector(privateSelectors.messageBlock)
         if (!hasVirtualList) return false
 
         const style = window.getComputedStyle(candidate)
@@ -408,13 +388,15 @@ export class DoubaoAdapter extends SiteAdapter {
   private getSharePageMessageContainer(): HTMLElement | null {
     if (!this.isSharePage()) return null
 
-    const messageList = document.querySelector(SHARE_MESSAGE_LIST_SELECTOR) as HTMLElement | null
+    const messageList = document.querySelector(
+      this.config.sitePrivateSelectors.shareMessageList,
+    ) as HTMLElement | null
     if (messageList) {
       return this.findScrollableAncestor(messageList) || messageList
     }
 
     const firstMessage = document.querySelector(
-      `${USER_QUERY_SELECTOR}, ${ASSISTANT_MESSAGE_SELECTOR}`,
+      `${this.config.selectors.userQuery}, ${this.config.selectors.assistantResponse}`,
     ) as HTMLElement | null
     if (!firstMessage) return null
 
@@ -427,12 +409,13 @@ export class DoubaoAdapter extends SiteAdapter {
 
   private getAssistantContentRoots(root: ParentNode): HTMLElement[] {
     const roots: HTMLElement[] = []
+    const assistantMarkdown = this.config.sitePrivateSelectors.assistantMarkdown
 
-    if (root instanceof HTMLElement && root.matches(ASSISTANT_MARKDOWN_SELECTOR)) {
+    if (root instanceof HTMLElement && root.matches(assistantMarkdown)) {
       roots.push(root)
     }
 
-    Array.from(root.querySelectorAll(ASSISTANT_MARKDOWN_SELECTOR)).forEach((node) => {
+    Array.from(root.querySelectorAll(assistantMarkdown)).forEach((node) => {
       if (node instanceof HTMLElement && !roots.includes(node)) {
         roots.push(node)
       }
@@ -442,11 +425,12 @@ export class DoubaoAdapter extends SiteAdapter {
   }
 
   private getAssistantContentRoot(element: Element): Element {
-    if (element.matches(ASSISTANT_MARKDOWN_SELECTOR)) {
+    const assistantMarkdown = this.config.sitePrivateSelectors.assistantMarkdown
+    if (element.matches(assistantMarkdown)) {
       return element
     }
 
-    return element.querySelector(ASSISTANT_MARKDOWN_SELECTOR) || element
+    return element.querySelector(assistantMarkdown) || element
   }
 
   getConversationTitle(): string | null {
@@ -491,16 +475,13 @@ export class DoubaoAdapter extends SiteAdapter {
       if (!id || id === "new") return
 
       const title = this.extractConversationTitle(link)
-      const isActive =
-        link.getAttribute("aria-current") === "page" ||
-        link.className.includes("active-link-") ||
-        link.className.includes("e2e-test-active")
-      const isPinned = !!link.querySelector('[class*="pin-"]')
+      const isActive = this.isConversationActive(link)
+      const isPinned = !!link.querySelector(this.config.sitePrivateSelectors.pinnedConversation)
 
       conversationMap.set(id, {
         id,
         title,
-        url: `https://www.doubao.com/chat/${id}`,
+        url: this.getConversationUrl(id),
         isActive,
         isPinned,
       })
@@ -510,14 +491,14 @@ export class DoubaoAdapter extends SiteAdapter {
   }
 
   navigateToConversation(id: string, url?: string): boolean {
-    const link = document.querySelector(
-      `#conversation_${id}, ${CONVERSATION_ROW_SELECTOR}[href*="/chat/${id}"]`,
-    ) as HTMLElement | null
-    if (link) {
+    const link = this.getConversationRows().find(
+      (candidate) => this.extractConversationId(candidate) === id,
+    )
+    if (this.config.conversation.navigationStrategy === "click-item" && link) {
       link.click()
       return true
     }
-    window.location.href = url || `https://www.doubao.com/chat/${id}`
+    window.location.href = url || this.getConversationUrl(id)
     return true
   }
 
@@ -526,22 +507,28 @@ export class DoubaoAdapter extends SiteAdapter {
     return this.findScrollableAncestor(historyContainer) || historyContainer
   }
 
-  getZenModeConfig() {
+  private cloneZenModeConfig(config: ZenModeConfig): ZenModeConfig {
+    const { hide, rootClass, styles } = config
     return {
-      hide: ["nav", ".container-qOgFQp", ".container-hzjmF1"],
+      ...(hide ? { hide: [...hide] } : {}),
+      ...(rootClass ? { rootClass: { ...rootClass } } : {}),
+      ...(styles ? { styles: styles.map((style) => ({ ...style })) } : {}),
     }
+  }
+
+  getZenModeConfig(): ZenModeConfig {
+    return this.cloneZenModeConfig(this.config.zenMode)
   }
 
   getCleanModeConfig(): ZenModeConfig | null {
-    return {
-      hide: [".container-qOgFQp", '[aria-label="活动入口"]'],
-    }
+    return this.cloneZenModeConfig(this.config.cleanMode)
   }
 
   getConversationObserverConfig(): ConversationObserverConfig | null {
+    const conversation = this.config.conversation
     return {
-      selector: CONVERSATION_ROW_SELECTOR,
-      shadow: false,
+      selector: conversation.itemSelector,
+      shadow: conversation.shadow ?? false,
       extractInfo: (el: Element): ConversationInfo | null => {
         const link = el as HTMLAnchorElement
         const id = this.extractConversationId(link)
@@ -552,17 +539,15 @@ export class DoubaoAdapter extends SiteAdapter {
         return {
           id,
           title,
-          url: `https://www.doubao.com/chat/${id}`,
-          isActive:
-            link.getAttribute("aria-current") === "page" ||
-            link.className.includes("active-link-") ||
-            link.className.includes("e2e-test-active"),
-          isPinned: !!link.querySelector('[class*="pin-"]'),
+          url: this.getConversationUrl(id),
+          isActive: this.isConversationActive(link),
+          isPinned: !!link.querySelector(this.config.sitePrivateSelectors.pinnedConversation),
         }
       },
       getTitleElement: (el: Element): Element | null => {
+        const titleSelector = conversation.titleSelector
         return (
-          el.querySelector(CONVERSATION_TITLE_SELECTOR) ||
+          (titleSelector ? el.querySelector(titleSelector) : null) ||
           Array.from(el.querySelectorAll("span")).find((span) => span.textContent?.trim()) ||
           null
         )
@@ -616,7 +601,7 @@ export class DoubaoAdapter extends SiteAdapter {
   }
 
   getResponseContainerSelector(): string {
-    return VIRTUAL_SCROLL_SELECTOR
+    return this.config.selectors.responseContainer
   }
 
   usesPeriodicOutlineRefreshFallback(): boolean {
@@ -624,29 +609,23 @@ export class DoubaoAdapter extends SiteAdapter {
   }
 
   getUserQuerySelector(): string | null {
-    return USER_QUERY_SELECTOR
+    return this.config.selectors.userQuery
   }
 
   getChatContentSelectors(): string[] {
-    return [ASSISTANT_CONTENT_SELECTOR, USER_QUERY_SELECTOR]
+    return [...this.config.selectors.chatContent]
   }
 
   private extractAssistantMarkdown(element: Element): string {
     const target = this.getAssistantContentRoot(element).cloneNode(true) as HTMLElement
 
+    const privateSelectors = this.config.sitePrivateSelectors
     target
       .querySelectorAll(
         [
-          "button",
-          "[role='button']",
-          "svg",
-          "[aria-hidden='true']",
-          "picture",
-          "img",
-          DOUBAO_GENERATED_IMAGE_BLOCK_SELECTOR,
-          DOUBAO_IMAGE_WRAPPER_SELECTOR,
-          '[data-foundation-type="receive-message-action-bar"]',
-          '[data-foundation-type="receive-message-suggest-foundation"]',
+          privateSelectors.assistantExportDecoration,
+          privateSelectors.generatedImageBlock,
+          privateSelectors.assistantImageContainers,
         ].join(", "),
       )
       .forEach((node) => node.remove())
@@ -678,7 +657,7 @@ export class DoubaoAdapter extends SiteAdapter {
   }
 
   getLatestReplyText(): string | null {
-    const responses = document.querySelectorAll(ASSISTANT_MESSAGE_SELECTOR)
+    const responses = document.querySelectorAll(this.config.selectors.assistantResponse)
     if (responses.length === 0) return null
 
     const last = responses[responses.length - 1]
@@ -687,17 +666,20 @@ export class DoubaoAdapter extends SiteAdapter {
   }
 
   private getUserMessageTextContainer(element: Element): HTMLElement | null {
-    if (element.matches(USER_QUERY_TEXT_CONTAINER_SELECTOR)) {
+    const userQuerySelector = this.config.selectors.userQuery
+    const textContainerSelector = this.config.sitePrivateSelectors.userQueryTextContainer
+    if (element.matches(textContainerSelector)) {
       return element as HTMLElement
     }
 
-    if (element.matches(USER_QUERY_SELECTOR)) {
-      return element.querySelector(USER_QUERY_TEXT_CONTAINER_SELECTOR) as HTMLElement | null
+    if (element.matches(userQuerySelector)) {
+      return element.querySelector(textContainerSelector) as HTMLElement | null
     }
 
+    const scopedTextSelector = `:is(${userQuerySelector}) :is(${textContainerSelector})`
     return (
-      (element.querySelector(USER_QUERY_TEXT_SELECTOR) as HTMLElement | null) ||
-      (element.querySelector(USER_QUERY_TEXT_CONTAINER_SELECTOR) as HTMLElement | null)
+      (element.querySelector(scopedTextSelector) as HTMLElement | null) ||
+      (element.querySelector(textContainerSelector) as HTMLElement | null)
     )
   }
 
@@ -710,7 +692,7 @@ export class DoubaoAdapter extends SiteAdapter {
     const textContainer = this.getUserMessageTextContainer(element)
     if (!textContainer) return ""
 
-    if (textContainer.matches(RENDERED_USER_QUERY_MARKDOWN_SELECTOR)) {
+    if (textContainer.matches(this.config.sitePrivateSelectors.renderedUserQueryMarkdown)) {
       const clone = textContainer.cloneNode(true) as HTMLElement
       clone
         .querySelectorAll(
@@ -750,9 +732,7 @@ export class DoubaoAdapter extends SiteAdapter {
 
   private extractDoubaoUserAttachments(element: Element): DoubaoUserAttachment[] {
     const cards = Array.from(
-      element.querySelectorAll(
-        `${DOUBAO_USER_ATTACHMENT_BLOCK_SELECTOR} ${DOUBAO_USER_ATTACHMENT_CARD_SELECTOR}`,
-      ),
+      element.querySelectorAll(this.config.sitePrivateSelectors.userAttachmentCard),
     )
 
     const attachments: DoubaoUserAttachment[] = []
@@ -944,20 +924,21 @@ export class DoubaoAdapter extends SiteAdapter {
   }
 
   private countDoubaoGeneratedImageSlots(element: Element): number {
+    const privateSelectors = this.config.sitePrivateSelectors
     const generatedBlocks = Array.from(
-      element.querySelectorAll(DOUBAO_GENERATED_IMAGE_BLOCK_SELECTOR),
+      element.querySelectorAll(privateSelectors.generatedImageBlock),
     )
 
     if (generatedBlocks.length === 0) {
-      const wrappers = element.querySelectorAll('[class*="image-wrapper"]').length
+      const wrappers = element.querySelectorAll(privateSelectors.generatedImageWrapper).length
       if (wrappers > 0) return wrappers
     }
 
     return generatedBlocks.reduce((sum, block) => {
-      const gridItems = block.querySelectorAll('[class*="image-box-grid-item"]').length
+      const gridItems = block.querySelectorAll(privateSelectors.generatedImageGridItem).length
       if (gridItems > 0) return sum + gridItems
 
-      const wrappers = block.querySelectorAll('[class*="image-wrapper"]').length
+      const wrappers = block.querySelectorAll(privateSelectors.generatedImageWrapper).length
       if (wrappers > 0) return sum + wrappers
 
       return sum + block.querySelectorAll("img").length
@@ -1114,12 +1095,13 @@ export class DoubaoAdapter extends SiteAdapter {
    *   2. 内部包含 .truncate 子元素（模型名称的文本容器）
    */
   private findModelSelectorButton(): HTMLElement | null {
-    const selector = 'button[data-slot="dropdown-menu-trigger"][aria-haspopup="menu"]'
-    const buttons = document.querySelectorAll(selector)
+    const buttons = document.querySelectorAll(
+      this.config.modelSwitcher.selectorButtonSelectors.join(", "),
+    )
     for (const btn of buttons) {
       const el = btn as HTMLElement
       if (el.offsetParent !== null) {
-        const truncate = el.querySelector(".truncate")
+        const truncate = el.querySelector(this.config.sitePrivateSelectors.modelName)
         // 模型选择器的 .truncate 里有模型名（如"快速"），而附件上传按钮的 .truncate 为空
         if (truncate && truncate.textContent?.trim()) {
           return el
@@ -1130,11 +1112,14 @@ export class DoubaoAdapter extends SiteAdapter {
   }
 
   getModelSwitcherConfig(_keyword: string): ModelSwitcherConfig | null {
+    const { selectorButtonSelectors, menuItemSelector, subMenuTriggers, ...config } =
+      this.config.modelSwitcher
     return {
+      ...config,
       targetModelKeyword: _keyword,
-      selectorButtonSelectors: ['button[data-slot="dropdown-menu-trigger"][aria-haspopup="menu"]'],
-      menuItemSelector: 'div[role="menuitem"][data-slot="dropdown-menu-item"]',
-      menuRenderDelay: 100,
+      selectorButtonSelectors: [...selectorButtonSelectors],
+      menuItemSelector,
+      ...(subMenuTriggers ? { subMenuTriggers: [...subMenuTriggers] } : {}),
     }
   }
 
@@ -1259,7 +1244,7 @@ export class DoubaoAdapter extends SiteAdapter {
   }
 
   private findConversationRow(id: string): HTMLElement | null {
-    return document.querySelector(`#conversation_${id}`) as HTMLElement | null
+    return this.getConversationRows().find((row) => this.extractConversationId(row) === id) || null
   }
 
   private getConversationMenuButtons(row: HTMLElement): HTMLElement[] {
@@ -1279,17 +1264,20 @@ export class DoubaoAdapter extends SiteAdapter {
       }
     }
 
-    const actionRoot = row.querySelector('[class*="chat-item-menu-wrapper-"]') as HTMLElement | null
+    const privateSelectors = this.config.sitePrivateSelectors
+    const actionRoot = row.querySelector(
+      privateSelectors.conversationMenuWrapper,
+    ) as HTMLElement | null
     if (!actionRoot) return []
 
     const trigger = actionRoot.querySelector(
-      'button[data-slot="dropdown-menu-trigger"][aria-haspopup="menu"]',
+      privateSelectors.conversationMenuTrigger,
     ) as HTMLElement | null
     const innerButton = actionRoot.querySelector(
-      'button[data-dbx-name="button"]',
+      privateSelectors.conversationMenuInnerButton,
     ) as HTMLElement | null
     const genericTrigger = actionRoot.querySelector(
-      'button[aria-haspopup="menu"]',
+      privateSelectors.conversationMenuGenericTrigger,
     ) as HTMLElement | null
 
     push(trigger)
@@ -1329,9 +1317,7 @@ export class DoubaoAdapter extends SiteAdapter {
 
     while (Date.now() - start < timeout) {
       const items = Array.from(
-        document.querySelectorAll(
-          '[data-radix-popper-content-wrapper] [role="menuitem"][data-slot="dropdown-menu-item"]',
-        ),
+        document.querySelectorAll(this.config.sitePrivateSelectors.deleteMenuItem),
       ) as HTMLElement[]
 
       for (const item of items) {
@@ -1339,7 +1325,7 @@ export class DoubaoAdapter extends SiteAdapter {
 
         // Primary: the delete item is styled in danger/red color (text-dbx-function-danger)
         // This is the most reliable signal after data-testid attributes were removed from the new DOM
-        if (item.querySelector(".text-dbx-function-danger")) {
+        if (item.querySelector(this.config.sitePrivateSelectors.deleteDangerIndicator)) {
           return item
         }
 
@@ -1369,7 +1355,7 @@ export class DoubaoAdapter extends SiteAdapter {
         // Primary: the confirm button has bg-dbx-function-danger (danger/red background)
         // This is reliable regardless of locale (works for Simplified, Traditional, English)
         const dangerBtn = dialog.querySelector(
-          'button[class*="bg-dbx-function-danger"]',
+          this.config.sitePrivateSelectors.deleteConfirmButton,
         ) as HTMLElement | null
         if (this.isVisible(dangerBtn)) {
           return dangerBtn
@@ -1399,14 +1385,14 @@ export class DoubaoAdapter extends SiteAdapter {
   private findVisibleDeleteDialog(): HTMLElement | null {
     // Primary: match by the new Radix dialog slot attribute and open state
     const newDialogs = Array.from(
-      document.querySelectorAll('[role="dialog"][data-state="open"][data-slot="dialog-content"]'),
+      document.querySelectorAll(this.config.sitePrivateSelectors.openDeleteDialog),
     ) as HTMLElement[]
     const newDialog = newDialogs.find((dialog) => this.isVisible(dialog))
     if (newDialog) return newDialog
 
     // Fallback: legacy structure — match by text content for Simplified, Traditional or English
     const dialogs = Array.from(
-      document.querySelectorAll('[role="dialog"][aria-modal="true"], [role="dialog"]'),
+      document.querySelectorAll(this.config.sitePrivateSelectors.deleteDialog),
     ) as HTMLElement[]
     return (
       dialogs.find((dialog) => {
@@ -1450,7 +1436,9 @@ export class DoubaoAdapter extends SiteAdapter {
     row.scrollIntoView({ block: "nearest", inline: "nearest" })
     button.scrollIntoView({ block: "nearest", inline: "nearest" })
 
-    const hoverTarget = button.closest('[class*="chat-item-menu-wrapper-"]') as HTMLElement | null
+    const hoverTarget = button.closest(
+      this.config.sitePrivateSelectors.conversationMenuWrapper,
+    ) as HTMLElement | null
     hoverTarget?.dispatchEvent(new MouseEvent("mouseenter", { bubbles: true }))
     hoverTarget?.dispatchEvent(new MouseEvent("mousemove", { bubbles: true }))
     button.dispatchEvent(new MouseEvent("mouseenter", { bubbles: true }))
@@ -1493,9 +1481,7 @@ export class DoubaoAdapter extends SiteAdapter {
     const start = Date.now()
     while (Date.now() - start < timeout) {
       const menus = Array.from(
-        document.querySelectorAll(
-          '[data-radix-popper-content-wrapper] [role="menu"][data-state="open"], [data-radix-popper-content-wrapper] [role="menu"]',
-        ),
+        document.querySelectorAll(this.config.sitePrivateSelectors.openConversationMenu),
       ) as HTMLElement[]
 
       if (menus.some((menu) => this.isVisible(menu))) {
@@ -1559,7 +1545,9 @@ export class DoubaoAdapter extends SiteAdapter {
   }
 
   private getVirtualRow(element: Element | null): HTMLElement | null {
-    return (element?.closest(VIRTUAL_ROW_SELECTOR) as HTMLElement | null) || null
+    return (
+      (element?.closest(this.config.sitePrivateSelectors.virtualRow) as HTMLElement | null) || null
+    )
   }
 
   private getVirtualRowIndex(row: HTMLElement | null, fallbackIndex: number): number {
@@ -1589,9 +1577,10 @@ export class DoubaoAdapter extends SiteAdapter {
     const row = this.getVirtualRow(unit)
     const observedRow = row?.getAttribute("data-observe-row") || ""
     const rowMessageId = observedRow.match(/^block_(.+)$/)?.[1] || null
-    const messageElement = unit.matches("[data-message-id]")
+    const messageIdSelector = this.config.sitePrivateSelectors.messageId
+    const messageElement = unit.matches(messageIdSelector)
       ? unit
-      : (unit.querySelector("[data-message-id]") as HTMLElement | null)
+      : (unit.querySelector(messageIdSelector) as HTMLElement | null)
 
     return {
       messageId: rowMessageId || messageElement?.getAttribute("data-message-id") || null,
@@ -1723,14 +1712,18 @@ export class DoubaoAdapter extends SiteAdapter {
     if (entry.messageId) {
       const escaped = this.escapeAttributeValue(entry.messageId)
       const messageElement = container.querySelector(
-        `[data-message-id="${escaped}"]`,
+        `:is(${this.config.sitePrivateSelectors.messageId})[data-message-id="${escaped}"]`,
       ) as HTMLElement | null
       if (messageElement) return messageElement
     }
 
-    const rows = Array.from(container.querySelectorAll(VIRTUAL_ROW_SELECTOR)) as HTMLElement[]
+    const rows = Array.from(
+      container.querySelectorAll(this.config.sitePrivateSelectors.virtualRow),
+    ) as HTMLElement[]
     const row = rows.find((candidate) => this.getVirtualRowIndex(candidate, -1) === entry.rowIndex)
-    return (row?.querySelector("[data-message-id]") as HTMLElement | null) || null
+    return (
+      (row?.querySelector(this.config.sitePrivateSelectors.messageId) as HTMLElement | null) || null
+    )
   }
 
   private findHeadingInsideMessage(
@@ -1938,9 +1931,9 @@ export class DoubaoAdapter extends SiteAdapter {
       })
     }
 
-    const messageBlocks = Array.from(container.querySelectorAll(MESSAGE_BLOCK_SELECTOR)).filter(
-      (block): block is HTMLElement => block instanceof HTMLElement,
-    )
+    const messageBlocks = Array.from(
+      container.querySelectorAll(this.config.sitePrivateSelectors.messageBlock),
+    ).filter((block): block is HTMLElement => block instanceof HTMLElement)
 
     let pendingUserQuery: {
       element: HTMLElement
@@ -1949,18 +1942,20 @@ export class DoubaoAdapter extends SiteAdapter {
       scrollTop: number
     } | null = null
 
+    const userQuerySelector = this.config.selectors.userQuery
+    const assistantResponseSelector = this.config.selectors.assistantResponse
     const orderedUnits =
       messageBlocks.length > 0
         ? messageBlocks
         : Array.from(
-            container.querySelectorAll(`${USER_QUERY_SELECTOR}, ${ASSISTANT_MESSAGE_SELECTOR}`),
+            container.querySelectorAll(`${userQuerySelector}, ${assistantResponseSelector}`),
           ).filter((message): message is HTMLElement => message instanceof HTMLElement)
 
     orderedUnits.forEach((unit, unitIndex) => {
       const meta = this.getVirtualMessageMeta(unit, unitIndex)
-      const userMessage = unit.matches(USER_QUERY_SELECTOR)
+      const userMessage = unit.matches(userQuerySelector)
         ? unit
-        : (unit.querySelector(USER_QUERY_SELECTOR) as HTMLElement | null) ?? null
+        : (unit.querySelector(userQuerySelector) as HTMLElement | null) ?? null
 
       if (userMessage) {
         const text = this.extractUserQueryMarkdown(userMessage)
@@ -2025,12 +2020,7 @@ export class DoubaoAdapter extends SiteAdapter {
   // ===== 导出配置 =====
 
   getExportConfig(): ExportConfig | null {
-    return {
-      userQuerySelector: USER_QUERY_SELECTOR,
-      assistantResponseSelector: ASSISTANT_MESSAGE_SELECTOR,
-      turnSelector: MESSAGE_BLOCK_SELECTOR,
-      useShadowDOM: false,
-    }
+    return { ...this.config.export }
   }
 
   async prepareConversationExport(context: ExportLifecycleContext): Promise<unknown> {
@@ -2183,7 +2173,9 @@ export class DoubaoAdapter extends SiteAdapter {
   ): string {
     const messageId =
       element.getAttribute("data-message-id") ||
-      element.closest("[data-message-id]")?.getAttribute("data-message-id") ||
+      element
+        .closest(this.config.sitePrivateSelectors.messageId)
+        ?.getAttribute("data-message-id") ||
       ""
     if (messageId) return `${role}:${messageId}`
 
@@ -2248,6 +2240,8 @@ export class DoubaoAdapter extends SiteAdapter {
   }> {
     const messages: Array<{ role: "user" | "assistant"; element: Element }> = []
     const seen = new Set<Element>()
+    const userQuerySelector = this.config.selectors.userQuery
+    const assistantResponseSelector = this.config.selectors.assistantResponse
 
     const addMessage = (role: "user" | "assistant", element: Element | null) => {
       if (!element || seen.has(element)) return
@@ -2256,16 +2250,16 @@ export class DoubaoAdapter extends SiteAdapter {
     }
 
     if (root instanceof Element) {
-      if (root.matches(USER_QUERY_SELECTOR)) {
+      if (root.matches(userQuerySelector)) {
         addMessage("user", root)
-      } else if (root.matches(ASSISTANT_MESSAGE_SELECTOR)) {
+      } else if (root.matches(assistantResponseSelector)) {
         addMessage("assistant", root)
       }
     }
 
-    root.querySelectorAll(USER_QUERY_SELECTOR).forEach((element) => addMessage("user", element))
+    root.querySelectorAll(userQuerySelector).forEach((element) => addMessage("user", element))
     root
-      .querySelectorAll(ASSISTANT_MESSAGE_SELECTOR)
+      .querySelectorAll(assistantResponseSelector)
       .forEach((element) => addMessage("assistant", element))
 
     return messages.sort((left, right) => {
@@ -2286,64 +2280,54 @@ export class DoubaoAdapter extends SiteAdapter {
   // ===== 其他 =====
 
   isGenerating(): boolean {
-    const stopBtn = document.querySelector('[data-testid="chat_input_local_break_button"]')
-    return stopBtn !== null && (stopBtn as HTMLElement).offsetParent !== null
+    return this.config.generating.existsSelectors.some((selector) => {
+      const indicator = document.querySelector(selector)
+      return indicator !== null && (indicator as HTMLElement).offsetParent !== null
+    })
   }
 
   getStopButtonSelectors(): string[] {
-    return ['[data-testid="chat_input_local_break_button"]']
+    return [...this.config.selectors.stopButton]
   }
 
   getNewChatButtonSelectors(): string[] {
-    return [NEW_CHAT_BUTTON_SELECTOR]
+    return [...this.config.selectors.newChatButton]
   }
 
   getSubmitButtonSelectors(): string[] {
-    return [
-      "[data-testid='chat_input_send_button']",
-      "#flow-end-msg-send",
-      ".send-btn-wrapper button",
-    ]
+    return [...this.config.selectors.submitButton]
   }
 
   getWidthSelectors(): WidthSelectorConfig[] {
-    return [
-      { selector: DOUBAO_MAIN_SELECTOR, property: "max-width" },
-      // 兼容豆包不同版本的 Tailwind 转义类名
-      { selector: ".max-w-\\(--content-max-width\\)", property: "max-width" },
-      { selector: ".max-w-\\[var\\(--content-max-width\\)\\]", property: "max-width" },
-      // 输入框区域会从上层 style 继承 --content-max-width，需要同步覆盖变量本身
-      { selector: '[style*="--content-max-width"]', property: "--content-max-width" },
-      // /code/chat 专用结构
-      { selector: ".chrome70-container", property: "--center-content-max-width" },
-    ]
+    return this.config.widthSelectors.map((selector) => ({ ...selector }))
   }
 
   getPanelAvoidanceConfig(): PanelAvoidanceConfig {
+    const privateSelectors = this.config.sitePrivateSelectors
     return {
-      scopeSelector: DOUBAO_MAIN_SELECTOR,
+      scopeSelector: privateSelectors.mainLayoutScope,
       widthSelectors: [
         {
-          selector: DOUBAO_CONTENT_WIDTH_ROOT_SELECTOR,
+          selector: privateSelectors.contentWidthRoot,
           property: "--content-max-width",
           noCenter: true,
         },
-        { selector: DOUBAO_CONTENT_WIDTH_SELECTOR, property: "max-width" },
-        { selector: DOUBAO_CONTENT_WIDTH_VAR_SELECTOR, property: "max-width" },
+        { selector: privateSelectors.contentWidth, property: "max-width" },
+        { selector: privateSelectors.contentWidthVar, property: "max-width" },
       ],
       insetSelectors: [
         {
-          selector: DOUBAO_CONTENT_COLUMN_SELECTOR,
+          selector: privateSelectors.contentColumn,
           extraCss: "box-sizing: border-box;",
         },
         {
-          selector: DOUBAO_NEW_CHAT_SAFE_AREA_SELECTOR,
+          selector: privateSelectors.newChatSafeArea,
           insetMode: "edge",
           extraCss: "box-sizing: border-box;",
         },
         {
-          selector: DOUBAO_CANVAS_SAFE_AREA_SELECTOR,
-          scopeSelector: DOUBAO_CANVAS_SCOPE_SELECTOR,
+          selector: privateSelectors.canvasSafeArea,
+          scopeSelector: privateSelectors.canvasScope,
           applySide: "right",
           insetMode: "edge",
           extraCss: "box-sizing: border-box; min-width: 0 !important;",
@@ -2355,19 +2339,10 @@ export class DoubaoAdapter extends SiteAdapter {
   }
 
   getUserQueryWidthSelectors(): WidthSelectorConfig[] {
-    return [
-      // 匹配豆包用户提问气泡本身的 max-width
-      // 必须加上 .w-fit 限制，否则 [class*="max-w-"] 会错误匹配到外层的 .max-w-full 导致气泡右对齐布局崩溃
-      {
-        selector: `${USER_QUERY_SELECTOR} .w-fit[class*="max-w-"]`,
-        property: "max-width",
-      },
-      // 新版用户气泡不再带 .w-fit/max-w-*，宽度要落在发送气泡本体，避免命中外层 .max-w-full。
-      {
-        selector: `${USER_QUERY_SELECTOR} [data-plugin-identifier="block_type:10000"] > .bg-g-send-msg-bubble-bg`,
-        property: "max-width",
-      },
-    ]
+    return this.config.sitePrivateSelectors.userQueryWidth.map((selector) => ({
+      selector,
+      property: "max-width",
+    }))
   }
 
   // ===== 专用滚动补偿与历史隔离机制 =====

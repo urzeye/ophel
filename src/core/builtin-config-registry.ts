@@ -1,5 +1,6 @@
 import { CHATGLM_CONFIG, CHATGLM_CONFIG_VERSION } from "~adapters/chatglm-config"
 import { DEEPSEEK_CONFIG, DEEPSEEK_CONFIG_VERSION } from "~adapters/deepseek-config"
+import { DOUBAO_CONFIG, DOUBAO_CONFIG_VERSION } from "~adapters/doubao-config"
 import { GROK_CONFIG, GROK_CONFIG_VERSION } from "~adapters/grok-config"
 import { IMA_CONFIG, IMA_CONFIG_VERSION } from "~adapters/ima-config"
 import { KIMI_CONFIG, KIMI_CONFIG_VERSION } from "~adapters/kimi-config"
@@ -25,6 +26,14 @@ const BUILTIN_CONFIG_DESCRIPTORS = new Map<string, BuiltinConfigDescriptor>([
       siteId: SITE_IDS.DEEPSEEK,
       configVersion: DEEPSEEK_CONFIG_VERSION,
       baseConfig: DEEPSEEK_CONFIG,
+    },
+  ],
+  [
+    SITE_IDS.DOUBAO,
+    {
+      siteId: SITE_IDS.DOUBAO,
+      configVersion: DOUBAO_CONFIG_VERSION,
+      baseConfig: DOUBAO_CONFIG,
     },
   ],
   [
