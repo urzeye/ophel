@@ -36,94 +36,19 @@ import {
   type NetworkMonitorConfig,
   type OutlineItem,
   type PanelAvoidanceConfig,
+  type ZenModeConfig,
 } from "./base"
+import type { BuiltinSiteConfig } from "./declarative"
+import {
+  QWEN_STUDIO_CONFIG,
+  QWEN_STUDIO_CONFIG_VERSION,
+  type QwenStudioSiteConfig,
+} from "./qwen-studio-config"
 
 const QWENAI_CHAT_PATH_PATTERN = /\/c\/([a-f0-9-]+)/i
 const QWENAI_THEME_STORAGE_KEY = "theme"
 const QWENAI_TOKEN_STORAGE_KEY = "token"
-const QWENAI_SIDEBAR_SELECTOR = "#sidebar"
-const QWENAI_SIDEBAR_SCROLL_SELECTOR = ".session-list-wrapper"
-const QWENAI_SIDEBAR_ITEM_SELECTOR = ".chat-item-drag"
-const QWENAI_SIDEBAR_TITLE_SELECTOR = ".chat-item-drag-link-content-tip-text"
-const QWENAI_NEW_CHAT_BUTTON_SELECTOR = ".sidebar-entry-fixed-list-content"
-const QWENAI_LAYOUT_SCOPE_SELECTOR =
-  ".chat-left-panel, body:not(:has(.chat-left-panel)) .splitter-container-left-panel"
-const QWENAI_MESSAGE_SCROLL_SELECTOR = "#chat-messages-scroll-container"
-const QWENAI_MESSAGE_CONTAINER_SELECTOR = "#chat-message-container"
-const QWENAI_MESSAGE_WIDTH_SELECTOR = ".qwen-chat-message"
-const QWENAI_INPUT_SAFE_AREA_SELECTOR = ".chat-layout-input-container"
-const QWENAI_NEW_CHAT_INPUT_SAFE_AREA_SELECTOR =
-  "body:not(:has(.chat-left-panel)) .message-input-wrapper"
-const QWENAI_NEW_CHAT_PLACEHOLDER_SELECTOR =
-  "body:not(:has(.chat-left-panel)) .placeholder-logo-text"
-const QWENAI_INPUT_WIDTH_SELECTOR = ".message-input-wrapper"
-const QWENAI_USER_MESSAGE_ROOT_SELECTOR = ".qwen-chat-message-user"
-const QWENAI_USER_MESSAGE_SELECTOR = ".qwen-chat-message-user, .chat-user-message-wrapper"
-const QWENAI_ASSISTANT_MESSAGE_SELECTOR = ".qwen-chat-message-assistant"
-const QWENAI_USER_CONTENT_SELECTOR = ".user-message-content"
-const QWENAI_ASSISTANT_CONTENT_SELECTOR = ".response-message-content"
-const QWENAI_TEXTAREA_SELECTOR = "textarea.message-input-textarea"
-const QWENAI_SEND_BUTTON_SELECTOR = "button.send-button"
-const QWENAI_STOP_BUTTON_SELECTORS = [
-  "button.stop-button",
-  'button[class*="stop-button"]',
-  ".stop-button",
-]
-const QWENAI_CODE_BLOCK_SELECTOR = "pre.qwen-markdown-code"
-const QWENAI_MERMAID_SWITCH_SELECTOR = ".artifacts-body-header-switch"
-const QWENAI_MERMAID_SWITCH_ITEM_SELECTOR =
-  ".artifacts-body-header-switch-active, .artifacts-body-header-switch-unactive, .header-switch-status-small"
 const QWENAI_MERMAID_EXPORT_SWITCHED_ATTR = "data-ophel-qwenai-mermaid-export-switched"
-const QWENAI_THINKING_CARD_SELECTOR =
-  ".qwen-chat-thinking-tool-status-card-wraper, .qwen-chat-thinking-status-card"
-const QWENAI_THOUGHT_TRIGGER_SELECTOR =
-  ".qwen-chat-thinking-tool-status-card-wraper .qwen-chat-tool-status-card, .qwen-chat-thinking-tool-status-card-wraper .qwen-chat-thinking-status-card-completed"
-const QWENAI_THOUGHT_TITLE_SELECTOR = ".qwen-chat-thinking-status-card-title-text"
-const QWENAI_THOUGHT_PANEL_SELECTOR = [
-  ".splitter-container-right-panel .qwen-chat-thinking-and-sources",
-  ".share-layout-right-panel .qwen-chat-thinking-and-sources",
-  ".qwen-chat-thinking-and-sources-share",
-].join(", ")
-const QWENAI_THOUGHT_PANEL_CONTENT_SELECTOR =
-  ".qwen-chat-thinking-and-sources-content-thinking-container"
-const QWENAI_THOUGHT_PANEL_CLOSE_SELECTOR =
-  ".qwen-chat-thinking-and-sources-header .anticon, .qwen-chat-thinking-and-sources-header [role='img']"
-const QWENAI_RESPONSE_TOOLBAR_SELECTOR =
-  ".response-message-footer, .copy-response-button, .message-hoc-container"
-const QWENAI_EXPORT_DECORATION_SELECTOR = [
-  ".gh-root",
-  ".gh-user-query-markdown",
-  QWENAI_THINKING_CARD_SELECTOR,
-  QWENAI_RESPONSE_TOOLBAR_SELECTOR,
-  "button",
-  "[role='button']",
-  "svg",
-  "[aria-hidden='true']",
-  "style",
-  "script",
-].join(", ")
-const QWENAI_USER_IMAGE_CARD_SELECTOR = [
-  ".user-image-item",
-  ".user-image-list .qwen-image",
-  "[class*='file-message-image'] .qwen-image",
-  ".qwen-markdown-image:has(img)",
-].join(", ")
-const QWENAI_USER_FILE_CARD_SELECTOR =
-  ".fileitem-btn, [class*='file-message-document'], .file-content-info"
-const QWENAI_ASSISTANT_GENERATED_IMAGE_SELECTOR = [
-  ".chat-response-media-render img",
-  ".qwen-chat-response-control-card img",
-  ".response-message-content img",
-  ".qwen-markdown-image img",
-  "img.qwen-image",
-].join(", ")
-const QWENAI_ASSISTANT_GENERATED_IMAGE_CARD_SELECTOR = [
-  ".chat-response-media-render",
-  ".qwen-chat-response-control-card",
-  ".qwen-markdown-image",
-  "picture",
-  "img",
-].join(", ")
 const QWENAI_ATTACHMENT_SOURCE_ATTRS = [
   "href",
   "src",
@@ -138,34 +63,6 @@ const QWENAI_ATTACHMENT_SOURCE_ATTRS = [
   "data-image-url",
   "data-image-src",
 ]
-const QWENAI_MODEL_TRIGGER_SELECTOR =
-  '#qwen-chat-header-left .ant-dropdown-trigger:has([class*="model-selector-text"])'
-const QWENAI_MODEL_TEXT_SELECTOR = '#qwen-chat-header-left [class*="model-selector-text"]'
-const QWENAI_MODEL_POPUP_SELECTOR = '[class*="model-selector-popup"]'
-const QWENAI_PRIMARY_MODEL_POPUP_SELECTOR =
-  '.ant-dropdown:not(.ant-dropdown-hidden) [class*="model-selector-popup"]:not([class*="secondary"])'
-const QWENAI_SECONDARY_MODEL_POPUP_SELECTOR =
-  '.ant-dropdown:not(.ant-dropdown-hidden) [class*="model-selector-popup"][class*="secondary"]'
-const QWENAI_MODEL_ITEM_SELECTOR = [
-  `${QWENAI_MODEL_POPUP_SELECTOR} [class*="model-list"] > [class*="model-item___"]`,
-  `${QWENAI_MODEL_POPUP_SELECTOR} [class*="model-list"] > [class*="model-item-selected___"]`,
-].join(", ")
-const QWENAI_MODEL_MORE_TRIGGER_SELECTOR = [
-  `${QWENAI_MODEL_POPUP_SELECTOR} .ant-dropdown-trigger:has([class*="view-more-text"])`,
-  `${QWENAI_MODEL_POPUP_SELECTOR} .ant-dropdown-trigger:has([class*="view-more-icon"])`,
-].join(", ")
-const QWENAI_MODEL_MENU_ITEM_SELECTOR = [
-  QWENAI_MODEL_ITEM_SELECTOR,
-  QWENAI_MODEL_MORE_TRIGGER_SELECTOR,
-  '.ant-dropdown [role="menuitem"]',
-  ".ant-dropdown .ant-dropdown-menu-item",
-  ".ant-dropdown .ant-dropdown-menu-title-content",
-  '.ant-select-dropdown [role="option"]',
-  ".ant-select-dropdown .ant-select-item-option",
-].join(", ")
-const QWENAI_MARKDOWN_PARAGRAPH_SELECTOR = ".qwen-markdown-paragraph"
-const QWENAI_LATEX_SELECTOR = ".qwen-markdown-latex"
-const QWENAI_DISCLAIMER_SELECTOR = ".chat-container-statement"
 const QWENAI_CONVERSATION_SNAPSHOT_TTL_MS = 30_000
 const QWENAI_FETCH_PAGE_LIMIT = 100
 const QWENAI_BOOTSTRAP_PAGE_LIMIT = 5
@@ -200,6 +97,7 @@ interface QwenAiAssistantImage {
 type QwenAiModelLockFailureReason = "button_not_found" | "menu_empty" | "not_found"
 
 export class QwenAiAdapter extends SiteAdapter {
+  private config: QwenStudioSiteConfig = QWEN_STUDIO_CONFIG
   private conversationSnapshot: ConversationInfo[] = []
   private conversationSnapshotFetchedAt = 0
   private conversationSnapshotPromise: Promise<ConversationInfo[]> | null = null
@@ -225,8 +123,28 @@ export class QwenAiAdapter extends SiteAdapter {
     return "Qwen Studio"
   }
 
+  getBuiltinConfig(): QwenStudioSiteConfig {
+    return QWEN_STUDIO_CONFIG
+  }
+
+  getBuiltinConfigVersion(): number {
+    return QWEN_STUDIO_CONFIG_VERSION
+  }
+
+  applyMergedConfig(config: BuiltinSiteConfig): void {
+    this.config = config as QwenStudioSiteConfig
+  }
+
   getThemeColors(): { primary: string; secondary: string } {
     return { primary: "#4f6bff", secondary: "#3047c7" }
+  }
+
+  getQuickQuoteSupportMode() {
+    return this.config.quickQuote
+  }
+
+  supportsHostThemeSync(): boolean {
+    return this.config.supportsHostThemeSync
   }
 
   getSessionId(): string {
@@ -304,21 +222,31 @@ export class QwenAiAdapter extends SiteAdapter {
     return this.mergeConversationInfos(snapshot, domList)
   }
 
+  private getConversationUrl(id: string): string {
+    const path = this.config.conversation.urlTemplate.replace("{id}", id)
+    return new URL(path, window.location.origin).href
+  }
+
   getConversationObserverConfig(): ConversationObserverConfig | null {
+    const conversation = this.config.conversation
     return {
-      selector: QWENAI_SIDEBAR_ITEM_SELECTOR,
-      shadow: false,
+      selector: conversation.itemSelector,
+      shadow: conversation.shadow ?? false,
       extractInfo: (el) =>
         this.extractSidebarConversationInfo(el, this.getCurrentCid() || undefined),
-      getTitleElement: (el) => el.querySelector(QWENAI_SIDEBAR_TITLE_SELECTOR) || el,
+      getTitleElement: (el) =>
+        (conversation.titleSelector ? el.querySelector(conversation.titleSelector) : null) || el,
     }
   }
 
   getSidebarScrollContainer(): Element | null {
+    const privateSelectors = this.config.sitePrivateSelectors
     return (
-      document.querySelector(`${QWENAI_SIDEBAR_SELECTOR} ${QWENAI_SIDEBAR_SCROLL_SELECTOR}`) ||
-      document.querySelector(QWENAI_SIDEBAR_SCROLL_SELECTOR) ||
-      document.querySelector(QWENAI_SIDEBAR_SELECTOR)
+      document.querySelector(
+        `:is(${privateSelectors.sidebarRoot}) :is(${privateSelectors.sidebarScroll})`,
+      ) ||
+      document.querySelector(privateSelectors.sidebarScroll) ||
+      document.querySelector(privateSelectors.sidebarRoot)
     )
   }
 
@@ -328,24 +256,30 @@ export class QwenAiAdapter extends SiteAdapter {
 
   navigateToConversation(id: string, url?: string): boolean {
     const cid = this.getCurrentCid() || undefined
-    const nodes = document.querySelectorAll(QWENAI_SIDEBAR_ITEM_SELECTOR)
+    const nodes = document.querySelectorAll(this.config.conversation.itemSelector)
 
-    for (const node of Array.from(nodes)) {
-      const info = this.extractSidebarConversationInfo(node, cid)
-      if (!info || info.id !== id) continue
+    if (this.config.conversation.navigationStrategy === "click-item") {
+      for (const node of Array.from(nodes)) {
+        const info = this.extractSidebarConversationInfo(node, cid)
+        if (!info || info.id !== id) continue
 
-      const clickable =
-        (node.querySelector("a, button, [role='button']") as HTMLElement | null) ||
-        (node as HTMLElement)
-      this.simulateClick(clickable)
-      return true
+        const clickable =
+          (node.querySelector("a, button, [role='button']") as HTMLElement | null) ||
+          (node as HTMLElement)
+        this.simulateClick(clickable)
+        return true
+      }
     }
 
-    return super.navigateToConversation(id, url || `https://chat.qwen.ai/c/${id}`)
+    return super.navigateToConversation(id, url || this.getConversationUrl(id))
   }
 
   getTextareaSelectors(): string[] {
-    return [QWENAI_TEXTAREA_SELECTOR, "textarea"]
+    return [...this.config.selectors.textarea]
+  }
+
+  getSubmitKeyConfig(): { key: "Enter" | "Ctrl+Enter" } {
+    return { key: this.config.input.submitKey ?? "Enter" }
   }
 
   insertPrompt(content: string): boolean {
@@ -392,11 +326,13 @@ export class QwenAiAdapter extends SiteAdapter {
   }
 
   getSubmitButtonSelectors(): string[] {
-    return [`${QWENAI_SEND_BUTTON_SELECTOR}:not([disabled])`]
+    return [...this.config.selectors.submitButton]
   }
 
   findSubmitButton(): HTMLElement | null {
-    const button = document.querySelector(QWENAI_SEND_BUTTON_SELECTOR) as HTMLElement | null
+    const button = document.querySelector(
+      this.config.sitePrivateSelectors.composerButton,
+    ) as HTMLElement | null
     if (!this.isVisibleActionElement(button)) return null
     if (button.hasAttribute("disabled")) return null
     if (this.isStopLikeButton(button)) return null
@@ -404,25 +340,29 @@ export class QwenAiAdapter extends SiteAdapter {
   }
 
   getNewChatButtonSelectors(): string[] {
-    return [QWENAI_NEW_CHAT_BUTTON_SELECTOR]
+    return [...this.config.selectors.newChatButton]
   }
 
   getScrollContainer(): HTMLElement | null {
-    const container = document.querySelector(QWENAI_MESSAGE_SCROLL_SELECTOR)
-    return container instanceof HTMLElement ? container : null
+    for (const selector of this.config.selectors.scrollContainer) {
+      const container = document.querySelector(selector)
+      if (container instanceof HTMLElement) return container
+    }
+    return null
   }
 
   getResponseContainerSelector(): string {
-    return QWENAI_MESSAGE_CONTAINER_SELECTOR
+    return this.config.selectors.responseContainer
   }
 
   getAssistantMermaidSupportMode() {
-    return "native" as const
+    return this.config.mermaidSupport
   }
 
   extractFormulaCopySource(target: Element, formulaHost: Element): FormulaCopySource | null {
     const latexHost =
-      target.closest(QWENAI_LATEX_SELECTOR) || formulaHost.closest(QWENAI_LATEX_SELECTOR)
+      target.closest(this.config.sitePrivateSelectors.latex) ||
+      formulaHost.closest(this.config.sitePrivateSelectors.latex)
     if (!latexHost) return null
 
     const math = latexHost.querySelector("math")
@@ -435,20 +375,22 @@ export class QwenAiAdapter extends SiteAdapter {
     return {
       latex,
       mathml,
-      isBlock: !!latexHost.closest(".katex-display") || math.getAttribute("display") === "block",
+      isBlock:
+        !!latexHost.closest(this.config.sitePrivateSelectors.latexDisplay) ||
+        math.getAttribute("display") === "block",
     }
   }
 
   getChatContentSelectors(): string[] {
-    return [QWENAI_USER_MESSAGE_SELECTOR, QWENAI_ASSISTANT_MESSAGE_SELECTOR]
+    return [...this.config.selectors.chatContent]
   }
 
   getUserQuerySelector(): string | null {
-    return QWENAI_USER_MESSAGE_SELECTOR
+    return this.config.selectors.userQuery
   }
 
   getLatestReplyText(): string | null {
-    const responses = document.querySelectorAll(QWENAI_ASSISTANT_MESSAGE_SELECTOR)
+    const responses = document.querySelectorAll(this.config.selectors.assistantResponse)
     const last = responses[responses.length - 1]
     return last ? this.extractAssistantResponseText(last) : null
   }
@@ -511,7 +453,7 @@ export class QwenAiAdapter extends SiteAdapter {
 
     clone
       .querySelectorAll(
-        `${QWENAI_EXPORT_DECORATION_SELECTOR}, ${QWENAI_ASSISTANT_GENERATED_IMAGE_CARD_SELECTOR}`,
+        `${this.config.sitePrivateSelectors.exportDecoration}, ${this.config.sitePrivateSelectors.assistantGeneratedImageCard}`,
       )
       .forEach((node) => node.remove())
 
@@ -540,13 +482,15 @@ export class QwenAiAdapter extends SiteAdapter {
   }
 
   getLastCodeBlockText(): string | null {
-    const responses = document.querySelectorAll(QWENAI_ASSISTANT_MESSAGE_SELECTOR)
+    const responses = document.querySelectorAll(this.config.selectors.assistantResponse)
 
     for (let i = responses.length - 1; i >= 0; i -= 1) {
       const contentRoot = this.findAssistantContentRoot(responses[i])
       if (!contentRoot) continue
 
-      const codeBlocks = Array.from(contentRoot.querySelectorAll(QWENAI_CODE_BLOCK_SELECTOR))
+      const codeBlocks = Array.from(
+        contentRoot.querySelectorAll(this.config.sitePrivateSelectors.codeBlock),
+      )
       for (let j = codeBlocks.length - 1; j >= 0; j -= 1) {
         const codeText = this.extractQwenCodeBlockText(codeBlocks[j])
         if (codeText) return codeText
@@ -559,20 +503,19 @@ export class QwenAiAdapter extends SiteAdapter {
   extractOutline(maxLevel = 6, includeUserQueries = false, showWordCount = false): OutlineItem[] {
     const items: OutlineItem[] = []
     const container =
-      document.querySelector(QWENAI_MESSAGE_CONTAINER_SELECTOR) ||
-      document.querySelector(QWENAI_MESSAGE_SCROLL_SELECTOR)
+      document.querySelector(this.config.selectors.responseContainer) || this.getScrollContainer()
     if (!container) return items
+    const userQuerySelector = this.config.selectors.userQuery
+    const assistantResponseSelector = this.config.selectors.assistantResponse
 
     const blocks = this.collectTopLevelBlocks(
       Array.from(
-        container.querySelectorAll(
-          `${QWENAI_USER_MESSAGE_SELECTOR}, ${QWENAI_ASSISTANT_MESSAGE_SELECTOR}`,
-        ),
+        container.querySelectorAll(`${userQuerySelector}, ${assistantResponseSelector}`),
       ).filter((el) => !el.closest(".gh-root")),
     )
 
     blocks.forEach((block, index) => {
-      const isUserBlock = block.matches(QWENAI_USER_MESSAGE_SELECTOR)
+      const isUserBlock = block.matches(userQuerySelector)
 
       if (isUserBlock) {
         if (!includeUserQueries) return
@@ -584,7 +527,7 @@ export class QwenAiAdapter extends SiteAdapter {
         if (showWordCount) {
           const nextAnswer = blocks
             .slice(index + 1)
-            .find((el) => el.matches(QWENAI_ASSISTANT_MESSAGE_SELECTOR))
+            .find((el) => el.matches(assistantResponseSelector))
           wordCount = nextAnswer ? this.extractAssistantPlainText(nextAnswer).length : 0
         }
 
@@ -601,7 +544,7 @@ export class QwenAiAdapter extends SiteAdapter {
 
       const headings = Array.from(block.querySelectorAll("h1, h2, h3, h4, h5, h6")).filter(
         (heading) =>
-          !heading.closest(QWENAI_THINKING_CARD_SELECTOR) &&
+          !heading.closest(this.config.sitePrivateSelectors.thinkingCard) &&
           !this.isInRenderedMarkdownContainer(heading),
       )
 
@@ -639,12 +582,7 @@ export class QwenAiAdapter extends SiteAdapter {
   }
 
   getExportConfig(): ExportConfig | null {
-    return {
-      userQuerySelector: QWENAI_USER_MESSAGE_SELECTOR,
-      assistantResponseSelector: QWENAI_ASSISTANT_MESSAGE_SELECTOR,
-      turnSelector: null,
-      useShadowDOM: false,
-    }
+    return { ...this.config.export }
   }
 
   async prepareConversationExport(
@@ -661,7 +599,7 @@ export class QwenAiAdapter extends SiteAdapter {
     }
 
     const assistantMessages = Array.from(
-      document.querySelectorAll(QWENAI_ASSISTANT_MESSAGE_SELECTOR),
+      document.querySelectorAll(this.config.selectors.assistantResponse),
     ).filter((element) => !element.closest(".gh-root"))
 
     for (const message of assistantMessages) {
@@ -709,7 +647,7 @@ export class QwenAiAdapter extends SiteAdapter {
   }
 
   private getExportHistoryMessageMarker(element: Element): string {
-    const source = element.closest(".qwen-chat-message, [data-message-id]") || element
+    const source = element.closest(this.config.sitePrivateSelectors.messageMarkerRoot) || element
     const id =
       source.id ||
       source.getAttribute("data-message-id") ||
@@ -762,7 +700,9 @@ export class QwenAiAdapter extends SiteAdapter {
   }
 
   getModelName(): string | null {
-    const textNode = document.querySelector(QWENAI_MODEL_TEXT_SELECTOR) as HTMLElement | null
+    const textNode = document.querySelector(
+      this.config.sitePrivateSelectors.modelText,
+    ) as HTMLElement | null
     const text = textNode?.innerText?.trim() || textNode?.textContent?.trim() || ""
     return text ? text.split("\n")[0].trim() : null
   }
@@ -782,8 +722,8 @@ export class QwenAiAdapter extends SiteAdapter {
     const target = this.normalizeModelKeyword(keyword)
     if (!target) return
 
-    const maxAttempts = 12
-    const checkInterval = 1000
+    const maxAttempts = this.config.modelSwitcher.maxAttempts ?? 12
+    const checkInterval = this.config.modelSwitcher.checkInterval ?? 1000
     let attempts = 0
 
     const tryLock = async () => {
@@ -818,24 +758,28 @@ export class QwenAiAdapter extends SiteAdapter {
   }
 
   getModelSwitcherConfig(keyword: string): ModelSwitcherConfig | null {
+    const { selectorButtonSelectors, menuItemSelector, subMenuTriggers, ...config } =
+      this.config.modelSwitcher
     return {
+      ...config,
       targetModelKeyword: keyword,
-      selectorButtonSelectors: [QWENAI_MODEL_TRIGGER_SELECTOR, QWENAI_MODEL_TEXT_SELECTOR],
-      menuItemSelector: QWENAI_MODEL_MENU_ITEM_SELECTOR,
-      checkInterval: 1000,
-      maxAttempts: 12,
-      menuRenderDelay: 400,
-      subMenuSelector: QWENAI_MODEL_MORE_TRIGGER_SELECTOR,
-      subMenuTriggers: ["展开更多模型", "更多模型", "view more", "more models"],
+      selectorButtonSelectors: [...selectorButtonSelectors],
+      menuItemSelector,
+      ...(subMenuTriggers ? { subMenuTriggers: [...subMenuTriggers] } : {}),
     }
   }
 
   isGenerating(): boolean {
+    const indicator = this.findVisibleElementBySelectors(this.config.generating.existsSelectors)
+    if (indicator && !this.isDisabledActionElement(indicator)) {
+      return true
+    }
+
     return this.findStopButton() !== null
   }
 
   getStopButtonSelectors(): string[] {
-    return [...QWENAI_STOP_BUTTON_SELECTORS]
+    return [...this.config.selectors.stopButton]
   }
 
   stopGeneration(): boolean {
@@ -846,37 +790,34 @@ export class QwenAiAdapter extends SiteAdapter {
   }
 
   getNetworkMonitorConfig(): NetworkMonitorConfig {
+    const { urlPatterns, urlPathEndsWith, requestBodyRules, ...config } = this.config.networkMonitor
     return {
-      // 国际版千问流式回复接口：/api/v2/chat/completions?chat_id=...
-      urlPatterns: ["/api/v2/chat/completions"],
-      urlPathEndsWith: ["/chat/completions"],
-      silenceThreshold: 2000,
+      ...config,
+      urlPatterns: [...urlPatterns],
+      ...(urlPathEndsWith ? { urlPathEndsWith: [...urlPathEndsWith] } : {}),
+      ...(requestBodyRules
+        ? {
+            requestBodyRules: requestBodyRules.map((rule) => ({
+              ...rule,
+              metadata: { ...rule.metadata },
+            })),
+          }
+        : {}),
     }
   }
 
   getWidthSelectors() {
-    return [
-      {
-        // Qwen Studio 对话宽度由消息外层 .qwen-chat-message 的 max-width 控制。
-        // 同时覆盖 width 和 box-sizing，避免原始 content-box + padding 让加宽效果不明显。
-        selector: QWENAI_MESSAGE_WIDTH_SELECTOR,
-        property: "max-width",
-        extraCss: "width: 100% !important; box-sizing: border-box !important;",
-      },
-      {
-        selector: QWENAI_INPUT_WIDTH_SELECTOR,
-        property: "max-width",
-      },
-    ]
+    return this.config.widthSelectors.map((selector) => ({ ...selector }))
   }
 
   getPanelAvoidanceConfig(): PanelAvoidanceConfig {
+    const privateSelectors = this.config.sitePrivateSelectors
     return {
-      scopeSelector: QWENAI_LAYOUT_SCOPE_SELECTOR,
-      obstacleSelectors: [QWENAI_THOUGHT_PANEL_SELECTOR],
+      scopeSelector: privateSelectors.layoutScope,
+      obstacleSelectors: [privateSelectors.thoughtPanel],
       widthSelectors: [
         {
-          selector: QWENAI_MESSAGE_WIDTH_SELECTOR,
+          selector: privateSelectors.messageWidth,
           property: "max-width",
           extraCss:
             "width: 100% !important; min-width: 0 !important; box-sizing: border-box !important;",
@@ -884,22 +825,22 @@ export class QwenAiAdapter extends SiteAdapter {
       ],
       insetSelectors: [
         {
-          selector: QWENAI_MESSAGE_SCROLL_SELECTOR,
+          selector: this.config.selectors.scrollContainer[0],
           extraCss: "box-sizing: border-box; min-width: 0 !important;",
         },
         {
-          selector: QWENAI_INPUT_SAFE_AREA_SELECTOR,
+          selector: privateSelectors.inputSafeArea,
           extraCss:
             "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
         },
         {
-          selector: QWENAI_NEW_CHAT_INPUT_SAFE_AREA_SELECTOR,
+          selector: privateSelectors.newChatInputSafeArea,
           insetMode: "edge",
           extraCss:
             "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
         },
         {
-          selector: QWENAI_NEW_CHAT_PLACEHOLDER_SELECTOR,
+          selector: privateSelectors.newChatPlaceholder,
           insetMode: "edge",
           extraCss:
             "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
@@ -911,38 +852,39 @@ export class QwenAiAdapter extends SiteAdapter {
   }
 
   getUserQueryWidthSelectors() {
-    return [
-      {
-        // 用户问题气泡本身使用 max-width: 70% 限宽，需要直接覆盖气泡节点。
-        // 保持右侧对齐，不额外注入通用居中样式。
-        selector: ".chat-user-message-container .chat-user-message-wrapper .chat-user-message",
-        property: "max-width",
-        noCenter: true,
-      },
-    ]
+    return this.config.sitePrivateSelectors.userQueryWidth.map((selector) => ({
+      selector,
+      property: "max-width",
+      noCenter: true,
+    }))
   }
 
-  getZenModeConfig() {
+  private cloneZenModeConfig(config: ZenModeConfig): ZenModeConfig {
+    const { hide, rootClass, styles } = config
     return {
-      hide: [QWENAI_SIDEBAR_SELECTOR],
+      ...(hide ? { hide: [...hide] } : {}),
+      ...(rootClass ? { rootClass: { ...rootClass } } : {}),
+      ...(styles ? { styles: styles.map((style) => ({ ...style })) } : {}),
     }
   }
 
-  getCleanModeConfig() {
-    return {
-      hide: [QWENAI_DISCLAIMER_SELECTOR],
-    }
+  getZenModeConfig(): ZenModeConfig {
+    return this.cloneZenModeConfig(this.config.zenMode)
+  }
+
+  getCleanModeConfig(): ZenModeConfig {
+    return this.cloneZenModeConfig(this.config.cleanMode)
   }
 
   getMarkdownFixerConfig(): MarkdownFixerConfig | null {
     return {
-      selector: `${QWENAI_ASSISTANT_MESSAGE_SELECTOR} ${QWENAI_MARKDOWN_PARAGRAPH_SELECTOR}`,
+      selector: `${this.config.selectors.assistantResponse} ${this.config.sitePrivateSelectors.markdownParagraph}`,
       fixSpanContent: false,
       shouldSkip: (element) => {
         if (!this.isGenerating()) return false
-        const currentMessage = element.closest(QWENAI_ASSISTANT_MESSAGE_SELECTOR)
+        const currentMessage = element.closest(this.config.selectors.assistantResponse)
         if (!currentMessage) return false
-        const messages = document.querySelectorAll(QWENAI_ASSISTANT_MESSAGE_SELECTOR)
+        const messages = document.querySelectorAll(this.config.selectors.assistantResponse)
         return currentMessage === messages[messages.length - 1]
       },
     }
@@ -1069,14 +1011,14 @@ export class QwenAiAdapter extends SiteAdapter {
       id,
       cid,
       title,
-      url: `https://chat.qwen.ai/c/${id}`,
+      url: this.getConversationUrl(id),
       isPinned: Boolean(record.pinned),
       isActive: id === this.getSessionId(),
     }
   }
 
   private collectConversationListFromDom(): ConversationInfo[] {
-    const nodes = document.querySelectorAll(QWENAI_SIDEBAR_ITEM_SELECTOR)
+    const nodes = document.querySelectorAll(this.config.conversation.itemSelector)
     if (nodes.length === 0) return []
 
     const cid = this.getCurrentCid() || undefined
@@ -1094,7 +1036,8 @@ export class QwenAiAdapter extends SiteAdapter {
     const id = this.extractConversationIdFromElement(element)
     if (!id) return null
 
-    const titleElement = element.querySelector(QWENAI_SIDEBAR_TITLE_SELECTOR)
+    const titleSelector = this.config.conversation.titleSelector
+    const titleElement = titleSelector ? element.querySelector(titleSelector) : null
     const title = titleElement?.textContent?.trim() || ""
     if (!title) return null
 
@@ -1102,15 +1045,15 @@ export class QwenAiAdapter extends SiteAdapter {
       id,
       cid,
       title,
-      url: `https://chat.qwen.ai/c/${id}`,
-      isPinned: !!element.querySelector(".chat-item-title-pined-icon"),
+      url: this.getConversationUrl(id),
+      isPinned: !!element.querySelector(this.config.sitePrivateSelectors.pinnedConversation),
       isActive: id === this.getSessionId(),
     }
   }
 
   private extractConversationIdFromElement(element: Element): string | null {
-    const directLink = element.querySelector('a[href*="/c/"]')
-    const directHref = directLink?.getAttribute("href")
+    const directLink = element.querySelector(this.config.sitePrivateSelectors.conversationLink)
+    const directHref = directLink?.getAttribute(this.config.conversation.idFrom.attr ?? "href")
     const directId = this.extractConversationIdFromText(directHref)
     if (directId) return directId
 
@@ -1151,7 +1094,7 @@ export class QwenAiAdapter extends SiteAdapter {
 
   private extractConversationIdFromText(value: string | null | undefined): string | null {
     if (!value) return null
-    const match = value.match(QWENAI_CHAT_PATH_PATTERN)
+    const match = new RegExp(this.config.conversation.idFrom.regex).exec(value)
     if (match?.[1]) return match[1]
 
     const uuidLike = value.match(
@@ -1190,8 +1133,8 @@ export class QwenAiAdapter extends SiteAdapter {
 
   private getQwenExportRoot(): HTMLElement {
     return (
-      (document.querySelector(QWENAI_MESSAGE_CONTAINER_SELECTOR) as HTMLElement | null) ||
-      (document.querySelector(QWENAI_MESSAGE_SCROLL_SELECTOR) as HTMLElement | null) ||
+      (document.querySelector(this.config.selectors.responseContainer) as HTMLElement | null) ||
+      this.getScrollContainer() ||
       document.body
     )
   }
@@ -1201,10 +1144,10 @@ export class QwenAiAdapter extends SiteAdapter {
     element: Element
   }> {
     const userRoots = this.collectTopLevelBlocks(
-      this.queryElementsIncludingSelf(root, QWENAI_USER_MESSAGE_SELECTOR),
+      this.queryElementsIncludingSelf(root, this.config.selectors.userQuery),
     ).filter((element) => !this.shouldSkipExportElement(element))
     const assistantRoots = this.collectTopLevelBlocks(
-      this.queryElementsIncludingSelf(root, QWENAI_ASSISTANT_MESSAGE_SELECTOR),
+      this.queryElementsIncludingSelf(root, this.config.selectors.assistantResponse),
     ).filter((element) => !this.shouldSkipExportElement(element))
 
     return [
@@ -1237,7 +1180,7 @@ export class QwenAiAdapter extends SiteAdapter {
   private extractQwenUserTextParts(element: Element): string[] {
     const scope = this.findUserMessageScope(element)
     const roots = this.collectTopLevelBlocks(
-      this.queryElementsIncludingSelf(scope, QWENAI_USER_CONTENT_SELECTOR),
+      this.queryElementsIncludingSelf(scope, this.config.sitePrivateSelectors.userContent),
     )
     const parts: string[] = []
     const seen = new Set<string>()
@@ -1246,7 +1189,9 @@ export class QwenAiAdapter extends SiteAdapter {
       if (root.closest(".gh-user-query-markdown")) return
 
       const clone = root.cloneNode(true) as HTMLElement
-      clone.querySelectorAll(QWENAI_EXPORT_DECORATION_SELECTOR).forEach((node) => node.remove())
+      clone
+        .querySelectorAll(this.config.sitePrivateSelectors.exportDecoration)
+        .forEach((node) => node.remove())
 
       const text = this.extractTextWithLineBreaks(clone).trim()
       if (!text || seen.has(text)) return
@@ -1274,11 +1219,11 @@ export class QwenAiAdapter extends SiteAdapter {
     }
 
     this.collectTopLevelBlocks(
-      this.queryElementsIncludingSelf(scope, QWENAI_USER_IMAGE_CARD_SELECTOR),
+      this.queryElementsIncludingSelf(scope, this.config.sitePrivateSelectors.userImageCard),
     ).forEach((card) => addAttachment(this.extractQwenUserImageAttachment(card)))
 
     this.collectTopLevelBlocks(
-      this.queryElementsIncludingSelf(scope, QWENAI_USER_FILE_CARD_SELECTOR),
+      this.queryElementsIncludingSelf(scope, this.config.sitePrivateSelectors.userFileCard),
     ).forEach((card) => addAttachment(this.extractQwenUserFileAttachment(card)))
 
     return attachments
@@ -1344,29 +1289,30 @@ export class QwenAiAdapter extends SiteAdapter {
   }
 
   private extractQwenAssistantImages(element: Element): QwenAiAssistantImage[] {
-    const scope = element.closest(QWENAI_ASSISTANT_MESSAGE_SELECTOR) || element
+    const scope = element.closest(this.config.selectors.assistantResponse) || element
     const images: QwenAiAssistantImage[] = []
     const seen = new Set<string>()
 
-    this.queryElementsIncludingSelf(scope, QWENAI_ASSISTANT_GENERATED_IMAGE_SELECTOR).forEach(
-      (node) => {
-        if (!(node instanceof HTMLImageElement)) return
-        if (node.closest(".gh-root, .gh-user-query-markdown")) return
-        if (node.closest(".response-message-footer, .copy-response-button")) return
+    this.queryElementsIncludingSelf(
+      scope,
+      this.config.sitePrivateSelectors.assistantGeneratedImage,
+    ).forEach((node) => {
+      if (!(node instanceof HTMLImageElement)) return
+      if (node.closest(".gh-root, .gh-user-query-markdown")) return
+      if (node.closest(this.config.sitePrivateSelectors.assistantImageDecoration)) return
 
-        const source = this.extractQwenImageSource(node)
-        if (!source || seen.has(source)) return
+      const source = this.extractQwenImageSource(node)
+      if (!source || seen.has(source)) return
 
-        seen.add(source)
-        images.push({
-          source,
-          alt:
-            node.alt?.trim() ||
-            node.getAttribute("aria-label")?.trim() ||
-            `generated image ${images.length + 1}`,
-        })
-      },
-    )
+      seen.add(source)
+      images.push({
+        source,
+        alt:
+          node.alt?.trim() ||
+          node.getAttribute("aria-label")?.trim() ||
+          `generated image ${images.length + 1}`,
+      })
+    })
 
     return images
   }
@@ -1384,10 +1330,10 @@ export class QwenAiAdapter extends SiteAdapter {
   }
 
   private findUserMessageScope(element: Element): Element {
-    const root = element.closest(QWENAI_USER_MESSAGE_ROOT_SELECTOR)
+    const root = element.closest(this.config.sitePrivateSelectors.userMessageRoot)
     if (root) return root
-    if (element.matches(QWENAI_USER_MESSAGE_SELECTOR)) return element
-    return element.closest(QWENAI_USER_MESSAGE_SELECTOR) || element
+    if (element.matches(this.config.selectors.userQuery)) return element
+    return element.closest(this.config.selectors.userQuery) || element
   }
 
   private shouldSkipExportElement(element: Element): boolean {
@@ -1571,7 +1517,7 @@ export class QwenAiAdapter extends SiteAdapter {
   }
 
   private normalizeQwenCodeBlocks(root: HTMLElement): void {
-    const codeBlocks = Array.from(root.querySelectorAll(QWENAI_CODE_BLOCK_SELECTOR))
+    const codeBlocks = Array.from(root.querySelectorAll(this.config.sitePrivateSelectors.codeBlock))
 
     codeBlocks.forEach((block) => {
       const codeText = this.extractQwenCodeBlockText(block)
@@ -1595,7 +1541,7 @@ export class QwenAiAdapter extends SiteAdapter {
     const mermaidSource = this.extractQwenMermaidSource(block)
     if (mermaidSource) return mermaidSource
 
-    const lines = Array.from(block.querySelectorAll(".view-lines .view-line"))
+    const lines = Array.from(block.querySelectorAll(this.config.sitePrivateSelectors.codeLine))
       .map((line) => this.normalizeQwenCodeLineText(line.textContent || ""))
       .filter((line, index, arr) => !(index === arr.length - 1 && line === "" && arr.length > 1))
 
@@ -1605,8 +1551,8 @@ export class QwenAiAdapter extends SiteAdapter {
     }
 
     const fallbackBody =
-      block.querySelector(".qwen-markdown-code-body") ||
-      block.querySelector("[data-mode-id]") ||
+      block.querySelector(this.config.sitePrivateSelectors.codeBody) ||
+      block.querySelector(this.config.sitePrivateSelectors.codeBodyFallback) ||
       block
 
     const fallbackText = this.normalizeQwenCodeLineText(fallbackBody.textContent || "")
@@ -1623,15 +1569,12 @@ export class QwenAiAdapter extends SiteAdapter {
       candidates.push(element)
     }
 
-    const codeBody = block.querySelector(".qwen-markdown-code-body.mermaid")
+    const codeBody = block.querySelector(this.config.sitePrivateSelectors.mermaidCodeBody)
     pushCandidate(codeBody)
 
-    Array.from(block.querySelectorAll(".qwen-markdown-code-body.mermaid > div")).forEach((node) =>
-      pushCandidate(node),
-    )
-    Array.from(block.querySelectorAll("[data-mode-id='mermaid']")).forEach((node) =>
-      pushCandidate(node),
-    )
+    for (const selector of this.config.sitePrivateSelectors.mermaidCodeContent) {
+      Array.from(block.querySelectorAll(selector)).forEach((node) => pushCandidate(node))
+    }
 
     let bestSource: string | null = null
 
@@ -1652,10 +1595,9 @@ export class QwenAiAdapter extends SiteAdapter {
 
     if (headerText === "mermaid") return true
 
-    const codeBody = block.querySelector(".qwen-markdown-code-body")
-    if (codeBody?.classList.contains("mermaid")) return true
+    if (block.querySelector(this.config.sitePrivateSelectors.mermaidCodeBody)) return true
 
-    return block.querySelector(".qwen-markdown-mermaid-chart-wrapper") !== null
+    return block.querySelector(this.config.sitePrivateSelectors.mermaidChart) !== null
   }
 
   private extractQwenCodeLanguage(block: Element): string {
@@ -1663,7 +1605,9 @@ export class QwenAiAdapter extends SiteAdapter {
 
     if (headerText) return headerText
 
-    const body = block.querySelector(".qwen-markdown-code-body") as HTMLElement | null
+    const body = block.querySelector(
+      this.config.sitePrivateSelectors.codeBody,
+    ) as HTMLElement | null
     if (!body) return ""
 
     const classNames = Array.from(body.classList)
@@ -1677,13 +1621,15 @@ export class QwenAiAdapter extends SiteAdapter {
   }
 
   private extractQwenCodeHeaderLabel(block: Element): string {
-    const header = block.querySelector(".qwen-markdown-code-header") as HTMLElement | null
+    const header = block.querySelector(
+      this.config.sitePrivateSelectors.codeHeader,
+    ) as HTMLElement | null
     if (!header) return ""
 
     const directChildren = Array.from(header.children)
     for (const child of directChildren) {
       if (!(child instanceof HTMLElement)) continue
-      if (child.classList.contains("qwen-markdown-code-header-actions")) continue
+      if (child.matches(this.config.sitePrivateSelectors.codeHeaderActions)) continue
 
       const text = child.textContent?.trim() || ""
       if (text) return text
@@ -1694,7 +1640,7 @@ export class QwenAiAdapter extends SiteAdapter {
   }
 
   private extractQwenCodeLinesFromRoot(root: Element): string | null {
-    const lineNodes = Array.from(root.querySelectorAll(".view-lines .view-line"))
+    const lineNodes = Array.from(root.querySelectorAll(this.config.sitePrivateSelectors.codeLine))
     if (lineNodes.length === 0) return null
 
     const lines = lineNodes
@@ -1725,7 +1671,7 @@ export class QwenAiAdapter extends SiteAdapter {
   }
 
   private getThoughtBlocksForElement(element: Element): string[] {
-    const host = element.closest(QWENAI_ASSISTANT_MESSAGE_SELECTOR)
+    const host = element.closest(this.config.selectors.assistantResponse)
     return (
       this.exportThoughtBlocks.get(element) ||
       (host ? this.exportThoughtBlocks.get(host) : undefined) ||
@@ -1740,9 +1686,9 @@ export class QwenAiAdapter extends SiteAdapter {
   private async prepareMermaidBlocksForExport(): Promise<void> {
     this.clearMermaidExportMarkers()
 
-    const codeBlocks = Array.from(document.querySelectorAll(QWENAI_CODE_BLOCK_SELECTOR)).filter(
-      (block) => this.isQwenMermaidCodeBlock(block),
-    )
+    const codeBlocks = Array.from(
+      document.querySelectorAll(this.config.sitePrivateSelectors.codeBlock),
+    ).filter((block) => this.isQwenMermaidCodeBlock(block))
 
     for (const block of codeBlocks) {
       if (!(block instanceof HTMLElement)) continue
@@ -1778,7 +1724,7 @@ export class QwenAiAdapter extends SiteAdapter {
   private async restoreMermaidBlocksAfterExport(): Promise<void> {
     const blocks = Array.from(
       document.querySelectorAll(
-        `${QWENAI_CODE_BLOCK_SELECTOR}[${QWENAI_MERMAID_EXPORT_SWITCHED_ATTR}]`,
+        `${this.config.sitePrivateSelectors.codeBlock}[${QWENAI_MERMAID_EXPORT_SWITCHED_ATTR}]`,
       ),
     )
 
@@ -1797,21 +1743,25 @@ export class QwenAiAdapter extends SiteAdapter {
 
   private clearMermaidExportMarkers(): void {
     document
-      .querySelectorAll(`${QWENAI_CODE_BLOCK_SELECTOR}[${QWENAI_MERMAID_EXPORT_SWITCHED_ATTR}]`)
+      .querySelectorAll(
+        `${this.config.sitePrivateSelectors.codeBlock}[${QWENAI_MERMAID_EXPORT_SWITCHED_ATTR}]`,
+      )
       .forEach((node) => node.removeAttribute(QWENAI_MERMAID_EXPORT_SWITCHED_ATTR))
   }
 
   private getQwenMermaidActiveView(block: Element): "code" | "preview" | null {
-    const switcher = block.querySelector(QWENAI_MERMAID_SWITCH_SELECTOR)
+    const switcher = block.querySelector(this.config.sitePrivateSelectors.mermaidSwitch)
     if (!(switcher instanceof HTMLElement)) return null
 
-    const items = Array.from(switcher.querySelectorAll(QWENAI_MERMAID_SWITCH_ITEM_SELECTOR))
+    const items = Array.from(
+      switcher.querySelectorAll(this.config.sitePrivateSelectors.mermaidSwitchItem),
+    )
     for (const item of items) {
       if (!(item instanceof HTMLElement)) continue
       const text = item.textContent?.trim().toLowerCase() || ""
       if (!text) continue
 
-      if (item.className.includes("switch-active")) {
+      if (item.matches(this.config.sitePrivateSelectors.mermaidActiveSwitch)) {
         if (text.includes("code")) return "code"
         if (text.includes("preview")) return "preview"
       }
@@ -1821,10 +1771,12 @@ export class QwenAiAdapter extends SiteAdapter {
   }
 
   private findQwenMermaidViewTab(block: Element, target: "code" | "preview"): HTMLElement | null {
-    const switcher = block.querySelector(QWENAI_MERMAID_SWITCH_SELECTOR)
+    const switcher = block.querySelector(this.config.sitePrivateSelectors.mermaidSwitch)
     if (!(switcher instanceof HTMLElement)) return null
 
-    const items = Array.from(switcher.querySelectorAll(QWENAI_MERMAID_SWITCH_ITEM_SELECTOR))
+    const items = Array.from(
+      switcher.querySelectorAll(this.config.sitePrivateSelectors.mermaidSwitchItem),
+    )
     for (const item of items) {
       if (!(item instanceof HTMLElement)) continue
       const text = item.textContent?.trim().toLowerCase() || ""
@@ -1867,7 +1819,9 @@ export class QwenAiAdapter extends SiteAdapter {
   }
 
   private getQwenMermaidExpectedLineCount(block: Element): number {
-    const lineNumbers = Array.from(block.querySelectorAll(".margin-view-overlays .line-numbers"))
+    const lineNumbers = Array.from(
+      block.querySelectorAll(this.config.sitePrivateSelectors.codeLineNumber),
+    )
       .map((node) => parseInt(node.textContent?.trim() || "", 10))
       .filter((value) => Number.isFinite(value) && value > 0)
 
@@ -1914,14 +1868,15 @@ export class QwenAiAdapter extends SiteAdapter {
   }
 
   private findThoughtTriggerForMessage(message: Element): HTMLElement | null {
-    const candidates = Array.from(message.querySelectorAll(QWENAI_THOUGHT_TRIGGER_SELECTOR))
+    const privateSelectors = this.config.sitePrivateSelectors
+    const candidates = Array.from(message.querySelectorAll(privateSelectors.thoughtTrigger))
 
     for (const candidate of candidates) {
       if (!(candidate instanceof HTMLElement)) continue
       if (!this.isQwenElementVisible(candidate)) continue
 
       const title =
-        candidate.querySelector(QWENAI_THOUGHT_TITLE_SELECTOR)?.textContent?.trim() ||
+        candidate.querySelector(privateSelectors.thoughtTitle)?.textContent?.trim() ||
         candidate.textContent?.trim() ||
         ""
 
@@ -1937,7 +1892,7 @@ export class QwenAiAdapter extends SiteAdapter {
     const messageId = this.extractQwenAssistantMessageId(message)
     if (!messageId) return true
 
-    const phaseIds = Array.from(panel.querySelectorAll("[data-phase-id]"))
+    const phaseIds = Array.from(panel.querySelectorAll(this.config.sitePrivateSelectors.phaseId))
       .map((node) => node.getAttribute("data-phase-id")?.trim() || "")
       .filter(Boolean)
 
@@ -1948,8 +1903,9 @@ export class QwenAiAdapter extends SiteAdapter {
   private extractQwenAssistantMessageId(message: Element): string {
     const candidates = [
       message.id || "",
-      message.querySelector("[id^='chat-response-message-']")?.id || "",
-      message.querySelector("[id^='qwen-chat-message-assistant-']")?.id || "",
+      ...this.config.sitePrivateSelectors.assistantMessageId.map(
+        (selector) => message.querySelector(selector)?.id || "",
+      ),
     ]
 
     for (const candidate of candidates) {
@@ -1961,7 +1917,7 @@ export class QwenAiAdapter extends SiteAdapter {
   }
 
   private getVisibleThoughtPanel(): HTMLElement | null {
-    const panels = document.querySelectorAll(QWENAI_THOUGHT_PANEL_SELECTOR)
+    const panels = document.querySelectorAll(this.config.sitePrivateSelectors.thoughtPanel)
     for (const panel of Array.from(panels)) {
       if (this.isQwenElementVisible(panel)) return panel as HTMLElement
     }
@@ -1972,7 +1928,7 @@ export class QwenAiAdapter extends SiteAdapter {
     const target = panel || this.getVisibleThoughtPanel()
     if (!target) return null
 
-    const phaseIds = Array.from(target.querySelectorAll("[data-phase-id]"))
+    const phaseIds = Array.from(target.querySelectorAll(this.config.sitePrivateSelectors.phaseId))
       .map((node) => node.getAttribute("data-phase-id")?.trim() || "")
       .filter(Boolean)
     if (phaseIds.length > 0) {
@@ -2007,27 +1963,28 @@ export class QwenAiAdapter extends SiteAdapter {
   }
 
   private extractThoughtBlockquotesFromPanel(panel: Element): string[] {
+    const privateSelectors = this.config.sitePrivateSelectors
     const container =
-      panel.querySelector(QWENAI_THOUGHT_PANEL_CONTENT_SELECTOR) ||
-      panel.querySelector(".qwen-chat-thinking-and-sources-content") ||
+      panel.querySelector(privateSelectors.thoughtPanelContent) ||
+      panel.querySelector(privateSelectors.thoughtPanelContentFallback) ||
       panel
 
-    const cards = Array.from(container.querySelectorAll(".qwen-chat-thinking-status-card"))
+    const cards = Array.from(container.querySelectorAll(privateSelectors.thoughtPanelCards))
     const blocks: string[] = []
 
     for (const card of cards) {
       const contentRoot =
-        card.querySelector(".qwen-chat-thinking-status-card-content") ||
-        card.querySelector(".qwen-markdown")
+        card.querySelector(privateSelectors.thoughtCardContent) ||
+        card.querySelector(privateSelectors.thoughtMarkdown)
       if (!contentRoot) continue
 
-      const title = card.querySelector(QWENAI_THOUGHT_TITLE_SELECTOR)?.textContent?.trim() || ""
+      const title = card.querySelector(privateSelectors.thoughtTitle)?.textContent?.trim() || ""
 
       const clone = contentRoot.cloneNode(true) as HTMLElement
       this.normalizeQwenCodeBlocks(clone)
       clone
         .querySelectorAll(
-          `${QWENAI_THOUGHT_TITLE_SELECTOR}, button, [role='button'], svg, [aria-hidden='true']`,
+          `${privateSelectors.thoughtTitle}, button, [role='button'], svg, [aria-hidden='true']`,
         )
         .forEach((node) => node.remove())
 
@@ -2058,7 +2015,7 @@ export class QwenAiAdapter extends SiteAdapter {
     if (!panel) return
 
     const closeButton = panel.querySelector(
-      QWENAI_THOUGHT_PANEL_CLOSE_SELECTOR,
+      this.config.sitePrivateSelectors.thoughtPanelClose,
     ) as HTMLElement | null
     if (!closeButton || !this.isQwenElementVisible(closeButton)) return
 
@@ -2140,7 +2097,7 @@ export class QwenAiAdapter extends SiteAdapter {
     this.simulateClick(trigger)
 
     const primaryPopup = await this.waitForVisibleQwenModelPopup(
-      QWENAI_PRIMARY_MODEL_POPUP_SELECTOR,
+      this.config.sitePrivateSelectors.primaryModelPopup,
     )
     if (!primaryPopup) {
       return { success: false, reason: "menu_empty" }
@@ -2200,9 +2157,7 @@ export class QwenAiAdapter extends SiteAdapter {
   }
 
   private getQwenModelItems(popup: HTMLElement): HTMLElement[] {
-    const items = Array.from(
-      popup.querySelectorAll('[class*="model-list"] > [class*="model-item___"]'),
-    )
+    const items = Array.from(popup.querySelectorAll(this.config.sitePrivateSelectors.modelItem))
 
     return items.filter(
       (item): item is HTMLElement => item instanceof HTMLElement && this.isQwenElementVisible(item),
@@ -2232,16 +2187,19 @@ export class QwenAiAdapter extends SiteAdapter {
   }
 
   private getQwenModelItemName(item: HTMLElement): string {
-    const label =
-      item.querySelector('[class*="model-item-name"] > span') ||
-      item.querySelector('[class*="model-item-name"]') ||
-      item
+    let label: Element = item
+    for (const selector of this.config.sitePrivateSelectors.modelItemName) {
+      const candidate = item.querySelector(selector)
+      if (!candidate) continue
+      label = candidate
+      break
+    }
 
     return (label.textContent || "").trim()
   }
 
   private findQwenMoreTrigger(popup: HTMLElement): HTMLElement | null {
-    const trigger = popup.querySelector(QWENAI_MODEL_MORE_TRIGGER_SELECTOR)
+    const trigger = popup.querySelector(this.config.sitePrivateSelectors.modelMoreTrigger)
     if (trigger instanceof HTMLElement && this.isQwenElementVisible(trigger)) {
       return trigger
     }
@@ -2250,11 +2208,9 @@ export class QwenAiAdapter extends SiteAdapter {
 
   private async openQwenMoreMenu(trigger: HTMLElement): Promise<HTMLElement | null> {
     const targets: HTMLElement[] = [trigger]
-    const innerCandidates = [
-      trigger.querySelector('[class*="view-more___"]'),
-      trigger.querySelector('[class*="view-more-text"]'),
-      trigger.querySelector('[class*="view-more-icon"]'),
-    ]
+    const innerCandidates = this.config.sitePrivateSelectors.modelMoreInner.map((selector) =>
+      trigger.querySelector(selector),
+    )
 
     innerCandidates.forEach((node) => {
       if (node instanceof HTMLElement && !targets.includes(node)) {
@@ -2290,14 +2246,12 @@ export class QwenAiAdapter extends SiteAdapter {
   }
 
   private findVisibleQwenSecondaryPopup(trigger: HTMLElement): HTMLElement | null {
-    const nested = trigger.querySelector(
-      '.ant-dropdown:not(.ant-dropdown-hidden) [class*="model-selector-popup"][class*="secondary"]',
-    )
+    const nested = trigger.querySelector(this.config.sitePrivateSelectors.secondaryModelPopup)
     if (nested instanceof HTMLElement && this.isQwenElementVisible(nested)) {
       return nested
     }
 
-    return this.findVisibleQwenModelPopup(QWENAI_SECONDARY_MODEL_POPUP_SELECTOR)
+    return this.findVisibleQwenModelPopup(this.config.sitePrivateSelectors.secondaryModelPopup)
   }
 
   private dispatchQwenMoreMenuHover(element: HTMLElement): void {
@@ -2429,19 +2383,15 @@ export class QwenAiAdapter extends SiteAdapter {
   }
 
   private findUserContentRoot(element: Element): HTMLElement | null {
-    if (element.matches(QWENAI_USER_CONTENT_SELECTOR)) return element as HTMLElement
-    return (
-      (element.querySelector(QWENAI_USER_CONTENT_SELECTOR) as HTMLElement | null) ||
-      (element as HTMLElement)
-    )
+    const selector = this.config.sitePrivateSelectors.userContent
+    if (element.matches(selector)) return element as HTMLElement
+    return (element.querySelector(selector) as HTMLElement | null) || (element as HTMLElement)
   }
 
   private findAssistantContentRoot(element: Element): HTMLElement | null {
-    if (element.matches(QWENAI_ASSISTANT_CONTENT_SELECTOR)) return element as HTMLElement
-    return (
-      (element.querySelector(QWENAI_ASSISTANT_CONTENT_SELECTOR) as HTMLElement | null) ||
-      (element as HTMLElement)
-    )
+    const selector = this.config.sitePrivateSelectors.assistantContent
+    if (element.matches(selector)) return element as HTMLElement
+    return (element.querySelector(selector) as HTMLElement | null) || (element as HTMLElement)
   }
 
   private extractAssistantPlainText(element: Element): string {
@@ -2453,7 +2403,7 @@ export class QwenAiAdapter extends SiteAdapter {
 
     clone
       .querySelectorAll(
-        `${QWENAI_THINKING_CARD_SELECTOR}, ${QWENAI_RESPONSE_TOOLBAR_SELECTOR}, button, [role='button'], svg, [aria-hidden='true']`,
+        `${this.config.sitePrivateSelectors.thinkingCard}, ${this.config.sitePrivateSelectors.responseToolbar}, button, [role='button'], svg, [aria-hidden='true']`,
       )
       .forEach((node) => node.remove())
 
@@ -2461,15 +2411,16 @@ export class QwenAiAdapter extends SiteAdapter {
   }
 
   private findModelTrigger(): HTMLElement | null {
-    const trigger = document.querySelector(QWENAI_MODEL_TRIGGER_SELECTOR)
+    const privateSelectors = this.config.sitePrivateSelectors
+    const trigger = document.querySelector(privateSelectors.modelTrigger)
     if (trigger instanceof HTMLElement && this.isVisibleActionElement(trigger)) {
       return trigger
     }
 
-    const label = document.querySelector(QWENAI_MODEL_TEXT_SELECTOR) as HTMLElement | null
+    const label = document.querySelector(privateSelectors.modelText) as HTMLElement | null
     if (!label) return null
 
-    const closest = label.closest(".ant-dropdown-trigger, [role='button'], button, [tabindex]")
+    const closest = label.closest(privateSelectors.modelTriggerFallback)
     return closest instanceof HTMLElement ? closest : label
   }
 
@@ -2489,7 +2440,9 @@ export class QwenAiAdapter extends SiteAdapter {
       return stopButton
     }
 
-    const composerButton = document.querySelector(QWENAI_SEND_BUTTON_SELECTOR) as HTMLElement | null
+    const composerButton = document.querySelector(
+      this.config.sitePrivateSelectors.composerButton,
+    ) as HTMLElement | null
     if (
       this.isVisibleActionElement(composerButton) &&
       !this.isDisabledActionElement(composerButton) &&
