@@ -23,6 +23,7 @@ import { QueueDispatcher } from "~core/queue-dispatcher"
 import { QuickQuoteActions } from "~components/QuickQuoteActions"
 import { ensureGlobalThemeManager, type ThemeTransitionOrigin } from "~core/theme-manager"
 import { useEdgePeekController } from "~hooks/useEdgePeekController"
+import { useAdapterHealthCheck } from "~hooks/useAdapterHealthCheck"
 import { useShortcuts } from "~hooks/useShortcuts"
 import { platform } from "~platform"
 import {
@@ -405,6 +406,7 @@ export const App = () => {
 
   // 单例实例
   const adapter = useMemo(() => getAdapter(), [])
+  const adapterHealth = useAdapterHealthCheck(adapter)
   const sitePackDetection = useMemo(() => getSitePackDetectionState(), [])
   const siteInstanceKey = adapter?.getSiteInstanceKey() || "_default"
 
@@ -3174,6 +3176,9 @@ export const App = () => {
         conversationManager={conversationManager}
         outlineManager={outlineManager}
         adapter={adapter}
+        adapterHealth={adapterHealth.snapshot}
+        onCheckAdapterHealthUpdates={adapterHealth.checkConfigurationUpdates}
+        onReportAdapterHealthIssue={adapterHealth.openIssueReport}
         sitePackDetection={sitePackDetection}
         onSwitchDetectedSitePack={handleSwitchDetectedSitePack}
         onThemeToggle={handleThemeToggle}

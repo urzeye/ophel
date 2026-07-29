@@ -130,6 +130,21 @@ export const ja = {
   sitePackDetectSelectLabel: "検出済み SitePack を選択",
   sitePackDetectSwitch: "切り替えて再読み込み",
   sitePackDetectSwitching: "切り替え中…",
+  healthCheckTitle: "サイト適配が無効になっている可能性があります",
+  healthCheckUpdateAvailableDesc:
+    "{name} SitePack の更新（v{current} → v{latest}）を利用できます。設定更新を確認して適用してください。",
+  healthCheckSiteChangedDesc:
+    "現在の適配設定がページの主要要素と一致しません。サイトが変更された可能性があります。",
+  healthCheckLocalPackDesc:
+    "ローカルから読み込んだ SitePack v{version} を使用しています。自動更新されないため、問題を報告するか新しい JSON を読み込んでください。",
+  healthCheckFailedSelectorsLabel: "見つからない要素：",
+  healthCheckSelectorTextarea: "入力欄",
+  healthCheckSelectorResponseContainer: "応答コンテナ",
+  healthCheckSelectorChatContent: "会話内容",
+  healthCheckCheckUpdates: "設定更新を確認",
+  healthCheckReportIssue: "問題を報告",
+  healthCheckRecovered: "適配設定が更新され、サイトチェックが正常に戻りました",
+  healthCheckStillFailing: "設定の確認は完了しましたが、サイトはまだ一致しません",
 
   generalPageDesc: "拡張機能の動作とインターフェースの設定",
   appearancePageDesc: "視覚スタイルとテーマのカスタマイズ",

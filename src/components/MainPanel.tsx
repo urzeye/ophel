@@ -10,7 +10,12 @@ import React, {
 
 import type { SitePackDetectionState } from "~adapters"
 import type { SiteAdapter } from "~adapters/base"
-import type { SitePackCapability } from "~adapters/feature-capabilities"
+import {
+  createFeatureCapabilitiesFromSignature,
+  getFeatureCapabilitiesSignature,
+  type SitePackCapability,
+} from "~adapters/feature-capabilities"
+import type { HealthCheckSnapshot, HealthCheckUpdateResult } from "~core/health-check-manager"
 import {
   AnchorIcon,
   ConversationIcon,
@@ -54,6 +59,7 @@ import { LoadingOverlay } from "./LoadingOverlay"
 import { OutlineTab } from "./OutlineTab"
 import { PromptsTab } from "./PromptsTab"
 import { SitePackDetectionNotice } from "./SitePackDetectionNotice"
+import { SiteAdapterHealthNotice } from "./SiteAdapterHealthNotice"
 import { Tooltip } from "~components/ui/Tooltip"
 
 interface MainPanelProps {
@@ -66,6 +72,9 @@ interface MainPanelProps {
   conversationManager: ConversationManager
   outlineManager: OutlineManager
   adapter?: SiteAdapter | null
+  adapterHealth?: HealthCheckSnapshot
+  onCheckAdapterHealthUpdates?: () => Promise<HealthCheckUpdateResult>
+  onReportAdapterHealthIssue?: () => void
   sitePackDetection?: SitePackDetectionState | null
   onSwitchDetectedSitePack?: (packId: string) => Promise<void>
   onThemeToggle?: (event?: ThemeTransitionOrigin) => void
@@ -154,6 +163,9 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   conversationManager,
   outlineManager,
   adapter,
+  adapterHealth,
+  onCheckAdapterHealthUpdates,
+  onReportAdapterHealthIssue,
   sitePackDetection = null,
   onSwitchDetectedSitePack,
   onThemeToggle,
@@ -184,9 +196,12 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   const tabOrder = currentSettings.features?.order || DEFAULT_SETTINGS.features.order
   const siteId = adapter?.getSiteId() || "_default"
   const siteInstanceKey = adapter?.getSiteInstanceKey() || "_default"
+  const featureCapabilitiesSignature = getFeatureCapabilitiesSignature(
+    adapter?.getFeatureCapabilities() ?? [],
+  )
   const featureCapabilities = useMemo(
-    () => adapter?.getFeatureCapabilities() ?? new Set<SitePackCapability>(),
-    [adapter],
+    () => createFeatureCapabilitiesFromSignature(featureCapabilitiesSignature),
+    [featureCapabilitiesSignature],
   )
   const enforceFeatureCapabilities = Boolean(adapter && !isBuiltinSiteId(siteId))
   const visibleTabs = useMemo(
@@ -1535,6 +1550,13 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             {t("tip1", { modifier: isMacOS() ? "⌘ Cmd" : "Ctrl" })}
           </span>
         </div>
+        {adapterHealth && onCheckAdapterHealthUpdates && onReportAdapterHealthIssue && (
+          <SiteAdapterHealthNotice
+            snapshot={adapterHealth}
+            onCheckUpdates={onCheckAdapterHealthUpdates}
+            onReportIssue={onReportAdapterHealthIssue}
+          />
+        )}
         {onSwitchDetectedSitePack && (
           <SitePackDetectionNotice
             detection={sitePackDetection}

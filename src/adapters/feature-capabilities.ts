@@ -18,6 +18,16 @@ export const SITE_PACK_CAPABILITIES = [
 
 export type SitePackCapability = (typeof SITE_PACK_CAPABILITIES)[number]
 
+export function getFeatureCapabilitiesSignature(
+  capabilities: Iterable<SitePackCapability>,
+): string {
+  return Array.from(capabilities).sort().join("\u0000")
+}
+
+export function createFeatureCapabilitiesFromSignature(signature: string): Set<SitePackCapability> {
+  return new Set(signature ? (signature.split("\u0000") as SitePackCapability[]) : [])
+}
+
 /**
  * 内置适配器的真实功能能力表。
  *

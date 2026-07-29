@@ -131,6 +131,23 @@ export const de = {
   sitePackDetectSelectLabel: "Erkanntes SitePack auswählen",
   sitePackDetectSwitch: "Wechseln und neu laden",
   sitePackDetectSwitching: "Wird gewechselt…",
+  healthCheckTitle: "Die Website-Anpassung funktioniert möglicherweise nicht mehr",
+  healthCheckUpdateAvailableDesc:
+    "Ein neueres {name}-SitePack ist verfügbar (v{current} → v{latest}). Prüfe Konfigurationsupdates, um es anzuwenden.",
+  healthCheckSiteChangedDesc:
+    "Der aktuelle Adapter findet wichtige Seitenelemente nicht mehr. Die Website wurde möglicherweise geändert.",
+  healthCheckLocalPackDesc:
+    "Diese Website verwendet das lokal importierte SitePack v{version}, das nicht automatisch aktualisiert wird. Melde das Problem oder importiere eine neuere JSON-Datei.",
+  healthCheckFailedSelectorsLabel: "Nicht gefunden:",
+  healthCheckSelectorTextarea: "Eingabefeld",
+  healthCheckSelectorResponseContainer: "Antwortcontainer",
+  healthCheckSelectorChatContent: "Unterhaltungsinhalt",
+  healthCheckCheckUpdates: "Konfigurationsupdates prüfen",
+  healthCheckReportIssue: "Problem melden",
+  healthCheckRecovered:
+    "Die Adapterkonfiguration wurde aktualisiert und die Prüfung ist wieder erfolgreich",
+  healthCheckStillFailing:
+    "Die Konfigurationsprüfung ist beendet, aber die Website passt weiterhin nicht",
 
   generalPageDesc: "Verhalten der Erweiterung konfigurieren",
   appearancePageDesc: "Visuelle Stile und Themes anpassen",

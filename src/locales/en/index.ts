@@ -125,6 +125,21 @@ export const en = {
   sitePackDetectSelectLabel: "Choose a detected SitePack",
   sitePackDetectSwitch: "Switch and reload",
   sitePackDetectSwitching: "Switching…",
+  healthCheckTitle: "Site adaptation may be broken",
+  healthCheckUpdateAvailableDesc:
+    "A newer {name} SitePack is available (v{current} → v{latest}). Check configuration updates to apply it.",
+  healthCheckSiteChangedDesc:
+    "The current adapter no longer matches key page elements. The site may have changed.",
+  healthCheckLocalPackDesc:
+    "This site uses locally imported SitePack v{version}, which is not updated automatically. Report the problem or import a newer JSON file.",
+  healthCheckFailedSelectorsLabel: "Not found:",
+  healthCheckSelectorTextarea: "Editor",
+  healthCheckSelectorResponseContainer: "Response container",
+  healthCheckSelectorChatContent: "Conversation content",
+  healthCheckCheckUpdates: "Check configuration updates",
+  healthCheckReportIssue: "Report issue",
+  healthCheckRecovered: "The adapter configuration was updated and the site check recovered",
+  healthCheckStillFailing: "The configuration check finished, but the site still does not match",
 
   generalPageDesc: "Configure extension behavior and interface",
   appearancePageDesc: "Customize visual styles and themes",

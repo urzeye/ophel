@@ -117,6 +117,20 @@ export const zhTW = {
   sitePackDetectSelectLabel: "選擇偵測到的適配包",
   sitePackDetectSwitch: "切換並重新整理",
   sitePackDetectSwitching: "切換中…",
+  healthCheckTitle: "網站適配可能已失效",
+  healthCheckUpdateAvailableDesc:
+    "找到可用的 {name} 適配包更新（v{current} → v{latest}）。檢查設定更新即可套用。",
+  healthCheckSiteChangedDesc: "目前的適配設定無法比對頁面關鍵元素，網站可能已改版。",
+  healthCheckLocalPackDesc:
+    "目前使用本機匯入的適配包 v{version}，不會自動更新。可回報問題或匯入較新的 JSON 檔案。",
+  healthCheckFailedSelectorsLabel: "找不到：",
+  healthCheckSelectorTextarea: "輸入框",
+  healthCheckSelectorResponseContainer: "回覆容器",
+  healthCheckSelectorChatContent: "對話內容",
+  healthCheckCheckUpdates: "檢查設定更新",
+  healthCheckReportIssue: "回報問題",
+  healthCheckRecovered: "設定已更新，網站自我檢查已恢復正常",
+  healthCheckStillFailing: "設定檢查已完成，但網站仍未匹配",
 
   generalPageDesc: "配置擴充功能的基本行為和介面",
   appearancePageDesc: "自定義擴充功能的視覺樣式和主題",

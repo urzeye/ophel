@@ -130,6 +130,21 @@ export const ru = {
   sitePackDetectSelectLabel: "Выбрать обнаруженный SitePack",
   sitePackDetectSwitch: "Переключить и обновить",
   sitePackDetectSwitching: "Переключение…",
+  healthCheckTitle: "Адаптация сайта могла перестать работать",
+  healthCheckUpdateAvailableDesc:
+    "Доступен более новый SitePack {name} (v{current} → v{latest}). Проверьте обновления конфигурации, чтобы применить его.",
+  healthCheckSiteChangedDesc:
+    "Текущий адаптер больше не находит ключевые элементы страницы. Возможно, сайт изменился.",
+  healthCheckLocalPackDesc:
+    "Этот сайт использует локально импортированный SitePack v{version}, который не обновляется автоматически. Сообщите о проблеме или импортируйте более новый JSON.",
+  healthCheckFailedSelectorsLabel: "Не найдены:",
+  healthCheckSelectorTextarea: "Поле ввода",
+  healthCheckSelectorResponseContainer: "Контейнер ответов",
+  healthCheckSelectorChatContent: "Содержимое диалога",
+  healthCheckCheckUpdates: "Проверить обновления конфигурации",
+  healthCheckReportIssue: "Сообщить о проблеме",
+  healthCheckRecovered: "Конфигурация обновлена, и проверка сайта снова проходит успешно",
+  healthCheckStillFailing: "Проверка завершена, но сайт по-прежнему не соответствует конфигурации",
 
   generalPageDesc: "Настройте поведение расширения и интерфейс",
   appearancePageDesc: "Персонализация стилей и тем",

@@ -9,12 +9,11 @@ import {
   type InstalledSitePack,
   type PackManagerSnapshot,
 } from "~core/pack-manager"
-import { loadActiveSiteConfigPatch } from "~core/remote-config-cache"
 import { createRuntimePackManager } from "~core/pack-manager-runtime"
 import { primeDynamicPlatforms } from "~core/platform-catalog"
+import { applyCachedBuiltinAdapterConfig } from "~core/site-adapter-config-runtime"
 import type { SitePackOriginBindingsState } from "~core/site-pack-origin-bindings"
 import { platform } from "~platform"
-import { APP_VERSION } from "~utils/config"
 
 import { AIStudioAdapter } from "./aistudio"
 import { SiteAdapter } from "./base"
@@ -28,13 +27,7 @@ import { GeminiEnterpriseAdapter } from "./gemini-enterprise"
 import { GrokAdapter } from "./grok"
 import { ImaAdapter } from "./ima"
 import { KimiAdapter } from "./kimi"
-import {
-  applyMergedConfig,
-  DeclarativeAdapter,
-  resolveSiteConfig,
-  supportsBuiltinSiteConfig,
-  type SiteConfigPatch,
-} from "./declarative"
+import { applyMergedConfig, DeclarativeAdapter, supportsBuiltinSiteConfig } from "./declarative"
 import { waitForSitePackDetectMatches, type SitePackDetectIssue } from "./declarative/detect"
 import { QianwenAdapter } from "./qianwen"
 import { QwenAiAdapter } from "./qwen-studio"
@@ -75,29 +68,15 @@ async function applyCachedBuiltinPatches(): Promise<void> {
     if (!supportsBuiltinSiteConfig(adapter)) continue
 
     const siteId = adapter.getSiteId()
-    let remotePatch: SiteConfigPatch | undefined
     try {
-      remotePatch = await loadActiveSiteConfigPatch(platform.storage, siteId)
+      await applyCachedBuiltinAdapterConfig(adapter, platform.storage)
     } catch (error) {
       applyMergedConfig(adapter, adapter.getBuiltinConfig())
       console.error(
         `[Ophel] Failed to load cached patch for ${siteId}; using built-in config:`,
         error,
       )
-      continue
     }
-    const resolved = resolveSiteConfig({
-      siteId,
-      appVersion: APP_VERSION,
-      configVersion: adapter.getBuiltinConfigVersion(),
-      baseConfig: adapter.getBuiltinConfig(),
-      remotePatch,
-    })
-
-    if (remotePatch && resolved.remotePatch.status !== "applied") {
-      console.warn(`[Ophel] Cached patch was not applied for ${siteId}:`, resolved.remotePatch)
-    }
-    applyMergedConfig(adapter, resolved.config)
   }
 }
 
@@ -126,7 +105,10 @@ const createDynamicAdapterEntries = (
 
   for (const pack of installedPacks) {
     try {
-      entries.push({ adapter: new DeclarativeAdapter(pack.manifest), pack })
+      entries.push({
+        adapter: new DeclarativeAdapter(pack.manifest, { installSource: pack.source }),
+        pack,
+      })
     } catch (error) {
       console.error(
         `[Ophel] Failed to initialize SitePack ${pack.manifest.id}; skipping package:`,
@@ -187,7 +169,12 @@ async function loadDynamicAdapters(): Promise<DynamicAdapterLoadResult> {
 
     try {
       return {
-        adapters: [new DeclarativeAdapter(entry.pack.manifest, { explicitOrigin: currentOrigin })],
+        adapters: [
+          new DeclarativeAdapter(entry.pack.manifest, {
+            explicitOrigin: currentOrigin,
+            installSource: entry.pack.source,
+          }),
+        ],
         packs: acceptedPacks,
       }
     } catch (error) {
@@ -224,7 +211,12 @@ async function loadDynamicAdapters(): Promise<DynamicAdapterLoadResult> {
 
   const detectedAdapters = detection.matches.flatMap((pack) => {
     try {
-      return [new DeclarativeAdapter(pack.manifest, { detectedOrigin: currentOrigin })]
+      return [
+        new DeclarativeAdapter(pack.manifest, {
+          detectedOrigin: currentOrigin,
+          installSource: pack.source,
+        }),
+      ]
     } catch (error) {
       console.error(
         `[Ophel] Failed to initialize detected SitePack ${pack.manifest.id} on ${currentOrigin}:`,

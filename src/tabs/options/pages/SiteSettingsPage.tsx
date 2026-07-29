@@ -6,7 +6,11 @@
 import React, { useEffect, useMemo, useState } from "react"
 
 import type { SiteAdapter } from "~adapters/base"
-import type { SitePackCapability } from "~adapters/feature-capabilities"
+import {
+  createFeatureCapabilitiesFromSignature,
+  getFeatureCapabilitiesSignature,
+  type SitePackCapability,
+} from "~adapters/feature-capabilities"
 import { PageContentIcon as LayoutIcon } from "~components/icons"
 import { NumberInput, Slider } from "~components/ui"
 import { LAYOUT_CONFIG, SITE_IDS, SITE_SETTINGS_TAB_IDS, isBuiltinSiteId } from "~constants"
@@ -69,9 +73,12 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
   initialTab,
   modelLockContent,
 }) => {
+  const featureCapabilitiesSignature = getFeatureCapabilitiesSignature(
+    adapter?.getFeatureCapabilities() ?? [],
+  )
   const featureCapabilities = useMemo(
-    () => adapter?.getFeatureCapabilities() ?? new Set<SitePackCapability>(),
-    [adapter],
+    () => createFeatureCapabilitiesFromSignature(featureCapabilitiesSignature),
+    [featureCapabilitiesSignature],
   )
   const isCommunitySitePack = Boolean(adapter && !isBuiltinSiteId(siteId))
   const supportsFeature = (capability: SitePackCapability): boolean =>

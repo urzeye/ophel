@@ -132,6 +132,22 @@ export const it = {
   sitePackDetectSelectLabel: "Scegli un SitePack rilevato",
   sitePackDetectSwitch: "Cambia e ricarica",
   sitePackDetectSwitching: "Cambio in corso…",
+  healthCheckTitle: "L'adattamento del sito potrebbe non funzionare",
+  healthCheckUpdateAvailableDesc:
+    "È disponibile un SitePack {name} più recente (v{current} → v{latest}). Controlla gli aggiornamenti della configurazione per applicarlo.",
+  healthCheckSiteChangedDesc:
+    "L'adattatore attuale non corrisponde più agli elementi principali della pagina. Il sito potrebbe essere cambiato.",
+  healthCheckLocalPackDesc:
+    "Questo sito usa il SitePack v{version} importato localmente, che non si aggiorna automaticamente. Segnala il problema o importa un JSON più recente.",
+  healthCheckFailedSelectorsLabel: "Non trovati:",
+  healthCheckSelectorTextarea: "Editor",
+  healthCheckSelectorResponseContainer: "Contenitore risposte",
+  healthCheckSelectorChatContent: "Contenuto conversazione",
+  healthCheckCheckUpdates: "Controlla aggiornamenti configurazione",
+  healthCheckReportIssue: "Segnala problema",
+  healthCheckRecovered:
+    "La configurazione è stata aggiornata e il controllo del sito è ripristinato",
+  healthCheckStillFailing: "Il controllo è terminato, ma il sito non corrisponde ancora",
 
   generalPageDesc: "Configura il comportamento e l'interfaccia dell'estensione",
   appearancePageDesc: "Personalizza stili e temi visivi",

@@ -41,6 +41,13 @@ interface OutlineCandidate {
 export interface DeclarativeAdapterOptions {
   explicitOrigin?: string
   detectedOrigin?: string
+  installSource?: "registry" | "local"
+}
+
+export interface DeclarativeAdapterPackageMetadata {
+  id: string
+  version: number
+  source?: "registry" | "local"
 }
 
 const isTextControl = (element: HTMLElement): element is TextControl =>
@@ -102,33 +109,65 @@ const normalizeElementText = (element: Element | null): string | null => {
 
 /** 把已通过校验的 SitePack manifest 显式映射到现有 SiteAdapter API。 */
 export class DeclarativeAdapter extends SiteAdapter {
-  private readonly conversationIdPattern: RegExp | null
-  private readonly sessionIdPattern: RegExp | null
-  private readonly newConversationPathPatterns: RegExp[] | null
-  private readonly featureCapabilities: ReadonlySet<SitePackCapability>
+  private manifest: SitePackManifest
+  private conversationIdPattern: RegExp | null = null
+  private sessionIdPattern: RegExp | null = null
+  private newConversationPathPatterns: RegExp[] | null = null
+  private featureCapabilities: ReadonlySet<SitePackCapability> = new Set()
   private readonly explicitOrigin?: string
   private readonly detectedOrigin?: string
+  private readonly installSource?: "registry" | "local"
 
-  constructor(
-    private readonly manifest: SitePackManifest,
-    options: DeclarativeAdapterOptions = {},
-  ) {
+  constructor(manifest: SitePackManifest, options: DeclarativeAdapterOptions = {}) {
     super()
     if (options.explicitOrigin !== undefined && options.detectedOrigin !== undefined) {
       throw new TypeError("Declarative adapter cannot be both explicit and detected")
     }
     this.explicitOrigin = options.explicitOrigin
     this.detectedOrigin = options.detectedOrigin
-    this.featureCapabilities = new Set(manifest.capabilities)
-    this.conversationIdPattern = manifest.conversation
-      ? new RegExp(manifest.conversation.idFrom.regex)
+    this.installSource = options.installSource
+    this.manifest = structuredClone(manifest)
+    this.rebuildManifestState()
+  }
+
+  private rebuildManifestState(): void {
+    this.featureCapabilities = new Set(this.manifest.capabilities)
+    this.conversationIdPattern = this.manifest.conversation
+      ? new RegExp(this.manifest.conversation.idFrom.regex)
       : null
-    this.sessionIdPattern = manifest.session?.idFromPathRegex
-      ? new RegExp(manifest.session.idFromPathRegex)
+    this.sessionIdPattern = this.manifest.session?.idFromPathRegex
+      ? new RegExp(this.manifest.session.idFromPathRegex)
       : null
-    this.newConversationPathPatterns = manifest.session?.newConversationPathPatterns
-      ? manifest.session.newConversationPathPatterns.map((pattern) => new RegExp(pattern))
+    this.newConversationPathPatterns = this.manifest.session?.newConversationPathPatterns
+      ? this.manifest.session.newConversationPathPatterns.map((pattern) => new RegExp(pattern))
       : null
+    this.textarea = null
+  }
+
+  getSitePackMetadata(): DeclarativeAdapterPackageMetadata {
+    return {
+      id: this.manifest.id,
+      version: this.manifest.version,
+      ...(this.installSource ? { source: this.installSource } : {}),
+    }
+  }
+
+  applySitePackManifest(manifest: SitePackManifest): boolean {
+    if (manifest.id !== this.manifest.id) {
+      throw new TypeError(
+        `Cannot replace SitePack ${this.manifest.id} with a different package: ${manifest.id}`,
+      )
+    }
+    if (manifest.version < this.manifest.version) {
+      throw new TypeError(
+        `Cannot roll back SitePack ${manifest.id}: ${manifest.version} < ${this.manifest.version}`,
+      )
+    }
+    if (manifest.version === this.manifest.version) return false
+
+    this.manifest = structuredClone(manifest)
+    this.rebuildManifestState()
+    return true
   }
 
   match(): boolean {

@@ -8,7 +8,11 @@ import React, {
   useSyncExternalStore,
 } from "react"
 
-import type { SitePackCapability } from "~adapters/feature-capabilities"
+import {
+  createFeatureCapabilitiesFromSignature,
+  getFeatureCapabilitiesSignature,
+  type SitePackCapability,
+} from "~adapters/feature-capabilities"
 import { getAdapter } from "~adapters/index"
 import { ThemeDarkIcon, ThemeLightIcon, EyeClosedIcon } from "~components/icons"
 import { LoadingOverlay } from "~components/LoadingOverlay"
@@ -164,9 +168,12 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   const proximityRadius = quickButtonsSettings.proximityRadius ?? 150
   const siteId = adapter?.getSiteId() || "_default"
   const siteInstanceKey = adapter?.getSiteInstanceKey() || "_default"
+  const featureCapabilitiesSignature = getFeatureCapabilitiesSignature(
+    adapter?.getFeatureCapabilities() ?? [],
+  )
   const featureCapabilities = useMemo(
-    () => adapter?.getFeatureCapabilities() ?? new Set<SitePackCapability>(),
-    [adapter],
+    () => createFeatureCapabilitiesFromSignature(featureCapabilitiesSignature),
+    [featureCapabilitiesSignature],
   )
   const enforceFeatureCapabilities = Boolean(adapter && !isBuiltinSiteId(siteId))
   const supportsCapability = useCallback(

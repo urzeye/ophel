@@ -126,6 +126,21 @@ export const ko = {
   sitePackDetectSelectLabel: "감지된 SitePack 선택",
   sitePackDetectSwitch: "전환 후 새로 고침",
   sitePackDetectSwitching: "전환 중…",
+  healthCheckTitle: "사이트 어댑터가 더 이상 작동하지 않을 수 있습니다",
+  healthCheckUpdateAvailableDesc:
+    "새 {name} SitePack 업데이트(v{current} → v{latest})를 사용할 수 있습니다. 구성 업데이트를 확인해 적용하세요.",
+  healthCheckSiteChangedDesc:
+    "현재 어댑터 구성이 페이지의 핵심 요소와 일치하지 않습니다. 사이트가 변경되었을 수 있습니다.",
+  healthCheckLocalPackDesc:
+    "로컬에서 가져온 SitePack v{version}을 사용 중이며 자동으로 업데이트되지 않습니다. 문제를 보고하거나 새 JSON 파일을 가져오세요.",
+  healthCheckFailedSelectorsLabel: "찾을 수 없음:",
+  healthCheckSelectorTextarea: "입력창",
+  healthCheckSelectorResponseContainer: "응답 컨테이너",
+  healthCheckSelectorChatContent: "대화 내용",
+  healthCheckCheckUpdates: "구성 업데이트 확인",
+  healthCheckReportIssue: "문제 보고",
+  healthCheckRecovered: "어댑터 구성이 업데이트되어 사이트 검사가 정상으로 돌아왔습니다",
+  healthCheckStillFailing: "구성 확인이 끝났지만 사이트가 여전히 일치하지 않습니다",
 
   generalPageDesc: "확장 프로그램 동작 및 인터페이스 구성",
   appearancePageDesc: "시각적 스타일 및 테마 사용자 정의",
