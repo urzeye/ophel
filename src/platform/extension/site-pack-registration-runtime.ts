@@ -1,8 +1,9 @@
-import type { InstalledSitePack, PackManager } from "~core/pack-manager"
+import type { PackManager } from "~core/pack-manager"
 
 import {
   createSitePackRegistrationManager,
   type ManifestContentScriptDescriptor,
+  type SitePackOriginPermissionRequestContext,
 } from "./site-pack-registration"
 import { extensionStorage } from "./storage"
 
@@ -88,12 +89,12 @@ const waitForPermissionWindow = async (
   })
 
 const requestSitePackOrigins = async (
-  pack: InstalledSitePack,
+  context: SitePackOriginPermissionRequestContext,
   origins: readonly string[],
 ): Promise<boolean> => {
   const params = new URLSearchParams({
     type: "sitePack",
-    name: pack.manifest.name,
+    name: context.name,
   })
   origins.forEach((origin) => params.append("origin", origin))
   const position = await getPermissionWindowPosition()

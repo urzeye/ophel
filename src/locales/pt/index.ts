@@ -96,6 +96,30 @@ export const pt = {
   sitePacksLocalUpdateHint: "Atualize importando um arquivo JSON local mais recente",
   sitePacksRequiresNewerApp: "Requer Ophel {version} ou posterior",
   sitePacksMatchesCount: "{count} padrões correspondentes",
+  sitePacksCustomOriginsTitle: "Origens personalizadas",
+  sitePacksCustomOriginsDesc:
+    "Vincule uma origem HTTPS auto-hospedada a um pacote instalado ou ao pool de detecção compartilhado.",
+  sitePacksCustomOriginLabel: "Origem HTTPS",
+  sitePacksCustomOriginPlaceholder: "https://chat.example.com",
+  sitePacksBindingModeLabel: "Modo de vínculo",
+  sitePacksBindingModeExplicit: "Pacote explícito",
+  sitePacksBindingModeDetect: "Pool de detecção",
+  sitePacksBindingPackLabel: "SitePack",
+  sitePacksBindingPackPlaceholder: "Escolha um pacote instalado",
+  sitePacksBindingEmpty: "Nenhuma origem personalizada vinculada",
+  sitePacksBindingHint:
+    "Digite uma origem HTTPS exata, por exemplo https://chat.example.com. Caminhos e curingas não são aceitos.",
+  sitePacksBindingDetectUnavailable:
+    "O modo de detecção fica disponível quando um pacote instalado declara regras de detecção.",
+  sitePacksBindingDetectPool: "Pool de detecção compartilhado",
+  sitePacksBindingPermissionDenied:
+    "A permissão para {origin} não foi concedida, então o vínculo não foi salvo.",
+  sitePacksBindingUserscriptHint:
+    "Salvo. Os gerenciadores de userscript ainda precisam incluir este domínio na lista de correspondências do script.",
+  sitePacksBindingPackRequired: "Escolha um SitePack instalado para o modo explícito.",
+  sitePacksBindingDetectRequired:
+    "Instale um SitePack com regras de detecção antes de usar este modo.",
+  sitePacksBindingReferences: "{count} referências",
 
   generalPageDesc: "Configurar o comportamento da extensão",
   appearancePageDesc: "Personalizar estilos visuais e temas",

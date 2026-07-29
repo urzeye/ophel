@@ -9,6 +9,7 @@ import type {
   SitePackOriginBindingIssue,
   SitePackOriginReferenceEntry,
 } from "~core/site-pack-origin-references"
+import type { SitePackOriginBinding } from "~core/site-pack-origin-bindings"
 
 /**
  * 存储接口
@@ -110,6 +111,11 @@ export interface SitePackRuntimeStatus {
 
 export interface PlatformSitePacks {
   ensureOrigins(packId: string): Promise<SitePackOriginPermissionResult>
+  ensureBindingOrigin(
+    origin: string,
+    binding: SitePackOriginBinding,
+    requestName: string,
+  ): Promise<SitePackOriginPermissionResult>
   reconcile(): Promise<SitePackRuntimeStatus>
 }
 

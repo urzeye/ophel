@@ -13,6 +13,7 @@ import type {
 } from "../types"
 import {
   MSG_CHECK_REMOTE_CONFIG,
+  MSG_ENSURE_SITE_PACK_BINDING_ORIGIN,
   MSG_ENSURE_SITE_PACK_ORIGINS,
   MSG_GET_REMOTE_CONFIG_STATE,
   MSG_IGNORE_REMOTE_CONFIG_PATCH,
@@ -78,6 +79,21 @@ export const platform: Platform = {
       if (response.granted === true) return "ready"
       if (response.granted === false) return "denied"
       throw new Error("SitePack origin authorization returned no result")
+    },
+
+    async ensureBindingOrigin(origin, binding, requestName) {
+      const response = await sendToBackground({
+        type: MSG_ENSURE_SITE_PACK_BINDING_ORIGIN,
+        origin,
+        binding,
+        requestName,
+      })
+      if (!response.success) {
+        throw new Error(response.error || "Failed to authorize SitePack binding origin")
+      }
+      if (response.granted === true) return "ready"
+      if (response.granted === false) return "denied"
+      throw new Error("SitePack binding origin authorization returned no result")
     },
 
     async reconcile() {

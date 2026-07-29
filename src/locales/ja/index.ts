@@ -94,6 +94,30 @@ export const ja = {
   sitePacksLocalUpdateHint: "新しいローカル JSON ファイルを読み込んで更新",
   sitePacksRequiresNewerApp: "Ophel {version} 以降が必要です",
   sitePacksMatchesCount: "{count} 件のマッチパターン",
+  sitePacksCustomOriginsTitle: "カスタムドメイン",
+  sitePacksCustomOriginsDesc:
+    "自分でホストする HTTPS ドメインを、インストール済みパックまたは共有検出プールに割り当てます。",
+  sitePacksCustomOriginLabel: "HTTPS ドメイン",
+  sitePacksCustomOriginPlaceholder: "https://chat.example.com",
+  sitePacksBindingModeLabel: "割り当てモード",
+  sitePacksBindingModeExplicit: "パックを指定",
+  sitePacksBindingModeDetect: "検出プール",
+  sitePacksBindingPackLabel: "SitePack",
+  sitePacksBindingPackPlaceholder: "インストール済みパックを選択",
+  sitePacksBindingEmpty: "カスタムドメインはありません",
+  sitePacksBindingHint:
+    "https://chat.example.com のような正確な HTTPS ドメインを入力してください。パスとワイルドカードは使えません。",
+  sitePacksBindingDetectUnavailable:
+    "インストール済みパックに検出ルールが宣言されるまで、検出モードは利用できません。",
+  sitePacksBindingDetectPool: "共有検出プール",
+  sitePacksBindingPermissionDenied:
+    "{origin} の権限が許可されなかったため、割り当ては保存されませんでした。",
+  sitePacksBindingUserscriptHint:
+    "保存しました。ユーザースクリプト管理画面でも、このドメインをスクリプトのマッチリストに追加する必要があります。",
+  sitePacksBindingPackRequired: "パック指定モードでは、インストール済みパックを選択してください。",
+  sitePacksBindingDetectRequired:
+    "検出モードを使うには、検出ルールを持つ SitePack をインストールしてください。",
+  sitePacksBindingReferences: "{count} 件の参照",
 
   generalPageDesc: "拡張機能の動作とインターフェースの設定",
   appearancePageDesc: "視覚スタイルとテーマのカスタマイズ",

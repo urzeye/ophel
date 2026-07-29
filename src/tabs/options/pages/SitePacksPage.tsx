@@ -8,11 +8,11 @@ import React, {
 } from "react"
 
 import { resolveSitePackDescription, resolveSitePackName } from "~adapters/declarative/localization"
-import { siteMatchPatternOriginPattern } from "~adapters/declarative/match-pattern"
+import { siteMatchPatternOriginPatternCovers } from "~adapters/declarative/match-pattern"
 import type { SitePackManifest } from "~adapters/declarative/types"
 import { SITE_PACK_MAX_BYTES, type SitePackValidationError } from "~adapters/declarative/validate"
 import { DeleteIcon, ImportIcon, InfoIcon, JSONFileIcon, RefreshIcon } from "~components/icons"
-import { Button, Switch } from "~components/ui"
+import { Button, Input, SelectDropdown, Switch, type SelectDropdownOption } from "~components/ui"
 import {
   INSTALLED_SITE_PACKS_STORAGE_KEY,
   isInstalledSitePackEffectivelyEnabled,
@@ -21,6 +21,14 @@ import {
   type PackManagerIssue,
 } from "~core/pack-manager"
 import { createRuntimePackManager } from "~core/pack-manager-runtime"
+import {
+  canonicalizeSitePackBindingOrigin,
+  createEmptySitePackOriginBindingsState,
+  type SitePackOriginBinding,
+  type SitePackOriginBindingsState,
+} from "~core/site-pack-origin-bindings"
+import { sitePackBindingOriginPattern } from "~core/site-pack-origin-references"
+import { SITE_PACK_ORIGIN_BINDINGS_STORAGE_KEY } from "~core/site-pack-storage-constants"
 import {
   REMOTE_CONFIG_STORAGE_KEY,
   type RemoteConfigState,
@@ -262,6 +270,9 @@ const SitePacksPage: React.FC = () => {
   const confirmationTriggerRef = useRef<HTMLElement | null>(null)
   const busyKeysRef = useRef<Set<string>>(new Set())
   const [installedPacks, setInstalledPacks] = useState<InstalledSitePack[]>([])
+  const [originBindings, setOriginBindings] = useState<SitePackOriginBindingsState>(
+    createEmptySitePackOriginBindingsState,
+  )
   const [snapshotIssues, setSnapshotIssues] = useState<PackManagerIssue[]>([])
   const [remoteState, setRemoteState] = useState<RemoteConfigState | null>(null)
   const [runtimeStatus, setRuntimeStatus] = useState<SitePackRuntimeStatus>({
@@ -271,14 +282,19 @@ const SitePacksPage: React.FC = () => {
     bindingIssues: [],
   })
   const [isInstalledLoading, setIsInstalledLoading] = useState(true)
+  const [isBindingsLoading, setIsBindingsLoading] = useState(true)
   const [isRegistryLoading, setIsRegistryLoading] = useState(true)
   const [isRuntimeLoading, setIsRuntimeLoading] = useState(true)
   const [installedError, setInstalledError] = useState<string | null>(null)
+  const [bindingsError, setBindingsError] = useState<string | null>(null)
   const [registryError, setRegistryError] = useState<string | null>(null)
   const [runtimeError, setRuntimeError] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<FeedbackState | null>(null)
   const [busyKeys, setBusyKeys] = useState<ReadonlySet<string>>(() => new Set())
   const [confirmation, setConfirmation] = useState<ConfirmationState | null>(null)
+  const [bindingOrigin, setBindingOrigin] = useState("")
+  const [bindingMode, setBindingMode] = useState<SitePackOriginBinding["mode"]>("explicit")
+  const [bindingPackId, setBindingPackId] = useState("")
 
   const beginBusy = useCallback((key: string): boolean => {
     const current = busyKeysRef.current
@@ -320,6 +336,42 @@ const SitePacksPage: React.FC = () => {
     () => new Map(installedPacks.map((pack) => [pack.manifest.id, pack] as const)),
     [installedPacks],
   )
+  const detectPacks = useMemo(
+    () => sortedInstalledPacks.filter((pack) => Boolean(pack.manifest.detect?.length)),
+    [sortedInstalledPacks],
+  )
+  const bindingModeOptions: SelectDropdownOption[] = [
+    { value: "explicit", label: t("sitePacksBindingModeExplicit") },
+    {
+      value: "detect",
+      label: t("sitePacksBindingModeDetect"),
+      disabled: detectPacks.length === 0,
+    },
+  ]
+  const bindingPackOptions = useMemo<SelectDropdownOption[]>(
+    () =>
+      sortedInstalledPacks.map((pack) => ({
+        value: pack.manifest.id,
+        label: resolveSitePackName(pack.manifest, currentLanguage),
+        title: pack.manifest.id,
+      })),
+    [currentLanguage, sortedInstalledPacks],
+  )
+  const sortedOriginBindings = useMemo(
+    () =>
+      Object.entries(originBindings.bindings).sort(([left], [right]) => left.localeCompare(right)),
+    [originBindings.bindings],
+  )
+  const canonicalFormOrigin = useMemo(() => {
+    try {
+      return canonicalizeSitePackBindingOrigin(bindingOrigin)
+    } catch {
+      return null
+    }
+  }, [bindingOrigin])
+  const isUpdatingBinding = Boolean(
+    canonicalFormOrigin && originBindings.bindings[canonicalFormOrigin],
+  )
   const registryViews = useMemo(
     () => buildRegistrySitePackViews(remoteState, installedPacks, currentLanguage),
     [currentLanguage, installedPacks, remoteState],
@@ -327,14 +379,15 @@ const SitePacksPage: React.FC = () => {
   const permissionReviewPacks = useMemo(() => {
     const missingOrigins = new Set(runtimeStatus.missingPermissionOrigins)
     if (missingOrigins.size === 0) return []
-    return sortedInstalledPacks.filter(
-      (pack) =>
-        isInstalledSitePackEffectivelyEnabled(pack) &&
-        pack.manifest.matches.some((match) =>
-          missingOrigins.has(siteMatchPatternOriginPattern(match)),
-        ),
+    const packIds = new Set(
+      runtimeStatus.originReferences
+        .filter((entry) => missingOrigins.has(entry.originPattern))
+        .flatMap((entry) => entry.references.map((reference) => reference.packId)),
     )
-  }, [runtimeStatus.missingPermissionOrigins, sortedInstalledPacks])
+    return sortedInstalledPacks.filter(
+      (pack) => isInstalledSitePackEffectivelyEnabled(pack) && packIds.has(pack.manifest.id),
+    )
+  }, [runtimeStatus.missingPermissionOrigins, runtimeStatus.originReferences, sortedInstalledPacks])
   const isRegistryBusy = useMemo(() => Array.from(busyKeys).some(isRegistryBusyKey), [busyKeys])
   const isImportBusy = useMemo(
     () =>
@@ -345,6 +398,10 @@ const SitePacksPage: React.FC = () => {
   )
   const isPackBusy = useCallback(
     (packId: string) => Array.from(busyKeys).some((key) => getBusyPackId(key) === packId),
+    [busyKeys],
+  )
+  const isBindingBusy = useMemo(
+    () => Array.from(busyKeys).some((key) => key.startsWith("binding:")),
     [busyKeys],
   )
   const getConfirmationFocusFallback = useCallback(
@@ -388,6 +445,24 @@ const SitePacksPage: React.FC = () => {
     }
   }, [])
 
+  const loadOriginBindings = useCallback(
+    async (showLoading = false) => {
+      if (showLoading) setIsBindingsLoading(true)
+      try {
+        const state = await packManager.getOriginBindings()
+        setOriginBindings(state)
+        setBindingsError(null)
+        return state
+      } catch (error) {
+        setBindingsError(t("sitePacksLoadFailed", { error: getErrorMessage(error) }))
+        return null
+      } finally {
+        if (showLoading) setIsBindingsLoading(false)
+      }
+    },
+    [packManager],
+  )
+
   const syncRuntimeStatus = useCallback(async () => {
     const status = await platform.sitePacks.reconcile()
     setRuntimeStatus(status)
@@ -411,21 +486,35 @@ const SitePacksPage: React.FC = () => {
   )
 
   useEffect(() => {
-    void Promise.all([loadInstalledPacks(true), loadRegistryState(true), loadRuntimeStatus(true)])
-  }, [loadInstalledPacks, loadRegistryState, loadRuntimeStatus])
+    void Promise.all([
+      loadInstalledPacks(true),
+      loadOriginBindings(true),
+      loadRegistryState(true),
+      loadRuntimeStatus(true),
+    ])
+  }, [loadInstalledPacks, loadOriginBindings, loadRegistryState, loadRuntimeStatus])
+
+  useEffect(() => {
+    if (bindingPackId && installedById.has(bindingPackId)) return
+    setBindingPackId(sortedInstalledPacks[0]?.manifest.id ?? "")
+  }, [bindingPackId, installedById, sortedInstalledPacks])
 
   useEffect(() => {
     const stopInstalledWatch = platform.storage.watch(INSTALLED_SITE_PACKS_STORAGE_KEY, () => {
-      void Promise.all([loadInstalledPacks(), loadRuntimeStatus()])
+      void Promise.all([loadInstalledPacks(), loadOriginBindings(), loadRuntimeStatus()])
+    })
+    const stopBindingsWatch = platform.storage.watch(SITE_PACK_ORIGIN_BINDINGS_STORAGE_KEY, () => {
+      void Promise.all([loadOriginBindings(), loadRuntimeStatus()])
     })
     const stopRegistryWatch = platform.storage.watch(REMOTE_CONFIG_STORAGE_KEY, () => {
       void loadRegistryState()
     })
     return () => {
       stopInstalledWatch()
+      stopBindingsWatch()
       stopRegistryWatch()
     }
-  }, [loadInstalledPacks, loadRegistryState, loadRuntimeStatus])
+  }, [loadInstalledPacks, loadOriginBindings, loadRegistryState, loadRuntimeStatus])
 
   const closeConfirmation = useCallback(() => setConfirmation(null), [])
 
@@ -446,6 +535,115 @@ const SitePacksPage: React.FC = () => {
       }),
     })
   }, [])
+
+  const rollbackOriginBinding = useCallback(
+    async (
+      origin: string,
+      previousBinding: SitePackOriginBinding | undefined,
+      operationError: unknown,
+    ): Promise<never> => {
+      try {
+        if (previousBinding) {
+          await packManager.setOriginBinding(origin, previousBinding)
+        } else {
+          await packManager.removeOriginBinding(origin)
+        }
+        await syncRuntimeStatus()
+        await loadOriginBindings()
+      } catch (rollbackError) {
+        throw new Error(
+          `SitePack origin binding operation failed: ${getErrorMessage(operationError)}; rollback failed: ${getErrorMessage(rollbackError)}`,
+        )
+      }
+      throw operationError
+    },
+    [loadOriginBindings, packManager, syncRuntimeStatus],
+  )
+
+  const handleSaveOriginBinding = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const key = "binding:save"
+    if (!beginBusy(key)) return
+    setFeedback(null)
+
+    let origin: string | null = null
+    let previousBinding: SitePackOriginBinding | undefined
+    let shouldRollback = false
+    try {
+      origin = canonicalizeSitePackBindingOrigin(bindingOrigin)
+      const binding: SitePackOriginBinding =
+        bindingMode === "explicit"
+          ? { mode: "explicit", packId: bindingPackId }
+          : { mode: "detect" }
+
+      if (binding.mode === "explicit" && !installedById.has(binding.packId)) {
+        throw new Error(t("sitePacksBindingPackRequired"))
+      }
+      if (binding.mode === "detect" && detectPacks.length === 0) {
+        throw new Error(t("sitePacksBindingDetectRequired"))
+      }
+
+      previousBinding = originBindings.bindings[origin]
+      const requestName =
+        binding.mode === "explicit"
+          ? resolveSitePackName(installedById.get(binding.packId)!.manifest, getCurrentLang())
+          : t("sitePacksBindingModeDetect")
+      const permission = await platform.sitePacks.ensureBindingOrigin(origin, binding, requestName)
+      if (permission === "denied") {
+        setFeedback({
+          tone: "error",
+          message: t("sitePacksBindingPermissionDenied", { origin }),
+        })
+        return
+      }
+
+      shouldRollback = true
+      await packManager.setOriginBinding(origin, binding)
+      await syncRuntimeStatus()
+      await loadOriginBindings()
+      shouldRollback = false
+      setBindingOrigin(origin)
+      setFeedback({
+        tone: permission === "unsupported" ? "neutral" : "success",
+        message:
+          permission === "unsupported" ? t("sitePacksBindingUserscriptHint") : t("saveSuccess"),
+      })
+    } catch (error) {
+      if (shouldRollback && origin) {
+        try {
+          await rollbackOriginBinding(origin, previousBinding, error)
+        } catch (rollbackResult) {
+          setOperationError(rollbackResult)
+        }
+      } else {
+        setOperationError(error)
+      }
+    } finally {
+      endBusy(key)
+    }
+  }
+
+  const handleRemoveOriginBinding = async (origin: string) => {
+    const key = `binding:remove:${origin}`
+    if (!beginBusy(key)) return
+    setFeedback(null)
+
+    const previousBinding = originBindings.bindings[origin]
+    try {
+      await packManager.removeOriginBinding(origin)
+      try {
+        await syncRuntimeStatus()
+        await loadOriginBindings()
+      } catch (error) {
+        await rollbackOriginBinding(origin, previousBinding, error)
+      }
+      setFeedback({ tone: "success", message: t("deleteSuccess") })
+    } catch (error) {
+      setOperationError(error)
+    } finally {
+      endBusy(key)
+    }
+  }
 
   const rollbackRuntimeActivation = useCallback(
     async (packIds: readonly string[], activationError: unknown): Promise<never> => {
@@ -769,6 +967,82 @@ const SitePacksPage: React.FC = () => {
     )
   }
 
+  const renderOriginBinding = ([origin, binding]: [string, SitePackOriginBinding]) => {
+    const originPattern = sitePackBindingOriginPattern(origin)
+    const referenceEntry = runtimeStatus.originReferences.find(
+      (entry) => entry.originPattern === originPattern,
+    )
+    const issue = runtimeStatus.bindingIssues.find((candidate) => candidate.origin === origin)
+    const missingPermission = runtimeStatus.missingPermissionOrigins.includes(originPattern)
+    const active = runtimeStatus.activeOrigins.some((activeOrigin) =>
+      siteMatchPatternOriginPatternCovers(activeOrigin, originPattern),
+    )
+    const status = issue
+      ? { tone: "danger", label: t("sitePacksStatusIncompatible") }
+      : missingPermission
+        ? { tone: "warning", label: t("notGranted") }
+        : active
+          ? { tone: "success", label: t("sitePacksStatusAvailable") }
+          : { tone: "neutral", label: t("sitePacksStatusDisabled") }
+    const explicitPack = binding.mode === "explicit" ? installedById.get(binding.packId) : undefined
+    const referenceNames = Array.from(
+      new Set(
+        (referenceEntry?.references ?? []).map((reference) => {
+          const pack = installedById.get(reference.packId)
+          return pack ? resolveSitePackName(pack.manifest, currentLanguage) : reference.packId
+        }),
+      ),
+    )
+    const summary =
+      binding.mode === "explicit"
+        ? explicitPack
+          ? resolveSitePackName(explicitPack.manifest, currentLanguage)
+          : binding.packId
+        : referenceNames.length > 0
+          ? referenceNames.join(", ")
+          : t("sitePacksBindingDetectPool")
+    const busy = busyKeys.has(`binding:remove:${origin}`)
+
+    return (
+      <div className="settings-pack-binding-item" key={origin}>
+        <div className="settings-pack-binding-info">
+          <div className="settings-pack-title-line">
+            <code className="settings-pack-binding-origin">{origin}</code>
+            <span className="settings-pack-badge neutral">
+              {t(
+                binding.mode === "explicit"
+                  ? "sitePacksBindingModeExplicit"
+                  : "sitePacksBindingModeDetect",
+              )}
+            </span>
+            <span className={`settings-pack-badge ${status.tone}`}>{status.label}</span>
+          </div>
+          <div className="settings-pack-binding-summary">{summary}</div>
+          <div className="settings-pack-meta">
+            <span>{originPattern}</span>
+            {referenceEntry && (
+              <span>
+                {t("sitePacksBindingReferences", {
+                  count: String(referenceEntry.referenceCount),
+                })}
+              </span>
+            )}
+          </div>
+        </div>
+        <Button
+          type="button"
+          size="sm"
+          variant="danger"
+          className="settings-pack-action-button"
+          disabled={busy || isBindingBusy}
+          onClick={() => void handleRemoveOriginBinding(origin)}>
+          <DeleteIcon size={13} />
+          {t("delete")}
+        </Button>
+      </div>
+    )
+  }
+
   const renderInstalledPack = (pack: InstalledSitePack) => {
     const packId = pack.manifest.id
     const status = getInstalledPackStatus(pack)
@@ -921,7 +1195,7 @@ const SitePacksPage: React.FC = () => {
       ref={pageRef}
       className="settings-pack-page"
       tabIndex={-1}
-      aria-busy={isInstalledLoading || isRegistryLoading || isRuntimeLoading}>
+      aria-busy={isInstalledLoading || isBindingsLoading || isRegistryLoading || isRuntimeLoading}>
       <PageTitle title={t("navSitePacks")} Icon={JSONFileIcon} />
       <p className="settings-page-desc">{t("sitePacksPageDesc")}</p>
 
@@ -1026,6 +1300,113 @@ const SitePacksPage: React.FC = () => {
                 </li>
               ))}
             </ul>
+          </div>
+        )}
+      </section>
+
+      <section
+        className="settings-card settings-pack-section"
+        aria-labelledby="site-packs-custom-origins-title">
+        <div className="settings-pack-section-header">
+          <div>
+            <h2 id="site-packs-custom-origins-title">{t("sitePacksCustomOriginsTitle")}</h2>
+            <p>{t("sitePacksCustomOriginsDesc")}</p>
+          </div>
+        </div>
+
+        {bindingsError && (
+          <div className="settings-pack-inline-error" role="alert">
+            <span>{bindingsError}</span>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              onClick={() => void loadOriginBindings(true)}>
+              {t("refresh")}
+            </Button>
+          </div>
+        )}
+
+        <form
+          className="settings-pack-binding-form"
+          onSubmit={(event) => void handleSaveOriginBinding(event)}>
+          <label className="settings-pack-binding-field">
+            <span>{t("sitePacksCustomOriginLabel")}</span>
+            <Input
+              className="settings-pack-binding-input"
+              type="url"
+              inputMode="url"
+              value={bindingOrigin}
+              placeholder={t("sitePacksCustomOriginPlaceholder")}
+              disabled={isBindingBusy}
+              onChange={(event) => setBindingOrigin(event.target.value)}
+              aria-label={t("sitePacksCustomOriginLabel")}
+            />
+          </label>
+          <div className="settings-pack-binding-options">
+            <div className="settings-pack-binding-field">
+              <span>{t("sitePacksBindingModeLabel")}</span>
+              <SelectDropdown
+                className="settings-select-dropdown settings-pack-binding-select"
+                buttonClassName="settings-select"
+                options={bindingModeOptions}
+                value={bindingMode}
+                disabled={isBindingBusy}
+                ariaLabel={t("sitePacksBindingModeLabel")}
+                onChange={(value) => setBindingMode(value as SitePackOriginBinding["mode"])}
+              />
+            </div>
+            {bindingMode === "explicit" && (
+              <div className="settings-pack-binding-field">
+                <span>{t("sitePacksBindingPackLabel")}</span>
+                <SelectDropdown
+                  className="settings-select-dropdown settings-pack-binding-select"
+                  buttonClassName="settings-select"
+                  options={bindingPackOptions}
+                  value={bindingPackId}
+                  placeholder={t("sitePacksBindingPackPlaceholder")}
+                  emptyText={t("sitePacksBindingPackPlaceholder")}
+                  disabled={isBindingBusy || bindingPackOptions.length === 0}
+                  ariaLabel={t("sitePacksBindingPackLabel")}
+                  onChange={setBindingPackId}
+                />
+              </div>
+            )}
+            <Button
+              type="submit"
+              size="sm"
+              variant="primary"
+              className="settings-pack-action-button settings-pack-binding-submit"
+              disabled={isBindingBusy || isBindingsLoading || isInstalledLoading}>
+              {isUpdatingBinding ? t("sitePacksUpdate") : t("add")}
+            </Button>
+          </div>
+          <p className="settings-pack-binding-hint">{t("sitePacksBindingHint")}</p>
+          {detectPacks.length === 0 && (
+            <p className="settings-pack-binding-hint warning">
+              {t("sitePacksBindingDetectUnavailable")}
+            </p>
+          )}
+          {platform.type === "userscript" && (
+            <p className="settings-pack-binding-hint warning">
+              {t("sitePacksBindingUserscriptHint")}
+            </p>
+          )}
+        </form>
+
+        {isBindingsLoading ? (
+          <SitePackListSkeleton />
+        ) : sortedOriginBindings.length === 0 ? (
+          <div className="settings-pack-empty-state settings-pack-binding-empty">
+            <InfoIcon size={24} />
+            <div>
+              <strong>{t("sitePacksBindingEmpty")}</strong>
+              <p>{t("sitePacksBindingHint")}</p>
+            </div>
+          </div>
+        ) : (
+          <div className="settings-pack-binding-list">
+            {sortedOriginBindings.map((entry) => renderOriginBinding(entry))}
           </div>
         )}
       </section>

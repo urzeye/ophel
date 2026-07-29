@@ -38,6 +38,10 @@ interface OutlineCandidate {
   isUserQuery: boolean
 }
 
+export interface DeclarativeAdapterOptions {
+  explicitOrigin?: string
+}
+
 const isTextControl = (element: HTMLElement): element is TextControl =>
   element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement
 
@@ -101,9 +105,14 @@ export class DeclarativeAdapter extends SiteAdapter {
   private readonly sessionIdPattern: RegExp | null
   private readonly newConversationPathPatterns: RegExp[] | null
   private readonly featureCapabilities: ReadonlySet<SitePackCapability>
+  private readonly explicitOrigin?: string
 
-  constructor(private readonly manifest: SitePackManifest) {
+  constructor(
+    private readonly manifest: SitePackManifest,
+    options: DeclarativeAdapterOptions = {},
+  ) {
     super()
+    this.explicitOrigin = options.explicitOrigin
     this.featureCapabilities = new Set(manifest.capabilities)
     this.conversationIdPattern = manifest.conversation
       ? new RegExp(manifest.conversation.idFrom.regex)
@@ -118,6 +127,7 @@ export class DeclarativeAdapter extends SiteAdapter {
 
   match(): boolean {
     const url = new URL(window.location.href)
+    if (this.explicitOrigin !== undefined) return url.origin === this.explicitOrigin
     return this.manifest.matches.some((pattern) => siteMatchPatternMatchesUrl(url, pattern))
   }
 
@@ -126,6 +136,7 @@ export class DeclarativeAdapter extends SiteAdapter {
   }
 
   canClaimLegacySiteData(): boolean {
+    if (this.explicitOrigin !== undefined) return false
     if (
       this.manifest.matches.length === 0 ||
       this.manifest.matches.some((match) => /^https:\/\/\*\./i.test(match))

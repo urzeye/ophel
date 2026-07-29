@@ -97,6 +97,30 @@ export const fr = {
   sitePacksLocalUpdateHint: "Mettre à jour en important un fichier JSON local plus récent",
   sitePacksRequiresNewerApp: "Nécessite Ophel {version} ou une version ultérieure",
   sitePacksMatchesCount: "{count} motifs correspondants",
+  sitePacksCustomOriginsTitle: "Origines personnalisées",
+  sitePacksCustomOriginsDesc:
+    "Associez une origine HTTPS auto-hébergée à un pack installé ou au pool de détection partagé.",
+  sitePacksCustomOriginLabel: "Origine HTTPS",
+  sitePacksCustomOriginPlaceholder: "https://chat.example.com",
+  sitePacksBindingModeLabel: "Mode d'association",
+  sitePacksBindingModeExplicit: "Pack explicite",
+  sitePacksBindingModeDetect: "Pool de détection",
+  sitePacksBindingPackLabel: "SitePack",
+  sitePacksBindingPackPlaceholder: "Choisir un pack installé",
+  sitePacksBindingEmpty: "Aucune origine personnalisée associée",
+  sitePacksBindingHint:
+    "Saisissez une origine HTTPS exacte, par exemple https://chat.example.com. Les chemins et les caractères génériques sont refusés.",
+  sitePacksBindingDetectUnavailable:
+    "Le mode détection sera disponible lorsqu'un pack installé déclarera des règles de détection.",
+  sitePacksBindingDetectPool: "Pool de détection partagé",
+  sitePacksBindingPermissionDenied:
+    "L'autorisation pour {origin} n'a pas été accordée ; l'association n'a pas été enregistrée.",
+  sitePacksBindingUserscriptHint:
+    "Enregistré. Les gestionnaires userscript doivent aussi ajouter ce domaine à la liste des correspondances du script.",
+  sitePacksBindingPackRequired: "Choisissez un SitePack installé pour le mode explicite.",
+  sitePacksBindingDetectRequired:
+    "Installez un SitePack avec des règles de détection avant d'utiliser ce mode.",
+  sitePacksBindingReferences: "{count} références",
 
   generalPageDesc: "Configurer le comportement de l'extension",
   appearancePageDesc: "Personnaliser les styles visuels et les thèmes",

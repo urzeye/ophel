@@ -95,6 +95,30 @@ export const de = {
   sitePacksLocalUpdateHint: "Durch Import einer neueren lokalen JSON-Datei aktualisieren",
   sitePacksRequiresNewerApp: "Erfordert Ophel {version} oder neuer",
   sitePacksMatchesCount: "{count} passende Muster",
+  sitePacksCustomOriginsTitle: "Benutzerdefinierte Ursprünge",
+  sitePacksCustomOriginsDesc:
+    "Eine selbst gehostete HTTPS-Quelle mit einem installierten Pack oder dem gemeinsamen Erkennungspool verknüpfen.",
+  sitePacksCustomOriginLabel: "HTTPS-Ursprung",
+  sitePacksCustomOriginPlaceholder: "https://chat.example.com",
+  sitePacksBindingModeLabel: "Verknüpfungsmodus",
+  sitePacksBindingModeExplicit: "Explizites Pack",
+  sitePacksBindingModeDetect: "Erkennungspool",
+  sitePacksBindingPackLabel: "SitePack",
+  sitePacksBindingPackPlaceholder: "Installiertes Pack auswählen",
+  sitePacksBindingEmpty: "Keine benutzerdefinierten Ursprünge verknüpft",
+  sitePacksBindingHint:
+    "Gib einen exakten HTTPS-Ursprung ein, z. B. https://chat.example.com. Pfade und Platzhalter sind nicht zulässig.",
+  sitePacksBindingDetectUnavailable:
+    "Der Erkennungsmodus ist verfügbar, sobald ein installiertes Pack Erkennungsregeln enthält.",
+  sitePacksBindingDetectPool: "Gemeinsamer Erkennungspool",
+  sitePacksBindingPermissionDenied:
+    "Die Berechtigung für {origin} wurde nicht erteilt; die Verknüpfung wurde nicht gespeichert.",
+  sitePacksBindingUserscriptHint:
+    "Gespeichert. Userscript-Manager müssen diese Domain weiterhin in die Match-Liste des Scripts aufnehmen.",
+  sitePacksBindingPackRequired: "Wähle für den expliziten Modus ein installiertes SitePack aus.",
+  sitePacksBindingDetectRequired:
+    "Installiere vor dem Erkennungsmodus ein SitePack mit Erkennungsregeln.",
+  sitePacksBindingReferences: "{count} Referenzen",
 
   generalPageDesc: "Verhalten der Erweiterung konfigurieren",
   appearancePageDesc: "Visuelle Stile und Themes anpassen",

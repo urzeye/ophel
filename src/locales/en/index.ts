@@ -90,6 +90,29 @@ export const en = {
   sitePacksLocalUpdateHint: "Update by importing a newer local JSON file",
   sitePacksRequiresNewerApp: "Requires Ophel {version} or newer",
   sitePacksMatchesCount: "{count} match patterns",
+  sitePacksCustomOriginsTitle: "Custom origins",
+  sitePacksCustomOriginsDesc:
+    "Bind a self-hosted HTTPS origin to one installed pack or the shared detect pool.",
+  sitePacksCustomOriginLabel: "HTTPS origin",
+  sitePacksCustomOriginPlaceholder: "https://chat.example.com",
+  sitePacksBindingModeLabel: "Binding mode",
+  sitePacksBindingModeExplicit: "Explicit pack",
+  sitePacksBindingModeDetect: "Detect pool",
+  sitePacksBindingPackLabel: "SitePack",
+  sitePacksBindingPackPlaceholder: "Choose an installed pack",
+  sitePacksBindingEmpty: "No custom origins bound",
+  sitePacksBindingHint:
+    "Enter an exact HTTPS origin, for example https://chat.example.com. Paths and wildcards are not accepted.",
+  sitePacksBindingDetectUnavailable:
+    "Detect mode is unavailable until an installed pack declares detect rules.",
+  sitePacksBindingDetectPool: "Shared detect pool",
+  sitePacksBindingPermissionDenied:
+    "Permission for {origin} was not granted, so the binding was not saved.",
+  sitePacksBindingUserscriptHint:
+    "Saved. Userscript managers still need this domain in the script's match list.",
+  sitePacksBindingPackRequired: "Choose an installed SitePack for explicit mode.",
+  sitePacksBindingDetectRequired: "Install a SitePack with detect rules before using detect mode.",
+  sitePacksBindingReferences: "{count} references",
 
   generalPageDesc: "Configure extension behavior and interface",
   appearancePageDesc: "Customize visual styles and themes",

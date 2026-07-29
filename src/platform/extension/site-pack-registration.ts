@@ -1,12 +1,18 @@
 import { isSiteMatchPatternOriginPattern } from "~adapters/declarative/match-pattern"
-import type { InstalledSitePack, PackManager, PackManagerIssue } from "~core/pack-manager"
+import type { PackManager, PackManagerIssue } from "~core/pack-manager"
 import {
   collapseCoveredSitePackOriginPatterns,
   deriveSitePackOriginReferences,
   getSitePackReferencedOriginPatterns,
+  sitePackBindingOriginPattern,
   type SitePackOriginBindingIssue,
   type SitePackOriginReferenceEntry,
 } from "~core/site-pack-origin-references"
+import {
+  canonicalizeSitePackBindingOrigin,
+  parseSitePackOriginBinding,
+  type SitePackOriginBinding,
+} from "~core/site-pack-origin-bindings"
 import { SITE_PACK_REGISTRATION_STATE_STORAGE_KEY } from "~core/site-pack-storage-constants"
 import type { PlatformStorage } from "~platform/types"
 
@@ -55,13 +61,20 @@ export interface SitePackPermissionsApi {
   remove(origins: string[]): Promise<boolean>
 }
 
+export interface SitePackOriginPermissionRequestContext {
+  name: string
+}
+
 export interface SitePackRegistrationManagerOptions {
   packManager: Pick<PackManager, "getOriginBindings" | "getSnapshot">
   storage: PlatformStorage
   scripting: SitePackScriptingApi
   permissions: SitePackPermissionsApi
   getManifestContentScripts(): readonly ManifestContentScriptDescriptor[]
-  requestOrigins(pack: InstalledSitePack, origins: readonly string[]): Promise<boolean>
+  requestOrigins(
+    context: SitePackOriginPermissionRequestContext,
+    origins: readonly string[],
+  ): Promise<boolean>
 }
 
 export interface EnsureSitePackOriginsResult {
@@ -320,15 +333,11 @@ export const createSitePackRegistrationManager = (options: SitePackRegistrationM
   const hasOriginPermission = (origin: string): Promise<boolean> =>
     options.permissions.contains([origin])
 
-  const ensurePackOriginsInternal = async (
-    packId: string,
+  const ensureOriginPatternsInternal = async (
+    context: SitePackOriginPermissionRequestContext,
+    requestedOrigins: readonly string[],
   ): Promise<EnsureSitePackOriginsResult> => {
-    const snapshot = await options.packManager.getSnapshot()
-    const pack = snapshot.packs.find((candidate) => candidate.manifest.id === packId)
-    if (!pack) throw new Error(`Installed SitePack not found: ${packId}`)
-
-    const bindingState = await options.packManager.getOriginBindings()
-    const origins = getSitePackReferencedOriginPatterns(pack, bindingState)
+    const origins = uniqueSorted(requestedOrigins)
     const missingOrigins: string[] = []
     for (const origin of origins) {
       if (!(await hasOriginPermission(origin))) missingOrigins.push(origin)
@@ -338,7 +347,7 @@ export const createSitePackRegistrationManager = (options: SitePackRegistrationM
     }
 
     const state = await loadState()
-    const granted = await options.requestOrigins(pack, missingOrigins)
+    const granted = await options.requestOrigins(context, missingOrigins)
     if (!granted) return { granted: false, origins, missingOrigins }
 
     for (const origin of missingOrigins) {
@@ -352,7 +361,18 @@ export const createSitePackRegistrationManager = (options: SitePackRegistrationM
       await saveState(nextManagedOrigins)
     } catch (error) {
       try {
-        await options.permissions.remove(missingOrigins)
+        const removed = await options.permissions.remove(missingOrigins)
+        if (!removed) {
+          const retainedOrigins: string[] = []
+          for (const origin of missingOrigins) {
+            if (await hasOriginPermission(origin)) retainedOrigins.push(origin)
+          }
+          if (retainedOrigins.length > 0) {
+            throw new Error(
+              `Failed to roll back SitePack origin permissions: ${retainedOrigins.join(", ")}`,
+            )
+          }
+        }
       } catch (rollbackError) {
         throw new Error(
           `Failed to persist SitePack permission ownership: ${String(error)}; permission rollback failed: ${String(rollbackError)}`,
@@ -362,6 +382,45 @@ export const createSitePackRegistrationManager = (options: SitePackRegistrationM
     }
 
     return { granted: true, origins, missingOrigins: [] }
+  }
+
+  const ensurePackOriginsInternal = async (
+    packId: string,
+  ): Promise<EnsureSitePackOriginsResult> => {
+    const snapshot = await options.packManager.getSnapshot()
+    const pack = snapshot.packs.find((candidate) => candidate.manifest.id === packId)
+    if (!pack) throw new Error(`Installed SitePack not found: ${packId}`)
+
+    const bindingState = await options.packManager.getOriginBindings()
+    const origins = getSitePackReferencedOriginPatterns(pack, bindingState)
+    return ensureOriginPatternsInternal({ name: pack.manifest.name }, origins)
+  }
+
+  const ensureBindingOriginInternal = async (
+    origin: string,
+    binding: SitePackOriginBinding,
+    requestName: string,
+  ): Promise<EnsureSitePackOriginsResult> => {
+    const canonicalOrigin = canonicalizeSitePackBindingOrigin(origin)
+    const parsedBinding = parseSitePackOriginBinding(binding)
+    const normalizedName = requestName.trim()
+    if (!normalizedName || normalizedName.length > 120) {
+      throw new Error("SitePack binding permission request name must contain 1-120 characters")
+    }
+
+    const snapshot = await options.packManager.getSnapshot()
+    if (parsedBinding.mode === "explicit") {
+      const pack = snapshot.packs.find(
+        (candidate) => candidate.manifest.id === parsedBinding.packId,
+      )
+      if (!pack) throw new Error(`Installed SitePack not found: ${parsedBinding.packId}`)
+    } else if (!snapshot.packs.some((pack) => pack.manifest.detect?.length)) {
+      throw new Error("At least one installed SitePack with detect rules is required")
+    }
+
+    return ensureOriginPatternsInternal({ name: normalizedName }, [
+      sitePackBindingOriginPattern(canonicalOrigin),
+    ])
   }
 
   const reconcileInternal = async (): Promise<ReconcileSitePackRegistrationsResult> => {
@@ -416,7 +475,10 @@ export const createSitePackRegistrationManager = (options: SitePackRegistrationM
         continue
       }
       if (stillGranted) {
-        await options.permissions.remove([origin])
+        const removed = await options.permissions.remove([origin])
+        if (!removed && (await hasOriginPermission(origin))) {
+          throw new Error(`Failed to revoke SitePack-managed origin permission: ${origin}`)
+        }
       }
     }
     if (
@@ -465,6 +527,14 @@ export const createSitePackRegistrationManager = (options: SitePackRegistrationM
   return {
     ensurePackOrigins(packId: string): Promise<EnsureSitePackOriginsResult> {
       return enqueue(() => ensurePackOriginsInternal(packId))
+    },
+
+    ensureBindingOrigin(
+      origin: string,
+      binding: SitePackOriginBinding,
+      requestName: string,
+    ): Promise<EnsureSitePackOriginsResult> {
+      return enqueue(() => ensureBindingOriginInternal(origin, binding, requestName))
     },
 
     reconcile(): Promise<ReconcileSitePackRegistrationsResult> {

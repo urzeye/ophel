@@ -91,6 +91,29 @@ export const ko = {
   sitePacksLocalUpdateHint: "더 최신의 로컬 JSON 파일을 가져와 업데이트",
   sitePacksRequiresNewerApp: "Ophel {version} 이상 필요",
   sitePacksMatchesCount: "일치 패턴 {count}개",
+  sitePacksCustomOriginsTitle: "사용자 지정 도메인",
+  sitePacksCustomOriginsDesc:
+    "직접 호스팅한 HTTPS 도메인을 설치된 팩 하나 또는 공유 감지 풀에 연결합니다.",
+  sitePacksCustomOriginLabel: "HTTPS 도메인",
+  sitePacksCustomOriginPlaceholder: "https://chat.example.com",
+  sitePacksBindingModeLabel: "연결 모드",
+  sitePacksBindingModeExplicit: "팩 지정",
+  sitePacksBindingModeDetect: "감지 풀",
+  sitePacksBindingPackLabel: "SitePack",
+  sitePacksBindingPackPlaceholder: "설치된 팩 선택",
+  sitePacksBindingEmpty: "연결된 사용자 지정 도메인이 없습니다",
+  sitePacksBindingHint:
+    "https://chat.example.com과 같은 정확한 HTTPS 도메인을 입력하세요. 경로와 와일드카드는 사용할 수 없습니다.",
+  sitePacksBindingDetectUnavailable:
+    "설치된 팩에 감지 규칙이 선언되어야 감지 모드를 사용할 수 있습니다.",
+  sitePacksBindingDetectPool: "공유 감지 풀",
+  sitePacksBindingPermissionDenied: "{origin} 권한이 허용되지 않아 연결을 저장하지 않았습니다.",
+  sitePacksBindingUserscriptHint:
+    "저장되었습니다. 사용자 스크립트 관리자에서도 이 도메인을 스크립트 일치 목록에 추가해야 합니다.",
+  sitePacksBindingPackRequired: "팩 지정 모드에서 설치된 SitePack을 선택하세요.",
+  sitePacksBindingDetectRequired:
+    "감지 모드를 사용하기 전에 감지 규칙이 있는 SitePack을 설치하세요.",
+  sitePacksBindingReferences: "참조 {count}개",
 
   generalPageDesc: "확장 프로그램 동작 및 인터페이스 구성",
   appearancePageDesc: "시각적 스타일 및 테마 사용자 정의",

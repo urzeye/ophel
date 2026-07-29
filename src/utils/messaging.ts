@@ -1,5 +1,6 @@
 import type { NetworkMonitorRequestBodyRule } from "~adapters/base"
 import type { RemoteConfigCheckResult, RemoteConfigState } from "~core/remote-config-types"
+import type { SitePackOriginBinding } from "~core/site-pack-origin-bindings"
 import type {
   SitePackOriginBindingIssue,
   SitePackOriginReferenceEntry,
@@ -163,6 +164,21 @@ export interface EnsureSitePackOriginsResponse extends BasicBackgroundResponse {
   missingOrigins?: string[]
 }
 
+export const MSG_ENSURE_SITE_PACK_BINDING_ORIGIN = "ENSURE_SITE_PACK_BINDING_ORIGIN"
+
+export interface EnsureSitePackBindingOriginMessage {
+  type: typeof MSG_ENSURE_SITE_PACK_BINDING_ORIGIN
+  origin: string
+  binding: SitePackOriginBinding
+  requestName: string
+}
+
+export interface EnsureSitePackBindingOriginResponse extends BasicBackgroundResponse {
+  granted?: boolean
+  origins?: string[]
+  missingOrigins?: string[]
+}
+
 export const MSG_RECONCILE_SITE_PACK_REGISTRATIONS = "RECONCILE_SITE_PACK_REGISTRATIONS"
 
 export interface ReconcileSitePackRegistrationsMessage {
@@ -296,6 +312,7 @@ export type ExtensionMessage =
   | CheckPermissionsMessage
   | RequestPermissionsMessage
   | EnsureSitePackOriginsMessage
+  | EnsureSitePackBindingOriginMessage
   | ReconcileSitePackRegistrationsMessage
   | RevokePermissionsMessage
   | OpenOptionsPageMessage
@@ -350,6 +367,7 @@ interface BackgroundResponseMap {
   [MSG_CHECK_PERMISSIONS]: PermissionCheckResponse
   [MSG_REQUEST_PERMISSIONS]: BasicBackgroundResponse
   [MSG_ENSURE_SITE_PACK_ORIGINS]: EnsureSitePackOriginsResponse
+  [MSG_ENSURE_SITE_PACK_BINDING_ORIGIN]: EnsureSitePackBindingOriginResponse
   [MSG_RECONCILE_SITE_PACK_REGISTRATIONS]: ReconcileSitePackRegistrationsResponse
   [MSG_CLEAR_ALL_DATA]: ClearAllDataResponse
   [MSG_RESTORE_DATA]: RestoreDataResponse

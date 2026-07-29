@@ -4,10 +4,15 @@
  * 根据当前页面 URL 自动选择合适的适配器
  */
 
-import type { InstalledSitePack, PackManagerSnapshot } from "~core/pack-manager"
+import {
+  isInstalledSitePackEffectivelyEnabled,
+  type InstalledSitePack,
+  type PackManagerSnapshot,
+} from "~core/pack-manager"
 import { loadActiveSiteConfigPatch } from "~core/remote-config-cache"
 import { createRuntimePackManager } from "~core/pack-manager-runtime"
 import { primeDynamicPlatforms } from "~core/platform-catalog"
+import type { SitePackOriginBindingsState } from "~core/site-pack-origin-bindings"
 import { platform } from "~platform"
 import { APP_VERSION } from "~utils/config"
 
@@ -95,8 +100,11 @@ interface DynamicAdapterLoadResult {
 
 async function loadDynamicAdapters(): Promise<DynamicAdapterLoadResult> {
   let snapshot: PackManagerSnapshot
+  const packManager = createRuntimePackManager(platform.storage)
+  let originBindings: SitePackOriginBindingsState
   try {
-    snapshot = await createRuntimePackManager(platform.storage).getEnabledPacks()
+    snapshot = await packManager.getEnabledPacks()
+    originBindings = await packManager.getOriginBindings()
   } catch (error) {
     console.error(
       "[Ophel] Failed to load installed SitePacks; continuing with built-in adapters:",
@@ -111,6 +119,35 @@ async function loadDynamicAdapters(): Promise<DynamicAdapterLoadResult> {
 
   const adapters: SiteAdapter[] = []
   const packs: InstalledSitePack[] = []
+  const currentOrigin = (() => {
+    try {
+      return new URL(window.location.href).origin
+    } catch {
+      return null
+    }
+  })()
+
+  if (currentOrigin) {
+    const binding = originBindings.bindings[currentOrigin]
+    if (binding?.mode === "explicit") {
+      const pack = snapshot.packs.find(
+        (candidate) =>
+          candidate.manifest.id === binding.packId &&
+          isInstalledSitePackEffectivelyEnabled(candidate),
+      )
+      if (pack) {
+        try {
+          adapters.push(new DeclarativeAdapter(pack.manifest, { explicitOrigin: currentOrigin }))
+        } catch (error) {
+          console.error(
+            `[Ophel] Failed to initialize explicit SitePack binding ${currentOrigin} -> ${pack.manifest.id}; skipping binding:`,
+            error,
+          )
+        }
+      }
+    }
+  }
+
   for (const pack of snapshot.packs) {
     try {
       adapters.push(new DeclarativeAdapter(pack.manifest))

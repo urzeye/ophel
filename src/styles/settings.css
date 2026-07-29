@@ -1400,6 +1400,110 @@
   line-height: 1.45;
 }
 
+.settings-pack-binding-form {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 14px;
+  border: 1px solid var(--gh-card-border, #e5e7eb);
+  border-radius: 10px;
+  background: var(--gh-bg-secondary, #f9fafb);
+}
+
+.settings-pack-binding-field {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+}
+
+.settings-pack-binding-field > span {
+  color: var(--gh-text, #374151);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.settings-pack-binding-options {
+  display: grid;
+  grid-template-columns: minmax(130px, 0.7fr) minmax(190px, 1.3fr) auto;
+  align-items: end;
+  gap: 10px;
+}
+
+.settings-pack-binding-select .settings-select {
+  width: 100%;
+  min-width: 0;
+  min-height: 38px;
+}
+
+.settings-pack-binding-input:focus-visible,
+.settings-pack-binding-select .settings-select:focus-visible {
+  border-color: var(--gh-primary, #4285f4) !important;
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 24%, transparent);
+  outline-offset: 1px;
+}
+
+.settings-pack-binding-input:disabled,
+.settings-pack-binding-select .settings-select:disabled {
+  opacity: 0.62;
+  cursor: not-allowed;
+}
+
+.settings-pack-binding-submit {
+  min-height: 38px;
+  white-space: nowrap;
+}
+
+.settings-pack-binding-hint {
+  margin: -2px 0 0;
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.settings-pack-binding-hint.warning {
+  color: var(--gh-text-danger, #b45309);
+}
+
+.settings-pack-binding-list {
+  border-top: 1px solid var(--gh-card-border, #e5e7eb);
+}
+
+.settings-pack-binding-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--gh-card-border, #e5e7eb);
+}
+
+.settings-pack-binding-info {
+  min-width: 0;
+}
+
+.settings-pack-binding-origin {
+  min-width: 0;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: var(--gh-bg-secondary, #f9fafb);
+  color: var(--gh-text, #374151);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+
+.settings-pack-binding-summary {
+  margin-top: 5px;
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 11px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.settings-pack-binding-empty {
+  margin-top: 0;
+}
+
 .settings-pack-skeleton {
   grid-template-columns: auto minmax(0, 1fr);
 }
@@ -1553,6 +1657,15 @@
     align-items: flex-start;
   }
 
+  .settings-pack-binding-options {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .settings-pack-binding-submit {
+    grid-column: 1 / -1;
+    justify-self: flex-start;
+  }
+
   .settings-pack-controls {
     grid-column: 1 / -1;
     align-items: stretch;
@@ -1575,6 +1688,16 @@
 
   .settings-pack-actions > button,
   .settings-pack-empty-state > button {
+    width: 100%;
+  }
+
+  .settings-pack-binding-options,
+  .settings-pack-binding-item {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-pack-binding-submit,
+  .settings-pack-binding-item > button {
     width: 100%;
   }
 }

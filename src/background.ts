@@ -20,6 +20,7 @@ import {
   MSG_CHECK_PERMISSION,
   MSG_CHECK_PERMISSIONS,
   MSG_CHECK_REMOTE_CONFIG,
+  MSG_ENSURE_SITE_PACK_BINDING_ORIGIN,
   MSG_ENSURE_SITE_PACK_ORIGINS,
   MSG_EXTENSION_UPDATE_AVAILABLE,
   MSG_FOCUS_TAB,
@@ -601,6 +602,34 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
           sendResponse({ success: true, hasPermission })
         } catch (err) {
           console.error("Permissions check failed:", err)
+          sendResponse({ success: false, error: (err as Error).message })
+        }
+      })()
+      break
+
+    case MSG_ENSURE_SITE_PACK_BINDING_ORIGIN:
+      if (
+        typeof message.origin !== "string" ||
+        typeof message.requestName !== "string" ||
+        message.requestName.trim().length === 0 ||
+        message.requestName.trim().length > 120
+      ) {
+        sendResponse({
+          success: false,
+          error: "origin must be a string and requestName must contain 1-120 characters",
+        })
+        break
+      }
+      ;(async () => {
+        try {
+          const result = await sitePackRegistrationManager.ensureBindingOrigin(
+            message.origin,
+            message.binding,
+            message.requestName,
+          )
+          sendResponse({ success: true, ...result })
+        } catch (err) {
+          console.error("SitePack binding origin permission request failed:", err)
           sendResponse({ success: false, error: (err as Error).message })
         }
       })()

@@ -78,6 +78,10 @@ export const platform: Platform = {
       return "unsupported"
     },
 
+    async ensureBindingOrigin() {
+      return "unsupported"
+    },
+
     async reconcile() {
       return {
         activeOrigins: [],

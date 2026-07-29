@@ -96,6 +96,30 @@ export const it = {
   sitePacksLocalUpdateHint: "Aggiorna importando un file JSON locale più recente",
   sitePacksRequiresNewerApp: "Richiede Ophel {version} o versione successiva",
   sitePacksMatchesCount: "{count} schemi di corrispondenza",
+  sitePacksCustomOriginsTitle: "Origini personalizzate",
+  sitePacksCustomOriginsDesc:
+    "Collega un'origine HTTPS auto-ospitata a un pack installato o al pool di rilevamento condiviso.",
+  sitePacksCustomOriginLabel: "Origine HTTPS",
+  sitePacksCustomOriginPlaceholder: "https://chat.example.com",
+  sitePacksBindingModeLabel: "Modalità collegamento",
+  sitePacksBindingModeExplicit: "Pack esplicito",
+  sitePacksBindingModeDetect: "Pool di rilevamento",
+  sitePacksBindingPackLabel: "SitePack",
+  sitePacksBindingPackPlaceholder: "Scegli un pack installato",
+  sitePacksBindingEmpty: "Nessuna origine personalizzata collegata",
+  sitePacksBindingHint:
+    "Inserisci un'origine HTTPS esatta, ad esempio https://chat.example.com. Percorsi e caratteri jolly non sono accettati.",
+  sitePacksBindingDetectUnavailable:
+    "La modalità di rilevamento è disponibile solo dopo l'installazione di un pack con regole di rilevamento.",
+  sitePacksBindingDetectPool: "Pool di rilevamento condiviso",
+  sitePacksBindingPermissionDenied:
+    "Il permesso per {origin} non è stato concesso, quindi il collegamento non è stato salvato.",
+  sitePacksBindingUserscriptHint:
+    "Salvato. I gestori userscript devono comunque includere questo dominio nell'elenco di corrispondenze dello script.",
+  sitePacksBindingPackRequired: "Scegli un SitePack installato per la modalità pack esplicito.",
+  sitePacksBindingDetectRequired:
+    "Installa un SitePack con regole di rilevamento prima di usare questa modalità.",
+  sitePacksBindingReferences: "{count} riferimenti",
 
   generalPageDesc: "Configura il comportamento e l'interfaccia dell'estensione",
   appearancePageDesc: "Personalizza stili e temi visivi",

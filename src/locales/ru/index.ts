@@ -94,6 +94,30 @@ export const ru = {
   sitePacksLocalUpdateHint: "Для обновления импортируйте более новый локальный JSON-файл",
   sitePacksRequiresNewerApp: "Требуется Ophel {version} или новее",
   sitePacksMatchesCount: "Шаблонов соответствия: {count}",
+  sitePacksCustomOriginsTitle: "Пользовательские домены",
+  sitePacksCustomOriginsDesc:
+    "Привяжите самостоятельно размещённый HTTPS-домен к установленному пакету или общему пулу обнаружения.",
+  sitePacksCustomOriginLabel: "HTTPS-домен",
+  sitePacksCustomOriginPlaceholder: "https://chat.example.com",
+  sitePacksBindingModeLabel: "Режим привязки",
+  sitePacksBindingModeExplicit: "Явный пакет",
+  sitePacksBindingModeDetect: "Пул обнаружения",
+  sitePacksBindingPackLabel: "SitePack",
+  sitePacksBindingPackPlaceholder: "Выберите установленный пакет",
+  sitePacksBindingEmpty: "Пользовательские домены не привязаны",
+  sitePacksBindingHint:
+    "Введите точный HTTPS-домен, например https://chat.example.com. Пути и подстановочные знаки не принимаются.",
+  sitePacksBindingDetectUnavailable:
+    "Режим обнаружения доступен после установки пакета с правилами обнаружения.",
+  sitePacksBindingDetectPool: "Общий пул обнаружения",
+  sitePacksBindingPermissionDenied:
+    "Разрешение для {origin} не предоставлено, поэтому привязка не сохранена.",
+  sitePacksBindingUserscriptHint:
+    "Сохранено. В менеджере userscript этот домен также нужно добавить в список совпадений скрипта.",
+  sitePacksBindingPackRequired: "Для явного режима выберите установленный SitePack.",
+  sitePacksBindingDetectRequired:
+    "Перед использованием режима обнаружения установите SitePack с правилами обнаружения.",
+  sitePacksBindingReferences: "Ссылок: {count}",
 
   generalPageDesc: "Настройте поведение расширения и интерфейс",
   appearancePageDesc: "Персонализация стилей и тем",
