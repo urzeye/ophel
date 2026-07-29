@@ -19,6 +19,7 @@
 11. [首次安装会话同步不全问题](#11-首次安装会话同步不全问题)
 12. [ChatGPT 面板被 React Hydration 清除](#12-chatgpt-面板被-react-hydration-清除)
 13. [onRehydrateStorage 回调中 Store 变量未初始化](#13-onrehydratestorage-回调中-store-变量未初始化)
+14. [SitePack 跨浏览器动态注册与 userscript 管理器回归](#14-sitepack-跨浏览器动态注册与-userscript-管理器回归)
 
 ---
 
@@ -2362,3 +2363,92 @@ runWithoutPersist(() => {
 | `src/stores/reading-history-store.ts`    | **修改** - 同上                                                   |
 | `src/stores/settings-store.ts`           | **修改** - 捕获 set + 简化 merge try-catch + 新增错误日志         |
 | `src/stores/chrome-adapter.ts`           | **修改** - 调整日志处理，新增错误日志捕获                         |
+
+---
+
+## 14. SitePack 跨浏览器动态注册与 userscript 管理器回归
+
+**日期**: 2026-07-29
+
+### 回归范围
+
+以启用的 Duck.ai SitePack 和 `https://duck.ai/*` 为固定样例，每次扩展回归都使用一次性浏览器 profile，并执行同一流程：
+
+1. 首次 reconcile 时只在 `missingPermissionOrigins` 中出现 Duck.ai；
+2. 从扩展页发起 `ENSURE_SITE_PACK_ORIGINS`，接受浏览器原生权限提示；
+3. 确认消息 Promise 返回 `granted: true`，且不依赖权限页延迟关闭；
+4. 确认注册 `ISOLATED/document_idle`、`MAIN/document_idle`、`MAIN/document_start` 三组脚本；
+5. 卸载 SitePack 后确认注册数归零，并撤销 Duck.ai origin 权限。
+
+### 扩展浏览器矩阵
+
+| 浏览器                               | 结果     | 说明                                                                                     |
+| :----------------------------------- | :------- | :--------------------------------------------------------------------------------------- |
+| Playwright Chromium 145.0.7632.6    | 通过     | 完整授权、三组动态注册与卸载清理通过；消息 Promise 早于权限页延迟关闭返回                |
+| Microsoft Edge 150.0.4078.105       | 通过     | 完整授权、三组动态注册与卸载清理通过                                                     |
+| Chrome for Testing 150.0.7871.124   | 通过     | 用于覆盖 Chrome 150 的实际扩展流程                                                       |
+| Google Chrome 150.0.7871.187        | 工具限制 | 品牌版 Chrome 自动化启动时忽略 `--load-extension`；同 major 的 Chrome for Testing 已通过 |
+| Firefox 151.0.2                     | 通过     | 修复扩展资源路径后，完整授权、三组动态注册与卸载清理通过                                 |
+
+Chrome、Edge 和 Firefox 的生产 manifest 都把动态站点能力放在 `optional_host_permissions: ["<all_urls>"]`。不要因为 Firefox 的授权 UI 或默认 host 权限行为不同，就在业务层跳过 `chrome.permissions.request()`；回归必须以 `permissions.contains()` 和实际注册结果为准。
+
+### Firefox 绝对扩展资源路径
+
+Firefox 151 会把 manifest 和已注册脚本中的资源返回为 `moz-extension://...` 绝对 URL，而 `scripting.registerContentScripts()` 的 `js`、`css` 字段只接受扩展内相对路径。原始失败发生在权限已授予之后，错误明确指出 CSS URL `must be a relative URL`。
+
+修复放在 `discoverSitePackScriptTemplates()` 这一浏览器描述符转换边界：
+
+- 将 `moz-extension://` 和 `chrome-extension://` 资源转为无前导斜杠的扩展相对路径；
+- 同时处理 manifest 的 ISOLATED 模板和已注册的 MAIN 模板；
+- 同时处理 JS、CSS 和反斜杠，不在运行时管理器中增加 Firefox 分支；
+- 保留嵌套目录，例如 `moz-extension://<id>/nested/entry.js` 转为 `nested/entry.js`。
+
+针对性 `tsx` 夹具和 Firefox 真实 `scripting.registerContentScripts()` 流程均已通过。
+
+### Userscript 管理器矩阵
+
+实际管理器回归使用 Chrome 150、标准地址 `https://chatgpt.com/` 的本地 HTTPS 夹具，以及完整的本地 userscript 资源服务。Chrome 150 下三种 MV3 管理器都必须先开启浏览器开发者模式和扩展详情页的“允许运行用户脚本”，再重新加载管理器。
+
+| 管理器             | 版本   | 完整本地资源构建 | 结果                                                                 |
+| :----------------- | :----- | :--------------- | :------------------------------------------------------------------- |
+| Tampermonkey       | 5.5.0  | 通过             | 安装成功，出现 userscript host、Shadow Root 和 app container         |
+| Violentmonkey      | 2.46.0 | 通过             | 安装成功，出现 userscript host、Shadow Root 和 app container         |
+| ScriptCat          | 1.4.0  | 通过             | 管理列表显示 Ophel，完整面板根节点出现                               |
+
+Violentmonkey 对 `https://chatgpt.com:8443/` 没有注入，但同一脚本在标准 443 地址立即通过。回归 `@match https://chatgpt.com/*` 时应使用标准 HTTPS 端口，不能把显式非标准端口的匹配差异判定为 Ophel 注入缺陷。
+
+三种代表性 `GM_info` 形态也通过纯函数夹具：Tampermonkey 的 `options.override` 合并规则、Violentmonkey 的 metadata/header 回退，以及 ScriptCat 的结构化 `script.matches` 均能得到正确管理器名称和有效匹配列表。
+
+### 正式 metadata 与资产发布顺序
+
+正式 `pnpm build:userscript` 产物已断言以下内容：
+
+- 16 条基础 `@match`、完整 `@grant`、6 条 `@require` 和全部 `@resource` 名称齐备；
+- `@connect *`、`@run-at document-start`、`@noframes` 正确；
+- metadata 中不存在 `127.0.0.1` 或 `localhost`。
+
+功能分支构建会根据当前源码生成新的哈希资源名。在这些资源发布到 `userscript-assets` 分支前，生产 CDN URL 会暂时 404，本次预发布状态如下：
+
+| 管理器       | 当前正式 metadata 结果 | 分类                                                         |
+| :----------- | :--------------------- | :----------------------------------------------------------- |
+| Tampermonkey | 安装并注入             | 注入成功，但控制台明确报告未发布 CSS/locale 资源加载警告     |
+| Violentmonkey | 安装页加载中           | 管理器 UI 已到达，安装按钮因未发布资源持续禁用               |
+| ScriptCat    | 安装并注入             | 管理列表和页面注入均通过                                     |
+
+这是发布顺序限制，不是管理器兼容性回归；正式发布验收必须先发布对应哈希资源，再重复生产 metadata 安装冒烟。
+
+### 自动化工具限制与告警
+
+- 品牌版 Chrome 150 不再适合用 `--load-extension` 做无人值守侧载，使用同 major 的 Chrome for Testing。
+- Firefox 临时 XPI 使用不含 `/` 等非法字符的显式文件名；不要直接采用可能由扩展名称派生的默认包名。
+- Geckodriver 退出时可能报告无法删除临时 XPI 的 `NS_ERROR_FILE_ACCESS_DENIED`。扩展页、权限流和注册结果均正常时，该信息属于清理告警。
+- 本地资源服务器随浏览器关闭时可能出现 `WinError 10053`，只表示客户端主动断开；应以管理器安装状态、页面注入节点和控制台错误为准。
+
+### 经验总结
+
+| 原则                                 | 说明                                                                                           |
+| :----------------------------------- | :--------------------------------------------------------------------------------------------- |
+| 浏览器输出不能直接回灌注册 API       | Firefox 可能返回扩展绝对 URL，进入动态注册前必须在统一边界转换为相对路径                       |
+| 权限成功不等于脚本注册成功           | 授权后仍需检查三组注册和真实 scripting API 错误                                                |
+| 管理器兼容与资源发布状态分开记录     | 本地完整资源验证执行能力，生产 metadata 验证发布集成；二者不能互相替代                         |
+| 自动化限制不能伪装成产品失败或成功   | 品牌 Chrome 侧载限制、Geckodriver 清理告警和非标准端口匹配差异都要单独分类                     |

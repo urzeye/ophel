@@ -109,6 +109,19 @@ const uniqueSorted = (values: readonly string[]): string[] =>
 const getAssetBaseName = (assetPath: string): string =>
   assetPath.replaceAll("\\", "/").split("/").at(-1)?.split("?")[0] ?? ""
 
+const normalizeExtensionAssetPath = (assetPath: string): string => {
+  const normalized = assetPath.replaceAll("\\", "/")
+  try {
+    const url = new URL(normalized)
+    if (url.protocol === "chrome-extension:" || url.protocol === "moz-extension:") {
+      return url.pathname.replace(/^\/+/, "")
+    }
+  } catch {
+    // Relative extension asset paths are expected on Chromium.
+  }
+  return normalized.replace(/^\/+/, "")
+}
+
 const assetMatchesEntry = (assetPath: string, entryName: string): boolean => {
   const baseName = getAssetBaseName(assetPath)
   return (
@@ -194,8 +207,8 @@ export const discoverSitePackScriptTemplates = (
     (script): SitePackScriptTemplate => ({
       world: script.world ?? "ISOLATED",
       runAt: script.run_at ?? "document_idle",
-      js: [...(script.js ?? [])],
-      css: [...(script.css ?? [])],
+      js: (script.js ?? []).map(normalizeExtensionAssetPath),
+      css: (script.css ?? []).map(normalizeExtensionAssetPath),
       allFrames: script.all_frames ?? false,
       matchOriginAsFallback: script.match_origin_as_fallback ?? false,
     }),
@@ -208,8 +221,8 @@ export const discoverSitePackScriptTemplates = (
     return {
       world,
       runAt: script.runAt ?? "document_idle",
-      js: [...(script.js ?? [])],
-      css: [...(script.css ?? [])],
+      js: (script.js ?? []).map(normalizeExtensionAssetPath),
+      css: (script.css ?? []).map(normalizeExtensionAssetPath),
       allFrames: script.allFrames ?? false,
       matchOriginAsFallback: script.matchOriginAsFallback ?? false,
     }
