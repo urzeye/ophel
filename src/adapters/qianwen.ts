@@ -34,68 +34,14 @@ import {
   type OutlineItem,
   type PanelAvoidanceConfig,
 } from "./base"
+import type { BuiltinSiteConfig } from "./declarative"
+import { QIANWEN_CONFIG, QIANWEN_CONFIG_VERSION, type QianwenSiteConfig } from "./qianwen-config"
 
 const CHAT_PATH_PATTERN = /\/chat\/([a-f0-9]+)/i
 const GROUP_PATH_PATTERN = /\/group\/([a-f0-9]+)/i
 const THEME_STORAGE_KEY = "tongyi-theme-preference"
 const CID_STORAGE_KEY = "qianwen-uniq-id"
 const MODEL_EXPANDED_KEY = "model-select-expanded"
-const QUESTION_ITEM_SELECTOR =
-  '[class*="questionItem"], .chat-question-wrap, [class*="message-select-wrapper-question"]'
-const QUESTION_LAYOUT_SELECTOR = '[class*="questionItem"], .chat-question-wrap'
-const QUESTION_CARD_SELECTOR = "[data-chat-question-wrap]"
-const ANSWER_ITEM_SELECTOR =
-  '[class*="answerItem"], [data-chat-answers-wrap], .chat-answers-card-wrap'
-const BUBBLE_SELECTOR = '[class*="bubble"]'
-const QUESTION_CARD_INNER_SELECTOR = [
-  `${QUESTION_CARD_SELECTOR} .message-card-wrap.question`,
-  `${QUESTION_CARD_SELECTOR} .question-text-card`,
-].join(", ")
-const TURN_SELECTOR = ".chat-round[data-chat], [data-chat-list-key]"
-const USER_CARD_SELECTOR = ".message-card-wrap.question"
-const USER_TEXT_CARD_SELECTOR = ".question-text-card"
-const USER_IMAGE_CARD_SELECTOR = `${USER_CARD_SELECTOR}[data-mt*="image"]`
-const USER_FILE_CARD_SELECTOR = [
-  `${USER_CARD_SELECTOR}[data-mt*="doc"]`,
-  `${USER_CARD_SELECTOR}[data-mt*="file"]`,
-  `${USER_CARD_SELECTOR}[data-mt*="office"]`,
-  `${USER_CARD_SELECTOR}:has([class*="office-card"])`,
-].join(", ")
-const ASSISTANT_CONTENT_SELECTOR = [
-  ".answer-common-card .qk-markdown",
-  ".markdown-pc-special-class .qk-markdown",
-  "#qk-markdown-react",
-  ".answer-common-card",
-].join(", ")
-const ASSISTANT_GENERATED_IMAGE_SELECTOR = [
-  '[data-card-type="ai_generate_image_list"] img',
-  ".card_card_ai_generate_image img",
-  '[data-tpl*="card_ai_generate_image"] img',
-  'img[data-image-menu-items*="download"]',
-  'img[class*="image-"][data-image-resource-id]',
-].join(", ")
-const ASSISTANT_GENERATED_IMAGE_CARD_SELECTOR = [
-  '[data-card-type="ai_generate_image_list"]',
-  ".card_card_ai_generate_image",
-  '[data-tpl*="card_ai_generate_image"]',
-].join(", ")
-const EXPORT_DECORATION_SELECTOR = [
-  ".gh-root",
-  ".gh-user-query-markdown",
-  "button",
-  "[role='button']",
-  "svg",
-  "[aria-hidden='true']",
-  ".qk-md-table-action",
-  ".qk-md-copy-icon",
-  "[class*='answerToolsContent']",
-  "[class*='functionArea']",
-  "[class*='recommend-query']",
-  ".q-item",
-  ".qs-bottom",
-  "style",
-  "script",
-].join(", ")
 const ATTACHMENT_SOURCE_ATTRS = [
   "href",
   "src",
@@ -110,44 +56,6 @@ const ATTACHMENT_SOURCE_ATTRS = [
   "data-image-url",
   "data-image-src",
 ]
-const CHAT_INPUT_SELECTOR = [
-  '[class*="chatInput"]',
-  '[data-chat-input-shell="true"]',
-  '[data-qw-chat-input-position="chat"]',
-].join(", ")
-const CHAT_TEXTAREA_SELECTOR = '[class*="chatTextarea"]'
-const MESSAGE_LIST_SELECTOR = ".message-list-scroll-container, #message-list-scroller"
-const MESSAGE_LIST_AREA_SELECTOR = "#qwen-message-list-area"
-const CHAT_LAYOUT_SCOPE_SELECTOR = "#qianwen-left-panel"
-const CANVAS_LAYOUT_SCOPE_SELECTOR = ".splitCardContainer:has(#qianwen-left-panel)"
-const CANVAS_PANEL_SELECTOR = [
-  `${CANVAS_LAYOUT_SCOPE_SELECTOR} > div:has([data-log-params*="canvas_panel"])`,
-  `${CANVAS_LAYOUT_SCOPE_SELECTOR} > div:has(.monaco-editor)`,
-  `${CANVAS_LAYOUT_SCOPE_SELECTOR} > div:has([data-preview-list="true"])`,
-].join(", ")
-const CHAT_CONTENT_SELECTOR = "#qw-chat-content"
-const CHAT_INPUT_WIDTH_SELECTOR =
-  '[data-text-area-width-container="true"], [class*="inputMotionCarrier"]'
-const MESSAGE_CENTER_SELECTOR = "#pc-center-wrapper, [class*='auto-center-wrapper']"
-const PAGE_SCROLL_CONTAINER_SELECTOR = [
-  '[class*="page-content-"]',
-  '[class*="pageContent"]',
-  CHAT_CONTENT_SELECTOR,
-  '[class*="scrollOutWrapper"]',
-].join(", ")
-const SIDEBAR_SELECTOR = "aside#new-nav-tab-wrapper"
-const NEW_CHAT_BUTTON_SELECTOR = '[class*="newChatButton"]'
-const THINKING_SELECTOR =
-  '.qc-thinking-header, [class*="thinkingWrap"], [class*="thinkingContent"], [class*="thinkingHeader"], [class*="thinkingTitle"]'
-const STOP_BUTTON_SELECTOR = '[class*="stop-"], [class*="stopBtn"], div[class*="stop"]'
-const MODEL_DIALOG_SELECTOR = '[role="dialog"], [data-radix-popper-content-wrapper]'
-const MODEL_DIALOG_ITEM_SELECTOR = [
-  '[role="dialog"] [id="tongyi-for-guide-model"]',
-  '[role="dialog"] .group.rounded-8',
-  '[data-radix-popper-content-wrapper] [id="tongyi-for-guide-model"]',
-  "[data-radix-popper-content-wrapper] .group.rounded-8",
-].join(", ")
-const FOOTNOTE_SELECTOR = "#ice-container .root-G6nVVr"
 const HISTORY_LOAD_WAIT_MS = 650
 const HISTORY_LOAD_MAX_ROUNDS = 60
 const HISTORY_LOAD_STABLE_ROUNDS = 4
@@ -166,6 +74,7 @@ interface QianwenAssistantImage {
 }
 
 export class QianwenAdapter extends SiteAdapter {
+  private config: QianwenSiteConfig = QIANWEN_CONFIG
   private exportIncludeThoughts: boolean | undefined = undefined
 
   // ==================== 基础识别 ====================
@@ -181,6 +90,18 @@ export class QianwenAdapter extends SiteAdapter {
 
   getName(): string {
     return "Qianwen"
+  }
+
+  getBuiltinConfig(): QianwenSiteConfig {
+    return QIANWEN_CONFIG
+  }
+
+  getBuiltinConfigVersion(): number {
+    return QIANWEN_CONFIG_VERSION
+  }
+
+  applyMergedConfig(config: BuiltinSiteConfig): void {
+    this.config = config as QianwenSiteConfig
   }
 
   getThemeColors(): { primary: string; secondary: string } {
@@ -268,20 +189,21 @@ export class QianwenAdapter extends SiteAdapter {
   // ==================== 输入框操作 ====================
 
   getTextareaSelectors(): string[] {
-    return [
-      CHAT_TEXTAREA_SELECTOR,
-      `${CHAT_INPUT_SELECTOR} [contenteditable="true"]`,
-      '[data-slate-editor="true"][contenteditable="true"]',
-      'div[role="textbox"][contenteditable="true"]',
-      "textarea",
-    ]
+    return [...this.config.selectors.textarea]
   }
 
   isValidTextarea(element: HTMLElement): boolean {
     if (!super.isValidTextarea(element)) return false
-    if (element.closest(THINKING_SELECTOR)) return false
+    if (element.closest(this.config.sitePrivateSelectors.thinking)) return false
     if (!(element.isContentEditable || element instanceof HTMLTextAreaElement)) return false
-    return !!(element.closest(CHAT_INPUT_SELECTOR) || element.matches('[data-slate-editor="true"]'))
+    return !!(
+      element.closest(this.config.sitePrivateSelectors.chatInput) ||
+      element.matches(this.config.sitePrivateSelectors.slateEditor)
+    )
+  }
+
+  getSubmitKeyConfig(): { key: "Enter" | "Ctrl+Enter" } {
+    return { key: this.config.input.submitKey ?? "Enter" }
   }
 
   insertPrompt(content: string): boolean {
@@ -463,16 +385,12 @@ export class QianwenAdapter extends SiteAdapter {
   }
 
   getSubmitButtonSelectors(): string[] {
-    return [
-      '[class*="operateBtn"]',
-      '[data-icon-type="qwpcicon-sendChat"]',
-      "button[type='submit']",
-    ]
+    return [...this.config.selectors.submitButton]
   }
 
   findSubmitButton(editor: HTMLElement | null): HTMLElement | null {
     const scopes = [
-      editor?.closest(CHAT_INPUT_SELECTOR),
+      editor?.closest(this.config.sitePrivateSelectors.chatInput),
       editor?.parentElement,
       editor?.closest("div"),
       document.body,
@@ -480,11 +398,11 @@ export class QianwenAdapter extends SiteAdapter {
 
     for (const scope of scopes) {
       const candidates = scope.querySelectorAll(
-        '[class*="operateBtn"], [data-icon-type="qwpcicon-sendChat"]',
+        this.config.sitePrivateSelectors.submitButtonCandidates,
       )
       for (const candidate of Array.from(candidates)) {
         const button = (candidate as HTMLElement).closest(
-          '[class*="operateBtn"], button, [role="button"]',
+          this.config.sitePrivateSelectors.submitButtonClickable,
         ) as HTMLElement | null
         if (!button || !this.isVisibleElement(button)) continue
         if (this.isDisabledActionButton(button)) continue
@@ -496,15 +414,15 @@ export class QianwenAdapter extends SiteAdapter {
   }
 
   getNewChatButtonSelectors(): string[] {
-    return [NEW_CHAT_BUTTON_SELECTOR]
+    return [...this.config.selectors.newChatButton]
   }
 
   // ==================== 滚动与消息 ====================
 
   getScrollContainer(): HTMLElement | null {
     const messageRoots = [
-      document.querySelector(MESSAGE_LIST_AREA_SELECTOR),
-      document.querySelector(MESSAGE_LIST_SELECTOR),
+      document.querySelector(this.config.sitePrivateSelectors.messageListArea),
+      document.querySelector(this.config.sitePrivateSelectors.messageList),
     ].filter(Boolean) as Element[]
 
     for (const root of messageRoots) {
@@ -512,12 +430,7 @@ export class QianwenAdapter extends SiteAdapter {
       if (scrollableAncestor) return scrollableAncestor
     }
 
-    const selectors = [
-      MESSAGE_LIST_SELECTOR,
-      MESSAGE_LIST_AREA_SELECTOR,
-      PAGE_SCROLL_CONTAINER_SELECTOR,
-    ]
-    for (const selector of selectors) {
+    for (const selector of this.config.sitePrivateSelectors.scrollRootCandidates) {
       const containers = document.querySelectorAll(selector)
       for (const container of Array.from(containers)) {
         const el = container as HTMLElement
@@ -537,19 +450,19 @@ export class QianwenAdapter extends SiteAdapter {
   }
 
   getResponseContainerSelector(): string {
-    return `${MESSAGE_LIST_AREA_SELECTOR}, ${MESSAGE_LIST_SELECTOR}`
+    return this.config.selectors.responseContainer
   }
 
   getChatContentSelectors(): string[] {
-    return [QUESTION_ITEM_SELECTOR, ANSWER_ITEM_SELECTOR]
+    return [...this.config.selectors.chatContent]
   }
 
   getUserQuerySelector(): string | null {
-    return QUESTION_ITEM_SELECTOR
+    return this.config.selectors.userQuery
   }
 
   getLatestReplyText(): string | null {
-    const responses = document.querySelectorAll(ANSWER_ITEM_SELECTOR)
+    const responses = document.querySelectorAll(this.config.selectors.assistantResponse)
     const last = responses[responses.length - 1]
     return last ? this.extractAssistantResponseText(last) : null
   }
@@ -567,9 +480,7 @@ export class QianwenAdapter extends SiteAdapter {
 
     const clone = contentRoot.cloneNode(true) as HTMLElement
     clone
-      .querySelectorAll(
-        ".gh-user-query-markdown, button, [role='button'], svg, [aria-hidden='true']",
-      )
+      .querySelectorAll(this.config.sitePrivateSelectors.userTextDecoration)
       .forEach((node) => node.remove())
 
     return this.normalizeUserQueryText(this.extractTextWithLineBreaks(clone)).trim()
@@ -643,18 +554,18 @@ export class QianwenAdapter extends SiteAdapter {
   extractOutline(maxLevel = 6, includeUserQueries = false, showWordCount = false): OutlineItem[] {
     const items: OutlineItem[] = []
     const container =
-      document.querySelector(MESSAGE_LIST_AREA_SELECTOR) ||
+      document.querySelector(this.config.sitePrivateSelectors.messageListArea) ||
       document.querySelector(this.getResponseContainerSelector())
     if (!container) return items
 
     const blocks = this.collectTopLevelBlocks(
-      Array.from(
-        container.querySelectorAll(`${QUESTION_ITEM_SELECTOR}, ${ANSWER_ITEM_SELECTOR}`),
-      ).filter((el) => !el.closest(".gh-root")),
+      Array.from(container.querySelectorAll(this.config.selectors.chatContent.join(", "))).filter(
+        (el) => !el.closest(".gh-root"),
+      ),
     )
 
     blocks.forEach((block, index) => {
-      const isUserBlock = block.matches(QUESTION_ITEM_SELECTOR)
+      const isUserBlock = block.matches(this.config.selectors.userQuery)
 
       if (isUserBlock) {
         if (!includeUserQueries) return
@@ -664,7 +575,9 @@ export class QianwenAdapter extends SiteAdapter {
 
         let wordCount: number | undefined
         if (showWordCount) {
-          const nextAnswer = blocks.slice(index + 1).find((el) => el.matches(ANSWER_ITEM_SELECTOR))
+          const nextAnswer = blocks
+            .slice(index + 1)
+            .find((el) => el.matches(this.config.selectors.assistantResponse))
           wordCount = nextAnswer ? this.extractAssistantPlainText(nextAnswer).length : 0
         }
 
@@ -682,7 +595,8 @@ export class QianwenAdapter extends SiteAdapter {
       // 直接在 answerItem 上查找标题，排除思维链和渲染容器中的标题
       const headings = Array.from(block.querySelectorAll("h1, h2, h3, h4, h5, h6")).filter(
         (heading) =>
-          !heading.closest(THINKING_SELECTOR) && !this.isInRenderedMarkdownContainer(heading),
+          !heading.closest(this.config.sitePrivateSelectors.thinking) &&
+          !this.isInRenderedMarkdownContainer(heading),
       )
 
       headings.forEach((heading, headingIndex) => {
@@ -719,12 +633,7 @@ export class QianwenAdapter extends SiteAdapter {
   }
 
   getExportConfig(): ExportConfig | null {
-    return {
-      userQuerySelector: QUESTION_ITEM_SELECTOR,
-      assistantResponseSelector: ANSWER_ITEM_SELECTOR,
-      turnSelector: null,
-      useShadowDOM: false,
-    }
+    return { ...this.config.export }
   }
 
   // ==================== 主题 / 模型 / 生成状态 ====================
@@ -763,36 +672,47 @@ export class QianwenAdapter extends SiteAdapter {
 
   getNetworkMonitorConfig(): NetworkMonitorConfig | null {
     return {
-      urlPatterns: ["api/v2/chat", "api/v1/chat/snap"],
-      silenceThreshold: 2000,
+      ...this.config.networkMonitor,
+      urlPatterns: [...this.config.networkMonitor.urlPatterns],
+      urlPathEndsWith: this.config.networkMonitor.urlPathEndsWith
+        ? [...this.config.networkMonitor.urlPathEndsWith]
+        : undefined,
+      requestBodyRules: this.config.networkMonitor.requestBodyRules?.map((rule) => ({
+        ...rule,
+        metadata: { ...rule.metadata },
+      })),
     }
   }
 
   isGenerating(): boolean {
-    const stopButtons = document.querySelectorAll(STOP_BUTTON_SELECTOR)
-    for (const button of Array.from(stopButtons)) {
-      const el = button as HTMLElement
-      if (this.isVisibleElement(el) && !this.isDisabledActionButton(el)) {
-        return true
+    for (const selector of this.config.generating.existsSelectors) {
+      const stopButtons = document.querySelectorAll(selector)
+      for (const button of Array.from(stopButtons)) {
+        const el = button as HTMLElement
+        if (this.isVisibleElement(el) && !this.isDisabledActionButton(el)) {
+          return true
+        }
       }
     }
     return false
   }
 
   getStopButtonSelectors(): string[] {
-    return [STOP_BUTTON_SELECTOR]
+    return [...this.config.selectors.stopButton]
   }
 
   stopGeneration(): boolean {
-    const stopButtons = document.querySelectorAll(STOP_BUTTON_SELECTOR)
-    for (const button of Array.from(stopButtons)) {
-      const el = button as HTMLElement
-      if (!this.isVisibleElement(el) || this.isDisabledActionButton(el)) {
-        continue
-      }
+    for (const selector of this.config.selectors.stopButton) {
+      const stopButtons = document.querySelectorAll(selector)
+      for (const button of Array.from(stopButtons)) {
+        const el = button as HTMLElement
+        if (!this.isVisibleElement(el) || this.isDisabledActionButton(el)) {
+          continue
+        }
 
-      this.simulateClick(el)
-      return true
+        this.simulateClick(el)
+        return true
+      }
     }
 
     return false
@@ -804,15 +724,12 @@ export class QianwenAdapter extends SiteAdapter {
 
   getModelSwitcherConfig(keyword: string): ModelSwitcherConfig | null {
     return {
+      ...this.config.modelSwitcher,
       targetModelKeyword: keyword,
-      selectorButtonSelectors: [
-        `${MESSAGE_LIST_AREA_SELECTOR} [aria-haspopup="dialog"]`,
-        `[aria-haspopup="dialog"][aria-controls][data-state]`,
-      ],
-      menuItemSelector: MODEL_DIALOG_ITEM_SELECTOR,
-      checkInterval: 1000,
-      maxAttempts: 10,
-      menuRenderDelay: 300,
+      selectorButtonSelectors: [...this.config.modelSwitcher.selectorButtonSelectors],
+      subMenuTriggers: this.config.modelSwitcher.subMenuTriggers
+        ? [...this.config.modelSwitcher.subMenuTriggers]
+        : undefined,
     }
   }
 
@@ -833,7 +750,8 @@ export class QianwenAdapter extends SiteAdapter {
     if (!target) return
 
     let attempts = 0
-    const maxAttempts = 10
+    const maxAttempts = this.config.modelSwitcher.maxAttempts ?? 10
+    const menuRenderDelay = this.config.modelSwitcher.menuRenderDelay ?? 300
 
     const trySelect = () => {
       attempts++
@@ -888,7 +806,7 @@ export class QianwenAdapter extends SiteAdapter {
           document.body.click()
           onSuccess?.()
         }, 150)
-      }, 300)
+      }, menuRenderDelay)
     }
 
     trySelect()
@@ -911,79 +829,7 @@ export class QianwenAdapter extends SiteAdapter {
   // ==================== 宽度 / Zen / Markdown 修复 ====================
 
   getWidthSelectors() {
-    // 千问新旧结构并存：旧版由 scrollOutWrapper 控制，新版由 #pc-center-wrapper
-    // 及 --message-content-width / --max-message-list-width 共同限宽。
-    const messageListWidthVarsCss = [
-      "width: 100% !important;",
-      "min-width: 0 !important;",
-      "--max-message-list-width: 100% !important;",
-      "--min-message-list-width: 0px !important;",
-    ].join(" ")
-    const inputWidthCss = [
-      "width: 100% !important;",
-      "min-width: 0 !important;",
-      "box-sizing: border-box !important;",
-      "--chat-input-visible-shell-width: 100% !important;",
-      "--chat-input-visible-shell-max-width: 100% !important;",
-      "--chat-input-visible-shell-side-gutter: 0px !important;",
-    ].join(" ")
-
-    return [
-      {
-        selector: '[class*="scrollOutWrapper"]',
-        property: "max-width",
-        extraCss: "width: 100% !important;",
-        noCenter: true,
-      },
-      {
-        selector: `${MESSAGE_LIST_AREA_SELECTOR}`,
-        property: "max-width",
-        extraCss: "width: 100% !important;",
-        noCenter: true,
-      },
-      {
-        selector: MESSAGE_CENTER_SELECTOR,
-        property: "max-width",
-        extraCss: messageListWidthVarsCss,
-      },
-      {
-        selector: MESSAGE_LIST_SELECTOR,
-        property: "--message-content-width",
-        noCenter: true,
-      },
-      {
-        selector: CHAT_INPUT_WIDTH_SELECTOR,
-        property: "max-width",
-        extraCss: inputWidthCss,
-      },
-      {
-        selector: '[class*="inputOutWrap"]',
-        property: "max-width",
-        value: "100%",
-        extraCss: "width: 100% !important;",
-      },
-      {
-        selector: '[class*="answerItem"] [class*="containerWrap"]',
-        property: "max-width",
-      },
-      {
-        selector: ANSWER_ITEM_SELECTOR,
-        property: "max-width",
-        extraCss: "width: 100% !important; min-width: 0 !important;",
-      },
-      {
-        selector: `${QUESTION_LAYOUT_SELECTOR}`,
-        property: "width",
-        extraCss: "margin-right: 0 !important",
-      },
-      {
-        selector: QUESTION_CARD_INNER_SELECTOR,
-        property: "width",
-        value: "100%",
-        extraCss: "max-width: 100% !important; box-sizing: border-box !important;",
-        noCenter: true,
-      },
-    ]
+    return this.config.widthSelectors.map((selector) => ({ ...selector }))
   }
 
   getPanelAvoidanceConfig(): PanelAvoidanceConfig {
@@ -995,33 +841,33 @@ export class QianwenAdapter extends SiteAdapter {
     ].join(" ")
 
     return {
-      scopeSelector: CHAT_LAYOUT_SCOPE_SELECTOR,
+      scopeSelector: this.config.sitePrivateSelectors.chatLayoutScope,
       widthSelectors: [
         {
-          selector: MESSAGE_CENTER_SELECTOR,
+          selector: this.config.sitePrivateSelectors.messageCenter,
           property: "max-width",
           extraCss: messageListWidthVarsCss,
         },
         {
-          selector: MESSAGE_LIST_SELECTOR,
+          selector: this.config.sitePrivateSelectors.messageList,
           property: "--message-content-width",
           noCenter: true,
         },
         {
-          selector: ANSWER_ITEM_SELECTOR,
+          selector: this.config.selectors.assistantResponse,
           property: "max-width",
           extraCss: "width: 100% !important; min-width: 0 !important;",
         },
       ],
       insetSelectors: [
         {
-          selector: `${CHAT_CONTENT_SELECTOR}, ${MESSAGE_LIST_AREA_SELECTOR}`,
+          selector: `${this.config.sitePrivateSelectors.chatContent}, ${this.config.sitePrivateSelectors.messageListArea}`,
           extraCss:
             "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
         },
         {
-          selector: CANVAS_PANEL_SELECTOR,
-          scopeSelector: CANVAS_LAYOUT_SCOPE_SELECTOR,
+          selector: this.config.sitePrivateSelectors.canvasPanel,
+          scopeSelector: this.config.sitePrivateSelectors.canvasLayoutScope,
           applySide: "right",
           insetMode: "edge",
           rightProperty: "margin-right",
@@ -1043,13 +889,13 @@ export class QianwenAdapter extends SiteAdapter {
 
     return [
       {
-        selector: `${QUESTION_ITEM_SELECTOR} ${BUBBLE_SELECTOR}`,
+        selector: `${this.config.selectors.userQuery} ${this.config.sitePrivateSelectors.bubble}`,
         property: "max-width",
         extraCss: alignRightCss,
         noCenter: true,
       },
       {
-        selector: QUESTION_CARD_SELECTOR,
+        selector: this.config.sitePrivateSelectors.questionCard,
         property: "max-width",
         extraCss: alignRightCss,
         noCenter: true,
@@ -1058,26 +904,32 @@ export class QianwenAdapter extends SiteAdapter {
   }
 
   getZenModeConfig() {
+    const { hide, rootClass, styles } = this.config.zenMode
     return {
-      hide: [SIDEBAR_SELECTOR],
+      ...(hide ? { hide: [...hide] } : {}),
+      ...(rootClass ? { rootClass: { ...rootClass } } : {}),
+      ...(styles ? { styles: styles.map((style) => ({ ...style })) } : {}),
     }
   }
 
   getCleanModeConfig() {
+    const { hide, rootClass, styles } = this.config.cleanMode
     return {
-      hide: [FOOTNOTE_SELECTOR],
+      ...(hide ? { hide: [...hide] } : {}),
+      ...(rootClass ? { rootClass: { ...rootClass } } : {}),
+      ...(styles ? { styles: styles.map((style) => ({ ...style })) } : {}),
     }
   }
 
   getMarkdownFixerConfig(): MarkdownFixerConfig | null {
     return {
-      selector: `${ANSWER_ITEM_SELECTOR} .qk-md-paragraph`,
+      selector: this.config.sitePrivateSelectors.markdownFixerParagraph,
       fixSpanContent: false,
       shouldSkip: (element) => {
         if (!this.isGenerating()) return false
-        const currentMessage = element.closest(ANSWER_ITEM_SELECTOR)
+        const currentMessage = element.closest(this.config.selectors.assistantResponse)
         if (!currentMessage) return false
-        const messages = document.querySelectorAll(ANSWER_ITEM_SELECTOR)
+        const messages = document.querySelectorAll(this.config.selectors.assistantResponse)
         return currentMessage === messages[messages.length - 1]
       },
     }
@@ -1139,7 +991,7 @@ export class QianwenAdapter extends SiteAdapter {
   private getExportableMessageBlockCount(): number {
     const root = this.getExportRoot()
     return this.collectTopLevelBlocks(
-      Array.from(root.querySelectorAll(`${QUESTION_ITEM_SELECTOR}, ${ANSWER_ITEM_SELECTOR}`)),
+      Array.from(root.querySelectorAll(this.config.selectors.chatContent.join(", "))),
     ).filter((element) => !element.closest(".gh-root")).length
   }
 
@@ -1158,11 +1010,7 @@ export class QianwenAdapter extends SiteAdapter {
     const hasConversationContent =
       element === document.documentElement ||
       element === document.body ||
-      Boolean(
-        element.querySelector(
-          `${MESSAGE_LIST_AREA_SELECTOR}, ${MESSAGE_LIST_SELECTOR}, ${QUESTION_ITEM_SELECTOR}, ${ANSWER_ITEM_SELECTOR}`,
-        ),
-      )
+      Boolean(element.querySelector(this.config.sitePrivateSelectors.scrollContent))
 
     if (!hasConversationContent) return false
 
@@ -1201,14 +1049,18 @@ export class QianwenAdapter extends SiteAdapter {
 
   private getExportRoot(): HTMLElement {
     return (
-      (document.querySelector(MESSAGE_LIST_AREA_SELECTOR) as HTMLElement | null) ||
-      (document.querySelector(MESSAGE_LIST_SELECTOR) as HTMLElement | null) ||
+      (document.querySelector(
+        this.config.sitePrivateSelectors.messageListArea,
+      ) as HTMLElement | null) ||
+      (document.querySelector(
+        this.config.sitePrivateSelectors.messageList,
+      ) as HTMLElement | null) ||
       document.body
     )
   }
 
   private collectQianwenExportTurns(root: Element): Element[] {
-    const candidates = this.queryElementsIncludingSelf(root, TURN_SELECTOR)
+    const candidates = this.queryElementsIncludingSelf(root, this.config.sitePrivateSelectors.turn)
     return this.collectTopLevelBlocks(candidates).filter(
       (turn) => this.getOrderedQianwenMessages(turn).length > 0,
     )
@@ -1228,10 +1080,13 @@ export class QianwenAdapter extends SiteAdapter {
     }
 
     const userRoots = this.collectTopLevelBlocks(
-      this.queryElementsIncludingSelf(root, `${QUESTION_ITEM_SELECTOR}, [data-chat-question-wrap]`),
+      this.queryElementsIncludingSelf(
+        root,
+        `${this.config.selectors.userQuery}, ${this.config.sitePrivateSelectors.questionCard}`,
+      ),
     )
     const assistantRoots = this.collectTopLevelBlocks(
-      this.queryElementsIncludingSelf(root, ANSWER_ITEM_SELECTOR),
+      this.queryElementsIncludingSelf(root, this.config.selectors.assistantResponse),
     )
 
     ;[
@@ -1283,18 +1138,12 @@ export class QianwenAdapter extends SiteAdapter {
     const clone = contentRoot.cloneNode(true) as HTMLElement
 
     clone
-      .querySelectorAll(
-        [
-          EXPORT_DECORATION_SELECTOR,
-          ASSISTANT_GENERATED_IMAGE_CARD_SELECTOR,
-          "picture",
-          "img",
-        ].join(", "),
-      )
+      .querySelectorAll(this.config.sitePrivateSelectors.assistantExportDecoration)
       .forEach((node) => node.remove())
 
-    const thinkingSelectors = `${THINKING_SELECTOR}, [class*="thinkingTitle"]`
-    clone.querySelectorAll(thinkingSelectors).forEach((node) => node.remove())
+    clone
+      .querySelectorAll(this.config.sitePrivateSelectors.thinking)
+      .forEach((node) => node.remove())
 
     const bodyMarkdown = htmlToMarkdown(clone) || this.extractTextWithLineBreaks(clone)
     const normalizedBody = bodyMarkdown.trim()
@@ -1309,7 +1158,10 @@ export class QianwenAdapter extends SiteAdapter {
 
   private extractUserTextParts(element: Element): string[] {
     const scope = this.findUserMessageScope(element)
-    const textCards = this.queryElementsIncludingSelf(scope, USER_TEXT_CARD_SELECTOR)
+    const textCards = this.queryElementsIncludingSelf(
+      scope,
+      this.config.sitePrivateSelectors.userTextCard,
+    )
     const parts: string[] = []
     const seen = new Set<string>()
 
@@ -1317,9 +1169,7 @@ export class QianwenAdapter extends SiteAdapter {
       if (card.closest(".gh-user-query-markdown")) return
       const clone = card.cloneNode(true) as HTMLElement
       clone
-        .querySelectorAll(
-          ".gh-user-query-markdown, button, [role='button'], svg, [aria-hidden='true']",
-        )
+        .querySelectorAll(this.config.sitePrivateSelectors.userTextDecoration)
         .forEach((node) => node.remove())
 
       const text = this.normalizeUserQueryText(this.extractTextWithLineBreaks(clone)).trim()
@@ -1350,18 +1200,18 @@ export class QianwenAdapter extends SiteAdapter {
       attachments.push(attachment)
     }
 
-    this.queryElementsIncludingSelf(scope, USER_IMAGE_CARD_SELECTOR).forEach((card) =>
-      addAttachment(this.extractQianwenUserImageAttachment(card)),
+    this.queryElementsIncludingSelf(scope, this.config.sitePrivateSelectors.userImageCard).forEach(
+      (card) => addAttachment(this.extractQianwenUserImageAttachment(card)),
     )
-    this.queryElementsIncludingSelf(scope, USER_FILE_CARD_SELECTOR).forEach((card) =>
-      addAttachment(this.extractQianwenUserFileAttachment(card)),
+    this.queryElementsIncludingSelf(scope, this.config.sitePrivateSelectors.userFileCard).forEach(
+      (card) => addAttachment(this.extractQianwenUserFileAttachment(card)),
     )
 
     return attachments
   }
 
   private extractQianwenUserImageAttachment(card: Element): QianwenUserAttachment | null {
-    const image = card.querySelector("img")
+    const image = card.querySelector(this.config.sitePrivateSelectors.attachmentImage)
     if (!(image instanceof HTMLImageElement)) return null
 
     const source = this.extractQianwenImageSource(image)
@@ -1421,23 +1271,24 @@ export class QianwenAdapter extends SiteAdapter {
     const images: QianwenAssistantImage[] = []
     const seen = new Set<string>()
 
-    this.queryElementsIncludingSelf(contentRoot, ASSISTANT_GENERATED_IMAGE_SELECTOR).forEach(
-      (node) => {
-        if (!(node instanceof HTMLImageElement)) return
+    this.queryElementsIncludingSelf(
+      contentRoot,
+      this.config.sitePrivateSelectors.assistantGeneratedImage,
+    ).forEach((node) => {
+      if (!(node instanceof HTMLImageElement)) return
 
-        const source = this.extractQianwenImageSource(node)
-        if (!source || seen.has(source)) return
+      const source = this.extractQianwenImageSource(node)
+      if (!source || seen.has(source)) return
 
-        seen.add(source)
-        images.push({
-          source,
-          alt:
-            node.alt?.trim() ||
-            node.getAttribute("aria-label")?.trim() ||
-            `generated image ${images.length + 1}`,
-        })
-      },
-    )
+      seen.add(source)
+      images.push({
+        source,
+        alt:
+          node.alt?.trim() ||
+          node.getAttribute("aria-label")?.trim() ||
+          `generated image ${images.length + 1}`,
+      })
+    })
 
     return images
   }
@@ -1455,20 +1306,23 @@ export class QianwenAdapter extends SiteAdapter {
   }
 
   private findUserMessageScope(element: Element): Element {
-    if (element.matches(QUESTION_ITEM_SELECTOR) || element.matches("[data-chat-question-wrap]")) {
+    if (
+      element.matches(this.config.selectors.userQuery) ||
+      element.matches(this.config.sitePrivateSelectors.questionCard)
+    ) {
       return element
     }
 
     return (
-      element.closest(QUESTION_ITEM_SELECTOR) ||
-      element.closest("[data-chat-question-wrap]") ||
+      element.closest(this.config.selectors.userQuery) ||
+      element.closest(this.config.sitePrivateSelectors.questionCard) ||
       element
     )
   }
 
   private findAssistantContentRoot(element: Element): Element {
-    if (element.matches(ASSISTANT_CONTENT_SELECTOR)) return element
-    return element.querySelector(ASSISTANT_CONTENT_SELECTOR) || element
+    if (element.matches(this.config.sitePrivateSelectors.assistantContent)) return element
+    return element.querySelector(this.config.sitePrivateSelectors.assistantContent) || element
   }
 
   private shouldSkipExportElement(element: Element): boolean {
@@ -1586,7 +1440,7 @@ export class QianwenAdapter extends SiteAdapter {
   private extractCleanTextParts(root: Element): string[] {
     const clone = root.cloneNode(true) as HTMLElement
     clone
-      .querySelectorAll("button, [role='button'], svg, [aria-hidden='true'], style, script")
+      .querySelectorAll(this.config.sitePrivateSelectors.cleanTextDecoration)
       .forEach((node) => node.remove())
 
     const parts: string[] = []
@@ -1616,16 +1470,16 @@ export class QianwenAdapter extends SiteAdapter {
   /** 从 clone 的元素中提取思维链内容，转为 blockquote 格式 */
   private extractThoughtBlockquotes(element: Element): string[] {
     // 千问思维链结构：thinkingContent > qk-markdown > 实际内容
-    const thoughtNodes = Array.from(element.querySelectorAll('[class*="thinkingContent"]'))
+    const thoughtNodes = Array.from(
+      element.querySelectorAll(this.config.sitePrivateSelectors.thinkingContent),
+    )
     const blocks: string[] = []
 
     for (const thought of thoughtNodes) {
       // 移除 thinking 内部的装饰元素
       const clone = thought.cloneNode(true) as HTMLElement
       clone
-        .querySelectorAll(
-          '[class*="thinkingTitle"], [class*="thinkingHeader"], .qc-thinking-header, button, svg, [aria-hidden="true"]',
-        )
+        .querySelectorAll(this.config.sitePrivateSelectors.thinkingDecoration)
         .forEach((node) => node.remove())
 
       const markdown = htmlToMarkdown(clone) || this.extractTextWithLineBreaks(clone)
@@ -1649,22 +1503,25 @@ export class QianwenAdapter extends SiteAdapter {
   private extractAssistantPlainText(element: Element): string {
     const clone = element.cloneNode(true) as HTMLElement
     clone
-      .querySelectorAll(
-        `${THINKING_SELECTOR}, .qc-thinking-header, [class*="thinkingWrap"], [class*="thinkingContent"], button, [role='button'], svg, .qk-md-table-action, .qk-md-copy-icon, [aria-hidden='true'], [class*="answerToolsContent"], [class*="functionArea"]`,
-      )
+      .querySelectorAll(this.config.sitePrivateSelectors.assistantPlainTextDecoration)
       .forEach((node) => node.remove())
     return this.extractTextWithLineBreaks(clone).trim()
   }
 
   private findUserQueryContentRoot(element: Element): HTMLElement | null {
-    if (element.matches(".question-text-card")) return element as HTMLElement
+    if (element.matches(this.config.sitePrivateSelectors.questionTextCard)) {
+      return element as HTMLElement
+    }
 
-    const questionTextCard = element.querySelector(".question-text-card")
+    const questionTextCard = element.querySelector(
+      this.config.sitePrivateSelectors.questionTextCard,
+    )
     if (questionTextCard instanceof HTMLElement) return questionTextCard
 
-    if (element.matches(BUBBLE_SELECTOR)) return element as HTMLElement
+    if (element.matches(this.config.sitePrivateSelectors.bubble)) return element as HTMLElement
     return (
-      (element.querySelector(BUBBLE_SELECTOR) as HTMLElement | null) || (element as HTMLElement)
+      (element.querySelector(this.config.sitePrivateSelectors.bubble) as HTMLElement | null) ||
+      (element as HTMLElement)
     )
   }
 
@@ -1674,16 +1531,14 @@ export class QianwenAdapter extends SiteAdapter {
 
   private findModelSelectorTrigger(): HTMLElement | null {
     const triggers = Array.from(
-      document.querySelectorAll(
-        '[aria-haspopup="dialog"][aria-controls], [aria-haspopup="dialog"][data-state]',
-      ),
+      document.querySelectorAll(this.config.sitePrivateSelectors.modelTrigger),
     )
 
     const visibleTriggers = triggers.filter((trigger) => {
       const el = trigger as HTMLElement
       if (!this.isVisibleElement(el)) return false
-      if (el.closest(SIDEBAR_SELECTOR)) return false
-      if (el.closest(CHAT_INPUT_SELECTOR)) return false
+      if (el.closest(this.config.sitePrivateSelectors.sidebar)) return false
+      if (el.closest(this.config.sitePrivateSelectors.chatInput)) return false
       const rect = el.getBoundingClientRect()
       const text = el.innerText?.trim() || el.textContent?.trim() || ""
       return rect.top < 180 && rect.width > 0 && rect.height > 0 && text.length > 0
@@ -1693,14 +1548,14 @@ export class QianwenAdapter extends SiteAdapter {
   }
 
   private findVisibleModelDialogItems(): HTMLElement[] {
-    const dialogs = Array.from(document.querySelectorAll(MODEL_DIALOG_SELECTOR)).filter((dialog) =>
-      this.isVisibleElement(dialog as HTMLElement),
-    )
+    const dialogs = Array.from(
+      document.querySelectorAll(this.config.sitePrivateSelectors.modelDialog),
+    ).filter((dialog) => this.isVisibleElement(dialog as HTMLElement))
     if (dialogs.length === 0) return []
 
     const items: HTMLElement[] = []
     dialogs.forEach((dialog) => {
-      const found = dialog.querySelectorAll(MODEL_DIALOG_ITEM_SELECTOR)
+      const found = dialog.querySelectorAll(this.config.modelSwitcher.menuItemSelector)
       for (const item of Array.from(found)) {
         const el = item as HTMLElement
         if (!this.isVisibleElement(el)) continue
@@ -1741,12 +1596,12 @@ export class QianwenAdapter extends SiteAdapter {
   }
 
   private expandMoreModels(): boolean {
-    const dialogs = Array.from(document.querySelectorAll(MODEL_DIALOG_SELECTOR)).filter((dialog) =>
-      this.isVisibleElement(dialog as HTMLElement),
-    )
+    const dialogs = Array.from(
+      document.querySelectorAll(this.config.sitePrivateSelectors.modelDialog),
+    ).filter((dialog) => this.isVisibleElement(dialog as HTMLElement))
 
     for (const dialog of dialogs) {
-      const toggles = dialog.querySelectorAll("button, div, span")
+      const toggles = dialog.querySelectorAll(this.config.sitePrivateSelectors.modelExpandToggle)
       for (const toggle of Array.from(toggles)) {
         const el = toggle as HTMLElement
         if (!this.isVisibleElement(el)) continue

@@ -1,5 +1,6 @@
 import { IMA_CONFIG, IMA_CONFIG_VERSION } from "~adapters/ima-config"
 import { KIMI_CONFIG, KIMI_CONFIG_VERSION } from "~adapters/kimi-config"
+import { QIANWEN_CONFIG, QIANWEN_CONFIG_VERSION } from "~adapters/qianwen-config"
 import { ZAI_CONFIG, ZAI_CONFIG_VERSION } from "~adapters/zai-config"
 import { SITE_IDS } from "~constants/defaults"
 
@@ -20,6 +21,14 @@ const BUILTIN_CONFIG_DESCRIPTORS = new Map<string, BuiltinConfigDescriptor>([
       siteId: SITE_IDS.KIMI,
       configVersion: KIMI_CONFIG_VERSION,
       baseConfig: KIMI_CONFIG,
+    },
+  ],
+  [
+    SITE_IDS.QIANWEN,
+    {
+      siteId: SITE_IDS.QIANWEN,
+      configVersion: QIANWEN_CONFIG_VERSION,
+      baseConfig: QIANWEN_CONFIG,
     },
   ],
   [
