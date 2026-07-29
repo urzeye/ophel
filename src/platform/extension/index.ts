@@ -90,6 +90,8 @@ export const platform: Platform = {
       return {
         activeOrigins: response.activeOrigins ?? [],
         missingPermissionOrigins: response.missingPermissionOrigins ?? [],
+        originReferences: response.originReferences ?? [],
+        bindingIssues: response.bindingIssues ?? [],
       }
     },
   },

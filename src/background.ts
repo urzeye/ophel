@@ -9,6 +9,7 @@ import {
   REMOTE_CONFIG_ALARM_NAME,
   REMOTE_CONFIG_ALARM_PERIOD_MINUTES,
 } from "~core/remote-config-types"
+import { SITE_PACK_ORIGIN_BINDINGS_STORAGE_KEY } from "~core/site-pack-storage-constants"
 import { extensionRegistryTransport } from "~platform/extension/registry-transport"
 import { createRuntimeSitePackRegistrationManager } from "~platform/extension/site-pack-registration-runtime"
 import { extensionStorage } from "~platform/extension/storage"
@@ -82,6 +83,9 @@ function scheduleSitePackRegistrationReconciliation(reason: string) {
       .then((result) => {
         for (const issue of result.packIssues) {
           console.warn("[Ophel] SitePack registration ignored an invalid pack:", issue)
+        }
+        for (const issue of result.bindingIssues) {
+          console.warn("[Ophel] SitePack registration ignored an invalid binding:", issue)
         }
         if (result.missingPermissionOrigins.length > 0) {
           console.warn(
@@ -164,8 +168,8 @@ setTimeout(() => scheduleSitePackRegistrationReconciliation("background-init"), 
 chrome.storage.onChanged.addListener((changes, areaName) => {
   if (areaName !== "local") return
   if (changes[PERSISTED_SETTINGS_STORAGE_KEY]) scheduleRemoteConfigAlarmSetup()
-  if (changes[INSTALLED_SITE_PACKS_STORAGE_KEY]) {
-    scheduleSitePackRegistrationReconciliation("installed-packs-changed")
+  if (changes[INSTALLED_SITE_PACKS_STORAGE_KEY] || changes[SITE_PACK_ORIGIN_BINDINGS_STORAGE_KEY]) {
+    scheduleSitePackRegistrationReconciliation("site-pack-state-changed")
   }
 })
 
@@ -634,6 +638,8 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
             success: true,
             activeOrigins: result.activeOrigins,
             missingPermissionOrigins: result.missingPermissionOrigins,
+            originReferences: result.originReferences,
+            bindingIssues: result.bindingIssues,
           })
         } catch (err) {
           console.error("SitePack registration reconciliation failed:", err)

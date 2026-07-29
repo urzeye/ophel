@@ -5,7 +5,11 @@ import type {
   SitePackCapability,
   SitePackManifest,
 } from "./types"
-import { SITE_CONFIG_PATCH_SCHEMA_VERSION, SITE_PACK_SCHEMA_VERSION } from "./types"
+import {
+  isValidSitePackId,
+  SITE_CONFIG_PATCH_SCHEMA_VERSION,
+  SITE_PACK_SCHEMA_VERSION,
+} from "./types"
 import { SITE_PACK_CAPABILITIES as SITE_PACK_CAPABILITY_VALUES } from "../feature-capabilities"
 
 export const SITE_PACK_MAX_BYTES = 64 * 1024
@@ -129,7 +133,6 @@ const PATCH_KEYS = [
 const SEMANTIC_VERSION_PATTERN =
   /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/
 
-const ID_PATTERN = /^[a-z0-9-]{2,40}$/
 const COLOR_PATTERN = /^#[0-9a-fA-F]{3,8}$/
 
 const isPlainRecord = (value: unknown): value is Record<string, unknown> => {
@@ -1513,7 +1516,7 @@ export function validateSitePackManifest(
     }
   }
   if (manifest.id !== undefined) {
-    if (validateString(manifest.id, "$.id", context, "full") && !ID_PATTERN.test(manifest.id)) {
+    if (validateString(manifest.id, "$.id", context, "full") && !isValidSitePackId(manifest.id)) {
       addError(context, "$.id", "invalid_pattern", "id must match ^[a-z0-9-]{2,40}$")
     }
   }
@@ -1652,7 +1655,7 @@ export function validateSiteConfigPatch(
   if (patch.targetSiteId !== undefined) {
     if (
       validateString(patch.targetSiteId, "$.targetSiteId", context, "full") &&
-      !ID_PATTERN.test(patch.targetSiteId)
+      !isValidSitePackId(patch.targetSiteId)
     ) {
       addError(
         context,

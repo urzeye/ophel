@@ -8,6 +8,13 @@ interface ParsedSiteMatchPattern {
   pathPattern: string
 }
 
+interface MatchPatternOriginScope {
+  hostname: string
+  wildcard: boolean
+  hasExplicitPort: boolean
+  port: string
+}
+
 const SITE_MATCH_PATTERN_ORIGIN_PATTERN =
   /^https:\/\/(?:\*\.)?(?:\[[0-9a-f:.]+\]|[a-z0-9-]+(?:\.[a-z0-9-]+)*)(?::\d{1,5})?\/\*$/i
 
@@ -27,6 +34,23 @@ const parseMatchPatternHost = (pattern: string): MatchPatternHost => {
     : authority.replace(/:\d+$/, "")
   const wildcard = host.startsWith("*.")
   return { host: wildcard ? host.slice(2) : host, wildcard }
+}
+
+const parseMatchPatternOriginScope = (pattern: string): MatchPatternOriginScope => {
+  if (!isSiteMatchPatternOriginPattern(pattern)) {
+    throw new TypeError(`Expected an HTTPS origin-level match pattern: ${pattern}`)
+  }
+
+  const authority = parseSiteMatchPattern(pattern).authority.toLowerCase()
+  const wildcard = authority.startsWith("*.")
+  const concreteAuthority = wildcard ? authority.slice(2) : authority
+  const url = new URL(`https://${concreteAuthority}/`)
+  return {
+    hostname: url.hostname.toLowerCase(),
+    wildcard,
+    hasExplicitPort: hasExplicitPort(concreteAuthority),
+    port: url.port,
+  }
 }
 
 const isSameOrSubdomain = (candidate: string, parent: string): boolean =>
@@ -88,6 +112,22 @@ export const isSiteMatchPatternOriginPattern = (pattern: string): boolean => {
 export const siteMatchPatternOriginPattern = (pattern: string): string => {
   const { authority } = parseSiteMatchPattern(pattern)
   return `https://${authority.toLowerCase()}/*`
+}
+
+/** 判断一个 origin 级匹配是否完整覆盖另一个，用于避免重叠动态脚本重复注入。 */
+export const siteMatchPatternOriginPatternCovers = (
+  coveringPattern: string,
+  candidatePattern: string,
+): boolean => {
+  const covering = parseMatchPatternOriginScope(coveringPattern)
+  const candidate = parseMatchPatternOriginScope(candidatePattern)
+
+  const hostCovered = covering.wildcard
+    ? isSameOrSubdomain(candidate.hostname, covering.hostname)
+    : !candidate.wildcard && candidate.hostname === covering.hostname
+  if (!hostCovered) return false
+  if (!covering.hasExplicitPort) return true
+  return candidate.hasExplicitPort && candidate.port === covering.port
 }
 
 /** Registry CI 与运行时安装冲突检查共用的 host 重叠语义。 */

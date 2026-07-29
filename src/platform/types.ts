@@ -5,6 +5,10 @@
  */
 
 import type { RemoteConfigCheckResult, RemoteConfigState } from "~core/remote-config-types"
+import type {
+  SitePackOriginBindingIssue,
+  SitePackOriginReferenceEntry,
+} from "~core/site-pack-origin-references"
 
 /**
  * 存储接口
@@ -100,6 +104,8 @@ export type SitePackOriginPermissionResult = "ready" | "denied" | "unsupported"
 export interface SitePackRuntimeStatus {
   activeOrigins: string[]
   missingPermissionOrigins: string[]
+  originReferences: SitePackOriginReferenceEntry[]
+  bindingIssues: SitePackOriginBindingIssue[]
 }
 
 export interface PlatformSitePacks {

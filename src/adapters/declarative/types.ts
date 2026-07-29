@@ -10,6 +10,11 @@ import type { SitePackCapability as AdapterFeatureCapability } from "../feature-
 export const SITE_PACK_SCHEMA_VERSION = 1 as const
 export const SITE_CONFIG_PATCH_SCHEMA_VERSION = 1 as const
 
+const SITE_PACK_ID_PATTERN = /^[a-z0-9-]{2,40}$/
+
+export const isValidSitePackId = (value: unknown): value is string =>
+  typeof value === "string" && SITE_PACK_ID_PATTERN.test(value)
+
 export type SitePackCapability = AdapterFeatureCapability
 
 export interface SiteDetectRule {

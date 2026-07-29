@@ -3,7 +3,7 @@ import {
   siteMatchPatternsOverlap,
 } from "~adapters/declarative/match-pattern"
 import { resolveSitePackName } from "~adapters/declarative/localization"
-import type { SitePackManifest } from "~adapters/declarative/types"
+import { isValidSitePackId, type SitePackManifest } from "~adapters/declarative/types"
 import {
   isValidSemanticVersion,
   validateSitePackManifest,
@@ -25,13 +25,25 @@ import {
   type RemoteConfigState,
   type RemoteConfigStorage,
 } from "./remote-config-types"
-import { INSTALLED_SITE_PACKS_STORAGE_KEY } from "./site-pack-storage-constants"
+import {
+  canonicalizeSitePackBindingOrigin,
+  cloneSitePackOriginBinding,
+  createSitePackOriginBindingsState,
+  parseSitePackOriginBinding,
+  parseSitePackOriginBindingsState,
+  sameSitePackOriginBinding,
+  type SitePackOriginBinding,
+  type SitePackOriginBindingsState,
+} from "./site-pack-origin-bindings"
+import {
+  INSTALLED_SITE_PACKS_STORAGE_KEY,
+  SITE_PACK_ORIGIN_BINDINGS_STORAGE_KEY,
+} from "./site-pack-storage-constants"
 
 export { INSTALLED_SITE_PACKS_STORAGE_KEY } from "./site-pack-storage-constants"
 export const INSTALLED_SITE_PACKS_STORAGE_SCHEMA_VERSION = 1 as const
 
 const MIN_UNIX_MILLISECONDS = 1_000_000_000_000
-const SITE_PACK_ID_PATTERN = /^[a-z0-9-]{2,40}$/
 const BUILTIN_MATCHES = SUPPORTED_AI_PLATFORMS.flatMap(({ id, matchPatterns }) =>
   matchPatterns.map((pattern) => ({ siteId: id, pattern })),
 )
@@ -90,6 +102,7 @@ export type PackManagerErrorCode =
   | "builtin-id-conflict"
   | "builtin-match-conflict"
   | "installed-match-conflict"
+  | "origin-binding-pack-missing"
   | "registry-pack-unavailable"
   | "registry-pack-disabled"
   | "registry-cache-invalid"
@@ -129,6 +142,13 @@ export interface PackManagerSnapshot {
 export interface PackManagerMutationResult {
   changed: boolean
   pack?: InstalledSitePack
+  removedOriginBindings?: string[]
+}
+
+export interface PackManagerOriginBindingMutationResult {
+  changed: boolean
+  origin: string
+  binding?: SitePackOriginBinding
 }
 
 export interface PackManagerSyncResult {
@@ -263,6 +283,69 @@ export class PackManager {
     })
   }
 
+  getOriginBindings(): Promise<SitePackOriginBindingsState> {
+    return this.enqueue(() => this.loadOriginBindingsState())
+  }
+
+  setOriginBinding(
+    origin: string,
+    binding: SitePackOriginBinding,
+  ): Promise<PackManagerOriginBindingMutationResult> {
+    return this.enqueue(async () => {
+      const canonicalOrigin = canonicalizeSitePackBindingOrigin(origin)
+      const parsedBinding = parseSitePackOriginBinding(binding)
+      if (parsedBinding.mode === "explicit") {
+        const installedState = await this.loadStoredState()
+        const installed = this.parseInstalledState(installedState).packs.some(
+          (pack) => pack.manifest.id === parsedBinding.packId,
+        )
+        if (!installed) {
+          throw new PackManagerError(
+            "origin-binding-pack-missing",
+            `Cannot bind ${canonicalOrigin} to missing SitePack ${parsedBinding.packId}`,
+            { packId: parsedBinding.packId },
+          )
+        }
+      }
+
+      const state = await this.loadOriginBindingsState()
+      const current = state.bindings[canonicalOrigin]
+      if (current && sameSitePackOriginBinding(current, parsedBinding)) {
+        return {
+          changed: false,
+          origin: canonicalOrigin,
+          binding: cloneSitePackOriginBinding(current),
+        }
+      }
+
+      const next = createSitePackOriginBindingsState({
+        ...state.bindings,
+        [canonicalOrigin]: parsedBinding,
+      })
+      await this.writeOriginBindingsState(next)
+      return {
+        changed: true,
+        origin: canonicalOrigin,
+        binding: cloneSitePackOriginBinding(parsedBinding),
+      }
+    })
+  }
+
+  removeOriginBinding(origin: string): Promise<PackManagerOriginBindingMutationResult> {
+    return this.enqueue(async () => {
+      const canonicalOrigin = canonicalizeSitePackBindingOrigin(origin)
+      const state = await this.loadOriginBindingsState()
+      if (!Object.prototype.hasOwnProperty.call(state.bindings, canonicalOrigin)) {
+        return { changed: false, origin: canonicalOrigin }
+      }
+
+      const bindings = { ...state.bindings }
+      delete bindings[canonicalOrigin]
+      await this.writeOriginBindingsState(createSitePackOriginBindingsState(bindings))
+      return { changed: true, origin: canonicalOrigin }
+    })
+  }
+
   installLocal(manifest: unknown): Promise<PackManagerMutationResult> {
     return this.enqueue(() => this.upsertPack(manifest, "local"))
   }
@@ -310,13 +393,24 @@ export class PackManager {
         return { changed: false }
       }
 
+      const bindingState = await this.loadOriginBindingsState()
+      const removedOriginBindings = Object.entries(bindingState.bindings)
+        .filter(([, binding]) => binding.mode === "explicit" && binding.packId === packId)
+        .map(([origin]) => origin)
+        .sort((left, right) => left.localeCompare(right))
+
       const packs = { ...state.packs }
       delete packs[packId]
       await this.storage.set<StoredInstalledSitePacksState>(INSTALLED_SITE_PACKS_STORAGE_KEY, {
         ...state,
         packs,
       })
-      return { changed: true }
+      if (removedOriginBindings.length > 0) {
+        const bindings = { ...bindingState.bindings }
+        for (const origin of removedOriginBindings) delete bindings[origin]
+        await this.writeOriginBindingsState(createSitePackOriginBindingsState(bindings))
+      }
+      return { changed: true, removedOriginBindings }
     })
   }
 
@@ -344,7 +438,7 @@ export class PackManager {
   }
 
   private assertPackId(packId: string): void {
-    if (!SITE_PACK_ID_PATTERN.test(packId)) {
+    if (!isValidSitePackId(packId)) {
       throw new PackManagerError("invalid-pack", `Invalid SitePack id: ${packId}`, { packId })
     }
   }
@@ -379,6 +473,19 @@ export class PackManager {
       storageSchemaVersion: INSTALLED_SITE_PACKS_STORAGE_SCHEMA_VERSION,
       packs: { ...value.packs },
     }
+  }
+
+  private async loadOriginBindingsState(): Promise<SitePackOriginBindingsState> {
+    return parseSitePackOriginBindingsState(
+      await this.storage.get<unknown>(SITE_PACK_ORIGIN_BINDINGS_STORAGE_KEY),
+    )
+  }
+
+  private async writeOriginBindingsState(state: SitePackOriginBindingsState): Promise<void> {
+    await this.storage.set<SitePackOriginBindingsState>(
+      SITE_PACK_ORIGIN_BINDINGS_STORAGE_KEY,
+      createSitePackOriginBindingsState(state.bindings),
+    )
   }
 
   private parseStoredPack(packId: string, value: unknown): InstalledSitePack {

@@ -1,5 +1,9 @@
 import type { NetworkMonitorRequestBodyRule } from "~adapters/base"
 import type { RemoteConfigCheckResult, RemoteConfigState } from "~core/remote-config-types"
+import type {
+  SitePackOriginBindingIssue,
+  SitePackOriginReferenceEntry,
+} from "~core/site-pack-origin-references"
 
 /**
  * Messaging Protocol Definitions
@@ -168,6 +172,8 @@ export interface ReconcileSitePackRegistrationsMessage {
 export interface ReconcileSitePackRegistrationsResponse extends BasicBackgroundResponse {
   activeOrigins?: string[]
   missingPermissionOrigins?: string[]
+  originReferences?: SitePackOriginReferenceEntry[]
+  bindingIssues?: SitePackOriginBindingIssue[]
 }
 
 // 撤销权限

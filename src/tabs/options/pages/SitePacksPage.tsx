@@ -267,6 +267,8 @@ const SitePacksPage: React.FC = () => {
   const [runtimeStatus, setRuntimeStatus] = useState<SitePackRuntimeStatus>({
     activeOrigins: [],
     missingPermissionOrigins: [],
+    originReferences: [],
+    bindingIssues: [],
   })
   const [isInstalledLoading, setIsInstalledLoading] = useState(true)
   const [isRegistryLoading, setIsRegistryLoading] = useState(true)

@@ -79,7 +79,12 @@ export const platform: Platform = {
     },
 
     async reconcile() {
-      return { activeOrigins: [], missingPermissionOrigins: [] }
+      return {
+        activeOrigins: [],
+        missingPermissionOrigins: [],
+        originReferences: [],
+        bindingIssues: [],
+      }
     },
   },
 

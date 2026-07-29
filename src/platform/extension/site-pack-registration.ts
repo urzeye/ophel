@@ -1,9 +1,12 @@
-import {
-  isSiteMatchPatternOriginPattern,
-  siteMatchPatternOriginPattern,
-} from "~adapters/declarative/match-pattern"
+import { isSiteMatchPatternOriginPattern } from "~adapters/declarative/match-pattern"
 import type { InstalledSitePack, PackManager, PackManagerIssue } from "~core/pack-manager"
-import { isInstalledSitePackEffectivelyEnabled } from "~core/pack-manager"
+import {
+  collapseCoveredSitePackOriginPatterns,
+  deriveSitePackOriginReferences,
+  getSitePackReferencedOriginPatterns,
+  type SitePackOriginBindingIssue,
+  type SitePackOriginReferenceEntry,
+} from "~core/site-pack-origin-references"
 import { SITE_PACK_REGISTRATION_STATE_STORAGE_KEY } from "~core/site-pack-storage-constants"
 import type { PlatformStorage } from "~platform/types"
 
@@ -53,7 +56,7 @@ export interface SitePackPermissionsApi {
 }
 
 export interface SitePackRegistrationManagerOptions {
-  packManager: Pick<PackManager, "getSnapshot">
+  packManager: Pick<PackManager, "getOriginBindings" | "getSnapshot">
   storage: PlatformStorage
   scripting: SitePackScriptingApi
   permissions: SitePackPermissionsApi
@@ -71,6 +74,8 @@ export interface ReconcileSitePackRegistrationsResult {
   activeOrigins: string[]
   missingPermissionOrigins: string[]
   registrations: chrome.scripting.RegisteredContentScript[]
+  originReferences: SitePackOriginReferenceEntry[]
+  bindingIssues: SitePackOriginBindingIssue[]
   packIssues: PackManagerIssue[]
 }
 
@@ -200,9 +205,6 @@ export const discoverSitePackScriptTemplates = (
   return groupTemplates([...isolatedTemplates, ...mainTemplates])
 }
 
-export const getSitePackOriginPatterns = (packs: readonly InstalledSitePack[]): string[] =>
-  uniqueSorted(packs.flatMap((pack) => pack.manifest.matches.map(siteMatchPatternOriginPattern)))
-
 const hashOrigin = async (originPattern: string): Promise<string> => {
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(originPattern))
   return Array.from(new Uint8Array(digest).slice(0, 8), (byte) =>
@@ -325,7 +327,8 @@ export const createSitePackRegistrationManager = (options: SitePackRegistrationM
     const pack = snapshot.packs.find((candidate) => candidate.manifest.id === packId)
     if (!pack) throw new Error(`Installed SitePack not found: ${packId}`)
 
-    const origins = getSitePackOriginPatterns([pack])
+    const bindingState = await options.packManager.getOriginBindings()
+    const origins = getSitePackReferencedOriginPatterns(pack, bindingState)
     const missingOrigins: string[] = []
     for (const origin of origins) {
       if (!(await hasOriginPermission(origin))) missingOrigins.push(origin)
@@ -363,16 +366,17 @@ export const createSitePackRegistrationManager = (options: SitePackRegistrationM
 
   const reconcileInternal = async (): Promise<ReconcileSitePackRegistrationsResult> => {
     const snapshot = await options.packManager.getSnapshot()
+    const bindingState = await options.packManager.getOriginBindings()
     const state = await loadState()
-    const desiredOrigins = getSitePackOriginPatterns(
-      snapshot.packs.filter(isInstalledSitePackEffectivelyEnabled),
-    )
-    const activeOrigins: string[] = []
+    const referenceGraph = deriveSitePackOriginReferences(snapshot.packs, bindingState)
+    const desiredOrigins = referenceGraph.originReferences.map(({ originPattern }) => originPattern)
+    const permittedOrigins: string[] = []
     const missingPermissionOrigins: string[] = []
     for (const origin of desiredOrigins) {
-      if (await hasOriginPermission(origin)) activeOrigins.push(origin)
+      if (await hasOriginPermission(origin)) permittedOrigins.push(origin)
       else missingPermissionOrigins.push(origin)
     }
+    const activeOrigins = collapseCoveredSitePackOriginPatterns(permittedOrigins)
 
     const registeredScripts = await options.scripting.getRegisteredContentScripts()
     const currentDynamic = registeredScripts.filter((script) =>
@@ -426,6 +430,8 @@ export const createSitePackRegistrationManager = (options: SitePackRegistrationM
       activeOrigins,
       missingPermissionOrigins,
       registrations: desiredRegistrations,
+      originReferences: referenceGraph.originReferences,
+      bindingIssues: referenceGraph.bindingIssues,
       packIssues: snapshot.issues,
     }
   }
