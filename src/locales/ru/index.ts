@@ -220,6 +220,7 @@ export const ru = {
   sitePacksSourceRegistry: "Каталог",
   sitePacksSourceLocal: "Локальный импорт",
   sitePacksStatusAvailable: "Доступен",
+  sitePacksStatusMatchRequired: "Требуется правило",
   sitePacksStatusDisabled: "Отключён",
   sitePacksStatusIncompatible: "Несовместим",
   sitePacksNoInstalled: "Пакеты сайтов не установлены",

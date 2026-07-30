@@ -212,6 +212,7 @@ export const ko = {
   sitePacksSourceRegistry: "레지스트리",
   sitePacksSourceLocal: "로컬 가져오기",
   sitePacksStatusAvailable: "사용 가능",
+  sitePacksStatusMatchRequired: "일치 규칙 필요",
   sitePacksStatusDisabled: "비활성화됨",
   sitePacksStatusIncompatible: "호환되지 않음",
   sitePacksNoInstalled: "설치된 사이트 팩이 없습니다",

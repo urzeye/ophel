@@ -48,6 +48,8 @@ The matcher supports exact hosts, `*.` hosts, `*` scheme/host, `<all_urls>`, and
 
 `SitePacksPage` derives required origins with `deriveSitePackOriginReferences()` and `collapseCoveredSitePackOriginPatterns()`. That preserves enabled-state, explicit binding, detect binding, and duplicate-reference semantics already used by extension registration. On the userscript platform it subtracts origins covered by `GM_info`; extension rendering remains unchanged.
 
+The same userscript reference graph also drives each custom-origin binding status. A referenced origin covered by the manager is available, an uncovered referenced origin explicitly asks for a match rule, and a binding with no enabled references remains disabled. This avoids treating the extension-only empty runtime registration state as evidence that a working userscript binding is disabled.
+
 ## UI Design
 
 The existing custom-origin card remains intact. When uncovered patterns exist, a compact warning panel appears below the binding form and before the binding list. It contains:
@@ -77,6 +79,7 @@ All new application copy is added to the eleven locale resources. The user docum
 ## Verification
 
 - Exercise the pure resolver with representative Tampermonkey, Violentmonkey, ScriptCat-compatible, wildcard, port, override, and path-limited fixtures.
+- In Tampermonkey, copy a missing origin rule, add it under user matches, reload the custom origin, and confirm Ophel injects while the warning disappears and the binding becomes available.
 - Run format, lint, typecheck, extension build, userscript build, and `git diff --check`.
 - Inspect the generated userscript metadata to confirm the built-in match list is unchanged.
 - Keep generated builds and the user's existing `.gitignore` modification out of the commit.

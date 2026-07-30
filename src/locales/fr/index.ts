@@ -224,6 +224,7 @@ export const fr = {
   sitePacksSourceRegistry: "Registre",
   sitePacksSourceLocal: "Import local",
   sitePacksStatusAvailable: "Disponible",
+  sitePacksStatusMatchRequired: "Règle requise",
   sitePacksStatusDisabled: "Désactivé",
   sitePacksStatusIncompatible: "Incompatible",
   sitePacksNoInstalled: "Aucun pack de site installé",

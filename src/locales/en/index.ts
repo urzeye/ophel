@@ -217,6 +217,7 @@ export const en = {
   sitePacksSourceRegistry: "Registry",
   sitePacksSourceLocal: "Local import",
   sitePacksStatusAvailable: "Available",
+  sitePacksStatusMatchRequired: "Match rule needed",
   sitePacksStatusDisabled: "Disabled",
   sitePacksStatusIncompatible: "Incompatible",
   sitePacksNoInstalled: "No site packs installed",

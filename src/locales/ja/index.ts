@@ -216,6 +216,7 @@ export const ja = {
   sitePacksSourceRegistry: "レジストリ",
   sitePacksSourceLocal: "ローカルインポート",
   sitePacksStatusAvailable: "利用可能",
+  sitePacksStatusMatchRequired: "マッチルールが必要",
   sitePacksStatusDisabled: "無効",
   sitePacksStatusIncompatible: "非対応",
   sitePacksNoInstalled: "サイトパックはまだインストールされていません",

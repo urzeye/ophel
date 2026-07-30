@@ -186,6 +186,7 @@ export const zhCN = {
   sitePacksSourceRegistry: "社区目录",
   sitePacksSourceLocal: "本地导入",
   sitePacksStatusAvailable: "可用",
+  sitePacksStatusMatchRequired: "需补充匹配",
   sitePacksStatusDisabled: "已停用",
   sitePacksStatusIncompatible: "不兼容",
   sitePacksNoInstalled: "尚未安装适配包",

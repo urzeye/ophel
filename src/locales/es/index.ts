@@ -223,6 +223,7 @@ export const es = {
   sitePacksSourceRegistry: "Registro",
   sitePacksSourceLocal: "Importación local",
   sitePacksStatusAvailable: "Disponible",
+  sitePacksStatusMatchRequired: "Falta regla de coincidencia",
   sitePacksStatusDisabled: "Desactivado",
   sitePacksStatusIncompatible: "Incompatible",
   sitePacksNoInstalled: "No hay paquetes de sitios instalados",

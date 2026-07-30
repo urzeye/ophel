@@ -386,13 +386,19 @@ const SitePacksPage: React.FC = () => {
     () => (platform.type === "userscript" ? getCurrentUserscriptMatchCoverageInfo() : null),
     [],
   )
+  const userscriptReferenceGraph = useMemo(
+    () =>
+      platform.type === "userscript"
+        ? deriveSitePackOriginReferences(installedPacks, originBindings)
+        : null,
+    [installedPacks, originBindings],
+  )
   const requiredUserscriptOriginPatterns = useMemo(() => {
-    if (platform.type !== "userscript") return []
-    const references = deriveSitePackOriginReferences(installedPacks, originBindings)
+    if (!userscriptReferenceGraph) return []
     return collapseCoveredSitePackOriginPatterns(
-      references.originReferences.map(({ originPattern }) => originPattern),
+      userscriptReferenceGraph.originReferences.map(({ originPattern }) => originPattern),
     )
-  }, [installedPacks, originBindings])
+  }, [userscriptReferenceGraph])
   const missingUserscriptOriginPatterns = useMemo(() => {
     if (!userscriptMatchInfo) return []
     return requiredUserscriptOriginPatterns.filter(
@@ -1018,21 +1024,34 @@ const SitePacksPage: React.FC = () => {
 
   const renderOriginBinding = ([origin, binding]: [string, SitePackOriginBinding]) => {
     const originPattern = sitePackBindingOriginPattern(origin)
-    const referenceEntry = runtimeStatus.originReferences.find(
+    const referenceGraph = userscriptReferenceGraph ?? runtimeStatus
+    const referenceEntry = referenceGraph.originReferences.find(
       (entry) => entry.originPattern === originPattern,
     )
-    const issue = runtimeStatus.bindingIssues.find((candidate) => candidate.origin === origin)
-    const missingPermission = runtimeStatus.missingPermissionOrigins.includes(originPattern)
-    const active = runtimeStatus.activeOrigins.some((activeOrigin) =>
-      siteMatchPatternOriginPatternCovers(activeOrigin, originPattern),
+    const issue = referenceGraph.bindingIssues.find((candidate) => candidate.origin === origin)
+    const userscriptCovered = Boolean(
+      userscriptMatchInfo &&
+        userscriptMatchPatternsCoverOriginPattern(userscriptMatchInfo.matchPatterns, originPattern),
     )
+    const userscriptMatchRequired = Boolean(
+      userscriptReferenceGraph && referenceEntry && !userscriptCovered,
+    )
+    const missingPermission =
+      !userscriptReferenceGraph && runtimeStatus.missingPermissionOrigins.includes(originPattern)
+    const active = userscriptReferenceGraph
+      ? Boolean(referenceEntry && userscriptCovered)
+      : runtimeStatus.activeOrigins.some((activeOrigin) =>
+          siteMatchPatternOriginPatternCovers(activeOrigin, originPattern),
+        )
     const status = issue
       ? { tone: "danger", label: t("sitePacksStatusIncompatible") }
-      : missingPermission
-        ? { tone: "warning", label: t("notGranted") }
-        : active
-          ? { tone: "success", label: t("sitePacksStatusAvailable") }
-          : { tone: "neutral", label: t("sitePacksStatusDisabled") }
+      : userscriptMatchRequired
+        ? { tone: "warning", label: t("sitePacksStatusMatchRequired") }
+        : missingPermission
+          ? { tone: "warning", label: t("notGranted") }
+          : active
+            ? { tone: "success", label: t("sitePacksStatusAvailable") }
+            : { tone: "neutral", label: t("sitePacksStatusDisabled") }
     const explicitPack = binding.mode === "explicit" ? installedById.get(binding.packId) : undefined
     const referenceNames = Array.from(
       new Set(

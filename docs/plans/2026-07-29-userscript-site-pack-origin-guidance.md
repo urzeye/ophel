@@ -36,11 +36,13 @@
 
 **Step 2:** On userscript only, filter references through the effective match coverage helper.
 
-**Step 3:** Replace the unconditional userscript warning with a conditional panel listing missing rules and a copy action.
+**Step 3:** Reuse that reference graph for binding status so covered origins are available, uncovered origins request a match rule, and bindings without enabled references stay disabled.
 
-**Step 4:** Add a three-step manager workflow and explicit clipboard failure feedback.
+**Step 4:** Replace the unconditional userscript warning with a conditional panel listing missing rules and a copy action.
 
-**Step 5:** Add responsive, focus-visible, light/dark-compatible styles using existing `--gh-*` variables.
+**Step 5:** Add a three-step manager workflow and explicit clipboard failure feedback.
+
+**Step 6:** Add responsive, focus-visible, light/dark-compatible styles using existing `--gh-*` variables.
 
 ### Task 3: Localize and document the workflow
 
@@ -83,3 +85,9 @@
 **Step 2:** Commit with `feat(userscript): guide custom SitePack matches`.
 
 **Step 3:** Push `feat/site-adapter-pluginization` and verify local/remote HEAD equality.
+
+## Completion evidence
+
+- Tampermonkey 5.5.0 on Chrome 150 showed the exact copied rule `https://custom-origin.example.com/*` and the three documented steps.
+- Before adding the rule, the binding showed one reference and `Match rule needed`; after saving it under Tampermonkey user matches and loading the custom origin, Ophel injected successfully, the guide disappeared, and the binding showed `Available`.
+- The real custom-origin page exposed the userscript host, Shadow Root, app container, and panel root with no page errors.

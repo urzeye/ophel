@@ -220,6 +220,7 @@ export const pt = {
   sitePacksSourceRegistry: "Registro",
   sitePacksSourceLocal: "Importação local",
   sitePacksStatusAvailable: "Disponível",
+  sitePacksStatusMatchRequired: "Regra necessária",
   sitePacksStatusDisabled: "Desativado",
   sitePacksStatusIncompatible: "Incompatível",
   sitePacksNoInstalled: "Nenhum pacote de site instalado",

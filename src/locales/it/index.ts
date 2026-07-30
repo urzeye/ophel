@@ -222,6 +222,7 @@ export const it = {
   sitePacksSourceRegistry: "Registro",
   sitePacksSourceLocal: "Importazione locale",
   sitePacksStatusAvailable: "Disponibile",
+  sitePacksStatusMatchRequired: "Regola richiesta",
   sitePacksStatusDisabled: "Disattivato",
   sitePacksStatusIncompatible: "Non compatibile",
   sitePacksNoInstalled: "Nessun pacchetto sito installato",
