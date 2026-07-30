@@ -13,6 +13,7 @@ import {
   isAppVersionCompatible,
   REMOTE_CONFIG_CHECK_INTERVAL_MS,
   REMOTE_CONFIG_MAX_INDEX_BYTES,
+  REMOTE_CONFIG_MAX_SIGNATURE_BYTES,
   REMOTE_CONFIG_STORAGE_KEY,
   validateRemoteConfigRegistryIndex,
   type BuiltinConfigDescriptor,
@@ -30,6 +31,13 @@ import {
   type ResolveBuiltinConfig,
 } from "./remote-config-types"
 import { isCachedSiteConfigPatchShape, isCachedSitePackShape } from "./remote-config-cache"
+import {
+  assertRegistrySigningKeyAllowsRevision,
+  REGISTRY_INDEX_SIGNATURE_FILE_NAME,
+  TRUSTED_REGISTRY_SIGNING_KEYS,
+  verifyRegistryIndexSignature,
+  type TrustedRegistrySigningKey,
+} from "./remote-config-signature"
 import { loadRemoteConfigState } from "./remote-config-state"
 
 export * from "./remote-config-cache"
@@ -44,6 +52,7 @@ export interface RemoteConfigManagerOptions {
   sources?: readonly string[]
   checkIntervalMs?: number
   now?: () => number
+  trustedSigningKeys?: readonly TrustedRegistrySigningKey[]
 }
 
 export interface CheckRemoteConfigOptions {
@@ -114,12 +123,6 @@ const fetchBytes = async (
   }
   return bytes
 }
-
-const fetchJson = async (
-  transport: RegistryTransport,
-  url: string,
-  maxBytes: number,
-): Promise<unknown> => decodeJson(await fetchBytes(transport, url, maxBytes), url)
 
 const sameStringArray = (left: readonly string[], right: readonly string[]): boolean =>
   left.length === right.length && left.every((value, index) => value === right[index])
@@ -339,6 +342,7 @@ export class RemoteConfigManager {
   private readonly sources: readonly string[]
   private readonly checkIntervalMs: number
   private readonly now: () => number
+  private readonly trustedSigningKeys: readonly TrustedRegistrySigningKey[]
   private mutationQueue: Promise<void> = Promise.resolve()
 
   constructor(options: RemoteConfigManagerOptions) {
@@ -361,6 +365,7 @@ export class RemoteConfigManager {
     this.sources = (options.sources ?? DEFAULT_REMOTE_CONFIG_SOURCES).map(normalizeSourceUrl)
     this.checkIntervalMs = options.checkIntervalMs ?? REMOTE_CONFIG_CHECK_INTERVAL_MS
     this.now = options.now ?? Date.now
+    this.trustedSigningKeys = options.trustedSigningKeys ?? TRUSTED_REGISTRY_SIGNING_KEYS
   }
 
   getState(): Promise<RemoteConfigState> {
@@ -481,8 +486,20 @@ export class RemoteConfigManager {
     sourceUrl: string,
     state: RemoteConfigState,
   ): Promise<SourceCheckResult> {
-    const value = await fetchJson(this.transport, sourceUrl, REMOTE_CONFIG_MAX_INDEX_BYTES)
-    const index = validateRemoteConfigRegistryIndex(value)
+    const indexBytes = await fetchBytes(this.transport, sourceUrl, REMOTE_CONFIG_MAX_INDEX_BYTES)
+    const signatureUrl = new URL(`./${REGISTRY_INDEX_SIGNATURE_FILE_NAME}`, sourceUrl).href
+    const signatureBytes = await fetchBytes(
+      this.transport,
+      signatureUrl,
+      REMOTE_CONFIG_MAX_SIGNATURE_BYTES,
+    )
+    const signingKey = await verifyRegistryIndexSignature(
+      indexBytes,
+      signatureBytes,
+      this.trustedSigningKeys,
+    )
+    const index = validateRemoteConfigRegistryIndex(decodeJson(indexBytes, sourceUrl))
+    assertRegistrySigningKeyAllowsRevision(signingKey, index.registryRevision)
     const currentRevision = state.active?.index.registryRevision ?? 0
     if (index.registryRevision < currentRevision) {
       throw new Error(

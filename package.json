@@ -23,7 +23,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "registry:validate": "tsx registry/scripts/validate.mjs",
-    "registry:build": "tsx registry/scripts/build-dist.mjs",
+    "registry:build": "tsx registry/scripts/build-dist-local.mjs",
+    "registry:build:signed": "tsx registry/scripts/build-dist.mjs",
     "build": "pnpm prepare:mermaid-assets && plasmo build",
     "build:firefox": "pnpm prepare:mermaid-assets && plasmo build --target=firefox-mv3",
     "build:all": "pnpm build && pnpm build:firefox",
@@ -49,6 +50,7 @@
   },
   "dependencies": {
     "@mdit/plugin-tex": "^0.24.1",
+    "@noble/ed25519": "3.1.0",
     "@pilio/gemini-watermark-remover": "1.0.17",
     "@plasmohq/storage": "^1.12.0",
     "effect": "^3.19.13",

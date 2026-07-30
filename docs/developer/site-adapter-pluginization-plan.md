@@ -500,7 +500,7 @@ pack 的 `matches` 是静态声明（禁通配、≤10 条），无法覆盖 Ope
 
 ### 7.1 目录与发布
 
-- 源文件在 `main` 分支 `registry/` 目录（§6.1）；push 到 main 触发 GH Actions：`validate.mjs` 全量校验 → `build-dist.mjs` 生成 `index.json`（含每个文件的 version/matches/sha256/minAppVersion 摘要 + 单调 `registryRevision`）→ **强制推送到 `registry-dist` 分支**（独立分支：jsDelivr 缓存可单独 purge，registry 更新不产生 main 提交噪音、不触发 release 流程）。
+- 源文件在 `main` 分支 `registry/` 目录（§6.1）；push 到 main 触发 GH Actions：`validate.mjs` 全量校验 → `build-dist.mjs` 生成 `index.json`（含每个文件的 version/matches/sha256/minAppVersion 摘要 + 单调 `registryRevision`）→ 用 GitHub Actions secret 中的 Ed25519 私钥签名 index 原始字节并生成 `index.sig.json` → **强制推送到 `registry-dist` 分支**（独立分支：jsDelivr 缓存可单独 purge，registry 更新不产生 main 提交噪音、不触发 release 流程）。
 - **不可变发布**（回应"可变分支混合读取"）：包/patch 写入按版本命名的不可变路径（如 `packs/duck-ai/3.json`），`index` 引用固定路径；客户端按 `registryRevision` 判断是否需要刷新，避免 index 与包文件读到不同 commit。
 - `index.json` 结构：
 
@@ -515,6 +515,8 @@ pack 的 `matches` 是静态声明（禁通配、≤10 条），无法覆盖 Ope
 ```
 
 - 时间字段一律 Unix 毫秒时间戳（§6.5 约定），不使用 ISO `T/Z` 字符串。
+
+- `index.sig.json` 为严格分离签名 envelope：`schemaVersion: 1`、`algorithm: "Ed25519"`、`keyId`、128 位小写十六进制签名。签名直接覆盖落盘的 `index.json` 原始字节，避免 Node 与浏览器分别实现 canonical JSON。客户端内置带 `registryRevision` 有效范围的公钥 keyring，先验签、后解析 index、再按已认证的 SHA-256 校验包；签名失败只尝试备源或保留 last-known-good，不允许无签名降级。
 
 - `disabled: true` 为紧急止损开关（§6.5，非即时，受轮询 + CDN 缓存约束）：客户端下次拉到即让对应缓存条目失效，用于问题 patch/pack 的下线。
 
@@ -542,7 +544,7 @@ pack 的 `matches` 是静态声明（禁通配、≤10 条），无法覆盖 Ope
 | --- | --- | --- |
 | 恶意 CSS（UI 欺骗、`url()` 数据外带） | `zenMode/cleanMode.styles.extraCss`、`widthSelectors.extraCss` | 字段长度 ≤ 2000；**归一化**（解码 CSS 转义如 `\75 rl(`、去注释、折叠空白、小写化）后黑名单 `url(`、`@import`、`expression(`、`javascript:`；CI + 运行时双重校验，绕过样例进测试用例 |
 | ReDoS | `idFrom.regex`、`session.idFromPathRegex` 等 | 长度 ≤ 200；编译失败即拒；CI 跑 safe-regex 类检查；运行时仅对短输入（pathname/属性值）执行 |
-| CDN 单文件篡改 | jsDelivr/raw | 包文件与 index 中 sha256 比对；index 本身信任 HTTPS（双源为**可用性 fallback，非交叉验证**；防 CDN + 分支双重篡改的签名方案见 P4-03） |
+| CDN 或 `registry-dist` 分支篡改 | jsDelivr/raw/发布分支 | Ed25519 验证 `index.json` 原始字节，内置公钥是信任根；已认证 index 中的 SHA-256 再校验每个不可变包。双源仅作**可用性 fallback**，任一签名失败均不降级接受无签名数据 |
 | 恶意本地导入包 | 用户导入第三方 JSON | 同一校验器 + 风险确认弹窗（明示：适配包可修改页面样式与 Ophel 在该站点的行为，仅导入可信来源）|
 | 表达力蠕变演变为远程代码 | schema 演进 | §3 红线：schema 永不加脚本/表达式字段，PR 审核硬性拒绝 |
 | 域名劫持内置站点 | pack matches 覆盖内置域名 | CI + 运行时双重拒绝；修改内置只能走 patch 通道 |

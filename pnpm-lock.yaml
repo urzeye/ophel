@@ -11,6 +11,9 @@ importers:
       '@mdit/plugin-tex':
         specifier: ^0.24.1
         version: 0.24.1(markdown-it@14.1.0)
+      '@noble/ed25519':
+        specifier: 3.1.0
+        version: 3.1.0
       '@pilio/gemini-watermark-remover':
         specifier: 1.0.17
         version: 1.0.17
@@ -1571,6 +1574,9 @@ packages:
     resolution: {integrity: sha512-x0fWaQtYp4E6sktbsdAqnehxDgEc/VwM7uLsRCYWaiGu0ykYdZPiS8zCWdnjHwyiumousxfBm4SO31eXqwEZhQ==}
     cpu: [x64]
     os: [win32]
+
+  '@noble/ed25519@3.1.0':
+    resolution: {integrity: sha512-pfcObRY3CtvwfaG9Mt5XqZdKmAQppl37tHUeuBhDUbiwJBCVY4/A4lbMvb1xKhMDx96AqAqZpMWuBX1HulhX4g==}
 
   '@nodelib/fs.scandir@2.1.5':
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
@@ -6999,6 +7005,8 @@ snapshots:
 
   '@msgpackr-extract/msgpackr-extract-win32-x64@3.0.3':
     optional: true
+
+  '@noble/ed25519@3.1.0': {}
 
   '@nodelib/fs.scandir@2.1.5':
     dependencies:

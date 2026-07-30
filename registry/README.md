@@ -104,6 +104,21 @@ Patch 只用于已经配置化的内置适配器 selector/纯配置热修，文�
 - 同一 pack `id` 或 patch `targetSiteId` 只能存在一份当前源文件。
 - 版本升级时修改当前源文件中的 `version` / `patchVersion`。发布分支会保留旧版本的不可变路径。
 - `registry/examples/` 仅保存校验与创作示例，不会进入发布索引。
+- 发布产物包含 `index.json` 与分离的 `index.sig.json`；签名认证完整 index，index 中的 SHA-256 再认证每个不可变包文件。
+
+## 发布签名
+
+正式 `registry-dist` 发布使用 Ed25519 签名。GitHub Actions 从 `REGISTRY_SIGNING_PRIVATE_KEY` secret 读取 base64 PKCS#8 私钥，并以源码内置的 key ID 和公钥校验私钥匹配关系；密钥缺失、类型错误或不匹配都会在写入发布分支前终止任务。
+
+客户端先验证 `index.json` 原始字节对应的 `index.sig.json`，再解析 index 和下载包。签名缺失、未知 key、验签失败或 key 不适用于该 `registryRevision` 时，不会降级接受无签名数据；客户端改用备源，两源均失败则继续使用 last-known-good。
+
+轮换密钥时必须按以下顺序操作：
+
+1. 先发布同时信任旧、新公钥的客户端，并给旧 key 设置明确的最大 `registryRevision`。
+2. 更新 GitHub secret 和 workflow key ID，切换 registry 发布签名。
+3. 支持范围内客户端越过切换版本后，再删除旧公钥。
+
+不要把生产私钥写入 `.env`、命令参数、日志或仓库文件。`pnpm registry:build:signed` 仅供配置了生产 secret 的发布环境使用。
 
 ## 本地命令
 
@@ -111,6 +126,8 @@ Patch 只用于已经配置化的内置适配器 selector/纯配置热修，文�
 pnpm registry:validate
 pnpm registry:build
 ```
+
+`pnpm registry:build` 会在进程内生成一次性 Ed25519 密钥并写出完整签名产物，用于本地结构与不可变路径检查；临时公钥不在客户端信任列表中，因此该输出不能发布。正式 workflow 使用 `pnpm registry:build:signed`，并强制匹配内置生产公钥。
 
 PR 校验 workflow 会从受信任的主分支脚本读取 PR 中的 registry 数据；本地复现时可指定候选目录：
 

@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto"
+import { createHash, generateKeyPairSync, sign } from "node:crypto"
 
 import { describe, expect, it, vi } from "vitest"
 
@@ -9,6 +9,7 @@ import type {
 } from "~adapters/declarative/types"
 
 import { RemoteConfigManager } from "./remote-config-manager"
+import type { TrustedRegistrySigningKey } from "./remote-config-signature"
 import {
   REMOTE_CONFIG_STORAGE_KEY,
   REMOTE_CONFIG_STORAGE_SCHEMA_VERSION,
@@ -30,6 +31,19 @@ const PRIMARY_SOURCE = "https://primary.example/registry/index.json"
 const FALLBACK_SOURCE = "https://fallback.example/registry/index.json"
 const SITE_ID = "test-site"
 const PACK_ID = "test-pack"
+const SIGNING_KEY_ID = "ophel-registry-test"
+const { privateKey: SIGNING_PRIVATE_KEY, publicKey: SIGNING_PUBLIC_KEY } =
+  generateKeyPairSync("ed25519")
+const SIGNING_PUBLIC_KEY_HEX = SIGNING_PUBLIC_KEY.export({ format: "der", type: "spki" })
+  .subarray(-32)
+  .toString("hex")
+const TRUSTED_SIGNING_KEYS: readonly TrustedRegistrySigningKey[] = [
+  {
+    keyId: SIGNING_KEY_ID,
+    publicKeyHex: SIGNING_PUBLIC_KEY_HEX,
+    minRegistryRevision: 1,
+  },
+]
 
 const clone = <T>(value: T): T => structuredClone(value)
 
@@ -75,6 +89,37 @@ const createTransport = (routes: Map<string, TransportRoute>) =>
   })
 
 const encodeJson = (value: unknown): Uint8Array => new TextEncoder().encode(JSON.stringify(value))
+
+const signatureUrl = (source: string): string => new URL("./index.sig.json", source).href
+
+const createSignatureBytes = (
+  indexBytes: Uint8Array,
+  overrides: Partial<{
+    schemaVersion: number
+    algorithm: string
+    keyId: string
+    signature: string
+  }> = {},
+): Uint8Array =>
+  encodeJson({
+    schemaVersion: 1,
+    algorithm: "Ed25519",
+    keyId: SIGNING_KEY_ID,
+    signature: sign(null, indexBytes, SIGNING_PRIVATE_KEY).toString("hex"),
+    ...overrides,
+  })
+
+const createSignedIndexRoutes = (
+  source: string,
+  index: RemoteConfigRegistryIndex,
+  signatureOverrides: Parameters<typeof createSignatureBytes>[1] = {},
+): Array<[string, TransportRoute]> => {
+  const indexBytes = encodeJson(index)
+  return [
+    [source, indexBytes],
+    [signatureUrl(source), createSignatureBytes(indexBytes, signatureOverrides)],
+  ]
+}
 
 const sha256 = (bytes: Uint8Array): string => createHash("sha256").update(bytes).digest("hex")
 
@@ -204,6 +249,7 @@ const createManager = (
     sources: options.sources ?? [PRIMARY_SOURCE],
     checkIntervalMs: options.checkIntervalMs,
     now: () => NOW,
+    trustedSigningKeys: TRUSTED_SIGNING_KEYS,
   })
 
 const artifactUrl = (entry: { file: string }, source = PRIMARY_SOURCE): string =>
@@ -217,7 +263,7 @@ describe("RemoteConfigManager source handling", () => {
     const index = createIndex(1, { packs: [packEntry] })
     const routes = new Map<string, TransportRoute>([
       [PRIMARY_SOURCE, new Error("primary unavailable")],
-      [FALLBACK_SOURCE, encodeJson(index)],
+      ...createSignedIndexRoutes(FALLBACK_SOURCE, index),
       [artifactUrl(packEntry, FALLBACK_SOURCE), packBytes],
     ])
     const transport = createTransport(routes)
@@ -240,6 +286,7 @@ describe("RemoteConfigManager source handling", () => {
     expect(transport.mock.calls.map(([url]) => url)).toEqual([
       PRIMARY_SOURCE,
       FALLBACK_SOURCE,
+      signatureUrl(FALLBACK_SOURCE),
       artifactUrl(packEntry, FALLBACK_SOURCE),
     ])
     expect(storage.readState()).toMatchObject({
@@ -297,6 +344,58 @@ describe("RemoteConfigManager source handling", () => {
     })
   })
 
+  it("falls back when the primary index signature is invalid", async () => {
+    const index = createIndex(1)
+    const routes = new Map<string, TransportRoute>([
+      ...createSignedIndexRoutes(PRIMARY_SOURCE, index, { signature: "00".repeat(64) }),
+      ...createSignedIndexRoutes(FALLBACK_SOURCE, index),
+    ])
+    const transport = createTransport(routes)
+    const storage = new MemoryRemoteConfigStorage()
+    const manager = createManager(storage, transport, {
+      sources: [PRIMARY_SOURCE, FALLBACK_SOURCE],
+    })
+
+    const result = await manager.checkForUpdates({ force: true })
+
+    expect(result).toMatchObject({
+      status: "updated",
+      registryRevision: 1,
+      sourceUrl: FALLBACK_SOURCE,
+    })
+    expect(transport.mock.calls.map(([url]) => url)).toEqual([
+      PRIMARY_SOURCE,
+      signatureUrl(PRIMARY_SOURCE),
+      FALLBACK_SOURCE,
+      signatureUrl(FALLBACK_SOURCE),
+    ])
+  })
+
+  it("preserves the active snapshot when every source signature is invalid", async () => {
+    const active = createSnapshot(createIndex(3))
+    const initialState = createState({ active, lastSuccessAt: NOW - 20_000 })
+    const nextIndex = createIndex(4)
+    const routes = new Map<string, TransportRoute>([
+      ...createSignedIndexRoutes(PRIMARY_SOURCE, nextIndex, { signature: "00".repeat(64) }),
+      ...createSignedIndexRoutes(FALLBACK_SOURCE, nextIndex, { keyId: "unknown-key" }),
+    ])
+    const transport = createTransport(routes)
+    const storage = new MemoryRemoteConfigStorage(initialState)
+    const manager = createManager(storage, transport, {
+      sources: [PRIMARY_SOURCE, FALLBACK_SOURCE],
+    })
+
+    const result = await manager.checkForUpdates({ force: true })
+
+    expect(result).toMatchObject({
+      status: "failed",
+      registryRevision: 3,
+    })
+    expect(result.error).toContain("Invalid Ed25519 signature")
+    expect(result.error).toContain("Unknown registry signing key: unknown-key")
+    expect(storage.readState()?.active).toEqual(active)
+  })
+
   it("throttles a recent automatic check without transport or storage writes", async () => {
     const checkIntervalMs = 10_000
     const lastCheckAt = NOW - 1_000
@@ -333,7 +432,7 @@ describe("RemoteConfigManager integrity and last-known-good state", () => {
       sha256: "0".repeat(64),
     })
     const routes = new Map<string, TransportRoute>([
-      [PRIMARY_SOURCE, encodeJson(createIndex(2, { packs: [nextEntry] }))],
+      ...createSignedIndexRoutes(PRIMARY_SOURCE, createIndex(2, { packs: [nextEntry] })),
       [artifactUrl(nextEntry), nextBytes],
     ])
     const transport = createTransport(routes)
@@ -352,7 +451,9 @@ describe("RemoteConfigManager integrity and last-known-good state", () => {
 
   it("rejects a registry revision rollback and preserves the active snapshot", async () => {
     const active = createSnapshot(createIndex(2))
-    const transport = createTransport(new Map([[PRIMARY_SOURCE, encodeJson(createIndex(1))]]))
+    const transport = createTransport(
+      new Map(createSignedIndexRoutes(PRIMARY_SOURCE, createIndex(1))),
+    )
     const storage = new MemoryRemoteConfigStorage(createState({ active }))
     const manager = createManager(storage, transport)
 
@@ -363,7 +464,10 @@ describe("RemoteConfigManager integrity and last-known-good state", () => {
       registryRevision: 2,
       error: "Stale registry revision 1; local revision is 2",
     })
-    expect(transport).toHaveBeenCalledTimes(1)
+    expect(transport.mock.calls.map(([url]) => url)).toEqual([
+      PRIMARY_SOURCE,
+      signatureUrl(PRIMARY_SOURCE),
+    ])
     expect(storage.readState()?.active).toEqual(active)
   })
 
@@ -385,7 +489,7 @@ describe("RemoteConfigManager integrity and last-known-good state", () => {
     const nextEntry = createPackEntry(createPack(2), invalidBytes)
     const transport = createTransport(
       new Map([
-        [PRIMARY_SOURCE, encodeJson(createIndex(2, { packs: [nextEntry] }))],
+        ...createSignedIndexRoutes(PRIMARY_SOURCE, createIndex(2, { packs: [nextEntry] })),
         [artifactUrl(nextEntry), invalidBytes],
       ]),
     )
@@ -423,7 +527,7 @@ describe("RemoteConfigManager stop and recovery paths", () => {
       packs: [disabledPackEntry],
       patches: [disabledPatchEntry],
     })
-    const transport = createTransport(new Map([[PRIMARY_SOURCE, encodeJson(nextIndex)]]))
+    const transport = createTransport(new Map(createSignedIndexRoutes(PRIMARY_SOURCE, nextIndex)))
     const storage = new MemoryRemoteConfigStorage(createState({ active }))
     const manager = createManager(storage, transport)
 
@@ -441,7 +545,10 @@ describe("RemoteConfigManager stop and recovery paths", () => {
         removedPatches: 1,
       },
     })
-    expect(transport.mock.calls.map(([url]) => url)).toEqual([PRIMARY_SOURCE])
+    expect(transport.mock.calls.map(([url]) => url)).toEqual([
+      PRIMARY_SOURCE,
+      signatureUrl(PRIMARY_SOURCE),
+    ])
     expect(storage.readState()?.active).toEqual({
       sourceUrl: PRIMARY_SOURCE,
       index: nextIndex,
@@ -460,7 +567,7 @@ describe("RemoteConfigManager stop and recovery paths", () => {
         [SITE_ID]: { index: patchV1Entry, patch: patchV1 },
       },
     })
-    const routes = new Map<string, TransportRoute>([[PRIMARY_SOURCE, encodeJson(indexV1)]])
+    const routes = new Map<string, TransportRoute>(createSignedIndexRoutes(PRIMARY_SOURCE, indexV1))
     const transport = createTransport(routes)
     const storage = new MemoryRemoteConfigStorage(createState({ active }))
     const manager = createManager(storage, transport)
@@ -479,14 +586,19 @@ describe("RemoteConfigManager stop and recovery paths", () => {
       status: "up-to-date",
       changes: { ignoredPatches: 1, downloadedPatches: 0 },
     })
-    expect(transport.mock.calls.map(([url]) => url)).toEqual([PRIMARY_SOURCE])
+    expect(transport.mock.calls.map(([url]) => url)).toEqual([
+      PRIMARY_SOURCE,
+      signatureUrl(PRIMARY_SOURCE),
+    ])
     expect(storage.readState()?.ignoredPatches).toEqual({ [SITE_ID]: 1 })
 
     const patchV2 = createPatch(2)
     const patchV2Bytes = encodeJson(patchV2)
     const patchV2Entry = createPatchEntry(patchV2, patchV2Bytes)
     const indexV2 = createIndex(2, { patches: [patchV2Entry] })
-    routes.set(PRIMARY_SOURCE, encodeJson(indexV2))
+    for (const [url, route] of createSignedIndexRoutes(PRIMARY_SOURCE, indexV2)) {
+      routes.set(url, route)
+    }
     routes.set(artifactUrl(patchV2Entry), patchV2Bytes)
     storage.clearWrites()
     transport.mockClear()
@@ -500,6 +612,7 @@ describe("RemoteConfigManager stop and recovery paths", () => {
     })
     expect(transport.mock.calls.map(([url]) => url)).toEqual([
       PRIMARY_SOURCE,
+      signatureUrl(PRIMARY_SOURCE),
       artifactUrl(patchV2Entry),
     ])
     expect(storage.readState()).toMatchObject({

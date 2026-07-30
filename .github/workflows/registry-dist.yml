@@ -75,13 +75,19 @@ jobs:
         shell: bash
         env:
           PREVIOUS_DIRECTORY: ${{ steps.previous.outputs.directory }}
+          REGISTRY_SIGNING_KEY_ID: ophel-registry-2026-07
+          REGISTRY_SIGNING_PRIVATE_KEY: ${{ secrets.REGISTRY_SIGNING_PRIVATE_KEY }}
         run: |
+          if [ -z "$REGISTRY_SIGNING_PRIVATE_KEY" ]; then
+            echo "REGISTRY_SIGNING_PRIVATE_KEY is not configured" >&2
+            exit 1
+          fi
           REVISION=$(git rev-list --count HEAD)
           GENERATED_AT=$(($(git show -s --format=%ct HEAD) * 1000))
           if [ -n "$PREVIOUS_DIRECTORY" ]; then
-            pnpm registry:build -- --revision "$REVISION" --generated-at "$GENERATED_AT" --previous-dir "$PREVIOUS_DIRECTORY"
+            pnpm registry:build:signed -- --revision "$REVISION" --generated-at "$GENERATED_AT" --previous-dir "$PREVIOUS_DIRECTORY"
           else
-            pnpm registry:build -- --revision "$REVISION" --generated-at "$GENERATED_AT"
+            pnpm registry:build:signed -- --revision "$REVISION" --generated-at "$GENERATED_AT"
           fi
 
       - name: Publish registry-dist branch

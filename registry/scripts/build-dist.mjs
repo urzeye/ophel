@@ -1,10 +1,17 @@
 import { execFileSync } from "node:child_process"
-import { createHash } from "node:crypto"
+import { createHash, createPrivateKey, createPublicKey, sign } from "node:crypto"
 import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises"
 import path from "node:path"
 import { fileURLToPath, pathToFileURL } from "node:url"
 
 import { REMOTE_CONFIG_INDEX_SCHEMA_VERSION } from "../../src/core/remote-config-constants.ts"
+import {
+  REGISTRY_INDEX_SIGNATURE_ALGORITHM,
+  REGISTRY_INDEX_SIGNATURE_FILE_NAME,
+  REGISTRY_INDEX_SIGNATURE_SCHEMA_VERSION,
+  TRUSTED_REGISTRY_SIGNING_KEYS,
+  validateRegistryIndexSignature,
+} from "../../src/core/remote-config-signature.ts"
 import { validateRemoteConfigRegistryIndex } from "../../src/core/remote-config-types.ts"
 
 import { DEFAULT_REGISTRY_ROOT, loadValidatedRegistrySources } from "./validate.mjs"
@@ -28,7 +35,7 @@ const parseUnixMilliseconds = (value, label) => {
   return parsed
 }
 
-const parseArguments = (args) => {
+export const parseRegistryBuildArguments = (args) => {
   const options = {}
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index]
@@ -42,6 +49,7 @@ const parseArguments = (args) => {
     } else if (argument === "--registry-root") options.registryRoot = path.resolve(value)
     else if (argument === "--output-dir") options.outputDirectory = path.resolve(value)
     else if (argument === "--previous-dir") options.previousDirectory = path.resolve(value)
+    else if (argument === "--signing-key-id") options.signingKeyId = value
     else throw new TypeError(`Unknown argument: ${argument}`)
     index += 1
   }
@@ -77,6 +85,74 @@ const assertSafeOutputDirectory = (registryRoot, outputDirectory) => {
 
 const serializeJson = (value) => Buffer.from(`${JSON.stringify(value, null, 2)}\n`, "utf8")
 const sha256 = (content) => createHash("sha256").update(content).digest("hex")
+const ED25519_SPKI_PREFIX = Buffer.from("302a300506032b6570032100", "hex")
+const BASE64_PATTERN = /^[A-Za-z0-9+/]+={0,2}$/
+const PUBLIC_KEY_PATTERN = /^[a-f0-9]{64}$/
+
+const importSigningPrivateKey = (value) => {
+  if (typeof value !== "string") return value
+  const encoded = value.trim()
+  if (!encoded || encoded.length % 4 !== 0 || !BASE64_PATTERN.test(encoded)) {
+    throw new TypeError("Registry signing private key must be base64 PKCS#8")
+  }
+  try {
+    return createPrivateKey({
+      key: Buffer.from(encoded, "base64"),
+      format: "der",
+      type: "pkcs8",
+    })
+  } catch (error) {
+    throw new TypeError("Registry signing private key must be base64 PKCS#8", { cause: error })
+  }
+}
+
+export const exportRawEd25519PublicKeyHex = (privateKey) => {
+  const publicKey = createPublicKey(privateKey)
+  const spki = publicKey.export({ format: "der", type: "spki" })
+  if (
+    spki.length !== ED25519_SPKI_PREFIX.length + 32 ||
+    !spki.subarray(0, ED25519_SPKI_PREFIX.length).equals(ED25519_SPKI_PREFIX)
+  ) {
+    throw new TypeError("Registry signing key must use Ed25519")
+  }
+  return spki.subarray(ED25519_SPKI_PREFIX.length).toString("hex")
+}
+
+const resolveSigningKey = (signingKey) => {
+  if (!signingKey) throw new TypeError("Registry signing key is required")
+  const { keyId, expectedPublicKeyHex } = signingKey
+  validateRegistryIndexSignature({
+    schemaVersion: REGISTRY_INDEX_SIGNATURE_SCHEMA_VERSION,
+    algorithm: REGISTRY_INDEX_SIGNATURE_ALGORITHM,
+    keyId,
+    signature: "00".repeat(64),
+  })
+  if (typeof expectedPublicKeyHex !== "string" || !PUBLIC_KEY_PATTERN.test(expectedPublicKeyHex)) {
+    throw new TypeError(`Invalid trusted public key for registry signing key: ${keyId}`)
+  }
+  const privateKey = importSigningPrivateKey(signingKey.privateKey)
+  if (!privateKey || privateKey.type !== "private" || privateKey.asymmetricKeyType !== "ed25519") {
+    throw new TypeError("Registry signing key must be an Ed25519 private key")
+  }
+  const actualPublicKeyHex = exportRawEd25519PublicKeyHex(privateKey)
+  if (actualPublicKeyHex !== expectedPublicKeyHex) {
+    throw new Error(`Registry signing key ${keyId} does not match the trusted public key`)
+  }
+  return { keyId, privateKey }
+}
+
+const resolveCliSigningKey = (keyId) => {
+  if (!keyId) throw new TypeError("REGISTRY_SIGNING_KEY_ID or --signing-key-id is required")
+  const trustedKey = TRUSTED_REGISTRY_SIGNING_KEYS.find((key) => key.keyId === keyId)
+  if (!trustedKey) throw new TypeError(`Unknown registry signing key: ${keyId}`)
+  const privateKey = process.env.REGISTRY_SIGNING_PRIVATE_KEY
+  if (!privateKey) throw new TypeError("REGISTRY_SIGNING_PRIVATE_KEY is required")
+  return {
+    keyId,
+    privateKey,
+    expectedPublicKeyHex: trustedKey.publicKeyHex,
+  }
+}
 
 const readPreviousIndex = async (previousDirectory) => {
   if (!previousDirectory) return null
@@ -177,6 +253,7 @@ export async function buildRegistryDist({
   previousDirectory,
   revision,
   generatedAt,
+  signingKey,
 } = {}) {
   const resolvedRegistryRoot = path.resolve(registryRoot)
   const resolvedOutputDirectory = path.resolve(
@@ -187,6 +264,7 @@ export async function buildRegistryDist({
   if (resolvedPreviousDirectory && resolvedPreviousDirectory === resolvedOutputDirectory) {
     throw new Error("Previous dist and output directory must be different")
   }
+  const resolvedSigningKey = resolveSigningKey(signingKey)
 
   const [{ packs, patches }, previousIndex] = await Promise.all([
     loadValidatedRegistrySources({ registryRoot: resolvedRegistryRoot }),
@@ -248,7 +326,18 @@ export async function buildRegistryDist({
 
   const validatedIndex = validateRemoteConfigRegistryIndex(index)
   assertIndexProgression(previousIndex, validatedIndex)
-  await writeFile(path.join(resolvedOutputDirectory, "index.json"), serializeJson(validatedIndex))
+  const indexContent = serializeJson(validatedIndex)
+  const signatureEnvelope = validateRegistryIndexSignature({
+    schemaVersion: REGISTRY_INDEX_SIGNATURE_SCHEMA_VERSION,
+    algorithm: REGISTRY_INDEX_SIGNATURE_ALGORITHM,
+    keyId: resolvedSigningKey.keyId,
+    signature: sign(null, indexContent, resolvedSigningKey.privateKey).toString("hex"),
+  })
+  await writeFile(path.join(resolvedOutputDirectory, "index.json"), indexContent)
+  await writeFile(
+    path.join(resolvedOutputDirectory, REGISTRY_INDEX_SIGNATURE_FILE_NAME),
+    serializeJson(signatureEnvelope),
+  )
   return validatedIndex
 }
 
@@ -257,8 +346,12 @@ const isMainModule =
   pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url
 
 if (isMainModule) {
-  const options = parseArguments(process.argv.slice(2))
-  buildRegistryDist(options)
+  const options = parseRegistryBuildArguments(process.argv.slice(2))
+  const { signingKeyId, ...buildOptions } = options
+  buildRegistryDist({
+    ...buildOptions,
+    signingKey: resolveCliSigningKey(signingKeyId ?? process.env.REGISTRY_SIGNING_KEY_ID),
+  })
     .then((index) => {
       console.warn(
         `[registry] built revision ${index.registryRevision} with ${index.packs.length} SitePack(s) and ${index.patches.length} patch(es)`,
