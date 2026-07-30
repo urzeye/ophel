@@ -171,6 +171,7 @@ export const zhTW = {
 
   // SitePack 管理
   sitePacksPageDesc: "安裝和管理社群站點適配包",
+  sitePacksGuideAction: "開啟 SitePack 使用指南",
   sitePacksInstalledTitle: "已安裝的適配包",
   sitePacksInstalledDesc: "啟用、更新或解除安裝儲存在此裝置上的適配包。",
   sitePacksRegistryTitle: "社群適配包目錄",

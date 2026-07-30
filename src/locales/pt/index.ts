@@ -200,6 +200,7 @@ export const pt = {
 
   // SitePack Manager
   sitePacksPageDesc: "Instale e gerencie pacotes adaptadores da comunidade",
+  sitePacksGuideAction: "Abrir guia de SitePack",
   sitePacksInstalledTitle: "Pacotes instalados",
   sitePacksInstalledDesc:
     "Ative, atualize ou remova os pacotes adaptadores salvos neste dispositivo.",

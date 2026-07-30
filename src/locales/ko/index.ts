@@ -195,6 +195,7 @@ export const ko = {
 
   // SitePack Manager
   sitePacksPageDesc: "커뮤니티 사이트 어댑터 팩을 설치하고 관리합니다",
+  sitePacksGuideAction: "SitePack 가이드 열기",
   sitePacksInstalledTitle: "설치된 팩",
   sitePacksInstalledDesc: "이 기기에 저장된 어댑터 팩을 활성화, 업데이트 또는 제거합니다.",
   sitePacksRegistryTitle: "커뮤니티 레지스트리",

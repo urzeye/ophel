@@ -200,6 +200,7 @@ export const en = {
 
   // SitePack Manager
   sitePacksPageDesc: "Install and manage community site adapter packs",
+  sitePacksGuideAction: "Open SitePack guide",
   sitePacksInstalledTitle: "Installed packs",
   sitePacksInstalledDesc: "Enable, update, or remove adapter packs stored on this device.",
   sitePacksRegistryTitle: "Community registry",

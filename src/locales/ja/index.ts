@@ -197,6 +197,7 @@ export const ja = {
 
   // SitePack Manager
   sitePacksPageDesc: "コミュニティのサイトアダプターパックをインストール・管理します",
+  sitePacksGuideAction: "SitePack ガイドを開く",
   sitePacksInstalledTitle: "インストール済みパック",
   sitePacksInstalledDesc:
     "このデバイスに保存されたアダプターパックの有効化、更新、削除を行います。",

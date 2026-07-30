@@ -1037,6 +1037,24 @@
   width: 100%;
 }
 
+.settings-pack-page-intro {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.settings-pack-page-intro .settings-page-desc {
+  flex: 1;
+  margin: 0;
+}
+
+.settings-pack-guide-action {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
 .settings-pack-section {
   min-width: 0;
 }
@@ -1721,10 +1739,19 @@
 }
 
 @media (max-width: 760px) {
+  .settings-pack-page-intro,
   .settings-pack-section-header,
   .settings-pack-inline-error {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .settings-pack-page-intro {
+    gap: 10px;
+  }
+
+  .settings-pack-guide-action {
+    align-self: flex-start;
   }
 
   .settings-pack-section-header > button,
@@ -1772,7 +1799,8 @@
   }
 
   .settings-pack-actions > button,
-  .settings-pack-empty-state > button {
+  .settings-pack-empty-state > button,
+  .settings-pack-guide-action {
     width: 100%;
   }
 

@@ -14,6 +14,7 @@ import { SITE_PACK_MAX_BYTES, type SitePackValidationError } from "~adapters/dec
 import {
   CopyIcon,
   DeleteIcon,
+  ExternalLinkIcon,
   ImportIcon,
   InfoIcon,
   JSONFileIcon,
@@ -61,6 +62,8 @@ import {
 } from "../site-pack-manager-view"
 
 type FeedbackTone = "success" | "error" | "neutral"
+
+const SITE_PACK_GUIDE_URL = "https://urzeye.github.io/ophel/site-packs/"
 
 interface FeedbackState {
   tone: FeedbackTone
@@ -1240,7 +1243,18 @@ const SitePacksPage: React.FC = () => {
       tabIndex={-1}
       aria-busy={isInstalledLoading || isBindingsLoading || isRegistryLoading || isRuntimeLoading}>
       <PageTitle title={t("navSitePacks")} Icon={JSONFileIcon} />
-      <p className="settings-page-desc">{t("sitePacksPageDesc")}</p>
+      <div className="settings-pack-page-intro">
+        <p className="settings-page-desc">{t("sitePacksPageDesc")}</p>
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          className="settings-pack-action-button settings-pack-guide-action"
+          onClick={() => platform.openTab(SITE_PACK_GUIDE_URL)}>
+          <ExternalLinkIcon size={14} />
+          {t("sitePacksGuideAction")}
+        </Button>
+      </div>
 
       {permissionReviewPacks.length > 0 && (
         <div className="settings-pack-permission-review" role="alert">

@@ -207,6 +207,7 @@ export const de = {
 
   // SitePack Manager
   sitePacksPageDesc: "Community-Adapterpakete installieren und verwalten",
+  sitePacksGuideAction: "SitePack-Anleitung öffnen",
   sitePacksInstalledTitle: "Installierte Pakete",
   sitePacksInstalledDesc:
     "Auf diesem Gerät gespeicherte Adapterpakete aktivieren, aktualisieren oder entfernen.",

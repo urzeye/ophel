@@ -204,6 +204,7 @@ export const fr = {
 
   // SitePack Manager
   sitePacksPageDesc: "Installer et gérer les packs d'adaptation communautaires",
+  sitePacksGuideAction: "Ouvrir le guide SitePack",
   sitePacksInstalledTitle: "Packs installés",
   sitePacksInstalledDesc:
     "Activer, mettre à jour ou supprimer les packs d'adaptation enregistrés sur cet appareil.",

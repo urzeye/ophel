@@ -200,6 +200,7 @@ export const ru = {
 
   // SitePack Manager
   sitePacksPageDesc: "Установка и управление пакетами адаптеров сообщества",
+  sitePacksGuideAction: "Открыть руководство SitePack",
   sitePacksInstalledTitle: "Установленные пакеты",
   sitePacksInstalledDesc:
     "Включайте, обновляйте или удаляйте пакеты адаптеров, сохранённые на этом устройстве.",

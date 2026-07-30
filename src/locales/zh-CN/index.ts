@@ -169,6 +169,7 @@ export const zhCN = {
 
   // SitePack 管理
   sitePacksPageDesc: "安装和管理社区站点适配包",
+  sitePacksGuideAction: "打开 SitePack 使用指南",
   sitePacksInstalledTitle: "已安装的适配包",
   sitePacksInstalledDesc: "启用、更新或卸载保存在此设备上的适配包。",
   sitePacksRegistryTitle: "社区适配包目录",
