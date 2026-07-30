@@ -32,6 +32,7 @@ import { createRuntimePackManager } from "~core/pack-manager-runtime"
 import {
   canonicalizeSitePackBindingOrigin,
   createEmptySitePackOriginBindingsState,
+  SitePackOriginBindingsError,
   type SitePackOriginBinding,
   type SitePackOriginBindingsState,
 } from "~core/site-pack-origin-bindings"
@@ -651,6 +652,8 @@ const SitePacksPage: React.FC = () => {
         } catch (rollbackResult) {
           setOperationError(rollbackResult)
         }
+      } else if (error instanceof SitePackOriginBindingsError && error.code === "invalid-origin") {
+        setFeedback({ tone: "error", message: t("sitePacksBindingHint") })
       } else {
         setOperationError(error)
       }
