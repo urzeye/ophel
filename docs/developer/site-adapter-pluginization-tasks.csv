@@ -37,7 +37,7 @@
 "P2-05","Phase 2","Packs","Open WebUI 官方包","含 detect 特征的 SitePack；在官方 demo 实例验证核心能力（大纲/插入/生成检测/新对话/Zen/导出基础）","P2-04","M","2","中","包合入 registry；demo 实例验证记录","进行中"
 "P2-06","Phase 2","Packs","LobeChat 官方包","同 P2-05","P2-04","M","1.5","中","包合入 registry；demo 实例验证记录","进行中"
 "P2-07","Phase 2","Packs","LibreChat 与 NextChat 官方包","同 P2-05，两个包","P2-04","M","2","低","包合入 registry；demo 实例验证记录","进行中"
-"P2-08","Phase 2","Core","HealthCheckManager 健康自检","激活后延迟 8s 检查核心选择器命中（textarea/responseContainer/会话页 chatContent）；新对话页豁免；连续 2 次加载失败才提示；面板黄条提示分因：L2 包版本落后 registry→提示更新可装，最新或本地导入包→提示站点可能改版并引导报告；+[检查配置更新][报告问题（预填 issue 模板：站点/版本/失效选择器）]；内置与 L2 通用","P1-06","M","3","中","人为破坏 selector 两次加载内出现提示；patch 发布后检查更新可自动恢复；提示分因正确（本地导入包不误导）；无误报（新对话页/慢加载）","进行中"
+"P2-08","Phase 2","Core","HealthCheckManager 健康自检","激活后延迟 8s 检查核心选择器命中（textarea/responseContainer/会话页 chatContent）；新对话页豁免；连续 2 次加载失败才提示；面板黄条提示分因：L2 包版本落后 registry→提示更新可装，最新或本地导入包→提示站点可能改版并引导报告；+[检查配置更新][报告问题（预填 issue 模板：站点/版本/失效选择器）]；内置与 L2 通用","P1-06","M","3","中","人为破坏 selector 两次加载内出现提示；patch 发布后检查更新可自动恢复；提示分因正确（本地导入包不误导）；无误报（新对话页/慢加载）","已完成"
 "P2-09","Phase 2","QA","跨浏览器与多管理器回归","Chrome/Edge/Firefox：动态注册+授权+卸载清理全流程（重点 Firefox MV3 host 权限默认 optional 的交互差异）；userscript 在 TM/VM/ScriptCat 冒烟","P2-01,P2-02","M","2","中","三浏览器回归清单通过；差异与已知问题记录进 troubleshooting 文档","已完成"
 "P3-01","Phase 3","Wizard","元素拾取 overlay","页内拾取组件：hover 高亮、点选确认、ESC 退出、iframe 场景提示不支持；复用面板 Shadow DOM 体系避免污染宿主页；与页面滚动/点击事件隔离","P1-13","L","4","中","在 3 个未适配站点实测拾取流畅无误触","进行中"
 "P3-02","Phase 3","Wizard","稳定 selector 生成器","优先级 data-testid>id>aria-*>稳定类名组合；hash 类名过滤（css-modules/utility）；唯一性验证与祖先链收缩；生成失败时提示手动输入","P3-01","L","3","中","生成器单测（典型 DOM 夹具≥10 组）；生成选择器刷新页面后仍命中","进行中"
