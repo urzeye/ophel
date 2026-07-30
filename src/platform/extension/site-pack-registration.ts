@@ -274,6 +274,7 @@ const canonicalRegistration = (script: chrome.scripting.RegisteredContentScript)
   JSON.stringify({
     id: script.id,
     matches: uniqueSorted(script.matches ?? []),
+    excludeMatches: uniqueSorted(script.excludeMatches ?? []),
     js: script.js ?? [],
     css: script.css ?? [],
     world: script.world ?? "ISOLATED",
