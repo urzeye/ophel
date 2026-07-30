@@ -34,6 +34,36 @@ export const it = {
   siteAdapterWizardSelectorLabel: "Selettore dell'elemento",
   siteAdapterWizardSelectorGenerated: "Generato automaticamente",
   siteAdapterWizardSelectorManual: "Modificato manualmente",
+  siteAdapterWizardAiTitle: "Bozza di selettori AI",
+  siteAdapterWizardAiOptional: "Facoltativo",
+  siteAdapterWizardAiSummary: "Copia un prompt anonimizzato e incolla il JSON dei selettori",
+  siteAdapterWizardAiPrivacy:
+    "Nessun dato viene inviato automaticamente. Il prompt esclude testo delle conversazioni, valori immessi, link, script e interfaccia Ophel; controllalo prima di condividerlo da pagine sensibili.",
+  siteAdapterWizardAiCopy: "Copia prompt AI",
+  siteAdapterWizardAiCopying: "Copia in corso…",
+  siteAdapterWizardAiCopied:
+    "Prompt AI anonimizzato copiato. Incollalo nell'assistente AI che preferisci.",
+  siteAdapterWizardAiCopyFailed:
+    "Impossibile copiare il prompt AI. Controlla l'autorizzazione degli appunti e riprova.",
+  siteAdapterWizardAiResponseLabel: "JSON dei selettori AI",
+  siteAdapterWizardAiResponsePlaceholder: "Incolla l'oggetto JSON restituito dall'AI",
+  siteAdapterWizardAiApply: "Applica bozza",
+  siteAdapterWizardAiSelectorSource: "Suggerito dall'AI",
+  siteAdapterWizardAiReviewReminder:
+    "L'output dell'AI è solo una bozza. Controlla ogni passaggio prima di salvare.",
+  siteAdapterWizardAiAppliedSuccess:
+    "Sono stati applicati {count} selettori AI, tutti validi nel controllo in tempo reale. Controlla ogni passaggio prima di salvare.",
+  siteAdapterWizardAiAppliedReview:
+    "Applicati {applied}: {valid} validi, {review} da controllare; {rejected} selettori non validi o senza corrispondenze sono stati respinti senza sostituire le selezioni esistenti.",
+  siteAdapterWizardAiAppliedNone:
+    "Nessun selettore applicato. Sono stati respinti {rejected} selettori non validi o senza corrispondenze e le selezioni esistenti sono rimaste invariate.",
+  siteAdapterWizardAiErrorInvalidJson:
+    "Incolla JSON valido o un singolo blocco di codice JSON senza testo aggiuntivo.",
+  siteAdapterWizardAiErrorInvalidSchema:
+    "La struttura della bozza AI o i campi dei selettori non sono validi. Usa esattamente il formato mostrato nel prompt copiato.",
+  siteAdapterWizardAiErrorResponseTooLarge:
+    "La risposta AI è troppo lunga. Chiedi di restituire solo il JSON dei selettori e riprova.",
+  siteAdapterWizardAiErrorNoSelectors: "La risposta AI non contiene selettori utilizzabili.",
   siteAdapterWizardSelectorPlaceholder: "Inserisci un selettore CSS",
   siteAdapterWizardPickFirst: "Seleziona prima un elemento nella pagina",
   siteAdapterWizardPickerBusy: "È già attiva un'altra selezione di elementi.",

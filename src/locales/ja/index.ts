@@ -33,6 +33,35 @@ export const ja = {
   siteAdapterWizardSelectorLabel: "要素セレクター",
   siteAdapterWizardSelectorGenerated: "自動生成済み",
   siteAdapterWizardSelectorManual: "手動編集済み",
+  siteAdapterWizardAiTitle: "AI セレクター下書き",
+  siteAdapterWizardAiOptional: "任意",
+  siteAdapterWizardAiSummary: "サニタイズ済みプロンプトをコピーし、セレクター JSON を貼り付け",
+  siteAdapterWizardAiPrivacy:
+    "データは自動送信されません。プロンプトから会話本文、入力値、リンク、スクリプト、Ophel UI は除外されます。機密性の高いページでは共有前に確認してください。",
+  siteAdapterWizardAiCopy: "AI 用プロンプトをコピー",
+  siteAdapterWizardAiCopying: "コピー中…",
+  siteAdapterWizardAiCopied:
+    "サニタイズ済みの AI 用プロンプトをコピーしました。任意の AI アシスタントに貼り付けてください。",
+  siteAdapterWizardAiCopyFailed:
+    "AI 用プロンプトをコピーできません。クリップボード権限を確認して再試行してください。",
+  siteAdapterWizardAiResponseLabel: "AI セレクター JSON",
+  siteAdapterWizardAiResponsePlaceholder: "AI が返した JSON オブジェクトを貼り付け",
+  siteAdapterWizardAiApply: "下書きを適用",
+  siteAdapterWizardAiSelectorSource: "AI による提案",
+  siteAdapterWizardAiReviewReminder: "AI 出力は下書きです。保存前に各ステップを確認してください。",
+  siteAdapterWizardAiAppliedSuccess:
+    "{count} 個の AI セレクターを適用し、ライブ検証に合格しました。保存前に各ステップを確認してください。",
+  siteAdapterWizardAiAppliedReview:
+    "{applied} 個を適用：{valid} 個は合格、{review} 個は要確認。無効または不一致の {rejected} 個は既存の選択を置き換えずに却下しました。",
+  siteAdapterWizardAiAppliedNone:
+    "セレクターは適用されませんでした。無効または不一致の {rejected} 個を却下し、既存の選択は保持しました。",
+  siteAdapterWizardAiErrorInvalidJson:
+    "有効な JSON、または前後に文章のない単一の JSON コードブロックを貼り付けてください。",
+  siteAdapterWizardAiErrorInvalidSchema:
+    "AI 下書きの構造またはセレクター項目が無効です。コピーしたプロンプトの形式を厳密に使用してください。",
+  siteAdapterWizardAiErrorResponseTooLarge:
+    "AI の応答が長すぎます。セレクター JSON だけを返すよう依頼して再試行してください。",
+  siteAdapterWizardAiErrorNoSelectors: "AI の応答に使用可能なセレクターがありません。",
   siteAdapterWizardSelectorPlaceholder: "CSS セレクターを入力",
   siteAdapterWizardPickFirst: "先にページ上の要素を選択してください",
   siteAdapterWizardPickerBusy: "別の要素選択がすでに進行中です。",

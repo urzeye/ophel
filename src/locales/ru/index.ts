@@ -33,6 +33,36 @@ export const ru = {
   siteAdapterWizardSelectorLabel: "Селектор элемента",
   siteAdapterWizardSelectorGenerated: "Создан автоматически",
   siteAdapterWizardSelectorManual: "Изменён вручную",
+  siteAdapterWizardAiTitle: "Черновик селекторов от ИИ",
+  siteAdapterWizardAiOptional: "Необязательно",
+  siteAdapterWizardAiSummary: "Скопируйте очищенный запрос и вставьте JSON селекторов",
+  siteAdapterWizardAiPrivacy:
+    "Данные не отправляются автоматически. Из запроса исключены тексты диалогов, введённые значения, ссылки, скрипты и интерфейс Ophel; перед отправкой с конфиденциальной страницы проверьте его.",
+  siteAdapterWizardAiCopy: "Скопировать запрос для ИИ",
+  siteAdapterWizardAiCopying: "Копирование…",
+  siteAdapterWizardAiCopied:
+    "Очищенный запрос для ИИ скопирован. Вставьте его в выбранного ИИ-помощника.",
+  siteAdapterWizardAiCopyFailed:
+    "Не удалось скопировать запрос для ИИ. Проверьте разрешение на доступ к буферу обмена и повторите попытку.",
+  siteAdapterWizardAiResponseLabel: "JSON селекторов от ИИ",
+  siteAdapterWizardAiResponsePlaceholder: "Вставьте JSON-объект, возвращённый ИИ",
+  siteAdapterWizardAiApply: "Применить черновик",
+  siteAdapterWizardAiSelectorSource: "Предложено ИИ",
+  siteAdapterWizardAiReviewReminder:
+    "Результат ИИ — только черновик. Проверьте каждый шаг перед сохранением.",
+  siteAdapterWizardAiAppliedSuccess:
+    "Применено {count} селекторов от ИИ, все прошли проверку на странице. Проверьте каждый шаг перед сохранением.",
+  siteAdapterWizardAiAppliedReview:
+    "Применено {applied}: {valid} прошли проверку, {review} требуют внимания; {rejected} неверных или ничего не находящих селекторов отклонены без замены существующего выбора.",
+  siteAdapterWizardAiAppliedNone:
+    "Селекторы не применены. Отклонено {rejected} неверных или ничего не находящих селекторов; существующий выбор сохранён.",
+  siteAdapterWizardAiErrorInvalidJson:
+    "Вставьте корректный JSON или один блок кода JSON без сопроводительного текста.",
+  siteAdapterWizardAiErrorInvalidSchema:
+    "Структура черновика ИИ или поля селекторов неверны. Используйте точный формат из скопированного запроса.",
+  siteAdapterWizardAiErrorResponseTooLarge:
+    "Ответ ИИ слишком длинный. Попросите вернуть только JSON селекторов и повторите попытку.",
+  siteAdapterWizardAiErrorNoSelectors: "В ответе ИИ нет пригодных селекторов.",
   siteAdapterWizardSelectorPlaceholder: "Введите CSS-селектор",
   siteAdapterWizardPickFirst: "Сначала выберите элемент на странице",
   siteAdapterWizardPickerBusy: "Уже выполняется другой выбор элемента.",

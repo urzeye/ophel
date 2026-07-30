@@ -10,66 +10,21 @@ import {
   type SitePackValidationError,
 } from "~adapters/declarative/validate"
 import {
+  querySelectorAllDeep,
   validateSelectorForElement,
   type SelectorValidationResult,
   type StableSelectorFailureReason,
 } from "~core/element-selector-generator"
-import { DOMToolkit } from "~utils/dom-toolkit"
 
-export const SITE_ADAPTER_WIZARD_STEPS = [
-  {
-    id: "textarea",
-    optional: false,
-    expectsUnique: true,
-    titleKey: "siteAdapterWizardStepTextareaTitle",
-    descriptionKey: "siteAdapterWizardStepTextareaDesc",
-  },
-  {
-    id: "submitButton",
-    optional: false,
-    expectsUnique: true,
-    titleKey: "siteAdapterWizardStepSubmitTitle",
-    descriptionKey: "siteAdapterWizardStepSubmitDesc",
-  },
-  {
-    id: "responseContainer",
-    optional: false,
-    expectsUnique: true,
-    titleKey: "siteAdapterWizardStepContainerTitle",
-    descriptionKey: "siteAdapterWizardStepContainerDesc",
-  },
-  {
-    id: "userQuery",
-    optional: false,
-    expectsUnique: false,
-    titleKey: "siteAdapterWizardStepUserTitle",
-    descriptionKey: "siteAdapterWizardStepUserDesc",
-  },
-  {
-    id: "assistantResponse",
-    optional: false,
-    expectsUnique: false,
-    titleKey: "siteAdapterWizardStepAssistantTitle",
-    descriptionKey: "siteAdapterWizardStepAssistantDesc",
-  },
-  {
-    id: "conversationItem",
-    optional: true,
-    expectsUnique: false,
-    titleKey: "siteAdapterWizardStepConversationTitle",
-    descriptionKey: "siteAdapterWizardStepConversationDesc",
-  },
-  {
-    id: "newChatButton",
-    optional: true,
-    expectsUnique: true,
-    titleKey: "siteAdapterWizardStepNewChatTitle",
-    descriptionKey: "siteAdapterWizardStepNewChatDesc",
-  },
-] as const
+import {
+  SITE_ADAPTER_WIZARD_STEPS,
+  type SiteAdapterWizardStepId,
+} from "./site-adapter-wizard-steps"
 
-export type SiteAdapterWizardStepId = (typeof SITE_ADAPTER_WIZARD_STEPS)[number]["id"]
-export type SiteAdapterWizardSelectorSource = "generated" | "manual"
+export { SITE_ADAPTER_WIZARD_STEPS } from "./site-adapter-wizard-steps"
+export type { SiteAdapterWizardStepId } from "./site-adapter-wizard-steps"
+
+export type SiteAdapterWizardSelectorSource = "generated" | "manual" | "ai"
 export type SiteAdapterWizardInputMode = "textarea" | "contenteditable"
 
 export interface SiteAdapterWizardSelection {
@@ -271,21 +226,19 @@ const getStepDefinition = (stepId: SiteAdapterWizardStepId) => {
   return definition
 }
 
-const queryDeep = (documentRoot: Document, selector: string): Element[] => {
-  const result = DOMToolkit.query(selector, {
-    parent: documentRoot,
-    all: true,
-    shadow: true,
-    useCache: false,
-  })
-  return Array.isArray(result) ? result : []
-}
+const queryDeep = (documentRoot: Document, selector: string): Element[] =>
+  querySelectorAllDeep(documentRoot, selector)
 
 const isComposedDescendant = (container: Element, element: Element): boolean => {
   let current: Node | null = element
   while (current) {
     if (current === container) return true
-    current = DOMToolkit.getComposedParent(current)
+    if (current.parentNode) {
+      current = current.parentNode
+      continue
+    }
+    const root = current.getRootNode()
+    current = root instanceof ShadowRoot ? root.host : null
   }
   return false
 }

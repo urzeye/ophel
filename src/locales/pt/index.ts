@@ -34,6 +34,36 @@ export const pt = {
   siteAdapterWizardSelectorLabel: "Seletor do elemento",
   siteAdapterWizardSelectorGenerated: "Gerado automaticamente",
   siteAdapterWizardSelectorManual: "Editado manualmente",
+  siteAdapterWizardAiTitle: "Rascunho de seletores com IA",
+  siteAdapterWizardAiOptional: "Opcional",
+  siteAdapterWizardAiSummary: "Copie um prompt sanitizado e cole o JSON dos seletores",
+  siteAdapterWizardAiPrivacy:
+    "Nenhum dado é enviado automaticamente. O prompt exclui texto de conversas, valores digitados, links, scripts e a interface do Ophel; revise-o antes de compartilhar em páginas sensíveis.",
+  siteAdapterWizardAiCopy: "Copiar prompt de IA",
+  siteAdapterWizardAiCopying: "Copiando…",
+  siteAdapterWizardAiCopied:
+    "Prompt de IA sanitizado copiado. Cole-o no assistente de IA que preferir.",
+  siteAdapterWizardAiCopyFailed:
+    "Não foi possível copiar o prompt de IA. Verifique a permissão da área de transferência e tente novamente.",
+  siteAdapterWizardAiResponseLabel: "JSON dos seletores de IA",
+  siteAdapterWizardAiResponsePlaceholder: "Cole o objeto JSON retornado pela IA",
+  siteAdapterWizardAiApply: "Aplicar rascunho",
+  siteAdapterWizardAiSelectorSource: "Sugerido pela IA",
+  siteAdapterWizardAiReviewReminder:
+    "A saída da IA é apenas um rascunho. Revise cada etapa antes de salvar.",
+  siteAdapterWizardAiAppliedSuccess:
+    "{count} seletores de IA foram aplicados e passaram na validação ao vivo. Revise cada etapa antes de salvar.",
+  siteAdapterWizardAiAppliedReview:
+    "{applied} aplicados: {valid} aprovados, {review} para revisar; {rejected} seletores inválidos ou sem correspondência foram rejeitados sem substituir as seleções existentes.",
+  siteAdapterWizardAiAppliedNone:
+    "Nenhum seletor foi aplicado. {rejected} seletores inválidos ou sem correspondência foram rejeitados e as seleções existentes foram mantidas.",
+  siteAdapterWizardAiErrorInvalidJson:
+    "Cole um JSON válido ou um único bloco de código JSON sem texto adicional.",
+  siteAdapterWizardAiErrorInvalidSchema:
+    "A estrutura do rascunho de IA ou seus campos de seletor são inválidos. Use exatamente o formato do prompt copiado.",
+  siteAdapterWizardAiErrorResponseTooLarge:
+    "A resposta da IA é longa demais. Peça apenas o JSON dos seletores e tente novamente.",
+  siteAdapterWizardAiErrorNoSelectors: "A resposta da IA não contém seletores utilizáveis.",
   siteAdapterWizardSelectorPlaceholder: "Digite um seletor CSS",
   siteAdapterWizardPickFirst: "Primeiro selecione um elemento na página",
   siteAdapterWizardPickerBusy: "Outra seleção de elemento já está ativa.",

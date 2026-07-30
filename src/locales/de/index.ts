@@ -34,6 +34,36 @@ export const de = {
   siteAdapterWizardSelectorLabel: "Elementselektor",
   siteAdapterWizardSelectorGenerated: "Automatisch erzeugt",
   siteAdapterWizardSelectorManual: "Manuell bearbeitet",
+  siteAdapterWizardAiTitle: "KI-Selektorentwurf",
+  siteAdapterWizardAiOptional: "Optional",
+  siteAdapterWizardAiSummary: "Bereinigten Prompt kopieren und Selektor-JSON einfügen",
+  siteAdapterWizardAiPrivacy:
+    "Es werden keine Daten automatisch gesendet. Der Prompt enthält keine Gesprächstexte, Eingabewerte, Links, Skripte oder Ophel-Oberfläche; prüfe ihn vor dem Teilen auf sensiblen Seiten.",
+  siteAdapterWizardAiCopy: "KI-Prompt kopieren",
+  siteAdapterWizardAiCopying: "Wird kopiert…",
+  siteAdapterWizardAiCopied:
+    "Bereinigter KI-Prompt kopiert. Füge ihn in einen KI-Assistenten deiner Wahl ein.",
+  siteAdapterWizardAiCopyFailed:
+    "Der KI-Prompt konnte nicht kopiert werden. Prüfe die Zwischenablage-Berechtigung und versuche es erneut.",
+  siteAdapterWizardAiResponseLabel: "KI-Selektor-JSON",
+  siteAdapterWizardAiResponsePlaceholder: "Das von der KI zurückgegebene JSON-Objekt einfügen",
+  siteAdapterWizardAiApply: "Entwurf anwenden",
+  siteAdapterWizardAiSelectorSource: "Von KI vorgeschlagen",
+  siteAdapterWizardAiReviewReminder:
+    "Die KI-Ausgabe ist nur ein Entwurf. Prüfe jeden Schritt vor dem Speichern.",
+  siteAdapterWizardAiAppliedSuccess:
+    "{count} KI-Selektoren wurden angewendet und haben die Live-Prüfung bestanden. Prüfe jeden Schritt vor dem Speichern.",
+  siteAdapterWizardAiAppliedReview:
+    "{applied} angewendet: {valid} bestanden, {review} zu prüfen; {rejected} ungültige oder nicht passende Selektoren wurden abgelehnt, ohne vorhandene Auswahlen zu ersetzen.",
+  siteAdapterWizardAiAppliedNone:
+    "Keine Selektoren angewendet. {rejected} ungültige oder nicht passende Selektoren wurden abgelehnt; vorhandene Auswahlen blieben erhalten.",
+  siteAdapterWizardAiErrorInvalidJson:
+    "Füge gültiges JSON oder genau einen JSON-Codeblock ohne Begleittext ein.",
+  siteAdapterWizardAiErrorInvalidSchema:
+    "Die Struktur des KI-Entwurfs oder seine Selektorfelder sind ungültig. Verwende genau das Format aus dem kopierten Prompt.",
+  siteAdapterWizardAiErrorResponseTooLarge:
+    "Die KI-Antwort ist zu lang. Bitte um ausschließliches Selektor-JSON und versuche es erneut.",
+  siteAdapterWizardAiErrorNoSelectors: "Die KI-Antwort enthält keine verwendbaren Selektoren.",
   siteAdapterWizardSelectorPlaceholder: "CSS-Selektor eingeben",
   siteAdapterWizardPickFirst: "Wähle zuerst ein Element auf der Seite aus",
   siteAdapterWizardPickerBusy: "Eine andere Elementauswahl ist bereits aktiv.",

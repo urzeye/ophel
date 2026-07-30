@@ -34,6 +34,36 @@ export const fr = {
   siteAdapterWizardSelectorLabel: "Sélecteur de l'élément",
   siteAdapterWizardSelectorGenerated: "Généré automatiquement",
   siteAdapterWizardSelectorManual: "Modifié manuellement",
+  siteAdapterWizardAiTitle: "Brouillon de sélecteurs par IA",
+  siteAdapterWizardAiOptional: "Facultatif",
+  siteAdapterWizardAiSummary: "Copiez une invite nettoyée, puis collez le JSON des sélecteurs",
+  siteAdapterWizardAiPrivacy:
+    "Aucune donnée n'est envoyée automatiquement. L'invite exclut le texte des conversations, les valeurs saisies, les liens, les scripts et l'interface Ophel ; vérifiez-la avant de la partager depuis une page sensible.",
+  siteAdapterWizardAiCopy: "Copier l'invite IA",
+  siteAdapterWizardAiCopying: "Copie…",
+  siteAdapterWizardAiCopied:
+    "Invite IA nettoyée copiée. Collez-la dans l'assistant IA de votre choix.",
+  siteAdapterWizardAiCopyFailed:
+    "Impossible de copier l'invite IA. Vérifiez l'autorisation du presse-papiers et réessayez.",
+  siteAdapterWizardAiResponseLabel: "JSON des sélecteurs IA",
+  siteAdapterWizardAiResponsePlaceholder: "Collez l'objet JSON renvoyé par l'IA",
+  siteAdapterWizardAiApply: "Appliquer le brouillon",
+  siteAdapterWizardAiSelectorSource: "Suggéré par l'IA",
+  siteAdapterWizardAiReviewReminder:
+    "La sortie de l'IA n'est qu'un brouillon. Vérifiez chaque étape avant d'enregistrer.",
+  siteAdapterWizardAiAppliedSuccess:
+    "{count} sélecteurs IA ont été appliqués et ont réussi la validation en direct. Vérifiez chaque étape avant d'enregistrer.",
+  siteAdapterWizardAiAppliedReview:
+    "{applied} appliqués : {valid} validés, {review} à vérifier ; {rejected} sélecteurs invalides ou sans correspondance ont été rejetés sans remplacer les sélections existantes.",
+  siteAdapterWizardAiAppliedNone:
+    "Aucun sélecteur appliqué. {rejected} sélecteurs invalides ou sans correspondance ont été rejetés et les sélections existantes ont été conservées.",
+  siteAdapterWizardAiErrorInvalidJson:
+    "Collez un JSON valide ou un seul bloc de code JSON sans texte autour.",
+  siteAdapterWizardAiErrorInvalidSchema:
+    "La structure du brouillon IA ou ses champs de sélecteur sont invalides. Utilisez exactement le format de l'invite copiée.",
+  siteAdapterWizardAiErrorResponseTooLarge:
+    "La réponse de l'IA est trop longue. Demandez uniquement le JSON des sélecteurs, puis réessayez.",
+  siteAdapterWizardAiErrorNoSelectors: "La réponse de l'IA ne contient aucun sélecteur utilisable.",
   siteAdapterWizardSelectorPlaceholder: "Saisissez un sélecteur CSS",
   siteAdapterWizardPickFirst: "Sélectionnez d'abord un élément dans la page",
   siteAdapterWizardPickerBusy: "Une autre sélection d'élément est déjà active.",

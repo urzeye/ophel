@@ -33,6 +33,35 @@ export const en = {
   siteAdapterWizardSelectorLabel: "Element selector",
   siteAdapterWizardSelectorGenerated: "Generated automatically",
   siteAdapterWizardSelectorManual: "Edited manually",
+  siteAdapterWizardAiTitle: "AI selector draft",
+  siteAdapterWizardAiOptional: "Optional",
+  siteAdapterWizardAiSummary: "Copy a sanitized prompt, then paste selector JSON",
+  siteAdapterWizardAiPrivacy:
+    "Nothing is sent automatically. The prompt excludes conversation text, input values, links, scripts, and Ophel UI; review it before sharing on sensitive pages.",
+  siteAdapterWizardAiCopy: "Copy AI prompt",
+  siteAdapterWizardAiCopying: "Copying…",
+  siteAdapterWizardAiCopied:
+    "Sanitized AI prompt copied. Paste it into an AI assistant of your choice.",
+  siteAdapterWizardAiCopyFailed:
+    "Could not copy the AI prompt. Check clipboard permission and try again.",
+  siteAdapterWizardAiResponseLabel: "AI selector JSON",
+  siteAdapterWizardAiResponsePlaceholder: "Paste the JSON object returned by the AI",
+  siteAdapterWizardAiApply: "Apply draft",
+  siteAdapterWizardAiSelectorSource: "Suggested by AI",
+  siteAdapterWizardAiReviewReminder: "AI output is only a draft. Review every step before saving.",
+  siteAdapterWizardAiAppliedSuccess:
+    "AI selectors applied and live-validated: {count}. Review every step before saving.",
+  siteAdapterWizardAiAppliedReview:
+    "Applied: {applied}. Passed: {valid}. Needs review: {review}. Rejected without replacing existing selections: {rejected} invalid or non-matching.",
+  siteAdapterWizardAiAppliedNone:
+    "No selectors were applied. {rejected} invalid or non-matching selectors were rejected, and existing selections were kept.",
+  siteAdapterWizardAiErrorInvalidJson:
+    "Paste valid JSON or a single fenced JSON block with no surrounding text.",
+  siteAdapterWizardAiErrorInvalidSchema:
+    "The AI draft shape or selector fields are invalid. Use the exact schema shown in the copied prompt.",
+  siteAdapterWizardAiErrorResponseTooLarge:
+    "The AI response is too large. Ask for selector-only JSON and try again.",
+  siteAdapterWizardAiErrorNoSelectors: "The AI response does not contain any usable selectors.",
   siteAdapterWizardSelectorPlaceholder: "Enter a CSS selector",
   siteAdapterWizardPickFirst: "Select an element on the page first",
   siteAdapterWizardPickerBusy: "Another element selection is already active.",

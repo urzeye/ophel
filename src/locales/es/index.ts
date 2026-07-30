@@ -34,6 +34,36 @@ export const es = {
   siteAdapterWizardSelectorLabel: "Selector del elemento",
   siteAdapterWizardSelectorGenerated: "Generado automáticamente",
   siteAdapterWizardSelectorManual: "Editado manualmente",
+  siteAdapterWizardAiTitle: "Borrador de selectores con IA",
+  siteAdapterWizardAiOptional: "Opcional",
+  siteAdapterWizardAiSummary: "Copia un prompt depurado y pega el JSON de selectores",
+  siteAdapterWizardAiPrivacy:
+    "No se envían datos automáticamente. El prompt excluye texto de conversaciones, valores introducidos, enlaces, scripts y la interfaz de Ophel; revísalo antes de compartirlo desde páginas sensibles.",
+  siteAdapterWizardAiCopy: "Copiar prompt de IA",
+  siteAdapterWizardAiCopying: "Copiando…",
+  siteAdapterWizardAiCopied:
+    "Prompt de IA depurado copiado. Pégalo en el asistente de IA que prefieras.",
+  siteAdapterWizardAiCopyFailed:
+    "No se pudo copiar el prompt de IA. Comprueba el permiso del portapapeles e inténtalo de nuevo.",
+  siteAdapterWizardAiResponseLabel: "JSON de selectores de IA",
+  siteAdapterWizardAiResponsePlaceholder: "Pega el objeto JSON devuelto por la IA",
+  siteAdapterWizardAiApply: "Aplicar borrador",
+  siteAdapterWizardAiSelectorSource: "Sugerido por IA",
+  siteAdapterWizardAiReviewReminder:
+    "La salida de la IA es solo un borrador. Revisa cada paso antes de guardar.",
+  siteAdapterWizardAiAppliedSuccess:
+    "Se aplicaron {count} selectores de IA y pasaron la validación en vivo. Revisa cada paso antes de guardar.",
+  siteAdapterWizardAiAppliedReview:
+    "Aplicados {applied}: {valid} válidos, {review} por revisar; se rechazaron {rejected} selectores no válidos o sin coincidencias sin reemplazar las selecciones existentes.",
+  siteAdapterWizardAiAppliedNone:
+    "No se aplicó ningún selector. Se rechazaron {rejected} selectores no válidos o sin coincidencias y se conservaron las selecciones existentes.",
+  siteAdapterWizardAiErrorInvalidJson:
+    "Pega JSON válido o un único bloque de código JSON sin texto adicional.",
+  siteAdapterWizardAiErrorInvalidSchema:
+    "La estructura del borrador de IA o sus campos de selector no son válidos. Usa exactamente el formato del prompt copiado.",
+  siteAdapterWizardAiErrorResponseTooLarge:
+    "La respuesta de la IA es demasiado larga. Pide solo el JSON de selectores e inténtalo de nuevo.",
+  siteAdapterWizardAiErrorNoSelectors: "La respuesta de la IA no contiene selectores utilizables.",
   siteAdapterWizardSelectorPlaceholder: "Introduce un selector CSS",
   siteAdapterWizardPickFirst: "Primero selecciona un elemento en la página",
   siteAdapterWizardPickerBusy: "Ya hay otra selección de elemento activa.",

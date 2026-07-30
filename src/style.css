@@ -239,7 +239,9 @@
 
 .gh-site-adapter-wizard-launcher:focus-visible,
 .gh-site-adapter-wizard button:focus-visible,
-.gh-site-adapter-wizard input:focus-visible {
+.gh-site-adapter-wizard input:focus-visible,
+.gh-site-adapter-wizard textarea:focus-visible,
+.gh-site-adapter-wizard summary:focus-visible {
   outline: 2px solid var(--gh-primary, #4285f4);
   outline-offset: 2px;
 }
@@ -354,6 +356,211 @@
   border-color: var(--gh-border, #e5e7eb);
   background: var(--gh-bg-secondary, #f9fafb);
   color: var(--gh-text, #1f2937);
+}
+
+.gh-site-adapter-wizard-ai {
+  border-bottom: 1px solid var(--gh-border, #e5e7eb);
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 3%, var(--gh-bg, #ffffff));
+}
+
+.gh-site-adapter-wizard-ai > summary {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 16px;
+  color: var(--gh-text, #1f2937);
+  cursor: pointer;
+  list-style: none;
+  transition: background 0.14s ease;
+}
+
+.gh-site-adapter-wizard-ai > summary::-webkit-details-marker {
+  display: none;
+}
+
+.gh-site-adapter-wizard-ai > summary::after {
+  content: "›";
+  color: var(--gh-text-tertiary, #9ca3af);
+  font-size: 18px;
+  line-height: 1;
+  transform: rotate(90deg);
+  transition: transform 0.14s ease;
+}
+
+.gh-site-adapter-wizard-ai[open] > summary::after {
+  transform: rotate(-90deg);
+}
+
+.gh-site-adapter-wizard-ai > summary:hover,
+.gh-site-adapter-wizard-ai[open] > summary {
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 6%, var(--gh-bg, #ffffff));
+}
+
+.gh-site-adapter-wizard-ai[open] > summary {
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--gh-primary, #4285f4) 14%, var(--gh-border, #e5e7eb));
+}
+
+.gh-site-adapter-wizard-ai-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 18%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 9%, var(--gh-bg, #ffffff));
+  color: var(--gh-primary, #4285f4);
+}
+
+.gh-site-adapter-wizard-ai-summary-copy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.gh-site-adapter-wizard-ai-summary-copy strong {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.gh-site-adapter-wizard-ai-summary-copy small {
+  overflow: hidden;
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 10px;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gh-site-adapter-wizard-ai-optional {
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 9%, var(--gh-bg, #ffffff));
+  color: var(--gh-primary, #4285f4);
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.gh-site-adapter-wizard-ai-body {
+  padding: 13px 16px 14px;
+}
+
+.gh-site-adapter-wizard-ai-privacy {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin: 0;
+  padding: 9px 10px;
+  border: 1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 18%, var(--gh-border, #e5e7eb));
+  border-radius: 9px;
+  background: var(--gh-bg, #ffffff);
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.gh-site-adapter-wizard-ai-privacy svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: var(--gh-primary, #4285f4);
+}
+
+.gh-site-adapter-wizard-ai-copy {
+  margin-top: 10px;
+}
+
+.gh-site-adapter-wizard-ai-response-label {
+  display: block;
+  margin: 13px 0 6px;
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 10px;
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+.gh-site-adapter-wizard-ai textarea {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 116px;
+  max-height: 260px;
+  padding: 9px 10px;
+  resize: vertical;
+  border: 1px solid var(--gh-input-border, var(--gh-border, #d1d5db));
+  border-radius: 8px;
+  background: var(--gh-input-bg, var(--gh-bg, #ffffff));
+  color: var(--gh-text, #1f2937);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 10px;
+  line-height: 1.5;
+  transition:
+    border-color 0.14s ease,
+    box-shadow 0.14s ease,
+    background 0.14s ease;
+}
+
+.gh-site-adapter-wizard-ai textarea::placeholder {
+  color: var(--gh-text-tertiary, #9ca3af);
+}
+
+.gh-site-adapter-wizard-ai textarea:hover {
+  border-color: color-mix(
+    in srgb,
+    var(--gh-primary, #4285f4) 42%,
+    var(--gh-input-border, var(--gh-border, #d1d5db))
+  );
+}
+
+.gh-site-adapter-wizard-ai textarea.is-invalid {
+  border-color: color-mix(in srgb, var(--gh-danger, #ef4444) 68%, var(--gh-border, #d1d5db));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--gh-danger, #ef4444) 8%, transparent);
+}
+
+.gh-site-adapter-wizard-ai-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.gh-site-adapter-wizard-ai-actions p {
+  margin: 0;
+  color: var(--gh-text-tertiary, #9ca3af);
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+.gh-site-adapter-wizard-ai-actions button {
+  flex: 0 0 auto;
+}
+
+.gh-site-adapter-wizard-ai-feedback {
+  margin: 10px 0 0;
+  padding: 8px 9px;
+  border-radius: 8px;
+  font-size: 10px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.gh-site-adapter-wizard-ai-feedback.is-error {
+  background: color-mix(in srgb, var(--gh-danger, #ef4444) 8%, var(--gh-bg, #ffffff));
+  color: var(--gh-danger, #dc2626);
+}
+
+.gh-site-adapter-wizard-ai-feedback.is-warning {
+  background: color-mix(in srgb, var(--gh-warning, #f59e0b) 8%, var(--gh-bg, #ffffff));
+  color: var(--gh-warning-text, #b45309);
+}
+
+.gh-site-adapter-wizard-ai-feedback.is-success {
+  background: color-mix(in srgb, var(--gh-success, #22c55e) 8%, var(--gh-bg, #ffffff));
+  color: var(--gh-success, #16a34a);
 }
 
 .gh-site-adapter-wizard-progress {
@@ -784,7 +991,8 @@
 .gh-site-adapter-wizard-footer button,
 .gh-site-adapter-wizard-complete-actions button,
 .gh-site-adapter-wizard-publish-actions button,
-.gh-site-adapter-wizard-reload-callout button {
+.gh-site-adapter-wizard-reload-callout button,
+.gh-site-adapter-wizard-ai button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -808,14 +1016,16 @@
 .gh-site-adapter-wizard-footer button:active:not(:disabled),
 .gh-site-adapter-wizard-complete-actions button:active:not(:disabled),
 .gh-site-adapter-wizard-publish-actions button:active:not(:disabled),
-.gh-site-adapter-wizard-reload-callout button:active:not(:disabled) {
+.gh-site-adapter-wizard-reload-callout button:active:not(:disabled),
+.gh-site-adapter-wizard-ai button:active:not(:disabled) {
   transform: scale(0.98);
 }
 
 .gh-site-adapter-wizard-footer button.is-primary,
 .gh-site-adapter-wizard-complete-actions button.is-primary,
 .gh-site-adapter-wizard-publish-actions button.is-primary,
-.gh-site-adapter-wizard-reload-callout button.is-primary {
+.gh-site-adapter-wizard-reload-callout button.is-primary,
+.gh-site-adapter-wizard-ai button.is-primary {
   border-color: var(--gh-primary, #4285f4);
   background: var(--gh-primary, #4285f4);
   color: var(--gh-text-on-primary, #ffffff);
@@ -824,14 +1034,16 @@
 .gh-site-adapter-wizard-footer button.is-primary:hover:not(:disabled),
 .gh-site-adapter-wizard-complete-actions button.is-primary:hover:not(:disabled),
 .gh-site-adapter-wizard-publish-actions button.is-primary:hover:not(:disabled),
-.gh-site-adapter-wizard-reload-callout button.is-primary:hover:not(:disabled) {
+.gh-site-adapter-wizard-reload-callout button.is-primary:hover:not(:disabled),
+.gh-site-adapter-wizard-ai button.is-primary:hover:not(:disabled) {
   border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 84%, #000000);
   background: color-mix(in srgb, var(--gh-primary, #4285f4) 88%, #000000);
 }
 
 .gh-site-adapter-wizard-footer button.is-secondary,
 .gh-site-adapter-wizard-complete-actions button.is-secondary,
-.gh-site-adapter-wizard-publish-actions button.is-secondary {
+.gh-site-adapter-wizard-publish-actions button.is-secondary,
+.gh-site-adapter-wizard-ai button.is-secondary {
   border-color: var(--gh-border, #d1d5db);
   background: var(--gh-bg, #ffffff);
   color: var(--gh-text-secondary, #6b7280);
@@ -839,7 +1051,8 @@
 
 .gh-site-adapter-wizard-footer button.is-secondary:hover:not(:disabled),
 .gh-site-adapter-wizard-complete-actions button.is-secondary:hover:not(:disabled),
-.gh-site-adapter-wizard-publish-actions button.is-secondary:hover:not(:disabled) {
+.gh-site-adapter-wizard-publish-actions button.is-secondary:hover:not(:disabled),
+.gh-site-adapter-wizard-ai button.is-secondary:hover:not(:disabled) {
   border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 32%, var(--gh-border, #d1d5db));
   color: var(--gh-text, #1f2937);
 }
@@ -859,7 +1072,8 @@
 .gh-site-adapter-wizard-footer button:disabled,
 .gh-site-adapter-wizard-complete-actions button:disabled,
 .gh-site-adapter-wizard-publish-actions button:disabled,
-.gh-site-adapter-wizard-reload-callout button:disabled {
+.gh-site-adapter-wizard-reload-callout button:disabled,
+.gh-site-adapter-wizard-ai button:disabled {
   cursor: not-allowed;
   opacity: 0.45;
 }
@@ -1128,6 +1342,16 @@
     margin-top: 11px;
   }
 
+  .gh-site-adapter-wizard-ai-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .gh-site-adapter-wizard-ai-actions button,
+  .gh-site-adapter-wizard-ai-copy {
+    width: 100%;
+  }
+
   .gh-site-adapter-wizard-outline-item {
     grid-template-columns: 50px minmax(0, 1fr);
   }
@@ -1165,7 +1389,11 @@
   .gh-site-adapter-wizard-complete-actions button,
   .gh-site-adapter-wizard-publish-fields input,
   .gh-site-adapter-wizard-publish-actions button,
-  .gh-site-adapter-wizard-reload-callout button {
+  .gh-site-adapter-wizard-reload-callout button,
+  .gh-site-adapter-wizard-ai > summary,
+  .gh-site-adapter-wizard-ai > summary::after,
+  .gh-site-adapter-wizard-ai textarea,
+  .gh-site-adapter-wizard-ai button {
     animation: none !important;
     transition: none !important;
   }

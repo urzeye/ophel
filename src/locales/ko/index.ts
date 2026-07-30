@@ -33,6 +33,35 @@ export const ko = {
   siteAdapterWizardSelectorLabel: "요소 선택자",
   siteAdapterWizardSelectorGenerated: "자동 생성됨",
   siteAdapterWizardSelectorManual: "수동 편집됨",
+  siteAdapterWizardAiTitle: "AI 선택자 초안",
+  siteAdapterWizardAiOptional: "선택 사항",
+  siteAdapterWizardAiSummary: "정제된 프롬프트를 복사한 뒤 선택자 JSON 붙여넣기",
+  siteAdapterWizardAiPrivacy:
+    "데이터는 자동으로 전송되지 않습니다. 프롬프트에서 대화 본문, 입력값, 링크, 스크립트, Ophel UI를 제외합니다. 민감한 페이지에서는 공유 전에 확인하세요.",
+  siteAdapterWizardAiCopy: "AI 프롬프트 복사",
+  siteAdapterWizardAiCopying: "복사 중…",
+  siteAdapterWizardAiCopied: "정제된 AI 프롬프트를 복사했습니다. 원하는 AI 도우미에 붙여넣으세요.",
+  siteAdapterWizardAiCopyFailed:
+    "AI 프롬프트를 복사할 수 없습니다. 클립보드 권한을 확인하고 다시 시도하세요.",
+  siteAdapterWizardAiResponseLabel: "AI 선택자 JSON",
+  siteAdapterWizardAiResponsePlaceholder: "AI가 반환한 JSON 객체 붙여넣기",
+  siteAdapterWizardAiApply: "초안 적용",
+  siteAdapterWizardAiSelectorSource: "AI 제안",
+  siteAdapterWizardAiReviewReminder:
+    "AI 출력은 초안일 뿐입니다. 저장하기 전에 모든 단계를 확인하세요.",
+  siteAdapterWizardAiAppliedSuccess:
+    "AI 선택자 {count}개를 적용했고 실시간 검증을 통과했습니다. 저장 전에 모든 단계를 확인하세요.",
+  siteAdapterWizardAiAppliedReview:
+    "{applied}개 적용: {valid}개 통과, {review}개 검토 필요. 유효하지 않거나 일치하지 않는 {rejected}개는 기존 선택을 바꾸지 않고 거부했습니다.",
+  siteAdapterWizardAiAppliedNone:
+    "선택자를 적용하지 않았습니다. 유효하지 않거나 일치하지 않는 {rejected}개를 거부했고 기존 선택은 유지했습니다.",
+  siteAdapterWizardAiErrorInvalidJson:
+    "유효한 JSON 또는 주변 설명이 없는 단일 JSON 코드 블록을 붙여넣으세요.",
+  siteAdapterWizardAiErrorInvalidSchema:
+    "AI 초안 구조나 선택자 필드가 유효하지 않습니다. 복사한 프롬프트의 형식을 정확히 사용하세요.",
+  siteAdapterWizardAiErrorResponseTooLarge:
+    "AI 응답이 너무 깁니다. 선택자 JSON만 반환하도록 요청한 뒤 다시 시도하세요.",
+  siteAdapterWizardAiErrorNoSelectors: "AI 응답에 사용할 수 있는 선택자가 없습니다.",
   siteAdapterWizardSelectorPlaceholder: "CSS 선택자 입력",
   siteAdapterWizardPickFirst: "먼저 페이지에서 요소를 선택하세요",
   siteAdapterWizardPickerBusy: "다른 요소 선택 작업이 이미 진행 중입니다.",

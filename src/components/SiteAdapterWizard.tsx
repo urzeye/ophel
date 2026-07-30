@@ -1,10 +1,16 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react"
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import {
   generateStableSelector,
   type StableSelectorFailureReason,
 } from "~core/element-selector-generator"
 import { ElementPickerBusyError, startElementPicker } from "~core/element-picker-controller"
+import {
+  SiteAdapterAiDraftResponseError,
+  applySiteAdapterAiDraftSelectors,
+  createSiteAdapterAiDraftPrompt,
+  parseSiteAdapterAiDraftResponse,
+} from "~core/site-adapter-ai-draft"
 import {
   SITE_ADAPTER_WIZARD_STEPS,
   buildSiteAdapterWizardPack,
@@ -30,11 +36,13 @@ import { t } from "~utils/i18n"
 import {
   CheckIcon,
   ClearIcon,
+  CopyIcon,
   DownloadIcon,
   GithubIcon,
   LocateIcon,
   RefreshIcon,
   SaveIcon,
+  ShieldCheckIcon,
   SparkleIcon,
 } from "./icons"
 
@@ -81,6 +89,12 @@ interface SiteAdapterWizardPublishForm {
 interface SiteAdapterWizardPublishFeedback {
   tone: SiteAdapterWizardPublishTone
   message: string
+}
+
+interface SiteAdapterWizardAiFeedback {
+  tone: SiteAdapterWizardPublishTone
+  message: string
+  responseInvalid: boolean
 }
 
 const getCapabilityLabel = (capability: string): string => {
@@ -149,6 +163,19 @@ const getPublishOperationErrorMessage = (error: unknown): string => {
   return t("siteAdapterWizardPublishSaveFailed")
 }
 
+const getAiResponseErrorMessage = (error: SiteAdapterAiDraftResponseError): string => {
+  switch (error.code) {
+    case "response-too-large":
+      return t("siteAdapterWizardAiErrorResponseTooLarge")
+    case "invalid-json":
+      return t("siteAdapterWizardAiErrorInvalidJson")
+    case "no-selectors":
+      return t("siteAdapterWizardAiErrorNoSelectors")
+    default:
+      return t("siteAdapterWizardAiErrorInvalidSchema")
+  }
+}
+
 export function SiteAdapterWizard() {
   const [isOpen, setIsOpen] = useState(false)
   const [isPicking, setIsPicking] = useState(false)
@@ -162,6 +189,11 @@ export function SiteAdapterWizard() {
     null,
   )
   const [savedPackJson, setSavedPackJson] = useState<string | null>(null)
+  const [aiResponse, setAiResponse] = useState("")
+  const [isCopyingAiPrompt, setIsCopyingAiPrompt] = useState(false)
+  const [aiFeedback, setAiFeedback] = useState<SiteAdapterWizardAiFeedback | null>(null)
+  const pickerButtonRef = useRef<HTMLButtonElement>(null)
+  const selectorInputRef = useRef<HTMLInputElement>(null)
   const packManager = useMemo(() => createRuntimePackManager(platform.storage), [])
 
   const isComplete = activeStepIndex >= SITE_ADAPTER_WIZARD_STEPS.length
@@ -319,6 +351,117 @@ export function SiteAdapterWizard() {
     setActiveStepIndex((index) => Math.max(0, index - 1))
   }, [])
 
+  const handleCopyAiPrompt = useCallback(async () => {
+    if (isCopyingAiPrompt) return
+
+    setAiFeedback(null)
+    if (!navigator.clipboard?.writeText) {
+      setAiFeedback({
+        tone: "error",
+        message: t("siteAdapterWizardAiCopyFailed"),
+        responseInvalid: false,
+      })
+      return
+    }
+
+    setIsCopyingAiPrompt(true)
+    try {
+      const prompt = createSiteAdapterAiDraftPrompt({
+        documentRoot: document,
+        pageUrl: new URL(window.location.href),
+        draft,
+      })
+      await navigator.clipboard.writeText(prompt)
+      setAiFeedback({
+        tone: "success",
+        message: t("siteAdapterWizardAiCopied"),
+        responseInvalid: false,
+      })
+    } catch {
+      setAiFeedback({
+        tone: "error",
+        message: t("siteAdapterWizardAiCopyFailed"),
+        responseInvalid: false,
+      })
+    } finally {
+      setIsCopyingAiPrompt(false)
+    }
+  }, [draft, isCopyingAiPrompt])
+
+  const handleApplyAiDraft = useCallback(() => {
+    if (!aiResponse.trim()) return
+
+    setAiFeedback(null)
+    try {
+      const selectors = parseSiteAdapterAiDraftResponse(aiResponse)
+      const result = applySiteAdapterAiDraftSelectors({
+        draft,
+        selectors,
+        documentRoot: document,
+      })
+      const nextValidations = validateSiteAdapterWizardDraft(result.draft)
+      const firstRequiredReviewIndex = SITE_ADAPTER_WIZARD_STEPS.findIndex(
+        (step) => !step.optional && nextValidations[step.id].status !== "valid",
+      )
+
+      setDraft(result.draft)
+      setPickerError(null)
+      if (firstRequiredReviewIndex !== -1) {
+        setActiveStepIndex(firstRequiredReviewIndex)
+        const reviewStepId = SITE_ADAPTER_WIZARD_STEPS[firstRequiredReviewIndex].id
+        window.requestAnimationFrame(() => {
+          if (result.draft.selections[reviewStepId]) {
+            selectorInputRef.current?.focus()
+          } else {
+            pickerButtonRef.current?.focus()
+          }
+        })
+      }
+
+      const appliedCount = result.appliedStepIds.length
+      const validCount = result.validStepIds.length
+      const reviewCount = result.reviewStepIds.length
+      const rejectedCount = result.issues.length
+      if (appliedCount === 0) {
+        setAiFeedback({
+          tone: "error",
+          message: t("siteAdapterWizardAiAppliedNone", {
+            rejected: String(rejectedCount),
+          }),
+          responseInvalid: true,
+        })
+      } else if (reviewCount > 0 || rejectedCount > 0) {
+        setAiFeedback({
+          tone: "warning",
+          message: t("siteAdapterWizardAiAppliedReview", {
+            applied: String(appliedCount),
+            valid: String(validCount),
+            review: String(reviewCount),
+            rejected: String(rejectedCount),
+          }),
+          responseInvalid: false,
+        })
+      } else {
+        setAiFeedback({
+          tone: "success",
+          message: t("siteAdapterWizardAiAppliedSuccess", {
+            count: String(validCount),
+          }),
+          responseInvalid: false,
+        })
+      }
+    } catch (error) {
+      setAiFeedback({
+        tone: "error",
+        message:
+          error instanceof SiteAdapterAiDraftResponseError
+            ? getAiResponseErrorMessage(error)
+            : t("siteAdapterWizardAiErrorInvalidSchema"),
+        responseInvalid: true,
+      })
+    }
+  }, [aiResponse, draft])
+
   const updatePublishForm = useCallback(
     (field: keyof SiteAdapterWizardPublishForm, value: string) => {
       setPublishFeedback(null)
@@ -444,6 +587,9 @@ export function SiteAdapterWizard() {
     setPublishAction(null)
     setPublishFeedback(null)
     setSavedPackJson(null)
+    setAiResponse("")
+    setIsCopyingAiPrompt(false)
+    setAiFeedback(null)
   }, [])
 
   if (isPicking) return null
@@ -497,6 +643,80 @@ export function SiteAdapterWizard() {
         </button>
       </header>
 
+      <details className="gh-site-adapter-wizard-ai" data-testid="site-adapter-ai-assist">
+        <summary>
+          <span aria-hidden="true" className="gh-site-adapter-wizard-ai-icon">
+            <SparkleIcon size={15} color="currentColor" />
+          </span>
+          <span className="gh-site-adapter-wizard-ai-summary-copy">
+            <strong>{t("siteAdapterWizardAiTitle")}</strong>
+            <small>{t("siteAdapterWizardAiSummary")}</small>
+          </span>
+          <span className="gh-site-adapter-wizard-ai-optional">
+            {t("siteAdapterWizardAiOptional")}
+          </span>
+        </summary>
+        <div className="gh-site-adapter-wizard-ai-body">
+          <p className="gh-site-adapter-wizard-ai-privacy">
+            <ShieldCheckIcon size={15} />
+            <span>{t("siteAdapterWizardAiPrivacy")}</span>
+          </p>
+          <button
+            type="button"
+            className="gh-site-adapter-wizard-ai-copy is-secondary"
+            disabled={isCopyingAiPrompt}
+            data-testid="site-adapter-ai-copy"
+            onClick={() => void handleCopyAiPrompt()}>
+            <CopyIcon size={14} />
+            {t(isCopyingAiPrompt ? "siteAdapterWizardAiCopying" : "siteAdapterWizardAiCopy")}
+          </button>
+
+          <label
+            className="gh-site-adapter-wizard-ai-response-label"
+            htmlFor="gh-site-adapter-ai-response">
+            {t("siteAdapterWizardAiResponseLabel")}
+          </label>
+          <textarea
+            id="gh-site-adapter-ai-response"
+            className={aiFeedback?.responseInvalid ? "is-invalid" : ""}
+            value={aiResponse}
+            rows={6}
+            spellCheck={false}
+            autoComplete="off"
+            aria-invalid={aiFeedback?.responseInvalid ? "true" : undefined}
+            data-testid="site-adapter-ai-response"
+            placeholder={t("siteAdapterWizardAiResponsePlaceholder")}
+            onChange={(event) => {
+              setAiResponse(event.target.value)
+              setAiFeedback(null)
+            }}
+          />
+
+          <div className="gh-site-adapter-wizard-ai-actions">
+            <p>{t("siteAdapterWizardAiReviewReminder")}</p>
+            <button
+              type="button"
+              className="is-primary"
+              disabled={!aiResponse.trim()}
+              data-testid="site-adapter-ai-apply"
+              onClick={handleApplyAiDraft}>
+              <SparkleIcon size={14} color="currentColor" />
+              {t("siteAdapterWizardAiApply")}
+            </button>
+          </div>
+
+          {aiFeedback && (
+            <p
+              className={`gh-site-adapter-wizard-ai-feedback is-${aiFeedback.tone}`}
+              role={aiFeedback.tone === "error" ? "alert" : "status"}
+              aria-live="polite"
+              data-testid="site-adapter-ai-feedback">
+              {aiFeedback.message}
+            </p>
+          )}
+        </div>
+      </details>
+
       {!isComplete && activeStep && validation && (
         <>
           <div className="gh-site-adapter-wizard-progress">
@@ -543,6 +763,7 @@ export function SiteAdapterWizard() {
                 <p>{t(activeStep.descriptionKey)}</p>
               </div>
               <button
+                ref={pickerButtonRef}
                 type="button"
                 className="gh-site-adapter-wizard-pick-button"
                 onClick={() => void handlePick()}>
@@ -558,12 +779,15 @@ export function SiteAdapterWizard() {
                   {t(
                     selection.source === "generated"
                       ? "siteAdapterWizardSelectorGenerated"
-                      : "siteAdapterWizardSelectorManual",
+                      : selection.source === "ai"
+                        ? "siteAdapterWizardAiSelectorSource"
+                        : "siteAdapterWizardSelectorManual",
                   )}
                 </span>
               )}
             </label>
             <input
+              ref={selectorInputRef}
               id={selectorInputId}
               className={`gh-site-adapter-wizard-selector-input ${
                 validation.status === "valid"

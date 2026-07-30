@@ -186,12 +186,12 @@ const escapeCssAttributeValue = (value: string): string =>
     .replace(/\n/g, "\\a ")
     .replace(/\f/g, "\\c ")
 
-const isStableAttributeValue = (value: string): boolean => {
+export const isStableSelectorAttributeValue = (value: string): boolean => {
   const trimmed = value.trim()
   return trimmed.length > 0 && trimmed.length <= MAX_ATTRIBUTE_VALUE_LENGTH
 }
 
-const isStableId = (value: string): boolean => {
+export const isStableSelectorId = (value: string): boolean => {
   const trimmed = value.trim()
   if (trimmed.length < 2 || trimmed.length > MAX_ATTRIBUTE_VALUE_LENGTH) return false
   if (/\s/.test(trimmed) || GENERATED_ID_PREFIX_PATTERN.test(trimmed)) return false
@@ -200,11 +200,11 @@ const isStableId = (value: string): boolean => {
 }
 
 const isStableAriaValue = (attribute: string, value: string): boolean => {
-  if (!isStableAttributeValue(value)) return false
+  if (!isStableSelectorAttributeValue(value)) return false
   if (!ARIA_ID_REFERENCE_ATTRIBUTES.has(attribute)) return true
 
   const references = value.trim().split(/\s+/)
-  return references.length > 0 && references.every(isStableId)
+  return references.length > 0 && references.every(isStableSelectorId)
 }
 
 export const isStableSelectorClassName = (className: string): boolean => {
@@ -276,7 +276,7 @@ const getLocalCandidates = (element: Element, includeTagFallback: boolean): Sele
 
   TEST_ID_ATTRIBUTES.forEach((attribute, attributeIndex) => {
     const value = element.getAttribute(attribute)
-    if (!value || !isStableAttributeValue(value)) return
+    if (!value || !isStableSelectorAttributeValue(value)) return
     const selector = `[${attribute}="${escapeCssAttributeValue(value)}"]`
     const quality = SEGMENT_QUALITY.dataTestId + attributeIndex * 2
     addCandidate({ selector, strategy: "data-testid", quality })
@@ -284,7 +284,7 @@ const getLocalCandidates = (element: Element, includeTagFallback: boolean): Sele
   })
 
   const id = element.getAttribute("id")
-  if (id && isStableId(id)) {
+  if (id && isStableSelectorId(id)) {
     const selector = `#${escapeCssIdentifier(id)}`
     addCandidate({ selector, strategy: "id", quality: SEGMENT_QUALITY.id })
     addCandidate({ selector: `${tag}${selector}`, strategy: "id", quality: SEGMENT_QUALITY.id + 1 })
@@ -328,12 +328,32 @@ const getLocalCandidates = (element: Element, includeTagFallback: boolean): Sele
   return Array.from(candidates.values()).sort(sortSegments)
 }
 
+const collectOpenSelectorRoots = (root: Document | ShadowRoot): Array<Document | ShadowRoot> => {
+  const roots: Array<Document | ShadowRoot> = []
+  const visited = new Set<Document | ShadowRoot>()
+
+  const visit = (current: Document | ShadowRoot, depth: number) => {
+    if (visited.has(current) || depth > MAX_SHADOW_DEPTH) return
+    visited.add(current)
+    roots.push(current)
+
+    current.querySelectorAll("*").forEach((element) => {
+      if (element.shadowRoot) {
+        visit(element.shadowRoot, depth + 1)
+      }
+    })
+  }
+
+  visit(root, 0)
+  return roots
+}
+
 class DeepSelectorQueryContext {
   private readonly roots: Array<Document | ShadowRoot>
   private readonly cache = new Map<string, Element[]>()
 
   constructor(root: Document | ShadowRoot) {
-    this.roots = this.collectRoots(root)
+    this.roots = collectOpenSelectorRoots(root)
   }
 
   contains(element: Element): boolean {
@@ -354,27 +374,10 @@ class DeepSelectorQueryContext {
     this.cache.set(selector, result)
     return result
   }
-
-  private collectRoots(root: Document | ShadowRoot): Array<Document | ShadowRoot> {
-    const roots: Array<Document | ShadowRoot> = []
-    const visited = new Set<Document | ShadowRoot>()
-
-    const visit = (current: Document | ShadowRoot, depth: number) => {
-      if (visited.has(current) || depth > MAX_SHADOW_DEPTH) return
-      visited.add(current)
-      roots.push(current)
-
-      current.querySelectorAll("*").forEach((element) => {
-        if (element.shadowRoot) {
-          visit(element.shadowRoot, depth + 1)
-        }
-      })
-    }
-
-    visit(root, 0)
-    return roots
-  }
 }
+
+export const querySelectorAllDeep = (root: Document | ShadowRoot, selector: string): Element[] =>
+  new DeepSelectorQueryContext(root).query(selector)
 
 const isUniqueTargetMatch = (
   context: DeepSelectorQueryContext,
