@@ -8,7 +8,7 @@ import type {
   SitePackManifest,
 } from "~adapters/declarative/types"
 
-import { RemoteConfigManager } from "./remote-config-manager"
+import { RemoteConfigManager, type ResolveRemoteConfigSources } from "./remote-config-manager"
 import type { TrustedRegistrySigningKey } from "./remote-config-signature"
 import {
   REMOTE_CONFIG_STORAGE_KEY,
@@ -238,19 +238,25 @@ const createManager = (
   transport: RegistryTransport,
   options: {
     sources?: readonly string[]
+    resolveSources?: ResolveRemoteConfigSources
     checkIntervalMs?: number
   } = {},
-): RemoteConfigManager =>
-  new RemoteConfigManager({
+): RemoteConfigManager => {
+  const sourceOptions = options.resolveSources
+    ? { resolveSources: options.resolveSources }
+    : { sources: options.sources ?? [PRIMARY_SOURCE] }
+
+  return new RemoteConfigManager({
     storage,
     transport,
     appVersion: APP_VERSION,
     resolveBuiltinConfig,
-    sources: options.sources ?? [PRIMARY_SOURCE],
+    ...sourceOptions,
     checkIntervalMs: options.checkIntervalMs,
     now: () => NOW,
     trustedSigningKeys: TRUSTED_SIGNING_KEYS,
   })
+}
 
 const artifactUrl = (entry: { file: string }, source = PRIMARY_SOURCE): string =>
   new URL(entry.file, source).href
@@ -413,6 +419,42 @@ describe("RemoteConfigManager source handling", () => {
     })
     expect(transport).not.toHaveBeenCalled()
     expect(storage.writes).toHaveLength(0)
+  })
+
+  it("resolves the current source for each check", async () => {
+    let selectedSource = PRIMARY_SOURCE
+    const firstIndex = createIndex(1)
+    const secondIndex = createIndex(2)
+    const routes = new Map<string, TransportRoute>([
+      ...createSignedIndexRoutes(PRIMARY_SOURCE, firstIndex),
+      ...createSignedIndexRoutes(FALLBACK_SOURCE, secondIndex),
+    ])
+    const transport = createTransport(routes)
+    const storage = new MemoryRemoteConfigStorage()
+    const manager = createManager(storage, transport, {
+      resolveSources: () => [selectedSource],
+    })
+
+    await expect(manager.checkForUpdates({ force: true })).resolves.toMatchObject({
+      status: "updated",
+      sourceUrl: PRIMARY_SOURCE,
+      registryRevision: 1,
+    })
+
+    selectedSource = FALLBACK_SOURCE
+    await expect(manager.checkForUpdates({ force: true })).resolves.toMatchObject({
+      status: "updated",
+      sourceUrl: FALLBACK_SOURCE,
+      registryRevision: 2,
+    })
+
+    expect(storage.readState()?.active?.sourceUrl).toBe(FALLBACK_SOURCE)
+    expect(transport.mock.calls.map(([url]) => url)).toEqual([
+      PRIMARY_SOURCE,
+      signatureUrl(PRIMARY_SOURCE),
+      FALLBACK_SOURCE,
+      signatureUrl(FALLBACK_SOURCE),
+    ])
   })
 })
 

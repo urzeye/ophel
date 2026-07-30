@@ -1938,6 +1938,15 @@ export const ko = {
   remoteConfigAutoUpdateLabel: "어댑터 구성 자동 업데이트",
   remoteConfigAutoUpdateDesc:
     "기본적으로 켜져 있습니다. 확장 프로그램은 정적 CDN을 최대 24시간에 한 번 확인합니다.",
+  remoteConfigRegistrySourceLabel: "개발용 Registry 소스",
+  remoteConfigRegistrySourceDesc:
+    "개발 빌드에서만 사용할 수 있습니다. 전체 index.json URL을 입력하고 비워 두면 기본 소스를 사용합니다.",
+  remoteConfigRegistrySourcePlaceholder: "https://staging.example.com/index.json",
+  remoteConfigRegistrySourceApplyButton: "적용",
+  remoteConfigRegistrySourceApplied:
+    "개발용 Registry 소스를 저장했습니다. 다음 업데이트 확인부터 사용됩니다.",
+  remoteConfigRegistrySourceCleared: "기본 Registry 소스로 되돌렸습니다.",
+  remoteConfigRegistrySourceInvalid: "Registry 소스가 올바르지 않습니다: {error}",
   remoteConfigCheckNowLabel: "지금 업데이트 확인",
   remoteConfigCheckNowDesc: "자동 업데이트가 꺼져 있어도 수동 확인은 사용할 수 있습니다.",
   remoteConfigCheckNowButton: "지금 확인",

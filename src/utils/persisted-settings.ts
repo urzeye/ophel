@@ -1,4 +1,5 @@
 import { DEFAULT_SETTINGS } from "~constants/default-settings"
+import { normalizeRemoteConfigSourceUrl } from "~core/remote-config-source"
 import type { PlatformStorage } from "~platform/types"
 import type { SettingsInput } from "~utils/settings-normalize"
 
@@ -72,15 +73,21 @@ export const parsePersistedSettings = (rawValue: unknown): SettingsInput | undef
   return parsed as SettingsInput
 }
 
-export const getRemoteConfigAutoUpdate = (rawValue: unknown): boolean => {
+const getRemoteConfigSettings = (rawValue: unknown): Record<string, unknown> | undefined => {
   const settings = parsePersistedSettings(rawValue)
-  if (!settings) return DEFAULT_SETTINGS.remoteConfig.autoUpdate
+  if (!settings) return undefined
 
   const remoteConfig = (settings as Record<string, unknown>).remoteConfig
-  if (remoteConfig === undefined) return DEFAULT_SETTINGS.remoteConfig.autoUpdate
+  if (remoteConfig === undefined) return undefined
   if (!isPlainRecord(remoteConfig)) {
     throw new PersistedSettingsError("remoteConfig must be an object")
   }
+  return remoteConfig
+}
+
+export const getRemoteConfigAutoUpdate = (rawValue: unknown): boolean => {
+  const remoteConfig = getRemoteConfigSettings(rawValue)
+  if (!remoteConfig) return DEFAULT_SETTINGS.remoteConfig.autoUpdate
 
   const { autoUpdate } = remoteConfig
   if (autoUpdate === undefined) return DEFAULT_SETTINGS.remoteConfig.autoUpdate
@@ -90,5 +97,29 @@ export const getRemoteConfigAutoUpdate = (rawValue: unknown): boolean => {
   return autoUpdate
 }
 
+export const getRemoteConfigRegistrySourceUrl = (rawValue: unknown): string | undefined => {
+  const remoteConfig = getRemoteConfigSettings(rawValue)
+  if (!remoteConfig) return undefined
+
+  const { registrySourceUrl } = remoteConfig
+  if (registrySourceUrl === undefined || registrySourceUrl === "") return undefined
+  if (typeof registrySourceUrl !== "string") {
+    throw new PersistedSettingsError("remoteConfig.registrySourceUrl must be a string")
+  }
+
+  try {
+    return normalizeRemoteConfigSourceUrl(registrySourceUrl)
+  } catch (error) {
+    throw new PersistedSettingsError(
+      `remoteConfig.registrySourceUrl is invalid: ${(error as Error).message}`,
+    )
+  }
+}
+
 export const readRemoteConfigAutoUpdate = async (storage: PlatformStorage): Promise<boolean> =>
   getRemoteConfigAutoUpdate(await storage.get<unknown>(PERSISTED_SETTINGS_STORAGE_KEY))
+
+export const readRemoteConfigRegistrySourceUrl = async (
+  storage: PlatformStorage,
+): Promise<string | undefined> =>
+  getRemoteConfigRegistrySourceUrl(await storage.get<unknown>(PERSISTED_SETTINGS_STORAGE_KEY))

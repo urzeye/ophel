@@ -1969,6 +1969,15 @@ Please output the optimized code block directly, followed by a brief summary of 
   remoteConfigAutoUpdateLabel: "Automatically update adapter configurations",
   remoteConfigAutoUpdateDesc:
     "Enabled by default. The extension checks static CDNs at most once every 24 hours.",
+  remoteConfigRegistrySourceLabel: "Development registry source",
+  remoteConfigRegistrySourceDesc:
+    "Development builds only. Enter a full index.json URL; leave blank to use the default sources.",
+  remoteConfigRegistrySourcePlaceholder: "https://staging.example.com/index.json",
+  remoteConfigRegistrySourceApplyButton: "Apply",
+  remoteConfigRegistrySourceApplied:
+    "Development registry source saved. The next update check will use it.",
+  remoteConfigRegistrySourceCleared: "Default registry sources restored.",
+  remoteConfigRegistrySourceInvalid: "Invalid registry source: {error}",
   remoteConfigCheckNowLabel: "Check for updates now",
   remoteConfigCheckNowDesc: "Manual checks remain available when automatic updates are off.",
   remoteConfigCheckNowButton: "Check now",

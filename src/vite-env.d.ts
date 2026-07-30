@@ -18,6 +18,7 @@ declare module "*.css?inline" {
 }
 
 declare const __PLATFORM__: "extension" | "userscript"
+declare const __OPHEL_DEV__: boolean | undefined
 
 declare const GM_info: {
   scriptHandler?: string

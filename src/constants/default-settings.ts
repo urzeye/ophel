@@ -79,6 +79,7 @@ export const DEFAULT_SETTINGS: Settings = {
 
   remoteConfig: {
     autoUpdate: true,
+    registrySourceUrl: "",
   },
 
   panel: {

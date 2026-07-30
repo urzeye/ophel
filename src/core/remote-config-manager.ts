@@ -38,6 +38,7 @@ import {
   verifyRegistryIndexSignature,
   type TrustedRegistrySigningKey,
 } from "./remote-config-signature"
+import { normalizeRemoteConfigSourceUrl } from "./remote-config-source"
 import { loadRemoteConfigState } from "./remote-config-state"
 
 export * from "./remote-config-cache"
@@ -50,10 +51,13 @@ export interface RemoteConfigManagerOptions {
   appVersion: string
   resolveBuiltinConfig: ResolveBuiltinConfig
   sources?: readonly string[]
+  resolveSources?: ResolveRemoteConfigSources
   checkIntervalMs?: number
   now?: () => number
   trustedSigningKeys?: readonly TrustedRegistrySigningKey[]
 }
+
+export type ResolveRemoteConfigSources = () => readonly string[] | Promise<readonly string[]>
 
 export interface CheckRemoteConfigOptions {
   force?: boolean
@@ -77,16 +81,6 @@ const SITE_ID_PATTERN = /^[a-z0-9-]{2,40}$/
 
 const toErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : String(error)
-
-const normalizeSourceUrl = (source: string): string => {
-  const url = new URL(source)
-  const isLocalDevSource =
-    url.protocol === "http:" && (url.hostname === "127.0.0.1" || url.hostname === "localhost")
-  if (url.protocol !== "https:" && !isLocalDevSource) {
-    throw new TypeError(`Registry source must use HTTPS: ${source}`)
-  }
-  return url.href
-}
 
 const decodeJson = (bytes: Uint8Array, url: string): unknown => {
   let text = new TextDecoder("utf-8", { fatal: true }).decode(bytes)
@@ -340,6 +334,7 @@ export class RemoteConfigManager {
   private readonly appVersion: string
   private readonly resolveBuiltinConfig: ResolveBuiltinConfig
   private readonly sources: readonly string[]
+  private readonly resolveSources?: ResolveRemoteConfigSources
   private readonly checkIntervalMs: number
   private readonly now: () => number
   private readonly trustedSigningKeys: readonly TrustedRegistrySigningKey[]
@@ -362,7 +357,10 @@ export class RemoteConfigManager {
     this.transport = options.transport
     this.appVersion = options.appVersion
     this.resolveBuiltinConfig = options.resolveBuiltinConfig
-    this.sources = (options.sources ?? DEFAULT_REMOTE_CONFIG_SOURCES).map(normalizeSourceUrl)
+    this.sources = (options.sources ?? DEFAULT_REMOTE_CONFIG_SOURCES).map(
+      normalizeRemoteConfigSourceUrl,
+    )
+    this.resolveSources = options.resolveSources
     this.checkIntervalMs = options.checkIntervalMs ?? REMOTE_CONFIG_CHECK_INTERVAL_MS
     this.now = options.now ?? Date.now
     this.trustedSigningKeys = options.trustedSigningKeys ?? TRUSTED_REGISTRY_SIGNING_KEYS
@@ -434,8 +432,9 @@ export class RemoteConfigManager {
       }
     }
 
+    const sourceUrls = await this.getSourceUrls()
     const sourceFailures: RemoteConfigSourceFailure[] = []
-    for (const sourceUrl of this.sources) {
+    for (const sourceUrl of sourceUrls) {
       try {
         const sourceResult = await this.checkSource(sourceUrl, state)
         const contentChanged =
@@ -480,6 +479,14 @@ export class RemoteConfigManager {
       error: message,
       changes: emptyChanges,
     }
+  }
+
+  private async getSourceUrls(): Promise<readonly string[]> {
+    const sources = this.resolveSources ? await this.resolveSources() : this.sources
+    if (sources.length === 0) {
+      throw new TypeError("At least one registry source is required")
+    }
+    return sources.map(normalizeRemoteConfigSourceUrl)
   }
 
   private async checkSource(

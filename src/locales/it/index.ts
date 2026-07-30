@@ -2044,6 +2044,15 @@ export const it = {
   remoteConfigAutoUpdateLabel: "Aggiorna automaticamente le configurazioni degli adattatori",
   remoteConfigAutoUpdateDesc:
     "Attivo per impostazione predefinita. L'estensione controlla i CDN statici al massimo ogni 24 ore.",
+  remoteConfigRegistrySourceLabel: "Sorgente Registry di sviluppo",
+  remoteConfigRegistrySourceDesc:
+    "Disponibile solo nelle build di sviluppo. Inserisci un URL completo di index.json; lascia vuoto per usare le sorgenti predefinite.",
+  remoteConfigRegistrySourcePlaceholder: "https://staging.example.com/index.json",
+  remoteConfigRegistrySourceApplyButton: "Applica",
+  remoteConfigRegistrySourceApplied:
+    "Sorgente Registry di sviluppo salvata. Verrà usata al prossimo controllo degli aggiornamenti.",
+  remoteConfigRegistrySourceCleared: "Ripristinate le sorgenti Registry predefinite.",
+  remoteConfigRegistrySourceInvalid: "Sorgente Registry non valida: {error}",
   remoteConfigCheckNowLabel: "Controlla ora gli aggiornamenti",
   remoteConfigCheckNowDesc:
     "Il controllo manuale resta disponibile quando gli aggiornamenti automatici sono disattivati.",

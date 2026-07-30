@@ -1959,6 +1959,15 @@ export const ru = {
   remoteConfigAutoUpdateLabel: "Автоматически обновлять конфигурации адаптеров",
   remoteConfigAutoUpdateDesc:
     "Включено по умолчанию. Расширение проверяет статические CDN не чаще одного раза в 24 часа.",
+  remoteConfigRegistrySourceLabel: "Источник Registry для разработки",
+  remoteConfigRegistrySourceDesc:
+    "Доступно только в dev-сборках. Укажите полный URL index.json; оставьте поле пустым, чтобы использовать источники по умолчанию.",
+  remoteConfigRegistrySourcePlaceholder: "https://staging.example.com/index.json",
+  remoteConfigRegistrySourceApplyButton: "Применить",
+  remoteConfigRegistrySourceApplied:
+    "Источник Registry для разработки сохранён. Он будет использоваться при следующей проверке обновлений.",
+  remoteConfigRegistrySourceCleared: "Источники Registry по умолчанию восстановлены.",
+  remoteConfigRegistrySourceInvalid: "Недопустимый источник Registry: {error}",
   remoteConfigCheckNowLabel: "Проверить обновления сейчас",
   remoteConfigCheckNowDesc:
     "Ручная проверка доступна даже при отключённых автоматических обновлениях.",

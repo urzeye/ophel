@@ -230,6 +230,7 @@ const SETTING_ID_ROUTE_RULES: SettingRouteRule[] = [
 
 export const SETTING_ID_ALIASES: Record<string, string> = {
   "remoteConfig.autoUpdate": "remote-config-auto-update",
+  "remoteConfig.registrySourceUrl": "remote-config-registry-source",
   "general.panel.panelMode": "panel-mode",
   "general.panel.edgeTriggerMode": "panel-edge-trigger-mode",
   "general.panel.defaultPosition": "panel-default-position",

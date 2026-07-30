@@ -3,9 +3,11 @@ import React, { useCallback, useEffect, useMemo, useState } from "react"
 import { CloudIcon, InfoIcon, RefreshIcon } from "~components/icons"
 import { Button } from "~components/ui"
 import { SUPPORTED_AI_PLATFORMS } from "~constants/defaults"
+import { normalizeRemoteConfigSourceUrl } from "~core/remote-config-source"
 import type { RemoteConfigState } from "~core/remote-config-types"
 import { platform } from "~platform"
 import { useSettingsStore } from "~stores/settings-store"
+import { IS_DEVELOPMENT_BUILD } from "~utils/config"
 import { getCurrentLang, t } from "~utils/i18n"
 
 import { SettingCard } from "./SettingCard"
@@ -40,6 +42,14 @@ export const RemoteConfigSettingsCard: React.FC = () => {
   const [feedback, setFeedback] = useState<FeedbackState | null>(null)
   const [isChecking, setIsChecking] = useState(false)
   const [resettingSiteId, setResettingSiteId] = useState<string | null>(null)
+  const configuredRegistrySource = settings.remoteConfig?.registrySourceUrl ?? ""
+  const [registrySourceInput, setRegistrySourceInput] = useState(configuredRegistrySource)
+  const [registrySourceError, setRegistrySourceError] = useState<string | null>(null)
+
+  useEffect(() => {
+    setRegistrySourceInput(configuredRegistrySource)
+    setRegistrySourceError(null)
+  }, [configuredRegistrySource])
 
   const refreshState = useCallback(async (): Promise<boolean> => {
     try {
@@ -100,6 +110,31 @@ export const RemoteConfigSettingsCard: React.FC = () => {
     }
   }
 
+  const handleApplyRegistrySource = () => {
+    setFeedback(null)
+    const source = registrySourceInput.trim()
+
+    if (!source) {
+      updateNestedSetting("remoteConfig", "registrySourceUrl", "")
+      setRegistrySourceInput("")
+      setRegistrySourceError(null)
+      setFeedback({ tone: "success", message: t("remoteConfigRegistrySourceCleared") })
+      return
+    }
+
+    try {
+      const normalizedSource = normalizeRemoteConfigSourceUrl(source)
+      updateNestedSetting("remoteConfig", "registrySourceUrl", normalizedSource)
+      setRegistrySourceInput(normalizedSource)
+      setRegistrySourceError(null)
+      setFeedback({ tone: "success", message: t("remoteConfigRegistrySourceApplied") })
+    } catch (error) {
+      setRegistrySourceError(
+        t("remoteConfigRegistrySourceInvalid", { error: getErrorMessage(error) }),
+      )
+    }
+  }
+
   const handleReset = async (siteId: string, siteName: string, patchVersion: number) => {
     setResettingSiteId(siteId)
     setFeedback(null)
@@ -146,6 +181,65 @@ export const RemoteConfigSettingsCard: React.FC = () => {
             )
           }
         />
+
+        {IS_DEVELOPMENT_BUILD && (
+          <SettingRow
+            label={t("remoteConfigRegistrySourceLabel")}
+            description={t("remoteConfigRegistrySourceDesc")}
+            settingId="remote-config-registry-source">
+            <div className="remote-config-source-editor">
+              <div className="remote-config-source-controls">
+                <input
+                  id="remote-config-registry-source-input"
+                  type="url"
+                  inputMode="url"
+                  className="settings-input remote-config-source-input"
+                  value={registrySourceInput}
+                  placeholder={t("remoteConfigRegistrySourcePlaceholder")}
+                  aria-label={t("remoteConfigRegistrySourceLabel")}
+                  aria-invalid={registrySourceError ? "true" : undefined}
+                  aria-describedby={
+                    registrySourceError ? "remote-config-registry-source-error" : undefined
+                  }
+                  disabled={isChecking || resettingSiteId !== null}
+                  spellCheck={false}
+                  onChange={(event) => {
+                    setRegistrySourceInput(event.target.value)
+                    setRegistrySourceError(null)
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key !== "Enter") return
+                    event.preventDefault()
+                    if (registrySourceInput.trim() !== configuredRegistrySource) {
+                      handleApplyRegistrySource()
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  className="remote-config-action-button"
+                  disabled={
+                    isChecking ||
+                    resettingSiteId !== null ||
+                    registrySourceInput.trim() === configuredRegistrySource
+                  }
+                  onClick={handleApplyRegistrySource}>
+                  {t("remoteConfigRegistrySourceApplyButton")}
+                </Button>
+              </div>
+              {registrySourceError && (
+                <span
+                  id="remote-config-registry-source-error"
+                  className="remote-config-source-error"
+                  role="alert">
+                  {registrySourceError}
+                </span>
+              )}
+            </div>
+          </SettingRow>
+        )}
 
         <SettingRow
           label={t("remoteConfigCheckNowLabel")}

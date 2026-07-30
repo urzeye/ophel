@@ -122,6 +122,7 @@ export interface Settings {
   // 适配配置远程更新
   remoteConfig: {
     autoUpdate: boolean
+    registrySourceUrl: string
   }
 
   // 面板行为

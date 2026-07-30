@@ -1969,6 +1969,15 @@ Dame el código y luego un resumen de mejoras.`,
   remoteConfigAutoUpdateLabel: "Actualizar automáticamente las configuraciones de adaptadores",
   remoteConfigAutoUpdateDesc:
     "Activado de forma predeterminada. La extensión consulta CDN estáticas como máximo una vez cada 24 horas.",
+  remoteConfigRegistrySourceLabel: "Fuente de Registry para desarrollo",
+  remoteConfigRegistrySourceDesc:
+    "Solo disponible en compilaciones de desarrollo. Introduce una URL completa de index.json; déjala vacía para usar las fuentes predeterminadas.",
+  remoteConfigRegistrySourcePlaceholder: "https://staging.example.com/index.json",
+  remoteConfigRegistrySourceApplyButton: "Aplicar",
+  remoteConfigRegistrySourceApplied:
+    "Fuente de Registry para desarrollo guardada. Se usará en la próxima comprobación de actualizaciones.",
+  remoteConfigRegistrySourceCleared: "Se restauraron las fuentes de Registry predeterminadas.",
+  remoteConfigRegistrySourceInvalid: "Fuente de Registry no válida: {error}",
   remoteConfigCheckNowLabel: "Buscar actualizaciones ahora",
   remoteConfigCheckNowDesc:
     "La búsqueda manual sigue disponible cuando las actualizaciones automáticas están desactivadas.",

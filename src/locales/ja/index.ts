@@ -1960,6 +1960,15 @@ export const ja = {
   remoteConfigAutoUpdateLabel: "アダプター設定を自動更新",
   remoteConfigAutoUpdateDesc:
     "初期設定では有効です。拡張機能は静的 CDN を最大 24 時間に 1 回確認します。",
+  remoteConfigRegistrySourceLabel: "開発用 Registry ソース",
+  remoteConfigRegistrySourceDesc:
+    "開発ビルドのみ使用できます。完全な index.json URL を入力し、空欄にすると既定のソースを使います。",
+  remoteConfigRegistrySourcePlaceholder: "https://staging.example.com/index.json",
+  remoteConfigRegistrySourceApplyButton: "適用",
+  remoteConfigRegistrySourceApplied:
+    "開発用 Registry ソースを保存しました。次回の更新確認から使用します。",
+  remoteConfigRegistrySourceCleared: "既定の Registry ソースに戻しました。",
+  remoteConfigRegistrySourceInvalid: "Registry ソースが無効です：{error}",
   remoteConfigCheckNowLabel: "今すぐ更新を確認",
   remoteConfigCheckNowDesc: "自動更新がオフでも手動確認は利用できます。",
   remoteConfigCheckNowButton: "今すぐ確認",

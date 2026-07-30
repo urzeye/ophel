@@ -1978,6 +1978,15 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   remoteConfigAutoUpdateLabel: "Adapterkonfigurationen automatisch aktualisieren",
   remoteConfigAutoUpdateDesc:
     "Standardmäßig aktiviert. Die Erweiterung prüft statische CDNs höchstens einmal alle 24 Stunden.",
+  remoteConfigRegistrySourceLabel: "Registry-Quelle für die Entwicklung",
+  remoteConfigRegistrySourceDesc:
+    "Nur in Entwicklungs-Builds verfügbar. Vollständige index.json-URL eingeben; leer lassen, um die Standardquellen zu verwenden.",
+  remoteConfigRegistrySourcePlaceholder: "https://staging.example.com/index.json",
+  remoteConfigRegistrySourceApplyButton: "Anwenden",
+  remoteConfigRegistrySourceApplied:
+    "Registry-Quelle für die Entwicklung gespeichert. Sie wird bei der nächsten Update-Prüfung verwendet.",
+  remoteConfigRegistrySourceCleared: "Standard-Registry-Quellen wiederhergestellt.",
+  remoteConfigRegistrySourceInvalid: "Ungültige Registry-Quelle: {error}",
   remoteConfigCheckNowLabel: "Jetzt nach Updates suchen",
   remoteConfigCheckNowDesc:
     "Die manuelle Suche bleibt verfügbar, wenn automatische Updates deaktiviert sind.",

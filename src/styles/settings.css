@@ -850,6 +850,34 @@
   outline-offset: 2px;
 }
 
+.remote-config-source-editor {
+  width: min(420px, 48vw);
+}
+
+.remote-config-source-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.remote-config-source-input {
+  width: 100%;
+  min-width: 0;
+}
+
+.remote-config-source-input[aria-invalid="true"] {
+  border-color: var(--gh-danger, #ef4444);
+}
+
+.remote-config-source-error {
+  display: block;
+  margin-top: 6px;
+  color: var(--gh-text-danger, var(--gh-danger, #ef4444));
+  font-size: 11px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
 .remote-config-refresh-icon {
   flex-shrink: 0;
 }
@@ -1008,6 +1036,28 @@
 }
 
 @media (max-width: 640px) {
+  .remote-config-settings-card [data-setting-id="remote-config-registry-source"] {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .remote-config-settings-card
+    [data-setting-id="remote-config-registry-source"]
+    .settings-row-control {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .remote-config-source-editor {
+    width: 100%;
+  }
+
+  .remote-config-source-controls {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
   .remote-config-metadata {
     grid-template-columns: 1fr;
   }

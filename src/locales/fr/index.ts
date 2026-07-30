@@ -1986,6 +1986,15 @@ Donnez le code puis un résumé des améliorations.`,
   remoteConfigAutoUpdateLabel: "Mettre à jour automatiquement les configurations des adaptateurs",
   remoteConfigAutoUpdateDesc:
     "Activé par défaut. L'extension vérifie les CDN statiques au maximum une fois toutes les 24 heures.",
+  remoteConfigRegistrySourceLabel: "Source Registry de développement",
+  remoteConfigRegistrySourceDesc:
+    "Disponible uniquement dans les builds de développement. Saisissez l'URL complète de index.json ; laissez vide pour utiliser les sources par défaut.",
+  remoteConfigRegistrySourcePlaceholder: "https://staging.example.com/index.json",
+  remoteConfigRegistrySourceApplyButton: "Appliquer",
+  remoteConfigRegistrySourceApplied:
+    "Source Registry de développement enregistrée. Elle sera utilisée lors de la prochaine vérification.",
+  remoteConfigRegistrySourceCleared: "Sources Registry par défaut restaurées.",
+  remoteConfigRegistrySourceInvalid: "Source Registry non valide : {error}",
   remoteConfigCheckNowLabel: "Rechercher des mises à jour maintenant",
   remoteConfigCheckNowDesc:
     "La vérification manuelle reste disponible lorsque les mises à jour automatiques sont désactivées.",

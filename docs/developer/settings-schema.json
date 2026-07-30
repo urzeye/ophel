@@ -4,7 +4,8 @@
   "hasSeenOphelAdvancedGuide": false,
 
   "remoteConfig": {
-    "autoUpdate": true
+    "autoUpdate": true,
+    "registrySourceUrl": ""
   },
 
   "panel": {

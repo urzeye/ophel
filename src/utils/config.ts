@@ -11,6 +11,12 @@ export const APP_DISPLAY_NAME = "Ophel Atlas"
 
 const isUserscript = typeof __PLATFORM__ !== "undefined" && __PLATFORM__ === "userscript"
 
+const isDevelopmentByEnvironment =
+  typeof process !== "undefined" && process.env.NODE_ENV === "development"
+
+export const IS_DEVELOPMENT_BUILD =
+  typeof __OPHEL_DEV__ !== "undefined" ? __OPHEL_DEV__ : isDevelopmentByEnvironment
+
 // 应用版本 - 根据平台获取
 export const APP_VERSION = isUserscript
   ? GM_info?.script?.version ?? "1.0.0"

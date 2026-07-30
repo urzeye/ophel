@@ -25,6 +25,9 @@ import {
 } from "./src/platform/userscript/katex-cdn"
 import { resources as localeResources } from "./src/locales/resources"
 
+const isUserscriptDevelopmentBuild =
+  process.env.NODE_ENV === "development" || Boolean(process.env.USERSCRIPT_ASSET_BASE_URL)
+
 // ========== Dynamic Metadata Loading ==========
 const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, "package.json"), "utf-8"))
 const reactPkg = JSON.parse(
@@ -241,6 +244,7 @@ async function buildGeminiWatermarkVendor(): Promise<void> {
     publicDir: false,
     define: {
       __PLATFORM__: JSON.stringify("userscript"),
+      __OPHEL_DEV__: JSON.stringify(false),
     },
     build: {
       outDir: userscriptAssetOutDir,
@@ -270,6 +274,7 @@ async function buildMarkdownVendor(): Promise<void> {
     publicDir: false,
     define: {
       __PLATFORM__: JSON.stringify("userscript"),
+      __OPHEL_DEV__: JSON.stringify(false),
     },
     resolve: {
       alias: {
@@ -563,6 +568,7 @@ export default defineConfig({
   define: {
     // 注入平台标识
     __PLATFORM__: JSON.stringify("userscript"),
+    __OPHEL_DEV__: JSON.stringify(isUserscriptDevelopmentBuild),
   },
   build: {
     outDir: "build/userscript",
