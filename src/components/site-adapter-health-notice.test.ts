@@ -5,7 +5,7 @@ import { createElement } from "react"
 import { renderToStaticMarkup } from "react-dom/server"
 import { describe, expect, it, vi } from "vitest"
 
-import type { HealthCheckSnapshot } from "~core/health-check-manager"
+import type { HealthCheckSnapshot, HealthCheckUpdateResult } from "~core/health-check-manager"
 import type { ActiveAdapterConfigContext } from "~core/site-adapter-config-runtime"
 
 import { SiteAdapterHealthNotice } from "./SiteAdapterHealthNotice"
@@ -61,7 +61,7 @@ const renderNotice = (snapshot: HealthCheckSnapshot): string =>
   renderToStaticMarkup(
     createElement(SiteAdapterHealthNotice, {
       snapshot,
-      onCheckUpdates: async () => ({
+      onCheckUpdates: async (): Promise<HealthCheckUpdateResult> => ({
         remoteStatus: "up-to-date",
         recovered: false,
         snapshot,
