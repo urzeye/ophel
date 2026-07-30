@@ -70,7 +70,7 @@
    - **DSL 永不引入脚本/表达式字段**。表达不了的站点 → 写代码进主仓成为 L1，或自行 fork 并完整构建 userscript。这是防"表达力蠕变"的铁律，任何 PR 想给 schema 加"一小段 JS"都必须拒绝。
 2. **动态注册内容脚本合规**：`chrome.scripting.registerContentScripts` 注册的是**扩展包内**的 JS 文件到新 origin，属于合规操作；需要 manifest 增加 `scripting` 权限（不弹权限警告），host 访问靠已有的 `optional_host_permissions` 运行时授权。
 3. **userscript 不提供运行时 L3 代码插件**：P4-01 已完成安全与架构评估，官方主脚本内的远程 `@require`、粘贴/下载后动态执行、page-world 注入和代码插件 registry 均判定为 No-Go；命令式适配器仅支持经 PR 转为 L1，或由用户自行 fork 并完整构建 userscript。详见 [P4-01 评估报告](../plans/2026-07-30-userscript-l3-plugin-evaluation-design.md)。
-4. **隐私**：远程配置拉取为纯 GET 静态 CDN 资源，不携带任何用户数据，不影响 Firefox `data_collection_permissions: none` 声明；设置页提供开关与说明。
+4. **隐私与遥测**：远程配置拉取为纯 GET 静态 CDN 资源，不携带任何用户数据；P4-04 已完成隐私与平台政策评估，自动或后台健康遥测判定为 No-Go。健康快照继续只存本地，仅在用户主动点击后打开可检查的 GitHub issue 表单，Firefox `data_collection_permissions: none` 与公开“零数据收集”承诺保持不变。详见 [P4-04 评估报告](../plans/2026-07-30-anonymous-health-telemetry-evaluation-design.md)。
 
 ---
 
@@ -610,8 +610,10 @@ pack 的 `matches` 是静态声明（禁通配、≤10 条），无法覆盖 Ope
 
 ### Phase 4（远期评估项，均先出报告再决定实施）
 
-- userscript 形态 L3 代码插件机制已完成评估并判定为 **No-Go**，官方主脚本不实现运行时代码插件；详见 [P4-01 评估报告](../plans/2026-07-30-userscript-l3-plugin-evaluation-design.md)。
-- 待评估：AI 辅助生成 pack 草稿；registry 包签名（Ed25519）；匿名健康遥测（涉及隐私政策与 AMO `data_collection` 声明变更，默认不做）。
+- **P4-01**：userscript L3 代码插件机制判定为 **No-Go**，官方主脚本不实现运行时代码插件；详见 [评估报告](../plans/2026-07-30-userscript-l3-plugin-evaluation-design.md)。
+- **P4-02**：AI 辅助生成 pack 草稿已完成隐私优先的剪贴板原型与评估，内置模型供应商仍为 No-Go；详见 [评估报告](../plans/2026-07-30-site-adapter-ai-draft-evaluation.md)。
+- **P4-03**：registry Ed25519 签名链路已评估并实施；详见 [设计记录](../plans/2026-07-30-registry-ed25519-signing-design.md)。
+- **P4-04**：匿名健康遥测判定为 **No-Go**，继续采用本地健康自检与用户主动报告；详见 [评估报告](../plans/2026-07-30-anonymous-health-telemetry-evaluation-design.md)。
 
 ### 阶段依赖
 
