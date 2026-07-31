@@ -138,6 +138,55 @@ export function deepMergeSiteConfig<T extends BuiltinSiteConfig>(
 const getPrivateSelectorKeys = (config: BuiltinSiteConfig): string[] =>
   Object.keys(config.sitePrivateSelectors ?? {})
 
+const validateBaseConfigShape = (
+  baseValue: unknown,
+  candidateValue: unknown,
+  path = "$",
+): SitePackValidationError[] => {
+  if (baseValue === null) return []
+
+  if (Array.isArray(baseValue)) {
+    return Array.isArray(candidateValue)
+      ? []
+      : [{ path, code: "invalid_type", message: "Expected an array from the built-in config" }]
+  }
+
+  if (isPlainRecord(baseValue)) {
+    if (!isPlainRecord(candidateValue)) {
+      return [
+        { path, code: "invalid_type", message: "Expected an object from the built-in config" },
+      ]
+    }
+
+    const errors: SitePackValidationError[] = []
+    for (const [key, nestedBaseValue] of Object.entries(baseValue)) {
+      if (nestedBaseValue === null) continue
+
+      const nestedPath = `${path}.${key}`
+      if (!Object.hasOwn(candidateValue, key)) {
+        errors.push({
+          path: nestedPath,
+          code: "missing_required",
+          message: "Built-in config field cannot be removed",
+        })
+        continue
+      }
+      errors.push(...validateBaseConfigShape(nestedBaseValue, candidateValue[key], nestedPath))
+    }
+    return errors
+  }
+
+  return typeof candidateValue === typeof baseValue
+    ? []
+    : [
+        {
+          path,
+          code: "invalid_type",
+          message: `Expected ${typeof baseValue} from the built-in config`,
+        },
+      ]
+}
+
 const getPatchSkipReason = (
   patch: SiteConfigPatch,
   siteId: string,
@@ -160,6 +209,7 @@ const getPatchSkipReason = (
 
 const applyValidatedOverride = <T extends BuiltinSiteConfig>(
   currentConfig: T,
+  baseConfig: T,
   override: SiteConfigOverride,
   allowedPrivateSelectorKeys: readonly string[],
   requiredCapabilities: readonly SitePackCapability[],
@@ -177,6 +227,18 @@ const applyValidatedOverride = <T extends BuiltinSiteConfig>(
         status: "rejected",
         stage: "merged-config",
         errors: mergedValidation.errors,
+      },
+    }
+  }
+
+  const shapeErrors = validateBaseConfigShape(baseConfig, candidate)
+  if (shapeErrors.length > 0) {
+    return {
+      config: currentConfig,
+      outcome: {
+        status: "rejected",
+        stage: "merged-config",
+        errors: shapeErrors,
       },
     }
   }
@@ -240,6 +302,7 @@ export function resolveSiteConfig<T extends BuiltinSiteConfig>(
       } else {
         const applied = applyValidatedOverride(
           currentConfig,
+          options.baseConfig,
           patch.config,
           allowedPrivateSelectorKeys,
           requiredCapabilities,
@@ -266,6 +329,7 @@ export function resolveSiteConfig<T extends BuiltinSiteConfig>(
     } else {
       const applied = applyValidatedOverride(
         currentConfig,
+        options.baseConfig,
         overrideValidation.value,
         allowedPrivateSelectorKeys,
         requiredCapabilities,

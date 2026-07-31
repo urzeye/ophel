@@ -363,13 +363,18 @@ export class DeclarativeAdapter extends SiteAdapter {
   insertPrompt(content: string): boolean {
     const configuredEditor = this.getConfiguredEditor()
     if (!configuredEditor) return false
+    const requireSubmitButton = (this.manifest.selectors.submitButton?.length ?? 0) > 0
 
     if (configuredEditor.mode === "contenteditable") {
-      return this.replaceContentEditableContent(configuredEditor.editor, content, true)
+      return this.replaceContentEditableContent(
+        configuredEditor.editor,
+        content,
+        requireSubmitButton,
+      )
     }
 
     if (!this.setTextControlValue(configuredEditor.editor, content)) return false
-    return this.isEditorUpdateValid(configuredEditor.editor, content, true)
+    return this.isEditorUpdateValid(configuredEditor.editor, content, requireSubmitButton)
   }
 
   clearTextarea(): void {
@@ -586,10 +591,13 @@ export class DeclarativeAdapter extends SiteAdapter {
   }
 
   isGenerating(): boolean {
-    return (this.manifest.generating?.existsSelectors ?? []).some((selector) =>
-      this.findAllElementsBySelector(selector).some((element) =>
-        this.isConfiguredElementVisible(element),
-      ),
+    return (
+      super.isGenerating() ||
+      (this.manifest.generating?.existsSelectors ?? []).some((selector) =>
+        this.findAllElementsBySelector(selector).some((element) =>
+          this.isConfiguredElementVisible(element),
+        ),
+      )
     )
   }
 

@@ -604,6 +604,7 @@ export class TabManager {
   private confirmCurrentNetworkGeneration() {
     this.currentNetworkGenerationPending = false
     this.currentNetworkGenerationConfirmed = true
+    this.adapter.setNetworkGenerationState(true)
     this.clearGenerationConfirmationPolling()
 
     if (this.aiState !== "generating") {
@@ -718,6 +719,7 @@ export class TabManager {
     this.resetDomCompletionState()
     this.currentNetworkGenerationPending = false
     this.currentNetworkGenerationConfirmed = false
+    this.adapter.setNetworkGenerationState(false)
   }
 
   private handleMessage(event: MessageEvent) {

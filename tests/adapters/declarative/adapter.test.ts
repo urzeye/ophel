@@ -28,6 +28,17 @@ const createMinimalManifest = (): SitePackManifest => ({
   },
 })
 
+interface DeclarativeAdapterInputInternals {
+  getConfiguredEditor(): { mode: "textarea" | "contenteditable"; editor: HTMLElement } | null
+  setTextControlValue(editor: HTMLTextAreaElement, content: string): boolean
+  isEditorUpdateValid(editor: HTMLElement, content: string, requireSubmitButton: boolean): boolean
+  replaceContentEditableContent(
+    editor: HTMLElement,
+    content: string,
+    requireSubmitButton: boolean,
+  ): boolean
+}
+
 afterEach(() => {
   vi.restoreAllMocks()
   vi.unstubAllGlobals()
@@ -222,6 +233,32 @@ describe("DeclarativeAdapter direct mappings", () => {
 })
 
 describe("DeclarativeAdapter P1-01 browser-facing behavior", () => {
+  it.each(["textarea", "contenteditable"] as const)(
+    "accepts %s prompt insertion when no submit button is configured",
+    (mode) => {
+      const manifest = createMinimalManifest()
+      manifest.capabilities = ["prompt-insert"]
+      manifest.selectors = { textarea: ["[data-editor]"] }
+      manifest.input = { mode }
+      const adapter = new DeclarativeAdapter(manifest)
+      const internals = adapter as unknown as DeclarativeAdapterInputInternals
+      const editor = {} as HTMLElement
+      vi.spyOn(internals, "getConfiguredEditor").mockReturnValue({ mode, editor })
+
+      if (mode === "contenteditable") {
+        const replace = vi.spyOn(internals, "replaceContentEditableContent").mockReturnValue(true)
+        expect(adapter.insertPrompt("hello")).toBe(true)
+        expect(replace).toHaveBeenCalledWith(editor, "hello", false)
+        return
+      }
+
+      vi.spyOn(internals, "setTextControlValue").mockReturnValue(true)
+      const validate = vi.spyOn(internals, "isEditorUpdateValid").mockReturnValue(true)
+      expect(adapter.insertPrompt("hello")).toBe(true)
+      expect(validate).toHaveBeenCalledWith(editor, "hello", false)
+    },
+  )
+
   interface MatchCase {
     name: string
     pattern: string

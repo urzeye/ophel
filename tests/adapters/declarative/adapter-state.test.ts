@@ -65,6 +65,25 @@ afterEach(() => {
 })
 
 describe("DeclarativeAdapter generation state", () => {
+  it("reflects confirmed network generation without DOM selectors", () => {
+    const adapter = new DeclarativeAdapter(
+      createManifest({
+        capabilities: ["generation-detect"],
+        selectors: {},
+        networkMonitor: {
+          urlPatterns: ["/api/chat"],
+          silenceThreshold: 1000,
+        },
+      }),
+    )
+
+    adapter.setNetworkGenerationState(true)
+    expect(adapter.isGenerating()).toBe(true)
+
+    adapter.setNetworkGenerationState(false)
+    expect(adapter.isGenerating()).toBe(false)
+  })
+
   it("returns idle when generation config is absent or selectors have no matches", () => {
     const withoutConfig = new DeclarativeAdapter(createManifest())
     const withoutConfigLookup = vi.spyOn(withoutConfig, "findAllElementsBySelector")

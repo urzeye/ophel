@@ -5,7 +5,7 @@ import {
   validateSitePackManifest,
   type SitePackValidationError,
 } from "~adapters/declarative/validate"
-import type { InstalledSitePack } from "~core/pack-manager"
+import type { InstalledSitePack, PackManagerSyncResult } from "~core/pack-manager"
 import type { RemoteConfigState } from "~core/remote-config-types"
 
 export type RegistrySitePackAvailability = "available" | "disabled" | "incompatible"
@@ -25,6 +25,14 @@ export interface RegistrySitePackView {
 export type SitePackImportParseResult =
   | { valid: true; manifest: SitePackManifest; errors: [] }
   | { valid: false; errors: SitePackValidationError[] }
+
+export const selectRuntimePreparationPacks = (
+  installedPacks: readonly InstalledSitePack[],
+  syncResult: Pick<PackManagerSyncResult, "updatedPackIds" | "statusChangedPackIds">,
+): InstalledSitePack[] => {
+  const changedPackIds = new Set([...syncResult.updatedPackIds, ...syncResult.statusChangedPackIds])
+  return installedPacks.filter((pack) => changedPackIds.has(pack.manifest.id))
+}
 
 export const buildRegistrySitePackViews = (
   remoteState: RemoteConfigState | null,

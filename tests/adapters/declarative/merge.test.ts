@@ -320,6 +320,47 @@ describe("resolveSiteConfig validation boundaries", () => {
     expect(result.config).toEqual(baseConfig)
   })
 
+  it("rejects changing a built-in private selector value type", () => {
+    const baseConfig = createBaseConfig()
+    baseConfig.sitePrivateSelectors = {
+      stopButtonChildren: [":scope > div"],
+    }
+
+    const result = resolveSiteConfig(
+      createResolutionOptions({
+        baseConfig,
+        remotePatch: createPatch({
+          sitePrivateSelectors: {
+            stopButtonChildren: ":scope > button",
+          },
+        }),
+      }),
+    )
+
+    expectLayerError(
+      result.remotePatch,
+      "$.sitePrivateSelectors.stopButtonChildren",
+      "merged-config",
+    )
+    expect(result.config).toEqual(baseConfig)
+  })
+
+  it("rejects removing a built-in config object used by the runtime", () => {
+    const baseConfig = createBaseConfig()
+
+    const result = resolveSiteConfig(
+      createResolutionOptions({
+        baseConfig,
+        userOverride: {
+          networkMonitor: null,
+        },
+      }),
+    )
+
+    expectLayerError(result.userOverride, "$.networkMonitor", "merged-config")
+    expect(result.config).toEqual(baseConfig)
+  })
+
   it("throws a structured error when the built-in config is invalid", () => {
     const baseConfig = createBaseConfig()
     delete baseConfig.selectors.responseContainer

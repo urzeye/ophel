@@ -374,6 +374,7 @@ export function findAssistantMermaidBlocks(root: ParentNode): AssistantMermaidBl
 export abstract class SiteAdapter {
   protected textarea: HTMLElement | null = null
   protected _cachedFlutterScrollContainer: HTMLElement | null = null
+  private networkGenerationActive = false
 
   // ==================== 必须实现的方法 ====================
 
@@ -595,9 +596,14 @@ export abstract class SiteAdapter {
 
   // ==================== 生成状态检测 ====================
 
+  /** 由网络监控状态机同步当前已确认的生成状态。 */
+  setNetworkGenerationState(active: boolean): void {
+    this.networkGenerationActive = active
+  }
+
   /** 检测 AI 是否正在生成响应 */
   isGenerating(): boolean {
-    return false
+    return this.networkGenerationActive
   }
 
   /**

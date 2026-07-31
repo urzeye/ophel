@@ -58,6 +58,7 @@ import { getCurrentLang, subscribeI18nChanges, t } from "~utils/i18n"
 import {
   buildRegistrySitePackViews,
   parseSitePackImport,
+  selectRuntimePreparationPacks,
   type RegistrySitePackAvailability,
   type RegistrySitePackView,
 } from "../site-pack-manager-view"
@@ -813,7 +814,11 @@ const SitePacksPage: React.FC = () => {
       }
       const syncResult = await packManager.syncRegistryPacks()
       const postSyncSnapshot = await packManager.getSnapshot()
-      const deniedPacks = await prepareInstalledPacksRuntime(postSyncSnapshot.packs)
+      const runtimePreparationPacks = selectRuntimePreparationPacks(
+        postSyncSnapshot.packs,
+        syncResult,
+      )
+      const deniedPacks = await prepareInstalledPacksRuntime(runtimePreparationPacks)
       const [snapshot] = await Promise.all([loadInstalledPacks(), loadRegistryState()])
       if (syncResult.issues.length > 0) {
         setSnapshotIssues((current) => mergePackManagerIssues(current, syncResult.issues))
