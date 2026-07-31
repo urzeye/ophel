@@ -237,7 +237,7 @@ const OptionsPage = () => {
       case "siteSettings":
         return <SiteSettingsPage siteId={siteId} initialTab={initialSubTab} />
       case "sitePacks":
-        return <SitePacksPage />
+        return <SitePacksPage initialTab={initialSubTab} />
       case "features":
         return <FeaturesPage siteId={siteId} initialTab={initialSubTab} />
       case "permissions":

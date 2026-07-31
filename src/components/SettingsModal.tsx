@@ -408,7 +408,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           />
         )
       case NAV_IDS.SITE_PACKS:
-        return <SitePacksPage />
+        return <SitePacksPage initialTab={initialSubTab} />
       case NAV_IDS.APPEARANCE:
         return <AppearancePage siteId={siteInstanceKey} initialTab={initialSubTab} />
       case NAV_IDS.FEATURES:

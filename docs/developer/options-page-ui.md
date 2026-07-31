@@ -19,7 +19,7 @@
 - 外观主题：`AppearancePage`
 - 功能模块：`FeaturesPage`
 - 站点配置：`SiteSettingsPage`
-- 站点适配包：`SitePacksPage`
+- 站点适配：`SitePacksPage`
 - 全局搜索：`GlobalSearchPage`
 - 快捷键位：`ShortcutsPage`
 - 数据管理：`BackupPage`
@@ -35,7 +35,7 @@
 - 基本设置：`GeneralPage`
 - 功能模块：`FeaturesPage`
 - 站点设置：`SiteSettingsPage`
-- 站点适配包：`SitePacksPage`
+- 站点适配：`SitePacksPage`
 - 外观主题：`AppearancePage`
 - 备份与同步：`BackupPage`
 - 权限管理：`PermissionsPage`
@@ -54,7 +54,7 @@
 - `GeneralPage`：语言、面板行为、快捷按钮、工具箱菜单。
 - `FeaturesPage`：大纲、会话、提示词、标签页行为、提醒、内容增强、阅读历史和用量统计。
 - `SiteSettingsPage`：页面布局、模型锁定、Gemini/AI Studio/ChatGPT/Claude 等站点专属设置。
-- `SitePacksPage`：已安装适配包、社区 registry 浏览、更新/启停/卸载和本地 JSON 风险确认导入。
+- `SitePacksPage`：按 `SITE_PACKS_TAB_IDS` 分为三个 tab——已安装（启停/卸载/单包更新）、域名绑定（自定义 origin、探测池、油猴 @match 补充）、更新与来源（自动更新、唯一的检查更新入口、内置配置补丁与回滚、社区 registry、本地 JSON 导入）。适配配置更新原先位于基本设置，已并入此页，避免出现两个语义不同的“检查更新”。
 - `GlobalSearchPage`：全局搜索触发方式、模糊搜索和提示词回车行为。
 - `ShortcutsPage`：快捷键总开关、全局 URL 和各动作绑定。
 - `AppearancePage`：主题同步、预置主题和自定义样式。

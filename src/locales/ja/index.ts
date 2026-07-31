@@ -179,7 +179,7 @@ export const ja = {
   // ======== Options Page Navigation ========
   navGeneral: "基本設定",
   navSiteSettings: "サイト設定",
-  navSitePacks: "サイトパック",
+  navSitePacks: "サイトアダプター",
   navGlobalSearch: "グローバル検索",
   navAppearance: "外観",
   navPageContent: "ページと内容",
@@ -196,18 +196,17 @@ export const ja = {
     "このサイトはコミュニティアダプターパックによって提供され、宣言済みで対応している機能のみ表示されます。",
 
   // SitePack Manager
-  sitePacksPageDesc: "コミュニティのサイトアダプターパックをインストール・管理します",
-  sitePacksGuideAction: "SitePack ガイドを開く",
-  sitePacksInstalledTitle: "インストール済みパック",
-  sitePacksInstalledDesc:
-    "このデバイスに保存されたアダプターパックの有効化、更新、削除を行います。",
+  sitePacksGuideAction: "ガイド",
   sitePacksRegistryTitle: "コミュニティレジストリ",
-  sitePacksRegistryDesc:
-    "公式コミュニティレジストリからキャッシュされたアダプターパックを表示します。",
   sitePacksLocalImportTitle: "ローカル JSON のインポート",
-  sitePacksLocalImportDesc: "信頼できる SitePack マニフェストをこのデバイスから読み込みます。",
+  sitePacksLocalImportDesc: "信頼できる提供元の JSON マニフェストだけをインポートしてください。",
   sitePacksCheckUpdates: "更新を確認",
-  sitePacksRefreshRegistry: "レジストリを更新",
+  sitePacksTabInstalled: "インストール済み",
+  sitePacksTabOrigins: "ドメイン",
+  sitePacksTabUpdates: "更新とソース",
+  sitePacksBindingListTitle: "登録済みドメイン",
+  sitePacksStatusUnavailable: "カタログから削除済み",
+  remoteConfigStatusSummary: "インデックス {revision} · 最終確認 {time}",
   sitePacksInstall: "インストール",
   sitePacksUpdate: "更新",
   sitePacksUninstall: "アンインストール",
@@ -220,11 +219,7 @@ export const ja = {
   sitePacksStatusDisabled: "無効",
   sitePacksStatusIncompatible: "非対応",
   sitePacksNoInstalled: "サイトパックはまだインストールされていません",
-  sitePacksNoInstalledDesc:
-    "レジストリからインストールするか、信頼できるローカル JSON ファイルを読み込んでください。",
   sitePacksRegistryEmpty: "レジストリのキャッシュにパックがありません",
-  sitePacksRegistryEmptyDesc:
-    "レジストリを更新して、利用可能なコミュニティパックを確認してください。",
   sitePacksLoadFailed: "サイトパックを読み込めませんでした：{error}",
   sitePacksOperationFailed: "サイトパックの操作に失敗しました：{error}",
   sitePacksPermissionTitle: "サイトパックにアクセスを許可しますか？",
@@ -232,8 +227,6 @@ export const ja = {
   sitePacksPermissionDenied:
     "「{name}」のサイトアクセスは許可されなかったため、パックは無効のままです。",
   sitePacksPermissionReviewTitle: "復元したサイトパックを再承認",
-  sitePacksPermissionReviewDesc:
-    "ブラウザーのサイト権限はバックアップに含まれません。以下の有効なパックを再承認すると、再び利用できます。",
   sitePacksInvalidFile: "この JSON ファイルは有効な SitePack ではありません。",
   sitePacksValidationErrorsTitle: "検証の詳細",
   sitePacksStoredIssuesTitle: "保存済みパックの問題",
@@ -252,14 +245,10 @@ export const ja = {
   sitePacksDisabledState: "無効",
   sitePacksPackUpToDate: "{name} は最新です。",
   sitePacksPackUpdated: "{name} をバージョン {version} に更新しました。",
-  sitePacksChangesApplyHint:
-    "変更はすぐに保存されます。アダプターを有効にするには、一致するページで権限の付与と再読み込みが必要な場合があります。",
-  sitePacksLocalUpdateHint: "新しいローカル JSON ファイルを読み込んで更新",
   sitePacksRequiresNewerApp: "Ophel {version} 以降が必要です",
-  sitePacksMatchesCount: "{count} 件のマッチパターン",
   sitePacksCustomOriginsTitle: "カスタムドメイン",
   sitePacksCustomOriginsDesc:
-    "自分でホストする HTTPS ドメインを、インストール済みパックまたは共有検出プールに割り当てます。",
+    "セルフホストしたサイトの HTTPS ドメインをインストール済みパックに紐づけます。",
   sitePacksCustomOriginLabel: "HTTPS ドメイン",
   sitePacksCustomOriginPlaceholder: "https://chat.example.com",
   sitePacksBindingModeLabel: "割り当てモード",
@@ -279,14 +268,9 @@ export const ja = {
   sitePacksUserscriptCoverageDesc:
     "{manager} には SitePack 用のマッチルールが {count} 件不足しています。対象サイトを開く前に、以下のルールをコピーしてください。",
   sitePacksUserscriptManagerUnknown: "現在のユーザースクリプト管理ツール",
-  sitePacksUserscriptStepOpen: "ユーザースクリプト管理ツールで Ophel のスクリプト設定を開きます。",
-  sitePacksUserscriptStepAdd:
-    "コピーしたルールをカスタムマッチに追加します（Tampermonkey：設定 → Includes/Excludes → User matches）。",
-  sitePacksUserscriptStepReload: "設定を保存し、対象サイトを再読み込みします。",
   sitePacksBindingPackRequired: "パック指定モードでは、インストール済みパックを選択してください。",
   sitePacksBindingDetectRequired:
     "検出モードを使うには、検出ルールを持つ SitePack をインストールしてください。",
-  sitePacksBindingReferences: "{count} 件の参照",
   sitePackDetectMultipleTitle: "複数の SitePack を検出しました",
   sitePackDetectMultipleDesc:
     "現在は「{name}」を使用しています。正しくない場合は、別の検出済み SitePack を固定できます。",
@@ -1954,13 +1938,9 @@ export const ja = {
   "featureTip-notifications-desc": "AI完了時にデスクトップ通知 — 応答を見逃すな",
   "featureTip-notifications-path": "機能 → 通知 → デスクトップ通知",
   // アダプター設定の更新
-  remoteConfigTab: "設定更新",
   remoteConfigSettingsTitle: "アダプター設定の更新",
-  remoteConfigSettingsDesc:
-    "サイトアダプター設定の自動更新、バージョン状態、ローカル復元を管理します",
   remoteConfigAutoUpdateLabel: "アダプター設定を自動更新",
-  remoteConfigAutoUpdateDesc:
-    "初期設定では有効です。拡張機能は静的 CDN を最大 24 時間に 1 回確認します。",
+  remoteConfigAutoUpdateDesc: "24 時間に 1 回までチェックします。",
   remoteConfigRegistrySourceLabel: "開発用 Registry ソース",
   remoteConfigRegistrySourceDesc:
     "開発ビルドのみ使用できます。完全な index.json URL を入力し、空欄にすると既定のソースを使います。",
@@ -1971,28 +1951,22 @@ export const ja = {
   remoteConfigRegistrySourceCleared: "既定の Registry ソースに戻しました。",
   remoteConfigRegistrySourceInvalid: "Registry ソースが無効です：{error}",
   remoteConfigCheckNowLabel: "今すぐ更新を確認",
-  remoteConfigCheckNowDesc: "自動更新がオフでも手動確認は利用できます。",
   remoteConfigCheckNowButton: "今すぐ確認",
   remoteConfigCheckingButton: "確認中…",
   remoteConfigStatusLoading: "読み込み中…",
-  remoteConfigRegistryRevisionLabel: "レジストリリビジョン",
-  remoteConfigLastCheckLabel: "最終確認",
   remoteConfigNeverChecked: "未確認",
-  remoteConfigNotAvailable: "利用不可",
   remoteConfigActivePatchesLabel: "適用中のパッチ",
   remoteConfigUsingBuiltin: "現在は組み込み設定を使用しています",
   remoteConfigPatchVersionLabel: "パッチバージョン",
   remoteConfigBaseVersionLabel: "組み込み設定バージョン",
   remoteConfigResetBuiltinButton: "組み込み設定に戻す",
   remoteConfigResettingButton: "復元中…",
-  remoteConfigPrivacyTitle: "プライバシー",
   remoteConfigPrivacyDesc:
-    "更新確認は静的 CDN への GET リクエストのみを行い、会話内容、アカウント情報、その他のユーザーデータを含みません。",
+    "更新確認は静的 CDN への GET リクエストのみで、会話内容やアカウント情報は含みません。",
   remoteConfigCheckUpdated:
     "新しいアダプター設定をダウンロードしました。対象の AI ページを再読み込みすると適用されます。",
   remoteConfigCheckUpToDate: "アダプター設定は最新です。",
   remoteConfigCheckFailed: "更新確認に失敗しました：{error}",
-  remoteConfigStateFailed: "設定更新の状態を読み込めませんでした：{error}",
   remoteConfigResetSuccess: "{site} を組み込み設定に戻しました。",
   remoteConfigResetFailed: "復元に失敗しました：{error}",
   remoteConfigResetUnavailable: "復元できる有効な設定がありません。",

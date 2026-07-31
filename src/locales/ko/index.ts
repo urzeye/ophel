@@ -177,7 +177,7 @@ export const ko = {
   // ======== Options Page Navigation ========
   navGeneral: "일반 설정",
   navSiteSettings: "사이트 설정",
-  navSitePacks: "사이트 팩",
+  navSitePacks: "사이트 어댑터",
   navGlobalSearch: "전체 검색",
   navAppearance: "모양",
   navPageContent: "페이지 및 콘텐츠",
@@ -194,16 +194,17 @@ export const ko = {
     "이 사이트는 커뮤니티 어댑터 팩으로 제공되며, 선언되고 지원되는 기능만 표시됩니다.",
 
   // SitePack Manager
-  sitePacksPageDesc: "커뮤니티 사이트 어댑터 팩을 설치하고 관리합니다",
-  sitePacksGuideAction: "SitePack 가이드 열기",
-  sitePacksInstalledTitle: "설치된 팩",
-  sitePacksInstalledDesc: "이 기기에 저장된 어댑터 팩을 활성화, 업데이트 또는 제거합니다.",
+  sitePacksGuideAction: "가이드",
   sitePacksRegistryTitle: "커뮤니티 레지스트리",
-  sitePacksRegistryDesc: "공식 커뮤니티 레지스트리에서 캐시된 어댑터 팩을 찾아봅니다.",
   sitePacksLocalImportTitle: "로컬 JSON 가져오기",
-  sitePacksLocalImportDesc: "신뢰할 수 있는 SitePack 매니페스트를 이 기기에서 가져옵니다.",
+  sitePacksLocalImportDesc: "신뢰할 수 있는 출처의 JSON 매니페스트만 가져오세요.",
   sitePacksCheckUpdates: "업데이트 확인",
-  sitePacksRefreshRegistry: "레지스트리 새로고침",
+  sitePacksTabInstalled: "설치됨",
+  sitePacksTabOrigins: "도메인",
+  sitePacksTabUpdates: "업데이트 및 소스",
+  sitePacksBindingListTitle: "연결된 도메인",
+  sitePacksStatusUnavailable: "카탈로그에서 제거됨",
+  remoteConfigStatusSummary: "인덱스 {revision} · 마지막 확인 {time}",
   sitePacksInstall: "설치",
   sitePacksUpdate: "업데이트",
   sitePacksUninstall: "제거",
@@ -216,9 +217,7 @@ export const ko = {
   sitePacksStatusDisabled: "비활성화됨",
   sitePacksStatusIncompatible: "호환되지 않음",
   sitePacksNoInstalled: "설치된 사이트 팩이 없습니다",
-  sitePacksNoInstalledDesc: "레지스트리에서 설치하거나 신뢰할 수 있는 로컬 JSON 파일을 가져오세요.",
   sitePacksRegistryEmpty: "레지스트리 캐시에 팩이 없습니다",
-  sitePacksRegistryEmptyDesc: "레지스트리를 새로고침하여 사용 가능한 커뮤니티 팩을 확인하세요.",
   sitePacksLoadFailed: "사이트 팩을 불러올 수 없습니다: {error}",
   sitePacksOperationFailed: "사이트 팩 작업에 실패했습니다: {error}",
   sitePacksPermissionTitle: "사이트 팩의 사이트 접근을 허용할까요?",
@@ -227,8 +226,6 @@ export const ko = {
   sitePacksPermissionDenied:
     '"{name}"의 사이트 접근 권한이 허용되지 않아 팩이 비활성화 상태로 유지됩니다.',
   sitePacksPermissionReviewTitle: "복원한 사이트 팩 다시 승인",
-  sitePacksPermissionReviewDesc:
-    "브라우저 사이트 권한은 백업에 포함되지 않습니다. 아래의 활성 팩을 다시 승인하면 다시 사용할 수 있습니다.",
   sitePacksInvalidFile: "이 JSON 파일은 유효한 SitePack이 아닙니다.",
   sitePacksValidationErrorsTitle: "검증 세부 정보",
   sitePacksStoredIssuesTitle: "저장된 팩 문제",
@@ -247,14 +244,9 @@ export const ko = {
   sitePacksDisabledState: "비활성화",
   sitePacksPackUpToDate: "{name} 팩은 최신 상태입니다.",
   sitePacksPackUpdated: "{name} 팩을 버전 {version}(으)로 업데이트했습니다.",
-  sitePacksChangesApplyHint:
-    "변경 사항은 즉시 저장됩니다. 어댑터가 활성화되기 전에 일치하는 페이지에 권한을 부여하고 새로고침해야 할 수 있습니다.",
-  sitePacksLocalUpdateHint: "더 최신의 로컬 JSON 파일을 가져와 업데이트",
   sitePacksRequiresNewerApp: "Ophel {version} 이상 필요",
-  sitePacksMatchesCount: "일치 패턴 {count}개",
   sitePacksCustomOriginsTitle: "사용자 지정 도메인",
-  sitePacksCustomOriginsDesc:
-    "직접 호스팅한 HTTPS 도메인을 설치된 팩 하나 또는 공유 감지 풀에 연결합니다.",
+  sitePacksCustomOriginsDesc: "자체 호스팅 사이트의 HTTPS 도메인을 설치된 팩에 연결합니다.",
   sitePacksCustomOriginLabel: "HTTPS 도메인",
   sitePacksCustomOriginPlaceholder: "https://chat.example.com",
   sitePacksBindingModeLabel: "연결 모드",
@@ -273,14 +265,9 @@ export const ko = {
   sitePacksUserscriptCoverageDesc:
     "{manager}에 SitePack 일치 규칙 {count}개가 없습니다. 해당 사이트를 열기 전에 아래 규칙을 복사하세요.",
   sitePacksUserscriptManagerUnknown: "현재 사용자 스크립트 관리자",
-  sitePacksUserscriptStepOpen: "사용자 스크립트 관리자에서 Ophel 스크립트 설정을 엽니다.",
-  sitePacksUserscriptStepAdd:
-    "복사한 모든 규칙을 사용자 지정 일치 규칙에 추가합니다(Tampermonkey: 설정 → 포함/제외 → 사용자 일치).",
-  sitePacksUserscriptStepReload: "설정을 저장한 뒤 각 대상 사이트를 다시 불러옵니다.",
   sitePacksBindingPackRequired: "팩 지정 모드에서 설치된 SitePack을 선택하세요.",
   sitePacksBindingDetectRequired:
     "감지 모드를 사용하기 전에 감지 규칙이 있는 SitePack을 설치하세요.",
-  sitePacksBindingReferences: "참조 {count}개",
   sitePackDetectMultipleTitle: "여러 SitePack이 감지되었습니다",
   sitePackDetectMultipleDesc:
     "현재 “{name}”을 사용 중입니다. 올바른 일치 항목이 아니면 다른 감지된 SitePack을 고정할 수 있습니다.",
@@ -1932,13 +1919,9 @@ export const ko = {
   "featureTip-notifications-desc": "AI 완료 시 데스크탑 알림 — 응답을 놓치지 마세요",
   "featureTip-notifications-path": "기능 → 알림 → 데스크탑 알림",
   // 어댑터 구성 업데이트
-  remoteConfigTab: "구성 업데이트",
   remoteConfigSettingsTitle: "어댑터 구성 업데이트",
-  remoteConfigSettingsDesc:
-    "사이트 어댑터 구성의 자동 업데이트, 버전 상태 및 로컬 복원을 관리합니다",
   remoteConfigAutoUpdateLabel: "어댑터 구성 자동 업데이트",
-  remoteConfigAutoUpdateDesc:
-    "기본적으로 켜져 있습니다. 확장 프로그램은 정적 CDN을 최대 24시간에 한 번 확인합니다.",
+  remoteConfigAutoUpdateDesc: "24시간에 최대 한 번 확인합니다.",
   remoteConfigRegistrySourceLabel: "개발용 Registry 소스",
   remoteConfigRegistrySourceDesc:
     "개발 빌드에서만 사용할 수 있습니다. 전체 index.json URL을 입력하고 비워 두면 기본 소스를 사용합니다.",
@@ -1949,28 +1932,22 @@ export const ko = {
   remoteConfigRegistrySourceCleared: "기본 Registry 소스로 되돌렸습니다.",
   remoteConfigRegistrySourceInvalid: "Registry 소스가 올바르지 않습니다: {error}",
   remoteConfigCheckNowLabel: "지금 업데이트 확인",
-  remoteConfigCheckNowDesc: "자동 업데이트가 꺼져 있어도 수동 확인은 사용할 수 있습니다.",
   remoteConfigCheckNowButton: "지금 확인",
   remoteConfigCheckingButton: "확인 중…",
   remoteConfigStatusLoading: "불러오는 중…",
-  remoteConfigRegistryRevisionLabel: "레지스트리 리비전",
-  remoteConfigLastCheckLabel: "마지막 확인",
   remoteConfigNeverChecked: "확인한 적 없음",
-  remoteConfigNotAvailable: "사용할 수 없음",
   remoteConfigActivePatchesLabel: "활성 패치",
   remoteConfigUsingBuiltin: "현재 기본 제공 구성을 사용 중입니다",
   remoteConfigPatchVersionLabel: "패치 버전",
   remoteConfigBaseVersionLabel: "기본 제공 구성 버전",
   remoteConfigResetBuiltinButton: "기본 제공 구성으로 복원",
   remoteConfigResettingButton: "복원 중…",
-  remoteConfigPrivacyTitle: "개인정보 보호",
   remoteConfigPrivacyDesc:
-    "업데이트 확인은 정적 CDN에 GET 요청만 보내며 대화 내용, 계정 정보 또는 기타 사용자 데이터를 포함하지 않습니다.",
+    "업데이트 확인은 정적 CDN에 GET 요청만 보내며 대화나 계정 정보는 포함하지 않습니다.",
   remoteConfigCheckUpdated:
     "새 어댑터 구성을 다운로드했습니다. 해당 AI 페이지를 새로고침하면 적용됩니다.",
   remoteConfigCheckUpToDate: "어댑터 구성이 최신 상태입니다.",
   remoteConfigCheckFailed: "업데이트 확인 실패: {error}",
-  remoteConfigStateFailed: "구성 업데이트 상태를 불러오지 못했습니다: {error}",
   remoteConfigResetSuccess: "{site}을(를) 기본 제공 구성으로 복원했습니다.",
   remoteConfigResetFailed: "복원 실패: {error}",
   remoteConfigResetUnavailable: "복원할 활성 구성이 없습니다.",

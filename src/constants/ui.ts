@@ -57,6 +57,13 @@ export const FEATURES_TAB_IDS = {
   TOOLBOX: "toolbox",
 } as const
 
+// ==================== Site Packs Page Tab IDs ====================
+export const SITE_PACKS_TAB_IDS = {
+  INSTALLED: "installed",
+  ORIGINS: "origins",
+  UPDATES: "updates",
+} as const
+
 // ==================== Appearance Page Tab IDs ====================
 export const APPEARANCE_TAB_IDS = {
   PRESETS: "presets",
@@ -156,7 +163,10 @@ export const SETTING_ID_ROUTE_MAP: Record<string, SettingRoute> = {
 } as const
 
 const SETTING_ID_ROUTE_RULES: SettingRouteRule[] = [
-  { prefix: "remote-config-", route: { page: NAV_IDS.GENERAL, subTab: "configUpdates" } },
+  {
+    prefix: "remote-config-",
+    route: { page: NAV_IDS.SITE_PACKS, subTab: SITE_PACKS_TAB_IDS.UPDATES },
+  },
   { prefix: "panel-", route: { page: NAV_IDS.GENERAL, subTab: "panel" } },
   { prefix: "quick-buttons-", route: { page: NAV_IDS.GENERAL, subTab: "shortcuts" } },
   { prefix: "tools-menu-", route: { page: NAV_IDS.GENERAL, subTab: "toolsMenu" } },

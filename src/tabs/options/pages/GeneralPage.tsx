@@ -21,14 +21,7 @@ import {
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
 
-import {
-  PageTitle,
-  RemoteConfigSettingsCard,
-  SettingCard,
-  SettingRow,
-  TabGroup,
-  ToggleRow,
-} from "../components"
+import { PageTitle, SettingCard, SettingRow, TabGroup, ToggleRow } from "../components"
 
 interface GeneralPageProps {
   siteId: string
@@ -324,7 +317,6 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
     { id: "tabOrder", label: t("tabOrderTab") },
     { id: "shortcuts", label: t("shortcutsTab") },
     { id: "toolsMenu", label: t("toolboxMenu") },
-    { id: "configUpdates", label: t("remoteConfigTab") },
   ]
 
   return (
@@ -892,9 +884,6 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
           })}
         </SettingCard>
       )}
-
-      {/* ========== 配置更新 Tab ========== */}
-      {activeTab === "configUpdates" && <RemoteConfigSettingsCard />}
     </div>
   )
 }

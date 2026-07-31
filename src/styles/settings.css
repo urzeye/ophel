@@ -829,398 +829,85 @@
   pointer-events: none;
 }
 
-/* ==================== 适配配置更新 ==================== */
-
-.remote-config-settings-card {
-  overflow: hidden;
-}
-
-.remote-config-action-button:hover:not(:disabled) {
-  transform: translateY(-1px);
-  border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 42%, var(--gh-input-border, #d1d5db));
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--gh-primary, #4285f4) 12%, transparent);
-}
-
-.remote-config-action-button:active:not(:disabled) {
-  transform: translateY(1px);
-}
-
-.remote-config-action-button:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 42%, transparent);
-  outline-offset: 2px;
-}
-
-.remote-config-source-editor {
-  width: min(420px, 48vw);
-}
-
-.remote-config-source-controls {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.remote-config-source-input {
-  width: 100%;
-  min-width: 0;
-}
-
-.remote-config-source-input[aria-invalid="true"] {
-  border-color: var(--gh-danger, #ef4444);
-}
-
-.remote-config-source-error {
-  display: block;
-  margin-top: 6px;
-  color: var(--gh-text-danger, var(--gh-danger, #ef4444));
-  font-size: 11px;
-  line-height: 1.4;
-  overflow-wrap: anywhere;
-}
-
-.remote-config-refresh-icon {
-  flex-shrink: 0;
-}
-
-.remote-config-refresh-icon.spinning {
-  animation: remote-config-spin 0.9s linear infinite;
-}
-
-@keyframes remote-config-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.remote-config-feedback {
-  margin: 4px 0 16px;
-  padding: 10px 12px;
-  border: 1px solid var(--gh-card-border, #e5e7eb);
-  border-radius: 10px;
-  background: var(--gh-bg-secondary, #f9fafb);
-  color: var(--gh-text-secondary, #6b7280);
-  font-size: 12px;
-  line-height: 1.5;
-  overflow-wrap: anywhere;
-}
-
-.remote-config-feedback.success {
-  border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 30%, transparent);
-  background: color-mix(in srgb, var(--gh-primary, #4285f4) 8%, var(--gh-card-bg, #ffffff));
-  color: var(--gh-primary, #4285f4);
-}
-
-.remote-config-feedback.error {
-  border-color: color-mix(in srgb, var(--gh-danger, #ef4444) 32%, transparent);
-  background: color-mix(in srgb, var(--gh-danger, #ef4444) 7%, var(--gh-card-bg, #ffffff));
-  color: var(--gh-text-danger, #ef4444);
-}
-
-.remote-config-metadata {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  margin: 4px 0 18px;
-}
-
-.remote-config-meta-item {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  min-width: 0;
-  padding: 12px;
-  border-radius: 10px;
-  background: var(--gh-bg-secondary, #f9fafb);
-}
-
-.remote-config-meta-item span {
-  color: var(--gh-text-secondary, #6b7280);
-  font-size: 11px;
-}
-
-.remote-config-meta-item strong {
-  color: var(--gh-text, #374151);
-  font-size: 13px;
-  font-weight: 600;
-  overflow-wrap: anywhere;
-}
-
-.remote-config-patches {
-  margin-top: 4px;
-}
-
-.remote-config-patches h3 {
-  margin: 0 0 10px;
-  color: var(--gh-text, #374151);
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.remote-config-empty-state {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  min-height: 44px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: var(--gh-bg-secondary, #f9fafb);
-  color: var(--gh-text-secondary, #6b7280);
-  font-size: 12px;
-}
-
-.remote-config-empty-state > span:first-child {
-  flex-shrink: 0;
-}
-
-.remote-config-patch-list {
-  border-top: 1px solid var(--gh-card-border, #e5e7eb);
-}
-
-.remote-config-patch-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 13px 0;
-  border-bottom: 1px solid var(--gh-card-border, #e5e7eb);
-}
-
-.remote-config-patch-info {
-  min-width: 0;
-}
-
-.remote-config-patch-info > strong {
-  display: block;
-  margin-bottom: 4px;
-  color: var(--gh-text, #374151);
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.remote-config-patch-versions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 12px;
-  color: var(--gh-text-secondary, #6b7280);
-  font-size: 11px;
-}
-
-.remote-config-privacy-note {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  margin-top: 16px;
-  padding: 12px;
-  border: 1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 20%, transparent);
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--gh-primary, #4285f4) 5%, var(--gh-card-bg, #ffffff));
-  color: var(--gh-text-secondary, #6b7280);
-}
-
-.remote-config-privacy-note > span:first-child {
-  flex-shrink: 0;
-  color: var(--gh-primary, #4285f4);
-}
-
-.remote-config-privacy-note strong {
-  display: block;
-  margin-bottom: 3px;
-  color: var(--gh-text, #374151);
-  font-size: 12px;
-}
-
-.remote-config-privacy-note p {
-  margin: 0;
-  font-size: 11px;
-  line-height: 1.5;
-}
-
-@media (max-width: 640px) {
-  .remote-config-settings-card [data-setting-id="remote-config-registry-source"] {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .remote-config-settings-card
-    [data-setting-id="remote-config-registry-source"]
-    .settings-row-control {
-    width: 100%;
-    margin-left: 0;
-  }
-
-  .remote-config-source-editor {
-    width: 100%;
-  }
-
-  .remote-config-source-controls {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .remote-config-metadata {
-    grid-template-columns: 1fr;
-  }
-
-  .remote-config-patch-item {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .remote-config-action-button,
-  .remote-config-refresh-icon {
-    transition: none !important;
-    animation: none !important;
-  }
-
-  .remote-config-action-button:hover:not(:disabled),
-  .remote-config-action-button:active:not(:disabled) {
-    transform: none;
-  }
-}
-
-/* ==================== 站点适配包管理 ==================== */
+/* ==================== 站点适配 ==================== */
 
 .settings-pack-page {
   width: 100%;
 }
 
-.settings-pack-page-intro {
+.settings-pack-toolbar {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 24px;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
 }
 
-.settings-pack-page-intro .settings-page-desc {
+.settings-pack-toolbar .settings-tab-group {
   flex: 1;
-  margin: 0;
-}
-
-.settings-pack-guide-action {
-  flex: 0 0 auto;
-  white-space: nowrap;
-}
-
-.settings-pack-section {
   min-width: 0;
+  margin-bottom: 0;
 }
 
-.settings-pack-section-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 14px;
-}
-
-.settings-pack-section-header > div {
-  min-width: 0;
-}
-
-.settings-pack-section-header h2 {
-  margin: 0 0 4px;
-  color: var(--gh-text, #374151);
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.settings-pack-section-header p {
-  margin: 0;
+.settings-pack-guide-link {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 4px;
+  min-height: 32px;
+  padding: 0 6px;
+  border: none;
+  border-radius: 8px;
+  background: none;
   color: var(--gh-text-secondary, #6b7280);
   font-size: 12px;
-  line-height: 1.55;
+  line-height: 1.4;
+  transition: color 0.18s ease;
 }
 
-.settings-pack-feedback,
-.settings-pack-inline-error,
-.settings-pack-issues {
-  margin-bottom: 16px;
-  padding: 11px 13px;
-  border: 1px solid var(--gh-card-border, #e5e7eb);
-  border-radius: 10px;
-  background: var(--gh-bg-secondary, #f9fafb);
-  color: var(--gh-text-secondary, #6b7280);
-  font-size: 12px;
-  line-height: 1.55;
-  overflow-wrap: anywhere;
-}
-
-.settings-pack-feedback.success {
-  border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 30%, transparent);
-  background: color-mix(in srgb, var(--gh-primary, #4285f4) 8%, var(--gh-card-bg, #ffffff));
+.settings-pack-guide-link:hover {
   color: var(--gh-primary, #4285f4);
 }
 
-.settings-pack-feedback.error,
-.settings-pack-inline-error,
-.settings-pack-issues {
-  border-color: color-mix(in srgb, var(--gh-danger, #ef4444) 30%, transparent);
-  background: color-mix(in srgb, var(--gh-danger, #ef4444) 7%, var(--gh-card-bg, #ffffff));
-  color: var(--gh-text-danger, #ef4444);
+.settings-pack-guide-link:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 42%, transparent);
+  outline-offset: 2px;
 }
 
-.settings-pack-permission-review {
+/* 持续状态才占页面空间；一次性操作结果统一走 toast */
+.settings-pack-notice {
   display: flex;
   align-items: flex-start;
   gap: 10px;
   margin-bottom: 16px;
   padding: 12px 14px;
-  border: 1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 28%, transparent);
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--gh-primary, #4285f4) 7%, var(--gh-card-bg, #ffffff));
-  color: var(--gh-text, #1f2937);
+  border: 1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 26%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 6%, var(--gh-card-bg, #ffffff));
+  color: var(--gh-text, #374151);
 }
 
-.settings-pack-permission-review > svg {
+.settings-pack-notice > svg {
   flex-shrink: 0;
-  margin-top: 2px;
+  margin-top: 1px;
   color: var(--gh-primary, #4285f4);
 }
 
-.settings-pack-permission-review-content {
-  min-width: 0;
-  flex: 1;
-}
-
-.settings-pack-permission-review-content > strong {
-  display: block;
-  font-size: 13px;
-  line-height: 1.4;
-}
-
-.settings-pack-permission-review-content > p {
-  margin: 4px 0 10px;
-  color: var(--gh-text-secondary, #6b7280);
-  font-size: 12px;
-  line-height: 1.55;
-}
-
-.settings-pack-permission-review-actions {
+.settings-pack-notice-body {
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 8px;
+  min-width: 0;
 }
 
-.settings-pack-permission-review-item {
+.settings-pack-notice-body > strong {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.settings-pack-notice-actions {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  min-width: 0;
-}
-
-.settings-pack-permission-review-item > span {
-  min-width: 0;
-  overflow: hidden;
-  color: var(--gh-text, #1f2937);
-  font-size: 12px;
-  font-weight: 500;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .settings-pack-inline-error {
@@ -1228,78 +915,124 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-}
-
-.settings-pack-validation-details,
-.settings-pack-issues {
-  margin-top: 10px;
-}
-
-.settings-pack-validation-details strong,
-.settings-pack-issues > strong {
-  display: block;
-  margin-bottom: 6px;
-  color: inherit;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--gh-danger, #ef4444) 30%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--gh-danger, #ef4444) 6%, var(--gh-card-bg, #ffffff));
+  color: var(--gh-text-danger, #ef4444);
   font-size: 12px;
+  line-height: 1.5;
 }
 
-.settings-pack-validation-details ul,
-.settings-pack-issues ul {
-  display: grid;
-  gap: 5px;
-  margin: 0;
-  padding-left: 18px;
+.settings-pack-inline-error > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
-.settings-pack-validation-details li,
-.settings-pack-issues li {
+.settings-pack-issues {
+  margin-top: 14px;
+  font-size: 12px;
+  color: var(--gh-text-secondary, #6b7280);
+}
+
+.settings-pack-issues > summary {
+  cursor: pointer;
+  padding: 6px 0;
+  font-weight: 500;
+  list-style: none;
+}
+
+.settings-pack-issues > summary::-webkit-details-marker {
+  display: none;
+}
+
+.settings-pack-issues > summary::before {
+  content: "›";
+  display: inline-block;
+  width: 12px;
+  transition: transform 0.18s ease;
+}
+
+.settings-pack-issues[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.settings-pack-issues > summary:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 42%, transparent);
+  outline-offset: 2px;
+}
+
+.settings-pack-issues ul,
+.settings-pack-validation-list {
   display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 5px 8px;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.settings-pack-validation-details code,
+.settings-pack-issues li,
+.settings-pack-validation-list li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
 .settings-pack-issues code,
-.settings-pack-dialog-file {
-  border-radius: 5px;
-  background: color-mix(in srgb, currentColor 8%, transparent);
-  color: inherit;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+.settings-pack-validation-list code,
+.settings-pack-dialog-file,
+.settings-pack-pattern code,
+.settings-pack-origin {
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--gh-bg-secondary, #f3f4f6);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 11px;
 }
 
-.settings-pack-validation-details code,
-.settings-pack-issues code {
-  padding: 1px 5px;
-}
+/* ---------- 列表 ---------- */
 
 .settings-pack-list {
-  border-top: 1px solid var(--gh-card-border, #e5e7eb);
+  display: flex;
+  flex-direction: column;
 }
 
 .settings-pack-item {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: 12px;
+  display: flex;
   align-items: center;
+  gap: 12px;
   padding: 14px 0;
-  border-bottom: 1px solid var(--gh-card-border, #e5e7eb);
+  border-bottom: 1px solid var(--gh-border, #f3f4f6);
+}
+
+.settings-pack-item:first-child {
+  padding-top: 0;
+}
+
+.settings-pack-item:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
 }
 
 .settings-pack-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
-  border: 1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 20%, transparent);
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
   border-radius: 9px;
-  background: color-mix(in srgb, var(--gh-primary, #4285f4) 7%, var(--gh-bg-secondary, #f9fafb));
-  color: var(--gh-primary, #4285f4);
+  background: var(--gh-bg-secondary, #f3f4f6);
+  color: var(--gh-text-secondary, #6b7280);
 }
 
 .settings-pack-info {
+  flex: 1;
   min-width: 0;
 }
 
@@ -1307,51 +1040,45 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 5px 7px;
+  gap: 8px;
 }
 
 .settings-pack-title-line > strong {
-  min-width: 0;
+  font-size: 14px;
+  font-weight: 500;
   color: var(--gh-text, #374151);
-  font-size: 13px;
-  font-weight: 600;
-  overflow-wrap: anywhere;
-}
-
-.settings-pack-id {
-  margin-top: 2px;
-  color: var(--gh-text-tertiary, #9ca3af);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 10px;
   overflow-wrap: anywhere;
 }
 
 .settings-pack-description {
-  display: -webkit-box;
-  margin: 5px 0 0;
-  overflow: hidden;
-  color: var(--gh-text-secondary, #6b7280);
+  margin: 3px 0 0;
   font-size: 12px;
-  line-height: 1.45;
+  line-height: 1.5;
+  color: var(--gh-text-secondary, #9ca3af);
+  display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 
 .settings-pack-meta {
   display: flex;
+  align-items: center;
   flex-wrap: wrap;
-  gap: 4px 12px;
-  margin-top: 6px;
-  color: var(--gh-text-secondary, #6b7280);
-  font-size: 10px;
+  gap: 2px 8px;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--gh-text-tertiary, var(--gh-text-secondary, #9ca3af));
 }
 
-.settings-pack-meta span {
+.settings-pack-meta > span {
   min-width: 0;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+}
+
+.settings-pack-meta > span + span::before {
+  content: "·";
+  margin-right: 8px;
 }
 
 .settings-pack-badge {
@@ -1388,31 +1115,15 @@
 
 .settings-pack-controls {
   display: flex;
-  align-items: flex-end;
-  flex-direction: column;
-  gap: 9px;
-}
-
-.settings-pack-switch-control {
-  display: inline-flex;
   align-items: center;
-  gap: 7px;
-  color: var(--gh-text-secondary, #6b7280);
-  font-size: 11px;
-}
-
-.settings-pack-actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
+  flex-shrink: 0;
   flex-wrap: wrap;
-  gap: 7px;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 .settings-pack-action-button:hover:not(:disabled) {
-  transform: translateY(-1px);
   border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 40%, var(--gh-input-border, #d1d5db));
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--gh-primary, #4285f4) 10%, transparent);
 }
 
 .settings-pack-action-button:active:not(:disabled) {
@@ -1434,232 +1145,166 @@
   }
 }
 
+/* ---------- 空状态 ---------- */
+
 .settings-pack-empty-state {
   display: flex;
   align-items: center;
-  gap: 12px;
-  min-height: 58px;
-  padding: 12px 14px;
-  border-radius: 10px;
-  background: var(--gh-bg-secondary, #f9fafb);
+  flex-direction: column;
+  gap: 10px;
+  padding: 28px 16px;
   color: var(--gh-text-secondary, #6b7280);
+  text-align: center;
+}
+
+.settings-pack-empty-state.compact {
+  flex-direction: row;
+  justify-content: flex-start;
+  padding: 14px 0 0;
+  text-align: left;
 }
 
 .settings-pack-empty-state > svg {
-  flex-shrink: 0;
-  color: var(--gh-primary, #4285f4);
+  color: var(--gh-text-tertiary, var(--gh-text-secondary, #9ca3af));
+  opacity: 0.7;
 }
 
-.settings-pack-empty-state > div {
-  flex: 1;
-  min-width: 0;
+.settings-pack-empty-state > strong {
+  font-size: 13px;
+  font-weight: 500;
 }
 
-.settings-pack-empty-state strong {
-  display: block;
-  margin-bottom: 2px;
-  color: var(--gh-text, #374151);
-  font-size: 12px;
+.settings-pack-empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
 }
 
-.settings-pack-empty-state p {
-  margin: 0;
-  font-size: 11px;
-  line-height: 1.45;
-}
+/* ---------- 域名绑定 ---------- */
 
 .settings-pack-binding-form {
   display: grid;
-  gap: 12px;
-  margin-bottom: 16px;
-  padding: 14px;
-  border: 1px solid var(--gh-card-border, #e5e7eb);
-  border-radius: 10px;
-  background: var(--gh-bg-secondary, #f9fafb);
-}
-
-.settings-pack-binding-field {
-  display: grid;
-  min-width: 0;
-  gap: 6px;
-}
-
-.settings-pack-binding-field > span {
-  color: var(--gh-text, #374151);
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.settings-pack-binding-options {
-  display: grid;
-  grid-template-columns: minmax(130px, 0.7fr) minmax(190px, 1.3fr) auto;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) auto;
   align-items: end;
   gap: 10px;
 }
 
-.settings-pack-binding-select .settings-select {
-  width: 100%;
+.settings-pack-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   min-width: 0;
-  min-height: 38px;
 }
 
-.settings-pack-binding-input:focus-visible,
-.settings-pack-binding-select .settings-select:focus-visible {
-  border-color: var(--gh-primary, #4285f4) !important;
-  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 24%, transparent);
-  outline-offset: 1px;
+.settings-pack-field > span {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gh-text-secondary, #6b7280);
 }
 
-.settings-pack-binding-input:disabled,
-.settings-pack-binding-select .settings-select:disabled {
-  opacity: 0.62;
-  cursor: not-allowed;
+.settings-pack-field-hint {
+  margin: 10px 0 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--gh-text-secondary, #9ca3af);
+}
+
+.settings-pack-field-hint.warning {
+  color: var(--gh-text-danger, #ef4444);
 }
 
 .settings-pack-binding-submit {
-  min-height: 38px;
-  white-space: nowrap;
+  min-height: 34px;
 }
 
-.settings-pack-binding-hint {
-  margin: -2px 0 0;
-  color: var(--gh-text-secondary, #6b7280);
-  font-size: 11px;
-  line-height: 1.5;
-}
-
-.settings-pack-binding-hint.warning {
-  color: var(--gh-text-danger, #b45309);
-}
-
-.settings-pack-userscript-guide {
-  display: grid;
-  gap: 12px;
-  margin: 0 0 16px;
-  padding: 14px;
-  border: 1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 32%, var(--gh-card-border));
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--gh-primary, #4285f4) 7%, var(--gh-bg-secondary));
-}
-
-.settings-pack-userscript-guide-header {
+.settings-pack-pattern-list {
   display: flex;
-  align-items: flex-start;
-  gap: 9px;
-  color: var(--gh-text, #374151);
+  flex-direction: column;
+  gap: 8px;
 }
 
-.settings-pack-userscript-guide-header > svg {
-  flex: 0 0 auto;
-  margin-top: 1px;
-  color: var(--gh-primary, #4285f4);
+.settings-pack-pattern {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 }
 
-.settings-pack-userscript-guide-header > div {
+.settings-pack-pattern code {
   min-width: 0;
+  overflow-wrap: anywhere;
 }
 
-.settings-pack-userscript-guide-header strong {
-  display: block;
-  font-size: 12px;
+/* ---------- 更新与来源 ---------- */
+
+.settings-pack-source-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: min(420px, 48vw);
+}
+
+.settings-pack-source-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.settings-pack-source-error {
+  color: var(--gh-text-danger, var(--gh-danger, #ef4444));
+  font-size: 11px;
   line-height: 1.4;
-}
-
-.settings-pack-userscript-guide-header p {
-  margin: 3px 0 0;
-  color: var(--gh-text-secondary, #6b7280);
-  font-size: 11px;
-  line-height: 1.5;
-}
-
-.settings-pack-userscript-pattern-list {
-  display: grid;
-  gap: 8px;
-}
-
-.settings-pack-userscript-pattern {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 8px;
-}
-
-.settings-pack-userscript-pattern code {
-  min-width: 0;
-  padding: 7px 9px;
-  border: 1px solid var(--gh-input-border, #d1d5db);
-  border-radius: 7px;
-  background: var(--gh-input-bg, var(--gh-bg, #ffffff));
-  color: var(--gh-text, #374151);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 11px;
   overflow-wrap: anywhere;
 }
 
-.settings-pack-userscript-copy {
-  min-width: 74px;
-  min-height: 32px;
+.settings-pack-patches {
+  margin-top: 16px;
+}
+
+.settings-pack-patches > h3 {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gh-text-secondary, #6b7280);
+}
+
+.settings-pack-privacy-note {
+  margin: 16px 0 0;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--gh-text-tertiary, var(--gh-text-secondary, #9ca3af));
+}
+
+.settings-pack-import-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.settings-pack-import-row .settings-card-title,
+.settings-pack-import-row .settings-card-desc {
+  margin-bottom: 0;
+}
+
+.settings-pack-import-row .settings-card-title {
+  margin-bottom: 2px;
+}
+
+.settings-pack-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
   white-space: nowrap;
+  border: 0;
 }
 
-.settings-pack-userscript-copy:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 36%, transparent);
-  outline-offset: 2px;
-}
-
-.settings-pack-userscript-steps {
-  display: grid;
-  gap: 4px;
-  margin: 0;
-  padding-left: 22px;
-  color: var(--gh-text-secondary, #6b7280);
-  font-size: 11px;
-  line-height: 1.5;
-}
-
-.settings-pack-binding-list {
-  border-top: 1px solid var(--gh-card-border, #e5e7eb);
-}
-
-.settings-pack-binding-item {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 0;
-  border-bottom: 1px solid var(--gh-card-border, #e5e7eb);
-}
-
-.settings-pack-binding-info {
-  min-width: 0;
-}
-
-.settings-pack-binding-origin {
-  min-width: 0;
-  padding: 2px 6px;
-  border-radius: 5px;
-  background: var(--gh-bg-secondary, #f9fafb);
-  color: var(--gh-text, #374151);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 11px;
-  overflow-wrap: anywhere;
-}
-
-.settings-pack-binding-summary {
-  margin-top: 5px;
-  color: var(--gh-text-secondary, #6b7280);
-  font-size: 11px;
-  line-height: 1.45;
-  overflow-wrap: anywhere;
-}
-
-.settings-pack-binding-empty {
-  margin-top: 0;
-}
-
-.settings-pack-skeleton {
-  grid-template-columns: auto minmax(0, 1fr);
-}
+/* ---------- 骨架屏 ---------- */
 
 .settings-pack-skeleton-icon,
 .settings-pack-skeleton-lines span {
@@ -1674,14 +1319,16 @@
 }
 
 .settings-pack-skeleton-icon {
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   border-radius: 9px;
+  flex-shrink: 0;
 }
 
 .settings-pack-skeleton-lines {
   display: grid;
   gap: 7px;
+  flex: 1;
 }
 
 .settings-pack-skeleton-lines span {
@@ -1702,83 +1349,52 @@
   }
 }
 
-.settings-pack-file-input {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-.settings-pack-activation-note {
-  display: flex;
-  align-items: flex-start;
-  gap: 9px;
-  margin-top: 4px;
-  padding: 11px 13px;
-  border: 1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 20%, transparent);
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--gh-primary, #4285f4) 5%, var(--gh-card-bg, #ffffff));
-  color: var(--gh-text-secondary, #6b7280);
-  font-size: 11px;
-  line-height: 1.5;
-}
-
-.settings-pack-activation-note svg {
-  flex-shrink: 0;
-  color: var(--gh-primary, #4285f4);
-}
+/* ---------- 对话框 ---------- */
 
 .settings-pack-dialog-overlay {
   position: fixed;
   inset: 0;
-  z-index: 10020;
+  z-index: 2147483000;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
-  background: var(--gh-overlay-bg, rgba(15, 23, 42, 0.48));
-  backdrop-filter: blur(5px);
+  padding: 24px;
+  background: var(--gh-overlay-bg, rgba(15, 23, 42, 0.45));
 }
 
 .settings-pack-dialog {
   width: min(460px, 100%);
-  max-height: min(78vh, 620px);
-  overflow: auto;
+  max-height: 80vh;
+  overflow-y: auto;
   padding: 20px;
   border: 1px solid var(--gh-card-border, #e5e7eb);
-  border-radius: 13px;
-  background: var(--gh-bg, #ffffff);
-  box-shadow: var(--gh-shadow-lg, 0 20px 50px rgba(0, 0, 0, 0.28));
+  border-radius: 14px;
+  background: var(--gh-card-bg, #ffffff);
+  box-shadow: var(--gh-shadow-lg, 0 18px 48px rgba(0, 0, 0, 0.22));
 }
 
 .settings-pack-dialog h2 {
-  margin: 0 0 10px;
-  color: var(--gh-text, #1f2937);
+  margin: 0 0 12px;
   font-size: 16px;
   font-weight: 600;
+  color: var(--gh-text, #374151);
 }
 
 .settings-pack-dialog-content {
-  color: var(--gh-text-secondary, #6b7280);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   font-size: 13px;
-  line-height: 1.55;
+  line-height: 1.6;
+  color: var(--gh-text-secondary, #6b7280);
 }
 
 .settings-pack-dialog-content p {
-  margin: 0 0 10px;
+  margin: 0;
 }
 
 .settings-pack-dialog-file {
-  display: block;
-  padding: 7px 9px;
-  background: var(--gh-bg-secondary, #f9fafb);
-  color: var(--gh-text, #374151);
-  overflow-wrap: anywhere;
+  align-self: flex-start;
 }
 
 .settings-pack-dialog-actions {
@@ -1789,99 +1405,58 @@
 }
 
 @media (max-width: 760px) {
-  .settings-pack-page-intro,
-  .settings-pack-section-header,
+  .settings-pack-binding-form {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .settings-pack-field-origin,
+  .settings-pack-binding-submit {
+    grid-column: 1 / -1;
+  }
+
+  .settings-pack-binding-submit {
+    justify-self: flex-start;
+  }
+}
+
+@media (max-width: 520px) {
+  .settings-pack-toolbar,
+  .settings-pack-item,
+  .settings-pack-import-row,
   .settings-pack-inline-error {
     align-items: stretch;
     flex-direction: column;
   }
 
-  .settings-pack-page-intro {
-    gap: 10px;
-  }
-
-  .settings-pack-guide-action {
-    align-self: flex-start;
-  }
-
-  .settings-pack-section-header > button,
-  .settings-pack-inline-error > button {
-    align-self: flex-start;
-  }
-
-  .settings-pack-permission-review-item {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .settings-pack-item {
-    grid-template-columns: auto minmax(0, 1fr);
-    align-items: flex-start;
-  }
-
-  .settings-pack-binding-options {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  }
-
-  .settings-pack-binding-submit {
-    grid-column: 1 / -1;
-    justify-self: flex-start;
-  }
-
-  .settings-pack-controls {
-    grid-column: 1 / -1;
-    align-items: stretch;
-    flex-direction: row;
-    justify-content: space-between;
-  }
-}
-
-@media (max-width: 520px) {
-  .settings-pack-controls,
-  .settings-pack-actions,
-  .settings-pack-empty-state {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .settings-pack-switch-control {
-    justify-content: space-between;
-  }
-
-  .settings-pack-actions > button,
-  .settings-pack-empty-state > button,
-  .settings-pack-guide-action {
-    width: 100%;
-  }
-
-  .settings-pack-binding-options,
-  .settings-pack-binding-item {
-    grid-template-columns: 1fr;
-  }
-
-  .settings-pack-userscript-pattern {
+  .settings-pack-binding-form {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .settings-pack-binding-submit,
-  .settings-pack-binding-item > button,
-  .settings-pack-userscript-copy {
+  .settings-pack-controls {
+    justify-content: flex-start;
+  }
+
+  .settings-pack-source-editor {
     width: 100%;
+  }
+
+  .settings-pack-source-controls {
+    align-items: stretch;
+    flex-direction: column;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .settings-pack-action-button,
   .settings-pack-action-button .spinning,
+  .settings-pack-guide-link,
+  .settings-pack-issues > summary::before,
   .settings-pack-skeleton-icon,
-  .settings-pack-skeleton-lines span,
-  .gh-switch-track,
-  .gh-switch-thumb {
+  .settings-pack-skeleton-lines span {
     transition: none !important;
     animation: none !important;
   }
 
-  .settings-pack-action-button:hover:not(:disabled),
   .settings-pack-action-button:active:not(:disabled) {
     transform: none;
   }

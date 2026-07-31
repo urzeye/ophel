@@ -12,6 +12,7 @@ import { siteMatchPatternOriginPatternCovers } from "~adapters/declarative/match
 import type { SitePackManifest } from "~adapters/declarative/types"
 import { SITE_PACK_MAX_BYTES, type SitePackValidationError } from "~adapters/declarative/validate"
 import {
+  CloudIcon,
   CopyIcon,
   DeleteIcon,
   ExternalLinkIcon,
@@ -21,6 +22,8 @@ import {
   RefreshIcon,
 } from "~components/icons"
 import { Button, Input, SelectDropdown, Switch, type SelectDropdownOption } from "~components/ui"
+import { SITE_PACKS_TAB_IDS } from "~constants"
+import { SUPPORTED_AI_PLATFORMS } from "~constants/defaults"
 import {
   INSTALLED_SITE_PACKS_STORAGE_KEY,
   isInstalledSitePackEffectivelyEnabled,
@@ -29,6 +32,7 @@ import {
   type PackManagerIssue,
 } from "~core/pack-manager"
 import { createRuntimePackManager } from "~core/pack-manager-runtime"
+import { normalizeRemoteConfigSourceUrl } from "~core/remote-config-source"
 import {
   canonicalizeSitePackBindingOrigin,
   createEmptySitePackOriginBindingsState,
@@ -52,8 +56,11 @@ import {
   getCurrentUserscriptMatchCoverageInfo,
   userscriptMatchPatternsCoverOriginPattern,
 } from "~platform/userscript-match-coverage"
-import { PageTitle } from "~tabs/options/components"
+import { useSettingsStore } from "~stores/settings-store"
+import { PageTitle, SettingRow, TabGroup, ToggleRow } from "~tabs/options/components"
+import { IS_DEVELOPMENT_BUILD } from "~utils/config"
 import { getCurrentLang, subscribeI18nChanges, t } from "~utils/i18n"
+import { showToast } from "~utils/toast"
 
 import {
   buildRegistrySitePackViews,
@@ -63,15 +70,12 @@ import {
   type RegistrySitePackView,
 } from "../site-pack-manager-view"
 
-type FeedbackTone = "success" | "error" | "neutral"
-
 const SITE_PACK_GUIDE_URL = "https://urzeye.github.io/ophel/site-packs/"
+const ERROR_TOAST_DURATION = 3500
 
-interface FeedbackState {
-  tone: FeedbackTone
-  message: string
-  details?: SitePackValidationError[]
-}
+const builtinPlatformNames = new Map(
+  SUPPORTED_AI_PLATFORMS.map(({ id, name }) => [id as string, name] as const),
+)
 
 type ConfirmationState =
   | {
@@ -85,11 +89,18 @@ type ConfirmationState =
       pack: InstalledSitePack
     }
 
-interface SitePackConfirmationDialogProps {
+interface ValidationReport {
+  title: string
+  errors: SitePackValidationError[]
+}
+
+interface SitePackDialogProps {
   title: string
   confirmText: string
+  /** notice 变体只提供关闭按钮，用于展示无需确认的只读详情。 */
+  variant?: "confirm" | "notice"
   danger?: boolean
-  busy: boolean
+  busy?: boolean
   children: React.ReactNode
   restoreFocusTo?: HTMLElement | null
   restoreFocusFallback?: () => HTMLElement | null
@@ -105,11 +116,12 @@ const getDeepActiveElement = (): HTMLElement | null => {
   return activeElement instanceof HTMLElement ? activeElement : null
 }
 
-const SitePackConfirmationDialog: React.FC<SitePackConfirmationDialogProps> = ({
+const SitePackDialog: React.FC<SitePackDialogProps> = ({
   title,
   confirmText,
+  variant = "confirm",
   danger = false,
-  busy,
+  busy = false,
   children,
   restoreFocusTo,
   restoreFocusFallback,
@@ -194,9 +206,11 @@ const SitePackConfirmationDialog: React.FC<SitePackConfirmationDialogProps> = ({
           {children}
         </div>
         <div className="settings-pack-dialog-actions">
-          <Button type="button" variant="secondary" disabled={busy} onClick={onCancel}>
-            {t("cancel")}
-          </Button>
+          {variant === "confirm" && (
+            <Button type="button" variant="secondary" disabled={busy} onClick={onCancel}>
+              {t("cancel")}
+            </Button>
+          )}
           <Button
             type="button"
             variant={danger ? "danger" : "primary"}
@@ -222,6 +236,20 @@ const SitePackListSkeleton: React.FC = () => (
         </div>
       </div>
     ))}
+  </div>
+)
+
+interface InlineErrorProps {
+  message: string
+  onRetry: () => void
+}
+
+const InlineError: React.FC<InlineErrorProps> = ({ message, onRetry }) => (
+  <div className="settings-pack-inline-error" role="alert">
+    <span>{message}</span>
+    <Button type="button" size="sm" variant="secondary" onClick={onRetry}>
+      {t("refresh")}
+    </Button>
   </div>
 )
 
@@ -253,7 +281,7 @@ const mergePackManagerIssues = (
 ): PackManagerIssue[] => {
   const issues = new Map<string, PackManagerIssue>()
   for (const issue of groups.flat()) {
-    issues.set(`${issue.code}\u0000${issue.packId ?? ""}\u0000${issue.message}`, issue)
+    issues.set(`${issue.code}|${issue.packId ?? ""}|${issue.message}`, issue)
   }
   return Array.from(issues.values())
 }
@@ -265,7 +293,7 @@ const getInstalledPackStatus = (
   if (pack.registryStatus === "disabled") {
     return { tone: "danger", label: t("sitePacksStatusDisabled") }
   }
-  return { tone: "warning", label: t("remoteConfigNotAvailable") }
+  return { tone: "warning", label: t("sitePacksStatusUnavailable") }
 }
 
 const getRegistryAvailabilityLabel = (availability: RegistrySitePackAvailability): string => {
@@ -282,13 +310,33 @@ const getRegistryAvailabilityTone = (
   return "success"
 }
 
-const SitePacksPage: React.FC = () => {
+const formatCheckTime = (timestamp: number): string =>
+  new Intl.DateTimeFormat(getCurrentLang(), {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(timestamp))
+
+const notify = (message: string) => showToast(message)
+const notifyError = (message: string) => showToast(message, ERROR_TOAST_DURATION)
+
+interface SitePacksPageProps {
+  initialTab?: string
+}
+
+const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
   const currentLanguage = useSyncExternalStore(subscribeI18nChanges, getCurrentLang, getCurrentLang)
   const packManager = useMemo(() => createRuntimePackManager(platform.storage), [])
+  const settings = useSettingsStore((state) => state.settings)
+  const updateNestedSetting = useSettingsStore((state) => state.updateNestedSetting)
   const pageRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const confirmationTriggerRef = useRef<HTMLElement | null>(null)
   const busyKeysRef = useRef<Set<string>>(new Set())
+  const [activeTab, setActiveTab] = useState<string>(
+    initialTab && Object.values(SITE_PACKS_TAB_IDS).some((id) => id === initialTab)
+      ? initialTab
+      : SITE_PACKS_TAB_IDS.INSTALLED,
+  )
   const [installedPacks, setInstalledPacks] = useState<InstalledSitePack[]>([])
   const [originBindings, setOriginBindings] = useState<SitePackOriginBindingsState>(
     createEmptySitePackOriginBindingsState,
@@ -309,13 +357,16 @@ const SitePacksPage: React.FC = () => {
   const [bindingsError, setBindingsError] = useState<string | null>(null)
   const [registryError, setRegistryError] = useState<string | null>(null)
   const [runtimeError, setRuntimeError] = useState<string | null>(null)
-  const [feedback, setFeedback] = useState<FeedbackState | null>(null)
+  const [validationReport, setValidationReport] = useState<ValidationReport | null>(null)
   const [busyKeys, setBusyKeys] = useState<ReadonlySet<string>>(() => new Set())
   const [confirmation, setConfirmation] = useState<ConfirmationState | null>(null)
   const [bindingOrigin, setBindingOrigin] = useState("")
   const [bindingMode, setBindingMode] = useState<SitePackOriginBinding["mode"]>("explicit")
   const [bindingPackId, setBindingPackId] = useState("")
-  const [copiedUserscriptPattern, setCopiedUserscriptPattern] = useState<string | null>(null)
+  const [resettingSiteId, setResettingSiteId] = useState<string | null>(null)
+  const configuredRegistrySource = settings.remoteConfig?.registrySourceUrl ?? ""
+  const [registrySourceInput, setRegistrySourceInput] = useState(configuredRegistrySource)
+  const [registrySourceError, setRegistrySourceError] = useState<string | null>(null)
 
   const beginBusy = useCallback((key: string): boolean => {
     const current = busyKeysRef.current
@@ -423,6 +474,18 @@ const SitePacksPage: React.FC = () => {
   const registryViews = useMemo(
     () => buildRegistrySitePackViews(remoteState, installedPacks, currentLanguage),
     [currentLanguage, installedPacks, remoteState],
+  )
+  const activePatches = useMemo(
+    () =>
+      Object.entries(remoteState?.active?.patches ?? {})
+        .map(([siteId, cachedPatch]) => ({
+          siteId,
+          siteName: builtinPlatformNames.get(siteId) ?? siteId,
+          patchVersion: cachedPatch.index.patchVersion,
+          baseConfigVersion: cachedPatch.index.baseConfigVersion,
+        }))
+        .sort((left, right) => left.siteName.localeCompare(right.siteName)),
+    [remoteState],
   )
   const permissionReviewPacks = useMemo(() => {
     const missingOrigins = new Set(runtimeStatus.missingPermissionOrigins)
@@ -543,6 +606,11 @@ const SitePacksPage: React.FC = () => {
   }, [loadInstalledPacks, loadOriginBindings, loadRegistryState, loadRuntimeStatus])
 
   useEffect(() => {
+    setRegistrySourceInput(configuredRegistrySource)
+    setRegistrySourceError(null)
+  }, [configuredRegistrySource])
+
+  useEffect(() => {
     if (bindingPackId && installedById.has(bindingPackId)) return
     setBindingPackId(sortedInstalledPacks[0]?.manifest.id ?? "")
   }, [bindingPackId, installedById, sortedInstalledPacks])
@@ -566,22 +634,20 @@ const SitePacksPage: React.FC = () => {
 
   const closeConfirmation = useCallback(() => setConfirmation(null), [])
 
-  const setOperationError = useCallback((error: unknown) => {
+  const reportOperationError = useCallback((error: unknown) => {
     const validationErrors = getValidationErrors(error)
-    setFeedback({
-      tone: "error",
-      message: t("sitePacksOperationFailed", { error: getErrorMessage(error) }),
-      ...(validationErrors ? { details: validationErrors } : {}),
-    })
+    notifyError(t("sitePacksOperationFailed", { error: getErrorMessage(error) }))
+    if (validationErrors && validationErrors.length > 0) {
+      setValidationReport({ title: t("sitePacksValidationErrorsTitle"), errors: validationErrors })
+    }
   }, [])
 
-  const setPermissionDeniedFeedback = useCallback((pack: InstalledSitePack) => {
-    setFeedback({
-      tone: "error",
-      message: t("sitePacksPermissionDenied", {
+  const reportPermissionDenied = useCallback((pack: InstalledSitePack) => {
+    notifyError(
+      t("sitePacksPermissionDenied", {
         name: resolveSitePackName(pack.manifest, getCurrentLang()),
       }),
-    })
+    )
   }, [])
 
   const rollbackOriginBinding = useCallback(
@@ -612,7 +678,6 @@ const SitePacksPage: React.FC = () => {
     event.preventDefault()
     const key = "binding:save"
     if (!beginBusy(key)) return
-    setFeedback(null)
 
     let origin: string | null = null
     let previousBinding: SitePackOriginBinding | undefined
@@ -638,10 +703,7 @@ const SitePacksPage: React.FC = () => {
           : t("sitePacksBindingModeDetect")
       const permission = await platform.sitePacks.ensureBindingOrigin(origin, binding, requestName)
       if (permission === "denied") {
-        setFeedback({
-          tone: "error",
-          message: t("sitePacksBindingPermissionDenied", { origin }),
-        })
+        notifyError(t("sitePacksBindingPermissionDenied", { origin }))
         return
       }
 
@@ -651,18 +713,18 @@ const SitePacksPage: React.FC = () => {
       await loadOriginBindings()
       shouldRollback = false
       setBindingOrigin(origin)
-      setFeedback({ tone: "success", message: t("saveSuccess") })
+      notify(t("saveSuccess"))
     } catch (error) {
       if (shouldRollback && origin) {
         try {
           await rollbackOriginBinding(origin, previousBinding, error)
         } catch (rollbackResult) {
-          setOperationError(rollbackResult)
+          reportOperationError(rollbackResult)
         }
       } else if (error instanceof SitePackOriginBindingsError && error.code === "invalid-origin") {
-        setFeedback({ tone: "error", message: t("sitePacksBindingHint") })
+        notifyError(t("sitePacksBindingHint"))
       } else {
-        setOperationError(error)
+        reportOperationError(error)
       }
     } finally {
       endBusy(key)
@@ -672,7 +734,6 @@ const SitePacksPage: React.FC = () => {
   const handleRemoveOriginBinding = async (origin: string) => {
     const key = `binding:remove:${origin}`
     if (!beginBusy(key)) return
-    setFeedback(null)
 
     const previousBinding = originBindings.bindings[origin]
     try {
@@ -683,9 +744,9 @@ const SitePacksPage: React.FC = () => {
       } catch (error) {
         await rollbackOriginBinding(origin, previousBinding, error)
       }
-      setFeedback({ tone: "success", message: t("deleteSuccess") })
+      notify(t("deleteSuccess"))
     } catch (error) {
-      setOperationError(error)
+      reportOperationError(error)
     } finally {
       endBusy(key)
     }
@@ -694,10 +755,10 @@ const SitePacksPage: React.FC = () => {
   const handleCopyUserscriptPattern = async (pattern: string) => {
     try {
       await navigator.clipboard.writeText(pattern)
-      setCopiedUserscriptPattern(pattern)
+      notify(t("copied"))
     } catch (error) {
       console.error("Failed to copy userscript match pattern:", error)
-      setFeedback({ tone: "error", message: t("copyFailed") })
+      notifyError(t("copyFailed"))
     }
   }
 
@@ -745,12 +806,11 @@ const SitePacksPage: React.FC = () => {
     const nextEnabled = !pack.enabled
     const key = `toggle:${pack.manifest.id}`
     if (!beginBusy(key)) return
-    setFeedback(null)
     try {
       if (nextEnabled) {
         const permission = await platform.sitePacks.ensureOrigins(pack.manifest.id)
         if (permission === "denied") {
-          setPermissionDeniedFeedback(pack)
+          reportPermissionDenied(pack)
           return
         }
         try {
@@ -764,16 +824,15 @@ const SitePacksPage: React.FC = () => {
         await syncRuntimeStatus()
       }
       await loadInstalledPacks()
-      setFeedback({
-        tone: "success",
-        message: t("sitePacksStateChanged", {
+      notify(
+        t("sitePacksStateChanged", {
           name: resolveSitePackName(pack.manifest, getCurrentLang()),
           state: t(nextEnabled ? "sitePacksEnabledState" : "sitePacksDisabledState"),
         }),
-      })
+      )
     } catch (error) {
       await loadInstalledPacks()
-      setOperationError(error)
+      reportOperationError(error)
     } finally {
       endBusy(key)
     }
@@ -782,35 +841,34 @@ const SitePacksPage: React.FC = () => {
   const handleReauthorizePack = async (pack: InstalledSitePack) => {
     const key = `permission:${pack.manifest.id}`
     if (!beginBusy(key)) return
-    setFeedback(null)
     try {
       const permission = await platform.sitePacks.ensureOrigins(pack.manifest.id)
       if (permission === "denied") {
         await Promise.all([loadInstalledPacks(), loadRuntimeStatus()])
-        setPermissionDeniedFeedback(pack)
+        reportPermissionDenied(pack)
         return
       }
       await Promise.all([loadInstalledPacks(), syncRuntimeStatus()])
-      setFeedback({ tone: "success", message: t("permissionGranted") })
+      notify(t("permissionGranted"))
     } catch (error) {
       await Promise.all([loadInstalledPacks(), loadRuntimeStatus()])
-      setOperationError(error)
+      reportOperationError(error)
     } finally {
       endBusy(key)
     }
   }
 
+  /** 唯一的更新入口：同步 registry 索引、内置配置补丁与已安装适配包。 */
   const refreshRegistry = async (
     targetPack?: InstalledSitePack,
   ): Promise<RemoteConfigCheckResult | null> => {
     const key = targetPack ? `update:${targetPack.manifest.id}` : "registry:refresh"
     const previousVersion = targetPack?.manifest.version
     if (!beginBusy(key)) return null
-    setFeedback(null)
     try {
       const result = await platform.remoteConfig.checkForUpdates()
       if (result.status === "failed") {
-        throw new Error(result.error || t("remoteConfigNotAvailable"))
+        throw new Error(result.error || t("operationFailed"))
       }
       const syncResult = await packManager.syncRegistryPacks()
       const postSyncSnapshot = await packManager.getSnapshot()
@@ -825,46 +883,73 @@ const SitePacksPage: React.FC = () => {
       }
 
       if (deniedPacks.length > 0) {
-        setPermissionDeniedFeedback(deniedPacks[0])
+        reportPermissionDenied(deniedPacks[0])
         return result
       }
 
       if (targetPack) {
         const nextPack = snapshot?.packs.find((pack) => pack.manifest.id === targetPack.manifest.id)
-        if (
-          nextPack &&
-          previousVersion !== undefined &&
-          nextPack.manifest.version > previousVersion
-        ) {
-          setFeedback({
-            tone: "success",
-            message: t("sitePacksPackUpdated", {
-              name: resolveSitePackName(nextPack.manifest, getCurrentLang()),
-              version: String(nextPack.manifest.version),
-            }),
-          })
-        } else {
-          setFeedback({
-            tone: "neutral",
-            message: t("sitePacksPackUpToDate", {
-              name: resolveSitePackName(targetPack.manifest, getCurrentLang()),
-            }),
-          })
-        }
+        const updated =
+          nextPack && previousVersion !== undefined && nextPack.manifest.version > previousVersion
+        notify(
+          updated
+            ? t("sitePacksPackUpdated", {
+                name: resolveSitePackName(nextPack.manifest, getCurrentLang()),
+                version: String(nextPack.manifest.version),
+              })
+            : t("sitePacksPackUpToDate", {
+                name: resolveSitePackName(targetPack.manifest, getCurrentLang()),
+              }),
+        )
       } else {
-        setFeedback({
-          tone: result.status === "updated" ? "success" : "neutral",
-          message: t(
-            result.status === "updated" ? "remoteConfigCheckUpdated" : "remoteConfigCheckUpToDate",
-          ),
-        })
+        notify(
+          t(result.status === "updated" ? "remoteConfigCheckUpdated" : "remoteConfigCheckUpToDate"),
+        )
       }
       return result
     } catch (error) {
-      setOperationError(error)
+      reportOperationError(error)
       return null
     } finally {
       endBusy(key)
+    }
+  }
+
+  const handleResetSite = async (siteId: string, siteName: string, patchVersion: number) => {
+    setResettingSiteId(siteId)
+    try {
+      const reset = await platform.remoteConfig.resetSite(siteId, patchVersion)
+      if (!reset) throw new Error(t("remoteConfigResetUnavailable"))
+      notify(t("remoteConfigResetSuccess", { site: siteName }))
+      await loadRegistryState()
+    } catch (error) {
+      notifyError(t("remoteConfigResetFailed", { error: getErrorMessage(error) }))
+    } finally {
+      setResettingSiteId(null)
+    }
+  }
+
+  const handleApplyRegistrySource = () => {
+    const source = registrySourceInput.trim()
+
+    if (!source) {
+      updateNestedSetting("remoteConfig", "registrySourceUrl", "")
+      setRegistrySourceInput("")
+      setRegistrySourceError(null)
+      notify(t("remoteConfigRegistrySourceCleared"))
+      return
+    }
+
+    try {
+      const normalizedSource = normalizeRemoteConfigSourceUrl(source)
+      updateNestedSetting("remoteConfig", "registrySourceUrl", normalizedSource)
+      setRegistrySourceInput(normalizedSource)
+      setRegistrySourceError(null)
+      notify(t("remoteConfigRegistrySourceApplied"))
+    } catch (error) {
+      setRegistrySourceError(
+        t("remoteConfigRegistrySourceInvalid", { error: getErrorMessage(error) }),
+      )
     }
   }
 
@@ -877,26 +962,22 @@ const SitePacksPage: React.FC = () => {
     )
     const key = `install:${view.id}`
     if (!beginBusy(key)) return
-    setFeedback(null)
     try {
       const result = await packManager.installFromRegistry(view.id)
       if (!result.pack) throw new Error(`Installed SitePack not found after install: ${view.id}`)
       const deniedPacks = await prepareInstalledPacksRuntime([result.pack])
       await loadInstalledPacks()
       if (deniedPacks.length > 0) {
-        setPermissionDeniedFeedback(deniedPacks[0])
+        reportPermissionDenied(deniedPacks[0])
         return
       }
-      setFeedback({
-        tone: "success",
-        message: t(isUpdate ? "sitePacksUpdatedSuccess" : "sitePacksSavedSuccess", {
-          name: result.pack
-            ? resolveSitePackName(result.pack.manifest, getCurrentLang())
-            : view.name,
+      notify(
+        t(isUpdate ? "sitePacksUpdatedSuccess" : "sitePacksSavedSuccess", {
+          name: resolveSitePackName(result.pack.manifest, getCurrentLang()),
         }),
-      })
+      )
     } catch (error) {
-      setOperationError(error)
+      reportOperationError(error)
     } finally {
       endBusy(key)
     }
@@ -909,26 +990,12 @@ const SitePacksPage: React.FC = () => {
 
     const key = "import:read"
     if (!beginBusy(key)) return
-    setFeedback(null)
     try {
-      if (file.size > SITE_PACK_MAX_BYTES) {
-        const parsed = parseSitePackImport("", file.size)
-        if (!parsed.valid) {
-          setFeedback({
-            tone: "error",
-            message: t("sitePacksInvalidFile"),
-            details: parsed.errors,
-          })
-        }
-        return
-      }
-      const parsed = parseSitePackImport(await file.text(), file.size)
+      const content = file.size > SITE_PACK_MAX_BYTES ? "" : await file.text()
+      const parsed = parseSitePackImport(content, file.size)
       if (!parsed.valid) {
-        setFeedback({
-          tone: "error",
-          message: t("sitePacksInvalidFile"),
-          details: parsed.errors,
-        })
+        notifyError(t("sitePacksInvalidFile"))
+        setValidationReport({ title: t("sitePacksInvalidFile"), errors: parsed.errors })
         return
       }
       const existing = installedById.get(parsed.manifest.id)
@@ -939,7 +1006,7 @@ const SitePacksPage: React.FC = () => {
         isUpdate: Boolean(existing && parsed.manifest.version > existing.manifest.version),
       })
     } catch (error) {
-      setOperationError(error)
+      reportOperationError(error)
     } finally {
       endBusy(key)
     }
@@ -960,21 +1027,17 @@ const SitePacksPage: React.FC = () => {
         await loadInstalledPacks()
         setConfirmation(null)
         if (deniedPacks.length > 0) {
-          setPermissionDeniedFeedback(deniedPacks[0])
+          reportPermissionDenied(deniedPacks[0])
           return
         }
-        setFeedback({
-          tone: "success",
-          message: t(confirmation.isUpdate ? "sitePacksUpdatedSuccess" : "sitePacksSavedSuccess", {
-            name: resolveSitePackName(
-              result.pack?.manifest ?? confirmation.manifest,
-              getCurrentLang(),
-            ),
+        notify(
+          t(confirmation.isUpdate ? "sitePacksUpdatedSuccess" : "sitePacksSavedSuccess", {
+            name: resolveSitePackName(result.pack.manifest, getCurrentLang()),
           }),
-        })
+        )
       } catch (error) {
         setConfirmation(null)
-        setOperationError(error)
+        reportOperationError(error)
       } finally {
         endBusy(key)
       }
@@ -987,44 +1050,23 @@ const SitePacksPage: React.FC = () => {
       await packManager.uninstall(confirmation.pack.manifest.id)
       await syncRuntimeStatus()
       await loadInstalledPacks()
-      setFeedback({
-        tone: "success",
-        message: t("sitePacksRemovedSuccess", {
+      notify(
+        t("sitePacksRemovedSuccess", {
           name: resolveSitePackName(confirmation.pack.manifest, getCurrentLang()),
         }),
-      })
+      )
       setConfirmation(null)
     } catch (error) {
       setConfirmation(null)
-      setOperationError(error)
+      reportOperationError(error)
     } finally {
       endBusy(key)
     }
   }
 
-  const renderFeedback = () => {
-    if (!feedback) return null
-    return (
-      <div
-        className={`settings-pack-feedback ${feedback.tone}`}
-        role={feedback.tone === "error" ? "alert" : "status"}
-        aria-live="polite">
-        <div>{feedback.message}</div>
-        {feedback.details && feedback.details.length > 0 && (
-          <div className="settings-pack-validation-details">
-            <strong>{t("sitePacksValidationErrorsTitle")}</strong>
-            <ul>
-              {feedback.details.map((error, index) => (
-                <li key={`${error.path}-${error.code}-${index}`}>
-                  <code>{error.path}</code>
-                  <span>{error.message}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
-    )
+  const openImportPicker = (trigger: HTMLElement) => {
+    confirmationTriggerRef.current = trigger
+    fileInputRef.current?.click()
   }
 
   const renderOriginBinding = ([origin, binding]: [string, SitePackOriginBinding]) => {
@@ -1077,41 +1119,36 @@ const SitePacksPage: React.FC = () => {
     const busy = busyKeys.has(`binding:remove:${origin}`)
 
     return (
-      <div className="settings-pack-binding-item" key={origin}>
-        <div className="settings-pack-binding-info">
+      <div className="settings-pack-item" key={origin}>
+        <div className="settings-pack-info">
           <div className="settings-pack-title-line">
-            <code className="settings-pack-binding-origin">{origin}</code>
-            <span className="settings-pack-badge neutral">
+            <strong className="settings-pack-origin">{origin}</strong>
+            <span className={`settings-pack-badge ${status.tone}`}>{status.label}</span>
+          </div>
+          <div className="settings-pack-meta">
+            <span>
               {t(
                 binding.mode === "explicit"
                   ? "sitePacksBindingModeExplicit"
                   : "sitePacksBindingModeDetect",
               )}
             </span>
-            <span className={`settings-pack-badge ${status.tone}`}>{status.label}</span>
-          </div>
-          <div className="settings-pack-binding-summary">{summary}</div>
-          <div className="settings-pack-meta">
-            <span>{originPattern}</span>
-            {referenceEntry && (
-              <span>
-                {t("sitePacksBindingReferences", {
-                  count: String(referenceEntry.referenceCount),
-                })}
-              </span>
-            )}
+            <span>{summary}</span>
           </div>
         </div>
-        <Button
-          type="button"
-          size="sm"
-          variant="danger"
-          className="settings-pack-action-button"
-          disabled={busy || isBindingBusy}
-          onClick={() => void handleRemoveOriginBinding(origin)}>
-          <DeleteIcon size={13} />
-          {t("delete")}
-        </Button>
+        <div className="settings-pack-controls">
+          <Button
+            type="button"
+            size="sm"
+            variant="danger"
+            className="settings-pack-action-button"
+            disabled={busy || isBindingBusy}
+            aria-label={`${t("delete")}: ${origin}`}
+            onClick={() => void handleRemoveOriginBinding(origin)}>
+            <DeleteIcon size={13} />
+            {t("delete")}
+          </Button>
+        </div>
       </div>
     )
   }
@@ -1129,67 +1166,61 @@ const SitePacksPage: React.FC = () => {
     return (
       <div className="settings-pack-item" key={packId}>
         <div className="settings-pack-icon" aria-hidden="true">
-          <JSONFileIcon size={20} />
+          <JSONFileIcon size={18} />
         </div>
         <div className="settings-pack-info">
           <div className="settings-pack-title-line">
-            <strong>{name}</strong>
-            <span className="settings-pack-badge neutral">
-              {t(pack.source === "registry" ? "sitePacksSourceRegistry" : "sitePacksSourceLocal")}
-            </span>
+            <strong title={packId}>{name}</strong>
             {status && <span className={`settings-pack-badge ${status.tone}`}>{status.label}</span>}
           </div>
-          <div className="settings-pack-id">{packId}</div>
           {description && <p className="settings-pack-description">{description}</p>}
           <div className="settings-pack-meta">
             <span>
               {t("version")} {pack.manifest.version}
             </span>
+            <span>
+              {t(pack.source === "registry" ? "sitePacksSourceRegistry" : "sitePacksSourceLocal")}
+            </span>
             {firstMatch && <span title={firstMatch}>{firstMatch}</span>}
-            {pack.source === "local" && <span>{t("sitePacksLocalUpdateHint")}</span>}
           </div>
         </div>
         <div className="settings-pack-controls">
-          <div className="settings-pack-switch-control">
-            <span>{t("sitePacksEnabledLabel")}</span>
-            <Switch
-              size="sm"
-              checked={pack.enabled}
-              disabled={toggleDisabled}
-              ariaLabel={`${name}: ${t("sitePacksEnabledLabel")}`}
-              onChange={() => void handleToggleEnabled(pack)}
-            />
-          </div>
-          <div className="settings-pack-actions">
-            {pack.source === "registry" && (
-              <Button
-                type="button"
-                size="sm"
-                variant="secondary"
-                className="settings-pack-action-button"
-                disabled={isBusy || isRegistryBusy}
-                onClick={() => void refreshRegistry(pack)}>
-                <RefreshIcon
-                  size={13}
-                  className={busyKeys.has(`update:${packId}`) ? "spinning" : ""}
-                />
-                {t("sitePacksCheckUpdates")}
-              </Button>
-            )}
+          {pack.source === "registry" && (
             <Button
               type="button"
               size="sm"
-              variant="danger"
+              variant="secondary"
               className="settings-pack-action-button"
-              disabled={isBusy}
-              onClick={(event) => {
-                confirmationTriggerRef.current = event.currentTarget
-                setConfirmation({ type: "uninstall", pack })
-              }}>
-              <DeleteIcon size={13} />
-              {t("sitePacksUninstall")}
+              disabled={isBusy || isRegistryBusy}
+              onClick={() => void refreshRegistry(pack)}>
+              <RefreshIcon
+                size={13}
+                className={busyKeys.has(`update:${packId}`) ? "spinning" : ""}
+              />
+              {t("sitePacksCheckUpdates")}
             </Button>
-          </div>
+          )}
+          <Button
+            type="button"
+            size="sm"
+            variant="danger"
+            className="settings-pack-action-button"
+            disabled={isBusy}
+            aria-label={`${t("sitePacksUninstall")}: ${name}`}
+            onClick={(event) => {
+              confirmationTriggerRef.current = event.currentTarget
+              setConfirmation({ type: "uninstall", pack })
+            }}>
+            <DeleteIcon size={13} />
+            {t("sitePacksUninstall")}
+          </Button>
+          <Switch
+            size="sm"
+            checked={pack.enabled}
+            disabled={toggleDisabled}
+            ariaLabel={`${name}: ${t("sitePacksEnabledLabel")}`}
+            onChange={() => void handleToggleEnabled(pack)}
+          />
         </div>
       </div>
     )
@@ -1211,29 +1242,27 @@ const SitePacksPage: React.FC = () => {
     return (
       <div className="settings-pack-item" key={view.id}>
         <div className="settings-pack-icon" aria-hidden="true">
-          <JSONFileIcon size={20} />
+          <JSONFileIcon size={18} />
         </div>
         <div className="settings-pack-info">
           <div className="settings-pack-title-line">
-            <strong>{view.name}</strong>
-            <span
-              className={`settings-pack-badge ${getRegistryAvailabilityTone(view.availability)}`}>
-              {getRegistryAvailabilityLabel(view.availability)}
-            </span>
+            <strong title={view.id}>{view.name}</strong>
+            {!isAvailable && (
+              <span
+                className={`settings-pack-badge ${getRegistryAvailabilityTone(view.availability)}`}>
+                {getRegistryAvailabilityLabel(view.availability)}
+              </span>
+            )}
             {isInstalled && (
               <span className="settings-pack-badge neutral">{t("sitePacksInstalledBadge")}</span>
             )}
           </div>
-          <div className="settings-pack-id">{view.id}</div>
           {view.description && <p className="settings-pack-description">{view.description}</p>}
           <div className="settings-pack-meta">
             <span>
               {t("version")} {version}
             </span>
             {firstMatch && <span title={firstMatch}>{firstMatch}</span>}
-            {view.matches.length > 1 && (
-              <span>{t("sitePacksMatchesCount", { count: String(view.matches.length) })}</span>
-            )}
             {view.availability === "incompatible" && (
               <span>{t("sitePacksRequiresNewerApp", { version: view.minAppVersion })}</span>
             )}
@@ -1257,11 +1286,23 @@ const SitePacksPage: React.FC = () => {
   const confirmationPackId =
     confirmation?.type === "import" ? confirmation.manifest.id : confirmation?.pack.manifest.id
   const isDialogBusy = confirmationPackId ? isPackBusy(confirmationPackId) : false
+  const registryRevision = remoteState?.active?.index.registryRevision
+  const lastCheckAt = remoteState?.lastCheckAt
+  const isCheckingRegistry = busyKeys.has("registry:refresh")
+  const registryStatusSummary = isRegistryLoading
+    ? t("remoteConfigStatusLoading")
+    : lastCheckAt
+      ? t("remoteConfigStatusSummary", {
+          revision: registryRevision !== undefined ? String(registryRevision) : "—",
+          time: formatCheckTime(lastCheckAt),
+        })
+      : t("remoteConfigNeverChecked")
 
-  const openImportPicker = (trigger: HTMLElement) => {
-    confirmationTriggerRef.current = trigger
-    fileInputRef.current?.click()
-  }
+  const tabs = [
+    { id: SITE_PACKS_TAB_IDS.INSTALLED, label: t("sitePacksTabInstalled") },
+    { id: SITE_PACKS_TAB_IDS.ORIGINS, label: t("sitePacksTabOrigins") },
+    { id: SITE_PACKS_TAB_IDS.UPDATES, label: t("sitePacksTabUpdates") },
+  ]
 
   return (
     <div
@@ -1270,41 +1311,36 @@ const SitePacksPage: React.FC = () => {
       tabIndex={-1}
       aria-busy={isInstalledLoading || isBindingsLoading || isRegistryLoading || isRuntimeLoading}>
       <PageTitle title={t("navSitePacks")} Icon={JSONFileIcon} />
-      <div className="settings-pack-page-intro">
-        <p className="settings-page-desc">{t("sitePacksPageDesc")}</p>
-        <Button
+
+      <div className="settings-pack-toolbar">
+        <TabGroup tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
+        <button
           type="button"
-          size="sm"
-          variant="secondary"
-          className="settings-pack-action-button settings-pack-guide-action"
+          className="settings-pack-guide-link"
           onClick={() => platform.openTab(SITE_PACK_GUIDE_URL)}>
-          <ExternalLinkIcon size={14} />
           {t("sitePacksGuideAction")}
-        </Button>
+          <ExternalLinkIcon size={13} />
+        </button>
       </div>
 
       {permissionReviewPacks.length > 0 && (
-        <div className="settings-pack-permission-review" role="alert">
-          <InfoIcon size={18} />
-          <div className="settings-pack-permission-review-content">
+        <div className="settings-pack-notice warning" role="alert">
+          <InfoIcon size={16} />
+          <div className="settings-pack-notice-body">
             <strong>{t("sitePacksPermissionReviewTitle")}</strong>
-            <p>{t("sitePacksPermissionReviewDesc")}</p>
-            <div className="settings-pack-permission-review-actions">
+            <div className="settings-pack-notice-actions">
               {permissionReviewPacks.map((pack) => {
                 const name = resolveSitePackName(pack.manifest, currentLanguage)
                 return (
-                  <div className="settings-pack-permission-review-item" key={pack.manifest.id}>
-                    <span>{name}</span>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="primary"
-                      disabled={isPackBusy(pack.manifest.id)}
-                      aria-label={`${t("allow")}: ${name}`}
-                      onClick={() => void handleReauthorizePack(pack)}>
-                      {t("allow")}
-                    </Button>
-                  </div>
+                  <Button
+                    key={pack.manifest.id}
+                    type="button"
+                    size="sm"
+                    variant="primary"
+                    disabled={isPackBusy(pack.manifest.id)}
+                    onClick={() => void handleReauthorizePack(pack)}>
+                    {`${t("allow")}: ${name}`}
+                  </Button>
                 )
               })}
             </div>
@@ -1312,310 +1348,359 @@ const SitePacksPage: React.FC = () => {
         </div>
       )}
 
-      {renderFeedback()}
+      {activeTab === SITE_PACKS_TAB_IDS.INSTALLED && (
+        <section className="settings-card">
+          {installedError && (
+            <InlineError message={installedError} onRetry={() => void loadInstalledPacks(true)} />
+          )}
+          {runtimeError && (
+            <InlineError message={runtimeError} onRetry={() => void loadRuntimeStatus(true)} />
+          )}
 
-      <section
-        className="settings-card settings-pack-section"
-        aria-labelledby="site-packs-installed-title">
-        <div className="settings-pack-section-header">
-          <div>
-            <h2 id="site-packs-installed-title">{t("sitePacksInstalledTitle")}</h2>
-            <p>{t("sitePacksInstalledDesc")}</p>
-          </div>
-        </div>
-
-        {installedError && (
-          <div className="settings-pack-inline-error" role="alert">
-            <span>{installedError}</span>
-            <Button
-              type="button"
-              size="sm"
-              variant="secondary"
-              onClick={() => void loadInstalledPacks(true)}>
-              {t("refresh")}
-            </Button>
-          </div>
-        )}
-
-        {runtimeError && (
-          <div className="settings-pack-inline-error" role="alert">
-            <span>{runtimeError}</span>
-            <Button
-              type="button"
-              size="sm"
-              variant="secondary"
-              onClick={() => void loadRuntimeStatus(true)}>
-              {t("refresh")}
-            </Button>
-          </div>
-        )}
-
-        {isInstalledLoading ? (
-          <SitePackListSkeleton />
-        ) : sortedInstalledPacks.length === 0 ? (
-          <div className="settings-pack-empty-state">
-            <JSONFileIcon size={26} />
-            <div>
+          {isInstalledLoading ? (
+            <SitePackListSkeleton />
+          ) : sortedInstalledPacks.length === 0 ? (
+            <div className="settings-pack-empty-state">
+              <JSONFileIcon size={24} />
               <strong>{t("sitePacksNoInstalled")}</strong>
-              <p>{t("sitePacksNoInstalledDesc")}</p>
+              <div className="settings-pack-empty-actions">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="primary"
+                  onClick={() => setActiveTab(SITE_PACKS_TAB_IDS.UPDATES)}>
+                  {t("sitePacksRegistryTitle")}
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  disabled={isImportBusy}
+                  onClick={(event) => openImportPicker(event.currentTarget)}>
+                  <ImportIcon size={14} />
+                  {t("importBtn")}
+                </Button>
+              </div>
             </div>
-            <Button
-              type="button"
-              size="sm"
-              variant="primary"
-              disabled={isImportBusy}
-              onClick={(event) => openImportPicker(event.currentTarget)}>
-              <ImportIcon size={14} />
-              {t("importBtn")}
-            </Button>
-          </div>
-        ) : (
-          <div className="settings-pack-list">{sortedInstalledPacks.map(renderInstalledPack)}</div>
-        )}
-
-        {snapshotIssues.length > 0 && (
-          <div className="settings-pack-issues" role="alert">
-            <strong>{t("sitePacksStoredIssuesTitle")}</strong>
-            <ul>
-              {snapshotIssues.map((issue, index) => (
-                <li key={`${issue.packId ?? "unknown"}-${issue.code}-${index}`}>
-                  {issue.packId && <code>{issue.packId}</code>}
-                  <span>{issue.message}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </section>
-
-      <section
-        className="settings-card settings-pack-section"
-        aria-labelledby="site-packs-custom-origins-title">
-        <div className="settings-pack-section-header">
-          <div>
-            <h2 id="site-packs-custom-origins-title">{t("sitePacksCustomOriginsTitle")}</h2>
-            <p>{t("sitePacksCustomOriginsDesc")}</p>
-          </div>
-        </div>
-
-        {bindingsError && (
-          <div className="settings-pack-inline-error" role="alert">
-            <span>{bindingsError}</span>
-            <Button
-              type="button"
-              size="sm"
-              variant="secondary"
-              onClick={() => void loadOriginBindings(true)}>
-              {t("refresh")}
-            </Button>
-          </div>
-        )}
-
-        <form
-          className="settings-pack-binding-form"
-          onSubmit={(event) => void handleSaveOriginBinding(event)}>
-          <label className="settings-pack-binding-field">
-            <span>{t("sitePacksCustomOriginLabel")}</span>
-            <Input
-              className="settings-pack-binding-input"
-              type="url"
-              inputMode="url"
-              value={bindingOrigin}
-              placeholder={t("sitePacksCustomOriginPlaceholder")}
-              disabled={isBindingBusy}
-              onChange={(event) => setBindingOrigin(event.target.value)}
-              aria-label={t("sitePacksCustomOriginLabel")}
-            />
-          </label>
-          <div className="settings-pack-binding-options">
-            <div className="settings-pack-binding-field">
-              <span>{t("sitePacksBindingModeLabel")}</span>
-              <SelectDropdown
-                className="settings-select-dropdown settings-pack-binding-select"
-                buttonClassName="settings-select"
-                options={bindingModeOptions}
-                value={bindingMode}
-                disabled={isBindingBusy}
-                ariaLabel={t("sitePacksBindingModeLabel")}
-                onChange={(value) => setBindingMode(value as SitePackOriginBinding["mode"])}
-              />
+          ) : (
+            <div className="settings-pack-list">
+              {sortedInstalledPacks.map(renderInstalledPack)}
             </div>
-            {bindingMode === "explicit" && (
-              <div className="settings-pack-binding-field">
-                <span>{t("sitePacksBindingPackLabel")}</span>
+          )}
+
+          {snapshotIssues.length > 0 && (
+            <details className="settings-pack-issues">
+              <summary>
+                {t("sitePacksStoredIssuesTitle")} ({snapshotIssues.length})
+              </summary>
+              <ul>
+                {snapshotIssues.map((issue, index) => (
+                  <li key={`${issue.packId ?? "unknown"}-${issue.code}-${index}`}>
+                    {issue.packId && <code>{issue.packId}</code>}
+                    <span>{issue.message}</span>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
+        </section>
+      )}
+
+      {activeTab === SITE_PACKS_TAB_IDS.ORIGINS && (
+        <>
+          <section className="settings-card">
+            <div className="settings-card-title">{t("sitePacksCustomOriginsTitle")}</div>
+            <div className="settings-card-desc">{t("sitePacksCustomOriginsDesc")}</div>
+
+            {bindingsError && (
+              <InlineError message={bindingsError} onRetry={() => void loadOriginBindings(true)} />
+            )}
+
+            <form
+              className="settings-pack-binding-form"
+              onSubmit={(event) => void handleSaveOriginBinding(event)}>
+              <label className="settings-pack-field settings-pack-field-origin">
+                <span>{t("sitePacksCustomOriginLabel")}</span>
+                <Input
+                  type="url"
+                  inputMode="url"
+                  value={bindingOrigin}
+                  placeholder={t("sitePacksCustomOriginPlaceholder")}
+                  disabled={isBindingBusy}
+                  onChange={(event) => setBindingOrigin(event.target.value)}
+                  aria-label={t("sitePacksCustomOriginLabel")}
+                />
+              </label>
+              <div className="settings-pack-field">
+                <span>{t("sitePacksBindingModeLabel")}</span>
                 <SelectDropdown
-                  className="settings-select-dropdown settings-pack-binding-select"
+                  className="settings-select-dropdown"
                   buttonClassName="settings-select"
-                  options={bindingPackOptions}
-                  value={bindingPackId}
-                  placeholder={t("sitePacksBindingPackPlaceholder")}
-                  emptyText={t("sitePacksBindingPackPlaceholder")}
-                  disabled={isBindingBusy || bindingPackOptions.length === 0}
-                  ariaLabel={t("sitePacksBindingPackLabel")}
-                  onChange={setBindingPackId}
+                  options={bindingModeOptions}
+                  value={bindingMode}
+                  disabled={isBindingBusy}
+                  ariaLabel={t("sitePacksBindingModeLabel")}
+                  onChange={(value) => setBindingMode(value as SitePackOriginBinding["mode"])}
                 />
               </div>
-            )}
-            <Button
-              type="submit"
-              size="sm"
-              variant="primary"
-              className="settings-pack-action-button settings-pack-binding-submit"
-              disabled={isBindingBusy || isBindingsLoading || isInstalledLoading}>
-              {isUpdatingBinding ? t("sitePacksUpdate") : t("add")}
-            </Button>
-          </div>
-          <p className="settings-pack-binding-hint">{t("sitePacksBindingHint")}</p>
-          {detectPacks.length === 0 && (
-            <p className="settings-pack-binding-hint warning">
-              {t("sitePacksBindingDetectUnavailable")}
-            </p>
-          )}
-        </form>
-
-        {userscriptMatchInfo && missingUserscriptOriginPatterns.length > 0 && (
-          <aside className="settings-pack-userscript-guide" role="status" aria-live="polite">
-            <div className="settings-pack-userscript-guide-header">
-              <InfoIcon size={18} />
-              <div>
-                <strong>{t("sitePacksUserscriptCoverageTitle")}</strong>
-                <p>
-                  {t("sitePacksUserscriptCoverageDesc", {
-                    count: String(missingUserscriptOriginPatterns.length),
-                    manager:
-                      userscriptMatchInfo.managerName ?? t("sitePacksUserscriptManagerUnknown"),
-                  })}
-                </p>
-              </div>
-            </div>
-
-            <div className="settings-pack-userscript-pattern-list">
-              {missingUserscriptOriginPatterns.map((pattern) => (
-                <div className="settings-pack-userscript-pattern" key={pattern}>
-                  <code>{pattern}</code>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="secondary"
-                    className="settings-pack-action-button settings-pack-userscript-copy"
-                    aria-label={`${t("copy")}: ${pattern}`}
-                    onClick={() => void handleCopyUserscriptPattern(pattern)}>
-                    <CopyIcon size={13} />
-                    {copiedUserscriptPattern === pattern ? t("copied") : t("copy")}
-                  </Button>
+              {bindingMode === "explicit" && (
+                <div className="settings-pack-field">
+                  <span>{t("sitePacksBindingPackLabel")}</span>
+                  <SelectDropdown
+                    className="settings-select-dropdown"
+                    buttonClassName="settings-select"
+                    options={bindingPackOptions}
+                    value={bindingPackId}
+                    placeholder={t("sitePacksBindingPackPlaceholder")}
+                    emptyText={t("sitePacksBindingPackPlaceholder")}
+                    disabled={isBindingBusy || bindingPackOptions.length === 0}
+                    ariaLabel={t("sitePacksBindingPackLabel")}
+                    onChange={setBindingPackId}
+                  />
                 </div>
-              ))}
+              )}
+              <Button
+                type="submit"
+                size="sm"
+                variant="primary"
+                className="settings-pack-action-button settings-pack-binding-submit"
+                disabled={isBindingBusy || isBindingsLoading || isInstalledLoading}>
+                {isUpdatingBinding ? t("sitePacksUpdate") : t("add")}
+              </Button>
+            </form>
+
+            {bindingMode === "detect" && detectPacks.length === 0 && (
+              <p className="settings-pack-field-hint warning">
+                {t("sitePacksBindingDetectUnavailable")}
+              </p>
+            )}
+          </section>
+
+          {userscriptMatchInfo && missingUserscriptOriginPatterns.length > 0 && (
+            <section className="settings-card">
+              <div className="settings-card-title">{t("sitePacksUserscriptCoverageTitle")}</div>
+              <div className="settings-card-desc">
+                {t("sitePacksUserscriptCoverageDesc", {
+                  count: String(missingUserscriptOriginPatterns.length),
+                  manager:
+                    userscriptMatchInfo.managerName ?? t("sitePacksUserscriptManagerUnknown"),
+                })}
+              </div>
+              <div className="settings-pack-pattern-list">
+                {missingUserscriptOriginPatterns.map((pattern) => (
+                  <div className="settings-pack-pattern" key={pattern}>
+                    <code>{pattern}</code>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      className="settings-pack-action-button"
+                      aria-label={`${t("copy")}: ${pattern}`}
+                      onClick={() => void handleCopyUserscriptPattern(pattern)}>
+                      <CopyIcon size={13} />
+                      {t("copy")}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <section className="settings-card">
+            <div className="settings-card-title">{t("sitePacksBindingListTitle")}</div>
+            {isBindingsLoading ? (
+              <SitePackListSkeleton />
+            ) : sortedOriginBindings.length === 0 ? (
+              <div className="settings-pack-empty-state">
+                <InfoIcon size={24} />
+                <strong>{t("sitePacksBindingEmpty")}</strong>
+              </div>
+            ) : (
+              <div className="settings-pack-list">
+                {sortedOriginBindings.map((entry) => renderOriginBinding(entry))}
+              </div>
+            )}
+          </section>
+        </>
+      )}
+
+      {activeTab === SITE_PACKS_TAB_IDS.UPDATES && (
+        <>
+          <section className="settings-card" data-setting-id="remote-config-status">
+            <div className="settings-card-title">{t("remoteConfigSettingsTitle")}</div>
+
+            <ToggleRow
+              label={t("remoteConfigAutoUpdateLabel")}
+              description={t("remoteConfigAutoUpdateDesc")}
+              settingId="remote-config-auto-update"
+              checked={settings.remoteConfig?.autoUpdate ?? true}
+              onChange={() =>
+                updateNestedSetting(
+                  "remoteConfig",
+                  "autoUpdate",
+                  !(settings.remoteConfig?.autoUpdate ?? true),
+                )
+              }
+            />
+
+            <SettingRow
+              label={t("remoteConfigCheckNowLabel")}
+              description={registryStatusSummary}
+              settingId="remote-config-check-now">
+              <Button
+                type="button"
+                variant="secondary"
+                className="settings-pack-action-button"
+                disabled={isRegistryBusy}
+                onClick={() => void refreshRegistry()}>
+                <RefreshIcon size={14} className={isCheckingRegistry ? "spinning" : ""} />
+                {isCheckingRegistry
+                  ? t("remoteConfigCheckingButton")
+                  : t("remoteConfigCheckNowButton")}
+              </Button>
+            </SettingRow>
+
+            {IS_DEVELOPMENT_BUILD && (
+              <SettingRow
+                label={t("remoteConfigRegistrySourceLabel")}
+                description={t("remoteConfigRegistrySourceDesc")}
+                settingId="remote-config-registry-source">
+                <div className="settings-pack-source-editor">
+                  <div className="settings-pack-source-controls">
+                    <Input
+                      type="url"
+                      inputMode="url"
+                      value={registrySourceInput}
+                      placeholder={t("remoteConfigRegistrySourcePlaceholder")}
+                      aria-label={t("remoteConfigRegistrySourceLabel")}
+                      aria-invalid={registrySourceError ? "true" : undefined}
+                      disabled={isRegistryBusy}
+                      spellCheck={false}
+                      onChange={(event) => {
+                        setRegistrySourceInput(event.target.value)
+                        setRegistrySourceError(null)
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      className="settings-pack-action-button"
+                      disabled={
+                        isRegistryBusy || registrySourceInput.trim() === configuredRegistrySource
+                      }
+                      onClick={handleApplyRegistrySource}>
+                      {t("remoteConfigRegistrySourceApplyButton")}
+                    </Button>
+                  </div>
+                  {registrySourceError && (
+                    <span className="settings-pack-source-error" role="alert">
+                      {registrySourceError}
+                    </span>
+                  )}
+                </div>
+              </SettingRow>
+            )}
+
+            <div className="settings-pack-patches" data-setting-id="remote-config-active-patches">
+              <h3>{t("remoteConfigActivePatchesLabel")}</h3>
+              {activePatches.length === 0 ? (
+                <div className="settings-pack-empty-state compact">
+                  <CloudIcon size={20} />
+                  <strong>{t("remoteConfigUsingBuiltin")}</strong>
+                </div>
+              ) : (
+                <div className="settings-pack-list">
+                  {activePatches.map((patch) => (
+                    <div className="settings-pack-item" key={patch.siteId}>
+                      <div className="settings-pack-info">
+                        <div className="settings-pack-title-line">
+                          <strong>{patch.siteName}</strong>
+                        </div>
+                        <div className="settings-pack-meta">
+                          <span>
+                            {t("remoteConfigPatchVersionLabel")} {patch.patchVersion}
+                          </span>
+                          <span>
+                            {t("remoteConfigBaseVersionLabel")} {patch.baseConfigVersion}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="settings-pack-controls">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          className="settings-pack-action-button"
+                          disabled={isRegistryBusy || resettingSiteId !== null}
+                          onClick={() =>
+                            void handleResetSite(patch.siteId, patch.siteName, patch.patchVersion)
+                          }>
+                          {resettingSiteId === patch.siteId
+                            ? t("remoteConfigResettingButton")
+                            : t("remoteConfigResetBuiltinButton")}
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
-            <ol className="settings-pack-userscript-steps">
-              <li>{t("sitePacksUserscriptStepOpen")}</li>
-              <li>{t("sitePacksUserscriptStepAdd")}</li>
-              <li>{t("sitePacksUserscriptStepReload")}</li>
-            </ol>
-          </aside>
-        )}
+            <p className="settings-pack-privacy-note">{t("remoteConfigPrivacyDesc")}</p>
+          </section>
 
-        {isBindingsLoading ? (
-          <SitePackListSkeleton />
-        ) : sortedOriginBindings.length === 0 ? (
-          <div className="settings-pack-empty-state settings-pack-binding-empty">
-            <InfoIcon size={24} />
-            <div>
-              <strong>{t("sitePacksBindingEmpty")}</strong>
-              <p>{t("sitePacksBindingHint")}</p>
+          <section className="settings-card">
+            <div className="settings-card-title">{t("sitePacksRegistryTitle")}</div>
+
+            {registryError && (
+              <InlineError message={registryError} onRetry={() => void loadRegistryState(true)} />
+            )}
+
+            {isRegistryLoading ? (
+              <SitePackListSkeleton />
+            ) : registryViews.length === 0 ? (
+              <div className="settings-pack-empty-state">
+                <RefreshIcon size={24} />
+                <strong>{t("sitePacksRegistryEmpty")}</strong>
+              </div>
+            ) : (
+              <div className="settings-pack-list">{registryViews.map(renderRegistryPack)}</div>
+            )}
+          </section>
+
+          <section className="settings-card">
+            <div className="settings-pack-import-row">
+              <div>
+                <div className="settings-card-title">{t("sitePacksLocalImportTitle")}</div>
+                <div className="settings-card-desc">{t("sitePacksLocalImportDesc")}</div>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                className="settings-pack-action-button"
+                data-site-pack-import-trigger="persistent"
+                disabled={isImportBusy}
+                onClick={(event) => openImportPicker(event.currentTarget)}>
+                <ImportIcon size={14} />
+                {t("importBtn")}
+              </Button>
             </div>
-          </div>
-        ) : (
-          <div className="settings-pack-binding-list">
-            {sortedOriginBindings.map((entry) => renderOriginBinding(entry))}
-          </div>
-        )}
-      </section>
+          </section>
+        </>
+      )}
 
-      <section
-        className="settings-card settings-pack-section"
-        aria-labelledby="site-packs-registry-title">
-        <div className="settings-pack-section-header">
-          <div>
-            <h2 id="site-packs-registry-title">{t("sitePacksRegistryTitle")}</h2>
-            <p>{t("sitePacksRegistryDesc")}</p>
-          </div>
-          <Button
-            type="button"
-            size="sm"
-            variant="secondary"
-            className="settings-pack-action-button"
-            disabled={isRegistryBusy}
-            onClick={() => void refreshRegistry()}>
-            <RefreshIcon size={13} className={busyKeys.has("registry:refresh") ? "spinning" : ""} />
-            {t("sitePacksRefreshRegistry")}
-          </Button>
-        </div>
-
-        {registryError && (
-          <div className="settings-pack-inline-error" role="alert">
-            <span>{registryError}</span>
-            <Button
-              type="button"
-              size="sm"
-              variant="secondary"
-              onClick={() => void loadRegistryState(true)}>
-              {t("refresh")}
-            </Button>
-          </div>
-        )}
-
-        {isRegistryLoading ? (
-          <SitePackListSkeleton />
-        ) : registryViews.length === 0 ? (
-          <div className="settings-pack-empty-state">
-            <RefreshIcon size={24} />
-            <div>
-              <strong>{t("sitePacksRegistryEmpty")}</strong>
-              <p>{t("sitePacksRegistryEmptyDesc")}</p>
-            </div>
-          </div>
-        ) : (
-          <div className="settings-pack-list">{registryViews.map(renderRegistryPack)}</div>
-        )}
-      </section>
-
-      <section
-        className="settings-card settings-pack-section"
-        aria-labelledby="site-packs-import-title">
-        <div className="settings-pack-section-header">
-          <div>
-            <h2 id="site-packs-import-title">{t("sitePacksLocalImportTitle")}</h2>
-            <p>{t("sitePacksLocalImportDesc")}</p>
-          </div>
-          <Button
-            type="button"
-            size="sm"
-            variant="primary"
-            className="settings-pack-action-button"
-            data-site-pack-import-trigger="persistent"
-            disabled={isImportBusy}
-            onClick={(event) => openImportPicker(event.currentTarget)}>
-            <ImportIcon size={14} />
-            {t("importBtn")}
-          </Button>
-          <input
-            ref={fileInputRef}
-            className="settings-pack-file-input"
-            type="file"
-            accept="application/json,.json"
-            onChange={(event) => void handleFileSelected(event)}
-          />
-        </div>
-      </section>
-
-      <div className="settings-pack-activation-note" role="note">
-        <InfoIcon size={18} />
-        <span>{t("sitePacksChangesApplyHint")}</span>
-      </div>
+      <input
+        ref={fileInputRef}
+        className="settings-pack-file-input"
+        type="file"
+        accept="application/json,.json"
+        onChange={(event) => void handleFileSelected(event)}
+      />
 
       {confirmation?.type === "import" && (
-        <SitePackConfirmationDialog
+        <SitePackDialog
           title={t("sitePacksImportConfirmTitle")}
           confirmText={t("confirm")}
           busy={isDialogBusy}
@@ -1633,11 +1718,11 @@ const SitePacksPage: React.FC = () => {
             })}
           </p>
           <code className="settings-pack-dialog-file">{confirmation.fileName}</code>
-        </SitePackConfirmationDialog>
+        </SitePackDialog>
       )}
 
       {confirmation?.type === "uninstall" && (
-        <SitePackConfirmationDialog
+        <SitePackDialog
           title={t("sitePacksUninstallConfirmTitle")}
           confirmText={t("sitePacksUninstall")}
           danger
@@ -1652,7 +1737,26 @@ const SitePacksPage: React.FC = () => {
             })}
           </p>
           <p>{t("sitePacksUninstallKeepData")}</p>
-        </SitePackConfirmationDialog>
+        </SitePackDialog>
+      )}
+
+      {validationReport && (
+        <SitePackDialog
+          title={validationReport.title}
+          confirmText={t("close")}
+          variant="notice"
+          restoreFocusFallback={getConfirmationFocusFallback}
+          onConfirm={() => setValidationReport(null)}
+          onCancel={() => setValidationReport(null)}>
+          <ul className="settings-pack-validation-list">
+            {validationReport.errors.map((error, index) => (
+              <li key={`${error.path}-${error.code}-${index}`}>
+                <code>{error.path}</code>
+                <span>{error.message}</span>
+              </li>
+            ))}
+          </ul>
+        </SitePackDialog>
       )}
     </div>
   )

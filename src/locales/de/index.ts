@@ -189,7 +189,7 @@ export const de = {
   // ======== Options Page Navigation ========
   navGeneral: "Allgemein",
   navSiteSettings: "Websites",
-  navSitePacks: "Site-Pakete",
+  navSitePacks: "Website-Adapter",
   navGlobalSearch: "Globale Suche",
   navAppearance: "Erscheinungsbild",
   navPageContent: "Inhalt",
@@ -206,19 +206,17 @@ export const de = {
     "Diese Website wird durch ein Community-Adapterpaket unterstützt. Es werden nur deklarierte und unterstützte Funktionen angezeigt.",
 
   // SitePack Manager
-  sitePacksPageDesc: "Community-Adapterpakete installieren und verwalten",
-  sitePacksGuideAction: "SitePack-Anleitung öffnen",
-  sitePacksInstalledTitle: "Installierte Pakete",
-  sitePacksInstalledDesc:
-    "Auf diesem Gerät gespeicherte Adapterpakete aktivieren, aktualisieren oder entfernen.",
+  sitePacksGuideAction: "Anleitung",
   sitePacksRegistryTitle: "Community-Registry",
-  sitePacksRegistryDesc:
-    "Adapterpakete durchsuchen, die aus der offiziellen Community-Registry zwischengespeichert wurden.",
   sitePacksLocalImportTitle: "Lokaler JSON-Import",
-  sitePacksLocalImportDesc:
-    "Ein vertrauenswürdiges SitePack-Manifest von diesem Gerät importieren.",
+  sitePacksLocalImportDesc: "Importiere nur JSON-Manifeste aus vertrauenswürdiger Quelle.",
   sitePacksCheckUpdates: "Nach Updates suchen",
-  sitePacksRefreshRegistry: "Registry aktualisieren",
+  sitePacksTabInstalled: "Installiert",
+  sitePacksTabOrigins: "Domains",
+  sitePacksTabUpdates: "Updates & Quellen",
+  sitePacksBindingListTitle: "Verknüpfte Domains",
+  sitePacksStatusUnavailable: "Aus Katalog entfernt",
+  remoteConfigStatusSummary: "Index {revision} · zuletzt geprüft {time}",
   sitePacksInstall: "Installieren",
   sitePacksUpdate: "Aktualisieren",
   sitePacksUninstall: "Deinstallieren",
@@ -231,11 +229,7 @@ export const de = {
   sitePacksStatusDisabled: "Deaktiviert",
   sitePacksStatusIncompatible: "Nicht kompatibel",
   sitePacksNoInstalled: "Keine Site-Pakete installiert",
-  sitePacksNoInstalledDesc:
-    "Aus der Registry installieren oder eine vertrauenswürdige lokale JSON-Datei importieren.",
   sitePacksRegistryEmpty: "Keine Pakete im Registry-Cache",
-  sitePacksRegistryEmptyDesc:
-    "Die Registry aktualisieren, um nach verfügbaren Community-Paketen zu suchen.",
   sitePacksLoadFailed: "Site-Pakete konnten nicht geladen werden: {error}",
   sitePacksOperationFailed: "Site-Paket-Aktion fehlgeschlagen: {error}",
   sitePacksPermissionTitle: "Site-Paket-Zugriff erlauben?",
@@ -243,8 +237,6 @@ export const de = {
   sitePacksPermissionDenied:
     'Der Site-Zugriff für "{name}" wurde nicht gewährt; das Paket bleibt deaktiviert.',
   sitePacksPermissionReviewTitle: "Wiederhergestellte Site-Packs erneut autorisieren",
-  sitePacksPermissionReviewDesc:
-    "Browser-Berechtigungen für Websites sind nicht in Backups enthalten. Erteile den unten aktivierten Packs erneut Zugriff, um sie wieder zu aktivieren.",
   sitePacksInvalidFile: "Diese JSON-Datei ist kein gültiges SitePack.",
   sitePacksValidationErrorsTitle: "Validierungsdetails",
   sitePacksStoredIssuesTitle: "Probleme gespeicherter Pakete",
@@ -263,14 +255,10 @@ export const de = {
   sitePacksDisabledState: "deaktiviert",
   sitePacksPackUpToDate: "{name} ist aktuell.",
   sitePacksPackUpdated: "{name} wurde auf Version {version} aktualisiert.",
-  sitePacksChangesApplyHint:
-    "Änderungen werden sofort gespeichert. Passende Seiten benötigen eventuell eine Berechtigung und ein Neuladen, bevor der Adapter aktiv wird.",
-  sitePacksLocalUpdateHint: "Durch Import einer neueren lokalen JSON-Datei aktualisieren",
   sitePacksRequiresNewerApp: "Erfordert Ophel {version} oder neuer",
-  sitePacksMatchesCount: "{count} passende Muster",
   sitePacksCustomOriginsTitle: "Benutzerdefinierte Ursprünge",
   sitePacksCustomOriginsDesc:
-    "Eine selbst gehostete HTTPS-Quelle mit einem installierten Pack oder dem gemeinsamen Erkennungspool verknüpfen.",
+    "Verknüpft eine selbst gehostete HTTPS-Domain mit einem installierten Paket.",
   sitePacksCustomOriginLabel: "HTTPS-Ursprung",
   sitePacksCustomOriginPlaceholder: "https://chat.example.com",
   sitePacksBindingModeLabel: "Verknüpfungsmodus",
@@ -290,14 +278,9 @@ export const de = {
   sitePacksUserscriptCoverageDesc:
     "In {manager} fehlen {count} SitePack-Match-Regeln. Kopiere die folgenden Regeln, bevor du die betroffenen Websites öffnest.",
   sitePacksUserscriptManagerUnknown: "Der aktuelle Userscript-Manager",
-  sitePacksUserscriptStepOpen: "Öffne die Einstellungen des Ophel-Scripts im Userscript-Manager.",
-  sitePacksUserscriptStepAdd:
-    "Füge jede kopierte Regel zu den benutzerdefinierten Match-Regeln hinzu (Tampermonkey: Einstellungen → Einschließen/Ausschließen → Benutzer-Matches).",
-  sitePacksUserscriptStepReload: "Speichere die Einstellungen und lade jede Zielwebsite neu.",
   sitePacksBindingPackRequired: "Wähle für den expliziten Modus ein installiertes SitePack aus.",
   sitePacksBindingDetectRequired:
     "Installiere vor dem Erkennungsmodus ein SitePack mit Erkennungsregeln.",
-  sitePacksBindingReferences: "{count} Referenzen",
   sitePackDetectMultipleTitle: "Mehrere SitePacks erkannt",
   sitePackDetectMultipleDesc:
     "Aktuell wird „{name}“ verwendet. Wenn dies nicht passt, kannst du ein anderes erkanntes SitePack festlegen.",
@@ -1972,13 +1955,9 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
     "Desktop-Benachrichtigung wenn KI fertig ist — keine Antwort verpassen",
   "featureTip-notifications-path": "Funktionen → Hinweise → Desktop-Benachrichtigung",
   // Aktualisierungen der Adapterkonfiguration
-  remoteConfigTab: "Konfig.-Updates",
   remoteConfigSettingsTitle: "Aktualisierungen der Adapterkonfiguration",
-  remoteConfigSettingsDesc:
-    "Automatische Updates, Versionsstatus und lokale Rücksetzung von Website-Konfigurationen verwalten",
   remoteConfigAutoUpdateLabel: "Adapterkonfigurationen automatisch aktualisieren",
-  remoteConfigAutoUpdateDesc:
-    "Standardmäßig aktiviert. Die Erweiterung prüft statische CDNs höchstens einmal alle 24 Stunden.",
+  remoteConfigAutoUpdateDesc: "Prüft höchstens einmal alle 24 Stunden.",
   remoteConfigRegistrySourceLabel: "Registry-Quelle für die Entwicklung",
   remoteConfigRegistrySourceDesc:
     "Nur in Entwicklungs-Builds verfügbar. Vollständige index.json-URL eingeben; leer lassen, um die Standardquellen zu verwenden.",
@@ -1989,29 +1968,22 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   remoteConfigRegistrySourceCleared: "Standard-Registry-Quellen wiederhergestellt.",
   remoteConfigRegistrySourceInvalid: "Ungültige Registry-Quelle: {error}",
   remoteConfigCheckNowLabel: "Jetzt nach Updates suchen",
-  remoteConfigCheckNowDesc:
-    "Die manuelle Suche bleibt verfügbar, wenn automatische Updates deaktiviert sind.",
   remoteConfigCheckNowButton: "Jetzt prüfen",
   remoteConfigCheckingButton: "Wird geprüft…",
   remoteConfigStatusLoading: "Wird geladen…",
-  remoteConfigRegistryRevisionLabel: "Registry-Revision",
-  remoteConfigLastCheckLabel: "Zuletzt geprüft",
   remoteConfigNeverChecked: "Noch nie geprüft",
-  remoteConfigNotAvailable: "Nicht verfügbar",
   remoteConfigActivePatchesLabel: "Aktive Patches",
   remoteConfigUsingBuiltin: "Derzeit werden die integrierten Konfigurationen verwendet",
   remoteConfigPatchVersionLabel: "Patch-Version",
   remoteConfigBaseVersionLabel: "Version der integrierten Konfiguration",
   remoteConfigResetBuiltinButton: "Auf integriert zurücksetzen",
   remoteConfigResettingButton: "Wird zurückgesetzt…",
-  remoteConfigPrivacyTitle: "Datenschutz",
   remoteConfigPrivacyDesc:
-    "Die Update-Prüfung sendet nur GET-Anfragen an statische CDNs und enthält keine Unterhaltungen, Kontodaten oder andere Nutzerdaten.",
+    "Update-Prüfungen senden nur GET-Anfragen an statische CDNs, ohne Konversations- oder Kontodaten.",
   remoteConfigCheckUpdated:
     "Neue Adapterkonfigurationen wurden heruntergeladen. Laden Sie die passenden AI-Seiten neu, um sie anzuwenden.",
   remoteConfigCheckUpToDate: "Ihre Adapterkonfigurationen sind aktuell.",
   remoteConfigCheckFailed: "Update-Prüfung fehlgeschlagen: {error}",
-  remoteConfigStateFailed: "Status der Konfigurationsupdates konnte nicht geladen werden: {error}",
   remoteConfigResetSuccess: "{site} wurde auf die integrierte Konfiguration zurückgesetzt.",
   remoteConfigResetFailed: "Zurücksetzen fehlgeschlagen: {error}",
   remoteConfigResetUnavailable: "Es gibt keine aktive Konfiguration zum Zurücksetzen.",

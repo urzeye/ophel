@@ -182,7 +182,7 @@ export const ru = {
   // ======== Options Page Navigation ========
   navGeneral: "Общие",
   navSiteSettings: "Сайты",
-  navSitePacks: "Пакеты сайтов",
+  navSitePacks: "Адаптеры сайтов",
   navGlobalSearch: "Глобальный поиск",
   navAppearance: "Вид",
   navPageContent: "Контент",
@@ -199,19 +199,17 @@ export const ru = {
     "Этот сайт поддерживается пакетом адаптера сообщества. Отображаются только заявленные и поддерживаемые функции.",
 
   // SitePack Manager
-  sitePacksPageDesc: "Установка и управление пакетами адаптеров сообщества",
-  sitePacksGuideAction: "Открыть руководство SitePack",
-  sitePacksInstalledTitle: "Установленные пакеты",
-  sitePacksInstalledDesc:
-    "Включайте, обновляйте или удаляйте пакеты адаптеров, сохранённые на этом устройстве.",
+  sitePacksGuideAction: "Руководство",
   sitePacksRegistryTitle: "Каталог сообщества",
-  sitePacksRegistryDesc:
-    "Просматривайте пакеты адаптеров, сохранённые из официального каталога сообщества.",
   sitePacksLocalImportTitle: "Импорт локального JSON",
-  sitePacksLocalImportDesc:
-    "Импортируйте с этого устройства манифест SitePack из надёжного источника.",
+  sitePacksLocalImportDesc: "Импортируйте только JSON-манифесты из доверенного источника.",
   sitePacksCheckUpdates: "Проверить обновления",
-  sitePacksRefreshRegistry: "Обновить каталог",
+  sitePacksTabInstalled: "Установленные",
+  sitePacksTabOrigins: "Домены",
+  sitePacksTabUpdates: "Обновления и источники",
+  sitePacksBindingListTitle: "Привязанные домены",
+  sitePacksStatusUnavailable: "Удалён из каталога",
+  remoteConfigStatusSummary: "Индекс {revision} · последняя проверка {time}",
   sitePacksInstall: "Установить",
   sitePacksUpdate: "Обновить",
   sitePacksUninstall: "Удалить",
@@ -224,10 +222,7 @@ export const ru = {
   sitePacksStatusDisabled: "Отключён",
   sitePacksStatusIncompatible: "Несовместим",
   sitePacksNoInstalled: "Пакеты сайтов не установлены",
-  sitePacksNoInstalledDesc:
-    "Установите пакет из каталога или импортируйте надёжный локальный JSON-файл.",
   sitePacksRegistryEmpty: "В кэше каталога нет пакетов",
-  sitePacksRegistryEmptyDesc: "Обновите каталог, чтобы проверить доступные пакеты сообщества.",
   sitePacksLoadFailed: "Не удалось загрузить пакеты сайтов: {error}",
   sitePacksOperationFailed: "Не удалось выполнить операцию с пакетом сайта: {error}",
   sitePacksPermissionTitle: "Разрешить пакету сайтов доступ?",
@@ -235,8 +230,6 @@ export const ru = {
   sitePacksPermissionDenied:
     "Доступ к сайтам для «{name}» не предоставлен, поэтому пакет остаётся отключённым.",
   sitePacksPermissionReviewTitle: "Повторно разрешить восстановленные пакеты",
-  sitePacksPermissionReviewDesc:
-    "Разрешения браузера для сайтов не входят в резервную копию. Снова предоставьте доступ активным пакетам ниже, чтобы включить их.",
   sitePacksInvalidFile: "Этот JSON-файл не является допустимым SitePack.",
   sitePacksValidationErrorsTitle: "Сведения о проверке",
   sitePacksStoredIssuesTitle: "Проблемы сохранённых пакетов",
@@ -255,14 +248,10 @@ export const ru = {
   sitePacksDisabledState: "отключён",
   sitePacksPackUpToDate: "{name} уже обновлён до последней версии.",
   sitePacksPackUpdated: "{name} обновлён до версии {version}.",
-  sitePacksChangesApplyHint:
-    "Изменения сохраняются сразу. До активации адаптера подходящим страницам могут потребоваться разрешение и перезагрузка.",
-  sitePacksLocalUpdateHint: "Для обновления импортируйте более новый локальный JSON-файл",
   sitePacksRequiresNewerApp: "Требуется Ophel {version} или новее",
-  sitePacksMatchesCount: "Шаблонов соответствия: {count}",
   sitePacksCustomOriginsTitle: "Пользовательские домены",
   sitePacksCustomOriginsDesc:
-    "Привяжите самостоятельно размещённый HTTPS-домен к установленному пакету или общему пулу обнаружения.",
+    "Привязывает самостоятельно размещённый HTTPS-домен к установленному пакету.",
   sitePacksCustomOriginLabel: "HTTPS-домен",
   sitePacksCustomOriginPlaceholder: "https://chat.example.com",
   sitePacksBindingModeLabel: "Режим привязки",
@@ -282,14 +271,9 @@ export const ru = {
   sitePacksUserscriptCoverageDesc:
     "В {manager} не хватает правил SitePack: {count}. Скопируйте правила ниже перед открытием этих сайтов.",
   sitePacksUserscriptManagerUnknown: "Текущий менеджер userscript",
-  sitePacksUserscriptStepOpen: "Откройте настройки скрипта Ophel в менеджере userscript.",
-  sitePacksUserscriptStepAdd:
-    "Добавьте каждое скопированное правило в пользовательские совпадения (Tampermonkey: Настройки → Включения/исключения → Пользовательские совпадения).",
-  sitePacksUserscriptStepReload: "Сохраните настройки и перезагрузите каждый целевой сайт.",
   sitePacksBindingPackRequired: "Для явного режима выберите установленный SitePack.",
   sitePacksBindingDetectRequired:
     "Перед использованием режима обнаружения установите SitePack с правилами обнаружения.",
-  sitePacksBindingReferences: "Ссылок: {count}",
   sitePackDetectMultipleTitle: "Обнаружено несколько SitePack",
   sitePackDetectMultipleDesc:
     "Сейчас используется «{name}». Если это не тот вариант, закрепите другой обнаруженный SitePack.",
@@ -1953,13 +1937,9 @@ export const ru = {
     "Получайте уведомление на рабочем столе, когда ИИ закончит ответ — ничего не пропустите",
   "featureTip-notifications-path": "Функции → Оповещения → Уведомление на раб. стол",
   // Обновления конфигурации адаптеров
-  remoteConfigTab: "Обновления",
   remoteConfigSettingsTitle: "Обновления конфигурации адаптеров",
-  remoteConfigSettingsDesc:
-    "Управление автоматическими обновлениями, версиями и локальным возвратом конфигураций сайтов",
   remoteConfigAutoUpdateLabel: "Автоматически обновлять конфигурации адаптеров",
-  remoteConfigAutoUpdateDesc:
-    "Включено по умолчанию. Расширение проверяет статические CDN не чаще одного раза в 24 часа.",
+  remoteConfigAutoUpdateDesc: "Проверяет не чаще одного раза в 24 часа.",
   remoteConfigRegistrySourceLabel: "Источник Registry для разработки",
   remoteConfigRegistrySourceDesc:
     "Доступно только в dev-сборках. Укажите полный URL index.json; оставьте поле пустым, чтобы использовать источники по умолчанию.",
@@ -1970,29 +1950,22 @@ export const ru = {
   remoteConfigRegistrySourceCleared: "Источники Registry по умолчанию восстановлены.",
   remoteConfigRegistrySourceInvalid: "Недопустимый источник Registry: {error}",
   remoteConfigCheckNowLabel: "Проверить обновления сейчас",
-  remoteConfigCheckNowDesc:
-    "Ручная проверка доступна даже при отключённых автоматических обновлениях.",
   remoteConfigCheckNowButton: "Проверить сейчас",
   remoteConfigCheckingButton: "Проверка…",
   remoteConfigStatusLoading: "Загрузка…",
-  remoteConfigRegistryRevisionLabel: "Ревизия реестра",
-  remoteConfigLastCheckLabel: "Последняя проверка",
   remoteConfigNeverChecked: "Ещё не проверялось",
-  remoteConfigNotAvailable: "Недоступно",
   remoteConfigActivePatchesLabel: "Активные патчи",
   remoteConfigUsingBuiltin: "Сейчас используются встроенные конфигурации",
   remoteConfigPatchVersionLabel: "Версия патча",
   remoteConfigBaseVersionLabel: "Версия встроенной конфигурации",
   remoteConfigResetBuiltinButton: "Вернуть встроенную",
   remoteConfigResettingButton: "Возврат…",
-  remoteConfigPrivacyTitle: "Конфиденциальность",
   remoteConfigPrivacyDesc:
-    "Проверка обновлений выполняет только GET-запросы к статическим CDN и не передаёт переписки, данные аккаунта или другие пользовательские данные.",
+    "Проверки отправляют только GET-запросы к статическим CDN, без переписки и данных аккаунта.",
   remoteConfigCheckUpdated:
     "Новые конфигурации загружены. Обновите соответствующие страницы AI, чтобы применить их.",
   remoteConfigCheckUpToDate: "Конфигурации адаптеров актуальны.",
   remoteConfigCheckFailed: "Не удалось проверить обновления: {error}",
-  remoteConfigStateFailed: "Не удалось загрузить состояние обновлений: {error}",
   remoteConfigResetSuccess: "Для {site} восстановлена встроенная конфигурация.",
   remoteConfigResetFailed: "Не удалось выполнить возврат: {error}",
   remoteConfigResetUnavailable: "Нет активной конфигурации для возврата.",
