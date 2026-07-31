@@ -154,7 +154,11 @@ export interface SupportedAiPlatform {
   /** 产品侧 URL 识别与 registry 冲突校验共用的单一域名声明。 */
   matchPatterns: readonly string[]
   pattern: SiteUrlPatternMatcher
-  url: string
+  /**
+   * 可直接打开的入口地址。内置站点恒为一条；适配包按静态 matches 与用户绑定域名展开，
+   * 未绑定任何域名时为空数组——消费方必须显式处理"没有入口"这种状态。
+   */
+  entryUrls: readonly string[]
   icon: string
   faviconUrl?: string
 }
@@ -199,14 +203,14 @@ export const SUPPORTED_AI_PLATFORMS: SupportedAiPlatform[] = [
       "https://*.chatgpt.com/*",
       "https://chat.openai.com/*",
     ],
-    url: "https://chatgpt.com",
+    entryUrls: ["https://chatgpt.com"],
     icon: "💬",
   }),
   createSupportedAiPlatform({
     id: SITE_IDS.GEMINI,
     name: "Gemini",
     matchPatterns: ["https://gemini.google.com/*", "https://*.gemini.google.com/*"],
-    url: "https://gemini.google.com",
+    entryUrls: ["https://gemini.google.com"],
     icon: "🌟",
   }),
   createSupportedAiPlatform({
@@ -218,91 +222,91 @@ export const SUPPORTED_AI_PLATFORMS: SupportedAiPlatform[] = [
       "https://claude.com/*",
       "https://*.claude.com/*",
     ],
-    url: "https://claude.ai",
+    entryUrls: ["https://claude.ai"],
     icon: "🎭",
   }),
   createSupportedAiPlatform({
     id: SITE_IDS.AISTUDIO,
     name: "AI Studio",
     matchPatterns: ["https://aistudio.google.com/*"],
-    url: "https://aistudio.google.com",
+    entryUrls: ["https://aistudio.google.com"],
     icon: "🧪",
   }),
   createSupportedAiPlatform({
     id: SITE_IDS.GROK,
     name: "Grok",
     matchPatterns: ["https://grok.com/*", "https://*.grok.com/*"],
-    url: "https://grok.com",
+    entryUrls: ["https://grok.com"],
     icon: "🤖",
   }),
   createSupportedAiPlatform({
     id: SITE_IDS.GEMINI_ENTERPRISE,
     name: "Gemini Enterprise",
     matchPatterns: ["https://business.gemini.google/*", "https://*.business.gemini.google/*"],
-    url: "https://business.gemini.google",
+    entryUrls: ["https://business.gemini.google"],
     icon: "🏢",
   }),
   createSupportedAiPlatform({
     id: SITE_IDS.DOUBAO,
     name: "Doubao",
     matchPatterns: ["https://www.doubao.com/*"],
-    url: "https://www.doubao.com",
+    entryUrls: ["https://www.doubao.com"],
     icon: "🌱",
   }),
   createSupportedAiPlatform({
     id: SITE_IDS.DEEPSEEK,
     name: "DeepSeek",
     matchPatterns: ["https://chat.deepseek.com/*"],
-    url: "https://chat.deepseek.com",
+    entryUrls: ["https://chat.deepseek.com"],
     icon: "🌀",
   }),
   createSupportedAiPlatform({
     id: SITE_IDS.KIMI,
     name: "Kimi",
     matchPatterns: ["https://www.kimi.com/*"],
-    url: "https://www.kimi.com",
+    entryUrls: ["https://www.kimi.com"],
     icon: "🌙",
   }),
   createSupportedAiPlatform({
     id: SITE_IDS.ZAI,
     name: "Z.ai",
     matchPatterns: ["https://chat.z.ai/*"],
-    url: "https://chat.z.ai",
+    entryUrls: ["https://chat.z.ai"],
     icon: "⚡",
   }),
   createSupportedAiPlatform({
     id: SITE_IDS.CHATGLM,
     name: "ChatGLM",
     matchPatterns: ["https://chatglm.cn/*"],
-    url: "https://chatglm.cn/main/alltoolsdetail?lang=zh",
+    entryUrls: ["https://chatglm.cn/main/alltoolsdetail?lang=zh"],
     icon: "🧠",
   }),
   createSupportedAiPlatform({
     id: SITE_IDS.YUANBAO,
     name: "Yuanbao",
     matchPatterns: ["https://yuanbao.tencent.com/*"],
-    url: "https://yuanbao.tencent.com",
+    entryUrls: ["https://yuanbao.tencent.com"],
     icon: "💎",
   }),
   createSupportedAiPlatform({
     id: SITE_IDS.QIANWEN,
     name: "Qianwen",
     matchPatterns: ["https://qianwen.com/*", "https://www.qianwen.com/*"],
-    url: "https://www.qianwen.com",
+    entryUrls: ["https://www.qianwen.com"],
     icon: "🔮",
   }),
   createSupportedAiPlatform({
     id: SITE_IDS.QWENAI,
     name: "Qwen Studio",
     matchPatterns: ["https://chat.qwen.ai/*"],
-    url: "https://chat.qwen.ai",
+    entryUrls: ["https://chat.qwen.ai"],
     icon: "🪄",
   }),
   createSupportedAiPlatform({
     id: SITE_IDS.IMA,
     name: "ima",
     matchPatterns: ["https://ima.qq.com/*"],
-    url: "https://ima.qq.com",
+    entryUrls: ["https://ima.qq.com"],
     icon: "🐼",
   }),
 ]

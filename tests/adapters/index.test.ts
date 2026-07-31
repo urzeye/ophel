@@ -334,7 +334,10 @@ describe("AdapterRegistry initialization", () => {
     expect(registryTestState.getOriginBindings).toHaveBeenCalledTimes(1)
     expect(registryTestState.declarativeInstances).toHaveLength(1)
     expect(registry.getAdapter()?.getSiteId()).toBe("pack:static-pack")
-    expect(registryTestState.primeDynamicPlatforms).toHaveBeenCalledWith([pack])
+    expect(registryTestState.primeDynamicPlatforms).toHaveBeenCalledWith(
+      [pack],
+      registryTestState.originBindings,
+    )
 
     expect(registry.initAdapterRegistry()).toBe(readyPromise)
     await registry.initAdapterRegistry()
@@ -375,7 +378,10 @@ describe("AdapterRegistry initialization", () => {
       "earlier-pack",
       "later-pack",
     ])
-    expect(registryTestState.primeDynamicPlatforms).toHaveBeenCalledWith([earlier, later])
+    expect(registryTestState.primeDynamicPlatforms).toHaveBeenCalledWith(
+      [earlier, later],
+      registryTestState.originBindings,
+    )
     expect(console.warn).toHaveBeenCalledWith("[Ophel] SitePack registry issue:", issue)
   })
 
@@ -398,7 +404,10 @@ describe("AdapterRegistry initialization", () => {
     await registry.registryReady()
 
     expect(registry.getAdapter()?.getSiteId()).toBe("pack:valid-pack")
-    expect(registryTestState.primeDynamicPlatforms).toHaveBeenCalledWith([valid])
+    expect(registryTestState.primeDynamicPlatforms).toHaveBeenCalledWith(
+      [valid],
+      registryTestState.originBindings,
+    )
     expect(console.error).toHaveBeenCalledWith(
       "[Ophel] Failed to initialize SitePack broken-pack; skipping package:",
       expect.any(Error),
@@ -414,7 +423,10 @@ describe("AdapterRegistry initialization", () => {
 
     expect(registry.getAdapter()?.getSiteId()).toBe("chatgpt")
     expect(registryTestState.getOriginBindings).not.toHaveBeenCalled()
-    expect(registryTestState.primeDynamicPlatforms).toHaveBeenCalledWith([])
+    expect(registryTestState.primeDynamicPlatforms).toHaveBeenCalledWith([], {
+      storageSchemaVersion: 1,
+      bindings: {},
+    })
     expect(console.error).toHaveBeenCalledWith(
       "[Ophel] Failed to load installed SitePacks; continuing with built-in adapters:",
       expect.any(Error),
@@ -450,7 +462,10 @@ describe("AdapterRegistry origin activation", () => {
       explicitOrigin: "https://custom.example",
       installSource: "registry",
     })
-    expect(registryTestState.primeDynamicPlatforms).toHaveBeenCalledWith([fallback, explicit])
+    expect(registryTestState.primeDynamicPlatforms).toHaveBeenCalledWith(
+      [fallback, explicit],
+      registryTestState.originBindings,
+    )
   })
 
   it("does not fall back when an explicit binding has no valid enabled package", async () => {
@@ -516,11 +531,10 @@ describe("AdapterRegistry origin activation", () => {
       "https://detect.example",
       registryTestState.detection.result,
     )
-    expect(registryTestState.primeDynamicPlatforms).toHaveBeenCalledWith([
-      staticPack,
-      detectEarly,
-      detectLate,
-    ])
+    expect(registryTestState.primeDynamicPlatforms).toHaveBeenCalledWith(
+      [staticPack, detectEarly, detectLate],
+      registryTestState.originBindings,
+    )
     expect(console.error).toHaveBeenCalledWith(
       "[Ophel] SitePack detection issue on https://detect.example:",
       detectionIssue,

@@ -1667,6 +1667,7 @@ export const ko = {
   popupUnsupported: "미지원",
   popupNewChat: "새 대화",
   popupQuickAccess: "빠른 액세스",
+  popupSitePackUnbound: "도메인 미연결",
   popupRecentUsed: "최근 사용",
   popupNoRecentPrompts: "최근 사용한 프롬프트가 없습니다",
   popupCopied: "복사됨",

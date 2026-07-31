@@ -3,11 +3,17 @@ import { SUPPORTED_AI_PLATFORMS } from "~constants/defaults"
 import type { PlatformStorage } from "~platform"
 import { getCurrentLang } from "~utils/i18n"
 
-import { getDynamicPlatforms, type InstalledSitePack } from "./pack-manager"
+import type { InstalledSitePack } from "./pack-manager"
 import { createRuntimePackManager } from "./pack-manager-runtime"
+import {
+  createEmptySitePackOriginBindingsState,
+  type SitePackOriginBindingsState,
+} from "./site-pack-origin-bindings"
+import { getDynamicPlatforms } from "./site-pack-platforms"
 
 let isCatalogPrimed = false
 let dynamicPacks: readonly InstalledSitePack[] = []
+let dynamicBindings: SitePackOriginBindingsState = createEmptySitePackOriginBindingsState()
 let supportedPlatforms: readonly SupportedAiPlatform[] = [...SUPPORTED_AI_PLATFORMS]
 let supportedLanguage = getCurrentLang()
 let loadPromise: Promise<readonly SupportedAiPlatform[]> | null = null
@@ -16,7 +22,7 @@ const rebuildSupportedPlatforms = (): readonly SupportedAiPlatform[] => {
   supportedLanguage = getCurrentLang()
   supportedPlatforms = [
     ...SUPPORTED_AI_PLATFORMS,
-    ...getDynamicPlatforms(dynamicPacks, supportedLanguage),
+    ...getDynamicPlatforms(dynamicPacks, dynamicBindings, supportedLanguage),
   ]
   return supportedPlatforms
 }
@@ -28,8 +34,10 @@ export const getSupportedAiPlatforms = (): readonly SupportedAiPlatform[] => {
 
 export const primeDynamicPlatforms = (
   packs: readonly InstalledSitePack[],
+  bindings: SitePackOriginBindingsState,
 ): readonly SupportedAiPlatform[] => {
   dynamicPacks = [...packs]
+  dynamicBindings = bindings
   isCatalogPrimed = true
   return rebuildSupportedPlatforms()
 }
@@ -39,19 +47,22 @@ export function loadSupportedAiPlatforms(
 ): Promise<readonly SupportedAiPlatform[]> {
   if (isCatalogPrimed) return Promise.resolve(getSupportedAiPlatforms())
 
-  return (loadPromise ??= createRuntimePackManager(storage)
-    .getEnabledPacks()
-    .then((snapshot) => {
+  const packManager = createRuntimePackManager(storage)
+  return (loadPromise ??= Promise.all([
+    packManager.getEnabledPacks(),
+    packManager.getOriginBindings(),
+  ])
+    .then(([snapshot, bindings]) => {
       for (const issue of snapshot.issues) {
         console.warn("[Ophel] SitePack platform catalog issue:", issue)
       }
-      return primeDynamicPlatforms(snapshot.packs)
+      return primeDynamicPlatforms(snapshot.packs, bindings)
     })
     .catch((error) => {
       console.error(
         "[Ophel] Failed to load SitePack platform catalog; using built-in platforms:",
         error,
       )
-      return primeDynamicPlatforms([])
+      return primeDynamicPlatforms([], createEmptySitePackOriginBindingsState())
     }))
 }

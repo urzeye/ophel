@@ -1785,6 +1785,7 @@ export const it = {
   popupUnsupported: "Non supportato",
   popupNewChat: "Nuova chiacchierata",
   popupQuickAccess: "Accesso rapido",
+  popupSitePackUnbound: "Nessun dominio associato",
   popupRecentUsed: "Recente",
   popupNoRecentPrompts: "Nessuna richiesta recente",
   popupCopied: "Copiato",

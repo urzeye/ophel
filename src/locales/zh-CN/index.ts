@@ -1642,6 +1642,7 @@ export const zhCN = {
   popupUnsupported: "不支持",
   popupNewChat: "新对话",
   popupQuickAccess: "快速访问",
+  popupSitePackUnbound: "未绑定域名",
   popupRecentUsed: "最近使用",
   popupNoRecentPrompts: "暂无最近使用的提示词",
   popupCopied: "已复制",

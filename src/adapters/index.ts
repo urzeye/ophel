@@ -12,7 +12,10 @@ import {
 import { createRuntimePackManager } from "~core/pack-manager-runtime"
 import { primeDynamicPlatforms } from "~core/platform-catalog"
 import { applyCachedBuiltinAdapterConfig } from "~core/site-adapter-config-runtime"
-import type { SitePackOriginBindingsState } from "~core/site-pack-origin-bindings"
+import {
+  createEmptySitePackOriginBindingsState,
+  type SitePackOriginBindingsState,
+} from "~core/site-pack-origin-bindings"
 import { platform } from "~platform"
 
 import { AIStudioAdapter } from "./aistudio"
@@ -83,6 +86,7 @@ async function applyCachedBuiltinPatches(): Promise<void> {
 interface DynamicAdapterLoadResult {
   adapters: SiteAdapter[]
   packs: InstalledSitePack[]
+  bindings: SitePackOriginBindingsState
 }
 
 interface DynamicAdapterEntry {
@@ -127,8 +131,8 @@ const logDetectionIssues = (origin: string, issues: readonly SitePackDetectIssue
 }
 
 async function loadDynamicAdapters(): Promise<DynamicAdapterLoadResult> {
-  let snapshot: PackManagerSnapshot
   const packManager = createRuntimePackManager(platform.storage)
+  let snapshot: PackManagerSnapshot
   let originBindings: SitePackOriginBindingsState
   try {
     snapshot = await packManager.getEnabledPacks()
@@ -138,9 +142,17 @@ async function loadDynamicAdapters(): Promise<DynamicAdapterLoadResult> {
       "[Ophel] Failed to load installed SitePacks; continuing with built-in adapters:",
       error,
     )
-    return { adapters: [], packs: [] }
+    return { adapters: [], packs: [], bindings: createEmptySitePackOriginBindingsState() }
   }
 
+  const resolved = await resolveDynamicAdapters(snapshot, originBindings)
+  return { ...resolved, bindings: originBindings }
+}
+
+async function resolveDynamicAdapters(
+  snapshot: PackManagerSnapshot,
+  originBindings: SitePackOriginBindingsState,
+): Promise<Omit<DynamicAdapterLoadResult, "bindings">> {
   for (const issue of snapshot.issues) {
     console.warn("[Ophel] SitePack registry issue:", issue)
   }
@@ -239,7 +251,7 @@ async function initializeAdapterRegistry(): Promise<void> {
   await applyCachedBuiltinPatches()
   const dynamic = await loadDynamicAdapters()
   dynamicAdapters = dynamic.adapters
-  primeDynamicPlatforms(dynamic.packs)
+  primeDynamicPlatforms(dynamic.packs, dynamic.bindings)
 }
 
 /** 在任何同步 getAdapter() 消费前加载内置 patch 与已启用 SitePack。 */

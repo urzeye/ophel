@@ -1723,6 +1723,7 @@ Please output the optimized code block directly, followed by a brief summary of 
   popupUnsupported: "Unsupported",
   popupNewChat: "New Chat",
   popupQuickAccess: "Quick Access",
+  popupSitePackUnbound: "No domain bound",
   popupRecentUsed: "Recent",
   popupNoRecentPrompts: "No recent prompts",
   popupCopied: "Copied",

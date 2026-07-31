@@ -1664,6 +1664,7 @@ export const ru = {
   popupUnsupported: "Не поддерж.",
   popupNewChat: "Новый чат",
   popupQuickAccess: "Быстрый доступ",
+  popupSitePackUnbound: "Домен не привязан",
   popupRecentUsed: "Недавние",
   popupNoRecentPrompts: "Нет недавних промптов",
   popupCopied: "Скопировано",

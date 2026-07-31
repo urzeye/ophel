@@ -1718,6 +1718,7 @@ export const ja = {
   popupUnsupported: "非対応",
   popupNewChat: "新規チャット",
   popupQuickAccess: "クイックアクセス",
+  popupSitePackUnbound: "ドメイン未設定",
   popupRecentUsed: "最近使用",
   popupNoRecentPrompts: "最近使用したプロンプトはありません",
   popupCopied: "コピーしました",

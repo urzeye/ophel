@@ -1,20 +1,11 @@
-import {
-  siteMatchPatternOrigin,
-  siteMatchPatternsOverlap,
-} from "~adapters/declarative/match-pattern"
-import { resolveSitePackName } from "~adapters/declarative/localization"
+import { siteMatchPatternsOverlap } from "~adapters/declarative/match-pattern"
 import { isValidSitePackId, type SitePackManifest } from "~adapters/declarative/types"
 import {
   isValidSemanticVersion,
   validateSitePackManifest,
   type SitePackValidationError,
 } from "~adapters/declarative/validate"
-import {
-  createSupportedAiPlatform,
-  isBuiltinSiteId,
-  SUPPORTED_AI_PLATFORMS,
-  type SupportedAiPlatform,
-} from "~constants/defaults"
+import { isBuiltinSiteId, SUPPORTED_AI_PLATFORMS } from "~constants/defaults"
 
 import { isCachedSitePackShape } from "./remote-config-cache"
 import { loadRemoteConfigState } from "./remote-config-state"
@@ -59,31 +50,6 @@ export interface InstalledSitePack {
   enabled: boolean
   registryStatus?: RegistryPackStatus
 }
-
-const getPlatformInitial = (name: string): string =>
-  Array.from(name.trim())[0]?.toUpperCase() ?? "?"
-
-export const getDynamicPlatforms = (
-  packs: readonly InstalledSitePack[],
-  language: string,
-): SupportedAiPlatform[] =>
-  packs.map(({ manifest }) => {
-    const url = manifest.matches[0] ? siteMatchPatternOrigin(manifest.matches[0]) : ""
-    const name = resolveSitePackName(manifest, language)
-    return createSupportedAiPlatform(
-      {
-        id: `pack:${manifest.id}`,
-        name,
-        matchPatterns: manifest.matches,
-        url,
-        icon: getPlatformInitial(name),
-        ...(url ? { faviconUrl: new URL("/favicon.ico", url).href } : {}),
-      },
-      {
-        allowEmptyMatchPatterns: true,
-      },
-    )
-  })
 
 interface StoredInstalledSitePacksState {
   storageSchemaVersion: typeof INSTALLED_SITE_PACKS_STORAGE_SCHEMA_VERSION

@@ -270,23 +270,40 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
           <span className="about-platforms-count">{supportedPlatformsCount}</span>
         </div>
         <div className="about-platforms-grid">
-          {supportedPlatforms.map((platform) => (
-            <a
-              key={platform.id}
-              href={platform.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="about-platform-chip"
-              title={platform.url}>
+          {supportedPlatforms.map((platform) => {
+            const [entryUrl] = platform.entryUrls
+            const icon = (
               <PlatformIcon
                 platform={platform}
                 size={18}
                 className="about-platform-chip-icon"
                 fallbackClassName="about-platform-chip-emoji"
               />
-              <span>{platform.name}</span>
-            </a>
-          ))}
+            )
+
+            // 未绑定域名的适配包没有可打开地址，渲染为纯标签而不是死链接。
+            if (!entryUrl) {
+              return (
+                <span key={platform.id} className="about-platform-chip">
+                  {icon}
+                  <span>{platform.name}</span>
+                </span>
+              )
+            }
+
+            return (
+              <a
+                key={platform.id}
+                href={entryUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="about-platform-chip"
+                title={entryUrl}>
+                {icon}
+                <span>{platform.name}</span>
+              </a>
+            )
+          })}
         </div>
       </div>
 

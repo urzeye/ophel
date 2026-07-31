@@ -4,7 +4,7 @@
  * Displays site status, quick actions, and recent prompts
  */
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 
 import { PlatformIcon } from "~components/PlatformIcon"
 import { DiscordIcon } from "~components/icons/DiscordIcon"
@@ -13,6 +13,11 @@ import { SettingsIcon } from "~components/icons/SettingsIcon"
 import { StarIcon } from "~components/icons/StarIcon"
 import { TimeIcon } from "~components/icons/TimeIcon"
 import { Tooltip } from "~components/ui/Tooltip"
+import {
+  buildQuickAccessSites,
+  resolveSiteEntryUrl,
+  type QuickAccessSite,
+} from "~core/quick-access-sites"
 import { useSupportedAiPlatforms } from "~hooks/useSupportedAiPlatforms"
 import { getStoreInfo } from "~utils/getStoreInfo"
 import { setLanguage, t } from "~utils/i18n"
@@ -37,8 +42,18 @@ interface SiteInfo {
   supported: boolean
 }
 
+const quickAccessTooltip = (site: QuickAccessSite): string => {
+  if (site.hostLabel) return `${site.platform.name} · ${site.hostLabel}`
+  if (!site.url) return `${site.platform.name} · ${t("popupSitePackUnbound")}`
+  return site.platform.name
+}
+
 function IndexPopup() {
   const supportedPlatforms = useSupportedAiPlatforms()
+  const quickAccessSites = useMemo(
+    () => buildQuickAccessSites(supportedPlatforms),
+    [supportedPlatforms],
+  )
   const [currentSite, setCurrentSite] = useState<SiteInfo | null>(null)
   const [recentPrompts, setRecentPrompts] = useState<Prompt[]>([])
   const [toastVisible, setToastVisible] = useState(false)
@@ -84,7 +99,11 @@ function IndexPopup() {
       const matchedSite = supportedPlatforms.find((site) => site.pattern.test(url))
 
       if (matchedSite) {
-        setCurrentSite({ name: matchedSite.name, url: matchedSite.url, supported: true })
+        setCurrentSite({
+          name: matchedSite.name,
+          url: resolveSiteEntryUrl(matchedSite, url),
+          supported: true,
+        })
         return
       }
 
@@ -117,9 +136,11 @@ function IndexPopup() {
     }
   }
 
-  const openOptionsPage = () => {
+  const openOptionsPage = (page?: string) => {
     // Use tabs.create as fallback for popup context
-    const optionsUrl = chrome.runtime.getURL("tabs/options.html")
+    const optionsUrl = chrome.runtime.getURL(
+      page ? `tabs/options.html?page=${page}` : "tabs/options.html",
+    )
     chrome.tabs.create({ url: optionsUrl })
     window.close()
   }
@@ -127,6 +148,14 @@ function IndexPopup() {
   const openUrl = (url: string) => {
     chrome.tabs.create({ url })
     window.close()
+  }
+
+  const openQuickAccessSite = (site: QuickAccessSite) => {
+    if (site.url) {
+      openUrl(site.url)
+      return
+    }
+    openOptionsPage("sitePacks")
   }
 
   const openUrlInCurrentTab = async (url: string) => {
@@ -189,7 +218,7 @@ function IndexPopup() {
             <span className="popup-title">Ophel Atlas</span>
           </div>
           <Tooltip content={t("popupSettings")}>
-            <button className="popup-settings-btn" onClick={openOptionsPage}>
+            <button className="popup-settings-btn" onClick={() => openOptionsPage()}>
               <SettingsIcon size={18} />
             </button>
           </Tooltip>
@@ -222,20 +251,27 @@ function IndexPopup() {
           <>
             <div className="popup-section-title">{t("popupQuickAccess")}</div>
             <div className="popup-sites-grid">
-              {supportedPlatforms.map((site) => (
+              {quickAccessSites.map((site) => (
                 <Tooltip
-                  key={site.id}
-                  content={site.name}
+                  key={site.key}
+                  content={quickAccessTooltip(site)}
                   triggerStyle={{ width: "100%", display: "flex" }}
                   triggerClassName="popup-tooltip-trigger">
-                  <button className="popup-site-link" onClick={() => openUrl(site.url)}>
+                  <button
+                    className={`popup-site-link${site.url ? "" : " unbound"}`}
+                    onClick={() => openQuickAccessSite(site)}>
                     <PlatformIcon
-                      platform={site}
+                      platform={site.platform}
                       size={20}
                       className="popup-site-icon"
                       fallbackClassName="popup-site-emoji"
                     />
-                    <span className="popup-site-title">{site.name}</span>
+                    <span className="popup-site-title">{site.platform.name}</span>
+                    {(site.hostLabel || !site.url) && (
+                      <span className="popup-site-subtitle">
+                        {site.hostLabel ?? t("popupSitePackUnbound")}
+                      </span>
+                    )}
                   </button>
                 </Tooltip>
               ))}

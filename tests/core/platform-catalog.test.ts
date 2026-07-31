@@ -12,10 +12,13 @@ interface TestCatalogSnapshot {
 
 const catalogTestState = vi.hoisted(() => {
   const snapshot: TestCatalogSnapshot = { packs: [], issues: [] }
+  const bindings: Record<string, unknown> = {}
   return {
     language: "en",
     snapshot,
+    bindings,
     getEnabledPacks: vi.fn(async () => snapshot),
+    getOriginBindings: vi.fn(async () => ({ storageSchemaVersion: 1, bindings })),
   }
 })
 
@@ -27,6 +30,7 @@ vi.mock("~utils/i18n", () => ({
 vi.mock("~core/pack-manager-runtime", () => ({
   createRuntimePackManager: () => ({
     getEnabledPacks: catalogTestState.getEnabledPacks,
+    getOriginBindings: catalogTestState.getOriginBindings,
   }),
 }))
 
@@ -34,6 +38,7 @@ interface CreatePackOptions {
   id: string
   name: string
   matches?: string[]
+  detect?: SitePackManifest["detect"]
   nameI18n?: Record<string, string>
   installedAt?: number
 }
@@ -42,6 +47,7 @@ const createPack = ({
   id,
   name,
   matches = [`https://${id}.example/*`],
+  detect,
   nameI18n,
   installedAt = 1,
 }: CreatePackOptions): InstalledSitePack => {
@@ -53,6 +59,7 @@ const createPack = ({
     name,
     ...(nameI18n ? { nameI18n } : {}),
     matches,
+    ...(detect ? { detect } : {}),
     capabilities: ["outline"],
     selectors: { responseContainer: "main" },
   }
@@ -73,8 +80,16 @@ beforeEach(() => {
   catalogTestState.language = "en"
   catalogTestState.snapshot.packs.length = 0
   catalogTestState.snapshot.issues.length = 0
+  for (const key of Object.keys(catalogTestState.bindings)) {
+    delete catalogTestState.bindings[key]
+  }
   catalogTestState.getEnabledPacks.mockReset()
   catalogTestState.getEnabledPacks.mockImplementation(async () => catalogTestState.snapshot)
+  catalogTestState.getOriginBindings.mockReset()
+  catalogTestState.getOriginBindings.mockImplementation(async () => ({
+    storageSchemaVersion: 1 as const,
+    bindings: catalogTestState.bindings,
+  }))
   vi.spyOn(console, "warn").mockImplementation(() => undefined)
   vi.spyOn(console, "error").mockImplementation(() => undefined)
 })
@@ -98,19 +113,28 @@ describe("dynamic SitePack platform metadata", () => {
       matches: ["https://*.atlas.example/*"],
       installedAt: 2,
     })
-    const [{ getDynamicPlatforms }, { isBuiltinSiteId }] = await Promise.all([
-      import("~core/pack-manager"),
+    const [
+      { getDynamicPlatforms },
+      { isBuiltinSiteId },
+      { createEmptySitePackOriginBindingsState },
+    ] = await Promise.all([
+      import("~core/site-pack-platforms"),
       import("~constants/defaults"),
+      import("~core/site-pack-origin-bindings"),
     ])
 
-    const platforms = getDynamicPlatforms([emptyMatchPack, wildcardPack], "zh-CN")
+    const platforms = getDynamicPlatforms(
+      [emptyMatchPack, wildcardPack],
+      createEmptySitePackOriginBindingsState(),
+      "zh-CN",
+    )
 
     expect(isBuiltinSiteId("chatgpt")).toBe(true)
     expect(isBuiltinSiteId("pack:atlas-chat")).toBe(false)
     expect(platforms.map(({ id }) => id)).toEqual(["pack:local-chat", "pack:atlas-chat"])
     expect(platforms[0]).toMatchObject({
       name: "鸭助手",
-      url: "",
+      entryUrls: [],
       icon: "鸭",
       matchPatterns: [],
     })
@@ -118,13 +142,45 @@ describe("dynamic SitePack platform metadata", () => {
     expect(platforms[0].pattern.test("https://local-chat.example/chat")).toBe(false)
     expect(platforms[1]).toMatchObject({
       name: "阿特拉斯对话",
-      url: "https://atlas.example",
+      entryUrls: ["https://atlas.example"],
       faviconUrl: "https://atlas.example/favicon.ico",
       icon: "阿",
       matchPatterns: ["https://*.atlas.example/*"],
     })
     expect(platforms[1].pattern.test("https://chat.atlas.example/thread?id=1")).toBe(true)
     expect(platforms[1].pattern.test("http://chat.atlas.example/thread")).toBe(false)
+  })
+
+  it("activates user-bound origins for packs that declare no static matches", async () => {
+    const genericPack = createPack({
+      id: "open-webui",
+      name: "Open WebUI",
+      matches: [],
+      detect: [{ type: "selector", value: "#chat-root" }],
+    })
+    const [{ getDynamicPlatforms }, { createSitePackOriginBindingsState }] = await Promise.all([
+      import("~core/site-pack-platforms"),
+      import("~core/site-pack-origin-bindings"),
+    ])
+
+    const [platform] = getDynamicPlatforms(
+      [genericPack],
+      createSitePackOriginBindingsState({
+        "https://chat.corp.example": { mode: "explicit", packId: "open-webui" },
+        "https://ai.lan.example": { mode: "detect" },
+        "https://other.example": { mode: "explicit", packId: "another-pack" },
+      }),
+      "en",
+    )
+
+    // 显式绑定与 detect 池域名都要进入识别范围和快捷入口，绑给其他包的域名不能进来。
+    expect(platform.matchPatterns).toEqual([
+      "https://ai.lan.example/*",
+      "https://chat.corp.example/*",
+    ])
+    expect(platform.entryUrls).toEqual(["https://ai.lan.example", "https://chat.corp.example"])
+    expect(platform.pattern.test("https://chat.corp.example/c/abc")).toBe(true)
+    expect(platform.pattern.test("https://other.example/c/abc")).toBe(false)
   })
 })
 
@@ -135,13 +191,16 @@ describe("runtime supported-platform catalog", () => {
       name: "Localized Pack",
       nameI18n: { en: "Localized Pack", "zh-CN": "本地化适配包" },
     })
-    const catalog = await import("~core/platform-catalog")
+    const [catalog, { createEmptySitePackOriginBindingsState }] = await Promise.all([
+      import("~core/platform-catalog"),
+      import("~core/site-pack-origin-bindings"),
+    ])
 
     expect(catalog.getSupportedAiPlatforms().some(({ id }) => id === "pack:localized-pack")).toBe(
       false,
     )
 
-    const primed = catalog.primeDynamicPlatforms([pack])
+    const primed = catalog.primeDynamicPlatforms([pack], createEmptySitePackOriginBindingsState())
     expect(primed.at(-1)).toMatchObject({
       id: "pack:localized-pack",
       name: "Localized Pack",

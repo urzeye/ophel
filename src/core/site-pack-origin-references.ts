@@ -139,12 +139,13 @@ export const deriveSitePackOriginReferences = (
   }
 }
 
-export const getSitePackReferencedOriginPatterns = (
+/** 用户为该包绑定的 origin 级匹配：显式绑定 + 该包参与的 detect 池域名。 */
+export const getSitePackBoundOriginPatterns = (
   pack: InstalledSitePack,
   bindingState: SitePackOriginBindingsState,
 ): string[] => {
-  const patterns = pack.manifest.matches.map(siteMatchPatternOriginPattern)
   const participatesInDetect = Boolean(pack.manifest.detect?.length)
+  const patterns: string[] = []
 
   for (const [origin, binding] of Object.entries(bindingState.bindings)) {
     if (
@@ -157,6 +158,15 @@ export const getSitePackReferencedOriginPatterns = (
 
   return uniqueSorted(patterns)
 }
+
+export const getSitePackReferencedOriginPatterns = (
+  pack: InstalledSitePack,
+  bindingState: SitePackOriginBindingsState,
+): string[] =>
+  uniqueSorted([
+    ...pack.manifest.matches.map(siteMatchPatternOriginPattern),
+    ...getSitePackBoundOriginPatterns(pack, bindingState),
+  ])
 
 export const collapseCoveredSitePackOriginPatterns = (patterns: readonly string[]): string[] => {
   const uniquePatterns = uniqueSorted(patterns)

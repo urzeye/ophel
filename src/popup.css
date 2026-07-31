@@ -428,6 +428,28 @@ body {
   text-overflow: ellipsis;
 }
 
+.popup-site-subtitle {
+  width: 100%;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--popup-text-secondary);
+}
+
+.popup-site-link.unbound {
+  border-style: dashed;
+  border-color: var(--popup-border);
+  box-shadow: none;
+}
+
+.popup-site-link.unbound .popup-site-icon,
+.popup-site-link.unbound .popup-site-emoji {
+  opacity: 0.5;
+}
+
 /* Footer */
 .popup-footer {
   flex-shrink: 0;

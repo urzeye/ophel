@@ -1643,6 +1643,7 @@ export const zhTW = {
   popupUnsupported: "不支援",
   popupNewChat: "新對話",
   popupQuickAccess: "快速存取",
+  popupSitePackUnbound: "未綁定網域",
   popupRecentUsed: "最近使用",
   popupNoRecentPrompts: "暫無最近使用的提示詞",
   popupCopied: "已複製",
