@@ -100,9 +100,9 @@ jobs:
           fi
           GENERATED_AT=$(($(git show -s --format=%ct HEAD) * 1000))
           if [ -n "$PREVIOUS_DIRECTORY" ]; then
-            pnpm registry:build:signed -- --revision "$REVISION" --generated-at "$GENERATED_AT" --previous-dir "$PREVIOUS_DIRECTORY"
+            pnpm registry:build:signed --revision "$REVISION" --generated-at "$GENERATED_AT" --previous-dir "$PREVIOUS_DIRECTORY"
           else
-            pnpm registry:build:signed -- --revision "$REVISION" --generated-at "$GENERATED_AT"
+            pnpm registry:build:signed --revision "$REVISION" --generated-at "$GENERATED_AT"
           fi
 
       - name: Publish registry-dist branch

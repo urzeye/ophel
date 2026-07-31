@@ -153,7 +153,8 @@ describe("registry publish workflow signing contract", () => {
       "REGISTRY_SIGNING_PRIVATE_KEY: ${{ secrets.REGISTRY_SIGNING_PRIVATE_KEY }}",
     )
     expect(workflow).toContain('if [ -z "$REGISTRY_SIGNING_PRIVATE_KEY" ]; then')
-    expect(workflow).toContain("pnpm registry:build:signed --")
+    expect(workflow).toContain('pnpm registry:build:signed --revision "$REVISION"')
+    expect(workflow).not.toContain("pnpm registry:build:signed -- --revision")
   })
 
   it("publishes pre-merge revisions without outrunning squashed main", async () => {
