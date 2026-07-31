@@ -155,4 +155,14 @@ describe("registry publish workflow signing contract", () => {
     expect(workflow).toContain('if [ -z "$REGISTRY_SIGNING_PRIVATE_KEY" ]; then')
     expect(workflow).toContain("pnpm registry:build:signed --")
   })
+
+  it("publishes pre-merge revisions without outrunning squashed main", async () => {
+    const workflow = await readFile(REGISTRY_WORKFLOW_PATH, "utf8")
+
+    expect(workflow).toContain('branches: ["main", "feat/site-adapter-pluginization"]')
+    expect(workflow).toContain('if [ "$GITHUB_REF_NAME" = "main" ]; then')
+    expect(workflow).toContain("REVISION=$(git rev-list --count HEAD)")
+    expect(workflow).toContain("process.stdout.write(String(index.registryRevision + 1))")
+    expect(workflow).toContain("REVISION=1")
+  })
 })

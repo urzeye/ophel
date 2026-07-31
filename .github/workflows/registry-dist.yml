@@ -2,7 +2,7 @@ name: "📦 Publish SitePack Registry"
 
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "feat/site-adapter-pluginization"]
     paths:
       - "registry/**"
       - "src/adapters/declarative/**"
@@ -28,7 +28,7 @@ jobs:
     name: Validate and publish registry-dist
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout main
+      - name: Checkout source branch
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
@@ -82,7 +82,22 @@ jobs:
             echo "REGISTRY_SIGNING_PRIVATE_KEY is not configured" >&2
             exit 1
           fi
-          REVISION=$(git rev-list --count HEAD)
+          if [ "$GITHUB_REF_NAME" = "main" ]; then
+            REVISION=$(git rev-list --count HEAD)
+          elif [ -n "$PREVIOUS_DIRECTORY" ]; then
+            REVISION=$(
+              node --input-type=module -e '
+                import { readFileSync } from "node:fs"
+                const index = JSON.parse(readFileSync(process.argv[1], "utf8"))
+                if (!Number.isSafeInteger(index.registryRevision) || index.registryRevision < 1) {
+                  throw new Error("Previous registryRevision is invalid")
+                }
+                process.stdout.write(String(index.registryRevision + 1))
+              ' "$PREVIOUS_DIRECTORY/index.json"
+            )
+          else
+            REVISION=1
+          fi
           GENERATED_AT=$(($(git show -s --format=%ct HEAD) * 1000))
           if [ -n "$PREVIOUS_DIRECTORY" ]; then
             pnpm registry:build:signed -- --revision "$REVISION" --generated-at "$GENERATED_AT" --previous-dir "$PREVIOUS_DIRECTORY"
