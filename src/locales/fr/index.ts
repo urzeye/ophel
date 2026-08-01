@@ -208,7 +208,12 @@ export const fr = {
   sitePacksLocalImportTitle: "Import JSON local",
   sitePacksLocalImportDesc: "N'importez que des manifestes JSON de source fiable.",
   sitePacksCheckUpdates: "Rechercher des mises à jour",
-  sitePacksTabInstalled: "Installés",
+  sitePacksBindingHttpsRequired:
+    "Seuls les domaines HTTPS peuvent être liés. Les sites HTTP ne sont pas pris en charge.",
+  sitePacksRegistrySearchPlaceholder: "Rechercher des packs",
+  sitePacksRegistryNoMatch: "Aucun pack correspondant",
+  sitePacksOpenSite: "Ouvrir le site",
+  sitePacksTabInstalled: "Packs",
   sitePacksTabOrigins: "Domaines",
   sitePacksTabUpdates: "Mises à jour et sources",
   sitePacksBindingListTitle: "Domaines liés",

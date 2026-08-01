@@ -204,7 +204,12 @@ export const ru = {
   sitePacksLocalImportTitle: "Импорт локального JSON",
   sitePacksLocalImportDesc: "Импортируйте только JSON-манифесты из доверенного источника.",
   sitePacksCheckUpdates: "Проверить обновления",
-  sitePacksTabInstalled: "Установленные",
+  sitePacksBindingHttpsRequired:
+    "Можно привязать только HTTPS-домены. HTTP-сайты не поддерживаются.",
+  sitePacksRegistrySearchPlaceholder: "Поиск пакетов",
+  sitePacksRegistryNoMatch: "Нет подходящих пакетов",
+  sitePacksOpenSite: "Открыть сайт",
+  sitePacksTabInstalled: "Пакеты",
   sitePacksTabOrigins: "Домены",
   sitePacksTabUpdates: "Обновления и источники",
   sitePacksBindingListTitle: "Привязанные домены",

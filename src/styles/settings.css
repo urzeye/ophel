@@ -755,20 +755,20 @@
 
 [data-setting-id].setting-locate-highlight {
   border-radius: 10px;
-  background: rgba(66, 133, 244, 0.12);
-  box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.28);
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 12%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--gh-primary, #4285f4) 28%, transparent);
   animation: settings-locate-highlight 2.2s ease;
 }
 
 @keyframes settings-locate-highlight {
   0% {
-    background: rgba(66, 133, 244, 0.26);
-    box-shadow: 0 0 0 0 rgba(66, 133, 244, 0.45);
+    background: color-mix(in srgb, var(--gh-primary, #4285f4) 26%, transparent);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--gh-primary, #4285f4) 45%, transparent);
   }
 
   100% {
-    background: rgba(66, 133, 244, 0.12);
-    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.28);
+    background: color-mix(in srgb, var(--gh-primary, #4285f4) 12%, transparent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--gh-primary, #4285f4) 28%, transparent);
   }
 }
 
@@ -995,6 +995,51 @@
   font-size: 11px;
 }
 
+/* 绑定的域名可直接打开，链接态只靠颜色和下划线，不额外加边框噪音 */
+.settings-pack-origin-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  min-height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: var(--gh-text, #374151);
+  text-align: left;
+  transition: color 0.18s ease;
+}
+
+.settings-pack-origin-link > svg {
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+
+.settings-pack-origin-link:hover {
+  color: var(--gh-primary, #4285f4);
+}
+
+.settings-pack-origin-link:hover .settings-pack-origin {
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 12%, transparent);
+  text-decoration: underline;
+}
+
+.settings-pack-origin-link:hover > svg,
+.settings-pack-origin-link:focus-visible > svg {
+  opacity: 1;
+}
+
+.settings-pack-origin-link:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 42%, transparent);
+  outline-offset: 2px;
+}
+
+.settings-pack-origin {
+  overflow-wrap: anywhere;
+}
+
 /* ---------- 列表 ---------- */
 
 .settings-pack-list {
@@ -1065,8 +1110,8 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 2px 8px;
-  margin-top: 4px;
+  gap: 4px 10px;
+  margin-top: 5px;
   font-size: 11px;
   color: var(--gh-text-tertiary, var(--gh-text-secondary, #9ca3af));
 }
@@ -1076,9 +1121,38 @@
   overflow-wrap: anywhere;
 }
 
-.settings-pack-meta > span + span::before {
-  content: "·";
-  margin-right: 8px;
+/* 版本用等宽 chip、来源用实心小标、匹配域名用弱化等宽，靠字形而不是颜色拉开层级 */
+.settings-pack-version {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 5px;
+  min-height: 16px;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 10%, transparent);
+  color: color-mix(in srgb, var(--gh-primary, #4285f4) 78%, var(--gh-text, #374151));
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.settings-pack-source,
+.settings-pack-mode {
+  color: var(--gh-text-secondary, #6b7280);
+  font-weight: 500;
+}
+
+.settings-pack-match {
+  max-width: min(320px, 100%);
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  color: var(--gh-text-tertiary, var(--gh-text-secondary, #9ca3af));
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .settings-pack-badge {
@@ -1238,24 +1312,61 @@
 
 /* ---------- 更新与来源 ---------- */
 
-.settings-pack-source-editor {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  width: min(420px, 48vw);
+.settings-pack-source-block {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--gh-border, #f3f4f6);
+}
+
+.settings-pack-source-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--gh-text, #374151);
+}
+
+.settings-pack-source-desc {
+  margin: 2px 0 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--gh-text-secondary, #9ca3af);
 }
 
 .settings-pack-source-controls {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   gap: 8px;
 }
 
+.settings-pack-source-apply {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
 .settings-pack-source-error {
+  display: block;
+  margin-top: 6px;
   color: var(--gh-text-danger, var(--gh-danger, #ef4444));
   font-size: 11px;
   line-height: 1.4;
   overflow-wrap: anywhere;
+}
+
+.settings-pack-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.settings-pack-section-head .settings-card-title {
+  margin-bottom: 0;
+}
+
+.settings-pack-search {
+  width: min(240px, 48%);
+  flex-shrink: 0;
 }
 
 .settings-pack-patches {
@@ -1436,7 +1547,12 @@
     justify-content: flex-start;
   }
 
-  .settings-pack-source-editor {
+  .settings-pack-section-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .settings-pack-search {
     width: 100%;
   }
 
@@ -1450,6 +1566,8 @@
   .settings-pack-action-button,
   .settings-pack-action-button .spinning,
   .settings-pack-guide-link,
+  .settings-pack-origin-link,
+  .settings-pack-origin-link > svg,
   .settings-pack-issues > summary::before,
   .settings-pack-skeleton-icon,
   .settings-pack-skeleton-lines span {

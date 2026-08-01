@@ -319,6 +319,16 @@ const formatCheckTime = (timestamp: number): string =>
 const notify = (message: string) => showToast(message)
 const notifyError = (message: string) => showToast(message, ERROR_TOAST_DURATION)
 
+/**
+ * 用户通常只输入主机名。补全 https:// 后再交给校验，
+ * 其它协议原样保留，让下游给出明确的拒绝理由而不是笼统的格式错误。
+ */
+const normalizeBindingOriginInput = (value: string): string => {
+  const trimmed = value.trim()
+  if (!trimmed || /^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed)) return trimmed
+  return `https://${trimmed}`
+}
+
 interface SitePacksPageProps {
   initialTab?: string
 }
@@ -364,6 +374,8 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
   const [bindingMode, setBindingMode] = useState<SitePackOriginBinding["mode"]>("explicit")
   const [bindingPackId, setBindingPackId] = useState("")
   const [resettingSiteId, setResettingSiteId] = useState<string | null>(null)
+  const [registryQuery, setRegistryQuery] = useState("")
+  const [pendingLocateId, setPendingLocateId] = useState<string | null>(null)
   const configuredRegistrySource = settings.remoteConfig?.registrySourceUrl ?? ""
   const [registrySourceInput, setRegistrySourceInput] = useState(configuredRegistrySource)
   const [registrySourceError, setRegistrySourceError] = useState<string | null>(null)
@@ -463,7 +475,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
   }, [requiredUserscriptOriginPatterns, userscriptMatchInfo])
   const canonicalFormOrigin = useMemo(() => {
     try {
-      return canonicalizeSitePackBindingOrigin(bindingOrigin)
+      return canonicalizeSitePackBindingOrigin(normalizeBindingOriginInput(bindingOrigin))
     } catch {
       return null
     }
@@ -475,6 +487,15 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
     () => buildRegistrySitePackViews(remoteState, installedPacks, currentLanguage),
     [currentLanguage, installedPacks, remoteState],
   )
+  const filteredRegistryViews = useMemo(() => {
+    const query = registryQuery.trim().toLowerCase()
+    if (!query) return registryViews
+    return registryViews.filter((view) =>
+      [view.name, view.id, view.description ?? "", ...view.matches].some((field) =>
+        field.toLowerCase().includes(query),
+      ),
+    )
+  }, [registryQuery, registryViews])
   const activePatches = useMemo(
     () =>
       Object.entries(remoteState?.active?.patches ?? {})
@@ -610,6 +631,25 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
     setRegistrySourceError(null)
   }, [configuredRegistrySource])
 
+  /** 跨 tab 跳转后把目标区块滚到视野内并复用设置页既有的定位高亮。 */
+  useEffect(() => {
+    if (!pendingLocateId) return
+
+    const frame = window.requestAnimationFrame(() => {
+      const target = pageRef.current?.querySelector<HTMLElement>(
+        `[data-setting-id="${pendingLocateId}"]`,
+      )
+      setPendingLocateId(null)
+      if (!target) return
+
+      target.scrollIntoView({ behavior: "smooth", block: "center" })
+      target.classList.add("setting-locate-highlight")
+      window.setTimeout(() => target.classList.remove("setting-locate-highlight"), 2200)
+    })
+
+    return () => window.cancelAnimationFrame(frame)
+  }, [pendingLocateId])
+
   useEffect(() => {
     if (bindingPackId && installedById.has(bindingPackId)) return
     setBindingPackId(sortedInstalledPacks[0]?.manifest.id ?? "")
@@ -683,7 +723,12 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
     let previousBinding: SitePackOriginBinding | undefined
     let shouldRollback = false
     try {
-      origin = canonicalizeSitePackBindingOrigin(bindingOrigin)
+      const candidate = normalizeBindingOriginInput(bindingOrigin)
+      if (/^http:\/\//i.test(candidate)) {
+        notifyError(t("sitePacksBindingHttpsRequired"))
+        return
+      }
+      origin = canonicalizeSitePackBindingOrigin(candidate)
       const binding: SitePackOriginBinding =
         bindingMode === "explicit"
           ? { mode: "explicit", packId: bindingPackId }
@@ -1122,11 +1167,19 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
       <div className="settings-pack-item" key={origin}>
         <div className="settings-pack-info">
           <div className="settings-pack-title-line">
-            <strong className="settings-pack-origin">{origin}</strong>
+            <button
+              type="button"
+              className="settings-pack-origin-link"
+              title={`${t("sitePacksOpenSite")}: ${origin}`}
+              aria-label={`${t("sitePacksOpenSite")}: ${origin}`}
+              onClick={() => platform.openTab(origin)}>
+              <span className="settings-pack-origin">{origin}</span>
+              <ExternalLinkIcon size={12} />
+            </button>
             <span className={`settings-pack-badge ${status.tone}`}>{status.label}</span>
           </div>
           <div className="settings-pack-meta">
-            <span>
+            <span className="settings-pack-mode">
               {t(
                 binding.mode === "explicit"
                   ? "sitePacksBindingModeExplicit"
@@ -1175,13 +1228,15 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
           </div>
           {description && <p className="settings-pack-description">{description}</p>}
           <div className="settings-pack-meta">
-            <span>
-              {t("version")} {pack.manifest.version}
-            </span>
-            <span>
+            <span className="settings-pack-version">v{pack.manifest.version}</span>
+            <span className="settings-pack-source">
               {t(pack.source === "registry" ? "sitePacksSourceRegistry" : "sitePacksSourceLocal")}
             </span>
-            {firstMatch && <span title={firstMatch}>{firstMatch}</span>}
+            {firstMatch && (
+              <code className="settings-pack-match" title={firstMatch}>
+                {firstMatch}
+              </code>
+            )}
           </div>
         </div>
         <div className="settings-pack-controls">
@@ -1259,10 +1314,12 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
           </div>
           {view.description && <p className="settings-pack-description">{view.description}</p>}
           <div className="settings-pack-meta">
-            <span>
-              {t("version")} {version}
-            </span>
-            {firstMatch && <span title={firstMatch}>{firstMatch}</span>}
+            <span className="settings-pack-version">v{version}</span>
+            {firstMatch && (
+              <code className="settings-pack-match" title={firstMatch}>
+                {firstMatch}
+              </code>
+            )}
             {view.availability === "incompatible" && (
               <span>{t("sitePacksRequiresNewerApp", { version: view.minAppVersion })}</span>
             )}
@@ -1324,7 +1381,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
       </div>
 
       {permissionReviewPacks.length > 0 && (
-        <div className="settings-pack-notice warning" role="alert">
+        <div className="settings-pack-notice" role="alert">
           <InfoIcon size={16} />
           <div className="settings-pack-notice-body">
             <strong>{t("sitePacksPermissionReviewTitle")}</strong>
@@ -1368,7 +1425,10 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
                   type="button"
                   size="sm"
                   variant="primary"
-                  onClick={() => setActiveTab(SITE_PACKS_TAB_IDS.UPDATES)}>
+                  onClick={() => {
+                    setActiveTab(SITE_PACKS_TAB_IDS.UPDATES)
+                    setPendingLocateId("site-packs-registry")
+                  }}>
                   {t("sitePacksRegistryTitle")}
                 </Button>
                 <Button
@@ -1422,12 +1482,15 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
               <label className="settings-pack-field settings-pack-field-origin">
                 <span>{t("sitePacksCustomOriginLabel")}</span>
                 <Input
-                  type="url"
+                  type="text"
                   inputMode="url"
+                  autoComplete="off"
+                  spellCheck={false}
                   value={bindingOrigin}
                   placeholder={t("sitePacksCustomOriginPlaceholder")}
                   disabled={isBindingBusy}
                   onChange={(event) => setBindingOrigin(event.target.value)}
+                  onBlur={() => setBindingOrigin(normalizeBindingOriginInput(bindingOrigin))}
                   aria-label={t("sitePacksCustomOriginLabel")}
                 />
               </label>
@@ -1561,45 +1624,48 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
             </SettingRow>
 
             {IS_DEVELOPMENT_BUILD && (
-              <SettingRow
-                label={t("remoteConfigRegistrySourceLabel")}
-                description={t("remoteConfigRegistrySourceDesc")}
-                settingId="remote-config-registry-source">
-                <div className="settings-pack-source-editor">
-                  <div className="settings-pack-source-controls">
-                    <Input
-                      type="url"
-                      inputMode="url"
-                      value={registrySourceInput}
-                      placeholder={t("remoteConfigRegistrySourcePlaceholder")}
-                      aria-label={t("remoteConfigRegistrySourceLabel")}
-                      aria-invalid={registrySourceError ? "true" : undefined}
-                      disabled={isRegistryBusy}
-                      spellCheck={false}
-                      onChange={(event) => {
-                        setRegistrySourceInput(event.target.value)
-                        setRegistrySourceError(null)
-                      }}
-                    />
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="secondary"
-                      className="settings-pack-action-button"
-                      disabled={
-                        isRegistryBusy || registrySourceInput.trim() === configuredRegistrySource
-                      }
-                      onClick={handleApplyRegistrySource}>
-                      {t("remoteConfigRegistrySourceApplyButton")}
-                    </Button>
-                  </div>
-                  {registrySourceError && (
-                    <span className="settings-pack-source-error" role="alert">
-                      {registrySourceError}
-                    </span>
-                  )}
+              <div
+                className="settings-pack-source-block"
+                data-setting-id="remote-config-registry-source">
+                <label
+                  className="settings-pack-source-label"
+                  htmlFor="remote-config-registry-source-input">
+                  {t("remoteConfigRegistrySourceLabel")}
+                </label>
+                <p className="settings-pack-source-desc">{t("remoteConfigRegistrySourceDesc")}</p>
+                <div className="settings-pack-source-controls">
+                  <Input
+                    id="remote-config-registry-source-input"
+                    type="text"
+                    inputMode="url"
+                    autoComplete="off"
+                    spellCheck={false}
+                    value={registrySourceInput}
+                    placeholder={t("remoteConfigRegistrySourcePlaceholder")}
+                    aria-invalid={registrySourceError ? "true" : undefined}
+                    disabled={isRegistryBusy}
+                    onChange={(event) => {
+                      setRegistrySourceInput(event.target.value)
+                      setRegistrySourceError(null)
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="settings-pack-action-button settings-pack-source-apply"
+                    disabled={
+                      isRegistryBusy || registrySourceInput.trim() === configuredRegistrySource
+                    }
+                    onClick={handleApplyRegistrySource}>
+                    {t("remoteConfigRegistrySourceApplyButton")}
+                  </Button>
                 </div>
-              </SettingRow>
+                {registrySourceError && (
+                  <span className="settings-pack-source-error" role="alert">
+                    {registrySourceError}
+                  </span>
+                )}
+              </div>
             )}
 
             <div className="settings-pack-patches" data-setting-id="remote-config-active-patches">
@@ -1618,8 +1684,10 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
                           <strong>{patch.siteName}</strong>
                         </div>
                         <div className="settings-pack-meta">
-                          <span>
-                            {t("remoteConfigPatchVersionLabel")} {patch.patchVersion}
+                          <span
+                            className="settings-pack-version"
+                            title={t("remoteConfigPatchVersionLabel")}>
+                            v{patch.patchVersion}
                           </span>
                           <span>
                             {t("remoteConfigBaseVersionLabel")} {patch.baseConfigVersion}
@@ -1650,8 +1718,23 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
             <p className="settings-pack-privacy-note">{t("remoteConfigPrivacyDesc")}</p>
           </section>
 
-          <section className="settings-card">
-            <div className="settings-card-title">{t("sitePacksRegistryTitle")}</div>
+          <section className="settings-card" data-setting-id="site-packs-registry">
+            <div className="settings-pack-section-head">
+              <div className="settings-card-title">{t("sitePacksRegistryTitle")}</div>
+              {registryViews.length > 0 && (
+                <div className="settings-pack-search">
+                  <Input
+                    type="search"
+                    autoComplete="off"
+                    spellCheck={false}
+                    value={registryQuery}
+                    placeholder={t("sitePacksRegistrySearchPlaceholder")}
+                    aria-label={t("sitePacksRegistrySearchPlaceholder")}
+                    onChange={(event) => setRegistryQuery(event.target.value)}
+                  />
+                </div>
+              )}
+            </div>
 
             {registryError && (
               <InlineError message={registryError} onRetry={() => void loadRegistryState(true)} />
@@ -1664,8 +1747,15 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
                 <RefreshIcon size={24} />
                 <strong>{t("sitePacksRegistryEmpty")}</strong>
               </div>
+            ) : filteredRegistryViews.length === 0 ? (
+              <div className="settings-pack-empty-state">
+                <RefreshIcon size={24} />
+                <strong>{t("sitePacksRegistryNoMatch")}</strong>
+              </div>
             ) : (
-              <div className="settings-pack-list">{registryViews.map(renderRegistryPack)}</div>
+              <div className="settings-pack-list">
+                {filteredRegistryViews.map(renderRegistryPack)}
+              </div>
             )}
           </section>
 

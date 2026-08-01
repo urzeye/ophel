@@ -208,7 +208,12 @@ export const es = {
   sitePacksLocalImportTitle: "Importación de JSON local",
   sitePacksLocalImportDesc: "Importa solo manifiestos JSON de origen fiable.",
   sitePacksCheckUpdates: "Buscar actualizaciones",
-  sitePacksTabInstalled: "Instalados",
+  sitePacksBindingHttpsRequired:
+    "Solo se pueden vincular dominios HTTPS. Los sitios HTTP no son compatibles.",
+  sitePacksRegistrySearchPlaceholder: "Buscar paquetes",
+  sitePacksRegistryNoMatch: "No hay paquetes coincidentes",
+  sitePacksOpenSite: "Abrir sitio",
+  sitePacksTabInstalled: "Paquetes",
   sitePacksTabOrigins: "Dominios",
   sitePacksTabUpdates: "Actualizaciones y orígenes",
   sitePacksBindingListTitle: "Dominios vinculados",

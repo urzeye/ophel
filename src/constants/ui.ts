@@ -160,6 +160,10 @@ export const SETTING_ID_ROUTE_MAP: Record<string, SettingRoute> = {
     page: NAV_IDS.FEATURES,
     subTab: FEATURES_TAB_IDS.REMINDER,
   },
+  "site-packs-registry": {
+    page: NAV_IDS.SITE_PACKS,
+    subTab: SITE_PACKS_TAB_IDS.UPDATES,
+  },
 } as const
 
 const SETTING_ID_ROUTE_RULES: SettingRouteRule[] = [
@@ -373,6 +377,20 @@ export const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
     settingId: "remote-config-active-patches",
     title: "重置适配配置",
     keywords: ["remote config", "patch", "reset", "built in", "补丁", "重置", "内置配置"],
+  },
+  {
+    settingId: "site-packs-registry",
+    title: "社区目录",
+    keywords: [
+      "site pack",
+      "registry",
+      "community",
+      "install",
+      "适配包",
+      "社区目录",
+      "安装",
+      "站点适配",
+    ],
   },
   {
     settingId: "panel-mode",

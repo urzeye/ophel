@@ -199,7 +199,12 @@ export const ko = {
   sitePacksLocalImportTitle: "로컬 JSON 가져오기",
   sitePacksLocalImportDesc: "신뢰할 수 있는 출처의 JSON 매니페스트만 가져오세요.",
   sitePacksCheckUpdates: "업데이트 확인",
-  sitePacksTabInstalled: "설치됨",
+  sitePacksBindingHttpsRequired:
+    "HTTPS 도메인만 연결할 수 있습니다. HTTP 사이트는 지원되지 않습니다.",
+  sitePacksRegistrySearchPlaceholder: "팩 검색",
+  sitePacksRegistryNoMatch: "일치하는 팩이 없습니다",
+  sitePacksOpenSite: "사이트 열기",
+  sitePacksTabInstalled: "팩",
   sitePacksTabOrigins: "도메인",
   sitePacksTabUpdates: "업데이트 및 소스",
   sitePacksBindingListTitle: "연결된 도메인",
