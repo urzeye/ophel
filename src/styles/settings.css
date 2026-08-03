@@ -1347,11 +1347,10 @@
 
 /* ---------- 域名绑定 ---------- */
 
-/* 两行网格：第一行站点+适配包，第二行操作按钮通栏 */
+/* 单行布局：域名占主列，适配包固定宽，操作按钮自然宽度并底对齐到控件行 */
 .settings-pack-binding-form {
-  display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-  align-items: end;
+  display: flex;
+  align-items: flex-end;
   gap: 12px;
 }
 
@@ -1360,6 +1359,14 @@
   flex-direction: column;
   gap: 6px;
   min-width: 0;
+}
+
+.settings-pack-field-origin {
+  flex: 1 1 240px;
+}
+
+.settings-pack-field-pack {
+  flex: 0 1 160px;
 }
 
 .settings-pack-field > span {
@@ -1376,14 +1383,15 @@
 }
 
 .settings-pack-binding-actions {
-  grid-column: 1 / -1;
   display: flex;
+  flex-shrink: 0;
   gap: 8px;
 }
 
-.settings-pack-binding-submit {
-  flex: 1;
-  min-height: 34px;
+/* 控件行同高：下拉与按钮对齐输入框高度 */
+.settings-pack-field-pack .settings-select,
+.settings-pack-binding-actions .settings-pack-action-button {
+  min-height: 38px;
 }
 
 .settings-pack-field-hint.editing {
@@ -1391,13 +1399,20 @@
   font-weight: 500;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 760px) {
   .settings-pack-binding-form {
-    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: stretch;
   }
 
-  .settings-pack-binding-actions {
-    grid-column: auto;
+  .settings-pack-field-origin,
+  .settings-pack-field-pack {
+    flex: 1 1 auto;
+  }
+
+  /* 窄屏下主操作占满一行，保证点击区域 */
+  .settings-pack-binding-submit {
+    flex: 1;
   }
 }
 
@@ -1633,12 +1648,6 @@
   margin-top: 18px;
 }
 
-@media (max-width: 760px) {
-  .settings-pack-binding-form {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  }
-}
-
 @media (max-width: 520px) {
   .settings-pack-toolbar,
   .settings-pack-item,
@@ -1646,10 +1655,6 @@
   .settings-pack-inline-error {
     align-items: stretch;
     flex-direction: column;
-  }
-
-  .settings-pack-binding-form {
-    grid-template-columns: minmax(0, 1fr);
   }
 
   .settings-pack-controls {

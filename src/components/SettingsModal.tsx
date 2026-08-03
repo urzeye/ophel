@@ -40,6 +40,7 @@ import SiteSettingsPage from "~tabs/options/pages/SiteSettingsPage"
 import { APP_DISPLAY_NAME, APP_ICON_URL } from "~utils/config"
 import { attachEditableKeyboardFocusGuard, OPHEL_INTERACTION_LAYER_PROPS } from "~utils/dom-toolkit"
 import { setLanguage, t } from "~utils/i18n"
+import { scrollWithinSettingsContent } from "~utils/settings-scroll"
 
 const getLocalizedLabel = (labelKey: string, fallback: string): string => {
   const localized = t(labelKey)
@@ -299,7 +300,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           highlightedElementRef.current.classList.remove("setting-locate-highlight")
         }
 
-        target.scrollIntoView({ behavior: "smooth", block: "center" })
+        scrollWithinSettingsContent(target)
         target.classList.remove("setting-locate-highlight")
         void target.offsetWidth
         target.classList.add("setting-locate-highlight")

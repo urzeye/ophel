@@ -63,6 +63,7 @@ import { useSettingsStore } from "~stores/settings-store"
 import { PageTitle, SettingRow, TabGroup, ToggleRow } from "~tabs/options/components"
 import { IS_DEVELOPMENT_BUILD } from "~utils/config"
 import { getCurrentLang, subscribeI18nChanges, t } from "~utils/i18n"
+import { scrollWithinSettingsContent } from "~utils/settings-scroll"
 import { showToast } from "~utils/toast"
 
 import {
@@ -646,7 +647,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
       setPendingLocateId(null)
       if (!target) return
 
-      target.scrollIntoView({ behavior: "smooth", block: "center" })
+      scrollWithinSettingsContent(target)
       target.classList.add("setting-locate-highlight")
       window.setTimeout(() => target.classList.remove("setting-locate-highlight"), 2200)
     })
@@ -804,18 +805,11 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
     setBindingOrigin(origin)
     setBindingPackId(binding.packId)
     const form = pageRef.current?.querySelector<HTMLElement>(".settings-pack-binding-form")
-    const scroller = form?.closest<HTMLElement>(".settings-content")
-    if (form && scroller) {
-      // 只滚动右侧内容区。scrollIntoView 会连带滚动所有可滚动祖先，
-      // 在设置弹窗里会把整个面板（含侧栏）顶上去且无法滚回
-      const top =
-        form.getBoundingClientRect().top -
-        scroller.getBoundingClientRect().top +
-        scroller.scrollTop -
-        12
-      scroller.scrollTo({ top, behavior: "smooth" })
+    if (form) {
+      // 只滚动右侧内容区并提到顶部，避免连带滚动弹窗容器或背景页
+      scrollWithinSettingsContent(form, { block: "start" })
+      form.querySelector<HTMLInputElement>("input")?.focus({ preventScroll: true })
     }
-    form?.querySelector<HTMLInputElement>("input")?.focus({ preventScroll: true })
   }
 
   const handleCancelEditOriginBinding = () => {
@@ -1526,7 +1520,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
             <form
               className="settings-pack-binding-form"
               onSubmit={(event) => void handleSaveOriginBinding(event)}>
-              <label className="settings-pack-field">
+              <label className="settings-pack-field settings-pack-field-origin">
                 <span>{t("sitePacksCustomOriginLabel")}</span>
                 <Input
                   type="text"
@@ -1541,7 +1535,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
                   aria-label={t("sitePacksCustomOriginLabel")}
                 />
               </label>
-              <div className="settings-pack-field">
+              <div className="settings-pack-field settings-pack-field-pack">
                 <span>{t("sitePacksBindingPackLabel")}</span>
                 <SelectDropdown
                   className="settings-select-dropdown"
@@ -1559,7 +1553,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
                 {editingOrigin !== null && (
                   <Button
                     type="button"
-                    size="sm"
+                    size="md"
                     variant="secondary"
                     className="settings-pack-action-button"
                     disabled={isBindingBusy}
@@ -1569,7 +1563,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
                 )}
                 <Button
                   type="submit"
-                  size="sm"
+                  size="md"
                   variant="primary"
                   className="settings-pack-action-button settings-pack-binding-submit"
                   disabled={isBindingBusy || isBindingsLoading || isInstalledLoading}>

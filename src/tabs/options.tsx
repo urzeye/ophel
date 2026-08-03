@@ -21,6 +21,7 @@ import { APP_DISPLAY_NAME, APP_ICON_URL } from "~utils/config"
 import { SidebarCommunityLinks } from "~components/SidebarCommunityLinks"
 import { getOphelPlatformFontClassName } from "~utils/font"
 import { setLanguage, t } from "~utils/i18n"
+import { scrollWithinSettingsContent } from "~utils/settings-scroll"
 
 import AboutPage from "./options/pages/AboutPage"
 import AppearancePage from "./options/pages/AppearancePage"
@@ -143,7 +144,7 @@ const OptionsPage = () => {
           highlightedElementRef.current.classList.remove("setting-locate-highlight")
         }
 
-        target.scrollIntoView({ behavior: "smooth", block: "center" })
+        scrollWithinSettingsContent(target)
         target.classList.remove("setting-locate-highlight")
         void target.offsetWidth
         target.classList.add("setting-locate-highlight")
