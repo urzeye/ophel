@@ -44,14 +44,14 @@ export const primeDynamicPlatforms = (
 
 export function loadSupportedAiPlatforms(
   storage: PlatformStorage,
+  options?: { force?: boolean },
 ): Promise<readonly SupportedAiPlatform[]> {
-  if (isCatalogPrimed) return Promise.resolve(getSupportedAiPlatforms())
+  // 默认保持 prime-once；适配包状态变化后由调用方传 force 主动重建目录。
+  if (!options?.force && isCatalogPrimed) return Promise.resolve(getSupportedAiPlatforms())
+  if (loadPromise) return loadPromise
 
   const packManager = createRuntimePackManager(storage)
-  return (loadPromise ??= Promise.all([
-    packManager.getEnabledPacks(),
-    packManager.getOriginBindings(),
-  ])
+  loadPromise = Promise.all([packManager.getEnabledPacks(), packManager.getOriginBindings()])
     .then(([snapshot, bindings]) => {
       for (const issue of snapshot.issues) {
         console.warn("[Ophel] SitePack platform catalog issue:", issue)
@@ -64,5 +64,9 @@ export function loadSupportedAiPlatforms(
         error,
       )
       return primeDynamicPlatforms([], createEmptySitePackOriginBindingsState())
-    }))
+    })
+    .finally(() => {
+      loadPromise = null
+    })
+  return loadPromise
 }
