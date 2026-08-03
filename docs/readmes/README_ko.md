@@ -418,9 +418,9 @@ pnpm serve:userscript:assets   # 아이콘/스타일 등 정적 어셋을 로컬
 <div align="center">
 <a href="https://www.star-history.com/?repos=urzeye%2Fophel&type=date&legend=top-left">
  <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=urzeye/ophel&type=date&theme=dark&legend=top-left&sealed_token=OmHYuLiRXx5_x_KvnLJ5mXi161fp3Ecf86V5HVM3VzH9aZj1BZ_TNyesCjRqsjZJxHH0Eo3Q__WyR5XXv8Rd2Fq8KNC2Hm0U95kxfV8Tjfz4Vpo0uZrZa71HwUelHhxsLjm6Uw8jcaP0Yw6QRGWk9AnXRfCrXJMYV0HDArSKtkNc8RD7qOvDoF2VfPer" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=urzeye/ophel&type=date&legend=top-left&sealed_token=OmHYuLiRXx5_x_KvnLJ5mXi161fp3Ecf86V5HVM3VzH9aZj1BZ_TNyesCjRqsjZJxHH0Eo3Q__WyR5XXv8Rd2Fq8KNC2Hm0U95kxfV8Tjfz4Vpo0uZrZa71HwUelHhxsLjm6Uw8jcaP0Yw6QRGWk9AnXRfCrXJMYV0HDArSKtkNc8RD7qOvDoF2VfPer" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=urzeye/ophel&type=date&legend=top-left&sealed_token=OmHYuLiRXx5_x_KvnLJ5mXi161fp3Ecf86V5HVM3VzH9aZj1BZ_TNyesCjRqsjZJxHH0Eo3Q__WyR5XXv8Rd2Fq8KNC2Hm0U95kxfV8Tjfz4Vpo0uZrZa71HwUelHhxsLjm6Uw8jcaP0Yw6QRGWk9AnXRfCrXJMYV0HDArSKtkNc8RD7qOvDoF2VfPer" />
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=urzeye/ophel&type=date&theme=dark&legend=top-left&sealed_token=L12UxrFEo1SBUqeBQbV64q92fjec3vXmv4I75q8YYn5m5Qi7NDHcFH0qOKtoxTvtVoKVT0lL6IXf-97iHb7OPFxZyLdeZsX6DZjDr9hgxp9cmsD-Pe2uCg" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=urzeye/ophel&type=date&legend=top-left&sealed_token=L12UxrFEo1SBUqeBQbV64q92fjec3vXmv4I75q8YYn5m5Qi7NDHcFH0qOKtoxTvtVoKVT0lL6IXf-97iHb7OPFxZyLdeZsX6DZjDr9hgxp9cmsD-Pe2uCg" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=urzeye/ophel&type=date&legend=top-left&sealed_token=L12UxrFEo1SBUqeBQbV64q92fjec3vXmv4I75q8YYn5m5Qi7NDHcFH0qOKtoxTvtVoKVT0lL6IXf-97iHb7OPFxZyLdeZsX6DZjDr9hgxp9cmsD-Pe2uCg" />
  </picture>
 </a>
 <p>
