@@ -156,7 +156,15 @@ export const createSitePackOriginBindingsState = (
         `SitePack binding origin key must be canonical: ${origin} (expected ${canonicalOrigin})`,
       )
     }
-    parsedBindings[origin] = parseSitePackOriginBinding(binding, `bindings[${origin}]`)
+    try {
+      parsedBindings[origin] = parseSitePackOriginBinding(binding, `bindings[${origin}]`)
+    } catch (error) {
+      // 单条无效绑定直接丢弃，避免脏数据导致整份绑定状态和绑定列表不可用
+      if (error instanceof SitePackOriginBindingsError && error.code === "binding-invalid") {
+        continue
+      }
+      throw error
+    }
   }
 
   return {
