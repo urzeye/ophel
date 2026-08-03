@@ -268,9 +268,6 @@ export const de = {
     "Füge deine selbst gehostete KI-Website hinzu (z. B. Open WebUI) und wähle, welches Paket sie unterstützt.",
   sitePacksCustomOriginLabel: "HTTPS-Ursprung",
   sitePacksCustomOriginPlaceholder: "https://chat.example.com",
-  sitePacksBindingModeLabel: "Nutzungsmodus",
-  sitePacksBindingModeExplicit: "Bestimmtes Paket",
-  sitePacksBindingModeDetect: "Automatisch erkennen",
   sitePacksBindingPackLabel: "Paket",
   sitePacksBindingPackPlaceholder: "Installiertes Pack auswählen",
   sitePacksBindingEmpty: "Noch keine eigenen Websites hinzugefügt",
@@ -279,9 +276,6 @@ export const de = {
     "{origin} wurde bereits hinzugefügt. Bearbeite oder lösche den Eintrag zuerst in der Liste.",
   sitePacksBindingHint:
     "Gib einen exakten HTTPS-Ursprung ein, z. B. https://chat.example.com. Pfade und Platzhalter sind nicht zulässig.",
-  sitePacksBindingDetectUnavailable:
-    "Installiere zuerst ein Paket mit automatischer Erkennung, um diesen Modus zu nutzen.",
-  sitePacksBindingDetectPool: "Automatische Erkennung",
   sitePacksBindingPermissionDenied:
     "Die Berechtigung für {origin} wurde nicht erteilt; die Website wurde nicht gespeichert.",
   sitePacksUserscriptCoverageTitle: "Userscript-Match-Regeln hinzufügen",
@@ -289,13 +283,6 @@ export const de = {
     "In {manager} fehlen {count} SitePack-Match-Regeln. Kopiere die folgenden Regeln, bevor du die betroffenen Websites öffnest.",
   sitePacksUserscriptManagerUnknown: "Der aktuelle Userscript-Manager",
   sitePacksBindingPackRequired: "Wähle zuerst ein installiertes Paket aus.",
-  sitePacksBindingDetectRequired: "Installiere zuerst ein Paket mit automatischer Erkennung.",
-  sitePackDetectMultipleTitle: "Mehrere Pakete erkannt",
-  sitePackDetectMultipleDesc:
-    "Aktuell wird „{name}“ verwendet. Wenn dies nicht passt, wechsle zu einem anderen erkannten Paket.",
-  sitePackDetectSelectLabel: "Erkanntes Paket auswählen",
-  sitePackDetectSwitch: "Wechseln und neu laden",
-  sitePackDetectSwitching: "Wird gewechselt…",
   healthCheckTitle: "Die Anpassung dieser Website funktioniert möglicherweise nicht mehr",
   healthCheckUpdateAvailableDesc:
     "Ein neueres {name}-SitePack ist verfügbar (v{current} → v{latest}). Prüfe Konfigurationsupdates, um es anzuwenden.",

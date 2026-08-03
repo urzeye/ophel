@@ -88,8 +88,7 @@ const createPack = (id: string, enabled = true): InstalledSitePack => {
     version: 1,
     minAppVersion: "1.1.8",
     name: id,
-    matches: [],
-    detect: [{ selectorExists: `main[data-pack="${id}"]` }],
+    matches: [SHARED_ORIGIN],
     capabilities: ["outline"],
     selectors: { responseContainer: "main" },
   }
@@ -102,13 +101,6 @@ const createPack = (id: string, enabled = true): InstalledSitePack => {
     enabled,
   }
 }
-
-const createDetectBindings = (): SitePackOriginBindingsState => ({
-  storageSchemaVersion: 1,
-  bindings: {
-    "https://shared.example.com": { mode: "detect" },
-  },
-})
 
 interface RegistrationHarnessOptions {
   packs: InstalledSitePack[]
@@ -215,7 +207,6 @@ describe("SitePack extension registration reconciliation", () => {
   it("registers one shared script set for multiple packs referencing the same origin", async () => {
     const harness = createRegistrationHarness({
       packs: [createPack("alpha-pack"), createPack("beta-pack")],
-      bindings: createDetectBindings(),
       grantedOrigins: [SHARED_ORIGIN],
       managedOrigins: [SHARED_ORIGIN],
     })
@@ -228,8 +219,8 @@ describe("SitePack extension registration reconciliation", () => {
         originPattern: SHARED_ORIGIN,
         referenceCount: 2,
         references: [
-          { packId: "alpha-pack", source: "detect" },
-          { packId: "beta-pack", source: "detect" },
+          { packId: "alpha-pack", source: "static" },
+          { packId: "beta-pack", source: "static" },
         ],
       },
     ])
@@ -250,7 +241,6 @@ describe("SitePack extension registration reconciliation", () => {
     const betaPack = createPack("beta-pack")
     const harness = createRegistrationHarness({
       packs: [alphaPack, betaPack],
-      bindings: createDetectBindings(),
       grantedOrigins: [SHARED_ORIGIN],
       managedOrigins: [SHARED_ORIGIN],
     })
@@ -264,7 +254,7 @@ describe("SitePack extension registration reconciliation", () => {
       {
         originPattern: SHARED_ORIGIN,
         referenceCount: 1,
-        references: [{ packId: "beta-pack", source: "detect" }],
+        references: [{ packId: "beta-pack", source: "static" }],
       },
     ])
     expect(harness.unregisterCalls).toEqual([])
@@ -301,7 +291,6 @@ describe("SitePack extension registration reconciliation", () => {
     }
     const harness = createRegistrationHarness({
       packs: [createPack("alpha-pack")],
-      bindings: createDetectBindings(),
       grantedOrigins: [SHARED_ORIGIN],
       managedOrigins: [SHARED_ORIGIN],
       dynamicScripts: [restrictedRegistration, orphanedRegistration],
@@ -321,7 +310,6 @@ describe("SitePack extension registration reconciliation", () => {
     const expectedRegistrations = await createExpectedRegistrations()
     const harness = createRegistrationHarness({
       packs: [createPack("alpha-pack")],
-      bindings: createDetectBindings(),
       managedOrigins: [SHARED_ORIGIN],
       dynamicScripts: expectedRegistrations,
     })

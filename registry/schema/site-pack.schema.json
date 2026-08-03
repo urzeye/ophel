@@ -56,13 +56,6 @@
         "$ref": "#/definitions/matchPattern"
       }
     },
-    "detect": {
-      "type": "array",
-      "maxItems": 50,
-      "items": {
-        "$ref": "#/definitions/detectRule"
-      }
-    },
     "theme": {
       "$ref": "#/definitions/theme"
     },
@@ -115,23 +108,6 @@
     }
   },
   "allOf": [
-    {
-      "if": {
-        "properties": {
-          "matches": {
-            "maxItems": 0
-          }
-        }
-      },
-      "then": {
-        "required": ["detect"],
-        "properties": {
-          "detect": {
-            "minItems": 1
-          }
-        }
-      }
-    },
     {
       "if": {
         "properties": {
@@ -459,28 +435,6 @@
         "enum": ["https://*/*"]
       },
       "description": "HTTPS extension match pattern. Runtime validation also rejects malformed and top-level host wildcards."
-    },
-    "detectRule": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "selectorExists": {
-          "$ref": "#/definitions/selector"
-        },
-        "metaGenerator": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 500
-        }
-      },
-      "anyOf": [
-        {
-          "required": ["selectorExists"]
-        },
-        {
-          "required": ["metaGenerator"]
-        }
-      ]
     },
     "theme": {
       "type": "object",

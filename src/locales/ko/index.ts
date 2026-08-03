@@ -255,9 +255,6 @@ export const ko = {
     "직접 호스팅하는 AI 사이트(예: Open WebUI)를 추가하고 어떤 팩으로 지원할지 선택하세요.",
   sitePacksCustomOriginLabel: "HTTPS 도메인",
   sitePacksCustomOriginPlaceholder: "https://chat.example.com",
-  sitePacksBindingModeLabel: "사용 방식",
-  sitePacksBindingModeExplicit: "팩 지정",
-  sitePacksBindingModeDetect: "자동 감지",
   sitePacksBindingPackLabel: "팩",
   sitePacksBindingPackPlaceholder: "설치된 팩 선택",
   sitePacksBindingEmpty: "추가된 사용자 지정 사이트가 없습니다",
@@ -266,22 +263,12 @@ export const ko = {
     "{origin} 도메인은 이미 추가되어 있습니다. 먼저 목록에서 편집하거나 삭제하세요.",
   sitePacksBindingHint:
     "https://chat.example.com과 같은 정확한 HTTPS 도메인을 입력하세요. 경로와 와일드카드는 사용할 수 없습니다.",
-  sitePacksBindingDetectUnavailable:
-    "이 방식을 사용하려면 자동 감지를 지원하는 팩을 먼저 설치하세요.",
-  sitePacksBindingDetectPool: "자동 감지",
   sitePacksBindingPermissionDenied: "{origin} 권한이 허용되지 않아 사이트를 저장하지 않았습니다.",
   sitePacksUserscriptCoverageTitle: "사용자 스크립트 일치 규칙 추가",
   sitePacksUserscriptCoverageDesc:
     "{manager}에 SitePack 일치 규칙 {count}개가 없습니다. 해당 사이트를 열기 전에 아래 규칙을 복사하세요.",
   sitePacksUserscriptManagerUnknown: "현재 사용자 스크립트 관리자",
   sitePacksBindingPackRequired: "먼저 설치된 팩을 선택하세요.",
-  sitePacksBindingDetectRequired: "자동 감지를 지원하는 팩을 먼저 설치하세요.",
-  sitePackDetectMultipleTitle: "여러 팩이 감지되었습니다",
-  sitePackDetectMultipleDesc:
-    "현재 “{name}”을 사용 중입니다. 올바르지 않다면 감지된 다른 팩으로 전환할 수 있습니다.",
-  sitePackDetectSelectLabel: "감지된 팩 선택",
-  sitePackDetectSwitch: "전환 후 새로 고침",
-  sitePackDetectSwitching: "전환 중…",
   healthCheckTitle: "이 사이트의 어댑터가 더 이상 작동하지 않을 수 있습니다",
   healthCheckUpdateAvailableDesc:
     "새 {name} SitePack 업데이트(v{current} → v{latest})를 사용할 수 있습니다. 구성 업데이트를 확인해 적용하세요.",

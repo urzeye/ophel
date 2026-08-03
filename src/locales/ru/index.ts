@@ -260,9 +260,6 @@ export const ru = {
     "Добавьте собственный ИИ-сайт (например, Open WebUI) и выберите пакет, который его поддерживает.",
   sitePacksCustomOriginLabel: "HTTPS-домен",
   sitePacksCustomOriginPlaceholder: "https://chat.example.com",
-  sitePacksBindingModeLabel: "Режим использования",
-  sitePacksBindingModeExplicit: "Указанный пакет",
-  sitePacksBindingModeDetect: "Автоопределение",
   sitePacksBindingPackLabel: "Пакет",
   sitePacksBindingPackPlaceholder: "Выберите установленный пакет",
   sitePacksBindingEmpty: "Свои сайты ещё не добавлены",
@@ -270,9 +267,6 @@ export const ru = {
   sitePacksBindingOriginExists: "{origin} уже добавлен. Сначала измените или удалите его в списке.",
   sitePacksBindingHint:
     "Введите точный HTTPS-домен, например https://chat.example.com. Пути и подстановочные знаки не принимаются.",
-  sitePacksBindingDetectUnavailable:
-    "Чтобы использовать этот режим, сначала установите пакет с автоопределением.",
-  sitePacksBindingDetectPool: "Автоопределение",
   sitePacksBindingPermissionDenied:
     "Разрешение для {origin} не предоставлено, поэтому сайт не сохранён.",
   sitePacksUserscriptCoverageTitle: "Добавьте правила совпадения userscript",
@@ -280,13 +274,6 @@ export const ru = {
     "В {manager} не хватает правил SitePack: {count}. Скопируйте правила ниже перед открытием этих сайтов.",
   sitePacksUserscriptManagerUnknown: "Текущий менеджер userscript",
   sitePacksBindingPackRequired: "Сначала выберите установленный пакет.",
-  sitePacksBindingDetectRequired: "Сначала установите пакет с автоопределением.",
-  sitePackDetectMultipleTitle: "Обнаружено несколько пакетов",
-  sitePackDetectMultipleDesc:
-    "Сейчас используется «{name}». Если это неверно, переключитесь на другой обнаруженный пакет.",
-  sitePackDetectSelectLabel: "Выбрать обнаруженный пакет",
-  sitePackDetectSwitch: "Переключить и обновить",
-  sitePackDetectSwitching: "Переключение…",
   healthCheckTitle: "Адаптация этого сайта могла перестать работать",
   healthCheckUpdateAvailableDesc:
     "Доступен более новый SitePack {name} (v{current} → v{latest}). Проверьте обновления конфигурации, чтобы применить его.",

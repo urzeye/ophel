@@ -267,9 +267,6 @@ export const fr = {
     "Ajoutez votre site d'IA auto-hébergé (par ex. Open WebUI) et choisissez le pack qui le prend en charge.",
   sitePacksCustomOriginLabel: "Origine HTTPS",
   sitePacksCustomOriginPlaceholder: "https://chat.example.com",
-  sitePacksBindingModeLabel: "Mode d'utilisation",
-  sitePacksBindingModeExplicit: "Pack spécifique",
-  sitePacksBindingModeDetect: "Détection automatique",
   sitePacksBindingPackLabel: "Pack",
   sitePacksBindingPackPlaceholder: "Choisir un pack installé",
   sitePacksBindingEmpty: "Aucun site personnalisé ajouté",
@@ -278,9 +275,6 @@ export const fr = {
     "{origin} est déjà ajouté. Modifiez-le ou supprimez-le d'abord dans la liste.",
   sitePacksBindingHint:
     "Saisissez une origine HTTPS exacte, par exemple https://chat.example.com. Les chemins et les caractères génériques sont refusés.",
-  sitePacksBindingDetectUnavailable:
-    "Installez d'abord un pack compatible avec la détection automatique pour utiliser ce mode.",
-  sitePacksBindingDetectPool: "Détection automatique",
   sitePacksBindingPermissionDenied:
     "L'autorisation pour {origin} n'a pas été accordée ; le site n'a pas été enregistré.",
   sitePacksUserscriptCoverageTitle: "Ajouter les règles de correspondance du userscript",
@@ -288,14 +282,6 @@ export const fr = {
     "Il manque {count} règles de correspondance SitePack dans {manager}. Copiez les règles ci-dessous avant d'ouvrir les sites concernés.",
   sitePacksUserscriptManagerUnknown: "Le gestionnaire userscript actuel",
   sitePacksBindingPackRequired: "Choisissez d'abord un pack installé.",
-  sitePacksBindingDetectRequired:
-    "Installez d'abord un pack compatible avec la détection automatique.",
-  sitePackDetectMultipleTitle: "Plusieurs packs détectés",
-  sitePackDetectMultipleDesc:
-    "« {name} » est utilisé. Si ce n’est pas la bonne correspondance, passez à un autre pack détecté.",
-  sitePackDetectSelectLabel: "Choisir un pack détecté",
-  sitePackDetectSwitch: "Changer et recharger",
-  sitePackDetectSwitching: "Changement en cours…",
   healthCheckTitle: "L'adaptation de ce site ne fonctionne peut-être plus",
   healthCheckUpdateAvailableDesc:
     "Un SitePack {name} plus récent est disponible (v{current} → v{latest}). Vérifiez les mises à jour de configuration pour l'appliquer.",

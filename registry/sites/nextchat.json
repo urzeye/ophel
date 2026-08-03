@@ -32,11 +32,6 @@
     "ru": "Добавляет в экземпляры NextChat функции Ophel для структуры, базового экспорта, режима Zen, нового чата и вставки промптов."
   },
   "matches": [],
-  "detect": [
-    {
-      "selectorExists": "html:has(head meta[name='config']):has(body #app-body #chat-input):has(body #app-body [class*='_chat-input-send__'])"
-    }
-  ],
   "capabilities": [
     "outline",
     "outline-user-queries",

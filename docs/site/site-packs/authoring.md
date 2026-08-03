@@ -53,7 +53,7 @@ Registry contributions should provide all eleven project languages when user-fac
 
 `matches` accepts at most ten HTTPS extension match patterns. Global matches, top-level host wildcards, overlaps with built-in sites, and overlaps with existing packs are rejected.
 
-For self-hosted applications, `matches` may be empty only when the pack includes at least one `detect` rule. Users then bind an HTTPS origin from the SitePack management page.
+For self-hosted applications, `matches` may be empty. The pack then activates only on HTTPS origins that users bind to it from the SitePack management page.
 
 ## Declare capabilities honestly
 

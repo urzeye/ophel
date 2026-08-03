@@ -1159,8 +1159,7 @@
   letter-spacing: 0.02em;
 }
 
-.settings-pack-source,
-.settings-pack-mode {
+.settings-pack-source {
   color: var(--gh-text-secondary, #6b7280);
   font-weight: 500;
 }
@@ -1348,7 +1347,7 @@
 
 /* ---------- 域名绑定 ---------- */
 
-/* 两行网格：第一行站点+使用方式，第二行适配包+提交；切换使用方式时首行布局稳定 */
+/* 两行网格：第一行站点+适配包，第二行操作按钮通栏 */
 .settings-pack-binding-form {
   display: grid;
   grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
@@ -1361,10 +1360,6 @@
   flex-direction: column;
   gap: 6px;
   min-width: 0;
-}
-
-.settings-pack-field-pack {
-  grid-column: 1;
 }
 
 .settings-pack-field > span {
@@ -1380,12 +1375,8 @@
   color: var(--gh-text-secondary, #9ca3af);
 }
 
-.settings-pack-field-hint.warning {
-  color: var(--gh-text-danger, #ef4444);
-}
-
 .settings-pack-binding-actions {
-  grid-column: 2;
+  grid-column: 1 / -1;
   display: flex;
   gap: 8px;
 }
@@ -1405,7 +1396,6 @@
     grid-template-columns: 1fr;
   }
 
-  .settings-pack-field-pack,
   .settings-pack-binding-actions {
     grid-column: auto;
   }
@@ -1646,15 +1636,6 @@
 @media (max-width: 760px) {
   .settings-pack-binding-form {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  }
-
-  .settings-pack-field-origin,
-  .settings-pack-binding-submit {
-    grid-column: 1 / -1;
-  }
-
-  .settings-pack-binding-submit {
-    justify-self: flex-start;
   }
 }
 

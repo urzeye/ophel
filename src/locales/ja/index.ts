@@ -258,9 +258,6 @@ export const ja = {
     "自分でホストしている AI サイト（Open WebUI など）を追加し、どのパックで対応するかを選択します。",
   sitePacksCustomOriginLabel: "HTTPS ドメイン",
   sitePacksCustomOriginPlaceholder: "https://chat.example.com",
-  sitePacksBindingModeLabel: "利用方式",
-  sitePacksBindingModeExplicit: "パックを指定",
-  sitePacksBindingModeDetect: "自動検出",
   sitePacksBindingPackLabel: "パック",
   sitePacksBindingPackPlaceholder: "インストール済みパックを選択",
   sitePacksBindingEmpty: "カスタムサイトはまだありません",
@@ -269,9 +266,6 @@ export const ja = {
     "{origin} は既に追加されています。先にリストから編集または削除してください。",
   sitePacksBindingHint:
     "https://chat.example.com のような正確な HTTPS ドメインを入力してください。パスとワイルドカードは使えません。",
-  sitePacksBindingDetectUnavailable:
-    "この方式を使うには、自動検出に対応したパックを先にインストールしてください。",
-  sitePacksBindingDetectPool: "自動検出",
   sitePacksBindingPermissionDenied:
     "{origin} の権限が許可されなかったため、サイトは保存されませんでした。",
   sitePacksUserscriptCoverageTitle: "ユーザースクリプトのマッチルールを追加",
@@ -279,13 +273,6 @@ export const ja = {
     "{manager} には SitePack 用のマッチルールが {count} 件不足しています。対象サイトを開く前に、以下のルールをコピーしてください。",
   sitePacksUserscriptManagerUnknown: "現在のユーザースクリプト管理ツール",
   sitePacksBindingPackRequired: "先にインストール済みのパックを選択してください。",
-  sitePacksBindingDetectRequired: "自動検出に対応したパックを先にインストールしてください。",
-  sitePackDetectMultipleTitle: "複数のパックを検出しました",
-  sitePackDetectMultipleDesc:
-    "現在は「{name}」を使用しています。正しくない場合は、検出された別のパックに切り替えられます。",
-  sitePackDetectSelectLabel: "検出されたパックを選択",
-  sitePackDetectSwitch: "切り替えて再読み込み",
-  sitePackDetectSwitching: "切り替え中…",
   healthCheckTitle: "このサイトの適合が無効になっている可能性があります",
   healthCheckUpdateAvailableDesc:
     "{name} SitePack の更新（v{current} → v{latest}）を利用できます。設定更新を確認して適用してください。",

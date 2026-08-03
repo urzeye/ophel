@@ -76,11 +76,6 @@ describe("DeclarativeAdapter direct mappings", () => {
         explicitOrigin: "https://chat.example.com",
       }).canClaimLegacySiteData(),
     ).toBe(false)
-    expect(
-      new DeclarativeAdapter(exactManifest, {
-        detectedOrigin: "https://chat.example.com",
-      }).canClaimLegacySiteData(),
-    ).toBe(false)
   })
 
   it("maps identity, localization, theme, and capabilities defensively", () => {
@@ -316,16 +311,6 @@ describe("DeclarativeAdapter P1-01 browser-facing behavior", () => {
     vi.stubGlobal("window", { location: new URL(url) })
 
     expect(adapter.match()).toBe(expected)
-  })
-
-  it("does not use detect rules when static matches fail", () => {
-    const manifest = createMinimalManifest()
-    manifest.matches = ["https://other.example.com/*"]
-    manifest.detect = [{ selectorExists: "main" }]
-    const adapter = new DeclarativeAdapter(manifest)
-    vi.stubGlobal("window", { location: new URL("https://minimal.example.com/") })
-
-    expect(adapter.match()).toBe(false)
   })
 
   it("reads the active conversation title through activeMatch and titleSelector", () => {

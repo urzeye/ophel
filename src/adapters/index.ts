@@ -31,15 +31,10 @@ import { GrokAdapter } from "./grok"
 import { ImaAdapter } from "./ima"
 import { KimiAdapter } from "./kimi"
 import { applyMergedConfig, DeclarativeAdapter, supportsBuiltinSiteConfig } from "./declarative"
-import { waitForSitePackDetectMatches, type SitePackDetectIssue } from "./declarative/detect"
 import { QianwenAdapter } from "./qianwen"
 import { QwenAiAdapter } from "./qwen-studio"
 import { YuanbaoAdapter } from "./yuanbao"
 import { ZaiAdapter } from "./zai"
-import { clearSitePackDetectionState, recordSitePackDetectionResult } from "./site-pack-detection"
-
-export { getSitePackDetectionState, selectDetectedSitePack } from "./site-pack-detection"
-export type { SitePackDetectionCandidate, SitePackDetectionState } from "./site-pack-detection"
 
 // 所有内置适配器；顺序即匹配优先级，动态适配包在 Phase 1 追加到独立列表。
 const builtinAdapters: SiteAdapter[] = [
@@ -124,12 +119,6 @@ const createDynamicAdapterEntries = (
   return entries
 }
 
-const logDetectionIssues = (origin: string, issues: readonly SitePackDetectIssue[]): void => {
-  for (const issue of issues) {
-    console.error(`[Ophel] SitePack detection issue on ${origin}:`, issue)
-  }
-}
-
 async function loadDynamicAdapters(): Promise<DynamicAdapterLoadResult> {
   const packManager = createRuntimePackManager(platform.storage)
   let snapshot: PackManagerSnapshot
@@ -157,7 +146,6 @@ async function resolveDynamicAdapters(
     console.warn("[Ophel] SitePack registry issue:", issue)
   }
 
-  clearSitePackDetectionState()
   const installedPacks = snapshot.packs
     .filter(isInstalledSitePackEffectivelyEnabled)
     .sort(compareInstalledPacks)
@@ -170,7 +158,7 @@ async function resolveDynamicAdapters(
 
   const currentOrigin = currentUrl.origin
   const binding = originBindings.bindings[currentOrigin]
-  if (binding?.mode === "explicit") {
+  if (binding) {
     const entry = entries.find(({ pack }) => pack.manifest.id === binding.packId)
     if (!entry) {
       console.error(
@@ -198,53 +186,7 @@ async function resolveDynamicAdapters(
     }
   }
 
-  if (binding?.mode !== "detect" || builtinAdapters.some((adapter) => adapter.match())) {
-    return { adapters: entries.map(({ adapter }) => adapter), packs: acceptedPacks }
-  }
-
-  const detectEntries = entries.filter(({ pack }) => Boolean(pack.manifest.detect?.length))
-  if (detectEntries.length === 0) {
-    console.warn(`[Ophel] Detect binding ${currentOrigin} has no enabled SitePack candidates.`)
-    return { adapters: entries.map(({ adapter }) => adapter), packs: acceptedPacks }
-  }
-
-  const detection = await waitForSitePackDetectMatches(
-    detectEntries.map(({ pack }) => pack),
-    currentUrl,
-  )
-  recordSitePackDetectionResult(currentOrigin, detection)
-  logDetectionIssues(currentOrigin, detection.issues)
-
-  if (detection.status !== "matched") {
-    console.warn(
-      `[Ophel] No SitePack detect rule matched ${currentOrigin} after ${detection.attempts} attempts (${detection.status}).`,
-    )
-  }
-
-  const detectedAdapters = detection.matches.flatMap((pack) => {
-    try {
-      return [
-        new DeclarativeAdapter(pack.manifest, {
-          detectedOrigin: currentOrigin,
-          installSource: pack.source,
-        }),
-      ]
-    } catch (error) {
-      console.error(
-        `[Ophel] Failed to initialize detected SitePack ${pack.manifest.id} on ${currentOrigin}:`,
-        error,
-      )
-      return []
-    }
-  })
-  const staticAdapters = entries
-    .filter(({ pack }) => !pack.manifest.detect?.length)
-    .map(({ adapter }) => adapter)
-
-  return {
-    adapters: [...detectedAdapters, ...staticAdapters],
-    packs: acceptedPacks,
-  }
+  return { adapters: entries.map(({ adapter }) => adapter), packs: acceptedPacks }
 }
 
 async function initializeAdapterRegistry(): Promise<void> {

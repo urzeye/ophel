@@ -20,7 +20,7 @@ Userscript managers decide where a script may run from `@match` rules. A running
 
 ## Can one pack support self-hosted instances?
 
-Yes. A pack can include `detect` rules and use an empty `matches` list. Bind each HTTPS origin from **Settings → SitePacks** using explicit mode or the detect pool.
+Yes. A pack can use an empty `matches` list so it never activates on its own. Bind each HTTPS origin to the pack from **Settings → SitePacks**.
 
 Ophel stores each instance under a key derived from pack ID and origin, so settings, themes, reading history, and conversations do not mix between two deployments of the same pack.
 

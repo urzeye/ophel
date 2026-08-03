@@ -8,7 +8,6 @@ import React, {
   useSyncExternalStore,
 } from "react"
 
-import type { SitePackDetectionState } from "~adapters"
 import type { SiteAdapter } from "~adapters/base"
 import {
   createFeatureCapabilitiesFromSignature,
@@ -58,7 +57,6 @@ import { ConversationsTab } from "./ConversationsTab"
 import { LoadingOverlay } from "./LoadingOverlay"
 import { OutlineTab } from "./OutlineTab"
 import { PromptsTab } from "./PromptsTab"
-import { SitePackDetectionNotice } from "./SitePackDetectionNotice"
 import { SiteAdapterHealthNotice } from "./SiteAdapterHealthNotice"
 import { Tooltip } from "~components/ui/Tooltip"
 
@@ -75,8 +73,6 @@ interface MainPanelProps {
   adapterHealth?: HealthCheckSnapshot
   onCheckAdapterHealthUpdates?: () => Promise<HealthCheckUpdateResult>
   onReportAdapterHealthIssue?: () => void
-  sitePackDetection?: SitePackDetectionState | null
-  onSwitchDetectedSitePack?: (packId: string) => Promise<void>
   onThemeToggle?: (event?: ThemeTransitionOrigin) => void
   themeMode?: "light" | "dark"
   selectedPromptId?: string | null
@@ -166,8 +162,6 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   adapterHealth,
   onCheckAdapterHealthUpdates,
   onReportAdapterHealthIssue,
-  sitePackDetection = null,
-  onSwitchDetectedSitePack,
   onThemeToggle,
   themeMode,
   selectedPromptId,
@@ -1555,12 +1549,6 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             snapshot={adapterHealth}
             onCheckUpdates={onCheckAdapterHealthUpdates}
             onReportIssue={onReportAdapterHealthIssue}
-          />
-        )}
-        {onSwitchDetectedSitePack && (
-          <SitePackDetectionNotice
-            detection={sitePackDetection}
-            onSwitch={onSwitchDetectedSitePack}
           />
         )}
         <div className="gh-panel-tabs" role="tablist" aria-label={t("panelTitle")}>

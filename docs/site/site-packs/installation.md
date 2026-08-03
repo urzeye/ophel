@@ -46,10 +46,7 @@ The exact menu name differs by manager. Keep the rule limited to the site you in
 
 Custom origins support self-hosted or same-application deployments whose domain is not listed in a pack's static `matches`.
 
-Enter an HTTPS origin such as `https://chat.example.com`, then choose a binding mode:
-
-- **Explicit pack** always activates the selected installed pack on that origin.
-- **Detect pool** lets installed packs with `detect` rules inspect the page. If several packs match, Ophel follows the installed-order priority and lets the binding be changed later.
+Enter an HTTPS origin such as `https://chat.example.com` and choose an installed pack. The selected pack always activates on that origin.
 
 The extension requests the origin before saving the binding. The userscript build instead shows the match-rule steps above.
 

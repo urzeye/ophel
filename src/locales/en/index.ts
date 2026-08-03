@@ -259,9 +259,6 @@ export const en = {
     "Add your self-hosted AI site (e.g. Open WebUI) and choose which pack supports it.",
   sitePacksCustomOriginLabel: "HTTPS origin",
   sitePacksCustomOriginPlaceholder: "https://chat.example.com",
-  sitePacksBindingModeLabel: "Usage mode",
-  sitePacksBindingModeExplicit: "Specific pack",
-  sitePacksBindingModeDetect: "Auto-detect",
   sitePacksBindingPackLabel: "Pack",
   sitePacksBindingPackPlaceholder: "Choose an installed pack",
   sitePacksBindingEmpty: "No custom sites added",
@@ -269,8 +266,6 @@ export const en = {
   sitePacksBindingOriginExists: "{origin} is already added. Edit or delete it from the list first.",
   sitePacksBindingHint:
     "Enter an exact HTTPS origin, for example https://chat.example.com. Paths and wildcards are not accepted.",
-  sitePacksBindingDetectUnavailable: "Install a pack that supports auto-detect to use this mode.",
-  sitePacksBindingDetectPool: "Auto-detect",
   sitePacksBindingPermissionDenied:
     "Permission for {origin} was not granted, so the site was not saved.",
   sitePacksUserscriptCoverageTitle: "Add userscript match rules",
@@ -278,13 +273,6 @@ export const en = {
     "{manager} is missing {count} SitePack match rules. Copy the rules below before opening those sites.",
   sitePacksUserscriptManagerUnknown: "Your userscript manager",
   sitePacksBindingPackRequired: "Choose an installed pack first.",
-  sitePacksBindingDetectRequired: "Install a pack that supports auto-detect first.",
-  sitePackDetectMultipleTitle: "Multiple packs detected",
-  sitePackDetectMultipleDesc:
-    "Using “{name}”. If this is not the right match, switch to another detected pack.",
-  sitePackDetectSelectLabel: "Choose a detected pack",
-  sitePackDetectSwitch: "Switch and reload",
-  sitePackDetectSwitching: "Switching…",
   healthCheckTitle: "This site's adaptation may be broken",
   healthCheckUpdateAvailableDesc:
     "A newer {name} SitePack is available (v{current} → v{latest}). Check configuration updates to apply it.",

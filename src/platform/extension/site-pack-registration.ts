@@ -423,14 +423,8 @@ export const createSitePackRegistrationManager = (options: SitePackRegistrationM
     }
 
     const snapshot = await options.packManager.getSnapshot()
-    if (parsedBinding.mode === "explicit") {
-      const pack = snapshot.packs.find(
-        (candidate) => candidate.manifest.id === parsedBinding.packId,
-      )
-      if (!pack) throw new Error(`Installed SitePack not found: ${parsedBinding.packId}`)
-    } else if (!snapshot.packs.some((pack) => pack.manifest.detect?.length)) {
-      throw new Error("At least one installed SitePack with detect rules is required")
-    }
+    const pack = snapshot.packs.find((candidate) => candidate.manifest.id === parsedBinding.packId)
+    if (!pack) throw new Error(`Installed SitePack not found: ${parsedBinding.packId}`)
 
     return ensureOriginPatternsInternal({ name: normalizedName }, [
       sitePackBindingOriginPattern(canonicalOrigin),

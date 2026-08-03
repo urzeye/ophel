@@ -9,7 +9,7 @@ import {
   type SitePackOriginBindingsState,
 } from "./site-pack-origin-bindings"
 
-export type SitePackOriginReferenceSource = "static" | "explicit" | "detect"
+export type SitePackOriginReferenceSource = "static" | "explicit"
 
 export interface SitePackOriginReference {
   packId: string
@@ -38,7 +38,6 @@ export interface SitePackOriginReferenceGraph {
 const SOURCE_ORDER: Record<SitePackOriginReferenceSource, number> = {
   static: 0,
   explicit: 1,
-  detect: 2,
 }
 
 const uniqueSorted = (values: readonly string[]): string[] =>
@@ -91,32 +90,21 @@ export const deriveSitePackOriginReferences = (
   const bindingIssues: SitePackOriginBindingIssue[] = []
   for (const [origin, binding] of Object.entries(bindingState.bindings)) {
     const originPattern = sitePackBindingOriginPattern(origin)
-    if (binding.mode === "explicit") {
-      const pack = packsById.get(binding.packId)
-      if (!pack) {
-        bindingIssues.push({
-          code: "binding-pack-missing",
-          origin,
-          originPattern,
-          packId: binding.packId,
-          message: `SitePack origin binding ${origin} references missing pack ${binding.packId}`,
-        })
-        continue
-      }
-      if (isInstalledSitePackEffectivelyEnabled(pack)) {
-        appendReference(referencesByOrigin, originPattern, {
-          packId: pack.manifest.id,
-          source: "explicit",
-        })
-      }
+    const pack = packsById.get(binding.packId)
+    if (!pack) {
+      bindingIssues.push({
+        code: "binding-pack-missing",
+        origin,
+        originPattern,
+        packId: binding.packId,
+        message: `SitePack origin binding ${origin} references missing pack ${binding.packId}`,
+      })
       continue
     }
-
-    for (const pack of enabledPacks) {
-      if (!pack.manifest.detect || pack.manifest.detect.length === 0) continue
+    if (isInstalledSitePackEffectivelyEnabled(pack)) {
       appendReference(referencesByOrigin, originPattern, {
         packId: pack.manifest.id,
-        source: "detect",
+        source: "explicit",
       })
     }
   }
@@ -139,19 +127,15 @@ export const deriveSitePackOriginReferences = (
   }
 }
 
-/** 用户为该包绑定的 origin 级匹配：显式绑定 + 该包参与的 detect 池域名。 */
+/** 用户为该包显式绑定的 origin 级匹配。 */
 export const getSitePackBoundOriginPatterns = (
   pack: InstalledSitePack,
   bindingState: SitePackOriginBindingsState,
 ): string[] => {
-  const participatesInDetect = Boolean(pack.manifest.detect?.length)
   const patterns: string[] = []
 
   for (const [origin, binding] of Object.entries(bindingState.bindings)) {
-    if (
-      (binding.mode === "explicit" && binding.packId === pack.manifest.id) ||
-      (binding.mode === "detect" && participatesInDetect)
-    ) {
+    if (binding.packId === pack.manifest.id) {
       patterns.push(sitePackBindingOriginPattern(origin))
     }
   }

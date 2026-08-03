@@ -40,7 +40,6 @@ interface OutlineCandidate {
 
 export interface DeclarativeAdapterOptions {
   explicitOrigin?: string
-  detectedOrigin?: string
   installSource?: "registry" | "local"
 }
 
@@ -115,16 +114,11 @@ export class DeclarativeAdapter extends SiteAdapter {
   private newConversationPathPatterns: RegExp[] | null = null
   private featureCapabilities: ReadonlySet<SitePackCapability> = new Set()
   private readonly explicitOrigin?: string
-  private readonly detectedOrigin?: string
   private readonly installSource?: "registry" | "local"
 
   constructor(manifest: SitePackManifest, options: DeclarativeAdapterOptions = {}) {
     super()
-    if (options.explicitOrigin !== undefined && options.detectedOrigin !== undefined) {
-      throw new TypeError("Declarative adapter cannot be both explicit and detected")
-    }
     this.explicitOrigin = options.explicitOrigin
-    this.detectedOrigin = options.detectedOrigin
     this.installSource = options.installSource
     this.manifest = structuredClone(manifest)
     this.rebuildManifestState()
@@ -173,13 +167,6 @@ export class DeclarativeAdapter extends SiteAdapter {
   match(): boolean {
     const url = new URL(window.location.href)
     if (this.explicitOrigin !== undefined) return url.origin === this.explicitOrigin
-    if (this.detectedOrigin !== undefined) {
-      return (
-        url.origin === this.detectedOrigin &&
-        (this.manifest.matches.length === 0 ||
-          this.manifest.matches.some((pattern) => siteMatchPatternMatchesUrl(url, pattern)))
-      )
-    }
     return this.manifest.matches.some((pattern) => siteMatchPatternMatchesUrl(url, pattern))
   }
 
@@ -188,7 +175,7 @@ export class DeclarativeAdapter extends SiteAdapter {
   }
 
   canClaimLegacySiteData(): boolean {
-    if (this.explicitOrigin !== undefined || this.detectedOrigin !== undefined) return false
+    if (this.explicitOrigin !== undefined) return false
     if (
       this.manifest.matches.length === 0 ||
       this.manifest.matches.some((match) => /^https:\/\/\*\./i.test(match))

@@ -5,16 +5,10 @@ export const SITE_PACK_ORIGIN_BINDINGS_STORAGE_SCHEMA_VERSION = 1 as const
 
 const EXACT_HTTPS_ORIGIN_INPUT_PATTERN = /^https:\/\/[^/?#\\]+\/?$/i
 
-export interface ExplicitSitePackOriginBinding {
+export interface SitePackOriginBinding {
   mode: "explicit"
   packId: string
 }
-
-export interface DetectSitePackOriginBinding {
-  mode: "detect"
-}
-
-export type SitePackOriginBinding = ExplicitSitePackOriginBinding | DetectSitePackOriginBinding
 
 export interface SitePackOriginBindingsState {
   storageSchemaVersion: typeof SITE_PACK_ORIGIN_BINDINGS_STORAGE_SCHEMA_VERSION
@@ -112,8 +106,7 @@ export const canonicalizeSitePackBindingOrigin = (value: string): string => {
 
 export const cloneSitePackOriginBinding = (
   binding: SitePackOriginBinding,
-): SitePackOriginBinding =>
-  binding.mode === "explicit" ? { mode: "explicit", packId: binding.packId } : { mode: "detect" }
+): SitePackOriginBinding => ({ mode: "explicit", packId: binding.packId })
 
 export const parseSitePackOriginBinding = (
   value: unknown,
@@ -134,15 +127,7 @@ export const parseSitePackOriginBinding = (
     return { mode: "explicit", packId: value.packId }
   }
 
-  if (value.mode === "detect") {
-    assertKnownKeys(value, ["mode"], path, "binding-invalid")
-    return { mode: "detect" }
-  }
-
-  throw new SitePackOriginBindingsError(
-    "binding-invalid",
-    `${path}.mode must be explicit or detect`,
-  )
+  throw new SitePackOriginBindingsError("binding-invalid", `${path}.mode must be explicit`)
 }
 
 const cloneBindings = (
@@ -214,6 +199,4 @@ export const parseSitePackOriginBindingsState = (value: unknown): SitePackOrigin
 export const sameSitePackOriginBinding = (
   left: SitePackOriginBinding,
   right: SitePackOriginBinding,
-): boolean =>
-  left.mode === right.mode &&
-  (left.mode === "detect" || (right.mode === "explicit" && left.packId === right.packId))
+): boolean => left.mode === right.mode && left.packId === right.packId

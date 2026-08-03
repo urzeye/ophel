@@ -14,14 +14,6 @@
     "zh-CN": "用于校验和贡献模板的完整虚构 SitePack。"
   },
   "matches": ["https://chat.example.com/*"],
-  "detect": [
-    {
-      "selectorExists": "main[data-example-chat]"
-    },
-    {
-      "metaGenerator": "Example Chat"
-    }
-  ],
   "theme": {
     "primary": "#1d4ed8",
     "secondary": "#f8fafc"

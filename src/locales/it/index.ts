@@ -265,9 +265,6 @@ export const it = {
     "Aggiungi il tuo sito di IA self-hosted (ad es. Open WebUI) e scegli quale pacchetto lo supporta.",
   sitePacksCustomOriginLabel: "Origine HTTPS",
   sitePacksCustomOriginPlaceholder: "https://chat.example.com",
-  sitePacksBindingModeLabel: "Modalità d'uso",
-  sitePacksBindingModeExplicit: "Pacchetto specifico",
-  sitePacksBindingModeDetect: "Rilevamento automatico",
   sitePacksBindingPackLabel: "Pacchetto",
   sitePacksBindingPackPlaceholder: "Scegli un pack installato",
   sitePacksBindingEmpty: "Nessun sito personalizzato aggiunto",
@@ -276,9 +273,6 @@ export const it = {
     "{origin} è già stato aggiunto. Modificalo o eliminalo prima dall'elenco.",
   sitePacksBindingHint:
     "Inserisci un'origine HTTPS esatta, ad esempio https://chat.example.com. Percorsi e caratteri jolly non sono accettati.",
-  sitePacksBindingDetectUnavailable:
-    "Installa prima un pacchetto che supporta il rilevamento automatico per usare questa modalità.",
-  sitePacksBindingDetectPool: "Rilevamento automatico",
   sitePacksBindingPermissionDenied:
     "Il permesso per {origin} non è stato concesso, quindi il sito non è stato salvato.",
   sitePacksUserscriptCoverageTitle: "Aggiungi le regole di corrispondenza userscript",
@@ -286,14 +280,6 @@ export const it = {
     "In {manager} mancano {count} regole di corrispondenza SitePack. Copia le regole seguenti prima di aprire i siti interessati.",
   sitePacksUserscriptManagerUnknown: "Il gestore userscript corrente",
   sitePacksBindingPackRequired: "Scegli prima un pacchetto installato.",
-  sitePacksBindingDetectRequired:
-    "Installa prima un pacchetto che supporta il rilevamento automatico.",
-  sitePackDetectMultipleTitle: "Rilevati più pacchetti",
-  sitePackDetectMultipleDesc:
-    "È in uso “{name}”. Se non è la corrispondenza corretta, passa a un altro pacchetto rilevato.",
-  sitePackDetectSelectLabel: "Scegli un pacchetto rilevato",
-  sitePackDetectSwitch: "Cambia e ricarica",
-  sitePackDetectSwitching: "Cambio in corso…",
   healthCheckTitle: "L'adattamento di questo sito potrebbe non funzionare più",
   healthCheckUpdateAvailableDesc:
     "È disponibile un SitePack {name} più recente (v{current} → v{latest}). Controlla gli aggiornamenti della configurazione per applicarlo.",

@@ -24,7 +24,6 @@ const MANIFEST_ONLY_KEYS = [
   "description",
   "descriptionI18n",
   "matches",
-  "detect",
 ] as const
 
 const createBaseConfig = (): BuiltinSiteConfig => {

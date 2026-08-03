@@ -386,7 +386,6 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
   const [busyKeys, setBusyKeys] = useState<ReadonlySet<string>>(() => new Set())
   const [confirmation, setConfirmation] = useState<ConfirmationState | null>(null)
   const [bindingOrigin, setBindingOrigin] = useState("")
-  const [bindingMode, setBindingMode] = useState<SitePackOriginBinding["mode"]>("explicit")
   const [bindingPackId, setBindingPackId] = useState("")
   // 显式编辑态：锁定正在编辑的绑定域名，改域名提交时按“迁移绑定”处理而不是新增
   const [editingOrigin, setEditingOrigin] = useState<string | null>(null)
@@ -437,18 +436,6 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
     () => new Map(installedPacks.map((pack) => [pack.manifest.id, pack] as const)),
     [installedPacks],
   )
-  const detectPacks = useMemo(
-    () => sortedInstalledPacks.filter((pack) => Boolean(pack.manifest.detect?.length)),
-    [sortedInstalledPacks],
-  )
-  const bindingModeOptions: SelectDropdownOption[] = [
-    { value: "explicit", label: t("sitePacksBindingModeExplicit") },
-    {
-      value: "detect",
-      label: t("sitePacksBindingModeDetect"),
-      disabled: detectPacks.length === 0,
-    },
-  ]
   const bindingPackOptions = useMemo<SelectDropdownOption[]>(
     () =>
       sortedInstalledPacks.map((pack) => ({
@@ -743,17 +730,10 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
         return
       }
       const origin = canonicalizeSitePackBindingOrigin(candidate)
-      const binding: SitePackOriginBinding =
-        bindingMode === "explicit"
-          ? { mode: "explicit", packId: bindingPackId }
-          : { mode: "detect" }
-
-      if (binding.mode === "explicit" && !installedById.has(binding.packId)) {
+      if (!installedById.has(bindingPackId)) {
         throw new Error(t("sitePacksBindingPackRequired"))
       }
-      if (binding.mode === "detect" && detectPacks.length === 0) {
-        throw new Error(t("sitePacksBindingDetectRequired"))
-      }
+      const binding: SitePackOriginBinding = { mode: "explicit", packId: bindingPackId }
 
       // 编辑态下改了域名视为迁移绑定；目标域名已有绑定则阻止，避免静默覆盖
       const moveFrom = editingOrigin !== null && editingOrigin !== origin ? editingOrigin : null
@@ -764,10 +744,10 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
 
       const previousBinding = originBindings.bindings[origin]
       const moveFromBinding = moveFrom ? originBindings.bindings[moveFrom] : undefined
-      const requestName =
-        binding.mode === "explicit"
-          ? resolveSitePackName(installedById.get(binding.packId)!.manifest, getCurrentLang())
-          : t("sitePacksBindingModeDetect")
+      const requestName = resolveSitePackName(
+        installedById.get(bindingPackId)!.manifest,
+        getCurrentLang(),
+      )
       const permission = await platform.sitePacks.ensureBindingOrigin(origin, binding, requestName)
       if (permission === "denied") {
         notifyError(t("sitePacksBindingPermissionDenied", { origin }))
@@ -822,8 +802,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
   const handleEditOriginBinding = (origin: string, binding: SitePackOriginBinding) => {
     setEditingOrigin(origin)
     setBindingOrigin(origin)
-    setBindingMode(binding.mode)
-    setBindingPackId(binding.mode === "explicit" ? binding.packId : "")
+    setBindingPackId(binding.packId)
     const form = pageRef.current?.querySelector<HTMLElement>(".settings-pack-binding-form")
     const scroller = form?.closest<HTMLElement>(".settings-content")
     if (form && scroller) {
@@ -1217,23 +1196,10 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
           : active
             ? { tone: "success", label: t("sitePacksStatusAvailable") }
             : { tone: "neutral", label: t("sitePacksStatusDisabled") }
-    const explicitPack = binding.mode === "explicit" ? installedById.get(binding.packId) : undefined
-    const referenceNames = Array.from(
-      new Set(
-        (referenceEntry?.references ?? []).map((reference) => {
-          const pack = installedById.get(reference.packId)
-          return pack ? resolveSitePackName(pack.manifest, currentLanguage) : reference.packId
-        }),
-      ),
-    )
-    const summary =
-      binding.mode === "explicit"
-        ? explicitPack
-          ? resolveSitePackName(explicitPack.manifest, currentLanguage)
-          : binding.packId
-        : referenceNames.length > 0
-          ? referenceNames.join(", ")
-          : t("sitePacksBindingDetectPool")
+    const boundPack = installedById.get(binding.packId)
+    const summary = boundPack
+      ? resolveSitePackName(boundPack.manifest, currentLanguage)
+      : binding.packId
     const busy = busyKeys.has(`binding:remove:${origin}`)
 
     return (
@@ -1255,13 +1221,6 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
             <span className={`settings-pack-badge ${status.tone}`}>{status.label}</span>
           </div>
           <div className="settings-pack-meta">
-            <span className="settings-pack-mode">
-              {t(
-                binding.mode === "explicit"
-                  ? "sitePacksBindingModeExplicit"
-                  : "sitePacksBindingModeDetect",
-              )}
-            </span>
             <span>{summary}</span>
           </div>
         </div>
@@ -1583,33 +1542,19 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
                 />
               </label>
               <div className="settings-pack-field">
-                <span>{t("sitePacksBindingModeLabel")}</span>
+                <span>{t("sitePacksBindingPackLabel")}</span>
                 <SelectDropdown
                   className="settings-select-dropdown"
                   buttonClassName="settings-select"
-                  options={bindingModeOptions}
-                  value={bindingMode}
-                  disabled={isBindingBusy}
-                  ariaLabel={t("sitePacksBindingModeLabel")}
-                  onChange={(value) => setBindingMode(value as SitePackOriginBinding["mode"])}
+                  options={bindingPackOptions}
+                  value={bindingPackId}
+                  placeholder={t("sitePacksBindingPackPlaceholder")}
+                  emptyText={t("sitePacksBindingPackPlaceholder")}
+                  disabled={isBindingBusy || bindingPackOptions.length === 0}
+                  ariaLabel={t("sitePacksBindingPackLabel")}
+                  onChange={setBindingPackId}
                 />
               </div>
-              {bindingMode === "explicit" && (
-                <div className="settings-pack-field settings-pack-field-pack">
-                  <span>{t("sitePacksBindingPackLabel")}</span>
-                  <SelectDropdown
-                    className="settings-select-dropdown"
-                    buttonClassName="settings-select"
-                    options={bindingPackOptions}
-                    value={bindingPackId}
-                    placeholder={t("sitePacksBindingPackPlaceholder")}
-                    emptyText={t("sitePacksBindingPackPlaceholder")}
-                    disabled={isBindingBusy || bindingPackOptions.length === 0}
-                    ariaLabel={t("sitePacksBindingPackLabel")}
-                    onChange={setBindingPackId}
-                  />
-                </div>
-              )}
               <div className="settings-pack-binding-actions">
                 {editingOrigin !== null && (
                   <Button
@@ -1639,11 +1584,6 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
               </p>
             )}
             <p className="settings-pack-field-hint">{t("sitePacksBindingHint")}</p>
-            {bindingMode === "detect" && detectPacks.length === 0 && (
-              <p className="settings-pack-field-hint warning">
-                {t("sitePacksBindingDetectUnavailable")}
-              </p>
-            )}
           </section>
 
           {userscriptMatchInfo && missingUserscriptOriginPatterns.length > 0 && (

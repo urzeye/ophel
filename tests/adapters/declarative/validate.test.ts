@@ -237,7 +237,7 @@ describe("validateSitePackManifest structure and limits", () => {
   })
 })
 
-describe("validateSitePackManifest matches and detect rules", () => {
+describe("validateSitePackManifest matches", () => {
   it("accepts HTTPS subdomain wildcard matches", () => {
     expectValid(
       validateSitePackManifest({
@@ -259,12 +259,11 @@ describe("validateSitePackManifest matches and detect rules", () => {
     )
   })
 
-  it("accepts empty matches when a detect rule is present", () => {
+  it("accepts empty matches for binding-only packs", () => {
     expectValid(
       validateSitePackManifest({
         ...createMinimalManifest(),
         matches: [],
-        detect: [{ selectorExists: "main[data-chat]" }],
       }),
     )
   })
@@ -307,28 +306,6 @@ describe("validateSitePackManifest matches and detect rules", () => {
       }),
       "$.matches[1]",
       "duplicate_value",
-    )
-  })
-
-  it("rejects empty matches without detect rules", () => {
-    expectInvalid(
-      validateSitePackManifest({
-        ...createMinimalManifest(),
-        matches: [],
-      }),
-      "$.detect",
-      "capability_requirement",
-    )
-  })
-
-  it("rejects empty detect rule objects", () => {
-    expectInvalid(
-      validateSitePackManifest({
-        ...createMinimalManifest(),
-        detect: [{}],
-      }),
-      "$.detect[0]",
-      "missing_required",
     )
   })
 })

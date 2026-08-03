@@ -260,18 +260,16 @@ export class PackManager {
     return this.enqueue(async () => {
       const canonicalOrigin = canonicalizeSitePackBindingOrigin(origin)
       const parsedBinding = parseSitePackOriginBinding(binding)
-      if (parsedBinding.mode === "explicit") {
-        const installedState = await this.loadStoredState()
-        const installed = this.parseInstalledState(installedState).packs.some(
-          (pack) => pack.manifest.id === parsedBinding.packId,
+      const installedState = await this.loadStoredState()
+      const installed = this.parseInstalledState(installedState).packs.some(
+        (pack) => pack.manifest.id === parsedBinding.packId,
+      )
+      if (!installed) {
+        throw new PackManagerError(
+          "origin-binding-pack-missing",
+          `Cannot bind ${canonicalOrigin} to missing SitePack ${parsedBinding.packId}`,
+          { packId: parsedBinding.packId },
         )
-        if (!installed) {
-          throw new PackManagerError(
-            "origin-binding-pack-missing",
-            `Cannot bind ${canonicalOrigin} to missing SitePack ${parsedBinding.packId}`,
-            { packId: parsedBinding.packId },
-          )
-        }
       }
 
       const state = await this.loadOriginBindingsState()

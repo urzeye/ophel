@@ -32,11 +32,6 @@
     "ru": "Добавляет в самостоятельно размещённые экземпляры Open WebUI функции Ophel для структуры, базового экспорта, отслеживания генерации, режима Zen, нового чата и вставки промптов."
   },
   "matches": [],
-  "detect": [
-    {
-      "selectorExists": "form:has(#chat-input-container #chat-input):has(#input-menu-button)"
-    }
-  ],
   "capabilities": [
     "outline",
     "outline-user-queries",

@@ -32,20 +32,6 @@
     "ru": "Добавляет в экземпляры LobeChat функции Ophel для структуры, базового экспорта, отслеживания генерации, режима Zen, нового чата и вставки промптов."
   },
   "matches": [],
-  "detect": [
-    {
-      "selectorExists": "body:has(a[href='/chat']):has([contenteditable='true'][data-lexical-editor='true']):has(button svg[viewBox='0 0 14 14'])"
-    },
-    {
-      "selectorExists": "#lobe-ui-theme-app:has([contenteditable='true'][data-lexical-editor='true']):has(button svg[viewBox='0 0 14 14'])"
-    },
-    {
-      "selectorExists": "#chatlist-list:has([data-index] article[data-code-type='markdown'])"
-    },
-    {
-      "selectorExists": "#lobe-ui-theme-app:has(.message-wrapper[data-message-id] article[data-code-type='markdown'])"
-    }
-  ],
   "capabilities": [
     "outline",
     "outline-user-queries",

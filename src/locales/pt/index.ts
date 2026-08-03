@@ -262,9 +262,6 @@ export const pt = {
     "Adicione seu site de IA auto-hospedado (ex.: Open WebUI) e escolha qual pacote o suporta.",
   sitePacksCustomOriginLabel: "Origem HTTPS",
   sitePacksCustomOriginPlaceholder: "https://chat.example.com",
-  sitePacksBindingModeLabel: "Modo de uso",
-  sitePacksBindingModeExplicit: "Pacote específico",
-  sitePacksBindingModeDetect: "Detecção automática",
   sitePacksBindingPackLabel: "Pacote",
   sitePacksBindingPackPlaceholder: "Escolha um pacote instalado",
   sitePacksBindingEmpty: "Nenhum site personalizado adicionado",
@@ -273,9 +270,6 @@ export const pt = {
     "{origin} já foi adicionado. Edite-o ou exclua-o primeiro na lista.",
   sitePacksBindingHint:
     "Digite uma origem HTTPS exata, por exemplo https://chat.example.com. Caminhos e curingas não são aceitos.",
-  sitePacksBindingDetectUnavailable:
-    "Instale primeiro um pacote compatível com detecção automática para usar este modo.",
-  sitePacksBindingDetectPool: "Detecção automática",
   sitePacksBindingPermissionDenied:
     "A permissão para {origin} não foi concedida, então o site não foi salvo.",
   sitePacksUserscriptCoverageTitle: "Adicionar regras de correspondência do userscript",
@@ -283,13 +277,6 @@ export const pt = {
     "Faltam {count} regras de correspondência de SitePack no {manager}. Copie as regras abaixo antes de abrir esses sites.",
   sitePacksUserscriptManagerUnknown: "Gerenciador de userscript atual",
   sitePacksBindingPackRequired: "Escolha primeiro um pacote instalado.",
-  sitePacksBindingDetectRequired: "Instale primeiro um pacote compatível com detecção automática.",
-  sitePackDetectMultipleTitle: "Vários pacotes detectados",
-  sitePackDetectMultipleDesc:
-    "“{name}” está em uso. Se não for a correspondência correta, mude para outro pacote detectado.",
-  sitePackDetectSelectLabel: "Escolher um pacote detectado",
-  sitePackDetectSwitch: "Trocar e recarregar",
-  sitePackDetectSwitching: "Trocando…",
   healthCheckTitle: "A adaptação deste site pode ter parado de funcionar",
   healthCheckUpdateAvailableDesc:
     "Um SitePack {name} mais recente está disponível (v{current} → v{latest}). Verifique as atualizações de configuração para aplicá-lo.",

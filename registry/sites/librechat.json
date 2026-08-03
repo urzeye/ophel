@@ -32,11 +32,6 @@
     "ru": "Добавляет в экземпляры LibreChat функции Ophel для структуры, базового экспорта, отслеживания и остановки генерации, режима Zen, нового чата и вставки промптов."
   },
   "matches": [],
-  "detect": [
-    {
-      "selectorExists": "form:has([data-testid='text-input']):has(#send-button)"
-    }
-  ],
   "capabilities": [
     "outline",
     "outline-user-queries",

@@ -38,7 +38,6 @@ interface CreatePackOptions {
   id: string
   name: string
   matches?: string[]
-  detect?: SitePackManifest["detect"]
   nameI18n?: Record<string, string>
   installedAt?: number
 }
@@ -47,7 +46,6 @@ const createPack = ({
   id,
   name,
   matches = [`https://${id}.example/*`],
-  detect,
   nameI18n,
   installedAt = 1,
 }: CreatePackOptions): InstalledSitePack => {
@@ -59,7 +57,6 @@ const createPack = ({
     name,
     ...(nameI18n ? { nameI18n } : {}),
     matches,
-    ...(detect ? { detect } : {}),
     capabilities: ["outline"],
     selectors: { responseContainer: "main" },
   }
@@ -156,7 +153,6 @@ describe("dynamic SitePack platform metadata", () => {
       id: "open-webui",
       name: "Open WebUI",
       matches: [],
-      detect: [{ type: "selector", value: "#chat-root" }],
     })
     const [{ getDynamicPlatforms }, { createSitePackOriginBindingsState }] = await Promise.all([
       import("~core/site-pack-platforms"),
@@ -167,18 +163,14 @@ describe("dynamic SitePack platform metadata", () => {
       [genericPack],
       createSitePackOriginBindingsState({
         "https://chat.corp.example": { mode: "explicit", packId: "open-webui" },
-        "https://ai.lan.example": { mode: "detect" },
         "https://other.example": { mode: "explicit", packId: "another-pack" },
       }),
       "en",
     )
 
-    // 显式绑定与 detect 池域名都要进入识别范围和快捷入口，绑给其他包的域名不能进来。
-    expect(platform.matchPatterns).toEqual([
-      "https://ai.lan.example/*",
-      "https://chat.corp.example/*",
-    ])
-    expect(platform.entryUrls).toEqual(["https://ai.lan.example", "https://chat.corp.example"])
+    // 只有绑定给该包的域名进入识别范围和快捷入口，绑给其他包的域名不能进来。
+    expect(platform.matchPatterns).toEqual(["https://chat.corp.example/*"])
+    expect(platform.entryUrls).toEqual(["https://chat.corp.example"])
     expect(platform.pattern.test("https://chat.corp.example/c/abc")).toBe(true)
     expect(platform.pattern.test("https://other.example/c/abc")).toBe(false)
   })

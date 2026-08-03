@@ -17,13 +17,6 @@ export const isValidSitePackId = (value: unknown): value is string =>
 
 export type SitePackCapability = AdapterFeatureCapability
 
-export interface SiteDetectRule {
-  /** 页面存在该选择器即判定命中。 */
-  selectorExists?: string
-  /** `<meta name="generator">` 的 content 包含该子串即判定命中。 */
-  metaGenerator?: string
-}
-
 export interface SitePackSelectors {
   /** 声明 prompt-insert 能力时必填；纯只读包可省略。 */
   textarea?: string[]
@@ -111,9 +104,8 @@ export interface SitePackManifest extends SitePackConfig {
   nameI18n?: Record<string, string>
   description?: string
   descriptionI18n?: Record<string, string>
-  /** 允许为空；为空时必须提供 detect，并仅经用户显式域名绑定激活。 */
+  /** 允许为空；为空时仅经用户显式域名绑定激活。 */
   matches: string[]
-  detect?: SiteDetectRule[]
 }
 
 export type SitePrivateSelectorValue = string | string[]

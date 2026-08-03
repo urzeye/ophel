@@ -116,7 +116,6 @@ const MANIFEST_KEYS = [
   "description",
   "descriptionI18n",
   "matches",
-  "detect",
   ...CONFIG_KEYS,
 ] as const
 
@@ -1432,50 +1431,6 @@ const validateMatchPattern = (value: string, path: string, context: ValidationCo
   }
 }
 
-const validateDetectRules = (value: unknown, path: string, context: ValidationContext): void => {
-  if (!Array.isArray(value)) {
-    addError(context, path, "invalid_type", "Expected an array")
-    return
-  }
-  if (value.length > SITE_PACK_MAX_ARRAY_ITEMS) {
-    addError(
-      context,
-      path,
-      "too_large",
-      `Array must not contain more than ${SITE_PACK_MAX_ARRAY_ITEMS} items`,
-    )
-  }
-
-  value.forEach((rule, index) => {
-    const rulePath = `${path}[${index}]`
-    const record = validateObject(
-      rule,
-      rulePath,
-      context,
-      ["selectorExists", "metaGenerator"],
-      [],
-      "full",
-    )
-    if (!record) return
-    if (record.selectorExists === undefined && record.metaGenerator === undefined) {
-      addError(
-        context,
-        rulePath,
-        "missing_required",
-        "Detect rule requires selectorExists or metaGenerator",
-      )
-    }
-    if (record.selectorExists !== undefined) {
-      validateSelectorString(record.selectorExists, `${rulePath}.selectorExists`, context, "full")
-    }
-    if (record.metaGenerator !== undefined) {
-      validateString(record.metaGenerator, `${rulePath}.metaGenerator`, context, "full", {
-        maxLength: 500,
-      })
-    }
-  })
-}
-
 export function validateSitePackManifest(
   input: unknown,
   options: SitePackValidationOptions = {},
@@ -1548,21 +1503,6 @@ export function validateSitePackManifest(
       unique: true,
       itemValidator: validateMatchPattern,
     })
-  }
-  if (manifest.detect !== undefined) {
-    validateDetectRules(manifest.detect, "$.detect", context)
-  }
-  if (
-    Array.isArray(manifest.matches) &&
-    manifest.matches.length === 0 &&
-    (!Array.isArray(manifest.detect) || manifest.detect.length === 0)
-  ) {
-    addError(
-      context,
-      "$.detect",
-      "capability_requirement",
-      "An empty matches array requires at least one detect rule",
-    )
   }
 
   validateConfigFields(manifest, "$", context, "full")

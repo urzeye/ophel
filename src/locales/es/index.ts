@@ -266,9 +266,6 @@ export const es = {
     "Añade tu sitio de IA autoalojado (p. ej. Open WebUI) y elige qué paquete lo admite.",
   sitePacksCustomOriginLabel: "Origen HTTPS",
   sitePacksCustomOriginPlaceholder: "https://chat.example.com",
-  sitePacksBindingModeLabel: "Modo de uso",
-  sitePacksBindingModeExplicit: "Paquete específico",
-  sitePacksBindingModeDetect: "Detección automática",
   sitePacksBindingPackLabel: "Paquete",
   sitePacksBindingPackPlaceholder: "Elige un pack instalado",
   sitePacksBindingEmpty: "No hay sitios personalizados añadidos",
@@ -277,9 +274,6 @@ export const es = {
     "{origin} ya está añadido. Edítalo o elimínalo primero en la lista.",
   sitePacksBindingHint:
     "Introduce un origen HTTPS exacto, por ejemplo https://chat.example.com. No se aceptan rutas ni comodines.",
-  sitePacksBindingDetectUnavailable:
-    "Instala primero un paquete compatible con la detección automática para usar este modo.",
-  sitePacksBindingDetectPool: "Detección automática",
   sitePacksBindingPermissionDenied:
     "No se concedió el permiso para {origin}, así que no se guardó el sitio.",
   sitePacksUserscriptCoverageTitle: "Añadir reglas de coincidencia del userscript",
@@ -287,14 +281,6 @@ export const es = {
     "A {manager} le faltan {count} reglas de coincidencia de SitePack. Copia las reglas siguientes antes de abrir esos sitios.",
   sitePacksUserscriptManagerUnknown: "El gestor de userscripts actual",
   sitePacksBindingPackRequired: "Elige primero un paquete instalado.",
-  sitePacksBindingDetectRequired:
-    "Instala primero un paquete compatible con la detección automática.",
-  sitePackDetectMultipleTitle: "Se detectaron varios paquetes",
-  sitePackDetectMultipleDesc:
-    "Se está usando “{name}”. Si no es la coincidencia correcta, cambia a otro paquete detectado.",
-  sitePackDetectSelectLabel: "Elegir un paquete detectado",
-  sitePackDetectSwitch: "Cambiar y recargar",
-  sitePackDetectSwitching: "Cambiando…",
   healthCheckTitle: "La adaptación de este sitio puede haber dejado de funcionar",
   healthCheckUpdateAvailableDesc:
     "Hay un SitePack de {name} más reciente (v{current} → v{latest}). Busca actualizaciones de configuración para aplicarlo.",

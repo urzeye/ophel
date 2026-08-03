@@ -7,7 +7,7 @@ import React, {
   useSyncExternalStore,
 } from "react"
 
-import { getAdapter, getSitePackDetectionState, selectDetectedSitePack } from "~adapters/index"
+import { getAdapter } from "~adapters/index"
 import { SITE_IDS } from "~constants/defaults"
 import {
   ConversationManager,
@@ -409,13 +409,7 @@ export const App = () => {
   // 单例实例
   const adapter = useMemo(() => getAdapter(), [])
   const adapterHealth = useAdapterHealthCheck(adapter)
-  const sitePackDetection = useMemo(() => getSitePackDetectionState(), [])
   const siteInstanceKey = adapter?.getSiteInstanceKey() || "_default"
-
-  const handleSwitchDetectedSitePack = useCallback(async (packId: string) => {
-    await selectDetectedSitePack(packId)
-    window.location.reload()
-  }, [])
 
   const promptManager = useMemo(() => {
     return adapter ? new PromptManager(adapter) : null
@@ -3187,8 +3181,6 @@ export const App = () => {
         adapterHealth={adapterHealth.snapshot}
         onCheckAdapterHealthUpdates={adapterHealth.checkConfigurationUpdates}
         onReportAdapterHealthIssue={adapterHealth.openIssueReport}
-        sitePackDetection={sitePackDetection}
-        onSwitchDetectedSitePack={handleSwitchDetectedSitePack}
         onThemeToggle={handleThemeToggle}
         themeMode={themeMode}
         selectedPromptId={selectedPrompt?.id}

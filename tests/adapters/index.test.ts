@@ -7,7 +7,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 interface TestManifest {
   id: string
   matches: string[]
-  detect?: { selectorExists: string }[]
 }
 
 interface TestPack {
@@ -23,24 +22,16 @@ interface TestSnapshot {
 }
 
 interface TestOriginBinding {
-  mode: "explicit" | "detect"
-  packId?: string
+  mode: "explicit"
+  packId: string
 }
 
 interface TestOriginBindings {
   bindings: Record<string, TestOriginBinding>
 }
 
-interface TestDetectionResult {
-  status: "matched" | "no-match"
-  matches: TestPack[]
-  issues: unknown[]
-  attempts: number
-}
-
 interface TestDeclarativeAdapterOptions {
   explicitOrigin?: string
-  detectedOrigin?: string
   installSource?: "local" | "registry"
 }
 
@@ -57,9 +48,6 @@ const registryTestState = vi.hoisted(() => {
   const declarativeInstances: FakeDeclarativeAdapter[] = []
   const snapshot: TestSnapshot = { packs: [], issues: [] }
   const originBindings: TestOriginBindings = { bindings: {} }
-  const detection: { result: TestDetectionResult } = {
-    result: { status: "no-match", matches: [], issues: [], attempts: 1 },
-  }
 
   const getCurrentUrl = (): URL | null => {
     try {
@@ -93,7 +81,7 @@ const registryTestState = vi.hoisted(() => {
       const currentUrl = getCurrentUrl()
       if (!currentUrl) return false
 
-      const forcedOrigin = this.options.explicitOrigin ?? this.options.detectedOrigin
+      const forcedOrigin = this.options.explicitOrigin
       if (forcedOrigin) return currentUrl.origin === forcedOrigin
 
       return this.manifest.matches.some((pattern) => {
@@ -130,30 +118,21 @@ const registryTestState = vi.hoisted(() => {
     events.push(`patch:${adapter.getSiteId()}`)
   })
   const primeDynamicPlatforms = vi.fn()
-  const waitForDetectMatches = vi.fn(
-    async (_packs: readonly TestPack[], _currentUrl: URL) => detection.result,
-  )
-  const clearDetectionState = vi.fn()
-  const recordDetectionResult = vi.fn()
 
   return {
     FakeDeclarativeAdapter,
     FakeSiteAdapter,
     applyCachedBuiltinAdapterConfig,
     builtinMatches,
-    clearDetectionState,
     constructorFailureIds,
     createBuiltinAdapterClass,
     declarativeInstances,
-    detection,
     events,
     getEnabledPacks,
     getOriginBindings,
     originBindings,
     primeDynamicPlatforms,
-    recordDetectionResult,
     snapshot,
-    waitForDetectMatches,
   }
 })
 
@@ -188,17 +167,6 @@ vi.mock("~adapters/declarative", () => ({
   DeclarativeAdapter: registryTestState.FakeDeclarativeAdapter,
   applyMergedConfig: vi.fn(),
   supportsBuiltinSiteConfig: () => true,
-}))
-
-vi.mock("~adapters/declarative/detect", () => ({
-  waitForSitePackDetectMatches: registryTestState.waitForDetectMatches,
-}))
-
-vi.mock("~adapters/site-pack-detection", () => ({
-  clearSitePackDetectionState: registryTestState.clearDetectionState,
-  getSitePackDetectionState: vi.fn(),
-  recordSitePackDetectionResult: registryTestState.recordDetectionResult,
-  selectDetectedSitePack: vi.fn(),
 }))
 
 vi.mock("~adapters/aistudio", () => ({
@@ -255,7 +223,6 @@ interface CreatePackOptions {
   installedAt?: number
   matches?: string[]
   enabled?: boolean
-  detect?: boolean
   source?: "local" | "registry"
 }
 
@@ -264,13 +231,11 @@ const createPack = ({
   installedAt = 1,
   matches = [`https://${id}.example/*`],
   enabled = true,
-  detect = false,
   source = "local",
 }: CreatePackOptions): TestPack => ({
   manifest: {
     id,
     matches,
-    ...(detect ? { detect: [{ selectorExists: `main[data-pack='${id}']` }] } : {}),
   },
   source,
   installedAt,
@@ -293,12 +258,6 @@ beforeEach(() => {
   registryTestState.snapshot.packs.length = 0
   registryTestState.snapshot.issues.length = 0
   registryTestState.originBindings.bindings = {}
-  registryTestState.detection.result = {
-    status: "no-match",
-    matches: [],
-    issues: [],
-    attempts: 1,
-  }
   setCurrentUrl("https://unmatched.example/")
   vi.spyOn(console, "warn").mockImplementation(() => undefined)
   vi.spyOn(console, "error").mockImplementation(() => undefined)
@@ -486,58 +445,6 @@ describe("AdapterRegistry origin activation", () => {
     expect(registry.getAdapter()).toBeNull()
     expect(console.error).toHaveBeenCalledWith(
       "[Ophel] Explicit SitePack binding https://custom.example -> missing-pack has no enabled, valid package; dynamic fallback is disabled for this origin.",
-    )
-  })
-
-  it("places the detected package before static fallbacks and preserves detect order", async () => {
-    const staticPack = createPack({
-      id: "static-pack",
-      installedAt: 5,
-      matches: ["https://detect.example/*"],
-    })
-    const detectEarly = createPack({
-      id: "detect-early",
-      installedAt: 10,
-      matches: [],
-      detect: true,
-    })
-    const detectLate = createPack({
-      id: "detect-late",
-      installedAt: 20,
-      matches: [],
-      detect: true,
-    })
-    const detectionIssue = { code: "selector-timeout", packId: "detect-early" }
-    registryTestState.snapshot.packs.push(detectLate, staticPack, detectEarly)
-    registryTestState.originBindings.bindings["https://detect.example"] = { mode: "detect" }
-    registryTestState.detection.result = {
-      status: "matched",
-      matches: [detectLate],
-      issues: [detectionIssue],
-      attempts: 2,
-    }
-    setCurrentUrl("https://detect.example/chat")
-    const registry = await importRegistry()
-
-    await registry.initAdapterRegistry()
-
-    const detectCandidates = registryTestState.waitForDetectMatches.mock.calls[0]?.[0] as TestPack[]
-    expect(detectCandidates.map(({ manifest }) => manifest.id)).toEqual([
-      "detect-early",
-      "detect-late",
-    ])
-    expect(registry.getAdapter()?.getSiteId()).toBe("pack:detect-late")
-    expect(registryTestState.recordDetectionResult).toHaveBeenCalledWith(
-      "https://detect.example",
-      registryTestState.detection.result,
-    )
-    expect(registryTestState.primeDynamicPlatforms).toHaveBeenCalledWith(
-      [staticPack, detectEarly, detectLate],
-      registryTestState.originBindings,
-    )
-    expect(console.error).toHaveBeenCalledWith(
-      "[Ophel] SitePack detection issue on https://detect.example:",
-      detectionIssue,
     )
   })
 })
