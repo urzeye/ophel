@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "nextchat",
-  "version": 1,
+  "version": 2,
   "minAppVersion": "1.1.8",
   "name": "NextChat",
   "nameI18n": {
