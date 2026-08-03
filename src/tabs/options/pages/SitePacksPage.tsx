@@ -1368,6 +1368,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
       tabIndex={-1}
       aria-busy={isInstalledLoading || isBindingsLoading || isRegistryLoading || isRuntimeLoading}>
       <PageTitle title={t("navSitePacks")} Icon={JSONFileIcon} />
+      <p className="settings-page-desc">{t("sitePacksPageDesc")}</p>
 
       <div className="settings-pack-toolbar">
         <TabGroup tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />

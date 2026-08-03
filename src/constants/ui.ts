@@ -380,16 +380,16 @@ export const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
   },
   {
     settingId: "site-packs-registry",
-    title: "社区目录",
+    title: "在线适配库",
     keywords: [
       "site pack",
       "registry",
       "community",
       "install",
       "适配包",
-      "社区目录",
+      "在线适配库",
+      "适配中心",
       "安装",
-      "站点适配",
     ],
   },
   {

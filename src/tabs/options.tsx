@@ -58,7 +58,7 @@ const NAV_ITEMS = [
     id: "sitePacks",
     Icon: JSONFileIcon,
     labelKey: "navSitePacks",
-    label: "站点适配包",
+    label: "适配中心",
   },
   {
     id: "appearance",

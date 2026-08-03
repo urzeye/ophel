@@ -15,8 +15,8 @@ interface LocalizedLabelDefinition {
 export const SETTING_SEARCH_PAGE_LABEL_DEFINITIONS: Record<string, LocalizedLabelDefinition> = {
   [NAV_IDS.GENERAL]: { key: "navGeneral", fallback: "General" },
   [NAV_IDS.FEATURES]: { key: "navFeatures", fallback: "Features" },
-  [NAV_IDS.SITE_SETTINGS]: { key: "navSiteSettings", fallback: "Site Config" },
-  [NAV_IDS.SITE_PACKS]: { key: "navSitePacks", fallback: "Site Adapters" },
+  [NAV_IDS.SITE_SETTINGS]: { key: "navSiteSettings", fallback: "Site Settings" },
+  [NAV_IDS.SITE_PACKS]: { key: "navSitePacks", fallback: "Site Packs" },
   [NAV_IDS.GLOBAL_SEARCH]: { key: "navGlobalSearch", fallback: "Global Search" },
   [NAV_IDS.APPEARANCE]: { key: "navAppearance", fallback: "Appearance" },
   [NAV_IDS.SHORTCUTS]: { key: "navShortcuts", fallback: "Keyboard Shortcuts" },

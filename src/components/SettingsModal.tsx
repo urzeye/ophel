@@ -95,13 +95,13 @@ const NAV_ITEMS = [
     id: NAV_IDS.SITE_SETTINGS,
     Icon: PageContentIcon,
     labelKey: "navSiteSettings",
-    label: "站点配置",
+    label: "站点设置",
   },
   {
     id: NAV_IDS.SITE_PACKS,
     Icon: JSONFileIcon,
     labelKey: "navSitePacks",
-    label: "站点适配包",
+    label: "适配中心",
   },
   {
     id: NAV_IDS.GLOBAL_SEARCH,

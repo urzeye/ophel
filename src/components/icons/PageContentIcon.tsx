@@ -1,5 +1,5 @@
 /**
- * SVG 图标组件 - 站点配置
+ * SVG 图标组件 - 站点设置
  */
 import React from "react"
 
