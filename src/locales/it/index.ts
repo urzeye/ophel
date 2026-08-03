@@ -271,6 +271,9 @@ export const it = {
   sitePacksBindingPackLabel: "Pacchetto",
   sitePacksBindingPackPlaceholder: "Scegli un pack installato",
   sitePacksBindingEmpty: "Nessun sito personalizzato aggiunto",
+  sitePacksBindingEditing: "Modifica in corso: {origin}",
+  sitePacksBindingOriginExists:
+    "{origin} è già stato aggiunto. Modificalo o eliminalo prima dall'elenco.",
   sitePacksBindingHint:
     "Inserisci un'origine HTTPS esatta, ad esempio https://chat.example.com. Percorsi e caratteri jolly non sono accettati.",
   sitePacksBindingDetectUnavailable:

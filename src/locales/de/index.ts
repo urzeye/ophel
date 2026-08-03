@@ -274,6 +274,9 @@ export const de = {
   sitePacksBindingPackLabel: "Paket",
   sitePacksBindingPackPlaceholder: "Installiertes Pack auswählen",
   sitePacksBindingEmpty: "Noch keine eigenen Websites hinzugefügt",
+  sitePacksBindingEditing: "Wird bearbeitet: {origin}",
+  sitePacksBindingOriginExists:
+    "{origin} wurde bereits hinzugefügt. Bearbeite oder lösche den Eintrag zuerst in der Liste.",
   sitePacksBindingHint:
     "Gib einen exakten HTTPS-Ursprung ein, z. B. https://chat.example.com. Pfade und Platzhalter sind nicht zulässig.",
   sitePacksBindingDetectUnavailable:

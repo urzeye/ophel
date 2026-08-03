@@ -273,6 +273,9 @@ export const fr = {
   sitePacksBindingPackLabel: "Pack",
   sitePacksBindingPackPlaceholder: "Choisir un pack installé",
   sitePacksBindingEmpty: "Aucun site personnalisé ajouté",
+  sitePacksBindingEditing: "Modification : {origin}",
+  sitePacksBindingOriginExists:
+    "{origin} est déjà ajouté. Modifiez-le ou supprimez-le d'abord dans la liste.",
   sitePacksBindingHint:
     "Saisissez une origine HTTPS exacte, par exemple https://chat.example.com. Les chemins et les caractères génériques sont refusés.",
   sitePacksBindingDetectUnavailable:

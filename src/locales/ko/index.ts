@@ -261,6 +261,9 @@ export const ko = {
   sitePacksBindingPackLabel: "팩",
   sitePacksBindingPackPlaceholder: "설치된 팩 선택",
   sitePacksBindingEmpty: "추가된 사용자 지정 사이트가 없습니다",
+  sitePacksBindingEditing: "편집 중: {origin}",
+  sitePacksBindingOriginExists:
+    "{origin} 도메인은 이미 추가되어 있습니다. 먼저 목록에서 편집하거나 삭제하세요.",
   sitePacksBindingHint:
     "https://chat.example.com과 같은 정확한 HTTPS 도메인을 입력하세요. 경로와 와일드카드는 사용할 수 없습니다.",
   sitePacksBindingDetectUnavailable:

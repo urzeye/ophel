@@ -167,7 +167,7 @@ export const zhTW = {
   siteSettingsPageDesc: "配置站點相關的頁面佈局和內容處理",
   communitySitePackBadge: "社群適配包（核心功能）",
   communitySitePackDesc: "此網站由社群適配包提供支援，僅顯示其支援的功能。",
-  sitePacksPageDesc: "安裝和管理網站適配包，讓 Ophel 支援更多 AI 網站。",
+  sitePacksPageDesc: "安裝和管理網站適配包，讓 Ophel 支援更多 AI 網站",
 
   // SitePack 管理
   sitePacksGuideAction: "使用指南",
@@ -233,6 +233,8 @@ export const zhTW = {
   sitePacksBindingPackLabel: "適配包",
   sitePacksBindingPackPlaceholder: "選擇已安裝的適配包",
   sitePacksBindingEmpty: "尚未新增自訂網站",
+  sitePacksBindingEditing: "正在編輯：{origin}",
+  sitePacksBindingOriginExists: "{origin} 已新增，請先在列表中編輯或刪除該網站。",
   sitePacksBindingHint:
     "請輸入精確的 HTTPS 網域，例如 https://chat.example.com。不接受路徑與萬用字元。",
   sitePacksBindingDetectUnavailable: "需先安裝支援自動辨識的適配包，才能使用此方式。",

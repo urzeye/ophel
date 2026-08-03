@@ -506,6 +506,19 @@
   white-space: nowrap;
 }
 
+/* 带徽标的导航项：标签不再撑满整行，徽标紧随文字，读作一个整体 */
+.settings-nav-item-label.has-badge {
+  flex: 0 1 auto;
+}
+
+/* 导航项内的 beta 徽标使用更紧凑的尺寸，避免挤压菜单文字 */
+.settings-nav-item .settings-beta-badge {
+  height: 16px;
+  padding: 0 6px;
+  margin-left: -4px;
+  font-size: 10px;
+}
+
 .lang-more-btn {
   display: inline-flex;
   align-items: center;
@@ -833,6 +846,7 @@
 
 .settings-pack-page {
   width: 100%;
+  max-width: 960px;
 }
 
 .settings-pack-toolbar {
@@ -848,23 +862,31 @@
   margin-bottom: 0;
 }
 
+/* 与标签组同高的描边 pill，保持工具栏视觉对齐 */
 .settings-pack-guide-link {
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
-  gap: 4px;
-  min-height: 32px;
-  padding: 0 6px;
-  border: none;
-  border-radius: 8px;
-  background: none;
+  gap: 5px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--gh-card-border, #e5e7eb);
+  border-radius: 10px;
+  background: var(--gh-card-bg, #ffffff);
   color: var(--gh-text-secondary, #6b7280);
   font-size: 12px;
+  font-weight: 500;
   line-height: 1.4;
-  transition: color 0.18s ease;
+  cursor: pointer;
+  transition:
+    color 0.18s ease,
+    border-color 0.18s ease,
+    background-color 0.18s ease;
 }
 
 .settings-pack-guide-link:hover {
+  border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 40%, var(--gh-card-border, #e5e7eb));
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 6%, var(--gh-card-bg, #ffffff));
   color: var(--gh-primary, #4285f4);
 }
 
@@ -1064,6 +1086,7 @@
   border-bottom: none;
 }
 
+/* 图标默认用主色浅着色；适配包有品牌色时由内联 style 覆盖 */
 .settings-pack-icon {
   display: inline-flex;
   align-items: center;
@@ -1072,8 +1095,8 @@
   width: 32px;
   height: 32px;
   border-radius: 9px;
-  background: var(--gh-bg-secondary, #f3f4f6);
-  color: var(--gh-text-secondary, #6b7280);
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 10%, var(--gh-card-bg, #ffffff));
+  color: color-mix(in srgb, var(--gh-primary, #4285f4) 72%, var(--gh-text, #374151));
 }
 
 .settings-pack-info {
@@ -1219,6 +1242,62 @@
   }
 }
 
+/* ---------- 图标按钮（行内次要/危险操作） ---------- */
+
+/* Button 组件用内联样式，无法用 class 改 hover 色；纯图标按钮用原生 button + 专用 class */
+.settings-pack-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--gh-input-border, #d1d5db);
+  border-radius: 8px;
+  background: var(--gh-bg, #ffffff);
+  color: var(--gh-text-secondary, #6b7280);
+  cursor: pointer;
+  transition:
+    color 0.18s ease,
+    border-color 0.18s ease,
+    background-color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.settings-pack-icon-btn:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 40%, var(--gh-input-border, #d1d5db));
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 7%, var(--gh-card-bg, #ffffff));
+  color: var(--gh-primary, #4285f4);
+}
+
+.settings-pack-icon-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.settings-pack-icon-btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 42%, transparent);
+  outline-offset: 2px;
+}
+
+.settings-pack-icon-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.settings-pack-icon-btn.danger:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--gh-danger, #ef4444) 38%, transparent);
+  background: color-mix(in srgb, var(--gh-danger, #ef4444) 7%, var(--gh-card-bg, #ffffff));
+  color: var(--gh-text-danger, #ef4444);
+}
+
+.settings-pack-icon-btn.danger:focus-visible {
+  outline-color: color-mix(in srgb, var(--gh-danger, #ef4444) 42%, transparent);
+}
+
+.settings-pack-icon-btn .spinning {
+  animation: settings-pack-spin 0.9s linear infinite;
+}
+
 /* ---------- 空状态 ---------- */
 
 .settings-pack-empty-state {
@@ -1243,6 +1322,18 @@
   opacity: 0.7;
 }
 
+/* 空状态主图标：主色浅着色圆形底，比裸图标更有视觉锚点 */
+.settings-pack-empty-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 9%, var(--gh-card-bg, #ffffff));
+  color: color-mix(in srgb, var(--gh-primary, #4285f4) 68%, var(--gh-text, #374151));
+}
+
 .settings-pack-empty-state > strong {
   font-size: 13px;
   font-weight: 500;
@@ -1257,11 +1348,12 @@
 
 /* ---------- 域名绑定 ---------- */
 
+/* 两行网格：第一行站点+使用方式，第二行适配包+提交；切换使用方式时首行布局稳定 */
 .settings-pack-binding-form {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
   align-items: end;
-  gap: 10px;
+  gap: 12px;
 }
 
 .settings-pack-field {
@@ -1269,6 +1361,10 @@
   flex-direction: column;
   gap: 6px;
   min-width: 0;
+}
+
+.settings-pack-field-pack {
+  grid-column: 1;
 }
 
 .settings-pack-field > span {
@@ -1288,8 +1384,31 @@
   color: var(--gh-text-danger, #ef4444);
 }
 
+.settings-pack-binding-actions {
+  grid-column: 2;
+  display: flex;
+  gap: 8px;
+}
+
 .settings-pack-binding-submit {
+  flex: 1;
   min-height: 34px;
+}
+
+.settings-pack-field-hint.editing {
+  color: var(--gh-primary, #4285f4);
+  font-weight: 500;
+}
+
+@media (max-width: 720px) {
+  .settings-pack-binding-form {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-pack-field-pack,
+  .settings-pack-binding-actions {
+    grid-column: auto;
+  }
 }
 
 .settings-pack-pattern-list {
@@ -1303,6 +1422,10 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--gh-border, #f3f4f6);
+  border-radius: 8px;
+  background: var(--gh-bg-secondary, #f9fafb);
 }
 
 .settings-pack-pattern code {
@@ -1392,6 +1515,11 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+}
+
+.settings-pack-import-text {
+  flex: 1;
+  min-width: 0;
 }
 
 .settings-pack-import-row .settings-card-title,

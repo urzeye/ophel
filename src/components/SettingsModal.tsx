@@ -12,11 +12,11 @@ import {
   ClearIcon,
   FeaturesIcon,
   GeneralIcon,
-  JSONFileIcon,
   KeyboardIcon,
   MaximizeIcon,
   PageContentIcon,
   PermissionsIcon,
+  PuzzleIcon,
   RestoreIcon,
   SearchIcon,
 } from "~components/icons"
@@ -77,7 +77,13 @@ const getFocusableElements = (container: HTMLElement): HTMLElement[] =>
   )
 
 // 导航菜单定义
-const NAV_ITEMS = [
+const NAV_ITEMS: Array<{
+  id: string
+  Icon: React.ComponentType<{ size?: number }>
+  labelKey: string
+  label: string
+  beta?: boolean
+}> = [
   {
     id: NAV_IDS.GENERAL,
     Icon: GeneralIcon,
@@ -99,9 +105,10 @@ const NAV_ITEMS = [
   },
   {
     id: NAV_IDS.SITE_PACKS,
-    Icon: JSONFileIcon,
+    Icon: PuzzleIcon,
     labelKey: "navSitePacks",
     label: "适配中心",
+    beta: true,
   },
   {
     id: NAV_IDS.GLOBAL_SEARCH,
@@ -494,9 +501,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <span className="settings-nav-item-icon">
                   <item.Icon size={22} />
                 </span>
-                <span className="settings-nav-item-label">
+                <span className={`settings-nav-item-label${item.beta ? " has-badge" : ""}`}>
                   {getLocalizedLabel(item.labelKey, item.label)}
                 </span>
+                {item.beta && (
+                  <span className="settings-beta-badge">
+                    {getLocalizedLabel("betaBadge", "Beta")}
+                  </span>
+                )}
               </button>
             ))}
 

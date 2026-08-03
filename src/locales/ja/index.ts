@@ -264,6 +264,9 @@ export const ja = {
   sitePacksBindingPackLabel: "パック",
   sitePacksBindingPackPlaceholder: "インストール済みパックを選択",
   sitePacksBindingEmpty: "カスタムサイトはまだありません",
+  sitePacksBindingEditing: "編集中：{origin}",
+  sitePacksBindingOriginExists:
+    "{origin} は既に追加されています。先にリストから編集または削除してください。",
   sitePacksBindingHint:
     "https://chat.example.com のような正確な HTTPS ドメインを入力してください。パスとワイルドカードは使えません。",
   sitePacksBindingDetectUnavailable:

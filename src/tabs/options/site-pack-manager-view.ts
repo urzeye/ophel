@@ -19,6 +19,7 @@ export interface RegistrySitePackView {
   minAppVersion: string
   matches: string[]
   availability: RegistrySitePackAvailability
+  theme?: SitePackManifest["theme"]
   installed?: InstalledSitePack
 }
 
@@ -63,6 +64,7 @@ export const buildRegistrySitePackViews = (
         minAppVersion: entry.minAppVersion,
         matches: [...entry.matches],
         availability,
+        ...(cached?.manifest.theme ? { theme: cached.manifest.theme } : {}),
         ...(installedById.has(entry.id) ? { installed: installedById.get(entry.id) } : {}),
       }
     })

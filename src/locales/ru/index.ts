@@ -266,6 +266,8 @@ export const ru = {
   sitePacksBindingPackLabel: "Пакет",
   sitePacksBindingPackPlaceholder: "Выберите установленный пакет",
   sitePacksBindingEmpty: "Свои сайты ещё не добавлены",
+  sitePacksBindingEditing: "Редактируется: {origin}",
+  sitePacksBindingOriginExists: "{origin} уже добавлен. Сначала измените или удалите его в списке.",
   sitePacksBindingHint:
     "Введите точный HTTPS-домен, например https://chat.example.com. Пути и подстановочные знаки не принимаются.",
   sitePacksBindingDetectUnavailable:

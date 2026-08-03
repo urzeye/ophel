@@ -12,13 +12,16 @@ import { siteMatchPatternOriginPatternCovers } from "~adapters/declarative/match
 import type { SitePackManifest } from "~adapters/declarative/types"
 import { SITE_PACK_MAX_BYTES, type SitePackValidationError } from "~adapters/declarative/validate"
 import {
+  CheckIcon,
   CloudIcon,
   CopyIcon,
   DeleteIcon,
+  EditIcon,
   ExternalLinkIcon,
+  GlobeIcon,
   ImportIcon,
   InfoIcon,
-  JSONFileIcon,
+  PuzzleIcon,
   RefreshIcon,
 } from "~components/icons"
 import { Button, Input, SelectDropdown, Switch, type SelectDropdownOption } from "~components/ui"
@@ -76,6 +79,18 @@ const ERROR_TOAST_DURATION = 3500
 const builtinPlatformNames = new Map(
   SUPPORTED_AI_PLATFORMS.map(({ id, name }) => [id as string, name] as const),
 )
+
+/**
+ * 适配包图标按 manifest 品牌色着色。
+ * 颜色混向主题变量，保证 24 套预设主题（亮/暗）下图标与底色都有足够对比度。
+ */
+const getPackIconStyle = (theme?: SitePackManifest["theme"]): React.CSSProperties | undefined =>
+  theme?.primary
+    ? {
+        background: `color-mix(in srgb, ${theme.primary} 14%, var(--gh-card-bg, #ffffff))`,
+        color: `color-mix(in srgb, ${theme.primary} 82%, var(--gh-text, #374151))`,
+      }
+    : undefined
 
 type ConfirmationState =
   | {
@@ -373,6 +388,8 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
   const [bindingOrigin, setBindingOrigin] = useState("")
   const [bindingMode, setBindingMode] = useState<SitePackOriginBinding["mode"]>("explicit")
   const [bindingPackId, setBindingPackId] = useState("")
+  // 显式编辑态：锁定正在编辑的绑定域名，改域名提交时按“迁移绑定”处理而不是新增
+  const [editingOrigin, setEditingOrigin] = useState<string | null>(null)
   const [resettingSiteId, setResettingSiteId] = useState<string | null>(null)
   const [registryQuery, setRegistryQuery] = useState("")
   const [pendingLocateId, setPendingLocateId] = useState<string | null>(null)
@@ -480,9 +497,9 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
       return null
     }
   }, [bindingOrigin])
-  const isUpdatingBinding = Boolean(
-    canonicalFormOrigin && originBindings.bindings[canonicalFormOrigin],
-  )
+  const isUpdatingBinding =
+    editingOrigin !== null ||
+    Boolean(canonicalFormOrigin && originBindings.bindings[canonicalFormOrigin])
   const registryViews = useMemo(
     () => buildRegistrySitePackViews(remoteState, installedPacks, currentLanguage),
     [currentLanguage, installedPacks, remoteState],
@@ -719,16 +736,13 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
     const key = "binding:save"
     if (!beginBusy(key)) return
 
-    let origin: string | null = null
-    let previousBinding: SitePackOriginBinding | undefined
-    let shouldRollback = false
     try {
       const candidate = normalizeBindingOriginInput(bindingOrigin)
       if (/^http:\/\//i.test(candidate)) {
         notifyError(t("sitePacksBindingHttpsRequired"))
         return
       }
-      origin = canonicalizeSitePackBindingOrigin(candidate)
+      const origin = canonicalizeSitePackBindingOrigin(candidate)
       const binding: SitePackOriginBinding =
         bindingMode === "explicit"
           ? { mode: "explicit", packId: bindingPackId }
@@ -741,7 +755,15 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
         throw new Error(t("sitePacksBindingDetectRequired"))
       }
 
-      previousBinding = originBindings.bindings[origin]
+      // 编辑态下改了域名视为迁移绑定；目标域名已有绑定则阻止，避免静默覆盖
+      const moveFrom = editingOrigin !== null && editingOrigin !== origin ? editingOrigin : null
+      if (moveFrom && originBindings.bindings[origin]) {
+        notifyError(t("sitePacksBindingOriginExists", { origin }))
+        return
+      }
+
+      const previousBinding = originBindings.bindings[origin]
+      const moveFromBinding = moveFrom ? originBindings.bindings[moveFrom] : undefined
       const requestName =
         binding.mode === "explicit"
           ? resolveSitePackName(installedById.get(binding.packId)!.manifest, getCurrentLang())
@@ -752,21 +774,41 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
         return
       }
 
-      shouldRollback = true
-      await packManager.setOriginBinding(origin, binding)
-      await syncRuntimeStatus()
-      await loadOriginBindings()
-      shouldRollback = false
-      setBindingOrigin(origin)
+      let wroteNewBinding = false
+      try {
+        await packManager.setOriginBinding(origin, binding)
+        wroteNewBinding = true
+        if (moveFrom) await packManager.removeOriginBinding(moveFrom)
+        await syncRuntimeStatus()
+        await loadOriginBindings()
+      } catch (error) {
+        if (!wroteNewBinding) throw error
+        // 新绑定写入后的任何失败统一回滚：恢复原值（或删除）；迁移场景同时还原旧域名绑定
+        try {
+          if (previousBinding) {
+            await packManager.setOriginBinding(origin, previousBinding)
+          } else {
+            await packManager.removeOriginBinding(origin)
+          }
+          if (moveFrom && moveFromBinding) {
+            await packManager.setOriginBinding(moveFrom, moveFromBinding)
+          }
+          await syncRuntimeStatus()
+          await loadOriginBindings()
+        } catch (rollbackError) {
+          throw new Error(
+            `SitePack origin binding operation failed: ${getErrorMessage(error)}; rollback failed: ${getErrorMessage(rollbackError)}`,
+          )
+        }
+        throw error
+      }
+
+      if (moveFrom) setEditingOrigin(origin)
+      // 新增成功后清空输入框，给出明确的“已提交”信号；更新/迁移则保留域名便于继续调整
+      setBindingOrigin(previousBinding || moveFrom ? origin : "")
       notify(t("saveSuccess"))
     } catch (error) {
-      if (shouldRollback && origin) {
-        try {
-          await rollbackOriginBinding(origin, previousBinding, error)
-        } catch (rollbackResult) {
-          reportOperationError(rollbackResult)
-        }
-      } else if (error instanceof SitePackOriginBindingsError && error.code === "invalid-origin") {
+      if (error instanceof SitePackOriginBindingsError && error.code === "invalid-origin") {
         notifyError(t("sitePacksBindingHint"))
       } else {
         reportOperationError(error)
@@ -774,6 +816,32 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
     } finally {
       endBusy(key)
     }
+  }
+
+  /** 把已有绑定回填到表单进入编辑态；表单在列表上方，长列表时需滚动右侧内容区并聚焦 */
+  const handleEditOriginBinding = (origin: string, binding: SitePackOriginBinding) => {
+    setEditingOrigin(origin)
+    setBindingOrigin(origin)
+    setBindingMode(binding.mode)
+    setBindingPackId(binding.mode === "explicit" ? binding.packId : "")
+    const form = pageRef.current?.querySelector<HTMLElement>(".settings-pack-binding-form")
+    const scroller = form?.closest<HTMLElement>(".settings-content")
+    if (form && scroller) {
+      // 只滚动右侧内容区。scrollIntoView 会连带滚动所有可滚动祖先，
+      // 在设置弹窗里会把整个面板（含侧栏）顶上去且无法滚回
+      const top =
+        form.getBoundingClientRect().top -
+        scroller.getBoundingClientRect().top +
+        scroller.scrollTop -
+        12
+      scroller.scrollTo({ top, behavior: "smooth" })
+    }
+    form?.querySelector<HTMLInputElement>("input")?.focus({ preventScroll: true })
+  }
+
+  const handleCancelEditOriginBinding = () => {
+    setEditingOrigin(null)
+    setBindingOrigin("")
   }
 
   const handleRemoveOriginBinding = async (origin: string) => {
@@ -788,6 +856,11 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
         await loadOriginBindings()
       } catch (error) {
         await rollbackOriginBinding(origin, previousBinding, error)
+      }
+      // 删除的正是编辑中的绑定时退出编辑态，避免向已不存在的域名提交
+      if (origin === editingOrigin) {
+        setEditingOrigin(null)
+        setBindingOrigin("")
       }
       notify(t("deleteSuccess"))
     } catch (error) {
@@ -1165,6 +1238,9 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
 
     return (
       <div className="settings-pack-item" key={origin}>
+        <div className="settings-pack-icon" aria-hidden="true">
+          <GlobeIcon size={16} />
+        </div>
         <div className="settings-pack-info">
           <div className="settings-pack-title-line">
             <button
@@ -1190,17 +1266,24 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
           </div>
         </div>
         <div className="settings-pack-controls">
-          <Button
+          <button
             type="button"
-            size="sm"
-            variant="danger"
-            className="settings-pack-action-button"
+            className="settings-pack-icon-btn"
             disabled={busy || isBindingBusy}
+            title={t("edit")}
+            aria-label={`${t("edit")}: ${origin}`}
+            onClick={() => handleEditOriginBinding(origin, binding)}>
+            <EditIcon size={15} />
+          </button>
+          <button
+            type="button"
+            className="settings-pack-icon-btn danger"
+            disabled={busy || isBindingBusy}
+            title={t("delete")}
             aria-label={`${t("delete")}: ${origin}`}
             onClick={() => void handleRemoveOriginBinding(origin)}>
-            <DeleteIcon size={13} />
-            {t("delete")}
-          </Button>
+            <DeleteIcon size={15} />
+          </button>
         </div>
       </div>
     )
@@ -1218,8 +1301,11 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
 
     return (
       <div className="settings-pack-item" key={packId}>
-        <div className="settings-pack-icon" aria-hidden="true">
-          <JSONFileIcon size={18} />
+        <div
+          className="settings-pack-icon"
+          style={getPackIconStyle(pack.manifest.theme)}
+          aria-hidden="true">
+          <PuzzleIcon size={18} />
         </div>
         <div className="settings-pack-info">
           <div className="settings-pack-title-line">
@@ -1241,34 +1327,31 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
         </div>
         <div className="settings-pack-controls">
           {pack.source === "registry" && (
-            <Button
+            <button
               type="button"
-              size="sm"
-              variant="secondary"
-              className="settings-pack-action-button"
+              className="settings-pack-icon-btn"
               disabled={isBusy || isRegistryBusy}
+              title={t("sitePacksCheckUpdates")}
+              aria-label={`${t("sitePacksCheckUpdates")}: ${name}`}
               onClick={() => void refreshRegistry(pack)}>
               <RefreshIcon
-                size={13}
+                size={15}
                 className={busyKeys.has(`update:${packId}`) ? "spinning" : ""}
               />
-              {t("sitePacksCheckUpdates")}
-            </Button>
+            </button>
           )}
-          <Button
+          <button
             type="button"
-            size="sm"
-            variant="danger"
-            className="settings-pack-action-button"
+            className="settings-pack-icon-btn danger"
             disabled={isBusy}
+            title={t("sitePacksUninstall")}
             aria-label={`${t("sitePacksUninstall")}: ${name}`}
             onClick={(event) => {
               confirmationTriggerRef.current = event.currentTarget
               setConfirmation({ type: "uninstall", pack })
             }}>
-            <DeleteIcon size={13} />
-            {t("sitePacksUninstall")}
-          </Button>
+            <DeleteIcon size={15} />
+          </button>
           <Switch
             size="sm"
             checked={pack.enabled}
@@ -1296,8 +1379,8 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
 
     return (
       <div className="settings-pack-item" key={view.id}>
-        <div className="settings-pack-icon" aria-hidden="true">
-          <JSONFileIcon size={18} />
+        <div className="settings-pack-icon" style={getPackIconStyle(view.theme)} aria-hidden="true">
+          <PuzzleIcon size={18} />
         </div>
         <div className="settings-pack-info">
           <div className="settings-pack-title-line">
@@ -1307,9 +1390,6 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
                 className={`settings-pack-badge ${getRegistryAvailabilityTone(view.availability)}`}>
                 {getRegistryAvailabilityLabel(view.availability)}
               </span>
-            )}
-            {isInstalled && (
-              <span className="settings-pack-badge neutral">{t("sitePacksInstalledBadge")}</span>
             )}
           </div>
           {view.description && <p className="settings-pack-description">{view.description}</p>}
@@ -1333,7 +1413,12 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
             className="settings-pack-action-button"
             disabled={!isAvailable || (isInstalled && !canUpdate) || isBusy || isRegistryBusy}
             onClick={() => void handleInstallRegistry(view)}>
-            {canUpdate ? t("sitePacksUpdate") : t("sitePacksInstall")}
+            {isInstalled && !canUpdate && <CheckIcon size={13} />}
+            {canUpdate
+              ? t("sitePacksUpdate")
+              : isInstalled
+                ? t("sitePacksInstalledBadge")
+                : t("sitePacksInstall")}
           </Button>
         </div>
       </div>
@@ -1367,7 +1452,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
       className="settings-pack-page"
       tabIndex={-1}
       aria-busy={isInstalledLoading || isBindingsLoading || isRegistryLoading || isRuntimeLoading}>
-      <PageTitle title={t("navSitePacks")} Icon={JSONFileIcon} />
+      <PageTitle title={t("navSitePacks")} Icon={PuzzleIcon} />
       <p className="settings-page-desc">{t("sitePacksPageDesc")}</p>
 
       <div className="settings-pack-toolbar">
@@ -1419,7 +1504,9 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
             <SitePackListSkeleton />
           ) : sortedInstalledPacks.length === 0 ? (
             <div className="settings-pack-empty-state">
-              <JSONFileIcon size={24} />
+              <div className="settings-pack-empty-icon" aria-hidden="true">
+                <PuzzleIcon size={22} />
+              </div>
               <strong>{t("sitePacksNoInstalled")}</strong>
               <div className="settings-pack-empty-actions">
                 <Button
@@ -1480,7 +1567,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
             <form
               className="settings-pack-binding-form"
               onSubmit={(event) => void handleSaveOriginBinding(event)}>
-              <label className="settings-pack-field settings-pack-field-origin">
+              <label className="settings-pack-field">
                 <span>{t("sitePacksCustomOriginLabel")}</span>
                 <Input
                   type="text"
@@ -1508,7 +1595,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
                 />
               </div>
               {bindingMode === "explicit" && (
-                <div className="settings-pack-field">
+                <div className="settings-pack-field settings-pack-field-pack">
                   <span>{t("sitePacksBindingPackLabel")}</span>
                   <SelectDropdown
                     className="settings-select-dropdown"
@@ -1523,16 +1610,35 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
                   />
                 </div>
               )}
-              <Button
-                type="submit"
-                size="sm"
-                variant="primary"
-                className="settings-pack-action-button settings-pack-binding-submit"
-                disabled={isBindingBusy || isBindingsLoading || isInstalledLoading}>
-                {isUpdatingBinding ? t("sitePacksUpdate") : t("add")}
-              </Button>
+              <div className="settings-pack-binding-actions">
+                {editingOrigin !== null && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    className="settings-pack-action-button"
+                    disabled={isBindingBusy}
+                    onClick={handleCancelEditOriginBinding}>
+                    {t("cancel")}
+                  </Button>
+                )}
+                <Button
+                  type="submit"
+                  size="sm"
+                  variant="primary"
+                  className="settings-pack-action-button settings-pack-binding-submit"
+                  disabled={isBindingBusy || isBindingsLoading || isInstalledLoading}>
+                  {isUpdatingBinding ? t("sitePacksUpdate") : t("add")}
+                </Button>
+              </div>
             </form>
 
+            {editingOrigin !== null && (
+              <p className="settings-pack-field-hint editing">
+                {t("sitePacksBindingEditing", { origin: editingOrigin })}
+              </p>
+            )}
+            <p className="settings-pack-field-hint">{t("sitePacksBindingHint")}</p>
             {bindingMode === "detect" && detectPacks.length === 0 && (
               <p className="settings-pack-field-hint warning">
                 {t("sitePacksBindingDetectUnavailable")}
@@ -1576,7 +1682,9 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
               <SitePackListSkeleton />
             ) : sortedOriginBindings.length === 0 ? (
               <div className="settings-pack-empty-state">
-                <InfoIcon size={24} />
+                <div className="settings-pack-empty-icon" aria-hidden="true">
+                  <GlobeIcon size={20} />
+                </div>
                 <strong>{t("sitePacksBindingEmpty")}</strong>
               </div>
             ) : (
@@ -1719,6 +1827,29 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
             <p className="settings-pack-privacy-note">{t("remoteConfigPrivacyDesc")}</p>
           </section>
 
+          <section className="settings-card">
+            <div className="settings-pack-import-row">
+              <div className="settings-pack-icon" aria-hidden="true">
+                <ImportIcon size={16} />
+              </div>
+              <div className="settings-pack-import-text">
+                <div className="settings-card-title">{t("sitePacksLocalImportTitle")}</div>
+                <div className="settings-card-desc">{t("sitePacksLocalImportDesc")}</div>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                className="settings-pack-action-button"
+                data-site-pack-import-trigger="persistent"
+                disabled={isImportBusy}
+                onClick={(event) => openImportPicker(event.currentTarget)}>
+                <ImportIcon size={14} />
+                {t("importBtn")}
+              </Button>
+            </div>
+          </section>
+
           <section className="settings-card" data-setting-id="site-packs-registry">
             <div className="settings-pack-section-head">
               <div className="settings-card-title">{t("sitePacksRegistryTitle")}</div>
@@ -1745,12 +1876,16 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
               <SitePackListSkeleton />
             ) : registryViews.length === 0 ? (
               <div className="settings-pack-empty-state">
-                <RefreshIcon size={24} />
+                <div className="settings-pack-empty-icon" aria-hidden="true">
+                  <GlobeIcon size={20} />
+                </div>
                 <strong>{t("sitePacksRegistryEmpty")}</strong>
               </div>
             ) : filteredRegistryViews.length === 0 ? (
               <div className="settings-pack-empty-state">
-                <RefreshIcon size={24} />
+                <div className="settings-pack-empty-icon" aria-hidden="true">
+                  <GlobeIcon size={20} />
+                </div>
                 <strong>{t("sitePacksRegistryNoMatch")}</strong>
               </div>
             ) : (
@@ -1758,26 +1893,6 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
                 {filteredRegistryViews.map(renderRegistryPack)}
               </div>
             )}
-          </section>
-
-          <section className="settings-card">
-            <div className="settings-pack-import-row">
-              <div>
-                <div className="settings-card-title">{t("sitePacksLocalImportTitle")}</div>
-                <div className="settings-card-desc">{t("sitePacksLocalImportDesc")}</div>
-              </div>
-              <Button
-                type="button"
-                size="sm"
-                variant="secondary"
-                className="settings-pack-action-button"
-                data-site-pack-import-trigger="persistent"
-                disabled={isImportBusy}
-                onClick={(event) => openImportPicker(event.currentTarget)}>
-                <ImportIcon size={14} />
-                {t("importBtn")}
-              </Button>
-            </div>
           </section>
         </>
       )}

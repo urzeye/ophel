@@ -10,9 +10,9 @@ import {
   BackupIcon,
   FeaturesIcon,
   GeneralIcon,
-  JSONFileIcon,
   PageContentIcon,
   PermissionsIcon,
+  PuzzleIcon,
 } from "~components/icons"
 import { resolveSettingsNavigateDetail } from "~constants"
 import { platform } from "~platform"
@@ -39,7 +39,13 @@ import { SidebarFooter } from "./options/components/SidebarFooter"
 // 图标组件
 
 // 导航菜单定义
-const NAV_ITEMS = [
+const NAV_ITEMS: Array<{
+  id: string
+  Icon: React.ComponentType<{ size?: number }>
+  labelKey: string
+  label: string
+  beta?: boolean
+}> = [
   // 导航项定义
   {
     id: "general",
@@ -56,9 +62,10 @@ const NAV_ITEMS = [
   },
   {
     id: "sitePacks",
-    Icon: JSONFileIcon,
+    Icon: PuzzleIcon,
     labelKey: "navSitePacks",
     label: "适配中心",
+    beta: true,
   },
   {
     id: "appearance",
@@ -292,7 +299,10 @@ const OptionsPage = () => {
               <span className="settings-nav-item-icon">
                 <item.Icon size={22} />
               </span>
-              <span className="settings-nav-item-label">{t(item.labelKey)}</span>
+              <span className={`settings-nav-item-label${item.beta ? " has-badge" : ""}`}>
+                {t(item.labelKey)}
+              </span>
+              {item.beta && <span className="settings-beta-badge">{t("betaBadge")}</span>}
             </button>
           ))}
 

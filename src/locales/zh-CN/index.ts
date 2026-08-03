@@ -165,7 +165,7 @@ export const zhCN = {
   siteSettingsPageDesc: "配置站点相关的页面布局和内容处理",
   communitySitePackBadge: "社区适配包（核心功能）",
   communitySitePackDesc: "此站点由社区适配包提供支持，仅显示其支持的功能。",
-  sitePacksPageDesc: "安装和管理站点适配包，让 Ophel 支持更多 AI 站点。",
+  sitePacksPageDesc: "安装和管理站点适配包，让 Ophel 支持更多 AI 站点",
 
   // SitePack 管理
   sitePacksGuideAction: "使用指南",
@@ -230,6 +230,8 @@ export const zhCN = {
   sitePacksBindingPackLabel: "适配包",
   sitePacksBindingPackPlaceholder: "选择已安装的适配包",
   sitePacksBindingEmpty: "尚未添加自定义站点",
+  sitePacksBindingEditing: "正在编辑：{origin}",
+  sitePacksBindingOriginExists: "{origin} 已添加，请先在列表中编辑或删除该站点。",
   sitePacksBindingHint:
     "请输入精确的 HTTPS 域名，例如 https://chat.example.com。不接受路径和通配符。",
   sitePacksBindingDetectUnavailable: "需先安装支持自动识别的适配包，才能使用此方式。",

@@ -268,6 +268,9 @@ export const pt = {
   sitePacksBindingPackLabel: "Pacote",
   sitePacksBindingPackPlaceholder: "Escolha um pacote instalado",
   sitePacksBindingEmpty: "Nenhum site personalizado adicionado",
+  sitePacksBindingEditing: "Editando: {origin}",
+  sitePacksBindingOriginExists:
+    "{origin} já foi adicionado. Edite-o ou exclua-o primeiro na lista.",
   sitePacksBindingHint:
     "Digite uma origem HTTPS exata, por exemplo https://chat.example.com. Caminhos e curingas não são aceitos.",
   sitePacksBindingDetectUnavailable:

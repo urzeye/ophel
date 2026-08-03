@@ -265,6 +265,8 @@ export const en = {
   sitePacksBindingPackLabel: "Pack",
   sitePacksBindingPackPlaceholder: "Choose an installed pack",
   sitePacksBindingEmpty: "No custom sites added",
+  sitePacksBindingEditing: "Editing: {origin}",
+  sitePacksBindingOriginExists: "{origin} is already added. Edit or delete it from the list first.",
   sitePacksBindingHint:
     "Enter an exact HTTPS origin, for example https://chat.example.com. Paths and wildcards are not accepted.",
   sitePacksBindingDetectUnavailable: "Install a pack that supports auto-detect to use this mode.",
