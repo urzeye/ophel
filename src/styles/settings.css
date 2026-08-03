@@ -1058,6 +1058,39 @@
   outline-offset: 2px;
 }
 
+/* 待绑定引导按钮：与版本 chip 同节奏的小胶囊，主色浅底表达可点击，比纯文字链接更醒目 */
+.settings-pack-bind-now-btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  padding: 0 9px;
+  border: 1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 30%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 8%, var(--gh-card-bg, #ffffff));
+  color: var(--gh-primary, #4285f4);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    border-color 0.18s ease,
+    background-color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.settings-pack-bind-now-btn:hover {
+  border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 48%, transparent);
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 14%, var(--gh-card-bg, #ffffff));
+}
+
+.settings-pack-bind-now-btn:active {
+  transform: translateY(1px);
+}
+
+.settings-pack-bind-now-btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 42%, transparent);
+  outline-offset: 2px;
+}
+
 .settings-pack-origin {
   overflow-wrap: anywhere;
 }
@@ -1679,6 +1712,7 @@
 @media (prefers-reduced-motion: reduce) {
   .settings-pack-action-button,
   .settings-pack-action-button .spinning,
+  .settings-pack-bind-now-btn,
   .settings-pack-guide-link,
   .settings-pack-origin-link,
   .settings-pack-origin-link > svg,
@@ -1689,7 +1723,8 @@
     animation: none !important;
   }
 
-  .settings-pack-action-button:active:not(:disabled) {
+  .settings-pack-action-button:active:not(:disabled),
+  .settings-pack-bind-now-btn:active {
     transform: none;
   }
 }

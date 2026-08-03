@@ -501,6 +501,11 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
       ),
     )
   }, [registryQuery, registryViews])
+  // 已有绑定指向的适配包集合：自部署包（manifest.matches 为空）不在其中时需要引导绑定
+  const boundPackIds = useMemo(
+    () => new Set(Object.values(originBindings.bindings).map((binding) => binding.packId)),
+    [originBindings],
+  )
   const activePatches = useMemo(
     () =>
       Object.entries(remoteState?.active?.patches ?? {})
@@ -815,6 +820,14 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
   const handleCancelEditOriginBinding = () => {
     setEditingOrigin(null)
     setBindingOrigin("")
+  }
+
+  /** 自部署包的一键绑定引导：切到自定义站点 tab、预选该包并定位高亮表单 */
+  const handleBindPackNow = (packId: string) => {
+    handleCancelEditOriginBinding()
+    setActiveTab(SITE_PACKS_TAB_IDS.ORIGINS)
+    setBindingPackId(packId)
+    setPendingLocateId("site-pack-custom-origin")
   }
 
   const handleRemoveOriginBinding = async (origin: string) => {
@@ -1251,6 +1264,8 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
     const firstMatch = pack.manifest.matches[0]
     const name = resolveSitePackName(pack.manifest, currentLanguage)
     const description = resolveSitePackDescription(pack.manifest, currentLanguage)
+    // 自部署包没有任何绑定指向时不会在任何站点生效，显式提示并给出绑定入口
+    const needsBinding = pack.manifest.matches.length === 0 && !boundPackIds.has(packId)
 
     return (
       <div className="settings-pack-item" key={packId}>
@@ -1263,6 +1278,9 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
         <div className="settings-pack-info">
           <div className="settings-pack-title-line">
             <strong title={packId}>{name}</strong>
+            {needsBinding && (
+              <span className="settings-pack-badge warning">{t("sitePacksNeedsBindingBadge")}</span>
+            )}
             {status && <span className={`settings-pack-badge ${status.tone}`}>{status.label}</span>}
           </div>
           {description && <p className="settings-pack-description">{description}</p>}
@@ -1275,6 +1293,14 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
               <code className="settings-pack-match" title={firstMatch}>
                 {firstMatch}
               </code>
+            )}
+            {needsBinding && (
+              <button
+                type="button"
+                className="settings-pack-bind-now-btn"
+                onClick={() => handleBindPackNow(packId)}>
+                {t("sitePacksBindNowAction")}
+              </button>
             )}
           </div>
         </div>
@@ -1327,6 +1353,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
     )
     const isAvailable = view.availability === "available"
     const isBusy = isPackBusy(view.id)
+    const isSelfHosted = view.matches.length === 0
     const firstMatch = view.matches[0]
     const version = view.availableVersion ?? view.latestVersion
 
@@ -1338,6 +1365,9 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
         <div className="settings-pack-info">
           <div className="settings-pack-title-line">
             <strong title={view.id}>{view.name}</strong>
+            {isSelfHosted && (
+              <span className="settings-pack-badge">{t("sitePacksSelfHostedBadge")}</span>
+            )}
             {!isAvailable && (
               <span
                 className={`settings-pack-badge ${getRegistryAvailabilityTone(view.availability)}`}>
@@ -1353,6 +1383,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
                 {firstMatch}
               </code>
             )}
+            {isSelfHosted && <span>{t("sitePacksSelfHostedHint")}</span>}
             {view.availability === "incompatible" && (
               <span>{t("sitePacksRequiresNewerApp", { version: view.minAppVersion })}</span>
             )}
@@ -1509,7 +1540,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
 
       {activeTab === SITE_PACKS_TAB_IDS.ORIGINS && (
         <>
-          <section className="settings-card">
+          <section className="settings-card" data-setting-id="site-pack-custom-origin">
             <div className="settings-card-title">{t("sitePacksCustomOriginsTitle")}</div>
             <div className="settings-card-desc">{t("sitePacksCustomOriginsDesc")}</div>
 

@@ -126,6 +126,7 @@ export const SETTING_SEARCH_TITLE_KEY_MAP: Record<string, string> = {
   "remote-config-active-patches": "remoteConfigActivePatchesLabel",
   "remote-config-auto-update": "remoteConfigAutoUpdateLabel",
   "remote-config-check-now": "remoteConfigCheckNowLabel",
+  "site-pack-custom-origin": "sitePacksCustomOriginsTitle",
   "site-packs-registry": "sitePacksRegistryTitle",
   "shortcuts-enabled": "enableShortcuts",
   "shortcuts-global-url": "globalShortcutUrl",
