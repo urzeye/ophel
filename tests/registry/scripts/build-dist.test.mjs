@@ -161,9 +161,9 @@ describe("registry publish workflow signing contract", () => {
     const workflow = await readFile(REGISTRY_WORKFLOW_PATH, "utf8")
 
     expect(workflow).toContain('branches: ["main", "feat/site-adapter-pluginization"]')
-    expect(workflow).toContain('if [ "$GITHUB_REF_NAME" = "main" ]; then')
-    expect(workflow).toContain("REVISION=$(git rev-list --count HEAD)")
     expect(workflow).toContain("process.stdout.write(String(index.registryRevision + 1))")
     expect(workflow).toContain("REVISION=1")
+    expect(workflow).toContain("revision-override:")
+    expect(workflow).toContain('REVISION="$REVISION_OVERRIDE"')
   })
 })
