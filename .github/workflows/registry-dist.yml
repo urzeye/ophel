@@ -72,6 +72,7 @@ jobs:
           esac
 
       - name: Build immutable registry dist
+        id: build
         shell: bash
         env:
           PREVIOUS_DIRECTORY: ${{ steps.previous.outputs.directory }}
@@ -104,6 +105,7 @@ jobs:
           else
             pnpm registry:build:signed --revision "$REVISION" --generated-at "$GENERATED_AT"
           fi
+          echo "revision=$REVISION" >> "$GITHUB_OUTPUT"
 
       - name: Publish registry-dist branch
         uses: peaceiris/actions-gh-pages@v4
@@ -117,23 +119,42 @@ jobs:
           user_email: "github-actions[bot]@users.noreply.github.com"
           commit_message: "Publish registry from ${{ github.sha }} [skip ci]"
 
-      # jsDelivr caches branch-ref URLs for hours; without purging, clients keep
-      # installing stale pack versions because the raw fallback only triggers on
-      # fetch/signature failure, not on stale-but-valid data.
-      - name: Purge jsDelivr cache for mutable index files
+      # jsDelivr caches branch-ref URLs for many hours (observed: 19h+), so purging is
+      # the only reliable refresh; without it clients keep installing stale packs
+      # because the raw fallback only triggers on fetch/signature failure, not on
+      # stale-but-valid data. Two caveats make a bare purge insufficient:
+      #   - purge.jsdelivr.net returns HTTP 200 with "throttled": true when the same
+      #     path was purged recently (throttlingReset can reach ~700s) and then does
+      #     NOT purge, so HTTP success alone proves nothing;
+      #   - a purge can race GitHub's origin propagation and get re-cached stale.
+      # Verify the CDN actually serves the revision we just published, re-purging
+      # with escalating waits to ride out throttle windows.
+      - name: Purge and verify jsDelivr cache for mutable index files
         shell: bash
+        env:
+          EXPECTED_REVISION: ${{ steps.build.outputs.revision }}
         run: |
           set -e
-          for file in index.json index.sig.json; do
-            url="https://purge.jsdelivr.net/gh/urzeye/ophel@registry-dist/${file}"
-            for attempt in 1 2 3; do
-              if curl -fsS "$url" > /dev/null; then
-                break
-              fi
-              if [ "$attempt" -eq 3 ]; then
-                echo "::error::Failed to purge jsDelivr cache for ${file}; clients may serve a stale registry"
-                exit 1
-              fi
-              sleep 5
+          CDN_BASE="https://cdn.jsdelivr.net/gh/urzeye/ophel@registry-dist"
+          PURGE_BASE="https://purge.jsdelivr.net/gh/urzeye/ophel@registry-dist"
+          purge() {
+            for file in index.json index.sig.json; do
+              echo "Purging $PURGE_BASE/$file"
+              curl -fsS "$PURGE_BASE/$file" || echo "::warning::jsDelivr purge request failed for $file"
+              echo ""
             done
+          }
+          purge
+          for delay in 10 20 40 80 160 320; do
+            sleep "$delay"
+            curl -fsS "$CDN_BASE/index.json" -o cdn-index.json
+            ACTUAL=$(node -e "try { process.stdout.write(String(JSON.parse(require('fs').readFileSync('cdn-index.json', 'utf8')).registryRevision ?? '')) } catch { process.stdout.write('') }")
+            if [ "$ACTUAL" = "$EXPECTED_REVISION" ]; then
+              echo "jsDelivr serves registry revision $ACTUAL as expected"
+              exit 0
+            fi
+            echo "jsDelivr still serves revision '${ACTUAL:-unknown}', expected $EXPECTED_REVISION"
+            purge
           done
+          echo "::error::jsDelivr cache did not converge to revision $EXPECTED_REVISION; clients will see a stale registry"
+          exit 1
