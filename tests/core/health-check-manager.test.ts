@@ -247,23 +247,17 @@ describe("evaluateAdapterSelectorHealth", () => {
     })
   })
 
-  it("skips the editor on share pages and chat content outside a user conversation", () => {
+  it("reports healthy on a conversation page when every core selector matches", () => {
     vi.mocked(DOMToolkit.query).mockReturnValue({} as Element)
-    const adapter = createSelectorAdapter({
-      isSharePage: () => true,
-      isUserConversationPage: () => false,
-    })
 
-    expect(evaluateAdapterSelectorHealth(adapter)).toEqual({ status: "healthy" })
-    expect(DOMToolkit.query).toHaveBeenCalledOnce()
-    expect(DOMToolkit.query).toHaveBeenCalledWith(["main[data-responses]"], {
-      shadow: true,
-      useCache: false,
-    })
+    expect(evaluateAdapterSelectorHealth(createSelectorAdapter())).toEqual({ status: "healthy" })
+    expect(DOMToolkit.query).toHaveBeenCalledTimes(3)
   })
 
-  it("exempts a new-conversation page without querying the DOM", () => {
-    const adapter = createSelectorAdapter({ isNewConversation: () => true })
+  it("exempts pages outside a user conversation without querying the DOM", () => {
+    // 站点功能页（如 /library、设置页）既不是新会话页也不是会话页，
+    // 本就没有聊天元素，不应触发任何选择器断言。
+    const adapter = createSelectorAdapter({ isUserConversationPage: () => false })
 
     expect(evaluateAdapterSelectorHealth(adapter)).toEqual({ status: "exempt" })
     expect(DOMToolkit.query).not.toHaveBeenCalled()

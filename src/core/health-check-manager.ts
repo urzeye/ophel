@@ -257,12 +257,14 @@ const hasSelectorMatch = (
   )
 
 export function evaluateAdapterSelectorHealth(adapter: SiteAdapter): HealthSelectorEvaluation {
-  if (adapter.isNewConversation()) return { status: "exempt" }
+  // 只在选择器承重的历史会话页上断言；新会话页、分享页和站点其他功能页
+  // （如 library、设置页）本就没有这些元素，一律豁免以避免误报。
+  // isUserConversationPage 的契约已排除新会话页与分享页。
+  if (!adapter.isUserConversationPage()) return { status: "exempt" }
 
   const failures: HealthSelectorFailure[] = []
   const textareaSelectors = adapter.getTextareaSelectors().filter(Boolean)
   if (
-    !adapter.isSharePage() &&
     textareaSelectors.length > 0 &&
     !hasSelectorMatch(
       textareaSelectors,
@@ -278,11 +280,7 @@ export function evaluateAdapterSelectorHealth(adapter: SiteAdapter): HealthSelec
   }
 
   const chatContentSelectors = adapter.getChatContentSelectors().filter(Boolean)
-  if (
-    adapter.isUserConversationPage() &&
-    chatContentSelectors.length > 0 &&
-    !hasSelectorMatch(chatContentSelectors)
-  ) {
+  if (chatContentSelectors.length > 0 && !hasSelectorMatch(chatContentSelectors)) {
     failures.push({ key: "chatContent", selectors: chatContentSelectors })
   }
 
