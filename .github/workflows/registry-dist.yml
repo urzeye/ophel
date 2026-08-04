@@ -116,3 +116,24 @@ jobs:
           user_name: "github-actions[bot]"
           user_email: "github-actions[bot]@users.noreply.github.com"
           commit_message: "Publish registry from ${{ github.sha }} [skip ci]"
+
+      # jsDelivr caches branch-ref URLs for hours; without purging, clients keep
+      # installing stale pack versions because the raw fallback only triggers on
+      # fetch/signature failure, not on stale-but-valid data.
+      - name: Purge jsDelivr cache for mutable index files
+        shell: bash
+        run: |
+          set -e
+          for file in index.json index.sig.json; do
+            url="https://purge.jsdelivr.net/gh/urzeye/ophel@registry-dist/${file}"
+            for attempt in 1 2 3; do
+              if curl -fsS "$url" > /dev/null; then
+                break
+              fi
+              if [ "$attempt" -eq 3 ]; then
+                echo "::error::Failed to purge jsDelivr cache for ${file}; clients may serve a stale registry"
+                exit 1
+              fi
+              sleep 5
+            done
+          done
