@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "lobechat",
-  "version": 3,
+  "version": 4,
   "minAppVersion": "1.1.8",
   "name": "LobeChat",
   "nameI18n": {
@@ -70,12 +70,7 @@
     "useShadowDOM": false
   },
   "zenMode": {
-    "hide": [
-      "div:has(a[href='/chat']):has(a[href='/labs']):not(:has([contenteditable='true'][data-lexical-editor='true']))",
-      "div:has(a[href^='/chat?session=']):has(svg.lucide-message-square-plus):not(:has([contenteditable='true'][data-lexical-editor='true']))",
-      "div:has(div[style*='max-height: 100vh'][style*='min-width: 280px']):not(:has([contenteditable='true'][data-lexical-editor='true']))",
-      "div[style*='height: 40px'][style*='max-height: 40px'][style*='min-height: 40px'][style*='z-index: 11']"
-    ]
+    "hide": ["aside"]
   },
   "themeSync": {
     "storageKey": "theme",
