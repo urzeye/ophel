@@ -28,6 +28,7 @@
     "new-chat",
     "stop-generation",
     "width",
+    "panel-avoidance",
     "zen",
     "clean",
     "prompt-insert",
@@ -138,6 +139,26 @@
       "noCenter": false
     }
   ],
+  "panelAvoidance": {
+    "scopeSelector": "main[data-example-chat]",
+    "obstacleSelectors": ["aside[data-example-settings]"],
+    "widthSelectors": [
+      {
+        "selector": "main[data-example-chat]",
+        "property": "max-width",
+        "extraCss": "width: 100% !important; box-sizing: border-box !important;"
+      }
+    ],
+    "insetSelectors": [
+      {
+        "selector": "main[data-example-chat]",
+        "insetMode": "edge",
+        "extraCss": "box-sizing: border-box !important;"
+      }
+    ],
+    "defaultWidth": "72rem",
+    "gap": 16
+  },
   "mermaidSupport": "fallback",
   "quickQuote": "enabled",
   "supportsHostThemeSync": false

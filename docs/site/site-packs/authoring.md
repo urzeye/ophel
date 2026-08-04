@@ -75,7 +75,7 @@ Duck.ai declares only the features covered by its configuration:
 }
 ```
 
-Capabilities are a UI contract, not marketing metadata. Each one requires supporting fields. For example, `prompt-insert` requires a textarea selector and `input`; `export-basic` requires `export`; `width` requires `widthSelectors`; and `zen` requires `zenMode`.
+Capabilities are a UI contract, not marketing metadata. Each one requires supporting fields. For example, `prompt-insert` requires a textarea selector and `input`; `export-basic` requires `export`; `width` requires `widthSelectors`; `panel-avoidance` requires `panelAvoidance`; and `zen` requires `zenMode`.
 
 If a feature is not verified, omit the capability. Ophel hides unsupported controls automatically.
 
@@ -181,6 +181,42 @@ The two message selectors identify export content. `turnSelector` is a shared pe
 ```
 
 Each entry identifies an element and the width-related property Ophel controls. Optional `extraCss` is passed through the restricted CSS-value validator. Remote resource functions, imports, expressions, and JavaScript URLs are rejected after decoding and normalization.
+
+## Configure panel avoidance
+
+Declaring `panel-avoidance` lets Ophel shrink the host page content into the safe area left over when its side panel is open, so messages, code blocks, and the input box stay visible:
+
+```json
+{
+  "panelAvoidance": {
+    "scopeSelector": "main",
+    "obstacleSelectors": ["aside.settings-panel"],
+    "widthSelectors": [
+      {
+        "selector": "div.chat-column",
+        "property": "max-width",
+        "extraCss": "width: 100% !important; box-sizing: border-box !important;"
+      }
+    ],
+    "insetSelectors": [
+      {
+        "selector": "div.chat-column",
+        "insetMode": "edge",
+        "extraCss": "box-sizing: border-box !important;"
+      }
+    ],
+    "gap": 16
+  }
+}
+```
+
+- `scopeSelector` (optional) is the host container used to measure the safe area; omit it to measure against the whole viewport.
+- `obstacleSelectors` (optional) lists the site's own side panels whose width is also subtracted from the safe area.
+- `widthSelectors` (required, non-empty) recomputes element widths against the safe area and follows the same rules as top-level `widthSelectors`.
+- `insetSelectors` (optional) redistributes left/right insets around the safe-area center. Each entry requires `selector`; `applySide` (`both`/`left`/`right`) and `insetMode` (`centered`/`edge`) tune how the inset is applied, and `leftProperty`/`rightProperty` override the CSS properties written.
+- `defaultWidth` is applied when page widening is off; `gap` reserves visual spacing between the panel and content; `minVisiblePanelWidth`, `minSafeWidth`, and `minViewportWidth` disable avoidance below the given pixel thresholds.
+
+Tune these rules on the real site with the panel open at several viewport widths before publishing; a `panel-avoidance` capability without a verified configuration makes conversations unreadable.
 
 ## Sync the host page theme
 

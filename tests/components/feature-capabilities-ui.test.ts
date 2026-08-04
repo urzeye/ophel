@@ -95,6 +95,7 @@ describe("feature capability settings boundaries", () => {
       'const hasModelLockContent = Boolean(modelLockContent) && supportsFeature("model-lock")',
     )
     expect(source).toContain('const supportsPageWidth = supportsFeature("width")')
+    expect(source).toContain('(isCommunitySitePack && supportsFeature("panel-avoidance"))')
     expect(source).toContain(
       "(supportsPageWidth && (adapter?.getUserQueryWidthSelectors().length ?? 0) > 0)",
     )

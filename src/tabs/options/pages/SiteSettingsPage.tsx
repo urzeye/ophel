@@ -108,7 +108,9 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
     showToastThrottled(prerequisiteToastTemplate.replace("{setting}", label), 2000, {}, 1500, label)
   const enablePageWidthLabel = t("enablePageWidth")
   const enableUserQueryWidthLabel = t("enableUserQueryWidth")
-  const supportsPanelAvoidance = PANEL_AVOIDANCE_SUPPORTED_SITE_IDS.has(siteId)
+  const supportsPanelAvoidance =
+    PANEL_AVOIDANCE_SUPPORTED_SITE_IDS.has(siteId) ||
+    (isCommunitySitePack && supportsFeature("panel-avoidance"))
   const supportsPageWidth = supportsFeature("width")
   const supportsUserQueryWidth =
     !isCommunitySitePack ||

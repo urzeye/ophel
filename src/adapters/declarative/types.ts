@@ -2,6 +2,7 @@ import type {
   ExportConfig,
   ModelSwitcherConfig,
   NetworkMonitorConfig,
+  PanelAvoidanceConfig,
   WidthSelectorConfig,
   ZenModeConfig,
 } from "../base"
@@ -67,6 +68,11 @@ export interface SitePackSessionConfig {
   newTabPath?: string
 }
 
+/** 面板安全区避让的声明式配置：与运行时结构一致，仅去掉函数字段 transformValue。 */
+export type SitePackPanelAvoidanceConfig = Omit<PanelAvoidanceConfig, "widthSelectors"> & {
+  widthSelectors: Omit<WidthSelectorConfig, "transformValue">[]
+}
+
 /** SitePack 与内置配置共同使用的声明式配置面。 */
 export interface SitePackConfig {
   theme?: {
@@ -86,6 +92,8 @@ export interface SitePackConfig {
   zenMode?: ZenModeConfig
   cleanMode?: ZenModeConfig
   widthSelectors?: Omit<WidthSelectorConfig, "transformValue">[]
+  /** 声明 panel-avoidance 能力时必填；驱动 Ophel 面板安全区避让布局。 */
+  panelAvoidance?: SitePackPanelAvoidanceConfig
   mermaidSupport?: "native" | "fallback"
   quickQuote?: "enabled" | "native" | "disabled"
   /** 缺省 false；由声明式适配器显式选择是否联动宿主页主题。 */

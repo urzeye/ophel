@@ -10,6 +10,7 @@ export const SITE_PACK_CAPABILITIES = [
   "new-chat",
   "stop-generation",
   "width",
+  "panel-avoidance",
   "zen",
   "clean",
   "prompt-insert",

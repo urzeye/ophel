@@ -101,6 +101,7 @@ const CONFIG_KEYS = [
   "zenMode",
   "cleanMode",
   "widthSelectors",
+  "panelAvoidance",
   "mermaidSupport",
   "quickQuote",
   "supportsHostThemeSync",
@@ -1275,6 +1276,130 @@ const validateWidthSelectors = (
   )
 }
 
+const validatePanelAvoidanceInset = (
+  value: unknown,
+  path: string,
+  context: ValidationContext,
+  mode: ValidationMode,
+): void => {
+  const inset = validateObject(
+    value,
+    path,
+    context,
+    [
+      "selector",
+      "scopeSelector",
+      "obstacleSelectors",
+      "applySide",
+      "insetMode",
+      "leftProperty",
+      "rightProperty",
+      "extraCss",
+    ],
+    ["selector"],
+    mode,
+  )
+  if (!inset) return
+  if (inset.selector !== undefined) {
+    validateSelectorString(inset.selector, `${path}.selector`, context, mode)
+  }
+  if (inset.scopeSelector !== undefined) {
+    validateSelectorString(inset.scopeSelector, `${path}.scopeSelector`, context, mode)
+  }
+  if (inset.obstacleSelectors !== undefined) {
+    validateSelectorArray(inset.obstacleSelectors, `${path}.obstacleSelectors`, context, mode)
+  }
+  if (inset.applySide !== undefined) {
+    validateEnum(inset.applySide, `${path}.applySide`, context, mode, ["both", "left", "right"])
+  }
+  if (inset.insetMode !== undefined) {
+    validateEnum(inset.insetMode, `${path}.insetMode`, context, mode, ["centered", "edge"])
+  }
+  if (inset.leftProperty !== undefined) {
+    validateString(inset.leftProperty, `${path}.leftProperty`, context, mode, { maxLength: 100 })
+  }
+  if (inset.rightProperty !== undefined) {
+    validateString(inset.rightProperty, `${path}.rightProperty`, context, mode, { maxLength: 100 })
+  }
+  if (inset.extraCss !== undefined) {
+    validateCssString(
+      inset.extraCss,
+      `${path}.extraCss`,
+      context,
+      mode,
+      SITE_PACK_MAX_EXTRA_CSS_LENGTH,
+    )
+  }
+}
+
+const validatePanelAvoidance = (
+  value: unknown,
+  path: string,
+  context: ValidationContext,
+  mode: ValidationMode,
+): void => {
+  const avoidance = validateObject(
+    value,
+    path,
+    context,
+    [
+      "scopeSelector",
+      "obstacleSelectors",
+      "widthSelectors",
+      "insetSelectors",
+      "defaultWidth",
+      "gap",
+      "minVisiblePanelWidth",
+      "minSafeWidth",
+      "minViewportWidth",
+    ],
+    ["widthSelectors"],
+    mode,
+  )
+  if (!avoidance) return
+  if (avoidance.scopeSelector !== undefined) {
+    validateSelectorString(avoidance.scopeSelector, `${path}.scopeSelector`, context, mode)
+  }
+  if (avoidance.obstacleSelectors !== undefined) {
+    validateSelectorArray(avoidance.obstacleSelectors, `${path}.obstacleSelectors`, context, mode)
+  }
+  if (avoidance.widthSelectors !== undefined) {
+    validateWidthSelectors(avoidance.widthSelectors, `${path}.widthSelectors`, context, mode)
+  }
+  if (avoidance.insetSelectors !== undefined) {
+    if (isDeletion(avoidance.insetSelectors, mode)) return
+    if (!Array.isArray(avoidance.insetSelectors)) {
+      addError(context, `${path}.insetSelectors`, "invalid_type", "Expected an array")
+      return
+    }
+    if (avoidance.insetSelectors.length > SITE_PACK_MAX_ARRAY_ITEMS) {
+      addError(
+        context,
+        `${path}.insetSelectors`,
+        "too_large",
+        `Array must not contain more than ${SITE_PACK_MAX_ARRAY_ITEMS} items`,
+      )
+    }
+    avoidance.insetSelectors.forEach((inset, index) =>
+      validatePanelAvoidanceInset(inset, `${path}.insetSelectors[${index}]`, context, "full"),
+    )
+  }
+  if (avoidance.defaultWidth !== undefined) {
+    validateCssString(
+      avoidance.defaultWidth,
+      `${path}.defaultWidth`,
+      context,
+      mode,
+      SITE_PACK_MAX_EXTRA_CSS_LENGTH,
+    )
+  }
+  for (const key of ["gap", "minVisiblePanelWidth", "minSafeWidth", "minViewportWidth"] as const) {
+    if (avoidance[key] !== undefined) {
+      validateFiniteNumber(avoidance[key], `${path}.${key}`, context, mode, { min: 0 })
+    }
+  }
+}
+
 const validatePrivateSelectors = (
   value: unknown,
   path: string,
@@ -1378,6 +1503,7 @@ const validateCapabilityRequirements = (
     Array.isArray(config.widthSelectors) && config.widthSelectors.length > 0,
     `${path}.widthSelectors`,
   )
+  requireField("panel-avoidance", isPlainRecord(config.panelAvoidance), `${path}.panelAvoidance`)
   requireField("zen", isPlainRecord(config.zenMode), `${path}.zenMode`)
   requireField("clean", isPlainRecord(config.cleanMode), `${path}.cleanMode`)
   requireField(
@@ -1465,6 +1591,9 @@ const validateConfigFields = (
   }
   if (config.widthSelectors !== undefined) {
     validateWidthSelectors(config.widthSelectors, `${path}.widthSelectors`, context, mode)
+  }
+  if (config.panelAvoidance !== undefined) {
+    validatePanelAvoidance(config.panelAvoidance, `${path}.panelAvoidance`, context, mode)
   }
   if (config.mermaidSupport !== undefined) {
     validateEnum(config.mermaidSupport, `${path}.mermaidSupport`, context, mode, [

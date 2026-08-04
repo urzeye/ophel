@@ -19,22 +19,25 @@ vi.mock("~utils/dom-toolkit", () => ({
   },
 }))
 
+// panel-avoidance 对所有内置站点统一省略：内置站点的避让能力由适配器代码中的
+// getPanelAvoidanceConfig 与 SiteSettingsPage 白名单表达，不经过能力矩阵；
+// 该能力只为社区 SitePack 的声明式门控服务。
 const DOCUMENTED_OMISSIONS = {
-  [SITE_IDS.AISTUDIO]: [],
-  [SITE_IDS.CHATGLM]: ["conversation-list"],
-  [SITE_IDS.CHATGPT]: [],
-  [SITE_IDS.CLAUDE]: [],
-  [SITE_IDS.DEEPSEEK]: ["model-lock"],
-  [SITE_IDS.DOUBAO]: [],
-  [SITE_IDS.GEMINI]: [],
-  [SITE_IDS.GEMINI_ENTERPRISE]: [],
-  [SITE_IDS.GROK]: ["clean"],
-  [SITE_IDS.IMA]: ["conversation-list"],
-  [SITE_IDS.KIMI]: [],
-  [SITE_IDS.QIANWEN]: ["conversation-list"],
-  [SITE_IDS.QWENAI]: ["conversation-list"],
-  [SITE_IDS.YUANBAO]: [],
-  [SITE_IDS.ZAI]: ["conversation-list", "clean"],
+  [SITE_IDS.AISTUDIO]: ["panel-avoidance"],
+  [SITE_IDS.CHATGLM]: ["conversation-list", "panel-avoidance"],
+  [SITE_IDS.CHATGPT]: ["panel-avoidance"],
+  [SITE_IDS.CLAUDE]: ["panel-avoidance"],
+  [SITE_IDS.DEEPSEEK]: ["model-lock", "panel-avoidance"],
+  [SITE_IDS.DOUBAO]: ["panel-avoidance"],
+  [SITE_IDS.GEMINI]: ["panel-avoidance"],
+  [SITE_IDS.GEMINI_ENTERPRISE]: ["panel-avoidance"],
+  [SITE_IDS.GROK]: ["clean", "panel-avoidance"],
+  [SITE_IDS.IMA]: ["conversation-list", "panel-avoidance"],
+  [SITE_IDS.KIMI]: ["panel-avoidance"],
+  [SITE_IDS.QIANWEN]: ["conversation-list", "panel-avoidance"],
+  [SITE_IDS.QWENAI]: ["conversation-list", "panel-avoidance"],
+  [SITE_IDS.YUANBAO]: ["panel-avoidance"],
+  [SITE_IDS.ZAI]: ["conversation-list", "clean", "panel-avoidance"],
 } as const satisfies Record<BuiltinSiteId, readonly SitePackCapability[]>
 
 class FixtureAdapter extends SiteAdapter {
@@ -72,9 +75,9 @@ class FixtureAdapter extends SiteAdapter {
 }
 
 describe("feature capability contract", () => {
-  it("keeps one unique 13-entry vocabulary and stable signatures", () => {
-    expect(SITE_PACK_CAPABILITIES).toHaveLength(13)
-    expect(new Set(SITE_PACK_CAPABILITIES)).toHaveLength(13)
+  it("keeps one unique 14-entry vocabulary and stable signatures", () => {
+    expect(SITE_PACK_CAPABILITIES).toHaveLength(14)
+    expect(new Set(SITE_PACK_CAPABILITIES)).toHaveLength(14)
 
     const signature = getFeatureCapabilitiesSignature(["zen", "outline", "clean"])
 

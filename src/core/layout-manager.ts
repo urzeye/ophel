@@ -133,6 +133,8 @@ export class LayoutManager {
 
   updateConfig(config: PageWidthConfig) {
     this.pageWidthConfig = config
+    // 站点包热更新后避让规则可能变化，重新读取；内置站点配置为静态，重读等价。
+    this.panelAvoidanceConfig = this.getPanelAvoidanceConfig()
     this.apply()
     this.schedulePanelAvoidanceUpdate()
   }

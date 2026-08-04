@@ -90,7 +90,7 @@ describe("validateSitePackManifest structure and limits", () => {
       }),
     )
 
-    expect(value.capabilities).toHaveLength(13)
+    expect(value.capabilities).toHaveLength(14)
   })
 
   it("returns a structured error for unknown keys", () => {
@@ -513,6 +513,7 @@ describe("validateSitePackManifest capability contracts", () => {
     { capability: "new-chat", paths: ["$.selectors.newChatButton"] },
     { capability: "stop-generation", paths: ["$.selectors.stopButton"] },
     { capability: "width", paths: ["$.widthSelectors"] },
+    { capability: "panel-avoidance", paths: ["$.panelAvoidance"] },
     { capability: "zen", paths: ["$.zenMode"] },
     { capability: "clean", paths: ["$.cleanMode"] },
     {
@@ -547,6 +548,108 @@ describe("validateSitePackManifest capability contracts", () => {
           silenceThreshold: 0,
         },
       }),
+    )
+  })
+})
+
+describe("validateSitePackManifest panel avoidance", () => {
+  const createAvoidanceManifest = (
+    panelAvoidance: Record<string, unknown>,
+  ): Record<string, unknown> => ({
+    ...createMinimalManifest(),
+    capabilities: ["outline", "panel-avoidance"],
+    panelAvoidance,
+  })
+
+  const minimalAvoidance = (): Record<string, unknown> => ({
+    widthSelectors: [{ selector: "main", property: "max-width" }],
+  })
+
+  it("accepts a minimal and a fully populated panelAvoidance config", () => {
+    expectValid(validateSitePackManifest(createAvoidanceManifest(minimalAvoidance())))
+
+    expectValid(
+      validateSitePackManifest(
+        createAvoidanceManifest({
+          scopeSelector: "main",
+          obstacleSelectors: ["aside.settings"],
+          widthSelectors: [
+            {
+              selector: "main",
+              property: "max-width",
+              extraCss: "width: 100% !important;",
+            },
+          ],
+          insetSelectors: [
+            {
+              selector: "main",
+              scopeSelector: "main",
+              obstacleSelectors: [],
+              applySide: "right",
+              insetMode: "edge",
+              leftProperty: "padding-left",
+              rightProperty: "padding-right",
+              extraCss: "box-sizing: border-box !important;",
+            },
+          ],
+          defaultWidth: "72rem",
+          gap: 16,
+          minVisiblePanelWidth: 48,
+          minSafeWidth: 320,
+          minViewportWidth: 768,
+        }),
+      ),
+    )
+  })
+
+  it("requires widthSelectors inside panelAvoidance", () => {
+    expectInvalid(
+      validateSitePackManifest(createAvoidanceManifest({ gap: 16 })),
+      "$.panelAvoidance.widthSelectors",
+      "missing_required",
+    )
+  })
+
+  it("rejects unknown keys and invalid enum values", () => {
+    expectInvalid(
+      validateSitePackManifest(createAvoidanceManifest({ ...minimalAvoidance(), padding: 8 })),
+      "$.panelAvoidance.padding",
+      "unknown_key",
+    )
+
+    expectInvalid(
+      validateSitePackManifest(
+        createAvoidanceManifest({
+          ...minimalAvoidance(),
+          insetSelectors: [{ selector: "main", applySide: "top" }],
+        }),
+      ),
+      "$.panelAvoidance.insetSelectors[0].applySide",
+      "invalid_value",
+    )
+  })
+
+  it("rejects unsafe CSS and negative thresholds", () => {
+    expectInvalid(
+      validateSitePackManifest(
+        createAvoidanceManifest({
+          widthSelectors: [
+            {
+              selector: "main",
+              property: "max-width",
+              extraCss: "background: url(https://evil.example/x.png)",
+            },
+          ],
+        }),
+      ),
+      "$.panelAvoidance.widthSelectors[0].extraCss",
+      "unsafe_css",
+    )
+
+    expectInvalid(
+      validateSitePackManifest(createAvoidanceManifest({ ...minimalAvoidance(), gap: -1 })),
+      "$.panelAvoidance.gap",
+      "out_of_range",
     )
   })
 })

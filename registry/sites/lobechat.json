@@ -39,7 +39,8 @@
     "generation-detect",
     "new-chat",
     "zen",
-    "prompt-insert"
+    "prompt-insert",
+    "panel-avoidance"
   ],
   "selectors": {
     "textarea": ["[contenteditable='true'][data-lexical-editor='true']"],
@@ -71,6 +72,16 @@
   },
   "zenMode": {
     "hide": ["aside"]
+  },
+  "panelAvoidance": {
+    "widthSelectors": [
+      {
+        "selector": "div.lobe-flex[style*='--lobe-flex-width']",
+        "property": "max-width",
+        "extraCss": "--lobe-flex-width: 100% !important;"
+      }
+    ],
+    "gap": 16
   },
   "themeSync": {
     "storageKey": "theme",

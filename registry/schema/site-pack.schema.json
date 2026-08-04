@@ -95,6 +95,9 @@
     "widthSelectors": {
       "$ref": "#/definitions/widthSelectors"
     },
+    "panelAvoidance": {
+      "$ref": "#/definitions/panelAvoidance"
+    },
     "mermaidSupport": {
       "type": "string",
       "enum": ["native", "fallback"]
@@ -276,6 +279,30 @@
         "properties": {
           "widthSelectors": {
             "minItems": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "capabilities": {
+            "contains": {
+              "const": "panel-avoidance"
+            }
+          }
+        }
+      },
+      "then": {
+        "required": ["panelAvoidance"],
+        "properties": {
+          "panelAvoidance": {
+            "required": ["widthSelectors"],
+            "properties": {
+              "widthSelectors": {
+                "minItems": 1
+              }
+            }
           }
         }
       }
@@ -530,6 +557,7 @@
           "new-chat",
           "stop-generation",
           "width",
+          "panel-avoidance",
           "zen",
           "clean",
           "prompt-insert",
@@ -880,6 +908,85 @@
         },
         "noCenter": {
           "type": "boolean"
+        }
+      }
+    },
+    "panelAvoidance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["widthSelectors"],
+      "properties": {
+        "scopeSelector": {
+          "$ref": "#/definitions/selector"
+        },
+        "obstacleSelectors": {
+          "$ref": "#/definitions/selectorArray"
+        },
+        "widthSelectors": {
+          "$ref": "#/definitions/widthSelectors"
+        },
+        "insetSelectors": {
+          "type": "array",
+          "maxItems": 50,
+          "items": {
+            "$ref": "#/definitions/panelAvoidanceInset"
+          }
+        },
+        "defaultWidth": {
+          "$ref": "#/definitions/cssValue"
+        },
+        "gap": {
+          "type": "number",
+          "minimum": 0
+        },
+        "minVisiblePanelWidth": {
+          "type": "number",
+          "minimum": 0
+        },
+        "minSafeWidth": {
+          "type": "number",
+          "minimum": 0
+        },
+        "minViewportWidth": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "panelAvoidanceInset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["selector"],
+      "properties": {
+        "selector": {
+          "$ref": "#/definitions/selector"
+        },
+        "scopeSelector": {
+          "$ref": "#/definitions/selector"
+        },
+        "obstacleSelectors": {
+          "$ref": "#/definitions/selectorArray"
+        },
+        "applySide": {
+          "type": "string",
+          "enum": ["both", "left", "right"]
+        },
+        "insetMode": {
+          "type": "string",
+          "enum": ["centered", "edge"]
+        },
+        "leftProperty": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "rightProperty": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "extraCss": {
+          "$ref": "#/definitions/cssValue"
         }
       }
     }

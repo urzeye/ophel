@@ -7,6 +7,7 @@ import {
   type ModelSwitcherConfig,
   type NetworkMonitorConfig,
   type OutlineItem,
+  type PanelAvoidanceConfig,
   type QuickQuoteSupportMode,
   type WidthSelectorConfig,
   type ZenModeConfig,
@@ -702,6 +703,10 @@ export class DeclarativeAdapter extends SiteAdapter {
 
   getWidthSelectors(): WidthSelectorConfig[] {
     return (this.manifest.widthSelectors ?? []).map((selector) => ({ ...selector }))
+  }
+
+  getPanelAvoidanceConfig(): PanelAvoidanceConfig | null {
+    return this.manifest.panelAvoidance ? structuredClone(this.manifest.panelAvoidance) : null
   }
 
   getZenModeConfig(): ZenModeConfig | null {
