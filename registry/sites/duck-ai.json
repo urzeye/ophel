@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "duck-ai",
-  "version": 1,
+  "version": 2,
   "minAppVersion": "1.1.8",
   "name": "Duck.ai",
   "nameI18n": {
@@ -54,7 +54,8 @@
     ],
     "stopButton": [
       "[data-testid='duckai-chat-input'] div:has(> button[type='submit']) + div > button[type='button']"
-    ]
+    ],
+    "scrollContainer": ["div:has(> div > [data-testid='user-message'])"]
   },
   "input": {
     "mode": "textarea",
