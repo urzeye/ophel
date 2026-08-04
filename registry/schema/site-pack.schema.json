@@ -105,6 +105,9 @@
     },
     "supportsHostThemeSync": {
       "type": "boolean"
+    },
+    "themeSync": {
+      "$ref": "#/definitions/themeSync"
     }
   },
   "allOf": [
@@ -446,6 +449,64 @@
         },
         "secondary": {
           "$ref": "#/definitions/hexColor"
+        }
+      }
+    },
+    "themeSync": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["storageKey", "values"],
+      "description": "Declarative host-page theme sync: write localStorage, optionally toggle html classes, and dispatch a storage event. Omit both darkClass and lightClass for sites that self-apply the theme from the storage event. Other mechanisms (body class, data-theme attributes, simulated clicks) are not supported.",
+      "properties": {
+        "storageKey": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "valuePath": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "Dot-separated path of the theme value inside a JSON object stored under storageKey. Omit for flat storage."
+        },
+        "valueFormat": {
+          "type": "string",
+          "enum": ["raw", "json"],
+          "description": "Wrapping format of the written value for flat storage; meaningless together with valuePath."
+        },
+        "values": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["dark", "light"],
+          "properties": {
+            "dark": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            },
+            "light": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            },
+            "system": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            }
+          }
+        },
+        "darkClass": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100,
+          "description": "Class added to <html> in dark mode. Optional."
+        },
+        "lightClass": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100,
+          "description": "Omit when the site only toggles a dark class."
         }
       }
     },

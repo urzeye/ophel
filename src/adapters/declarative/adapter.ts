@@ -52,6 +52,30 @@ export interface DeclarativeAdapterPackageMetadata {
 const isTextControl = (element: HTMLElement): element is TextControl =>
   element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement
 
+/**
+ * 按点分隔路径写入嵌套对象的值；中间层缺失或被占用时重建为对象。
+ * valuePath 已经过 manifest 校验（不含 __proto__ 等危险段），这里仍按段防御一次。
+ */
+const setNestedThemeValue = (
+  target: Record<string, unknown>,
+  path: string,
+  value: string,
+): void => {
+  const segments = path.split(".")
+  let current: Record<string, unknown> = target
+  for (const segment of segments.slice(0, -1)) {
+    if (segment === "__proto__" || segment === "prototype" || segment === "constructor") return
+    const next: unknown = current[segment]
+    if (typeof next !== "object" || next === null || Array.isArray(next)) {
+      current[segment] = {}
+    }
+    current = current[segment] as Record<string, unknown>
+  }
+  const last = segments[segments.length - 1]
+  if (last === "__proto__" || last === "prototype" || last === "constructor") return
+  current[last] = value
+}
+
 const getEditorText = (editor: HTMLElement): string =>
   isTextControl(editor) ? editor.value : editor.textContent ?? ""
 
@@ -701,6 +725,79 @@ export class DeclarativeAdapter extends SiteAdapter {
   }
 
   supportsHostThemeSync(): boolean {
-    return this.manifest.supportsHostThemeSync ?? false
+    return this.manifest.supportsHostThemeSync ?? Boolean(this.manifest.themeSync)
+  }
+
+  /**
+   * 基于 manifest.themeSync 的声明式宿主页主题切换。
+   * 仅支持 localStorage + html class 机制；未声明 themeSync 时保持基类行为（返回 false）。
+   */
+  async toggleTheme(targetMode: "light" | "dark" | "system"): Promise<boolean> {
+    const config = this.manifest.themeSync
+    if (!config) return false
+
+    try {
+      const resolvedMode: "light" | "dark" =
+        targetMode === "system"
+          ? window.matchMedia?.("(prefers-color-scheme: dark)").matches
+            ? "dark"
+            : "light"
+          : targetMode
+
+      // system 未配置独立值时退化为解析值，避免站点读到不认识的模式值
+      const storageValue =
+        targetMode === "system"
+          ? config.values.system ?? config.values[resolvedMode]
+          : config.values[targetMode]
+
+      const previousValue = localStorage.getItem(config.storageKey)
+      let nextValue: string
+      if (config.valuePath) {
+        // 嵌套存储：保留对象内其他偏好字段，读-改-写
+        let stored: Record<string, unknown> = {}
+        if (previousValue) {
+          try {
+            const parsed: unknown = JSON.parse(previousValue)
+            if (typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)) {
+              stored = parsed as Record<string, unknown>
+            }
+          } catch {
+            stored = {}
+          }
+        }
+        setNestedThemeValue(stored, config.valuePath, storageValue)
+        nextValue = JSON.stringify(stored)
+      } else {
+        nextValue = config.valueFormat === "json" ? JSON.stringify(storageValue) : storageValue
+      }
+      localStorage.setItem(config.storageKey, nextValue)
+
+      // 用 classList 精确替换，绝不像部分内置站点那样整体覆写 className
+      // darkClass/lightClass 都缺省时不动 DOM 类，靠上面的 storage 事件让站点自行应用
+      const html = document.documentElement
+      if (resolvedMode === "dark") {
+        if (config.lightClass) html.classList.remove(config.lightClass)
+        if (config.darkClass) html.classList.add(config.darkClass)
+      } else {
+        if (config.darkClass) html.classList.remove(config.darkClass)
+        if (config.lightClass) html.classList.add(config.lightClass)
+      }
+      html.style.colorScheme = resolvedMode
+
+      // 手动派发的 storage 事件同标签页监听者也能收到，next-themes 类实现靠它同步状态
+      window.dispatchEvent(
+        new StorageEvent("storage", {
+          key: config.storageKey,
+          oldValue: previousValue,
+          newValue: nextValue,
+          storageArea: localStorage,
+        }),
+      )
+
+      return true
+    } catch (error) {
+      console.error(`[SitePackAdapter:${this.manifest.id}] toggleTheme error:`, error)
+      return false
+    }
   }
 }

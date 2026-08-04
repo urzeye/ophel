@@ -90,6 +90,38 @@ export interface SitePackConfig {
   quickQuote?: "enabled" | "native" | "disabled"
   /** 缺省 false；由声明式适配器显式选择是否联动宿主页主题。 */
   supportsHostThemeSync?: boolean
+  /** 声明后启用 localStorage + html class 机制的宿主页主题联动。 */
+  themeSync?: SitePackThemeSyncConfig
+}
+
+/**
+ * 宿主页主题联动的声明式配置，仅覆盖 “写 localStorage + 换 html class” 机制。
+ * 其余机制（body class、data-theme 属性、特殊枚举值、模拟点击等）不支持。
+ */
+export interface SitePackThemeSyncConfig {
+  /** localStorage 键名（如 next-themes 系的 "theme"）。 */
+  storageKey: string
+  /**
+   * 主题值在存储 JSON 对象内的点分隔路径（如 "theme"、"appearance.mode"）。
+   * 缺省表示整个键值即主题值（扁平存储）。
+   */
+  valuePath?: string
+  /** 扁平存储时写入值的包装格式：raw 裸字符串；json 经 JSON.stringify 包装。缺省 raw。 */
+  valueFormat?: "raw" | "json"
+  /** 各模式写入的值。system 缺省时按系统偏好解析为 dark/light 对应值写入。 */
+  values: {
+    dark: string
+    light: string
+    system?: string
+  }
+  /**
+   * html 元素上的暗色类名。
+   * 与 lightClass 都缺省时不动 DOM 类：仅写存储并派发 storage 事件，
+   * 适用于自行监听事件并应用主题的站点（如 LobeChat）。
+   */
+  darkClass?: string
+  /** html 元素上的亮色类名；缺省时亮色仅移除 darkClass。 */
+  lightClass?: string
 }
 
 /** 顶层站点适配包清单。 */

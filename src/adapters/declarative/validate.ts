@@ -104,6 +104,7 @@ const CONFIG_KEYS = [
   "mermaidSupport",
   "quickQuote",
   "supportsHostThemeSync",
+  "themeSync",
 ] as const
 
 const MANIFEST_KEYS = [
@@ -832,6 +833,99 @@ const validateSession = (
   }
 }
 
+const validateThemeSync = (
+  value: unknown,
+  path: string,
+  context: ValidationContext,
+  mode: ValidationMode,
+): void => {
+  const themeSync = validateObject(
+    value,
+    path,
+    context,
+    ["storageKey", "valuePath", "valueFormat", "values", "darkClass", "lightClass"],
+    ["storageKey", "values"],
+    mode,
+  )
+  if (!themeSync) return
+
+  if (themeSync.storageKey !== undefined) {
+    validateString(themeSync.storageKey, `${path}.storageKey`, context, mode, { maxLength: 200 })
+  }
+
+  if (themeSync.valuePath !== undefined) {
+    const valuePathPath = `${path}.valuePath`
+    if (validateString(themeSync.valuePath, valuePathPath, context, mode, { maxLength: 200 })) {
+      // 点分隔路径逐段校验，拒绝原型污染风险段
+      for (const segment of themeSync.valuePath.split(".")) {
+        if (segment.length === 0) {
+          addError(context, valuePathPath, "invalid_value", "Path segments must not be empty")
+          break
+        }
+        if (DANGEROUS_OBJECT_KEYS.has(segment)) {
+          addError(
+            context,
+            valuePathPath,
+            "invalid_value",
+            `Path segment "${segment}" is not allowed`,
+          )
+          break
+        }
+      }
+    }
+    // 嵌套存储时值总是以裸字符串写入对象，valueFormat 无意义
+    if (themeSync.valueFormat !== undefined) {
+      addError(
+        context,
+        `${path}.valueFormat`,
+        "invalid_value",
+        "valueFormat is not supported together with valuePath",
+      )
+    }
+  } else if (themeSync.valueFormat !== undefined) {
+    validateEnum(themeSync.valueFormat, `${path}.valueFormat`, context, mode, ["raw", "json"])
+  }
+
+  if (themeSync.values !== undefined) {
+    const values = validateObject(
+      themeSync.values,
+      `${path}.values`,
+      context,
+      ["dark", "light", "system"],
+      ["dark", "light"],
+      mode,
+    )
+    if (values) {
+      if (values.dark !== undefined) {
+        validateString(values.dark, `${path}.values.dark`, context, mode, { maxLength: 100 })
+      }
+      if (values.light !== undefined) {
+        validateString(values.light, `${path}.values.light`, context, mode, { maxLength: 100 })
+      }
+      if (values.system !== undefined) {
+        validateString(values.system, `${path}.values.system`, context, mode, { maxLength: 100 })
+      }
+    }
+  }
+
+  if (themeSync.darkClass !== undefined) {
+    validateString(themeSync.darkClass, `${path}.darkClass`, context, mode, { maxLength: 100 })
+  }
+  if (themeSync.lightClass !== undefined) {
+    const lightClassOk = validateString(themeSync.lightClass, `${path}.lightClass`, context, mode, {
+      maxLength: 100,
+    })
+    if (lightClassOk && themeSync.lightClass === themeSync.darkClass) {
+      addError(
+        context,
+        `${path}.lightClass`,
+        "invalid_value",
+        "lightClass must differ from darkClass",
+      )
+    }
+  }
+}
+
 const validateNetworkMonitor = (
   value: unknown,
   path: string,
@@ -1387,6 +1481,17 @@ const validateConfigFields = (
   }
   if (config.supportsHostThemeSync !== undefined) {
     validateBoolean(config.supportsHostThemeSync, `${path}.supportsHostThemeSync`, context, mode)
+  }
+  if (config.themeSync !== undefined) {
+    validateThemeSync(config.themeSync, `${path}.themeSync`, context, mode)
+  }
+  if (config.themeSync !== undefined && config.supportsHostThemeSync === false) {
+    addError(
+      context,
+      `${path}.themeSync`,
+      "invalid_value",
+      "themeSync conflicts with supportsHostThemeSync: false",
+    )
   }
 
   if (mode === "full") validateCapabilityRequirements(config, path, context)

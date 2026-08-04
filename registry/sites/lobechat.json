@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "lobechat",
-  "version": 2,
+  "version": 3,
   "minAppVersion": "1.1.8",
   "name": "LobeChat",
   "nameI18n": {
@@ -76,5 +76,9 @@
       "div:has(div[style*='max-height: 100vh'][style*='min-width: 280px']):not(:has([contenteditable='true'][data-lexical-editor='true']))",
       "div[style*='height: 40px'][style*='max-height: 40px'][style*='min-height: 40px'][style*='z-index: 11']"
     ]
+  },
+  "themeSync": {
+    "storageKey": "theme",
+    "values": { "dark": "dark", "light": "light", "system": "system" }
   }
 }

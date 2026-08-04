@@ -182,6 +182,43 @@ The two message selectors identify export content. `turnSelector` is a shared pe
 
 Each entry identifies an element and the width-related property Ophel controls. Optional `extraCss` is passed through the restricted CSS-value validator. Remote resource functions, imports, expressions, and JavaScript URLs are rejected after decoding and normalization.
 
+## Sync the host page theme
+
+Sites that switch their own light/dark mode by writing `localStorage` and toggling a class on `<html>` can declare `themeSync` so Ophel's panel theme button drives the host page too:
+
+```json
+{
+  "themeSync": {
+    "storageKey": "theme",
+    "values": { "dark": "dark", "light": "light", "system": "system" },
+    "darkClass": "dark",
+    "lightClass": "light"
+  }
+}
+```
+
+- `storageKey` is the `localStorage` key the site reads. Everything is written explicitly; Ophel never guesses keys or values.
+- `values.dark` / `values.light` are required strings written for the respective modes. Add `values.system` only when the site itself stores a distinct "follow system" value; otherwise Ophel resolves the system preference and writes the corresponding dark/light value.
+- `darkClass` is added to `<html>` in dark mode and removed in light mode. Declare `lightClass` only when the site also toggles a dedicated light class; `darkClass` and `lightClass` must differ.
+- Omit both classes for sites that watch the `storage` event and apply the theme themselves (LobeChat works this way): Ophel then only writes the value, sets `color-scheme`, and dispatches the event. Always verify the live behavior on the real site — a site that ignores storage events (duck.ai, for example) cannot be live-switched with this field and must not declare it.
+- Flat storage (the whole key is the theme value) writes the raw string by default; set `"valueFormat": "json"` when the site stores a JSON-encoded string such as `"\"dark\""`.
+- Nested storage (the key holds a JSON object containing other preferences) uses `valuePath`, a dot-separated path to the theme value inside that object:
+
+```json
+{
+  "themeSync": {
+    "storageKey": "app-settings",
+    "valuePath": "appearance.mode",
+    "values": { "dark": "dark", "light": "light" },
+    "darkClass": "dark"
+  }
+}
+```
+
+Ophel reads the stored object, updates only that path, and writes it back so sibling preferences survive. `valuePath` cannot be combined with `valueFormat`, and path segments must not be `__proto__`, `prototype`, or `constructor`.
+
+Other theme mechanisms (body classes, `data-theme` attributes, special enumerated values, simulated clicks) are intentionally not supported by this field. Declaring `themeSync` also implies host theme sync, so `supportsHostThemeSync` may stay omitted; setting `supportsHostThemeSync: false` together with `themeSync` is rejected.
+
 ## Validate and contribute
 
 Run the same source checks used by the registry workflow:
