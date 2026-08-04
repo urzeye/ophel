@@ -25,6 +25,14 @@ const ICON_CLASS = "gh-inline-bookmark"
 const ICON_BOOKMARKED_CLASS = "gh-inline-bookmark--bookmarked"
 const OUTLINE_TARGET_SELECTOR = "h1, h2, h3, h4, h5, h6"
 
+/**
+ * 页内收藏打在站点标题/提问元素上的状态标记。
+ * 必须用 data 属性而非 gh- 前缀 class：DeclarativeAdapter 的大纲提取会把
+ * 带 gh- 前缀 class 的元素当作 Ophel 自有 DOM 排除，用 class 打标会让
+ * 被标记的候选在下一轮提取中被自我过滤，导致大纲清空、图标无法重建。
+ */
+const MARKER_ATTRIBUTE = "data-gh-inline-bookmark"
+
 // Style IDs
 const GLOBAL_STYLE_ID = "gh-inline-bookmark-global-styles"
 const SCOPED_STYLE_ID = "gh-inline-bookmark-scoped-styles"
@@ -168,12 +176,12 @@ export class InlineBookmarkManager {
       }
 
       /* Parent Hover Effect */
-      .gh-has-inline-bookmark:hover .${ICON_CLASS}:not(.${ICON_BOOKMARKED_CLASS}) {
+      [${MARKER_ATTRIBUTE}]:hover .${ICON_CLASS}:not(.${ICON_BOOKMARKED_CLASS}) {
         opacity: var(--gh-icon-opacity-parent-hover, 0.5);
       }
 
       /* Ensure parent relative positioning */
-      .gh-has-inline-bookmark {
+      [${MARKER_ATTRIBUTE}] {
         position: relative !important;
       }
     `
@@ -249,8 +257,8 @@ export class InlineBookmarkManager {
 
       existingIcon?.remove()
 
-      // 确保元素有 position: relative
-      element.classList.add("gh-has-inline-bookmark")
+      // 确保元素有 position: relative（通过 MARKER_ATTRIBUTE 选择器命中 scoped CSS）
+      element.setAttribute(MARKER_ATTRIBUTE, "")
 
       // 创建图标容器
       const iconWrapper = document.createElement("span")
@@ -495,12 +503,12 @@ export class InlineBookmarkManager {
     }) as Element[]
     icons.forEach((el) => el.remove())
 
-    const containers = DOMToolkit.query(".gh-has-inline-bookmark", {
+    const containers = DOMToolkit.query(`[${MARKER_ATTRIBUTE}]`, {
       all: true,
       shadow: true,
     }) as Element[]
     containers.forEach((el) => {
-      el.classList.remove("gh-has-inline-bookmark")
+      el.removeAttribute(MARKER_ATTRIBUTE)
     })
 
     this.injectedSignatures = new WeakMap()
@@ -522,12 +530,12 @@ export class InlineBookmarkManager {
     }) as Element[]
     icons.forEach((el) => el.remove())
 
-    const containers = DOMToolkit.query(".gh-has-inline-bookmark", {
+    const containers = DOMToolkit.query(`[${MARKER_ATTRIBUTE}]`, {
       all: true,
       shadow: true,
     }) as Element[]
     containers.forEach((el) => {
-      el.classList.remove("gh-has-inline-bookmark")
+      el.removeAttribute(MARKER_ATTRIBUTE)
     })
 
     document.body.classList.remove(
