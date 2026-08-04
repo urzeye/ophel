@@ -31,7 +31,7 @@
     "pt-BR": "Adiciona às instâncias do LobeChat os recursos do Ophel para estrutura, exportação básica, detecção de geração, modo Zen, novo chat e inserção de prompts.",
     "ru": "Добавляет в экземпляры LobeChat функции Ophel для структуры, базового экспорта, отслеживания генерации, режима Zen, нового чата и вставки промптов."
   },
-  "matches": [],
+  "matches": ["https://app.lobehub.com/*"],
   "capabilities": [
     "outline",
     "outline-user-queries",
