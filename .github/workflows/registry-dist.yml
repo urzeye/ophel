@@ -15,6 +15,11 @@ on:
       - "pnpm-lock.yaml"
       - ".github/workflows/registry-dist.yml"
   workflow_dispatch:
+    inputs:
+      revision-override:
+        description: "Force registryRevision for disaster recovery (must exceed the published revision)"
+        required: false
+        type: number
 
 permissions:
   contents: write
@@ -30,8 +35,6 @@ jobs:
     steps:
       - name: Checkout source branch
         uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -83,8 +86,11 @@ jobs:
             echo "REGISTRY_SIGNING_PRIVATE_KEY is not configured" >&2
             exit 1
           fi
-          if [ "$GITHUB_REF_NAME" = "main" ]; then
-            REVISION=$(git rev-list --count HEAD)
+          # registryRevision increments by 1 per publish on every branch; the
+          # workflow_dispatch input overrides it only for disaster recovery.
+          REVISION_OVERRIDE="${{ inputs.revision-override }}"
+          if [ -n "$REVISION_OVERRIDE" ]; then
+            REVISION="$REVISION_OVERRIDE"
           elif [ -n "$PREVIOUS_DIRECTORY" ]; then
             REVISION=$(
               node --input-type=module -e '

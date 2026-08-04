@@ -183,6 +183,44 @@ const assertIndexProgression = (previousIndex, nextIndex) => {
   }
 }
 
+// 索引级兜底校验：版本只增不减，同版本号必须同内容（与客户端语义一致）
+const assertArtifactVersionProgression = (previousIndex, nextIndex) => {
+  if (!previousIndex) return
+  const assertEntries = (previousEntries, nextEntries, getKey, getVersion, label) => {
+    const previousByKey = new Map(previousEntries.map((entry) => [getKey(entry), entry]))
+    for (const entry of nextEntries) {
+      const previous = previousByKey.get(getKey(entry))
+      if (!previous) continue
+      const version = getVersion(entry)
+      const previousVersion = getVersion(previous)
+      if (version < previousVersion) {
+        throw new Error(
+          `${label} version regressed for ${getKey(entry)}: ${version} < ${previousVersion}`,
+        )
+      }
+      if (version === previousVersion && entry.sha256 !== previous.sha256) {
+        throw new Error(
+          `${label} ${getKey(entry)} version ${version} was reused with different content`,
+        )
+      }
+    }
+  }
+  assertEntries(
+    previousIndex.packs,
+    nextIndex.packs,
+    (entry) => entry.id,
+    (entry) => entry.version,
+    "SitePack",
+  )
+  assertEntries(
+    previousIndex.patches,
+    nextIndex.patches,
+    (entry) => entry.targetSiteId,
+    (entry) => entry.patchVersion,
+    "Patch",
+  )
+}
+
 const readHighestPublishedVersion = async (previousDirectory, relativeDirectory) => {
   if (!previousDirectory) return null
   let entries
@@ -202,27 +240,18 @@ const readHighestPublishedVersion = async (previousDirectory, relativeDirectory)
   return versions.length > 0 ? Math.max(...versions) : null
 }
 
-const assertPublishedVersionProgression = async (previousDirectory, packs, patches) => {
-  for (const source of packs) {
-    const { id, version } = source.manifest
-    const previousVersion = await readHighestPublishedVersion(previousDirectory, `packs/${id}`)
-    if (previousVersion !== null && version < previousVersion) {
-      throw new Error(`SitePack version regressed for ${id}: ${version} < ${previousVersion}`)
-    }
-  }
-
-  for (const source of patches) {
-    const { targetSiteId, patchVersion } = source.patch
-    const previousVersion = await readHighestPublishedVersion(
-      previousDirectory,
-      `patches/${targetSiteId}`,
-    )
-    if (previousVersion !== null && patchVersion < previousVersion) {
-      throw new Error(
-        `Patch version regressed for ${targetSiteId}: ${patchVersion} < ${previousVersion}`,
-      )
-    }
-  }
+// 版本派生：与上一版发布内容（SHA-256）一致则复用版本号，变更则在上一版基础上 +1。
+// 源码声明的 version/patchVersion 仅作为下限，日常迭代无需手动递增；
+// 仅在灾难恢复等需要强制抬高已发布版本时才改大它。
+const deriveArtifactVersion = ({
+  declaredVersion,
+  previousEntryVersion,
+  highestPublishedVersion,
+  contentUnchanged,
+}) => {
+  const base = Math.max(previousEntryVersion ?? 0, highestPublishedVersion ?? 0)
+  if (base < 1) return Math.max(1, declaredVersion)
+  return Math.max(declaredVersion, contentUnchanged ? base : base + 1)
 }
 
 const assertImmutableArtifact = async (previousDirectory, relativePath, content) => {
@@ -279,22 +308,41 @@ export async function buildRegistryDist({
     patches: [],
   }
 
-  await assertPublishedVersionProgression(resolvedPreviousDirectory, packs, patches)
   await rm(resolvedOutputDirectory, { recursive: true, force: true })
   await mkdir(resolvedOutputDirectory, { recursive: true })
 
+  const previousPackEntries = new Map(
+    (previousIndex?.packs ?? []).map((entry) => [entry.id, entry]),
+  )
+  const previousPatchEntries = new Map(
+    (previousIndex?.patches ?? []).map((entry) => [entry.targetSiteId, entry]),
+  )
+
   for (const source of packs) {
     const { manifest } = source
-    const relativePath = `packs/${manifest.id}/${manifest.version}.json`
+    const previousEntry = previousPackEntries.get(manifest.id) ?? null
+    const version = deriveArtifactVersion({
+      declaredVersion: manifest.version,
+      previousEntryVersion: previousEntry?.version ?? null,
+      highestPublishedVersion: await readHighestPublishedVersion(
+        resolvedPreviousDirectory,
+        `packs/${manifest.id}`,
+      ),
+      contentUnchanged:
+        previousEntry !== null &&
+        sha256(serializeJson({ ...manifest, version: previousEntry.version })) ===
+          previousEntry.sha256,
+    })
+    const relativePath = `packs/${manifest.id}/${version}.json`
     const digest = await writeArtifact({
       outputDirectory: resolvedOutputDirectory,
       previousDirectory: resolvedPreviousDirectory,
       relativePath,
-      value: manifest,
+      value: { ...manifest, version },
     })
     index.packs.push({
       id: manifest.id,
-      version: manifest.version,
+      version,
       minAppVersion: manifest.minAppVersion,
       matches: manifest.matches,
       file: relativePath,
@@ -305,16 +353,29 @@ export async function buildRegistryDist({
 
   for (const source of patches) {
     const { patch } = source
-    const relativePath = `patches/${patch.targetSiteId}/${patch.patchVersion}.json`
+    const previousEntry = previousPatchEntries.get(patch.targetSiteId) ?? null
+    const patchVersion = deriveArtifactVersion({
+      declaredVersion: patch.patchVersion,
+      previousEntryVersion: previousEntry?.patchVersion ?? null,
+      highestPublishedVersion: await readHighestPublishedVersion(
+        resolvedPreviousDirectory,
+        `patches/${patch.targetSiteId}`,
+      ),
+      contentUnchanged:
+        previousEntry !== null &&
+        sha256(serializeJson({ ...patch, patchVersion: previousEntry.patchVersion })) ===
+          previousEntry.sha256,
+    })
+    const relativePath = `patches/${patch.targetSiteId}/${patchVersion}.json`
     const digest = await writeArtifact({
       outputDirectory: resolvedOutputDirectory,
       previousDirectory: resolvedPreviousDirectory,
       relativePath,
-      value: patch,
+      value: { ...patch, patchVersion },
     })
     index.patches.push({
       targetSiteId: patch.targetSiteId,
-      patchVersion: patch.patchVersion,
+      patchVersion,
       baseConfigVersion: patch.baseConfigVersion,
       minAppVersion: patch.minAppVersion,
       ...(patch.maxAppVersion ? { maxAppVersion: patch.maxAppVersion } : {}),
@@ -326,6 +387,7 @@ export async function buildRegistryDist({
 
   const validatedIndex = validateRemoteConfigRegistryIndex(index)
   assertIndexProgression(previousIndex, validatedIndex)
+  assertArtifactVersionProgression(previousIndex, validatedIndex)
   const indexContent = serializeJson(validatedIndex)
   const signatureEnvelope = validateRegistryIndexSignature({
     schemaVersion: REGISTRY_INDEX_SIGNATURE_SCHEMA_VERSION,

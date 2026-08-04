@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "lobechat",
-  "version": 4,
+  "version": 5,
   "minAppVersion": "1.1.8",
   "name": "LobeChat",
   "nameI18n": {

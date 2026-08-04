@@ -20,7 +20,7 @@ SitePack 的 TypeScript 运行时校验器是安全与兼容性的最终真值�
 | ---------------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | `schemaVersion`        | 当前固定为 `1`。                                                                                                            |
 | `id`                   | 全局唯一，匹配 `^[a-z0-9-]{2,40}$`，且不能与内置站点 ID 冲突。                                                              |
-| `version`              | 正整数；每次修改已发布包都必须递增，不能复用旧版本号。                                                                      |
+| `version`              | 正整数，仅作为已发布版本号的下限。新建包填 `1`，之后修改内容无需递增：发布构建按内容自动派生版本号。                        |
 | `minAppVersion`        | 最早理解这些字段并完成过验证的 Ophel SemVer 版本。                                                                          |
 | `name` / `description` | 默认展示文本；可用 `nameI18n` / `descriptionI18n` 提供多语映射。                                                            |
 | `matches`              | 最多 10 条 HTTPS match pattern；禁止全局匹配、顶层通配及与内置/现有包重叠。自部署站点包可为空，仅经用户自定义域名绑定激活。 |
@@ -91,7 +91,7 @@ Patch 只用于已经配置化的内置适配器 selector/纯配置热修，文�
 ```
 
 - `targetSiteId` 必须已有可配置内置描述符；不能借 patch 新增站点。
-- `patchVersion` 正整数单调递增，`baseConfigVersion` 必须等于当前内置配置版本。
+- `patchVersion` 与 SitePack `version` 同规则：仅作下限声明，新建填 `1`，之后由发布构建按内容自动派生；`baseConfigVersion` 必须等于当前内置配置版本。
 - `config` 使用对象递归覆盖、数组整体替换、`null` 删除键；合并结果仍须是完整合法配置。
 - `sitePrivateSelectors` 只能修改目标站点已登记的白名单键。
 - 临时兼容修复可设置 `maxAppVersion`；内置修复发布并提升 `baseConfigVersion` 后旧 patch 会自动失效。
@@ -102,7 +102,8 @@ Patch 只用于已经配置化的内置适配器 selector/纯配置热修，文�
 - 普通文件使用 `*.json`。
 - 需要通过 registry kill switch 停用的当前版本改名为 `*.disabled.json`；JSON 内容本身不增加 `disabled` 字段。
 - 同一 pack `id` 或 patch `targetSiteId` 只能存在一份当前源文件。
-- 版本升级时修改当前源文件中的 `version` / `patchVersion`。发布分支会保留旧版本的不可变路径。
+- 版本号无需手动递增：发布构建将源内容（剔除版本号字段）与上一份发布产物的 SHA-256 对比，未变更的包复用旧版本号，已变更的包在上一版基础上 +1，且不低于源文件声明的 `version` / `patchVersion`；同一版本号对应的内容恒定不变，声明值仅在灾难恢复等需要强制抬高已发布版本时才手动改大。发布分支会保留旧版本的不可变路径。
+- `index.json` 的 `registryRevision` 每次发布递增 1，与仓库 commit 数无关；仅在 `registry-dist` 分支丢失等灾难恢复场景，通过 `workflow_dispatch` 的 `revision-override` 输入强制指定一个大于已发布值的 revision。
 - `registry/examples/` 仅保存校验与创作示例，不会进入发布索引。
 - 发布产物包含 `index.json` 与分离的 `index.sig.json`；签名认证完整 index，index 中的 SHA-256 再认证每个不可变包文件。
 
