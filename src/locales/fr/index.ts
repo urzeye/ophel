@@ -301,6 +301,12 @@ export const fr = {
   healthCheckReportIssue: "Signaler le problème",
   healthCheckRecovered: "La configuration a été mise à jour et le contrôle du site est rétabli",
   healthCheckStillFailing: "Le contrôle est terminé, mais le site ne correspond toujours pas",
+  healthCheckSettingsTitle: "Vérification de santé de l'adaptateur",
+  healthCheckSettingsDesc:
+    "Détecte si l'adaptateur du site cesse de fonctionner après le chargement de la page et affiche un avertissement en haut du panneau après des échecs consécutifs",
+  healthCheckEnabledLabel: "Activer la vérification de santé de l'adaptateur",
+  healthCheckEnabledDesc:
+    "Si activée, vérifie automatiquement l'éditeur, la zone de réponse et d'autres éléments clés sur les pages de conversation ; désactivée par défaut, sans avertissements",
 
   generalPageDesc: "Configurer le comportement de l'extension",
   appearancePageDesc: "Personnaliser les styles visuels et les thèmes",

@@ -300,6 +300,12 @@ export const it = {
   healthCheckRecovered:
     "La configurazione è stata aggiornata e il controllo del sito è ripristinato",
   healthCheckStillFailing: "Il controllo è terminato, ma il sito non corrisponde ancora",
+  healthCheckSettingsTitle: "Controllo integrità adattatore",
+  healthCheckSettingsDesc:
+    "Rileva se l'adattatore del sito smette di funzionare dopo il caricamento della pagina e mostra un avviso in cima al pannello dopo errori consecutivi",
+  healthCheckEnabledLabel: "Abilita controllo integrità adattatore",
+  healthCheckEnabledDesc:
+    "Se attivo, verifica automaticamente editor, area risposte e altri elementi chiave nelle pagine di conversazione; disattivo per impostazione predefinita, senza avvisi",
 
   generalPageDesc: "Configura il comportamento e l'interfaccia dell'estensione",
   appearancePageDesc: "Personalizza stili e temi visivi",

@@ -250,6 +250,10 @@ export const DEFAULT_SETTINGS: Settings = {
     autoResetEnabled: false,
   },
 
+  healthCheck: {
+    enabled: false,
+  },
+
   features: {
     order: ["outline", "conversations", "prompts"],
     prompts: {

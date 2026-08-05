@@ -408,7 +408,7 @@ export const App = () => {
 
   // 单例实例
   const adapter = useMemo(() => getAdapter(), [])
-  const adapterHealth = useAdapterHealthCheck(adapter)
+  const adapterHealth = useAdapterHealthCheck(adapter, settings?.healthCheck?.enabled ?? false)
   const siteInstanceKey = adapter?.getSiteInstanceKey() || "_default"
 
   const promptManager = useMemo(() => {

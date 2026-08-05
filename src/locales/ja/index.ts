@@ -292,6 +292,12 @@ export const ja = {
   healthCheckReportIssue: "問題を報告",
   healthCheckRecovered: "適配設定が更新され、サイトチェックが正常に戻りました",
   healthCheckStillFailing: "設定の確認は完了しましたが、サイトはまだ一致しません",
+  healthCheckSettingsTitle: "アダプター健全性チェック",
+  healthCheckSettingsDesc:
+    "ページ読み込み後にサイトアダプターの障害を検出し、連続して失敗した場合にパネル上部に通知します",
+  healthCheckEnabledLabel: "アダプター健全性チェックを有効化",
+  healthCheckEnabledDesc:
+    "有効にすると会話ページで入力欄や応答エリアなどの主要要素を自動チェックします。デフォルトはオフで、通知は表示されません",
 
   generalPageDesc: "拡張機能の動作とインターフェースの設定",
   appearancePageDesc: "視覚スタイルとテーマのカスタマイズ",

@@ -255,6 +255,11 @@ export const zhCN = {
   healthCheckReportIssue: "报告问题",
   healthCheckRecovered: "配置已更新，站点自检恢复正常",
   healthCheckStillFailing: "配置检查已完成，但站点仍未匹配",
+  healthCheckSettingsTitle: "适配健康检查",
+  healthCheckSettingsDesc: "页面加载后检测站点适配是否失效，连续失效时在面板顶部提示",
+  healthCheckEnabledLabel: "启用适配健康检查",
+  healthCheckEnabledDesc:
+    "开启后在会话页自动检测输入框、回复区域等关键元素；默认关闭，不产生任何提示",
 
   generalPageDesc: "配置扩展的基本行为和界面",
   appearancePageDesc: "自定义扩展的视觉样式和主题",

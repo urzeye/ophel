@@ -301,6 +301,12 @@ export const es = {
   healthCheckRecovered:
     "La configuración se actualizó y la comprobación del sitio volvió a funcionar",
   healthCheckStillFailing: "La comprobación terminó, pero el sitio aún no coincide",
+  healthCheckSettingsTitle: "Comprobación de estado del adaptador",
+  healthCheckSettingsDesc:
+    "Detecta si el adaptador del sitio deja de funcionar tras cargar la página y muestra un aviso en la parte superior del panel tras fallos consecutivos",
+  healthCheckEnabledLabel: "Activar comprobación de estado del adaptador",
+  healthCheckEnabledDesc:
+    "Si está activa, verifica automáticamente el editor, el área de respuestas y otros elementos clave en las páginas de conversación; desactivada de forma predeterminada, sin avisos",
 
   generalPageDesc: "Configurar el comportamiento de la extensión",
   appearancePageDesc: "Personalizar estilos visuales y temas",

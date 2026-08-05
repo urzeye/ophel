@@ -288,6 +288,12 @@ export const ko = {
   healthCheckReportIssue: "문제 보고",
   healthCheckRecovered: "어댑터 구성이 업데이트되어 사이트 검사가 정상으로 돌아왔습니다",
   healthCheckStillFailing: "구성 확인이 끝났지만 사이트가 여전히 일치하지 않습니다",
+  healthCheckSettingsTitle: "어댑터 상태 검사",
+  healthCheckSettingsDesc:
+    "페이지 로드 후 사이트 어댑터 오류를 감지하고, 연속 실패 시 패널 상단에 알림을 표시합니다",
+  healthCheckEnabledLabel: "어댑터 상태 검사 사용",
+  healthCheckEnabledDesc:
+    "활성화하면 대화 페이지에서 입력창, 응답 영역 등 주요 요소를 자동으로 확인합니다. 기본값은 꺼짐이며 알림이 표시되지 않습니다",
 
   generalPageDesc: "확장 프로그램 동작 및 인터페이스 구성",
   appearancePageDesc: "시각적 스타일 및 테마 사용자 정의",

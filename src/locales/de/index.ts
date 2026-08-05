@@ -304,6 +304,12 @@ export const de = {
     "Die Adapterkonfiguration wurde aktualisiert und die Prüfung ist wieder erfolgreich",
   healthCheckStillFailing:
     "Die Konfigurationsprüfung ist beendet, aber die Website passt weiterhin nicht",
+  healthCheckSettingsTitle: "Adapter-Integritätsprüfung",
+  healthCheckSettingsDesc:
+    "Erkennt nach dem Laden der Seite, ob der Website-Adapter nicht mehr funktioniert, und zeigt nach wiederholten Fehlern einen Hinweis oben im Panel",
+  healthCheckEnabledLabel: "Adapter-Integritätsprüfung aktivieren",
+  healthCheckEnabledDesc:
+    "Wenn aktiviert, werden Eingabefeld, Antwortbereich und weitere Schlüsselelemente auf Unterhaltungsseiten automatisch geprüft; standardmäßig deaktiviert, ohne Hinweise",
 
   generalPageDesc: "Verhalten der Erweiterung konfigurieren",
   appearancePageDesc: "Visuelle Stile und Themes anpassen",

@@ -296,6 +296,12 @@ export const pt = {
   healthCheckReportIssue: "Relatar problema",
   healthCheckRecovered: "A configuração foi atualizada e a verificação do site voltou ao normal",
   healthCheckStillFailing: "A verificação terminou, mas o site ainda não corresponde",
+  healthCheckSettingsTitle: "Verificação de integridade do adaptador",
+  healthCheckSettingsDesc:
+    "Detecta se o adaptador do site para de funcionar após o carregamento da página e mostra um aviso no topo do painel após falhas consecutivas",
+  healthCheckEnabledLabel: "Ativar verificação de integridade do adaptador",
+  healthCheckEnabledDesc:
+    "Quando ativada, verifica automaticamente o editor, a área de respostas e outros elementos-chave nas páginas de conversação; desativada por padrão, sem avisos",
 
   generalPageDesc: "Configurar o comportamento da extensão",
   appearancePageDesc: "Personalizar estilos visuais e temas",

@@ -976,6 +976,20 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
     </SettingCard>
   )
 
+  const healthCheckCard = (
+    <SettingCard title={t("healthCheckSettingsTitle")} description={t("healthCheckSettingsDesc")}>
+      <ToggleRow
+        label={t("healthCheckEnabledLabel")}
+        description={t("healthCheckEnabledDesc")}
+        settingId="health-check-enabled"
+        checked={settings.healthCheck?.enabled ?? false}
+        onChange={() =>
+          updateNestedSetting("healthCheck", "enabled", !(settings.healthCheck?.enabled ?? false))
+        }
+      />
+    </SettingCard>
+  )
+
   return (
     <div>
       <PageTitle title={t("navFeatures")} Icon={FeaturesIcon} />
@@ -1097,6 +1111,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
         <>
           {notificationSettingsCard}
           {usageMonitorCard}
+          {healthCheckCard}
         </>
       )}
 

@@ -258,6 +258,11 @@ export const zhTW = {
   healthCheckReportIssue: "回報問題",
   healthCheckRecovered: "設定已更新，網站自我檢查已恢復正常",
   healthCheckStillFailing: "設定檢查已完成，但網站仍未匹配",
+  healthCheckSettingsTitle: "適配健康檢查",
+  healthCheckSettingsDesc: "頁面載入後檢測站點適配是否失效，連續失效時在面板頂部提示",
+  healthCheckEnabledLabel: "啟用適配健康檢查",
+  healthCheckEnabledDesc:
+    "開啟後在會話頁自動檢測輸入框、回覆區域等關鍵元素；預設關閉，不產生任何提示",
 
   generalPageDesc: "配置擴充功能的基本行為和介面",
   appearancePageDesc: "自定義擴充功能的視覺樣式和主題",

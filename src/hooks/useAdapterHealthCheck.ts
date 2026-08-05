@@ -13,10 +13,10 @@ import { getCurrentLang } from "~utils/i18n"
 
 const missingManagerError = () => new Error("Adapter health manager is unavailable")
 
-export function useAdapterHealthCheck(adapter: SiteAdapter | null) {
+export function useAdapterHealthCheck(adapter: SiteAdapter | null, enabled = false) {
   const manager = useMemo(
     () =>
-      adapter
+      adapter && enabled
         ? new HealthCheckManager({
             adapter,
             storage: platform.storage,
@@ -24,7 +24,7 @@ export function useAdapterHealthCheck(adapter: SiteAdapter | null) {
             refreshConfig: () => refreshActiveAdapterConfig(adapter, platform.storage),
           })
         : null,
-    [adapter],
+    [adapter, enabled],
   )
 
   useEffect(() => {
