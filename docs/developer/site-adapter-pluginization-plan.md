@@ -302,7 +302,6 @@ src/adapters/declarative/
 src/core/
   remote-config-manager.ts   # 远程 index/包/patch 拉取、缓存、TTL、完整性校验
   pack-manager.ts            # 安装/更新/卸载/启用禁用/冲突检查
-  health-check-manager.ts    # 选择器健康自检（Phase 2）
 registry/
   schema/site-pack.schema.json
   sites/*.json               # L2 适配包源文件

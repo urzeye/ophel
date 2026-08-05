@@ -192,11 +192,6 @@ export interface Settings {
   // 高级模型本地计数与额度预估
   usageMonitor: UsageMonitorSettings
 
-  // 站点适配健康检查（默认关闭，开启后才在页面自动检测并提示）
-  healthCheck: {
-    enabled: boolean
-  }
-
   // 功能模块配置
   features: {
     order: string[]

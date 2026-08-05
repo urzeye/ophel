@@ -241,25 +241,6 @@ export const zhCN = {
     "{manager} 尚未覆盖 {count} 条适配包域名规则。请复制下列规则后再打开对应站点。",
   sitePacksUserscriptManagerUnknown: "当前脚本管理器",
   sitePacksBindingPackRequired: "请先选择一个已安装的适配包。",
-  healthCheckTitle: "此站点的适配可能已失效",
-  healthCheckUpdateAvailableDesc:
-    "发现可用的 {name} 适配包更新（v{current} → v{latest}）。检查配置更新即可应用。",
-  healthCheckSiteChangedDesc: "当前适配配置无法匹配页面关键元素，站点可能已改版。",
-  healthCheckLocalPackDesc:
-    "当前使用本地导入的适配包 v{version}，不会自动更新。可报告问题或导入更新的 JSON 文件。",
-  healthCheckFailedSelectorsLabel: "未找到：",
-  healthCheckSelectorTextarea: "输入框",
-  healthCheckSelectorResponseContainer: "回复容器",
-  healthCheckSelectorChatContent: "会话内容",
-  healthCheckCheckUpdates: "检查配置更新",
-  healthCheckReportIssue: "报告问题",
-  healthCheckRecovered: "配置已更新，站点自检恢复正常",
-  healthCheckStillFailing: "配置检查已完成，但站点仍未匹配",
-  healthCheckSettingsTitle: "适配健康检查",
-  healthCheckSettingsDesc: "页面加载后检测站点适配是否失效，连续失效时在面板顶部提示",
-  healthCheckEnabledLabel: "启用适配健康检查",
-  healthCheckEnabledDesc:
-    "开启后在会话页自动检测输入框、回复区域等关键元素；默认关闭，不产生任何提示",
 
   generalPageDesc: "配置扩展的基本行为和界面",
   appearancePageDesc: "自定义扩展的视觉样式和主题",

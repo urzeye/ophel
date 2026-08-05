@@ -287,29 +287,6 @@ export const de = {
     "In {manager} fehlen {count} SitePack-Match-Regeln. Kopiere die folgenden Regeln, bevor du die betroffenen Websites öffnest.",
   sitePacksUserscriptManagerUnknown: "Der aktuelle Userscript-Manager",
   sitePacksBindingPackRequired: "Wähle zuerst ein installiertes Paket aus.",
-  healthCheckTitle: "Die Anpassung dieser Website funktioniert möglicherweise nicht mehr",
-  healthCheckUpdateAvailableDesc:
-    "Ein neueres {name}-SitePack ist verfügbar (v{current} → v{latest}). Prüfe Konfigurationsupdates, um es anzuwenden.",
-  healthCheckSiteChangedDesc:
-    "Der aktuelle Adapter findet wichtige Seitenelemente nicht mehr. Die Website wurde möglicherweise geändert.",
-  healthCheckLocalPackDesc:
-    "Diese Website verwendet das lokal importierte SitePack v{version}, das nicht automatisch aktualisiert wird. Melde das Problem oder importiere eine neuere JSON-Datei.",
-  healthCheckFailedSelectorsLabel: "Nicht gefunden:",
-  healthCheckSelectorTextarea: "Eingabefeld",
-  healthCheckSelectorResponseContainer: "Antwortcontainer",
-  healthCheckSelectorChatContent: "Unterhaltungsinhalt",
-  healthCheckCheckUpdates: "Konfigurationsupdates prüfen",
-  healthCheckReportIssue: "Problem melden",
-  healthCheckRecovered:
-    "Die Adapterkonfiguration wurde aktualisiert und die Prüfung ist wieder erfolgreich",
-  healthCheckStillFailing:
-    "Die Konfigurationsprüfung ist beendet, aber die Website passt weiterhin nicht",
-  healthCheckSettingsTitle: "Adapter-Integritätsprüfung",
-  healthCheckSettingsDesc:
-    "Erkennt nach dem Laden der Seite, ob der Website-Adapter nicht mehr funktioniert, und zeigt nach wiederholten Fehlern einen Hinweis oben im Panel",
-  healthCheckEnabledLabel: "Adapter-Integritätsprüfung aktivieren",
-  healthCheckEnabledDesc:
-    "Wenn aktiviert, werden Eingabefeld, Antwortbereich und weitere Schlüsselelemente auf Unterhaltungsseiten automatisch geprüft; standardmäßig deaktiviert, ohne Hinweise",
 
   generalPageDesc: "Verhalten der Erweiterung konfigurieren",
   appearancePageDesc: "Visuelle Stile und Themes anpassen",

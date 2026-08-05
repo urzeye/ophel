@@ -278,27 +278,6 @@ export const ru = {
     "В {manager} не хватает правил SitePack: {count}. Скопируйте правила ниже перед открытием этих сайтов.",
   sitePacksUserscriptManagerUnknown: "Текущий менеджер userscript",
   sitePacksBindingPackRequired: "Сначала выберите установленный пакет.",
-  healthCheckTitle: "Адаптация этого сайта могла перестать работать",
-  healthCheckUpdateAvailableDesc:
-    "Доступен более новый SitePack {name} (v{current} → v{latest}). Проверьте обновления конфигурации, чтобы применить его.",
-  healthCheckSiteChangedDesc:
-    "Текущий адаптер больше не находит ключевые элементы страницы. Возможно, сайт изменился.",
-  healthCheckLocalPackDesc:
-    "Этот сайт использует локально импортированный SitePack v{version}, который не обновляется автоматически. Сообщите о проблеме или импортируйте более новый JSON.",
-  healthCheckFailedSelectorsLabel: "Не найдены:",
-  healthCheckSelectorTextarea: "Поле ввода",
-  healthCheckSelectorResponseContainer: "Контейнер ответов",
-  healthCheckSelectorChatContent: "Содержимое диалога",
-  healthCheckCheckUpdates: "Проверить обновления конфигурации",
-  healthCheckReportIssue: "Сообщить о проблеме",
-  healthCheckRecovered: "Конфигурация обновлена, и проверка сайта снова проходит успешно",
-  healthCheckStillFailing: "Проверка завершена, но сайт по-прежнему не соответствует конфигурации",
-  healthCheckSettingsTitle: "Проверка работоспособности адаптера",
-  healthCheckSettingsDesc:
-    "Определяет, перестал ли адаптер сайта работать после загрузки страницы, и показывает уведомление вверху панели после повторных сбоев",
-  healthCheckEnabledLabel: "Включить проверку работоспособности адаптера",
-  healthCheckEnabledDesc:
-    "Если включено, автоматически проверяет поле ввода, область ответов и другие ключевые элементы на страницах диалогов; по умолчанию выключено, уведомления не показываются",
 
   generalPageDesc: "Настройте поведение расширения и интерфейс",
   appearancePageDesc: "Персонализация стилей и тем",

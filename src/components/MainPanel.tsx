@@ -14,7 +14,6 @@ import {
   getFeatureCapabilitiesSignature,
   type SitePackCapability,
 } from "~adapters/feature-capabilities"
-import type { HealthCheckSnapshot, HealthCheckUpdateResult } from "~core/health-check-manager"
 import {
   AnchorIcon,
   ConversationIcon,
@@ -57,7 +56,6 @@ import { ConversationsTab } from "./ConversationsTab"
 import { LoadingOverlay } from "./LoadingOverlay"
 import { OutlineTab } from "./OutlineTab"
 import { PromptsTab } from "./PromptsTab"
-import { SiteAdapterHealthNotice } from "./SiteAdapterHealthNotice"
 import { Tooltip } from "~components/ui/Tooltip"
 
 interface MainPanelProps {
@@ -70,9 +68,6 @@ interface MainPanelProps {
   conversationManager: ConversationManager
   outlineManager: OutlineManager
   adapter?: SiteAdapter | null
-  adapterHealth?: HealthCheckSnapshot
-  onCheckAdapterHealthUpdates?: () => Promise<HealthCheckUpdateResult>
-  onReportAdapterHealthIssue?: () => void
   onThemeToggle?: (event?: ThemeTransitionOrigin) => void
   themeMode?: "light" | "dark"
   selectedPromptId?: string | null
@@ -159,9 +154,6 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   conversationManager,
   outlineManager,
   adapter,
-  adapterHealth,
-  onCheckAdapterHealthUpdates,
-  onReportAdapterHealthIssue,
   onThemeToggle,
   themeMode,
   selectedPromptId,
@@ -1544,13 +1536,6 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             {t("tip1", { modifier: isMacOS() ? "⌘ Cmd" : "Ctrl" })}
           </span>
         </div>
-        {adapterHealth && onCheckAdapterHealthUpdates && onReportAdapterHealthIssue && (
-          <SiteAdapterHealthNotice
-            snapshot={adapterHealth}
-            onCheckUpdates={onCheckAdapterHealthUpdates}
-            onReportIssue={onReportAdapterHealthIssue}
-          />
-        )}
         <div className="gh-panel-tabs" role="tablist" aria-label={t("panelTitle")}>
           {visibleTabs.map((tab) => {
             let IconComp: React.FC<{ size?: number }> | null = null

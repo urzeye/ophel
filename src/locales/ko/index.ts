@@ -273,27 +273,6 @@ export const ko = {
     "{manager}에 SitePack 일치 규칙 {count}개가 없습니다. 해당 사이트를 열기 전에 아래 규칙을 복사하세요.",
   sitePacksUserscriptManagerUnknown: "현재 사용자 스크립트 관리자",
   sitePacksBindingPackRequired: "먼저 설치된 팩을 선택하세요.",
-  healthCheckTitle: "이 사이트의 어댑터가 더 이상 작동하지 않을 수 있습니다",
-  healthCheckUpdateAvailableDesc:
-    "새 {name} SitePack 업데이트(v{current} → v{latest})를 사용할 수 있습니다. 구성 업데이트를 확인해 적용하세요.",
-  healthCheckSiteChangedDesc:
-    "현재 어댑터 구성이 페이지의 핵심 요소와 일치하지 않습니다. 사이트가 변경되었을 수 있습니다.",
-  healthCheckLocalPackDesc:
-    "로컬에서 가져온 SitePack v{version}을 사용 중이며 자동으로 업데이트되지 않습니다. 문제를 보고하거나 새 JSON 파일을 가져오세요.",
-  healthCheckFailedSelectorsLabel: "찾을 수 없음:",
-  healthCheckSelectorTextarea: "입력창",
-  healthCheckSelectorResponseContainer: "응답 컨테이너",
-  healthCheckSelectorChatContent: "대화 내용",
-  healthCheckCheckUpdates: "구성 업데이트 확인",
-  healthCheckReportIssue: "문제 보고",
-  healthCheckRecovered: "어댑터 구성이 업데이트되어 사이트 검사가 정상으로 돌아왔습니다",
-  healthCheckStillFailing: "구성 확인이 끝났지만 사이트가 여전히 일치하지 않습니다",
-  healthCheckSettingsTitle: "어댑터 상태 검사",
-  healthCheckSettingsDesc:
-    "페이지 로드 후 사이트 어댑터 오류를 감지하고, 연속 실패 시 패널 상단에 알림을 표시합니다",
-  healthCheckEnabledLabel: "어댑터 상태 검사 사용",
-  healthCheckEnabledDesc:
-    "활성화하면 대화 페이지에서 입력창, 응답 영역 등 주요 요소를 자동으로 확인합니다. 기본값은 꺼짐이며 알림이 표시되지 않습니다",
 
   generalPageDesc: "확장 프로그램 동작 및 인터페이스 구성",
   appearancePageDesc: "시각적 스타일 및 테마 사용자 정의",

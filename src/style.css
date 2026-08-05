@@ -1965,122 +1965,6 @@
   line-height: 1.5;
 }
 
-.gh-site-adapter-health-notice {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  margin: 8px 8px 0;
-  padding: 10px;
-  border: 1px solid
-    color-mix(in srgb, var(--gh-text-warning, #d97706) 38%, var(--gh-border, #e5e7eb));
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--gh-text-warning, #d97706) 9%, var(--gh-bg, #ffffff));
-  color: var(--gh-text, #1f2937);
-}
-
-.gh-site-adapter-health-heading {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  min-width: 0;
-  color: var(--gh-text, #1f2937);
-}
-
-.gh-site-adapter-health-heading strong {
-  font-size: 12px;
-  font-weight: 650;
-  line-height: 1.35;
-}
-
-.gh-site-adapter-health-icon {
-  width: 15px;
-  height: 15px;
-  flex: 0 0 auto;
-  color: var(--gh-text-warning, #d97706);
-}
-
-.gh-site-adapter-health-description,
-.gh-site-adapter-health-failures,
-.gh-site-adapter-health-error {
-  margin: 0;
-  font-size: 11px;
-  line-height: 1.45;
-}
-
-.gh-site-adapter-health-description {
-  color: var(--gh-text-secondary, #6b7280);
-}
-
-.gh-site-adapter-health-failures {
-  color: var(--gh-text, #1f2937);
-  overflow-wrap: anywhere;
-}
-
-.gh-site-adapter-health-failures span {
-  margin-right: 4px;
-  color: var(--gh-text-secondary, #6b7280);
-  font-weight: 600;
-}
-
-.gh-site-adapter-health-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.gh-site-adapter-health-button {
-  min-height: 32px;
-  padding: 6px 9px;
-  border: 1px solid var(--gh-input-border, #d1d5db);
-  border-radius: 8px;
-  background: var(--gh-input-bg, var(--gh-bg, #ffffff));
-  color: var(--gh-text, #1f2937);
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 1.2;
-  transition:
-    background 0.18s ease,
-    border-color 0.18s ease,
-    color 0.18s ease,
-    opacity 0.18s ease,
-    transform 0.18s ease;
-}
-
-.gh-site-adapter-health-button:hover:not(:disabled) {
-  border-color: var(--gh-primary, #4285f4);
-  background: color-mix(in srgb, var(--gh-primary, #4285f4) 7%, var(--gh-bg, #ffffff));
-}
-
-.gh-site-adapter-health-button:active:not(:disabled) {
-  transform: translateY(1px);
-}
-
-.gh-site-adapter-health-button:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 38%, transparent);
-  outline-offset: 1px;
-}
-
-.gh-site-adapter-health-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.58;
-}
-
-.gh-site-adapter-health-button--primary {
-  border-color: color-mix(in srgb, var(--gh-text-warning, #d97706) 50%, var(--gh-border, #e5e7eb));
-  background: color-mix(in srgb, var(--gh-text-warning, #d97706) 16%, var(--gh-bg, #ffffff));
-}
-
-.gh-site-adapter-health-button--primary:hover:not(:disabled) {
-  border-color: var(--gh-text-warning, #d97706);
-  background: color-mix(in srgb, var(--gh-text-warning, #d97706) 22%, var(--gh-bg, #ffffff));
-}
-
-.gh-site-adapter-health-error {
-  color: var(--gh-danger, #dc2626);
-}
-
 .gh-panel-tabs {
   display: flex;
   gap: 4px;
@@ -4013,8 +3897,6 @@
   .gh-theme-card,
   .gh-theme-check,
   .gh-update-notice,
-  .gh-site-adapter-health-notice,
-  .gh-site-adapter-health-button,
   .gh-update-notice-button,
   .gh-update-notice-close,
   .gh-element-picker-highlight,

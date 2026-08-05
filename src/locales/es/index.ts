@@ -285,28 +285,6 @@ export const es = {
     "A {manager} le faltan {count} reglas de coincidencia de SitePack. Copia las reglas siguientes antes de abrir esos sitios.",
   sitePacksUserscriptManagerUnknown: "El gestor de userscripts actual",
   sitePacksBindingPackRequired: "Elige primero un paquete instalado.",
-  healthCheckTitle: "La adaptación de este sitio puede haber dejado de funcionar",
-  healthCheckUpdateAvailableDesc:
-    "Hay un SitePack de {name} más reciente (v{current} → v{latest}). Busca actualizaciones de configuración para aplicarlo.",
-  healthCheckSiteChangedDesc:
-    "El adaptador actual ya no coincide con elementos clave de la página. Es posible que el sitio haya cambiado.",
-  healthCheckLocalPackDesc:
-    "Este sitio usa el SitePack v{version} importado localmente, que no se actualiza automáticamente. Informa del problema o importa un JSON más reciente.",
-  healthCheckFailedSelectorsLabel: "No encontrados:",
-  healthCheckSelectorTextarea: "Editor",
-  healthCheckSelectorResponseContainer: "Contenedor de respuestas",
-  healthCheckSelectorChatContent: "Contenido de la conversación",
-  healthCheckCheckUpdates: "Buscar actualizaciones de configuración",
-  healthCheckReportIssue: "Informar del problema",
-  healthCheckRecovered:
-    "La configuración se actualizó y la comprobación del sitio volvió a funcionar",
-  healthCheckStillFailing: "La comprobación terminó, pero el sitio aún no coincide",
-  healthCheckSettingsTitle: "Comprobación de estado del adaptador",
-  healthCheckSettingsDesc:
-    "Detecta si el adaptador del sitio deja de funcionar tras cargar la página y muestra un aviso en la parte superior del panel tras fallos consecutivos",
-  healthCheckEnabledLabel: "Activar comprobación de estado del adaptador",
-  healthCheckEnabledDesc:
-    "Si está activa, verifica automáticamente el editor, el área de respuestas y otros elementos clave en las páginas de conversación; desactivada de forma predeterminada, sin avisos",
 
   generalPageDesc: "Configurar el comportamiento de la extensión",
   appearancePageDesc: "Personalizar estilos visuales y temas",

@@ -370,10 +370,6 @@ export const normalizeSettings = (settings: SettingsInput): Settings => {
       ...DEFAULT_SETTINGS.usageMonitor,
       ...settings.usageMonitor,
     },
-    healthCheck: {
-      ...DEFAULT_SETTINGS.healthCheck,
-      ...settings.healthCheck,
-    },
     features: {
       ...DEFAULT_SETTINGS.features,
       ...settings.features,

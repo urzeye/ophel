@@ -277,27 +277,6 @@ export const en = {
     "{manager} is missing {count} SitePack match rules. Copy the rules below before opening those sites.",
   sitePacksUserscriptManagerUnknown: "Your userscript manager",
   sitePacksBindingPackRequired: "Choose an installed pack first.",
-  healthCheckTitle: "This site's adaptation may be broken",
-  healthCheckUpdateAvailableDesc:
-    "A newer {name} SitePack is available (v{current} → v{latest}). Check configuration updates to apply it.",
-  healthCheckSiteChangedDesc:
-    "The current adapter no longer matches key page elements. The site may have changed.",
-  healthCheckLocalPackDesc:
-    "This site uses locally imported SitePack v{version}, which is not updated automatically. Report the problem or import a newer JSON file.",
-  healthCheckFailedSelectorsLabel: "Not found:",
-  healthCheckSelectorTextarea: "Editor",
-  healthCheckSelectorResponseContainer: "Response container",
-  healthCheckSelectorChatContent: "Conversation content",
-  healthCheckCheckUpdates: "Check configuration updates",
-  healthCheckReportIssue: "Report issue",
-  healthCheckRecovered: "The adapter configuration was updated and the site check recovered",
-  healthCheckStillFailing: "The configuration check finished, but the site still does not match",
-  healthCheckSettingsTitle: "Adapter Health Check",
-  healthCheckSettingsDesc:
-    "Detects whether the site adapter stops working after page loads and shows a notice at the top of the panel after consecutive failures",
-  healthCheckEnabledLabel: "Enable adapter health check",
-  healthCheckEnabledDesc:
-    "When enabled, automatically checks the editor, response area, and other key elements on conversation pages; off by default with no notices",
 
   generalPageDesc: "Configure extension behavior and interface",
   appearancePageDesc: "Customize visual styles and themes",

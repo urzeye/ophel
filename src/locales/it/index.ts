@@ -284,28 +284,6 @@ export const it = {
     "In {manager} mancano {count} regole di corrispondenza SitePack. Copia le regole seguenti prima di aprire i siti interessati.",
   sitePacksUserscriptManagerUnknown: "Il gestore userscript corrente",
   sitePacksBindingPackRequired: "Scegli prima un pacchetto installato.",
-  healthCheckTitle: "L'adattamento di questo sito potrebbe non funzionare più",
-  healthCheckUpdateAvailableDesc:
-    "È disponibile un SitePack {name} più recente (v{current} → v{latest}). Controlla gli aggiornamenti della configurazione per applicarlo.",
-  healthCheckSiteChangedDesc:
-    "L'adattatore attuale non corrisponde più agli elementi principali della pagina. Il sito potrebbe essere cambiato.",
-  healthCheckLocalPackDesc:
-    "Questo sito usa il SitePack v{version} importato localmente, che non si aggiorna automaticamente. Segnala il problema o importa un JSON più recente.",
-  healthCheckFailedSelectorsLabel: "Non trovati:",
-  healthCheckSelectorTextarea: "Editor",
-  healthCheckSelectorResponseContainer: "Contenitore risposte",
-  healthCheckSelectorChatContent: "Contenuto conversazione",
-  healthCheckCheckUpdates: "Controlla aggiornamenti configurazione",
-  healthCheckReportIssue: "Segnala problema",
-  healthCheckRecovered:
-    "La configurazione è stata aggiornata e il controllo del sito è ripristinato",
-  healthCheckStillFailing: "Il controllo è terminato, ma il sito non corrisponde ancora",
-  healthCheckSettingsTitle: "Controllo integrità adattatore",
-  healthCheckSettingsDesc:
-    "Rileva se l'adattatore del sito smette di funzionare dopo il caricamento della pagina e mostra un avviso in cima al pannello dopo errori consecutivi",
-  healthCheckEnabledLabel: "Abilita controllo integrità adattatore",
-  healthCheckEnabledDesc:
-    "Se attivo, verifica automaticamente editor, area risposte e altri elementi chiave nelle pagine di conversazione; disattivo per impostazione predefinita, senza avvisi",
 
   generalPageDesc: "Configura il comportamento e l'interfaccia dell'estensione",
   appearancePageDesc: "Personalizza stili e temi visivi",

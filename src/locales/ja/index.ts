@@ -277,27 +277,6 @@ export const ja = {
     "{manager} には SitePack 用のマッチルールが {count} 件不足しています。対象サイトを開く前に、以下のルールをコピーしてください。",
   sitePacksUserscriptManagerUnknown: "現在のユーザースクリプト管理ツール",
   sitePacksBindingPackRequired: "先にインストール済みのパックを選択してください。",
-  healthCheckTitle: "このサイトの適合が無効になっている可能性があります",
-  healthCheckUpdateAvailableDesc:
-    "{name} SitePack の更新（v{current} → v{latest}）を利用できます。設定更新を確認して適用してください。",
-  healthCheckSiteChangedDesc:
-    "現在の適配設定がページの主要要素と一致しません。サイトが変更された可能性があります。",
-  healthCheckLocalPackDesc:
-    "ローカルから読み込んだ SitePack v{version} を使用しています。自動更新されないため、問題を報告するか新しい JSON を読み込んでください。",
-  healthCheckFailedSelectorsLabel: "見つからない要素：",
-  healthCheckSelectorTextarea: "入力欄",
-  healthCheckSelectorResponseContainer: "応答コンテナ",
-  healthCheckSelectorChatContent: "会話内容",
-  healthCheckCheckUpdates: "設定更新を確認",
-  healthCheckReportIssue: "問題を報告",
-  healthCheckRecovered: "適配設定が更新され、サイトチェックが正常に戻りました",
-  healthCheckStillFailing: "設定の確認は完了しましたが、サイトはまだ一致しません",
-  healthCheckSettingsTitle: "アダプター健全性チェック",
-  healthCheckSettingsDesc:
-    "ページ読み込み後にサイトアダプターの障害を検出し、連続して失敗した場合にパネル上部に通知します",
-  healthCheckEnabledLabel: "アダプター健全性チェックを有効化",
-  healthCheckEnabledDesc:
-    "有効にすると会話ページで入力欄や応答エリアなどの主要要素を自動チェックします。デフォルトはオフで、通知は表示されません",
 
   generalPageDesc: "拡張機能の動作とインターフェースの設定",
   appearancePageDesc: "視覚スタイルとテーマのカスタマイズ",
