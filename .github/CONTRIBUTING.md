@@ -125,7 +125,7 @@ Enhancement suggestions are tracked as [GitHub issues](https://github.com/urzeye
 
 ### Contributing a SitePack
 
-SitePacks add declarative support for an AI chat site with reviewed JSON data instead of executable adapter code. Read the complete [SitePack registry guide](../registry/README.md) and the [maintainer review checklist](../docs/developer/site-pack-review-checklist.md) before starting.
+SitePacks add declarative support for an AI chat site with reviewed JSON data instead of executable adapter code. Read the complete [SitePack registry guide](../registry/README.md) and the [maintainer review checklist](../docs/developer/site-adapter/site-pack-review-checklist.md) before starting.
 
 1. Copy `registry/examples/site-pack.example.json` to `registry/sites/<id>.json`.
 2. Remove unused optional fields and declare only capabilities you have tested on the real site.

@@ -264,6 +264,6 @@ pnpm registry:validate
 pnpm registry:build
 ```
 
-Then verify the declared capabilities on the real site, including reload stability and both idle/generating states. Submit the JSON with the [SitePack pull request template](https://github.com/urzeye/ophel/blob/main/.github/PULL_REQUEST_TEMPLATE/site-pack.md) and follow the [review checklist](https://github.com/urzeye/ophel/blob/main/docs/developer/site-pack-review-checklist.md).
+Then verify the declared capabilities on the real site, including reload stability and both idle/generating states. Submit the JSON with the [SitePack pull request template](https://github.com/urzeye/ophel/blob/main/.github/PULL_REQUEST_TEMPLATE/site-pack.md) and follow the [review checklist](https://github.com/urzeye/ophel/blob/main/docs/developer/site-adapter/site-pack-review-checklist.md).
 
 The [JSON Schema](https://github.com/urzeye/ophel/blob/main/registry/schema/site-pack.schema.json) provides editor assistance, but `src/adapters/declarative/validate.ts` remains authoritative for runtime, regex, selector, CSS, overlap, and serialized-size rules.

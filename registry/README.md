@@ -95,7 +95,7 @@ Patch 只用于已经配置化的内置适配器 selector/纯配置热修，文�
 - `config` 使用对象递归覆盖、数组整体替换、`null` 删除键；合并结果仍须是完整合法配置。
 - `sitePrivateSelectors` 只能修改目标站点已登记的白名单键。
 - 临时兼容修复可设置 `maxAppVersion`；内置修复发布并提升 `baseConfigVersion` 后旧 patch 会自动失效。
-- Patch PR 使用常规 PR 模板，并按[审核清单](../docs/developer/site-pack-review-checklist.md#内置适配器-patch-审核)提供受影响能力的真实站点回归结果。
+- Patch PR 使用常规 PR 模板，并按[审核清单](../docs/developer/site-adapter/site-pack-review-checklist.md#内置适配器-patch-审核)提供受影响能力的真实站点回归结果。
 
 ## 文件与发布约定
 

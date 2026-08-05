@@ -1,6 +1,6 @@
 # SitePack contribution / SitePack 贡献
 
-> Use this template only for `registry/sites/*.json`. Read the [registry guide](https://github.com/urzeye/ophel/blob/main/registry/README.md) and [review checklist](https://github.com/urzeye/ophel/blob/main/docs/developer/site-pack-review-checklist.md) first.
+> Use this template only for `registry/sites/*.json`. Read the [registry guide](https://github.com/urzeye/ophel/blob/main/registry/README.md) and [review checklist](https://github.com/urzeye/ophel/blob/main/docs/developer/site-adapter/site-pack-review-checklist.md) first.
 >
 > 本模板仅用于 `registry/sites/*.json`。提交前请阅读 registry 指南与审核清单。
 
@@ -58,4 +58,4 @@ Describe any limitation, fallback, or capability intentionally not declared:
 - [ ] Selectors avoid generated classes, broad page containers, and language-specific visible text where a stable attribute exists.
 - [ ] Regex, path templates, and CSS stay within the documented safety boundary.
 - [ ] The JSON contains no secrets, cookies, tokens, account data, internal URLs, scripts, expressions, or remote resource loading.
-- [ ] I reviewed `docs/developer/site-pack-review-checklist.md` and documented any item that cannot be exercised.
+- [ ] I reviewed `docs/developer/site-adapter/site-pack-review-checklist.md` and documented any item that cannot be exercised.

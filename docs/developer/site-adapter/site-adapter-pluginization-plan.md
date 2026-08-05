@@ -523,7 +523,7 @@ pack 的 `matches` 是静态声明（禁通配、≤10 条），无法覆盖 Ope
 
 - PR 模板（新增 `.github/PULL_REQUEST_TEMPLATE/site-pack.md`）：站点名/URL、测试过的功能勾选表（对应 capabilities）、截图。
 - CI 校验（PR 触发，任务 P0-07）：schema 合法、id 唯一且不与内置冲突、matches 不与内置/已有包重叠、正则可编译且长度合规、CSS 黑名单、capabilities 与字段齐备性。
-- 审核 checklist（`docs/developer/site-pack-review-checklist.md`，随 P0-12 产出）：人工在目标站点冒烟核心能力后合并。**审核一份 JSON 的成本远低于审核千行级 TS 适配器 PR，这是社区扩展可持续的关键。**
+- 审核 checklist（`docs/developer/site-adapter/site-pack-review-checklist.md`，随 P0-12 产出）：人工在目标站点冒烟核心能力后合并。**审核一份 JSON 的成本远低于审核千行级 TS 适配器 PR，这是社区扩展可持续的关键。**
 
 ### 7.3 版本策略
 

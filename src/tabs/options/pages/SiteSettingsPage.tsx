@@ -46,7 +46,7 @@ const normalizeSiteSettingsTab = (
 }
 
 const SITE_PACK_INFO_URL =
-  "https://github.com/urzeye/ophel/blob/main/docs/developer/site-adapter-pluginization-plan.md#67-capabilities-%E4%B8%8E-ui-%E8%81%94%E5%8A%A8"
+  "https://github.com/urzeye/ophel/blob/main/docs/developer/site-adapter/site-adapter-pluginization-plan.md#67-capabilities-%E4%B8%8E-ui-%E8%81%94%E5%8A%A8"
 
 const PANEL_AVOIDANCE_SUPPORTED_SITE_IDS = new Set<string>([
   SITE_IDS.AISTUDIO,
