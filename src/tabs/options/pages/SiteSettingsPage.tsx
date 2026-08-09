@@ -3,7 +3,7 @@
  * 包含：页面布局、内容处理
  * 这些设置与具体站点相关，按站点存储配置
  */
-import React, { useEffect, useMemo, useState } from "react"
+import React, { useCallback, useEffect, useMemo, useState } from "react"
 
 import type { SiteAdapter } from "~adapters/base"
 import {
@@ -12,8 +12,14 @@ import {
   type SitePackCapability,
 } from "~adapters/feature-capabilities"
 import { PageContentIcon as LayoutIcon } from "~components/icons"
-import { NumberInput, Slider } from "~components/ui"
+import { Button, NumberInput, Slider } from "~components/ui"
 import { LAYOUT_CONFIG, SITE_IDS, SITE_SETTINGS_TAB_IDS, isBuiltinSiteId } from "~constants"
+import {
+  buildAdapterDiagnostics,
+  formatAdapterDiagnosticsText,
+  type AdapterDiagnosticsReport,
+} from "~core/adapter-diagnostics"
+import { refreshActiveAdapterConfig } from "~core/site-adapter-config-runtime"
 import { platform } from "~platform"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
@@ -117,6 +123,56 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
     (supportsPageWidth && (adapter?.getUserQueryWidthSelectors().length ?? 0) > 0)
   const supportsZenMode = supportsFeature("zen")
   const supportsCleanMode = supportsFeature("clean")
+  const [diagnosticsReport, setDiagnosticsReport] = useState<AdapterDiagnosticsReport | null>(null)
+  const [diagnosticsError, setDiagnosticsError] = useState<string | null>(null)
+  const [diagnosticsBusy, setDiagnosticsBusy] = useState(false)
+
+  const refreshDiagnostics = useCallback(async () => {
+    if (!adapter) {
+      setDiagnosticsReport(null)
+      setDiagnosticsError(null)
+      return
+    }
+    setDiagnosticsBusy(true)
+    try {
+      const context = await refreshActiveAdapterConfig(adapter, platform.storage)
+      setDiagnosticsReport(
+        buildAdapterDiagnostics(adapter, {
+          configContext: context,
+          root: document,
+          href: window.location.href,
+        }),
+      )
+      setDiagnosticsError(null)
+    } catch (error) {
+      setDiagnosticsError(error instanceof Error ? error.message : String(error))
+    } finally {
+      setDiagnosticsBusy(false)
+    }
+  }, [adapter])
+
+  useEffect(() => {
+    void refreshDiagnostics()
+  }, [refreshDiagnostics])
+
+  const handleCopyDiagnostics = useCallback(async () => {
+    if (!diagnosticsReport) return
+    const textReport = formatAdapterDiagnosticsText(diagnosticsReport)
+    try {
+      if (!navigator.clipboard?.writeText) {
+        throw new Error("clipboard unavailable")
+      }
+      await navigator.clipboard.writeText(textReport)
+      showToast(t("adapterDiagnosticsCopied"), 2000)
+    } catch (error) {
+      showToast(
+        t("adapterDiagnosticsCopyFailed", {
+          error: error instanceof Error ? error.message : String(error),
+        }),
+        2500,
+      )
+    }
+  }, [diagnosticsReport])
 
   // 宽度布局相关状态
   const currentPageWidth = settings ? getSitePageWidth(settings, siteInstanceKey) : undefined
@@ -225,6 +281,94 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
         </div>
       )}
       <p className="settings-page-desc">{t("siteSettingsPageDesc")}</p>
+
+      {adapter && (
+        <SettingCard title={t("adapterDiagnosticsTitle")}>
+          <p className="settings-card-desc">{t("adapterDiagnosticsDesc")}</p>
+          {diagnosticsError ? (
+            <p className="settings-pack-source-error" role="alert">
+              {t("adapterDiagnosticsFailed", { error: diagnosticsError })}
+            </p>
+          ) : diagnosticsReport ? (
+            <div className="settings-adapter-diagnostics">
+              <div className="settings-pack-meta">
+                <span>
+                  {t("adapterDiagnosticsKindLabel")}: {diagnosticsReport.kind}
+                </span>
+                <span>
+                  {t("adapterDiagnosticsSiteLabel")}: {diagnosticsReport.siteName} (
+                  {diagnosticsReport.siteId})
+                </span>
+                {diagnosticsReport.baseConfigVersion !== undefined ? (
+                  <span>
+                    {t("remoteConfigBaseVersionLabel")} {diagnosticsReport.baseConfigVersion}
+                  </span>
+                ) : null}
+                {diagnosticsReport.patchVersion !== undefined ? (
+                  <span>
+                    {t("remoteConfigPatchVersionLabel")} v{diagnosticsReport.patchVersion}
+                    {diagnosticsReport.patchSource
+                      ? ` (${t(
+                          diagnosticsReport.patchSource === "local"
+                            ? "remoteConfigPatchSourceLocal"
+                            : "remoteConfigPatchSourceRegistry",
+                        )})`
+                      : ""}
+                  </span>
+                ) : (
+                  <span>{t("adapterDiagnosticsNoPatch")}</span>
+                )}
+                {diagnosticsReport.packId ? (
+                  <span>
+                    {t("adapterDiagnosticsPackLabel")}: {diagnosticsReport.packId}
+                    {diagnosticsReport.packVersion !== undefined
+                      ? ` v${diagnosticsReport.packVersion}`
+                      : ""}
+                  </span>
+                ) : null}
+              </div>
+              <p className="settings-card-desc">{diagnosticsReport.summaryLine}</p>
+              <ul className="settings-pack-validation-list">
+                {diagnosticsReport.selectors.map((item) => (
+                  <li key={item.id}>
+                    <code>{item.label}</code>
+                    <span>
+                      {item.matchCount > 0
+                        ? t("adapterDiagnosticsHitCount", { count: String(item.matchCount) })
+                        : item.selectors.length === 0
+                          ? t("adapterDiagnosticsNoSelector")
+                          : t("adapterDiagnosticsMiss")}
+                      {item.selectors[0] ? ` · ${item.selectors[0]}` : ""}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <p className="settings-card-desc">{t("adapterDiagnosticsLoading")}</p>
+          )}
+          <div className="settings-pack-controls" style={{ marginTop: 12, gap: 8 }}>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              disabled={diagnosticsBusy}
+              onClick={() => void refreshDiagnostics()}>
+              {diagnosticsBusy
+                ? t("adapterDiagnosticsRefreshing")
+                : t("adapterDiagnosticsRefreshButton")}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              disabled={!diagnosticsReport || diagnosticsBusy}
+              onClick={() => void handleCopyDiagnostics()}>
+              {t("adapterDiagnosticsCopyButton")}
+            </Button>
+          </div>
+        </SettingCard>
+      )}
 
       <TabGroup tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
 

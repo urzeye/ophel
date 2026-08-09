@@ -1972,6 +1972,23 @@ Please output the optimized code block directly, followed by a brief summary of 
     "Switched to the local registry source and started an update check.",
   remoteConfigLocalRegistryPermissionDenied:
     "Local registry host permission was denied. Allow 127.0.0.1 access and try again.",
+  adapterDiagnosticsTitle: "Adapter diagnostics",
+  adapterDiagnosticsDesc:
+    "Inspect the active config source and whether key selectors match on this page. Copy a summary for PR reproduction without conversation content.",
+  adapterDiagnosticsKindLabel: "Kind",
+  adapterDiagnosticsSiteLabel: "Site",
+  adapterDiagnosticsPackLabel: "Pack",
+  adapterDiagnosticsNoPatch: "No patch applied",
+  adapterDiagnosticsHitCount: "{count} matches",
+  adapterDiagnosticsMiss: "No matches",
+  adapterDiagnosticsNoSelector: "No selector configured",
+  adapterDiagnosticsLoading: "Collecting diagnostics…",
+  adapterDiagnosticsRefreshing: "Refreshing…",
+  adapterDiagnosticsRefreshButton: "Refresh diagnostics",
+  adapterDiagnosticsCopyButton: "Copy diagnostics",
+  adapterDiagnosticsCopied: "Diagnostics summary copied.",
+  adapterDiagnosticsCopyFailed: "Copy failed: {error}",
+  adapterDiagnosticsFailed: "Diagnostics failed: {error}",
   remoteConfigLocalPatchImportButton: "Import local patch",
   remoteConfigLocalPatchImportDesc:
     "Install a built-in site patch from a JSON file without a signed registry. Local patches override remote ones so you can verify selector hotfixes before contributing.",

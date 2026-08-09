@@ -173,6 +173,8 @@ pnpm registry:serve
 - [ ] 11 语 i18n 同步  
 - [ ] 相关单测通过；`format` / `lint` / `typecheck` 对改动文件干净  
 
+配套工作流文档：[`local-debug-workflow.md`](./local-debug-workflow.md)。
+
 ## 7. 风险
 
 - 本地 patch 长期滞留可能导致“我以为用的是线上配置”：UI 必须明确标记 local  

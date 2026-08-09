@@ -1879,6 +1879,23 @@ export const zhTW = {
   remoteConfigLocalRegistrySourceApplied: "已切換到本機 Registry 來源並開始檢查更新。",
   remoteConfigLocalRegistryPermissionDenied:
     "未取得本機 Registry 存取權限。請允許 127.0.0.1 主機權限後重試。",
+  adapterDiagnosticsTitle: "適配器診斷",
+  adapterDiagnosticsDesc:
+    "查看目前站點生效的設定來源，以及關鍵選擇器在本頁的命中情況。可複製摘要用於 PR 重現，不包含對話內容。",
+  adapterDiagnosticsKindLabel: "類型",
+  adapterDiagnosticsSiteLabel: "站點",
+  adapterDiagnosticsPackLabel: "適配包",
+  adapterDiagnosticsNoPatch: "未套用補丁",
+  adapterDiagnosticsHitCount: "命中 {count}",
+  adapterDiagnosticsMiss: "未命中",
+  adapterDiagnosticsNoSelector: "未設定選擇器",
+  adapterDiagnosticsLoading: "正在收集診斷資訊…",
+  adapterDiagnosticsRefreshing: "重新整理中…",
+  adapterDiagnosticsRefreshButton: "重新整理診斷",
+  adapterDiagnosticsCopyButton: "複製診斷摘要",
+  adapterDiagnosticsCopied: "診斷摘要已複製。",
+  adapterDiagnosticsCopyFailed: "複製失敗：{error}",
+  adapterDiagnosticsFailed: "診斷失敗：{error}",
   remoteConfigLocalPatchImportButton: "匯入本機補丁",
   remoteConfigLocalPatchImportDesc:
     "從 JSON 檔安裝內建站點補丁，無需簽名 Registry。本機補丁優先於遠端補丁，適合貢獻前驗證選擇器熱修。",
