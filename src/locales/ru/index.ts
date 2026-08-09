@@ -1952,6 +1952,13 @@ export const ru = {
   remoteConfigResetSuccess: "Для {site} восстановлена встроенная конфигурация.",
   remoteConfigResetFailed: "Не удалось выполнить возврат: {error}",
   remoteConfigResetUnavailable: "Нет активной конфигурации для возврата.",
+  remoteConfigLocalRegistryUseButton: "Использовать локальный registry",
+  remoteConfigLocalRegistryHint:
+    "Сначала запустите pnpm registry:serve, затем нажмите кнопку. Локальный ключ подписи доверяется только dev-сборкам.",
+  remoteConfigLocalRegistrySourceApplied:
+    "Переключено на локальный registry и запущена проверка обновлений.",
+  remoteConfigLocalRegistryPermissionDenied:
+    "Доступ к локальному registry отклонён. Разрешите 127.0.0.1 и повторите.",
   remoteConfigLocalPatchImportButton: "Импорт локального патча",
   remoteConfigLocalPatchImportDesc:
     "Устанавливает JSON-патч встроенного сайта без подписанного registry. Локальные патчи важнее удалённых и нужны для проверки hotfix до вклада.",

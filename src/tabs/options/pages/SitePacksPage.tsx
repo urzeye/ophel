@@ -35,6 +35,10 @@ import {
   type PackManagerIssue,
 } from "~core/pack-manager"
 import { createRuntimePackManager } from "~core/pack-manager-runtime"
+import {
+  getLocalDevRegistryIndexUrl,
+  getLocalDevRegistryOriginPatterns,
+} from "~core/remote-config-local-dev"
 import { normalizeRemoteConfigSourceUrl } from "~core/remote-config-source"
 import {
   canonicalizeSitePackBindingOrigin,
@@ -1142,7 +1146,30 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
     patchFileInputRef.current?.click()
   }
 
-  const handleApplyRegistrySource = () => {
+  const ensureLocalRegistryHostPermission = async (sourceUrl: string): Promise<boolean> => {
+    let url: URL
+    try {
+      url = new URL(sourceUrl)
+    } catch {
+      return true
+    }
+    const isLoopback =
+      url.protocol === "http:" && (url.hostname === "127.0.0.1" || url.hostname === "localhost")
+    if (!isLoopback) return true
+    if (typeof chrome === "undefined" || !chrome.permissions?.request) return true
+
+    const origins = getLocalDevRegistryOriginPatterns(url.hostname, Number(url.port || 80))
+    try {
+      const already = await chrome.permissions.contains({ origins })
+      if (already) return true
+      return await chrome.permissions.request({ origins })
+    } catch (error) {
+      console.warn("[Ophel] Failed to request local registry host permission:", error)
+      return false
+    }
+  }
+
+  const handleApplyRegistrySource = async (options: { forceCheck?: boolean } = {}) => {
     const source = registrySourceInput.trim()
 
     if (!source) {
@@ -1155,10 +1182,41 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
 
     try {
       const normalizedSource = normalizeRemoteConfigSourceUrl(source)
+      const permitted = await ensureLocalRegistryHostPermission(normalizedSource)
+      if (!permitted) {
+        setRegistrySourceError(t("remoteConfigLocalRegistryPermissionDenied"))
+        return
+      }
       updateNestedSetting("remoteConfig", "registrySourceUrl", normalizedSource)
       setRegistrySourceInput(normalizedSource)
       setRegistrySourceError(null)
       notify(t("remoteConfigRegistrySourceApplied"))
+      if (options.forceCheck) {
+        await refreshRegistry()
+      }
+    } catch (error) {
+      setRegistrySourceError(
+        t("remoteConfigRegistrySourceInvalid", { error: getErrorMessage(error) }),
+      )
+    }
+  }
+
+  const handleUseLocalRegistrySource = async () => {
+    const localUrl = getLocalDevRegistryIndexUrl()
+    setRegistrySourceInput(localUrl)
+    setRegistrySourceError(null)
+    // Apply immediately with the computed URL rather than waiting for state.
+    try {
+      const normalizedSource = normalizeRemoteConfigSourceUrl(localUrl)
+      const permitted = await ensureLocalRegistryHostPermission(normalizedSource)
+      if (!permitted) {
+        setRegistrySourceError(t("remoteConfigLocalRegistryPermissionDenied"))
+        return
+      }
+      updateNestedSetting("remoteConfig", "registrySourceUrl", normalizedSource)
+      setRegistrySourceInput(normalizedSource)
+      notify(t("remoteConfigLocalRegistrySourceApplied"))
+      await refreshRegistry()
     } catch (error) {
       setRegistrySourceError(
         t("remoteConfigRegistrySourceInvalid", { error: getErrorMessage(error) }),
@@ -1872,10 +1930,19 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
                     disabled={
                       isRegistryBusy || registrySourceInput.trim() === configuredRegistrySource
                     }
-                    onClick={handleApplyRegistrySource}>
+                    onClick={() => void handleApplyRegistrySource({ forceCheck: true })}>
                     {t("remoteConfigRegistrySourceApplyButton")}
                   </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="settings-pack-action-button"
+                    disabled={isRegistryBusy}
+                    onClick={() => void handleUseLocalRegistrySource()}>
+                    {t("remoteConfigLocalRegistryUseButton")}
+                  </Button>
                 </div>
+                <p className="settings-pack-source-desc">{t("remoteConfigLocalRegistryHint")}</p>
                 {registrySourceError && (
                   <span className="settings-pack-source-error" role="alert">
                     {registrySourceError}

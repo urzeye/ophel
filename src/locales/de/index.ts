@@ -1970,6 +1970,13 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   remoteConfigResetSuccess: "{site} wurde auf die integrierte Konfiguration zurückgesetzt.",
   remoteConfigResetFailed: "Zurücksetzen fehlgeschlagen: {error}",
   remoteConfigResetUnavailable: "Es gibt keine aktive Konfiguration zum Zurücksetzen.",
+  remoteConfigLocalRegistryUseButton: "Lokales Registry nutzen",
+  remoteConfigLocalRegistryHint:
+    "Zuerst pnpm registry:serve ausführen, dann diese Schaltfläche. Nur Entwicklungsbuilds vertrauen dem lokalen Signaturschlüssel.",
+  remoteConfigLocalRegistrySourceApplied:
+    "Auf lokale Registry-Quelle umgestellt und Update-Prüfung gestartet.",
+  remoteConfigLocalRegistryPermissionDenied:
+    "Host-Berechtigung für lokales Registry verweigert. Erlaube 127.0.0.1 und versuche es erneut.",
   remoteConfigLocalPatchImportButton: "Lokalen Patch importieren",
   remoteConfigLocalPatchImportDesc:
     "Installiert einen integrierten Site-Patch aus einer JSON-Datei ohne signiertes Registry. Lokale Patches haben Vorrang vor Remote-Patches und eignen sich zur Prüfung vor dem Beitrag.",

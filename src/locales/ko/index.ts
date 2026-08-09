@@ -1935,6 +1935,13 @@ export const ko = {
   remoteConfigResetSuccess: "{site}을(를) 기본 제공 구성으로 복원했습니다.",
   remoteConfigResetFailed: "복원 실패: {error}",
   remoteConfigResetUnavailable: "복원할 활성 구성이 없습니다.",
+  remoteConfigLocalRegistryUseButton: "로컬 레지스트리 사용",
+  remoteConfigLocalRegistryHint:
+    "먼저 pnpm registry:serve를 실행한 뒤 이 버튼을 누르세요. 로컬 서명 키는 개발 빌드에서만 신뢰됩니다.",
+  remoteConfigLocalRegistrySourceApplied:
+    "로컬 레지스트리 소스로 전환하고 업데이트 확인을 시작했습니다.",
+  remoteConfigLocalRegistryPermissionDenied:
+    "로컬 레지스트리 호스트 권한이 거부되었습니다. 127.0.0.1 권한을 허용한 뒤 다시 시도하세요.",
   remoteConfigLocalPatchImportButton: "로컬 패치 가져오기",
   remoteConfigLocalPatchImportDesc:
     "서명된 레지스트리 없이 내장 사이트 패치 JSON을 설치합니다. 로컬 패치는 원격 패치보다 우선하며 기여 전 선택자 검증에 적합합니다.",

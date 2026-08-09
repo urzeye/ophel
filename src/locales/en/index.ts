@@ -1942,8 +1942,7 @@ Please output the optimized code block directly, followed by a brief summary of 
     "Development builds only. Enter a full index.json URL; leave blank to use the default sources.",
   remoteConfigRegistrySourcePlaceholder: "https://staging.example.com/index.json",
   remoteConfigRegistrySourceApplyButton: "Apply",
-  remoteConfigRegistrySourceApplied:
-    "Development registry source saved. The next update check will use it.",
+  remoteConfigRegistrySourceApplied: "Development registry source saved; checking for updates now.",
   remoteConfigRegistrySourceCleared: "Default registry sources restored.",
   remoteConfigRegistrySourceInvalid: "Invalid registry source: {error}",
   remoteConfigCheckNowLabel: "Check for updates now",
@@ -1966,6 +1965,13 @@ Please output the optimized code block directly, followed by a brief summary of 
   remoteConfigResetSuccess: "{site} was reset to its built-in configuration.",
   remoteConfigResetFailed: "Reset failed: {error}",
   remoteConfigResetUnavailable: "There is no active configuration to reset.",
+  remoteConfigLocalRegistryUseButton: "Use local registry",
+  remoteConfigLocalRegistryHint:
+    "Run pnpm registry:serve first, then click this button. Only development builds trust the local signing key.",
+  remoteConfigLocalRegistrySourceApplied:
+    "Switched to the local registry source and started an update check.",
+  remoteConfigLocalRegistryPermissionDenied:
+    "Local registry host permission was denied. Allow 127.0.0.1 access and try again.",
   remoteConfigLocalPatchImportButton: "Import local patch",
   remoteConfigLocalPatchImportDesc:
     "Install a built-in site patch from a JSON file without a signed registry. Local patches override remote ones so you can verify selector hotfixes before contributing.",

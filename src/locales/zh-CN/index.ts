@@ -1850,7 +1850,7 @@ export const zhCN = {
   remoteConfigRegistrySourceDesc: "仅开发构建可用。请输入完整的 index.json 地址；留空使用默认源。",
   remoteConfigRegistrySourcePlaceholder: "https://staging.example.com/index.json",
   remoteConfigRegistrySourceApplyButton: "应用",
-  remoteConfigRegistrySourceApplied: "开发 Registry 源已保存；下一次检查更新时生效。",
+  remoteConfigRegistrySourceApplied: "开发 Registry 源已保存，并立即检查更新。",
   remoteConfigRegistrySourceCleared: "已恢复默认 Registry 源。",
   remoteConfigRegistrySourceInvalid: "Registry 源无效：{error}",
   remoteConfigCheckNowLabel: "立即检查更新",
@@ -1871,6 +1871,12 @@ export const zhCN = {
   remoteConfigResetSuccess: "已将 {site} 恢复为内置配置。",
   remoteConfigResetFailed: "重置失败：{error}",
   remoteConfigResetUnavailable: "没有可重置的有效配置。",
+  remoteConfigLocalRegistryUseButton: "使用本地 Registry",
+  remoteConfigLocalRegistryHint:
+    "先运行 pnpm registry:serve，再点此按钮。仅开发构建会信任本地签名密钥。",
+  remoteConfigLocalRegistrySourceApplied: "已切换到本地 Registry 源并开始检查更新。",
+  remoteConfigLocalRegistryPermissionDenied:
+    "未获得访问本地 Registry 的权限。请允许 127.0.0.1 主机权限后重试。",
   remoteConfigLocalPatchImportButton: "导入本地补丁",
   remoteConfigLocalPatchImportDesc:
     "从 JSON 文件安装内置站点补丁，无需签名 Registry。本地补丁优先于远程补丁，适合贡献前验证选择器热修。",

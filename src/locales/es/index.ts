@@ -1961,6 +1961,13 @@ Dame el código y luego un resumen de mejoras.`,
   remoteConfigResetSuccess: "{site} se restauró a su configuración integrada.",
   remoteConfigResetFailed: "Error al restaurar: {error}",
   remoteConfigResetUnavailable: "No hay ninguna configuración activa para restaurar.",
+  remoteConfigLocalRegistryUseButton: "Usar registry local",
+  remoteConfigLocalRegistryHint:
+    "Ejecuta primero pnpm registry:serve y luego este botón. Solo las builds de desarrollo confían en la clave de firma local.",
+  remoteConfigLocalRegistrySourceApplied:
+    "Se cambió al origen de registry local y se inició la comprobación de actualizaciones.",
+  remoteConfigLocalRegistryPermissionDenied:
+    "Se denegó el permiso de host del registry local. Permite 127.0.0.1 e inténtalo de nuevo.",
   remoteConfigLocalPatchImportButton: "Importar parche local",
   remoteConfigLocalPatchImportDesc:
     "Instala un parche JSON de un sitio integrado sin un registry firmado. Los parches locales tienen prioridad sobre los remotos para validar hotfixes antes de contribuir.",

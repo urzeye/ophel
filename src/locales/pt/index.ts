@@ -1951,6 +1951,13 @@ Dê o código e depois um resumo de melhorias.`,
   remoteConfigResetSuccess: "{site} foi restaurado para a configuração integrada.",
   remoteConfigResetFailed: "Falha ao restaurar: {error}",
   remoteConfigResetUnavailable: "Não há configuração ativa para restaurar.",
+  remoteConfigLocalRegistryUseButton: "Usar registry local",
+  remoteConfigLocalRegistryHint:
+    "Execute primeiro pnpm registry:serve e depois este botão. Somente builds de desenvolvimento confiam na chave de assinatura local.",
+  remoteConfigLocalRegistrySourceApplied:
+    "Alternado para a origem do registry local e verificação de atualizações iniciada.",
+  remoteConfigLocalRegistryPermissionDenied:
+    "Permissão de host do registry local negada. Permita 127.0.0.1 e tente novamente.",
   remoteConfigLocalPatchImportButton: "Importar patch local",
   remoteConfigLocalPatchImportDesc:
     "Instala um patch JSON de site embutido sem registry assinado. Patches locais têm prioridade sobre os remotos para validar hotfixes antes de contribuir.",

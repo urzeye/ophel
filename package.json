@@ -25,6 +25,7 @@
     "registry:validate": "tsx registry/scripts/validate.mjs",
     "registry:build": "tsx registry/scripts/build-dist-local.mjs",
     "registry:build:signed": "tsx registry/scripts/build-dist.mjs",
+    "registry:serve": "tsx registry/scripts/serve-local.mjs",
     "build": "pnpm prepare:mermaid-assets && plasmo build",
     "build:firefox": "pnpm prepare:mermaid-assets && plasmo build --target=firefox-mv3",
     "build:all": "pnpm build && pnpm build:firefox",

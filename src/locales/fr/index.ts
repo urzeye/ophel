@@ -1979,6 +1979,13 @@ Donnez le code puis un résumé des améliorations.`,
   remoteConfigResetSuccess: "{site} a été restauré à sa configuration intégrée.",
   remoteConfigResetFailed: "Échec de la restauration : {error}",
   remoteConfigResetUnavailable: "Aucune configuration active ne peut être restaurée.",
+  remoteConfigLocalRegistryUseButton: "Utiliser le registry local",
+  remoteConfigLocalRegistryHint:
+    "Lancez d’abord pnpm registry:serve, puis ce bouton. Seules les builds de développement font confiance à la clé de signature locale.",
+  remoteConfigLocalRegistrySourceApplied:
+    "Basculé vers la source registry locale et vérification des mises à jour lancée.",
+  remoteConfigLocalRegistryPermissionDenied:
+    "Autorisation d’hôte du registry local refusée. Autorisez 127.0.0.1 puis réessayez.",
   remoteConfigLocalPatchImportButton: "Importer un correctif local",
   remoteConfigLocalPatchImportDesc:
     "Installe un correctif JSON de site intégré sans registry signé. Les correctifs locaux priment sur les distants pour vérifier les hotfixes avant contribution.",

@@ -126,9 +126,10 @@ Patch 只用于已经配置化的内置适配器 selector/纯配置热修，文�
 ```bash
 pnpm registry:validate
 pnpm registry:build
+pnpm registry:serve
 ```
 
-`pnpm registry:build` 会在进程内生成一次性 Ed25519 密钥并写出完整签名产物，用于本地结构与不可变路径检查；临时公钥不在客户端信任列表中，因此该输出不能发布。正式 workflow 使用 `pnpm registry:build:signed`，并强制匹配内置生产公钥。
+`pnpm registry:build` 使用固定的 **local-dev** Ed25519 密钥写出完整签名产物，仅供本地结构检查与开发构建联调；该密钥不会进入生产信任列表，产物也不可发布。`pnpm registry:serve` 会先构建再在 `http://127.0.0.1:8787/index.json` 提供静态服务。开发构建可在设置页一键“使用本地 Registry”。正式 workflow 使用 `pnpm registry:build:signed`，并强制匹配内置生产公钥。
 
 PR 校验 workflow 会从受信任的主分支脚本读取 PR 中的 registry 数据；本地复现时可指定候选目录：
 

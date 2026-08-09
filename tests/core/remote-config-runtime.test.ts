@@ -7,7 +7,12 @@ vi.mock("~utils/config", () => ({
   IS_DEVELOPMENT_BUILD: false,
 }))
 
-import { resolveRuntimeRemoteConfigSources } from "~core/remote-config-runtime"
+import {
+  resolveRuntimeRemoteConfigSources,
+  resolveRuntimeTrustedRegistrySigningKeys,
+} from "~core/remote-config-runtime"
+import { LOCAL_DEV_REGISTRY_SIGNING_KEY_ID } from "~core/remote-config-local-dev"
+import { TRUSTED_REGISTRY_SIGNING_KEYS } from "~core/remote-config-signature"
 import { DEFAULT_REMOTE_CONFIG_SOURCES } from "~core/remote-config-types"
 
 class MemoryStorage implements PlatformStorage {
@@ -61,5 +66,17 @@ describe("runtime remote config sources", () => {
     await expect(resolveRuntimeRemoteConfigSources(storage, true)).resolves.toEqual([
       "https://staging.example.com/index.json",
     ])
+  })
+})
+
+describe("runtime remote config signing keys", () => {
+  it("keeps production trust list unchanged by default", () => {
+    expect(resolveRuntimeTrustedRegistrySigningKeys(false)).toEqual(TRUSTED_REGISTRY_SIGNING_KEYS)
+  })
+
+  it("adds the fixed local-dev key only when explicitly enabled", () => {
+    const keys = resolveRuntimeTrustedRegistrySigningKeys(true)
+    expect(keys.map((key) => key.keyId)).toContain(LOCAL_DEV_REGISTRY_SIGNING_KEY_ID)
+    expect(keys).toHaveLength(TRUSTED_REGISTRY_SIGNING_KEYS.length + 1)
   })
 })

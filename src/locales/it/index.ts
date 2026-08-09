@@ -2037,6 +2037,13 @@ export const it = {
   remoteConfigResetSuccess: "{site} è stato ripristinato alla configurazione integrata.",
   remoteConfigResetFailed: "Ripristino non riuscito: {error}",
   remoteConfigResetUnavailable: "Non c'è alcuna configurazione attiva da ripristinare.",
+  remoteConfigLocalRegistryUseButton: "Usa registry locale",
+  remoteConfigLocalRegistryHint:
+    "Esegui prima pnpm registry:serve, poi premi questo pulsante. Solo le build di sviluppo si fidano della chiave di firma locale.",
+  remoteConfigLocalRegistrySourceApplied:
+    "Passato all’origine registry locale e avviato il controllo aggiornamenti.",
+  remoteConfigLocalRegistryPermissionDenied:
+    "Autorizzazione host per il registry locale negata. Consenti l’accesso a 127.0.0.1 e riprova.",
   remoteConfigLocalPatchImportButton: "Importa patch locale",
   remoteConfigLocalPatchImportDesc:
     "Installa una patch JSON per un sito integrato senza registry firmato. Le patch locali hanno priorità su quelle remote e servono a verificare gli hotfix prima del contributo.",

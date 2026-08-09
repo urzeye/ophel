@@ -1955,6 +1955,13 @@ export const ja = {
   remoteConfigResetSuccess: "{site} を組み込み設定に戻しました。",
   remoteConfigResetFailed: "復元に失敗しました：{error}",
   remoteConfigResetUnavailable: "復元できる有効な設定がありません。",
+  remoteConfigLocalRegistryUseButton: "ローカル Registry を使う",
+  remoteConfigLocalRegistryHint:
+    "先に pnpm registry:serve を実行してから押してください。ローカル署名鍵は開発ビルドでのみ信頼されます。",
+  remoteConfigLocalRegistrySourceApplied:
+    "ローカル Registry ソースに切り替え、更新確認を開始しました。",
+  remoteConfigLocalRegistryPermissionDenied:
+    "ローカル Registry へのホスト権限が拒否されました。127.0.0.1 を許可して再試行してください。",
   remoteConfigLocalPatchImportButton: "ローカルパッチをインポート",
   remoteConfigLocalPatchImportDesc:
     "署名付き Registry なしで、組み込みサイトのパッチ JSON をインストールします。ローカルパッチはリモートより優先され、貢献前のセレクタ検証に使えます。",

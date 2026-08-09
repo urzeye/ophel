@@ -1873,6 +1873,12 @@ export const zhTW = {
   remoteConfigResetSuccess: "已將 {site} 恢復為內置配置。",
   remoteConfigResetFailed: "重置失敗：{error}",
   remoteConfigResetUnavailable: "沒有可重置的有效配置。",
+  remoteConfigLocalRegistryUseButton: "使用本機 Registry",
+  remoteConfigLocalRegistryHint:
+    "先執行 pnpm registry:serve，再點此按鈕。僅開發建置會信任本機簽名金鑰。",
+  remoteConfigLocalRegistrySourceApplied: "已切換到本機 Registry 來源並開始檢查更新。",
+  remoteConfigLocalRegistryPermissionDenied:
+    "未取得本機 Registry 存取權限。請允許 127.0.0.1 主機權限後重試。",
   remoteConfigLocalPatchImportButton: "匯入本機補丁",
   remoteConfigLocalPatchImportDesc:
     "從 JSON 檔安裝內建站點補丁，無需簽名 Registry。本機補丁優先於遠端補丁，適合貢獻前驗證選擇器熱修。",

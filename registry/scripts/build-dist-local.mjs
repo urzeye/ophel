@@ -1,27 +1,24 @@
-import { generateKeyPairSync } from "node:crypto"
 import path from "node:path"
 import { pathToFileURL } from "node:url"
 
 import {
-  buildRegistryDist,
-  exportRawEd25519PublicKeyHex,
-  parseRegistryBuildArguments,
-} from "./build-dist.mjs"
-
-const LOCAL_SIGNING_KEY_ID = "ophel-registry-local"
+  LOCAL_DEV_REGISTRY_PRIVATE_KEY_BASE64,
+  LOCAL_DEV_REGISTRY_PUBLIC_KEY_HEX,
+  LOCAL_DEV_REGISTRY_SIGNING_KEY_ID,
+} from "./local-dev-signing.mjs"
+import { buildRegistryDist, parseRegistryBuildArguments } from "./build-dist.mjs"
 
 export async function buildLocalRegistryDist(args = process.argv.slice(2)) {
   const options = parseRegistryBuildArguments(args)
   if (options.signingKeyId) {
     throw new TypeError("--signing-key-id is only supported by registry:build:signed")
   }
-  const { privateKey } = generateKeyPairSync("ed25519")
   return buildRegistryDist({
     ...options,
     signingKey: {
-      keyId: LOCAL_SIGNING_KEY_ID,
-      privateKey,
-      expectedPublicKeyHex: exportRawEd25519PublicKeyHex(privateKey),
+      keyId: LOCAL_DEV_REGISTRY_SIGNING_KEY_ID,
+      privateKey: LOCAL_DEV_REGISTRY_PRIVATE_KEY_BASE64,
+      expectedPublicKeyHex: LOCAL_DEV_REGISTRY_PUBLIC_KEY_HEX,
     },
   })
 }
@@ -34,7 +31,7 @@ if (isMainModule) {
   buildLocalRegistryDist()
     .then((index) => {
       console.warn(
-        `[registry] built local revision ${index.registryRevision} with an ephemeral signing key; output is not publishable`,
+        `[registry] built local revision ${index.registryRevision} with fixed local-dev key ${LOCAL_DEV_REGISTRY_SIGNING_KEY_ID}; output is not publishable`,
       )
     })
     .catch((error) => {
