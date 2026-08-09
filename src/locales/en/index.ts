@@ -1966,6 +1966,22 @@ Please output the optimized code block directly, followed by a brief summary of 
   remoteConfigResetSuccess: "{site} was reset to its built-in configuration.",
   remoteConfigResetFailed: "Reset failed: {error}",
   remoteConfigResetUnavailable: "There is no active configuration to reset.",
+  remoteConfigLocalPatchImportButton: "Import local patch",
+  remoteConfigLocalPatchImportDesc:
+    "Install a built-in site patch from a JSON file without a signed registry. Local patches override remote ones so you can verify selector hotfixes before contributing.",
+  remoteConfigLocalPatchConfirmTitle: "Import local patch?",
+  remoteConfigLocalPatchRisk:
+    "Local patches are not authenticated by the official registry signature. Only import files you trust.",
+  remoteConfigLocalPatchSummary:
+    "Install patch v{version} for {site} ({id}) against built-in config version {base}.",
+  remoteConfigLocalPatchInstalled:
+    "Installed local patch v{version} for {site}. Open the site to verify, and reload if needed.",
+  remoteConfigLocalPatchRemoved: "Removed the local patch for {site}.",
+  remoteConfigLocalPatchRemoveFailed: "Failed to remove the local patch: {error}",
+  remoteConfigLocalPatchRemoveButton: "Remove local patch",
+  remoteConfigLocalPatchInvalid: "The local patch JSON is invalid or missing required fields.",
+  remoteConfigPatchSourceLocal: "Local",
+  remoteConfigPatchSourceRegistry: "Registry",
 
   discordCommunity: "Discord Community",
   discordDesc:

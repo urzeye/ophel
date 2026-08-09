@@ -1955,6 +1955,22 @@ export const ja = {
   remoteConfigResetSuccess: "{site} を組み込み設定に戻しました。",
   remoteConfigResetFailed: "復元に失敗しました：{error}",
   remoteConfigResetUnavailable: "復元できる有効な設定がありません。",
+  remoteConfigLocalPatchImportButton: "ローカルパッチをインポート",
+  remoteConfigLocalPatchImportDesc:
+    "署名付き Registry なしで、組み込みサイトのパッチ JSON をインストールします。ローカルパッチはリモートより優先され、貢献前のセレクタ検証に使えます。",
+  remoteConfigLocalPatchConfirmTitle: "ローカルパッチをインポートしますか？",
+  remoteConfigLocalPatchRisk:
+    "ローカルパッチは公式 Registry の署名検証を受けません。信頼できるファイルのみインポートしてください。",
+  remoteConfigLocalPatchSummary:
+    "{site}（{id}）にパッチ v{version} をインストールします（組み込み設定バージョン {base}）。",
+  remoteConfigLocalPatchInstalled:
+    "{site} にローカルパッチ v{version} をインストールしました。対象サイトで確認し、必要なら再読み込みしてください。",
+  remoteConfigLocalPatchRemoved: "{site} のローカルパッチを削除しました。",
+  remoteConfigLocalPatchRemoveFailed: "ローカルパッチの削除に失敗しました：{error}",
+  remoteConfigLocalPatchRemoveButton: "ローカルパッチを削除",
+  remoteConfigLocalPatchInvalid: "ローカルパッチ JSON が無効か、必須フィールドが不足しています。",
+  remoteConfigPatchSourceLocal: "ローカル",
+  remoteConfigPatchSourceRegistry: "Registry",
 
   discordCommunity: "Discord コミュニティ",
   discordDesc:

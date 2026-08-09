@@ -101,6 +101,15 @@ type ConfirmationState =
       isUpdate: boolean
     }
   | {
+      type: "import-patch"
+      patch: unknown
+      fileName: string
+      siteId: string
+      siteName: string
+      patchVersion: number
+      baseConfigVersion: number
+    }
+  | {
       type: "uninstall"
       pack: InstalledSitePack
     }
@@ -356,6 +365,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
   const updateNestedSetting = useSettingsStore((state) => state.updateNestedSetting)
   const pageRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const patchFileInputRef = useRef<HTMLInputElement>(null)
   const confirmationTriggerRef = useRef<HTMLElement | null>(null)
   const busyKeysRef = useRef<Set<string>>(new Set())
   const [activeTab, setActiveTab] = useState<string>(
@@ -506,18 +516,39 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
     () => new Set(Object.values(originBindings.bindings).map((binding) => binding.packId)),
     [originBindings],
   )
-  const activePatches = useMemo(
-    () =>
-      Object.entries(remoteState?.active?.patches ?? {})
-        .map(([siteId, cachedPatch]) => ({
-          siteId,
-          siteName: builtinPlatformNames.get(siteId) ?? siteId,
-          patchVersion: cachedPatch.index.patchVersion,
-          baseConfigVersion: cachedPatch.index.baseConfigVersion,
-        }))
-        .sort((left, right) => left.siteName.localeCompare(right.siteName)),
-    [remoteState],
-  )
+  const activePatches = useMemo(() => {
+    type ActivePatchRow = {
+      siteId: string
+      siteName: string
+      patchVersion: number
+      baseConfigVersion: number
+      source: "registry" | "local"
+      fileName?: string
+    }
+    const bySiteId = new Map<string, ActivePatchRow>()
+    for (const [siteId, cachedPatch] of Object.entries(remoteState?.active?.patches ?? {})) {
+      bySiteId.set(siteId, {
+        siteId,
+        siteName: builtinPlatformNames.get(siteId) ?? siteId,
+        patchVersion: cachedPatch.index.patchVersion,
+        baseConfigVersion: cachedPatch.index.baseConfigVersion,
+        source: "registry",
+      })
+    }
+    for (const [siteId, record] of Object.entries(remoteState?.localPatches ?? {})) {
+      bySiteId.set(siteId, {
+        siteId,
+        siteName: builtinPlatformNames.get(siteId) ?? siteId,
+        patchVersion: record.patch.patchVersion,
+        baseConfigVersion: record.patch.baseConfigVersion,
+        source: "local",
+        ...(record.fileName ? { fileName: record.fileName } : {}),
+      })
+    }
+    return Array.from(bySiteId.values()).sort((left, right) =>
+      left.siteName.localeCompare(right.siteName),
+    )
+  }, [remoteState])
   const permissionReviewPacks = useMemo(() => {
     const missingOrigins = new Set(runtimeStatus.missingPermissionOrigins)
     if (missingOrigins.size === 0) return []
@@ -534,7 +565,11 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
   const isImportBusy = useMemo(
     () =>
       Array.from(busyKeys).some(
-        (key) => key === "import:read" || key.startsWith("confirm:import:"),
+        (key) =>
+          key === "import:read" ||
+          key === "import-patch:read" ||
+          key.startsWith("confirm:import:") ||
+          key.startsWith("confirm:import-patch:"),
       ),
     [busyKeys],
   )
@@ -1033,6 +1068,80 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
     }
   }
 
+  const handleRemoveLocalPatch = async (siteId: string, siteName: string) => {
+    setResettingSiteId(siteId)
+    try {
+      const removed = await platform.remoteConfig.removeLocalPatch(siteId)
+      if (!removed) throw new Error(t("remoteConfigResetUnavailable"))
+      notify(t("remoteConfigLocalPatchRemoved", { site: siteName }))
+      await loadRegistryState()
+    } catch (error) {
+      notifyError(t("remoteConfigLocalPatchRemoveFailed", { error: getErrorMessage(error) }))
+    } finally {
+      setResettingSiteId(null)
+    }
+  }
+
+  const handlePatchFileSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    event.target.value = ""
+    if (!file) return
+
+    const key = "import-patch:read"
+    if (!beginBusy(key)) return
+    try {
+      if (file.size > SITE_PACK_MAX_BYTES) {
+        notifyError(t("remoteConfigLocalPatchInvalid"))
+        return
+      }
+      const content = await file.text()
+      let parsed: unknown
+      try {
+        parsed = JSON.parse(content)
+      } catch {
+        notifyError(t("remoteConfigLocalPatchInvalid"))
+        return
+      }
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+        notifyError(t("remoteConfigLocalPatchInvalid"))
+        return
+      }
+      const record = parsed as Record<string, unknown>
+      const siteId = typeof record.targetSiteId === "string" ? record.targetSiteId : ""
+      const patchVersion =
+        typeof record.patchVersion === "number" && Number.isSafeInteger(record.patchVersion)
+          ? record.patchVersion
+          : 0
+      const baseConfigVersion =
+        typeof record.baseConfigVersion === "number" &&
+        Number.isSafeInteger(record.baseConfigVersion)
+          ? record.baseConfigVersion
+          : 0
+      if (!siteId || patchVersion < 1 || baseConfigVersion < 1) {
+        notifyError(t("remoteConfigLocalPatchInvalid"))
+        return
+      }
+      setConfirmation({
+        type: "import-patch",
+        patch: parsed,
+        fileName: file.name,
+        siteId,
+        siteName: builtinPlatformNames.get(siteId) ?? siteId,
+        patchVersion,
+        baseConfigVersion,
+      })
+    } catch (error) {
+      reportOperationError(error)
+    } finally {
+      endBusy(key)
+    }
+  }
+
+  const openPatchImportPicker = (trigger: HTMLElement) => {
+    confirmationTriggerRef.current = trigger
+    patchFileInputRef.current?.click()
+  }
+
   const handleApplyRegistrySource = () => {
     const source = registrySourceInput.trim()
 
@@ -1139,6 +1248,28 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
             name: resolveSitePackName(result.pack.manifest, getCurrentLang()),
           }),
         )
+      } catch (error) {
+        setConfirmation(null)
+        reportOperationError(error)
+      } finally {
+        endBusy(key)
+      }
+      return
+    }
+
+    if (confirmation.type === "import-patch") {
+      const key = `confirm:import-patch:${confirmation.siteId}`
+      if (!beginBusy(key)) return
+      try {
+        await platform.remoteConfig.installLocalPatch(confirmation.patch, confirmation.fileName)
+        await loadRegistryState()
+        notify(
+          t("remoteConfigLocalPatchInstalled", {
+            site: confirmation.siteName,
+            version: String(confirmation.patchVersion),
+          }),
+        )
+        setConfirmation(null)
       } catch (error) {
         setConfirmation(null)
         reportOperationError(error)
@@ -1410,8 +1541,19 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
   }
 
   const confirmationPackId =
-    confirmation?.type === "import" ? confirmation.manifest.id : confirmation?.pack.manifest.id
-  const isDialogBusy = confirmationPackId ? isPackBusy(confirmationPackId) : false
+    confirmation?.type === "import"
+      ? confirmation.manifest.id
+      : confirmation?.type === "uninstall"
+        ? confirmation.pack.manifest.id
+        : confirmation?.type === "import-patch"
+          ? confirmation.siteId
+          : undefined
+  const isDialogBusy = confirmation
+    ? confirmation.type === "import-patch"
+      ? busyKeys.has(`confirm:import-patch:${confirmation.siteId}`) ||
+        busyKeys.has("import-patch:read")
+      : Boolean(confirmationPackId && isPackBusy(confirmationPackId))
+    : false
   const registryRevision = remoteState?.active?.index.registryRevision
   const lastCheckAt = remoteState?.lastCheckAt
   const isCheckingRegistry = busyKeys.has("registry:refresh")
@@ -1743,7 +1885,21 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
             )}
 
             <div className="settings-pack-patches" data-setting-id="remote-config-active-patches">
-              <h3>{t("remoteConfigActivePatchesLabel")}</h3>
+              <div className="settings-pack-section-head">
+                <h3>{t("remoteConfigActivePatchesLabel")}</h3>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  className="settings-pack-action-button"
+                  data-setting-id="remote-config-local-patch-import"
+                  disabled={isRegistryBusy || isImportBusy}
+                  onClick={(event) => openPatchImportPicker(event.currentTarget)}>
+                  <ImportIcon size={14} />
+                  {t("remoteConfigLocalPatchImportButton")}
+                </Button>
+              </div>
+              <p className="settings-pack-source-desc">{t("remoteConfigLocalPatchImportDesc")}</p>
               {activePatches.length === 0 ? (
                 <div className="settings-pack-empty-state compact">
                   <CloudIcon size={20} />
@@ -1752,10 +1908,17 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
               ) : (
                 <div className="settings-pack-list">
                   {activePatches.map((patch) => (
-                    <div className="settings-pack-item" key={patch.siteId}>
+                    <div className="settings-pack-item" key={`${patch.source}:${patch.siteId}`}>
                       <div className="settings-pack-info">
                         <div className="settings-pack-title-line">
                           <strong>{patch.siteName}</strong>
+                          <span className="settings-site-pack-badge">
+                            {t(
+                              patch.source === "local"
+                                ? "remoteConfigPatchSourceLocal"
+                                : "remoteConfigPatchSourceRegistry",
+                            )}
+                          </span>
                         </div>
                         <div className="settings-pack-meta">
                           <span
@@ -1766,9 +1929,27 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
                           <span>
                             {t("remoteConfigBaseVersionLabel")} {patch.baseConfigVersion}
                           </span>
+                          {patch.fileName ? (
+                            <span title={patch.fileName}>{patch.fileName}</span>
+                          ) : null}
                         </div>
                       </div>
                       <div className="settings-pack-controls">
+                        {patch.source === "local" ? (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="secondary"
+                            className="settings-pack-action-button"
+                            disabled={isRegistryBusy || resettingSiteId !== null}
+                            onClick={() =>
+                              void handleRemoveLocalPatch(patch.siteId, patch.siteName)
+                            }>
+                            {resettingSiteId === patch.siteId
+                              ? t("remoteConfigResettingButton")
+                              : t("remoteConfigLocalPatchRemoveButton")}
+                          </Button>
+                        ) : null}
                         <Button
                           type="button"
                           size="sm"
@@ -1869,6 +2050,13 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
         accept="application/json,.json"
         onChange={(event) => void handleFileSelected(event)}
       />
+      <input
+        ref={patchFileInputRef}
+        className="settings-pack-file-input"
+        type="file"
+        accept="application/json,.json"
+        onChange={(event) => void handlePatchFileSelected(event)}
+      />
 
       {confirmation?.type === "import" && (
         <SitePackDialog
@@ -1886,6 +2074,28 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
               id: confirmation.manifest.id,
               version: String(confirmation.manifest.version),
               matches: String(confirmation.manifest.matches.length),
+            })}
+          </p>
+          <code className="settings-pack-dialog-file">{confirmation.fileName}</code>
+        </SitePackDialog>
+      )}
+
+      {confirmation?.type === "import-patch" && (
+        <SitePackDialog
+          title={t("remoteConfigLocalPatchConfirmTitle")}
+          confirmText={t("confirm")}
+          busy={isDialogBusy}
+          restoreFocusTo={confirmationTriggerRef.current}
+          restoreFocusFallback={getConfirmationFocusFallback}
+          onConfirm={() => void handleConfirmAction()}
+          onCancel={closeConfirmation}>
+          <p>{t("remoteConfigLocalPatchRisk")}</p>
+          <p>
+            {t("remoteConfigLocalPatchSummary", {
+              site: confirmation.siteName,
+              id: confirmation.siteId,
+              version: String(confirmation.patchVersion),
+              base: String(confirmation.baseConfigVersion),
             })}
           </p>
           <code className="settings-pack-dialog-file">{confirmation.fileName}</code>

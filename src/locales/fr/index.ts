@@ -1979,6 +1979,22 @@ Donnez le code puis un résumé des améliorations.`,
   remoteConfigResetSuccess: "{site} a été restauré à sa configuration intégrée.",
   remoteConfigResetFailed: "Échec de la restauration : {error}",
   remoteConfigResetUnavailable: "Aucune configuration active ne peut être restaurée.",
+  remoteConfigLocalPatchImportButton: "Importer un correctif local",
+  remoteConfigLocalPatchImportDesc:
+    "Installe un correctif JSON de site intégré sans registry signé. Les correctifs locaux priment sur les distants pour vérifier les hotfixes avant contribution.",
+  remoteConfigLocalPatchConfirmTitle: "Importer le correctif local ?",
+  remoteConfigLocalPatchRisk:
+    "Les correctifs locaux ne sont pas authentifiés par la signature du registry officiel. N’importez que des fichiers de confiance.",
+  remoteConfigLocalPatchSummary:
+    "Installer le correctif v{version} pour {site} ({id}) sur la config intégrée version {base}.",
+  remoteConfigLocalPatchInstalled:
+    "Correctif local v{version} installé pour {site}. Ouvrez le site pour vérifier, et rechargez si besoin.",
+  remoteConfigLocalPatchRemoved: "Correctif local supprimé pour {site}.",
+  remoteConfigLocalPatchRemoveFailed: "Échec de la suppression du correctif local : {error}",
+  remoteConfigLocalPatchRemoveButton: "Supprimer le correctif local",
+  remoteConfigLocalPatchInvalid: "Le JSON du correctif local est invalide ou incomplet.",
+  remoteConfigPatchSourceLocal: "Local",
+  remoteConfigPatchSourceRegistry: "Registry",
 
   discordCommunity: "Communauté Discord",
   discordDesc:

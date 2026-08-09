@@ -1935,6 +1935,22 @@ export const ko = {
   remoteConfigResetSuccess: "{site}을(를) 기본 제공 구성으로 복원했습니다.",
   remoteConfigResetFailed: "복원 실패: {error}",
   remoteConfigResetUnavailable: "복원할 활성 구성이 없습니다.",
+  remoteConfigLocalPatchImportButton: "로컬 패치 가져오기",
+  remoteConfigLocalPatchImportDesc:
+    "서명된 레지스트리 없이 내장 사이트 패치 JSON을 설치합니다. 로컬 패치는 원격 패치보다 우선하며 기여 전 선택자 검증에 적합합니다.",
+  remoteConfigLocalPatchConfirmTitle: "로컬 패치를 가져올까요?",
+  remoteConfigLocalPatchRisk:
+    "로컬 패치는 공식 레지스트리 서명 검증을 거치지 않습니다. 신뢰하는 파일만 가져오세요.",
+  remoteConfigLocalPatchSummary:
+    "{site}({id})에 패치 v{version}을(를) 설치합니다(내장 구성 버전 {base}).",
+  remoteConfigLocalPatchInstalled:
+    "{site}에 로컬 패치 v{version}을(를) 설치했습니다. 해당 사이트에서 확인하고 필요하면 새로고침하세요.",
+  remoteConfigLocalPatchRemoved: "{site}의 로컬 패치를 제거했습니다.",
+  remoteConfigLocalPatchRemoveFailed: "로컬 패치 제거 실패: {error}",
+  remoteConfigLocalPatchRemoveButton: "로컬 패치 제거",
+  remoteConfigLocalPatchInvalid: "로컬 패치 JSON이 유효하지 않거나 필수 필드가 없습니다.",
+  remoteConfigPatchSourceLocal: "로컬",
+  remoteConfigPatchSourceRegistry: "Registry",
 
   discordCommunity: "Discord 커뮤니티",
   discordDesc:

@@ -1871,6 +1871,21 @@ export const zhCN = {
   remoteConfigResetSuccess: "已将 {site} 恢复为内置配置。",
   remoteConfigResetFailed: "重置失败：{error}",
   remoteConfigResetUnavailable: "没有可重置的有效配置。",
+  remoteConfigLocalPatchImportButton: "导入本地补丁",
+  remoteConfigLocalPatchImportDesc:
+    "从 JSON 文件安装内置站点补丁，无需签名 Registry。本地补丁优先于远程补丁，适合贡献前验证选择器热修。",
+  remoteConfigLocalPatchConfirmTitle: "导入本地补丁？",
+  remoteConfigLocalPatchRisk: "本地补丁不会经官方 Registry 签名校验。只导入你信任的文件。",
+  remoteConfigLocalPatchSummary:
+    "将为 {site}（{id}）安装补丁 v{version}，基于内置配置版本 {base}。",
+  remoteConfigLocalPatchInstalled:
+    "已为 {site} 安装本地补丁 v{version}。打开对应站点即可验证，必要时刷新页面。",
+  remoteConfigLocalPatchRemoved: "已移除 {site} 的本地补丁。",
+  remoteConfigLocalPatchRemoveFailed: "移除本地补丁失败：{error}",
+  remoteConfigLocalPatchRemoveButton: "移除本地补丁",
+  remoteConfigLocalPatchInvalid: "本地补丁 JSON 无效或缺少必要字段。",
+  remoteConfigPatchSourceLocal: "本地",
+  remoteConfigPatchSourceRegistry: "Registry",
 
   discordCommunity: "Discord 社区",
   discordDesc: "加入社区，与其他用户交流、反馈问题、获取最新动态",

@@ -28,13 +28,16 @@ import {
   MSG_GET_CLAUDE_SESSION_KEY,
   MSG_GET_REMOTE_CONFIG_STATE,
   MSG_IGNORE_REMOTE_CONFIG_PATCH,
+  MSG_INSTALL_LOCAL_REMOTE_CONFIG_PATCH,
   MSG_OPEN_OPTIONS_PAGE,
   MSG_OPEN_URL,
   MSG_PROXY_FETCH,
   MSG_RECONCILE_SITE_PACK_REGISTRATIONS,
+  MSG_REMOVE_LOCAL_REMOTE_CONFIG_PATCH,
   MSG_REQUEST_PERMISSIONS,
   MSG_RESTORE_DATA,
   MSG_RESET_REMOTE_CONFIG_SITE,
+  MSG_REAPPLY_REMOTE_CONFIG_SITE,
   MSG_REVOKE_PERMISSIONS,
   MSG_SET_CLAUDE_SESSION_KEY,
   MSG_SHOW_NOTIFICATION,
@@ -499,6 +502,39 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
         sendResponse({
           success: ignored,
           ...(ignored ? {} : { error: "No active patch version to ignore" }),
+        })
+      })().catch((error) => {
+        sendResponse({ success: false, error: (error as Error).message })
+      })
+      break
+
+    case MSG_INSTALL_LOCAL_REMOTE_CONFIG_PATCH:
+      ;(async () => {
+        const result = await remoteConfigManager.installLocalPatch(message.patch, {
+          ...(message.fileName ? { fileName: message.fileName } : {}),
+        })
+        await broadcastToOphelTabs({
+          type: MSG_REAPPLY_REMOTE_CONFIG_SITE,
+          siteId: result.siteId,
+        })
+        sendResponse({ success: true })
+      })().catch((error) => {
+        sendResponse({ success: false, error: (error as Error).message })
+      })
+      break
+
+    case MSG_REMOVE_LOCAL_REMOTE_CONFIG_PATCH:
+      ;(async () => {
+        const result = await remoteConfigManager.removeLocalPatch(message.siteId)
+        if (result.changed) {
+          await broadcastToOphelTabs({
+            type: MSG_REAPPLY_REMOTE_CONFIG_SITE,
+            siteId: result.siteId,
+          })
+        }
+        sendResponse({
+          success: result.changed,
+          ...(result.changed ? {} : { error: "No local patch to remove" }),
         })
       })().catch((error) => {
         sendResponse({ success: false, error: (error as Error).message })

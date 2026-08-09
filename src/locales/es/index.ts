@@ -1961,6 +1961,23 @@ Dame el código y luego un resumen de mejoras.`,
   remoteConfigResetSuccess: "{site} se restauró a su configuración integrada.",
   remoteConfigResetFailed: "Error al restaurar: {error}",
   remoteConfigResetUnavailable: "No hay ninguna configuración activa para restaurar.",
+  remoteConfigLocalPatchImportButton: "Importar parche local",
+  remoteConfigLocalPatchImportDesc:
+    "Instala un parche JSON de un sitio integrado sin un registry firmado. Los parches locales tienen prioridad sobre los remotos para validar hotfixes antes de contribuir.",
+  remoteConfigLocalPatchConfirmTitle: "¿Importar parche local?",
+  remoteConfigLocalPatchRisk:
+    "Los parches locales no se autentican con la firma del registry oficial. Importa solo archivos de confianza.",
+  remoteConfigLocalPatchSummary:
+    "Instalar el parche v{version} para {site} ({id}) sobre la config integrada versión {base}.",
+  remoteConfigLocalPatchInstalled:
+    "Parche local v{version} instalado para {site}. Abre el sitio para verificarlo y recarga si hace falta.",
+  remoteConfigLocalPatchRemoved: "Se eliminó el parche local de {site}.",
+  remoteConfigLocalPatchRemoveFailed: "No se pudo eliminar el parche local: {error}",
+  remoteConfigLocalPatchRemoveButton: "Quitar parche local",
+  remoteConfigLocalPatchInvalid:
+    "El JSON del parche local no es válido o le faltan campos obligatorios.",
+  remoteConfigPatchSourceLocal: "Local",
+  remoteConfigPatchSourceRegistry: "Registry",
 
   discordCommunity: "Comunidad de Discord",
   discordDesc:

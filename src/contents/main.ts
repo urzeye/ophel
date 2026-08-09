@@ -7,7 +7,12 @@
 
 import type { PlasmoCSConfig } from "plasmo"
 
-import { getAdapter, initAdapterRegistry, resetBuiltinSiteConfig } from "~adapters"
+import {
+  getAdapter,
+  initAdapterRegistry,
+  reapplyBuiltinSiteConfig,
+  resetBuiltinSiteConfig,
+} from "~adapters"
 import { DEFAULT_FOLDERS, SITE_IDS, getDefaultPromptChains, getDefaultPrompts } from "~constants"
 import {
   initCoreModules,
@@ -33,6 +38,7 @@ import {
   MSG_EXTENSION_UPDATE_AVAILABLE,
   MSG_RESTORE_DATA,
   MSG_RESET_REMOTE_CONFIG_SITE,
+  MSG_REAPPLY_REMOTE_CONFIG_SITE,
   MSG_START_NEW_CONVERSATION,
 } from "~utils/messaging"
 
@@ -523,6 +529,19 @@ function initializeOphel() {
             success: reset,
             ...(reset ? {} : { error: `No configurable built-in adapter for ${message.siteId}` }),
           })
+          return true
+        }
+
+        if (message.type === MSG_REAPPLY_REMOTE_CONFIG_SITE) {
+          ;(async () => {
+            const reapplied = await reapplyBuiltinSiteConfig(message.siteId)
+            sendResponse({
+              success: reapplied,
+              ...(reapplied
+                ? {}
+                : { error: `No configurable built-in adapter for ${message.siteId}` }),
+            })
+          })()
           return true
         }
 

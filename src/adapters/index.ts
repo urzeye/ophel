@@ -211,6 +211,20 @@ export function resetBuiltinSiteConfig(siteId: string): boolean {
   return applyMergedConfig(adapter, adapter.getBuiltinConfig())
 }
 
+/** 按 storage 中的 local/remote patch 重新注入内置适配器配置。 */
+export async function reapplyBuiltinSiteConfig(siteId: string): Promise<boolean> {
+  const adapter = builtinAdapters.find((candidate) => candidate.getSiteId() === siteId)
+  if (!adapter || !supportsBuiltinSiteConfig(adapter)) return false
+  try {
+    await applyCachedBuiltinAdapterConfig(adapter, platform.storage)
+    return true
+  } catch (error) {
+    applyMergedConfig(adapter, adapter.getBuiltinConfig())
+    console.error(`[Ophel] Failed to reapply config for ${siteId}; using built-in config:`, error)
+    return false
+  }
+}
+
 /**
  * 获取当前页面匹配的适配器
  */

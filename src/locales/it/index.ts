@@ -2037,6 +2037,23 @@ export const it = {
   remoteConfigResetSuccess: "{site} è stato ripristinato alla configurazione integrata.",
   remoteConfigResetFailed: "Ripristino non riuscito: {error}",
   remoteConfigResetUnavailable: "Non c'è alcuna configurazione attiva da ripristinare.",
+  remoteConfigLocalPatchImportButton: "Importa patch locale",
+  remoteConfigLocalPatchImportDesc:
+    "Installa una patch JSON per un sito integrato senza registry firmato. Le patch locali hanno priorità su quelle remote e servono a verificare gli hotfix prima del contributo.",
+  remoteConfigLocalPatchConfirmTitle: "Importare la patch locale?",
+  remoteConfigLocalPatchRisk:
+    "Le patch locali non sono autenticate dalla firma del registry ufficiale. Importa solo file di cui ti fidi.",
+  remoteConfigLocalPatchSummary:
+    "Installa la patch v{version} per {site} ({id}) sulla config integrata versione {base}.",
+  remoteConfigLocalPatchInstalled:
+    "Patch locale v{version} installata per {site}. Apri il sito per verificarla e ricarica se necessario.",
+  remoteConfigLocalPatchRemoved: "Patch locale rimossa per {site}.",
+  remoteConfigLocalPatchRemoveFailed: "Rimozione della patch locale non riuscita: {error}",
+  remoteConfigLocalPatchRemoveButton: "Rimuovi patch locale",
+  remoteConfigLocalPatchInvalid:
+    "Il JSON della patch locale non è valido o manca di campi obbligatori.",
+  remoteConfigPatchSourceLocal: "Locale",
+  remoteConfigPatchSourceRegistry: "Registry",
 
   discordCommunity: "Comunità Discord",
   discordDesc:

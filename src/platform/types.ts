@@ -98,6 +98,8 @@ export interface PlatformRemoteConfig {
   getState(): Promise<RemoteConfigState>
   checkForUpdates(): Promise<RemoteConfigCheckResult>
   resetSite(siteId: string, patchVersion?: number): Promise<boolean>
+  installLocalPatch(patch: unknown, fileName?: string): Promise<boolean>
+  removeLocalPatch(siteId: string): Promise<boolean>
 }
 
 export type SitePackOriginPermissionResult = "ready" | "denied" | "unsupported"

@@ -1970,6 +1970,22 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   remoteConfigResetSuccess: "{site} wurde auf die integrierte Konfiguration zurückgesetzt.",
   remoteConfigResetFailed: "Zurücksetzen fehlgeschlagen: {error}",
   remoteConfigResetUnavailable: "Es gibt keine aktive Konfiguration zum Zurücksetzen.",
+  remoteConfigLocalPatchImportButton: "Lokalen Patch importieren",
+  remoteConfigLocalPatchImportDesc:
+    "Installiert einen integrierten Site-Patch aus einer JSON-Datei ohne signiertes Registry. Lokale Patches haben Vorrang vor Remote-Patches und eignen sich zur Prüfung vor dem Beitrag.",
+  remoteConfigLocalPatchConfirmTitle: "Lokalen Patch importieren?",
+  remoteConfigLocalPatchRisk:
+    "Lokale Patches werden nicht durch die offizielle Registry-Signatur authentifiziert. Importiere nur Dateien, denen du vertraust.",
+  remoteConfigLocalPatchSummary:
+    "Installiert Patch v{version} für {site} ({id}) gegen integrierte Config-Version {base}.",
+  remoteConfigLocalPatchInstalled:
+    "Lokaler Patch v{version} für {site} installiert. Öffne die Site zum Prüfen und lade bei Bedarf neu.",
+  remoteConfigLocalPatchRemoved: "Lokaler Patch für {site} entfernt.",
+  remoteConfigLocalPatchRemoveFailed: "Lokaler Patch konnte nicht entfernt werden: {error}",
+  remoteConfigLocalPatchRemoveButton: "Lokalen Patch entfernen",
+  remoteConfigLocalPatchInvalid: "Das lokale Patch-JSON ist ungültig oder unvollständig.",
+  remoteConfigPatchSourceLocal: "Lokal",
+  remoteConfigPatchSourceRegistry: "Registry",
 
   discordCommunity: "Discord-Community",
   discordDesc:

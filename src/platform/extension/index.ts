@@ -17,7 +17,9 @@ import {
   MSG_ENSURE_SITE_PACK_ORIGINS,
   MSG_GET_REMOTE_CONFIG_STATE,
   MSG_IGNORE_REMOTE_CONFIG_PATCH,
+  MSG_INSTALL_LOCAL_REMOTE_CONFIG_PATCH,
   MSG_RECONCILE_SITE_PACK_REGISTRATIONS,
+  MSG_REMOVE_LOCAL_REMOTE_CONFIG_PATCH,
   sendToBackground,
 } from "~utils/messaging"
 import { extensionStorage } from "./storage"
@@ -62,6 +64,29 @@ export const platform: Platform = {
       })
       if (!response.success) {
         throw new Error(response.error || "Failed to reset remote config site")
+      }
+      return true
+    },
+
+    async installLocalPatch(patch, fileName) {
+      const response = await sendToBackground({
+        type: MSG_INSTALL_LOCAL_REMOTE_CONFIG_PATCH,
+        patch,
+        ...(fileName ? { fileName } : {}),
+      })
+      if (!response.success) {
+        throw new Error(response.error || "Failed to install local patch")
+      }
+      return true
+    },
+
+    async removeLocalPatch(siteId) {
+      const response = await sendToBackground({
+        type: MSG_REMOVE_LOCAL_REMOTE_CONFIG_PATCH,
+        siteId,
+      })
+      if (!response.success) {
+        throw new Error(response.error || "Failed to remove local patch")
       }
       return true
     },

@@ -1952,6 +1952,22 @@ export const ru = {
   remoteConfigResetSuccess: "Для {site} восстановлена встроенная конфигурация.",
   remoteConfigResetFailed: "Не удалось выполнить возврат: {error}",
   remoteConfigResetUnavailable: "Нет активной конфигурации для возврата.",
+  remoteConfigLocalPatchImportButton: "Импорт локального патча",
+  remoteConfigLocalPatchImportDesc:
+    "Устанавливает JSON-патч встроенного сайта без подписанного registry. Локальные патчи важнее удалённых и нужны для проверки hotfix до вклада.",
+  remoteConfigLocalPatchConfirmTitle: "Импортировать локальный патч?",
+  remoteConfigLocalPatchRisk:
+    "Локальные патчи не проверяются официальной подписью registry. Импортируйте только доверенные файлы.",
+  remoteConfigLocalPatchSummary:
+    "Установить патч v{version} для {site} ({id}) поверх встроенной конфигурации версии {base}.",
+  remoteConfigLocalPatchInstalled:
+    "Локальный патч v{version} для {site} установлен. Откройте сайт для проверки и при необходимости обновите страницу.",
+  remoteConfigLocalPatchRemoved: "Локальный патч для {site} удалён.",
+  remoteConfigLocalPatchRemoveFailed: "Не удалось удалить локальный патч: {error}",
+  remoteConfigLocalPatchRemoveButton: "Удалить локальный патч",
+  remoteConfigLocalPatchInvalid: "JSON локального патча недействителен или неполон.",
+  remoteConfigPatchSourceLocal: "Локальный",
+  remoteConfigPatchSourceRegistry: "Registry",
 
   discordCommunity: "Сообщество Discord",
   discordDesc:

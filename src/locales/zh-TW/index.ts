@@ -1873,6 +1873,21 @@ export const zhTW = {
   remoteConfigResetSuccess: "已將 {site} 恢復為內置配置。",
   remoteConfigResetFailed: "重置失敗：{error}",
   remoteConfigResetUnavailable: "沒有可重置的有效配置。",
+  remoteConfigLocalPatchImportButton: "匯入本機補丁",
+  remoteConfigLocalPatchImportDesc:
+    "從 JSON 檔安裝內建站點補丁，無需簽名 Registry。本機補丁優先於遠端補丁，適合貢獻前驗證選擇器熱修。",
+  remoteConfigLocalPatchConfirmTitle: "匯入本機補丁？",
+  remoteConfigLocalPatchRisk: "本機補丁不會經過官方 Registry 簽名驗證。請只匯入你信任的檔案。",
+  remoteConfigLocalPatchSummary:
+    "將為 {site}（{id}）安裝補丁 v{version}，基於內建設定版本 {base}。",
+  remoteConfigLocalPatchInstalled:
+    "已為 {site} 安裝本機補丁 v{version}。開啟對應站點即可驗證，必要時重新整理頁面。",
+  remoteConfigLocalPatchRemoved: "已移除 {site} 的本機補丁。",
+  remoteConfigLocalPatchRemoveFailed: "移除本機補丁失敗：{error}",
+  remoteConfigLocalPatchRemoveButton: "移除本機補丁",
+  remoteConfigLocalPatchInvalid: "本機補丁 JSON 無效或缺少必要欄位。",
+  remoteConfigPatchSourceLocal: "本機",
+  remoteConfigPatchSourceRegistry: "Registry",
 
   discordCommunity: "Discord 社群",
   discordDesc: "加入社群，與其他用戶交流、反饋問題、獲取最新動態",

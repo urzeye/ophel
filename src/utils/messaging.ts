@@ -79,6 +79,27 @@ export interface IgnoreRemoteConfigPatchMessage extends IgnoreRemoteConfigPatchP
   type: typeof MSG_IGNORE_REMOTE_CONFIG_PATCH
 }
 
+export const MSG_INSTALL_LOCAL_REMOTE_CONFIG_PATCH = "INSTALL_LOCAL_REMOTE_CONFIG_PATCH"
+
+export interface InstallLocalRemoteConfigPatchPayload {
+  patch: unknown
+  fileName?: string
+}
+
+export interface InstallLocalRemoteConfigPatchMessage extends InstallLocalRemoteConfigPatchPayload {
+  type: typeof MSG_INSTALL_LOCAL_REMOTE_CONFIG_PATCH
+}
+
+export const MSG_REMOVE_LOCAL_REMOTE_CONFIG_PATCH = "REMOVE_LOCAL_REMOTE_CONFIG_PATCH"
+
+export interface RemoveLocalRemoteConfigPatchPayload {
+  siteId: string
+}
+
+export interface RemoveLocalRemoteConfigPatchMessage extends RemoveLocalRemoteConfigPatchPayload {
+  type: typeof MSG_REMOVE_LOCAL_REMOTE_CONFIG_PATCH
+}
+
 export const MSG_RESET_REMOTE_CONFIG_SITE = "RESET_REMOTE_CONFIG_SITE"
 
 export interface ResetRemoteConfigSitePayload {
@@ -87,6 +108,16 @@ export interface ResetRemoteConfigSitePayload {
 
 export interface ResetRemoteConfigSiteMessage extends ResetRemoteConfigSitePayload {
   type: typeof MSG_RESET_REMOTE_CONFIG_SITE
+}
+
+export const MSG_REAPPLY_REMOTE_CONFIG_SITE = "REAPPLY_REMOTE_CONFIG_SITE"
+
+export interface ReapplyRemoteConfigSitePayload {
+  siteId: string
+}
+
+export interface ReapplyRemoteConfigSiteMessage extends ReapplyRemoteConfigSitePayload {
+  type: typeof MSG_REAPPLY_REMOTE_CONFIG_SITE
 }
 
 // WebDAV 代理请求（绕过 CORS）
@@ -306,7 +337,10 @@ export type ExtensionMessage =
   | CheckRemoteConfigMessage
   | GetRemoteConfigStateMessage
   | IgnoreRemoteConfigPatchMessage
+  | InstallLocalRemoteConfigPatchMessage
+  | RemoveLocalRemoteConfigPatchMessage
   | ResetRemoteConfigSiteMessage
+  | ReapplyRemoteConfigSiteMessage
   | WebDAVRequestMessage
   | CheckPermissionMessage
   | CheckPermissionsMessage
@@ -363,6 +397,8 @@ interface BackgroundResponseMap {
   [MSG_CHECK_REMOTE_CONFIG]: CheckRemoteConfigResponse
   [MSG_GET_REMOTE_CONFIG_STATE]: GetRemoteConfigStateResponse
   [MSG_IGNORE_REMOTE_CONFIG_PATCH]: BasicBackgroundResponse
+  [MSG_INSTALL_LOCAL_REMOTE_CONFIG_PATCH]: BasicBackgroundResponse
+  [MSG_REMOVE_LOCAL_REMOTE_CONFIG_PATCH]: BasicBackgroundResponse
   [MSG_CHECK_PERMISSION]: PermissionCheckResponse
   [MSG_CHECK_PERMISSIONS]: PermissionCheckResponse
   [MSG_REQUEST_PERMISSIONS]: BasicBackgroundResponse

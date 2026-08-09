@@ -1951,6 +1951,22 @@ Dê o código e depois um resumo de melhorias.`,
   remoteConfigResetSuccess: "{site} foi restaurado para a configuração integrada.",
   remoteConfigResetFailed: "Falha ao restaurar: {error}",
   remoteConfigResetUnavailable: "Não há configuração ativa para restaurar.",
+  remoteConfigLocalPatchImportButton: "Importar patch local",
+  remoteConfigLocalPatchImportDesc:
+    "Instala um patch JSON de site embutido sem registry assinado. Patches locais têm prioridade sobre os remotos para validar hotfixes antes de contribuir.",
+  remoteConfigLocalPatchConfirmTitle: "Importar patch local?",
+  remoteConfigLocalPatchRisk:
+    "Patches locais não são autenticados pela assinatura do registry oficial. Importe apenas arquivos confiáveis.",
+  remoteConfigLocalPatchSummary:
+    "Instalar o patch v{version} para {site} ({id}) sobre a config embutida versão {base}.",
+  remoteConfigLocalPatchInstalled:
+    "Patch local v{version} instalado para {site}. Abra o site para verificar e recarregue se necessário.",
+  remoteConfigLocalPatchRemoved: "Patch local removido de {site}.",
+  remoteConfigLocalPatchRemoveFailed: "Falha ao remover o patch local: {error}",
+  remoteConfigLocalPatchRemoveButton: "Remover patch local",
+  remoteConfigLocalPatchInvalid: "O JSON do patch local é inválido ou está incompleto.",
+  remoteConfigPatchSourceLocal: "Local",
+  remoteConfigPatchSourceRegistry: "Registry",
 
   discordCommunity: "Comunidade Discord",
   discordDesc:

@@ -71,6 +71,16 @@ export const platform: Platform = {
       const { resetUserscriptRemotePatch } = await import("./remote-config")
       return resetUserscriptRemotePatch(siteId, patchVersion)
     },
+
+    async installLocalPatch(patch, fileName) {
+      const { installUserscriptLocalRemotePatch } = await import("./remote-config")
+      return installUserscriptLocalRemotePatch(patch, fileName)
+    },
+
+    async removeLocalPatch(siteId) {
+      const { removeUserscriptLocalRemotePatch } = await import("./remote-config")
+      return removeUserscriptLocalRemotePatch(siteId)
+    },
   },
 
   sitePacks: {

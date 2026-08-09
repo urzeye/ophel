@@ -43,3 +43,17 @@ export const resetUserscriptRemotePatch = async (siteId: string, patchVersion?: 
   const { resetBuiltinSiteConfig } = await import("~adapters")
   return resetBuiltinSiteConfig(siteId)
 }
+
+export const installUserscriptLocalRemotePatch = async (patch: unknown, fileName?: string) => {
+  const result = await remoteConfigManager.installLocalPatch(patch, fileName ? { fileName } : {})
+  if (!result.changed && !result.record) return false
+  const { reapplyBuiltinSiteConfig } = await import("~adapters")
+  return reapplyBuiltinSiteConfig(result.siteId)
+}
+
+export const removeUserscriptLocalRemotePatch = async (siteId: string) => {
+  const result = await remoteConfigManager.removeLocalPatch(siteId)
+  if (!result.changed) return false
+  const { reapplyBuiltinSiteConfig } = await import("~adapters")
+  return reapplyBuiltinSiteConfig(siteId)
+}
