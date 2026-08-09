@@ -229,6 +229,7 @@ const createState = (
   overrides: Partial<Omit<RemoteConfigState, "storageSchemaVersion">> = {},
 ): RemoteConfigState => ({
   storageSchemaVersion: REMOTE_CONFIG_STORAGE_SCHEMA_VERSION,
+  localPatches: {},
   ignoredPatches: {},
   ...overrides,
 })
@@ -667,5 +668,161 @@ describe("RemoteConfigManager stop and recovery paths", () => {
         },
       },
     })
+  })
+})
+
+describe("RemoteConfigManager local patches", () => {
+  it("installs, prioritizes, and preserves local patches across remote checks", async () => {
+    const registryPatch = createPatch(1)
+    const registryBytes = encodeJson(registryPatch)
+    const registryEntry = createPatchEntry(registryPatch, registryBytes)
+    const index = createIndex(1, { patches: [registryEntry] })
+    const routes = new Map<string, TransportRoute>([
+      ...createSignedIndexRoutes(PRIMARY_SOURCE, index),
+      [artifactUrl(registryEntry), registryBytes],
+    ])
+    const transport = createTransport(routes)
+    const storage = new MemoryRemoteConfigStorage()
+    const manager = createManager(storage, transport)
+
+    const localPatch = createPatch(9)
+    localPatch.config = {
+      selectors: {
+        responseContainer: "main[data-local]",
+      },
+    }
+
+    const installed = await manager.installLocalPatch(localPatch, { fileName: "ima-local.json" })
+    expect(installed).toMatchObject({
+      changed: true,
+      siteId: SITE_ID,
+      record: {
+        fileName: "ima-local.json",
+        patch: {
+          patchVersion: 9,
+          config: {
+            selectors: {
+              responseContainer: "main[data-local]",
+            },
+          },
+        },
+      },
+    })
+
+    const remoteResult = await manager.checkForUpdates({ force: true })
+    expect(remoteResult.status).toBe("updated")
+    expect(storage.readState()).toMatchObject({
+      localPatches: {
+        [SITE_ID]: {
+          fileName: "ima-local.json",
+          patch: {
+            patchVersion: 9,
+          },
+        },
+      },
+      active: {
+        patches: {
+          [SITE_ID]: {
+            patch: {
+              patchVersion: 1,
+            },
+          },
+        },
+      },
+    })
+
+    const { loadActiveSiteConfigPatchDetails } = await import("~core/remote-config-cache")
+    const loaded = await loadActiveSiteConfigPatchDetails(storage, SITE_ID)
+    expect(loaded).toMatchObject({
+      source: "local",
+      fileName: "ima-local.json",
+      patch: {
+        patchVersion: 9,
+        config: {
+          selectors: {
+            responseContainer: "main[data-local]",
+          },
+        },
+      },
+    })
+  })
+
+  it("resets both local and remote patches when ignorePatch is called", async () => {
+    const registryPatch = createPatch(1)
+    const registryBytes = encodeJson(registryPatch)
+    const registryEntry = createPatchEntry(registryPatch, registryBytes)
+    const active = createSnapshot(createIndex(1, { patches: [registryEntry] }), {
+      patches: {
+        [SITE_ID]: { index: registryEntry, patch: registryPatch },
+      },
+    })
+    const storage = new MemoryRemoteConfigStorage(
+      createState({
+        active,
+        localPatches: {
+          [SITE_ID]: {
+            installedAt: NOW,
+            fileName: "local.json",
+            patch: createPatch(3),
+          },
+        },
+      }),
+    )
+    const manager = createManager(storage, createTransport(new Map()))
+
+    await expect(manager.ignorePatch(SITE_ID)).resolves.toBe(true)
+    expect(storage.readState()).toMatchObject({
+      localPatches: {},
+      ignoredPatches: { [SITE_ID]: 3 },
+      active: { patches: {} },
+    })
+  })
+
+  it("removes only the local override via removeLocalPatch", async () => {
+    const registryPatch = createPatch(1)
+    const registryBytes = encodeJson(registryPatch)
+    const registryEntry = createPatchEntry(registryPatch, registryBytes)
+    const active = createSnapshot(createIndex(1, { patches: [registryEntry] }), {
+      patches: {
+        [SITE_ID]: { index: registryEntry, patch: registryPatch },
+      },
+    })
+    const storage = new MemoryRemoteConfigStorage(
+      createState({
+        active,
+        localPatches: {
+          [SITE_ID]: {
+            installedAt: NOW,
+            patch: createPatch(4),
+          },
+        },
+      }),
+    )
+    const manager = createManager(storage, createTransport(new Map()))
+
+    await expect(manager.removeLocalPatch(SITE_ID)).resolves.toEqual({
+      changed: true,
+      siteId: SITE_ID,
+    })
+    expect(storage.readState()?.localPatches).toEqual({})
+    expect(storage.readState()?.active?.patches[SITE_ID]?.patch.patchVersion).toBe(1)
+
+    const { loadActiveSiteConfigPatchDetails } = await import("~core/remote-config-cache")
+    const loaded = await loadActiveSiteConfigPatchDetails(storage, SITE_ID)
+    expect(loaded).toMatchObject({
+      source: "registry",
+      patch: { patchVersion: 1 },
+    })
+  })
+
+  it("rejects local patches for unknown built-in sites", async () => {
+    const storage = new MemoryRemoteConfigStorage()
+    const manager = createManager(storage, createTransport(new Map()))
+    await expect(
+      manager.installLocalPatch({
+        ...createPatch(1),
+        targetSiteId: "missing-site",
+      }),
+    ).rejects.toThrow(/No configurable built-in adapter/)
   })
 })

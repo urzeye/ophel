@@ -50,6 +50,15 @@ export interface CachedSiteConfigPatch {
   patch: SiteConfigPatch
 }
 
+/** Developer/contributor override installed from a local JSON file. */
+export interface LocalSiteConfigPatchRecord {
+  installedAt: number
+  patch: SiteConfigPatch
+  fileName?: string
+}
+
+export type ActiveSiteConfigPatchSource = "registry" | "local"
+
 export interface RemoteConfigSnapshot {
   sourceUrl: string
   index: RemoteConfigRegistryIndex
@@ -71,6 +80,8 @@ export interface RemoteConfigFailureRecord {
 export interface RemoteConfigState {
   storageSchemaVersion: typeof REMOTE_CONFIG_STORAGE_SCHEMA_VERSION
   active?: RemoteConfigSnapshot
+  /** Local patch overrides; win over active.patches and survive remote checks. */
+  localPatches: Record<string, LocalSiteConfigPatchRecord>
   ignoredPatches: Record<string, number>
   lastCheckAt?: number
   lastSuccessAt?: number
@@ -471,6 +482,7 @@ export const isAppVersionCompatible = (
 
 export const createEmptyRemoteConfigState = (): RemoteConfigState => ({
   storageSchemaVersion: REMOTE_CONFIG_STORAGE_SCHEMA_VERSION,
+  localPatches: {},
   ignoredPatches: {},
 })
 

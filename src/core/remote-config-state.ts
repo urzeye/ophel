@@ -7,6 +7,7 @@ import {
   validateRemoteConfigRegistryIndex,
   type CachedSiteConfigPatch,
   type CachedSitePack,
+  type LocalSiteConfigPatchRecord,
   type RemoteConfigSnapshot,
   type RemoteConfigSourceFailure,
   type RemoteConfigState,
@@ -54,6 +55,45 @@ const parseIgnoredPatches = (value: unknown): Record<string, number> => {
   return ignored
 }
 
+const parseLocalPatches = (value: unknown): Record<string, LocalSiteConfigPatchRecord> => {
+  if (value === undefined) return {}
+  if (!isPlainRecord(value)) {
+    throw new RemoteConfigStateError("localPatches must be an object")
+  }
+  const localPatches: Record<string, LocalSiteConfigPatchRecord> = {}
+  for (const [siteId, record] of Object.entries(value)) {
+    if (!SITE_ID_PATTERN.test(siteId)) {
+      throw new RemoteConfigStateError(`localPatches contains an invalid site id: ${siteId}`)
+    }
+    if (!isPlainRecord(record)) {
+      throw new RemoteConfigStateError(`localPatches.${siteId} must be an object`)
+    }
+    if (
+      !Number.isSafeInteger(record.installedAt) ||
+      (record.installedAt as number) < MIN_UNIX_MILLISECONDS
+    ) {
+      throw new RemoteConfigStateError(
+        `localPatches.${siteId}.installedAt must be a Unix millisecond timestamp`,
+      )
+    }
+    if (!isPlainRecord(record.patch)) {
+      throw new RemoteConfigStateError(`localPatches.${siteId}.patch must be an object`)
+    }
+    if (record.fileName !== undefined && typeof record.fileName !== "string") {
+      throw new RemoteConfigStateError(`localPatches.${siteId}.fileName must be a string`)
+    }
+    const entry: LocalSiteConfigPatchRecord = {
+      installedAt: record.installedAt as number,
+      patch: record.patch as unknown as LocalSiteConfigPatchRecord["patch"],
+    }
+    if (typeof record.fileName === "string" && record.fileName.length > 0) {
+      entry.fileName = record.fileName
+    }
+    localPatches[siteId] = entry
+  }
+  return localPatches
+}
+
 const parseStoredSnapshot = (value: unknown): RemoteConfigSnapshot | undefined => {
   if (value === undefined) return undefined
   if (!isPlainRecord(value)) {
@@ -87,6 +127,7 @@ const parseStoredState = (value: unknown): RemoteConfigState => {
 
   const state: RemoteConfigState = {
     storageSchemaVersion: REMOTE_CONFIG_STORAGE_SCHEMA_VERSION,
+    localPatches: parseLocalPatches(value.localPatches),
     ignoredPatches: parseIgnoredPatches(value.ignoredPatches),
   }
   const active = parseStoredSnapshot(value.active)

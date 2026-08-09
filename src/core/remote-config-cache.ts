@@ -1,10 +1,8 @@
 import type { SiteConfigPatch } from "~adapters/declarative/types"
 
-import {
-  REMOTE_CONFIG_STORAGE_KEY,
-  REMOTE_CONFIG_STORAGE_SCHEMA_VERSION,
-} from "./remote-config-storage-constants"
+import { loadRemoteConfigState } from "./remote-config-state"
 import type {
+  ActiveSiteConfigPatchSource,
   CachedSiteConfigPatch,
   CachedSitePack,
   RemoteConfigStorage,
@@ -58,33 +56,47 @@ export const isCachedSiteConfigPatchShape = (value: unknown): value is CachedSit
   )
 }
 
+export interface LoadedSiteConfigPatch {
+  patch: SiteConfigPatch
+  source: ActiveSiteConfigPatchSource
+  fileName?: string
+  installedAt?: number
+}
+
 export async function loadActiveSiteConfigPatch(
   storage: RemoteConfigStorage,
   siteId: string,
 ): Promise<SiteConfigPatch | undefined> {
+  const loaded = await loadActiveSiteConfigPatchDetails(storage, siteId)
+  return loaded?.patch
+}
+
+export async function loadActiveSiteConfigPatchDetails(
+  storage: RemoteConfigStorage,
+  siteId: string,
+): Promise<LoadedSiteConfigPatch | undefined> {
   if (!SITE_ID_PATTERN.test(siteId)) {
     throw new TypeError(`Invalid site id: ${siteId}`)
   }
 
-  const stored = await storage.get<unknown>(REMOTE_CONFIG_STORAGE_KEY)
-  if (stored === undefined) return undefined
-  if (!isPlainRecord(stored)) {
-    throw new RemoteConfigCacheError("Remote config state must be an object")
-  }
-  if (stored.storageSchemaVersion !== REMOTE_CONFIG_STORAGE_SCHEMA_VERSION) {
-    throw new RemoteConfigCacheError(
-      `Unsupported remote config storage schema: ${String(stored.storageSchemaVersion)}`,
-    )
-  }
-  if (stored.active === undefined) return undefined
-  if (!isPlainRecord(stored.active) || !isPlainRecord(stored.active.patches)) {
-    throw new RemoteConfigCacheError("Remote config active patch map is malformed")
+  const state = await loadRemoteConfigState(storage)
+  const local = state.localPatches[siteId]
+  if (local) {
+    return {
+      patch: local.patch,
+      source: "local",
+      installedAt: local.installedAt,
+      ...(local.fileName ? { fileName: local.fileName } : {}),
+    }
   }
 
-  const cached = stored.active.patches[siteId]
+  const cached = state.active?.patches[siteId]
   if (cached === undefined) return undefined
   if (!isCachedSiteConfigPatchShape(cached)) {
     throw new RemoteConfigCacheError(`Cached patch is malformed: ${siteId}`)
   }
-  return cached.patch
+  return {
+    patch: cached.patch,
+    source: "registry",
+  }
 }

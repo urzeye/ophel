@@ -19,6 +19,7 @@ import {
   type BuiltinConfigDescriptor,
   type CachedSiteConfigPatch,
   type CachedSitePack,
+  type LocalSiteConfigPatchRecord,
   type RegistryPackIndexEntry,
   type RegistryPatchIndexEntry,
   type RegistryTransport,
@@ -67,6 +68,16 @@ export interface IgnoreRemotePatchOptions {
   patchVersion?: number
 }
 
+export interface InstallLocalPatchOptions {
+  fileName?: string
+}
+
+export interface LocalPatchMutationResult {
+  changed: boolean
+  siteId: string
+  record?: LocalSiteConfigPatchRecord
+}
+
 interface CandidateBuildResult {
   snapshot: RemoteConfigSnapshot
   ignoredPatches: Record<string, number>
@@ -78,6 +89,12 @@ interface SourceCheckResult extends CandidateBuildResult {
 }
 
 const SITE_ID_PATTERN = /^[a-z0-9-]{2,40}$/
+
+const isPlainRecord = (value: unknown): value is Record<string, unknown> => {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) return false
+  const prototype = Object.getPrototypeOf(value)
+  return prototype === Object.prototype || prototype === null
+}
 
 const toErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : String(error)
@@ -379,29 +396,130 @@ export class RemoteConfigManager {
       if (!SITE_ID_PATTERN.test(siteId)) return false
       const state = await loadRemoteConfigState(this.storage)
       const activePatch = state.active?.patches[siteId]
-      const patchVersion = options.patchVersion ?? activePatch?.patch.patchVersion
-      if (!Number.isSafeInteger(patchVersion) || (patchVersion as number) < 1) {
+      const localPatch = state.localPatches[siteId]
+      const hasLocal = localPatch !== undefined
+      const hasRemote = activePatch !== undefined
+      if (!hasLocal && !hasRemote) return false
+      if (
+        options.patchVersion !== undefined &&
+        (!Number.isSafeInteger(options.patchVersion) || options.patchVersion < 1)
+      ) {
         return false
       }
 
-      const nextIgnored = {
-        ...state.ignoredPatches,
-        [siteId]: Math.max(state.ignoredPatches[siteId] ?? 0, patchVersion as number),
+      const candidateVersions = [
+        options.patchVersion,
+        activePatch?.patch.patchVersion,
+        localPatch?.patch.patchVersion,
+      ].filter((value): value is number => Number.isSafeInteger(value) && (value as number) >= 1)
+      const patchVersion = candidateVersions.length > 0 ? Math.max(...candidateVersions) : undefined
+
+      const nextIgnored = { ...state.ignoredPatches }
+      if (patchVersion !== undefined) {
+        nextIgnored[siteId] = Math.max(state.ignoredPatches[siteId] ?? 0, patchVersion)
       }
+
       let nextActive = state.active
       if (activePatch && state.active) {
         const patches = { ...state.active.patches }
         delete patches[siteId]
         nextActive = { ...state.active, patches }
       }
+
+      const localPatches = { ...state.localPatches }
+      delete localPatches[siteId]
+
       const nextState: RemoteConfigState = {
         ...state,
+        localPatches,
         ignoredPatches: nextIgnored,
       }
       if (nextActive) nextState.active = nextActive
+      else delete nextState.active
       await this.storage.set<RemoteConfigState>(REMOTE_CONFIG_STORAGE_KEY, nextState)
       return true
     })
+  }
+
+  installLocalPatch(
+    patchInput: unknown,
+    options: InstallLocalPatchOptions = {},
+  ): Promise<LocalPatchMutationResult> {
+    return this.enqueue(async () => {
+      if (!isPlainRecord(patchInput)) {
+        throw new TypeError("Local patch must be an object")
+      }
+      const targetSiteId = patchInput.targetSiteId
+      if (typeof targetSiteId !== "string" || !SITE_ID_PATTERN.test(targetSiteId)) {
+        throw new TypeError(`Invalid local patch targetSiteId: ${String(targetSiteId)}`)
+      }
+
+      const descriptor = await this.resolveBuiltinConfig(targetSiteId)
+      if (!descriptor) {
+        throw new Error(`No configurable built-in adapter for site: ${targetSiteId}`)
+      }
+
+      const patch = validatePatchAgainstBuiltin(patchInput, descriptor, this.appVersion)
+      const state = await loadRemoteConfigState(this.storage)
+      const installedAt = this.getTimestamp()
+      const record: LocalSiteConfigPatchRecord = {
+        installedAt,
+        patch,
+      }
+      const fileName = options.fileName?.trim()
+      if (fileName) record.fileName = fileName
+
+      const previous = state.localPatches[targetSiteId]
+      const unchanged =
+        previous !== undefined &&
+        previous.patch.patchVersion === patch.patchVersion &&
+        previous.patch.baseConfigVersion === patch.baseConfigVersion &&
+        previous.fileName === record.fileName &&
+        JSON.stringify(previous.patch) === JSON.stringify(patch)
+      if (unchanged) {
+        return { changed: false, siteId: targetSiteId, record: previous }
+      }
+
+      const nextState: RemoteConfigState = {
+        ...state,
+        localPatches: {
+          ...state.localPatches,
+          [targetSiteId]: record,
+        },
+      }
+      await this.storage.set<RemoteConfigState>(REMOTE_CONFIG_STORAGE_KEY, nextState)
+      return { changed: true, siteId: targetSiteId, record }
+    })
+  }
+
+  removeLocalPatch(siteId: string): Promise<LocalPatchMutationResult> {
+    return this.enqueue(async () => {
+      if (!SITE_ID_PATTERN.test(siteId)) {
+        return { changed: false, siteId }
+      }
+      const state = await loadRemoteConfigState(this.storage)
+      if (state.localPatches[siteId] === undefined) {
+        return { changed: false, siteId }
+      }
+      const localPatches = { ...state.localPatches }
+      delete localPatches[siteId]
+      const nextState: RemoteConfigState = {
+        ...state,
+        localPatches,
+      }
+      await this.storage.set<RemoteConfigState>(REMOTE_CONFIG_STORAGE_KEY, nextState)
+      return { changed: true, siteId }
+    })
+  }
+
+  private getTimestamp(): number {
+    const timestamp = this.now()
+    if (!Number.isSafeInteger(timestamp) || timestamp < 1_000_000_000_000) {
+      throw new TypeError(
+        `RemoteConfigManager now() must return a Unix millisecond timestamp: ${timestamp}`,
+      )
+    }
+    return timestamp
   }
 
   private enqueue<T>(operation: () => Promise<T>): Promise<T> {
@@ -444,6 +562,7 @@ export class RemoteConfigManager {
         const nextState: RemoteConfigState = {
           ...stateWithoutError,
           active: sourceResult.snapshot,
+          localPatches: state.localPatches,
           ignoredPatches: sourceResult.ignoredPatches,
           lastCheckAt: checkedAt,
           lastSuccessAt: checkedAt,

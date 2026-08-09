@@ -11,7 +11,7 @@ import type { PlatformStorage } from "~platform"
 
 import { isInstalledSitePackEffectivelyEnabled } from "./pack-manager"
 import { createRuntimePackManager } from "./pack-manager-runtime"
-import { isCachedSitePackShape, loadActiveSiteConfigPatch } from "./remote-config-cache"
+import { isCachedSitePackShape, loadActiveSiteConfigPatchDetails } from "./remote-config-cache"
 import { loadRemoteConfigState } from "./remote-config-state"
 
 export type ActiveSitePackSource = "registry" | "local"
@@ -26,6 +26,7 @@ export interface ActiveAdapterConfigContext {
   canCheckUpdates: boolean
   baseConfigVersion?: number
   patchVersion?: number
+  patchSource?: "registry" | "local"
   patchOutcome?: SiteConfigLayerOutcome
   packId?: string
   activeVersion?: number
@@ -37,6 +38,7 @@ export interface ActiveAdapterConfigContext {
 export interface AppliedBuiltinAdapterConfig {
   baseConfigVersion: number
   patchVersion?: number
+  patchSource?: "registry" | "local"
   patchOutcome: SiteConfigLayerOutcome
 }
 
@@ -50,7 +52,8 @@ export async function applyCachedBuiltinAdapterConfig(
 
   const siteId = adapter.getSiteId()
   const baseConfigVersion = adapter.getBuiltinConfigVersion()
-  const remotePatch = await loadActiveSiteConfigPatch(storage, siteId)
+  const loadedPatch = await loadActiveSiteConfigPatchDetails(storage, siteId)
+  const remotePatch = loadedPatch?.patch
   const resolved = resolveSiteConfig({
     siteId,
     appVersion: APP_VERSION,
@@ -68,7 +71,10 @@ export async function applyCachedBuiltinAdapterConfig(
     baseConfigVersion,
     patchOutcome: resolved.remotePatch,
     ...(resolved.remotePatch.status === "applied" && resolved.remotePatch.patchVersion
-      ? { patchVersion: resolved.remotePatch.patchVersion }
+      ? {
+          patchVersion: resolved.remotePatch.patchVersion,
+          ...(loadedPatch ? { patchSource: loadedPatch.source } : {}),
+        }
       : {}),
   }
 }
@@ -145,7 +151,8 @@ export async function refreshActiveAdapterConfig(
       ? {
           baseConfigVersion: applied.baseConfigVersion,
           patchOutcome: applied.patchOutcome,
-          ...(applied.patchVersion ? { patchVersion: applied.patchVersion } : {}),
+          ...(applied.patchVersion !== undefined ? { patchVersion: applied.patchVersion } : {}),
+          ...(applied.patchSource ? { patchSource: applied.patchSource } : {}),
         }
       : {}),
     updateAvailable: false,

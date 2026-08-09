@@ -121,6 +121,7 @@ const createRemoteState = (
   cachedPacks: Record<string, unknown>,
 ): RemoteConfigState => ({
   storageSchemaVersion: REMOTE_CONFIG_STORAGE_SCHEMA_VERSION,
+  localPatches: {},
   ignoredPatches: {},
   active: {
     sourceUrl: REGISTRY_SOURCE,
