@@ -39,6 +39,7 @@ import {
   verifyRegistryIndexSignature,
   type TrustedRegistrySigningKey,
 } from "./remote-config-signature"
+import { shouldRelaxRegistryRevisionGuards } from "./remote-config-local-dev"
 import { normalizeRemoteConfigSourceUrl } from "./remote-config-source"
 import { loadRemoteConfigState } from "./remote-config-state"
 
@@ -62,6 +63,8 @@ export type ResolveRemoteConfigSources = () => readonly string[] | Promise<reado
 
 export interface CheckRemoteConfigOptions {
   force?: boolean
+  /** One-shot source override; bypasses resolveSources/settings for this check only. */
+  sources?: readonly string[]
 }
 
 export interface IgnoreRemotePatchOptions {
@@ -388,7 +391,7 @@ export class RemoteConfigManager {
   }
 
   checkForUpdates(options: CheckRemoteConfigOptions = {}): Promise<RemoteConfigCheckResult> {
-    return this.enqueue(() => this.performCheck(options.force === true))
+    return this.enqueue(() => this.performCheck(options.force === true, options.sources))
   }
 
   ignorePatch(siteId: string, options: IgnoreRemotePatchOptions = {}): Promise<boolean> {
@@ -512,6 +515,30 @@ export class RemoteConfigManager {
     })
   }
 
+  /**
+   * Drop the cached registry snapshot without touching localPatches.
+   * Used by development source switching and recovery from poisoned revisions.
+   */
+  clearCachedRegistrySnapshot(): Promise<boolean> {
+    return this.enqueue(async () => {
+      const state = await loadRemoteConfigState(this.storage)
+      const hasActive = state.active !== undefined
+      const hasError = state.lastError !== undefined
+      if (!hasActive && !hasError) return false
+
+      const nextState: RemoteConfigState = {
+        storageSchemaVersion: state.storageSchemaVersion,
+        localPatches: state.localPatches,
+        ignoredPatches: state.ignoredPatches,
+      }
+      if (state.lastCheckAt !== undefined) nextState.lastCheckAt = state.lastCheckAt
+      // Keep lastSuccessAt only as historical signal when no active snapshot remains.
+      if (state.lastSuccessAt !== undefined) nextState.lastSuccessAt = state.lastSuccessAt
+      await this.storage.set<RemoteConfigState>(REMOTE_CONFIG_STORAGE_KEY, nextState)
+      return true
+    })
+  }
+
   private getTimestamp(): number {
     const timestamp = this.now()
     if (!Number.isSafeInteger(timestamp) || timestamp < 1_000_000_000_000) {
@@ -531,7 +558,10 @@ export class RemoteConfigManager {
     return result
   }
 
-  private async performCheck(force: boolean): Promise<RemoteConfigCheckResult> {
+  private async performCheck(
+    force: boolean,
+    sourceOverride?: readonly string[],
+  ): Promise<RemoteConfigCheckResult> {
     const checkedAt = this.now()
     const state = await loadRemoteConfigState(this.storage)
     const emptyChanges = createEmptyRemoteConfigChangeSummary()
@@ -550,7 +580,7 @@ export class RemoteConfigManager {
       }
     }
 
-    const sourceUrls = await this.getSourceUrls()
+    const sourceUrls = await this.getSourceUrls(sourceOverride)
     const sourceFailures: RemoteConfigSourceFailure[] = []
     for (const sourceUrl of sourceUrls) {
       try {
@@ -600,8 +630,13 @@ export class RemoteConfigManager {
     }
   }
 
-  private async getSourceUrls(): Promise<readonly string[]> {
-    const sources = this.resolveSources ? await this.resolveSources() : this.sources
+  private async getSourceUrls(sourceOverride?: readonly string[]): Promise<readonly string[]> {
+    const sources =
+      sourceOverride && sourceOverride.length > 0
+        ? sourceOverride
+        : this.resolveSources
+          ? await this.resolveSources()
+          : this.sources
     if (sources.length === 0) {
       throw new TypeError("At least one registry source is required")
     }
@@ -626,21 +661,33 @@ export class RemoteConfigManager {
     )
     const index = validateRemoteConfigRegistryIndex(decodeJson(indexBytes, sourceUrl))
     assertRegistrySigningKeyAllowsRevision(signingKey, index.registryRevision)
-    const currentRevision = state.active?.index.registryRevision ?? 0
+    const relaxRevisionGuards = shouldRelaxRegistryRevisionGuards(
+      state.active?.sourceUrl,
+      sourceUrl,
+    )
+    // Local serve rebuilds and local ↔ production switches ignore the previous snapshot for
+    // monotonic checks and artifact rollback rules so developers can iterate freely.
+    const comparisonState: RemoteConfigState = relaxRevisionGuards
+      ? {
+          ...state,
+          active: undefined,
+        }
+      : state
+    const currentRevision = comparisonState.active?.index.registryRevision ?? 0
     if (index.registryRevision < currentRevision) {
       throw new Error(
         `Stale registry revision ${index.registryRevision}; local revision is ${currentRevision}`,
       )
     }
     if (
-      state.active &&
+      comparisonState.active &&
       index.registryRevision === currentRevision &&
-      !sameRegistryIndex(state.active.index, index)
+      !sameRegistryIndex(comparisonState.active.index, index)
     ) {
       throw new Error(`Registry revision ${index.registryRevision} was reused with different data`)
     }
 
-    const candidate = await this.buildCandidateSnapshot(sourceUrl, index, state)
+    const candidate = await this.buildCandidateSnapshot(sourceUrl, index, comparisonState)
     return { ...candidate, sourceUrl }
   }
 

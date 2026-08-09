@@ -4,9 +4,7 @@ import path from "node:path"
 import { fileURLToPath, pathToFileURL } from "node:url"
 
 import { buildLocalRegistryDist } from "./build-dist-local.mjs"
-import {
-  LOCAL_DEV_REGISTRY_SIGNING_KEY_ID,
-} from "./local-dev-signing.mjs"
+import { LOCAL_DEV_REGISTRY_SIGNING_KEY_ID } from "./local-dev-signing.mjs"
 
 const SCRIPT_DIRECTORY = path.dirname(fileURLToPath(import.meta.url))
 const DEFAULT_PORT = 8787
@@ -81,12 +79,10 @@ const createServer = (root) =>
 export async function serveLocalRegistry(args = process.argv.slice(2)) {
   const options = parseArgs(args)
   if (!options.skipBuild) {
-    await buildLocalRegistryDist([
-      "--output-dir",
-      options.outputDirectory,
-      "--revision",
-      String(Math.max(1, Math.floor(Date.now() / 1000))),
-    ])
+    // Use the normal local build revision resolver (git count / env). Do not stamp
+    // Date.now()-based revisions: those poison client state and block switching back
+    // to production sources even after source-aware reset logic.
+    await buildLocalRegistryDist(["--output-dir", options.outputDirectory])
   }
 
   const root = path.resolve(options.outputDirectory)
@@ -106,7 +102,10 @@ export async function serveLocalRegistry(args = process.argv.slice(2)) {
   const indexUrl = `http://${options.host}:${options.port}/index.json`
   console.warn(`[registry] serving local dist at ${indexUrl}`)
   console.warn(
-    `[registry] signed with ${LOCAL_DEV_REGISTRY_SIGNING_KEY_ID}; use a development build and set this URL as the registry source`,
+    `[registry] signed with ${LOCAL_DEV_REGISTRY_SIGNING_KEY_ID}; development build → SitePacks → Updates → "Use local registry"`,
+  )
+  console.warn(
+    `[registry] local rebuilds with the same revision are accepted; to leave local mode use Restore defaults`,
   )
   return { server, indexUrl, root }
 }

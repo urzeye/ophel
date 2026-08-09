@@ -38,6 +38,7 @@ import { createRuntimePackManager } from "~core/pack-manager-runtime"
 import {
   getLocalDevRegistryIndexUrl,
   getLocalDevRegistryOriginPatterns,
+  isLoopbackRegistrySourceUrl,
 } from "~core/remote-config-local-dev"
 import { normalizeRemoteConfigSourceUrl } from "~core/remote-config-source"
 import {
@@ -54,6 +55,7 @@ import {
 } from "~core/site-pack-origin-references"
 import { SITE_PACK_ORIGIN_BINDINGS_STORAGE_KEY } from "~core/site-pack-storage-constants"
 import {
+  DEFAULT_REMOTE_CONFIG_SOURCES,
   REMOTE_CONFIG_STORAGE_KEY,
   type RemoteConfigState,
   type RemoteConfigCheckResult,
@@ -303,7 +305,13 @@ const getBusyPackId = (key: string): string | null => {
 }
 
 const isRegistryBusyKey = (key: string): boolean =>
-  key === "registry:refresh" || key.startsWith("update:") || key.startsWith("install:")
+  key === "registry:refresh" ||
+  key === "registry:clear-cache" ||
+  key === "registry:apply-source" ||
+  key === "registry:use-local" ||
+  key === "registry:restore-defaults" ||
+  key.startsWith("update:") ||
+  key.startsWith("install:")
 
 const mergePackManagerIssues = (
   ...groups: readonly (readonly PackManagerIssue[])[]
@@ -1004,12 +1012,16 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
   /** 唯一的更新入口：同步 registry 索引、内置配置补丁与已安装适配包。 */
   const refreshRegistry = async (
     targetPack?: InstalledSitePack,
+    options: { manageBusyState?: boolean; sources?: readonly string[] } = {},
   ): Promise<RemoteConfigCheckResult | null> => {
+    const manageBusyState = options.manageBusyState !== false
     const key = targetPack ? `update:${targetPack.manifest.id}` : "registry:refresh"
     const previousVersion = targetPack?.manifest.version
-    if (!beginBusy(key)) return null
+    if (manageBusyState && !beginBusy(key)) return null
     try {
-      const result = await platform.remoteConfig.checkForUpdates()
+      const result = await platform.remoteConfig.checkForUpdates(
+        options.sources && options.sources.length > 0 ? { sources: options.sources } : undefined,
+      )
       if (result.status === "failed") {
         throw new Error(result.error || t("operationFailed"))
       }
@@ -1054,7 +1066,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
       reportOperationError(error)
       return null
     } finally {
-      endBusy(key)
+      if (manageBusyState) endBusy(key)
     }
   }
 
@@ -1158,7 +1170,8 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
     if (!isLoopback) return true
     if (typeof chrome === "undefined" || !chrome.permissions?.request) return true
 
-    const origins = getLocalDevRegistryOriginPatterns(url.hostname, Number(url.port || 80))
+    const port = url.port ? Number(url.port) : url.protocol === "https:" ? 443 : 80
+    const origins = getLocalDevRegistryOriginPatterns(url.hostname, port)
     try {
       const already = await chrome.permissions.contains({ origins })
       if (already) return true
@@ -1169,43 +1182,98 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
     }
   }
 
+  const clearRegistryCache = async (): Promise<boolean> => {
+    try {
+      await platform.remoteConfig.clearCache()
+      await loadRegistryState()
+      return true
+    } catch (error) {
+      setRegistrySourceError(
+        t("remoteConfigRegistryCacheClearFailed", { error: getErrorMessage(error) }),
+      )
+      return false
+    }
+  }
+
+  const handleClearRegistryCache = async () => {
+    const key = "registry:clear-cache"
+    if (!beginBusy(key)) return
+    try {
+      const cleared = await clearRegistryCache()
+      if (!cleared) return
+      notify(t("remoteConfigRegistryCacheCleared"))
+    } finally {
+      endBusy(key)
+    }
+  }
+
   const handleApplyRegistrySource = async (options: { forceCheck?: boolean } = {}) => {
     const source = registrySourceInput.trim()
-
-    if (!source) {
-      updateNestedSetting("remoteConfig", "registrySourceUrl", "")
-      setRegistrySourceInput("")
-      setRegistrySourceError(null)
-      notify(t("remoteConfigRegistrySourceCleared"))
-      return
-    }
+    const key = "registry:apply-source"
+    if (!beginBusy(key)) return
 
     try {
+      if (!source) {
+        const previousActiveSource = remoteState?.active?.sourceUrl
+        updateNestedSetting("remoteConfig", "registrySourceUrl", "")
+        setRegistrySourceInput("")
+        setRegistrySourceError(null)
+        // Leaving a loopback snapshot behind poisons later production checks for some clients;
+        // always drop cache when restoring defaults from a local active source.
+        if (previousActiveSource && isLoopbackRegistrySourceUrl(previousActiveSource)) {
+          await clearRegistryCache()
+        }
+        notify(t("remoteConfigRegistrySourceCleared"))
+        if (options.forceCheck) {
+          await refreshRegistry(undefined, {
+            manageBusyState: false,
+            sources: DEFAULT_REMOTE_CONFIG_SOURCES,
+          })
+        }
+        return
+      }
+
       const normalizedSource = normalizeRemoteConfigSourceUrl(source)
       const permitted = await ensureLocalRegistryHostPermission(normalizedSource)
       if (!permitted) {
         setRegistrySourceError(t("remoteConfigLocalRegistryPermissionDenied"))
         return
       }
+
+      const previousActiveSource = remoteState?.active?.sourceUrl
+      const crossingLocalBoundary =
+        Boolean(previousActiveSource) &&
+        isLoopbackRegistrySourceUrl(previousActiveSource!) !==
+          isLoopbackRegistrySourceUrl(normalizedSource)
+      if (crossingLocalBoundary) {
+        await clearRegistryCache()
+      }
+
       updateNestedSetting("remoteConfig", "registrySourceUrl", normalizedSource)
       setRegistrySourceInput(normalizedSource)
       setRegistrySourceError(null)
       notify(t("remoteConfigRegistrySourceApplied"))
       if (options.forceCheck) {
-        await refreshRegistry()
+        await refreshRegistry(undefined, {
+          manageBusyState: false,
+          sources: [normalizedSource],
+        })
       }
     } catch (error) {
       setRegistrySourceError(
         t("remoteConfigRegistrySourceInvalid", { error: getErrorMessage(error) }),
       )
+    } finally {
+      endBusy(key)
     }
   }
 
   const handleUseLocalRegistrySource = async () => {
     const localUrl = getLocalDevRegistryIndexUrl()
+    const key = "registry:use-local"
+    if (!beginBusy(key)) return
     setRegistrySourceInput(localUrl)
     setRegistrySourceError(null)
-    // Apply immediately with the computed URL rather than waiting for state.
     try {
       const normalizedSource = normalizeRemoteConfigSourceUrl(localUrl)
       const permitted = await ensureLocalRegistryHostPermission(normalizedSource)
@@ -1213,14 +1281,50 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
         setRegistrySourceError(t("remoteConfigLocalRegistryPermissionDenied"))
         return
       }
+      const previousActiveSource = remoteState?.active?.sourceUrl
+      if (previousActiveSource && !isLoopbackRegistrySourceUrl(previousActiveSource)) {
+        await clearRegistryCache()
+      }
       updateNestedSetting("remoteConfig", "registrySourceUrl", normalizedSource)
       setRegistrySourceInput(normalizedSource)
       notify(t("remoteConfigLocalRegistrySourceApplied"))
-      await refreshRegistry()
+      await refreshRegistry(undefined, {
+        manageBusyState: false,
+        sources: [normalizedSource],
+      })
+    } catch (error) {
+      const message = getErrorMessage(error)
+      setRegistrySourceError(t("remoteConfigRegistrySourceInvalid", { error: message }))
+      notifyError(
+        t("remoteConfigLocalRegistryCheckFailed", {
+          error: message,
+          url: localUrl,
+        }),
+      )
+    } finally {
+      endBusy(key)
+    }
+  }
+
+  const handleRestoreDefaultRegistrySource = async () => {
+    const key = "registry:restore-defaults"
+    if (!beginBusy(key)) return
+    try {
+      updateNestedSetting("remoteConfig", "registrySourceUrl", "")
+      setRegistrySourceInput("")
+      setRegistrySourceError(null)
+      await clearRegistryCache()
+      notify(t("remoteConfigRegistryDefaultsRestored"))
+      await refreshRegistry(undefined, {
+        manageBusyState: false,
+        sources: DEFAULT_REMOTE_CONFIG_SOURCES,
+      })
     } catch (error) {
       setRegistrySourceError(
         t("remoteConfigRegistrySourceInvalid", { error: getErrorMessage(error) }),
       )
+    } finally {
+      endBusy(key)
     }
   }
 
@@ -1907,6 +2011,21 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
                   {t("remoteConfigRegistrySourceLabel")}
                 </label>
                 <p className="settings-pack-source-desc">{t("remoteConfigRegistrySourceDesc")}</p>
+                <p className="settings-pack-source-desc">
+                  {t("remoteConfigRegistryActiveSourceLabel")}:{" "}
+                  <code>
+                    {remoteState?.active?.sourceUrl ?? t("remoteConfigRegistryActiveSourceDefault")}
+                  </code>
+                  {remoteState?.active?.index.registryRevision !== undefined
+                    ? ` · rev ${remoteState.active.index.registryRevision}`
+                    : ""}
+                  {configuredRegistrySource ? ` · ${t("remoteConfigRegistryOverrideLabel")}` : ""}
+                </p>
+                {remoteState?.lastError?.message ? (
+                  <p className="settings-pack-source-error" role="status">
+                    {t("remoteConfigRegistryLastErrorLabel")}: {remoteState.lastError.message}
+                  </p>
+                ) : null}
                 <div className="settings-pack-source-controls">
                   <Input
                     id="remote-config-registry-source-input"
@@ -1940,6 +2059,22 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
                     disabled={isRegistryBusy}
                     onClick={() => void handleUseLocalRegistrySource()}>
                     {t("remoteConfigLocalRegistryUseButton")}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="settings-pack-action-button"
+                    disabled={isRegistryBusy}
+                    onClick={() => void handleRestoreDefaultRegistrySource()}>
+                    {t("remoteConfigRegistryRestoreDefaultsButton")}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="settings-pack-action-button"
+                    disabled={isRegistryBusy || (!remoteState?.active && !remoteState?.lastError)}
+                    onClick={() => void handleClearRegistryCache()}>
+                    {t("remoteConfigRegistryCacheClearButton")}
                   </Button>
                 </div>
                 <p className="settings-pack-source-desc">{t("remoteConfigLocalRegistryHint")}</p>

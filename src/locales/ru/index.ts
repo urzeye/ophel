@@ -1952,6 +1952,18 @@ export const ru = {
   remoteConfigResetSuccess: "Для {site} восстановлена встроенная конфигурация.",
   remoteConfigResetFailed: "Не удалось выполнить возврат: {error}",
   remoteConfigResetUnavailable: "Нет активной конфигурации для возврата.",
+  remoteConfigRegistryActiveSourceLabel: "Активный источник",
+  remoteConfigRegistryActiveSourceDefault: "Официальные источники по умолчанию (ещё без кэша)",
+  remoteConfigRegistryOverrideLabel: "переопределено",
+  remoteConfigRegistryLastErrorLabel: "Последняя ошибка",
+  remoteConfigRegistryRestoreDefaultsButton: "Восстановить по умолчанию",
+  remoteConfigRegistryCacheClearButton: "Очистить кэш",
+  remoteConfigRegistryCacheCleared: "Кэш registry очищен (локальные патчи сохранены).",
+  remoteConfigRegistryCacheClearFailed: "Не удалось очистить кэш: {error}",
+  remoteConfigRegistryDefaultsRestored:
+    "Источники registry по умолчанию восстановлены и проверены снова.",
+  remoteConfigLocalRegistryCheckFailed:
+    "Проверка локального registry не удалась ({url}): {error}. Убедитесь, что запущен pnpm registry:serve.",
   remoteConfigLocalRegistryUseButton: "Использовать локальный registry",
   remoteConfigLocalRegistryHint:
     "Сначала запустите pnpm registry:serve, затем нажмите кнопку. Локальный ключ подписи доверяется только dev-сборкам.",

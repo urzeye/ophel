@@ -1871,6 +1871,17 @@ export const zhCN = {
   remoteConfigResetSuccess: "已将 {site} 恢复为内置配置。",
   remoteConfigResetFailed: "重置失败：{error}",
   remoteConfigResetUnavailable: "没有可重置的有效配置。",
+  remoteConfigRegistryActiveSourceLabel: "当前生效源",
+  remoteConfigRegistryActiveSourceDefault: "默认官方源（尚未缓存）",
+  remoteConfigRegistryOverrideLabel: "已覆盖",
+  remoteConfigRegistryLastErrorLabel: "上次错误",
+  remoteConfigRegistryRestoreDefaultsButton: "恢复默认源",
+  remoteConfigRegistryCacheClearButton: "清除缓存",
+  remoteConfigRegistryCacheCleared: "已清除 Registry 缓存（本地补丁保留）。",
+  remoteConfigRegistryCacheClearFailed: "清除缓存失败：{error}",
+  remoteConfigRegistryDefaultsRestored: "已恢复默认 Registry 源并重新检查。",
+  remoteConfigLocalRegistryCheckFailed:
+    "本地 Registry 检查失败（{url}）：{error}。请确认已运行 pnpm registry:serve。",
   remoteConfigLocalRegistryUseButton: "使用本地 Registry",
   remoteConfigLocalRegistryHint:
     "先运行 pnpm registry:serve，再点此按钮。仅开发构建会信任本地签名密钥。",

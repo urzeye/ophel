@@ -62,9 +62,9 @@ export const platform: Platform = {
       return getUserscriptRemoteConfigState()
     },
 
-    async checkForUpdates() {
+    async checkForUpdates(options) {
       const { checkUserscriptRemoteConfigNow } = await import("./remote-config")
-      return checkUserscriptRemoteConfigNow()
+      return checkUserscriptRemoteConfigNow(options?.sources)
     },
 
     async resetSite(siteId, patchVersion) {
@@ -80,6 +80,11 @@ export const platform: Platform = {
     async removeLocalPatch(siteId) {
       const { removeUserscriptLocalRemotePatch } = await import("./remote-config")
       return removeUserscriptLocalRemotePatch(siteId)
+    },
+
+    async clearCache() {
+      const { clearUserscriptRemoteConfigCache } = await import("./remote-config")
+      return clearUserscriptRemoteConfigCache()
     },
   },
 

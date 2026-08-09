@@ -31,8 +31,13 @@ export const checkUserscriptRemoteConfigOnStartup = async () => {
   return syncInstalledRegistryPacks(await remoteConfigManager.checkForUpdates({ force: false }))
 }
 
-export const checkUserscriptRemoteConfigNow = async () =>
-  syncInstalledRegistryPacks(await remoteConfigManager.checkForUpdates({ force: true }))
+export const checkUserscriptRemoteConfigNow = async (sources?: readonly string[]) =>
+  syncInstalledRegistryPacks(
+    await remoteConfigManager.checkForUpdates({
+      force: true,
+      ...(sources && sources.length > 0 ? { sources } : {}),
+    }),
+  )
 
 export const getUserscriptRemoteConfigState = () => remoteConfigManager.getState()
 
@@ -57,3 +62,6 @@ export const removeUserscriptLocalRemotePatch = async (siteId: string) => {
   const { reapplyBuiltinSiteConfig } = await import("~adapters")
   return reapplyBuiltinSiteConfig(siteId)
 }
+
+export const clearUserscriptRemoteConfigCache = async () =>
+  remoteConfigManager.clearCachedRegistrySnapshot()

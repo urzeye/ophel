@@ -94,12 +94,18 @@ export interface ClaudeTestResult {
 /**
  * 适配配置远程更新接口
  */
+export interface CheckRemoteConfigRequestOptions {
+  sources?: readonly string[]
+}
+
 export interface PlatformRemoteConfig {
   getState(): Promise<RemoteConfigState>
-  checkForUpdates(): Promise<RemoteConfigCheckResult>
+  checkForUpdates(options?: CheckRemoteConfigRequestOptions): Promise<RemoteConfigCheckResult>
   resetSite(siteId: string, patchVersion?: number): Promise<boolean>
   installLocalPatch(patch: unknown, fileName?: string): Promise<boolean>
   removeLocalPatch(siteId: string): Promise<boolean>
+  /** Drop cached registry snapshot; preserves localPatches. */
+  clearCache(): Promise<boolean>
 }
 
 export type SitePackOriginPermissionResult = "ready" | "denied" | "unsupported"

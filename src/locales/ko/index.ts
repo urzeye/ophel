@@ -1935,6 +1935,17 @@ export const ko = {
   remoteConfigResetSuccess: "{site}을(를) 기본 제공 구성으로 복원했습니다.",
   remoteConfigResetFailed: "복원 실패: {error}",
   remoteConfigResetUnavailable: "복원할 활성 구성이 없습니다.",
+  remoteConfigRegistryActiveSourceLabel: "활성 소스",
+  remoteConfigRegistryActiveSourceDefault: "기본 공식 소스(아직 캐시 없음)",
+  remoteConfigRegistryOverrideLabel: "재정의됨",
+  remoteConfigRegistryLastErrorLabel: "마지막 오류",
+  remoteConfigRegistryRestoreDefaultsButton: "기본값 복원",
+  remoteConfigRegistryCacheClearButton: "캐시 지우기",
+  remoteConfigRegistryCacheCleared: "Registry 캐시를 지웠습니다(로컬 패치 유지).",
+  remoteConfigRegistryCacheClearFailed: "캐시 지우기 실패: {error}",
+  remoteConfigRegistryDefaultsRestored: "기본 Registry 소스를 복원하고 다시 확인했습니다.",
+  remoteConfigLocalRegistryCheckFailed:
+    "로컬 레지스트리 확인 실패({url}): {error}. pnpm registry:serve 실행 여부를 확인하세요.",
   remoteConfigLocalRegistryUseButton: "로컬 레지스트리 사용",
   remoteConfigLocalRegistryHint:
     "먼저 pnpm registry:serve를 실행한 뒤 이 버튼을 누르세요. 로컬 서명 키는 개발 빌드에서만 신뢰됩니다.",

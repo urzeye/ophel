@@ -1873,6 +1873,17 @@ export const zhTW = {
   remoteConfigResetSuccess: "已將 {site} 恢復為內置配置。",
   remoteConfigResetFailed: "重置失敗：{error}",
   remoteConfigResetUnavailable: "沒有可重置的有效配置。",
+  remoteConfigRegistryActiveSourceLabel: "目前生效來源",
+  remoteConfigRegistryActiveSourceDefault: "預設官方來源（尚未快取）",
+  remoteConfigRegistryOverrideLabel: "已覆寫",
+  remoteConfigRegistryLastErrorLabel: "上次錯誤",
+  remoteConfigRegistryRestoreDefaultsButton: "恢復預設來源",
+  remoteConfigRegistryCacheClearButton: "清除快取",
+  remoteConfigRegistryCacheCleared: "已清除 Registry 快取（本機補丁保留）。",
+  remoteConfigRegistryCacheClearFailed: "清除快取失敗：{error}",
+  remoteConfigRegistryDefaultsRestored: "已恢復預設 Registry 來源並重新檢查。",
+  remoteConfigLocalRegistryCheckFailed:
+    "本機 Registry 檢查失敗（{url}）：{error}。請確認已執行 pnpm registry:serve。",
   remoteConfigLocalRegistryUseButton: "使用本機 Registry",
   remoteConfigLocalRegistryHint:
     "先執行 pnpm registry:serve，再點此按鈕。僅開發建置會信任本機簽名金鑰。",

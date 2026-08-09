@@ -20,6 +20,7 @@ import {
   MSG_CHECK_PERMISSION,
   MSG_CHECK_PERMISSIONS,
   MSG_CHECK_REMOTE_CONFIG,
+  MSG_CLEAR_REMOTE_CONFIG_CACHE,
   MSG_ENSURE_SITE_PACK_BINDING_ORIGIN,
   MSG_ENSURE_SITE_PACK_ORIGINS,
   MSG_EXTENSION_UPDATE_AVAILABLE,
@@ -128,10 +129,13 @@ async function shouldRunAutomaticRemoteConfig(): Promise<boolean> {
   }
 }
 
-async function runRemoteConfigCheck(force: boolean) {
+async function runRemoteConfigCheck(force: boolean, sources?: readonly string[]) {
   if (!force && !(await shouldRunAutomaticRemoteConfig())) return null
 
-  const result = await remoteConfigManager.checkForUpdates({ force })
+  const result = await remoteConfigManager.checkForUpdates({
+    force,
+    ...(sources && sources.length > 0 ? { sources } : {}),
+  })
   if (result.status === "failed") {
     console.warn("[Ophel] Remote config check failed:", result.error)
   } else {
@@ -463,8 +467,16 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
         sendResponse({ success: false, error: "force must be a boolean" })
         break
       }
+      if (
+        message.sources !== undefined &&
+        (!Array.isArray(message.sources) ||
+          message.sources.some((source) => typeof source !== "string"))
+      ) {
+        sendResponse({ success: false, error: "sources must be a string array" })
+        break
+      }
       ;(async () => {
-        const result = await runRemoteConfigCheck(message.force ?? true)
+        const result = await runRemoteConfigCheck(message.force ?? true, message.sources)
         if (!result) {
           sendResponse({ success: true })
           return
@@ -536,6 +548,16 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
           success: result.changed,
           ...(result.changed ? {} : { error: "No local patch to remove" }),
         })
+      })().catch((error) => {
+        sendResponse({ success: false, error: (error as Error).message })
+      })
+      break
+
+    case MSG_CLEAR_REMOTE_CONFIG_CACHE:
+      ;(async () => {
+        // Idempotent: success even when there was no cached snapshot/error to drop.
+        await remoteConfigManager.clearCachedRegistrySnapshot()
+        sendResponse({ success: true })
       })().catch((error) => {
         sendResponse({ success: false, error: (error as Error).message })
       })

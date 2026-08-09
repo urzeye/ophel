@@ -1961,6 +1961,19 @@ Dame el código y luego un resumen de mejoras.`,
   remoteConfigResetSuccess: "{site} se restauró a su configuración integrada.",
   remoteConfigResetFailed: "Error al restaurar: {error}",
   remoteConfigResetUnavailable: "No hay ninguna configuración activa para restaurar.",
+  remoteConfigRegistryActiveSourceLabel: "Origen activo",
+  remoteConfigRegistryActiveSourceDefault: "Orígenes oficiales predeterminados (aún sin caché)",
+  remoteConfigRegistryOverrideLabel: "anulación activa",
+  remoteConfigRegistryLastErrorLabel: "Último error",
+  remoteConfigRegistryRestoreDefaultsButton: "Restaurar predeterminados",
+  remoteConfigRegistryCacheClearButton: "Vaciar caché",
+  remoteConfigRegistryCacheCleared:
+    "Caché del registry vaciada (se conservan los parches locales).",
+  remoteConfigRegistryCacheClearFailed: "No se pudo vaciar la caché: {error}",
+  remoteConfigRegistryDefaultsRestored:
+    "Orígenes predeterminados del registry restaurados y comprobados de nuevo.",
+  remoteConfigLocalRegistryCheckFailed:
+    "Falló la comprobación del registry local ({url}): {error}. Asegúrate de que pnpm registry:serve esté en ejecución.",
   remoteConfigLocalRegistryUseButton: "Usar registry local",
   remoteConfigLocalRegistryHint:
     "Ejecuta primero pnpm registry:serve y luego este botón. Solo las builds de desarrollo confían en la clave de firma local.",

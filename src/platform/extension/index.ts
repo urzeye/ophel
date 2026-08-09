@@ -17,6 +17,7 @@ import {
   MSG_ENSURE_SITE_PACK_ORIGINS,
   MSG_GET_REMOTE_CONFIG_STATE,
   MSG_IGNORE_REMOTE_CONFIG_PATCH,
+  MSG_CLEAR_REMOTE_CONFIG_CACHE,
   MSG_INSTALL_LOCAL_REMOTE_CONFIG_PATCH,
   MSG_RECONCILE_SITE_PACK_REGISTRATIONS,
   MSG_REMOVE_LOCAL_REMOTE_CONFIG_PATCH,
@@ -50,8 +51,14 @@ export const platform: Platform = {
       return response.state
     },
 
-    async checkForUpdates() {
-      const response = await sendToBackground({ type: MSG_CHECK_REMOTE_CONFIG, force: true })
+    async checkForUpdates(options) {
+      const response = await sendToBackground({
+        type: MSG_CHECK_REMOTE_CONFIG,
+        force: true,
+        ...(options?.sources && options.sources.length > 0
+          ? { sources: [...options.sources] }
+          : {}),
+      })
       if (response.result) return response.result
       throw new Error(response.error || "Remote config check returned no result")
     },
@@ -87,6 +94,16 @@ export const platform: Platform = {
       })
       if (!response.success) {
         throw new Error(response.error || "Failed to remove local patch")
+      }
+      return true
+    },
+
+    async clearCache() {
+      const response = await sendToBackground({
+        type: MSG_CLEAR_REMOTE_CONFIG_CACHE,
+      })
+      if (!response.success) {
+        throw new Error(response.error || "Failed to clear remote config cache")
       }
       return true
     },

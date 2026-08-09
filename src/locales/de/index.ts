@@ -1970,6 +1970,19 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   remoteConfigResetSuccess: "{site} wurde auf die integrierte Konfiguration zurückgesetzt.",
   remoteConfigResetFailed: "Zurücksetzen fehlgeschlagen: {error}",
   remoteConfigResetUnavailable: "Es gibt keine aktive Konfiguration zum Zurücksetzen.",
+  remoteConfigRegistryActiveSourceLabel: "Aktive Quelle",
+  remoteConfigRegistryActiveSourceDefault:
+    "Offizielle Standardquellen (noch nicht zwischengespeichert)",
+  remoteConfigRegistryOverrideLabel: "Override aktiv",
+  remoteConfigRegistryLastErrorLabel: "Letzter Fehler",
+  remoteConfigRegistryRestoreDefaultsButton: "Standards wiederherstellen",
+  remoteConfigRegistryCacheClearButton: "Cache leeren",
+  remoteConfigRegistryCacheCleared: "Registry-Cache geleert (lokale Patches bleiben).",
+  remoteConfigRegistryCacheClearFailed: "Cache konnte nicht geleert werden: {error}",
+  remoteConfigRegistryDefaultsRestored:
+    "Standard-Registry-Quellen wiederhergestellt und erneut geprüft.",
+  remoteConfigLocalRegistryCheckFailed:
+    "Lokale Registry-Prüfung fehlgeschlagen ({url}): {error}. Stelle sicher, dass pnpm registry:serve läuft.",
   remoteConfigLocalRegistryUseButton: "Lokales Registry nutzen",
   remoteConfigLocalRegistryHint:
     "Zuerst pnpm registry:serve ausführen, dann diese Schaltfläche. Nur Entwicklungsbuilds vertrauen dem lokalen Signaturschlüssel.",

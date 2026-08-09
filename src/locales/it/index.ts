@@ -2037,6 +2037,18 @@ export const it = {
   remoteConfigResetSuccess: "{site} è stato ripristinato alla configurazione integrata.",
   remoteConfigResetFailed: "Ripristino non riuscito: {error}",
   remoteConfigResetUnavailable: "Non c'è alcuna configurazione attiva da ripristinare.",
+  remoteConfigRegistryActiveSourceLabel: "Origine attiva",
+  remoteConfigRegistryActiveSourceDefault: "Origini ufficiali predefinite (non ancora in cache)",
+  remoteConfigRegistryOverrideLabel: "override attivo",
+  remoteConfigRegistryLastErrorLabel: "Ultimo errore",
+  remoteConfigRegistryRestoreDefaultsButton: "Ripristina predefiniti",
+  remoteConfigRegistryCacheClearButton: "Svuota cache",
+  remoteConfigRegistryCacheCleared: "Cache del registry svuotata (patch locali conservate).",
+  remoteConfigRegistryCacheClearFailed: "Impossibile svuotare la cache: {error}",
+  remoteConfigRegistryDefaultsRestored:
+    "Origini registry predefinite ripristinate e ricontrollate.",
+  remoteConfigLocalRegistryCheckFailed:
+    "Controllo registry locale non riuscito ({url}): {error}. Verifica che pnpm registry:serve sia in esecuzione.",
   remoteConfigLocalRegistryUseButton: "Usa registry locale",
   remoteConfigLocalRegistryHint:
     "Esegui prima pnpm registry:serve, poi premi questo pulsante. Solo le build di sviluppo si fidano della chiave di firma locale.",

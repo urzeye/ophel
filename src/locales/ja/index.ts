@@ -1955,6 +1955,17 @@ export const ja = {
   remoteConfigResetSuccess: "{site} を組み込み設定に戻しました。",
   remoteConfigResetFailed: "復元に失敗しました：{error}",
   remoteConfigResetUnavailable: "復元できる有効な設定がありません。",
+  remoteConfigRegistryActiveSourceLabel: "有効なソース",
+  remoteConfigRegistryActiveSourceDefault: "公式デフォルト（未キャッシュ）",
+  remoteConfigRegistryOverrideLabel: "上書き中",
+  remoteConfigRegistryLastErrorLabel: "前回のエラー",
+  remoteConfigRegistryRestoreDefaultsButton: "デフォルトに戻す",
+  remoteConfigRegistryCacheClearButton: "キャッシュを清除",
+  remoteConfigRegistryCacheCleared: "Registry キャッシュを清除しました（ローカルパッチは保持）。",
+  remoteConfigRegistryCacheClearFailed: "キャッシュの清除に失敗しました：{error}",
+  remoteConfigRegistryDefaultsRestored: "デフォルトの Registry ソースに戻し、再チェックしました。",
+  remoteConfigLocalRegistryCheckFailed:
+    "ローカル Registry の確認に失敗（{url}）：{error}。pnpm registry:serve が起動しているか確認してください。",
   remoteConfigLocalRegistryUseButton: "ローカル Registry を使う",
   remoteConfigLocalRegistryHint:
     "先に pnpm registry:serve を実行してから押してください。ローカル署名鍵は開発ビルドでのみ信頼されます。",

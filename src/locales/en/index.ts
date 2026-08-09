@@ -1965,6 +1965,17 @@ Please output the optimized code block directly, followed by a brief summary of 
   remoteConfigResetSuccess: "{site} was reset to its built-in configuration.",
   remoteConfigResetFailed: "Reset failed: {error}",
   remoteConfigResetUnavailable: "There is no active configuration to reset.",
+  remoteConfigRegistryActiveSourceLabel: "Active source",
+  remoteConfigRegistryActiveSourceDefault: "Default official sources (not cached yet)",
+  remoteConfigRegistryOverrideLabel: "override on",
+  remoteConfigRegistryLastErrorLabel: "Last error",
+  remoteConfigRegistryRestoreDefaultsButton: "Restore defaults",
+  remoteConfigRegistryCacheClearButton: "Clear cache",
+  remoteConfigRegistryCacheCleared: "Registry cache cleared (local patches kept).",
+  remoteConfigRegistryCacheClearFailed: "Failed to clear cache: {error}",
+  remoteConfigRegistryDefaultsRestored: "Default registry sources restored and rechecked.",
+  remoteConfigLocalRegistryCheckFailed:
+    "Local registry check failed ({url}): {error}. Make sure pnpm registry:serve is running.",
   remoteConfigLocalRegistryUseButton: "Use local registry",
   remoteConfigLocalRegistryHint:
     "Run pnpm registry:serve first, then click this button. Only development builds trust the local signing key.",

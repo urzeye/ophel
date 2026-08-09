@@ -29,4 +29,49 @@ export const getLocalDevRegistryIndexUrl = (
 export const getLocalDevRegistryOriginPatterns = (
   host = LOCAL_DEV_REGISTRY_DEFAULT_HOST,
   port = LOCAL_DEV_REGISTRY_DEFAULT_PORT,
-): string[] => [`http://${host}:${port}/*`]
+): string[] => {
+  const normalizedPort = Number.isFinite(port) && port > 0 ? port : LOCAL_DEV_REGISTRY_DEFAULT_PORT
+  return [`http://${host}:${normalizedPort}/*`]
+}
+
+/** True for loopback registry sources used only in local development. */
+export const isLoopbackRegistrySourceUrl = (sourceUrl: string): boolean => {
+  try {
+    const url = new URL(sourceUrl)
+    return (
+      url.protocol === "http:" && (url.hostname === "127.0.0.1" || url.hostname === "localhost")
+    )
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Allow non-monotonic registryRevision when crossing the local/production boundary.
+ * Production dual sources (CDN ↔ GitHub raw) stay strictly monotonic.
+ */
+export const shouldAllowRegistryRevisionReset = (
+  previousSourceUrl: string | undefined,
+  nextSourceUrl: string,
+): boolean => {
+  if (!previousSourceUrl) return false
+  if (previousSourceUrl === nextSourceUrl) return false
+  return (
+    isLoopbackRegistrySourceUrl(previousSourceUrl) || isLoopbackRegistrySourceUrl(nextSourceUrl)
+  )
+}
+
+/**
+ * Relax revision/immutability guards for local development:
+ * - always when the source being checked is loopback (rebuilds reuse git revisions)
+ * - or when crossing local ↔ production sources
+ *
+ * Production dual-source failover stays strict.
+ */
+export const shouldRelaxRegistryRevisionGuards = (
+  previousSourceUrl: string | undefined,
+  nextSourceUrl: string,
+): boolean => {
+  if (isLoopbackRegistrySourceUrl(nextSourceUrl)) return true
+  return shouldAllowRegistryRevisionReset(previousSourceUrl, nextSourceUrl)
+}

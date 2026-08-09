@@ -826,3 +826,117 @@ describe("RemoteConfigManager local patches", () => {
     ).rejects.toThrow(/No configurable built-in adapter/)
   })
 })
+
+describe("RemoteConfigManager development source switching", () => {
+  it("allows moving from a high local revision back to a lower production revision", async () => {
+    const localSource = "http://127.0.0.1:8787/index.json"
+    const localPatch = createPatch(1)
+    const localBytes = encodeJson(localPatch)
+    const localEntry = createPatchEntry(localPatch, localBytes)
+    const localIndex = createIndex(1_700_000_000, { patches: [localEntry] })
+    const localActive = createSnapshot(localIndex, {
+      sourceUrl: localSource,
+      patches: {
+        [SITE_ID]: { index: localEntry, patch: localPatch },
+      },
+    })
+
+    const productionPatch = createPatch(2)
+    const productionBytes = encodeJson(productionPatch)
+    const productionEntry = createPatchEntry(productionPatch, productionBytes)
+    const productionIndex = createIndex(12, { patches: [productionEntry] })
+    const routes = new Map<string, TransportRoute>([
+      ...createSignedIndexRoutes(PRIMARY_SOURCE, productionIndex),
+      [artifactUrl(productionEntry), productionBytes],
+    ])
+    const transport = createTransport(routes)
+    const storage = new MemoryRemoteConfigStorage(createState({ active: localActive }))
+    const manager = createManager(storage, transport)
+
+    const result = await manager.checkForUpdates({ force: true, sources: [PRIMARY_SOURCE] })
+    expect(result.status).toBe("updated")
+    expect(result.registryRevision).toBe(12)
+    expect(storage.readState()?.active?.sourceUrl).toBe(PRIMARY_SOURCE)
+    expect(storage.readState()?.active?.patches[SITE_ID]?.patch.patchVersion).toBe(2)
+  })
+
+  it("still rejects stale revisions on the same non-local source", async () => {
+    const newer = createSnapshot(createIndex(5))
+    const olderIndex = createIndex(4)
+    const transport = createTransport(new Map(createSignedIndexRoutes(PRIMARY_SOURCE, olderIndex)))
+    const storage = new MemoryRemoteConfigStorage(createState({ active: newer }))
+    const manager = createManager(storage, transport)
+
+    const result = await manager.checkForUpdates({ force: true, sources: [PRIMARY_SOURCE] })
+    expect(result.status).toBe("failed")
+    expect(result.error).toContain("Stale registry revision")
+    expect(storage.readState()?.active?.index.registryRevision).toBe(5)
+  })
+
+  it("allows same loopback revision with different content after local rebuild", async () => {
+    const localSource = "http://127.0.0.1:8787/index.json"
+    const oldPatch = createPatch(1)
+    const oldBytes = encodeJson(oldPatch)
+    const oldEntry = createPatchEntry(oldPatch, oldBytes)
+    const oldIndex = createIndex(42, { patches: [oldEntry] })
+    const oldActive = createSnapshot(oldIndex, {
+      sourceUrl: localSource,
+      patches: {
+        [SITE_ID]: { index: oldEntry, patch: oldPatch },
+      },
+    })
+
+    const newPatch = createPatch(2)
+    const newBytes = encodeJson(newPatch)
+    const newEntry = createPatchEntry(newPatch, newBytes)
+    const newIndex = createIndex(42, { patches: [newEntry] })
+    const routes = new Map<string, TransportRoute>([
+      ...createSignedIndexRoutes(localSource, newIndex),
+      [artifactUrl(newEntry, localSource), newBytes],
+    ])
+    const transport = createTransport(routes)
+    const storage = new MemoryRemoteConfigStorage(createState({ active: oldActive }))
+    const manager = createManager(storage, transport)
+
+    const result = await manager.checkForUpdates({ force: true, sources: [localSource] })
+    expect(result.status).toBe("updated")
+    expect(result.registryRevision).toBe(42)
+    expect(storage.readState()?.active?.sourceUrl).toBe(localSource)
+    expect(storage.readState()?.active?.patches[SITE_ID]?.patch.patchVersion).toBe(2)
+  })
+
+  it("clears cached registry snapshot while preserving local patches", async () => {
+    const patch = createPatch(1)
+    const patchBytes = encodeJson(patch)
+    const patchEntry = createPatchEntry(patch, patchBytes)
+    const active = createSnapshot(createIndex(3, { patches: [patchEntry] }), {
+      patches: {
+        [SITE_ID]: { index: patchEntry, patch },
+      },
+    })
+    const storage = new MemoryRemoteConfigStorage(
+      createState({
+        active,
+        localPatches: {
+          [SITE_ID]: {
+            installedAt: NOW,
+            fileName: "local.json",
+            patch: createPatch(9),
+          },
+        },
+        lastError: {
+          at: NOW,
+          message: "boom",
+          sources: [{ sourceUrl: PRIMARY_SOURCE, message: "boom" }],
+        },
+      }),
+    )
+    const manager = createManager(storage, createTransport(new Map()))
+
+    await expect(manager.clearCachedRegistrySnapshot()).resolves.toBe(true)
+    const state = storage.readState()
+    expect(state?.active).toBeUndefined()
+    expect(state?.lastError).toBeUndefined()
+    expect(state?.localPatches[SITE_ID]?.patch.patchVersion).toBe(9)
+  })
+})

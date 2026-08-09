@@ -44,6 +44,7 @@ export const MSG_CHECK_REMOTE_CONFIG = "CHECK_REMOTE_CONFIG"
 
 export interface CheckRemoteConfigPayload {
   force?: boolean
+  sources?: string[]
 }
 
 export interface CheckRemoteConfigMessage extends CheckRemoteConfigPayload {
@@ -98,6 +99,12 @@ export interface RemoveLocalRemoteConfigPatchPayload {
 
 export interface RemoveLocalRemoteConfigPatchMessage extends RemoveLocalRemoteConfigPatchPayload {
   type: typeof MSG_REMOVE_LOCAL_REMOTE_CONFIG_PATCH
+}
+
+export const MSG_CLEAR_REMOTE_CONFIG_CACHE = "CLEAR_REMOTE_CONFIG_CACHE"
+
+export interface ClearRemoteConfigCacheMessage {
+  type: typeof MSG_CLEAR_REMOTE_CONFIG_CACHE
 }
 
 export const MSG_RESET_REMOTE_CONFIG_SITE = "RESET_REMOTE_CONFIG_SITE"
@@ -339,6 +346,7 @@ export type ExtensionMessage =
   | IgnoreRemoteConfigPatchMessage
   | InstallLocalRemoteConfigPatchMessage
   | RemoveLocalRemoteConfigPatchMessage
+  | ClearRemoteConfigCacheMessage
   | ResetRemoteConfigSiteMessage
   | ReapplyRemoteConfigSiteMessage
   | WebDAVRequestMessage
@@ -399,6 +407,7 @@ interface BackgroundResponseMap {
   [MSG_IGNORE_REMOTE_CONFIG_PATCH]: BasicBackgroundResponse
   [MSG_INSTALL_LOCAL_REMOTE_CONFIG_PATCH]: BasicBackgroundResponse
   [MSG_REMOVE_LOCAL_REMOTE_CONFIG_PATCH]: BasicBackgroundResponse
+  [MSG_CLEAR_REMOTE_CONFIG_CACHE]: BasicBackgroundResponse
   [MSG_CHECK_PERMISSION]: PermissionCheckResponse
   [MSG_CHECK_PERMISSIONS]: PermissionCheckResponse
   [MSG_REQUEST_PERMISSIONS]: BasicBackgroundResponse
