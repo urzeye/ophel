@@ -2057,23 +2057,7 @@ export const it = {
     "Passato all’origine registry locale e avviato il controllo aggiornamenti.",
   remoteConfigLocalRegistryPermissionDenied:
     "Autorizzazione host per il registry locale negata. Consenti l’accesso a 127.0.0.1 e riprova.",
-  adapterDiagnosticsTitle: "Diagnostica adapter",
-  adapterDiagnosticsDesc:
-    "Controlla l’origine della config attiva e se i selettori chiave corrispondono in questa pagina. Copia un riepilogo per il PR senza contenuti della chat.",
-  adapterDiagnosticsKindLabel: "Tipo",
-  adapterDiagnosticsSiteLabel: "Sito",
-  adapterDiagnosticsPackLabel: "Pack",
-  adapterDiagnosticsNoPatch: "Nessuna patch applicata",
-  adapterDiagnosticsHitCount: "{count} corrispondenze",
-  adapterDiagnosticsMiss: "Nessuna corrispondenza",
-  adapterDiagnosticsNoSelector: "Nessun selettore",
-  adapterDiagnosticsLoading: "Raccolta diagnostica…",
-  adapterDiagnosticsRefreshing: "Aggiornamento…",
-  adapterDiagnosticsRefreshButton: "Aggiorna diagnostica",
-  adapterDiagnosticsCopyButton: "Copia diagnostica",
-  adapterDiagnosticsCopied: "Riepilogo diagnostico copiato.",
-  adapterDiagnosticsCopyFailed: "Copia non riuscita: {error}",
-  adapterDiagnosticsFailed: "Diagnostica non riuscita: {error}",
+
   remoteConfigLocalPatchImportButton: "Importa hotfix del sito",
   remoteConfigLocalPatchImportDesc:
     "Importa un JSON di hotfix selettori per un sito integrato. Gli hotfix locali hanno priorità su quelli remoti per i test pre-contributo. Non installa un nuovo pacchetto.",

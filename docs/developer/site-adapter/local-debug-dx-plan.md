@@ -10,7 +10,7 @@
 
 1. 本地安装并验证 **内置站点 patch JSON**
 2. 用本地 registry 服务验证 **pack + patch 的完整远程更新路径**
-3. 在目标站点页内查看 **当前适配配置与选择器命中诊断**
+3. 在目标站点页内验证 **当前适配配置是否生效**
 
 非目标：
 
@@ -35,10 +35,9 @@ Ima 等 hotfix 矩阵中“可通过 patch 热修”的字段，工程上却无�
 ```text
 P0  本地 patch 导入/重置     —— 不依赖 registry，直接覆盖内置 config
 P0  registry:serve + 开发信任 —— 验证完整远程更新链路
-P1  页内 Adapter Diagnostics —— 真站证明 selector/capability 是否生效
 ```
 
-优先级：本地 patch 导入 > 诊断 > 本地 registry serve。
+优先级：本地 patch 导入 > 本地 registry serve。
 
 ## 4. 详细设计
 
@@ -116,23 +115,8 @@ pnpm registry:serve
 - 设置页：一键填入 `http://127.0.0.1:8787/index.json` 并立即 `checkForUpdates({ force: true })`
 - 扩展：对 localhost registry origin 走 optional host permission 申请（用户手势页）
 
-### 4.3 Adapter Diagnostics（P1）
 
-在内容脚本环境（站点设置页 / 面板可触达处）展示：
-
-- kind：`builtin` | `site-pack`
-- siteId / packId / origin
-- baseConfigVersion / patchVersion / source（`builtin` | `registry` | `local`）
-- 关键 selector 命中数（textarea、responseContainer、userQuery、assistantResponse、stop/newChat 等）
-- 声明 capabilities 列表
-- 复制诊断摘要（不含对话正文）
-
-实现：
-
-- 纯函数 `buildAdapterDiagnostics(adapter, configContext, document)`
-- UI 只读，不改站点 DOM（高亮可选后续）
-
-### 4.4 文档与工作流
+### 4.3 文档与工作流
 
 新增/更新：
 
@@ -145,7 +129,7 @@ pnpm registry:serve
 ```text
 改 registry/patches/<site>.json
   → 设置页导入本地补丁
-  → 打开真站，看 Diagnostics
+  → 打开真站验证功能
   → 通过后提 PR
   → 评审者同样本地导入复验
   → 合并后 CI 签名发布给用户
@@ -158,9 +142,8 @@ pnpm registry:serve
 3. 平台 + 设置页：导入/列表/重置 UI、消息广播、i18n  
 4. registry：固定 dev key 的 local build + `registry:serve`  
 5. 开发源一键应用 + localhost 权限  
-6. Diagnostics 核心 + 站点设置 UI + i18n  
-7. 贡献者调试文档  
-8. 自审、相关检查、推送 GitHub
+6. 贡献者调试文档  
+7. 自审、相关检查、推送 GitHub
 
 ## 6. 验收标准
 
@@ -169,7 +152,6 @@ pnpm registry:serve
 - [ ] 重置可回到纯内置  
 - [ ] `pnpm registry:serve` + 开发构建可完整跑通签名更新链路  
 - [ ] 生产构建不信任 local-dev key  
-- [ ] Diagnostics 能显示当前配置来源与关键 selector 命中  
 - [ ] 11 语 i18n 同步  
 - [ ] 相关单测通过；`format` / `lint` / `typecheck` 对改动文件干净  
 

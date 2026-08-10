@@ -1889,23 +1889,7 @@ export const zhCN = {
   remoteConfigLocalRegistrySourceApplied: "已切换到本地 Registry 源并开始检查更新。",
   remoteConfigLocalRegistryPermissionDenied:
     "未获得访问本地 Registry 的权限。请允许 127.0.0.1 主机权限后重试。",
-  adapterDiagnosticsTitle: "适配器诊断",
-  adapterDiagnosticsDesc:
-    "查看当前站点生效的配置来源，以及关键选择器在本页的命中情况。可复制摘要用于 PR 复现，不包含对话内容。",
-  adapterDiagnosticsKindLabel: "类型",
-  adapterDiagnosticsSiteLabel: "站点",
-  adapterDiagnosticsPackLabel: "适配包",
-  adapterDiagnosticsNoPatch: "未应用补丁",
-  adapterDiagnosticsHitCount: "命中 {count}",
-  adapterDiagnosticsMiss: "未命中",
-  adapterDiagnosticsNoSelector: "未配置选择器",
-  adapterDiagnosticsLoading: "正在收集诊断信息…",
-  adapterDiagnosticsRefreshing: "刷新中…",
-  adapterDiagnosticsRefreshButton: "刷新诊断",
-  adapterDiagnosticsCopyButton: "复制诊断摘要",
-  adapterDiagnosticsCopied: "诊断摘要已复制。",
-  adapterDiagnosticsCopyFailed: "复制失败：{error}",
-  adapterDiagnosticsFailed: "诊断失败：{error}",
+
   remoteConfigLocalPatchImportButton: "导入站点热修",
   remoteConfigLocalPatchImportDesc:
     "为已有内置站点导入选择器热修 JSON。本地热修优先于远程补丁，适合贡献前验证；不会安装新的适配包。",

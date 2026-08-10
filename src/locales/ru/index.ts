@@ -1972,23 +1972,7 @@ export const ru = {
     "Переключено на локальный registry и запущена проверка обновлений.",
   remoteConfigLocalRegistryPermissionDenied:
     "Доступ к локальному registry отклонён. Разрешите 127.0.0.1 и повторите.",
-  adapterDiagnosticsTitle: "Диагностика адаптера",
-  adapterDiagnosticsDesc:
-    "Показывает источник активной конфигурации и совпадения ключевых селекторов на странице. Можно скопировать сводку для PR без содержимого диалога.",
-  adapterDiagnosticsKindLabel: "Тип",
-  adapterDiagnosticsSiteLabel: "Сайт",
-  adapterDiagnosticsPackLabel: "Пакет",
-  adapterDiagnosticsNoPatch: "Патч не применён",
-  adapterDiagnosticsHitCount: "совпадений: {count}",
-  adapterDiagnosticsMiss: "Нет совпадений",
-  adapterDiagnosticsNoSelector: "Селектор не задан",
-  adapterDiagnosticsLoading: "Сбор диагностики…",
-  adapterDiagnosticsRefreshing: "Обновление…",
-  adapterDiagnosticsRefreshButton: "Обновить диагностику",
-  adapterDiagnosticsCopyButton: "Копировать диагностику",
-  adapterDiagnosticsCopied: "Сводка диагностики скопирована.",
-  adapterDiagnosticsCopyFailed: "Не удалось скопировать: {error}",
-  adapterDiagnosticsFailed: "Ошибка диагностики: {error}",
+
   remoteConfigLocalPatchImportButton: "Импорт hotfix сайта",
   remoteConfigLocalPatchImportDesc:
     "Импортирует JSON hotfix селекторов для встроенного сайта. Локальные hotfix важнее удалённых патчей и нужны для проверки до вклада. Новый пакет адаптера не устанавливается.",

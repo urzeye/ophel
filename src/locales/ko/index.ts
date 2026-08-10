@@ -1954,23 +1954,7 @@ export const ko = {
     "로컬 레지스트리 소스로 전환하고 업데이트 확인을 시작했습니다.",
   remoteConfigLocalRegistryPermissionDenied:
     "로컬 레지스트리 호스트 권한이 거부되었습니다. 127.0.0.1 권한을 허용한 뒤 다시 시도하세요.",
-  adapterDiagnosticsTitle: "어댑터 진단",
-  adapterDiagnosticsDesc:
-    "현재 적용된 구성 소스와 핵심 선택자가 이 페이지에서 일치하는지 확인합니다. 대화 내용 없이 PR 재현용 요약을 복사할 수 있습니다.",
-  adapterDiagnosticsKindLabel: "유형",
-  adapterDiagnosticsSiteLabel: "사이트",
-  adapterDiagnosticsPackLabel: "팩",
-  adapterDiagnosticsNoPatch: "패치 없음",
-  adapterDiagnosticsHitCount: "{count}개 일치",
-  adapterDiagnosticsMiss: "일치 없음",
-  adapterDiagnosticsNoSelector: "선택자 없음",
-  adapterDiagnosticsLoading: "진단 정보 수집 중…",
-  adapterDiagnosticsRefreshing: "새로고침 중…",
-  adapterDiagnosticsRefreshButton: "진단 새로고침",
-  adapterDiagnosticsCopyButton: "진단 복사",
-  adapterDiagnosticsCopied: "진단 요약을 복사했습니다.",
-  adapterDiagnosticsCopyFailed: "복사 실패: {error}",
-  adapterDiagnosticsFailed: "진단 실패: {error}",
+
   remoteConfigLocalPatchImportButton: "사이트 핫픽스 가져오기",
   remoteConfigLocalPatchImportDesc:
     "내장 사이트용 선택자 핫픽스 JSON을 가져옵니다. 로컬 핫픽스는 원격 패치보다 우선하며 기여 전 검증에 적합합니다. 새 어댑터 패키지는 설치하지 않습니다.",

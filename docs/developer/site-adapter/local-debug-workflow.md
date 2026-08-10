@@ -8,7 +8,7 @@
 2. 打开目标站点 → 使用页内 Wizard，或手写 `registry/sites/<id>.json`  
 3. 设置 → SitePacks → 导入本地 JSON / Wizard 保存  
 4. 授权域名并刷新目标页  
-5. 站点设置中的 **适配器诊断** 检查选择器命中  
+5. 打开目标站点验证功能是否生效  
 6. 导出 JSON 提 PR；评审者用同一 JSON 本地导入复验  
 
 ## 路径二：内置站点 Patch（如 Ima 选择器热修）
@@ -16,7 +16,7 @@
 1. 修改 `registry/patches/<site-id>.json`（或从矩阵文档确认可热修字段）  
 2. 设置 → SitePacks → Updates → **导入本地补丁**  
 3. 打开目标内置站点  
-4. **适配器诊断** 应显示 `patchSource=local` 与选择器命中  
+4. 打开目标站点，确认补丁已生效  
 5. 通过后提 PR；评审者同样本地导入  
 6. 合并后由正式 CI 签名发布给用户  
 
@@ -47,9 +47,3 @@ pnpm dev
 2. `pnpm dev` 真站回归  
 3. 正常应用发版  
 
-## 诊断摘要
-
-站点设置页可复制诊断文本，适合贴进 PR（勿包含对话正文）。至少应覆盖：
-
-- kind / siteId / baseConfigVersion / patchVersion / source  
-- textarea、responseContainer、userQuery、assistantResponse、stop/newChat 命中数  

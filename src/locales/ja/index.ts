@@ -1974,23 +1974,7 @@ export const ja = {
     "ローカル Registry ソースに切り替え、更新確認を開始しました。",
   remoteConfigLocalRegistryPermissionDenied:
     "ローカル Registry へのホスト権限が拒否されました。127.0.0.1 を許可して再試行してください。",
-  adapterDiagnosticsTitle: "アダプター診断",
-  adapterDiagnosticsDesc:
-    "現在有効な設定ソースと、主要セレクタがこのページで一致するかを確認します。会話内容を含まない要約を PR 用にコピーできます。",
-  adapterDiagnosticsKindLabel: "種類",
-  adapterDiagnosticsSiteLabel: "サイト",
-  adapterDiagnosticsPackLabel: "パック",
-  adapterDiagnosticsNoPatch: "パッチ未適用",
-  adapterDiagnosticsHitCount: "{count} 件一致",
-  adapterDiagnosticsMiss: "一致なし",
-  adapterDiagnosticsNoSelector: "セレクタ未設定",
-  adapterDiagnosticsLoading: "診断情報を収集中…",
-  adapterDiagnosticsRefreshing: "更新中…",
-  adapterDiagnosticsRefreshButton: "診断を更新",
-  adapterDiagnosticsCopyButton: "診断をコピー",
-  adapterDiagnosticsCopied: "診断要約をコピーしました。",
-  adapterDiagnosticsCopyFailed: "コピーに失敗しました：{error}",
-  adapterDiagnosticsFailed: "診断に失敗しました：{error}",
+
   remoteConfigLocalPatchImportButton: "サイトホットフィックスをインポート",
   remoteConfigLocalPatchImportDesc:
     "組み込みサイト向けのセレクター修正 JSON を取り込みます。ローカル修正はリモートより優先され、貢献前の検証に使えます。新しいアダプターパックはインストールしません。",
