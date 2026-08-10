@@ -207,8 +207,9 @@ export const fr = {
   // SitePack Manager
   sitePacksGuideAction: "Guide",
   sitePacksRegistryTitle: "Bibliothèque en ligne",
-  sitePacksLocalImportTitle: "Import JSON local",
-  sitePacksLocalImportDesc: "N'importez que des manifestes JSON de source fiable.",
+  sitePacksLocalImportTitle: "Installer un pack depuis un fichier",
+  sitePacksLocalImportDesc:
+    "Installe un pack d’adaptateur depuis un fichier JSON local. Utile pour les packs hors ligne ou pas encore listés. N’importez que des fichiers de confiance.",
   sitePacksCheckUpdates: "Rechercher des mises à jour",
   sitePacksBindingHttpsRequired:
     "Seuls les sites HTTPS peuvent être ajoutés. Les sites HTTP ne sont pas pris en charge.",
@@ -2014,9 +2015,9 @@ Donnez le code puis un résumé des améliorations.`,
   adapterDiagnosticsCopied: "Résumé du diagnostic copié.",
   adapterDiagnosticsCopyFailed: "Échec de la copie : {error}",
   adapterDiagnosticsFailed: "Échec du diagnostic : {error}",
-  remoteConfigLocalPatchImportButton: "Importer un correctif local",
+  remoteConfigLocalPatchImportButton: "Importer un correctif de site",
   remoteConfigLocalPatchImportDesc:
-    "Installe un correctif JSON de site intégré sans registry signé. Les correctifs locaux priment sur les distants pour vérifier les hotfixes avant contribution.",
+    "Importe un JSON de correctif de sélecteurs pour un site intégré. Les correctifs locaux priment sur les distants pour les tests avant contribution. N’installe pas un nouveau pack.",
   remoteConfigLocalPatchConfirmTitle: "Importer le correctif local ?",
   remoteConfigLocalPatchRisk:
     "Les correctifs locaux ne sont pas authentifiés par la signature du registry officiel. N’importez que des fichiers de confiance.",

@@ -13,7 +13,6 @@ import type { SitePackManifest } from "~adapters/declarative/types"
 import { SITE_PACK_MAX_BYTES, type SitePackValidationError } from "~adapters/declarative/validate"
 import {
   CheckIcon,
-  CloudIcon,
   CopyIcon,
   DeleteIcon,
   EditIcon,
@@ -1967,6 +1966,74 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
 
       {activeTab === SITE_PACKS_TAB_IDS.UPDATES && (
         <>
+          <section className="settings-card" data-setting-id="site-packs-registry">
+            <div className="settings-pack-section-head">
+              <div className="settings-card-title">{t("sitePacksRegistryTitle")}</div>
+              {registryViews.length > 0 && (
+                <div className="settings-pack-search">
+                  <Input
+                    type="search"
+                    autoComplete="off"
+                    spellCheck={false}
+                    value={registryQuery}
+                    placeholder={t("sitePacksRegistrySearchPlaceholder")}
+                    aria-label={t("sitePacksRegistrySearchPlaceholder")}
+                    onChange={(event) => setRegistryQuery(event.target.value)}
+                  />
+                </div>
+              )}
+            </div>
+
+            {registryError && (
+              <InlineError message={registryError} onRetry={() => void loadRegistryState(true)} />
+            )}
+
+            {isRegistryLoading ? (
+              <SitePackListSkeleton />
+            ) : registryViews.length === 0 ? (
+              <div className="settings-pack-empty-state">
+                <div className="settings-pack-empty-icon" aria-hidden="true">
+                  <GlobeIcon size={20} />
+                </div>
+                <strong>{t("sitePacksRegistryEmpty")}</strong>
+              </div>
+            ) : filteredRegistryViews.length === 0 ? (
+              <div className="settings-pack-empty-state">
+                <div className="settings-pack-empty-icon" aria-hidden="true">
+                  <GlobeIcon size={20} />
+                </div>
+                <strong>{t("sitePacksRegistryNoMatch")}</strong>
+              </div>
+            ) : (
+              <div className="settings-pack-list">
+                {filteredRegistryViews.map(renderRegistryPack)}
+              </div>
+            )}
+          </section>
+
+          <section className="settings-card settings-pack-secondary-card">
+            <div className="settings-pack-import-row">
+              <div className="settings-pack-icon" aria-hidden="true">
+                <ImportIcon size={16} />
+              </div>
+              <div className="settings-pack-import-text">
+                <div className="settings-card-title">{t("sitePacksLocalImportTitle")}</div>
+                <div className="settings-card-desc">{t("sitePacksLocalImportDesc")}</div>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                className="settings-pack-action-button"
+                data-site-pack-import-trigger="persistent"
+                disabled={isImportBusy}
+                onClick={(event) => openImportPicker(event.currentTarget)}>
+                <ImportIcon size={14} />
+                {t("importBtn")}
+              </Button>
+            </div>
+          </section>
+
           <section className="settings-card" data-setting-id="remote-config-status">
             <div className="settings-card-title">{t("remoteConfigSettingsTitle")}</div>
 
@@ -2000,6 +2067,91 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
                   : t("remoteConfigCheckNowButton")}
               </Button>
             </SettingRow>
+
+            <div className="settings-pack-patches" data-setting-id="remote-config-active-patches">
+              <div className="settings-pack-section-head">
+                <div className="settings-pack-subsection-title">
+                  {t("remoteConfigActivePatchesLabel")}
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  className="settings-pack-action-button"
+                  data-setting-id="remote-config-local-patch-import"
+                  disabled={isRegistryBusy || isImportBusy}
+                  onClick={(event) => openPatchImportPicker(event.currentTarget)}>
+                  <ImportIcon size={14} />
+                  {t("remoteConfigLocalPatchImportButton")}
+                </Button>
+              </div>
+              <p className="settings-pack-source-desc">{t("remoteConfigLocalPatchImportDesc")}</p>
+              {activePatches.length === 0 ? (
+                <p className="settings-pack-patch-status">{t("remoteConfigUsingBuiltin")}</p>
+              ) : (
+                <div className="settings-pack-list">
+                  {activePatches.map((patch) => (
+                    <div className="settings-pack-item" key={`${patch.source}:${patch.siteId}`}>
+                      <div className="settings-pack-info">
+                        <div className="settings-pack-title-line">
+                          <strong>{patch.siteName}</strong>
+                          <span className="settings-site-pack-badge">
+                            {t(
+                              patch.source === "local"
+                                ? "remoteConfigPatchSourceLocal"
+                                : "remoteConfigPatchSourceRegistry",
+                            )}
+                          </span>
+                        </div>
+                        <div className="settings-pack-meta">
+                          <span
+                            className="settings-pack-version"
+                            title={t("remoteConfigPatchVersionLabel")}>
+                            v{patch.patchVersion}
+                          </span>
+                          <span>
+                            {t("remoteConfigBaseVersionLabel")} {patch.baseConfigVersion}
+                          </span>
+                          {patch.fileName ? (
+                            <span title={patch.fileName}>{patch.fileName}</span>
+                          ) : null}
+                        </div>
+                      </div>
+                      <div className="settings-pack-controls">
+                        {patch.source === "local" ? (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="secondary"
+                            className="settings-pack-action-button"
+                            disabled={isRegistryBusy || resettingSiteId !== null}
+                            onClick={() =>
+                              void handleRemoveLocalPatch(patch.siteId, patch.siteName)
+                            }>
+                            {resettingSiteId === patch.siteId
+                              ? t("remoteConfigResettingButton")
+                              : t("remoteConfigLocalPatchRemoveButton")}
+                          </Button>
+                        ) : null}
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          className="settings-pack-action-button"
+                          disabled={isRegistryBusy || resettingSiteId !== null}
+                          onClick={() =>
+                            void handleResetSite(patch.siteId, patch.siteName, patch.patchVersion)
+                          }>
+                          {resettingSiteId === patch.siteId
+                            ? t("remoteConfigResettingButton")
+                            : t("remoteConfigResetBuiltinButton")}
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
             {IS_DEVELOPMENT_BUILD && (
               <div
@@ -2097,161 +2249,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
               </div>
             )}
 
-            <div className="settings-pack-patches" data-setting-id="remote-config-active-patches">
-              <div className="settings-pack-section-head">
-                <h3>{t("remoteConfigActivePatchesLabel")}</h3>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="secondary"
-                  className="settings-pack-action-button"
-                  data-setting-id="remote-config-local-patch-import"
-                  disabled={isRegistryBusy || isImportBusy}
-                  onClick={(event) => openPatchImportPicker(event.currentTarget)}>
-                  <ImportIcon size={14} />
-                  {t("remoteConfigLocalPatchImportButton")}
-                </Button>
-              </div>
-              <p className="settings-pack-source-desc">{t("remoteConfigLocalPatchImportDesc")}</p>
-              {activePatches.length === 0 ? (
-                <div className="settings-pack-empty-state compact">
-                  <CloudIcon size={20} />
-                  <strong>{t("remoteConfigUsingBuiltin")}</strong>
-                </div>
-              ) : (
-                <div className="settings-pack-list">
-                  {activePatches.map((patch) => (
-                    <div className="settings-pack-item" key={`${patch.source}:${patch.siteId}`}>
-                      <div className="settings-pack-info">
-                        <div className="settings-pack-title-line">
-                          <strong>{patch.siteName}</strong>
-                          <span className="settings-site-pack-badge">
-                            {t(
-                              patch.source === "local"
-                                ? "remoteConfigPatchSourceLocal"
-                                : "remoteConfigPatchSourceRegistry",
-                            )}
-                          </span>
-                        </div>
-                        <div className="settings-pack-meta">
-                          <span
-                            className="settings-pack-version"
-                            title={t("remoteConfigPatchVersionLabel")}>
-                            v{patch.patchVersion}
-                          </span>
-                          <span>
-                            {t("remoteConfigBaseVersionLabel")} {patch.baseConfigVersion}
-                          </span>
-                          {patch.fileName ? (
-                            <span title={patch.fileName}>{patch.fileName}</span>
-                          ) : null}
-                        </div>
-                      </div>
-                      <div className="settings-pack-controls">
-                        {patch.source === "local" ? (
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="secondary"
-                            className="settings-pack-action-button"
-                            disabled={isRegistryBusy || resettingSiteId !== null}
-                            onClick={() =>
-                              void handleRemoveLocalPatch(patch.siteId, patch.siteName)
-                            }>
-                            {resettingSiteId === patch.siteId
-                              ? t("remoteConfigResettingButton")
-                              : t("remoteConfigLocalPatchRemoveButton")}
-                          </Button>
-                        ) : null}
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="secondary"
-                          className="settings-pack-action-button"
-                          disabled={isRegistryBusy || resettingSiteId !== null}
-                          onClick={() =>
-                            void handleResetSite(patch.siteId, patch.siteName, patch.patchVersion)
-                          }>
-                          {resettingSiteId === patch.siteId
-                            ? t("remoteConfigResettingButton")
-                            : t("remoteConfigResetBuiltinButton")}
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
             <p className="settings-pack-privacy-note">{t("remoteConfigPrivacyDesc")}</p>
-          </section>
-
-          <section className="settings-card">
-            <div className="settings-pack-import-row">
-              <div className="settings-pack-icon" aria-hidden="true">
-                <ImportIcon size={16} />
-              </div>
-              <div className="settings-pack-import-text">
-                <div className="settings-card-title">{t("sitePacksLocalImportTitle")}</div>
-                <div className="settings-card-desc">{t("sitePacksLocalImportDesc")}</div>
-              </div>
-              <Button
-                type="button"
-                size="sm"
-                variant="secondary"
-                className="settings-pack-action-button"
-                data-site-pack-import-trigger="persistent"
-                disabled={isImportBusy}
-                onClick={(event) => openImportPicker(event.currentTarget)}>
-                <ImportIcon size={14} />
-                {t("importBtn")}
-              </Button>
-            </div>
-          </section>
-
-          <section className="settings-card" data-setting-id="site-packs-registry">
-            <div className="settings-pack-section-head">
-              <div className="settings-card-title">{t("sitePacksRegistryTitle")}</div>
-              {registryViews.length > 0 && (
-                <div className="settings-pack-search">
-                  <Input
-                    type="search"
-                    autoComplete="off"
-                    spellCheck={false}
-                    value={registryQuery}
-                    placeholder={t("sitePacksRegistrySearchPlaceholder")}
-                    aria-label={t("sitePacksRegistrySearchPlaceholder")}
-                    onChange={(event) => setRegistryQuery(event.target.value)}
-                  />
-                </div>
-              )}
-            </div>
-
-            {registryError && (
-              <InlineError message={registryError} onRetry={() => void loadRegistryState(true)} />
-            )}
-
-            {isRegistryLoading ? (
-              <SitePackListSkeleton />
-            ) : registryViews.length === 0 ? (
-              <div className="settings-pack-empty-state">
-                <div className="settings-pack-empty-icon" aria-hidden="true">
-                  <GlobeIcon size={20} />
-                </div>
-                <strong>{t("sitePacksRegistryEmpty")}</strong>
-              </div>
-            ) : filteredRegistryViews.length === 0 ? (
-              <div className="settings-pack-empty-state">
-                <div className="settings-pack-empty-icon" aria-hidden="true">
-                  <GlobeIcon size={20} />
-                </div>
-                <strong>{t("sitePacksRegistryNoMatch")}</strong>
-              </div>
-            ) : (
-              <div className="settings-pack-list">
-                {filteredRegistryViews.map(renderRegistryPack)}
-              </div>
-            )}
           </section>
         </>
       )}

@@ -210,8 +210,9 @@ export const de = {
   // SitePack Manager
   sitePacksGuideAction: "Anleitung",
   sitePacksRegistryTitle: "Online-Bibliothek",
-  sitePacksLocalImportTitle: "Lokaler JSON-Import",
-  sitePacksLocalImportDesc: "Importiere nur JSON-Manifeste aus vertrauenswürdiger Quelle.",
+  sitePacksLocalImportTitle: "Paket aus Datei installieren",
+  sitePacksLocalImportDesc:
+    "Installiert ein Adapter-Paket aus einer lokalen JSON-Datei. Geeignet für Offline-Pakete oder noch nicht gelistete Pakete. Nur vertrauenswürdige Dateien importieren.",
   sitePacksCheckUpdates: "Nach Updates suchen",
   sitePacksBindingHttpsRequired:
     "Nur HTTPS-Websites können hinzugefügt werden. HTTP-Websites werden nicht unterstützt.",
@@ -2007,9 +2008,9 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   adapterDiagnosticsCopied: "Diagnosezusammenfassung kopiert.",
   adapterDiagnosticsCopyFailed: "Kopieren fehlgeschlagen: {error}",
   adapterDiagnosticsFailed: "Diagnose fehlgeschlagen: {error}",
-  remoteConfigLocalPatchImportButton: "Lokalen Patch importieren",
+  remoteConfigLocalPatchImportButton: "Site-Hotfix importieren",
   remoteConfigLocalPatchImportDesc:
-    "Installiert einen integrierten Site-Patch aus einer JSON-Datei ohne signiertes Registry. Lokale Patches haben Vorrang vor Remote-Patches und eignen sich zur Prüfung vor dem Beitrag.",
+    "Importiert eine Selektor-Hotfix-JSON für eine integrierte Site. Lokale Hotfixes haben Vorrang vor Remote-Patches und eignen sich zur Prüfung vor dem Beitrag. Installiert kein neues Adapter-Paket.",
   remoteConfigLocalPatchConfirmTitle: "Lokalen Patch importieren?",
   remoteConfigLocalPatchRisk:
     "Lokale Patches werden nicht durch die offizielle Registry-Signatur authentifiziert. Importiere nur Dateien, denen du vertraust.",

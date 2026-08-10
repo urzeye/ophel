@@ -1475,15 +1475,18 @@
 
 .settings-pack-source-block {
   margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid var(--gh-border, #f3f4f6);
+  padding: 12px;
+  border: 1px dashed
+    color-mix(in srgb, var(--gh-border, #e5e7eb) 90%, var(--gh-text-secondary, #9ca3af));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--gh-bg-secondary, #f9fafb) 78%, var(--gh-card-bg, #ffffff));
 }
 
 .settings-pack-source-label {
   display: block;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
-  color: var(--gh-text, #374151);
+  color: var(--gh-text-secondary, #6b7280);
 }
 
 .settings-pack-source-desc {
@@ -1557,14 +1560,43 @@
 }
 
 .settings-pack-patches {
-  margin-top: 16px;
+  margin-top: 4px;
+  padding-top: 16px;
 }
 
-.settings-pack-patches > h3 {
-  margin: 0 0 4px;
-  font-size: 12px;
+.settings-pack-patches .settings-pack-section-head {
+  margin-bottom: 6px;
+}
+
+.settings-pack-subsection-title {
+  margin: 0;
+  font-size: 13px;
   font-weight: 600;
+  color: var(--gh-text, #374151);
+}
+
+.settings-pack-section-head .settings-pack-subsection-title {
+  margin-bottom: 0;
+}
+
+.settings-pack-patch-status {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
   color: var(--gh-text-secondary, #6b7280);
+}
+
+.settings-pack-secondary-card {
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
+
+.settings-pack-secondary-card .settings-card-title {
+  font-size: 14px;
+}
+
+.settings-pack-secondary-card .settings-card-desc {
+  margin-bottom: 0;
 }
 
 .settings-pack-privacy-note {

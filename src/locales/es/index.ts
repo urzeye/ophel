@@ -206,8 +206,9 @@ export const es = {
   // SitePack Manager
   sitePacksGuideAction: "Guía",
   sitePacksRegistryTitle: "Biblioteca en línea",
-  sitePacksLocalImportTitle: "Importación de JSON local",
-  sitePacksLocalImportDesc: "Importa solo manifiestos JSON de origen fiable.",
+  sitePacksLocalImportTitle: "Instalar paquete desde archivo",
+  sitePacksLocalImportDesc:
+    "Instala un paquete de adaptador desde un JSON local. Sirve para paquetes sin conexión o aún no listados. Solo importa archivos de confianza.",
   sitePacksCheckUpdates: "Buscar actualizaciones",
   sitePacksBindingHttpsRequired:
     "Solo se pueden añadir sitios HTTPS. Los sitios HTTP no son compatibles.",
@@ -1998,9 +1999,9 @@ Dame el código y luego un resumen de mejoras.`,
   adapterDiagnosticsCopied: "Resumen de diagnóstico copiado.",
   adapterDiagnosticsCopyFailed: "Error al copiar: {error}",
   adapterDiagnosticsFailed: "Error de diagnóstico: {error}",
-  remoteConfigLocalPatchImportButton: "Importar parche local",
+  remoteConfigLocalPatchImportButton: "Importar hotfix del sitio",
   remoteConfigLocalPatchImportDesc:
-    "Instala un parche JSON de un sitio integrado sin un registry firmado. Los parches locales tienen prioridad sobre los remotos para validar hotfixes antes de contribuir.",
+    "Importa un JSON de hotfix de selectores para un sitio integrado. Los hotfixes locales tienen prioridad sobre los remotos para validar antes de contribuir. No instala un paquete nuevo.",
   remoteConfigLocalPatchConfirmTitle: "¿Importar parche local?",
   remoteConfigLocalPatchRisk:
     "Los parches locales no se autentican con la firma del registry oficial. Importa solo archivos de confianza.",

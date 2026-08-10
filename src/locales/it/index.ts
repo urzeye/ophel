@@ -205,8 +205,9 @@ export const it = {
   // SitePack Manager
   sitePacksGuideAction: "Guida",
   sitePacksRegistryTitle: "Libreria online",
-  sitePacksLocalImportTitle: "Importazione JSON locale",
-  sitePacksLocalImportDesc: "Importa solo manifest JSON di origine attendibile.",
+  sitePacksLocalImportTitle: "Installa pacchetto da file",
+  sitePacksLocalImportDesc:
+    "Installa un pacchetto adattatore da un file JSON locale. Utile per pacchetti offline o non ancora in elenco. Importa solo file di cui ti fidi.",
   sitePacksCheckUpdates: "Controlla aggiornamenti",
   sitePacksBindingHttpsRequired:
     "È possibile aggiungere solo siti HTTPS. I siti HTTP non sono supportati.",
@@ -2073,9 +2074,9 @@ export const it = {
   adapterDiagnosticsCopied: "Riepilogo diagnostico copiato.",
   adapterDiagnosticsCopyFailed: "Copia non riuscita: {error}",
   adapterDiagnosticsFailed: "Diagnostica non riuscita: {error}",
-  remoteConfigLocalPatchImportButton: "Importa patch locale",
+  remoteConfigLocalPatchImportButton: "Importa hotfix del sito",
   remoteConfigLocalPatchImportDesc:
-    "Installa una patch JSON per un sito integrato senza registry firmato. Le patch locali hanno priorità su quelle remote e servono a verificare gli hotfix prima del contributo.",
+    "Importa un JSON di hotfix selettori per un sito integrato. Gli hotfix locali hanno priorità su quelli remoti per i test pre-contributo. Non installa un nuovo pacchetto.",
   remoteConfigLocalPatchConfirmTitle: "Importare la patch locale?",
   remoteConfigLocalPatchRisk:
     "Le patch locali non sono autenticate dalla firma del registry ufficiale. Importa solo file di cui ti fidi.",

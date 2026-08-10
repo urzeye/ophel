@@ -203,8 +203,9 @@ export const ru = {
   // SitePack Manager
   sitePacksGuideAction: "Руководство",
   sitePacksRegistryTitle: "Онлайн-каталог",
-  sitePacksLocalImportTitle: "Импорт локального JSON",
-  sitePacksLocalImportDesc: "Импортируйте только JSON-манифесты из доверенного источника.",
+  sitePacksLocalImportTitle: "Установить пакет из файла",
+  sitePacksLocalImportDesc:
+    "Устанавливает пакет адаптера из локального JSON. Подходит для офлайн-пакетов или ещё не опубликованных. Импортируйте только доверенные файлы.",
   sitePacksCheckUpdates: "Проверить обновления",
   sitePacksBindingHttpsRequired: "Можно добавить только HTTPS-сайты. HTTP-сайты не поддерживаются.",
   sitePacksRegistrySearchPlaceholder: "Поиск пакетов",
@@ -1988,9 +1989,9 @@ export const ru = {
   adapterDiagnosticsCopied: "Сводка диагностики скопирована.",
   adapterDiagnosticsCopyFailed: "Не удалось скопировать: {error}",
   adapterDiagnosticsFailed: "Ошибка диагностики: {error}",
-  remoteConfigLocalPatchImportButton: "Импорт локального патча",
+  remoteConfigLocalPatchImportButton: "Импорт hotfix сайта",
   remoteConfigLocalPatchImportDesc:
-    "Устанавливает JSON-патч встроенного сайта без подписанного registry. Локальные патчи важнее удалённых и нужны для проверки hotfix до вклада.",
+    "Импортирует JSON hotfix селекторов для встроенного сайта. Локальные hotfix важнее удалённых патчей и нужны для проверки до вклада. Новый пакет адаптера не устанавливается.",
   remoteConfigLocalPatchConfirmTitle: "Импортировать локальный патч?",
   remoteConfigLocalPatchRisk:
     "Локальные патчи не проверяются официальной подписью registry. Импортируйте только доверенные файлы.",

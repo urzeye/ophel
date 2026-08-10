@@ -170,8 +170,9 @@ export const zhCN = {
   // SitePack 管理
   sitePacksGuideAction: "使用指南",
   sitePacksRegistryTitle: "在线适配库",
-  sitePacksLocalImportTitle: "本地 JSON 导入",
-  sitePacksLocalImportDesc: "仅导入来源可信的 JSON 清单。",
+  sitePacksLocalImportTitle: "从文件安装适配包",
+  sitePacksLocalImportDesc:
+    "从本地 JSON 文件安装适配包，适合离线包或尚未上架的包。只导入你信任的来源。",
   sitePacksCheckUpdates: "检查更新",
   sitePacksBindingHttpsRequired: "只支持 HTTPS 站点，HTTP 站点无法添加。",
   sitePacksRegistrySearchPlaceholder: "搜索适配包",
@@ -1905,9 +1906,9 @@ export const zhCN = {
   adapterDiagnosticsCopied: "诊断摘要已复制。",
   adapterDiagnosticsCopyFailed: "复制失败：{error}",
   adapterDiagnosticsFailed: "诊断失败：{error}",
-  remoteConfigLocalPatchImportButton: "导入本地补丁",
+  remoteConfigLocalPatchImportButton: "导入站点热修",
   remoteConfigLocalPatchImportDesc:
-    "从 JSON 文件安装内置站点补丁，无需签名 Registry。本地补丁优先于远程补丁，适合贡献前验证选择器热修。",
+    "为已有内置站点导入选择器热修 JSON。本地热修优先于远程补丁，适合贡献前验证；不会安装新的适配包。",
   remoteConfigLocalPatchConfirmTitle: "导入本地补丁？",
   remoteConfigLocalPatchRisk: "本地补丁不会经官方 Registry 签名校验。只导入你信任的文件。",
   remoteConfigLocalPatchSummary:

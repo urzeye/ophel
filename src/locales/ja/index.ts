@@ -200,8 +200,9 @@ export const ja = {
   // SitePack Manager
   sitePacksGuideAction: "ガイド",
   sitePacksRegistryTitle: "オンラインライブラリ",
-  sitePacksLocalImportTitle: "ローカル JSON のインポート",
-  sitePacksLocalImportDesc: "信頼できる提供元の JSON マニフェストだけをインポートしてください。",
+  sitePacksLocalImportTitle: "ファイルからアダプターをインストール",
+  sitePacksLocalImportDesc:
+    "ローカル JSON ファイルからアダプターパックをインストールします。オフライン配布や未掲載パック向けです。信頼できるファイルだけを取り込んでください。",
   sitePacksCheckUpdates: "更新を確認",
   sitePacksBindingHttpsRequired:
     "HTTPS サイトのみ追加できます。HTTP サイトはサポートされていません。",
@@ -1990,9 +1991,9 @@ export const ja = {
   adapterDiagnosticsCopied: "診断要約をコピーしました。",
   adapterDiagnosticsCopyFailed: "コピーに失敗しました：{error}",
   adapterDiagnosticsFailed: "診断に失敗しました：{error}",
-  remoteConfigLocalPatchImportButton: "ローカルパッチをインポート",
+  remoteConfigLocalPatchImportButton: "サイトホットフィックスをインポート",
   remoteConfigLocalPatchImportDesc:
-    "署名付き Registry なしで、組み込みサイトのパッチ JSON をインストールします。ローカルパッチはリモートより優先され、貢献前のセレクタ検証に使えます。",
+    "組み込みサイト向けのセレクター修正 JSON を取り込みます。ローカル修正はリモートより優先され、貢献前の検証に使えます。新しいアダプターパックはインストールしません。",
   remoteConfigLocalPatchConfirmTitle: "ローカルパッチをインポートしますか？",
   remoteConfigLocalPatchRisk:
     "ローカルパッチは公式 Registry の署名検証を受けません。信頼できるファイルのみインポートしてください。",

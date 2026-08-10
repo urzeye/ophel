@@ -202,8 +202,9 @@ export const en = {
   // SitePack Manager
   sitePacksGuideAction: "Guide",
   sitePacksRegistryTitle: "Online pack library",
-  sitePacksLocalImportTitle: "Local JSON import",
-  sitePacksLocalImportDesc: "Only import JSON manifests from a source you trust.",
+  sitePacksLocalImportTitle: "Install pack from file",
+  sitePacksLocalImportDesc:
+    "Install a site pack from a local JSON file. Use this for offline packs or packs not yet listed. Only import files you trust.",
   sitePacksCheckUpdates: "Check for updates",
   sitePacksBindingHttpsRequired: "Only HTTPS sites can be added. HTTP sites are not supported.",
   sitePacksRegistrySearchPlaceholder: "Search packs",
@@ -2000,9 +2001,9 @@ Please output the optimized code block directly, followed by a brief summary of 
   adapterDiagnosticsCopied: "Diagnostics summary copied.",
   adapterDiagnosticsCopyFailed: "Copy failed: {error}",
   adapterDiagnosticsFailed: "Diagnostics failed: {error}",
-  remoteConfigLocalPatchImportButton: "Import local patch",
+  remoteConfigLocalPatchImportButton: "Import site hotfix",
   remoteConfigLocalPatchImportDesc:
-    "Install a built-in site patch from a JSON file without a signed registry. Local patches override remote ones so you can verify selector hotfixes before contributing.",
+    "Import a selector hotfix JSON for a built-in site. Local hotfixes override remote patches for pre-contribution testing. This does not install a new site pack.",
   remoteConfigLocalPatchConfirmTitle: "Import local patch?",
   remoteConfigLocalPatchRisk:
     "Local patches are not authenticated by the official registry signature. Only import files you trust.",

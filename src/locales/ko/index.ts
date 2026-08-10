@@ -196,8 +196,9 @@ export const ko = {
   // SitePack Manager
   sitePacksGuideAction: "가이드",
   sitePacksRegistryTitle: "온라인 라이브러리",
-  sitePacksLocalImportTitle: "로컬 JSON 가져오기",
-  sitePacksLocalImportDesc: "신뢰할 수 있는 출처의 JSON 매니페스트만 가져오세요.",
+  sitePacksLocalImportTitle: "파일에서 어댑터 패키지 설치",
+  sitePacksLocalImportDesc:
+    "로컬 JSON 파일에서 어댑터 패키지를 설치합니다. 오프라인 패키지나 아직 목록에 없는 패키지에 사용하세요. 신뢰할 수 있는 파일만 가져오세요.",
   sitePacksCheckUpdates: "업데이트 확인",
   sitePacksBindingHttpsRequired:
     "HTTPS 사이트만 추가할 수 있습니다. HTTP 사이트는 지원되지 않습니다.",
@@ -1970,9 +1971,9 @@ export const ko = {
   adapterDiagnosticsCopied: "진단 요약을 복사했습니다.",
   adapterDiagnosticsCopyFailed: "복사 실패: {error}",
   adapterDiagnosticsFailed: "진단 실패: {error}",
-  remoteConfigLocalPatchImportButton: "로컬 패치 가져오기",
+  remoteConfigLocalPatchImportButton: "사이트 핫픽스 가져오기",
   remoteConfigLocalPatchImportDesc:
-    "서명된 레지스트리 없이 내장 사이트 패치 JSON을 설치합니다. 로컬 패치는 원격 패치보다 우선하며 기여 전 선택자 검증에 적합합니다.",
+    "내장 사이트용 선택자 핫픽스 JSON을 가져옵니다. 로컬 핫픽스는 원격 패치보다 우선하며 기여 전 검증에 적합합니다. 새 어댑터 패키지는 설치하지 않습니다.",
   remoteConfigLocalPatchConfirmTitle: "로컬 패치를 가져올까요?",
   remoteConfigLocalPatchRisk:
     "로컬 패치는 공식 레지스트리 서명 검증을 거치지 않습니다. 신뢰하는 파일만 가져오세요.",

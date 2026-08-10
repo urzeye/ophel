@@ -172,8 +172,9 @@ export const zhTW = {
   // SitePack 管理
   sitePacksGuideAction: "使用指南",
   sitePacksRegistryTitle: "線上適配庫",
-  sitePacksLocalImportTitle: "本機 JSON 匯入",
-  sitePacksLocalImportDesc: "僅匯入來源可信的 JSON 清單。",
+  sitePacksLocalImportTitle: "從檔案安裝適配包",
+  sitePacksLocalImportDesc:
+    "從本機 JSON 檔安裝適配包，適合離線包或尚未上架的包。只匯入你信任的來源。",
   sitePacksCheckUpdates: "檢查更新",
   sitePacksBindingHttpsRequired: "只支援 HTTPS 網站，HTTP 網站無法新增。",
   sitePacksRegistrySearchPlaceholder: "搜尋適配包",
@@ -1907,9 +1908,9 @@ export const zhTW = {
   adapterDiagnosticsCopied: "診斷摘要已複製。",
   adapterDiagnosticsCopyFailed: "複製失敗：{error}",
   adapterDiagnosticsFailed: "診斷失敗：{error}",
-  remoteConfigLocalPatchImportButton: "匯入本機補丁",
+  remoteConfigLocalPatchImportButton: "匯入站點熱修",
   remoteConfigLocalPatchImportDesc:
-    "從 JSON 檔安裝內建站點補丁，無需簽名 Registry。本機補丁優先於遠端補丁，適合貢獻前驗證選擇器熱修。",
+    "為既有內建站點匯入選擇器熱修 JSON。本機熱修優先於遠端補丁，適合貢獻前驗證；不會安裝新的適配包。",
   remoteConfigLocalPatchConfirmTitle: "匯入本機補丁？",
   remoteConfigLocalPatchRisk: "本機補丁不會經過官方 Registry 簽名驗證。請只匯入你信任的檔案。",
   remoteConfigLocalPatchSummary:
