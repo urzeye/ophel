@@ -1948,7 +1948,7 @@ export const ko = {
     "로컬 레지스트리 확인 실패({url}): {error}. pnpm registry:serve 실행 여부를 확인하세요.",
   remoteConfigLocalRegistryUseButton: "로컬 레지스트리 사용",
   remoteConfigLocalRegistryHint:
-    "먼저 pnpm registry:serve를 실행한 뒤 이 버튼을 누르세요. 로컬 서명 키는 개발 빌드에서만 신뢰됩니다.",
+    "먼저 pnpm registry:serve를 실행한 뒤 “{button}”을 누르세요. 로컬 서명 키는 개발 빌드에서만 신뢰됩니다.",
   remoteConfigLocalRegistrySourceApplied:
     "로컬 레지스트리 소스로 전환하고 업데이트 확인을 시작했습니다.",
   remoteConfigLocalRegistryPermissionDenied:

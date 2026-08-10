@@ -1966,7 +1966,7 @@ export const ru = {
     "Проверка локального registry не удалась ({url}): {error}. Убедитесь, что запущен pnpm registry:serve.",
   remoteConfigLocalRegistryUseButton: "Использовать локальный registry",
   remoteConfigLocalRegistryHint:
-    "Сначала запустите pnpm registry:serve, затем нажмите кнопку. Локальный ключ подписи доверяется только dev-сборкам.",
+    "Сначала запустите pnpm registry:serve, затем нажмите «{button}». Локальный ключ подписи доверяется только dev-сборкам.",
   remoteConfigLocalRegistrySourceApplied:
     "Переключено на локальный registry и запущена проверка обновлений.",
   remoteConfigLocalRegistryPermissionDenied:

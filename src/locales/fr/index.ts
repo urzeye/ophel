@@ -1992,7 +1992,7 @@ Donnez le code puis un résumé des améliorations.`,
     "Échec de la vérification du registry local ({url}) : {error}. Vérifiez que pnpm registry:serve tourne.",
   remoteConfigLocalRegistryUseButton: "Utiliser le registry local",
   remoteConfigLocalRegistryHint:
-    "Lancez d’abord pnpm registry:serve, puis ce bouton. Seules les builds de développement font confiance à la clé de signature locale.",
+    "Lancez d’abord pnpm registry:serve, puis cliquez sur « {button} ». Seules les builds de développement font confiance à la clé de signature locale.",
   remoteConfigLocalRegistrySourceApplied:
     "Basculé vers la source registry locale et vérification des mises à jour lancée.",
   remoteConfigLocalRegistryPermissionDenied:

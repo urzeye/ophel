@@ -1495,12 +1495,38 @@
 
 .settings-pack-source-controls {
   display: flex;
-  align-items: stretch;
+  flex-direction: column;
   gap: 8px;
 }
 
+.settings-pack-source-input-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  min-width: 0;
+}
+
+.settings-pack-source-input-row > input {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: auto;
+}
+
 .settings-pack-source-apply {
-  flex-shrink: 0;
+  flex: 0 0 auto;
+  align-self: stretch;
+  white-space: nowrap;
+}
+
+.settings-pack-source-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.settings-pack-source-actions .settings-pack-action-button {
+  flex: 0 0 auto;
   white-space: nowrap;
 }
 
@@ -1703,9 +1729,22 @@
     width: 100%;
   }
 
-  .settings-pack-source-controls {
+  .settings-pack-source-input-row {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .settings-pack-source-apply {
+    width: 100%;
+  }
+
+  .settings-pack-source-actions {
+    align-items: stretch;
+  }
+
+  .settings-pack-source-actions .settings-pack-action-button {
+    flex: 1 1 auto;
+    justify-content: center;
   }
 }
 

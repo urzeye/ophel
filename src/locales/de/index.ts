@@ -1985,7 +1985,7 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
     "Lokale Registry-Prüfung fehlgeschlagen ({url}): {error}. Stelle sicher, dass pnpm registry:serve läuft.",
   remoteConfigLocalRegistryUseButton: "Lokales Registry nutzen",
   remoteConfigLocalRegistryHint:
-    "Zuerst pnpm registry:serve ausführen, dann diese Schaltfläche. Nur Entwicklungsbuilds vertrauen dem lokalen Signaturschlüssel.",
+    "Zuerst pnpm registry:serve ausführen, dann “{button}” klicken. Nur Entwicklungsbuilds vertrauen dem lokalen Signaturschlüssel.",
   remoteConfigLocalRegistrySourceApplied:
     "Auf lokale Registry-Quelle umgestellt und Update-Prüfung gestartet.",
   remoteConfigLocalRegistryPermissionDenied:

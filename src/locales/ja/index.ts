@@ -1968,7 +1968,7 @@ export const ja = {
     "ローカル Registry の確認に失敗（{url}）：{error}。pnpm registry:serve が起動しているか確認してください。",
   remoteConfigLocalRegistryUseButton: "ローカル Registry を使う",
   remoteConfigLocalRegistryHint:
-    "先に pnpm registry:serve を実行してから押してください。ローカル署名鍵は開発ビルドでのみ信頼されます。",
+    "先に pnpm registry:serve を実行してから「{button}」を押してください。ローカル署名鍵は開発ビルドでのみ信頼されます。",
   remoteConfigLocalRegistrySourceApplied:
     "ローカル Registry ソースに切り替え、更新確認を開始しました。",
   remoteConfigLocalRegistryPermissionDenied:

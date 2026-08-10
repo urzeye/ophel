@@ -1978,7 +1978,7 @@ Please output the optimized code block directly, followed by a brief summary of 
     "Local registry check failed ({url}): {error}. Make sure pnpm registry:serve is running.",
   remoteConfigLocalRegistryUseButton: "Use local registry",
   remoteConfigLocalRegistryHint:
-    "Run pnpm registry:serve first, then click this button. Only development builds trust the local signing key.",
+    "Run pnpm registry:serve first, then click “{button}”. Only development builds trust the local signing key.",
   remoteConfigLocalRegistrySourceApplied:
     "Switched to the local registry source and started an update check.",
   remoteConfigLocalRegistryPermissionDenied:

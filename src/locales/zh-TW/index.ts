@@ -1886,7 +1886,7 @@ export const zhTW = {
     "本機 Registry 檢查失敗（{url}）：{error}。請確認已執行 pnpm registry:serve。",
   remoteConfigLocalRegistryUseButton: "使用本機 Registry",
   remoteConfigLocalRegistryHint:
-    "先執行 pnpm registry:serve，再點此按鈕。僅開發建置會信任本機簽名金鑰。",
+    "先執行 pnpm registry:serve，再點「{button}」。僅開發建置會信任本機簽名金鑰。",
   remoteConfigLocalRegistrySourceApplied: "已切換到本機 Registry 來源並開始檢查更新。",
   remoteConfigLocalRegistryPermissionDenied:
     "未取得本機 Registry 存取權限。請允許 127.0.0.1 主機權限後重試。",

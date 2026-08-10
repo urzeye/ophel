@@ -1976,7 +1976,7 @@ Dame el código y luego un resumen de mejoras.`,
     "Falló la comprobación del registry local ({url}): {error}. Asegúrate de que pnpm registry:serve esté en ejecución.",
   remoteConfigLocalRegistryUseButton: "Usar registry local",
   remoteConfigLocalRegistryHint:
-    "Ejecuta primero pnpm registry:serve y luego este botón. Solo las builds de desarrollo confían en la clave de firma local.",
+    "Ejecuta primero pnpm registry:serve y luego pulsa “{button}”. Solo las builds de desarrollo confían en la clave de firma local.",
   remoteConfigLocalRegistrySourceApplied:
     "Se cambió al origen de registry local y se inició la comprobación de actualizaciones.",
   remoteConfigLocalRegistryPermissionDenied:

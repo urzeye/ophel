@@ -1884,7 +1884,7 @@ export const zhCN = {
     "本地 Registry 检查失败（{url}）：{error}。请确认已运行 pnpm registry:serve。",
   remoteConfigLocalRegistryUseButton: "使用本地 Registry",
   remoteConfigLocalRegistryHint:
-    "先运行 pnpm registry:serve，再点此按钮。仅开发构建会信任本地签名密钥。",
+    "先运行 pnpm registry:serve，再点「{button}」。仅开发构建会信任本地签名密钥。",
   remoteConfigLocalRegistrySourceApplied: "已切换到本地 Registry 源并开始检查更新。",
   remoteConfigLocalRegistryPermissionDenied:
     "未获得访问本地 Registry 的权限。请允许 127.0.0.1 主机权限后重试。",

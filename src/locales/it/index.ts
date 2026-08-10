@@ -2051,7 +2051,7 @@ export const it = {
     "Controllo registry locale non riuscito ({url}): {error}. Verifica che pnpm registry:serve sia in esecuzione.",
   remoteConfigLocalRegistryUseButton: "Usa registry locale",
   remoteConfigLocalRegistryHint:
-    "Esegui prima pnpm registry:serve, poi premi questo pulsante. Solo le build di sviluppo si fidano della chiave di firma locale.",
+    "Esegui prima pnpm registry:serve, poi premi “{button}”. Solo le build di sviluppo si fidano della chiave di firma locale.",
   remoteConfigLocalRegistrySourceApplied:
     "Passato all’origine registry locale e avviato il controllo aggiornamenti.",
   remoteConfigLocalRegistryPermissionDenied:
