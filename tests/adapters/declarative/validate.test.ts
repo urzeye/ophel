@@ -272,6 +272,7 @@ describe("validateSitePackManifest matches", () => {
     ["non-HTTPS matches", "http://chat.example.com/*"],
     ["the all-URLs token", "<all_urls>"],
     ["a top-level wildcard", "https://*/*"],
+    ["an HTTP top-level wildcard", "http://*/*"],
     ["a malformed wildcard", "https://foo.*.example.com/*"],
   ])("rejects %s", (_name, matchPattern) => {
     expectInvalid(
@@ -281,6 +282,18 @@ describe("validateSitePackManifest matches", () => {
       }),
       "$.matches[0]",
       "invalid_pattern",
+    )
+  })
+
+  it("accepts HTTP matches when allowHttpMatches is enabled", () => {
+    expectValid(
+      validateSitePackManifest(
+        {
+          ...createMinimalManifest(),
+          matches: ["http://127.0.0.1:3080/*"],
+        },
+        { allowHttpMatches: true },
+      ),
     )
   })
 

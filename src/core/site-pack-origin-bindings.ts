@@ -3,7 +3,7 @@ import { isValidSitePackId } from "~adapters/declarative/types"
 export { SITE_PACK_ORIGIN_BINDINGS_STORAGE_KEY } from "./site-pack-storage-constants"
 export const SITE_PACK_ORIGIN_BINDINGS_STORAGE_SCHEMA_VERSION = 1 as const
 
-const EXACT_HTTPS_ORIGIN_INPUT_PATTERN = /^https:\/\/[^/?#\\]+\/?$/i
+const EXACT_ORIGIN_INPUT_PATTERN = /^(https?):\/\/[^/?#\\]+\/?$/i
 
 export interface SitePackOriginBinding {
   mode: "explicit"
@@ -58,11 +58,11 @@ export const canonicalizeSitePackBindingOrigin = (value: string): string => {
     typeof value !== "string" ||
     value.length === 0 ||
     /\s/.test(value) ||
-    !EXACT_HTTPS_ORIGIN_INPUT_PATTERN.test(value)
+    !EXACT_ORIGIN_INPUT_PATTERN.test(value)
   ) {
     throw new SitePackOriginBindingsError(
       "invalid-origin",
-      "SitePack binding origin must contain only an HTTPS scheme and exact authority",
+      "SitePack binding origin must contain only an http(s) scheme and exact authority",
     )
   }
 
@@ -76,10 +76,10 @@ export const canonicalizeSitePackBindingOrigin = (value: string): string => {
     )
   }
 
-  if (url.protocol !== "https:") {
+  if (url.protocol !== "https:" && url.protocol !== "http:") {
     throw new SitePackOriginBindingsError(
       "invalid-origin",
-      `SitePack binding origin must use HTTPS: ${value}`,
+      `SitePack binding origin must use HTTP or HTTPS: ${value}`,
     )
   }
   if (url.username || url.password) {

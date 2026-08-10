@@ -9,7 +9,7 @@ export interface UserscriptMatchCoverageInfo {
 }
 
 interface ParsedUserscriptMatchPattern {
-  scheme: "https" | "*"
+  scheme: "http" | "https" | "*"
   hostname: string
   wildcardHost: boolean
   anyHost: boolean
@@ -127,7 +127,7 @@ const parseUserscriptMatchPattern = (rawPattern: string): ParsedUserscriptMatchP
     }
   }
 
-  const match = /^(https|\*):\/\/([^/]+)(\/.*)$/.exec(pattern)
+  const match = /^(https?|\*):\/\/([^/]+)(\/.*)$/.exec(pattern)
   if (!match) return null
 
   const authority = match[2].toLowerCase()
@@ -137,7 +137,7 @@ const parseUserscriptMatchPattern = (rawPattern: string): ParsedUserscriptMatchP
   if (!parsedAuthority) return null
 
   return {
-    scheme: match[1] as "https" | "*",
+    scheme: match[1] as "http" | "https" | "*",
     hostname: parsedAuthority.hostname,
     wildcardHost,
     anyHost,
@@ -171,10 +171,18 @@ export const userscriptMatchPatternCoversOriginPattern = (
 ): boolean => {
   const covering = parseUserscriptMatchPattern(coveringPattern)
   const candidate = parseUserscriptMatchPattern(candidateOriginPattern)
-  if (!covering || !candidate || candidate.scheme !== "https" || !candidate.coversAllPaths) {
+  if (
+    !covering ||
+    !candidate ||
+    (candidate.scheme !== "https" && candidate.scheme !== "http") ||
+    !candidate.coversAllPaths
+  ) {
     return false
   }
   if (!covering.coversAllPaths) return false
+  const schemeCovered =
+    covering.scheme === "*" || covering.scheme === candidate.scheme
+  if (!schemeCovered) return false
   return coversHost(covering, candidate) && coversPort(covering, candidate)
 }
 

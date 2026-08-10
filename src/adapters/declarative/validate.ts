@@ -44,6 +44,8 @@ export type SitePackValidationResult<T> =
 
 export interface SitePackValidationOptions {
   regexSafetyCheck?: (pattern: string) => boolean
+  /** Development-only: allow http:// match patterns for local debugging. */
+  allowHttpMatches?: boolean
 }
 
 export interface SiteConfigValidationOptions extends SitePackValidationOptions {
@@ -57,11 +59,13 @@ type ValidationMode = "full" | "partial"
 interface ValidationContext {
   errors: SitePackValidationError[]
   regexSafetyCheck?: (pattern: string) => boolean
+  allowHttpMatches: boolean
 }
 
 const createValidationContext = (options: SitePackValidationOptions = {}): ValidationContext => ({
   errors: [],
   regexSafetyCheck: options.regexSafetyCheck,
+  allowHttpMatches: options.allowHttpMatches === true,
 })
 
 interface StringValidationOptions {
@@ -1627,21 +1631,31 @@ const validateConfigFields = (
 }
 
 const validateMatchPattern = (value: string, path: string, context: ValidationContext): void => {
-  if (value === "<all_urls>" || value === "https://*/*") {
+  if (value === "<all_urls>" || value === "https://*/*" || value === "http://*/*") {
     addError(context, path, "invalid_pattern", "Global match patterns are not allowed")
     return
   }
-  if (!value.startsWith("https://")) {
+
+  const match = /^(https?):\/\/([^/]+)(\/.*)$/i.exec(value)
+  if (!match) {
+    addError(
+      context,
+      path,
+      "invalid_pattern",
+      context.allowHttpMatches
+        ? "Match pattern must use http:// or https://"
+        : "Match pattern must use https://",
+    )
+    return
+  }
+
+  const scheme = match[1].toLowerCase() as "http" | "https"
+  if (scheme === "http" && !context.allowHttpMatches) {
     addError(context, path, "invalid_pattern", "Match pattern must use https://")
     return
   }
 
-  const match = /^https:\/\/([^/]+)(\/.*)$/.exec(value)
-  if (!match) {
-    addError(context, path, "invalid_pattern", "Invalid HTTPS match pattern")
-    return
-  }
-  const host = match[1]
+  const host = match[2]
   if (host === "*" || (host.includes("*") && !/^\*\.[^*]+$/.test(host))) {
     addError(
       context,
@@ -1659,7 +1673,7 @@ const validateMatchPattern = (value: string, path: string, context: ValidationCo
     return
   }
   try {
-    new URL(`https://${concreteHost}/`)
+    new URL(`${scheme}://${concreteHost}/`)
   } catch {
     addError(context, path, "invalid_pattern", "Match pattern contains an invalid host")
   }

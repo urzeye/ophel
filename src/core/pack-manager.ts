@@ -9,6 +9,7 @@ import { isBuiltinSiteId, SUPPORTED_AI_PLATFORMS } from "~constants/defaults"
 
 import { isCachedSitePackShape } from "./remote-config-cache"
 import { isLoopbackRegistrySourceUrl } from "./remote-config-local-dev"
+import { allowsSitePackHttpOrigins } from "./site-pack-http-policy"
 import { loadRemoteConfigState } from "./remote-config-state"
 import {
   isAppVersionCompatible,
@@ -591,7 +592,9 @@ export class PackManager {
   }
 
   private validateManifest(input: unknown, expectedId?: string): SitePackManifest {
-    const validation = validateSitePackManifest(input)
+    const validation = validateSitePackManifest(input, {
+      allowHttpMatches: allowsSitePackHttpOrigins(),
+    })
     if (!validation.valid) {
       throw new PackManagerError(
         "invalid-pack",

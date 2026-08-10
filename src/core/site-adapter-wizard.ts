@@ -16,6 +16,7 @@ import {
   type StableSelectorFailureReason,
 } from "~core/element-selector-generator"
 
+import { allowsSitePackHttpOrigins } from "~core/site-pack-http-policy"
 import {
   SITE_ADAPTER_WIZARD_STEPS,
   type SiteAdapterWizardStepId,
@@ -532,21 +533,23 @@ export const buildSiteAdapterWizardPack = (input: {
     }
   }
 
-  if (input.pageUrl.protocol !== "https:") {
+  const allowHttp = allowsSitePackHttpOrigins()
+  if (input.pageUrl.protocol !== "https:" && !(allowHttp && input.pageUrl.protocol === "http:")) {
     return { valid: false, issue: { code: "https-required" } }
   }
 
   const preview = buildSiteAdapterWizardConfigPreview(input.draft, validations)
+  const matchScheme = input.pageUrl.protocol === "http:" ? "http" : "https"
   const candidate: SitePackManifest = {
     schemaVersion: SITE_PACK_SCHEMA_VERSION,
     id: input.metadata.id.trim(),
     version: input.metadata.version,
     minAppVersion: input.appVersion,
     name: normalizePackName(input.metadata.name),
-    matches: [`https://${input.pageUrl.host.toLowerCase()}/*`],
+    matches: [`${matchScheme}://${input.pageUrl.host.toLowerCase()}/*`],
     ...preview.config,
   }
-  const validation = validateSitePackManifest(candidate)
+  const validation = validateSitePackManifest(candidate, { allowHttpMatches: allowHttp })
   if (!validation.valid) {
     return {
       valid: false,

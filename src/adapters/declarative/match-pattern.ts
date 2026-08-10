@@ -4,11 +4,13 @@ interface MatchPatternHost {
 }
 
 interface ParsedSiteMatchPattern {
+  scheme: "http" | "https"
   authority: string
   pathPattern: string
 }
 
 interface MatchPatternOriginScope {
+  scheme: "http" | "https"
   hostname: string
   wildcard: boolean
   hasExplicitPort: boolean
@@ -16,14 +18,18 @@ interface MatchPatternOriginScope {
 }
 
 const SITE_MATCH_PATTERN_ORIGIN_PATTERN =
-  /^https:\/\/(?:\*\.)?(?:\[[0-9a-f:.]+\]|[a-z0-9-]+(?:\.[a-z0-9-]+)*)(?::\d{1,5})?\/\*$/i
+  /^https?:\/\/(?:\*\.)?(?:\[[0-9a-f:.]+\]|[a-z0-9-]+(?:\.[a-z0-9-]+)*)(?::\d{1,5})?\/\*$/i
 
 const parseSiteMatchPattern = (pattern: string): ParsedSiteMatchPattern => {
-  const match = /^https:\/\/([^/]+)(\/.*)$/.exec(pattern)
+  const match = /^(https?):\/\/([^/]+)(\/.*)$/i.exec(pattern)
   if (!match) {
     throw new TypeError(`Validated match pattern could not be parsed: ${pattern}`)
   }
-  return { authority: match[1], pathPattern: match[2] }
+  return {
+    scheme: match[1].toLowerCase() as "http" | "https",
+    authority: match[2],
+    pathPattern: match[3],
+  }
 }
 
 const parseMatchPatternHost = (pattern: string): MatchPatternHost => {
@@ -38,14 +44,16 @@ const parseMatchPatternHost = (pattern: string): MatchPatternHost => {
 
 const parseMatchPatternOriginScope = (pattern: string): MatchPatternOriginScope => {
   if (!isSiteMatchPatternOriginPattern(pattern)) {
-    throw new TypeError(`Expected an HTTPS origin-level match pattern: ${pattern}`)
+    throw new TypeError(`Expected an origin-level match pattern: ${pattern}`)
   }
 
-  const authority = parseSiteMatchPattern(pattern).authority.toLowerCase()
+  const parsed = parseSiteMatchPattern(pattern)
+  const authority = parsed.authority.toLowerCase()
   const wildcard = authority.startsWith("*.")
   const concreteAuthority = wildcard ? authority.slice(2) : authority
-  const url = new URL(`https://${concreteAuthority}/`)
+  const url = new URL(`${parsed.scheme}://${concreteAuthority}/`)
   return {
+    scheme: parsed.scheme,
     hostname: url.hostname.toLowerCase(),
     wildcard,
     hasExplicitPort: hasExplicitPort(concreteAuthority),
@@ -64,11 +72,11 @@ const createWildcardRegExp = (value: string): RegExp =>
 const hasExplicitPort = (authority: string): boolean =>
   authority.startsWith("[") ? /\]:\d+$/.test(authority) : /:\d+$/.test(authority)
 
-const matchesAuthority = (url: URL, authority: string): boolean => {
+const matchesAuthority = (url: URL, authority: string, scheme: "http" | "https"): boolean => {
   const normalizedAuthority = authority.toLowerCase()
   const wildcard = normalizedAuthority.startsWith("*.")
   const concreteAuthority = wildcard ? normalizedAuthority.slice(2) : normalizedAuthority
-  const baseUrl = new URL(`https://${concreteAuthority}/`)
+  const baseUrl = new URL(`${scheme}://${concreteAuthority}/`)
   const hostname = url.hostname.toLowerCase()
   const baseHostname = baseUrl.hostname.toLowerCase()
   const hostnameMatches = wildcard
@@ -81,27 +89,28 @@ const matchesAuthority = (url: URL, authority: string): boolean => {
 
 /** 已校验 match pattern 对 URL 的运行时匹配语义。 */
 export const siteMatchPatternMatchesUrl = (url: URL, pattern: string): boolean => {
-  if (url.protocol !== "https:") return false
+  if (url.protocol !== "https:" && url.protocol !== "http:") return false
 
-  const { authority, pathPattern } = parseSiteMatchPattern(pattern)
-  if (!matchesAuthority(url, authority)) return false
+  const { scheme, authority, pathPattern } = parseSiteMatchPattern(pattern)
+  if (url.protocol !== `${scheme}:`) return false
+  if (!matchesAuthority(url, authority, scheme)) return false
   return createWildcardRegExp(pathPattern).test(`${url.pathname}${url.search}`)
 }
 
 /** 从已校验 match pattern 取得可展示/取 favicon 的具体 origin。 */
 export const siteMatchPatternOrigin = (pattern: string): string => {
-  const { authority } = parseSiteMatchPattern(pattern)
+  const { scheme, authority } = parseSiteMatchPattern(pattern)
   const concreteAuthority = authority.startsWith("*.") ? authority.slice(2) : authority
-  return new URL(`https://${concreteAuthority}/`).origin
+  return new URL(`${scheme}://${concreteAuthority}/`).origin
 }
 
-/** 检查动态授权页收到的值是否为受支持的 HTTPS origin 级匹配。 */
+/** 检查动态授权页收到的值是否为受支持的 origin 级匹配。 */
 export const isSiteMatchPatternOriginPattern = (pattern: string): boolean => {
   if (!SITE_MATCH_PATTERN_ORIGIN_PATTERN.test(pattern)) return false
-  const { authority } = parseSiteMatchPattern(pattern)
+  const { scheme, authority } = parseSiteMatchPattern(pattern)
   const concreteAuthority = authority.startsWith("*.") ? authority.slice(2) : authority
   try {
-    new URL(`https://${concreteAuthority}/`)
+    new URL(`${scheme}://${concreteAuthority}/`)
     return true
   } catch {
     return false
@@ -110,8 +119,8 @@ export const isSiteMatchPatternOriginPattern = (pattern: string): boolean => {
 
 /** 从已校验 match pattern 取得动态授权/注册使用的 origin 级匹配。 */
 export const siteMatchPatternOriginPattern = (pattern: string): string => {
-  const { authority } = parseSiteMatchPattern(pattern)
-  return `https://${authority.toLowerCase()}/*`
+  const { scheme, authority } = parseSiteMatchPattern(pattern)
+  return `${scheme}://${authority.toLowerCase()}/*`
 }
 
 /** 判断一个 origin 级匹配是否完整覆盖另一个，用于避免重叠动态脚本重复注入。 */
@@ -121,6 +130,8 @@ export const siteMatchPatternOriginPatternCovers = (
 ): boolean => {
   const covering = parseMatchPatternOriginScope(coveringPattern)
   const candidate = parseMatchPatternOriginScope(candidatePattern)
+
+  if (covering.scheme !== candidate.scheme) return false
 
   const hostCovered = covering.wildcard
     ? isSameOrSubdomain(candidate.hostname, covering.hostname)

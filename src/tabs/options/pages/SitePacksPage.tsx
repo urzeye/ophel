@@ -67,6 +67,7 @@ import {
 } from "~platform/userscript-match-coverage"
 import { useSettingsStore } from "~stores/settings-store"
 import { PageTitle, SettingRow, TabGroup, ToggleRow } from "~tabs/options/components"
+import { allowsSitePackHttpOrigins } from "~core/site-pack-http-policy"
 import { IS_DEVELOPMENT_BUILD } from "~utils/config"
 import { getCurrentLang, subscribeI18nChanges, t } from "~utils/i18n"
 import { scrollWithinSettingsContent } from "~utils/settings-scroll"
@@ -789,7 +790,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
 
     try {
       const candidate = normalizeBindingOriginInput(bindingOrigin)
-      if (/^http:\/\//i.test(candidate)) {
+      if (/^http:\/\//i.test(candidate) && !allowsSitePackHttpOrigins()) {
         notifyError(t("sitePacksBindingHttpsRequired"))
         return
       }

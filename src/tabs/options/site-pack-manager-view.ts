@@ -5,6 +5,7 @@ import {
   validateSitePackManifest,
   type SitePackValidationError,
 } from "~adapters/declarative/validate"
+import { allowsSitePackHttpOrigins } from "~core/site-pack-http-policy"
 import type { InstalledSitePack, PackManagerSyncResult } from "~core/pack-manager"
 import type { RemoteConfigState } from "~core/remote-config-types"
 
@@ -101,7 +102,9 @@ export const parseSitePackImport = (text: string, byteSize: number): SitePackImp
     }
   }
 
-  const validation = validateSitePackManifest(parsed)
+  const validation = validateSitePackManifest(parsed, {
+    allowHttpMatches: allowsSitePackHttpOrigins(),
+  })
   if (!validation.valid) {
     return { valid: false, errors: validation.errors }
   }

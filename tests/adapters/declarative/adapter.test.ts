@@ -299,9 +299,21 @@ describe("DeclarativeAdapter P1-01 browser-facing behavior", () => {
       expected: false,
     },
     {
-      name: "a non-HTTPS URL",
+      name: "a non-HTTPS URL against an HTTPS pattern",
       pattern: "https://chat.example.com/*",
       url: "http://chat.example.com/conversation",
+      expected: false,
+    },
+    {
+      name: "an HTTP pattern on an HTTP URL",
+      pattern: "http://127.0.0.1:3080/*",
+      url: "http://127.0.0.1:3080/chat",
+      expected: true,
+    },
+    {
+      name: "an HTTP pattern on an HTTPS URL",
+      pattern: "http://chat.example.com/*",
+      url: "https://chat.example.com/conversation",
       expected: false,
     },
   ])("matches $name", ({ pattern, url, expected }) => {
