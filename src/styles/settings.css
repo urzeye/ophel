@@ -1473,20 +1473,19 @@
 
 /* ---------- 更新与来源 ---------- */
 
-.settings-pack-source-block {
-  margin-top: 16px;
-  padding: 12px;
-  border: 1px dashed
-    color-mix(in srgb, var(--gh-border, #e5e7eb) 90%, var(--gh-text-secondary, #9ca3af));
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--gh-bg-secondary, #f9fafb) 78%, var(--gh-card-bg, #ffffff));
+.settings-pack-dev-card {
+  border-style: dashed;
+  background: color-mix(in srgb, var(--gh-bg-secondary, #f9fafb) 72%, var(--gh-card-bg, #ffffff));
 }
 
-.settings-pack-source-label {
+.settings-pack-dev-card .settings-card-title {
   display: block;
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 14px;
   color: var(--gh-text-secondary, #6b7280);
+}
+
+.settings-pack-dev-card .settings-pack-source-desc:first-of-type {
+  margin-top: 0;
 }
 
 .settings-pack-source-desc {
