@@ -12,7 +12,7 @@ import {
   GeneralIcon,
   PageContentIcon,
   PermissionsIcon,
-  PuzzleIcon,
+  SitePacksIcon,
 } from "~components/icons"
 import { resolveSettingsNavigateDetail } from "~constants"
 import { platform } from "~platform"
@@ -63,7 +63,7 @@ const NAV_ITEMS: Array<{
   },
   {
     id: "sitePacks",
-    Icon: PuzzleIcon,
+    Icon: SitePacksIcon,
     labelKey: "navSitePacks",
     label: "适配中心",
     beta: true,

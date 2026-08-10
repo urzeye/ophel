@@ -22,6 +22,7 @@ import {
   InfoIcon,
   PuzzleIcon,
   RefreshIcon,
+  SitePacksIcon,
 } from "~components/icons"
 import { Button, Input, SelectDropdown, Switch, type SelectDropdownOption } from "~components/ui"
 import { SITE_PACKS_TAB_IDS } from "~constants"
@@ -1739,7 +1740,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
       className="settings-pack-page"
       tabIndex={-1}
       aria-busy={isInstalledLoading || isBindingsLoading || isRegistryLoading || isRuntimeLoading}>
-      <PageTitle title={t("navSitePacks")} Icon={PuzzleIcon} />
+      <PageTitle title={t("navSitePacks")} Icon={SitePacksIcon} />
       <p className="settings-page-desc">{t("sitePacksPageDesc")}</p>
 
       <div className="settings-pack-toolbar">

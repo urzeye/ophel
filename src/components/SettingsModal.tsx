@@ -16,8 +16,8 @@ import {
   MaximizeIcon,
   PageContentIcon,
   PermissionsIcon,
-  PuzzleIcon,
   RestoreIcon,
+  SitePacksIcon,
   SearchIcon,
 } from "~components/icons"
 import ModelLockSettingsContent from "~components/ModelLockSettingsContent"
@@ -106,7 +106,7 @@ const NAV_ITEMS: Array<{
   },
   {
     id: NAV_IDS.SITE_PACKS,
-    Icon: PuzzleIcon,
+    Icon: SitePacksIcon,
     labelKey: "navSitePacks",
     label: "适配中心",
     beta: true,
