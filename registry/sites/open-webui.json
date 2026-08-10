@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "open-webui",
-  "version": 2,
+  "version": 3,
   "minAppVersion": "1.1.8",
   "name": "Open WebUI",
   "nameI18n": {
@@ -46,7 +46,8 @@
     "submitButton": ["#send-message-button"],
     "responseContainer": "#messages-container [role='log']",
     "userQuery": ".user-message .chat-user .markdown-prose, .user-message .chat-user .whitespace-pre-wrap",
-    "newChatButton": ["a#sidebar-new-chat-button", "#sidebar > button a[href='/']"]
+    "newChatButton": ["a#sidebar-new-chat-button", "#sidebar > button a[href='/']"],
+    "scrollContainer": ["#messages-container", "#chat-pane"]
   },
   "input": {
     "mode": "contenteditable",
