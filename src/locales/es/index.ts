@@ -285,6 +285,15 @@ export const es = {
   sitePacksUserscriptCoverageDesc:
     "A {manager} le faltan {count} reglas de coincidencia de SitePack. Copia las reglas siguientes antes de abrir esos sitios.",
   sitePacksUserscriptManagerUnknown: "El gestor de userscripts actual",
+  sitePacksUserscriptGuideTampermonkey:
+    "Para añadir en Tampermonkey: panel → este script → pestaña Configuración → Coincidencias de usuario → Añadir y pega una regla de arriba.",
+  sitePacksUserscriptGuideViolentmonkey:
+    "Para añadir en Violentmonkey: panel → icono de configuración junto a este script → pestaña Personalizado → pega una regla de arriba en las reglas de coincidencia personalizadas.",
+  sitePacksUserscriptGuideGeneric:
+    "Abre la configuración de este script en tu gestor de userscripts y añade las reglas anteriores como reglas de coincidencia de usuario (personalizadas).",
+  sitePacksUserscriptCoveragePersistNote:
+    "Cada regla solo hay que añadirla una vez y se conserva tras las actualizaciones del script. Después, recarga el sitio de destino.",
+  sitePacksMatchGuideAction: "Ver guía de configuración",
   sitePacksBindingPackRequired: "Elige primero un paquete instalado.",
 
   generalPageDesc: "Configurar el comportamiento de la extensión",

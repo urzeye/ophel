@@ -287,6 +287,15 @@ export const de = {
   sitePacksUserscriptCoverageDesc:
     "In {manager} fehlen {count} SitePack-Match-Regeln. Kopiere die folgenden Regeln, bevor du die betroffenen Websites öffnest.",
   sitePacksUserscriptManagerUnknown: "Der aktuelle Userscript-Manager",
+  sitePacksUserscriptGuideTampermonkey:
+    "In Tampermonkey hinzufügen: Dashboard → dieses Skript → Tab „Einstellungen“ → „Benutzer-Matches“ → „Hinzufügen“ und eine der obigen Regeln einfügen.",
+  sitePacksUserscriptGuideViolentmonkey:
+    "In Violentmonkey hinzufügen: Dashboard → Einstellungssymbol neben diesem Skript → Tab „Benutzerdefiniert“ → eine der obigen Regeln bei den benutzerdefinierten Match-Regeln einfügen.",
+  sitePacksUserscriptGuideGeneric:
+    "Öffne die Einstellungen dieses Skripts in deinem Userscript-Manager und füge die obigen Regeln als Benutzer-(benutzerdefinierte) Match-Regeln hinzu.",
+  sitePacksUserscriptCoveragePersistNote:
+    "Jede Regel muss nur einmal hinzugefügt werden und bleibt auch nach Skript-Updates erhalten. Lade danach die Zielseite neu.",
+  sitePacksMatchGuideAction: "Anleitung anzeigen",
   sitePacksBindingPackRequired: "Wähle zuerst ein installiertes Paket aus.",
 
   generalPageDesc: "Verhalten der Erweiterung konfigurieren",

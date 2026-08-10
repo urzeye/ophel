@@ -244,6 +244,15 @@ export const zhTW = {
   sitePacksUserscriptCoverageDesc:
     "{manager} 尚未涵蓋 {count} 個適配包網域規則。請先複製下列規則，再開啟對應網站。",
   sitePacksUserscriptManagerUnknown: "目前的腳本管理器",
+  sitePacksUserscriptGuideTampermonkey:
+    "在 Tampermonkey 中新增：管理面板 → 本腳本 → 「設定」分頁 → 「使用者比對」區域 → 「新增」，貼上上述規則。",
+  sitePacksUserscriptGuideViolentmonkey:
+    "在 Violentmonkey 中新增：開啟控制台 → 點擊本腳本旁的設定圖示 → 「自訂」分頁 → 在「自訂比對」中貼上上述規則。",
+  sitePacksUserscriptGuideGeneric:
+    "請在腳本管理器中開啟本腳本的設定頁，將上述規則新增為使用者比對（自訂比對）規則。",
+  sitePacksUserscriptCoveragePersistNote:
+    "規則只需新增一次，腳本更新後也會保留；新增後重新整理目標網站即可生效。",
+  sitePacksMatchGuideAction: "查看新增指引",
   sitePacksBindingPackRequired: "請先選擇一個已安裝的適配包。",
 
   generalPageDesc: "配置擴充功能的基本行為和介面",

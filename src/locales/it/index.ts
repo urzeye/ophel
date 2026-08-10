@@ -284,6 +284,15 @@ export const it = {
   sitePacksUserscriptCoverageDesc:
     "In {manager} mancano {count} regole di corrispondenza SitePack. Copia le regole seguenti prima di aprire i siti interessati.",
   sitePacksUserscriptManagerUnknown: "Il gestore userscript corrente",
+  sitePacksUserscriptGuideTampermonkey:
+    "Per aggiungere in Tampermonkey: dashboard → questo script → scheda Impostazioni → Corrispondenze utente → Aggiungi e incolla una regola qui sopra.",
+  sitePacksUserscriptGuideViolentmonkey:
+    "Per aggiungere in Violentmonkey: dashboard → icona delle impostazioni accanto a questo script → scheda Personalizzato → incolla una regola qui sopra nelle regole di corrispondenza personalizzate.",
+  sitePacksUserscriptGuideGeneric:
+    "Apri le impostazioni di questo script nel tuo gestore userscript e aggiungi le regole qui sopra come regole di corrispondenza utente (personalizzate).",
+  sitePacksUserscriptCoveragePersistNote:
+    "Ogni regola va aggiunta una sola volta e resta anche dopo gli aggiornamenti dello script. Ricarica poi il sito di destinazione.",
+  sitePacksMatchGuideAction: "Vedi guida all'aggiunta",
   sitePacksBindingPackRequired: "Scegli prima un pacchetto installato.",
 
   generalPageDesc: "Configura il comportamento e l'interfaccia dell'estensione",

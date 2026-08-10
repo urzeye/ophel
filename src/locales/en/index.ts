@@ -277,6 +277,15 @@ export const en = {
   sitePacksUserscriptCoverageDesc:
     "{manager} is missing {count} SitePack match rules. Copy the rules below before opening those sites.",
   sitePacksUserscriptManagerUnknown: "Your userscript manager",
+  sitePacksUserscriptGuideTampermonkey:
+    "To add in Tampermonkey: Dashboard → this script → Settings tab → User matches → Add, then paste a rule from above.",
+  sitePacksUserscriptGuideViolentmonkey:
+    "To add in Violentmonkey: open the dashboard → click the settings icon next to this script → Custom tab → paste a rule from above into the custom match rules.",
+  sitePacksUserscriptGuideGeneric:
+    "Open this script's settings in your userscript manager and add the rules above as user (custom) match rules.",
+  sitePacksUserscriptCoveragePersistNote:
+    "Each rule only needs to be added once and survives script updates. Refresh the target site afterwards.",
+  sitePacksMatchGuideAction: "View setup guide",
   sitePacksBindingPackRequired: "Choose an installed pack first.",
 
   generalPageDesc: "Configure extension behavior and interface",

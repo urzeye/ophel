@@ -512,6 +512,29 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
         ),
     )
   }, [requiredUserscriptOriginPatterns, userscriptMatchInfo])
+  // 已安装包维度：哪些包存在未被脚本 match 覆盖的域名，用于在已安装列表内直接警示
+  const missingUserscriptPackIds = useMemo(() => {
+    const result = new Set<string>()
+    if (!userscriptMatchInfo || !userscriptReferenceGraph) return result
+    for (const entry of userscriptReferenceGraph.originReferences) {
+      if (
+        userscriptMatchPatternsCoverOriginPattern(
+          userscriptMatchInfo.matchPatterns,
+          entry.originPattern,
+        )
+      ) {
+        continue
+      }
+      for (const reference of entry.references) result.add(reference.packId)
+    }
+    return result
+  }, [userscriptMatchInfo, userscriptReferenceGraph])
+  const userscriptManagerGuideKey = useMemo(() => {
+    const manager = userscriptMatchInfo?.managerName?.toLowerCase() ?? ""
+    if (manager.includes("tampermonkey")) return "sitePacksUserscriptGuideTampermonkey"
+    if (manager.includes("violentmonkey")) return "sitePacksUserscriptGuideViolentmonkey"
+    return "sitePacksUserscriptGuideGeneric"
+  }, [userscriptMatchInfo])
   const canonicalFormOrigin = useMemo(() => {
     try {
       return canonicalizeSitePackBindingOrigin(normalizeBindingOriginInput(bindingOrigin))
@@ -887,6 +910,12 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
     setActiveTab(SITE_PACKS_TAB_IDS.ORIGINS)
     setBindingPackId(packId)
     setPendingLocateId("site-pack-custom-origin")
+  }
+
+  /** 油猴匹配缺失引导：切到自定义站点 tab 并定位高亮匹配规则区块 */
+  const handleViewMatchGuide = () => {
+    setActiveTab(SITE_PACKS_TAB_IDS.ORIGINS)
+    setPendingLocateId("site-pack-userscript-coverage")
   }
 
   const handleRemoveOriginBinding = async (origin: string) => {
@@ -1569,6 +1598,8 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
     const description = resolveSitePackDescription(pack.manifest, currentLanguage)
     // 自部署包没有任何绑定指向时不会在任何站点生效，显式提示并给出绑定入口
     const needsBinding = pack.manifest.matches.length === 0 && !boundPackIds.has(packId)
+    // 油猴端：包的域名未被脚本 match 覆盖时脚本不会注入该站点，提示用户补充匹配规则
+    const needsMatchCoverage = missingUserscriptPackIds.has(packId)
 
     return (
       <div className="settings-pack-item" key={packId}>
@@ -1583,6 +1614,11 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
             <strong title={packId}>{name}</strong>
             {needsBinding && (
               <span className="settings-pack-badge warning">{t("sitePacksNeedsBindingBadge")}</span>
+            )}
+            {needsMatchCoverage && (
+              <span className="settings-pack-badge warning">
+                {t("sitePacksStatusMatchRequired")}
+              </span>
             )}
             {status && <span className={`settings-pack-badge ${status.tone}`}>{status.label}</span>}
           </div>
@@ -1603,6 +1639,14 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
                 className="settings-pack-bind-now-btn"
                 onClick={() => handleBindPackNow(packId)}>
                 {t("sitePacksBindNowAction")}
+              </button>
+            )}
+            {needsMatchCoverage && (
+              <button
+                type="button"
+                className="settings-pack-bind-now-btn"
+                onClick={handleViewMatchGuide}>
+                {t("sitePacksMatchGuideAction")}
               </button>
             )}
           </div>
@@ -1926,7 +1970,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
           </section>
 
           {userscriptMatchInfo && missingUserscriptOriginPatterns.length > 0 && (
-            <section className="settings-card">
+            <section className="settings-card" data-setting-id="site-pack-userscript-coverage">
               <div className="settings-card-title">{t("sitePacksUserscriptCoverageTitle")}</div>
               <div className="settings-card-desc">
                 {t("sitePacksUserscriptCoverageDesc", {
@@ -1938,20 +1982,24 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
               <div className="settings-pack-pattern-list">
                 {missingUserscriptOriginPatterns.map((pattern) => (
                   <div className="settings-pack-pattern" key={pattern}>
-                    <code>{pattern}</code>
+                    <code>{`// @match ${pattern}`}</code>
                     <Button
                       type="button"
                       size="sm"
                       variant="secondary"
                       className="settings-pack-action-button"
-                      aria-label={`${t("copy")}: ${pattern}`}
-                      onClick={() => void handleCopyUserscriptPattern(pattern)}>
+                      aria-label={`${t("copy")}: @match ${pattern}`}
+                      onClick={() => void handleCopyUserscriptPattern(`// @match ${pattern}`)}>
                       <CopyIcon size={13} />
                       {t("copy")}
                     </Button>
                   </div>
                 ))}
               </div>
+              <p className="settings-pack-field-hint">{t(userscriptManagerGuideKey)}</p>
+              <p className="settings-pack-field-hint">
+                {t("sitePacksUserscriptCoveragePersistNote")}
+              </p>
             </section>
           )}
 

@@ -277,6 +277,15 @@ export const ja = {
   sitePacksUserscriptCoverageDesc:
     "{manager} には SitePack 用のマッチルールが {count} 件不足しています。対象サイトを開く前に、以下のルールをコピーしてください。",
   sitePacksUserscriptManagerUnknown: "現在のユーザースクリプト管理ツール",
+  sitePacksUserscriptGuideTampermonkey:
+    "Tampermonkey で追加：ダッシュボード → このスクリプト → 「設定」タブ → 「ユーザーマッチ」→「追加」を選び、上記のルールを貼り付けます。",
+  sitePacksUserscriptGuideViolentmonkey:
+    "Violentmonkey で追加：ダッシュボード → このスクリプトの設定アイコン → 「カスタム」タブ → カスタムマッチルールに上記のルールを貼り付けます。",
+  sitePacksUserscriptGuideGeneric:
+    "ユーザースクリプト管理ツールでこのスクリプトの設定を開き、上記のルールをユーザー（カスタム）マッチルールとして追加してください。",
+  sitePacksUserscriptCoveragePersistNote:
+    "ルールの追加は一度だけで、スクリプト更新後も保持されます。追加後は対象サイトを再読み込みしてください。",
+  sitePacksMatchGuideAction: "追加手順を見る",
   sitePacksBindingPackRequired: "先にインストール済みのパックを選択してください。",
 
   generalPageDesc: "拡張機能の動作とインターフェースの設定",

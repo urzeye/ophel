@@ -241,6 +241,15 @@ export const zhCN = {
   sitePacksUserscriptCoverageDesc:
     "{manager} 尚未覆盖 {count} 条适配包域名规则。请复制下列规则后再打开对应站点。",
   sitePacksUserscriptManagerUnknown: "当前脚本管理器",
+  sitePacksUserscriptGuideTampermonkey:
+    "在 Tampermonkey 中添加：管理面板 → 本脚本 → “设置”标签页 → “用户匹配”区域 → “添加”，粘贴上述规则。",
+  sitePacksUserscriptGuideViolentmonkey:
+    "在 Violentmonkey 中添加：打开控制台 → 点击本脚本旁的设置图标 → “自定义”标签页 → 在“自定义匹配”中粘贴上述规则。",
+  sitePacksUserscriptGuideGeneric:
+    "请在脚本管理器中打开本脚本的设置页，将上述规则添加为用户匹配（自定义匹配）规则。",
+  sitePacksUserscriptCoveragePersistNote:
+    "规则只需添加一次，脚本更新后也会保留；添加后刷新目标站点即可生效。",
+  sitePacksMatchGuideAction: "查看添加指引",
   sitePacksBindingPackRequired: "请先选择一个已安装的适配包。",
 
   generalPageDesc: "配置扩展的基本行为和界面",

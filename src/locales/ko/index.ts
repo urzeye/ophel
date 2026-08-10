@@ -273,6 +273,15 @@ export const ko = {
   sitePacksUserscriptCoverageDesc:
     "{manager}에 SitePack 일치 규칙 {count}개가 없습니다. 해당 사이트를 열기 전에 아래 규칙을 복사하세요.",
   sitePacksUserscriptManagerUnknown: "현재 사용자 스크립트 관리자",
+  sitePacksUserscriptGuideTampermonkey:
+    "Tampermonkey에서 추가: 대시보드 → 이 스크립트 → '설정' 탭 → '사용자 일치' → '추가'를 선택하고 위 규칙을 붙여넣으세요.",
+  sitePacksUserscriptGuideViolentmonkey:
+    "Violentmonkey에서 추가: 대시보드 → 이 스크립트의 설정 아이콘 → '사용자 지정' 탭 → 사용자 지정 일치 규칙에 위 규칙을 붙여넣으세요.",
+  sitePacksUserscriptGuideGeneric:
+    "사용자 스크립트 관리자에서 이 스크립트의 설정을 열고 위 규칙을 사용자(사용자 지정) 일치 규칙으로 추가하세요.",
+  sitePacksUserscriptCoveragePersistNote:
+    "규칙은 한 번만 추가하면 되며 스크립트 업데이트 후에도 유지됩니다. 추가 후 대상 사이트를 새로고침하세요.",
+  sitePacksMatchGuideAction: "추가 방법 보기",
   sitePacksBindingPackRequired: "먼저 설치된 팩을 선택하세요.",
 
   generalPageDesc: "확장 프로그램 동작 및 인터페이스 구성",

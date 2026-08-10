@@ -278,6 +278,15 @@ export const ru = {
   sitePacksUserscriptCoverageDesc:
     "В {manager} не хватает правил SitePack: {count}. Скопируйте правила ниже перед открытием этих сайтов.",
   sitePacksUserscriptManagerUnknown: "Текущий менеджер userscript",
+  sitePacksUserscriptGuideTampermonkey:
+    "Как добавить в Tampermonkey: панель управления → этот скрипт → вкладка «Настройки» → «Пользовательские совпадения» → «Добавить» и вставьте правило выше.",
+  sitePacksUserscriptGuideViolentmonkey:
+    "Как добавить в Violentmonkey: панель управления → значок настроек рядом с этим скриптом → вкладка «Пользовательские» → вставьте правило выше в пользовательские правила совпадений.",
+  sitePacksUserscriptGuideGeneric:
+    "Откройте настройки этого скрипта в вашем менеджере userscript и добавьте указанные выше правила как пользовательские правила совпадений.",
+  sitePacksUserscriptCoveragePersistNote:
+    "Каждое правило достаточно добавить один раз — оно сохранится после обновлений скрипта. После этого обновите целевой сайт.",
+  sitePacksMatchGuideAction: "Открыть инструкцию",
   sitePacksBindingPackRequired: "Сначала выберите установленный пакет.",
 
   generalPageDesc: "Настройте поведение расширения и интерфейс",
