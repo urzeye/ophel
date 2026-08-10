@@ -119,12 +119,13 @@ const createRemoteState = (
   registryRevision: number,
   entries: RegistryPackIndexEntry[],
   cachedPacks: Record<string, unknown>,
+  sourceUrl: string = REGISTRY_SOURCE,
 ): RemoteConfigState => ({
   storageSchemaVersion: REMOTE_CONFIG_STORAGE_SCHEMA_VERSION,
   localPatches: {},
   ignoredPatches: {},
   active: {
-    sourceUrl: REGISTRY_SOURCE,
+    sourceUrl,
     index: {
       generatedAt: NOW + registryRevision,
       schemaVersion: 1,
@@ -140,6 +141,7 @@ const createRemoteState = (
 const createRemoteCatalog = (
   registryRevision: number,
   manifests: SitePackManifest[],
+  sourceUrl: string = REGISTRY_SOURCE,
 ): RemoteConfigState => {
   const entries = manifests.map((manifest) => createRegistryEntry(manifest))
   return createRemoteState(
@@ -148,6 +150,7 @@ const createRemoteCatalog = (
     Object.fromEntries(
       manifests.map((manifest, index) => [manifest.id, createCachedPack(manifest, entries[index])]),
     ),
+    sourceUrl,
   )
 }
 
@@ -553,5 +556,78 @@ describe("PackManager registry lifecycle", () => {
     expect(packById(snapshot.packs, goodV1.id).manifest.version).toBe(2)
     expect(packById(snapshot.packs, badV2.id)).toEqual(initialBad)
     expect(packById(snapshot.packs, localV1.id)).toEqual(initialLocal)
+  })
+})
+
+describe("PackManager loopback content replace", () => {
+  it("replaces same-version and lower-version content from loopback registries", async () => {
+    const { manager, storage, advanceTime } = createHarness()
+    const packV1 = createManifest("dev-pack", 1, { name: "Dev pack original" })
+    storage.seed(
+      REMOTE_CONFIG_STORAGE_KEY,
+      createRemoteCatalog(1, [packV1], "http://127.0.0.1:8787/index.json"),
+    )
+    await manager.installFromRegistry(packV1.id)
+
+    advanceTime()
+    const sameVersionChanged = createManifest("dev-pack", 1, { name: "Dev pack revised" })
+    storage.seed(
+      REMOTE_CONFIG_STORAGE_KEY,
+      createRemoteCatalog(1, [sameVersionChanged], "http://127.0.0.1:8787/index.json"),
+    )
+    const sameVersionSync = await manager.syncRegistryPacks()
+    expect(sameVersionSync).toMatchObject({
+      changed: true,
+      updatedPackIds: [packV1.id],
+      issues: [],
+    })
+    expect(packById((await manager.getSnapshot()).packs, packV1.id).manifest.name).toBe(
+      "Dev pack revised",
+    )
+
+    advanceTime()
+    const lowerVersionChanged = createManifest("dev-pack", 1, { name: "Dev pack again" })
+    // Simulate a rebuild that keeps declared version while content changes again.
+    storage.seed(
+      REMOTE_CONFIG_STORAGE_KEY,
+      createRemoteCatalog(2, [lowerVersionChanged], "http://localhost:8787/index.json"),
+    )
+    const repeatSync = await manager.syncRegistryPacks()
+    expect(repeatSync.updatedPackIds).toEqual([packV1.id])
+    expect(packById((await manager.getSnapshot()).packs, packV1.id).manifest.name).toBe(
+      "Dev pack again",
+    )
+
+    // Production sources remain strict.
+    const productionChanged = createManifest("dev-pack", 1, { name: "Production blocked" })
+    storage.seed(REMOTE_CONFIG_STORAGE_KEY, createRemoteCatalog(3, [productionChanged]))
+    const productionSync = await manager.syncRegistryPacks()
+    expect(productionSync.changed).toBe(false)
+    expect(productionSync.issues).toContainEqual(
+      expect.objectContaining({ code: "version-reuse", packId: packV1.id }),
+    )
+    expect(packById((await manager.getSnapshot()).packs, packV1.id).manifest.name).toBe(
+      "Dev pack again",
+    )
+  })
+
+  it("allows installFromRegistry content replace on loopback without version bumps", async () => {
+    const { manager, storage, advanceTime } = createHarness()
+    const packV1 = createManifest("dev-install", 2, { name: "Installed" })
+    storage.seed(
+      REMOTE_CONFIG_STORAGE_KEY,
+      createRemoteCatalog(1, [packV1], "http://127.0.0.1:8787/index.json"),
+    )
+    await manager.installFromRegistry(packV1.id)
+
+    advanceTime()
+    const revised = createManifest("dev-install", 2, { name: "Reinstalled content" })
+    storage.seed(
+      REMOTE_CONFIG_STORAGE_KEY,
+      createRemoteCatalog(1, [revised], "http://127.0.0.1:8787/index.json"),
+    )
+    const result = await manager.installFromRegistry(revised.id)
+    expect(result.changed).toBe(true)
+    expect(result.pack?.manifest.name).toBe("Reinstalled content")
   })
 })

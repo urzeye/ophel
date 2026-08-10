@@ -8,6 +8,7 @@ import {
 import { isBuiltinSiteId, SUPPORTED_AI_PLATFORMS } from "~constants/defaults"
 
 import { isCachedSitePackShape } from "./remote-config-cache"
+import { isLoopbackRegistrySourceUrl } from "./remote-config-local-dev"
 import { loadRemoteConfigState } from "./remote-config-state"
 import {
   isAppVersionCompatible,
@@ -194,6 +195,19 @@ const sameRegistryPackIndexEntry = (
   left.file === right.file &&
   left.sha256 === right.sha256 &&
   left.disabled === right.disabled
+
+/** Production is version-monotonic; loopback dev sources replace by content. */
+const resolveRegistryManifestReplacement = (
+  installed: SitePackManifest,
+  candidate: SitePackManifest,
+  allowContentReplace: boolean,
+): "identical" | "replace" | "version-rollback" | "version-reuse" => {
+  if (sameManifest(installed, candidate)) return "identical"
+  if (allowContentReplace) return "replace"
+  if (candidate.version < installed.version) return "version-rollback"
+  if (candidate.version === installed.version) return "version-reuse"
+  return "replace"
+}
 
 const createEmptyStoredState = (): StoredInstalledSitePacksState => ({
   storageSchemaVersion: INSTALLED_SITE_PACKS_STORAGE_SCHEMA_VERSION,
@@ -655,6 +669,15 @@ export class PackManager {
     }
   }
 
+  private async isActiveRegistryLoopback(): Promise<boolean> {
+    try {
+      const state = await this.loadRemoteState()
+      return Boolean(state.active && isLoopbackRegistrySourceUrl(state.active.sourceUrl))
+    } catch {
+      return false
+    }
+  }
+
   private async upsertPack(
     input: unknown,
     source: SitePackInstallSource,
@@ -682,32 +705,40 @@ export class PackManager {
         { packId: manifest.id },
       )
     }
-    if (current && manifest.version < current.manifest.version) {
-      throw new PackManagerError(
-        "version-rollback",
-        `SitePack ${manifest.id} version rollback: ${manifest.version} < ${current.manifest.version}`,
-        { packId: manifest.id },
+
+    if (current) {
+      const allowContentReplace = source === "registry" && (await this.isActiveRegistryLoopback())
+      const replacement = resolveRegistryManifestReplacement(
+        current.manifest,
+        manifest,
+        allowContentReplace,
       )
-    }
-    if (current && manifest.version === current.manifest.version) {
-      if (!sameManifest(manifest, current.manifest)) {
+      if (replacement === "version-rollback") {
+        throw new PackManagerError(
+          "version-rollback",
+          `SitePack ${manifest.id} version rollback: ${manifest.version} < ${current.manifest.version}`,
+          { packId: manifest.id },
+        )
+      }
+      if (replacement === "version-reuse") {
         throw new PackManagerError(
           "version-reuse",
           `SitePack ${manifest.id} version ${manifest.version} was reused with different content`,
           { packId: manifest.id },
         )
       }
-
-      const nextRegistryStatus = source === "registry" ? registryStatus : undefined
-      if (current.registryStatus === nextRegistryStatus) {
-        return { changed: false, pack: cloneInstalledPack(current) }
+      if (replacement === "identical") {
+        const nextRegistryStatus = source === "registry" ? registryStatus : undefined
+        if (current.registryStatus === nextRegistryStatus) {
+          return { changed: false, pack: cloneInstalledPack(current) }
+        }
+        const next = {
+          ...current,
+          ...(source === "registry" ? { registryStatus: nextRegistryStatus } : {}),
+        }
+        await this.writePack(state, manifest.id, next)
+        return { changed: true, pack: cloneInstalledPack(next) }
       }
-      const next = {
-        ...current,
-        ...(source === "registry" ? { registryStatus: nextRegistryStatus } : {}),
-      }
-      await this.writePack(state, manifest.id, next)
-      return { changed: true, pack: cloneInstalledPack(next) }
     }
 
     const timestamp = this.getTimestamp()
@@ -845,6 +876,7 @@ export class PackManager {
       return { changed: false, updatedPackIds, statusChangedPackIds, issues }
     }
 
+    const allowContentReplace = isLoopbackRegistrySourceUrl(remoteState.active.sourceUrl)
     const packsById = new Map(parsed.packs.map((pack) => [pack.manifest.id, pack]))
     const nextRawPacks = { ...state.packs }
     let changed = false
@@ -868,17 +900,19 @@ export class PackManager {
           try {
             const manifest = this.validateCachedRegistryPack(packId, cached, indexEntry)
             this.assertNoInstalledConflict(manifest, Array.from(packsById.values()), packId)
-            if (manifest.version < installed.manifest.version) {
+            const replacement = resolveRegistryManifestReplacement(
+              installed.manifest,
+              manifest,
+              allowContentReplace,
+            )
+            if (replacement === "version-rollback") {
               throw new PackManagerError(
                 "version-rollback",
                 `Registry pack ${packId} version rollback: ${manifest.version} < ${installed.manifest.version}`,
                 { packId },
               )
             }
-            if (
-              manifest.version === installed.manifest.version &&
-              !sameManifest(manifest, installed.manifest)
-            ) {
+            if (replacement === "version-reuse") {
               throw new PackManagerError(
                 "version-reuse",
                 `Registry pack ${packId} version ${manifest.version} was reused with different content`,
@@ -886,7 +920,7 @@ export class PackManager {
               )
             }
 
-            if (manifest.version > installed.manifest.version) {
+            if (replacement === "replace") {
               next = {
                 ...installed,
                 manifest,

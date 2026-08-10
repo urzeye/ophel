@@ -370,6 +370,17 @@ interface SitePacksPageProps {
   initialTab?: string
 }
 
+/** Same loopback URL can be re-applied to re-check after local registry rebuilds. */
+const isReapplyableLoopbackRegistrySource = (sourceInput: string): boolean => {
+  const trimmed = sourceInput.trim()
+  if (!trimmed) return false
+  try {
+    return isLoopbackRegistrySourceUrl(normalizeRemoteConfigSourceUrl(trimmed))
+  } catch {
+    return false
+  }
+}
+
 const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
   const currentLanguage = useSyncExternalStore(subscribeI18nChanges, getCurrentLang, getCurrentLang)
   const packManager = useMemo(() => createRuntimePackManager(platform.storage), [])
@@ -1016,7 +1027,6 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
   ): Promise<RemoteConfigCheckResult | null> => {
     const manageBusyState = options.manageBusyState !== false
     const key = targetPack ? `update:${targetPack.manifest.id}` : "registry:refresh"
-    const previousVersion = targetPack?.manifest.version
     if (manageBusyState && !beginBusy(key)) return null
     try {
       const result = await platform.remoteConfig.checkForUpdates(
@@ -1044,10 +1054,10 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
 
       if (targetPack) {
         const nextPack = snapshot?.packs.find((pack) => pack.manifest.id === targetPack.manifest.id)
-        const updated =
-          nextPack && previousVersion !== undefined && nextPack.manifest.version > previousVersion
+        // Loopback dev sources may refresh same-version content; prefer sync result over version bumps.
+        const updated = syncResult.updatedPackIds.includes(targetPack.manifest.id)
         notify(
-          updated
+          updated && nextPack
             ? t("sitePacksPackUpdated", {
                 name: resolveSitePackName(nextPack.manifest, getCurrentLang()),
                 version: String(nextPack.manifest.version),
@@ -1253,12 +1263,11 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
       setRegistrySourceInput(normalizedSource)
       setRegistrySourceError(null)
       notify(t("remoteConfigRegistrySourceApplied"))
-      if (options.forceCheck) {
-        await refreshRegistry(undefined, {
-          manageBusyState: false,
-          sources: [normalizedSource],
-        })
-      }
+      // Always check immediately after applying a custom registry source.
+      await refreshRegistry(undefined, {
+        manageBusyState: false,
+        sources: [normalizedSource],
+      })
     } catch (error) {
       setRegistrySourceError(
         t("remoteConfigRegistrySourceInvalid", { error: getErrorMessage(error) }),
@@ -2202,7 +2211,9 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
                     variant="secondary"
                     className="settings-pack-action-button settings-pack-source-apply"
                     disabled={
-                      isRegistryBusy || registrySourceInput.trim() === configuredRegistrySource
+                      isRegistryBusy ||
+                      (registrySourceInput.trim() === configuredRegistrySource &&
+                        !isReapplyableLoopbackRegistrySource(registrySourceInput))
                     }
                     onClick={() => void handleApplyRegistrySource({ forceCheck: true })}>
                     {t("remoteConfigRegistrySourceApplyButton")}

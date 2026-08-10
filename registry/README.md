@@ -129,7 +129,7 @@ pnpm registry:build
 pnpm registry:serve
 ```
 
-`pnpm registry:build` 使用固定的 **local-dev** Ed25519 密钥写出完整签名产物，仅供本地结构检查与开发构建联调；该密钥不会进入生产信任列表，产物也不可发布。`pnpm registry:serve` 会先构建再在 `http://127.0.0.1:8787/index.json` 提供静态服务（revision 使用常规 git/env 解析，不用时间戳；客户端对 loopback 源放宽同 revision 内容替换，避免本地迭代卡死）。开发构建可在设置页一键“使用本地 Registry”，并用“恢复默认源 / 清除缓存”来回切换。正式 workflow 使用 `pnpm registry:build:signed`，并强制匹配内置生产公钥。
+`pnpm registry:build` 使用固定的 **local-dev** Ed25519 密钥写出完整签名产物，仅供本地结构检查与开发构建联调；该密钥不会进入生产信任列表，产物也不可发布。`pnpm registry:serve` 会先构建再在 `http://127.0.0.1:8787/index.json` 提供静态服务（revision 使用常规 git/env 解析，不用时间戳；客户端对 loopback 源放宽同 revision 内容替换，并在检查更新时按内容覆盖已安装包（不要求 version 递增），避免本地迭代卡死）。开发构建可在设置页一键“使用本地 Registry”，并用“恢复默认源 / 清除缓存”来回切换。正式 workflow 使用 `pnpm registry:build:signed`，并强制匹配内置生产公钥。
 
 PR 校验 workflow 会从受信任的主分支脚本读取 PR 中的 registry 数据；本地复现时可指定候选目录：
 
