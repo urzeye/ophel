@@ -1,10 +1,14 @@
 import React, { useState } from "react"
 
-import type { SupportedAiPlatform } from "~constants/defaults"
 import { SITE_ICONS } from "~constants/site-icons"
 
 interface PlatformIconProps {
-  platform: SupportedAiPlatform
+  /** 结构化子集而非完整 SupportedAiPlatform：只传 name/faviconUrl 即可获得 favicon → 首字母回退链。 */
+  platform: {
+    name: string
+    icon?: string
+    faviconUrl?: string
+  }
   size?: number
   className?: string
   fallbackClassName?: string

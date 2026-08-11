@@ -24,6 +24,7 @@ import {
   RefreshIcon,
   SitePacksIcon,
 } from "~components/icons"
+import { PlatformIcon } from "~components/PlatformIcon"
 import { Button, Input, SelectDropdown, Switch, type SelectDropdownOption } from "~components/ui"
 import { SITE_PACKS_TAB_IDS } from "~constants"
 import { SUPPORTED_AI_PLATFORMS } from "~constants/defaults"
@@ -51,8 +52,10 @@ import {
 import {
   collapseCoveredSitePackOriginPatterns,
   deriveSitePackOriginReferences,
+  getSitePackBoundOriginPatterns,
   sitePackBindingOriginPattern,
 } from "~core/site-pack-origin-references"
+import { getSitePackFaviconUrl } from "~core/site-pack-platforms"
 import { SITE_PACK_ORIGIN_BINDINGS_STORAGE_KEY } from "~core/site-pack-storage-constants"
 import {
   DEFAULT_REMOTE_CONFIG_SOURCES,
@@ -1601,6 +1604,11 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
     const toggleDisabled = isBusy || (!pack.enabled && !canToggleOn)
     const firstMatch = pack.manifest.matches[0]
     const name = resolveSitePackName(pack.manifest, currentLanguage)
+    // 与提示词平台筛选同一条 favicon 规则；无 favicon 或加载失败时回退为首字母
+    const faviconUrl = getSitePackFaviconUrl([
+      ...pack.manifest.matches,
+      ...getSitePackBoundOriginPatterns(pack, originBindings),
+    ])
     const description = resolveSitePackDescription(pack.manifest, currentLanguage)
     // 自部署包没有任何绑定指向时不会在任何站点生效，显式提示并给出绑定入口
     const needsBinding = pack.manifest.matches.length === 0 && !boundPackIds.has(packId)
@@ -1613,7 +1621,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
           className="settings-pack-icon"
           style={getPackIconStyle(pack.manifest.theme)}
           aria-hidden="true">
-          <PuzzleIcon size={18} />
+          <PlatformIcon platform={faviconUrl ? { name, faviconUrl } : { name }} size={18} />
         </div>
         <div className="settings-pack-info">
           <div className="settings-pack-title-line">
@@ -1709,11 +1717,20 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
     const isSelfHosted = view.matches.length === 0
     const firstMatch = view.matches[0]
     const version = view.availableVersion ?? view.latestVersion
+    // 已安装的 registry 包把用户绑定域名也计入 favicon 来源，与已安装列表保持一致
+    const faviconUrl = getSitePackFaviconUrl(
+      view.installed
+        ? [...view.matches, ...getSitePackBoundOriginPatterns(view.installed, originBindings)]
+        : view.matches,
+    )
 
     return (
       <div className="settings-pack-item" key={view.id}>
         <div className="settings-pack-icon" style={getPackIconStyle(view.theme)} aria-hidden="true">
-          <PuzzleIcon size={18} />
+          <PlatformIcon
+            platform={faviconUrl ? { name: view.name, faviconUrl } : { name: view.name }}
+            size={18}
+          />
         </div>
         <div className="settings-pack-info">
           <div className="settings-pack-title-line">
