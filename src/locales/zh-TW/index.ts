@@ -230,8 +230,6 @@ export const zhTW = {
   sitePacksStateChanged: "{name} 現已{state}。",
   sitePacksEnabledState: "啟用",
   sitePacksDisabledState: "停用",
-  sitePacksPackUpToDate: "{name} 已是最新版本。",
-  sitePacksPackUpdated: "已將 {name} 更新至版本 {version}。",
   sitePacksRequiresNewerApp: "需要 Ophel {version} 或更新版本",
   sitePacksCustomOriginsTitle: "新增自訂網站",
   sitePacksCustomOriginsDesc: "新增你自己部署的 AI 網站（如 Open WebUI），選擇用哪個適配包支援它。",

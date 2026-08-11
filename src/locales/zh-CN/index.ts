@@ -227,8 +227,6 @@ export const zhCN = {
   sitePacksStateChanged: "{name} 现已{state}。",
   sitePacksEnabledState: "启用",
   sitePacksDisabledState: "停用",
-  sitePacksPackUpToDate: "{name} 已是最新版本。",
-  sitePacksPackUpdated: "已将 {name} 更新至版本 {version}。",
   sitePacksRequiresNewerApp: "需要 Ophel {version} 或更高版本",
   sitePacksCustomOriginsTitle: "添加自定义站点",
   sitePacksCustomOriginsDesc: "添加你自己部署的 AI 站点（如 Open WebUI），选择用哪个适配包支持它。",

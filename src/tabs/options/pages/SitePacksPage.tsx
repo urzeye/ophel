@@ -295,13 +295,7 @@ const getValidationErrors = (error: unknown): SitePackValidationError[] | undefi
   error instanceof PackManagerError ? error.validationErrors : undefined
 
 const getBusyPackId = (key: string): string | null => {
-  for (const prefix of [
-    "toggle:",
-    "update:",
-    "install:",
-    "permission:",
-    "confirm:import:",
-  ] as const) {
+  for (const prefix of ["toggle:", "install:", "permission:", "confirm:import:"] as const) {
     if (key.startsWith(prefix)) return key.slice(prefix.length)
   }
   const uninstallPrefix = "confirm:uninstall:"
@@ -314,7 +308,6 @@ const isRegistryBusyKey = (key: string): boolean =>
   key === "registry:apply-source" ||
   key === "registry:use-local" ||
   key === "registry:restore-defaults" ||
-  key.startsWith("update:") ||
   key.startsWith("install:")
 
 const mergePackManagerIssues = (
@@ -1055,11 +1048,10 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
 
   /** 唯一的更新入口：同步 registry 索引、内置配置补丁与已安装适配包。 */
   const refreshRegistry = async (
-    targetPack?: InstalledSitePack,
     options: { manageBusyState?: boolean; sources?: readonly string[] } = {},
   ): Promise<RemoteConfigCheckResult | null> => {
     const manageBusyState = options.manageBusyState !== false
-    const key = targetPack ? `update:${targetPack.manifest.id}` : "registry:refresh"
+    const key = "registry:refresh"
     if (manageBusyState && !beginBusy(key)) return null
     try {
       const result = await platform.remoteConfig.checkForUpdates(
@@ -1075,7 +1067,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
         syncResult,
       )
       const deniedPacks = await prepareInstalledPacksRuntime(runtimePreparationPacks)
-      const [snapshot] = await Promise.all([loadInstalledPacks(), loadRegistryState()])
+      await Promise.all([loadInstalledPacks(), loadRegistryState()])
       if (syncResult.issues.length > 0) {
         setSnapshotIssues((current) => mergePackManagerIssues(current, syncResult.issues))
       }
@@ -1085,25 +1077,9 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
         return result
       }
 
-      if (targetPack) {
-        const nextPack = snapshot?.packs.find((pack) => pack.manifest.id === targetPack.manifest.id)
-        // Loopback dev sources may refresh same-version content; prefer sync result over version bumps.
-        const updated = syncResult.updatedPackIds.includes(targetPack.manifest.id)
-        notify(
-          updated && nextPack
-            ? t("sitePacksPackUpdated", {
-                name: resolveSitePackName(nextPack.manifest, getCurrentLang()),
-                version: String(nextPack.manifest.version),
-              })
-            : t("sitePacksPackUpToDate", {
-                name: resolveSitePackName(targetPack.manifest, getCurrentLang()),
-              }),
-        )
-      } else {
-        notify(
-          t(result.status === "updated" ? "remoteConfigCheckUpdated" : "remoteConfigCheckUpToDate"),
-        )
-      }
+      notify(
+        t(result.status === "updated" ? "remoteConfigCheckUpdated" : "remoteConfigCheckUpToDate"),
+      )
       return result
     } catch (error) {
       reportOperationError(error)
@@ -1268,7 +1244,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
         }
         notify(t("remoteConfigRegistrySourceCleared"))
         if (options.forceCheck) {
-          await refreshRegistry(undefined, {
+          await refreshRegistry({
             manageBusyState: false,
             sources: DEFAULT_REMOTE_CONFIG_SOURCES,
           })
@@ -1297,7 +1273,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
       setRegistrySourceError(null)
       notify(t("remoteConfigRegistrySourceApplied"))
       // Always check immediately after applying a custom registry source.
-      await refreshRegistry(undefined, {
+      await refreshRegistry({
         manageBusyState: false,
         sources: [normalizedSource],
       })
@@ -1330,7 +1306,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
       updateNestedSetting("remoteConfig", "registrySourceUrl", normalizedSource)
       setRegistrySourceInput(normalizedSource)
       notify(t("remoteConfigLocalRegistrySourceApplied"))
-      await refreshRegistry(undefined, {
+      await refreshRegistry({
         manageBusyState: false,
         sources: [normalizedSource],
       })
@@ -1357,7 +1333,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
       setRegistrySourceError(null)
       await clearRegistryCache()
       notify(t("remoteConfigRegistryDefaultsRestored"))
-      await refreshRegistry(undefined, {
+      await refreshRegistry({
         manageBusyState: false,
         sources: DEFAULT_REMOTE_CONFIG_SOURCES,
       })
@@ -1666,20 +1642,6 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
           </div>
         </div>
         <div className="settings-pack-controls">
-          {pack.source === "registry" && (
-            <button
-              type="button"
-              className="settings-pack-icon-btn"
-              disabled={isBusy || isRegistryBusy}
-              title={t("sitePacksCheckUpdates")}
-              aria-label={`${t("sitePacksCheckUpdates")}: ${name}`}
-              onClick={() => void refreshRegistry(pack)}>
-              <RefreshIcon
-                size={15}
-                className={busyKeys.has(`update:${packId}`) ? "spinning" : ""}
-              />
-            </button>
-          )}
           <button
             type="button"
             className="settings-pack-icon-btn danger"
@@ -1896,9 +1858,24 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
               </div>
             </div>
           ) : (
-            <div className="settings-pack-list">
-              {sortedInstalledPacks.map(renderInstalledPack)}
-            </div>
+            <>
+              <div className="settings-pack-list-toolbar">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  disabled={isRegistryBusy}
+                  onClick={() => void refreshRegistry()}>
+                  <RefreshIcon size={14} className={isCheckingRegistry ? "spinning" : ""} />
+                  {isCheckingRegistry
+                    ? t("remoteConfigCheckingButton")
+                    : t("sitePacksCheckUpdates")}
+                </Button>
+              </div>
+              <div className="settings-pack-list">
+                {sortedInstalledPacks.map(renderInstalledPack)}
+              </div>
+            </>
           )}
 
           {snapshotIssues.length > 0 && (

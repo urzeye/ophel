@@ -262,8 +262,6 @@ export const ru = {
   sitePacksStateChanged: "{name}: теперь {state}.",
   sitePacksEnabledState: "включён",
   sitePacksDisabledState: "отключён",
-  sitePacksPackUpToDate: "{name} уже обновлён до последней версии.",
-  sitePacksPackUpdated: "{name} обновлён до версии {version}.",
   sitePacksRequiresNewerApp: "Требуется Ophel {version} или новее",
   sitePacksCustomOriginsTitle: "Добавить свой сайт",
   sitePacksCustomOriginsDesc:

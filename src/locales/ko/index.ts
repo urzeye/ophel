@@ -257,8 +257,6 @@ export const ko = {
   sitePacksStateChanged: "상태 변경: {name} — {state}",
   sitePacksEnabledState: "활성화",
   sitePacksDisabledState: "비활성화",
-  sitePacksPackUpToDate: "{name} 팩은 최신 상태입니다.",
-  sitePacksPackUpdated: "{name} 팩을 버전 {version}(으)로 업데이트했습니다.",
   sitePacksRequiresNewerApp: "Ophel {version} 이상 필요",
   sitePacksCustomOriginsTitle: "사용자 지정 사이트 추가",
   sitePacksCustomOriginsDesc:

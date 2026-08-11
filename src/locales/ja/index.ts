@@ -260,8 +260,6 @@ export const ja = {
   sitePacksStateChanged: "{name} を{state}にしました。",
   sitePacksEnabledState: "有効",
   sitePacksDisabledState: "無効",
-  sitePacksPackUpToDate: "{name} は最新です。",
-  sitePacksPackUpdated: "{name} をバージョン {version} に更新しました。",
   sitePacksRequiresNewerApp: "Ophel {version} 以降が必要です",
   sitePacksCustomOriginsTitle: "カスタムサイトを追加",
   sitePacksCustomOriginsDesc:

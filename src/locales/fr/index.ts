@@ -269,8 +269,6 @@ export const fr = {
   sitePacksStateChanged: "{name} est maintenant {state}.",
   sitePacksEnabledState: "activé",
   sitePacksDisabledState: "désactivé",
-  sitePacksPackUpToDate: "{name} est à jour.",
-  sitePacksPackUpdated: "{name} a été mis à jour vers la version {version}.",
   sitePacksRequiresNewerApp: "Nécessite Ophel {version} ou une version ultérieure",
   sitePacksCustomOriginsTitle: "Ajouter un site personnalisé",
   sitePacksCustomOriginsDesc:

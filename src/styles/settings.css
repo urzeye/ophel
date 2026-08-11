@@ -1097,6 +1097,12 @@
 
 /* ---------- 列表 ---------- */
 
+.settings-pack-list-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
 .settings-pack-list {
   display: flex;
   flex-direction: column;
