@@ -232,6 +232,11 @@ export const es = {
   sitePacksStatusMatchRequired: "Falta regla de coincidencia",
   sitePacksStatusDisabled: "Desactivado",
   sitePacksStatusIncompatible: "Incompatible",
+  sitePacksStatusPackMissing: "Falta el paquete",
+  sitePackBindingNoticeTitle: "Vinculación del sitio inactiva",
+  sitePackBindingNoticeMessage:
+    'Este sitio está vinculado al paquete "{packId}", que se desinstaló o ya no es válido, por lo que el panel no se cargó. Reinstala el paquete o elimina esta vinculación en la configuración de Paquetes de sitio.',
+  sitePackBindingNoticeAction: "Abrir Paquetes de sitio",
   sitePacksSelfHostedBadge: "Autoalojado",
   sitePacksSelfHostedHint: "Requiere un dominio vinculado",
   sitePacksNeedsBindingBadge: "Vinculación pendiente",

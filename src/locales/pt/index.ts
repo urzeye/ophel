@@ -229,6 +229,11 @@ export const pt = {
   sitePacksStatusMatchRequired: "Regra necessária",
   sitePacksStatusDisabled: "Desativado",
   sitePacksStatusIncompatible: "Incompatível",
+  sitePacksStatusPackMissing: "Pacote ausente",
+  sitePackBindingNoticeTitle: "Vínculo do site inativo",
+  sitePackBindingNoticeMessage:
+    'Este site está vinculado ao pacote "{packId}", que foi desinstalado ou não é mais válido, por isso o painel não foi carregado. Reinstale o pacote ou remova este vínculo nas configurações de Pacotes de site.',
+  sitePackBindingNoticeAction: "Abrir Pacotes de site",
   sitePacksSelfHostedBadge: "Auto-hospedado",
   sitePacksSelfHostedHint: "Requer um domínio vinculado",
   sitePacksNeedsBindingBadge: "Vinculação pendente",

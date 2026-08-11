@@ -197,6 +197,11 @@ export const zhTW = {
   sitePacksStatusMatchRequired: "需補充比對",
   sitePacksStatusDisabled: "已停用",
   sitePacksStatusIncompatible: "不相容",
+  sitePacksStatusPackMissing: "適配包缺失",
+  sitePackBindingNoticeTitle: "站點綁定已失效",
+  sitePackBindingNoticeMessage:
+    "此站點綁定的適配包「{packId}」已被解除安裝或失效,面板未載入。可重新安裝該適配包,或在適配中心移除此站點綁定。",
+  sitePackBindingNoticeAction: "開啟適配中心",
   sitePacksSelfHostedBadge: "自我架設",
   sitePacksSelfHostedHint: "需綁定站點網域後生效",
   sitePacksNeedsBindingBadge: "待綁定網域",

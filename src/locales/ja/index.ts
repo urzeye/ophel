@@ -226,6 +226,11 @@ export const ja = {
   sitePacksStatusMatchRequired: "マッチルールが必要",
   sitePacksStatusDisabled: "無効",
   sitePacksStatusIncompatible: "非対応",
+  sitePacksStatusPackMissing: "パック未検出",
+  sitePackBindingNoticeTitle: "サイトのバインドが無効です",
+  sitePackBindingNoticeMessage:
+    "このサイトはサイトパック「{packId}」にバインドされていますが、そのパックはアンインストール済みか無効なため、パネルは読み込まれませんでした。パックを再インストールするか、サイトパック設定でこのバインドを解除してください。",
+  sitePackBindingNoticeAction: "サイトパックを開く",
   sitePacksSelfHostedBadge: "セルフホスト",
   sitePacksSelfHostedHint: "サイトドメインのバインドが必要です",
   sitePacksNeedsBindingBadge: "要ドメインバインド",

@@ -233,6 +233,11 @@ export const fr = {
   sitePacksStatusMatchRequired: "Règle requise",
   sitePacksStatusDisabled: "Désactivé",
   sitePacksStatusIncompatible: "Incompatible",
+  sitePacksStatusPackMissing: "Pack manquant",
+  sitePackBindingNoticeTitle: "Liaison du site inactive",
+  sitePackBindingNoticeMessage:
+    "Ce site est lié au pack « {packId} », qui a été désinstallé ou n'est plus valide ; le panneau n'a donc pas été chargé. Réinstallez le pack ou supprimez cette liaison dans les réglages Packs de site.",
+  sitePackBindingNoticeAction: "Ouvrir les Packs de site",
   sitePacksSelfHostedBadge: "Auto-hébergé",
   sitePacksSelfHostedHint: "Nécessite un domaine lié",
   sitePacksNeedsBindingBadge: "Liaison requise",

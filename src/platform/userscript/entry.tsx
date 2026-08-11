@@ -381,15 +381,17 @@ async function init() {
     })
 
   const [
-    { getAdapter, initAdapterRegistry },
+    { getAdapter, getBrokenOriginBinding, initAdapterRegistry },
     { App },
     { initNetworkMonitor },
     { initGeminiTitleGuard },
+    { showSitePackBindingIssueNotice },
   ] = await Promise.all([
     import("~adapters"),
     import("~components/App"),
     import("~core/network-monitor"),
     import("~core/gemini-title-guard"),
+    import("~utils/binding-issue-notice"),
   ])
 
   await initAdapterRegistry()
@@ -509,6 +511,17 @@ async function init() {
   window.addEventListener("unload", cleanupUserscriptObjectUrls)
 
   if (!adapter) {
+    const brokenBinding = getBrokenOriginBinding()
+    if (brokenBinding) {
+      showSitePackBindingIssueNotice({
+        packId: brokenBinding.packId,
+        onOpenSettings: () => {
+          window.dispatchEvent(
+            new CustomEvent("ophel:navigateSettingsPage", { detail: { page: "sitePacks" } }),
+          )
+        },
+      })
+    }
     return
   }
 

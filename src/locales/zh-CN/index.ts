@@ -195,6 +195,11 @@ export const zhCN = {
   sitePacksStatusMatchRequired: "需补充匹配",
   sitePacksStatusDisabled: "已停用",
   sitePacksStatusIncompatible: "不兼容",
+  sitePacksStatusPackMissing: "适配包缺失",
+  sitePackBindingNoticeTitle: "站点绑定已失效",
+  sitePackBindingNoticeMessage:
+    "此站点绑定的适配包「{packId}」已被卸载或失效,面板未加载。可重新安装该适配包,或在适配中心移除此站点绑定。",
+  sitePackBindingNoticeAction: "打开适配中心",
   sitePacksSelfHostedBadge: "自部署",
   sitePacksSelfHostedHint: "需绑定站点域名后生效",
   sitePacksNeedsBindingBadge: "待绑定域名",

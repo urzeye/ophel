@@ -58,6 +58,16 @@ let dynamicAdapters: SiteAdapter[] = []
 
 let registryInitialization: Promise<void> | null = null
 
+export interface BrokenOriginBinding {
+  origin: string
+  packId: string
+}
+
+// 当前 origin 存在显式绑定、但绑定的包不可用时的记录,供入口层给用户可见提示。
+let brokenOriginBinding: BrokenOriginBinding | null = null
+
+export const getBrokenOriginBinding = (): BrokenOriginBinding | null => brokenOriginBinding
+
 const compareInstalledPacks = (left: InstalledSitePack, right: InstalledSitePack): number =>
   left.installedAt - right.installedAt || left.manifest.id.localeCompare(right.manifest.id)
 
@@ -146,6 +156,8 @@ async function resolveDynamicAdapters(
     console.warn("[Ophel] SitePack registry issue:", issue)
   }
 
+  brokenOriginBinding = null
+
   const installedPacks = snapshot.packs
     .filter(isInstalledSitePackEffectivelyEnabled)
     .sort(compareInstalledPacks)
@@ -161,6 +173,7 @@ async function resolveDynamicAdapters(
   if (binding) {
     const entry = entries.find(({ pack }) => pack.manifest.id === binding.packId)
     if (!entry) {
+      brokenOriginBinding = { origin: currentOrigin, packId: binding.packId }
       console.error(
         `[Ophel] Explicit SitePack binding ${currentOrigin} -> ${binding.packId} has no enabled, valid package; dynamic fallback is disabled for this origin.`,
       )
@@ -178,6 +191,7 @@ async function resolveDynamicAdapters(
         packs: acceptedPacks,
       }
     } catch (error) {
+      brokenOriginBinding = { origin: currentOrigin, packId: binding.packId }
       console.error(
         `[Ophel] Failed to initialize explicit SitePack binding ${currentOrigin} -> ${entry.pack.manifest.id}; dynamic fallback is disabled for this origin:`,
         error,

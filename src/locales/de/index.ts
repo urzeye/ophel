@@ -236,6 +236,11 @@ export const de = {
   sitePacksStatusMatchRequired: "Match-Regel erforderlich",
   sitePacksStatusDisabled: "Deaktiviert",
   sitePacksStatusIncompatible: "Nicht kompatibel",
+  sitePacksStatusPackMissing: "Paket fehlt",
+  sitePackBindingNoticeTitle: "Website-Bindung ungültig",
+  sitePackBindingNoticeMessage:
+    'Diese Website ist an das Website-Paket "{packId}" gebunden, das deinstalliert wurde oder nicht mehr gültig ist. Das Panel wurde daher nicht geladen. Installieren Sie das Paket erneut oder entfernen Sie diese Bindung in den Website-Pakete-Einstellungen.',
+  sitePackBindingNoticeAction: "Website-Pakete öffnen",
   sitePacksSelfHostedBadge: "Selbst gehostet",
   sitePacksSelfHostedHint: "Erfordert eine gebundene Domain",
   sitePacksNeedsBindingBadge: "Bindung erforderlich",

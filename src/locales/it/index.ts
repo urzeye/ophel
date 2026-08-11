@@ -231,6 +231,11 @@ export const it = {
   sitePacksStatusMatchRequired: "Regola richiesta",
   sitePacksStatusDisabled: "Disattivato",
   sitePacksStatusIncompatible: "Non compatibile",
+  sitePacksStatusPackMissing: "Pacchetto mancante",
+  sitePackBindingNoticeTitle: "Associazione del sito non attiva",
+  sitePackBindingNoticeMessage:
+    'Questo sito è associato al pacchetto "{packId}", che è stato disinstallato o non è più valido, quindi il pannello non è stato caricato. Reinstalla il pacchetto o rimuovi questa associazione nelle impostazioni Pacchetti sito.',
+  sitePackBindingNoticeAction: "Apri Pacchetti sito",
   sitePacksSelfHostedBadge: "Self-hosted",
   sitePacksSelfHostedHint: "Richiede un dominio collegato",
   sitePacksNeedsBindingBadge: "Collegamento necessario",

@@ -227,6 +227,11 @@ export const en = {
   sitePacksStatusMatchRequired: "Match rule needed",
   sitePacksStatusDisabled: "Disabled",
   sitePacksStatusIncompatible: "Incompatible",
+  sitePacksStatusPackMissing: "Pack missing",
+  sitePackBindingNoticeTitle: "Site binding inactive",
+  sitePackBindingNoticeMessage:
+    'This site is bound to the site pack "{packId}", which was uninstalled or is no longer valid, so the panel did not load. Reinstall the pack, or remove this binding in Site Packs settings.',
+  sitePackBindingNoticeAction: "Open Site Packs",
   sitePacksSelfHostedBadge: "Self-hosted",
   sitePacksSelfHostedHint: "Requires a bound site domain",
   sitePacksNeedsBindingBadge: "Binding needed",

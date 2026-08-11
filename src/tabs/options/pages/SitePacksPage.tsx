@@ -1527,7 +1527,13 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
           siteMatchPatternOriginPatternCovers(activeOrigin, originPattern),
         )
     const status = issue
-      ? { tone: "danger", label: t("sitePacksStatusIncompatible") }
+      ? {
+          tone: "danger",
+          label:
+            issue.code === "binding-pack-missing"
+              ? t("sitePacksStatusPackMissing")
+              : t("sitePacksStatusIncompatible"),
+        }
       : userscriptMatchRequired
         ? { tone: "warning", label: t("sitePacksStatusMatchRequired") }
         : missingPermission

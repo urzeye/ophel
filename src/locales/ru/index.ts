@@ -228,6 +228,11 @@ export const ru = {
   sitePacksStatusMatchRequired: "Требуется правило",
   sitePacksStatusDisabled: "Отключён",
   sitePacksStatusIncompatible: "Несовместим",
+  sitePacksStatusPackMissing: "Пакет отсутствует",
+  sitePackBindingNoticeTitle: "Привязка сайта неактивна",
+  sitePackBindingNoticeMessage:
+    "Этот сайт привязан к пакету «{packId}», который был удалён или больше недействителен, поэтому панель не загрузилась. Переустановите пакет или удалите эту привязку в настройках пакетов сайтов.",
+  sitePackBindingNoticeAction: "Открыть пакеты сайтов",
   sitePacksSelfHostedBadge: "Свой хостинг",
   sitePacksSelfHostedHint: "Требуется привязка домена",
   sitePacksNeedsBindingBadge: "Нужна привязка",

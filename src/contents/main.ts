@@ -9,6 +9,7 @@ import type { PlasmoCSConfig } from "plasmo"
 
 import {
   getAdapter,
+  getBrokenOriginBinding,
   initAdapterRegistry,
   reapplyBuiltinSiteConfig,
   resetBuiltinSiteConfig,
@@ -36,11 +37,13 @@ import {
   EVENT_EXTENSION_UPDATE_AVAILABLE,
   MSG_CLEAR_ALL_DATA,
   MSG_EXTENSION_UPDATE_AVAILABLE,
+  MSG_OPEN_URL,
   MSG_RESTORE_DATA,
   MSG_RESET_REMOTE_CONFIG_SITE,
   MSG_REAPPLY_REMOTE_CONFIG_SITE,
   MSG_START_NEW_CONVERSATION,
 } from "~utils/messaging"
+import { showSitePackBindingIssueNotice } from "~utils/binding-issue-notice"
 
 const resetAllStores = () => {
   useSettingsStore.getState().resetSettings()
@@ -586,6 +589,18 @@ function initializeOphel() {
       })
     })()
   } else {
+    const brokenBinding = getBrokenOriginBinding()
+    if (brokenBinding) {
+      showSitePackBindingIssueNotice({
+        packId: brokenBinding.packId,
+        onOpenSettings: () => {
+          const url = chrome.runtime.getURL("tabs/options.html?page=sitePacks")
+          void chrome.runtime.sendMessage({ type: MSG_OPEN_URL, url }).catch((error: unknown) => {
+            console.warn("[Ophel] Failed to open Site Packs settings:", error)
+          })
+        },
+      })
+    }
     console.warn("[Ophel] No adapter found for:", window.location.hostname)
   }
 }

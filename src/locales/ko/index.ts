@@ -222,6 +222,11 @@ export const ko = {
   sitePacksStatusMatchRequired: "일치 규칙 필요",
   sitePacksStatusDisabled: "비활성화됨",
   sitePacksStatusIncompatible: "호환되지 않음",
+  sitePacksStatusPackMissing: "팩 없음",
+  sitePackBindingNoticeTitle: "사이트 바인딩이 비활성화됨",
+  sitePackBindingNoticeMessage:
+    '이 사이트는 사이트 팩 "{packId}"에 바인딩되어 있지만, 해당 팩이 제거되었거나 더 이상 유효하지 않아 패널이 로드되지 않았습니다. 팩을 다시 설치하거나 사이트 팩 설정에서 이 바인딩을 제거하세요.',
+  sitePackBindingNoticeAction: "사이트 팩 열기",
   sitePacksSelfHostedBadge: "셀프 호스팅",
   sitePacksSelfHostedHint: "사이트 도메인 바인딩이 필요합니다",
   sitePacksNeedsBindingBadge: "도메인 바인딩 필요",
