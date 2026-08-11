@@ -13,18 +13,14 @@ describe("canonicalizeSitePackBindingOrigin", () => {
   })
 
   it("accepts exact HTTP origins for local debugging", () => {
-    expect(canonicalizeSitePackBindingOrigin("http://127.0.0.1:3080")).toBe(
-      "http://127.0.0.1:3080",
-    )
+    expect(canonicalizeSitePackBindingOrigin("http://127.0.0.1:3080")).toBe("http://127.0.0.1:3080")
   })
 
   it("rejects paths and wildcards", () => {
     expect(() => canonicalizeSitePackBindingOrigin("https://chat.example.com/app")).toThrow(
       /http\(s\) scheme and exact authority/,
     )
-    expect(() => canonicalizeSitePackBindingOrigin("https://*.example.com")).toThrow(
-      /wildcard/,
-    )
+    expect(() => canonicalizeSitePackBindingOrigin("https://*.example.com")).toThrow(/wildcard/)
   })
 })
 

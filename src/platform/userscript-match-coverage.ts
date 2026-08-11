@@ -180,8 +180,7 @@ export const userscriptMatchPatternCoversOriginPattern = (
     return false
   }
   if (!covering.coversAllPaths) return false
-  const schemeCovered =
-    covering.scheme === "*" || covering.scheme === candidate.scheme
+  const schemeCovered = covering.scheme === "*" || covering.scheme === candidate.scheme
   if (!schemeCovered) return false
   return coversHost(covering, candidate) && coversPort(covering, candidate)
 }

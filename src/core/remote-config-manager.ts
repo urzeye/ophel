@@ -281,7 +281,9 @@ const isCachedPackReusable = (
   entry: RegistryPackIndexEntry,
 ): cached is CachedSitePack => {
   if (!isCachedSitePackShape(cached) || !samePackIndexEntry(cached.index, entry)) return false
-  const validation = validateSitePackManifest(cached.manifest, { allowHttpMatches: allowsSitePackHttpOrigins() })
+  const validation = validateSitePackManifest(cached.manifest, {
+    allowHttpMatches: allowsSitePackHttpOrigins(),
+  })
   if (!validation.valid) return false
   try {
     validatePackMetadata(validation.value, entry)
@@ -319,7 +321,9 @@ const isCachedPackCurrentlyCompatible = (
   ) {
     return false
   }
-  const validation = validateSitePackManifest(cached.manifest, { allowHttpMatches: allowsSitePackHttpOrigins() })
+  const validation = validateSitePackManifest(cached.manifest, {
+    allowHttpMatches: allowsSitePackHttpOrigins(),
+  })
   if (!validation.valid) return false
   try {
     validatePackMetadata(validation.value, cached.index)
@@ -737,7 +741,9 @@ export class RemoteConfigManager {
           throw new Error(`SHA-256 mismatch for ${entry.file}`)
         }
         const value = decodeJson(bytes, artifactUrl)
-        const validation = validateSitePackManifest(value, { allowHttpMatches: allowsSitePackHttpOrigins() })
+        const validation = validateSitePackManifest(value, {
+          allowHttpMatches: allowsSitePackHttpOrigins(),
+        })
         if (!validation.valid) {
           throw new Error(
             `Pack validation failed: ${validation.errors
