@@ -27,6 +27,15 @@ import { ZaiAdapter } from "~adapters/zai"
 
 import type {} from "./vendor-bridge/types"
 
+declare const __OPHEL_APP_VERSION__: string
+
+// 版本握手：主包实例化前校验 version 与 schemaVersion，
+// 防止脚本本体更新后 @require 缓存滞留导致的静默错配。
+window.__OphelAdaptersVendorMeta = {
+  version: __OPHEL_APP_VERSION__,
+  schemaVersion: 1,
+}
+
 window.__OphelBuiltinAdapters = [
   GeminiEnterpriseAdapter,
   GeminiAdapter,

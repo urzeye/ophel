@@ -184,6 +184,11 @@ jobs:
             build/userscript/ophel.user.js \
             build/userscript/userscript-assets/manifest.json
 
+      - name: Verify userscript assets on jsDelivr
+        run: |
+          node scripts/verify-userscript-assets.mjs \
+            ${{ steps.userscript_assets.outputs.commit }}
+
       - name: Rename artifacts for release
         run: |
           cp build/chrome-mv3-prod.zip build/ophel-atlas-${{ steps.get_version.outputs.VERSION }}-chrome.zip

@@ -9,14 +9,34 @@ import type { SiteAdapter } from "~adapters/base"
 
 import type {} from "./vendor-bridge/types"
 
+declare const __OPHEL_APP_VERSION__: string
+
+const EXPECTED_VENDOR_SCHEMA_VERSION = 1
+
+const vendorMeta = window.__OphelAdaptersVendorMeta
 const vendorAdapterClasses = window.__OphelBuiltinAdapters
 
-if (!Array.isArray(vendorAdapterClasses) || vendorAdapterClasses.length === 0) {
+if (
+  !vendorMeta ||
+  vendorMeta.schemaVersion !== EXPECTED_VENDOR_SCHEMA_VERSION ||
+  vendorMeta.version !== __OPHEL_APP_VERSION__
+) {
+  console.error(
+    `[Ophel] Adapters vendor version mismatch: expected v${__OPHEL_APP_VERSION__} ` +
+      `(schema ${EXPECTED_VENDOR_SCHEMA_VERSION}), got ` +
+      `v${vendorMeta?.version ?? "missing"} (schema ${vendorMeta?.schemaVersion ?? "missing"}); ` +
+      "built-in site support is disabled. Try updating the userscript so @require caches refresh.",
+  )
+} else if (!Array.isArray(vendorAdapterClasses) || vendorAdapterClasses.length === 0) {
   console.error(
     "[Ophel] Built-in adapters vendor is missing or empty; built-in site support is disabled.",
   )
 }
 
-export const builtinAdapters: SiteAdapter[] = (vendorAdapterClasses ?? []).map(
-  (AdapterClass) => new AdapterClass(),
-)
+const vendorVersionMatches =
+  vendorMeta?.schemaVersion === EXPECTED_VENDOR_SCHEMA_VERSION &&
+  vendorMeta.version === __OPHEL_APP_VERSION__
+
+export const builtinAdapters: SiteAdapter[] = vendorVersionMatches
+  ? (vendorAdapterClasses ?? []).map((AdapterClass) => new AdapterClass())
+  : []

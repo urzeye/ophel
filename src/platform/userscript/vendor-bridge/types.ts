@@ -24,6 +24,11 @@ declare global {
   interface Window {
     /** adapters vendor 注册的内置适配器类（顺序即匹配优先级） */
     __OphelBuiltinAdapters?: Array<new () => import("~adapters/base").SiteAdapter>
+    /** adapters vendor 的版本握手信息，主包据此拒绝加载错配版本 */
+    __OphelAdaptersVendorMeta?: {
+      version: string
+      schemaVersion: number
+    }
     /** 主包发布的有状态模块单例，vendor 侧桥接 shim 懒解析读取 */
     __OphelAdaptersVendorBridge?: AdaptersVendorBridge
   }

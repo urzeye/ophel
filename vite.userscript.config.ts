@@ -176,6 +176,12 @@ function createContentHash(content: string | Buffer): string {
   return createHash("sha256").update(content).digest("hex").slice(0, 12)
 }
 
+// Greasyfork 脚本本体字符数硬限制约 200 万；项目闸门预留余量，
+// 触闸说明需要继续向 vendor 拆分，而不是顶着上限发布。
+const USERSCRIPT_GREASYFORK_CHAR_LIMIT = 2_000_000
+const USERSCRIPT_CHAR_GATE = 1_950_000
+const userscriptMainFileName = `${pkg.name}.user.js`
+
 function createHashedFileName(fileName: string, content: string | Buffer): string {
   const ext = path.extname(fileName)
   const baseName = fileName.slice(0, fileName.length - ext.length)
@@ -332,6 +338,7 @@ async function buildAdaptersVendor(): Promise<void> {
     define: {
       __PLATFORM__: JSON.stringify("userscript"),
       __OPHEL_DEV__: JSON.stringify(false),
+      __OPHEL_APP_VERSION__: JSON.stringify(version),
     },
     resolve: {
       alias: {
@@ -530,6 +537,48 @@ function emitUserscriptAssets(): Plugin {
         ),
         "utf-8",
       )
+
+      // ========== SRI 完整性片段 + 字符数闸门 ==========
+      // monkey 在 generateBundle 阶段产出最终 user.js，writeBundle 时文件已落盘。
+      // 为自托管资源的 @require/@resource URL 追加 #sha256= 片段，
+      // 支持 SRI 的脚本管理器（Tampermonkey）安装时校验内容完整性；
+      // 不支持的引擎会忽略 fragment，行为不变。
+      const mainScriptPath = path.join(userscriptBuildOutDir, userscriptMainFileName)
+      let mainScript = fs.readFileSync(mainScriptPath, "utf-8")
+      const assetBaseUrl = getUserscriptAssetBaseUrl()
+      const selfHostedRelativePaths = [
+        ...Object.values(userscriptResourceFiles).map(({ relativePath }) => relativePath),
+        ...Object.values(userscriptLocaleResourceFiles).map(({ relativePath }) => relativePath),
+        userscriptGeminiWatermarkVendorRelativePath,
+        userscriptMarkdownVendorRelativePath,
+        userscriptAdaptersVendorRelativePath,
+      ]
+
+      for (const relativePath of selfHostedRelativePaths) {
+        const url = `${assetBaseUrl}/${relativePath}`
+        if (!mainScript.includes(url) || mainScript.includes(`${url}#sha256=`)) continue
+
+        const digest = createHash("sha256")
+          .update(fs.readFileSync(path.join(userscriptBuildOutDir, relativePath)))
+          .digest("hex")
+        mainScript = mainScript.replaceAll(url, `${url}#sha256=${digest}`)
+      }
+
+      fs.writeFileSync(mainScriptPath, mainScript, "utf-8")
+
+      const mainScriptChars = mainScript.length
+      if (mainScriptChars > USERSCRIPT_CHAR_GATE) {
+        throw new Error(
+          `${userscriptMainFileName} is ${mainScriptChars} chars, exceeding the ` +
+            `${USERSCRIPT_CHAR_GATE} project gate (Greasyfork hard limit ` +
+            `${USERSCRIPT_GREASYFORK_CHAR_LIMIT}). Move more code into @require vendor ` +
+            "bundles or @resource data instead of shipping near the limit.",
+        )
+      }
+      console.warn(
+        `[ophel-userscript-assets] ${userscriptMainFileName}: ${mainScriptChars} chars ` +
+          `(gate ${USERSCRIPT_CHAR_GATE}, Greasyfork limit ${USERSCRIPT_GREASYFORK_CHAR_LIMIT})`,
+      )
     },
   }
 }
@@ -676,6 +725,8 @@ export default defineConfig({
     // 注入平台标识
     __PLATFORM__: JSON.stringify("userscript"),
     __OPHEL_DEV__: JSON.stringify(isUserscriptDevelopmentBuild),
+    // 与 adapters vendor 的版本握手标识
+    __OPHEL_APP_VERSION__: JSON.stringify(version),
   },
   build: {
     outDir: "build/userscript",

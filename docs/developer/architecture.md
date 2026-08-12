@@ -84,6 +84,17 @@ App.tsx (Shadow DOM 内的 React 面板)
 - `platform.remoteConfig` 在 vendor 中被替换为显式抛错的 stub
   （`remote-config-stub.ts`），用于截断站点包注册表链路；
   适配器代码不允许调用 `platform.remoteConfig.*`。
+- **版本握手**：vendor 在 `window.__OphelAdaptersVendorMeta` 注册
+  `{ version, schemaVersion }`（由 `__OPHEL_APP_VERSION__` 注入），
+  主包实例化前校验，不一致则显式报错并停用内置适配器，
+  防止脚本更新后 @require 缓存滞留导致静默错配。
+- **完整性片段**：构建会为自托管资产的 `@require`/`@resource` URL 追加
+  `#sha256=` SRI 片段，Tampermonkey 安装时校验内容；release 工作流在
+  pin URL 之后执行 `scripts/verify-userscript-assets.mjs`，逐字节比对
+  jsDelivr 远端与本地产物。
+- **字符数闸门**：构建结尾检查 `ophel.user.js` 字符数，超过项目闸门
+  （195 万，Greasyfork 硬限 200 万）直接构建失败；触闸应继续向
+  vendor/`@resource` 拆分，而不是顶着上限发布。
 
 ## 模块结构图
 
