@@ -4,6 +4,10 @@
  * 根据当前页面 URL 自动选择合适的适配器
  */
 
+// 内置适配器列表由 ~adapters/builtin 提供；油猴构建中该模块被 alias 替换为
+// vendor 桥接实现（见 builtin.ts 注释），浏览器扩展构建不受影响。
+// 必须使用 ~ 别名导入，油猴 vite alias 才能拦截。
+import { builtinAdapters } from "~adapters/builtin"
 import {
   isInstalledSitePackEffectivelyEnabled,
   type InstalledSitePack,
@@ -18,42 +22,9 @@ import {
 } from "~core/site-pack-origin-bindings"
 import { platform } from "~platform"
 
-import { AIStudioAdapter } from "./aistudio"
 import { SiteAdapter } from "./base"
-import { ChatGLMAdapter } from "./chatglm"
-import { ChatGPTAdapter } from "./chatgpt"
-import { ClaudeAdapter } from "./claude"
-import { DeepSeekAdapter } from "./deepseek"
-import { DoubaoAdapter } from "./doubao"
-import { GeminiAdapter } from "./gemini"
-import { GeminiEnterpriseAdapter } from "./gemini-enterprise"
-import { GrokAdapter } from "./grok"
-import { ImaAdapter } from "./ima"
-import { KimiAdapter } from "./kimi"
 import { applyMergedConfig, DeclarativeAdapter, supportsBuiltinSiteConfig } from "./declarative"
-import { QianwenAdapter } from "./qianwen"
-import { QwenAiAdapter } from "./qwen-studio"
-import { YuanbaoAdapter } from "./yuanbao"
-import { ZaiAdapter } from "./zai"
 
-// 所有内置适配器；顺序即匹配优先级，动态适配包在 Phase 1 追加到独立列表。
-const builtinAdapters: SiteAdapter[] = [
-  new GeminiEnterpriseAdapter(),
-  new GeminiAdapter(),
-  new ChatGPTAdapter(),
-  new GrokAdapter(),
-  new AIStudioAdapter(),
-  new ClaudeAdapter(),
-  new DeepSeekAdapter(),
-  new DoubaoAdapter(),
-  new ImaAdapter(),
-  new ChatGLMAdapter(),
-  new KimiAdapter(),
-  new QwenAiAdapter(),
-  new QianwenAdapter(),
-  new YuanbaoAdapter(),
-  new ZaiAdapter(),
-]
 let dynamicAdapters: SiteAdapter[] = []
 
 let registryInitialization: Promise<void> | null = null

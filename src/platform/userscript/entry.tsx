@@ -386,14 +386,19 @@ async function init() {
     { initNetworkMonitor },
     { initGeminiTitleGuard },
     { showSitePackBindingIssueNotice },
+    { publishAdaptersVendorBridge },
   ] = await Promise.all([
     import("~adapters"),
     import("~components/App"),
     import("~core/network-monitor"),
     import("~core/gemini-title-guard"),
     import("~utils/binding-issue-notice"),
+    import("./publish-vendor-bridge"),
   ])
 
+  // 向 @require 引入的 adapters vendor 发布有状态模块单例，
+  // 必须先于适配器注册与任何适配器方法调用。
+  publishAdaptersVendorBridge()
   await initAdapterRegistry()
   initGeminiTitleGuard()
 

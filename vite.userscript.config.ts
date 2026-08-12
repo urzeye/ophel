@@ -116,6 +116,9 @@ const userscriptGeminiWatermarkVendorUrl = `${getUserscriptAssetBaseUrl()}/${use
 const userscriptMarkdownVendorFileName = `ophel-markdown-vendor-ophel-${version}.js`
 const userscriptMarkdownVendorRelativePath = `${userscriptAssetOutDirName}/${userscriptMarkdownVendorFileName}`
 const userscriptMarkdownVendorUrl = `${getUserscriptAssetBaseUrl()}/${userscriptMarkdownVendorRelativePath}`
+const userscriptAdaptersVendorFileName = `ophel-adapters-vendor-ophel-${version}.js`
+const userscriptAdaptersVendorRelativePath = `${userscriptAssetOutDirName}/${userscriptAdaptersVendorFileName}`
+const userscriptAdaptersVendorUrl = `${getUserscriptAssetBaseUrl()}/${userscriptAdaptersVendorRelativePath}`
 
 const userscriptAssetSources = {
   icon: path.resolve(__dirname, "assets/icon.png"),
@@ -301,6 +304,101 @@ async function buildMarkdownVendor(): Promise<void> {
   })
 }
 
+// 内置站点适配器独立 vendor 构建（经 @require 引入，压缩脚本本体字符数）。
+// 有状态模块（settings-store / watermark-remover / i18n）alias 到
+// vendor-bridge shim，运行时转发主包 window.__OphelAdaptersVendorBridge；
+// 其余共享模块无状态，vendor 自带副本即可。
+async function buildAdaptersVendor(): Promise<void> {
+  await viteBuild({
+    configFile: false,
+    publicDir: false,
+    plugins: [
+      {
+        name: "ophel-adapters-vendor-stubs",
+        enforce: "pre",
+        resolveId(source, importer) {
+          // platform.remoteConfig 仅设置 UI 使用，vendor 内不会调用；
+          // 截断该动态导入，避免把站点包注册表链路打包进 vendor。
+          if (source === "./remote-config" && importer?.endsWith("platform/userscript/index.ts")) {
+            return path.resolve(
+              __dirname,
+              "src/platform/userscript/vendor-bridge/remote-config-stub.ts",
+            )
+          }
+          return null
+        },
+      },
+    ],
+    define: {
+      __PLATFORM__: JSON.stringify("userscript"),
+      __OPHEL_DEV__: JSON.stringify(false),
+    },
+    resolve: {
+      alias: {
+        // ========== React 走 @require 的 window 全局（与主包一致）==========
+        "react/jsx-runtime": path.resolve(
+          __dirname,
+          "src/platform/userscript/react-jsx-runtime.ts",
+        ),
+        "react-dom/client": path.resolve(
+          __dirname,
+          "src/platform/userscript/react-dom-client-global.ts",
+        ),
+        "react-dom": path.resolve(__dirname, "src/platform/userscript/react-dom-global.ts"),
+        react: path.resolve(__dirname, "src/platform/userscript/react-global.ts"),
+        // ========== 主包持有的有状态模块（桥接 shim）==========
+        "~stores/settings-store": path.resolve(
+          __dirname,
+          "src/platform/userscript/vendor-bridge/settings-store.ts",
+        ),
+        "~core/watermark-remover": path.resolve(
+          __dirname,
+          "src/platform/userscript/vendor-bridge/watermark-remover.ts",
+        ),
+        "~utils/i18n": path.resolve(__dirname, "src/platform/userscript/vendor-bridge/i18n.ts"),
+        // ========== 与主包一致的 window 全局/polyfill ==========
+        "~utils/markdown": path.resolve(__dirname, "src/platform/userscript/markdown-global.ts"),
+        "~constants/site-icons": path.resolve(
+          __dirname,
+          "src/platform/userscript/site-icons.ts",
+        ),
+        "~platform/katex": path.resolve(__dirname, "src/platform/userscript/katex.ts"),
+        "@plasmohq/storage": path.resolve(
+          __dirname,
+          "src/platform/userscript/storage-polyfill.ts",
+        ),
+        // ========== 路径别名（与主包一致）==========
+        "~adapters": path.resolve(__dirname, "src/adapters"),
+        "~components": path.resolve(__dirname, "src/components"),
+        "~constants": path.resolve(__dirname, "src/constants"),
+        "~core": path.resolve(__dirname, "src/core"),
+        "~platform": path.resolve(__dirname, "src/platform"),
+        "~stores": path.resolve(__dirname, "src/stores"),
+        "~styles": path.resolve(__dirname, "src/styles"),
+        "~types": path.resolve(__dirname, "src/types"),
+        "~utils": path.resolve(__dirname, "src/utils"),
+        "~": path.resolve(__dirname, "src"),
+      },
+    },
+    build: {
+      outDir: userscriptAssetOutDir,
+      emptyOutDir: false,
+      minify: "terser",
+      lib: {
+        entry: path.resolve(__dirname, "src/platform/userscript/adapters-vendor.ts"),
+        name: "OphelAdaptersVendor",
+        formats: ["iife"],
+        fileName: () => userscriptAdaptersVendorFileName,
+      },
+      rollupOptions: {
+        output: {
+          inlineDynamicImports: true,
+        },
+      },
+    },
+  })
+}
+
 const localUserscriptResourceEntries = Object.entries(USERSCRIPT_RESOURCE_DEFINITIONS).filter(
   ([, definition]) => !("externalUrl" in definition),
 )
@@ -389,6 +487,7 @@ function emitUserscriptAssets(): Plugin {
 
       await buildGeminiWatermarkVendor()
       await buildMarkdownVendor()
+      await buildAdaptersVendor()
 
       fs.writeFileSync(
         path.join(userscriptAssetOutDir, userscriptAssetManifestFileName),
@@ -415,10 +514,15 @@ function emitUserscriptAssets(): Plugin {
                 fileName: userscriptMarkdownVendorFileName,
                 relativePath: userscriptMarkdownVendorRelativePath,
               },
+              adaptersVendor: {
+                fileName: userscriptAdaptersVendorFileName,
+                relativePath: userscriptAdaptersVendorRelativePath,
+              },
             },
             requireUrls: {
               geminiWatermarkRemover: userscriptGeminiWatermarkVendorUrl,
               markdownVendor: userscriptMarkdownVendorUrl,
+              adaptersVendor: userscriptAdaptersVendorUrl,
             },
           },
           null,
@@ -510,6 +614,7 @@ export default defineConfig({
           KATEX_CDN_JS_URL,
           userscriptMarkdownVendorUrl,
           userscriptGeminiWatermarkVendorUrl,
+          userscriptAdaptersVendorUrl,
         ],
         resource: {
           ...userscriptResourceUrls,
@@ -546,6 +651,8 @@ export default defineConfig({
       // 注意：chrome-adapter.ts 已内置跨平台支持（通过 __PLATFORM__ 判断），无需 alias 替换
 
       // ========== 路径别名（与 Plasmo 的 ~ 别名一致）==========
+      // 内置适配器列表改由 @require 的 adapters vendor 提供（必须放在 ~adapters 之前）
+      "~adapters/builtin": path.resolve(__dirname, "src/platform/userscript/builtin-adapters.ts"),
       "~adapters": path.resolve(__dirname, "src/adapters"),
       "~components": path.resolve(__dirname, "src/components"),
       "~constants": path.resolve(__dirname, "src/constants"),

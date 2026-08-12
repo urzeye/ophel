@@ -161,9 +161,10 @@ pnpm dev
 **Userscript**
 
 ```bash
-pnpm dev:userscript
-# This will start a dev server (usually http://localhost:5173).
-# Install the script in Tampermonkey using the URL provided in the console.
+pnpm build:userscript:local
+pnpm serve:userscript:assets
+# Keep the asset server running, then install build/userscript/ophel.user.js
+# in Tampermonkey. @require/@resource URLs point to the local asset server.
 ```
 
 #### Verification
