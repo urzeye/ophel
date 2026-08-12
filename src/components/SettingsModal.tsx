@@ -37,7 +37,7 @@ import PermissionsPage from "~tabs/options/pages/PermissionsPage"
 import ShortcutsPage from "~tabs/options/pages/ShortcutsPage"
 import SitePacksPage from "~tabs/options/pages/SitePacksPage"
 import SiteSettingsPage from "~tabs/options/pages/SiteSettingsPage"
-import { APP_DISPLAY_NAME, APP_ICON_URL } from "~utils/config"
+import { APP_DISPLAY_NAME, getAppIconUrl } from "~utils/config"
 import { attachEditableKeyboardFocusGuard, OPHEL_INTERACTION_LAYER_PROPS } from "~utils/dom-toolkit"
 import { setLanguage, t } from "~utils/i18n"
 import { scrollWithinSettingsContent } from "~utils/settings-scroll"
@@ -478,7 +478,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         <aside className="settings-sidebar">
           <div className="settings-sidebar-header">
             <div className="settings-sidebar-logo">
-              <img src={APP_ICON_URL} alt={APP_DISPLAY_NAME} />
+              <img src={getAppIconUrl()} alt={APP_DISPLAY_NAME} />
               <span id={titleId} tabIndex={-1}>
                 {APP_DISPLAY_NAME}
               </span>

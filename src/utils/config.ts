@@ -24,8 +24,12 @@ export const APP_VERSION = isUserscript
 
 // 应用图标 URL
 // 油猴脚本由入口阶段通过 @resource 预载入，浏览器扩展继续使用本地资源
-export const APP_ICON_URL = isUserscript
-  ? typeof window !== "undefined"
-    ? window.__OPHEL_USERSCRIPT_ASSET_URLS__?.icon || ""
-    : ""
-  : chrome.runtime.getURL("assets/icon.png")
+// 必须惰性读取：油猴构建将模块图内联为单文件，入口设置
+// __OPHEL_USERSCRIPT_ASSET_URLS__ 的代码晚于其他模块求值，
+// 模块顶层读取会永远拿到空串
+export function getAppIconUrl(): string {
+  if (isUserscript) {
+    return typeof window !== "undefined" ? window.__OPHEL_USERSCRIPT_ASSET_URLS__?.icon || "" : ""
+  }
+  return chrome.runtime.getURL("assets/icon.png")
+}

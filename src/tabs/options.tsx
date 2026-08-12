@@ -17,7 +17,7 @@ import {
 import { resolveSettingsNavigateDetail } from "~constants"
 import { platform } from "~platform"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
-import { APP_DISPLAY_NAME, APP_ICON_URL } from "~utils/config"
+import { APP_DISPLAY_NAME, getAppIconUrl } from "~utils/config"
 import { SidebarCommunityLinks } from "~components/SidebarCommunityLinks"
 import { getOphelPlatformFontClassName } from "~utils/font"
 import { setLanguage, t } from "~utils/i18n"
@@ -283,7 +283,7 @@ const OptionsPage = () => {
       <aside className="settings-sidebar">
         <div className="settings-sidebar-header">
           <div className="settings-sidebar-logo">
-            <img src={APP_ICON_URL} alt={APP_DISPLAY_NAME} />
+            <img src={getAppIconUrl()} alt={APP_DISPLAY_NAME} />
             <span>{APP_DISPLAY_NAME}</span>
           </div>
         </div>

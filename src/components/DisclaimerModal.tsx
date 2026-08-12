@@ -1,6 +1,6 @@
 import { GithubIcon, ShieldCheckIcon } from "~components/icons"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
-import { APP_ICON_URL } from "~utils/config"
+import { getAppIconUrl } from "~utils/config"
 import { OPHEL_FONT_FAMILY_CSS_VAR } from "~utils/font"
 import { getStoreInfo } from "~utils/getStoreInfo"
 import { t } from "~utils/i18n"
@@ -22,7 +22,7 @@ export const DisclaimerModal: React.FC = () => {
     <div className="disclaimer-modal-overlay">
       <div className="disclaimer-modal">
         <div className="disclaimer-header">
-          <img src={APP_ICON_URL} alt="Ophel" className="disclaimer-icon-img" />
+          <img src={getAppIconUrl()} alt="Ophel" className="disclaimer-icon-img" />
           <div className="disclaimer-slogan-container">
             <span className="sparkle" aria-hidden="true">
               ✨

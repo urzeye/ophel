@@ -23,7 +23,7 @@ import {
 import { SparkleIcon } from "~components/icons/SparkleIcon"
 import { STORE_LINKS } from "~constants/store-links"
 import { useSupportedAiPlatforms } from "~hooks/useSupportedAiPlatforms"
-import { APP_DISPLAY_NAME, APP_ICON_URL, APP_VERSION } from "~utils/config"
+import { APP_DISPLAY_NAME, APP_VERSION, getAppIconUrl } from "~utils/config"
 import { t } from "~utils/i18n"
 
 import { PageTitle } from "../components"
@@ -55,7 +55,7 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
       {/* Hero Card */}
       <div className="about-hero-card">
         <img
-          src={APP_ICON_URL}
+          src={getAppIconUrl()}
           alt={APP_DISPLAY_NAME}
           className="about-hero-logo"
           onError={(e) => {
