@@ -111,6 +111,18 @@ const PermissionRequestPage: React.FC = () => {
     }
   }, [])
 
+  // 无效请求（如 sitePack 的 origin 参数全部被过滤）直接按失败处理，
+  // 不展示一个点击后才会报错的空授权弹窗。
+  useEffect(() => {
+    if (config.origins.length > 0 || config.permissions.length > 0) return
+    console.error("[PermRequest] Permission request contains no valid origins or permissions")
+    setStatus("denied")
+    const timer = setTimeout(() => {
+      window.close()
+    }, 1000)
+    return () => clearTimeout(timer)
+  }, [config])
+
   // 请求权限
   const handleRequest = async () => {
     try {

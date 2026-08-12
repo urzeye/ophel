@@ -370,6 +370,8 @@ async function buildAdaptersVendor(): Promise<void> {
           "src/platform/userscript/site-icons.ts",
         ),
         "~platform/katex": path.resolve(__dirname, "src/platform/userscript/katex.ts"),
+        // 平台实现编译期选择（必须放在 ~platform 之前，精确匹配优先）
+        "~platform/impl": path.resolve(__dirname, "src/platform/userscript/impl.ts"),
         "@plasmohq/storage": path.resolve(
           __dirname,
           "src/platform/userscript/storage-polyfill.ts",
@@ -685,6 +687,8 @@ export default defineConfig({
       // ========== 路径别名（与 Plasmo 的 ~ 别名一致）==========
       // 内置适配器列表改由 @require 的 adapters vendor 提供（必须放在 ~adapters 之前）
       "~adapters/builtin": path.resolve(__dirname, "src/platform/userscript/builtin-adapters.ts"),
+      // 平台实现编译期选择（必须放在 ~platform 之前，精确匹配优先）
+      "~platform/impl": path.resolve(__dirname, "src/platform/userscript/impl.ts"),
       "~adapters": path.resolve(__dirname, "src/adapters"),
       "~components": path.resolve(__dirname, "src/components"),
       "~constants": path.resolve(__dirname, "src/constants"),

@@ -11,7 +11,6 @@ import {
 import {
   INSTALLED_SITE_PACKS_STORAGE_KEY,
   REMOTE_CONFIG_STORAGE_KEY,
-  SITE_CONFIG_OVERRIDES_STORAGE_KEY,
   SITE_PACK_ORIGIN_BINDINGS_STORAGE_KEY,
   SITE_PACK_REGISTRATION_STATE_STORAGE_KEY,
 } from "~core/site-pack-storage-constants"
@@ -85,20 +84,11 @@ describe("backup codec SitePack lifecycle", () => {
         },
       },
     }
-    const overrides = {
-      storageSchemaVersion: 1,
-      overrides: {
-        "pack:example-chat": {
-          theme: { primary: "#123456" },
-        },
-      },
-    }
     const settings = { language: "en", theme: "dark" }
     const source = new MemoryPlatformStorage({
       settings: JSON.stringify({ state: { settings }, version: 0 }),
       [INSTALLED_SITE_PACKS_STORAGE_KEY]: installedPacks,
       [SITE_PACK_ORIGIN_BINDINGS_STORAGE_KEY]: originBindings,
-      [SITE_CONFIG_OVERRIDES_STORAGE_KEY]: overrides,
       [REMOTE_CONFIG_STORAGE_KEY]: { registryRevision: 9 },
       [SITE_PACK_REGISTRATION_STATE_STORAGE_KEY]: {
         storageSchemaVersion: 1,
@@ -116,7 +106,6 @@ describe("backup codec SitePack lifecycle", () => {
         settings,
         [INSTALLED_SITE_PACKS_STORAGE_KEY]: installedPacks,
         [SITE_PACK_ORIGIN_BINDINGS_STORAGE_KEY]: originBindings,
-        [SITE_CONFIG_OVERRIDES_STORAGE_KEY]: overrides,
       },
     })
     expect(document.data).not.toHaveProperty(REMOTE_CONFIG_STORAGE_KEY)
@@ -131,13 +120,11 @@ describe("backup codec SitePack lifecycle", () => {
         "settings",
         INSTALLED_SITE_PACKS_STORAGE_KEY,
         SITE_PACK_ORIGIN_BINDINGS_STORAGE_KEY,
-        SITE_CONFIG_OVERRIDES_STORAGE_KEY,
       ]),
     )
     expect(target.read("settings")).toBe(JSON.stringify({ state: { settings }, version: 0 }))
     expect(target.read(INSTALLED_SITE_PACKS_STORAGE_KEY)).toEqual(installedPacks)
     expect(target.read(SITE_PACK_ORIGIN_BINDINGS_STORAGE_KEY)).toEqual(originBindings)
-    expect(target.read(SITE_CONFIG_OVERRIDES_STORAGE_KEY)).toEqual(overrides)
   })
 
   it("normalizes legacy full backups and ignores cache or future keys", async () => {

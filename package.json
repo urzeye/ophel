@@ -159,7 +159,8 @@
           "assets/assistant-mermaid-vendor.js",
           "assets/release-notes/*",
           "assets/notification-sounds/*",
-          "assets/userscript/*"
+          "assets/userscript/*",
+          "KaTeX_*.woff2"
         ],
         "matches": [
           "<all_urls>"

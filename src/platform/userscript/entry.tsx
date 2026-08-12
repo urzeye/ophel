@@ -346,34 +346,35 @@ if (chromeRuntime && !chromeRuntime.onMessage) {
 // 虽然 @match 设为 */*（技术原因，油猴无法动态添加 match），
 // 但只在白名单站点（内置 15 个站点 + 已安装 SitePack + 自定义绑定）上初始化。
 // 非白名单站点在此处早期退出，性能影响极小（<1ms）。
+// 注意：不要用顶层 throw 退出——每个非白名单页面都会在控制台留下一条
+// 未捕获错误噪音。用条件分支跳过所有后续副作用。
 const { shouldInitializeOnCurrentSite } = await import("./whitelist-check")
 const shouldRun = await shouldInitializeOnCurrentSite()
 if (!shouldRun) {
   console.debug(
     "[Ophel] Current site is not in whitelist (built-in sites, installed SitePacks, or custom bindings). Skipping initialization.",
   )
-  // 早期退出，不执行任何后续代码
-  throw new Error("Ophel: Site not in whitelist")
-}
+} else if (window.top !== window.self) {
+  // 防止在 iframe 中执行（@noframes 之外的兜底防御）
+  console.warn("[Ophel] Running in iframe, skipping initialization")
+} else if (window.ophelUserscriptInitialized) {
+  // 防止重复初始化
+  console.warn("[Ophel] Already initialized, skipping")
+} else {
+  window.ophelUserscriptInitialized = true
 
-// 防止在 iframe 中执行
-if (window.top !== window.self) {
-  throw new Error("Ophel: Running in iframe, skipping initialization")
-}
+  // 注入滚动锁定 API 劫持到页面主世界
+  // 等效于浏览器扩展中的 scroll-lock-main.ts (MAIN World content script)
+  // 必须在 document-start 时同步执行，在页面代码加载前劫持滚动 API
+  // 否则 ChatGPT 等平台可能缓存原始 API 引用，导致位置锁被绕过
+  injectScrollLock()
+  injectGeminiCanvasCodeBridge()
+  injectYuanbaoMonacoWrap()
 
-// 防止重复初始化
-if (window.ophelUserscriptInitialized) {
-  throw new Error("Ophel: Already initialized")
+  // 启动：document-start 时 DOM 未就绪，需等待
+  // injectScrollLock() 已在上方同步执行，后续初始化延迟到 DOM 就绪
+  startWhenReady()
 }
-window.ophelUserscriptInitialized = true
-
-// 注入滚动锁定 API 劫持到页面主世界
-// 等效于浏览器扩展中的 scroll-lock-main.ts (MAIN World content script)
-// 必须在 document-start 时同步执行，在页面代码加载前劫持滚动 API
-// 否则 ChatGPT 等平台可能缓存原始 API 引用，导致位置锁被绕过
-injectScrollLock()
-injectGeminiCanvasCodeBridge()
-injectYuanbaoMonacoWrap()
 
 // 注意：Flutter 滚动容器现在在 scroll-helper.ts 中直接通过 unsafeWindow 访问
 // 不再需要在这里注入 Main World 监听器
@@ -632,8 +633,6 @@ async function init() {
   window.addEventListener("unload", cleanupUrlChangeObserver, { once: true })
 }
 
-// 启动：document-start 时 DOM 未就绪，需等待
-// injectScrollLock() 已在上方同步执行，后续初始化延迟到 DOM 就绪
 function startWhenReady() {
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", () => void init(), { once: true })
@@ -641,4 +640,3 @@ function startWhenReady() {
     void init()
   }
 }
-startWhenReady()
