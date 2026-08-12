@@ -342,6 +342,20 @@ if (chromeRuntime && !chromeRuntime.onMessage) {
   }
 }
 
+// ========== 早期白名单检查（仅 userscript） ==========
+// 虽然 @match 设为 */*（技术原因，油猴无法动态添加 match），
+// 但只在白名单站点（内置 15 个站点 + 已安装 SitePack + 自定义绑定）上初始化。
+// 非白名单站点在此处早期退出，性能影响极小（<1ms）。
+const { shouldInitializeOnCurrentSite } = await import("./whitelist-check")
+const shouldRun = await shouldInitializeOnCurrentSite()
+if (!shouldRun) {
+  console.debug(
+    "[Ophel] Current site is not in whitelist (built-in sites, installed SitePacks, or custom bindings). Skipping initialization.",
+  )
+  // 早期退出，不执行任何后续代码
+  throw new Error("Ophel: Site not in whitelist")
+}
+
 // 防止在 iframe 中执行
 if (window.top !== window.self) {
   throw new Error("Ophel: Running in iframe, skipping initialization")

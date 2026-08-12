@@ -13,7 +13,6 @@ import type { SitePackManifest } from "~adapters/declarative/types"
 import { SITE_PACK_MAX_BYTES, type SitePackValidationError } from "~adapters/declarative/validate"
 import {
   CheckIcon,
-  CopyIcon,
   DeleteIcon,
   EditIcon,
   ExternalLinkIcon,
@@ -50,7 +49,6 @@ import {
   type SitePackOriginBindingsState,
 } from "~core/site-pack-origin-bindings"
 import {
-  collapseCoveredSitePackOriginPatterns,
   deriveSitePackOriginReferences,
   getSitePackBoundOriginPatterns,
   sitePackBindingOriginPattern,
@@ -64,10 +62,6 @@ import {
   type RemoteConfigCheckResult,
 } from "~core/remote-config-types"
 import { platform, type SitePackRuntimeStatus } from "~platform"
-import {
-  getCurrentUserscriptMatchCoverageInfo,
-  userscriptMatchPatternsCoverOriginPattern,
-} from "~platform/userscript-match-coverage"
 import { useSettingsStore } from "~stores/settings-store"
 import { PageTitle, SettingRow, TabGroup, ToggleRow } from "~tabs/options/components"
 import { allowsSitePackHttpOrigins } from "~core/site-pack-http-policy"
@@ -481,10 +475,6 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
       Object.entries(originBindings.bindings).sort(([left], [right]) => left.localeCompare(right)),
     [originBindings.bindings],
   )
-  const userscriptMatchInfo = useMemo(
-    () => (platform.type === "userscript" ? getCurrentUserscriptMatchCoverageInfo() : null),
-    [],
-  )
   const userscriptReferenceGraph = useMemo(
     () =>
       platform.type === "userscript"
@@ -492,45 +482,6 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
         : null,
     [installedPacks, originBindings],
   )
-  const requiredUserscriptOriginPatterns = useMemo(() => {
-    if (!userscriptReferenceGraph) return []
-    return collapseCoveredSitePackOriginPatterns(
-      userscriptReferenceGraph.originReferences.map(({ originPattern }) => originPattern),
-    )
-  }, [userscriptReferenceGraph])
-  const missingUserscriptOriginPatterns = useMemo(() => {
-    if (!userscriptMatchInfo) return []
-    return requiredUserscriptOriginPatterns.filter(
-      (originPattern) =>
-        !userscriptMatchPatternsCoverOriginPattern(
-          userscriptMatchInfo.matchPatterns,
-          originPattern,
-        ),
-    )
-  }, [requiredUserscriptOriginPatterns, userscriptMatchInfo])
-  // 已安装包维度：哪些包存在未被脚本 match 覆盖的域名，用于在已安装列表内直接警示
-  const missingUserscriptPackIds = useMemo(() => {
-    const result = new Set<string>()
-    if (!userscriptMatchInfo || !userscriptReferenceGraph) return result
-    for (const entry of userscriptReferenceGraph.originReferences) {
-      if (
-        userscriptMatchPatternsCoverOriginPattern(
-          userscriptMatchInfo.matchPatterns,
-          entry.originPattern,
-        )
-      ) {
-        continue
-      }
-      for (const reference of entry.references) result.add(reference.packId)
-    }
-    return result
-  }, [userscriptMatchInfo, userscriptReferenceGraph])
-  const userscriptManagerGuideKey = useMemo(() => {
-    const manager = userscriptMatchInfo?.managerName?.toLowerCase() ?? ""
-    if (manager.includes("tampermonkey")) return "sitePacksUserscriptGuideTampermonkey"
-    if (manager.includes("violentmonkey")) return "sitePacksUserscriptGuideViolentmonkey"
-    return "sitePacksUserscriptGuideGeneric"
-  }, [userscriptMatchInfo])
   const canonicalFormOrigin = useMemo(() => {
     try {
       return canonicalizeSitePackBindingOrigin(normalizeBindingOriginInput(bindingOrigin))
@@ -908,12 +859,6 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
     setPendingLocateId("site-pack-custom-origin")
   }
 
-  /** 油猴匹配缺失引导：切到自定义站点 tab 并定位高亮匹配规则区块 */
-  const handleViewMatchGuide = () => {
-    setActiveTab(SITE_PACKS_TAB_IDS.ORIGINS)
-    setPendingLocateId("site-pack-userscript-coverage")
-  }
-
   const handleRemoveOriginBinding = async (origin: string) => {
     const key = `binding:remove:${origin}`
     if (!beginBusy(key)) return
@@ -937,16 +882,6 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
       reportOperationError(error)
     } finally {
       endBusy(key)
-    }
-  }
-
-  const handleCopyUserscriptPattern = async (pattern: string) => {
-    try {
-      await navigator.clipboard.writeText(pattern)
-      notify(t("copied"))
-    } catch (error) {
-      console.error("Failed to copy userscript match pattern:", error)
-      notifyError(t("copyFailed"))
     }
   }
 
@@ -1491,17 +1426,11 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
       (entry) => entry.originPattern === originPattern,
     )
     const issue = referenceGraph.bindingIssues.find((candidate) => candidate.origin === origin)
-    const userscriptCovered = Boolean(
-      userscriptMatchInfo &&
-        userscriptMatchPatternsCoverOriginPattern(userscriptMatchInfo.matchPatterns, originPattern),
-    )
-    const userscriptMatchRequired = Boolean(
-      userscriptReferenceGraph && referenceEntry && !userscriptCovered,
-    )
+    const userscriptMatchRequired = false
     const missingPermission =
       !userscriptReferenceGraph && runtimeStatus.missingPermissionOrigins.includes(originPattern)
     const active = userscriptReferenceGraph
-      ? Boolean(referenceEntry && userscriptCovered)
+      ? Boolean(referenceEntry)
       : runtimeStatus.activeOrigins.some((activeOrigin) =>
           siteMatchPatternOriginPatternCovers(activeOrigin, originPattern),
         )
@@ -1588,8 +1517,6 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
     const description = resolveSitePackDescription(pack.manifest, currentLanguage)
     // 自部署包没有任何绑定指向时不会在任何站点生效，显式提示并给出绑定入口
     const needsBinding = pack.manifest.matches.length === 0 && !boundPackIds.has(packId)
-    // 油猴端：包的域名未被脚本 match 覆盖时脚本不会注入该站点，提示用户补充匹配规则
-    const needsMatchCoverage = missingUserscriptPackIds.has(packId)
 
     return (
       <div className="settings-pack-item" key={packId}>
@@ -1604,11 +1531,6 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
             <strong title={packId}>{name}</strong>
             {needsBinding && (
               <span className="settings-pack-badge warning">{t("sitePacksNeedsBindingBadge")}</span>
-            )}
-            {needsMatchCoverage && (
-              <span className="settings-pack-badge warning">
-                {t("sitePacksStatusMatchRequired")}
-              </span>
             )}
             {status && <span className={`settings-pack-badge ${status.tone}`}>{status.label}</span>}
           </div>
@@ -1629,14 +1551,6 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
                 className="settings-pack-bind-now-btn"
                 onClick={() => handleBindPackNow(packId)}>
                 {t("sitePacksBindNowAction")}
-              </button>
-            )}
-            {needsMatchCoverage && (
-              <button
-                type="button"
-                className="settings-pack-bind-now-btn"
-                onClick={handleViewMatchGuide}>
-                {t("sitePacksMatchGuideAction")}
               </button>
             )}
           </div>
@@ -1968,40 +1882,6 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
             )}
             <p className="settings-pack-field-hint">{t("sitePacksBindingHint")}</p>
           </section>
-
-          {userscriptMatchInfo && missingUserscriptOriginPatterns.length > 0 && (
-            <section className="settings-card" data-setting-id="site-pack-userscript-coverage">
-              <div className="settings-card-title">{t("sitePacksUserscriptCoverageTitle")}</div>
-              <div className="settings-card-desc">
-                {t("sitePacksUserscriptCoverageDesc", {
-                  count: String(missingUserscriptOriginPatterns.length),
-                  manager:
-                    userscriptMatchInfo.managerName ?? t("sitePacksUserscriptManagerUnknown"),
-                })}
-              </div>
-              <div className="settings-pack-pattern-list">
-                {missingUserscriptOriginPatterns.map((pattern) => (
-                  <div className="settings-pack-pattern" key={pattern}>
-                    <code>{`// @match ${pattern}`}</code>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="secondary"
-                      className="settings-pack-action-button"
-                      aria-label={`${t("copy")}: @match ${pattern}`}
-                      onClick={() => void handleCopyUserscriptPattern(`// @match ${pattern}`)}>
-                      <CopyIcon size={13} />
-                      {t("copy")}
-                    </Button>
-                  </div>
-                ))}
-              </div>
-              <p className="settings-pack-field-hint">{t(userscriptManagerGuideKey)}</p>
-              <p className="settings-pack-field-hint">
-                {t("sitePacksUserscriptCoveragePersistNote")}
-              </p>
-            </section>
-          )}
 
           <section className="settings-card">
             <div className="settings-card-title">{t("sitePacksBindingListTitle")}</div>
