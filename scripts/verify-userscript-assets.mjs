@@ -3,6 +3,8 @@
 /**
  * 发布后核验油猴自托管资产：逐个拉取 commit 锁定的 jsDelivr URL，
  * 与本地构建产物逐字节比对 SHA-256，确保 CDN 上的内容就是本次构建产物。
+ * jsDelivr 对新 commit 有传播窗口，拉取失败（网络错误/非 200）按退避重试；
+ * 内容摘要不一致属于发布错误，立即失败不重试。
  *
  * 用法：node scripts/verify-userscript-assets.mjs <40-char-commit-sha>
  * （commit 为 userscript-assets 分支发布后的提交，release 工作流自动传入）
@@ -46,41 +48,69 @@ if (relativePaths.length === 0) {
 
 const baseUrl = `https://cdn.jsdelivr.net/gh/urzeye/ophel@${commit}`
 
+// jsDelivr 新 commit 首次传播通常在秒级；多轮退避覆盖较慢的窗口，
+// 每轮只重试尚未成功的资产，避免已通过项重复拉取。
+const RETRY_DELAYS_MS = [5_000, 15_000, 30_000, 60_000]
+
 let verified = 0
 const mismatches = []
+let pending = [...relativePaths]
 
-for (const relativePath of relativePaths) {
-  const localPath = path.join(BUILD_ROOT, relativePath)
-  if (!fs.existsSync(localPath)) {
-    mismatches.push(`${relativePath}: local file missing`)
-    continue
-  }
+for (let attempt = 0; ; attempt += 1) {
+  const retryLater = []
 
-  const url = `${baseUrl}/${relativePath}`
-  let remoteBuffer
-  try {
-    const response = await fetch(url)
-    if (!response.ok) {
-      mismatches.push(`${relativePath}: HTTP ${response.status}`)
+  for (const relativePath of pending) {
+    const localPath = path.join(BUILD_ROOT, relativePath)
+    if (!fs.existsSync(localPath)) {
+      mismatches.push(`${relativePath}: local file missing`)
       continue
     }
-    remoteBuffer = Buffer.from(await response.arrayBuffer())
-  } catch (error) {
-    mismatches.push(`${relativePath}: fetch failed: ${error.message}`)
-    continue
+
+    const url = `${baseUrl}/${relativePath}`
+    let remoteBuffer
+    try {
+      const response = await fetch(url)
+      if (!response.ok) {
+        retryLater.push([relativePath, `HTTP ${response.status}`])
+        continue
+      }
+      remoteBuffer = Buffer.from(await response.arrayBuffer())
+    } catch (error) {
+      retryLater.push([relativePath, `fetch failed: ${error.message}`])
+      continue
+    }
+
+    const localDigest = createHash("sha256").update(fs.readFileSync(localPath)).digest("hex")
+    const remoteDigest = createHash("sha256").update(remoteBuffer).digest("hex")
+
+    if (localDigest !== remoteDigest) {
+      mismatches.push(
+        `${relativePath}: sha256 mismatch (local ${localDigest.slice(0, 12)}…, remote ${remoteDigest.slice(0, 12)}…)`,
+      )
+      continue
+    }
+
+    verified += 1
   }
 
-  const localDigest = createHash("sha256").update(fs.readFileSync(localPath)).digest("hex")
-  const remoteDigest = createHash("sha256").update(remoteBuffer).digest("hex")
-
-  if (localDigest !== remoteDigest) {
-    mismatches.push(
-      `${relativePath}: sha256 mismatch (local ${localDigest.slice(0, 12)}…, remote ${remoteDigest.slice(0, 12)}…)`,
-    )
-    continue
+  if (retryLater.length === 0) {
+    break
   }
 
-  verified += 1
+  if (attempt >= RETRY_DELAYS_MS.length) {
+    for (const [relativePath, reason] of retryLater) {
+      mismatches.push(`${relativePath}: ${reason}`)
+    }
+    break
+  }
+
+  const delayMs = RETRY_DELAYS_MS[attempt]
+  console.log(
+    `verify-userscript-assets: ${retryLater.length} asset(s) not reachable yet, ` +
+      `retrying in ${delayMs / 1000}s (round ${attempt + 1}/${RETRY_DELAYS_MS.length})`,
+  )
+  await new Promise((resolve) => setTimeout(resolve, delayMs))
+  pending = retryLater.map(([relativePath]) => relativePath)
 }
 
 if (mismatches.length > 0) {

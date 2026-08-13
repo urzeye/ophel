@@ -176,10 +176,12 @@ function createContentHash(content: string | Buffer): string {
   return createHash("sha256").update(content).digest("hex").slice(0, 12)
 }
 
-// Greasyfork 脚本本体字符数硬限制约 200 万；项目闸门预留余量，
+// Greasyfork 脚本本体大小硬限制 2MB（按字节计）；项目闸门预留余量，
 // 触闸说明需要继续向 vendor 拆分，而不是顶着上限发布。
-const USERSCRIPT_GREASYFORK_CHAR_LIMIT = 2_000_000
-const USERSCRIPT_CHAR_GATE = 1_950_000
+// 必须按 UTF-8 字节而非 UTF-16 码元度量：CJK 字符编码后占 3 字节，
+// 按字符数计量可能在未触闸的情况下超出平台字节上限。
+const USERSCRIPT_GREASYFORK_BYTE_LIMIT = 2_000_000
+const USERSCRIPT_BYTE_GATE = 1_950_000
 const userscriptMainFileName = `${pkg.name}.user.js`
 
 function createHashedFileName(fileName: string, content: string | Buffer): string {
@@ -568,18 +570,18 @@ function emitUserscriptAssets(): Plugin {
 
       fs.writeFileSync(mainScriptPath, mainScript, "utf-8")
 
-      const mainScriptChars = mainScript.length
-      if (mainScriptChars > USERSCRIPT_CHAR_GATE) {
+      const mainScriptBytes = Buffer.byteLength(mainScript, "utf8")
+      if (mainScriptBytes > USERSCRIPT_BYTE_GATE) {
         throw new Error(
-          `${userscriptMainFileName} is ${mainScriptChars} chars, exceeding the ` +
-            `${USERSCRIPT_CHAR_GATE} project gate (Greasyfork hard limit ` +
-            `${USERSCRIPT_GREASYFORK_CHAR_LIMIT}). Move more code into @require vendor ` +
+          `${userscriptMainFileName} is ${mainScriptBytes} bytes, exceeding the ` +
+            `${USERSCRIPT_BYTE_GATE} project gate (Greasyfork hard limit ` +
+            `${USERSCRIPT_GREASYFORK_BYTE_LIMIT}). Move more code into @require vendor ` +
             "bundles or @resource data instead of shipping near the limit.",
         )
       }
       console.warn(
-        `[ophel-userscript-assets] ${userscriptMainFileName}: ${mainScriptChars} chars ` +
-          `(gate ${USERSCRIPT_CHAR_GATE}, Greasyfork limit ${USERSCRIPT_GREASYFORK_CHAR_LIMIT})`,
+        `[ophel-userscript-assets] ${userscriptMainFileName}: ${mainScriptBytes} bytes ` +
+          `(gate ${USERSCRIPT_BYTE_GATE}, Greasyfork limit ${USERSCRIPT_GREASYFORK_BYTE_LIMIT})`,
       )
     },
   }
