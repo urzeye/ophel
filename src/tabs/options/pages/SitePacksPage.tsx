@@ -8,7 +8,10 @@ import React, {
 } from "react"
 
 import { resolveSitePackDescription, resolveSitePackName } from "~adapters/declarative/localization"
-import { siteMatchPatternOriginPatternCovers } from "~adapters/declarative/match-pattern"
+import {
+  siteMatchPatternOrigin,
+  siteMatchPatternOriginPatternCovers,
+} from "~adapters/declarative/match-pattern"
 import type { SitePackManifest } from "~adapters/declarative/types"
 import { SITE_PACK_MAX_BYTES, type SitePackValidationError } from "~adapters/declarative/validate"
 import {
@@ -1508,6 +1511,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
     const canToggleOn = pack.source === "local" || pack.registryStatus === "available"
     const toggleDisabled = isBusy || (!pack.enabled && !canToggleOn)
     const firstMatch = pack.manifest.matches[0]
+    const firstSiteUrl = firstMatch ? siteMatchPatternOrigin(firstMatch) : undefined
     const name = resolveSitePackName(pack.manifest, currentLanguage)
     // 与提示词平台筛选同一条 favicon 规则；无 favicon 或加载失败时回退为首字母
     const faviconUrl = getSitePackFaviconUrl([
@@ -1540,11 +1544,22 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
             <span className="settings-pack-source">
               {t(pack.source === "registry" ? "sitePacksSourceRegistry" : "sitePacksSourceLocal")}
             </span>
-            {firstMatch && (
-              <code className="settings-pack-match" title={firstMatch}>
-                {firstMatch}
-              </code>
-            )}
+            {firstMatch &&
+              (firstSiteUrl ? (
+                <button
+                  type="button"
+                  className="settings-pack-origin-link"
+                  title={firstMatch}
+                  aria-label={`${t("sitePacksOpenSite")}: ${firstSiteUrl}`}
+                  onClick={() => platform.openTab(firstSiteUrl)}>
+                  <span className="settings-pack-origin">{firstSiteUrl}</span>
+                  <ExternalLinkIcon size={12} />
+                </button>
+              ) : (
+                <code className="settings-pack-match" title={firstMatch}>
+                  {firstMatch}
+                </code>
+              ))}
             {needsBinding && (
               <button
                 type="button"
@@ -1556,6 +1571,16 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
           </div>
         </div>
         <div className="settings-pack-controls">
+          {firstSiteUrl && (
+            <button
+              type="button"
+              className="settings-pack-icon-btn"
+              title={t("sitePacksOpenSite")}
+              aria-label={`${t("sitePacksOpenSite")}: ${name}`}
+              onClick={() => platform.openTab(firstSiteUrl)}>
+              <ExternalLinkIcon size={15} />
+            </button>
+          )}
           <button
             type="button"
             className="settings-pack-icon-btn danger"
@@ -1592,6 +1617,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
     const isBusy = isPackBusy(view.id)
     const isSelfHosted = view.matches.length === 0
     const firstMatch = view.matches[0]
+    const firstSiteUrl = firstMatch ? siteMatchPatternOrigin(firstMatch) : undefined
     const version = view.availableVersion ?? view.latestVersion
     // 已安装的 registry 包把用户绑定域名也计入 favicon 来源，与已安装列表保持一致
     const faviconUrl = getSitePackFaviconUrl(
@@ -1624,11 +1650,22 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
           {view.description && <p className="settings-pack-description">{view.description}</p>}
           <div className="settings-pack-meta">
             <span className="settings-pack-version">v{version}</span>
-            {firstMatch && (
-              <code className="settings-pack-match" title={firstMatch}>
-                {firstMatch}
-              </code>
-            )}
+            {firstMatch &&
+              (firstSiteUrl ? (
+                <button
+                  type="button"
+                  className="settings-pack-origin-link"
+                  title={firstMatch}
+                  aria-label={`${t("sitePacksOpenSite")}: ${firstSiteUrl}`}
+                  onClick={() => platform.openTab(firstSiteUrl)}>
+                  <span className="settings-pack-origin">{firstSiteUrl}</span>
+                  <ExternalLinkIcon size={12} />
+                </button>
+              ) : (
+                <code className="settings-pack-match" title={firstMatch}>
+                  {firstMatch}
+                </code>
+              ))}
             {isSelfHosted && <span>{t("sitePacksSelfHostedHint")}</span>}
             {view.availability === "incompatible" && (
               <span>{t("sitePacksRequiresNewerApp", { version: view.minAppVersion })}</span>
@@ -1636,6 +1673,16 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
           </div>
         </div>
         <div className="settings-pack-controls">
+          {firstSiteUrl && (
+            <button
+              type="button"
+              className="settings-pack-icon-btn"
+              title={t("sitePacksOpenSite")}
+              aria-label={`${t("sitePacksOpenSite")}: ${view.name}`}
+              onClick={() => platform.openTab(firstSiteUrl)}>
+              <ExternalLinkIcon size={15} />
+            </button>
+          )}
           <Button
             type="button"
             size="sm"
