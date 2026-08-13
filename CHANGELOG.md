@@ -9,6 +9,12 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### 🚀 New Features
+
+- **Site packs** — Added a "Site Packs" section in settings for installing adapter packs from the online library, extending Ophel to more AI sites (self-hosted instances can be enabled by binding a custom domain); built-in site adapters can now be fixed via cloud updates instead of waiting for the next extension release. (#809)
+
+<!-- release-note-media: site-packs-video -->
+
 ---
 
 ## [1.1.8] - 2026-07-28
