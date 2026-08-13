@@ -81,7 +81,12 @@ import {
   type RegistrySitePackView,
 } from "../site-pack-manager-view"
 
-const SITE_PACK_GUIDE_URL = "https://urzeye.github.io/ophel/site-packs/"
+const SITE_PACK_GUIDE_URL_EN = "https://ophel.app/docs/enhancements/site-extensions"
+const SITE_PACK_GUIDE_URL_ZH = "https://ophel.app/docs/zh/enhancements/site-extensions"
+
+const getSitePackGuideUrl = (lang: string): string =>
+  lang.startsWith("zh") ? SITE_PACK_GUIDE_URL_ZH : SITE_PACK_GUIDE_URL_EN
+
 const ERROR_TOAST_DURATION = 3500
 
 const builtinPlatformNames = new Map(
@@ -1748,7 +1753,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
         <button
           type="button"
           className="settings-pack-guide-link"
-          onClick={() => platform.openTab(SITE_PACK_GUIDE_URL)}>
+          onClick={() => platform.openTab(getSitePackGuideUrl(currentLanguage))}>
           {t("sitePacksGuideAction")}
           <ExternalLinkIcon size={13} />
         </button>

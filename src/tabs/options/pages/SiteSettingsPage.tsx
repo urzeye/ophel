@@ -3,7 +3,7 @@
  * 包含：页面布局、内容处理
  * 这些设置与具体站点相关，按站点存储配置
  */
-import React, { useEffect, useMemo, useState } from "react"
+import React, { useEffect, useMemo, useState, useSyncExternalStore } from "react"
 
 import type { SiteAdapter } from "~adapters/base"
 import {
@@ -16,7 +16,7 @@ import { NumberInput, Slider } from "~components/ui"
 import { LAYOUT_CONFIG, SITE_IDS, SITE_SETTINGS_TAB_IDS, isBuiltinSiteId } from "~constants"
 import { platform } from "~platform"
 import { useSettingsStore } from "~stores/settings-store"
-import { t } from "~utils/i18n"
+import { getCurrentLang, subscribeI18nChanges, t } from "~utils/i18n"
 import { MSG_CHECK_PERMISSIONS, MSG_REQUEST_PERMISSIONS, sendToBackground } from "~utils/messaging"
 import {
   getSiteCleanMode,
@@ -45,8 +45,11 @@ const normalizeSiteSettingsTab = (
   return tab && availableTabs.includes(tab) ? tab : SITE_SETTINGS_TAB_IDS.LAYOUT
 }
 
-const SITE_PACK_INFO_URL =
-  "https://github.com/urzeye/ophel/blob/main/docs/developer/site-adapter/site-adapter-pluginization-plan.md#67-capabilities-%E4%B8%8E-ui-%E8%81%94%E5%8A%A8"
+const SITE_PACK_INFO_URL_EN = "https://ophel.app/docs/enhancements/site-extensions/capabilities"
+const SITE_PACK_INFO_URL_ZH = "https://ophel.app/docs/zh/enhancements/site-extensions/capabilities"
+
+const getSitePackInfoUrl = (lang: string): string =>
+  lang.startsWith("zh") ? SITE_PACK_INFO_URL_ZH : SITE_PACK_INFO_URL_EN
 
 const PANEL_AVOIDANCE_SUPPORTED_SITE_IDS = new Set<string>([
   SITE_IDS.AISTUDIO,
@@ -97,6 +100,7 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
   const [activeTab, setActiveTab] = useState<string>(
     normalizeSiteSettingsTab(initialTab, availableTabs),
   )
+  const currentLanguage = useSyncExternalStore(subscribeI18nChanges, getCurrentLang, getCurrentLang)
 
   useEffect(() => {
     setActiveTab(normalizeSiteSettingsTab(initialTab, availableTabs))
@@ -216,7 +220,7 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
           <span className="settings-site-pack-notice-text">{t("communitySitePackDesc")}</span>
           <a
             className="settings-site-pack-link"
-            href={SITE_PACK_INFO_URL}
+            href={getSitePackInfoUrl(currentLanguage)}
             target="_blank"
             rel="noreferrer">
             {t("learnMore")}
