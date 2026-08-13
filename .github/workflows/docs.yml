@@ -1,13 +1,11 @@
-name: 📚 Deploy SitePack Guide
+name: 📚 Deploy Redirect Page
 
 on:
   push:
     branches:
       - main
     paths:
-      - "docs/site/**"
-      - "package.json"
-      - "pnpm-lock.yaml"
+      - "docs/redirect/**"
       - ".github/workflows/docs.yml"
   workflow_dispatch:
 
@@ -28,33 +26,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 20
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        uses: actions/checkout@v4
 
       - name: Setup Pages
-        id: pages
         uses: actions/configure-pages@v5
 
-      - name: Build SitePack guide
-        run: pnpm docs:build
-        env:
-          DOCS_BASE: ${{ steps.pages.outputs.base_path }}
-
-      - name: Upload SitePack guide
+      - name: Upload redirect page
         uses: actions/upload-pages-artifact@v4
         with:
-          path: docs/site/.vitepress/dist
+          path: docs/redirect
 
       - name: Deploy to GitHub Pages
         id: deployment

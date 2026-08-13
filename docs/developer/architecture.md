@@ -209,8 +209,7 @@ pnpm format:check  # Prettier 只检查
 pnpm typecheck     # TypeScript 类型检查
 
 # 文档站
-pnpm docs:dev      # 本地预览
-pnpm docs:build    # 构建文档
+用户文档由独立仓库 ophel-docs 维护，发布到 https://ophel.app/docs（中文版位于 https://ophel.app/docs/zh）。
 ```
 
 ### 关键入口文件
