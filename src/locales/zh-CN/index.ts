@@ -288,7 +288,7 @@ export const zhCN = {
   // permissionAllUrlsDesc: "允许扩展在所有网站上运行，用于支持更多 AI 平台。", // Deprecated
   permissionWebdavAccess: "高级功能访问权限",
   permissionWebdavAccessDesc:
-    "允许连接所有网站。用于 WebDAV 云端备份同步以及移除 AI 图片水印等高级功能。",
+    "允许连接所有网站。用于 WebDAV 云端备份同步、移除 AI 图片水印，以及让插件式适配包（Site Packs）无需逐站点授权即可在目标站点运行等高级功能。",
 
   // 必需权限
   permissionStorage: "存储",

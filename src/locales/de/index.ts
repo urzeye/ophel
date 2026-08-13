@@ -332,7 +332,7 @@ export const de = {
   required: "Erforderlich",
   permissionWebdavAccess: "Zugriff auf erweiterte Funktionen",
   permissionWebdavAccessDesc:
-    "Zugriff auf alle Websites. Erforderlich für WebDAV und Wasserzeichen-Entfernung.",
+    "Zugriff auf alle Websites. Erforderlich für WebDAV, Wasserzeichen-Entfernung und die Ausführung installierter Site Packs auf ihren Zielseiten ohne sitebezogene Abfragen.",
 
   // Required permissions
   permissionStorage: "Speicher",

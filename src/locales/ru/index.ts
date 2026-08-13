@@ -322,7 +322,8 @@ export const ru = {
   allowRecommended: "Разрешить (рекомендуется)",
   required: "Обязательно",
   permissionWebdavAccess: "Доступ к расширенным функциям",
-  permissionWebdavAccessDesc: "Доступ ко всем сайтам. Нужно для WebDAV и удаления водяных знаков.",
+  permissionWebdavAccessDesc:
+    "Доступ ко всем сайтам. Нужен для WebDAV, удаления водяных знаков и работы установленных Site Pack на целевых сайтах без запросов по каждому сайту.",
 
   // Required permissions
   permissionStorage: "Хранилище",

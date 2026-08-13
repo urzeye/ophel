@@ -318,7 +318,7 @@ export const ko = {
   required: "필수",
   permissionWebdavAccess: "고급 기능 액세스",
   permissionWebdavAccessDesc:
-    "모든 웹사이트에 대한 액세스. WebDAV 동기화 및 AI 이미지 워터마크 제거에 필요합니다.",
+    "모든 웹사이트에 대한 액세스. WebDAV 동기화, AI 이미지 워터마크 제거, 그리고 설치된 Site Pack이 사이트별 승인 없이 대상 사이트에서 실행되는 데 필요합니다.",
 
   // Required permissions
   permissionStorage: "저장소",

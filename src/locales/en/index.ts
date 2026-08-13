@@ -325,7 +325,7 @@ export const en = {
   // permissionAllUrlsDesc: "Allow the extension to run on all websites to support more AI platforms.", // Deprecated
   permissionWebdavAccess: "Advanced Features Access",
   permissionWebdavAccessDesc:
-    "Access to all websites. Required for WebDAV sync and AI image watermark removal.",
+    "Access to all websites. Required for WebDAV sync, AI image watermark removal, and letting installed Site Packs run on their target sites without per-site prompts.",
 
   // Required permissions
   permissionStorage: "Storage",

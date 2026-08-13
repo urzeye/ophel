@@ -1321,7 +1321,7 @@ export const zhTW = {
   // 可選權限
   permissionWebdavAccess: "進階功能存取權限",
   permissionWebdavAccessDesc:
-    "允許連接所有網站。用於 WebDAV 雲端備份同步以及移除 AI 圖片浮水印等進階功能。",
+    "允許連接所有網站。用於 WebDAV 雲端備份同步、移除 AI 圖片浮水印，以及讓外掛式適配包（Site Packs）無需逐站點授權即可在目標站點執行等進階功能。",
 
   // 權限管理
   permissionStorage: "儲存",

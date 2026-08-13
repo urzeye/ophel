@@ -330,7 +330,7 @@ export const es = {
   required: "Requerido",
   permissionWebdavAccess: "Acceso a Funciones Avanzadas",
   permissionWebdavAccessDesc:
-    "Acceso a todos los sitios. Necesario para WebDAV y quitar marcas de agua.",
+    "Acceso a todos los sitios. Necesario para WebDAV, quitar marcas de agua y ejecutar los Site Packs instalados en sus sitios de destino sin solicitudes por sitio.",
 
   // Required permissions
   permissionStorage: "Almacenamiento",

@@ -322,7 +322,7 @@ export const ja = {
   required: "必須",
   permissionWebdavAccess: "高度な機能へのアクセス",
   permissionWebdavAccessDesc:
-    "すべてのウェブサイトへのアクセス。WebDAV同期やAI画像の透かし除去に必要です。",
+    "すべてのウェブサイトへのアクセス。WebDAV同期、AI画像の透かし除去、およびインストール済みSite Packがサイトごとの承認なしに対象サイトで動作するために必要です。",
 
   // Required permissions
   permissionStorage: "ストレージ",

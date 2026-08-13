@@ -331,7 +331,7 @@ export const fr = {
   required: "Requis",
   permissionWebdavAccess: "Accès aux Fonctions Avancées",
   permissionWebdavAccessDesc:
-    "Accès à tous les sites. Requis pour WebDAV et la suppression des filigranes.",
+    "Accès à tous les sites. Requis pour WebDAV, la suppression des filigranes et l'exécution des Site Packs installés sur leurs sites cibles sans demandes par site.",
 
   // Required permissions
   permissionStorage: "Stockage",
