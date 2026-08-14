@@ -990,47 +990,82 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
   }
 
   /** 唯一的更新入口：同步 registry 索引、内置配置补丁与已安装适配包。 */
-  const refreshRegistry = async (
-    options: { manageBusyState?: boolean; sources?: readonly string[] } = {},
-  ): Promise<RemoteConfigCheckResult | null> => {
-    const manageBusyState = options.manageBusyState !== false
-    const key = "registry:refresh"
-    if (manageBusyState && !beginBusy(key)) return null
-    try {
-      const result = await platform.remoteConfig.checkForUpdates(
-        options.sources && options.sources.length > 0 ? { sources: options.sources } : undefined,
-      )
-      if (result.status === "failed") {
-        throw new Error(result.error || t("operationFailed"))
-      }
-      const syncResult = await packManager.syncRegistryPacks()
-      const postSyncSnapshot = await packManager.getSnapshot()
-      const runtimePreparationPacks = selectRuntimePreparationPacks(
-        postSyncSnapshot.packs,
-        syncResult,
-      )
-      const deniedPacks = await prepareInstalledPacksRuntime(runtimePreparationPacks)
-      await Promise.all([loadInstalledPacks(), loadRegistryState()])
-      if (syncResult.issues.length > 0) {
-        setSnapshotIssues((current) => mergePackManagerIssues(current, syncResult.issues))
-      }
+  const refreshRegistry = useCallback(
+    async (
+      options: {
+        manageBusyState?: boolean
+        sources?: readonly string[]
+        silent?: boolean
+      } = {},
+    ): Promise<RemoteConfigCheckResult | null> => {
+      const manageBusyState = options.manageBusyState !== false
+      const key = "registry:refresh"
+      if (manageBusyState && !beginBusy(key)) return null
+      try {
+        const result = await platform.remoteConfig.checkForUpdates(
+          options.sources && options.sources.length > 0 ? { sources: options.sources } : undefined,
+        )
+        if (result.status === "failed") {
+          throw new Error(result.error || t("operationFailed"))
+        }
+        const syncResult = await packManager.syncRegistryPacks()
+        const postSyncSnapshot = await packManager.getSnapshot()
+        const runtimePreparationPacks = selectRuntimePreparationPacks(
+          postSyncSnapshot.packs,
+          syncResult,
+        )
+        const deniedPacks = await prepareInstalledPacksRuntime(runtimePreparationPacks)
+        await Promise.all([loadInstalledPacks(), loadRegistryState()])
+        if (syncResult.issues.length > 0) {
+          setSnapshotIssues((current) => mergePackManagerIssues(current, syncResult.issues))
+        }
 
-      if (deniedPacks.length > 0) {
-        reportPermissionDenied(deniedPacks[0])
+        if (deniedPacks.length > 0) {
+          reportPermissionDenied(deniedPacks[0])
+          return result
+        }
+
+        if (!options.silent) {
+          notify(
+            t(
+              result.status === "updated"
+                ? "remoteConfigCheckUpdated"
+                : "remoteConfigCheckUpToDate",
+            ),
+          )
+        }
         return result
+      } catch (error) {
+        reportOperationError(error)
+        return null
+      } finally {
+        if (manageBusyState) endBusy(key)
       }
+    },
+    [
+      beginBusy,
+      endBusy,
+      loadInstalledPacks,
+      loadRegistryState,
+      packManager,
+      prepareInstalledPacksRuntime,
+      reportOperationError,
+      reportPermissionDenied,
+    ],
+  )
 
-      notify(
-        t(result.status === "updated" ? "remoteConfigCheckUpdated" : "remoteConfigCheckUpToDate"),
-      )
-      return result
-    } catch (error) {
-      reportOperationError(error)
-      return null
-    } finally {
-      if (manageBusyState) endBusy(key)
+  // 首次安装时在线适配库为空，进入“获取与更新”页自动检查一次；
+  // 底层按 checkIntervalMs 节流，重复进入或双重挂载不会频繁请求。
+  const autoCheckedTabRef = useRef<string | null>(null)
+  useEffect(() => {
+    if (activeTab !== SITE_PACKS_TAB_IDS.UPDATES) {
+      autoCheckedTabRef.current = null
+      return
     }
-  }
+    if (autoCheckedTabRef.current === activeTab) return
+    autoCheckedTabRef.current = activeTab
+    void refreshRegistry({ silent: true })
+  }, [activeTab, refreshRegistry])
 
   const handleResetSite = async (siteId: string, siteName: string, patchVersion: number) => {
     setResettingSiteId(siteId)

@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### ✨ Improvements
+
+- **Site packs auto update check** — Opening Settings -> Site Packs -> "Get & Updates" now automatically checks for adapter updates once, so first-time users see the online library right away instead of an empty list. (#821)
+
 ### 🐛 Bug Fixes
 
 - **Claude page width** — Fixed issue where the page width setting no longer widened conversations after Claude updated its layout.
