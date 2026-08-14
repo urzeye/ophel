@@ -17,19 +17,19 @@
     "pt-BR": "LongCat AI",
     "ru": "LongCat AI"
   },
-  "description": "Adds Ophel outlines, basic export, generation detection and stopping, chat width, Zen Mode, new chat, prompt insertion, and reading history to LongCat AI.",
+  "description": "Adds Ophel outlines, basic export, generation detection and stopping, chat width, Zen Mode, new chat, and prompt insertion to LongCat AI.",
   "descriptionI18n": {
-    "zh-CN": "为 LongCat AI 添加 Ophel 大纲、基础导出、生成检测与停止、对话宽度、禅模式、新对话、提示词插入和阅读进度功能。",
-    "zh-TW": "為 LongCat AI 加入 Ophel 大綱、基本匯出、生成偵測與停止、對話寬度、禪模式、新對話、提示詞插入與閱讀進度功能。",
-    "en": "Adds Ophel outlines, basic export, generation detection and stopping, chat width, Zen Mode, new chat, prompt insertion, and reading history to LongCat AI.",
-    "ja": "LongCat AI に、Ophel のアウトライン、基本エクスポート、生成の検出と停止、チャット幅、Zen モード、新規チャット、プロンプト挿入、読書履歴の機能を追加します。",
-    "ko": "LongCat AI에 Ophel의 개요, 기본 내보내기, 생성 감지 및 중지, 대화 너비, Zen 모드, 새 채팅, 프롬프트 삽입, 읽기 기록 기능을 추가합니다.",
-    "it": "Aggiunge a LongCat AI le funzioni Ophel per struttura, esportazione di base, rilevamento e arresto della generazione, larghezza della chat, modalità Zen, nuova chat, inserimento dei prompt e cronologia di lettura.",
-    "de": "Ergänzt LongCat AI um Ophel-Funktionen für Gliederung, Basisexport, Erkennung und Stoppen der Generierung, Chatbreite, Zen-Modus, neuen Chat, Prompt-Einfügung und Leseverlauf.",
-    "es": "Añade a LongCat AI las funciones de Ophel para esquema, exportación básica, detección y detención de la generación, ancho del chat, modo zen, nuevo chat, inserción de prompts e historial de lectura.",
-    "fr": "Ajoute à LongCat AI les fonctions Ophel de plan, d’exportation de base, de détection et d’arrêt de la génération, de largeur de discussion, de mode Zen, de nouvelle discussion, d’insertion de prompts et d’historique de lecture.",
-    "pt-BR": "Adiciona ao LongCat AI os recursos do Ophel para estrutura, exportação básica, detecção e interrupção da geração, largura da conversa, modo Zen, nova conversa, inserção de prompts e histórico de leitura.",
-    "ru": "Добавляет в LongCat AI функции Ophel для структуры, базового экспорта, отслеживания и остановки генерации, ширины чата, режима Zen, нового чата, вставки промптов и истории чтения."
+    "zh-CN": "为 LongCat AI 添加 Ophel 大纲、基础导出、生成检测与停止、对话宽度、禅模式、新对话和提示词插入功能。",
+    "zh-TW": "為 LongCat AI 加入 Ophel 大綱、基本匯出、生成偵測與停止、對話寬度、禪模式、新對話與提示詞插入功能。",
+    "en": "Adds Ophel outlines, basic export, generation detection and stopping, chat width, Zen Mode, new chat, and prompt insertion to LongCat AI.",
+    "ja": "LongCat AI に、Ophel のアウトライン、基本エクスポート、生成の検出と停止、チャット幅、Zen モード、新規チャット、プロンプト挿入の機能を追加します。",
+    "ko": "LongCat AI에 Ophel의 개요, 기본 내보내기, 생성 감지 및 중지, 대화 너비, Zen 모드, 새 채팅, 프롬프트 삽입 기능을 추가합니다.",
+    "it": "Aggiunge a LongCat AI le funzioni Ophel per struttura, esportazione di base, rilevamento e arresto della generazione, larghezza della chat, modalità Zen, nuova chat e inserimento dei prompt.",
+    "de": "Ergänzt LongCat AI um Ophel-Funktionen für Gliederung, Basisexport, Erkennung und Stoppen der Generierung, Chatbreite, Zen-Modus, neuen Chat und Prompt-Einfügung.",
+    "es": "Añade a LongCat AI las funciones de Ophel para esquema, exportación básica, detección y detención de la generación, ancho del chat, modo zen, nuevo chat e inserción de prompts.",
+    "fr": "Ajoute à LongCat AI les fonctions Ophel de plan, d’exportation de base, de détection et d’arrêt de la génération, de largeur de discussion, de mode Zen, de nouvelle discussion et d’insertion de prompts.",
+    "pt-BR": "Adiciona ao LongCat AI os recursos do Ophel para estrutura, exportação básica, detecção e interrupção da geração, largura da conversa, modo Zen, nova conversa e inserção de prompts.",
+    "ru": "Добавляет в LongCat AI функции Ophel для структуры, базового экспорта, отслеживания и остановки генерации, ширины чата, режима Zen, нового чата и вставки промптов."
   },
   "matches": ["https://longcat.chat/*"],
   "theme": {
@@ -45,8 +45,7 @@
     "stop-generation",
     "width",
     "zen",
-    "prompt-insert",
-    "reading-history"
+    "prompt-insert"
   ],
   "selectors": {
     "textarea": [".chatInput .tiptap.ProseMirror"],

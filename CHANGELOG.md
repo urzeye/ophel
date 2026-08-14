@@ -11,7 +11,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🚀 New Features
 
-- **LongCat AI support** — The online adapter library now includes LongCat AI (longcat.chat); installing the pack enables outlines with user queries, export, generation detection and stop, page width, Zen Mode, new chat, prompt insertion, and reading history on the site.
+- **LongCat AI support** — The online adapter library now includes LongCat AI (longcat.chat); installing the pack enables outlines with user queries, export, generation detection and stop, page width, Zen Mode, new chat, and prompt insertion on the site.
 - **HTTP self-hosted sites** — Site Packs can now be bound to HTTP origins such as `http://192.168.1.10:3000`, so a self-hosted AI site that is not served over HTTPS can still be adapted; the in-page adapter wizard and local pack import accept HTTP origins as well.
 
 ### ✨ Improvements
@@ -20,6 +20,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
+- **Site pack reading position restore** — Fixed issue where reading position restore could still run on adapter-pack sites that do not support reading history, interrupting in-page navigation such as outline jumps on LongCat AI.
 - **Userscript adapter library updates** — Fixed issue where the userscript version kept showing an outdated online adapter library (for up to a week) because the browser cached the CDN response; update checks now always fetch the latest index.
 - **Claude page width** — Fixed issue where the page width setting no longer widened conversations after Claude updated its layout.
 - **ChatGPT page redesign adaptation** — Fixed issues caused by ChatGPT's page redesign: conversations could be scanned but not added to the conversation list, the "ChatGPT can make mistakes" disclaimer stayed visible in Clean Mode, and double-clicking LaTeX formulas reported missing source; sidebar chat links and formula sources are now read from the redesigned structure.

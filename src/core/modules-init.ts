@@ -342,6 +342,10 @@ export function initWatermarkRemover(ctx: ModulesContext): void {
 export async function initReadingHistoryManager(ctx: ModulesContext): Promise<void> {
   const { adapter, settings } = ctx
 
+  // 站点未声明 reading-history 能力时不启用阅读历史；
+  // 否则恢复滚动位置的逻辑可能干扰页内导航（如大纲标题跳转）。
+  if (!adapter.hasFeatureCapability("reading-history")) return
+
   if (settings.readingHistory?.persistence) {
     if (readingHistoryAutoStartTimer) {
       clearTimeout(readingHistoryAutoStartTimer)
@@ -613,7 +617,10 @@ export function subscribeModuleUpdates(ctx: ModulesContext): () => void {
     if (newSettings?.readingHistory) {
       if (modules.readingHistoryManager) {
         modules.readingHistoryManager.updateSettings(newSettings.readingHistory)
-      } else if (newSettings.readingHistory.persistence) {
+      } else if (
+        newSettings.readingHistory.persistence &&
+        adapter.hasFeatureCapability("reading-history")
+      ) {
         modules.readingHistoryManager = new ReadingHistoryManager(
           adapter,
           newSettings.readingHistory,
