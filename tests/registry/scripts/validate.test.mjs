@@ -201,6 +201,24 @@ describe("registry PR candidate validation", () => {
       "sites/cli-error.json:$.conversation.idFrom.regex [unsafe_regex]",
     )
   })
+
+  it("accepts the `--` separator forwarded by pnpm run", async () => {
+    await writePack("cli-separator.json", createPack())
+
+    const result = spawnSync(
+      process.execPath,
+      [TSX_CLI_PATH, VALIDATE_SCRIPT_PATH, "--", "--registry-root", registryRoot],
+      {
+        cwd: REPOSITORY_ROOT,
+        encoding: "utf8",
+        env: { ...process.env, NO_COLOR: "1" },
+      },
+    )
+
+    expect(result.error).toBeUndefined()
+    expect(result.status).toBe(0)
+    expect(result.stderr).toContain("[registry] validated")
+  })
 })
 
 describe("registry PR workflow security contract", () => {

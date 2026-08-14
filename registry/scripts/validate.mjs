@@ -81,6 +81,8 @@ const parseArguments = (args) => {
   const options = {}
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index]
+    // `pnpm run <script> -- <args>` 会把分隔符原样传给脚本，跳过后再解析实际参数
+    if (argument === "--") continue
     const value = args[index + 1]
     if (!value || value.startsWith("--")) {
       throw new TypeError(`Missing value for ${argument}`)
