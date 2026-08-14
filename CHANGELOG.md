@@ -9,6 +9,12 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### 🐛 Bug Fixes
+
+- **ChatGPT conversation sync** — Fixed issue where conversations synced from ChatGPT's redesigned sidebar could be scanned but not added to the conversation list; the new sidebar may use absolute chat links, which are now handled alongside relative ones.
+- **ChatGPT clean mode disclaimer** — Fixed issue where the "ChatGPT can make mistakes" disclaimer stayed visible in Clean Mode after the redesign.
+- **ChatGPT formula copy** — Fixed issue where double-clicking a LaTeX formula in ChatGPT reported "no copyable source"; the formula source is now read from the redesigned math wrapper.
+
 ---
 
 ## [1.2.0] - 2026-08-13

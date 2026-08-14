@@ -43,6 +43,7 @@ export class CopyManager {
     ".katex-display",
     "math",
     "[data-math]",
+    "[data-math-source]",
     "[data-custom-copy-text]",
     'annotation[encoding="application/x-tex"]',
   ].join(", ")
@@ -167,11 +168,14 @@ export class CopyManager {
 
     // 优先匹配 Gemini/Doubao/Ophel 渲染预览这类直接携带源码的节点
     const structuredMathEl = formulaHost.closest(
-      ".math-block, .math-inline, [data-math], [data-custom-copy-text]",
+      ".math-block, .math-inline, [data-math], [data-math-source], [data-custom-copy-text]",
     ) as HTMLElement | null
     if (structuredMathEl) {
+      // ChatGPT 新版公式：<span role="math" data-math-source="E = mc^2" data-client-katex-layout>
+      // KaTeX 0.16 不再输出 <math>/<annotation>，源码直接从 data-math-source 读取。
       const latex = this.unwrapMathDelimiters(
         structuredMathEl.getAttribute("data-math") ||
+          structuredMathEl.getAttribute("data-math-source") ||
           structuredMathEl.getAttribute("data-custom-copy-text") ||
           structuredMathEl.getAttribute("copy-text") ||
           "",
@@ -185,7 +189,8 @@ export class CopyManager {
           isBlock:
             structuredMathEl.classList.contains("math-block") ||
             structuredMathEl.matches(".math-block") ||
-            this.isBlockMathElement(structuredMathEl),
+            this.isBlockMathElement(structuredMathEl) ||
+            Boolean(structuredMathEl.querySelector(".katex-display")),
         }
       }
     }
