@@ -235,6 +235,11 @@ export class ConversationManager {
       this.startGeminiMigrationRetry()
     }
 
+    // 修复历史数据中 folderId 指向已不存在文件夹的会话（面板只按现有文件夹渲染，
+    // 这类会话会不可见）。同步的更新分支也会修复 folderId，但只覆盖本次侧边栏
+    // 扫到的会话；这里在启动时兜底修复其余会话。
+    this.repairOrphanedConversationFolders()
+
     // 检查是否刚恢复了备份数据，如果是则跳过自动同步以保持备份的干净状态
     const isRestore = await consumeRestoreFlag()
 
@@ -252,6 +257,36 @@ export class ConversationManager {
     }
 
     this.startSidebarObserver()
+  }
+
+  /**
+   * 将 folderId 缺失或指向不存在文件夹的会话移回收件箱。
+   * 幂等，只改动确实无效的会话，避免老用户升级后历史会话在面板里消失。
+   */
+  private repairOrphanedConversationFolders(): void {
+    const validFolderIds = new Set(this.folders.map((folder) => folder.id))
+    const all = this.storedConversations
+    let changed = false
+    const nextConversations: Record<string, Conversation> = {}
+
+    for (const [storageKey, conversation] of Object.entries(all)) {
+      if (conversation.folderId && validFolderIds.has(conversation.folderId)) {
+        nextConversations[storageKey] = conversation
+        continue
+      }
+
+      nextConversations[storageKey] = {
+        ...conversation,
+        folderId: "inbox",
+        updatedAt: Date.now(),
+      }
+      changed = true
+    }
+
+    if (changed) {
+      useConversationsStore.setState({ conversations: nextConversations })
+      this.notifyDataChange()
+    }
   }
 
   // Gemini 老数据迁移：数字 cid(0/1/2...) -> 当前邮箱 cid
@@ -1021,6 +1056,7 @@ export class ConversationManager {
     let deletedCount = 0
     const now = Date.now()
     const folderId = targetFolderId || this.lastUsedFolderId || "inbox"
+    const validFolderIds = new Set(this.folders.map((folder) => folder.id))
     const store = getConversationsStore()
     const sidebarIds = new Set(sidebarItems.map((item) => item.id))
     const upserts: Conversation[] = []
@@ -1056,6 +1092,10 @@ export class ConversationManager {
         }
         if (item.cid && !existing.cid) {
           updates.cid = item.cid
+          needsUpdate = true
+        }
+        if (!existing.folderId || !validFolderIds.has(existing.folderId)) {
+          updates.folderId = "inbox"
           needsUpdate = true
         }
 

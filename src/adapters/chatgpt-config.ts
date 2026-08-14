@@ -98,7 +98,7 @@ export interface ChatGPTSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const CHATGPT_CONFIG_VERSION = 1
+export const CHATGPT_CONFIG_VERSION = 2
 
 const createChatGPTConfig = (): ChatGPTSiteConfig => {
   const userMessage = '[data-message-author-role="user"]'
@@ -107,7 +107,9 @@ const createChatGPTConfig = (): ChatGPTSiteConfig => {
   const srOnly = ".sr-only"
   const codexTaskMarkdown = ".markdown.markdown-new-styling"
   const codexTaskUserQuery = `.self-end.bg-token-bg-tertiary ${userQueryText}`
-  const conversationItem = 'a[data-sidebar-item="true"][href^="/c/"]'
+  // 新版侧边栏会话链接可能输出绝对 URL（https://chatgpt.com/c/...），这里同时兼容相对 /c/... 写法。
+  const conversationItem =
+    'a[data-sidebar-item="true"][href^="/c/"], a[data-sidebar-item="true"][href*="chatgpt.com/c/"]'
   const stopButton = [
     '[data-testid="stop-button"]',
     'form[data-type="unified-composer"] #composer-submit-button[aria-label*="Stop"]',
@@ -153,7 +155,7 @@ const createChatGPTConfig = (): ChatGPTSiteConfig => {
       itemSelector: conversationItem,
       idFrom: {
         attr: "href",
-        regex: "^/c/([a-z0-9-]+)(?:[/?#]|$)",
+        regex: "(?:^|/)c/([a-z0-9-]+)(?:[/?#]|$)",
       },
       titleSelector: ".truncate [dir='auto']",
       urlTemplate: "/c/{id}",
@@ -205,11 +207,16 @@ const createChatGPTConfig = (): ChatGPTSiteConfig => {
       },
     ],
     zenMode: {
-      hide: ["#stage-slideover-sidebar", "div.select-none:has(> .pointer-events-auto)"],
+      hide: [
+        "#stage-slideover-sidebar",
+        "div.select-none:has(> .pointer-events-auto)",
+        "[data-testid='thread-disclaimer']",
+      ],
     },
     cleanMode: {
       hide: [
         "div.select-none:has(> .pointer-events-auto)",
+        "[data-testid='thread-disclaimer']",
         'div.border-token-border-default.border-t.py-4.text-sm:has(button[aria-label="Ad options"]):has([role="link"][tabindex="0"])',
       ],
     },

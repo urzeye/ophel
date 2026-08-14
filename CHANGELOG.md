@@ -12,6 +12,8 @@ versioning follows [Semantic Versioning](https://semver.org/).
 ### 🐛 Bug Fixes
 
 - **Claude page width** — Fixed issue where the page width setting no longer widened conversations after Claude updated its layout.
+- **ChatGPT page redesign adaptation** — Fixed issues caused by ChatGPT's page redesign: conversations could be scanned but not added to the conversation list, the "ChatGPT can make mistakes" disclaimer stayed visible in Clean Mode, and double-clicking LaTeX formulas reported missing source; sidebar chat links and formula sources are now read from the redesigned structure.
+- **Hidden conversations recovery** — Fixed issue where some conversations stayed invisible in the conversation list even after re-syncing (their folder had been removed earlier); upgrading now automatically moves such conversations back to the inbox.
 
 ---
 

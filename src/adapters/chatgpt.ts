@@ -754,10 +754,12 @@ export class ChatGPTAdapter extends SiteAdapter {
   }
 
   private findConversationRow(id: string): HTMLElement | null {
-    const targetHref = this.getChatGPTConversationPath(id)
+    // 新版侧边栏的 href 可能是绝对 URL（https://chatgpt.com/c/...），
+    // 统一按会话 ID 匹配，兼容相对与绝对两种写法。
     return (
-      this.getChatGPTConversationLinks().find((link) => link.getAttribute("href") === targetHref) ||
-      null
+      this.getChatGPTConversationLinks().find(
+        (link) => this.getChatGPTConversationId(link) === id,
+      ) || null
     )
   }
 
@@ -796,7 +798,6 @@ export class ChatGPTAdapter extends SiteAdapter {
   }
 
   private findConversationItemContainer(row: HTMLElement, id: string): HTMLElement | null {
-    const targetHref = this.getChatGPTConversationPath(id)
     let current: HTMLElement | null = row
     let fallback: HTMLElement | null = null
 
@@ -804,7 +805,7 @@ export class ChatGPTAdapter extends SiteAdapter {
       const links = Array.from(
         current.querySelectorAll(this.config.conversation.itemSelector),
       ) as HTMLAnchorElement[]
-      const hasTargetLink = links.some((link) => link.getAttribute("href") === targetHref)
+      const hasTargetLink = links.some((link) => this.getChatGPTConversationId(link) === id)
       if (hasTargetLink) {
         if (!fallback && links.length === 1) {
           fallback = current
@@ -846,7 +847,6 @@ export class ChatGPTAdapter extends SiteAdapter {
   ): boolean {
     if (!container.contains(button)) return false
 
-    const targetHref = this.getChatGPTConversationPath(id)
     const owner = button.closest("li")
     if (owner) {
       const ownerLinks = Array.from(
@@ -854,8 +854,8 @@ export class ChatGPTAdapter extends SiteAdapter {
       ) as HTMLAnchorElement[]
       if (
         ownerLinks.length === 1 &&
-        ownerLinks[0].getAttribute("href") === targetHref &&
-        owner.contains(container.querySelector(`a[data-sidebar-item="true"][href="${targetHref}"]`))
+        this.getChatGPTConversationId(ownerLinks[0]) === id &&
+        owner.contains(this.findConversationRow(id))
       ) {
         return true
       }
@@ -864,7 +864,9 @@ export class ChatGPTAdapter extends SiteAdapter {
     const linksInContainer = Array.from(
       container.querySelectorAll(this.config.conversation.itemSelector),
     ) as HTMLAnchorElement[]
-    return linksInContainer.length === 1 && linksInContainer[0].getAttribute("href") === targetHref
+    return (
+      linksInContainer.length === 1 && this.getChatGPTConversationId(linksInContainer[0]) === id
+    )
   }
 
   private getMenuContainerFromTrigger(trigger: HTMLElement): HTMLElement | null {
