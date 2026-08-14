@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "id": "longcat",
+  "version": 1,
+  "minAppVersion": "1.2.0",
+  "name": "LongCat AI",
+  "nameI18n": {
+    "zh-CN": "LongCat AI",
+    "zh-TW": "LongCat AI",
+    "en": "LongCat AI",
+    "ja": "LongCat AI",
+    "ko": "LongCat AI",
+    "it": "LongCat AI",
+    "de": "LongCat AI",
+    "es": "LongCat AI",
+    "fr": "LongCat AI",
+    "pt-BR": "LongCat AI",
+    "ru": "LongCat AI"
+  },
+  "description": "Adds Ophel outlines, basic export, generation detection and stopping, chat width, Zen Mode, new chat, prompt insertion, and reading history to LongCat AI.",
+  "descriptionI18n": {
+    "zh-CN": "为 LongCat AI 添加 Ophel 大纲、基础导出、生成检测与停止、对话宽度、禅模式、新对话、提示词插入和阅读进度功能。",
+    "zh-TW": "為 LongCat AI 加入 Ophel 大綱、基本匯出、生成偵測與停止、對話寬度、禪模式、新對話、提示詞插入與閱讀進度功能。",
+    "en": "Adds Ophel outlines, basic export, generation detection and stopping, chat width, Zen Mode, new chat, prompt insertion, and reading history to LongCat AI.",
+    "ja": "LongCat AI に、Ophel のアウトライン、基本エクスポート、生成の検出と停止、チャット幅、Zen モード、新規チャット、プロンプト挿入、読書履歴の機能を追加します。",
+    "ko": "LongCat AI에 Ophel의 개요, 기본 내보내기, 생성 감지 및 중지, 대화 너비, Zen 모드, 새 채팅, 프롬프트 삽입, 읽기 기록 기능을 추가합니다.",
+    "it": "Aggiunge a LongCat AI le funzioni Ophel per struttura, esportazione di base, rilevamento e arresto della generazione, larghezza della chat, modalità Zen, nuova chat, inserimento dei prompt e cronologia di lettura.",
+    "de": "Ergänzt LongCat AI um Ophel-Funktionen für Gliederung, Basisexport, Erkennung und Stoppen der Generierung, Chatbreite, Zen-Modus, neuen Chat, Prompt-Einfügung und Leseverlauf.",
+    "es": "Añade a LongCat AI las funciones de Ophel para esquema, exportación básica, detección y detención de la generación, ancho del chat, modo zen, nuevo chat, inserción de prompts e historial de lectura.",
+    "fr": "Ajoute à LongCat AI les fonctions Ophel de plan, d’exportation de base, de détection et d’arrêt de la génération, de largeur de discussion, de mode Zen, de nouvelle discussion, d’insertion de prompts et d’historique de lecture.",
+    "pt-BR": "Adiciona ao LongCat AI os recursos do Ophel para estrutura, exportação básica, detecção e interrupção da geração, largura da conversa, modo Zen, nova conversa, inserção de prompts e histórico de leitura.",
+    "ru": "Добавляет в LongCat AI функции Ophel для структуры, базового экспорта, отслеживания и остановки генерации, ширины чата, режима Zen, нового чата, вставки промптов и истории чтения."
+  },
+  "matches": ["https://longcat.chat/*"],
+  "theme": {
+    "primary": "#166ff7",
+    "secondary": "#0e65e8"
+  },
+  "capabilities": [
+    "outline",
+    "outline-user-queries",
+    "export-basic",
+    "generation-detect",
+    "new-chat",
+    "stop-generation",
+    "width",
+    "zen",
+    "prompt-insert",
+    "reading-history"
+  ],
+  "selectors": {
+    "textarea": [".chatInput .tiptap.ProseMirror"],
+    "submitButton": [".chatInput .send-btn"],
+    "responseContainer": ".v-message-list",
+    "chatContent": [".v-message-list > .v-chat-messge-view"],
+    "userQuery": ".v-chat-user-message .user-text",
+    "assistantResponse": ".v-chat-assistant-message .md-show-container",
+    "newChatButton": [".slider-header .new-content"],
+    "stopButton": [".chatInput .stop-generate"],
+    "scrollContainer": ["#pageContentScroll"],
+    "sidebarScrollContainer": ".conversation-list"
+  },
+  "input": {
+    "mode": "contenteditable",
+    "submitKey": "Enter"
+  },
+  "generating": {
+    "existsSelectors": [".chatInput .stop-generate"]
+  },
+  "session": {
+    "idFromPathRegex": "^/c/([^/?#]+)$",
+    "newConversationPathPatterns": ["^/$"],
+    "sharePathPrefix": "/share/",
+    "newTabPath": "/"
+  },
+  "export": {
+    "userQuerySelector": ".v-chat-user-message .user-text",
+    "assistantResponseSelector": ".v-chat-assistant-message .md-show-container",
+    "turnSelector": ".v-chat-messge-view",
+    "useShadowDOM": false
+  },
+  "widthSelectors": [
+    {
+      "selector": ".v-message-list",
+      "property": "max-width"
+    },
+    {
+      "selector": ".page-footer",
+      "property": "max-width"
+    }
+  ],
+  "zenMode": {
+    "hide": [".slider-menus"]
+  }
+}
