@@ -25,6 +25,7 @@ const DEFAULT_THEME_COLORS = {
 }
 
 const ZERO_WIDTH_EDITOR_MARKERS = /[\u200B\u200C\u200D\uFEFF]/g
+const EDITOR_WHITESPACE = /\s+/g
 
 type TextControl = HTMLInputElement | HTMLTextAreaElement
 
@@ -79,6 +80,11 @@ const setNestedThemeValue = (
 
 const getEditorText = (editor: HTMLElement): string =>
   isTextControl(editor) ? editor.value : editor.textContent ?? ""
+
+// contenteditable DOM（如 ProseMirror 多段落）的 textContent 不保留换行与原始空白，
+// 校验插入结果时移除两侧全部空白字符，避免多行内容已插入却被误判为失败。
+const normalizeEditorText = (text: string): string =>
+  text.replace(ZERO_WIDTH_EDITOR_MARKERS, "").replace(EDITOR_WHITESPACE, "")
 
 const compareDomOrder = (left: Element, right: Element): number => {
   if (left === right) return 0
@@ -252,7 +258,7 @@ export class DeclarativeAdapter extends SiteAdapter {
     const editorText = getEditorText(editor)
     const contentMatches =
       content.length > 0
-        ? editorText.includes(content)
+        ? normalizeEditorText(editorText).includes(normalizeEditorText(content))
         : editorText.replace(ZERO_WIDTH_EDITOR_MARKERS, "").length === 0
 
     return contentMatches && (!requireSubmitButton || this.hasReadySubmitButton())

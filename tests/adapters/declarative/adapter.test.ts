@@ -254,6 +254,17 @@ describe("DeclarativeAdapter P1-01 browser-facing behavior", () => {
     },
   )
 
+  it("accepts multi-line content when the contenteditable DOM drops newlines", () => {
+    vi.stubGlobal("HTMLInputElement", class {})
+    vi.stubGlobal("HTMLTextAreaElement", class {})
+    const adapter = new DeclarativeAdapter(createMinimalManifest())
+    const internals = adapter as unknown as DeclarativeAdapterInputInternals
+    const editor = { isConnected: true, textContent: "line1line2" } as HTMLElement
+
+    expect(internals.isEditorUpdateValid(editor, "line1\nline2", false)).toBe(true)
+    expect(internals.isEditorUpdateValid(editor, "missing", false)).toBe(false)
+  })
+
   interface MatchCase {
     name: string
     pattern: string

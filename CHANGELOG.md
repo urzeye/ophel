@@ -20,6 +20,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
+- **Site pack prompt insertion** — Fixed issue where inserting a multi-line prompt into a site's rich text input box (such as LongCat AI) showed an "Insert failed" toast even though the text had been inserted correctly.
 - **Site pack reading position restore** — Fixed issue where reading position restore could still run on adapter-pack sites that do not support reading history, interrupting in-page navigation such as outline jumps on LongCat AI.
 - **Userscript adapter library updates** — Fixed issue where the userscript version kept showing an outdated online adapter library (for up to a week) because the browser cached the CDN response; update checks now always fetch the latest index.
 - **Claude page width** — Fixed issue where the page width setting no longer widened conversations after Claude updated its layout.
