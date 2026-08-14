@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 1,
+  "id": "deepseek-harness",
+  "version": 1,
+  "minAppVersion": "1.2.0",
+  "name": "DeepSeek Harness",
+  "nameI18n": {
+    "zh-CN": "DeepSeek Harness",
+    "zh-TW": "DeepSeek Harness",
+    "en": "DeepSeek Harness",
+    "ja": "DeepSeek Harness",
+    "ko": "DeepSeek Harness",
+    "it": "DeepSeek Harness",
+    "de": "DeepSeek Harness",
+    "es": "DeepSeek Harness",
+    "fr": "DeepSeek Harness",
+    "pt-BR": "DeepSeek Harness",
+    "ru": "DeepSeek Harness"
+  },
+  "description": "Adds Ophel outlines, basic export, generation detection and stopping, chat width, Zen Mode, prompt insertion, and reading history to self-hosted DeepSeek Harness instances.",
+  "descriptionI18n": {
+    "zh-CN": "为自建的 DeepSeek Harness 实例添加 Ophel 大纲、基础导出、生成检测与停止、对话宽度、禅模式、提示词插入和阅读进度功能。",
+    "zh-TW": "為自建的 DeepSeek Harness 執行個體加入 Ophel 大綱、基本匯出、生成偵測與停止、對話寬度、禪模式、提示詞插入與閱讀進度功能。",
+    "en": "Adds Ophel outlines, basic export, generation detection and stopping, chat width, Zen Mode, prompt insertion, and reading history to self-hosted DeepSeek Harness instances.",
+    "ja": "セルフホストの DeepSeek Harness に、Ophel のアウトライン、基本エクスポート、生成の検出と停止、チャット幅、Zen モード、プロンプト挿入、読書履歴の機能を追加します。",
+    "ko": "자체 호스팅 DeepSeek Harness 인스턴스에 Ophel의 개요, 기본 내보내기, 생성 감지 및 중지, 대화 너비, Zen 모드, 프롬프트 삽입, 읽기 기록 기능을 추가합니다.",
+    "it": "Aggiunge alle istanze self-hosted di DeepSeek Harness le funzioni Ophel per struttura, esportazione di base, rilevamento e arresto della generazione, larghezza della chat, modalità Zen, inserimento dei prompt e cronologia di lettura.",
+    "de": "Ergänzt selbst gehostete DeepSeek-Harness-Instanzen um Ophel-Funktionen für Gliederung, Basisexport, Erkennung und Stoppen der Generierung, Chatbreite, Zen-Modus, Prompt-Einfügung und Leseverlauf.",
+    "es": "Añade a las instancias autoalojadas de DeepSeek Harness las funciones de Ophel para esquema, exportación básica, detección y detención de la generación, ancho del chat, modo zen, inserción de prompts e historial de lectura.",
+    "fr": "Ajoute aux instances auto-hébergées de DeepSeek Harness les fonctions Ophel de plan, d’exportation de base, de détection et d’arrêt de la génération, de largeur de discussion, de mode Zen, d’insertion de prompts et d’historique de lecture.",
+    "pt-BR": "Adiciona às instâncias auto-hospedadas do DeepSeek Harness os recursos do Ophel para estrutura, exportação básica, detecção e interrupção da geração, largura da conversa, modo Zen, inserção de prompts e histórico de leitura.",
+    "ru": "Добавляет в самостоятельно размещённые экземпляры DeepSeek Harness функции Ophel для структуры, базового экспорта, отслеживания и остановки генерации, ширины чата, режима Zen, вставки промптов и истории чтения."
+  },
+  "matches": [],
+  "theme": {
+    "primary": "#4b6bfe",
+    "secondary": "#3a5ae0"
+  },
+  "capabilities": [
+    "outline",
+    "outline-user-queries",
+    "export-basic",
+    "generation-detect",
+    "stop-generation",
+    "width",
+    "zen",
+    "prompt-insert",
+    "reading-history"
+  ],
+  "selectors": {
+    "textarea": ["[data-composer-card] textarea"],
+    "submitButton": ["[data-composer-card] button:has(> svg > path[d^='M8.3125 0.980183'])"],
+    "stopButton": [
+      "[data-composer-card] button:has(> svg > rect[width='10'][height='10'][rx='3'])"
+    ],
+    "responseContainer": "[data-chat-flow]",
+    "chatContent": ["[data-chat-flow] > [data-chat-flow-key]"],
+    "userQuery": "[data-chat-flow-kind='user'] [data-time-hover-root] > div:first-child",
+    "assistantResponse": "[data-chat-flow-kind='assistant-step'] > [data-slot='conversation.chat.node']",
+    "scrollContainer": ["[data-conversation-scroll]"]
+  },
+  "input": {
+    "mode": "textarea",
+    "submitKey": "Enter"
+  },
+  "generating": {
+    "existsSelectors": [
+      "[data-composer-card] button:has(> svg > rect[width='10'][height='10'][rx='3'])",
+      "[data-chat-flow] [data-streaming]"
+    ]
+  },
+  "export": {
+    "userQuerySelector": "[data-chat-flow-kind='user'] [data-time-hover-root] > div:first-child",
+    "assistantResponseSelector": "[data-chat-flow-kind='assistant-step'] > [data-slot='conversation.chat.node']",
+    "turnSelector": "[data-chat-flow] > [data-chat-flow-key]",
+    "useShadowDOM": false
+  },
+  "widthSelectors": [
+    {
+      "selector": "[data-slot='conversation'] > [data-phase]",
+      "property": "--dsh-chat-content-width",
+      "noCenter": true
+    }
+  ],
+  "zenMode": {
+    "hide": [
+      "div:has(> [data-shell-overlay]) > [data-side='sidebar']",
+      "div:has(> [data-shell-overlay]) > [data-side='details']"
+    ],
+    "styles": [
+      {
+        "selector": "div:has(> [data-shell-overlay])",
+        "property": "grid-template-columns",
+        "value": "0 minmax(0, 1fr) 0"
+      }
+    ]
+  }
+}
