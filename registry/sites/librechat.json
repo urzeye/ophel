@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "librechat",
   "version": 2,
-  "minAppVersion": "1.1.8",
+  "minAppVersion": "1.2.0",
   "name": "LibreChat",
   "nameI18n": {
     "zh-CN": "LibreChat",

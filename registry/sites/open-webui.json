@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "open-webui",
   "version": 3,
-  "minAppVersion": "1.1.8",
+  "minAppVersion": "1.2.0",
   "name": "Open WebUI",
   "nameI18n": {
     "zh-CN": "Open WebUI",

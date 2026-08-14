@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "duck-ai",
   "version": 1,
-  "minAppVersion": "1.1.8",
+  "minAppVersion": "1.2.0",
   "name": "Duck.ai",
   "nameI18n": {
     "zh-CN": "Duck.ai",
