@@ -5,7 +5,6 @@ import {
   validateSitePackManifest,
   type SitePackValidationError,
 } from "~adapters/declarative/validate"
-import { allowsSitePackHttpOrigins } from "~core/site-pack-http-policy"
 import type { InstalledSitePack, PackManagerSyncResult } from "~core/pack-manager"
 import type { RemoteConfigState } from "~core/remote-config-types"
 
@@ -102,9 +101,8 @@ export const parseSitePackImport = (text: string, byteSize: number): SitePackImp
     }
   }
 
-  const validation = validateSitePackManifest(parsed, {
-    allowHttpMatches: allowsSitePackHttpOrigins(),
-  })
+  // 本地导入是用户主动提供的文件，允许 http match，覆盖自建的明文 HTTP 实例
+  const validation = validateSitePackManifest(parsed, { allowHttpMatches: true })
   if (!validation.valid) {
     return { valid: false, errors: validation.errors }
   }

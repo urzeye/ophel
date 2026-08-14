@@ -121,7 +121,7 @@ export const zhTW = {
   siteAdapterWizardPublishConversationOmitted:
     "無法安全推導會話 ID 與連結規則，因此不會把會話列表項目寫入適配包。",
   siteAdapterWizardPublishDraftInvalid: "某個必要項目已失效，請返回對應步驟重新選取。",
-  siteAdapterWizardPublishHttpsRequired: "只能為 HTTPS 網站建立適配包。",
+  siteAdapterWizardPublishSchemeUnsupported: "只能為 HTTP 或 HTTPS 網站建立適配包。",
   siteAdapterWizardPublishManifestInvalid: "產生的適配包無效。",
   siteAdapterWizardPublishNameInvalid: "請輸入站點名稱。",
   siteAdapterWizardPublishIdInvalid: "適配包 ID 必須為 2–40 位小寫字母、數字或連字號。",
@@ -176,7 +176,6 @@ export const zhTW = {
   sitePacksLocalImportDesc:
     "從本機 JSON 檔安裝適配包，適合離線包或尚未上架的包。只匯入你信任的來源。",
   sitePacksCheckUpdates: "檢查更新",
-  sitePacksBindingHttpsRequired: "只支援 HTTPS 網站，HTTP 網站無法新增。",
   sitePacksRegistrySearchPlaceholder: "搜尋適配包",
   sitePacksRegistryNoMatch: "沒有符合的適配包",
   sitePacksOpenSite: "開啟站台",
@@ -241,7 +240,7 @@ export const zhTW = {
   sitePacksBindingEditing: "正在編輯：{origin}",
   sitePacksBindingOriginExists: "{origin} 已新增，請先在列表中編輯或刪除該網站。",
   sitePacksBindingHint:
-    "請輸入精確的 HTTPS 網域，例如 https://chat.example.com。不接受路徑與萬用字元。",
+    "請輸入精確的 HTTP 或 HTTPS 網域，例如 https://chat.example.com 或 http://192.168.1.10:3000。不接受路徑與萬用字元。",
   sitePacksBindingPermissionDenied: "未授予 {origin} 的權限，因此未儲存。",
   sitePacksUserscriptCoverageTitle: "補充油猴比對規則",
   sitePacksUserscriptCoverageDesc:

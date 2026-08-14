@@ -143,8 +143,8 @@ export const fr = {
     "L'élément de conversation n'est pas inclus, car ses règles d'ID et d'URL ne peuvent pas être déduites de façon sûre.",
   siteAdapterWizardPublishDraftInvalid:
     "Une sélection obligatoire n'est plus valide. Revenez à cette étape et sélectionnez-la de nouveau.",
-  siteAdapterWizardPublishHttpsRequired:
-    "Les SitePacks ne peuvent être créés que pour une origine HTTPS.",
+  siteAdapterWizardPublishSchemeUnsupported:
+    "Les SitePacks ne peuvent être créés que pour une origine HTTP ou HTTPS.",
   siteAdapterWizardPublishManifestInvalid: "Le SitePack généré n'est pas valide.",
   siteAdapterWizardPublishNameInvalid: "Saisissez un nom de site.",
   siteAdapterWizardPublishIdInvalid:
@@ -211,8 +211,6 @@ export const fr = {
   sitePacksLocalImportDesc:
     "Installe un pack d’adaptateur depuis un fichier JSON local. Utile pour les packs hors ligne ou pas encore listés. N’importez que des fichiers de confiance.",
   sitePacksCheckUpdates: "Rechercher des mises à jour",
-  sitePacksBindingHttpsRequired:
-    "Seuls les sites HTTPS peuvent être ajoutés. Les sites HTTP ne sont pas pris en charge.",
   sitePacksRegistrySearchPlaceholder: "Rechercher des packs",
   sitePacksRegistryNoMatch: "Aucun pack correspondant",
   sitePacksOpenSite: "Ouvrir le site",
@@ -282,7 +280,7 @@ export const fr = {
   sitePacksBindingOriginExists:
     "{origin} est déjà ajouté. Modifiez-le ou supprimez-le d'abord dans la liste.",
   sitePacksBindingHint:
-    "Saisissez une origine HTTPS exacte, par exemple https://chat.example.com. Les chemins et les caractères génériques sont refusés.",
+    "Saisissez une origine HTTP ou HTTPS exacte, par exemple https://chat.example.com ou http://192.168.1.10:3000. Les chemins et les caractères génériques sont refusés.",
   sitePacksBindingPermissionDenied:
     "L'autorisation pour {origin} n'a pas été accordée ; le site n'a pas été enregistré.",
   sitePacksUserscriptCoverageTitle: "Ajouter les règles de correspondance du userscript",

@@ -126,8 +126,8 @@ const getPackBuildErrorMessage = (result: SiteAdapterWizardPackBuildResult): str
   if (issue.code === "required-steps-invalid") {
     return t("siteAdapterWizardPublishDraftInvalid")
   }
-  if (issue.code === "https-required") {
-    return t("siteAdapterWizardPublishHttpsRequired")
+  if (issue.code === "unsupported-scheme") {
+    return t("siteAdapterWizardPublishSchemeUnsupported")
   }
 
   const firstError = issue.errors[0]
@@ -139,7 +139,7 @@ const getPackBuildErrorMessage = (result: SiteAdapterWizardPackBuildResult): str
     return t("siteAdapterWizardPublishAppVersionInvalid")
   }
   if (firstError.path.startsWith("$.matches")) {
-    return t("siteAdapterWizardPublishHttpsRequired")
+    return t("siteAdapterWizardPublishSchemeUnsupported")
   }
   return t("siteAdapterWizardPublishManifestInvalidField", { field: firstError.path })
 }

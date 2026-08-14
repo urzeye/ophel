@@ -146,8 +146,8 @@ export const de = {
     "Der Gesprächseintrag wird nicht aufgenommen, da seine ID- und URL-Regeln nicht sicher abgeleitet werden können.",
   siteAdapterWizardPublishDraftInvalid:
     "Eine erforderliche Auswahl ist nicht mehr gültig. Kehre zu diesem Schritt zurück und wähle sie erneut aus.",
-  siteAdapterWizardPublishHttpsRequired:
-    "SitePacks können nur für eine HTTPS-Domain erstellt werden.",
+  siteAdapterWizardPublishSchemeUnsupported:
+    "SitePacks können nur für eine HTTP- oder HTTPS-Domain erstellt werden.",
   siteAdapterWizardPublishManifestInvalid: "Das erzeugte SitePack ist ungültig.",
   siteAdapterWizardPublishNameInvalid: "Gib einen Website-Namen ein.",
   siteAdapterWizardPublishIdInvalid:
@@ -214,8 +214,6 @@ export const de = {
   sitePacksLocalImportDesc:
     "Installiert ein Adapter-Paket aus einer lokalen JSON-Datei. Geeignet für Offline-Pakete oder noch nicht gelistete Pakete. Nur vertrauenswürdige Dateien importieren.",
   sitePacksCheckUpdates: "Nach Updates suchen",
-  sitePacksBindingHttpsRequired:
-    "Nur HTTPS-Websites können hinzugefügt werden. HTTP-Websites werden nicht unterstützt.",
   sitePacksRegistrySearchPlaceholder: "Pakete suchen",
   sitePacksRegistryNoMatch: "Keine passenden Pakete",
   sitePacksOpenSite: "Website öffnen",
@@ -283,7 +281,7 @@ export const de = {
   sitePacksBindingOriginExists:
     "{origin} wurde bereits hinzugefügt. Bearbeite oder lösche den Eintrag zuerst in der Liste.",
   sitePacksBindingHint:
-    "Gib einen exakten HTTPS-Ursprung ein, z. B. https://chat.example.com. Pfade und Platzhalter sind nicht zulässig.",
+    "Gib einen exakten HTTP- oder HTTPS-Ursprung ein, z. B. https://chat.example.com oder http://192.168.1.10:3000. Pfade und Platzhalter sind nicht zulässig.",
   sitePacksBindingPermissionDenied:
     "Die Berechtigung für {origin} wurde nicht erteilt; die Website wurde nicht gespeichert.",
   sitePacksUserscriptCoverageTitle: "Userscript-Match-Regeln hinzufügen",

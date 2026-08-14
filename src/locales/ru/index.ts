@@ -140,7 +140,8 @@ export const ru = {
     "Элемент диалога не включён, поскольку правила его ID и URL нельзя безопасно вывести.",
   siteAdapterWizardPublishDraftInvalid:
     "Обязательный выбранный элемент больше недействителен. Вернитесь к этому шагу и выберите его снова.",
-  siteAdapterWizardPublishHttpsRequired: "SitePack можно создать только для HTTPS origin.",
+  siteAdapterWizardPublishSchemeUnsupported:
+    "SitePack можно создать только для HTTP- или HTTPS-origin.",
   siteAdapterWizardPublishManifestInvalid: "Созданный SitePack недействителен.",
   siteAdapterWizardPublishNameInvalid: "Введите название сайта.",
   siteAdapterWizardPublishIdInvalid:
@@ -207,7 +208,6 @@ export const ru = {
   sitePacksLocalImportDesc:
     "Устанавливает пакет адаптера из локального JSON. Подходит для офлайн-пакетов или ещё не опубликованных. Импортируйте только доверенные файлы.",
   sitePacksCheckUpdates: "Проверить обновления",
-  sitePacksBindingHttpsRequired: "Можно добавить только HTTPS-сайты. HTTP-сайты не поддерживаются.",
   sitePacksRegistrySearchPlaceholder: "Поиск пакетов",
   sitePacksRegistryNoMatch: "Нет подходящих пакетов",
   sitePacksOpenSite: "Открыть сайт",
@@ -274,7 +274,7 @@ export const ru = {
   sitePacksBindingEditing: "Редактируется: {origin}",
   sitePacksBindingOriginExists: "{origin} уже добавлен. Сначала измените или удалите его в списке.",
   sitePacksBindingHint:
-    "Введите точный HTTPS-домен, например https://chat.example.com. Пути и подстановочные знаки не принимаются.",
+    "Введите точный HTTP- или HTTPS-origin, например https://chat.example.com или http://192.168.1.10:3000. Пути и подстановочные знаки не принимаются.",
   sitePacksBindingPermissionDenied:
     "Разрешение для {origin} не предоставлено, поэтому сайт не сохранён.",
   sitePacksUserscriptCoverageTitle: "Добавьте правила совпадения userscript",

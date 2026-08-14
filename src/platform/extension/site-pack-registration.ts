@@ -311,7 +311,9 @@ const parseStoredState = (value: unknown): StoredSitePackRegistrationState => {
         typeof origin === "string" && isSiteMatchPatternOriginPattern(origin),
     )
   ) {
-    throw new Error("SitePack extension runtime managedOrigins must contain HTTPS origin patterns")
+    throw new Error(
+      "SitePack extension runtime managedOrigins must contain HTTP(S) origin patterns",
+    )
   }
   return {
     storageSchemaVersion: SITE_PACK_REGISTRATION_STATE_SCHEMA_VERSION,

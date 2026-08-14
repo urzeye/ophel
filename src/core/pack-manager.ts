@@ -9,7 +9,6 @@ import { isBuiltinSiteId, SUPPORTED_AI_PLATFORMS } from "~constants/defaults"
 
 import { isCachedSitePackShape } from "./remote-config-cache"
 import { isLoopbackRegistrySourceUrl } from "./remote-config-local-dev"
-import { allowsSitePackHttpOrigins } from "./site-pack-http-policy"
 import { loadRemoteConfigState } from "./remote-config-state"
 import {
   isAppVersionCompatible,
@@ -591,10 +590,13 @@ export class PackManager {
     return { packs: accepted, issues }
   }
 
+  /**
+   * 已安装记录同时来自 registry 和本地导入，允许 http match，
+   * 否则本地安装的明文 HTTP 适配包会在重新读取时被判为无效。
+   * registry 侧的 https 约束由下载校验和 registry CI 负责。
+   */
   private validateManifest(input: unknown, expectedId?: string): SitePackManifest {
-    const validation = validateSitePackManifest(input, {
-      allowHttpMatches: allowsSitePackHttpOrigins(),
-    })
+    const validation = validateSitePackManifest(input, { allowHttpMatches: true })
     if (!validation.valid) {
       throw new PackManagerError(
         "invalid-pack",

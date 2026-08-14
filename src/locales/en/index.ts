@@ -141,7 +141,8 @@ export const en = {
     "The conversation item is not included because its ID and URL rules cannot be derived safely.",
   siteAdapterWizardPublishDraftInvalid:
     "A required selection is no longer valid. Return to that step and select it again.",
-  siteAdapterWizardPublishHttpsRequired: "SitePacks can only be created for an HTTPS origin.",
+  siteAdapterWizardPublishSchemeUnsupported:
+    "SitePacks can only be created for an HTTP or HTTPS origin.",
   siteAdapterWizardPublishManifestInvalid: "The generated SitePack is invalid.",
   siteAdapterWizardPublishNameInvalid: "Enter a site name.",
   siteAdapterWizardPublishIdInvalid:
@@ -206,7 +207,6 @@ export const en = {
   sitePacksLocalImportDesc:
     "Install a site pack from a local JSON file. Use this for offline packs or packs not yet listed. Only import files you trust.",
   sitePacksCheckUpdates: "Check for updates",
-  sitePacksBindingHttpsRequired: "Only HTTPS sites can be added. HTTP sites are not supported.",
   sitePacksRegistrySearchPlaceholder: "Search packs",
   sitePacksRegistryNoMatch: "No matching packs",
   sitePacksOpenSite: "Open site",
@@ -273,7 +273,7 @@ export const en = {
   sitePacksBindingEditing: "Editing: {origin}",
   sitePacksBindingOriginExists: "{origin} is already added. Edit or delete it from the list first.",
   sitePacksBindingHint:
-    "Enter an exact HTTPS origin, for example https://chat.example.com. Paths and wildcards are not accepted.",
+    "Enter an exact HTTP or HTTPS origin, for example https://chat.example.com or http://192.168.1.10:3000. Paths and wildcards are not accepted.",
   sitePacksBindingPermissionDenied:
     "Permission for {origin} was not granted, so the site was not saved.",
   sitePacksUserscriptCoverageTitle: "Add userscript match rules",

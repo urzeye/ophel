@@ -140,7 +140,8 @@ export const pt = {
     "O item de conversa não é incluído porque suas regras de ID e URL não podem ser deduzidas com segurança.",
   siteAdapterWizardPublishDraftInvalid:
     "Uma seleção obrigatória deixou de ser válida. Volte à etapa e selecione novamente.",
-  siteAdapterWizardPublishHttpsRequired: "SitePacks só podem ser criados para uma origem HTTPS.",
+  siteAdapterWizardPublishSchemeUnsupported:
+    "SitePacks só podem ser criados para uma origem HTTP ou HTTPS.",
   siteAdapterWizardPublishManifestInvalid: "O SitePack gerado é inválido.",
   siteAdapterWizardPublishNameInvalid: "Informe o nome do site.",
   siteAdapterWizardPublishIdInvalid:
@@ -207,8 +208,6 @@ export const pt = {
   sitePacksLocalImportDesc:
     "Instala um pacote de adaptador a partir de um JSON local. Use para pacotes offline ou ainda não listados. Importe apenas arquivos confiáveis.",
   sitePacksCheckUpdates: "Verificar atualizações",
-  sitePacksBindingHttpsRequired:
-    "Apenas sites HTTPS podem ser adicionados. Sites HTTP não são suportados.",
   sitePacksRegistrySearchPlaceholder: "Pesquisar pacotes",
   sitePacksRegistryNoMatch: "Nenhum pacote correspondente",
   sitePacksOpenSite: "Abrir site",
@@ -277,7 +276,7 @@ export const pt = {
   sitePacksBindingOriginExists:
     "{origin} já foi adicionado. Edite-o ou exclua-o primeiro na lista.",
   sitePacksBindingHint:
-    "Digite uma origem HTTPS exata, por exemplo https://chat.example.com. Caminhos e curingas não são aceitos.",
+    "Digite uma origem HTTP ou HTTPS exata, por exemplo https://chat.example.com ou http://192.168.1.10:3000. Caminhos e curingas não são aceitos.",
   sitePacksBindingPermissionDenied:
     "A permissão para {origin} não foi concedida, então o site não foi salvo.",
   sitePacksUserscriptCoverageTitle: "Adicionar regras de correspondência do userscript",

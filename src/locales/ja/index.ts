@@ -137,7 +137,8 @@ export const ja = {
     "会話 ID と URL 規則を安全に推定できないため、会話項目はパックに含まれません。",
   siteAdapterWizardPublishDraftInvalid:
     "必須の選択項目が無効になりました。その手順に戻って選択し直してください。",
-  siteAdapterWizardPublishHttpsRequired: "SitePack は HTTPS オリジンに対してのみ作成できます。",
+  siteAdapterWizardPublishSchemeUnsupported:
+    "SitePack は HTTP または HTTPS オリジンに対してのみ作成できます。",
   siteAdapterWizardPublishManifestInvalid: "生成された SitePack は無効です。",
   siteAdapterWizardPublishNameInvalid: "サイト名を入力してください。",
   siteAdapterWizardPublishIdInvalid:
@@ -204,8 +205,6 @@ export const ja = {
   sitePacksLocalImportDesc:
     "ローカル JSON ファイルからアダプターパックをインストールします。オフライン配布や未掲載パック向けです。信頼できるファイルだけを取り込んでください。",
   sitePacksCheckUpdates: "更新を確認",
-  sitePacksBindingHttpsRequired:
-    "HTTPS サイトのみ追加できます。HTTP サイトはサポートされていません。",
   sitePacksRegistrySearchPlaceholder: "パックを検索",
   sitePacksRegistryNoMatch: "一致するパックがありません",
   sitePacksOpenSite: "サイトを開く",
@@ -273,7 +272,7 @@ export const ja = {
   sitePacksBindingOriginExists:
     "{origin} は既に追加されています。先にリストから編集または削除してください。",
   sitePacksBindingHint:
-    "https://chat.example.com のような正確な HTTPS ドメインを入力してください。パスとワイルドカードは使えません。",
+    "https://chat.example.com や http://192.168.1.10:3000 のような正確な HTTP／HTTPS オリジンを入力してください。パスとワイルドカードは使えません。",
   sitePacksBindingPermissionDenied:
     "{origin} の権限が許可されなかったため、サイトは保存されませんでした。",
   sitePacksUserscriptCoverageTitle: "ユーザースクリプトのマッチルールを追加",

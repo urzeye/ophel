@@ -137,7 +137,8 @@ export const ko = {
     "대화 ID와 URL 규칙을 안전하게 추론할 수 없어 대화 항목은 팩에 포함되지 않습니다.",
   siteAdapterWizardPublishDraftInvalid:
     "필수 선택 항목이 더 이상 유효하지 않습니다. 해당 단계로 돌아가 다시 선택하세요.",
-  siteAdapterWizardPublishHttpsRequired: "SitePack은 HTTPS 오리진에 대해서만 만들 수 있습니다.",
+  siteAdapterWizardPublishSchemeUnsupported:
+    "SitePack은 HTTP 또는 HTTPS 오리진에 대해서만 만들 수 있습니다.",
   siteAdapterWizardPublishManifestInvalid: "생성된 SitePack이 유효하지 않습니다.",
   siteAdapterWizardPublishNameInvalid: "사이트 이름을 입력하세요.",
   siteAdapterWizardPublishIdInvalid: "팩 ID는 2~40자의 영문 소문자, 숫자 또는 하이픈이어야 합니다.",
@@ -200,8 +201,6 @@ export const ko = {
   sitePacksLocalImportDesc:
     "로컬 JSON 파일에서 어댑터 패키지를 설치합니다. 오프라인 패키지나 아직 목록에 없는 패키지에 사용하세요. 신뢰할 수 있는 파일만 가져오세요.",
   sitePacksCheckUpdates: "업데이트 확인",
-  sitePacksBindingHttpsRequired:
-    "HTTPS 사이트만 추가할 수 있습니다. HTTP 사이트는 지원되지 않습니다.",
   sitePacksRegistrySearchPlaceholder: "팩 검색",
   sitePacksRegistryNoMatch: "일치하는 팩이 없습니다",
   sitePacksOpenSite: "사이트 열기",
@@ -270,7 +269,7 @@ export const ko = {
   sitePacksBindingOriginExists:
     "{origin} 도메인은 이미 추가되어 있습니다. 먼저 목록에서 편집하거나 삭제하세요.",
   sitePacksBindingHint:
-    "https://chat.example.com과 같은 정확한 HTTPS 도메인을 입력하세요. 경로와 와일드카드는 사용할 수 없습니다.",
+    "https://chat.example.com 또는 http://192.168.1.10:3000과 같은 정확한 HTTP/HTTPS 오리진을 입력하세요. 경로와 와일드카드는 사용할 수 없습니다.",
   sitePacksBindingPermissionDenied: "{origin} 권한이 허용되지 않아 사이트를 저장하지 않았습니다.",
   sitePacksUserscriptCoverageTitle: "사용자 스크립트 일치 규칙 추가",
   sitePacksUserscriptCoverageDesc:

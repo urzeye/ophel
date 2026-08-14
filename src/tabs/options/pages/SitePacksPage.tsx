@@ -67,7 +67,6 @@ import {
 import { platform, type SitePackRuntimeStatus } from "~platform"
 import { useSettingsStore } from "~stores/settings-store"
 import { PageTitle, SettingRow, TabGroup, ToggleRow } from "~tabs/options/components"
-import { allowsSitePackHttpOrigins } from "~core/site-pack-http-policy"
 import { IS_DEVELOPMENT_BUILD } from "~utils/config"
 import { getCurrentLang, subscribeI18nChanges, t } from "~utils/i18n"
 import { scrollWithinSettingsContent } from "~utils/settings-scroll"
@@ -767,12 +766,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
     if (!beginBusy(key)) return
 
     try {
-      const candidate = normalizeBindingOriginInput(bindingOrigin)
-      if (/^http:\/\//i.test(candidate) && !allowsSitePackHttpOrigins()) {
-        notifyError(t("sitePacksBindingHttpsRequired"))
-        return
-      }
-      const origin = canonicalizeSitePackBindingOrigin(candidate)
+      const origin = canonicalizeSitePackBindingOrigin(normalizeBindingOriginInput(bindingOrigin))
       if (!installedById.has(bindingPackId)) {
         throw new Error(t("sitePacksBindingPackRequired"))
       }

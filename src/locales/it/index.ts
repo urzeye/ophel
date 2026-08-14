@@ -142,8 +142,8 @@ export const it = {
     "L'elemento conversazione non è incluso perché le regole per ID e URL non possono essere dedotte in modo sicuro.",
   siteAdapterWizardPublishDraftInvalid:
     "Una selezione obbligatoria non è più valida. Torna a quel passaggio e selezionala di nuovo.",
-  siteAdapterWizardPublishHttpsRequired:
-    "I SitePack possono essere creati solo per un'origine HTTPS.",
+  siteAdapterWizardPublishSchemeUnsupported:
+    "I SitePack possono essere creati solo per un'origine HTTP o HTTPS.",
   siteAdapterWizardPublishManifestInvalid: "Il SitePack generato non è valido.",
   siteAdapterWizardPublishNameInvalid: "Inserisci il nome del sito.",
   siteAdapterWizardPublishIdInvalid:
@@ -209,8 +209,6 @@ export const it = {
   sitePacksLocalImportDesc:
     "Installa un pacchetto adattatore da un file JSON locale. Utile per pacchetti offline o non ancora in elenco. Importa solo file di cui ti fidi.",
   sitePacksCheckUpdates: "Controlla aggiornamenti",
-  sitePacksBindingHttpsRequired:
-    "È possibile aggiungere solo siti HTTPS. I siti HTTP non sono supportati.",
   sitePacksRegistrySearchPlaceholder: "Cerca pacchetti",
   sitePacksRegistryNoMatch: "Nessun pacchetto corrispondente",
   sitePacksOpenSite: "Apri sito",
@@ -280,7 +278,7 @@ export const it = {
   sitePacksBindingOriginExists:
     "{origin} è già stato aggiunto. Modificalo o eliminalo prima dall'elenco.",
   sitePacksBindingHint:
-    "Inserisci un'origine HTTPS esatta, ad esempio https://chat.example.com. Percorsi e caratteri jolly non sono accettati.",
+    "Inserisci un'origine HTTP o HTTPS esatta, ad esempio https://chat.example.com oppure http://192.168.1.10:3000. Percorsi e caratteri jolly non sono accettati.",
   sitePacksBindingPermissionDenied:
     "Il permesso per {origin} non è stato concesso, quindi il sito non è stato salvato.",
   sitePacksUserscriptCoverageTitle: "Aggiungi le regole di corrispondenza userscript",

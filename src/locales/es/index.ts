@@ -144,7 +144,8 @@ export const es = {
     "El elemento de conversación no se incluye porque sus reglas de ID y URL no pueden deducirse de forma segura.",
   siteAdapterWizardPublishDraftInvalid:
     "Una selección obligatoria ya no es válida. Vuelve a ese paso y selecciónala de nuevo.",
-  siteAdapterWizardPublishHttpsRequired: "Los SitePacks solo se pueden crear para un origen HTTPS.",
+  siteAdapterWizardPublishSchemeUnsupported:
+    "Los SitePacks solo se pueden crear para un origen HTTP o HTTPS.",
   siteAdapterWizardPublishManifestInvalid: "El SitePack generado no es válido.",
   siteAdapterWizardPublishNameInvalid: "Introduce el nombre del sitio.",
   siteAdapterWizardPublishIdInvalid:
@@ -210,8 +211,6 @@ export const es = {
   sitePacksLocalImportDesc:
     "Instala un paquete de adaptador desde un JSON local. Sirve para paquetes sin conexión o aún no listados. Solo importa archivos de confianza.",
   sitePacksCheckUpdates: "Buscar actualizaciones",
-  sitePacksBindingHttpsRequired:
-    "Solo se pueden añadir sitios HTTPS. Los sitios HTTP no son compatibles.",
   sitePacksRegistrySearchPlaceholder: "Buscar paquetes",
   sitePacksRegistryNoMatch: "No hay paquetes coincidentes",
   sitePacksOpenSite: "Abrir sitio",
@@ -281,7 +280,7 @@ export const es = {
   sitePacksBindingOriginExists:
     "{origin} ya está añadido. Edítalo o elimínalo primero en la lista.",
   sitePacksBindingHint:
-    "Introduce un origen HTTPS exacto, por ejemplo https://chat.example.com. No se aceptan rutas ni comodines.",
+    "Introduce un origen HTTP o HTTPS exacto, por ejemplo https://chat.example.com o http://192.168.1.10:3000. No se aceptan rutas ni comodines.",
   sitePacksBindingPermissionDenied:
     "No se concedió el permiso para {origin}, así que no se guardó el sitio.",
   sitePacksUserscriptCoverageTitle: "Añadir reglas de coincidencia del userscript",

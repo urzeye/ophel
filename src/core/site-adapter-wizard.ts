@@ -16,7 +16,6 @@ import {
   type StableSelectorFailureReason,
 } from "~core/element-selector-generator"
 
-import { allowsSitePackHttpOrigins } from "~core/site-pack-http-policy"
 import {
   SITE_ADAPTER_WIZARD_STEPS,
   type SiteAdapterWizardStepId,
@@ -90,7 +89,7 @@ export type SiteAdapterWizardPackBuildIssue =
       readonly code: "required-steps-invalid"
       readonly stepId: SiteAdapterWizardStepId
     }
-  | { readonly code: "https-required" }
+  | { readonly code: "unsupported-scheme" }
   | {
       readonly code: "manifest-invalid"
       readonly errors: readonly SitePackValidationError[]
@@ -533,9 +532,8 @@ export const buildSiteAdapterWizardPack = (input: {
     }
   }
 
-  const allowHttp = allowsSitePackHttpOrigins()
-  if (input.pageUrl.protocol !== "https:" && !(allowHttp && input.pageUrl.protocol === "http:")) {
-    return { valid: false, issue: { code: "https-required" } }
+  if (input.pageUrl.protocol !== "https:" && input.pageUrl.protocol !== "http:") {
+    return { valid: false, issue: { code: "unsupported-scheme" } }
   }
 
   const preview = buildSiteAdapterWizardConfigPreview(input.draft, validations)
@@ -549,7 +547,8 @@ export const buildSiteAdapterWizardPack = (input: {
     matches: [`${matchScheme}://${input.pageUrl.host.toLowerCase()}/*`],
     ...preview.config,
   }
-  const validation = validateSitePackManifest(candidate, { allowHttpMatches: allowHttp })
+  // 向导产出的是用户本地适配包，允许 http match，覆盖自建的明文 HTTP 实例
+  const validation = validateSitePackManifest(candidate, { allowHttpMatches: true })
   if (!validation.valid) {
     return {
       valid: false,

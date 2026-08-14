@@ -11,15 +11,15 @@
 5. 打开目标站点验证功能是否生效  
 6. 导出 JSON 提 PR；评审者用同一 JSON 本地导入复验  
 
-## 路径一附：本地 HTTP 自建站（仅开发构建）
+## 路径一附：HTTP 自建站
 
-生产构建仍只允许 HTTPS。`pnpm dev` / 开发构建下可以：
+Wizard、本地 JSON 导入和自定义域名绑定都接受 `http://`，正式构建同样适用：
 
-1. 在 HTTP 自建站（如 `http://127.0.0.1:3080`）打开 Wizard 生成适配包  
-2. 设置 → SitePacks → 导入本地 JSON，或绑定自定义 `http://` 域名  
-3. 授权对应 HTTP origin 后刷新目标页验证  
+1. 在 HTTP 自建站（如 `http://127.0.0.1:3080`）打开 Wizard 生成适配包
+2. 设置 → SitePacks → 导入本地 JSON，或绑定自定义 `http://` 域名
+3. 授权对应 HTTP origin 后刷新目标页验证
 
-正式 registry 贡献与商店构建路径不要提交 `http://` matches。
+registry 分发的适配包仍只允许 HTTPS matches：自建站点包提交时 `matches` 留空，由用户自己绑定域名激活。
 
 ## 路径二：内置站点 Patch（如 Ima 选择器热修）
 

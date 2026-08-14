@@ -40,7 +40,6 @@ import {
   type TrustedRegistrySigningKey,
 } from "./remote-config-signature"
 import { shouldRelaxRegistryRevisionGuards } from "./remote-config-local-dev"
-import { allowsSitePackHttpOrigins } from "./site-pack-http-policy"
 import { normalizeRemoteConfigSourceUrl } from "./remote-config-source"
 import { loadRemoteConfigState } from "./remote-config-state"
 
@@ -281,9 +280,7 @@ const isCachedPackReusable = (
   entry: RegistryPackIndexEntry,
 ): cached is CachedSitePack => {
   if (!isCachedSitePackShape(cached) || !samePackIndexEntry(cached.index, entry)) return false
-  const validation = validateSitePackManifest(cached.manifest, {
-    allowHttpMatches: allowsSitePackHttpOrigins(),
-  })
+  const validation = validateSitePackManifest(cached.manifest)
   if (!validation.valid) return false
   try {
     validatePackMetadata(validation.value, entry)
@@ -321,9 +318,7 @@ const isCachedPackCurrentlyCompatible = (
   ) {
     return false
   }
-  const validation = validateSitePackManifest(cached.manifest, {
-    allowHttpMatches: allowsSitePackHttpOrigins(),
-  })
+  const validation = validateSitePackManifest(cached.manifest)
   if (!validation.valid) return false
   try {
     validatePackMetadata(validation.value, cached.index)
@@ -741,9 +736,8 @@ export class RemoteConfigManager {
           throw new Error(`SHA-256 mismatch for ${entry.file}`)
         }
         const value = decodeJson(bytes, artifactUrl)
-        const validation = validateSitePackManifest(value, {
-          allowHttpMatches: allowsSitePackHttpOrigins(),
-        })
+        // registry 分发的适配包始终要求 https match，与 registry CI 校验保持一致
+        const validation = validateSitePackManifest(value)
         if (!validation.valid) {
           throw new Error(
             `Pack validation failed: ${validation.errors

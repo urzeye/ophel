@@ -120,7 +120,7 @@ export const zhCN = {
   siteAdapterWizardPublishConversationOmitted:
     "无法安全推导会话 ID 与链接规则，因此不会把会话列表项写入适配包。",
   siteAdapterWizardPublishDraftInvalid: "某个必选项已失效，请返回对应步骤重新选择。",
-  siteAdapterWizardPublishHttpsRequired: "只能为 HTTPS 站点创建适配包。",
+  siteAdapterWizardPublishSchemeUnsupported: "只能为 HTTP 或 HTTPS 站点创建适配包。",
   siteAdapterWizardPublishManifestInvalid: "生成的适配包无效。",
   siteAdapterWizardPublishNameInvalid: "请输入站点名称。",
   siteAdapterWizardPublishIdInvalid: "适配包 ID 需为 2–40 位小写字母、数字或连字符。",
@@ -174,7 +174,6 @@ export const zhCN = {
   sitePacksLocalImportDesc:
     "从本地 JSON 文件安装适配包，适合离线包或尚未上架的包。只导入你信任的来源。",
   sitePacksCheckUpdates: "检查更新",
-  sitePacksBindingHttpsRequired: "只支持 HTTPS 站点，HTTP 站点无法添加。",
   sitePacksRegistrySearchPlaceholder: "搜索适配包",
   sitePacksRegistryNoMatch: "没有匹配的适配包",
   sitePacksOpenSite: "打开站点",
@@ -238,7 +237,7 @@ export const zhCN = {
   sitePacksBindingEditing: "正在编辑：{origin}",
   sitePacksBindingOriginExists: "{origin} 已添加，请先在列表中编辑或删除该站点。",
   sitePacksBindingHint:
-    "请输入精确的 HTTPS 域名，例如 https://chat.example.com。不接受路径和通配符。",
+    "请输入精确的 HTTP 或 HTTPS 域名，例如 https://chat.example.com 或 http://192.168.1.10:3000。不接受路径和通配符。",
   sitePacksBindingPermissionDenied: "未授予 {origin} 的权限，因此没有保存。",
   sitePacksUserscriptCoverageTitle: "补充油猴匹配规则",
   sitePacksUserscriptCoverageDesc:
