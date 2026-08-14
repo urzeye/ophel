@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### 🐛 Bug Fixes
+
+- **Claude page width** — Fixed issue where the page width setting no longer widened conversations after Claude updated its layout.
+
 ---
 
 ## [1.2.0] - 2026-08-13

@@ -93,7 +93,7 @@ export interface ClaudeSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const CLAUDE_CONFIG_VERSION = 1
+export const CLAUDE_CONFIG_VERSION = 2
 
 const createClaudeConfig = (): ClaudeSiteConfig => {
   const conversationItem = 'a[data-dd-action-name="sidebar-chat-item"]'
@@ -173,6 +173,11 @@ const createClaudeConfig = (): ClaudeSiteConfig => {
       useShadowDOM: false,
     },
     widthSelectors: [
+      {
+        selector: `${layoutScope} .max-w-screen-md`,
+        property: "max-width",
+        extraCss: "width: 100% !important; min-width: 0 !important;",
+      },
       {
         selector: `${layoutScope} .max-w-3xl`,
         property: "max-width",
