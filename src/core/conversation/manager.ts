@@ -236,7 +236,8 @@ export class ConversationManager {
     }
 
     // 修复历史数据中 folderId 指向已不存在文件夹的会话（面板只按现有文件夹渲染，
-    // 这类会话会不可见；同步的更新分支不会改写 folderId，只能在这里一次性兜底修复）
+    // 这类会话会不可见）。同步的更新分支也会修复 folderId，但只覆盖本次侧边栏
+    // 扫到的会话；这里在启动时兜底修复其余会话。
     this.repairOrphanedConversationFolders()
 
     // 检查是否刚恢复了备份数据，如果是则跳过自动同步以保持备份的干净状态
