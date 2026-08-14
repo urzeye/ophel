@@ -17,6 +17,10 @@ declare function GM_xmlhttpRequest(details: {
 
 export const userscriptRegistryTransport: RegistryTransport = (url, maxBytes) =>
   new Promise((resolve, reject) => {
+    // jsDelivr 对 branch URL 下发 max-age=604800 的缓存头，GM_xmlhttpRequest 会走浏览器
+    // HTTP 缓存，陈旧索引最长可残留 7 天；jsDelivr 忽略 query，而浏览器按完整 URL 缓存，
+    // 追加时间戳参数即可绕过（扩展端 fetch 用 cache: "no-store" 解决同一问题）
+    const requestUrl = `${url}${url.includes("?") ? "&" : "?"}_=${Date.now()}`
     let settled = false
     let request: { abort(): void } | undefined
     const fail = (error: unknown) => {
@@ -26,7 +30,7 @@ export const userscriptRegistryTransport: RegistryTransport = (url, maxBytes) =>
     }
 
     request = GM_xmlhttpRequest({
-      url,
+      url: requestUrl,
       method: "GET",
       headers: { Accept: "application/json" },
       responseType: "arraybuffer",
