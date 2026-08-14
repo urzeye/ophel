@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### ✨ Improvements
+
+- **Site packs auto update check** — Opening Settings -> Site Packs -> "Get & Updates" now automatically checks for adapter updates once, so first-time users see the online library right away instead of an empty list. (#821)
+
 ### 🐛 Bug Fixes
 
 - **ChatGPT page redesign adaptation** — Fixed issues caused by ChatGPT's page redesign: conversations could be scanned but not added to the conversation list, the "ChatGPT can make mistakes" disclaimer stayed visible in Clean Mode, and double-clicking LaTeX formulas reported missing source; sidebar chat links and formula sources are now read from the redesigned structure.
