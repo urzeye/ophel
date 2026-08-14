@@ -24,149 +24,112 @@
       "name": "小 i 同学",
       "avatar_url": "https://raw.githubusercontent.com/urzeye/ophel/main/docs/media/github/avatar.gif",
       "profile": "https://github.com/urzeye",
-      "contributions": [
-        "code",
-        "ideas",
-        "infra"
-      ]
+      "contributions": ["code", "ideas", "infra"]
     },
     {
       "login": "treasuresure",
       "name": "treasuresure",
       "avatar_url": "https://avatars.githubusercontent.com/u/50103468?v=4",
       "profile": "https://github.com/treasuresure",
-      "contributions": [
-        "design",
-        "financial"
-      ]
+      "contributions": ["design", "financial"]
     },
     {
       "login": "tjsky",
       "name": "去年夏天",
       "avatar_url": "https://avatars.githubusercontent.com/u/7272911?v=4",
       "profile": "https://www.tjsky.net/",
-      "contributions": [
-        "code"
-      ]
+      "contributions": ["code"]
     },
     {
       "login": "lanvent",
       "name": "Jianglang",
       "avatar_url": "https://avatars.githubusercontent.com/u/26515464?v=4",
       "profile": "https://github.com/lanvent",
-      "contributions": [
-        "code",
-        "bug"
-      ]
+      "contributions": ["code", "bug"]
     },
     {
       "login": "Felix3322",
       "name": "Felix Liu",
       "avatar_url": "https://avatars.githubusercontent.com/u/115849429?v=4",
       "profile": "https://github.com/Felix3322",
-      "contributions": [
-        "code"
-      ]
+      "contributions": ["code"]
     },
     {
       "login": "KanameMadoka520",
       "name": "Madoka",
       "avatar_url": "https://avatars.githubusercontent.com/u/90090108?v=4",
       "profile": "https://github.com/KanameMadoka520",
-      "contributions": [
-        "code"
-      ]
+      "contributions": ["code"]
     },
     {
       "login": "RyanLin-InfEvo",
       "name": "Lin Zit Ting",
       "avatar_url": "https://avatars.githubusercontent.com/u/121378653?v=4",
       "profile": "https://github.com/RyanLin-InfEvo",
-      "contributions": [
-        "code"
-      ]
+      "contributions": ["code"]
     },
     {
       "login": "joevalleyfield",
       "name": "joevalleyfield",
       "avatar_url": "https://avatars.githubusercontent.com/u/14796422?v=4",
       "profile": "https://github.com/joevalleyfield",
-      "contributions": [
-        "code"
-      ]
+      "contributions": ["code"]
     },
     {
       "login": "hugo1120",
       "name": "hugo2233",
       "avatar_url": "https://avatars.githubusercontent.com/u/69150726?v=4",
       "profile": "https://github.com/hugo1120",
-      "contributions": [
-        "promotion"
-      ]
+      "contributions": ["promotion"]
     },
     {
       "login": "t0ny-peng",
       "name": "t0ny-peng",
       "avatar_url": "https://avatars.githubusercontent.com/u/4816327?v=4",
       "profile": "https://github.com/t0ny-peng",
-      "contributions": [
-        "code"
-      ]
+      "contributions": ["code"]
     },
     {
       "login": "mrpops2ko",
       "name": "mrpops2ko",
       "avatar_url": "https://avatars.githubusercontent.com/u/34683587?v=4",
       "profile": "https://github.com/mrpops2ko",
-      "contributions": [
-        "code"
-      ]
+      "contributions": ["code"]
     },
     {
       "login": "Suxixihuanni",
       "name": "Suxixihuanni",
       "avatar_url": "https://avatars.githubusercontent.com/u/208633969?v=4",
       "profile": "https://github.com/Suxixihuanni",
-      "contributions": [
-        "promotion"
-      ]
+      "contributions": ["promotion"]
     },
     {
       "login": "Ice-wilderness",
       "name": "Ice-wilderness",
       "avatar_url": "https://avatars.githubusercontent.com/u/65530045?v=4",
       "profile": "https://github.com/Ice-wilderness",
-      "contributions": [
-        "code",
-        "bug"
-      ]
+      "contributions": ["code", "bug"]
     },
     {
       "login": "Gitoffthelawn",
       "name": "Gitoffthelawn",
       "avatar_url": "https://avatars.githubusercontent.com/u/7672848?v=4",
       "profile": "https://github.com/Gitoffthelawn/Contact-Gitoffthelawn",
-      "contributions": [
-        "doc"
-      ]
+      "contributions": ["doc"]
     },
     {
       "login": "sriharshaguthikonda",
       "name": "Dr. Sri Harsha Guthikonda",
       "avatar_url": "https://avatars.githubusercontent.com/u/16268244?v=4",
       "profile": "https://github.com/sriharshaguthikonda",
-      "contributions": [
-        "code"
-      ]
+      "contributions": ["code"]
     },
     {
       "login": "crazyn2",
       "name": "crazyn2",
       "avatar_url": "https://avatars.githubusercontent.com/u/45783572?v=4",
       "profile": "https://github.com/crazyn2",
-      "contributions": [
-        "code"
-      ]
+      "contributions": ["code"]
     }
   ],
   "contributorsPerLine": 8,
