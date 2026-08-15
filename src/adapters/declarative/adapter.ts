@@ -656,6 +656,34 @@ export class DeclarativeAdapter extends SiteAdapter {
     return [...(this.manifest.selectors.submitButton ?? [])]
   }
 
+  scrollToOutlineTarget(element: HTMLElement): void {
+    super.scrollToOutlineTarget(element)
+    this.signalUserScrollIntent(element)
+  }
+
+  /**
+   * 部分站点（如 LongCat）靠 wheel/touchmove 判断用户已接管滚动，判定前
+   * 内容区的 MutationObserver 会反复把容器拉回底部，撤销大纲的程序化跳转。
+   * 跳转后补发零增量 wheel 让站点停止自动吸底；若期间被拉回则重试跳转。
+   * 对没有此类监听的站点，零增量 wheel 是无副作用的空操作。
+   */
+  private signalUserScrollIntent(element: HTMLElement): void {
+    const container = this.getScrollContainer()
+    if (!container) return
+
+    const attempt = () => {
+      if (!element.isConnected) return
+      super.scrollToOutlineTarget(element)
+      requestAnimationFrame(() => {
+        container.dispatchEvent(new WheelEvent("wheel", { bubbles: true, cancelable: true }))
+      })
+    }
+
+    attempt()
+    setTimeout(attempt, 120)
+    setTimeout(attempt, 320)
+  }
+
   getNewChatButtonSelectors(): string[] {
     return [...(this.manifest.selectors.newChatButton ?? [])]
   }

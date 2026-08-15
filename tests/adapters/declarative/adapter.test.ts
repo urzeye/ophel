@@ -265,6 +265,41 @@ describe("DeclarativeAdapter P1-01 browser-facing behavior", () => {
     expect(internals.isEditorUpdateValid(editor, "missing", false)).toBe(false)
   })
 
+  it("dispatches a zero-delta wheel after outline jumps to release host auto-pinning", () => {
+    vi.useFakeTimers()
+    vi.stubGlobal(
+      "WheelEvent",
+      class extends Event {
+        constructor(type: string, init?: EventInit) {
+          super(type, init)
+        }
+      },
+    )
+    vi.stubGlobal("requestAnimationFrame", (callback: () => void) => {
+      callback()
+      return 0
+    })
+    const adapter = new DeclarativeAdapter(createMinimalManifest())
+    const element = { isConnected: true, scrollIntoView: vi.fn() } as unknown as HTMLElement
+    const container = { dispatchEvent: vi.fn() } as unknown as HTMLElement
+    vi.spyOn(adapter, "getScrollContainer").mockReturnValue(container)
+
+    try {
+      adapter.scrollToOutlineTarget(element)
+      vi.runAllTimers()
+
+      expect(element.scrollIntoView).toHaveBeenCalled()
+      const dispatched = (container.dispatchEvent as ReturnType<typeof vi.fn>).mock.calls.map(
+        ([event]) => event,
+      )
+      expect(dispatched.length).toBeGreaterThan(0)
+      expect(dispatched.every((event) => event instanceof WheelEvent)).toBe(true)
+      expect(dispatched.every((event) => event.type === "wheel")).toBe(true)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   interface MatchCase {
     name: string
     pattern: string
