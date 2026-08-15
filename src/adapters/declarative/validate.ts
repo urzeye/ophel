@@ -109,6 +109,7 @@ const CONFIG_KEYS = [
   "mermaidSupport",
   "quickQuote",
   "supportsHostThemeSync",
+  "scrollPinRelease",
   "themeSync",
 ] as const
 
@@ -1614,6 +1615,9 @@ const validateConfigFields = (
   }
   if (config.supportsHostThemeSync !== undefined) {
     validateBoolean(config.supportsHostThemeSync, `${path}.supportsHostThemeSync`, context, mode)
+  }
+  if (config.scrollPinRelease !== undefined) {
+    validateBoolean(config.scrollPinRelease, `${path}.scrollPinRelease`, context, mode)
   }
   if (config.themeSync !== undefined) {
     validateThemeSync(config.themeSync, `${path}.themeSync`, context, mode)

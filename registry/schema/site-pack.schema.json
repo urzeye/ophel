@@ -109,6 +109,9 @@
     "supportsHostThemeSync": {
       "type": "boolean"
     },
+    "scrollPinRelease": {
+      "type": "boolean"
+    },
     "themeSync": {
       "$ref": "#/definitions/themeSync"
     }

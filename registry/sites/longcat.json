@@ -90,5 +90,6 @@
   ],
   "zenMode": {
     "hide": [".slider-menus"]
-  }
+  },
+  "scrollPinRelease": true
 }

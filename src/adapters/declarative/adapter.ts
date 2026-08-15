@@ -658,24 +658,49 @@ export class DeclarativeAdapter extends SiteAdapter {
 
   scrollToOutlineTarget(element: HTMLElement): void {
     super.scrollToOutlineTarget(element)
-    this.signalUserScrollIntent(element)
+    if (this.manifest.scrollPinRelease) this.signalUserScrollIntent(element)
   }
+
+  private outlineJumpSeq = 0
+  private emittingPinReleaseWheel = false
 
   /**
    * 部分站点（如 LongCat）靠 wheel/touchmove 判断用户已接管滚动，判定前
    * 内容区的 MutationObserver 会反复把容器拉回底部，撤销大纲的程序化跳转。
    * 跳转后补发零增量 wheel 让站点停止自动吸底；若期间被拉回则重试跳转。
-   * 对没有此类监听的站点，零增量 wheel 是无副作用的空操作。
+   * 仅对 manifest 声明 scrollPinRelease 的站点启用，避免影响其他适配包站点。
    */
   private signalUserScrollIntent(element: HTMLElement): void {
     const container = this.getScrollContainer()
     if (!container) return
 
+    // 序号守卫：仅最后一次大纲跳转的重试生效，避免连点不同标题时旧重试把视图拽回。
+    const seq = ++this.outlineJumpSeq
+    const isCurrentJump = () => seq === this.outlineJumpSeq
+
+    // 重试窗口内的真实用户滚动（排除补发的合成 wheel）视为用户已接管，放弃后续重试。
+    const cancelOnUserScroll = () => {
+      if (this.emittingPinReleaseWheel) return
+      if (isCurrentJump()) this.outlineJumpSeq += 1
+    }
+    container.addEventListener("wheel", cancelOnUserScroll, { passive: true })
+    container.addEventListener("touchmove", cancelOnUserScroll, { passive: true })
+    setTimeout(() => {
+      container.removeEventListener("wheel", cancelOnUserScroll)
+      container.removeEventListener("touchmove", cancelOnUserScroll)
+    }, 480)
+
     const attempt = () => {
-      if (!element.isConnected) return
+      if (!isCurrentJump() || !element.isConnected) return
       super.scrollToOutlineTarget(element)
       requestAnimationFrame(() => {
-        container.dispatchEvent(new WheelEvent("wheel", { bubbles: true, cancelable: true }))
+        if (!isCurrentJump()) return
+        this.emittingPinReleaseWheel = true
+        try {
+          container.dispatchEvent(new WheelEvent("wheel", { bubbles: true, cancelable: true }))
+        } finally {
+          this.emittingPinReleaseWheel = false
+        }
       })
     }
 

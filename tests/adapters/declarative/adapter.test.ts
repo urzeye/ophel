@@ -265,39 +265,122 @@ describe("DeclarativeAdapter P1-01 browser-facing behavior", () => {
     expect(internals.isEditorUpdateValid(editor, "missing", false)).toBe(false)
   })
 
-  it("dispatches a zero-delta wheel after outline jumps to release host auto-pinning", () => {
-    vi.useFakeTimers()
-    vi.stubGlobal(
-      "WheelEvent",
-      class extends Event {
-        constructor(type: string, init?: EventInit) {
-          super(type, init)
-        }
-      },
-    )
-    vi.stubGlobal("requestAnimationFrame", (callback: () => void) => {
-      callback()
-      return 0
-    })
-    const adapter = new DeclarativeAdapter(createMinimalManifest())
-    const element = { isConnected: true, scrollIntoView: vi.fn() } as unknown as HTMLElement
-    const container = { dispatchEvent: vi.fn() } as unknown as HTMLElement
-    vi.spyOn(adapter, "getScrollContainer").mockReturnValue(container)
-
-    try {
-      adapter.scrollToOutlineTarget(element)
-      vi.runAllTimers()
-
-      expect(element.scrollIntoView).toHaveBeenCalled()
-      const dispatched = (container.dispatchEvent as ReturnType<typeof vi.fn>).mock.calls.map(
-        ([event]) => event,
-      )
-      expect(dispatched.length).toBeGreaterThan(0)
-      expect(dispatched.every((event) => event instanceof WheelEvent)).toBe(true)
-      expect(dispatched.every((event) => event.type === "wheel")).toBe(true)
-    } finally {
-      vi.useRealTimers()
+  describe("outline jump scroll pin release", () => {
+    const createFakeContainer = () => {
+      const listeners = new Map<string, Set<EventListener>>()
+      const dispatched: Event[] = []
+      return {
+        dispatched,
+        addEventListener: vi.fn((type: string, listener: EventListener) => {
+          listeners.set(type, (listeners.get(type) ?? new Set()).add(listener))
+        }),
+        removeEventListener: vi.fn((type: string, listener: EventListener) => {
+          listeners.get(type)?.delete(listener)
+        }),
+        dispatchEvent: vi.fn((event: Event) => {
+          dispatched.push(event)
+          listeners.get(event.type)?.forEach((listener) => listener(event))
+          return true
+        }),
+        emit(type: string) {
+          const event = new Event(type)
+          listeners.get(type)?.forEach((listener) => listener(event))
+        },
+      }
     }
+
+    const setupPinRelease = (withFlag: boolean) => {
+      vi.useFakeTimers()
+      vi.stubGlobal(
+        "WheelEvent",
+        class extends Event {
+          constructor(type: string, init?: EventInit) {
+            super(type, init)
+          }
+        },
+      )
+      vi.stubGlobal("requestAnimationFrame", (callback: () => void) => {
+        callback()
+        return 0
+      })
+      const manifest = createMinimalManifest()
+      if (withFlag) manifest.scrollPinRelease = true
+      const adapter = new DeclarativeAdapter(manifest)
+      const container = createFakeContainer()
+      vi.spyOn(adapter, "getScrollContainer").mockReturnValue(container as unknown as HTMLElement)
+      const createElement = () =>
+        ({ isConnected: true, scrollIntoView: vi.fn() }) as unknown as HTMLElement
+      return { adapter, container, createElement }
+    }
+
+    it("dispatches a zero-delta wheel after outline jumps to release host auto-pinning", () => {
+      const { adapter, container, createElement } = setupPinRelease(true)
+      const element = createElement()
+
+      try {
+        adapter.scrollToOutlineTarget(element)
+        vi.runAllTimers()
+
+        expect(element.scrollIntoView).toHaveBeenCalled()
+        expect(container.dispatched.length).toBeGreaterThan(0)
+        expect(container.dispatched.every((event) => event instanceof WheelEvent)).toBe(true)
+        expect(container.dispatched.every((event) => event.type === "wheel")).toBe(true)
+        // 合成 wheel 不应触发“用户接管滚动”的取消逻辑，三次尝试都应派发
+        expect(container.dispatched).toHaveLength(3)
+      } finally {
+        vi.useRealTimers()
+      }
+    })
+
+    it("does not dispatch wheel or retry when the pack does not declare scrollPinRelease", () => {
+      const { adapter, container, createElement } = setupPinRelease(false)
+      const element = createElement()
+
+      try {
+        adapter.scrollToOutlineTarget(element)
+        vi.runAllTimers()
+
+        expect(element.scrollIntoView).toHaveBeenCalledTimes(1)
+        expect(container.dispatched).toHaveLength(0)
+        expect(container.addEventListener).not.toHaveBeenCalled()
+      } finally {
+        vi.useRealTimers()
+      }
+    })
+
+    it("skips stale retries after a newer outline jump", () => {
+      const { adapter, createElement } = setupPinRelease(true)
+      const first = createElement()
+      const second = createElement()
+
+      try {
+        adapter.scrollToOutlineTarget(first)
+        adapter.scrollToOutlineTarget(second)
+        vi.runAllTimers()
+
+        // 第一次跳转只有立即尝试生效，120ms/320ms 的重试被第二次跳转作废
+        expect(first.scrollIntoView).toHaveBeenCalledTimes(2)
+        expect(second.scrollIntoView).toHaveBeenCalledTimes(4)
+      } finally {
+        vi.useRealTimers()
+      }
+    })
+
+    it("cancels pending retries when the user really scrolls during the retry window", () => {
+      const { adapter, container, createElement } = setupPinRelease(true)
+      const element = createElement()
+
+      try {
+        adapter.scrollToOutlineTarget(element)
+        container.emit("wheel")
+        vi.runAllTimers()
+
+        expect(element.scrollIntoView).toHaveBeenCalledTimes(2)
+        expect(container.dispatched).toHaveLength(1)
+      } finally {
+        vi.useRealTimers()
+      }
+    })
   })
 
   interface MatchCase {
