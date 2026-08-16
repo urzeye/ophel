@@ -133,6 +133,7 @@ const createClaudeConfig = (): ClaudeSiteConfig => {
       textarea: ['[contenteditable="true"]', ".ProseMirror", 'div[role="textbox"]'],
       submitButton: [
         'button[aria-label="Send Message"]',
+        'button[aria-label="Send message"]',
         'button[data-testid="send-button"]',
         'button[aria-label="Send"]',
       ],
@@ -159,7 +160,11 @@ const createClaudeConfig = (): ClaudeSiteConfig => {
       shadow: false,
     },
     generating: {
-      existsSelectors: [...stopButton, '[class*="streaming"], [class*="typing"]'],
+      existsSelectors: [
+        ...stopButton,
+        '[data-is-streaming="true"]',
+        '[class*="streaming"], [class*="typing"]',
+      ],
     },
     networkMonitor: {
       urlPatterns: ["/api/"],
