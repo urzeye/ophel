@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "id": "opencode-share",
+  "version": 1,
+  "minAppVersion": "1.2.0",
+  "name": "OpenCode Share",
+  "nameI18n": {
+    "zh-CN": "OpenCode 分享",
+    "zh-TW": "OpenCode 分享",
+    "en": "OpenCode Share",
+    "ja": "OpenCode シェア",
+    "ko": "OpenCode 공유",
+    "it": "OpenCode Condivisione",
+    "de": "OpenCode Freigabe",
+    "es": "OpenCode Compartido",
+    "fr": "OpenCode Partagé",
+    "pt-BR": "OpenCode Compartilhado",
+    "ru": "OpenCode Поделиться"
+  },
+  "description": "Adds Ophel outlines with user query detection and basic export to OpenCode shared conversations on opncd.ai.",
+  "descriptionI18n": {
+    "zh-CN": "为 opncd.ai 上的 OpenCode 分享对话添加 Ophel 大纲（含用户提问识别）和基础导出功能。",
+    "zh-TW": "為 opncd.ai 上的 OpenCode 分享對話加入 Ophel 大綱（含使用者提問識別）與基本匯出功能。",
+    "en": "Adds Ophel outlines with user query detection and basic export to OpenCode shared conversations on opncd.ai.",
+    "ja": "opncd.ai の OpenCode 共有会話に、Ophel のアウトライン（ユーザー質問検出を含む）と基本エクスポート機能を追加します。",
+    "ko": "opncd.ai의 OpenCode 공유 대화에 Ophel 개요(사용자 질문 감지 포함) 및 기본 내보내기 기능을 추가합니다.",
+    "it": "Aggiunge alle conversazioni condivise di OpenCode su opncd.ai le funzioni Ophel per struttura (con rilevamento delle domande utente) ed esportazione di base.",
+    "de": "Ergänzt geteilte OpenCode-Gespräche auf opncd.ai um Ophel-Funktionen für Gliederung (mit Erkennung von Nutzerfragen) und Basisexport.",
+    "es": "Añade a las conversaciones compartidas de OpenCode en opncd.ai las funciones de Ophel para esquema (con detección de preguntas del usuario) y exportación básica.",
+    "fr": "Ajoute aux conversations partagées d'OpenCode sur opncd.ai les fonctions Ophel de plan (avec détection des questions utilisateur) et d'exportation de base.",
+    "pt-BR": "Adiciona às conversas compartilhadas do OpenCode no opncd.ai os recursos do Ophel para estrutura (com detecção de perguntas do usuário) e exportação básica.",
+    "ru": "Добавляет в общие диалоги OpenCode на opncd.ai функции Ophel для структуры (с распознаванием вопросов пользователя) и базового экспорта."
+  },
+  "matches": ["https://opncd.ai/*"],
+  "theme": {
+    "primary": "#131010",
+    "secondary": "#F8F7F7"
+  },
+  "capabilities": ["outline", "outline-user-queries", "export-basic"],
+  "selectors": {
+    "responseContainer": "[data-component=session-turn]",
+    "userQuery": "[data-slot=user-message-text]",
+    "scrollContainer": ["[data-component=session-turn]"]
+  },
+  "session": {
+    "idFromPathRegex": "^/share/([^/?#]+)$",
+    "sharePathPrefix": "/share/"
+  },
+  "export": {
+    "userQuerySelector": "[data-slot=user-message-text]",
+    "assistantResponseSelector": "[data-component=text-part] [data-component=markdown]",
+    "turnSelector": "[data-slot=session-turn-message-container]",
+    "useShadowDOM": false
+  },
+  "mermaidSupport": "fallback",
+  "quickQuote": "disabled",
+  "supportsHostThemeSync": false
+}

@@ -11,6 +11,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🚀 New Features
 
+- **OpenCode Share support** — The online adapter library now includes OpenCode Share (opncd.ai); installing the pack enables outlines with user query detection and basic export for shared OpenCode conversations. (#800)
 - **LongCat AI support** — The online adapter library now includes LongCat AI (longcat.chat); installing the pack enables outlines with user queries, export, generation detection and stop, page width, Zen Mode, new chat, and prompt insertion on the site.
 - **HTTP self-hosted sites** — Site Packs can now be bound to HTTP origins such as `http://192.168.1.10:3000`, so a self-hosted AI site that is not served over HTTPS can still be adapted; the in-page adapter wizard and local pack import accept HTTP origins as well.
 
