@@ -29,7 +29,8 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **Hidden conversations recovery** — Fixed issue where some conversations stayed invisible in the conversation list even after re-syncing (their folder had been removed earlier); upgrading now automatically moves such conversations back to the inbox.
 - **Site pack prompt insertion** — Fixed issue where inserting a multi-line prompt into a site's rich text input box (such as LongCat AI) showed an "Insert failed" toast even though the text had been inserted correctly.
 - **Claude panel avoidance** — Fixed issue where smart panel avoidance stopped working on Claude.ai after a layout update moved the scroll container out of the chat column scope; the conversation list and new chat button selectors were also updated to match the new sidebar structure.
-- **Claude send & generation detection** — Updated send button and generation detection selectors to match Claude.ai's new design system; the send button aria-label changed casing and generation state now uses a data attribute.
+- **Claude adaptation** — Updated sidebar, send button, generation detection, Zen Mode, and panel avoidance selectors to adapt to Claude.ai's new DOM structure.
+- **Claude conversation pinning** — Updated conversation group and user message container selectors to match Claude.ai's new sidebar grouping structure and message layout.
 - **Site pack reading position restore** — Fixed issue where reading position restore could still run on adapter-pack sites that do not support reading history, interrupting in-page navigation such as outline jumps on LongCat AI.
 - **LongCat AI outline navigation** — Fixed issue where clicking outline titles right after a page refresh did not jump, or snapped back to the bottom, until the page was scrolled by hand; the site keeps auto-pinning the conversation to the bottom until it sees real user scrolling, so outline jumps now release that pinning.
 

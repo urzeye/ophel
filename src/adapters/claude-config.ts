@@ -203,7 +203,7 @@ const createClaudeConfig = (): ClaudeSiteConfig => {
       },
     ],
     zenMode: {
-      hide: [`nav:has(${conversationItem})`],
+      hide: ['nav[data-testid="sidebar"]'],
     },
     cleanMode: {
       hide: ['[data-disclaimer="true"]'],
@@ -215,8 +215,8 @@ const createClaudeConfig = (): ClaudeSiteConfig => {
       nativeQuotePopover: ['[data-selection-tooltip="true"]'],
       validTextarea: '[contenteditable="true"], .ProseMirror, [role="textbox"]',
       sidebarScrollFallback: "div.overflow-y-auto",
-      conversationGroup: "div.flex.flex-col",
-      conversationGroupHeading: "h3",
+      conversationGroup: "[class*='group/nsh'], div.flex.flex-col",
+      conversationGroupHeading: "span[role=button], h3",
       conversationGroupList: "ul",
       conversationPinnedList: "ul.-mx-1\\.5",
       conversationActionButton: [
@@ -252,7 +252,7 @@ const createClaudeConfig = (): ClaudeSiteConfig => {
       outlineIgnoredHeading: ".pointer-events-none",
       srOnly: ".sr-only",
       userQueryText: "p.whitespace-pre-wrap",
-      userMessageBubble: '[data-user-message-bubble="true"]',
+      userMessageBubble: "[data-cds='UserMessage'], [data-user-message-bubble='true']",
       userMessageBoundary: `${assistantResponse}, main, [role='main']`,
       userFileThumbnail,
       thoughtToggle,
