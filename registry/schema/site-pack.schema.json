@@ -601,6 +601,9 @@
         },
         "sidebarScrollContainer": {
           "$ref": "#/definitions/selector"
+        },
+        "outlineExclude": {
+          "$ref": "#/definitions/selectorArray"
         }
       }
     },

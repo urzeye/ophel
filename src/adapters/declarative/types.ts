@@ -30,6 +30,8 @@ export interface SitePackSelectors {
   stopButton?: string[]
   scrollContainer?: string[]
   sidebarScrollContainer?: string
+  /** 大纲提取时需要排除的容器选择器；命中任一选择器的元素及其后代都不参与大纲。 */
+  outlineExclude?: string[]
 }
 
 export interface SitePackInputConfig {

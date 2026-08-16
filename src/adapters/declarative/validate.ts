@@ -669,6 +669,7 @@ const validateSelectors = (
     "stopButton",
     "scrollContainer",
     "sidebarScrollContainer",
+    "outlineExclude",
   ] as const
   const selectors = validateObject(value, path, context, selectorKeys, [], mode)
   if (!selectors) return
@@ -680,6 +681,7 @@ const validateSelectors = (
     "newChatButton",
     "stopButton",
     "scrollContainer",
+    "outlineExclude",
   ] as const) {
     if (selectors[key] !== undefined) {
       validateSelectorArray(selectors[key], `${path}.${key}`, context, mode)

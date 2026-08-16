@@ -408,6 +408,12 @@ export class DeclarativeAdapter extends SiteAdapter {
     if (!this.isEditorUpdateValid(configuredEditor.editor, "", false)) return
   }
 
+  private isInsideOutlineExclude(element: Element): boolean {
+    const excludeSelectors = this.manifest.selectors.outlineExclude
+    if (!excludeSelectors || excludeSelectors.length === 0) return false
+    return excludeSelectors.some((selector) => element.closest(selector) !== null)
+  }
+
   private getOutlineCandidates(
     maxLevel: number,
   ): { container: HTMLElement; candidates: OutlineCandidate[] } | null {
@@ -424,6 +430,7 @@ export class DeclarativeAdapter extends SiteAdapter {
 
     const candidates = Array.from(container.querySelectorAll(selectors.join(", ")))
       .filter((element) => !isInsideOphelContainer(element, container))
+      .filter((element) => !this.isInsideOutlineExclude(element))
       .map((element): OutlineCandidate | null => {
         const isUserQuery = userQuerySelector ? element.matches(userQuerySelector) : false
         if (isUserQuery) {
