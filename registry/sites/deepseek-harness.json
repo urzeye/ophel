@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "deepseek-harness",
   "version": 1,
-  "minAppVersion": "1.2.0",
+  "minAppVersion": "1.2.1",
   "name": "DeepSeek Harness",
   "nameI18n": {
     "zh-CN": "DeepSeek Harness",
