@@ -87,7 +87,7 @@ interface SemanticVersion {
   prerelease: string[]
 }
 
-const DANGEROUS_OBJECT_KEYS = new Set(["__proto__", "prototype", "constructor"])
+export const DANGEROUS_OBJECT_KEYS = new Set(["__proto__", "prototype", "constructor"])
 
 const SITE_PACK_CAPABILITIES = new Set<SitePackCapability>(SITE_PACK_CAPABILITY_VALUES)
 

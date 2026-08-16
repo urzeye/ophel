@@ -18,6 +18,7 @@ const require = createRequire(import.meta.url)
 const TSX_CLI_PATH = require.resolve("tsx/cli")
 
 let exampleManifest
+let packageVersion
 let registryRoot
 
 const writeJson = async (relativePath, value) => {
@@ -28,6 +29,13 @@ const writeJson = async (relativePath, value) => {
 
 const writePack = (fileName, manifest) => writeJson(`sites/${fileName}`, manifest)
 
+const updateSchema = async (updater) => {
+  const schemaPath = path.join(registryRoot, "schema", "site-pack.schema.json")
+  const schema = JSON.parse(await readFile(schemaPath, "utf8"))
+  updater(schema)
+  await writeFile(schemaPath, `${JSON.stringify(schema, null, 2)}\n`, "utf8")
+}
+
 const createPack = ({ id = "fixture-pack", matches = ["https://fixture.example/*"] } = {}) => ({
   ...structuredClone(exampleManifest),
   id,
@@ -35,14 +43,17 @@ const createPack = ({ id = "fixture-pack", matches = ["https://fixture.example/*
   matches,
 })
 
-const expectRegistryFailure = async (...expectedFragments) => {
-  let message = ""
+const captureRegistryFailure = async () => {
   try {
     await loadValidatedRegistrySources({ registryRoot })
   } catch (error) {
-    message = error instanceof Error ? error.message : String(error)
+    return error instanceof Error ? error.message : String(error)
   }
+  return ""
+}
 
+const expectRegistryFailure = async (...expectedFragments) => {
+  const message = await captureRegistryFailure()
   expect(message).not.toBe("")
   for (const fragment of expectedFragments) {
     expect(message).toContain(fragment)
@@ -53,6 +64,9 @@ beforeAll(async () => {
   exampleManifest = JSON.parse(
     await readFile(path.join(SOURCE_REGISTRY_ROOT, "examples", "site-pack.example.json"), "utf8"),
   )
+  packageVersion = JSON.parse(
+    await readFile(path.join(REPOSITORY_ROOT, "package.json"), "utf8"),
+  ).version
 })
 
 beforeEach(async () => {
@@ -218,6 +232,77 @@ describe("registry PR candidate validation", () => {
     expect(result.error).toBeUndefined()
     expect(result.status).toBe(0)
     expect(result.stderr).toContain("[registry] validated")
+  })
+})
+
+describe("forward-compatible root keys", () => {
+  const declareRootKey = (key) =>
+    updateSchema((schema) => {
+      schema.properties[key] = { type: "boolean" }
+    })
+
+  it("accepts schema-declared root keys unknown to this code when minAppVersion gates them", async () => {
+    await declareRootKey("futureToggle")
+    const pack = createPack()
+    pack.futureToggle = true
+    pack.minAppVersion = packageVersion
+    await writePack("future-toggle.json", pack)
+
+    const result = await loadValidatedRegistrySources({ registryRoot })
+
+    expect(result.packs.map(({ manifest }) => manifest.id)).toEqual(["fixture-pack"])
+  })
+
+  it("requires minAppVersion at or above the current app version for unknown root keys", async () => {
+    await declareRootKey("futureToggle")
+    const pack = createPack()
+    pack.futureToggle = true
+    pack.minAppVersion = "0.9.0"
+    await writePack("future-toggle.json", pack)
+
+    const message = await captureRegistryFailure()
+
+    expect(message).toContain("sites/future-toggle.json:$.minAppVersion [min_app_version_too_low]")
+    expect(message).toContain("futureToggle")
+    expect(message).not.toContain("[unknown_key]")
+  })
+
+  it("still rejects root keys that the schema does not declare", async () => {
+    const pack = createPack()
+    pack.futureToggle = true
+    pack.minAppVersion = packageVersion
+    await writePack("future-toggle.json", pack)
+
+    const message = await captureRegistryFailure()
+
+    expect(message).toContain(
+      "sites/future-toggle.json:$/futureToggle [schema_additionalProperties]",
+    )
+    expect(message).not.toContain("[unknown_key]")
+  })
+
+  it("does not tolerate dangerous root keys", async () => {
+    const pack = createPack()
+    pack.minAppVersion = packageVersion
+    const text = JSON.stringify(pack, null, 2).replace(
+      /^\{/,
+      '{\n  "__proto__": { "polluted": true },',
+    )
+    await writeFile(path.join(registryRoot, "sites", "proto.json"), `${text}\n`, "utf8")
+
+    await expectRegistryFailure("sites/proto.json:$.__proto__ [unknown_key]")
+  })
+
+  it("keeps rejecting nested keys unknown to this code even when the schema declares them", async () => {
+    await updateSchema((schema) => {
+      schema.definitions.selectors.properties.futureSelector = { type: "string" }
+    })
+    const pack = createPack()
+    pack.selectors.futureSelector = ".future"
+    pack.minAppVersion = packageVersion
+    await writePack("future-nested.json", pack)
+
+    await expectRegistryFailure("sites/future-nested.json:$.selectors.futureSelector [unknown_key]")
   })
 })
 

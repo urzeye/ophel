@@ -8,6 +8,8 @@ import safeRegex from "safe-regex2"
 import { siteMatchPatternsOverlap } from "../../src/adapters/declarative/match-pattern.ts"
 import { resolveSiteConfig } from "../../src/adapters/declarative/merge.ts"
 import {
+  compareSemanticVersions,
+  DANGEROUS_OBJECT_KEYS,
   validateSiteConfigPatch,
   validateSitePackManifest,
 } from "../../src/adapters/declarative/validate.ts"
@@ -19,6 +21,10 @@ export { siteMatchPatternsOverlap as matchPatternsOverlap }
 const SCRIPT_DIRECTORY = path.dirname(fileURLToPath(import.meta.url))
 
 export const DEFAULT_REGISTRY_ROOT = path.resolve(SCRIPT_DIRECTORY, "..")
+
+const APP_VERSION = JSON.parse(
+  await readFile(path.resolve(SCRIPT_DIRECTORY, "..", "..", "package.json"), "utf8"),
+).version
 
 const SITE_PACK_SCHEMA_PATH = path.join("schema", "site-pack.schema.json")
 const SITE_PACK_EXAMPLE_PATH = path.join("examples", "site-pack.example.json")
@@ -44,6 +50,32 @@ const formatIssue = (sourcePath, fieldPath, code, message) =>
 
 const formatValidationErrors = (sourcePath, errors) =>
   errors.map((error) => formatIssue(sourcePath, error.path, error.code, error.message)).join("\n")
+
+const ROOT_KEY_PATH = /^\$\.([^.\[\]]+)$/
+
+// CI 用 base 代码校验候选 registry 数据：schema 来自候选 PR，而运行时校验器的
+// 硬编码白名单来自 base，新字段 + pack 同 PR 时会被误判为未知键。schema 根级
+// additionalProperties: false 已经拒绝未声明的键，因此根级 unknown_key 可以放宽；
+// 嵌套对象的新子字段仍由 base 白名单把关，需 code-first 落地。
+const getToleratedRootUnknownKey = (error) => {
+  if (error.code !== "unknown_key") return null
+  const match = ROOT_KEY_PATH.exec(error.path)
+  if (!match || DANGEROUS_OBJECT_KEYS.has(match[1])) return null
+  return match[1]
+}
+
+// 被放宽的新字段只有更新版本的应用才认识，要求 minAppVersion 不低于当前
+// package.json 版本，保证加载该 pack 的版本一定包含字段支持。
+const checkForwardCompatibleKeys = (sourcePath, keys, minAppVersion) => {
+  const comparison = compareSemanticVersions(minAppVersion, APP_VERSION)
+  if (comparison !== null && comparison >= 0) return null
+  return formatIssue(
+    sourcePath,
+    "$.minAppVersion",
+    "min_app_version_too_low",
+    `Root key(s) ${keys.join(", ")} are not supported by app ${APP_VERSION}; set minAppVersion to ${APP_VERSION} or later so only releases with support load this pack`,
+  )
+}
 
 const escapeJsonPointerSegment = (value) => value.replaceAll("~", "~0").replaceAll("/", "~1")
 
@@ -146,13 +178,43 @@ const validateSitePackInput = (input, sourcePath, schemaValidator) => {
   if (!schemaValid) {
     errors.push(formatSchemaValidationErrors(sourcePath, schemaValidator.errors))
   }
+  let manifest = runtimeResult.valid ? runtimeResult.value : null
+  let runtimeErrors = runtimeResult.valid ? [] : runtimeResult.errors
   if (!runtimeResult.valid) {
-    errors.push(formatValidationErrors(sourcePath, runtimeResult.errors))
+    const toleratedKeys = []
+    const blockingErrors = []
+    for (const error of runtimeResult.errors) {
+      const toleratedKey = getToleratedRootUnknownKey(error)
+      if (toleratedKey === null) blockingErrors.push(error)
+      else toleratedKeys.push(toleratedKey)
+    }
+    if (toleratedKeys.length > 0 && blockingErrors.length === 0) {
+      // 剔除新根字段后重新校验，拿到类型化 manifest 供注册策略检查使用
+      const strippedInput = { ...input }
+      for (const key of toleratedKeys) delete strippedInput[key]
+      const retryResult = validateSitePackManifest(strippedInput, regexValidationOptions)
+      if (retryResult.valid) {
+        manifest = retryResult.value
+        runtimeErrors = []
+        console.warn(
+          `[registry] ${sourcePath}: accepted schema-declared root key(s) pending app support: ${toleratedKeys.join(", ")}`,
+        )
+        const guardError = checkForwardCompatibleKeys(
+          sourcePath,
+          toleratedKeys,
+          retryResult.value.minAppVersion,
+        )
+        if (guardError) errors.push(guardError)
+      }
+    }
+  }
+  if (runtimeErrors.length > 0) {
+    errors.push(formatValidationErrors(sourcePath, runtimeErrors))
   }
   if (errors.length > 0) {
     throw new Error(errors.filter(Boolean).join("\n"))
   }
-  return runtimeResult.value
+  return manifest
 }
 
 const validateSitePackExample = async (registryRoot, schemaValidator) => {
