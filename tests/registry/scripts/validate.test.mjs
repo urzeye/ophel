@@ -235,7 +235,7 @@ describe("registry PR candidate validation", () => {
   })
 })
 
-describe("forward-compatible root keys", () => {
+describe("forward-compatible schema-declared fields", () => {
   const declareRootKey = (key) =>
     updateSchema((schema) => {
       schema.properties[key] = { type: "boolean" }
@@ -293,7 +293,7 @@ describe("forward-compatible root keys", () => {
     await expectRegistryFailure("sites/proto.json:$.__proto__ [unknown_key]")
   })
 
-  it("keeps rejecting nested keys unknown to this code even when the schema declares them", async () => {
+  it("accepts schema-declared nested keys unknown to this code when minAppVersion gates them", async () => {
     await updateSchema((schema) => {
       schema.definitions.selectors.properties.futureSelector = { type: "string" }
     })
@@ -302,7 +302,39 @@ describe("forward-compatible root keys", () => {
     pack.minAppVersion = packageVersion
     await writePack("future-nested.json", pack)
 
-    await expectRegistryFailure("sites/future-nested.json:$.selectors.futureSelector [unknown_key]")
+    const result = await loadValidatedRegistrySources({ registryRoot })
+
+    expect(result.packs.map(({ manifest }) => manifest.id)).toEqual(["fixture-pack"])
+  })
+
+  it("requires minAppVersion at or above the current app version for unknown nested keys", async () => {
+    await updateSchema((schema) => {
+      schema.definitions.selectors.properties.futureSelector = { type: "string" }
+    })
+    const pack = createPack()
+    pack.selectors.futureSelector = ".future"
+    pack.minAppVersion = "0.9.0"
+    await writePack("future-nested.json", pack)
+
+    const message = await captureRegistryFailure()
+
+    expect(message).toContain("sites/future-nested.json:$.minAppVersion [min_app_version_too_low]")
+    expect(message).toContain("selectors.futureSelector")
+    expect(message).not.toContain("[unknown_key]")
+  })
+
+  it("still rejects nested keys that the schema does not declare", async () => {
+    const pack = createPack()
+    pack.selectors.futureSelector = ".future"
+    pack.minAppVersion = packageVersion
+    await writePack("future-nested.json", pack)
+
+    const message = await captureRegistryFailure()
+
+    expect(message).toContain(
+      "sites/future-nested.json:$/selectors/futureSelector [schema_additionalProperties]",
+    )
+    expect(message).not.toContain("[unknown_key]")
   })
 })
 

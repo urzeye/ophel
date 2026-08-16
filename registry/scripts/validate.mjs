@@ -51,31 +51,62 @@ const formatIssue = (sourcePath, fieldPath, code, message) =>
 const formatValidationErrors = (sourcePath, errors) =>
   errors.map((error) => formatIssue(sourcePath, error.path, error.code, error.message)).join("\n")
 
-const ROOT_KEY_PATH = /^\$\.([^.\[\]]+)$/
-
 // CI 用 base 代码校验候选 registry 数据：schema 来自候选 PR，而运行时校验器的
-// 硬编码白名单来自 base，新字段 + pack 同 PR 时会被误判为未知键。schema 根级
-// additionalProperties: false 已经拒绝未声明的键，因此根级 unknown_key 可以放宽；
-// 嵌套对象的新子字段仍由 base 白名单把关，需 code-first 落地。
-const getToleratedRootUnknownKey = (error) => {
+// 硬编码白名单来自 base，新字段 + pack 同 PR 时会被误判为未知键。schema 每一层
+// additionalProperties: false 已经逐层拒绝未声明的键；只要 Ajv 校验通过，runtime
+// 报出的任何 unknown_key 必然是 schema 已声明、base 白名单尚未收录的字段，可一并放行。
+const getToleratedSchemaDeclaredUnknownKey = (error) => {
   if (error.code !== "unknown_key") return null
-  const match = ROOT_KEY_PATH.exec(error.path)
-  if (!match || DANGEROUS_OBJECT_KEYS.has(match[1])) return null
-  return match[1]
+
+  const segments = error.path.split(".").slice(1)
+  if (segments.some((segment) => DANGEROUS_OBJECT_KEYS.has(segment.replace(/\[\d+\]$/, "")))) {
+    return null
+  }
+  return segments
 }
 
 // 被放宽的新字段只有更新版本的应用才认识，要求 minAppVersion 不低于当前
 // package.json 版本，保证加载该 pack 的版本一定包含字段支持。
-const checkForwardCompatibleKeys = (sourcePath, keys, minAppVersion) => {
+const checkForwardCompatibleKeys = (sourcePath, keyLabels, minAppVersion) => {
   const comparison = compareSemanticVersions(minAppVersion, APP_VERSION)
   if (comparison !== null && comparison >= 0) return null
   return formatIssue(
     sourcePath,
     "$.minAppVersion",
     "min_app_version_too_low",
-    `Root key(s) ${keys.join(", ")} are not supported by app ${APP_VERSION}; set minAppVersion to ${APP_VERSION} or later so only releases with support load this pack`,
+    `Field(s) ${keyLabels.join(", ")} are not supported by app ${APP_VERSION}; set minAppVersion to ${APP_VERSION} or later so only releases with support load this pack`,
   )
 }
+
+// 按点分段路径递归删除候选 input 中 schema 已声明但 base 白名单尚未认识的字段，
+// 使后续重试校验能返回类型化 manifest 供注册策略检查使用。
+const deleteNestedPath = (target, segments) => {
+  if (segments.length === 0) return
+  const [head, ...rest] = segments
+  const match = /^([^\[]+)(?:\[(\d+)\])?$/.exec(head)
+  if (!match) return
+
+  const key = match[1]
+  const index = match[2]
+  if (rest.length === 0) {
+    if (index !== undefined && Array.isArray(target[key])) {
+      target[key].splice(Number(index), 1)
+    } else if (isPlainRecordValue(target)) {
+      delete target[key]
+    }
+    return
+  }
+
+  const next = target[key]
+  if (index !== undefined && Array.isArray(next)) {
+    deleteNestedPath(next[Number(index)], rest)
+  } else if (isPlainRecordValue(next)) {
+    deleteNestedPath(next, rest)
+  }
+}
+
+const isPlainRecordValue = (value) =>
+  value !== null && typeof value === "object" && !Array.isArray(value)
 
 const escapeJsonPointerSegment = (value) => value.replaceAll("~", "~0").replaceAll("/", "~1")
 
@@ -181,27 +212,35 @@ const validateSitePackInput = (input, sourcePath, schemaValidator) => {
   let manifest = runtimeResult.valid ? runtimeResult.value : null
   let runtimeErrors = runtimeResult.valid ? [] : runtimeResult.errors
   if (!runtimeResult.valid) {
-    const toleratedKeys = []
+    const toleratedPaths = []
     const blockingErrors = []
     for (const error of runtimeResult.errors) {
-      const toleratedKey = getToleratedRootUnknownKey(error)
-      if (toleratedKey === null) blockingErrors.push(error)
-      else toleratedKeys.push(toleratedKey)
+      // schema 已逐层 additionalProperties: false 把关：Ajv 不接受就不放行，
+      // runtime 报出的 unknown_key 必然是 schema 已声明、base 白名单尚未认识的字段。
+      // schema 拒绝的字段 runtime 也会报 unknown_key，但 schema 错误已先拦截，
+      // tolerate 这些噪音避免 message 里同时出现两份等价错误。
+      const toleratedPath = getToleratedSchemaDeclaredUnknownKey(error)
+      if (toleratedPath !== null) {
+        toleratedPaths.push(toleratedPath)
+        continue
+      }
+      blockingErrors.push(error)
     }
-    if (toleratedKeys.length > 0 && blockingErrors.length === 0) {
-      // 剔除新根字段后重新校验，拿到类型化 manifest 供注册策略检查使用
-      const strippedInput = { ...input }
-      for (const key of toleratedKeys) delete strippedInput[key]
+    if (toleratedPaths.length > 0 && blockingErrors.length === 0) {
+      // 剔除 schema 已声明但 base 白名单尚未认识的字段后重新校验，拿到类型化 manifest
+      const strippedInput = structuredClone(input)
+      for (const segments of toleratedPaths) deleteNestedPath(strippedInput, segments)
       const retryResult = validateSitePackManifest(strippedInput, regexValidationOptions)
       if (retryResult.valid) {
         manifest = retryResult.value
         runtimeErrors = []
+        const keyLabels = toleratedPaths.map((segments) => segments.join("."))
         console.warn(
-          `[registry] ${sourcePath}: accepted schema-declared root key(s) pending app support: ${toleratedKeys.join(", ")}`,
+          `[registry] ${sourcePath}: accepted schema-declared field(s) pending app support: ${keyLabels.join(", ")}`,
         )
         const guardError = checkForwardCompatibleKeys(
           sourcePath,
-          toleratedKeys,
+          keyLabels,
           retryResult.value.minAppVersion,
         )
         if (guardError) errors.push(guardError)

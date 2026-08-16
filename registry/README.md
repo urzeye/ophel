@@ -16,7 +16,7 @@ SitePack 的 TypeScript 运行时校验器是安全与兼容性的最终真值�
 
 ### 新增 manifest 字段（维护者）
 
-新增根级字段可以与使用该字段的 SitePack 同 PR 提交，无需拆成两个 PR。PR 校验以候选分支的 schema 为准（`additionalProperties: false` 会拒绝未在 schema 声明的字段），对 schema 已声明、但当前已发布应用代码还不认识的新根字段做前向兼容放行，前提是该包的 `minAppVersion` 不低于当前 `package.json` 版本，保证只有包含字段支持的版本才会加载这个包。嵌套对象内的新子字段（如 `themeSync`、`selectors` 的新属性）不在放行范围内，仍需先合入应用代码再提交使用它的包。运行时（扩展/油猴）校验不受影响，始终拒绝未知字段。
+新增字段（根级或嵌套）可以与使用该字段的 SitePack 同 PR 提交，无需拆成两个 PR。PR 校验以候选分支的 schema 为准（`additionalProperties: false` 逐层拒绝未在 schema 声明的字段），对 schema 已声明、但当前已发布应用代码还不认识的新字段做前向兼容放行，前提是该包的 `minAppVersion` 不低于当前 `package.json` 版本，保证只有包含字段支持的版本才会加载这个包。运行时（扩展/油猴）校验不受影响，始终拒绝未知字段。
 
 ### 核心字段
 
