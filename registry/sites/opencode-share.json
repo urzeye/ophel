@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "opencode-share",
   "version": 1,
-  "minAppVersion": "1.2.0",
+  "minAppVersion": "1.2.1",
   "name": "OpenCode Share",
   "nameI18n": {
     "zh-CN": "OpenCode 分享",
