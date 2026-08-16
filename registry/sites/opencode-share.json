@@ -40,7 +40,8 @@
   "selectors": {
     "responseContainer": "[data-component=session-turn]",
     "userQuery": "[data-slot=user-message-text]",
-    "scrollContainer": ["[data-slot=session-turn-content]"]
+    "scrollContainer": ["[data-slot=session-turn-content]"],
+    "outlineExclude": ["[data-component=reasoning-part]"]
   },
   "session": {
     "idFromPathRegex": "^/share/([^/?#]+)$",

@@ -17,6 +17,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### ✨ Improvements
 
+- **Site pack outline exclusion** — Site Packs can now declare containers to exclude from outline extraction, so reasoning or thinking sections no longer pollute the outline with draft headings. (#800)
 - **Site packs auto update check** — Opening Settings -> Site Packs -> "Get & Updates" now automatically checks for adapter updates once, so first-time users see the online library right away instead of an empty list. (#821)
 
 ### 🐛 Bug Fixes
