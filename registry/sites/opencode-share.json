@@ -48,9 +48,9 @@
     "sharePathPrefix": "/share/"
   },
   "export": {
-    "userQuerySelector": "[data-slot=user-message-text]",
-    "assistantResponseSelector": "[data-component=text-part] [data-component=markdown]",
-    "turnSelector": "[data-slot=session-turn-message-container]",
+    "userQuerySelector": ".hidden [data-slot=user-message-text]",
+    "assistantResponseSelector": ".hidden [data-component=text-part] [data-component=markdown]",
+    "turnSelector": ".hidden [data-slot=session-turn-message-container]",
     "useShadowDOM": false
   },
   "mermaidSupport": "fallback",
