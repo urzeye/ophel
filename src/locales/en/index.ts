@@ -529,7 +529,7 @@ export const en = {
 
   tip3: "Press {shortcut} to view all keyboard shortcuts",
   tip4: "{shortcut} opens global search with folder: tag: level: syntax",
-  tip5: "{shortcut} to quickly copy the latest AI response",
+  tip5: "Install packs in Site Packs to bring Ophel to more AI sites",
   tip6: "{shortcut} to jump between outline headings",
   edit: "Edit",
   delete: "Delete",

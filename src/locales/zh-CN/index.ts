@@ -545,7 +545,7 @@ export const zhCN = {
 
   tip3: "按 {shortcut} 查看全部快捷键",
   tip4: "{shortcut} 打开全局搜索，支持 folder: tag: level: 语法",
-  tip5: "{shortcut} 一键复制最新 AI 回复",
+  tip5: "在适配中心安装适配包，让 Ophel 支持更多 AI 站点",
   tip6: "{shortcut} 在大纲标题间快速跳转",
   copy: "复制",
   addBookmark: "添加收藏",

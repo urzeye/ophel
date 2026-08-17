@@ -387,7 +387,7 @@ export const zhTW = {
 
   tip3: "按 {shortcut} 查看全部快捷鍵",
   tip4: "{shortcut} 開啟全域搜尋，支援 folder: tag: level: 語法",
-  tip5: "{shortcut} 一鍵複製最新 AI 回覆",
+  tip5: "在適配中心安裝適配包，讓 Ophel 支援更多 AI 站點",
   tip6: "{shortcut} 在大綱標題間快速跳轉",
   copy: "複製",
   addBookmark: "加入收藏",

@@ -527,7 +527,7 @@ export const es = {
 
   tip3: "{shortcut} muestra todos los atajos de teclado",
   tip4: "{shortcut} abre la búsqueda global (sintaxis folder: tag: level:)",
-  tip5: "{shortcut} copia la última respuesta de IA",
+  tip5: "Instala paquetes de sitio para usar Ophel en más sitios de IA",
   tip6: "{shortcut} salta entre encabezados del esquema",
   edit: "Editar",
   delete: "Borrar",

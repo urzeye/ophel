@@ -63,6 +63,7 @@ export function buildStructuredTips(
 
   return [
     { icon: "👻", text: renderTip("tip1", "modifier", isMac ? "⌘ Cmd" : "Ctrl") },
+    { icon: "🧩", text: t("tip5") },
     {
       icon: "↔️",
       text: panelModeShortcut
@@ -71,7 +72,6 @@ export function buildStructuredTips(
     },
     { icon: "🔍", text: renderTip("tip4", "shortcut", fmt("openGlobalSearch")) },
     { icon: "🚀", text: renderTip("tip3", "shortcut", fmt("showShortcuts")) },
-    { icon: "📋", text: renderTip("tip5", "shortcut", fmt("copyLatestReply")) },
     {
       icon: "🧭",
       text: renderTip("tip6", "shortcut", fmt("prevHeading") + "/" + fmt("nextHeading")),

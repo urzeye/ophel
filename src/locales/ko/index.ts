@@ -515,7 +515,7 @@ export const ko = {
   tip1: "{modifier} 길게 누르면 패널을 투과하여 아래 콘텐츠를 조작할 수 있습니다",
   tip3: "{shortcut} 을 누르면 모든 단축키를 확인할 수 있습니다",
   tip4: "{shortcut}로 글로벌 검색 (folder: tag: level: 구문 지원)",
-  tip5: "{shortcut}로 최신 AI 응답을 빠르게 복사",
+  tip5: "사이트 팩을 설치하면 더 많은 AI 사이트에서 Ophel을 사용할 수 있습니다",
   tip6: "{shortcut}으로 개요 제목 간 이동",
   edit: "편집",
   delete: "삭제",

@@ -540,7 +540,7 @@ export const it = {
 
   tip3: "Premi {shortcut} per visualizzare tutte le scorciatoie da tastiera",
   tip4: "{shortcut} apre la ricerca globale con la sintassi folder: tag: level:",
-  tip5: "{shortcut} per copiare rapidamente l'ultima risposta AI",
+  tip5: "Installa i pacchetti sito per usare Ophel su più siti di IA",
   tip6: "{shortcut} per passare da un titolo all'altro",
   edit: "Modifica",
   delete: "Elimina",

@@ -528,7 +528,7 @@ export const de = {
 
   tip3: "{shortcut} zeigt alle Tastaturkürzel",
   tip4: "{shortcut} öffnet die globale Suche (folder: tag: level: Syntax)",
-  tip5: "{shortcut} kopiert die neueste KI-Antwort",
+  tip5: "Installiere Website-Pakete, um Ophel auf weiteren KI-Seiten zu nutzen",
   tip6: "{shortcut} springt zwischen Gliederungsüberschriften",
   edit: "Bearbeiten",
   delete: "Löschen",
