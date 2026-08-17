@@ -13,13 +13,9 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 - **StepFun support** — The online adapter library now includes StepFun (chat.stepfun.com); installing the pack enables outlines with user queries, basic export, generation detection and stop, chat width, Zen Mode, new chat, and prompt insertion on conversations and shared pages. (#839, #792, #352)
 
-### ✨ Improvements
-
-- **Outline anchor on repeated heading click** — Clicking the same outline heading twice no longer overwrites the saved anchor with the current scroll position; the "Return to Anchor" button now correctly jumps back to the previously saved location instead of staying stuck at the heading.
-
 ### 🐛 Bug Fixes
 
-- **Anchor position lost and stuck** — Fixed issue where quickly clicking "Return to Anchor", "Go to Top", or "Go to Bottom" multiple times, or clicking "Go to Top"/"Go to Bottom" a second time after settling, collapsed both anchor positions into one spot so "Return to Anchor" could no longer jump back to the previous location; anchor operations are now serialized and the anchor is preserved when the scroll is already at the target end.
+- **Outline anchor position lost** — Fixed issue where quickly or repeatedly clicking "Return to Anchor", "Go to Top", "Go to Bottom", or clicking the same outline heading twice collapsed the saved anchor onto the current position, so "Return to Anchor" could no longer jump back to the previous location; anchor operations are now serialized, and the anchor is preserved when the target is already reached.
 - **Doubao conversation title sync** — Fixed issue where conversations synced from Doubao showed their titles repeated three times (e.g. a title became "titletitletitle") after the site rolled out its new sidebar conversation list; titles are now read correctly from the new structure. (#846)
 - **Qwen Studio scroll shortcuts** — Adapted to Qwen Studio's new chat scroll container, fixing "Go to Top", "Go to Bottom", and "Return to Anchor" failing after the site updated its page structure.
 - **Adapt to Grok's new DOM structure** — Adapt to Grok's new chat scroll container and theme style selector, and fix the problem of "Go to Top", "Go to Bottom" and "Return to Anchor" on Grok failing and switching between light/dark themes causing the page to freeze and become unresponsive. (#842, #843)
