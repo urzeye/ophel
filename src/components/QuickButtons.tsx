@@ -656,7 +656,8 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
         })
 
         // 保存锚点到全局存储
-        anchorStore.set(result.previousScrollTop)
+        // 已在顶部时不覆盖锚点，避免重复点击丢失原位置
+        if (result.previousScrollTop >= 4) anchorStore.set(result.previousScrollTop)
         setIsFlutterMode(result.isFlutterMode)
 
         // 清理遮罩
@@ -691,7 +692,11 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       const { previousScrollTop, container } = await smartScrollToBottom(adapter)
 
       // 保存锚点到全局存储
-      anchorStore.set(previousScrollTop)
+      // 已在底部时不覆盖锚点，避免重复点击丢失原位置
+      const maxScroll = container.scrollHeight - container.clientHeight
+      if (container.clientHeight <= 0 || maxScroll - previousScrollTop >= 4) {
+        anchorStore.set(previousScrollTop)
+      }
 
       // 检测是否处于 Flutter 模式
       setIsFlutterMode(isFlutterProxy(container))

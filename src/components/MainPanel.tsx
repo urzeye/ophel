@@ -956,7 +956,8 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             setLoadingText(`${t("loadingHistory")} ${msg}`)
           },
         })
-        anchorStore.set(result.previousScrollTop)
+        // 已在顶部时不覆盖锚点，避免重复点击丢失原位置
+        if (result.previousScrollTop >= 4) anchorStore.set(result.previousScrollTop)
 
         // 清理遮罩
         if (overlayTimer) {
@@ -987,8 +988,12 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   // 滚动到底部（自动记录当前位置为锚点）
   const scrollToBottom = useCallback(async () => {
     await withAnchorOp(async () => {
-      const { previousScrollTop } = await smartScrollToBottom(adapter || null)
-      anchorStore.set(previousScrollTop)
+      const { previousScrollTop, container } = await smartScrollToBottom(adapter || null)
+      // 已在底部时不覆盖锚点，避免重复点击丢失原位置
+      const maxScroll = container.scrollHeight - container.clientHeight
+      if (container.clientHeight <= 0 || maxScroll - previousScrollTop >= 4) {
+        anchorStore.set(previousScrollTop)
+      }
     })
   }, [adapter])
 
