@@ -44,6 +44,7 @@
     "new-chat",
     "stop-generation",
     "width",
+    "panel-avoidance",
     "zen",
     "prompt-insert"
   ],
@@ -87,13 +88,55 @@
   "widthSelectors": [
     {
       "selector": "[data-message-id=\"message\"] > div",
-      "property": "max-width"
+      "property": "max-width",
+      "extraCss": "width: 100% !important;"
     },
     {
       "selector": "#contentContainer > .w-full.flex.justify-center > div",
+      "property": "max-width",
+      "extraCss": "width: 100% !important;"
+    },
+    {
+      "selector": "#contentContainer > .w-full.flex.justify-center > div > div",
       "property": "max-width"
+    },
+    {
+      "selector": "[data-message-id=\"message\"] .items-end .bg-fill-white",
+      "property": "max-width",
+      "noCenter": true
     }
   ],
+  "panelAvoidance": {
+    "scopeSelector": "#contentContainer",
+    "widthSelectors": [
+      {
+        "selector": "[data-message-id=\"message\"] > div",
+        "property": "max-width",
+        "extraCss": "width: 100% !important;"
+      },
+      {
+        "selector": "#contentContainer > .w-full.flex.justify-center > div",
+        "property": "max-width",
+        "extraCss": "width: 100% !important;"
+      },
+      {
+        "selector": "#contentContainer > .w-full.flex.justify-center > div > div",
+        "property": "max-width"
+      }
+    ],
+    "insetSelectors": [
+      {
+        "selector": "[data-message-id=\"message\"]",
+        "extraCss": "box-sizing: border-box;"
+      },
+      {
+        "selector": "#contentContainer > .w-full.flex.justify-center",
+        "extraCss": "box-sizing: border-box;"
+      }
+    ],
+    "defaultWidth": "800px",
+    "gap": 16
+  },
   "zenMode": {
     "hide": [
       ".fixed.w-72.bg-fill-shallowGold",
