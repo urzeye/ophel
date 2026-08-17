@@ -225,7 +225,7 @@ const createAIStudioConfig = (): AIStudioSiteConfig => {
     },
     mermaidSupport: "fallback",
     quickQuote: "disabled",
-    supportsHostThemeSync: false,
+    supportsHostThemeSync: true,
     sitePrivateSelectors: {
       scrollbarButton: [
         "ms-items-scrollbar button[aria-controls]",
