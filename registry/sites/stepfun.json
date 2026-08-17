@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "stepfun",
   "version": 1,
-  "minAppVersion": "1.2.1",
+  "minAppVersion": "1.2.2",
   "name": "StepFun",
   "nameI18n": {
     "zh-CN": "阶跃AI",
