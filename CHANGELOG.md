@@ -15,6 +15,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
+- **Grok theme toggle freeze** — Fixed issue where switching the light/dark theme on Grok made the page unresponsive; host theme detection no longer misreads Grok's built-in utility classes, and the toggle no longer triggers Grok's own theme reset loop.
 - **Grok scroll shortcuts** — Fixed issue where "Go to top", "Go to bottom", and "Back to anchor" stopped working after Grok's page structure update; the chat scroll area is now located from the new layout.
 - **ChatGPT prompt insertion on Firefox** — Fixed issue where inserting a multi-line prompt into ChatGPT in Firefox lost all line breaks; inserted prompts now keep their original line structure. (#811, #838)
 

@@ -1403,9 +1403,9 @@ export class AssistantMermaidRenderer {
   }
 
   private getMermaidTheme(): MermaidTheme {
-    const htmlClass = document.documentElement.className
     const bodyClass = document.body.className
-    const htmlHasDark = /\bdark\b/i.test(htmlClass)
+    // 用 classList token 精确匹配，避免命中 Grok 常驻工具类（scheme-light / dark:scheme-dark）
+    const htmlHasDark = document.documentElement.classList.contains("dark")
     const bodyHasDarkTheme = /\bdark-theme\b/i.test(bodyClass)
     const htmlHasDarkThemeAttr = document.documentElement.hasAttribute("dark-theme")
 

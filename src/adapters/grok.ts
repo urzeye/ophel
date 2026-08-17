@@ -2523,6 +2523,8 @@ export class GrokAdapter extends SiteAdapter {
   /**
    * 切换 Grok 主题
    * Grok 使用 localStorage("theme") 和 document.documentElement.classList 控制主题
+   * 注意：不要向当前文档派发合成 storage 事件，Grok 会响应它并把主题回弹为内部状态，
+   * 与 ThemeManager 的宿主监听形成回写循环导致页面卡死；真实 setItem 已会通知其他标签页。
    * @param targetMode 目标主题模式
    */
   async toggleTheme(targetMode: "light" | "dark"): Promise<boolean> {
@@ -2536,15 +2538,6 @@ export class GrokAdapter extends SiteAdapter {
 
       // 更新 color-scheme
       document.documentElement.style.colorScheme = targetMode
-
-      // 触发 storage 事件以通知其他可能监听的代码
-      window.dispatchEvent(
-        new StorageEvent("storage", {
-          key: "theme",
-          newValue: targetMode,
-          storageArea: localStorage,
-        }),
-      )
 
       return true
     } catch (error) {

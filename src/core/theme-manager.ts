@@ -194,13 +194,7 @@ export class ThemeManager {
           document.documentElement.classList.remove("light", "dark")
           document.documentElement.classList.add(targetMode)
           document.documentElement.style.colorScheme = targetMode
-          window.dispatchEvent(
-            new StorageEvent("storage", {
-              key: "theme",
-              newValue: "system",
-              storageArea: localStorage,
-            }),
-          )
+          // 同 toggleTheme：不派发合成 storage 事件，避免 Grok 回弹触发回写循环
           return true
         }
         case SITE_IDS.QWENAI: {
@@ -510,10 +504,11 @@ export class ThemeManager {
     if (ybThemeMode === "system") return this.getSystemMode()
 
     // 1. html 元素的 class（ChatGPT 使用 html.dark / html.light）
-    const htmlClass = document.documentElement.className
-    if (/\bdark\b/i.test(htmlClass)) {
+    // 按空白分词精确匹配，避免命中 Grok 常驻工具类（scheme-light / dark:scheme-dark）
+    const htmlClasses = document.documentElement.classList
+    if (htmlClasses.contains("dark")) {
       return "dark"
-    } else if (/\blight\b/i.test(htmlClass)) {
+    } else if (htmlClasses.contains("light")) {
       return "light"
     }
 

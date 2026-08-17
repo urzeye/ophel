@@ -192,9 +192,9 @@ export async function syncHostThemeWithSettings(ctx: ModulesContext): Promise<vo
   }
 
   // 检测页面实际的主题状态
-  const htmlClass = document.documentElement.className
-  const htmlHasDark = /\bdark\b/i.test(htmlClass)
-  const htmlHasLight = /\blight\b/i.test(htmlClass)
+  // 用 classList token 精确匹配，避免命中 Grok 常驻工具类（scheme-light / dark:scheme-dark）
+  const htmlHasDark = document.documentElement.classList.contains("dark")
+  const htmlHasLight = document.documentElement.classList.contains("light")
   const bodyClass = document.body.className
   const bodyHasDarkTheme = /\bdark-theme\b/i.test(bodyClass)
   const pageColorScheme = document.body.style.colorScheme

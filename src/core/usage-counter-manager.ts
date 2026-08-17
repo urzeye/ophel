@@ -1296,9 +1296,9 @@ export class UsageCounterManager {
   }
 
   private detectThemeMode(): "light" | "dark" {
-    const htmlClass = document.documentElement.className
-    if (/\bdark\b/i.test(htmlClass)) return "dark"
-    if (/\blight\b/i.test(htmlClass)) return "light"
+    // 用 classList token 精确匹配，避免命中 Grok 常驻工具类（scheme-light / dark:scheme-dark）
+    if (document.documentElement.classList.contains("dark")) return "dark"
+    if (document.documentElement.classList.contains("light")) return "light"
 
     const bodyClass = document.body.className
     if (/\bdark-theme\b/i.test(bodyClass)) return "dark"
