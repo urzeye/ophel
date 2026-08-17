@@ -34,6 +34,7 @@ import {
   htmlToMarkdown,
 } from "~utils/exporter"
 import { getAllLocalizedTexts, t } from "~utils/i18n"
+import { getTopScrollPosition } from "~utils/scroll-helper"
 import { createSiteScopedStorageKey, resolvePersistedSiteInstanceKey } from "~utils/site-identity"
 import { consumeRestoreFlag, type ExportPackaging } from "~utils/storage"
 import { showToast } from "~utils/toast"
@@ -1606,7 +1607,7 @@ export class ConversationManager {
         const maxRetries = 50
 
         while (retries < maxRetries) {
-          scrollContainer.scrollTop = 0
+          scrollContainer.scrollTop = getTopScrollPosition(scrollContainer)
           await new Promise((resolve) => setTimeout(resolve, 500))
 
           const currentHeight = scrollContainer.scrollHeight

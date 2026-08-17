@@ -6,7 +6,12 @@
  */
 
 import type { SiteAdapter } from "~adapters/base"
-import { getScrollInfo, isFlutterProxy, smartScrollToTop } from "~utils/scroll-helper"
+import {
+  getScrollInfo,
+  getTopScrollPosition,
+  isFlutterProxy,
+  smartScrollToTop,
+} from "~utils/scroll-helper"
 
 // ==================== 类型定义 ====================
 
@@ -72,15 +77,6 @@ const CONFIG = {
   MAX_INITIAL_WAIT_ROUNDS: 10,
   /** 最大加载轮次（超时保护） */
   MAX_TOTAL_ROUNDS: 50,
-}
-
-function getTopScrollPosition(adapter: SiteAdapter | null, container: HTMLElement): number {
-  const isReverse =
-    adapter?.getSiteId() === "doubao" &&
-    typeof window !== "undefined" &&
-    window.getComputedStyle(container).flexDirection === "column-reverse"
-
-  return isReverse ? Math.min(0, container.clientHeight - container.scrollHeight) : 0
 }
 
 // ==================== 核心函数 ====================
@@ -161,7 +157,7 @@ export async function loadHistoryUntil(options: LoadHistoryOptions): Promise<Loa
     }
 
     // 强制保持在顶部并派发 WheelEvent 触发懒加载
-    container.scrollTop = getTopScrollPosition(adapter, container)
+    container.scrollTop = getTopScrollPosition(container)
     container.dispatchEvent(new WheelEvent("wheel", { deltaY: -100, bubbles: true }))
 
     // 等待懒加载触发
@@ -193,7 +189,7 @@ export async function loadHistoryUntil(options: LoadHistoryOptions): Promise<Loa
         initialHeight = container.scrollHeight
         lastHeight = container.scrollHeight
         // 重新滚动到顶部
-        container.scrollTop = getTopScrollPosition(adapter, container)
+        container.scrollTop = getTopScrollPosition(container)
       }
     }
 

@@ -28,27 +28,25 @@ interface ScrollResponse {
 
 let scrollRequestSequence = 0
 
-function isColumnReverseScrollContainer(
-  adapter: SiteAdapter | null,
-  container: HTMLElement,
-): boolean {
+// column-reverse 容器的滚动原点在视觉底部：scrollTop 为 0，向上滚动为负值。
+// 该语义由 CSS 规范定义，对任意站点通用，直接按 computed style 检测。
+function isColumnReverseContainer(container: HTMLElement): boolean {
   return (
-    adapter?.getSiteId() === "doubao" &&
     typeof window !== "undefined" &&
     window.getComputedStyle(container).flexDirection === "column-reverse"
   )
 }
 
-function getTopScrollPosition(container: HTMLElement, isReverse: boolean): number {
-  if (isReverse) {
+export function getTopScrollPosition(container: HTMLElement): number {
+  if (isColumnReverseContainer(container)) {
     return Math.min(0, container.clientHeight - container.scrollHeight)
   }
 
   return 0
 }
 
-function getBottomScrollPosition(container: HTMLElement, isReverse: boolean): number {
-  if (isReverse) {
+function getBottomScrollPosition(container: HTMLElement): number {
+  if (isColumnReverseContainer(container)) {
     return 0
   }
 
@@ -277,9 +275,8 @@ export async function smartScrollToTop(
     const previousScrollTop = container.scrollTop
     const scrollHeight = container.scrollHeight
 
-    const isReverse = isColumnReverseScrollContainer(adapter, container)
     container.scrollTo({
-      top: getTopScrollPosition(container, isReverse),
+      top: getTopScrollPosition(container),
       behavior: "instant",
       ...{ __bypassLock: true },
     } as any)
@@ -324,9 +321,8 @@ export async function smartScrollToBottom(
   if (container && container.scrollHeight > container.clientHeight) {
     const previousScrollTop = container.scrollTop
 
-    const isReverse = isColumnReverseScrollContainer(adapter, container)
     container.scrollTo({
-      top: getBottomScrollPosition(container, isReverse),
+      top: getBottomScrollPosition(container),
       behavior: "instant",
       ...{ __bypassLock: true },
     } as any)
