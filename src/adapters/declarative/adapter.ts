@@ -786,6 +786,10 @@ export class DeclarativeAdapter extends SiteAdapter {
     return this.manifest.export ? { ...this.manifest.export } : null
   }
 
+  isExportReversed(): boolean {
+    return this.manifest.outlineReverse ?? false
+  }
+
   getNetworkMonitorConfig(): NetworkMonitorConfig | null {
     return this.manifest.networkMonitor
       ? cloneNetworkMonitorConfig(this.manifest.networkMonitor)

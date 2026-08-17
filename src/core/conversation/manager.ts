@@ -1896,13 +1896,16 @@ export class ConversationManager {
     const { userQuerySelector, assistantResponseSelector, turnSelector, useShadowDOM } = config
 
     if (turnSelector) {
-      const turns =
+      let turns =
         (DOMToolkit.query(turnSelector, {
           all: true,
           shadow: useShadowDOM,
         }) as Element[]) || []
 
       if (turns.length > 0) {
+        // Sites with flex-col-reverse message lists render newest turns
+        // first in the DOM; reverse so exported messages follow visual order.
+        if (this.siteAdapter.isExportReversed()) turns = turns.reverse()
         const collectTurnMatches = (turn: Element, selector: string): Element[] => {
           const matches: Element[] = []
 
@@ -1975,17 +1978,22 @@ export class ConversationManager {
       }
     }
 
-    const userMessages =
+    let userMessages =
       (DOMToolkit.query(userQuerySelector, {
         all: true,
         shadow: useShadowDOM,
       }) as Element[]) || []
 
-    const aiMessages =
+    let aiMessages =
       (DOMToolkit.query(assistantResponseSelector, {
         all: true,
         shadow: useShadowDOM,
       }) as Element[]) || []
+
+    if (this.siteAdapter.isExportReversed()) {
+      userMessages.reverse()
+      aiMessages.reverse()
+    }
 
     const maxLen = Math.max(userMessages.length, aiMessages.length)
     for (let i = 0; i < maxLen; i++) {

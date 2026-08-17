@@ -1334,6 +1334,15 @@ export abstract class SiteAdapter {
   }
 
   /**
+   * Whether the site renders messages in reverse DOM order (e.g.
+   * flex-col-reverse). When true, the export pipeline reverses turn
+   * order so exported messages follow visual (oldest-first) order.
+   */
+  isExportReversed(): boolean {
+    return false
+  }
+
+  /**
    * 站点自定义导出包抽取。
    *
    * 用于导出消息之外的附件资产（图片、文档、Artifact 等）。
