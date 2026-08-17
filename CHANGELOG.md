@@ -11,7 +11,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🚀 New Features
 
-- **StepFun support** — The online adapter library now includes StepFun (chat.stepfun.com); installing the pack enables outlines with user queries, basic export, generation detection and stop, chat width, Zen Mode, new chat, and prompt insertion on conversations and shared pages. (#792, #352)
+- **StepFun support** — The online adapter library now includes StepFun (chat.stepfun.com); installing the pack enables outlines with user queries, basic export, generation detection and stop, chat width, Zen Mode, new chat, and prompt insertion on conversations and shared pages. (#839, #792, #352)
 
 ### 🐛 Bug Fixes
 
@@ -19,7 +19,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.2.1] - 2026-08-17
+## [1.2.1][1.2.1] - 2026-08-17
 
 ### 🚀 New Features
 
