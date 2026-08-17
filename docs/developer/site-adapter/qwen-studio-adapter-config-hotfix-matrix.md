@@ -1,6 +1,6 @@
 # Qwen Studio 适配器配置热修覆盖矩阵
 
-Qwen Studio 是 P3-06 批次的第四个配置化站点，当前 `configVersion` 为 `1`。适配器启动时使用内置默认配置，门闩完成后注入通过校验的合并结果；可热修字段均在调用时从 `this.config` 读取。
+Qwen Studio 是 P3-06 批次的第四个配置化站点，当前 `configVersion` 为 `2`。适配器启动时使用内置默认配置，门闩完成后注入通过校验的合并结果；可热修字段均在调用时从 `this.config` 读取。
 
 ## 可通过 patch 热修
 
@@ -9,6 +9,7 @@ Qwen Studio 是 P3-06 批次的第四个配置化站点，当前 `configVersion`
 | 输入与操作按钮 | `selectors.textarea`、`selectors.submitButton`、`selectors.newChatButton`、`selectors.stopButton`、`input.submitKey`、`composerButton` | 输入框、发送、新对话、停止生成和快捷键提交 |
 | 会话侧栏 | `conversation.*`、`sidebarRoot`、`sidebarScroll`、`conversationLink`、`pinnedConversation` | 会话列表、标题、ID、跳转、置顶状态、侧栏滚动容器和观察器 |
 | 消息、正文与公式 | `selectors.responseContainer`、`selectors.chatContent`、`selectors.userQuery`、`selectors.assistantResponse`、`userMessageRoot`、`userContent`、`assistantContent`、`latex`、`latexDisplay`、`markdownParagraph` | 消息容器、大纲、用户问题与 AI 正文提取、公式复制和 Markdown 修复 |
+| 消息滚动容器 | `selectors.scrollContainer` | 去顶部、到底部、返回锚点和阅读位置恢复 |
 | 代码块与 Mermaid | `codeBlock`、`codeLine`、`codeBody`、`codeBodyFallback`、`mermaidCodeBody`、`mermaidCodeContent`、`mermaidChart`、`codeHeader`、`codeHeaderActions`、`codeLineNumber`、`mermaidSwitch`、`mermaidSwitchItem`、`mermaidActiveSwitch` | 代码语言/正文提取、Mermaid 源码识别、代码/预览视图定位和导出恢复 |
 | 思考面板 | `thinkingCard`、`thoughtTrigger`、`thoughtTitle`、`thoughtPanel`、`thoughtPanelContent`、`thoughtPanelContentFallback`、`thoughtPanelCards`、`thoughtCardContent`、`thoughtMarkdown`、`thoughtPanelClose`、`phaseId`、`assistantMessageId` | 思考入口、当前消息匹配、思考内容提取、标题清理和面板关闭 |
 | 导出、附件与图片 | `export.*`、`exportDecoration`、`responseToolbar`、`userImageCard`、`userFileCard`、`assistantGeneratedImage`、`assistantGeneratedImageCard`、`assistantImageDecoration`、`messageMarkerRoot` | 对话导出、装饰节点清理、用户附件、生成图片和消息去重标记 |

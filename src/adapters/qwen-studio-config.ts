@@ -109,7 +109,7 @@ export interface QwenStudioSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const QWEN_STUDIO_CONFIG_VERSION = 1
+export const QWEN_STUDIO_CONFIG_VERSION = 2
 
 const createQwenStudioConfig = (): QwenStudioSiteConfig => {
   const sidebarRoot = "#sidebar"
@@ -119,7 +119,8 @@ const createQwenStudioConfig = (): QwenStudioSiteConfig => {
   const newChatButton = ".sidebar-entry-fixed-list-content"
   const layoutScope =
     ".chat-left-panel, body:not(:has(.chat-left-panel)) .splitter-container-left-panel"
-  const messageScroll = "#chat-messages-scroll-container"
+  // 新版 DOM 中消息滚动容器为 .chat-messages（overflow-y: auto），保留旧 id 兼容旧结构
+  const messageScroll = ".chat-messages-container > .chat-messages, #chat-messages-scroll-container"
   const messageContainer = "#chat-message-container"
   const messageWidth = ".qwen-chat-message"
   const inputSafeArea = ".chat-layout-input-container"
