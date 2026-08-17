@@ -99,7 +99,8 @@
       ".fixed.w-72.bg-fill-shallowGold",
       "#root > .fixed.z-30.top-3",
       "#root > .absolute:has(.custom-icon-sidebar-trigger-outline)",
-      "header.flex.h-16"
+      "header.flex.h-16",
+      ".fixed.bottom-4.right-4.z-50"
     ],
     "styles": [
       {
@@ -109,5 +110,14 @@
       }
     ]
   },
-  "scrollPinRelease": true
+  "scrollPinRelease": true,
+  "themeSync": {
+    "storageKey": "theme",
+    "values": {
+      "dark": "dark",
+      "light": "light",
+      "system": "system"
+    }
+  },
+  "outlineReverse": true
 }

@@ -110,6 +110,7 @@ const CONFIG_KEYS = [
   "quickQuote",
   "supportsHostThemeSync",
   "scrollPinRelease",
+  "outlineReverse",
   "themeSync",
 ] as const
 

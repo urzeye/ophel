@@ -428,7 +428,7 @@ export class DeclarativeAdapter extends SiteAdapter {
     const userQuerySelector = this.manifest.selectors.userQuery
     if (userQuerySelector) selectors.push(userQuerySelector)
 
-    const candidates = Array.from(container.querySelectorAll(selectors.join(", ")))
+    let candidates = Array.from(container.querySelectorAll(selectors.join(", ")))
       .filter((element) => !isInsideOphelContainer(element, container))
       .filter((element) => !this.isInsideOutlineExclude(element))
       .map((element): OutlineCandidate | null => {
@@ -450,6 +450,43 @@ export class DeclarativeAdapter extends SiteAdapter {
       })
       .filter((candidate): candidate is OutlineCandidate => candidate !== null)
       .sort((left, right) => compareDomOrder(left.element, right.element))
+
+    // Sites whose message list uses flex-col-reverse render newest messages
+    // first in the DOM. Reverse message-level group order (each group = one
+    // chatContent element) so the outline follows visual order, while
+    // preserving intra-message heading order.
+    if (this.manifest.outlineReverse) {
+      const chatContentSelectors = this.manifest.selectors.chatContent ?? []
+      if (chatContentSelectors.length > 0) {
+        const groupKey = (el: Element): Element | null => {
+          for (const selector of chatContentSelectors) {
+            const ancestor = el.closest(selector)
+            if (ancestor) return ancestor
+          }
+          return null
+        }
+        const groups: OutlineCandidate[][] = []
+        let currentKey: Element | null | undefined
+        let currentGroup: OutlineCandidate[] = []
+        for (const candidate of candidates) {
+          const key = groupKey(candidate.element)
+          if (key !== currentKey) {
+            if (currentGroup.length > 0) groups.push(currentGroup)
+            currentGroup = [candidate]
+            currentKey = key
+          } else {
+            currentGroup.push(candidate)
+          }
+        }
+        if (currentGroup.length > 0) groups.push(currentGroup)
+        // Reverse message groups; ungrouped candidates (key='') keep position
+        // relative to each other but move with their adjacent group.
+        groups.reverse()
+        candidates = groups.flat()
+      } else {
+        candidates.reverse()
+      }
+    }
 
     return { container, candidates }
   }

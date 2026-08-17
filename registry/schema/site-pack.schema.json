@@ -112,6 +112,10 @@
     "scrollPinRelease": {
       "type": "boolean"
     },
+    "outlineReverse": {
+      "type": "boolean",
+      "description": "Reverse outline candidate order after DOM sort. Use for sites whose message list uses flex-col-reverse or similar, so DOM order is newest-first while visual order is oldest-first."
+    },
     "themeSync": {
       "$ref": "#/definitions/themeSync"
     }

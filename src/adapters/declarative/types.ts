@@ -107,6 +107,7 @@ export interface SitePackConfig {
    * 大纲跳转后补发零增量 wheel 并重试跳转，解除站点吸底。
    */
   scrollPinRelease?: boolean
+  outlineReverse?: boolean
 }
 
 /**
