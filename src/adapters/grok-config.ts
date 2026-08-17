@@ -79,7 +79,7 @@ export interface GrokSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const GROK_CONFIG_VERSION = 1
+export const GROK_CONFIG_VERSION = 2
 
 const createGrokConfig = (): GrokSiteConfig => {
   const sidebarScrollContainer = '[data-sidebar="content"]'
@@ -168,7 +168,9 @@ const createGrokConfig = (): GrokSiteConfig => {
         ".absolute.bg-surface-l2.p-1.rounded-full button",
       ],
       sidebarScrollContainer,
-      mainScrollContainer: '[class*="overflow-auto"]',
+      // 新版聊天滚动容器为 overflow-y-auto + px-gutter；保留 overflow-auto 兼容旧结构
+      mainScrollContainer:
+        '[class*="overflow-y-auto"][class*="px-gutter"], [class*="overflow-auto"]',
       fallbackScrollContainers: '[class*="overflow-y-auto"], [class*="overflow-auto"]',
       viewAllButton: "button.w-full.justify-start.text-xs.text-secondary.font-semibold",
       cmdkList: '[cmdk-list-sizer=""], [cmdk-list]',
