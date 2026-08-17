@@ -50,7 +50,7 @@ import { getScrollInfo, smartScrollTo, smartScrollToBottom } from "~utils/scroll
 import { DEFAULT_SETTINGS, getSiteTheme, type Prompt } from "~utils/storage"
 import { showToast } from "~utils/toast"
 import { OPHEL_FONT_FAMILY_CSS_VAR } from "~utils/font"
-import { anchorStore } from "~stores/anchor-store"
+import { anchorStore, withAnchorOp } from "~stores/anchor-store"
 
 import { ConversationsTab } from "./ConversationsTab"
 import { LoadingOverlay } from "./LoadingOverlay"
@@ -924,57 +924,59 @@ export const MainPanel: React.FC<MainPanelProps> = ({
 
   // 滚动到顶部（自动记录当前位置为锚点，使用 HistoryLoader 加载全部历史）
   const scrollToTop = useCallback(async () => {
-    // 遮罩延迟显示
-    const OVERLAY_DELAY_MS = 1600
-    abortLoadingRef.current = false
+    await withAnchorOp(async () => {
+      // 遮罩延迟显示
+      const OVERLAY_DELAY_MS = 1600
+      abortLoadingRef.current = false
 
-    // 创建 AbortController 用于中断
-    const abortController = new AbortController()
-    const checkAbort = () => {
-      if (abortLoadingRef.current) {
-        abortController.abort()
+      // 创建 AbortController 用于中断
+      const abortController = new AbortController()
+      const checkAbort = () => {
+        if (abortLoadingRef.current) {
+          abortController.abort()
+        }
       }
-    }
-    const abortCheckInterval = setInterval(checkAbort, 100)
+      const abortCheckInterval = setInterval(checkAbort, 100)
 
-    // 延迟显示遮罩的定时器
-    let overlayTimer: ReturnType<typeof setTimeout> | null = setTimeout(() => {
-      if (!abortLoadingRef.current) {
-        setIsLoadingHistory(true)
-        setLoadingText(t("loadingHistory"))
-      }
-    }, OVERLAY_DELAY_MS)
+      // 延迟显示遮罩的定时器
+      let overlayTimer: ReturnType<typeof setTimeout> | null = setTimeout(() => {
+        if (!abortLoadingRef.current) {
+          setIsLoadingHistory(true)
+          setLoadingText(t("loadingHistory"))
+        }
+      }, OVERLAY_DELAY_MS)
 
-    try {
-      const result = await loadHistoryUntil({
-        adapter: adapter || null,
-        loadAll: true,
-        signal: abortController.signal,
-        allowShortCircuit: true, // 用户主动点击，启用短对话短路
-        onProgress: (msg) => {
-          setLoadingText(`${t("loadingHistory")} ${msg}`)
-        },
-      })
-      anchorStore.set(result.previousScrollTop)
+      try {
+        const result = await loadHistoryUntil({
+          adapter: adapter || null,
+          loadAll: true,
+          signal: abortController.signal,
+          allowShortCircuit: true, // 用户主动点击，启用短对话短路
+          onProgress: (msg) => {
+            setLoadingText(`${t("loadingHistory")} ${msg}`)
+          },
+        })
+        anchorStore.set(result.previousScrollTop)
 
-      // 清理遮罩
-      if (overlayTimer) {
-        clearTimeout(overlayTimer)
-        overlayTimer = null
-      }
-      setIsLoadingHistory(false)
-      setLoadingText("")
+        // 清理遮罩
+        if (overlayTimer) {
+          clearTimeout(overlayTimer)
+          overlayTimer = null
+        }
+        setIsLoadingHistory(false)
+        setLoadingText("")
 
-      // 显示完成提示（静默模式不显示）
-      if (result.success && !result.silent) {
-        showToast(t("historyLoaded"), 2000)
+        // 显示完成提示（静默模式不显示）
+        if (result.success && !result.silent) {
+          showToast(t("historyLoaded"), 2000)
+        }
+      } finally {
+        clearInterval(abortCheckInterval)
+        if (overlayTimer) {
+          clearTimeout(overlayTimer)
+        }
       }
-    } finally {
-      clearInterval(abortCheckInterval)
-      if (overlayTimer) {
-        clearTimeout(overlayTimer)
-      }
-    }
+    })
   }, [adapter])
 
   // 停止加载
@@ -984,27 +986,31 @@ export const MainPanel: React.FC<MainPanelProps> = ({
 
   // 滚动到底部（自动记录当前位置为锚点）
   const scrollToBottom = useCallback(async () => {
-    const { previousScrollTop } = await smartScrollToBottom(adapter || null)
-    anchorStore.set(previousScrollTop)
+    await withAnchorOp(async () => {
+      const { previousScrollTop } = await smartScrollToBottom(adapter || null)
+      anchorStore.set(previousScrollTop)
+    })
   }, [adapter])
 
   // 跳转到锚点（实现位置交换，支持来回跳转）
   const goToAnchor = useCallback(async () => {
-    const savedAnchor = anchorStore.get()
-    if (savedAnchor === null) return
+    await withAnchorOp(async () => {
+      const savedAnchor = anchorStore.get()
+      if (savedAnchor === null) return
 
-    // 触发按钮弹性动画
-    setAnchorTapId((id) => id + 1)
+      // 触发按钮弹性动画
+      setAnchorTapId((id) => id + 1)
 
-    // 获取当前位置
-    const scrollInfo = await getScrollInfo(adapter || null)
-    const currentPos = scrollInfo.scrollTop
+      // 获取当前位置
+      const scrollInfo = await getScrollInfo(adapter || null)
+      const currentPos = scrollInfo.scrollTop
 
-    // 跳转到锚点
-    await smartScrollTo(adapter || null, savedAnchor)
+      // 跳转到锚点
+      await smartScrollTo(adapter || null, savedAnchor)
 
-    // 交换位置
-    anchorStore.set(currentPos)
+      // 交换位置
+      anchorStore.set(currentPos)
+    })
   }, [adapter])
 
   // 记录锚点位置（每次跳转大纲时调用）

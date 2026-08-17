@@ -25,7 +25,7 @@ import {
   type ToolsMenuId,
 } from "~constants"
 import type { ThemeTransitionOrigin } from "~core/theme-manager"
-import { anchorStore } from "~stores/anchor-store"
+import { anchorStore, withAnchorOp } from "~stores/anchor-store"
 import { useSettingsStore } from "~stores/settings-store"
 import { loadHistoryUntil } from "~utils/history-loader"
 import { OPHEL_HOVER_WIDTH_RETAIN_LAYER_PROPS } from "~utils/dom-toolkit"
@@ -621,61 +621,63 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
 
   // 滚动到顶部（支持图文并茂模式）
   const scrollToTop = useCallback(async () => {
-    // 遮罩延迟显示
-    const OVERLAY_DELAY_MS = 1600
-    abortLoadingRef.current = false
+    await withAnchorOp(async () => {
+      // 遮罩延迟显示
+      const OVERLAY_DELAY_MS = 1600
+      abortLoadingRef.current = false
 
-    // 创建 AbortController 用于中断
-    const abortController = new AbortController()
-    const checkAbort = () => {
-      if (abortLoadingRef.current) {
-        abortController.abort()
+      // 创建 AbortController 用于中断
+      const abortController = new AbortController()
+      const checkAbort = () => {
+        if (abortLoadingRef.current) {
+          abortController.abort()
+        }
       }
-    }
-    const abortCheckInterval = setInterval(checkAbort, 100)
+      const abortCheckInterval = setInterval(checkAbort, 100)
 
-    // 延迟显示遮罩的定时器
-    let overlayTimer: ReturnType<typeof window.setTimeout> | null = setTimeout(() => {
-      if (!abortLoadingRef.current) {
-        setIsLoadingHistory(true)
-        setLoadingText(t("loadingHistory"))
+      // 延迟显示遮罩的定时器
+      let overlayTimer: ReturnType<typeof window.setTimeout> | null = setTimeout(() => {
+        if (!abortLoadingRef.current) {
+          setIsLoadingHistory(true)
+          setLoadingText(t("loadingHistory"))
+        }
+      }, OVERLAY_DELAY_MS)
+
+      try {
+        // 使用公共 HistoryLoader
+        const result = await loadHistoryUntil({
+          adapter,
+          loadAll: true,
+          signal: abortController.signal,
+          allowShortCircuit: true, // 用户主动点击，启用短对话短路
+          onProgress: (msg) => {
+            setLoadingText(`${t("loadingHistory")} ${msg}`)
+          },
+        })
+
+        // 保存锚点到全局存储
+        anchorStore.set(result.previousScrollTop)
+        setIsFlutterMode(result.isFlutterMode)
+
+        // 清理遮罩
+        if (overlayTimer) {
+          window.clearTimeout(overlayTimer)
+          overlayTimer = null
+        }
+        setIsLoadingHistory(false)
+        setLoadingText("")
+
+        // 显示完成提示（静默模式不显示）
+        if (result.success && !result.silent) {
+          showToast(t("historyLoaded"), 2000)
+        }
+      } finally {
+        clearInterval(abortCheckInterval)
+        if (overlayTimer) {
+          window.clearTimeout(overlayTimer)
+        }
       }
-    }, OVERLAY_DELAY_MS)
-
-    try {
-      // 使用公共 HistoryLoader
-      const result = await loadHistoryUntil({
-        adapter,
-        loadAll: true,
-        signal: abortController.signal,
-        allowShortCircuit: true, // 用户主动点击，启用短对话短路
-        onProgress: (msg) => {
-          setLoadingText(`${t("loadingHistory")} ${msg}`)
-        },
-      })
-
-      // 保存锚点到全局存储
-      anchorStore.set(result.previousScrollTop)
-      setIsFlutterMode(result.isFlutterMode)
-
-      // 清理遮罩
-      if (overlayTimer) {
-        window.clearTimeout(overlayTimer)
-        overlayTimer = null
-      }
-      setIsLoadingHistory(false)
-      setLoadingText("")
-
-      // 显示完成提示（静默模式不显示）
-      if (result.success && !result.silent) {
-        showToast(t("historyLoaded"), 2000)
-      }
-    } finally {
-      clearInterval(abortCheckInterval)
-      if (overlayTimer) {
-        window.clearTimeout(overlayTimer)
-      }
-    }
+    })
   }, [adapter])
 
   // 停止加载
@@ -685,39 +687,45 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
 
   // 滚动到底部（支持图文并茂模式）
   const scrollToBottom = useCallback(async () => {
-    const { previousScrollTop, container } = await smartScrollToBottom(adapter)
+    await withAnchorOp(async () => {
+      const { previousScrollTop, container } = await smartScrollToBottom(adapter)
 
-    // 保存锚点到全局存储
-    anchorStore.set(previousScrollTop)
+      // 保存锚点到全局存储
+      anchorStore.set(previousScrollTop)
 
-    // 检测是否处于 Flutter 模式
-    setIsFlutterMode(isFlutterProxy(container))
+      // 检测是否处于 Flutter 模式
+      setIsFlutterMode(isFlutterProxy(container))
+    })
   }, [adapter])
 
   // 锚点跳转（双向，支持图文并茂模式）
   const handleAnchorClick = useCallback(async () => {
-    const savedAnchor = anchorStore.get()
-    if (savedAnchor === null) return
+    await withAnchorOp(async () => {
+      const savedAnchor = anchorStore.get()
+      if (savedAnchor === null) return
 
-    // 触发弹性动画
-    setAnchorTapId((id) => id + 1)
+      // 触发弹性动画
+      setAnchorTapId((id) => id + 1)
 
-    // 获取当前位置
-    const scrollInfo = await getScrollInfo(adapter)
-    const currentPos = scrollInfo.scrollTop
+      // 获取当前位置
+      const scrollInfo = await getScrollInfo(adapter)
+      const currentPos = scrollInfo.scrollTop
 
-    // 跳转到锚点
-    await smartScrollTo(adapter, savedAnchor)
+      // 跳转到锚点
+      await smartScrollTo(adapter, savedAnchor)
 
-    // 交换位置
-    anchorStore.set(currentPos)
+      // 交换位置
+      anchorStore.set(currentPos)
+    })
   }, [adapter])
 
   // 手动锚点：设置（支持图文并茂模式）
   const setAnchorManually = useCallback(async () => {
-    const scrollInfo = await getScrollInfo(adapter)
-    anchorStore.set(scrollInfo.scrollTop)
-    setIsFlutterMode(scrollInfo.isFlutterMode)
+    await withAnchorOp(async () => {
+      const scrollInfo = await getScrollInfo(adapter)
+      anchorStore.set(scrollInfo.scrollTop)
+      setIsFlutterMode(scrollInfo.isFlutterMode)
+    })
   }, [adapter])
 
   // 获取主题图标

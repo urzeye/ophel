@@ -11,7 +11,7 @@ import { SHORTCUT_ACTIONS, isMacOS, type ShortcutActionId } from "~constants/sho
 import type { ConversationManager } from "~core/conversation-manager"
 import type { OutlineManager } from "~core/outline-manager"
 import { getShortcutManager } from "~core/shortcut-manager"
-import { anchorStore } from "~stores/anchor-store"
+import { anchorStore, withAnchorOp } from "~stores/anchor-store"
 import { useSettingsStore } from "~stores/settings-store"
 import { loadHistoryUntil } from "~utils/history-loader"
 import { t } from "~utils/i18n"
@@ -105,51 +105,58 @@ export function useShortcuts({
   const scrollToTop = useCallback(async () => {
     if (!adapter) return
 
-    // 保存锚点到全局存储
-    const scrollInfo = await getScrollInfo(adapter)
-    anchorStore.set(scrollInfo.scrollTop)
+    await withAnchorOp(async () => {
+      // 保存锚点到全局存储
+      const scrollInfo = await getScrollInfo(adapter)
+      anchorStore.set(scrollInfo.scrollTop)
 
-    await loadHistoryUntil({
-      adapter,
-      loadAll: true,
-      allowShortCircuit: true,
+      await loadHistoryUntil({
+        adapter,
+        loadAll: true,
+        allowShortCircuit: true,
+      })
+      await smartScrollToTop(adapter)
+
+      showToast(t("scrolledToTop"))
     })
-    await smartScrollToTop(adapter)
-
-    showToast(t("scrolledToTop"))
   }, [adapter])
 
   // 去底部
   const scrollToBottom = useCallback(async () => {
     if (!adapter) return
 
-    // 保存锚点到全局存储
-    const scrollInfo = await getScrollInfo(adapter)
-    anchorStore.set(scrollInfo.scrollTop)
+    await withAnchorOp(async () => {
+      // 保存锚点到全局存储
+      const scrollInfo = await getScrollInfo(adapter)
+      anchorStore.set(scrollInfo.scrollTop)
 
-    await smartScrollToBottom(adapter)
+      await smartScrollToBottom(adapter)
 
-    showToast(t("scrolledToBottom"))
+      showToast(t("scrolledToBottom"))
+    })
   }, [adapter])
 
   // 返回锚点
   const goToAnchor = useCallback(async () => {
     if (!adapter) return
-    const savedAnchor = anchorStore.get()
-    if (savedAnchor === null) {
-      showToast(t("noAnchor"))
-      return
-    }
 
-    // 获取当前位置
-    const scrollInfo = await getScrollInfo(adapter)
-    const currentPos = scrollInfo.scrollTop
+    await withAnchorOp(async () => {
+      const savedAnchor = anchorStore.get()
+      if (savedAnchor === null) {
+        showToast(t("noAnchor"))
+        return
+      }
 
-    // 跳转到锚点
-    await smartScrollTo(adapter, savedAnchor)
+      // 获取当前位置
+      const scrollInfo = await getScrollInfo(adapter)
+      const currentPos = scrollInfo.scrollTop
 
-    // 交换位置（双向跳转）
-    anchorStore.set(currentPos)
+      // 跳转到锚点
+      await smartScrollTo(adapter, savedAnchor)
+
+      // 交换位置（双向跳转）
+      anchorStore.set(currentPos)
+    })
   }, [adapter])
 
   // 刷新大纲
