@@ -42,6 +42,7 @@ type DoubaoPrivateSelectors = SitePrivateSelectors & {
   generatedImageWrapper: string
   generatedImageGridItem: string
   modelName: string
+  conversationMarqueeTitle: string
   conversationMenuWrapper: string
   conversationMenuTrigger: string
   conversationMenuInnerButton: string
@@ -79,7 +80,7 @@ export interface DoubaoSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const DOUBAO_CONFIG_VERSION = 1
+export const DOUBAO_CONFIG_VERSION = 2
 
 const createDoubaoConfig = (): DoubaoSiteConfig => {
   const sidebarRoot = "#flow_chat_sidebar"
@@ -140,7 +141,8 @@ const createDoubaoConfig = (): DoubaoSiteConfig => {
     conversation: {
       itemSelector: conversationItem,
       idFrom: { attr: "id", regex: "^conversation_(.+)$" },
-      titleSelector: '[class*="overallTitle-"], [class*="title-"]',
+      titleSelector:
+        '[data-testid="chat_list_item_title"], [class*="overallTitle-"], [class*="title-"]',
       urlTemplate: "/chat/{id}",
       activeMatch: '[aria-current="page"], [class*="active-link-"], .e2e-test-active',
       navigationStrategy: "click-item",
@@ -202,6 +204,9 @@ const createDoubaoConfig = (): DoubaoSiteConfig => {
       generatedImageWrapper: '[class*="image-wrapper"]',
       generatedImageGridItem: '[class*="image-box-grid-item"]',
       modelName: ".truncate",
+      // v2 侧边栏标题为悬停滚动（marquee）结构，同一标题在 DOM 中重复 3 份；
+      // 视口 span 的 title 属性始终是完整标题，取它比 textContent 更可靠
+      conversationMarqueeTitle: '[data-testid="conversation-list-v2-item"] span[title]',
       conversationMenuWrapper: '[class*="chat-item-menu-wrapper-"]',
       conversationMenuTrigger: modelSelectorButton,
       conversationMenuInnerButton: 'button[data-dbx-name="button"]',

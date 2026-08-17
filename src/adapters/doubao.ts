@@ -292,13 +292,33 @@ export class DoubaoAdapter extends SiteAdapter {
   }
 
   private extractConversationTitle(link: HTMLAnchorElement): string {
-    const titleSelector = this.config.conversation.titleSelector
-    const titleElement =
-      (titleSelector ? (link.querySelector(titleSelector) as HTMLElement | null) : null) ||
-      Array.from(link.querySelectorAll("span")).find((span) => span.textContent?.trim()) ||
-      null
+    const marqueeViewport = link.querySelector(
+      this.config.sitePrivateSelectors.conversationMarqueeTitle,
+    )
+    const marqueeTitle = marqueeViewport?.getAttribute("title")?.trim()
+    if (marqueeTitle) return marqueeTitle
 
-    return titleElement?.textContent?.trim() || ""
+    return this.findConversationTitleElement(link)?.textContent?.trim() || ""
+  }
+
+  private findConversationTitleElement(link: HTMLAnchorElement): HTMLElement | null {
+    const titleSelector = this.config.conversation.titleSelector
+    return (
+      (titleSelector ? (link.querySelector(titleSelector) as HTMLElement | null) : null) ||
+      this.findLeafTextSpan(link)
+    )
+  }
+
+  // 兜底只取“叶子”span：容器 span 的 textContent 会把子节点文本拼接起来，
+  // 遇到 marquee 这类重复结构时会导致标题成倍重复
+  private findLeafTextSpan(root: ParentNode): HTMLElement | null {
+    return (
+      Array.from(root.querySelectorAll("span")).find(
+        (span) =>
+          span.textContent?.trim() &&
+          !Array.from(span.children).some((child) => child.textContent?.trim()),
+      ) || null
+    )
   }
 
   private getConversationRows(root: ParentNode = document): HTMLAnchorElement[] {
@@ -545,12 +565,7 @@ export class DoubaoAdapter extends SiteAdapter {
         }
       },
       getTitleElement: (el: Element): Element | null => {
-        const titleSelector = conversation.titleSelector
-        return (
-          (titleSelector ? el.querySelector(titleSelector) : null) ||
-          Array.from(el.querySelectorAll("span")).find((span) => span.textContent?.trim()) ||
-          null
-        )
+        return this.findConversationTitleElement(el as HTMLAnchorElement)
       },
     }
   }
