@@ -281,6 +281,16 @@ export class ClaudeAdapter extends SiteAdapter {
     return selector ? element.querySelector(selector) : null
   }
 
+  private getClaudeConversationTitle(element: ParentNode): string {
+    const titleElement = this.getClaudeConversationTitleElement(element)
+    if (!titleElement) return ""
+
+    // 新 DOM 中重新渲染过的会话项会在标题内嵌套 sr-only 全文副本和 aria-hidden
+    // 可见副本，直接读 textContent 会把标题拼成两份；优先取 sr-only 副本。
+    const srOnlyCopy = titleElement.querySelector(this.config.sitePrivateSelectors.srOnly)
+    return srOnlyCopy?.textContent?.trim() || titleElement.textContent?.trim() || ""
+  }
+
   private isClaudeConversationPinned(element: Element): boolean {
     const privateSelectors = this.config.sitePrivateSelectors
     const groupContainer = element.closest(privateSelectors.conversationGroup)
@@ -304,7 +314,7 @@ export class ClaudeAdapter extends SiteAdapter {
     const href = element.getAttribute("href") || this.getClaudeConversationPath(id)
     return {
       id,
-      title: this.getClaudeConversationTitleElement(element)?.textContent?.trim() || "",
+      title: this.getClaudeConversationTitle(element),
       url: new URL(href, this.getNewTabUrl()).href,
       isActive: window.location.href.includes(id),
       isPinned: this.isClaudeConversationPinned(element),
@@ -993,7 +1003,7 @@ export class ClaudeAdapter extends SiteAdapter {
 
     const activeItem = this.findConversationRow(currentId)
     if (!activeItem) return null
-    return this.getClaudeConversationTitleElement(activeItem)?.textContent?.trim() || null
+    return this.getClaudeConversationTitle(activeItem) || null
   }
 
   private findClaudeScrollContainer(): HTMLElement | null {
