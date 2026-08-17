@@ -1458,8 +1458,21 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
       }
 
       if (targetElement && targetElement.isConnected) {
-        // 等待锚点保存完成后再跳转（instant 模式必须）
+        // 方案 A：目标标题已在容器顶部附近，跳转不会引起实际滚动，
+        // 此时跳过锚点保存，避免重复点击同一标题把锚点覆盖为当前位置
+        let skipAnchor = false
         if (onJumpBefore && !anchorCaptured) {
+          const container = manager.getScrollContainer()
+          if (container) {
+            const offset =
+              (targetElement as HTMLElement).getBoundingClientRect().top -
+              container.getBoundingClientRect().top
+            skipAnchor = Math.abs(offset) < 4
+          }
+        }
+
+        // 等待锚点保存完成后再跳转（instant 模式必须）
+        if (onJumpBefore && !anchorCaptured && !skipAnchor) {
           await onJumpBefore()
         }
 

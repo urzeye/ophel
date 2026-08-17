@@ -15,6 +15,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
+- **Outline anchor on repeated heading click** — Fixed issue where clicking the same outline heading twice overwrote the saved anchor with the current scroll position, causing the "Return to Anchor" button to stay stuck at that one spot; the anchor is now preserved when the target heading is already at the top of the scroll area.
 - **Doubao conversation title sync** — Fixed issue where conversations synced from Doubao showed their titles repeated three times (e.g. a title became "titletitletitle") after the site rolled out its new sidebar conversation list; titles are now read correctly from the new structure. (#846)
 - **Qwen Studio scroll shortcuts** — Adapted to Qwen Studio's new chat scroll container, fixing "Go to Top", "Go to Bottom", and "Return to Anchor" failing after the site updated its page structure.
 - **Adapt to Grok's new DOM structure** — Adapt to Grok's new chat scroll container and theme style selector, and fix the problem of "Go to Top", "Go to Bottom" and "Return to Anchor" on Grok failing and switching between light/dark themes causing the page to freeze and become unresponsive. (#842, #843)
