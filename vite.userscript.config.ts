@@ -605,7 +605,10 @@ export default defineConfig({
         namespace: "https://github.com/urzeye/ophel",
         license: license,
         icon: "https://raw.githubusercontent.com/urzeye/ophel/main/assets/icon.png",
-        match: ["https://*/*"],
+        // 安装期注入门槛：必须同时覆盖 http/https，否则绑定到 http origin 的
+        // SitePack（如自托管 DeepSeek Harness）页面根本不会注入脚本。
+        // 实际运行范围由 whitelist-check.ts 在运行时收紧。
+        match: ["http://*/*", "https://*/*"],
         grant: [
           "GM_getResourceText",
           "GM_getResourceURL",

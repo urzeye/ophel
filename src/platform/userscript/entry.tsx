@@ -343,7 +343,8 @@ if (chromeRuntime && !chromeRuntime.onMessage) {
 }
 
 // ========== 早期白名单检查（仅 userscript） ==========
-// 虽然 @match 设为 */*（技术原因，油猴无法动态添加 match），
+// 虽然 @match 设为 http(s)://*/*（技术原因，油猴无法动态添加 match，
+// 且必须覆盖 http 以支持自托管 http 站点的 SitePack 绑定），
 // 但只在白名单站点（内置 15 个站点 + 已安装 SitePack + 自定义绑定）上初始化。
 // 非白名单站点在此处早期退出，性能影响极小（<1ms）。
 // 注意：不要用顶层 throw 退出——每个非白名单页面都会在控制台留下一条
