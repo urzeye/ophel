@@ -254,59 +254,12 @@ export class ChatGLMAdapter extends SiteAdapter {
   }
 
   private async applyThemeByClick(targetMode: "light" | "dark" | "system"): Promise<boolean> {
-    const trigger = this.findVisibleElement(this.config.sitePrivateSelectors.themeUserMenuButtons)
-    if (!trigger) return false
-    this.simulateClick(trigger)
-    await this.delay(120)
-
-    const themeEntry = await this.waitForVisibleElement(
-      this.config.sitePrivateSelectors.themeEntry,
-      1500,
-    )
-    if (!themeEntry) return false
-    this.simulateClick(themeEntry)
-    await this.delay(120)
-
     const option = await this.findThemeOption(targetMode, 1500)
     if (!option) return false
     this.simulateClick(option)
     await this.delay(80)
 
     return true
-  }
-
-  private findVisibleElement(selectors: string[]): HTMLElement | null {
-    for (const selector of selectors) {
-      const element = document.querySelector(selector) as HTMLElement | null
-      if (!element) continue
-      if (element.offsetParent === null) continue
-      return this.resolveClickable(element)
-    }
-    return null
-  }
-
-  private resolveClickable(element: HTMLElement): HTMLElement {
-    for (const selector of this.config.sitePrivateSelectors.themeClickable) {
-      const clickable = element.closest(selector)
-      if (clickable instanceof HTMLElement) return clickable
-    }
-
-    return element
-  }
-
-  private async waitForVisibleElement(
-    selector: string,
-    timeoutMs = 800,
-  ): Promise<HTMLElement | null> {
-    const start = Date.now()
-    while (Date.now() - start < timeoutMs) {
-      const element = document.querySelector(selector) as HTMLElement | null
-      if (element && element.offsetParent !== null) {
-        return element
-      }
-      await this.delay(50)
-    }
-    return null
   }
 
   private async findThemeOption(
@@ -336,7 +289,6 @@ export class ChatGLMAdapter extends SiteAdapter {
       const elements = document.querySelectorAll(selector)
       for (const element of Array.from(elements)) {
         if (!(element instanceof HTMLElement)) continue
-        if (element.offsetParent === null) continue
         options.add(element)
       }
       if (options.size > 0) break
