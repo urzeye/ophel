@@ -35,6 +35,17 @@ import { CHATGPT_CONFIG, CHATGPT_CONFIG_VERSION, type ChatGPTSiteConfig } from "
 
 const DEFAULT_TITLE = "ChatGPT"
 
+// Firefox insertText 修复：把纯文本按行转为 ProseMirror 可解析的段落 HTML
+const escapeHtmlForInsert = (value: string): string =>
+  value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+
+const buildParagraphHtml = (content: string): string =>
+  content
+    .replace(/\r\n/g, "\n")
+    .split("\n")
+    .map((line) => `<p>${line === "" ? "<br>" : escapeHtmlForInsert(line)}</p>`)
+    .join("")
+
 const DELETE_CONFIRM_KEYWORDS = [
   "delete",
   "remove",
@@ -1179,9 +1190,14 @@ export class ChatGPTAdapter extends SiteAdapter {
     }
 
     try {
-      // 尝试使用 execCommand
       document.execCommand("selectAll", false, undefined)
-      const success = document.execCommand("insertText", false, content)
+      // Firefox 的 insertText 不会把 \n 拆成段落节点，ProseMirror 重新解析 DOM 时换行会被折叠丢失，
+      // 改为显式插入 <p> 段落结构；Chrome 的 insertText 行为正常，保持原路径避免回归
+      const isFirefox = /firefox/i.test(navigator.userAgent)
+      const success =
+        isFirefox && editor.tagName !== "TEXTAREA"
+          ? document.execCommand("insertHTML", false, buildParagraphHtml(content))
+          : document.execCommand("insertText", false, content)
       if (!success) throw new Error("execCommand returned false")
     } catch {
       // 回退：直接设置内容
