@@ -2748,6 +2748,7 @@ export class GeminiAdapter extends SiteAdapter {
     _context: ExportLifecycleContext,
     state: unknown,
   ): Promise<void> {
+    window.postMessage({ type: "OPHEL_GEMINI_CAPTURE_STOP" }, "*")
     this.clearPreparedExportImageMetadata()
 
     if (this.isGeminiExportLifecycleState(state) && state.openedDeepResearchPanel) {
@@ -2762,30 +2763,35 @@ export class GeminiAdapter extends SiteAdapter {
 
   private async prepareImagesForExport(context: ExportLifecycleContext): Promise<void> {
     this.clearPreparedExportImageMetadata()
+    window.postMessage({ type: "OPHEL_GEMINI_CAPTURE_START" }, "*")
 
-    const privateSelectors = this.config.sitePrivateSelectors
-    const userQueryImages = privateSelectors.userQueryImage.map(
-      (selector) => `${this.config.selectors.userQuery} ${selector}`,
-    )
+    try {
+      const privateSelectors = this.config.sitePrivateSelectors
+      const userQueryImages = privateSelectors.userQueryImage.map(
+        (selector) => `${this.config.selectors.userQuery} ${selector}`,
+      )
 
-    const images = Array.from(
-      document.querySelectorAll(
-        [
-          `${this.config.selectors.assistantResponse} img`,
-          `${privateSelectors.sharePage} ${privateSelectors.shareAssistantMarkdown} img`,
-          ...userQueryImages,
-        ].join(", "),
-      ),
-    ).filter((node): node is HTMLImageElement => node instanceof HTMLImageElement)
+      const images = Array.from(
+        document.querySelectorAll(
+          [
+            `${this.config.selectors.assistantResponse} img`,
+            `${privateSelectors.sharePage} ${privateSelectors.shareAssistantMarkdown} img`,
+            ...userQueryImages,
+          ].join(", "),
+        ),
+      ).filter((node): node is HTMLImageElement => node instanceof HTMLImageElement)
 
-    for (const image of images) {
-      try {
-        const exportSrc = await this.resolvePreparedExportImageSrc(image, context)
-        if (!exportSrc) continue
-        image.setAttribute(GEMINI_EXPORT_IMAGE_SRC_ATTR, exportSrc)
-      } catch (error) {
-        console.warn("[GeminiAdapter] Failed to prepare export image source", error)
+      for (const image of images) {
+        try {
+          const exportSrc = await this.resolvePreparedExportImageSrc(image, context)
+          if (!exportSrc) continue
+          image.setAttribute(GEMINI_EXPORT_IMAGE_SRC_ATTR, exportSrc)
+        } catch (error) {
+          console.warn("[GeminiAdapter] Failed to prepare export image source", error)
+        }
       }
+    } finally {
+      window.postMessage({ type: "OPHEL_GEMINI_CAPTURE_STOP" }, "*")
     }
   }
 
@@ -3415,10 +3421,108 @@ export class GeminiAdapter extends SiteAdapter {
     return ""
   }
 
+  private findDownloadButtonForGeneratedImage(image: HTMLImageElement): HTMLElement | null {
+    const container =
+      image.closest(
+        "generated-image, single-image, .attachment-container, .image-container, response-element, [data-image-attachment-index], model-response",
+      ) || image.parentElement
+
+    if (!container) return null
+
+    const button = container.querySelector(
+      [
+        "download-generated-image-button button",
+        '[data-test-id="download-generated-image-button"] button',
+        'gem-icon-button[data-test-id="download-generated-image-button"] button',
+        'button[data-test-id="download-generated-image-button"]',
+        'button[aria-label*="下载完整尺寸"]',
+        'button[aria-label*="Download full size"]',
+        'button[aria-label*="下载"]',
+        'button[aria-label*="Download"]',
+      ].join(", "),
+    )
+
+    if (!button) return null
+    if (typeof HTMLElement !== "undefined" && !(button instanceof HTMLElement)) {
+      return null
+    }
+
+    return button as HTMLElement
+  }
+
+  private async captureFullSizeImageFromButton(
+    button: HTMLElement,
+    timeoutMs = 4500,
+  ): Promise<string | null> {
+    return new Promise<string | null>((resolve) => {
+      let resolved = false
+
+      const listener = (event: MessageEvent) => {
+        if (event.source !== window) return
+        if (event.data?.type === "OPHEL_GEMINI_IMAGE_CAPTURED") {
+          if (!resolved) {
+            resolved = true
+            cleanup()
+            const dataUrl = event.data.dataUrl || event.data.href || null
+            resolve(dataUrl)
+          }
+        }
+      }
+
+      const timer = window.setTimeout(() => {
+        if (!resolved) {
+          resolved = true
+          cleanup()
+          resolve(null)
+        }
+      }, timeoutMs)
+
+      const cleanup = () => {
+        window.clearTimeout(timer)
+        window.removeEventListener("message", listener)
+      }
+
+      window.addEventListener("message", listener)
+
+      try {
+        button.click()
+      } catch {
+        if (!resolved) {
+          resolved = true
+          cleanup()
+          resolve(null)
+        }
+      }
+    })
+  }
+
   private async resolvePreparedExportImageSrc(
     image: HTMLImageElement,
     context: ExportLifecycleContext,
   ): Promise<string> {
+    if (this.shouldTryWatermarkRemovalForExport(image)) {
+      const downloadButton = this.findDownloadButtonForGeneratedImage(image)
+      if (downloadButton) {
+        const capturedSource = await this.captureFullSizeImageFromButton(downloadButton)
+        if (capturedSource) {
+          const watermarkRemover = WatermarkRemover.getActiveInstance()
+          if (watermarkRemover) {
+            try {
+              const cleaned = await watermarkRemover.resolveProcessedImageDataUrl(capturedSource, {
+                scene: "export",
+              })
+              if (cleaned?.startsWith("data:image/")) {
+                return cleaned
+              }
+            } catch {
+              // fallback to captured source directly
+            }
+          }
+          return capturedSource
+        }
+      }
+    }
+
     const watermarkRemovedSource = await this.resolveWatermarkRemovedExportImageSrc(image)
     if (watermarkRemovedSource) {
       return watermarkRemovedSource

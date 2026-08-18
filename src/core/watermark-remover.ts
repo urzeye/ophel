@@ -603,6 +603,9 @@ export class WatermarkRemover {
     if (this.actionButtonListener || !this.isGeminiStandardSite()) return
 
     this.actionButtonListener = (event: MouseEvent) => {
+      if (document.documentElement.getAttribute("data-ophel-export-capturing") === "1") {
+        return
+      }
       this.handleActionButtonClick(event)
     }
 

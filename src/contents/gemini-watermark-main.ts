@@ -146,8 +146,82 @@ if (!window.__ophelGeminiWatermarkMainInitialized) {
     }
   }
 
+  const OPHEL_GEMINI_CAPTURE_START = "OPHEL_GEMINI_CAPTURE_START"
+  const OPHEL_GEMINI_CAPTURE_STOP = "OPHEL_GEMINI_CAPTURE_STOP"
+  const OPHEL_GEMINI_IMAGE_CAPTURED = "OPHEL_GEMINI_IMAGE_CAPTURED"
+
+  let isImageCaptureActive = false
+
+  const handleCapturedAnchor = async (anchor: HTMLAnchorElement) => {
+    const href = anchor.href || anchor.getAttribute("href") || ""
+    const filename = anchor.download || anchor.getAttribute("download") || ""
+    let dataUrl = ""
+
+    if (href.startsWith("data:")) {
+      dataUrl = href
+    } else if (href) {
+      try {
+        const resp = await originalFetch(href)
+        if (resp.ok) {
+          const blob = await resp.blob()
+          const reader = new FileReader()
+          dataUrl = await new Promise<string>((resolve) => {
+            reader.onloadend = () => resolve((reader.result as string) || "")
+            reader.onerror = () => resolve("")
+            reader.readAsDataURL(blob)
+          })
+        }
+      } catch {
+        // fallback
+      }
+    }
+
+    window.postMessage(
+      {
+        type: OPHEL_GEMINI_IMAGE_CAPTURED,
+        href,
+        filename,
+        dataUrl,
+      },
+      "*",
+    )
+  }
+
+  const originalAnchorClick = HTMLAnchorElement.prototype.click
+  HTMLAnchorElement.prototype.click = function (this: HTMLAnchorElement) {
+    if (isImageCaptureActive && (this.hasAttribute("download") || this.download)) {
+      handleCapturedAnchor(this)
+      return
+    }
+    return originalAnchorClick.call(this)
+  }
+
+  const captureClickListener = (event: MouseEvent) => {
+    if (!isImageCaptureActive) return
+    const anchor = (event.target as Element)?.closest?.("a[download]")
+    if (anchor instanceof HTMLAnchorElement) {
+      event.preventDefault()
+      event.stopPropagation()
+      event.stopImmediatePropagation()
+      handleCapturedAnchor(anchor)
+    }
+  }
+  document.addEventListener("click", captureClickListener, true)
+
   window.addEventListener("message", (event) => {
     if (event.source !== window) return
+
+    if (event.data?.type === OPHEL_GEMINI_CAPTURE_START) {
+      isImageCaptureActive = true
+      document.documentElement.setAttribute("data-ophel-export-capturing", "1")
+      return
+    }
+
+    if (event.data?.type === OPHEL_GEMINI_CAPTURE_STOP) {
+      isImageCaptureActive = false
+      document.documentElement.removeAttribute("data-ophel-export-capturing")
+      return
+    }
 
     if (event.data?.type === OPHEL_WATERMARK_FETCH_TOGGLE) {
       watermarkFetchEnabled = !!event.data.enabled
