@@ -390,7 +390,7 @@ async function setupDynamicRules() {
         },
         condition: {
           // 排除页面本身发起的请求，主要针对扩展的后台请求
-          excludedInitiatorDomains: ["google.com", "gemini.google.com"],
+          excludedInitiatorDomains: ["google.com", "gemini.google.com", "share.gemini.google"],
           urlFilter: "*://*.googleusercontent.com/*",
           resourceTypes: [
             chrome.declarativeNetRequest.ResourceType.XMLHTTPREQUEST,
@@ -409,7 +409,7 @@ async function setupDynamicRules() {
         },
         condition: {
           // 排除页面本身发起的请求
-          excludedInitiatorDomains: ["google.com", "gemini.google.com"],
+          excludedInitiatorDomains: ["google.com", "gemini.google.com", "share.gemini.google"],
           urlFilter: "*://*.google.com/*",
           resourceTypes: [
             chrome.declarativeNetRequest.ResourceType.XMLHTTPREQUEST,

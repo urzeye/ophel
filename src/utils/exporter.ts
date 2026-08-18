@@ -800,6 +800,56 @@ function getDefaultAssetPath(asset: ExportAsset): string {
   return `assets/${sanitizeZipPathSegment(asset.name, asset.id || "asset")}`
 }
 
+export function findMatchingImageInDocument(sourceUrl: string): HTMLImageElement | null {
+  if (typeof document === "undefined" || !sourceUrl) return null
+
+  const images = Array.from(document.querySelectorAll("img"))
+  for (const img of images) {
+    const src = img.getAttribute("src") || img.src || ""
+    const currentSrc = img.currentSrc || ""
+    const wmSource = img.getAttribute("data-ophel-wm-source") || ""
+    const exportSrc = img.getAttribute("data-ophel-export-img-src") || ""
+
+    if (
+      src === sourceUrl ||
+      currentSrc === sourceUrl ||
+      wmSource === sourceUrl ||
+      exportSrc === sourceUrl
+    ) {
+      if (img.complete && (img.naturalWidth > 0 || img.width > 0)) {
+        return img
+      }
+    }
+  }
+
+  return null
+}
+
+async function renderImageElementToBlob(image: HTMLImageElement): Promise<Blob | null> {
+  try {
+    if (!image.complete || image.naturalWidth <= 0 || image.naturalHeight <= 0) {
+      await image.decode()
+    }
+
+    const width = image.naturalWidth || image.width || image.clientWidth
+    const height = image.naturalHeight || image.height || image.clientHeight
+    if (width <= 0 || height <= 0) return null
+
+    const canvas = document.createElement("canvas")
+    canvas.width = width
+    canvas.height = height
+    const context = canvas.getContext("2d")
+    if (!context) return null
+
+    context.drawImage(image, 0, 0, width, height)
+    return await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob((blob) => resolve(blob), "image/png")
+    })
+  } catch {
+    return null
+  }
+}
+
 async function resolveAssetData(
   asset: ExportAsset,
 ): Promise<string | Blob | ArrayBuffer | Uint8Array> {
@@ -809,6 +859,25 @@ async function resolveAssetData(
 
   if (!asset.sourceUrl) {
     throw new Error("Asset has no content or source URL")
+  }
+
+  if (asset.sourceUrl.startsWith("blob:")) {
+    try {
+      const response = await fetch(asset.sourceUrl)
+      if (response.ok) {
+        return await response.blob()
+      }
+    } catch {
+      // Continue to DOM fallback
+    }
+
+    const matchingImg = findMatchingImageInDocument(asset.sourceUrl)
+    if (matchingImg) {
+      const blob = await renderImageElementToBlob(matchingImg)
+      if (blob) return blob
+    }
+
+    throw new Error("Blob asset URL expired or unavailable")
   }
 
   try {
@@ -831,6 +900,14 @@ async function resolveAssetData(
 
       return response.blob()
     } catch (proxyFetchError) {
+      const matchingImg = findMatchingImageInDocument(asset.sourceUrl)
+      if (matchingImg) {
+        const domBlob = await renderImageElementToBlob(matchingImg)
+        if (domBlob) {
+          return domBlob
+        }
+      }
+
       throw new Error(
         `Asset fetch failed: ${getErrorMessage(pageFetchError)}; proxy fetch failed: ${getErrorMessage(proxyFetchError)}`,
       )
