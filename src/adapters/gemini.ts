@@ -63,6 +63,7 @@ import {
   GEMINI_CANVAS_CODE_REQUEST_EVENT,
   GEMINI_CANVAS_CODE_RESPONSE_EVENT,
 } from "~core/gemini-canvas-code-bridge"
+import { normalizeGoogleusercontentImageUrl } from "~core/watermark/gemini-asset-url"
 import { WatermarkRemover } from "~core/watermark-remover"
 import {
   SiteAdapter,
@@ -3553,7 +3554,8 @@ export class GeminiAdapter extends SiteAdapter {
     }
 
     try {
-      return new URL(value, window.location.href).toString()
+      const absoluteUrl = new URL(value, window.location.href).toString()
+      return normalizeGoogleusercontentImageUrl(absoluteUrl)
     } catch {
       return value
     }
