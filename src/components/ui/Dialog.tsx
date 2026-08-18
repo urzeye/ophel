@@ -63,19 +63,19 @@ const DIALOG_STYLES = `
   }
   .gh-dialog-btn-secondary {
     border: 1px solid var(--gh-border, #d1d5db);
-    background: var(--gh-bg, white);
+    background: var(--gh-card-bg, var(--gh-bg, #ffffff));
     color: var(--gh-text, #374151);
   }
   .gh-dialog-btn-secondary:hover {
     background: var(--gh-hover, #f3f4f6);
   }
   .gh-dialog-btn-primary {
-    background: var(--gh-brand-gradient, linear-gradient(135deg, #4285f4 0%, #34a853 100%));
-    color: white;
+    background: var(--gh-primary, #4285f4);
+    color: var(--gh-text-on-primary, #ffffff);
   }
   .gh-dialog-btn-danger {
-    background: var(--gh-text-danger, #ef4444);
-    color: white;
+    background: var(--gh-danger, #ef4444);
+    color: var(--gh-text-on-primary, #ffffff);
   }
   .gh-dialog-input {
     width: 100%;

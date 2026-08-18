@@ -293,8 +293,8 @@
 .gh-release-notes-primary {
   border: 1px solid transparent;
   padding: 0 14px;
-  background: var(--gh-brand-gradient, linear-gradient(135deg, #4285f4 0%, #34a853 100%));
-  color: #ffffff;
+  background: var(--gh-primary, #4285f4);
+  color: var(--gh-text-on-primary, #ffffff);
 }
 
 .gh-release-notes-secondary {
