@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "deepseek-harness",
-  "version": 1,
+  "version": 2,
   "minAppVersion": "1.2.1",
   "name": "DeepSeek Harness",
   "nameI18n": {
@@ -55,7 +55,7 @@
     ],
     "responseContainer": "[data-chat-flow]",
     "chatContent": ["[data-chat-flow] > [data-chat-flow-key]"],
-    "userQuery": "[data-chat-flow-kind='user'] [data-time-hover-root] > div:first-child",
+    "userQuery": "[data-chat-flow-kind='user'] [data-time-hover-root] > div:first-child, [data-chat-flow-kind='steering'] [data-time-hover-root] > div:first-child",
     "assistantResponse": "[data-chat-flow-kind='assistant-step'] > [data-slot='conversation.chat.node']",
     "scrollContainer": ["[data-conversation-scroll]"]
   },
@@ -70,7 +70,7 @@
     ]
   },
   "export": {
-    "userQuerySelector": "[data-chat-flow-kind='user'] [data-time-hover-root] > div:first-child",
+    "userQuerySelector": "[data-chat-flow-kind='user'] [data-time-hover-root] > div:first-child, [data-chat-flow-kind='steering'] [data-time-hover-root] > div:first-child",
     "assistantResponseSelector": "[data-chat-flow-kind='assistant-step'] > [data-slot='conversation.chat.node']",
     "turnSelector": "[data-chat-flow] > [data-chat-flow-key]",
     "useShadowDOM": false

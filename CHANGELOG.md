@@ -15,6 +15,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
+- **DeepSeek Harness steering messages** — Fixed issue where steering instructions sent while a response was generating were missing from the outline and exports on DeepSeek Harness; these messages are now recognized as user queries.
 - **Outline anchor position lost** — Fixed issue where quickly or repeatedly clicking "Return to Anchor", "Go to Top", "Go to Bottom", or clicking the same outline heading twice collapsed the saved anchor onto the current position, so "Return to Anchor" could no longer jump back to the previous location; anchor operations are now serialized, and the anchor is preserved when the target is already reached. (#848)
 - **Adapt to Claude's new page layout** — Claude updated the page structure again, **Fuck you, Claude!** (#823, #849)
 - **Doubao conversation title sync** — Fixed issue where conversations synced from Doubao showed their titles repeated three times (e.g. a title became "titletitletitle") after the site rolled out its new sidebar conversation list; titles are now read correctly from the new structure. (#846)
