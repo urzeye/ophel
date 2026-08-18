@@ -45,6 +45,7 @@ describe("GeminiAdapter image export full size resolution", () => {
       click: () => {},
     }
     const mockContainer = {
+      matches: () => false,
       querySelector: (selector: string) => {
         if (
           selector.includes("download-generated-image-button") ||
@@ -54,10 +55,42 @@ describe("GeminiAdapter image export full size resolution", () => {
         }
         return null
       },
+      parentElement: null,
     }
     const mockImage = {
-      closest: () => mockContainer,
       parentElement: mockContainer,
+    } as unknown as HTMLImageElement
+
+    const adapterInternal = adapter as unknown as {
+      findDownloadButtonForGeneratedImage: (image: HTMLImageElement) => HTMLElement | null
+    }
+    const found = adapterInternal.findDownloadButtonForGeneratedImage(mockImage)
+    expect(found).toBe(mockButton)
+  })
+
+  it("finds download button by traversing ancestors when nested in single-image", () => {
+    const adapter = new GeminiAdapter()
+    const mockButton = { click: () => {} }
+
+    const grandParentContainer = {
+      matches: () => false,
+      querySelector: (selector: string) => {
+        if (selector.includes("download-generated-image-button")) {
+          return mockButton
+        }
+        return null
+      },
+      parentElement: null,
+    }
+
+    const parentSingleImage = {
+      matches: () => false,
+      querySelector: () => null, // single-image does not have the button
+      parentElement: grandParentContainer, // generated-image parent has the button
+    }
+
+    const mockImage = {
+      parentElement: parentSingleImage,
     } as unknown as HTMLImageElement
 
     const adapterInternal = adapter as unknown as {

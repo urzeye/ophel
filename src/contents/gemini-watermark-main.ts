@@ -150,7 +150,14 @@ if (!window.__ophelGeminiWatermarkMainInitialized) {
   const OPHEL_GEMINI_CAPTURE_STOP = "OPHEL_GEMINI_CAPTURE_STOP"
   const OPHEL_GEMINI_IMAGE_CAPTURED = "OPHEL_GEMINI_IMAGE_CAPTURED"
 
-  let isImageCaptureActive = false
+  let isImageCaptureActiveFlag = false
+
+  const isImageCaptureActive = (): boolean => {
+    return (
+      isImageCaptureActiveFlag ||
+      document.documentElement.getAttribute("data-ophel-export-capturing") === "1"
+    )
+  }
 
   const handleCapturedAnchor = async (anchor: HTMLAnchorElement) => {
     const href = anchor.href || anchor.getAttribute("href") || ""
@@ -189,7 +196,7 @@ if (!window.__ophelGeminiWatermarkMainInitialized) {
 
   const originalAnchorClick = HTMLAnchorElement.prototype.click
   HTMLAnchorElement.prototype.click = function (this: HTMLAnchorElement) {
-    if (isImageCaptureActive && (this.hasAttribute("download") || this.download)) {
+    if (isImageCaptureActive() && (this.hasAttribute("download") || this.download)) {
       handleCapturedAnchor(this)
       return
     }
@@ -197,7 +204,7 @@ if (!window.__ophelGeminiWatermarkMainInitialized) {
   }
 
   const captureClickListener = (event: MouseEvent) => {
-    if (!isImageCaptureActive) return
+    if (!isImageCaptureActive()) return
     const anchor = (event.target as Element)?.closest?.("a[download]")
     if (anchor instanceof HTMLAnchorElement) {
       event.preventDefault()
@@ -212,13 +219,13 @@ if (!window.__ophelGeminiWatermarkMainInitialized) {
     if (event.source !== window) return
 
     if (event.data?.type === OPHEL_GEMINI_CAPTURE_START) {
-      isImageCaptureActive = true
+      isImageCaptureActiveFlag = true
       document.documentElement.setAttribute("data-ophel-export-capturing", "1")
       return
     }
 
     if (event.data?.type === OPHEL_GEMINI_CAPTURE_STOP) {
-      isImageCaptureActive = false
+      isImageCaptureActiveFlag = false
       document.documentElement.removeAttribute("data-ophel-export-capturing")
       return
     }

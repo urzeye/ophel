@@ -2763,6 +2763,7 @@ export class GeminiAdapter extends SiteAdapter {
 
   private async prepareImagesForExport(context: ExportLifecycleContext): Promise<void> {
     this.clearPreparedExportImageMetadata()
+    document.documentElement.setAttribute("data-ophel-export-capturing", "1")
     window.postMessage({ type: "OPHEL_GEMINI_CAPTURE_START" }, "*")
 
     try {
@@ -2791,6 +2792,7 @@ export class GeminiAdapter extends SiteAdapter {
         }
       }
     } finally {
+      document.documentElement.removeAttribute("data-ophel-export-capturing")
       window.postMessage({ type: "OPHEL_GEMINI_CAPTURE_STOP" }, "*")
     }
   }
@@ -3422,37 +3424,87 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   private findDownloadButtonForGeneratedImage(image: HTMLImageElement): HTMLElement | null {
-    const container =
-      image.closest(
-        "generated-image, single-image, .attachment-container, .image-container, response-element, [data-image-attachment-index], model-response",
-      ) || image.parentElement
+    let current: HTMLElement | null = image.parentElement
+    let depth = 0
+    while (
+      current &&
+      depth++ < 10 &&
+      (typeof document === "undefined" || current !== document?.body)
+    ) {
+      const button = current.querySelector(
+        [
+          "download-generated-image-button button",
+          '[data-test-id="download-generated-image-button"] button',
+          'gem-icon-button[data-test-id="download-generated-image-button"] button',
+          'button[data-test-id="download-generated-image-button"]',
+          "download-generated-image-button gem-icon-button",
+          "download-generated-image-button",
+          'button[aria-label*="下载完整尺寸"]',
+          'button[aria-label*="Download full size"]',
+          'button[aria-label*="下载"]',
+          'button[aria-label*="Download"]',
+        ].join(", "),
+      )
 
-    if (!container) return null
+      if (button) {
+        if (typeof HTMLElement !== "undefined" && !(button instanceof HTMLElement)) {
+          return null
+        }
+        return button as HTMLElement
+      }
 
-    const button = container.querySelector(
-      [
-        "download-generated-image-button button",
-        '[data-test-id="download-generated-image-button"] button',
-        'gem-icon-button[data-test-id="download-generated-image-button"] button',
-        'button[data-test-id="download-generated-image-button"]',
-        'button[aria-label*="下载完整尺寸"]',
-        'button[aria-label*="Download full size"]',
-        'button[aria-label*="下载"]',
-        'button[aria-label*="Download"]',
-      ].join(", "),
-    )
+      if (
+        current.matches(
+          "model-response, response-element, .conversation-turn, [data-test-id='conversation-turn']",
+        )
+      ) {
+        break
+      }
 
-    if (!button) return null
-    if (typeof HTMLElement !== "undefined" && !(button instanceof HTMLElement)) {
-      return null
+      current = current.parentElement
     }
 
-    return button as HTMLElement
+    return null
+  }
+
+  private triggerElementClick(element: HTMLElement): void {
+    const mouseEvents = ["pointerdown", "mousedown", "pointerup", "mouseup", "click"]
+    for (const type of mouseEvents) {
+      const event = new MouseEvent(type, {
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+        view: window,
+        detail: 1,
+      })
+      element.dispatchEvent(event)
+    }
+
+    if (typeof element.click === "function") {
+      element.click()
+    }
+
+    const innerButton = element.querySelector("button")
+    if (innerButton && innerButton !== element && innerButton instanceof HTMLElement) {
+      for (const type of mouseEvents) {
+        const event = new MouseEvent(type, {
+          bubbles: true,
+          cancelable: true,
+          composed: true,
+          view: window,
+          detail: 1,
+        })
+        innerButton.dispatchEvent(event)
+      }
+      if (typeof innerButton.click === "function") {
+        innerButton.click()
+      }
+    }
   }
 
   private async captureFullSizeImageFromButton(
     button: HTMLElement,
-    timeoutMs = 4500,
+    timeoutMs = 5000,
   ): Promise<string | null> {
     return new Promise<string | null>((resolve) => {
       let resolved = false
@@ -3485,7 +3537,7 @@ export class GeminiAdapter extends SiteAdapter {
       window.addEventListener("message", listener)
 
       try {
-        button.click()
+        this.triggerElementClick(button)
       } catch {
         if (!resolved) {
           resolved = true
