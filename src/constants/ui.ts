@@ -77,6 +77,12 @@ export const SITE_SETTINGS_TAB_IDS = {
   // 站点专属 Tab ID 直接使用 SITE_IDS
 } as const
 
+// ==================== Backup Page Tab IDs ====================
+export const BACKUP_TAB_IDS = {
+  LOCAL: "local",
+  WEBDAV: "webdav",
+} as const
+
 // ==================== Settings Deep Link ====================
 export interface SettingsNavigateDetail {
   page?: string

@@ -15,6 +15,7 @@ import {
   InfoIcon,
 } from "~components/icons"
 import { ConfirmDialog, Tooltip } from "~components/ui"
+import { BACKUP_TAB_IDS } from "~constants"
 import { DEFAULT_FOLDERS, getDefaultPromptChains, getDefaultPrompts } from "~constants/defaults"
 import {
   createBackupDocument,
@@ -52,10 +53,11 @@ import {
 import { CLEAR_ALL_FLAG_KEY, DEFAULT_SETTINGS, RESTORE_FLAG_KEY } from "~utils/storage"
 import { showToast as showDomToast } from "~utils/toast"
 
-import { PageTitle, SettingCard, SettingRow } from "../components"
+import { PageTitle, SettingCard, SettingRow, TabGroup } from "../components"
 
 interface BackupPageProps {
   siteId: string
+  initialTab?: string
   onNavigate?: (page: string) => void
 }
 
@@ -104,7 +106,7 @@ const getRestoreSuccessMessage = (message: string, missingPermissionOrigins: rea
     ? `${message} ${t("sitePacksPermissionReviewTitle")}`
     : message
 
-// ==================== 远程备份列表模态框 (保持原有逻辑) ====================
+// ==================== 远程备份列表模态框 ====================
 const RemoteBackupModal: React.FC<{
   onClose: () => void
   onRestore: () => void
@@ -202,20 +204,7 @@ const RemoteBackupModal: React.FC<{
   }
 
   return (
-    <div
-      className="settings-modal-overlay"
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: "rgba(0,0,0,0.5)",
-        zIndex: 1000,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}>
+    <div className="settings-modal-overlay" onClick={onClose}>
       {confirmConfig.show && (
         <ConfirmDialog
           title={confirmConfig.title}
@@ -226,163 +215,60 @@ const RemoteBackupModal: React.FC<{
         />
       )}
 
-      <div
-        className="settings-modal"
-        style={{
-          width: "500px",
-          height: "600px",
-          background: "var(--gh-card-bg, #ffffff)",
-          borderRadius: "12px",
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-        }}>
-        <div
-          style={{
-            padding: "16px 20px",
-            borderBottom: "1px solid var(--gh-border, #e5e7eb)",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}>
+      <div className="settings-backup-remote-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="settings-backup-remote-header">
           <div style={{ fontWeight: 600, fontSize: "16px" }}>{t("webdavBackupList")}</div>
           <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
             <Tooltip content={t("refresh")}>
               <button
                 onClick={loadBackups}
                 className="settings-btn settings-btn-secondary"
-                aria-label={t("refresh")}
-                style={{ padding: "6px", display: "flex", alignItems: "center" }}>
+                aria-label={t("refresh")}>
                 <RefreshIcon size={16} />
               </button>
             </Tooltip>
-            <button
-              onClick={onClose}
-              className="settings-btn settings-btn-secondary"
-              style={{ padding: "6px 12px" }}>
+            <button onClick={onClose} className="settings-btn settings-btn-secondary">
               ✕
             </button>
           </div>
         </div>
 
-        <div style={{ overflowY: "auto", padding: "16px", flex: 1 }}>
+        <div className="settings-backup-remote-body">
           {loading ? (
-            <div
-              style={{ textAlign: "center", padding: "20px", color: "var(--gh-text-secondary)" }}>
-              {t("loading")}
-            </div>
+            <div className="settings-empty-state">{t("loading")}</div>
           ) : backups.length === 0 ? (
-            <div
-              style={{ textAlign: "center", padding: "20px", color: "var(--gh-text-secondary)" }}>
-              {t("noBackupsFound")}
-            </div>
+            <div className="settings-empty-state">{t("noBackupsFound")}</div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              {backups.map((file) => (
-                <div
-                  key={file.name}
-                  style={{
-                    padding: "12px 14px",
-                    background: "var(--gh-bg, #ffffff)",
-                    border: "1px solid var(--gh-border, #e5e7eb)",
-                    borderRadius: "8px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    transition: "border-color 0.15s",
-                  }}>
-                  <div style={{ minWidth: 0, flex: 1, marginRight: "12px" }}>
-                    <div
-                      style={{
-                        fontSize: "13px",
-                        fontWeight: 500,
-                        color: "var(--gh-text, #1f2937)",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}>
-                      {file.name}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: "12px",
-                        color: "var(--gh-text-secondary)",
-                        marginTop: "2px",
-                      }}>
-                      {formatSize(file.size)} • {file.lastModified.toLocaleString()}
-                    </div>
+            backups.map((file) => (
+              <div key={file.name} className="settings-backup-remote-item">
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div className="settings-backup-remote-name" title={file.name}>
+                    {file.name}
                   </div>
-                  <div style={{ display: "flex", gap: "6px", flexShrink: 0 }}>
-                    <Tooltip content={t("restore")}>
-                      <button
-                        onClick={() => handleRestoreClick(file)}
-                        aria-label={t("restore")}
-                        style={{
-                          padding: "7px",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          borderRadius: "7px",
-                          border:
-                            "1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 25%, transparent)",
-                          background:
-                            "color-mix(in srgb, var(--gh-primary, #4285f4) 8%, transparent)",
-                          color: "var(--gh-primary, #4285f4)",
-                          cursor: "pointer",
-                          transition: "background 0.15s, border-color 0.15s",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background =
-                            "color-mix(in srgb, var(--gh-primary, #4285f4) 16%, transparent)"
-                          e.currentTarget.style.borderColor =
-                            "color-mix(in srgb, var(--gh-primary, #4285f4) 40%, transparent)"
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background =
-                            "color-mix(in srgb, var(--gh-primary, #4285f4) 8%, transparent)"
-                          e.currentTarget.style.borderColor =
-                            "color-mix(in srgb, var(--gh-primary, #4285f4) 25%, transparent)"
-                        }}>
-                        <FileRestoreIcon size={16} color="currentColor" />
-                      </button>
-                    </Tooltip>
-                    <Tooltip content={t("delete")}>
-                      <button
-                        onClick={() => handleDeleteClick(file)}
-                        aria-label={t("delete")}
-                        style={{
-                          padding: "7px",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          borderRadius: "7px",
-                          border:
-                            "1px solid color-mix(in srgb, var(--gh-danger, #ef4444) 20%, transparent)",
-                          background:
-                            "color-mix(in srgb, var(--gh-danger, #ef4444) 7%, transparent)",
-                          color: "var(--gh-danger, #ef4444)",
-                          cursor: "pointer",
-                          transition: "background 0.15s, border-color 0.15s",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background =
-                            "color-mix(in srgb, var(--gh-danger, #ef4444) 14%, transparent)"
-                          e.currentTarget.style.borderColor =
-                            "color-mix(in srgb, var(--gh-danger, #ef4444) 35%, transparent)"
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background =
-                            "color-mix(in srgb, var(--gh-danger, #ef4444) 7%, transparent)"
-                          e.currentTarget.style.borderColor =
-                            "color-mix(in srgb, var(--gh-danger, #ef4444) 20%, transparent)"
-                        }}>
-                        <DeleteIcon size={16} color="currentColor" />
-                      </button>
-                    </Tooltip>
+                  <div className="settings-backup-remote-meta">
+                    {formatSize(file.size)} • {file.lastModified.toLocaleString()}
                   </div>
                 </div>
-              ))}
-            </div>
+                <div className="settings-backup-remote-actions">
+                  <Tooltip content={t("restore")}>
+                    <button
+                      onClick={() => handleRestoreClick(file)}
+                      aria-label={t("restore")}
+                      className="settings-backup-icon-btn primary">
+                      <FileRestoreIcon size={16} color="currentColor" />
+                    </button>
+                  </Tooltip>
+                  <Tooltip content={t("delete")}>
+                    <button
+                      onClick={() => handleDeleteClick(file)}
+                      aria-label={t("delete")}
+                      className="settings-backup-icon-btn danger">
+                      <DeleteIcon size={16} color="currentColor" />
+                    </button>
+                  </Tooltip>
+                </div>
+              </div>
+            ))
           )}
         </div>
       </div>
@@ -391,8 +277,15 @@ const RemoteBackupModal: React.FC<{
 }
 
 // ==================== 主页面组件 ====================
-const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
+const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavigate }) => {
+  const [activeTab, setActiveTab] = useState<string>(initialTab || BACKUP_TAB_IDS.LOCAL)
   const { settings, setSettings, resetSettings } = useSettingsStore()
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab)
+    }
+  }, [initialTab])
 
   // 状态管理
   const [showRemoteBackups, setShowRemoteBackups] = useState(false)
@@ -450,8 +343,12 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
 
   if (!settings) return null
 
-  // -------------------- 导出功能 --------------------
+  const tabs = [
+    { id: BACKUP_TAB_IDS.LOCAL, label: t("localBackupTab") },
+    { id: BACKUP_TAB_IDS.WEBDAV, label: t("webdavTab") },
+  ]
 
+  // -------------------- 导出功能 --------------------
   const handleExport = async (type: BackupType) => {
     try {
       const exportData = await createBackupDocument(platform.storage, type)
@@ -481,7 +378,6 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
   }
 
   // -------------------- 导入功能 --------------------
-
   const processImport = async (jsonString: string) => {
     try {
       const parsedData = JSON.parse(jsonString)
@@ -501,27 +397,12 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
         message: (
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             <div>{t("importConfirm")}</div>
-            <div
-              style={{
-                border: "1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 15%, transparent)",
-                background: "var(--gh-hover, #f8fafc)",
-                borderRadius: "8px",
-                padding: "10px 12px",
-              }}>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "72px 1fr",
-                  rowGap: "6px",
-                  columnGap: "10px",
-                  alignItems: "start",
-                }}>
-                <div style={{ color: "var(--gh-text-secondary, #6b7280)" }}>{t("backupTime")}</div>
-                <div style={{ color: "var(--gh-text, #111827)", fontWeight: 500 }}>
-                  {String(data.timestamp || "-")}
-                </div>
-                <div style={{ color: "var(--gh-text-secondary, #6b7280)" }}>{t("backupType")}</div>
-                <div style={{ color: "var(--gh-text, #111827)", fontWeight: 500 }}>
+            <div className="settings-backup-confirm-box">
+              <div className="settings-backup-confirm-grid">
+                <div className="settings-backup-confirm-label">{t("backupTime")}</div>
+                <div className="settings-backup-confirm-value">{String(data.timestamp || "-")}</div>
+                <div className="settings-backup-confirm-label">{t("backupType")}</div>
+                <div className="settings-backup-confirm-value">
                   {formatBackupTypeLabel(data.type)}
                 </div>
               </div>
@@ -559,8 +440,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
     const file = e.target.files?.[0]
     if (!file) return
     const text = await file.text()
-    setPasteContent(text) // 预览
-    // processImport(text) // 暂时不自动导入，让用户点击按钮
+    setPasteContent(text)
     if (fileInputRef.current) fileInputRef.current.value = ""
   }
 
@@ -625,7 +505,6 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
   }
 
   // -------------------- WebDAV 功能 --------------------
-
   const waitForWebDAVPermission = async (origin: string): Promise<boolean> => {
     const deadline = Date.now() + 60000
     while (Date.now() < deadline) {
@@ -647,13 +526,12 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
   const checkAndRequestWebDAVPermission = async (
     onGranted: () => void | Promise<void>,
   ): Promise<boolean> => {
-    const url = webdavForm.url // 使用表单值检查权限
+    const url = webdavForm.url
     if (!url) {
       showDomToast(t("webdavConfigIncomplete"))
       return false
     }
 
-    // 油猴脚本环境：直接执行，无需权限检查（GM_xmlhttpRequest 已通过 @grant 声明）
     if (!platform.hasCapability("permissions")) {
       await onGranted()
       return true
@@ -707,7 +585,6 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
   }
 
   const handleSaveConfig = () => {
-    // 保存配置到 Store（持久化）
     const baseWebdav = settings.webdav ?? DEFAULT_SETTINGS.webdav
     setSettings({
       webdav: {
@@ -721,7 +598,6 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
   const testWebDAVConnection = async () => {
     await checkAndRequestWebDAVPermission(async () => {
       const manager = getWebDAVSyncManager()
-      // 临时应用配置（不持久化）
       await manager.setConfig(webdavForm, false)
 
       const res = await manager.testConnection()
@@ -733,7 +609,6 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
   const uploadToWebDAV = async () => {
     await checkAndRequestWebDAVPermission(async () => {
       const manager = getWebDAVSyncManager()
-      // 临时应用配置（不持久化）
       await manager.setConfig(webdavForm, false)
 
       const res = await manager.upload()
@@ -756,8 +631,12 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
   })()
 
   return (
-    <div className="settings-content">
+    <div>
       <PageTitle title={t("navBackup")} Icon={CloudIcon} />
+      <p className="settings-page-desc">{t("backupPageDesc")}</p>
+
+      {/* 标签组（粘性吸顶） */}
+      <TabGroup tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
       {/* 确认弹窗 */}
       {confirmConfig.show && (
@@ -788,398 +667,285 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
         />
       )}
 
-      {/* 主布局：两列 */}
-      <div
-        className="backup-grid"
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))",
-          gap: "20px",
-          marginBottom: "24px",
-        }}>
-        {/* 左侧：导出 */}
-        <SettingCard title={t("exportData")} description={t("exportDataDesc")}>
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            {/* 完整备份 */}
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                padding: "12px",
-                background: "var(--gh-bg-secondary)",
-                borderRadius: "8px",
-              }}>
-              <div>
-                <div style={{ fontWeight: 500, fontSize: "14px" }}>{t("fullBackup")}</div>
-                <div style={{ fontSize: "12px", color: "var(--gh-text-secondary)" }}>
-                  {t("fullBackupDesc")}
+      {/* 本地备份 Tab */}
+      {activeTab === BACKUP_TAB_IDS.LOCAL && (
+        <>
+          <div className="settings-backup-grid">
+            {/* 导出 */}
+            <SettingCard title={t("exportData")} description={t("exportDataDesc")}>
+              <div className="settings-backup-export-list">
+                {/* 完整备份 */}
+                <div className="settings-backup-export-item">
+                  <div className="settings-backup-export-info">
+                    <div className="settings-backup-export-title">{t("fullBackup")}</div>
+                    <div className="settings-backup-export-desc">{t("fullBackupDesc")}</div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleExport("full")}
+                    className="settings-btn settings-btn-success">
+                    {t("export")}
+                  </button>
                 </div>
-              </div>
-              <button
-                onClick={() => handleExport("full")}
-                className="settings-btn settings-btn-success"
-                style={{ padding: "6px 16px" }}>
-                {t("export")}
-              </button>
-            </div>
 
-            {/* 提示词备份 */}
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                padding: "12px",
-                background: "var(--gh-bg-secondary)",
-                borderRadius: "8px",
-              }}>
-              <div>
-                <div style={{ fontWeight: 500, fontSize: "14px" }}>{t("promptsBackup")}</div>
-                <div style={{ fontSize: "12px", color: "var(--gh-text-secondary)" }}>
-                  {t("promptsBackupDesc")}
+                {/* 提示词备份 */}
+                <div className="settings-backup-export-item">
+                  <div className="settings-backup-export-info">
+                    <div className="settings-backup-export-title">{t("promptsBackup")}</div>
+                    <div className="settings-backup-export-desc">{t("promptsBackupDesc")}</div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleExport("prompts")}
+                    className="settings-btn settings-btn-primary">
+                    {t("export")}
+                  </button>
                 </div>
-              </div>
-              <button
-                onClick={() => handleExport("prompts")}
-                className="settings-btn settings-btn-primary"
-                style={{ padding: "6px 16px" }}>
-                {t("export")}
-              </button>
-            </div>
 
-            {/* 设置备份 */}
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                padding: "12px",
-                background: "var(--gh-bg-secondary)",
-                borderRadius: "8px",
-              }}>
-              <div>
-                <div style={{ fontWeight: 500, fontSize: "14px" }}>{t("settingsBackup")}</div>
-                <div style={{ fontSize: "12px", color: "var(--gh-text-secondary)" }}>
-                  {t("settingsBackupDesc")}
+                {/* 设置备份 */}
+                <div className="settings-backup-export-item">
+                  <div className="settings-backup-export-info">
+                    <div className="settings-backup-export-title">{t("settingsBackup")}</div>
+                    <div className="settings-backup-export-desc">{t("settingsBackupDesc")}</div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleExport("settings")}
+                    className="settings-btn settings-btn-secondary">
+                    {t("export")}
+                  </button>
                 </div>
               </div>
-              <button
-                onClick={() => handleExport("settings")}
-                className="settings-btn settings-btn-secondary"
-                style={{ padding: "6px 16px" }}>
-                {t("export")}
-              </button>
-            </div>
+            </SettingCard>
+
+            {/* 导入 */}
+            <SettingCard title={t("importData")} description={t("importDataDesc")}>
+              <div className="settings-backup-import-box">
+                {/* 文件选择 */}
+                <div className="settings-backup-file-row">
+                  <div className="settings-backup-file-label">{t("selectFile")}</div>
+                  <button
+                    type="button"
+                    className="settings-btn settings-btn-secondary"
+                    onClick={() => fileInputRef.current?.click()}>
+                    {t("browse")}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".json"
+                      style={{ display: "none" }}
+                      onChange={handleFileChange}
+                    />
+                  </button>
+                </div>
+
+                {/* 预览区域 */}
+                <div className="settings-backup-preview-container">
+                  <div className="settings-backup-preview-label">{t("dataPreview")}</div>
+                  <textarea
+                    className="settings-input settings-backup-preview-textarea"
+                    value={pasteContent}
+                    onChange={(e) => setPasteContent(e.target.value)}
+                    placeholder={t("pastePlaceholder")}
+                  />
+                </div>
+
+                {/* 导入按钮 */}
+                <button
+                  type="button"
+                  onClick={handleImportClick}
+                  className="settings-btn settings-btn-primary settings-backup-import-btn"
+                  disabled={!pasteContent.trim()}>
+                  {t("importBtn")}
+                </button>
+              </div>
+            </SettingCard>
           </div>
-        </SettingCard>
 
-        {/* 右侧：导入 */}
-        <SettingCard title={t("importData")} description={t("importDataDesc")}>
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            {/* 文件选择 */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div style={{ fontSize: "14px", fontWeight: 500 }}>{t("selectFile")}</div>
+          {/* 危险操作区 */}
+          <SettingCard
+            title={t("dangerZone")}
+            description={t("dangerZoneDesc")}
+            className="settings-backup-danger-card">
+            <div className="settings-backup-danger-row">
+              <div>
+                <div className="settings-backup-danger-title">{t("clearAllData")}</div>
+                <div className="settings-backup-danger-desc">{t("clearAllDataDesc")}</div>
+              </div>
               <button
-                className="settings-btn settings-btn-secondary"
-                onClick={() => fileInputRef.current?.click()}
-                style={{ padding: "6px 12px" }}>
-                {t("browse")}
+                type="button"
+                className="settings-btn settings-btn-danger"
+                onClick={handleClearAll}>
+                {t("clearAllData")}
+              </button>
+            </div>
+          </SettingCard>
+        </>
+      )}
+
+      {/* WebDAV 云同步 Tab */}
+      {activeTab === BACKUP_TAB_IDS.WEBDAV && (
+        <SettingCard title={t("webdavConfig")} description={t("webdavConfigDesc")}>
+          {/* 提示信息 */}
+          <div className="settings-backup-tip">
+            <div className="settings-backup-tip-title">
+              <InfoIcon size={14} color="var(--gh-primary, #4285f4)" /> {t("restoreTip")}
+            </div>
+            <div className="settings-backup-tip-content">{t("restoreTipContent")}</div>
+          </div>
+
+          <SettingRow label={t("webdavProvider")}>
+            <select
+              className="settings-input settings-select"
+              value={webdavForm.provider || "custom"}
+              onChange={(e) => {
+                const provider = e.target.value as WebDAVProvider
+                const preset = WEBDAV_PROVIDER_PRESETS.find((p) => p.id === provider)
+                setWebdavForm((prev) => ({
+                  ...prev,
+                  provider,
+                  ...(preset?.urlTemplate ? { url: preset.urlTemplate } : {}),
+                }))
+              }}
+              style={{ width: "280px" }}>
+              {WEBDAV_PROVIDER_PRESETS.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {t(p.labelKey)}
+                </option>
+              ))}
+            </select>
+          </SettingRow>
+
+          {/* 服务商专属提示 */}
+          {(() => {
+            const preset = WEBDAV_PROVIDER_PRESETS.find(
+              (p) => p.id === (webdavForm.provider || "custom"),
+            )
+            if (!preset?.hintKey) return null
+            return (
+              <div className="settings-backup-provider-hint">
+                <InfoIcon
+                  size={14}
+                  color="var(--gh-primary, #4285f4)"
+                  style={{ flexShrink: 0, marginTop: "1px" }}
+                />
+                <div>
+                  {t(preset.hintKey)}
+                  {preset.helpUrl && (
+                    <a href={preset.helpUrl} target="_blank" rel="noreferrer noopener">
+                      {t("learnMore")}
+                    </a>
+                  )}
+                </div>
+              </div>
+            )
+          })()}
+
+          <SettingRow label={t("webdavAddress")}>
+            {(() => {
+              const preset = WEBDAV_PROVIDER_PRESETS.find(
+                (p) => p.id === (webdavForm.provider || "custom"),
+              )
+              const placeholder = preset?.urlPlaceholder || "https://dav.example.com/dav/"
+              return (
                 <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".json"
-                  style={{ display: "none" }}
-                  onChange={handleFileChange}
+                  type="text"
+                  className="settings-input"
+                  placeholder={placeholder}
+                  value={webdavForm.url}
+                  onChange={(e) => setWebdavForm({ ...webdavForm, url: e.target.value })}
+                  style={{ width: "280px" }}
                 />
+              )
+            })()}
+          </SettingRow>
+
+          <SettingRow label={t("username")}>
+            <input
+              type="text"
+              className="settings-input"
+              value={webdavForm.username}
+              onChange={(e) => setWebdavForm({ ...webdavForm, username: e.target.value })}
+              style={{ width: "280px" }}
+            />
+          </SettingRow>
+
+          <SettingRow label={t("password")}>
+            {(() => {
+              const preset = WEBDAV_PROVIDER_PRESETS.find(
+                (p) => p.id === (webdavForm.provider || "custom"),
+              )
+              const pwdPlaceholder = preset?.passwordPlaceholderKey
+                ? t(preset.passwordPlaceholderKey)
+                : t("webdavPasswordPlaceholder")
+              return (
+                <input
+                  type="password"
+                  className="settings-input"
+                  placeholder={pwdPlaceholder}
+                  value={webdavForm.password}
+                  onChange={(e) => setWebdavForm({ ...webdavForm, password: e.target.value })}
+                  style={{ width: "280px" }}
+                />
+              )
+            })()}
+          </SettingRow>
+
+          <SettingRow label={t("defaultDir")} description={t("defaultDirHint")}>
+            <input
+              type="text"
+              className="settings-input"
+              placeholder="ophel"
+              value={webdavForm.remoteDir}
+              onChange={(e) => setWebdavForm({ ...webdavForm, remoteDir: e.target.value })}
+              style={{ width: "280px" }}
+            />
+          </SettingRow>
+
+          {/* 操作按钮行 */}
+          <div className="settings-backup-actions-row">
+            {/* 左侧：测试连接 + 保存配置 */}
+            <div className="settings-backup-actions-group">
+              <button
+                type="button"
+                className="settings-btn settings-btn-secondary"
+                onClick={testWebDAVConnection}>
+                <LinkIcon size={16} /> {t("webdavTestBtn")}
+              </button>
+              <div style={{ position: "relative" }}>
+                <button
+                  type="button"
+                  className={`settings-btn ${isWebDAVUnsaved ? "settings-btn-primary" : "settings-btn-secondary"}`}
+                  onClick={handleSaveConfig}>
+                  <SaveIcon size={16} /> {t("saveConfig")}
+                </button>
+                {isWebDAVUnsaved && <span className="settings-backup-unsaved-dot" />}
+              </div>
+            </div>
+            {/* 右侧：恢复 + 立即备份 */}
+            <div className="settings-backup-actions-group">
+              <button
+                type="button"
+                className="settings-btn settings-btn-secondary"
+                onClick={async () => {
+                  await checkAndRequestWebDAVPermission(async () => {
+                    const manager = getWebDAVSyncManager()
+                    await manager.setConfig(webdavForm, false)
+                    setShowRemoteBackups(true)
+                  })
+                }}>
+                <FileRestoreIcon size={16} color="currentColor" /> {t("restore")}
+              </button>
+              <button
+                type="button"
+                className={`settings-btn ${!isWebDAVUnsaved ? "settings-btn-primary" : "settings-btn-secondary"}`}
+                onClick={uploadToWebDAV}>
+                <CloudUploadIcon size={16} color="currentColor" /> {t("backupNow")}
               </button>
             </div>
-
-            {/* 预览区域 */}
-            <div style={{ flex: 1 }}>
-              <div
-                style={{
-                  fontSize: "12px",
-                  color: "var(--gh-text-secondary)",
-                  marginBottom: "4px",
-                }}>
-                {t("dataPreview")}
-              </div>
-              <textarea
-                className="settings-input"
-                value={pasteContent}
-                onChange={(e) => setPasteContent(e.target.value)}
-                placeholder={t("pastePlaceholder")}
-                style={{
-                  width: "100%",
-                  height: "120px",
-                  fontFamily: "monospace",
-                  fontSize: "12px",
-                  resize: "vertical",
-                }}
-              />
-            </div>
-
-            {/* 导入按钮 */}
-            <button
-              onClick={handleImportClick}
-              className="settings-btn settings-btn-primary"
-              style={{ width: "100%", justifyContent: "center", padding: "8px" }}
-              disabled={!pasteContent.trim()}>
-              {t("importBtn")}
-            </button>
           </div>
         </SettingCard>
-      </div>
-
-      {/* WebDAV 设置与操作 */}
-      <SettingCard title={t("webdavConfig")} description={t("webdavConfigDesc")}>
-        {/* 提示信息 */}
-        <div
-          style={{
-            background: "var(--gh-bg-secondary, #f8f9fa)",
-            border: "1px solid var(--gh-border, #e0e0e0)",
-            borderRadius: "8px",
-            padding: "12px",
-            marginBottom: "20px",
-            fontSize: "13px",
-            color: "var(--gh-text-secondary)",
-          }}>
-          <div
-            style={{
-              fontWeight: 600,
-              marginBottom: "4px",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              color: "var(--gh-text)",
-            }}>
-            <InfoIcon size={14} color="var(--gh-primary, #4285f4)" /> {t("restoreTip")}
-          </div>
-          <div style={{ lineHeight: 1.5 }}>{t("restoreTipContent")}</div>
-        </div>
-
-        <SettingRow label={t("webdavProvider")}>
-          <select
-            className="settings-input settings-select"
-            value={webdavForm.provider || "custom"}
-            onChange={(e) => {
-              const provider = e.target.value as WebDAVProvider
-              const preset = WEBDAV_PROVIDER_PRESETS.find((p) => p.id === provider)
-              setWebdavForm((prev) => ({
-                ...prev,
-                provider,
-                // 有固定 URL 的服务商自动预填（可编辑）
-                ...(preset?.urlTemplate ? { url: preset.urlTemplate } : {}),
-              }))
-            }}
-            style={{ width: "280px" }}>
-            {WEBDAV_PROVIDER_PRESETS.map((p) => (
-              <option key={p.id} value={p.id}>
-                {t(p.labelKey)}
-              </option>
-            ))}
-          </select>
-        </SettingRow>
-
-        {/* 服务商专属提示 */}
-        {(() => {
-          const preset = WEBDAV_PROVIDER_PRESETS.find(
-            (p) => p.id === (webdavForm.provider || "custom"),
-          )
-          if (!preset?.hintKey) return null
-          return (
-            <div
-              style={{
-                background: "var(--gh-primary-light-bg, rgba(66, 133, 244, 0.05))",
-                border: "1px solid var(--gh-primary-border, rgba(66, 133, 244, 0.2))",
-                borderRadius: "8px",
-                padding: "10px 12px",
-                marginBottom: "4px",
-                fontSize: "12px",
-                color: "var(--gh-text-secondary)",
-                display: "flex",
-                alignItems: "flex-start",
-                gap: "8px",
-              }}>
-              <InfoIcon
-                size={14}
-                color="var(--gh-primary, #4285f4)"
-                style={{ flexShrink: 0, marginTop: "1px" }}
-              />
-              <div>
-                {t(preset.hintKey)}
-                {preset.helpUrl && (
-                  <a
-                    href={preset.helpUrl}
-                    target="_blank"
-                    rel="noreferrer noopener"
-                    style={{
-                      marginLeft: "6px",
-                      color: "var(--gh-primary, #4285f4)",
-                      textDecoration: "underline",
-                    }}>
-                    {t("learnMore")}
-                  </a>
-                )}
-              </div>
-            </div>
-          )
-        })()}
-
-        <SettingRow label={t("webdavAddress")}>
-          {(() => {
-            const preset = WEBDAV_PROVIDER_PRESETS.find(
-              (p) => p.id === (webdavForm.provider || "custom"),
-            )
-            const placeholder = preset?.urlPlaceholder || "https://dav.example.com/dav/"
-            return (
-              <input
-                type="text"
-                className="settings-input"
-                placeholder={placeholder}
-                value={webdavForm.url}
-                onChange={(e) => setWebdavForm({ ...webdavForm, url: e.target.value })}
-                style={{ width: "280px" }}
-              />
-            )
-          })()}
-        </SettingRow>
-
-        <SettingRow label={t("username")}>
-          <input
-            type="text"
-            className="settings-input"
-            value={webdavForm.username}
-            onChange={(e) => setWebdavForm({ ...webdavForm, username: e.target.value })}
-            style={{ width: "280px" }}
-          />
-        </SettingRow>
-
-        <SettingRow label={t("password")}>
-          {(() => {
-            const preset = WEBDAV_PROVIDER_PRESETS.find(
-              (p) => p.id === (webdavForm.provider || "custom"),
-            )
-            const pwdPlaceholder = preset?.passwordPlaceholderKey
-              ? t(preset.passwordPlaceholderKey)
-              : t("webdavPasswordPlaceholder")
-            return (
-              <input
-                type="password"
-                className="settings-input"
-                placeholder={pwdPlaceholder}
-                value={webdavForm.password}
-                onChange={(e) => setWebdavForm({ ...webdavForm, password: e.target.value })}
-                style={{ width: "280px" }}
-              />
-            )
-          })()}
-        </SettingRow>
-
-        <SettingRow label={t("defaultDir")} description={t("defaultDirHint")}>
-          <input
-            type="text"
-            className="settings-input"
-            placeholder="ophel"
-            value={webdavForm.remoteDir}
-            onChange={(e) => setWebdavForm({ ...webdavForm, remoteDir: e.target.value })}
-            style={{ width: "280px" }}
-          />
-        </SettingRow>
-
-        {/* 操作按钮行：左=配置操作，右=数据同步 */}
-        <div
-          style={{
-            marginTop: "16px",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: "8px",
-          }}>
-          {/* 左侧：测试连接 + 保存配置 */}
-          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-            <button
-              className="settings-btn settings-btn-secondary"
-              onClick={testWebDAVConnection}
-              style={{ display: "flex", alignItems: "center", gap: "6px", padding: "6px 16px" }}>
-              <LinkIcon size={16} /> {t("webdavTestBtn")}
-            </button>
-            <div style={{ position: "relative" }}>
-              <button
-                className={`settings-btn ${isWebDAVUnsaved ? "settings-btn-primary" : "settings-btn-secondary"}`}
-                onClick={handleSaveConfig}
-                style={{ display: "flex", alignItems: "center", gap: "6px", padding: "6px 16px" }}>
-                <SaveIcon size={16} /> {t("saveConfig")}
-              </button>
-              {isWebDAVUnsaved && (
-                <span
-                  style={{
-                    position: "absolute",
-                    top: "-4px",
-                    right: "-4px",
-                    width: "8px",
-                    height: "8px",
-                    backgroundColor: "var(--gh-warning, #f59e0b)",
-                    borderRadius: "50%",
-                    boxShadow: "0 0 0 2px var(--gh-bg, #ffffff)",
-                  }}
-                />
-              )}
-            </div>
-          </div>
-          {/* 右侧：恢复 + 立即备份 */}
-          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-            <button
-              className="settings-btn settings-btn-secondary"
-              style={{ display: "flex", alignItems: "center", gap: "6px", padding: "6px 16px" }}
-              onClick={async () => {
-                await checkAndRequestWebDAVPermission(async () => {
-                  // 临时应用配置
-                  const manager = getWebDAVSyncManager()
-                  await manager.setConfig(webdavForm, false)
-                  setShowRemoteBackups(true)
-                })
-              }}>
-              <FileRestoreIcon size={16} color="currentColor" /> {t("restore")}
-            </button>
-            <button
-              className={`settings-btn ${!isWebDAVUnsaved ? "settings-btn-primary" : "settings-btn-secondary"}`}
-              style={{ display: "flex", alignItems: "center", gap: "6px", padding: "6px 16px" }}
-              onClick={uploadToWebDAV}>
-              <CloudUploadIcon size={16} color="currentColor" /> {t("backupNow")}
-            </button>
-          </div>
-        </div>
-      </SettingCard>
-
-      {/* 危险操作区 */}
-      <SettingCard
-        title={t("dangerZone")}
-        description={t("dangerZoneDesc")}
-        className="danger-zone-card">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div>
-            <div
-              style={{
-                fontSize: "14px",
-                fontWeight: 500,
-                color: "var(--gh-danger, #ef4444)",
-              }}>
-              {t("clearAllData")}
-            </div>
-            <div style={{ fontSize: "12px", color: "var(--gh-text-secondary)" }}>
-              {t("clearAllDataDesc")}
-            </div>
-          </div>
-          <button
-            className="settings-btn settings-btn-danger"
-            onClick={handleClearAll}
-            style={{ padding: "8px 16px", fontSize: "13px" }}>
-            {t("clearAllData")}
-          </button>
-        </div>
-      </SettingCard>
+      )}
     </div>
   )
 }

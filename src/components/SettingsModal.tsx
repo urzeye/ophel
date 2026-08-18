@@ -428,7 +428,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       case NAV_IDS.PERMISSIONS:
         return <PermissionsPage siteId={siteId} />
       case NAV_IDS.BACKUP:
-        return <BackupPage siteId={siteId} onNavigate={setActivePage} />
+        return <BackupPage siteId={siteId} initialTab={initialSubTab} onNavigate={setActivePage} />
       case NAV_IDS.ABOUT:
         return <AboutPage onOpenReleaseNotes={onOpenReleaseNotes} />
       default:
