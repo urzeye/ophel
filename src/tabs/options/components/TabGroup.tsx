@@ -20,15 +20,17 @@ export interface TabGroupProps {
 
 export const TabGroup: React.FC<TabGroupProps> = ({ tabs, activeTab, onTabChange }) => {
   return (
-    <div className="settings-tab-group">
-      {tabs.map((tab) => (
-        <button
-          key={tab.id}
-          className={`settings-tab-item ${activeTab === tab.id ? "active" : ""}`}
-          onClick={() => onTabChange(tab.id)}>
-          {tab.label}
-        </button>
-      ))}
+    <div className="settings-tab-group-container">
+      <div className="settings-tab-group">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            className={`settings-tab-item ${activeTab === tab.id ? "active" : ""}`}
+            onClick={() => onTabChange(tab.id)}>
+            {tab.label}
+          </button>
+        ))}
+      </div>
     </div>
   )
 }

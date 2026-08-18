@@ -648,7 +648,22 @@
   outline-offset: 3px;
 }
 
-/* ==================== 顶部标签组 ==================== */
+/* ==================== 顶部标签组与粘性吸顶 ==================== */
+
+.settings-tab-group-container {
+  position: sticky;
+  top: -24px;
+  z-index: 10;
+  margin-bottom: 20px;
+  padding-top: 4px;
+  padding-bottom: 6px;
+  background: color-mix(in srgb, var(--gh-bg, #ffffff) 86%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  margin-inline: -8px;
+  padding-inline: 8px;
+  border-radius: 12px;
+}
 
 .settings-tab-group {
   display: flex;
@@ -656,7 +671,6 @@
   padding: 4px;
   background: var(--gh-bg-secondary, #f3f4f6);
   border-radius: 10px;
-  margin-bottom: 24px;
 }
 
 .settings-tab-item {
@@ -850,15 +864,35 @@
 }
 
 .settings-pack-toolbar {
+  position: sticky;
+  top: -24px;
+  z-index: 10;
   display: flex;
   align-items: center;
   gap: 12px;
   margin-bottom: 20px;
+  padding-top: 4px;
+  padding-bottom: 6px;
+  background: color-mix(in srgb, var(--gh-bg, #ffffff) 86%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  margin-inline: -8px;
+  padding-inline: 8px;
+  border-radius: 12px;
+}
+
+.settings-pack-toolbar .settings-tab-group-container {
+  position: static;
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 .settings-pack-toolbar .settings-tab-group {
-  flex: 1;
-  min-width: 0;
   margin-bottom: 0;
 }
 
@@ -3185,7 +3219,7 @@
   right: 12px;
   display: flex;
   gap: 8px;
-  z-index: 10;
+  z-index: 20;
 }
 
 .settings-modal-action-btn {
