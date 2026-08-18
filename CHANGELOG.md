@@ -16,7 +16,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 ### 🐛 Bug Fixes
 
 - **Outline anchor position lost** — Fixed issue where quickly or repeatedly clicking "Return to Anchor", "Go to Top", "Go to Bottom", or clicking the same outline heading twice collapsed the saved anchor onto the current position, so "Return to Anchor" could no longer jump back to the previous location; anchor operations are now serialized, and the anchor is preserved when the target is already reached. (#848)
-- **Adapt to Claude's new page layout** — Claude updated the page structure again, Fuck you, Claude! (#849)
+- **Adapt to Claude's new page layout** — Claude updated the page structure again, **Fuck you, Claude!** (#823, #849)
 - **Doubao conversation title sync** — Fixed issue where conversations synced from Doubao showed their titles repeated three times (e.g. a title became "titletitletitle") after the site rolled out its new sidebar conversation list; titles are now read correctly from the new structure. (#846)
 - **Qwen Studio scroll shortcuts** — Adapted to Qwen Studio's new chat scroll container, fixing "Go to Top", "Go to Bottom", and "Return to Anchor" failing after the site updated its page structure.
 - **Adapt to Grok's new DOM structure** — Adapt to Grok's new chat scroll container and theme style selector, and fix the problem of "Go to Top", "Go to Bottom" and "Return to Anchor" on Grok failing and switching between light/dark themes causing the page to freeze and become unresponsive. (#842, #843)
