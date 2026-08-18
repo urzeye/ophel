@@ -13,6 +13,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 - **Genspark support** — The online adapter library now includes Genspark (genspark.ai); installing the pack enables outlines with user queries, basic export, generation detection and stop, chat width, Zen Mode, new chat, prompt insertion, and Clean Mode. (#851)
 
+### ✨ Improvements
+
+- **Settings and panel visual experience polish** — Settings pages now feature sticky tab bars with backdrop blur; the Backup page is redesigned into a clean tabbed layout for local and WebDAV options; Permissions and Shortcuts pages now use crisp SVG icons and keyboard badges; and prompt action buttons along with UI components across all 24 themes now have refined visual hierarchy and contrast.
+
 ---
 
 ## [1.2.2][1.2.2] - 2026-08-18
