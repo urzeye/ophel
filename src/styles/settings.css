@@ -1479,19 +1479,134 @@
 
 /* ---------- 更新与来源 ---------- */
 
+.settings-pack-import-card {
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
+
+.settings-pack-import-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.settings-pack-import-row .settings-pack-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  flex-shrink: 0;
+}
+
+.settings-pack-import-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.settings-pack-import-row .settings-card-title {
+  margin-bottom: 2px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--gh-text, #374151);
+}
+
+.settings-pack-import-row .settings-card-desc {
+  margin-bottom: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--gh-text-secondary, #9ca3af);
+}
+
+.settings-pack-check-summary {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--gh-text-secondary, #6b7280);
+}
+
+.settings-pack-check-summary .settings-pack-version {
+  font-size: 10px;
+  padding: 1px 6px;
+  min-height: 18px;
+  border-radius: 5px;
+}
+
+.settings-pack-check-time {
+  font-size: 12px;
+  color: var(--gh-text-secondary, #6b7280);
+}
+
 .settings-pack-dev-card {
   border-style: dashed;
   background: color-mix(in srgb, var(--gh-bg-secondary, #f9fafb) 72%, var(--gh-card-bg, #ffffff));
 }
 
-.settings-pack-dev-card .settings-card-title {
-  display: block;
+.settings-pack-dev-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.settings-pack-dev-head .settings-card-title {
+  margin-bottom: 0;
   font-size: 14px;
   color: var(--gh-text-secondary, #6b7280);
 }
 
-.settings-pack-dev-card .settings-pack-source-desc:first-of-type {
-  margin-top: 0;
+.settings-pack-dev-status-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  margin: 8px 0 12px;
+  font-size: 12px;
+  color: var(--gh-text-secondary, #6b7280);
+}
+
+.settings-pack-dev-status-code {
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: var(--gh-bg, #ffffff);
+  border: 1px solid var(--gh-border, #e5e7eb);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  color: var(--gh-text, #374151);
+  word-break: break-all;
+}
+
+.settings-pack-dev-error-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--gh-danger, #ef4444) 30%, transparent);
+  background: color-mix(in srgb, var(--gh-danger, #ef4444) 7%, var(--gh-card-bg, #ffffff));
+  color: var(--gh-text-danger, #ef4444);
+  font-size: 11px;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.settings-pack-dev-error-indicator {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  margin-top: 5px;
+  border-radius: 50%;
+  background: var(--gh-danger, #ef4444);
+}
+
+.settings-pack-source-hint {
+  margin-top: 10px;
+  margin-bottom: 0;
 }
 
 .settings-pack-source-desc {
@@ -1565,12 +1680,21 @@
 }
 
 .settings-pack-patches {
-  margin-top: 4px;
+  margin-top: 0;
   padding-top: 16px;
 }
 
 .settings-pack-patches .settings-pack-section-head {
-  margin-bottom: 6px;
+  margin-bottom: 12px;
+}
+
+.settings-pack-section-head-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.settings-pack-section-head-main .settings-pack-source-desc {
+  margin: 3px 0 0;
 }
 
 .settings-pack-subsection-title {
@@ -1580,56 +1704,41 @@
   color: var(--gh-text, #374151);
 }
 
-.settings-pack-section-head .settings-pack-subsection-title {
-  margin-bottom: 0;
-}
-
-.settings-pack-patch-status {
-  margin: 0;
+.settings-pack-patch-empty {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: var(--gh-bg-secondary, #f9fafb);
+  border: 1px solid var(--gh-border, #f3f4f6);
   font-size: 12px;
-  line-height: 1.5;
   color: var(--gh-text-secondary, #6b7280);
 }
 
-.settings-pack-secondary-card {
-  padding-top: 16px;
-  padding-bottom: 16px;
-}
-
-.settings-pack-secondary-card .settings-card-title {
-  font-size: 14px;
-}
-
-.settings-pack-secondary-card .settings-card-desc {
-  margin-bottom: 0;
+.settings-pack-patch-empty-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 65%, transparent);
 }
 
 .settings-pack-privacy-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
   margin: 16px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--gh-border, #f3f4f6);
   font-size: 11px;
-  line-height: 1.6;
+  line-height: 1.5;
   color: var(--gh-text-tertiary, var(--gh-text-secondary, #9ca3af));
 }
 
-.settings-pack-import-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.settings-pack-import-text {
-  flex: 1;
-  min-width: 0;
-}
-
-.settings-pack-import-row .settings-card-title,
-.settings-pack-import-row .settings-card-desc {
-  margin-bottom: 0;
-}
-
-.settings-pack-import-row .settings-card-title {
-  margin-bottom: 2px;
+.settings-pack-privacy-note svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+  opacity: 0.8;
 }
 
 .settings-pack-file-input {
@@ -1747,7 +1856,7 @@
 @media (max-width: 520px) {
   .settings-pack-toolbar,
   .settings-pack-item,
-  .settings-pack-import-row,
+  .settings-pack-import-footer,
   .settings-pack-inline-error {
     align-items: stretch;
     flex-direction: column;

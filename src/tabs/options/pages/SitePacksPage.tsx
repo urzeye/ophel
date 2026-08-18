@@ -1707,16 +1707,6 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
           </div>
         </div>
         <div className="settings-pack-controls">
-          {firstSiteUrl && (
-            <button
-              type="button"
-              className="settings-pack-icon-btn"
-              title={t("sitePacksOpenSite")}
-              aria-label={`${t("sitePacksOpenSite")}: ${view.name}`}
-              onClick={() => platform.openTab(firstSiteUrl)}>
-              <ExternalLinkIcon size={15} />
-            </button>
-          )}
           <Button
             type="button"
             size="sm"
@@ -1753,14 +1743,23 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
   const registryRevision = remoteState?.active?.index.registryRevision
   const lastCheckAt = remoteState?.lastCheckAt
   const isCheckingRegistry = busyKeys.has("registry:refresh")
-  const registryStatusSummary = isRegistryLoading
-    ? t("remoteConfigStatusLoading")
-    : lastCheckAt
-      ? t("remoteConfigStatusSummary", {
+  const registryStatusSummary = isRegistryLoading ? (
+    t("remoteConfigStatusLoading")
+  ) : lastCheckAt ? (
+    <span className="settings-pack-check-summary">
+      <span className="settings-pack-version">
+        {registryRevision !== undefined ? `rev ${registryRevision}` : "—"}
+      </span>
+      <span className="settings-pack-check-time">
+        {t("remoteConfigStatusSummary", {
           revision: registryRevision !== undefined ? String(registryRevision) : "—",
           time: formatCheckTime(lastCheckAt),
-        })
-      : t("remoteConfigNeverChecked")
+        }).replace(/^[^·]*·\s*/, "")}
+      </span>
+    </span>
+  ) : (
+    t("remoteConfigNeverChecked")
+  )
 
   const tabs = [
     { id: SITE_PACKS_TAB_IDS.INSTALLED, label: t("sitePacksTabInstalled") },
@@ -2031,7 +2030,9 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
             )}
           </section>
 
-          <section className="settings-card settings-pack-secondary-card">
+          <section
+            className="settings-card settings-pack-import-card"
+            data-setting-id="site-packs-local-import">
             <div className="settings-pack-import-row">
               <div className="settings-pack-icon" aria-hidden="true">
                 <ImportIcon size={16} />
@@ -2077,6 +2078,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
               settingId="remote-config-check-now">
               <Button
                 type="button"
+                size="sm"
                 variant="secondary"
                 className="settings-pack-action-button"
                 disabled={isRegistryBusy}
@@ -2090,8 +2092,13 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
 
             <div className="settings-pack-patches" data-setting-id="remote-config-active-patches">
               <div className="settings-pack-section-head">
-                <div className="settings-pack-subsection-title">
-                  {t("remoteConfigActivePatchesLabel")}
+                <div className="settings-pack-section-head-main">
+                  <div className="settings-pack-subsection-title">
+                    {t("remoteConfigActivePatchesLabel")}
+                  </div>
+                  <p className="settings-pack-source-desc">
+                    {t("remoteConfigLocalPatchImportDesc")}
+                  </p>
                 </div>
                 <Button
                   type="button"
@@ -2105,9 +2112,11 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
                   {t("remoteConfigLocalPatchImportButton")}
                 </Button>
               </div>
-              <p className="settings-pack-source-desc">{t("remoteConfigLocalPatchImportDesc")}</p>
               {activePatches.length === 0 ? (
-                <p className="settings-pack-patch-status">{t("remoteConfigUsingBuiltin")}</p>
+                <div className="settings-pack-patch-empty">
+                  <span className="settings-pack-patch-empty-dot" aria-hidden="true" />
+                  <span>{t("remoteConfigUsingBuiltin")}</span>
+                </div>
               ) : (
                 <div className="settings-pack-list">
                   {activePatches.map((patch) => (
@@ -2173,32 +2182,55 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
               )}
             </div>
 
-            <p className="settings-pack-privacy-note">{t("remoteConfigPrivacyDesc")}</p>
+            <div className="settings-pack-privacy-note">
+              <InfoIcon size={13} aria-hidden="true" />
+              <span>{t("remoteConfigPrivacyDesc")}</span>
+            </div>
           </section>
 
           {IS_DEVELOPMENT_BUILD && (
             <section
               className="settings-card settings-pack-dev-card"
               data-setting-id="remote-config-registry-source">
-              <label className="settings-card-title" htmlFor="remote-config-registry-source-input">
-                {t("remoteConfigRegistrySourceLabel")}
-              </label>
+              <div className="settings-pack-dev-head">
+                <label
+                  className="settings-card-title"
+                  htmlFor="remote-config-registry-source-input">
+                  {t("remoteConfigRegistrySourceLabel")}
+                </label>
+                <span className="settings-pack-badge warning">DEV</span>
+              </div>
               <p className="settings-pack-source-desc">{t("remoteConfigRegistrySourceDesc")}</p>
-              <p className="settings-pack-source-desc">
-                {t("remoteConfigRegistryActiveSourceLabel")}:{" "}
-                <code>
+
+              <div className="settings-pack-dev-status-row">
+                <span className="settings-pack-dev-status-label">
+                  {t("remoteConfigRegistryActiveSourceLabel")}:
+                </span>
+                <code className="settings-pack-dev-status-code">
                   {remoteState?.active?.sourceUrl ?? t("remoteConfigRegistryActiveSourceDefault")}
                 </code>
-                {remoteState?.active?.index.registryRevision !== undefined
-                  ? ` · rev ${remoteState.active.index.registryRevision}`
-                  : ""}
-                {configuredRegistrySource ? ` · ${t("remoteConfigRegistryOverrideLabel")}` : ""}
-              </p>
-              {remoteState?.lastError?.message ? (
-                <p className="settings-pack-source-error" role="status">
-                  {t("remoteConfigRegistryLastErrorLabel")}: {remoteState.lastError.message}
-                </p>
-              ) : null}
+                {remoteState?.active?.index.registryRevision !== undefined && (
+                  <span className="settings-pack-badge success">
+                    rev {remoteState.active.index.registryRevision}
+                  </span>
+                )}
+                {configuredRegistrySource && (
+                  <span className="settings-pack-badge warning">
+                    {t("remoteConfigRegistryOverrideLabel")}
+                  </span>
+                )}
+              </div>
+
+              {remoteState?.lastError?.message && (
+                <div className="settings-pack-dev-error-box" role="status">
+                  <span className="settings-pack-dev-error-indicator" aria-hidden="true" />
+                  <span>
+                    <strong>{t("remoteConfigRegistryLastErrorLabel")}:</strong>{" "}
+                    {remoteState.lastError.message}
+                  </span>
+                </div>
+              )}
+
               <div className="settings-pack-source-controls">
                 <div className="settings-pack-source-input-row">
                   <Input
@@ -2218,6 +2250,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
                   />
                   <Button
                     type="button"
+                    size="sm"
                     variant="secondary"
                     className="settings-pack-action-button settings-pack-source-apply"
                     disabled={
@@ -2259,15 +2292,16 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
                   </Button>
                 </div>
               </div>
-              <p className="settings-pack-source-desc">
+              <p className="settings-pack-source-desc settings-pack-source-hint">
                 {t("remoteConfigLocalRegistryHint", {
                   button: t("remoteConfigLocalRegistryUseButton"),
                 })}
               </p>
               {registrySourceError && (
-                <span className="settings-pack-source-error" role="alert">
-                  {registrySourceError}
-                </span>
+                <div className="settings-pack-dev-error-box" role="alert">
+                  <span className="settings-pack-dev-error-indicator" aria-hidden="true" />
+                  <span>{registrySourceError}</span>
+                </div>
               )}
             </section>
           )}
