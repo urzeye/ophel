@@ -1,14 +1,14 @@
 TaskID,Module,Title,TargetFiles,Type,Priority,Description,AcceptanceCriteria,Status
-T-01,Settings-Backup,BackupPage TabGroup 结构重构,"src/tabs/options/pages/BackupPage.tsx, src/styles/settings.css",ux,P1,将备份页面拆分为本地备份与 WebDAV 云同步两组 Tab，接入 TabGroup 粘性毛玻璃吸顶组件,通过 Tab 切换本地与云同步，支持 initialTab 路由，粘性吸顶正常,Pending
-T-02,Settings-Backup,BackupPage 内联样式抽离与清理,"src/tabs/options/pages/BackupPage.tsx, src/styles/settings.css",refactor,P1,抽离导入确认框、数据预览文本框、操作按钮行等内联样式至 settings.css 统一类名,JSX 中无硬编码内联样式，类名命名规范（.settings-backup-*）,Pending
-T-03,Settings-Shortcuts,ShortcutsPage 录制态与 kbd 标签化,"src/tabs/options/pages/ShortcutsPage.tsx, src/styles/settings.css",ux,P1,抽离 ShortcutInput 内联样式，录制中增加发光反馈，格式化快捷键展示为 kbd 标签,录制与非录制状态视觉清晰，快捷键以 kbd 标签排版呈现，无内联样式,Pending
-T-04,Settings-Shortcuts,ShortcutsPage 底部与外链操作区重构,"src/tabs/options/pages/ShortcutsPage.tsx, src/styles/settings.css",ux,P2,标准化重置默认快捷键与浏览器快捷键管理按钮的工具栏布局,操作按钮对齐规范，符合 DESIGN.md 按钮规范,Pending
-T-05,Settings-Permissions,PermissionsPage SVG 图标替换与 Badge 规范化,"src/tabs/options/pages/PermissionsPage.tsx, src/styles/settings.css",ux,P1,移除硬编码 Emoji 图标并替换为标准 SVG 图标；重构已授权/未授权 Badge 样式类,无 Emoji 作为功能图标，Badge 采用语义 CSS 变量适配 24 套主题,Pending
-T-06,Settings-General,GeneralPage SortableItem 拖拽态消除虚线,"src/tabs/options/pages/GeneralPage.tsx, src/styles/settings.css",ux,P2,将拖拽中的 1px dashed 边框替换为实线高亮 + 半透明背景 + 投影抬升，抽离内联样式,拖拽时反馈清晰自然，无 dashed 边框违规，无内联样式,Pending
-T-07,Settings-About,AboutPage 样式类化与卡片触感统一,"src/tabs/options/pages/AboutPage.tsx, src/styles/settings.css",ux,P2,保留 ✨ 装饰 emoji，将其余平台/社区/赞助卡片的内联样式抽离至 settings.css，统一 hover 微动效,✨ 装饰保留，所有卡片 hover 动效统一（translateY(-2px) + 柔和阴影），无内联样式,Pending
-T-08,MainPanel-Core,MainPanel Header/Footer 微触感与 focus 环打磨,"src/components/MainPanel.tsx, src/style.css",ux,P1,统一 Header 按钮 focus-visible 样式，为 Footer 置顶/置底/锚点按钮增加 active 按压微动效,Footer 按钮点击有 scale(0.96) 触感反馈，Header 焦点环清晰,Pending
-T-09,MainPanel-Outline,OutlineTab 树层级参考线与阅读位置高亮,"src/components/OutlineTab.tsx, src/style.css",ux,P2,为 H1~H4 嵌套层级增加微细参考引导线；增强当前视口阅读标题的高亮胶囊条,多层级大纲阅读节奏清晰，父子关系明确，激活项一目了然,Pending
-T-10,MainPanel-Prompts,PromptsTab 搜索清除与卡片操作栏平滑过渡,"src/components/PromptsTab.tsx, src/style.css",ux,P2,搜索框增加清除按钮，提示词卡片悬停操作栏过渡平滑化，优化标签筛选激活态,搜索框支持一键清空，操作按钮淡入淡出无跳跃感,Pending
-T-11,MainPanel-Conversations,ConversationsTab 空状态引导与文件夹折叠动效,"src/components/ConversationsTab.tsx, src/styles/conversations.css",ux,P2,优化对话列表与文件夹空状态视觉引导；文件夹展开折叠添加 Chevron 旋转微动效,空状态清晰引导用户操作，文件夹折叠展开过渡平滑（150ms ease）,Pending
-T-12,System-Themes,全站 24 套主题色彩变量与 Hex 漏网清理,"src/styles/settings.css, src/style.css, src/styles/theme-variables.css",refactor,P1,全面审计并替换 settings.css 和 style.css 中的硬编码 Hex 颜色为 --gh-* 语义变量,24 套深浅色主题下无反相割裂、无对比度退化,Pending
-T-13,System-Verification,双平台构建与类型/Lint 综合验证,"src/**",build,P1,运行 pnpm lint:check, pnpm typecheck, pnpm build, pnpm build:userscript 确保全流程通过,所有 CI 检查命令退出码为 0，双平台构建产物无异常,Pending
+T-01,Settings-Backup,BackupPage TabGroup 结构重构,"src/tabs/options/pages/BackupPage.tsx, src/styles/settings.css",ux,P1,将备份页面拆分为本地备份与 WebDAV 云同步两组 Tab，接入 TabGroup 粘性毛玻璃吸顶组件,通过 Tab 切换本地与云同步，支持 initialTab 路由，粘性吸顶正常,Done
+T-02,Settings-Backup,BackupPage 内联样式抽离与清理,"src/tabs/options/pages/BackupPage.tsx, src/styles/settings.css",refactor,P1,抽离导入确认框、数据预览文本框、操作按钮行等内联样式至 settings.css 统一类名,JSX 中无硬编码内联样式，类名命名规范（.settings-backup-*）,Done
+T-03,Settings-Shortcuts,ShortcutsPage 录制态与 kbd 标签化,"src/tabs/options/pages/ShortcutsPage.tsx, src/styles/settings.css",ux,P1,抽离 ShortcutInput 内联样式，录制中增加发光反馈，格式化快捷键展示为 kbd 标签,录制与非录制状态视觉清晰，快捷键以 kbd 标签排版呈现，无内联样式,Done
+T-04,Settings-Shortcuts,ShortcutsPage 底部与外链操作区重构,"src/tabs/options/pages/ShortcutsPage.tsx, src/styles/settings.css",ux,P2,标准化重置默认快捷键与浏览器快捷键管理按钮的工具栏布局,操作按钮对齐规范，符合 DESIGN.md 按钮规范,Done
+T-05,Settings-Permissions,PermissionsPage SVG 图标替换与 Badge 规范化,"src/tabs/options/pages/PermissionsPage.tsx, src/styles/settings.css",ux,P1,移除硬编码 Emoji 图标并替换为标准 SVG 图标；重构已授权/未授权 Badge 样式类,无 Emoji 作为功能图标，Badge 采用语义 CSS 变量适配 24 套主题,Done
+T-06,Settings-General,GeneralPage SortableItem 拖拽态消除虚线,"src/tabs/options/pages/GeneralPage.tsx, src/styles/settings.css",ux,P2,将拖拽中的 1px dashed 边框替换为实线高亮 + 半透明背景 + 投影抬升，抽离内联样式,拖拽时反馈清晰自然，无 dashed 边框违规，无内联样式,Done
+T-07,Settings-About,AboutPage 样式类化与卡片触感统一,"src/tabs/options/pages/AboutPage.tsx, src/styles/settings.css",ux,P2,保留 ✨ 装饰 emoji，将其余平台/社区/赞助卡片的内联样式抽离至 settings.css，统一 hover 微动效,✨ 装饰保留，所有卡片 hover 动效统一（translateY(-2px) + 柔和阴影），无内联样式,Done
+T-08,MainPanel-Core,MainPanel Header/Footer 微触感与 focus 环打磨,"src/components/MainPanel.tsx, src/style.css",ux,P1,统一 Header 按钮 focus-visible 样式，为 Footer 置顶/置底/锚点按钮增加 active 按压微动效,Footer 按钮点击有 scale(0.96) 触感反馈，Header 焦点环清晰,Done
+T-09,MainPanel-Outline,OutlineTab 树层级参考线与阅读位置高亮,"src/components/OutlineTab.tsx, src/style.css",ux,P2,为 H1~H4 嵌套层级增加微细参考引导线；增强当前视口阅读标题的高亮胶囊条,多层级大纲阅读节奏清晰，父子关系明确，激活项一目了然,Done
+T-10,MainPanel-Prompts,PromptsTab 搜索清除与卡片操作栏平滑过渡,"src/components/PromptsTab.tsx, src/style.css",ux,P2,搜索框增加清除按钮，提示词卡片悬停操作栏过渡平滑化，优化标签筛选激活态,搜索框支持一键清空，操作按钮淡入淡出无跳跃感,Done
+T-11,MainPanel-Conversations,ConversationsTab 空状态引导与文件夹折叠动效,"src/components/ConversationsTab.tsx, src/styles/conversations.css",ux,P2,优化对话列表与文件夹空状态视觉引导；文件夹展开折叠添加 Chevron 旋转微动效,空状态清晰引导用户操作，文件夹折叠展开过渡平滑（150ms ease）,Done
+T-12,System-Themes,全站 24 套主题色彩变量与 Hex 漏网清理,"src/styles/settings.css, src/style.css, src/styles/theme-variables.css",refactor,P1,全面审计并替换 settings.css 和 style.css 中的硬编码 Hex 颜色为 --gh-* 语义变量,24 套深浅色主题下无反相割裂、无对比度退化,Done
+T-13,System-Verification,双平台构建与类型/Lint 综合验证,"src/**",build,P1,运行 pnpm lint:check, pnpm typecheck, pnpm build, pnpm build:userscript 确保全流程通过,所有 CI 检查命令退出码为 0，双平台构建产物无异常,Done
