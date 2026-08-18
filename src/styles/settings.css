@@ -3096,11 +3096,44 @@
 .settings-sortable-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
+  gap: 10px;
+  padding: 10px 14px;
   background: var(--gh-bg-secondary, #f9fafb);
-  border-radius: 8px;
-  margin-bottom: 6px;
+  border: 1px solid var(--gh-border, #e5e7eb);
+  border-radius: 10px;
+  margin-bottom: 8px;
+  cursor: grab;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.settings-sortable-item:hover {
+  border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 30%, var(--gh-border, #e5e7eb));
+}
+
+.settings-sortable-item.is-dragging {
+  opacity: 0.45;
+  cursor: grabbing;
+  border-color: var(--gh-primary, #4285f4);
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 8%, var(--gh-bg-secondary, #f9fafb));
+  box-shadow: var(--gh-shadow-md, 0 4px 14px rgba(0, 0, 0, 0.1));
+}
+
+.settings-sortable-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 6px 4px 0;
+  cursor: grab;
+  color: var(--gh-text-tertiary, #9ca3af);
+  transition: color 0.15s ease;
+}
+
+.settings-sortable-item:hover .settings-sortable-handle {
+  color: var(--gh-text-secondary, #6b7280);
 }
 
 .settings-sortable-item-icon {
@@ -5227,4 +5260,65 @@ html[data-theme="dark"] .about-privacy-banner {
   background: color-mix(in srgb, var(--gh-text-secondary, #6b7280) 12%, transparent);
   color: var(--gh-text-secondary, #6b7280);
   border: 1px solid color-mix(in srgb, var(--gh-text-secondary, #6b7280) 20%, transparent);
+}
+
+/* ==================== 关于页面 (AboutPage) 辅助类 ==================== */
+
+.about-slogan-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 32px;
+}
+
+.about-links-grid.reviews-grid {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.about-links-grid.community-grid {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.about-community-motto {
+  font-size: 13px;
+  color: var(--gh-text-secondary, #6b7280);
+  margin-bottom: 16px;
+  font-style: italic;
+  text-align: center;
+}
+
+.about-btn-inner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.about-credits-text {
+  font-size: 13px;
+  color: var(--gh-text-secondary, #6b7280);
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+.about-credits-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.about-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  background: var(--gh-bg-secondary, #f3f4f6);
+  border: 1px solid var(--gh-border, #e5e7eb);
+  border-radius: 12px;
+  font-size: 12px;
+  color: var(--gh-text-secondary, #6b7280);
+}
+
+.about-license-text {
+  margin-top: 16px;
+  font-size: 12px;
+  color: var(--gh-text-secondary, #6b7280);
 }

@@ -62,28 +62,14 @@ const SortableItem: React.FC<{
   isDragging = false,
 }) => (
   <div
-    className={`settings-sortable-item ${isDragging ? "dragging" : ""}`}
+    className={`settings-sortable-item ${isDragging ? "is-dragging" : ""}`}
     draggable
     onDragStart={(e) => onDragStart(e, index)}
     onDragOver={(e) => onDragOver(e, index)}
     onDragEnd={onDragEnd}
-    onDrop={(e) => onDrop(e, index)}
-    style={{
-      opacity: isDragging ? 0.4 : 1,
-      cursor: "grab",
-      border: isDragging ? "1px dashed var(--gh-primary)" : undefined,
-    }}>
+    onDrop={(e) => onDrop(e, index)}>
     {/* 拖拽手柄 */}
-    <div
-      className="settings-sortable-handle"
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "4px 8px 4px 0",
-        cursor: "grab",
-        color: "var(--gh-text-secondary, #9ca3af)",
-      }}>
+    <div className="settings-sortable-handle">
       <ReorderIcon size={16} />
     </div>
 

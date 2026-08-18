@@ -35,16 +35,11 @@ interface AboutPageProps {
 const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
   const supportedPlatforms = useSupportedAiPlatforms()
   const supportedPlatformsCount = String(supportedPlatforms.length)
+
   return (
     <div>
       <PageTitle title={t("navAbout")} Icon={AboutIcon} />
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          marginBottom: 32,
-        }}>
+      <div className="about-slogan-container">
         <div className="about-slogan-badge">
           <span style={{ marginRight: 6 }}>✨</span>
           {t("aboutPageDesc")}
@@ -85,9 +80,7 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
       </div>
 
       <div className="about-section-title">{t("rateAndReview")}</div>
-      <div
-        className="about-links-grid"
-        style={{ gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}>
+      <div className="about-links-grid reviews-grid">
         {/* Chrome Store */}
         <a
           href={STORE_LINKS.chrome}
@@ -99,7 +92,9 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
             <ChromeIcon size={24} color="var(--card-color)" />
             <span style={{ fontWeight: 600 }}>{t("chromeStore")}</span>
           </div>
-          <button className="about-link-btn">{t("reviewBtn")}</button>
+          <button type="button" className="about-link-btn">
+            {t("reviewBtn")}
+          </button>
         </a>
 
         {/* Edge Add-ons */}
@@ -113,7 +108,9 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
             <EdgeIcon size={24} />
             <span style={{ fontWeight: 600 }}>{t("edgeAddons")}</span>
           </div>
-          <button className="about-link-btn">{t("reviewBtn")}</button>
+          <button type="button" className="about-link-btn">
+            {t("reviewBtn")}
+          </button>
         </a>
 
         {/* Firefox Add-on */}
@@ -127,7 +124,9 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
             <FirefoxIcon size={24} color="var(--card-color)" />
             <span style={{ fontWeight: 600 }}>{t("firefoxAddons")}</span>
           </div>
-          <button className="about-link-btn">{t("reviewBtn")}</button>
+          <button type="button" className="about-link-btn">
+            {t("reviewBtn")}
+          </button>
         </a>
 
         {/* GreasyFork */}
@@ -141,7 +140,9 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
             <GreasyForkIcon size={24} color="currentColor" />
             <span style={{ fontWeight: 600, color: "var(--gh-text)" }}>{t("greasyFork")}</span>
           </div>
-          <button className="about-link-btn">{t("reviewBtn")}</button>
+          <button type="button" className="about-link-btn">
+            {t("reviewBtn")}
+          </button>
         </a>
 
         {/* ScriptCat */}
@@ -155,25 +156,16 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
             <ScriptCatIcon size={24} color="var(--card-color)" />
             <span style={{ fontWeight: 600, color: "var(--gh-text)" }}>{t("scriptCat")}</span>
           </div>
-          <button className="about-link-btn">{t("reviewBtn")}</button>
+          <button type="button" className="about-link-btn">
+            {t("reviewBtn")}
+          </button>
         </a>
       </div>
 
       <div className="about-section-title">{t("communityAndSupport")}</div>
-      <div
-        style={{
-          fontSize: "13px",
-          color: "var(--gh-text-secondary)",
-          marginBottom: 16,
-          fontStyle: "italic",
-          textAlign: "center",
-        }}>
-        "{t("communityMotto")}"
-      </div>
+      <div className="about-community-motto">"{t("communityMotto")}"</div>
 
-      <div
-        className="about-links-grid"
-        style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
+      <div className="about-links-grid community-grid">
         {/* GitHub Link */}
         <a
           href="https://github.com/urzeye/ophel"
@@ -186,8 +178,8 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
             <span style={{ fontWeight: 600 }}>{t("githubRepository")}</span>
           </div>
           <div className="about-link-desc">{t("githubDesc")}</div>
-          <button className="about-link-btn about-star-btn">
-            <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <button type="button" className="about-link-btn about-star-btn">
+            <span className="about-btn-inner">
               <StarIcon size={15} color="currentColor" filled={true} />
               {t("giveStar")}
             </span>
@@ -208,8 +200,8 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
           <div className="about-link-desc" style={{ color: "var(--gh-text-secondary)" }}>
             {t("kofiDesc")}
           </div>
-          <button className="about-link-btn">
-            <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <button type="button" className="about-link-btn">
+            <span className="about-btn-inner">
               <KofiIcon size={14} color="currentColor" />
               {t("kofiBtn")}
             </span>
@@ -230,8 +222,8 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
             </span>
           </div>
           <div className="about-link-desc">{t("websiteDesc")}</div>
-          <button className="about-link-btn">
-            <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <button type="button" className="about-link-btn">
+            <span className="about-btn-inner">
               <GlobeIcon size={14} color="currentColor" />
               {t("visitWebsite")}
             </span>
@@ -252,8 +244,8 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
           <div className="about-link-desc" style={{ color: "var(--gh-text-secondary)" }}>
             {t("discordDesc")}
           </div>
-          <button className="about-link-btn">
-            <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <button type="button" className="about-link-btn">
+            <span className="about-btn-inner">
               <DiscordIcon size={14} color="currentColor" />
               {t("joinDiscord")}
             </span>
@@ -321,24 +313,16 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
 
       <div className="about-simple-card">
         <div className="about-simple-header">
-          <HeartIcon size={18} style={{ color: "#ef4444" }} />
+          <HeartIcon size={18} style={{ color: "var(--gh-danger, #ef4444)" }} />
           {t("devAndMaintain")}
         </div>
-        <p
-          style={{
-            fontSize: "13px",
-            color: "var(--gh-text-secondary)",
-            lineHeight: 1.6,
-            marginBottom: 16,
-          }}>
-          {t("creditsDesc")}
-        </p>
-        <div style={{ display: "flex", gap: 8 }}>
-          <Badge text={`Made with ❤️`} />
+        <p className="about-credits-text">{t("creditsDesc")}</p>
+        <div className="about-credits-badges">
+          <Badge text="Made with ❤️" />
           <Badge text="Open Source" />
           <Badge text="Privacy First" />
         </div>
-        <div style={{ marginTop: 16, fontSize: "12px", color: "var(--gh-text-secondary)" }}>
+        <div className="about-license-text">
           GNU GPLv3 © {new Date().getFullYear()} {APP_DISPLAY_NAME}
         </div>
       </div>
@@ -365,20 +349,6 @@ const TechCard = ({ name, version, desc }: { name: string; version: string; desc
   </div>
 )
 
-const Badge = ({ text }: { text: string }) => (
-  <span
-    style={{
-      display: "inline-flex",
-      alignItems: "center",
-      padding: "2px 8px",
-      background: "var(--gh-bg-secondary)",
-      border: "1px solid var(--gh-border)",
-      borderRadius: "12px",
-      fontSize: "12px",
-      color: "var(--gh-text-secondary)",
-    }}>
-    {text}
-  </span>
-)
+const Badge = ({ text }: { text: string }) => <span className="about-badge">{text}</span>
 
 export default AboutPage
