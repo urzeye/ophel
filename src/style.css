@@ -21,6 +21,9 @@
   font-size: 14px;
   line-height: 1.5;
   color: var(--gh-text, #333);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   /* Allow tooltips and popups to overflow the shadow host boundaries */
   overflow: visible !important;
 }
@@ -2027,6 +2030,7 @@
   color: var(--gh-primary, #4285f4);
   border-bottom-color: var(--gh-primary, #4285f4);
   background: color-mix(in srgb, var(--gh-bg, #ffffff) 82%, transparent);
+  font-weight: 600;
 }
 
 .gh-panel-tab-btn:focus-visible {

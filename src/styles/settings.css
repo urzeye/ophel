@@ -32,6 +32,9 @@
     var(--gh-bg, #f9fafb);
   color: var(--gh-text, #374151);
   font-family: var(--gh-font-family);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .settings-layout.gh-platform-macos {
@@ -617,7 +620,7 @@
   border-radius: 999px;
   background: color-mix(in srgb, var(--gh-primary, #4285f4) 11%, var(--gh-card-bg, #ffffff));
   color: var(--gh-primary, #4285f4);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   line-height: 1.3;
   white-space: nowrap;
@@ -745,7 +748,7 @@
   background: color-mix(in srgb, var(--gh-primary, #4285f4) 10%, var(--gh-card-bg, #ffffff));
   color: var(--gh-primary, #4285f4);
   flex: 0 0 auto;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   line-height: 1;
   white-space: nowrap;
@@ -829,7 +832,7 @@
 
 .settings-row-desc {
   font-size: 12px;
-  color: var(--gh-text-secondary, #9ca3af);
+  color: var(--gh-text-secondary, #6b7280);
 }
 
 .settings-row-control {
@@ -1187,8 +1190,8 @@
 
 .settings-pack-title-line > strong {
   font-size: 14px;
-  font-weight: 500;
-  color: var(--gh-text, #374151);
+  font-weight: 600;
+  color: var(--gh-text, #1f2937);
   overflow-wrap: anywhere;
 }
 
@@ -1196,7 +1199,7 @@
   margin: 3px 0 0;
   font-size: 12px;
   line-height: 1.5;
-  color: var(--gh-text-secondary, #9ca3af);
+  color: var(--gh-text-secondary, #6b7280);
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -1209,8 +1212,8 @@
   flex-wrap: wrap;
   gap: 4px 10px;
   margin-top: 5px;
-  font-size: 11px;
-  color: var(--gh-text-tertiary, var(--gh-text-secondary, #9ca3af));
+  font-size: 12px;
+  color: var(--gh-text-secondary, #6b7280);
 }
 
 .settings-pack-meta > span {
@@ -1222,13 +1225,13 @@
 .settings-pack-version {
   display: inline-flex;
   align-items: center;
-  padding: 0 5px;
-  min-height: 16px;
+  padding: 0 6px;
+  min-height: 18px;
   border-radius: 5px;
   background: color-mix(in srgb, var(--gh-primary, #4285f4) 10%, transparent);
   color: color-mix(in srgb, var(--gh-primary, #4285f4) 78%, var(--gh-text, #374151));
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.02em;
 }
@@ -1243,9 +1246,9 @@
   padding: 0;
   border-radius: 0;
   background: none;
-  color: var(--gh-text-tertiary, var(--gh-text-secondary, #9ca3af));
+  color: var(--gh-text-secondary, #6b7280);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 11px;
+  font-size: 12px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1254,13 +1257,13 @@
 .settings-pack-badge {
   display: inline-flex;
   align-items: center;
-  min-height: 18px;
-  padding: 0 6px;
+  min-height: 20px;
+  padding: 0 7px;
   border: 1px solid var(--gh-card-border, #e5e7eb);
   border-radius: 999px;
   background: var(--gh-bg-secondary, #f9fafb);
   color: var(--gh-text-secondary, #6b7280);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   line-height: 1.2;
 }
@@ -1765,9 +1768,9 @@
   margin: 16px 0 0;
   padding-top: 12px;
   border-top: 1px solid var(--gh-border, #f3f4f6);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.5;
-  color: var(--gh-text-tertiary, var(--gh-text-secondary, #9ca3af));
+  color: var(--gh-text-secondary, #6b7280);
 }
 
 .settings-pack-privacy-note svg {
@@ -3224,6 +3227,9 @@
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   overflow: hidden;
   position: relative;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   animation: settings-modal-slide-in 0.25s ease;
   transition:
     width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
@@ -3380,7 +3386,7 @@ html[data-theme="dark"] .about-hero-card {
 }
 
 .about-hero-version {
-  font-size: 11px;
+  font-size: 12px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
     "Courier New", monospace;
   font-weight: 700;
@@ -3894,7 +3900,7 @@ html[data-theme="dark"] .about-privacy-banner {
   border: 1px solid var(--gh-border, #e5e7eb);
   background: var(--gh-bg-secondary, #f9fafb);
   color: var(--gh-text-secondary, #6b7280);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.6;
 }
 
@@ -3906,7 +3912,7 @@ html[data-theme="dark"] .about-privacy-banner {
   border: 1px solid var(--gh-border, #e5e7eb);
   background: var(--gh-bg-secondary, #f9fafb);
   color: var(--gh-text-secondary, #6b7280);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
   line-height: 1;
   cursor: pointer;
