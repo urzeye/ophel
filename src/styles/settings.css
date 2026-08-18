@@ -2427,6 +2427,11 @@
 /* ==================== 按钮 ==================== */
 
 .settings-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
   padding: 8px 16px;
   border-radius: 8px;
   font-size: 14px;
@@ -4905,9 +4910,8 @@ html[data-theme="dark"] .about-privacy-banner {
 }
 
 .settings-backup-actions-row {
-  margin-top: 18px;
-  padding-top: 16px;
-  border-top: 1px solid var(--gh-border, #e5e7eb);
+  margin-top: 16px;
+  padding-top: 2px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -4917,7 +4921,7 @@ html[data-theme="dark"] .about-privacy-banner {
 
 .settings-backup-actions-group {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   align-items: center;
 }
 
@@ -4929,7 +4933,7 @@ html[data-theme="dark"] .about-privacy-banner {
   height: 8px;
   background-color: var(--gh-warning, #f59e0b);
   border-radius: 50%;
-  box-shadow: 0 0 0 2px var(--gh-bg, #ffffff);
+  box-shadow: 0 0 0 2px var(--gh-card-bg, #ffffff);
 }
 
 .settings-backup-danger-card {
