@@ -2997,7 +2997,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                 type="button"
                 className="gh-panel-search-action"
                 onClick={() => setSearchQuery("")}
-                aria-label={t("clearSearch")}>
+                aria-label={t("clear")}>
                 <ClearIcon size={13} />
               </button>
             )}
@@ -3554,41 +3554,20 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
       </div>
 
       {/* 添加按钮 */}
-      <div style={{ padding: "12px" }}>
+      <div className="gh-prompt-add-container">
         <button
+          type="button"
+          className="gh-prompt-add-btn"
           onClick={() => {
             if (activeLibraryView === "chains") {
               openChainEditor()
               return
             }
             openEditModal()
-          }}
-          style={{
-            width: "100%",
-            padding: "10px",
-            background: "var(--gh-primary, #4285f4)",
-            color: "var(--gh-text-on-primary, #ffffff)",
-            border: "none",
-            borderRadius: "8px",
-            fontSize: "14px",
-            fontWeight: 500,
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "6px",
-            boxShadow: "var(--gh-btn-shadow)",
-            transition: "transform 0.2s, box-shadow 0.2s",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = "translateY(-1px)"
-            e.currentTarget.style.boxShadow = "var(--gh-btn-shadow-hover)"
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = "translateY(0)"
-            e.currentTarget.style.boxShadow = "var(--gh-btn-shadow)"
           }}>
-          <span>+</span>
+          <span className="gh-prompt-add-icon" aria-hidden="true">
+            +
+          </span>
           <span>{activeLibraryView === "chains" ? t("chainAdd") : t("addPrompt")}</span>
         </button>
       </div>

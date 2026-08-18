@@ -210,6 +210,7 @@ export const ko = {
   sitePacksBindingListTitle: "추가된 사이트",
   sitePacksStatusUnavailable: "라이브러리에서 제거됨",
   remoteConfigStatusSummary: "인덱스 {revision} · 마지막 확인 {time}",
+  remoteConfigLastCheckTime: "마지막 확인 {time}",
   sitePacksInstall: "설치",
   sitePacksUpdate: "업데이트",
   sitePacksUninstall: "제거",

@@ -223,6 +223,7 @@ export const de = {
   sitePacksBindingListTitle: "Hinzugefügte Websites",
   sitePacksStatusUnavailable: "Aus Bibliothek entfernt",
   remoteConfigStatusSummary: "Index {revision} · zuletzt geprüft {time}",
+  remoteConfigLastCheckTime: "zuletzt geprüft {time}",
   sitePacksInstall: "Installieren",
   sitePacksUpdate: "Aktualisieren",
   sitePacksUninstall: "Deinstallieren",

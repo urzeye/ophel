@@ -185,6 +185,7 @@ export const zhTW = {
   sitePacksBindingListTitle: "已新增的網站",
   sitePacksStatusUnavailable: "適配庫中已移除",
   remoteConfigStatusSummary: "索引 {revision} · 上次檢查 {time}",
+  remoteConfigLastCheckTime: "上次檢查 {time}",
   sitePacksInstall: "安裝",
   sitePacksUpdate: "更新",
   sitePacksUninstall: "解除安裝",

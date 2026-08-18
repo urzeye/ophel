@@ -214,6 +214,7 @@ export const ja = {
   sitePacksBindingListTitle: "追加済みのサイト",
   sitePacksStatusUnavailable: "ライブラリから削除済み",
   remoteConfigStatusSummary: "インデックス {revision} · 最終確認 {time}",
+  remoteConfigLastCheckTime: "最終確認 {time}",
   sitePacksInstall: "インストール",
   sitePacksUpdate: "更新",
   sitePacksUninstall: "アンインストール",

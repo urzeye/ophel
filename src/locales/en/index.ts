@@ -216,6 +216,7 @@ export const en = {
   sitePacksBindingListTitle: "Added sites",
   sitePacksStatusUnavailable: "Removed from library",
   remoteConfigStatusSummary: "Index {revision} · last checked {time}",
+  remoteConfigLastCheckTime: "last checked {time}",
   sitePacksInstall: "Install",
   sitePacksUpdate: "Update",
   sitePacksUninstall: "Uninstall",

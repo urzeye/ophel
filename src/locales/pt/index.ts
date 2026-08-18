@@ -217,6 +217,7 @@ export const pt = {
   sitePacksBindingListTitle: "Sites adicionados",
   sitePacksStatusUnavailable: "Removido da biblioteca",
   remoteConfigStatusSummary: "Índice {revision} · última verificação {time}",
+  remoteConfigLastCheckTime: "última verificação {time}",
   sitePacksInstall: "Instalar",
   sitePacksUpdate: "Atualizar",
   sitePacksUninstall: "Desinstalar",

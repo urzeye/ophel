@@ -217,6 +217,7 @@ export const ru = {
   sitePacksBindingListTitle: "Добавленные сайты",
   sitePacksStatusUnavailable: "Удалён из каталога",
   remoteConfigStatusSummary: "Индекс {revision} · последняя проверка {time}",
+  remoteConfigLastCheckTime: "последняя проверка {time}",
   sitePacksInstall: "Установить",
   sitePacksUpdate: "Обновить",
   sitePacksUninstall: "Удалить",

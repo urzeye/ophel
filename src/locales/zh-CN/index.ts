@@ -183,6 +183,7 @@ export const zhCN = {
   sitePacksBindingListTitle: "已添加的站点",
   sitePacksStatusUnavailable: "适配库中已移除",
   remoteConfigStatusSummary: "索引 {revision} · 上次检查 {time}",
+  remoteConfigLastCheckTime: "上次检查 {time}",
   sitePacksInstall: "安装",
   sitePacksUpdate: "更新",
   sitePacksUninstall: "卸载",

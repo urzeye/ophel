@@ -1751,10 +1751,9 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
         {registryRevision !== undefined ? `rev ${registryRevision}` : "—"}
       </span>
       <span className="settings-pack-check-time">
-        {t("remoteConfigStatusSummary", {
-          revision: registryRevision !== undefined ? String(registryRevision) : "—",
+        {t("remoteConfigLastCheckTime", {
           time: formatCheckTime(lastCheckAt),
-        }).replace(/^[^·]*·\s*/, "")}
+        })}
       </span>
     </span>
   ) : (
