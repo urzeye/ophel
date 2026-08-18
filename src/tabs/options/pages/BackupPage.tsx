@@ -221,13 +221,18 @@ const RemoteBackupModal: React.FC<{
           <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
             <Tooltip content={t("refresh")}>
               <button
+                type="button"
                 onClick={loadBackups}
-                className="settings-btn settings-btn-secondary"
+                className="settings-btn settings-btn-secondary settings-icon-only-btn"
                 aria-label={t("refresh")}>
                 <RefreshIcon size={16} />
               </button>
             </Tooltip>
-            <button onClick={onClose} className="settings-btn settings-btn-secondary">
+            <button
+              type="button"
+              onClick={onClose}
+              className="settings-btn settings-btn-secondary settings-icon-only-btn"
+              aria-label={t("close")}>
               ✕
             </button>
           </div>

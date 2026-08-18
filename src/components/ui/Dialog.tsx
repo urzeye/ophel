@@ -49,6 +49,11 @@ const DIALOG_STYLES = `
     justify-content: flex-end;
   }
   .gh-dialog-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    white-space: nowrap;
     padding: 8px 16px;
     border-radius: 6px;
     font-size: 14px;

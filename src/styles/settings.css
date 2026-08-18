@@ -5197,8 +5197,7 @@ html[data-theme="dark"] .about-privacy-banner {
 
 .settings-shortcuts-footer {
   margin-top: 16px;
-  padding-top: 14px;
-  border-top: 1px solid var(--gh-border, #e5e7eb);
+  padding-top: 2px;
   display: flex;
   justify-content: flex-end;
 }
