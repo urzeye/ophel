@@ -9,6 +9,7 @@ import { ConfirmDialog, Tooltip } from "~components/ui"
 import {
   DEFAULT_KEYBINDINGS,
   formatShortcut,
+  getShortcutParts,
   isMacOS,
   normalizeShortcutBinding,
   normalizeShortcutKey,
@@ -101,61 +102,48 @@ const ShortcutInput: React.FC<{
     setIsRecording(false)
   }
 
-  // 如果 binding 为 null，显示"未设置"
-  const displayText = isRecording
-    ? t("pressAnyKey")
-    : binding
-      ? formatShortcut(binding, isMac)
-      : t("shortcutNotSet")
+  const parts = binding ? getShortcutParts(binding, isMac) : []
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+    <div className="settings-shortcut-container">
       <button
-        className={`shortcut-input ${isRecording ? "recording" : ""} ${!binding ? "not-set" : ""}`}
+        type="button"
+        className={`settings-shortcut-input ${isRecording ? "is-recording" : ""} ${!binding ? "is-empty" : ""}`}
         onClick={() => setIsRecording(true)}
         onKeyDown={handleKeyDown}
         onBlur={handleBlur}
-        style={{
-          padding: "6px 12px",
-          minWidth: "120px",
-          fontSize: "13px",
-          fontFamily: "monospace",
-          border: isRecording
-            ? "2px solid var(--gh-primary)"
-            : "1px solid var(--gh-border, #e5e7eb)",
-          borderRadius: "6px",
-          background: isRecording ? "var(--gh-bg-hover)" : "var(--gh-bg)",
-          color: binding ? "var(--gh-text)" : "var(--gh-text-tertiary)",
-          cursor: "pointer",
-          textAlign: "center",
-          transition: "all 0.2s",
-          fontStyle: binding ? "normal" : "italic",
-        }}>
-        {displayText}
+        title={
+          isRecording
+            ? t("pressAnyKey")
+            : binding
+              ? formatShortcut(binding, isMac)
+              : t("shortcutNotSet")
+        }>
+        {isRecording ? (
+          <span>{t("pressAnyKey")}</span>
+        ) : parts.length > 0 ? (
+          parts.map((part, index) => (
+            <React.Fragment key={index}>
+              {index > 0 && !isMac && <span className="settings-kbd-separator">+</span>}
+              <kbd className="settings-kbd">{part}</kbd>
+            </React.Fragment>
+          ))
+        ) : (
+          <span>{t("shortcutNotSet")}</span>
+        )}
       </button>
       {binding && (
         <Tooltip content={t("shortcutRemove")}>
           <button
+            type="button"
+            className="settings-shortcut-remove-btn"
             onClick={onRemove}
-            style={{
-              padding: "4px 8px",
-              fontSize: "12px",
-              border: "1px solid var(--gh-border)",
-              borderRadius: "4px",
-              background: "var(--gh-bg)",
-              color: "var(--gh-text-secondary)",
-              cursor: "pointer",
-              transition: "all 0.2s",
-            }}>
+            aria-label={t("shortcutRemove")}>
             ✕
           </button>
         </Tooltip>
       )}
-      {conflictWarning && (
-        <span style={{ fontSize: "12px", color: "var(--gh-error, #ef4444)" }}>
-          {conflictWarning}
-        </span>
-      )}
+      {conflictWarning && <span className="settings-shortcut-conflict">{conflictWarning}</span>}
     </div>
   )
 }
@@ -342,7 +330,6 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
                 if (isEdge) url = "edge://extensions/shortcuts"
 
                 // Firefox does not allow extensions to open about:addons via tabs.create.
-                // Show inline guidance text instead.
                 if (isFirefox) {
                   return (
                     <span
@@ -358,17 +345,9 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
 
                 return (
                   <button
-                    onClick={() => sendToBackground({ type: MSG_OPEN_URL, url })}
-                    style={{
-                      padding: "6px 12px",
-                      fontSize: "13px",
-                      border: "none",
-                      borderRadius: "6px",
-                      background: "var(--gh-primary)",
-                      color: "#fff",
-                      cursor: "pointer",
-                      whiteSpace: "nowrap",
-                    }}>
+                    type="button"
+                    className="settings-btn settings-btn-primary"
+                    onClick={() => sendToBackground({ type: MSG_OPEN_URL, url })}>
                     {t("openBrowserShortcuts")}
                   </button>
                 )
@@ -377,24 +356,11 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
           </>
         )}
 
-        <div
-          style={{
-            marginTop: "16px",
-            paddingTop: "16px",
-            display: "flex",
-            justifyContent: "flex-end",
-          }}>
+        <div className="settings-shortcuts-footer">
           <button
-            onClick={() => setShowResetConfirm(true)}
-            style={{
-              padding: "8px 16px",
-              fontSize: "13px",
-              border: "1px solid var(--gh-border)",
-              borderRadius: "6px",
-              background: "var(--gh-bg)",
-              color: "var(--gh-text-secondary)",
-              cursor: "pointer",
-            }}>
+            type="button"
+            className="settings-btn settings-btn-secondary"
+            onClick={() => setShowResetConfirm(true)}>
             {t("resetShortcuts")}
           </button>
         </div>
@@ -403,7 +369,6 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
       {groupedActions.map(({ categoryId, categoryMeta, actions }) => (
         <SettingCard key={categoryId} title={t(categoryMeta.labelKey)}>
           {actions.map(([actionId, meta]) => {
-            // 获取绑定：用户设置 > 默认设置（若用户设置为 null 则为已移除）
             const userBinding = shortcuts?.keybindings?.[actionId]
             const binding =
               userBinding === null ? null : userBinding || DEFAULT_KEYBINDINGS[actionId]

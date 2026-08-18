@@ -4,7 +4,13 @@
  */
 import React, { useCallback, useEffect, useState } from "react"
 
-import { PermissionsIcon } from "~components/icons"
+import {
+  CloudIcon,
+  CookieIcon,
+  NotificationIcon,
+  PermissionsIcon,
+  SaveIcon,
+} from "~components/icons"
 import { ConfirmDialog } from "~components/ui"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
@@ -25,7 +31,7 @@ const REQUIRED_PERMISSIONS = [
     name: "存储",
     nameKey: "permissionStorage",
     description: "permissionStorageDesc",
-    icon: "💾",
+    Icon: SaveIcon,
   },
 ]
 
@@ -36,7 +42,7 @@ const OPTIONAL_PERMISSIONS = [
     name: "通知",
     nameKey: "permissionNotifications",
     description: "permissionNotificationsDesc",
-    icon: "🔔",
+    Icon: NotificationIcon,
     permissions: ["notifications"],
   },
   {
@@ -44,7 +50,7 @@ const OPTIONAL_PERMISSIONS = [
     name: "Cookie管理",
     nameKey: "permissionCookies",
     description: "permissionCookiesDesc",
-    icon: "🍪",
+    Icon: CookieIcon,
     permissions: ["cookies"],
   },
 ]
@@ -56,7 +62,7 @@ const OPTIONAL_HOST_PERMISSIONS = [
     name: "WebDAV 访问权限",
     nameKey: "permissionWebdavAccess",
     description: "permissionWebdavAccessDesc",
-    icon: "☁️",
+    Icon: CloudIcon,
     origins: ["<all_urls>"],
   },
 ]
@@ -85,7 +91,6 @@ const PermissionsPage: React.FC<PermissionsPageProps> = () => {
   })
 
   // 判断是否在扩展页面上下文（可以直接调用权限 API）
-  // 注意：content script 中 chrome.permissions 为 undefined
   const isExtensionPage = typeof chrome.permissions !== "undefined"
 
   // 检查可选权限状态
@@ -180,15 +185,10 @@ const PermissionsPage: React.FC<PermissionsPageProps> = () => {
   useEffect(() => {
     checkOptionalPermissions()
 
-    // 检查是否有自动请求参数 (auto_request)
-    // 只有在扩展页面环境下才处理
     if (isExtensionPage && typeof window !== "undefined") {
       const urlParams = new URLSearchParams(window.location.search)
       if (urlParams.get("auto_request") === "true") {
-        // 给一点延迟，确保页面渲染完成
         setTimeout(() => {
-          // 默认请求第一个可选权限（通常是 all_urls）
-          // 以后如果有多权限，可能需要传递具体权限 ID
           const perm = OPTIONAL_HOST_PERMISSIONS[0]
           if (perm) {
             requestPermission(perm)
@@ -264,19 +264,12 @@ const PermissionsPage: React.FC<PermissionsPageProps> = () => {
       {/* 可选权限 */}
       <SettingCard title={t("optionalPermissions")} description={t("optionalPermissionsDesc")}>
         {/* 同步提示 + 刷新按钮 */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "16px",
-            paddingBottom: "12px",
-            borderBottom: "1px solid var(--gh-border, #e5e7eb)",
-          }}>
+        <div className="settings-perm-header-row">
           <span style={{ fontSize: "13px", color: "var(--gh-text-secondary, #9ca3af)" }}>
             {t("permissionsSyncHint")}
           </span>
           <button
+            type="button"
             className="settings-btn settings-btn-secondary"
             onClick={async (e) => {
               e.preventDefault()
@@ -284,39 +277,31 @@ const PermissionsPage: React.FC<PermissionsPageProps> = () => {
               await checkOptionalPermissions()
               showToast(t("permissionsRefreshed"), 1500)
             }}
-            disabled={loading}
-            style={{ fontSize: "12px", padding: "4px 12px", flexShrink: 0 }}>
+            disabled={loading}>
             {loading ? t("refreshing") : t("refreshStatus")}
           </button>
         </div>
 
-        {[...OPTIONAL_PERMISSIONS, ...OPTIONAL_HOST_PERMISSIONS].map((perm, index, arr) => (
+        {[...OPTIONAL_PERMISSIONS, ...OPTIONAL_HOST_PERMISSIONS].map((perm) => (
           <SettingRow
             key={perm.id}
             label={
-              <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <span style={{ fontSize: "18px" }}>{perm.icon}</span>
+              <span className="settings-perm-item-label">
+                <span className="settings-perm-icon">
+                  <perm.Icon size={16} color="currentColor" />
+                </span>
                 <span>{t(perm.nameKey)}</span>
               </span>
             }
             description={t(perm.description)}
-            style={index === arr.length - 1 ? { borderBottom: "none" } : {}}>
-            <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+            settingId={`permission-item-${perm.id}`}>
+            <div className="settings-perm-actions">
               {optionalPermissionStatus[perm.id] ? (
                 <>
-                  <span
-                    style={{
-                      padding: "4px 10px",
-                      borderRadius: "4px",
-                      fontSize: "12px",
-                      background: "rgba(16, 185, 129, 0.1)",
-                      color: "#10b981",
-                    }}>
-                    {t("granted")}
-                  </span>
+                  <span className="settings-status-badge is-success">{t("granted")}</span>
                   <button
+                    type="button"
                     className="settings-btn settings-btn-secondary"
-                    style={{ padding: "4px 12px", fontSize: "12px" }}
                     onClick={(e) => {
                       e.preventDefault()
                       e.stopPropagation()
@@ -327,19 +312,10 @@ const PermissionsPage: React.FC<PermissionsPageProps> = () => {
                 </>
               ) : (
                 <>
-                  <span
-                    style={{
-                      padding: "4px 10px",
-                      borderRadius: "4px",
-                      fontSize: "12px",
-                      background: "rgba(239, 68, 68, 0.1)",
-                      color: "#ef4444",
-                    }}>
-                    {t("notGranted")}
-                  </span>
+                  <span className="settings-status-badge is-danger">{t("notGranted")}</span>
                   <button
+                    type="button"
                     className="settings-btn settings-btn-primary"
-                    style={{ padding: "4px 12px", fontSize: "12px" }}
                     onClick={(e) => {
                       e.preventDefault()
                       e.stopPropagation()
@@ -356,27 +332,20 @@ const PermissionsPage: React.FC<PermissionsPageProps> = () => {
 
       {/* 必需权限（只读展示） */}
       <SettingCard title={t("requiredPermissions")} description={t("requiredPermissionsDesc")}>
-        {REQUIRED_PERMISSIONS.map((perm, index) => (
+        {REQUIRED_PERMISSIONS.map((perm) => (
           <SettingRow
             key={perm.id}
             label={
-              <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <span style={{ fontSize: "18px" }}>{perm.icon}</span>
+              <span className="settings-perm-item-label">
+                <span className="settings-perm-icon">
+                  <perm.Icon size={16} color="currentColor" />
+                </span>
                 <span>{t(perm.nameKey)}</span>
               </span>
             }
             description={t(perm.description)}
-            style={index === REQUIRED_PERMISSIONS.length - 1 ? { borderBottom: "none" } : {}}>
-            <span
-              style={{
-                padding: "4px 10px",
-                borderRadius: "4px",
-                fontSize: "12px",
-                background: "rgba(107, 114, 128, 0.1)",
-                color: "var(--gh-text-secondary, #6b7280)",
-              }}>
-              {t("required")}
-            </span>
+            settingId={`permission-item-${perm.id}`}>
+            <span className="settings-status-badge is-muted">{t("required")}</span>
           </SettingRow>
         ))}
       </SettingCard>

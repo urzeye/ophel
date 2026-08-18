@@ -497,9 +497,9 @@ export function normalizeShortcutsSettings(
 /**
  * 将快捷键配置转换为用于显示的字符串
  */
-export function formatShortcut(binding: ShortcutBinding, isMac = false): string {
+export function getShortcutParts(binding: ShortcutBinding, isMac = false): string[] {
   const normalizedBinding = normalizeShortcutBinding(binding)
-  if (!normalizedBinding) return ""
+  if (!normalizedBinding) return []
 
   const parts: string[] = []
 
@@ -529,6 +529,11 @@ export function formatShortcut(binding: ShortcutBinding, isMac = false): string 
   const displayKey = keyMap[normalizedKey] || normalizedKey.toUpperCase()
   parts.push(displayKey)
 
+  return parts
+}
+
+export function formatShortcut(binding: ShortcutBinding, isMac = false): string {
+  const parts = getShortcutParts(binding, isMac)
   return parts.join(isMac ? "" : "+")
 }
 
