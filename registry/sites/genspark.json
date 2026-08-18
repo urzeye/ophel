@@ -79,7 +79,7 @@
     "hide": [".j-index-layout-sidebar", ".left-side"]
   },
   "cleanMode": {
-    "hide": [".promo-banner", ".upgrade-promo-banner", ".invite-button .invite-button--icon-only"]
+    "hide": [".promo-banner", ".upgrade-promo-banner", ".invite-button"]
   },
   "widthSelectors": [
     {
