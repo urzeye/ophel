@@ -292,6 +292,10 @@ export class ClaudeAdapter extends SiteAdapter {
   }
 
   private isClaudeConversationPinned(element: Element): boolean {
+    // dframe 布局：置顶/最近分组有独立 testid，直接判定
+    if (element.closest('[data-testid="sidebar-pinned"]')) return true
+    if (element.closest('[data-testid="sidebar-recents"]')) return false
+
     const privateSelectors = this.config.sitePrivateSelectors
     const groupContainer = element.closest(privateSelectors.conversationGroup)
     if (!groupContainer) return false

@@ -93,10 +93,12 @@ export interface ClaudeSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const CLAUDE_CONFIG_VERSION = 3
+export const CLAUDE_CONFIG_VERSION = 4
 
 const createClaudeConfig = (): ClaudeSiteConfig => {
-  const conversationItem = 'nav[data-testid="sidebar"] a[href*="/chat/"]'
+  // dframe 布局中侧栏列表容器是 div#frame-peek-popover（不再是 nav），
+  // 用标签无关的 [data-testid="sidebar"] 同时覆盖新旧两代结构
+  const conversationItem = '[data-testid="sidebar"] a[href*="/chat/"]'
   const userQuery = '[data-testid="user-message"]'
   const assistantResponse = ".font-claude-response"
   const documentRoot = "#wiggle-file-content"
@@ -106,10 +108,15 @@ const createClaudeConfig = (): ClaudeSiteConfig => {
   const thoughtToggle = "button[aria-expanded]"
   const thoughtStatus = 'span[role="status"][aria-live="polite"]'
   const stopButton = ['button[aria-label="Stop response"]']
-  const layoutScope = "#main-content"
+  // 新版 dframe 布局主容器为 main[data-perf-region="main"]，#main-content 已被移除；
+  // 用 :is() 同时兼容新旧主容器，保证下游 "${layoutScope} xxx" 和
+  // "${layoutScope}:not(...)" 两种插值方式语义都正确。
+  const layoutScope = ':is(main[data-perf-region="main"], #main-content)'
   // 灰度后 data-autoscroll-container 不再是 page-header 的直接子节点，而是下移一层；
   // 用后代 has() 匹配新结构，同时保留直接子选择器兼容旧结构。
   const chatColumnScope = [
+    // dframe 布局：page-header 更名为 chat-header
+    `${layoutScope} div:has(> [data-testid="chat-header"]):has([data-autoscroll-container="true"])`,
     `${layoutScope} div:has(> [data-testid="page-header"]):has([data-autoscroll-container="true"])`,
     `${layoutScope} div:has(> [data-testid="page-header"]):has(> [data-autoscroll-container="true"])`,
   ].join(", ")
@@ -148,13 +155,14 @@ const createClaudeConfig = (): ClaudeSiteConfig => {
         `${layoutScope} .overflow-y-scroll`,
         "#root .overflow-y-auto.overflow-x-hidden",
       ],
-      sidebarScrollContainer: "nav",
+      sidebarScrollContainer: '[data-testid="sidebar"], nav',
     },
     input: { mode: "contenteditable", submitKey: "Enter" },
     conversation: {
       itemSelector: conversationItem,
       idFrom: { attr: "href", regex: "/chat/([a-f0-9-]+)" },
-      titleSelector: "span.truncate",
+      // dframe 布局标题为 .dframe-fade-label（无 truncate 类），旧结构保留 span.truncate
+      titleSelector: ".dframe-fade-label, span.truncate",
       urlTemplate: "/chat/{id}",
       navigationStrategy: "click-item",
       shadow: false,
@@ -187,6 +195,13 @@ const createClaudeConfig = (): ClaudeSiteConfig => {
     },
     widthSelectors: [
       {
+        // dframe 布局新增的最外层宽度约束（max-w-[50.5rem]），
+        // transcript 与输入框都在其内部，必须一起放宽
+        selector: `${layoutScope} [data-testid="chat-column"]`,
+        property: "max-width",
+        extraCss: "width: 100% !important; min-width: 0 !important;",
+      },
+      {
         selector: `${layoutScope} .max-w-screen-md`,
         property: "max-width",
         extraCss: "width: 100% !important; min-width: 0 !important;",
@@ -203,7 +218,17 @@ const createClaudeConfig = (): ClaudeSiteConfig => {
       },
     ],
     zenMode: {
-      hide: ['nav[data-testid="sidebar"]'],
+      // dframe 布局侧栏外壳为 aside.dframe-sidebar，列表在 [data-testid="sidebar"] 内
+      hide: ["aside.dframe-sidebar", '[data-testid="sidebar"]'],
+      styles: [
+        {
+          // dframe 布局的侧栏是 position:absolute，宽度靠 .dframe-content-inner 的
+          // padding-left（--df-sidebar-clearance）预留；隐藏侧栏后归还这块空间
+          selector: 'main[data-perf-region="main"] .dframe-content-inner',
+          property: "padding-left",
+          value: "var(--df-content-gutter, 8px)",
+        },
+      ],
     },
     cleanMode: {
       hide: ['[data-disclaimer="true"]'],
