@@ -3411,8 +3411,8 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                 onDrop={(e) => handleDrop(e, p.id)}
                 style={{
                   background: isHighlighted
-                    ? "linear-gradient(135deg, #e8f0fe 0%, #f1f8e9 100%)"
-                    : "var(--gh-bg, white)",
+                    ? "color-mix(in srgb, var(--gh-primary, #4285f4) 10%, var(--gh-card-bg, var(--gh-bg, #ffffff)))"
+                    : "var(--gh-card-bg, var(--gh-bg, #ffffff))",
                   border: isHighlighted
                     ? "1px solid var(--gh-primary, #4285f4)"
                     : "1px solid var(--gh-border, #e5e7eb)",
@@ -3460,9 +3460,9 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                     />
                     <span
                       style={{
-                        fontSize: "11px",
-                        padding: "2px 6px",
-                        background: "var(--gh-hover, #f3f4f6)",
+                        fontSize: "12px",
+                        padding: "2px 7px",
+                        background: "var(--gh-bg-secondary, #f3f4f6)",
                         borderRadius: "4px",
                         color: "var(--gh-text-secondary, #6b7280)",
                         flexShrink: 0,
@@ -3477,7 +3477,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                   style={{
                     fontSize: "13px",
                     color: "var(--gh-text-secondary, #6b7280)",
-                    lineHeight: 1.4,
+                    lineHeight: 1.55,
                     display: "-webkit-box",
                     WebkitLineClamp: 2,
                     WebkitBoxOrient: "vertical",
@@ -3566,8 +3566,8 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
           style={{
             width: "100%",
             padding: "10px",
-            background: "var(--gh-header-bg)",
-            color: "var(--gh-footer-text, var(--gh-text-on-primary, white))",
+            background: "var(--gh-primary, #4285f4)",
+            color: "var(--gh-text-on-primary, #ffffff)",
             border: "none",
             borderRadius: "8px",
             fontSize: "14px",
