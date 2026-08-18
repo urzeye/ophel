@@ -774,7 +774,17 @@ export class DeclarativeAdapter extends SiteAdapter {
   }
 
   getScrollContainer(): HTMLElement | null {
-    return this.findElementBySelectors(this.manifest.selectors.scrollContainer ?? [])
+    const selectors = this.manifest.selectors.scrollContainer ?? []
+    // 优先返回第一个实际可滚动的匹配；都不可滚动时退回首个匹配，
+    // 保持与原先“取第一个命中”行为兼容。
+    let firstMatch: HTMLElement | null = null
+    for (const selector of selectors) {
+      const el = this.findElementBySelectors([selector])
+      if (!el) continue
+      if (el.scrollHeight > el.clientHeight) return el
+      firstMatch ??= el
+    }
+    return firstMatch
   }
 
   getSidebarScrollContainer(): Element | null {

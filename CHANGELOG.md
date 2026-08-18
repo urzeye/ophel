@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### 🚀 New Features
+
+- **Genspark support** — The online adapter library now includes Genspark (genspark.ai); installing the pack enables outlines with user queries, basic export, generation detection and stop, chat width, Zen Mode, new chat, prompt insertion, and Clean Mode.
+
 ---
 
 ## [1.2.2] - 2026-08-18

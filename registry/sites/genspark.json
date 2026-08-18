@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "genspark",
   "version": 1,
-  "minAppVersion": "1.2.0",
+  "minAppVersion": "1.2.3",
   "name": "Genspark",
   "nameI18n": {
     "zh-CN": "Genspark",
@@ -60,7 +60,7 @@
       ".sidebar-header .menu-items > [data-rail-fixed]:first-child"
     ],
     "stopButton": ["svg.stop-icon"],
-    "scrollContainer": [".conversation-wrapper", ".j-general-chat-wrapper"]
+    "scrollContainer": [".chat-wrapper", ".main-inner-wrapper", ".j-index-layout-content"]
   },
   "input": {
     "mode": "textarea",
@@ -79,7 +79,7 @@
     "hide": [".j-index-layout-sidebar", ".left-side"]
   },
   "cleanMode": {
-    "hide": [".promo-banner", ".upgrade-promo-banner"]
+    "hide": [".promo-banner", ".upgrade-promo-banner", ".invite-button .invite-button--icon-only"]
   },
   "widthSelectors": [
     {
