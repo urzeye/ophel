@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "id": "genspark",
+  "version": 1,
+  "minAppVersion": "1.2.0",
+  "name": "Genspark",
+  "nameI18n": {
+    "zh-CN": "Genspark",
+    "zh-TW": "Genspark",
+    "en": "Genspark",
+    "ja": "Genspark",
+    "ko": "Genspark",
+    "it": "Genspark",
+    "de": "Genspark",
+    "es": "Genspark",
+    "fr": "Genspark",
+    "pt-BR": "Genspark",
+    "ru": "Genspark"
+  },
+  "description": "Adds Ophel outlines, basic export, generation detection and stopping, chat width, Zen Mode, new chat, prompt insertion, and Clean Mode to Genspark (genspark.ai).",
+  "descriptionI18n": {
+    "zh-CN": "为 Genspark 添加 Ophel 大纲、基础导出、生成检测与停止、对话宽度、禅模式、新对话、提示词插入和净化模式功能。",
+    "zh-TW": "為 Genspark 加入 Ophel 大綱、基本匯出、生成偵測與停止、對話寬度、禪模式、新對話、提示詞插入與淨化模式功能。",
+    "en": "Adds Ophel outlines, basic export, generation detection and stopping, chat width, Zen Mode, new chat, prompt insertion, and Clean Mode to Genspark (genspark.ai).",
+    "ja": "Genspark に、Ophel のアウトライン、基本エクスポート、生成の検出と停止、チャット幅、Zen モード、新規チャット、プロンプト挿入、クリーンモードの機能を追加します。",
+    "ko": "Genspark에 Ophel의 개요, 기본 내보내기, 생성 감지 및 중지, 대화 너비, Zen 모드, 새 채팅, 프롬프트 삽입, 클린 모드 기능을 추가합니다.",
+    "it": "Aggiunge a Genspark le funzioni Ophel per struttura, esportazione di base, rilevamento e arresto della generazione, larghezza della chat, modalità Zen, nuova chat, inserimento dei prompt e modalità pulita.",
+    "de": "Ergänzt Genspark um Ophel-Funktionen für Gliederung, Basisexport, Erkennung und Stoppen der Generierung, Chatbreite, Zen-Modus, neuen Chat, Prompt-Einfügung und Clean-Modus.",
+    "es": "Añade a Genspark las funciones de Ophel para esquema, exportación básica, detección y detención de la generación, ancho del chat, modo zen, nuevo chat, inserción de prompts y modo limpio.",
+    "fr": "Ajoute à Genspark les fonctions Ophel de plan, d’exportation de base, de détection et d’arrêt de la génération, de largeur de discussion, de mode Zen, de nouvelle discussion, d’insertion de prompts et de mode épuré.",
+    "pt-BR": "Adiciona ao Genspark os recursos do Ophel para estrutura, exportação básica, detecção e interrupção da geração, largura da conversa, modo Zen, nova conversa, inserção de prompts e modo limpo.",
+    "ru": "Добавляет в Genspark функции Ophel для структуры, базового экспорта, отслеживания и остановки генерации, ширины чата, режима Zen, нового чата, вставки промптов и режима очистки."
+  },
+  "matches": ["https://www.genspark.ai/*"],
+  "theme": {
+    "primary": "#232425",
+    "secondary": "#1a1a1a"
+  },
+  "capabilities": [
+    "outline",
+    "outline-user-queries",
+    "export-basic",
+    "generation-detect",
+    "new-chat",
+    "stop-generation",
+    "width",
+    "zen",
+    "clean",
+    "prompt-insert"
+  ],
+  "selectors": {
+    "textarea": ["textarea[name='query']", "textarea.j-search-input"],
+    "submitButton": [".enter-icon .enter-icon-wrapper"],
+    "responseContainer": ".conversation-content",
+    "chatContent": [".conversation-statement"],
+    "userQuery": ".conversation-statement.user .content",
+    "assistantResponse": ".conversation-statement.assistant .markdown-viewer",
+    "newChatButton": [
+      ".header-right .top > .icon",
+      ".sidebar-header .menu-items > [data-rail-fixed]:first-child"
+    ],
+    "stopButton": ["svg.stop-icon"],
+    "scrollContainer": [".conversation-wrapper", ".j-general-chat-wrapper"]
+  },
+  "input": {
+    "mode": "textarea",
+    "submitKey": "Enter"
+  },
+  "generating": {
+    "existsSelectors": ["svg.stop-icon"]
+  },
+  "export": {
+    "userQuerySelector": ".conversation-statement.user .content",
+    "assistantResponseSelector": ".conversation-statement.assistant .markdown-viewer",
+    "turnSelector": ".conversation-statement",
+    "useShadowDOM": false
+  },
+  "zenMode": {
+    "hide": [".j-index-layout-sidebar", ".left-side"]
+  },
+  "cleanMode": {
+    "hide": [".promo-banner", ".upgrade-promo-banner"]
+  },
+  "widthSelectors": [
+    {
+      "selector": ".conversation-wrapper",
+      "property": "width"
+    },
+    {
+      "selector": ".search-input-wrapper",
+      "property": "max-width",
+      "extraCss": "width: 100% !important; box-sizing: border-box !important;"
+    }
+  ]
+}
