@@ -1495,7 +1495,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
     return (
       <div className="settings-pack-item" key={origin}>
         <div className="settings-pack-icon" aria-hidden="true">
-          <GlobeIcon size={16} />
+          <GlobeIcon size={20} />
         </div>
         <div className="settings-pack-info">
           <div className="settings-pack-title-line">
@@ -1562,7 +1562,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
           className="settings-pack-icon"
           style={getPackIconStyle(pack.manifest.theme)}
           aria-hidden="true">
-          <PlatformIcon platform={faviconUrl ? { name, faviconUrl } : { name }} size={18} />
+          <PlatformIcon platform={faviconUrl ? { name, faviconUrl } : { name }} size={24} />
         </div>
         <div className="settings-pack-info">
           <div className="settings-pack-title-line">
@@ -1665,7 +1665,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
         <div className="settings-pack-icon" style={getPackIconStyle(view.theme)} aria-hidden="true">
           <PlatformIcon
             platform={faviconUrl ? { name: view.name, faviconUrl } : { name: view.name }}
-            size={18}
+            size={24}
           />
         </div>
         <div className="settings-pack-info">
@@ -2035,7 +2035,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
             data-setting-id="site-packs-local-import">
             <div className="settings-pack-import-row">
               <div className="settings-pack-icon" aria-hidden="true">
-                <ImportIcon size={16} />
+                <ImportIcon size={20} />
               </div>
               <div className="settings-pack-import-text">
                 <div className="settings-card-title">{t("sitePacksLocalImportTitle")}</div>

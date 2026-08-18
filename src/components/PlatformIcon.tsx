@@ -71,7 +71,9 @@ export const PlatformIcon: React.FC<PlatformIconProps> = ({
         alignItems: "center",
         justifyContent: "center",
         flex: "0 0 auto",
-        ...(fallbackClassName ? {} : { fontSize: size, lineHeight: 1 }),
+        ...(fallbackClassName
+          ? {}
+          : { fontSize: Math.round(size * 0.75), fontWeight: 600, lineHeight: 1 }),
       }}>
       {platform.icon || Array.from(platform.name.trim())[0]?.toUpperCase() || "?"}
     </span>

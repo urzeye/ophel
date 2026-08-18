@@ -1165,11 +1165,12 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 9px;
   background: color-mix(in srgb, var(--gh-primary, #4285f4) 10%, var(--gh-card-bg, #ffffff));
   color: color-mix(in srgb, var(--gh-primary, #4285f4) 72%, var(--gh-text, #374151));
+  overflow: hidden;
 }
 
 .settings-pack-info {
