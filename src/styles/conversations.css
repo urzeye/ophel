@@ -342,6 +342,23 @@ html[data-theme="dark"] .conversations-unsupported-icon {
   flex-shrink: 0;
 }
 
+.conversations-folder-chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  color: var(--gh-text-secondary, #6b7280);
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transform: rotate(-90deg);
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+.conversations-folder-chevron.expanded {
+  transform: rotate(0deg);
+}
+
 .conversations-folder-item.is-dragging {
   opacity: 0.74;
   background: color-mix(in srgb, var(--gh-primary, #4285f4) 9%, var(--gh-bg, #fff)) !important;

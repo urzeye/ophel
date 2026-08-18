@@ -39,6 +39,7 @@ const PROGRESSIVE_BATCH_SIZE = 30
 
 import {
   BatchIcon,
+  ChevronDownIcon,
   ClearIcon,
   CopyIcon,
   DeleteIcon,
@@ -1198,6 +1199,12 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                         }}>
                         <MoreHorizontalIcon size={20} />
                       </button>
+
+                      <span
+                        className={`conversations-folder-chevron ${isExpanded ? "expanded" : ""}`}
+                        aria-hidden="true">
+                        <ChevronDownIcon size={14} />
+                      </span>
                     </div>
                   </div>
 

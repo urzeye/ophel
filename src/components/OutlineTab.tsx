@@ -524,7 +524,9 @@ const OutlineNodeView: React.FC<{
         {/* 用户提问: 徽章 (图标+角标数字) */}
         {node.isUserQuery && (
           <span className="user-query-badge">
-            <span className="user-query-badge-icon">💬</span>
+            <span className="user-query-badge-icon">
+              <UserQueryIcon size={13} color="currentColor" />
+            </span>
             <span className="user-query-badge-number">{node.queryIndex}</span>
           </span>
         )}

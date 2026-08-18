@@ -2992,6 +2992,15 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
+            {searchQuery && (
+              <button
+                type="button"
+                className="gh-panel-search-action"
+                onClick={() => setSearchQuery("")}
+                aria-label={t("clearSearch")}>
+                <ClearIcon size={13} />
+              </button>
+            )}
           </div>
           {activeLibraryView === "prompts" && (
             <div className="gh-panel-menu-anchor">
