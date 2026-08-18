@@ -3504,7 +3504,7 @@ export class GeminiAdapter extends SiteAdapter {
 
   private async captureFullSizeImageFromButton(
     button: HTMLElement,
-    timeoutMs = 5000,
+    timeoutMs = 7000,
   ): Promise<string | null> {
     return new Promise<string | null>((resolve) => {
       let resolved = false
@@ -3552,11 +3552,17 @@ export class GeminiAdapter extends SiteAdapter {
     image: HTMLImageElement,
     context: ExportLifecycleContext,
   ): Promise<string> {
+    const cachedFullSize = image.getAttribute("data-ophel-fullsize-src")
+    if (cachedFullSize && cachedFullSize.startsWith("data:image/")) {
+      return cachedFullSize
+    }
+
     if (this.shouldTryWatermarkRemovalForExport(image)) {
       const downloadButton = this.findDownloadButtonForGeneratedImage(image)
       if (downloadButton) {
         const capturedSource = await this.captureFullSizeImageFromButton(downloadButton)
         if (capturedSource) {
+          let finalSource = capturedSource
           const watermarkRemover = WatermarkRemover.getActiveInstance()
           if (watermarkRemover) {
             try {
@@ -3564,13 +3570,16 @@ export class GeminiAdapter extends SiteAdapter {
                 scene: "export",
               })
               if (cleaned?.startsWith("data:image/")) {
-                return cleaned
+                finalSource = cleaned
               }
             } catch {
               // fallback to captured source directly
             }
           }
-          return capturedSource
+          if (finalSource.startsWith("data:image/")) {
+            image.setAttribute("data-ophel-fullsize-src", finalSource)
+          }
+          return finalSource
         }
       }
     }

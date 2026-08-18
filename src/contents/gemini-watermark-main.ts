@@ -89,11 +89,50 @@ if (!window.__ophelGeminiWatermarkMainInitialized) {
 
   const originalFetch = window.fetch.bind(window)
   window.fetch = async function (...args: Parameters<typeof fetch>) {
+    const requestUrl = getRequestUrl(args[0])
+
+    if (
+      isImageCaptureActive() &&
+      requestUrl &&
+      (requestUrl.includes("/rd-gg/") ||
+        requestUrl.includes("-d-I") ||
+        requestUrl.includes("=s0-d") ||
+        requestUrl.includes("=d-I"))
+    ) {
+      try {
+        const resp = await originalFetch(...args)
+        if (resp.ok) {
+          const cloned = resp.clone()
+          cloned.blob().then(async (blob) => {
+            if (blob.type.startsWith("image/") || blob.size > 20000) {
+              const reader = new FileReader()
+              reader.onloadend = () => {
+                const dataUrl = (reader.result as string) || ""
+                if (dataUrl) {
+                  window.postMessage(
+                    {
+                      type: OPHEL_GEMINI_IMAGE_CAPTURED,
+                      href: requestUrl,
+                      dataUrl,
+                    },
+                    "*",
+                  )
+                }
+              }
+              reader.readAsDataURL(blob)
+            }
+          })
+        }
+        return resp
+      } catch {
+        // Continue to normal flow
+      }
+    }
+
     if (!watermarkFetchEnabled) {
       return originalFetch(...args)
     }
 
-    const requestUrl = getRequestUrl(args[0])
     if (!requestUrl || !isGeminiGeneratedImageUrl(requestUrl)) {
       return originalFetch(...args)
     }
@@ -194,9 +233,36 @@ if (!window.__ophelGeminiWatermarkMainInitialized) {
     )
   }
 
+  const originalCreateObjectURL = URL.createObjectURL.bind(URL)
+  URL.createObjectURL = function (object: Blob | MediaSource): string {
+    const url = originalCreateObjectURL(object)
+    if (
+      isImageCaptureActive() &&
+      object instanceof Blob &&
+      (object.type.startsWith("image/") || object.size > 20000)
+    ) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        const dataUrl = (reader.result as string) || ""
+        if (dataUrl) {
+          window.postMessage(
+            {
+              type: OPHEL_GEMINI_IMAGE_CAPTURED,
+              href: url,
+              dataUrl,
+            },
+            "*",
+          )
+        }
+      }
+      reader.readAsDataURL(object)
+    }
+    return url
+  }
+
   const originalAnchorClick = HTMLAnchorElement.prototype.click
   HTMLAnchorElement.prototype.click = function (this: HTMLAnchorElement) {
-    if (isImageCaptureActive() && (this.hasAttribute("download") || this.download)) {
+    if (isImageCaptureActive()) {
       handleCapturedAnchor(this)
       return
     }
@@ -205,7 +271,7 @@ if (!window.__ophelGeminiWatermarkMainInitialized) {
 
   const captureClickListener = (event: MouseEvent) => {
     if (!isImageCaptureActive()) return
-    const anchor = (event.target as Element)?.closest?.("a[download]")
+    const anchor = (event.target as Element)?.closest?.("a")
     if (anchor instanceof HTMLAnchorElement) {
       event.preventDefault()
       event.stopPropagation()
