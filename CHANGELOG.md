@@ -17,6 +17,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 - **Settings and panel visual experience polish** — Settings pages now feature sticky tab bars with backdrop blur; the Backup page is redesigned into a clean tabbed layout for local and WebDAV options; Permissions and Shortcuts pages now use crisp SVG icons and keyboard badges; and prompt action buttons along with UI components across all 24 themes now have refined visual hierarchy and contrast.
 
+### 🐛 Bug Fixes
+
+- **Gemini image export resolution** — Fixed an issue where images exported from Gemini conversations were compressed to low-resolution preview thumbnails by preserving full-resolution image URLs. (#824)
+
 ---
 
 ## [1.2.2][1.2.2] - 2026-08-18

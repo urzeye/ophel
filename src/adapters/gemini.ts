@@ -63,6 +63,12 @@ import {
   GEMINI_CANVAS_CODE_REQUEST_EVENT,
   GEMINI_CANVAS_CODE_RESPONSE_EVENT,
 } from "~core/gemini-canvas-code-bridge"
+import {
+  GEMINI_EXPORT_CAPTURE_START_MESSAGE,
+  GEMINI_EXPORT_CAPTURE_STOP_MESSAGE,
+  GEMINI_EXPORT_CAPTURING_ATTR,
+  GEMINI_EXPORT_IMAGE_CAPTURED_MESSAGE,
+} from "~core/gemini-export-image-bridge"
 import { WatermarkRemover } from "~core/watermark-remover"
 import {
   SiteAdapter,
@@ -117,6 +123,10 @@ const GEMINI_CANCEL_KEYWORDS = [
 ]
 
 const GEMINI_EXPORT_IMAGE_SRC_ATTR = "data-ophel-export-image-src"
+// 捕获成功的原生全尺寸图缓存在 img 上，同一会话内重复导出不再触发下载流程。
+const GEMINI_EXPORT_FULLSIZE_SRC_ATTR = "data-ophel-fullsize-src"
+// 连续捕获失败达到该次数后，本次导出的剩余图片直接回退预览，避免逐图等待超时。
+const GEMINI_EXPORT_CAPTURE_MAX_FAILURE_STREAK = 2
 const GEMINI_OPHEL_ASSISTANT_EXPORT_NOISE_SELECTOR = ".gh-inline-bookmark, .gh-table-copy-btn"
 const GEMINI_EMAIL_REGEX = /([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})/i
 const GEMINI_ACCOUNT_HINT_REGEX =
@@ -806,6 +816,8 @@ export class GeminiAdapter extends SiteAdapter {
   private canvasPanelObservers = new WeakMap<Element, () => void>()
   private canvasPanelTooltipBindings = new WeakMap<HTMLElement, DomTooltipBinding>()
   private exportOpenedCanvasPanel = false
+  private exportCaptureIdCounter = 0
+  private exportCaptureFailureStreak = 0
   private outlineWordCountCache = new WeakMap<Element, GeminiOutlineWordCountCacheEntry>()
 
   private getUserPathPrefix(): string {
@@ -2747,6 +2759,8 @@ export class GeminiAdapter extends SiteAdapter {
     _context: ExportLifecycleContext,
     state: unknown,
   ): Promise<void> {
+    document.documentElement.removeAttribute(GEMINI_EXPORT_CAPTURING_ATTR)
+    window.postMessage({ type: GEMINI_EXPORT_CAPTURE_STOP_MESSAGE }, "*")
     this.clearPreparedExportImageMetadata()
 
     if (this.isGeminiExportLifecycleState(state) && state.openedDeepResearchPanel) {
@@ -2761,30 +2775,37 @@ export class GeminiAdapter extends SiteAdapter {
 
   private async prepareImagesForExport(context: ExportLifecycleContext): Promise<void> {
     this.clearPreparedExportImageMetadata()
+    this.exportCaptureFailureStreak = 0
+    document.documentElement.setAttribute(GEMINI_EXPORT_CAPTURING_ATTR, "1")
 
-    const privateSelectors = this.config.sitePrivateSelectors
-    const userQueryImages = privateSelectors.userQueryImage.map(
-      (selector) => `${this.config.selectors.userQuery} ${selector}`,
-    )
+    try {
+      const privateSelectors = this.config.sitePrivateSelectors
+      const userQueryImages = privateSelectors.userQueryImage.map(
+        (selector) => `${this.config.selectors.userQuery} ${selector}`,
+      )
 
-    const images = Array.from(
-      document.querySelectorAll(
-        [
-          `${this.config.selectors.assistantResponse} img`,
-          `${privateSelectors.sharePage} ${privateSelectors.shareAssistantMarkdown} img`,
-          ...userQueryImages,
-        ].join(", "),
-      ),
-    ).filter((node): node is HTMLImageElement => node instanceof HTMLImageElement)
+      const images = Array.from(
+        document.querySelectorAll(
+          [
+            `${this.config.selectors.assistantResponse} img`,
+            `${privateSelectors.sharePage} ${privateSelectors.shareAssistantMarkdown} img`,
+            ...userQueryImages,
+          ].join(", "),
+        ),
+      ).filter((node): node is HTMLImageElement => node instanceof HTMLImageElement)
 
-    for (const image of images) {
-      try {
-        const exportSrc = await this.resolvePreparedExportImageSrc(image, context)
-        if (!exportSrc) continue
-        image.setAttribute(GEMINI_EXPORT_IMAGE_SRC_ATTR, exportSrc)
-      } catch (error) {
-        console.warn("[GeminiAdapter] Failed to prepare export image source", error)
+      for (const image of images) {
+        try {
+          const exportSrc = await this.resolvePreparedExportImageSrc(image, context)
+          if (!exportSrc) continue
+          image.setAttribute(GEMINI_EXPORT_IMAGE_SRC_ATTR, exportSrc)
+        } catch (error) {
+          console.warn("[GeminiAdapter] Failed to prepare export image source", error)
+        }
       }
+    } finally {
+      document.documentElement.removeAttribute(GEMINI_EXPORT_CAPTURING_ATTR)
+      window.postMessage({ type: GEMINI_EXPORT_CAPTURE_STOP_MESSAGE }, "*")
     }
   }
 
@@ -3414,10 +3435,156 @@ export class GeminiAdapter extends SiteAdapter {
     return ""
   }
 
+  private findDownloadButtonForGeneratedImage(image: HTMLImageElement): HTMLElement | null {
+    let current: HTMLElement | null = image.parentElement
+    let depth = 0
+    while (
+      current &&
+      depth++ < 10 &&
+      (typeof document === "undefined" || current !== document?.body)
+    ) {
+      const button = current.querySelector(
+        [
+          "download-generated-image-button button",
+          '[data-test-id="download-generated-image-button"] button',
+          "download-generated-image-button",
+        ].join(", "),
+      )
+
+      if (button) {
+        if (typeof HTMLElement !== "undefined" && !(button instanceof HTMLElement)) {
+          return null
+        }
+        return button as HTMLElement
+      }
+
+      if (
+        current.matches(
+          "model-response, response-element, .conversation-turn, [data-test-id='conversation-turn']",
+        )
+      ) {
+        break
+      }
+
+      current = current.parentElement
+    }
+
+    return null
+  }
+
+  private triggerElementClick(element: HTMLElement): void {
+    const innerButton = element.querySelector("button")
+    const target =
+      typeof HTMLElement !== "undefined" && innerButton instanceof HTMLElement
+        ? innerButton
+        : element
+
+    for (const type of ["pointerdown", "mousedown", "pointerup", "mouseup"]) {
+      target.dispatchEvent(
+        new MouseEvent(type, {
+          bubbles: true,
+          cancelable: true,
+          composed: true,
+          view: window,
+          detail: 1,
+        }),
+      )
+    }
+
+    if (typeof target.click === "function") {
+      target.click()
+    }
+  }
+
+  private async captureFullSizeImageFromButton(
+    button: HTMLElement,
+    image: HTMLImageElement,
+    timeoutMs = 8000,
+  ): Promise<string | null> {
+    const captureId = `ophel-export-capture-${++this.exportCaptureIdCounter}-${Date.now()}`
+
+    return new Promise<string | null>((resolve) => {
+      let settled = false
+      let timer = 0
+
+      const settle = (value: string | null) => {
+        if (settled) return
+        settled = true
+        window.clearTimeout(timer)
+        window.removeEventListener("message", listener)
+        window.postMessage({ type: GEMINI_EXPORT_CAPTURE_STOP_MESSAGE, captureId }, "*")
+        resolve(value)
+      }
+
+      const listener = (event: MessageEvent) => {
+        if (event.source !== window) return
+        const data = event.data
+        if (data?.type !== GEMINI_EXPORT_IMAGE_CAPTURED_MESSAGE || data.captureId !== captureId) {
+          return
+        }
+        const dataUrl = typeof data.dataUrl === "string" ? data.dataUrl : ""
+        if (!dataUrl.startsWith("data:image/")) return
+        settle(dataUrl)
+      }
+
+      timer = window.setTimeout(() => settle(null), timeoutMs)
+      window.addEventListener("message", listener)
+
+      window.postMessage(
+        {
+          type: GEMINI_EXPORT_CAPTURE_START_MESSAGE,
+          captureId,
+          minWidth: image.naturalWidth || 0,
+          minHeight: image.naturalHeight || 0,
+        },
+        "*",
+      )
+
+      try {
+        this.triggerElementClick(button)
+      } catch {
+        settle(null)
+      }
+    })
+  }
+
   private async resolvePreparedExportImageSrc(
     image: HTMLImageElement,
     context: ExportLifecycleContext,
   ): Promise<string> {
+    const cachedFullSize = image.getAttribute(GEMINI_EXPORT_FULLSIZE_SRC_ATTR)
+    if (cachedFullSize && cachedFullSize.startsWith("data:image/")) {
+      return cachedFullSize
+    }
+
+    if (
+      this.shouldTryWatermarkRemovalForExport(image) &&
+      this.exportCaptureFailureStreak < GEMINI_EXPORT_CAPTURE_MAX_FAILURE_STREAK
+    ) {
+      const downloadButton = this.findDownloadButtonForGeneratedImage(image)
+      if (downloadButton) {
+        const capturedSource = await this.captureFullSizeImageFromButton(downloadButton, image)
+        if (capturedSource) {
+          this.exportCaptureFailureStreak = 0
+          let finalSource = capturedSource
+          const watermarkRemover = WatermarkRemover.getActiveInstance()
+          if (watermarkRemover) {
+            const cleanedSource = await watermarkRemover.processCapturedImageDataUrl(capturedSource)
+            if (cleanedSource) {
+              finalSource = cleanedSource
+            }
+          }
+          image.setAttribute(GEMINI_EXPORT_FULLSIZE_SRC_ATTR, finalSource)
+          return finalSource
+        }
+
+        this.exportCaptureFailureStreak++
+        console.warn(
+          "[GeminiAdapter] Full-size image capture failed; falling back to preview resolution",
+        )
+      }
+    }
+
     const watermarkRemovedSource = await this.resolveWatermarkRemovedExportImageSrc(image)
     if (watermarkRemovedSource) {
       return watermarkRemovedSource

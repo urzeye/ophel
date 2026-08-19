@@ -1,5 +1,6 @@
 import { MSG_PROXY_FETCH, sendToBackground } from "~utils/messaging"
 import { t } from "~utils/i18n"
+import { GEMINI_EXPORT_CAPTURING_ATTR } from "~core/gemini-export-image-bridge"
 import { processBananaWatermarkImageData } from "~core/watermark/banana-engine"
 import {
   classifyGeminiAssetUrl,
@@ -603,6 +604,10 @@ export class WatermarkRemover {
     if (this.actionButtonListener || !this.isGeminiStandardSite()) return
 
     this.actionButtonListener = (event: MouseEvent) => {
+      // 导出捕获期间交还原生下载流程，由捕获链路统一处理水印。
+      if (document.documentElement.getAttribute(GEMINI_EXPORT_CAPTURING_ATTR) === "1") {
+        return
+      }
       this.handleActionButtonClick(event)
     }
 
@@ -853,6 +858,18 @@ export class WatermarkRemover {
       if (error instanceof Error && error.message === WATERMARK_NOT_DETECTED_ERROR) {
         return null
       }
+      return null
+    }
+  }
+
+  // 导出时捕获到的原生全尺寸图走既有水印检测/去除管道；未检测到水印或处理失败
+  // 时返回 null，由调用方继续使用原始捕获结果。
+  async processCapturedImageDataUrl(dataUrl: string): Promise<string | null> {
+    if (!this.enabled || !dataUrl.startsWith("data:image/")) return null
+
+    try {
+      return await this.processImageSourceToDataUrl(dataUrl, { scene: "export" })
+    } catch {
       return null
     }
   }
