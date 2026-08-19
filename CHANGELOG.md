@@ -19,7 +19,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
-- **Gemini image package download** — Fixed an issue where image downloads failed when exporting Gemini conversations to ZIP files on shared links or multi-account sessions by adding share domain permissions and rendered-DOM image fallback. (#814)
+- **Gemini image package download** — Fixed an issue where ZIP exports from Gemini share pages or multi-account sessions could miss images, by using pictures already shown on the page when downloading them fails. (#814)
 
 ---
 

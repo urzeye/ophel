@@ -800,96 +800,233 @@ function getDefaultAssetPath(asset: ExportAsset): string {
   return `assets/${sanitizeZipPathSegment(asset.name, asset.id || "asset")}`
 }
 
+const EXPORT_IMAGE_SRC_ATTR = "data-ophel-export-image-src"
+const WATERMARK_SOURCE_ATTR = "data-ophel-wm-source"
+
+function isGoogleusercontentHost(hostname: string): boolean {
+  return hostname === "googleusercontent.com" || hostname.endsWith(".googleusercontent.com")
+}
+
+function canonicalizeExportAssetMatchUrl(url: string): string {
+  if (!url) return ""
+  if (url.startsWith("blob:") || url.startsWith("data:")) return url
+
+  try {
+    const parsed = new URL(url)
+    parsed.hash = ""
+    if (isGoogleusercontentHost(parsed.hostname)) {
+      // Display URLs often use =w400-h300 while export assets keep =s0.
+      parsed.pathname = parsed.pathname.replace(/=(?:s|w|h)\d+[^/]*$/i, "")
+      parsed.search = ""
+    }
+    return parsed.toString()
+  } catch {
+    return url
+  }
+}
+
+function areExportAssetUrlsEquivalent(left: string, right: string): boolean {
+  if (!left || !right) return false
+  if (left === right) return true
+  const canonicalLeft = canonicalizeExportAssetMatchUrl(left)
+  const canonicalRight = canonicalizeExportAssetMatchUrl(right)
+  return Boolean(canonicalLeft) && canonicalLeft === canonicalRight
+}
+
+function getImageSourceCandidates(image: HTMLImageElement): string[] {
+  const candidates = [
+    image.currentSrc || "",
+    image.src || "",
+    image.getAttribute("src") || "",
+    image.getAttribute(EXPORT_IMAGE_SRC_ATTR) || "",
+    image.getAttribute(WATERMARK_SOURCE_ATTR) || "",
+  ]
+  const unique: string[] = []
+  const seen = new Set<string>()
+  for (const candidate of candidates) {
+    if (!candidate || seen.has(candidate)) continue
+    seen.add(candidate)
+    unique.push(candidate)
+  }
+  return unique
+}
+
+function isMatchingExportImageSource(sourceUrl: string, image: HTMLImageElement): boolean {
+  return getImageSourceCandidates(image).some((candidate) =>
+    areExportAssetUrlsEquivalent(sourceUrl, candidate),
+  )
+}
+
+function getImageRenderedArea(image: HTMLImageElement): number {
+  const width = image.naturalWidth || image.width || 0
+  const height = image.naturalHeight || image.height || 0
+  return Math.max(0, width) * Math.max(0, height)
+}
+
 export function findMatchingImageInDocument(sourceUrl: string): HTMLImageElement | null {
   if (typeof document === "undefined" || !sourceUrl) return null
 
-  const images = Array.from(document.querySelectorAll("img"))
-  for (const img of images) {
-    const src = img.getAttribute("src") || img.src || ""
-    const currentSrc = img.currentSrc || ""
-    const wmSource = img.getAttribute("data-ophel-wm-source") || ""
-    const exportSrc =
-      img.getAttribute("data-ophel-export-image-src") ||
-      img.getAttribute("data-ophel-export-img-src") ||
-      ""
+  let best: HTMLImageElement | null = null
+  let bestArea = -1
 
-    if (
-      src === sourceUrl ||
-      currentSrc === sourceUrl ||
-      wmSource === sourceUrl ||
-      exportSrc === sourceUrl
-    ) {
-      if (img.complete && (img.naturalWidth > 0 || img.width > 0)) {
-        return img
-      }
+  for (const image of Array.from(document.querySelectorAll("img"))) {
+    if (!isMatchingExportImageSource(sourceUrl, image)) continue
+    const area = getImageRenderedArea(image)
+    if (!best || area > bestArea) {
+      best = image
+      bestArea = area
+    }
+  }
+
+  return best
+}
+
+function isSameOriginImageSource(source: string): boolean {
+  if (!source) return false
+  if (source.startsWith("blob:") || source.startsWith("data:")) return true
+  if (typeof window === "undefined") return false
+
+  try {
+    return new URL(source, window.location.href).origin === window.location.origin
+  } catch {
+    return false
+  }
+}
+
+function resolveCanvasMimeType(asset?: ExportAsset): string {
+  const mimeType = (asset?.mimeType || "").toLowerCase()
+  if (mimeType === "image/jpeg" || mimeType === "image/jpg") return "image/jpeg"
+  if (mimeType === "image/webp") return "image/webp"
+
+  const name = (asset?.name || "").toLowerCase()
+  if (name.endsWith(".jpg") || name.endsWith(".jpeg")) return "image/jpeg"
+  if (name.endsWith(".webp")) return "image/webp"
+  return "image/png"
+}
+
+function dataUrlToBlob(dataUrl: string): Blob | null {
+  try {
+    const commaIndex = dataUrl.indexOf(",")
+    if (!dataUrl.startsWith("data:") || commaIndex < 0) return null
+
+    const header = dataUrl.slice(0, commaIndex)
+    const payload = dataUrl.slice(commaIndex + 1)
+    const mimeType = header.match(/^data:([^;,]+)/)?.[1] || "application/octet-stream"
+    const isBase64 = /;base64/i.test(header)
+
+    if (!isBase64) {
+      return new Blob([decodeURIComponent(payload)], { type: mimeType })
+    }
+
+    const binary = atob(payload)
+    const bytes = new Uint8Array(binary.length)
+    for (let index = 0; index < binary.length; index += 1) {
+      bytes[index] = binary.charCodeAt(index)
+    }
+    return new Blob([bytes], { type: mimeType })
+  } catch {
+    return null
+  }
+}
+
+async function readRenderedImageBlob(image: HTMLImageElement): Promise<Blob | null> {
+  const candidates = getImageSourceCandidates(image)
+
+  for (const candidate of candidates) {
+    if (!candidate.startsWith("data:image/")) continue
+    const blob = dataUrlToBlob(candidate)
+    if (blob) return blob
+  }
+
+  for (const candidate of candidates) {
+    if (!candidate.startsWith("blob:")) continue
+    try {
+      const response = await fetch(candidate)
+      if (response.ok) return await response.blob()
+    } catch {
+      // Try the next candidate; canvas remains the last resort.
     }
   }
 
   return null
 }
 
-async function renderImageElementToBlob(image: HTMLImageElement): Promise<Blob | null> {
+async function ensureImageDecoded(image: HTMLImageElement): Promise<void> {
+  if (image.complete && (image.naturalWidth > 0 || image.width > 0)) return
+  if (typeof image.decode !== "function") {
+    throw new Error("Image is not loaded and cannot be decoded")
+  }
+  await image.decode()
+}
+
+function isSecurityError(error: unknown): boolean {
+  if (typeof DOMException !== "undefined" && error instanceof DOMException) {
+    return error.name === "SecurityError"
+  }
+  return error instanceof Error && error.name === "SecurityError"
+}
+
+async function renderImageElementToBlob(
+  image: HTMLImageElement,
+  asset?: ExportAsset,
+): Promise<Blob> {
+  const source = image.currentSrc || image.src || image.getAttribute("src") || ""
+  if (!isSameOriginImageSource(source)) {
+    throw new Error("Canvas fallback is only available for same-origin images")
+  }
+
+  await ensureImageDecoded(image)
+
+  const width = image.naturalWidth || image.width || image.clientWidth
+  const height = image.naturalHeight || image.height || image.clientHeight
+  if (width <= 0 || height <= 0) {
+    throw new Error("Image has no exportable size")
+  }
+
+  const canvas = document.createElement("canvas")
+  canvas.width = width
+  canvas.height = height
+  const context = canvas.getContext("2d")
+  if (!context) {
+    throw new Error("2D canvas context unavailable")
+  }
+
   try {
-    if (!image.complete || image.naturalWidth <= 0 || image.naturalHeight <= 0) {
-      await image.decode()
-    }
-
-    const width = image.naturalWidth || image.width || image.clientWidth
-    const height = image.naturalHeight || image.height || image.clientHeight
-    if (width <= 0 || height <= 0) return null
-
-    const canvas = document.createElement("canvas")
-    canvas.width = width
-    canvas.height = height
-    const context = canvas.getContext("2d")
-    if (!context) return null
-
     context.drawImage(image, 0, 0, width, height)
-    return await new Promise<Blob | null>((resolve) => {
-      canvas.toBlob((blob) => resolve(blob), "image/png")
+  } catch (error) {
+    if (isSecurityError(error)) {
+      throw new Error("Canvas is tainted and cannot be exported")
+    }
+    throw error
+  }
+
+  const mimeType = resolveCanvasMimeType(asset)
+
+  try {
+    return await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          reject(new Error("Canvas export produced no image data"))
+          return
+        }
+        resolve(blob)
+      }, mimeType)
     })
-  } catch {
-    return null
+  } catch (error) {
+    if (isSecurityError(error)) {
+      throw new Error("Canvas is tainted and cannot be exported")
+    }
+    throw error
   }
 }
 
-async function resolveImageElementBlob(image: HTMLImageElement): Promise<Blob | null> {
-  const candidates = [
-    image.getAttribute("data-ophel-export-image-src") || "",
-    image.getAttribute("data-ophel-export-img-src") || "",
-    image.getAttribute("data-ophel-wm-source") || "",
-    image.getAttribute("src") || "",
-    image.src || "",
-    image.currentSrc || "",
-  ]
-
-  for (const candidate of candidates) {
-    if (candidate.startsWith("data:image/")) {
-      try {
-        const response = await fetch(candidate)
-        if (response.ok) {
-          return await response.blob()
-        }
-      } catch {
-        // Fall through
-      }
-    }
-  }
-
-  for (const candidate of candidates) {
-    if (candidate.startsWith("blob:")) {
-      try {
-        const response = await fetch(candidate)
-        if (response.ok) {
-          return await response.blob()
-        }
-      } catch {
-        // Fall through
-      }
-    }
-  }
-
-  return await renderImageElementToBlob(image)
+async function resolveImageElementBlob(
+  image: HTMLImageElement,
+  asset?: ExportAsset,
+): Promise<Blob> {
+  const renderedBlob = await readRenderedImageBlob(image)
+  if (renderedBlob) return renderedBlob
+  return await renderImageElementToBlob(image, asset)
 }
 
 async function resolveAssetData(
@@ -903,50 +1040,68 @@ async function resolveAssetData(
     throw new Error("Asset has no content or source URL")
   }
 
-  if (asset.sourceUrl.startsWith("blob:")) {
+  const sourceUrl = asset.sourceUrl
+  const matchingImage = findMatchingImageInDocument(sourceUrl)
+
+  if (sourceUrl.startsWith("blob:")) {
     try {
-      const response = await fetch(asset.sourceUrl)
+      const response = await fetch(sourceUrl)
       if (response.ok) {
         return await response.blob()
       }
     } catch {
-      // Continue to DOM fallback
+      // Fall through to the matching rendered image.
     }
 
-    const matchingImg = findMatchingImageInDocument(asset.sourceUrl)
-    if (matchingImg) {
-      const blob = await resolveImageElementBlob(matchingImg)
-      if (blob) return blob
+    if (matchingImage) {
+      return await resolveImageElementBlob(matchingImage, asset)
     }
 
     throw new Error("Blob asset URL expired or unavailable")
   }
 
+  if (matchingImage) {
+    const renderedBlob = await readRenderedImageBlob(matchingImage)
+    if (renderedBlob) return renderedBlob
+  }
+
   try {
-    const response = await fetch(asset.sourceUrl, { credentials: "include" })
+    const response = await fetch(sourceUrl, {
+      credentials: "include",
+      cache: "force-cache",
+    })
     if (!response.ok) {
       throw new Error(`Asset fetch failed with HTTP ${response.status}`)
     }
 
     return response.blob()
   } catch (pageFetchError) {
-    if (!/^https?:\/\//i.test(asset.sourceUrl)) {
+    if (!/^https?:\/\//i.test(sourceUrl)) {
+      if (matchingImage) {
+        return await resolveImageElementBlob(matchingImage, asset)
+      }
       throw pageFetchError
     }
 
     try {
-      const response = await platform.fetch(asset.sourceUrl)
+      const response = await platform.fetch(sourceUrl)
       if (!response.ok) {
         throw new Error(`Asset proxy fetch failed with HTTP ${response.status}`)
       }
 
       return response.blob()
     } catch (proxyFetchError) {
-      const matchingImg = findMatchingImageInDocument(asset.sourceUrl)
-      if (matchingImg) {
-        const domBlob = await resolveImageElementBlob(matchingImg)
-        if (domBlob) {
-          return domBlob
+      if (matchingImage) {
+        const source =
+          matchingImage.currentSrc || matchingImage.src || matchingImage.getAttribute("src") || ""
+        if (isSameOriginImageSource(source)) {
+          try {
+            return await renderImageElementToBlob(matchingImage, asset)
+          } catch (canvasError) {
+            throw new Error(
+              `Asset fetch failed: ${getErrorMessage(pageFetchError)}; proxy fetch failed: ${getErrorMessage(proxyFetchError)}; canvas fallback failed: ${getErrorMessage(canvasError)}`,
+            )
+          }
         }
       }
 

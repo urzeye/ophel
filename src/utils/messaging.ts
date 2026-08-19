@@ -34,9 +34,6 @@ export const MSG_PROXY_FETCH = "PROXY_FETCH"
 
 export interface ProxyFetchPayload {
   url: string
-  method?: string
-  headers?: Record<string, string>
-  body?: unknown
 }
 
 export interface ProxyFetchMessage extends ProxyFetchPayload {

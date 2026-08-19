@@ -46,7 +46,6 @@ import {
   MSG_TEST_CLAUDE_TOKEN,
   MSG_WEBDAV_REQUEST,
   type ExtensionMessage,
-  type ProxyFetchMessage,
 } from "~utils/messaging"
 import {
   PERSISTED_SETTINGS_STORAGE_KEY,
@@ -391,13 +390,7 @@ async function setupDynamicRules() {
         },
         condition: {
           // 排除页面本身发起的请求，主要针对扩展的后台请求
-          excludedInitiatorDomains: [
-            "google.com",
-            "gemini.google.com",
-            "share.gemini.google",
-            "business.gemini.google",
-            "aistudio.google.com",
-          ],
+          excludedInitiatorDomains: ["google.com", "gemini.google.com"],
           urlFilter: "*://*.googleusercontent.com/*",
           resourceTypes: [
             chrome.declarativeNetRequest.ResourceType.XMLHTTPREQUEST,
@@ -416,13 +409,7 @@ async function setupDynamicRules() {
         },
         condition: {
           // 排除页面本身发起的请求
-          excludedInitiatorDomains: [
-            "google.com",
-            "gemini.google.com",
-            "share.gemini.google",
-            "business.gemini.google",
-            "aistudio.google.com",
-          ],
+          excludedInitiatorDomains: ["google.com", "gemini.google.com"],
           urlFilter: "*://*.google.com/*",
           resourceTypes: [
             chrome.declarativeNetRequest.ResourceType.XMLHTTPREQUEST,
@@ -587,15 +574,9 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
 
           // 携带credentials以便访问需要认证的图片资源
           // Dynamic Rules会自动处理 Referer/Origin 和 Access-Control-Allow-Origin
-          const fetchOptions: RequestInit = {
+          const response = await fetch(message.url, {
             credentials: "include",
-          }
-          const { method, headers, body } = message as ProxyFetchMessage
-          if (method) fetchOptions.method = method
-          if (headers) fetchOptions.headers = headers
-          if (body) fetchOptions.body = body as BodyInit
-
-          const response = await fetch(message.url, fetchOptions)
+          })
 
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`)
