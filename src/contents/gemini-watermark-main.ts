@@ -1,4 +1,11 @@
 import type { PlasmoCSConfig } from "plasmo"
+
+import {
+  GEMINI_EXPORT_CAPTURE_START_MESSAGE,
+  GEMINI_EXPORT_CAPTURE_STOP_MESSAGE,
+  GEMINI_EXPORT_CAPTURING_ATTR,
+  GEMINI_EXPORT_IMAGE_CAPTURED_MESSAGE,
+} from "~core/gemini-export-image-bridge"
 import {
   isGeminiGeneratedImageUrl,
   normalizeGeminiImageUrl,
@@ -88,45 +95,128 @@ if (!window.__ophelGeminiWatermarkMainInitialized) {
   }
 
   const originalFetch = window.fetch.bind(window)
+
+  // ---------- 导出全尺寸图片捕获 ----------
+  // 导出时适配器为每张生成图模拟点击站点原生“下载完整尺寸的图片”按钮，并开启
+  // 一个捕获窗口。窗口内从原生下载链路（fetch 响应、createObjectURL、下载 anchor）
+  // 收集候选 blob，解码校验像素尺寸严格大于页面预览后才回发 CAPTURED 消息；
+  // 预览图等不合格候选一律丢弃，失败不回发消息，由适配器超时回退。
+  type ImageCaptureWindow = {
+    captureId: string
+    minWidth: number
+    minHeight: number
+    resolved: boolean
+  }
+
+  let imageCaptureWindow: ImageCaptureWindow | null = null
+  const captureObjectUrlBlobs = new Map<string, Blob>()
+
+  const isExportCaptureActive = (): boolean =>
+    document.documentElement.getAttribute(GEMINI_EXPORT_CAPTURING_ATTR) === "1"
+
+  const isLikelyFullSizeDownloadUrl = (url: string): boolean =>
+    url.includes("/rd-gg/") || url.includes("-d-I") || url.includes("=s0-d") || url.includes("=d-I")
+
+  const blobToDataUrl = (blob: Blob): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onloadend = () => resolve((reader.result as string) || "")
+      reader.onerror = () => reject(reader.error)
+      reader.readAsDataURL(blob)
+    })
+
+  const rememberCaptureObjectUrlBlob = (url: string, blob: Blob) => {
+    captureObjectUrlBlobs.set(url, blob)
+    while (captureObjectUrlBlobs.size > 16) {
+      const oldestKey = captureObjectUrlBlobs.keys().next().value
+      if (!oldestKey) break
+      captureObjectUrlBlobs.delete(oldestKey)
+    }
+  }
+
+  const submitCaptureCandidate = async (blob: Blob) => {
+    const activeWindow = imageCaptureWindow
+    if (!activeWindow || activeWindow.resolved) return
+
+    let width = 0
+    let height = 0
+    try {
+      const bitmap = await createImageBitmap(blob)
+      width = bitmap.width
+      height = bitmap.height
+      bitmap.close()
+    } catch {
+      return
+    }
+
+    if (imageCaptureWindow !== activeWindow || activeWindow.resolved) return
+    if (width <= activeWindow.minWidth || height <= activeWindow.minHeight) return
+
+    activeWindow.resolved = true
+    try {
+      const imageBlob = blob.type.startsWith("image/")
+        ? blob
+        : new Blob([blob], { type: "image/png" })
+      const dataUrl = await blobToDataUrl(imageBlob)
+      if (!dataUrl.startsWith("data:image/")) {
+        activeWindow.resolved = false
+        return
+      }
+      window.postMessage(
+        {
+          type: GEMINI_EXPORT_IMAGE_CAPTURED_MESSAGE,
+          captureId: activeWindow.captureId,
+          dataUrl,
+          width,
+          height,
+        },
+        "*",
+      )
+    } catch {
+      activeWindow.resolved = false
+    }
+  }
+
+  const handleSuppressedDownloadAnchor = (anchor: HTMLAnchorElement) => {
+    const href = anchor.href || anchor.getAttribute("href") || ""
+    if (!href) return
+
+    if (href.startsWith("blob:")) {
+      const knownBlob = captureObjectUrlBlobs.get(href)
+      if (knownBlob) {
+        void submitCaptureCandidate(knownBlob)
+        return
+      }
+    }
+
+    if (/^(?:blob:|data:|https?:)/i.test(href)) {
+      originalFetch(href, { credentials: "include" })
+        .then((response) =>
+          response.ok ? response.blob() : Promise.reject(new Error(`HTTP ${response.status}`)),
+        )
+        .then((blob) => submitCaptureCandidate(blob))
+        .catch(() => {
+          // 候选获取失败保持静默，等待窗口内其他捕获来源或适配器超时回退。
+        })
+    }
+  }
+  // ---------------------------------------
+
   window.fetch = async function (...args: Parameters<typeof fetch>) {
     const requestUrl = getRequestUrl(args[0])
 
-    if (
-      isImageCaptureActive() &&
-      requestUrl &&
-      (requestUrl.includes("/rd-gg/") ||
-        requestUrl.includes("-d-I") ||
-        requestUrl.includes("=s0-d") ||
-        requestUrl.includes("=d-I"))
-    ) {
-      try {
-        const resp = await originalFetch(...args)
-        if (resp.ok) {
-          const cloned = resp.clone()
-          cloned.blob().then(async (blob) => {
-            if (blob.type.startsWith("image/") || blob.size > 20000) {
-              const reader = new FileReader()
-              reader.onloadend = () => {
-                const dataUrl = (reader.result as string) || ""
-                if (dataUrl) {
-                  window.postMessage(
-                    {
-                      type: OPHEL_GEMINI_IMAGE_CAPTURED,
-                      href: requestUrl,
-                      dataUrl,
-                    },
-                    "*",
-                  )
-                }
-              }
-              reader.readAsDataURL(blob)
-            }
+    if (imageCaptureWindow && requestUrl && isLikelyFullSizeDownloadUrl(requestUrl)) {
+      const response = await originalFetch(...args)
+      if (response.ok) {
+        response
+          .clone()
+          .blob()
+          .then((blob) => submitCaptureCandidate(blob))
+          .catch(() => {
+            // 读取响应副本失败不影响页面自身的下载流程。
           })
-        }
-        return resp
-      } catch {
-        // Continue to normal flow
       }
+      return response
     }
 
     if (!watermarkFetchEnabled) {
@@ -185,98 +275,47 @@ if (!window.__ophelGeminiWatermarkMainInitialized) {
     }
   }
 
-  const OPHEL_GEMINI_CAPTURE_START = "OPHEL_GEMINI_CAPTURE_START"
-  const OPHEL_GEMINI_CAPTURE_STOP = "OPHEL_GEMINI_CAPTURE_STOP"
-  const OPHEL_GEMINI_IMAGE_CAPTURED = "OPHEL_GEMINI_IMAGE_CAPTURED"
-
-  let isImageCaptureActiveFlag = false
-
-  const isImageCaptureActive = (): boolean => {
-    return (
-      isImageCaptureActiveFlag ||
-      document.documentElement.getAttribute("data-ophel-export-capturing") === "1"
-    )
-  }
-
-  const handleCapturedAnchor = async (anchor: HTMLAnchorElement) => {
-    const href = anchor.href || anchor.getAttribute("href") || ""
-    const filename = anchor.download || anchor.getAttribute("download") || ""
-    let dataUrl = ""
-
-    if (href.startsWith("data:")) {
-      dataUrl = href
-    } else if (href) {
-      try {
-        const resp = await originalFetch(href)
-        if (resp.ok) {
-          const blob = await resp.blob()
-          const reader = new FileReader()
-          dataUrl = await new Promise<string>((resolve) => {
-            reader.onloadend = () => resolve((reader.result as string) || "")
-            reader.onerror = () => resolve("")
-            reader.readAsDataURL(blob)
-          })
-        }
-      } catch {
-        // fallback
-      }
-    }
-
-    window.postMessage(
-      {
-        type: OPHEL_GEMINI_IMAGE_CAPTURED,
-        href,
-        filename,
-        dataUrl,
-      },
-      "*",
-    )
-  }
-
   const originalCreateObjectURL = URL.createObjectURL.bind(URL)
   URL.createObjectURL = function (object: Blob | MediaSource): string {
     const url = originalCreateObjectURL(object)
-    if (
-      isImageCaptureActive() &&
-      object instanceof Blob &&
-      (object.type.startsWith("image/") || object.size > 20000)
-    ) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        const dataUrl = (reader.result as string) || ""
-        if (dataUrl) {
-          window.postMessage(
-            {
-              type: OPHEL_GEMINI_IMAGE_CAPTURED,
-              href: url,
-              dataUrl,
-            },
-            "*",
-          )
-        }
-      }
-      reader.readAsDataURL(object)
+    if (isExportCaptureActive() && object instanceof Blob) {
+      rememberCaptureObjectUrlBlob(url, object)
+      void submitCaptureCandidate(object)
     }
     return url
   }
 
   const originalAnchorClick = HTMLAnchorElement.prototype.click
   HTMLAnchorElement.prototype.click = function (this: HTMLAnchorElement) {
-    if (isImageCaptureActive()) {
-      handleCapturedAnchor(this)
+    if (isExportCaptureActive()) {
+      handleSuppressedDownloadAnchor(this)
       return
     }
     return originalAnchorClick.call(this)
   }
 
+  // 页面对（可能已脱离文档的）下载 anchor 直接 dispatchEvent(click) 时不会经过
+  // document 监听，也不会调用 click()；这里补齐拦截，避免捕获期间触发真实下载。
+  const originalAnchorDispatchEvent = HTMLAnchorElement.prototype.dispatchEvent
+  HTMLAnchorElement.prototype.dispatchEvent = function (
+    this: HTMLAnchorElement,
+    event: Event,
+  ): boolean {
+    if (isExportCaptureActive() && event?.type === "click") {
+      handleSuppressedDownloadAnchor(this)
+      return false
+    }
+    return originalAnchorDispatchEvent.call(this, event)
+  }
+
   const captureClickListener = (event: MouseEvent) => {
-    if (!isImageCaptureActive()) return
-    const anchor = (event.target as Element)?.closest?.("a")
+    if (!isExportCaptureActive()) return
+    const target = event.target
+    const anchor = target instanceof Element ? target.closest("a") : null
     if (anchor instanceof HTMLAnchorElement) {
       event.preventDefault()
-      event.stopPropagation()
       event.stopImmediatePropagation()
-      handleCapturedAnchor(anchor)
+      handleSuppressedDownloadAnchor(anchor)
     }
   }
   document.addEventListener("click", captureClickListener, true)
@@ -284,15 +323,30 @@ if (!window.__ophelGeminiWatermarkMainInitialized) {
   window.addEventListener("message", (event) => {
     if (event.source !== window) return
 
-    if (event.data?.type === OPHEL_GEMINI_CAPTURE_START) {
-      isImageCaptureActiveFlag = true
-      document.documentElement.setAttribute("data-ophel-export-capturing", "1")
+    if (event.data?.type === GEMINI_EXPORT_CAPTURE_START_MESSAGE) {
+      const captureId = typeof event.data.captureId === "string" ? event.data.captureId : ""
+      if (!captureId) return
+      const minWidth = Number(event.data.minWidth)
+      const minHeight = Number(event.data.minHeight)
+      imageCaptureWindow = {
+        captureId,
+        minWidth: Number.isFinite(minWidth) && minWidth > 0 ? minWidth : 0,
+        minHeight: Number.isFinite(minHeight) && minHeight > 0 ? minHeight : 0,
+        resolved: false,
+      }
       return
     }
 
-    if (event.data?.type === OPHEL_GEMINI_CAPTURE_STOP) {
-      isImageCaptureActiveFlag = false
-      document.documentElement.removeAttribute("data-ophel-export-capturing")
+    if (event.data?.type === GEMINI_EXPORT_CAPTURE_STOP_MESSAGE) {
+      const captureId = typeof event.data.captureId === "string" ? event.data.captureId : ""
+      if (!captureId) {
+        imageCaptureWindow = null
+        captureObjectUrlBlobs.clear()
+        return
+      }
+      if (imageCaptureWindow?.captureId === captureId) {
+        imageCaptureWindow = null
+      }
       return
     }
 

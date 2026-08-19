@@ -63,7 +63,12 @@ import {
   GEMINI_CANVAS_CODE_REQUEST_EVENT,
   GEMINI_CANVAS_CODE_RESPONSE_EVENT,
 } from "~core/gemini-canvas-code-bridge"
-import { normalizeGoogleusercontentImageUrl } from "~core/watermark/gemini-asset-url"
+import {
+  GEMINI_EXPORT_CAPTURE_START_MESSAGE,
+  GEMINI_EXPORT_CAPTURE_STOP_MESSAGE,
+  GEMINI_EXPORT_CAPTURING_ATTR,
+  GEMINI_EXPORT_IMAGE_CAPTURED_MESSAGE,
+} from "~core/gemini-export-image-bridge"
 import { WatermarkRemover } from "~core/watermark-remover"
 import {
   SiteAdapter,
@@ -118,6 +123,10 @@ const GEMINI_CANCEL_KEYWORDS = [
 ]
 
 const GEMINI_EXPORT_IMAGE_SRC_ATTR = "data-ophel-export-image-src"
+// 捕获成功的原生全尺寸图缓存在 img 上，同一会话内重复导出不再触发下载流程。
+const GEMINI_EXPORT_FULLSIZE_SRC_ATTR = "data-ophel-fullsize-src"
+// 连续捕获失败达到该次数后，本次导出的剩余图片直接回退预览，避免逐图等待超时。
+const GEMINI_EXPORT_CAPTURE_MAX_FAILURE_STREAK = 2
 const GEMINI_OPHEL_ASSISTANT_EXPORT_NOISE_SELECTOR = ".gh-inline-bookmark, .gh-table-copy-btn"
 const GEMINI_EMAIL_REGEX = /([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})/i
 const GEMINI_ACCOUNT_HINT_REGEX =
@@ -807,6 +816,8 @@ export class GeminiAdapter extends SiteAdapter {
   private canvasPanelObservers = new WeakMap<Element, () => void>()
   private canvasPanelTooltipBindings = new WeakMap<HTMLElement, DomTooltipBinding>()
   private exportOpenedCanvasPanel = false
+  private exportCaptureIdCounter = 0
+  private exportCaptureFailureStreak = 0
   private outlineWordCountCache = new WeakMap<Element, GeminiOutlineWordCountCacheEntry>()
 
   private getUserPathPrefix(): string {
@@ -2748,7 +2759,8 @@ export class GeminiAdapter extends SiteAdapter {
     _context: ExportLifecycleContext,
     state: unknown,
   ): Promise<void> {
-    window.postMessage({ type: "OPHEL_GEMINI_CAPTURE_STOP" }, "*")
+    document.documentElement.removeAttribute(GEMINI_EXPORT_CAPTURING_ATTR)
+    window.postMessage({ type: GEMINI_EXPORT_CAPTURE_STOP_MESSAGE }, "*")
     this.clearPreparedExportImageMetadata()
 
     if (this.isGeminiExportLifecycleState(state) && state.openedDeepResearchPanel) {
@@ -2763,8 +2775,8 @@ export class GeminiAdapter extends SiteAdapter {
 
   private async prepareImagesForExport(context: ExportLifecycleContext): Promise<void> {
     this.clearPreparedExportImageMetadata()
-    document.documentElement.setAttribute("data-ophel-export-capturing", "1")
-    window.postMessage({ type: "OPHEL_GEMINI_CAPTURE_START" }, "*")
+    this.exportCaptureFailureStreak = 0
+    document.documentElement.setAttribute(GEMINI_EXPORT_CAPTURING_ATTR, "1")
 
     try {
       const privateSelectors = this.config.sitePrivateSelectors
@@ -2792,8 +2804,8 @@ export class GeminiAdapter extends SiteAdapter {
         }
       }
     } finally {
-      document.documentElement.removeAttribute("data-ophel-export-capturing")
-      window.postMessage({ type: "OPHEL_GEMINI_CAPTURE_STOP" }, "*")
+      document.documentElement.removeAttribute(GEMINI_EXPORT_CAPTURING_ATTR)
+      window.postMessage({ type: GEMINI_EXPORT_CAPTURE_STOP_MESSAGE }, "*")
     }
   }
 
@@ -3435,14 +3447,7 @@ export class GeminiAdapter extends SiteAdapter {
         [
           "download-generated-image-button button",
           '[data-test-id="download-generated-image-button"] button',
-          'gem-icon-button[data-test-id="download-generated-image-button"] button',
-          'button[data-test-id="download-generated-image-button"]',
-          "download-generated-image-button gem-icon-button",
           "download-generated-image-button",
-          'button[aria-label*="下载完整尺寸"]',
-          'button[aria-label*="Download full size"]',
-          'button[aria-label*="下载"]',
-          'button[aria-label*="Download"]',
         ].join(", "),
       )
 
@@ -3468,82 +3473,77 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   private triggerElementClick(element: HTMLElement): void {
-    const mouseEvents = ["pointerdown", "mousedown", "pointerup", "mouseup", "click"]
-    for (const type of mouseEvents) {
-      const event = new MouseEvent(type, {
-        bubbles: true,
-        cancelable: true,
-        composed: true,
-        view: window,
-        detail: 1,
-      })
-      element.dispatchEvent(event)
-    }
-
-    if (typeof element.click === "function") {
-      element.click()
-    }
-
     const innerButton = element.querySelector("button")
-    if (innerButton && innerButton !== element && innerButton instanceof HTMLElement) {
-      for (const type of mouseEvents) {
-        const event = new MouseEvent(type, {
+    const target =
+      typeof HTMLElement !== "undefined" && innerButton instanceof HTMLElement
+        ? innerButton
+        : element
+
+    for (const type of ["pointerdown", "mousedown", "pointerup", "mouseup"]) {
+      target.dispatchEvent(
+        new MouseEvent(type, {
           bubbles: true,
           cancelable: true,
           composed: true,
           view: window,
           detail: 1,
-        })
-        innerButton.dispatchEvent(event)
-      }
-      if (typeof innerButton.click === "function") {
-        innerButton.click()
-      }
+        }),
+      )
+    }
+
+    if (typeof target.click === "function") {
+      target.click()
     }
   }
 
   private async captureFullSizeImageFromButton(
     button: HTMLElement,
-    timeoutMs = 7000,
+    image: HTMLImageElement,
+    timeoutMs = 8000,
   ): Promise<string | null> {
+    const captureId = `ophel-export-capture-${++this.exportCaptureIdCounter}-${Date.now()}`
+
     return new Promise<string | null>((resolve) => {
-      let resolved = false
+      let settled = false
+      let timer = 0
+
+      const settle = (value: string | null) => {
+        if (settled) return
+        settled = true
+        window.clearTimeout(timer)
+        window.removeEventListener("message", listener)
+        window.postMessage({ type: GEMINI_EXPORT_CAPTURE_STOP_MESSAGE, captureId }, "*")
+        resolve(value)
+      }
 
       const listener = (event: MessageEvent) => {
         if (event.source !== window) return
-        if (event.data?.type === "OPHEL_GEMINI_IMAGE_CAPTURED") {
-          if (!resolved) {
-            resolved = true
-            cleanup()
-            const dataUrl = event.data.dataUrl || event.data.href || null
-            resolve(dataUrl)
-          }
+        const data = event.data
+        if (data?.type !== GEMINI_EXPORT_IMAGE_CAPTURED_MESSAGE || data.captureId !== captureId) {
+          return
         }
+        const dataUrl = typeof data.dataUrl === "string" ? data.dataUrl : ""
+        if (!dataUrl.startsWith("data:image/")) return
+        settle(dataUrl)
       }
 
-      const timer = window.setTimeout(() => {
-        if (!resolved) {
-          resolved = true
-          cleanup()
-          resolve(null)
-        }
-      }, timeoutMs)
-
-      const cleanup = () => {
-        window.clearTimeout(timer)
-        window.removeEventListener("message", listener)
-      }
-
+      timer = window.setTimeout(() => settle(null), timeoutMs)
       window.addEventListener("message", listener)
+
+      window.postMessage(
+        {
+          type: GEMINI_EXPORT_CAPTURE_START_MESSAGE,
+          captureId,
+          minWidth: image.naturalWidth || 0,
+          minHeight: image.naturalHeight || 0,
+        },
+        "*",
+      )
 
       try {
         this.triggerElementClick(button)
       } catch {
-        if (!resolved) {
-          resolved = true
-          cleanup()
-          resolve(null)
-        }
+        settle(null)
       }
     })
   }
@@ -3552,35 +3552,36 @@ export class GeminiAdapter extends SiteAdapter {
     image: HTMLImageElement,
     context: ExportLifecycleContext,
   ): Promise<string> {
-    const cachedFullSize = image.getAttribute("data-ophel-fullsize-src")
+    const cachedFullSize = image.getAttribute(GEMINI_EXPORT_FULLSIZE_SRC_ATTR)
     if (cachedFullSize && cachedFullSize.startsWith("data:image/")) {
       return cachedFullSize
     }
 
-    if (this.shouldTryWatermarkRemovalForExport(image)) {
+    if (
+      this.shouldTryWatermarkRemovalForExport(image) &&
+      this.exportCaptureFailureStreak < GEMINI_EXPORT_CAPTURE_MAX_FAILURE_STREAK
+    ) {
       const downloadButton = this.findDownloadButtonForGeneratedImage(image)
       if (downloadButton) {
-        const capturedSource = await this.captureFullSizeImageFromButton(downloadButton)
+        const capturedSource = await this.captureFullSizeImageFromButton(downloadButton, image)
         if (capturedSource) {
+          this.exportCaptureFailureStreak = 0
           let finalSource = capturedSource
           const watermarkRemover = WatermarkRemover.getActiveInstance()
           if (watermarkRemover) {
-            try {
-              const cleaned = await watermarkRemover.resolveProcessedImageDataUrl(capturedSource, {
-                scene: "export",
-              })
-              if (cleaned?.startsWith("data:image/")) {
-                finalSource = cleaned
-              }
-            } catch {
-              // fallback to captured source directly
+            const cleanedSource = await watermarkRemover.processCapturedImageDataUrl(capturedSource)
+            if (cleanedSource) {
+              finalSource = cleanedSource
             }
           }
-          if (finalSource.startsWith("data:image/")) {
-            image.setAttribute("data-ophel-fullsize-src", finalSource)
-          }
+          image.setAttribute(GEMINI_EXPORT_FULLSIZE_SRC_ATTR, finalSource)
           return finalSource
         }
+
+        this.exportCaptureFailureStreak++
+        console.warn(
+          "[GeminiAdapter] Full-size image capture failed; falling back to preview resolution",
+        )
       }
     }
 
@@ -3719,8 +3720,7 @@ export class GeminiAdapter extends SiteAdapter {
     }
 
     try {
-      const absoluteUrl = new URL(value, window.location.href).toString()
-      return normalizeGoogleusercontentImageUrl(absoluteUrl)
+      return new URL(value, window.location.href).toString()
     } catch {
       return value
     }

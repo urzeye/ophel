@@ -119,39 +119,3 @@ export function normalizeGeminiImageUrl(url: string): string {
     return url
   }
 }
-
-export function normalizeGoogleusercontentImageUrl(url: string): string {
-  if (!url) return ""
-
-  try {
-    const parsed = new URL(url)
-    if (!isGoogleusercontentHost(parsed.hostname)) return url
-
-    const path = parsed.pathname
-
-    const dimensionPairAtTail = /=w\d+-h\d+([^/]*)$/i
-    if (dimensionPairAtTail.test(path)) {
-      parsed.pathname = path.replace(dimensionPairAtTail, "=s0$1")
-      return parsed.toString()
-    }
-
-    if (hasNativeDownloadTokenAtTail(path)) {
-      parsed.pathname = path.replace(/=(?:d|d-I)$/i, (match) => `=s0-${match.slice(1)}`)
-      return parsed.toString()
-    }
-
-    const sizeTransformAtTail = /=(?:s|w|h)\d+([^/]*)$/i
-    if (sizeTransformAtTail.test(path)) {
-      parsed.pathname = path.replace(sizeTransformAtTail, "=s0$1")
-      return parsed.toString()
-    }
-
-    if (classifyGeminiAssetPath(path)) {
-      parsed.pathname = `${path}=s0`
-    }
-
-    return parsed.toString()
-  } catch {
-    return url
-  }
-}
