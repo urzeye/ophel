@@ -209,7 +209,11 @@ export const SUPPORTED_AI_PLATFORMS: SupportedAiPlatform[] = [
   createSupportedAiPlatform({
     id: SITE_IDS.GEMINI,
     name: "Gemini",
-    matchPatterns: ["https://gemini.google.com/*", "https://*.gemini.google.com/*"],
+    matchPatterns: [
+      "https://gemini.google.com/*",
+      "https://*.gemini.google.com/*",
+      "https://share.gemini.google/*",
+    ],
     entryUrls: ["https://gemini.google.com"],
     icon: "🌟",
   }),

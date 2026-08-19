@@ -808,7 +808,10 @@ export function findMatchingImageInDocument(sourceUrl: string): HTMLImageElement
     const src = img.getAttribute("src") || img.src || ""
     const currentSrc = img.currentSrc || ""
     const wmSource = img.getAttribute("data-ophel-wm-source") || ""
-    const exportSrc = img.getAttribute("data-ophel-export-img-src") || ""
+    const exportSrc =
+      img.getAttribute("data-ophel-export-image-src") ||
+      img.getAttribute("data-ophel-export-img-src") ||
+      ""
 
     if (
       src === sourceUrl ||
@@ -850,6 +853,45 @@ async function renderImageElementToBlob(image: HTMLImageElement): Promise<Blob |
   }
 }
 
+async function resolveImageElementBlob(image: HTMLImageElement): Promise<Blob | null> {
+  const candidates = [
+    image.getAttribute("data-ophel-export-image-src") || "",
+    image.getAttribute("data-ophel-export-img-src") || "",
+    image.getAttribute("data-ophel-wm-source") || "",
+    image.getAttribute("src") || "",
+    image.src || "",
+    image.currentSrc || "",
+  ]
+
+  for (const candidate of candidates) {
+    if (candidate.startsWith("data:image/")) {
+      try {
+        const response = await fetch(candidate)
+        if (response.ok) {
+          return await response.blob()
+        }
+      } catch {
+        // Fall through
+      }
+    }
+  }
+
+  for (const candidate of candidates) {
+    if (candidate.startsWith("blob:")) {
+      try {
+        const response = await fetch(candidate)
+        if (response.ok) {
+          return await response.blob()
+        }
+      } catch {
+        // Fall through
+      }
+    }
+  }
+
+  return await renderImageElementToBlob(image)
+}
+
 async function resolveAssetData(
   asset: ExportAsset,
 ): Promise<string | Blob | ArrayBuffer | Uint8Array> {
@@ -873,7 +915,7 @@ async function resolveAssetData(
 
     const matchingImg = findMatchingImageInDocument(asset.sourceUrl)
     if (matchingImg) {
-      const blob = await renderImageElementToBlob(matchingImg)
+      const blob = await resolveImageElementBlob(matchingImg)
       if (blob) return blob
     }
 
@@ -902,7 +944,7 @@ async function resolveAssetData(
     } catch (proxyFetchError) {
       const matchingImg = findMatchingImageInDocument(asset.sourceUrl)
       if (matchingImg) {
-        const domBlob = await renderImageElementToBlob(matchingImg)
+        const domBlob = await resolveImageElementBlob(matchingImg)
         if (domBlob) {
           return domBlob
         }

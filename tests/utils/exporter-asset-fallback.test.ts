@@ -81,4 +81,22 @@ describe("exporter findMatchingImageInDocument", () => {
     const found = findMatchingImageInDocument("https://lh3.googleusercontent.com/target")
     expect(found).toBe(targetImage)
   })
+
+  it("finds image matching data-ophel-export-image-src", () => {
+    const images = (globalThis as Record<string, unknown>).__testImages as Array<
+      Record<string, unknown>
+    >
+    const targetImage = {
+      getAttribute: (name: string) =>
+        name === "data-ophel-export-image-src" ? "https://lh3.googleusercontent.com/target2" : null,
+      src: "data:image/png;base64,456",
+      complete: true,
+      naturalWidth: 200,
+      width: 200,
+    }
+    images.push(targetImage)
+
+    const found = findMatchingImageInDocument("https://lh3.googleusercontent.com/target2")
+    expect(found).toBe(targetImage)
+  })
 })
