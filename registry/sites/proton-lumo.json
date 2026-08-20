@@ -1,0 +1,121 @@
+{
+  "schemaVersion": 1,
+  "id": "proton-lumo",
+  "version": 1,
+  "minAppVersion": "1.2.2",
+  "name": "Proton Lumo",
+  "nameI18n": {
+    "zh-CN": "Proton Lumo",
+    "zh-TW": "Proton Lumo",
+    "en": "Proton Lumo",
+    "ja": "Proton Lumo",
+    "ko": "Proton Lumo",
+    "it": "Proton Lumo",
+    "de": "Proton Lumo",
+    "es": "Proton Lumo",
+    "fr": "Proton Lumo",
+    "pt-BR": "Proton Lumo",
+    "ru": "Proton Lumo"
+  },
+  "description": "Adds Ophel outlines, basic export, generation detection and stopping, chat width, Zen Mode, Clean Mode, new chat, and prompt insertion to Proton Lumo (lumo.proton.me).",
+  "descriptionI18n": {
+    "zh-CN": "为 Proton Lumo 添加 Ophel 大纲、基础导出、生成检测与停止、对话宽度、禅模式、净化模式、新对话和提示词插入功能。",
+    "zh-TW": "為 Proton Lumo 加入 Ophel 大綱、基本匯出、生成偵測與停止、對話寬度、禪模式、淨化模式、新對話與提示詞插入功能。",
+    "en": "Adds Ophel outlines, basic export, generation detection and stopping, chat width, Zen Mode, Clean Mode, new chat, and prompt insertion to Proton Lumo (lumo.proton.me).",
+    "ja": "Proton Lumo に、Ophel のアウトライン、基本エクスポート、生成の検出と停止、チャット幅、Zen モード、クリーンモード、新規チャット、プロンプト挿入機能を追加します。",
+    "ko": "Proton Lumo에 Ophel의 개요, 기본 내보내기, 생성 감지 및 중지, 대화 너비, Zen 모드, 클린 모드, 새 채팅 및 프롬프트 삽입 기능을 추가합니다。",
+    "it": "Aggiunge a Proton Lumo le funzioni Ophel per struttura, esportazione di base, rilevamento e arresto della generazione, larghezza della chat, modalità Zen, modalità pulita, nuova chat e inserimento dei prompt.",
+    "de": "Ergänzt Proton Lumo um Ophel-Funktionen für Gliederung, Basisexport, Erkennung und Stoppen der Generierung, Chatbreite, Zen-Modus, Clean-Modus, neuen Chat und Prompt-Einfügung.",
+    "es": "Añade a Proton Lumo las funciones de Ophel para esquema, exportación básica, detección y detención de la generación, ancho del chat, modo zen, modo limpio, nuevo chat e inserción de prompts.",
+    "fr": "Ajoute à Proton Lumo les fonctions Ophel de plan, d’exportation de base, de détection et d’arrêt de la génération, de largeur de discussion, de mode Zen, de mode épuré, de nouvelle discussion et d’insertion de prompts.",
+    "pt-BR": "Adiciona ao Proton Lumo os recursos do Ophel para estrutura, exportação básica, detecção e interrupção da geração, largura da conversa, modo Zen, modo limpo, nova conversa e inserção de prompts.",
+    "ru": "Добавляет в Proton Lumo функции Ophel для структуры, базового экспорта, отслеживания и остановки генерации, ширины чата, режима Zen, режима очистки, нового чата и вставки промптов."
+  },
+  "matches": ["https://lumo.proton.me/*"],
+  "theme": {
+    "primary": "#6d4aff",
+    "secondary": "#573bcc"
+  },
+  "capabilities": [
+    "outline",
+    "outline-user-queries",
+    "export-basic",
+    "generation-detect",
+    "new-chat",
+    "stop-generation",
+    "width",
+    "zen",
+    "clean",
+    "prompt-insert"
+  ],
+  "selectors": {
+    "textarea": [
+      "textarea.composer",
+      ".lumo-input textarea",
+      "textarea[placeholder*='Ask anything']"
+    ],
+    "submitButton": [
+      ".lumo-input-container button[type='submit']",
+      ".lumo-input-container button:has(svg.lucide-arrow-up)",
+      ".lumo-input-container button.button-solid-norm"
+    ],
+    "responseContainer": ".lumo-message-chain",
+    "chatContent": [".lumo-chat-item[data-message-role]"],
+    "userQuery": ".lumo-chat-item[data-message-role='user'] .user-msg-container .lumo-markdown",
+    "assistantResponse": ".lumo-chat-item[data-message-role='assistant'] .progressive-markdown-content",
+    "newChatButton": [
+      "button.sidebar-item-main-action[aria-label='New chat']",
+      ".lumo-layout-header-left button:has(svg.lucide-square-pen)",
+      "button:has(svg.lucide-square-pen)"
+    ],
+    "stopButton": [
+      "button[aria-label*='Stop']",
+      ".lumo-input-container button:has(svg.lucide-square)",
+      "button:has(svg.lucide-square)"
+    ],
+    "scrollContainer": [".lumo-message-chain"],
+    "sidebarScrollContainer": ".sidebar-main-scroll .scroll-inner",
+    "outlineExclude": [".thinking-path", ".action-toolbar", ".user-toolbar"]
+  },
+  "input": {
+    "mode": "textarea",
+    "submitKey": "Enter"
+  },
+  "generating": {
+    "existsSelectors": [
+      "button[aria-label*='Stop']",
+      ".lumo-input-container button:has(svg.lucide-square)",
+      ".loading",
+      ".thinking-path-header[aria-busy='true']"
+    ]
+  },
+  "session": {
+    "idFromPathRegex": "^/u/\\d+/c/([0-9a-fA-F-]+)$",
+    "newConversationPathPatterns": ["^/$", "^/u/\\d+/?$"],
+    "newTabPath": "/u/1"
+  },
+  "export": {
+    "userQuerySelector": ".lumo-chat-item[data-message-role='user'] .user-msg-container .lumo-markdown",
+    "assistantResponseSelector": ".lumo-chat-item[data-message-role='assistant'] .progressive-markdown-content",
+    "turnSelector": ".lumo-chat-item",
+    "useShadowDOM": false
+  },
+  "zenMode": {
+    "hide": [".lumo-sidebar-shell", ".lumo-layout-header"]
+  },
+  "cleanMode": {
+    "hide": [".composer-notification-card", ".upsell-addon-button", ".lumo-plus-upgrade-button"]
+  },
+  "widthSelectors": [
+    {
+      "selector": ".lumo-message-chain .lumo-chat-item",
+      "property": "max-width",
+      "extraCss": "width: 100% !important; --max-w-custom: 100% !important;"
+    },
+    {
+      "selector": ".conversation-page-component .lumo-chat-item",
+      "property": "max-width",
+      "extraCss": "width: 100% !important; --max-w-custom: 100% !important;"
+    }
+  ]
+}

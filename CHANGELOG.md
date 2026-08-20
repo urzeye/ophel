@@ -11,6 +11,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🚀 New Features
 
+- **Proton Lumo support** — The online adapter library now includes Proton Lumo (lumo.proton.me); installing the pack enables outlines with user queries, basic export, generation detection and stop, chat width, Zen Mode, Clean Mode, new chat, and prompt insertion.
 - **Genspark support** — The online adapter library now includes Genspark (genspark.ai); installing the pack enables outlines with user queries, basic export, generation detection and stop, chat width, Zen Mode, new chat, prompt insertion, and Clean Mode. (#851)
 
 ### ✨ Improvements
