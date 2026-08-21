@@ -343,8 +343,8 @@ describe("registry PR workflow security contract", () => {
     const workflow = await readFile(WORKFLOW_PATH, "utf8")
 
     expect(workflow).toContain("pull_request_target:")
-    expect(workflow).toContain('- "registry/schema/**"')
-    expect(workflow).toContain('- "registry/examples/**"')
+    expect(workflow).toContain('- "registry/sites/**"')
+    expect(workflow).toContain('- "registry/patches/**"')
     expect(workflow).toContain("ref: ${{ github.event.pull_request.base.sha }}")
     expect(workflow).toContain("persist-credentials: false")
     expect(workflow).toContain("EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}")
@@ -357,7 +357,7 @@ describe("registry PR workflow security contract", () => {
     expect(workflow).toContain("uses: actions/github-script@v8")
     expect(workflow).toContain("VALIDATION_LOG: ${{ runner.temp }}/registry-validation.log")
     expect(workflow).toContain(
-      "if: always() && steps.registry_validation.outputs.result != 'success'",
+      "if: always() && steps.registry_validation.outputs.result != 'success' && steps.registry_validation.outputs.result != 'skipped_engine_pr'",
     )
   })
 })

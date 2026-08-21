@@ -7,8 +7,6 @@ on:
     paths:
       - "registry/sites/**"
       - "registry/patches/**"
-      - "registry/schema/**"
-      - "registry/examples/**"
 
 permissions:
   contents: read
@@ -62,8 +60,22 @@ jobs:
         shell: bash
         env:
           NO_COLOR: "1"
+          IS_OWNER: ${{ github.event.pull_request.user.login == github.repository_owner || github.event.pull_request.author_association == 'OWNER' }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           set +e
+          # 检查 PR 是否包含核心应用/规范代码变更
+          CHANGED_FILES=$(git diff --name-only "$BASE_SHA" FETCH_HEAD)
+          HAS_CORE_CHANGES=$(echo "$CHANGED_FILES" | grep -E '^(src/|package\.json|registry/schema/|registry/examples/)' || true)
+
+          # 如果是仓库所有者提交的核心代码升级 PR，则跳过基于 base 代码的校验，由 Audit Code Quality CI 全权验证
+          if [ "$IS_OWNER" = "true" ] && [ -n "$HAS_CORE_CHANGES" ]; then
+            echo "Repository owner core code update detected; skipping stale base-branch registry validation."
+            echo "result=skipped_engine_pr" >> "$GITHUB_OUTPUT"
+            echo "exit_code=0" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
           pnpm registry:validate -- --registry-root "$RUNNER_TEMP/registry-pr/registry" > "$RUNNER_TEMP/registry-validation.log" 2>&1
           STATUS=$?
           set -e
@@ -96,6 +108,8 @@ jobs:
             let body;
             if (result === "success") {
               body = `${marker}\n### Registry validation passed ✅\n\nAll SitePack and patch sources satisfy the schema, safety, ID, and match-conflict checks.`;
+            } else if (result === "skipped_engine_pr") {
+              body = `${marker}\n### Registry validation skipped (Core Update PR) ℹ️\n\nThis PR includes core framework/engine updates authored by the repository owner. Full validation is handled by the **Audit Code Quality** workflow.`;
             } else if (result === "failure") {
               const suffix = truncated ? "\n… output truncated; inspect the workflow log for the remainder." : "";
               body = `${marker}\n### Registry validation failed ❌\n\nFix the fields reported below and push a new commit.\n\n<details open><summary>Validation errors</summary>\n\n<pre>${escapeHtml(visibleLog + suffix)}</pre>\n</details>`;
@@ -129,5 +143,5 @@ jobs:
             }
 
       - name: Fail when registry validation failed
-        if: always() && steps.registry_validation.outputs.result != 'success'
+        if: always() && steps.registry_validation.outputs.result != 'success' && steps.registry_validation.outputs.result != 'skipped_engine_pr'
         run: exit 1
