@@ -48,6 +48,8 @@ export interface ExportMetadata {
   source: string
   customUserName?: string
   customModelName?: string
+  showIndex?: boolean
+  customDivider?: string
 }
 
 export type ExportFormat = "markdown" | "json" | "txt" | "html" | "clipboard"
@@ -561,148 +563,7 @@ export function htmlToMarkdown(el: Element): string {
   return processNode(el).trim()
 }
 
-// ==================== 格式化函数 ====================
-
-/**
- * 为 UTF-8 文本添加 BOM，提升 Windows 记事本等工具的编码识别
- */
-export function ensureUtf8Bom(content: string): string {
-  if (!content) return "\ufeff"
-  return content.startsWith("\ufeff") ? content : `\ufeff${content}`
-}
-
-/**
- * 格式化为 Markdown
- */
-export function formatToMarkdown(metadata: ExportMetadata, messages: ExportMessage[]): string {
-  const lines: string[] = []
-
-  // 元数据头
-  lines.push(`# ${metadata.title}`)
-  lines.push("")
-  lines.push("---")
-  lines.push("")
-  lines.push(`## ${EMOJI_EXPORT} ${t("exportMetaTitle")}`)
-  lines.push(`- **${t("exportMetaConvTitle")}**: ${metadata.title}`)
-  lines.push(`- **${t("exportMetaTime")}**: ${metadata.exportTime}`)
-  lines.push(`- **${t("exportMetaSource")}**: ${metadata.source}`)
-  lines.push(`- **${t("exportMetaUrl")}**: ${metadata.url}`)
-  lines.push("")
-  lines.push("---")
-  lines.push("")
-
-  // 对话内容
-  messages.forEach((msg) => {
-    if (msg.role === "user") {
-      const userLabel = metadata.customUserName || t("exportUserLabel")
-      lines.push(`## ${EMOJI_USER} ${userLabel}`)
-      lines.push("")
-      lines.push(msg.content)
-      lines.push("")
-      lines.push("---")
-      lines.push("")
-    } else {
-      const modelLabel = metadata.customModelName || metadata.source
-      lines.push(`## ${EMOJI_ASSISTANT} ${modelLabel}`)
-      lines.push("")
-      lines.push(msg.content)
-      lines.push("")
-      lines.push("---")
-      lines.push("")
-    }
-  })
-
-  return lines.join("\n")
-}
-
-/**
- * 格式化为 JSON
- */
-export function formatToJSON(metadata: ExportMetadata, messages: ExportMessage[]): string {
-  const data = {
-    metadata: {
-      title: metadata.title,
-      id: metadata.id,
-      url: metadata.url,
-      exportTime: metadata.exportTime,
-      source: metadata.source,
-    },
-    messages: messages.map((msg) => ({
-      role: msg.role,
-      content: msg.content,
-    })),
-  }
-  return JSON.stringify(data, null, 2)
-}
-
-/**
- * 格式化为 TXT
- */
-export function formatToTXT(metadata: ExportMetadata, messages: ExportMessage[]): string {
-  const lines: string[] = []
-
-  lines.push(`${t("exportMetaConvTitle")}: ${metadata.title}`)
-  lines.push(`${t("exportMetaTime")}: ${metadata.exportTime}`)
-  lines.push(`${t("exportMetaSource")}: ${metadata.source}`)
-  lines.push(`${t("exportMetaUrl")}: ${metadata.url}`)
-  lines.push("")
-  lines.push("=".repeat(50))
-  lines.push("")
-
-  messages.forEach((msg) => {
-    if (msg.role === "user") {
-      const userLabel = metadata.customUserName || t("exportUserLabel")
-      lines.push(`[${userLabel}]`)
-    } else {
-      const modelLabel = metadata.customModelName || metadata.source
-      lines.push(`[${modelLabel}]`)
-    }
-    lines.push(msg.content)
-    lines.push("")
-    lines.push("-".repeat(50))
-    lines.push("")
-  })
-
-  return lines.join("\n")
-}
-
-// ==================== HTML 导出 ====================
-
-/**
- * 导出的 HTML 是自包含的单文件文档：
- * - 无外部依赖（字体、图标、CDN），file:// 直接打开即可阅读
- * - 内置亮 / 暗 / 跟随系统三种主题，读者可自由切换
- * - 代码块带复制按钮与语言标签，打印时强制浅色
- */
-
-export const HTML_FILE_EXT = "html"
-
-const escapeHtml = (value: string): string =>
-  value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;")
-
-/**
- * 将 LaTeX 渲染为 MathML（现代浏览器原生支持，无需内嵌字体）
- * 渲染失败时回退为等宽文本显示 LaTeX 源码
- */
-export const renderMathToMathML = (content: string, displayMode: boolean): string =>
-  platform.math.renderKatexToMathML(content, { displayMode })
-
-let htmlExportMarkdownIt: ReturnType<typeof createMarkdownIt> | null = null
-
-const getHtmlExportMarkdownIt = (): ReturnType<typeof createMarkdownIt> => {
-  if (!htmlExportMarkdownIt) {
-    htmlExportMarkdownIt = createMarkdownIt(true, false, renderMathToMathML)
-  }
-  return htmlExportMarkdownIt
-}
-
-const COPY_ICON_SVG =
-  '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>'
+// ==================== 格式化函数与清洗管道 ====================
 
 const THOUGHT_MARKDOWN_LINE =
   /^\s*(?:\[(?:Thoughts?|思维链|思考过程)\]|\*{0,2}💭\s*思考过程\*{0,2})\s*$/i
@@ -717,7 +578,13 @@ function getThoughtMarkerIndex(lines: string[]): number {
   return -1
 }
 
-function mergeSegmentedThoughtBlocks(content: string): string {
+/**
+ * 通用思维链聚合函数：
+ * 扫描内容中的连续 > [Thoughts] 引用块，合并为单一标准的思维链引用块，避免分段产生多个 [Thoughts] 标签。
+ */
+export function consolidateThoughtBlocks(content: string): string {
+  if (!content || !content.includes(">")) return content
+
   const lines = content.replace(/\r\n?/g, "\n").split("\n")
   const merged: string[] = []
   let index = 0
@@ -770,6 +637,232 @@ function mergeSegmentedThoughtBlocks(content: string): string {
 
   return merged.join("\n")
 }
+
+/** 兼容旧命名 */
+export const mergeSegmentedThoughtBlocks = consolidateThoughtBlocks
+
+/**
+ * 判断内容是否为纯思维链块（整段由引用行组成，且头部为思考过程标记）
+ */
+export function isPureThoughtContent(content: string): boolean {
+  const trimmed = content.trim()
+  if (!trimmed || !trimmed.startsWith(">")) return false
+  const lines = trimmed.split("\n")
+  const markerIdx = getThoughtMarkerIndex(lines)
+  if (markerIdx === -1) return false
+  return lines.every((line) => !line.trim() || line.trimStart().startsWith(">"))
+}
+
+/**
+ * 消息序列归一化管道：
+ * 1. 对每条消息统一聚合思维链（合并碎片化 [Thoughts]）
+ * 2. 安全合并规则：连续 Assistant 角色且前一条为纯思维链时，自动将思维链作为前缀拼到后续正文前
+ * 3. 用户（User）消息与连续普通正文严格保持原样，绝不发生误合并
+ */
+export function normalizeExportMessages(messages: ExportMessage[]): ExportMessage[] {
+  if (!Array.isArray(messages) || messages.length === 0) return []
+
+  if (messages.length === 1) {
+    return [
+      {
+        role: messages[0].role,
+        content: consolidateThoughtBlocks(messages[0].content),
+      },
+    ]
+  }
+
+  const result: ExportMessage[] = []
+  let i = 0
+
+  while (i < messages.length) {
+    const current = {
+      role: messages[i].role,
+      content: consolidateThoughtBlocks(messages[i].content),
+    }
+
+    // 仅当连续两条均为 assistant，且前一条为纯思维链时，安全合并
+    if (
+      current.role === "assistant" &&
+      isPureThoughtContent(current.content) &&
+      i + 1 < messages.length &&
+      messages[i + 1].role === "assistant"
+    ) {
+      const nextContent = consolidateThoughtBlocks(messages[i + 1].content)
+      result.push({
+        role: "assistant",
+        content: consolidateThoughtBlocks(`${current.content}\n\n${nextContent}`),
+      })
+      i += 2
+      continue
+    }
+
+    result.push(current)
+    i += 1
+  }
+
+  return result
+}
+
+/**
+ * 为 UTF-8 文本添加 BOM，提升 Windows 记事本等工具的编码识别
+ */
+export function ensureUtf8Bom(content: string): string {
+  if (!content) return "\ufeff"
+  return content.startsWith("\ufeff") ? content : `\ufeff${content}`
+}
+
+/**
+ * 格式化为 Markdown
+ */
+export function formatToMarkdown(metadata: ExportMetadata, messages: ExportMessage[]): string {
+  const lines: string[] = []
+  const normalizedMessages = normalizeExportMessages(messages)
+  const divider = metadata.customDivider !== undefined ? metadata.customDivider : "---"
+
+  // 元数据头
+  lines.push(`# ${metadata.title}`)
+  lines.push("")
+  if (divider) {
+    lines.push(divider)
+    lines.push("")
+  }
+  lines.push(`## ${EMOJI_EXPORT} ${t("exportMetaTitle")}`)
+  lines.push(`- **${t("exportMetaConvTitle")}**: ${metadata.title}`)
+  lines.push(`- **${t("exportMetaTime")}**: ${metadata.exportTime}`)
+  lines.push(`- **${t("exportMetaSource")}**: ${metadata.source}`)
+  lines.push(`- **${t("exportMetaUrl")}**: ${metadata.url}`)
+  lines.push("")
+  if (divider) {
+    lines.push(divider)
+    lines.push("")
+  }
+
+  // 对话内容
+  let turnNumber = 0
+  normalizedMessages.forEach((msg) => {
+    if (msg.role === "user") {
+      turnNumber += 1
+      const userLabel = metadata.customUserName || t("exportUserLabel")
+      const titlePrefix = metadata.showIndex ? `${turnNumber}. ` : ""
+      lines.push(`## ${titlePrefix}${EMOJI_USER} ${userLabel}`)
+      lines.push("")
+      lines.push(msg.content)
+      lines.push("")
+      if (divider) {
+        lines.push(divider)
+        lines.push("")
+      }
+    } else {
+      const modelLabel = metadata.customModelName || metadata.source
+      const titlePrefix = metadata.showIndex ? `${turnNumber || 1}. ` : ""
+      lines.push(`## ${titlePrefix}${EMOJI_ASSISTANT} ${modelLabel}`)
+      lines.push("")
+      lines.push(msg.content)
+      lines.push("")
+      if (divider) {
+        lines.push(divider)
+        lines.push("")
+      }
+    }
+  })
+
+  return lines.join("\n")
+}
+
+/**
+ * 格式化为 JSON
+ */
+export function formatToJSON(metadata: ExportMetadata, messages: ExportMessage[]): string {
+  const normalizedMessages = normalizeExportMessages(messages)
+  const data = {
+    metadata: {
+      title: metadata.title,
+      id: metadata.id,
+      url: metadata.url,
+      exportTime: metadata.exportTime,
+      source: metadata.source,
+    },
+    messages: normalizedMessages.map((msg) => ({
+      role: msg.role,
+      content: msg.content,
+    })),
+  }
+  return JSON.stringify(data, null, 2)
+}
+
+/**
+ * 格式化为 TXT
+ */
+export function formatToTXT(metadata: ExportMetadata, messages: ExportMessage[]): string {
+  const lines: string[] = []
+  const normalizedMessages = normalizeExportMessages(messages)
+
+  lines.push(`${t("exportMetaConvTitle")}: ${metadata.title}`)
+  lines.push(`${t("exportMetaTime")}: ${metadata.exportTime}`)
+  lines.push(`${t("exportMetaSource")}: ${metadata.source}`)
+  lines.push(`${t("exportMetaUrl")}: ${metadata.url}`)
+  lines.push("")
+  lines.push("=".repeat(50))
+  lines.push("")
+
+  let turnNumber = 0
+  normalizedMessages.forEach((msg) => {
+    if (msg.role === "user") {
+      turnNumber += 1
+      const userLabel = metadata.customUserName || t("exportUserLabel")
+      const prefix = metadata.showIndex ? `${turnNumber}. ` : ""
+      lines.push(`[${prefix}${userLabel}]`)
+    } else {
+      const modelLabel = metadata.customModelName || metadata.source
+      const prefix = metadata.showIndex ? `${turnNumber || 1}. ` : ""
+      lines.push(`[${prefix}${modelLabel}]`)
+    }
+    lines.push(msg.content)
+    lines.push("")
+    lines.push("-".repeat(50))
+    lines.push("")
+  })
+
+  return lines.join("\n")
+}
+
+// ==================== HTML 导出 ====================
+
+/**
+ * 导出的 HTML 是自包含的单文件文档：
+ * - 无外部依赖（字体、图标、CDN），file:// 直接打开即可阅读
+ * - 内置亮 / 暗 / 跟随系统三种主题，读者可自由切换
+ * - 代码块带复制按钮与语言标签，打印时强制浅色
+ */
+
+export const HTML_FILE_EXT = "html"
+
+const escapeHtml = (value: string): string =>
+  value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;")
+
+/**
+ * 将 LaTeX 渲染为 MathML（现代浏览器原生支持，无需内嵌字体）
+ * 渲染失败时回退为等宽文本显示 LaTeX 源码
+ */
+export const renderMathToMathML = (content: string, displayMode: boolean): string =>
+  platform.math.renderKatexToMathML(content, { displayMode })
+
+let htmlExportMarkdownIt: ReturnType<typeof createMarkdownIt> | null = null
+
+const getHtmlExportMarkdownIt = (): ReturnType<typeof createMarkdownIt> => {
+  if (!htmlExportMarkdownIt) {
+    htmlExportMarkdownIt = createMarkdownIt(true, false, renderMathToMathML)
+  }
+  return htmlExportMarkdownIt
+}
+
+const COPY_ICON_SVG =
+  '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>'
 
 type TopLevelBlockquote = {
   index: number
@@ -1335,14 +1428,22 @@ const USER_ICON_SVG =
 const ASSISTANT_ICON_SVG =
   '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.8 5.8 1.9-5.8 1.9L12 18.4l-1.9-5.8L4.3 10.7l5.8-1.9z"></path><path d="M19 3v3"></path><path d="M20.5 4.5h-3"></path></svg>'
 
-function formatMessageHtml(msg: ExportMessage, metadata: ExportMetadata): string {
+function formatMessageHtml(
+  msg: ExportMessage,
+  metadata: ExportMetadata,
+  turnNumber?: number,
+): string {
   const isUser = msg.role === "user"
   const isAssistant = msg.role === "assistant"
-  const label = isUser
+  let label = isUser
     ? metadata.customUserName || t("exportUserLabel")
     : isAssistant
       ? metadata.customModelName || metadata.source
       : msg.role
+
+  if (metadata.showIndex && turnNumber) {
+    label = `${turnNumber}. ${label}`
+  }
   const icon = isUser ? USER_ICON_SVG : ASSISTANT_ICON_SVG
 
   return `<article class="gh-message" data-role="${escapeHtml(msg.role)}">
@@ -1362,7 +1463,17 @@ export function formatToHTML(metadata: ExportMetadata, messages: ExportMessage[]
   const title = escapeHtml(metadata.title)
   const time = escapeHtml(metadata.exportTime)
   const source = escapeHtml(metadata.source)
-  const messagesHtml = messages.map((msg) => formatMessageHtml(msg, metadata)).join("\n")
+  const normalizedMessages = normalizeExportMessages(messages)
+
+  let turnNumber = 0
+  const messagesHtml = normalizedMessages
+    .map((msg) => {
+      if (msg.role === "user") {
+        turnNumber += 1
+      }
+      return formatMessageHtml(msg, metadata, turnNumber || 1)
+    })
+    .join("\n")
 
   return `<!DOCTYPE html>
 <html lang="${lang}" data-theme="auto">
@@ -2086,7 +2197,12 @@ export function createExportMetadata(
   title: string,
   source: string,
   id?: string,
-  options?: { customUserName?: string; customModelName?: string },
+  options?: {
+    customUserName?: string
+    customModelName?: string
+    showIndex?: boolean
+    customDivider?: string
+  },
 ): ExportMetadata {
   return {
     title: title || t("exportUntitled"),
@@ -2096,5 +2212,7 @@ export function createExportMetadata(
     source,
     customUserName: options?.customUserName,
     customModelName: options?.customModelName,
+    showIndex: options?.showIndex,
+    customDivider: options?.customDivider,
   }
 }

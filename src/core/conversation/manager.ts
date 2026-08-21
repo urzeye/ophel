@@ -126,9 +126,14 @@ interface ConversationExportData {
   notifyProgress: (stage: ConversationExportStage) => void
 }
 
-interface ConversationExportDataOptions {
+export interface ConversationExportOptions {
   packaging?: ExportPackaging
+  includeThoughts?: boolean
+  showIndex?: boolean
+  customDivider?: string
 }
+
+type ConversationExportDataOptions = ConversationExportOptions
 
 interface AutoFullSyncResult {
   scannedCount: number
@@ -1286,6 +1291,8 @@ export class ConversationManager {
       metadata: createExportMetadata(exportTitle, siteName, conv.id, {
         customUserName: settings.export?.customUserName,
         customModelName: settings.export?.customModelName,
+        showIndex: settings.export?.exportShowIndex,
+        customDivider: settings.export?.exportMarkdownDivider,
       }),
     }
   }
@@ -1584,7 +1591,7 @@ export class ConversationManager {
     const exportContext: ExportLifecycleContext = {
       conversationId: convId,
       format,
-      includeThoughts: settings.export?.includeThoughts ?? true,
+      includeThoughts: options.includeThoughts ?? settings.export?.includeThoughts ?? true,
       packaging: exportPackaging,
     }
 
@@ -1779,8 +1786,8 @@ export class ConversationManager {
         mimeType: "application/json;charset=utf-8",
       })
 
-      const packageFilename = `${draft.filenamePrefix}${draft.safeTitle}${draft.timestampSuffix} - segments.zip`
-      const downloaded = await downloadZipFiles(files, packageFilename)
+      const filename = `${draft.filenamePrefix}${draft.safeTitle}${draft.timestampSuffix} - segments.zip`
+      const downloaded = await downloadZipFiles(files, filename)
       if (downloaded) showToast(t("exportSuccess"))
       return downloaded
     } catch (error) {
@@ -1793,7 +1800,11 @@ export class ConversationManager {
   /**
    * 导出会话
    */
-  async exportConversation(convId: string, format: ExportFormat): Promise<boolean> {
+  async exportConversation(
+    convId: string,
+    format: ExportFormat,
+    options?: ConversationExportOptions,
+  ): Promise<boolean> {
     const result = await this.withConversationExportData(
       convId,
       format,
@@ -1809,6 +1820,8 @@ export class ConversationManager {
         const metadata = createExportMetadata(exportTitle, this.siteAdapter.getName(), conv.id, {
           customUserName: settings.export?.customUserName,
           customModelName: settings.export?.customModelName,
+          showIndex: options?.showIndex ?? settings.export?.exportShowIndex,
+          customDivider: options?.customDivider ?? settings.export?.exportMarkdownDivider,
         })
 
         let content: string
@@ -1876,6 +1889,8 @@ export class ConversationManager {
         showToast(t("exportSuccess"))
         return true
       },
+      "export",
+      options,
     )
 
     return result === true

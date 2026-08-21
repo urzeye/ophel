@@ -5,6 +5,7 @@
 export * from "./types"
 export {
   ConversationManager,
+  type ConversationExportOptions,
   type ConversationExportProgress,
   type ConversationExportSegment,
   type ConversationSegmentedExportDraft,
