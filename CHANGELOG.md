@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### 🚀 New Features
+
+- **Manus support** — The online adapter library now includes Manus (manus.im); installing the pack enables outlines with user queries, basic export, chat width, Zen Mode, Clean Mode, new chat, and prompt insertion on conversations and shared pages.
+
 ---
 
 ## [1.2.3] - 2026-08-20

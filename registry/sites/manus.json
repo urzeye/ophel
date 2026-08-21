@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "manus",
   "version": 1,
-  "minAppVersion": "1.2.2",
+  "minAppVersion": "1.2.4",
   "name": "Manus",
   "nameI18n": {
     "zh-CN": "Manus",
