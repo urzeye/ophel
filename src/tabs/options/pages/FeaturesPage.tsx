@@ -1360,6 +1360,33 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
               }
             />
 
+            <ToggleRow
+              label={t("exportShowIndexLabel")}
+              description={t("exportShowIndexDesc")}
+              settingId="export-show-index"
+              checked={settings.export?.exportShowIndex ?? false}
+              onChange={() =>
+                updateNestedSetting(
+                  "export",
+                  "exportShowIndex",
+                  !(settings.export?.exportShowIndex ?? false),
+                )
+              }
+            />
+
+            <SettingRow
+              label={t("exportMarkdownDividerLabel")}
+              description={t("exportMarkdownDividerDesc")}
+              settingId="export-markdown-divider">
+              <LazyInput
+                className="settings-input"
+                value={settings.export?.exportMarkdownDivider ?? "---"}
+                onChange={(val) => updateNestedSetting("export", "exportMarkdownDivider", val)}
+                placeholder="---"
+                style={{ width: "180px" }}
+              />
+            </SettingRow>
+
             <SettingRow
               label={t("exportCustomUserName")}
               description={t("exportCustomUserNameDesc")}

@@ -1811,6 +1811,12 @@ export const ru = {
   exportThoughtCollapsedLabel: "Процесс мышления",
   exportIncludeThoughtsDesc:
     "Включать ход мыслей при экспорте; он свернут под переключателем «Процесс мышления», который читатели могут развернуть",
+  exportShowIndexLabel: "Показывать номера сообщений при экспорте",
+  exportShowIndexDesc:
+    "Добавляет порядковый номер к заголовкам сообщений для удобного поиска и навигации",
+  exportMarkdownDividerLabel: "Разделитель Markdown",
+  exportMarkdownDividerDesc:
+    "Пользовательский разделитель между сообщениями в экспортированном Markdown (по умолчанию: ---)",
   exportAttachmentsLabel: "Вложения",
   exportPackagingLabel: "Способ экспорта Markdown",
   exportDefaultFormatLabel: "Формат экспорта по умолчанию",
@@ -1821,6 +1827,11 @@ export const ru = {
     "ZIP включает файл Markdown и загружаемые вложения, сохраняет вложения в assets и ссылается на них относительными путями.",
   exportPackagingMarkdown: "Markdown",
   exportPackagingZip: "ZIP",
+  exportFormat: "Формат экспорта",
+  exportOptions: "Параметры экспорта",
+  exportPackagingZipOption: "Упаковать в ZIP-архив (с вложениями)",
+  exportConversationTitle: "Экспорт диалога",
+  exporting: "Экспорт...",
 
   // ==================== Prompt Queue ====================
   queueTitle: "Очередь промптов",

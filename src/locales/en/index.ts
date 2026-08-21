@@ -894,6 +894,11 @@ export const en = {
   exportThoughtCollapsedLabel: "Thinking process",
   exportIncludeThoughtsDesc:
     'Include thoughts when exporting; they are collapsed under a "Thinking process" toggle that readers can expand',
+  exportShowIndexLabel: "Show Turn Numbers in Export",
+  exportShowIndexDesc: "Add numeric index to message headings for easier searching and reference",
+  exportMarkdownDividerLabel: "Markdown Divider",
+  exportMarkdownDividerDesc:
+    "Custom divider string between messages in exported Markdown (default: ---)",
   exportAttachmentsLabel: "Attachments",
   exportPackagingLabel: "Markdown Export Method",
   exportDefaultFormatLabel: "Default Export Format",
@@ -904,6 +909,11 @@ export const en = {
     "ZIP includes the Markdown file and downloadable attachments, storing attachments in assets and referencing them with relative paths.",
   exportPackagingMarkdown: "Markdown",
   exportPackagingZip: "ZIP",
+  exportFormat: "Export Format",
+  exportOptions: "Export Options",
+  exportPackagingZipOption: "Package as ZIP (with attachments)",
+  exportConversationTitle: "Export Conversation",
+  exporting: "Exporting...",
   userQueryMarkdownLabel: "User Query Style Enhancement",
   userQueryMarkdownDesc: "Apply Markdown formatting and LaTeX math rendering to user queries",
   assistantMermaidPreviewTab: "Diagram",

@@ -290,10 +290,20 @@ const normalizeExportSettings = (
     exportSettings?.defaultExportFormat === "html"
       ? exportSettings.defaultExportFormat
       : defaults.defaultExportFormat
+  const exportShowIndex =
+    typeof exportSettings?.exportShowIndex === "boolean"
+      ? exportSettings.exportShowIndex
+      : defaults.exportShowIndex
+  const exportMarkdownDivider =
+    typeof exportSettings?.exportMarkdownDivider === "string"
+      ? exportSettings.exportMarkdownDivider
+      : defaults.exportMarkdownDivider
 
   return {
     ...defaults,
     ...exportSettings,
+    exportShowIndex,
+    exportMarkdownDivider,
     packaging,
     defaultExportFormat,
   }

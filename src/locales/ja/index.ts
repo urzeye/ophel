@@ -1692,6 +1692,11 @@ export const ja = {
   exportThoughtCollapsedLabel: "思考過程",
   exportIncludeThoughtsDesc:
     "エクスポート時に思考過程を含めます。既定では折りたたまれ、クリックで展開できます",
+  exportShowIndexLabel: "エクスポートに対話番号を表示",
+  exportShowIndexDesc: "検索や参照を容易にするため、メッセージの見出しに通し番号を追加します",
+  exportMarkdownDividerLabel: "Markdown 区切り線",
+  exportMarkdownDividerDesc:
+    "エクスポート時のメッセージ間の区切り文字列をカスタマイズ（デフォルト: ---）",
   exportAttachmentsLabel: "添付ファイル",
   exportPackagingLabel: "Markdownエクスポート方式",
   exportDefaultFormatLabel: "デフォルトのエクスポート形式",
@@ -1702,6 +1707,11 @@ export const ja = {
     "ZIPにはMarkdownファイルとダウンロード可能な添付ファイルが含まれ、添付ファイルはassetsに保存され相対パスで参照されます",
   exportPackagingMarkdown: "Markdown",
   exportPackagingZip: "ZIP",
+  exportFormat: "エクスポート形式",
+  exportOptions: "エクスポート設定",
+  exportPackagingZipOption: "ZIP圧縮ファイルとして保存 (添付ファイル含む)",
+  exportConversationTitle: "対話をエクスポート",
+  exporting: "エクスポート中...",
 
   // ======== Popup ========
   popupCurrentSite: "現在のサイト",

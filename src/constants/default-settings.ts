@@ -120,6 +120,8 @@ export const DEFAULT_SETTINGS: Settings = {
     customModelName: "",
     exportFilenameTimestamp: false,
     includeThoughts: true,
+    exportShowIndex: false,
+    exportMarkdownDivider: "---",
     packaging: "markdown",
     defaultExportFormat: "markdown",
   },

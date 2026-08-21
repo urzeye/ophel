@@ -1663,6 +1663,12 @@ Donnez le code puis un résumé des améliorations.`,
   exportThoughtCollapsedLabel: "Processus de réflexion",
   exportIncludeThoughtsDesc:
     "Inclure les réflexions lors de l'export ; elles sont repliées sous un bouton « Processus de réflexion » que les lecteurs peuvent déplier",
+  exportShowIndexLabel: "Afficher les numéros de tour à l'export",
+  exportShowIndexDesc:
+    "Ajoute un numéro d'index aux titres des messages pour faciliter le repérage",
+  exportMarkdownDividerLabel: "Séparateur Markdown",
+  exportMarkdownDividerDesc:
+    "Ligne de séparation personnalisée entre les messages dans le Markdown exporté (par défaut : ---)",
   exportAttachmentsLabel: "Pièces jointes",
   exportPackagingLabel: "Méthode d'export Markdown",
   exportDefaultFormatLabel: "Format d'export par défaut",
@@ -1673,6 +1679,11 @@ Donnez le code puis un résumé des améliorations.`,
     "ZIP inclut le fichier Markdown et les pièces jointes téléchargeables, place les pièces jointes dans assets et les référence avec des chemins relatifs.",
   exportPackagingMarkdown: "Markdown",
   exportPackagingZip: "ZIP",
+  exportFormat: "Format d'export",
+  exportOptions: "Options d'export",
+  exportPackagingZipOption: "Créer une archive ZIP (avec pièces jointes)",
+  exportConversationTitle: "Exporter la conversation",
+  exporting: "Exportation...",
 
   // ======== Popup ========
   popupCurrentSite: "Site Actuel",
