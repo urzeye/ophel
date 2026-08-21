@@ -21,6 +21,7 @@
   "capabilities": [
     "outline",
     "outline-user-queries",
+    "document-outline",
     "conversation-list",
     "export-basic",
     "model-lock",
@@ -158,6 +159,16 @@
     ],
     "defaultWidth": "72rem",
     "gap": 16
+  },
+  "documentOutline": {
+    "container": "aside[data-document-root]",
+    "scrollContainer": "aside[data-document-root] [data-scroll-container]",
+    "exclude": ["[data-hidden-heading]"],
+    "label": "Document",
+    "labelI18n": {
+      "en": "Document",
+      "zh-CN": "文档"
+    }
   },
   "mermaidSupport": "fallback",
   "quickQuote": "enabled",

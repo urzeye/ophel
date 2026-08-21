@@ -122,6 +122,7 @@ export const es = {
   siteAdapterWizardCapabilityPrompt: "Inserción de prompts",
   siteAdapterWizardCapabilityOutline: "Esquema de conversación",
   siteAdapterWizardCapabilityUserQueries: "Preguntas del usuario en el esquema",
+  siteAdapterWizardCapabilityDocumentOutline: "Esquema del documento",
   siteAdapterWizardCapabilityExport: "Exportación básica",
   siteAdapterWizardCapabilityHistory: "Historial de lectura",
   siteAdapterWizardCapabilityNewChat: "Nueva conversación",

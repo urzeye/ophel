@@ -75,6 +75,20 @@ export type SitePackPanelAvoidanceConfig = Omit<PanelAvoidanceConfig, "widthSele
   widthSelectors: Omit<WidthSelectorConfig, "transformValue">[]
 }
 
+/** 声明式文档/Canvas 大纲配置。 */
+export interface SitePackDocumentOutlineConfig {
+  /** 声明文档大纲根容器的选择器；当该元素存在且包含标题时，自动激活“文档”大纲数据源。 */
+  container: string
+  /** 文档独立的滚动容器选择器；缺省时自动向上寻找可滚动祖先元素。 */
+  scrollContainer?: string
+  /** 文档大纲中需要排除的容器选择器。 */
+  exclude?: string[]
+  /** 自定义数据源标签（缺省为“文档”）。 */
+  label?: string
+  /** 自定义数据源标签的多语言映射。 */
+  labelI18n?: Record<string, string>
+}
+
 /** SitePack 与内置配置共同使用的声明式配置面。 */
 export interface SitePackConfig {
   theme?: {
@@ -96,6 +110,8 @@ export interface SitePackConfig {
   widthSelectors?: Omit<WidthSelectorConfig, "transformValue">[]
   /** 声明 panel-avoidance 能力时必填；驱动 Ophel 面板安全区避让布局。 */
   panelAvoidance?: SitePackPanelAvoidanceConfig
+  /** 声明 document-outline 能力时必填；驱动 Canvas / 独立文档大纲数据源。 */
+  documentOutline?: SitePackDocumentOutlineConfig
   mermaidSupport?: "native" | "fallback"
   quickQuote?: "enabled" | "native" | "disabled"
   /** 缺省 false；由声明式适配器显式选择是否联动宿主页主题。 */

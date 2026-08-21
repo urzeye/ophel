@@ -119,6 +119,7 @@ export const en = {
   siteAdapterWizardCapabilityPrompt: "Prompt insertion",
   siteAdapterWizardCapabilityOutline: "Conversation outline",
   siteAdapterWizardCapabilityUserQueries: "User questions in outline",
+  siteAdapterWizardCapabilityDocumentOutline: "Document outline",
   siteAdapterWizardCapabilityExport: "Basic export",
   siteAdapterWizardCapabilityHistory: "Reading history",
   siteAdapterWizardCapabilityNewChat: "New conversation",

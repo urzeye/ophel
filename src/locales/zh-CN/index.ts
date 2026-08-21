@@ -101,6 +101,7 @@ export const zhCN = {
   siteAdapterWizardCapabilityPrompt: "提示词插入",
   siteAdapterWizardCapabilityOutline: "对话大纲",
   siteAdapterWizardCapabilityUserQueries: "大纲显示用户问题",
+  siteAdapterWizardCapabilityDocumentOutline: "文档大纲",
   siteAdapterWizardCapabilityExport: "基础导出",
   siteAdapterWizardCapabilityHistory: "阅读历史",
   siteAdapterWizardCapabilityNewChat: "新建对话",

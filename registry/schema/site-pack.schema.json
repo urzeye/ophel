@@ -98,6 +98,9 @@
     "panelAvoidance": {
       "$ref": "#/definitions/panelAvoidance"
     },
+    "documentOutline": {
+      "$ref": "#/definitions/documentOutline"
+    },
     "mermaidSupport": {
       "type": "string",
       "enum": ["native", "fallback"]
@@ -388,6 +391,20 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "properties": {
+          "capabilities": {
+            "contains": {
+              "const": "document-outline"
+            }
+          }
+        }
+      },
+      "then": {
+        "required": ["documentOutline"]
+      }
     }
   ],
   "definitions": {
@@ -557,6 +574,7 @@
         "enum": [
           "outline",
           "outline-user-queries",
+          "document-outline",
           "conversation-list",
           "export-basic",
           "model-lock",
@@ -997,6 +1015,34 @@
         },
         "extraCss": {
           "$ref": "#/definitions/cssValue"
+        }
+      }
+    },
+    "documentOutline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["container"],
+      "properties": {
+        "container": {
+          "$ref": "#/definitions/selector",
+          "description": "Root selector of the Canvas/document markdown container."
+        },
+        "scrollContainer": {
+          "$ref": "#/definitions/selector",
+          "description": "Optional selector of the dedicated document scroll container."
+        },
+        "exclude": {
+          "$ref": "#/definitions/selectorArray",
+          "description": "Optional selectors for elements to exclude from document outline."
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 50,
+          "description": "Custom label for the document outline tab (defaults to Document / 文档)."
+        },
+        "labelI18n": {
+          "$ref": "#/definitions/i18nRecord"
         }
       }
     }

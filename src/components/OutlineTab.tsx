@@ -54,9 +54,15 @@ const countOutlineNodes = (nodes: OutlineNode[]): number => {
 
 const getOutlineSourceLabel = (source: OutlineSource): string => {
   if (source.kind === "conversation") {
+    if (source.label && source.label !== "对话" && source.label !== "Conversation") {
+      return source.label
+    }
     return t("outlineSourceConversation")
   }
   if (source.kind === "document") {
+    if (source.label && source.label !== "文档" && source.label !== "Document") {
+      return source.label
+    }
     return t("outlineSourceDocument")
   }
   return source.label

@@ -120,6 +120,7 @@ export const it = {
   siteAdapterWizardCapabilityPrompt: "Inserimento prompt",
   siteAdapterWizardCapabilityOutline: "Struttura conversazione",
   siteAdapterWizardCapabilityUserQueries: "Domande utente nella struttura",
+  siteAdapterWizardCapabilityDocumentOutline: "Struttura del documento",
   siteAdapterWizardCapabilityExport: "Esportazione di base",
   siteAdapterWizardCapabilityHistory: "Cronologia di lettura",
   siteAdapterWizardCapabilityNewChat: "Nuova conversazione",

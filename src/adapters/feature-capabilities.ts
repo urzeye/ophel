@@ -3,6 +3,7 @@ import { SITE_IDS, isBuiltinSiteId, type BuiltinSiteId } from "~constants/defaul
 export const SITE_PACK_CAPABILITIES = [
   "outline",
   "outline-user-queries",
+  "document-outline",
   "conversation-list",
   "export-basic",
   "model-lock",
@@ -82,6 +83,7 @@ export const BUILTIN_FEATURE_CAPABILITIES = {
   [SITE_IDS.CLAUDE]: [
     "outline",
     "outline-user-queries",
+    "document-outline",
     "conversation-list",
     "export-basic",
     "model-lock",
@@ -126,6 +128,7 @@ export const BUILTIN_FEATURE_CAPABILITIES = {
   [SITE_IDS.GEMINI]: [
     "outline",
     "outline-user-queries",
+    "document-outline",
     "conversation-list",
     "export-basic",
     "model-lock",
@@ -141,6 +144,7 @@ export const BUILTIN_FEATURE_CAPABILITIES = {
   [SITE_IDS.GEMINI_ENTERPRISE]: [
     "outline",
     "outline-user-queries",
+    "document-outline",
     "conversation-list",
     "export-basic",
     "model-lock",

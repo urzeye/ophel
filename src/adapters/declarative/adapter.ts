@@ -7,12 +7,19 @@ import {
   type ModelSwitcherConfig,
   type NetworkMonitorConfig,
   type OutlineItem,
+  type OutlineSource,
   type PanelAvoidanceConfig,
   type QuickQuoteSupportMode,
   type WidthSelectorConfig,
   type ZenModeConfig,
 } from "../base"
 import type { SitePackCapability } from "../feature-capabilities"
+import {
+  extractHeadingOutline,
+  findHeadingByText,
+  findScrollableAncestor,
+  scrollElementInContainer,
+} from "~core/outline/dom-outline"
 import { getCurrentLang } from "~utils/i18n"
 
 import { resolveSitePackName } from "./localization"
@@ -535,6 +542,130 @@ export class DeclarativeAdapter extends SiteAdapter {
     })
 
     return outline
+  }
+
+  getOutlineSources(): OutlineSource[] {
+    const sources: OutlineSource[] = [
+      { id: "conversation", kind: "conversation", label: "对话", available: true },
+    ]
+
+    if (this.hasDocumentOutlineCapability()) {
+      const documentOutline = this.extractDocumentOutline(6, false)
+      if (documentOutline.length > 0) {
+        sources.push({
+          id: "document",
+          kind: "document",
+          label: this.getDocumentOutlineLabel(),
+          available: true,
+          count: documentOutline.length,
+        })
+      }
+    }
+
+    return sources
+  }
+
+  supportsDynamicOutlineSources(): boolean {
+    return this.hasDocumentOutlineCapability()
+  }
+
+  extractOutlineForSource(
+    sourceId: string,
+    maxLevel = 6,
+    includeUserQueries = false,
+    showWordCount = false,
+  ): OutlineItem[] {
+    if (sourceId === "document" && this.hasDocumentOutlineCapability()) {
+      return this.extractDocumentOutline(maxLevel, showWordCount)
+    }
+
+    return this.extractOutline(maxLevel, includeUserQueries, showWordCount)
+  }
+
+  getOutlineScrollContainer(sourceId = "conversation"): HTMLElement | null {
+    if (sourceId === "document" && this.hasDocumentOutlineCapability()) {
+      const scrollContainerSelector = this.manifest.documentOutline?.scrollContainer
+      if (scrollContainerSelector) {
+        const container = this.findElementBySelectors([scrollContainerSelector])
+        if (container instanceof HTMLElement) return container
+      }
+      const root = this.getDocumentOutlineContainer()
+      return findScrollableAncestor(root) || (root instanceof HTMLElement ? root : null)
+    }
+
+    return this.getScrollContainer()
+  }
+
+  async resolveOutlineTarget(
+    item: Pick<OutlineItem, "level" | "text" | "isUserQuery" | "id" | "navigationId">,
+    queryIndex?: number,
+    sourceId = "conversation",
+  ): Promise<Element | null> {
+    if (sourceId === "document" && this.hasDocumentOutlineCapability()) {
+      const root = this.getDocumentOutlineContainer()
+      if (!root) return null
+      return findHeadingByText(root, item.level, item.text, (heading) =>
+        this.isInsideDocumentOutlineExclude(heading),
+      )
+    }
+
+    return super.resolveOutlineTarget(item, queryIndex, sourceId)
+  }
+
+  scrollToOutlineSourceTarget(element: HTMLElement, sourceId = "conversation"): void {
+    if (sourceId === "document" && this.hasDocumentOutlineCapability()) {
+      const container = findScrollableAncestor(element) || this.getOutlineScrollContainer(sourceId)
+      if (scrollElementInContainer(element, container)) {
+        return
+      }
+    }
+
+    this.scrollToOutlineTarget(element)
+  }
+
+  private hasDocumentOutlineCapability(): boolean {
+    return (
+      this.manifest.capabilities.includes("document-outline") &&
+      Boolean(this.manifest.documentOutline?.container)
+    )
+  }
+
+  private getDocumentOutlineContainer(): Element | null {
+    const selector = this.manifest.documentOutline?.container
+    if (!selector) return null
+    return this.findElementBySelectors([selector])
+  }
+
+  private getDocumentOutlineLabel(): string {
+    const config = this.manifest.documentOutline
+    if (!config) return "文档"
+    if (config.labelI18n) {
+      const lang = getCurrentLang()
+      const localized = config.labelI18n[lang]
+      if (localized) return localized
+    }
+    return config.label || "文档"
+  }
+
+  private isInsideDocumentOutlineExclude(element: Element): boolean {
+    const excludeSelectors = this.manifest.documentOutline?.exclude
+    if (!excludeSelectors || excludeSelectors.length === 0) return false
+    return excludeSelectors.some((selector) => element.closest(selector) !== null)
+  }
+
+  private extractDocumentOutline(maxLevel = 6, showWordCount = false): OutlineItem[] {
+    const root = this.getDocumentOutlineContainer()
+    if (!root) return []
+
+    return extractHeadingOutline(root, {
+      maxLevel,
+      showWordCount,
+      idPrefix: "declarative-document",
+      shouldSkipHeading: (heading) => this.isInsideDocumentOutlineExclude(heading),
+      calculateWordCount: (heading, nextBoundary, outlineRoot) => {
+        return this.calculateRangeWordCount(heading, nextBoundary, outlineRoot)
+      },
+    })
   }
 
   getConversationTitle(): string | null {

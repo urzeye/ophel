@@ -106,6 +106,7 @@ const CONFIG_KEYS = [
   "cleanMode",
   "widthSelectors",
   "panelAvoidance",
+  "documentOutline",
   "mermaidSupport",
   "quickQuote",
   "supportsHostThemeSync",
@@ -935,6 +936,39 @@ const validateThemeSync = (
   }
 }
 
+const validateDocumentOutline = (
+  value: unknown,
+  path: string,
+  context: ValidationContext,
+  mode: ValidationMode,
+): void => {
+  const docOutline = validateObject(
+    value,
+    path,
+    context,
+    ["container", "scrollContainer", "exclude", "label", "labelI18n"],
+    ["container"],
+    mode,
+  )
+  if (!docOutline) return
+
+  if (docOutline.container !== undefined) {
+    validateSelectorString(docOutline.container, `${path}.container`, context, mode)
+  }
+  if (docOutline.scrollContainer !== undefined) {
+    validateSelectorString(docOutline.scrollContainer, `${path}.scrollContainer`, context, mode)
+  }
+  if (docOutline.exclude !== undefined) {
+    validateSelectorArray(docOutline.exclude, `${path}.exclude`, context, mode)
+  }
+  if (docOutline.label !== undefined) {
+    validateString(docOutline.label, `${path}.label`, context, mode, { maxLength: 50 })
+  }
+  if (docOutline.labelI18n !== undefined) {
+    validateI18nRecord(docOutline.labelI18n, `${path}.labelI18n`, context)
+  }
+}
+
 const validateNetworkMonitor = (
   value: unknown,
   path: string,
@@ -1530,6 +1564,11 @@ const validateCapabilityRequirements = (
     typeof selectors.userQuery === "string",
     `${path}.selectors.userQuery`,
   )
+  requireField(
+    "document-outline",
+    isPlainRecord(config.documentOutline) && typeof config.documentOutline.container === "string",
+    `${path}.documentOutline.container`,
+  )
 
   if (capabilities.has("outline-user-queries") && !capabilities.has("outline")) {
     addError(
@@ -1602,6 +1641,9 @@ const validateConfigFields = (
   }
   if (config.panelAvoidance !== undefined) {
     validatePanelAvoidance(config.panelAvoidance, `${path}.panelAvoidance`, context, mode)
+  }
+  if (config.documentOutline !== undefined) {
+    validateDocumentOutline(config.documentOutline, `${path}.documentOutline`, context, mode)
   }
   if (config.mermaidSupport !== undefined) {
     validateEnum(config.mermaidSupport, `${path}.mermaidSupport`, context, mode, [

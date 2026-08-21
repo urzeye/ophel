@@ -121,6 +121,7 @@ export const fr = {
   siteAdapterWizardCapabilityPrompt: "Insertion de prompts",
   siteAdapterWizardCapabilityOutline: "Plan de conversation",
   siteAdapterWizardCapabilityUserQueries: "Questions utilisateur dans le plan",
+  siteAdapterWizardCapabilityDocumentOutline: "Plan du document",
   siteAdapterWizardCapabilityExport: "Exportation de base",
   siteAdapterWizardCapabilityHistory: "Historique de lecture",
   siteAdapterWizardCapabilityNewChat: "Nouvelle conversation",

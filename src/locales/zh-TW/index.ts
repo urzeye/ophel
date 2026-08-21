@@ -102,6 +102,7 @@ export const zhTW = {
   siteAdapterWizardCapabilityPrompt: "提示詞插入",
   siteAdapterWizardCapabilityOutline: "對話大綱",
   siteAdapterWizardCapabilityUserQueries: "大綱顯示使用者問題",
+  siteAdapterWizardCapabilityDocumentOutline: "文檔大綱",
   siteAdapterWizardCapabilityExport: "基本匯出",
   siteAdapterWizardCapabilityHistory: "閱讀歷史",
   siteAdapterWizardCapabilityNewChat: "建立新對話",

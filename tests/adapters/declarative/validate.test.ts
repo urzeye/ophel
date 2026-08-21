@@ -90,7 +90,7 @@ describe("validateSitePackManifest structure and limits", () => {
       }),
     )
 
-    expect(value.capabilities).toHaveLength(14)
+    expect(value.capabilities).toHaveLength(15)
   })
 
   it("returns a structured error for unknown keys", () => {
@@ -538,6 +538,7 @@ describe("validateSitePackManifest capability contracts", () => {
       capability: "outline-user-queries",
       paths: ["$.selectors.userQuery", "$.capabilities"],
     },
+    { capability: "document-outline", paths: ["$.documentOutline.container"] },
   ])("requires fields declared by $capability", ({ capability, paths }) => {
     const result = validateSitePackManifest({
       ...createMinimalManifest(),
@@ -558,9 +559,57 @@ describe("validateSitePackManifest capability contracts", () => {
         selectors: {},
         networkMonitor: {
           urlPatterns: ["/api/chat"],
-          silenceThreshold: 0,
+          silenceThreshold: 1000,
         },
       }),
+    )
+  })
+})
+
+describe("validateSitePackManifest document outline", () => {
+  it("accepts a valid document outline configuration", () => {
+    expectValid(
+      validateSitePackManifest({
+        ...createMinimalManifest(),
+        capabilities: ["outline", "document-outline"],
+        documentOutline: {
+          container: "aside.artifact-root",
+          scrollContainer: "aside.artifact-root .scroll-body",
+          exclude: [".ignore-heading"],
+          label: "Document",
+          labelI18n: {
+            "zh-CN": "文档",
+            en: "Document",
+          },
+        },
+      }),
+    )
+  })
+
+  it("rejects unknown keys and invalid selector types", () => {
+    expectInvalid(
+      validateSitePackManifest({
+        ...createMinimalManifest(),
+        capabilities: ["outline", "document-outline"],
+        documentOutline: {
+          container: "aside.artifact-root",
+          unexpectedKey: true,
+        },
+      }),
+      "$.documentOutline.unexpectedKey",
+      "unknown_key",
+    )
+
+    expectInvalid(
+      validateSitePackManifest({
+        ...createMinimalManifest(),
+        capabilities: ["outline", "document-outline"],
+        documentOutline: {
+          container: 123,
+        },
+      }),
+      "$.documentOutline.container",
+      "invalid_type",
     )
   })
 })

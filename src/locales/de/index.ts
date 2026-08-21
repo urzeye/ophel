@@ -124,6 +124,7 @@ export const de = {
   siteAdapterWizardCapabilityPrompt: "Prompt-Einfügung",
   siteAdapterWizardCapabilityOutline: "Gesprächsgliederung",
   siteAdapterWizardCapabilityUserQueries: "Benutzerfragen in der Gliederung",
+  siteAdapterWizardCapabilityDocumentOutline: "Dokumentengliederung",
   siteAdapterWizardCapabilityExport: "Basisexport",
   siteAdapterWizardCapabilityHistory: "Leseverlauf",
   siteAdapterWizardCapabilityNewChat: "Neue Unterhaltung",

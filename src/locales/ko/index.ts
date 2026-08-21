@@ -115,6 +115,7 @@ export const ko = {
   siteAdapterWizardCapabilityPrompt: "프롬프트 삽입",
   siteAdapterWizardCapabilityOutline: "대화 개요",
   siteAdapterWizardCapabilityUserQueries: "개요의 사용자 질문",
+  siteAdapterWizardCapabilityDocumentOutline: "문서 개요",
   siteAdapterWizardCapabilityExport: "기본 내보내기",
   siteAdapterWizardCapabilityHistory: "읽기 기록",
   siteAdapterWizardCapabilityNewChat: "새 대화",

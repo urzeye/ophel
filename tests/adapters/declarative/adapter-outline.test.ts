@@ -328,4 +328,75 @@ describe("DeclarativeAdapter outline boundaries", () => {
       adapter.getInlineBookmarkItems().map((item) => (item.element as TestOutlineElement).testId),
     ).toEqual(["user", "connected"])
   })
+
+  it("extracts document outline, manages dynamic sources, and resolves targets", async () => {
+    const chatContainer = createContainer()
+    const docContainer = createContainer()
+    docContainer.testId = "doc-container"
+
+    const docH1 = createElement(docContainer, "doc-heading-1", 0, {
+      tagName: "H1",
+      text: "Introduction",
+    })
+    const docH2 = createElement(docContainer, "doc-heading-2", 1, {
+      tagName: "H2",
+      text: "Details",
+    })
+    docContainer.queryOrder = [docH1, docH2]
+
+    const docManifest: SitePackManifest = {
+      ...createManifest(),
+      capabilities: ["outline", "document-outline"],
+      documentOutline: {
+        container: "#doc-container",
+        label: "Document",
+        labelI18n: {
+          "zh-CN": "文档",
+          en: "Document",
+        },
+      },
+    }
+
+    class DocOutlineTestAdapter extends OutlineTestAdapter {
+      override findElementBySelectors(selectors: string[]): HTMLElement | null {
+        if (selectors.includes("#doc-container")) {
+          return docContainer as unknown as HTMLElement
+        }
+        return super.findElementBySelectors(selectors)
+      }
+    }
+
+    const adapter = new DocOutlineTestAdapter(docManifest, chatContainer)
+
+    expect(adapter.supportsDynamicOutlineSources()).toBe(true)
+    expect(adapter.getOutlineSourcesSignature()).toBe(
+      "conversation:conversation:true:|document:document:true:2",
+    )
+
+    const sources = adapter.getOutlineSources()
+    expect(sources).toHaveLength(2)
+    expect(sources[0]).toEqual({
+      id: "conversation",
+      kind: "conversation",
+      label: "对话",
+      available: true,
+    })
+    expect(sources[1].id).toBe("document")
+    expect(sources[1].kind).toBe("document")
+    expect(sources[1].count).toBe(2)
+
+    const docOutline = adapter.extractOutlineForSource("document", 6, false, false)
+    expect(docOutline).toHaveLength(2)
+    expect(docOutline[0].text).toBe("Introduction")
+    expect(docOutline[0].level).toBe(1)
+    expect(docOutline[1].text).toBe("Details")
+    expect(docOutline[1].level).toBe(2)
+
+    const target = await adapter.resolveOutlineTarget(
+      { level: 1, text: "Introduction" },
+      undefined,
+      "document",
+    )
+    expect(target).toBe(docH1)
+  })
 })

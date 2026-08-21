@@ -23,21 +23,21 @@ vi.mock("~utils/dom-toolkit", () => ({
 // getPanelAvoidanceConfig 与 SiteSettingsPage 白名单表达，不经过能力矩阵；
 // 该能力只为社区 SitePack 的声明式门控服务。
 const DOCUMENTED_OMISSIONS = {
-  [SITE_IDS.AISTUDIO]: ["panel-avoidance"],
-  [SITE_IDS.CHATGLM]: ["conversation-list", "panel-avoidance"],
-  [SITE_IDS.CHATGPT]: ["panel-avoidance"],
+  [SITE_IDS.AISTUDIO]: ["panel-avoidance", "document-outline"],
+  [SITE_IDS.CHATGLM]: ["conversation-list", "panel-avoidance", "document-outline"],
+  [SITE_IDS.CHATGPT]: ["panel-avoidance", "document-outline"],
   [SITE_IDS.CLAUDE]: ["panel-avoidance"],
-  [SITE_IDS.DEEPSEEK]: ["model-lock", "panel-avoidance"],
-  [SITE_IDS.DOUBAO]: ["panel-avoidance"],
+  [SITE_IDS.DEEPSEEK]: ["model-lock", "panel-avoidance", "document-outline"],
+  [SITE_IDS.DOUBAO]: ["panel-avoidance", "document-outline"],
   [SITE_IDS.GEMINI]: ["panel-avoidance"],
   [SITE_IDS.GEMINI_ENTERPRISE]: ["panel-avoidance"],
-  [SITE_IDS.GROK]: ["clean", "panel-avoidance"],
-  [SITE_IDS.IMA]: ["conversation-list", "panel-avoidance"],
-  [SITE_IDS.KIMI]: ["panel-avoidance"],
-  [SITE_IDS.QIANWEN]: ["conversation-list", "panel-avoidance"],
-  [SITE_IDS.QWENAI]: ["conversation-list", "panel-avoidance"],
-  [SITE_IDS.YUANBAO]: ["panel-avoidance"],
-  [SITE_IDS.ZAI]: ["conversation-list", "clean", "panel-avoidance"],
+  [SITE_IDS.GROK]: ["clean", "panel-avoidance", "document-outline"],
+  [SITE_IDS.IMA]: ["conversation-list", "panel-avoidance", "document-outline"],
+  [SITE_IDS.KIMI]: ["panel-avoidance", "document-outline"],
+  [SITE_IDS.QIANWEN]: ["conversation-list", "panel-avoidance", "document-outline"],
+  [SITE_IDS.QWENAI]: ["conversation-list", "panel-avoidance", "document-outline"],
+  [SITE_IDS.YUANBAO]: ["panel-avoidance", "document-outline"],
+  [SITE_IDS.ZAI]: ["conversation-list", "clean", "panel-avoidance", "document-outline"],
 } as const satisfies Record<BuiltinSiteId, readonly SitePackCapability[]>
 
 class FixtureAdapter extends SiteAdapter {
@@ -75,9 +75,9 @@ class FixtureAdapter extends SiteAdapter {
 }
 
 describe("feature capability contract", () => {
-  it("keeps one unique 14-entry vocabulary and stable signatures", () => {
-    expect(SITE_PACK_CAPABILITIES).toHaveLength(14)
-    expect(new Set(SITE_PACK_CAPABILITIES)).toHaveLength(14)
+  it("keeps one unique 15-entry vocabulary and stable signatures", () => {
+    expect(SITE_PACK_CAPABILITIES).toHaveLength(15)
+    expect(new Set(SITE_PACK_CAPABILITIES)).toHaveLength(15)
 
     const signature = getFeatureCapabilitiesSignature(["zen", "outline", "clean"])
 

@@ -70,6 +70,7 @@ const CAPABILITY_LABEL_KEYS = {
   "prompt-insert": "siteAdapterWizardCapabilityPrompt",
   outline: "siteAdapterWizardCapabilityOutline",
   "outline-user-queries": "siteAdapterWizardCapabilityUserQueries",
+  "document-outline": "siteAdapterWizardCapabilityDocumentOutline",
   "export-basic": "siteAdapterWizardCapabilityExport",
   "reading-history": "siteAdapterWizardCapabilityHistory",
   "new-chat": "siteAdapterWizardCapabilityNewChat",

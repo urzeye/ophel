@@ -115,6 +115,7 @@ export const ja = {
   siteAdapterWizardCapabilityPrompt: "プロンプト挿入",
   siteAdapterWizardCapabilityOutline: "会話アウトライン",
   siteAdapterWizardCapabilityUserQueries: "アウトライン内のユーザー質問",
+  siteAdapterWizardCapabilityDocumentOutline: "ドキュメントアウトライン",
   siteAdapterWizardCapabilityExport: "基本エクスポート",
   siteAdapterWizardCapabilityHistory: "閲覧履歴",
   siteAdapterWizardCapabilityNewChat: "新しい会話",

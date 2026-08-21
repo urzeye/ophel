@@ -118,6 +118,7 @@ export const ru = {
   siteAdapterWizardCapabilityPrompt: "Вставка промпта",
   siteAdapterWizardCapabilityOutline: "Структура диалога",
   siteAdapterWizardCapabilityUserQueries: "Вопросы пользователя в структуре",
+  siteAdapterWizardCapabilityDocumentOutline: "Оглавление документа",
   siteAdapterWizardCapabilityExport: "Базовый экспорт",
   siteAdapterWizardCapabilityHistory: "История чтения",
   siteAdapterWizardCapabilityNewChat: "Новый диалог",

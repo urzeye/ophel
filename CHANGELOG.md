@@ -11,6 +11,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🚀 New Features
 
+- **Site Pack document outline support** — Declarative Site Packs now support document outline navigation (`document-outline` capability and `documentOutline` config), enabling multi-source "Document" tab outlines and scroll navigation for Canvas, Artifacts, and standalone research reports on adapted sites.
 - **Manus support** — The online adapter library now includes Manus (manus.im); installing the pack enables outlines with user queries, basic export, chat width, Zen Mode, Clean Mode, new chat, and prompt insertion on conversations and shared pages.
 
 ---
