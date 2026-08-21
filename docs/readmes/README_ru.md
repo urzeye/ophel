@@ -403,6 +403,9 @@ pnpm serve:userscript:assets   # Запуск сервера для статич
       <td align="center" valign="top" width="12.5%"><a href="https://github.com/sriharshaguthikonda"><img src="https://avatars.githubusercontent.com/u/16268244?v=4&s=80" width="80" height="80" alt="Dr. Sri Harsha Guthikonda"/></a><br /><a href="https://github.com/sriharshaguthikonda"><sub><b>Dr. Sri Harsha Guthikonda</b></sub></a><br /><span title="Code">💻</span></td>
       <td align="center" valign="top" width="12.5%"><a href="https://github.com/crazyn2"><img src="https://avatars.githubusercontent.com/u/45783572?v=4&s=80" width="80" height="80" alt="crazyn2"/></a><br /><a href="https://github.com/crazyn2"><sub><b>crazyn2</b></sub></a><br /><span title="Code">💻</span></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="12.5%"><a href="https://github.com/Piracola"><img src="https://avatars.githubusercontent.com/u/116626041?v=4&s=80" width="80" height="80" alt="Cola"/></a><br /><a href="https://github.com/Piracola"><sub><b>Cola</b></sub></a><br /><span title="Code">💻</span></td>
+    </tr>
   </tbody>
 </table>
 
