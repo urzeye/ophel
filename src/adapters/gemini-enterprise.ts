@@ -1643,8 +1643,9 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
     super.lockModel(keyword, onSuccess ?? undefined)
   }
 
-  /** 排除侧边栏中的 Shadow DOM 样式注入 */
+  /** 排除侧边栏及 Ophel 容器中的 Shadow DOM 样式注入 */
   shouldInjectIntoShadow(host: Element): boolean {
+    if (!super.shouldInjectIntoShadow(host)) return false
     return !this.config.sitePrivateSelectors.shadowInjectionExclusion.some((selector) =>
       host.closest(selector),
     )

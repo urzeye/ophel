@@ -1901,8 +1901,16 @@ export abstract class SiteAdapter {
     }
   }
 
-  /** 判断是否应该将样式注入到指定的 Shadow Host 中 */
-  shouldInjectIntoShadow(_host: Element): boolean {
+  /** 判断是否应该将样式注入到指定的 Shadow Host 中（默认排除 Ophel 自身的 UI 容器） */
+  shouldInjectIntoShadow(host: Element): boolean {
+    if (
+      host.tagName.toLowerCase() === "plasmo-csui" ||
+      host.id === "ophel-userscript-root" ||
+      host.classList.contains("plasmo-csui-container") ||
+      host.closest("plasmo-csui, #ophel-userscript-root, .plasmo-csui-container") !== null
+    ) {
+      return false
+    }
     return true
   }
 
