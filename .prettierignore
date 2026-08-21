@@ -23,6 +23,7 @@ public/
 .claude/
 CLAUDE.md
 docs/
+.all-contributorsrc
 
 .prettierrc.mjs
 vite.userscript.config.ts
