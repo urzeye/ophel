@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react"
 
+import { CopyIcon, HTMLFileIcon, JSONFileIcon, MarkdownIcon, TXTFileIcon } from "~components/icons"
 import type { ConversationExportOptions } from "~core/conversation-manager"
 import type { ExportPackaging } from "~types/settings"
 import type { ExportFormat } from "~utils/exporter"
@@ -143,6 +144,24 @@ const EXPORT_DIALOG_STYLES = `
   .gh-export-format-btn[data-active="true"] .gh-export-format-badge {
     background: color-mix(in srgb, var(--gh-primary, #4285f4) 18%, transparent);
     color: var(--gh-primary, #4285f4);
+  }
+
+  .gh-export-format-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .gh-export-format-icon {
+    flex-shrink: 0;
+    opacity: 0.75;
+    transition: opacity 0.15s ease;
+  }
+
+  .gh-export-format-btn:hover .gh-export-format-icon,
+  .gh-export-format-btn[data-active="true"] .gh-export-format-icon {
+    opacity: 1;
   }
 
   .gh-export-options-list {
@@ -304,12 +323,17 @@ export interface ExportDialogProps {
   onSegmentedExport?: () => void
 }
 
-const getFormatOptions = (): { format: ExportFormat; label: string; badge: string }[] => [
-  { format: "markdown", label: "Markdown", badge: ".md" },
-  { format: "html", label: "HTML", badge: ".html" },
-  { format: "json", label: "JSON", badge: ".json" },
-  { format: "txt", label: "Text", badge: ".txt" },
-  { format: "clipboard", label: t("exportToClipboard"), badge: "copy" },
+const getFormatOptions = (): {
+  format: ExportFormat
+  label: string
+  badge: string
+  Icon: React.FC<{ size?: number; className?: string }>
+}[] => [
+  { format: "markdown", label: "Markdown", badge: ".md", Icon: MarkdownIcon },
+  { format: "html", label: "HTML", badge: ".html", Icon: HTMLFileIcon },
+  { format: "json", label: "JSON", badge: ".json", Icon: JSONFileIcon },
+  { format: "txt", label: "Text", badge: ".txt", Icon: TXTFileIcon },
+  { format: "clipboard", label: t("exportToClipboard"), badge: "copy", Icon: CopyIcon },
 ]
 
 export const ExportDialog: React.FC<ExportDialogProps> = ({
@@ -429,7 +453,10 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
               className="gh-export-format-btn"
               data-active={selectedFormat === item.format}
               onClick={() => setSelectedFormat(item.format)}>
-              <span>{item.label}</span>
+              <span className="gh-export-format-label">
+                <item.Icon size={15} className="gh-export-format-icon" />
+                <span>{item.label}</span>
+              </span>
               <span className="gh-export-format-badge">{item.badge}</span>
             </button>
           ))}
