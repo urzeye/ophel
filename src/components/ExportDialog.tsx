@@ -77,9 +77,14 @@ const EXPORT_DIALOG_STYLES = `
     transition: background 0.15s ease, color 0.15s ease;
   }
 
-  .gh-export-dialog-close:hover {
+  .gh-export-dialog-close:hover:not(:disabled) {
     background: var(--gh-hover, rgba(0, 0, 0, 0.05));
     color: var(--gh-text, #1f2937);
+  }
+
+  .gh-export-dialog-close:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 
   .gh-export-section {
@@ -128,6 +133,11 @@ const EXPORT_DIALOG_STYLES = `
 
   .gh-export-format-btn:active {
     transform: translateY(0);
+  }
+
+  .gh-export-format-btn:focus-visible {
+    outline: 2px solid var(--gh-primary, #4285f4);
+    outline-offset: 2px;
   }
 
   .gh-export-format-btn[data-active="true"] {
@@ -287,10 +297,15 @@ const EXPORT_DIALOG_STYLES = `
     transition: all 0.15s ease;
   }
 
-  .gh-export-segmented-link:hover {
+  .gh-export-segmented-link:hover:not(:disabled) {
     color: var(--gh-primary, #4285f4);
     border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 45%, var(--gh-border, #e5e7eb));
     background: color-mix(in srgb, var(--gh-primary, #4285f4) 8%, var(--gh-bg, #ffffff));
+  }
+
+  .gh-export-segmented-link:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 
   .gh-export-action-btn {
@@ -312,10 +327,15 @@ const EXPORT_DIALOG_STYLES = `
     color: var(--gh-text-secondary, #6b7280);
   }
 
-  .gh-export-cancel-btn:hover {
+  .gh-export-cancel-btn:hover:not(:disabled) {
     background: var(--gh-hover, #f3f4f6);
     color: var(--gh-text, #1f2937);
     border-color: color-mix(in srgb, var(--gh-text-secondary, #6b7280) 40%, var(--gh-border, #d1d5db));
+  }
+
+  .gh-export-cancel-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 
   .gh-export-submit-btn {
@@ -428,7 +448,11 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
   }
 
   return (
-    <DialogOverlay onClose={onClose} dialogClassName="gh-export-dialog">
+    <DialogOverlay
+      onClose={onClose}
+      dialogClassName="gh-export-dialog"
+      closeOnOverlayClick={!isExporting}
+      closeOnEscape={!isExporting}>
       <style>{EXPORT_DIALOG_STYLES}</style>
       <div className="gh-export-dialog-header">
         <div className="gh-export-dialog-title-wrap">
@@ -453,6 +477,7 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
           type="button"
           className="gh-export-dialog-close"
           onClick={onClose}
+          disabled={isExporting}
           aria-label={t("close")}>
           <svg
             viewBox="0 0 24 24"
@@ -549,6 +574,7 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
           <button
             type="button"
             className="gh-export-segmented-link"
+            disabled={isExporting}
             onClick={() => {
               onClose()
               onSegmentedExport()
@@ -563,6 +589,7 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
           <button
             type="button"
             className="gh-export-action-btn gh-export-cancel-btn"
+            disabled={isExporting}
             onClick={onClose}>
             {t("cancel")}
           </button>
