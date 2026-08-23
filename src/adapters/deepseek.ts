@@ -1911,12 +1911,15 @@ export class DeepSeekAdapter extends SiteAdapter {
           }
         })
 
-        const thoughtBlocks = this.shouldIncludeThoughtsInExport()
-          ? thoughtParts
-              .map((content) => content.trim())
-              .filter(Boolean)
-              .map((content) => this.formatAsThoughtBlockquote(content))
-          : []
+        const cleanThought = thoughtParts
+          .map((content) => content.trim())
+          .filter(Boolean)
+          .join("\n\n")
+
+        const thoughtBlocks =
+          this.shouldIncludeThoughtsInExport() && cleanThought
+            ? [this.formatAsThoughtBlockquote(cleanThought)]
+            : []
         const content = this.normalizeExportMessageContent(
           [...thoughtBlocks, ...responseParts.map((content) => content.trim()).filter(Boolean)]
             .filter(Boolean)
@@ -2471,15 +2474,13 @@ export class DeepSeekAdapter extends SiteAdapter {
       ),
     ).filter((markdown): markdown is HTMLElement => markdown instanceof HTMLElement)
 
-    const blocks: string[] = []
+    const thoughtTexts = thoughtMarkdowns
+      .map((markdown) => this.extractMarkdownText(markdown))
+      .filter(Boolean)
 
-    thoughtMarkdowns.forEach((markdown) => {
-      const text = this.extractMarkdownText(markdown)
-      if (!text) return
-      blocks.push(this.formatAsThoughtBlockquote(text))
-    })
+    if (thoughtTexts.length === 0) return []
 
-    return blocks
+    return [this.formatAsThoughtBlockquote(thoughtTexts.join("\n\n"))]
   }
 
   private extractMarkdownText(element: Element): string {

@@ -19,6 +19,7 @@ import { stripQuickQuoteMarkers } from "~core/quick-quote-marker"
 import { sanitizeConversationTitleCandidate } from "~utils/conversation-title"
 import { DOMToolkit } from "~utils/dom-toolkit"
 import {
+  consolidateThoughtBlocks,
   createExportMetadata,
   downloadExportPackage,
   downloadFile,
@@ -126,9 +127,14 @@ interface ConversationExportData {
   notifyProgress: (stage: ConversationExportStage) => void
 }
 
-interface ConversationExportDataOptions {
+export interface ConversationExportOptions {
   packaging?: ExportPackaging
+  includeThoughts?: boolean
+  showIndex?: boolean
+  customDivider?: string
 }
+
+type ConversationExportDataOptions = ConversationExportOptions
 
 interface AutoFullSyncResult {
   scannedCount: number
@@ -1286,6 +1292,8 @@ export class ConversationManager {
       metadata: createExportMetadata(exportTitle, siteName, conv.id, {
         customUserName: settings.export?.customUserName,
         customModelName: settings.export?.customModelName,
+        showIndex: settings.export?.exportShowIndex,
+        customDivider: settings.export?.exportMarkdownDivider,
       }),
     }
   }
@@ -1416,11 +1424,14 @@ export class ConversationManager {
   }
 
   private formatSegmentBody(segment: ConversationExportSegment): string {
-    return this.getSegmentReplyMessages(segment)
-      .map((message) => message.content.trim())
-      .filter(Boolean)
-      .join("\n\n")
-      .trim()
+    // 分段正文绕过 formatTo* 系列函数，需要在这里补一遍思维链聚合清洗，
+    // 保证分段导出与整篇导出共享同一条清洗管道
+    return consolidateThoughtBlocks(
+      this.getSegmentReplyMessages(segment)
+        .map((message) => message.content.trim())
+        .filter(Boolean)
+        .join("\n\n"),
+    ).trim()
   }
 
   private formatSingleSegmentMarkdown(
@@ -1584,7 +1595,7 @@ export class ConversationManager {
     const exportContext: ExportLifecycleContext = {
       conversationId: convId,
       format,
-      includeThoughts: settings.export?.includeThoughts ?? true,
+      includeThoughts: options.includeThoughts ?? settings.export?.includeThoughts ?? true,
       packaging: exportPackaging,
     }
 
@@ -1793,7 +1804,11 @@ export class ConversationManager {
   /**
    * 导出会话
    */
-  async exportConversation(convId: string, format: ExportFormat): Promise<boolean> {
+  async exportConversation(
+    convId: string,
+    format: ExportFormat,
+    options?: ConversationExportOptions,
+  ): Promise<boolean> {
     const result = await this.withConversationExportData(
       convId,
       format,
@@ -1809,6 +1824,8 @@ export class ConversationManager {
         const metadata = createExportMetadata(exportTitle, this.siteAdapter.getName(), conv.id, {
           customUserName: settings.export?.customUserName,
           customModelName: settings.export?.customModelName,
+          showIndex: options?.showIndex ?? settings.export?.exportShowIndex,
+          customDivider: options?.customDivider ?? settings.export?.exportMarkdownDivider,
         })
 
         let content: string
@@ -1876,6 +1893,8 @@ export class ConversationManager {
         showToast(t("exportSuccess"))
         return true
       },
+      "export",
+      options,
     )
 
     return result === true
