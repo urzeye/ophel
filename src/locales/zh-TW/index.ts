@@ -1621,6 +1621,14 @@ export const zhTW = {
   exportIncludeThoughtsLabel: "匯出包含思維鏈",
   exportThoughtCollapsedLabel: "思考過程",
   exportIncludeThoughtsDesc: "匯出時包含思維鏈內容，預設摺疊為「思考過程」，讀者可點擊展開",
+  exportShowIndexLabel: "匯出顯示對話序號",
+  exportShowIndexDesc: "在匯出的訊息標題中新增數字序號，方便查找與定位",
+  exportShowIndexJsonUnsupported: "JSON 格式匯出不支援序號",
+  exportMarkdownDividerLabel: "Markdown 分隔線",
+  exportMarkdownDividerDesc: "自訂匯出 Markdown 時訊息之間的分隔線字元（預設 ---）",
+  exportShowDialogLabel: "匯出前顯示選項彈窗",
+  exportShowDialogDesc:
+    "點擊匯出按鈕時先彈出選項彈窗，可即時調整格式與匯出項目；關閉後按預設格式直接匯出",
   exportAttachmentsLabel: "附件",
   exportPackagingLabel: "Markdown 匯出方式",
   exportDefaultFormatLabel: "預設匯出格式",
@@ -1630,6 +1638,11 @@ export const zhTW = {
     "ZIP 會包含 Markdown 檔案與可下載附件，" + "附件放入 assets 並以相對路徑引用",
   exportPackagingMarkdown: "Markdown",
   exportPackagingZip: "ZIP",
+  exportFormat: "匯出格式",
+  exportOptions: "匯出選項",
+  exportPackagingZipOption: "打包為 ZIP 壓縮檔 (含附件)",
+  exportConversationTitle: "匯出對話",
+  exporting: "匯出中...",
 
   // ======== Popup 頁面 ========
   popupCurrentSite: "目前站點",

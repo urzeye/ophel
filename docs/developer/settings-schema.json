@@ -45,6 +45,9 @@
     "customModelName": "",
     "exportFilenameTimestamp": false,
     "includeThoughts": true,
+    "exportShowIndex": false,
+    "exportMarkdownDivider": "---",
+    "exportShowDialog": true,
     "packaging": "markdown",
     "defaultExportFormat": "markdown"
   },

@@ -917,6 +917,16 @@ export const it = {
   exportThoughtCollapsedLabel: "Processo di pensiero",
   exportIncludeThoughtsDesc:
     'Include i pensieri durante l\'esportazione; sono compressi sotto un interruttore "Processo di pensiero" che i lettori possono espandere',
+  exportShowIndexLabel: "Mostra numerazione messaggi nell'esportazione",
+  exportShowIndexDesc:
+    "Aggiunge un numero progressivo alle intestazioni dei messaggi per una ricerca più rapida",
+  exportShowIndexJsonUnsupported: "La numerazione non è supportata nell'esportazione JSON",
+  exportMarkdownDividerLabel: "Separatore Markdown",
+  exportMarkdownDividerDesc:
+    "Separatore personalizzato tra i messaggi nel Markdown esportato (predefinito: ---)",
+  exportShowDialogLabel: "Mostra finestra opzioni prima dell'esportazione",
+  exportShowDialogDesc:
+    "Mostra una finestra di opzioni quando si fa clic sul pulsante di esportazione per regolare formato e opzioni al volo; se disattivata, esporta direttamente nel formato predefinito",
   exportAttachmentsLabel: "Allegati",
   exportPackagingLabel: "Metodo di esportazione Markdown",
   exportDefaultFormatLabel: "Formato di esportazione predefinito",
@@ -927,6 +937,11 @@ export const it = {
     "ZIP include il file Markdown e gli allegati scaricabili, salvando gli allegati in assets e referenziandoli con percorsi relativi.",
   exportPackagingMarkdown: "Markdown",
   exportPackagingZip: "ZIP",
+  exportFormat: "Formato di esportazione",
+  exportOptions: "Opzioni di esportazione",
+  exportPackagingZipOption: "Crea pacchetto ZIP (con allegati)",
+  exportConversationTitle: "Esporta conversazione",
+  exporting: "Esportazione...",
   userQueryMarkdownLabel: "Miglioramento dello stile delle query utente",
   userQueryMarkdownDesc:
     "Applica la formattazione Markdown e il rendering matematico LaTeX alle query degli utenti",

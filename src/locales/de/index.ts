@@ -1659,6 +1659,16 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   exportThoughtCollapsedLabel: "Denkprozess",
   exportIncludeThoughtsDesc:
     "Beim Exportieren Gedanken einschließen; sie sind unter einem „Denkprozess“-Umschalter eingeklappt, den Leser erweitern können",
+  exportShowIndexLabel: "Nachrichtennummerierung beim Export anzeigen",
+  exportShowIndexDesc:
+    "Fügt den Nachrichtenüberschriften eine Nummerierung zur einfacheren Navigation hinzu",
+  exportShowIndexJsonUnsupported: "Nummerierung wird im JSON-Export nicht unterstützt",
+  exportMarkdownDividerLabel: "Markdown-Trennlinie",
+  exportMarkdownDividerDesc:
+    "Benutzerdefinierte Trennlinie zwischen Nachrichten im exportierten Markdown (Standard: ---)",
+  exportShowDialogLabel: "Optionsdialog vor dem Export anzeigen",
+  exportShowDialogDesc:
+    "Zeigt beim Klick auf die Export-Schaltfläche einen Optionsdialog, um Format und Optionen direkt anzupassen; wenn deaktiviert, wird direkt im Standardformat exportiert",
   exportAttachmentsLabel: "Anhänge",
   exportPackagingLabel: "Markdown-Exportmethode",
   exportDefaultFormatLabel: "Standard-Exportformat",
@@ -1669,6 +1679,11 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
     "ZIP enthält die Markdown-Datei und herunterladbare Anhänge, speichert Anhänge in assets und referenziert sie relativ.",
   exportPackagingMarkdown: "Markdown",
   exportPackagingZip: "ZIP",
+  exportFormat: "Exportformat",
+  exportOptions: "Exportoptionen",
+  exportPackagingZipOption: "Als ZIP-Archiv packen (inkl. Anhänge)",
+  exportConversationTitle: "Unterhaltung exportieren",
+  exporting: "Exportieren...",
 
   // ======== Popup ========
   popupCurrentSite: "Aktuelle Seite",

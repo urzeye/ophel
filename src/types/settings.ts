@@ -52,6 +52,9 @@ export interface ExportSettings {
   customModelName?: string // 自定义 AI 名称
   exportFilenameTimestamp?: boolean // 导出文件名包含时间戳
   includeThoughts?: boolean // 导出包含思维链
+  exportShowIndex?: boolean // 导出显示对话序号
+  exportMarkdownDivider?: string // 导出 Markdown 分割线自定义
+  exportShowDialog?: boolean // 点击导出按钮时显示选项弹窗（关闭则按默认格式直接导出）
   packaging?: ExportPackaging // 导出打包方式
   defaultExportFormat?: ExportFormatSetting // 快捷键与一键导出的默认格式
 }

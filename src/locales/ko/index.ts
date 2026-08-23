@@ -1643,6 +1643,14 @@ export const ko = {
   exportThoughtCollapsedLabel: "사고 과정",
   exportIncludeThoughtsDesc:
     "내보낼 때 사고 과정을 포함합니다. 기본적으로 접혀 있으며 클릭하여 펼칠 수 있습니다",
+  exportShowIndexLabel: "내보내기에 대화 번호 표시",
+  exportShowIndexDesc: "빠른 검색과 참조를 위해 메시지 제목에 순번 번호를 추가합니다",
+  exportShowIndexJsonUnsupported: "JSON 내보내기에서는 번호 매기기가 지원되지 않습니다",
+  exportMarkdownDividerLabel: "Markdown 구분선",
+  exportMarkdownDividerDesc: "내보낸 Markdown의 메시지 간 구분선 사용자 정의 (기본값: ---)",
+  exportShowDialogLabel: "내보내기 전 옵션 대화 상자 표시",
+  exportShowDialogDesc:
+    "내보내기 버튼을 클릭할 때 옵션 대화 상자를 표시하여 형식과 항목을 즉시 조정할 수 있습니다. 끄면 기본 형식으로 바로 내보냅니다",
   exportAttachmentsLabel: "첨부 파일",
   exportPackagingLabel: "Markdown 내보내기 방식",
   exportDefaultFormatLabel: "기본 내보내기 형식",
@@ -1653,6 +1661,11 @@ export const ko = {
     "ZIP에는 Markdown 파일과 다운로드 가능한 첨부 파일이 포함되며, 첨부 파일은 assets에 저장되고 상대 경로로 참조됩니다",
   exportPackagingMarkdown: "Markdown",
   exportPackagingZip: "ZIP",
+  exportFormat: "내보내기 형식",
+  exportOptions: "내보내기 옵션",
+  exportPackagingZipOption: "ZIP 압축 파일로 패키징 (첨부 파일 포함)",
+  exportConversationTitle: "대화 내보내기",
+  exporting: "내보내는 중...",
 
   // ======== Popup ========
   popupCurrentSite: "현재 사이트",

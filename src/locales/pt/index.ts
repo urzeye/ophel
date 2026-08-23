@@ -1781,6 +1781,16 @@ Dê o código e depois um resumo de melhorias.`,
   exportThoughtCollapsedLabel: "Processo de pensamento",
   exportIncludeThoughtsDesc:
     'Incluir pensamentos ao exportar; eles são recolhidos sob um alternador "Processo de pensamento" que os leitores podem expandir',
+  exportShowIndexLabel: "Mostrar numeração de mensagens na exportação",
+  exportShowIndexDesc:
+    "Adiciona um índice numérico aos cabeçalhos das mensagens para facilitar a busca e referência",
+  exportShowIndexJsonUnsupported: "A numeração não é suportada na exportação JSON",
+  exportMarkdownDividerLabel: "Separador de Markdown",
+  exportMarkdownDividerDesc:
+    "Separador personalizado entre mensagens no Markdown exportado (padrão: ---)",
+  exportShowDialogLabel: "Mostrar diálogo de opções antes de exportar",
+  exportShowDialogDesc:
+    "Mostra um diálogo de opções ao clicar no botão de exportar para ajustar formato e opções na hora; se desativado, exporta diretamente no formato padrão",
   exportAttachmentsLabel: "Anexos",
   exportPackagingLabel: "Método de exportação Markdown",
   exportDefaultFormatLabel: "Formato de exportação padrão",
@@ -1791,6 +1801,11 @@ Dê o código e depois um resumo de melhorias.`,
     "O ZIP inclui o arquivo Markdown e anexos baixáveis, salva os anexos em assets e os referencia com caminhos relativos.",
   exportPackagingMarkdown: "Markdown",
   exportPackagingZip: "ZIP",
+  exportFormat: "Formato de exportação",
+  exportOptions: "Opções de exportação",
+  exportPackagingZipOption: "Compactar como ZIP (com anexos)",
+  exportConversationTitle: "Exportar conversa",
+  exporting: "Exportando...",
 
   // ======== Popup ========
   popupCurrentSite: "Site Atual",
