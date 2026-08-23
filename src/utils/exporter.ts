@@ -742,23 +742,19 @@ export function formatToMarkdown(metadata: ExportMetadata, messages: ExportMessa
   const normalizedMessages = normalizeExportMessages(messages)
   const divider = metadata.customDivider !== undefined ? metadata.customDivider : "---"
 
-  // 元数据头
+  // 元数据头（头部结构分隔线固定为 ---，自定义分割线只作用于消息之间）
   lines.push(`# ${metadata.title}`)
   lines.push("")
-  if (divider) {
-    lines.push(divider)
-    lines.push("")
-  }
+  lines.push("---")
+  lines.push("")
   lines.push(`## ${EMOJI_EXPORT} ${t("exportMetaTitle")}`)
   lines.push(`- **${t("exportMetaConvTitle")}**: ${metadata.title}`)
   lines.push(`- **${t("exportMetaTime")}**: ${metadata.exportTime}`)
   lines.push(`- **${t("exportMetaSource")}**: ${metadata.source}`)
   lines.push(`- **${t("exportMetaUrl")}**: ${metadata.url}`)
   lines.push("")
-  if (divider) {
-    lines.push(divider)
-    lines.push("")
-  }
+  lines.push("---")
+  lines.push("")
 
   // 对话内容
   let turnNumber = 0

@@ -75,4 +75,25 @@ describe("export turn numbering", () => {
     expect(md).toContain("## 1. 🤖 Example\n\n回答")
     expect(md.match(/## 1\./g)).toHaveLength(2)
   })
+
+  it("keeps header separators fixed while applying the custom divider between messages", () => {
+    const md = formatToMarkdown({ ...metadata, customDivider: "***" }, [
+      user("提问"),
+      assistant("回答"),
+    ])
+
+    // 标题与元信息头前后的分隔线固定为 ---
+    expect(md).toContain("# normalize test\n\n---\n\n##")
+    expect(md).toMatch(/- \*\*.*\*\*: https:\/\/example\.com\n\n---\n\n/)
+    // 消息之间使用自定义分割线
+    expect(md).toContain("提问\n\n***\n\n")
+    expect(md).toContain("回答\n\n***")
+  })
+
+  it("omits message dividers but keeps header separators when the custom divider is empty", () => {
+    const md = formatToMarkdown(metadata, [user("提问"), assistant("回答")])
+
+    expect(md).toContain("# normalize test\n\n---\n\n##")
+    expect(md).toContain("提问\n\n##")
+  })
 })
