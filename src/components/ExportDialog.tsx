@@ -1,6 +1,13 @@
 import React, { useEffect, useState } from "react"
 
-import { CopyIcon, HTMLFileIcon, JSONFileIcon, MarkdownIcon, TXTFileIcon } from "~components/icons"
+import {
+  CopyIcon,
+  HTMLFileIcon,
+  JSONFileIcon,
+  MarkdownIcon,
+  SegmentedExportIcon,
+  TXTFileIcon,
+} from "~components/icons"
 import type { ConversationExportOptions } from "~core/conversation-manager"
 import type { ExportPackaging } from "~types/settings"
 import type { ExportFormat } from "~utils/exporter"
@@ -131,6 +138,11 @@ const EXPORT_DIALOG_STYLES = `
     box-shadow: 0 0 0 1px var(--gh-primary, #4285f4);
   }
 
+  /* 剪贴板是动作而非文件格式，独占整行以容纳各语言长文案 */
+  .gh-export-format-btn-full {
+    grid-column: 1 / -1;
+  }
+
   .gh-export-format-badge {
     font-size: 11px;
     font-weight: 600;
@@ -138,6 +150,8 @@ const EXPORT_DIALOG_STYLES = `
     border-radius: 5px;
     background: var(--gh-bg-tertiary, #f3f4f6);
     color: var(--gh-text-secondary, #6b7280);
+    flex-shrink: 0;
+    white-space: nowrap;
     transition: all 0.15s ease;
   }
 
@@ -151,6 +165,13 @@ const EXPORT_DIALOG_STYLES = `
     align-items: center;
     gap: 8px;
     min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  .gh-export-format-label > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .gh-export-format-icon {
@@ -252,19 +273,24 @@ const EXPORT_DIALOG_STYLES = `
   }
 
   .gh-export-segmented-link {
-    background: transparent;
-    border: none;
-    padding: 6px 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
     font-size: 12px;
+    font-weight: 550;
     color: var(--gh-text-secondary, #6b7280);
+    background: var(--gh-bg-secondary, #f9fafb);
+    border: 1px solid var(--gh-border, #e5e7eb);
+    border-radius: 8px;
     cursor: pointer;
-    border-radius: 6px;
-    transition: color 0.15s ease, background 0.15s ease;
+    transition: all 0.15s ease;
   }
 
   .gh-export-segmented-link:hover {
     color: var(--gh-primary, #4285f4);
-    background: var(--gh-hover, rgba(0, 0, 0, 0.04));
+    border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 45%, var(--gh-border, #e5e7eb));
+    background: color-mix(in srgb, var(--gh-primary, #4285f4) 8%, var(--gh-bg, #ffffff));
   }
 
   .gh-export-action-btn {
@@ -450,7 +476,11 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
             <button
               key={item.format}
               type="button"
-              className="gh-export-format-btn"
+              className={
+                item.format === "clipboard"
+                  ? "gh-export-format-btn gh-export-format-btn-full"
+                  : "gh-export-format-btn"
+              }
               data-active={selectedFormat === item.format}
               onClick={() => setSelectedFormat(item.format)}>
               <span className="gh-export-format-label">
@@ -523,6 +553,7 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
               onClose()
               onSegmentedExport()
             }}>
+            <SegmentedExportIcon size={14} />
             {t("segmentedExportMenuItem")}
           </button>
         ) : (
