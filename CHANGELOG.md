@@ -11,8 +11,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🚀 New Features
 
-- **Interactive export dialog** — The export button now opens a dialog to pick the format (Markdown / HTML / JSON / TXT / Copy Markdown), toggle thought inclusion and turn numbering, customize the Markdown divider, and package as ZIP; a new "Show Export Options Dialog" setting restores one-click export when turned off, and the dialog links directly to segmented export. (#841)
-- **Export turn numbers and custom divider** — Added options to display turn numbers in exported message headings and customize the Markdown message divider string (default: `---`). (#841)
+- **Interactive export dialog** — The export button and the conversation list export menu now open a unified options dialog: pick the format (Markdown / HTML / JSON / TXT / Copy Markdown), toggle thought inclusion and turn numbering, customize the Markdown divider, package as ZIP, or jump to segmented export; a new "Show Export Options Dialog" setting restores one-click export when turned off. (#841)
 - **HTML export** — Conversations can now be exported as a single self-contained HTML file with responsive layout, light/dark/auto theme switching, syntax-highlighted code blocks with copy buttons, native MathML formulas, a collapsible "Thinking process" section, and light-theme printing. (#856, @Piracola)
 - **Default export format** — Added a "Default Export Format" setting, so the export shortcut and quick export use a preferred format (Markdown / JSON / TXT / HTML) instead of always Markdown. (#856, @Piracola)
 - **Site Pack document outline support** — Declarative Site Packs now support document outline navigation (`document-outline` capability and `documentOutline` config), enabling multi-source "Document" tab outlines and scroll navigation for Canvas, Artifacts, and standalone research reports on adapted sites.
@@ -21,7 +20,6 @@ versioning follows [Semantic Versioning](https://semver.org/).
 ### ✨ Improvements
 
 - **Thought block consolidation and duplicate title cleanup** — The export pipeline now automatically merges consecutive thought fragments into a single unified blockquote and safely combines consecutive pure-thought assistant turns (including multi-fragment chains), preventing duplicate model headings across adapted sites; segmented exports are cleaned up the same way. (#841)
-- **Conversation list export menu** — The export entry in the conversation menu now opens the unified export options dialog instead of a format-only submenu, consistent with the toolbar export button. (#841)
 
 ---
 
