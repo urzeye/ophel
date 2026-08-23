@@ -11,11 +11,13 @@ import { getAdapter } from "~adapters/index"
 import { SITE_IDS } from "~constants/defaults"
 import {
   ConversationManager,
+  type ConversationExportOptions,
   type ConversationExportProgress,
   type ConversationExportStage,
   type ConversationSegmentedExportDraft,
   type ConversationSegmentedExportMode,
 } from "~core/conversation-manager"
+import type { ExportFormat } from "~utils/exporter"
 import { InlineBookmarkManager } from "~core/inline-bookmark-manager"
 import { OutlineManager, type OutlineNode } from "~core/outline-manager"
 import { AI_STUDIO_SHORTCUT_SYNC_EVENT, PromptManager } from "~core/prompt-manager"
@@ -60,6 +62,7 @@ import { QueueOverlay } from "./QueueOverlay"
 import { ReleaseNotesModal } from "./ReleaseNotesModal"
 import { QuickButtons } from "./QuickButtons"
 import { SelectedPromptBar } from "./SelectedPromptBar"
+import { ExportDialog } from "./ExportDialog"
 import { SegmentedExportDialog } from "./SegmentedExportDialog"
 import { SettingsModal } from "./SettingsModal"
 import { SiteAdapterWizard } from "./SiteAdapterWizard"
@@ -2541,6 +2544,8 @@ export const App = () => {
     showToast(newState ? t("preventAutoScrollEnabled") : t("preventAutoScrollDisabled"))
   }, [setSettings])
 
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false)
+
   const handleFloatingToolbarExport = useCallback(async () => {
     if (!conversationManager || !adapter) return
     const sessionId = adapter.getSessionId()
@@ -2548,13 +2553,42 @@ export const App = () => {
       showToast(t("exportNeedOpenFirst"))
       return
     }
-    // 使用用户在设置中选择的默认导出格式（支持 HTML）
-    const format = settings.export?.defaultExportFormat ?? "markdown"
-    const success = await conversationManager.exportConversation(sessionId, format)
-    if (!success) {
-      showToast(t("exportFailed"))
+    // 用户关闭“导出前显示选项弹窗”时，保持按默认格式一键直出
+    if (settings.export?.exportShowDialog === false) {
+      const format = settings.export?.defaultExportFormat ?? "markdown"
+      const success = await conversationManager.exportConversation(sessionId, format)
+      if (!success) {
+        showToast(t("exportFailed"))
+      }
+      return
     }
-  }, [conversationManager, adapter, settings.export?.defaultExportFormat])
+    setIsExportDialogOpen(true)
+  }, [
+    conversationManager,
+    adapter,
+    settings.export?.exportShowDialog,
+    settings.export?.defaultExportFormat,
+  ])
+
+  const handleCustomExport = useCallback(
+    async (format: ExportFormat, options: ConversationExportOptions) => {
+      if (!conversationManager || !adapter) {
+        showToast(t("exportFailed"))
+        return false
+      }
+      const sessionId = adapter.getSessionId()
+      if (!sessionId) {
+        showToast(t("exportNeedOpenFirst"))
+        return false
+      }
+      const success = await conversationManager.exportConversation(sessionId, format, options)
+      if (!success) {
+        showToast(t("exportFailed"))
+      }
+      return success
+    },
+    [conversationManager, adapter],
+  )
 
   const handleFloatingToolbarSegmentedExport = useCallback(async () => {
     if (!conversationManager || !adapter) return
@@ -3292,6 +3326,12 @@ export const App = () => {
           onExport={handleSegmentedExport}
         />
       )}
+      <ExportDialog
+        isOpen={isExportDialogOpen}
+        onClose={() => setIsExportDialogOpen(false)}
+        onExport={handleCustomExport}
+        onSegmentedExport={handleFloatingToolbarSegmentedExport}
+      />
       <GlobalSearchOverlay
         isOpen={isGlobalSettingsSearchOpen}
         onClose={() => {
