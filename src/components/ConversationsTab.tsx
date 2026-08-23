@@ -5,14 +5,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
-import type {
-  Conversation,
-  ConversationManager,
-  ConversationSegmentedExportDraft,
-  ConversationSegmentedExportMode,
-  Folder,
-  Tag,
-} from "~core/conversation-manager"
+import type { Conversation, ConversationManager, Folder, Tag } from "~core/conversation-manager"
 import { platform } from "~platform"
 import { useConversationsStore } from "~stores/conversations-store"
 import { useFoldersStore } from "~stores/folders-store"
@@ -29,8 +22,7 @@ import {
   TagManagerDialog,
 } from "./ConversationDialogs"
 import { LoadingOverlay } from "./LoadingOverlay"
-import { ConversationMenu, ExportMenu, FolderMenu, type MenuAnchorPoint } from "./ConversationMenus"
-import { SegmentedExportDialog } from "./SegmentedExportDialog"
+import { ConversationMenu, FolderMenu, type MenuAnchorPoint } from "./ConversationMenus"
 
 import "~styles/conversations.css"
 
@@ -91,13 +83,6 @@ type MenuType =
   | { type: "folder"; folder: Folder; anchorEl: HTMLElement }
   | {
       type: "conversation"
-      conv: Conversation
-      anchorEl: HTMLElement | null
-      anchorPoint?: MenuAnchorPoint
-    }
-  | { type: "export"; anchorEl: HTMLElement }
-  | {
-      type: "export-conv"
       conv: Conversation
       anchorEl: HTMLElement | null
       anchorPoint?: MenuAnchorPoint
@@ -203,9 +188,6 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
   // 对话框和菜单
   const [dialog, setDialog] = useState<DialogType>(null)
   const [menu, setMenu] = useState<MenuType>(null)
-  const [segmentedExportDraft, setSegmentedExportDraft] =
-    useState<ConversationSegmentedExportDraft | null>(null)
-  const [isSegmentedExporting, setIsSegmentedExporting] = useState(false)
 
   // 文件夹拖拽排序
   const [draggedFolderId, setDraggedFolderId] = useState<string | null>(null)
@@ -346,23 +328,12 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
     const isInteracting = !!(
       menu ||
       dialog ||
-      segmentedExportDraft ||
       showTagFilterMenu ||
       isFolderSelectOpen ||
-      isDeleting ||
-      isSegmentedExporting
+      isDeleting
     )
     onInteractionStateChange?.(isInteracting)
-  }, [
-    menu,
-    dialog,
-    segmentedExportDraft,
-    showTagFilterMenu,
-    isFolderSelectOpen,
-    isDeleting,
-    isSegmentedExporting,
-    onInteractionStateChange,
-  ])
+  }, [menu, dialog, showTagFilterMenu, isFolderSelectOpen, isDeleting, onInteractionStateChange])
 
   // 防抖搜索
   const handleSearchInput = (value: string) => {
@@ -380,34 +351,6 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
     [manager, selectedIds],
   )
 
-  const openSegmentedExportDialog = useCallback(
-    async (conv?: Conversation) => {
-      const convId = getCurrentExportConversationId(conv)
-      if (!convId) {
-        showToast(t("exportNeedOpenFirst"))
-        return
-      }
-      if (manager.siteAdapter.getSessionId() !== convId) {
-        showToast(t("exportNeedOpenFirst"))
-        return
-      }
-
-      setIsSegmentedExporting(true)
-      try {
-        const draft = await manager.prepareSegmentedConversationExport(convId)
-        if (!draft || draft.segments.length === 0) {
-          showToast(t("segmentedExportNoSegments"))
-          return
-        }
-
-        setSegmentedExportDraft(draft)
-      } finally {
-        setIsSegmentedExporting(false)
-      }
-    },
-    [getCurrentExportConversationId, manager],
-  )
-
   // 列表菜单的导出统一交给 App 层的导出选项弹窗（或按设置一键直出）
   const openExportDialog = useCallback(
     (conv?: Conversation) => {
@@ -419,27 +362,6 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
       window.dispatchEvent(new CustomEvent("ophel:openExportDialog"))
     },
     [getCurrentExportConversationId, manager],
-  )
-
-  const handleSegmentedExport = useCallback(
-    async (segmentIds: string[], mode: ConversationSegmentedExportMode) => {
-      if (!segmentedExportDraft) return
-
-      setIsSegmentedExporting(true)
-      try {
-        const success = await manager.exportSegmentedConversation(
-          segmentedExportDraft,
-          segmentIds,
-          mode,
-        )
-        if (success) {
-          setSegmentedExportDraft(null)
-        }
-      } finally {
-        setIsSegmentedExporting(false)
-      }
-    },
-    [manager, segmentedExportDraft],
   )
 
   // Tag 查表 Map（O(1) 查找替代 tags.find()）
@@ -1322,10 +1244,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                 <button
                   className="conversations-batch-btn"
                   style={{ padding: "4px 6px", minWidth: "auto", marginLeft: "4px" }}
-                  onClick={(e) => {
-                    onInteractionStateChange?.(true)
-                    setMenu({ type: "export", anchorEl: e.currentTarget })
-                  }}>
+                  onClick={() => openExportDialog()}>
                   <ExportIcon size={16} />
                 </button>
               </Tooltip>
@@ -1548,9 +1467,8 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
           }}
           onExport={() => {
             const conv = menu.conv
-            const anchorEl = menu.anchorEl
-            const anchorPoint = menu.anchorPoint
-            setMenu({ type: "export-conv", conv, anchorEl, anchorPoint })
+            setMenu(null)
+            openExportDialog(conv)
           }}
           onDelete={() => {
             setMenu(null)
@@ -1580,39 +1498,6 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
               },
             })
           }}
-        />
-      )}
-      {menu?.type === "export" && (
-        <ExportMenu
-          anchorEl={menu.anchorEl}
-          onClose={() => setMenu(null)}
-          onExport={() => openExportDialog()}
-          onSegmentedExport={() => {
-            void openSegmentedExportDialog()
-          }}
-        />
-      )}
-      {menu?.type === "export-conv" && (
-        <ExportMenu
-          anchorEl={menu.anchorEl}
-          anchorPoint={menu.anchorPoint}
-          onClose={() => setMenu(null)}
-          onExport={() => openExportDialog(menu.conv)}
-          onSegmentedExport={() => {
-            void openSegmentedExportDialog(menu.conv)
-          }}
-        />
-      )}
-      {segmentedExportDraft && (
-        <SegmentedExportDialog
-          draft={segmentedExportDraft}
-          isExporting={isSegmentedExporting}
-          onCancel={() => {
-            if (!isSegmentedExporting) {
-              setSegmentedExportDraft(null)
-            }
-          }}
-          onExport={handleSegmentedExport}
         />
       )}
     </>
