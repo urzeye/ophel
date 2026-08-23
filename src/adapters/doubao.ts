@@ -34,6 +34,7 @@ import {
   type ConversationDeleteTarget,
   type ConversationInfo,
   type ConversationObserverConfig,
+  type ExportCollectionReport,
   type ExportConfig,
   type ExportLifecycleContext,
   type ModelSwitcherConfig,
@@ -113,6 +114,17 @@ interface DoubaoExportMessageSnapshot {
   order: number
 }
 
+/** 行号驱动采集使用的快照：带虚拟行号 / 行顶偏移 / 首见序号，替代 transform-y 派生的排序键 */
+interface DoubaoExportRowSnapshot extends DoubaoExportMessageSnapshot {
+  /** 虚拟行号（--cls r-N-）；无法解析时为 -1，排序沉底按首见顺序 */
+  rowIndex: number
+  /** 行顶在虚拟内容中的偏移（--vlist-row-transform-y），仅用于缺口定位插值，不参与排序 */
+  rowTop: number
+  firstSeen: number
+  /** 未做 markdown 转换的 textContent 长度，用于增量跳过未变长的重复抓取 */
+  rawLength: number
+}
+
 export class DoubaoAdapter extends SiteAdapter {
   private config: DoubaoSiteConfig = DOUBAO_CONFIG
   private outlineCacheSessionKey = ""
@@ -120,6 +132,8 @@ export class DoubaoAdapter extends SiteAdapter {
   private outlineItemCache = new Map<string, DoubaoOutlineCacheEntry>()
   private exportMessagesCache: ExportMessage[] | null = null
   private exportBundleCache: ExportBundle | null = null
+  // 导出采集完整性报告（通过 getExportCollectionReport 暴露给 manager）
+  private exportCollectionReport: ExportCollectionReport | null = null
 
   // ===== 必选抽象方法 =====
 
@@ -2040,6 +2054,7 @@ export class DoubaoAdapter extends SiteAdapter {
 
   async prepareConversationExport(context: ExportLifecycleContext): Promise<unknown> {
     this.clearExportCache()
+    this.exportCollectionReport = null
 
     const collector =
       context.format === "markdown" && context.packaging === "zip"
@@ -2049,7 +2064,7 @@ export class DoubaoAdapter extends SiteAdapter {
     const scrollContainer = this.getVirtualScrollContainer()
     const fallbackRoot = this.getOutlineContentContainer() || document
     const snapshots = scrollContainer
-      ? await this.collectDoubaoExportSnapshotsByScrollSweep(scrollContainer, collector)
+      ? await this.collectDoubaoExportSnapshots(scrollContainer, collector)
       : this.readVisibleDoubaoExportSnapshots(
           fallbackRoot,
           collector,
@@ -2101,6 +2116,265 @@ export class DoubaoAdapter extends SiteAdapter {
   private clearExportCache(): void {
     this.exportMessagesCache = null
     this.exportBundleCache = null
+  }
+
+  getExportCollectionReport(): ExportCollectionReport | null {
+    return this.exportCollectionReport
+  }
+
+  /**
+   * 虚拟列表导出采集入口。
+   * 优先走行号驱动采集；锚点（带 `--cls r-N-` 行号的虚拟行）探测为空说明站点结构变更，
+   * 自动回退到旧的步进盲扫——结构变更的最坏结果与现状一致。
+   */
+  private async collectDoubaoExportSnapshots(
+    scrollContainer: HTMLElement,
+    collector?: ExportAssetCollector,
+  ): Promise<DoubaoExportMessageSnapshot[]> {
+    if (this.getIndexedVirtualRows(scrollContainer).length === 0) {
+      console.warn("[DoubaoAdapter] Virtual row anchors not found, falling back to sweep export")
+      return this.collectDoubaoExportSnapshotsByScrollSweep(scrollContainer, collector)
+    }
+    return this.collectDoubaoExportSnapshotsRowDriven(scrollContainer, collector)
+  }
+
+  /**
+   * 行号驱动采集（修复 #780 的核心）。
+   *
+   * 与旧 sweep 的差异：
+   * 1. 每个位置不睡固定 120ms，而是轮询等待"行号 + 行内消息内容"签名稳定（挂载确认）；
+   * 2. 去重 key 统一为 `role:data-message-id`（user/assistant 选择器本身要求该属性，
+   *    拿不到 id 说明行未挂载完成，跳过等下一轮），废弃 content:hash:order 兜底轨；
+   * 3. 排序主键用虚拟行号（单调、不受图片异步加载影响），废弃 transform-y 派生 order；
+   * 4. 采集后做行号连续性校验，缺号行按邻行 transform-y 插值定位定向补抓一轮，
+   *    仍缺则写入完整性报告（manager 负责提示用户），不静默产出。
+   */
+  private async collectDoubaoExportSnapshotsRowDriven(
+    scrollContainer: HTMLElement,
+    collector?: ExportAssetCollector,
+  ): Promise<DoubaoExportMessageSnapshot[]> {
+    const positions = this.buildDoubaoExportSnapshotPositions(scrollContainer)
+    const originalScrollTop = scrollContainer.scrollTop
+    const fallbackState = this.createDoubaoAssistantImageFallbackState()
+    const collected = new Map<string, DoubaoExportRowSnapshot>()
+    // 记录所有挂载过的行号（含无消息行），缺口 = 从未挂载过的行号，避免空行误报
+    const seenRowIndexes = new Set<number>()
+    const rowTopByIndex = new Map<number, number>()
+    let firstSeenCounter = 0
+
+    const collectVisible = (): void => {
+      for (const { row, rowIndex } of this.getIndexedVirtualRows(scrollContainer)) {
+        seenRowIndexes.add(rowIndex)
+        rowTopByIndex.set(
+          rowIndex,
+          this.getVirtualRowScrollTop(row, rowTopByIndex.get(rowIndex) ?? 0),
+        )
+      }
+
+      for (const { role, element } of this.getOrderedDoubaoMessages(scrollContainer)) {
+        const messageId =
+          element.getAttribute("data-message-id") ||
+          element
+            .closest(this.config.sitePrivateSelectors.messageId)
+            ?.getAttribute("data-message-id") ||
+          ""
+        if (!messageId) continue
+
+        const key = `${role}:${messageId}`
+        const rawLength = element.textContent?.length ?? 0
+        const existing = collected.get(key)
+        // 增量转换：内容未变长的重复出现直接跳过，省掉昂贵的 markdown 转换。
+        // 例外：ZIP 模式（collector 存在）始终重提取——图片后挂载不改变 textContent，
+        // 跳过会丢资产，与旧 sweep 每位置全量收集的行为保持一致。
+        if (existing && existing.rawLength >= rawLength && !collector) continue
+
+        const freshContent = this.normalizeDoubaoExportMessageContent(
+          role === DOUBAO_EXPORT_ROLE_USER
+            ? this.extractUserQueryExportContentWithAssets(element, collector)
+            : this.extractAssistantResponseTextWithAssets(element, collector, fallbackState),
+        )
+        if (!freshContent) continue
+        // 与旧 sweep 一致：同一 key 多次出现时保留更长的内容版本
+        const content = existing
+          ? this.mergeDoubaoExportSnapshotContent(existing.content, freshContent)
+          : freshContent
+
+        const row = this.getVirtualRow(element)
+        const rowIndex = this.getVirtualRowIndex(row, -1)
+        collected.set(key, {
+          role,
+          content,
+          key,
+          order: rowIndex >= 0 ? rowIndex : Number.MAX_SAFE_INTEGER,
+          rowIndex,
+          rowTop: row ? this.getVirtualRowScrollTop(row, 0) : 0,
+          firstSeen: existing?.firstSeen ?? firstSeenCounter++,
+          rawLength: Math.max(existing?.rawLength ?? 0, rawLength),
+        })
+        if (rowIndex >= 0) {
+          seenRowIndexes.add(rowIndex)
+          rowTopByIndex.set(rowIndex, this.getVirtualRowScrollTop(row as HTMLElement, 0))
+        }
+      }
+    }
+
+    try {
+      for (const top of positions) {
+        this.scrollVirtualContainerTo(scrollContainer, top)
+        scrollContainer.getBoundingClientRect()
+        await this.waitForDoubaoRowsMounted(scrollContainer)
+        collectVisible()
+      }
+
+      // 行号连续性补抓：缺号行按最近已知邻行的 transform-y 线性插值定位
+      const missing = this.findMissingDoubaoRowIndexes(seenRowIndexes)
+      for (const rowIndex of missing) {
+        const top = this.estimateDoubaoRowScrollTop(rowTopByIndex, rowIndex, scrollContainer)
+        if (top === null) break
+        this.scrollVirtualContainerTo(scrollContainer, top)
+        scrollContainer.getBoundingClientRect()
+        await this.waitForDoubaoRowsMounted(scrollContainer)
+        collectVisible()
+      }
+    } finally {
+      this.scrollVirtualContainerTo(scrollContainer, originalScrollTop)
+    }
+
+    this.exportCollectionReport = {
+      expectedCount: null,
+      collectedCount: collected.size,
+      missingAnchors: this.compressDoubaoRowIndexes(
+        this.findMissingDoubaoRowIndexes(seenRowIndexes),
+      ),
+      hasTruncated: false,
+    }
+
+    return Array.from(collected.values())
+      .sort((a, b) => (a.order !== b.order ? a.order - b.order : a.firstSeen - b.firstSeen))
+      .map(({ role, content, key, order }) => ({ role, content, key, order }))
+  }
+
+  /** 当前容器内带可解析行号的虚拟行。 */
+  private getIndexedVirtualRows(container: HTMLElement): Array<{
+    row: HTMLElement
+    rowIndex: number
+  }> {
+    return Array.from(container.querySelectorAll(this.config.sitePrivateSelectors.virtualRow))
+      .filter((row): row is HTMLElement => row instanceof HTMLElement)
+      .map((row) => ({ row, rowIndex: this.getVirtualRowIndex(row, -1) }))
+      .filter((entry) => entry.rowIndex >= 0)
+  }
+
+  /**
+   * 挂载确认：轮询"行号 + 行内消息有无内容"签名，连续两次采样一致即视为稳定。
+   * 快时几十毫秒通过（不劣于固定 sleep），慢时最多等 timeoutMs。
+   */
+  private async waitForDoubaoRowsMounted(container: HTMLElement, timeoutMs = 800): Promise<void> {
+    const deadline = Date.now() + timeoutMs
+    let lastSignature = ""
+    while (Date.now() < deadline) {
+      const signature = this.getDoubaoVisibleRowSignature(container)
+      if (signature && signature === lastSignature) return
+      lastSignature = signature
+      await this.sleep(60)
+    }
+  }
+
+  private getDoubaoVisibleRowSignature(container: HTMLElement): string {
+    const rows = this.getIndexedVirtualRows(container)
+    if (rows.length === 0) return ""
+    return rows
+      .map(({ row, rowIndex }) => {
+        const message = row.querySelector(this.config.sitePrivateSelectors.messageId)
+        const hasContent = message?.textContent?.trim() ? 1 : 0
+        return `${rowIndex}:${hasContent}`
+      })
+      .join("|")
+  }
+
+  /** 行号连续性缺口（仅限已观测范围内，不假设行号基数）。 */
+  private findMissingDoubaoRowIndexes(seen: Set<number>): number[] {
+    if (seen.size === 0) return []
+    let min = Number.POSITIVE_INFINITY
+    let max = 0
+    for (const n of seen) {
+      if (n < min) min = n
+      if (n > max) max = n
+    }
+    const missing: number[] = []
+    for (let n = min; n <= max; n += 1) {
+      if (!seen.has(n)) missing.push(n)
+    }
+    return missing
+  }
+
+  /** 把连续缺号压缩成区间描述，避免报告里出现几百条锚点记录。 */
+  private compressDoubaoRowIndexes(missing: number[]): string[] {
+    if (missing.length === 0) return []
+    const ranges: string[] = []
+    let start = missing[0]
+    let prev = missing[0]
+    const flush = (): void => {
+      ranges.push(start === prev ? `row-${start}` : `row-${start}..row-${prev}`)
+    }
+    for (let i = 1; i < missing.length; i += 1) {
+      const n = missing[i]
+      if (n === prev + 1) {
+        prev = n
+        continue
+      }
+      flush()
+      start = n
+      prev = n
+    }
+    flush()
+    return ranges
+  }
+
+  /** 按已知邻行的 transform-y 线性插值估算缺号行的滚动位置（目标行落在视口中部）。 */
+  private estimateDoubaoRowScrollTop(
+    rowTopByIndex: Map<number, number>,
+    targetIndex: number,
+    container: HTMLElement,
+  ): number | null {
+    if (rowTopByIndex.size === 0) return null
+    let below: [number, number] | null = null
+    let above: [number, number] | null = null
+    for (const [index, top] of rowTopByIndex) {
+      if (index < targetIndex && (!below || index > below[0])) below = [index, top]
+      if (index > targetIndex && (!above || index < above[0])) above = [index, top]
+    }
+
+    let estimated: number
+    if (below && above) {
+      const ratio = (targetIndex - below[0]) / (above[0] - below[0])
+      estimated = below[1] + (above[1] - below[1]) * ratio
+    } else if (below) {
+      estimated =
+        below[1] + (targetIndex - below[0]) * this.estimateDoubaoAverageRowHeight(rowTopByIndex)
+    } else if (above) {
+      estimated =
+        above[1] - (above[0] - targetIndex) * this.estimateDoubaoAverageRowHeight(rowTopByIndex)
+    } else {
+      return null
+    }
+
+    return Math.max(0, estimated - container.clientHeight / 2)
+  }
+
+  private estimateDoubaoAverageRowHeight(rowTopByIndex: Map<number, number>): number {
+    const entries = Array.from(rowTopByIndex.entries()).sort((a, b) => a[0] - b[0])
+    let total = 0
+    let count = 0
+    for (let i = 1; i < entries.length; i += 1) {
+      const indexDelta = entries[i][0] - entries[i - 1][0]
+      const topDelta = entries[i][1] - entries[i - 1][1]
+      if (indexDelta > 0 && topDelta > 0) {
+        total += topDelta / indexDelta
+        count += 1
+      }
+    }
+    return count > 0 ? total / count : 400
   }
 
   private async collectDoubaoExportSnapshotsByScrollSweep(

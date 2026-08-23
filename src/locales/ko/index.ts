@@ -1156,6 +1156,8 @@ export const ko = {
   exportLoading: "기록 로드 중...",
   exportSuccess: "내보내기 성공",
   exportFailed: "내보내기 실패",
+  exportMayBeIncomplete:
+    "내보내기가 불완전할 수 있습니다: 일부 콘텐츠가 완전히 로드되지 않았습니다. 결과를 확인하세요.",
   exportNoContent: "내용 없음",
   copySuccess: "클립보드에 복사되었습니다",
   copyFailed: "복사 실패",

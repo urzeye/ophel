@@ -1192,6 +1192,8 @@ export const ja = {
   exportLoading: "履歴を読み込み中...",
   exportSuccess: "出力成功",
   exportFailed: "出力失敗",
+  exportMayBeIncomplete:
+    "エクスポートが不完全な可能性があります：一部のコンテンツが完全に読み込まれませんでした。結果を確認してください。",
   exportNoContent: "内容が見つかりません",
   copySuccess: "コピーしました",
   copyFailed: "コピー失敗",

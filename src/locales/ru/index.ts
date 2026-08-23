@@ -1163,6 +1163,8 @@ export const ru = {
   exportLoading: "Грузим...",
   exportSuccess: "Успех",
   exportFailed: "Ошибка",
+  exportMayBeIncomplete:
+    "Экспорт может быть неполным: часть содержимого не была полностью загружена. Проверьте результат.",
   exportNoContent: "Пусто",
   copySuccess: "Копировано",
   copyFailed: "Ошибка коп.",

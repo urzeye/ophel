@@ -1175,6 +1175,8 @@ export const de = {
   exportLoading: "Lädt...",
   exportSuccess: "Erfolg",
   exportFailed: "Fehler",
+  exportMayBeIncomplete:
+    "Der Export ist möglicherweise unvollständig: Einige Inhalte wurden nicht vollständig geladen. Bitte prüfe das Ergebnis.",
   exportNoContent: "Leer",
   copySuccess: "Kopiert",
   copyFailed: "Kopie fehlgeschlagen",

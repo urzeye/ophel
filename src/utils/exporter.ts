@@ -1895,6 +1895,25 @@ async function resolveImageElementBlob(
   return await renderImageElementToBlob(image, asset)
 }
 
+/**
+ * 单个资产的下载超时。
+ * 无超时的 fetch 一旦挂起会让整个 ZIP 打包永远等待（导出卡在打包阶段），
+ * 超时后走现有的逐资产降级：manifest 标记 included: false，不拖死整包。
+ */
+const ASSET_FETCH_TIMEOUT_MS = 30_000
+
+/** 给不支持 AbortSignal 的平台请求通道加超时（platform.fetch 的 FetchOptions 无 signal）。 */
+function withFetchTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const timeout = new Promise<never>((_resolve, reject) => {
+    timer = setTimeout(
+      () => reject(new Error(`${label} timed out after ${timeoutMs}ms`)),
+      timeoutMs,
+    )
+  })
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer))
+}
+
 async function resolveAssetData(
   asset: ExportAsset,
 ): Promise<string | Blob | ArrayBuffer | Uint8Array> {
@@ -1935,6 +1954,7 @@ async function resolveAssetData(
     const response = await fetch(sourceUrl, {
       credentials: "include",
       cache: "force-cache",
+      signal: AbortSignal.timeout(ASSET_FETCH_TIMEOUT_MS),
     })
     if (!response.ok) {
       throw new Error(`Asset fetch failed with HTTP ${response.status}`)
@@ -1950,7 +1970,11 @@ async function resolveAssetData(
     }
 
     try {
-      const response = await platform.fetch(sourceUrl)
+      const response = await withFetchTimeout(
+        platform.fetch(sourceUrl),
+        ASSET_FETCH_TIMEOUT_MS,
+        "Asset proxy fetch",
+      )
       if (!response.ok) {
         throw new Error(`Asset proxy fetch failed with HTTP ${response.status}`)
       }

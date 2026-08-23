@@ -9,6 +9,12 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### 🐛 Bug Fixes
+
+- **Virtual-scroll long conversation export** — ChatGPT, Doubao, DeepSeek, and AI Studio exports now wait for virtualized rows to finish mounting before reading them, verify turn/row number continuity, and retry missing segments, so long conversations no longer export with silently missing, duplicated, or reordered messages; repeated exports of the same Doubao conversation now produce consistent results. (#780, @AstraVanX)
+- **Incomplete export warning** — When message collection detects missing turns/rows or history loading hits its time budget, a notice is now shown after export instead of silently producing an incomplete file. (#117, #780)
+- **Asset download timeout in ZIP export** — Image downloads now time out after 30 seconds and degrade to external references recorded in the manifest, so a single stuck asset no longer hangs the whole export. (#780, @AstraVanX)
+
 ---
 
 ## [1.2.4] - 2026-08-23

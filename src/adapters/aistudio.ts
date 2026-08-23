@@ -28,6 +28,7 @@ import {
   type ConversationDeleteTarget,
   type ConversationInfo,
   type ConversationObserverConfig,
+  type ExportCollectionReport,
   type ExportConfig,
   type ExportLifecycleContext,
   type MarkdownFixerConfig,
@@ -136,6 +137,8 @@ export class AIStudioAdapter extends SiteAdapter {
   private exportSnapshotActive = false
   private exportIncludeThoughtsOverride: boolean | null = null
   private exportBundleCache: ExportBundle | null = null
+  // 导出采集完整性报告（通过 getExportCollectionReport 暴露给 manager）
+  private exportCollectionReport: ExportCollectionReport | null = null
 
   // ==================== 基础信息 ====================
 
@@ -2164,6 +2167,7 @@ export class AIStudioAdapter extends SiteAdapter {
   async prepareConversationExport(context: ExportLifecycleContext): Promise<unknown> {
     this.exportIncludeThoughtsOverride = context.includeThoughts
     this.exportBundleCache = null
+    this.exportCollectionReport = null
     this.clearExportSnapshot()
     const collector =
       context.format === "markdown" && context.packaging === "zip"
@@ -2208,6 +2212,10 @@ export class AIStudioAdapter extends SiteAdapter {
     this.clearExportSnapshot()
     this.exportIncludeThoughtsOverride = null
     this.exportBundleCache = null
+  }
+
+  getExportCollectionReport(): ExportCollectionReport | null {
+    return this.exportCollectionReport
   }
 
   extractOutline(maxLevel = 6, includeUserQueries = false, showWordCount = false): OutlineItem[] {
@@ -3058,7 +3066,19 @@ export class AIStudioAdapter extends SiteAdapter {
       // Retry pass：first pass 走过一遍后，少数 turn 因为内层挂载特别慢（图片大、
       // 内容长、CPU 抖动等）没能在 1.8s 内抓到——这里把缺失的 user / assistant turn
       // 单独逐个处理一次，给极宽的 5s timeout + 多轮 scroll 重试。
-      await this.retryMissingTurns(allTurns, collected, includeThoughts, collector)
+      const stillMissingAnchors = await this.retryMissingTurns(
+        allTurns,
+        collected,
+        includeThoughts,
+        collector,
+      )
+      // 重试后仍缺失的 turn 写入完整性报告（manager 负责向用户提示），不静默产出
+      this.exportCollectionReport = {
+        expectedCount: null,
+        collectedCount: collected.length,
+        missingAnchors: stillMissingAnchors,
+        hasTruncated: false,
+      }
     } finally {
       scrollContainer.scrollTop = originalScrollTop
       scrollContainer.dispatchEvent(new Event("scroll", { bubbles: true }))
@@ -3072,13 +3092,15 @@ export class AIStudioAdapter extends SiteAdapter {
    *
    * 漏抓的 turn 通常是因为 1.8s 内部挂载没渲染完（图片大、长正文、CPU 高负载）。
    * 这里用 5s 的宽 timeout + 多次重 scroll，最大化恢复机会。慢一些但保证完整。
+   *
+   * 返回重试后仍缺失的 turn 锚点，供完整性报告使用。
    */
   private async retryMissingTurns(
     allTurns: HTMLElement[],
     collected: AIStudioExportMessageSnapshot[],
     includeThoughts: boolean,
     collector?: ExportAssetCollector,
-  ): Promise<void> {
+  ): Promise<string[]> {
     const collectedUserTurnIds = new Set(
       collected
         .filter((s) => s.role === AISTUDIO_EXPORT_ROLE_USER)
@@ -3133,7 +3155,7 @@ export class AIStudioAdapter extends SiteAdapter {
       }
     }
 
-    if (missingUserTurns.length === 0 && missingAssistantTurns.length === 0) return
+    if (missingUserTurns.length === 0 && missingAssistantTurns.length === 0) return []
 
     // 处理 missing user：重新 reveal + 等 5s + 抓自己 + 下一个连续 user（合并）
     for (const headTurn of missingUserTurns) {
@@ -3210,6 +3232,28 @@ export class AIStudioAdapter extends SiteAdapter {
         })
       }
     }
+
+    // 重抓后仍缺失的 turn 锚点
+    const finalUserTurnIds = new Set(
+      collected
+        .filter((s) => s.role === AISTUDIO_EXPORT_ROLE_USER)
+        .map((s) => s.turnKey.replace(/^user:/, "")),
+    )
+    const finalAssistantTurnIds = new Set(
+      collected
+        .filter((s) => s.role === AISTUDIO_EXPORT_ROLE_ASSISTANT)
+        .map((s) => s.turnKey.replace(/^assistant:/, "")),
+    )
+    const stillMissing: string[] = []
+    for (const turn of missingUserTurns) {
+      const id = turn.id || `idx:${allTurns.indexOf(turn)}`
+      if (!finalUserTurnIds.has(id)) stillMissing.push(`user-turn:${id}`)
+    }
+    for (const turn of missingAssistantTurns) {
+      const id = turn.id || `idx:${allTurns.indexOf(turn)}`
+      if (!finalAssistantTurnIds.has(id)) stillMissing.push(`assistant-turn:${id}`)
+    }
+    return stillMissing
   }
 
   /** turn 内部是否已经渲染出真实内容（不是只剩高度占位）。 */

@@ -1172,6 +1172,8 @@ export const fr = {
   exportLoading: "Chargement...",
   exportSuccess: "Succès",
   exportFailed: "Échec",
+  exportMayBeIncomplete:
+    "L'exportation peut être incomplète : une partie du contenu n'a pas été entièrement chargée. Vérifiez le résultat.",
   exportNoContent: "Vide",
   copySuccess: "Copié",
   copyFailed: "Échec copie",

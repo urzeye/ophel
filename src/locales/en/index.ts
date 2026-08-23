@@ -1236,6 +1236,8 @@ export const en = {
   exportLoading: "Loading history...",
   exportSuccess: "Export success",
   exportFailed: "Export failed",
+  exportMayBeIncomplete:
+    "Export may be incomplete: some content was not fully loaded. Please review the result.",
   exportNoContent: "No content found",
   copySuccess: "Copied to clipboard",
   copyFailed: "Copy failed",

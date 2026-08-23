@@ -20,6 +20,7 @@ import {
   type ConversationDeleteTarget,
   type ConversationInfo,
   type ConversationObserverConfig,
+  type ExportCollectionReport,
   type ExportConfig,
   type ExportLifecycleContext,
   type MarkdownFixerConfig,
@@ -227,6 +228,11 @@ export class ChatGPTAdapter extends SiteAdapter {
   private exportSnapshotRoot: HTMLElement | null = null
   private exportSnapshotActive = false
   private exportBundle: ExportBundle | null = null
+  // 导出采集完整性报告（通过 getExportCollectionReport 暴露给 manager）
+  private exportCollectionReport: ExportCollectionReport | null = null
+  // turnKey 内容兜底的唯一后缀：避免无 turnId 且内容前缀相同的 turn 在去重 Map 中互相覆盖
+  private exportTurnFallbackIds = new WeakMap<HTMLElement, number>()
+  private exportTurnFallbackIdCounter = 0
 
   match(): boolean {
     return window.location.hostname.includes("chatgpt.com")
@@ -1493,6 +1499,7 @@ export class ChatGPTAdapter extends SiteAdapter {
   async prepareConversationExport(context: ExportLifecycleContext): Promise<unknown> {
     this.clearExportSnapshot()
     this.exportBundle = null
+    this.exportCollectionReport = null
 
     const exportAssetCollector =
       context.format === "markdown" && context.packaging === "zip"
@@ -1547,6 +1554,10 @@ export class ChatGPTAdapter extends SiteAdapter {
     this.exportBundle = null
   }
 
+  getExportCollectionReport(): ExportCollectionReport | null {
+    return this.exportCollectionReport
+  }
+
   private getAuthorMessageSelector(): string {
     return [this.config.selectors.userQuery, this.config.selectors.assistantResponse].join(", ")
   }
@@ -1595,6 +1606,17 @@ export class ChatGPTAdapter extends SiteAdapter {
       }
     }
 
+    // 内容挂载后仍在分块渲染（textContent 持续增长）时立即提取会得到截断内容；
+    // 仅对本次刚滚出来的 turn 额外等一个稳定帧，命中预算上限仍在增长则记为疑似截断。
+    let truncationSuspects = 0
+    const settleAndRecord = async (turn: HTMLElement): Promise<void> => {
+      if (!(await this.waitForTurnContentSettled(turn))) {
+        truncationSuspects += 1
+      }
+      recordSnapshots(this.extractTurnExportSnapshots(turn, null, collector))
+      this.absorbTurnIntoOutlineCache(turn)
+    }
+
     try {
       const turns = this.getAllTurnShellsSorted()
 
@@ -1604,17 +1626,22 @@ export class ChatGPTAdapter extends SiteAdapter {
       } else {
         // First pass：按 conversation-turn-N 顺序逐个滚动 / 抓取
         for (const turn of turns) {
-          if (!this.turnHasMountedMessage(turn)) {
+          const wasMounted = this.turnHasMountedMessage(turn)
+          if (!wasMounted) {
             this.scrollTurnIntoView(turn)
             scrollContainer.dispatchEvent(new Event("scroll", { bubbles: true }))
             await this.waitForTurnMessageMounted(turn, 900)
           }
           if (this.turnHasMountedMessage(turn)) {
-            recordSnapshots(this.extractTurnExportSnapshots(turn, null, collector))
-            // **关键**：每个 turn 在挂载状态下立即把 user / heading 写入大纲缓存，
-            // 不能等到全部 collect 完再统一抓——ChatGPT 在抓取过程中会 mount + unmount，
-            // 等到 finally 时大量 turn 已经被卸载，extractOutline 抓不到了。
-            this.absorbTurnIntoOutlineCache(turn)
+            if (wasMounted) {
+              recordSnapshots(this.extractTurnExportSnapshots(turn, null, collector))
+              // **关键**：每个 turn 在挂载状态下立即把 user / heading 写入大纲缓存，
+              // 不能等到全部 collect 完再统一抓——ChatGPT 在抓取过程中会 mount + unmount，
+              // 等到 finally 时大量 turn 已经被卸载，extractOutline 抓不到了。
+              this.absorbTurnIntoOutlineCache(turn)
+            } else {
+              await settleAndRecord(turn)
+            }
           }
         }
 
@@ -1634,12 +1661,32 @@ export class ChatGPTAdapter extends SiteAdapter {
             scrollContainer.dispatchEvent(new Event("scroll", { bubbles: true }))
             await this.waitForTurnMessageMounted(turn, 1800)
             if (this.turnHasMountedMessage(turn)) {
-              recordSnapshots(this.extractTurnExportSnapshots(turn, null, collector))
-              this.absorbTurnIntoOutlineCache(turn)
+              await settleAndRecord(turn)
+            }
+          }
+        }
+
+        // 连续性补抓：conversation-turn-N 是连续整数，缺号即漏抓（含起始 N > 1 的
+        // 历史未加载场景）。对仍能定位到 shell 的缺口定向补一轮；补不回的进报告。
+        const missingNumbers = this.findMissingExportTurnNumbers(collected)
+        if (missingNumbers.length > 0) {
+          const missingSet = new Set(missingNumbers)
+          const gapTurns = turns.filter((turn) => missingSet.has(this.getExportTurnSortIndex(turn)))
+          for (const turn of gapTurns) {
+            this.scrollTurnIntoView(turn)
+            scrollContainer.dispatchEvent(new Event("scroll", { bubbles: true }))
+            await this.waitForTurnMessageMounted(turn, 1800)
+            if (this.turnHasMountedMessage(turn)) {
+              await settleAndRecord(turn)
             }
           }
         }
       }
+
+      this.exportCollectionReport = this.buildExportCollectionReport(
+        collected,
+        truncationSuspects > 0,
+      )
     } finally {
       // 退出前主动让大纲缓存吸收一次本轮被 mount 过的所有 turn——
       // 我们刚滚过每个 turn 的内容，这是最完整的状态；恢复 scrollTop 后 ChatGPT 会
@@ -1715,6 +1762,104 @@ export class ChatGPTAdapter extends SiteAdapter {
       await this.sleep(50)
     }
     return false
+  }
+
+  /**
+   * 内容挂载确认后再等一个"稳定帧"：长 markdown 会分块渲染，textContent 仍在增长时
+   * 立即提取会得到截断内容。最多轮询 3 轮（约 360ms），返回 false 表示到上限仍在增长
+   * （疑似截断，计入完整性报告的 hasTruncated）。
+   */
+  private async waitForTurnContentSettled(turn: HTMLElement): Promise<boolean> {
+    let lastLength = -1
+    for (let round = 0; round < 3; round += 1) {
+      const length = turn.textContent?.length ?? 0
+      if (length === lastLength) return true
+      lastLength = length
+      await this.sleep(120)
+    }
+    return (turn.textContent?.length ?? 0) === lastLength
+  }
+
+  /** 已收集快照中的 conversation-turn-N 序号集合（忽略无 N 的兜底项）。 */
+  private getCollectedTurnNumbers(
+    collected: Map<string, ChatGPTExportMessageSnapshot>,
+  ): Set<number> {
+    const numbers = new Set<number>()
+    for (const snapshot of collected.values()) {
+      if (snapshot.order !== Number.MAX_SAFE_INTEGER) numbers.add(snapshot.order)
+    }
+    return numbers
+  }
+
+  /** turn-N 连续性缺口：起始 N > 1 说明历史分页未加载完；中间缺号说明采集丢失。 */
+  private findMissingExportTurnNumbers(
+    collected: Map<string, ChatGPTExportMessageSnapshot>,
+  ): number[] {
+    const numbers = this.getCollectedTurnNumbers(collected)
+    if (numbers.size === 0) return []
+    let max = 0
+    for (const n of numbers) max = Math.max(max, n)
+    const missing: number[] = []
+    for (let n = 1; n <= max; n += 1) {
+      if (!numbers.has(n)) missing.push(n)
+    }
+    return missing
+  }
+
+  /** 把连续缺号压缩成区间描述，避免历史未加载时产生几百条锚点记录。 */
+  private compressMissingTurnNumbers(missing: number[]): string[] {
+    if (missing.length === 0) return []
+    const ranges: string[] = []
+    let start = missing[0]
+    let prev = missing[0]
+    const flush = (): void => {
+      ranges.push(start === prev ? `turn-${start}` : `turn-${start}..turn-${prev}`)
+    }
+    for (let i = 1; i < missing.length; i += 1) {
+      const n = missing[i]
+      if (n === prev + 1) {
+        prev = n
+        continue
+      }
+      flush()
+      start = n
+      prev = n
+    }
+    flush()
+    return ranges
+  }
+
+  private buildExportCollectionReport(
+    collected: Map<string, ChatGPTExportMessageSnapshot>,
+    hasTruncated: boolean,
+  ): ExportCollectionReport {
+    const numbers = this.getCollectedTurnNumbers(collected)
+    if (numbers.size === 0) {
+      return {
+        expectedCount: null,
+        collectedCount: collected.size,
+        missingAnchors: [],
+        hasTruncated,
+      }
+    }
+    let max = 0
+    for (const n of numbers) max = Math.max(max, n)
+    return {
+      expectedCount: max,
+      collectedCount: numbers.size,
+      missingAnchors: this.compressMissingTurnNumbers(this.findMissingExportTurnNumbers(collected)),
+      hasTruncated,
+    }
+  }
+
+  /** 无 turnId 时给内容兜底 key 追加按元素稳定、跨 turn 唯一的后缀，避免同内容前缀的 turn 互相覆盖。 */
+  private getExportTurnFallbackId(turn: HTMLElement): number {
+    let id = this.exportTurnFallbackIds.get(turn)
+    if (id === undefined) {
+      id = this.exportTurnFallbackIdCounter++
+      this.exportTurnFallbackIds.set(turn, id)
+    }
+    return id
   }
 
   /** 容错地把 turn 滚到视口中央。 */
@@ -1922,7 +2067,7 @@ export class ChatGPTAdapter extends SiteAdapter {
             role: CHATGPT_EXPORT_ROLE_ASSISTANT,
             turnKey: turnId
               ? `assistant:turn:${turnId}`
-              : `assistant:images:${content.replace(/\s+/g, " ").slice(0, 120)}`,
+              : `assistant:images:${content.replace(/\s+/g, " ").slice(0, 120)}#f${this.getExportTurnFallbackId(turn)}`,
             order: this.getExportTurnSortIndex(turn),
             content,
           },
@@ -1961,7 +2106,7 @@ export class ChatGPTAdapter extends SiteAdapter {
           role: CHATGPT_EXPORT_ROLE_USER,
           turnKey: turnId
             ? `user:turn:${turnId}`
-            : `user:content:${content.replace(/\s+/g, " ").slice(0, 120)}`,
+            : `user:content:${content.replace(/\s+/g, " ").slice(0, 120)}#f${this.getExportTurnFallbackId(turn)}`,
           order,
           content,
         },
@@ -1987,7 +2132,7 @@ export class ChatGPTAdapter extends SiteAdapter {
     const combinedContent = parts.join("\n\n")
     const turnKey = turnId
       ? `assistant:turn:${turnId}`
-      : `assistant:content:${combinedContent.replace(/\s+/g, " ").slice(0, 120)}`
+      : `assistant:content:${combinedContent.replace(/\s+/g, " ").slice(0, 120)}#f${this.getExportTurnFallbackId(turn)}`
 
     return [
       {

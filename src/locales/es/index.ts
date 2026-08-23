@@ -1171,6 +1171,8 @@ export const es = {
   exportLoading: "Cargando...",
   exportSuccess: "Éxito",
   exportFailed: "Fallo",
+  exportMayBeIncomplete:
+    "La exportación puede estar incompleta: parte del contenido no se cargó por completo. Revisa el resultado.",
   exportNoContent: "Vacío",
   copySuccess: "Copiado",
   copyFailed: "Fallo copia",

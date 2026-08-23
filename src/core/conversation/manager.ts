@@ -59,6 +59,12 @@ export type ConversationExportOperation = "export" | "outline-copy" | "segment-e
 
 export type ConversationSegmentedExportMode = "zip-markdown" | "merged-markdown" | "clipboard"
 
+/**
+ * 历史分页加载的总时长预算。
+ * 收敛条件满足（高度稳定且无加载中）时立即结束；预算触顶则继续导出但标记"历史可能不完整"。
+ */
+const HISTORY_LOAD_TIME_BUDGET_MS = 5 * 60 * 1000
+
 export interface ConversationExportSegment {
   id: string
   index: number
@@ -1613,24 +1619,36 @@ export class ConversationManager {
     try {
       notifyProgress("loading-history")
 
-      // 加载完整历史（滚动到顶部）
+      // 加载完整历史（滚动到顶部）。
+      // 收敛条件：scrollHeight 连续 3 轮不变且适配器无分页加载中；
+      // 旧逻辑只看高度，慢网络下单页加载超过 1.5s 会被误判为"没有更多历史"而提前停止，
+      // 导致长会话开头若干段从未进入 DOM（导出缺段的来源之一）。
+      let historyPossiblyIncomplete = false
       if (scrollContainer) {
-        let prevHeight = 0
-        let retries = 0
-        const maxRetries = 50
+        const deadline = Date.now() + HISTORY_LOAD_TIME_BUDGET_MS
+        let prevHeight = -1
+        let stableRounds = 0
 
-        while (retries < maxRetries) {
+        while (Date.now() < deadline) {
           scrollContainer.scrollTop = getTopScrollPosition(scrollContainer)
           await new Promise((resolve) => setTimeout(resolve, 500))
 
           const currentHeight = scrollContainer.scrollHeight
-          if (currentHeight === prevHeight) {
-            retries++
-            if (retries >= 3) break
+          const loading = this.siteAdapter.isHistoryLoading()
+          if (currentHeight === prevHeight && !loading) {
+            stableRounds++
+            if (stableRounds >= 3) break
           } else {
-            retries = 0
+            stableRounds = 0
             prevHeight = currentHeight
           }
+        }
+
+        if (Date.now() >= deadline) {
+          historyPossiblyIncomplete = true
+          console.warn(
+            "[ConversationManager] History load hit time budget; export may miss early messages",
+          )
         }
       }
 
@@ -1653,13 +1671,19 @@ export class ConversationManager {
         return null
       }
 
-      return await handleExportData({
+      const result = await handleExportData({
         conv,
         messages,
         exportBundle,
         exportPackaging,
         notifyProgress,
       })
+
+      // 导出失败时由调用方提示 exportFailed，这里只对成功的结果做完整性提示，避免双重打扰
+      if (result) {
+        this.reportExportCompleteness(convId, historyPossiblyIncomplete)
+      }
+      return result
     } catch (error) {
       console.error("[ConversationManager] Export failed:", error)
       return null
@@ -1683,6 +1707,30 @@ export class ConversationManager {
 
       this.notifyExportProgress(null)
     }
+  }
+
+  /**
+   * 导出完成后消费适配器的完整性报告：
+   * 有缺口 / 数量不足 / 疑似截断 / 历史加载触顶时，给出用户可见的"可能不完整"提示。
+   * 禁止静默产出残缺文件——缺口必须显式暴露。
+   */
+  private reportExportCompleteness(convId: string, historyPossiblyIncomplete: boolean): void {
+    const report = this.siteAdapter.getExportCollectionReport()
+    const missingCount =
+      (report?.missingAnchors.length ?? 0) +
+      (report?.expectedCount != null
+        ? Math.max(0, report.expectedCount - report.collectedCount)
+        : 0)
+    const incomplete =
+      historyPossiblyIncomplete || missingCount > 0 || report?.hasTruncated === true
+    if (!incomplete) return
+
+    console.warn("[ConversationManager] Export may be incomplete:", {
+      conversationId: convId,
+      historyPossiblyIncomplete,
+      report,
+    })
+    showToast(t("exportMayBeIncomplete"), 4000)
   }
 
   async collectCurrentConversationExportMessages(

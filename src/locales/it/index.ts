@@ -1286,6 +1286,8 @@ export const it = {
   exportLoading: "Caricamento cronologia...",
   exportSuccess: "Successo nell'esportazione",
   exportFailed: "Esportazione non riuscita",
+  exportMayBeIncomplete:
+    "L'esportazione potrebbe essere incompleta: alcuni contenuti non sono stati caricati completamente. Controlla il risultato.",
   exportNoContent: "Nessun contenuto trovato",
   copySuccess: "Copiato negli appunti",
   copyFailed: "Copia non riuscita",

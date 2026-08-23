@@ -105,6 +105,24 @@ export interface ExportLifecycleContext {
   packaging: ExportPackaging
 }
 
+/**
+ * 导出采集完整性报告。
+ *
+ * 虚拟滚动站点在 prepareConversationExport 中采集消息时生成，
+ * 供 ConversationManager 判断是否需要补扫或向用户提示"导出可能不完整"。
+ * 无法提供完整性判定的站点保持默认 null，行为与现状一致。
+ */
+export interface ExportCollectionReport {
+  /** 站点锚点序列给出的应有锚点总数；无法获知时为 null */
+  expectedCount: number | null
+  /** 实际采集到的锚点数 */
+  collectedCount: number
+  /** 连续性校验发现的缺口描述（如缺失的 turn-N / 行号），无校验能力时为空数组 */
+  missingAnchors: string[]
+  /** 是否有内容疑似截断的条目（抓到了但可能不全） */
+  hasTruncated: boolean
+}
+
 export interface ConversationObserverConfig {
   selector: string
   shadow: boolean
@@ -1385,6 +1403,26 @@ export abstract class SiteAdapter {
     _context: ExportLifecycleContext,
     _state: unknown,
   ): Promise<void> {}
+
+  /**
+   * 导出采集完整性报告（虚拟滚动站点可选实现）。
+   *
+   * 适配器在 prepareConversationExport 采集后缓存报告，manager 在提取完成后读取。
+   * 默认返回 null，表示该站点不提供完整性判定。
+   */
+  getExportCollectionReport(): ExportCollectionReport | null {
+    return null
+  }
+
+  /**
+   * 历史消息是否仍在分页加载中（适配器可选实现）。
+   *
+   * manager 的 loading-history 阶段用它区分"没有更多历史"与"请求在飞但高度暂未变化"，
+   * 避免慢网络下提前停止加载。默认 false（退化为纯高度判定）。
+   */
+  isHistoryLoading(): boolean {
+    return false
+  }
 
   // ==================== 新对话监听 ====================
 
