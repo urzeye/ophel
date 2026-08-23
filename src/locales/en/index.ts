@@ -1253,6 +1253,7 @@ export const en = {
   exportUntitled: "Untitled",
   exportToClipboard: "Copy Markdown",
   segmentedExportMenuItem: "Export segments...",
+  exportMenuItem: "Export...",
   segmentedExportTitle: "Segmented export",
   segmentedExportDetected: "Detected {count} segments",
   segmentedExportSearchPlaceholder: "Search segments...",

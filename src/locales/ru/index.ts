@@ -1180,6 +1180,7 @@ export const ru = {
   exportUntitled: "Без темы",
   exportToClipboard: "Скопировать Markdown",
   segmentedExportMenuItem: "Экспорт сегментов...",
+  exportMenuItem: "Экспорт...",
   segmentedExportTitle: "Экспорт сегментами",
   segmentedExportDetected: "Найдено сегментов: {count}",
   segmentedExportSearchPlaceholder: "Поиск сегментов...",

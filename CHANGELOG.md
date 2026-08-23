@@ -21,6 +21,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 ### ✨ Improvements
 
 - **Thought block consolidation and duplicate title cleanup** — The export pipeline now automatically merges consecutive thought fragments into a single unified blockquote and safely combines consecutive pure-thought assistant turns (including multi-fragment chains), preventing duplicate model headings across adapted sites; segmented exports are cleaned up the same way. (#841)
+- **Conversation list export menu** — The export entry in the conversation menu now opens the unified export options dialog instead of a format-only submenu, consistent with the toolbar export button. (#841)
 
 ---
 

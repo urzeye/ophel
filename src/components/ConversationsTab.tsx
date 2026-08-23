@@ -408,6 +408,19 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
     [getCurrentExportConversationId, manager],
   )
 
+  // 列表菜单的导出统一交给 App 层的导出选项弹窗（或按设置一键直出）
+  const openExportDialog = useCallback(
+    (conv?: Conversation) => {
+      const convId = getCurrentExportConversationId(conv)
+      if (!convId || manager.siteAdapter.getSessionId() !== convId) {
+        showToast(t("exportNeedOpenFirst"))
+        return
+      }
+      window.dispatchEvent(new CustomEvent("ophel:openExportDialog"))
+    },
+    [getCurrentExportConversationId, manager],
+  )
+
   const handleSegmentedExport = useCallback(
     async (segmentIds: string[], mode: ConversationSegmentedExportMode) => {
       if (!segmentedExportDraft) return
@@ -1573,30 +1586,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
         <ExportMenu
           anchorEl={menu.anchorEl}
           onClose={() => setMenu(null)}
-          onExportMarkdown={async () => {
-            setMenu(null)
-            const convId =
-              selectedIds.size > 0 ? Array.from(selectedIds)[0] : manager.siteAdapter.getSessionId()
-            await manager.exportConversation(convId, "markdown")
-          }}
-          onExportJSON={async () => {
-            setMenu(null)
-            const convId =
-              selectedIds.size > 0 ? Array.from(selectedIds)[0] : manager.siteAdapter.getSessionId()
-            await manager.exportConversation(convId, "json")
-          }}
-          onExportTXT={async () => {
-            setMenu(null)
-            const convId =
-              selectedIds.size > 0 ? Array.from(selectedIds)[0] : manager.siteAdapter.getSessionId()
-            await manager.exportConversation(convId, "txt")
-          }}
-          onExportHTML={async () => {
-            setMenu(null)
-            const convId =
-              selectedIds.size > 0 ? Array.from(selectedIds)[0] : manager.siteAdapter.getSessionId()
-            await manager.exportConversation(convId, "html")
-          }}
+          onExport={() => openExportDialog()}
           onSegmentedExport={() => {
             void openSegmentedExportDialog()
           }}
@@ -1607,22 +1597,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
           anchorEl={menu.anchorEl}
           anchorPoint={menu.anchorPoint}
           onClose={() => setMenu(null)}
-          onExportMarkdown={async () => {
-            setMenu(null)
-            await manager.exportConversation(menu.conv.id, "markdown")
-          }}
-          onExportJSON={async () => {
-            setMenu(null)
-            await manager.exportConversation(menu.conv.id, "json")
-          }}
-          onExportTXT={async () => {
-            setMenu(null)
-            await manager.exportConversation(menu.conv.id, "txt")
-          }}
-          onExportHTML={async () => {
-            setMenu(null)
-            await manager.exportConversation(menu.conv.id, "html")
-          }}
+          onExport={() => openExportDialog(menu.conv)}
           onSegmentedExport={() => {
             void openSegmentedExportDialog(menu.conv)
           }}

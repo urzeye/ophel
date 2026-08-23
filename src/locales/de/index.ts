@@ -1192,6 +1192,7 @@ export const de = {
   exportUntitled: "Unbenannt",
   exportToClipboard: "Markdown kopieren",
   segmentedExportMenuItem: "Segmente exportieren...",
+  exportMenuItem: "Exportieren...",
   segmentedExportTitle: "Segmentierter Export",
   segmentedExportDetected: "{count} Segmente erkannt",
   segmentedExportSearchPlaceholder: "Segmente suchen...",

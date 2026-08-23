@@ -1189,6 +1189,7 @@ export const fr = {
   exportUntitled: "Sans Titre",
   exportToClipboard: "Copier Markdown",
   segmentedExportMenuItem: "Exporter segments...",
+  exportMenuItem: "Exporter...",
   segmentedExportTitle: "Export segmenté",
   segmentedExportDetected: "{count} segments détectés",
   segmentedExportSearchPlaceholder: "Chercher segments...",

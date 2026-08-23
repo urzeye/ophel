@@ -1,15 +1,7 @@
 import React, { useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 
-import {
-  ExportIcon,
-  HTMLFileIcon,
-  JSONFileIcon,
-  LinkIcon,
-  MarkdownIcon,
-  SegmentedExportIcon,
-  TXTFileIcon,
-} from "~components/icons"
+import { ExportIcon, LinkIcon, SegmentedExportIcon } from "~components/icons"
 import { DeleteIcon } from "~components/icons/DeleteIcon"
 import { FolderMoveIcon } from "~components/icons/FolderMoveIcon"
 import { PinIcon } from "~components/icons/PinIcon"
@@ -411,10 +403,7 @@ interface ExportMenuProps {
   anchorEl: HTMLElement | null
   anchorPoint?: MenuAnchorPoint
   onClose: () => void
-  onExportMarkdown: () => void
-  onExportJSON: () => void
-  onExportTXT: () => void
-  onExportHTML: () => void
+  onExport: () => void
   onSegmentedExport?: () => void
 }
 
@@ -422,10 +411,7 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
   anchorEl,
   anchorPoint,
   onClose,
-  onExportMarkdown,
-  onExportJSON,
-  onExportTXT,
-  onExportHTML,
+  onExport,
   onSegmentedExport,
 }) => {
   return (
@@ -433,41 +419,11 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
       <MenuButton
         onClick={() => {
           onClose()
-          onExportMarkdown()
+          onExport()
         }}>
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <MarkdownIcon size={14} />
-          <span>{t("exportToMarkdown")}</span>
-        </div>
-      </MenuButton>
-      <MenuButton
-        onClick={() => {
-          onClose()
-          onExportJSON()
-        }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <JSONFileIcon size={14} />
-          <span>{t("exportToJSON")}</span>
-        </div>
-      </MenuButton>
-      <MenuButton
-        onClick={() => {
-          onClose()
-          onExportTXT()
-        }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <TXTFileIcon size={14} />
-          <span>{t("exportToTXT")}</span>
-        </div>
-      </MenuButton>
-      <MenuButton
-        onClick={() => {
-          onClose()
-          onExportHTML()
-        }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <HTMLFileIcon size={14} />
-          <span>{t("exportToHTML")}</span>
+          <ExportIcon size={14} />
+          <span>{t("exportMenuItem")}</span>
         </div>
       </MenuButton>
       {onSegmentedExport && (

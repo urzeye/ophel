@@ -1082,6 +1082,7 @@ export const zhTW = {
   exportUntitled: "未命名",
   exportToClipboard: "複製 Markdown",
   segmentedExportMenuItem: "分段匯出...",
+  exportMenuItem: "匯出...",
   segmentedExportTitle: "分段匯出",
   segmentedExportDetected: "已識別 {count} 個片段",
   segmentedExportSearchPlaceholder: "搜尋片段...",

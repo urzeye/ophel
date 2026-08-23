@@ -1209,6 +1209,7 @@ export const ja = {
   exportUntitled: "無題",
   exportToClipboard: "Markdownをコピー",
   segmentedExportMenuItem: "分割出力...",
+  exportMenuItem: "エクスポート...",
   segmentedExportTitle: "分割出力",
   segmentedExportDetected: "{count} 個のセグメントを検出",
   segmentedExportSearchPlaceholder: "セグメントを検索...",

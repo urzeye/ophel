@@ -1183,6 +1183,7 @@ export const pt = {
   exportUntitled: "Sem Título",
   exportToClipboard: "Copiar Markdown",
   segmentedExportMenuItem: "Exportar segmentos...",
+  exportMenuItem: "Exportar...",
   segmentedExportTitle: "Exportação segmentada",
   segmentedExportDetected: "{count} segmentos detectados",
   segmentedExportSearchPlaceholder: "Buscar segmentos...",

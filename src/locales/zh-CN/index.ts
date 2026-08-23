@@ -1189,6 +1189,7 @@ export const zhCN = {
   exportUntitled: "未命名",
   exportToClipboard: "复制 Markdown",
   segmentedExportMenuItem: "分段导出...",
+  exportMenuItem: "导出...",
   segmentedExportTitle: "分段导出",
   segmentedExportDetected: "已识别 {count} 个片段",
   segmentedExportSearchPlaceholder: "搜索片段...",

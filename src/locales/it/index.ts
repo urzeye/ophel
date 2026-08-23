@@ -1303,6 +1303,7 @@ export const it = {
   exportUntitled: "Senza titolo",
   exportToClipboard: "Copia Markdown",
   segmentedExportMenuItem: "Esporta segmenti...",
+  exportMenuItem: "Esporta...",
   segmentedExportTitle: "Esportazione segmentata",
   segmentedExportDetected: "Segmenti {count} rilevati",
   segmentedExportSearchPlaceholder: "Cerca segmenti...",

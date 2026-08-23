@@ -1173,6 +1173,7 @@ export const ko = {
   exportUntitled: "제목 없음",
   exportToClipboard: "Markdown 복사",
   segmentedExportMenuItem: "세그먼트 내보내기...",
+  exportMenuItem: "내보내기...",
   segmentedExportTitle: "세그먼트 내보내기",
   segmentedExportDetected: "{count}개 세그먼트 감지",
   segmentedExportSearchPlaceholder: "세그먼트 검색...",

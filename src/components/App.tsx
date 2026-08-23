@@ -2590,6 +2590,15 @@ export const App = () => {
     [conversationManager, adapter],
   )
 
+  // 会话列表菜单通过事件请求打开导出弹窗（或按设置直出），与工具箱按钮共用同一入口逻辑
+  useEffect(() => {
+    const handleOpenExportDialog = () => {
+      void handleFloatingToolbarExport()
+    }
+    window.addEventListener("ophel:openExportDialog", handleOpenExportDialog)
+    return () => window.removeEventListener("ophel:openExportDialog", handleOpenExportDialog)
+  }, [handleFloatingToolbarExport])
+
   const handleFloatingToolbarSegmentedExport = useCallback(async () => {
     if (!conversationManager || !adapter) return
     const sessionId = adapter.getSessionId()
