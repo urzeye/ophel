@@ -568,6 +568,8 @@ export function htmlToMarkdown(el: Element): string {
 const THOUGHT_MARKDOWN_LINE =
   /^\s*(?:\[(?:Thoughts?|思维链|思考过程)\]|\*{0,2}💭\s*思考过程\*{0,2})\s*$/i
 
+const CODE_FENCE_LINE = /^\s*(`{3,}|~{3,})/
+
 function getThoughtMarkerIndex(lines: string[]): number {
   for (let index = 0; index < lines.length; index += 1) {
     const line = lines[index].replace(/^>\s?/, "").trim()
@@ -579,6 +581,32 @@ function getThoughtMarkerIndex(lines: string[]): number {
 }
 
 /**
+ * 按行标记 fenced code block 内部（含闭合围栏行之前的所有内容行），
+ * 思维链聚合只处理普通引用块，不能改写代码示例中的 > 引用文本
+ */
+function computeCodeFenceFlags(lines: string[]): boolean[] {
+  const flags: boolean[] = []
+  let fenceChar = ""
+  let fenceLength = 0
+
+  for (const line of lines) {
+    flags.push(fenceLength > 0)
+    const match = line.match(CODE_FENCE_LINE)
+    if (!match) continue
+    const marker = match[1]
+    if (fenceLength === 0) {
+      fenceChar = marker[0]
+      fenceLength = marker.length
+    } else if (marker[0] === fenceChar && marker.length >= fenceLength) {
+      fenceChar = ""
+      fenceLength = 0
+    }
+  }
+
+  return flags
+}
+
+/**
  * 通用思维链聚合函数：
  * 扫描内容中的连续 > [Thoughts] 引用块，合并为单一标准的思维链引用块，避免分段产生多个 [Thoughts] 标签。
  */
@@ -586,18 +614,19 @@ export function consolidateThoughtBlocks(content: string): string {
   if (!content || !content.includes(">")) return content
 
   const lines = content.replace(/\r\n?/g, "\n").split("\n")
+  const inCodeFence = computeCodeFenceFlags(lines)
   const merged: string[] = []
   let index = 0
 
   while (index < lines.length) {
-    if (!lines[index].startsWith(">")) {
+    if (inCodeFence[index] || !lines[index].startsWith(">")) {
       merged.push(lines[index])
       index += 1
       continue
     }
 
     const block: string[] = []
-    while (index < lines.length && lines[index].startsWith(">")) {
+    while (index < lines.length && !inCodeFence[index] && lines[index].startsWith(">")) {
       block.push(lines[index])
       index += 1
     }
@@ -615,11 +644,16 @@ export function consolidateThoughtBlocks(content: string): string {
     while (true) {
       let nextIndex = index
       while (nextIndex < lines.length && lines[nextIndex].trim() === "") nextIndex += 1
-      if (nextIndex >= lines.length || !lines[nextIndex].startsWith(">")) break
+      if (nextIndex >= lines.length || inCodeFence[nextIndex] || !lines[nextIndex].startsWith(">"))
+        break
 
       const nextBlock: string[] = []
       let scanIndex = nextIndex
-      while (scanIndex < lines.length && lines[scanIndex].startsWith(">")) {
+      while (
+        scanIndex < lines.length &&
+        !inCodeFence[scanIndex] &&
+        lines[scanIndex].startsWith(">")
+      ) {
         nextBlock.push(lines[scanIndex])
         scanIndex += 1
       }
@@ -743,7 +777,8 @@ export function formatToMarkdown(metadata: ExportMetadata, messages: ExportMessa
       }
     } else {
       const modelLabel = metadata.customModelName || metadata.source
-      const titlePrefix = metadata.showIndex ? `${turnNumber || 1}. ` : ""
+      // 开场 assistant（尚未出现 user 轮次）不编号，避免与首轮 1 重复
+      const titlePrefix = metadata.showIndex && turnNumber > 0 ? `${turnNumber}. ` : ""
       lines.push(`## ${titlePrefix}${EMOJI_ASSISTANT} ${modelLabel}`)
       lines.push("")
       lines.push(msg.content)
@@ -803,7 +838,7 @@ export function formatToTXT(metadata: ExportMetadata, messages: ExportMessage[])
       lines.push(`[${prefix}${userLabel}]`)
     } else {
       const modelLabel = metadata.customModelName || metadata.source
-      const prefix = metadata.showIndex ? `${turnNumber || 1}. ` : ""
+      const prefix = metadata.showIndex && turnNumber > 0 ? `${turnNumber}. ` : ""
       lines.push(`[${prefix}${modelLabel}]`)
     }
     lines.push(msg.content)
@@ -1460,7 +1495,8 @@ export function formatToHTML(metadata: ExportMetadata, messages: ExportMessage[]
       if (msg.role === "user") {
         turnNumber += 1
       }
-      return formatMessageHtml(msg, metadata, turnNumber || 1)
+      // 开场 assistant（turnNumber 仍为 0）不传序号，标题不编号
+      return formatMessageHtml(msg, metadata, turnNumber > 0 ? turnNumber : undefined)
     })
     .join("\n")
 
