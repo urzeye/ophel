@@ -12,6 +12,7 @@
 # misc
 .DS_Store
 *.pem
+*.htm
 
 # debug
 npm-debug.log*

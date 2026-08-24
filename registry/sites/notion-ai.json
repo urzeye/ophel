@@ -1,0 +1,105 @@
+{
+  "schemaVersion": 1,
+  "id": "notion-ai",
+  "version": 1,
+  "minAppVersion": "1.2.4",
+  "name": "Notion AI",
+  "nameI18n": {
+    "zh-CN": "Notion AI",
+    "zh-TW": "Notion AI",
+    "en": "Notion AI",
+    "ja": "Notion AI",
+    "ko": "Notion AI",
+    "it": "Notion AI",
+    "de": "Notion AI",
+    "es": "Notion AI",
+    "fr": "Notion AI",
+    "pt-BR": "Notion AI",
+    "ru": "Notion AI"
+  },
+  "description": "Adds Ophel outlines, basic export, chat width, Zen Mode, new chat, and prompt insertion to Notion AI (app.notion.com).",
+  "descriptionI18n": {
+    "zh-CN": "为 Notion AI 添加 Ophel 大纲、基础导出、对话宽度、禅模式、新对话和提示词插入功能。",
+    "zh-TW": "為 Notion AI 加入 Ophel 大綱、基本匯出、對話寬度、禪模式、新對話與提示詞插入功能。",
+    "en": "Adds Ophel outlines, basic export, chat width, Zen Mode, new chat, and prompt insertion to Notion AI (app.notion.com).",
+    "ja": "Notion AI に、Ophel のアウトライン、基本エクスポート、チャット幅、Zen モード、新規チャット、プロンプト挿入機能を追加します。",
+    "ko": "Notion AI에 Ophel의 개요, 기본 내보내기, 대화 너비, Zen 모드, 새 채팅 및 프롬프트 삽입 기능을 추가합니다.",
+    "it": "Aggiunge a Notion AI le funzioni Ophel per struttura, esportazione di base, larghezza della chat, modalità Zen, nuova chat e inserimento dei prompt.",
+    "de": "Ergänzt Notion AI um Ophel-Funktionen für Gliederung, Basisexport, Chatbreite, Zen-Modus, neuen Chat und Prompt-Einfügung.",
+    "es": "Añade a Notion AI las funciones de Ophel para esquema, exportación básica, ancho del chat, modo zen, nuevo chat e inserción de prompts.",
+    "fr": "Ajoute à Notion AI les fonctions Ophel de plan, d’exportation de base, de largeur de discussion, de mode Zen, de nouvelle discussion et d’insertion de prompts.",
+    "pt-BR": "Adiciona ao Notion AI os recursos do Ophel para estrutura, exportação básica, largura da conversa, modo Zen, nova conversa e inserção de prompts.",
+    "ru": "Добавляет в Notion AI функции Ophel для структуры, базового экспорта, ширины чата, режима Zen, нового чата и вставки промптов."
+  },
+  "matches": ["https://app.notion.com/*", "https://www.notion.so/*"],
+  "theme": {
+    "primary": "#2383e2",
+    "secondary": "#105fad"
+  },
+  "capabilities": [
+    "outline",
+    "outline-user-queries",
+    "export-basic",
+    "new-chat",
+    "width",
+    "zen",
+    "prompt-insert"
+  ],
+  "selectors": {
+    "textarea": [
+      "div[contenteditable='true'][role='textbox']",
+      "div.content-editable-leaf-rtl[contenteditable='true']",
+      "div[data-content-editable-leaf='true'][contenteditable='true']"
+    ],
+    "submitButton": [
+      "div[data-testid='agent-send-message-button']",
+      "[data-testid='agent-send-message-button']",
+      "div[aria-label='提交 AI 消息']",
+      "div[aria-label='Submit AI message']"
+    ],
+    "responseContainer": ".notion-selectable-container",
+    "chatContent": [".notion-selectable-container", "div[data-agent-chat-user-step-id]"],
+    "userQuery": "div[data-agent-chat-user-step-id] [data-content-editable-leaf='true']",
+    "assistantResponse": "div[data-content-editable-root='true']",
+    "newChatButton": [
+      "div[data-inp-target='sidebar-new-chat']",
+      "div[data-inp-target='sidebar-tab-chats']"
+    ],
+    "scrollContainer": [
+      "div[style*='scrollbar-gutter:stable'][style*='overflow-y:auto']",
+      "div[style*='overflow-y:auto']",
+      ".notion-scroller.vertical"
+    ]
+  },
+  "input": {
+    "mode": "contenteditable",
+    "submitKey": "Enter"
+  },
+  "session": {
+    "newConversationPathPatterns": ["^/ai/?$"],
+    "newTabPath": "/ai"
+  },
+  "export": {
+    "userQuerySelector": "div[data-agent-chat-user-step-id] [data-content-editable-leaf='true']",
+    "assistantResponseSelector": "div[data-content-editable-root='true']",
+    "turnSelector": null,
+    "useShadowDOM": false
+  },
+  "zenMode": {
+    "hide": [
+      ".notion-sidebar-container",
+      ".notion-sidebar",
+      ".layout-content > div:first-child > div:first-child"
+    ]
+  },
+  "widthSelectors": [
+    {
+      "selector": "div[style*='max-width:798px'], div[style*='max-width: 798px'], div[style*='padding-inline:52px']",
+      "property": "max-width"
+    },
+    {
+      "selector": "div[style*='max-width:742px'], div[style*='max-width: 742px'], div[style*='padding:0px 24px'], div[style*='padding: 0px 24px']",
+      "property": "max-width"
+    }
+  ]
+}

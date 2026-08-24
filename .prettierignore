@@ -14,6 +14,7 @@ yarn.lock
 
 # 临时文件
 *.log
+*.htm
 .DS_Store
 
 # 其他不需要格式化的资源
