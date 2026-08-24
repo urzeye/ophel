@@ -23,6 +23,10 @@ import {
   MSG_REMOVE_LOCAL_REMOTE_CONFIG_PATCH,
   sendToBackground,
 } from "~utils/messaging"
+// KaTeX 样式文本必须静态导入：Parcel 对 content script 的动态 import
+// 通过向页面注入 <script> 加载 chunk，chunk 在主世界执行并注册模块，
+// 隔离世界的 bundle.root 找不到该模块（Cannot find module）。
+import { getKatexStylesText as resolveKatexStylesText } from "../katex"
 import { renderKatexToMathML, renderKatexToString } from "../katex-render"
 import { extensionStorage } from "./storage"
 
@@ -47,8 +51,7 @@ export const platform: Platform = {
     renderKatexToString,
     renderKatexToMathML,
     async getKatexStylesText() {
-      const { getKatexStylesText } = await import("../katex")
-      return getKatexStylesText()
+      return resolveKatexStylesText()
     },
   },
 
