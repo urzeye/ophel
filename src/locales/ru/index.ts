@@ -1633,6 +1633,15 @@ export const ru = {
   chatgptSettingsDesc: "Настроить поведение по умолчанию для страницы ChatGPT",
   chatgptMarkdownFixLabel: "Исправление жирного Markdown",
   chatgptMarkdownFixDesc: "Исправить нерендеренный **жирный** текст в ответах ChatGPT",
+  chatgptCodeBlockBatchMountLabel: "Пакетное монтирование блоков кода",
+  chatgptCodeBlockBatchMountDesc:
+    "Монтирует редакторы кода пакетно при открытии или переключении длинных диалогов, уменьшая зависания страницы",
+  chatgptStreamingRenderOptimizeLabel: "Оптимизация рендеринга при стриминге",
+  chatgptStreamingRenderOptimizeDesc:
+    "Приостанавливает анимации и переходы в области сообщений во время генерации ответа, снижая нагрузку на отрисовку",
+  chatgptDisableBackdropBlurLabel: "Отключить размытие фона",
+  chatgptDisableBackdropBlurDesc:
+    "Отключает эффекты размытия фона, чтобы уменьшить просадки кадров при прокрутке длинных диалогов; немного меняет внешний вид страницы",
 
   aistudioRemoveWatermark: "Удалить водяной знак",
   aistudioRemoveWatermarkDesc:

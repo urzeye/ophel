@@ -1726,6 +1726,15 @@ Please output the optimized code block directly, followed by a brief summary of 
   chatgptSettingsDesc: "Configure default behavior for ChatGPT page",
   chatgptMarkdownFixLabel: "Markdown Bold Fix",
   chatgptMarkdownFixDesc: "Fix unrendered **bold** text in ChatGPT responses",
+  chatgptCodeBlockBatchMountLabel: "Code Block Batch Mount",
+  chatgptCodeBlockBatchMountDesc:
+    "Mount code editors in batches when opening or switching long conversations to reduce page freezes",
+  chatgptStreamingRenderOptimizeLabel: "Streaming Render Optimization",
+  chatgptStreamingRenderOptimizeDesc:
+    "Pause animations and transitions in the message area while a response is being generated to reduce rendering overhead",
+  chatgptDisableBackdropBlurLabel: "Disable Backdrop Blur",
+  chatgptDisableBackdropBlurDesc:
+    "Turn off backdrop blur effects to reduce frame drops when scrolling long conversations; slightly changes the page appearance",
 
   // ======== Popup ========
   popupCurrentSite: "Current Site",

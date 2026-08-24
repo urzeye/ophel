@@ -9,6 +9,7 @@ import { injectGeminiCanvasCodeBridge } from "./gemini-canvas-inject"
 import { getInitialUserscriptLanguage, primeUserscriptLocales, subscribeI18nChanges } from "./i18n"
 import { injectScrollLock } from "./scroll-lock-inject"
 import { injectYuanbaoMonacoWrap } from "./yuanbao-monaco-wrap-inject"
+import { injectChatGptCmBatchMount } from "./chatgpt-cm-mount-inject"
 
 const USERSCRIPT_OBJECT_URLS = new Set<string>()
 
@@ -371,6 +372,7 @@ if (!shouldRun) {
   injectScrollLock()
   injectGeminiCanvasCodeBridge()
   injectYuanbaoMonacoWrap()
+  injectChatGptCmBatchMount()
 
   // 启动：document-start 时 DOM 未就绪，需等待
   // injectScrollLock() 已在上方同步执行，后续初始化延迟到 DOM 就绪

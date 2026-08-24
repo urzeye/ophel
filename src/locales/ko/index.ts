@@ -1628,6 +1628,15 @@ export const ko = {
   chatgptSettingsDesc: "ChatGPT 페이지의 기본 동작 구성",
   chatgptMarkdownFixLabel: "Markdown 굵게 수정",
   chatgptMarkdownFixDesc: "ChatGPT 응답에서 렌더링되지 않은 **굵게** 텍스트를 수정합니다",
+  chatgptCodeBlockBatchMountLabel: "코드 블록 일괄 마운트",
+  chatgptCodeBlockBatchMountDesc:
+    "긴 대화를 열거나 전환할 때 코드 에디터를 일괄로 마운트하여 페이지 멈춤을 줄입니다",
+  chatgptStreamingRenderOptimizeLabel: "스트리밍 렌더링 최적화",
+  chatgptStreamingRenderOptimizeDesc:
+    "응답 생성 중 메시지 영역의 애니메이션과 전환 효과를 일시 중지하여 렌더링 부하를 줄입니다",
+  chatgptDisableBackdropBlurLabel: "배경 블러 비활성화",
+  chatgptDisableBackdropBlurDesc:
+    "배경 블러 효과를 꺼서 긴 대화 스크롤 시 프레임 드롭을 줄입니다. 페이지 모습이 약간 달라집니다",
 
   aistudioRemoveWatermark: "이미지 워터마크 제거",
   aistudioRemoveWatermarkDesc:

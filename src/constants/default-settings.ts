@@ -351,5 +351,10 @@ export const DEFAULT_SETTINGS: Settings = {
   chatgpt: {
     // 默认关闭
     markdownFix: false,
+    // 长会话渲染性能优化，默认开启（行为透明，仅改变挂载时机/动画开销）
+    codeBlockBatchMount: true,
+    streamingRenderOptimize: true,
+    // 改变页面视觉（关闭毛玻璃），默认关闭
+    disableBackdropBlur: false,
   },
 }

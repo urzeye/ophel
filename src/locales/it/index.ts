@@ -1783,6 +1783,15 @@ export const it = {
   chatgptMarkdownFixLabel: "Markdown Correzione audace",
   chatgptMarkdownFixDesc:
     "Correzione del testo in **grassetto** non visualizzato nelle risposte ChatGPT",
+  chatgptCodeBlockBatchMountLabel: "Montaggio batch dei blocchi di codice",
+  chatgptCodeBlockBatchMountDesc:
+    "Monta gli editor di codice in batch all'apertura o al cambio di conversazioni lunghe, riducendo i blocchi della pagina",
+  chatgptStreamingRenderOptimizeLabel: "Ottimizzazione rendering in streaming",
+  chatgptStreamingRenderOptimizeDesc:
+    "Sospende animazioni e transizioni nell'area dei messaggi durante la generazione della risposta per ridurre il carico di rendering",
+  chatgptDisableBackdropBlurLabel: "Disattiva sfocatura dello sfondo",
+  chatgptDisableBackdropBlurDesc:
+    "Disattiva gli effetti di sfocatura dello sfondo per ridurre i cali di frame nello scorrimento delle conversazioni lunghe; modifica leggermente l'aspetto della pagina",
 
   // ======== Popup ========
   popupCurrentSite: "Sito attuale",

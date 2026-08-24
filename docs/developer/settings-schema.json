@@ -366,6 +366,9 @@
   },
 
   "chatgpt": {
-    "markdownFix": false
+    "markdownFix": false,
+    "codeBlockBatchMount": true,
+    "streamingRenderOptimize": true,
+    "disableBackdropBlur": false
   }
 }

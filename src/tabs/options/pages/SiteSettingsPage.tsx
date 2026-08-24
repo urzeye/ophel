@@ -687,6 +687,51 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
               })
             }
           />
+
+          <ToggleRow
+            label={t("chatgptCodeBlockBatchMountLabel")}
+            description={t("chatgptCodeBlockBatchMountDesc")}
+            settingId="chatgpt-code-block-batch-mount"
+            checked={settings.chatgpt?.codeBlockBatchMount ?? true}
+            onChange={() =>
+              setSettings({
+                chatgpt: {
+                  ...settings.chatgpt,
+                  codeBlockBatchMount: !(settings.chatgpt?.codeBlockBatchMount ?? true),
+                },
+              })
+            }
+          />
+
+          <ToggleRow
+            label={t("chatgptStreamingRenderOptimizeLabel")}
+            description={t("chatgptStreamingRenderOptimizeDesc")}
+            settingId="chatgpt-streaming-render-optimize"
+            checked={settings.chatgpt?.streamingRenderOptimize ?? true}
+            onChange={() =>
+              setSettings({
+                chatgpt: {
+                  ...settings.chatgpt,
+                  streamingRenderOptimize: !(settings.chatgpt?.streamingRenderOptimize ?? true),
+                },
+              })
+            }
+          />
+
+          <ToggleRow
+            label={t("chatgptDisableBackdropBlurLabel")}
+            description={t("chatgptDisableBackdropBlurDesc")}
+            settingId="chatgpt-disable-backdrop-blur"
+            checked={settings.chatgpt?.disableBackdropBlur ?? false}
+            onChange={() =>
+              setSettings({
+                chatgpt: {
+                  ...settings.chatgpt,
+                  disableBackdropBlur: !settings.chatgpt?.disableBackdropBlur,
+                },
+              })
+            }
+          />
         </SettingCard>
       )}
     </div>

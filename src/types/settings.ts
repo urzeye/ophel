@@ -86,6 +86,9 @@ export interface AIStudioSettings {
 // ChatGPT 设置
 export interface ChatGPTSettings {
   markdownFix?: boolean // 修复响应中未渲染的加粗文本
+  codeBlockBatchMount?: boolean // 代码编辑器批量挂载，减少打开/切换长会话时的页面卡顿
+  streamingRenderOptimize?: boolean // 生成回答期间暂停消息区域动画，降低渲染开销
+  disableBackdropBlur?: boolean // 禁用页面毛玻璃效果，减少长会话滚动掉帧
 }
 
 export interface UsageMonitorSettings {

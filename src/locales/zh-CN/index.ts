@@ -1644,6 +1644,12 @@ export const zhCN = {
   chatgptSettingsDesc: "配置 ChatGPT 页面的默认行为",
   chatgptMarkdownFixLabel: "Markdown 加粗修复",
   chatgptMarkdownFixDesc: "修复 ChatGPT 响应中未渲染的 **加粗** 文本",
+  chatgptCodeBlockBatchMountLabel: "代码块批量挂载",
+  chatgptCodeBlockBatchMountDesc: "打开或切换长会话时合并挂载代码编辑器，减少页面卡顿",
+  chatgptStreamingRenderOptimizeLabel: "流式渲染优化",
+  chatgptStreamingRenderOptimizeDesc: "生成回答期间暂停消息区域的动画与过渡效果，降低渲染开销",
+  chatgptDisableBackdropBlurLabel: "禁用毛玻璃效果",
+  chatgptDisableBackdropBlurDesc: "关闭页面背景模糊效果，减少长会话滚动掉帧；会轻微改变页面视觉",
 
   // ======== Popup 页面 ========
   popupCurrentSite: "当前站点",

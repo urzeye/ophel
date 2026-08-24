@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### 🚀 New Features
+
+- **ChatGPT long conversation performance** — ChatGPT site settings now include three rendering optimizations: code block batch mount (on by default; batches code editor mounting when opening or switching long conversations to reduce page freezes), streaming render optimization (on by default; pauses message-area animations while a response is being generated), and an optional backdrop blur toggle that reduces scroll frame drops at the cost of a slight visual change.
+
 ### 🐛 Bug Fixes
 
 - **Doubao new input box adaptation** — Prompt insertion, queued send, generation stop detection, and model lock now work with Doubao's redesigned TipTap input box and the updated send/stop/model-switch controls. (#867)

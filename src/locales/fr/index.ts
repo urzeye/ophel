@@ -1647,6 +1647,15 @@ Donnez le code puis un résumé des améliorations.`,
   chatgptSettingsDesc: "Configurer le comportement par défaut de la page ChatGPT",
   chatgptMarkdownFixLabel: "Correction du Gras Markdown",
   chatgptMarkdownFixDesc: "Corriger le texte **gras** non rendu dans les réponses ChatGPT",
+  chatgptCodeBlockBatchMountLabel: "Montage groupé des blocs de code",
+  chatgptCodeBlockBatchMountDesc:
+    "Monte les éditeurs de code par lots lors de l'ouverture ou du changement de longues conversations pour réduire les blocages de la page",
+  chatgptStreamingRenderOptimizeLabel: "Optimisation du rendu en streaming",
+  chatgptStreamingRenderOptimizeDesc:
+    "Met en pause les animations et transitions de la zone de messages pendant la génération de la réponse pour réduire la charge de rendu",
+  chatgptDisableBackdropBlurLabel: "Désactiver le flou d'arrière-plan",
+  chatgptDisableBackdropBlurDesc:
+    "Désactive les effets de flou d'arrière-plan pour réduire les pertes d'images lors du défilement de longues conversations ; modifie légèrement l'apparence de la page",
 
   aistudioRemoveWatermark: "Supprimer le filigrane",
   aistudioRemoveWatermarkDesc:

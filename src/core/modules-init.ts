@@ -8,6 +8,7 @@
 import type { SiteAdapter } from "~adapters/base"
 import { SITE_IDS } from "~constants"
 import { AssistantMermaidRenderer } from "~core/assistant-mermaid-renderer"
+import { ChatGptPerfManager } from "~core/chatgpt-perf-manager"
 import type { CoreModule } from "~core/core-module"
 import { CopyManager } from "~core/copy-manager"
 import { LayoutManager } from "~core/layout-manager"
@@ -53,6 +54,7 @@ export interface ModulesContext {
  */
 export interface ModuleInstances {
   assistantMermaidRenderer: AssistantMermaidRenderer | null
+  chatgptPerfManager: ChatGptPerfManager | null
   themeManager: ThemeManager | null
   copyManager: CopyManager | null
   layoutManager: LayoutManager | null
@@ -70,6 +72,7 @@ export interface ModuleInstances {
 // 全局模块实例（用于设置变更时的热更新）
 let modules: ModuleInstances = {
   assistantMermaidRenderer: null,
+  chatgptPerfManager: null,
   themeManager: null,
   copyManager: null,
   layoutManager: null,
@@ -337,6 +340,23 @@ export function initWatermarkRemover(ctx: ModulesContext): void {
 }
 
 /**
+ * 初始化 ChatGPT 长会话渲染性能优化 (仅 ChatGPT)
+ */
+export function initChatGptPerfManager(ctx: ModulesContext): void {
+  const { adapter, settings, siteId } = ctx
+
+  if (siteId !== SITE_IDS.CHATGPT) return
+
+  if (modules.chatgptPerfManager) {
+    modules.chatgptPerfManager.update(settings.chatgpt || {})
+    return
+  }
+
+  modules.chatgptPerfManager = new ChatGptPerfManager(adapter, settings.chatgpt || {})
+  modules.chatgptPerfManager.start()
+}
+
+/**
  * 初始化阅读历史管理器
  */
 export async function initReadingHistoryManager(ctx: ModulesContext): Promise<void> {
@@ -472,6 +492,9 @@ export async function initCoreModules(ctx: ModulesContext): Promise<ModuleInstan
 
   // 13. Policy Retry Manager
   initPolicyRetryManager(ctx)
+
+  // 14. ChatGPT 长会话渲染性能优化
+  initChatGptPerfManager(ctx)
 
   return modules
 }
@@ -670,6 +693,16 @@ export function subscribeModuleUpdates(ctx: ModulesContext): () => void {
       modules.policyRetryManager.updateSettings(
         newSettings.geminiEnterprise?.policyRetry || { enabled: false, maxRetries: 3 },
       )
+    }
+
+    // 14. ChatGPT 长会话渲染性能优化 update
+    if (siteId === SITE_IDS.CHATGPT && newSettings?.chatgpt) {
+      if (modules.chatgptPerfManager) {
+        modules.chatgptPerfManager.update(newSettings.chatgpt)
+      } else {
+        modules.chatgptPerfManager = new ChatGptPerfManager(adapter, newSettings.chatgpt)
+        modules.chatgptPerfManager.start()
+      }
     }
   })
 }

@@ -1765,6 +1765,15 @@ Dê o código e depois um resumo de melhorias.`,
   chatgptSettingsDesc: "Configurar comportamento padrão da página ChatGPT",
   chatgptMarkdownFixLabel: "Correção de Negrito Markdown",
   chatgptMarkdownFixDesc: "Corrigir texto **negrito** não renderizado nas respostas do ChatGPT",
+  chatgptCodeBlockBatchMountLabel: "Montagem em lote de blocos de código",
+  chatgptCodeBlockBatchMountDesc:
+    "Monta os editores de código em lote ao abrir ou alternar conversas longas, reduzindo travamentos da página",
+  chatgptStreamingRenderOptimizeLabel: "Otimização de renderização em streaming",
+  chatgptStreamingRenderOptimizeDesc:
+    "Pausa animações e transições na área de mensagens durante a geração da resposta para reduzir a carga de renderização",
+  chatgptDisableBackdropBlurLabel: "Desativar desfoque de fundo",
+  chatgptDisableBackdropBlurDesc:
+    "Desativa os efeitos de desfoque de fundo para reduzir quedas de quadros ao rolar conversas longas; altera levemente a aparência da página",
 
   aistudioRemoveWatermark: "Remover marca d'água",
   aistudioRemoveWatermarkDesc:

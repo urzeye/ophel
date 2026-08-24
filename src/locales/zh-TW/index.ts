@@ -1607,6 +1607,12 @@ export const zhTW = {
   chatgptSettingsDesc: "配置 ChatGPT 頁面的預設行為",
   chatgptMarkdownFixLabel: "Markdown 加粗修復",
   chatgptMarkdownFixDesc: "修復 ChatGPT 回應中未渲染的 **加粗** 文字",
+  chatgptCodeBlockBatchMountLabel: "程式碼區塊批次掛載",
+  chatgptCodeBlockBatchMountDesc: "開啟或切換長對話時合併掛載程式碼編輯器，減少頁面卡頓",
+  chatgptStreamingRenderOptimizeLabel: "串流渲染最佳化",
+  chatgptStreamingRenderOptimizeDesc: "生成回應期間暫停訊息區域的動畫與過場效果，降低渲染開銷",
+  chatgptDisableBackdropBlurLabel: "停用毛玻璃效果",
+  chatgptDisableBackdropBlurDesc: "關閉頁面背景模糊效果，減少長對話捲動掉幀；會略微改變頁面視覺",
 
   aistudioRemoveWatermark: "移除圖片浮水印",
   aistudioRemoveWatermarkDesc: "移除 AI Studio 生成圖片的浮水印（需重新整理頁面生效）",
