@@ -10,7 +10,6 @@ import React, {
 import { resolveSitePackDescription, resolveSitePackName } from "~adapters/declarative/localization"
 import {
   siteMatchPatternDisplayUrl,
-  siteMatchPatternOrigin,
   siteMatchPatternOriginPatternCovers,
 } from "~adapters/declarative/match-pattern"
 import type { SitePackManifest } from "~adapters/declarative/types"

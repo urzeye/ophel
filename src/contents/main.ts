@@ -14,6 +14,7 @@ import {
   reapplyBuiltinSiteConfig,
   resetBuiltinSiteConfig,
 } from "~adapters"
+import type { SiteAdapter } from "~adapters/base"
 import { DEFAULT_FOLDERS, SITE_IDS, getDefaultPromptChains, getDefaultPrompts } from "~constants"
 import {
   initCoreModules,
