@@ -614,13 +614,25 @@ async function init() {
 
   let activeAdapter: SiteAdapter | null = null
   let activeModulesCleanup: (() => void) | null = null
+  let initGeneration = 0
+  let bindingIssueNoticeShown = false
+
+  const teardownActiveModules = () => {
+    activeModulesCleanup?.()
+    activeModulesCleanup = null
+    activeAdapter = null
+    initGeneration++
+  }
 
   const initializeUserscriptModules = async () => {
     const adapter = getAdapter()
 
     if (adapter) {
       if (activeAdapter === adapter) return
+      // 适配器切换（含 A→B 直接切换）时先销毁旧模块，避免订阅与观察者残留
+      teardownActiveModules()
       activeAdapter = adapter
+      const generation = initGeneration
       adapter.afterPropertiesSet({})
 
       await Promise.all([
@@ -658,27 +670,34 @@ async function init() {
       // 初始化 URL 变化监听 (SPA 导航)
       const cleanupUrlChangeObserver = initUrlChangeObserver(ctx)
 
-      activeModulesCleanup = () => {
+      const cleanup = () => {
         unsubscribeModuleUpdates()
         cleanupUrlChangeObserver()
       }
-    } else {
-      if (activeAdapter) {
-        activeModulesCleanup?.()
-        activeModulesCleanup = null
-        activeAdapter = null
-      }
 
-      const brokenBinding = getBrokenOriginBinding()
-      if (brokenBinding) {
-        showSitePackBindingIssueNotice({
-          packId: brokenBinding.packId,
-          onOpenSettings: () => {
-            window.dispatchEvent(
-              new CustomEvent("ophel:navigateSettingsPage", { detail: { page: "sitePacks" } }),
-            )
-          },
-        })
+      // 异步窗口内适配器可能已切换或被清空；过期初始化结果立即销毁，避免泄漏
+      if (generation !== initGeneration || activeAdapter !== adapter) {
+        cleanup()
+        return
+      }
+      activeModulesCleanup = cleanup
+    } else {
+      teardownActiveModules()
+
+      // 绑定异常提示每次页面加载只展示一次，避免 SPA 导航反复弹出
+      if (!bindingIssueNoticeShown) {
+        const brokenBinding = getBrokenOriginBinding()
+        if (brokenBinding) {
+          bindingIssueNoticeShown = true
+          showSitePackBindingIssueNotice({
+            packId: brokenBinding.packId,
+            onOpenSettings: () => {
+              window.dispatchEvent(
+                new CustomEvent("ophel:navigateSettingsPage", { detail: { page: "sitePacks" } }),
+              )
+            },
+          })
+        }
       }
     }
   }

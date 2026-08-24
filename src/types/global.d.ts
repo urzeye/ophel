@@ -16,8 +16,6 @@ declare global {
   }
 
   interface Window {
-    /** Ophel 初始化标记 */
-    ophelInitialized?: boolean
     /** userscript 初始化标记 */
     ophelUserscriptInitialized?: boolean
     /** 全局 ThemeManager 实例 */
