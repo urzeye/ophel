@@ -555,6 +555,125 @@ describe("DeclarativeAdapter P1-01 browser-facing behavior", () => {
     expect(editor.focus).toHaveBeenCalled()
     expect(selectionMock.selectAllChildren).toHaveBeenCalledWith(editor)
     expect(execCommandMock).toHaveBeenCalledWith("delete", false, undefined)
+    // 原生 delete 已清空时直接返回，不再派发合成事件
+    expect(editor.dispatchEvent).not.toHaveBeenCalled()
+  })
+
+  it("falls back to synthetic event chain when execCommand delete leaves content", () => {
+    vi.stubGlobal("HTMLInputElement", class {})
+    vi.stubGlobal("HTMLTextAreaElement", class {})
+    vi.stubGlobal("HTMLElement", class {})
+    vi.stubGlobal(
+      "KeyboardEvent",
+      class {
+        constructor(
+          public type: string,
+          public options?: KeyboardEventInit,
+        ) {}
+      },
+    )
+    vi.stubGlobal(
+      "InputEvent",
+      class {
+        constructor(
+          public type: string,
+          public options?: InputEventInit,
+        ) {}
+      },
+    )
+    vi.stubGlobal(
+      "Event",
+      class {
+        constructor(
+          public type: string,
+          public options?: EventInit,
+        ) {}
+      },
+    )
+
+    const execCommandMock = vi.fn(() => false)
+    const selectionMock = {
+      selectAllChildren: vi.fn(),
+    }
+    const editor = {
+      isConnected: true,
+      isContentEditable: true,
+      textContent: "inserted prompt text",
+      focus: vi.fn(),
+      dispatchEvent: vi.fn(),
+      ownerDocument: {
+        execCommand: execCommandMock,
+        getSelection: vi.fn(() => selectionMock),
+      },
+    } as unknown as HTMLElement
+
+    const manifest = createMinimalManifest()
+    manifest.input = { mode: "contenteditable", submitKey: "Enter" }
+    const adapter = new DeclarativeAdapter(manifest)
+    const internals = adapter as unknown as DeclarativeAdapterInputInternals
+    vi.spyOn(internals, "getConfiguredEditor").mockReturnValue({
+      mode: "contenteditable",
+      editor,
+    })
+
+    adapter.clearTextarea()
+
+    expect(execCommandMock).toHaveBeenCalledWith("delete", false, undefined)
     expect(editor.dispatchEvent).toHaveBeenCalled()
+    // 兜底链最后强写 textContent，确保 DOM 被清空
+    expect(editor.textContent).toBe("")
+  })
+
+  it("replaces selected content via insertText before dispatching synthetic events", () => {
+    vi.stubGlobal("HTMLInputElement", class {})
+    vi.stubGlobal("HTMLTextAreaElement", class {})
+    vi.stubGlobal("HTMLElement", class {})
+    vi.stubGlobal(
+      "InputEvent",
+      class {
+        constructor(
+          public type: string,
+          public options?: InputEventInit,
+        ) {}
+      },
+    )
+
+    const execCommandMock = vi.fn((cmd: string, _showUI: boolean, value?: string) => {
+      if (cmd === "insertText") {
+        // 模拟原生编辑管线：全选后插入即整体替换
+        editor.textContent = value ?? ""
+        return true
+      }
+      return false
+    })
+    const selectionMock = {
+      selectAllChildren: vi.fn(),
+    }
+    const editor = {
+      isConnected: true,
+      isContentEditable: true,
+      textContent: "old text",
+      focus: vi.fn(),
+      dispatchEvent: vi.fn(),
+      ownerDocument: {
+        execCommand: execCommandMock,
+        getSelection: vi.fn(() => selectionMock),
+      },
+    } as unknown as HTMLElement
+
+    const manifest = createMinimalManifest()
+    manifest.input = { mode: "contenteditable", submitKey: "Enter" }
+    const adapter = new DeclarativeAdapter(manifest)
+    const internals = adapter as unknown as DeclarativeAdapterInputInternals
+    vi.spyOn(internals, "getConfiguredEditor").mockReturnValue({
+      mode: "contenteditable",
+      editor,
+    })
+
+    expect(adapter.insertPrompt("new prompt")).toBe(true)
+    expect(execCommandMock).toHaveBeenCalledWith("insertText", false, "new prompt")
+    expect(editor.textContent).toBe("new prompt")
+    // 原生插入成功时不再派发合成 beforeinput
+    expect(editor.dispatchEvent).not.toHaveBeenCalled()
   })
 })
