@@ -357,6 +357,32 @@ export class DeclarativeAdapter extends SiteAdapter {
   ): boolean {
     editor.focus()
 
+    if (content === "") {
+      if (this.selectAllEditorContent(editor)) {
+        try {
+          editor.dispatchEvent(
+            new InputEvent("beforeinput", {
+              bubbles: true,
+              cancelable: true,
+              composed: true,
+              inputType: "deleteContentBackward",
+            }),
+          )
+        } catch {
+          // Unsupported beforeinput construction continues to execCommand.
+        }
+        try {
+          editor.ownerDocument.execCommand("delete", false, undefined)
+        } catch {
+          // Unsupported execCommand attempt continues to validation.
+        }
+        editor.dispatchEvent(new Event("input", { bubbles: true, composed: true }))
+        editor.dispatchEvent(new Event("change", { bubbles: true }))
+        if (this.isEditorUpdateValid(editor, "", requireSubmitButton)) return true
+      }
+      return false
+    }
+
     if (this.selectAllEditorContent(editor)) {
       try {
         editor.dispatchEvent(

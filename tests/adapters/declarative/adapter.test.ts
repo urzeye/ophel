@@ -486,4 +486,65 @@ describe("DeclarativeAdapter P1-01 browser-facing behavior", () => {
 
     expect(adapter.getConversationTitle()).toBe("Fallback Topic")
   })
+
+  it("clears contenteditable editor using delete command", () => {
+    vi.stubGlobal("HTMLInputElement", class {})
+    vi.stubGlobal("HTMLTextAreaElement", class {})
+    vi.stubGlobal("HTMLElement", class {})
+    vi.stubGlobal(
+      "InputEvent",
+      class {
+        constructor(
+          public type: string,
+          public options?: any,
+        ) {}
+      },
+    )
+    vi.stubGlobal(
+      "Event",
+      class {
+        constructor(
+          public type: string,
+          public options?: any,
+        ) {}
+      },
+    )
+
+    const execCommandMock = vi.fn((cmd: string) => {
+      if (cmd === "delete") {
+        editor.textContent = ""
+        return true
+      }
+      return false
+    })
+    const selectionMock = {
+      selectAllChildren: vi.fn(),
+    }
+    const editor = {
+      isConnected: true,
+      isContentEditable: true,
+      textContent: "inserted prompt text",
+      focus: vi.fn(),
+      dispatchEvent: vi.fn(),
+      ownerDocument: {
+        execCommand: execCommandMock,
+        getSelection: vi.fn(() => selectionMock),
+      },
+    } as unknown as HTMLElement
+
+    const manifest = createMinimalManifest()
+    manifest.input = { mode: "contenteditable", submitKey: "Enter" }
+    const adapter = new DeclarativeAdapter(manifest)
+    vi.spyOn(adapter as any, "getConfiguredEditor").mockReturnValue({
+      mode: "contenteditable",
+      editor,
+    })
+
+    adapter.clearTextarea()
+
+    expect(editor.focus).toHaveBeenCalled()
+    expect(selectionMock.selectAllChildren).toHaveBeenCalledWith(editor)
+    expect(execCommandMock).toHaveBeenCalledWith("delete", false, undefined)
+    expect(editor.dispatchEvent).toHaveBeenCalled()
+  })
 })
