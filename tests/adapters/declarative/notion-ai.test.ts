@@ -25,7 +25,7 @@ describe("Notion AI SitePack", () => {
     vi.unstubAllGlobals()
   })
 
-  it("matches Notion AI URLs", () => {
+  it("matches Notion AI chat and ai paths on app.notion.com, but excludes normal Notion pages and notion.so", () => {
     expect(adapter.match()).toBe(true)
 
     vi.stubGlobal("window", {
@@ -34,9 +34,24 @@ describe("Notion AI SitePack", () => {
     expect(adapter.match()).toBe(true)
 
     vi.stubGlobal("window", {
-      location: new URL("https://www.notion.so/ai"),
+      location: new URL("https://app.notion.com/ai/"),
     })
     expect(adapter.match()).toBe(true)
+
+    vi.stubGlobal("window", {
+      location: new URL("https://app.notion.com/home"),
+    })
+    expect(adapter.match()).toBe(false)
+
+    vi.stubGlobal("window", {
+      location: new URL("https://app.notion.com/workspace-name/my-document-123"),
+    })
+    expect(adapter.match()).toBe(false)
+
+    vi.stubGlobal("window", {
+      location: new URL("https://www.notion.so/ai"),
+    })
+    expect(adapter.match()).toBe(false)
 
     vi.stubGlobal("window", {
       location: new URL("https://other.notion.com/ai"),
