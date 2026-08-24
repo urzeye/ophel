@@ -80,7 +80,7 @@ export interface DoubaoSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const DOUBAO_CONFIG_VERSION = 2
+export const DOUBAO_CONFIG_VERSION = 3
 
 const createDoubaoConfig = (): DoubaoSiteConfig => {
   const sidebarRoot = "#flow_chat_sidebar"
@@ -114,28 +114,37 @@ const createDoubaoConfig = (): DoubaoSiteConfig => {
   const contentColumn = `${mainLayoutScope} .flex.h-full.min-h-0.w-full.flex-1.flex-col:has(${virtualScroll}):has([class*="input-content-container"])`
   const newChatSafeArea = `${mainLayoutScope} [class*="-mt-[var(--header-height)]"][class*="flex-grow"][class*="items-center"]:has([class*="input-content-container"])`
   const canvasScope = "aside:has(.code-canvas)"
-  const modelSelectorButton = 'button[data-slot="dropdown-menu-trigger"][aria-haspopup="menu"]'
-  const stopButton = '[data-testid="chat_input_local_break_button"]'
+  // v3 模型切换入口换成 div 形态的 Radix trigger，用语义化的 data-valid-btn 定位
+  const modelSelectorButton = '[data-valid-btn="model-select-action-btn"]'
+  const dropdownMenuTrigger = 'button[data-slot="dropdown-menu-trigger"][aria-haspopup="menu"]'
+  // v3 停止按钮无 testid，退化为 CSS module 前缀匹配
+  const stopButtonSelectors = [
+    '[data-testid="chat_input_local_break_button"]',
+    '[class*="break-btn-"]',
+  ]
 
   return {
     capabilities: [...BUILTIN_FEATURE_CAPABILITIES[SITE_IDS.DOUBAO]],
     selectors: {
       textarea: [
+        // v3 输入框为 TipTap（ProseMirror）编辑器
+        '[data-guidance-input-boundary] [contenteditable="true"][role="textbox"]',
+        '.tiptap.ProseMirror[contenteditable="true"]',
         '[data-slate-editor="true"]',
         'textarea[data-testid="chat_input_input"]',
         "textarea.semi-input-textarea",
       ],
       submitButton: [
-        "[data-testid='chat_input_send_button']",
         "#flow-end-msg-send",
         ".send-btn-wrapper button",
+        "[data-testid='chat_input_send_button']",
       ],
       responseContainer: virtualScroll,
       chatContent: [assistantContent, userQuery],
       userQuery,
       assistantResponse,
       newChatButton: [newChatButton],
-      stopButton: [stopButton],
+      stopButton: stopButtonSelectors,
     },
     input: { mode: "contenteditable", submitKey: "Enter" },
     conversation: {
@@ -148,9 +157,9 @@ const createDoubaoConfig = (): DoubaoSiteConfig => {
       navigationStrategy: "click-item",
       shadow: false,
     },
-    generating: { existsSelectors: [stopButton] },
+    generating: { existsSelectors: stopButtonSelectors },
     modelSwitcher: {
-      selectorButtonSelectors: [modelSelectorButton],
+      selectorButtonSelectors: [modelSelectorButton, dropdownMenuTrigger],
       menuItemSelector: 'div[role="menuitem"][data-slot="dropdown-menu-item"]',
       menuRenderDelay: 100,
     },
@@ -208,7 +217,7 @@ const createDoubaoConfig = (): DoubaoSiteConfig => {
       // 视口 span 的 title 属性始终是完整标题，取它比 textContent 更可靠
       conversationMarqueeTitle: '[data-testid="conversation-list-v2-item"] span[title]',
       conversationMenuWrapper: '[class*="chat-item-menu-wrapper-"]',
-      conversationMenuTrigger: modelSelectorButton,
+      conversationMenuTrigger: dropdownMenuTrigger,
       conversationMenuInnerButton: 'button[data-dbx-name="button"]',
       conversationMenuGenericTrigger: 'button[aria-haspopup="menu"]',
       deleteMenuItem:

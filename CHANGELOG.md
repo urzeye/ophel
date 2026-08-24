@@ -11,6 +11,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
+- **Doubao new input box adaptation** — Prompt insertion, queued send, generation stop detection, and model lock now work with Doubao's redesigned TipTap input box and the updated send/stop/model-switch controls. (#867)
 - **Virtual-scroll long conversation export** — ChatGPT, Doubao, DeepSeek, and AI Studio exports now wait for virtualized rows to finish mounting before reading them, verify turn/row number continuity, and retry missing segments, so long conversations no longer export with silently missing, duplicated, or reordered messages; repeated exports of the same Doubao conversation now produce consistent results.(#865)
 - **Incomplete export warning** — When message collection detects missing turns/rows or history loading hits its time budget, a notice is now shown after export instead of silently producing an incomplete file. (#865)
 - **Asset download timeout in ZIP export** — Image downloads now time out after 30 seconds and degrade to external references recorded in the manifest, so a single stuck asset no longer hangs the whole export. (#865)

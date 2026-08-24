@@ -202,7 +202,7 @@ export class DoubaoAdapter extends SiteAdapter {
       el.dispatchEvent(new Event("change", { bubbles: true }))
       el.setSelectionRange(content.length, content.length)
     } else if (el.isContentEditable) {
-      // 对于 Slate.js 或其他 contenteditable 编辑器
+      // 对于 TipTap（v3 新输入框）、Slate.js 或其他 contenteditable 编辑器
       const selection = window.getSelection()
       if (selection) {
         // 先确保焦点在元素内
@@ -224,7 +224,7 @@ export class DoubaoAdapter extends SiteAdapter {
         }
       }
 
-      // 豆包 /code/chat 的 Slate 编辑器依靠 paste 事件更新状态和插入内容
+      // 豆包的 TipTap / Slate 编辑器依靠 paste 事件更新状态和插入内容
       // 使用 execCommand 会导致内容被插入两次（一次 native，一次 React 响应 paste）
       const dataTransfer = new DataTransfer()
       dataTransfer.setData("text/plain", content)
