@@ -8,6 +8,7 @@ import React, {
 } from "react"
 
 import { getAdapter } from "~adapters/index"
+import type { SiteAdapter } from "~adapters/base"
 import { SITE_IDS } from "~constants/defaults"
 import {
   ConversationManager,
@@ -183,7 +184,11 @@ const PASS_THROUGH_CONTROL_KEY_ALIASES = new Set(["Control", "Ctrl"])
 
 const hasPromptVariables = (content: string): boolean => /\{\{([^\s{}]+)\}\}/.test(content)
 
-export const App = () => {
+export interface AppProps {
+  adapter?: SiteAdapter | null
+}
+
+export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
   // 读取设置 - 使用 Zustand Store
   const { settings, setSettings, updateDeepSetting, updateNestedSetting } = useSettingsStore()
   const isSettingsHydrated = useSettingsHydrated()
@@ -409,7 +414,8 @@ export const App = () => {
   )
 
   // 单例实例
-  const adapter = useMemo(() => getAdapter(), [])
+  const fallbackAdapter = useMemo(() => getAdapter(), [])
+  const adapter = propAdapter !== undefined ? propAdapter : fallbackAdapter
   const siteInstanceKey = adapter?.getSiteInstanceKey() || "_default"
 
   const promptManager = useMemo(() => {

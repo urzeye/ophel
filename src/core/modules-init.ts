@@ -707,17 +707,31 @@ export function subscribeModuleUpdates(ctx: ModulesContext): () => void {
   })
 }
 
+let globalUrlChangeBroadcasterStarted = false
+let broadcasterRefCount = 0
+let broadcasterCleanup: (() => void) | null = null
+
 /**
- * 初始化 URL 变化监听 (SPA 导航)
+ * 启动页面级 URL 变化单例广播器（支持 SPA 导航，分发 EVENT_PAGE_URL_CHANGE 事件）
  */
-export function initUrlChangeObserver(ctx: ModulesContext): () => void {
-  const { adapter } = ctx
+export function startPageUrlChangeBroadcaster(): () => void {
+  broadcasterRefCount++
+  if (globalUrlChangeBroadcasterStarted && broadcasterCleanup) {
+    return () => {
+      broadcasterRefCount--
+      if (broadcasterRefCount <= 0) {
+        broadcasterCleanup?.()
+        broadcasterCleanup = null
+        globalUrlChangeBroadcasterStarted = false
+        broadcasterRefCount = 0
+      }
+    }
+  }
 
+  globalUrlChangeBroadcasterStarted = true
   let lastHref = window.location.href
-  let lastPathname = window.location.pathname
-  let readingHistoryRestoreRequestId = 0
 
-  const handleUrlChange = async () => {
+  const broadcastUrlChange = () => {
     const currentHref = window.location.href
     if (currentHref === lastHref) return
 
@@ -732,7 +746,63 @@ export function initUrlChangeObserver(ctx: ModulesContext): () => void {
         },
       }),
     )
+  }
 
+  window.addEventListener("popstate", broadcastUrlChange)
+  window.addEventListener("hashchange", broadcastUrlChange)
+
+  const originalPushState = history.pushState
+  const originalReplaceState = history.replaceState
+  const patchedPushState = function (this: History, ...args: Parameters<History["pushState"]>) {
+    originalPushState.apply(this, args)
+    broadcastUrlChange()
+  }
+  const patchedReplaceState = function (
+    this: History,
+    ...args: Parameters<History["replaceState"]>
+  ) {
+    originalReplaceState.apply(this, args)
+    broadcastUrlChange()
+  }
+  history.pushState = patchedPushState
+  history.replaceState = patchedReplaceState
+
+  const intervalId = window.setInterval(broadcastUrlChange, 1000)
+
+  broadcasterCleanup = () => {
+    window.removeEventListener("popstate", broadcastUrlChange)
+    window.removeEventListener("hashchange", broadcastUrlChange)
+    window.clearInterval(intervalId)
+
+    if (history.pushState === patchedPushState) {
+      history.pushState = originalPushState
+    }
+    if (history.replaceState === patchedReplaceState) {
+      history.replaceState = originalReplaceState
+    }
+  }
+
+  return () => {
+    broadcasterRefCount--
+    if (broadcasterRefCount <= 0) {
+      broadcasterCleanup?.()
+      broadcasterCleanup = null
+      globalUrlChangeBroadcasterStarted = false
+      broadcasterRefCount = 0
+    }
+  }
+}
+
+/**
+ * 初始化 URL 变化监听 (SPA 导航)
+ */
+export function initUrlChangeObserver(ctx: ModulesContext): () => void {
+  const { adapter } = ctx
+
+  let lastPathname = window.location.pathname
+  let readingHistoryRestoreRequestId = 0
+
+  const handleUrlChange = async () => {
     const currentPathname = window.location.pathname
     if (currentPathname === lastPathname) return
 
@@ -797,43 +867,13 @@ export function initUrlChangeObserver(ctx: ModulesContext): () => void {
     modules.modelLocker?.relock(300)
   }
 
-  // 监听 popstate (后退/前进)
-  window.addEventListener("popstate", handleUrlChange)
-  window.addEventListener("hashchange", handleUrlChange)
-
-  // Monkey-patch pushState / replaceState
-  const originalPushState = history.pushState
-  const originalReplaceState = history.replaceState
-  const patchedPushState = function (this: History, ...args: Parameters<History["pushState"]>) {
-    originalPushState.apply(this, args)
-    void handleUrlChange()
-  }
-  const patchedReplaceState = function (
-    this: History,
-    ...args: Parameters<History["replaceState"]>
-  ) {
-    originalReplaceState.apply(this, args)
-    void handleUrlChange()
-  }
-  history.pushState = patchedPushState
-  history.replaceState = patchedReplaceState
-
-  // 兜底定时器
-  const fallbackIntervalId = window.setInterval(handleUrlChange, 1000)
+  const stopBroadcaster = startPageUrlChangeBroadcaster()
+  window.addEventListener(EVENT_PAGE_URL_CHANGE, handleUrlChange)
 
   return () => {
-    window.removeEventListener("popstate", handleUrlChange)
-    window.removeEventListener("hashchange", handleUrlChange)
-    window.clearInterval(fallbackIntervalId)
-
+    window.removeEventListener(EVENT_PAGE_URL_CHANGE, handleUrlChange)
+    stopBroadcaster()
     readingHistoryRestoreRequestId++
-
-    if (history.pushState === patchedPushState) {
-      history.pushState = originalPushState
-    }
-    if (history.replaceState === patchedReplaceState) {
-      history.replaceState = originalReplaceState
-    }
   }
 }
 

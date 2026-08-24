@@ -19,11 +19,13 @@ import {
   initCoreModules,
   initUrlChangeObserver,
   handleClearAllData,
+  startPageUrlChangeBroadcaster,
   subscribeModuleUpdates,
   type ModulesContext,
 } from "~core/modules-init"
 import { APP_DISPLAY_NAME } from "~utils/config"
 import { INTER_LOCAL_FONT_FACE, getPlatformFontFamily } from "~utils/font"
+import { EVENT_PAGE_URL_CHANGE } from "~utils/messaging"
 import { useBookmarkStore } from "~stores/bookmarks-store"
 import { useClaudeSessionKeysStore } from "~stores/claude-sessionkeys-store"
 import { useConversationsStore } from "~stores/conversations-store"
@@ -462,12 +464,104 @@ export const config: PlasmoCSConfig = {
   run_at: "document_idle",
 }
 
-function initializeOphel() {
-  window.ophelInitialized = true
+let activeAdapterInstance: SiteAdapter | null = null
+let activeModulesCleanup: (() => void) | null = null
+let messageListenerRegistered = false
 
+function registerBackgroundMessageListener() {
+  if (messageListenerRegistered) return
+  messageListenerRegistered = true
+
+  chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+    if (message.type === MSG_CLEAR_ALL_DATA) {
+      handleClearAllData()
+      resetAllStores()
+      sendResponse({ success: true })
+      return true
+    }
+
+    if (message.type === MSG_RESTORE_DATA) {
+      window.location.reload()
+      sendResponse({ success: true })
+      return true
+    }
+
+    if (message.type === MSG_RESET_REMOTE_CONFIG_SITE) {
+      const reset = resetBuiltinSiteConfig(message.siteId)
+      sendResponse({
+        success: reset,
+        ...(reset ? {} : { error: `No configurable built-in adapter for ${message.siteId}` }),
+      })
+      return true
+    }
+
+    if (message.type === MSG_REAPPLY_REMOTE_CONFIG_SITE) {
+      ;(async () => {
+        const reapplied = await reapplyBuiltinSiteConfig(message.siteId)
+        sendResponse({
+          success: reapplied,
+          ...(reapplied ? {} : { error: `No configurable built-in adapter for ${message.siteId}` }),
+        })
+      })()
+      return true
+    }
+
+    const adapter = getAdapter()
+
+    if (message.type === "CHECK_IS_GENERATING") {
+      const isGenerating = adapter?.isGenerating?.() ?? false
+      sendResponse({ isGenerating })
+      return true
+    }
+
+    if (message.type === MSG_START_NEW_CONVERSATION) {
+      if (!adapter) {
+        sendResponse({ success: false, error: "No active adapter" })
+        return true
+      }
+      try {
+        const success = adapter.startNewConversation()
+        sendResponse({ success })
+      } catch (err) {
+        console.error("[Ophel] startNewConversation failed:", err)
+        sendResponse({ success: false, error: (err as Error).message })
+      }
+      return true
+    }
+
+    if (message.type === "GET_MODEL_LIST") {
+      if (
+        adapter?.getSiteId() === SITE_IDS.AISTUDIO &&
+        typeof (adapter as any).getModelList === "function"
+      ) {
+        ;(async () => {
+          try {
+            const models = await (adapter as any).getModelList()
+            sendResponse({ success: true, models })
+          } catch (err) {
+            console.error("[Ophel] getModelList failed:", err)
+            sendResponse({ success: false, error: (err as Error).message })
+          }
+        })()
+        return true
+      }
+
+      sendResponse({ success: false, error: "NOT_AISTUDIO" })
+      return true
+    }
+
+    return false
+  })
+}
+
+function initializeOphel() {
   const adapter = getAdapter()
 
   if (adapter) {
+    if (activeAdapterInstance === adapter) return
+    activeAdapterInstance = adapter
+    window.ophelInitialized = true
+
     console.warn(`[Ophel] Loaded ${adapter.getName()} adapter on:`, window.location.hostname)
 
     // 初始化适配器
@@ -504,91 +598,22 @@ function initializeOphel() {
 
       // 订阅设置变化
       const unsubscribeModuleUpdates = subscribeModuleUpdates(ctx)
-      window.addEventListener("unload", unsubscribeModuleUpdates, { once: true })
 
       // 初始化 URL 变化监听
       const cleanupUrlChangeObserver = initUrlChangeObserver(ctx)
-      window.addEventListener("unload", cleanupUrlChangeObserver, { once: true })
 
-      // 监听来自 background 的消息（用于跨页面检测生成状态）
-      chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-        if (message.type === MSG_CLEAR_ALL_DATA) {
-          handleClearAllData()
-          resetAllStores()
-          sendResponse({ success: true })
-          return true
-        }
-
-        if (message.type === MSG_RESTORE_DATA) {
-          // 收到恢复数据的广播时，刷新页面使得数据从 Storage 重新读取并保证 Zustand hydration 最新的内容
-          window.location.reload()
-          sendResponse({ success: true })
-          return true
-        }
-
-        if (message.type === MSG_RESET_REMOTE_CONFIG_SITE) {
-          const reset = resetBuiltinSiteConfig(message.siteId)
-          sendResponse({
-            success: reset,
-            ...(reset ? {} : { error: `No configurable built-in adapter for ${message.siteId}` }),
-          })
-          return true
-        }
-
-        if (message.type === MSG_REAPPLY_REMOTE_CONFIG_SITE) {
-          ;(async () => {
-            const reapplied = await reapplyBuiltinSiteConfig(message.siteId)
-            sendResponse({
-              success: reapplied,
-              ...(reapplied
-                ? {}
-                : { error: `No configurable built-in adapter for ${message.siteId}` }),
-            })
-          })()
-          return true
-        }
-
-        if (message.type === "CHECK_IS_GENERATING") {
-          // 使用 adapter 的 isGenerating 方法检测当前页面是否正在生成
-          const isGenerating = adapter.isGenerating?.() ?? false
-          sendResponse({ isGenerating })
-          return true // 保持消息通道打开
-        }
-
-        if (message.type === MSG_START_NEW_CONVERSATION) {
-          try {
-            const success = adapter.startNewConversation()
-            sendResponse({ success })
-          } catch (err) {
-            console.error("[Ophel] startNewConversation failed:", err)
-            sendResponse({ success: false, error: (err as Error).message })
-          }
-          return true
-        }
-
-        // AI Studio 获取模型列表
-        if (message.type === "GET_MODEL_LIST") {
-          if (siteId === SITE_IDS.AISTUDIO && typeof (adapter as any).getModelList === "function") {
-            ;(async () => {
-              try {
-                const models = await (adapter as any).getModelList()
-                sendResponse({ success: true, models })
-              } catch (err) {
-                console.error("[Ophel] getModelList failed:", err)
-                sendResponse({ success: false, error: (err as Error).message })
-              }
-            })()
-            return true
-          }
-
-          sendResponse({ success: false, error: "NOT_AISTUDIO" })
-          return true
-        }
-
-        return false
-      })
+      activeModulesCleanup = () => {
+        unsubscribeModuleUpdates()
+        cleanupUrlChangeObserver()
+      }
     })()
   } else {
+    if (activeAdapterInstance) {
+      activeModulesCleanup?.()
+      activeModulesCleanup = null
+      activeAdapterInstance = null
+    }
+
     const brokenBinding = getBrokenOriginBinding()
     if (brokenBinding) {
       showSitePackBindingIssueNotice({
@@ -601,14 +626,19 @@ function initializeOphel() {
         },
       })
     }
-    console.warn("[Ophel] No adapter found for:", window.location.hostname)
   }
 }
 
 async function bootstrapOphel() {
   await initAdapterRegistry()
-  if (window.ophelInitialized) return
+  registerBackgroundMessageListener()
   initializeOphel()
+
+  // 启动页面级 URL 广播，监听 SPA 路由变化
+  startPageUrlChangeBroadcaster()
+  window.addEventListener(EVENT_PAGE_URL_CHANGE, () => {
+    initializeOphel()
+  })
 }
 
 void bootstrapOphel().catch((error) => {

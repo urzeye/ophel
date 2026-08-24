@@ -109,4 +109,16 @@ describe("Notion AI SitePack", () => {
     const zenConfig = adapter.getZenModeConfig()
     expect(zenConfig?.hide).toContain(".notion-sidebar-container")
   })
+
+  it("extracts clean display and visitable entry URL for Notion AI and match patterns", async () => {
+    const { siteMatchPatternDisplayUrl } = await import("~adapters/declarative/match-pattern")
+    expect(siteMatchPatternDisplayUrl(notionAiManifest.matches[0])).toBe(
+      "https://app.notion.com/ai",
+    )
+    expect(siteMatchPatternDisplayUrl(notionAiManifest.matches[1])).toBe(
+      "https://app.notion.com/chat",
+    )
+    expect(siteMatchPatternDisplayUrl("https://chatgpt.com/*")).toBe("https://chatgpt.com")
+    expect(siteMatchPatternDisplayUrl("https://*.notion.com/ai*")).toBe("https://notion.com/ai")
+  })
 })

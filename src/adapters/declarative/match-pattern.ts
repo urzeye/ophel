@@ -104,6 +104,19 @@ export const siteMatchPatternOrigin = (pattern: string): string => {
   return new URL(`${scheme}://${concreteAuthority}/`).origin
 }
 
+/** 从已校验 match pattern 取得可展示/访问的具体入口 URL（保留具体路径，仅去除尾部通配符及根通配符）。 */
+export const siteMatchPatternDisplayUrl = (pattern: string): string => {
+  const { scheme, authority, pathPattern } = parseSiteMatchPattern(pattern)
+  const concreteAuthority = authority.startsWith("*.") ? authority.slice(2) : authority
+  let cleanPath = pathPattern.replace(/\*+$/g, "")
+  if (cleanPath === "/" || cleanPath === "") {
+    return new URL(`${scheme}://${concreteAuthority}/`).origin
+  }
+  if (!cleanPath.startsWith("/")) cleanPath = `/${cleanPath}`
+  cleanPath = cleanPath.replace(/\/+$/, "")
+  return `${scheme}://${concreteAuthority}${cleanPath}`
+}
+
 /** 检查动态授权页收到的值是否为受支持的 origin 级匹配。 */
 export const isSiteMatchPatternOriginPattern = (pattern: string): boolean => {
   if (!SITE_MATCH_PATTERN_ORIGIN_PATTERN.test(pattern)) return false

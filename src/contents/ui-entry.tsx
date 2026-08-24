@@ -5,9 +5,12 @@ import settingsCssText from "data-text:~styles/settings.css"
 import type { PlasmoCSConfig, PlasmoMountShadowHost } from "plasmo"
 import React from "react"
 
-import { registryReady } from "~adapters"
+import { getAdapter, registryReady } from "~adapters"
+import type { SiteAdapter } from "~adapters/base"
 import { App } from "~components/App"
+import { startPageUrlChangeBroadcaster } from "~core/modules-init"
 import { applyOphelPlatformFontClass } from "~utils/font"
+import { EVENT_PAGE_URL_CHANGE } from "~utils/messaging"
 
 export const config: PlasmoCSConfig = {
   matches: [
@@ -129,12 +132,16 @@ export const mountShadowHost: PlasmoMountShadowHost = ({
 
 const PlasmoApp = () => {
   const [isRegistryReady, setIsRegistryReady] = React.useState(false)
+  const [adapter, setAdapter] = React.useState<SiteAdapter | null>(() => getAdapter())
 
   React.useEffect(() => {
     let mounted = true
     void registryReady()
       .then(() => {
-        if (mounted) setIsRegistryReady(true)
+        if (mounted) {
+          setIsRegistryReady(true)
+          setAdapter(getAdapter())
+        }
       })
       .catch((error) => {
         console.error("[Ophel] Failed to initialize adapter registry:", error)
@@ -144,8 +151,27 @@ const PlasmoApp = () => {
     }
   }, [])
 
-  if (!isRegistryReady) return null
-  return <App />
+  React.useEffect(() => {
+    const stopBroadcaster = startPageUrlChangeBroadcaster()
+
+    const handleUrlChange = () => {
+      const nextAdapter = getAdapter()
+      setAdapter((prev) => (prev === nextAdapter ? prev : nextAdapter))
+    }
+
+    window.addEventListener(EVENT_PAGE_URL_CHANGE, handleUrlChange)
+    window.addEventListener("popstate", handleUrlChange)
+    window.addEventListener("hashchange", handleUrlChange)
+    return () => {
+      window.removeEventListener(EVENT_PAGE_URL_CHANGE, handleUrlChange)
+      window.removeEventListener("popstate", handleUrlChange)
+      window.removeEventListener("hashchange", handleUrlChange)
+      stopBroadcaster()
+    }
+  }, [])
+
+  if (!isRegistryReady || !adapter) return null
+  return <App key={adapter.getSiteInstanceKey()} adapter={adapter} />
 }
 
 export default PlasmoApp
