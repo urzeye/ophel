@@ -2535,6 +2535,9 @@ export class ChatGPTAdapter extends SiteAdapter {
   }
 
   private getNativeTocButtonIndex(button: HTMLElement, fallbackIndex: number): number {
+    const attrIndex = Number.parseInt(button.getAttribute("data-toc-item-index") || "", 10)
+    if (!Number.isNaN(attrIndex)) return Math.max(0, attrIndex)
+
     const match = /^Prompt\s+(\d+)$/i.exec((button.getAttribute("aria-label") || "").trim())
     if (!match?.[1]) return fallbackIndex
 

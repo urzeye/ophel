@@ -276,8 +276,8 @@ const createChatGPTConfig = (): ChatGPTSiteConfig => {
         'main#main [role="dialog"][class*="fixed"][class*="inset-0"]:has(.cm-editor)',
       panelLibraryShellInset: libraryShell,
       panelLibraryComposerWrapperInset: libraryComposerWrapper,
-      nativeTocRail: ".no-scrollbar",
-      nativeTocButton: 'button[aria-label][class*="h-0.5"][class*="w-4.5"]',
+      nativeTocRail: "div:has(> button[data-toc-item-index])",
+      nativeTocButton: "button[data-toc-item-index]",
       nativeTocHoverAncestor: [".relative.flex.items-start", ".fixed"],
       nativeTocTitleElement: [
         "button[data-fill] [title]",

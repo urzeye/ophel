@@ -15,6 +15,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
+- **Incomplete user questions in ChatGPT outline** — ChatGPT redesigned its in-page prompt rail, so after a page refresh the outline tab could no longer read the full list of user questions from it; the outline now recognizes the updated rail again and restores complete user question extraction. (#871)
 - **Spurious console errors on page load** — Fixed an issue where every page load logged "Failed to load cached patch" errors for Claude, Gemini, and Gemini Enterprise regardless of the site being visited; cached config patches for these three sites can now apply again instead of always being rejected. (#870)
 - **Doubao new input box adaptation** — Prompt insertion, queued send, generation stop detection, and model lock now work with Doubao's redesigned TipTap input box and the updated send/stop/model-switch controls. (#867)
 - **Virtual-scroll long conversation export** — ChatGPT, Doubao, DeepSeek, and AI Studio exports now wait for virtualized rows to finish mounting before reading them, verify turn/row number continuity, and retry missing segments, so long conversations no longer export with silently missing, duplicated, or reordered messages; repeated exports of the same Doubao conversation now produce consistent results.(#865)
