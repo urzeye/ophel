@@ -9,7 +9,10 @@
  * 非白名单站点会在早期退出，性能影响极小（小于1ms）。
  */
 
-import { siteMatchPatternMatchesUrl } from "~adapters/declarative/match-pattern"
+import {
+  siteMatchPatternMatchesUrl,
+  siteMatchPatternOriginPattern,
+} from "~adapters/declarative/match-pattern"
 import { SUPPORTED_AI_PLATFORMS } from "~constants/defaults"
 
 import { INSTALLED_SITE_PACKS_STORAGE_KEY } from "../../core/pack-manager"
@@ -66,7 +69,10 @@ export async function shouldInitializeOnCurrentSite(): Promise<boolean> {
       for (const pack of Object.values(installedPacks.packs)) {
         if (!pack.enabled || !pack.manifest?.matches) continue
         for (const pattern of pack.manifest.matches) {
-          if (siteMatchPatternMatchesUrl(parsedUrl, pattern)) {
+          if (
+            siteMatchPatternMatchesUrl(parsedUrl, pattern) ||
+            siteMatchPatternMatchesUrl(parsedUrl, siteMatchPatternOriginPattern(pattern))
+          ) {
             return true
           }
         }

@@ -1,8 +1,11 @@
 import React from "react"
 import ReactDOM from "react-dom/client"
 
+import type { SiteAdapter } from "~adapters/base"
 import { BACKUP_EXCLUDED_STORAGE_KEYS, BACKUP_USER_DATA_STORAGE_KEYS } from "~core/backup-codec"
+import { startPageUrlChangeBroadcaster } from "~core/modules-init"
 import { applyOphelPlatformFontClass } from "~utils/font"
+import { EVENT_PAGE_URL_CHANGE } from "~utils/messaging"
 
 import { USERSCRIPT_RESOURCE_DEFINITIONS } from "./resource-manifest"
 import { injectGeminiCanvasCodeBridge } from "./gemini-canvas-inject"
@@ -508,6 +511,9 @@ async function init() {
       shadowRoot.appendChild(container)
 
       const UserscriptAppRoot = () => {
+        const [currentAdapter, setCurrentAdapter] = React.useState<SiteAdapter | null>(() =>
+          getAdapter(),
+        )
         const [, forceUpdate] = React.useState(0)
 
         React.useEffect(
@@ -518,7 +524,30 @@ async function init() {
           [],
         )
 
-        return React.createElement(App)
+        React.useEffect(() => {
+          const stopBroadcaster = startPageUrlChangeBroadcaster()
+
+          const handleUrlChange = () => {
+            const nextAdapter = getAdapter()
+            setCurrentAdapter((prev) => (prev === nextAdapter ? prev : nextAdapter))
+          }
+
+          window.addEventListener(EVENT_PAGE_URL_CHANGE, handleUrlChange)
+          window.addEventListener("popstate", handleUrlChange)
+          window.addEventListener("hashchange", handleUrlChange)
+          return () => {
+            window.removeEventListener(EVENT_PAGE_URL_CHANGE, handleUrlChange)
+            window.removeEventListener("popstate", handleUrlChange)
+            window.removeEventListener("hashchange", handleUrlChange)
+            stopBroadcaster()
+          }
+        }, [])
+
+        if (!currentAdapter) return null
+        return React.createElement(App, {
+          key: currentAdapter.getSiteInstanceKey(),
+          adapter: currentAdapter,
+        })
       }
 
       const root = ReactDOM.createRoot(container)
@@ -532,21 +561,6 @@ async function init() {
   await mountUserscriptApp()
   window.addEventListener("unload", cleanupMountWatchers)
   window.addEventListener("unload", cleanupUserscriptObjectUrls)
-
-  if (!adapter) {
-    const brokenBinding = getBrokenOriginBinding()
-    if (brokenBinding) {
-      showSitePackBindingIssueNotice({
-        packId: brokenBinding.packId,
-        onOpenSettings: () => {
-          window.dispatchEvent(
-            new CustomEvent("ophel:navigateSettingsPage", { detail: { page: "sitePacks" } }),
-          )
-        },
-      })
-    }
-    return
-  }
 
   // 等待 Zustand hydration 完成后初始化核心模块
   const { useSettingsStore, getSettingsState, claimLegacySiteSettings } = await import(
@@ -598,42 +612,87 @@ async function init() {
     return hydrationPromise
   }
 
-  await Promise.all([
-    waitForHydration(useSettingsStore),
-    waitForHydration(useConversationsStore),
-    waitForHydration(useFoldersStore),
-    waitForHydration(useTagsStore),
-    waitForHydration(usePromptsStore),
-    waitForHydration(useClaudeSessionKeysStore),
-    waitForHydration(useReadingHistoryStore),
-  ])
+  let activeAdapter: SiteAdapter | null = null
+  let activeModulesCleanup: (() => void) | null = null
 
-  const siteId = adapter.getSiteId()
-  const siteInstanceKey = adapter.getSiteInstanceKey()
-  if (adapter.canClaimLegacySiteData()) {
-    claimLegacySiteSettings(siteId, siteInstanceKey)
+  const initializeUserscriptModules = async () => {
+    const adapter = getAdapter()
+
+    if (adapter) {
+      if (activeAdapter === adapter) return
+      activeAdapter = adapter
+      adapter.afterPropertiesSet({})
+
+      await Promise.all([
+        waitForHydration(useSettingsStore),
+        waitForHydration(useConversationsStore),
+        waitForHydration(useFoldersStore),
+        waitForHydration(useTagsStore),
+        waitForHydration(usePromptsStore),
+        waitForHydration(useClaudeSessionKeysStore),
+        waitForHydration(useReadingHistoryStore),
+      ])
+
+      const siteId = adapter.getSiteId()
+      const siteInstanceKey = adapter.getSiteInstanceKey()
+      if (adapter.canClaimLegacySiteData()) {
+        claimLegacySiteSettings(siteId, siteInstanceKey)
+      }
+      const settings = getSettingsState()
+
+      // ========== 初始化所有核心模块（使用共享模块） ==========
+      const { initCoreModules, subscribeModuleUpdates, initUrlChangeObserver } = await import(
+        "~core/modules-init"
+      )
+
+      const ctx = { adapter, settings, siteId, siteInstanceKey }
+
+      await initCoreModules(ctx)
+
+      // 初始化 NetworkMonitor 消息监听器（必须显式调用以避免 tree-shaking）
+      initNetworkMonitor()
+
+      // 订阅设置变化
+      const unsubscribeModuleUpdates = subscribeModuleUpdates(ctx)
+
+      // 初始化 URL 变化监听 (SPA 导航)
+      const cleanupUrlChangeObserver = initUrlChangeObserver(ctx)
+
+      activeModulesCleanup = () => {
+        unsubscribeModuleUpdates()
+        cleanupUrlChangeObserver()
+      }
+    } else {
+      if (activeAdapter) {
+        activeModulesCleanup?.()
+        activeModulesCleanup = null
+        activeAdapter = null
+      }
+
+      const brokenBinding = getBrokenOriginBinding()
+      if (brokenBinding) {
+        showSitePackBindingIssueNotice({
+          packId: brokenBinding.packId,
+          onOpenSettings: () => {
+            window.dispatchEvent(
+              new CustomEvent("ophel:navigateSettingsPage", { detail: { page: "sitePacks" } }),
+            )
+          },
+        })
+      }
+    }
   }
-  const settings = getSettingsState()
 
-  // ========== 初始化所有核心模块（使用共享模块） ==========
-  const { initCoreModules, subscribeModuleUpdates, initUrlChangeObserver } = await import(
-    "~core/modules-init"
-  )
+  await initializeUserscriptModules()
 
-  const ctx = { adapter, settings, siteId, siteInstanceKey }
-
-  await initCoreModules(ctx)
-
-  // 初始化 NetworkMonitor 消息监听器（必须显式调用以避免 tree-shaking）
-  initNetworkMonitor()
-
-  // 订阅设置变化
-  const unsubscribeModuleUpdates = subscribeModuleUpdates(ctx)
-  window.addEventListener("unload", unsubscribeModuleUpdates, { once: true })
-
-  // 初始化 URL 变化监听 (SPA 导航)
-  const cleanupUrlChangeObserver = initUrlChangeObserver(ctx)
-  window.addEventListener("unload", cleanupUrlChangeObserver, { once: true })
+  const stopBroadcaster = startPageUrlChangeBroadcaster()
+  window.addEventListener(EVENT_PAGE_URL_CHANGE, () => {
+    void initializeUserscriptModules()
+  })
+  window.addEventListener("unload", () => {
+    stopBroadcaster()
+    activeModulesCleanup?.()
+  })
 }
 
 function startWhenReady() {
