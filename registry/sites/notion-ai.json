@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "notion-ai",
   "version": 1,
-  "minAppVersion": "1.2.4",
+  "minAppVersion": "1.2.5",
   "name": "Notion AI",
   "nameI18n": {
     "zh-CN": "Notion AI",
