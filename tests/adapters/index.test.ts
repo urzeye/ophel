@@ -459,10 +459,10 @@ describe("AdapterRegistry bootstrap contracts", () => {
     ])
 
     expect(uiEntry).toMatch(
-      /void registryReady\(\)[\s\S]*setIsRegistryReady\(true\)[\s\S]*if \(!isRegistryReady\) return null[\s\S]*return <App \/>/,
+      /void registryReady\(\)[\s\S]*setIsRegistryReady\(true\)[\s\S]*if \(!isRegistryReady \|\| !adapter\) return null[\s\S]*return <App key={adapter\.getSiteInstanceKey\(\)} adapter={adapter} \/>/,
     )
     expect(extensionEntry).toContain("await initAdapterRegistry()")
     expect(userscriptEntry).toContain("await initAdapterRegistry()")
-    expect(appSource).toContain("const adapter = useMemo(() => getAdapter(), [])")
+    expect(appSource).toContain("const fallbackAdapter = useMemo(() => getAdapter(), [])")
   })
 })
