@@ -496,7 +496,7 @@ describe("DeclarativeAdapter P1-01 browser-facing behavior", () => {
       class {
         constructor(
           public type: string,
-          public options?: any,
+          public options?: InputEventInit,
         ) {}
       },
     )
@@ -505,7 +505,7 @@ describe("DeclarativeAdapter P1-01 browser-facing behavior", () => {
       class {
         constructor(
           public type: string,
-          public options?: any,
+          public options?: EventInit,
         ) {}
       },
     )
@@ -535,7 +535,8 @@ describe("DeclarativeAdapter P1-01 browser-facing behavior", () => {
     const manifest = createMinimalManifest()
     manifest.input = { mode: "contenteditable", submitKey: "Enter" }
     const adapter = new DeclarativeAdapter(manifest)
-    vi.spyOn(adapter as any, "getConfiguredEditor").mockReturnValue({
+    const internals = adapter as unknown as DeclarativeAdapterInputInternals
+    vi.spyOn(internals, "getConfiguredEditor").mockReturnValue({
       mode: "contenteditable",
       editor,
     })
