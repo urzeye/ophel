@@ -97,6 +97,8 @@ describe("Notion AI SitePack", () => {
     expect(adapter.getSubmitButtonSelectors()).toContain(
       "div[data-testid='agent-send-message-button']",
     )
+    expect(adapter.getChatContentSelectors()).toContain("div[data-agent-chat-user-step-id]")
+    expect(adapter.getChatContentSelectors()).toContain("div[data-block-id]")
 
     const exportConfig = adapter.getExportConfig()
     expect(exportConfig?.userQuerySelector).toBe(
