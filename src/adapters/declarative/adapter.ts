@@ -339,15 +339,23 @@ export class DeclarativeAdapter extends SiteAdapter {
   }
 
   private selectAllEditorContent(editor: HTMLElement): boolean {
-    const selection = editor.ownerDocument.getSelection()
-    if (!selection) return false
-
     try {
-      selection.selectAllChildren(editor)
-      return true
+      editor.ownerDocument.execCommand("selectAll", false, undefined)
     } catch {
-      return false
+      // ignore
     }
+
+    const selection = editor.ownerDocument.getSelection()
+    if (selection) {
+      try {
+        selection.selectAllChildren(editor)
+        return true
+      } catch {
+        // ignore
+      }
+    }
+
+    return true
   }
 
   private replaceContentEditableContent(
@@ -358,29 +366,81 @@ export class DeclarativeAdapter extends SiteAdapter {
     editor.focus()
 
     if (content === "") {
-      if (this.selectAllEditorContent(editor)) {
-        try {
-          editor.dispatchEvent(
-            new InputEvent("beforeinput", {
-              bubbles: true,
-              cancelable: true,
-              composed: true,
-              inputType: "deleteContentBackward",
-            }),
-          )
-        } catch {
-          // Unsupported beforeinput construction continues to execCommand.
-        }
-        try {
-          editor.ownerDocument.execCommand("delete", false, undefined)
-        } catch {
-          // Unsupported execCommand attempt continues to validation.
-        }
-        editor.dispatchEvent(new Event("input", { bubbles: true, composed: true }))
-        editor.dispatchEvent(new Event("change", { bubbles: true }))
-        if (this.isEditorUpdateValid(editor, "", requireSubmitButton)) return true
+      this.selectAllEditorContent(editor)
+
+      try {
+        editor.dispatchEvent(
+          new KeyboardEvent("keydown", {
+            key: "Backspace",
+            code: "Backspace",
+            keyCode: 8,
+            which: 8,
+            bubbles: true,
+            composed: true,
+          }),
+        )
+      } catch {
+        // Unsupported keydown construction continues.
       }
-      return false
+
+      try {
+        editor.dispatchEvent(
+          new InputEvent("beforeinput", {
+            bubbles: true,
+            cancelable: true,
+            composed: true,
+            inputType: "deleteContentBackward",
+          }),
+        )
+      } catch {
+        // Unsupported beforeinput construction continues to execCommand.
+      }
+
+      try {
+        editor.ownerDocument.execCommand("delete", false, undefined)
+      } catch {
+        // Unsupported execCommand attempt continues.
+      }
+
+      try {
+        editor.dispatchEvent(
+          new InputEvent("input", {
+            bubbles: true,
+            composed: true,
+            inputType: "deleteContentBackward",
+          }),
+        )
+      } catch {
+        // Unsupported input construction continues.
+      }
+
+      try {
+        editor.dispatchEvent(
+          new KeyboardEvent("keyup", {
+            key: "Backspace",
+            code: "Backspace",
+            keyCode: 8,
+            which: 8,
+            bubbles: true,
+            composed: true,
+          }),
+        )
+      } catch {
+        // Unsupported keyup construction continues.
+      }
+
+      if (editor.textContent && editor.textContent.length > 0) {
+        try {
+          editor.textContent = ""
+        } catch {
+          // ignore
+        }
+      }
+
+      editor.dispatchEvent(new Event("input", { bubbles: true, composed: true }))
+      editor.dispatchEvent(new Event("change", { bubbles: true }))
+
+      return this.isEditorUpdateValid(editor, "", requireSubmitButton)
     }
 
     if (this.selectAllEditorContent(editor)) {

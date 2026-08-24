@@ -492,6 +492,15 @@ describe("DeclarativeAdapter P1-01 browser-facing behavior", () => {
     vi.stubGlobal("HTMLTextAreaElement", class {})
     vi.stubGlobal("HTMLElement", class {})
     vi.stubGlobal(
+      "KeyboardEvent",
+      class {
+        constructor(
+          public type: string,
+          public options?: KeyboardEventInit,
+        ) {}
+      },
+    )
+    vi.stubGlobal(
       "InputEvent",
       class {
         constructor(

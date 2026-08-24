@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "notion-ai",
   "version": 1,
-  "minAppVersion": "1.2.3",
+  "minAppVersion": "1.2.4",
   "name": "Notion AI",
   "nameI18n": {
     "zh-CN": "Notion AI",
@@ -49,7 +49,10 @@
     "textarea": [
       "div[contenteditable='true'][role='textbox']",
       "div.content-editable-leaf-rtl[contenteditable='true']",
-      "div[data-content-editable-leaf='true'][contenteditable='true']"
+      "div[data-content-editable-leaf='true'][contenteditable='true']",
+      "div[role='textbox'][contenteditable='true']",
+      "div[contenteditable='true']",
+      "[contenteditable='true']"
     ],
     "submitButton": [
       "div[data-testid='agent-send-message-button']",
