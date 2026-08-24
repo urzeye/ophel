@@ -89,7 +89,9 @@ describe("Notion AI SitePack", () => {
     expect(capabilities.has("model-lock")).toBe(false)
 
     expect(adapter.getTextareaSelectors()).toContain("div[contenteditable='true'][role='textbox']")
-    expect(adapter.getResponseContainerSelector()).toBe(".notion-selectable-container")
+    expect(adapter.getResponseContainerSelector()).toBe(
+      ".layout-content .notion-selectable-container",
+    )
     expect(adapter.getUserQuerySelector()).toBe(
       "div[data-agent-chat-user-step-id] [data-content-editable-leaf='true']",
     )

@@ -60,7 +60,7 @@
       "div[aria-label='提交 AI 消息']",
       "div[aria-label='Submit AI message']"
     ],
-    "responseContainer": ".notion-selectable-container",
+    "responseContainer": ".layout-content .notion-selectable-container",
     "chatContent": [
       "div[data-agent-chat-user-step-id]",
       "div[data-content-editable-root='true']",
