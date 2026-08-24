@@ -123,6 +123,13 @@ describe("validateBuiltinSiteConfig", () => {
       "missing_required",
     )
   })
+
+  it("allows built-in adapters to implement document-outline imperatively", () => {
+    const config = createBuiltinConfig()
+    delete config.documentOutline
+
+    expectValid(validateBuiltinSiteConfig(config))
+  })
 })
 
 describe("validateSiteConfigOverride", () => {

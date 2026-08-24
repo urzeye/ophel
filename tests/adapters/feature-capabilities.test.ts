@@ -4,6 +4,7 @@ import { SITE_IDS, type BuiltinSiteId } from "~constants/defaults"
 import { resolveBuiltinConfig } from "~core/builtin-config-registry"
 
 import { SiteAdapter } from "~adapters/base"
+import { resolveSiteConfig } from "~adapters/declarative/merge"
 import {
   BUILTIN_FEATURE_CAPABILITIES,
   SITE_PACK_CAPABILITIES,
@@ -137,6 +138,25 @@ describe("feature capability contract", () => {
       expect(descriptor?.baseConfig.capabilities, siteId).toEqual([
         ...BUILTIN_FEATURE_CAPABILITIES[siteId],
       ])
+    }
+  })
+
+  // 回归：声明 document-outline 但由适配器代码命令式实现的内置站点
+  // （Claude / Gemini / Gemini Enterprise）不得在校验阶段抛错。
+  it("resolves every built-in base config through resolveSiteConfig", async () => {
+    for (const siteId of Object.values(SITE_IDS)) {
+      const descriptor = await resolveBuiltinConfig(siteId)
+      expect(descriptor, siteId).not.toBeNull()
+      if (!descriptor) continue
+
+      const resolved = resolveSiteConfig({
+        siteId,
+        appVersion: "1.2.4",
+        configVersion: descriptor.configVersion,
+        baseConfig: descriptor.baseConfig,
+      })
+
+      expect(resolved.config, siteId).toBeTruthy()
     }
   })
 })

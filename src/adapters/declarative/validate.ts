@@ -52,6 +52,12 @@ export interface SiteConfigValidationOptions extends SitePackValidationOptions {
   allowedPrivateSelectorKeys?: readonly string[]
   requiredPrivateSelectorKeys?: readonly string[]
   requiredCapabilities?: readonly SitePackCapability[]
+  /**
+   * 内置适配器的 document-outline 可由适配器代码命令式实现（Claude / Gemini /
+   * Gemini Enterprise），不要求声明 documentOutline 配置；仅 SitePack manifest
+   * 校验强制该字段。
+   */
+  allowImperativeDocumentOutline?: boolean
 }
 
 type ValidationMode = "full" | "partial"
@@ -60,12 +66,14 @@ interface ValidationContext {
   errors: SitePackValidationError[]
   regexSafetyCheck?: (pattern: string) => boolean
   allowHttpMatches: boolean
+  allowImperativeDocumentOutline: boolean
 }
 
-const createValidationContext = (options: SitePackValidationOptions = {}): ValidationContext => ({
+const createValidationContext = (options: SiteConfigValidationOptions = {}): ValidationContext => ({
   errors: [],
   regexSafetyCheck: options.regexSafetyCheck,
   allowHttpMatches: options.allowHttpMatches === true,
+  allowImperativeDocumentOutline: options.allowImperativeDocumentOutline === true,
 })
 
 interface StringValidationOptions {
@@ -1564,11 +1572,13 @@ const validateCapabilityRequirements = (
     typeof selectors.userQuery === "string",
     `${path}.selectors.userQuery`,
   )
-  requireField(
-    "document-outline",
-    isPlainRecord(config.documentOutline) && typeof config.documentOutline.container === "string",
-    `${path}.documentOutline.container`,
-  )
+  if (!context.allowImperativeDocumentOutline) {
+    requireField(
+      "document-outline",
+      isPlainRecord(config.documentOutline) && typeof config.documentOutline.container === "string",
+      `${path}.documentOutline.container`,
+    )
+  }
 
   if (capabilities.has("outline-user-queries") && !capabilities.has("outline")) {
     addError(
@@ -1858,7 +1868,7 @@ export function validateBuiltinSiteConfig(
   input: unknown,
   options: SiteConfigValidationOptions = {},
 ): SitePackValidationResult<BuiltinSiteConfig> {
-  const context = createValidationContext(options)
+  const context = createValidationContext({ ...options, allowImperativeDocumentOutline: true })
   validateBuiltinConfigInto(input, "$", context, "full", options)
   return finishValidation(input, context)
 }
