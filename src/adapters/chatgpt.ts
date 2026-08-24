@@ -1558,6 +1558,17 @@ export class ChatGPTAdapter extends SiteAdapter {
     return this.exportCollectionReport
   }
 
+  /**
+   * 历史起点未加载完 = DOM 中最早的 conversation-turn-N 仍 N > 1。
+   * 复用导出采集依赖的同一锚点（data-testid），不需要额外的加载指示器选择器。
+   */
+  hasUnloadedConversationHistory(): boolean {
+    const turns = this.getAllTurnShellsSorted()
+    if (turns.length === 0) return false
+    const firstTurnNumber = this.getExportTurnSortIndex(turns[0])
+    return firstTurnNumber > 1 && firstTurnNumber !== Number.MAX_SAFE_INTEGER
+  }
+
   private getAuthorMessageSelector(): string {
     return [this.config.selectors.userQuery, this.config.selectors.assistantResponse].join(", ")
   }

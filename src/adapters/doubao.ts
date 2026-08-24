@@ -2213,7 +2213,11 @@ export class DoubaoAdapter extends SiteAdapter {
         })
         if (rowIndex >= 0) {
           seenRowIndexes.add(rowIndex)
-          rowTopByIndex.set(rowIndex, this.getVirtualRowScrollTop(row as HTMLElement, 0))
+          // fallback 沿用已有值，与首段行扫描一致；解析失败时用 0 会覆盖有效值、污染缺口插值
+          rowTopByIndex.set(
+            rowIndex,
+            this.getVirtualRowScrollTop(row, rowTopByIndex.get(rowIndex) ?? 0),
+          )
         }
       }
     }
@@ -2271,6 +2275,13 @@ export class DoubaoAdapter extends SiteAdapter {
    */
   private async waitForDoubaoRowsMounted(container: HTMLElement, timeoutMs = 800): Promise<void> {
     const deadline = Date.now() + timeoutMs
+    // 先等一帧再首采样：scroll 事件在下一帧才派发，滚动后立即采样拿到的是旧位置的行，
+    // 慢渲染下两次采样一致会被误判为稳定（假稳定竞态）。
+    // 与 sleep 竞速：后台标签页 rAF 不触发，避免悬挂
+    await Promise.race([
+      new Promise<void>((resolve) => requestAnimationFrame(() => resolve())),
+      this.sleep(100),
+    ])
     let lastSignature = ""
     while (Date.now() < deadline) {
       const signature = this.getDoubaoVisibleRowSignature(container)
@@ -2283,13 +2294,15 @@ export class DoubaoAdapter extends SiteAdapter {
   private getDoubaoVisibleRowSignature(container: HTMLElement): string {
     const rows = this.getIndexedVirtualRows(container)
     if (rows.length === 0) return ""
-    return rows
+    const rowsSignature = rows
       .map(({ row, rowIndex }) => {
         const message = row.querySelector(this.config.sitePrivateSelectors.messageId)
-        const hasContent = message?.textContent?.trim() ? 1 : 0
-        return `${rowIndex}:${hasContent}`
+        // 用内容长度而不是 0/1：行内分块渲染（长度持续增长）时签名会继续变化
+        return `${rowIndex}:${message?.textContent?.length ?? 0}`
       })
       .join("|")
+    // 混入 scrollTop：同一组行在不同滚动位置（如超高行内部步进）不会产生假稳定
+    return `${Math.round(container.scrollTop)}@${rowsSignature}`
   }
 
   /** 行号连续性缺口（仅限已观测范围内，不假设行号基数）。 */

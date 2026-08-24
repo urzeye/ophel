@@ -121,7 +121,7 @@ interface VirtualExportCollectResult {
 
 | 站点 | oracle | 缺口检测 |
 | --- | --- | --- |
-| ChatGPT | `conversation-turn-N` 连续整数序列 | 起始 N > 1 说明历史未加载完，回 loading-history 继续；中间缺号则定向补抓对应 shell |
+| ChatGPT | `conversation-turn-N` 连续整数序列 | 起始 N > 1 说明历史未加载完，loading-history 收敛后做有界补载（已实现）；中间缺号则定向补抓对应 shell |
 | Doubao | `--cls r-N-` 行号连续序列 | 缺号行按行号定向滚动补抓 |
 | DeepSeek | 无序号（待实测行属性）；用"可见行数稳定 + 扫描位置覆盖全高"做弱校验 | 无硬缺口检测，靠挂载确认消除缺失源头 |
 | AI Studio | DOM 中 `ms-chat-turn` 总数 vs 已处理数 | 未处理/未挂载 turn 列表定向重试 |
@@ -134,7 +134,7 @@ interface VirtualExportCollectResult {
 2. retry 范围从"完全没抓到的 turn"扩展到"疑似截断的 turn"（挂载中状态、末尾仍在流式标记）。
 3. turnKey 内容兜底追加首见序号后缀，消除重复提问碰撞。
 4. 实测超长会话（300+ turn）shell 留存假设；若不成立，改为"边滚动边枚举 shell"的两段式（先滚一遍建 shell 清单，再逐个采集）。
-5. loading-history 与采集联动：shell 起始 N > 1 时返回继续加载历史，而不是直接开扫。
+5. loading-history 与采集联动（已实现）：高度收敛后 shell 起始 N > 1 时继续滚顶补载（30s 有界预算，避免无完整历史的会话卡死），仍缺则标记"历史可能不完整"并提示。
 
 #### Doubao（重写为行号驱动，修 #780）
 
@@ -158,7 +158,7 @@ interface VirtualExportCollectResult {
 
 #### Manager（公共链路）
 
-1. **loading-history 收敛改造**：高度不变不再直接视为完成——同时探测站点加载指示器（spinner/skeleton，适配器可选提供选择器）存在则继续等；加入真正的总时长上限（替换死代码 `maxRetries` 语义）并在触顶时上报"历史可能未加载完"。
+1. **loading-history 收敛改造**：高度不变不再直接视为完成——收敛后询问适配器历史起点是否未加载完（`hasUnloadedConversationHistory`，ChatGPT 用起始 `conversation-turn-N > 1` 判定，复用采集锚点而非易变的 spinner 选择器），是则继续滚顶做有界补载；加入真正的总时长上限（替换死代码 `maxRetries` 语义），触顶或补载失败时上报"历史可能未加载完"。
 2. **失败显式化**：`withConversationExportData` 的 catch 目前只 `console.error` 返回 null；改为 overlay 显示失败态 + toast，错误信息进日志。
 3. **进度反馈**：preparing 阶段把 `collectedCount/expectedCount` 透传到 overlay，长会话不再像卡死。
 4. **资产下载加超时**（`resolveAssetData` 每资源 AbortSignal 超时 + 有限并发），单资源失败降级为保留外链并在 markdown 中标注，不拖死整包。

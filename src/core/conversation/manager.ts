@@ -61,9 +61,16 @@ export type ConversationSegmentedExportMode = "zip-markdown" | "merged-markdown"
 
 /**
  * 历史分页加载的总时长预算。
- * 收敛条件满足（高度稳定且无加载中）时立即结束；预算触顶则继续导出但标记"历史可能不完整"。
+ * 收敛条件满足（高度连续 3 轮稳定）时立即结束；预算触顶则继续导出但标记"历史可能不完整"。
  */
 const HISTORY_LOAD_TIME_BUDGET_MS = 5 * 60 * 1000
+
+/**
+ * 高度收敛后、适配器仍报告历史起点缺口时的补载预算。
+ * 覆盖"分页请求在飞但 scrollHeight 暂未变化"的场景；有界是为了不让
+ * 永远补不齐的会话（如无完整历史的共享会话）卡住导出。
+ */
+const HISTORY_CATCH_UP_BUDGET_MS = 30 * 1000
 
 export interface ConversationExportSegment {
   id: string
@@ -1620,7 +1627,7 @@ export class ConversationManager {
       notifyProgress("loading-history")
 
       // 加载完整历史（滚动到顶部）。
-      // 收敛条件：scrollHeight 连续 3 轮不变且适配器无分页加载中；
+      // 收敛条件：scrollHeight 连续 3 轮不变；
       // 旧逻辑只看高度，慢网络下单页加载超过 1.5s 会被误判为"没有更多历史"而提前停止，
       // 导致长会话开头若干段从未进入 DOM（导出缺段的来源之一）。
       let historyPossiblyIncomplete = false
@@ -1634,8 +1641,7 @@ export class ConversationManager {
           await new Promise((resolve) => setTimeout(resolve, 500))
 
           const currentHeight = scrollContainer.scrollHeight
-          const loading = this.siteAdapter.isHistoryLoading()
-          if (currentHeight === prevHeight && !loading) {
+          if (currentHeight === prevHeight) {
             stableRounds++
             if (stableRounds >= 3) break
           } else {
@@ -1649,6 +1655,15 @@ export class ConversationManager {
           console.warn(
             "[ConversationManager] History load hit time budget; export may miss early messages",
           )
+        } else if (this.siteAdapter.hasUnloadedConversationHistory()) {
+          // 高度收敛但历史起点未加载完（如 ChatGPT 起始 turn-N > 1）：
+          // 分页请求可能在飞但高度暂未变化，继续滚顶做有界补载
+          if (!(await this.waitForHistoryCatchUp(scrollContainer))) {
+            historyPossiblyIncomplete = true
+            console.warn(
+              "[ConversationManager] History start still incomplete after catch-up budget",
+            )
+          }
         }
       }
 
@@ -1707,6 +1722,20 @@ export class ConversationManager {
 
       this.notifyExportProgress(null)
     }
+  }
+
+  /**
+   * 历史起点补载：loading-history 高度收敛后适配器仍报告起点缺口时，
+   * 继续滚顶多等一段有界时间。返回 true 表示缺口消失。
+   */
+  private async waitForHistoryCatchUp(scrollContainer: HTMLElement): Promise<boolean> {
+    const deadline = Date.now() + HISTORY_CATCH_UP_BUDGET_MS
+    while (Date.now() < deadline) {
+      if (!this.siteAdapter.hasUnloadedConversationHistory()) return true
+      scrollContainer.scrollTop = getTopScrollPosition(scrollContainer)
+      await new Promise((resolve) => setTimeout(resolve, 500))
+    }
+    return !this.siteAdapter.hasUnloadedConversationHistory()
   }
 
   /**

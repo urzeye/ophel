@@ -1415,12 +1415,13 @@ export abstract class SiteAdapter {
   }
 
   /**
-   * 历史消息是否仍在分页加载中（适配器可选实现）。
+   * 历史起点是否未加载完（适配器可选实现）。
    *
-   * manager 的 loading-history 阶段用它区分"没有更多历史"与"请求在飞但高度暂未变化"，
-   * 避免慢网络下提前停止加载。默认 false（退化为纯高度判定）。
+   * manager 的 loading-history 高度收敛后调用：返回 true 说明最早锚点尚未进入 DOM
+   * （如 ChatGPT 起始 conversation-turn-N > 1，慢网络下分页请求在飞时高度可能暂时不变），
+   * manager 会继续滚顶做有界补载。默认 false——无法判定的站点行为与现状一致。
    */
-  isHistoryLoading(): boolean {
+  hasUnloadedConversationHistory(): boolean {
     return false
   }
 

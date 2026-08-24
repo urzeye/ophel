@@ -2390,6 +2390,13 @@ export class DeepSeekAdapter extends SiteAdapter {
     timeoutMs = 800,
   ): Promise<void> {
     const deadline = Date.now() + timeoutMs
+    // 先等一帧再首采样：scroll 事件在下一帧才派发，滚动后立即采样拿到的是旧位置的消息，
+    // 慢渲染下两次采样一致会被误判为稳定（假稳定竞态）。
+    // 与 sleep 竞速：后台标签页 rAF 不触发，避免悬挂
+    await Promise.race([
+      new Promise<void>((resolve) => requestAnimationFrame(() => resolve())),
+      this.sleep(100),
+    ])
     let lastSignature = ""
     while (Date.now() < deadline) {
       const signature = this.getVisibleExportMessageSignature(container)
@@ -2410,7 +2417,8 @@ export class DeepSeekAdapter extends SiteAdapter {
     if (messages.length === 0) return ""
     const firstLength = messages[0].textContent?.length ?? 0
     const lastLength = messages[messages.length - 1].textContent?.length ?? 0
-    return `${messages.length}:${firstLength}:${lastLength}`
+    // 混入 scrollTop：同一组消息在不同滚动位置不会产生假稳定
+    return `${Math.round(container.scrollTop)}:${messages.length}:${firstLength}:${lastLength}`
   }
 
   private buildExportSnapshotPositions(scrollContainer: HTMLElement): number[] {
