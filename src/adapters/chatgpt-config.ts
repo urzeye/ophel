@@ -251,7 +251,8 @@ const createChatGPTConfig = (): ChatGPTSiteConfig => {
       srOnlyFallback: "[class*='sr-only']",
       assistantMarkdown: ".markdown, .prose, [class*='prose']",
       exportCleanup: `${srOnly}, button, [role="button"], svg, [aria-hidden="true"]`,
-      exportTurnContainer: 'section[data-turn], [data-testid^="conversation-turn"]',
+      exportTurnContainer:
+        'section[data-turn], [data-testid^="conversation-turn"], [data-turn-id-container]',
       exportMountedMessage: "[data-message-author-role]",
       exportImageContainer: '[class*="imagegen-image"], [data-testid*="image-gen"]',
       exportFileTile: '[role="group"][aria-label], [class*="file-tile"]',

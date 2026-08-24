@@ -146,6 +146,10 @@ const CHATGPT_EXPORT_ASSISTANT_SELECTOR = `[${CHATGPT_EXPORT_ROOT_ATTR}="1"] [${
 const CHATGPT_NATIVE_TOC_ID_PREFIX = "chatgpt-native-user-query::"
 const CHATGPT_NATIVE_TOC_ID_RE = /^chatgpt-native-user-query::(\d+)::/
 const CHATGPT_NATIVE_TOC_PROMPT_LABEL_RE = /^Prompt\s+\d+$/i
+// 新版结构：离屏 turn 只剩外层占位 div[data-turn-id-container]，挂载后内层才出现
+// section[data-turn][data-testid=conversation-turn-N]。提取内容前要先解析到内层。
+const CHATGPT_EXPORT_MOUNTED_TURN_SELECTOR =
+  'section[data-turn], [data-testid^="conversation-turn"]'
 
 interface ChatGPTExportMessageSnapshot {
   role: "user" | "assistant"
@@ -1566,7 +1570,10 @@ export class ChatGPTAdapter extends SiteAdapter {
     const turns = this.getAllTurnShellsSorted()
     if (turns.length === 0) return false
     const firstTurnNumber = this.getExportTurnSortIndex(turns[0])
-    return firstTurnNumber > 1 && firstTurnNumber !== Number.MAX_SAFE_INTEGER
+    // 新版结构下离屏 shell（外层占位 div）没有 conversation-turn-N，无法确认起点，
+    // 保守视为未加载完，让 catch-up 继续滚顶直到最早 turn 挂载出 N。
+    if (firstTurnNumber === Number.MAX_SAFE_INTEGER) return true
+    return firstTurnNumber > 1
   }
 
   private getAuthorMessageSelector(): string {
@@ -1576,15 +1583,16 @@ export class ChatGPTAdapter extends SiteAdapter {
   /**
    * 按 turn shell 目标驱动的快照采集。
    *
-   * 关键观察（参考 new4.html，一段约 60 轮的会话有 135 个 turn 全部在 DOM 里）：
-   * - 即便是离屏 turn，ChatGPT 也保留它的 `<section data-turn data-testid="conversation-turn-N">` 占位
-   *   以及外层 `data-is-intersecting="false"` + `--last-known-height` 的高度占位 div；
-   * - 离屏 turn 的 section **是空的**，`[data-message-author-role]` 节点不在 DOM 里——
-   *   仅当用户滚动到附近 ChatGPT 才会真正挂载内容。
-   * - 旧方案按 `scrollTop = top` 步进扫描，受 scroll anchoring 干扰会跳过大量 turn
-   *   （60 轮的会话只抓到 30 条 user 提问就是这样来的）。
+   * 关键观察（60 轮样本 + 新版页面实测）：
+   * - 所有 turn 的 shell 始终留在 DOM；新版结构中离屏 turn 只剩外层
+   *   `<div data-turn-id-container data-is-intersecting="false">` 空壳（带
+   *   `--last-known-height` / `--estimated-turn-height` 高度占位），内层
+   *   `section[data-turn][data-testid=conversation-turn-N]` 仅挂载后出现；
+   * - 离屏 turn 的 `[data-message-author-role]` 节点不在 DOM 里——
+   *   仅当滚动到附近 ChatGPT 才会真正挂载内容；
+   * - 旧方案按 `scrollTop = top` 步进扫描，受 scroll anchoring 干扰会跳过大量 turn。
    *
-   * 因此改成：先一次性把所有 turn shell 拉出来按 conversation-turn-N 排序，
+   * 因此：先一次性枚举所有 turn shell（querySelectorAll 顺序即 DOM 顺序），
    * 然后逐个 `scrollIntoView({ block: "center" })` 触发挂载，每个 turn 单独等待
    * 内容出现再抓取。已挂载的 turn 跳过滚动直接抓，把 N 次滚动开销摊平到不滚的部分。
    */
@@ -1624,8 +1632,9 @@ export class ChatGPTAdapter extends SiteAdapter {
       if (!(await this.waitForTurnContentSettled(turn))) {
         truncationSuspects += 1
       }
-      recordSnapshots(this.extractTurnExportSnapshots(turn, null, collector))
-      this.absorbTurnIntoOutlineCache(turn)
+      const resolved = this.resolveExportTurnElement(turn)
+      recordSnapshots(this.extractTurnExportSnapshots(resolved, null, collector))
+      this.absorbTurnIntoOutlineCache(resolved)
     }
 
     try {
@@ -1645,11 +1654,12 @@ export class ChatGPTAdapter extends SiteAdapter {
           }
           if (this.turnHasMountedMessage(turn)) {
             if (wasMounted) {
-              recordSnapshots(this.extractTurnExportSnapshots(turn, null, collector))
+              const resolved = this.resolveExportTurnElement(turn)
+              recordSnapshots(this.extractTurnExportSnapshots(resolved, null, collector))
               // **关键**：每个 turn 在挂载状态下立即把 user / heading 写入大纲缓存，
               // 不能等到全部 collect 完再统一抓——ChatGPT 在抓取过程中会 mount + unmount，
               // 等到 finally 时大量 turn 已经被卸载，extractOutline 抓不到了。
-              this.absorbTurnIntoOutlineCache(turn)
+              this.absorbTurnIntoOutlineCache(resolved)
             } else {
               await settleAndRecord(turn)
             }
@@ -1725,7 +1735,7 @@ export class ChatGPTAdapter extends SiteAdapter {
     })
   }
 
-  /** 列出当前 DOM 中所有 turn 的 section，按 conversation-turn-N 升序。 */
+  /** 列出当前 DOM 中所有 turn 的 shell，按 conversation-turn-N 升序（无 N 的离屏壳排在最后，保持稳定 DOM 序）。 */
   private getAllTurnShellsSorted(): HTMLElement[] {
     // scrollContainer 在 ChatGPT 上未必包含 #thread（它可能是后者的祖先 / 兄弟节点），
     // 用响应容器选择器作为查询根更稳。
@@ -1736,6 +1746,8 @@ export class ChatGPTAdapter extends SiteAdapter {
       if (!(element instanceof HTMLElement)) return false
       if (element.closest(`[${CHATGPT_EXPORT_ROOT_ATTR}]`)) return false
       if (element.closest(".gh-root, .gh-main-panel")) return false
+      // 本地新草稿的占位容器，不是真实 turn
+      if (element.getAttribute("data-turn-id-container") === "client-created-root") return false
       return true
     })
 
@@ -1745,6 +1757,17 @@ export class ChatGPTAdapter extends SiteAdapter {
     )
 
     return innermost.sort((a, b) => this.getExportTurnSortIndex(a) - this.getExportTurnSortIndex(b))
+  }
+
+  /**
+   * 枚举到的 shell 可能是新版结构的外层占位 div；挂载后真实内容在内层
+   * section[data-turn] 上（归属判断、conversation-turn-N、data-turn-id 都在内层）。
+   * 提取前解析到最内层挂载 turn，取不到就原样返回。
+   */
+  private resolveExportTurnElement(turn: HTMLElement): HTMLElement {
+    if (turn.matches(CHATGPT_EXPORT_MOUNTED_TURN_SELECTOR)) return turn
+    const inner = turn.querySelector(CHATGPT_EXPORT_MOUNTED_TURN_SELECTOR)
+    return inner instanceof HTMLElement ? inner : turn
   }
 
   /** turn 是否已挂载真实内容（不是只剩 shell）。 */
@@ -2013,7 +2036,11 @@ export class ChatGPTAdapter extends SiteAdapter {
 
     const snapshots: ChatGPTExportMessageSnapshot[] = []
     for (const turn of turns) {
-      const turnSnapshots = this.extractTurnExportSnapshots(turn, referenceContainer, collector)
+      const turnSnapshots = this.extractTurnExportSnapshots(
+        this.resolveExportTurnElement(turn),
+        referenceContainer,
+        collector,
+      )
       snapshots.push(...turnSnapshots)
     }
     return snapshots
@@ -2021,8 +2048,8 @@ export class ChatGPTAdapter extends SiteAdapter {
 
   /**
    * 找出当前可见区域内的 turn 容器。
-   * ChatGPT 新版结构：<section data-turn="user|assistant" data-turn-id="..." data-testid="conversation-turn-N">。
-   * 老版可能只有 [data-testid^="conversation-turn"]。
+   * 挂载态结构：<section data-turn="user|assistant" data-turn-id="..." data-testid="conversation-turn-N">；
+   * 离屏只剩外层 <div data-turn-id-container="..."> 空壳（老版可能只有 [data-testid^="conversation-turn"]）。
    */
   private findExportTurnContainers(container: ParentNode): HTMLElement[] {
     const candidates = Array.from(
