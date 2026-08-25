@@ -24,7 +24,7 @@ import { getCurrentLang } from "~utils/i18n"
 
 import { resolveSitePackName } from "./localization"
 import { siteMatchPatternMatchesUrl, siteMatchPatternOrigin } from "./match-pattern"
-import type { SitePackManifest } from "./types"
+import type { SitePackManifest, SitePackThemeSyncConfig } from "./types"
 
 const DEFAULT_THEME_COLORS = {
   primary: "#2563eb",
@@ -68,7 +68,7 @@ const isTextControl = (element: HTMLElement): element is TextControl =>
 const setNestedThemeValue = (
   target: Record<string, unknown>,
   path: string,
-  value: string,
+  value: string | number,
 ): void => {
   const segments = path.split(".")
   let current: Record<string, unknown> = target
@@ -1101,10 +1101,8 @@ export class DeclarativeAdapter extends SiteAdapter {
           : targetMode
 
       // system 未配置独立值时退化为解析值，避免站点读到不认识的模式值
-      const storageValue =
-        targetMode === "system"
-          ? config.values.system ?? config.values[resolvedMode]
-          : config.values[targetMode]
+      const resolveStorageValue = (values: SitePackThemeSyncConfig["values"]): string =>
+        targetMode === "system" ? values.system ?? values[resolvedMode] : values[targetMode]
 
       const previousValue = localStorage.getItem(config.storageKey)
       let nextValue: string
@@ -1121,12 +1119,40 @@ export class DeclarativeAdapter extends SiteAdapter {
             stored = {}
           }
         }
-        setNestedThemeValue(stored, config.valuePath, storageValue)
+        // 先合并固定字段、再刷新时间戳，最后写主题值，保证主题值不被覆盖
+        if (config.staticFields) {
+          for (const [field, fieldValue] of Object.entries(config.staticFields)) {
+            if (field === "__proto__" || field === "prototype" || field === "constructor") continue
+            stored[field] = fieldValue
+          }
+        }
+        if (config.timestampPath) {
+          setNestedThemeValue(stored, config.timestampPath, Date.now())
+        }
+        setNestedThemeValue(stored, config.valuePath, resolveStorageValue(config.values))
         nextValue = JSON.stringify(stored)
       } else {
+        const storageValue = resolveStorageValue(config.values)
         nextValue = config.valueFormat === "json" ? JSON.stringify(storageValue) : storageValue
       }
       localStorage.setItem(config.storageKey, nextValue)
+
+      // 额外扁平键（如站点另存的布尔主题标记），逐个写入并记录待派发事件
+      const writtenKeys: Array<{ key: string; oldValue: string | null; newValue: string }> = [
+        { key: config.storageKey, oldValue: previousValue, newValue: nextValue },
+      ]
+      for (const extra of config.extraKeys ?? []) {
+        const extraOldValue = localStorage.getItem(extra.storageKey)
+        const extraValue = resolveStorageValue(extra.values)
+        const extraNextValue =
+          extra.valueFormat === "json" ? JSON.stringify(extraValue) : extraValue
+        localStorage.setItem(extra.storageKey, extraNextValue)
+        writtenKeys.push({
+          key: extra.storageKey,
+          oldValue: extraOldValue,
+          newValue: extraNextValue,
+        })
+      }
 
       // 用 classList 精确替换，绝不像部分内置站点那样整体覆写 className
       // darkClass/lightClass 都缺省时不动 DOM 类，靠上面的 storage 事件让站点自行应用
@@ -1141,14 +1167,16 @@ export class DeclarativeAdapter extends SiteAdapter {
       html.style.colorScheme = resolvedMode
 
       // 手动派发的 storage 事件同标签页监听者也能收到，next-themes 类实现靠它同步状态
-      window.dispatchEvent(
-        new StorageEvent("storage", {
-          key: config.storageKey,
-          oldValue: previousValue,
-          newValue: nextValue,
-          storageArea: localStorage,
-        }),
-      )
+      for (const written of writtenKeys) {
+        window.dispatchEvent(
+          new StorageEvent("storage", {
+            key: written.key,
+            oldValue: written.oldValue,
+            newValue: written.newValue,
+            storageArea: localStorage,
+          }),
+        )
+      }
 
       return true
     } catch (error) {

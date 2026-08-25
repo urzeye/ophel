@@ -517,7 +517,7 @@
       "type": "object",
       "additionalProperties": false,
       "required": ["storageKey", "values"],
-      "description": "Declarative host-page theme sync: write localStorage, optionally toggle html classes, and dispatch a storage event. Omit both darkClass and lightClass for sites that self-apply the theme from the storage event. Other mechanisms (body class, data-theme attributes, simulated clicks) are not supported.",
+      "description": "Declarative host-page theme sync: write localStorage, optionally toggle html classes, and dispatch a storage event per written key. Omit both darkClass and lightClass for sites that self-apply the theme from the storage event. Other mechanisms (body class, data-theme attributes, simulated clicks) are not supported.",
       "properties": {
         "storageKey": {
           "type": "string",
@@ -535,25 +535,59 @@
           "enum": ["raw", "json"],
           "description": "Wrapping format of the written value for flat storage; meaningless together with valuePath."
         },
-        "values": {
+        "timestampPath": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "Dot-separated path inside the JSON object storage refreshed with Date.now() on every write. Requires valuePath. Use for cross-tab sync payloads ordered by timestamp."
+        },
+        "staticFields": {
           "type": "object",
-          "additionalProperties": false,
-          "required": ["dark", "light"],
-          "properties": {
-            "dark": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 100
-            },
-            "light": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 100
-            },
-            "system": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 100
+          "description": "Fixed fields merged into the JSON object storage on every write (e.g. {\"mode\": \"manual\"}). Requires valuePath. Merged before valuePath/timestampPath, so the theme value wins on conflicts.",
+          "propertyNames": {
+            "allOf": [
+              {
+                "minLength": 1,
+                "maxLength": 100
+              },
+              {
+                "not": {
+                  "enum": ["__proto__", "prototype", "constructor"]
+                }
+              }
+            ]
+          },
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          }
+        },
+        "values": {
+          "$ref": "#/definitions/themeSyncValues"
+        },
+        "extraKeys": {
+          "type": "array",
+          "maxItems": 50,
+          "description": "Additional flat storage keys written alongside storageKey (e.g. a boolean theme flag the site persists separately). Each written key dispatches its own storage event.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["storageKey", "values"],
+            "properties": {
+              "storageKey": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200,
+                "description": "Must differ from themeSync.storageKey."
+              },
+              "valueFormat": {
+                "type": "string",
+                "enum": ["raw", "json"]
+              },
+              "values": {
+                "$ref": "#/definitions/themeSyncValues"
+              }
             }
           }
         },
@@ -568,6 +602,28 @@
           "minLength": 1,
           "maxLength": 100,
           "description": "Omit when the site only toggles a dark class."
+        }
+      }
+    },
+    "themeSyncValues": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dark", "light"],
+      "properties": {
+        "dark": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "light": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "system": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
         }
       }
     },

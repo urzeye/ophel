@@ -88,5 +88,26 @@
   ],
   "zenMode": {
     "hide": ["div:has(> div > a > [data-testid='Button:toolbar_new_answer_button'])"]
+  },
+  "themeSync": {
+    "storageKey": "theme@sync",
+    "valuePath": "theme",
+    "timestampPath": "ts",
+    "staticFields": {
+      "mode": "manual"
+    },
+    "values": {
+      "dark": "dark",
+      "light": "light"
+    },
+    "extraKeys": [
+      {
+        "storageKey": "zhida:theme_mode",
+        "values": {
+          "dark": "true",
+          "light": "false"
+        }
+      }
+    ]
   }
 }

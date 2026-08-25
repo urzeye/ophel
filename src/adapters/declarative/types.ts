@@ -140,12 +140,27 @@ export interface SitePackThemeSyncConfig {
   valuePath?: string
   /** 扁平存储时写入值的包装格式：raw 裸字符串；json 经 JSON.stringify 包装。缺省 raw。 */
   valueFormat?: "raw" | "json"
+  /**
+   * 嵌套存储时，写入前用当前时间戳（Date.now() 毫秒数）刷新的点分隔路径（如 "ts"）。
+   * 仅与 valuePath 同用；用于跨标签页同步载荷中按时间戳判先后的站点。
+   */
+  timestampPath?: string
+  /**
+   * 嵌套存储时每次写入都合并进对象的固定字段（如 { "mode": "manual" }）。
+   * 仅与 valuePath 同用；先于 valuePath/timestampPath 合并，同名字段以主题值为准。
+   */
+  staticFields?: Record<string, string>
   /** 各模式写入的值。system 缺省时按系统偏好解析为 dark/light 对应值写入。 */
   values: {
     dark: string
     light: string
     system?: string
   }
+  /**
+   * 除 storageKey 外需要同步写入的额外扁平键（如站点另存的布尔主题标记）。
+   * 只支持扁平存储；每个键写入后都会派发对应的 storage 事件。
+   */
+  extraKeys?: SitePackThemeSyncExtraKey[]
   /**
    * html 元素上的暗色类名。
    * 与 lightClass 都缺省时不动 DOM 类：仅写存储并派发 storage 事件，
@@ -154,6 +169,20 @@ export interface SitePackThemeSyncConfig {
   darkClass?: string
   /** html 元素上的亮色类名；缺省时亮色仅移除 darkClass。 */
   lightClass?: string
+}
+
+/** themeSync.extraKeys 的额外表键写入配置，仅支持扁平存储。 */
+export interface SitePackThemeSyncExtraKey {
+  /** localStorage 键名，必须与 themeSync.storageKey 不同。 */
+  storageKey: string
+  /** 写入值的包装格式：raw 裸字符串；json 经 JSON.stringify 包装。缺省 raw。 */
+  valueFormat?: "raw" | "json"
+  /** 各模式写入的值。system 缺省时按系统偏好解析为 dark/light 对应值写入。 */
+  values: {
+    dark: string
+    light: string
+    system?: string
+  }
 }
 
 /** 顶层站点适配包清单。 */
