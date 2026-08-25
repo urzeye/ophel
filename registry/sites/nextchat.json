@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "nextchat",
   "version": 2,
-  "minAppVersion": "1.2.0",
+  "minAppVersion": "1.2.5",
   "name": "NextChat",
   "nameI18n": {
     "zh-CN": "NextChat",
@@ -32,6 +32,7 @@
     "ru": "Добавляет в экземпляры NextChat функции Ophel для структуры, базового экспорта, режима Zen, нового чата и вставки промптов."
   },
   "matches": [],
+  "logoUrl": "https://avatars.githubusercontent.com/u/153288546?s=200&v=4",
   "capabilities": [
     "outline",
     "outline-user-queries",
