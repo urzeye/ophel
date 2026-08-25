@@ -237,6 +237,10 @@ export class LayoutManager {
       this.shadowCheckInterval = null
     }
     this.panelAvoidanceShadowCss = ""
+
+    // 已注入各 shadow root 的样式不会随 interval 停止而消失，必须显式移除；
+    // 同时释放 processedShadowRoots 持有的 ShadowRoot 引用
+    this.clearAllShadowStyles()
   }
 
   // ==================== 用户问题宽度 ====================

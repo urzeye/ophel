@@ -378,6 +378,9 @@ export async function initReadingHistoryManager(ctx: ModulesContext): Promise<vo
     }
 
     const startRecording = (currentSettings: Settings) => {
+      // await consumeClearAllFlag() 期间适配器可能已切换并被 teardown 回收，
+      // 过期上下文不得再创建实例，否则旧适配器的实例会被后续站点直接复用
+      if (ctx.isStale?.()) return
       if (modules.readingHistoryManager) return
       modules.readingHistoryManager = new ReadingHistoryManager(
         adapter,
@@ -401,9 +404,11 @@ export async function initReadingHistoryManager(ctx: ModulesContext): Promise<vo
 
     startRecording(settings)
 
-    if (settings.readingHistory.autoRestore) {
+    // startRecording 可能因过期中止而未创建实例，这里必须判空
+    const manager = modules.readingHistoryManager
+    if (settings.readingHistory.autoRestore && manager) {
       const { showToast } = await import("~utils/toast")
-      modules.readingHistoryManager
+      manager
         .restoreProgress((msg) => showToast(msg, 3000))
         .then((restored) => {
           if (restored) {
@@ -412,7 +417,7 @@ export async function initReadingHistoryManager(ctx: ModulesContext): Promise<vo
         })
     }
 
-    modules.readingHistoryManager.cleanup()
+    manager?.cleanup()
   }
 }
 
@@ -459,11 +464,16 @@ export async function initCoreModules(ctx: ModulesContext): Promise<ModuleInstan
   // 异步步骤之间适配器可能已被切换/清空（SPA 导航），过期初始化不得再创建新实例
   const isAborted = () => ctx.isStale?.() === true
 
+  // 等待 hydration 期间 teardown 可能已执行，入口先拦截，避免步骤 1-7 无条件建实例
+  if (isAborted()) return modules
+
   // 1. 主题管理 (优先应用)
   initThemeManager(ctx)
 
   // 延迟同步页面主题
-  setTimeout(() => syncHostThemeWithSettings(ctx), 1000)
+  setTimeout(() => {
+    if (!isAborted()) void syncHostThemeWithSettings(ctx)
+  }, 1000)
 
   // 2. Markdown 修复
   initMarkdownFixer(ctx)

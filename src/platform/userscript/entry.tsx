@@ -616,13 +616,9 @@ async function init() {
   let activeModulesCleanup: (() => void) | null = null
   let initGeneration = 0
   let bindingIssueNoticeShown = false
-  // modules-init 仅在首次成功初始化后才被动态加载，尚未加载时无需清理
-  let coreModulesLoaded = false
-
-  const destroyCoreModulesIfLoaded = () => {
-    if (!coreModulesLoaded) return
-    void import("~core/modules-init").then(({ destroyCoreModules }) => destroyCoreModules())
-  }
+  // modules-init 首次动态加载后缓存 destroy 引用，teardown 时同步调用；
+  // 不依赖动态 import 的微任务顺序，尚未加载时无需清理
+  let destroyCoreModulesFn: (() => void) | null = null
 
   const teardownActiveModules = () => {
     activeModulesCleanup?.()
@@ -631,7 +627,7 @@ async function init() {
     initGeneration++
     // 订阅解除后再统一停掉旧适配器创建的全部模块实例，
     // 否则 initCoreModules 重新 new 时旧实例的监听器会持续累积
-    destroyCoreModulesIfLoaded()
+    destroyCoreModulesFn?.()
   }
 
   const initializeUserscriptModules = async () => {
@@ -663,10 +659,9 @@ async function init() {
       const settings = getSettingsState()
 
       // ========== 初始化所有核心模块（使用共享模块） ==========
-      const { initCoreModules, subscribeModuleUpdates, initUrlChangeObserver } = await import(
-        "~core/modules-init"
-      )
-      coreModulesLoaded = true
+      const { initCoreModules, subscribeModuleUpdates, initUrlChangeObserver, destroyCoreModules } =
+        await import("~core/modules-init")
+      destroyCoreModulesFn = destroyCoreModules
 
       const ctx = {
         adapter,
