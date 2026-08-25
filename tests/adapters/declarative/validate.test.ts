@@ -323,6 +323,45 @@ describe("validateSitePackManifest matches", () => {
   })
 })
 
+describe("validateSitePackManifest logoUrl", () => {
+  it("accepts an https logoUrl", () => {
+    const value = expectValid(
+      validateSitePackManifest({
+        ...createMinimalManifest(),
+        logoUrl: "https://chat.example.com/assets/logo.svg",
+      }),
+    )
+
+    expect(value.logoUrl).toBe("https://chat.example.com/assets/logo.svg")
+  })
+
+  it.each(["http://chat.example.com/logo.png", "not-a-url", "javascript:alert(1)"])(
+    "rejects logoUrl %s for registry packs",
+    (logoUrl) => {
+      expectInvalid(
+        validateSitePackManifest({
+          ...createMinimalManifest(),
+          logoUrl,
+        }),
+        "$.logoUrl",
+        "invalid_value",
+      )
+    },
+  )
+
+  it("allows http logoUrl for local imports", () => {
+    expectValid(
+      validateSitePackManifest(
+        {
+          ...createMinimalManifest(),
+          logoUrl: "http://chat.example.com/logo.png",
+        },
+        { allowHttpMatches: true },
+      ),
+    )
+  })
+})
+
 describe("validateSitePackManifest identity, colors, and same-origin paths", () => {
   it.each(["ab", "pack-1", "a".repeat(40)])("accepts valid SitePack id %s", (id) => {
     expectValid(

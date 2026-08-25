@@ -39,6 +39,7 @@ interface CreatePackOptions {
   name: string
   matches?: string[]
   nameI18n?: Record<string, string>
+  logoUrl?: string
   installedAt?: number
 }
 
@@ -47,6 +48,7 @@ const createPack = ({
   name,
   matches = [`https://${id}.example/*`],
   nameI18n,
+  logoUrl,
   installedAt = 1,
 }: CreatePackOptions): InstalledSitePack => {
   const manifest: SitePackManifest = {
@@ -57,6 +59,7 @@ const createPack = ({
     name,
     ...(nameI18n ? { nameI18n } : {}),
     matches,
+    ...(logoUrl ? { logoUrl } : {}),
     capabilities: ["outline"],
     selectors: { responseContainer: "main" },
   }
@@ -146,6 +149,26 @@ describe("dynamic SitePack platform metadata", () => {
     })
     expect(platforms[1].pattern.test("https://chat.atlas.example/thread?id=1")).toBe(true)
     expect(platforms[1].pattern.test("http://chat.atlas.example/thread")).toBe(false)
+  })
+
+  it("prefers manifest logoUrl over the derived /favicon.ico", async () => {
+    const logoPack = createPack({
+      id: "notion-ai",
+      name: "Notion AI",
+      matches: ["https://app.notion.example/ai*"],
+      logoUrl: "https://app.notion.example/images/favicon.ico",
+    })
+    const [{ getDynamicPlatforms }, { createEmptySitePackOriginBindingsState }] = await Promise.all(
+      [import("~core/site-pack-platforms"), import("~core/site-pack-origin-bindings")],
+    )
+
+    const [platform] = getDynamicPlatforms(
+      [logoPack],
+      createEmptySitePackOriginBindingsState(),
+      "en",
+    )
+
+    expect(platform.faviconUrl).toBe("https://app.notion.example/images/favicon.ico")
   })
 
   it("activates user-bound origins for packs that declare no static matches", async () => {

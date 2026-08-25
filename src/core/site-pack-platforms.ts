@@ -13,10 +13,15 @@ const uniqueOrigins = (patterns: readonly string[]): string[] =>
   Array.from(new Set(patterns.map(siteMatchPatternOrigin)))
 
 /**
- * 适配包站点 favicon 规则：取匹配合集（静态 matches + 用户绑定域名）首个来源的
- * /favicon.ico。平台目录与适配中心列表共用这一条规则，避免两处各自推导分叉。
+ * 适配包站点图标规则：manifest 声明的 logoUrl 优先；否则取匹配合集
+ * （静态 matches + 用户绑定域名）首个来源的 /favicon.ico。
+ * 平台目录与适配中心列表共用这一条规则，避免两处各自推导分叉。
  */
-export const getSitePackFaviconUrl = (matchPatterns: readonly string[]): string | undefined => {
+export const getSitePackFaviconUrl = (
+  matchPatterns: readonly string[],
+  logoUrl?: string,
+): string | undefined => {
+  if (logoUrl) return logoUrl
   const [faviconOrigin] = uniqueOrigins(matchPatterns)
   return faviconOrigin ? new URL("/favicon.ico", faviconOrigin).href : undefined
 }
@@ -36,7 +41,7 @@ export const getDynamicPlatforms = (
     )
     const entryUrls = uniqueOrigins(matchPatterns)
     const name = resolveSitePackName(pack.manifest, language)
-    const faviconUrl = getSitePackFaviconUrl(matchPatterns)
+    const faviconUrl = getSitePackFaviconUrl(matchPatterns, pack.manifest.logoUrl)
     return createSupportedAiPlatform(
       {
         id: `pack:${pack.manifest.id}`,

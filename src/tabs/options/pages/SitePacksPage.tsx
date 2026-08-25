@@ -1548,10 +1548,10 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
     const firstSiteUrl = firstMatch ? siteMatchPatternDisplayUrl(firstMatch) : undefined
     const name = resolveSitePackName(pack.manifest, currentLanguage)
     // 与提示词平台筛选同一条 favicon 规则；无 favicon 或加载失败时回退为首字母
-    const faviconUrl = getSitePackFaviconUrl([
-      ...pack.manifest.matches,
-      ...getSitePackBoundOriginPatterns(pack, originBindings),
-    ])
+    const faviconUrl = getSitePackFaviconUrl(
+      [...pack.manifest.matches, ...getSitePackBoundOriginPatterns(pack, originBindings)],
+      pack.manifest.logoUrl,
+    )
     const description = resolveSitePackDescription(pack.manifest, currentLanguage)
     // 自部署包没有任何绑定指向时不会在任何站点生效，显式提示并给出绑定入口
     const needsBinding = pack.manifest.matches.length === 0 && !boundPackIds.has(packId)
@@ -1658,6 +1658,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
       view.installed
         ? [...view.matches, ...getSitePackBoundOriginPatterns(view.installed, originBindings)]
         : view.matches,
+      view.logoUrl,
     )
 
     return (
