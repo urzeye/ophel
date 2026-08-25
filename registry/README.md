@@ -28,6 +28,7 @@ SitePack 的 TypeScript 运行时校验器是安全与兼容性的最终真值�
 | `minAppVersion`        | 最早理解这些字段并完成过验证的 Ophel SemVer 版本。                                                                          |
 | `name` / `description` | 默认展示文本；可用 `nameI18n` / `descriptionI18n` 提供多语映射。                                                            |
 | `matches`              | 最多 10 条 HTTPS match pattern；禁止全局匹配、顶层通配及与内置/现有包重叠。自部署站点包可为空，仅经用户自定义域名绑定激活。 |
+| `logoUrl`              | 可选 HTTPS 图片 URL，作为适配包图标；缺省时取首个 match 来源的 `/favicon.ico`。                                             |
 | `capabilities`         | 用户界面能力契约，只能声明已经提供所需字段并在真实页面验证的能力。                                                          |
 | `selectors`            | 通用页面选择器集合；各字符串最长 500 字符，普通数组最多 50 项。                                                             |
 

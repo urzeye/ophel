@@ -133,6 +133,7 @@ const MANIFEST_KEYS = [
   "description",
   "descriptionI18n",
   "matches",
+  "logoUrl",
   ...CONFIG_KEYS,
 ] as const
 
@@ -1689,6 +1690,26 @@ const validateConfigFields = (
   if (mode === "full") validateCapabilityRequirements(config, path, context)
 }
 
+/** logoUrl 仅允许 https；本地导入（allowHttpMatches）放宽 http 以覆盖明文 HTTP 自托管实例。 */
+const validateLogoUrl = (value: unknown, path: string, context: ValidationContext): void => {
+  if (!validateString(value, path, context, "full", { maxLength: 500 })) return
+  let url: URL
+  try {
+    url = new URL(value)
+  } catch {
+    addError(context, path, "invalid_value", "logoUrl must be a valid URL")
+    return
+  }
+  if (url.protocol === "https:") return
+  if (url.protocol === "http:" && context.allowHttpMatches) return
+  addError(
+    context,
+    path,
+    "invalid_value",
+    context.allowHttpMatches ? "logoUrl must use http:// or https://" : "logoUrl must use https://",
+  )
+}
+
 const validateMatchPattern = (value: string, path: string, context: ValidationContext): void => {
   if (value === "<all_urls>" || value === "https://*/*" || value === "http://*/*") {
     addError(context, path, "invalid_pattern", "Global match patterns are not allowed")
@@ -1802,6 +1823,9 @@ export function validateSitePackManifest(
   }
   if (manifest.descriptionI18n !== undefined) {
     validateI18nRecord(manifest.descriptionI18n, "$.descriptionI18n", context)
+  }
+  if (manifest.logoUrl !== undefined) {
+    validateLogoUrl(manifest.logoUrl, "$.logoUrl", context)
   }
   if (manifest.matches !== undefined) {
     validateStringArray(manifest.matches, "$.matches", context, "full", {

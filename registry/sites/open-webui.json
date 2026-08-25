@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "open-webui",
   "version": 3,
-  "minAppVersion": "1.2.0",
+  "minAppVersion": "1.2.5",
   "name": "Open WebUI",
   "nameI18n": {
     "zh-CN": "Open WebUI",
@@ -32,6 +32,7 @@
     "ru": "Добавляет в самостоятельно размещённые экземпляры Open WebUI функции Ophel для структуры, базового экспорта, отслеживания генерации, режима Zen, нового чата и вставки промптов."
   },
   "matches": [],
+  "logoUrl": "https://docs.openwebui.com/images/favicon.png",
   "capabilities": [
     "outline",
     "outline-user-queries",

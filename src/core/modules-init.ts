@@ -47,6 +47,11 @@ export interface ModulesContext {
   settings: Settings
   siteId: string
   siteInstanceKey: string
+  /**
+   * 可选中止信号：异步初始化期间适配器若已切换 / 离开，返回 true。
+   * 返回 true 时 initCoreModules 不再继续创建新模块（已建模块由 teardown 回收）。
+   */
+  isStale?: () => boolean
 }
 
 /**
@@ -373,6 +378,9 @@ export async function initReadingHistoryManager(ctx: ModulesContext): Promise<vo
     }
 
     const startRecording = (currentSettings: Settings) => {
+      // await consumeClearAllFlag() 期间适配器可能已切换并被 teardown 回收，
+      // 过期上下文不得再创建实例，否则旧适配器的实例会被后续站点直接复用
+      if (ctx.isStale?.()) return
       if (modules.readingHistoryManager) return
       modules.readingHistoryManager = new ReadingHistoryManager(
         adapter,
@@ -396,9 +404,14 @@ export async function initReadingHistoryManager(ctx: ModulesContext): Promise<vo
 
     startRecording(settings)
 
-    if (settings.readingHistory.autoRestore) {
+    // startRecording 可能因过期中止而未创建实例，这里必须判空
+    const manager = modules.readingHistoryManager
+    if (settings.readingHistory.autoRestore && manager) {
       const { showToast } = await import("~utils/toast")
-      modules.readingHistoryManager
+      // await 期间适配器可能已切换并被 destroyCoreModules 回收，
+      // 注册表中已不再是该实例时不得再对旧适配器执行恢复
+      if (modules.readingHistoryManager !== manager) return
+      manager
         .restoreProgress((msg) => showToast(msg, 3000))
         .then((restored) => {
           if (restored) {
@@ -407,7 +420,7 @@ export async function initReadingHistoryManager(ctx: ModulesContext): Promise<vo
         })
     }
 
-    modules.readingHistoryManager.cleanup()
+    manager?.cleanup()
   }
 }
 
@@ -451,11 +464,19 @@ export function initUserQueryMarkdownRenderer(ctx: ModulesContext): void {
  * 初始化所有核心模块
  */
 export async function initCoreModules(ctx: ModulesContext): Promise<ModuleInstances> {
+  // 异步步骤之间适配器可能已被切换/清空（SPA 导航），过期初始化不得再创建新实例
+  const isAborted = () => ctx.isStale?.() === true
+
+  // 等待 hydration 期间 teardown 可能已执行，入口先拦截，避免步骤 1-7 无条件建实例
+  if (isAborted()) return modules
+
   // 1. 主题管理 (优先应用)
   initThemeManager(ctx)
 
   // 延迟同步页面主题
-  setTimeout(() => syncHostThemeWithSettings(ctx), 1000)
+  setTimeout(() => {
+    if (!isAborted()) void syncHostThemeWithSettings(ctx)
+  }, 1000)
 
   // 2. Markdown 修复
   initMarkdownFixer(ctx)
@@ -477,6 +498,7 @@ export async function initCoreModules(ctx: ModulesContext): Promise<ModuleInstan
 
   // 8. 阅读历史
   await initReadingHistoryManager(ctx)
+  if (isAborted()) return modules
 
   // 9. 模型锁定
   initModelLocker(ctx)
@@ -489,6 +511,7 @@ export async function initCoreModules(ctx: ModulesContext): Promise<ModuleInstan
 
   // 12. AI 回复 Mermaid 渲染
   await initAssistantMermaidRenderer(ctx)
+  if (isAborted()) return modules
 
   // 13. Policy Retry Manager
   initPolicyRetryManager(ctx)
@@ -878,6 +901,50 @@ export function initUrlChangeObserver(ctx: ModulesContext): () => void {
 }
 
 declare const __PLATFORM__: "extension" | "userscript" | undefined
+
+/**
+ * 停止并释放全部核心模块（适配器切换 / 站点离开时使用）。
+ *
+ * initCoreModules 只负责创建与覆盖引用，旧实例的监听器和观察者不会自己消失，
+ * 必须在这里逐个停掉；主题管理器是跨适配器复用的全局单例，不在本函数范围内。
+ */
+export function destroyCoreModules(): void {
+  if (readingHistoryAutoStartTimer) {
+    clearTimeout(readingHistoryAutoStartTimer)
+    readingHistoryAutoStartTimer = null
+  }
+
+  modules.assistantMermaidRenderer?.stop()
+  modules.chatgptPerfManager?.stop()
+  modules.copyManager?.stop()
+  modules.layoutManager?.stop()
+  modules.markdownFixer?.stop()
+  modules.tabManager?.destroy()
+  modules.watermarkRemover?.stop()
+  modules.readingHistoryManager?.stopRecording()
+  modules.modelLocker?.stop()
+  modules.scrollLockManager?.stop()
+  modules.userQueryMarkdownRenderer?.destroy()
+  modules.policyRetryManager?.stop()
+  modules.usageCounterManager?.destroy()
+
+  modules = {
+    assistantMermaidRenderer: null,
+    chatgptPerfManager: null,
+    themeManager: modules.themeManager,
+    copyManager: null,
+    layoutManager: null,
+    markdownFixer: null,
+    tabManager: null,
+    watermarkRemover: null,
+    readingHistoryManager: null,
+    modelLocker: null,
+    scrollLockManager: null,
+    userQueryMarkdownRenderer: null,
+    policyRetryManager: null,
+    usageCounterManager: null,
+  }
+}
 
 /**
  * 清除全部数据时的模块清理

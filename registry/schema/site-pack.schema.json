@@ -56,6 +56,9 @@
         "$ref": "#/definitions/matchPattern"
       }
     },
+    "logoUrl": {
+      "$ref": "#/definitions/logoUrl"
+    },
     "theme": {
       "$ref": "#/definitions/theme"
     },
@@ -489,6 +492,13 @@
         "enum": ["https://*/*"]
       },
       "description": "HTTPS extension match pattern. Runtime validation also rejects malformed and top-level host wildcards."
+    },
+    "logoUrl": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500,
+      "pattern": "^https://",
+      "description": "HTTPS image URL used as the pack icon, overriding the default /favicon.ico derivation from the first match origin. Local imports may additionally use http:// (runtime-only allowance)."
     },
     "theme": {
       "type": "object",

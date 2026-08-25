@@ -20,6 +20,7 @@ export interface RegistrySitePackView {
   matches: string[]
   availability: RegistrySitePackAvailability
   theme?: SitePackManifest["theme"]
+  logoUrl?: SitePackManifest["logoUrl"]
   installed?: InstalledSitePack
 }
 
@@ -48,12 +49,15 @@ export const buildRegistrySitePackViews = (
   return active.index.packs
     .map((entry): RegistrySitePackView => {
       const cached = active.packs[entry.id]
+      const installed = installedById.get(entry.id)
       const description = cached ? resolveSitePackDescription(cached.manifest, language) : undefined
       const availability: RegistrySitePackAvailability = entry.disabled
         ? "disabled"
         : cached
           ? "available"
           : "incompatible"
+      // 已安装时优先反映实际运行的 manifest 图标，否则用 registry 缓存的清单
+      const logoUrl = installed?.manifest.logoUrl ?? cached?.manifest.logoUrl
 
       return {
         id: entry.id,
@@ -65,7 +69,8 @@ export const buildRegistrySitePackViews = (
         matches: [...entry.matches],
         availability,
         ...(cached?.manifest.theme ? { theme: cached.manifest.theme } : {}),
-        ...(installedById.has(entry.id) ? { installed: installedById.get(entry.id) } : {}),
+        ...(logoUrl ? { logoUrl } : {}),
+        ...(installed ? { installed } : {}),
       }
     })
     .sort((left, right) => left.name.localeCompare(right.name) || left.id.localeCompare(right.id))

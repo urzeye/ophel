@@ -32,6 +32,7 @@
     "ru": "Добавляет в Notion AI функции Ophel для структуры, базового экспорта, ширины чата, режима Zen, нового чата и вставки промптов."
   },
   "matches": ["https://app.notion.com/ai*", "https://app.notion.com/chat*"],
+  "logoUrl": "https://app.notion.com/images/favicon.ico",
   "theme": {
     "primary": "#2383e2",
     "secondary": "#105fad"

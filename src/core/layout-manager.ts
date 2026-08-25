@@ -208,6 +208,41 @@ export class LayoutManager {
     this.refreshShadowInjection()
   }
 
+  /**
+   * 完全停止并释放布局副作用（适配器切换 / 站点离开时使用）。
+   *
+   * 与 update 系列方法的区别：不仅移除配置层（样式、避让监听、Zen/Clean 模式），
+   * 还要求实例此后不可复用——modules registry 会丢弃引用并重建。
+   */
+  stop(): void {
+    this.stopPanelAvoidance()
+
+    this.removeStyle(this.pageWidthStyle)
+    this.pageWidthStyle = null
+    this.removeStyle(this.userQueryWidthStyle)
+    this.userQueryWidthStyle = null
+    this.removeStyle(this.zenModeStyle)
+    this.zenModeStyle = null
+    this.removeStyle(this.cleanModeStyle)
+    this.cleanModeStyle = null
+
+    // Zen 模式的根类只移除由本实例添加的那些，避免误删站点自带类名
+    this.cleanupZenModeRootClass()
+    this.unmountZenModeExitButton()
+    this.zenModeEnabled = false
+    this.cleanModeEnabled = false
+
+    if (this.shadowCheckInterval) {
+      clearInterval(this.shadowCheckInterval)
+      this.shadowCheckInterval = null
+    }
+    this.panelAvoidanceShadowCss = ""
+
+    // 已注入各 shadow root 的样式不会随 interval 停止而消失，必须显式移除；
+    // 同时释放 processedShadowRoots 持有的 ShadowRoot 引用
+    this.clearAllShadowStyles()
+  }
+
   // ==================== 用户问题宽度 ====================
 
   updateUserQueryConfig(config: PageWidthConfig) {

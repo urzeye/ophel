@@ -19,6 +19,7 @@ import { DEFAULT_FOLDERS, SITE_IDS, getDefaultPromptChains, getDefaultPrompts } 
 import {
   initCoreModules,
   initUrlChangeObserver,
+  destroyCoreModules,
   handleClearAllData,
   startPageUrlChangeBroadcaster,
   subscribeModuleUpdates,
@@ -476,6 +477,9 @@ function teardownActiveModules() {
   activeModulesCleanup = null
   activeAdapterInstance = null
   initGeneration++
+  // 订阅解除后再统一停掉旧适配器创建的全部模块实例，
+  // 否则 initCoreModules 重新 new 时旧实例的监听器会持续累积
+  destroyCoreModules()
 }
 
 function registerBackgroundMessageListener() {
@@ -603,7 +607,13 @@ function initializeOphel() {
       const settings = getSettingsState()
 
       // 创建模块上下文
-      const ctx: ModulesContext = { adapter, settings, siteId, siteInstanceKey }
+      const ctx: ModulesContext = {
+        adapter,
+        settings,
+        siteId,
+        siteInstanceKey,
+        isStale: () => generation !== initGeneration || activeAdapterInstance !== adapter,
+      }
 
       // 初始化所有核心模块
       await initCoreModules(ctx)

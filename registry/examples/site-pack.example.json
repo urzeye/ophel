@@ -14,6 +14,7 @@
     "zh-CN": "用于校验和贡献模板的完整虚构 SitePack。"
   },
   "matches": ["https://chat.example.com/*"],
+  "logoUrl": "https://chat.example.com/assets/logo.svg",
   "theme": {
     "primary": "#1d4ed8",
     "secondary": "#f8fafc"

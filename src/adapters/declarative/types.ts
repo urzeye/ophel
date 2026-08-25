@@ -170,6 +170,8 @@ export interface SitePackManifest extends SitePackConfig {
   descriptionI18n?: Record<string, string>
   /** 允许为空；为空时仅经用户显式域名绑定激活。 */
   matches: string[]
+  /** 自定义图标图片 URL；缺省时取首个 match 来源的 /favicon.ico。 */
+  logoUrl?: string
 }
 
 export type SitePrivateSelectorValue = string | string[]
