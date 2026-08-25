@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "zhida",
   "version": 1,
-  "minAppVersion": "1.2.4",
+  "minAppVersion": "1.2.5",
   "name": "知乎直答",
   "nameI18n": {
     "zh-CN": "知乎直答",
@@ -32,6 +32,7 @@
     "ru": "Добавляет в Zhihu Zhida функции Ophel для структуры, базового экспорта, нового чата, ширины чата, режима Zen и вставки промптов."
   },
   "matches": ["https://zhida.zhihu.com/*"],
+  "logoUrl": "https://pica.zhimg.com/v2-793ea13f76a2bd45599c1849cad804b5.png",
   "theme": {
     "primary": "#5a4df8",
     "secondary": "#3730b8"
@@ -50,14 +51,14 @@
       "div[contenteditable='true'][role='textbox']",
       ".public-DraftEditor-content[contenteditable='true']"
     ],
-    "responseContainer": "[data-message-id][data-phase='Answer']",
-    "userQuery": "[style*='rgba(90, 77, 248, 0.15)']",
-    "assistantResponse": ".Render-markdown",
+    "responseContainer": "#fullScreen [data-scroller='true']",
+    "userQuery": "[style*='background-color: rgba(90, 77, 248, 0.15)'], [style*='background-color:rgba(90, 77, 248, 0.15)']",
+    "assistantResponse": "[data-testid='Block:zhida_answer_result_block'] .Render-markdown",
     "newChatButton": [
       "[data-testid='Button:toolbar_new_answer_button']",
       "[data-testid='Button:zhida_multi_round_dialogue']"
     ],
-    "scrollContainer": ["#fullScreen", "#fullScreen [data-scroller='true']"]
+    "scrollContainer": ["#fullScreen [data-scroller='true']", "#fullScreen"]
   },
   "input": {
     "mode": "contenteditable",
@@ -70,8 +71,8 @@
     "newTabPath": "/"
   },
   "export": {
-    "userQuerySelector": "[style*='rgba(90, 77, 248, 0.15)']",
-    "assistantResponseSelector": ".Render-markdown",
+    "userQuerySelector": "[style*='background-color: rgba(90, 77, 248, 0.15)'], [style*='background-color:rgba(90, 77, 248, 0.15)']",
+    "assistantResponseSelector": "[data-testid='Block:zhida_answer_result_block'] .Render-markdown",
     "turnSelector": null,
     "useShadowDOM": false
   },
@@ -83,13 +84,9 @@
     {
       "selector": "#fullScreen [style*='width: 712px'], #fullScreen [style*='width:712px']",
       "property": "max-width"
-    },
-    {
-      "selector": "[data-testid='Block:zhida_input_box']",
-      "property": "max-width"
     }
   ],
   "zenMode": {
-    "hide": ["#fullScreen"]
+    "hide": ["div:has(> div > a > [data-testid='Button:toolbar_new_answer_button'])"]
   }
 }
