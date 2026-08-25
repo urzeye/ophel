@@ -20,6 +20,7 @@ const MANIFEST_ONLY_KEYS = [
   "description",
   "descriptionI18n",
   "matches",
+  "logoUrl",
 ] as const
 
 const createBuiltinConfig = (): Record<string, unknown> => {
