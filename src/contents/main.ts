@@ -654,10 +654,12 @@ async function bootstrapOphel() {
   initializeOphel()
 
   // 启动页面级 URL 广播，监听 SPA 路由变化
-  startPageUrlChangeBroadcaster()
+  const stopBroadcaster = startPageUrlChangeBroadcaster()
   window.addEventListener(EVENT_PAGE_URL_CHANGE, () => {
     initializeOphel()
   })
+  // 页面卸载时释放广播器引用计数，避免引用计数单例泄漏
+  window.addEventListener("unload", () => stopBroadcaster(), { once: true })
 }
 
 void bootstrapOphel().catch((error) => {

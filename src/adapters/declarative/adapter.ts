@@ -346,16 +346,16 @@ export class DeclarativeAdapter extends SiteAdapter {
     }
 
     const selection = editor.ownerDocument.getSelection()
-    if (selection) {
-      try {
-        selection.selectAllChildren(editor)
-        return true
-      } catch {
-        // ignore
-      }
-    }
+    if (!selection) return false
 
-    return true
+    try {
+      selection.selectAllChildren(editor)
+      return true
+    } catch {
+      // selectAllChildren 失败时选区停留在 execCommand 的整页范围，
+      // 不能当作成功，否则后续 insertText/deletion 会作用于错误位置。
+      return false
+    }
   }
 
   private replaceContentEditableContent(
