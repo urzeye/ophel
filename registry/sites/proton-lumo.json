@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "proton-lumo",
   "version": 1,
-  "minAppVersion": "1.2.2",
+  "minAppVersion": "1.2.5",
   "name": "Proton Lumo",
   "nameI18n": {
     "zh-CN": "Proton Lumo",
@@ -32,6 +32,7 @@
     "ru": "Добавляет в Proton Lumo функции Ophel для структуры, базового экспорта, отслеживания и остановки генерации, ширины чата, режима Zen, режима очистки, нового чата и вставки промптов."
   },
   "matches": ["https://lumo.proton.me/*"],
+  "logoUrl": "https://lumo.proton.me/assets/favicon.ico",
   "theme": {
     "primary": "#6d4aff",
     "secondary": "#573bcc"

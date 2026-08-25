@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "longcat",
   "version": 1,
-  "minAppVersion": "1.2.1",
+  "minAppVersion": "1.2.5",
   "name": "LongCat AI",
   "nameI18n": {
     "zh-CN": "LongCat AI",
@@ -32,6 +32,7 @@
     "ru": "Добавляет в LongCat AI функции Ophel для структуры, базового экспорта, отслеживания и остановки генерации, ширины чата, режима Zen, нового чата и вставки промптов."
   },
   "matches": ["https://longcat.chat/*"],
+  "logoUrl": "https://s3plus.meituan.net/aigc-media-resources/longcat/yeqian-logo.svg",
   "theme": {
     "primary": "#166ff7",
     "secondary": "#0e65e8"

@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "librechat",
   "version": 2,
-  "minAppVersion": "1.2.0",
+  "minAppVersion": "1.2.5",
   "name": "LibreChat",
   "nameI18n": {
     "zh-CN": "LibreChat",
@@ -32,6 +32,7 @@
     "ru": "Добавляет в экземпляры LibreChat функции Ophel для структуры, базового экспорта, отслеживания и остановки генерации, режима Zen, нового чата и вставки промптов."
   },
   "matches": [],
+  "logoUrl": "https://www.librechat.ai/favicon.ico",
   "capabilities": [
     "outline",
     "outline-user-queries",

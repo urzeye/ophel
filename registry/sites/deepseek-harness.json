@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "deepseek-harness",
   "version": 2,
-  "minAppVersion": "1.2.1",
+  "minAppVersion": "1.2.5",
   "name": "DeepSeek Harness",
   "nameI18n": {
     "zh-CN": "DeepSeek Harness",
@@ -32,6 +32,7 @@
     "ru": "Добавляет в самостоятельно размещённые экземпляры DeepSeek Harness функции Ophel для структуры, базового экспорта, отслеживания и остановки генерации, ширины чата, режима Zen, вставки промптов и истории чтения."
   },
   "matches": [],
+  "logoUrl": "https://raw.githubusercontent.com/deepseek-ai/deepseek-harness/master/apps/web/public/favicon.svg",
   "theme": {
     "primary": "#4b6bfe",
     "secondary": "#3a5ae0"
