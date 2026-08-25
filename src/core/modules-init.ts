@@ -408,6 +408,9 @@ export async function initReadingHistoryManager(ctx: ModulesContext): Promise<vo
     const manager = modules.readingHistoryManager
     if (settings.readingHistory.autoRestore && manager) {
       const { showToast } = await import("~utils/toast")
+      // await 期间适配器可能已切换并被 destroyCoreModules 回收，
+      // 注册表中已不再是该实例时不得再对旧适配器执行恢复
+      if (modules.readingHistoryManager !== manager) return
       manager
         .restoreProgress((msg) => showToast(msg, 3000))
         .then((restored) => {
