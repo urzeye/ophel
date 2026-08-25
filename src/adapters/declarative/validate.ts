@@ -988,55 +988,57 @@ const validateThemeSync = (
 
   if (themeSync.extraKeys !== undefined) {
     const extraKeysPath = `${path}.extraKeys`
-    if (isDeletion(themeSync.extraKeys, mode)) return
-    if (!Array.isArray(themeSync.extraKeys)) {
+    // 不能用提前 return：darkClass/lightClass 校验在本块之后，删除或类型错误时也要继续校验
+    if (!isDeletion(themeSync.extraKeys, mode) && !Array.isArray(themeSync.extraKeys)) {
       addError(context, extraKeysPath, "invalid_type", "Expected an array")
-      return
     }
-    if (themeSync.extraKeys.length > SITE_PACK_MAX_ARRAY_ITEMS) {
-      addError(
-        context,
-        extraKeysPath,
-        "too_large",
-        `Array must not contain more than ${SITE_PACK_MAX_ARRAY_ITEMS} items`,
-      )
-    }
-    themeSync.extraKeys.forEach((extra, index) => {
-      const extraPath = `${extraKeysPath}[${index}]`
-      const extraKey = validateObject(
-        extra,
-        extraPath,
-        context,
-        ["storageKey", "valueFormat", "values"],
-        ["storageKey", "values"],
-        "full",
-      )
-      if (!extraKey) return
-      if (extraKey.storageKey !== undefined) {
-        if (
-          validateString(extraKey.storageKey, `${extraPath}.storageKey`, context, mode, {
-            maxLength: 200,
-          }) &&
-          extraKey.storageKey === themeSync.storageKey
-        ) {
-          addError(
-            context,
-            `${extraPath}.storageKey`,
-            "invalid_value",
-            "extraKeys storageKey must differ from themeSync.storageKey",
-          )
+    if (Array.isArray(themeSync.extraKeys)) {
+      if (themeSync.extraKeys.length > SITE_PACK_MAX_ARRAY_ITEMS) {
+        addError(
+          context,
+          extraKeysPath,
+          "too_large",
+          `Array must not contain more than ${SITE_PACK_MAX_ARRAY_ITEMS} items`,
+        )
+      }
+      themeSync.extraKeys.forEach((extra, index) => {
+        const extraPath = `${extraKeysPath}[${index}]`
+        const extraKey = validateObject(
+          extra,
+          extraPath,
+          context,
+          ["storageKey", "valueFormat", "values"],
+          ["storageKey", "values"],
+          "full",
+        )
+        if (!extraKey) return
+        if (extraKey.storageKey !== undefined) {
+          if (
+            validateString(extraKey.storageKey, `${extraPath}.storageKey`, context, mode, {
+              maxLength: 200,
+            }) &&
+            extraKey.storageKey === themeSync.storageKey
+          ) {
+            addError(
+              context,
+              `${extraPath}.storageKey`,
+              "invalid_value",
+              "extraKeys storageKey must differ from themeSync.storageKey",
+            )
+          }
         }
-      }
-      if (extraKey.valueFormat !== undefined) {
-        validateEnum(extraKey.valueFormat, `${extraPath}.valueFormat`, context, mode, [
-          "raw",
-          "json",
-        ])
-      }
-      if (extraKey.values !== undefined) {
-        validateThemeSyncValues(extraKey.values, `${extraPath}.values`, context, mode)
-      }
-    })
+        if (extraKey.valueFormat !== undefined) {
+          validateEnum(extraKey.valueFormat, `${extraPath}.valueFormat`, context, mode, [
+            "raw",
+            "json",
+          ])
+        }
+        // 数组合并是整体替换，数组项必须按 full 校验，否则 partial 补丁可引入缺 dark/light 的 values
+        if (extraKey.values !== undefined) {
+          validateThemeSyncValues(extraKey.values, `${extraPath}.values`, context, "full")
+        }
+      })
+    }
   }
 
   if (themeSync.darkClass !== undefined) {

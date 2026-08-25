@@ -196,6 +196,31 @@ describe("validateSiteConfigOverride", () => {
       "out_of_range",
     )
   })
+
+  it("still validates darkClass/lightClass when extraKeys is deleted", () => {
+    expectInvalid(
+      validateSiteConfigOverride({
+        themeSync: {
+          extraKeys: null,
+          darkClass: 123,
+        },
+      }),
+      "$.themeSync.darkClass",
+      "invalid_type",
+    )
+  })
+
+  it("requires dark/light values inside extraKeys items even in partial mode", () => {
+    expectInvalid(
+      validateSiteConfigOverride({
+        themeSync: {
+          extraKeys: [{ storageKey: "zhida:theme_mode", values: {} }],
+        },
+      }),
+      "$.themeSync.extraKeys[0].values.dark",
+      "missing_required",
+    )
+  })
 })
 
 describe("validateSiteConfigPatch", () => {
