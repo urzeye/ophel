@@ -11,6 +11,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🚀 New Features
 
+- **Zhihu Zhida support** — The online adapter library now includes Zhihu Zhida (zhida.zhihu.com); installing the pack enables outlines with user queries, basic export, chat width, Zen Mode, new chat, and prompt insertion on conversations and shared pages.
 - **Notion AI support** — The online adapter library now includes Notion AI (app.notion.com); installing the pack enables outlines with user queries, basic export, chat width, Zen Mode, new chat, and prompt insertion on conversations and shared pages.(#873)
 - **ChatGPT long conversation performance** — ChatGPT site settings now include three rendering optimizations: code block batch mount (on by default; batches code editor mounting when opening or switching long conversations to reduce page freezes), streaming render optimization (on by default; pauses message-area animations while a response is being generated), and an optional backdrop blur toggle that reduces scroll frame drops at the cost of a slight visual change. (#868)
 
