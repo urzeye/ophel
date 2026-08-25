@@ -616,12 +616,22 @@ async function init() {
   let activeModulesCleanup: (() => void) | null = null
   let initGeneration = 0
   let bindingIssueNoticeShown = false
+  // modules-init 仅在首次成功初始化后才被动态加载，尚未加载时无需清理
+  let coreModulesLoaded = false
+
+  const destroyCoreModulesIfLoaded = () => {
+    if (!coreModulesLoaded) return
+    void import("~core/modules-init").then(({ destroyCoreModules }) => destroyCoreModules())
+  }
 
   const teardownActiveModules = () => {
     activeModulesCleanup?.()
     activeModulesCleanup = null
     activeAdapter = null
     initGeneration++
+    // 订阅解除后再统一停掉旧适配器创建的全部模块实例，
+    // 否则 initCoreModules 重新 new 时旧实例的监听器会持续累积
+    destroyCoreModulesIfLoaded()
   }
 
   const initializeUserscriptModules = async () => {
@@ -656,8 +666,15 @@ async function init() {
       const { initCoreModules, subscribeModuleUpdates, initUrlChangeObserver } = await import(
         "~core/modules-init"
       )
+      coreModulesLoaded = true
 
-      const ctx = { adapter, settings, siteId, siteInstanceKey }
+      const ctx = {
+        adapter,
+        settings,
+        siteId,
+        siteInstanceKey,
+        isStale: () => generation !== initGeneration || activeAdapter !== adapter,
+      }
 
       await initCoreModules(ctx)
 

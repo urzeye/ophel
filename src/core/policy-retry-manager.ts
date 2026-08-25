@@ -12,6 +12,8 @@ export class PolicyRetryManager {
   private settings: NonNullable<Settings["geminiEnterprise"]>["policyRetry"]
   private retryCounts = new Map<string, number>() // promptHash -> count
   private monitorInitialized = false
+  private boundHandleMessage: (event: MessageEvent) => void
+  private stopped = false
 
   constructor(
     adapter: SiteAdapter,
@@ -19,12 +21,24 @@ export class PolicyRetryManager {
   ) {
     this.adapter = adapter as GeminiEnterpriseAdapter
     this.settings = settings
-    window.addEventListener("message", this.handleMessage.bind(this))
+    this.boundHandleMessage = this.handleMessage.bind(this)
+    window.addEventListener("message", this.boundHandleMessage)
 
     // 如果功能已启用，立即初始化网络监控
     if (this.settings.enabled) {
       this.initNetworkMonitor()
     }
+  }
+
+  /**
+   * 停止监听消息，释放实例（适配器切换 / 站点离开时使用）。
+   * 已发出的 EVENT_MONITOR_INIT 请求由主世界去重，无需撤销。
+   */
+  stop(): void {
+    if (this.stopped) return
+    this.stopped = true
+    window.removeEventListener("message", this.boundHandleMessage)
+    this.retryCounts.clear()
   }
 
   updateSettings(settings: NonNullable<Settings["geminiEnterprise"]>["policyRetry"]) {
