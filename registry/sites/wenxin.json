@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "id": "wenxin",
+  "version": 1,
+  "minAppVersion": "1.2.5",
+  "name": "百度文心",
+  "nameI18n": {
+    "zh-CN": "百度文心",
+    "zh-TW": "百度文心",
+    "en": "Baidu Wenxin",
+    "ja": "百度文心",
+    "ko": "Baidu Wenxin",
+    "it": "Baidu Wenxin",
+    "de": "Baidu Wenxin",
+    "es": "Baidu Wenxin",
+    "fr": "Baidu Wenxin",
+    "pt-BR": "Baidu Wenxin",
+    "ru": "Baidu Wenxin"
+  },
+  "description": "Adds Ophel outlines, basic export, new chat, chat width, Zen Mode and prompt insertion to Baidu Wenxin (wenxin.baidu.com).",
+  "descriptionI18n": {
+    "zh-CN": "为百度文心添加 Ophel 大纲、基础导出、新对话、对话宽度、禅模式和提示词插入功能。",
+    "zh-TW": "為百度文心加入 Ophel 大綱、基本匯出、新對話、對話寬度、禪模式與提示詞插入功能。",
+    "en": "Adds Ophel outlines, basic export, new chat, chat width, Zen Mode and prompt insertion to Baidu Wenxin (wenxin.baidu.com).",
+    "ja": "百度文心に、Ophel のアウトライン、基本エクスポート、新規チャット、チャット幅、Zen モード、プロンプト挿入機能を追加します。",
+    "ko": "Baidu Wenxin에 Ophel의 개요, 기본 내보내기, 새 채팅, 대화 너비, Zen 모드, 프롬프트 삽입 기능을 추가합니다.",
+    "it": "Aggiunge a Baidu Wenxin le funzioni Ophel per struttura, esportazione di base, nuova chat, larghezza della chat, modalità Zen e inserimento dei prompt.",
+    "de": "Ergänzt Baidu Wenxin um Ophel-Funktionen für Gliederung, Basisexport, neuen Chat, Chatbreite, Zen-Modus und Prompt-Einfügung.",
+    "es": "Añade a Baidu Wenxin las funciones de Ophel para esquema, exportación básica, nuevo chat, ancho del chat, modo zen e inserción de prompts.",
+    "fr": "Ajoute à Baidu Wenxin les fonctions Ophel de plan, d’exportation de base, de nouvelle discussion, de largeur de discussion, de mode Zen et d’insertion de prompts.",
+    "pt-BR": "Adiciona ao Baidu Wenxin os recursos do Ophel para estrutura, exportação básica, novo chat, largura da conversa, modo Zen e inserção de prompts.",
+    "ru": "Добавляет в Baidu Wenxin функции Ophel для структуры, базового экспорта, нового чата, ширины чата, режима Zen и вставки промптов."
+  },
+  "matches": ["https://wenxin.baidu.com/*", "https://mr.baidu.com/r/*"],
+  "theme": {
+    "primary": "#4e6ef2",
+    "secondary": "#3377fe"
+  },
+  "capabilities": [
+    "outline",
+    "outline-user-queries",
+    "export-basic",
+    "new-chat",
+    "width",
+    "zen",
+    "prompt-insert"
+  ],
+  "selectors": {
+    "textarea": ["#chat-textarea"],
+    "submitButton": ["#ci-submit-button-ai", ".ci-submit-button"],
+    "responseContainer": "#conversation-flow-container",
+    "userQuery": ".cs-question-pure-text",
+    "assistantResponse": ".ai-markdown",
+    "newChatButton": [".new-dialog-container-button"],
+    "scrollContainer": ["#conversation-flow-container", "#conversation-flow-content"]
+  },
+  "input": {
+    "mode": "textarea",
+    "submitKey": "Enter"
+  },
+  "session": {
+    "idFromPathRegex": "^/search/([^/?#]+)",
+    "newConversationPathPatterns": ["^/?$"],
+    "sharePathPrefix": "/r/",
+    "newTabPath": "/"
+  },
+  "export": {
+    "userQuerySelector": ".cs-question-pure-text",
+    "assistantResponseSelector": ".ai-markdown",
+    "turnSelector": null,
+    "useShadowDOM": false
+  },
+  "widthSelectors": [
+    {
+      "selector": "#conversation-flow-content",
+      "property": "max-width"
+    },
+    {
+      "selector": ".chat-input-box-pc",
+      "property": "max-width"
+    }
+  ],
+  "zenMode": {
+    "hide": [".chat-aside-container", "#chat-top-tab-list"]
+  }
+}
