@@ -93,7 +93,7 @@ export interface ClaudeSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const CLAUDE_CONFIG_VERSION = 4
+export const CLAUDE_CONFIG_VERSION = 5
 
 const createClaudeConfig = (): ClaudeSiteConfig => {
   // dframe 布局中侧栏列表容器是 div#frame-peek-popover（不再是 nav），
@@ -119,6 +119,9 @@ const createClaudeConfig = (): ClaudeSiteConfig => {
     `${layoutScope} div:has(> [data-testid="chat-header"]):has([data-autoscroll-container="true"])`,
     `${layoutScope} div:has(> [data-testid="page-header"]):has([data-autoscroll-container="true"])`,
     `${layoutScope} div:has(> [data-testid="page-header"]):has(> [data-autoscroll-container="true"])`,
+    // 隐身会话页（/new?incognito=）没有 chat-header/page-header，直取聊天内容包裹层；
+    // 按文档顺序求值时它位于常规包裹层之后，不影响常规会话页的 scope 选择
+    `${layoutScope} [data-testid="chat-column-body"]:has(> [data-autoscroll-container="true"])`,
   ].join(", ")
   const panelScope = [
     chatColumnScope,

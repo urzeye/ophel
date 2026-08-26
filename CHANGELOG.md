@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### 🐛 Bug Fixes
+
+- **Claude Incognito chat adaptation** — Fixed conversation export and copy failing with "Conversation not found" in Claude Incognito chats (claude.ai/new?incognito=); the export file is titled from the first user message, and smart panel avoidance now works on Incognito pages. (#879)
+
 ---
 
 ## [1.2.5] - 2026-08-25

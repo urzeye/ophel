@@ -8,6 +8,10 @@
 
 ## [Unreleased]
 
+### 🐛 问题修复
+
+- **适配 Claude 隐身会话** — 修复 Claude 隐身会话（claude.ai/new?incognito=）中导出和复制对话提示“Conversation not found”失败的问题，导出文件以首条提问作为标题，智能避让在隐身会话页恢复生效。(#879)
+
 ---
 
 ## [1.2.5] - 2026-08-25

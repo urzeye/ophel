@@ -264,6 +264,42 @@ export class ClaudeAdapter extends SiteAdapter {
     return !this.isSharePage() && /^\/chat\/[a-f0-9-]+(?:\/|$)/i.test(window.location.pathname)
   }
 
+  /**
+   * 隐身会话页（/new?incognito=）：URL 不会随发消息跳转，会话不持久保存。
+   * 导出走内存态元数据，不写入会话库（见 resolveConversationForExport）。
+   */
+  isEphemeralConversationPage(): boolean {
+    return this.isIncognitoConversation()
+  }
+
+  private isIncognitoConversation(): boolean {
+    return (
+      window.location.pathname === "/new" &&
+      new URLSearchParams(window.location.search).has("incognito")
+    )
+  }
+
+  getCurrentConversationInfo(): ConversationInfo | null {
+    if (!this.isIncognitoConversation()) {
+      return super.getCurrentConversationInfo()
+    }
+
+    // 基类把隐身会话当新对话页返回 null，导出会报 "Conversation not found: new"；
+    // 这里为隐身会话提供内存态元数据，id 随 URL 停留在 "new"。
+    return {
+      id: this.getSessionId(),
+      title: this.getIncognitoConversationTitle(),
+      url: window.location.href,
+    }
+  }
+
+  private getIncognitoConversationTitle(): string {
+    // 隐身会话没有侧栏与标题，用首条用户消息兜底导出标题
+    const firstUserMessage = document.querySelector(this.getUserQuerySelector())
+    const text = firstUserMessage?.textContent?.replace(/\s+/g, " ").trim() || ""
+    return text.slice(0, 80)
+  }
+
   // ==================== 会话管理 ====================
 
   private getClaudeConversationItems(root: ParentNode = document): Element[] {

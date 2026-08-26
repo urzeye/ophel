@@ -483,6 +483,15 @@ export abstract class SiteAdapter {
     return window.location.pathname.startsWith("/share/")
   }
 
+  /**
+   * 判断当前是否为不入库的临时会话页（如 Claude 隐身会话）。
+   * 临时会话不会改变 URL、也不能产生持久会话记录；
+   * 导出时只构建内存态会话元数据，不写入会话库。
+   */
+  isEphemeralConversationPage(): boolean {
+    return false
+  }
+
   /** 判断当前是否为用户自己的历史会话页 */
   isUserConversationPage(): boolean {
     const sessionId = this.getSessionId()?.trim()

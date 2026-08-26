@@ -1568,7 +1568,8 @@ export class ConversationManager {
       updatedAt: now,
     }
 
-    if (this.siteAdapter.isSharePage()) {
+    // 分享页与临时会话页（如 Claude 隐身会话）都不写入会话库，避免产生假记录
+    if (this.siteAdapter.isSharePage() || this.siteAdapter.isEphemeralConversationPage()) {
       return fallbackConversation
     }
 
