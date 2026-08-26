@@ -32,7 +32,6 @@
     "ru": "Добавляет в Perplexity функции Ophel для структуры (включая вопросы пользователя), базового экспорта, ширины чата, режима Zen, нового чата и вставки промптов."
   },
   "matches": ["https://www.perplexity.ai/*"],
-  "logoUrl": "https://www.perplexity.ai/favicon.png",
   "theme": {
     "primary": "#016a71",
     "secondary": "#01838c"
@@ -49,14 +48,14 @@
   "selectors": {
     "textarea": ["#ask-input[contenteditable='true']"],
     "responseContainer": ".scrollable-container .max-w-threadContentWidth",
-    "userQuery": "[class*='group/query']",
-    "assistantResponse": "[id^='markdown-content-']",
+    "userQuery": ".flow-root .group.justify-end div.bg-subtle.rounded-2xl",
+    "assistantResponse": ".flow-root [data-renderer='lm']",
     "newChatButton": [
       "nav[class*='group/sidebar'] .relative.shrink-0 a[draggable='false']",
       "nav[class*='group/sidebar'] a[draggable='false'][href='/']"
     ],
     "scrollContainer": [".scrollable-container"],
-    "outlineExclude": ["[id^='markdown-content-'] .not-prose"]
+    "outlineExclude": [".flow-root .not-prose"]
   },
   "input": {
     "mode": "contenteditable",
@@ -68,8 +67,8 @@
     "newTabPath": "/"
   },
   "export": {
-    "userQuerySelector": "[class*='group/query']",
-    "assistantResponseSelector": "[id^='markdown-content-']",
+    "userQuerySelector": ".flow-root .group.justify-end div.bg-subtle.rounded-2xl",
+    "assistantResponseSelector": ".flow-root [data-renderer='lm']",
     "turnSelector": null,
     "useShadowDOM": false
   },
