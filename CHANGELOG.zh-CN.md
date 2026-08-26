@@ -8,6 +8,10 @@
 
 ## [Unreleased]
 
+### 🚀 新增功能
+
+- **Perplexity 支持** — 在线适配库新增 Perplexity（www.perplexity.ai），安装适配包后即可在对话页使用大纲（含用户提问）、基础导出、对话宽度、禅模式、新对话和提示词插入功能。
+
 ### 🐛 问题修复
 
 - **适配 Claude 隐身会话** — 修复 Claude 隐身会话（claude.ai/new?incognito=）中导出和复制对话提示“Conversation not found”失败的问题，导出文件以首条提问作为标题，智能避让在隐身会话页恢复生效。(#879)
