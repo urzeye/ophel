@@ -11,7 +11,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🚀 New Features
 
-- **Perplexity support** — The online adapter library now includes Perplexity (www.perplexity.ai); installing the pack enables outlines with user queries, basic export, chat width, Zen Mode, new chat, and prompt insertion.
+- **Perplexity support** — The online adapter library now includes Perplexity (www.perplexity.ai); installing the pack enables outlines with user queries, basic export, chat width, Zen Mode, new chat, prompt insertion, and theme sync that follows Ophel's light, dark, or system theme instantly.
 
 ### 🐛 Bug Fixes
 

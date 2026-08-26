@@ -907,6 +907,7 @@ const validateThemeSync = (
     path,
     context,
     [
+      "storageType",
       "storageKey",
       "valuePath",
       "valueFormat",
@@ -922,8 +923,51 @@ const validateThemeSync = (
   )
   if (!themeSync) return
 
+  let storageType = "localStorage"
+  if (themeSync.storageType !== undefined) {
+    validateEnum(themeSync.storageType, `${path}.storageType`, context, mode, [
+      "localStorage",
+      "cookie",
+    ])
+    if (themeSync.storageType === "cookie") storageType = "cookie"
+  }
+
   if (themeSync.storageKey !== undefined) {
-    validateString(themeSync.storageKey, `${path}.storageKey`, context, mode, { maxLength: 200 })
+    if (
+      validateString(themeSync.storageKey, `${path}.storageKey`, context, mode, {
+        maxLength: 200,
+      })
+    ) {
+      // Cookie 名不能含分隔符或空白，避免写出畸形 Set-Cookie 头
+      if (storageType === "cookie" && /[\s;,=]/.test(themeSync.storageKey)) {
+        addError(
+          context,
+          `${path}.storageKey`,
+          "invalid_value",
+          "Cookie storageKey must not contain whitespace, ';', ',' or '='",
+        )
+      }
+    }
+  }
+
+  // cookie 模式只有扁平写入/删除原语，localStorage 特有的 JSON 嵌套与额外表键一律拒绝
+  if (storageType === "cookie") {
+    for (const unsupportedKey of [
+      "valuePath",
+      "valueFormat",
+      "timestampPath",
+      "staticFields",
+      "extraKeys",
+    ] as const) {
+      if (themeSync[unsupportedKey] !== undefined) {
+        addError(
+          context,
+          `${path}.${unsupportedKey}`,
+          "invalid_value",
+          `${unsupportedKey} is not supported with storageType "cookie"`,
+        )
+      }
+    }
   }
 
   if (themeSync.valuePath !== undefined) {

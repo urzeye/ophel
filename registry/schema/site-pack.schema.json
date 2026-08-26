@@ -517,8 +517,13 @@
       "type": "object",
       "additionalProperties": false,
       "required": ["storageKey", "values"],
-      "description": "Declarative host-page theme sync: write localStorage, optionally toggle html classes, and dispatch a storage event per written key. Omit both darkClass and lightClass for sites that self-apply the theme from the storage event. Other mechanisms (body class, data-theme attributes, simulated clicks) are not supported.",
+      "description": "Declarative host-page theme sync: by default write localStorage, optionally toggle html classes, and dispatch a storage event per written key. Omit both darkClass and lightClass for sites that self-apply the theme from the storage event. With storageType \"cookie\" the theme value is written to a cookie named storageKey instead (no storage event, no valuePath/valueFormat/timestampPath/staticFields/extraKeys); omitting values.system deletes the cookie. Other mechanisms (body class, data-theme attributes, simulated clicks) are not supported.",
       "properties": {
+        "storageType": {
+          "type": "string",
+          "enum": ["localStorage", "cookie"],
+          "description": "Storage medium for the theme value. Defaults to \"localStorage\". \"cookie\" writes a flat cookie named storageKey (path=/, one-year max-age, SameSite=Lax); when values.system is omitted, system mode deletes the cookie."
+        },
         "storageKey": {
           "type": "string",
           "minLength": 1,

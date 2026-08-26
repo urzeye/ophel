@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "perplexity",
   "version": 1,
-  "minAppVersion": "1.2.5",
+  "minAppVersion": "1.2.6",
   "name": "Perplexity",
   "nameI18n": {
     "zh-CN": "Perplexity",
@@ -35,6 +35,14 @@
   "theme": {
     "primary": "#016a71",
     "secondary": "#01838c"
+  },
+  "themeSync": {
+    "storageType": "cookie",
+    "storageKey": "colorScheme",
+    "values": {
+      "dark": "dark",
+      "light": "light"
+    }
   },
   "capabilities": [
     "outline",

@@ -1086,13 +1086,26 @@ export class DeclarativeAdapter extends SiteAdapter {
 
   /**
    * 基于 manifest.themeSync 的声明式宿主页主题切换。
-   * 仅支持 localStorage + html class 机制；未声明 themeSync 时保持基类行为（返回 false）。
+   * 缺省为 localStorage + html class 机制；storageType 为 cookie 时写入/删除主题 Cookie，
+   * 由站点自行监听应用。未声明 themeSync 时保持基类行为（返回 false）。
    */
   async toggleTheme(targetMode: "light" | "dark" | "system"): Promise<boolean> {
     const config = this.manifest.themeSync
     if (!config) return false
 
     try {
+      if (config.storageType === "cookie") {
+        const cookieValue =
+          targetMode === "system" ? config.values.system : config.values[targetMode]
+        if (cookieValue === undefined) {
+          // system 未配置独立值 = 删除 Cookie，站点回退为跟随系统
+          document.cookie = `${config.storageKey}=; path=/; max-age=0; SameSite=Lax`
+        } else {
+          document.cookie = `${config.storageKey}=${encodeURIComponent(cookieValue)}; path=/; max-age=31536000; SameSite=Lax`
+        }
+        return true
+      }
+
       const resolvedMode: "light" | "dark" =
         targetMode === "system"
           ? window.matchMedia?.("(prefers-color-scheme: dark)").matches
