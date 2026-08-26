@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### ✨ Improvements
+
+- **Store listing names** — Chrome Web Store names in all languages now start with "Ophel Atlas", so the product name appears first in search results and listings.
+
 ### 🐛 Bug Fixes
 
 - **Claude Incognito chat adaptation** — Fixed conversation export and copy failing with "Conversation not found" in Claude Incognito chats (claude.ai/new?incognito=); the export file is titled from the first user message, and smart panel avoidance now works on Incognito pages. (#879)

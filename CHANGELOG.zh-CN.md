@@ -8,6 +8,10 @@
 
 ## [Unreleased]
 
+### ✨ 功能优化
+
+- **商店插件名称** — Chrome 网上应用店各语言名称现在都以 “Ophel Atlas” 开头，搜索结果和详情页会先看到插件名。
+
 ### 🐛 问题修复
 
 - **适配 Claude 隐身会话** — 修复 Claude 隐身会话（claude.ai/new?incognito=）中导出和复制对话提示“Conversation not found”失败的问题，导出文件以首条提问作为标题，智能避让在隐身会话页恢复生效。(#879)
