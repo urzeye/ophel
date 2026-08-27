@@ -85,6 +85,21 @@ const setNestedThemeValue = (
   current[last] = value
 }
 
+/** 按点分隔路径读取嵌套对象的值；路径非法或类型不符时返回 undefined。 */
+const getNestedThemeValue = (source: Record<string, unknown>, path: string): unknown => {
+  let current: unknown = source
+  for (const segment of path.split(".")) {
+    if (segment === "__proto__" || segment === "prototype" || segment === "constructor") {
+      return undefined
+    }
+    if (typeof current !== "object" || current === null || Array.isArray(current)) {
+      return undefined
+    }
+    current = (current as Record<string, unknown>)[segment]
+  }
+  return current
+}
+
 const getEditorText = (editor: HTMLElement): string =>
   isTextControl(editor) ? editor.value : editor.textContent ?? ""
 
@@ -1084,15 +1099,103 @@ export class DeclarativeAdapter extends SiteAdapter {
     return this.manifest.supportsHostThemeSync ?? Boolean(this.manifest.themeSync)
   }
 
+  /** 声明 themeSync 时，toggleTheme 支持 "system" 语义（含 cookie 删除）。 */
+  acceptsSystemThemePreference(): boolean {
+    return Boolean(this.manifest.themeSync)
+  }
+
+  /**
+   * 按 themeSync 的写侧语义读回宿主页主题偏好。
+   * 未声明 themeSync、值无法读取或无法被 values 识别时返回 null，
+   * 由 ThemeManager 回退到通用 DOM 检测。
+   */
+  detectHostThemePreference(): "light" | "dark" | "system" | null {
+    const config = this.manifest.themeSync
+    if (!config) return null
+
+    const stored = this.readThemeSyncValue(config)
+    if (stored === null) {
+      // cookie 模式下无记录 = 站点跟随系统（未声明独立 system 值时写侧即删除 cookie）
+      return config.storageType === "cookie" && config.values.system === undefined ? "system" : null
+    }
+    if (config.values.system !== undefined && stored === config.values.system) return "system"
+    if (stored === config.values.dark) return "dark"
+    if (stored === config.values.light) return "light"
+    return null
+  }
+
+  detectHostThemeMode(): "light" | "dark" | null {
+    const preference = this.detectHostThemePreference()
+    if (preference === null) return null
+    if (preference !== "system") return preference
+    return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light"
+  }
+
+  /**
+   * 读取 themeSync 声明的宿主页主题原始值，与写入语义对应。
+   * cookie 读取 document.cookie（无记录返回 null）；localStorage 处理扁平
+   * raw/json 与 valuePath 嵌套。解析失败一律返回 null，不做静默兜底猜测。
+   */
+  private readThemeSyncValue(config: SitePackThemeSyncConfig): string | null {
+    if (config.storageType === "cookie") {
+      const prefix = `${config.storageKey}=`
+      const entry = document.cookie.split("; ").find((part) => part.startsWith(prefix))
+      if (!entry) return null
+      try {
+        return decodeURIComponent(entry.slice(prefix.length))
+      } catch {
+        return entry.slice(prefix.length)
+      }
+    }
+
+    const raw = localStorage.getItem(config.storageKey)
+    if (raw === null) return null
+
+    if (config.valuePath) {
+      try {
+        const parsed: unknown = JSON.parse(raw)
+        if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) return null
+        const value = getNestedThemeValue(parsed as Record<string, unknown>, config.valuePath)
+        return typeof value === "string" ? value : null
+      } catch {
+        return null
+      }
+    }
+
+    if (config.valueFormat === "json") {
+      try {
+        const parsed: unknown = JSON.parse(raw)
+        return typeof parsed === "string" ? parsed : null
+      } catch {
+        return null
+      }
+    }
+
+    return raw
+  }
+
   /**
    * 基于 manifest.themeSync 的声明式宿主页主题切换。
-   * 仅支持 localStorage + html class 机制；未声明 themeSync 时保持基类行为（返回 false）。
+   * 缺省为 localStorage + html class 机制；storageType 为 cookie 时写入/删除主题 Cookie，
+   * 由站点自行监听应用。未声明 themeSync 时保持基类行为（返回 false）。
    */
   async toggleTheme(targetMode: "light" | "dark" | "system"): Promise<boolean> {
     const config = this.manifest.themeSync
     if (!config) return false
 
     try {
+      if (config.storageType === "cookie") {
+        const cookieValue =
+          targetMode === "system" ? config.values.system : config.values[targetMode]
+        if (cookieValue === undefined) {
+          // system 未配置独立值 = 删除 Cookie，站点回退为跟随系统
+          document.cookie = `${config.storageKey}=; path=/; max-age=0; SameSite=Lax`
+        } else {
+          document.cookie = `${config.storageKey}=${encodeURIComponent(cookieValue)}; path=/; max-age=31536000; SameSite=Lax`
+        }
+        return true
+      }
+
       const resolvedMode: "light" | "dark" =
         targetMode === "system"
           ? window.matchMedia?.("(prefers-color-scheme: dark)").matches

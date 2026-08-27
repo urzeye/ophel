@@ -145,7 +145,19 @@ export class ThemeManager {
     if (preference === "system") {
       const handled = this.applySystemPreferenceToHost(targetMode)
       if (!handled && this.adapter && typeof this.adapter.toggleTheme === "function") {
-        this.adapter.toggleTheme(targetMode).catch(() => {})
+        // 声明支持 system 语义的适配器（声明式 themeSync）直接传 "system"，
+        // 其余适配器只接受已解析的 light/dark，传解析值避免回归。
+        if (this.adapter.acceptsSystemThemePreference()) {
+          ;(
+            this.adapter as SiteAdapter & {
+              toggleTheme: (targetMode: "light" | "dark" | "system") => Promise<boolean>
+            }
+          )
+            .toggleTheme("system")
+            .catch(() => {})
+        } else {
+          this.adapter.toggleTheme(targetMode).catch(() => {})
+        }
       }
     } else if (this.adapter && typeof this.adapter.toggleTheme === "function") {
       this.adapter.toggleTheme(preference).catch(() => {})
@@ -836,8 +848,10 @@ ${cssVars}
         return
       }
 
-      const detectedMode = this.detectHostThemeMode()
-      const detectedPreference = this.detectHostThemePreference()
+      // 适配器按自身存储语义读回优先；返回 null 时回退到站点特定/通用 DOM 检测
+      const detectedMode = this.adapter?.detectHostThemeMode() ?? this.detectHostThemeMode()
+      const detectedPreference =
+        this.adapter?.detectHostThemePreference() ?? this.detectHostThemePreference()
       const nextPreference: ThemePreference = detectedPreference ?? detectedMode
       const nextMode: ThemeMode =
         nextPreference === "system" ? this.getSystemMode() : nextPreference
@@ -1017,11 +1031,11 @@ ${cssVars}
    * @param event 可选的鼠标事件，用于确定动画中心
    */
   async toggle(event?: ThemeTransitionOrigin): Promise<ThemeMode> {
-    // 使用 detectHostThemeMode 统一检测当前宿主页状态
+    // 检测当前宿主页状态：适配器读回优先，其次通用 DOM 检测
     const currentMode =
       this.preference === "system" || !this.isHostThemeSyncActive()
         ? this.mode
-        : this.detectHostThemeMode()
+        : this.adapter?.detectHostThemeMode() ?? this.detectHostThemeMode()
     const nextMode: ThemeMode = currentMode === "dark" ? "light" : "dark"
     this.preference = nextMode
 

@@ -127,11 +127,14 @@ export interface SitePackConfig {
 }
 
 /**
- * 宿主页主题联动的声明式配置，仅覆盖 “写 localStorage + 换 html class” 机制。
+ * 宿主页主题联动的声明式配置，默认覆盖 “写 localStorage + 换 html class” 机制；
+ * storageType 为 "cookie" 时改为写入以 storageKey 命名的 Cookie（站点自行监听应用）。
  * 其余机制（body class、data-theme 属性、特殊枚举值、模拟点击等）不支持。
  */
 export interface SitePackThemeSyncConfig {
-  /** localStorage 键名（如 next-themes 系的 "theme"）。 */
+  /** 存储类型：localStorage（缺省）或 cookie。cookie 模式只支持扁平值写入/删除。 */
+  storageType?: "localStorage" | "cookie"
+  /** localStorage 键名（如 next-themes 系的 "theme"）或 cookie 键名（如 Perplexity 的 "colorScheme"）。 */
   storageKey: string
   /**
    * 主题值在存储 JSON 对象内的点分隔路径（如 "theme"、"appearance.mode"）。
@@ -150,7 +153,10 @@ export interface SitePackThemeSyncConfig {
    * 仅与 valuePath 同用；先于 valuePath/timestampPath 合并，同名字段以主题值为准。
    */
   staticFields?: Record<string, string>
-  /** 各模式写入的值。system 缺省时按系统偏好解析为 dark/light 对应值写入。 */
+  /**
+   * 各模式写入的值。system 缺省时按系统偏好解析为 dark/light 对应值写入；
+   * cookie 模式下 system 缺省改为删除该 cookie（站点回退为跟随系统）。
+   */
   values: {
     dark: string
     light: string

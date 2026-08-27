@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 1,
+  "id": "perplexity",
+  "version": 1,
+  "minAppVersion": "1.2.6",
+  "name": "Perplexity",
+  "nameI18n": {
+    "zh-CN": "Perplexity",
+    "zh-TW": "Perplexity",
+    "en": "Perplexity",
+    "ja": "Perplexity",
+    "ko": "Perplexity",
+    "it": "Perplexity",
+    "de": "Perplexity",
+    "es": "Perplexity",
+    "fr": "Perplexity",
+    "pt-BR": "Perplexity",
+    "ru": "Perplexity"
+  },
+  "description": "Adds Ophel outlines with user queries, basic export, chat width, Zen Mode, new chat, and prompt insertion to Perplexity (www.perplexity.ai).",
+  "descriptionI18n": {
+    "zh-CN": "为 Perplexity 添加 Ophel 大纲（含用户提问）、基础导出、对话宽度、禅模式、新对话和提示词插入功能。",
+    "zh-TW": "為 Perplexity 加入 Ophel 大綱（含使用者提問）、基本匯出、對話寬度、禪模式、新對話與提示詞插入功能。",
+    "en": "Adds Ophel outlines with user queries, basic export, chat width, Zen Mode, new chat, and prompt insertion to Perplexity (www.perplexity.ai).",
+    "ja": "Perplexity に、Ophel のアウトライン（ユーザー質問を含む）、基本エクスポート、チャット幅、Zen モード、新規チャット、プロンプト挿入機能を追加します。",
+    "ko": "Perplexity에 Ophel의 개요(사용자 질문 포함), 기본 내보내기, 대화 너비, Zen 모드, 새 채팅 및 프롬프트 삽입 기능을 추가합니다.",
+    "it": "Aggiunge a Perplexity le funzioni Ophel per struttura (incluse le domande dell’utente), esportazione di base, larghezza della chat, modalità Zen, nuova chat e inserimento dei prompt.",
+    "de": "Ergänzt Perplexity um Ophel-Funktionen für Gliederung (inkl. Nutzerfragen), Basisexport, Chatbreite, Zen-Modus, neuen Chat und Prompt-Einfügung.",
+    "es": "Añade a Perplexity las funciones de Ophel para esquema (incluidas las preguntas del usuario), exportación básica, ancho del chat, modo zen, nuevo chat e inserción de prompts.",
+    "fr": "Ajoute à Perplexity les fonctions Ophel de plan (y compris les questions de l’utilisateur), d’exportation de base, de largeur de discussion, de mode Zen, de nouvelle discussion et d’insertion de prompts.",
+    "pt-BR": "Adiciona ao Perplexity os recursos do Ophel para estrutura (incluindo perguntas do usuário), exportação básica, largura da conversa, modo Zen, nova conversa e inserção de prompts.",
+    "ru": "Добавляет в Perplexity функции Ophel для структуры (включая вопросы пользователя), базового экспорта, ширины чата, режима Zen, нового чата и вставки промптов."
+  },
+  "matches": ["https://www.perplexity.ai/*"],
+  "theme": {
+    "primary": "#016a71",
+    "secondary": "#01838c"
+  },
+  "themeSync": {
+    "storageType": "cookie",
+    "storageKey": "colorScheme",
+    "values": {
+      "dark": "dark",
+      "light": "light"
+    }
+  },
+  "capabilities": [
+    "outline",
+    "outline-user-queries",
+    "export-basic",
+    "new-chat",
+    "width",
+    "zen",
+    "prompt-insert"
+  ],
+  "selectors": {
+    "textarea": ["#ask-input[contenteditable='true']"],
+    "responseContainer": ".scrollable-container .max-w-threadContentWidth",
+    "userQuery": ".flow-root .group.justify-end div.bg-subtle.rounded-2xl",
+    "assistantResponse": ".flow-root [data-renderer='lm']",
+    "newChatButton": [
+      "nav[class*='group/sidebar'] .relative.shrink-0 a[draggable='false']",
+      "nav[class*='group/sidebar'] a[draggable='false'][href='/']"
+    ],
+    "scrollContainer": [".scrollable-container"],
+    "outlineExclude": [".flow-root .not-prose"]
+  },
+  "input": {
+    "mode": "contenteditable",
+    "submitKey": "Enter"
+  },
+  "session": {
+    "idFromPathRegex": "^/search/([^/?#]+)",
+    "newConversationPathPatterns": ["^/?$"],
+    "newTabPath": "/"
+  },
+  "export": {
+    "userQuerySelector": ".flow-root .group.justify-end div.bg-subtle.rounded-2xl",
+    "assistantResponseSelector": ".flow-root [data-renderer='lm']",
+    "turnSelector": null,
+    "useShadowDOM": false
+  },
+  "zenMode": {
+    "hide": ["nav[class*='group/sidebar']", ".w-sideBarWidth", ".h-headerHeight"]
+  },
+  "widthSelectors": [
+    {
+      "selector": ".max-w-threadContentWidth",
+      "property": "max-width",
+      "extraCss": "width: 100% !important; box-sizing: border-box !important;"
+    }
+  ]
+}

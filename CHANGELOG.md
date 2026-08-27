@@ -11,6 +11,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🚀 New Features
 
+- **Perplexity support** — The online adapter library now includes Perplexity (www.perplexity.ai); installing the pack enables outlines with user queries, basic export, chat width, Zen Mode, new chat, prompt insertion, and theme sync on conversation pages.
 - **Baidu Wenxin support** — The online adapter library now includes Baidu Wenxin (wenxin.baidu.com); installing the pack enables outlines with user queries, basic export, chat width, Zen Mode, new chat, and prompt insertion on conversations and shared pages.
 
 ### 🐛 Bug Fixes
