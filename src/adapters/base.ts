@@ -687,6 +687,30 @@ export abstract class SiteAdapter {
   }
 
   /**
+   * 检测宿主页当前主题模式（light/dark）。
+   * 返回 null 表示本适配器无法检测，ThemeManager 回退到通用 DOM 检测。
+   */
+  detectHostThemeMode(): "light" | "dark" | null {
+    return null
+  }
+
+  /**
+   * 检测宿主页当前主题偏好（含 system）。
+   * 返回 null 表示本适配器无法检测，ThemeManager 回退到站点特定/通用检测。
+   */
+  detectHostThemePreference(): "light" | "dark" | "system" | null {
+    return null
+  }
+
+  /**
+   * toggleTheme 是否接受 "system" 语义（由适配器自行解析/清除跟随系统状态）。
+   * 基类与仅接受 light/dark 的适配器保持 false。
+   */
+  acceptsSystemThemePreference(): boolean {
+    return false
+  }
+
+  /**
    * 返回站点原生主题覆盖 CSS。
    * 默认不提供，子类可按需覆盖。
    */
