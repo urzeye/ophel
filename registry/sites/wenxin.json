@@ -61,7 +61,6 @@
   "session": {
     "idFromPathRegex": "^/search/([^/?#]+)",
     "newConversationPathPatterns": ["^/?$"],
-    "sharePathPrefix": "/r/",
     "newTabPath": "/"
   },
   "export": {

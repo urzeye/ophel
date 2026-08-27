@@ -51,7 +51,7 @@ describe("Baidu Wenxin SitePack", () => {
     expect("disabled" in wenxinManifest).toBe(false)
   })
 
-  it("matches Wenxin conversation and share URLs, but excludes unrelated hosts", () => {
+  it("matches Wenxin conversation URLs, but excludes share and unrelated hosts", () => {
     expect(adapter.match()).toBe(true)
 
     vi.stubGlobal("window", {
@@ -62,7 +62,7 @@ describe("Baidu Wenxin SitePack", () => {
     vi.stubGlobal("window", {
       location: new URL(SHARE_URL),
     })
-    expect(adapter.match()).toBe(true)
+    expect(adapter.match()).toBe(false)
 
     vi.stubGlobal("window", {
       location: new URL("https://www.baidu.com/"),
@@ -80,7 +80,7 @@ describe("Baidu Wenxin SitePack", () => {
     expect(adapter.match()).toBe(false)
   })
 
-  it("extracts session ID and detects new conversation and share paths", () => {
+  it("extracts session ID and detects new conversation paths", () => {
     expect(adapter.getSessionId()).toBe("13173937630652015742")
     expect(adapter.isNewConversation()).toBe(false)
     expect(adapter.isSharePage()).toBe(false)
@@ -91,12 +91,6 @@ describe("Baidu Wenxin SitePack", () => {
     expect(adapter.getSessionId()).toBe("")
     expect(adapter.isNewConversation()).toBe(true)
     expect(adapter.isSharePage()).toBe(false)
-
-    vi.stubGlobal("window", {
-      location: new URL(SHARE_URL),
-    })
-    expect(adapter.isSharePage()).toBe(true)
-    expect(adapter.isNewConversation()).toBe(false)
   })
 
   it("exposes the basic capability set and required selector fields", () => {
