@@ -31,7 +31,7 @@
     "pt-BR": "Adiciona ao Baidu Wenxin os recursos do Ophel para estrutura, exportação básica, novo chat, largura da conversa, modo Zen e inserção de prompts.",
     "ru": "Добавляет в Baidu Wenxin функции Ophel для структуры, базового экспорта, нового чата, ширины чата, режима Zen и вставки промптов."
   },
-  "matches": ["https://wenxin.baidu.com/*", "https://mr.baidu.com/r/*"],
+  "matches": ["https://wenxin.baidu.com/*"],
   "theme": {
     "primary": "#4e6ef2",
     "secondary": "#3377fe"
