@@ -493,6 +493,7 @@ const OutlineNodeView: React.FC<{
   }
 
   return (
+    // 开启字数统计时 tooltip 带有字数增量信息，不做截断门控
     <Tooltip
       content={
         node.wordCount && node.wordCount > 0 ? (
@@ -508,7 +509,7 @@ const OutlineNodeView: React.FC<{
       }
       disabled={isHoveringAction}
       triggerStyle={{ width: "100%", display: "block" }}
-      showOnlyWhenTruncated
+      showOnlyWhenTruncated={!(node.wordCount && node.wordCount > 0)}
       delay={500}>
       <div
         className={itemClassName}

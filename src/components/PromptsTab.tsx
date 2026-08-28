@@ -3102,7 +3102,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
             {categories.map((cat) => {
               const colorIndex = getCategoryColorIndex(cat)
               return (
-                <Tooltip key={cat} content={cat}>
+                <Tooltip key={cat} content={cat} showOnlyWhenTruncated>
                   <span
                     onClick={() => setSelectedCategory(cat)}
                     style={{

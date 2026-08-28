@@ -274,7 +274,6 @@ class DomTooltipManager {
   private tooltipEl: HTMLDivElement | null = null
   private activeTrigger: HTMLElement | null = null
   private positionOptions: TooltipPositionOptions = {}
-  private lastHiddenAt = 0
 
   private readonly handleWindowChange = () => {
     this.positionTooltip()
@@ -297,7 +296,7 @@ class DomTooltipManager {
   }
 
   shouldSkipDelay(): boolean {
-    return Date.now() - this.lastHiddenAt < SKIP_DELAY_WINDOW_MS
+    return Date.now() - lastTooltipHiddenAt < SKIP_DELAY_WINDOW_MS
   }
 
   show(
@@ -340,7 +339,7 @@ class DomTooltipManager {
 
     if (this.activeTrigger) {
       this.activeTrigger.removeAttribute("aria-describedby")
-      this.lastHiddenAt = Date.now()
+      lastTooltipHiddenAt = Date.now()
     }
 
     this.activeTrigger = null
