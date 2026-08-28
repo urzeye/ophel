@@ -3,10 +3,13 @@ import fuzzysort from "fuzzysort"
 
 import { SETTING_ID_ALIASES, type SettingsSearchItem } from "~constants"
 import { FEATURE_TIPS } from "~constants/feature-tips"
-import type { ConversationManager } from "~core/conversation-manager"
+import type { Conversation, ConversationManager } from "~core/conversation-manager"
 import type { OutlineManager, OutlineNode } from "~core/outline-manager"
 import type { ShortcutActionId } from "~constants/shortcuts"
+import { getSupportedAiPlatforms } from "~core/platform-catalog"
+import { getConversationsStore } from "~stores/conversations-store"
 import { t } from "~utils/i18n"
+import { resolvePersistedSiteInstanceKey } from "~utils/site-identity"
 import type { Prompt } from "~utils/storage"
 
 import {
@@ -21,6 +24,7 @@ import type {
   GlobalSearchGroupedResult,
   GlobalSearchHighlightField,
   GlobalSearchMatchReason,
+  GlobalSearchOffsiteSite,
   GlobalSearchResultCategory,
   GlobalSearchResultItem,
   GlobalSearchTagBadge,
@@ -961,7 +965,11 @@ export const useGlobalSearchData = ({
       fallback: "Untitled conversation",
     })
 
-    return conversations.map((conversation, index) => {
+    const buildConversationEntry = (
+      conversation: Conversation,
+      index: number,
+      offsiteSite?: GlobalSearchOffsiteSite,
+    ): GlobalSearchIndexEntry => {
       const title = conversation.title?.trim() || untitledConversation
       const folder = folderMap.get(conversation.folderId)
       const folderLabel = folder
@@ -1011,18 +1019,35 @@ export const useGlobalSearchData = ({
         },
       ]
 
+      if (offsiteSite) {
+        // 站点名参与匹配但不打 badge，命中时高亮 breadcrumb 中的站点名
+        fields.push({
+          value: normalizeGlobalSearchValue(offsiteSite.name),
+          exact: 0,
+          prefix: 0,
+          includes: 56,
+          tokenPrefix: 0,
+          tokenIncludes: 6,
+          highlightField: "breadcrumb",
+        })
+      }
+
       return createGlobalSearchIndexEntry({
         index,
         fields,
         recency: conversation.updatedAt || 0,
-        scoreBoost: conversation.pinned ? 6 : 0,
+        // 站外会话在分数相近时排在站内结果之后
+        scoreBoost: (conversation.pinned ? 6 : 0) - (offsiteSite ? 10 : 0),
         createItem: (scoreMeta) => ({
-          id: `conversations:${conversation.id}`,
+          id: offsiteSite
+            ? `conversations:${resolvePersistedSiteInstanceKey(conversation) ?? conversation.siteId}:${conversation.id}`
+            : `conversations:${conversation.id}`,
           title,
-          breadcrumb: folderLabel,
+          breadcrumb: offsiteSite ? `${offsiteSite.name} · ${folderLabel}` : folderLabel,
           category: "conversations" as const,
           conversationId: conversation.id,
           conversationUrl: conversation.url,
+          offsiteSite,
           tagBadges,
           folderName: folderLabel,
           tagNames: tagBadges.map((tag) => tag.name),
@@ -1032,7 +1057,58 @@ export const useGlobalSearchData = ({
           fuzzyMatch: scoreMeta.fuzzyMatch,
         }),
       })
+    }
+
+    const entries = conversations.map((conversation, index) =>
+      buildConversationEntry(conversation, index),
+    )
+
+    // 站外会话标题搜索：会话元数据 store 含所有站点，按站点实例 key 过滤出非当前站点
+    const currentSiteInstanceKey = conversationManager.getSiteInstanceKey()
+    const platformBySiteId = new Map(
+      getSupportedAiPlatforms().map((platform) => [platform.id, platform]),
+    )
+
+    const resolveOffsiteSite = (conversation: Conversation): GlobalSearchOffsiteSite => {
+      const platformInfo = platformBySiteId.get(conversation.siteId)
+      if (platformInfo) {
+        return {
+          name: platformInfo.name,
+          icon: platformInfo.icon,
+          faviconUrl: platformInfo.faviconUrl,
+        }
+      }
+
+      // 适配包已卸载等目录缺失场景：从实例 key 的 origin 回退出站点名与 favicon
+      const instanceKey = resolvePersistedSiteInstanceKey(conversation) ?? conversation.siteId
+      const origin = instanceKey.includes("@")
+        ? instanceKey.slice(instanceKey.indexOf("@") + 1)
+        : null
+      if (origin) {
+        try {
+          return { name: new URL(origin).hostname, faviconUrl: `${origin}/favicon.ico` }
+        } catch {
+          // origin 非法时落到 siteId 兜底
+        }
+      }
+      return { name: conversation.siteId.replace(/^pack:/, "") }
+    }
+
+    const offsiteConversations = Object.values(getConversationsStore().conversations).filter(
+      (conversation) => resolvePersistedSiteInstanceKey(conversation) !== currentSiteInstanceKey,
+    )
+
+    offsiteConversations.forEach((conversation, offset) => {
+      entries.push(
+        buildConversationEntry(
+          conversation,
+          conversations.length + offset,
+          resolveOffsiteSite(conversation),
+        ),
+      )
     })
+
+    return entries
   }, [
     conversationManager,
     conversationsSnapshot,

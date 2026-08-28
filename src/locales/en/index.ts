@@ -1674,6 +1674,7 @@ Please output the optimized code block directly, followed by a brief summary of 
   globalSearchMatchReasonKeyword: "Keyword match",
   globalSearchMatchReasonAlias: "Alias match",
   globalSearchMatchReasonFuzzy: "Fuzzy match",
+  globalSearchOffsiteConversation: "External",
   globalSearchSyntaxOperatorType: "Type",
   globalSearchSyntaxOperatorFolder: "Folder",
   globalSearchSyntaxOperatorTag: "Tag",

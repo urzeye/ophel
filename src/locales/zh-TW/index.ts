@@ -1617,6 +1617,7 @@ export const zhTW = {
   globalSearchMatchReasonKeyword: "關鍵字命中",
   globalSearchMatchReasonAlias: "別名命中",
   globalSearchMatchReasonFuzzy: "模糊命中",
+  globalSearchOffsiteConversation: "站外",
   globalSearchSyntaxOperatorType: "類型",
   globalSearchSyntaxOperatorFolder: "資料夾",
   globalSearchSyntaxOperatorTag: "標籤",

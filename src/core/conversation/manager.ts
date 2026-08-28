@@ -823,6 +823,11 @@ export class ConversationManager {
     return this.folders
   }
 
+  /** 当前站点实例 key，用于跨站点场景（如全局搜索）区分站内/站外会话 */
+  getSiteInstanceKey(): string {
+    return this.siteInstanceKey
+  }
+
   getConversations(folderId?: string) {
     // 按当前站点和团队过滤
     const currentCid = this.siteAdapter.getCurrentCid?.() || null

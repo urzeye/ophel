@@ -1595,6 +1595,7 @@ export const ru = {
   globalSearchMatchReasonKeyword: "Совпадение по ключевому слову",
   globalSearchMatchReasonAlias: "Совпадение по алиасу",
   globalSearchMatchReasonFuzzy: "Нечеткое совпадение",
+  globalSearchOffsiteConversation: "Внешний",
   globalSearchSyntaxOperatorType: "Тип",
   globalSearchSyntaxOperatorFolder: "Папка",
   globalSearchSyntaxOperatorTag: "Тег",

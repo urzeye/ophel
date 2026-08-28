@@ -1734,6 +1734,7 @@ export const it = {
   globalSearchMatchReasonKeyword: "Corrispondenza delle parole chiave",
   globalSearchMatchReasonAlias: "Corrispondenza dell'alias",
   globalSearchMatchReasonFuzzy: "Corrispondenza fuzzy",
+  globalSearchOffsiteConversation: "Esterno",
   globalSearchSyntaxOperatorType: "Digitare",
   globalSearchSyntaxOperatorFolder: "Cartella",
   globalSearchSyntaxOperatorTag: "Etichetta",

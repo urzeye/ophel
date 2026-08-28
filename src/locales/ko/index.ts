@@ -1623,6 +1623,7 @@ export const ko = {
   globalSearchMatchReasonKeyword: "키워드 일치",
   globalSearchMatchReasonAlias: "별칭 일치",
   globalSearchMatchReasonFuzzy: "퍼지 일치",
+  globalSearchOffsiteConversation: "외부",
   globalSearchSyntaxOperatorType: "유형",
   globalSearchSyntaxOperatorFolder: "폴더",
   globalSearchSyntaxOperatorTag: "태그",

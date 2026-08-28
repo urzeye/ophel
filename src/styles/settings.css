@@ -4550,6 +4550,33 @@ html[data-theme="dark"] .about-privacy-banner {
   min-width: 0;
 }
 
+.settings-search-conversation-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.settings-search-offsite-site-icon {
+  flex-shrink: 0;
+}
+
+.settings-search-offsite-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 18px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  color: var(--gh-text-secondary, #6b7280);
+  background: var(--gh-bg-secondary, #f9fafb);
+  border: 1px solid var(--gh-border, #e5e7eb);
+}
+
 .settings-search-outline-role,
 .settings-search-outline-code {
   display: inline-flex;

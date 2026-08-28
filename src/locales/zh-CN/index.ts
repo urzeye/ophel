@@ -1617,6 +1617,7 @@ export const zhCN = {
   globalSearchMatchReasonKeyword: "关键词命中",
   globalSearchMatchReasonAlias: "别名命中",
   globalSearchMatchReasonFuzzy: "模糊命中",
+  globalSearchOffsiteConversation: "站外",
   globalSearchSyntaxOperatorType: "类型",
   globalSearchSyntaxOperatorFolder: "文件夹",
   globalSearchSyntaxOperatorTag: "标签",

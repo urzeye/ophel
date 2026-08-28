@@ -1669,6 +1669,7 @@ export const ja = {
   globalSearchMatchReasonKeyword: "キーワード一致",
   globalSearchMatchReasonAlias: "別名一致",
   globalSearchMatchReasonFuzzy: "あいまい一致",
+  globalSearchOffsiteConversation: "他サイト",
   globalSearchSyntaxOperatorType: "種類",
   globalSearchSyntaxOperatorFolder: "フォルダ",
   globalSearchSyntaxOperatorTag: "タグ",
