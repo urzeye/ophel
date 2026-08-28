@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### 🚀 New Features
+
+- **Cross-site conversation search** — Global search now also matches conversation titles from other supported sites; results from other sites carry the site icon and an "External" badge, and clicking one opens the conversation in a new tab. (#888)
+
 ### ✨ Improvements
 
 - **Tooltip display** — Tooltips are lighter, flip automatically near screen edges, and dismiss immediately on click or Esc; sweeping across neighboring buttons now shows hints instantly without the hover delay; quick action button hints open toward the center of the screen, and list hints (outline, conversations, folders, prompt chains) only appear when the title is truncated, so hovering no longer covers neighboring items. (#885)
