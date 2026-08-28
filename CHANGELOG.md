@@ -11,7 +11,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### ✨ Improvements
 
-- **Tooltip positioning and compact presentation** — Refined tooltips with smart boundary flipping, safer viewport clamping, and lighter styling to prevent obscuring nearby buttons or tabs; quick action buttons now open tooltips outward, and clicking immediately dismisses the hint. (#885)
+- **Tooltip positioning and compact presentation** — Refined tooltips with smart boundary flipping, safer viewport clamping, and lighter styling to prevent obscuring nearby buttons or tabs; quick action buttons now open tooltips toward the center of the screen, and clicking immediately dismisses the hint. (#885)
 
 ---
 
