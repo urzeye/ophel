@@ -1634,7 +1634,10 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         {/* Footer - 底部固定按钮 */}
         <div className="gh-panel-footer">
           {/* 顶部按钮 */}
-          <Tooltip content={t("scrollTop")} triggerStyle={{ flex: 1, maxWidth: "120px" }}>
+          <Tooltip
+            content={t("scrollTop")}
+            placement="top"
+            triggerStyle={{ flex: 1, maxWidth: "120px" }}>
             <button
               type="button"
               className="gh-interactive scroll-nav-btn gh-panel-footer-action"
@@ -1647,6 +1650,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
           {/* 锚点按钮（返回之前位置，双向跳转） */}
           <Tooltip
             content={hasAnchor ? t("jumpToAnchor") : t("noAnchor")}
+            placement="top"
             triggerStyle={{ flex: "0 0 32px" }}>
             <button
               type="button"
@@ -1666,7 +1670,10 @@ export const MainPanel: React.FC<MainPanelProps> = ({
           </Tooltip>
 
           {/* 底部按钮 */}
-          <Tooltip content={t("scrollBottom")} triggerStyle={{ flex: 1, maxWidth: "120px" }}>
+          <Tooltip
+            content={t("scrollBottom")}
+            placement="top"
+            triggerStyle={{ flex: 1, maxWidth: "120px" }}>
             <button
               type="button"
               className="gh-interactive scroll-nav-btn gh-panel-footer-action"

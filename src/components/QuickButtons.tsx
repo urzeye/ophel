@@ -864,7 +864,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       : t(def.labelKey)
 
     return (
-      <Tooltip key={id} content={tooltipContent}>
+      <Tooltip key={id} content={tooltipContent} placement="left">
         <button
           className={`quick-prompt-btn gh-interactive ${isPanelOnly ? "panel-only" : ""} ${isPanelBtn ? "panel-btn" : ""} ${isActive ? "active" : ""} ${isFloatingToolbarBtn ? "tools-trigger-btn" : ""} ${isZenModeBtn ? "zen-mode-btn" : ""}`}
           onClick={(e) => buttonActions[id]?.(e)}
@@ -921,7 +921,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     return (
       <React.Fragment key="manualAnchor">
         {/* 设置锚点（手动） */}
-        <Tooltip content={t("setAnchor")}>
+        <Tooltip content={t("setAnchor")} placement="left">
           <button
             className="quick-prompt-btn manual-anchor-btn set-btn gh-interactive"
             onClick={setAnchorManually}>

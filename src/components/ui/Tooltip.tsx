@@ -34,26 +34,26 @@ function isFocusFromWindowRestoration(): boolean {
 
 export const GLOBAL_TOOLTIP_STYLE_TEXT = `
   .ophel-tooltip {
-    background-color: rgba(30, 30, 35, 0.95);
+    background-color: rgba(24, 24, 28, 0.94);
     color: #ffffff;
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-size: 13px;
-    line-height: 1.5;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    line-height: 1.35;
     z-index: 2147483647;
     pointer-events: none;
     white-space: pre-wrap;
     word-wrap: break-word;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(4px);
-    animation: tooltip-fade-in 0.15s ease-out;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(6px);
+    animation: tooltip-fade-in 0.12s ease-out;
   }
 
   @keyframes tooltip-fade-in {
     from {
       opacity: 0;
-      transform: scale(0.95);
+      transform: scale(0.96);
     }
     to {
       opacity: 1;
@@ -62,7 +62,7 @@ export const GLOBAL_TOOLTIP_STYLE_TEXT = `
   }
 `
 
-export type TooltipPlacement = "top" | "bottom"
+export type TooltipPlacement = "top" | "bottom" | "left" | "right" | "auto"
 
 export interface TooltipPositionOptions {
   preferredPlacement?: TooltipPlacement
@@ -90,6 +90,7 @@ export interface DomTooltipOptions extends TooltipPositionOptions {
 export interface TooltipProps {
   content: string | ReactNode
   children: ReactNode
+  placement?: TooltipPlacement
   maxWidth?: number | string
   delay?: number
   className?: string
@@ -138,42 +139,112 @@ export function calculateTooltipPosition(
   options: TooltipPositionOptions = {},
 ): TooltipCoordinates {
   const {
-    preferredPlacement = "bottom",
+    preferredPlacement = "auto",
     gap = DEFAULT_TOOLTIP_GAP,
     viewportPadding = DEFAULT_VIEWPORT_PADDING,
   } = options
 
-  const preferredTop =
-    preferredPlacement === "top"
-      ? triggerRect.top - tooltipRect.height - gap
-      : triggerRect.bottom + gap
-  const fallbackTop =
-    preferredPlacement === "top"
-      ? triggerRect.bottom + gap
-      : triggerRect.top - tooltipRect.height - gap
-
-  let top = preferredTop
-
-  if (top < viewportPadding || top + tooltipRect.height > window.innerHeight - viewportPadding) {
-    top = fallbackTop
+  if (typeof window === "undefined") {
+    return { top: 0, left: 0 }
   }
 
-  if (top < viewportPadding) {
-    top = viewportPadding
+  const spaceTop = triggerRect.top - viewportPadding
+  const spaceBottom = window.innerHeight - triggerRect.bottom - viewportPadding
+  const spaceLeft = triggerRect.left - viewportPadding
+  const spaceRight = window.innerWidth - triggerRect.right - viewportPadding
+
+  const neededHeight = tooltipRect.height + gap
+  const neededWidth = tooltipRect.width + gap
+
+  let resolvedPlacement: "top" | "bottom" | "left" | "right" = "bottom"
+
+  if (preferredPlacement === "top") {
+    if (spaceTop >= neededHeight) {
+      resolvedPlacement = "top"
+    } else if (spaceBottom >= neededHeight) {
+      resolvedPlacement = "bottom"
+    } else {
+      resolvedPlacement = spaceTop >= spaceBottom ? "top" : "bottom"
+    }
+  } else if (preferredPlacement === "bottom") {
+    if (spaceBottom >= neededHeight) {
+      resolvedPlacement = "bottom"
+    } else if (spaceTop >= neededHeight) {
+      resolvedPlacement = "top"
+    } else {
+      resolvedPlacement = spaceBottom >= spaceTop ? "bottom" : "top"
+    }
+  } else if (preferredPlacement === "left") {
+    if (spaceLeft >= neededWidth) {
+      resolvedPlacement = "left"
+    } else if (spaceRight >= neededWidth) {
+      resolvedPlacement = "right"
+    } else {
+      resolvedPlacement = spaceLeft >= spaceRight ? "left" : "right"
+    }
+  } else if (preferredPlacement === "right") {
+    if (spaceRight >= neededWidth) {
+      resolvedPlacement = "right"
+    } else if (spaceLeft >= neededWidth) {
+      resolvedPlacement = "left"
+    } else {
+      resolvedPlacement = spaceRight >= spaceLeft ? "right" : "left"
+    }
+  } else {
+    // "auto": vertical first if space suffices, prefer bottom unless bottom is too tight
+    if (spaceBottom >= neededHeight) {
+      resolvedPlacement = "bottom"
+    } else if (spaceTop >= neededHeight) {
+      resolvedPlacement = "top"
+    } else if (spaceLeft >= neededWidth) {
+      resolvedPlacement = "left"
+    } else if (spaceRight >= neededWidth) {
+      resolvedPlacement = "right"
+    } else {
+      resolvedPlacement = spaceBottom >= spaceTop ? "bottom" : "top"
+    }
   }
 
-  if (top + tooltipRect.height > window.innerHeight - viewportPadding) {
-    top = Math.max(viewportPadding, window.innerHeight - tooltipRect.height - viewportPadding)
-  }
+  let top = 0
+  let left = 0
 
-  let left = triggerRect.left + triggerRect.width / 2 - tooltipRect.width / 2
+  if (resolvedPlacement === "top" || resolvedPlacement === "bottom") {
+    top =
+      resolvedPlacement === "top"
+        ? triggerRect.top - tooltipRect.height - gap
+        : triggerRect.bottom + gap
 
-  if (left < viewportPadding) {
-    left = viewportPadding
-  }
+    // Clamp top to viewport bounds
+    top = Math.max(
+      viewportPadding,
+      Math.min(window.innerHeight - tooltipRect.height - viewportPadding, top),
+    )
 
-  if (left + tooltipRect.width > window.innerWidth - viewportPadding) {
-    left = window.innerWidth - tooltipRect.width - viewportPadding
+    // Center horizontally and clamp to viewport bounds
+    left = triggerRect.left + triggerRect.width / 2 - tooltipRect.width / 2
+    left = Math.max(
+      viewportPadding,
+      Math.min(window.innerWidth - tooltipRect.width - viewportPadding, left),
+    )
+  } else {
+    // "left" or "right"
+    left =
+      resolvedPlacement === "left"
+        ? triggerRect.left - tooltipRect.width - gap
+        : triggerRect.right + gap
+
+    // Clamp left to viewport bounds
+    left = Math.max(
+      viewportPadding,
+      Math.min(window.innerWidth - tooltipRect.width - viewportPadding, left),
+    )
+
+    // Center vertically and clamp to viewport bounds
+    top = triggerRect.top + triggerRect.height / 2 - tooltipRect.height / 2
+    top = Math.max(
+      viewportPadding,
+      Math.min(window.innerHeight - tooltipRect.height - viewportPadding, top),
+    )
   }
 
   return { top, left }
@@ -358,6 +429,7 @@ export function bindDomTooltip(
 export const Tooltip: React.FC<TooltipProps> = ({
   content,
   children,
+  placement = "auto",
   maxWidth = DEFAULT_TOOLTIP_MAX_WIDTH,
   delay = DEFAULT_TOOLTIP_DELAY_MS,
   className = "",
@@ -418,9 +490,9 @@ export const Tooltip: React.FC<TooltipProps> = ({
     if (!triggerRect || !tooltipRect) return
 
     setPosition(
-      calculateTooltipPosition(triggerRect, tooltipRect, { preferredPlacement: "bottom" }),
+      calculateTooltipPosition(triggerRect, tooltipRect, { preferredPlacement: placement }),
     )
-  }, [])
+  }, [placement])
 
   useEffect(() => {
     if (triggerRef.current) {
@@ -507,6 +579,8 @@ export const Tooltip: React.FC<TooltipProps> = ({
       onMouseLeave={hideTooltip}
       onFocus={showTooltipFromFocus}
       onBlur={hideTooltip}
+      onClick={hideTooltip}
+      onPointerDown={hideTooltip}
       style={{ display: "inline-flex", ...triggerStyle }}>
       {children}
       {isVisible &&
