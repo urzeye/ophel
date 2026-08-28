@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react"
+import React, { useCallback, useEffect, useId, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import type { ReactNode } from "react"
 
@@ -7,6 +7,12 @@ const DEFAULT_TOOLTIP_DELAY_MS = 300
 const DEFAULT_TOOLTIP_MAX_WIDTH = 260
 const DEFAULT_TOOLTIP_GAP = 8
 const DEFAULT_VIEWPORT_PADDING = 10
+const SKIP_DELAY_WINDOW_MS = 300
+const FOCUSABLE_SELECTOR = 'button, a[href], input, [tabindex], [role="button"]'
+
+// 连续悬停免延迟：一个 tooltip 刚关闭的短窗口内，相邻触发器立即显示。
+// 模块级共享，等价于 Radix 的 skipDelayDuration，天然覆盖同组按钮互扫场景。
+let lastTooltipHiddenAt = 0
 
 // 切换标签页/窗口回来时浏览器会自动恢复焦点到上次聚焦的元素，
 // 触发 onFocus → showTooltip，导致 tooltip 凭空出现。
@@ -268,6 +274,7 @@ class DomTooltipManager {
   private tooltipEl: HTMLDivElement | null = null
   private activeTrigger: HTMLElement | null = null
   private positionOptions: TooltipPositionOptions = {}
+  private lastHiddenAt = 0
 
   private readonly handleWindowChange = () => {
     this.positionTooltip()
@@ -281,6 +288,16 @@ class DomTooltipManager {
     if (document.hidden) {
       this.hide()
     }
+  }
+
+  private readonly handleKeyDown = (event: KeyboardEvent) => {
+    if (event.key === "Escape") {
+      this.hide()
+    }
+  }
+
+  shouldSkipDelay(): boolean {
+    return Date.now() - this.lastHiddenAt < SKIP_DELAY_WINDOW_MS
   }
 
   show(
@@ -323,6 +340,7 @@ class DomTooltipManager {
 
     if (this.activeTrigger) {
       this.activeTrigger.removeAttribute("aria-describedby")
+      this.lastHiddenAt = Date.now()
     }
 
     this.activeTrigger = null
@@ -372,6 +390,7 @@ class DomTooltipManager {
     window.addEventListener("scroll", this.handleWindowChange, true)
     window.addEventListener("resize", this.handleWindowChange)
     window.addEventListener("blur", this.handleWindowBlur)
+    window.addEventListener("keydown", this.handleKeyDown)
     document.addEventListener("visibilitychange", this.handleVisibilityChange)
   }
 
@@ -379,6 +398,7 @@ class DomTooltipManager {
     window.removeEventListener("scroll", this.handleWindowChange, true)
     window.removeEventListener("resize", this.handleWindowChange)
     window.removeEventListener("blur", this.handleWindowBlur)
+    window.removeEventListener("keydown", this.handleKeyDown)
     document.removeEventListener("visibilitychange", this.handleVisibilityChange)
   }
 }
@@ -407,6 +427,10 @@ export function bindDomTooltip(
     clearTimer()
     if (resolveDisabled(options.disabled)) return
 
+    const effectiveDelay = domTooltipManager.shouldSkipDelay()
+      ? 0
+      : options.delay ?? DEFAULT_TOOLTIP_DELAY_MS
+
     timerId = setTimeout(() => {
       if (!trigger.isConnected) return
       const content = options.getContent()
@@ -416,7 +440,7 @@ export function bindDomTooltip(
         options.maxWidth ?? DEFAULT_TOOLTIP_MAX_WIDTH,
         options,
       )
-    }, options.delay ?? DEFAULT_TOOLTIP_DELAY_MS)
+    }, effectiveDelay)
   }
 
   trigger.addEventListener("mouseenter", show)
@@ -462,9 +486,16 @@ export const Tooltip: React.FC<TooltipProps> = ({
   const tooltipRef = useRef<HTMLDivElement>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isHoveringRef = useRef(false)
+  const isVisibleRef = useRef(false)
+  const tooltipId = useId()
 
   const hideTooltip = useCallback(() => {
     isHoveringRef.current = false
+    // 只在 tooltip 真实显示过时记录关闭时间，避免未显示的 hover 污染免延迟窗口
+    if (isVisibleRef.current) {
+      isVisibleRef.current = false
+      lastTooltipHiddenAt = Date.now()
+    }
     if (timerRef.current) {
       clearTimeout(timerRef.current)
       timerRef.current = null
@@ -475,6 +506,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
   }, [])
 
   const scheduleShow = useCallback(() => {
+    const effectiveDelay = Date.now() - lastTooltipHiddenAt < SKIP_DELAY_WINDOW_MS ? 0 : delay
     if (timerRef.current) {
       clearTimeout(timerRef.current)
     }
@@ -484,10 +516,11 @@ export const Tooltip: React.FC<TooltipProps> = ({
       setHasPendingTimer(false)
       // 二次检查：timer 到期时确认页面仍在前台且仍在 hover/focus 状态
       if (!document.hidden && isHoveringRef.current) {
+        isVisibleRef.current = true
         setIsVisible(true)
         setIsMeasuring(true)
       }
-    }, delay)
+    }, effectiveDelay)
   }, [delay])
 
   // 截断门控：文本完整可见时 tooltip 没有增量信息，不显示
@@ -564,11 +597,19 @@ export const Tooltip: React.FC<TooltipProps> = ({
       }
     }
 
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        hideTooltip()
+      }
+    }
+
     window.addEventListener("blur", hideTooltip)
+    window.addEventListener("keydown", handleKeyDown)
     document.addEventListener("visibilitychange", handleVisibilityChange)
 
     return () => {
       window.removeEventListener("blur", hideTooltip)
+      window.removeEventListener("keydown", handleKeyDown)
       document.removeEventListener("visibilitychange", handleVisibilityChange)
     }
   }, [hasPendingTimer, hideTooltip, isMeasuring, isVisible])
@@ -578,6 +619,28 @@ export const Tooltip: React.FC<TooltipProps> = ({
       if (timerRef.current) clearTimeout(timerRef.current)
     }
   }, [])
+
+  // 与 DOM tooltip 路径对齐：可见时把浮层 id 关联到实际可聚焦元素，
+  // 让读屏器能感知提示内容；不可见时移除，避免悬空引用
+  useEffect(() => {
+    const trigger = triggerRef.current
+    if (!trigger) return
+
+    const focusable = trigger.matches(FOCUSABLE_SELECTOR)
+      ? trigger
+      : trigger.querySelector<HTMLElement>(FOCUSABLE_SELECTOR)
+    const target = focusable ?? trigger
+
+    if (isVisible) {
+      target.setAttribute("aria-describedby", tooltipId)
+    } else {
+      target.removeAttribute("aria-describedby")
+    }
+
+    return () => {
+      target.removeAttribute("aria-describedby")
+    }
+  }, [isVisible, tooltipId])
 
   useEffect(() => {
     if (disabled) {
@@ -605,6 +668,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
         createPortal(
           <div
             ref={tooltipRef}
+            id={tooltipId}
             className="ophel-tooltip"
             style={{
               position: "fixed",
