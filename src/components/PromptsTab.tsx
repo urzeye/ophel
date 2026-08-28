@@ -2432,7 +2432,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                   <div className="gh-chain-title-row">
                     <span className="gh-chain-title">{chain.title}</span>
                   </div>
-                  <Tooltip content={flowText}>
+                  <Tooltip content={flowText} showOnlyWhenTruncated>
                     <div className="gh-chain-flow">
                       <span className="gh-chain-meta-badge">{chain.steps.length}</span>
                       <span className="gh-chain-flow-text">{flowText}</span>

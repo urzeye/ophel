@@ -1108,7 +1108,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                         {folder.icon}
                       </span>
 
-                      <Tooltip content={folderName}>
+                      <Tooltip content={folderName} showOnlyWhenTruncated>
                         <span className="conversations-folder-name">
                           {searchQuery && searchResult?.folderMatches.has(folder.id)
                             ? highlightText(folderName, searchQuery)
@@ -1592,6 +1592,7 @@ const ConversationItem = React.memo<ConversationItemProps>(
           <div className="conversations-item-headline">
             <Tooltip
               content={conv.title}
+              showOnlyWhenTruncated
               triggerStyle={{
                 flex: 1,
                 minWidth: 0,

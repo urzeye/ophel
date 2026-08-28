@@ -93,10 +93,24 @@ export interface TooltipProps {
   placement?: TooltipPlacement
   maxWidth?: number | string
   delay?: number
+  /** 仅当触发器内文本被截断（ellipsis/line-clamp）时才显示，用于列表项全文预览 */
+  showOnlyWhenTruncated?: boolean
   className?: string
   triggerClassName?: string
   triggerStyle?: React.CSSProperties
   disabled?: boolean
+}
+
+// 文本截断检测：比较 scroll/client 尺寸，同时覆盖单行 ellipsis 与多行 line-clamp
+function hasTruncatedText(root: HTMLElement): boolean {
+  const isOverflowing = (el: Element): boolean =>
+    el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1
+
+  if (isOverflowing(root)) return true
+  for (const el of Array.from(root.querySelectorAll("*"))) {
+    if (isOverflowing(el)) return true
+  }
+  return false
 }
 
 function resolveDisabled(disabled: DomTooltipOptions["disabled"]): boolean {
@@ -432,6 +446,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
   placement = "auto",
   maxWidth = DEFAULT_TOOLTIP_MAX_WIDTH,
   delay = DEFAULT_TOOLTIP_DELAY_MS,
+  showOnlyWhenTruncated = false,
   className = "",
   triggerClassName = "",
   triggerStyle = {},
@@ -459,9 +474,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
     setHasPendingTimer(false)
   }, [])
 
-  const showTooltip = useCallback(() => {
-    isHoveringRef.current = true
-    if (disabled) return
+  const scheduleShow = useCallback(() => {
     if (timerRef.current) {
       clearTimeout(timerRef.current)
     }
@@ -475,7 +488,21 @@ export const Tooltip: React.FC<TooltipProps> = ({
         setIsMeasuring(true)
       }
     }, delay)
-  }, [delay, disabled])
+  }, [delay])
+
+  // 截断门控：文本完整可见时 tooltip 没有增量信息，不显示
+  const passesTruncationGate = useCallback((): boolean => {
+    if (!showOnlyWhenTruncated) return true
+    const trigger = triggerRef.current
+    return trigger !== null && hasTruncatedText(trigger)
+  }, [showOnlyWhenTruncated])
+
+  const showTooltip = useCallback(() => {
+    isHoveringRef.current = true
+    if (disabled) return
+    if (!passesTruncationGate()) return
+    scheduleShow()
+  }, [disabled, passesTruncationGate, scheduleShow])
 
   // 针对切标签页/窗口回来时浏览器自动恢复焦点的场景，
   // 屏蔽由页面恢复焦点触发的 showTooltip（非用户主动键盘导航）
@@ -555,21 +582,10 @@ export const Tooltip: React.FC<TooltipProps> = ({
   useEffect(() => {
     if (disabled) {
       hideTooltip()
-    } else if (isHoveringRef.current) {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current)
-      }
-      setHasPendingTimer(true)
-      timerRef.current = setTimeout(() => {
-        timerRef.current = null
-        setHasPendingTimer(false)
-        if (!document.hidden && isHoveringRef.current) {
-          setIsVisible(true)
-          setIsMeasuring(true)
-        }
-      }, delay)
+    } else if (isHoveringRef.current && passesTruncationGate()) {
+      scheduleShow()
     }
-  }, [delay, disabled, hideTooltip])
+  }, [disabled, hideTooltip, passesTruncationGate, scheduleShow])
 
   return (
     <div

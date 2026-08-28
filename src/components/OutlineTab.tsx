@@ -508,6 +508,7 @@ const OutlineNodeView: React.FC<{
       }
       disabled={isHoveringAction}
       triggerStyle={{ width: "100%", display: "block" }}
+      showOnlyWhenTruncated
       delay={500}>
       <div
         className={itemClassName}
