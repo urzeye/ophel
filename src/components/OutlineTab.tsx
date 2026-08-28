@@ -37,7 +37,6 @@ interface OutlineTabProps {
   manager: OutlineManager
   conversationManager: ConversationManager
   onJumpBefore?: () => void
-  isCodexOpen?: boolean
   showUserQueryToggle?: boolean
 }
 
@@ -711,7 +710,6 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
   manager,
   conversationManager,
   onJumpBefore,
-  isCodexOpen = false,
   showUserQueryToggle = true,
 }) => {
   // 获取设置 - 使用 Zustand Store
@@ -2091,14 +2089,12 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
                     display: "flex",
                     justifyContent: "center",
                   }}>
-                  {!isCodexOpen && (
-                    <MagicCodex
-                      isOpen={true}
-                      onClose={() => {}}
-                      tips={structuredTips}
-                      isStatic={true}
-                    />
-                  )}
+                  <MagicCodex
+                    isOpen={true}
+                    onClose={() => {}}
+                    tips={structuredTips}
+                    isStatic={true}
+                  />
                 </div>
               </div>
             )
@@ -2127,14 +2123,12 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
                     display: "flex",
                     justifyContent: "center",
                   }}>
-                  {!isCodexOpen && (
-                    <MagicCodex
-                      isOpen={true}
-                      onClose={() => {}}
-                      tips={structuredTips}
-                      isStatic={true}
-                    />
-                  )}
+                  <MagicCodex
+                    isOpen={true}
+                    onClose={() => {}}
+                    tips={structuredTips}
+                    isStatic={true}
+                  />
                 </div>
               </div>
             )

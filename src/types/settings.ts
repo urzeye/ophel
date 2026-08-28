@@ -126,7 +126,6 @@ export type FormulaCopyFormat = "latex" | "mathml"
 export interface Settings {
   language: string
   hasAgreedToTerms: boolean // 用户是否同意免责声明
-  hasSeenOphelAdvancedGuide?: boolean
 
   // 适配配置远程更新
   remoteConfig: {

@@ -634,7 +634,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
   const [isHoverWidthSettingsPreviewActive, setIsHoverWidthSettingsPreviewActive] = useState(false)
   const [hoverWidthReleaseToken, setHoverWidthReleaseToken] = useState(0)
   const [isReleaseNotesOpen, setIsReleaseNotesOpen] = useState(false)
-  const [releaseNotesAutoSignal, setReleaseNotesAutoSignal] = useState(0)
+  const [hasUnseenReleaseNotes, setHasUnseenReleaseNotes] = useState(false)
   const [showExtensionUpdateNotice, setShowExtensionUpdateNotice] = useState(
     () => typeof window !== "undefined" && Boolean(window.__OPHEL_EXTENSION_UPDATE_AVAILABLE__),
   )
@@ -716,9 +716,6 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
   const [outlineSearchVersion, setOutlineSearchVersion] = useState(0)
   const outlineSearchNavigationRequestIdRef = useRef(0)
   const settingsSearchRestoreFocusRef = useRef<HTMLElement | null>(null)
-  const releaseNotesAutoCheckRef = useRef(false)
-  const releaseNotesPendingOpenRef = useRef(false)
-
   const releaseNotesLanguage = settings?.language ?? DEFAULT_SETTINGS.language
   const canShowCurrentReleaseNotes = hasCurrentReleaseNotes()
   const releaseNotesMarkdown = canShowCurrentReleaseNotes
@@ -729,6 +726,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
     : "https://ophel.app/docs/changelog"
 
   const markCurrentReleaseNotesSeen = useCallback(() => {
+    setHasUnseenReleaseNotes(false)
     void markReleaseNotesSeen(APP_VERSION).catch((error) => {
       console.warn("[Ophel] Failed to save release notes state:", error)
     })
@@ -750,7 +748,6 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
 
   useEffect(() => {
     if (
-      releaseNotesAutoCheckRef.current ||
       !canShowCurrentReleaseNotes ||
       !releaseNotesMarkdown.trim() ||
       !isSettingsHydrated ||
@@ -760,13 +757,11 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
     }
 
     let cancelled = false
-    releaseNotesAutoCheckRef.current = true
 
     void getReleaseNotesState()
       .then((state) => {
-        if (cancelled || state.lastSeenVersion === APP_VERSION) return
-        releaseNotesPendingOpenRef.current = true
-        setReleaseNotesAutoSignal((value) => value + 1)
+        if (cancelled) return
+        setHasUnseenReleaseNotes(state.lastSeenVersion !== APP_VERSION)
       })
       .catch((error) => {
         console.warn("[Ophel] Failed to read release notes state:", error)
@@ -780,29 +775,6 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
     isSettingsHydrated,
     releaseNotesMarkdown,
     settings?.hasAgreedToTerms,
-  ])
-
-  useEffect(() => {
-    if (
-      !releaseNotesPendingOpenRef.current ||
-      isReleaseNotesOpen ||
-      isSettingsOpen ||
-      isGlobalSettingsSearchOpen ||
-      Boolean(exportProgress) ||
-      showExtensionUpdateNotice
-    ) {
-      return
-    }
-
-    releaseNotesPendingOpenRef.current = false
-    setIsReleaseNotesOpen(true)
-  }, [
-    exportProgress,
-    isGlobalSettingsSearchOpen,
-    isReleaseNotesOpen,
-    isSettingsOpen,
-    releaseNotesAutoSignal,
-    showExtensionUpdateNotice,
   ])
 
   // 浮动工具栏
@@ -3250,6 +3222,12 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
         onOpenSettings={() => {
           openSettingsModal()
         }}
+        hasUnseenReleaseNotes={
+          canShowCurrentReleaseNotes &&
+          Boolean(releaseNotesMarkdown.trim()) &&
+          hasUnseenReleaseNotes
+        }
+        onOpenReleaseNotes={canShowCurrentReleaseNotes ? openReleaseNotes : undefined}
         onMouseEnter={handleMainPanelMouseEnter}
         onMouseLeave={handleMainPanelMouseLeave}
       />

@@ -32,10 +32,8 @@ import {
   ThemeLightIcon,
 } from "~components/icons"
 import { SparkleIcon } from "~components/icons/SparkleIcon"
-import { MagicCodex } from "~components/MagicCodex"
 import { TAB_IDS, isBuiltinSiteId } from "~constants"
 import { isMacOS } from "~constants/shortcuts"
-import { buildStructuredTips } from "~utils/build-structured-tips"
 import type { ConversationManager } from "~core/conversation-manager"
 import type { OutlineManager } from "~core/outline-manager"
 import type { PromptManager } from "~core/prompt-manager"
@@ -80,6 +78,8 @@ interface MainPanelProps {
   onOpenSettings?: () => void
   isHoverWidthSettingsPreviewActive?: boolean
   hoverWidthReleaseToken?: number
+  hasUnseenReleaseNotes?: boolean
+  onOpenReleaseNotes?: () => void
   onMouseEnter?: React.MouseEventHandler<HTMLDivElement>
   onMouseLeave?: React.MouseEventHandler<HTMLDivElement>
 }
@@ -166,6 +166,8 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   onOpenSettings,
   isHoverWidthSettingsPreviewActive = false,
   hoverWidthReleaseToken = 0,
+  hasUnseenReleaseNotes = false,
+  onOpenReleaseNotes,
   onMouseEnter,
   onMouseLeave,
 }) => {
@@ -177,7 +179,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     }
   }, [])
 
-  const { settings, updateNestedSetting, setSettings } = useSettingsStore()
+  const { settings, updateNestedSetting } = useSettingsStore()
   const currentSettings = settings || DEFAULT_SETTINGS
   const tabOrder = currentSettings.features?.order || DEFAULT_SETTINGS.features.order
   const siteId = adapter?.getSiteId() || "_default"
@@ -738,22 +740,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         : { right: `${defaultEdgeDistance}px`, left: "auto" }
       : { left: "", right: "" }
 
-  const [showCodex, setShowCodex] = useState(false)
   const [isHeaderPressed, setIsHeaderPressed] = useState(false)
-  const hasSeenCodex = currentSettings.hasSeenOphelAdvancedGuide ?? false
-  const shortcutNotSetKey = "shortcutNotSet"
-  const translatedShortcutNotSetLabel = t(shortcutNotSetKey)
-  const shortcutNotSetLabel =
-    translatedShortcutNotSetLabel === shortcutNotSetKey ? "未设置" : translatedShortcutNotSetLabel
-  const setHasSeenCodex = useCallback(
-    (val: boolean) => {
-      if (val && !hasSeenCodex && setSettings) {
-        setSettings({ hasSeenOphelAdvancedGuide: true })
-      }
-    },
-    [hasSeenCodex, setSettings],
-  )
-
   const shouldShowHeaderPressHint = useCallback((target: EventTarget | null) => {
     if (!(target instanceof Element)) {
       return true
@@ -778,28 +765,31 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     [resetHeaderPressHint, shouldShowHeaderPressHint],
   )
 
-  const structuredTips = useMemo(
-    () =>
-      buildStructuredTips(currentSettings.shortcuts?.keybindings, isMacOS(), shortcutNotSetLabel),
-    [currentSettings.shortcuts?.keybindings, shortcutNotSetLabel],
-  )
+  // 品牌区（logo）交互：未读更新日志时悬停短暂停留即打开，已读后仅点击打开
+  const brandHoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Hover logic for MagicCodex trigger instead of click
-  const headerInteractionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const handleBrandMouseEnter = useCallback(() => {
+    if (!hasUnseenReleaseNotes || !onOpenReleaseNotes) return
+    if (brandHoverTimerRef.current) clearTimeout(brandHoverTimerRef.current)
+    brandHoverTimerRef.current = setTimeout(() => {
+      onOpenReleaseNotes()
+    }, 400)
+  }, [hasUnseenReleaseNotes, onOpenReleaseNotes])
 
-  const handleLogoMouseEnter = useCallback(() => {
-    if (hasSeenCodex) return
-    if (headerInteractionTimerRef.current) clearTimeout(headerInteractionTimerRef.current)
-    setShowCodex(true)
-    setHasSeenCodex(true)
-  }, [hasSeenCodex, setHasSeenCodex])
-
-  const handleLogoMouseLeave = useCallback(() => {
-    if (headerInteractionTimerRef.current) clearTimeout(headerInteractionTimerRef.current)
-    headerInteractionTimerRef.current = setTimeout(() => {
-      setShowCodex(false)
-    }, 300)
+  const handleBrandMouseLeave = useCallback(() => {
+    if (brandHoverTimerRef.current) {
+      clearTimeout(brandHoverTimerRef.current)
+      brandHoverTimerRef.current = null
+    }
   }, [])
+
+  const handleBrandClick = useCallback(() => {
+    if (brandHoverTimerRef.current) {
+      clearTimeout(brandHoverTimerRef.current)
+      brandHoverTimerRef.current = null
+    }
+    onOpenReleaseNotes?.()
+  }, [onOpenReleaseNotes])
 
   // Double click to toggle panel mode
   const handleHeaderDoubleClick = useCallback(
@@ -825,12 +815,8 @@ export const MainPanel: React.FC<MainPanelProps> = ({
 
   useEffect(() => {
     return () => {
-      if (headerInteractionTimerRef.current) clearTimeout(headerInteractionTimerRef.current)
+      if (brandHoverTimerRef.current) clearTimeout(brandHoverTimerRef.current)
     }
-  }, [])
-
-  const closeCodex = useCallback(() => {
-    setShowCodex(false)
   }, [])
 
   // 初始化 activeTab（先用默认值，等 settings 加载后更新）
@@ -1384,42 +1370,33 @@ export const MainPanel: React.FC<MainPanelProps> = ({
           onPointerCancel={resetHeaderPressHint}
           onDoubleClick={handleHeaderDoubleClick}
           className="gh-panel-header">
-          {/* 左侧：图标 + 标题悬停展示高级指南 */}
+          {/* 左侧：图标 + 标题，未读更新日志时显示红点，悬停/点击查看 */}
           <div
             className="gh-panel-brand"
-            onMouseEnter={handleLogoMouseEnter}
-            onMouseLeave={handleLogoMouseLeave}>
+            onMouseEnter={handleBrandMouseEnter}
+            onMouseLeave={handleBrandMouseLeave}>
             <div
               className="gh-interactive gh-panel-brand-trigger"
               role="button"
               tabIndex={0}
-              aria-label={t("panelTitle")}
+              aria-label={t("releaseNotesOpen")}
               data-tip-target="header-title"
               data-no-header-press-hint="true"
-              onClick={() => {
-                setShowCodex((v) => !v)
-                setHasSeenCodex(true)
-              }}
+              onClick={handleBrandClick}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault()
-                  setShowCodex((v) => !v)
+                  handleBrandClick()
                 }
               }}>
               <div className="gh-panel-brand-mark">
                 <SparkleIcon size={18} color={panelSparkleColor} />
-                {!hasSeenCodex && <span className="gh-panel-brand-unread" aria-hidden="true" />}
+                {hasUnseenReleaseNotes && (
+                  <span className="gh-panel-brand-unread" aria-hidden="true" />
+                )}
               </div>
               <span className="gh-panel-brand-title">{t("panelTitle")}</span>
             </div>
-
-            <MagicCodex
-              isOpen={showCodex}
-              onClose={closeCodex}
-              tips={structuredTips}
-              onMouseEnter={handleLogoMouseEnter}
-              onMouseLeave={handleLogoMouseLeave}
-            />
           </div>
 
           {/* 右侧：按钮组 - 需要 gh-panel-controls 以排除拖拽 */}
@@ -1624,7 +1601,6 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                 manager={outlineManager}
                 conversationManager={conversationManager}
                 onJumpBefore={saveAnchor}
-                isCodexOpen={showCodex}
                 showUserQueryToggle={canShowOutlineUserQueries}
               />
             )}

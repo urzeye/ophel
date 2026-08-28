@@ -75,7 +75,6 @@ export const DEFAULT_QUICK_BUTTONS_SETTINGS: QuickButtonsSettings = {
 export const DEFAULT_SETTINGS: Settings = {
   language: "auto",
   hasAgreedToTerms: false,
-  hasSeenOphelAdvancedGuide: false,
 
   remoteConfig: {
     autoUpdate: true,
