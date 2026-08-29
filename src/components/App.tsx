@@ -761,6 +761,8 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
 
   const openReleaseNotes = useCallback(() => {
     if (!canShowCurrentReleaseNotes || !releaseNotesMarkdown.trim()) return
+    // 无论从哪个入口打开更新日志，都同时收起 toast，避免浮层叠在 modal 之上
+    setShowReleaseNotesToast(false)
     setIsReleaseNotesOpen(true)
   }, [canShowCurrentReleaseNotes, releaseNotesMarkdown])
 
@@ -815,7 +817,11 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
       !canShowCurrentReleaseNotes ||
       !releaseNotesMarkdown.trim() ||
       !isSettingsHydrated ||
-      !settings?.hasAgreedToTerms
+      !settings?.hasAgreedToTerms ||
+      // 与右下角扩展更新横幅错开，避免两个浮层同位置重叠
+      showExtensionUpdateNotice ||
+      // 更新日志已打开时不再弹 toast；关闭后已读标记会让本 effect 不再调度
+      isReleaseNotesOpen
     ) {
       return
     }
@@ -847,9 +853,11 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
     }
   }, [
     canShowCurrentReleaseNotes,
+    isReleaseNotesOpen,
     isSettingsHydrated,
     releaseNotesMarkdown,
     settings?.hasAgreedToTerms,
+    showExtensionUpdateNotice,
   ])
 
   // 浮动工具栏
