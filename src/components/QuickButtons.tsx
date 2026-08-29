@@ -49,6 +49,8 @@ import { showToast } from "~utils/toast"
 
 interface QuickButtonsProps {
   isPanelExpanded: boolean
+  /** 有未读更新日志时在面板开关按钮上镜像红点，保证面板收起时也可见 */
+  hasUnseenReleaseNotes?: boolean
   onPanelToggle: () => void
   onPanelLogoHoverStart?: (anchorRect: DOMRect, options?: { waitForGroupDwell?: boolean }) => void
   onPanelLogoHoverEnd?: () => void
@@ -128,6 +130,7 @@ const TOOLS_MENU_CAPABILITY_REQUIREMENTS: Partial<Record<ToolsMenuId, SitePackCa
 
 export const QuickButtons: React.FC<QuickButtonsProps> = ({
   isPanelExpanded,
+  hasUnseenReleaseNotes = false,
   onPanelToggle,
   onPanelLogoHoverStart,
   onPanelLogoHoverEnd,
@@ -911,6 +914,9 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
           ) : (
             icon
           )}
+          {isPanelBtn && hasUnseenReleaseNotes ? (
+            <span className="gh-quick-btn-unread" aria-hidden="true" />
+          ) : null}
         </button>
       </Tooltip>
     )

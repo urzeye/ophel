@@ -34,7 +34,11 @@ import {
   hasCurrentReleaseNotes,
 } from "~release-notes"
 import { currentReleaseNotes } from "~release-notes/current"
-import { getReleaseNotesState, markReleaseNotesSeen } from "~release-notes/storage"
+import {
+  getReleaseNotesState,
+  markReleaseNotesSeen,
+  markReleaseNotesToastShown,
+} from "~release-notes/storage"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
 import { useConversationsStore } from "~stores/conversations-store"
 import { useFoldersStore } from "~stores/folders-store"
@@ -635,6 +639,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
   const [hoverWidthReleaseToken, setHoverWidthReleaseToken] = useState(0)
   const [isReleaseNotesOpen, setIsReleaseNotesOpen] = useState(false)
   const [hasUnseenReleaseNotes, setHasUnseenReleaseNotes] = useState(false)
+  const [showReleaseNotesToast, setShowReleaseNotesToast] = useState(false)
   const [showExtensionUpdateNotice, setShowExtensionUpdateNotice] = useState(
     () => typeof window !== "undefined" && Boolean(window.__OPHEL_EXTENSION_UPDATE_AVAILABLE__),
   )
@@ -725,6 +730,28 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
     ? getFullChangelogUrl(releaseNotesLanguage)
     : "https://ophel.app/docs/changelog"
 
+  // 红点悬停 popover 与更新 toast 共用的标题和首条要点预览
+  const releaseNotesTitleText = canShowCurrentReleaseNotes
+    ? formatLocalizedText(
+        { key: "releaseNotesTitle", fallback: `Ophel Atlas v{version}` },
+        { version: APP_VERSION },
+      )
+    : ""
+
+  const releaseNotesPreview = useMemo(() => {
+    const firstItem = releaseNotesMarkdown
+      .split("\n")
+      .map((line) => line.trim())
+      .find((line) => line.startsWith("- "))
+    if (!firstItem) return ""
+    // 去掉 markdown 加粗标记与末尾的 PR/issue 引用，popover/toast 里只留纯文本
+    return firstItem
+      .slice(2)
+      .replace(/\*\*/g, "")
+      .replace(/\s*\((?:#[\d]+[@\w.,\s#]*)\)\s*$/, "")
+      .trim()
+  }, [releaseNotesMarkdown])
+
   const markCurrentReleaseNotesSeen = useCallback(() => {
     setHasUnseenReleaseNotes(false)
     void markReleaseNotesSeen(APP_VERSION).catch((error) => {
@@ -746,6 +773,43 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
     platform.openTab(fullChangelogUrl)
   }, [fullChangelogUrl])
 
+  const dismissReleaseNotesToast = useCallback(() => {
+    setShowReleaseNotesToast(false)
+    void markReleaseNotesToastShown(APP_VERSION).catch((error) => {
+      console.warn("[Ophel] Failed to save release notes toast state:", error)
+    })
+  }, [])
+
+  const openReleaseNotesFromToast = useCallback(() => {
+    openReleaseNotes()
+    dismissReleaseNotesToast()
+  }, [openReleaseNotes, dismissReleaseNotesToast])
+
+  // toast 自动消失；悬停时暂停计时，移开后重新计时
+  const releaseNotesToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const clearReleaseNotesToastTimer = useCallback(() => {
+    if (releaseNotesToastTimerRef.current) {
+      clearTimeout(releaseNotesToastTimerRef.current)
+      releaseNotesToastTimerRef.current = null
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!showReleaseNotesToast) return
+    releaseNotesToastTimerRef.current = setTimeout(dismissReleaseNotesToast, 8000)
+    return clearReleaseNotesToastTimer
+  }, [showReleaseNotesToast, dismissReleaseNotesToast, clearReleaseNotesToastTimer])
+
+  const pauseReleaseNotesToast = useCallback(() => {
+    clearReleaseNotesToastTimer()
+  }, [clearReleaseNotesToastTimer])
+
+  const resumeReleaseNotesToast = useCallback(() => {
+    clearReleaseNotesToastTimer()
+    releaseNotesToastTimerRef.current = setTimeout(dismissReleaseNotesToast, 4000)
+  }, [clearReleaseNotesToastTimer, dismissReleaseNotesToast])
+
   useEffect(() => {
     if (
       !canShowCurrentReleaseNotes ||
@@ -757,11 +821,21 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
     }
 
     let cancelled = false
+    let toastDelayTimer: ReturnType<typeof setTimeout> | null = null
 
     void getReleaseNotesState()
       .then((state) => {
         if (cancelled) return
-        setHasUnseenReleaseNotes(state.lastSeenVersion !== APP_VERSION)
+        const unseen = state.lastSeenVersion !== APP_VERSION
+        setHasUnseenReleaseNotes(unseen)
+
+        // 更新提醒 toast 每个版本最多一次，且只在升级场景（有历史版本记录）触发，
+        // 首次安装走红点即可，避免和免责流程叠加打扰
+        if (unseen && state.lastSeenVersion && state.lastToastVersion !== APP_VERSION) {
+          toastDelayTimer = setTimeout(() => {
+            if (!cancelled) setShowReleaseNotesToast(true)
+          }, 1600)
+        }
       })
       .catch((error) => {
         console.warn("[Ophel] Failed to read release notes state:", error)
@@ -769,6 +843,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
 
     return () => {
       cancelled = true
+      if (toastDelayTimer) clearTimeout(toastDelayTimer)
     }
   }, [
     canShowCurrentReleaseNotes,
@@ -3228,12 +3303,19 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
           hasUnseenReleaseNotes
         }
         onOpenReleaseNotes={canShowCurrentReleaseNotes ? openReleaseNotes : undefined}
+        releaseNotesTitleText={releaseNotesTitleText}
+        releaseNotesPreview={releaseNotesPreview}
         onMouseEnter={handleMainPanelMouseEnter}
         onMouseLeave={handleMainPanelMouseLeave}
       />
 
       <QuickButtons
         isPanelExpanded={isPanelExpanded}
+        hasUnseenReleaseNotes={
+          canShowCurrentReleaseNotes &&
+          Boolean(releaseNotesMarkdown.trim()) &&
+          hasUnseenReleaseNotes
+        }
         onPanelToggle={handlePanelToggle}
         onPanelLogoHoverStart={handlePanelLogoHoverStart}
         onPanelLogoHoverEnd={handlePanelLogoHoverEnd}
@@ -3616,6 +3698,57 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
         tone="export"
         blockPageInteraction
       />
+      {showReleaseNotesToast && canShowCurrentReleaseNotes && (
+        <section
+          className="gh-release-toast gh-interactive"
+          role="status"
+          aria-live="polite"
+          onMouseEnter={pauseReleaseNotesToast}
+          onMouseLeave={resumeReleaseNotesToast}>
+          <button
+            type="button"
+            className="gh-release-toast-close"
+            aria-label={t("close")}
+            onClick={dismissReleaseNotesToast}>
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round">
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
+          </button>
+          <div className="gh-release-toast-title">
+            <svg
+              className="gh-release-toast-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round">
+              <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+            </svg>
+            {releaseNotesTitleText}
+          </div>
+          {releaseNotesPreview ? (
+            <p className="gh-release-toast-preview">{releaseNotesPreview}</p>
+          ) : null}
+          <div className="gh-release-toast-actions">
+            <button
+              type="button"
+              className="gh-release-toast-button"
+              onClick={openReleaseNotesFromToast}>
+              {t("releaseNotesOpen")}
+            </button>
+          </div>
+        </section>
+      )}
       {showExtensionUpdateNotice && (
         <section className="gh-update-notice gh-interactive" role="status" aria-live="polite">
           <button

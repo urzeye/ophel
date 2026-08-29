@@ -80,6 +80,8 @@ interface MainPanelProps {
   hoverWidthReleaseToken?: number
   hasUnseenReleaseNotes?: boolean
   onOpenReleaseNotes?: () => void
+  releaseNotesTitleText?: string
+  releaseNotesPreview?: string
   onMouseEnter?: React.MouseEventHandler<HTMLDivElement>
   onMouseLeave?: React.MouseEventHandler<HTMLDivElement>
 }
@@ -168,6 +170,8 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   hoverWidthReleaseToken = 0,
   hasUnseenReleaseNotes = false,
   onOpenReleaseNotes,
+  releaseNotesTitleText,
+  releaseNotesPreview,
   onMouseEnter,
   onMouseLeave,
 }) => {
@@ -765,15 +769,16 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     [resetHeaderPressHint, shouldShowHeaderPressHint],
   )
 
-  // 品牌区（logo）交互：未读更新日志时悬停短暂停留即打开，已读后仅点击打开
+  // 品牌区（logo）交互：未读更新日志时悬停短暂停留展示轻量预览，点击才打开完整更新日志
   const brandHoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [isBrandPopoverOpen, setIsBrandPopoverOpen] = useState(false)
 
   const handleBrandMouseEnter = useCallback(() => {
     if (!hasUnseenReleaseNotes || !onOpenReleaseNotes) return
     if (brandHoverTimerRef.current) clearTimeout(brandHoverTimerRef.current)
     brandHoverTimerRef.current = setTimeout(() => {
-      onOpenReleaseNotes()
-    }, 400)
+      setIsBrandPopoverOpen(true)
+    }, 300)
   }, [hasUnseenReleaseNotes, onOpenReleaseNotes])
 
   const handleBrandMouseLeave = useCallback(() => {
@@ -781,6 +786,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
       clearTimeout(brandHoverTimerRef.current)
       brandHoverTimerRef.current = null
     }
+    setIsBrandPopoverOpen(false)
   }, [])
 
   const handleBrandClick = useCallback(() => {
@@ -788,6 +794,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
       clearTimeout(brandHoverTimerRef.current)
       brandHoverTimerRef.current = null
     }
+    setIsBrandPopoverOpen(false)
     onOpenReleaseNotes?.()
   }, [onOpenReleaseNotes])
 
@@ -1397,6 +1404,16 @@ export const MainPanel: React.FC<MainPanelProps> = ({
               </div>
               <span className="gh-panel-brand-title">{t("panelTitle")}</span>
             </div>
+
+            {isBrandPopoverOpen && hasUnseenReleaseNotes && releaseNotesTitleText ? (
+              <div className="gh-brand-release-popover" role="status">
+                <div className="gh-brand-release-popover-title">{releaseNotesTitleText}</div>
+                {releaseNotesPreview ? (
+                  <p className="gh-brand-release-popover-preview">{releaseNotesPreview}</p>
+                ) : null}
+                <div className="gh-brand-release-popover-hint">{t("releaseNotesViewFull")}</div>
+              </div>
+            ) : null}
           </div>
 
           {/* 右侧：按钮组 - 需要 gh-panel-controls 以排除拖拽 */}
