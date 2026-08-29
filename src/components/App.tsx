@@ -1966,6 +1966,8 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
         if (item.offsiteSite) {
           if (item.conversationUrl) {
             platform.openTab(item.conversationUrl)
+          } else {
+            showToast(t("noConversationToLocate"))
           }
           return
         }
