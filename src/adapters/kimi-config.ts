@@ -166,6 +166,7 @@ const createKimiConfig = (): KimiSiteConfig => {
         "a.new-chat-btn",
         'a.new-chat-btn[href="/"]',
         'a.new-chat-btn[href="https://www.kimi.com/"]',
+        'a.new-chat-btn[href="https://www.kimi.ai/"]',
       ],
       stopButton: [activeStopButton, `${submitButtonContainer}:has(svg[name="stop"])`],
     },

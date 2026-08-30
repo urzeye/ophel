@@ -263,7 +263,7 @@ export const SUPPORTED_AI_PLATFORMS: SupportedAiPlatform[] = [
   createSupportedAiPlatform({
     id: SITE_IDS.KIMI,
     name: "Kimi",
-    matchPatterns: ["https://www.kimi.com/*"],
+    matchPatterns: ["https://www.kimi.com/*", "https://www.kimi.ai/*"],
     entryUrls: ["https://www.kimi.com"],
     icon: "🌙",
   }),

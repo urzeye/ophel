@@ -1,5 +1,5 @@
 /**
- * Kimi 适配器（www.kimi.com）
+ * Kimi 适配器（www.kimi.com / www.kimi.ai 国际版）
  *
  * 选择器策略：
  * - 优先使用语义化 class（如 .chat-info-item、.chat-input-editor、.segment-assistant）
@@ -62,6 +62,7 @@ const KIMI_TOKEN_FIELD_KEYS = [
 ]
 const JWT_TOKEN_REGEX = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/
 const TOKEN_KEYWORD_REGEX = /(token|auth|jwt|tea)/i
+const KIMI_HOSTS = new Set(["www.kimi.com", "kimi.com", "www.kimi.ai", "kimi.ai"])
 
 const THEME_STORAGE_KEY = "CUSTOM_THEME"
 const FULL_LIST_SNAPSHOT_TTL_MS = 15_000
@@ -83,7 +84,7 @@ export class KimiAdapter extends SiteAdapter {
   private exportIncludeThoughts: boolean | undefined = undefined
 
   match(): boolean {
-    const matched = window.location.hostname === "www.kimi.com"
+    const matched = KIMI_HOSTS.has(window.location.hostname)
     if (matched) {
       this.normalizeThemeStorageValue()
     }
@@ -123,7 +124,7 @@ export class KimiAdapter extends SiteAdapter {
   }
 
   getNewTabUrl(): string {
-    return "https://www.kimi.com/"
+    return `${window.location.origin}/`
   }
 
   getSessionId(): string {

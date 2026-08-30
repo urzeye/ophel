@@ -456,6 +456,7 @@ export const config: PlasmoCSConfig = {
     "https://ima.qq.com/*",
     "https://chat.deepseek.com/*",
     "https://www.kimi.com/*",
+    "https://www.kimi.ai/*",
     "https://chatglm.cn/*",
     "https://chat.qwen.ai/*",
     "https://www.qianwen.com/*",

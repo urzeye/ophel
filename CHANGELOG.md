@@ -20,6 +20,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
+- **Kimi international site** — The extension now recognizes Kimi's international domain kimi.ai, so the panel no longer shows "not supported" there; outline, export, Zen Mode, and other Kimi features work on both kimi.ai and kimi.com. (#890)
 - **ChatGPT in-page bookmark icons** — Fixed the bookmark star feature repeatedly expanding ChatGPT's native prompt navigation text layer in the background on every sent message and content update, regardless of the "Show user queries" and "Auto-update outline during conversation" switches; in long conversations this could drive up tab memory usage. (#889)
 
 ---
