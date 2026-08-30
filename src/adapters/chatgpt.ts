@@ -3402,7 +3402,22 @@ export class ChatGPTAdapter extends SiteAdapter {
     return null
   }
 
-  extractOutline(maxLevel = 6, includeUserQueries = false, showWordCount = false): OutlineItem[] {
+  /**
+   * 页内收藏只需要当前已挂载的 DOM 元素，纯 DOM 扫描即可覆盖；
+   * 走 native TOC 会为每条提问触发合成悬停展开，是纯副作用（还降低图标覆盖率）。
+   */
+  getInlineBookmarkItems(): OutlineItem[] {
+    return this.extractOutline(6, true, false, { skipNativeToc: true }).filter(
+      (item) => item.element?.isConnected,
+    )
+  }
+
+  extractOutline(
+    maxLevel = 6,
+    includeUserQueries = false,
+    showWordCount = false,
+    options?: { skipNativeToc?: boolean },
+  ): OutlineItem[] {
     let outline: OutlineItem[] = []
     const container = this.getOutlineExtractionContainer()
     if (!container) return outline
@@ -3567,7 +3582,8 @@ export class ChatGPTAdapter extends SiteAdapter {
     // 获取所有潜在的节点（按文档顺序）
     const allElements = Array.from(container.querySelectorAll(combinedSelector))
 
-    const nativeTocEntries = includeUserQueries ? this.getNativeTocEntries() : []
+    const nativeTocEntries =
+      includeUserQueries && !options?.skipNativeToc ? this.getNativeTocEntries() : []
 
     allElements.forEach((element, index) => {
       const tagName = element.tagName.toLowerCase()
