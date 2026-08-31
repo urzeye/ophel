@@ -326,7 +326,7 @@ function IndexPopup() {
                     ? t("popupSitePackUnbound")
                     : site.urls.length > 1 && resolvedUrl
                       ? hostOf(resolvedUrl)
-                      : " "
+                      : null
                 return (
                   <div className="popup-site-tile" key={site.key}>
                     <Tooltip
@@ -343,7 +343,7 @@ function IndexPopup() {
                           fallbackClassName="popup-site-emoji"
                         />
                         <span className="popup-site-title">{site.platform.name}</span>
-                        <span className="popup-site-subtitle">{subtitle}</span>
+                        {subtitle && <span className="popup-site-subtitle">{subtitle}</span>}
                       </button>
                     </Tooltip>
                     {site.urls.length > 1 && (
