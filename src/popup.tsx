@@ -7,6 +7,7 @@
 import { useEffect, useMemo, useState } from "react"
 
 import { PlatformIcon } from "~components/PlatformIcon"
+import { ChevronDownIcon } from "~components/icons/ChevronDownIcon"
 import { DiscordIcon } from "~components/icons/DiscordIcon"
 import { KofiIcon } from "~components/icons/KofiIcon"
 import { SettingsIcon } from "~components/icons/SettingsIcon"
@@ -15,6 +16,8 @@ import { TimeIcon } from "~components/icons/TimeIcon"
 import { Tooltip } from "~components/ui/Tooltip"
 import {
   buildQuickAccessSites,
+  hostOf,
+  resolveQuickAccessUrl,
   resolveSiteEntryUrl,
   type QuickAccessSite,
 } from "~core/quick-access-sites"
@@ -42,11 +45,8 @@ interface SiteInfo {
   supported: boolean
 }
 
-const quickAccessTooltip = (site: QuickAccessSite): string => {
-  if (site.hostLabel) return `${site.platform.name} · ${site.hostLabel}`
-  if (!site.url) return `${site.platform.name} · ${t("popupSitePackUnbound")}`
-  return site.platform.name
-}
+/** 记住每个平台上次打开的入口地址（多域名平台专用）。 */
+const QUICK_ACCESS_LAST_URLS_KEY = "popupQuickAccessLastEntryUrls"
 
 function IndexPopup() {
   const supportedPlatforms = useSupportedAiPlatforms()
@@ -56,6 +56,8 @@ function IndexPopup() {
   )
   const [currentSite, setCurrentSite] = useState<SiteInfo | null>(null)
   const [recentPrompts, setRecentPrompts] = useState<Prompt[]>([])
+  const [lastEntryUrls, setLastEntryUrls] = useState<Record<string, string>>({})
+  const [entryMenuSiteKey, setEntryMenuSiteKey] = useState<string | null>(null)
   const [toastVisible, setToastVisible] = useState(false)
   const [toastMessage, setToastMessage] = useState("")
   const [languageReady, setLanguageReady] = useState(false)
@@ -91,7 +93,30 @@ function IndexPopup() {
         console.error("Failed to load prompts:", e)
       }
     })
+
+    // Load remembered quick access entry urls
+    chrome.storage.local.get(QUICK_ACCESS_LAST_URLS_KEY, (data) => {
+      const value = data[QUICK_ACCESS_LAST_URLS_KEY]
+      if (value && typeof value === "object") {
+        setLastEntryUrls(value as Record<string, string>)
+      }
+    })
   }, [])
+
+  // 入口切换菜单：点击外部或按 Escape 关闭
+  useEffect(() => {
+    if (!entryMenuSiteKey) return
+    const closeMenu = () => setEntryMenuSiteKey(null)
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeMenu()
+    }
+    document.addEventListener("click", closeMenu)
+    document.addEventListener("keydown", onKeyDown)
+    return () => {
+      document.removeEventListener("click", closeMenu)
+      document.removeEventListener("keydown", onKeyDown)
+    }
+  }, [entryMenuSiteKey])
 
   useEffect(() => {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -150,12 +175,34 @@ function IndexPopup() {
     window.close()
   }
 
+  const rememberEntryUrl = (platformId: string, url: string) => {
+    const next = { ...lastEntryUrls, [platformId]: url }
+    setLastEntryUrls(next)
+    chrome.storage.local.set({ [QUICK_ACCESS_LAST_URLS_KEY]: next })
+  }
+
   const openQuickAccessSite = (site: QuickAccessSite) => {
-    if (site.url) {
-      openUrl(site.url)
+    const url = resolveQuickAccessUrl(site, lastEntryUrls)
+    if (!url) {
+      openOptionsPage("sitePacks")
       return
     }
-    openOptionsPage("sitePacks")
+    rememberEntryUrl(site.platform.id, url)
+    openUrl(url)
+  }
+
+  const openQuickAccessEntry = (site: QuickAccessSite, url: string) => {
+    rememberEntryUrl(site.platform.id, url)
+    openUrl(url)
+  }
+
+  const quickAccessTooltip = (site: QuickAccessSite): string => {
+    if (site.urls.length === 0) return `${site.platform.name} · ${t("popupSitePackUnbound")}`
+    if (site.urls.length > 1) {
+      const url = resolveQuickAccessUrl(site, lastEntryUrls)
+      if (url) return `${site.platform.name} · ${hostOf(url)}`
+    }
+    return site.platform.name
   }
 
   const openUrlInCurrentTab = async (url: string) => {
@@ -251,30 +298,65 @@ function IndexPopup() {
           <>
             <div className="popup-section-title">{t("popupQuickAccess")}</div>
             <div className="popup-sites-grid">
-              {quickAccessSites.map((site) => (
-                <Tooltip
-                  key={site.key}
-                  content={quickAccessTooltip(site)}
-                  triggerStyle={{ width: "100%", display: "flex" }}
-                  triggerClassName="popup-tooltip-trigger">
-                  <button
-                    className={`popup-site-link${site.url ? "" : " unbound"}`}
-                    onClick={() => openQuickAccessSite(site)}>
-                    <PlatformIcon
-                      platform={site.platform}
-                      size={20}
-                      className="popup-site-icon"
-                      fallbackClassName="popup-site-emoji"
-                    />
-                    <span className="popup-site-title">{site.platform.name}</span>
-                    {(site.hostLabel || !site.url) && (
-                      <span className="popup-site-subtitle">
-                        {site.hostLabel ?? t("popupSitePackUnbound")}
-                      </span>
+              {quickAccessSites.map((site) => {
+                const resolvedUrl = resolveQuickAccessUrl(site, lastEntryUrls)
+                const subtitle =
+                  site.urls.length === 0
+                    ? t("popupSitePackUnbound")
+                    : site.urls.length > 1 && resolvedUrl
+                      ? hostOf(resolvedUrl)
+                      : " "
+                return (
+                  <div className="popup-site-tile" key={site.key}>
+                    <Tooltip
+                      content={quickAccessTooltip(site)}
+                      triggerStyle={{ width: "100%", display: "flex" }}
+                      triggerClassName="popup-tooltip-trigger">
+                      <button
+                        className={`popup-site-link${site.urls.length === 0 ? " unbound" : ""}`}
+                        onClick={() => openQuickAccessSite(site)}>
+                        <PlatformIcon
+                          platform={site.platform}
+                          size={20}
+                          className="popup-site-icon"
+                          fallbackClassName="popup-site-emoji"
+                        />
+                        <span className="popup-site-title">{site.platform.name}</span>
+                        <span className="popup-site-subtitle">{subtitle}</span>
+                      </button>
+                    </Tooltip>
+                    {site.urls.length > 1 && (
+                      <>
+                        <Tooltip content={t("popupSwitchSiteEntry")}>
+                          <button
+                            className="popup-site-entry-switch"
+                            aria-label={t("popupSwitchSiteEntry")}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setEntryMenuSiteKey(entryMenuSiteKey === site.key ? null : site.key)
+                            }}>
+                            <ChevronDownIcon size={12} />
+                          </button>
+                        </Tooltip>
+                        {entryMenuSiteKey === site.key && (
+                          <div
+                            className="popup-site-entry-menu"
+                            onClick={(e) => e.stopPropagation()}>
+                            {site.urls.map((url) => (
+                              <button
+                                key={url}
+                                className={`popup-site-entry-item${url === resolvedUrl ? " active" : ""}`}
+                                onClick={() => openQuickAccessEntry(site, url)}>
+                                {hostOf(url)}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </>
                     )}
-                  </button>
-                </Tooltip>
-              ))}
+                  </div>
+                )
+              })}
             </div>
           </>
         )}

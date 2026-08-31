@@ -1496,6 +1496,7 @@ export const ru = {
   popupNewChat: "Новый чат",
   popupQuickAccess: "Быстрый доступ",
   popupSitePackUnbound: "Сайт не добавлен",
+  popupSwitchSiteEntry: "Сменить точку входа на сайт",
   popupRecentUsed: "Недавние",
   popupNoRecentPrompts: "Нет недавних промптов",
   popupCopied: "Скопировано",

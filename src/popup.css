@@ -450,6 +450,85 @@ body {
   opacity: 0.5;
 }
 
+/* Grid tile wrapper: anchors the entry switch button and entry menu */
+.popup-site-tile {
+  position: relative;
+  display: flex;
+  width: 100%;
+}
+
+.popup-site-entry-switch {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--popup-text-secondary);
+  cursor: pointer;
+  opacity: 0.7;
+  transition: all 0.15s ease;
+}
+
+.popup-site-entry-switch:hover {
+  background: var(--popup-border);
+  color: var(--popup-accent);
+  opacity: 1;
+}
+
+.popup-site-entry-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+  background: var(--popup-bg);
+  border: 1px solid var(--popup-border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+@media (prefers-color-scheme: dark) {
+  .popup-site-entry-menu {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  }
+}
+
+.popup-site-entry-item {
+  padding: 6px 8px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--popup-text);
+  font-size: 11px;
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: all 0.15s ease;
+}
+
+.popup-site-entry-item:hover {
+  background: var(--popup-card-bg);
+  color: var(--popup-accent);
+}
+
+.popup-site-entry-item.active {
+  color: var(--popup-accent);
+  font-weight: 600;
+}
+
 /* Footer */
 .popup-footer {
   flex-shrink: 0;

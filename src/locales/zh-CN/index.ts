@@ -1522,6 +1522,7 @@ export const zhCN = {
   popupNewChat: "新对话",
   popupQuickAccess: "快速访问",
   popupSitePackUnbound: "未添加站点",
+  popupSwitchSiteEntry: "切换站点入口",
   popupRecentUsed: "最近使用",
   popupNoRecentPrompts: "暂无最近使用的提示词",
   popupCopied: "已复制",

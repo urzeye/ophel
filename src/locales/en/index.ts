@@ -1577,6 +1577,7 @@ Please output the optimized code block directly, followed by a brief summary of 
   popupNewChat: "New Chat",
   popupQuickAccess: "Quick Access",
   popupSitePackUnbound: "No site added",
+  popupSwitchSiteEntry: "Switch site entry",
   popupRecentUsed: "Recent",
   popupNoRecentPrompts: "No recent prompts",
   popupCopied: "Copied",

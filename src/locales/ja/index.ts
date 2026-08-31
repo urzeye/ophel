@@ -1573,6 +1573,7 @@ export const ja = {
   popupNewChat: "新規チャット",
   popupQuickAccess: "クイックアクセス",
   popupSitePackUnbound: "サイト未追加",
+  popupSwitchSiteEntry: "サイトの入口を切り替え",
   popupRecentUsed: "最近使用",
   popupNoRecentPrompts: "最近使用したプロンプトはありません",
   popupCopied: "コピーしました",

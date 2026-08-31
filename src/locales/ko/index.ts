@@ -1525,6 +1525,7 @@ export const ko = {
   popupNewChat: "새 대화",
   popupQuickAccess: "빠른 액세스",
   popupSitePackUnbound: "사이트 미추가",
+  popupSwitchSiteEntry: "사이트 진입점 전환",
   popupRecentUsed: "최근 사용",
   popupNoRecentPrompts: "최근 사용한 프롬프트가 없습니다",
   popupCopied: "복사됨",

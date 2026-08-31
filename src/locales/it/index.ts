@@ -1632,6 +1632,7 @@ export const it = {
   popupNewChat: "Nuova chiacchierata",
   popupQuickAccess: "Accesso rapido",
   popupSitePackUnbound: "Nessun sito aggiunto",
+  popupSwitchSiteEntry: "Cambia punto di accesso al sito",
   popupRecentUsed: "Recente",
   popupNoRecentPrompts: "Nessuna richiesta recente",
   popupCopied: "Copiato",
