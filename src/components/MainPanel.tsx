@@ -798,6 +798,16 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     onOpenReleaseNotes?.()
   }, [onOpenReleaseNotes])
 
+  const handleBrandKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault()
+        handleBrandClick()
+      }
+    },
+    [handleBrandClick],
+  )
+
   // Double click to toggle panel mode
   const handleHeaderDoubleClick = useCallback(
     (e: React.MouseEvent) => {
@@ -1384,18 +1394,13 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             onMouseLeave={handleBrandMouseLeave}>
             <div
               className="gh-interactive gh-panel-brand-trigger"
-              role="button"
-              tabIndex={0}
-              aria-label={t("releaseNotesOpen")}
+              role={onOpenReleaseNotes ? "button" : undefined}
+              tabIndex={onOpenReleaseNotes ? 0 : undefined}
+              aria-label={onOpenReleaseNotes ? t("releaseNotesOpen") : undefined}
               data-tip-target="header-title"
               data-no-header-press-hint="true"
-              onClick={handleBrandClick}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault()
-                  handleBrandClick()
-                }
-              }}>
+              onClick={onOpenReleaseNotes ? handleBrandClick : undefined}
+              onKeyDown={onOpenReleaseNotes ? handleBrandKeyDown : undefined}>
               <div className="gh-panel-brand-mark">
                 <SparkleIcon size={18} color={panelSparkleColor} />
                 {hasUnseenReleaseNotes && (

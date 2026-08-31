@@ -525,6 +525,11 @@
   color: inherit;
 }
 
+/* 无更新日志可查看时品牌区不可交互，鼠标样式回落为默认 */
+.gh-panel-brand-trigger:not([role="button"]) {
+  cursor: default;
+}
+
 .gh-panel-brand-trigger:focus-visible {
   outline: 2px solid rgba(255, 255, 255, 0.42);
   outline-offset: 4px;
