@@ -350,7 +350,10 @@ export class ConversationManager {
       nextConversations[storageKey] = {
         ...conv,
         cid: currentCid,
-        url: this.buildGeminiConversationUrl(conv.id, userPathPrefix),
+        // Spark 线程的 URL 是 /spark/chat/{id}，不能按 /app 模板重建
+        url: (conv.url || "").includes("/spark/chat/")
+          ? conv.url
+          : this.buildGeminiConversationUrl(conv.id, userPathPrefix),
       }
     })
 
