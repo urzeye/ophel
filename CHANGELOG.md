@@ -15,6 +15,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### ✨ Improvements
 
+- **Popup Quick Access for multi-entry sites** — Sites bound to multiple domains (like Kimi's kimi.com and kimi.ai) now take a single tile in the popup's Quick Access grid instead of one tile per domain; the tile shows which entry will open, a corner button opens an entry switch menu that flips upward when space below runs out, and the last chosen entry is remembered. (#895)
 - **Tooltip display** — Tooltips are lighter, flip automatically near screen edges, and dismiss immediately on click or Esc; sweeping across neighboring buttons now shows hints instantly without the hover delay; quick action button hints open toward the center of the screen, and list hints (outline, conversations, folders, prompt chains) only appear when the title is truncated, so hovering no longer covers neighboring items. (#885)
 - **Update notifications** — The full-screen "What's New" dialog no longer pops up automatically after each update. Instead, a one-time corner toast announces the new version, and an unread red dot appears on the panel logo and on the quick panel button while the panel is collapsed: hovering the logo previews the highlights, clicking opens the full notes, and the dot clears once read. The Settings → About entry remains available. (#887)
 
