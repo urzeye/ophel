@@ -69,7 +69,7 @@ function IndexPopup() {
     chrome.storage.local.get("settings", (data) => {
       try {
         const parsed = typeof data.settings === "string" ? JSON.parse(data.settings) : data.settings
-        const lang = parsed?.state?.global?.language || "auto"
+        const lang = parsed?.state?.settings?.language || "auto"
         setLanguage(lang)
       } catch (e) {
         console.error("Failed to load language setting:", e)
