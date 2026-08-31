@@ -1518,7 +1518,7 @@ export class GeminiAdapter extends SiteAdapter {
         const id = this.extractSparkConversationId(card)
         const title =
           card.querySelector(sitePrivateSelectors.sparkGoalTitle)?.textContent?.trim() || ""
-        const isPinned = !!card.querySelector(sitePrivateSelectors.sparkGoalPinnedIcon)
+        const isPinned = !!card.querySelector(sitePrivateSelectors.sparkGoalPinnedMenu)
         const isActive =
           card.classList.contains("goal-card-selected") ||
           card.getAttribute("aria-selected") === "true"
@@ -1766,7 +1766,7 @@ export class GeminiAdapter extends SiteAdapter {
             cid: this.getCurrentCid(),
             title: sparkTitle,
             url: `https://gemini.google.com${this.getUserPathPrefix()}/spark/chat/${sparkId}`,
-            isPinned: !!el.querySelector(sitePrivateSelectors.sparkGoalPinnedIcon),
+            isPinned: !!el.querySelector(sitePrivateSelectors.sparkGoalPinnedMenu),
           }
         }
         // 新版侧边栏：jslog 在内部 <a> 上，标题在 .title-text 中
