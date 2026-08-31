@@ -1153,9 +1153,11 @@ export class ConversationManager {
 
     if (options.syncDeleted) {
       const currentCid = this.siteAdapter.getCurrentCid?.() || null
+      const deletionScope = this.siteAdapter.getConversationDeletionScope?.() ?? null
 
       Object.entries(conversations).forEach(([id, conv]) => {
         if (!this.matchesCid(conv, currentCid)) return
+        if (deletionScope && !deletionScope(conv)) return
         if (sidebarIds.has(id)) return
 
         deleteIds.push(this.getConversationStorageKey(id))

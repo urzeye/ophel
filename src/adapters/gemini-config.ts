@@ -146,6 +146,10 @@ type GeminiPrivateSelectors = SitePrivateSelectors & {
   inputSafeArea: string
   newChatInputSafeArea: string
   userQueryWidth: string
+  sparkGoalCard: string
+  sparkGoalTitle: string
+  sparkGoalPinnedIcon: string
+  sparkThreadTitle: string
 }
 
 export interface GeminiSiteConfig extends BuiltinSiteConfig {
@@ -166,7 +170,7 @@ export interface GeminiSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const GEMINI_CONFIG_VERSION = 1
+export const GEMINI_CONFIG_VERSION = 2
 
 const createGeminiConfig = (): GeminiSiteConfig => {
   const userQuery = "user-query"
@@ -578,6 +582,11 @@ const createGeminiConfig = (): GeminiSiteConfig => {
       inputSafeArea: "input-container",
       newChatInputSafeArea: "chat-window.center-input-layout .input-area-container.is-zero-state",
       userQueryWidth: ".user-query-bubble-with-background:not(.edit-mode)",
+      // Gemini Spark（/spark 路由）：会话列表是主内容区/左窗格里的任务卡片，没有侧边栏列表
+      sparkGoalCard: 'remy-task-list .goal-card[id^="goal-c_"]',
+      sparkGoalTitle: ".goal-description",
+      sparkGoalPinnedIcon: ".goal-actions-pin-icon:not(.sf-hidden)",
+      sparkThreadTitle: '[data-test-id="remy-split-pane-title"]',
     },
   }
 }

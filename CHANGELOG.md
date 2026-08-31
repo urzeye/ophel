@@ -11,6 +11,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🚀 New Features
 
+- **Gemini Spark conversation sync** — Task threads in Gemini Spark (gemini.google.com/spark) now sync into Conversation Manager: the sync button reads recent threads on the Spark home page and the full thread list on the All Tasks page, pinned state syncs along, and clicking a synced thread opens it directly; sync no longer reports "no conversations detected in sidebar" on Spark pages.
 - **Cross-site conversation search** — Global search now also matches conversation titles from other supported sites; results from other sites carry the site icon and an "External" badge, and clicking one opens the conversation in a new tab. (#888)
 
 ### ✨ Improvements

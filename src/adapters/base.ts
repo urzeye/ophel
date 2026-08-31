@@ -517,6 +517,15 @@ export abstract class SiteAdapter {
     return []
   }
 
+  /**
+   * 删除同步范围：返回 null 表示当前会话列表即完整集合（默认）；
+   * 返回函数时，只有判定为 true 的已存会话参与删除同步。
+   * 用于同站点存在多个互不相交会话列表的场景（如 Gemini 的 /app 侧边栏与 Spark 任务列表）。
+   */
+  getConversationDeletionScope(): ((conv: ConversationInfo) => boolean) | null {
+    return null
+  }
+
   /** 获取已加载的会话数量，用于判断滚动加载是否稳定 */
   protected getLoadedConversationCount(): number {
     return this.getConversationList().length
