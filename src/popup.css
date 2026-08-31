@@ -483,15 +483,23 @@ body {
   position: absolute;
   top: calc(100% + 4px);
   left: 0;
-  right: 0;
   z-index: 20;
   display: flex;
   flex-direction: column;
+  min-width: 100%;
+  width: max-content;
+  max-width: 200px;
   padding: 4px;
   background: var(--popup-bg);
   border: 1px solid var(--popup-border);
   border-radius: 8px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+/* 最右列的菜单改为右对齐展开，避免超出隐藏横向滚动的容器被裁剪 */
+.popup-site-tile:nth-child(3n) .popup-site-entry-menu {
+  left: auto;
+  right: 0;
 }
 
 /* 下方空间不足时向上弹出（由 popup.tsx 测量后加类） */
