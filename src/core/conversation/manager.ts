@@ -163,7 +163,6 @@ export class ConversationManager {
   // Observer state
   private observerConfig: ConversationObserverConfig | null = null
   private sidebarObserverStop: (() => void) | null = null
-  private sidebarObserverRestartTimer: ReturnType<typeof setTimeout> | null = null
   private titleWatcher: any = null // DOMToolkit watcher instance
   private pollInterval: ReturnType<typeof setTimeout> | null = null
   private geminiMigrationTimer: ReturnType<typeof setTimeout> | null = null
@@ -574,30 +573,8 @@ export class ConversationManager {
   }
 
   destroy() {
-    if (this.sidebarObserverRestartTimer) {
-      clearTimeout(this.sidebarObserverRestartTimer)
-      this.sidebarObserverRestartTimer = null
-    }
     this.stopGeminiMigrationRetry()
     this.stopSidebarObserver()
-  }
-
-  /**
-   * SPA 路由切换后重启侧边栏观察器。
-   * 观察器根节点取自 getSidebarScrollContainer()，可能位于路由内容内部
-   * （如 Gemini Spark 的 task-list），路由切换时随旧页面被站点框架销毁，
-   * 不重启会让 MutationObserver 永久挂在已分离节点上，新会话不再自动入库。
-   * 延迟执行以等待新路由 DOM 渲染；连续导航时只保留最后一次。
-   */
-  restartSidebarObserver(delayMs = 500): void {
-    if (this.sidebarObserverRestartTimer) {
-      clearTimeout(this.sidebarObserverRestartTimer)
-    }
-    this.sidebarObserverRestartTimer = setTimeout(() => {
-      this.sidebarObserverRestartTimer = null
-      this.stopSidebarObserver()
-      this.startSidebarObserver()
-    }, delayMs)
   }
 
   updateSettings(settings: { syncUnpin: boolean; syncDelete?: boolean }) {
@@ -628,10 +605,10 @@ export class ConversationManager {
       const maxRetries = 5
       const retryDelay = 1000
 
-      const sidebarContainer = this.siteAdapter.getSidebarScrollContainer() || document
+      const sidebarContainer = this.siteAdapter.getConversationObserverContainer() || document
 
       if (config.shadow && retryCount < maxRetries) {
-        const foundContainer = this.siteAdapter.getSidebarScrollContainer()
+        const foundContainer = this.siteAdapter.getConversationObserverContainer()
         if (!foundContainer) {
           setTimeout(() => startObserverRetry(retryCount + 1), retryDelay)
           return
@@ -800,7 +777,7 @@ export class ConversationManager {
     el.dataset.ghTitleObserver = "true"
 
     if (!this.titleWatcher) {
-      const container = this.siteAdapter.getSidebarScrollContainer() || document.body
+      const container = this.siteAdapter.getConversationObserverContainer() || document.body
       this.titleWatcher = DOMToolkit.watchMultiple(container as Node, {
         debounce: 500,
       })

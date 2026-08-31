@@ -551,6 +551,15 @@ export abstract class SiteAdapter {
     return null
   }
 
+  /**
+   * 会话观察器绑定的根节点。默认复用侧边栏滚动容器；
+   * 若会话列表位于会随 SPA 路由销毁重建的容器内（如 Gemini Spark 的 task-list），
+   * 应覆盖此方法返回更稳定的节点，返回 null 时调用方回退到 document 根。
+   */
+  getConversationObserverContainer(): Element | null {
+    return this.getSidebarScrollContainer()
+  }
+
   /** 获取会话观察器配置 */
   getConversationObserverConfig(): ConversationObserverConfig | null {
     return null

@@ -1548,6 +1548,13 @@ export class GeminiAdapter extends SiteAdapter {
     return this.getChatsScrollableContainer()
   }
 
+  getConversationObserverContainer(): Element | null {
+    // Spark 的 task-list 位于路由出口内，首页 ↔ 线程页切换时随旧页面销毁重建；
+    // 观察器绑定该易失节点会在导航后永久失效，Spark 路由下返回 null 回退 document 根全覆盖
+    if (this.isSparkRoute()) return null
+    return super.getConversationObserverContainer()
+  }
+
   private getSparkGoalListContainer(): Element | null {
     const anchor = document.querySelector("remy-task-list .goal-list")
     if (!(anchor instanceof HTMLElement)) return null
