@@ -4,7 +4,7 @@
  * Displays site status, quick actions, and recent prompts
  */
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 
 import { PlatformIcon } from "~components/PlatformIcon"
 import { ChevronDownIcon } from "~components/icons/ChevronDownIcon"
@@ -58,6 +58,8 @@ function IndexPopup() {
   const [recentPrompts, setRecentPrompts] = useState<Prompt[]>([])
   const [lastEntryUrls, setLastEntryUrls] = useState<Record<string, string>>({})
   const [entryMenuSiteKey, setEntryMenuSiteKey] = useState<string | null>(null)
+  const [entryMenuDropUp, setEntryMenuDropUp] = useState(false)
+  const entryMenuRef = useRef<HTMLDivElement>(null)
   const [toastVisible, setToastVisible] = useState(false)
   const [toastMessage, setToastMessage] = useState("")
   const [languageReady, setLanguageReady] = useState(false)
@@ -116,6 +118,22 @@ function IndexPopup() {
       document.removeEventListener("click", closeMenu)
       document.removeEventListener("keydown", onKeyDown)
     }
+  }, [entryMenuSiteKey])
+
+  // 入口菜单默认向下弹出；渲染后（绘制前）测量一次，
+  // 若下方空间不足且上方更宽敞则翻转向上，避免被隐藏滚动条的容器裁剪。
+  useLayoutEffect(() => {
+    const menu = entryMenuRef.current
+    if (!menu) return
+    const tile = menu.parentElement
+    const scroller = menu.closest(".popup-scrollable")
+    if (!tile || !scroller) return
+    const tileRect = tile.getBoundingClientRect()
+    const scrollerRect = scroller.getBoundingClientRect()
+    const menuHeight = menu.offsetHeight
+    const spaceBelow = scrollerRect.bottom - tileRect.bottom
+    const spaceAbove = tileRect.top - scrollerRect.top
+    setEntryMenuDropUp(spaceBelow < menuHeight + 4 && spaceAbove > spaceBelow)
   }, [entryMenuSiteKey])
 
   useEffect(() => {
@@ -187,7 +205,10 @@ function IndexPopup() {
       openOptionsPage("sitePacks")
       return
     }
-    rememberEntryUrl(site.platform.id, url)
+    // 单入口平台的打开目标可由 urls[0] 推导，无需落盘
+    if (site.urls.length > 1) {
+      rememberEntryUrl(site.platform.id, url)
+    }
     openUrl(url)
   }
 
@@ -340,7 +361,8 @@ function IndexPopup() {
                         </Tooltip>
                         {entryMenuSiteKey === site.key && (
                           <div
-                            className="popup-site-entry-menu"
+                            ref={entryMenuRef}
+                            className={`popup-site-entry-menu${entryMenuDropUp ? " drop-up" : ""}`}
                             onClick={(e) => e.stopPropagation()}>
                             {site.urls.map((url) => (
                               <button

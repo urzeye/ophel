@@ -498,6 +498,12 @@ body {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
+/* 下方空间不足时向上弹出（由 popup.tsx 测量后加类） */
+.popup-site-entry-menu.drop-up {
+  top: auto;
+  bottom: calc(100% + 4px);
+}
+
 @media (prefers-color-scheme: dark) {
   .popup-site-entry-menu {
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
