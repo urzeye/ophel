@@ -818,8 +818,6 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
       !releaseNotesMarkdown.trim() ||
       !isSettingsHydrated ||
       !settings?.hasAgreedToTerms ||
-      // 与右下角扩展更新横幅错开，避免两个浮层同位置重叠
-      showExtensionUpdateNotice ||
       // 更新日志已打开时不再弹 toast；关闭后已读标记会让本 effect 不再调度
       isReleaseNotesOpen
     ) {
@@ -836,8 +834,15 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
         setHasUnseenReleaseNotes(unseen)
 
         // 更新提醒 toast 每个版本最多一次，且只在升级场景（有历史版本记录）触发，
-        // 首次安装走红点即可，避免和免责流程叠加打扰
-        if (unseen && state.lastSeenVersion && state.lastToastVersion !== APP_VERSION) {
+        // 首次安装走红点即可，避免和免责流程叠加打扰；
+        // 与右下角扩展更新横幅错开，避免两个浮层同位置重叠（红点不受横幅影响，
+        // 横幅关闭后本 effect 重跑时会再走到这里补弹 toast）
+        if (
+          unseen &&
+          state.lastSeenVersion &&
+          state.lastToastVersion !== APP_VERSION &&
+          !showExtensionUpdateNotice
+        ) {
           toastDelayTimer = setTimeout(() => {
             if (!cancelled) setShowReleaseNotesToast(true)
           }, 1600)
