@@ -62,7 +62,8 @@ const KIMI_TOKEN_FIELD_KEYS = [
 ]
 const JWT_TOKEN_REGEX = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/
 const TOKEN_KEYWORD_REGEX = /(token|auth|jwt|tea)/i
-const KIMI_HOSTS = new Set(["www.kimi.com", "kimi.com", "www.kimi.ai", "kimi.ai"])
+// 裸域名均 302 到 www 子域，content script 注入链路也只匹配 www，无需覆盖裸域名
+const KIMI_HOSTS = new Set(["www.kimi.com", "www.kimi.ai"])
 
 const THEME_STORAGE_KEY = "CUSTOM_THEME"
 const FULL_LIST_SNAPSHOT_TTL_MS = 15_000
