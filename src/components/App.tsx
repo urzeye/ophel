@@ -2503,6 +2503,18 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
     }
   }, [promptManager, conversationManager, outlineManager])
 
+  // SPA 路由切换后重启会话侧边栏观察器：观察器根节点可能位于路由内容内部
+  // （如 Gemini Spark 的任务列表），随旧页面销毁后观察器会失效，需重新绑定
+  useEffect(() => {
+    if (!conversationManager) return
+
+    const restartSidebarObserver = () => conversationManager.restartSidebarObserver()
+    window.addEventListener(EVENT_PAGE_URL_CHANGE, restartSidebarObserver)
+    return () => {
+      window.removeEventListener(EVENT_PAGE_URL_CHANGE, restartSidebarObserver)
+    }
+  }, [conversationManager])
+
   useEffect(() => {
     if (!conversationManager || typeof chrome === "undefined") return
 
