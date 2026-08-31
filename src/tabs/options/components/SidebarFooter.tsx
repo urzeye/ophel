@@ -165,7 +165,11 @@ export const SidebarFooter = ({ siteId = "_default" }: { siteId?: string }) => {
         <div
           ref={themeSegmentRef}
           className={`settings-theme-segmented ${themeSegmentState === "compact" ? "is-compact" : ""} ${themeSegmentState === "icon" ? "is-icon" : ""}`}>
-          <Tooltip content={t("themeLight")} triggerStyle={{ flex: 1 }}>
+          {/* icon 模式下标签隐藏，tooltip 是唯一名称来源；有文字时仅在截断时提示 */}
+          <Tooltip
+            content={t("themeLight")}
+            triggerStyle={{ flex: 1 }}
+            showOnlyWhenTruncated={themeSegmentState !== "icon"}>
             <button
               className={`settings-theme-segment ${currentThemePreference === "light" ? "active" : ""}`}
               onClick={(event) => handleThemeModeToggle("light", event)}>
@@ -175,7 +179,10 @@ export const SidebarFooter = ({ siteId = "_default" }: { siteId?: string }) => {
               <span className="segment-label">{t("themeLight")}</span>
             </button>
           </Tooltip>
-          <Tooltip content={t("themeDark")} triggerStyle={{ flex: 1 }}>
+          <Tooltip
+            content={t("themeDark")}
+            triggerStyle={{ flex: 1 }}
+            showOnlyWhenTruncated={themeSegmentState !== "icon"}>
             <button
               className={`settings-theme-segment ${currentThemePreference === "dark" ? "active" : ""}`}
               onClick={(event) => handleThemeModeToggle("dark", event)}>
@@ -185,7 +192,10 @@ export const SidebarFooter = ({ siteId = "_default" }: { siteId?: string }) => {
               <span className="segment-label">{t("themeDark")}</span>
             </button>
           </Tooltip>
-          <Tooltip content={t("themeSystem")} triggerStyle={{ flex: 1 }}>
+          <Tooltip
+            content={t("themeSystem")}
+            triggerStyle={{ flex: 1 }}
+            showOnlyWhenTruncated={themeSegmentState !== "icon"}>
             <button
               className={`settings-theme-segment ${currentThemePreference === "system" ? "active" : ""}`}
               onClick={(event) => handleThemeModeToggle("system", event)}>

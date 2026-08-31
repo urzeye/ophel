@@ -181,7 +181,7 @@ export const SelectedPromptBar: React.FC<SelectedPromptBarProps> = ({
         zIndex: 999998,
       }}>
       <span className="selected-prompt-label">{t("currentPrompt")}</span>
-      <Tooltip content={title}>
+      <Tooltip content={title} showOnlyWhenTruncated>
         <span className="selected-prompt-text">{title}</span>
       </Tooltip>
       <Tooltip content={t("clear")}>
