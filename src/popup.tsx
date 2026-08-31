@@ -348,10 +348,14 @@ function IndexPopup() {
                     </Tooltip>
                     {site.urls.length > 1 && (
                       <>
-                        <Tooltip content={t("popupSwitchSiteEntry")}>
+                        <Tooltip
+                          content={t("popupSwitchSiteEntry")}
+                          triggerStyle={{ position: "absolute", top: 4, right: 4, zIndex: 2 }}>
                           <button
                             className="popup-site-entry-switch"
                             aria-label={t("popupSwitchSiteEntry")}
+                            aria-haspopup="menu"
+                            aria-expanded={entryMenuSiteKey === site.key}
                             onClick={(e) => {
                               e.stopPropagation()
                               setEntryMenuSiteKey(entryMenuSiteKey === site.key ? null : site.key)
@@ -363,11 +367,13 @@ function IndexPopup() {
                           <div
                             ref={entryMenuRef}
                             className={`popup-site-entry-menu${entryMenuDropUp ? " drop-up" : ""}`}
+                            role="menu"
                             onClick={(e) => e.stopPropagation()}>
                             {site.urls.map((url) => (
                               <button
                                 key={url}
                                 className={`popup-site-entry-item${url === resolvedUrl ? " active" : ""}`}
+                                role="menuitem"
                                 onClick={() => openQuickAccessEntry(site, url)}>
                                 {hostOf(url)}
                               </button>
