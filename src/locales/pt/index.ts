@@ -359,7 +359,7 @@ export const pt = {
 
   tip3: "{shortcut} mostra todos os atalhos de teclado",
   tip4: "{shortcut} abre a busca global (sintaxe folder: tag: level:)",
-  tip5: "Instale pacotes de site para usar o Ophel em mais sites de IA",
+  tip5: "Instale pacotes em {sitePacks} para usar o Ophel em mais sites de IA",
   tip6: "{shortcut} navega entre os títulos do esquema",
   edit: "Editar",
   delete: "Excluir",

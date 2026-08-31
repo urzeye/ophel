@@ -626,6 +626,41 @@
   line-height: 1.5;
 }
 
+/* 功能技巧内的可点击入口（如「适配中心」） */
+.gh-tip-link {
+  appearance: none;
+  border: 1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 35%, transparent);
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 10%, transparent);
+  color: var(--gh-primary, #4285f4);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px;
+  margin: 0 3px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+  vertical-align: baseline;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.gh-tip-link:hover {
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 18%, transparent);
+  border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 55%, transparent);
+}
+
+.gh-tip-link:focus-visible {
+  outline: 2px solid var(--gh-primary, #4285f4);
+  outline-offset: 1px;
+}
+
+.gh-tip-link:active {
+  transform: translateY(0.5px);
+}
+
 .gh-panel-tabs {
   display: flex;
   gap: 4px;

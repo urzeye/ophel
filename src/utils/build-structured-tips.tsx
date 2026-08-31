@@ -1,5 +1,6 @@
 import React from "react"
 
+import { NAV_IDS, SITE_PACKS_TAB_IDS } from "~constants"
 import { DEFAULT_KEYBINDINGS, formatShortcut } from "~constants/shortcuts"
 import type { ShortcutBinding } from "~constants/shortcuts"
 import { t } from "~utils/i18n"
@@ -35,6 +36,39 @@ function renderTip(transKey: string, placeholderName: string, kbValue: string): 
   )
 }
 
+// 「适配中心」提示中的链接：点击打开设置弹窗并跳到在线适配库
+function renderSitePacksTip(): React.ReactNode {
+  const raw = t("tip5", { sitePacks: "___LINK___" })
+  const parts = raw.split("___LINK___")
+
+  const openSitePacksRegistry = () => {
+    window.dispatchEvent(
+      new CustomEvent("ophel:navigateSettingsPage", {
+        detail: { page: NAV_IDS.SITE_PACKS, subTab: SITE_PACKS_TAB_IDS.UPDATES },
+      }),
+    )
+  }
+
+  const link = (
+    <button
+      type="button"
+      className="gh-tip-link"
+      aria-label={t("sitePackBindingNoticeAction")}
+      onClick={openSitePacksRegistry}>
+      {t("navSitePacks")}
+    </button>
+  )
+
+  if (parts.length === 1) return link
+  return (
+    <span style={{ display: "inline" }}>
+      {parts[0]}
+      {link}
+      {parts[1]}
+    </span>
+  )
+}
+
 export function buildStructuredTips(
   keybindings: Record<string, ShortcutBinding | null> | undefined,
   isMac: boolean,
@@ -63,7 +97,7 @@ export function buildStructuredTips(
 
   return [
     { icon: "👻", text: renderTip("tip1", "modifier", isMac ? "⌘ Cmd" : "Ctrl") },
-    { icon: "🧩", text: t("tip5") },
+    { icon: "🧩", text: renderSitePacksTip() },
     {
       icon: "↔️",
       text: panelModeShortcut

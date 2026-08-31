@@ -136,6 +136,8 @@ const PANEL_DEFAULT_WIDTH = 320
 const PANEL_DEFAULT_HOVER_WIDTH = 520
 const HOVER_WIDTH_POINTER_QUERY = "(hover: hover) and (pointer: fine)"
 const HOVER_WIDTH_RELEASE_DELAY_MS = 160
+const HEADER_PRESS_HINT_DELAY_MS = 450
+const HEADER_PRESS_HINT_MOVE_TOLERANCE = 6
 
 const PANEL_TAB_CAPABILITIES: Partial<Record<string, SitePackCapability>> = {
   [TAB_IDS.PROMPTS]: "prompt-insert",
@@ -745,6 +747,16 @@ export const MainPanel: React.FC<MainPanelProps> = ({
       : { left: "", right: "" }
 
   const [isHeaderPressed, setIsHeaderPressed] = useState(false)
+  const headerPressHintTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const headerPressStartRef = useRef<{ x: number; y: number } | null>(null)
+
+  const clearHeaderPressHintTimer = useCallback(() => {
+    if (headerPressHintTimerRef.current) {
+      clearTimeout(headerPressHintTimerRef.current)
+      headerPressHintTimerRef.current = null
+    }
+  }, [])
+
   const shouldShowHeaderPressHint = useCallback((target: EventTarget | null) => {
     if (!(target instanceof Element)) {
       return true
@@ -754,8 +766,12 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   }, [])
 
   const resetHeaderPressHint = useCallback(() => {
+    clearHeaderPressHintTimer()
+    headerPressStartRef.current = null
     setIsHeaderPressed(false)
-  }, [])
+  }, [clearHeaderPressHintTimer])
+
+  useEffect(() => () => clearHeaderPressHintTimer(), [clearHeaderPressHintTimer])
 
   const handleHeaderPointerDown = useCallback(
     (event: React.PointerEvent<HTMLDivElement>) => {
@@ -764,9 +780,28 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         return
       }
 
-      setIsHeaderPressed(true)
+      // 按住顶栏停留片刻才展示提示，避免点击、双击或拖拽时闪过遮挡
+      headerPressStartRef.current = { x: event.clientX, y: event.clientY }
+      clearHeaderPressHintTimer()
+      headerPressHintTimerRef.current = setTimeout(() => {
+        headerPressHintTimerRef.current = null
+        setIsHeaderPressed(true)
+      }, HEADER_PRESS_HINT_DELAY_MS)
     },
-    [resetHeaderPressHint, shouldShowHeaderPressHint],
+    [clearHeaderPressHintTimer, resetHeaderPressHint, shouldShowHeaderPressHint],
+  )
+
+  const handleHeaderPointerMove = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      const start = headerPressStartRef.current
+      if (!start) return
+
+      const distance = Math.hypot(event.clientX - start.x, event.clientY - start.y)
+      if (distance > HEADER_PRESS_HINT_MOVE_TOLERANCE) {
+        resetHeaderPressHint()
+      }
+    },
+    [resetHeaderPressHint],
   )
 
   // 品牌区（logo）交互：未读更新日志时悬停短暂停留展示轻量预览，点击才打开完整更新日志
@@ -1382,6 +1417,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         <div
           ref={headerRef}
           onPointerDown={handleHeaderPointerDown}
+          onPointerMove={handleHeaderPointerMove}
           onPointerUp={resetHeaderPressHint}
           onPointerLeave={resetHeaderPressHint}
           onPointerCancel={resetHeaderPressHint}
