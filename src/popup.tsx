@@ -350,6 +350,7 @@ function IndexPopup() {
                       <>
                         <Tooltip
                           content={t("popupSwitchSiteEntry")}
+                          placement="top"
                           triggerStyle={{ position: "absolute", top: 4, right: 4, zIndex: 2 }}>
                           <button
                             className="popup-site-entry-switch"

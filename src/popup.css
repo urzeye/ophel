@@ -357,7 +357,8 @@ body {
 /* Sites Grid (for unsupported sites) */
 .popup-sites-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  /* minmax(0, 1fr)：不换行的标题/域名会抬高 1fr 的 auto 最小宽度把列撑宽，导致三列不等宽 */
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
 }
 
