@@ -267,7 +267,7 @@ export const it = {
   scriptCat: "ScriptCat",
   reviewBtn: "Recensione",
   starBtn: "Stella",
-  githubDesc: "Visualizza il codice sorgente, segnala problemi o contribuisci",
+  githubDesc: "Metti una stella al repository per sostenere lo sviluppo",
   giveStar: "Stella su GitHub",
   projectWebsite: "Sito ufficiale",
   websiteDesc: "Visualizza documentazione, guide e altro ancora",
@@ -1963,4 +1963,9 @@ export const it = {
   kofiSupport: "Comprami un caffè",
   kofiDesc: "Se Ophel ti è utile, considera l'acquisto di un caffè per supportare lo sviluppatore",
   kofiBtn: "Supporto su Ko-fi",
+  sponsorSupport: "Sostieni il progetto",
+  sponsorDesc: "Se Ophel ti è utile, considera di sostenere lo sviluppo",
+  wechatPay: "WeChat Pay",
+  alipayPay: "Alipay",
+  afdianSupport: "Afdian",
 }

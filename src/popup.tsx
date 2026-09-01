@@ -22,8 +22,9 @@ import {
   type QuickAccessSite,
 } from "~core/quick-access-sites"
 import { useSupportedAiPlatforms } from "~hooks/useSupportedAiPlatforms"
+import { GITHUB_REPO_URL, getDonateChannels } from "~utils/donate-channels"
 import { getStoreInfo } from "~utils/getStoreInfo"
-import { setLanguage, t } from "~utils/i18n"
+import { getCurrentLang, setLanguage, t } from "~utils/i18n"
 import { MSG_START_NEW_CONVERSATION } from "~utils/messaging"
 import { version } from "../package.json"
 
@@ -262,6 +263,7 @@ function IndexPopup() {
 
   // Fetch store info
   const storeInfo = getStoreInfo()
+  const donateChannels = getDonateChannels(getCurrentLang())
 
   // Wait for language to be loaded before rendering
   if (!languageReady) {
@@ -429,7 +431,7 @@ function IndexPopup() {
           <Tooltip content={t("giveStar")}>
             <button
               className="popup-action-pill star-btn icon-only"
-              onClick={() => openUrl("https://github.com/urzeye/ophel")}>
+              onClick={() => openUrl(GITHUB_REPO_URL)}>
               <StarIcon size={16} />
             </button>
           </Tooltip>
@@ -437,7 +439,7 @@ function IndexPopup() {
           <Tooltip content={t("kofiSupport")}>
             <button
               className="popup-action-pill kofi-btn icon-only"
-              onClick={() => openUrl("https://ko-fi.com/urzeye")}>
+              onClick={() => openUrl(donateChannels.primaryUrl)}>
               <KofiIcon size={16} />
             </button>
           </Tooltip>
@@ -452,7 +454,7 @@ function IndexPopup() {
         </div>
         <div className="popup-footer-links">
           <a
-            href="https://github.com/urzeye/ophel/issues"
+            href={`${GITHUB_REPO_URL}/issues`}
             target="_blank"
             rel="noopener noreferrer"
             className="popup-feedback-link">

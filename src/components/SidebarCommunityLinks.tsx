@@ -1,4 +1,4 @@
-import React, { useMemo } from "react"
+import React, { useMemo, useSyncExternalStore } from "react"
 import { DiscordIcon } from "~components/icons/DiscordIcon"
 import { GithubIcon } from "~components/icons/GithubIcon"
 import { KofiIcon } from "~components/icons/KofiIcon"
@@ -6,12 +6,15 @@ import { ScriptCatIcon } from "~components/icons/StoreIcons"
 import { Tooltip } from "~components/ui/Tooltip"
 import { STORE_LINKS } from "~constants/store-links"
 import { isScriptCatUserscriptManager } from "~platform/utils"
+import { GITHUB_REPO_URL, getDonateChannels } from "~utils/donate-channels"
 import { getStoreInfo } from "~utils/getStoreInfo"
-import { t } from "~utils/i18n"
+import { getCurrentLang, subscribeI18nChanges, t } from "~utils/i18n"
 
 export function SidebarCommunityLinks() {
   const storeInfo = useMemo(() => getStoreInfo(), [])
   const showScriptCat = useMemo(() => isScriptCatUserscriptManager(), [])
+  const language = useSyncExternalStore(subscribeI18nChanges, getCurrentLang, getCurrentLang)
+  const donateChannels = getDonateChannels(language)
 
   return (
     <div className="sidebar-community-links">
@@ -41,7 +44,7 @@ export function SidebarCommunityLinks() {
 
       <Tooltip content={t("giveStar")}>
         <a
-          href="https://github.com/urzeye/ophel"
+          href={GITHUB_REPO_URL}
           target="_blank"
           rel="noopener noreferrer"
           aria-label={t("giveStar")}
@@ -52,7 +55,7 @@ export function SidebarCommunityLinks() {
 
       <Tooltip content={t("kofiSupport")}>
         <a
-          href="https://ko-fi.com/urzeye"
+          href={donateChannels.primaryUrl}
           target="_blank"
           rel="noopener noreferrer"
           aria-label={t("kofiSupport")}

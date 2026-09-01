@@ -179,7 +179,7 @@ export const zhTW = {
     "目前已涵蓋 {count} 個 AI 平台，並與彈出視窗中的站點識別與快捷入口保持同步。",
   projectLinks: "專案連結",
   githubRepository: "GitHub 儲存庫",
-  githubDesc: "檢視原始碼、提交問題或參與專案開發",
+  githubDesc: "幫專案點個 Star，鼓勵持續維護",
   giveStar: "按個 Star",
   projectWebsite: "專案官網",
   websiteDesc: "檢視詳細文件、使用指南和更多資訊",
@@ -1819,4 +1819,9 @@ export const zhTW = {
   kofiSupport: "Buy Me a Coffee",
   kofiDesc: "如果 Ophel 對你有幫助，請考慮贊助一杯咖啡支持開發者",
   kofiBtn: "贊助支持",
+  sponsorSupport: "贊助支持",
+  sponsorDesc: "如果 Ophel 對你有幫助，歡迎贊助支持開發",
+  wechatPay: "微信讚賞",
+  alipayPay: "支付寶",
+  afdianSupport: "愛發電",
 }

@@ -5326,6 +5326,57 @@ html[data-theme="dark"] .about-privacy-banner {
   text-align: center;
 }
 
+.about-sponsor-block {
+  margin-bottom: 32px;
+}
+
+.about-sponsor-desc {
+  margin: 0 0 16px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--gh-text-secondary, #6b7280);
+}
+
+.about-sponsor-channels {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 20px;
+}
+
+.about-sponsor-afdian,
+.about-sponsor-qr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--gh-border, #e5e7eb);
+  border-radius: 12px;
+  background: var(--gh-card-bg, #fff);
+  text-decoration: none;
+  color: inherit;
+}
+
+.about-sponsor-channel-label,
+.about-sponsor-qr figcaption {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gh-text, #1f2937);
+}
+
+.about-sponsor-afdian-img,
+.about-sponsor-qr-img {
+  display: block;
+  width: 160px;
+  height: 160px;
+  object-fit: contain;
+  background: #fff;
+  border-radius: 8px;
+}
+
 .about-btn-inner {
   display: flex;
   align-items: center;

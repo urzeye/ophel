@@ -1,0 +1,78 @@
+/**
+ * 捐赠渠道：按产品 i18n 语言分流，而不是浏览器 UI 语言。
+ * 仅 zh-CN 走爱发电 / 微信 / 支付宝；其余语言走 Ko-fi。
+ */
+
+const isUserscript = typeof __PLATFORM__ !== "undefined" && __PLATFORM__ === "userscript"
+
+export const KOFI_URL = "https://ko-fi.com/urzeye"
+export const AFDIAN_URL = "https://afdian.com/a/urzeye"
+export const GITHUB_REPO_URL = "https://github.com/urzeye/ophel"
+export const OPHEL_WEBSITE_URL = "https://ophel.app"
+
+export const AFDIAN_PROFILE = {
+  href: AFDIAN_URL,
+  lightSrc: "https://afdian-connect.vercel.app/profile.svg?slug=urzeye",
+  darkSrc:
+    "https://afdian-connect.vercel.app/profile.svg?slug=urzeye&bg_color=%230d1117&text_color=%23dedbd7&border_color=%232e343d",
+} as const
+
+export const SUPPORT_ASSET_FILES = {
+  wechatPay: "assets/support/wechat-pay.jpg",
+  alipay: "assets/support/alipay.png",
+} as const
+
+const USERSCRIPT_ASSET_KEY_BY_PATH: Record<string, string> = {
+  [SUPPORT_ASSET_FILES.wechatPay]: "wechatPay",
+  [SUPPORT_ASSET_FILES.alipay]: "alipay",
+}
+
+export type ZhCnDonateChannels = {
+  kind: "zh-CN"
+  primaryUrl: typeof AFDIAN_URL
+  afdianUrl: typeof AFDIAN_URL
+  afdianProfile: typeof AFDIAN_PROFILE
+  wechatImagePath: typeof SUPPORT_ASSET_FILES.wechatPay
+  alipayImagePath: typeof SUPPORT_ASSET_FILES.alipay
+}
+
+export type KofiDonateChannels = {
+  kind: "kofi"
+  primaryUrl: typeof KOFI_URL
+  kofiUrl: typeof KOFI_URL
+}
+
+export type DonateChannels = ZhCnDonateChannels | KofiDonateChannels
+
+export function usesZhCnDonateChannels(language: string): boolean {
+  return language === "zh-CN"
+}
+
+export function getDonateChannels(language: string): DonateChannels {
+  if (usesZhCnDonateChannels(language)) {
+    return {
+      kind: "zh-CN",
+      primaryUrl: AFDIAN_URL,
+      afdianUrl: AFDIAN_URL,
+      afdianProfile: AFDIAN_PROFILE,
+      wechatImagePath: SUPPORT_ASSET_FILES.wechatPay,
+      alipayImagePath: SUPPORT_ASSET_FILES.alipay,
+    }
+  }
+
+  return {
+    kind: "kofi",
+    primaryUrl: KOFI_URL,
+    kofiUrl: KOFI_URL,
+  }
+}
+
+export function resolveSupportImageUrl(assetPath: string): string {
+  if (isUserscript) {
+    const key = USERSCRIPT_ASSET_KEY_BY_PATH[assetPath]
+    if (!key || typeof window === "undefined") return ""
+    return window.__OPHEL_USERSCRIPT_ASSET_URLS__?.[key] || ""
+  }
+
+  return chrome.runtime.getURL(assetPath)
+}

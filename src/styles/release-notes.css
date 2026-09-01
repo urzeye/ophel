@@ -264,11 +264,33 @@
 
 .gh-release-notes-footer {
   display: flex;
+  align-items: center;
   justify-content: space-between;
   gap: 10px;
   padding: 14px 16px;
   border-top: 1px solid var(--gh-border, #e5e7eb);
   background: var(--gh-bg, #ffffff);
+}
+
+.gh-release-notes-star-link {
+  flex: 0 1 auto;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--gh-text-secondary, #6b7280);
+  text-decoration: none;
+}
+
+.gh-release-notes-star-link:hover {
+  color: var(--gh-primary, #4285f4);
+  text-decoration: underline;
+}
+
+.gh-release-notes-footer-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-left: auto;
 }
 
 .gh-release-notes-primary,
@@ -403,6 +425,16 @@
 
   .gh-release-notes-footer {
     flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .gh-release-notes-footer-actions {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .gh-release-notes-star-link {
+    align-self: center;
   }
 
   .about-hero-heading {

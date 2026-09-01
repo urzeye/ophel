@@ -158,6 +158,7 @@
           "assets/release-notes/*",
           "assets/notification-sounds/*",
           "assets/userscript/*",
+          "assets/support/*",
           "KaTeX_*.woff2"
         ],
         "matches": [

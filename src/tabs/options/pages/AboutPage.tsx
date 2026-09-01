@@ -2,7 +2,7 @@
  * 关于页面
  * 显示扩展信息、版本、链接等
  */
-import React from "react"
+import React, { useSyncExternalStore } from "react"
 
 import { PlatformIcon } from "~components/PlatformIcon"
 import {
@@ -24,7 +24,14 @@ import { SparkleIcon } from "~components/icons/SparkleIcon"
 import { STORE_LINKS } from "~constants/store-links"
 import { useSupportedAiPlatforms } from "~hooks/useSupportedAiPlatforms"
 import { APP_DISPLAY_NAME, APP_VERSION, getAppIconUrl } from "~utils/config"
-import { t } from "~utils/i18n"
+import {
+  AFDIAN_PROFILE,
+  GITHUB_REPO_URL,
+  OPHEL_WEBSITE_URL,
+  getDonateChannels,
+  resolveSupportImageUrl,
+} from "~utils/donate-channels"
+import { getCurrentLang, subscribeI18nChanges, t } from "~utils/i18n"
 
 import { PageTitle } from "../components"
 
@@ -35,6 +42,8 @@ interface AboutPageProps {
 const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
   const supportedPlatforms = useSupportedAiPlatforms()
   const supportedPlatformsCount = String(supportedPlatforms.length)
+  const language = useSyncExternalStore(subscribeI18nChanges, getCurrentLang, getCurrentLang)
+  const donateChannels = getDonateChannels(language)
 
   return (
     <div>
@@ -168,7 +177,7 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
       <div className="about-links-grid community-grid">
         {/* GitHub Link */}
         <a
-          href="https://github.com/urzeye/ophel"
+          href={GITHUB_REPO_URL}
           target="_blank"
           rel="noopener noreferrer"
           className="about-link-card"
@@ -186,31 +195,32 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
           </button>
         </a>
 
-        {/* Ko-fi Link */}
-        <a
-          href="https://ko-fi.com/urzeye"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="about-link-card kofi-card"
-          style={{ "--card-color": "#FF5E5B" } as React.CSSProperties}>
-          <div className="about-link-header" style={{ color: "var(--card-color)" }}>
-            <KofiIcon size={22} color="var(--card-color)" />
-            <span style={{ fontWeight: 600 }}>{t("kofiSupport")}</span>
-          </div>
-          <div className="about-link-desc" style={{ color: "var(--gh-text-secondary)" }}>
-            {t("kofiDesc")}
-          </div>
-          <button type="button" className="about-link-btn">
-            <span className="about-btn-inner">
-              <KofiIcon size={14} color="currentColor" />
-              {t("kofiBtn")}
-            </span>
-          </button>
-        </a>
+        {donateChannels.kind === "kofi" ? (
+          <a
+            href={donateChannels.kofiUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="about-link-card kofi-card"
+            style={{ "--card-color": "#FF5E5B" } as React.CSSProperties}>
+            <div className="about-link-header" style={{ color: "var(--card-color)" }}>
+              <KofiIcon size={22} color="var(--card-color)" />
+              <span style={{ fontWeight: 600 }}>{t("kofiSupport")}</span>
+            </div>
+            <div className="about-link-desc" style={{ color: "var(--gh-text-secondary)" }}>
+              {t("kofiDesc")}
+            </div>
+            <button type="button" className="about-link-btn">
+              <span className="about-btn-inner">
+                <KofiIcon size={14} color="currentColor" />
+                {t("kofiBtn")}
+              </span>
+            </button>
+          </a>
+        ) : null}
 
         {/* Website Link */}
         <a
-          href="https://github.com/urzeye/ophel"
+          href={OPHEL_WEBSITE_URL}
           target="_blank"
           rel="noopener noreferrer"
           className="about-link-card"
@@ -252,6 +262,49 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
           </button>
         </a>
       </div>
+
+      {donateChannels.kind === "zh-CN" ? (
+        <section className="about-sponsor-block">
+          <div className="about-section-title">{t("sponsorSupport")}</div>
+          <p className="about-sponsor-desc">{t("sponsorDesc")}</p>
+          <div className="about-sponsor-channels">
+            <a
+              href={AFDIAN_PROFILE.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="about-sponsor-afdian"
+              aria-label={t("afdianSupport")}>
+              <span className="about-sponsor-channel-label">{t("afdianSupport")}</span>
+              <picture>
+                <source media="(prefers-color-scheme: dark)" srcSet={AFDIAN_PROFILE.darkSrc} />
+                <source media="(prefers-color-scheme: light)" srcSet={AFDIAN_PROFILE.lightSrc} />
+                <img
+                  alt={t("afdianSupport")}
+                  src={AFDIAN_PROFILE.lightSrc}
+                  height={160}
+                  className="about-sponsor-afdian-img"
+                />
+              </picture>
+            </a>
+            <figure className="about-sponsor-qr">
+              <img
+                src={resolveSupportImageUrl(donateChannels.wechatImagePath)}
+                alt={t("wechatPay")}
+                className="about-sponsor-qr-img"
+              />
+              <figcaption>{t("wechatPay")}</figcaption>
+            </figure>
+            <figure className="about-sponsor-qr">
+              <img
+                src={resolveSupportImageUrl(donateChannels.alipayImagePath)}
+                alt={t("alipayPay")}
+                className="about-sponsor-qr-img"
+              />
+              <figcaption>{t("alipayPay")}</figcaption>
+            </figure>
+          </div>
+        </section>
+      ) : null}
 
       <div className="about-section-title">{t("aboutSupportedPlatforms")}</div>
       <div className="about-platforms-card">

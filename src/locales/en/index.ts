@@ -258,7 +258,7 @@ export const en = {
   scriptCat: "ScriptCat",
   reviewBtn: "Review",
   starBtn: "Star",
-  githubDesc: "View source code, report issues, or contribute",
+  githubDesc: "Star the repository to support ongoing development",
   giveStar: "Star on GitHub",
   projectWebsite: "Official Website",
   websiteDesc: "View documentation, guides, and more",
@@ -1892,4 +1892,9 @@ Please output the optimized code block directly, followed by a brief summary of 
   kofiSupport: "Buy Me a Coffee",
   kofiDesc: "If Ophel is helpful to you, please consider buying a coffee to support the developer",
   kofiBtn: "Support on Ko-fi",
+  sponsorSupport: "Support the project",
+  sponsorDesc: "If Ophel is helpful to you, consider supporting ongoing development",
+  wechatPay: "WeChat Pay",
+  alipayPay: "Alipay",
+  afdianSupport: "Afdian",
 }

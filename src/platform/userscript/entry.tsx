@@ -58,11 +58,13 @@ const USERSCRIPT_RESOURCE_MIME_TYPES = Object.fromEntries(
         ? "text/css"
         : extension === "png"
           ? "image/png"
-          : extension === "mp3"
-            ? "audio/mpeg"
-            : extension === "ogg"
-              ? "audio/ogg"
-              : "application/octet-stream"
+          : extension === "jpg" || extension === "jpeg"
+            ? "image/jpeg"
+            : extension === "mp3"
+              ? "audio/mpeg"
+              : extension === "ogg"
+                ? "audio/ogg"
+                : "application/octet-stream"
 
     return [metaName, mimeType]
   }),
@@ -187,6 +189,8 @@ window.__OPHEL_USERSCRIPT_ASSET_URLS__ = {
     getUserscriptResourceUrl(USERSCRIPT_RESOURCE_DEFINITIONS.assistantMermaidRunner.metaName) || "",
   assistantMermaidVendor:
     getUserscriptResourceUrl(USERSCRIPT_RESOURCE_DEFINITIONS.assistantMermaidVendor.metaName) || "",
+  wechatPay: getUserscriptResourceUrl(USERSCRIPT_RESOURCE_DEFINITIONS.wechatPay.metaName) || "",
+  alipay: getUserscriptResourceUrl(USERSCRIPT_RESOURCE_DEFINITIONS.alipay.metaName) || "",
 }
 
 primeUserscriptLocales(getInitialUserscriptLanguage())

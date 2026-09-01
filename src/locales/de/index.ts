@@ -243,7 +243,7 @@ export const de = {
     "Derzeit werden {count} KI-Plattformen unterstützt, synchron mit Erkennung und Schnellzugriff im Popup.",
   projectLinks: "Projekt-Links",
   githubRepository: "GitHub-Repository",
-  githubDesc: "Quellcode, Fehler melden oder beitragen",
+  githubDesc: "Gib dem Repository einen Stern, um die Weiterentwicklung zu unterstützen",
   giveStar: "Github-Stern geben",
   projectWebsite: "Offizielle Website",
   websiteDesc: "Dokumentation und Anleitungen",
@@ -1893,4 +1893,9 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   kofiDesc:
     "Wenn Ophel für Sie hilfreich ist, ziehen Sie bitte in Betracht, dem Entwickler einen Kaffee zu spendieren",
   kofiBtn: "Auf Ko-fi unterstützen",
+  sponsorSupport: "Projekt unterstützen",
+  sponsorDesc: "Wenn Ophel dir hilft, unterstütze bitte die Weiterentwicklung",
+  wechatPay: "WeChat Pay",
+  alipayPay: "Alipay",
+  afdianSupport: "Afdian",
 }

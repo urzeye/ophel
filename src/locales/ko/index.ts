@@ -243,7 +243,7 @@ export const ko = {
     "현재 {count}개의 AI 플랫폼을 지원하며, 팝업의 사이트 감지 및 빠른 접근 목록과 같은 기준을 사용합니다.",
   projectLinks: "프로젝트 링크",
   githubRepository: "GitHub 저장소",
-  githubDesc: "소스 코드 확인, 문제 보고 또는 기여",
+  githubDesc: "GitHub에서 스타를 눌러 개발을 응원해 주세요",
   giveStar: "GitHub에서 스타 주기",
   projectWebsite: "공식 웹사이트",
   websiteDesc: "문서, 가이드 등 확인",
@@ -1866,4 +1866,9 @@ export const ko = {
   kofiSupport: "Buy Me a Coffee",
   kofiDesc: "Ophel이 도움이 되었다면 개발자를 지원하기 위해 커피를 사주는 것을 고려해 주세요",
   kofiBtn: "Ko-fi에서 후원하기",
+  sponsorSupport: "프로젝트 후원",
+  sponsorDesc: "Ophel이 도움이 되었다면 개발 지속을 후원해 주세요",
+  wechatPay: "WeChat Pay",
+  alipayPay: "Alipay",
+  afdianSupport: "Afdian",
 }

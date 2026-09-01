@@ -66,6 +66,14 @@ export const USERSCRIPT_RESOURCE_DEFINITIONS = {
     metaName: "ophelWatermarkBg96",
     fileName: "ophel-watermark-bg-96.png",
   },
+  wechatPay: {
+    metaName: "ophelWechatPay",
+    fileName: "ophel-wechat-pay.jpg",
+  },
+  alipay: {
+    metaName: "ophelAlipay",
+    fileName: "ophel-alipay.png",
+  },
   assistantMermaidRunner: {
     metaName: "ophelAssistantMermaidRunner",
     fileName: "ophel-assistant-mermaid-runner.js",

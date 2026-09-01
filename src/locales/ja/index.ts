@@ -246,7 +246,7 @@ export const ja = {
     "現在 {count} 個の AI プラットフォームに対応しており、ポップアップのサイト判定とクイックアクセスと同期しています。",
   projectLinks: "プロジェクトリンク",
   githubRepository: "GitHub リポジトリ",
-  githubDesc: "ソースコードの確認、バグ報告、貢献はこちら",
+  githubDesc: "GitHub でスターを付けて開発を応援してください",
   giveStar: "GitHubでスターを送る",
   projectWebsite: "公式サイト",
   websiteDesc: "ドキュメントやガイドなどを確認",
@@ -1885,4 +1885,9 @@ export const ja = {
   kofiSupport: "Buy Me a Coffee",
   kofiDesc: "Ophel がお役に立ちましたら、開発者を支援するためにコーヒーを奢ることをご検討ください",
   kofiBtn: "Ko-fi で支援",
+  sponsorSupport: "開発を支援",
+  sponsorDesc: "Ophel がお役に立ちましたら、開発の継続を支援してください",
+  wechatPay: "WeChat Pay",
+  alipayPay: "Alipay",
+  afdianSupport: "愛発電",
 }

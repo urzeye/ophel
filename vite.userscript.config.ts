@@ -146,6 +146,8 @@ const userscriptAssetSources = {
     __dirname,
     "assets/userscript/ophel-watermark-bg-96.png",
   ),
+  wechatPay: path.resolve(__dirname, "assets/support/wechat-pay.jpg"),
+  alipay: path.resolve(__dirname, "assets/support/alipay.png"),
 } as const
 
 function buildUserscriptStyleBundle(): string {

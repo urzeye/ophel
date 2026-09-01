@@ -242,7 +242,7 @@ export const ru = {
     "Сейчас поддерживается {count} AI-платформ, синхронизированных с определением сайта и быстрым доступом в popup.",
   projectLinks: "Ссылки",
   githubRepository: "Репозиторий GitHub",
-  githubDesc: "Код, ошибки или вклад в проект",
+  githubDesc: "Поставьте звезду репозиторию, чтобы поддержать развитие",
   giveStar: "Поставить звезду на GitHub",
   projectWebsite: "Сайт",
   websiteDesc: "Документация и руководства",
@@ -1882,4 +1882,9 @@ export const ru = {
   kofiSupport: "Buy Me a Coffee",
   kofiDesc: "Если Ophel оказался вам полезен, вы можете угостить разработчика кофе",
   kofiBtn: "Поддержать на Ko-fi",
+  sponsorSupport: "Поддержать проект",
+  sponsorDesc: "Если Ophel вам полезен, поддержите дальнейшую разработку",
+  wechatPay: "WeChat Pay",
+  alipayPay: "Alipay",
+  afdianSupport: "Afdian",
 }

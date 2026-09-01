@@ -5,6 +5,7 @@ import { SparkleIcon } from "~components/icons/SparkleIcon"
 import { getReleaseNotesMediaAlt, getReleaseNotesMediaCaption } from "~release-notes"
 import type { ReleaseNotesMedia } from "~release-notes/types"
 import { OPHEL_HOVER_WIDTH_RETAIN_LAYER_PROPS } from "~utils/dom-toolkit"
+import { GITHUB_REPO_URL } from "~utils/donate-channels"
 import { t } from "~utils/i18n"
 import { getHighlightStyles, renderMarkdown } from "~utils/markdown"
 import { createSafeHTML } from "~utils/trusted-types"
@@ -226,18 +227,27 @@ export const ReleaseNotesModal: React.FC<ReleaseNotesModalProps> = ({
         </div>
 
         <footer className="gh-release-notes-footer">
-          <button
-            type="button"
-            className="gh-release-notes-secondary"
-            title={fullChangelogUrl}
-            onClick={onOpenFullChangelog}>
-            <ExternalLinkIcon size={14} />
-            <span>{t("releaseNotesViewFull")}</span>
-          </button>
-          <button type="button" className="gh-release-notes-primary" onClick={onClose}>
-            <CheckIcon size={14} />
-            <span>{t("releaseNotesGotIt")}</span>
-          </button>
+          <a
+            className="gh-release-notes-star-link"
+            href={GITHUB_REPO_URL}
+            target="_blank"
+            rel="noopener noreferrer">
+            {t("giveStar")}
+          </a>
+          <div className="gh-release-notes-footer-actions">
+            <button
+              type="button"
+              className="gh-release-notes-secondary"
+              title={fullChangelogUrl}
+              onClick={onOpenFullChangelog}>
+              <ExternalLinkIcon size={14} />
+              <span>{t("releaseNotesViewFull")}</span>
+            </button>
+            <button type="button" className="gh-release-notes-primary" onClick={onClose}>
+              <CheckIcon size={14} />
+              <span>{t("releaseNotesGotIt")}</span>
+            </button>
+          </div>
         </footer>
       </section>
 

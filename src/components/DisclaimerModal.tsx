@@ -1,8 +1,8 @@
-import { GithubIcon, ShieldCheckIcon } from "~components/icons"
+import { ShieldCheckIcon } from "~components/icons"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
 import { getAppIconUrl } from "~utils/config"
+import { GITHUB_REPO_URL } from "~utils/donate-channels"
 import { OPHEL_FONT_FAMILY_CSS_VAR } from "~utils/font"
-import { getStoreInfo } from "~utils/getStoreInfo"
 import { t } from "~utils/i18n"
 
 export const DisclaimerModal: React.FC = () => {
@@ -51,29 +51,9 @@ export const DisclaimerModal: React.FC = () => {
           <div className="disclaimer-section quote-section">
             <p className="disclaimer-quote-text">{t("communityMotto")}</p>
 
-            <div className="action-row">
-              <a
-                href="https://github.com/urzeye/ophel"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="star-btn">
-                <GithubIcon size={18} />
-                <span>{t("giveStar")}</span>
-              </a>
-
-              <a
-                href={getStoreInfo().url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="star-btn review-btn">
-                {getStoreInfo().icon}
-                <span>{getStoreInfo().label}</span>
-              </a>
-            </div>
-
             <div className="secondary-links">
               <a
-                href="https://github.com/urzeye/ophel/pulls"
+                href={`${GITHUB_REPO_URL}/pulls`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="sec-link">
@@ -81,7 +61,7 @@ export const DisclaimerModal: React.FC = () => {
               </a>
               <span className="divider">/</span>
               <a
-                href="https://github.com/urzeye/ophel/issues"
+                href={`${GITHUB_REPO_URL}/issues`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="sec-link">
@@ -258,67 +238,6 @@ export const DisclaimerModal: React.FC = () => {
            color: var(--gh-text, #1f2937) !important;
            margin: 0 !important;
            font-style: italic;
-        }
-
-        .action-row {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          flex-wrap: wrap;
-          justify-content: center;
-        }
-
-        .star-btn {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          background: #24292e; /* GitHub Dark */
-          color: white;
-          padding: 8px 20px;
-          border-radius: 20px;
-          text-decoration: none;
-          font-weight: 600;
-          font-size: 14px;
-          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-          border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .star-btn:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
-          background: #2f363d;
-          border-color: rgba(255,255,255,0.2);
-          color: white;
-        }
-
-        .review-btn {
-          background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-        }
-
-        .review-btn:hover {
-          background: linear-gradient(135deg, #4338ca 0%, #6d28d9 100%);
-        }
-
-        .star-btn:active {
-          transform: scale(0.96);
-        }
-
-        :host-context([data-gh-mode="dark"]) .star-btn {
-          background: #3b82f6;
-          border: none;
-        }
-
-        :host-context([data-gh-mode="dark"]) .star-btn:hover {
-          background: #2563eb;
-        }
-
-        :host-context([data-gh-mode="dark"]) .review-btn {
-          background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-        }
-
-        :host-context([data-gh-mode="dark"]) .review-btn:hover {
-           background: linear-gradient(135deg, #4338ca 0%, #6d28d9 100%);
         }
 
         .secondary-links {
