@@ -1864,7 +1864,7 @@ export const ko = {
     "커뮤니티에 참여하여 다른 사용자와 소통하고, 피드백을 제공하고, 최신 소식을 받아보세요",
   joinDiscord: "그룹 가입",
   joinDiscordCommunity: "Discord 참여",
-  kofiSupport: "Buy Me a Coffee",
+  kofiSupport: "Ko-fi에서 후원하기",
   kofiDesc: "Ophel이 도움이 되었다면 개발자를 지원하기 위해 커피를 사주는 것을 고려해 주세요",
   kofiBtn: "Ko-fi에서 후원하기",
   sponsorSupport: "프로젝트 후원",

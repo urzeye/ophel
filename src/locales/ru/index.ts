@@ -1880,7 +1880,7 @@ export const ru = {
     "Присоединяйтесь к нашему сообществу, чтобы общаться с другими пользователями, оставлять отзывы и получать последние новости",
   joinDiscord: "Присоединиться",
   joinDiscordCommunity: "Присоединиться к Discord",
-  kofiSupport: "Buy Me a Coffee",
+  kofiSupport: "Поддержать на Ko-fi",
   kofiDesc: "Если Ophel оказался вам полезен, вы можете угостить разработчика кофе",
   kofiBtn: "Поддержать на Ko-fi",
   sponsorSupport: "Поддержать проект",

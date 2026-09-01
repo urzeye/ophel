@@ -1883,7 +1883,7 @@ export const ja = {
     "コミュニティに参加して、他のユーザーと交流したり、フィードバックを提供したり、最新情報を入手したりできます",
   joinDiscord: "グループに参加",
   joinDiscordCommunity: "Discord に参加",
-  kofiSupport: "Buy Me a Coffee",
+  kofiSupport: "Ko-fi で支援",
   kofiDesc: "Ophel がお役に立ちましたら、開発者を支援するためにコーヒーを奢ることをご検討ください",
   kofiBtn: "Ko-fi で支援",
   sponsorSupport: "開発を支援",
