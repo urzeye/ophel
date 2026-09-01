@@ -1689,14 +1689,14 @@ export const zhTW = {
   queueBatchImportAction: "加入隊列",
   queueBatchImportSuccess: "已加入隊列 {count} 條",
   queueBatchImportEmpty: "沒有可加入隊列的提示詞",
-  zenModeTitle: "禪模式 (Zen Mode)",
+  zenModeTitle: "禪模式",
   zenModeLabel: "啟用禪模式",
   zenModeDesc: "隱藏側邊欄和導航元素，專注於當前對話（每個站點獨立配置）",
   zenModeExitButton: "退出禪模式",
   zenModeExitButtonVisibleLabel: "顯示退出按鈕",
   zenModeExitButtonVisibleDesc:
     "關閉後會隱藏頁面上的「退出禪模式」按鈕；仍可透過快捷按鈕或快捷鍵退出禪模式。",
-  cleanModeTitle: "淨化模式 (Clean Mode)",
+  cleanModeTitle: "淨化模式",
   cleanModeLabel: "啟用淨化模式",
   cleanModeDesc:
     "隱藏頁面中的免責聲明、廣告、下載按鈕等冗餘元素，獲得更乾淨的介面（每個站點獨立配置）",

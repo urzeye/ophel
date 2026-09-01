@@ -1688,14 +1688,14 @@ export const zhCN = {
   queueBatchImportAction: "加入队列",
   queueBatchImportSuccess: "已加入队列 {count} 条",
   queueBatchImportEmpty: "没有可加入队列的提示词",
-  zenModeTitle: "禅模式 (Zen Mode)",
+  zenModeTitle: "禅模式",
   zenModeLabel: "启用禅模式",
   zenModeDesc: "隐藏侧边栏和导航元素，专注于当前对话（每个站点独立配置）",
   zenModeExitButton: "退出禅模式",
   zenModeExitButtonVisibleLabel: "显示退出按钮",
   zenModeExitButtonVisibleDesc:
     "关闭后会隐藏页面上的“退出禅模式”按钮；仍可通过快捷按钮或快捷键退出禅模式。",
-  cleanModeTitle: "净化模式 (Clean Mode)",
+  cleanModeTitle: "净化模式",
   cleanModeLabel: "启用净化模式",
   cleanModeDesc:
     "隐藏页面中的免责声明、广告、下载按钮等冗余元素，获得更干净的界面（每个站点独立配置）",
