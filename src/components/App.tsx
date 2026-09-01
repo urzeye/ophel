@@ -2023,7 +2023,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
 
       if (item.category === "conversations" && item.conversationId) {
         // 站外会话没有当前站点的适配器上下文，直接新标签打开会话链接
-        if (item.offsiteSite) {
+        if (item.sourceSite?.isOffsite) {
           if (item.conversationUrl) {
             platform.openTab(item.conversationUrl)
           } else {

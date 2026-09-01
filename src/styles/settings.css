@@ -4557,8 +4557,10 @@ html[data-theme="dark"] .about-privacy-banner {
   min-width: 0;
 }
 
-.settings-search-offsite-site-icon {
+.settings-search-conversation-site-icon {
   flex-shrink: 0;
+  width: 14px;
+  height: 14px;
 }
 
 .settings-search-offsite-badge {

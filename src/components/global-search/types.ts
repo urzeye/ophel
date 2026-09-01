@@ -37,11 +37,12 @@ export interface GlobalSearchTagBadge {
   color: string
 }
 
-/** 站外会话结果的来源站点信息，用于 icon 与"站外"标注 */
-export interface GlobalSearchOffsiteSite {
+/** 会话搜索结果的来源站点；本站/站外都带这份数据，标题行才能共用同一图标槽。 */
+export interface GlobalSearchSourceSite {
   name: string
   icon?: string
   faviconUrl?: string
+  isOffsite: boolean
 }
 
 export interface GlobalSearchOutlineTarget {
@@ -66,8 +67,8 @@ export interface GlobalSearchResultItem {
   settingId?: string
   conversationId?: string
   conversationUrl?: string
-  /** 存在时表示该会话结果来自其他站点，点击在新标签页打开而不是站内跳转 */
-  offsiteSite?: GlobalSearchOffsiteSite
+  /** 会话结果的来源站点；isOffsite 时点击在新标签页打开而不是站内跳转 */
+  sourceSite?: GlobalSearchSourceSite
   promptId?: string
   promptContent?: string
   tagBadges?: GlobalSearchTagBadge[]
