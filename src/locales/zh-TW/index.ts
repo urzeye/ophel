@@ -1817,7 +1817,7 @@ export const zhTW = {
   discordDesc: "加入社群，與其他用戶交流、反饋問題、獲取最新動態",
   joinDiscord: "加入群組",
   joinDiscordCommunity: "加入 Discord 社群",
-  kofiSupport: "Buy Me a Coffee",
+  kofiSupport: "贊助支持",
   kofiDesc: "如果 Ophel 對你有幫助，請考慮贊助一杯咖啡支持開發者",
   kofiBtn: "贊助支持",
   sponsorSupport: "贊助支持",

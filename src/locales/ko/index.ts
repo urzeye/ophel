@@ -1725,7 +1725,7 @@ export const ko = {
   queueBatchImportAction: "대기열에 추가",
   queueBatchImportSuccess: "{count}개의 프롬프트를 대기열에 추가했습니다",
   queueBatchImportEmpty: "추가할 프롬프트가 없습니다",
-  zenModeTitle: "선(Zen) 모드",
+  zenModeTitle: "선 모드",
   zenModeLabel: "선 모드 활성화",
   zenModeDesc: "사이드바 및 내비게이션 요소를 숨겨 현재 대화에 집중합니다 (각 사이트별 개별 설정)",
   zenModeExitButton: "선 모드 종료",

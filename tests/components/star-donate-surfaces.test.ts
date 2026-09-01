@@ -124,6 +124,10 @@ describe("star and donate copy", () => {
     expect(Object.keys(resources).sort()).toEqual([...localeIds].sort())
     expect(resources["zh-CN"].kofiSupport).not.toBe("Buy Me a Coffee")
     expect(resources["zh-CN"].kofiSupport).toBe("赞助支持")
+    expect(resources["zh-TW"].kofiSupport).not.toBe("Buy Me a Coffee")
+    expect(resources["zh-TW"].kofiSupport).toBe("贊助支持")
+    expect(resources.ko.zenModeTitle).toBe("선 모드")
+    expect(resources.ko.zenModeTitle).not.toContain("Zen")
 
     for (const localeId of localeIds) {
       const locale = resources[localeId]
