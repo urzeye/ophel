@@ -64,6 +64,7 @@ describe("star and donate surfaces", () => {
     const source = compact(releaseNotesSource)
 
     expect(source).toContain("gh-release-notes-star-link")
+    expect(source).toContain("gh-release-notes-secondary")
     expect(source).toContain("GithubIcon")
     expect(source).toContain("GITHUB_REPO_URL")
     expect(source).toContain('t("giveStar")')

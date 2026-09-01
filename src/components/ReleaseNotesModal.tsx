@@ -228,7 +228,7 @@ export const ReleaseNotesModal: React.FC<ReleaseNotesModalProps> = ({
 
         <footer className="gh-release-notes-footer">
           <a
-            className="gh-release-notes-star-link"
+            className="gh-release-notes-secondary gh-release-notes-star-link"
             href={GITHUB_REPO_URL}
             target="_blank"
             rel="noopener noreferrer">
