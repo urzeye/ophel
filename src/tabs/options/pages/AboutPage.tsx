@@ -194,34 +194,39 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
               rel="noopener noreferrer"
               className="about-sponsor-afdian"
               aria-label={t("afdianSupport")}>
-              <picture>
-                <source media="(prefers-color-scheme: dark)" srcSet={AFDIAN_PROFILE.darkSrc} />
-                <source media="(prefers-color-scheme: light)" srcSet={AFDIAN_PROFILE.lightSrc} />
-                <img
-                  alt={t("afdianSupport")}
-                  src={AFDIAN_PROFILE.lightSrc}
-                  height={160}
-                  className="about-sponsor-afdian-img"
-                />
-              </picture>
+              <img
+                className="about-sponsor-afdian-img is-light"
+                alt={t("afdianSupport")}
+                src={AFDIAN_PROFILE.lightSrc}
+                height={160}
+              />
+              <img
+                className="about-sponsor-afdian-img is-dark"
+                alt=""
+                src={AFDIAN_PROFILE.darkSrc}
+                height={160}
+                aria-hidden="true"
+              />
               <span className="about-sponsor-channel-label">{t("afdianSupport")}</span>
             </a>
-            <figure className="about-sponsor-qr">
-              <img
-                src={resolveSupportImageUrl(donateChannels.wechatImagePath)}
-                alt={t("wechatPay")}
-                className="about-sponsor-qr-img"
-              />
-              <figcaption>{t("wechatPay")}</figcaption>
-            </figure>
-            <figure className="about-sponsor-qr">
-              <img
-                src={resolveSupportImageUrl(donateChannels.alipayImagePath)}
-                alt={t("alipayPay")}
-                className="about-sponsor-qr-img"
-              />
-              <figcaption>{t("alipayPay")}</figcaption>
-            </figure>
+            <div className="about-sponsor-qrs">
+              <figure className="about-sponsor-qr">
+                <img
+                  src={resolveSupportImageUrl(donateChannels.wechatImagePath)}
+                  alt={t("wechatPay")}
+                  className="about-sponsor-qr-img"
+                />
+                <figcaption>{t("wechatPay")}</figcaption>
+              </figure>
+              <figure className="about-sponsor-qr">
+                <img
+                  src={resolveSupportImageUrl(donateChannels.alipayImagePath)}
+                  alt={t("alipayPay")}
+                  className="about-sponsor-qr-img"
+                />
+                <figcaption>{t("alipayPay")}</figcaption>
+              </figure>
+            </div>
           </div>
         </section>
       ) : null}

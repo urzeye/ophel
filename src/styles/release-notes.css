@@ -277,15 +277,29 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  padding: 6px 8px;
+  margin: -6px -8px;
+  border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
   line-height: 1.4;
+  white-space: nowrap;
   color: var(--gh-text, #1f2937);
   text-decoration: none;
 }
 
+.gh-release-notes-star-link svg {
+  flex-shrink: 0;
+}
+
 .gh-release-notes-star-link:hover {
   color: var(--gh-primary, #4285f4);
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 8%, transparent);
+}
+
+.gh-release-notes-star-link:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 38%, transparent);
+  outline-offset: 2px;
 }
 
 .gh-release-notes-footer-actions {

@@ -5347,9 +5347,8 @@ html[data-theme="dark"] .about-privacy-banner {
 
 .about-sponsor-channels {
   display: flex;
-  flex-wrap: wrap;
-  align-items: stretch;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
   gap: 16px;
 }
 
@@ -5358,7 +5357,6 @@ html[data-theme="dark"] .about-privacy-banner {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between;
   gap: 8px;
   margin: 0;
   padding: 12px;
@@ -5370,12 +5368,18 @@ html[data-theme="dark"] .about-privacy-banner {
 }
 
 .about-sponsor-afdian {
-  flex: 1 1 260px;
-  max-width: 380px;
+  width: min(100%, 520px);
 }
 
-.about-sponsor-qr {
-  flex: 0 0 auto;
+.about-sponsor-afdian:hover {
+  border-color: var(--gh-border-hover, #d1d5db);
+}
+
+.about-sponsor-qrs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
 }
 
 .about-sponsor-channel-label,
@@ -5389,10 +5393,26 @@ html[data-theme="dark"] .about-privacy-banner {
   display: block;
   width: 100%;
   height: auto;
-  max-height: 160px;
+  max-height: 180px;
   object-fit: contain;
-  background: #fff;
+  background: transparent;
   border-radius: 8px;
+}
+
+.about-sponsor-afdian-img.is-dark {
+  display: none;
+}
+
+:host([data-theme="dark"]) .about-sponsor-afdian-img.is-light,
+:host-context([data-gh-mode="dark"]) .about-sponsor-afdian-img.is-light,
+html[data-theme="dark"] .about-sponsor-afdian-img.is-light {
+  display: none;
+}
+
+:host([data-theme="dark"]) .about-sponsor-afdian-img.is-dark,
+:host-context([data-gh-mode="dark"]) .about-sponsor-afdian-img.is-dark,
+html[data-theme="dark"] .about-sponsor-afdian-img.is-dark {
+  display: block;
 }
 
 .about-sponsor-qr-img {
