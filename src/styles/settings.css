@@ -5349,7 +5349,7 @@ html[data-theme="dark"] .about-privacy-banner {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  width: min(100%, 420px);
+  width: min(100%, 520px);
   margin-inline: auto;
   gap: 16px;
 }
