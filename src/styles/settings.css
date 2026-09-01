@@ -3648,14 +3648,14 @@ html[data-theme="dark"] .about-link-card:not(.discord-card):not(.kofi-card):hove
 }
 
 .reviews-grid .about-link-btn {
-  color: var(--gh-primary, #4285f4);
-  border-color: var(--gh-primary, #4285f4);
+  color: var(--card-color, var(--gh-primary));
+  border-color: var(--card-color, var(--gh-primary));
 }
 
 html[data-theme="dark"] .reviews-grid .about-link-btn,
 :host([data-theme="dark"]) .reviews-grid .about-link-btn {
-  color: var(--gh-primary, #4285f4);
-  border-color: var(--gh-primary, #4285f4);
+  color: var(--card-color, var(--gh-primary));
+  border-color: var(--card-color, var(--gh-primary));
 }
 
 .about-link-card:hover .about-link-btn {
@@ -3667,14 +3667,9 @@ html[data-theme="dark"] .reviews-grid .about-link-btn,
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.reviews-grid .about-link-card:hover .about-link-btn,
 html[data-theme="dark"] .reviews-grid .about-link-card:hover .about-link-btn,
 :host([data-theme="dark"]) .reviews-grid .about-link-card:hover .about-link-btn {
-  background: color-mix(in srgb, var(--gh-primary, #4285f4) 12%, var(--gh-bg, #ffffff));
-  color: var(--gh-primary, #4285f4);
-  border-color: var(--gh-primary, #4285f4);
-  box-shadow: none;
-  transform: translateY(-1px);
+  color: #fff;
 }
 
 /* Star Button Special Style - Sunset Gold Pill */

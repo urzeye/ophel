@@ -281,9 +281,9 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
           target="_blank"
           rel="noopener noreferrer"
           className="about-link-card"
-          style={{ "--card-color": "#4285F4" } as React.CSSProperties}>
+          style={{ "--card-color": "#EA4335" } as React.CSSProperties}>
           <div className="about-link-header">
-            <ChromeIcon size={24} color="var(--card-color)" />
+            <ChromeIcon size={24} />
             <span style={{ fontWeight: 600 }}>{t("chromeStore")}</span>
           </div>
           <button type="button" className="about-link-btn">
