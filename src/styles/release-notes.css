@@ -309,10 +309,10 @@
 }
 
 .gh-release-notes-primary {
-  border: 1px solid transparent;
+  border: 1px solid var(--gh-primary, #4285f4);
   padding: 0 14px;
-  background: var(--gh-primary, #4285f4);
-  color: var(--gh-text-on-primary, #ffffff);
+  background: var(--gh-bg, #ffffff);
+  color: var(--gh-primary, #4285f4);
 }
 
 .gh-release-notes-secondary {
@@ -327,8 +327,17 @@
   transform: translateY(-1px);
 }
 
+.gh-release-notes-primary:hover {
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 10%, var(--gh-bg, #ffffff));
+}
+
 .gh-release-notes-secondary:hover {
   background: var(--gh-hover, #f3f4f6);
+}
+
+.gh-release-notes-primary:active,
+.gh-release-notes-secondary:active {
+  transform: translateY(1px);
 }
 
 .gh-release-notes-primary:focus-visible,

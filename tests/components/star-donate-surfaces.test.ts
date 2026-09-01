@@ -11,6 +11,8 @@ const readSource = (relativePath: string): string =>
 
 const compact = (source: string): string => source.replace(/\s+/g, " ")
 
+const releaseNotesCss = compact(readSource("../../src/styles/release-notes.css"))
+
 const disclaimerSource = readSource("../../src/components/DisclaimerModal.tsx")
 const aboutSource = readSource("../../src/tabs/options/pages/AboutPage.tsx")
 const releaseNotesSource = readSource("../../src/components/ReleaseNotesModal.tsx")
@@ -73,6 +75,15 @@ describe("star and donate surfaces", () => {
     expect(source).toContain("onOpenFullChangelog")
     expect(source).toContain('t("releaseNotesViewFull")')
     expect(GITHUB_REPO_URL).toBe("https://github.com/urzeye/ophel")
+    expect(releaseNotesCss).toContain(
+      ".gh-release-notes-primary { border: 1px solid var(--gh-primary, #4285f4);",
+    )
+    expect(releaseNotesCss).toContain(
+      "background: var(--gh-bg, #ffffff); color: var(--gh-primary, #4285f4);",
+    )
+    expect(releaseNotesCss).not.toContain(
+      ".gh-release-notes-primary { border: 1px solid transparent; padding: 0 14px; background: var(--gh-primary, #4285f4);",
+    )
   })
 
   it("points sidebar and popup coffee actions at the shared donate primary URL", () => {
