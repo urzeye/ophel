@@ -39,6 +39,8 @@ describe("star and donate surfaces", () => {
   it("wires About to Afdian picture sources, the website, and locale donate channels", () => {
     expect(aboutSource).toContain("getDonateChannels")
     expect(aboutSource).toContain("about-sponsor-qrs")
+    expect(aboutSource).toContain("about-sponsor-qr-zoom")
+    expect(aboutSource).toContain("about-sponsor-lightbox")
     expect(aboutSource).toContain("AFDIAN_PROFILE.darkSrc")
     expect(aboutSource).toContain("AFDIAN_PROFILE.lightSrc")
     expect(aboutSource).toContain("OPHEL_WEBSITE_URL")

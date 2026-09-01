@@ -2,7 +2,7 @@
  * 关于页面
  * 显示扩展信息、版本、链接等
  */
-import React, { useSyncExternalStore } from "react"
+import React, { useEffect, useState, useSyncExternalStore } from "react"
 
 import { PlatformIcon } from "~components/PlatformIcon"
 import {
@@ -44,6 +44,18 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
   const supportedPlatformsCount = String(supportedPlatforms.length)
   const language = useSyncExternalStore(subscribeI18nChanges, getCurrentLang, getCurrentLang)
   const donateChannels = getDonateChannels(language)
+  const [sponsorPreview, setSponsorPreview] = useState<{ src: string; alt: string } | null>(null)
+
+  useEffect(() => {
+    if (!sponsorPreview) return
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setSponsorPreview(null)
+    }
+
+    document.addEventListener("keydown", handleKeyDown)
+    return () => document.removeEventListener("keydown", handleKeyDown)
+  }, [sponsorPreview])
 
   return (
     <div>
@@ -198,36 +210,66 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
                 className="about-sponsor-afdian-img is-light"
                 alt={t("afdianSupport")}
                 src={AFDIAN_PROFILE.lightSrc}
-                height={160}
+                height={220}
               />
               <img
                 className="about-sponsor-afdian-img is-dark"
                 alt=""
                 src={AFDIAN_PROFILE.darkSrc}
-                height={160}
+                height={220}
                 aria-hidden="true"
               />
               <span className="about-sponsor-channel-label">{t("afdianSupport")}</span>
             </a>
             <div className="about-sponsor-qrs">
               <figure className="about-sponsor-qr">
-                <img
-                  src={resolveSupportImageUrl(donateChannels.wechatImagePath)}
-                  alt={t("wechatPay")}
-                  className="about-sponsor-qr-img"
-                />
+                <button
+                  type="button"
+                  className="about-sponsor-qr-zoom"
+                  onClick={() =>
+                    setSponsorPreview({
+                      src: resolveSupportImageUrl(donateChannels.wechatImagePath),
+                      alt: t("wechatPay"),
+                    })
+                  }>
+                  <img
+                    src={resolveSupportImageUrl(donateChannels.wechatImagePath)}
+                    alt={t("wechatPay")}
+                    className="about-sponsor-qr-img"
+                  />
+                </button>
                 <figcaption>{t("wechatPay")}</figcaption>
               </figure>
               <figure className="about-sponsor-qr">
-                <img
-                  src={resolveSupportImageUrl(donateChannels.alipayImagePath)}
-                  alt={t("alipayPay")}
-                  className="about-sponsor-qr-img"
-                />
+                <button
+                  type="button"
+                  className="about-sponsor-qr-zoom"
+                  onClick={() =>
+                    setSponsorPreview({
+                      src: resolveSupportImageUrl(donateChannels.alipayImagePath),
+                      alt: t("alipayPay"),
+                    })
+                  }>
+                  <img
+                    src={resolveSupportImageUrl(donateChannels.alipayImagePath)}
+                    alt={t("alipayPay")}
+                    className="about-sponsor-qr-img"
+                  />
+                </button>
                 <figcaption>{t("alipayPay")}</figcaption>
               </figure>
             </div>
           </div>
+          {sponsorPreview ? (
+            <div
+              className="about-sponsor-lightbox"
+              role="dialog"
+              aria-modal="true"
+              aria-label={sponsorPreview.alt}
+              onClick={() => setSponsorPreview(null)}>
+              <img src={sponsorPreview.src} alt={sponsorPreview.alt} />
+            </div>
+          ) : null}
         </section>
       ) : null}
 
