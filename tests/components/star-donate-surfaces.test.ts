@@ -53,12 +53,20 @@ describe("star and donate surfaces", () => {
       "https://afdian-connect.vercel.app/profile.svg?slug=urzeye",
     )
     expect(OPHEL_WEBSITE_URL).toBe("https://ophel.app")
+    expect(aboutSource.indexOf('t("communityAndSupport")')).toBeLessThan(
+      aboutSource.indexOf('t("sponsorSupport")'),
+    )
+    expect(aboutSource.indexOf('t("sponsorSupport")')).toBeLessThan(
+      aboutSource.indexOf('t("rateAndReview")'),
+    )
+    expect(aboutSource).toContain("community-grid-triple")
   })
 
   it("adds a weak Release Notes Star link without replacing the changelog control", () => {
     const source = compact(releaseNotesSource)
 
     expect(source).toContain("gh-release-notes-star-link")
+    expect(source).toContain("GithubIcon")
     expect(source).toContain("GITHUB_REPO_URL")
     expect(source).toContain('t("giveStar")')
     expect(source).toContain("onOpenFullChangelog")

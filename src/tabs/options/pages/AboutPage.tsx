@@ -88,93 +88,13 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
         </div>
       </div>
 
-      <div className="about-section-title">{t("rateAndReview")}</div>
-      <div className="about-links-grid reviews-grid">
-        {/* Chrome Store */}
-        <a
-          href={STORE_LINKS.chrome}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="about-link-card"
-          style={{ "--card-color": "#4285F4" } as React.CSSProperties}>
-          <div className="about-link-header">
-            <ChromeIcon size={24} color="var(--card-color)" />
-            <span style={{ fontWeight: 600 }}>{t("chromeStore")}</span>
-          </div>
-          <button type="button" className="about-link-btn">
-            {t("reviewBtn")}
-          </button>
-        </a>
-
-        {/* Edge Add-ons */}
-        <a
-          href={STORE_LINKS.edge}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="about-link-card"
-          style={{ "--card-color": "#0078D7" } as React.CSSProperties}>
-          <div className="about-link-header">
-            <EdgeIcon size={24} />
-            <span style={{ fontWeight: 600 }}>{t("edgeAddons")}</span>
-          </div>
-          <button type="button" className="about-link-btn">
-            {t("reviewBtn")}
-          </button>
-        </a>
-
-        {/* Firefox Add-on */}
-        <a
-          href={STORE_LINKS.firefox}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="about-link-card"
-          style={{ "--card-color": "#FF7139" } as React.CSSProperties}>
-          <div className="about-link-header">
-            <FirefoxIcon size={24} color="var(--card-color)" />
-            <span style={{ fontWeight: 600 }}>{t("firefoxAddons")}</span>
-          </div>
-          <button type="button" className="about-link-btn">
-            {t("reviewBtn")}
-          </button>
-        </a>
-
-        {/* GreasyFork */}
-        <a
-          href={STORE_LINKS.greasyFork}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="about-link-card"
-          style={{ "--card-color": "#4b5563" } as React.CSSProperties}>
-          <div className="about-link-header">
-            <GreasyForkIcon size={24} color="currentColor" />
-            <span style={{ fontWeight: 600, color: "var(--gh-text)" }}>{t("greasyFork")}</span>
-          </div>
-          <button type="button" className="about-link-btn">
-            {t("reviewBtn")}
-          </button>
-        </a>
-
-        {/* ScriptCat */}
-        <a
-          href={STORE_LINKS.scriptCat}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="about-link-card"
-          style={{ "--card-color": "#1296db" } as React.CSSProperties}>
-          <div className="about-link-header">
-            <ScriptCatIcon size={24} color="var(--card-color)" />
-            <span style={{ fontWeight: 600, color: "var(--gh-text)" }}>{t("scriptCat")}</span>
-          </div>
-          <button type="button" className="about-link-btn">
-            {t("reviewBtn")}
-          </button>
-        </a>
-      </div>
-
       <div className="about-section-title">{t("communityAndSupport")}</div>
       <div className="about-community-motto">"{t("communityMotto")}"</div>
 
-      <div className="about-links-grid community-grid">
+      <div
+        className={`about-links-grid community-grid${
+          donateChannels.kind === "zh-CN" ? " community-grid-triple" : ""
+        }`}>
         {/* GitHub Link */}
         <a
           href={GITHUB_REPO_URL}
@@ -274,7 +194,6 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
               rel="noopener noreferrer"
               className="about-sponsor-afdian"
               aria-label={t("afdianSupport")}>
-              <span className="about-sponsor-channel-label">{t("afdianSupport")}</span>
               <picture>
                 <source media="(prefers-color-scheme: dark)" srcSet={AFDIAN_PROFILE.darkSrc} />
                 <source media="(prefers-color-scheme: light)" srcSet={AFDIAN_PROFILE.lightSrc} />
@@ -285,6 +204,7 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
                   className="about-sponsor-afdian-img"
                 />
               </picture>
+              <span className="about-sponsor-channel-label">{t("afdianSupport")}</span>
             </a>
             <figure className="about-sponsor-qr">
               <img
@@ -305,6 +225,89 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
           </div>
         </section>
       ) : null}
+
+      <div className="about-section-title">{t("rateAndReview")}</div>
+      <div className="about-links-grid reviews-grid">
+        {/* Chrome Store */}
+        <a
+          href={STORE_LINKS.chrome}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="about-link-card"
+          style={{ "--card-color": "#4285F4" } as React.CSSProperties}>
+          <div className="about-link-header">
+            <ChromeIcon size={24} color="var(--card-color)" />
+            <span style={{ fontWeight: 600 }}>{t("chromeStore")}</span>
+          </div>
+          <button type="button" className="about-link-btn">
+            {t("reviewBtn")}
+          </button>
+        </a>
+
+        {/* Edge Add-ons */}
+        <a
+          href={STORE_LINKS.edge}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="about-link-card"
+          style={{ "--card-color": "#0078D7" } as React.CSSProperties}>
+          <div className="about-link-header">
+            <EdgeIcon size={24} />
+            <span style={{ fontWeight: 600 }}>{t("edgeAddons")}</span>
+          </div>
+          <button type="button" className="about-link-btn">
+            {t("reviewBtn")}
+          </button>
+        </a>
+
+        {/* Firefox Add-on */}
+        <a
+          href={STORE_LINKS.firefox}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="about-link-card"
+          style={{ "--card-color": "#FF7139" } as React.CSSProperties}>
+          <div className="about-link-header">
+            <FirefoxIcon size={24} color="var(--card-color)" />
+            <span style={{ fontWeight: 600 }}>{t("firefoxAddons")}</span>
+          </div>
+          <button type="button" className="about-link-btn">
+            {t("reviewBtn")}
+          </button>
+        </a>
+
+        {/* GreasyFork */}
+        <a
+          href={STORE_LINKS.greasyFork}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="about-link-card"
+          style={{ "--card-color": "#4b5563" } as React.CSSProperties}>
+          <div className="about-link-header">
+            <GreasyForkIcon size={24} color="currentColor" />
+            <span style={{ fontWeight: 600, color: "var(--gh-text)" }}>{t("greasyFork")}</span>
+          </div>
+          <button type="button" className="about-link-btn">
+            {t("reviewBtn")}
+          </button>
+        </a>
+
+        {/* ScriptCat */}
+        <a
+          href={STORE_LINKS.scriptCat}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="about-link-card"
+          style={{ "--card-color": "#1296db" } as React.CSSProperties}>
+          <div className="about-link-header">
+            <ScriptCatIcon size={24} color="var(--card-color)" />
+            <span style={{ fontWeight: 600, color: "var(--gh-text)" }}>{t("scriptCat")}</span>
+          </div>
+          <button type="button" className="about-link-btn">
+            {t("reviewBtn")}
+          </button>
+        </a>
+      </div>
 
       <div className="about-section-title">{t("aboutSupportedPlatforms")}</div>
       <div className="about-platforms-card">

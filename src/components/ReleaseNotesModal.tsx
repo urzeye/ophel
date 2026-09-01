@@ -1,6 +1,6 @@
 import React, { useEffect, useId, useMemo, useRef, useState } from "react"
 
-import { CheckIcon, ClearIcon, ExternalLinkIcon } from "~components/icons"
+import { CheckIcon, ClearIcon, ExternalLinkIcon, GithubIcon } from "~components/icons"
 import { SparkleIcon } from "~components/icons/SparkleIcon"
 import { getReleaseNotesMediaAlt, getReleaseNotesMediaCaption } from "~release-notes"
 import type { ReleaseNotesMedia } from "~release-notes/types"
@@ -232,7 +232,8 @@ export const ReleaseNotesModal: React.FC<ReleaseNotesModalProps> = ({
             href={GITHUB_REPO_URL}
             target="_blank"
             rel="noopener noreferrer">
-            {t("giveStar")}
+            <GithubIcon size={16} />
+            <span>{t("giveStar")}</span>
           </a>
           <div className="gh-release-notes-footer-actions">
             <button

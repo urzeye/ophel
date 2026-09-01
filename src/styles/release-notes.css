@@ -274,16 +274,18 @@
 
 .gh-release-notes-star-link {
   flex: 0 1 auto;
-  font-size: 12px;
-  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
   line-height: 1.4;
-  color: var(--gh-text-secondary, #6b7280);
+  color: var(--gh-text, #1f2937);
   text-decoration: none;
 }
 
 .gh-release-notes-star-link:hover {
   color: var(--gh-primary, #4285f4);
-  text-decoration: underline;
 }
 
 .gh-release-notes-footer-actions {
