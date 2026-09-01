@@ -64,12 +64,12 @@ export function SidebarCommunityLinks() {
         </a>
       </Tooltip>
 
-      <Tooltip content={t("discordCommunity")}>
+      <Tooltip content={t("joinDiscordCommunity")}>
         <a
           href="https://discord.gg/rmPzb6Cx9u"
           target="_blank"
           rel="noopener noreferrer"
-          aria-label={t("discordCommunity")}
+          aria-label={t("joinDiscordCommunity")}
           className="sidebar-social-btn discord-btn">
           <DiscordIcon size={18} />
         </a>

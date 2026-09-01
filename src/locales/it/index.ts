@@ -1960,6 +1960,7 @@ export const it = {
   discordDesc:
     "Unisciti alla nostra community per chattare con altri utenti, fornire feedback e ricevere gli ultimi aggiornamenti",
   joinDiscord: "Unisciti a Discord",
+  joinDiscordCommunity: "Unisciti a Discord",
   kofiSupport: "Comprami un caffè",
   kofiDesc: "Se Ophel ti è utile, considera l'acquisto di un caffè per supportare lo sviluppatore",
   kofiBtn: "Supporto su Ko-fi",

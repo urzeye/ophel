@@ -1876,6 +1876,7 @@ Dê o código e depois um resumo de melhorias.`,
   discordDesc:
     "Junte-se à nossa comunidade para conversar com outros usuários, fornecer feedback e receber as últimas atualizações",
   joinDiscord: "Entrar no grupo",
+  joinDiscordCommunity: "Entrar no Discord",
   kofiSupport: "Buy Me a Coffee",
   kofiDesc: "Se o Ophel for útil para você, considere comprar um café para apoiar o desenvolvedor",
   kofiBtn: "Apoiar no Ko-fi",

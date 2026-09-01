@@ -5348,7 +5348,9 @@ html[data-theme="dark"] .about-privacy-banner {
 .about-sponsor-channels {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
+  width: min(100%, 420px);
+  margin-inline: auto;
   gap: 16px;
 }
 
@@ -5371,7 +5373,7 @@ html[data-theme="dark"] .about-privacy-banner {
 }
 
 .about-sponsor-afdian {
-  width: min(100%, 680px);
+  width: 100%;
   padding: 0;
   border: none;
   background: transparent;
@@ -5395,7 +5397,6 @@ html[data-theme="dark"] .about-privacy-banner {
   display: block;
   width: 100%;
   height: auto;
-  max-height: 240px;
   object-fit: contain;
   background: transparent;
 }

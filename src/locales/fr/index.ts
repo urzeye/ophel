@@ -1899,6 +1899,7 @@ Donnez le code puis un résumé des améliorations.`,
   discordDesc:
     "Rejoignez notre communauté pour discuter avec d'autres utilisateurs, donner votre avis et obtenir les dernières nouvelles",
   joinDiscord: "Rejoindre le groupe",
+  joinDiscordCommunity: "Rejoindre Discord",
   kofiSupport: "Buy Me a Coffee",
   kofiDesc: "Si Ophel vous est utile, pensez à offrir un café pour soutenir le développeur",
   kofiBtn: "Soutenir sur Ko-fi",

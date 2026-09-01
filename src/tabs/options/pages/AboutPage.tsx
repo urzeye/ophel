@@ -210,13 +210,13 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
                 className="about-sponsor-afdian-img is-light"
                 alt={t("afdianSupport")}
                 src={AFDIAN_PROFILE.lightSrc}
-                height={220}
+                height={160}
               />
               <img
                 className="about-sponsor-afdian-img is-dark"
                 alt=""
                 src={AFDIAN_PROFILE.darkSrc}
-                height={220}
+                height={160}
                 aria-hidden="true"
               />
               <span className="about-sponsor-channel-label">{t("afdianSupport")}</span>

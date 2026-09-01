@@ -1889,6 +1889,7 @@ Please output the optimized code block directly, followed by a brief summary of 
   discordDesc:
     "Join our community to chat with other users, provide feedback, and get the latest updates",
   joinDiscord: "Join Discord",
+  joinDiscordCommunity: "Join Discord",
   kofiSupport: "Buy Me a Coffee",
   kofiDesc: "If Ophel is helpful to you, please consider buying a coffee to support the developer",
   kofiBtn: "Support on Ko-fi",

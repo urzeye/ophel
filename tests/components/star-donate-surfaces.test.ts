@@ -77,6 +77,7 @@ describe("star and donate surfaces", () => {
 
   it("points sidebar and popup coffee actions at the shared donate primary URL", () => {
     expect(sidebarSource).toContain("getDonateChannels")
+    expect(sidebarSource).toContain("joinDiscordCommunity")
     expect(sidebarSource).toContain("donateChannels.primaryUrl")
     expect(sidebarSource).not.toContain("https://ko-fi.com/urzeye")
     expect(popupSource).toContain("getDonateChannels")
@@ -124,6 +125,7 @@ describe("star and donate copy", () => {
       expect(locale.wechatPay.length, localeId).toBeGreaterThan(0)
       expect(locale.alipayPay.length, localeId).toBeGreaterThan(0)
       expect(locale.afdianSupport.length, localeId).toBeGreaterThan(0)
+      expect(locale.joinDiscordCommunity.length, localeId).toBeGreaterThan(0)
     }
   })
 })

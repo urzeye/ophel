@@ -1815,6 +1815,7 @@ export const zhCN = {
   discordCommunity: "Discord 社区",
   discordDesc: "加入社区，与其他用户交流、反馈问题、获取最新动态",
   joinDiscord: "加入群组",
+  joinDiscordCommunity: "加入 Discord 社区",
   kofiSupport: "赞助支持",
   kofiDesc: "如果 Ophel 对你有帮助，请考虑赞助一杯咖啡支持开发者",
   kofiBtn: "赞助支持",

@@ -1889,6 +1889,7 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   discordDesc:
     "Treten Sie unserer Community bei, um sich mit anderen Nutzern auszutauschen, Feedback zu geben und die neuesten Updates zu erhalten",
   joinDiscord: "Gruppe beitreten",
+  joinDiscordCommunity: "Discord beitreten",
   kofiSupport: "Buy Me a Coffee",
   kofiDesc:
     "Wenn Ophel für Sie hilfreich ist, ziehen Sie bitte in Betracht, dem Entwickler einen Kaffee zu spendieren",

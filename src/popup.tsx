@@ -444,9 +444,10 @@ function IndexPopup() {
             </button>
           </Tooltip>
 
-          <Tooltip content={t("discordCommunity")}>
+          <Tooltip content={t("joinDiscordCommunity")}>
             <button
               className="popup-action-pill discord-btn icon-only"
+              aria-label={t("joinDiscordCommunity")}
               onClick={() => openUrl("https://discord.gg/rmPzb6Cx9u")}>
               <DiscordIcon size={16} />
             </button>
