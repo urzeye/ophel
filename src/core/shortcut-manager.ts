@@ -89,7 +89,9 @@ export class ShortcutManager {
    * 检查是否应该忽略快捷键（如在输入框中）
    */
   private shouldIgnoreEvent(e: KeyboardEvent): boolean {
-    const target = e.target
+    // 事件冒泡出 Shadow Root 后 e.target 会被重定向为宿主元素，
+    // 必须取 composedPath 的第一个节点才能拿到真实的输入框
+    const target = e.composedPath?.()[0] ?? e.target
     if (!target || !(target instanceof Element)) return false
 
     // 在输入框、文本区域、可编辑元素中时忽略快捷键
