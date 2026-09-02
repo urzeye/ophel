@@ -128,6 +128,17 @@ export const mountShadowHost: PlasmoMountShadowHost = ({
       }
     })
     observer.observe(document.body, { childList: true, subtree: false })
+
+    // 挂载窗口结束后停止观察，避免长期监听 body 的 childList 变化。
+    // 若届时仍未挂载（异常情况），保留 observer 继续兜底。
+    setTimeout(
+      () => {
+        if (shadowHost.parentElement) {
+          observer.disconnect()
+        }
+      },
+      Math.max(...delays) + 2000,
+    )
   } else {
     // 其他站点直接挂载到 body
     doMount()
