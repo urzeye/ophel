@@ -4,6 +4,7 @@
  */
 @import url("../styles/theme-variables.css");
 @import url("../styles/settings.css");
+@import url("../styles/release-notes.css");
 
 /* 页面基础样式 */
 html,

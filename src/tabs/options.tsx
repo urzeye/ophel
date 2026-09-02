@@ -17,8 +17,16 @@ import {
 import { resolveSettingsNavigateDetail } from "~constants"
 import { useHasUnseenReleaseNotes } from "~hooks/useHasUnseenReleaseNotes"
 import { platform } from "~platform"
+import {
+  getFullChangelogUrl,
+  getReleaseNotesMarkdown,
+  hasCurrentReleaseNotes,
+} from "~release-notes"
+import { currentReleaseNotes } from "~release-notes/current"
+import { markReleaseNotesSeen } from "~release-notes/storage"
+import { ReleaseNotesModal } from "~components/ReleaseNotesModal"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
-import { APP_DISPLAY_NAME, getAppIconUrl } from "~utils/config"
+import { APP_DISPLAY_NAME, APP_VERSION, getAppIconUrl } from "~utils/config"
 import { SidebarCommunityLinks } from "~components/SidebarCommunityLinks"
 import { getOphelPlatformFontClassName } from "~utils/font"
 import { setLanguage, t } from "~utils/i18n"
@@ -209,6 +217,7 @@ const OptionsPage = () => {
   // 语言初始化状态
   // 确保在语言设置完成后才渲染内容，避免首次渲染显示默认语言
   const [languageReady, setLanguageReady] = useState(false)
+  const [isReleaseNotesOpen, setIsReleaseNotesOpen] = useState(false)
 
   // 初始化 i18n 语言设置
   // 当 settings 加载完成后，根据 settings.language 设置界面语言
@@ -229,6 +238,25 @@ const OptionsPage = () => {
         <div style={{ padding: 40, textAlign: "center" }}>{t("loading")}</div>
       </div>
     )
+  }
+
+  // 独立 Options 页同样能打开当前版本更新日志：导航红点与关于页按钮不再是死端
+  const releaseNotesLanguage = settings.language
+  const canShowCurrentReleaseNotes = hasCurrentReleaseNotes()
+  const releaseNotesMarkdown = canShowCurrentReleaseNotes
+    ? getReleaseNotesMarkdown(releaseNotesLanguage)
+    : ""
+  const fullChangelogUrl = canShowCurrentReleaseNotes
+    ? getFullChangelogUrl(releaseNotesLanguage)
+    : "https://ophel.app/docs/changelog"
+
+  const openReleaseNotes = () => {
+    if (!canShowCurrentReleaseNotes || !releaseNotesMarkdown.trim()) return
+    // 打开即视为已读，与页内面板行为一致；storage.watch 会同步各入口红点
+    void markReleaseNotesSeen(APP_VERSION).catch((error) => {
+      console.warn("[Ophel] Failed to save release notes state:", error)
+    })
+    setIsReleaseNotesOpen(true)
   }
 
   // 渲染当前页面
@@ -255,7 +283,15 @@ const OptionsPage = () => {
       case "backup":
         return <BackupPage siteId={siteId} onNavigate={setActivePage} />
       case "about":
-        return <AboutPage />
+        return (
+          <AboutPage
+            onOpenReleaseNotes={
+              canShowCurrentReleaseNotes && releaseNotesMarkdown.trim()
+                ? openReleaseNotes
+                : undefined
+            }
+          />
+        )
       default:
         return (
           <GeneralPage
@@ -324,6 +360,19 @@ const OptionsPage = () => {
       <main className="settings-content" ref={contentRef}>
         {renderPage()}
       </main>
+
+      {isReleaseNotesOpen && canShowCurrentReleaseNotes && releaseNotesMarkdown.trim() ? (
+        <ReleaseNotesModal
+          version={currentReleaseNotes.version}
+          date={currentReleaseNotes.date}
+          markdown={releaseNotesMarkdown}
+          language={releaseNotesLanguage}
+          media={currentReleaseNotes.media}
+          fullChangelogUrl={fullChangelogUrl}
+          onClose={() => setIsReleaseNotesOpen(false)}
+          onOpenFullChangelog={() => platform.openTab(fullChangelogUrl)}
+        />
+      ) : null}
     </div>
   )
 }
