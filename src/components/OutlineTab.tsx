@@ -425,7 +425,7 @@ const OutlineNodeView: React.FC<{
       setCopySuccess(true)
       setTimeout(() => setCopySuccess(false), 1500)
     } catch (err) {
-      console.error("[DEBUG] Clipboard API failed, trying fallback:", err)
+      console.error("[OutlineTab] Clipboard API failed, trying fallback:", err)
       // 备用方案：使用 execCommand
       try {
         const textArea = document.createElement("textarea")
@@ -439,7 +439,7 @@ const OutlineNodeView: React.FC<{
         setCopySuccess(true)
         setTimeout(() => setCopySuccess(false), 1500)
       } catch (fallbackErr) {
-        console.error("[DEBUG] Fallback copy also failed:", fallbackErr)
+        console.error("[OutlineTab] Fallback copy also failed:", fallbackErr)
       }
     }
   }
