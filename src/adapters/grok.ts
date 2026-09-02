@@ -45,6 +45,18 @@ const PIN_ICON_PATH_SIGNATURES = [
   "M13 21L12 23L11 21V16H4.5V13.7129L4.65234 13.4697L6.95801 9.78027L6.41797 5.99512C6.11675 3.8866 7.75289 2 9.88281 2H14.1172C16.2471 2 17.8832 3.8866 17.582 5.99512L17.041 9.78027L19.5 13.7129V16H13V21Z",
 ].map((path) => path.replace(/\s+/g, ""))
 
+// 提示词按行转为 ProseMirror/Tiptap 段落 HTML，必须先转义再拼接，
+// 否则提示词中的 < > & 会被解析为 DOM，多行文本也会丢失分段
+const escapeHtmlForInsert = (value: string): string =>
+  value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+
+const buildParagraphHtml = (content: string): string =>
+  content
+    .replace(/\r\n/g, "\n")
+    .split("\n")
+    .map((line) => `<p>${line === "" ? "<br>" : escapeHtmlForInsert(line)}</p>`)
+    .join("")
+
 const DELETE_REASON = {
   UI_FAILED: "delete_ui_failed",
   BATCH_ABORTED_AFTER_UI_FAILURE: "delete_batch_aborted_after_ui_failure",
@@ -1336,7 +1348,7 @@ export class GrokAdapter extends SiteAdapter {
     // Tiptap 编辑器使用 contenteditable
     if (editor.getAttribute("contenteditable") === "true") {
       // 清空现有内容并插入新内容
-      editor.innerHTML = `<p>${content}</p>`
+      editor.innerHTML = buildParagraphHtml(content)
       // 触发 input 事件通知 Tiptap
       editor.dispatchEvent(new Event("input", { bubbles: true }))
       // 将光标移到末尾
