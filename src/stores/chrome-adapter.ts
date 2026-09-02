@@ -95,8 +95,15 @@ const userscriptStorageAdapter: StateStorage = {
  */
 const extensionStorageAdapter: StateStorage = {
   getItem: async (name: string): Promise<string | null> => {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       chrome.storage.local.get(name, (result) => {
+        // 读取失败（如扩展上下文失效）必须显式暴露，
+        // 否则 persist 会把失败当成“无数据”水合默认值，后续写回覆盖真实数据
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message))
+          return
+        }
+
         const value = result[name]
         if (value === undefined) {
           resolve(null)
@@ -115,17 +122,25 @@ const extensionStorageAdapter: StateStorage = {
   },
 
   setItem: async (name: string, value: string): Promise<void> => {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       // 存储 JSON 字符串
       chrome.storage.local.set({ [name]: value }, () => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message))
+          return
+        }
         resolve()
       })
     })
   },
 
   removeItem: async (name: string): Promise<void> => {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       chrome.storage.local.remove(name, () => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message))
+          return
+        }
         resolve()
       })
     })
