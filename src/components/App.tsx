@@ -476,6 +476,11 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- 只在 adapter 变化时重新创建
   }, [adapter, updateDeepSetting])
 
+  // 面板卸载或适配器切换时销毁旧实例，释放 window 监听、store 订阅和计时器
+  useEffect(() => {
+    return () => outlineManager?.destroy()
+  }, [outlineManager])
+
   // 面板展开状态：true 表示面板没有收进快捷按钮组，和悬浮/吸附模式无关
   const [isPanelExpanded, setIsPanelExpandedState] = useState(false)
   const isPanelExpandedRef = useRef(false)

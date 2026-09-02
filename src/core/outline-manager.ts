@@ -130,6 +130,11 @@ export class OutlineManager {
   private onExpandLevelChange?: (level: number) => void
   private onShowUserQueriesChange?: (show: boolean) => void
 
+  // 需要手动释放的资源
+  private boundHandleMessage = (event: MessageEvent) => this.handleMessage(event)
+  private unsubscribeBookmarks: (() => void) | null = null
+  private destroyed = false
+
   constructor(
     adapter: SiteAdapter,
     settings: Settings["features"]["outline"],
@@ -146,10 +151,10 @@ export class OutlineManager {
     this.expandLevel = settings.expandLevel ?? 6
 
     // Listen to monitor messages
-    window.addEventListener("message", this.handleMessage.bind(this))
+    window.addEventListener("message", this.boundHandleMessage)
 
     // 订阅 bookmarks-store，当书签变化时刷新大纲
-    void useBookmarkStore.subscribe(() => {
+    this.unsubscribeBookmarks = useBookmarkStore.subscribe(() => {
       // 只有在激活状态下才刷新，避免不必要的计算
       if (this.isActive) {
         this.refresh()
@@ -437,6 +442,33 @@ export class OutlineManager {
     return () => {
       this.listeners = this.listeners.filter((l) => l !== listener)
     }
+  }
+
+  // 释放全部外部资源：面板卸载或适配器切换后必须调用，避免泄漏监听与计时器
+  destroy() {
+    if (this.destroyed) return
+    this.destroyed = true
+
+    window.removeEventListener("message", this.boundHandleMessage)
+    this.unsubscribeBookmarks?.()
+    this.unsubscribeBookmarks = null
+
+    this.stopAutoUpdate()
+    this.stopPeriodicOutlineRefreshFallback()
+    this.stopSourceObserver()
+
+    if (this.refreshDebounceTimer) {
+      clearTimeout(this.refreshDebounceTimer)
+      this.refreshDebounceTimer = null
+    }
+    if (this.fallbackRefreshTimer) {
+      clearTimeout(this.fallbackRefreshTimer)
+      this.fallbackRefreshTimer = null
+    }
+
+    this.listeners = []
+    this.activeConsumers.clear()
+    this.isActive = false
   }
 
   private notify() {
@@ -793,7 +825,7 @@ export class OutlineManager {
 
   // Adjusted refresh signature
   refresh(overrideLevel?: number, immediate = false) {
-    if (!this.settings.enabled || this.isRefreshing) return
+    if (this.destroyed || !this.settings.enabled || this.isRefreshing) return
 
     // immediate = true: 立即执行（用于 fallback 检测和路由切换）
     // immediate = false: 防抖执行（用于书签、设置变更等）
