@@ -25,6 +25,8 @@ import { t } from "~utils/i18n"
 import { parseQueueBatchInput, splitQueueLines, type QueueBatchSplitMode } from "~utils/queue-batch"
 import { showToast } from "~utils/toast"
 
+import "~styles/queue-overlay.css"
+
 interface QueueOverlayProps {
   adapter: SiteAdapter
   dispatcher: QueueDispatcher
@@ -285,7 +287,33 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
     if (!isExpanded || isBatchDialogOpen) return
 
     const handleClickOutside = (e: MouseEvent) => {
-      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
+      const panel = panelRef.current
+      if (!panel) return
+
+      // Shadow DOM 内事件冒泡到 document 时会被 retarget 为 shadow host，
+      // 必须通过 composedPath 穿透判断真实点击路径是否在面板内
+      const path = typeof e.composedPath === "function" ? e.composedPath() : []
+      if (path.length > 0) {
+        const isInside = path.some((node) => {
+          if (node === panel || (node instanceof Node && panel.contains(node))) {
+            return true
+          }
+          if (
+            node instanceof HTMLElement &&
+            node.closest?.(".gh-dialog-overlay, .gh-queue-batch-dialog, .gh-queue-capsule")
+          ) {
+            return true
+          }
+          return false
+        })
+        if (!isInside) {
+          setIsExpanded(false)
+        }
+        return
+      }
+
+      const target = e.target as Node | null
+      if (target && !panel.contains(target)) {
         setIsExpanded(false)
       }
     }
@@ -490,17 +518,8 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
 
   if (!position) return null
 
-  // App 渲染在 Shadow DOM 内，document.querySelector 穿不透 shadow 边界；
-  // 必须经 shadow host 的 shadowRoot 查找 .gh-root，浮层才能读到主题变量
-  const findShadowPanelRoot = (): HTMLElement | null => {
-    const hosts = document.querySelectorAll<HTMLElement>("plasmo-csui, #ophel-userscript-root")
-    for (const host of hosts) {
-      const root = host.shadowRoot?.querySelector<HTMLElement>(".gh-root")
-      if (root) return root
-    }
-    return null
-  }
-  const targetContainer = findShadowPanelRoot() || document.body
+  // 挂载到 document.body，确保与 DialogOverlay 弹窗样式环境一致
+  const targetContainer = document.querySelector(".gh-root") || document.body
 
   const capsuleStyle: React.CSSProperties = {
     bottom: position.bottom,
@@ -517,7 +536,10 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
   if (!isExpanded) {
     return createPortal(
       <Tooltip content={shortcutText || t("queueQuickAsk")}>
-        <div className="gh-queue-capsule" style={capsuleStyle} onClick={() => setIsExpanded(true)}>
+        <div
+          className="gh-queue-capsule gh-interactive"
+          style={capsuleStyle}
+          onClick={() => setIsExpanded(true)}>
           <span className="gh-queue-capsule-icon">
             <PromptQueueIcon size={18} color="currentColor" />
           </span>
@@ -536,7 +558,7 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
   return (
     <>
       {createPortal(
-        <div className="gh-queue-panel" style={panelStyle} ref={panelRef}>
+        <div className="gh-queue-panel gh-interactive" style={panelStyle} ref={panelRef}>
           {/* 头部 */}
           <div className="gh-queue-header">
             <div className="gh-queue-header-title">

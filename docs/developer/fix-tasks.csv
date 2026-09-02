@@ -11,7 +11,7 @@
 10,P1-3,DeepSeek 大纲 fallback 前校验用户消息元素,P1,中,小,修复,src/adapters/deepseek.ts,Gemini #2,已修
 11,P1-12,scroll-lock-main 补齐通义千问/百炼 matches,P1,易,极小,修复,src/contents/scroll-lock-main.ts,Gemini #16,已修
 12,P1-13,ShortcutManager 用 composedPath 判定真实目标,P1,中,小,修复,src/core/shortcut-manager.ts,Gemini #17,已修
-13,P1-10,VariableInputDialog textarea 内 Enter 换行,P1,易,小,修复,src/components/VariableInputDialog.tsx,Gemini #12,已修
+13,P1-10,VariableInputDialog textarea 内 Enter 换行,P1,易,小,不修,src/components/VariableInputDialog.tsx,Gemini #12,已回退
 14,P1-26,NumberInput 用 getRootNode 检测 Shadow DOM 焦点,P1,中,小,修复,src/components/ui/NumberInput.tsx,Gemini 架构#4,已修
 15,P1-25,ThemeManager.destroy 注销系统媒体查询监听,P1,中,小,修复,src/core/theme-manager.ts,Gemini 架构#2,已修
 16,P1-16,PromptManager.init 加 hydration 超时兜底,P1,难,小,修复,src/core/prompt-manager.ts,Gemini #20,已修
@@ -21,7 +21,7 @@
 20,P1-1,大纲字数边界统一修复（基类 contains 校验 + 各适配器边界查找）,P1,中,中,修复,src/adapters/base.ts; chatgpt.ts; zai.ts; grok.ts; claude.ts; gemini.ts,Gemini #3/#11/#14/#15 / Codex,已修
 21,P1-15,QueueDispatcher.stop 中断提交后等待轮询,P1,中,小,修复,src/core/queue-dispatcher.ts,Gemini #19,已修
 22,P1-22,吸附面板 IME composition 期间保持展开,P1,中,小,修复,src/hooks/useEdgePeekController.ts,Grok P2-6 (#753),已修
-23,P1-17,QueueOverlay 挂回 Shadow .gh-root 并纳入样式注入,P1,中,中,修复,src/components/QueueOverlay.tsx; src/contents/ui-entry.tsx; vite.userscript.config.ts,Grok P1-4,已修
+23,P1-17,QueueOverlay 挂回 Shadow 导致弹窗样式断层与事件穿透,P1,中,中,不修,src/components/QueueOverlay.tsx,Grok P1-4,已回退
 24,P1-18a,Dialog 与 ConversationDialogs 样式 ID 拆分,P1,易,极小,修复,src/components/ui/Dialog.tsx; src/components/ConversationDialogs.tsx,Gemini UI#4,已修
 25,P1-19,Options 页接入全局搜索与快捷键页面,P1,易,中,修复,src/tabs/options.tsx,Grok P2-11,已修
 26,P2-1,ClaudeSettings 改用已定义主题变量替换 --gh-primary-rgb,P2,易,极小,修复,src/tabs/options/pages/ClaudeSettings.tsx,Gemini UI#1,已修
@@ -62,7 +62,8 @@
 61,P3-8,大文件拆分,P3,-,大,不修,App.tsx 等,Grok P3,不修
 62,P3-13,韩文乱码定案（缺证据）,P3,难,-,不修,油猴存储链路,Grok P2-12,不修
 63,R-1,Grok/ChatGPT 多行内容队列恢复匹配加去空格压缩等价比较,P1,中,小,修复,src/core/queue-dispatcher.ts,复审 R-1,已修
-64,R-2,删除 QueueOverlay 残留页面级死 CSS 导入,P3,易,极小,修复,src/components/QueueOverlay.tsx,复审 R-2,已修
+64,R-2,删除 QueueOverlay 页面级 CSS 导致弹窗样式丢失,P3,易,极小,不修,src/components/QueueOverlay.tsx,复审 R-2,已随P1-17回退
 65,R-3,代理校验补 IPv6 环回与 0.0.0.0 匹配,P2,易,极小,修复,src/background.ts,复审 R-3,已修
 66,R-4,ui-entry 重挂载观察器断连时机权衡,P3,难,小,缓修,src/contents/ui-entry.tsx,复审 R-4,缓修
-67,R-5,变量输入框补 Ctrl/Cmd+Enter 提交提示文案,P3,易,小,缓修,src/components/VariableInputDialog.tsx,复审 R-5,缓修
+67,R-5,变量输入框补 Ctrl/Cmd+Enter 提交提示文案,P3,易,小,不修,src/components/VariableInputDialog.tsx,复审 R-5,已随P1-10回退
+68,R-7,队列浮层保持 pointer-events 交互与页面级样式完整注入,P0,易,极小,修复,src/styles/queue-overlay.css; src/components/QueueOverlay.tsx,复审 R-7,已修

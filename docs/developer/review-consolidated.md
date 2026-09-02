@@ -296,15 +296,30 @@
 
 ---
 
-## 七、复审发现（修复后自审，2026-09-02）
+## 七、复审发现与实测决策（2026-09-03）
 
-38 项修复完成后逐项 diff 复审：全部命中原问题，CI 检查（format/lint/typecheck/build/build:userscript）全绿。复审新发现如下，前三项已立项修复，后两项记录为已知事项。
+38 项修复完成后进行全量实测与代码复审，针对实测中暴露的交互与架构问题进行了二次处理与决策定案：
 
-| 编号 | 问题 | 位置 | 性质 | 处置 |
+### 1. 关键决策与回退记录
+
+| 任务 / 编号 | 改动项 | 决策 | 涉及文件 | 根因与详细理由 |
+|---|---|---|---|---|
+| **P1-10 / R-5** | VariableInputDialog 变量输入框 Enter 键行为 | **已回退** | `src/components/VariableInputDialog.tsx` | 原审查认为多行 textarea 应允许 Enter 换行、改由 Ctrl/Cmd+Enter 提交。实测发现：① 在 Mac 环境下 textarea 聚焦时 `Cmd+Enter` 存在快捷键失效问题；② 破坏了老用户输入完内容直接按 `Enter` 快速提交的原有流畅习惯，导致必须手动点击“确定”按钮。**决定撤销此改动，完全恢复按 Enter 直接提交**。 |
+| **P1-17 / R-2 / R-7** | QueueOverlay 队列浮层挂载与样式体系 | **已回退挂载改动，恢复页面级完整样式** | `src/components/QueueOverlay.tsx`<br>`src/contents/ui-entry.tsx`<br>`vite.userscript.config.ts` | 原先为了让队列浮层读取 Shadow 主题变量，将其改挂载到 Shadow DOM 内并删除了页面级 CSS 导入。该改造引发了连锁结构性缺陷：<br>① **弹窗样式完全丢失**：队列内的“批量导入弹窗”（`DialogOverlay`）挂载于主页面 `document.body`，因无法穿透 Shadow DOM 读取 CSS，导致弹窗完全失去样式，退化为无布局的裸 HTML 结构；<br>② **全屏事件穿透**：Shadow 根容器 `.gh-root` 默认 `pointer-events: none`，导致队列胶囊与面板点击无响应；<br>③ **Click-outside 误判**：Shadow DOM 事件 Retargeting 导致在面板内点击“批量导入”按钮时，`handleClickOutside` 误判为点击外部而直接收起浮层。<br>**决定彻底回退 P1-17 的 Shadow 挂载改造**，恢复 `QueueOverlay.tsx` 的页面级 `queue-overlay.css` 导入与 `document.body` 挂载，仅保留纯数据层发送逻辑修复（P0-2 精确匹配）与 i18n 国际化文案修复。 |
+| **P1-5** | WebDAV 与 Background 凭证 UTF-8 安全 Base64 编码 | **确认保留（100% 兼容历史数据）** | `src/utils/encoding.ts`<br>`src/core/webdav-sync.ts`<br>`src/background.ts` | 经排查：本地 Settings Store 持久化保存的是明文 `username`/`password`，仅在发送 HTTP 请求时动态编码；对于所有纯 ASCII 凭证，`btoaUtf8` 输出与原生 `btoa` 完全一致，仅消除了含中文或特殊字符时的 `InvalidCharacterError` 崩溃，无任何数据迁移或不兼容问题。 |
+| **P2-13 / R-6** | 工具箱展开旋转与未读红点脉冲动画 | **明确设计保留** | `src/style.css` | 按明确设计需求保留原有视觉动效与反馈，撤销对 `style.css` 动画规则的移除。 |
+
+---
+
+### 2. 复审问题汇总明细
+
+| 编号 | 问题 | 位置 | 性质 | 最终处置 |
 |---|---|---|---|---|
 | R-1 | Grok 多行提示词队列恢复失配：P0-3 段落化插入后 contenteditable 的 `textContent` 读回为段落无分隔拼接（`line1line2`），而 `normalizeContent` 把 `\n` 折叠为空格，P0-2 的精确匹配对多行内容永远失配。`recoverSendingItem` 误判"输入框已清空"，把仍在编辑器里的内容标记 sent 并移出队列（静默丢任务，不会重发，方向安全）。ChatGPT 本就是段落化插入，属同类存量问题 | `src/core/queue-dispatcher.ts` × `src/adapters/grok.ts` | 新引入回归 | 已修：匹配时追加"去全部空格"压缩等价比较 |
-| R-2 | QueueOverlay 残留页面级死 CSS 导入：浮层已挂进 Shadow DOM 且 CSS 进了 `getStyle` 链，但组件仍保留 `import "~styles/queue-overlay.css"`，向页面 document 注入一份无人使用的样式（扩展与油猴两端皆是） | `src/components/QueueOverlay.tsx:28` | 新引入残留 | 已修：删除该 import（组件仅被 App 使用） |
+| R-2 | QueueOverlay 删除页面级 CSS 导入导致批量导入弹窗丢失样式退化为裸 HTML | `src/components/QueueOverlay.tsx` | 新引入回归 | 已回退：恢复 `import "~styles/queue-overlay.css"`，浮层与弹窗统一在 `document.body` 消费全局样式 |
 | R-3 | 代理校验 IPv6 环回漏网：WHATWG URL 规范下 `new URL("http://[::1]/").hostname` 返回带方括号的 `[::1]`，`hostname === "::1"` 永不命中；`0.0.0.0` 等写法也未覆盖。风险面小（消息只能来自已注入的 content script），但名单有洞 | `src/background.ts` | 修复不彻底 | 已修：补 `[::1]`/`[::]` 与 `0.0.0.0` 匹配 |
 | R-4 | ui-entry 重挂载观察器 5 秒断连的回归窗口：原实现永久观察 body 兜底，现 `max(delays)+2000` 后断连；慢网络下水合晚于 5 秒且清除 host 时面板不再重挂载。概率低，但方向是回归 | `src/contents/ui-entry.tsx` | 修复引入的边界回退 | 缓修：可改为"挂载成功后稳定观察 N 秒再断连"，需实测权衡 |
-| R-5 | 变量输入框 Enter 改为换行、Ctrl/Cmd+Enter 提交：符合审查意见，但改变老用户习惯，对话框内暂无新交互提示文案 | `src/components/VariableInputDialog.tsx` | 有意行为变化 | 缓修：补一行快捷键提示文案 |
+| R-5 | 变量输入框 Enter 改为换行、Ctrl/Cmd+Enter 提交：改变老用户习惯且 Mac 键位不灵敏 | `src/components/VariableInputDialog.tsx` | 有意行为变化 | 已回退：恢复 Enter 直接提交 |
 | R-6 | 工具箱展开旋转（tools-spin）与未读红点脉冲（pulse-red）动画：按明确设计需求保留原有视觉动效与反馈，撤销对 style.css 的动画移除 | `src/style.css` | 明确设计保留 | 保留：恢复动画定义与调用 |
+| R-7 | 队列浮层挂进 Shadow 产生 pointer-events 穿透与 click-outside 误判 | `src/styles/queue-overlay.css` × `QueueOverlay.tsx` | 新引入回归 | 已回退：挂载回归 document.body，彻底消除穿透与误判 |
+

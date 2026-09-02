@@ -4,6 +4,7 @@
 .gh-queue-capsule {
   position: fixed;
   z-index: 9998;
+  pointer-events: auto;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -67,6 +68,7 @@
 .gh-queue-panel {
   position: fixed;
   z-index: 9999;
+  pointer-events: auto;
   width: 420px;
   max-width: calc(100vw - 40px);
   max-height: min(440px, calc(100vh - 32px));
