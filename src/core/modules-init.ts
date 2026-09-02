@@ -680,7 +680,7 @@ export function subscribeModuleUpdates(ctx: ModulesContext): () => void {
       if (modules.copyManager) {
         modules.copyManager.updateSettings(newSettings.content)
       } else {
-        modules.copyManager = new CopyManager(newSettings.content)
+        modules.copyManager = new CopyManager(newSettings.content, adapter)
         if (newSettings.content.formulaCopy) modules.copyManager.initFormulaCopy()
         if (newSettings.content.tableCopy) modules.copyManager.initTableCopy()
       }
