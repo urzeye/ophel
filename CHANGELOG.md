@@ -21,12 +21,16 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **Popup Quick Access for multi-entry sites** — Sites with multiple domains (like Kimi's kimi.com and kimi.ai) now take a single tile in the popup Quick Access grid; you can switch entries, and the last choice is remembered. (#895)
 - **Site Packs entry in feature tips** — "Site Packs" in the outline feature tips is now a clickable link that opens Settings → Site Packs on the online library.
 - **Header drag hint** — The passthrough-mode hint now appears only after holding the header, so it no longer flashes over the title when clicking or dragging the panel.
+- **Claude Key switching** — Switching Session Keys now only reloads the requesting Claude tab rather than all open Claude tabs, preserving active drafts and sessions in other tabs.
 
 ### 🐛 Bug Fixes
 
 - **ChatGPT in-page bookmark icons** — Fixed in-page bookmarks repeatedly expanding ChatGPT question text in long conversations, which could drive up tab memory usage. (#889)
 - **Kimi international site** — The extension now recognizes kimi.ai, so outline, export, Zen Mode, and other Kimi features work on both kimi.ai and kimi.com. (#890)
 - **Popup language setting** — Fixed the extension popup always showing the browser language; it now follows the interface language in Settings. (#897)
+- **DeepSeek thinking block outline** — Fixed issue where DeepSeek R1 reasoning/thinking blocks during streaming were incorrectly recognized as user queries, causing outline flickering.
+- **Outline word count overflow** — Fixed issue across ChatGPT, Claude, Gemini, Grok, and Z.ai where section word counts incorrectly accumulated across subsequent conversation turns.
+- **Grok prompt insertion** — Fixed issue where prompts containing `<`, `>`, or `&` were parsed as raw HTML or discarded, and preserved multiline paragraph formatting in Grok.
 
 ---
 
