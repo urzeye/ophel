@@ -281,6 +281,9 @@
   background: transparent;
   color: var(--gh-text-secondary, #6b7280);
   font-size: 13px;
+  /* 固定行高与图标同高：line-height: normal 下 CJK 字体的行盒比拉丁字体高，
+     会导致同一控件在不同语言下高度不一致 */
+  line-height: 16px;
   cursor: pointer;
   transition:
     background 0.25s cubic-bezier(0.4, 0, 0.2, 1),
@@ -310,7 +313,9 @@
 
 .settings-theme-segmented.is-compact .settings-theme-segment {
   gap: 4px;
-  padding: 4px 2px;
+  /* 紧凑档只收窄横向间距和字号，垂直 padding 与 normal 保持一致，
+     避免语言切换触发密度降级时整个分段块变矮 */
+  padding: 6px 2px;
   font-size: 12px;
 }
 
