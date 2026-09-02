@@ -1824,4 +1824,5 @@ export const zhCN = {
   wechatPay: "微信赞赏",
   alipayPay: "支付宝",
   afdianSupport: "爱发电",
+  afdianBannerUnavailable: "爱发电横幅加载失败，点击前往赞助页",
 }

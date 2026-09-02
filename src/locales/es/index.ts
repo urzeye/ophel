@@ -1893,4 +1893,6 @@ Dame el código y luego un resumen de mejoras.`,
   wechatPay: "WeChat Pay",
   alipayPay: "Alipay",
   afdianSupport: "Afdian",
+  afdianBannerUnavailable:
+    "No se pudo cargar el banner de Afdian; haz clic para abrir la página de patrocinio",
 }

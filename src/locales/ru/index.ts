@@ -1888,4 +1888,6 @@ export const ru = {
   wechatPay: "WeChat Pay",
   alipayPay: "Alipay",
   afdianSupport: "Afdian",
+  afdianBannerUnavailable:
+    "Не удалось загрузить баннер Afdian; нажмите, чтобы открыть страницу поддержки",
 }

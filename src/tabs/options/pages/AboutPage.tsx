@@ -8,6 +8,7 @@ import { PlatformIcon } from "~components/PlatformIcon"
 import {
   AboutIcon,
   ChromeIcon,
+  ClearIcon,
   DiscordIcon,
   EdgeIcon,
   FirefoxIcon,
@@ -45,16 +46,20 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
   const language = useSyncExternalStore(subscribeI18nChanges, getCurrentLang, getCurrentLang)
   const donateChannels = getDonateChannels(language)
   const [sponsorPreview, setSponsorPreview] = useState<{ src: string; alt: string } | null>(null)
+  const [afdianBannerFailed, setAfdianBannerFailed] = useState(false)
 
   useEffect(() => {
     if (!sponsorPreview) return
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setSponsorPreview(null)
+      if (event.key !== "Escape") return
+      // capture 阶段拦截并截断，避免设置弹窗的容器级 Esc 监听把整个弹窗一起关掉
+      event.stopPropagation()
+      setSponsorPreview(null)
     }
 
-    document.addEventListener("keydown", handleKeyDown)
-    return () => document.removeEventListener("keydown", handleKeyDown)
+    document.addEventListener("keydown", handleKeyDown, true)
+    return () => document.removeEventListener("keydown", handleKeyDown, true)
   }, [sponsorPreview])
 
   return (
@@ -206,19 +211,29 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
               rel="noopener noreferrer"
               className="about-sponsor-afdian"
               aria-label={t("afdianSupport")}>
-              <img
-                className="about-sponsor-afdian-img is-light"
-                alt={t("afdianSupport")}
-                src={AFDIAN_PROFILE.lightSrc}
-                height={180}
-              />
-              <img
-                className="about-sponsor-afdian-img is-dark"
-                alt=""
-                src={AFDIAN_PROFILE.darkSrc}
-                height={180}
-                aria-hidden="true"
-              />
+              {afdianBannerFailed ? (
+                <span className="about-sponsor-afdian-fallback">
+                  {t("afdianBannerUnavailable")}
+                </span>
+              ) : (
+                <>
+                  <img
+                    className="about-sponsor-afdian-img is-light"
+                    alt={t("afdianSupport")}
+                    src={AFDIAN_PROFILE.lightSrc}
+                    height={180}
+                    onError={() => setAfdianBannerFailed(true)}
+                  />
+                  <img
+                    className="about-sponsor-afdian-img is-dark"
+                    alt=""
+                    src={AFDIAN_PROFILE.darkSrc}
+                    height={180}
+                    aria-hidden="true"
+                    onError={() => setAfdianBannerFailed(true)}
+                  />
+                </>
+              )}
               <span className="about-sponsor-channel-label">{t("afdianSupport")}</span>
             </a>
             <div className="about-sponsor-qrs">
@@ -267,6 +282,14 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
               aria-modal="true"
               aria-label={sponsorPreview.alt}
               onClick={() => setSponsorPreview(null)}>
+              <button
+                type="button"
+                className="about-sponsor-lightbox-close"
+                aria-label={t("close")}
+                autoFocus
+                onClick={() => setSponsorPreview(null)}>
+                <ClearIcon size={18} />
+              </button>
               <img src={sponsorPreview.src} alt={sponsorPreview.alt} />
             </div>
           ) : null}
@@ -280,8 +303,7 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
           href={STORE_LINKS.chrome}
           target="_blank"
           rel="noopener noreferrer"
-          className="about-link-card"
-          style={{ "--card-color": "#EA4335" } as React.CSSProperties}>
+          className="about-link-card">
           <div className="about-link-header">
             <ChromeIcon size={24} />
             <span style={{ fontWeight: 600 }}>{t("chromeStore")}</span>
@@ -296,8 +318,7 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
           href={STORE_LINKS.edge}
           target="_blank"
           rel="noopener noreferrer"
-          className="about-link-card"
-          style={{ "--card-color": "#0078D7" } as React.CSSProperties}>
+          className="about-link-card">
           <div className="about-link-header">
             <EdgeIcon size={24} />
             <span style={{ fontWeight: 600 }}>{t("edgeAddons")}</span>
@@ -312,10 +333,9 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
           href={STORE_LINKS.firefox}
           target="_blank"
           rel="noopener noreferrer"
-          className="about-link-card"
-          style={{ "--card-color": "#FF7139" } as React.CSSProperties}>
+          className="about-link-card">
           <div className="about-link-header">
-            <FirefoxIcon size={24} color="var(--card-color)" />
+            <FirefoxIcon size={24} color="#FF7139" />
             <span style={{ fontWeight: 600 }}>{t("firefoxAddons")}</span>
           </div>
           <button type="button" className="about-link-btn">
@@ -328,8 +348,7 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
           href={STORE_LINKS.greasyFork}
           target="_blank"
           rel="noopener noreferrer"
-          className="about-link-card"
-          style={{ "--card-color": "#4b5563" } as React.CSSProperties}>
+          className="about-link-card">
           <div className="about-link-header">
             <GreasyForkIcon size={24} color="currentColor" />
             <span style={{ fontWeight: 600, color: "var(--gh-text)" }}>{t("greasyFork")}</span>
@@ -344,10 +363,9 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
           href={STORE_LINKS.scriptCat}
           target="_blank"
           rel="noopener noreferrer"
-          className="about-link-card"
-          style={{ "--card-color": "#1296db" } as React.CSSProperties}>
+          className="about-link-card">
           <div className="about-link-header">
-            <ScriptCatIcon size={24} color="var(--card-color)" />
+            <ScriptCatIcon size={24} color="#1296db" />
             <span style={{ fontWeight: 600, color: "var(--gh-text)" }}>{t("scriptCat")}</span>
           </div>
           <button type="button" className="about-link-btn">

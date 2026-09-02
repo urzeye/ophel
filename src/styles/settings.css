@@ -3638,24 +3638,19 @@ html[data-theme="dark"] .about-link-card {
   letter-spacing: 0.2px;
 }
 
-html[data-theme="dark"] .about-link-card:not(.discord-card):not(.kofi-card) .about-link-btn {
-  /* Override default dark text color on specific cards so it's readable in dark mode */
+html[data-theme="dark"]
+  .community-grid
+  .about-link-card:not(.discord-card):not(.kofi-card)
+  .about-link-btn {
+  /* Override default dark text color on community cards so it's readable in dark mode */
   color: var(--gh-text);
   border-color: var(--gh-border);
 }
-html[data-theme="dark"] .about-link-card:not(.discord-card):not(.kofi-card):hover .about-link-btn {
+html[data-theme="dark"]
+  .community-grid
+  .about-link-card:not(.discord-card):not(.kofi-card):hover
+  .about-link-btn {
   color: #111827;
-}
-
-.reviews-grid .about-link-btn {
-  color: var(--card-color, var(--gh-primary));
-  border-color: var(--card-color, var(--gh-primary));
-}
-
-html[data-theme="dark"] .reviews-grid .about-link-btn,
-:host([data-theme="dark"]) .reviews-grid .about-link-btn {
-  color: var(--card-color, var(--gh-primary));
-  border-color: var(--card-color, var(--gh-primary));
 }
 
 .about-link-card:hover .about-link-btn {
@@ -3665,11 +3660,6 @@ html[data-theme="dark"] .reviews-grid .about-link-btn,
   border-color: transparent;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-html[data-theme="dark"] .reviews-grid .about-link-card:hover .about-link-btn,
-:host([data-theme="dark"]) .reviews-grid .about-link-card:hover .about-link-btn {
-  color: #fff;
 }
 
 /* Star Button Special Style - Sunset Gold Pill */
@@ -5417,6 +5407,23 @@ html[data-theme="dark"] .about-privacy-banner {
   background: transparent;
 }
 
+.about-sponsor-afdian-fallback {
+  /* 远程爱发电横幅加载失败（如宿主 CSP 拦截）时的本地降级块 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 120px;
+  padding: 16px;
+  border: 1px solid var(--gh-border, #e5e7eb);
+  border-radius: 12px;
+  background: var(--gh-card-bg, #fff);
+  color: var(--gh-text, #1f2937);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+}
+
 .about-sponsor-qr-zoom {
   display: block;
   padding: 0;
@@ -5450,6 +5457,34 @@ html[data-theme="dark"] .about-privacy-banner {
   border-radius: 12px;
   background: #fff;
   box-shadow: 0 24px 72px rgba(0, 0, 0, 0.42);
+}
+
+.about-sponsor-lightbox-close {
+  /* 遮罩固定为深色，关闭按钮跟随遮罩而不是主题变量 */
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.about-sponsor-lightbox-close:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
+
+.about-sponsor-lightbox-close:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.7);
+  outline-offset: 2px;
 }
 
 .about-sponsor-afdian-img.is-dark {

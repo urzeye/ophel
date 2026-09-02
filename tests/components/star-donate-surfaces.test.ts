@@ -43,6 +43,10 @@ describe("star and donate surfaces", () => {
     expect(aboutSource).toContain("about-sponsor-qrs")
     expect(aboutSource).toContain("about-sponsor-qr-zoom")
     expect(aboutSource).toContain("about-sponsor-lightbox")
+    expect(aboutSource).toContain("about-sponsor-lightbox-close")
+    expect(aboutSource).toContain("about-sponsor-afdian-fallback")
+    expect(aboutSource).toContain('t("afdianBannerUnavailable")')
+    expect(aboutSource).toContain("stopPropagation")
     expect(aboutSource).toContain("AFDIAN_PROFILE.darkSrc")
     expect(aboutSource).toContain("AFDIAN_PROFILE.lightSrc")
     expect(aboutSource).toContain("OPHEL_WEBSITE_URL")
@@ -62,6 +66,12 @@ describe("star and donate surfaces", () => {
       aboutSource.indexOf('t("rateAndReview")'),
     )
     expect(aboutSource).toContain("community-grid-triple")
+  })
+
+  it("keeps store review buttons on the theme primary color instead of store brand colors", () => {
+    const reviewsSection = aboutSource.slice(aboutSource.indexOf('t("rateAndReview")'))
+
+    expect(reviewsSection).not.toContain("--card-color")
   })
 
   it("adds a weak Release Notes Star link without replacing the changelog control", () => {
@@ -143,6 +153,7 @@ describe("star and donate copy", () => {
       expect(locale.wechatPay.length, localeId).toBeGreaterThan(0)
       expect(locale.alipayPay.length, localeId).toBeGreaterThan(0)
       expect(locale.afdianSupport.length, localeId).toBeGreaterThan(0)
+      expect(locale.afdianBannerUnavailable.length, localeId).toBeGreaterThan(0)
       expect(locale.joinDiscordCommunity.length, localeId).toBeGreaterThan(0)
     }
   })

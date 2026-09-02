@@ -1825,4 +1825,5 @@ export const zhTW = {
   wechatPay: "微信讚賞",
   alipayPay: "支付寶",
   afdianSupport: "愛發電",
+  afdianBannerUnavailable: "愛發電橫幅載入失敗，點擊前往贊助頁面",
 }
