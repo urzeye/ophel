@@ -565,7 +565,10 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
               padding: "8px 12px",
               flex: "1 1 auto",
               opacity: keys.length === 0 || isBatchTesting ? 0.6 : 1,
-              backgroundColor: isBatchTesting ? "rgba(var(--gh-primary-rgb), 0.1)" : undefined,
+              // --gh-primary-rgb 从未定义，用 color-mix 基于 --gh-primary 取 12% 透明度
+              backgroundColor: isBatchTesting
+                ? "color-mix(in srgb, var(--gh-primary, #3b82f6) 12%, transparent)"
+                : undefined,
               color: isBatchTesting ? "var(--gh-primary)" : undefined,
               borderColor: isBatchTesting ? "var(--gh-primary)" : undefined,
               whiteSpace: "nowrap",
