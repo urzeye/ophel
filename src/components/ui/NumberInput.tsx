@@ -119,7 +119,12 @@ export const NumberInput: React.FC<NumberInputProps> = ({
     // 使用防抖：延迟 100ms 执行，给 React 重渲染后恢复焦点的机会
     blurTimerRef.current = setTimeout(() => {
       // 再次检查是否真的失焦了（可能已经重新获得焦点）
-      if (document.activeElement !== inputRef.current) {
+      // Shadow DOM 中 document.activeElement 指向宿主元素，
+      // 必须取输入框所在 root（ShadowRoot 或 document）的 activeElement
+      const root = inputRef.current?.getRootNode()
+      const activeElement =
+        root instanceof ShadowRoot || root instanceof Document ? root.activeElement : null
+      if (activeElement !== inputRef.current) {
         isFocusedRef.current = false
         commitValue(tempValue)
       }
