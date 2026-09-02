@@ -302,8 +302,8 @@
 
 | 编号 | 问题 | 位置 | 性质 | 处置 |
 |---|---|---|---|---|
-| R-1 | Grok 多行提示词队列恢复失配：P0-3 段落化插入后 contenteditable 的 `textContent` 读回为段落无分隔拼接（`line1line2`），而 `normalizeContent` 把 `\n` 折叠为空格，P0-2 的精确匹配对多行内容永远失配。`recoverSendingItem` 误判"输入框已清空"，把仍在编辑器里的内容标记 sent 并移出队列（静默丢任务，不会重发，方向安全）。ChatGPT 本就是段落化插入，属同类存量问题 | `src/core/queue-dispatcher.ts` × `src/adapters/grok.ts` | 新引入回归 | 修复：匹配时追加"去全部空格"压缩等价比较 |
-| R-2 | QueueOverlay 残留页面级死 CSS 导入：浮层已挂进 Shadow DOM 且 CSS 进了 `getStyle` 链，但组件仍保留 `import "~styles/queue-overlay.css"`，向页面 document 注入一份无人使用的样式（扩展与油猴两端皆是） | `src/components/QueueOverlay.tsx:28` | 新引入残留 | 修复：删除该 import（组件仅被 App 使用） |
-| R-3 | 代理校验 IPv6 环回漏网：WHATWG URL 规范下 `new URL("http://[::1]/").hostname` 返回带方括号的 `[::1]`，`hostname === "::1"` 永不命中；`0.0.0.0` 等写法也未覆盖。风险面小（消息只能来自已注入的 content script），但名单有洞 | `src/background.ts` | 修复不彻底 | 修复：补 `[::1]` 与 `0.0.0.0` 匹配 |
+| R-1 | Grok 多行提示词队列恢复失配：P0-3 段落化插入后 contenteditable 的 `textContent` 读回为段落无分隔拼接（`line1line2`），而 `normalizeContent` 把 `\n` 折叠为空格，P0-2 的精确匹配对多行内容永远失配。`recoverSendingItem` 误判"输入框已清空"，把仍在编辑器里的内容标记 sent 并移出队列（静默丢任务，不会重发，方向安全）。ChatGPT 本就是段落化插入，属同类存量问题 | `src/core/queue-dispatcher.ts` × `src/adapters/grok.ts` | 新引入回归 | 已修：匹配时追加"去全部空格"压缩等价比较 |
+| R-2 | QueueOverlay 残留页面级死 CSS 导入：浮层已挂进 Shadow DOM 且 CSS 进了 `getStyle` 链，但组件仍保留 `import "~styles/queue-overlay.css"`，向页面 document 注入一份无人使用的样式（扩展与油猴两端皆是） | `src/components/QueueOverlay.tsx:28` | 新引入残留 | 已修：删除该 import（组件仅被 App 使用） |
+| R-3 | 代理校验 IPv6 环回漏网：WHATWG URL 规范下 `new URL("http://[::1]/").hostname` 返回带方括号的 `[::1]`，`hostname === "::1"` 永不命中；`0.0.0.0` 等写法也未覆盖。风险面小（消息只能来自已注入的 content script），但名单有洞 | `src/background.ts` | 修复不彻底 | 已修：补 `[::1]`/`[::]` 与 `0.0.0.0` 匹配 |
 | R-4 | ui-entry 重挂载观察器 5 秒断连的回归窗口：原实现永久观察 body 兜底，现 `max(delays)+2000` 后断连；慢网络下水合晚于 5 秒且清除 host 时面板不再重挂载。概率低，但方向是回归 | `src/contents/ui-entry.tsx` | 修复引入的边界回退 | 缓修：可改为"挂载成功后稳定观察 N 秒再断连"，需实测权衡 |
 | R-5 | 变量输入框 Enter 改为换行、Ctrl/Cmd+Enter 提交：符合审查意见，但改变老用户习惯，对话框内暂无新交互提示文案 | `src/components/VariableInputDialog.tsx` | 有意行为变化 | 缓修：补一行快捷键提示文案 |
