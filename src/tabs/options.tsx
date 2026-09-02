@@ -10,8 +10,10 @@ import {
   BackupIcon,
   FeaturesIcon,
   GeneralIcon,
+  KeyboardIcon,
   PageContentIcon,
   PermissionsIcon,
+  SearchIcon,
   SitePacksIcon,
 } from "~components/icons"
 import { resolveSettingsNavigateDetail } from "~constants"
@@ -38,7 +40,9 @@ import BackupPage from "./options/pages/BackupPage"
 import FeaturesPage from "./options/pages/FeaturesPage"
 // 页面组件
 import GeneralPage from "./options/pages/GeneralPage"
+import GlobalSearchPage from "./options/pages/GlobalSearchPage"
 import PermissionsPage from "./options/pages/PermissionsPage"
+import ShortcutsPage from "./options/pages/ShortcutsPage"
 import SitePacksPage from "./options/pages/SitePacksPage"
 import SiteSettingsPage from "./options/pages/SiteSettingsPage"
 // 样式
@@ -77,6 +81,13 @@ const NAV_ITEMS: Array<{
     label: "适配中心",
     beta: true,
   },
+  {
+    id: "globalSearch",
+    Icon: SearchIcon,
+    labelKey: "navGlobalSearch",
+    label: "全局搜索",
+  },
+  { id: "shortcuts", Icon: KeyboardIcon, labelKey: "navShortcuts", label: "快捷键位" },
   {
     id: "appearance",
     Icon: AppearanceIcon,
@@ -276,6 +287,10 @@ const OptionsPage = () => {
         return <SiteSettingsPage siteId={siteId} initialTab={initialSubTab} />
       case "sitePacks":
         return <SitePacksPage initialTab={initialSubTab} />
+      case "globalSearch":
+        return <GlobalSearchPage siteId={siteId} />
+      case "shortcuts":
+        return <ShortcutsPage siteId={siteId} />
       case "features":
         return <FeaturesPage siteId={siteId} initialTab={initialSubTab} />
       case "permissions":
