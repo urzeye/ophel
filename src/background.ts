@@ -918,15 +918,26 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
             })
           }
 
-          // 查找并刷新所有 claude.ai 标签页（而非发送消息的页面）
-          const claudeTabs = await chrome.tabs.query({ url: "*://claude.ai/*" })
-          for (const tab of claudeTabs) {
-            if (tab.id) {
-              await chrome.tabs.reload(tab.id)
+          // 优先只刷新发起请求的 Claude 标签页，避免打断其他标签页的浏览与草稿；
+          // 消息来自选项页等非 Claude 页面时，回退到刷新全部 Claude 标签页
+          const senderClaudeTabId = sender.tab?.url?.startsWith("https://claude.ai/")
+            ? sender.tab.id
+            : undefined
+          let reloadedTabs = 0
+          if (senderClaudeTabId) {
+            await chrome.tabs.reload(senderClaudeTabId)
+            reloadedTabs = 1
+          } else {
+            const claudeTabs = await chrome.tabs.query({ url: "*://claude.ai/*" })
+            for (const tab of claudeTabs) {
+              if (tab.id) {
+                await chrome.tabs.reload(tab.id)
+              }
             }
+            reloadedTabs = claudeTabs.length
           }
 
-          sendResponse({ success: true, reloadedTabs: claudeTabs.length })
+          sendResponse({ success: true, reloadedTabs })
         } catch (err) {
           console.error("Set Claude SessionKey failed:", err)
           sendResponse({ success: false, error: (err as Error).message })
@@ -1009,10 +1020,19 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
           }
 
           // 6. 跳转到首页 (而非刷新)
-          const claudeTabs = await chrome.tabs.query({ url: "*://claude.ai/*" })
-          for (const tab of claudeTabs) {
-            if (tab.id) {
-              await chrome.tabs.update(tab.id, { url: "https://claude.ai/" })
+          // 优先只处理发起请求的 Claude 标签页，避免丢弃其他标签页的会话与草稿；
+          // 消息来自非 Claude 页面时回退到全量处理
+          const senderClaudeTabId = sender.tab?.url?.startsWith("https://claude.ai/")
+            ? sender.tab.id
+            : undefined
+          if (senderClaudeTabId) {
+            await chrome.tabs.update(senderClaudeTabId, { url: "https://claude.ai/" })
+          } else {
+            const claudeTabs = await chrome.tabs.query({ url: "*://claude.ai/*" })
+            for (const tab of claudeTabs) {
+              if (tab.id) {
+                await chrome.tabs.update(tab.id, { url: "https://claude.ai/" })
+              }
             }
           }
 
