@@ -1274,6 +1274,15 @@ ${cssVars}
   destroy() {
     this.stopThemeMonitoring()
     this.listeners.clear()
+    // 注销系统主题偏好监听，避免实例销毁后回调仍持有引用
+    if (this.systemMediaQuery) {
+      if (typeof this.systemMediaQuery.removeEventListener === "function") {
+        this.systemMediaQuery.removeEventListener("change", this.handleSystemChange)
+      } else if (typeof this.systemMediaQuery.removeListener === "function") {
+        this.systemMediaQuery.removeListener(this.handleSystemChange)
+      }
+      this.systemMediaQuery = null
+    }
   }
 }
 
