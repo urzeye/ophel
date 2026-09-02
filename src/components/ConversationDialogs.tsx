@@ -96,7 +96,8 @@ let dialogStyleInjected = false
 const injectDialogStyles = () => {
   if (dialogStyleInjected) return
   const style = document.createElement("style")
-  style.id = "gh-dialog-styles"
+  // 与 ui/Dialog.tsx 的 gh-dialog-styles 区分，避免同 ID 重复注入
+  style.id = "gh-conversation-dialog-styles"
   style.textContent = DIALOG_STYLES
   document.head.appendChild(style)
   dialogStyleInjected = true
