@@ -215,15 +215,17 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
               target="_blank"
               rel="noopener noreferrer"
               className="about-sponsor-afdian-card">
-              <span className="about-sponsor-afdian-icon" aria-hidden="true">
-                <HeartIcon size={22} />
+              <span className="about-sponsor-afdian-visual" aria-hidden="true">
+                <span className="about-sponsor-afdian-icon">
+                  <HeartIcon size={22} />
+                </span>
+                <span className="about-sponsor-afdian-desc">{t("afdianCardDesc")}</span>
+                <span className="about-sponsor-afdian-cta">
+                  afdian.com
+                  <ExternalLinkIcon size={12} />
+                </span>
               </span>
               <span className="about-sponsor-afdian-title">{t("afdianSupport")}</span>
-              <span className="about-sponsor-afdian-desc">{t("afdianCardDesc")}</span>
-              <span className="about-sponsor-afdian-cta">
-                afdian.com
-                <ExternalLinkIcon size={12} />
-              </span>
             </a>
             <div className="about-sponsor-qrs">
               <figure className="about-sponsor-qr">

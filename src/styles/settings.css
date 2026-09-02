@@ -5415,15 +5415,10 @@ html[data-theme="dark"] .about-privacy-banner {
   color: var(--gh-text, #1f2937);
 }
 
-/* 爱发电渠道卡：与扫码卡同宽（10*2+150），flex stretch 自动同高；
+/* 爱发电渠道卡：与扫码卡同宽同构（150 视觉区 + 底部名称），
    本地渲染不依赖远程横幅，避免严格 CSP 站点拦截外链图片 */
 .about-sponsor-afdian-card {
-  justify-content: center;
   width: 170px;
-  border-color: rgba(148, 108, 230, 0.28);
-  /* 淡紫渐变底呼应爱发电品牌色，浅色主题下保持轻量 */
-  background: linear-gradient(165deg, rgba(148, 108, 230, 0.1), rgba(148, 108, 230, 0.03)),
-    var(--gh-card-bg, #fff);
   transition:
     transform 0.2s ease,
     border-color 0.2s ease,
@@ -5441,6 +5436,20 @@ html[data-theme="dark"] .about-privacy-banner {
   outline-offset: 2px;
 }
 
+/* 视觉区与二维码图同尺寸，卡片本体与扫码卡保持一致；
+   品牌紫由图标单层承载，底色只留极淡提示避免区域显得空 */
+.about-sponsor-afdian-visual {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 150px;
+  height: 150px;
+  border-radius: 8px;
+  background: linear-gradient(165deg, rgba(148, 108, 230, 0.08), rgba(148, 108, 230, 0.02));
+}
+
 .about-sponsor-afdian-icon {
   display: flex;
   align-items: center;
@@ -5451,11 +5460,11 @@ html[data-theme="dark"] .about-privacy-banner {
   /* 实色品牌紫圆标 + 白色爱心，明暗主题下都保持辨识度 */
   background: #946ce6;
   color: #fff;
-  box-shadow: 0 4px 10px rgba(148, 108, 230, 0.35);
+  box-shadow: 0 2px 8px rgba(148, 108, 230, 0.28);
 }
 
 .about-sponsor-afdian-title {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--gh-text, #1f2937);
 }
@@ -5481,15 +5490,7 @@ html[data-theme="dark"] .about-privacy-banner {
 html[data-theme="dark"] .about-sponsor-afdian-icon {
   background: #a17ef0;
   color: #fff;
-  box-shadow: 0 4px 12px rgba(148, 108, 230, 0.45);
-}
-
-:host([data-theme="dark"]) .about-sponsor-afdian-card,
-:host-context([data-gh-mode="dark"]) .about-sponsor-afdian-card,
-html[data-theme="dark"] .about-sponsor-afdian-card {
-  border-color: rgba(148, 108, 230, 0.38);
-  background: linear-gradient(165deg, rgba(148, 108, 230, 0.16), rgba(148, 108, 230, 0.05)),
-    var(--gh-card-bg, #1c2128);
+  box-shadow: 0 2px 10px rgba(148, 108, 230, 0.4);
 }
 
 :host([data-theme="dark"]) .about-sponsor-afdian-cta,
