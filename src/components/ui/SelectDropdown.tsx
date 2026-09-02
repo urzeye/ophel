@@ -342,7 +342,9 @@ export const SelectDropdown: React.FC<SelectDropdownProps> = ({
                       : isActive
                         ? "var(--gh-hover, #f3f4f6)"
                         : "transparent",
-                    color: isSelected ? "#ffffff" : "var(--gh-text, #1f2937)",
+                    color: isSelected
+                      ? "var(--gh-text-on-primary, #ffffff)"
+                      : "var(--gh-text, #1f2937)",
                     cursor: option.disabled ? "not-allowed" : "pointer",
                     display: "flex",
                     alignItems: "center",
