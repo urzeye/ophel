@@ -340,7 +340,7 @@ const injectQuickQuoteHostStyles = (root: Document | ShadowRoot) => {
       border: 1px solid rgba(66, 133, 244, 0.28) !important;
       border-radius: 8px !important;
       background: rgba(66, 133, 244, 0.07) !important;
-      color: #2563eb !important;
+      color: var(--gh-primary, #2563eb) !important;
       font: 500 12px/1.35 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
       letter-spacing: 0 !important;
       vertical-align: baseline !important;
