@@ -243,7 +243,7 @@ export const es = {
   // ======== About Page ========
   version: "Versión",
   aboutDescription:
-    "{appName} es una extensión diseñada para Gemini, ChatGPT, Claude, AI Studio y Grok. Mejora tu flujo de trabajo con gestión de chats, índices inteligentes y biblioteca de prompts, ofreciendo utilidades como historial de lectura, anclajes, eliminación de marcas de agua, avisos de finalización y bloqueo de modelo. Con amplias opciones de personalización, {appName} asegura una experiencia de IA más fluida.",
+    "{appName} es una extensión de navegador diseñada para plataformas de IA como ChatGPT, Claude, Gemini, DeepSeek y Doubao, ampliable a más sitios mediante paquetes de adaptadores (reglas JSON). Ofrece herramientas de productividad como gestión de conversaciones, exportación multiformato, esquemas inteligentes con marcadores, búsqueda global y una biblioteca de prompts con colas automáticas, además de funciones útiles como restauración del progreso de lectura, renderizado y copia de gráficos y fórmulas, bloqueo de modelo, títulos de pestañas mejorados y avisos de finalización de respuestas de IA. Con ajuste inteligente del diseño de página, temas, modo Zen y sincronización WebDAV entre dispositivos, {appName} hace que tu interacción con la IA sea más fluida y agradable.",
   aboutSupportedPlatforms: "Plataformas compatibles",
   aboutSupportedPlatformsDesc:
     "Actualmente cubre {count} plataformas de IA, sincronizadas con la detección y el acceso rápido del popup.",

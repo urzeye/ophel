@@ -192,4 +192,20 @@ describe("star and donate copy", () => {
       expect(locale.joinDiscordCommunity.length, localeId).toBeGreaterThan(0)
     }
   })
+
+  it("keeps the About description current in all 11 locales", () => {
+    for (const localeId of localeIds) {
+      const desc = resources[localeId].aboutDescription
+
+      // 保留占位符与站点适配能力，平台顺序固定为 ChatGPT、Claude、Gemini、DeepSeek
+      expect(desc, localeId).toContain("{appName}")
+      expect(desc, localeId).toContain("JSON")
+      expect(desc.indexOf("ChatGPT"), localeId).toBeGreaterThanOrEqual(0)
+      expect(desc.indexOf("ChatGPT"), localeId).toBeLessThan(desc.indexOf("Claude"))
+      expect(desc.indexOf("Claude"), localeId).toBeLessThan(desc.indexOf("Gemini"))
+      expect(desc.indexOf("Gemini"), localeId).toBeLessThan(desc.indexOf("DeepSeek"))
+      // 旧文案中的过时平台举例不应再出现
+      expect(desc, localeId).not.toContain("AI Studio")
+    }
+  })
 })

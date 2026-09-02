@@ -242,7 +242,7 @@ export const de = {
   // ======== About Page ========
   version: "Version",
   aboutDescription:
-    "{appName} ist eine Erweiterung für Gemini, ChatGPT, Claude, AI Studio und Grok. Optimieren Sie Ihren Workflow mit Chat-Verwaltung, smarten Inhaltsverzeichnissen und Prompt-Bibliotheken. Features wie Lesehistorie, Wasserzeichen-Entfernung und Modellsperre sowie umfangreiche Theme-Optionen sorgen für eine reibungslose KI-Erfahrung.",
+    "{appName} ist eine Browser-Erweiterung für KI-Plattformen wie ChatGPT, Claude, Gemini, DeepSeek und Doubao, die sich über Site-Adapter-Pakete (JSON-Regeln) auf weitere Seiten erweitern lässt. Sie bietet Produktivitätswerkzeuge wie Konversationsverwaltung, Multi-Format-Export, intelligente Gliederungen mit Lesezeichen, globale Suche und eine Prompt-Bibliothek mit automatischen Warteschlangen, dazu praktische Funktionen wie Wiederherstellung des Lesefortschritts, Rendering und Kopieren von Diagrammen und Formeln, Modell-Sperre, verbesserte Tab-Titel und Benachrichtigungen bei fertigen KI-Antworten. Mit intelligenter Layout-Anpassung, Themes, Zen-Modus und WebDAV-Synchronisation über mehrere Geräte macht {appName} deine KI-Interaktionen flüssiger und angenehmer.",
   aboutSupportedPlatforms: "Unterstützte Plattformen",
   aboutSupportedPlatformsDesc:
     "Derzeit werden {count} KI-Plattformen unterstützt, synchron mit Erkennung und Schnellzugriff im Popup.",

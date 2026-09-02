@@ -177,7 +177,7 @@ export const zhTW = {
   // ======== 關於頁面 ========
   version: "版本",
   aboutDescription:
-    "{appName} 一款專為 Gemini、ChatGPT、Claude、AI Studio、Grok 等 AI 平台打造的瀏覽器增強擴充功能。它為您提供會話管理與匯出、智慧大綱導航、提示詞指令庫等效率工具，同時具備閱讀進度恢復、雙向錨點定位、浮水印移除、排版修復、公式複製及模型鎖定等實用功能，並支援深度自定義主題與頁面美化，讓您的 AI 互動體驗更加流暢愉悅。",
+    "{appName} 是一款專為 ChatGPT、Claude、Gemini、DeepSeek、豆包等 AI 平台打造的瀏覽器增強擴充功能，還可透過站點適配包（JSON 規則）擴展適配更多站點。它提供會話管理、多格式匯出、智慧大綱與收藏、全域搜尋、提示詞庫與自動佇列等效率工具，還具備閱讀進度恢復、圖表與公式渲染複製、模型鎖定、分頁標題增強、AI 回覆完成提醒等實用功能，並支援頁面智慧版面調整、主題美化、禪模式與 WebDAV 多端同步，讓您的 AI 互動體驗更加流暢愉悅。",
   aboutSupportedPlatforms: "支援平台",
   aboutSupportedPlatformsDesc:
     "目前已涵蓋 {count} 個 AI 平台，並與彈出視窗中的站點識別與快捷入口保持同步。",

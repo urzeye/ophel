@@ -247,7 +247,7 @@ export const en = {
   // ======== About Page ========
   version: "Version",
   aboutDescription:
-    "{appName} is a browser extension designed for AI platforms like Gemini, ChatGPT, Claude, AI Studio, and Grok. It empowers your workflow with conversation management, smart outlines, and a prompt library, while offering utilities like reading history restoration, bidirectional anchors, watermark removal, formatting fixes, and model locking. With comprehensive customization options for themes and UI, {appName} ensures a smoother and more efficient AI interaction experience.",
+    "{appName} is a browser extension built for AI platforms like ChatGPT, Claude, Gemini, DeepSeek, and Doubao, extendable to even more sites through site adapter packs (JSON rules). It boosts your workflow with conversation management, multi-format export, smart outlines with bookmarks, global search, and a prompt library with automated queues, plus handy tools like reading progress restore, chart and formula rendering and copying, model lock, enhanced tab titles, and AI reply completion alerts. With smart page layout tuning, themes, Zen mode, and WebDAV multi-device sync, {appName} makes your AI interactions smoother and more enjoyable.",
   aboutSupportedPlatforms: "Supported Platforms",
   aboutSupportedPlatformsDesc:
     "Currently covers {count} AI platforms, kept in sync with popup detection and quick access.",

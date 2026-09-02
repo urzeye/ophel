@@ -255,7 +255,7 @@ export const it = {
   // ======== About Page ========
   version: "Versione",
   aboutDescription:
-    "{appName} è un'estensione del browser progettata per piattaforme AI come Gemini, ChatGPT, Claude, AI Studio e Grok. Potenzia il tuo flusso di lavoro con gestione delle conversazioni, strutture intelligenti e una libreria di prompt, offrendo al contempo utilità come ripristino della cronologia di lettura, ancoraggi bidirezionali, rimozione della filigrana, correzioni di formattazione e blocco dei modelli. Con opzioni di personalizzazione complete per temi e interfaccia utente, {appName} garantisce un'esperienza di interazione IA più fluida ed efficiente.",
+    "{appName} è un'estensione del browser pensata per piattaforme AI come ChatGPT, Claude, Gemini, DeepSeek e Doubao, espandibile ad altri siti tramite pacchetti di adattatori (regole JSON). Offre strumenti di produttività come gestione delle conversazioni, esportazione multi-formato, outline intelligenti con segnalibri, ricerca globale e una libreria di prompt con code automatiche, oltre a funzioni utili come ripristino del progresso di lettura, rendering e copia di grafici e formule, blocco del modello, titoli delle schede avanzati e notifiche di completamento delle risposte AI. Con regolazione intelligente del layout, temi, modalità Zen e sincronizzazione WebDAV multi-dispositivo, {appName} rende le tue interazioni con l'IA più fluide e piacevoli.",
   aboutSupportedPlatforms: "Piattaforme supportate",
   aboutSupportedPlatformsDesc:
     "Attualmente copre le piattaforme AI {count}, mantenute sincronizzate con il rilevamento dei popup e l'accesso rapido.",
