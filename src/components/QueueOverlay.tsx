@@ -583,9 +583,7 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
           {/* 队列列表 */}
           <div className="gh-queue-list">
             {items.filter((i) => i.status === "pending" || i.status === "sending").length === 0 ? (
-              <div className="gh-queue-empty">
-                队列为空，输入内容后按 {submitKeyDisplay} 发送或排队
-              </div>
+              <div className="gh-queue-empty">{t("queueEmpty", { key: submitKeyDisplay })}</div>
             ) : (
               items
                 .filter((i) => i.status === "pending" || i.status === "sending")

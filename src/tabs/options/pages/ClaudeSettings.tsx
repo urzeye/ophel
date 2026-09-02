@@ -716,7 +716,7 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
                             fontWeight: 500,
                             border: "1px solid var(--gh-border)",
                           }}>
-                          当前使用
+                          {t("claudeKeyUsing")}
                         </span>
                       )}
                       {renderTypeBadge(key.accountType)}

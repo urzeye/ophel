@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react"
 
 import { ChevronDownIcon } from "~components/icons"
 import { OPHEL_INTERACTION_LAYER_PROPS } from "~utils/dom-toolkit"
+import { t } from "~utils/i18n"
 
 export interface SelectDropdownOption {
   value: string
@@ -306,7 +307,7 @@ export const SelectDropdown: React.FC<SelectDropdownProps> = ({
                 fontSize: "13px",
                 textAlign: "left",
               }}>
-              {emptyText || "No options"}
+              {emptyText || t("selectNoOptions")}
             </div>
           ) : (
             options.map((option, index) => {
