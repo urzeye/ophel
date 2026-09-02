@@ -24,6 +24,7 @@ export class QueueDispatcher {
   private idleCount = 0 // 连续空闲计数
   private isDispatching = false
   private postSubmitWaitPromise: Promise<void> | null = null
+  private postSubmitAbortController: AbortController | null = null
   private readonly IDLE_THRESHOLD = 2 // 需要连续 N 次检测到空闲才发送
   private readonly POLL_TASK_NAME = "queue-dispatcher"
   private readonly POLL_INTERVAL = 1000 // 轮询间隔 (ms)
@@ -57,6 +58,8 @@ export class QueueDispatcher {
   stop(): void {
     this.pollingTasks.stop(this.POLL_TASK_NAME)
     this.idleCount = 0
+    // 中断提交后等待轮询，避免停止后仍在后台跑满 10 分钟
+    this.postSubmitAbortController?.abort()
   }
 
   /**
@@ -289,14 +292,15 @@ export class QueueDispatcher {
     return `${text.length}:${text.slice(Math.max(0, text.length - 400))}`
   }
 
-  private async waitForConversationIdleAfterSubmit(): Promise<void> {
+  private async waitForConversationIdleAfterSubmit(signal: AbortSignal): Promise<void> {
     const startedAt = Date.now()
     let lastActivityAt = startedAt
     let lastSignature = this.getConversationActivitySignature()
     let sawGenerating = this.adapter.isGenerating()
 
-    while (Date.now() - startedAt < this.POST_SUBMIT_MAX_WAIT_MS) {
+    while (!signal.aborted && Date.now() - startedAt < this.POST_SUBMIT_MAX_WAIT_MS) {
       await new Promise((resolve) => setTimeout(resolve, 500))
+      if (signal.aborted) return
 
       const now = Date.now()
       const isGenerating = this.adapter.isGenerating()
@@ -329,12 +333,19 @@ export class QueueDispatcher {
   private startPostSubmitWait(): void {
     if (this.postSubmitWaitPromise) return
 
-    this.postSubmitWaitPromise = this.waitForConversationIdleAfterSubmit()
+    this.postSubmitAbortController?.abort()
+    const controller = new AbortController()
+    this.postSubmitAbortController = controller
+
+    this.postSubmitWaitPromise = this.waitForConversationIdleAfterSubmit(controller.signal)
       .catch((error) => {
         console.error("[QueueDispatcher] 等待回复结束失败:", error)
       })
       .finally(() => {
         this.postSubmitWaitPromise = null
+        if (this.postSubmitAbortController === controller) {
+          this.postSubmitAbortController = null
+        }
         this.idleCount = 0
       })
   }
