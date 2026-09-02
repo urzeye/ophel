@@ -145,9 +145,10 @@ export const ReleaseNotesModal: React.FC<ReleaseNotesModalProps> = ({
     return () => document.removeEventListener("keydown", handleKeyDown)
   }, [activeMedia, onClose])
 
-  // 页脚四控件在长文案语言里可能一行放不下：临时切到 nowrap 实测完整内容宽度，
-  // 溢出时隐藏 Star/赞助按钮的文案只留图标；仍放不下则由 flex-wrap 换行兜底。
-  // 判定只依赖“完整内容宽度 vs 页脚可用宽度”，同一宽度下结果确定；
+  // 页脚四控件在长文案语言里可能一行放不下：实测两组按钮的内容宽度之和，
+  // 超过“可用宽度 - 20px 余量”就隐藏 Star/赞助按钮的文案只留图标（贴近放满也降级，
+  // 避免视觉拥挤）；仍放不下则由 flex-wrap 换行兜底。
+  // 判定是页脚宽度的纯函数，同一宽度下结果确定；
   // 紧凑切换只改变页脚高度、不改变宽度，因此只在宽度真正变化（视口 resize）时复测，
   // 从结构上排除“测量→切换紧凑→高度变化→触发再测量”的自反馈抖动。
   useLayoutEffect(() => {
@@ -156,8 +157,17 @@ export const ReleaseNotesModal: React.FC<ReleaseNotesModalProps> = ({
 
     const checkOverflow = () => {
       footer.classList.add("is-measuring")
-      const overflowing = footer.scrollWidth > footer.clientWidth + 1
+      const style = getComputedStyle(footer)
+      // 竖排（移动端 column-reverse）是正常布局，不做紧凑降级
+      const isRow = style.flexDirection === "row"
+      // nowrap + flex-shrink:0 下每组的 offsetWidth 即其完整内容宽度
+      const groups = Array.from(footer.children) as HTMLElement[]
+      const gapWidth = Math.max(groups.length - 1, 0) * (parseFloat(style.columnGap) || 0)
+      const contentWidth = groups.reduce((sum, el) => sum + el.offsetWidth, 0) + gapWidth
+      const availableWidth =
+        footer.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight)
       footer.classList.remove("is-measuring")
+      const overflowing = isRow && contentWidth > availableWidth - 20
       setIsFooterCompact((prev) => (prev === overflowing ? prev : overflowing))
     }
 

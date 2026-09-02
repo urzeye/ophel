@@ -118,6 +118,8 @@ describe("star and donate surfaces", () => {
     expect(source).toContain("is-measuring")
     // 只在页脚宽度变化时复测：紧凑切换不改宽度，排除自反馈抖动
     expect(source).toContain("footer.clientWidth === lastWidth")
+    // 留 20px 余量：内容贴近可用宽度时就提前降级为图标
+    expect(source).toContain("availableWidth - 20")
     expect(releaseNotesCss).toContain(
       ".gh-release-notes-footer.is-compact:not(.is-measuring) .gh-release-notes-star-link span { display: none;",
     )
