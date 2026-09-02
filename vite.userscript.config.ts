@@ -162,6 +162,10 @@ function buildUserscriptStyleBundle(): string {
     path.resolve(__dirname, "src/styles/conversations.css"),
     "utf-8",
   )
+  const queueOverlayStyle = fs.readFileSync(
+    path.resolve(__dirname, "src/styles/queue-overlay.css"),
+    "utf-8",
+  )
   const releaseNotesStyle = fs.readFileSync(
     path.resolve(__dirname, "src/styles/release-notes.css"),
     "utf-8",
@@ -171,7 +175,14 @@ function buildUserscriptStyleBundle(): string {
     "utf-8",
   )
 
-  return [themeVariablesStyle, mainStyle, conversationsStyle, releaseNotesStyle, settingsStyle].join("\n")
+  return [
+    themeVariablesStyle,
+    mainStyle,
+    conversationsStyle,
+    queueOverlayStyle,
+    releaseNotesStyle,
+    settingsStyle,
+  ].join("\n")
 }
 
 function createContentHash(content: string | Buffer): string {

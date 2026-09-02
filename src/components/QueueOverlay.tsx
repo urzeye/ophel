@@ -492,11 +492,17 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
 
   if (!position) return null
 
-  // 因为定位点(top, left)标志着组件要显示的右下角（紧贴输入框上方右侧）
-  // 所以需要用 translate(-100%, -100%) 把组件从锚定点推上去靠左
-  // 为了保证能读取到 CSS 主题变量，我们需要找到含有主题类名的容器
-  // App 组件渲染内容在 .gh-root 下
-  const targetContainer = document.querySelector(".gh-root") || document.body
+  // App 渲染在 Shadow DOM 内，document.querySelector 穿不透 shadow 边界；
+  // 必须经 shadow host 的 shadowRoot 查找 .gh-root，浮层才能读到主题变量
+  const findShadowPanelRoot = (): HTMLElement | null => {
+    const hosts = document.querySelectorAll<HTMLElement>("plasmo-csui, #ophel-userscript-root")
+    for (const host of hosts) {
+      const root = host.shadowRoot?.querySelector<HTMLElement>(".gh-root")
+      if (root) return root
+    }
+    return null
+  }
+  const targetContainer = findShadowPanelRoot() || document.body
 
   const capsuleStyle: React.CSSProperties = {
     bottom: position.bottom,
