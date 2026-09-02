@@ -20,7 +20,7 @@ import {
   findScrollableAncestor,
   scrollElementInContainer,
 } from "~core/outline/dom-outline"
-import { getCurrentLang } from "~utils/i18n"
+import { getCurrentLang, t } from "~utils/i18n"
 
 import { resolveSitePackName } from "./localization"
 import { siteMatchPatternMatchesUrl, siteMatchPatternOrigin } from "./match-pattern"
@@ -664,7 +664,12 @@ export class DeclarativeAdapter extends SiteAdapter {
 
   getOutlineSources(): OutlineSource[] {
     const sources: OutlineSource[] = [
-      { id: "conversation", kind: "conversation", label: "对话", available: true },
+      {
+        id: "conversation",
+        kind: "conversation",
+        label: t("outlineSourceConversation"),
+        available: true,
+      },
     ]
 
     if (this.hasDocumentOutlineCapability()) {
@@ -756,13 +761,13 @@ export class DeclarativeAdapter extends SiteAdapter {
 
   private getDocumentOutlineLabel(): string {
     const config = this.manifest.documentOutline
-    if (!config) return "文档"
+    if (!config) return t("outlineSourceDocument")
     if (config.labelI18n) {
       const lang = getCurrentLang()
       const localized = config.labelI18n[lang]
       if (localized) return localized
     }
-    return config.label || "文档"
+    return config.label || t("outlineSourceDocument")
   }
 
   private isInsideDocumentOutlineExclude(element: Element): boolean {

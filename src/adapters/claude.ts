@@ -1786,14 +1786,19 @@ export class ClaudeAdapter extends SiteAdapter {
 
   getOutlineSources(): OutlineSource[] {
     const sources: OutlineSource[] = [
-      { id: "conversation", kind: "conversation", label: "对话", available: true },
+      {
+        id: "conversation",
+        kind: "conversation",
+        label: t("outlineSourceConversation"),
+        available: true,
+      },
     ]
     const documentOutline = this.extractClaudeDocumentOutline(6, false)
     if (documentOutline.length > 0) {
       sources.push({
         id: CLAUDE_DOCUMENT_OUTLINE_SOURCE_ID,
         kind: "document",
-        label: "文档",
+        label: t("outlineSourceDocument"),
         available: true,
         count: documentOutline.length,
       })

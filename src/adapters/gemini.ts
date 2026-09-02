@@ -2704,7 +2704,12 @@ export class GeminiAdapter extends SiteAdapter {
 
   getOutlineSources(): OutlineSource[] {
     const sources: OutlineSource[] = [
-      { id: "conversation", kind: "conversation", label: "对话", available: true },
+      {
+        id: "conversation",
+        kind: "conversation",
+        label: t("outlineSourceConversation"),
+        available: true,
+      },
     ]
 
     const documentOutline = this.extractDeepResearchDocumentOutline(6, false)
@@ -2712,7 +2717,7 @@ export class GeminiAdapter extends SiteAdapter {
       sources.push({
         id: GEMINI_DOCUMENT_OUTLINE_SOURCE_ID,
         kind: "document",
-        label: "文档",
+        label: t("outlineSourceDocument"),
         available: true,
         count: documentOutline.length,
       })

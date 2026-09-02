@@ -10,6 +10,7 @@ import { extractConversationTitleFromDocumentTitle } from "~utils/conversation-t
 import { DOMToolkit } from "~utils/dom-toolkit"
 import { createExportAssetCollector, type ExportAssetCollector } from "~utils/export-assets"
 import type { ExportBundle, ExportFormat, ExportMessage } from "~utils/exporter"
+import { t } from "~utils/i18n"
 import { createSiteInstanceKey } from "~utils/site-identity"
 import type { ExportPackaging } from "~utils/storage"
 
@@ -1259,7 +1260,14 @@ export abstract class SiteAdapter {
   }
 
   getOutlineSources(): OutlineSource[] {
-    return [{ id: "conversation", kind: "conversation", label: "对话", available: true }]
+    return [
+      {
+        id: "conversation",
+        kind: "conversation",
+        label: t("outlineSourceConversation"),
+        available: true,
+      },
+    ]
   }
 
   supportsDynamicOutlineSources(): boolean {
