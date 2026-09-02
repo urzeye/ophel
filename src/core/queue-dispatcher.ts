@@ -211,13 +211,9 @@ export class QueueDispatcher {
     const itemContent = this.normalizeContent(item.content)
     const visibleItemContent = this.normalizeContent(stripQuickQuoteMarkers(item.content))
 
-    return [itemContent, visibleItemContent].some(
-      (content) =>
-        content &&
-        (editorContent === content ||
-          editorContent.includes(content) ||
-          content.includes(editorContent)),
-    )
+    // 必须精确相等：双向 includes 会把用户发送失败后继续编辑的内容
+    // 误判为“队列项仍在编辑器”，导致恢复逻辑把用户正在输入的内容重发出去
+    return [itemContent, visibleItemContent].some((content) => content && editorContent === content)
   }
 
   private completeItem(itemId: string): void {
