@@ -1,42 +1,42 @@
 序号,任务ID,标题,优先级,复现难度,改动面,决策,涉及文件,来源,状态
-1,P0-1,扩展存储适配器检查 chrome.runtime.lastError,P0,中,小,修复,src/stores/chrome-adapter.ts,Grok P1-1 / Gemini #21,待修
-2,P0-2,队列 sending 恢复改精确匹配防误发送,P0,易,小,修复,src/core/queue-dispatcher.ts,Grok P1-2,待修
-3,P0-3,Grok 插入提示词转义 innerHTML,P0,易,小,修复,src/adapters/grok.ts,Grok P1-3 / Gemini #1,待修
-4,P0-4,MSG_PROXY_FETCH 增加协议与目标校验,P0,中,小,修复,src/background.ts,Gemini 架构#5,待修
-5,P1-4,CopyManager 热更新补齐 adapter 参数,P1,易,极小,修复,src/core/modules-init.ts,Gemini #5,待修
-6,P1-5,WebDAV/Background btoa 改 UTF-8 安全编码,P1,易,小,修复,src/core/webdav-sync.ts; src/background.ts,Gemini #6,待修
-7,P1-6,油猴 storage-polyfill 单 key watch 分发回调,P1,易,小,修复,src/platform/userscript/storage-polyfill.ts,Gemini #7,待修
-8,P1-8,ModelLocker 保存 startTimer 并在 stop 清理,P1,中,小,修复,src/core/model-locker.ts,Gemini #9,待修
-9,P1-2,Z.ai extractOutline 仅在需要用户提问时阻断,P1,中,小,修复,src/adapters/zai.ts,Gemini #4,待修
-10,P1-3,DeepSeek 大纲 fallback 前校验用户消息元素,P1,中,小,修复,src/adapters/deepseek.ts,Gemini #2,待修
-11,P1-12,scroll-lock-main 补齐通义千问/百炼 matches,P1,易,极小,修复,src/contents/scroll-lock-main.ts,Gemini #16,待修
-12,P1-13,ShortcutManager 用 composedPath 判定真实目标,P1,中,小,修复,src/core/shortcut-manager.ts,Gemini #17,待修
-13,P1-10,VariableInputDialog textarea 内 Enter 换行,P1,易,小,修复,src/components/VariableInputDialog.tsx,Gemini #12,待修
-14,P1-26,NumberInput 用 getRootNode 检测 Shadow DOM 焦点,P1,中,小,修复,src/components/ui/NumberInput.tsx,Gemini 架构#4,待修
-15,P1-25,ThemeManager.destroy 注销系统媒体查询监听,P1,中,小,修复,src/core/theme-manager.ts,Gemini 架构#2,待修
-16,P1-16,PromptManager.init 加 hydration 超时兜底,P1,难,小,修复,src/core/prompt-manager.ts,Gemini #20,待修
-17,P1-11,Claude 切 Key 仅刷新发起标签页,P1,易,小,修复,src/background.ts,Gemini #13,待修
-18,P1-7,水印下载/复制失败补充提示,P1,易,小,修复,src/core/watermark-remover.ts,Gemini #8,待修
-19,P3-9,outline-manager 改用 messaging 常量并清理 TODO,P3,易,极小,修复,src/core/outline-manager.ts,Gemini #23,待修
-20,P1-1,大纲字数边界统一修复（基类 contains 校验 + 各适配器边界查找）,P1,中,中,修复,src/adapters/base.ts; chatgpt.ts; zai.ts; grok.ts; claude.ts; gemini.ts,Gemini #3/#11/#14/#15 / Codex,待修
-21,P1-15,QueueDispatcher.stop 中断提交后等待轮询,P1,中,小,修复,src/core/queue-dispatcher.ts,Gemini #19,待修
-22,P1-22,吸附面板 IME composition 期间保持展开,P1,中,小,修复,src/hooks/useEdgePeekController.ts,Grok P2-6 (#753),待修
-23,P1-17,QueueOverlay 挂回 Shadow .gh-root 并纳入样式注入,P1,中,中,修复,src/components/QueueOverlay.tsx; src/contents/ui-entry.tsx; vite.userscript.config.ts,Grok P1-4,待修
-24,P1-18a,Dialog 与 ConversationDialogs 样式 ID 拆分,P1,易,极小,修复,src/components/ui/Dialog.tsx; src/components/ConversationDialogs.tsx,Gemini UI#4,待修
-25,P1-19,Options 页接入全局搜索与快捷键页面,P1,易,中,修复,src/tabs/options.tsx,Grok P2-11,待修
-26,P2-1,ClaudeSettings 改用已定义主题变量替换 --gh-primary-rgb,P2,易,极小,修复,src/tabs/options/pages/ClaudeSettings.tsx,Gemini UI#1,待修
-27,P2-3,SelectDropdown 选中项文字改语义变量,P2,易,极小,修复,src/components/ui/SelectDropdown.tsx,Gemini UI#3,待修
-28,P2-20,collapseRunSettings 补默认值与 schema,P2,易,小,修复,src/constants/default-settings.ts; docs/developer/settings-schema.json,Gemini 五#3,待修
-29,P2-18,提示词分类删除回退改可国际化空值,P2,易,小,修复,src/stores/prompts-store.ts; src/core/prompt-manager.ts,Gemini 五#1,待修
-30,P2-19,抽取 4 处硬编码文案并同步 11 语言,P2,易,中,修复,QueueOverlay.tsx; ClaudeSettings.tsx; SelectDropdown.tsx; GlobalSearchOverlay.tsx; src/locales/*/index.ts,Gemini 五#2,待修
-31,P2-21,getOutlineSources 标签国际化（11 语言）,P2,易,中,修复,base.ts; declarative/adapter.ts; claude.ts; gemini.ts; src/locales/*/index.ts,Gemini #22,待修
-32,P2-22,移除 OutlineTab 残留 DEBUG 日志前缀,P2,易,极小,修复,src/components/OutlineTab.tsx,Grok P3,待修
-33,P2-5,AboutPage 链接卡内 button 改 span,P2,易,小,修复,src/tabs/options/pages/AboutPage.tsx,Gemini UI#6,待修
-34,P2-7,AppearancePage 改用 ConfirmDialog,P2,易,小,修复,src/tabs/options/pages/AppearancePage.tsx,Gemini UI#8,待修
-35,P1-24,OutlineManager 实现 destroy 并由 useEffect 管理,P1,中,中,修复,src/core/outline-manager.ts; src/components/App.tsx,Gemini 架构#1,待修
-36,P3-10,ui-entry remount 观察器挂载成功后 disconnect,P3,易,小,修复,src/contents/ui-entry.tsx,Codex,待修
-37,P2-2,QuickQuote Chip 深色模式对比度适配,P2,易,小,修复,src/components/QuickQuoteActions.tsx,Gemini UI#2,待修
-38,P2-13,移除工具箱常驻旋转与红点脉冲动画,P2,易,小,修复,MainPanel.tsx / 相关 CSS,Grok UI,待修
+1,P0-1,扩展存储适配器检查 chrome.runtime.lastError,P0,中,小,修复,src/stores/chrome-adapter.ts,Grok P1-1 / Gemini #21,已修
+2,P0-2,队列 sending 恢复改精确匹配防误发送,P0,易,小,修复,src/core/queue-dispatcher.ts,Grok P1-2,已修
+3,P0-3,Grok 插入提示词转义 innerHTML,P0,易,小,修复,src/adapters/grok.ts,Grok P1-3 / Gemini #1,已修
+4,P0-4,MSG_PROXY_FETCH 增加协议与目标校验,P0,中,小,修复,src/background.ts,Gemini 架构#5,已修
+5,P1-4,CopyManager 热更新补齐 adapter 参数,P1,易,极小,修复,src/core/modules-init.ts,Gemini #5,已修
+6,P1-5,WebDAV/Background btoa 改 UTF-8 安全编码,P1,易,小,修复,src/core/webdav-sync.ts; src/background.ts,Gemini #6,已修
+7,P1-6,油猴 storage-polyfill 单 key watch 分发回调,P1,易,小,修复,src/platform/userscript/storage-polyfill.ts,Gemini #7,已修
+8,P1-8,ModelLocker 保存 startTimer 并在 stop 清理,P1,中,小,修复,src/core/model-locker.ts,Gemini #9,已修
+9,P1-2,Z.ai extractOutline 仅在需要用户提问时阻断,P1,中,小,修复,src/adapters/zai.ts,Gemini #4,已修
+10,P1-3,DeepSeek 大纲 fallback 前校验用户消息元素,P1,中,小,修复,src/adapters/deepseek.ts,Gemini #2,已修
+11,P1-12,scroll-lock-main 补齐通义千问/百炼 matches,P1,易,极小,修复,src/contents/scroll-lock-main.ts,Gemini #16,已修
+12,P1-13,ShortcutManager 用 composedPath 判定真实目标,P1,中,小,修复,src/core/shortcut-manager.ts,Gemini #17,已修
+13,P1-10,VariableInputDialog textarea 内 Enter 换行,P1,易,小,修复,src/components/VariableInputDialog.tsx,Gemini #12,已修
+14,P1-26,NumberInput 用 getRootNode 检测 Shadow DOM 焦点,P1,中,小,修复,src/components/ui/NumberInput.tsx,Gemini 架构#4,已修
+15,P1-25,ThemeManager.destroy 注销系统媒体查询监听,P1,中,小,修复,src/core/theme-manager.ts,Gemini 架构#2,已修
+16,P1-16,PromptManager.init 加 hydration 超时兜底,P1,难,小,修复,src/core/prompt-manager.ts,Gemini #20,已修
+17,P1-11,Claude 切 Key 仅刷新发起标签页,P1,易,小,修复,src/background.ts,Gemini #13,已修
+18,P1-7,水印下载/复制失败补充提示,P1,易,小,修复,src/core/watermark-remover.ts,Gemini #8,已修
+19,P3-9,outline-manager 改用 messaging 常量并清理 TODO,P3,易,极小,修复,src/core/outline-manager.ts,Gemini #23,已修
+20,P1-1,大纲字数边界统一修复（基类 contains 校验 + 各适配器边界查找）,P1,中,中,修复,src/adapters/base.ts; chatgpt.ts; zai.ts; grok.ts; claude.ts; gemini.ts,Gemini #3/#11/#14/#15 / Codex,已修
+21,P1-15,QueueDispatcher.stop 中断提交后等待轮询,P1,中,小,修复,src/core/queue-dispatcher.ts,Gemini #19,已修
+22,P1-22,吸附面板 IME composition 期间保持展开,P1,中,小,修复,src/hooks/useEdgePeekController.ts,Grok P2-6 (#753),已修
+23,P1-17,QueueOverlay 挂回 Shadow .gh-root 并纳入样式注入,P1,中,中,修复,src/components/QueueOverlay.tsx; src/contents/ui-entry.tsx; vite.userscript.config.ts,Grok P1-4,已修
+24,P1-18a,Dialog 与 ConversationDialogs 样式 ID 拆分,P1,易,极小,修复,src/components/ui/Dialog.tsx; src/components/ConversationDialogs.tsx,Gemini UI#4,已修
+25,P1-19,Options 页接入全局搜索与快捷键页面,P1,易,中,修复,src/tabs/options.tsx,Grok P2-11,已修
+26,P2-1,ClaudeSettings 改用已定义主题变量替换 --gh-primary-rgb,P2,易,极小,修复,src/tabs/options/pages/ClaudeSettings.tsx,Gemini UI#1,已修
+27,P2-3,SelectDropdown 选中项文字改语义变量,P2,易,极小,修复,src/components/ui/SelectDropdown.tsx,Gemini UI#3,已修
+28,P2-20,collapseRunSettings 补默认值与 schema,P2,易,小,修复,src/constants/default-settings.ts; docs/developer/settings-schema.json,Gemini 五#3,已修
+29,P2-18,提示词分类删除回退改可国际化空值,P2,易,小,修复,src/stores/prompts-store.ts; src/core/prompt-manager.ts,Gemini 五#1,已修
+30,P2-19,抽取 4 处硬编码文案并同步 11 语言,P2,易,中,修复,QueueOverlay.tsx; ClaudeSettings.tsx; SelectDropdown.tsx; GlobalSearchOverlay.tsx; src/locales/*/index.ts,Gemini 五#2,已修
+31,P2-21,getOutlineSources 标签国际化（11 语言）,P2,易,中,修复,base.ts; declarative/adapter.ts; claude.ts; gemini.ts; src/locales/*/index.ts,Gemini #22,已修
+32,P2-22,移除 OutlineTab 残留 DEBUG 日志前缀,P2,易,极小,修复,src/components/OutlineTab.tsx,Grok P3,已修
+33,P2-5,AboutPage 链接卡内 button 改 span,P2,易,小,修复,src/tabs/options/pages/AboutPage.tsx,Gemini UI#6,已修
+34,P2-7,AppearancePage 改用 ConfirmDialog,P2,易,小,修复,src/tabs/options/pages/AppearancePage.tsx,Gemini UI#8,已修
+35,P1-24,OutlineManager 实现 destroy 并由 useEffect 管理,P1,中,中,修复,src/core/outline-manager.ts; src/components/App.tsx,Gemini 架构#1,已修
+36,P3-10,ui-entry remount 观察器挂载成功后 disconnect,P3,易,小,修复,src/contents/ui-entry.tsx,Codex,已修
+37,P2-2,QuickQuote Chip 深色模式对比度适配,P2,易,小,修复,src/components/QuickQuoteActions.tsx,Gemini UI#2,已修
+38,P2-13,移除工具箱常驻旋转与红点脉冲动画,P2,易,小,修复,MainPanel.tsx / 相关 CSS,Grok UI,已修
 39,P2-4,Emoji 功能图标替换为 SVG 图标组件,P2,易,中,缓修,ClaudeSettings.tsx; OutlineTab.tsx; QuickButtons.tsx; GlobalSearchResultItemView.tsx,Gemini UI#5,缓修
 40,P2-6,icon-only 按钮补 aria-label 与 32px 热区（含 11 语言 key）,P2,易,中,缓修,MainPanel.tsx; QuickButtons.tsx; ShortcutsPage.tsx; VariableInputDialog.tsx,Gemini UI#7,缓修
 41,P1-9,油猴 Claude SessionKey 改 GM_cookie,P1,难,中,缓修,src/platform/userscript/index.ts,Gemini #10,缓修
