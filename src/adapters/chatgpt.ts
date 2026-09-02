@@ -3537,18 +3537,12 @@ export class ChatGPTAdapter extends SiteAdapter {
 
         // 如果没有下一个边界元素，需要找到正确的终点
         // 策略：从 startEl 在 DOM 中向后遍历，找到下一个用户提问元素
-        let foundCurrent = false
-        let nextUserQuery: Element | null = null
-
-        for (const uq of allUserQueries) {
-          if (foundCurrent) {
-            nextUserQuery = uq
-            break
-          }
-          if (uq === startEl || uq.contains(startEl) || startEl.contains(uq)) {
-            foundCurrent = true
-          }
-        }
+        // startEl 是 AI 回复内的标题，与用户提问元素不存在相等/包含关系，
+        // 必须按文档顺序找第一个位于 startEl 之后的用户提问
+        const nextUserQuery =
+          allUserQueries.find((uq) =>
+            Boolean(startEl.compareDocumentPosition(uq) & Node.DOCUMENT_POSITION_FOLLOWING),
+          ) || null
 
         if (nextUserQuery) {
           // 找到了下一个用户提问，使用它作为边界

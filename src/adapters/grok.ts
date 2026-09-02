@@ -2247,6 +2247,13 @@ export class GrokAdapter extends SiteAdapter {
       // Fallback：如果没有找到任何内容（可能是最后一条消息正在生成中）
       // 尝试从整个 container 中查找跟在当前用户消息之后的 AI 回复
       if (totalLength === 0) {
+        // nextElementSibling 是紧随的 AI 回复而非下一个用户消息，
+        // 必须在全容器内按文档顺序找 startEl 之后的第一个用户提问
+        const nextUserQuery =
+          Array.from(container.querySelectorAll(userQuerySelector)).find((uq) =>
+            Boolean(startEl.compareDocumentPosition(uq) & Node.DOCUMENT_POSITION_FOLLOWING),
+          ) || null
+
         const allAiMessages = container.querySelectorAll(this.config.selectors.assistantResponse)
         for (const aiMsg of Array.from(allAiMessages)) {
           // 检查这个 AI 消息是否在 startEl 之后
@@ -2255,8 +2262,6 @@ export class GrokAdapter extends SiteAdapter {
           if (!isAfterStart) continue
 
           // 检查是否在下一个用户消息之前
-          const nextUserQuery =
-            startEl.parentElement?.nextElementSibling?.querySelector(userQuerySelector)
           if (nextUserQuery) {
             const positionToEnd = nextUserQuery.compareDocumentPosition(aiMsg)
             const isBeforeEnd = positionToEnd & Node.DOCUMENT_POSITION_PRECEDING

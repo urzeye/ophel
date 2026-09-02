@@ -616,16 +616,16 @@ export class ZaiAdapter extends SiteAdapter {
         const allUserQueries = userQuerySelector
           ? container.querySelectorAll(userQuerySelector)
           : []
-        let foundCurrent = false
         let nextUserQuery: Element | null = null
 
         for (const uq of Array.from(allUserQueries)) {
-          if (foundCurrent) {
+          // startEl 是 AI 回复内的标题，按文档顺序找其后的第一个用户提问
+          const followsStart = Boolean(
+            startEl.compareDocumentPosition(uq) & Node.DOCUMENT_POSITION_FOLLOWING,
+          )
+          if (followsStart) {
             nextUserQuery = uq
             break
-          }
-          if (uq === startEl || uq.contains(startEl) || startEl.contains(uq)) {
-            foundCurrent = true
           }
         }
 

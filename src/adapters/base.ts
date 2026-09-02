@@ -1165,6 +1165,18 @@ export abstract class SiteAdapter {
   ): number {
     if (!startEl) return 0
     try {
+      // 边界元素必须真实位于起始元素之后，且在回退容器内；
+      // 否则 Range 会跨消息块统计（字数虚高）或直接抛异常
+      if (endEl) {
+        const followsStart = Boolean(
+          startEl.compareDocumentPosition(endEl) & Node.DOCUMENT_POSITION_FOLLOWING,
+        )
+        const withinContainer = fallbackContainer ? fallbackContainer.contains(endEl) : true
+        if (!followsStart || !withinContainer) {
+          endEl = null
+        }
+      }
+
       const range = document.createRange()
       range.setStartAfter(startEl)
       if (endEl) {
