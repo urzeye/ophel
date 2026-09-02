@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url"
 import { describe, expect, it } from "vitest"
 
 import { resources } from "~locales/resources"
-import { AFDIAN_PROFILE, GITHUB_REPO_URL, OPHEL_WEBSITE_URL } from "~utils/donate-channels"
+import { AFDIAN_URL, GITHUB_REPO_URL, OPHEL_WEBSITE_URL } from "~utils/donate-channels"
 
 const readSource = (relativePath: string): string =>
   readFileSync(fileURLToPath(new URL(relativePath, import.meta.url)), "utf8")
@@ -60,26 +60,22 @@ describe("star and donate surfaces", () => {
     }
   })
 
-  it("wires About to Afdian picture sources, the website, and locale donate channels", () => {
+  it("wires About to a local Afdian card, the website, and locale donate channels", () => {
     expect(aboutSource).toContain("getDonateChannels")
     expect(aboutSource).toContain("about-sponsor-qrs")
     expect(aboutSource).toContain("about-sponsor-qr-zoom")
     expect(aboutSource).toContain("about-sponsor-lightbox")
     expect(aboutSource).toContain("about-sponsor-lightbox-close")
-    expect(aboutSource).toContain("about-sponsor-afdian-fallback")
-    expect(aboutSource).toContain('t("afdianBannerUnavailable")')
     expect(aboutSource).toContain("stopPropagation")
-    expect(aboutSource).toContain("AFDIAN_PROFILE.darkSrc")
-    expect(aboutSource).toContain("AFDIAN_PROFILE.lightSrc")
+    // 爱发电是本地渲染卡片，不再依赖远程 SVG 横幅（严格 CSP 站点会被拦截）
+    expect(aboutSource).toContain("about-sponsor-afdian-card")
+    expect(aboutSource).toContain('t("afdianCardDesc")')
+    expect(aboutSource).not.toContain("afdianBannerUnavailable")
+    expect(aboutSource).not.toContain("afdian-connect.vercel.app")
+    expect(AFDIAN_URL).toBe("https://afdian.com/a/urzeye")
     expect(aboutSource).toContain("OPHEL_WEBSITE_URL")
     expect(aboutSource).toContain("donateChannels.wechatImagePath")
     expect(aboutSource).toContain("donateChannels.alipayImagePath")
-    expect(AFDIAN_PROFILE.darkSrc).toContain(
-      "https://afdian-connect.vercel.app/profile.svg?slug=urzeye&bg_color=%230d1117",
-    )
-    expect(AFDIAN_PROFILE.lightSrc).toBe(
-      "https://afdian-connect.vercel.app/profile.svg?slug=urzeye",
-    )
     expect(OPHEL_WEBSITE_URL).toBe("https://ophel.app")
     expect(aboutSource.indexOf('t("communityAndSupport")')).toBeLessThan(
       aboutSource.indexOf('t("sponsorSupport")'),
@@ -96,16 +92,30 @@ describe("star and donate surfaces", () => {
     expect(reviewsSection).not.toContain("--card-color")
   })
 
-  it("adds a weak Release Notes Star link without replacing the changelog control", () => {
+  it("adds weak Release Notes Star and donate links without replacing the changelog control", () => {
     const source = compact(releaseNotesSource)
 
     expect(source).toContain("gh-release-notes-star-link")
+    expect(source).toContain("gh-release-notes-footer-support")
     expect(source).toContain("gh-release-notes-secondary")
     expect(source).toContain("GithubIcon")
     expect(source).toContain("GITHUB_REPO_URL")
     expect(source).toContain('t("giveStar")')
+    // 赞助入口按语言分流：zh-CN 爱发电，其余 Ko-fi
+    expect(source).toContain("getDonateChannels")
+    expect(source).toContain("donateChannels.primaryUrl")
+    expect(source).toContain('t("afdianSupport")')
+    expect(source).toContain('t("kofiSupport")')
     expect(source).toContain("onOpenFullChangelog")
     expect(source).toContain('t("releaseNotesViewFull")')
+    // 长文案语言一行放不下时，实测溢出后隐藏 Star/赞助文案只留图标按钮
+    expect(source).toContain("is-compact")
+    expect(source).toContain("ResizeObserver")
+    // 测量时按完整内容宽度判定，避免紧凑后按图标宽度误判导致来回振荡
+    expect(source).toContain("is-measuring")
+    expect(releaseNotesCss).toContain(
+      ".gh-release-notes-footer.is-compact:not(.is-measuring) .gh-release-notes-star-link span { display: none;",
+    )
     expect(GITHUB_REPO_URL).toBe("https://github.com/urzeye/ophel")
     expect(releaseNotesCss).toContain(
       ".gh-release-notes-primary { border: 1px solid var(--gh-primary, #4285f4);",
@@ -146,6 +156,8 @@ describe("star and donate surfaces", () => {
     // 悬停短暂停留后直接打开完整更新日志
     expect(panel).toContain("brandHoverTimerRef.current = setTimeout(() => {")
     expect(panel).toContain("onOpenReleaseNotes()")
+    // 悬停 350ms 才打开，避免鼠标路过 logo 误触
+    expect(panel).toContain("}, 350)")
     // 打开即标记已读，关闭只做关闭，避免读写竞态复活红点
     expect(app).toContain("markedSeenVersionRef.current = APP_VERSION")
     expect(app).toContain(
@@ -156,6 +168,10 @@ describe("star and donate surfaces", () => {
   it("mirrors the unread release notes dot on the settings nav and About entry", () => {
     expect(compact(settingsModalSource)).toContain("settings-nav-unread-dot")
     expect(compact(optionsSource)).toContain("settings-nav-unread-dot")
+    // 独立 Options 页也能打开更新日志并标记已读，导航红点不是死端
+    expect(compact(optionsSource)).toContain("ReleaseNotesModal")
+    expect(compact(optionsSource)).toContain("onOpenReleaseNotes")
+    expect(compact(optionsSource)).toContain("markReleaseNotesSeen")
     expect(aboutSource).toContain("about-release-notes-unread")
     expect(aboutSource).toContain("useHasUnseenReleaseNotes")
     // 共享 hook 读写同一份平台存储，保证各入口红点同生同灭
@@ -188,7 +204,7 @@ describe("star and donate copy", () => {
       expect(locale.wechatPay.length, localeId).toBeGreaterThan(0)
       expect(locale.alipayPay.length, localeId).toBeGreaterThan(0)
       expect(locale.afdianSupport.length, localeId).toBeGreaterThan(0)
-      expect(locale.afdianBannerUnavailable.length, localeId).toBeGreaterThan(0)
+      expect(locale.afdianCardDesc.length, localeId).toBeGreaterThan(0)
       expect(locale.joinDiscordCommunity.length, localeId).toBeGreaterThan(0)
     }
   })

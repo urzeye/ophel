@@ -10,13 +10,6 @@ export const AFDIAN_URL = "https://afdian.com/a/urzeye"
 export const GITHUB_REPO_URL = "https://github.com/urzeye/ophel"
 export const OPHEL_WEBSITE_URL = "https://ophel.app"
 
-export const AFDIAN_PROFILE = {
-  href: AFDIAN_URL,
-  lightSrc: "https://afdian-connect.vercel.app/profile.svg?slug=urzeye",
-  darkSrc:
-    "https://afdian-connect.vercel.app/profile.svg?slug=urzeye&bg_color=%230d1117&text_color=%23dedbd7&border_color=%232e343d",
-} as const
-
 export const SUPPORT_ASSET_FILES = {
   wechatPay: "assets/support/wechat-pay.jpg",
   alipay: "assets/support/alipay.png",
@@ -31,7 +24,6 @@ export type ZhCnDonateChannels = {
   kind: "zh-CN"
   primaryUrl: typeof AFDIAN_URL
   afdianUrl: typeof AFDIAN_URL
-  afdianProfile: typeof AFDIAN_PROFILE
   wechatImagePath: typeof SUPPORT_ASSET_FILES.wechatPay
   alipayImagePath: typeof SUPPORT_ASSET_FILES.alipay
 }
@@ -54,7 +46,6 @@ export function getDonateChannels(language: string): DonateChannels {
       kind: "zh-CN",
       primaryUrl: AFDIAN_URL,
       afdianUrl: AFDIAN_URL,
-      afdianProfile: AFDIAN_PROFILE,
       wechatImagePath: SUPPORT_ASSET_FILES.wechatPay,
       alipayImagePath: SUPPORT_ASSET_FILES.alipay,
     }

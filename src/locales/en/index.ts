@@ -1903,5 +1903,5 @@ Please output the optimized code block directly, followed by a brief summary of 
   wechatPay: "WeChat Pay",
   alipayPay: "Alipay",
   afdianSupport: "Afdian",
-  afdianBannerUnavailable: "Afdian banner failed to load; click to open the sponsor page",
+  afdianCardDesc: "Fuel ongoing development",
 }

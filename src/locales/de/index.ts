@@ -1904,6 +1904,5 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   wechatPay: "WeChat Pay",
   alipayPay: "Alipay",
   afdianSupport: "Afdian",
-  afdianBannerUnavailable:
-    "Afdian-Banner konnte nicht geladen werden; klicken, um die Sponsor-Seite zu öffnen",
+  afdianCardDesc: "Unterstütze die Weiterentwicklung",
 }

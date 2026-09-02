@@ -5377,14 +5377,13 @@ html[data-theme="dark"] .about-privacy-banner {
 
 .about-sponsor-channels {
   display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  width: min(100%, 520px);
+  flex-wrap: wrap;
+  justify-content: center;
   margin-inline: auto;
   gap: 16px;
 }
 
-.about-sponsor-afdian,
+.about-sponsor-afdian-card,
 .about-sponsor-qr {
   display: flex;
   flex-direction: column;
@@ -5395,18 +5394,12 @@ html[data-theme="dark"] .about-privacy-banner {
   color: inherit;
 }
 
+.about-sponsor-afdian-card,
 .about-sponsor-qr {
-  padding: 12px;
+  padding: 10px;
   border: 1px solid var(--gh-border, #e5e7eb);
   border-radius: 12px;
   background: var(--gh-card-bg, #fff);
-}
-
-.about-sponsor-afdian {
-  width: 100%;
-  padding: 0;
-  border: none;
-  background: transparent;
 }
 
 .about-sponsor-qrs {
@@ -5416,36 +5409,100 @@ html[data-theme="dark"] .about-privacy-banner {
   gap: 16px;
 }
 
-.about-sponsor-channel-label,
 .about-sponsor-qr figcaption {
   font-size: 13px;
   font-weight: 600;
   color: var(--gh-text, #1f2937);
 }
 
-.about-sponsor-afdian-img {
-  display: block;
-  width: 100%;
-  height: auto;
-  object-fit: contain;
-  background: transparent;
+/* 爱发电渠道卡：与扫码卡同宽（10*2+150），flex stretch 自动同高；
+   本地渲染不依赖远程横幅，避免严格 CSP 站点拦截外链图片 */
+.about-sponsor-afdian-card {
+  justify-content: center;
+  width: 170px;
+  border-color: rgba(148, 108, 230, 0.28);
+  /* 淡紫渐变底呼应爱发电品牌色，浅色主题下保持轻量 */
+  background: linear-gradient(165deg, rgba(148, 108, 230, 0.1), rgba(148, 108, 230, 0.03)),
+    var(--gh-card-bg, #fff);
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
-.about-sponsor-afdian-fallback {
-  /* 远程爱发电横幅加载失败（如宿主 CSP 拦截）时的本地降级块 */
+.about-sponsor-afdian-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(148, 108, 230, 0.45);
+  box-shadow: 0 8px 24px rgba(148, 108, 230, 0.14);
+}
+
+.about-sponsor-afdian-card:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 38%, transparent);
+  outline-offset: 2px;
+}
+
+.about-sponsor-afdian-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
-  min-height: 120px;
-  padding: 16px;
-  border: 1px solid var(--gh-border, #e5e7eb);
-  border-radius: 12px;
-  background: var(--gh-card-bg, #fff);
-  color: var(--gh-text, #1f2937);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  /* 实色品牌紫圆标 + 白色爱心，明暗主题下都保持辨识度 */
+  background: #946ce6;
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(148, 108, 230, 0.35);
+}
+
+.about-sponsor-afdian-title {
   font-size: 14px;
   font-weight: 600;
+  color: var(--gh-text, #1f2937);
+}
+
+.about-sponsor-afdian-desc {
+  font-size: 12px;
+  line-height: 1.5;
   text-align: center;
+  color: var(--gh-text-secondary, #6b7280);
+}
+
+.about-sponsor-afdian-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #946ce6;
+}
+
+:host([data-theme="dark"]) .about-sponsor-afdian-icon,
+:host-context([data-gh-mode="dark"]) .about-sponsor-afdian-icon,
+html[data-theme="dark"] .about-sponsor-afdian-icon {
+  background: #a17ef0;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(148, 108, 230, 0.45);
+}
+
+:host([data-theme="dark"]) .about-sponsor-afdian-card,
+:host-context([data-gh-mode="dark"]) .about-sponsor-afdian-card,
+html[data-theme="dark"] .about-sponsor-afdian-card {
+  border-color: rgba(148, 108, 230, 0.38);
+  background: linear-gradient(165deg, rgba(148, 108, 230, 0.16), rgba(148, 108, 230, 0.05)),
+    var(--gh-card-bg, #1c2128);
+}
+
+:host([data-theme="dark"]) .about-sponsor-afdian-cta,
+:host-context([data-gh-mode="dark"]) .about-sponsor-afdian-cta,
+html[data-theme="dark"] .about-sponsor-afdian-cta {
+  color: #c9b3f5;
+}
+
+:host([data-theme="dark"]) .about-sponsor-afdian-card:hover,
+:host-context([data-gh-mode="dark"]) .about-sponsor-afdian-card:hover,
+html[data-theme="dark"] .about-sponsor-afdian-card:hover {
+  border-color: rgba(148, 108, 230, 0.55);
+  box-shadow: 0 8px 24px rgba(148, 108, 230, 0.2);
 }
 
 .about-sponsor-qr-zoom {
@@ -5511,26 +5568,10 @@ html[data-theme="dark"] .about-privacy-banner {
   outline-offset: 2px;
 }
 
-.about-sponsor-afdian-img.is-dark {
-  display: none;
-}
-
-:host([data-theme="dark"]) .about-sponsor-afdian-img.is-light,
-:host-context([data-gh-mode="dark"]) .about-sponsor-afdian-img.is-light,
-html[data-theme="dark"] .about-sponsor-afdian-img.is-light {
-  display: none;
-}
-
-:host([data-theme="dark"]) .about-sponsor-afdian-img.is-dark,
-:host-context([data-gh-mode="dark"]) .about-sponsor-afdian-img.is-dark,
-html[data-theme="dark"] .about-sponsor-afdian-img.is-dark {
-  display: block;
-}
-
 .about-sponsor-qr-img {
   display: block;
-  width: 160px;
-  height: 160px;
+  width: 150px;
+  height: 150px;
   object-fit: contain;
   background: #fff;
   border-radius: 8px;

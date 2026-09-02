@@ -817,7 +817,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     brandHoverTimerRef.current = setTimeout(() => {
       brandHoverTimerRef.current = null
       onOpenReleaseNotes()
-    }, 200)
+    }, 350)
   }, [clearBrandHoverTimer, hasUnseenReleaseNotes, onOpenReleaseNotes])
 
   const handleBrandMouseLeave = clearBrandHoverTimer

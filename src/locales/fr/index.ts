@@ -1913,6 +1913,5 @@ Donnez le code puis un résumé des améliorations.`,
   wechatPay: "WeChat Pay",
   alipayPay: "Alipay",
   afdianSupport: "Afdian",
-  afdianBannerUnavailable:
-    "Impossible de charger la bannière Afdian ; cliquez pour ouvrir la page de soutien",
+  afdianCardDesc: "Soutenir le développement continu",
 }

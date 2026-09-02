@@ -1876,5 +1876,5 @@ export const ko = {
   wechatPay: "WeChat Pay",
   alipayPay: "Alipay",
   afdianSupport: "Afdian",
-  afdianBannerUnavailable: "배너를 불러오지 못했습니다. 클릭하여 Afdian 후원 페이지 열기",
+  afdianCardDesc: "지속적인 개발 응원하기",
 }

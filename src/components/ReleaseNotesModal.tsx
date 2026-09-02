@@ -1,11 +1,18 @@
-import React, { useEffect, useId, useMemo, useRef, useState } from "react"
+import React, { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react"
 
-import { CheckIcon, ClearIcon, ExternalLinkIcon, GithubIcon } from "~components/icons"
+import {
+  CheckIcon,
+  ClearIcon,
+  ExternalLinkIcon,
+  GithubIcon,
+  HeartIcon,
+  KofiIcon,
+} from "~components/icons"
 import { SparkleIcon } from "~components/icons/SparkleIcon"
 import { getReleaseNotesMediaAlt, getReleaseNotesMediaCaption } from "~release-notes"
 import type { ReleaseNotesMedia } from "~release-notes/types"
 import { OPHEL_HOVER_WIDTH_RETAIN_LAYER_PROPS } from "~utils/dom-toolkit"
-import { GITHUB_REPO_URL } from "~utils/donate-channels"
+import { GITHUB_REPO_URL, getDonateChannels } from "~utils/donate-channels"
 import { t } from "~utils/i18n"
 import { getHighlightStyles, renderMarkdown } from "~utils/markdown"
 import { createSafeHTML } from "~utils/trusted-types"
@@ -112,6 +119,9 @@ export const ReleaseNotesModal: React.FC<ReleaseNotesModalProps> = ({
   const titleId = useId()
   const closeButtonRef = useRef<HTMLButtonElement | null>(null)
   const [activeMedia, setActiveMedia] = useState<ReleaseNotesMedia | null>(null)
+  const donateChannels = getDonateChannels(language)
+  const footerRef = useRef<HTMLElement | null>(null)
+  const [isFooterCompact, setIsFooterCompact] = useState(false)
   const releaseNotesContent = useMemo(
     () => createReleaseNotesContentBlocks(markdown, media),
     [markdown, media],
@@ -133,6 +143,30 @@ export const ReleaseNotesModal: React.FC<ReleaseNotesModalProps> = ({
     document.addEventListener("keydown", handleKeyDown)
     return () => document.removeEventListener("keydown", handleKeyDown)
   }, [activeMedia, onClose])
+
+  // 页脚四控件在长文案语言里可能一行放不下：临时切到 nowrap 实测内容宽度，
+  // 溢出时隐藏 Star/赞助按钮的文案只留图标；仍放不下则由 flex-wrap 换行兜底。
+  // 测量必须按完整内容宽度（is-measuring 临时禁用紧凑样式），
+  // 否则紧凑后按图标宽度判定"不溢出"会来回振荡（页脚抖动）
+  useLayoutEffect(() => {
+    const footer = footerRef.current
+    if (!footer) return
+
+    const checkOverflow = () => {
+      const prevWrap = footer.style.flexWrap
+      footer.style.flexWrap = "nowrap"
+      footer.classList.add("is-measuring")
+      const overflowing = footer.scrollWidth > footer.clientWidth + 1
+      footer.classList.remove("is-measuring")
+      footer.style.flexWrap = prevWrap
+      setIsFooterCompact((prev) => (prev === overflowing ? prev : overflowing))
+    }
+
+    checkOverflow()
+    const observer = new ResizeObserver(checkOverflow)
+    observer.observe(footer)
+    return () => observer.disconnect()
+  }, [language])
 
   const activeMediaUrl = activeMedia ? resolveReleaseNotesAssetUrl(activeMedia.src) : ""
 
@@ -226,15 +260,28 @@ export const ReleaseNotesModal: React.FC<ReleaseNotesModalProps> = ({
           <style>{getHighlightStyles()}</style>
         </div>
 
-        <footer className="gh-release-notes-footer">
-          <a
-            className="gh-release-notes-secondary gh-release-notes-star-link"
-            href={GITHUB_REPO_URL}
-            target="_blank"
-            rel="noopener noreferrer">
-            <GithubIcon size={16} />
-            <span>{t("giveStar")}</span>
-          </a>
+        <footer
+          ref={footerRef}
+          className={`gh-release-notes-footer${isFooterCompact ? " is-compact" : ""}`}>
+          <div className="gh-release-notes-footer-support">
+            <a
+              className="gh-release-notes-secondary gh-release-notes-star-link"
+              href={GITHUB_REPO_URL}
+              target="_blank"
+              rel="noopener noreferrer">
+              <GithubIcon size={16} />
+              <span>{t("giveStar")}</span>
+            </a>
+            {/* 赞助入口按产品语言分流：zh-CN 走爱发电，其余走 Ko-fi */}
+            <a
+              className="gh-release-notes-secondary gh-release-notes-star-link"
+              href={donateChannels.primaryUrl}
+              target="_blank"
+              rel="noopener noreferrer">
+              {donateChannels.kind === "zh-CN" ? <HeartIcon size={16} /> : <KofiIcon size={16} />}
+              <span>{donateChannels.kind === "zh-CN" ? t("afdianSupport") : t("kofiSupport")}</span>
+            </a>
+          </div>
           <div className="gh-release-notes-footer-actions">
             <button
               type="button"

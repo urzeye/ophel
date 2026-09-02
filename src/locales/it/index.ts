@@ -1974,6 +1974,5 @@ export const it = {
   wechatPay: "WeChat Pay",
   alipayPay: "Alipay",
   afdianSupport: "Afdian",
-  afdianBannerUnavailable:
-    "Impossibile caricare il banner di Afdian; fai clic per aprire la pagina sponsor",
+  afdianCardDesc: "Sostieni lo sviluppo continuo",
 }

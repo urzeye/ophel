@@ -5,7 +5,6 @@ import { fileURLToPath } from "node:url"
 import { describe, expect, it } from "vitest"
 
 import {
-  AFDIAN_PROFILE,
   AFDIAN_URL,
   KOFI_URL,
   SUPPORT_ASSET_FILES,
@@ -30,17 +29,10 @@ describe("getDonateChannels", () => {
     }
 
     expect(channels.afdianUrl).toBe(AFDIAN_URL)
-    expect(channels.afdianProfile).toBe(AFDIAN_PROFILE)
     expect(channels.wechatImagePath).toBe(SUPPORT_ASSET_FILES.wechatPay)
     expect(channels.alipayImagePath).toBe(SUPPORT_ASSET_FILES.alipay)
     expect(channels.wechatImagePath).toBe("assets/support/wechat-pay.jpg")
     expect(channels.alipayImagePath).toBe("assets/support/alipay.png")
-    expect(AFDIAN_PROFILE.lightSrc).toBe(
-      "https://afdian-connect.vercel.app/profile.svg?slug=urzeye",
-    )
-    expect(AFDIAN_PROFILE.darkSrc).toBe(
-      "https://afdian-connect.vercel.app/profile.svg?slug=urzeye&bg_color=%230d1117&text_color=%23dedbd7&border_color=%232e343d",
-    )
   })
 
   it("keeps Ko-fi and omits WeChat/Alipay for other product languages", () => {

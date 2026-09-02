@@ -267,15 +267,39 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  flex-wrap: wrap;
+  row-gap: 8px;
   padding: 14px 16px;
   border-top: 1px solid var(--gh-border, #e5e7eb);
   background: var(--gh-bg, #ffffff);
+}
+
+/* 子项不压缩，保证溢出检测（scrollWidth）读到真实内容宽度，放不下时换行而不是变形 */
+.gh-release-notes-footer > * {
+  flex-shrink: 0;
 }
 
 .gh-release-notes-star-link {
   flex: 0 0 auto;
   text-decoration: none;
   white-space: nowrap;
+}
+
+.gh-release-notes-footer-support {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: nowrap;
+}
+
+/* 紧凑模式：Star/赞助按钮隐藏文案只留图标（按钮样式保留），由 JS 实测溢出后触发。
+   is-measuring 期间暂停紧凑样式，保证溢出判定始终按完整内容宽度 */
+.gh-release-notes-footer.is-compact:not(.is-measuring) .gh-release-notes-star-link {
+  padding: 0 10px;
+}
+
+.gh-release-notes-footer.is-compact:not(.is-measuring) .gh-release-notes-star-link span {
+  display: none;
 }
 
 .gh-release-notes-star-link svg {
@@ -445,13 +469,13 @@
     align-items: stretch;
   }
 
+  .gh-release-notes-footer-support {
+    justify-content: center;
+  }
+
   .gh-release-notes-footer-actions {
     width: 100%;
     margin-left: 0;
-  }
-
-  .gh-release-notes-star-link {
-    align-self: center;
   }
 
   .about-hero-heading {
@@ -463,8 +487,9 @@
     width: 100%;
   }
 
-  .gh-release-notes-primary,
-  .gh-release-notes-secondary {
+  /* 仅右侧操作按钮全宽；Star/赞助保持行内按钮，居中排列 */
+  .gh-release-notes-footer-actions .gh-release-notes-primary,
+  .gh-release-notes-footer-actions .gh-release-notes-secondary {
     width: 100%;
   }
 }

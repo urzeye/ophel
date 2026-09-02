@@ -1896,5 +1896,5 @@ export const ja = {
   wechatPay: "WeChat Pay",
   alipayPay: "Alipay",
   afdianSupport: "愛発電",
-  afdianBannerUnavailable: "バナーを読み込めませんでした。クリックして愛発電を開く",
+  afdianCardDesc: "継続的な開発を応援",
 }

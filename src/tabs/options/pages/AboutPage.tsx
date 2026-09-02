@@ -11,6 +11,7 @@ import {
   ClearIcon,
   DiscordIcon,
   EdgeIcon,
+  ExternalLinkIcon,
   FirefoxIcon,
   GithubIcon,
   GlobeIcon,
@@ -27,7 +28,7 @@ import { useHasUnseenReleaseNotes } from "~hooks/useHasUnseenReleaseNotes"
 import { useSupportedAiPlatforms } from "~hooks/useSupportedAiPlatforms"
 import { APP_DISPLAY_NAME, APP_VERSION, getAppIconUrl } from "~utils/config"
 import {
-  AFDIAN_PROFILE,
+  AFDIAN_URL,
   GITHUB_REPO_URL,
   OPHEL_WEBSITE_URL,
   getDonateChannels,
@@ -48,13 +49,6 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
   const donateChannels = getDonateChannels(language)
   const hasUnseenReleaseNotes = useHasUnseenReleaseNotes()
   const [sponsorPreview, setSponsorPreview] = useState<{ src: string; alt: string } | null>(null)
-  const [afdianBannerFailed, setAfdianBannerFailed] = useState(false)
-
-  // 明/暗两张横幅由 CSS 按主题切换，隐藏的那张加载失败（offsetParent 为 null）不应触发 fallback
-  const handleAfdianBannerError = (event: React.SyntheticEvent<HTMLImageElement>) => {
-    if (event.currentTarget.offsetParent === null) return
-    setAfdianBannerFailed(true)
-  }
 
   useEffect(() => {
     if (!sponsorPreview) return
@@ -217,37 +211,19 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
           <p className="about-sponsor-desc">{t("sponsorDesc")}</p>
           <div className="about-sponsor-channels">
             <a
-              href={AFDIAN_PROFILE.href}
+              href={AFDIAN_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="about-sponsor-afdian"
-              aria-label={t("afdianSupport")}>
-              {afdianBannerFailed ? (
-                <span className="about-sponsor-afdian-fallback">
-                  {t("afdianBannerUnavailable")}
-                </span>
-              ) : (
-                <>
-                  <img
-                    className="about-sponsor-afdian-img is-light"
-                    alt={t("afdianSupport")}
-                    src={AFDIAN_PROFILE.lightSrc}
-                    height={180}
-                    loading="lazy"
-                    onError={handleAfdianBannerError}
-                  />
-                  <img
-                    className="about-sponsor-afdian-img is-dark"
-                    alt=""
-                    src={AFDIAN_PROFILE.darkSrc}
-                    height={180}
-                    aria-hidden="true"
-                    loading="lazy"
-                    onError={handleAfdianBannerError}
-                  />
-                </>
-              )}
-              <span className="about-sponsor-channel-label">{t("afdianSupport")}</span>
+              className="about-sponsor-afdian-card">
+              <span className="about-sponsor-afdian-icon" aria-hidden="true">
+                <HeartIcon size={22} />
+              </span>
+              <span className="about-sponsor-afdian-title">{t("afdianSupport")}</span>
+              <span className="about-sponsor-afdian-desc">{t("afdianCardDesc")}</span>
+              <span className="about-sponsor-afdian-cta">
+                afdian.com
+                <ExternalLinkIcon size={12} />
+              </span>
             </a>
             <div className="about-sponsor-qrs">
               <figure className="about-sponsor-qr">
