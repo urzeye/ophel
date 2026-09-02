@@ -50,6 +50,12 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
   const [sponsorPreview, setSponsorPreview] = useState<{ src: string; alt: string } | null>(null)
   const [afdianBannerFailed, setAfdianBannerFailed] = useState(false)
 
+  // 明/暗两张横幅由 CSS 按主题切换，隐藏的那张加载失败（offsetParent 为 null）不应触发 fallback
+  const handleAfdianBannerError = (event: React.SyntheticEvent<HTMLImageElement>) => {
+    if (event.currentTarget.offsetParent === null) return
+    setAfdianBannerFailed(true)
+  }
+
   useEffect(() => {
     if (!sponsorPreview) return
 
@@ -227,7 +233,8 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
                     alt={t("afdianSupport")}
                     src={AFDIAN_PROFILE.lightSrc}
                     height={180}
-                    onError={() => setAfdianBannerFailed(true)}
+                    loading="lazy"
+                    onError={handleAfdianBannerError}
                   />
                   <img
                     className="about-sponsor-afdian-img is-dark"
@@ -235,7 +242,8 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
                     src={AFDIAN_PROFILE.darkSrc}
                     height={180}
                     aria-hidden="true"
-                    onError={() => setAfdianBannerFailed(true)}
+                    loading="lazy"
+                    onError={handleAfdianBannerError}
                   />
                 </>
               )}

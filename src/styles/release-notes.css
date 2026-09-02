@@ -406,19 +406,8 @@
   flex-shrink: 0;
   border-radius: 50%;
   background: var(--gh-danger, #ef4444);
+  /* keyframes 复用 settings.css 的 gh-unread-dot-pulse（本文件始终与其一同注入） */
   animation: gh-unread-dot-pulse 2s infinite;
-}
-
-@keyframes gh-unread-dot-pulse {
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.3);
-    opacity: 0.8;
-  }
 }
 
 @keyframes gh-release-notes-enter {
