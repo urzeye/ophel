@@ -566,6 +566,25 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
     case MSG_PROXY_FETCH:
       ;(async () => {
         try {
+          // 仅允许代理公网 http(s) 资源，避免被用来探测 localhost / 内网服务
+          const target = new URL(message.url)
+          if (target.protocol !== "http:" && target.protocol !== "https:") {
+            throw new Error(`Blocked proxy fetch: unsupported protocol ${target.protocol}`)
+          }
+          const hostname = target.hostname.toLowerCase()
+          if (
+            hostname === "localhost" ||
+            hostname === "::1" ||
+            hostname.endsWith(".local") ||
+            /^127\./.test(hostname) ||
+            /^10\./.test(hostname) ||
+            /^192\.168\./.test(hostname) ||
+            /^169\.254\./.test(hostname) ||
+            /^172\.(1[6-9]|2\d|3[01])\./.test(hostname)
+          ) {
+            throw new Error(`Blocked proxy fetch: private address ${hostname}`)
+          }
+
           // 确保规则已设置
           const rules = await chrome.declarativeNetRequest.getDynamicRules()
           if (!rules || rules.length === 0 || !rules.find((r) => r.id === 1001)) {
