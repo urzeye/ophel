@@ -145,36 +145,32 @@ export const ReleaseNotesModal: React.FC<ReleaseNotesModalProps> = ({
     return () => document.removeEventListener("keydown", handleKeyDown)
   }, [activeMedia, onClose])
 
-  // 页脚四控件在长文案语言里可能一行放不下：临时切到 nowrap 实测内容宽度，
+  // 页脚四控件在长文案语言里可能一行放不下：临时切到 nowrap 实测完整内容宽度，
   // 溢出时隐藏 Star/赞助按钮的文案只留图标；仍放不下则由 flex-wrap 换行兜底。
-  // 测量必须按完整内容宽度（is-measuring 临时禁用紧凑样式），
-  // 否则紧凑后按图标宽度判定"不溢出"会来回振荡（页脚抖动）
+  // 判定只依赖“完整内容宽度 vs 页脚可用宽度”，同一宽度下结果确定；
+  // 紧凑切换只改变页脚高度、不改变宽度，因此只在宽度真正变化（视口 resize）时复测，
+  // 从结构上排除“测量→切换紧凑→高度变化→触发再测量”的自反馈抖动。
   useLayoutEffect(() => {
     const footer = footerRef.current
     if (!footer) return
 
     const checkOverflow = () => {
-      // 已经换行直接判溢出，覆盖字体加载后变宽等测不准的场景；
-      // 判定用“后一组的顶边超过前一组的底边”，不能用 offsetTop 差值——
-      // 同行两组高度不同时 align-items:center 会产生 1-2px 的顶边差，会误判成换行；
-      // 竖排（移动端 column-reverse）是正常布局，不算溢出
-      const groups = Array.from(footer.children) as HTMLElement[]
-      const isRow = getComputedStyle(footer).flexDirection === "row"
-      const wrapped =
-        isRow &&
-        groups.length > 1 &&
-        groups[groups.length - 1].offsetTop > groups[0].offsetTop + groups[0].offsetHeight - 1
       footer.classList.add("is-measuring")
       const overflowing = footer.scrollWidth > footer.clientWidth + 1
       footer.classList.remove("is-measuring")
-      const compact = wrapped || overflowing
-      setIsFooterCompact((prev) => (prev === compact ? prev : compact))
+      setIsFooterCompact((prev) => (prev === overflowing ? prev : overflowing))
     }
 
     checkOverflow()
-    // 网页字体加载完成后按钮文案会变宽，需要复测一次
+    // 网页字体加载完成后按钮文案可能变宽，补一次复测
     void document.fonts?.ready.then(checkOverflow)
-    const observer = new ResizeObserver(checkOverflow)
+
+    let lastWidth = footer.clientWidth
+    const observer = new ResizeObserver(() => {
+      if (footer.clientWidth === lastWidth) return
+      lastWidth = footer.clientWidth
+      checkOverflow()
+    })
     observer.observe(footer)
     return () => observer.disconnect()
   }, [language])
