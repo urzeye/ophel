@@ -11,6 +11,11 @@ export const de = {
   communityMotto: "Wer schnell gehen will, geht allein. Wer weit gehen will, geht gemeinsam.",
   welcomeJoin: "Willkommen bei Ophel",
   agreeButton: "Verstanden & Akzeptieren",
+  disclaimerAffiliation:
+    "Diese Erweiterung ist nicht offiziell mit den unterstützten Seiten verbunden oder von ihnen unterstützt; alle Marken und Namen gehören ihren jeweiligen Eigentümern.",
+  disclaimerAgreeNote:
+    "Mit einem Klick auf die Schaltfläche oben bestätigst du, dass du das Obige gelesen, verstanden und akzeptiert hast.",
+  disclaimerContribute: "Mitwirken",
 
   tabPrompts: "Prompt-Bibliothek",
   tabSettings: "Einstellungen",

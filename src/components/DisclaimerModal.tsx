@@ -19,7 +19,11 @@ export const DisclaimerModal: React.FC = () => {
   }
 
   return (
-    <div className="disclaimer-modal-overlay">
+    <div
+      className="disclaimer-modal-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label={t("disclaimerTitle")}>
       <div className="disclaimer-modal">
         <div className="disclaimer-header">
           <img src={getAppIconUrl()} alt="Ophel" className="disclaimer-icon-img" />
@@ -38,6 +42,7 @@ export const DisclaimerModal: React.FC = () => {
           <div className="disclaimer-section">
             <p>{t("disclaimerText")}</p>
             <p className="disclaimer-warning">{t("disclaimerWarning")}</p>
+            <p className="disclaimer-affiliation">{t("disclaimerAffiliation")}</p>
           </div>
 
           <div className="disclaimer-section privacy-section">
@@ -57,7 +62,7 @@ export const DisclaimerModal: React.FC = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="sec-link">
-                PR
+                {t("disclaimerContribute")}
               </a>
               <span className="divider">/</span>
               <a
@@ -65,16 +70,17 @@ export const DisclaimerModal: React.FC = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="sec-link">
-                Issue
+                {t("reportIssue")}
               </a>
             </div>
           </div>
         </div>
 
         <div className="disclaimer-footer">
-          <button className="disclaimer-agree-btn" onClick={handleAgree}>
+          <button className="disclaimer-agree-btn" autoFocus onClick={handleAgree}>
             {t("agreeButton")}
           </button>
+          <p className="disclaimer-agree-note">{t("disclaimerAgreeNote")}</p>
         </div>
       </div>
 
@@ -158,7 +164,7 @@ export const DisclaimerModal: React.FC = () => {
         }
 
         .disclaimer-section {
-          margin-bottom: 20px;
+          margin-bottom: 16px;
         }
 
         .disclaimer-section h3 {
@@ -179,11 +185,26 @@ export const DisclaimerModal: React.FC = () => {
 
         .disclaimer-warning {
           margin-top: 8px !important;
-          color: #ef4444 !important;
+          /* 请求类提示用 amber 而非错误红，避免抢占免责正文的视觉权重 */
+          color: #b45309 !important;
           font-weight: 500;
-          background: rgba(239, 68, 68, 0.1);
+          background: rgba(245, 158, 11, 0.1);
+          border: 1px solid rgba(245, 158, 11, 0.25);
           padding: 8px 12px;
           border-radius: 6px;
+        }
+
+        :host-context([data-gh-mode="dark"]) .disclaimer-warning {
+          color: #fbbf24 !important;
+          background: rgba(245, 158, 11, 0.14);
+          border-color: rgba(245, 158, 11, 0.3);
+        }
+
+        .disclaimer-affiliation {
+          margin-top: 12px !important;
+          font-size: 12px !important;
+          color: var(--gh-text-secondary, #6b7280) !important;
+          line-height: 1.5 !important;
         }
 
         .quote-section {
@@ -203,7 +224,7 @@ export const DisclaimerModal: React.FC = () => {
           border: 1px solid rgba(16, 185, 129, 0.2);
           border-radius: 12px;
           padding: 16px;
-          margin-bottom: 20px;
+          margin-bottom: 16px;
         }
 
         .privacy-header {
@@ -286,6 +307,19 @@ export const DisclaimerModal: React.FC = () => {
 
         .disclaimer-agree-btn:active {
           transform: scale(0.98);
+        }
+
+        .disclaimer-agree-btn:focus-visible {
+          outline: 2px solid #3b82f6;
+          outline-offset: 2px;
+        }
+
+        .disclaimer-agree-note {
+          margin: 10px 0 0;
+          font-size: 12px;
+          line-height: 1.5;
+          text-align: center;
+          color: var(--gh-text-secondary, #6b7280);
         }
 
         @keyframes modal-pop {

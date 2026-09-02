@@ -11,6 +11,10 @@ export const ko = {
   communityMotto: "빨리 가려면 혼자 가고, 멀리 가려면 함께 가라.",
   welcomeJoin: "Ophel에 오신 것을 환영합니다",
   agreeButton: "이해했으며 동의합니다",
+  disclaimerAffiliation:
+    "이 확장 프로그램은 지원되는 사이트와 공식적인 제휴 또는 보증 관계가 없으며, 관련 상표와 명칭은 각 소유자에게 있습니다.",
+  disclaimerAgreeNote: "위 버튼을 클릭하면 위 내용을 읽고 이해했으며 동의한 것으로 간주됩니다.",
+  disclaimerContribute: "기여하기",
 
   tabPrompts: "프롬프트",
   tabSettings: "설정",

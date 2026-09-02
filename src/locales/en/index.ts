@@ -11,6 +11,11 @@ export const en = {
   communityMotto: "If you want to go fast, go alone. If you want to go far, go together.",
   welcomeJoin: "Welcome to",
   agreeButton: "I Understand and Agree",
+  disclaimerAffiliation:
+    "This extension is not officially affiliated with or endorsed by any supported site; all trademarks and names belong to their respective owners.",
+  disclaimerAgreeNote:
+    "By clicking the button above, you acknowledge that you have read, understood, and agree to the above.",
+  disclaimerContribute: "Contribute",
 
   tabPrompts: "Prompts",
   tabSettings: "Settings",

@@ -11,6 +11,11 @@ export const ja = {
   communityMotto: "早く行きたければ、一人で行け。遠くへ行きたければ、みんなで行け。",
   welcomeJoin: "Ophelへようこそ",
   agreeButton: "理解し同意する",
+  disclaimerAffiliation:
+    "この拡張機能は対応サイトと公式な提携・承認関係にありません。各商標・名称はそれぞれの所有者に帰属します。",
+  disclaimerAgreeNote:
+    "上のボタンをクリックすると、上記の内容を読み、理解し、同意したことになります。",
+  disclaimerContribute: "貢献する",
 
   tabPrompts: "プロンプト",
   tabSettings: "設定",

@@ -11,6 +11,11 @@ export const pt = {
   communityMotto: "Se quer ir rápido, vá sozinho. Se quer ir longe, vá acompanhado.",
   welcomeJoin: "Bem-vindo ao Ophel",
   agreeButton: "Entendo e Aceito",
+  disclaimerAffiliation:
+    "Esta extensão não é afiliada oficialmente nem endossada pelos sites compatíveis; todas as marcas e nomes pertencem aos seus respectivos proprietários.",
+  disclaimerAgreeNote:
+    "Ao clicar no botão acima, você confirma que leu, compreendeu e concorda com o conteúdo acima.",
+  disclaimerContribute: "Contribuir",
 
   tabPrompts: "Comandos",
   tabSettings: "Ajustes",

@@ -10,6 +10,10 @@ export const zhTW = {
   communityMotto: "一個人可以走得很快，但一群人可以走得更遠。",
   welcomeJoin: "歡迎",
   agreeButton: "我已知曉並同意",
+  disclaimerAffiliation:
+    "本擴充功能與所支援的站點無任何官方隸屬或合作關係，相關商標與名稱歸各自擁有者。",
+  disclaimerAgreeNote: "點擊上方按鈕即表示你已閱讀、理解並同意以上內容。",
+  disclaimerContribute: "參與貢獻",
 
   tabPrompts: "提示詞",
   tabSettings: "設置",

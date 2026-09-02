@@ -11,6 +11,11 @@ export const it = {
   communityMotto: "Se vuoi andare veloce, vai da solo. Se vuoi andare lontano, andiamo insieme.",
   welcomeJoin: "Benvenuto a",
   agreeButton: "Capisco e sono d'accordo",
+  disclaimerAffiliation:
+    "Questa estensione non è affiliata ufficialmente né approvata dai siti supportati; tutti i marchi e i nomi appartengono ai rispettivi proprietari.",
+  disclaimerAgreeNote:
+    "Facendo clic sul pulsante qui sopra, dichiari di aver letto, compreso e accettato quanto sopra.",
+  disclaimerContribute: "Contribuisci",
 
   tabPrompts: "Suggerimenti",
   tabSettings: "Impostazioni",

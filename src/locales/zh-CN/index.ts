@@ -9,6 +9,10 @@ export const zhCN = {
   communityMotto: "一个人可以走得很快，但一群人可以走得更远。",
   welcomeJoin: "欢迎",
   agreeButton: "我已知晓并同意",
+  disclaimerAffiliation:
+    "本插件与所支持的站点无任何官方隶属或合作关系，相关商标与名称归各自所有者。",
+  disclaimerAgreeNote: "点击上方按钮即表示你已阅读、理解并同意以上内容。",
+  disclaimerContribute: "参与贡献",
 
   tabPrompts: "提示词",
   tabSettings: "设置",

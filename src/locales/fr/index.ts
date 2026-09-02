@@ -11,6 +11,11 @@ export const fr = {
   communityMotto: "Seul on va plus vite, ensemble on va plus loin.",
   welcomeJoin: "Bienvenue sur Ophel",
   agreeButton: "Je comprends et j'accepte",
+  disclaimerAffiliation:
+    "Cette extension n'est ni affiliée officiellement ni approuvée par les sites pris en charge ; toutes les marques et tous les noms appartiennent à leurs propriétaires respectifs.",
+  disclaimerAgreeNote:
+    "En cliquant sur le bouton ci-dessus, vous confirmez avoir lu, compris et accepté ce qui précède.",
+  disclaimerContribute: "Contribuer",
 
   tabPrompts: "Invites",
   tabSettings: "Réglages",

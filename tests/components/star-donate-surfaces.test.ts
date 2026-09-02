@@ -20,12 +20,21 @@ const sidebarSource = readSource("../../src/components/SidebarCommunityLinks.tsx
 const popupSource = readSource("../../src/popup.tsx")
 const mainPanelSource = readSource("../../src/components/MainPanel.tsx")
 
+const localeIds = ["zh-CN", "zh-TW", "en", "ja", "ko", "it", "de", "es", "fr", "pt", "ru"] as const
+
 describe("star and donate surfaces", () => {
   it("keeps the first-run disclaimer legal-only", () => {
     const source = compact(disclaimerSource)
 
     expect(source).toContain('t("agreeButton")')
     expect(source).toContain('t("disclaimerWarning")')
+    expect(source).toContain('t("disclaimerAffiliation")')
+    expect(source).toContain('t("disclaimerAgreeNote")')
+    expect(source).toContain('t("disclaimerContribute")')
+    expect(source).toContain('t("reportIssue")')
+    expect(source).toContain('role="dialog"')
+    expect(source).toContain('aria-modal="true"')
+    expect(source).toContain("autoFocus")
     expect(source).toContain("GITHUB_REPO_URL")
     expect(source).not.toContain('t("giveStar")')
     expect(source).not.toContain("getStoreInfo")
@@ -36,6 +45,15 @@ describe("star and donate surfaces", () => {
     expect(source).not.toContain("wechat")
     expect(source).not.toContain("alipay")
     expect(source).not.toContain("kofiSupport")
+  })
+
+  it("provides disclaimer affiliation, agree note, and contribute copy in all 11 locales", () => {
+    for (const localeId of localeIds) {
+      const locale = resources[localeId]
+      expect(locale.disclaimerAffiliation.length, localeId).toBeGreaterThan(0)
+      expect(locale.disclaimerAgreeNote.length, localeId).toBeGreaterThan(0)
+      expect(locale.disclaimerContribute.length, localeId).toBeGreaterThan(0)
+    }
   })
 
   it("wires About to Afdian picture sources, the website, and locale donate channels", () => {
@@ -116,20 +134,6 @@ describe("star and donate surfaces", () => {
 })
 
 describe("star and donate copy", () => {
-  const localeIds = [
-    "zh-CN",
-    "zh-TW",
-    "en",
-    "ja",
-    "ko",
-    "it",
-    "de",
-    "es",
-    "fr",
-    "pt",
-    "ru",
-  ] as const
-
   it("fixes zh-CN donate title and keeps Star-aligned githubDesc in all 11 locales", () => {
     expect(Object.keys(resources).sort()).toEqual([...localeIds].sort())
     expect(resources.en.kofiSupport).toBe("Buy Me a Coffee")
