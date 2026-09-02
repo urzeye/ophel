@@ -100,6 +100,10 @@ export const VariableInputDialog: React.FC<VariableInputDialogProps> = ({
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
+      // 多行 textarea 中 Enter 用于换行；Ctrl/Cmd+Enter 提交，避免吞掉换行
+      if (e.target instanceof HTMLTextAreaElement && !e.ctrlKey && !e.metaKey) {
+        return
+      }
       e.preventDefault()
       handleSubmit()
     }
