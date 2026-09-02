@@ -575,7 +575,11 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
           const hostname = target.hostname.toLowerCase()
           if (
             hostname === "localhost" ||
+            // URL API 的 IPv6 hostname 带方括号：[::1]
+            hostname === "[::1]" ||
+            hostname === "[::]" ||
             hostname === "::1" ||
+            hostname === "0.0.0.0" ||
             hostname.endsWith(".local") ||
             /^127\./.test(hostname) ||
             /^10\./.test(hostname) ||
