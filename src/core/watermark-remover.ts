@@ -1,5 +1,6 @@
 import { MSG_PROXY_FETCH, sendToBackground } from "~utils/messaging"
 import { t } from "~utils/i18n"
+import { showToast } from "~utils/toast"
 import { processBananaWatermarkImageData } from "~core/watermark/banana-engine"
 import {
   classifyGeminiAssetUrl,
@@ -962,6 +963,7 @@ export class WatermarkRemover {
       )
 
       if (!processedDataUrl) {
+        showToast(t("watermarkFailed"))
         return
       }
 
@@ -975,7 +977,9 @@ export class WatermarkRemover {
         this.triggerDownloadFromDataUrl(processedDataUrl)
       }
     } catch {
-      return
+      // 原生下载/复制已被 stopImmediatePropagation 阻断，
+      // 失败必须显式提示，不能让用户误以为操作成功
+      showToast(t("watermarkFailed"))
     } finally {
       this.hideImageProcessingIndicator(loadingHost)
     }
