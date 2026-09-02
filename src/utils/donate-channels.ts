@@ -3,6 +3,8 @@
  * 仅 zh-CN 走爱发电 / 微信 / 支付宝；其余语言走 Ko-fi。
  */
 
+import { getEffectiveLanguage } from "~utils/i18n"
+
 const isUserscript = typeof __PLATFORM__ !== "undefined" && __PLATFORM__ === "userscript"
 
 export const KOFI_URL = "https://ko-fi.com/urzeye"
@@ -37,7 +39,9 @@ export type KofiDonateChannels = {
 export type DonateChannels = ZhCnDonateChannels | KofiDonateChannels
 
 export function usesZhCnDonateChannels(language: string): boolean {
-  return language === "zh-CN"
+  // 调用方可能传入设置里的原始值（默认 "auto"，如更新日志页脚），
+  // 先解析成实际生效语言再判断，否则中文用户会被错误分流到 Ko-fi
+  return getEffectiveLanguage(language) === "zh-CN"
 }
 
 export function getDonateChannels(language: string): DonateChannels {

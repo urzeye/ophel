@@ -2,7 +2,7 @@ import { existsSync, statSync } from "node:fs"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
 
-import { describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 
 import {
   AFDIAN_URL,
@@ -16,6 +16,10 @@ import {
 const repoRoot = fileURLToPath(new URL("../..", import.meta.url))
 
 describe("getDonateChannels", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
   it("maps zh-CN to Afdian plus WeChat and Alipay assets", () => {
     const channels = getDonateChannels("zh-CN")
 
@@ -46,6 +50,19 @@ describe("getDonateChannels", () => {
       expect("wechatImagePath" in channels).toBe(false)
       expect("alipayImagePath" in channels).toBe(false)
     }
+  })
+
+  it('resolves the "auto" setting through the browser language before routing', () => {
+    // 设置默认值是 "auto"，更新日志页脚会直接传入原始值
+    vi.stubGlobal("navigator", { language: "zh-CN" })
+    expect(usesZhCnDonateChannels("auto")).toBe(true)
+    expect(getDonateChannels("auto").primaryUrl).toBe(AFDIAN_URL)
+
+    vi.stubGlobal("navigator", { language: "zh-TW" })
+    expect(getDonateChannels("auto").primaryUrl).toBe(KOFI_URL)
+
+    vi.stubGlobal("navigator", { language: "en-US" })
+    expect(getDonateChannels("auto").primaryUrl).toBe(KOFI_URL)
   })
 
   it("resolves support images through the extension runtime URL", () => {
