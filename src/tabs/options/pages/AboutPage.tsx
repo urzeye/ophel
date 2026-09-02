@@ -7,6 +7,7 @@ import React, { useEffect, useState, useSyncExternalStore } from "react"
 import { PlatformIcon } from "~components/PlatformIcon"
 import {
   AboutIcon,
+  AfdianIcon,
   ChromeIcon,
   ClearIcon,
   DiscordIcon,
@@ -217,7 +218,7 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
               className="about-sponsor-afdian-card">
               <span className="about-sponsor-afdian-visual" aria-hidden="true">
                 <span className="about-sponsor-afdian-icon">
-                  <HeartIcon size={22} />
+                  <AfdianIcon size={24} />
                 </span>
                 <span className="about-sponsor-afdian-desc">{t("afdianCardDesc")}</span>
                 <span className="about-sponsor-afdian-cta">

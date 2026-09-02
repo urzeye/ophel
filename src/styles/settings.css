@@ -5462,10 +5462,9 @@ html[data-theme="dark"] .about-privacy-banner {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  /* 实色品牌紫圆标 + 白色爱心，明暗主题下都保持辨识度 */
-  background: #946ce6;
-  color: #fff;
-  box-shadow: 0 2px 8px rgba(148, 108, 230, 0.28);
+  /* 淡紫底 + 品牌紫 Logo，避免实色圆标在卡片视觉区显得过重 */
+  background: rgba(148, 108, 230, 0.12);
+  color: #946ce6;
 }
 
 .about-sponsor-afdian-title {
@@ -5493,9 +5492,8 @@ html[data-theme="dark"] .about-privacy-banner {
 :host([data-theme="dark"]) .about-sponsor-afdian-icon,
 :host-context([data-gh-mode="dark"]) .about-sponsor-afdian-icon,
 html[data-theme="dark"] .about-sponsor-afdian-icon {
-  background: #a17ef0;
-  color: #fff;
-  box-shadow: 0 2px 10px rgba(148, 108, 230, 0.4);
+  background: rgba(148, 108, 230, 0.22);
+  color: #c9b3f5;
 }
 
 :host([data-theme="dark"]) .about-sponsor-afdian-cta,
