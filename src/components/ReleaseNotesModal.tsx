@@ -154,12 +154,16 @@ export const ReleaseNotesModal: React.FC<ReleaseNotesModalProps> = ({
     if (!footer) return
 
     const checkOverflow = () => {
-      // 已经换行（两组按钮不在同一行）直接判溢出，覆盖字体加载后变宽等测不准的场景；
+      // 已经换行直接判溢出，覆盖字体加载后变宽等测不准的场景；
+      // 判定用“后一组的顶边超过前一组的底边”，不能用 offsetTop 差值——
+      // 同行两组高度不同时 align-items:center 会产生 1-2px 的顶边差，会误判成换行；
       // 竖排（移动端 column-reverse）是正常布局，不算溢出
       const groups = Array.from(footer.children) as HTMLElement[]
       const isRow = getComputedStyle(footer).flexDirection === "row"
       const wrapped =
-        isRow && groups.length > 1 && groups[groups.length - 1].offsetTop > groups[0].offsetTop
+        isRow &&
+        groups.length > 1 &&
+        groups[groups.length - 1].offsetTop > groups[0].offsetTop + groups[0].offsetHeight - 1
       footer.classList.add("is-measuring")
       const overflowing = footer.scrollWidth > footer.clientWidth + 1
       footer.classList.remove("is-measuring")
