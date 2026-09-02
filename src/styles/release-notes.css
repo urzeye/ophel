@@ -279,6 +279,11 @@
   flex-shrink: 0;
 }
 
+/* 测量期间强制单行，scrollWidth 才能反映完整内容宽度 */
+.gh-release-notes-footer.is-measuring {
+  flex-wrap: nowrap;
+}
+
 .gh-release-notes-star-link {
   flex: 0 0 auto;
   text-decoration: none;

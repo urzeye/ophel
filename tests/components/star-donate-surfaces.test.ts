@@ -111,6 +111,9 @@ describe("star and donate surfaces", () => {
     // 长文案语言一行放不下时，实测溢出后隐藏 Star/赞助文案只留图标按钮
     expect(source).toContain("is-compact")
     expect(source).toContain("ResizeObserver")
+    // 只剩图标时用 tooltip 兜底文案
+    expect(source).toContain("Tooltip")
+    expect(source).toContain("disabled={!isFooterCompact}")
     // 测量时按完整内容宽度判定，避免紧凑后按图标宽度误判导致来回振荡
     expect(source).toContain("is-measuring")
     expect(releaseNotesCss).toContain(

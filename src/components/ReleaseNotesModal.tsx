@@ -11,6 +11,7 @@ import {
 import { SparkleIcon } from "~components/icons/SparkleIcon"
 import { getReleaseNotesMediaAlt, getReleaseNotesMediaCaption } from "~release-notes"
 import type { ReleaseNotesMedia } from "~release-notes/types"
+import { Tooltip } from "~components/ui/Tooltip"
 import { OPHEL_HOVER_WIDTH_RETAIN_LAYER_PROPS } from "~utils/dom-toolkit"
 import { GITHUB_REPO_URL, getDonateChannels } from "~utils/donate-channels"
 import { t } from "~utils/i18n"
@@ -153,16 +154,22 @@ export const ReleaseNotesModal: React.FC<ReleaseNotesModalProps> = ({
     if (!footer) return
 
     const checkOverflow = () => {
-      const prevWrap = footer.style.flexWrap
-      footer.style.flexWrap = "nowrap"
+      // 已经换行（两组按钮不在同一行）直接判溢出，覆盖字体加载后变宽等测不准的场景；
+      // 竖排（移动端 column-reverse）是正常布局，不算溢出
+      const groups = Array.from(footer.children) as HTMLElement[]
+      const isRow = getComputedStyle(footer).flexDirection === "row"
+      const wrapped =
+        isRow && groups.length > 1 && groups[groups.length - 1].offsetTop > groups[0].offsetTop
       footer.classList.add("is-measuring")
       const overflowing = footer.scrollWidth > footer.clientWidth + 1
       footer.classList.remove("is-measuring")
-      footer.style.flexWrap = prevWrap
-      setIsFooterCompact((prev) => (prev === overflowing ? prev : overflowing))
+      const compact = wrapped || overflowing
+      setIsFooterCompact((prev) => (prev === compact ? prev : compact))
     }
 
     checkOverflow()
+    // 网页字体加载完成后按钮文案会变宽，需要复测一次
+    void document.fonts?.ready.then(checkOverflow)
     const observer = new ResizeObserver(checkOverflow)
     observer.observe(footer)
     return () => observer.disconnect()
@@ -264,23 +271,32 @@ export const ReleaseNotesModal: React.FC<ReleaseNotesModalProps> = ({
           ref={footerRef}
           className={`gh-release-notes-footer${isFooterCompact ? " is-compact" : ""}`}>
           <div className="gh-release-notes-footer-support">
-            <a
-              className="gh-release-notes-secondary gh-release-notes-star-link"
-              href={GITHUB_REPO_URL}
-              target="_blank"
-              rel="noopener noreferrer">
-              <GithubIcon size={16} />
-              <span>{t("giveStar")}</span>
-            </a>
+            {/* 紧凑模式只剩图标时，用 tooltip 兜底文案 */}
+            <Tooltip content={t("giveStar")} disabled={!isFooterCompact}>
+              <a
+                className="gh-release-notes-secondary gh-release-notes-star-link"
+                href={GITHUB_REPO_URL}
+                target="_blank"
+                rel="noopener noreferrer">
+                <GithubIcon size={16} />
+                <span>{t("giveStar")}</span>
+              </a>
+            </Tooltip>
             {/* 赞助入口按产品语言分流：zh-CN 走爱发电，其余走 Ko-fi */}
-            <a
-              className="gh-release-notes-secondary gh-release-notes-star-link"
-              href={donateChannels.primaryUrl}
-              target="_blank"
-              rel="noopener noreferrer">
-              {donateChannels.kind === "zh-CN" ? <HeartIcon size={16} /> : <KofiIcon size={16} />}
-              <span>{donateChannels.kind === "zh-CN" ? t("afdianSupport") : t("kofiSupport")}</span>
-            </a>
+            <Tooltip
+              content={donateChannels.kind === "zh-CN" ? t("afdianSupport") : t("kofiSupport")}
+              disabled={!isFooterCompact}>
+              <a
+                className="gh-release-notes-secondary gh-release-notes-star-link"
+                href={donateChannels.primaryUrl}
+                target="_blank"
+                rel="noopener noreferrer">
+                {donateChannels.kind === "zh-CN" ? <HeartIcon size={16} /> : <KofiIcon size={16} />}
+                <span>
+                  {donateChannels.kind === "zh-CN" ? t("afdianSupport") : t("kofiSupport")}
+                </span>
+              </a>
+            </Tooltip>
           </div>
           <div className="gh-release-notes-footer-actions">
             <button
