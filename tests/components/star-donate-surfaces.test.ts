@@ -101,10 +101,9 @@ describe("star and donate surfaces", () => {
     expect(source).toContain("GithubIcon")
     expect(source).toContain("GITHUB_REPO_URL")
     expect(source).toContain('t("giveStar")')
-    // 赞助入口按语言分流：zh-CN 爱发电，其余 Ko-fi
+    // 赞助入口按语言分流（zh-CN 爱发电，其余 Ko-fi），文案统一用 kofiSupport（中文即“赞助支持”）
     expect(source).toContain("getDonateChannels")
     expect(source).toContain("donateChannels.primaryUrl")
-    expect(source).toContain('t("afdianSupport")')
     expect(source).toContain('t("kofiSupport")')
     expect(source).toContain("onOpenFullChangelog")
     expect(source).toContain('t("releaseNotesViewFull")')
@@ -124,14 +123,16 @@ describe("star and donate surfaces", () => {
       ".gh-release-notes-footer.is-compact:not(.is-measuring) .gh-release-notes-star-link span { display: none;",
     )
     expect(GITHUB_REPO_URL).toBe("https://github.com/urzeye/ophel")
+    // “知道了”保持实色主按钮，hover 用 color-mix 加深以兼容 24 套主题
     expect(releaseNotesCss).toContain(
-      ".gh-release-notes-primary { border: 1px solid var(--gh-primary, #4285f4);",
+      ".gh-release-notes-primary { border: 1px solid transparent; padding: 0 14px; background: var(--gh-primary, #4285f4);",
     )
+    expect(releaseNotesCss).toContain("color: var(--gh-text-on-primary, #ffffff);")
     expect(releaseNotesCss).toContain(
-      "background: var(--gh-bg, #ffffff); color: var(--gh-primary, #4285f4);",
+      "background: color-mix(in srgb, var(--gh-primary, #4285f4) 88%, #000000);",
     )
     expect(releaseNotesCss).not.toContain(
-      ".gh-release-notes-primary { border: 1px solid transparent; padding: 0 14px; background: var(--gh-primary, #4285f4);",
+      ".gh-release-notes-primary { border: 1px solid var(--gh-primary, #4285f4);",
     )
   })
 

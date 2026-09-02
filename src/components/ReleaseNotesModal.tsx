@@ -293,18 +293,14 @@ export const ReleaseNotesModal: React.FC<ReleaseNotesModalProps> = ({
               </a>
             </Tooltip>
             {/* 赞助入口按产品语言分流：zh-CN 走爱发电，其余走 Ko-fi */}
-            <Tooltip
-              content={donateChannels.kind === "zh-CN" ? t("afdianSupport") : t("kofiSupport")}
-              disabled={!isFooterCompact}>
+            <Tooltip content={t("kofiSupport")} disabled={!isFooterCompact}>
               <a
                 className="gh-release-notes-secondary gh-release-notes-star-link"
                 href={donateChannels.primaryUrl}
                 target="_blank"
                 rel="noopener noreferrer">
                 {donateChannels.kind === "zh-CN" ? <HeartIcon size={16} /> : <KofiIcon size={16} />}
-                <span>
-                  {donateChannels.kind === "zh-CN" ? t("afdianSupport") : t("kofiSupport")}
-                </span>
+                <span>{t("kofiSupport")}</span>
               </a>
             </Tooltip>
           </div>
