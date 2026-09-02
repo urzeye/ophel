@@ -73,7 +73,9 @@ export const usePromptsStore = create<PromptsState>()(
             ),
           })),
 
-        deleteCategory: (name, defaultCategory = "未分类") =>
+        // 默认回退为空串（未分类），展示层用 t("uncategorized") 按当前语言渲染；
+        // 不能写入中文常量，否则非中文用户的数据里会混入中文字符串
+        deleteCategory: (name, defaultCategory = "") =>
           set((state) => ({
             prompts: state.prompts.map((p) =>
               p.category === name ? { ...p, category: defaultCategory } : p,

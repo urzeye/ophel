@@ -80,7 +80,8 @@ export class PromptManager {
     getPromptsStore().renameCategory(oldName, newName)
   }
 
-  deleteCategory(name: string, defaultCategoryName: string = "未分类") {
+  // 空串表示未分类，由展示层本地化渲染，避免把中文写进用户数据
+  deleteCategory(name: string, defaultCategoryName: string = "") {
     getPromptsStore().deleteCategory(name, defaultCategoryName)
   }
 
