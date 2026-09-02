@@ -444,7 +444,13 @@ export function bindDomTooltip(
 
   trigger.addEventListener("mouseenter", show)
   trigger.addEventListener("mouseleave", hide)
-  trigger.addEventListener("focus", show)
+  // 仅在键盘导航聚焦（:focus-visible）时显示；
+  // 弹窗关闭后程序化恢复焦点不匹配 :focus-visible，避免 tooltip 凭空出现
+  const showFromFocus = () => {
+    if (!trigger.matches(":focus-visible")) return
+    show()
+  }
+  trigger.addEventListener("focus", showFromFocus)
   trigger.addEventListener("blur", hide)
   trigger.addEventListener("pointerdown", hide)
   trigger.addEventListener("click", hide)
@@ -454,7 +460,7 @@ export function bindDomTooltip(
     destroy: () => {
       trigger.removeEventListener("mouseenter", show)
       trigger.removeEventListener("mouseleave", hide)
-      trigger.removeEventListener("focus", show)
+      trigger.removeEventListener("focus", showFromFocus)
       trigger.removeEventListener("blur", hide)
       trigger.removeEventListener("pointerdown", hide)
       trigger.removeEventListener("click", hide)
@@ -538,10 +544,17 @@ export const Tooltip: React.FC<TooltipProps> = ({
 
   // 针对切标签页/窗口回来时浏览器自动恢复焦点的场景，
   // 屏蔽由页面恢复焦点触发的 showTooltip（非用户主动键盘导航）
-  const showTooltipFromFocus = useCallback(() => {
-    if (isFocusFromWindowRestoration()) return
-    showTooltip()
-  }, [showTooltip])
+  const showTooltipFromFocus = useCallback(
+    (event: React.FocusEvent) => {
+      if (isFocusFromWindowRestoration()) return
+      // 弹窗关闭后程序化恢复焦点（如设置弹窗把焦点还给设置按钮）不匹配
+      // :focus-visible；仅键盘导航聚焦时才通过 focus 显示 tooltip，
+      // 避免鼠标操作链路下 tooltip 凭空出现
+      if (!event.target.matches(":focus-visible")) return
+      showTooltip()
+    },
+    [showTooltip],
+  )
 
   const updatePosition = useCallback(() => {
     const triggerRect = triggerRef.current?.getBoundingClientRect()
