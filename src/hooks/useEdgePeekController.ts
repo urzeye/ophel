@@ -56,6 +56,8 @@ export function useEdgePeekController({
   const shortcutPeekTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isInteractionActiveRef = useRef(false)
   const isInputFocusedRef = useRef(false)
+  // IME 组合输入期间（如中文候选框）保持面板展开，不因 focusout/指针离开缩回
+  const isComposingRef = useRef(false)
   const suppressOverlayInitRef = useRef(false)
   const shouldSyncAfterOpenRef = useRef(false)
   const edgeSnapStateRef = useRef(edgeSnapState)
@@ -98,7 +100,12 @@ export function useEdgePeekController({
       return
     }
 
-    if (isSettingsOpenRef.current || isInteractionActiveRef.current || isInputFocusedRef.current) {
+    if (
+      isSettingsOpenRef.current ||
+      isInteractionActiveRef.current ||
+      isInputFocusedRef.current ||
+      isComposingRef.current
+    ) {
       return
     }
 
@@ -169,6 +176,7 @@ export function useEdgePeekController({
     hideTimerRef.current = setTimeout(() => {
       if (isSettingsOpenRef.current) return
       if (isInputFocusedRef.current) return
+      if (isComposingRef.current) return
       syncEdgePeekVisibility()
     }, 200)
   }, [clearHideTimer, isSettingsOpenRef, syncEdgePeekVisibility])
@@ -255,6 +263,9 @@ export function useEdgePeekController({
         return
       }
 
+      // IME 组合输入（中文候选框）引发的 focusout 不算真正失焦
+      if (isComposingRef.current) return
+
       isInputFocusedRef.current = false
       clearHideTimer()
       hideTimerRef.current = setTimeout(() => {
@@ -281,10 +292,23 @@ export function useEdgePeekController({
       window.setTimeout(syncEdgePeekVisibility, 0)
     }
 
+    const handleCompositionStart = () => {
+      isComposingRef.current = true
+      clearHideTimer()
+    }
+
+    const handleCompositionEnd = () => {
+      isComposingRef.current = false
+      // 组合结束后再按真实焦点状态同步一次
+      scheduleEdgePeekSync(300)
+    }
+
     shadowRoots.forEach((shadowRoot) => {
       shadowRoot.addEventListener("focusin", handleFocusIn, true)
       shadowRoot.addEventListener("focusout", handleFocusOut, true)
       shadowRoot.addEventListener("keydown", handleKeyDown, true)
+      shadowRoot.addEventListener("compositionstart", handleCompositionStart, true)
+      shadowRoot.addEventListener("compositionend", handleCompositionEnd, true)
     })
 
     return () => {
@@ -292,6 +316,8 @@ export function useEdgePeekController({
         shadowRoot.removeEventListener("focusin", handleFocusIn, true)
         shadowRoot.removeEventListener("focusout", handleFocusOut, true)
         shadowRoot.removeEventListener("keydown", handleKeyDown, true)
+        shadowRoot.removeEventListener("compositionstart", handleCompositionStart, true)
+        shadowRoot.removeEventListener("compositionend", handleCompositionEnd, true)
       })
     }
   }, [
@@ -300,6 +326,7 @@ export function useEdgePeekController({
     getQueryRoots,
     isSettingsOpenRef,
     panelMode,
+    scheduleEdgePeekSync,
     showEdgePeek,
     syncEdgePeekVisibility,
   ])
