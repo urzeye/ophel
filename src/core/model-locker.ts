@@ -20,6 +20,7 @@ export class ModelLocker {
   private isLocked = false
   private verifyTimer: ReturnType<typeof setInterval> | null = null
   private configDebounceTimer: ReturnType<typeof setTimeout> | null = null
+  private startTimer: ReturnType<typeof setTimeout> | null = null
 
   constructor(adapter: SiteAdapter, config: ModelLockSiteConfig) {
     this.adapter = adapter
@@ -52,8 +53,15 @@ export class ModelLocker {
     if (!this.config.enabled || !this.config.keyword) return
     if (this.isLocked) return
 
+    // 重新调度前先清掉挂起的启动定时器，避免旧定时器到期后再次触发锁定
+    if (this.startTimer) {
+      clearTimeout(this.startTimer)
+      this.startTimer = null
+    }
+
     // 延迟后开始锁定（初始化时需要延迟等待页面加载，手动触发时可直接执行）
-    setTimeout(() => {
+    this.startTimer = setTimeout(() => {
+      this.startTimer = null
       if (this.isLocked) return // 再次检查，避免重复锁定
 
       this.adapter.lockModel(this.config.keyword, () => {
@@ -151,6 +159,11 @@ export class ModelLocker {
   }
 
   stop() {
+    // 停止挂起的启动定时器（延迟窗口内 stop/relock 必须可取消）
+    if (this.startTimer) {
+      clearTimeout(this.startTimer)
+      this.startTimer = null
+    }
     // 停止防抖定时器
     if (this.configDebounceTimer) {
       clearTimeout(this.configDebounceTimer)
