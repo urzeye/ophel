@@ -216,7 +216,13 @@ export class QueueDispatcher {
 
     // 必须精确相等：双向 includes 会把用户发送失败后继续编辑的内容
     // 误判为“队列项仍在编辑器”，导致恢复逻辑把用户正在输入的内容重发出去
-    return [itemContent, visibleItemContent].some((content) => content && editorContent === content)
+    const candidates = [itemContent, visibleItemContent]
+    if (candidates.some((content) => content && editorContent === content)) return true
+
+    // 段落化插入（ChatGPT/Grok 的 <p> 结构）读回 textContent 时换行丢失，
+    // 空格折叠后多行内容永远失配；再按“去掉全部空白”的压缩形式比较一次
+    const editorSquashed = editorContent.replace(/ /g, "")
+    return candidates.some((content) => content && editorSquashed === content.replace(/ /g, ""))
   }
 
   private completeItem(itemId: string): void {
