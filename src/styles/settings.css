@@ -514,6 +514,30 @@
   flex: 0 1 auto;
 }
 
+/* 导航项未读红点（如“关于”有新版更新日志时），与面板 logo 红点同色 */
+.settings-nav-unread-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-left: 5px;
+  border-radius: 50%;
+  background: var(--gh-danger, #ef4444);
+  vertical-align: middle;
+  animation: gh-unread-dot-pulse 2s infinite;
+}
+
+@keyframes gh-unread-dot-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 0.8;
+  }
+}
+
 /* 导航项内的 beta 徽标使用更紧凑的尺寸，避免挤压菜单文字 */
 .settings-nav-item .settings-beta-badge {
   height: 16px;

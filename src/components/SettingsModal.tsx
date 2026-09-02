@@ -24,6 +24,7 @@ import ModelLockSettingsContent from "~components/ModelLockSettingsContent"
 import { Tooltip } from "~components/ui/Tooltip"
 import { SidebarCommunityLinks } from "~components/SidebarCommunityLinks"
 import { NAV_IDS, resolveSettingsNavigateDetail, type SettingsNavigateDetail } from "~constants"
+import { useHasUnseenReleaseNotes } from "~hooks/useHasUnseenReleaseNotes"
 import { platform } from "~platform"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
 import { SidebarFooter } from "~tabs/options/components/SidebarFooter"
@@ -146,6 +147,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const siteId = adapter.getSiteId()
   const siteInstanceKey = adapter.getSiteInstanceKey()
   const [activePage, setActivePage] = useState<string>(NAV_IDS.GENERAL)
+  const hasUnseenReleaseNotes = useHasUnseenReleaseNotes()
   const [initialSubTab, setInitialSubTab] = useState<string | undefined>(undefined)
   const [locateRequest, setLocateRequest] = useState<{ settingId: string; token: number } | null>(
     null,
@@ -504,6 +506,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </span>
                 <span className={`settings-nav-item-label${item.beta ? " has-badge" : ""}`}>
                   {getLocalizedLabel(item.labelKey, item.label)}
+                  {item.id === NAV_IDS.ABOUT && hasUnseenReleaseNotes ? (
+                    <span className="settings-nav-unread-dot" aria-hidden="true" />
+                  ) : null}
                 </span>
                 {item.beta && (
                   <span className="settings-beta-badge">

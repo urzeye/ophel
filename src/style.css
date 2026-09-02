@@ -2617,7 +2617,6 @@
   .gh-release-toast,
   .gh-release-toast-button,
   .gh-release-toast-close,
-  .gh-brand-release-popover,
   .selected-prompt-bar,
   .ophel-tooltip {
     transition: none !important;
@@ -2636,7 +2635,6 @@
   .gh-update-notice-icon,
   .gh-panel-brand-unread,
   .gh-release-toast,
-  .gh-brand-release-popover,
   .gh-quick-btn-unread,
   .selected-prompt-bar,
   .ophel-tooltip {
@@ -4696,59 +4694,6 @@
   0% {
     opacity: 0;
     transform: translateY(12px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* ============= 品牌区更新预览 popover ============= */
-.gh-brand-release-popover {
-  position: absolute;
-  top: calc(100% + 10px);
-  left: 0;
-  z-index: 60;
-  width: 260px;
-  padding: 12px 14px;
-  border-radius: 12px;
-  background: var(--gh-bg, #ffffff);
-  border: 1px solid var(--gh-border, rgba(148, 163, 184, 0.2));
-  box-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.18);
-  color: var(--gh-text, #111827);
-  /* 预览不拦截指针，避免悬停闪烁；点击行为由品牌区本身承担 */
-  pointer-events: none;
-  animation: gh-brand-release-popover-enter 0.18s ease-out;
-}
-
-.gh-brand-release-popover-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--gh-primary, #2563eb);
-}
-
-.gh-brand-release-popover-preview {
-  margin: 6px 0 0;
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--gh-text-secondary, #6b7280);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.gh-brand-release-popover-hint {
-  margin-top: 8px;
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--gh-primary, #4285f4);
-}
-
-@keyframes gh-brand-release-popover-enter {
-  0% {
-    opacity: 0;
-    transform: translateY(-4px);
   }
   100% {
     opacity: 1;

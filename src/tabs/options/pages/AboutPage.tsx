@@ -23,6 +23,7 @@ import {
 } from "~components/icons"
 import { SparkleIcon } from "~components/icons/SparkleIcon"
 import { STORE_LINKS } from "~constants/store-links"
+import { useHasUnseenReleaseNotes } from "~hooks/useHasUnseenReleaseNotes"
 import { useSupportedAiPlatforms } from "~hooks/useSupportedAiPlatforms"
 import { APP_DISPLAY_NAME, APP_VERSION, getAppIconUrl } from "~utils/config"
 import {
@@ -45,6 +46,7 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
   const supportedPlatformsCount = String(supportedPlatforms.length)
   const language = useSyncExternalStore(subscribeI18nChanges, getCurrentLang, getCurrentLang)
   const donateChannels = getDonateChannels(language)
+  const hasUnseenReleaseNotes = useHasUnseenReleaseNotes()
   const [sponsorPreview, setSponsorPreview] = useState<{ src: string; alt: string } | null>(null)
   const [afdianBannerFailed, setAfdianBannerFailed] = useState(false)
 
@@ -96,6 +98,9 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
                 onClick={onOpenReleaseNotes}>
                 <SparkleIcon size={14} color="currentColor" />
                 <span>{t("releaseNotesOpen")}</span>
+                {hasUnseenReleaseNotes ? (
+                  <span className="about-release-notes-unread" aria-hidden="true" />
+                ) : null}
               </button>
             ) : null}
           </div>

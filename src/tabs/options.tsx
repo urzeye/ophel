@@ -15,6 +15,7 @@ import {
   SitePacksIcon,
 } from "~components/icons"
 import { resolveSettingsNavigateDetail } from "~constants"
+import { useHasUnseenReleaseNotes } from "~hooks/useHasUnseenReleaseNotes"
 import { platform } from "~platform"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
 import { APP_DISPLAY_NAME, getAppIconUrl } from "~utils/config"
@@ -86,6 +87,7 @@ const NAV_ITEMS: Array<{
 
 const OptionsPage = () => {
   const [activePage, setActivePage] = useState("general")
+  const hasUnseenReleaseNotes = useHasUnseenReleaseNotes()
   const [initialSubTab, setInitialSubTab] = useState<string | undefined>(undefined)
   const [locateRequest, setLocateRequest] = useState<{ settingId: string; token: number } | null>(
     null,
@@ -302,6 +304,9 @@ const OptionsPage = () => {
               </span>
               <span className={`settings-nav-item-label${item.beta ? " has-badge" : ""}`}>
                 {t(item.labelKey)}
+                {item.id === "about" && hasUnseenReleaseNotes ? (
+                  <span className="settings-nav-unread-dot" aria-hidden="true" />
+                ) : null}
               </span>
               {item.beta && <span className="settings-beta-badge">{t("betaBadge")}</span>}
             </button>

@@ -5,9 +5,9 @@ export interface ReleaseNotesState {
   lastToastVersion?: string
 }
 
-const RELEASE_NOTES_STATE_KEY = "ophel:releaseNotesState"
+export const RELEASE_NOTES_STATE_KEY = "ophel:releaseNotesState"
 
-const normalizeReleaseNotesState = (value: unknown): ReleaseNotesState => {
+export const normalizeReleaseNotesState = (value: unknown): ReleaseNotesState => {
   if (!value || typeof value !== "object") return {}
 
   const state = value as ReleaseNotesState

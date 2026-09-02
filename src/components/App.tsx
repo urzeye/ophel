@@ -639,6 +639,8 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
   const [hoverWidthReleaseToken, setHoverWidthReleaseToken] = useState(0)
   const [isReleaseNotesOpen, setIsReleaseNotesOpen] = useState(false)
   const [hasUnseenReleaseNotes, setHasUnseenReleaseNotes] = useState(false)
+  // 本进程内已标记已读的版本：防止关闭弹窗时 effect 重读存储的竞态把红点复活
+  const markedSeenVersionRef = useRef<string | null>(null)
   const [showReleaseNotesToast, setShowReleaseNotesToast] = useState(false)
   const [showExtensionUpdateNotice, setShowExtensionUpdateNotice] = useState(
     () => typeof window !== "undefined" && Boolean(window.__OPHEL_EXTENSION_UPDATE_AVAILABLE__),
@@ -753,6 +755,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
   }, [releaseNotesMarkdown])
 
   const markCurrentReleaseNotesSeen = useCallback(() => {
+    markedSeenVersionRef.current = APP_VERSION
     setHasUnseenReleaseNotes(false)
     void markReleaseNotesSeen(APP_VERSION).catch((error) => {
       console.warn("[Ophel] Failed to save release notes state:", error)
@@ -763,13 +766,14 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
     if (!canShowCurrentReleaseNotes || !releaseNotesMarkdown.trim()) return
     // 无论从哪个入口打开更新日志，都同时收起 toast，避免浮层叠在 modal 之上
     setShowReleaseNotesToast(false)
+    // 打开即视为已读：用户已经看到内容，红点随之消失
+    markCurrentReleaseNotesSeen()
     setIsReleaseNotesOpen(true)
-  }, [canShowCurrentReleaseNotes, releaseNotesMarkdown])
+  }, [canShowCurrentReleaseNotes, markCurrentReleaseNotesSeen, releaseNotesMarkdown])
 
   const closeReleaseNotes = useCallback(() => {
     setIsReleaseNotesOpen(false)
-    markCurrentReleaseNotesSeen()
-  }, [markCurrentReleaseNotesSeen])
+  }, [])
 
   const openFullChangelog = useCallback(() => {
     platform.openTab(fullChangelogUrl)
@@ -830,7 +834,8 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
     void getReleaseNotesState()
       .then((state) => {
         if (cancelled) return
-        const unseen = state.lastSeenVersion !== APP_VERSION
+        const unseen =
+          markedSeenVersionRef.current !== APP_VERSION && state.lastSeenVersion !== APP_VERSION
         setHasUnseenReleaseNotes(unseen)
 
         // 更新提醒 toast 每个版本最多一次，且只在升级场景（有历史版本记录）触发，
@@ -3331,8 +3336,6 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
           hasUnseenReleaseNotes
         }
         onOpenReleaseNotes={canShowCurrentReleaseNotes ? openReleaseNotes : undefined}
-        releaseNotesTitleText={releaseNotesTitleText}
-        releaseNotesPreview={releaseNotesPreview}
         onMouseEnter={handleMainPanelMouseEnter}
         onMouseLeave={handleMainPanelMouseLeave}
       />

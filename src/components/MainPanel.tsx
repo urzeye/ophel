@@ -80,8 +80,6 @@ interface MainPanelProps {
   hoverWidthReleaseToken?: number
   hasUnseenReleaseNotes?: boolean
   onOpenReleaseNotes?: () => void
-  releaseNotesTitleText?: string
-  releaseNotesPreview?: string
   onMouseEnter?: React.MouseEventHandler<HTMLDivElement>
   onMouseLeave?: React.MouseEventHandler<HTMLDivElement>
 }
@@ -172,8 +170,6 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   hoverWidthReleaseToken = 0,
   hasUnseenReleaseNotes = false,
   onOpenReleaseNotes,
-  releaseNotesTitleText,
-  releaseNotesPreview,
   onMouseEnter,
   onMouseLeave,
 }) => {
@@ -804,34 +800,35 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     [resetHeaderPressHint],
   )
 
-  // 品牌区（logo）交互：未读更新日志时悬停短暂停留展示轻量预览，点击才打开完整更新日志
+  // 品牌区（logo）交互：未读更新日志时悬停短暂停留直接打开完整更新日志（打开即已读），
+  // 已读后悬停无行为、点击打开
   const brandHoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const [isBrandPopoverOpen, setIsBrandPopoverOpen] = useState(false)
+
+  const clearBrandHoverTimer = useCallback(() => {
+    if (brandHoverTimerRef.current) {
+      clearTimeout(brandHoverTimerRef.current)
+      brandHoverTimerRef.current = null
+    }
+  }, [])
 
   const handleBrandMouseEnter = useCallback(() => {
     if (!hasUnseenReleaseNotes || !onOpenReleaseNotes) return
-    if (brandHoverTimerRef.current) clearTimeout(brandHoverTimerRef.current)
+    clearBrandHoverTimer()
     brandHoverTimerRef.current = setTimeout(() => {
-      setIsBrandPopoverOpen(true)
-    }, 300)
-  }, [hasUnseenReleaseNotes, onOpenReleaseNotes])
-
-  const handleBrandMouseLeave = useCallback(() => {
-    if (brandHoverTimerRef.current) {
-      clearTimeout(brandHoverTimerRef.current)
       brandHoverTimerRef.current = null
-    }
-    setIsBrandPopoverOpen(false)
-  }, [])
+      onOpenReleaseNotes()
+    }, 200)
+  }, [clearBrandHoverTimer, hasUnseenReleaseNotes, onOpenReleaseNotes])
+
+  const handleBrandMouseLeave = clearBrandHoverTimer
 
   const handleBrandClick = useCallback(() => {
-    if (brandHoverTimerRef.current) {
-      clearTimeout(brandHoverTimerRef.current)
-      brandHoverTimerRef.current = null
-    }
-    setIsBrandPopoverOpen(false)
+    clearBrandHoverTimer()
     onOpenReleaseNotes?.()
-  }, [onOpenReleaseNotes])
+  }, [clearBrandHoverTimer, onOpenReleaseNotes])
+
+  // 卸载时清理悬停定时器，避免组件销毁后回调触发
+  useEffect(() => clearBrandHoverTimer, [clearBrandHoverTimer])
 
   const handleBrandKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -1445,16 +1442,6 @@ export const MainPanel: React.FC<MainPanelProps> = ({
               </div>
               <span className="gh-panel-brand-title">{t("panelTitle")}</span>
             </div>
-
-            {isBrandPopoverOpen && hasUnseenReleaseNotes && releaseNotesTitleText ? (
-              <div className="gh-brand-release-popover" role="status">
-                <div className="gh-brand-release-popover-title">{releaseNotesTitleText}</div>
-                {releaseNotesPreview ? (
-                  <p className="gh-brand-release-popover-preview">{releaseNotesPreview}</p>
-                ) : null}
-                <div className="gh-brand-release-popover-hint">{t("releaseNotesViewFull")}</div>
-              </div>
-            ) : null}
           </div>
 
           {/* 右侧：按钮组 - 需要 gh-panel-controls 以排除拖拽 */}

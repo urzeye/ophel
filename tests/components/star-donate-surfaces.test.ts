@@ -19,6 +19,10 @@ const releaseNotesSource = readSource("../../src/components/ReleaseNotesModal.ts
 const sidebarSource = readSource("../../src/components/SidebarCommunityLinks.tsx")
 const popupSource = readSource("../../src/popup.tsx")
 const mainPanelSource = readSource("../../src/components/MainPanel.tsx")
+const appSource = readSource("../../src/components/App.tsx")
+const settingsModalSource = readSource("../../src/components/SettingsModal.tsx")
+const optionsSource = readSource("../../src/tabs/options.tsx")
+const unreadHookSource = readSource("../../src/hooks/useHasUnseenReleaseNotes.ts")
 
 const localeIds = ["zh-CN", "zh-TW", "en", "ja", "ko", "it", "de", "es", "fr", "pt", "ru"] as const
 
@@ -130,6 +134,33 @@ describe("star and donate surfaces", () => {
     expect(mainPanelSource).not.toContain("ko-fi.com")
     expect(mainPanelSource).not.toContain("afdian")
     expect(mainPanelSource).not.toContain("getDonateChannels")
+  })
+
+  it("opens the full release notes modal on brand hover and drops the preview popover", () => {
+    const panel = compact(mainPanelSource)
+    const app = compact(appSource)
+
+    // 轻量预览 popover 已移除：不再有任何 popover 残留
+    expect(panel).not.toContain("gh-brand-release-popover")
+    expect(panel).not.toContain("isBrandPopoverOpen")
+    // 悬停短暂停留后直接打开完整更新日志
+    expect(panel).toContain("brandHoverTimerRef.current = setTimeout(() => {")
+    expect(panel).toContain("onOpenReleaseNotes()")
+    // 打开即标记已读，关闭只做关闭，避免读写竞态复活红点
+    expect(app).toContain("markedSeenVersionRef.current = APP_VERSION")
+    expect(app).toContain(
+      "const closeReleaseNotes = useCallback(() => { setIsReleaseNotesOpen(false) }, [])",
+    )
+  })
+
+  it("mirrors the unread release notes dot on the settings nav and About entry", () => {
+    expect(compact(settingsModalSource)).toContain("settings-nav-unread-dot")
+    expect(compact(optionsSource)).toContain("settings-nav-unread-dot")
+    expect(aboutSource).toContain("about-release-notes-unread")
+    expect(aboutSource).toContain("useHasUnseenReleaseNotes")
+    // 共享 hook 读写同一份平台存储，保证各入口红点同生同灭
+    expect(unreadHookSource).toContain("RELEASE_NOTES_STATE_KEY")
+    expect(unreadHookSource).toContain("platform.storage.watch")
   })
 })
 
