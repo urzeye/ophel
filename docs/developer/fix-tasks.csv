@@ -36,7 +36,7 @@
 35,P1-24,OutlineManager 实现 destroy 并由 useEffect 管理,P1,中,中,修复,src/core/outline-manager.ts; src/components/App.tsx,Gemini 架构#1,已修
 36,P3-10,ui-entry remount 观察器挂载成功后 disconnect,P3,易,小,修复,src/contents/ui-entry.tsx,Codex,已修
 37,P2-2,QuickQuote Chip 深色模式对比度适配,P2,易,小,修复,src/components/QuickQuoteActions.tsx,Gemini UI#2,已修
-38,P2-13,移除工具箱常驻旋转与红点脉冲动画,P2,易,小,修复,MainPanel.tsx / 相关 CSS,Grok UI,已修
+38,P2-13,工具箱常驻旋转与红点脉冲动画（按明确需求保留既有设计）,P2,易,小,不修,src/style.css,Grok UI,保留设计
 39,P2-4,Emoji 功能图标替换为 SVG 图标组件,P2,易,中,缓修,ClaudeSettings.tsx; OutlineTab.tsx; QuickButtons.tsx; GlobalSearchResultItemView.tsx,Gemini UI#5,缓修
 40,P2-6,icon-only 按钮补 aria-label 与 32px 热区（含 11 语言 key）,P2,易,中,缓修,MainPanel.tsx; QuickButtons.tsx; ShortcutsPage.tsx; VariableInputDialog.tsx,Gemini UI#7,缓修
 41,P1-9,油猴 Claude SessionKey 改 GM_cookie,P1,难,中,缓修,src/platform/userscript/index.ts,Gemini #10,缓修

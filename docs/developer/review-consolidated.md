@@ -239,7 +239,7 @@
 | P2-10 | div 冒充按钮（大纲层级圆点、标签筛选、队列折叠胶囊），键盘不可达 | `OutlineTab.tsx`、`ConversationsTab.tsx`、`QueueOverlay.tsx` | Grok UI | 真实 |
 | P2-11 | 提示词编辑器 Esc 只能关平台选择器，关不了编辑器；预览/导入弹窗缺 Esc | `PromptsTab.tsx` | Grok UI | 真实 |
 | P2-12 | 拖拽无键盘替代（面板 Tab、设置排序、文件夹、Chain、快捷按钮） | 多处 | Grok UI | 真实 |
-| P2-13 | 工具箱打开无限旋转、未读红点常驻脉冲，违反 DESIGN 6.3 | `MainPanel.tsx` / 相关 CSS | Grok UI | 真实 |
+| P2-13 | 工具箱打开旋转（tools-spin）、未读红点脉冲（pulse-red） | `src/style.css` | Grok UI | 保留设计（按明确需求保留既有视觉动效） |
 | P2-14 | Tooltip 固定深色玻璃不跟 24 套主题 | tooltip 样式 | Grok UI | 真实 |
 | P2-15 | 失败反馈几乎全靠 2-3s toast，错误不可复制 | 全局 | Grok UI | 真实（方向性改进） |
 | P2-16 | 三个 Tab 工具栏不统一（会话未进 tool-stack、大纲 28px 旧类、搜索 30/32 混用） | 三个 Tab | Grok UI | 真实 |
@@ -307,3 +307,4 @@
 | R-3 | 代理校验 IPv6 环回漏网：WHATWG URL 规范下 `new URL("http://[::1]/").hostname` 返回带方括号的 `[::1]`，`hostname === "::1"` 永不命中；`0.0.0.0` 等写法也未覆盖。风险面小（消息只能来自已注入的 content script），但名单有洞 | `src/background.ts` | 修复不彻底 | 已修：补 `[::1]`/`[::]` 与 `0.0.0.0` 匹配 |
 | R-4 | ui-entry 重挂载观察器 5 秒断连的回归窗口：原实现永久观察 body 兜底，现 `max(delays)+2000` 后断连；慢网络下水合晚于 5 秒且清除 host 时面板不再重挂载。概率低，但方向是回归 | `src/contents/ui-entry.tsx` | 修复引入的边界回退 | 缓修：可改为"挂载成功后稳定观察 N 秒再断连"，需实测权衡 |
 | R-5 | 变量输入框 Enter 改为换行、Ctrl/Cmd+Enter 提交：符合审查意见，但改变老用户习惯，对话框内暂无新交互提示文案 | `src/components/VariableInputDialog.tsx` | 有意行为变化 | 缓修：补一行快捷键提示文案 |
+| R-6 | 工具箱展开旋转（tools-spin）与未读红点脉冲（pulse-red）动画：按明确设计需求保留原有视觉动效与反馈，撤销对 style.css 的动画移除 | `src/style.css` | 明确设计保留 | 保留：恢复动画定义与调用 |
