@@ -358,6 +358,7 @@
     "collapseNavbar": false,
     "collapseTools": false,
     "collapseAdvanced": false,
+    "collapseRunSettings": false,
     "enableSearch": true,
     "defaultModel": "",
     "markdownFix": false,

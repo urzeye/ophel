@@ -340,6 +340,7 @@ export const DEFAULT_SETTINGS: Settings = {
     collapseNavbar: false,
     collapseTools: false,
     collapseAdvanced: false,
+    collapseRunSettings: false,
     enableSearch: true,
     defaultModel: "", // 空表示不覆盖
     // 油猴脚本环境默认开启
