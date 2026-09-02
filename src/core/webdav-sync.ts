@@ -12,6 +12,7 @@ import {
 import { platform } from "~platform"
 import type { WebDAVProvider } from "~types/webdav"
 import { APP_NAME } from "~utils/config"
+import { btoaUtf8 } from "~utils/encoding"
 import { MSG_WEBDAV_REQUEST } from "~utils/messaging"
 
 function safeDecodeURIComponent(str: string) {
@@ -666,7 +667,7 @@ export class WebDAVSyncManager {
       // 构建请求头，添加 Basic Auth
       const requestHeaders: Record<string, string> = { ...headers }
       if (this.config.username && this.config.password) {
-        const credentials = btoa(`${this.config.username}:${this.config.password}`)
+        const credentials = btoaUtf8(`${this.config.username}:${this.config.password}`)
         requestHeaders["Authorization"] = `Basic ${credentials}`
       }
 

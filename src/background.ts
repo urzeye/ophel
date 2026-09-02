@@ -52,6 +52,7 @@ import {
   readRemoteConfigAutoUpdate,
 } from "~utils/persisted-settings"
 import { localStorage, type Settings } from "~utils/storage"
+import { btoaUtf8 } from "~utils/encoding"
 
 /**
  * Ophel - Background Service Worker
@@ -625,7 +626,7 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
 
           // 添加 Basic Auth
           if (auth?.username && auth?.password) {
-            const credentials = btoa(`${auth.username}:${auth.password}`)
+            const credentials = btoaUtf8(`${auth.username}:${auth.password}`)
             fetchHeaders["Authorization"] = `Basic ${credentials}`
           }
 
