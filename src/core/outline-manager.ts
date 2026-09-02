@@ -5,6 +5,7 @@ import { useBookmarkStore, type Bookmark } from "~stores/bookmarks-store"
 import { useSettingsStore } from "~stores/settings-store"
 import { showToast } from "~utils/toast"
 import { t } from "~utils/i18n"
+import { EVENT_MONITOR_COMPLETE, EVENT_MONITOR_START } from "~utils/messaging"
 import { signalReadingHistoryUserNavigation } from "~utils/reading-history-navigation"
 
 type ExtendedOutlineItem = OutlineItem & {
@@ -250,15 +251,13 @@ export class OutlineManager {
 
   private handleMessage(event: MessageEvent) {
     if (event.source !== window) return
-    // Imports needed: EVENT_MONITOR_START, EVENT_MONITOR_COMPLETE
-    // I will add them to the top of the file
     const { type } = event.data || {}
 
-    if (type === "GH_MONITOR_START" /* EVENT_MONITOR_START */) {
+    if (type === EVENT_MONITOR_START) {
       if (this.settings.autoUpdate) {
         this.startAutoUpdate()
       }
-    } else if (type === "GH_MONITOR_COMPLETE" /* EVENT_MONITOR_COMPLETE */) {
+    } else if (type === EVENT_MONITOR_COMPLETE) {
       this.stopAutoUpdate()
       // Final refresh
       this.refresh()
