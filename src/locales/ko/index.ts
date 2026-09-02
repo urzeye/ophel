@@ -241,7 +241,7 @@ export const ko = {
   // ======== About Page ========
   version: "버전",
   aboutDescription:
-    "{appName}은 ChatGPT, Claude, Gemini, DeepSeek, Doubao 등 AI 플랫폼을 위한 브라우저 확장 프로그램으로, 사이트 어댑터 팩(JSON 규칙)으로 지원 사이트를 더 확장할 수 있습니다. 대화 관리, 다중 형식보내기, 스마트 개요와 북마크, 전역 검색, 프롬프트 라이브러리와 자동 큐 같은 생산성 도구와 함께 읽기 진행 복원, 차트·수식 렌더링 및 복사, 모델 잠금, 탭 제목 강화, AI 응답 완료 알림 같은 편의 기능을 제공하며, 스마트 페이지 레이아웃 조정, 테마, Zen 모드, WebDAV 멀티 디바이스 동기화도 지원하여 더욱 매끄러운 AI 경험을 제공합니다.",
+    "{appName}은 ChatGPT, Claude, Gemini, DeepSeek, Doubao 등 AI 플랫폼을 위한 브라우저 확장 프로그램으로, 어댑터 팩(JSON 규칙)으로 지원 사이트를 확장할 수 있습니다. 대화 관리, 다중 형식보내기, 스마트 개요, 전역 검색, 프롬프트 큐 같은 생산성 도구와 함께 읽기 진행 복원, 수식 렌더링·복사, 완료 알림, 모델 잠금, 페이지 레이아웃 조정 같은 편의 기능을 제공하며, 테마, Zen 모드, WebDAV 동기화도 지원하여 더욱 매끄러운 AI 경험을 제공합니다.",
   aboutSupportedPlatforms: "지원 플랫폼",
   aboutSupportedPlatformsDesc:
     "현재 {count}개의 AI 플랫폼을 지원하며, 팝업의 사이트 감지 및 빠른 접근 목록과 같은 기준을 사용합니다.",

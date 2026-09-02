@@ -242,7 +242,7 @@ export const pt = {
   // ======== About Page ========
   version: "Versão",
   aboutDescription:
-    "{appName} é uma extensão de navegador criada para plataformas de IA como ChatGPT, Claude, Gemini, DeepSeek e Doubao, expansível para mais sites por meio de pacotes de adaptadores (regras JSON). Ela oferece ferramentas de produtividade como gerenciamento de conversas, exportação em vários formatos, outlines inteligentes com favoritos, busca global e uma biblioteca de prompts com filas automáticas, além de recursos úteis como restauração do progresso de leitura, renderização e cópia de gráficos e fórmulas, bloqueio de modelo, títulos de abas aprimorados e alertas de conclusão das respostas da IA. Com ajuste inteligente de layout, temas, modo Zen e sincronização WebDAV entre dispositivos, o {appName} torna suas interações com IA mais fluidas e agradáveis.",
+    "{appName} é uma extensão de navegador para plataformas de IA como ChatGPT, Claude, Gemini, DeepSeek e Doubao, expansível para mais sites por meio de pacotes de adaptadores (regras JSON). Ela oferece gerenciamento de conversas, exportação em vários formatos, outlines inteligentes, busca global e filas de prompts, além de restauração do progresso de leitura, renderização e cópia de fórmulas, alertas de conclusão, bloqueio de modelo e ajuste de layout. Com temas, modo Zen e sincronização WebDAV, torna suas interações com IA mais fluidas e agradáveis.",
   aboutSupportedPlatforms: "Plataformas compatíveis",
   aboutSupportedPlatformsDesc:
     "Atualmente cobre {count} plataformas de IA, em sincronia com a detecção e o acesso rápido do popup.",

@@ -271,7 +271,7 @@ export const zhCN = {
   // ======== 关于页面 ========
   version: "版本",
   aboutDescription:
-    "{appName} 是一款专为 ChatGPT、Claude、Gemini、DeepSeek、豆包等 AI 平台打造的浏览器增强扩展，还可通过站点适配包（JSON 规则）扩展适配更多站点。它提供会话管理、多格式导出、智能大纲与收藏、全局搜索、提示词库与自动队列等效率工具，还具备阅读进度恢复、图表与公式渲染复制、模型锁定、标签页增强、AI 回复完成提醒等实用功能，并支持页面智能布局调整、主题美化、禅模式与 WebDAV 多端同步，让您的 AI 交互体验更加流畅愉悦。",
+    "{appName} 是一款专为 ChatGPT、Claude、Gemini、DeepSeek、豆包等 AI 平台打造的浏览器增强扩展，支持站点适配包（JSON 规则）扩展更多站点。它提供会话管理、多格式导出、智能大纲、全局搜索、提示词队列等效率工具，以及阅读进度恢复、公式渲染复制、完成提醒、模型锁定、页面布局调整等实用功能，并支持主题美化、禅模式与 WebDAV 多端同步，让您的 AI 交互更流畅愉悦。",
   aboutSupportedPlatforms: "支持平台",
   aboutSupportedPlatformsDesc:
     "当前已覆盖 {count} 个 AI 平台，和弹窗中的站点识别与快捷入口保持同步。",

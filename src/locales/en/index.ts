@@ -247,7 +247,7 @@ export const en = {
   // ======== About Page ========
   version: "Version",
   aboutDescription:
-    "{appName} is a browser extension built for AI platforms like ChatGPT, Claude, Gemini, DeepSeek, and Doubao, extendable to even more sites through site adapter packs (JSON rules). It boosts your workflow with conversation management, multi-format export, smart outlines with bookmarks, global search, and a prompt library with automated queues, plus handy tools like reading progress restore, chart and formula rendering and copying, model lock, enhanced tab titles, and AI reply completion alerts. With smart page layout tuning, themes, Zen mode, and WebDAV multi-device sync, {appName} makes your AI interactions smoother and more enjoyable.",
+    "{appName} is a browser extension for AI platforms like ChatGPT, Claude, Gemini, DeepSeek, and Doubao, extendable to more sites via adapter packs (JSON rules). It offers conversation management, multi-format export, smart outlines, global search, and prompt queues, plus reading progress restore, formula rendering and copy, completion alerts, model lock, and page layout tuning, with themes, Zen mode, and WebDAV sync to keep your AI interactions smooth and enjoyable.",
   aboutSupportedPlatforms: "Supported Platforms",
   aboutSupportedPlatformsDesc:
     "Currently covers {count} AI platforms, kept in sync with popup detection and quick access.",
