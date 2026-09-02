@@ -15,6 +15,7 @@ import {
   ThemeDarkIcon,
   ThemeLightIcon,
 } from "~components/icons"
+import { ConfirmDialog } from "~components/ui"
 import { APPEARANCE_TAB_IDS } from "~constants"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
@@ -105,6 +106,7 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
   // 自定义样式编辑器状态
   const [showStyleEditor, setShowStyleEditor] = useState(false)
   const [editingStyle, setEditingStyle] = useState<CustomStyle | null>(null)
+  const [styleToDelete, setStyleToDelete] = useState<string | null>(null)
 
   // 获取当前站点的主题配置
   const currentTheme = settings ? getSiteTheme(settings, siteId) : undefined
@@ -206,15 +208,13 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
 
   // 删除自定义样式
   const deleteCustomStyle = (styleId: string) => {
-    if (confirm(t("confirmDeleteStyle"))) {
-      const newStyles = (settings?.theme?.customStyles || []).filter((s) => s.id !== styleId)
-      setSettings({
-        theme: {
-          ...settings?.theme,
-          customStyles: newStyles,
-        },
-      })
-    }
+    const newStyles = (settings?.theme?.customStyles || []).filter((s) => s.id !== styleId)
+    setSettings({
+      theme: {
+        ...settings?.theme,
+        customStyles: newStyles,
+      },
+    })
   }
 
   const customStyles = settings?.theme?.customStyles || []
@@ -379,7 +379,7 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
                       <button
                         type="button"
                         className="settings-btn settings-btn-danger settings-icon-only-btn"
-                        onClick={() => deleteCustomStyle(style.id)}
+                        onClick={() => setStyleToDelete(style.id)}
                         aria-label={t("confirmDeleteStyle")}
                         title={t("confirmDeleteStyle")}>
                         <DeleteIcon size={14} />
@@ -488,6 +488,19 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
             </div>
           </div>
         </div>
+      )}
+
+      {styleToDelete && (
+        <ConfirmDialog
+          title={t("deleteStyle")}
+          message={t("confirmDeleteStyle")}
+          danger
+          onConfirm={() => {
+            deleteCustomStyle(styleToDelete)
+            setStyleToDelete(null)
+          }}
+          onCancel={() => setStyleToDelete(null)}
+        />
       )}
     </div>
   )
