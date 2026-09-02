@@ -51,11 +51,12 @@ export class Storage {
 
   watch<T>(
     key: string | { [key: string]: (change: { newValue?: T; oldValue?: T }) => void },
+    callback?: (change: { newValue?: T; oldValue?: T }) => void,
   ): () => void {
     if (typeof key === "string") {
       // 单 key 监听
       const listenerId = GM_addValueChangeListener(key, (_name, _oldValue, _newValue, _remote) => {
-        // 简化实现，不完全兼容原 API
+        callback?.({ newValue: _newValue as T, oldValue: _oldValue as T })
       })
       return () => GM_removeValueChangeListener(listenerId)
     } else {
