@@ -130,12 +130,12 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
             <span style={{ fontWeight: 600 }}>{t("githubRepository")}</span>
           </div>
           <div className="about-link-desc">{t("githubDesc")}</div>
-          <button type="button" className="about-link-btn about-star-btn">
+          <span className="about-link-btn about-star-btn" aria-hidden="true">
             <span className="about-btn-inner">
               <StarIcon size={15} color="currentColor" filled={true} />
               {t("giveStar")}
             </span>
-          </button>
+          </span>
         </a>
 
         {donateChannels.kind === "kofi" ? (
@@ -152,12 +152,12 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
             <div className="about-link-desc" style={{ color: "var(--gh-text-secondary)" }}>
               {t("kofiDesc")}
             </div>
-            <button type="button" className="about-link-btn">
+            <span className="about-link-btn" aria-hidden="true">
               <span className="about-btn-inner">
                 <KofiIcon size={14} color="currentColor" />
                 {t("kofiBtn")}
               </span>
-            </button>
+            </span>
           </a>
         ) : null}
 
@@ -175,12 +175,12 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
             </span>
           </div>
           <div className="about-link-desc">{t("websiteDesc")}</div>
-          <button type="button" className="about-link-btn">
+          <span className="about-link-btn" aria-hidden="true">
             <span className="about-btn-inner">
               <GlobeIcon size={14} color="currentColor" />
               {t("visitWebsite")}
             </span>
-          </button>
+          </span>
         </a>
 
         {/* Discord Link */}
@@ -197,12 +197,12 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
           <div className="about-link-desc" style={{ color: "var(--gh-text-secondary)" }}>
             {t("discordDesc")}
           </div>
-          <button type="button" className="about-link-btn">
+          <span className="about-link-btn" aria-hidden="true">
             <span className="about-btn-inner">
               <DiscordIcon size={14} color="currentColor" />
               {t("joinDiscord")}
             </span>
-          </button>
+          </span>
         </a>
       </div>
 
@@ -300,9 +300,9 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
             <ChromeIcon size={24} />
             <span style={{ fontWeight: 600 }}>{t("chromeStore")}</span>
           </div>
-          <button type="button" className="about-link-btn">
+          <span className="about-link-btn" aria-hidden="true">
             {t("reviewBtn")}
-          </button>
+          </span>
         </a>
 
         {/* Edge Add-ons */}
@@ -315,9 +315,9 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
             <EdgeIcon size={24} />
             <span style={{ fontWeight: 600 }}>{t("edgeAddons")}</span>
           </div>
-          <button type="button" className="about-link-btn">
+          <span className="about-link-btn" aria-hidden="true">
             {t("reviewBtn")}
-          </button>
+          </span>
         </a>
 
         {/* Firefox Add-on */}
@@ -330,9 +330,9 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
             <FirefoxIcon size={24} color="#FF7139" />
             <span style={{ fontWeight: 600 }}>{t("firefoxAddons")}</span>
           </div>
-          <button type="button" className="about-link-btn">
+          <span className="about-link-btn" aria-hidden="true">
             {t("reviewBtn")}
-          </button>
+          </span>
         </a>
 
         {/* GreasyFork */}
@@ -345,9 +345,9 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
             <GreasyForkIcon size={24} color="currentColor" />
             <span style={{ fontWeight: 600, color: "var(--gh-text)" }}>{t("greasyFork")}</span>
           </div>
-          <button type="button" className="about-link-btn">
+          <span className="about-link-btn" aria-hidden="true">
             {t("reviewBtn")}
-          </button>
+          </span>
         </a>
 
         {/* ScriptCat */}
@@ -360,9 +360,9 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
             <ScriptCatIcon size={24} color="#1296db" />
             <span style={{ fontWeight: 600, color: "var(--gh-text)" }}>{t("scriptCat")}</span>
           </div>
-          <button type="button" className="about-link-btn">
+          <span className="about-link-btn" aria-hidden="true">
             {t("reviewBtn")}
-          </button>
+          </span>
         </a>
       </div>
 
