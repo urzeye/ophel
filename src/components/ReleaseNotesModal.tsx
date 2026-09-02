@@ -173,7 +173,10 @@ export const ReleaseNotesModal: React.FC<ReleaseNotesModalProps> = ({
 
     checkOverflow()
     // 网页字体加载完成后按钮文案可能变宽，补一次复测
-    void document.fonts?.ready.then(checkOverflow)
+    let cancelled = false
+    void document.fonts?.ready.then(() => {
+      if (!cancelled) checkOverflow()
+    })
 
     let lastWidth = footer.clientWidth
     const observer = new ResizeObserver(() => {
@@ -182,7 +185,10 @@ export const ReleaseNotesModal: React.FC<ReleaseNotesModalProps> = ({
       checkOverflow()
     })
     observer.observe(footer)
-    return () => observer.disconnect()
+    return () => {
+      cancelled = true
+      observer.disconnect()
+    }
   }, [language])
 
   const activeMediaUrl = activeMedia ? resolveReleaseNotesAssetUrl(activeMedia.src) : ""

@@ -732,7 +732,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
     ? getFullChangelogUrl(releaseNotesLanguage)
     : "https://ophel.app/docs/changelog"
 
-  // 红点悬停 popover 与更新 toast 共用的标题和首条要点预览
+  // 更新 toast 的标题和首条要点预览
   const releaseNotesTitleText = canShowCurrentReleaseNotes
     ? formatLocalizedText(
         { key: "releaseNotesTitle", fallback: `Ophel Atlas v{version}` },

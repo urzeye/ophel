@@ -274,7 +274,7 @@
   background: var(--gh-bg, #ffffff);
 }
 
-/* 子项不压缩，保证溢出检测（scrollWidth）读到真实内容宽度，放不下时换行而不是变形 */
+/* 子项不压缩，保证溢出检测按各组 offsetWidth 读到真实内容宽度，放不下时换行而不是变形 */
 .gh-release-notes-footer > * {
   flex-shrink: 0;
 }
