@@ -558,6 +558,9 @@ export class DeepSeekAdapter extends SiteAdapter {
       if (!markdown) {
         if (!includeUserQueries) return
 
+        // 流式思考阶段正文 markdown 尚未生成，不能把 AI 思考块当成用户提问
+        if (!this.resolveUserMessageElement(message)) return
+
         const text = this.extractUserQueryMarkdown(message)
         if (!text) return
 
