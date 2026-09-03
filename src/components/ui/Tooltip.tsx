@@ -107,14 +107,23 @@ export interface TooltipProps {
   disabled?: boolean
 }
 
-// 文本截断检测：比较 scroll/client 尺寸，同时覆盖单行 ellipsis 与多行 line-clamp
+// 文本截断检测：只统计“具备文本裁剪能力”的元素（ellipsis / line-clamp），
+// 忽略徽章、图标等有意的视觉溢出（如大纲提问徽章绝对定位超出自身盒），
+// 同时覆盖单行 ellipsis 与多行 line-clamp 两种截断形式
 function hasTruncatedText(root: HTMLElement): boolean {
   const isOverflowing = (el: Element): boolean =>
     el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1
 
-  if (isOverflowing(root)) return true
+  const canClipText = (el: Element): boolean => {
+    const style = window.getComputedStyle(el)
+    if (style.textOverflow === "ellipsis") return true
+    const lineClamp = style.webkitLineClamp
+    return lineClamp !== "" && lineClamp !== "none"
+  }
+
+  if (canClipText(root) && isOverflowing(root)) return true
   for (const el of Array.from(root.querySelectorAll("*"))) {
-    if (isOverflowing(el)) return true
+    if (canClipText(el) && isOverflowing(el)) return true
   }
   return false
 }
