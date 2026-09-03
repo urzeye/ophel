@@ -2065,14 +2065,15 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   }
 
   const filtered = getFilteredPrompts()
-  const isPromptReorderingEnabled =
-    selectedCategory !== VIRTUAL_CATEGORY.RECENT &&
-    !searchQuery.trim() &&
-    selectedPlatforms.length === 0
   const isCurrentPlatformFilter =
     currentPlatform !== null &&
     selectedPlatforms.length === 1 &&
     selectedPlatforms[0] === currentPlatform.id
+  // 提示词顺序是全局手动数组，平台筛选只是隐藏部分行，
+  // 拖放落点按目标项 id 映射回全局数组即可，与筛选哪个站点无关；
+  // 仅"最近使用"（按时间排序）和搜索中（防误触）禁用拖动
+  const isPromptReorderingEnabled =
+    selectedCategory !== VIRTUAL_CATEGORY.RECENT && !searchQuery.trim()
   const isCustomPlatformFilter = selectedPlatforms.length > 0 && !isCurrentPlatformFilter
   const selectedPlatform =
     selectedPlatforms.length === 1

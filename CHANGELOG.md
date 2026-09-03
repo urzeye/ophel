@@ -31,6 +31,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **DeepSeek thinking block outline** — Fixed issue where DeepSeek R1 reasoning/thinking blocks during streaming were incorrectly recognized as user queries, causing outline flickering.
 - **Outline word count overflow** — Fixed issue across ChatGPT, Claude, Gemini, Grok, and Z.ai where section word counts incorrectly accumulated across subsequent conversation turns.
 - **Grok prompt insertion** — Fixed issue where prompts containing `<`, `>`, or `&` were parsed as raw HTML or discarded, and preserved multiline paragraph formatting in Grok.
+- **Prompt drag sorting** — Fixed drag sorting being unavailable in the prompt library; reordering now works under any platform filter, and stays disabled only in the "Recent" view and during search.
 
 ---
 
