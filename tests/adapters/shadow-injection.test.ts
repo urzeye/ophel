@@ -16,6 +16,21 @@ class DummyAdapter extends SiteAdapter {
   match(): boolean {
     return true
   }
+  getName(): string {
+    return "Dummy"
+  }
+  getThemeColors(): { primary: string; secondary: string } {
+    return { primary: "#000000", secondary: "#ffffff" }
+  }
+  getTextareaSelectors(): string[] {
+    return []
+  }
+  insertPrompt(_content: string): boolean {
+    return false
+  }
+  getConversationTitle(): string | null {
+    return null
+  }
 }
 
 describe("shouldInjectIntoShadow", () => {

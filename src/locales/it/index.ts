@@ -1403,8 +1403,7 @@ export const it = {
   resetShortcutsConfirm:
     "Sei sicuro di voler reimpostare tutte le scorciatoie sui valori predefiniti?",
   pressAnyKey: "Premere un tasto qualsiasi...",
-  shortcutConflictWith: "Conflitti con",
-  shortcutConflict: "",
+  shortcutConflict: 'Conflitti con "{name}"',
   globalShortcutsTitle: "Scorciatoie globali",
   globalShortcutsDesc:
     "Lavora su qualsiasi pagina del browser. Configurali nelle impostazioni dell'estensione del browser.",

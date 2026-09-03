@@ -40,13 +40,15 @@ Ophel Atlas 是 TypeScript + React 18 + Plasmo 的浏览器扩展，同时支持
 - 扩展开发：`pnpm dev`
 - 格式检查：`pnpm format:check`
 - Lint 检查：`pnpm lint:check`
-- 类型检查：`pnpm typecheck`
+- 类型检查：`pnpm typecheck`（覆盖 `src/` 与 `tests/`）
+- 测试：`pnpm test`（Vitest）
 - Chrome 构建：`pnpm build`
+- Firefox 构建：`pnpm build:firefox`
 - 油猴构建：`pnpm build:userscript`
 - 油猴本地调试构建：`pnpm build:userscript:local`
 - 油猴本地资源服务：`pnpm serve:userscript:assets`
 
-项目当前没有正式测试体系；代码变更优先运行最相关检查，提交前参考 CI 顺序补齐 `pnpm format:check`、`pnpm lint:check`、`pnpm typecheck`、`pnpm build`。若无法运行，交付时说明原因和替代检查。
+项目使用 Vitest 作为测试体系。代码变更优先运行最相关检查；提交前参考 CI 顺序补齐 `pnpm format:check`、`pnpm lint:check`、`pnpm typecheck`、`pnpm test`、`pnpm build`。涉及存储适配、内容脚本入口、样式注入或核心初始化时，再补 `pnpm build:userscript` 与 `pnpm build:firefox`。若无法运行，交付时说明原因和替代检查。
 
 ## 编码约束
 
@@ -126,7 +128,7 @@ Ophel Atlas 是 TypeScript + React 18 + Plasmo 的浏览器扩展，同时支持
 
 ## 提交与 PR
 
-- 提交代码前参考 `.github/workflows/ci.yml`，建议按 CI 顺序运行：`pnpm format:check`、`pnpm lint:check`、`pnpm typecheck`、`pnpm build`。
+- 提交代码前参考 `.github/workflows/ci.yml`，建议按 CI 顺序运行：`pnpm format:check`、`pnpm lint:check`、`pnpm typecheck`、`pnpm test`、`pnpm build`。
 - 仅文档或 `docs/**` 变更通常不会触发 CI，可按风险选择是否运行完整检查。
 - Commit message 使用英文，遵循 `commitlint.config.js` 的 Conventional Commits：`type(scope): subject`。
 - 允许的 type：`feat`、`fix`、`docs`、`style`、`refactor`、`perf`、`test`、`build`、`ci`、`chore`、`revert`、`deps`、`ux`。

@@ -2,7 +2,6 @@
 import { createHash } from "crypto"
 import * as fs from "fs"
 import * as path from "path"
-import * as vm from "vm"
 import react from "@vitejs/plugin-react"
 import { build as viteBuild, defineConfig, type Plugin } from "vite"
 import monkey from "vite-plugin-monkey"
@@ -23,7 +22,10 @@ import {
   KATEX_CDN_JS_URL,
   KATEX_CSS_RESOURCE_NAME,
 } from "./src/platform/userscript/katex-cdn"
+import { SITE_ICONS } from "./src/constants/site-icons"
 import { resources as localeResources } from "./src/locales/resources"
+import { INLINE_HIGHLIGHT_STYLES } from "./src/styles/markdown-preview-inline"
+import { INLINE_USER_QUERY_MARKDOWN_STYLES } from "./src/styles/user-query-markdown-inline"
 
 const isUserscriptDevelopmentBuild =
   process.env.NODE_ENV === "development" || Boolean(process.env.USERSCRIPT_ASSET_BASE_URL)
@@ -192,37 +194,6 @@ function createHashedFileName(fileName: string, content: string | Buffer): strin
   return `${baseName}.${createContentHash(content)}${ext}`
 }
 
-function extractReturnedTemplateLiteral(sourceFile: string, functionName: string): string {
-  const source = fs.readFileSync(sourceFile, "utf-8")
-  const pattern = new RegExp(
-    `function\\s+${functionName}\\s*\\(\\)\\s*:\\s*string\\s*{\\s*return\\s+\`([\\s\\S]*?)\`\\s*}`,
-  )
-  const match = source.match(pattern)
-
-  if (!match) {
-    throw new Error(`Unable to extract ${functionName} from ${path.relative(__dirname, sourceFile)}`)
-  }
-
-  return match[1]
-}
-
-function buildUserscriptSiteIconsResource(): string {
-  const sourceFile = path.resolve(__dirname, "src/constants/site-icons.ts")
-  const source = fs.readFileSync(sourceFile, "utf-8")
-  const executableSource = source.replace(
-    /export\s+const\s+SITE_ICONS\s*:\s*Record<string,\s*string>\s*=/,
-    "module.exports =",
-  )
-  const sandbox = { module: { exports: {} } }
-
-  vm.runInNewContext(executableSource, sandbox, {
-    filename: sourceFile,
-    timeout: 1000,
-  })
-
-  return JSON.stringify(sandbox.module.exports)
-}
-
 function readUserscriptAssetContent(
   key: keyof typeof USERSCRIPT_RESOURCE_DEFINITIONS,
 ): string | Buffer {
@@ -231,21 +202,15 @@ function readUserscriptAssetContent(
   }
 
   if (key === "markdownPreviewStyles") {
-    return extractReturnedTemplateLiteral(
-      path.resolve(__dirname, "src/utils/markdown.ts"),
-      "getInlineHighlightStyles",
-    )
+    return INLINE_HIGHLIGHT_STYLES
   }
 
   if (key === "userQueryMarkdownStyles") {
-    return extractReturnedTemplateLiteral(
-      path.resolve(__dirname, "src/core/user-query-markdown.ts"),
-      "getInlineUserQueryMarkdownStyles",
-    )
+    return INLINE_USER_QUERY_MARKDOWN_STYLES
   }
 
   if (key === "siteIcons") {
-    return buildUserscriptSiteIconsResource()
+    return JSON.stringify(SITE_ICONS)
   }
 
   return fs.readFileSync(userscriptAssetSources[key])
@@ -297,6 +262,7 @@ async function buildMarkdownVendor(): Promise<void> {
           "src/platform/userscript/vendor-bridge/platform.ts",
         ),
         "~platform": path.resolve(__dirname, "src/platform"),
+        "~styles": path.resolve(__dirname, "src/styles"),
         "~": path.resolve(__dirname, "src"),
       },
     },

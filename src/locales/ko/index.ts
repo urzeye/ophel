@@ -1271,8 +1271,7 @@ export const ko = {
   resetShortcuts: "기본값으로 재설정",
   resetShortcutsConfirm: "모든 단축키를 기본값으로 재설정하시겠습니까?",
   pressAnyKey: "키를 누르세요...",
-  shortcutConflictWith: "다음 단축키와 충돌:",
-  shortcutConflict: "",
+  shortcutConflict: '다음 단축키와 충돌: "{name}"',
   globalShortcutsTitle: "글로벌 단축키",
   globalShortcutsDesc:
     "모든 브라우저 페이지에서 작동합니다. 브라우저 확장 프로그램 설정에서 구성하세요.",

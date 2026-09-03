@@ -176,12 +176,7 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
           !!normalizedExistingBinding.ctrl === !!normalizedBinding.ctrl &&
           !!normalizedExistingBinding.shift === !!normalizedBinding.shift
         ) {
-          const conflictParts = [
-            t("shortcutConflictWith"),
-            `"${t(meta.labelKey)}"`,
-            t("shortcutConflict"),
-          ].filter(Boolean)
-          return conflictParts.join(" ")
+          return t("shortcutConflict", { name: t(meta.labelKey) })
         }
       }
       return undefined
