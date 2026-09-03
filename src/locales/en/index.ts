@@ -1726,6 +1726,7 @@ Please output the optimized code block directly, followed by a brief summary of 
   queueEdit: "Edit",
   queueEditSave: "Save",
   queueEditCancel: "Cancel",
+  queueEditedNotSent: "Editor content changed; the queued item was not sent",
   queueForceSend: "Force Send",
   queueBatchImport: "Batch Add",
   queueBatchImportTitle: "Batch Add to Queue",

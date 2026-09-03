@@ -1788,6 +1788,7 @@ export const it = {
   queueEdit: "Modifica",
   queueEditSave: "Salva",
   queueEditCancel: "Annulla",
+  queueEditedNotSent: "Contenuto dell'editor modificato; l'elemento in coda non è stato inviato",
   queueForceSend: "Forza l'invio",
   queueBatchImport: "Aggiunta batch",
   queueBatchImportTitle: "Aggiungi batch alla coda",

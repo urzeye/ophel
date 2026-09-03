@@ -1709,6 +1709,7 @@ export const ru = {
   queueEdit: "Редактировать",
   queueEditSave: "Сохранить",
   queueEditCancel: "Отмена",
+  queueEditedNotSent: "Содержимое редактора изменилось; элемент очереди не был отправлен",
   queueForceSend: "Принудительная отправка",
   queueBatchImport: "Массовое добавление",
   queueBatchImportTitle: "Массово добавить в очередь",

@@ -1722,6 +1722,7 @@ export const ja = {
   queueEdit: "編集",
   queueEditSave: "保存",
   queueEditCancel: "キャンセル",
+  queueEditedNotSent: "入力内容が変更されたため、このキュー項目は送信されませんでした",
   queueForceSend: "強制送信",
   queueBatchImport: "一括追加",
   queueBatchImportTitle: "キューに一括追加",

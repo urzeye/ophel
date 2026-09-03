@@ -16,6 +16,8 @@ import {
 import { useSettingsStore } from "~stores/settings-store"
 import type { QueueItem } from "~stores/queue-store"
 import { useQueueStore } from "~stores/queue-store"
+import { t } from "~utils/i18n"
+import { showToast } from "~utils/toast"
 
 export class QueueDispatcher {
   private adapter: SiteAdapter
@@ -238,7 +240,12 @@ export class QueueDispatcher {
     }
 
     if (!this.isItemContentInEditor(item)) {
-      // 输入框已清空或内容已被用户处理，避免永久卡在 sending。
+      // 编辑器已清空：可能是站点已消费或用户手动清空，保持静默丢弃。
+      // 编辑器里还有内容但不匹配：说明用户改过内容，为避免误发送而丢弃，
+      // 但必须提示用户这条队列项并未发出，不能伪装成已发送
+      if (this.promptManager.getCurrentEditorContent().trim()) {
+        showToast(t("queueEditedNotSent"))
+      }
       this.completeItem(item.id)
       this.idleCount = 0
       return

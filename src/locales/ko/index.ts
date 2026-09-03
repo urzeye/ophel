@@ -1704,6 +1704,7 @@ export const ko = {
   queueEdit: "편집",
   queueEditSave: "저장",
   queueEditCancel: "취소",
+  queueEditedNotSent: "편집 내용이 변경되어 이 큐 항목이 전송되지 않았습니다",
   queueForceSend: "강제 전송",
   queueBatchImport: "일괄 추가",
   queueBatchImportTitle: "대기열에 일괄 추가",

@@ -1667,6 +1667,7 @@ export const zhCN = {
   queueEdit: "编辑",
   queueEditSave: "保存",
   queueEditCancel: "取消",
+  queueEditedNotSent: "编辑器内容已修改，该队列项未发送",
   queueForceSend: "强制发送",
   queueBatchImport: "批量加入",
   queueBatchImportTitle: "批量加入队列",

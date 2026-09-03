@@ -1668,6 +1668,7 @@ export const zhTW = {
   queueEdit: "編輯",
   queueEditSave: "儲存",
   queueEditCancel: "取消",
+  queueEditedNotSent: "編輯器內容已修改，該佇列項目未送出",
   queueForceSend: "強制發送",
   queueBatchImport: "批次加入",
   queueBatchImportTitle: "批次加入隊列",
