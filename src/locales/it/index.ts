@@ -167,8 +167,6 @@ export const it = {
   allowRecommended: "Consenti (consigliato)",
   required: "Obbligatorio",
   // Optional permissions
-  // permissionAllUrls: "All Sites Access", // Deprecated
-  // permissionAllUrlsDesc: "Allow the extension to run on all websites to support more AI platforms.", // Deprecated
   permissionWebdavAccess: "Accesso alle funzionalità avanzate",
   permissionWebdavAccessDesc:
     "Accesso a tutti i siti web. Richiesto per la sincronizzazione WebDAV, la rimozione della filigrana dell'immagine AI e l'esecuzione dei Site Pack installati sui loro siti target senza richieste per singolo sito.",

@@ -584,11 +584,6 @@ export class ConversationManager {
     }
   }
 
-  // ================= Data Loading（已迁移到 Zustand stores）=================
-
-  // 不再需要 loadData / loadTags / saveFolders / saveConversations / saveTags
-  // 数据加载由 Zustand persist 自动处理
-
   // ================= Observer Logic =================
 
   startSidebarObserver() {

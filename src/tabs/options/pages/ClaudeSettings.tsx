@@ -71,7 +71,7 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
 
   // 切换 Session Key（带检测）
   const handleSwitchToken = async (keyId: string) => {
-    // 禁止切换到空值（已移除默认选项）
+    // 禁止切换到空值
     if (!keyId) {
       showToast(t("claudePleaseSelectKey"), TOAST_DURATION.SHORT)
       return

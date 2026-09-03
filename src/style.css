@@ -760,13 +760,6 @@
   display: inline-flex !important;
 }
 
-/*
- * 注意：深色模式的样式覆盖已移除。
- * 由于所有组件都使用 CSS 变量（如 var(--gh-bg)），
- * 当 ThemeManager 切换主题时会动态更新这些变量的值，
- * 因此不再需要单独的深色模式选择器规则。
- */
-
 /* ============= 面板工具栏与搜索控件 ============= */
 .gh-panel-tool-stack {
   flex-shrink: 0;
@@ -1529,7 +1522,7 @@
 /* 必须使用 !important 覆盖通用的 .outline-item.sync-highlight 样式 */
 .outline-item.user-query-node.sync-highlight,
 .outline-item.user-query-node.sync-highlight-visible {
-  /* 去除原来的右侧竖条和直角 */
+  /* 覆盖通用高亮样式的竖条与直角 */
   border-right: none !important;
   border-radius: 8px !important;
 
@@ -2795,10 +2788,6 @@
   }
 }
 
-/*
- * 深色模式适配样式已改为使用 CSS 变量
- * 当 ThemeManager 切换主题时会自动更新变量值
- */
 .prompt-item.selected {
   background: var(--gh-selected-gradient) !important;
   box-shadow:

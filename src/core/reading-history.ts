@@ -277,9 +277,7 @@ export class ReadingHistoryManager {
     }
 
     const now = Date.now()
-    // 对于 beforeunload 和 visibilitychange，不进行节流，总是尝试操作（但在 saveProgress 内部会检查是否值得保存，这里主要是为了触发逻辑）
-    // 实际上 saveProgress 没有节流 checks，只有 handleScroll 有。
-    // 对于重要事件，绕过节流
+    // 对于 beforeunload 和 visibilitychange 等退出/切台关键事件，绕过节流立即保存
     if (
       e.type === "beforeunload" ||
       e.type === "visibilitychange" ||
@@ -567,8 +565,6 @@ export class ReadingHistoryManager {
       }
     }
   }
-
-  // rawScroll 方法已删除 - 未被使用
 
   cleanup() {
     const days = this.settings.cleanupDays || 7

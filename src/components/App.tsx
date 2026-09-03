@@ -2410,7 +2410,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
     return () => {
       themeManager.setOnModeChange(undefined)
     }
-  }, [themeManager, setSettings, isSettingsHydrated]) // 移除 settings?.theme 依赖，通过 ref 访问最新值
+  }, [themeManager, setSettings, isSettingsHydrated]) // 通过 ref 访问最新 settings 避免重新挂载回调
 
   const themeSites = settings?.theme?.sites
   const syncUnpin = settings?.features?.conversations?.syncUnpin
@@ -2478,8 +2478,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
       return
     }
 
-    // 不再调用 applyModePreference，由 main.ts 负责初始应用
-    // 这里只启动监听器，监听页面主题变化（如浏览器/站点自动切换）
+    // 监听页面主题变化（如浏览器/站点自动切换）
     themeManager.startThemeMonitoring()
 
     return () => {
@@ -2622,8 +2621,6 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
       },
     })
 
-    // 简单的提示，实际文案建议放在 useShortcuts或统一管理
-    // 这里暂时使用硬编码中文，后续可优化
     showToast(newState ? t("preventAutoScrollEnabled") : t("preventAutoScrollDisabled"))
   }, [setSettings])
 

@@ -3,9 +3,6 @@ export const deepseekNativeThemeCss = `
  * DeepSeek 站点原生主题适配器 (DeepSeek Theme Adapter)
  * ============================================= */
 body, page, .ds-theme {
-    /* 核心页面背景层 - 覆盖基础背景 */
-    // --dsw-alias-bg-base: color-mix(in srgb, var(--gh-primary) 2%, var(--gh-bg)) !important;
-
     --dsr-side-hover-bg: var(--gh-hover) !important;
 
     --dsw-alias-markdown-inline-code: var(--gh-bg-tertiary) !important;

@@ -1,6 +1,5 @@
 /**
  * 会话 Tab 样式
- * 从油猴脚本 geminiHelper.user.js 11608~12124 行原封不动迁移
  */
 
 /* ========== 主面板内容区滚动条隐藏 ========== */
@@ -277,7 +276,7 @@ html[data-theme="dark"] .conversations-unsupported-icon {
 }
 
 .conversations-folder-item.expanded {
-  /* background 由组件内联样式控制，移除此处的 !important */
+  /* background 由组件内联样式控制 */
   border: 2px solid var(--gh-border-active);
   box-shadow: 0 2px 8px var(--gh-shadow-sm);
   border-radius: 8px 8px 0 0;

@@ -3432,7 +3432,7 @@ export class ClaudeAdapter extends SiteAdapter {
         }),
       )
 
-      // 等待一下看是否生效，如果不行则尝试刷新页面
+      // 等待 300ms 确保主题样式生效
       await new Promise((r) => setTimeout(r, 300))
       return true
     } catch (error) {

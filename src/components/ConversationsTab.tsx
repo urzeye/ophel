@@ -1329,10 +1329,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
               // 更新
               await manager.updateFolder(dialog.folder.id, { name, icon })
             } else {
-              // 新建，假设 createFolder 返回新文件夹的 ID (需要确认 manager 实现，如果是 void 则需要其他方式)
-              // 暂时假设 createFolder 返回 void，我们需要通过名字查找或者 manager 修改
-              // 实际上 manager.createFolder 是 async 的，我们可以稍微修改 manager 使其返回 ID
-              // 但为了保险，这里先不依赖返回值，而是通过逻辑判断
+              // 新建文件夹并记录 ID
               const folder = await manager.createFolder(name, icon)
               if (folder) newFolderId = folder.id
             }

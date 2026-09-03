@@ -392,8 +392,7 @@ const OutlineNodeView: React.FC<{
   extractUserQueryText,
 }) => {
   const hasChildren = node.children && node.children.length > 0
-  // Legacy: isExpanded 直接看 hasChildren 和 collapsed，不考虑搜索
-  // 箭头始终显示（只要有子节点），因为用户可能想手动展开查看不匹配的子节点
+  // 只要有子节点就显示箭头，允许手动展开查看不匹配的子节点
   const isExpanded = hasChildren && !node.collapsed
 
   // ===== 复制处理 (阻止冒泡) =====
@@ -447,7 +446,7 @@ const OutlineNodeView: React.FC<{
   // ===== 状态控制：鼠标悬停在操作按钮时不显示主 Tooltip =====
   const [isHoveringAction, setIsHoveringAction] = useState(false)
 
-  // ===== CSS 类名 (Legacy exact) =====
+  // ===== CSS 类名 =====
   const itemClassName = [
     "outline-item",
     `outline-level-${node.relativeLevel}`,
@@ -457,7 +456,7 @@ const OutlineNodeView: React.FC<{
     .filter(Boolean)
     .join(" ")
 
-  // ===== 搜索高亮处理 (Legacy: regex split) =====
+  // ===== 搜索高亮处理 =====
   const renderTextWithHighlight = () => {
     if (searchQuery && node.isMatch) {
       try {
@@ -516,7 +515,7 @@ const OutlineNodeView: React.FC<{
         data-level={node.relativeLevel}
         ref={(el) => setItemRef(node.index, el)}
         onClick={() => onClick(node)}>
-        {/* 折叠箭头 (Legacy: ▸) - 使用 hasChildren 显示箭头，允许手动展开 */}
+        {/* 折叠箭头 - 使用 hasChildren 显示箭头，允许手动展开 */}
         <span
           className={`outline-item-toggle ${hasChildren ? (isExpanded ? "expanded" : "") : "invisible"}`}
           onClick={(e) => {
@@ -733,7 +732,6 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
   const [scrollState, setScrollState] = useState<"top" | "bottom">("bottom")
   const [expandLevel, setExpandLevel] = useState(initialState.expandLevel ?? 6)
   const [levelCounts, setLevelCounts] = useState<Record<number, number>>(initialState.levelCounts)
-  // New state for legacy parity
   const [displayLevel, setDisplayLevel] = useState(initialState.displayLevel)
   const [minRelativeLevel, setMinRelativeLevel] = useState(initialState.minRelativeLevel)
   const [searchLevelManual, setSearchLevelManual] = useState(initialState.searchLevelManual)
@@ -745,8 +743,6 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
   const [fullOutlineCopySuccess, setFullOutlineCopySuccess] = useState(false)
   const [outlineScrollTop, setOutlineScrollTop] = useState(0)
   const [outlineViewportHeight, setOutlineViewportHeight] = useState(0)
-
-  // const { bookmarks } = useBookmarkStore() // Removed unused bookmarks
 
   const listRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -830,15 +826,6 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
   // 订阅 Manager 更新
   useEffect(() => {
     const update = () => {
-      // 智能滚动：检测用户是否已在底部附近（更新前）
-      /*
-      let wasAtBottom = false
-      if (listRef.current) {
-        const { scrollTop, scrollHeight, clientHeight } = listRef.current
-        wasAtBottom = scrollTop + clientHeight >= scrollHeight - 50 // 50px 容差
-      }
-      */
-
       const state = manager.getState()
 
       const newTotalNodes = countOutlineNodes(state.tree)
@@ -1617,7 +1604,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
     }
   }, [scrollState])
 
-  // Legacy: locateCurrentPosition 完全复刻
+  // 定位当前阅读位置
   const handleLocateCurrent = useCallback(() => {
     const scrollContainer = manager.getScrollContainer()
     if (!scrollContainer) return

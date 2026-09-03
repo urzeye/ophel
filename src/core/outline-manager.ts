@@ -1426,11 +1426,11 @@ export class OutlineManager {
     })
   }
 
-  // Legacy: 使用原始 level (H1-H6) 判断，不是 relativeLevel
+  // 使用原始 level (H1-H6) 判断，而非 relativeLevel
   private initializeCollapsedState(nodes: OutlineNode[], displayLevel: number) {
     nodes.forEach((node) => {
       if (node.children && node.children.length > 0) {
-        // Legacy: child.level > displayLevel
+        // 检查子节点层级是否超过当前显示层级
         const allChildrenHidden = node.children.every((child) => child.level > displayLevel)
         node.collapsed = allChildrenHidden
         this.initializeCollapsedState(node.children, displayLevel)
@@ -1440,12 +1440,12 @@ export class OutlineManager {
     })
   }
 
-  // Legacy: 使用原始 level (H1-H6) 判断，不是 relativeLevel
+  // 使用原始 level (H1-H6) 判断，而非 relativeLevel
   private clearForceExpandedState(nodes: OutlineNode[], displayLevel: number) {
     nodes.forEach((node) => {
       node.forceExpanded = false
       if (node.children && node.children.length > 0) {
-        // Legacy: child.level > displayLevel
+        // 检查子节点层级是否超过当前显示层级
         const allChildrenHidden = node.children.every((child) => child.level > displayLevel)
         node.collapsed = allChildrenHidden
         this.clearForceExpandedState(node.children, displayLevel)
@@ -1464,21 +1464,21 @@ export class OutlineManager {
     this.notify()
   }
 
-  // 折叠全部 (Legacy: toggleExpandAll when isAllExpanded = true)
+  // 折叠全部
   collapseAll() {
-    // Legacy: collapse to minLevel or 0 if showing user queries
+    // 折叠到最小层级（如果显示用户提问则折叠到 0）
     const targetLevel = this.settings.showUserQueries ? 0 : this.minLevel || 1
     this.setLevel(targetLevel)
   }
 
-  // 展开全部 (Legacy: toggleExpandAll when isAllExpanded = false)
+  // 展开全部
   expandAll() {
-    // Legacy: expand to maxActualLevel
+    // 展开到当前存在的最大层级
     const maxActualLevel = Math.max(...Object.keys(this.levelCounts).map(Number), 1)
     this.setLevel(maxActualLevel)
   }
 
-  // 设置展开层级 (Legacy: setLevel 完全复刻)
+  // 设置展开层级
   setLevel(level: number) {
     // 收藏模式下禁用层级调整
     if (this.bookmarkMode) {
@@ -1488,8 +1488,7 @@ export class OutlineManager {
 
     this.expandLevel = level
 
-    // Legacy: clearForceExpandedState 已经正确设置了 collapsed 状态
-    // 不再需要额外调用 initializeCollapsedState
+    // 重置并按层级更新折叠状态
     if (this.tree.length > 0) {
       this.clearForceExpandedState(this.tree, level)
     }
@@ -1498,7 +1497,7 @@ export class OutlineManager {
     const maxActualLevel = Math.max(...Object.keys(this.levelCounts).map(Number), 1)
     this.isAllExpanded = level >= maxActualLevel
 
-    // Legacy: 如果在搜索状态下调整了 Slider，标记为手动
+    // 如果在搜索状态下调整了层级滑块，标记为手动层级
     if (this.searchQuery) {
       this.searchLevelManual = true
     }
@@ -1532,8 +1531,7 @@ export class OutlineManager {
     this.setShowUserQueries(!this.settings.showUserQueries)
   }
 
-  // Legacy: expandParents 完全复刻 + 强制可见支持
-  // 设置整条路径（包括目标和所有祖先）为 forceVisible
+  // 展开并设置整条路径（包括目标和所有祖先）为 forceVisible
   revealNode(index: number) {
     // 先清除之前的 forceVisible 标记
     const clearForceVisible = (nodes: OutlineNode[]) => {
@@ -1605,7 +1603,6 @@ export class OutlineManager {
     this.notify()
   }
 
-  // Legacy: handleSearch 完全复刻
   setSearchQuery(query: string) {
     if (!query) {
       // === 结束搜索 ===
@@ -1647,7 +1644,7 @@ export class OutlineManager {
       }
 
       this.searchQuery = query
-      this.searchLevelManual = false // Legacy: 重置手动层级标记
+      this.searchLevelManual = false // 重置手动层级标记
       this.performSearch(query)
     }
     this.notify()

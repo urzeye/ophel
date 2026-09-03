@@ -162,8 +162,6 @@ export const en = {
   allowRecommended: "Allow (Recommended)",
   required: "Required",
   // Optional permissions
-  // permissionAllUrls: "All Sites Access", // Deprecated
-  // permissionAllUrlsDesc: "Allow the extension to run on all websites to support more AI platforms.", // Deprecated
   permissionWebdavAccess: "Advanced Features Access",
   permissionWebdavAccessDesc:
     "Access to all websites. Required for WebDAV sync, AI image watermark removal, and letting installed Site Packs run on their target sites without per-site prompts.",
@@ -1241,7 +1239,7 @@ export const en = {
   watermarkProcessing: "Processing image...",
   watermarkProcessed: "Watermark removed",
   watermarkFailed: "Failed to process",
-  // ======== Backup Redesign ========
+  // Backup & Sync
 
   exportData: "Export Data",
   exportDataDesc: "Export data as JSON file for backup",

@@ -153,8 +153,6 @@ export const zhCN = {
   allowRecommended: "允许（推荐）",
   required: "必需",
   // 可选权限
-  // permissionAllUrls: "所有网站访问权限", // Deprecated
-  // permissionAllUrlsDesc: "允许扩展在所有网站上运行，用于支持更多 AI 平台。", // Deprecated
   permissionWebdavAccess: "高级功能访问权限",
   permissionWebdavAccessDesc:
     "允许连接所有网站。用于 WebDAV 云端备份同步、移除 AI 图片水印，以及让插件式适配包（Site Packs）无需逐站点授权即可在目标站点运行等高级功能。",
@@ -232,7 +230,7 @@ export const zhCN = {
   noBackupsFound: "未找到备份文件",
   loading: "加载中...",
 
-  // ======== 备份与同步重构 ========
+  // 备份与同步
   exportData: "导出数据",
   exportDataDesc: "将数据导出为 JSON 文件进行备份",
   importData: "导入数据",

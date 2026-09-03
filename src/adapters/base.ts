@@ -1327,16 +1327,19 @@ export abstract class SiteAdapter {
   }
 
   /**
+   * 获取当前激活的大纲项 ID（可选实现）。
+   */
+  findActiveOutlineItemId(): string | null {
+    return null
+  }
+
+  /**
    * 根据 queryIndex 和文本查找用户提问元素
    * 用于大纲跳转时元素失效后的重新查找
    * @param queryIndex 用户提问的序号（从 1 开始）
    * @param text 用户提问文本（用于验证和回退搜索）
    * @returns 匹配的元素，未找到返回 null
    */
-  findActiveOutlineItemId(): string | null {
-    return null
-  }
-
   findUserQueryElement(queryIndex: number, text: string): Element | null {
     const selector = this.getUserQuerySelector()
     if (!selector) return null

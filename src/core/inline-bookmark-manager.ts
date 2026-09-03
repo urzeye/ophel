@@ -121,16 +121,8 @@ export class InlineBookmarkManager {
   private injectScopedStyles(root: Node) {
     if (this.injectedRoots.has(root)) return
 
-    // 如果是 Document，检查是否已存在（避免重复）
-    // 如果是 ShadowRoot，需要在该 Root 下查找
-    // const parent = root instanceof Document ? document.head : root
-
-    // 检查是否存在
+    // 如果是 Document，检查主文档是否已存在样式；如果是 ShadowRoot，检查内部是否已存在
     if (root instanceof Document) {
-      // Global styles handled separately, but scoped styles for main doc also needed?
-      // Actually injectGlobalStyles handles body classes.
-      // We need similar .gh-inline-bookmark rules in main document too if not shadow.
-      // Let's use a specific ID check for the root
       if (document.getElementById(SCOPED_STYLE_ID)) {
         this.injectedRoots.add(root)
         return

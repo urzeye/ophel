@@ -23,7 +23,6 @@ import {
   NewTabIcon,
   OutlineIcon,
   PromptIcon,
-  // RefreshIcon, (刷新按钮已注释掉)
   ScrollBottomIcon,
   ScrollTopIcon,
   SettingsIcon,
@@ -1389,7 +1388,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             border: "1px solid var(--gh-border, #e5e7eb)",
             zIndex: 9999,
             fontFamily: OPHEL_FONT_FAMILY_CSS_VAR,
-            // 位置现在由 useDraggable 通过直接 DOM 操作控制，不再通过 React state
+            // 面板定位由 useDraggable 通过直接 DOM 写入控制
           } as React.CSSProperties
         }>
         {/* 自定义 CSS 注入：根据当前站点的样式 ID 查找自定义样式 */}
@@ -1520,32 +1519,6 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                 <SettingsIcon size={14} />
               </button>
             </Tooltip>
-
-            {/* 刷新按钮 - 暂时隐藏，数据已是响应式自动更新 */}
-            {/* <Tooltip
-              content={
-                activeTab === TAB_IDS.OUTLINE
-                  ? t("refreshOutline")
-                  : activeTab === TAB_IDS.PROMPTS
-                    ? t("refreshPrompts")
-                    : activeTab === TAB_IDS.CONVERSATIONS
-                      ? t("refreshConversations")
-                      : t("refresh")
-              }>
-              <button
-                onClick={() => {
-                  if (activeTab === TAB_IDS.OUTLINE) {
-                    outlineManager?.refresh()
-                  } else if (activeTab === TAB_IDS.PROMPTS) {
-                    promptManager?.init()
-                  } else if (activeTab === TAB_IDS.CONVERSATIONS) {
-                    conversationManager?.notifyDataChange()
-                  }
-                }}
-                className="gh-header-icon-btn">
-                <RefreshIcon size={14} />
-              </button>
-            </Tooltip> */}
 
             {/* 折叠按钮（收起面板） */}
             <Tooltip content={t("collapse")}>

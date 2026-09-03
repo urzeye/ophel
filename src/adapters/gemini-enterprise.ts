@@ -1638,11 +1638,6 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
     }
   }
 
-  /** 覆盖基类：处理锁定后的清理（已废弃的清空逻辑已移除）*/
-  lockModel(keyword: string, onSuccess: (() => void) | null = null): void {
-    super.lockModel(keyword, onSuccess ?? undefined)
-  }
-
   /** 排除侧边栏及 Ophel 容器中的 Shadow DOM 样式注入 */
   shouldInjectIntoShadow(host: Element): boolean {
     if (!super.shouldInjectIntoShadow(host)) return false

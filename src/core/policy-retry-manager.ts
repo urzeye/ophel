@@ -168,8 +168,6 @@ export class PolicyRetryManager {
       if (found) return found
     }
 
-    // 3. 检查子节点 (如果不是 Shadow Host 或者即使是也要查 slot?)
-    // 通常只需查 Shadow Root，但为了保险起见...
     return null
   }
 

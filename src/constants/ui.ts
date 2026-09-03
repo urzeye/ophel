@@ -1079,8 +1079,8 @@ export const COLLAPSED_BUTTON_DEFS: Record<
   },
   floatingToolbar: {
     icon: "🧰",
-    labelKey: "tools", // Changed from floatingToolbarLabel
-    canToggle: true, // This toggle will now open the menu
+    labelKey: "tools",
+    canToggle: true,
     isPanelOnly: false,
     IconComponent: ToolsIcon,
   },

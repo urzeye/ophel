@@ -386,9 +386,6 @@ if (!shouldRun) {
   startWhenReady()
 }
 
-// 注意：Flutter 滚动容器现在在 scroll-helper.ts 中直接通过 unsafeWindow 访问
-// 不再需要在这里注入 Main World 监听器
-
 /**
  * 初始化油猴脚本
  * document-start 时 DOM 尚未就绪，需等待 document.readyState 变化
