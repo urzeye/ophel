@@ -519,7 +519,8 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
   if (!position) return null
 
   // 挂载到 document.body，确保与 DialogOverlay 弹窗样式环境一致
-  const targetContainer = document.querySelector(".gh-root") || document.body
+  // （.gh-root 在 Shadow DOM 内，document.querySelector 取不到，历史上恒为 body）
+  const targetContainer = document.body
 
   const capsuleStyle: React.CSSProperties = {
     bottom: position.bottom,
