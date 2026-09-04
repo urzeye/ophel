@@ -145,6 +145,26 @@
   transform: translateY(-2px);
 }
 
+/* GreasyFork 图标（油猴平台）：圆形跟随文字色、叉形跟随 dock 背景色，深浅主题自动反相 */
+.sidebar-social-btn.review-btn .greasyfork-icon {
+  color: var(--gh-text, #1f2328);
+}
+.sidebar-social-btn.review-btn .greasyfork-icon .greasyfork-fork {
+  fill: var(--gh-bg-secondary, #f3f4f6);
+}
+.sidebar-social-btn.review-btn:hover .greasyfork-icon {
+  color: #4285f4;
+}
+.sidebar-social-btn.review-btn:hover .greasyfork-icon .greasyfork-fork {
+  fill: #ffffff;
+}
+
+/* 纯黑透明底的站点 logo（如 ChatGPT）在深色主题下反白 */
+html[data-theme="dark"] .platform-icon-dark-invert,
+:host-context([data-gh-mode="dark"]) .platform-icon-dark-invert {
+  filter: invert(1);
+}
+
 /* 2. ScriptCat */
 .sidebar-social-btn.scriptcat-btn {
   color: #1296db;
@@ -3634,6 +3654,11 @@ html[data-theme="dark"] .about-link-card {
 
 .about-link-header > svg {
   flex-shrink: 0;
+}
+
+/* GreasyFork 图标：圆形跟随标题文字色（currentColor），叉形跟随卡片背景色，深浅主题自动反相 */
+.about-link-header .greasyfork-icon .greasyfork-fork {
+  fill: var(--gh-card-bg, #ffffff);
 }
 
 .about-link-desc {

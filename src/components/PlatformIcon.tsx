@@ -2,6 +2,9 @@ import React, { useState } from "react"
 
 import { SITE_ICONS } from "~constants/site-icons"
 
+/** 纯黑透明底的品牌 logo，深色主题下需 CSS 反白（filter: invert）保证可见性 */
+const DARK_INVERT_SITE_ICONS = new Set(["ChatGPT"])
+
 interface PlatformIconProps {
   /** 结构化子集而非完整 SupportedAiPlatform：只传 name/faviconUrl 即可获得 favicon → 首字母回退链。 */
   platform: {
@@ -24,6 +27,9 @@ export const PlatformIcon: React.FC<PlatformIconProps> = ({
   const embeddedIcon = SITE_ICONS[platform.name]
 
   if (embeddedIcon) {
+    const svgClassName = DARK_INVERT_SITE_ICONS.has(platform.name)
+      ? [className, "platform-icon-dark-invert"].filter(Boolean).join(" ")
+      : className
     return (
       <svg
         viewBox="0 0 24 24"
@@ -31,7 +37,7 @@ export const PlatformIcon: React.FC<PlatformIconProps> = ({
         height={size}
         aria-hidden="true"
         focusable="false"
-        className={className}
+        className={svgClassName}
         style={{ display: "block", flex: "0 0 auto" }}>
         <image
           href={embeddedIcon}

@@ -525,6 +525,17 @@ body {
   filter: grayscale(0.6);
 }
 
+@media (prefers-color-scheme: dark) {
+  /* 纯黑透明底的站点 logo（如 ChatGPT）在深色模式下反白 */
+  .platform-icon-dark-invert {
+    filter: invert(1);
+  }
+
+  .popup-site-link.site-disabled .platform-icon-dark-invert {
+    filter: grayscale(0.6) invert(1);
+  }
+}
+
 .popup-site-link.site-disabled .popup-site-subtitle {
   color: var(--popup-text-secondary);
 }
