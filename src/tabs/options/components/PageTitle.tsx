@@ -10,7 +10,9 @@ export const PageTitle: React.FC<PageTitleProps> = ({ title, Icon, action }) => 
   return (
     <div className="settings-page-header">
       <div className="settings-page-title-wrap">
-        <h1 className="settings-page-title" style={{ display: "flex", alignItems: "center" }}>
+        <h1
+          className="settings-page-title"
+          style={{ display: "flex", alignItems: "center", margin: 0 }}>
           {Icon && (
             <Icon
               size={28}
@@ -21,7 +23,7 @@ export const PageTitle: React.FC<PageTitleProps> = ({ title, Icon, action }) => 
               }}
             />
           )}
-          {title}
+          <span>{title}</span>
         </h1>
         {action && <div className="settings-page-header-action">{action}</div>}
       </div>

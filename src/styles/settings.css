@@ -646,25 +646,27 @@ html[data-theme="dark"] .platform-icon-dark-invert {
 }
 
 .settings-page-title-wrap {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 10px;
 }
 
 .settings-page-title {
+  margin: 0 0 8px;
   font-size: 24px;
+  line-height: 1.25;
   font-weight: 600;
   color: var(--gh-text, #1f2937);
-  margin-bottom: 8px;
 }
 
 .settings-page-header .settings-page-title {
-  margin-bottom: 0;
+  margin: 0;
 }
 
 .settings-page-header-action {
   display: inline-flex;
   align-items: center;
+  line-height: 1;
 }
 
 .settings-site-disable-icon-btn {
