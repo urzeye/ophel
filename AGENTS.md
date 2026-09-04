@@ -49,7 +49,7 @@ Ophel Atlas 是 TypeScript + React 18 + Plasmo 的浏览器扩展，同时支持
 - 油猴本地调试构建：`pnpm build:userscript:local`
 - 油猴本地资源服务：`pnpm serve:userscript:assets`
 
-项目使用 Vitest 作为测试体系。代码变更优先运行最相关检查；提交前参考 CI 顺序补齐 `pnpm format:check`、`pnpm lint:check`、`pnpm typecheck`、`pnpm test`、`pnpm build`。涉及存储适配、内容脚本入口、样式注入或核心初始化时，再补 `pnpm build:userscript` 与 `pnpm build:firefox`。若无法运行，交付时说明原因和替代检查。
+项目使用 Vitest 作为测试体系。代码变更优先运行最相关检查；提交前的完整验证顺序见 `docs/developer/conventions/commits.md`。涉及存储适配、内容脚本入口、样式注入或核心初始化时，再补 `pnpm build:userscript` 与 `pnpm build:firefox`。若无法运行，交付时说明原因和替代检查。
 
 ## 编码约束
 
@@ -87,22 +87,12 @@ Ophel Atlas 是 TypeScript + React 18 + Plasmo 的浏览器扩展，同时支持
 
 ## UI 与 CSS 规则
 
-- `DESIGN.md` 是本项目 UI 与交互规范入口；做界面改动时先确认适用界面、主题约束和完成标准。
-- 使用 `DESIGN.md` 的最低流程：先看 `0. 使用方式`、`1. 设计定位`、`2. 主题系统规范`、`9. 实现约束`、`11. UI 改动工作流`；只改局部界面也不能跳过主题兼容和完成标准。
-- 面板运行在 Plasmo Shadow DOM 中；普通 CSS import 不会自动作用于面板。
-- 面板样式要通过 `src/contents/ui-entry.tsx` 的 `getStyle()` 注入，新增 CSS 文件需用 `data-text:` 合并。
-- 动态主题变量由 `ThemeManager` 注入到 Shadow Root 末尾，避免被静态变量覆盖。
-- `::view-transition-*` 等文档根伪元素样式必须注入主文档 `document.head`，不能放在 Shadow DOM CSS 里。
-- Gemini Enterprise 等第三方 Shadow DOM 场景，样式要注入目标 shadowRoot，而不是只注入页面或插件 Shadow DOM。
-- 样式必须同时兼容 Chrome 与 Firefox，新增 CSS 前先确认特性在两端的支持情况（参考 MDN）。
-  - 禁止使用 Firefox 未实现的选择器/特性，典型如 `:host-context()`：Firefox 不支持，且选择器列表中含任何一个无效选择器会导致整条规则被丢弃，连累同规则内其他有效选择器。
-  - Shadow DOM 内的深浅主题选择器统一使用 `:host([data-theme="dark"])`（`ThemeManager` 会向 host 写入 `data-theme`），不要用 `:host-context()` 或 `body[data-gh-mode]` 这类 Shadow 内不可达/不兼容的写法。
-  - 浏览器表现不一致的选择器不要与通用选择器合并在同一条规则里，应拆成独立规则分别声明。
-- CSS 类名延续 `gh-` 前缀，颜色优先使用 `--gh-*` 变量并提供合理 fallback。
-- 交付 UI 任务时，说明本次主要应用了哪些 `DESIGN.md` 章节，并明确验证了哪些主题、状态或样式注入链路。
+- `DESIGN.md` 是本项目 UI 与交互规范的唯一入口；触及 UI、交互、主题、排版、动效时按其 `0. 使用方式` 执行。
+- Shadow DOM 样式注入、主题变量、Firefox 兼容等硬约束以 `DESIGN.md` 的 `9. 实现约束` 为准，机制细节见 `docs/developer/css-architecture.md`；不要在本文件或其他文档里另写一份。
 
 ## 排查优先读的文档
 
+- 文档目录分工与索引：`docs/developer/README.md`
 - 项目级 UI、交互、主题规范：`DESIGN.md`
 - 全局架构、模块、命令：`docs/developer/architecture.md`
 - Shadow DOM、样式注入、主题系统：`docs/developer/css-architecture.md`
@@ -112,45 +102,13 @@ Ophel Atlas 是 TypeScript + React 18 + Plasmo 的浏览器扩展，同时支持
 
 ## 更新日志写法
 
-- 修改 `CHANGELOG.md` 时，如存在 `CHANGELOG.zh-CN.md`，必须同步更新中英文两份日志；两份含义保持一致，但表达要符合各自语言习惯。
-- 新增更新日志只使用三类标题，不要新增性能、UI、文档、国际化、限制等其它标题，除非用户明确要求。
-  - 英文：`### 🚀 New Features`、`### ✨ Improvements`、`### 🐛 Bug Fixes`
-  - 中文：`### 🚀 新增功能`、`### ✨ 功能优化`、`### 🐛 问题修复`
-- 标题选择按用户可感知变化判断：
-  - 新增能力放 `New Features` / `新增功能`。
-  - 已有能力变得更快、更顺、更好用、更清晰，放 `Improvements` / `功能优化`；性能优化通常归入这里。
-  - 明确错误行为、兼容性问题或回归修复，放 `Bug Fixes` / `问题修复`。
-- 条目沿用现有日志格式：`- **功能点标题** — 一句说明。` 标题要具体，说明写“做了什么、用户会感受到什么效果”。
-- 面向普通用户写，不面向开发者；避免类名、函数名、内部模块名、实现细节和纯技术词。可以保留用户知道的功能名、站点名、快捷键名、设置项名和导出格式名。
-- 不要逐条翻译 commit。如果几个commit内容一致或相关联，可以（但非必要）按用户可感知结果合并。同一分类下高价值内容排序在前。
-- 如果变更来自 PR、issue 或外部贡献者，能确认时要在条目末尾保留编号和贡献者；不要遗漏，也不要凭空补。
-  - 单个来源：`(#645)`、`(#547, @urzeye)`
-  - 多个直接相关来源：`(#593, #625)`
-  - 中英文两份日志的编号和贡献者保持一致。
-- 英文说明优先使用现在时或完成时，如 `now supports`、`now recognizes`、`Fixed issue where...`；中文说明优先使用“现在…”“修复…”“减少…”等直接表达。
-- 文案要克制、具体、把具体做了清楚但不宜过长；避免“更丝滑”“更好用”“更轻快”等没有说明实际改善的泛泛表述，不要用一堆“更”来描述具体更新内容。
-- 示例：
-  - 英文：`- **Zen Mode exit button** — Added a "Show exit button" setting for Zen Mode, so the on-page exit button can be hidden while keeping the quick button and shortcut exit paths available. (#645)`
-  - 中文：`- **禅模式退出按钮** — 禅模式设置新增“显示退出按钮”开关，可隐藏页面上的退出按钮，保留快捷按钮和快捷键退出入口，避免遮挡标题或对话内容。(#645)`
+- 详细规范见 `docs/developer/conventions/changelog.md`；写更新日志前必读。
+- 核心禁令：中英文两份日志必须同步；只使用三类固定标题（New Features / Improvements / Bug Fixes 及对应中文）；面向普通用户写，不写内部实现细节。
 
 ## 提交与 PR
 
-- 提交代码前参考 `.github/workflows/ci.yml`，建议按 CI 顺序运行本地验证：`pnpm format:check`、`pnpm lint:check`、`pnpm typecheck`、`pnpm test`、`pnpm build`。
-- 纯文档与元配置（`docs/**`、`*.md`、`.gitattributes`、`.editorconfig`、`.all-contributorsrc` 等）已被配置在 CI `paths-ignore` 中不会触发流水线。
-- CI 已配置 Draft PR 自动跳过执行，转换为 Ready for review 后方会触发全量构建与检查。
-- Commit message 使用英文，遵循 `commitlint.config.js` 的 Conventional Commits：`type(scope): subject`。
-- 允许的 type：`feat`、`fix`、`docs`、`style`、`refactor`、`perf`、`test`、`build`、`ci`、`chore`、`revert`、`deps`、`ux`。
-- Commit type 按改动意图选择，不要把“优化”“清理”“移除”默认写成 `fix`：
-  - `fix`：修复明确 bug、错误行为、回归或兼容性问题。
-  - `feat`：新增、移除或改变用户可见能力；破坏性能力移除使用 `feat!`，或在 footer 标注 `BREAKING CHANGE`。
-  - `refactor`：不改变用户可见行为的结构调整、重复逻辑合并、死代码删除。
-  - `perf`：以性能为目标、用户行为等价的优化。
-  - `ux`：用户界面、交互流程、文案体验相关优化。
-  - `chore`：配置、脚本、依赖、仓库维护等不直接影响产品行为的清理。
-- Commit header 最长 100 字符；scope 使用小写；body/footer 前留空行；body 每行最长 100 字符（长句必须手动断行）；footer 每行最长 120 字符。
-- 创建 PR 使用英文；PR 标题也参考 commit message 格式，例如 `refactor(core): remove obsolete prompt pipeline`、`perf(adapter): reduce DOM observer work`、`ux(panel): simplify quick actions`、`fix(adapter): prevent duplicate panel injection`。
-- 创建 PR 默认一律创建为 Draft PR（如 `gh pr create --draft`），除非用户显式要求创建正式 PR；避免未审阅的提交提前触发 CI 消耗额度或发生误合。
-- 提交或整理 diff 前先看 `git status` 和 `git diff`；不要把无关文件、用户未要求的格式化改动或生成物混进提交。
+- 详细规范见 `docs/developer/conventions/commits.md`；提交或创建 PR 前必读。
+- 核心禁令：Commit 与 PR 使用英文 Conventional Commits（`type(scope): subject`）；PR 默认创建为 Draft；提交前先看 `git status` 和 `git diff`，不混入无关改动。
 
 ## 验证与交付
 
