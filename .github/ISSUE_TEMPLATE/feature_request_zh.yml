@@ -18,6 +18,8 @@ body:
     attributes:
       label: 前置检查
       options:
+        - label: 我已查阅 [官方文档](https://ophel.app/docs/zh/introduction)，确认这不是当前版本已有的功能
+          required: true
         - label: 我已在 Issue 中搜索过类似需求，确认这不是一个重复提议
           required: true
         - label: 我已为项目点了 Star 🌟

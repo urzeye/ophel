@@ -7,6 +7,10 @@ body:
         与社区分享您的绝妙想法！
         Share your brilliant ideas with the community!
 
+        > [!TIP]
+        > 提交前欢迎浏览 [官方文档 (EN)](https://ophel.app/docs) / [中文文档](https://ophel.app/docs/zh/introduction)，查看 Ophel 目前已支持的丰富功能。
+        > Feel free to check the documentation before submitting to see if the feature already exists.
+
   - type: textarea
     id: description
     attributes:
