@@ -170,12 +170,12 @@ export interface GeminiSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const GEMINI_CONFIG_VERSION = 3
+export const GEMINI_CONFIG_VERSION = 4
 
 const createGeminiConfig = (): GeminiSiteConfig => {
   const userQuery = "user-query"
   const assistantResponse = "model-response"
-  const responseContainer = "infinite-scroller.chat-history"
+  const responseContainer = "infinite-scroller.chat-history, .chat-history-scroll-container"
   const shareResponseContainer = "div.content-container"
   const conversationItem = 'gem-nav-list-item[data-test-id="conversation"]'
   const conversationList = 'conversations-list[data-test-id="all-conversations"]'
@@ -194,7 +194,7 @@ const createGeminiConfig = (): GeminiSiteConfig => {
   const canvasArtifactContainer = ".immersive-artifact-container"
   const canvasCodeBlock = "code-block"
   const canvasCodeEditor = 'xap-code-editor[data-test-id="code-editor"]'
-  const messageWidth = ".conversation-container"
+  const messageWidth = ".conversation-container, conversation-container"
   const inputWidth = ".input-area-container"
   const layoutScope = "bard-sidenav-content, body:not(:has(bard-sidenav-content)) main.chat-app"
   const markdownFixerSourceAttributeKeywords = [
@@ -246,6 +246,8 @@ const createGeminiConfig = (): GeminiSiteConfig => {
         'button[aria-label*="发送"]',
         ".send-button",
         '[data-testid*="send"]',
+        '[data-test-id*="send-button"]',
+        'button:has(mat-icon[fonticon="send"])',
       ],
       responseContainer,
       chatContent: [
@@ -292,6 +294,7 @@ const createGeminiConfig = (): GeminiSiteConfig => {
     modelSwitcher: {
       selectorButtonSelectors: [
         ".input-area-switch-label",
+        '[data-test-id="bard-mode-menu-button"]',
         ".model-selector",
         '[data-test-id="model-selector"]',
         '[aria-label*="model"]',
@@ -305,7 +308,7 @@ const createGeminiConfig = (): GeminiSiteConfig => {
     export: {
       userQuerySelector: userQuery,
       assistantResponseSelector: `${assistantResponse}, .model-response-container .markdown`,
-      turnSelector: ".conversation-turn",
+      turnSelector: ".conversation-container, conversation-container, .conversation-turn",
       useShadowDOM: false,
     },
     widthSelectors: [
@@ -318,6 +321,20 @@ const createGeminiConfig = (): GeminiSiteConfig => {
         selector: inputWidth,
         property: "max-width",
         extraCss: "width: 100% !important; min-width: 0 !important;",
+      },
+      {
+        selector:
+          ".md-content > *, message-content .markdown > *, thinking-overlay, .response-footer, .response-container-header, .response-container-footer, model-response-disclaimers",
+        property: "max-width",
+        value: "100%",
+        noCenter: true,
+      },
+      {
+        selector: "message-actions",
+        property: "max-width",
+        value: "100%",
+        noCenter: true,
+        extraCss: "margin-inline-start: 0 !important;",
       },
       {
         selector: ".table-block.new-table-style",
@@ -347,6 +364,8 @@ const createGeminiConfig = (): GeminiSiteConfig => {
     cleanMode: {
       hide: [
         "hallucination-disclaimer",
+        "condensed-tos-disclaimer",
+        "model-response-disclaimers",
         "g1-dynamic-upsell-button",
         ".share-viewer_footer_disclaimer",
         'share-landing-page immersive-share-landing-page .page:has(structured-content-container[data-test-id="deep-research-block"]) > .footer',
@@ -452,7 +471,8 @@ const createGeminiConfig = (): GeminiSiteConfig => {
       visuallyHidden,
       userQueryText: ".query-text",
       userQueryLine: ".query-text-line",
-      exportMessageSource: "message-content, .conversation-turn",
+      exportMessageSource:
+        "message-content, .conversation-container, conversation-container, .conversation-turn",
       immersivePanel,
       exportImageScope: [
         ".attachment-container.generated-images",
@@ -470,6 +490,8 @@ const createGeminiConfig = (): GeminiSiteConfig => {
       assistantExportNoise: [
         visuallyHidden,
         "model-thoughts",
+        "thinking-overlay",
+        "sources-list",
         canvasEntryChip,
         "gem-processing-card",
         canvasCard,
@@ -573,7 +595,7 @@ const createGeminiConfig = (): GeminiSiteConfig => {
       outlineMessageContent: "message-content",
       outlineUserMetadataButton: 'button[jslog*="BardVeMetadataKey"]',
       outlineAssistantMarkdown: ".model-response-text, message-content",
-      outlineThoughts: "model-thoughts",
+      outlineThoughts: "model-thoughts, thinking-overlay",
       modelName: ".input-area-switch-label",
       layoutScope,
       immersiveLayout: "chat-window.immersives-mode:not(.mobile-device)",
