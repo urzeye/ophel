@@ -1,10 +1,21 @@
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 
+import { GeminiAdapter } from "~adapters/gemini"
 import { GEMINI_CONFIG, GEMINI_CONFIG_VERSION } from "~adapters/gemini-config"
+
+vi.mock("~utils/dom-toolkit", () => ({
+  DOMToolkit: {
+    query: vi.fn(),
+  },
+}))
+
+vi.mock("~utils/i18n", () => ({
+  t: (key: string) => key,
+}))
 
 describe("Gemini built-in config and DOM adaptation", () => {
   it("increments GEMINI_CONFIG_VERSION to invalidate obsolete patches", () => {
-    expect(GEMINI_CONFIG_VERSION).toBe(4)
+    expect(GEMINI_CONFIG_VERSION).toBe(5)
   })
 
   it("adapts messageWidth and turnSelector to conversation-container web component", () => {
@@ -48,6 +59,26 @@ describe("Gemini built-in config and DOM adaptation", () => {
     expect(messageActionsSelector?.property).toBe("max-width")
     expect(messageActionsSelector?.value).toBe("100%")
     expect(messageActionsSelector?.extraCss).toContain("margin-inline-start: 0 !important;")
+  })
+
+  it("configures messageSafeArea to avoid parent-child double padding in panel avoidance", () => {
+    const messageSafeArea = GEMINI_CONFIG.sitePrivateSelectors.messageSafeArea
+    expect(messageSafeArea).toContain("infinite-scroller.chat-history")
+    // 确保外层容器带有 :not(:has(infinite-scroller.chat-history)) 限制，防止内外层同时命中双重 padding
+    expect(messageSafeArea).toContain(":not(:has(infinite-scroller.chat-history))")
+  })
+
+  it("provides full widthSelectors in getPanelAvoidanceConfig to preserve child element width overrides", () => {
+    const adapter = new GeminiAdapter()
+    const avoidanceConfig = adapter.getPanelAvoidanceConfig()
+    expect(avoidanceConfig.widthSelectors).toHaveLength(GEMINI_CONFIG.widthSelectors.length)
+
+    // 验证避让配置中包含解除 708px 限制的规则
+    const contentChildSelector = avoidanceConfig.widthSelectors.find((s) =>
+      s.selector.includes(".md-content > *"),
+    )
+    expect(contentChildSelector).toBeDefined()
+    expect(contentChildSelector?.value).toBe("100%")
   })
 
   it("supports thinking-overlay in outline thoughts and export noise", () => {

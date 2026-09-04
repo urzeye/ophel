@@ -170,7 +170,7 @@ export interface GeminiSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const GEMINI_CONFIG_VERSION = 4
+export const GEMINI_CONFIG_VERSION = 5
 
 const createGeminiConfig = (): GeminiSiteConfig => {
   const userQuery = "user-query"
@@ -600,7 +600,8 @@ const createGeminiConfig = (): GeminiSiteConfig => {
       layoutScope,
       immersiveLayout: "chat-window.immersives-mode:not(.mobile-device)",
       chatColumnScope: "chat-window .chat-container",
-      messageSafeArea: responseContainer,
+      messageSafeArea:
+        "infinite-scroller.chat-history, .chat-history-scroll-container:not(:has(infinite-scroller.chat-history))",
       inputSafeArea: "input-container",
       newChatInputSafeArea: "chat-window.center-input-layout .input-area-container.is-zero-state",
       userQueryWidth: ".user-query-bubble-with-background:not(.edit-mode)",

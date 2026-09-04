@@ -2522,7 +2522,7 @@ export class GeminiAdapter extends SiteAdapter {
     const privateSelectors = this.config.sitePrivateSelectors
     return {
       scopeSelector: privateSelectors.layoutScope,
-      widthSelectors: this.config.widthSelectors.slice(0, 2).map((selector) => ({ ...selector })),
+      widthSelectors: this.getWidthSelectors(),
       insetSelectors: [
         {
           selector: privateSelectors.immersiveLayout,
