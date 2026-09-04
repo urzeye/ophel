@@ -62,8 +62,7 @@ export const GreasyForkIcon: React.FC<{ size?: number; className?: string; color
     width={size}
     height={size}
     viewBox="0 0 1024 1024"
-    className={["greasyfork-icon", className].filter(Boolean).join(" ")}
-    style={{ color }}>
+    className={["greasyfork-icon", className].filter(Boolean).join(" ")}>
     <path
       d="M28.16 514.56c0 268.8 217.6 486.4 486.4 486.4s486.4-217.6 486.4-486.4-217.6-486.4-486.4-486.4-486.4 217.6-486.4 486.4z"
       fill={color}

@@ -194,7 +194,7 @@ export const DisclaimerModal: React.FC = () => {
           border-radius: 6px;
         }
 
-        :host-context([data-gh-mode="dark"]) .disclaimer-warning {
+        :host([data-theme="dark"]) .disclaimer-warning {
           color: #fbbf24 !important;
           background: rgba(245, 158, 11, 0.14);
           border-color: rgba(245, 158, 11, 0.3);
@@ -248,7 +248,7 @@ export const DisclaimerModal: React.FC = () => {
           margin: 0;
         }
 
-        :host-context([data-gh-mode="dark"]) .privacy-content {
+        :host([data-theme="dark"]) .privacy-content {
           color: #34d399 !important;
         }
 

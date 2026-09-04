@@ -160,8 +160,11 @@
 }
 
 /* 纯黑透明底的站点 logo（如 ChatGPT）在深色主题下反白 */
-html[data-theme="dark"] .platform-icon-dark-invert,
-:host-context([data-gh-mode="dark"]) .platform-icon-dark-invert {
+html[data-theme="dark"] .platform-icon-dark-invert {
+  filter: invert(1);
+}
+/* Shadow DOM 面板：用 :host([data-theme]) 而非 :host-context([data-gh-mode])，后者 Firefox 不支持且会连累整条规则失效 */
+:host([data-theme="dark"]) .platform-icon-dark-invert {
   filter: invert(1);
 }
 
@@ -184,7 +187,7 @@ html[data-theme="dark"] .platform-icon-dark-invert,
   --pulse-bg: rgba(36, 41, 47, 0.05);
   --pulse-bg-hover: rgba(36, 41, 47, 0.1);
 }
-:host-context([data-gh-mode="dark"]) .sidebar-social-btn.github-btn {
+:host([data-theme="dark"]) .sidebar-social-btn.github-btn {
   color: #ffffff;
   --pulse-bg: rgba(255, 255, 255, 0.08);
   --pulse-bg-hover: rgba(255, 255, 255, 0.15);
@@ -195,7 +198,7 @@ html[data-theme="dark"] .platform-icon-dark-invert,
   box-shadow: 0 4px 10px rgba(36, 41, 47, 0.25);
   transform: translateY(-2px);
 }
-:host-context([data-gh-mode="dark"]) .sidebar-social-btn.github-btn:hover {
+:host([data-theme="dark"]) .sidebar-social-btn.github-btn:hover {
   background: #ffffff !important;
   color: #000000 !important;
   box-shadow: 0 4px 10px rgba(255, 255, 255, 0.25);
@@ -258,7 +261,7 @@ html[data-theme="dark"] .platform-icon-dark-invert,
   );
   opacity: 0.6;
 }
-:host-context([data-gh-mode="dark"]) .settings-sidebar-footer::before {
+:host([data-theme="dark"]) .settings-sidebar-footer::before {
   background: linear-gradient(
     to right,
     transparent,
@@ -283,7 +286,7 @@ html[data-theme="dark"] .platform-icon-dark-invert,
   transition: background 0.3s ease;
 }
 
-:host-context([data-gh-mode="dark"]) .settings-theme-segmented {
+:host([data-theme="dark"]) .settings-theme-segmented {
   background: rgba(255, 255, 255, 0.04);
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15);
 }
@@ -364,13 +367,13 @@ html[data-theme="dark"] .platform-icon-dark-invert,
 }
 
 /* 深色模式下的 Theme Segment Active */
-:host-context([data-gh-mode="dark"]) .settings-theme-segment {
+:host([data-theme="dark"]) .settings-theme-segment {
   color: #9ca3af;
 }
-:host-context([data-gh-mode="dark"]) .settings-theme-segment:hover {
+:host([data-theme="dark"]) .settings-theme-segment:hover {
   color: #e5e7eb;
 }
-:host-context([data-gh-mode="dark"]) .settings-theme-segment.active {
+:host([data-theme="dark"]) .settings-theme-segment.active {
   background: rgba(255, 255, 255, 0.12);
   color: #ffffff;
   box-shadow:
@@ -5515,20 +5518,17 @@ html[data-theme="dark"] .about-privacy-banner {
 }
 
 :host([data-theme="dark"]) .about-sponsor-afdian-icon,
-:host-context([data-gh-mode="dark"]) .about-sponsor-afdian-icon,
 html[data-theme="dark"] .about-sponsor-afdian-icon {
   background: rgba(148, 108, 230, 0.22);
   color: #c9b3f5;
 }
 
 :host([data-theme="dark"]) .about-sponsor-afdian-cta,
-:host-context([data-gh-mode="dark"]) .about-sponsor-afdian-cta,
 html[data-theme="dark"] .about-sponsor-afdian-cta {
   color: #c9b3f5;
 }
 
 :host([data-theme="dark"]) .about-sponsor-afdian-card:hover,
-:host-context([data-gh-mode="dark"]) .about-sponsor-afdian-card:hover,
 html[data-theme="dark"] .about-sponsor-afdian-card:hover {
   border-color: rgba(148, 108, 230, 0.55);
   box-shadow: 0 8px 24px rgba(148, 108, 230, 0.2);
