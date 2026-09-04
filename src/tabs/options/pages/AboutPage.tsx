@@ -327,7 +327,7 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
           rel="noopener noreferrer"
           className="about-link-card">
           <div className="about-link-header">
-            <FirefoxIcon size={24} color="#FF7139" />
+            <FirefoxIcon size={24} />
             <span style={{ fontWeight: 600 }}>{t("firefoxAddons")}</span>
           </div>
           <span className="about-link-btn" aria-hidden="true">
