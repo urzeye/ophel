@@ -51,6 +51,22 @@ export const fr = {
   sitePacksRegistrySearchPlaceholder: "Rechercher des packs",
   sitePacksRegistryNoMatch: "Aucun pack correspondant",
   sitePacksOpenSite: "Ouvrir le site",
+  sitePacksTabBuiltin: "Sites intégrés",
+  builtinSitesDesc:
+    "Gérez les sites IA intégrés sur lesquels Ophel est actif. Une fois désactivé, le panneau et toutes les améliorations ne se chargent plus sur ce site ; rechargez les pages ouvertes pour appliquer complètement le changement",
+  builtinSiteBadge: "Intégré",
+  builtinSiteEnabledToast: "{site} réactivé",
+  builtinSiteDisabledToast:
+    "Ophel désactivé sur {site} ; rechargez les pages ouvertes pour appliquer complètement le changement",
+  disableSiteCardTitle: "Interrupteur du site",
+  disableSiteEntryLabel: "Désactiver Ophel sur ce site",
+  disableSiteEntryDesc:
+    "Supprime immédiatement le panneau et toutes les améliorations sur {site}. Vous pouvez le réactiver à tout moment dans le Centre d'adaptation",
+  disableSiteAction: "Désactiver…",
+  disableSiteConfirmTitle: "Désactiver Ophel sur {site} ?",
+  disableSiteConfirmDesc:
+    "Supprime le panneau et tous les moniteurs en arrière-plan de cette page, puis la recharge pour appliquer complètement la désactivation. Pour réactiver, allez dans Centre d'adaptation → Sites intégrés",
+  disableSiteConfirmAction: "Désactiver et recharger",
   sitePacksTabInstalled: "Installés",
   sitePacksTabOrigins: "Sites personnalisés",
   sitePacksTabUpdates: "Catalogue et mises à jour",

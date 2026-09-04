@@ -50,6 +50,22 @@ export const en = {
   sitePacksRegistrySearchPlaceholder: "Search packs",
   sitePacksRegistryNoMatch: "No matching packs",
   sitePacksOpenSite: "Open site",
+  sitePacksTabBuiltin: "Built-in sites",
+  builtinSitesDesc:
+    "Manage where Ophel runs on built-in AI sites. Once disabled, the panel and all enhancements no longer load on that site; reload open pages for the change to take full effect.",
+  builtinSiteBadge: "Built-in",
+  builtinSiteEnabledToast: "{site} re-enabled",
+  builtinSiteDisabledToast:
+    "Ophel disabled on {site}; reload open pages for it to take full effect",
+  disableSiteCardTitle: "Site toggle",
+  disableSiteEntryLabel: "Disable Ophel on this site",
+  disableSiteEntryDesc:
+    "Immediately removes the panel and all enhancements on {site}. You can re-enable it anytime in the Adapter Center.",
+  disableSiteAction: "Disable…",
+  disableSiteConfirmTitle: "Disable Ophel on {site}?",
+  disableSiteConfirmDesc:
+    "This removes the panel and all background monitors on this page and reloads it to fully take effect. To re-enable, go to Adapter Center → Built-in sites.",
+  disableSiteConfirmAction: "Disable & reload",
   sitePacksTabInstalled: "Installed",
   sitePacksTabOrigins: "Custom sites",
   sitePacksTabUpdates: "Browse & updates",

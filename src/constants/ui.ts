@@ -59,6 +59,7 @@ export const FEATURES_TAB_IDS = {
 
 // ==================== Site Packs Page Tab IDs ====================
 export const SITE_PACKS_TAB_IDS = {
+  BUILTIN: "builtin",
   INSTALLED: "installed",
   ORIGINS: "origins",
   UPDATES: "updates",

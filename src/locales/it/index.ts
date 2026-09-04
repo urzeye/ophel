@@ -50,6 +50,22 @@ export const it = {
   sitePacksRegistrySearchPlaceholder: "Cerca pacchetti",
   sitePacksRegistryNoMatch: "Nessun pacchetto corrispondente",
   sitePacksOpenSite: "Apri sito",
+  sitePacksTabBuiltin: "Siti integrati",
+  builtinSitesDesc:
+    "Gestisci dove Ophel è attivo sui siti AI integrati. Una volta disattivato, il pannello e tutte le funzionalità non vengono più caricati su quel sito; ricarica le pagine aperte per applicare completamente la modifica",
+  builtinSiteBadge: "Integrato",
+  builtinSiteEnabledToast: "{site} riattivato",
+  builtinSiteDisabledToast:
+    "Ophel disattivato su {site}; ricarica le pagine aperte per applicare completamente la modifica",
+  disableSiteCardTitle: "Attivazione sito",
+  disableSiteEntryLabel: "Disattiva Ophel su questo sito",
+  disableSiteEntryDesc:
+    "Rimuove immediatamente il pannello e tutte le funzionalità su {site}. Puoi riattivarlo in qualsiasi momento nel Centro adattatori",
+  disableSiteAction: "Disattiva…",
+  disableSiteConfirmTitle: "Disattivare Ophel su {site}?",
+  disableSiteConfirmDesc:
+    "Rimuove il pannello e tutti i monitor in background da questa pagina e la ricarica per applicare completamente la modifica. Per riattivare, vai su Centro adattatori → Siti integrati",
+  disableSiteConfirmAction: "Disattiva e ricarica",
   sitePacksTabInstalled: "Installati",
   sitePacksTabOrigins: "Siti personalizzati",
   sitePacksTabUpdates: "Catalogo e aggiornamenti",

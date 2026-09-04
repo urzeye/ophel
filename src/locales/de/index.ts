@@ -51,6 +51,22 @@ export const de = {
   sitePacksRegistrySearchPlaceholder: "Pakete suchen",
   sitePacksRegistryNoMatch: "Keine passenden Pakete",
   sitePacksOpenSite: "Website öffnen",
+  sitePacksTabBuiltin: "Integrierte Seiten",
+  builtinSitesDesc:
+    "Verwalte, auf welchen integrierten KI-Seiten Ophel aktiv ist. Nach der Deaktivierung werden Panel und alle Erweiterungen auf dieser Seite nicht mehr geladen; lade geöffnete Seiten neu, damit die Änderung vollständig wirkt",
+  builtinSiteBadge: "Integriert",
+  builtinSiteEnabledToast: "{site} wieder aktiviert",
+  builtinSiteDisabledToast:
+    "Ophel auf {site} deaktiviert; lade geöffnete Seiten neu, damit es vollständig wirkt",
+  disableSiteCardTitle: "Seiten-Schalter",
+  disableSiteEntryLabel: "Ophel auf dieser Seite deaktivieren",
+  disableSiteEntryDesc:
+    "Entfernt sofort Panel und alle Erweiterungen auf {site}. Du kannst es jederzeit im Adapter-Center wieder aktivieren",
+  disableSiteAction: "Deaktivieren…",
+  disableSiteConfirmTitle: "Ophel auf {site} deaktivieren?",
+  disableSiteConfirmDesc:
+    "Entfernt Panel und alle Hintergrund-Monitore von dieser Seite und lädt sie neu, damit die Deaktivierung vollständig wirkt. Zum erneuten Aktivieren gehe zu Adapter-Center → Integrierte Seiten",
+  disableSiteConfirmAction: "Deaktivieren & neu laden",
   sitePacksTabInstalled: "Installiert",
   sitePacksTabOrigins: "Eigene Websites",
   sitePacksTabUpdates: "Durchsuchen & Updates",

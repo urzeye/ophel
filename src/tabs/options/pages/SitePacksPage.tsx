@@ -384,6 +384,8 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
   const packManager = useMemo(() => createRuntimePackManager(platform.storage), [])
   const settings = useSettingsStore((state) => state.settings)
   const updateNestedSetting = useSettingsStore((state) => state.updateNestedSetting)
+  const setSettings = useSettingsStore((state) => state.setSettings)
+  const disabledSites = useSettingsStore((state) => state.settings?.disabledSites) ?? []
   const pageRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const patchFileInputRef = useRef<HTMLInputElement>(null)
@@ -392,7 +394,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
   const [activeTab, setActiveTab] = useState<string>(
     initialTab && Object.values(SITE_PACKS_TAB_IDS).some((id) => id === initialTab)
       ? initialTab
-      : SITE_PACKS_TAB_IDS.INSTALLED,
+      : SITE_PACKS_TAB_IDS.BUILTIN,
   )
   const [installedPacks, setInstalledPacks] = useState<InstalledSitePack[]>([])
   const [originBindings, setOriginBindings] = useState<SitePackOriginBindingsState>(
@@ -1538,6 +1540,66 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
     )
   }
 
+  const handleToggleBuiltinSite = (siteId: string, name: string) => {
+    const isDisabled = disabledSites.includes(siteId)
+    const next = isDisabled
+      ? disabledSites.filter((id) => id !== siteId)
+      : [...disabledSites, siteId]
+    setSettings({ disabledSites: next })
+    showToast(
+      isDisabled
+        ? t("builtinSiteEnabledToast", { site: name })
+        : t("builtinSiteDisabledToast", { site: name }),
+      3500,
+    )
+  }
+
+  const renderBuiltinSite = (site: (typeof SUPPORTED_AI_PLATFORMS)[number]) => {
+    const isDisabled = disabledSites.includes(site.id)
+    const faviconUrl = getSitePackFaviconUrl(site.matchPatterns)
+    const siteUrl = site.entryUrls[0]
+
+    return (
+      <div className="settings-pack-item" key={site.id}>
+        <div className="settings-pack-icon" aria-hidden="true">
+          <PlatformIcon
+            platform={faviconUrl ? { name: site.name, faviconUrl } : { name: site.name }}
+            size={24}
+          />
+        </div>
+        <div className="settings-pack-info">
+          <div className="settings-pack-title-line">
+            <strong>{site.name}</strong>
+            <span className="settings-pack-badge">{t("builtinSiteBadge")}</span>
+            {isDisabled && (
+              <span className="settings-pack-badge warning">{t("sitePacksStatusDisabled")}</span>
+            )}
+          </div>
+          <div className="settings-pack-meta">
+            {siteUrl && (
+              <button
+                type="button"
+                className="settings-pack-origin-link"
+                aria-label={`${t("sitePacksOpenSite")}: ${siteUrl}`}
+                onClick={() => platform.openTab(siteUrl)}>
+                <span className="settings-pack-origin">{siteUrl}</span>
+                <ExternalLinkIcon size={12} />
+              </button>
+            )}
+          </div>
+        </div>
+        <div className="settings-pack-controls">
+          <Switch
+            size="sm"
+            checked={!isDisabled}
+            ariaLabel={`${site.name}: ${t("sitePacksEnabledLabel")}`}
+            onChange={() => handleToggleBuiltinSite(site.id, site.name)}
+          />
+        </div>
+      </div>
+    )
+  }
+
   const renderInstalledPack = (pack: InstalledSitePack) => {
     const packId = pack.manifest.id
     const status = getInstalledPackStatus(pack)
@@ -1762,6 +1824,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
   )
 
   const tabs = [
+    { id: SITE_PACKS_TAB_IDS.BUILTIN, label: t("sitePacksTabBuiltin") },
     { id: SITE_PACKS_TAB_IDS.INSTALLED, label: t("sitePacksTabInstalled") },
     { id: SITE_PACKS_TAB_IDS.ORIGINS, label: t("sitePacksTabOrigins") },
     { id: SITE_PACKS_TAB_IDS.UPDATES, label: t("sitePacksTabUpdates") },
@@ -1810,6 +1873,13 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
             </div>
           </div>
         </div>
+      )}
+
+      {activeTab === SITE_PACKS_TAB_IDS.BUILTIN && (
+        <section className="settings-card">
+          <div className="settings-card-desc">{t("builtinSitesDesc")}</div>
+          <div className="settings-pack-list">{SUPPORTED_AI_PLATFORMS.map(renderBuiltinSite)}</div>
+        </section>
       )}
 
       {activeTab === SITE_PACKS_TAB_IDS.INSTALLED && (

@@ -51,6 +51,22 @@ export const ru = {
   sitePacksRegistrySearchPlaceholder: "Поиск пакетов",
   sitePacksRegistryNoMatch: "Нет подходящих пакетов",
   sitePacksOpenSite: "Открыть сайт",
+  sitePacksTabBuiltin: "Встроенные сайты",
+  builtinSitesDesc:
+    "Управляйте тем, на каких встроенных ИИ-сайтах работает Ophel. После отключения панель и все улучшения больше не загружаются на этом сайте; перезагрузите открытые страницы, чтобы изменение полностью вступило в силу",
+  builtinSiteBadge: "Встроенный",
+  builtinSiteEnabledToast: "{site} снова включён",
+  builtinSiteDisabledToast:
+    "Ophel отключён на {site}; перезагрузите открытые страницы, чтобы изменение полностью вступило в силу",
+  disableSiteCardTitle: "Переключатель сайта",
+  disableSiteEntryLabel: "Отключить Ophel на этом сайте",
+  disableSiteEntryDesc:
+    "Немедленно удаляет панель и все улучшения на {site}. Вы можете включить его снова в любой момент в Центре адаптации",
+  disableSiteAction: "Отключить…",
+  disableSiteConfirmTitle: "Отключить Ophel на {site}?",
+  disableSiteConfirmDesc:
+    "Удаляет панель и всех фоновых наблюдателей на этой странице и перезагружает её для полного применения. Чтобы включить снова, перейдите в Центр адаптации → Встроенные сайты",
+  disableSiteConfirmAction: "Отключить и перезагрузить",
   sitePacksTabInstalled: "Установленные",
   sitePacksTabOrigins: "Свои сайты",
   sitePacksTabUpdates: "Каталог и обновления",

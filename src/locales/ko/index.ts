@@ -48,6 +48,22 @@ export const ko = {
   sitePacksRegistrySearchPlaceholder: "팩 검색",
   sitePacksRegistryNoMatch: "일치하는 팩이 없습니다",
   sitePacksOpenSite: "사이트 열기",
+  sitePacksTabBuiltin: "기본 제공 사이트",
+  builtinSitesDesc:
+    "기본 제공 AI 사이트에서 Ophel의 활성화 상태를 관리합니다. 비활성화하면 해당 사이트에서 패널과 모든 향상 기능이 로드되지 않으며, 열린 페이지는 새로 고침 후 완전히 적용됩니다",
+  builtinSiteBadge: "기본 제공",
+  builtinSiteEnabledToast: "{site}을(를) 다시 활성화했습니다",
+  builtinSiteDisabledToast:
+    "{site}에서 Ophel을 비활성화했습니다. 열린 페이지는 새로 고침 후 완전히 적용됩니다",
+  disableSiteCardTitle: "사이트 스위치",
+  disableSiteEntryLabel: "이 사이트에서 Ophel 비활성화",
+  disableSiteEntryDesc:
+    "비활성화하면 {site}의 패널과 모든 향상 기능이 즉시 제거됩니다. 어댑터 센터에서 언제든 다시 활성화할 수 있습니다",
+  disableSiteAction: "비활성화…",
+  disableSiteConfirmTitle: "{site}에서 Ophel을 비활성화할까요?",
+  disableSiteConfirmDesc:
+    "이 페이지의 패널과 모든 백그라운드 모니터링을 제거하고 페이지를 새로 고침하여 완전히 적용합니다. 다시 활성화하려면 「어댑터 센터 → 기본 제공 사이트」로 이동하세요",
+  disableSiteConfirmAction: "비활성화 후 새로 고침",
   sitePacksTabInstalled: "설치됨",
   sitePacksTabOrigins: "사용자 지정 사이트",
   sitePacksTabUpdates: "추가 및 업데이트",
