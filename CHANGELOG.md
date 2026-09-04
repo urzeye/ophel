@@ -11,7 +11,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🚀 New Features
 
-- **Built-in site toggle** — You can now individually disable any built-in site or site pack from the Adapter Center, on-page settings, or extension popup to stop Ophel from loading on that site. (#908)
+- **Site toggle** — You can now individually disable any built-in site or site pack from the Adapter Center, on-page settings, or extension popup to stop Ophel from loading on that site. (#908)
 - **Cross-site conversation search** — Global search now also matches conversations from other supported sites; results show the site icon and an "External" badge, and clicking one opens it in a new tab. (#888)
 - **Gemini Spark conversation sync** — Task threads in Gemini Spark (gemini.google.com/spark) now sync into Conversation Manager, including pinned state; clicking a synced thread opens it. (#902)
 
