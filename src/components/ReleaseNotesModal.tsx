@@ -27,6 +27,8 @@ interface ReleaseNotesModalProps {
   fullChangelogUrl: string
   onClose: () => void
   onOpenFullChangelog: () => void
+  // 中文（zh-CN）下点击赞助按钮跳转到“关于-赞助支持”，其余语言直接打开 Ko-fi
+  onOpenSponsor: () => void
 }
 
 type ReleaseNotesContentBlock =
@@ -116,6 +118,7 @@ export const ReleaseNotesModal: React.FC<ReleaseNotesModalProps> = ({
   fullChangelogUrl,
   onClose,
   onOpenFullChangelog,
+  onOpenSponsor,
 }) => {
   const titleId = useId()
   const closeButtonRef = useRef<HTMLButtonElement | null>(null)
@@ -298,16 +301,26 @@ export const ReleaseNotesModal: React.FC<ReleaseNotesModalProps> = ({
                 <span>{t("giveStar")}</span>
               </a>
             </Tooltip>
-            {/* 赞助入口按产品语言分流：zh-CN 走爱发电，其余走 Ko-fi */}
+            {/* 赞助入口按产品语言分流：zh-CN 跳转“关于-赞助支持”（微信/支付宝扫码），其余走 Ko-fi */}
             <Tooltip content={t("kofiSupport")} disabled={!isFooterCompact}>
-              <a
-                className="gh-release-notes-secondary gh-release-notes-star-link"
-                href={donateChannels.primaryUrl}
-                target="_blank"
-                rel="noopener noreferrer">
-                {donateChannels.kind === "zh-CN" ? <HeartIcon size={16} /> : <KofiIcon size={16} />}
-                <span>{t("kofiSupport")}</span>
-              </a>
+              {donateChannels.kind === "zh-CN" ? (
+                <button
+                  type="button"
+                  className="gh-release-notes-secondary gh-release-notes-star-link"
+                  onClick={onOpenSponsor}>
+                  <HeartIcon size={16} />
+                  <span>{t("kofiSupport")}</span>
+                </button>
+              ) : (
+                <a
+                  className="gh-release-notes-secondary gh-release-notes-star-link"
+                  href={donateChannels.primaryUrl}
+                  target="_blank"
+                  rel="noopener noreferrer">
+                  <KofiIcon size={16} />
+                  <span>{t("kofiSupport")}</span>
+                </a>
+              )}
             </Tooltip>
           </div>
           <div className="gh-release-notes-footer-actions">

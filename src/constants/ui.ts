@@ -45,6 +45,9 @@ export const NAV_IDS = {
   ABOUT: "about",
 } as const
 
+// 关于页“赞助支持”区块的定位 ID，供设置导航的滚动/高亮机制使用
+export const ABOUT_SPONSOR_SETTING_ID = "about-sponsor"
+
 // ==================== Features Page Tab IDs ====================
 export const FEATURES_TAB_IDS = {
   OUTLINE: "outline",

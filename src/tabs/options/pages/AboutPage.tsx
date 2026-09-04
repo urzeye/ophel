@@ -24,6 +24,7 @@ import {
   StarIcon,
 } from "~components/icons"
 import { SparkleIcon } from "~components/icons/SparkleIcon"
+import { ABOUT_SPONSOR_SETTING_ID } from "~constants"
 import { STORE_LINKS } from "~constants/store-links"
 import { useHasUnseenReleaseNotes } from "~hooks/useHasUnseenReleaseNotes"
 import { useSupportedAiPlatforms } from "~hooks/useSupportedAiPlatforms"
@@ -207,7 +208,7 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
       </div>
 
       {donateChannels.kind === "zh-CN" ? (
-        <section className="about-sponsor-block">
+        <section className="about-sponsor-block" data-setting-id={ABOUT_SPONSOR_SETTING_ID}>
           <div className="about-section-title">{t("sponsorSupport")}</div>
           <p className="about-sponsor-desc">{t("sponsorDesc")}</p>
           <div className="about-sponsor-channels">

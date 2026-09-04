@@ -16,7 +16,7 @@ import {
   SearchIcon,
   SitePacksIcon,
 } from "~components/icons"
-import { resolveSettingsNavigateDetail } from "~constants"
+import { ABOUT_SPONSOR_SETTING_ID, NAV_IDS, resolveSettingsNavigateDetail } from "~constants"
 import { useHasUnseenReleaseNotes } from "~hooks/useHasUnseenReleaseNotes"
 import { platform } from "~platform"
 import {
@@ -386,6 +386,12 @@ const OptionsPage = () => {
           fullChangelogUrl={fullChangelogUrl}
           onClose={() => setIsReleaseNotesOpen(false)}
           onOpenFullChangelog={() => platform.openTab(fullChangelogUrl)}
+          // 中文下赞助按钮跳回本页“关于-赞助支持”区块并高亮定位
+          onOpenSponsor={() => {
+            setIsReleaseNotesOpen(false)
+            setActivePage(NAV_IDS.ABOUT)
+            setLocateRequest({ settingId: ABOUT_SPONSOR_SETTING_ID, token: Date.now() })
+          }}
         />
       ) : null}
     </div>

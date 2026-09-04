@@ -115,6 +115,8 @@ import {
 } from "./global-search/syntax"
 import { useTagsStore } from "~stores/tags-store"
 import {
+  ABOUT_SPONSOR_SETTING_ID,
+  NAV_IDS,
   TAB_IDS,
   resolveSettingRoute,
   searchSettingsItems,
@@ -1862,6 +1864,20 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
     showEdgePeek,
   ])
 
+  // 更新日志页脚的赞助入口：中文下打开设置“关于”页并定位到赞助支持区块
+  const openSponsorFromReleaseNotes = useCallback(() => {
+    closeReleaseNotes()
+    openSettingsModal()
+    // 延迟发送导航事件，确保 Modal 已挂载
+    setTimeout(() => {
+      window.dispatchEvent(
+        new CustomEvent("ophel:navigateSettingsPage", {
+          detail: { page: NAV_IDS.ABOUT, settingId: ABOUT_SPONSOR_SETTING_ID },
+        }),
+      )
+    }, 50)
+  }, [closeReleaseNotes, openSettingsModal])
+
   const navigateToSearchResult = useCallback(
     async (item: GlobalSearchResultItem) => {
       const navigationRequestId = ++outlineSearchNavigationRequestIdRef.current
@@ -3411,6 +3427,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
           fullChangelogUrl={fullChangelogUrl}
           onClose={closeReleaseNotes}
           onOpenFullChangelog={openFullChangelog}
+          onOpenSponsor={openSponsorFromReleaseNotes}
         />
       ) : null}
       {segmentedExportDraft && (
