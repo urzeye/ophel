@@ -1,4 +1,4 @@
-import { LAYOUT_CONFIG } from "~constants"
+import { LAYOUT_CONFIG, isBuiltinSiteId } from "~constants"
 import { normalizeShortcutsSettings } from "~constants/shortcuts"
 import { DEFAULT_QUICK_BUTTONS_SETTINGS, DEFAULT_SETTINGS } from "~constants/default-settings"
 import type {
@@ -21,6 +21,14 @@ type LegacyQuickButtonsSettings = {
 export type SettingsInput = Omit<Partial<Settings>, "quickButtons"> & {
   quickButtons?: Partial<Settings["quickButtons"]>
 } & LegacyQuickButtonsSettings
+
+// 停用列表只保留合法的内置站点 ID，过滤掉脏数据与已下线的站点
+const normalizeDisabledSites = (value: SettingsInput["disabledSites"]): string[] => {
+  if (!Array.isArray(value)) return []
+  return [
+    ...new Set(value.filter((id): id is string => typeof id === "string" && isBuiltinSiteId(id))),
+  ]
+}
 
 const ensureQuickButton = (
   buttons: QuickButtonConfig[],
@@ -349,6 +357,7 @@ export const normalizeSettings = (settings: SettingsInput): Settings => {
   return {
     ...DEFAULT_SETTINGS,
     ...rest,
+    disabledSites: normalizeDisabledSites(settings.disabledSites),
     remoteConfig: {
       ...DEFAULT_SETTINGS.remoteConfig,
       ...settings.remoteConfig,

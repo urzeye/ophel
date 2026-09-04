@@ -76,6 +76,8 @@ export const DEFAULT_SETTINGS: Settings = {
   language: "auto",
   hasAgreedToTerms: false,
 
+  disabledSites: [],
+
   remoteConfig: {
     autoUpdate: true,
     registrySourceUrl: "",

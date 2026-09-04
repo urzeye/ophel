@@ -6,6 +6,7 @@ import { BACKUP_EXCLUDED_STORAGE_KEYS, BACKUP_USER_DATA_STORAGE_KEYS } from "~co
 import { startPageUrlChangeBroadcaster } from "~core/modules-init"
 import { applyOphelPlatformFontClass } from "~utils/font"
 import { EVENT_PAGE_URL_CHANGE } from "~utils/messaging"
+import { isBuiltinSiteDisabled } from "~utils/settings-selectors"
 
 import { USERSCRIPT_RESOURCE_DEFINITIONS } from "./resource-manifest"
 import { injectGeminiCanvasCodeBridge } from "./gemini-canvas-inject"
@@ -516,6 +517,7 @@ async function init() {
           getAdapter(),
         )
         const [, forceUpdate] = React.useState(0)
+        const [siteDisabled, setSiteDisabled] = React.useState(false)
 
         React.useEffect(
           () =>
@@ -524,6 +526,25 @@ async function init() {
             }),
           [],
         )
+
+        // 订阅设置中的站点停用状态：停用后立即卸载面板
+        React.useEffect(() => {
+          if (!currentAdapter) return
+          let disposed = false
+          let unsubscribe: (() => void) | null = null
+          void import("~stores/settings-store").then(({ useSettingsStore }) => {
+            if (disposed) return
+            const siteId = currentAdapter.getSiteId()
+            const syncDisabled = () =>
+              setSiteDisabled(isBuiltinSiteDisabled(useSettingsStore.getState().settings, siteId))
+            syncDisabled()
+            unsubscribe = useSettingsStore.subscribe(syncDisabled)
+          })
+          return () => {
+            disposed = true
+            unsubscribe?.()
+          }
+        }, [currentAdapter])
 
         React.useEffect(() => {
           const stopBroadcaster = startPageUrlChangeBroadcaster()
@@ -544,7 +565,7 @@ async function init() {
           }
         }, [])
 
-        if (!currentAdapter) return null
+        if (!currentAdapter || siteDisabled) return null
         return React.createElement(App, {
           key: currentAdapter.getSiteInstanceKey(),
           adapter: currentAdapter,
@@ -564,9 +585,8 @@ async function init() {
   window.addEventListener("unload", cleanupUserscriptObjectUrls)
 
   // 等待 Zustand hydration 完成后初始化核心模块
-  const { useSettingsStore, getSettingsState, claimLegacySiteSettings } = await import(
-    "~stores/settings-store"
-  )
+  const { useSettingsStore, getSettingsState, claimLegacySiteSettings, subscribeSettings } =
+    await import("~stores/settings-store")
   const { useConversationsStore } = await import("~stores/conversations-store")
   const { useFoldersStore } = await import("~stores/folders-store")
   const { useTagsStore } = await import("~stores/tags-store")
@@ -659,6 +679,12 @@ async function init() {
       }
       const settings = getSettingsState()
 
+      if (isBuiltinSiteDisabled(settings, siteId)) {
+        // 站点已停用：回收模块后不再初始化任何功能
+        teardownActiveModules()
+        return
+      }
+
       // ========== 初始化所有核心模块（使用共享模块） ==========
       const { initCoreModules, subscribeModuleUpdates, initUrlChangeObserver, destroyCoreModules } =
         await import("~core/modules-init")
@@ -716,6 +742,18 @@ async function init() {
   }
 
   await initializeUserscriptModules()
+
+  // 内置站点停用状态即时生效：停用 → 回收全部核心模块；重新启用 → 重新初始化
+  subscribeSettings((newSettings) => {
+    const currentAdapter = getAdapter()
+    if (!currentAdapter) return
+    const disabled = isBuiltinSiteDisabled(newSettings, currentAdapter.getSiteId())
+    if (disabled) {
+      if (activeAdapter) teardownActiveModules()
+      return
+    }
+    if (!activeAdapter) void initializeUserscriptModules()
+  })
 
   const stopBroadcaster = startPageUrlChangeBroadcaster()
   window.addEventListener(EVENT_PAGE_URL_CHANGE, () => {

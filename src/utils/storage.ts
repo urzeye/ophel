@@ -113,6 +113,7 @@ export {
   getSiteTheme,
   getSiteUserQueryWidth,
   getSiteZenMode,
+  isBuiltinSiteDisabled,
 } from "~utils/settings-selectors"
 export {
   createSiteInstanceKey,

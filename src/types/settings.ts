@@ -127,6 +127,9 @@ export interface Settings {
   language: string
   hasAgreedToTerms: boolean // 用户是否同意免责声明
 
+  // 已停用的内置站点 ID 列表（SITE_IDS 值）；停用后该站点不再初始化任何功能
+  disabledSites: string[]
+
   // 适配配置远程更新
   remoteConfig: {
     autoUpdate: boolean

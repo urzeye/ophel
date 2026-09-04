@@ -9,8 +9,10 @@ import { getAdapter, registryReady } from "~adapters"
 import type { SiteAdapter } from "~adapters/base"
 import { App } from "~components/App"
 import { startPageUrlChangeBroadcaster } from "~core/modules-init"
+import { useSettingsStore } from "~stores/settings-store"
 import { applyOphelPlatformFontClass } from "~utils/font"
 import { EVENT_PAGE_URL_CHANGE } from "~utils/messaging"
+import { isBuiltinSiteDisabled } from "~utils/storage"
 
 export const config: PlasmoCSConfig = {
   matches: [
@@ -145,6 +147,10 @@ export const mountShadowHost: PlasmoMountShadowHost = ({
 const PlasmoApp = () => {
   const [isRegistryReady, setIsRegistryReady] = React.useState(false)
   const [adapter, setAdapter] = React.useState<SiteAdapter | null>(() => getAdapter())
+  const settingsHydrated = useSettingsStore((state) => state._hasHydrated)
+  const siteDisabled = useSettingsStore((state) =>
+    adapter ? isBuiltinSiteDisabled(state.settings, adapter.getSiteId()) : false,
+  )
 
   React.useEffect(() => {
     let mounted = true
@@ -182,7 +188,8 @@ const PlasmoApp = () => {
     }
   }, [])
 
-  if (!isRegistryReady || !adapter) return null
+  // 设置 hydration 完成前不渲染，避免停用站点上面板闪现
+  if (!isRegistryReady || !settingsHydrated || !adapter || siteDisabled) return null
   return <App key={adapter.getSiteInstanceKey()} adapter={adapter} />
 }
 

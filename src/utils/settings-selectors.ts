@@ -18,6 +18,17 @@ import type {
 /**
  * 获取站点配置，如果不存在则返回默认配置
  */
+
+/**
+ * 内置站点是否被用户停用；停用的站点不初始化任何功能模块
+ */
+export function isBuiltinSiteDisabled(
+  settings: Settings | null | undefined,
+  siteId: string,
+): boolean {
+  return settings?.disabledSites?.includes(siteId) ?? false
+}
+
 export function getSiteTheme(settings: Settings, siteId: string): SiteThemeConfig {
   const sites = settings.theme?.sites
   if (sites && siteId in sites) {

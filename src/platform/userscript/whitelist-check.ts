@@ -39,6 +39,32 @@ interface OriginBindingsStorage {
   bindings: Record<string, { mode: string; packId: string }>
 }
 
+// Zustand persist 存储信封的键名（与 STORAGE_KEYS.SETTINGS / settings-store 的 name 一致）
+const SETTINGS_STORAGE_KEY = "settings"
+
+interface SettingsStorageEnvelope {
+  state?: {
+    settings?: {
+      disabledSites?: unknown
+    }
+  }
+}
+
+/**
+ * 读取用户已停用的内置站点 ID 列表（settings 为 Zustand persist 信封结构）
+ */
+function readDisabledBuiltinSites(): string[] {
+  try {
+    const envelope = GM_getValue<SettingsStorageEnvelope | null>(SETTINGS_STORAGE_KEY, null)
+    const list = envelope?.state?.settings?.disabledSites
+    if (!Array.isArray(list)) return []
+    return list.filter((id): id is string => typeof id === "string")
+  } catch (error) {
+    console.debug("[Ophel] Failed to read disabled sites during whitelist check:", error)
+    return []
+  }
+}
+
 /**
  * 检查当前站点是否应该初始化 Ophel
  */
@@ -52,11 +78,18 @@ export async function shouldInitializeOnCurrentSite(): Promise<boolean> {
   }
 
   // 1. 检查内置站点（15 个内置适配器）
-  const builtinMatches = SUPPORTED_AI_PLATFORMS.flatMap((platform) => platform.matchPatterns)
-  for (const pattern of builtinMatches) {
-    if (siteMatchPatternMatchesUrl(parsedUrl, pattern)) {
+  const disabledSites = readDisabledBuiltinSites()
+  for (const builtinPlatform of SUPPORTED_AI_PLATFORMS) {
+    const matched = builtinPlatform.matchPatterns.some((pattern) =>
+      siteMatchPatternMatchesUrl(parsedUrl, pattern),
+    )
+    if (!matched) continue
+    if (!disabledSites.includes(builtinPlatform.id)) {
       return true
     }
+    // 内置适配器已停用：不再因内置匹配初始化，
+    // 但继续检查 SitePack matches 与显式绑定，允许社区适配包接管该站点
+    break
   }
 
   // 2. 检查已安装的 SitePack matches

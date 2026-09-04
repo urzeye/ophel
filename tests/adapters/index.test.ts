@@ -459,7 +459,7 @@ describe("AdapterRegistry bootstrap contracts", () => {
     ])
 
     expect(uiEntry).toMatch(
-      /void registryReady\(\)[\s\S]*setIsRegistryReady\(true\)[\s\S]*if \(!isRegistryReady \|\| !adapter\) return null[\s\S]*return <App key={adapter\.getSiteInstanceKey\(\)} adapter={adapter} \/>/,
+      /void registryReady\(\)[\s\S]*setIsRegistryReady\(true\)[\s\S]*if \(!isRegistryReady \|\| !settingsHydrated \|\| !adapter \|\| siteDisabled\) return null[\s\S]*return <App key={adapter\.getSiteInstanceKey\(\)} adapter={adapter} \/>/,
     )
     expect(extensionEntry).toContain("await initAdapterRegistry()")
     expect(userscriptEntry).toContain("await initAdapterRegistry()")

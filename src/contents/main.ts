@@ -35,7 +35,12 @@ import { useFoldersStore } from "~stores/folders-store"
 import { usePromptChainsStore } from "~stores/prompt-chains-store"
 import { usePromptsStore } from "~stores/prompts-store"
 import { useReadingHistoryStore } from "~stores/reading-history-store"
-import { claimLegacySiteSettings, getSettingsState, useSettingsStore } from "~stores/settings-store"
+import {
+  claimLegacySiteSettings,
+  getSettingsState,
+  subscribeSettings,
+  useSettingsStore,
+} from "~stores/settings-store"
 import { useTagsStore } from "~stores/tags-store"
 import {
   EVENT_EXTENSION_UPDATE_AVAILABLE,
@@ -48,6 +53,7 @@ import {
   MSG_START_NEW_CONVERSATION,
 } from "~utils/messaging"
 import { showSitePackBindingIssueNotice } from "~utils/binding-issue-notice"
+import { isBuiltinSiteDisabled } from "~utils/storage"
 
 const resetAllStores = () => {
   useSettingsStore.getState().resetSettings()
@@ -468,6 +474,7 @@ export const config: PlasmoCSConfig = {
 }
 
 let activeAdapterInstance: SiteAdapter | null = null
+let pendingAdapterInstance: SiteAdapter | null = null
 let activeModulesCleanup: (() => void) | null = null
 let initGeneration = 0
 let bindingIssueNoticeShown = false
@@ -569,75 +576,95 @@ function registerBackgroundMessageListener() {
   })
 }
 
+const waitForSettingsHydration = (): Promise<void> =>
+  new Promise<void>((resolve) => {
+    if (useSettingsStore.getState()._hasHydrated) {
+      resolve()
+      return
+    }
+    const unsub = useSettingsStore.subscribe((state) => {
+      if (state._hasHydrated) {
+        unsub()
+        resolve()
+      }
+    })
+  })
+
 function initializeOphel() {
   const adapter = getAdapter()
 
   if (adapter) {
-    if (activeAdapterInstance === adapter) return
-    // 适配器切换（含 A→B 直接切换）时先销毁旧模块，避免订阅与观察者残留
-    teardownActiveModules()
-    activeAdapterInstance = adapter
-    const generation = initGeneration
+    if (activeAdapterInstance === adapter || pendingAdapterInstance === adapter) return
 
-    console.warn(`[Ophel] Loaded ${adapter.getName()} adapter on:`, window.location.hostname)
-
-    // 初始化适配器
-    adapter.afterPropertiesSet({})
-
-    // 异步初始化所有功能模块
+    pendingAdapterInstance = adapter
     ;(async () => {
-      // 等待 Zustand hydration 完成
-      await new Promise<void>((resolve) => {
-        if (useSettingsStore.getState()._hasHydrated) {
-          resolve()
+      try {
+        // 等待 Zustand hydration 完成后再判断站点停用状态
+        await waitForSettingsHydration()
+
+        // 等待期间适配器可能已被更新的调用取代（SPA 导航）
+        if (pendingAdapterInstance !== adapter) return
+
+        if (isBuiltinSiteDisabled(getSettingsState(), adapter.getSiteId())) {
+          // 站点已停用：回收上一适配器模块后不再初始化任何功能
+          teardownActiveModules()
           return
         }
-        const unsub = useSettingsStore.subscribe((state) => {
-          if (state._hasHydrated) {
-            unsub()
-            resolve()
-          }
-        })
-      })
 
-      const siteId = adapter.getSiteId()
-      const siteInstanceKey = adapter.getSiteInstanceKey()
-      if (adapter.canClaimLegacySiteData()) {
-        claimLegacySiteSettings(siteId, siteInstanceKey)
+        // 适配器切换（含 A→B 直接切换）时先销毁旧模块，避免订阅与观察者残留
+        teardownActiveModules()
+        activeAdapterInstance = adapter
+        const generation = initGeneration
+
+        console.warn(`[Ophel] Loaded ${adapter.getName()} adapter on:`, window.location.hostname)
+
+        // 初始化适配器
+        adapter.afterPropertiesSet({})
+
+        const siteId = adapter.getSiteId()
+        const siteInstanceKey = adapter.getSiteInstanceKey()
+        if (adapter.canClaimLegacySiteData()) {
+          claimLegacySiteSettings(siteId, siteInstanceKey)
+        }
+        const settings = getSettingsState()
+
+        // 创建模块上下文
+        const ctx: ModulesContext = {
+          adapter,
+          settings,
+          siteId,
+          siteInstanceKey,
+          isStale: () => generation !== initGeneration || activeAdapterInstance !== adapter,
+        }
+
+        // 初始化所有核心模块
+        await initCoreModules(ctx)
+
+        // 订阅设置变化
+        const unsubscribeModuleUpdates = subscribeModuleUpdates(ctx)
+
+        // 初始化 URL 变化监听
+        const cleanupUrlChangeObserver = initUrlChangeObserver(ctx)
+
+        const cleanup = () => {
+          unsubscribeModuleUpdates()
+          cleanupUrlChangeObserver()
+        }
+
+        // 异步窗口内适配器可能已切换或被清空；过期初始化结果立即销毁，避免泄漏
+        if (generation !== initGeneration || activeAdapterInstance !== adapter) {
+          cleanup()
+          return
+        }
+        activeModulesCleanup = cleanup
+      } finally {
+        if (pendingAdapterInstance === adapter) {
+          pendingAdapterInstance = null
+        }
       }
-      const settings = getSettingsState()
-
-      // 创建模块上下文
-      const ctx: ModulesContext = {
-        adapter,
-        settings,
-        siteId,
-        siteInstanceKey,
-        isStale: () => generation !== initGeneration || activeAdapterInstance !== adapter,
-      }
-
-      // 初始化所有核心模块
-      await initCoreModules(ctx)
-
-      // 订阅设置变化
-      const unsubscribeModuleUpdates = subscribeModuleUpdates(ctx)
-
-      // 初始化 URL 变化监听
-      const cleanupUrlChangeObserver = initUrlChangeObserver(ctx)
-
-      const cleanup = () => {
-        unsubscribeModuleUpdates()
-        cleanupUrlChangeObserver()
-      }
-
-      // 异步窗口内适配器可能已切换或被清空；过期初始化结果立即销毁，避免泄漏
-      if (generation !== initGeneration || activeAdapterInstance !== adapter) {
-        cleanup()
-        return
-      }
-      activeModulesCleanup = cleanup
     })()
   } else {
+    pendingAdapterInstance = null
     teardownActiveModules()
 
     // 绑定异常提示每次页面加载只展示一次，避免 SPA 导航反复弹出
@@ -663,6 +690,20 @@ async function bootstrapOphel() {
   await initAdapterRegistry()
   registerBackgroundMessageListener()
   initializeOphel()
+
+  // 内置站点停用状态即时生效：停用 → 回收全部核心模块；重新启用 → 重新初始化
+  subscribeSettings((newSettings) => {
+    const adapter = getAdapter()
+    if (!adapter) return
+    const disabled = isBuiltinSiteDisabled(newSettings, adapter.getSiteId())
+    if (disabled) {
+      if (activeAdapterInstance) teardownActiveModules()
+      return
+    }
+    if (!activeAdapterInstance && !pendingAdapterInstance) {
+      initializeOphel()
+    }
+  })
 
   // 启动页面级 URL 广播，监听 SPA 路由变化
   const stopBroadcaster = startPageUrlChangeBroadcaster()
