@@ -52,11 +52,18 @@ interface SettingsStorageEnvelope {
 
 /**
  * 读取用户已停用的内置站点 ID 列表（settings 为 Zustand persist 信封结构）
+ *
+ * 注意：persist 经 createJSONStorage 写入，GM 里存的是 JSON 字符串而非对象；
+ * 另需兼容旧版油猴直接把 settings 原始对象存入 GM 的格式。
  */
 function readDisabledBuiltinSites(): string[] {
   try {
-    const envelope = GM_getValue<SettingsStorageEnvelope | null>(SETTINGS_STORAGE_KEY, null)
-    const list = envelope?.state?.settings?.disabledSites
+    const raw = GM_getValue<unknown>(SETTINGS_STORAGE_KEY, null)
+    if (raw === undefined || raw === null) return []
+    const parsed = typeof raw === "string" ? JSON.parse(raw) : raw
+    const envelope = parsed as SettingsStorageEnvelope & { disabledSites?: unknown }
+    // Zustand persist 信封：{ state: { settings } }；旧版直存 settings 对象兜底
+    const list = envelope?.state?.settings?.disabledSites ?? envelope?.disabledSites
     if (!Array.isArray(list)) return []
     return list.filter((id): id is string => typeof id === "string")
   } catch (error) {

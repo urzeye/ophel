@@ -30,6 +30,7 @@ export const SETTING_SEARCH_SUB_TAB_LABEL_DEFINITIONS: Record<string, LocalizedL
   tabOrder: { key: "tabOrderTab", fallback: "Tab Order" },
   shortcuts: { key: "shortcutsTab", fallback: "Quick Buttons" },
   toolsMenu: { key: "toolboxMenu", fallback: "Toolbox" },
+  [SITE_PACKS_TAB_IDS.BUILTIN]: { key: "sitePacksTabBuiltin", fallback: "Built-in Sites" },
   [SITE_PACKS_TAB_IDS.UPDATES]: { key: "sitePacksTabUpdates", fallback: "Updates" },
   [FEATURES_TAB_IDS.TAB_SETTINGS]: { key: "tabSettingsTab", fallback: "Tab Settings" },
   [FEATURES_TAB_IDS.REMINDER]: { key: "reminderTab", fallback: "Alerts" },

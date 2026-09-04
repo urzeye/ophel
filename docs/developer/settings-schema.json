@@ -2,6 +2,8 @@
   "language": "auto",
   "hasAgreedToTerms": false,
 
+  "disabledSites": [],
+
   "remoteConfig": {
     "autoUpdate": true,
     "registrySourceUrl": ""
