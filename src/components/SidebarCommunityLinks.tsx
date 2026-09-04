@@ -4,6 +4,7 @@ import { GithubIcon } from "~components/icons/GithubIcon"
 import { KofiIcon } from "~components/icons/KofiIcon"
 import { ScriptCatIcon } from "~components/icons/StoreIcons"
 import { Tooltip } from "~components/ui/Tooltip"
+import { ABOUT_SPONSOR_SETTING_ID, NAV_IDS } from "~constants"
 import { STORE_LINKS } from "~constants/store-links"
 import { isScriptCatUserscriptManager } from "~platform/utils"
 import { GITHUB_REPO_URL, getDonateChannels } from "~utils/donate-channels"
@@ -15,6 +16,15 @@ export function SidebarCommunityLinks() {
   const showScriptCat = useMemo(() => isScriptCatUserscriptManager(), [])
   const language = useSyncExternalStore(subscribeI18nChanges, getCurrentLang, getCurrentLang)
   const donateChannels = getDonateChannels(language)
+
+  // zh-CN 下赞助入口跳“关于-赞助支持”扫码区块，其余语言外链 Ko-fi
+  const openSponsor = () => {
+    window.dispatchEvent(
+      new CustomEvent("ophel:navigateSettingsPage", {
+        detail: { page: NAV_IDS.ABOUT, settingId: ABOUT_SPONSOR_SETTING_ID },
+      }),
+    )
+  }
 
   return (
     <div className="sidebar-community-links">
@@ -54,14 +64,24 @@ export function SidebarCommunityLinks() {
       </Tooltip>
 
       <Tooltip content={t("kofiSupport")}>
-        <a
-          href={donateChannels.primaryUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label={t("kofiSupport")}
-          className="sidebar-social-btn kofi-btn">
-          <KofiIcon size={18} />
-        </a>
+        {donateChannels.kind === "zh-CN" ? (
+          <button
+            type="button"
+            aria-label={t("kofiSupport")}
+            className="sidebar-social-btn kofi-btn"
+            onClick={openSponsor}>
+            <KofiIcon size={18} />
+          </button>
+        ) : (
+          <a
+            href={donateChannels.primaryUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={t("kofiSupport")}
+            className="sidebar-social-btn kofi-btn">
+            <KofiIcon size={18} />
+          </a>
+        )}
       </Tooltip>
 
       <Tooltip content={t("joinDiscordCommunity")}>

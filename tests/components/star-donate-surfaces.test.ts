@@ -151,6 +151,21 @@ describe("star and donate surfaces", () => {
     )
   })
 
+  it("routes the zh-CN sidebar and popup donate entries to the About sponsor section", () => {
+    // 中文下侧边栏和 popup 的赞助入口同样跳“关于-赞助支持”，不再直连爱发电登录墙
+    const sidebar = compact(sidebarSource)
+    expect(sidebar).toContain('donateChannels.kind === "zh-CN"')
+    expect(sidebar).toContain(
+      "detail: { page: NAV_IDS.ABOUT, settingId: ABOUT_SPONSOR_SETTING_ID },",
+    )
+    const options = compact(optionsSource)
+    expect(options).toContain('window.addEventListener("ophel:navigateSettingsPage"')
+    const popup = compact(popupSource)
+    expect(popup).toContain("openOptionsPage(NAV_IDS.ABOUT, ABOUT_SPONSOR_SETTING_ID)")
+    expect(popup).toContain('if (page) params.set("page", page)')
+    expect(popup).toContain('if (settingId) params.set("settingId", settingId)')
+  })
+
   it("points sidebar and popup coffee actions at the shared donate primary URL", () => {
     expect(sidebarSource).toContain("getDonateChannels")
     expect(sidebarSource).toContain("joinDiscordCommunity")

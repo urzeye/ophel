@@ -15,6 +15,7 @@ import { SettingsIcon } from "~components/icons/SettingsIcon"
 import { StarIcon } from "~components/icons/StarIcon"
 import { TimeIcon } from "~components/icons/TimeIcon"
 import { Tooltip } from "~components/ui/Tooltip"
+import { ABOUT_SPONSOR_SETTING_ID, NAV_IDS } from "~constants"
 import type { SupportedAiPlatform } from "~constants/defaults"
 import {
   buildQuickAccessSites,
@@ -303,10 +304,14 @@ function IndexPopup() {
     }
   }
 
-  const openOptionsPage = (page?: string) => {
+  const openOptionsPage = (page?: string, settingId?: string) => {
+    const params = new URLSearchParams()
+    if (page) params.set("page", page)
+    if (settingId) params.set("settingId", settingId)
+    const query = params.toString()
     // Use tabs.create as fallback for popup context
     const optionsUrl = chrome.runtime.getURL(
-      page ? `tabs/options.html?page=${page}` : "tabs/options.html",
+      query ? `tabs/options.html?${query}` : "tabs/options.html",
     )
     chrome.tabs.create({ url: optionsUrl })
     window.close()
@@ -315,6 +320,15 @@ function IndexPopup() {
   const openUrl = (url: string) => {
     chrome.tabs.create({ url })
     window.close()
+  }
+
+  // zh-CN 下赞助入口跳“关于-赞助支持”扫码区块，其余语言外链 Ko-fi
+  const openSponsor = () => {
+    if (donateChannels.kind === "zh-CN") {
+      openOptionsPage(NAV_IDS.ABOUT, ABOUT_SPONSOR_SETTING_ID)
+      return
+    }
+    openUrl(donateChannels.primaryUrl)
   }
 
   const rememberEntryUrl = (platformId: string, url: string) => {
@@ -593,9 +607,7 @@ function IndexPopup() {
           </Tooltip>
 
           <Tooltip content={t("kofiSupport")}>
-            <button
-              className="popup-action-pill kofi-btn icon-only"
-              onClick={() => openUrl(donateChannels.primaryUrl)}>
+            <button className="popup-action-pill kofi-btn icon-only" onClick={openSponsor}>
               <KofiIcon size={16} />
             </button>
           </Tooltip>
