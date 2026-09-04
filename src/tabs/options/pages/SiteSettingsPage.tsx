@@ -129,8 +129,9 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
     if (!current.includes(siteId)) {
       setSettings({ disabledSites: [...current, siteId] })
     }
-    // 主世界注入脚本无法随设置卸载，刷新页面以保证彻底停用
-    window.location.reload()
+    // persist 写入 chrome.storage 是异步 IPC，立即刷新可能中断写入；
+    // 留出持久化缓冲后再刷新（主世界注入脚本无法随设置卸载，需刷新彻底停用）
+    setTimeout(() => window.location.reload(), 300)
   }
   // 宽度布局相关状态
   const currentPageWidth = settings ? getSitePageWidth(settings, siteInstanceKey) : undefined

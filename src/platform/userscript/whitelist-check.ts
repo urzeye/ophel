@@ -67,7 +67,7 @@ function readDisabledBuiltinSites(): string[] {
     if (!Array.isArray(list)) return []
     return list.filter((id): id is string => typeof id === "string")
   } catch (error) {
-    console.debug("[Ophel] Failed to read disabled sites during whitelist check:", error)
+    console.warn("[Ophel] Failed to read disabled sites during whitelist check:", error)
     return []
   }
 }
