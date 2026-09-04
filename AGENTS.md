@@ -1,5 +1,3 @@
-改
-
 # AGENTS.md
 
 面向本仓库 AI/Codex 代理的项目级规则。项目级 Agent 规则统一维护在 `AGENTS.md`。优先级：用户当前指令 > 本文件 > 其他项目文档。默认用中文回复，除非用户明确要求其他语言。
@@ -33,6 +31,7 @@ Ophel Atlas 是 TypeScript + React 18 + Plasmo 的浏览器扩展，同时支持
 - `src/contents/`：Plasmo content script 入口，含 isolated/main world 和 UI 挂载逻辑。
 - `src/styles/`、`src/style.css`：原生 CSS 与主题变量。
 - `locales/` 与 `src/locales/`：manifest 与应用内 i18n。
+- `registry/`：SitePack 注册表、元数据校验与构建脚本。
 
 ## 常用命令
 
@@ -42,8 +41,10 @@ Ophel Atlas 是 TypeScript + React 18 + Plasmo 的浏览器扩展，同时支持
 - Lint 检查：`pnpm lint:check`
 - 类型检查：`pnpm typecheck`（覆盖 `src/` 与 `tests/`）
 - 测试：`pnpm test`（Vitest）
+- 校验 SitePack：`pnpm registry:validate`
 - Chrome 构建：`pnpm build`
 - Firefox 构建：`pnpm build:firefox`
+- 打包压缩包：`pnpm package`（Chrome）/ `pnpm package:firefox`（Firefox）
 - 油猴构建：`pnpm build:userscript`
 - 油猴本地调试构建：`pnpm build:userscript:local`
 - 油猴本地资源服务：`pnpm serve:userscript:assets`
@@ -62,8 +63,10 @@ Ophel Atlas 是 TypeScript + React 18 + Plasmo 的浏览器扩展，同时支持
 - `any`、`console` 只在确有必要时使用；日志优先 `console.warn/error`。
 - 设置项变更要同步 `DEFAULT_SETTINGS`、store、UI、备份/恢复兼容逻辑和 i18n 文案。
 - 修改或新增任何文案时，必须一次性同步 11 种语言，不准遗漏某种语言的文案。
-- 11 种语言包括：zh-CN、zh-TW、en、ja、ko、it、de、es、fr、pt-BR/pt、ru。
-- 应用内文案检查 `src/locales/*/index.ts`；扩展 manifest 文案检查 `locales/*/messages.json`；新增 key 时按使用场景同步对应体系。
+- 11 种语言在两套体系中的目录命名格式不同，必须严格对应：
+  - 应用内文案（横杠/简写）：`src/locales/{zh-CN, zh-TW, en, ja, ko, it, de, es, fr, pt, ru}/index.ts`。
+  - 扩展 Manifest 文案（下划线）：`locales/{zh_CN, zh_TW, en, ja, ko, it, de, es, fr, pt_BR, ru}/messages.json`。
+  - 新增 key 时按使用场景同步对应体系。
 - Manifest 权限变更要保持最小授权，优先使用 optional permissions。
 - 依赖管理统一使用 pnpm；不要使用 `npm install` 或 `yarn`；依赖变更必须同步 `pnpm-lock.yaml`。
 - 不为绕过类型、Lint 或构建问题随意升级大版本依赖。
@@ -113,7 +116,7 @@ Ophel Atlas 是 TypeScript + React 18 + Plasmo 的浏览器扩展，同时支持
   - 新增能力放 `New Features` / `新增功能`。
   - 已有能力变得更快、更顺、更好用、更清晰，放 `Improvements` / `功能优化`；性能优化通常归入这里。
   - 明确错误行为、兼容性问题或回归修复，放 `Bug Fixes` / `问题修复`。
-- 条目沿用现有 1.0.60 附近的格式：`- **功能点标题** — 一句说明。` 标题要具体，说明写“做了什么、用户会感受到什么效果”。
+- 条目沿用现有日志格式：`- **功能点标题** — 一句说明。` 标题要具体，说明写“做了什么、用户会感受到什么效果”。
 - 面向普通用户写，不面向开发者；避免类名、函数名、内部模块名、实现细节和纯技术词。可以保留用户知道的功能名、站点名、快捷键名、设置项名和导出格式名。
 - 不要逐条翻译 commit。如果几个commit内容一致或相关联，可以（但非必要）按用户可感知结果合并。同一分类下高价值内容排序在前。
 - 如果变更来自 PR、issue 或外部贡献者，能确认时要在条目末尾保留编号和贡献者；不要遗漏，也不要凭空补。
@@ -128,8 +131,9 @@ Ophel Atlas 是 TypeScript + React 18 + Plasmo 的浏览器扩展，同时支持
 
 ## 提交与 PR
 
-- 提交代码前参考 `.github/workflows/ci.yml`，建议按 CI 顺序运行：`pnpm format:check`、`pnpm lint:check`、`pnpm typecheck`、`pnpm test`、`pnpm build`。
-- 仅文档或 `docs/**` 变更通常不会触发 CI，可按风险选择是否运行完整检查。
+- 提交代码前参考 `.github/workflows/ci.yml`，建议按 CI 顺序运行本地验证：`pnpm format:check`、`pnpm lint:check`、`pnpm typecheck`、`pnpm test`、`pnpm build`。
+- 纯文档与元配置（`docs/**`、`*.md`、`.gitattributes`、`.editorconfig`、`.all-contributorsrc` 等）已被配置在 CI `paths-ignore` 中不会触发流水线。
+- CI 已配置 Draft PR 自动跳过执行，转换为 Ready for review 后方会触发全量构建与检查。
 - Commit message 使用英文，遵循 `commitlint.config.js` 的 Conventional Commits：`type(scope): subject`。
 - 允许的 type：`feat`、`fix`、`docs`、`style`、`refactor`、`perf`、`test`、`build`、`ci`、`chore`、`revert`、`deps`、`ux`。
 - Commit type 按改动意图选择，不要把“优化”“清理”“移除”默认写成 `fix`：
@@ -139,8 +143,9 @@ Ophel Atlas 是 TypeScript + React 18 + Plasmo 的浏览器扩展，同时支持
   - `perf`：以性能为目标、用户行为等价的优化。
   - `ux`：用户界面、交互流程、文案体验相关优化。
   - `chore`：配置、脚本、依赖、仓库维护等不直接影响产品行为的清理。
-- Commit header 最长 100 字符；scope 使用小写；body/footer 前留空行。
+- Commit header 最长 100 字符；scope 使用小写；body/footer 前留空行；body 每行最长 100 字符（长句必须手动断行）；footer 每行最长 120 字符。
 - 创建 PR 使用英文；PR 标题也参考 commit message 格式，例如 `refactor(core): remove obsolete prompt pipeline`、`perf(adapter): reduce DOM observer work`、`ux(panel): simplify quick actions`、`fix(adapter): prevent duplicate panel injection`。
+- 创建 PR 默认一律创建为 Draft PR（如 `gh pr create --draft`），除非用户显式要求创建正式 PR；避免未审阅的提交提前触发 CI 消耗额度或发生误合。
 - 提交或整理 diff 前先看 `git status` 和 `git diff`；不要把无关文件、用户未要求的格式化改动或生成物混进提交。
 
 ## 验证与交付
