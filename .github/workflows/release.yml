@@ -65,14 +65,11 @@ jobs:
       - name: Sync supporters sections
         run: pnpm sync:supporters
 
-      - name: Build all platforms
-        run: pnpm build:all
+      - name: Package all platforms
+        run: pnpm package:all
 
       - name: Build Userscript
         run: pnpm build:userscript
-
-      - name: Package all platforms
-        run: pnpm package:all
 
       - name: Extract Changelog
         id: extract_changelog
