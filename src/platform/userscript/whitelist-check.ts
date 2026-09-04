@@ -119,7 +119,7 @@ export async function shouldInitializeOnCurrentSite(): Promise<boolean> {
       }
     }
   } catch (error) {
-    console.debug("[Ophel] Failed to check installed SitePacks during whitelist check:", error)
+    console.warn("[Ophel] Failed to check installed SitePacks during whitelist check:", error)
   }
 
   // 3. 检查用户显式绑定的自定义 origin
@@ -132,7 +132,7 @@ export async function shouldInitializeOnCurrentSite(): Promise<boolean> {
       return true
     }
   } catch (error) {
-    console.debug("[Ophel] Failed to check origin bindings during whitelist check:", error)
+    console.warn("[Ophel] Failed to check origin bindings during whitelist check:", error)
   }
 
   return false

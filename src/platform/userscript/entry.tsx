@@ -424,13 +424,6 @@ async function init() {
   await initAdapterRegistry()
   initGeminiTitleGuard()
 
-  const adapter = getAdapter()
-
-  if (adapter) {
-    // 初始化适配器
-    adapter.afterPropertiesSet({})
-  }
-
   let mountObserver: MutationObserver | null = null
   let mountInterval: number | null = null
 
