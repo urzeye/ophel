@@ -227,6 +227,27 @@ export function getAdapter(): SiteAdapter | null {
   return null
 }
 
+/**
+ * 获取当前页面的有效适配器：被用户停用的内置站点会被跳过，
+ * 允许已安装的 SitePack 适配器接管同站点。
+ *
+ * getAdapter() 保持纯粹（同步、无设置依赖）；本函数由已完成
+ * settings hydration 的入口在运行时调用，disabledSites 来自设置。
+ */
+export function getEffectiveAdapter(disabledSites: readonly string[] = []): SiteAdapter | null {
+  for (const adapter of builtinAdapters) {
+    if (adapter.match() && !disabledSites.includes(adapter.getSiteId())) {
+      return adapter
+    }
+  }
+  for (const adapter of dynamicAdapters) {
+    if (adapter.match()) {
+      return adapter
+    }
+  }
+  return null
+}
+
 // 导出类型和基类
 export { SiteAdapter } from "./base"
 export type {

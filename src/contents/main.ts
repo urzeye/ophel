@@ -9,6 +9,7 @@ import type { PlasmoCSConfig } from "plasmo"
 
 import {
   getAdapter,
+  getEffectiveAdapter,
   getBrokenOriginBinding,
   initAdapterRegistry,
   reapplyBuiltinSiteConfig,
@@ -53,7 +54,6 @@ import {
   MSG_START_NEW_CONVERSATION,
 } from "~utils/messaging"
 import { showSitePackBindingIssueNotice } from "~utils/binding-issue-notice"
-import { isBuiltinSiteDisabled } from "~utils/storage"
 
 const resetAllStores = () => {
   useSettingsStore.getState().resetSettings()
@@ -591,25 +591,30 @@ const waitForSettingsHydration = (): Promise<void> =>
   })
 
 function initializeOphel() {
-  const adapter = getAdapter()
+  const matchedAdapter = getAdapter()
 
-  if (adapter) {
-    if (activeAdapterInstance === adapter || pendingAdapterInstance === adapter) return
+  if (matchedAdapter) {
+    if (activeAdapterInstance === matchedAdapter || pendingAdapterInstance === matchedAdapter)
+      return
 
-    pendingAdapterInstance = adapter
+    pendingAdapterInstance = matchedAdapter
     ;(async () => {
       try {
         // 等待 Zustand hydration 完成后再判断站点停用状态
         await waitForSettingsHydration()
 
         // 等待期间适配器可能已被更新的调用取代（SPA 导航）
-        if (pendingAdapterInstance !== adapter) return
+        if (pendingAdapterInstance !== matchedAdapter) return
 
-        if (isBuiltinSiteDisabled(getSettingsState(), adapter.getSiteId())) {
-          // 站点已停用：回收上一适配器模块后不再初始化任何功能
+        // 内置适配器被停用时跳过，允许已安装的 SitePack 接管同站点；
+        // 无接管适配器则完全停用
+        const adapter = getEffectiveAdapter(getSettingsState().disabledSites)
+        if (!adapter) {
           teardownActiveModules()
           return
         }
+        // 有效适配器未变化（例如同站点 SPA 导航）时不重复初始化
+        if (activeAdapterInstance === adapter) return
 
         // 适配器切换（含 A→B 直接切换）时先销毁旧模块，避免订阅与观察者残留
         teardownActiveModules()
@@ -658,7 +663,7 @@ function initializeOphel() {
         }
         activeModulesCleanup = cleanup
       } finally {
-        if (pendingAdapterInstance === adapter) {
+        if (pendingAdapterInstance === matchedAdapter) {
           pendingAdapterInstance = null
         }
       }
@@ -693,14 +698,14 @@ async function bootstrapOphel() {
 
   // 内置站点停用状态即时生效：停用 → 回收全部核心模块；重新启用 → 重新初始化
   subscribeSettings((newSettings) => {
-    const adapter = getAdapter()
-    if (!adapter) return
-    const disabled = isBuiltinSiteDisabled(newSettings, adapter.getSiteId())
-    if (disabled) {
+    if (!getAdapter()) return
+    const effectiveAdapter = getEffectiveAdapter(newSettings.disabledSites)
+    if (!effectiveAdapter) {
+      // 无有效适配器（内置已停用且无 SitePack 接管）：回收全部核心模块
       if (activeAdapterInstance) teardownActiveModules()
       return
     }
-    if (!activeAdapterInstance && !pendingAdapterInstance) {
+    if (effectiveAdapter !== activeAdapterInstance && !pendingAdapterInstance) {
       initializeOphel()
     }
   })

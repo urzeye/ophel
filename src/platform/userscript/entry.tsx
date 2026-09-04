@@ -6,7 +6,6 @@ import { BACKUP_EXCLUDED_STORAGE_KEYS, BACKUP_USER_DATA_STORAGE_KEYS } from "~co
 import { startPageUrlChangeBroadcaster } from "~core/modules-init"
 import { applyOphelPlatformFontClass } from "~utils/font"
 import { EVENT_PAGE_URL_CHANGE } from "~utils/messaging"
-import { isBuiltinSiteDisabled } from "~utils/settings-selectors"
 
 import { USERSCRIPT_RESOURCE_DEFINITIONS } from "./resource-manifest"
 import { injectGeminiCanvasCodeBridge } from "./gemini-canvas-inject"
@@ -404,7 +403,7 @@ async function init() {
     })
 
   const [
-    { getAdapter, getBrokenOriginBinding, initAdapterRegistry },
+    { getAdapter, getEffectiveAdapter, getBrokenOriginBinding, initAdapterRegistry },
     { App },
     { initNetworkMonitor },
     { initGeminiTitleGuard },
@@ -517,7 +516,6 @@ async function init() {
           getAdapter(),
         )
         const [, forceUpdate] = React.useState(0)
-        const [siteDisabled, setSiteDisabled] = React.useState(false)
 
         React.useEffect(
           () =>
@@ -527,24 +525,25 @@ async function init() {
           [],
         )
 
-        // 订阅设置中的站点停用状态：停用后立即卸载面板
+        // 订阅设置中的站点停用状态：停用后立即卸载面板；
+        // 内置适配器被停用时允许已安装的 SitePack 接管同站点
         React.useEffect(() => {
-          if (!currentAdapter) return
           let disposed = false
           let unsubscribe: (() => void) | null = null
           void import("~stores/settings-store").then(({ useSettingsStore }) => {
             if (disposed) return
-            const siteId = currentAdapter.getSiteId()
-            const syncDisabled = () =>
-              setSiteDisabled(isBuiltinSiteDisabled(useSettingsStore.getState().settings, siteId))
-            syncDisabled()
-            unsubscribe = useSettingsStore.subscribe(syncDisabled)
+            const syncAdapter = () => {
+              const next = getEffectiveAdapter(useSettingsStore.getState().settings.disabledSites)
+              setCurrentAdapter((prev) => (prev === next ? prev : next))
+            }
+            syncAdapter()
+            unsubscribe = useSettingsStore.subscribe(syncAdapter)
           })
           return () => {
             disposed = true
             unsubscribe?.()
           }
-        }, [currentAdapter])
+        }, [])
 
         React.useEffect(() => {
           const stopBroadcaster = startPageUrlChangeBroadcaster()
@@ -565,7 +564,7 @@ async function init() {
           }
         }, [])
 
-        if (!currentAdapter || siteDisabled) return null
+        if (!currentAdapter) return null
         return React.createElement(App, {
           key: currentAdapter.getSiteInstanceKey(),
           adapter: currentAdapter,
@@ -652,16 +651,9 @@ async function init() {
   }
 
   const initializeUserscriptModules = async () => {
-    const adapter = getAdapter()
+    const matchedAdapter = getAdapter()
 
-    if (adapter) {
-      if (activeAdapter === adapter) return
-      // 适配器切换（含 A→B 直接切换）时先销毁旧模块，避免订阅与观察者残留
-      teardownActiveModules()
-      activeAdapter = adapter
-      const generation = initGeneration
-      adapter.afterPropertiesSet({})
-
+    if (matchedAdapter) {
       await Promise.all([
         waitForHydration(useSettingsStore),
         waitForHydration(useConversationsStore),
@@ -672,17 +664,28 @@ async function init() {
         waitForHydration(useReadingHistoryStore),
       ])
 
+      const settings = getSettingsState()
+
+      // 内置适配器被停用时跳过，允许已安装的 SitePack 接管同站点；
+      // 无接管适配器则完全停用
+      const adapter = getEffectiveAdapter(settings.disabledSites)
+      if (!adapter) {
+        teardownActiveModules()
+        return
+      }
+      // 有效适配器未变化（例如同站点 SPA 导航）时不重复初始化
+      if (activeAdapter === adapter) return
+
+      // 适配器切换（含 A→B 直接切换）时先销毁旧模块，避免订阅与观察者残留
+      teardownActiveModules()
+      activeAdapter = adapter
+      const generation = initGeneration
+      adapter.afterPropertiesSet({})
+
       const siteId = adapter.getSiteId()
       const siteInstanceKey = adapter.getSiteInstanceKey()
       if (adapter.canClaimLegacySiteData()) {
         claimLegacySiteSettings(siteId, siteInstanceKey)
-      }
-      const settings = getSettingsState()
-
-      if (isBuiltinSiteDisabled(settings, siteId)) {
-        // 站点已停用：回收模块后不再初始化任何功能
-        teardownActiveModules()
-        return
       }
 
       // ========== 初始化所有核心模块（使用共享模块） ==========
@@ -745,14 +748,14 @@ async function init() {
 
   // 内置站点停用状态即时生效：停用 → 回收全部核心模块；重新启用 → 重新初始化
   subscribeSettings((newSettings) => {
-    const currentAdapter = getAdapter()
-    if (!currentAdapter) return
-    const disabled = isBuiltinSiteDisabled(newSettings, currentAdapter.getSiteId())
-    if (disabled) {
+    if (!getAdapter()) return
+    const effectiveAdapter = getEffectiveAdapter(newSettings.disabledSites)
+    if (!effectiveAdapter) {
+      // 无有效适配器（内置已停用且无 SitePack 接管）：回收全部核心模块
       if (activeAdapter) teardownActiveModules()
       return
     }
-    if (!activeAdapter) void initializeUserscriptModules()
+    if (effectiveAdapter !== activeAdapter) void initializeUserscriptModules()
   })
 
   const stopBroadcaster = startPageUrlChangeBroadcaster()

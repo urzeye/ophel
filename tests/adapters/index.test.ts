@@ -449,6 +449,55 @@ describe("AdapterRegistry origin activation", () => {
   })
 })
 
+describe("AdapterRegistry disabled built-in sites", () => {
+  it("matches built-ins first when no site is disabled", async () => {
+    const pack = createPack({ id: "takeover-pack", matches: ["https://toggle.example/*"] })
+    registryTestState.snapshot.packs.push(pack)
+    registryTestState.builtinMatches.add("doubao")
+    setCurrentUrl("https://toggle.example/chat")
+    const registry = await importRegistry()
+
+    await registry.initAdapterRegistry()
+
+    expect(registry.getAdapter()?.getSiteId()).toBe("doubao")
+    expect(registry.getEffectiveAdapter([])?.getSiteId()).toBe("doubao")
+  })
+
+  it("lets an installed SitePack take over when the built-in adapter is disabled", async () => {
+    const pack = createPack({ id: "takeover-pack", matches: ["https://toggle.example/*"] })
+    registryTestState.snapshot.packs.push(pack)
+    registryTestState.builtinMatches.add("doubao")
+    setCurrentUrl("https://toggle.example/chat")
+    const registry = await importRegistry()
+
+    await registry.initAdapterRegistry()
+
+    expect(registry.getAdapter()?.getSiteId()).toBe("doubao")
+    expect(registry.getEffectiveAdapter(["doubao"])?.getSiteId()).toBe("pack:takeover-pack")
+  })
+
+  it("returns null when the built-in adapter is disabled and no SitePack matches", async () => {
+    registryTestState.builtinMatches.add("doubao")
+    setCurrentUrl("https://toggle.example/chat")
+    const registry = await importRegistry()
+
+    await registry.initAdapterRegistry()
+
+    expect(registry.getAdapter()?.getSiteId()).toBe("doubao")
+    expect(registry.getEffectiveAdapter(["doubao"])).toBeNull()
+  })
+
+  it("ignores disabled entries that do not match the current site", async () => {
+    registryTestState.builtinMatches.add("doubao")
+    setCurrentUrl("https://toggle.example/chat")
+    const registry = await importRegistry()
+
+    await registry.initAdapterRegistry()
+
+    expect(registry.getEffectiveAdapter(["chatgpt", "kimi"])?.getSiteId()).toBe("doubao")
+  })
+})
+
 describe("AdapterRegistry bootstrap contracts", () => {
   it("keeps the panel and both platform entries behind registry initialization", async () => {
     const [uiEntry, extensionEntry, userscriptEntry, appSource] = await Promise.all([
@@ -459,7 +508,7 @@ describe("AdapterRegistry bootstrap contracts", () => {
     ])
 
     expect(uiEntry).toMatch(
-      /void registryReady\(\)[\s\S]*setIsRegistryReady\(true\)[\s\S]*if \(!isRegistryReady \|\| !settingsHydrated \|\| !adapter \|\| siteDisabled\) return null[\s\S]*return <App key={adapter\.getSiteInstanceKey\(\)} adapter={adapter} \/>/,
+      /getEffectiveAdapter\(disabledSites\)[\s\S]*void registryReady\(\)[\s\S]*setIsRegistryReady\(true\)[\s\S]*if \(!isRegistryReady \|\| !settingsHydrated \|\| !effectiveAdapter\) return null[\s\S]*return <App key={effectiveAdapter\.getSiteInstanceKey\(\)} adapter={effectiveAdapter} \/>/,
     )
     expect(extensionEntry).toContain("await initAdapterRegistry()")
     expect(userscriptEntry).toContain("await initAdapterRegistry()")
