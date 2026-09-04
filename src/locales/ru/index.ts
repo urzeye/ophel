@@ -58,12 +58,7 @@ export const ru = {
   builtinSiteEnabledToast: "{site} снова включён",
   builtinSiteDisabledToast:
     "Ophel отключён на {site}; перезагрузите открытые страницы, чтобы изменение полностью вступило в силу",
-  disableSiteCardTitle: "Переключатель сайта",
   disableSiteEntryLabel: "Отключить Ophel на этом сайте",
-  disableSiteEntryDesc:
-    "Немедленно удаляет панель и все улучшения на {site}. Вы можете включить его снова в любой момент в Центре адаптации",
-  disableSiteAction: "Отключить…",
-  disableCurrentSiteAction: "Отключить на этом сайте…",
   disableSiteConfirmTitle: "Отключить Ophel на {site}?",
   disableSiteConfirmDesc:
     "Удаляет панель и всех фоновых наблюдателей на этой странице и перезагружает её для полного применения. Чтобы включить снова, перейдите в Центр адаптации → Встроенные сайты",

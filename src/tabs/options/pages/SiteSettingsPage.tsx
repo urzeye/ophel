@@ -234,7 +234,7 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
               <button
                 type="button"
                 className="settings-site-disable-icon-btn"
-                aria-label={t("disableSiteConfirmTitle", { site: adapter?.getName() ?? siteId })}
+                aria-label={t("disableSiteEntryLabel")}
                 onClick={() => setShowDisableSiteConfirm(true)}>
                 <PowerIcon size={16} />
               </button>

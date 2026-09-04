@@ -57,12 +57,7 @@ export const en = {
   builtinSiteEnabledToast: "{site} re-enabled",
   builtinSiteDisabledToast:
     "Ophel disabled on {site}; reload open pages for it to take full effect",
-  disableSiteCardTitle: "Site toggle",
   disableSiteEntryLabel: "Disable Ophel on this site",
-  disableSiteEntryDesc:
-    "Immediately removes the panel and all enhancements on {site}. You can re-enable it anytime in the Adapter Center.",
-  disableSiteAction: "Disable…",
-  disableCurrentSiteAction: "Disable on this site…",
   disableSiteConfirmTitle: "Disable Ophel on {site}?",
   disableSiteConfirmDesc:
     "This removes the panel and all background monitors on this page and reloads it to fully take effect. To re-enable, go to Adapter Center → Built-in sites.",

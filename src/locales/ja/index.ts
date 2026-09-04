@@ -58,12 +58,7 @@ export const ja = {
   builtinSiteEnabledToast: "{site} を再度有効にしました",
   builtinSiteDisabledToast:
     "{site} で Ophel を無効にしました。開いているページは再読み込み後に完全に反映されます",
-  disableSiteCardTitle: "サイトの切り替え",
   disableSiteEntryLabel: "このサイトで Ophel を無効にする",
-  disableSiteEntryDesc:
-    "無効にすると {site} のパネルとすべての拡張機能が直ちに削除されます。アダプターセンターでいつでも再度有効にできます",
-  disableSiteAction: "無効にする…",
-  disableCurrentSiteAction: "このサイトで無効化…",
   disableSiteConfirmTitle: "{site} で Ophel を無効にしますか？",
   disableSiteConfirmDesc:
     "このページのパネルとすべてのバックグラウンド監視を削除し、ページを再読み込みして完全に反映します。元に戻すには「アダプターセンター → 内蔵サイト」で再度有効にしてください",

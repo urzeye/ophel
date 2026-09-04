@@ -58,12 +58,7 @@ export const de = {
   builtinSiteEnabledToast: "{site} wieder aktiviert",
   builtinSiteDisabledToast:
     "Ophel auf {site} deaktiviert; lade geöffnete Seiten neu, damit es vollständig wirkt",
-  disableSiteCardTitle: "Seiten-Schalter",
   disableSiteEntryLabel: "Ophel auf dieser Seite deaktivieren",
-  disableSiteEntryDesc:
-    "Entfernt sofort Panel und alle Erweiterungen auf {site}. Du kannst es jederzeit im Adapter-Center wieder aktivieren",
-  disableSiteAction: "Deaktivieren…",
-  disableCurrentSiteAction: "Auf dieser Seite deaktivieren…",
   disableSiteConfirmTitle: "Ophel auf {site} deaktivieren?",
   disableSiteConfirmDesc:
     "Entfernt Panel und alle Hintergrund-Monitore von dieser Seite und lädt sie neu, damit die Deaktivierung vollständig wirkt. Zum erneuten Aktivieren gehe zu Adapter-Center → Integrierte Seiten",
