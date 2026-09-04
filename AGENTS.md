@@ -94,6 +94,10 @@ Ophel Atlas 是 TypeScript + React 18 + Plasmo 的浏览器扩展，同时支持
 - 动态主题变量由 `ThemeManager` 注入到 Shadow Root 末尾，避免被静态变量覆盖。
 - `::view-transition-*` 等文档根伪元素样式必须注入主文档 `document.head`，不能放在 Shadow DOM CSS 里。
 - Gemini Enterprise 等第三方 Shadow DOM 场景，样式要注入目标 shadowRoot，而不是只注入页面或插件 Shadow DOM。
+- 样式必须同时兼容 Chrome 与 Firefox，新增 CSS 前先确认特性在两端的支持情况（参考 MDN）。
+  - 禁止使用 Firefox 未实现的选择器/特性，典型如 `:host-context()`：Firefox 不支持，且选择器列表中含任何一个无效选择器会导致整条规则被丢弃，连累同规则内其他有效选择器。
+  - Shadow DOM 内的深浅主题选择器统一使用 `:host([data-theme="dark"])`（`ThemeManager` 会向 host 写入 `data-theme`），不要用 `:host-context()` 或 `body[data-gh-mode]` 这类 Shadow 内不可达/不兼容的写法。
+  - 浏览器表现不一致的选择器不要与通用选择器合并在同一条规则里，应拆成独立规则分别声明。
 - CSS 类名延续 `gh-` 前缀，颜色优先使用 `--gh-*` 变量并提供合理 fallback。
 - 交付 UI 任务时，说明本次主要应用了哪些 `DESIGN.md` 章节，并明确验证了哪些主题、状态或样式注入链路。
 
