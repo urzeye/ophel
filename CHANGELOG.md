@@ -11,6 +11,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🚀 New Features
 
+- **Built-in site toggle** — The Adapter Center gains a "Built-in sites" tab where each of the 15 built-in sites (ChatGPT, Gemini, Doubao, and more) can be turned off individually; Ophel then no longer loads the panel or any enhancements on that site. Site Settings on a supported page also offers a one-click "Disable Ophel on this site" entry.
 - **Cross-site conversation search** — Global search now also matches conversations from other supported sites; results show the site icon and an "External" badge, and clicking one opens it in a new tab. (#888)
 - **Gemini Spark conversation sync** — Task threads in Gemini Spark (gemini.google.com/spark) now sync into Conversation Manager, including pinned state; clicking a synced thread opens it. (#902)
 
