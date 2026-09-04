@@ -170,6 +170,66 @@ body {
   border: 1px solid rgba(245, 158, 11, 0.2);
 }
 
+.popup-status-badge.disabled {
+  background: rgba(107, 114, 128, 0.1);
+  color: #6b7280;
+  border: 1px solid rgba(107, 114, 128, 0.2);
+}
+
+.popup-site-status-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 当前站点启停开关 */
+.popup-site-switch {
+  position: relative;
+  width: 32px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  border-radius: 9px;
+  background: var(--popup-accent);
+  cursor: pointer;
+  transition: background 0.2s ease;
+  flex-shrink: 0;
+}
+
+.popup-site-switch.off {
+  background: var(--popup-border);
+}
+
+.popup-site-switch-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease;
+  transform: translateX(14px);
+}
+
+.popup-site-switch.off .popup-site-switch-knob {
+  transform: translateX(0);
+}
+
+/* 当前站点已停用状态区 */
+.popup-disabled-state {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.popup-disabled-hint {
+  font-size: 12px;
+  color: var(--popup-text-secondary);
+  text-align: center;
+}
+
 @media (prefers-color-scheme: dark) {
   .popup-status-badge.supported {
     background: rgba(52, 211, 153, 0.15);
@@ -180,6 +240,11 @@ body {
     background: rgba(251, 191, 36, 0.15);
     color: #fbbf24;
     border-color: rgba(251, 191, 36, 0.25);
+  }
+  .popup-status-badge.disabled {
+    background: rgba(156, 163, 175, 0.15);
+    color: #9ca3af;
+    border-color: rgba(156, 163, 175, 0.25);
   }
 }
 
@@ -449,6 +514,17 @@ body {
 .popup-site-link.unbound .popup-site-icon,
 .popup-site-link.unbound .popup-site-emoji {
   opacity: 0.5;
+}
+
+/* 停用站点的格子：弱化展示但保留导航能力 */
+.popup-site-link.site-disabled .popup-site-icon,
+.popup-site-link.site-disabled .popup-site-emoji {
+  opacity: 0.55;
+  filter: grayscale(0.6);
+}
+
+.popup-site-link.site-disabled .popup-site-subtitle {
+  color: var(--popup-text-secondary);
 }
 
 /* Grid tile wrapper: anchors the entry switch button and entry menu */
