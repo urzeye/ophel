@@ -12,8 +12,12 @@ on:
       - "!.github/workflows/ci.yml"
       - "LICENSE"
       - ".gitignore"
+      - ".gitattributes"
+      - ".editorconfig"
+      - ".all-contributorsrc"
   pull_request:
     branches: ["main"]
+    types: [opened, synchronize, reopened, ready_for_review]
     paths-ignore:
       - "**.md"
       - "docs/**"
@@ -23,6 +27,9 @@ on:
       - "!.github/workflows/ci.yml"
       - "LICENSE"
       - ".gitignore"
+      - ".gitattributes"
+      - ".editorconfig"
+      - ".all-contributorsrc"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -31,6 +38,7 @@ concurrency:
 jobs:
   audit:
     name: "Audit Code Quality"
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -46,7 +54,7 @@ jobs:
           cache: "pnpm"
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --prefer-offline
 
       - name: 🎨 Check Code Format (Prettier)
         run: pnpm format:check
