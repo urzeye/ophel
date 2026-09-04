@@ -9,20 +9,22 @@ interface PageTitleProps {
 export const PageTitle: React.FC<PageTitleProps> = ({ title, Icon, action }) => {
   return (
     <div className="settings-page-header">
-      <h1 className="settings-page-title" style={{ display: "flex", alignItems: "center" }}>
-        {Icon && (
-          <Icon
-            size={28}
-            className="settings-page-title-icon"
-            style={{
-              marginRight: 8,
-              color: "var(--gh-primary, #4285f4)",
-            }}
-          />
-        )}
-        {title}
-      </h1>
-      {action && <div className="settings-page-header-action">{action}</div>}
+      <div className="settings-page-title-wrap">
+        <h1 className="settings-page-title" style={{ display: "flex", alignItems: "center" }}>
+          {Icon && (
+            <Icon
+              size={28}
+              className="settings-page-title-icon"
+              style={{
+                marginRight: 8,
+                color: "var(--gh-primary, #4285f4)",
+              }}
+            />
+          )}
+          {title}
+        </h1>
+        {action && <div className="settings-page-header-action">{action}</div>}
+      </div>
     </div>
   )
 }

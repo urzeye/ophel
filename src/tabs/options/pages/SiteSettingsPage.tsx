@@ -11,8 +11,8 @@ import {
   getFeatureCapabilitiesSignature,
   type SitePackCapability,
 } from "~adapters/feature-capabilities"
-import { PageContentIcon as LayoutIcon } from "~components/icons"
-import { ConfirmDialog, NumberInput, Slider } from "~components/ui"
+import { PageContentIcon as LayoutIcon, PowerIcon } from "~components/icons"
+import { ConfirmDialog, NumberInput, Slider, Tooltip } from "~components/ui"
 import { LAYOUT_CONFIG, SITE_IDS, SITE_SETTINGS_TAB_IDS, isBuiltinSiteId } from "~constants"
 import { platform } from "~platform"
 import { useSettingsStore } from "~stores/settings-store"
@@ -230,14 +230,15 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
         Icon={LayoutIcon}
         action={
           canDisableCurrentSite ? (
-            <button
-              type="button"
-              className="settings-site-disable-btn"
-              title={t("disableSiteEntryDesc", { site: adapter?.getName() ?? siteId })}
-              aria-label={t("disableSiteConfirmTitle", { site: adapter?.getName() ?? siteId })}
-              onClick={() => setShowDisableSiteConfirm(true)}>
-              {t("disableCurrentSiteAction", { site: adapter?.getName() ?? siteId })}
-            </button>
+            <Tooltip content={t("disableSiteEntryLabel")}>
+              <button
+                type="button"
+                className="settings-site-disable-icon-btn"
+                aria-label={t("disableSiteConfirmTitle", { site: adapter?.getName() ?? siteId })}
+                onClick={() => setShowDisableSiteConfirm(true)}>
+                <PowerIcon size={16} />
+              </button>
+            </Tooltip>
           ) : undefined
         }
       />
