@@ -2337,8 +2337,8 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
   // 从 window 获取 main.ts 创建的全局 ThemeManager 实例
   // userscript 场景下 App 可能先于核心模块渲染，这里统一复用全局单例
   const themeManager = useMemo(() => {
-    const currentAdapter = getAdapter()
-    const currentSiteInstanceKey = currentAdapter?.getSiteInstanceKey() || "_default"
+    // 使用 props 传入的生效适配器：全局 getAdapter() 会绕过内置站点停用与 SitePack 接管
+    const currentSiteInstanceKey = adapter?.getSiteInstanceKey() || "_default"
     const fallbackTheme = settings ? getSiteTheme(settings, currentSiteInstanceKey) : undefined
 
     return ensureGlobalThemeManager({
@@ -2375,9 +2375,8 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
       const currentSettings = settingsRef.current
       const sites = currentSettings?.theme?.sites || {}
 
-      // 获取当前站点 ID
-      const currentAdapter = getAdapter()
-      const currentSiteInstanceKey = currentAdapter?.getSiteInstanceKey() || "_default"
+      // 获取当前站点 ID（使用 props 传入的生效适配器）
+      const currentSiteInstanceKey = adapter?.getSiteInstanceKey() || "_default"
 
       // 确保站点配置有完整的默认值，但优先使用已有配置
       const existingSite = currentSettings
@@ -2410,7 +2409,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
     return () => {
       themeManager.setOnModeChange(undefined)
     }
-  }, [themeManager, setSettings, isSettingsHydrated]) // 通过 ref 访问最新 settings 避免重新挂载回调
+  }, [themeManager, setSettings, isSettingsHydrated, adapter]) // 通过 ref 访问最新 settings 避免重新挂载回调
 
   const themeSites = settings?.theme?.sites
   const syncUnpin = settings?.features?.conversations?.syncUnpin
@@ -2438,9 +2437,8 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
   useEffect(() => {
     if (!isSettingsHydrated) return // 等待 hydration 完成
 
-    // 使用当前站点的配置而非 _default
-    const currentAdapter = getAdapter()
-    const currentSiteInstanceKey = currentAdapter?.getSiteInstanceKey() || "_default"
+    // 使用当前站点（生效适配器）的配置而非 _default
+    const currentSiteInstanceKey = adapter?.getSiteInstanceKey() || "_default"
     const siteTheme = themeSites?.[currentSiteInstanceKey] || themeSites?._default
     const lightId = siteTheme?.lightStyleId
     const darkId = siteTheme?.darkStyleId
@@ -2448,7 +2446,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
     if (lightId && darkId) {
       themeManager.setPresets(lightId, darkId)
     }
-  }, [themeSites, themeManager, isSettingsHydrated])
+  }, [themeSites, themeManager, isSettingsHydrated, adapter])
 
   // 监听自定义样式变化，同步到 ThemeManager
   useEffect(() => {
@@ -3343,6 +3341,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
       />
 
       <QuickButtons
+        adapter={adapter}
         isPanelExpanded={isPanelExpanded}
         hasUnseenReleaseNotes={
           canShowCurrentReleaseNotes &&

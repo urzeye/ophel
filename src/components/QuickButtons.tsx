@@ -13,7 +13,7 @@ import {
   getFeatureCapabilitiesSignature,
   type SitePackCapability,
 } from "~adapters/feature-capabilities"
-import { getAdapter } from "~adapters/index"
+import type { SiteAdapter } from "~adapters/base"
 import { ThemeDarkIcon, ThemeLightIcon, EyeClosedIcon } from "~components/icons"
 import { LoadingOverlay } from "~components/LoadingOverlay"
 import { Tooltip } from "~components/ui/Tooltip"
@@ -48,6 +48,8 @@ import {
 import { showToast } from "~utils/toast"
 
 interface QuickButtonsProps {
+  /** 当前生效的站点适配器（内置站点停用后可能是接管它的社区 SitePack） */
+  adapter?: SiteAdapter | null
   isPanelExpanded: boolean
   /** 有未读更新日志时在面板开关按钮上镜像红点，保证面板收起时也可见 */
   hasUnseenReleaseNotes?: boolean
@@ -129,6 +131,7 @@ const TOOLS_MENU_CAPABILITY_REQUIREMENTS: Partial<Record<ToolsMenuId, SitePackCa
 }
 
 export const QuickButtons: React.FC<QuickButtonsProps> = ({
+  adapter,
   isPanelExpanded,
   hasUnseenReleaseNotes = false,
   onPanelToggle,
@@ -162,7 +165,6 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
 
   const { settings, updateNestedSetting } = useSettingsStore()
   const currentSettings = settings || DEFAULT_SETTINGS
-  const adapter = getAdapter()
   const quickButtonsSettings = currentSettings.quickButtons || DEFAULT_SETTINGS.quickButtons
   const collapsedButtonsOrder = useMemo(
     () => quickButtonsSettings.collapsed || [],

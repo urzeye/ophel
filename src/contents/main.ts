@@ -528,7 +528,9 @@ function registerBackgroundMessageListener() {
       return true
     }
 
-    const adapter = getAdapter()
+    // 必须使用实际运行的适配器实例：getAdapter() 会绕过站点停用状态，
+    // 也无法把消息派发给接管该站点的社区 SitePack
+    const adapter = activeAdapterInstance
 
     if (message.type === "CHECK_IS_GENERATING") {
       const isGenerating = adapter?.isGenerating?.() ?? false
@@ -594,8 +596,10 @@ function initializeOphel() {
   const matchedAdapter = getAdapter()
 
   if (matchedAdapter) {
-    if (activeAdapterInstance === matchedAdapter || pendingAdapterInstance === matchedAdapter)
-      return
+    // 只按 pending 防抖：这里不能用原始匹配结果与 activeAdapterInstance 判等，
+    // 否则内置适配器运行中被停用并由 SitePack 接管时会被误判为"已初始化"而提前返回，
+    // 造成旧模块未销毁、新模块未初始化的死锁
+    if (pendingAdapterInstance === matchedAdapter) return
 
     pendingAdapterInstance = matchedAdapter
     ;(async () => {

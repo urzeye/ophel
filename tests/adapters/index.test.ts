@@ -514,4 +514,22 @@ describe("AdapterRegistry bootstrap contracts", () => {
     expect(userscriptEntry).toContain("await initAdapterRegistry()")
     expect(appSource).toContain("const fallbackAdapter = useMemo(() => getAdapter(), [])")
   })
+
+  it("resolves the effective adapter instead of comparing the raw built-in match", async () => {
+    const [extensionEntry, userscriptEntry, appSource, quickButtonsSource] = await Promise.all([
+      readFile(path.join(REPOSITORY_ROOT, "src", "contents", "main.ts"), "utf8"),
+      readFile(path.join(REPOSITORY_ROOT, "src", "platform", "userscript", "entry.tsx"), "utf8"),
+      readFile(path.join(REPOSITORY_ROOT, "src", "components", "App.tsx"), "utf8"),
+      readFile(path.join(REPOSITORY_ROOT, "src", "components", "QuickButtons.tsx"), "utf8"),
+    ])
+
+    // 运行时判等若直接比对 getAdapter() 的原始内置匹配，"内置停用 + SitePack 接管"
+    // 场景会被误判为已初始化而提前返回，造成旧模块未销毁、新模块未初始化的死锁
+    expect(extensionEntry).not.toContain("activeAdapterInstance === matchedAdapter")
+    expect(extensionEntry).toContain("getEffectiveAdapter(getSettingsState().disabledSites)")
+    expect(userscriptEntry).toContain("getEffectiveAdapter(settings.disabledSites)")
+    // 面板与快捷按钮必须使用 props 传入的生效适配器，不能回退到全局 getAdapter()
+    expect(appSource).not.toContain("const currentAdapter = getAdapter()")
+    expect(quickButtonsSource).not.toContain("getAdapter()")
+  })
 })
