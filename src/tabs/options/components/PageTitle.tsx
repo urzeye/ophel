@@ -3,22 +3,26 @@ import React from "react"
 interface PageTitleProps {
   title: string
   Icon?: React.ComponentType<{ size?: number; className?: string; style?: React.CSSProperties }>
+  action?: React.ReactNode
 }
 
-export const PageTitle: React.FC<PageTitleProps> = ({ title, Icon }) => {
+export const PageTitle: React.FC<PageTitleProps> = ({ title, Icon, action }) => {
   return (
-    <h1 className="settings-page-title" style={{ display: "flex", alignItems: "center" }}>
-      {Icon && (
-        <Icon
-          size={28}
-          className="settings-page-title-icon"
-          style={{
-            marginRight: 8,
-            color: "var(--gh-primary, #4285f4)",
-          }}
-        />
-      )}
-      {title}
-    </h1>
+    <div className="settings-page-header">
+      <h1 className="settings-page-title" style={{ display: "flex", alignItems: "center" }}>
+        {Icon && (
+          <Icon
+            size={28}
+            className="settings-page-title-icon"
+            style={{
+              marginRight: 8,
+              color: "var(--gh-primary, #4285f4)",
+            }}
+          />
+        )}
+        {title}
+      </h1>
+      {action && <div className="settings-page-header-action">{action}</div>}
+    </div>
   )
 }

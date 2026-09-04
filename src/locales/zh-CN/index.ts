@@ -56,6 +56,7 @@ export const zhCN = {
   disableSiteEntryLabel: "在此站点停用 Ophel",
   disableSiteEntryDesc: "停用后将立即移除 {site} 上的面板与全部增强功能，可随时在适配中心重新启用",
   disableSiteAction: "停用…",
+  disableCurrentSiteAction: "在此站点停用…",
   disableSiteConfirmTitle: "在 {site} 停用 Ophel？",
   disableSiteConfirmDesc:
     "将移除本页的面板与所有后台监控，并刷新页面以彻底停用。如需恢复，可前往「适配中心 → 内置站点」重新启用",

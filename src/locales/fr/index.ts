@@ -63,6 +63,7 @@ export const fr = {
   disableSiteEntryDesc:
     "Supprime immédiatement le panneau et toutes les améliorations sur {site}. Vous pouvez le réactiver à tout moment dans le Centre d'adaptation",
   disableSiteAction: "Désactiver…",
+  disableCurrentSiteAction: "Désactiver sur ce site…",
   disableSiteConfirmTitle: "Désactiver Ophel sur {site} ?",
   disableSiteConfirmDesc:
     "Supprime le panneau et tous les moniteurs en arrière-plan de cette page, puis la recharge pour appliquer complètement la désactivation. Pour réactiver, allez dans Centre d'adaptation → Sites intégrés",

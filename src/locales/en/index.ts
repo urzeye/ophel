@@ -62,6 +62,7 @@ export const en = {
   disableSiteEntryDesc:
     "Immediately removes the panel and all enhancements on {site}. You can re-enable it anytime in the Adapter Center.",
   disableSiteAction: "Disable…",
+  disableCurrentSiteAction: "Disable on this site…",
   disableSiteConfirmTitle: "Disable Ophel on {site}?",
   disableSiteConfirmDesc:
     "This removes the panel and all background monitors on this page and reloads it to fully take effect. To re-enable, go to Adapter Center → Built-in sites.",
