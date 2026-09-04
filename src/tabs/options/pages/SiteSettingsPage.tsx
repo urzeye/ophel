@@ -764,7 +764,7 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
 
       {showDisableSiteConfirm && (
         <ConfirmDialog
-          title={t("disableSiteConfirmTitle")}
+          title={t("disableSiteConfirmTitle", { site: adapter?.getName() ?? siteId })}
           message={t("disableSiteConfirmDesc", { site: adapter?.getName() ?? siteId })}
           confirmText={t("disableSiteConfirmAction")}
           danger
