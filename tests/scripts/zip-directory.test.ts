@@ -1,4 +1,4 @@
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import path from "node:path"
 import { inflateRawSync } from "node:zlib"
@@ -105,5 +105,18 @@ describe("zipDirectory", () => {
     const outputZip = path.join(createTempDir(), "archive.zip")
 
     expect(() => zipDirectory(missingDir, outputZip)).toThrow(/Zip source directory not found/)
+  })
+
+  it("creates destination directory recursively if it does not exist", () => {
+    const sourceDir = createTempDir()
+    writeFileSync(path.join(sourceDir, "file.txt"), "nested zip content")
+
+    const outputZip = path.join(createTempDir(), "deep", "nested", "archive.zip")
+    zipDirectory(sourceDir, outputZip)
+
+    expect(existsSync(outputZip)).toBe(true)
+    const zipBuffer = readFileSync(outputZip)
+    const entries = readZipEntries(zipBuffer)
+    expect(entries.get("file.txt")?.toString("utf8")).toBe("nested zip content")
   })
 })

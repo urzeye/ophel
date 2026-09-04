@@ -316,15 +316,17 @@ function assertGitState(options) {
   git(["rev-parse", "--is-inside-work-tree"])
 
   const branch = git(["branch", "--show-current"])
-  if (branch !== RELEASE_BRANCH) {
-    fail(`Release must run on ${RELEASE_BRANCH}; current branch is ${branch}`)
-  }
-
   if (!options.dryRun) {
+    if (branch !== RELEASE_BRANCH) {
+      fail(`Release must run on ${RELEASE_BRANCH}; current branch is ${branch}`)
+    }
+
     const status = git(["status", "--porcelain"])
     if (status) {
       fail("Working tree must be clean before running a release")
     }
+  } else if (branch && branch !== RELEASE_BRANCH) {
+    console.log(`Dry run on branch ${branch} (production releases run on ${RELEASE_BRANCH}).`)
   }
 }
 
@@ -533,13 +535,13 @@ if (options.command === "redo") {
   git(["rev-parse", "--is-inside-work-tree"])
   runRedo(normalizeVersion(options.requestedVersion), options)
 } else {
+  assertGitState(options)
+
   if (options.skipChecks) {
     console.log("Skipping pre-release checks (--skip-checks).")
   } else {
     runQualityChecks()
   }
-
-  assertGitState(options)
 
   const packageJson = readPackageJson()
   const version = options.requestedVersion

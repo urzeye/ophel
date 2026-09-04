@@ -39,6 +39,7 @@ describe("release CLI", () => {
       encoding: "utf8",
     })
 
+    expect(result.status).toBe(0)
     expect(result.stdout).toMatch(/Skipping pre-release checks \(--skip-checks\)\./)
     expect(result.stdout + result.stderr).not.toMatch(/Running pre-release checks/)
     expect(afterTags.stdout).toBe(beforeTags.stdout)

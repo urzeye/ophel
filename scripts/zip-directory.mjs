@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs"
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs"
 import path from "node:path"
 import { deflateRawSync } from "node:zlib"
 
@@ -124,6 +124,11 @@ export function zipDirectory(sourceDir, outputZip) {
   eocd.writeUInt32LE(centralDirectory.length, 12)
   eocd.writeUInt32LE(offset, 16)
   eocd.writeUInt16LE(0, 20)
+
+  const outputDir = path.dirname(resolvedOutput)
+  if (!existsSync(outputDir)) {
+    mkdirSync(outputDir, { recursive: true })
+  }
 
   writeFileSync(resolvedOutput, Buffer.concat([...localParts, centralDirectory, eocd]))
 }
