@@ -1543,6 +1543,8 @@ export const zhTW = {
   popupSiteDisabledHint: "Ophel 增強已在此網站停用",
   popupSiteDisabledToast: "已停用，重新整理頁面後完全生效",
   popupSiteEnabledToast: "已啟用",
+  popupPackEnabledToast: "已啟用適配包 {site}，重新整理已開啟的頁面後生效",
+  popupPackDisabledToast: "已停用適配包 {site}，重新整理已開啟的頁面後生效",
   popupSiteTileDisabledTooltip: "Ophel 在此網站已停用，點擊仍會開啟網站",
   popupQuickAccess: "快速存取",
   popupSitePackUnbound: "尚未新增網站",

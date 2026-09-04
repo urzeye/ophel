@@ -1597,6 +1597,10 @@ export const ja = {
   popupSiteDisabledHint: "このサイトで Ophel の拡張機能は無効になっています",
   popupSiteDisabledToast: "無効にしました。完全に反映するにはページを再読み込みしてください",
   popupSiteEnabledToast: "有効にしました",
+  popupPackEnabledToast:
+    "サイトパック {site} を有効にしました。開いているページを再読み込みすると反映されます",
+  popupPackDisabledToast:
+    "サイトパック {site} を無効にしました。開いているページを再読み込みすると反映されます",
   popupSiteTileDisabledTooltip: "このサイトで Ophel は無効です。クリックするとサイトを開きます",
   popupQuickAccess: "クイックアクセス",
   popupSitePackUnbound: "サイト未追加",

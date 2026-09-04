@@ -1685,6 +1685,10 @@ Dê o código e depois um resumo de melhorias.`,
   popupSiteDisabledHint: "Os recursos do Ophel estão desativados neste site",
   popupSiteDisabledToast: "Desativado. Recarregue a página para aplicar totalmente",
   popupSiteEnabledToast: "Ativado",
+  popupPackEnabledToast:
+    "Pacote de site {site} ativado; recarregue as páginas abertas para aplicar",
+  popupPackDisabledToast:
+    "Pacote de site {site} desativado; recarregue as páginas abertas para aplicar",
   popupSiteTileDisabledTooltip:
     "O Ophel está desativado neste site; clique para abri-lo mesmo assim",
   popupQuickAccess: "Acesso Rápido",

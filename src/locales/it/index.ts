@@ -1654,6 +1654,9 @@ export const it = {
   popupSiteDisabledHint: "Le funzionalità di Ophel sono disattivate su questo sito",
   popupSiteDisabledToast: "Disattivato. Ricarica la pagina per applicare completamente",
   popupSiteEnabledToast: "Attivato",
+  popupPackEnabledToast: "Pacchetto sito {site} attivato; ricarica le pagine aperte per applicare",
+  popupPackDisabledToast:
+    "Pacchetto sito {site} disattivato; ricarica le pagine aperte per applicare",
   popupSiteTileDisabledTooltip: "Ophel è disattivato su questo sito; clicca per aprirlo comunque",
   popupQuickAccess: "Accesso rapido",
   popupSitePackUnbound: "Nessun sito aggiunto",

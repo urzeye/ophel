@@ -1556,6 +1556,10 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   popupSiteDisabledHint: "Ophel-Funktionen sind auf dieser Seite deaktiviert",
   popupSiteDisabledToast: "Deaktiviert. Lade die Seite neu, damit es vollständig wirkt",
   popupSiteEnabledToast: "Aktiviert",
+  popupPackEnabledToast:
+    "Site-Paket {site} aktiviert; lade geöffnete Seiten neu, um die Änderung anzuwenden",
+  popupPackDisabledToast:
+    "Site-Paket {site} deaktiviert; lade geöffnete Seiten neu, um die Änderung anzuwenden",
   popupSiteTileDisabledTooltip:
     "Ophel ist auf dieser Seite deaktiviert; Klicken öffnet die Seite trotzdem",
   popupQuickAccess: "Schnellzugriff",

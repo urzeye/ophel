@@ -1520,6 +1520,10 @@ export const ru = {
   popupSiteDisabledHint: "Функции Ophel отключены на этом сайте",
   popupSiteDisabledToast: "Отключено. Перезагрузите страницу для полного применения",
   popupSiteEnabledToast: "Включено",
+  popupPackEnabledToast:
+    "Пакет сайта {site} включён; перезагрузите открытые страницы, чтобы применить",
+  popupPackDisabledToast:
+    "Пакет сайта {site} отключён; перезагрузите открытые страницы, чтобы применить",
   popupSiteTileDisabledTooltip: "Ophel отключён на этом сайте; нажмите, чтобы всё равно открыть",
   popupQuickAccess: "Быстрый доступ",
   popupSitePackUnbound: "Сайт не добавлен",

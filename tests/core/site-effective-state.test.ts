@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest"
 
 import { createSupportedAiPlatform, SITE_IDS } from "~constants/defaults"
-import { isQuickAccessTileDisabled, resolveSiteEffectiveState } from "~core/site-effective-state"
+import {
+  isQuickAccessTileDisabled,
+  resolvePopupSiteToggleTarget,
+  resolveSiteEffectiveState,
+} from "~core/site-effective-state"
 
 const createBuiltin = (id: string, host: string) =>
   createSupportedAiPlatform({
@@ -78,5 +82,53 @@ describe("isQuickAccessTileDisabled", () => {
     expect(isQuickAccessTileDisabled(doubao, [SITE_IDS.DOUBAO])).toBe(true)
     expect(isQuickAccessTileDisabled(doubao, [])).toBe(false)
     expect(isQuickAccessTileDisabled(doubaoPack, [SITE_IDS.DOUBAO])).toBe(false)
+  })
+})
+
+describe("resolvePopupSiteToggleTarget", () => {
+  it("targets the serving pack for pack-only sites", () => {
+    const state = resolveSiteEffectiveState([doubaoPack], DOUBAO_URL, [])
+    expect(resolvePopupSiteToggleTarget(state, null)).toEqual({
+      kind: "pack",
+      platform: doubaoPack,
+      enabled: true,
+    })
+  })
+
+  it("targets the serving pack when it takes over a disabled built-in", () => {
+    const state = resolveSiteEffectiveState([doubao, doubaoPack], DOUBAO_URL, [SITE_IDS.DOUBAO])
+    expect(resolvePopupSiteToggleTarget(state, null)).toEqual({
+      kind: "pack",
+      platform: doubaoPack,
+      enabled: true,
+    })
+  })
+
+  it("targets the built-in site while the built-in adapter is serving", () => {
+    const state = resolveSiteEffectiveState([doubao, doubaoPack], DOUBAO_URL, [])
+    // 内置生效时即使存在已停用的适配包也保持内置开关
+    expect(resolvePopupSiteToggleTarget(state, doubaoPack)).toEqual({
+      kind: "builtin",
+      enabled: true,
+    })
+  })
+
+  it("prefers a matching disabled pack over the disabled built-in so it can be re-enabled", () => {
+    const state = resolveSiteEffectiveState([doubao], DOUBAO_URL, [SITE_IDS.DOUBAO])
+    expect(resolvePopupSiteToggleTarget(state, doubaoPack)).toEqual({
+      kind: "pack",
+      platform: doubaoPack,
+      enabled: false,
+    })
+  })
+
+  it("falls back to the built-in toggle when no pack matches", () => {
+    const state = resolveSiteEffectiveState([doubao], DOUBAO_URL, [SITE_IDS.DOUBAO])
+    expect(resolvePopupSiteToggleTarget(state, null)).toEqual({ kind: "builtin", enabled: false })
+  })
+
+  it("returns null for unsupported sites without a disabled pack", () => {
+    const state = resolveSiteEffectiveState([doubao], "https://example.com/", [])
+    expect(resolvePopupSiteToggleTarget(state, null)).toBeNull()
   })
 })

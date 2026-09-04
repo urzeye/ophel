@@ -1563,6 +1563,9 @@ Donnez le code puis un résumé des améliorations.`,
   popupSiteDisabledHint: "Les fonctionnalités d'Ophel sont désactivées sur ce site",
   popupSiteDisabledToast: "Désactivé. Rechargez la page pour une prise d'effet complète",
   popupSiteEnabledToast: "Activé",
+  popupPackEnabledToast: "Pack de site {site} activé ; rechargez les pages ouvertes pour appliquer",
+  popupPackDisabledToast:
+    "Pack de site {site} désactivé ; rechargez les pages ouvertes pour appliquer",
   popupSiteTileDisabledTooltip:
     "Ophel est désactivé sur ce site ; cliquez pour l'ouvrir quand même",
   popupQuickAccess: "Accès Rapide",

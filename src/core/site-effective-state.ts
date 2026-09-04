@@ -64,3 +64,36 @@ export const isQuickAccessTileDisabled = (
   platform: SupportedAiPlatform,
   disabledSites: readonly string[],
 ): boolean => isBuiltinSiteId(platform.id) && disabledSites.includes(platform.id)
+
+/**
+ * 弹窗站点开关的作用对象。
+ *
+ * 规则：生效适配器是适配包（含 via-pack 接管）→ 控制该包的启用状态；
+ * 无生效适配器但当前 URL 匹配到已停用的已安装适配包 → 控制该包（支持从弹窗
+ * 重新启用）；其余情况回落到内置站点开关。内置生效时忽略已停用的适配包，
+ * 因为即使启用也会被内置压制，开关没有意义。
+ */
+export type PopupSiteToggleTarget =
+  | { kind: "pack"; platform: SupportedAiPlatform; enabled: boolean }
+  | { kind: "builtin"; enabled: boolean }
+  | null
+
+export const resolvePopupSiteToggleTarget = (
+  state: SiteEffectiveState,
+  disabledPackPlatform: SupportedAiPlatform | null,
+): PopupSiteToggleTarget => {
+  const serving = state.platform
+  if (serving && !isBuiltinSiteId(serving.id)) {
+    return { kind: "pack", platform: serving, enabled: true }
+  }
+  if (state.status === "supported") {
+    return { kind: "builtin", enabled: true }
+  }
+  if (disabledPackPlatform) {
+    return { kind: "pack", platform: disabledPackPlatform, enabled: false }
+  }
+  if (state.builtinPlatform && state.status === "disabled") {
+    return { kind: "builtin", enabled: false }
+  }
+  return null
+}

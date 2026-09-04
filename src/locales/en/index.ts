@@ -1599,6 +1599,8 @@ Please output the optimized code block directly, followed by a brief summary of 
   popupSiteDisabledHint: "Ophel enhancements are disabled on this site",
   popupSiteDisabledToast: "Disabled. Reload the page for it to fully take effect",
   popupSiteEnabledToast: "Enabled",
+  popupPackEnabledToast: "Site pack {site} enabled; reload open pages to apply",
+  popupPackDisabledToast: "Site pack {site} disabled; reload open pages to apply",
   popupSiteTileDisabledTooltip: "Ophel is disabled on this site; click to open it anyway",
   popupQuickAccess: "Quick Access",
   popupSitePackUnbound: "No site added",

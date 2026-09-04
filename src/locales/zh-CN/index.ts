@@ -1541,6 +1541,8 @@ export const zhCN = {
   popupSiteDisabledHint: "Ophel 增强已在此站点停用",
   popupSiteDisabledToast: "已停用，刷新页面后完全生效",
   popupSiteEnabledToast: "已启用",
+  popupPackEnabledToast: "已启用适配包 {site}，刷新已打开的页面后生效",
+  popupPackDisabledToast: "已停用适配包 {site}，刷新已打开的页面后生效",
   popupSiteTileDisabledTooltip: "Ophel 在此站点已停用，点击仍打开网站",
   popupQuickAccess: "快速访问",
   popupSitePackUnbound: "未添加站点",

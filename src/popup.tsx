@@ -6,6 +6,7 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 
+import { siteMatchPatternMatchesUrl } from "~adapters/declarative/match-pattern"
 import { PlatformIcon } from "~components/PlatformIcon"
 import { ChevronDownIcon } from "~components/icons/ChevronDownIcon"
 import { DiscordIcon } from "~components/icons/DiscordIcon"
@@ -14,6 +15,7 @@ import { SettingsIcon } from "~components/icons/SettingsIcon"
 import { StarIcon } from "~components/icons/StarIcon"
 import { TimeIcon } from "~components/icons/TimeIcon"
 import { Tooltip } from "~components/ui/Tooltip"
+import type { SupportedAiPlatform } from "~constants/defaults"
 import {
   buildQuickAccessSites,
   hostOf,
@@ -21,12 +23,16 @@ import {
   resolveSiteEntryUrl,
   type QuickAccessSite,
 } from "~core/quick-access-sites"
+import { createRuntimePackManager } from "~core/pack-manager-runtime"
 import {
   isQuickAccessTileDisabled,
+  resolvePopupSiteToggleTarget,
   resolveSiteEffectiveState,
   type SiteEffectiveStatus,
 } from "~core/site-effective-state"
+import { getDynamicPlatforms } from "~core/site-pack-platforms"
 import { useSupportedAiPlatforms } from "~hooks/useSupportedAiPlatforms"
+import { platform } from "~platform"
 import { useSettingsStore } from "~stores/settings-store"
 import { GITHUB_REPO_URL, getDonateChannels } from "~utils/donate-channels"
 import { getStoreInfo } from "~utils/getStoreInfo"
@@ -75,11 +81,57 @@ function IndexPopup() {
     [supportedPlatforms, activeTabUrl, disabledSites],
   )
 
+  // 平台目录只含启用中的适配包；为支持从弹窗重新启用，额外查找
+  // 匹配当前 URL 但已停用的已安装适配包（含用户绑定域名）
+  const packManager = useMemo(() => createRuntimePackManager(platform.storage), [])
+  const [disabledPackPlatform, setDisabledPackPlatform] = useState<SupportedAiPlatform | null>(null)
+  const [packStateVersion, setPackStateVersion] = useState(0)
+  const [isPackToggleBusy, setIsPackToggleBusy] = useState(false)
+
+  useEffect(() => {
+    let parsed: URL
+    try {
+      parsed = new URL(activeTabUrl)
+    } catch {
+      return
+    }
+    let cancelled = false
+    void Promise.all([packManager.getSnapshot(), packManager.getOriginBindings()]).then(
+      ([snapshot, bindings]) => {
+        if (cancelled) return
+        const disabledPacks = snapshot.packs.filter((pack) => !pack.enabled)
+        const matched = getDynamicPlatforms(disabledPacks, bindings, getCurrentLang()).find(
+          (candidate) =>
+            candidate.matchPatterns.some((pattern) => siteMatchPatternMatchesUrl(parsed, pattern)),
+        )
+        setDisabledPackPlatform(matched ?? null)
+      },
+    )
+    return () => {
+      cancelled = true
+    }
+  }, [activeTabUrl, packManager, packStateVersion])
+
+  // 开关作用对象：生效适配器是适配包 → 控制包启停；无生效适配器但匹配到
+  // 已停用适配包 → 控制该包以便重新启用；其余情况回落到内置站点开关
+  const toggleTarget = useMemo(
+    () => resolvePopupSiteToggleTarget(effectiveState, disabledPackPlatform),
+    [effectiveState, disabledPackPlatform],
+  )
+
   const currentSite = useMemo((): SiteInfo | null => {
     if (!activeTabUrl) return null
-    const { status, platform } = effectiveState
-    if (platform) {
-      return { name: platform.name, url: resolveSiteEntryUrl(platform, activeTabUrl), status }
+    // 开关目标是已停用适配包时，站点名展示该包（开关旁的名字始终与作用对象一致）
+    const displayPlatform =
+      toggleTarget?.kind === "pack" ? toggleTarget.platform : effectiveState.platform
+    if (displayPlatform) {
+      const status =
+        toggleTarget?.kind === "pack" && !toggleTarget.enabled ? "disabled" : effectiveState.status
+      return {
+        name: displayPlatform.name,
+        url: resolveSiteEntryUrl(displayPlatform, activeTabUrl),
+        status,
+      }
     }
     try {
       const hostname = new URL(activeTabUrl).hostname || t("popupCurrentSite")
@@ -87,13 +139,10 @@ function IndexPopup() {
     } catch {
       return { name: t("popupCurrentSite"), url: "", status: "unsupported" }
     }
-  }, [activeTabUrl, effectiveState])
+  }, [activeTabUrl, effectiveState, toggleTarget])
 
-  const isCurrentSiteDisabled = effectiveState.status === "disabled"
-  // 仅内置站点提供开关；适配包接管的站点（via-pack）上内置适配器已停用，不提供开关
-  const canToggleCurrentSite =
-    effectiveState.builtinPlatform !== null &&
-    (effectiveState.status === "supported" || isCurrentSiteDisabled)
+  const isCurrentSiteDisabled = currentSite?.status === "disabled"
+  const canToggleCurrentSite = toggleTarget !== null
   const [recentPrompts, setRecentPrompts] = useState<Prompt[]>([])
   const [lastEntryUrls, setLastEntryUrls] = useState<Record<string, string>>({})
   const [entryMenuSiteKey, setEntryMenuSiteKey] = useState<string | null>(null)
@@ -190,13 +239,54 @@ function IndexPopup() {
   // 停用后核心模块由内容脚本的设置订阅即时回收；
   // 主世界注入脚本无法热卸载，toast 明确提示刷新后完全生效
   const toggleCurrentSite = () => {
-    const siteId = effectiveState.builtinPlatform?.id
+    const siteId = toggleTarget?.kind === "builtin" ? effectiveState.builtinPlatform?.id : undefined
     if (!siteId || !settings) return
     const next = isCurrentSiteDisabled
       ? disabledSites.filter((id) => id !== siteId)
       : [...disabledSites, siteId]
     setSettings({ disabledSites: next })
     showToast(isCurrentSiteDisabled ? t("popupSiteEnabledToast") : t("popupSiteDisabledToast"))
+  }
+
+  // 适配包开关：控制已安装包的启用状态（与适配中心一致，不解绑域名）。
+  // 内容脚本按页注册，已打开的页面需刷新后生效，toast 明确提示
+  const togglePackSite = async () => {
+    if (toggleTarget?.kind !== "pack" || isPackToggleBusy) return
+    const packId = toggleTarget.platform.id.slice("pack:".length)
+    const packName = toggleTarget.platform.name
+    setIsPackToggleBusy(true)
+    try {
+      if (toggleTarget.enabled) {
+        await packManager.setEnabled(packId, false)
+      } else {
+        const permission = await platform.sitePacks.ensureOrigins(packId)
+        if (permission === "denied") {
+          showToast(t("sitePacksPermissionDenied", { name: packName }))
+          return
+        }
+        await packManager.setEnabled(packId, true)
+      }
+      await platform.sitePacks.reconcile()
+      showToast(
+        toggleTarget.enabled
+          ? t("popupPackDisabledToast", { site: packName })
+          : t("popupPackEnabledToast", { site: packName }),
+      )
+    } catch (error) {
+      console.warn("[Ophel Popup] Failed to toggle site pack:", error)
+      showToast(t("sitePacksOperationFailed", { error: String(error) }))
+    } finally {
+      setIsPackToggleBusy(false)
+      setPackStateVersion((version) => version + 1)
+    }
+  }
+
+  const handleToggleCurrentSite = () => {
+    if (toggleTarget?.kind === "pack") {
+      void togglePackSite()
+      return
+    }
+    toggleCurrentSite()
   }
 
   const getActiveTab = async () => {
@@ -351,7 +441,7 @@ function IndexPopup() {
                     role="switch"
                     aria-checked={!isCurrentSiteDisabled}
                     aria-label={t("popupToggleOphelOnSite")}
-                    onClick={toggleCurrentSite}>
+                    onClick={handleToggleCurrentSite}>
                     <span className="popup-site-switch-knob" />
                   </button>
                 </Tooltip>
@@ -365,7 +455,7 @@ function IndexPopup() {
           isCurrentSiteDisabled ? (
             <div className="popup-disabled-state">
               <div className="popup-disabled-hint">{t("popupSiteDisabledHint")}</div>
-              <button className="popup-action-btn primary-btn" onClick={toggleCurrentSite}>
+              <button className="popup-action-btn primary-btn" onClick={handleToggleCurrentSite}>
                 {t("popupEnableOnThisSite")}
               </button>
             </div>

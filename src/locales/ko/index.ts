@@ -1548,6 +1548,10 @@ export const ko = {
   popupSiteDisabledHint: "이 사이트에서 Ophel 기능이 비활성화되어 있습니다",
   popupSiteDisabledToast: "비활성화되었습니다. 페이지를 새로고침하면 완전히 적용됩니다",
   popupSiteEnabledToast: "활성화되었습니다",
+  popupPackEnabledToast:
+    "사이트 팩 {site}을(를) 활성화했습니다. 열린 페이지를 새로고침하면 적용됩니다",
+  popupPackDisabledToast:
+    "사이트 팩 {site}을(를) 비활성화했습니다. 열린 페이지를 새로고침하면 적용됩니다",
   popupSiteTileDisabledTooltip:
     "이 사이트에서 Ophel이 비활성화되어 있습니다. 클릭하면 사이트가 열립니다",
   popupQuickAccess: "빠른 액세스",
