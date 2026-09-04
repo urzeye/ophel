@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { DeclarativeAdapter } from "~adapters/declarative/adapter"
 import type { SitePackManifest } from "~adapters/declarative/types"
+import { t } from "~utils/i18n"
 
 vi.mock("~utils/dom-toolkit", () => ({
   DOMToolkit: {
@@ -378,7 +379,7 @@ describe("DeclarativeAdapter outline boundaries", () => {
     expect(sources[0]).toEqual({
       id: "conversation",
       kind: "conversation",
-      label: "对话",
+      label: t("outlineSourceConversation"),
       available: true,
     })
     expect(sources[1].id).toBe("document")

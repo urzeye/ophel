@@ -12,6 +12,7 @@ const readSource = (relativePath: string): string =>
 const compact = (source: string): string => source.replace(/\s+/g, " ")
 
 const releaseNotesCss = compact(readSource("../../src/styles/release-notes.css"))
+const settingsCss = compact(readSource("../../src/styles/settings.css"))
 
 const disclaimerSource = readSource("../../src/components/DisclaimerModal.tsx")
 const aboutSource = readSource("../../src/tabs/options/pages/AboutPage.tsx")
@@ -64,6 +65,12 @@ describe("star and donate surfaces", () => {
     expect(aboutSource).toContain("getDonateChannels")
     expect(aboutSource).toContain("about-sponsor-qrs")
     expect(aboutSource).toContain("about-sponsor-qr-zoom")
+    expect(aboutSource).toContain("about-sponsor-qr-wechat")
+    expect(aboutSource).toContain("about-sponsor-qr-alipay")
+    expect(aboutSource).toContain("about-sponsor-qr-title")
+    expect(settingsCss).toContain(".about-sponsor-qr-wechat:hover")
+    expect(settingsCss).toContain(".about-sponsor-qr-alipay:hover")
+    expect(settingsCss).toContain(".about-sponsor-afdian-card:hover")
     expect(aboutSource).toContain("about-sponsor-lightbox")
     expect(aboutSource).toContain("about-sponsor-lightbox-close")
     expect(aboutSource).toContain("stopPropagation")

@@ -230,42 +230,38 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
               <span className="about-sponsor-afdian-title">{t("afdianSupport")}</span>
             </a>
             <div className="about-sponsor-qrs">
-              <figure className="about-sponsor-qr">
-                <button
-                  type="button"
-                  className="about-sponsor-qr-zoom"
-                  onClick={() =>
-                    setSponsorPreview({
-                      src: resolveSupportImageUrl(donateChannels.wechatImagePath),
-                      alt: t("wechatPay"),
-                    })
-                  }>
-                  <img
-                    src={resolveSupportImageUrl(donateChannels.wechatImagePath)}
-                    alt={t("wechatPay")}
-                    className="about-sponsor-qr-img"
-                  />
-                </button>
-                <figcaption>{t("wechatPay")}</figcaption>
-              </figure>
-              <figure className="about-sponsor-qr">
-                <button
-                  type="button"
-                  className="about-sponsor-qr-zoom"
-                  onClick={() =>
-                    setSponsorPreview({
-                      src: resolveSupportImageUrl(donateChannels.alipayImagePath),
-                      alt: t("alipayPay"),
-                    })
-                  }>
-                  <img
-                    src={resolveSupportImageUrl(donateChannels.alipayImagePath)}
-                    alt={t("alipayPay")}
-                    className="about-sponsor-qr-img"
-                  />
-                </button>
-                <figcaption>{t("alipayPay")}</figcaption>
-              </figure>
+              <button
+                type="button"
+                className="about-sponsor-qr about-sponsor-qr-zoom about-sponsor-qr-wechat"
+                onClick={() =>
+                  setSponsorPreview({
+                    src: resolveSupportImageUrl(donateChannels.wechatImagePath),
+                    alt: t("wechatPay"),
+                  })
+                }>
+                <img
+                  src={resolveSupportImageUrl(donateChannels.wechatImagePath)}
+                  alt={t("wechatPay")}
+                  className="about-sponsor-qr-img"
+                />
+                <span className="about-sponsor-qr-title">{t("wechatPay")}</span>
+              </button>
+              <button
+                type="button"
+                className="about-sponsor-qr about-sponsor-qr-zoom about-sponsor-qr-alipay"
+                onClick={() =>
+                  setSponsorPreview({
+                    src: resolveSupportImageUrl(donateChannels.alipayImagePath),
+                    alt: t("alipayPay"),
+                  })
+                }>
+                <img
+                  src={resolveSupportImageUrl(donateChannels.alipayImagePath)}
+                  alt={t("alipayPay")}
+                  className="about-sponsor-qr-img"
+                />
+                <span className="about-sponsor-qr-title">{t("alipayPay")}</span>
+              </button>
             </div>
           </div>
           {sponsorPreview ? (

@@ -2161,6 +2161,8 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   .about-link-card,
   .about-link-btn,
   .about-star-btn,
+  .about-sponsor-afdian-card,
+  .about-sponsor-qr,
   .settings-search-category {
     transition: none !important;
   }
@@ -5425,17 +5427,24 @@ html[data-theme="dark"] .about-privacy-banner {
   flex-direction: column;
   align-items: center;
   gap: 8px;
+  width: 170px;
+  box-sizing: border-box;
   margin: 0;
-  text-decoration: none;
-  color: inherit;
-}
-
-.about-sponsor-afdian-card,
-.about-sponsor-qr {
   padding: 10px;
   border: 1px solid var(--gh-border, #e5e7eb);
   border-radius: 12px;
   background: var(--gh-card-bg, #fff);
+  color: inherit;
+  font: inherit;
+  text-decoration: none;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.about-sponsor-qr {
+  cursor: zoom-in;
 }
 
 .about-sponsor-qrs {
@@ -5445,29 +5454,35 @@ html[data-theme="dark"] .about-privacy-banner {
   gap: 16px;
 }
 
-.about-sponsor-qr figcaption {
+.about-sponsor-qr figcaption,
+.about-sponsor-qr-title {
   font-size: 13px;
   font-weight: 600;
   color: var(--gh-text, #1f2937);
 }
 
-/* 爱发电渠道卡：与扫码卡同宽同构（150 视觉区 + 底部名称），
-   本地渲染不依赖远程横幅，避免严格 CSP 站点拦截外链图片 */
-.about-sponsor-afdian-card {
-  width: 170px;
-  transition:
-    transform 0.2s ease,
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
+/* 赞助卡片悬浮动效与品牌色反馈（爱发电紫、微信绿、支付宝蓝） */
 .about-sponsor-afdian-card:hover {
   transform: translateY(-2px);
   border-color: rgba(148, 108, 230, 0.45);
   box-shadow: 0 8px 24px rgba(148, 108, 230, 0.14);
 }
 
-.about-sponsor-afdian-card:focus-visible {
+.about-sponsor-qr-wechat:hover {
+  transform: translateY(-2px);
+  border-color: rgba(7, 193, 96, 0.45);
+  box-shadow: 0 8px 24px rgba(7, 193, 96, 0.14);
+}
+
+.about-sponsor-qr-alipay:hover {
+  transform: translateY(-2px);
+  border-color: rgba(22, 119, 255, 0.45);
+  box-shadow: 0 8px 24px rgba(22, 119, 255, 0.14);
+}
+
+.about-sponsor-afdian-card:focus-visible,
+.about-sponsor-qr:focus-visible,
+.about-sponsor-qr-zoom:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 38%, transparent);
   outline-offset: 2px;
 }
@@ -5537,18 +5552,16 @@ html[data-theme="dark"] .about-sponsor-afdian-card:hover {
   box-shadow: 0 8px 24px rgba(148, 108, 230, 0.2);
 }
 
-.about-sponsor-qr-zoom {
-  display: block;
-  padding: 0;
-  border: none;
-  background: transparent;
-  cursor: zoom-in;
-  border-radius: 8px;
+:host([data-theme="dark"]) .about-sponsor-qr-wechat:hover,
+html[data-theme="dark"] .about-sponsor-qr-wechat:hover {
+  border-color: rgba(7, 193, 96, 0.55);
+  box-shadow: 0 8px 24px rgba(7, 193, 96, 0.2);
 }
 
-.about-sponsor-qr-zoom:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 38%, transparent);
-  outline-offset: 2px;
+:host([data-theme="dark"]) .about-sponsor-qr-alipay:hover,
+html[data-theme="dark"] .about-sponsor-qr-alipay:hover {
+  border-color: rgba(22, 119, 255, 0.55);
+  box-shadow: 0 8px 24px rgba(22, 119, 255, 0.2);
 }
 
 .about-sponsor-lightbox {
