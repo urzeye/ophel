@@ -109,6 +109,9 @@ describe("Gemini built-in config and DOM adaptation", () => {
       ),
     ).toBe(true)
     expect(
+      GEMINI_CONFIG.selectors.submitButton.some((sel) => sel.includes(".send-button.submit")),
+    ).toBe(true)
+    expect(
       GEMINI_CONFIG.selectors.stopButton.some((sel) => sel.includes(".send-button.stop")),
     ).toBe(true)
     expect(
