@@ -621,8 +621,7 @@ const createGeminiConfig = (): GeminiSiteConfig => {
       layoutScope,
       immersiveLayout: "chat-window.immersives-mode:not(.mobile-device)",
       chatColumnScope: "chat-window .chat-container",
-      messageSafeArea:
-        "infinite-scroller.chat-history, .chat-history-scroll-container:not(:has(infinite-scroller.chat-history))",
+      messageSafeArea: "infinite-scroller.chat-history",
       inputSafeArea: "input-container",
       newChatInputSafeArea:
         "chat-window.center-input-layout .input-area-container.is-zero-state, .center-input-layout .input-area-container, .zero-state-theme .input-area-container",

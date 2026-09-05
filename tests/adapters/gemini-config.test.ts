@@ -63,11 +63,9 @@ describe("Gemini built-in config and DOM adaptation", () => {
     expect(messageActionsSelector?.extraCss).toContain("margin-inline-start: 0 !important;")
   })
 
-  it("configures messageSafeArea to avoid parent-child double padding in panel avoidance", () => {
+  it("configures messageSafeArea directly to infinite-scroller.chat-history", () => {
     const messageSafeArea = GEMINI_CONFIG.sitePrivateSelectors.messageSafeArea
-    expect(messageSafeArea).toContain("infinite-scroller.chat-history")
-    // 确保外层容器带有 :not(:has(infinite-scroller.chat-history)) 限制，防止内外层同时命中双重 padding
-    expect(messageSafeArea).toContain(":not(:has(infinite-scroller.chat-history))")
+    expect(messageSafeArea).toBe("infinite-scroller.chat-history")
   })
 
   it("provides full widthSelectors in getPanelAvoidanceConfig to preserve child element width overrides", () => {
