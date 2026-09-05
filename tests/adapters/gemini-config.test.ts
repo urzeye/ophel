@@ -15,7 +15,7 @@ vi.mock("~utils/i18n", () => ({
 
 describe("Gemini built-in config and DOM adaptation", () => {
   it("increments GEMINI_CONFIG_VERSION to invalidate obsolete patches", () => {
-    expect(GEMINI_CONFIG_VERSION).toBe(5)
+    expect(GEMINI_CONFIG_VERSION).toBe(6)
   })
 
   it("adapts messageWidth and turnSelector to conversation-container web component", () => {
@@ -42,7 +42,7 @@ describe("Gemini built-in config and DOM adaptation", () => {
     expect(containerSelector?.property).toBe("max-width")
     expect(containerSelector?.extraCss).toContain("width: 100% !important;")
 
-    // 2. 正文直接子元素解除 @scope 708px 限制规则
+    // 2. 正文直接子元素解除 @scope 708px 限制规则（含选举、财经等免责条）
     const contentChildSelector = selectors.find(
       (s) =>
         s.selector.includes(".md-content > *") ||
@@ -52,6 +52,8 @@ describe("Gemini built-in config and DOM adaptation", () => {
     expect(contentChildSelector?.property).toBe("max-width")
     expect(contentChildSelector?.value).toBe("100%")
     expect(contentChildSelector?.noCenter).toBe(true)
+    expect(contentChildSelector?.selector).toContain("election-info-disclaimer")
+    expect(contentChildSelector?.selector).toContain("finance-info-disclaimer")
 
     // 3. message-actions 操作栏对齐规则
     const messageActionsSelector = selectors.find((s) => s.selector.includes("message-actions"))
@@ -81,28 +83,43 @@ describe("Gemini built-in config and DOM adaptation", () => {
     expect(contentChildSelector?.value).toBe("100%")
   })
 
-  it("supports thinking-overlay in outline thoughts and export noise", () => {
+  it("supports thinking-overlay and filters message-actions in outline thoughts and export noise", () => {
     expect(GEMINI_CONFIG.sitePrivateSelectors.outlineThoughts).toContain("thinking-overlay")
     expect(GEMINI_CONFIG.sitePrivateSelectors.assistantExportNoise).toContain("thinking-overlay")
     expect(GEMINI_CONFIG.sitePrivateSelectors.assistantExportNoise).toContain("sources-list")
+    expect(GEMINI_CONFIG.sitePrivateSelectors.assistantExportNoise).toContain("message-actions")
   })
 
-  it("hides new disclaimers in clean mode", () => {
+  it("hides new disclaimers and banners in clean mode", () => {
     const hideList = GEMINI_CONFIG.cleanMode.hide
     expect(hideList).toContain("hallucination-disclaimer")
     expect(hideList).toContain("condensed-tos-disclaimer")
     expect(hideList).toContain("model-response-disclaimers")
+    expect(hideList).toContain("election-info-disclaimer")
+    expect(hideList).toContain("finance-info-disclaimer")
+    expect(hideList).toContain("freemium-rag-disclaimer")
+    expect(hideList).toContain("freemium-file-upload-near-quota-disclaimer")
+    expect(hideList).toContain("freemium-file-upload-quota-exceeded-disclaimer")
+    expect(hideList).toContain("sensitive-memories-banner")
+    expect(hideList).toContain("bot-banner")
   })
 
-  it("includes updated submit button and model switcher selectors", () => {
+  it("includes updated submit button, stop button and model switcher selectors", () => {
     expect(
       GEMINI_CONFIG.selectors.submitButton.some(
         (sel) => sel.includes("send-button") || sel.includes("send"),
       ),
     ).toBe(true)
+    expect(
+      GEMINI_CONFIG.selectors.stopButton.some((sel) => sel.includes(".send-button.stop")),
+    ).toBe(true)
+    expect(
+      GEMINI_CONFIG.generating.existsSelectors.some((sel) => sel.includes(".send-button.stop")),
+    ).toBe(true)
     expect(GEMINI_CONFIG.modelSwitcher.selectorButtonSelectors).toContain(
       '[data-test-id="bard-mode-menu-button"]',
     )
+    expect(GEMINI_CONFIG.modelSwitcher.menuItemSelector).toContain(".bard-mode-list-button")
   })
 
   it("ensures selectors cover new Gemini custom elements and fallback classes", () => {

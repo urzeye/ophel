@@ -170,7 +170,7 @@ export interface GeminiSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const GEMINI_CONFIG_VERSION = 5
+export const GEMINI_CONFIG_VERSION = 6
 
 const createGeminiConfig = (): GeminiSiteConfig => {
   const userQuery = "user-query"
@@ -270,7 +270,14 @@ const createGeminiConfig = (): GeminiSiteConfig => {
         '[data-test-id="temp-chat-button"]',
         'button[aria-label="临时对话"]',
       ],
-      stopButton: ['button:has(mat-icon[fonticon="stop"])', 'mat-icon[fonticon="stop"]'],
+      stopButton: [
+        'button:has(mat-icon[fonticon="stop"])',
+        'mat-icon[fonticon="stop"]',
+        ".send-button.stop",
+        "button.send-button.stop",
+        "gem-icon-button.send-button.stop",
+        '[data-test-id*="stop-button"]',
+      ],
       scrollContainer: [responseContainer],
       sidebarScrollContainer: conversationList,
     },
@@ -285,7 +292,13 @@ const createGeminiConfig = (): GeminiSiteConfig => {
       shadow: false,
     },
     generating: {
-      existsSelectors: ['mat-icon[fonticon="stop"]'],
+      existsSelectors: [
+        'mat-icon[fonticon="stop"]',
+        ".send-button.stop",
+        "button.send-button.stop",
+        "gem-icon-button.send-button.stop",
+        '[data-test-id*="stop-button"]',
+      ],
     },
     networkMonitor: {
       urlPatterns: ["BardFrontendService", "StreamGenerate"],
@@ -300,7 +313,7 @@ const createGeminiConfig = (): GeminiSiteConfig => {
         '[aria-label*="model"]',
         'button[aria-haspopup="menu"]',
       ],
-      menuItemSelector: '.mode-title, [role="menuitem"], [role="option"]',
+      menuItemSelector: '.bard-mode-list-button, .mode-title, [role="menuitem"], [role="option"]',
       checkInterval: 1000,
       maxAttempts: 15,
       menuRenderDelay: 300,
@@ -324,7 +337,7 @@ const createGeminiConfig = (): GeminiSiteConfig => {
       },
       {
         selector:
-          ".md-content > *, message-content .markdown > *, thinking-overlay, .response-footer, .response-container-header, .response-container-footer, model-response-disclaimers",
+          ".md-content > *, message-content .markdown > *, thinking-overlay, .response-footer, .response-container-header, .response-container-footer, model-response-disclaimers, election-info-disclaimer, finance-info-disclaimer",
         property: "max-width",
         value: "100%",
         noCenter: true,
@@ -366,6 +379,13 @@ const createGeminiConfig = (): GeminiSiteConfig => {
         "hallucination-disclaimer",
         "condensed-tos-disclaimer",
         "model-response-disclaimers",
+        "election-info-disclaimer",
+        "finance-info-disclaimer",
+        "freemium-rag-disclaimer",
+        "freemium-file-upload-near-quota-disclaimer",
+        "freemium-file-upload-quota-exceeded-disclaimer",
+        "sensitive-memories-banner",
+        "bot-banner",
         "g1-dynamic-upsell-button",
         ".share-viewer_footer_disclaimer",
         'share-landing-page immersive-share-landing-page .page:has(structured-content-container[data-test-id="deep-research-block"]) > .footer',
@@ -503,6 +523,7 @@ const createGeminiConfig = (): GeminiSiteConfig => {
         "mat-icon",
         "share-button",
         "copy-button",
+        "message-actions",
         "download-generated-image-button",
         ".generated-image-controls",
         ".loader",
@@ -603,7 +624,8 @@ const createGeminiConfig = (): GeminiSiteConfig => {
       messageSafeArea:
         "infinite-scroller.chat-history, .chat-history-scroll-container:not(:has(infinite-scroller.chat-history))",
       inputSafeArea: "input-container",
-      newChatInputSafeArea: "chat-window.center-input-layout .input-area-container.is-zero-state",
+      newChatInputSafeArea:
+        "chat-window.center-input-layout .input-area-container.is-zero-state, .center-input-layout .input-area-container, .zero-state-theme .input-area-container",
       userQueryWidth: ".user-query-bubble-with-background:not(.edit-mode)",
       // Gemini Spark（/spark 路由）：会话列表是主内容区/左窗格里的任务卡片，没有侧边栏列表
       sparkGoalCard: 'remy-task-list .goal-card[id^="goal-c_"]',
