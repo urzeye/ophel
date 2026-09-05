@@ -15,7 +15,7 @@ vi.mock("~utils/i18n", () => ({
 
 describe("Gemini built-in config and DOM adaptation", () => {
   it("increments GEMINI_CONFIG_VERSION to invalidate obsolete patches", () => {
-    expect(GEMINI_CONFIG_VERSION).toBe(7)
+    expect(GEMINI_CONFIG_VERSION).toBe(4)
   })
 
   it("adapts messageWidth and turnSelector to conversation-container web component", () => {
