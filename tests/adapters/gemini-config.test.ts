@@ -15,7 +15,7 @@ vi.mock("~utils/i18n", () => ({
 
 describe("Gemini built-in config and DOM adaptation", () => {
   it("increments GEMINI_CONFIG_VERSION to invalidate obsolete patches", () => {
-    expect(GEMINI_CONFIG_VERSION).toBe(6)
+    expect(GEMINI_CONFIG_VERSION).toBe(7)
   })
 
   it("adapts messageWidth and turnSelector to conversation-container web component", () => {
@@ -126,10 +126,8 @@ describe("Gemini built-in config and DOM adaptation", () => {
       ".conversation-container, conversation-container, .conversation-turn",
     )
 
-    // 验证 scrollContainer 包含主滚动区与滚动容器类
-    expect(GEMINI_CONFIG.selectors.scrollContainer).toContain(
-      "infinite-scroller.chat-history, .chat-history-scroll-container",
-    )
+    // 验证 scrollContainer 包含主滚动区
+    expect(GEMINI_CONFIG.selectors.scrollContainer).toContain("infinite-scroller.chat-history")
 
     // 验证 userQuery 与 assistantResponse 保持对自定义组件标签的匹配
     expect(GEMINI_CONFIG.selectors.userQuery).toBe("user-query")
