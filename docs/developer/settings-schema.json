@@ -50,7 +50,8 @@
     "exportMarkdownDivider": "---",
     "exportShowDialog": true,
     "packaging": "markdown",
-    "defaultExportFormat": "markdown"
+    "defaultExportFormat": "markdown",
+    "exportStyle": "standard"
   },
 
   "theme": {

@@ -126,6 +126,7 @@ export const DEFAULT_SETTINGS: Settings = {
     exportShowDialog: true,
     packaging: "markdown",
     defaultExportFormat: "markdown",
+    exportStyle: "standard",
   },
 
   theme: {

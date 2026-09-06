@@ -473,6 +473,7 @@ export const it = {
   promptMerge: "Unisci",
   promptOverwrite: "Sovrascrivi",
   promptMergeSuccess: "Unificato: {updated} aggiornato, {added} aggiunto",
+  promptDeleteConfirm: "Eliminare questo prompt?",
   promptSettingsTitle: "Impostazioni dei suggerimenti",
   promptSettingsDesc: "Configura le interazioni nella scheda dei prompt",
   promptSubmitShortcutLabel: "Invia scorciatoia",
@@ -767,6 +768,12 @@ export const it = {
   exportShowIndexLabel: "Mostra numerazione messaggi nell'esportazione",
   exportShowIndexDesc:
     "Aggiunge un numero progressivo alle intestazioni dei messaggi per una ricerca più rapida",
+  exportStyleLabel: "Stile di esportazione",
+  exportStyleDesc:
+    "Lo stile pulito rimuove emoji decorativi e branding dell'estensione dai file esportati",
+  exportStyleStandard: "Standard",
+  exportStyleClean: "Pulito",
+  exportImageAlt: "Immagine",
   exportShowIndexJsonUnsupported: "La numerazione non è supportata nell'esportazione JSON",
   exportMarkdownDividerLabel: "Separatore Markdown",
   exportMarkdownDividerDesc:
@@ -1796,8 +1803,8 @@ export const it = {
   activeSearchFilters: "Filtri di ricerca attivi",
   queueClearAll: "Cancella coda",
   queueRemove: "Rimuovi",
-  queuePlaceholderIdle: "Digita un messaggio, Enter per inviare...",
-  queuePlaceholderBusy: "L'IA sta generando, premi Enter per accodare...",
+  queuePlaceholderIdle: "Digita un messaggio, {key} per inviare...",
+  queuePlaceholderBusy: "L'IA sta generando, premi {key} per accodare...",
   queueStatusIdle: "IA inattiva",
   queueStatusBusy: "IA in generazione",
   queueSettingLabel: "Coda di richiesta",

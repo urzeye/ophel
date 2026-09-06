@@ -6,7 +6,7 @@
  */
 import { WatermarkRemover } from "~core/watermark-remover"
 import { useSettingsStore } from "~stores/settings-store"
-import { getCurrentLang, t } from "~utils/i18n"
+import { getCurrentLang, getCurrentLocale, t } from "~utils/i18n"
 
 import type { AdaptersVendorBridge } from "./vendor-bridge/types"
 
@@ -16,6 +16,7 @@ export function publishAdaptersVendorBridge(): void {
     WatermarkRemover,
     t,
     getCurrentLang,
+    getCurrentLocale,
   }
   window.__OphelAdaptersVendorBridge = bridge
 }

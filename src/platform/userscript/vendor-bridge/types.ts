@@ -12,12 +12,14 @@ export type WatermarkRemoverClass = (typeof import("~core/watermark-remover"))["
 export type SettingsStoreHook = (typeof import("~stores/settings-store"))["useSettingsStore"]
 export type TranslateFn = (typeof import("~utils/i18n"))["t"]
 export type GetCurrentLangFn = (typeof import("~utils/i18n"))["getCurrentLang"]
+export type GetCurrentLocaleFn = (typeof import("~utils/i18n"))["getCurrentLocale"]
 
 export interface AdaptersVendorBridge {
   useSettingsStore: SettingsStoreHook
   WatermarkRemover: WatermarkRemoverClass
   t: TranslateFn
   getCurrentLang: GetCurrentLangFn
+  getCurrentLocale: GetCurrentLocaleFn
 }
 
 declare global {

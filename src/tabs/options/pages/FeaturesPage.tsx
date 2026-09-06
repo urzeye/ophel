@@ -13,7 +13,12 @@ import { platform } from "~platform"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
 import { MSG_CHECK_PERMISSIONS, MSG_REQUEST_PERMISSIONS, sendToBackground } from "~utils/messaging"
-import type { ExportFormatSetting, ExportPackaging, FormulaCopyFormat } from "~utils/storage"
+import type {
+  ExportFormatSetting,
+  ExportPackaging,
+  ExportStyle,
+  FormulaCopyFormat,
+} from "~utils/storage"
 import {
   aggregateUsageEvents,
   getUsageEvents,
@@ -662,6 +667,11 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
     { value: "json", label: t("exportToJSON") },
     { value: "txt", label: t("exportToTXT") },
     { value: "html", label: t("exportToHTML") },
+  ]
+  const exportStyle = settings.export?.exportStyle === "clean" ? "clean" : "standard"
+  const exportStyleOptions = [
+    { value: "standard", label: t("exportStyleStandard") },
+    { value: "clean", label: t("exportStyleClean") },
   ]
   const formulaCopyFormat = settings.content?.formulaCopyFormat === "mathml" ? "mathml" : "latex"
   const formulaCopyFormatOptions = [
@@ -1328,6 +1338,22 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
                 ariaLabel={t("exportPackagingLabel")}
                 onChange={(value) =>
                   updateNestedSetting("export", "packaging", value as ExportPackaging)
+                }
+              />
+            </SettingRow>
+
+            <SettingRow
+              label={t("exportStyleLabel")}
+              description={t("exportStyleDesc")}
+              settingId="export-style">
+              <SelectDropdown
+                className="settings-select-dropdown"
+                buttonClassName="settings-select"
+                options={exportStyleOptions}
+                value={exportStyle}
+                ariaLabel={t("exportStyleLabel")}
+                onChange={(value) =>
+                  updateNestedSetting("export", "exportStyle", value as ExportStyle)
                 }
               />
             </SettingRow>

@@ -310,6 +310,10 @@ const normalizeExportSettings = (
     typeof exportSettings?.exportShowDialog === "boolean"
       ? exportSettings.exportShowDialog
       : defaults.exportShowDialog
+  const exportStyle =
+    exportSettings?.exportStyle === "clean" || exportSettings?.exportStyle === "standard"
+      ? exportSettings.exportStyle
+      : defaults.exportStyle
 
   return {
     ...defaults,
@@ -317,6 +321,7 @@ const normalizeExportSettings = (
     exportShowIndex,
     exportMarkdownDivider,
     exportShowDialog,
+    exportStyle,
     packaging,
     defaultExportFormat,
   }

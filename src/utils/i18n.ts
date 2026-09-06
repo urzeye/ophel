@@ -73,3 +73,22 @@ export function getAllLocalizedTexts(key: string): string[] {
 export function getCurrentLang(): string {
   return currentLang
 }
+
+// 应用语言到 BCP 47 locale 的映射，用于日期时间等本地化格式化
+const LOCALE_MAP: Record<string, string> = {
+  "zh-CN": "zh-CN",
+  "zh-TW": "zh-TW",
+  en: "en",
+  ja: "ja",
+  ko: "ko",
+  it: "it",
+  de: "de",
+  es: "es",
+  fr: "fr",
+  pt: "pt",
+  ru: "ru",
+}
+
+export function getCurrentLocale(): string {
+  return LOCALE_MAP[currentLang] ?? "en"
+}

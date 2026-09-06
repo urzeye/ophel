@@ -1312,6 +1312,7 @@ export class ConversationManager {
         customModelName: settings.export?.customModelName,
         showIndex: settings.export?.exportShowIndex,
         customDivider: settings.export?.exportMarkdownDivider,
+        style: settings.export?.exportStyle,
       }),
     }
   }
@@ -1909,6 +1910,7 @@ export class ConversationManager {
           customModelName: settings.export?.customModelName,
           showIndex: options?.showIndex ?? settings.export?.exportShowIndex,
           customDivider: options?.customDivider ?? settings.export?.exportMarkdownDivider,
+          style: settings.export?.exportStyle,
         })
 
         let content: string

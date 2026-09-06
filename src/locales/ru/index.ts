@@ -454,6 +454,7 @@ export const ru = {
   promptMerge: "Слияние",
   promptOverwrite: "Замена",
   promptMergeSuccess: "Готово: {updated} обновлено, {added} новых",
+  promptDeleteConfirm: "Удалить этот промпт?",
   promptSettingsTitle: "Настройки промптов",
   promptSettingsDesc: "Настройка взаимодействия во вкладке промптов",
   promptSubmitShortcutLabel: "Горячая клавиша отправки",
@@ -1689,6 +1690,12 @@ export const ru = {
   exportShowIndexLabel: "Показывать номера сообщений при экспорте",
   exportShowIndexDesc:
     "Добавляет порядковый номер к заголовкам сообщений для удобного поиска и навигации",
+  exportStyleLabel: "Стиль экспорта",
+  exportStyleDesc:
+    "Чистый стиль убирает декоративные эмодзи и брендинг расширения из экспортированных файлов",
+  exportStyleStandard: "Стандартный",
+  exportStyleClean: "Чистый",
+  exportImageAlt: "Изображение",
   exportShowIndexJsonUnsupported: "Нумерация не поддерживается при экспорте в JSON",
   exportMarkdownDividerLabel: "Разделитель Markdown",
   exportMarkdownDividerDesc:
@@ -1721,8 +1728,8 @@ export const ru = {
   activeSearchFilters: "Активные фильтры поиска",
   queueClearAll: "Очистить всё",
   queueRemove: "Удалить",
-  queuePlaceholderIdle: "Введите промпт, Enter для отправки...",
-  queuePlaceholderBusy: "ИИ генерирует, Enter для добавления в очередь...",
+  queuePlaceholderIdle: "Введите промпт, {key} для отправки...",
+  queuePlaceholderBusy: "ИИ генерирует, {key} для добавления в очередь...",
   queueStatusIdle: "ИИ свободен",
   queueStatusBusy: "ИИ генерирует",
   queueSettingLabel: "Очередь промптов",

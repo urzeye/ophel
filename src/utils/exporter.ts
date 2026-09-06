@@ -6,7 +6,8 @@
  */
 
 import { platform } from "~platform"
-import { getCurrentLang, t } from "~utils/i18n"
+import type { ExportStyle } from "~types/settings"
+import { getCurrentLang, getCurrentLocale, t } from "~utils/i18n"
 import { createMarkdownIt } from "~utils/markdown"
 import { showToast } from "~utils/toast"
 
@@ -50,6 +51,7 @@ export interface ExportMetadata {
   customModelName?: string
   showIndex?: boolean
   customDivider?: string
+  style?: ExportStyle
 }
 
 export type ExportFormat = "markdown" | "json" | "txt" | "html" | "clipboard"
@@ -415,7 +417,8 @@ export function htmlToMarkdown(el: Element): string {
 
       // 图片
       if (tag === "img") {
-        const alt = (element as HTMLImageElement).alt || element.getAttribute("alt") || "图片"
+        const alt =
+          (element as HTMLImageElement).alt || element.getAttribute("alt") || t("exportImageAlt")
         const src = element.getAttribute("src") || (element as HTMLImageElement).src || ""
         return `![${alt}](${src})`
       }
@@ -741,13 +744,16 @@ export function formatToMarkdown(metadata: ExportMetadata, messages: ExportMessa
   const lines: string[] = []
   const normalizedMessages = normalizeExportMessages(messages)
   const divider = metadata.customDivider !== undefined ? metadata.customDivider : "---"
+  // clean 样式不输出装饰 emoji，面向专业场景
+  const isClean = metadata.style === "clean"
+  const exportEmoji = isClean ? "" : `${EMOJI_EXPORT} `
 
   // 元数据头（头部结构分隔线固定为 ---，自定义分割线只作用于消息之间）
   lines.push(`# ${metadata.title}`)
   lines.push("")
   lines.push("---")
   lines.push("")
-  lines.push(`## ${EMOJI_EXPORT} ${t("exportMetaTitle")}`)
+  lines.push(`## ${exportEmoji}${t("exportMetaTitle")}`)
   lines.push(`- **${t("exportMetaConvTitle")}**: ${metadata.title}`)
   lines.push(`- **${t("exportMetaTime")}**: ${metadata.exportTime}`)
   lines.push(`- **${t("exportMetaSource")}**: ${metadata.source}`)
@@ -763,7 +769,8 @@ export function formatToMarkdown(metadata: ExportMetadata, messages: ExportMessa
       turnNumber += 1
       const userLabel = metadata.customUserName || t("exportUserLabel")
       const titlePrefix = metadata.showIndex ? `${turnNumber}. ` : ""
-      lines.push(`## ${titlePrefix}${EMOJI_USER} ${userLabel}`)
+      const userEmoji = isClean ? "" : `${EMOJI_USER} `
+      lines.push(`## ${titlePrefix}${userEmoji}${userLabel}`)
       lines.push("")
       lines.push(msg.content)
       lines.push("")
@@ -775,7 +782,8 @@ export function formatToMarkdown(metadata: ExportMetadata, messages: ExportMessa
       const modelLabel = metadata.customModelName || metadata.source
       // 开场 assistant（尚未出现 user 轮次）不编号，避免与首轮 1 重复
       const titlePrefix = metadata.showIndex && turnNumber > 0 ? `${turnNumber}. ` : ""
-      lines.push(`## ${titlePrefix}${EMOJI_ASSISTANT} ${modelLabel}`)
+      const assistantEmoji = isClean ? "" : `${EMOJI_ASSISTANT} `
+      lines.push(`## ${titlePrefix}${assistantEmoji}${modelLabel}`)
       lines.push("")
       lines.push(msg.content)
       lines.push("")
@@ -1484,6 +1492,16 @@ export function formatToHTML(metadata: ExportMetadata, messages: ExportMessage[]
   const time = escapeHtml(metadata.exportTime)
   const source = escapeHtml(metadata.source)
   const normalizedMessages = normalizeExportMessages(messages)
+  // clean 样式去掉扩展品牌信息（kicker 与页脚），仅保留对话与导出信息
+  const isClean = metadata.style === "clean"
+  const kickerHtml = isClean ? "" : `    <p class="gh-kicker">Ophel Atlas</p>\n`
+  const footerHtml = isClean
+    ? ""
+    : `  <footer class="gh-doc-footer">
+    <span>Ophel Atlas</span>
+    <span class="gh-footer-dot" aria-hidden="true">·</span>
+    <span>${time}</span>
+  </footer>\n`
 
   let turnNumber = 0
   const messagesHtml = normalizedMessages
@@ -1511,8 +1529,7 @@ export function formatToHTML(metadata: ExportMetadata, messages: ExportMessage[]
     <div class="gh-toolbar">
       <button id="gh-theme-btn" class="gh-tool-btn" type="button" aria-label="${t("themeAuto")}" title="${t("themeAuto")}" data-theme-mode="auto">${SUN_ICON_SVG}${MOON_ICON_SVG}${SYSTEM_ICON_SVG}</button>
     </div>
-    <p class="gh-kicker">Ophel Atlas</p>
-    <h1>${title}</h1>
+${kickerHtml}    <h1>${title}</h1>
     <div class="gh-doc-meta">
       <span>${time}</span>
       <span class="gh-meta-dot" aria-hidden="true">·</span>
@@ -1522,12 +1539,7 @@ export function formatToHTML(metadata: ExportMetadata, messages: ExportMessage[]
   <section class="gh-conversation">
 ${messagesHtml}
   </section>
-  <footer class="gh-doc-footer">
-    <span>Ophel Atlas</span>
-    <span class="gh-footer-dot" aria-hidden="true">·</span>
-    <span>${time}</span>
-  </footer>
-</main>
+${footerHtml}</main>
 </body>
 </html>`
 }
@@ -2247,17 +2259,19 @@ export function createExportMetadata(
     customModelName?: string
     showIndex?: boolean
     customDivider?: string
+    style?: ExportStyle
   },
 ): ExportMetadata {
   return {
     title: title || t("exportUntitled"),
     id,
     url: window.location.href,
-    exportTime: new Date().toLocaleString(),
+    exportTime: new Date().toLocaleString(getCurrentLocale()),
     source,
     customUserName: options?.customUserName,
     customModelName: options?.customModelName,
     showIndex: options?.showIndex,
     customDivider: options?.customDivider,
+    style: options?.style,
   }
 }

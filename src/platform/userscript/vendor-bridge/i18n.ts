@@ -5,7 +5,7 @@
  * vendor 内若打包第二份会退回浏览器默认语言。这里把 t()
  * 转发给主包实例，保证语言切换后适配器文案同步更新。
  */
-import type { GetCurrentLangFn, TranslateFn } from "./types"
+import type { GetCurrentLangFn, GetCurrentLocaleFn, TranslateFn } from "./types"
 
 const resolveBridge = () => {
   const bridge = window.__OphelAdaptersVendorBridge
@@ -21,4 +21,8 @@ export const t: TranslateFn = (key, params) => {
 
 export const getCurrentLang: GetCurrentLangFn = () => {
   return resolveBridge().getCurrentLang()
+}
+
+export const getCurrentLocale: GetCurrentLocaleFn = () => {
+  return resolveBridge().getCurrentLocale()
 }

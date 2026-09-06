@@ -759,8 +759,8 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
                 onChange={handleInputChange}
                 placeholder={
                   isGenerating
-                    ? `AI 生成中，${submitKeyDisplay} 加入队列...`
-                    : `输入提示词，${submitKeyDisplay} 直接发送...`
+                    ? t("queuePlaceholderBusy", { key: submitKeyDisplay })
+                    : t("queuePlaceholderIdle", { key: submitKeyDisplay })
                 }
                 rows={1}
               />

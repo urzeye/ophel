@@ -1886,11 +1886,11 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
 
     loadData()
     setImportDialogState({ show: false, prompts: [] })
-    const msg = `已合并：更新 ${toUpdate.length} 个，新增 ${toAdd.length} 个`
     showToast(
-      t("promptMergeSuccess")
-        ?.replace("{updated}", toUpdate.length.toString())
-        .replace("{added}", toAdd.length.toString()) || msg,
+      t("promptMergeSuccess", {
+        updated: toUpdate.length.toString(),
+        added: toAdd.length.toString(),
+      }),
     )
   }
 
@@ -1989,7 +1989,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   const handleDelete = (id: string, e: React.MouseEvent) => {
     e.stopPropagation()
     e.preventDefault()
-    showConfirm(t("confirmDelete"), "确定删除该提示词？", async () => {
+    showConfirm(t("confirmDelete"), t("promptDeleteConfirm"), async () => {
       await manager.deletePrompt(id)
       showToast(t("deleted"))
       loadData()

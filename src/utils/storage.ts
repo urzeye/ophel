@@ -26,6 +26,7 @@ export type {
   ExportFormatSetting,
   ExportPackaging,
   ExportSettings,
+  ExportStyle,
   FormulaCopyFormat,
   ModelLockConfig,
   PageWidthConfig,
