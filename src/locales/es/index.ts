@@ -1520,10 +1520,10 @@ Dame el código y luego un resumen de mejoras.`,
   exportShowIndexDesc:
     "Añade un número de turno a los encabezados para facilitar la búsqueda y referencia",
   exportStyleLabel: "Estilo de exportación",
-  exportStyleDesc:
-    "El estilo limpio elimina los emojis decorativos y la marca de la extensión de los archivos exportados",
+  exportStyleDesc: "El estilo limpio elimina los emojis decorativos de los archivos exportados",
   exportStyleStandard: "Estándar",
   exportStyleClean: "Limpio",
+  exportStyleCleanOption: "Usar estilo limpio (sin emojis decorativos)",
   exportImageAlt: "Imagen",
   exportShowIndexJsonUnsupported: "La numeración no es compatible con la exportación JSON",
   exportMarkdownDividerLabel: "Separador de Markdown",

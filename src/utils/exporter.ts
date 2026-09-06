@@ -1492,16 +1492,6 @@ export function formatToHTML(metadata: ExportMetadata, messages: ExportMessage[]
   const time = escapeHtml(metadata.exportTime)
   const source = escapeHtml(metadata.source)
   const normalizedMessages = normalizeExportMessages(messages)
-  // clean 样式去掉扩展品牌信息（kicker 与页脚），仅保留对话与导出信息
-  const isClean = metadata.style === "clean"
-  const kickerHtml = isClean ? "" : `    <p class="gh-kicker">Ophel Atlas</p>\n`
-  const footerHtml = isClean
-    ? ""
-    : `  <footer class="gh-doc-footer">
-    <span>Ophel Atlas</span>
-    <span class="gh-footer-dot" aria-hidden="true">·</span>
-    <span>${time}</span>
-  </footer>\n`
 
   let turnNumber = 0
   const messagesHtml = normalizedMessages
@@ -1529,7 +1519,8 @@ export function formatToHTML(metadata: ExportMetadata, messages: ExportMessage[]
     <div class="gh-toolbar">
       <button id="gh-theme-btn" class="gh-tool-btn" type="button" aria-label="${t("themeAuto")}" title="${t("themeAuto")}" data-theme-mode="auto">${SUN_ICON_SVG}${MOON_ICON_SVG}${SYSTEM_ICON_SVG}</button>
     </div>
-${kickerHtml}    <h1>${title}</h1>
+    <p class="gh-kicker">Ophel Atlas</p>
+    <h1>${title}</h1>
     <div class="gh-doc-meta">
       <span>${time}</span>
       <span class="gh-meta-dot" aria-hidden="true">·</span>
@@ -1539,7 +1530,12 @@ ${kickerHtml}    <h1>${title}</h1>
   <section class="gh-conversation">
 ${messagesHtml}
   </section>
-${footerHtml}</main>
+  <footer class="gh-doc-footer">
+    <span>Ophel Atlas</span>
+    <span class="gh-footer-dot" aria-hidden="true">·</span>
+    <span>${time}</span>
+  </footer>
+</main>
 </body>
 </html>`
 }

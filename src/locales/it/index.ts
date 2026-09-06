@@ -769,10 +769,10 @@ export const it = {
   exportShowIndexDesc:
     "Aggiunge un numero progressivo alle intestazioni dei messaggi per una ricerca più rapida",
   exportStyleLabel: "Stile di esportazione",
-  exportStyleDesc:
-    "Lo stile pulito rimuove emoji decorativi e branding dell'estensione dai file esportati",
+  exportStyleDesc: "Lo stile pulito rimuove gli emoji decorativi dai file esportati",
   exportStyleStandard: "Standard",
   exportStyleClean: "Pulito",
+  exportStyleCleanOption: "Usa stile pulito (senza emoji decorativi)",
   exportImageAlt: "Immagine",
   exportShowIndexJsonUnsupported: "La numerazione non è supportata nell'esportazione JSON",
   exportMarkdownDividerLabel: "Separatore Markdown",

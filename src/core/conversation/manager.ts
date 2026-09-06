@@ -39,7 +39,7 @@ import {
 import { getAllLocalizedTexts, t } from "~utils/i18n"
 import { getTopScrollPosition } from "~utils/scroll-helper"
 import { createSiteScopedStorageKey, resolvePersistedSiteInstanceKey } from "~utils/site-identity"
-import { consumeRestoreFlag, type ExportPackaging } from "~utils/storage"
+import { consumeRestoreFlag, type ExportPackaging, type ExportStyle } from "~utils/storage"
 import { showToast } from "~utils/toast"
 
 import type { Conversation, ConversationData, Tag } from "./types"
@@ -145,6 +145,7 @@ export interface ConversationExportOptions {
   includeThoughts?: boolean
   showIndex?: boolean
   customDivider?: string
+  style?: ExportStyle
 }
 
 type ConversationExportDataOptions = ConversationExportOptions
@@ -1910,7 +1911,7 @@ export class ConversationManager {
           customModelName: settings.export?.customModelName,
           showIndex: options?.showIndex ?? settings.export?.exportShowIndex,
           customDivider: options?.customDivider ?? settings.export?.exportMarkdownDivider,
-          style: settings.export?.exportStyle,
+          style: options?.style ?? settings.export?.exportStyle,
         })
 
         let content: string

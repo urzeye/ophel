@@ -1691,10 +1691,10 @@ export const ru = {
   exportShowIndexDesc:
     "Добавляет порядковый номер к заголовкам сообщений для удобного поиска и навигации",
   exportStyleLabel: "Стиль экспорта",
-  exportStyleDesc:
-    "Чистый стиль убирает декоративные эмодзи и брендинг расширения из экспортированных файлов",
+  exportStyleDesc: "Чистый стиль убирает декоративные эмодзи из экспортированных файлов",
   exportStyleStandard: "Стандартный",
   exportStyleClean: "Чистый",
+  exportStyleCleanOption: "Чистый стиль (без декоративных эмодзи)",
   exportImageAlt: "Изображение",
   exportShowIndexJsonUnsupported: "Нумерация не поддерживается при экспорте в JSON",
   exportMarkdownDividerLabel: "Разделитель Markdown",

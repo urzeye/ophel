@@ -1520,10 +1520,10 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   exportShowIndexDesc:
     "Fügt den Nachrichtenüberschriften eine Nummerierung zur einfacheren Navigation hinzu",
   exportStyleLabel: "Export-Stil",
-  exportStyleDesc:
-    "Der schlichte Stil entfernt dekorative Emojis und das Branding der Erweiterung aus exportierten Dateien",
+  exportStyleDesc: "Der schlichte Stil entfernt dekorative Emojis aus exportierten Dateien",
   exportStyleStandard: "Standard",
   exportStyleClean: "Schlicht",
+  exportStyleCleanOption: "Schlichten Stil verwenden (ohne dekorative Emojis)",
   exportImageAlt: "Bild",
   exportShowIndexJsonUnsupported: "Nummerierung wird im JSON-Export nicht unterstützt",
   exportMarkdownDividerLabel: "Markdown-Trennlinie",

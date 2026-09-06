@@ -1561,10 +1561,10 @@ export const ja = {
   exportShowIndexLabel: "エクスポートに対話番号を表示",
   exportShowIndexDesc: "検索や参照を容易にするため、メッセージの見出しに通し番号を追加します",
   exportStyleLabel: "エクスポートスタイル",
-  exportStyleDesc:
-    "クリーンスタイルは、エクスポートされたファイルから装飾絵文字と拡張機能のブランド表示を削除します",
+  exportStyleDesc: "クリーンスタイルはエクスポートされたファイルから装飾絵文字を削除します",
   exportStyleStandard: "標準",
   exportStyleClean: "クリーン",
+  exportStyleCleanOption: "クリーンスタイルを使用（装飾絵文字なし）",
   exportImageAlt: "画像",
   exportShowIndexJsonUnsupported: "JSON エクスポートでは番号付けはサポートされません",
   exportMarkdownDividerLabel: "Markdown 区切り線",

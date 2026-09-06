@@ -1527,10 +1527,10 @@ Donnez le code puis un résumé des améliorations.`,
   exportShowIndexDesc:
     "Ajoute un numéro d'index aux titres des messages pour faciliter le repérage",
   exportStyleLabel: "Style d'export",
-  exportStyleDesc:
-    "Le style épuré supprime les émojis décoratifs et la marque de l'extension des fichiers exportés",
+  exportStyleDesc: "Le style épuré supprime les émojis décoratifs des fichiers exportés",
   exportStyleStandard: "Standard",
   exportStyleClean: "Épuré",
+  exportStyleCleanOption: "Utiliser le style épuré (sans émojis décoratifs)",
   exportImageAlt: "Image",
   exportShowIndexJsonUnsupported: "La numérotation n'est pas prise en charge dans l'export JSON",
   exportMarkdownDividerLabel: "Séparateur Markdown",

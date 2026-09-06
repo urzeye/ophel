@@ -9,7 +9,7 @@ import {
   TXTFileIcon,
 } from "~components/icons"
 import type { ConversationExportOptions } from "~core/conversation-manager"
-import type { ExportPackaging } from "~types/settings"
+import type { ExportPackaging, ExportStyle } from "~types/settings"
 import type { ExportFormat } from "~utils/exporter"
 import { t } from "~utils/i18n"
 import { useSettingsStore } from "~stores/settings-store"
@@ -406,6 +406,9 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
     settings.export?.exportMarkdownDivider ?? "---",
   )
   const [packageZip, setPackageZip] = useState<boolean>(settings.export?.packaging === "zip")
+  const [exportStyle, setExportStyle] = useState<ExportStyle>(
+    settings.export?.exportStyle === "clean" ? "clean" : "standard",
+  )
   const [isExporting, setIsExporting] = useState(false)
 
   // 每次打开时从全局设置重新同步初始值，避免常驻挂载导致的过期快照
@@ -422,6 +425,7 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
     setShowIndex(current.export?.exportShowIndex ?? false)
     setCustomDivider(current.export?.exportMarkdownDivider ?? "---")
     setPackageZip(current.export?.packaging === "zip")
+    setExportStyle(current.export?.exportStyle === "clean" ? "clean" : "standard")
   }, [isOpen])
 
   if (!isOpen) return null
@@ -438,6 +442,7 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
         showIndex,
         packaging,
         customDivider,
+        style: exportStyle,
       })
       if (success !== false) {
         onClose()
@@ -566,6 +571,15 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
               />
             </label>
           )}
+
+          <label className="gh-export-option-row">
+            <span>{t("exportStyleCleanOption")}</span>
+            <input
+              type="checkbox"
+              checked={exportStyle === "clean"}
+              onChange={(e) => setExportStyle(e.target.checked ? "clean" : "standard")}
+            />
+          </label>
         </div>
       </div>
 

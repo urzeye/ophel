@@ -1649,10 +1649,10 @@ Dê o código e depois um resumo de melhorias.`,
   exportShowIndexDesc:
     "Adiciona um índice numérico aos cabeçalhos das mensagens para facilitar a busca e referência",
   exportStyleLabel: "Estilo de exportação",
-  exportStyleDesc:
-    "O estilo limpo remove emojis decorativos e a marca da extensão dos arquivos exportados",
+  exportStyleDesc: "O estilo limpo remove emojis decorativos dos arquivos exportados",
   exportStyleStandard: "Padrão",
   exportStyleClean: "Limpo",
+  exportStyleCleanOption: "Usar estilo limpo (sem emojis decorativos)",
   exportImageAlt: "Imagem",
   exportShowIndexJsonUnsupported: "A numeração não é suportada na exportação JSON",
   exportMarkdownDividerLabel: "Separador de Markdown",

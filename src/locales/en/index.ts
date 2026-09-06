@@ -747,10 +747,10 @@ export const en = {
   exportShowIndexLabel: "Show Turn Numbers in Export",
   exportShowIndexDesc: "Add numeric index to message headings for easier searching and reference",
   exportStyleLabel: "Export Style",
-  exportStyleDesc:
-    "Clean style removes decorative emojis and extension branding from exported files",
+  exportStyleDesc: "Clean style removes decorative emojis from exported files",
   exportStyleStandard: "Standard",
   exportStyleClean: "Clean",
+  exportStyleCleanOption: "Use clean style (no decorative emojis)",
   exportImageAlt: "Image",
   exportShowIndexJsonUnsupported: "Turn numbers are not supported in JSON export",
   exportMarkdownDividerLabel: "Markdown Divider",
