@@ -572,14 +572,16 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
             </label>
           )}
 
-          <label className="gh-export-option-row">
-            <span>{t("exportStyleCleanOption")}</span>
-            <input
-              type="checkbox"
-              checked={exportStyle === "clean"}
-              onChange={(e) => setExportStyle(e.target.checked ? "clean" : "standard")}
-            />
-          </label>
+          {isMarkdownLike && (
+            <label className="gh-export-option-row">
+              <span>{t("exportStyleCleanOption")}</span>
+              <input
+                type="checkbox"
+                checked={exportStyle === "clean"}
+                onChange={(e) => setExportStyle(e.target.checked ? "clean" : "standard")}
+              />
+            </label>
+          )}
         </div>
       </div>
 

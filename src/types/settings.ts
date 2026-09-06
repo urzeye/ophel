@@ -59,7 +59,7 @@ export interface ExportSettings {
   exportShowDialog?: boolean // 点击导出按钮时显示选项弹窗（关闭则按默认格式直接导出）
   packaging?: ExportPackaging // 导出打包方式
   defaultExportFormat?: ExportFormatSetting // 快捷键与一键导出的默认格式
-  exportStyle?: ExportStyle // 导出样式：standard 保留装饰，clean 去除装饰 emoji 与品牌信息
+  exportStyle?: ExportStyle // 导出样式：standard 保留装饰，clean 去除装饰 emoji
 }
 
 export type ExportFormatSetting = "markdown" | "json" | "txt" | "html"
