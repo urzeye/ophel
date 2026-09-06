@@ -27,6 +27,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
+- **Prompt Queue overlay covering site dialogs** — Fixed the floating queue capsule and panel covering sites' own dialogs and popups; the overlay now hides while a native dialog is open and reappears once it closes.
 - **ChatGPT in-page bookmark icons** — Fixed in-page bookmarks repeatedly expanding ChatGPT question text in long conversations, which could drive up tab memory usage. (#889)
 - **Kimi international site** — The extension now recognizes kimi.ai, so outline, export, Zen Mode, and other Kimi features work on both kimi.ai and kimi.com. (#890)
 - **Popup language setting** — Fixed the extension popup always showing the browser language; it now follows the interface language in Settings. (#897)

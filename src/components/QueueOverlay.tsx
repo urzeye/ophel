@@ -259,6 +259,61 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
     return () => window.removeEventListener("ophel:togglePromptQueue", handleToggle)
   }, [])
 
+  // ==================== 原生弹窗避让 ====================
+
+  // 胶囊/面板通过 portal 直接挂在页面 body 下,z-index(9998/9999)高于多数站点的
+  // 弹窗层级,会遮挡站点自身的对话框。这里监听页面 DOM,检测到站点原生弹窗出现时
+  // 临时隐藏队列悬浮层,弹窗关闭后自动恢复。
+  const [isPageModalOpen, setIsPageModalOpen] = useState(false)
+
+  useEffect(() => {
+    // :popover-open 低版本浏览器不支持,先探测再回退
+    let modalSelector = 'dialog[open], [role="dialog"], [role="alertdialog"], :popover-open'
+    try {
+      document.querySelector(modalSelector)
+    } catch {
+      modalSelector = 'dialog[open], [role="dialog"], [role="alertdialog"]'
+    }
+
+    const checkPageModal = () => {
+      let open = false
+      for (const el of document.querySelectorAll(modalSelector)) {
+        if (!(el instanceof HTMLElement)) continue
+        // 排除扩展自身 UI(批量导入弹窗等也 portal 在 body 下)
+        if (el.closest(".gh-queue-capsule, .gh-queue-panel, .gh-dialog-overlay")) continue
+        if (el.getClientRects().length === 0) continue
+        const style = window.getComputedStyle(el)
+        if (style.display === "none" || style.visibility === "hidden") continue
+        open = true
+        break
+      }
+      setIsPageModalOpen((prev) => (prev === open ? prev : open))
+    }
+
+    // 聊天页流式输出会频繁触发 DOM 变化,合并为 150ms 一次检查
+    let timer: number | null = null
+    const scheduleCheck = () => {
+      if (timer !== null) return
+      timer = window.setTimeout(() => {
+        timer = null
+        checkPageModal()
+      }, 150)
+    }
+
+    checkPageModal()
+    const observer = new MutationObserver(scheduleCheck)
+    observer.observe(document.documentElement, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["open", "hidden", "class", "style", "aria-hidden"],
+    })
+    return () => {
+      observer.disconnect()
+      if (timer !== null) window.clearTimeout(timer)
+    }
+  }, [])
+
   // 展开时聚焦输入框
   useEffect(() => {
     if (isExpanded && inputRef.current) {
@@ -516,7 +571,7 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
 
   // ==================== 渲染 ====================
 
-  if (!position) return null
+  if (!position || isPageModalOpen) return null
 
   // 挂载到 document.body，确保与 DialogOverlay 弹窗样式环境一致
   // （.gh-root 在 Shadow DOM 内，document.querySelector 取不到，历史上恒为 body）
