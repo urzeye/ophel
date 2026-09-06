@@ -20,7 +20,10 @@ import { usePromptsStore } from "~stores/prompts-store"
 import { useSettingsStore } from "~stores/settings-store"
 import type { QueueItem } from "~stores/queue-store"
 import { useQueueItems, useQueueStore } from "~stores/queue-store"
-import { attachEditableKeyboardFocusGuard } from "~utils/dom-toolkit"
+import {
+  attachEditableKeyboardFocusGuard,
+  OPHEL_INTERACTION_LAYER_SELECTOR,
+} from "~utils/dom-toolkit"
 import { t } from "~utils/i18n"
 import { parseQueueBatchInput, splitQueueLines, type QueueBatchSplitMode } from "~utils/queue-batch"
 import { showToast } from "~utils/toast"
@@ -275,12 +278,14 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
       modalSelector = 'dialog[open], [role="dialog"], [role="alertdialog"]'
     }
 
+    // 扩展自身 UI(批量导入弹窗、提示词编辑器等也 portal 在 body 下)不算页面弹窗
+    const ownUiSelector = `${OPHEL_INTERACTION_LAYER_SELECTOR}, .gh-queue-capsule, .gh-queue-panel`
+
     const checkPageModal = () => {
       let open = false
       for (const el of document.querySelectorAll(modalSelector)) {
         if (!(el instanceof HTMLElement)) continue
-        // 排除扩展自身 UI(批量导入弹窗等也 portal 在 body 下)
-        if (el.closest(".gh-queue-capsule, .gh-queue-panel, .gh-dialog-overlay")) continue
+        if (el.closest(ownUiSelector)) continue
         if (el.getClientRects().length === 0) continue
         const style = window.getComputedStyle(el)
         if (style.display === "none" || style.visibility === "hidden") continue
@@ -306,26 +311,30 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: ["open", "hidden", "class", "style", "aria-hidden"],
+      attributeFilter: ["open", "hidden", "class", "style", "aria-hidden", "aria-modal"],
     })
+    // popover 显隐不产生 DOM mutation,MutationObserver 感知不到;
+    // toggle 事件(dialog/popover 显隐时触发)不冒泡,必须在 document 捕获阶段监听
+    document.addEventListener("toggle", scheduleCheck, true)
     return () => {
       observer.disconnect()
+      document.removeEventListener("toggle", scheduleCheck, true)
       if (timer !== null) window.clearTimeout(timer)
     }
   }, [])
 
-  // 展开时聚焦输入框
+  // 展开时聚焦输入框;isPageModalOpen 恢复为 false 时 portal 重新挂载,需要重新聚焦
   useEffect(() => {
     if (isExpanded && inputRef.current) {
       setTimeout(() => inputRef.current?.focus(), 100)
     }
-  }, [isExpanded])
+  }, [isExpanded, isPageModalOpen])
 
   useEffect(() => {
     if (!isBatchDialogOpen || batchSource !== "text") return
     const timeoutId = window.setTimeout(() => batchTextareaRef.current?.focus(), 60)
     return () => window.clearTimeout(timeoutId)
-  }, [batchSource, isBatchDialogOpen])
+  }, [batchSource, isBatchDialogOpen, isPageModalOpen])
 
   useEffect(() => {
     const panel = panelRef.current
@@ -335,7 +344,8 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
 
     // 队列输入依赖本地 Enter / Escape 逻辑，改为冒泡阶段拦截以避免吞掉自身键盘处理。
     return attachEditableKeyboardFocusGuard(panel, { capture: false })
-  }, [isExpanded, position])
+    // 依赖 isPageModalOpen:恢复显示时 panel 是全新节点,必须重新挂监听
+  }, [isExpanded, isPageModalOpen, position])
 
   // 点击外部关闭
   useEffect(() => {
@@ -441,7 +451,8 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
     return () => {
       textarea.removeEventListener("keydown", handleKeyDownCapture, true)
     }
-  }, [isExpanded, submitShortcut, handleSubmit])
+    // isPageModalOpen 恢复为 false 时 textarea 是全新节点,必须重新挂监听
+  }, [isExpanded, isPageModalOpen, submitShortcut, handleSubmit])
 
   const handleRemoveItem = useCallback(
     (id: string) => {
@@ -563,7 +574,8 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
 
   useEffect(() => {
     adjustTextareaHeight()
-  }, [inputValue, adjustTextareaHeight])
+    // isPageModalOpen 恢复为 false 时 textarea 是全新节点,内联高度丢失,需要重算
+  }, [inputValue, isPageModalOpen, adjustTextareaHeight])
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInputValue(e.target.value)
