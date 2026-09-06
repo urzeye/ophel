@@ -454,7 +454,7 @@ export const ru = {
   promptMerge: "Слияние",
   promptOverwrite: "Замена",
   promptMergeSuccess: "Готово: {updated} обновлено, {added} новых",
-  promptDeleteConfirm: "Удалить этот промпт?",
+  promptDeleteConfirm: "Этот промпт будет удалён безвозвратно.",
   promptSettingsTitle: "Настройки промптов",
   promptSettingsDesc: "Настройка взаимодействия во вкладке промптов",
   promptSubmitShortcutLabel: "Горячая клавиша отправки",
@@ -491,7 +491,7 @@ export const ru = {
   chainNoPromptsDescription:
     "Chains строятся из существующих промптов и требуют хотя бы один промпт.",
   chainDuplicated: "Chain дублирована",
-  chainDeleteConfirm: "Удалить эту chain?",
+  chainDeleteConfirm: "Эта chain будет удалена безвозвратно.",
   chainAdd: "Добавить Chain",
   chainEditorEditTitle: "Изменить Chain",
   chainEditorNewTitle: "Новая Chain",

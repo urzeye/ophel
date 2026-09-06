@@ -459,7 +459,7 @@ export const fr = {
   promptMerge: "Fusionner",
   promptOverwrite: "Remplacer",
   promptMergeSuccess: "Fusionné : {updated} mis à jour, {added} nouveaux",
-  promptDeleteConfirm: "Supprimer ce prompt ?",
+  promptDeleteConfirm: "Ce prompt sera définitivement supprimé.",
   promptSettingsTitle: "Paramètres des prompts",
   promptSettingsDesc: "Configurer les interactions dans l'onglet des prompts",
   promptSubmitShortcutLabel: "Raccourci d'envoi",
@@ -496,7 +496,7 @@ export const fr = {
   chainNoPromptsDescription:
     "Les chains sont créées à partir de prompts existants et nécessitent au moins un prompt.",
   chainDuplicated: "Chain dupliquée",
-  chainDeleteConfirm: "Supprimer cette chain ?",
+  chainDeleteConfirm: "Cette chain sera définitivement supprimée.",
   chainAdd: "Ajouter une Chain",
   chainEditorEditTitle: "Modifier la Chain",
   chainEditorNewTitle: "Nouvelle Chain",

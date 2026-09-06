@@ -456,7 +456,7 @@ export const de = {
   promptMerge: "Zusammenführen",
   promptOverwrite: "Ersetzen",
   promptMergeSuccess: "Fertig: {updated} aktualisiert, {added} neu",
-  promptDeleteConfirm: "Diesen Prompt löschen?",
+  promptDeleteConfirm: "Dieser Prompt wird endgültig gelöscht.",
   promptSettingsTitle: "Prompt-Einstellungen",
   promptSettingsDesc: "Interaktionen im Prompt-Tab konfigurieren",
   promptSubmitShortcutLabel: "Sende-Tastenkürzel",
@@ -494,7 +494,7 @@ export const de = {
   chainNoPromptsDescription:
     "Chains bestehen aus vorhandenen Prompts und benötigen mindestens einen Prompt.",
   chainDuplicated: "Chain dupliziert",
-  chainDeleteConfirm: "Diese Chain löschen?",
+  chainDeleteConfirm: "Diese Chain wird endgültig gelöscht.",
   chainAdd: "Chain hinzufügen",
   chainEditorEditTitle: "Chain bearbeiten",
   chainEditorNewTitle: "Neue Chain",

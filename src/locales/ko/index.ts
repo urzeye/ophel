@@ -454,7 +454,7 @@ export const ko = {
   promptMerge: "병합",
   promptOverwrite: "덮어쓰기",
   promptMergeSuccess: "병합됨: {updated}개 업데이트, {added}개 추가",
-  promptDeleteConfirm: "이 프롬프트를 삭제하시겠습니까?",
+  promptDeleteConfirm: "이 프롬프트는 영구적으로 삭제됩니다.",
   promptSettingsTitle: "프롬프트 설정",
   promptSettingsDesc: "프롬프트 탭의 상호작용을 설정합니다",
   promptSubmitShortcutLabel: "전송 단축키",
@@ -491,7 +491,7 @@ export const ko = {
   chainNoPromptsDescription:
     "Chain은 기존 프롬프트로 구성되므로 하나 이상의 프롬프트가 필요합니다.",
   chainDuplicated: "Chain이 복제되었습니다",
-  chainDeleteConfirm: "이 Chain을 삭제하시겠습니까?",
+  chainDeleteConfirm: "이 Chain은 영구적으로 삭제됩니다.",
   chainAdd: "Chain 추가",
   chainEditorEditTitle: "Chain 편집",
   chainEditorNewTitle: "새 Chain",

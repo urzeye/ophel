@@ -473,7 +473,7 @@ export const it = {
   promptMerge: "Unisci",
   promptOverwrite: "Sovrascrivi",
   promptMergeSuccess: "Unificato: {updated} aggiornato, {added} aggiunto",
-  promptDeleteConfirm: "Eliminare questo prompt?",
+  promptDeleteConfirm: "Questo prompt verrà eliminato definitivamente.",
   promptSettingsTitle: "Impostazioni dei suggerimenti",
   promptSettingsDesc: "Configura le interazioni nella scheda dei prompt",
   promptSubmitShortcutLabel: "Invia scorciatoia",
@@ -511,7 +511,7 @@ export const it = {
   chainNoPromptsDescription:
     "Le catene vengono create da prompt esistenti e necessitano di almeno un prompt.",
   chainDuplicated: "Catena duplicata",
-  chainDeleteConfirm: "Eliminare questa catena?",
+  chainDeleteConfirm: "Questa catena verrà eliminata definitivamente.",
   chainAdd: "Aggiungi catena",
   chainEditorEditTitle: "Modifica catena",
   chainEditorNewTitle: "Nuova catena",

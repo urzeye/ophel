@@ -457,7 +457,7 @@ export const es = {
   promptMerge: "Combinar",
   promptOverwrite: "Sobrescribir",
   promptMergeSuccess: "Combinado: {updated} actualizados, {added} nuevos",
-  promptDeleteConfirm: "¿Eliminar este prompt?",
+  promptDeleteConfirm: "Este prompt se eliminará permanentemente.",
   promptSettingsTitle: "Configuración de prompts",
   promptSettingsDesc: "Configura las interacciones en la pestaña de prompts",
   promptSubmitShortcutLabel: "Atajo de envío",
@@ -494,7 +494,7 @@ export const es = {
   chainNoPromptsDescription:
     "Las chains se construyen con prompts existentes y necesitan al menos un prompt.",
   chainDuplicated: "Chain duplicada",
-  chainDeleteConfirm: "¿Eliminar esta chain?",
+  chainDeleteConfirm: "Esta chain se eliminará permanentemente.",
   chainAdd: "Añadir Chain",
   chainEditorEditTitle: "Editar Chain",
   chainEditorNewTitle: "Nueva Chain",

@@ -462,7 +462,7 @@ export const ja = {
   promptMerge: "統合",
   promptOverwrite: "上書き",
   promptMergeSuccess: "統合完了：{updated} 更新、{added} 追加",
-  promptDeleteConfirm: "このプロンプトを削除しますか？",
+  promptDeleteConfirm: "このプロンプトは完全に削除されます。",
   promptSettingsTitle: "プロンプト設定",
   promptSettingsDesc: "プロンプトタブの操作を設定",
   promptSubmitShortcutLabel: "送信ショートカット",
@@ -499,7 +499,7 @@ export const ja = {
   chainNoPromptsDescription:
     "Chain は既存のプロンプトから作成されるため、少なくとも 1 つのプロンプトが必要です。",
   chainDuplicated: "Chain を複製しました",
-  chainDeleteConfirm: "この Chain を削除しますか？",
+  chainDeleteConfirm: "この Chain は完全に削除されます。",
   chainAdd: "Chain を追加",
   chainEditorEditTitle: "Chain を編集",
   chainEditorNewTitle: "新しい Chain",
