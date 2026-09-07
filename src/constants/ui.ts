@@ -514,6 +514,7 @@ export const SETTING_ID_ALIASES: Record<string, string> = {
   "chatgpt.markdownFix": "chatgpt-markdown-fix",
   "claude.sessionKeys": "claude-session-keys",
   "appearance.syncNativePageTheme": "appearance-sync-native-page-theme",
+  "appearance-theme-sync": "appearance-sync-native-page-theme",
   "appearance.presets.light": "appearance-preset-light",
   "appearance.presets.dark": "appearance-preset-dark",
   "appearance.custom.styles": "appearance-custom-styles",
@@ -1121,9 +1122,9 @@ const SETTING_CARD_SEARCH_ITEMS: SettingsSearchItem[] = [
     keywords: ["clean mode", "distraction free", "净化模式", "隐藏侧栏", "去杂质"],
   },
   {
-    settingId: "appearance-theme-sync",
-    title: "原生页面主题同步",
-    keywords: ["sync native page theme", "system theme", "原生页面主题", "跟随系统", "自适应"],
+    settingId: "site-pack-custom-origin",
+    title: "自定义域名覆盖",
+    keywords: ["custom origin", "domains", "自定义域名", "域名覆盖", "绑定"],
   },
   {
     settingId: "backup-export-card",
@@ -1316,6 +1317,11 @@ const ADDITIONAL_SETTING_SEARCH_ITEMS: SettingsSearchItem[] = [
     settingId: "backup-webdav-dir",
     title: "WebDAV 备份存储目录",
     keywords: ["webdav dir", "directory", "folder", "存储目录", "备份目录", "文件夹"],
+  },
+  {
+    settingId: "remote-config-registry-source",
+    title: "开发 Registry 源",
+    keywords: ["registry source", "remote config", "适配仓库源", "自定义源", "注册表"],
   },
 ]
 
@@ -1879,9 +1885,12 @@ export const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
       "native page theme",
       "sync native page theme",
       "sync page theme",
+      "system theme",
       "同步原生页面主题",
       "原生页面主题",
       "同步主题",
+      "跟随系统",
+      "自适应",
       "亮暗模式联动",
       "宿主页面主题",
     ],

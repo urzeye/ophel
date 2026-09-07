@@ -1,7 +1,7 @@
 import { useMemo } from "react"
 import fuzzysort from "fuzzysort"
 
-import { SETTING_ID_ALIASES, type SettingsSearchItem } from "~constants"
+import { ABOUT_SPONSOR_SETTING_ID, SETTING_ID_ALIASES, type SettingsSearchItem } from "~constants"
 import { FEATURE_TIPS } from "~constants/feature-tips"
 import type { Conversation, ConversationManager } from "~core/conversation-manager"
 import type { OutlineManager, OutlineNode } from "~core/outline-manager"
@@ -881,8 +881,9 @@ export const useGlobalSearchData = ({
       const isCardItem =
         item.settingId.endsWith("-card") ||
         item.settingId === "site-packs-registry" ||
+        item.settingId === "site-pack-custom-origin" ||
         item.settingId === "remote-config-status" ||
-        item.settingId === "appearance-theme-sync"
+        item.settingId === ABOUT_SPONSOR_SETTING_ID
 
       const titleExactWeight = isPageItem ? 260 : isSubTabItem ? 240 : isCardItem ? 230 : 220
       const titlePrefixWeight = isPageItem ? 160 : isSubTabItem ? 150 : isCardItem ? 145 : 140
@@ -916,6 +917,7 @@ export const useGlobalSearchData = ({
           tokenPrefix: 10,
           tokenIncludes: 6,
           matchReason: "keyword",
+          highlightField: "breadcrumb",
         },
         {
           value: normalizeGlobalSearchValue(item.settingId),

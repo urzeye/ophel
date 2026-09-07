@@ -8,6 +8,7 @@ import {
   SITE_PACKS_TAB_IDS,
   SITE_SETTINGS_TAB_IDS,
   resolveSettingsNavigateDetail,
+  resolveSettingId,
   resolveSettingRoute,
 } from "~constants"
 import {
@@ -136,6 +137,12 @@ describe("settings hierarchy search & route resolution", () => {
     }
 
     expect(unroutableItems).toEqual([])
+
+    const searchItemIds = new Set(SETTINGS_SEARCH_ITEMS.map((item) => item.settingId))
+    expect(searchItemIds.has("site-pack-custom-origin")).toBe(true)
+    expect(searchItemIds.has("remote-config-registry-source")).toBe(true)
+    expect(searchItemIds.has("appearance-theme-sync")).toBe(false)
+    expect(resolveSettingId("appearance-theme-sync")).toBe("appearance-sync-native-page-theme")
   })
 
   it("ensures page and subtab label definitions exist for all navigation targets", () => {
@@ -153,7 +160,14 @@ describe("settings hierarchy search & route resolution", () => {
 
   it("maps section cards and missing settings in title key map", () => {
     expect(SETTING_SEARCH_TITLE_KEY_MAP["site-packs-registry"]).toBe("sitePacksRegistryTitle")
+    expect(SETTING_SEARCH_TITLE_KEY_MAP["site-packs-local-import"]).toBe(
+      "sitePacksLocalImportTitle",
+    )
+    expect(SETTING_SEARCH_TITLE_KEY_MAP["remote-config-registry-source"]).toBe(
+      "remoteConfigRegistrySourceLabel",
+    )
     expect(SETTING_SEARCH_TITLE_KEY_MAP["panel-settings-card"]).toBe("panelSettings")
+    expect(SETTING_SEARCH_TITLE_KEY_MAP["quick-buttons-card"]).toBe("quickButtonsBehaviorTitle")
     expect(SETTING_SEARCH_TITLE_KEY_MAP["outline-settings-card"]).toBe("outlineSettings")
     expect(SETTING_SEARCH_TITLE_KEY_MAP["tab-behavior-card"]).toBe("tabBehaviorTitle")
     expect(SETTING_SEARCH_TITLE_KEY_MAP["tab-privacy-card"]).toBe("privacyModeTitle")
