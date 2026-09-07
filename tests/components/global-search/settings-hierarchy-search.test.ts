@@ -77,6 +77,24 @@ describe("settings hierarchy search & route resolution", () => {
       subTab: SITE_SETTINGS_TAB_IDS.LAYOUT,
     })
 
+    const geminiCardRoute = resolveSettingRoute("gemini-settings-card")
+    expect(geminiCardRoute).toEqual({
+      page: NAV_IDS.SITE_SETTINGS,
+      subTab: "gemini",
+    })
+
+    const aistudioCardRoute = resolveSettingRoute("aistudio-settings-card")
+    expect(aistudioCardRoute).toEqual({
+      page: NAV_IDS.SITE_SETTINGS,
+      subTab: "aistudio",
+    })
+
+    const chatgptCardRoute = resolveSettingRoute("chatgpt-settings-card")
+    expect(chatgptCardRoute).toEqual({
+      page: NAV_IDS.SITE_SETTINGS,
+      subTab: "chatgpt",
+    })
+
     const webdavCardRoute = resolveSettingRoute("backup-webdav-card")
     expect(webdavCardRoute).toEqual({
       page: NAV_IDS.BACKUP,
@@ -213,6 +231,9 @@ describe("settings hierarchy search & route resolution", () => {
     expect(SETTING_SEARCH_TITLE_KEY_MAP["panel-settings-card"]).toBe("panelSettings")
     expect(SETTING_SEARCH_TITLE_KEY_MAP["quick-buttons-card"]).toBe("quickButtonsBehaviorTitle")
     expect(SETTING_SEARCH_TITLE_KEY_MAP["outline-settings-card"]).toBe("outlineSettings")
+    expect(SETTING_SEARCH_TITLE_KEY_MAP["gemini-settings-card"]).toBe("geminiSettingsTab")
+    expect(SETTING_SEARCH_TITLE_KEY_MAP["aistudio-settings-card"]).toBe("aistudioSettingsTitle")
+    expect(SETTING_SEARCH_TITLE_KEY_MAP["chatgpt-settings-card"]).toBe("chatgptSettingsTitle")
     expect(SETTING_SEARCH_TITLE_KEY_MAP["tab-behavior-card"]).toBe("tabBehaviorTitle")
     expect(SETTING_SEARCH_TITLE_KEY_MAP["tab-privacy-card"]).toBe("privacyModeTitle")
     expect(SETTING_SEARCH_TITLE_KEY_MAP["backup-webdav-card"]).toBe("webdavConfig")

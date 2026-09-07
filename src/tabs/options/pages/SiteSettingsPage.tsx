@@ -466,7 +466,10 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
 
       {/* ========== Gemini 专属 Tab ========== */}
       {activeTab === "gemini" && (
-        <SettingCard title={t("geminiSettingsTab")} description={t("contentProcessingDesc")}>
+        <SettingCard
+          title={t("geminiSettingsTab")}
+          description={t("contentProcessingDesc")}
+          settingId="gemini-settings-card">
           <ToggleRow
             label={t("markdownFixLabel")}
             description={t("markdownFixDesc")}
@@ -585,7 +588,10 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
 
       {/* ========== AI Studio 专属 Tab ========== */}
       {activeTab === SITE_IDS.AISTUDIO && (
-        <SettingCard title={t("aistudioSettingsTitle")} description={t("aistudioSettingsDesc")}>
+        <SettingCard
+          title={t("aistudioSettingsTitle")}
+          description={t("aistudioSettingsDesc")}
+          settingId="aistudio-settings-card">
           {/* 界面状态开关 */}
           <ToggleRow
             label={t("aistudioCollapseNavbar")}
@@ -700,7 +706,10 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
 
       {/* ========== ChatGPT 专属 Tab ========== */}
       {activeTab === SITE_IDS.CHATGPT && (
-        <SettingCard title={t("chatgptSettingsTitle")} description={t("chatgptSettingsDesc")}>
+        <SettingCard
+          title={t("chatgptSettingsTitle")}
+          description={t("chatgptSettingsDesc")}
+          settingId="chatgpt-settings-card">
           <ToggleRow
             label={t("chatgptMarkdownFixLabel")}
             description={t("chatgptMarkdownFixDesc")}
