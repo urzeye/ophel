@@ -111,6 +111,118 @@ interface SettingRouteRule {
 }
 
 export const SETTING_ID_ROUTE_MAP: Record<string, SettingRoute> = {
+  // --- 页面级 Tab (Page) ---
+  "page-general": { page: NAV_IDS.GENERAL },
+  "page-features": { page: NAV_IDS.FEATURES },
+  "page-site-settings": { page: NAV_IDS.SITE_SETTINGS },
+  "page-site-packs": { page: NAV_IDS.SITE_PACKS },
+  "page-global-search": { page: NAV_IDS.GLOBAL_SEARCH },
+  "page-shortcuts": { page: NAV_IDS.SHORTCUTS },
+  "page-appearance": { page: NAV_IDS.APPEARANCE },
+  "page-backup": { page: NAV_IDS.BACKUP },
+  "page-permissions": { page: NAV_IDS.PERMISSIONS },
+  "page-about": { page: NAV_IDS.ABOUT },
+
+  // --- 二级子 Tab (SubTab) ---
+  "subtab-general-panel": { page: NAV_IDS.GENERAL, subTab: "panel" },
+  "subtab-general-tab-order": { page: NAV_IDS.GENERAL, subTab: "tabOrder" },
+  "subtab-general-shortcuts": { page: NAV_IDS.GENERAL, subTab: "shortcuts" },
+  "subtab-general-tools-menu": { page: NAV_IDS.GENERAL, subTab: "toolsMenu" },
+  "subtab-features-outline": { page: NAV_IDS.FEATURES, subTab: FEATURES_TAB_IDS.OUTLINE },
+  "subtab-features-conversations": {
+    page: NAV_IDS.FEATURES,
+    subTab: FEATURES_TAB_IDS.CONVERSATIONS,
+  },
+  "subtab-features-prompts": { page: NAV_IDS.FEATURES, subTab: FEATURES_TAB_IDS.PROMPTS },
+  "subtab-features-tab-settings": {
+    page: NAV_IDS.FEATURES,
+    subTab: FEATURES_TAB_IDS.TAB_SETTINGS,
+  },
+  "subtab-features-reminder": { page: NAV_IDS.FEATURES, subTab: FEATURES_TAB_IDS.REMINDER },
+  "subtab-features-content": { page: NAV_IDS.FEATURES, subTab: FEATURES_TAB_IDS.CONTENT },
+  "subtab-features-reading-history": {
+    page: NAV_IDS.FEATURES,
+    subTab: FEATURES_TAB_IDS.READING_HISTORY,
+  },
+  "subtab-site-settings-layout": {
+    page: NAV_IDS.SITE_SETTINGS,
+    subTab: SITE_SETTINGS_TAB_IDS.LAYOUT,
+  },
+  "subtab-site-settings-model-lock": {
+    page: NAV_IDS.SITE_SETTINGS,
+    subTab: SITE_SETTINGS_TAB_IDS.MODEL_LOCK,
+  },
+  "subtab-site-settings-gemini": { page: NAV_IDS.SITE_SETTINGS, subTab: "gemini" },
+  "subtab-site-settings-aistudio": { page: NAV_IDS.SITE_SETTINGS, subTab: "aistudio" },
+  "subtab-site-settings-chatgpt": { page: NAV_IDS.SITE_SETTINGS, subTab: "chatgpt" },
+  "subtab-site-settings-claude": { page: NAV_IDS.SITE_SETTINGS, subTab: "claude" },
+  "subtab-appearance-presets": {
+    page: NAV_IDS.APPEARANCE,
+    subTab: APPEARANCE_TAB_IDS.PRESETS,
+  },
+  "subtab-appearance-custom": { page: NAV_IDS.APPEARANCE, subTab: APPEARANCE_TAB_IDS.CUSTOM },
+  "subtab-site-packs-builtin": {
+    page: NAV_IDS.SITE_PACKS,
+    subTab: SITE_PACKS_TAB_IDS.BUILTIN,
+  },
+  "subtab-site-packs-installed": {
+    page: NAV_IDS.SITE_PACKS,
+    subTab: SITE_PACKS_TAB_IDS.INSTALLED,
+  },
+  "subtab-site-packs-origins": {
+    page: NAV_IDS.SITE_PACKS,
+    subTab: SITE_PACKS_TAB_IDS.ORIGINS,
+  },
+  "subtab-site-packs-updates": {
+    page: NAV_IDS.SITE_PACKS,
+    subTab: SITE_PACKS_TAB_IDS.UPDATES,
+  },
+  "subtab-backup-local": { page: NAV_IDS.BACKUP, subTab: BACKUP_TAB_IDS.LOCAL },
+  "subtab-backup-webdav": { page: NAV_IDS.BACKUP, subTab: BACKUP_TAB_IDS.WEBDAV },
+
+  // --- 设置集合 Card ---
+  "panel-settings-card": { page: NAV_IDS.GENERAL, subTab: "panel" },
+  "tab-order-card": { page: NAV_IDS.GENERAL, subTab: "tabOrder" },
+  "quick-buttons-card": { page: NAV_IDS.GENERAL, subTab: "shortcuts" },
+  "toolbox-menu-card": { page: NAV_IDS.GENERAL, subTab: "toolsMenu" },
+  "tab-behavior-card": { page: NAV_IDS.FEATURES, subTab: FEATURES_TAB_IDS.TAB_SETTINGS },
+  "tab-privacy-card": { page: NAV_IDS.FEATURES, subTab: FEATURES_TAB_IDS.TAB_SETTINGS },
+  "notification-settings-card": { page: NAV_IDS.FEATURES, subTab: FEATURES_TAB_IDS.REMINDER },
+  "usage-monitor-card": { page: NAV_IDS.FEATURES, subTab: FEATURES_TAB_IDS.REMINDER },
+  "outline-settings-card": { page: NAV_IDS.FEATURES, subTab: FEATURES_TAB_IDS.OUTLINE },
+  "bookmark-settings-card": { page: NAV_IDS.FEATURES, subTab: FEATURES_TAB_IDS.OUTLINE },
+  "scroll-settings-card": { page: NAV_IDS.FEATURES, subTab: FEATURES_TAB_IDS.OUTLINE },
+  "conversations-settings-card": {
+    page: NAV_IDS.FEATURES,
+    subTab: FEATURES_TAB_IDS.CONVERSATIONS,
+  },
+  "export-settings-card": {
+    page: NAV_IDS.FEATURES,
+    subTab: FEATURES_TAB_IDS.CONVERSATIONS,
+  },
+  "prompts-settings-card": { page: NAV_IDS.FEATURES, subTab: FEATURES_TAB_IDS.PROMPTS },
+  "quick-quote-settings-card": { page: NAV_IDS.FEATURES, subTab: FEATURES_TAB_IDS.PROMPTS },
+  "reading-history-card": {
+    page: NAV_IDS.FEATURES,
+    subTab: FEATURES_TAB_IDS.READING_HISTORY,
+  },
+  "content-interaction-card": { page: NAV_IDS.FEATURES, subTab: FEATURES_TAB_IDS.CONTENT },
+  "layout-clean-mode-card": {
+    page: NAV_IDS.SITE_SETTINGS,
+    subTab: SITE_SETTINGS_TAB_IDS.LAYOUT,
+  },
+  "appearance-theme-sync": {
+    page: NAV_IDS.APPEARANCE,
+  },
+  "backup-export-card": { page: NAV_IDS.BACKUP, subTab: BACKUP_TAB_IDS.LOCAL },
+  "backup-import-card": { page: NAV_IDS.BACKUP, subTab: BACKUP_TAB_IDS.LOCAL },
+  "backup-reset-card": { page: NAV_IDS.BACKUP, subTab: BACKUP_TAB_IDS.LOCAL },
+  "backup-webdav-card": { page: NAV_IDS.BACKUP, subTab: BACKUP_TAB_IDS.WEBDAV },
+  "shortcuts-global-card": { page: NAV_IDS.SHORTCUTS },
+  "permissions-optional-card": { page: NAV_IDS.PERMISSIONS },
+  [ABOUT_SPONSOR_SETTING_ID]: { page: NAV_IDS.ABOUT },
+
+  // --- 具体设置项 ---
   "appearance-sync-native-page-theme": {
     page: NAV_IDS.APPEARANCE,
   },
@@ -174,6 +286,88 @@ export const SETTING_ID_ROUTE_MAP: Record<string, SettingRoute> = {
     page: NAV_IDS.SITE_PACKS,
     subTab: SITE_PACKS_TAB_IDS.UPDATES,
   },
+  "site-pack-custom-origin": {
+    page: NAV_IDS.SITE_PACKS,
+    subTab: SITE_PACKS_TAB_IDS.ORIGINS,
+  },
+  "site-packs-local-import": {
+    page: NAV_IDS.SITE_PACKS,
+    subTab: SITE_PACKS_TAB_IDS.UPDATES,
+  },
+  "remote-config-status": {
+    page: NAV_IDS.SITE_PACKS,
+    subTab: SITE_PACKS_TAB_IDS.UPDATES,
+  },
+  "remote-config-local-patch-import": {
+    page: NAV_IDS.SITE_PACKS,
+    subTab: SITE_PACKS_TAB_IDS.UPDATES,
+  },
+  "layout-clean-mode-enabled": {
+    page: NAV_IDS.SITE_SETTINGS,
+    subTab: SITE_SETTINGS_TAB_IDS.LAYOUT,
+  },
+  "chatgpt-code-block-batch-mount": {
+    page: NAV_IDS.SITE_SETTINGS,
+    subTab: "chatgpt",
+  },
+  "chatgpt-streaming-render-optimize": {
+    page: NAV_IDS.SITE_SETTINGS,
+    subTab: "chatgpt",
+  },
+  "chatgpt-disable-backdrop-blur": {
+    page: NAV_IDS.SITE_SETTINGS,
+    subTab: "chatgpt",
+  },
+  "export-default-format": {
+    page: NAV_IDS.FEATURES,
+    subTab: FEATURES_TAB_IDS.CONVERSATIONS,
+  },
+  "export-style": {
+    page: NAV_IDS.FEATURES,
+    subTab: FEATURES_TAB_IDS.CONVERSATIONS,
+  },
+  "export-show-index": {
+    page: NAV_IDS.FEATURES,
+    subTab: FEATURES_TAB_IDS.CONVERSATIONS,
+  },
+  "export-show-dialog": {
+    page: NAV_IDS.FEATURES,
+    subTab: FEATURES_TAB_IDS.CONVERSATIONS,
+  },
+  "export-markdown-divider": {
+    page: NAV_IDS.FEATURES,
+    subTab: FEATURES_TAB_IDS.CONVERSATIONS,
+  },
+  "permission-item-storage": {
+    page: NAV_IDS.PERMISSIONS,
+  },
+  "permission-item-notifications": {
+    page: NAV_IDS.PERMISSIONS,
+  },
+  "permission-item-cookies": {
+    page: NAV_IDS.PERMISSIONS,
+  },
+  "permission-item-webdav": {
+    page: NAV_IDS.PERMISSIONS,
+  },
+  "backup-webdav-url": {
+    page: NAV_IDS.BACKUP,
+    subTab: BACKUP_TAB_IDS.WEBDAV,
+  },
+  "backup-webdav-username": {
+    page: NAV_IDS.BACKUP,
+    subTab: BACKUP_TAB_IDS.WEBDAV,
+  },
+  "backup-webdav-password": {
+    page: NAV_IDS.BACKUP,
+    subTab: BACKUP_TAB_IDS.WEBDAV,
+  },
+  "backup-webdav-dir": {
+    page: NAV_IDS.BACKUP,
+    subTab: BACKUP_TAB_IDS.WEBDAV,
+  },
+  "global-search-matching-card": { page: NAV_IDS.GLOBAL_SEARCH },
+  "global-search-prompt-card": { page: NAV_IDS.GLOBAL_SEARCH },
 } as const
 
 const SETTING_ID_ROUTE_RULES: SettingRouteRule[] = [
@@ -190,33 +384,13 @@ const SETTING_ID_ROUTE_RULES: SettingRouteRule[] = [
     prefix: "layout-",
     route: { page: NAV_IDS.SITE_SETTINGS, subTab: SITE_SETTINGS_TAB_IDS.LAYOUT },
   },
+  { prefix: "gemini-", route: { page: NAV_IDS.SITE_SETTINGS, subTab: "gemini" } },
+  { prefix: "aistudio-", route: { page: NAV_IDS.SITE_SETTINGS, subTab: "aistudio" } },
+  { prefix: "chatgpt-", route: { page: NAV_IDS.SITE_SETTINGS, subTab: "chatgpt" } },
+  { prefix: "claude-", route: { page: NAV_IDS.SITE_SETTINGS, subTab: "claude" } },
   {
     prefix: "model-lock-",
     route: { page: NAV_IDS.SITE_SETTINGS, subTab: SITE_SETTINGS_TAB_IDS.MODEL_LOCK },
-  },
-  {
-    prefix: "gemini-",
-    route: { page: NAV_IDS.SITE_SETTINGS, subTab: "gemini" },
-  },
-  {
-    prefix: "aistudio-",
-    route: { page: NAV_IDS.SITE_SETTINGS, subTab: "aistudio" },
-  },
-  {
-    prefix: "chatgpt-",
-    route: { page: NAV_IDS.SITE_SETTINGS, subTab: "chatgpt" },
-  },
-  {
-    prefix: "claude-",
-    route: { page: NAV_IDS.SITE_SETTINGS, subTab: "claude" },
-  },
-  {
-    prefix: "global-search-",
-    route: { page: NAV_IDS.GLOBAL_SEARCH },
-  },
-  {
-    prefix: "tab-",
-    route: { page: NAV_IDS.FEATURES, subTab: FEATURES_TAB_IDS.TAB_SETTINGS },
   },
   {
     prefix: "outline-",
@@ -249,6 +423,26 @@ const SETTING_ID_ROUTE_RULES: SettingRouteRule[] = [
   {
     prefix: "appearance-custom-",
     route: { page: NAV_IDS.APPEARANCE, subTab: APPEARANCE_TAB_IDS.CUSTOM },
+  },
+  {
+    prefix: "permission-item-",
+    route: { page: NAV_IDS.PERMISSIONS },
+  },
+  {
+    prefix: "backup-webdav-",
+    route: { page: NAV_IDS.BACKUP, subTab: BACKUP_TAB_IDS.WEBDAV },
+  },
+  {
+    prefix: "backup-",
+    route: { page: NAV_IDS.BACKUP, subTab: BACKUP_TAB_IDS.LOCAL },
+  },
+  {
+    prefix: "global-search-",
+    route: { page: NAV_IDS.GLOBAL_SEARCH },
+  },
+  {
+    prefix: "tab-",
+    route: { page: NAV_IDS.FEATURES, subTab: FEATURES_TAB_IDS.TAB_SETTINGS },
   },
 ]
 
@@ -344,10 +538,14 @@ export const resolveSettingsNavigateDetail = (
   const resolvedSubTab =
     detail.subTab ?? (detail.page && detail.page !== route?.page ? undefined : route?.subTab)
 
+  const isTabOnlyTarget = Boolean(
+    resolvedSettingId?.startsWith("page-") || resolvedSettingId?.startsWith("subtab-"),
+  )
+
   return {
     page: resolvedPage,
     subTab: resolvedSubTab,
-    settingId: resolvedSettingId,
+    settingId: isTabOnlyTarget ? undefined : resolvedSettingId,
   }
 }
 
@@ -371,6 +569,747 @@ const SHORTCUT_SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = Object.entries(SHOR
     ],
   }),
 )
+
+const PAGE_TAB_SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
+  {
+    settingId: "page-general",
+    title: "基本设置",
+    keywords: ["general", "settings", "通用", "常规", "基本设置", "面板", "侧边栏"],
+  },
+  {
+    settingId: "page-features",
+    title: "功能模块",
+    keywords: [
+      "features",
+      "modules",
+      "functions",
+      "功能",
+      "模块",
+      "大纲",
+      "会话",
+      "提示词",
+      "标签页",
+      "提醒",
+      "内容处理",
+    ],
+  },
+  {
+    settingId: "page-site-settings",
+    title: "站点设置",
+    keywords: [
+      "site settings",
+      "sites",
+      "adapter",
+      "站点",
+      "站点设置",
+      "布局",
+      "宽度",
+      "模型锁定",
+      "gemini",
+      "chatgpt",
+      "claude",
+      "aistudio",
+    ],
+  },
+  {
+    settingId: "page-site-packs",
+    title: "适配中心",
+    keywords: [
+      "site packs",
+      "registry",
+      "extensions",
+      "适配",
+      "适配中心",
+      "适配扩展",
+      "在线适配库",
+      "社区适配",
+      "插件",
+    ],
+  },
+  {
+    settingId: "page-global-search",
+    title: "全局搜索",
+    keywords: [
+      "global search",
+      "search everywhere",
+      "search",
+      "全局搜索",
+      "搜索",
+      "全搜",
+      "双击 shift",
+      "模糊搜索",
+    ],
+  },
+  {
+    settingId: "page-shortcuts",
+    title: "快捷键位",
+    keywords: [
+      "shortcuts",
+      "keyboard",
+      "hotkeys",
+      "keybindings",
+      "快捷键",
+      "键位",
+      "快捷键位",
+      "热键",
+    ],
+  },
+  {
+    settingId: "page-appearance",
+    title: "外观主题",
+    keywords: [
+      "appearance",
+      "theme",
+      "themes",
+      "style",
+      "css",
+      "外观",
+      "主题",
+      "配色",
+      "深色模式",
+      "浅色模式",
+      "自定义样式",
+    ],
+  },
+  {
+    settingId: "page-backup",
+    title: "备份与同步",
+    keywords: [
+      "backup",
+      "sync",
+      "webdav",
+      "export",
+      "import",
+      "备份",
+      "同步",
+      "数据管理",
+      "导入导出",
+      "云端同步",
+      "还原",
+    ],
+  },
+  {
+    settingId: "page-permissions",
+    title: "权限管理",
+    keywords: [
+      "permissions",
+      "auth",
+      "access",
+      "权限",
+      "权限管理",
+      "授权",
+      "通知权限",
+      "cookie",
+      "存储权限",
+    ],
+  },
+  {
+    settingId: "page-about",
+    title: "关于",
+    keywords: [
+      "about",
+      "version",
+      "changelog",
+      "release notes",
+      "sponsor",
+      "关于",
+      "版本",
+      "更新日志",
+      "赞助",
+    ],
+  },
+]
+
+const SUB_TAB_SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
+  // 通用
+  {
+    settingId: "subtab-general-panel",
+    title: "面板设置",
+    keywords: ["panel", "float", "snap", "面板", "浮动", "吸附", "尺寸", "宽高"],
+  },
+  {
+    settingId: "subtab-general-tab-order",
+    title: "Tab 顺序与显隐",
+    keywords: ["tab order", "order", "sort", "tab 顺序", "标签顺序", "排序", "显示隐藏"],
+  },
+  {
+    settingId: "subtab-general-shortcuts",
+    title: "快捷按钮",
+    keywords: ["quick buttons", "float buttons", "快捷按钮", "悬浮按钮", "侧边按钮"],
+  },
+  {
+    settingId: "subtab-general-tools-menu",
+    title: "工具箱菜单",
+    keywords: ["toolbox menu", "tools menu", "工具箱", "菜单", "工具菜单"],
+  },
+  // 功能模块
+  {
+    settingId: "subtab-features-outline",
+    title: "大纲",
+    keywords: ["outline", "toc", "headings", "大纲", "目录", "标题", "书签", "自动跟随"],
+  },
+  {
+    settingId: "subtab-features-conversations",
+    title: "会话管理",
+    keywords: [
+      "conversations",
+      "chat history",
+      "会话",
+      "会话管理",
+      "对话",
+      "额度监控",
+      "彩虹文件夹",
+    ],
+  },
+  {
+    settingId: "subtab-features-prompts",
+    title: "提示词与队列",
+    keywords: [
+      "prompts",
+      "prompt",
+      "queue",
+      "quick quote",
+      "提示词",
+      "常用提示词",
+      "队列",
+      "快捷引用",
+      "双击发送",
+    ],
+  },
+  {
+    settingId: "subtab-features-tab-settings",
+    title: "标签页设置",
+    keywords: [
+      "tab settings",
+      "browser tabs",
+      "tabs",
+      "标签页",
+      "网页标签",
+      "自动重命名",
+      "隐私模式",
+      "标题格式化",
+    ],
+  },
+  {
+    settingId: "subtab-features-reminder",
+    title: "提醒声音与额度",
+    keywords: [
+      "reminder",
+      "alert",
+      "sound",
+      "notification",
+      "提醒",
+      "声音",
+      "通知",
+      "铃声",
+      "音量",
+      "额度监控",
+    ],
+  },
+  {
+    settingId: "subtab-features-content",
+    title: "内容处理与交互",
+    keywords: [
+      "content",
+      "formula",
+      "latex",
+      "math",
+      "table",
+      "mermaid",
+      "export",
+      "内容",
+      "内容处理",
+      "公式",
+      "表格",
+      "流程图",
+      "导出",
+    ],
+  },
+  {
+    settingId: "subtab-features-reading-history",
+    title: "阅读历史",
+    keywords: [
+      "reading history",
+      "scroll position",
+      "progress",
+      "阅读历史",
+      "进度记录",
+      "阅读位置",
+      "自动恢复",
+    ],
+  },
+  // 站点设置
+  {
+    settingId: "subtab-site-settings-layout",
+    title: "布局增强",
+    keywords: [
+      "layout",
+      "width",
+      "zen mode",
+      "clean mode",
+      "布局",
+      "页面宽度",
+      "用户问题宽度",
+      "禅模式",
+      "净化模式",
+    ],
+  },
+  {
+    settingId: "subtab-site-settings-model-lock",
+    title: "模型锁定",
+    keywords: ["model lock", "lock", "模型锁定", "锁定模型", "默认模型"],
+  },
+  {
+    settingId: "subtab-site-settings-gemini",
+    title: "Gemini 设置",
+    keywords: ["gemini", "google gemini", "markdown fix", "watermark", "重试"],
+  },
+  {
+    settingId: "subtab-site-settings-aistudio",
+    title: "AI Studio 设置",
+    keywords: ["aistudio", "ai studio", "google ai studio", "折叠面板", "水印"],
+  },
+  {
+    settingId: "subtab-site-settings-chatgpt",
+    title: "ChatGPT 设置",
+    keywords: ["chatgpt", "openai", "markdown fix", "代码块", "渲染优化", "背景虚化"],
+  },
+  {
+    settingId: "subtab-site-settings-claude",
+    title: "Claude 设置",
+    keywords: ["claude", "anthropic", "session keys"],
+  },
+  // 外观
+  {
+    settingId: "subtab-appearance-presets",
+    title: "主题预设",
+    keywords: [
+      "presets",
+      "themes",
+      "light",
+      "dark",
+      "预设",
+      "主题预设",
+      "配色方案",
+      "深色预设",
+      "浅色预设",
+    ],
+  },
+  {
+    settingId: "subtab-appearance-custom",
+    title: "自定义样式",
+    keywords: ["custom styles", "css", "code editor", "自定义样式", "自定义 css", "用户样式"],
+  },
+  // 适配中心
+  {
+    settingId: "subtab-site-packs-builtin",
+    title: "内置站点",
+    keywords: ["builtin sites", "default sites", "内置站点", "原生支持站点"],
+  },
+  {
+    settingId: "subtab-site-packs-installed",
+    title: "已安装适配包",
+    keywords: ["installed", "installed packs", "已安装", "已安装适配包"],
+  },
+  {
+    settingId: "subtab-site-packs-origins",
+    title: "域名覆盖",
+    keywords: ["custom origins", "domains", "域名覆盖", "自定义域名", "绑定"],
+  },
+  {
+    settingId: "subtab-site-packs-updates",
+    title: "更新与安装",
+    keywords: [
+      "updates",
+      "check updates",
+      "registry",
+      "在线适配库",
+      "更新与安装",
+      "检查更新",
+      "适配包更新",
+    ],
+  },
+  // 备份与同步
+  {
+    settingId: "subtab-backup-local",
+    title: "本地备份",
+    keywords: ["local backup", "export", "import", "本地备份", "备份导出", "备份导入", "恢复"],
+  },
+  {
+    settingId: "subtab-backup-webdav",
+    title: "WebDAV 同步",
+    keywords: [
+      "webdav",
+      "cloud sync",
+      "cloud backup",
+      "webdav 同步",
+      "云端同步",
+      "坚果云",
+      "同步设置",
+    ],
+  },
+]
+
+const SETTING_CARD_SEARCH_ITEMS: SettingsSearchItem[] = [
+  {
+    settingId: "panel-settings-card",
+    title: "面板基础设置",
+    keywords: [
+      "panel settings",
+      "mode",
+      "position",
+      "size",
+      "面板设置",
+      "面板模式",
+      "默认位置",
+      "宽高",
+    ],
+  },
+  {
+    settingId: "tab-order-card",
+    title: "Tab 顺序与显隐设置",
+    keywords: ["tab order", "sort", "visible", "tab 顺序", "标签顺序", "功能开关"],
+  },
+  {
+    settingId: "quick-buttons-card",
+    title: "快捷按钮设置",
+    keywords: ["quick buttons", "proximity", "opacity", "快捷按钮", "透明度", "悬浮感应"],
+  },
+  {
+    settingId: "toolbox-menu-card",
+    title: "工具箱菜单设置",
+    keywords: ["toolbox menu", "tools", "工具箱菜单", "快捷操作菜单"],
+  },
+  {
+    settingId: "tab-behavior-card",
+    title: "标签页行为设置",
+    keywords: ["tab behavior", "auto rename", "open new", "标签页行为", "新标签打开", "自动重命名"],
+  },
+  {
+    settingId: "tab-privacy-card",
+    title: "隐私模式设置",
+    keywords: ["privacy mode", "hide title", "隐私模式", "隐藏标题", "隐私标题"],
+  },
+  {
+    settingId: "notification-settings-card",
+    title: "提醒声音与通知设置",
+    keywords: [
+      "notification settings",
+      "sound",
+      "volume",
+      "提醒设置",
+      "声音提醒",
+      "完成提醒",
+      "音量",
+    ],
+  },
+  {
+    settingId: "usage-monitor-card",
+    title: "额度监控与统计",
+    keywords: [
+      "usage monitor",
+      "daily limit",
+      "auto reset",
+      "额度监控",
+      "使用量统计",
+      "每日上限",
+      "自动重置",
+    ],
+  },
+  {
+    settingId: "outline-settings-card",
+    title: "大纲设置",
+    keywords: [
+      "outline settings",
+      "auto update",
+      "follow mode",
+      "大纲设置",
+      "自动更新",
+      "跟随模式",
+    ],
+  },
+  {
+    settingId: "bookmark-settings-card",
+    title: "书签模式设置",
+    keywords: ["bookmark", "inline bookmark", "书签设置", "内嵌书签", "面板书签"],
+  },
+  {
+    settingId: "scroll-settings-card",
+    title: "滚动锁定设置",
+    keywords: ["scroll settings", "prevent auto scroll", "滚动设置", "防止自动滚动", "防跳滚"],
+  },
+  {
+    settingId: "conversations-settings-card",
+    title: "会话管理设置",
+    keywords: [
+      "conversations settings",
+      "folder rainbow",
+      "sync delete",
+      "会话设置",
+      "彩虹文件夹",
+      "同步删除",
+    ],
+  },
+  {
+    settingId: "export-settings-card",
+    title: "对话导出设置",
+    keywords: [
+      "export settings",
+      "format",
+      "style",
+      "packaging",
+      "导出设置",
+      "导出格式",
+      "打包方式",
+      "导出样式",
+    ],
+  },
+  {
+    settingId: "prompts-settings-card",
+    title: "提示词设置",
+    keywords: [
+      "prompt settings",
+      "double click send",
+      "queue",
+      "提示词设置",
+      "双击发送",
+      "提示词队列",
+    ],
+  },
+  {
+    settingId: "quick-quote-settings-card",
+    title: "快捷引用设置",
+    keywords: ["quick quote", "quote", "快捷引用", "划词引用", "引用设置"],
+  },
+  {
+    settingId: "reading-history-card",
+    title: "阅读历史设置",
+    keywords: [
+      "reading history",
+      "auto restore",
+      "cleanup",
+      "阅读历史",
+      "自动恢复进度",
+      "历史清理",
+    ],
+  },
+  {
+    settingId: "content-interaction-card",
+    title: "内容交互与增强设置",
+    keywords: [
+      "interaction enhance",
+      "formula",
+      "table",
+      "mermaid",
+      "交互增强",
+      "公式复制",
+      "表格复制",
+      "图表渲染",
+    ],
+  },
+  {
+    settingId: "layout-clean-mode-card",
+    title: "净化模式设置",
+    keywords: ["clean mode", "distraction free", "净化模式", "隐藏侧栏", "去杂质"],
+  },
+  {
+    settingId: "appearance-theme-sync",
+    title: "原生页面主题同步",
+    keywords: ["sync native page theme", "system theme", "原生页面主题", "跟随系统", "自适应"],
+  },
+  {
+    settingId: "backup-export-card",
+    title: "数据备份导出",
+    keywords: [
+      "export data",
+      "backup export",
+      "数据导出",
+      "本地备份导出",
+      "完整备份",
+      "提示词备份",
+    ],
+  },
+  {
+    settingId: "backup-import-card",
+    title: "数据备份导入",
+    keywords: ["import data", "backup restore", "数据导入", "本地恢复", "导入备份"],
+  },
+  {
+    settingId: "backup-reset-card",
+    title: "重置所有数据",
+    keywords: ["danger zone", "reset all", "clear all", "重置数据", "清除所有数据", "危险操作"],
+  },
+  {
+    settingId: "backup-webdav-card",
+    title: "WebDAV 云端同步配置",
+    keywords: ["webdav config", "cloud sync", "webdav 配置", "云端备份", "坚果云配置", "同步设置"],
+  },
+  {
+    settingId: "shortcuts-global-card",
+    title: "全局快捷键设置",
+    keywords: [
+      "global shortcuts",
+      "enable shortcuts",
+      "快捷键全局设置",
+      "快捷键总开关",
+      "浏览器快捷键",
+    ],
+  },
+  {
+    settingId: "permissions-optional-card",
+    title: "可选权限管理",
+    keywords: [
+      "optional permissions",
+      "notifications",
+      "cookies",
+      "webdav",
+      "可选权限",
+      "通知权限",
+      "cookie权限",
+      "权限授权",
+    ],
+  },
+  {
+    settingId: ABOUT_SPONSOR_SETTING_ID,
+    title: "赞助与支持",
+    keywords: ["sponsor", "donate", "afdian", "赞助", "支持", "爱发电", "捐助"],
+  },
+  {
+    settingId: "global-search-matching-card",
+    title: "搜索匹配设置",
+    keywords: [
+      "search matching",
+      "fuzzy search",
+      "double shift",
+      "搜索匹配",
+      "模糊搜索",
+      "双击shift",
+    ],
+  },
+  {
+    settingId: "global-search-prompt-card",
+    title: "提示词行为设置",
+    keywords: ["prompt behavior", "enter behavior", "提示词行为", "回车行为"],
+  },
+]
+
+const ADDITIONAL_SETTING_SEARCH_ITEMS: SettingsSearchItem[] = [
+  {
+    settingId: "tab-notification-sound-preset",
+    title: "提示音音效预设",
+    keywords: ["notification sound preset", "preset", "sound", "音效", "预设", "提示音"],
+  },
+  {
+    settingId: "tab-notification-repeat-count",
+    title: "提示音重复播放次数",
+    keywords: ["notification repeat count", "repeat", "重复播放", "播放次数"],
+  },
+  {
+    settingId: "tab-notification-repeat-interval",
+    title: "提示音重复间隔时间",
+    keywords: ["notification repeat interval", "interval", "重复间隔", "播放间隔"],
+  },
+  {
+    settingId: "export-default-format",
+    title: "默认导出格式",
+    keywords: ["export default format", "markdown", "html", "txt", "json", "导出格式", "默认格式"],
+  },
+  {
+    settingId: "export-style",
+    title: "导出样式风格",
+    keywords: ["export style", "theme", "bubble", "document", "导出样式", "对话气泡", "纯文档风格"],
+  },
+  {
+    settingId: "export-show-index",
+    title: "导出包含序号",
+    keywords: ["export show index", "message index", "序号", "消息序号", "楼层号"],
+  },
+  {
+    settingId: "export-show-dialog",
+    title: "导出前显示预览对话框",
+    keywords: ["export show dialog", "preview dialog", "导出预览", "确认弹窗"],
+  },
+  {
+    settingId: "export-markdown-divider",
+    title: "Markdown 分隔线标记",
+    keywords: ["export markdown divider", "divider", "hr", "分隔线", "分割线"],
+  },
+  {
+    settingId: "layout-clean-mode-enabled",
+    title: "开启净化模式",
+    keywords: ["clean mode", "distraction free", "净化模式", "去杂质", "纯净模式"],
+  },
+  {
+    settingId: "chatgpt-code-block-batch-mount",
+    title: "ChatGPT 代码块批量挂载优化",
+    keywords: ["chatgpt", "code block", "batch mount", "代码块", "挂载", "性能优化"],
+  },
+  {
+    settingId: "chatgpt-streaming-render-optimize",
+    title: "ChatGPT 流式渲染性能优化",
+    keywords: ["chatgpt", "streaming render", "optimize", "流式渲染", "性能优化", "卡顿"],
+  },
+  {
+    settingId: "chatgpt-disable-backdrop-blur",
+    title: "ChatGPT 禁用背景毛玻璃模糊",
+    keywords: ["chatgpt", "backdrop blur", "毛玻璃", "模糊", "背景模糊", "掉帧"],
+  },
+  {
+    settingId: "site-packs-local-import",
+    title: "导入本地适配包",
+    keywords: ["import site pack", "local pack", "zip", "json", "导入适配包", "本地导入", "安装包"],
+  },
+  {
+    settingId: "remote-config-status",
+    title: "适配配置更新状态",
+    keywords: ["remote config status", "adapter version", "适配配置", "更新状态", "版本检查"],
+  },
+  {
+    settingId: "remote-config-local-patch-import",
+    title: "导入本地适配补丁",
+    keywords: ["import patch", "local patch", "适配补丁", "热修复补丁", "导入补丁"],
+  },
+  {
+    settingId: "permission-item-storage",
+    title: "存储权限",
+    keywords: ["storage permission", "存储", "存储权限", "必须权限"],
+  },
+  {
+    settingId: "permission-item-notifications",
+    title: "通知权限",
+    keywords: ["notifications permission", "通知", "桌面通知", "消息提示权限"],
+  },
+  {
+    settingId: "permission-item-cookies",
+    title: "Cookie 权限",
+    keywords: ["cookies permission", "cookie", "凭据权限", "账号权限"],
+  },
+  {
+    settingId: "permission-item-webdav",
+    title: "WebDAV 跨域访问权限",
+    keywords: ["webdav permission", "all urls", "webdav 权限", "云同步权限", "网络请求权限"],
+  },
+  {
+    settingId: "backup-webdav-url",
+    title: "WebDAV 服务器地址",
+    keywords: ["webdav address", "url", "server", "服务器地址", "网盘地址", "坚果云地址"],
+  },
+  {
+    settingId: "backup-webdav-username",
+    title: "WebDAV 用户名",
+    keywords: ["webdav username", "account", "用户名", "账号", "登录名"],
+  },
+  {
+    settingId: "backup-webdav-password",
+    title: "WebDAV 授权密码",
+    keywords: ["webdav password", "token", "密码", "应用密码", "授权码"],
+  },
+  {
+    settingId: "backup-webdav-dir",
+    title: "WebDAV 备份存储目录",
+    keywords: ["webdav dir", "directory", "folder", "存储目录", "备份目录", "文件夹"],
+  },
+]
 
 export const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
   {
@@ -955,6 +1894,10 @@ export const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
     keywords: ["appearance", "custom style", "主题样式", "css"],
   },
   ...SHORTCUT_SETTINGS_SEARCH_ITEMS,
+  ...PAGE_TAB_SETTINGS_SEARCH_ITEMS,
+  ...SUB_TAB_SETTINGS_SEARCH_ITEMS,
+  ...SETTING_CARD_SEARCH_ITEMS,
+  ...ADDITIONAL_SETTING_SEARCH_ITEMS,
 ]
 
 const SETTING_ID_ALIAS_SEARCH_MAP = Object.entries(SETTING_ID_ALIASES).reduce(

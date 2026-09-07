@@ -249,7 +249,7 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
       <PageTitle title={t("navShortcuts")} Icon={KeyboardIcon} />
       <p className="settings-page-desc">{t("shortcutsPageDesc")}</p>
 
-      <SettingCard title={t("shortcutsGlobalSettings")}>
+      <SettingCard title={t("shortcutsGlobalSettings")} settingId="shortcuts-global-card">
         <ToggleRow
           label={t("enableShortcuts")}
           description={t("enableShortcutsDesc")}

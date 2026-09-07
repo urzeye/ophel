@@ -321,7 +321,7 @@ const OptionsPage = () => {
       case "permissions":
         return <PermissionsPage siteId={siteId} />
       case "backup":
-        return <BackupPage siteId={siteId} onNavigate={setActivePage} />
+        return <BackupPage siteId={siteId} initialTab={initialSubTab} onNavigate={setActivePage} />
       case "about":
         return (
           <AboutPage

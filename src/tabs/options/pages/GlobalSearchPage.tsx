@@ -98,7 +98,8 @@ const GlobalSearchPage: React.FC<GlobalSearchPageProps> = ({ siteId: _siteId }) 
         description={getLocalizedText(
           "globalSearchMatchingSettingsDesc",
           "Configure how Search Everywhere matches search results",
-        )}>
+        )}
+        settingId="global-search-matching-card">
         <SettingRow
           label={getLocalizedText("globalSearchShortcutSettingLabel", "全局搜索快捷键")}
           description={getLocalizedText(
@@ -141,7 +142,8 @@ const GlobalSearchPage: React.FC<GlobalSearchPageProps> = ({ siteId: _siteId }) 
         description={getLocalizedText(
           "globalSearchPromptSettingsDesc",
           "Choose what happens when pressing Enter on a prompt result in Search Everywhere",
-        )}>
+        )}
+        settingId="global-search-prompt-card">
         <SettingRow
           label={getLocalizedText(
             "globalSearchPromptEnterBehaviorLabel",

@@ -683,6 +683,12 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
     setRegistrySourceError(null)
   }, [configuredRegistrySource])
 
+  useEffect(() => {
+    if (initialTab && Object.values(SITE_PACKS_TAB_IDS).some((id) => id === initialTab)) {
+      setActiveTab(initialTab)
+    }
+  }, [initialTab])
+
   /** 跨 tab 跳转后把目标区块滚到视野内并复用设置页既有的定位高亮。 */
   useEffect(() => {
     if (!pendingLocateId) return

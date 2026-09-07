@@ -736,7 +736,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
     })
   }
   const notificationSettingsCard = (
-    <SettingCard title={t("notificationSettings")}>
+    <SettingCard title={t("notificationSettings")} settingId="notification-settings-card">
       <ToggleRow
         label={t("showNotificationLabel")}
         description={t("showNotificationDesc")}
@@ -914,7 +914,10 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
     </SettingCard>
   )
   const usageMonitorCard = (
-    <SettingCard title={t("usageMonitorSettingsTitle")} description={t("usageMonitorSettingsDesc")}>
+    <SettingCard
+      title={t("usageMonitorSettingsTitle")}
+      description={t("usageMonitorSettingsDesc")}
+      settingId="usage-monitor-card">
       <div
         style={{
           marginBottom: "12px",
@@ -1004,7 +1007,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
       {activeTab === FEATURES_TAB_IDS.TAB_SETTINGS && (
         <>
           {/* 标签页行为卡片 */}
-          <SettingCard title={t("tabBehaviorTitle")}>
+          <SettingCard title={t("tabBehaviorTitle")} settingId="tab-behavior-card">
             <ToggleRow
               label={t("openNewTabLabel")}
               description={t("openNewTabDesc")}
@@ -1081,7 +1084,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
           </SettingCard>
 
           {/* 隐私模式卡片 */}
-          <SettingCard title={t("privacyModeTitle")}>
+          <SettingCard title={t("privacyModeTitle")} settingId="tab-privacy-card">
             <ToggleRow
               label={t("privacyModeLabel")}
               description={t("privacyModeDesc")}
@@ -1120,7 +1123,10 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
       {/* ========== 大纲 Tab ========== */}
       {activeTab === FEATURES_TAB_IDS.OUTLINE && (
         <>
-          <SettingCard title={t("outlineSettings")} description={t("outlineSettingsDesc")}>
+          <SettingCard
+            title={t("outlineSettings")}
+            description={t("outlineSettingsDesc")}
+            settingId="outline-settings-card">
             <ToggleRow
               label={t("outlineAutoUpdateLabel")}
               description={t("outlineAutoUpdateDesc")}
@@ -1194,7 +1200,10 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
           </SettingCard>
 
           {/* 收藏图标设置卡片 */}
-          <SettingCard title={t("bookmarkSettings")} description={t("bookmarkSettingsDesc")}>
+          <SettingCard
+            title={t("bookmarkSettings")}
+            description={t("bookmarkSettingsDesc")}
+            settingId="bookmark-settings-card">
             <SettingRow
               label={t("inlineBookmarkModeLabel")}
               description={t("inlineBookmarkModeDesc")}
@@ -1239,7 +1248,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
           </SettingCard>
 
           {/* 滚动设置卡片 */}
-          <SettingCard title={t("scrollSettings")}>
+          <SettingCard title={t("scrollSettings")} settingId="scroll-settings-card">
             <ToggleRow
               label={t("preventAutoScrollLabel")}
               description={t("preventAutoScrollDesc")}
@@ -1262,7 +1271,8 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
         <>
           <SettingCard
             title={t("conversationsSettingsTitle")}
-            description={t("conversationsSettingsDesc")}>
+            description={t("conversationsSettingsDesc")}
+            settingId="conversations-settings-card">
             <ToggleRow
               label={t("folderRainbowLabel")}
               description={t("folderRainbowDesc")}
@@ -1309,7 +1319,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
           </SettingCard>
 
           {/* 导出设置卡片 */}
-          <SettingCard title={t("exportSettings")}>
+          <SettingCard title={t("exportSettings")} settingId="export-settings-card">
             <SettingRow
               label={t("exportDefaultFormatLabel")}
               description={t("exportDefaultFormatDesc")}
@@ -1458,7 +1468,10 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
       {/* ========== Prompt Tab ========== */}
       {activeTab === FEATURES_TAB_IDS.PROMPTS && (
         <>
-          <SettingCard title={t("promptSettingsTitle")} description={t("promptSettingsDesc")}>
+          <SettingCard
+            title={t("promptSettingsTitle")}
+            description={t("promptSettingsDesc")}
+            settingId="prompts-settings-card">
             <ToggleRow
               label={t("promptDoubleClickSendLabel")}
               description={t("promptDoubleClickSendDesc")}
@@ -1507,7 +1520,8 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
 
           <SettingCard
             title={t("quickQuoteSettingsTitle")}
-            description={t("quickQuoteSettingsDesc")}>
+            description={t("quickQuoteSettingsDesc")}
+            settingId="quick-quote-settings-card">
             <ToggleRow
               label={t("quickQuoteEnabledLabel")}
               description={t("quickQuoteEnabledDesc")}
@@ -1528,7 +1542,10 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
 
       {/* ========== Reading History Tab ========== */}
       {activeTab === FEATURES_TAB_IDS.READING_HISTORY && (
-        <SettingCard title={t("readingHistoryTitle")} description={t("readingHistoryDesc")}>
+        <SettingCard
+          title={t("readingHistoryTitle")}
+          description={t("readingHistoryDesc")}
+          settingId="reading-history-card">
           <ToggleRow
             label={t("readingHistoryPersistenceLabel")}
             description={t("readingHistoryPersistenceDesc")}
@@ -1584,7 +1601,10 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
 
       {/* ========== 内容交互 Tab ========== */}
       {activeTab === FEATURES_TAB_IDS.CONTENT && (
-        <SettingCard title={t("interactionEnhance")} description={t("interactionEnhanceDesc")}>
+        <SettingCard
+          title={t("interactionEnhance")}
+          description={t("interactionEnhanceDesc")}
+          settingId="content-interaction-card">
           <ToggleRow
             label={t("assistantMermaidLabel")}
             description={t("assistantMermaidDesc")}

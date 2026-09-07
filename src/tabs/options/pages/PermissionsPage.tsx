@@ -262,7 +262,10 @@ const PermissionsPage: React.FC<PermissionsPageProps> = () => {
       <p className="settings-page-desc">{t("permissionsPageDesc")}</p>
 
       {/* 可选权限 */}
-      <SettingCard title={t("optionalPermissions")} description={t("optionalPermissionsDesc")}>
+      <SettingCard
+        title={t("optionalPermissions")}
+        description={t("optionalPermissionsDesc")}
+        settingId="permissions-optional-card">
         {/* 同步提示 + 刷新按钮 */}
         <div className="settings-perm-header-row">
           <span style={{ fontSize: "13px", color: "var(--gh-text-secondary, #9ca3af)" }}>

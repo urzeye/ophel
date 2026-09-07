@@ -315,7 +315,7 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
 
       {/* ========== 面板 Tab ========== */}
       {activeTab === "panel" && (
-        <SettingCard title={t("panelSettings")}>
+        <SettingCard title={t("panelSettings")} settingId="panel-settings-card">
           {/* 面板模式 */}
           <div
             className={`settings-panel-mode-accordion ${isPanelModeAdvancedVisible ? "open" : ""}`}
@@ -697,7 +697,10 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
 
       {/* ========== 界面排版 Tab ========== */}
       {activeTab === "tabOrder" && (
-        <SettingCard title={t("tabOrderSettings")} description={t("tabOrderDesc")}>
+        <SettingCard
+          title={t("tabOrderSettings")}
+          description={t("tabOrderDesc")}
+          settingId="tab-order-card">
           {settings.features?.order
             ?.filter((id) => TAB_DEFINITIONS[id])
             .map((tabId, index) => {
@@ -749,7 +752,8 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
         <>
           <SettingCard
             title={t("quickButtonsBehaviorTitle")}
-            description={t("quickButtonsBehaviorDesc")}>
+            description={t("quickButtonsBehaviorDesc")}
+            settingId="quick-buttons-card">
             <ToggleRow
               label={t("quickButtonsHideWhenPanelOpenLabel")}
               description={t("quickButtonsHideWhenPanelOpenDesc")}
@@ -848,7 +852,10 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
 
       {/* ========== 工具箱菜单 Tab ========== */}
       {activeTab === "toolsMenu" && (
-        <SettingCard title={t("toolboxMenuTitle")} description={t("toolboxMenuDesc")}>
+        <SettingCard
+          title={t("toolboxMenuTitle")}
+          description={t("toolboxMenuDesc")}
+          settingId="toolbox-menu-card">
           {TOOLS_MENU_ITEMS.filter((item) => item.id !== TOOLS_MENU_IDS.SETTINGS).map((item) => {
             const enabledIds = settings.quickButtons?.toolsMenu ?? getDefaultToolsMenuIds()
             const isEnabled = enabledIds.includes(item.id)

@@ -360,11 +360,25 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
 
   const resolveSettingSearchTitle = useCallback(
     (item: SettingsSearchItem): string => {
+      if (item.settingId.startsWith("page-")) {
+        const route = resolveSettingRoute(item.settingId)
+        if (route) {
+          return getPageLabel(route.page)
+        }
+      }
+
+      if (item.settingId.startsWith("subtab-")) {
+        const route = resolveSettingRoute(item.settingId)
+        if (route?.subTab) {
+          return getSubTabLabel(route.subTab)
+        }
+      }
+
       const titleKey = SETTING_SEARCH_TITLE_KEY_MAP[item.settingId]
       if (titleKey) {
         return getLocalizedText({
           key: titleKey,
-          fallback: toSearchTitleFallback(item.settingId),
+          fallback: item.title || toSearchTitleFallback(item.settingId),
         })
       }
 
@@ -394,19 +408,32 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
         }
       }
 
-      return toSearchTitleFallback(item.settingId)
+      return item.title || toSearchTitleFallback(item.settingId)
     },
-    [getLocalizedText],
+    [getLocalizedText, getPageLabel, getSubTabLabel],
   )
 
   const getSettingsBreadcrumb = useCallback(
     (settingId: string): string => {
+      const settingsRootLabel = getLocalizedText({
+        key: "globalSearchCategorySettings",
+        fallback: "Settings",
+      })
+
+      if (settingId.startsWith("page-")) {
+        return settingsRootLabel
+      }
+
       const route = resolveSettingRoute(settingId)
       if (!route) {
-        return getLocalizedText({ key: "globalSearchCategorySettings", fallback: "Settings" })
+        return settingsRootLabel
       }
 
       const pageLabel = getPageLabel(route.page)
+      if (settingId.startsWith("subtab-")) {
+        return `${settingsRootLabel} / ${pageLabel}`
+      }
+
       if (!route.subTab) {
         return pageLabel
       }

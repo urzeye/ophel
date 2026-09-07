@@ -436,7 +436,7 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
 
           {/* 净化模式 (Clean Mode) 卡片 */}
           {supportsCleanMode && (
-            <SettingCard title={t("cleanModeTitle")}>
+            <SettingCard title={t("cleanModeTitle")} settingId="layout-clean-mode-card">
               <ToggleRow
                 label={t("cleanModeLabel")}
                 description={t("cleanModeDesc")}

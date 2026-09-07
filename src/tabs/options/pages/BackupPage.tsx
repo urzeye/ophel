@@ -677,7 +677,10 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
         <>
           <div className="settings-backup-grid">
             {/* 导出 */}
-            <SettingCard title={t("exportData")} description={t("exportDataDesc")}>
+            <SettingCard
+              title={t("exportData")}
+              description={t("exportDataDesc")}
+              settingId="backup-export-card">
               <div className="settings-backup-export-list">
                 {/* 完整备份 */}
                 <div className="settings-backup-export-item">
@@ -724,7 +727,10 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
             </SettingCard>
 
             {/* 导入 */}
-            <SettingCard title={t("importData")} description={t("importDataDesc")}>
+            <SettingCard
+              title={t("importData")}
+              description={t("importDataDesc")}
+              settingId="backup-import-card">
               <div className="settings-backup-import-box">
                 {/* 文件选择 */}
                 <div className="settings-backup-file-row">
@@ -771,7 +777,8 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
           <SettingCard
             title={t("dangerZone")}
             description={t("dangerZoneDesc")}
-            className="settings-backup-danger-card">
+            className="settings-backup-danger-card"
+            settingId="backup-reset-card">
             <div className="settings-backup-danger-row">
               <div>
                 <div className="settings-backup-danger-title">{t("clearAllData")}</div>
@@ -790,7 +797,10 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
 
       {/* WebDAV 云同步 Tab */}
       {activeTab === BACKUP_TAB_IDS.WEBDAV && (
-        <SettingCard title={t("webdavConfig")} description={t("webdavConfigDesc")}>
+        <SettingCard
+          title={t("webdavConfig")}
+          description={t("webdavConfigDesc")}
+          settingId="backup-webdav-card">
           {/* 提示信息 */}
           <div className="settings-backup-tip">
             <div className="settings-backup-tip-title">
@@ -846,7 +856,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
             )
           })()}
 
-          <SettingRow label={t("webdavAddress")}>
+          <SettingRow label={t("webdavAddress")} settingId="backup-webdav-url">
             {(() => {
               const preset = WEBDAV_PROVIDER_PRESETS.find(
                 (p) => p.id === (webdavForm.provider || "custom"),
@@ -865,7 +875,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
             })()}
           </SettingRow>
 
-          <SettingRow label={t("username")}>
+          <SettingRow label={t("username")} settingId="backup-webdav-username">
             <input
               type="text"
               className="settings-input"
@@ -875,7 +885,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
             />
           </SettingRow>
 
-          <SettingRow label={t("password")}>
+          <SettingRow label={t("password")} settingId="backup-webdav-password">
             {(() => {
               const preset = WEBDAV_PROVIDER_PRESETS.find(
                 (p) => p.id === (webdavForm.provider || "custom"),
@@ -896,7 +906,10 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
             })()}
           </SettingRow>
 
-          <SettingRow label={t("defaultDir")} description={t("defaultDirHint")}>
+          <SettingRow
+            label={t("defaultDir")}
+            description={t("defaultDirHint")}
+            settingId="backup-webdav-dir">
             <input
               type="text"
               className="settings-input"
