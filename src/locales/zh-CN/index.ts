@@ -50,6 +50,7 @@ export const zhCN = {
   builtinSitesDesc:
     "管理 Ophel 在内置 AI 站点的启用状态。停用后该站点不再加载面板与任何增强功能，已打开的页面刷新后完全生效",
   builtinSiteBadge: "内置",
+  builtinSiteCurrentBadge: "当前站点",
   builtinSiteEnabledToast: "已重新启用 {site}",
   builtinSiteDisabledToast: "已在 {site} 停用 Ophel，已打开的页面刷新后完全生效",
   disableSiteEntryLabel: "在此站点停用 Ophel",

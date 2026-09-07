@@ -52,6 +52,7 @@ export const ko = {
   builtinSitesDesc:
     "기본 제공 AI 사이트에서 Ophel의 활성화 상태를 관리합니다. 비활성화하면 해당 사이트에서 패널과 모든 향상 기능이 로드되지 않으며, 열린 페이지는 새로 고침 후 완전히 적용됩니다",
   builtinSiteBadge: "기본 제공",
+  builtinSiteCurrentBadge: "현재 사이트",
   builtinSiteEnabledToast: "{site}을(를) 다시 활성화했습니다",
   builtinSiteDisabledToast:
     "{site}에서 Ophel을 비활성화했습니다. 열린 페이지는 새로 고침 후 완전히 적용됩니다",

@@ -55,6 +55,7 @@ export const ja = {
   builtinSitesDesc:
     "内蔵 AI サイトでの Ophel の有効状態を管理します。無効にすると、そのサイトではパネルとすべての拡張機能が読み込まれなくなります。開いているページは再読み込み後に完全に反映されます",
   builtinSiteBadge: "内蔵",
+  builtinSiteCurrentBadge: "現在のサイト",
   builtinSiteEnabledToast: "{site} を再度有効にしました",
   builtinSiteDisabledToast:
     "{site} で Ophel を無効にしました。開いているページは再読み込み後に完全に反映されます",

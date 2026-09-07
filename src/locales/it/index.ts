@@ -54,6 +54,7 @@ export const it = {
   builtinSitesDesc:
     "Gestisci dove Ophel è attivo sui siti AI integrati. Una volta disattivato, il pannello e tutte le funzionalità non vengono più caricati su quel sito; ricarica le pagine aperte per applicare completamente la modifica",
   builtinSiteBadge: "Integrato",
+  builtinSiteCurrentBadge: "Sito attuale",
   builtinSiteEnabledToast: "{site} riattivato",
   builtinSiteDisabledToast:
     "Ophel disattivato su {site}; ricarica le pagine aperte per applicare completamente la modifica",

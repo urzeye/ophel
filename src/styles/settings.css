@@ -1376,7 +1376,8 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   line-height: 1.2;
 }
 
-.settings-pack-badge.success {
+.settings-pack-badge.success,
+.settings-pack-badge.current {
   border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 28%, transparent);
   background: color-mix(in srgb, var(--gh-primary, #4285f4) 8%, var(--gh-card-bg, #ffffff));
   color: var(--gh-primary, #4285f4);

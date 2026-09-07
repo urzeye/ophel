@@ -55,6 +55,7 @@ export const pt = {
   builtinSitesDesc:
     "Gerencie em quais sites de IA integrados o Ophel é executado. Após a desativação, o painel e todas as melhorias deixam de carregar nesse site; recarregue as páginas abertas para aplicar totalmente a alteração",
   builtinSiteBadge: "Integrado",
+  builtinSiteCurrentBadge: "Site atual",
   builtinSiteEnabledToast: "{site} reativado",
   builtinSiteDisabledToast:
     "Ophel desativado em {site}; recarregue as páginas abertas para aplicar totalmente",

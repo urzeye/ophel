@@ -55,6 +55,7 @@ export const fr = {
   builtinSitesDesc:
     "Gérez les sites IA intégrés sur lesquels Ophel est actif. Une fois désactivé, le panneau et toutes les améliorations ne se chargent plus sur ce site ; rechargez les pages ouvertes pour appliquer complètement le changement",
   builtinSiteBadge: "Intégré",
+  builtinSiteCurrentBadge: "Site actuel",
   builtinSiteEnabledToast: "{site} réactivé",
   builtinSiteDisabledToast:
     "Ophel désactivé sur {site} ; rechargez les pages ouvertes pour appliquer complètement le changement",

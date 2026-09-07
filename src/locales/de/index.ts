@@ -55,6 +55,7 @@ export const de = {
   builtinSitesDesc:
     "Verwalte, auf welchen integrierten KI-Seiten Ophel aktiv ist. Nach der Deaktivierung werden Panel und alle Erweiterungen auf dieser Seite nicht mehr geladen; lade geöffnete Seiten neu, damit die Änderung vollständig wirkt",
   builtinSiteBadge: "Integriert",
+  builtinSiteCurrentBadge: "Aktuelle Seite",
   builtinSiteEnabledToast: "{site} wieder aktiviert",
   builtinSiteDisabledToast:
     "Ophel auf {site} deaktiviert; lade geöffnete Seiten neu, damit es vollständig wirkt",

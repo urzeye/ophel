@@ -66,6 +66,10 @@ import {
 } from "~core/remote-config-types"
 import { platform, type SitePackRuntimeStatus } from "~platform"
 import { useSettingsStore } from "~stores/settings-store"
+import {
+  getBuiltinSiteEntryUrls,
+  orderBuiltinSitesByCurrentUrl,
+} from "~tabs/options/builtin-sites-list"
 import { PageTitle, SettingRow, TabGroup, ToggleRow } from "~tabs/options/components"
 import { IS_DEVELOPMENT_BUILD } from "~utils/config"
 import { getCurrentLang, subscribeI18nChanges, t } from "~utils/i18n"
@@ -1554,10 +1558,14 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
     )
   }
 
+  const pageUrl = typeof window === "undefined" ? "" : window.location.href
+  const builtinSites = orderBuiltinSitesByCurrentUrl(SUPPORTED_AI_PLATFORMS, pageUrl)
+
   const renderBuiltinSite = (site: (typeof SUPPORTED_AI_PLATFORMS)[number]) => {
     const isDisabled = disabledSites.includes(site.id)
+    const isCurrentSite = site.pattern.test(pageUrl)
     const faviconUrl = getSitePackFaviconUrl(site.matchPatterns)
-    const siteUrl = site.entryUrls[0]
+    const entryUrls = getBuiltinSiteEntryUrls(site)
 
     return (
       <div className="settings-pack-item" key={site.id}>
@@ -1571,13 +1579,17 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
           <div className="settings-pack-title-line">
             <strong>{site.name}</strong>
             <span className="settings-pack-badge">{t("builtinSiteBadge")}</span>
+            {isCurrentSite && (
+              <span className="settings-pack-badge current">{t("builtinSiteCurrentBadge")}</span>
+            )}
             {isDisabled && (
               <span className="settings-pack-badge warning">{t("sitePacksStatusDisabled")}</span>
             )}
           </div>
           <div className="settings-pack-meta">
-            {siteUrl && (
+            {entryUrls.map((siteUrl) => (
               <button
+                key={siteUrl}
                 type="button"
                 className="settings-pack-origin-link"
                 aria-label={`${t("sitePacksOpenSite")}: ${siteUrl}`}
@@ -1585,7 +1597,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
                 <span className="settings-pack-origin">{siteUrl}</span>
                 <ExternalLinkIcon size={12} />
               </button>
-            )}
+            ))}
           </div>
         </div>
         <div className="settings-pack-controls">
@@ -1878,7 +1890,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
       {activeTab === SITE_PACKS_TAB_IDS.BUILTIN && (
         <section className="settings-card">
           <div className="settings-card-desc">{t("builtinSitesDesc")}</div>
-          <div className="settings-pack-list">{SUPPORTED_AI_PLATFORMS.map(renderBuiltinSite)}</div>
+          <div className="settings-pack-list">{builtinSites.map(renderBuiltinSite)}</div>
         </section>
       )}
 

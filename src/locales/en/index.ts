@@ -54,6 +54,7 @@ export const en = {
   builtinSitesDesc:
     "Manage where Ophel runs on built-in AI sites. Once disabled, the panel and all enhancements no longer load on that site; reload open pages for the change to take full effect.",
   builtinSiteBadge: "Built-in",
+  builtinSiteCurrentBadge: "Current site",
   builtinSiteEnabledToast: "{site} re-enabled",
   builtinSiteDisabledToast:
     "Ophel disabled on {site}; reload open pages for it to take full effect",
