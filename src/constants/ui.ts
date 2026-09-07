@@ -211,9 +211,6 @@ export const SETTING_ID_ROUTE_MAP: Record<string, SettingRoute> = {
     page: NAV_IDS.SITE_SETTINGS,
     subTab: SITE_SETTINGS_TAB_IDS.LAYOUT,
   },
-  "appearance-theme-sync": {
-    page: NAV_IDS.APPEARANCE,
-  },
   "backup-export-card": { page: NAV_IDS.BACKUP, subTab: BACKUP_TAB_IDS.LOCAL },
   "backup-import-card": { page: NAV_IDS.BACKUP, subTab: BACKUP_TAB_IDS.LOCAL },
   "backup-reset-card": { page: NAV_IDS.BACKUP, subTab: BACKUP_TAB_IDS.LOCAL },
@@ -1307,6 +1304,14 @@ const SETTING_CARD_SEARCH_ITEMS: SettingsSearchItem[] = [
     keywords: ["prompt behavior", "enter behavior", "提示词行为", "回车行为"],
   },
 ]
+
+// 卡片层级搜索项 ID 集合，全局搜索据此区分页面/子 Tab/卡片/叶子项的标题权重。
+// site-packs-registry 与 remote-config-status 定义在卡片列表之外，但语义上同属卡片层级。
+export const SETTING_CARD_LEVEL_SEARCH_IDS: ReadonlySet<string> = new Set([
+  ...SETTING_CARD_SEARCH_ITEMS.map((item) => item.settingId),
+  "site-packs-registry",
+  "remote-config-status",
+])
 
 const ADDITIONAL_SETTING_SEARCH_ITEMS: SettingsSearchItem[] = [
   {

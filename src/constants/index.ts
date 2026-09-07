@@ -16,6 +16,7 @@ export {
   BACKUP_TAB_IDS,
   SETTING_ID_ROUTE_MAP,
   SETTING_ID_ALIASES,
+  SETTING_CARD_LEVEL_SEARCH_IDS,
   SETTINGS_SEARCH_ITEMS,
   resolveSettingId,
   resolveSettingRoute,

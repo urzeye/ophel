@@ -208,7 +208,6 @@ export const SETTING_SEARCH_TITLE_KEY_MAP: Record<string, string> = {
   "gemini-settings-card": "geminiSettingsTab",
   "aistudio-settings-card": "aistudioSettingsTitle",
   "chatgpt-settings-card": "chatgptSettingsTitle",
-  "appearance-theme-sync": "syncNativePageThemeLabel",
   "backup-export-card": "exportData",
   "backup-import-card": "importData",
   "backup-reset-card": "dangerZone",
