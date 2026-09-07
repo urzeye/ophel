@@ -260,7 +260,7 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
       <PageTitle title={t("navAppearance")} Icon={AppearanceIcon} />
       <p className="settings-page-desc">{t("appearancePageDesc")}</p>
 
-      <SettingCard settingId="appearance-theme-sync">
+      <SettingCard>
         <ToggleRow
           label={t("syncNativePageThemeLabel")}
           description={t("syncNativePageThemeDesc")}

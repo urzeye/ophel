@@ -406,4 +406,61 @@ describe("settings hierarchy search & route resolution", () => {
 
     expect(duplicates).toEqual([])
   })
+
+  it("ensures every settingId declared in options pages can be resolved by global search", async () => {
+    const { readFileSync, readdirSync } = await import("node:fs")
+    const { fileURLToPath } = await import("node:url")
+    const path = await import("node:path")
+
+    const pagesDir = fileURLToPath(new URL("../../../src/tabs/options/pages", import.meta.url))
+    const files = readdirSync(pagesDir).filter((f) => f.endsWith(".tsx"))
+
+    const searchIds = new Set(SETTINGS_SEARCH_ITEMS.map((item) => item.settingId))
+    const unsearchableIds: Array<{ id: string; file: string }> = []
+
+    for (const file of files) {
+      const content = readFileSync(path.join(pagesDir, file), "utf8")
+      const regex = /(?:settingId|data-setting-id)=["']([^"']+)["']/g
+      let match: RegExpExecArray | null
+      while ((match = regex.exec(content)) !== null) {
+        const id = match[1]
+        if (id.includes("${")) continue
+        const resolvedId = resolveSettingId(id)
+        if (!resolvedId || (!searchIds.has(resolvedId) && !searchIds.has(id))) {
+          unsearchableIds.push({ id, file })
+        }
+      }
+    }
+
+    expect(unsearchableIds).toEqual([])
+  })
+
+  it("ensures every subTab from resolveSettingRoute is defined in SETTING_SEARCH_SUB_TAB_LABEL_DEFINITIONS", () => {
+    const missingSubTabs = new Set<string>()
+
+    for (const item of SETTINGS_SEARCH_ITEMS) {
+      const route = resolveSettingRoute(item.settingId)
+      if (route?.subTab) {
+        if (!SETTING_SEARCH_SUB_TAB_LABEL_DEFINITIONS[route.subTab]) {
+          missingSubTabs.add(route.subTab)
+        }
+      }
+    }
+
+    expect([...missingSubTabs]).toEqual([])
+  })
+
+  it("ensures all SETTINGS_SEARCH_ITEMS IDs are strictly unique", () => {
+    const seen = new Set<string>()
+    const duplicates: string[] = []
+
+    for (const item of SETTINGS_SEARCH_ITEMS) {
+      if (seen.has(item.settingId)) {
+        duplicates.push(item.settingId)
+      }
+      seen.add(item.settingId)
+    }
+
+    expect(duplicates).toEqual([])
+  })
 })
