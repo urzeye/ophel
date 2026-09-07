@@ -2,11 +2,12 @@
  * 页面原生弹窗避让的判定策略(与 DOM API 解耦,便于单测)。
  *
  * 检测分两层:
- * - 强信号(aria-modal / role=alertdialog / dialog:modal / :popover-open)
+ * - 强信号仅 dialog:modal(showModal 使页面其余部分 inert,语义可信),
  *   由调用方用选择器直接判定,可见即算弹窗;
- * - 弱信号(裸 role="dialog"、非模态 dialog[open])经本模块的注册表判定:
- *   先乐观算作弹窗;一旦用户在其之外发生有效交互(说明它不阻断页面,
- *   是常驻容器误标 role="dialog"),即放行;元素隐藏后重置,重新出现时再次按弹窗处理。
+ * - 弱信号(其余可见的 dialog[open] / role="dialog" / role="alertdialog" /
+ *   aria-modal)经本模块的注册表判定:先乐观算作弹窗;一旦用户在其之外
+ *   发生有效交互(说明它不阻断页面,是常驻容器误标),即放行;
+ *   元素隐藏后重置,重新出现时再次按弹窗处理。
  */
 
 /** 矩形覆盖视口达到该比例即视为遮罩/全屏容器 */

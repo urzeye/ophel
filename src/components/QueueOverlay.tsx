@@ -271,29 +271,21 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
   const [isPageModalOpen, setIsPageModalOpen] = useState(false)
 
   useEffect(() => {
-    // :modal / :popover-open 低版本浏览器不支持,探测失败的选择器直接弃用
-    const probeSelector = (selector: string): boolean => {
-      try {
-        document.querySelector(selector)
-        return true
-      } catch {
-        return false
-      }
+    // :modal 低版本浏览器不支持,探测失败则弃用该选择器
+    let modalDialogSupported = true
+    try {
+      document.querySelector("dialog:modal")
+    } catch {
+      modalDialogSupported = false
     }
-    const popoverSupported = probeSelector(":popover-open")
 
-    // 强信号:显式模态语义或 top layer 元素,可见即算页面弹窗
-    const strongParts = ['[aria-modal="true"]', '[role="alertdialog"]']
-    if (probeSelector("dialog:modal")) strongParts.push("dialog:modal")
-    if (popoverSupported) strongParts.push(":popover-open")
-    const strongModalSelector = strongParts.join(", ")
-
-    // 弱信号:其余可见的 dialog / role="dialog" 元素先乐观算作弹窗;
-    // 若用户在元素之外发生有效交互,说明它不阻断页面(常驻容器误标
-    // role="dialog"),由 weakModals 注册表放行,避免 overlay 被永久隐藏
-    const detectionParts = ["dialog[open]", '[role="dialog"]', '[role="alertdialog"]']
-    if (popoverSupported) detectionParts.push(":popover-open")
-    const modalSelector = detectionParts.join(", ")
+    // 强信号仅 dialog:modal:showModal() 会让页面其余部分 inert,外部交互事件
+    // 根本到不了 document,下方的宽恕机制不可能被误触发,可见即算页面弹窗。
+    // aria-modal / role="alertdialog" 只是语义声明,站点可能误标在常驻容器上,
+    // 一律走 weakModals 注册表;popover 在 top layer,天然绘制在 overlay 之上,
+    // 不存在遮挡问题,不检测。
+    const strongModalSelector = modalDialogSupported ? "dialog:modal" : ""
+    const modalSelector = 'dialog[open], [role="dialog"], [role="alertdialog"], [aria-modal="true"]'
 
     // 扩展自身 UI(批量导入弹窗、提示词编辑器等也 portal 在 body 下)不算页面弹窗
     const ownUiSelector = `${OPHEL_INTERACTION_LAYER_SELECTOR}, .gh-queue-capsule, .gh-queue-panel`
@@ -301,6 +293,9 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
     const weakModals = createWeakModalRegistry()
 
     const isBackdropLike = (el: HTMLElement): boolean => {
+      // 已知盲区:站点主布局容器若为 absolute/fixed 且铺满视口,点在其空白处会
+      // 被误认为点在遮罩上而不放行;此时任意一次按键仍会触发宽恕恢复 overlay,
+      // 影响温和,暂不加更复杂的启发式
       const style = window.getComputedStyle(el)
       if (style.position !== "fixed" && style.position !== "absolute") return false
       return isViewportCovering(el.getBoundingClientRect(), {
@@ -315,10 +310,11 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
       for (const el of document.querySelectorAll(modalSelector)) {
         if (!(el instanceof HTMLElement)) continue
         if (el.closest(ownUiSelector)) continue
-        if (el.getClientRects().length === 0) continue
-        const style = window.getComputedStyle(el)
-        if (style.display === "none" || style.visibility === "hidden") continue
-        if (el.matches(strongModalSelector)) {
+        // display:none / 零面积的挂点容器(误标 aria-modal 等)不算可见
+        const rect = el.getBoundingClientRect()
+        if (rect.width === 0 || rect.height === 0) continue
+        if (window.getComputedStyle(el).visibility === "hidden") continue
+        if (strongModalSelector && el.matches(strongModalSelector)) {
           open = true
         } else {
           weakVisible.push(el)
@@ -360,14 +356,10 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
       attributes: true,
       attributeFilter: ["open", "hidden", "class", "style", "aria-hidden", "aria-modal"],
     })
-    // popover 显隐不产生 DOM mutation,MutationObserver 感知不到;
-    // toggle 事件(dialog/popover 显隐时触发)不冒泡,必须在 document 捕获阶段监听
-    document.addEventListener("toggle", scheduleCheck, true)
     document.addEventListener("pointerdown", handleInteraction, true)
     document.addEventListener("keydown", handleInteraction, true)
     return () => {
       observer.disconnect()
-      document.removeEventListener("toggle", scheduleCheck, true)
       document.removeEventListener("pointerdown", handleInteraction, true)
       document.removeEventListener("keydown", handleInteraction, true)
       if (timer !== null) window.clearTimeout(timer)
