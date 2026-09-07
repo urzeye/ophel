@@ -759,7 +759,7 @@ const SUB_TAB_SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
   },
   {
     settingId: "subtab-features-conversations",
-    title: "会话管理",
+    title: "会话",
     keywords: [
       "conversations",
       "chat history",
@@ -772,7 +772,7 @@ const SUB_TAB_SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
   },
   {
     settingId: "subtab-features-prompts",
-    title: "提示词与队列",
+    title: "提示词",
     keywords: [
       "prompts",
       "prompt",
@@ -787,7 +787,7 @@ const SUB_TAB_SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
   },
   {
     settingId: "subtab-features-tab-settings",
-    title: "标签页设置",
+    title: "标签页",
     keywords: [
       "tab settings",
       "browser tabs",
@@ -801,7 +801,7 @@ const SUB_TAB_SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
   },
   {
     settingId: "subtab-features-reminder",
-    title: "提醒声音与额度",
+    title: "提醒",
     keywords: [
       "reminder",
       "alert",
@@ -817,7 +817,7 @@ const SUB_TAB_SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
   },
   {
     settingId: "subtab-features-content",
-    title: "内容处理与交互",
+    title: "内容交互",
     keywords: [
       "content",
       "formula",
@@ -850,7 +850,7 @@ const SUB_TAB_SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
   // 站点设置
   {
     settingId: "subtab-site-settings-layout",
-    title: "布局增强",
+    title: "页面布局",
     keywords: [
       "layout",
       "width",
@@ -870,22 +870,22 @@ const SUB_TAB_SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
   },
   {
     settingId: "subtab-site-settings-gemini",
-    title: "Gemini 设置",
+    title: "Gemini",
     keywords: ["gemini", "google gemini", "markdown fix", "watermark", "重试"],
   },
   {
     settingId: "subtab-site-settings-aistudio",
-    title: "AI Studio 设置",
+    title: "AI Studio",
     keywords: ["aistudio", "ai studio", "google ai studio", "折叠面板", "水印"],
   },
   {
     settingId: "subtab-site-settings-chatgpt",
-    title: "ChatGPT 设置",
+    title: "ChatGPT",
     keywords: ["chatgpt", "openai", "markdown fix", "代码块", "渲染优化", "背景虚化"],
   },
   {
     settingId: "subtab-site-settings-claude",
-    title: "Claude 设置",
+    title: "Claude",
     keywords: ["claude", "anthropic", "session keys"],
   },
   // 外观

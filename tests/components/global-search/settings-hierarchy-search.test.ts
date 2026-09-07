@@ -151,11 +151,55 @@ describe("settings hierarchy search & route resolution", () => {
       expect(SETTING_SEARCH_PAGE_LABEL_DEFINITIONS[pageId].key).toBeTruthy()
     }
 
-    expect(SETTING_SEARCH_SUB_TAB_LABEL_DEFINITIONS.outline).toBeDefined()
-    expect(SETTING_SEARCH_SUB_TAB_LABEL_DEFINITIONS.conversations).toBeDefined()
-    expect(SETTING_SEARCH_SUB_TAB_LABEL_DEFINITIONS.prompts).toBeDefined()
+    expect(SETTING_SEARCH_SUB_TAB_LABEL_DEFINITIONS.outline).toEqual({
+      key: "tabOutline",
+      fallback: "Outline",
+    })
+    expect(SETTING_SEARCH_SUB_TAB_LABEL_DEFINITIONS.conversations).toEqual({
+      key: "tabConversations",
+      fallback: "Conversations",
+    })
+    expect(SETTING_SEARCH_SUB_TAB_LABEL_DEFINITIONS.prompts).toEqual({
+      key: "tabPrompts",
+      fallback: "Prompts",
+    })
+    expect(SETTING_SEARCH_SUB_TAB_LABEL_DEFINITIONS.content).toEqual({
+      key: "navContent",
+      fallback: "Content",
+    })
+    expect(SETTING_SEARCH_SUB_TAB_LABEL_DEFINITIONS.layout).toEqual({
+      key: "tabLayout",
+      fallback: "Layout",
+    })
+    expect(SETTING_SEARCH_SUB_TAB_LABEL_DEFINITIONS.gemini).toEqual({
+      key: "globalSearchSiteGemini",
+      fallback: "Gemini",
+    })
+    expect(SETTING_SEARCH_SUB_TAB_LABEL_DEFINITIONS.aistudio).toEqual({
+      key: "globalSearchSiteAIStudio",
+      fallback: "AI Studio",
+    })
+    expect(SETTING_SEARCH_SUB_TAB_LABEL_DEFINITIONS.chatgpt).toEqual({
+      key: "globalSearchSiteChatGPT",
+      fallback: "ChatGPT",
+    })
+    expect(SETTING_SEARCH_SUB_TAB_LABEL_DEFINITIONS.claude).toEqual({
+      key: "globalSearchSiteClaude",
+      fallback: "Claude",
+    })
     expect(SETTING_SEARCH_SUB_TAB_LABEL_DEFINITIONS.webdav).toBeDefined()
     expect(SETTING_SEARCH_SUB_TAB_LABEL_DEFINITIONS.installed).toBeDefined()
+
+    // 确保二级 Tab 标题与内部卡片标题不同，避免搜索结果重名与面包屑套娃
+    expect(SETTING_SEARCH_SUB_TAB_LABEL_DEFINITIONS.outline.key).not.toBe(
+      SETTING_SEARCH_TITLE_KEY_MAP["outline-settings-card"],
+    )
+    expect(SETTING_SEARCH_SUB_TAB_LABEL_DEFINITIONS.conversations.key).not.toBe(
+      SETTING_SEARCH_TITLE_KEY_MAP["conversations-settings-card"],
+    )
+    expect(SETTING_SEARCH_SUB_TAB_LABEL_DEFINITIONS.prompts.key).not.toBe(
+      SETTING_SEARCH_TITLE_KEY_MAP["prompts-settings-card"],
+    )
   })
 
   it("maps section cards and missing settings in title key map", () => {
