@@ -81,6 +81,18 @@
   transform: translateY(-1px) scale(1.03);
 }
 
+.settings-sidebar-logo span,
+#ophel-settings-modal-title {
+  outline: none;
+}
+
+.settings-sidebar-logo span:focus,
+.settings-sidebar-logo span:focus-visible,
+#ophel-settings-modal-title:focus,
+#ophel-settings-modal-title:focus-visible {
+  outline: none;
+}
+
 .settings-sidebar-nav {
   flex: 1;
   padding: 12px 10px;
@@ -3348,6 +3360,12 @@ html[data-theme="dark"] .platform-icon-dark-invert {
     max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
     max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
     border-radius 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none;
+}
+
+.settings-modal-container:focus,
+.settings-modal-container:focus-visible {
+  outline: none;
 }
 
 .settings-modal-container.maximized {

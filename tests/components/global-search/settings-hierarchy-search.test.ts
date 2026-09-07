@@ -163,4 +163,17 @@ describe("settings hierarchy search & route resolution", () => {
       "chatgptCodeBlockBatchMountLabel",
     )
   })
+
+  it("suppresses focus outline on modal title and container in settings.css", async () => {
+    const { readFileSync } = await import("node:fs")
+    const { fileURLToPath } = await import("node:url")
+    const css = readFileSync(
+      fileURLToPath(new URL("../../../src/styles/settings.css", import.meta.url)),
+      "utf8",
+    )
+
+    expect(css).toMatch(/\.settings-sidebar-logo\s+span[\s\S]*?outline:\s*none/)
+    expect(css).toMatch(/#ophel-settings-modal-title[\s\S]*?outline:\s*none/)
+    expect(css).toMatch(/\.settings-modal-container[\s\S]*?outline:\s*none/)
+  })
 })
