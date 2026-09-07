@@ -25,6 +25,7 @@ import {
   OPHEL_INTERACTION_LAYER_SELECTOR,
 } from "~utils/dom-toolkit"
 import { t } from "~utils/i18n"
+import { createWeakModalRegistry, isViewportCovering } from "~utils/page-modal-policy"
 import { parseQueueBatchInput, splitQueueLines, type QueueBatchSplitMode } from "~utils/queue-batch"
 import { showToast } from "~utils/toast"
 
@@ -270,28 +271,60 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
   const [isPageModalOpen, setIsPageModalOpen] = useState(false)
 
   useEffect(() => {
-    // :popover-open 低版本浏览器不支持,先探测再回退
-    let modalSelector = 'dialog[open], [role="dialog"], [role="alertdialog"], :popover-open'
-    try {
-      document.querySelector(modalSelector)
-    } catch {
-      modalSelector = 'dialog[open], [role="dialog"], [role="alertdialog"]'
+    // :modal / :popover-open 低版本浏览器不支持,探测失败的选择器直接弃用
+    const probeSelector = (selector: string): boolean => {
+      try {
+        document.querySelector(selector)
+        return true
+      } catch {
+        return false
+      }
     }
+    const popoverSupported = probeSelector(":popover-open")
+
+    // 强信号:显式模态语义或 top layer 元素,可见即算页面弹窗
+    const strongParts = ['[aria-modal="true"]', '[role="alertdialog"]']
+    if (probeSelector("dialog:modal")) strongParts.push("dialog:modal")
+    if (popoverSupported) strongParts.push(":popover-open")
+    const strongModalSelector = strongParts.join(", ")
+
+    // 弱信号:其余可见的 dialog / role="dialog" 元素先乐观算作弹窗;
+    // 若用户在元素之外发生有效交互,说明它不阻断页面(常驻容器误标
+    // role="dialog"),由 weakModals 注册表放行,避免 overlay 被永久隐藏
+    const detectionParts = ["dialog[open]", '[role="dialog"]', '[role="alertdialog"]']
+    if (popoverSupported) detectionParts.push(":popover-open")
+    const modalSelector = detectionParts.join(", ")
 
     // 扩展自身 UI(批量导入弹窗、提示词编辑器等也 portal 在 body 下)不算页面弹窗
     const ownUiSelector = `${OPHEL_INTERACTION_LAYER_SELECTOR}, .gh-queue-capsule, .gh-queue-panel`
 
+    const weakModals = createWeakModalRegistry()
+
+    const isBackdropLike = (el: HTMLElement): boolean => {
+      const style = window.getComputedStyle(el)
+      if (style.position !== "fixed" && style.position !== "absolute") return false
+      return isViewportCovering(el.getBoundingClientRect(), {
+        width: window.innerWidth,
+        height: window.innerHeight,
+      })
+    }
+
     const checkPageModal = () => {
       let open = false
+      const weakVisible: HTMLElement[] = []
       for (const el of document.querySelectorAll(modalSelector)) {
         if (!(el instanceof HTMLElement)) continue
         if (el.closest(ownUiSelector)) continue
         if (el.getClientRects().length === 0) continue
         const style = window.getComputedStyle(el)
         if (style.display === "none" || style.visibility === "hidden") continue
-        open = true
-        break
+        if (el.matches(strongModalSelector)) {
+          open = true
+        } else {
+          weakVisible.push(el)
+        }
       }
+      if (weakModals.update(weakVisible)) open = true
       setIsPageModalOpen((prev) => (prev === open ? prev : open))
     }
 
@@ -305,6 +338,20 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
       }, 150)
     }
 
+    // 模态弹窗会阻断页面交互;用户在弱信号元素之外成功点击/按键,说明它
+    // 不阻断页面,放行这些元素。点在全屏遮罩上除外——那通常是真实弹窗的 backdrop
+    const handleInteraction = (e: Event) => {
+      const target = e.target
+      const changed = weakModals.forgiveOnOutsideInteraction(
+        target instanceof Element ? target : null,
+        {
+          onBackdrop:
+            e.type === "pointerdown" && target instanceof HTMLElement && isBackdropLike(target),
+        },
+      )
+      if (changed) scheduleCheck()
+    }
+
     checkPageModal()
     const observer = new MutationObserver(scheduleCheck)
     observer.observe(document.documentElement, {
@@ -316,9 +363,13 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
     // popover 显隐不产生 DOM mutation,MutationObserver 感知不到;
     // toggle 事件(dialog/popover 显隐时触发)不冒泡,必须在 document 捕获阶段监听
     document.addEventListener("toggle", scheduleCheck, true)
+    document.addEventListener("pointerdown", handleInteraction, true)
+    document.addEventListener("keydown", handleInteraction, true)
     return () => {
       observer.disconnect()
       document.removeEventListener("toggle", scheduleCheck, true)
+      document.removeEventListener("pointerdown", handleInteraction, true)
+      document.removeEventListener("keydown", handleInteraction, true)
       if (timer !== null) window.clearTimeout(timer)
     }
   }, [])
