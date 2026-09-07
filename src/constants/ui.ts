@@ -368,6 +368,10 @@ export const SETTING_ID_ROUTE_MAP: Record<string, SettingRoute> = {
   },
   "global-search-matching-card": { page: NAV_IDS.GLOBAL_SEARCH },
   "global-search-prompt-card": { page: NAV_IDS.GLOBAL_SEARCH },
+  "shortcuts-prompt-submit-shortcut": {
+    page: NAV_IDS.FEATURES,
+    subTab: FEATURES_TAB_IDS.PROMPTS,
+  },
 } as const
 
 const SETTING_ID_ROUTE_RULES: SettingRouteRule[] = [
@@ -439,6 +443,10 @@ const SETTING_ID_ROUTE_RULES: SettingRouteRule[] = [
   {
     prefix: "global-search-",
     route: { page: NAV_IDS.GLOBAL_SEARCH },
+  },
+  {
+    prefix: "tab-notification-",
+    route: { page: NAV_IDS.FEATURES, subTab: FEATURES_TAB_IDS.REMINDER },
   },
   {
     prefix: "tab-",

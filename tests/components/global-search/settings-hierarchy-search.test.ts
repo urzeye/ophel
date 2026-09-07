@@ -176,4 +176,121 @@ describe("settings hierarchy search & route resolution", () => {
     expect(css).toMatch(/#ophel-settings-modal-title[\s\S]*?outline:\s*none/)
     expect(css).toMatch(/\.settings-modal-container[\s\S]*?outline:\s*none/)
   })
+
+  it("verifies every settingId declared in options page JSX resolves to the correct page", async () => {
+    const { readFileSync, readdirSync } = await import("node:fs")
+    const { fileURLToPath } = await import("node:url")
+    const path = await import("node:path")
+
+    const pageToExpectedNav: Record<string, string> = {
+      "GeneralPage.tsx": NAV_IDS.GENERAL,
+      "FeaturesPage.tsx": NAV_IDS.FEATURES,
+      "AppearancePage.tsx": NAV_IDS.APPEARANCE,
+      "SiteSettingsPage.tsx": NAV_IDS.SITE_SETTINGS,
+      "SitePacksPage.tsx": NAV_IDS.SITE_PACKS,
+      "GlobalSearchPage.tsx": NAV_IDS.GLOBAL_SEARCH,
+      "ShortcutsPage.tsx": NAV_IDS.SHORTCUTS,
+      "BackupPage.tsx": NAV_IDS.BACKUP,
+      "PermissionsPage.tsx": NAV_IDS.PERMISSIONS,
+      "AboutPage.tsx": NAV_IDS.ABOUT,
+    }
+
+    const pagesDir = fileURLToPath(new URL("../../../src/tabs/options/pages", import.meta.url))
+    const files = readdirSync(pagesDir)
+
+    const mismatches: Array<{
+      file: string
+      settingId: string
+      expected: string
+      resolved?: string
+    }> = []
+
+    for (const file of files) {
+      const expectedPage = pageToExpectedNav[file]
+      if (!expectedPage) continue
+
+      const content = readFileSync(path.join(pagesDir, file), "utf8")
+      const regex = /(?:settingId|data-setting-id)=["']([^"']+)["']/g
+      let match: RegExpExecArray | null
+      while ((match = regex.exec(content)) !== null) {
+        const settingId = match[1]
+        if (settingId.includes("${")) continue
+        const route = resolveSettingRoute(settingId)
+        if (!route || route.page !== expectedPage) {
+          mismatches.push({
+            file,
+            settingId,
+            expected: expectedPage,
+            resolved: route?.page,
+          })
+        }
+      }
+    }
+
+    expect(mismatches).toEqual([])
+  })
+
+  it("ensures all title and label keys exist across all 11 locales in resources", async () => {
+    const { resources } = await import("~locales/resources")
+    const locales = Object.keys(resources)
+
+    expect(locales.length).toBe(11)
+
+    const keysToCheck = new Set<string>()
+
+    for (const def of Object.values(SETTING_SEARCH_PAGE_LABEL_DEFINITIONS)) {
+      keysToCheck.add(def.key)
+    }
+    for (const def of Object.values(SETTING_SEARCH_SUB_TAB_LABEL_DEFINITIONS)) {
+      keysToCheck.add(def.key)
+    }
+    for (const key of Object.values(SETTING_SEARCH_TITLE_KEY_MAP)) {
+      keysToCheck.add(key)
+    }
+
+    const missingInLocales: Array<{ locale: string; missingKeys: string[] }> = []
+
+    for (const locale of locales) {
+      const translation = (resources as Record<string, Record<string, string>>)[locale]
+      const missing = [...keysToCheck].filter((key) => !translation || !(key in translation))
+      if (missing.length > 0) {
+        missingInLocales.push({ locale, missingKeys: missing })
+      }
+    }
+
+    expect(missingInLocales).toEqual([])
+  })
+
+  it("ensures all settingId declarations across options pages are globally unique", async () => {
+    const { readFileSync, readdirSync } = await import("node:fs")
+    const { fileURLToPath } = await import("node:url")
+    const path = await import("node:path")
+
+    const pagesDir = fileURLToPath(new URL("../../../src/tabs/options/pages", import.meta.url))
+    const files = readdirSync(pagesDir).filter((f) => f.endsWith(".tsx"))
+
+    const seen = new Map<string, string>()
+    const duplicates: Array<{ id: string; file1: string; file2: string }> = []
+
+    for (const file of files) {
+      const content = readFileSync(path.join(pagesDir, file), "utf8")
+      const regex = /(?:settingId|data-setting-id)=["']([^"']+)["']/g
+      let match: RegExpExecArray | null
+      const pageSeen = new Set<string>()
+      while ((match = regex.exec(content)) !== null) {
+        const id = match[1]
+        if (id.includes("${")) continue
+        // Same file is allowed only for known mutually exclusive conditional renders (e.g. panel-width in floating vs docked)
+        if (seen.has(id) && seen.get(id) !== file) {
+          duplicates.push({ id, file1: seen.get(id)!, file2: file })
+        } else if (pageSeen.has(id) && id !== "panel-width") {
+          duplicates.push({ id, file1: file, file2: file })
+        }
+        seen.set(id, file)
+        pageSeen.add(id)
+      }
+    }
+
+    expect(duplicates).toEqual([])
+  })
 })
