@@ -334,7 +334,10 @@ const PermissionsPage: React.FC<PermissionsPageProps> = () => {
       </SettingCard>
 
       {/* 必需权限（只读展示） */}
-      <SettingCard title={t("requiredPermissions")} description={t("requiredPermissionsDesc")}>
+      <SettingCard
+        title={t("requiredPermissions")}
+        description={t("requiredPermissionsDesc")}
+        settingId="permissions-required-card">
         {REQUIRED_PERMISSIONS.map((perm) => (
           <SettingRow
             key={perm.id}

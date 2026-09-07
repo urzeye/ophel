@@ -263,7 +263,7 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
       {activeTab === SITE_SETTINGS_TAB_IDS.LAYOUT && (
         <>
           {supportsPanelAvoidance && (
-            <SettingCard title={panelAvoidanceTitle}>
+            <SettingCard title={panelAvoidanceTitle} settingId="layout-panel-avoidance-card">
               <ToggleRow
                 label={t("panelAvoidanceLabel")}
                 description={t("panelAvoidanceDesc")}
@@ -289,7 +289,7 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
 
           {/* 页面宽度卡片 */}
           {supportsPageWidth && (
-            <SettingCard title={t("layoutSettingsTitle")}>
+            <SettingCard title={t("layoutSettingsTitle")} settingId="layout-page-width-card">
               <ToggleRow
                 label={t("enablePageWidth")}
                 description={t("pageWidthDesc")}
@@ -334,7 +334,9 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
 
           {/* 用户问题宽度卡片 */}
           {supportsUserQueryWidth && (
-            <SettingCard title={t("userQueryWidthSettings")}>
+            <SettingCard
+              title={t("userQueryWidthSettings")}
+              settingId="layout-user-query-width-card">
               <ToggleRow
                 label={t("enableUserQueryWidth")}
                 description={t("userQueryWidthDesc")}
@@ -383,7 +385,7 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
 
           {/* 禅模式 (Zen Mode) 卡片 */}
           {supportsZenMode && (
-            <SettingCard title={t("zenModeTitle")}>
+            <SettingCard title={t("zenModeTitle")} settingId="layout-zen-mode-card">
               <ToggleRow
                 label={t("zenModeLabel")}
                 description={t("zenModeDesc")}

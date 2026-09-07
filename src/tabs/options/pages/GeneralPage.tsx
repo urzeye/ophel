@@ -816,7 +816,8 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
           </SettingCard>
           <SettingCard
             title={t("collapsedButtonsOrderTitle")}
-            description={t("collapsedButtonsOrderDesc")}>
+            description={t("collapsedButtonsOrderDesc")}
+            settingId="collapsed-buttons-order-card">
             {settings.quickButtons?.collapsed?.map((btn, index) => {
               // 暂时隐藏"手动锚点"设置项，避免对用户造成困扰
               if (btn.id === "manualAnchor") return null

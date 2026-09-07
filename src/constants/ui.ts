@@ -220,6 +220,7 @@ export const SETTING_ID_ROUTE_MAP: Record<string, SettingRoute> = {
   "backup-webdav-card": { page: NAV_IDS.BACKUP, subTab: BACKUP_TAB_IDS.WEBDAV },
   "shortcuts-global-card": { page: NAV_IDS.SHORTCUTS },
   "permissions-optional-card": { page: NAV_IDS.PERMISSIONS },
+  "permissions-required-card": { page: NAV_IDS.PERMISSIONS },
   [ABOUT_SPONSOR_SETTING_ID]: { page: NAV_IDS.ABOUT },
 
   // --- 具体设置项 ---
@@ -368,6 +369,10 @@ export const SETTING_ID_ROUTE_MAP: Record<string, SettingRoute> = {
   },
   "global-search-matching-card": { page: NAV_IDS.GLOBAL_SEARCH },
   "global-search-prompt-card": { page: NAV_IDS.GLOBAL_SEARCH },
+  "collapsed-buttons-order-card": {
+    page: NAV_IDS.GENERAL,
+    subTab: "shortcuts",
+  },
   "shortcuts-prompt-submit-shortcut": {
     page: NAV_IDS.FEATURES,
     subTab: FEATURES_TAB_IDS.PROMPTS,
@@ -1003,6 +1008,11 @@ const SETTING_CARD_SEARCH_ITEMS: SettingsSearchItem[] = [
     keywords: ["quick buttons", "proximity", "opacity", "快捷按钮", "透明度", "悬浮感应"],
   },
   {
+    settingId: "collapsed-buttons-order-card",
+    title: "折叠按钮顺序设置",
+    keywords: ["collapsed buttons order", "quick buttons", "折叠按钮", "按钮排序", "折叠菜单排序"],
+  },
+  {
     settingId: "toolbox-menu-card",
     title: "工具箱菜单设置",
     keywords: ["toolbox menu", "tools", "工具箱菜单", "快捷操作菜单"],
@@ -1135,6 +1145,26 @@ const SETTING_CARD_SEARCH_ITEMS: SettingsSearchItem[] = [
     ],
   },
   {
+    settingId: "layout-panel-avoidance-card",
+    title: "面板避让设置",
+    keywords: ["panel avoidance", "avoidance", "面板避让", "避让侧边栏", "防遮挡"],
+  },
+  {
+    settingId: "layout-page-width-card",
+    title: "页面宽度设置",
+    keywords: ["page width", "layout", "页面宽度", "自适应宽度", "页面布局"],
+  },
+  {
+    settingId: "layout-user-query-width-card",
+    title: "用户问题宽度设置",
+    keywords: ["user query width", "query width", "用户问题宽度", "提问宽度", "输入宽度"],
+  },
+  {
+    settingId: "layout-zen-mode-card",
+    title: "禅模式设置",
+    keywords: ["zen mode", "distraction free", "禅模式", "专注模式", "无干扰"],
+  },
+  {
     settingId: "layout-clean-mode-card",
     title: "净化模式设置",
     keywords: ["clean mode", "distraction free", "净化模式", "隐藏侧栏", "去杂质"],
@@ -1240,6 +1270,18 @@ const SETTING_CARD_SEARCH_ITEMS: SettingsSearchItem[] = [
       "通知权限",
       "cookie权限",
       "权限授权",
+    ],
+  },
+  {
+    settingId: "permissions-required-card",
+    title: "必需权限说明",
+    keywords: [
+      "required permissions",
+      "permissions",
+      "必要权限",
+      "必需权限",
+      "核心权限",
+      "基础权限",
     ],
   },
   {
@@ -1361,6 +1403,11 @@ const ADDITIONAL_SETTING_SEARCH_ITEMS: SettingsSearchItem[] = [
     settingId: "permission-item-webdav",
     title: "WebDAV 跨域访问权限",
     keywords: ["webdav permission", "all urls", "webdav 权限", "云同步权限", "网络请求权限"],
+  },
+  {
+    settingId: "backup-webdav-provider",
+    title: "WebDAV 服务商预设",
+    keywords: ["webdav provider", "jianguoyun", "坚果云", "服务商", "webdav 预设"],
   },
   {
     settingId: "backup-webdav-url",

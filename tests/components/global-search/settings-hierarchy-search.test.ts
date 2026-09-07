@@ -110,6 +110,29 @@ describe("settings hierarchy search & route resolution", () => {
     expect(permissionsCardRoute).toEqual({
       page: NAV_IDS.PERMISSIONS,
     })
+
+    const permissionsRequiredCardRoute = resolveSettingRoute("permissions-required-card")
+    expect(permissionsRequiredCardRoute).toEqual({
+      page: NAV_IDS.PERMISSIONS,
+    })
+
+    const collapsedButtonsCardRoute = resolveSettingRoute("collapsed-buttons-order-card")
+    expect(collapsedButtonsCardRoute).toEqual({
+      page: NAV_IDS.GENERAL,
+      subTab: "shortcuts",
+    })
+
+    const panelAvoidanceCardRoute = resolveSettingRoute("layout-panel-avoidance-card")
+    expect(panelAvoidanceCardRoute).toEqual({
+      page: NAV_IDS.SITE_SETTINGS,
+      subTab: SITE_SETTINGS_TAB_IDS.LAYOUT,
+    })
+
+    const webdavProviderRoute = resolveSettingRoute("backup-webdav-provider")
+    expect(webdavProviderRoute).toEqual({
+      page: NAV_IDS.BACKUP,
+      subTab: BACKUP_TAB_IDS.WEBDAV,
+    })
   })
 
   it("clears settingId when resolving navigation detail for page or subtab targets", () => {
@@ -234,6 +257,17 @@ describe("settings hierarchy search & route resolution", () => {
     expect(SETTING_SEARCH_TITLE_KEY_MAP["gemini-settings-card"]).toBe("geminiSettingsTab")
     expect(SETTING_SEARCH_TITLE_KEY_MAP["aistudio-settings-card"]).toBe("aistudioSettingsTitle")
     expect(SETTING_SEARCH_TITLE_KEY_MAP["chatgpt-settings-card"]).toBe("chatgptSettingsTitle")
+    expect(SETTING_SEARCH_TITLE_KEY_MAP["layout-panel-avoidance-card"]).toBe("panelAvoidanceTitle")
+    expect(SETTING_SEARCH_TITLE_KEY_MAP["layout-page-width-card"]).toBe("layoutSettingsTitle")
+    expect(SETTING_SEARCH_TITLE_KEY_MAP["layout-user-query-width-card"]).toBe(
+      "userQueryWidthSettings",
+    )
+    expect(SETTING_SEARCH_TITLE_KEY_MAP["layout-zen-mode-card"]).toBe("zenModeTitle")
+    expect(SETTING_SEARCH_TITLE_KEY_MAP["collapsed-buttons-order-card"]).toBe(
+      "collapsedButtonsOrderTitle",
+    )
+    expect(SETTING_SEARCH_TITLE_KEY_MAP["permissions-required-card"]).toBe("requiredPermissions")
+    expect(SETTING_SEARCH_TITLE_KEY_MAP["backup-webdav-provider"]).toBe("webdavProvider")
     expect(SETTING_SEARCH_TITLE_KEY_MAP["tab-behavior-card"]).toBe("tabBehaviorTitle")
     expect(SETTING_SEARCH_TITLE_KEY_MAP["tab-privacy-card"]).toBe("privacyModeTitle")
     expect(SETTING_SEARCH_TITLE_KEY_MAP["backup-webdav-card"]).toBe("webdavConfig")

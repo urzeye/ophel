@@ -809,7 +809,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
             <div className="settings-backup-tip-content">{t("restoreTipContent")}</div>
           </div>
 
-          <SettingRow label={t("webdavProvider")}>
+          <SettingRow label={t("webdavProvider")} settingId="backup-webdav-provider">
             <select
               className="settings-input settings-select"
               value={webdavForm.provider || "custom"}
