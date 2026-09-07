@@ -269,6 +269,8 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
   // 弹窗层级,会遮挡站点自身的对话框。这里监听页面 DOM,检测到站点原生弹窗出现时
   // 临时隐藏队列悬浮层,弹窗关闭后自动恢复。
   const [isPageModalOpen, setIsPageModalOpen] = useState(false)
+  // 隐藏前焦点是否在队列输入框内,供恢复显示时决定是否还回焦点
+  const hadInputFocusRef = useRef(false)
 
   useEffect(() => {
     // :modal 低版本浏览器不支持,探测失败则弃用该选择器
@@ -304,6 +306,9 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
       })
     }
 
+    // 本地镜像 open 状态,用于识别跳变
+    let modalOpen = false
+
     const checkPageModal = () => {
       let open = false
       const weakVisible: HTMLElement[] = []
@@ -321,6 +326,12 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
         }
       }
       if (weakModals.update(weakVisible)) open = true
+      if (open && !modalOpen) {
+        // 此刻 portal 尚未卸载,可读到隐藏前的真实焦点;若站点弹窗已主动
+        // focus() 把焦点抢进弹窗,则保守记为不在输入框——宁可不还原,也不抢页面焦点
+        hadInputFocusRef.current = document.activeElement === inputRef.current
+      }
+      modalOpen = open
       setIsPageModalOpen((prev) => (prev === open ? prev : open))
     }
 
@@ -337,6 +348,9 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
     // 模态弹窗会阻断页面交互;用户在弱信号元素之外成功点击/按键,说明它
     // 不阻断页面,放行这些元素。点在全屏遮罩上除外——那通常是真实弹窗的 backdrop
     const handleInteraction = (e: Event) => {
+      // Escape 的语义是关闭弹窗而非与页面交互;弹窗未聚焦时 target 落在 body 上,
+      // 不能作为"弹窗不阻断页面"的证据
+      if (e.type === "keydown" && (e as KeyboardEvent).key === "Escape") return
       const target = e.target
       const changed = weakModals.forgiveOnOutsideInteraction(
         target instanceof Element ? target : null,
@@ -366,11 +380,19 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
     }
   }, [])
 
-  // 展开时聚焦输入框;isPageModalOpen 恢复为 false 时 portal 重新挂载,需要重新聚焦
+  // 展开时聚焦输入框
   useEffect(() => {
     if (isExpanded && inputRef.current) {
       setTimeout(() => inputRef.current?.focus(), 100)
     }
+  }, [isExpanded])
+
+  // 站点弹窗关闭后 portal 重新挂载,输入框是全新节点。仅当隐藏前焦点就在
+  // 输入框内时才还回焦点,避免抢夺用户在页面上的焦点
+  useEffect(() => {
+    if (isPageModalOpen || !isExpanded || !hadInputFocusRef.current) return
+    hadInputFocusRef.current = false
+    setTimeout(() => inputRef.current?.focus(), 100)
   }, [isExpanded, isPageModalOpen])
 
   useEffect(() => {
