@@ -1,4 +1,5 @@
 import type { ExportMessage } from "~utils/exporter"
+import { cleanOutlineTitle } from "~utils/outline-text"
 
 export interface ExportMessagesOutlineOptions {
   includeUserQueries: boolean
@@ -37,26 +38,8 @@ function clampHeadingLevel(level: number | undefined): number {
   return Math.min(MAX_MARKDOWN_HEADING_LEVEL, Math.max(0, Math.floor(level)))
 }
 
-function stripBlockquoteMarkers(value: string): string {
-  return value.replace(/(^|\n)\s*>+\s?/g, "$1")
-}
-
-function stripInlineMarkdown(value: string): string {
-  return stripBlockquoteMarkers(value)
-    .replace(/^\s{0,3}#{1,6}\s+/, "")
-    .replace(/!\[([^\]]*)\]\([^)]+\)/g, "$1")
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-    .replace(/\\([\\`*_[\]{}()#+\-.!|>])/g, "$1")
-    .replace(/[`*_~]/g, "")
-    .replace(/⁣/g, "") // Remove invisible separator character (used in quick quote markers)
-    .replace(/\s+/g, " ")
-    .trim()
-}
-
 function normalizeOutlineText(value: string, maxLength?: number): string {
-  const normalized = stripInlineMarkdown(
-    stripBlockquoteMarkers(value.replace(/\r\n?/g, "\n")).replace(/\n+/g, " "),
-  )
+  const normalized = cleanOutlineTitle(value)
   if (!maxLength || normalized.length <= maxLength) return normalized
   return `${normalized.slice(0, maxLength).trim()}...`
 }

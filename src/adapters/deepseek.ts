@@ -19,6 +19,7 @@ import {
   type ExportAssetCollector,
 } from "~utils/export-assets"
 import { htmlToMarkdown, type ExportBundle } from "~utils/exporter"
+import { cleanOutlineTitle } from "~utils/outline-text"
 import { t } from "~utils/i18n"
 
 import {
@@ -1612,7 +1613,7 @@ export class DeepSeekAdapter extends SiteAdapter {
   }
 
   private normalizeUserQueryMatchText(text: string): string {
-    return this.normalizeOutlineText(text).replace(/(?:\.{3}|…)$/u, "")
+    return cleanOutlineTitle(text).replace(/(?:\.{3}|…)$/u, "")
   }
 
   private normalizeOutlineText(text: string): string {

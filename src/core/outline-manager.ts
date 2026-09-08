@@ -5,6 +5,7 @@ import { useBookmarkStore, type Bookmark } from "~stores/bookmarks-store"
 import { useSettingsStore } from "~stores/settings-store"
 import { showToast } from "~utils/toast"
 import { t } from "~utils/i18n"
+import { cleanOutlineTitle } from "~utils/outline-text"
 import { EVENT_MONITOR_COMPLETE, EVENT_MONITOR_START } from "~utils/messaging"
 import { signalReadingHistoryUserNavigation } from "~utils/reading-history-navigation"
 
@@ -922,6 +923,14 @@ export class OutlineManager {
       this.settings.showUserQueries,
       showWordCount,
     )
+
+    // 标准化清洗用户提问标题（剥离 Markdown 语法标记）
+    outlineData.forEach((item) => {
+      if (item.isUserQuery && item.text) {
+        item.text = cleanOutlineTitle(item.text)
+      }
+    })
+
     // --- Merge Bookmarks ---
     const sessionId = this.getBookmarkSessionId()
     const bookmarks = useBookmarkStore.getState().getBookmarksBySession(sessionId)
@@ -939,6 +948,11 @@ export class OutlineManager {
         // Preserve Array.find semantics if duplicate bookmarks share signature + title.
         if (!bookmarksByTitle.has(bookmark.title)) {
           bookmarksByTitle.set(bookmark.title, bookmark)
+        }
+        // 兼容清洗前后的标题匹配（支持历史带 Markdown 标记的书签与清洗后标题匹配）
+        const cleanTitle = cleanOutlineTitle(bookmark.title)
+        if (!bookmarksByTitle.has(cleanTitle)) {
+          bookmarksByTitle.set(cleanTitle, bookmark)
         }
       })
       const unmatchedBookmarkIds = new Set(bookmarks.map((b) => b.id))
@@ -967,8 +981,9 @@ export class OutlineManager {
       unmatchedBookmarkIds.forEach((bid) => {
         const bookmark = bookmarkById.get(bid)
         if (bookmark) {
-          if (!ghostCandidates[bookmark.title]) ghostCandidates[bookmark.title] = []
-          ghostCandidates[bookmark.title].push(bookmark.id)
+          const key = bookmark.level === 0 ? cleanOutlineTitle(bookmark.title) : bookmark.title
+          if (!ghostCandidates[key]) ghostCandidates[key] = []
+          ghostCandidates[key].push(bookmark.id)
         }
       })
 
@@ -1022,7 +1037,7 @@ export class OutlineManager {
           }
           ghosts.push({
             level: bookmark.level,
-            text: bookmark.title,
+            text: bookmark.level === 0 ? cleanOutlineTitle(bookmark.title) : bookmark.title,
             element: null, // Ghost nodes have no element
             isUserQuery: bookmark.level === 0, // 0 级节点即用户提问
             // Custom props
@@ -1207,6 +1222,7 @@ export class OutlineManager {
 
       if (
         node.element !== item.element ||
+        node.text !== item.text ||
         node.id !== item.id ||
         node.navigationId !== item.navigationId ||
         node.context !== item.context ||
@@ -1222,6 +1238,7 @@ export class OutlineManager {
       }
 
       node.element = item.element
+      node.text = item.text
       node.id = item.id
       node.navigationId = item.navigationId
       node.context = item.context
