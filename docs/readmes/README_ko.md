@@ -21,7 +21,7 @@
   
   <p align="center" style="font-size: 12px; color: #555;">👇 데모: "무한 스크롤 채팅 기록"에서 "탐색 가능한 AI 문서"로</p>
 
-<img width="1200" height="675" alt="Image" src="https://github.com/user-attachments/assets/f64acba5-145d-4d69-a551-1ea78d1c2fe7" />
+<img width="1200" height="675" alt="Image" src="https://github.com/user-attachments/assets/3e15e094-4085-4532-9bd7-7ec3f1ca525e" />
 
   <p>
     <strong><em>AI 채팅을 처음으로 정리 가능한 워크플로우로 만듭니다</em></strong><br/>

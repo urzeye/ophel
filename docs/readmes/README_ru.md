@@ -13,7 +13,7 @@
   
   <p align="center" style="font-size: 12px; color: #555;">👇 Демо: От "Бесконечной прокрутки чата" к "Навигационным AI документам"</p>
 
-<img width="1200" height="675" alt="Image" src="https://github.com/user-attachments/assets/f64acba5-145d-4d69-a551-1ea78d1c2fe7" />
+<img width="1200" height="675" alt="Image" src="https://github.com/user-attachments/assets/3e15e094-4085-4532-9bd7-7ec3f1ca525e" />
 
   <p>
     <strong><em>Делая AI-чат действительно организуемым рабочим процессом впервые</em></strong><br/>
