@@ -12,7 +12,7 @@
     </br>
     用實時大綱釐清脈絡，
     </br>
-    用會話文件夾構築體系，
+    用對話文件夾構築體系，
     </br>
     用 Prompt 詞庫沉澱經驗，
     </br>
@@ -85,7 +85,7 @@
 
 ## 📹 功能演示
 
-|                                                        大綱 Outline                                                        |                                                     會話 Conversations                                                     |                                                       功能 Features                                                        |
+|                                                        大綱 Outline                                                        |                                                     對話 Conversations                                                     |                                                       功能 Features                                                        |
 | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: |
 | <video src="https://github.com/user-attachments/assets/a40eb655-295e-4f9c-b432-9313c9242c9d" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/a249baeb-2e82-4677-847c-2ff584c3f56b" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/6dfca20d-2f88-4844-b3bb-c48321100ff4" width="280" controls></video> |
 
@@ -106,8 +106,8 @@
       <td>實時解析對話結構生成可導航目錄，支援層級折疊、搜尋跳轉、錨點定位、收藏書籤、大綱複製與字數統計</td>
     </tr>
     <tr>
-      <td>💬 <a href="https://ophel.app/docs/zh/features/conversations">會話管理</a></td>
-      <td>文件夾 + 標籤雙維度管理，自動同步源站會話，支援搜尋、批量操作與拖曳排序</td>
+      <td>💬 <a href="https://ophel.app/docs/zh/features/conversations">對話管理</a></td>
+      <td>文件夾 + 標籤雙維度管理，自動同步源站對話，支援搜尋、批量操作與拖曳排序</td>
     </tr>
     <tr>
       <td>📤 <a href="https://ophel.app/docs/zh/features/export">匯出功能</a></td>
@@ -123,7 +123,7 @@
     </tr>
     <tr>
       <td>🔍 <a href="https://ophel.app/docs/zh/features/global-search">全域搜尋</a></td>
-      <td>跨會話/大綱/提示詞/設定統一搜尋，支援 <code>folder:</code> <code>tag:</code> <code>date:</code> 等語法過濾與模糊匹配</td>
+      <td>跨對話/大綱/提示詞/設定統一搜尋，支援 <code>folder:</code> <code>tag:</code> <code>date:</code> 等語法過濾與模糊匹配</td>
     </tr>
     <tr>
       <td>📖 <a href="https://ophel.app/docs/zh/enhancements/content">閱讀增強</a></td>
@@ -150,7 +150,7 @@
 >
 > **Ophel Atlas** 以隱私優先為原則：預設本地儲存，你的資料由你掌控。
 >
-> - **預設本地儲存：** 設定、Prompt、會話管理資料等預設保存在瀏覽器本地
+> - **預設本地儲存：** 設定、Prompt、對話管理資料等預設保存在瀏覽器本地
 > - **無需註冊帳號：** 不需要建立任何帳號即可使用
 > - **按需授權：** 可選權限在需要時再授權，並可隨時撤銷（見擴充功能 Permissions 頁）
 > - **可選 WebDAV 同步：** 如需多裝置一致，可使用你自己的 WebDAV 服務同步（可控、可遷移）
