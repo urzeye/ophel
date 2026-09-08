@@ -21,7 +21,7 @@
   
   <p align="center" style="font-size: 12px; color: #555;">👇 데모: "무한 스크롤 채팅 기록"에서 "탐색 가능한 AI 문서"로</p>
 
-![Ophel Demo](../media/demo/outline.gif)
+<img width="1200" height="675" alt="Image" src="https://github.com/user-attachments/assets/f64acba5-145d-4d69-a551-1ea78d1c2fe7" />
 
   <p>
     <strong><em>AI 채팅을 처음으로 정리 가능한 워크플로우로 만듭니다</em></strong><br/>
@@ -72,7 +72,6 @@
 </p>
 
 <p align="center">
-  <a href="#-기능-데모">기능 데모</a> •
   <a href="#-핵심-기능">핵심 기능</a> •
   <a href="#-시작하기">시작하기</a> •
   <a href="#-ophel-atlas-지원하기">Ophel Atlas 지원하기</a> •
@@ -82,12 +81,6 @@
 <p align="center">
   🌐 <a href="../../README.md">English</a> | <a href="../../README_zh-CN.md">简体中文</a> | <a href="./README_zh-TW.md">繁體中文</a> | <a href="./README_ja.md">日本語</a> | <strong>한국어</strong> | <a href="./README_de.md">Deutsch</a> | <a href="./README_fr.md">Français</a> | <a href="./README_es.md">Español</a> | <a href="./README_pt-BR.md">Português</a> | <a href="./README_ru.md">Русский</a>
 </p>
-
-## 📹 기능 데모
-
-|                                                        개요 Outline                                                        |                                                     대화 Conversations                                                     |                                                       기능 Features                                                        |
-| :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: |
-| <video src="https://github.com/user-attachments/assets/a40eb655-295e-4f9c-b432-9313c9242c9d" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/a249baeb-2e82-4677-847c-2ff584c3f56b" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/6dfca20d-2f88-4844-b3bb-c48321100ff4" width="280" controls></video> |
 
 ## ✨ 핵심 기능
 

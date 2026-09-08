@@ -21,7 +21,7 @@
   
   <p align="center" style="font-size: 12px; color: #555;">👇 Demo: 從“無限滾動的聊天記錄”，到“可導航的 AI 文檔”</p>
 
-![Ophel Demo](../media/demo/outline.gif)
+<img width="1200" height="675" alt="Image" src="https://github.com/user-attachments/assets/f64acba5-145d-4d69-a551-1ea78d1c2fe7" />
 
   <p>
     <strong><em>它讓 AI 對話第一次成為可組織的工作流</em></strong><br/>
@@ -72,7 +72,6 @@
 </p>
 
 <p align="center">
-  <a href="#-功能演示">功能演示</a> •
   <a href="#-核心功能">核心功能</a> •
   <a href="#-快速開始">快速開始</a> •
   <a href="#-支持-ophel-atlas">支持 Ophel Atlas</a> •
@@ -82,12 +81,6 @@
 <p align="center">
   🌐 <a href="../../README.md">English</a> | <a href="../../README_zh-CN.md">简体中文</a> | <strong>繁體中文</strong> | <a href="./README_ja.md">日本語</a> | <a href="./README_ko.md">한국어</a> | <a href="./README_de.md">Deutsch</a> | <a href="./README_fr.md">Français</a> | <a href="./README_es.md">Español</a> | <a href="./README_pt-BR.md">Português</a> | <a href="./README_ru.md">Русский</a>
 </p>
-
-## 📹 功能演示
-
-|                                                        大綱 Outline                                                        |                                                     對話 Conversations                                                     |                                                       功能 Features                                                        |
-| :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: |
-| <video src="https://github.com/user-attachments/assets/a40eb655-295e-4f9c-b432-9313c9242c9d" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/a249baeb-2e82-4677-847c-2ff584c3f56b" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/6dfca20d-2f88-4844-b3bb-c48321100ff4" width="280" controls></video> |
 
 ## ✨ 核心功能
 

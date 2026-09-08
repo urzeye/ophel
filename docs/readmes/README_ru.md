@@ -13,7 +13,7 @@
   
   <p align="center" style="font-size: 12px; color: #555;">👇 Демо: От "Бесконечной прокрутки чата" к "Навигационным AI документам"</p>
 
-![Ophel Demo](../media/demo/outline.gif)
+<img width="1200" height="675" alt="Image" src="https://github.com/user-attachments/assets/f64acba5-145d-4d69-a551-1ea78d1c2fe7" />
 
   <p>
     <strong><em>Делая AI-чат действительно организуемым рабочим процессом впервые</em></strong><br/>
@@ -64,7 +64,6 @@
 </p>
 
 <p align="center">
-  <a href="#-демо">Демо</a> •
   <a href="#-основные-функции">Основные Функции</a> •
   <a href="#-быстрый-старт">Быстрый Старт</a> •
   <a href="#-поддержать-ophel-atlas">Поддержать Ophel Atlas</a> •
@@ -74,12 +73,6 @@
 <p align="center">
   🌐 <a href="../../README.md">English</a> | <a href="../../README_zh-CN.md">简体中文</a> | <a href="./README_zh-TW.md">繁體中文</a> | <a href="./README_ja.md">日本語</a> | <a href="./README_ko.md">한국어</a> | <a href="./README_de.md">Deutsch</a> | <a href="./README_fr.md">Français</a> | <a href="./README_es.md">Español</a> | <a href="./README_pt-BR.md">Português</a> | <strong>Русский</strong>
 </p>
-
-## 📹 Демо
-
-|                                                          Outline                                                           |                                                       Conversations                                                        |                                                          Features                                                          |
-| :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: |
-| <video src="https://github.com/user-attachments/assets/a40eb655-295e-4f9c-b432-9313c9242c9d" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/a249baeb-2e82-4677-847c-2ff584c3f56b" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/6dfca20d-2f88-4844-b3bb-c48321100ff4" width="280" controls></video> |
 
 ## ✨ Основные Функции
 

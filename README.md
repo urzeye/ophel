@@ -15,7 +15,7 @@
   
   <sub>👇 Demo: From "Infinite Scroll" to "Navigable AI Documents"</sub>
   
-  ![Ophel Demo](./docs/media/demo/outline.gif)
+  <img width="1200" height="675" alt="Image" src="https://github.com/user-attachments/assets/f64acba5-145d-4d69-a551-1ea78d1c2fe7" />
   
   <p>
     <strong><em>Making AI chat a truly organizeable workflow for the first time</em></strong><br/>
@@ -66,7 +66,6 @@
 </p>
 
 <p align="center">
-  <a href="#-demo">Demo</a> •
   <a href="#-core-features">Core Features</a> •
   <a href="#-quick-start">Quick Start</a> •
   <a href="#-support-ophel-atlas">Support Ophel Atlas</a> •
@@ -76,12 +75,6 @@
 <p align="center">
   🌐 <strong>English</strong> | <a href="./README_zh-CN.md">简体中文</a> | <a href="./docs/readmes/README_zh-TW.md">繁體中文</a> | <a href="./docs/readmes/README_ja.md">日本語</a> | <a href="./docs/readmes/README_ko.md">한국어</a> | <a href="./docs/readmes/README_de.md">Deutsch</a> | <a href="./docs/readmes/README_fr.md">Français</a> | <a href="./docs/readmes/README_es.md">Español</a> | <a href="./docs/readmes/README_pt-BR.md">Português</a> | <a href="./docs/readmes/README_ru.md">Русский</a>
 </p>
-
-## 📹 Demo
-
-|                                                          Outline                                                           |                                                           Chats                                                            |                                                          Features                                                          |
-| :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: |
-| <video src="https://github.com/user-attachments/assets/a40eb655-295e-4f9c-b432-9313c9242c9d" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/a249baeb-2e82-4677-847c-2ff584c3f56b" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/6dfca20d-2f88-4844-b3bb-c48321100ff4" width="280" controls></video> |
 
 ## ✨ Core Features
 

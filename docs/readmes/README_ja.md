@@ -21,7 +21,7 @@
   
   <p align="center" style="font-size: 12px; color: #555;">👇 デモ：「無限スクロールのチャット履歴」から「ナビ可能なAIドキュメント」へ</p>
 
-![Ophel Demo](../media/demo/outline.gif)
+<img width="1200" height="675" alt="Image" src="https://github.com/user-attachments/assets/f64acba5-145d-4d69-a551-1ea78d1c2fe7" />
 
   <p>
     <strong><em>AIチャットを初めて「整理可能なワークフロー」にします</em></strong><br/>
@@ -72,7 +72,6 @@
 </p>
 
 <p align="center">
-  <a href="#-デモ">デモ</a> •
   <a href="#-主な機能">主な機能</a> •
   <a href="#-今すぐ始める">今すぐ始める</a> •
   <a href="#-ophel-atlas-をサポート">Ophel Atlas をサポート</a> •
@@ -82,12 +81,6 @@
 <p align="center">
   🌐 <a href="../../README.md">English</a> | <a href="../../README_zh-CN.md">简体中文</a> | <a href="./README_zh-TW.md">繁體中文</a> | <strong>日本語</strong> | <a href="./README_ko.md">한국어</a> | <a href="./README_de.md">Deutsch</a> | <a href="./README_fr.md">Français</a> | <a href="./README_es.md">Español</a> | <a href="./README_pt-BR.md">Português</a> | <a href="./README_ru.md">Русский</a>
 </p>
-
-## 📹 デモ
-
-|                                                        大綱 Outline                                                        |                                                     会話 Conversations                                                     |                                                       機能 Features                                                        |
-| :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: |
-| <video src="https://github.com/user-attachments/assets/a40eb655-295e-4f9c-b432-9313c9242c9d" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/a249baeb-2e82-4677-847c-2ff584c3f56b" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/6dfca20d-2f88-4844-b3bb-c48321100ff4" width="280" controls></video> |
 
 ## ✨ 主な機能
 
