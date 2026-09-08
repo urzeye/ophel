@@ -913,9 +913,10 @@ export class OutlineManager {
   private _doRefresh(overrideLevel?: number) {
     const sourcesChanged = this.updateSources()
 
-    // Read showWordCount from live settings store to pick up changes without page refresh
+    // Read showWordCount and userQueryMarkdown from live settings store to pick up changes without page refresh
     const liveSettings = useSettingsStore.getState().settings
     const showWordCount = liveSettings?.features?.outline?.showWordCount ?? false
+    const userQueryMarkdownEnabled = liveSettings?.content?.userQueryMarkdown ?? true
 
     let outlineData = this.siteAdapter.extractOutlineForSource(
       this.activeSourceId,
@@ -924,12 +925,14 @@ export class OutlineManager {
       showWordCount,
     )
 
-    // 标准化清洗用户提问标题（剥离 Markdown 语法标记）
-    outlineData.forEach((item) => {
-      if (item.isUserQuery && item.text) {
-        item.text = cleanOutlineTitle(item.text)
-      }
-    })
+    // 仅在开启“用户提问样式优化”时，标准化清洗用户提问标题中的 Markdown 语法标记
+    if (userQueryMarkdownEnabled) {
+      outlineData.forEach((item) => {
+        if (item.isUserQuery && item.text) {
+          item.text = cleanOutlineTitle(item.text)
+        }
+      })
+    }
 
     // --- Merge Bookmarks ---
     const sessionId = this.getBookmarkSessionId()
@@ -1037,7 +1040,10 @@ export class OutlineManager {
           }
           ghosts.push({
             level: bookmark.level,
-            text: bookmark.level === 0 ? cleanOutlineTitle(bookmark.title) : bookmark.title,
+            text:
+              bookmark.level === 0 && userQueryMarkdownEnabled
+                ? cleanOutlineTitle(bookmark.title)
+                : bookmark.title,
             element: null, // Ghost nodes have no element
             isUserQuery: bookmark.level === 0, // 0 级节点即用户提问
             // Custom props
