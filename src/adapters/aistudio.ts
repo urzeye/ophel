@@ -21,7 +21,6 @@ import {
   type ExportAssetCollector,
 } from "~utils/export-assets"
 import { htmlToMarkdown, type ExportBundle } from "~utils/exporter"
-import { cleanOutlineTitle } from "~utils/outline-text"
 import { t } from "~utils/i18n"
 
 import {
@@ -218,7 +217,7 @@ export class AIStudioAdapter extends SiteAdapter {
   }
 
   private normalizeScrollbarQueryText(text: string): string {
-    return cleanOutlineTitle(text)
+    return text.replace(/\s+/g, " ").trim()
   }
 
   private isSameOutlineText(source: string, target: string): boolean {

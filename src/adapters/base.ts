@@ -12,7 +12,6 @@ import { createExportAssetCollector, type ExportAssetCollector } from "~utils/ex
 import type { ExportBundle, ExportFormat, ExportMessage } from "~utils/exporter"
 import { t } from "~utils/i18n"
 import { createSiteInstanceKey } from "~utils/site-identity"
-import { cleanOutlineTitle } from "~utils/outline-text"
 import type { ExportPackaging } from "~utils/storage"
 
 import { getBuiltinFeatureCapabilities, type SitePackCapability } from "./feature-capabilities"
@@ -1334,26 +1333,6 @@ export abstract class SiteAdapter {
     return null
   }
 
-  /** 判断候选 DOM 文本与大纲提问文本是否匹配（支持原始文本与清洗后标题归一化比对） */
-  protected isMatchingUserQueryText(candidateText: string, targetText: string): boolean {
-    if (!candidateText || !targetText) return false
-    if (
-      candidateText === targetText ||
-      candidateText.startsWith(targetText) ||
-      targetText.startsWith(candidateText)
-    ) {
-      return true
-    }
-
-    const cleanCandidate = cleanOutlineTitle(candidateText)
-    const cleanTarget = cleanOutlineTitle(targetText)
-    return (
-      cleanCandidate === cleanTarget ||
-      cleanCandidate.startsWith(cleanTarget) ||
-      cleanTarget.startsWith(cleanCandidate)
-    )
-  }
-
   /**
    * 根据 queryIndex 和文本查找用户提问元素
    * 用于大纲跳转时元素失效后的重新查找
@@ -1372,8 +1351,12 @@ export abstract class SiteAdapter {
     if (elements.length >= queryIndex) {
       const candidate = elements[queryIndex - 1]
       const candidateText = this.extractUserQueryText(candidate)
-      // 验证：文本匹配或包含关系（支持原始文本与清洗后标题匹配）
-      if (this.isMatchingUserQueryText(candidateText, text)) {
+      // 验证：文本匹配或包含关系（大纲可能显示截断的文本）
+      if (
+        candidateText === text ||
+        candidateText.startsWith(text) ||
+        text.startsWith(candidateText)
+      ) {
         return candidate
       }
     }
@@ -1381,7 +1364,7 @@ export abstract class SiteAdapter {
     // 2. 回退：按文本内容搜索所有用户提问
     for (const el of elements) {
       const elText = this.extractUserQueryText(el)
-      if (this.isMatchingUserQueryText(elText, text)) {
+      if (elText === text || elText.startsWith(text) || text.startsWith(elText)) {
         return el
       }
     }

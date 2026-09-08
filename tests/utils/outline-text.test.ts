@@ -70,6 +70,15 @@ describe("cleanOutlineTitle", () => {
     expect(cleanOutlineTitle("###")).toBe("###")
     expect(cleanOutlineTitle(">")).toBe(">")
   })
+
+  it("removes quick quote marker residue (U+2063 invisible separator)", () => {
+    // 渲染形态：标记锚点标签只剩不可见分隔符
+    expect(cleanOutlineTitle("请分析这段代码 \u2063")).toBe("请分析这段代码")
+    // 原始 Markdown 形态：链接文本为 U+2063，整条标记应被移除
+    expect(
+      cleanOutlineTitle('请分析 [\u2063](#ophel-quick-quote "ophel-quick-quote:abc123")'),
+    ).toBe("请分析")
+  })
 })
 
 describe("export-outline integration with cleanOutlineTitle", () => {

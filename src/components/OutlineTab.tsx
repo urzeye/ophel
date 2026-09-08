@@ -29,6 +29,7 @@ import {
   createOutlineTextFromExportMessages,
   createOutlineTextFromOutlineTree,
 } from "~utils/export-outline"
+import { cleanOutlineTitle } from "~utils/outline-text"
 import { t, getCurrentLang } from "~utils/i18n"
 import { formatWordCount } from "~utils/format"
 import { showToast } from "~utils/toast"
@@ -395,6 +396,15 @@ const OutlineNodeView: React.FC<{
   // 只要有子节点就显示箭头，允许手动展开查看不匹配的子节点
   const isExpanded = hasChildren && !node.collapsed
 
+  // ===== 展示文本（仅展示层清洗，node.text 始终保留原文供复制/书签/跳转匹配使用）=====
+  const cleanUserQueryTitles = useSettingsStore(
+    (s) => s.settings.content?.userQueryMarkdown ?? true,
+  )
+  const displayText = useMemo(
+    () => (node.isUserQuery && cleanUserQueryTitles ? cleanOutlineTitle(node.text) : node.text),
+    [node.isUserQuery, node.text, cleanUserQueryTitles],
+  )
+
   // ===== 复制处理 (阻止冒泡) =====
   const [copySuccess, setCopySuccess] = useState(false)
 
@@ -462,7 +472,7 @@ const OutlineNodeView: React.FC<{
       try {
         const escapedQuery = searchQuery.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
         const regex = new RegExp(`(${escapedQuery})`, "gi")
-        const parts = node.text.split(regex)
+        const parts = displayText.split(regex)
         return (
           <>
             {parts.map((part, i) =>
@@ -484,10 +494,10 @@ const OutlineNodeView: React.FC<{
           </>
         )
       } catch {
-        return node.text
+        return displayText
       }
     }
-    return node.text
+    return displayText
   }
 
   return (
@@ -496,13 +506,13 @@ const OutlineNodeView: React.FC<{
       content={
         node.wordCount && node.wordCount > 0 ? (
           <div>
-            {node.text}
+            {displayText}
             <div style={{ fontSize: "12px", opacity: 0.8, marginTop: "2px" }}>
               ({formatWordCount(node.wordCount, getCurrentLang())} {t("words")})
             </div>
           </div>
         ) : (
-          node.text
+          displayText
         )
       }
       disabled={isHoveringAction}
