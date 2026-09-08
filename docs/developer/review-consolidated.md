@@ -46,7 +46,7 @@
 - **位置**：
   - `src/adapters/chatgpt.ts:3540-3569`、`src/adapters/zai.ts:612-635`：`foundCurrent` 循环恒假——`startEl` 是 AI 回复内的 h1~h6，与用户提问元素比较 `===`/`contains` 永远不中，`nextUserQuery` 恒为 `null`，字数从当前标题一直累加到最后一个 AI 回复。
   - `src/adapters/grok.ts:2246-2252`：仅查 `parentElement.nextElementSibling`（是紧随的 AI 回复，不是下一个用户消息），同样恒 `null`。
-  - `src/adapters/claude.ts:1952-1973`、`src/adapters/gemini.ts:5545`：`headings` 是全会话扁平数组，`nextBoundaryEl`/`nextEl` 可能在 `messageContent` 容器之外；基类 `calculateRangeWordCount`（`src/adapters/base.ts:1161`）**不校验 endEl 是否在容器内**，Range 跨多个轮次消息，字数虚高数倍；endEl 在 startEl 之前时抛错被 catch 静默返回 0。
+  - `src/adapters/claude.ts:1952-1973`、`src/adapters/gemini.ts:5545`：`headings` 是全对话扁平数组，`nextBoundaryEl`/`nextEl` 可能在 `messageContent` 容器之外；基类 `calculateRangeWordCount`（`src/adapters/base.ts:1161`）**不校验 endEl 是否在容器内**，Range 跨多个轮次消息，字数虚高数倍；endEl 在 startEl 之前时抛错被 catch 静默返回 0。
 - **修复**：边界查找改用 `compareDocumentPosition`；基类 `calculateRangeWordCount` 增加 `fallbackContainer.contains(endEl)` 校验，越界时退化为容器末尾。
 
 ### P1-2 Z.ai 无用户提问选择器时大纲全部丢失
@@ -144,7 +144,7 @@
 
 - **来源**：Gemini #19；Codex 补充：轮询本身是 CPU 热点
 - **位置**：`src/core/queue-dispatcher.ts:57-60, 296-341`
-- **现状**：`stop()` 只停 `pollingTasks`，`postSubmitWaitPromise` 的 while 循环脱缰跑到超时；且 `getConversationActivitySignature` 每 500ms 对整段会话做全量 `textContent` 序列化。
+- **现状**：`stop()` 只停 `pollingTasks`，`postSubmitWaitPromise` 的 while 循环脱缰跑到超时；且 `getConversationActivitySignature` 每 500ms 对整段对话做全量 `textContent` 序列化。
 - **修复**：引入停止标记，`stop()` 时退出循环。
 
 ### P1-16 `PromptManager.init()` 等待 hydration 无超时兜底
@@ -165,7 +165,7 @@
 
 - **来源**：Grok P2-10 = Gemini UI#4（部分重叠）
 - **位置**：`src/components/ui/Dialog.tsx:103, 168`、`src/components/ConversationDialogs.tsx:99, 165`
-- **现状**：导出、会话对话框、变量输入等均 `createPortal(..., document.body)`，自定义主题失效；两处都注入 `id="gh-dialog-styles"`，先到先赢，后挂载组件的整份 CSS 被跳过。
+- **现状**：导出、对话对话框、变量输入等均 `createPortal(..., document.body)`，自定义主题失效；两处都注入 `id="gh-dialog-styles"`，先到先赢，后挂载组件的整份 CSS 被跳过。
 - **修复**：区分样式 ID（小改动先修冲突）；弹层挂回 Shadow 内（改动面大，见 CSV 取舍）。
 
 ### P1-19 独立 Options 页缺「全局搜索」「快捷键」两个一级入口
@@ -195,7 +195,7 @@
 - **现状**：IME 候选框出现时输入框 focusout + 指针落候选窗，200ms 后按 `:hover` 缩回。微软拼音/搜狗必现，英文输入法不出现。
 - **修复**：`compositionstart/end` 期间保持展开；输入框聚焦时不按 `:hover` 缩回。
 
-### P1-23 DeepSeek 长会话导出仍用步进扫描 + overlap 合并
+### P1-23 DeepSeek 长对话导出仍用步进扫描 + overlap 合并
 
 - **来源**：Grok P2-8
 - **位置**：`src/adapters/deepseek.ts:2374, 2682`（`mergeExportMessageBatch`）
@@ -242,7 +242,7 @@
 | P2-13 | 工具箱打开旋转（tools-spin）、未读红点脉冲（pulse-red） | `src/style.css` | Grok UI | 保留设计（按明确需求保留既有视觉动效） |
 | P2-14 | Tooltip 固定深色玻璃不跟 24 套主题 | tooltip 样式 | Grok UI | 真实 |
 | P2-15 | 失败反馈几乎全靠 2-3s toast，错误不可复制 | 全局 | Grok UI | 真实（方向性改进） |
-| P2-16 | 三个 Tab 工具栏不统一（会话未进 tool-stack、大纲 28px 旧类、搜索 30/32 混用） | 三个 Tab | Grok UI | 真实 |
+| P2-16 | 三个 Tab 工具栏不统一（对话未进 tool-stack、大纲 28px 旧类、搜索 30/32 混用） | 三个 Tab | Grok UI | 真实 |
 | P2-17 | 免责声明装饰性 emoji + 硬编码蓝紫渐变 | 相关组件 | Grok UI | 真实 |
 | P2-18 | 提示词分类删除硬编码中文回退 `"未分类"` | `src/stores/prompts-store.ts:76`、`src/core/prompt-manager.ts:74` | Gemini 五#1 | 真实 |
 | P2-19 | 散落硬编码文案：「队列为空…」「当前使用」`"No options"` `aria-label="active search filters"` | `QueueOverlay.tsx:581`、`ClaudeSettings.tsx:716`、`SelectDropdown.tsx:309`、`GlobalSearchOverlay.tsx:286` | Gemini 五#2 | 真实 |
@@ -261,7 +261,7 @@
 | P3-1 | Trusted Types 恒等策略 `createHTML: (s) => s`，油猴还可能装 pass-through default policy | `src/utils/trusted-types.ts:53,87` | Grok P3 | 真实（合规绕行性质，非漏洞本身） |
 | P3-2 | WebDAV 恢复非原子：`Promise.all(storage.set)` 失败不回滚，叠加存储吞错 | `src/core/backup-codec.ts:360` | Grok P3 | 真实 |
 | P3-3 | 多处 `postMessage(..., "*")` 不校验 origin，同窗口脚本可干扰滚动锁/批量挂载 | `chatgpt-perf-manager.ts:114`、`scroll-lock-manager.ts:71`、`network-monitor.ts:426-428`、`iframe-scroll-main.ts:65`、`gemini-mystuff-bridge.ts:335` | Grok P3 | 真实 |
-| P3-4 | 阅读进度恢复仍 `loadAll: true`，长会话全量滚动加载 | `src/hooks/useShortcuts.ts:116` | Grok P3 | 真实 |
+| P3-4 | 阅读进度恢复仍 `loadAll: true`，长对话全量滚动加载 | `src/hooks/useShortcuts.ts:116` | Grok P3 | 真实 |
 | P3-5 | Gemini 提问 ID 绑 `jslog` 正则，站点一改书签/大纲 ID 全失效 | `src/adapters/gemini.ts:595-614` | Grok P3 | 真实（无更稳定替代前的固有风险） |
 | P3-6 | ChatGPT 空闲观察器常驻：`document.body` `subtree + characterData`；`network-monitor` 对命中 fetch `response.clone()` 读全量 body；多路 1s/2s/3s 轮询（#787 / #889） | `src/core/chatgpt-perf-manager.ts:130-135`、`src/core/network-monitor.ts:172` | Grok P2-7 | 真实 |
 | P3-7 | `ConversationsTab` store snapshot 与 4 组 useState 双重镜像，级联重渲染 | `src/components/ConversationsTab.tsx:152-193` | Gemini 架构 #3 | 真实 |
@@ -278,7 +278,7 @@
 
 | 条目 | 结论 | 说明 |
 |---|---|---|
-| 历史二.6「提示词备份遗漏 folders 与 tags」 | 误报 | `Prompt` 模型用 `category: string`，folders/tags 属会话体系；`BACKUP_TYPE_KEYS.prompts` 已完整覆盖提示词数据。Gemini 判断正确，Codex 复核确认。 |
+| 历史二.6「提示词备份遗漏 folders 与 tags」 | 误报 | `Prompt` 模型用 `category: string`，folders/tags 属对话体系；`BACKUP_TYPE_KEYS.prompts` 已完整覆盖提示词数据。Gemini 判断正确，Codex 复核确认。 |
 | Grok P1-4「queue-overlay.css 未打进包」 | 部分修正 | 组件内 `import` 会被油猴构建注入 document.head；真正丢失的是 Shadow `:host` 主题变量与挂载层级，见 P1-17。 |
 | Grok P2-12 韩文乱码 | 存疑 | 见 P3-13，复现条件苛刻且缺关键证据，暂按「不存在」处理，不立项修复。 |
 

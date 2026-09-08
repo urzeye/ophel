@@ -630,7 +630,7 @@ const createGeminiConfig = (): GeminiSiteConfig => {
       newChatInputSafeArea:
         "chat-window.center-input-layout .input-area-container.is-zero-state, .center-input-layout .input-area-container, .zero-state-theme .input-area-container",
       userQueryWidth: ".user-query-bubble-with-background:not(.edit-mode)",
-      // Gemini Spark（/spark 路由）：会话列表是主内容区/左窗格里的任务卡片，没有侧边栏列表
+      // Gemini Spark（/spark 路由）：对话列表是主内容区/左窗格里的任务卡片，没有侧边栏列表
       sparkGoalCard: 'remy-task-list .goal-card[id^="goal-c_"]',
       sparkGoalTitle: ".goal-description",
       // 置顶标记：操作菜单宿主上的语义类。pin 图标的 sf-hidden 只是显隐工具类，hover/渲染时序下不可靠

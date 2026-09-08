@@ -45,7 +45,7 @@ export const FEATURE_TIPS: FeatureTip[] = [
     highlightTarget: "outline-tab",
     shortcutIds: ["prevHeading", "nextHeading"],
   },
-  // ---- 会话 Tab ----
+  // ---- 对话 Tab ----
   {
     id: "export-conv",
     highlightTarget: "conversations-tab",

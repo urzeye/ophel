@@ -7,9 +7,9 @@ ChatGPT 是 P3-07 大站批次的第一个配置化站点，当前 `configVersio
 | 范围 | 配置字段 | 影响功能 |
 | --- | --- | --- |
 | 输入与操作按钮 | `selectors.textarea`、`selectors.submitButton`、`selectors.newChatButton`、`selectors.stopButton`、`input.submitKey`、`validTextarea` | 输入框候选与有效性识别、发送、新对话、停止生成和快捷键提交 |
-| 会话侧栏 | `conversation.*`、`selectors.sidebarScrollContainer`、`conversationTitleFallback`、`conversationPinnedTrailingPair`、`conversationPinnedTrailingIcon` | 会话列表、ID、标题、URL、活动/置顶状态、跳转、侧栏滚动容器和观察器 |
-| 会话删除菜单 | `conversationActionButton`、`conversationActionIndicator`、`conversationMenu`、`conversationMenuItem` | 会话操作入口、菜单容器和删除项候选；点击与等待时序保持代码实现 |
-| 消息、Markdown 与大纲 | `selectors.responseContainer`、`selectors.chatContent`、`selectors.userQuery`、`selectors.assistantResponse`、`selectors.scrollContainer`、`codexTaskMarkdown`、`codexTaskUserQuery`、`userQueryText`、`srOnly`、`srOnlyFallback`、`assistantMarkdown`、`markdownFixerParagraph` | 普通会话与 Codex Task 消息识别、最新回复、滚动、大纲、字数统计、用户问题和 AI 正文提取及 Markdown 修复 |
+| 对话侧栏 | `conversation.*`、`selectors.sidebarScrollContainer`、`conversationTitleFallback`、`conversationPinnedTrailingPair`、`conversationPinnedTrailingIcon` | 对话列表、ID、标题、URL、活动/置顶状态、跳转、侧栏滚动容器和观察器 |
+| 对话删除菜单 | `conversationActionButton`、`conversationActionIndicator`、`conversationMenu`、`conversationMenuItem` | 对话操作入口、菜单容器和删除项候选；点击与等待时序保持代码实现 |
+| 消息、Markdown 与大纲 | `selectors.responseContainer`、`selectors.chatContent`、`selectors.userQuery`、`selectors.assistantResponse`、`selectors.scrollContainer`、`codexTaskMarkdown`、`codexTaskUserQuery`、`userQueryText`、`srOnly`、`srOnlyFallback`、`assistantMarkdown`、`markdownFixerParagraph` | 普通对话与 Codex Task 消息识别、最新回复、滚动、大纲、字数统计、用户问题和 AI 正文提取及 Markdown 修复 |
 | 导出、附件与图片 | `export.*`、`exportCleanup`、`exportTurnContainer`、`exportMountedMessage`、`exportImageContainer`、`exportFileTile`、`exportFileLabel`、`exportFileName`、`deepResearchIframe` | 实时 DOM 导出、虚拟 turn 挂载检测、图片/文件识别和 Deep Research 链接导出 |
 | 原生 TOC | `nativeTocRail`、`nativeTocButton`、`nativeTocHoverAncestor`、`nativeTocTitleElement`、`nativeTocActive` | 原生 TOC 轨道、按钮、标题层、活动项和 hover 目标识别 |
 | 生成与模型 | `generating.existsSelectors`、`networkMonitor.*`、`modelSwitcher.*`、`modelMenu`、`modelMenuItem`、`modelMessageSlug`、`modelNameContainer`、`modelSelectedIndicator`、`modelSelectorName` | 生成检测、网络静默判断、当前模型名称、模型入口和模型锁定 |
@@ -20,9 +20,9 @@ ChatGPT 是 P3-07 大站批次的第一个配置化站点，当前 `configVersio
 
 ## 仍需随应用发版
 
-- hostname、会话/分享/Codex Task 路由判断、会话 ID 与账户隔离解析、`localStorage._account` 和 Cookie 读取。
+- hostname、对话/分享/Codex Task 路由判断、对话 ID 与账户隔离解析、`localStorage._account` 和 Cookie 读取。
 - access token 缓存、原生删除 API endpoint/header、HTTP 错误映射、UI 删除关键词、批量失败熔断、点击/hover 和等待时序。
-- 长会话虚拟滚动遍历、turn 挂载重试、去重与排序、导出快照 `data-gh-*` 标记、Markdown/文本转换及附件 URL 安全过滤。
+- 长对话虚拟滚动遍历、turn 挂载重试、去重与排序、导出快照 `data-gh-*` 标记、Markdown/文本转换及附件 URL 安全过滤。
 - 原生 TOC 文本兼容、hover/PointerEvent、缓存签名、异步刷新、用户问题绑定和跳转等待逻辑。
 - Turn/Message ID 解析、大纲缓存与稳定排序、字数计算、动态 heading/属性 selector 和 Ophel 自身 `.gh-*` 排除规则。
 - 模型 slug/显示名解析、本地化信号缓存、重复进入冷却、菜单点击编排、PointerEvent 兼容和锁定结果判断。

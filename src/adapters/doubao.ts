@@ -3,7 +3,7 @@
  *
  * 选择器策略：
  * - 侧边栏基于新结构的稳定根节点 `#flow_chat_sidebar`
- * - 历史会话基于 `a[id^="conversation_"]`
+ * - 历史对话基于 `a[id^="conversation_"]`
  * - 文本与按钮仅在必要时使用哈希 class 的局部模糊匹配
  *
  * 主题机制：
@@ -11,7 +11,7 @@
  * - 使用 Semi Design 组件库（semi-* class 前缀）
  *
  * 路由兼容：
- * - /chat/{id} 和 /code/chat/{id} 指向同一会话
+ * - /chat/{id} 和 /code/chat/{id} 指向同一对话
  * - /thread/{id} 指向分享页
  * - 统一使用 conversationPathPattern 提取对话 ID
  */
@@ -473,7 +473,7 @@ export class DoubaoAdapter extends SiteAdapter {
     return this.extractConversationTitle(activeLink) || null
   }
 
-  // ===== 会话与路由 =====
+  // ===== 对话与路由 =====
 
   getSessionId(): string {
     const match = window.location.pathname.match(conversationPathPattern)
@@ -487,7 +487,7 @@ export class DoubaoAdapter extends SiteAdapter {
   }
 
   isSharePage(): boolean {
-    // 自有会话：/chat/ID 或 /code/chat/ID    分享会话：/thread/ID
+    // 自有对话：/chat/ID 或 /code/chat/ID    分享对话：/thread/ID
     return window.location.pathname.startsWith("/thread/")
   }
 
@@ -496,7 +496,7 @@ export class DoubaoAdapter extends SiteAdapter {
     return `https://www.doubao.com${prefix}/chat/`
   }
 
-  // ===== 会话列表 =====
+  // ===== 对话列表 =====
 
   getConversationList(): ConversationInfo[] {
     const links = this.getConversationRows()

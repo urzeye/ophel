@@ -1,5 +1,5 @@
 /**
- * 会话管理类型定义
+ * 对话管理类型定义
  */
 
 import type { ConversationInfo } from "~adapters/base"

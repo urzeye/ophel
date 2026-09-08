@@ -597,7 +597,7 @@ const PAGE_TAB_SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
       "功能",
       "模块",
       "大纲",
-      "会话",
+      "对话",
       "提示词",
       "标签页",
       "提醒",
@@ -761,13 +761,14 @@ const SUB_TAB_SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
   },
   {
     settingId: "subtab-features-conversations",
-    title: "会话",
+    title: "对话",
     keywords: [
       "conversations",
+      "chats",
       "chat history",
-      "会话",
-      "会话管理",
       "对话",
+      "对话",
+      "对话管理",
       "额度监控",
       "彩虹文件夹",
     ],
@@ -1074,12 +1075,14 @@ const SETTING_CARD_SEARCH_ITEMS: SettingsSearchItem[] = [
   },
   {
     settingId: "conversations-settings-card",
-    title: "会话管理设置",
+    title: "对话管理设置",
     keywords: [
       "conversations settings",
+      "chats settings",
       "folder rainbow",
       "sync delete",
-      "会话设置",
+      "对话设置",
+      "对话设置",
       "彩虹文件夹",
       "同步删除",
     ],
@@ -1618,7 +1621,7 @@ export const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
   },
   {
     settingId: "tab-open-new",
-    title: "新会话打开方式",
+    title: "新对话打开方式",
     keywords: ["tab", "new conversation", "open in new tab", "新标签页"],
   },
   {
@@ -1744,7 +1747,7 @@ export const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
   },
   {
     settingId: "conversation-folder-rainbow",
-    title: "会话文件夹彩虹色",
+    title: "对话文件夹彩虹色",
     keywords: ["conversation", "folder", "rainbow", "文件夹颜色"],
   },
   {

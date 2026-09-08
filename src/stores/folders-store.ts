@@ -1,7 +1,7 @@
 /**
  * Folders Store - Zustand 状态管理
  *
- * 管理会话文件夹列表
+ * 管理对话文件夹列表
  */
 
 import { create } from "zustand"

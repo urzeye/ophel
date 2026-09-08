@@ -1,8 +1,8 @@
-# 虚拟滚动站点长会话导出完整性技术方案
+# 虚拟滚动站点长对话导出完整性技术方案
 
 > 创建日期：2026-08-23
 > 涉及模块：`src/core/conversation/manager.ts`、`src/adapters/chatgpt.ts`、`src/adapters/doubao.ts`、`src/adapters/deepseek.ts`、`src/adapters/aistudio.ts`、`src/adapters/base.ts`、`src/utils/exporter.ts`
-> 关联需求：[Issue #780](https://github.com/urzeye/ophel/issues/780)（Doubao 导出不确定）、[Issue #117 评论](https://github.com/urzeye/ophel/issues/117#issuecomment-5382242329)（ChatGPT 长会话导出缺段）
+> 关联需求：[Issue #780](https://github.com/urzeye/ophel/issues/780)（Doubao 导出不确定）、[Issue #117 评论](https://github.com/urzeye/ophel/issues/117#issuecomment-5382242329)（ChatGPT 长对话导出缺段）
 > 关联文档：`export-pipeline-optimization-plan.md`（导出内容清洗管道，与本文的"采集完整性"正交）
 
 ---
@@ -11,8 +11,8 @@
 
 ### 1.1 用户反馈
 
-- **#780（Doubao，v1.1.5）**：同一会话重复导出结果不确定。短样本 19 条消息但末两条互换；长虚拟滚动样本两次导出分别为 343 与 425 条，稳定交集只有 298 条，并伴随重复记录与图片引用漂移；一次 Markdown 导出停留在 "Preparing export" 超过 296 秒未产出文件。
-- **#117 评论（ChatGPT，2026-08-22，现行版本）**：长会话 Markdown 导出缺若干段，第三方工具可完整导出。注意此时 ChatGPT 的 turn 驱动导出（#514，2026-05-19 引入）早已发布，说明现行方案仍有残余缺陷。
+- **#780（Doubao，v1.1.5）**：同一对话重复导出结果不确定。短样本 19 条消息但末两条互换；长虚拟滚动样本两次导出分别为 343 与 425 条，稳定交集只有 298 条，并伴随重复记录与图片引用漂移；一次 Markdown 导出停留在 "Preparing export" 超过 296 秒未产出文件。
+- **#117 评论（ChatGPT，2026-08-22，现行版本）**：长对话 Markdown 导出缺若干段，第三方工具可完整导出。注意此时 ChatGPT 的 turn 驱动导出（#514，2026-05-19 引入）早已发布，说明现行方案仍有残余缺陷。
 
 ### 1.2 根因定性
 
@@ -55,10 +55,10 @@ Claude（#782）是仓内已验证的最佳范式：稳定序号键 + 总数 ora
 
 ### P1 — 现行新范式的残余缺陷（#117 的根因候选）
 
-6. **ChatGPT 挂载超时的 turn 静默丢弃**：900ms 加 1800ms 两轮后放弃，无日志、无用户提示。长会话逐个快速滚动时，站点 IntersectionObserver 与渲染在资源压力下可能跟不上。
+6. **ChatGPT 挂载超时的 turn 静默丢弃**：900ms 加 1800ms 两轮后放弃，无日志、无用户提示。长对话逐个快速滚动时，站点 IntersectionObserver 与渲染在资源压力下可能跟不上。
 7. **ChatGPT 抓到不等于抓全**：`turnHasMountedMessage` 只看有无非空文本，长 markdown 分块渲染中即返回 true，提取出截断内容；retry 只覆盖"完全没抓到"的 turn，残缺 snapshot 不会重抓。
 8. **ChatGPT turnKey 内容兜底碰撞**：无 `data-turn-id` 时退化为 `role:content:<前120字符>`，重复提问（"继续"）或纯图片 turn 前缀相同即在 Map 中互相覆盖。
-9. **ChatGPT turn shell 留存假设未验证**：turn 驱动方案建立在"离屏 turn 保留 shell"的 5 月观察（60 轮样本）上。8 月站点改版（#819）后超长会话是否仍然成立需实测；若 shell 被卸载，`getAllTurnShellsSorted` 的前提失效。
+9. **ChatGPT turn shell 留存假设未验证**：turn 驱动方案建立在"离屏 turn 保留 shell"的 5 月观察（60 轮样本）上。8 月站点改版（#819）后超长对话是否仍然成立需实测；若 shell 被卸载，`getAllTurnShellsSorted` 的前提失效。
 
 ### P2 — 健壮性与体验
 
@@ -133,8 +133,8 @@ interface VirtualExportCollectResult {
 1. 采集结束做 turn-N 连续性校验（起始值 + 缺号），缺则定向补抓一轮，仍缺则上报。
 2. retry 范围从"完全没抓到的 turn"扩展到"疑似截断的 turn"（挂载中状态、末尾仍在流式标记）。
 3. turnKey 内容兜底追加首见序号后缀，消除重复提问碰撞。
-4. 实测超长会话（300+ turn）shell 留存假设；若不成立，改为"边滚动边枚举 shell"的两段式（先滚一遍建 shell 清单，再逐个采集）。
-5. loading-history 与采集联动（已实现）：高度收敛后 shell 起始 N > 1 时继续滚顶补载（30s 有界预算，避免无完整历史的会话卡死），仍缺则标记"历史可能不完整"并提示。
+4. 实测超长对话（300+ turn）shell 留存假设；若不成立，改为"边滚动边枚举 shell"的两段式（先滚一遍建 shell 清单，再逐个采集）。
+5. loading-history 与采集联动（已实现）：高度收敛后 shell 起始 N > 1 时继续滚顶补载（30s 有界预算，避免无完整历史的对话卡死），仍缺则标记"历史可能不完整"并提示。
 
 #### Doubao（重写为行号驱动，修 #780）
 
@@ -160,13 +160,13 @@ interface VirtualExportCollectResult {
 
 1. **loading-history 收敛改造**：高度不变不再直接视为完成——收敛后询问适配器历史起点是否未加载完（`hasUnloadedConversationHistory`，ChatGPT 用起始 `conversation-turn-N > 1` 判定，复用采集锚点而非易变的 spinner 选择器），是则继续滚顶做有界补载；加入真正的总时长上限（替换死代码 `maxRetries` 语义），触顶或补载失败时上报"历史可能未加载完"。
 2. **失败显式化**：`withConversationExportData` 的 catch 目前只 `console.error` 返回 null；改为 overlay 显示失败态 + toast，错误信息进日志。
-3. **进度反馈**：preparing 阶段把 `collectedCount/expectedCount` 透传到 overlay，长会话不再像卡死。
+3. **进度反馈**：preparing 阶段把 `collectedCount/expectedCount` 透传到 overlay，长对话不再像卡死。
 4. **资产下载加超时**（`resolveAssetData` 每资源 AbortSignal 超时 + 有限并发），单资源失败降级为保留外链并在 markdown 中标注，不拖死整包。
 
 ### 4.5 性能约束
 
-- 扫描改增量转换：按 key 只对首次出现的消息做 markdown 转换与资产收集，重复出现仅做长度比对（Doubao 长会话转换量从约 2 倍全量降为 1 倍）。
-- 等待时长自适应：挂载确认通过即立即继续，不睡满固定时长；长会话总耗时应低于现行固定 sleep 方案。
+- 扫描改增量转换：按 key 只对首次出现的消息做 markdown 转换与资产收集，重复出现仅做长度比对（Doubao 长对话转换量从约 2 倍全量降为 1 倍）。
+- 等待时长自适应：挂载确认通过即立即继续，不睡满固定时长；长对话总耗时应低于现行固定 sleep 方案。
 
 ---
 
@@ -185,10 +185,10 @@ interface VirtualExportCollectResult {
 
 | 阶段 | 内容 | 风险 | 验证 |
 | --- | --- | --- | --- |
-| P0 基础设施 | `ExportCollectionReport` 契约 + manager 消费（补扫/提示/失败态）+ loading-history 收敛改造 + 资产下载超时 | 低：未实现的适配器行为不变 | typecheck/lint/build；短会话导出回归 |
-| P1 ChatGPT | turn-N 连续性校验 + 截断重抓 + turnKey 兜底修复 + shell 留存假设实测 | 低：只增校验与重试 | 长会话重复导出确定性（消息数稳定、无缺口）；慢网模拟 |
-| P2 Doubao | 行号驱动采集重写 + key/排序统一 + 大纲副作用保留 + sweep 回退 | 中：采集主路径重写 | #780 复现场景：同一会话重复导出 LCS = 全长；导出后大纲完整性 |
-| P3 DeepSeek | key-based 合并 + 挂载确认 | 中：依赖行属性实测结论 | 长会话重复导出确定性 |
+| P0 基础设施 | `ExportCollectionReport` 契约 + manager 消费（补扫/提示/失败态）+ loading-history 收敛改造 + 资产下载超时 | 低：未实现的适配器行为不变 | typecheck/lint/build；短对话导出回归 |
+| P1 ChatGPT | turn-N 连续性校验 + 截断重抓 + turnKey 兜底修复 + shell 留存假设实测 | 低：只增校验与重试 | 长对话重复导出确定性（消息数稳定、无缺口）；慢网模拟 |
+| P2 Doubao | 行号驱动采集重写 + key/排序统一 + 大纲副作用保留 + sweep 回退 | 中：采集主路径重写 | #780 复现场景：同一对话重复导出 LCS = 全长；导出后大纲完整性 |
+| P3 DeepSeek | key-based 合并 + 挂载确认 | 中：依赖行属性实测结论 | 长对话重复导出确定性 |
 | P4 收尾 | AI Studio 报告补齐 + 增量转换性能优化 + overlay 进度 | 低 | 各站点冒烟 + `pnpm build:userscript` 油猴回归 |
 
 每阶段提交前按 CI 顺序运行：`pnpm format:check`、`pnpm lint:check`、`pnpm typecheck`、`pnpm build`；触及平台抽象或内容脚本时加跑 `pnpm build:userscript`。
@@ -199,11 +199,11 @@ interface VirtualExportCollectResult {
 
 ### 7.1 确定性指标（针对 #780）
 
-同一不变会话连续导出 3 次，要求：消息数一致；`role+content` 序列完全一致（LCS = 全长）；无重复记录；图片引用集合一致。
+同一不变对话连续导出 3 次，要求：消息数一致；`role+content` 序列完全一致（LCS = 全长）；无重复记录；图片引用集合一致。
 
 ### 7.2 完整性指标
 
-- ChatGPT：导出消息数 = 会话实际 turn 数（turn-N 序列无缺口，起始 N = 1）。
+- ChatGPT：导出消息数 = 对话实际 turn 数（turn-N 序列无缺口，起始 N = 1）。
 - Doubao：行号序列无缺口。
 - 人为制造慢网（DevTools throttling）下导出，不允许静默缺段——要么补齐，要么出现"可能不完整"提示。
 
@@ -211,15 +211,15 @@ interface VirtualExportCollectResult {
 
 | 场景 | 站点 | 检查点 |
 | --- | --- | --- |
-| 短会话（无虚拟滚动） | 全部 | 与现行输出逐字节对比（除 exportTime） |
-| 长虚拟滚动会话 | ChatGPT / Doubao / DeepSeek / AI Studio / Claude | 确定性 + 完整性指标 |
+| 短对话（无虚拟滚动） | 全部 | 与现行输出逐字节对比（除 exportTime） |
+| 长虚拟滚动对话 | ChatGPT / Doubao / DeepSeek / AI Studio / Claude | 确定性 + 完整性指标 |
 | Markdown + ZIP | Doubao / DeepSeek | 资产收集不丢、单资产超时降级 |
 | 分段导出 / 大纲复制 | ChatGPT | 共用链路行为不变 |
 | 导出后大纲 | Doubao | 大纲条目数不因导出减少 |
 
 ### 7.4 线上验证（无法本地完成项）
 
-- ChatGPT 超长会话 shell 留存假设（P1 前置）。
+- ChatGPT 超长对话 shell 留存假设（P1 前置）。
 - DeepSeek 虚拟行是否带稳定 data 属性（P3 前置，决定 key 方案）。
 
 ---
@@ -227,6 +227,6 @@ interface VirtualExportCollectResult {
 ## 8. 开放问题
 
 1. DeepSeek `.ds-virtual-list` 行级稳定标识实测结果——若无，复合 key 在"同内容不同消息相邻"场景仍有理论误并风险，需要接受或引入滚动位置指纹。
-2. ChatGPT 站点 8 月改版后，`data-is-intersecting` / `--last-known-height` 占位行为是否在 300+ turn 会话保持。
+2. ChatGPT 站点 8 月改版后，`data-is-intersecting` / `--last-known-height` 占位行为是否在 300+ turn 对话保持。
 3. 远端配置（remote config patch / site packs）可能覆盖选择器，新锚点选择器需要纳入配置版本治理（参考 `DEEPSEEK_CONFIG_VERSION` 机制）。
 4. "导出可能不完整"提示是否需要在导出文件内嵌标记（metadata 字段），便于用户反馈时定位。

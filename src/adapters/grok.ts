@@ -157,7 +157,7 @@ export class GrokAdapter extends SiteAdapter {
   }
 
   isSharePage(): boolean {
-    // 自有会话：/c/ID    分享会话：/share/ID
+    // 自有对话：/c/ID    分享对话：/share/ID
     return window.location.pathname.startsWith("/share/")
   }
 
@@ -165,7 +165,7 @@ export class GrokAdapter extends SiteAdapter {
     return !this.isSharePage() && /^\/c\/[^/?#]+(?:\/|$)/i.test(window.location.pathname)
   }
 
-  // 缓存弹窗中的会话数据（用于同步时弹窗已关闭的情况）
+  // 缓存弹窗中的对话数据（用于同步时弹窗已关闭的情况）
   private cachedDialogConversations: Map<string, ConversationInfo> | null = null
 
   private exportUserAttachmentsByResponseId: Map<string, GrokUserAttachment[]> | null = null
@@ -218,7 +218,7 @@ export class GrokAdapter extends SiteAdapter {
         }
       }
 
-      // 在关闭弹窗之前，缓存弹窗中的所有会话
+      // 在关闭弹窗之前，缓存弹窗中的所有对话
       // 这样 getConversationList 在弹窗关闭后仍然可以返回这些数据
       this.cacheDialogConversations()
 
@@ -234,12 +234,12 @@ export class GrokAdapter extends SiteAdapter {
     }
   }
 
-  /** 缓存弹窗中的会话数据 */
+  /** 缓存弹窗中的对话数据 */
   private cacheDialogConversations(): void {
     const cache = new Map<string, ConversationInfo>()
     const conversation = this.config.conversation
 
-    // 扫描所有 cmdk 对话框中的会话链接
+    // 扫描所有 cmdk 对话框中的对话链接
     const allLinks = document.querySelectorAll(conversation.itemSelector)
     allLinks.forEach((link) => {
       if (this.isCmdkActionItem(link)) return
@@ -278,7 +278,7 @@ export class GrokAdapter extends SiteAdapter {
     this.cachedDialogConversations = cache
   }
 
-  // ==================== 会话管理 ====================
+  // ==================== 对话管理 ====================
 
   getConversationList(): ConversationInfo[] {
     const conversationMap = new Map<string, ConversationInfo>()
@@ -319,8 +319,8 @@ export class GrokAdapter extends SiteAdapter {
       })
     }
 
-    // 2. 扫描所有会话链接（补充对话框中的会话）
-    // 这能捕获"查看全部"对话框中的会话，无论选择器细节如何
+    // 2. 扫描所有对话链接（补充对话框中的对话）
+    // 这能捕获"查看全部"对话框中的对话，无论选择器细节如何
     const allLinks = document.querySelectorAll(conversation.itemSelector)
     allLinks.forEach((link) => {
       if (this.isCmdkActionItem(link)) return
@@ -332,7 +332,7 @@ export class GrokAdapter extends SiteAdapter {
       if (!id) return
       if (conversationMap.has(id)) return // 已从侧边栏获取，跳过
 
-      // 处理对话框（或其他位置）的会话
+      // 处理对话框（或其他位置）的对话
       let title = "New Chat"
       let isActive = false
       const isPinned = false // 侧边栏以外默认不置顶
@@ -360,7 +360,7 @@ export class GrokAdapter extends SiteAdapter {
       })
     })
 
-    // 3. 合并缓存的弹窗会话数据（用于弹窗已关闭但缓存未过期的情况）
+    // 3. 合并缓存的弹窗对话数据（用于弹窗已关闭但缓存未过期的情况）
     if (this.cachedDialogConversations) {
       this.cachedDialogConversations.forEach((conv, id) => {
         if (!conversationMap.has(id)) {
@@ -392,7 +392,7 @@ export class GrokAdapter extends SiteAdapter {
     const itemSelector = `:is(${conversation.itemSelector})`
 
     return {
-      // 同时匹配侧边栏和 cmdk 对话框中的会话链接
+      // 同时匹配侧边栏和 cmdk 对话框中的对话链接
       // - 侧边栏：[data-sidebar="content"] a[href^="/c/"]
       // - 对话框：[cmdk-item][data-value^="conversation:"] a[href^="/c/"]
       selector: `${sidebarSelector} ${itemSelector}, ${privateSelectors.cmdkConversationItem} ${itemSelector}`,

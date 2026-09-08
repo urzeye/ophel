@@ -1067,7 +1067,7 @@ export const useGlobalSearchData = ({
         index,
         fields,
         recency: conversation.updatedAt || 0,
-        // 站外会话在分数相近时排在站内结果之后
+        // 站外对话在分数相近时排在站内结果之后
         scoreBoost: (conversation.pinned ? 6 : 0) - (sourceSite.isOffsite ? 10 : 0),
         createItem: (scoreMeta) => ({
           id: sourceSite.isOffsite
@@ -1094,7 +1094,7 @@ export const useGlobalSearchData = ({
       buildConversationEntry(conversation, index),
     )
 
-    // 站外会话标题搜索：会话元数据 store 含所有站点，按站点实例 key 过滤出非当前站点
+    // 站外对话标题搜索：对话元数据 store 含所有站点，按站点实例 key 过滤出非当前站点
     const offsiteConversations = Object.values(getConversationsStore().conversations).filter(
       (conversation) => resolvePersistedSiteInstanceKey(conversation) !== currentSiteInstanceKey,
     )

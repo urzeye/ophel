@@ -3,7 +3,7 @@
  *
  * 选择器策略：
  * - 优先使用 ID / data-* / class 等稳定属性
- * - 会话列表缺少稳定 ID，列表解析为 best-effort
+ * - 对话列表缺少稳定 ID，列表解析为 best-effort
  */
 import { SITE_IDS } from "~constants"
 import {

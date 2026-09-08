@@ -53,9 +53,9 @@ SitePack 的 TypeScript 运行时校验器是安全与兼容性的最终真值�
 ### 配置分组
 
 - `input`：输入元素类型与提交快捷键。
-- `conversation`：会话列表项、ID 捕获正则、标题和同源跳转模板。
+- `conversation`：对话列表项、ID 捕获正则、标题和同源跳转模板。
 - `generating` / `networkMonitor`：DOM 或网络生成状态检测。
-- `session`：会话 ID、新对话页、分享页和新标签页路径。
+- `session`：对话 ID、新对话页、分享页和新标签页路径。
 - `modelSwitcher`：模型菜单按钮、菜单项和可选子菜单规则。
 - `export`：用户消息、助手消息、轮次容器及 Shadow DOM 标记。
 - `zenMode` / `cleanMode`：隐藏选择器、根 class 和受限样式规则。

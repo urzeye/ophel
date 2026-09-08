@@ -4,7 +4,7 @@
  * 选择器策略：
  * - 优先使用稳定的语义属性和结构锚点（role/data-slate-editor/id）
  * - CSS Modules 仅使用 stem 匹配，避免依赖完整哈希
- * - 会话列表使用“当前可见项 + 快照缓存”兼容 react-window 虚拟列表
+ * - 对话列表使用“当前可见项 + 快照缓存”兼容 react-window 虚拟列表
  */
 import { SITE_IDS } from "~constants"
 import { qianwenNativeThemeCss } from "~styles/native-theme-adapters/qianwen"
@@ -525,7 +525,7 @@ export class QianwenAdapter extends SiteAdapter {
     return this.extractAssistantResponseTextWithAssets(element)
   }
 
-  /** 导出前钩子：记录 includeThoughts，并补齐千问懒加载的长会话历史。 */
+  /** 导出前钩子：记录 includeThoughts，并补齐千问懒加载的长对话历史。 */
   async prepareConversationExport(context: ExportLifecycleContext): Promise<unknown> {
     this.exportIncludeThoughts = context.includeThoughts
     await this.loadCompleteConversationHistory()

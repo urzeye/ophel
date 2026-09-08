@@ -175,7 +175,7 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
     return cidMatch ? cidMatch[1] : ""
   }
 
-  // ==================== 会话管理 ====================
+  // ==================== 对话管理 ====================
 
   getSessionName(): string | null {
     const conversations = DOMToolkit.query(this.config.conversation.itemSelector, {
@@ -330,7 +330,7 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
   }
 
   navigateToConversation(id: string, url?: string): boolean {
-    // 通过菜单按钮 ID 查找侧边栏会话元素
+    // 通过菜单按钮 ID 查找侧边栏对话元素
     const conversations = DOMToolkit.query(this.config.conversation.itemSelector, {
       all: true,
       shadow: this.config.conversation.shadow ?? true,
@@ -1646,7 +1646,7 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
     )
   }
 
-  /** 覆盖基类：通过点击“展开”按钮加载更多会话 */
+  /** 覆盖基类：通过点击“展开”按钮加载更多对话 */
   async loadAllConversations(): Promise<void> {
     const maxIterations = 20 // 防止无限循环
 
@@ -1674,7 +1674,7 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
         ;(btn as HTMLElement).click()
       }
 
-      // 等待会话加载
+      // 等待对话加载
       await new Promise((r) => setTimeout(r, 300))
     }
   }

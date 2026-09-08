@@ -51,7 +51,7 @@ export const SHORTCUT_ACTIONS = {
   EXPAND_LEVEL_5: "expandLevel5",
   EXPAND_LEVEL_6: "expandLevel6",
 
-  // 会话类
+  // 对话类
   NEW_CONVERSATION: "newConversation",
   REFRESH_CONVERSATIONS: "refreshConversations",
   LOCATE_CONVERSATION: "locateConversation",
@@ -146,30 +146,30 @@ export const SHORTCUT_META: Record<
   expandLevel5: { labelKey: "shortcutExpandLevel5", label: "展开到 5 级", category: "outline" },
   expandLevel6: { labelKey: "shortcutExpandLevel6", label: "展开到 6 级", category: "outline" },
 
-  // 会话类
+  // 对话类
   newConversation: {
     labelKey: "shortcutNewConversation",
-    label: "新会话",
+    label: "新对话",
     category: "conversation",
   },
   refreshConversations: {
     labelKey: "shortcutRefreshConversations",
-    label: "刷新会话列表",
+    label: "刷新对话列表",
     category: "conversation",
   },
   locateConversation: {
     labelKey: "shortcutLocateConversation",
-    label: "定位当前会话",
+    label: "定位当前对话",
     category: "conversation",
   },
   prevConversation: {
     labelKey: "shortcutPrevConversation",
-    label: "上一个会话",
+    label: "上一个对话",
     category: "conversation",
   },
   nextConversation: {
     labelKey: "shortcutNextConversation",
-    label: "下一个会话",
+    label: "下一个对话",
     category: "conversation",
   },
 
@@ -269,7 +269,7 @@ export const SHORTCUT_CATEGORIES = {
   navigation: { labelKey: "shortcutCategoryNavigation", label: "导航" },
   panel: { labelKey: "shortcutCategoryPanel", label: "面板" },
   outline: { labelKey: "shortcutCategoryOutline", label: "大纲" },
-  conversation: { labelKey: "shortcutCategoryConversation", label: "会话" },
+  conversation: { labelKey: "shortcutCategoryConversation", label: "对话" },
   edit: { labelKey: "shortcutCategoryEdit", label: "交互控制" },
   settings: { labelKey: "shortcutCategorySettings", label: "设置" },
 }
@@ -306,7 +306,7 @@ export const DEFAULT_KEYBINDINGS: Record<ShortcutActionId, ShortcutBinding> = {
   locateOutline: { key: "l", alt: true },
   searchOutline: { key: "f", alt: true },
 
-  // 会话类
+  // 对话类
   newConversation: { key: "o", ctrl: true, shift: true },
   refreshConversations: { key: "r", alt: true, shift: true },
   locateConversation: { key: "l", alt: true, shift: true },

@@ -1,7 +1,7 @@
 /**
- * Conversations Store - Zustand 状态管理
+ * 对话 Store - Zustand 状态管理
  *
- * 管理会话元数据（不包含会话内容，只有标题、文件夹、标签等元信息）
+ * 管理对话元数据（不包含对话内容，只有标题、文件夹、标签等元信息）
  */
 
 import { create } from "zustand"

@@ -17,7 +17,7 @@ import path from "path"
  */
 const EDGE_NAMES = {
   en: "Ophel Atlas: AI Chat Navigator & Organizer",
-  zh_CN: "Ophel Atlas：AI 对话大纲导航与会话整理",
+  zh_CN: "Ophel Atlas：AI 对话大纲导航与对话整理",
   zh_TW: "Ophel Atlas：AI 對話大綱導航與會話整理",
   de: "Ophel Atlas: KI-Chat-Navigator und Organizer",
   es: "Ophel Atlas: Navegador y Organizador de IA",

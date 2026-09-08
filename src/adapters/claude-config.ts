@@ -114,13 +114,13 @@ const createClaudeConfig = (): ClaudeSiteConfig => {
   const layoutScope = ':is(main[data-perf-region="main"], #main-content)'
   // 灰度后 data-autoscroll-container 不再是 page-header 的直接子节点，而是下移一层；
   // 用后代 has() 匹配新结构，同时保留直接子选择器兼容旧结构。
-  // 用一次 :is() 合并常规会话列与隐身会话列，避免 panelScope 超过 500 字符校验上限。
+  // 用一次 :is() 合并常规对话列与隐身对话列，避免 panelScope 超过 500 字符校验上限。
   const chatColumnScope = `${layoutScope} :is(${[
     // dframe 布局：page-header 更名为 chat-header
     'div:has(> [data-testid="chat-header"]):has([data-autoscroll-container="true"])',
     'div:has(> [data-testid="page-header"]):has([data-autoscroll-container="true"])',
     'div:has(> [data-testid="page-header"]):has(> [data-autoscroll-container="true"])',
-    // 隐身会话页（/new?incognito=）没有 chat-header/page-header，直取聊天内容包裹层
+    // 隐身对话页（/new?incognito=）没有 chat-header/page-header，直取聊天内容包裹层
     '[data-testid="chat-column-body"]:has(> [data-autoscroll-container="true"])',
   ].join(", ")})`
   const panelScope = [

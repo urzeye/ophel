@@ -192,7 +192,7 @@ export class ClaudeAdapter extends SiteAdapter {
   private outlineItemCache = new Map<string, ClaudeOutlineCacheEntry>()
   private sortedCachedUserQueries: ClaudeOutlineCacheEntry[] | null = null
   private outlineScannedMessageIndexes = new Set<number>()
-  // 全量滚动只用于当前会话的首次缓存回填；后续新增消息由已挂载行增量更新。
+  // 全量滚动只用于当前对话的首次缓存回填；后续新增消息由已挂载行增量更新。
   private hasCompletedInitialVirtualOutlineScan = false
   private outlineScanPromise: Promise<void> | null = null
   private isCollectingVirtualOutline = false
@@ -265,8 +265,8 @@ export class ClaudeAdapter extends SiteAdapter {
   }
 
   /**
-   * 隐身会话页（/new?incognito=）：URL 不会随发消息跳转，会话不持久保存。
-   * 导出走内存态元数据，不写入会话库（见 resolveConversationForExport）。
+   * 隐身对话页（/new?incognito=）：URL 不会随发消息跳转，对话不持久保存。
+   * 导出走内存态元数据，不写入对话库（见 resolveConversationForExport）。
    */
   isEphemeralConversationPage(): boolean {
     return this.isIncognitoConversation()
@@ -284,8 +284,8 @@ export class ClaudeAdapter extends SiteAdapter {
       return super.getCurrentConversationInfo()
     }
 
-    // 基类把隐身会话当新对话页返回 null，导出会报 "Conversation not found: new"；
-    // 这里为隐身会话提供内存态元数据，id 随 URL 停留在 "new"。
+    // 基类把隐身对话当新对话页返回 null，导出会报 "Conversation not found: new"；
+    // 这里为隐身对话提供内存态元数据，id 随 URL 停留在 "new"。
     return {
       id: this.getSessionId(),
       title: this.getIncognitoConversationTitle(),
@@ -294,13 +294,13 @@ export class ClaudeAdapter extends SiteAdapter {
   }
 
   private getIncognitoConversationTitle(): string {
-    // 隐身会话没有侧栏与标题，用首条用户消息兜底导出标题
+    // 隐身对话没有侧栏与标题，用首条用户消息兜底导出标题
     const firstUserMessage = document.querySelector(this.getUserQuerySelector())
     const text = firstUserMessage?.textContent?.replace(/\s+/g, " ").trim() || ""
     return text.slice(0, 80)
   }
 
-  // ==================== 会话管理 ====================
+  // ==================== 对话管理 ====================
 
   private getClaudeConversationItems(root: ParentNode = document): Element[] {
     return Array.from(root.querySelectorAll(this.config.conversation.itemSelector))
@@ -321,7 +321,7 @@ export class ClaudeAdapter extends SiteAdapter {
     const titleElement = this.getClaudeConversationTitleElement(element)
     if (!titleElement) return ""
 
-    // 新 DOM 中重新渲染过的会话项会在标题内嵌套 sr-only 全文副本和 aria-hidden
+    // 新 DOM 中重新渲染过的对话项会在标题内嵌套 sr-only 全文副本和 aria-hidden
     // 可见副本，直接读 textContent 会把标题拼成两份；优先取 sr-only 副本。
     const srOnlyCopy = titleElement.querySelector(this.config.sitePrivateSelectors.srOnly)
     return srOnlyCopy?.textContent?.trim() || titleElement.textContent?.trim() || ""
@@ -3288,7 +3288,7 @@ export class ClaudeAdapter extends SiteAdapter {
     return this.extractClaudeAssistantResponseTextWithDocuments(element)
   }
 
-  // ==================== 会话观察器 ====================
+  // ==================== 对话观察器 ====================
 
   getConversationObserverConfig(): ConversationObserverConfig {
     return {

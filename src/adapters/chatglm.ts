@@ -383,7 +383,7 @@ export class ChatGLMAdapter extends SiteAdapter {
   }
 
   isSharePage(): boolean {
-    // 自有会话：/chat/...    分享会话：/glmsShare?is_share=1&...
+    // 自有对话：/chat/...    分享对话：/glmsShare?is_share=1&...
     return (
       window.location.pathname.startsWith("/glmsShare") ||
       window.location.pathname.startsWith("/share/") ||

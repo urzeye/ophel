@@ -1,5 +1,5 @@
 /**
- * 会话 Tab 组件
+ * 对话 Tab 组件
  * 从油猴脚本 geminiHelper.user.js 5874~6606 行原封不动移植
  */
 
@@ -26,7 +26,7 @@ import { ConversationMenu, FolderMenu, type MenuAnchorPoint } from "./Conversati
 
 import "~styles/conversations.css"
 
-// 渐进式加载：每次渲染的会话批次大小
+// 渐进式加载：每次渲染的对话批次大小
 const PROGRESSIVE_BATCH_SIZE = 30
 
 import {
@@ -193,7 +193,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
   const [draggedFolderId, setDraggedFolderId] = useState<string | null>(null)
   const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null)
 
-  // 会话拖拽移动
+  // 对话拖拽移动
   const [draggedConvId, setDraggedConvId] = useState<string | null>(null)
   const [dragOverFolderForConvId, setDragOverFolderForConvId] = useState<string | null>(null)
   // Ref 跟踪实际拖拽悬停目标，避免浏览器 dragenter/dragleave 事件顺序不一致导致的高亮闪烁
@@ -371,7 +371,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
     return map
   }, [tags])
 
-  // 缓存每个文件夹的会话列表（过滤并排序），避免重复计算
+  // 缓存每个文件夹的对话列表（过滤并排序），避免重复计算
   const folderConversationsMap = useMemo(() => {
     const sidebarOrder = manager.getSidebarConversationOrder()
     // 预处理为 Map<id, index>，排序比较时 O(1) 取位置
@@ -393,7 +393,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
       list.push(conv)
     }
 
-    // 对每个文件夹的会话过滤 + 排序
+    // 对每个文件夹的对话过滤 + 排序
     const result = new Map<string, Conversation[]>()
     for (const [folderId, convs] of byFolder) {
       let filtered = searchResult
@@ -428,7 +428,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
     return getConversationsInFolder(folderId).length
   }
 
-  // 渐进式加载：记录每个文件夹已显示的会话数量
+  // 渐进式加载：记录每个文件夹已显示的对话数量
   const [visibleCounts, setVisibleCounts] = useState<Record<string, number>>({})
   const loadMoreSentinelRefs = useRef<Map<string, HTMLDivElement | null>>(new Map())
 
@@ -629,7 +629,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
     return () => observer.disconnect()
   }, [])
 
-  // 点击会话
+  // 点击对话
   const handleConversationClick = useCallback(
     (conv: Conversation) => {
       if (batchMode) {
@@ -898,7 +898,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                     className="conversations-tag-filter-item conversations-tag-filter-action"
                     onClick={() => {
                       setShowTagFilterMenu(false)
-                      // 从筛选菜单打开标签管理对话框，作为纯管理模式（不绑定会话）
+                      // 从筛选菜单打开标签管理对话框，作为纯管理模式（不绑定对话）
                       onInteractionStateChange?.(true)
                       setDialog({ type: "tagManager", conv: undefined })
                     }}>
@@ -1143,7 +1143,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                     </div>
                   </div>
 
-                  {/* 会话列表 */}
+                  {/* 对话列表 */}
                   {isExpanded && (
                     <div className="conversations-list" data-folder-id={folder.id}>
                       {(() => {
@@ -1501,7 +1501,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
   )
 }
 
-// ==================== 会话项子组件（React.memo 防止不必要的重渲染）====================
+// ==================== 对话项子组件（React.memo 防止不必要的重渲染）====================
 
 interface ConversationItemProps {
   conv: Conversation

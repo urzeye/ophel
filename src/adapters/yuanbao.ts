@@ -277,7 +277,7 @@ export class YuanbaoAdapter extends SiteAdapter {
   }
 
   isSharePage(): boolean {
-    // 自有会话：/chat/ID    分享会话：/s/ID
+    // 自有对话：/chat/ID    分享对话：/s/ID
     return window.location.pathname.startsWith("/s/")
   }
 

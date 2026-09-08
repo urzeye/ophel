@@ -1024,7 +1024,7 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
           }
 
           // 6. 跳转到首页 (而非刷新)
-          // 优先只处理发起请求的 Claude 标签页，避免丢弃其他标签页的会话与草稿；
+          // 优先只处理发起请求的 Claude 标签页，避免丢弃其他标签页的对话与草稿；
           // 消息来自非 Claude 页面时回退到全量处理
           const senderClaudeTabId = sender.tab?.url?.startsWith("https://claude.ai/")
             ? sender.tab.id

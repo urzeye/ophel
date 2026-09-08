@@ -372,7 +372,7 @@ export const FolderDialog: React.FC<FolderDialogProps> = ({ folder, onConfirm, o
   )
 }
 
-// ==================== 重命名会话对话框 ====================
+// ==================== 重命名对话弹窗 ====================
 
 interface RenameDialogProps {
   title: string
@@ -544,7 +544,7 @@ export const FolderSelectDialog: React.FC<FolderSelectDialogProps> = ({
 
 interface TagManagerDialogProps {
   tags: Tag[]
-  conv?: Conversation | null // 可选的会话上下文
+  conv?: Conversation | null // 可选的对话上下文
   onCancel: () => void
   onCreateTag: (name: string, color: string) => Promise<Tag | null>
   onUpdateTag: (tagId: string, name: string, color: string) => Promise<Tag | null>
@@ -572,7 +572,7 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
   const [loading, setLoading] = useState(false)
   const [colorExpanded, setColorExpanded] = useState(false) // 颜色选择器折叠状态
   const [deletingTagId, setDeletingTagId] = useState<string | null>(null) // 待删除的标签 ID
-  // 本地状态跟踪当前会话已选标签，确保 UI 反映最新状态
+  // 本地状态跟踪当前对话已选标签，确保 UI 反映最新状态
   const [selectedTagIds, setSelectedTagIds] = useState<Set<string>>(new Set(conv?.tagIds || []))
 
   const nameInputRef = useRef<HTMLInputElement>(null)
@@ -658,7 +658,7 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
     onRefresh()
   }
 
-  // 切换会话标签
+  // 切换对话标签
   const handleToggleConvTag = async (tagId: string, checked: boolean) => {
     if (!conv || !onSetConversationTags) return
 

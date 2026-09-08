@@ -4,7 +4,7 @@
  * 范围说明：
  * - 支持输入框注入、导出、大纲、新对话、模型锁定、停止生成、页面宽度/禅模式
  * - 不支持主题切换
- * - 会话同步/会话面板能力按需求保持不支持
+ * - 对话同步/对话面板能力按需求保持不支持
  */
 import { SITE_IDS } from "~constants"
 import {
@@ -119,7 +119,7 @@ export class ImaAdapter extends SiteAdapter {
   }
 
   isSharePage(): boolean {
-    // 自有会话：/ai-chat/ID    分享会话：/share/
+    // 自有对话：/ai-chat/ID    分享对话：/share/
     return window.location.pathname.startsWith("/share/")
   }
 

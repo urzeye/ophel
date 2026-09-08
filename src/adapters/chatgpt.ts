@@ -128,11 +128,11 @@ const KNOWN_LANGUAGES = new Set([
 const CHATGPT_MODEL_LOCK_REENTRY_COOLDOWN_MS = 1_200
 
 // ==================== 导出快照 ====================
-// ChatGPT 长会话采用虚拟滚动：滚出视口的消息内容会被卸载，
+// ChatGPT 长对话采用虚拟滚动：滚出视口的消息内容会被卸载，
 // 只剩 [data-turn-id-container] 占位符。直接 querySelectorAll 会漏掉这些消息，
 // 导致导出内容缺失；而某些情况下旧版本/重生成的消息节点仍残留在 DOM 中，
 // 不去重又会让同一条消息出现多次。
-// 解决方案：导出前滚动遍历整个会话，按 message-id 去重收集快照，
+// 解决方案：导出前滚动遍历整个对话，按 message-id 去重收集快照，
 // 挂载到隐藏 DOM 后切换 ExportConfig 指向快照节点。
 
 const CHATGPT_EXPORT_ROOT_ATTR = "data-gh-chatgpt-export-root"
@@ -169,7 +169,7 @@ interface ChatGPTOutlineCacheEntry {
   level: number
   text: string
   turnId: string | null
-  /** turn 在本次会话内首次出现的全局序号（单调递增） */
+  /** turn 在本次对话内首次出现的全局序号（单调递增） */
   firstSeenTurnIndex: number
   orderInTurn: number
   isUserQuery?: boolean
@@ -208,7 +208,7 @@ export class ChatGPTAdapter extends SiteAdapter {
   private lastModelLockAttemptKeyword = ""
   private cachedModelDisplayNamesBySlug = new Map<string, string>()
   // 菜单打开时读到的当前选中模型 slug，菜单关闭后仍可用于本地化匹配（如 "think" vs "思考"）
-  // 绑定 contextKey，切换对话/账号后自动失效；新对话页路径始终为 "/" 无法区分会话，額外用 TTL 兼容
+  // 绑定 contextKey，切换对话/账号后自动失效；新对话页路径始终为 "/" 无法区分对话，額外用 TTL 兼容
   private lastKnownModelSlug: string | null = null
   private lastKnownModelSlugContextKey = ""
   private lastKnownModelSlugObservedAt = 0
@@ -217,8 +217,8 @@ export class ChatGPTAdapter extends SiteAdapter {
   // turn 首次出现的 DOM 顺序，用于 turn-shell 被完全卸载后仍能维持稳定排序
   private outlineTurnFirstSeenIndex = new Map<string, number>()
   private outlineTurnFirstSeenCounter = 0
-  // SPA 切换会话后的过渡期截止时刻：在此之前 extractOutline 不写 cache 也不
-  // merge cache，避免把上一个会话残留的 DOM 内容污染到新会话的 cache 里。
+  // SPA 切换对话后的过渡期截止时刻：在此之前 extractOutline 不写 cache 也不
+  // merge cache，避免把上一个对话残留的 DOM 内容污染到新对话的 cache 里。
   private outlineCacheTransitionEndAt = 0
   private nativeTocTextCache: string[] = []
   private nativeTocButtonElementSignatureCache = ""
@@ -300,7 +300,7 @@ export class ChatGPTAdapter extends SiteAdapter {
   }
 
   isSharePage(): boolean {
-    // 自有会话：/c/ID    分享会话：/share/e/ID
+    // 自有对话：/c/ID    分享对话：/share/e/ID
     return window.location.pathname.startsWith("/share/")
   }
 
@@ -309,7 +309,7 @@ export class ChatGPTAdapter extends SiteAdapter {
   }
 
   /**
-   * 获取当前账户标识（用于会话隔离）
+   * 获取当前账户标识（用于对话隔离）
    * ChatGPT 通过 localStorage._account 区分不同账户/团队
    * 值可能为 "personal" 或团队 UUID
    */
@@ -326,7 +326,7 @@ export class ChatGPTAdapter extends SiteAdapter {
     return null
   }
 
-  // ==================== 会话管理 ====================
+  // ==================== 对话管理 ====================
 
   private getChatGPTConversationLinks(): HTMLAnchorElement[] {
     return Array.from(document.querySelectorAll(this.config.conversation.itemSelector)).filter(
@@ -776,7 +776,7 @@ export class ChatGPTAdapter extends SiteAdapter {
 
   private findConversationRow(id: string): HTMLElement | null {
     // 新版侧边栏的 href 可能是绝对 URL（https://chatgpt.com/c/...），
-    // 统一按会话 ID 匹配，兼容相对与绝对两种写法。
+    // 统一按对话 ID 匹配，兼容相对与绝对两种写法。
     return (
       this.getChatGPTConversationLinks().find(
         (link) => this.getChatGPTConversationId(link) === id,
@@ -2469,7 +2469,7 @@ export class ChatGPTAdapter extends SiteAdapter {
   /**
    * 解析 turn 的稳定全局排序键。
    *
-   * ChatGPT 每个 turn 都有 `data-testid="conversation-turn-N"`，N 是该会话内
+   * ChatGPT 每个 turn 都有 `data-testid="conversation-turn-N"`，N 是该对话内
    * 从开始往后的 1-based 单调序号，**与虚拟滚动当前的滚动状态、shell 高度变化
    * 完全无关**。相比之前用 `scrollTop + rect.top` 算出来的坐标，这个 N 不会
    * 因为 scroll anchoring、shell 卸载、`--last-known-height` 误差而漂移。
@@ -3069,10 +3069,10 @@ export class ChatGPTAdapter extends SiteAdapter {
     this.nativeTocRefreshScheduled = false
     this.nativeTocButtonElementIds = new WeakMap()
     this.nativeTocButtonElementIdCounter = 0
-    // SPA 切换会话时（不是首次初始化）进入过渡期：ChatGPT 的 URL 同步切换、但
-    // DOM 替换是异步的；此时 extractOutline 抓到的仍是上一个会话的残留节点，
-    // 若立刻当成"新会话 cache"写进去，等 DOM 完成切换、新会话内容到位时再做
-    // merge 就会把上一个会话的条目追加到末尾。
+    // SPA 切换对话时（不是首次初始化）进入过渡期：ChatGPT 的 URL 同步切换、但
+    // DOM 替换是异步的；此时 extractOutline 抓到的仍是上一个对话的残留节点，
+    // 若立刻当成"新对话 cache"写进去，等 DOM 完成切换、新对话内容到位时再做
+    // merge 就会把上一个对话的条目追加到末尾。
     // 过渡期内 extractOutline 跳过 cache 写入与合并，只返回 DOM 实时内容；
     // 等过了过渡期再恢复正常的"虚拟滚动兜底"行为。
     this.outlineCacheTransitionEndAt = isFirstSession ? 0 : Date.now() + 2000
@@ -3747,8 +3747,8 @@ export class ChatGPTAdapter extends SiteAdapter {
     const turnAnchors = this.getOrderedChatGPTTurnAnchors(container)
 
     // SPA 切换过渡期：跳过 cache 写入与合并，仅返回当前 DOM 真实可见的内容。
-    // ChatGPT 在 URL 改变后还会异步把旧会话的 DOM 替换为新会话的，提前写 cache
-    // 会把旧会话节点污染进新会话；提前 merge 又会把上次留存的 cache（如果有）
+    // ChatGPT 在 URL 改变后还会异步把旧对话的 DOM 替换为新对话的，提前写 cache
+    // 会把旧对话节点污染进新对话；提前 merge 又会把上次留存的 cache（如果有）
     // 追加到末尾。等过渡期结束再让 cache 介入即可。
     if (this.isInOutlineCacheTransition()) {
       return outline
@@ -3883,7 +3883,7 @@ export class ChatGPTAdapter extends SiteAdapter {
       selectedModelFromMenu?.name,
       selectedModelFromMenu?.slug,
       // 菜单关闭后仍保留 slug，解决本地化名称（如"思考"）与关键词（如"think"）不匹配的循环
-      // 真实会话（/c/UUID）：contextKey 匹配即有效；新对话页（/）：contextKey 不唯一，改用 60s TTL 兼容
+      // 真实对话（/c/UUID）：contextKey 匹配即有效；新对话页（/）：contextKey 不唯一，改用 60s TTL 兼容
       this.lastKnownModelSlug &&
       (this.isNewConversation()
         ? Date.now() - this.lastKnownModelSlugObservedAt < 60_000

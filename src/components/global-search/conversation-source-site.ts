@@ -17,7 +17,7 @@ interface ResolveConversationSourceSiteParams {
 
 const packSiteIdFallback = (siteId: string): string => siteId.replace(/^pack:/, "")
 
-/** 解析会话搜索结果的来源站点：本站/站外共用，保证标题行都能占同一图标槽。 */
+/** 解析对话搜索结果的来源站点：本站/站外共用，保证标题行都能占同一图标槽。 */
 export const resolveConversationSourceSite = ({
   conversation,
   currentSiteInstanceKey,

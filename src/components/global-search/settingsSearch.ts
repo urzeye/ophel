@@ -43,7 +43,7 @@ export const SETTING_SEARCH_SUB_TAB_LABEL_DEFINITIONS: Record<string, LocalizedL
   [FEATURES_TAB_IDS.OUTLINE]: { key: "tabOutline", fallback: "Outline" },
   [FEATURES_TAB_IDS.CONVERSATIONS]: {
     key: "tabConversations",
-    fallback: "Conversations",
+    fallback: "Chats",
   },
   [FEATURES_TAB_IDS.PROMPTS]: { key: "tabPrompts", fallback: "Prompts" },
   [FEATURES_TAB_IDS.READING_HISTORY]: {

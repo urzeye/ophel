@@ -10,7 +10,7 @@
   <h3 style="margin-top: -2px;">✨ Turn Conversations into Knowledge, Not Just History ✨</h3>
   
   <p>
-    No more getting lost in endless scroll. Clarify context with real-time Outlines, Build your system with Conversation Folders, Refine experience with the Prompt Library, Let sparkling thoughts flow freely in order.
+    No more getting lost in endless scroll. Clarify context with real-time Outlines, Build your system with Chat Folders, Refine experience with the Prompt Library, Let sparkling thoughts flow freely in order.
   </p>
   
   <sub>👇 Demo: From "Infinite Scroll" to "Navigable AI Documents"</sub>
@@ -79,7 +79,7 @@
 
 ## 📹 Demo
 
-|                                                          Outline                                                           |                                                       Conversations                                                        |                                                          Features                                                          |
+|                                                          Outline                                                           |                                                           Chats                                                            |                                                          Features                                                          |
 | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: |
 | <video src="https://github.com/user-attachments/assets/a40eb655-295e-4f9c-b432-9313c9242c9d" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/a249baeb-2e82-4677-847c-2ff584c3f56b" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/6dfca20d-2f88-4844-b3bb-c48321100ff4" width="280" controls></video> |
 
@@ -100,7 +100,7 @@
       <td>Auto-parse conversation structure into a navigable TOC with hierarchical collapse, search, anchors, bookmarks, outline copy, and word counts</td>
     </tr>
     <tr>
-      <td>💬 <a href="https://ophel.app/docs/features/conversations">Conversations</a></td>
+      <td>💬 <a href="https://ophel.app/docs/features/conversations">Chats</a></td>
       <td>Folders + tags for dual-dimension management, auto-sync from source sites, search, batch ops, and drag-to-reorder</td>
     </tr>
     <tr>
@@ -117,7 +117,7 @@
     </tr>
     <tr>
       <td>🔍 <a href="https://ophel.app/docs/features/global-search">Global Search</a></td>
-      <td>Unified search across conversations, outlines, prompts, and settings with <code>folder:</code> <code>tag:</code> <code>date:</code> syntax filters and fuzzy matching</td>
+      <td>Unified search across chats, outlines, prompts, and settings with <code>folder:</code> <code>tag:</code> <code>date:</code> syntax filters and fuzzy matching</td>
     </tr>
     <tr>
       <td>📖 <a href="https://ophel.app/docs/enhancements/content">Reading</a></td>
@@ -144,7 +144,7 @@
 >
 > **Ophel Atlas** puts privacy first: local by default, your data stays in your control.
 >
-> - **Local by default:** settings, prompts, and conversation management data are stored in your browser
+> - **Local by default:** settings, prompts, and chat management data are stored in your browser
 > - **No account required:** use it without signing up
 > - **Permissions on demand:** optional permissions are requested only when needed and can be revoked anytime (see the Permissions page in the extension)
 > - **Optional WebDAV sync:** use your own WebDAV for multi-device consistency (controllable, portable)

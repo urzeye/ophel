@@ -453,7 +453,7 @@ export class TabManager {
    * 获取干净的对话标题（过滤被污染的标签页标题）
    */
   private getCleanConversationTitle(): string | null {
-    // 新对话页面：清除旧会话标题，避免使用之前的标题
+    // 新对话页面：清除旧对话标题，避免使用之前的标题
     if (this.adapter.isNewConversation?.()) {
       this.lastConversationTitle = null
       return null

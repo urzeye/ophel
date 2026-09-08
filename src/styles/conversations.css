@@ -1,5 +1,5 @@
 /**
- * 会话 Tab 样式
+ * 对话 Tab 样式
  */
 
 /* ========== 主面板内容区滚动条隐藏 ========== */
@@ -25,7 +25,7 @@
   border-top: none !important;
 }
 
-/* ========== 会话面板样式 ========== */
+/* ========== 对话面板样式 ========== */
 .conversations-content {
   display: flex;
   flex-direction: column;
@@ -35,7 +35,7 @@
   overflow-y: auto;
 }
 
-/* 拖拽进行中时禁止文本选择，避免拖拽会话时误选文字 */
+/* 拖拽进行中时禁止文本选择，避免拖拽对话时误选文字 */
 .conversations-content.is-dragging-any {
   user-select: none;
 }
@@ -151,7 +151,7 @@
   height: 0;
 } /* Chrome */
 
-/* 会话 Tab 主容器隐藏滚动条 */
+/* 对话 Tab 主容器隐藏滚动条 */
 .conversations-content {
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE/Edge */
@@ -799,7 +799,7 @@ html[data-theme="dark"] .conversations-unsupported-icon {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-/* 会话列表样式 */
+/* 对话列表样式 */
 .conversations-list {
   width: calc(100% - 8px);
   margin-left: 4px;
@@ -1155,7 +1155,7 @@ html[data-theme="dark"] .conversations-unsupported-icon {
   border: none;
 }
 
-/* 会话对话框样式 */
+/* 对话弹窗样式 */
 .conversations-dialog-overlay {
   position: fixed;
   top: 0;

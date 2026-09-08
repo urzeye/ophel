@@ -389,7 +389,7 @@ export class ReadingHistoryManager {
   private saveProgress(): boolean {
     if (!this.isRecording || this.isRestoring) return false
     const sessionId = this.getSessionId()
-    // 检查会话一致性：如果当前 URL 的会话 ID 与记录时不一致，说明发生了切换但还没重置
+    // 检查对话一致性：如果当前 URL 的对话 ID 与记录时不一致，说明发生了切换但还没重置
     if (this.currentSessionId && sessionId && sessionId !== this.currentSessionId) {
       return false
     }

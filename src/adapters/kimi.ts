@@ -155,7 +155,7 @@ export class KimiAdapter extends SiteAdapter {
   }
 
   isSharePage(): boolean {
-    // 自有会话：/chat/ID    分享会话：/share/ID 或 /kimiplus/ID
+    // 自有对话：/chat/ID    分享对话：/share/ID 或 /kimiplus/ID
     return (
       window.location.pathname.startsWith("/share/") ||
       window.location.pathname.startsWith("/kimiplus/")

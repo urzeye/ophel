@@ -249,7 +249,7 @@ export const FolderMenu: React.FC<FolderMenuProps> = ({
   )
 }
 
-// ==================== 会话菜单 ====================
+// ==================== 对话菜单 ====================
 
 interface ConversationMenuProps {
   conversation: Conversation

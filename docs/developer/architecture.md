@@ -2,7 +2,7 @@
 
 ## 项目愿景
 
-Ophel 是一款跨平台浏览器扩展（同时支持油猴脚本），将 AI 对话转化为可阅读、可导航、可复用的知识内容。通过实时大纲、会话文件夹与 Prompt 词库，让 AI 对话告别无限滚动，成为可组织、可沉淀的工作流。
+Ophel 是一款跨平台浏览器扩展（同时支持油猴脚本），将 AI 对话转化为可阅读、可导航、可复用的知识内容。通过实时大纲、对话文件夹与 Prompt 词库，让 AI 对话告别无限滚动，成为可组织、可沉淀的工作流。
 
 支持站点（15 个）：Gemini、Gemini Enterprise、AI Studio、ChatGPT、Grok、Claude、DeepSeek、Doubao、Kimi、Qwen Studio（原 QwenAI，文件已重命名 qwen-studio.ts）、Qianwen、Yuanbao、Z.ai、ChatGLM、Ima。
 
@@ -129,7 +129,7 @@ graph TD
 
     CORE --> C_MOD["modules-init.ts (模块编排)"]
     CORE --> C_OUTLINE["outline-manager.ts"]
-    CORE --> C_CONV["conversation/ (会话管理)"]
+    CORE --> C_CONV["conversation/ (对话管理)"]
     CORE --> C_THEME["theme-manager.ts"]
     CORE --> C_COPY["copy-manager.ts"]
     CORE --> C_LAYOUT["layout-manager.ts"]
@@ -241,7 +241,7 @@ import { useSettingsStore } from "~stores/settings-store"
 - `match()` / `getSiteId()` / `getName()` - 站点识别
 - `getTextareaSelectors()` / `insertPrompt()` - 输入框交互
 - `extractOutline()` - 大纲提取
-- `getConversationList()` / `navigateToConversation()` - 会话管理
+- `getConversationList()` / `navigateToConversation()` - 对话管理
 - `getExportConfig()` - 导出配置
 - `lockModel()` - 模型锁定（通用实现在基类中）
 
@@ -274,7 +274,7 @@ import { useSettingsStore } from "~stores/settings-store"
 使用 Zustand + persist 中间件，数据持久化到 `chrome.storage.local`：
 
 - **settings-store** - 全局设置（主题、功能开关、站点特定配置）
-- **conversations-store** - 会话元数据（标题、文件夹、标签、置顶）
+- **conversations-store** - 对话元数据（标题、文件夹、标签、置顶）
 - **prompts-store** - 提示词库
 - **folders-store** - 文件夹管理
 - **tags-store** - 标签管理
@@ -308,7 +308,7 @@ import { useSettingsStore } from "~stores/settings-store"
 | 数据     | `MSG_CLEAR_ALL_DATA`, `MSG_RESTORE_DATA`                                                                                                         | 数据清除/恢复                      |
 | Claude   | `MSG_SET_CLAUDE_SESSION_KEY`, `MSG_TEST_CLAUDE_TOKEN`, `MSG_GET_CLAUDE_SESSION_KEY`, `MSG_CHECK_CLAUDE_GENERATING`, `MSG_SWITCH_NEXT_CLAUDE_KEY` | Claude 账号管理                    |
 | 模型     | `MSG_GET_AISTUDIO_MODELS`                                                                                                                        | AI Studio 模型列表                 |
-| 会话     | `MSG_START_NEW_CONVERSATION`                                                                                                                     | 发起新会话                         |
+| 对话     | `MSG_START_NEW_CONVERSATION`                                                                                                                     | 发起新对话                         |
 | 事件     | `EVENT_MONITOR_INIT`                                                                                                                             | 网络监控初始化                     |
 
 ## 测试策略
@@ -330,7 +330,7 @@ import { useSettingsStore } from "~stores/settings-store"
 | -------------------------------- | ----- | ----------------------------------------------- |
 | `src/style.css`                  | 1,472 | 主样式（大纲面板、快捷按钮、tooltip 等核心 UI） |
 | `src/styles/settings.css`        | 2,081 | 设置页面（Options Page）样式                    |
-| `src/styles/conversations.css`   | 1,313 | 会话 Tab 样式（文件夹、标签、搜索、批量操作）   |
+| `src/styles/conversations.css`   | 1,313 | 对话 Tab 样式（文件夹、标签、搜索、批量操作）   |
 | `src/styles/queue-overlay.css`   | 395   | Prompt Queue 排队叠加层样式                     |
 | `src/styles/theme-variables.css` | 286   | CSS 变量定义文件（浅色/深色模式默认值）         |
 | `src/popup.css`                  | 395   | 浏览器扩展 Popup 页面样式                       |
@@ -466,7 +466,7 @@ feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert, deps, ux
 
 - 用户操作流程：`popup.tsx` -> 支持站点检测 -> Content Script 注入 -> `main.ts` 初始化适配器 -> `modules-init.ts` 初始化模块 -> `ui-entry.tsx` 挂载 Shadow DOM -> `App.tsx` 渲染面板
 - 设置同步流程：UI 操作 -> `useSettingsStore.updateNestedSetting()` -> Zustand persist -> `chrome.storage.local` -> `subscribeModuleUpdates()` 热更新模块
-- 会话管理流程：`ConversationObserverConfig` 观察 DOM -> `ConversationManager` 聚合数据 -> `conversations-store` 持久化
+- 对话管理流程：`ConversationObserverConfig` 观察 DOM -> `ConversationManager` 聚合数据 -> `conversations-store` 持久化
 - WebDAV 同步流程：`WebDAVSyncManager` -> `MSG_WEBDAV_REQUEST` -> Background SW 代理 -> WebDAV 服务器
 
 ## 变更记录 (Changelog)

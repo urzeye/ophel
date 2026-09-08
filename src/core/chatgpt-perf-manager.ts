@@ -1,5 +1,5 @@
 /**
- * ChatGPT 长会话渲染性能管理器
+ * ChatGPT 长对话渲染性能管理器
  *
  * 负责三个仅作用于 ChatGPT 的性能优化开关：
  * 1. 代码编辑器批量挂载：向主世界补丁（core/chatgpt-cm-batch-mount.ts）下发开关，

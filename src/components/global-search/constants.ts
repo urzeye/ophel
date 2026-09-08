@@ -31,14 +31,14 @@ export const GLOBAL_SEARCH_CATEGORY_DEFINITIONS: GlobalSearchCategoryDefinition[
   },
   {
     id: "conversations",
-    label: { key: "globalSearchCategoryConversations", fallback: "Conversations" },
+    label: { key: "globalSearchCategoryConversations", fallback: "Chats" },
     placeholder: {
       key: "globalSearchPlaceholderConversations",
-      fallback: "Search conversations on current site",
+      fallback: "Search chats on current site",
     },
     emptyText: {
       key: "globalSearchEmptyConversations",
-      fallback: "No conversation results",
+      fallback: "No chat results",
     },
   },
   {
@@ -67,7 +67,7 @@ export const GLOBAL_SEARCH_RESULT_CATEGORY_LABELS: Record<
 > = {
   outline: { key: "globalSearchCategoryOutline", fallback: "Outline" },
   settings: { key: "globalSearchCategorySettings", fallback: "Settings" },
-  conversations: { key: "globalSearchCategoryConversations", fallback: "Conversations" },
+  conversations: { key: "globalSearchCategoryConversations", fallback: "Chats" },
   prompts: { key: "globalSearchCategoryPrompts", fallback: "Prompts" },
   tips: { key: "featureTipsCategory", fallback: "Tips" },
 }

@@ -37,7 +37,7 @@ export interface GlobalSearchTagBadge {
   color: string
 }
 
-/** 会话搜索结果的来源站点；本站/站外都带这份数据，标题行才能共用同一图标槽。 */
+/** 对话搜索结果的来源站点；本站/站外都带这份数据，标题行才能共用同一图标槽。 */
 export interface GlobalSearchSourceSite {
   name: string
   icon?: string
@@ -67,7 +67,7 @@ export interface GlobalSearchResultItem {
   settingId?: string
   conversationId?: string
   conversationUrl?: string
-  /** 会话结果的来源站点；isOffsite 时点击在新标签页打开而不是站内跳转 */
+  /** 对话结果的来源站点；isOffsite 时点击在新标签页打开而不是站内跳转 */
   sourceSite?: GlobalSearchSourceSite
   promptId?: string
   promptContent?: string

@@ -7,8 +7,8 @@ Yuanbao 是 P3-05 批次的第三个配置化站点，当前 `configVersion` 为
 | 范围 | 配置字段 | 影响功能 |
 | --- | --- | --- |
 | 输入与发送 | `selectors.textarea`、`selectors.submitButton`、`input.submitKey`、`inputContainer`、`primarySubmitButton` | Quill 输入框识别、发送快捷键、主发送按钮优先级和发送候选定位 |
-| 会话列表与导航 | `conversation.*`、`selectors.sidebarScrollContainer`、`conversationPinned`、`conversationFallbackId`、`agentId` | 会话列表/标题/活动态、主 ID 提取、列表观察、侧栏滚动、动态会话 URL 和点击/地址导航策略 |
-| 会话删除 UI | `conversationMenuTrigger`、`conversationActionExclusion`、`conversationActionIcon`、`dropdownMenu`、`dropdownItem`、`dialog`、`dialogButton` | 会话操作入口评分、下拉菜单、删除项、确认弹窗和按钮定位 |
+| 对话列表与导航 | `conversation.*`、`selectors.sidebarScrollContainer`、`conversationPinned`、`conversationFallbackId`、`agentId` | 对话列表/标题/活动态、主 ID 提取、列表观察、侧栏滚动、动态对话 URL 和点击/地址导航策略 |
+| 对话删除 UI | `conversationMenuTrigger`、`conversationActionExclusion`、`conversationActionIcon`、`dropdownMenu`、`dropdownItem`、`dialog`、`dialogButton` | 对话操作入口评分、下拉菜单、删除项、确认弹窗和按钮定位 |
 | 消息与滚动 | `selectors.responseContainer`、`selectors.scrollContainer`、`selectors.chatContent`、`selectors.userQuery`、`selectors.assistantResponse`、`userText`、`assistantMarkdown`、`assistantSpeechText`、`bubbleContent` | 消息容器、滚动根、用户/AI 消息、正文 fallback、大纲和最新回复识别 |
 | 生成、模型与网络监控 | `selectors.stopButton`、`generating.existsSelectors`、`sendIcon`、`stopIcon`、`modelSwitcher.*`、`networkMonitor.*` | 生成状态、停止按钮、发送/停止图标区分、模型名/菜单和流式请求识别 |
 | 导出正文与思维内容 | `export.*`、`assistantExportDecoration`、`assistantPlainTextDecoration`、`headingDecoration`、`thoughtMarkdown`、`thoughtContainer`、`thoughtDecoration`、`assistantReasonerBody` | 导出角色、正文根节点、思维内容提取、装饰清理、纯文本与标题统计 |
@@ -22,10 +22,10 @@ Yuanbao 是 P3-05 批次的第三个配置化站点，当前 `configVersion` 为
 
 ## 仍需随应用发版
 
-- hostname、聊天/分享路径正则、agent/session 路径组成规则和新会话判断。
+- hostname、聊天/分享路径正则、agent/session 路径组成规则和新对话判断。
 - 主题与用户 ID localStorage key、`dt-agent-id`、`data-item-id`、`data-item-name`、`data-card-url` 等属性读取语义。
 - Quill 的 `execCommand`、InputEvent、焦点、清空 fallback，以及 PointerEvent/MouseEvent 点击序列。
-- 会话删除的中文/英文文本规则、候选评分权重、重试次数、80/800/1000/1200/2000/4500 ms 等等待编排和批量中止策略。
+- 对话删除的中文/英文文本规则、候选评分权重、重试次数、80/800/1000/1200/2000/4500 ms 等等待编排和批量中止策略。
 - 附件来源属性列表、资源 ID 文件名、URL 过滤、文件类型/大小解析、去重和资源下载逻辑。
 - 导出消息排序、顶层块去重、思维引用格式化、图片扩展名推断和 DOM 顺序比较算法。
 - 主题切换行为、站点主题颜色、公式复制支持、最大大纲文本长度和其它非 selector 常量。

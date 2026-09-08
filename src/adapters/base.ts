@@ -439,9 +439,9 @@ export abstract class SiteAdapter {
     return true
   }
 
-  // ==================== 会话相关 ====================
+  // ==================== 对话相关 ====================
 
-  /** 获取当前会话 ID */
+  /** 获取当前对话 ID */
   getSessionId(): string {
     const urlWithoutQuery = window.location.href.split("?")[0]
     const parts = urlWithoutQuery.split("/").filter((p) => p)
@@ -470,7 +470,7 @@ export abstract class SiteAdapter {
     })
   }
 
-  /** 获取当前侧边栏选中会话的标题 */
+  /** 获取当前侧边栏选中对话的标题 */
   abstract getConversationTitle(): string | null
 
   /** 判断当前是否处于新对话页面 */
@@ -485,15 +485,15 @@ export abstract class SiteAdapter {
   }
 
   /**
-   * 判断当前是否为不入库的临时会话页（如 Claude 隐身会话）。
-   * 临时会话不会改变 URL、也不能产生持久会话记录；
-   * 导出时只构建内存态会话元数据，不写入会话库。
+   * 判断当前是否为不入库的临时对话页（如 Claude 隐身对话）。
+   * 临时对话不会改变 URL、也不能产生持久对话记录；
+   * 导出时只构建内存态对话元数据，不写入对话库。
    */
   isEphemeralConversationPage(): boolean {
     return false
   }
 
-  /** 判断当前是否为用户自己的历史会话页 */
+  /** 判断当前是否为用户自己的历史对话页 */
   isUserConversationPage(): boolean {
     const sessionId = this.getSessionId()?.trim()
     return (
@@ -505,7 +505,7 @@ export abstract class SiteAdapter {
   }
 
   /**
-   * 获取当前团队 ID（用于会话隔离）
+   * 获取当前团队 ID（用于对话隔离）
    * 仅在支持多团队的站点（如 Gemini Enterprise）中实现
    * @returns 团队 ID 或 null（无团队/默认团队）
    */
@@ -513,26 +513,26 @@ export abstract class SiteAdapter {
     return null
   }
 
-  /** 获取侧边栏会话列表 */
+  /** 获取侧边栏对话列表 */
   getConversationList(): ConversationInfo[] {
     return []
   }
 
   /**
-   * 删除同步范围：返回 null 表示当前会话列表即完整集合（默认）；
-   * 返回函数时，只有判定为 true 的已存会话参与删除同步。
-   * 用于同站点存在多个互不相交会话列表的场景（如 Gemini 的 /app 侧边栏与 Spark 任务列表）。
+   * 删除同步范围：返回 null 表示当前对话列表即完整集合（默认）；
+   * 返回函数时，只有判定为 true 的已存对话参与删除同步。
+   * 用于同站点存在多个互不相交对话列表的场景（如 Gemini 的 /app 侧边栏与 Spark 任务列表）。
    */
   getConversationDeletionScope(): ((conv: ConversationInfo) => boolean) | null {
     return null
   }
 
-  /** 获取已加载的会话数量，用于判断滚动加载是否稳定 */
+  /** 获取已加载的对话数量，用于判断滚动加载是否稳定 */
   protected getLoadedConversationCount(): number {
     return this.getConversationList().length
   }
 
-  /** 获取当前页面会话的基础元数据 */
+  /** 获取当前页面对话的基础元数据 */
   getCurrentConversationInfo(): ConversationInfo | null {
     const id = this.getSessionId()
     if (!id || id === "default" || this.isNewConversation()) {
@@ -553,24 +553,24 @@ export abstract class SiteAdapter {
   }
 
   /**
-   * 会话观察器绑定的根节点。默认复用侧边栏滚动容器；
-   * 若会话列表位于会随 SPA 路由销毁重建的容器内（如 Gemini Spark 的 task-list），
+   * 对话观察器绑定的根节点。默认复用侧边栏滚动容器；
+   * 若对话列表位于会随 SPA 路由销毁重建的容器内（如 Gemini Spark 的 task-list），
    * 应覆盖此方法返回更稳定的节点，返回 null 时调用方回退到 document 根。
    */
   getConversationObserverContainer(): Element | null {
     return this.getSidebarScrollContainer()
   }
 
-  /** 获取会话观察器配置 */
+  /** 获取对话观察器配置 */
   getConversationObserverConfig(): ConversationObserverConfig | null {
     return null
   }
 
   /**
-   * 导航到指定会话（SPA 导航，不刷新页面）
+   * 导航到指定对话（SPA 导航，不刷新页面）
    * 各站点适配器应覆盖此方法实现站点特定的导航逻辑
-   * @param _id 会话 ID
-   * @param url 会话 URL（用于降级硬刷新）
+   * @param _id 对话 ID
+   * @param url 对话 URL（用于降级硬刷新）
    * @returns 是否成功导航
    */
   navigateToConversation(_id: string, url?: string): boolean {
@@ -582,7 +582,7 @@ export abstract class SiteAdapter {
     return false
   }
 
-  /** 滚动加载全部会话 */
+  /** 滚动加载全部对话 */
   async deleteConversationOnSite(
     target: ConversationDeleteTarget,
   ): Promise<SiteDeleteConversationResult> {

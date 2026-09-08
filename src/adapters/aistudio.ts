@@ -129,7 +129,7 @@ export class AIStudioAdapter extends SiteAdapter {
 
   // ==================== 缓存属性 ====================
 
-  // 缓存从 library 页面抓取的会话列表
+  // 缓存从 library 页面抓取的对话列表
   private cachedLibraryConversations: ConversationInfo[] | null = null
   private cachedApiKey: string | null = null
   private cachedRpcOrigin: string | null = null
@@ -177,7 +177,7 @@ export class AIStudioAdapter extends SiteAdapter {
     return "https://aistudio.google.com/prompts/new_chat"
   }
 
-  // ==================== 会话状态 ====================
+  // ==================== 对话状态 ====================
 
   isNewConversation(): boolean {
     // 只要有有效的 session ID，就不是新对话
@@ -185,13 +185,13 @@ export class AIStudioAdapter extends SiteAdapter {
   }
 
   isSharePage(): boolean {
-    // 自有会话：/prompts/ID    分享会话：/app/prompts/ID
+    // 自有对话：/prompts/ID    分享对话：/app/prompts/ID
     return window.location.pathname.startsWith("/app/prompts/")
   }
 
   getSessionId(): string {
     const path = window.location.pathname
-    // AI Studio 会话 ID 位于 /prompts/ 之后
+    // AI Studio 对话 ID 位于 /prompts/ 之后
     // 支持 /app/prompts/[ID] 和 /prompts/[ID]
     // 排除 query 参数和 hash（虽然 pathname 通常不含这些，但为了稳健性使用排除集）
     const match = path.match(/\/prompts\/([^/?#]+)/)
@@ -887,7 +887,7 @@ export class AIStudioAdapter extends SiteAdapter {
   }
 
   /**
-   * 加载全部会话（从 library 页面抓取）
+   * 加载全部对话（从 library 页面抓取）
    * 跳转到 /library 页面，等待桌面表格或移动端卡片列表加载后缓存。
    */
   async loadAllConversations(): Promise<void> {
@@ -955,7 +955,7 @@ export class AIStudioAdapter extends SiteAdapter {
    */
   private async waitForLibraryContent(): Promise<boolean> {
     // 最多等待 5 秒
-    // 以桌面表格、移动端卡片列表、真实会话链接或明确空状态为就绪信号。
+    // 以桌面表格、移动端卡片列表、真实对话链接或明确空状态为就绪信号。
     // 不把裸 ms-library-table 当作完成信号，避免 Angular shell 阶段提前返回。
     for (let i = 0; i < 50; i++) {
       await new Promise((resolve) => setTimeout(resolve, 100))
@@ -970,7 +970,7 @@ export class AIStudioAdapter extends SiteAdapter {
   }
 
   /**
-   * 从 library 页面提取会话列表，兼容桌面表格和移动端卡片布局。
+   * 从 library 页面提取对话列表，兼容桌面表格和移动端卡片布局。
    */
   private extractLibraryConversations(): ConversationInfo[] {
     const conversations = new Map<string, ConversationInfo>()
@@ -1047,7 +1047,7 @@ export class AIStudioAdapter extends SiteAdapter {
   }
 
   /**
-   * 从侧边栏提取会话列表（仅部分最近会话）
+   * 从侧边栏提取对话列表（仅部分最近对话）
    */
   private extractSidebarConversations(): ConversationInfo[] {
     const conversationMap = new Map<string, ConversationInfo>()
@@ -1071,7 +1071,7 @@ export class AIStudioAdapter extends SiteAdapter {
       // 提取标题
       const title = link.textContent?.trim() || "Untitled"
 
-      // 检查是否当前会话
+      // 检查是否当前对话
       const isActive = window.location.pathname.includes(id)
 
       conversationMap.set(id, {
@@ -1102,14 +1102,14 @@ export class AIStudioAdapter extends SiteAdapter {
   }
 
   getSidebarScrollContainer(): Element | null {
-    // /library 页面返回真实的会话列表滚动容器
+    // /library 页面返回真实的对话列表滚动容器
     if (window.location.pathname === "/library") {
       return this.getLibraryScrollContainer()
     }
 
     // 非 /library 页面：新版 AI Studio（ms-navbar-v2）侧边栏不再包含可滚动的历史列表，
     // 但上层 waitForSidebarReady() 需要一个稳定可获取的元素作为「页面就绪」信号，
-    // 否则首次安装或会话列表为空时的自动全量同步（autoFullSync）会被永久阻塞。
+    // 否则首次安装或对话列表为空时的自动全量同步（autoFullSync）会被永久阻塞。
     // 这里返回稳定宿主容器作为就绪信号，而非直接返回 null。
     return (
       document.querySelector(this.config.selectors.sidebarScrollContainer) ||
@@ -1120,8 +1120,8 @@ export class AIStudioAdapter extends SiteAdapter {
   }
 
   getConversationObserverConfig(): ConversationObserverConfig | null {
-    // 新版 AI Studio 侧边栏（ms-navbar-v2）已不含历史会话链接
-    // 会话列表仅通过 /library 页面获取，无需 DOM 观察器
+    // 新版 AI Studio 侧边栏（ms-navbar-v2）已不含历史对话链接
+    // 对话列表仅通过 /library 页面获取，无需 DOM 观察器
     if (window.location.pathname === "/library") {
       return {
         selector: this.config.conversation.itemSelector,
@@ -1779,7 +1779,7 @@ export class AIStudioAdapter extends SiteAdapter {
       return element.textContent?.trim() || ""
     }
 
-    // 检查会话变更并清理缓存
+    // 检查对话变更并清理缓存
     const currentSessionId = this.getSessionId()
     if (this.lastSessionIdForCache !== currentSessionId) {
       this.textCache.clear()
@@ -2897,7 +2897,7 @@ export class AIStudioAdapter extends SiteAdapter {
    * 收集导出快照。
    *
    * **AI Studio 的关键事实**（用户在控制台跑诊断脚本拿到的 ground truth）：
-   *   - 长会话里**所有** `ms-chat-turn` 都常驻 DOM（358 turn 全部存在），不外层
+   *   - 长对话里**所有** `ms-chat-turn` 都常驻 DOM（358 turn 全部存在），不外层
    *     虚拟化；
    *   - 页面**没有** `<cdk-virtual-scroll-viewport>`，普通浏览器滚动，无 CDK；
    *   - 真正的虚拟化在 turn 内部——`<div class="virtual-scroll-container">` 内

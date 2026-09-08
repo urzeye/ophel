@@ -1,7 +1,7 @@
 /**
  * Tags Store - Zustand 状态管理
  *
- * 管理会话标签列表
+ * 管理对话标签列表
  */
 
 import { create } from "zustand"

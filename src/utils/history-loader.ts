@@ -45,7 +45,7 @@ export interface LoadHistoryResult {
   previousScrollTop: number
   /** 是否处于 Flutter 模式 */
   isFlutterMode: boolean
-  /** 是否静默完成（短会话） */
+  /** 是否静默完成（短对话） */
   silent: boolean
 }
 

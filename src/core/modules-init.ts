@@ -345,7 +345,7 @@ export function initWatermarkRemover(ctx: ModulesContext): void {
 }
 
 /**
- * 初始化 ChatGPT 长会话渲染性能优化 (仅 ChatGPT)
+ * 初始化 ChatGPT 长对话渲染性能优化 (仅 ChatGPT)
  */
 export function initChatGptPerfManager(ctx: ModulesContext): void {
   const { adapter, settings, siteId } = ctx
@@ -516,7 +516,7 @@ export async function initCoreModules(ctx: ModulesContext): Promise<ModuleInstan
   // 13. Policy Retry Manager
   initPolicyRetryManager(ctx)
 
-  // 14. ChatGPT 长会话渲染性能优化
+  // 14. ChatGPT 长对话渲染性能优化
   initChatGptPerfManager(ctx)
 
   return modules
@@ -718,7 +718,7 @@ export function subscribeModuleUpdates(ctx: ModulesContext): () => void {
       )
     }
 
-    // 14. ChatGPT 长会话渲染性能优化 update
+    // 14. ChatGPT 长对话渲染性能优化 update
     if (siteId === SITE_IDS.CHATGPT && newSettings?.chatgpt) {
       if (modules.chatgptPerfManager) {
         modules.chatgptPerfManager.update(newSettings.chatgpt)

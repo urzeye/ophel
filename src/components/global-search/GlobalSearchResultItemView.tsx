@@ -16,7 +16,7 @@ interface GlobalSearchResultItemViewProps {
     reply: string
   }
   matchReasonLabels: Record<GlobalSearchMatchReason, string>
-  /** 站外会话结果站点名旁的"站外"标注文案 */
+  /** 站外对话结果站点名旁的"站外"标注文案 */
   offsiteConversationLabel: string
   onMouseMove: () => void
   onMouseEnter: (event: React.MouseEvent<HTMLDivElement>) => void

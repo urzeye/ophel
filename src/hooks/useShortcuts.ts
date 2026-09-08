@@ -25,7 +25,7 @@ import { getSiteZenMode, type Settings } from "~utils/storage"
 import { showToast } from "~utils/toast"
 
 /**
- * 辅助函数：导航到上/下一个会话
+ * 辅助函数：导航到上/下一个对话
  */
 function navigateConversation(
   conversationManager: ConversationManager,
@@ -34,7 +34,7 @@ function navigateConversation(
 ) {
   if (!adapter) return
 
-  // 获取当前会话 ID 和会话列表
+  // 获取当前对话 ID 和对话列表
   const currentSessionId = adapter.getSessionId()
   const conversations = conversationManager.getConversations()
 
@@ -46,12 +46,12 @@ function navigateConversation(
   // 按更新时间排序
   const sorted = [...conversations].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
 
-  // 找到当前会话的位置
+  // 找到当前对话的位置
   const currentIndex = sorted.findIndex((c) => c.id === currentSessionId)
 
   let targetIndex: number
   if (currentIndex === -1) {
-    // 当前会话不在列表中，跳转到第一个
+    // 当前对话不在列表中，跳转到第一个
     targetIndex = 0
   } else if (direction === "prev") {
     targetIndex = currentIndex > 0 ? currentIndex - 1 : sorted.length - 1
@@ -319,7 +319,7 @@ export function useShortcuts({
   const prevHeading = useCallback(() => navigateHeading("prev"), [navigateHeading])
   const nextHeading = useCallback(() => navigateHeading("next"), [navigateHeading])
 
-  // 刷新会话列表
+  // 刷新对话列表
   const refreshConversations = useCallback(() => {
     showToast(t("syncingConversations"))
     // 触发事件，ConversationsTab 会监听并执行同步
@@ -410,9 +410,9 @@ export function useShortcuts({
     }, 50)
   }, [settings, isPanelVisible, isSnapped, onPanelToggle, onShowSnappedPanel])
 
-  // 定位当前会话（Alt+Shift+L）
+  // 定位当前对话（Alt+Shift+L）
   const locateConversation = useCallback(() => {
-    // 检查会话功能是否启用
+    // 检查对话功能是否启用
     if (!settings?.features?.conversations?.enabled) {
       showToast(t("conversationsDisabled"))
       return
@@ -440,7 +440,7 @@ export function useShortcuts({
     showToast(t("locatingConversation"))
   }, [adapter, settings, isPanelVisible, isSnapped, onPanelToggle, onShowSnappedPanel])
 
-  // 新会话（主修饰键 + Shift + O）
+  // 新对话（主修饰键 + Shift + O）
   const newConversation = useCallback(() => {
     if (adapter?.startNewConversation()) {
       return
@@ -580,13 +580,13 @@ export function useShortcuts({
     showToast(t("notGenerating"))
   }, [adapter])
 
-  // 上一个会话 (Alt+[)
+  // 上一个对话 (Alt+[)
   const prevConversation = useCallback(() => {
     if (!conversationManager) return
     navigateConversation(conversationManager, adapter, "prev")
   }, [conversationManager, adapter])
 
-  // 下一个会话 (Alt+])
+  // 下一个对话 (Alt+])
   const nextConversation = useCallback(() => {
     if (!conversationManager) return
     navigateConversation(conversationManager, adapter, "next")

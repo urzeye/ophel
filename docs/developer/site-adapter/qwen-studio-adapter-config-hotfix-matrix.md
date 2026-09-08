@@ -7,7 +7,7 @@ Qwen Studio 是 P3-06 批次的第四个配置化站点，当前 `configVersion`
 | 范围 | 配置字段 | 影响功能 |
 | --- | --- | --- |
 | 输入与操作按钮 | `selectors.textarea`、`selectors.submitButton`、`selectors.newChatButton`、`selectors.stopButton`、`input.submitKey`、`composerButton` | 输入框、发送、新对话、停止生成和快捷键提交 |
-| 会话侧栏 | `conversation.*`、`sidebarRoot`、`sidebarScroll`、`conversationLink`、`pinnedConversation` | 会话列表、标题、ID、跳转、置顶状态、侧栏滚动容器和观察器 |
+| 对话侧栏 | `conversation.*`、`sidebarRoot`、`sidebarScroll`、`conversationLink`、`pinnedConversation` | 对话列表、标题、ID、跳转、置顶状态、侧栏滚动容器和观察器 |
 | 消息、正文与公式 | `selectors.responseContainer`、`selectors.chatContent`、`selectors.userQuery`、`selectors.assistantResponse`、`userMessageRoot`、`userContent`、`assistantContent`、`latex`、`latexDisplay`、`markdownParagraph` | 消息容器、大纲、用户问题与 AI 正文提取、公式复制和 Markdown 修复 |
 | 消息滚动容器 | `selectors.scrollContainer` | 去顶部、到底部、返回锚点和阅读位置恢复 |
 | 代码块与 Mermaid | `codeBlock`、`codeLine`、`codeBody`、`codeBodyFallback`、`mermaidCodeBody`、`mermaidCodeContent`、`mermaidChart`、`codeHeader`、`codeHeaderActions`、`codeLineNumber`、`mermaidSwitch`、`mermaidSwitchItem`、`mermaidActiveSwitch` | 代码语言/正文提取、Mermaid 源码识别、代码/预览视图定位和导出恢复 |
@@ -21,8 +21,8 @@ Qwen Studio 是 P3-06 批次的第四个配置化站点，当前 `configVersion`
 
 ## 仍需随应用发版
 
-- hostname、`/c` 与 `/s` 路由判断，新标签页 URL、会话 ID 路径回退、token/cookie 与 UID 解析。
-- 会话 API 请求、快照 TTL、分页上限、响应归一化、DOM/API 合并和会话标题回退算法。
+- hostname、`/c` 与 `/s` 路由判断，新标签页 URL、对话 ID 路径回退、token/cookie 与 UID 解析。
+- 对话 API 请求、快照 TTL、分页上限、响应归一化、DOM/API 合并和对话标题回退算法。
 - 受控 textarea setter、focus、input/change/keyboard 事件和发送按钮状态判断。
 - 完整历史滚动加载、消息排序/去重、附件元数据解析、资源属性列表、下载 URL 安全过滤和导出打包算法。
 - Mermaid 代码/预览点击、等待、稳定轮次、恢复时序和 Ophel 导出标记属性。

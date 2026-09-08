@@ -1,5 +1,5 @@
 /**
- * 会话导出工具
+ * 对话导出工具
  *
  * 支持导出为 Markdown、JSON、TXT、HTML 格式
  * 包含强大的 HTML 转 Markdown 功能

@@ -198,7 +198,7 @@ describe("settings hierarchy search & route resolution", () => {
     })
     expect(SETTING_SEARCH_SUB_TAB_LABEL_DEFINITIONS.conversations).toEqual({
       key: "tabConversations",
-      fallback: "Conversations",
+      fallback: "Chats",
     })
     expect(SETTING_SEARCH_SUB_TAB_LABEL_DEFINITIONS.prompts).toEqual({
       key: "tabPrompts",

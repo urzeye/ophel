@@ -2075,7 +2075,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
       }
 
       if (item.category === "conversations" && item.conversationId) {
-        // 站外会话没有当前站点的适配器上下文，直接新标签打开会话链接
+        // 站外对话没有当前站点的适配器上下文，直接新标签打开对话链接
         if (item.sourceSite?.isOffsite) {
           if (item.conversationUrl) {
             platform.openTab(item.conversationUrl)
@@ -2538,7 +2538,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
     }
     if (outlineManager) {
       outlineManager.refresh()
-      // SPA 路由变化：立刻让大纲面板清掉上一个会话的内容、并安排几次错峰 refresh，
+      // SPA 路由变化：立刻让大纲面板清掉上一个对话的内容、并安排几次错峰 refresh，
       // 避免切换到新对话后大纲面板仍在显示旧对话条目。modules-init.ts 会在
       // popstate / pushState / replaceState 时 dispatch "gh-url-change"。
       const onUrlChange = () => outlineManager.handleUrlChange()
@@ -2711,7 +2711,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
     [conversationManager, adapter],
   )
 
-  // 会话列表菜单通过事件请求打开导出弹窗（或按设置直出），与工具箱按钮共用同一入口逻辑
+  // 对话列表菜单通过事件请求打开导出弹窗（或按设置直出），与工具箱按钮共用同一入口逻辑
   useEffect(() => {
     const handleOpenExportDialog = () => {
       void handleFloatingToolbarExport()
@@ -3188,7 +3188,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
     }
   }, [adapter, selectedPrompt])
 
-  // 切换会话时自动清空选中的提示词悬浮条及输入框
+  // 切换对话时自动清空选中的提示词悬浮条及输入框
   useEffect(() => {
     if (!selectedPrompt || !adapter) return
 
@@ -3742,7 +3742,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
             await conversationManager.updateConversation(convId, { tagIds })
           }}
           onRefresh={() => {
-            // 强制刷新会话列表 ? conversationManager 会触发 onChange
+            // 强制刷新对话列表 - conversationManager 会触发 onChange
           }}
         />
       )}

@@ -39,10 +39,10 @@ export interface SitePackInputConfig {
   submitKey?: "Enter" | "Ctrl+Enter"
 }
 
-/** 会话列表字段映射，用受限原语替代站点自定义提取函数。 */
+/** 对话列表字段映射，用受限原语替代站点自定义提取函数。 */
 export interface SitePackConversationConfig {
   itemSelector: string
-  /** attr 缺省为 href；regex 的第一个捕获组作为会话 id。 */
+  /** attr 缺省为 href；regex 的第一个捕获组作为对话 id。 */
   idFrom: {
     attr?: string
     regex: string
@@ -62,7 +62,7 @@ export interface SitePackGeneratingConfig {
 }
 
 export interface SitePackSessionConfig {
-  /** 对 pathname 匹配，第一个捕获组作为会话 id。 */
+  /** 对 pathname 匹配，第一个捕获组作为对话 id。 */
   idFromPathRegex?: string
   newConversationPathPatterns?: string[]
   sharePathPrefix?: string

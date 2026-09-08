@@ -1065,7 +1065,7 @@ export const it = {
   togglePrompts: "Attiva/disattiva i suggerimenti",
   toggleConversations: "Attiva/disattiva conversazioni",
   // Conversations
-  tabConversations: "Conversazioni",
+  tabConversations: "Chat",
   conversationsEmpty: "Nessuna conversazione ancora",
   conversationsEmptyHint:
     "Fai clic sul pulsante di sincronizzazione in alto per importare dalla barra laterale",

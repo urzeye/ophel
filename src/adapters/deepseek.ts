@@ -3,7 +3,7 @@
  *
  * 选择器策略：
  * - 优先使用 `ds-*` 语义类名
- * - 会话列表优先使用 `/a/chat/s/{id}` 路由结构
+ * - 对话列表优先使用 `/a/chat/s/{id}` 路由结构
  * - 对用户消息采用“消息容器内不存在 `.ds-markdown`”的结构判断
  *
  * 注意：DeepSeek 页面存在部分 CSS Modules 哈希类名，首版实现尽量避免依赖它们。
@@ -205,7 +205,7 @@ export class DeepSeekAdapter extends SiteAdapter {
   }
 
   isSharePage(): boolean {
-    // 自有会话：/a/chat/s/ID    分享会话：/share/ID
+    // 自有对话：/a/chat/s/ID    分享对话：/share/ID
     return window.location.pathname.startsWith("/share/")
   }
 

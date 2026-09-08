@@ -1,6 +1,6 @@
 /**
  * 功能模块页面
- * 包含：标签页、提醒、内容处理、大纲、会话、模型锁定、阅读历史
+ * 包含：标签页、提醒、内容处理、大纲、对话、模型锁定、阅读历史
  * 使用顶部 Tab 切换
  */
 import React, { useCallback, useEffect, useState } from "react"
@@ -1266,7 +1266,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
         </>
       )}
 
-      {/* ========== 会话 Tab ========== */}
+      {/* ========== 对话 Tab ========== */}
       {activeTab === FEATURES_TAB_IDS.CONVERSATIONS && (
         <>
           {/* 导出设置卡片 */}

@@ -1,5 +1,5 @@
 /**
- * SVG 图标组件 - 会话 (气泡)
+ * SVG 图标组件 - 对话 (气泡)
  * 风格：Outline (stroke-based)
  */
 import React from "react"

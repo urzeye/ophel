@@ -1422,7 +1422,7 @@ export class GeminiAdapter extends SiteAdapter {
     const path = window.location.pathname.replace(/^\/u\/\d+/, "")
     // 普通新对话
     if (path === "/app" || path === "/app/") return true
-    // Spark 首页与列表/配置页不是具体会话，/spark/chat/{id} 才是线程页
+    // Spark 首页与列表/配置页不是具体对话，/spark/chat/{id} 才是线程页
     if (this.isSparkRoute() && !this.isSparkThreadPage()) return true
     // Gem 相关页面：创建、编辑、使用 gem 新对话
     if (path === "/gems/create" || path === "/gems/create/") return true
@@ -1445,7 +1445,7 @@ export class GeminiAdapter extends SiteAdapter {
     )
   }
 
-  /** Spark 路由（/spark、/spark/tasks、/spark/chat/... 等），会话以任务卡片而非侧边栏列表呈现 */
+  /** Spark 路由（/spark、/spark/tasks、/spark/chat/... 等），对话以任务卡片而非侧边栏列表呈现 */
   private isSparkRoute(): boolean {
     const path = window.location.pathname.replace(/^\/u\/\d+(?=\/|$)/, "")
     return path === "/spark" || path.startsWith("/spark/")
@@ -1457,11 +1457,11 @@ export class GeminiAdapter extends SiteAdapter {
     return /^\/spark\/chat\/[^/?#]+(?:\/|$)/i.test(path)
   }
 
-  // ==================== 会话管理 ====================
+  // ==================== 对话管理 ====================
 
   getConversationDeletionScope(): ((conv: ConversationInfo) => boolean) | null {
-    // /app 侧边栏与 Spark 任务列表互不相交；删除同步只能作用于当前路由可见的那一类会话，
-    // 否则在任一侧全量同步都会把另一侧的会话误判为“已从站点删除”。
+    // /app 侧边栏与 Spark 任务列表互不相交；删除同步只能作用于当前路由可见的那一类对话，
+    // 否则在任一侧全量同步都会把另一侧的对话误判为“已从站点删除”。
     const spark = this.isSparkRoute()
     return (conv) => (conv.url || "").includes("/spark/chat/") === spark
   }
@@ -1504,7 +1504,7 @@ export class GeminiAdapter extends SiteAdapter {
       .filter((c) => c.id)
   }
 
-  /** Spark 路由下的会话列表：扫描 remy-task-list 里的任务卡片（首页为近期对话，tasks/线程页左窗格为完整列表） */
+  /** Spark 路由下的对话列表：扫描 remy-task-list 里的任务卡片（首页为近期对话，tasks/线程页左窗格为完整列表） */
   private getSparkConversationList(): ConversationInfo[] {
     const { sitePrivateSelectors } = this.config
     const cards =
@@ -1536,7 +1536,7 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   private extractSparkConversationId(card: Element): string {
-    // 卡片 DOM id 为 goal-c_{会话id}，与 jslog 里的 ["c_..."] 信号一致
+    // 卡片 DOM id 为 goal-c_{对话id}，与 jslog 里的 ["c_..."] 信号一致
     const domId = card.getAttribute("id")?.match(/^goal-c_(.+)$/)
     if (domId) return domId[1]
     return this.extractConversationIdFromSignal(card.getAttribute("jslog") || "")
@@ -1544,7 +1544,7 @@ export class GeminiAdapter extends SiteAdapter {
 
   getSidebarScrollContainer(): Element | null {
     if (this.isSparkRoute()) return this.getSparkGoalListContainer()
-    // Gemini 正文聊天也使用 infinite-scroller，必须限定在侧边栏会话区域内查找。
+    // Gemini 正文聊天也使用 infinite-scroller，必须限定在侧边栏对话区域内查找。
     return this.getChatsScrollableContainer()
   }
 
@@ -1759,7 +1759,7 @@ export class GeminiAdapter extends SiteAdapter {
     const { conversation, sitePrivateSelectors } = this.config
     const sparkCardSelector = sitePrivateSelectors.sparkGoalCard
     return {
-      // 同时监听 /app 侧边栏会话项与 Spark 任务卡片；两类元素不会出现在同一路由下
+      // 同时监听 /app 侧边栏对话项与 Spark 任务卡片；两类元素不会出现在同一路由下
       selector: `${conversation.itemSelector}, ${sparkCardSelector}`,
       shadow: conversation.shadow ?? false,
       extractInfo: (el) => {
@@ -1821,7 +1821,7 @@ export class GeminiAdapter extends SiteAdapter {
       return super.navigateToConversation(id, url)
     }
 
-    // 新版侧边栏：通过配置化会话信号定位行，再点击内部链接。
+    // 新版侧边栏：通过配置化对话信号定位行，再点击内部链接。
     const privateSelectors = this.config.sitePrivateSelectors
     const row = this.findConversationRow(id)
     const anchor = row?.querySelector(privateSelectors.conversationAnchor) as HTMLElement | null

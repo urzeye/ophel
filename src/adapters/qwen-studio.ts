@@ -3,7 +3,7 @@
  *
  * 说明：
  * - 与国内版 qianwen.com 完全独立，避免选择器/路由相互污染
- * - 会话列表优先走官方接口 /api/v2/chats/，DOM 只做补充
+ * - 对话列表优先走官方接口 /api/v2/chats/，DOM 只做补充
  * - 输入框、导出、主题、模型选择器均基于 qwen.html 快照中的稳定类名和结构锚点
  */
 import { SITE_IDS } from "~constants"
@@ -158,7 +158,7 @@ export class QwenAiAdapter extends SiteAdapter {
   }
 
   isSharePage(): boolean {
-    // 自有会话：/chat/...    分享会话：/s/ID
+    // 自有对话：/chat/...    分享对话：/s/ID
     return window.location.pathname.startsWith("/s/")
   }
 

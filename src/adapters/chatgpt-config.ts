@@ -107,7 +107,7 @@ const createChatGPTConfig = (): ChatGPTSiteConfig => {
   const srOnly = ".sr-only"
   const codexTaskMarkdown = ".markdown.markdown-new-styling"
   const codexTaskUserQuery = `.self-end.bg-token-bg-tertiary ${userQueryText}`
-  // 新版侧边栏会话链接可能输出绝对 URL（https://chatgpt.com/c/...），这里同时兼容相对 /c/... 写法。
+  // 新版侧边栏对话链接可能输出绝对 URL（https://chatgpt.com/c/...），这里同时兼容相对 /c/... 写法。
   const conversationItem =
     'a[data-sidebar-item="true"][href^="/c/"], a[data-sidebar-item="true"][href*="chatgpt.com/c/"]'
   const stopButton = [

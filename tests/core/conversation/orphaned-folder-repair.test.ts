@@ -147,7 +147,7 @@ describe("ConversationManager orphaned folder repair", () => {
     const stored = useConversationsStore.getState().conversations
     expect(stored[createSiteScopedStorageKey(SITE_ID, "conv-ghost")].folderId).toBe("inbox")
     expect(stored[createSiteScopedStorageKey(SITE_ID, "conv-missing")].folderId).toBe("inbox")
-    // 已指向有效文件夹的会话保持不变
+    // 已指向有效文件夹的对话保持不变
     expect(stored[STORAGE_KEY].folderId).toBe("folder_1")
   })
 

@@ -7,7 +7,7 @@ Grok 是 P3-06 批次的第二个配置化站点，当前 `configVersion` 为 `2
 | 范围 | 配置字段 | 影响功能 |
 | --- | --- | --- |
 | 输入与操作按钮 | `selectors.textarea`、`selectors.submitButton`、`selectors.newChatButton`、`selectors.stopButton`、`input.submitKey` | Tiptap 输入框、发送、新对话、停止生成与快捷键提交 |
-| 会话侧栏与 CMDK | `conversation.*`、`sidebarScrollContainer`、`sidebarGroup`、`sidebarMenu*`、`sidebarIcon`、`viewAllButton`、`cmdk*`、`actionDialog`、`actionIconNodes`、`conversationTitle` | 会话列表/标题/跳转、查看全部弹窗、观察器、置顶状态与 UI 删除目标定位 |
+| 对话侧栏与 CMDK | `conversation.*`、`sidebarScrollContainer`、`sidebarGroup`、`sidebarMenu*`、`sidebarIcon`、`viewAllButton`、`cmdk*`、`actionDialog`、`actionIconNodes`、`conversationTitle` | 对话列表/标题/跳转、查看全部弹窗、观察器、置顶状态与 UI 删除目标定位 |
 | 消息、大纲与滚动 | `selectors.responseContainer`、`selectors.chatContent`、`selectors.userQuery`、`selectors.assistantResponse`、`messageBubble`、`responseMarkdown`、`responseRoot`、`mainScrollContainer`、`fallbackScrollContainers`、`inlineCodeSpan` | 用户与 AI 消息、滚动容器、标题大纲、字数统计和用户问题 Markdown 提取 |
 | 导出与附件 | `export.*`、`responseMarkdown`、`responseRoot`、`exportDecoration`、`attachmentCardCandidates` | DOM/分享页导出正文、图片与文件卡片识别、装饰节点清理和用户问题替换 |
 | 生成、模型与网络 | `generating.existsSelectors`、`modelSwitcher.*`、`modelName`、`networkMonitor.*` | 生成检测、停止入口、当前模型文本、模型锁定和流式请求识别 |
@@ -21,7 +21,7 @@ Grok 是 P3-06 批次的第二个配置化站点，当前 `configVersion` 为 `2
 - hostname、新对话/分享页路由判断、新标签页 URL、分享 ID 与 response ID 前缀解析。
 - 删除 API 路径、请求头、Statsig/localStorage 读取、删除后刷新与错误原因映射。
 - CMDK 虚拟列表滚动次数、等待时序、ESC/PointerEvent 编排、删除/确认关键词和批量删除熔断逻辑。
-- 置顶图标 SVG path 签名、DOM 可见性算法及会话缓存生命周期。
+- 置顶图标 SVG path 签名、DOM 可见性算法及对话缓存生命周期。
 - Tiptap `innerHTML`、InputEvent、光标与清空占位结构。
 - 分享 API schema、附件 metadata、文件名/类型/大小解析、资源 URL 过滤与下载打包算法。
 - 百分比宽度转换、面板避让 extra CSS/间距、主题 localStorage/class/color-scheme 操作。

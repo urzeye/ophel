@@ -88,7 +88,7 @@ document
 | 文件                             | 用途                                             | 注入方式                              |
 | -------------------------------- | ------------------------------------------------ | ------------------------------------- |
 | `src/style.css`                  | 主样式文件，包含面板、大纲、工具栏等核心 UI 样式 | `data-text:~style.css`                |
-| `src/styles/conversations.css`   | 会话 Tab 专用样式，从油猴脚本迁移                | `data-text:~styles/conversations.css` |
+| `src/styles/conversations.css`   | 对话 Tab 专用样式，从油猴脚本迁移                | `data-text:~styles/conversations.css` |
 | `src/styles/theme-variables.css` | CSS 变量定义（浅色/深色模式默认值）              | 被 `style.css` 通过 `@import` 引入    |
 
 **注入代码** (`src/contents/ui-entry.tsx`)：
@@ -317,7 +317,7 @@ src/
 ├── style.css                          # 主样式文件
 ├── styles/
 │   ├── theme-variables.css            # CSS 变量默认值
-│   └── conversations.css              # 会话 Tab 样式
+│   └── conversations.css              # 对话 Tab 样式
 ├── utils/
 │   ├── themes.ts                      # 主题系统入口
 │   ├── themes/
@@ -339,7 +339,7 @@ src/
 | ---------------- | --------------------------------------- | -------------------------- | ----------------------- |
 | 面板框架         | `style.css`                             | Plasmo Shadow DOM          | `getStyle()`            |
 | 大纲组件         | `style.css`                             | Plasmo Shadow DOM          | `getStyle()`            |
-| 会话列表         | `conversations.css`                     | Plasmo Shadow DOM          | `getStyle()`            |
+| 对话列表         | `conversations.css`                     | Plasmo Shadow DOM          | `getStyle()`            |
 | 提示词 Tab       | `style.css`                             | Plasmo Shadow DOM          | `getStyle()`            |
 | CSS 变量默认值   | `theme-variables.css`                   | Plasmo Shadow DOM          | `@import` by style.css  |
 | 主题预置变量     | `themes/light/*.ts`, `themes/dark/*.ts` | Plasmo Shadow DOM          | `ThemeManager` 动态注入 |
