@@ -18,6 +18,7 @@ export default [
       "assets/assistant-mermaid-vendor.js",
       ".claude/**",
       "CLAUDE.md",
+      "output/**",
     ],
   },
   {
