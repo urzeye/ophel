@@ -18,6 +18,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 ### ✨ Improvements
 
 - **Long conversation and streaming performance** — Optimized background calculations and DOM scanning across Gemini and other supported sites during long conversations, continuous streaming responses, and scrolling, reducing stutter and frame drops.
+- **Reading history disabled by default** — "Enable Reading History" is now disabled by default for new installs across the browser extension and userscript, avoiding automatic scroll tracking until opted in; existing user settings are preserved.
 - **Export style** — New "Export Style" setting (also selectable per export in the export dialog) with a Clean option that removes decorative emojis from exported files; Prompt Queue and export text now fully follow the selected interface language.
 - **Update notifications** — Version updates no longer pop up the full-screen changelog. A one-time corner toast appears instead, and a red dot on the panel logo previews highlights on hover and opens the full notes on click. (#887)
 - **Tooltips** — Tooltips now flip near screen edges and dismiss on click or Esc; list-item hints only appear when the title is truncated, so they no longer cover neighboring content. (#885)

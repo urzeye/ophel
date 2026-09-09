@@ -307,7 +307,7 @@ export const DEFAULT_SETTINGS: Settings = {
   },
 
   readingHistory: {
-    persistence: true,
+    persistence: false,
     autoRestore: true,
     cleanupDays: 3,
   },

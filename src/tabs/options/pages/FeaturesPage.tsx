@@ -1550,12 +1550,12 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
             label={t("readingHistoryPersistenceLabel")}
             description={t("readingHistoryPersistenceDesc")}
             settingId="reading-history-persistence"
-            checked={settings.readingHistory?.persistence ?? true}
+            checked={settings.readingHistory?.persistence ?? false}
             onChange={() =>
               updateNestedSetting(
                 "readingHistory",
                 "persistence",
-                !settings.readingHistory?.persistence,
+                !(settings.readingHistory?.persistence ?? false),
               )
             }
           />

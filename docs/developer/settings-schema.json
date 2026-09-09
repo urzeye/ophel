@@ -263,7 +263,7 @@
   },
 
   "readingHistory": {
-    "persistence": true,
+    "persistence": false,
     "autoRestore": true,
     "cleanupDays": 3
   },
