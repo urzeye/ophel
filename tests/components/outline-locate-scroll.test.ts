@@ -13,7 +13,7 @@ const outlineTabSource = readSource("../../src/components/OutlineTab.tsx")
 describe("outline locate scroll & highlight jitter prevention", () => {
   it("decouples locate retry limit from 3s highlight duration to prevent infinite scroll fighting", () => {
     expect(outlineTabSource).toContain("const OUTLINE_LOCATE_HIGHLIGHT_MS = 3000")
-    expect(outlineTabSource).toContain("const OUTLINE_LOCATE_MAX_RETRIES = 10")
+    expect(outlineTabSource).toContain("const OUTLINE_LOCATE_MAX_RETRIES = 20")
     expect(outlineTabSource).not.toContain(
       "const OUTLINE_LOCATE_MAX_RETRIES = Math.ceil(\n  OUTLINE_LOCATE_HIGHLIGHT_MS / OUTLINE_LOCATE_RETRY_DELAY_MS,\n)",
     )
