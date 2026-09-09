@@ -108,7 +108,7 @@ const stopCoreModule = (module: Pick<CoreModule, "stop">): void => {
 }
 
 function isAssistantMermaidEnabled(settings: Settings): boolean {
-  return settings.content?.assistantMermaid ?? true
+  return settings.content?.assistantMermaid ?? false
 }
 
 export async function initAssistantMermaidRenderer(ctx: ModulesContext): Promise<void> {

@@ -105,7 +105,7 @@ export const DEFAULT_SETTINGS: Settings = {
   },
 
   content: {
-    assistantMermaid: true, // 默认开启，仅对非原生 Mermaid 站点生效
+    assistantMermaid: false, // 默认关闭，仅对非原生 Mermaid 站点生效
     markdownFix: false,
     // 油猴脚本环境默认开启（GM_xmlhttpRequest 已通过 @grant 声明）
     watermarkRemoval: isUserscript,

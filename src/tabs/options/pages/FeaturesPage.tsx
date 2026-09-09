@@ -1609,12 +1609,12 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
             label={t("assistantMermaidLabel")}
             description={t("assistantMermaidDesc")}
             settingId="content-assistant-mermaid"
-            checked={settings.content?.assistantMermaid ?? true}
+            checked={settings.content?.assistantMermaid ?? false}
             onChange={() =>
               updateNestedSetting(
                 "content",
                 "assistantMermaid",
-                !(settings.content?.assistantMermaid ?? true),
+                !(settings.content?.assistantMermaid ?? false),
               )
             }
           />
