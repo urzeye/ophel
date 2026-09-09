@@ -1030,6 +1030,18 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
     }
   }, [])
 
+  // 用户手动滚动中止定位时，清理未激活的 pending 高亮与 forceVisible，
+  // 避免目标行之后挂载时延迟触发高亮；已激活的高亮不受影响
+  const abortPendingLocate = useCallback(() => {
+    const pending = pendingLocateHighlightRef.current
+    if (!pending) return
+    if (activeLocateHighlightRef.current?.requestId === pending.requestId) return
+
+    locateHighlightRequestIdRef.current += 1
+    pendingLocateHighlightRef.current = null
+    manager.clearForceVisible()
+  }, [manager])
+
   const applyPendingLocateHighlight = useCallback(
     (index: number): boolean => {
       const pending = pendingLocateHighlightRef.current
@@ -1436,6 +1448,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
     const handleUserScroll = () => {
       userScrollingOutlineRef.current = true
       cancelLocateRetry()
+      abortPendingLocate()
       if (userScrollTimerRef.current) clearTimeout(userScrollTimerRef.current)
       userScrollTimerRef.current = setTimeout(() => {
         userScrollingOutlineRef.current = false
@@ -1454,7 +1467,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
       el.removeEventListener("touchmove", handleUserScroll)
       if (userScrollTimerRef.current) clearTimeout(userScrollTimerRef.current)
     }
-  }, [cancelLocateRetry])
+  }, [abortPendingLocate, cancelLocateRetry])
 
   const handleToggle = useCallback(
     (node: OutlineNode) => {
@@ -1649,6 +1662,13 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
     const scrollContainer = manager.getScrollContainer()
     if (!scrollContainer) return
 
+    // 用户主动触发定位时解除手动滚动锁定，避免被 1.5s 抑制窗口静默拦截
+    userScrollingOutlineRef.current = false
+    if (userScrollTimerRef.current) {
+      clearTimeout(userScrollTimerRef.current)
+      userScrollTimerRef.current = null
+    }
+
     // 0. 如果在搜索模式，先清除搜索
     if (searchQuery) {
       manager.setSearchQuery("")
@@ -1727,6 +1747,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
       if (locateHighlightRequestId !== locateHighlightRequestIdRef.current) return
       if (userScrollingOutlineRef.current) {
         cancelLocateRetry()
+        abortPendingLocate()
         return
       }
 
@@ -1742,6 +1763,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
         if (locateHighlightRequestId !== locateHighlightRequestIdRef.current) return
         if (userScrollingOutlineRef.current) {
           cancelLocateRetry()
+          abortPendingLocate()
           return
         }
 
@@ -1773,6 +1795,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
     tree,
     searchQuery,
     manager,
+    abortPendingLocate,
     applyPendingLocateHighlight,
     cancelLocateRetry,
     clearLocateHighlight,

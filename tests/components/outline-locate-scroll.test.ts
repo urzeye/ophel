@@ -51,7 +51,9 @@ describe("outline locate scroll & highlight jitter prevention", () => {
     const source = compact(outlineTabSource)
 
     // Entry check inside tryScrollAndHighlight
-    expect(source).toContain("if (userScrollingOutlineRef.current) { cancelLocateRetry() return }")
+    expect(source).toContain(
+      "if (userScrollingOutlineRef.current) { cancelLocateRetry() abortPendingLocate() return }",
+    )
     expect(source).toContain(
       "if (activeLocateHighlightRef.current?.requestId === locateHighlightRequestId) { cancelLocateRetry() return }",
     )
@@ -74,5 +76,36 @@ describe("outline locate scroll & highlight jitter prevention", () => {
     expect(source).toContain(
       "useEffect( () => () => { cancelLocateRetry() clearLocateHighlight({ clearForceVisible: true }) }, [cancelLocateRetry, clearLocateHighlight], )",
     )
+  })
+
+  it("resets the 1.5s user-scroll suppression when locate is triggered explicitly", () => {
+    const source = compact(outlineTabSource)
+    const locateFn = source.split("const handleLocateCurrent = useCallback(() => {")[1] ?? ""
+    // The reset must happen before any scroll/highlight attempt inside the locate handler
+    const locateHead = locateFn.slice(0, 1200)
+
+    expect(locateHead).toContain("userScrollingOutlineRef.current = false")
+    expect(locateHead).toContain("clearTimeout(userScrollTimerRef.current)")
+    expect(locateHead).toContain("userScrollTimerRef.current = null")
+  })
+
+  it("clears stale pending locate highlight and forceVisible when user scroll aborts the retry", () => {
+    const source = compact(outlineTabSource)
+
+    // abortPendingLocate guards against clearing an already-active highlight
+    expect(source).toContain("const abortPendingLocate = useCallback(() => {")
+    expect(source).toContain(
+      "if (activeLocateHighlightRef.current?.requestId === pending.requestId) return",
+    )
+    expect(source).toContain("pendingLocateHighlightRef.current = null manager.clearForceVisible()")
+
+    // wired into user scroll handling so pending cannot fire a delayed highlight later
+    const userScrollSection = source.split("const handleUserScroll = () => {")[1] ?? ""
+    expect(userScrollSection.slice(0, 400)).toContain("abortPendingLocate()")
+
+    // and into both user-scroll abort branches of the retry loop
+    const abortBranch =
+      "if (userScrollingOutlineRef.current) { cancelLocateRetry() abortPendingLocate() return }"
+    expect(source.split(abortBranch).length - 1).toBe(2)
   })
 })
