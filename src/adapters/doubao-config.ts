@@ -80,12 +80,19 @@ export interface DoubaoSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const DOUBAO_CONFIG_VERSION = 3
+export const DOUBAO_CONFIG_VERSION = 4
 
 const createDoubaoConfig = (): DoubaoSiteConfig => {
   const sidebarRoot = "#flow_chat_sidebar"
   const conversationItem = `${sidebarRoot} a[id^="conversation_"][href*="/chat/"]`
-  const newChatButton = `${sidebarRoot} > div:nth-child(2)`
+  const newChatIconPath = 'svg path[d^="M12.6221 1.01074"]'
+  const newChatButton = [
+    `${sidebarRoot} [class*="sidebar_nav_item"]:has(${newChatIconPath})`,
+    `[class*="sidebar_nav_item"]:has(${newChatIconPath})`,
+    `div[class*="cursor-pointer"]:has(${newChatIconPath})`,
+    `:is(button, div):has(> svg > ${newChatIconPath})`,
+    `${sidebarRoot} > div:nth-child(2)`,
+  ]
   const virtualScroll = '[class*="v_list_scroller"]'
   const virtualRow = ".v_list_row"
   const messageBlock = '[data-target-id="message-box-target-id"]'
@@ -143,7 +150,7 @@ const createDoubaoConfig = (): DoubaoSiteConfig => {
       chatContent: [assistantContent, userQuery],
       userQuery,
       assistantResponse,
-      newChatButton: [newChatButton],
+      newChatButton,
       stopButton: stopButtonSelectors,
     },
     input: { mode: "contenteditable", submitKey: "Enter" },

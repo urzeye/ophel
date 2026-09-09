@@ -63,7 +63,7 @@ export interface DeepSeekSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const DEEPSEEK_CONFIG_VERSION = 1
+export const DEEPSEEK_CONFIG_VERSION = 2
 
 const createDeepSeekConfig = (): DeepSeekSiteConfig => {
   const conversationLink = 'a[href*="/a/chat/s/"]'
@@ -83,6 +83,7 @@ const createDeepSeekConfig = (): DeepSeekSiteConfig => {
   const sendIconPath =
     'svg path[d="M8.3125 0.981587C8.66767 1.0545 8.97902 1.20558 9.2627 1.43374C9.48724 1.61438 9.73029 1.85933 9.97949 2.10854L14.707 6.83608L13.293 8.25014L9 3.95717V15.0431H7V3.95717L2.70703 8.25014L1.29297 6.83608L6.02051 2.10854C6.26971 1.85933 6.51277 1.61438 6.7373 1.43374C6.97662 1.24126 7.28445 1.04542 7.6875 0.981587C7.8973 0.94841 8.1031 0.956564 8.3125 0.981587Z"]'
   const stopIconPath = 'svg path[d^="M2 4.88"]'
+  const newChatIconPath = 'svg path[d^="M8 0.599609"]'
   const submitButton = [
     `div[role="button"]${iconButton}:has(${sendIconPath})`,
     `button${iconButton}:has(${sendIconPath})`,
@@ -90,6 +91,14 @@ const createDeepSeekConfig = (): DeepSeekSiteConfig => {
   const stopButton = [
     `div[role="button"]${iconButton}:has(${stopIconPath})`,
     `button${iconButton}:has(${stopIconPath})`,
+  ]
+  const newChatButton = [
+    `div[tabindex]:has(${newChatIconPath})`,
+    `div[role="button"]:has(${newChatIconPath})`,
+    `button:has(${newChatIconPath})`,
+    `div[tabindex]:has(> .ds-icon):has(> ${focusRing})`,
+    'a[href="/a/chat"]',
+    'a[href="/a/chat/"]',
   ]
   const messageLayoutWidthScope = ":root"
   const messageLayoutScope = `:is(.ds-virtual-list:has(${message}), .ds-virtual-list:has(textarea${sidebarScrollArea}))`
@@ -121,7 +130,7 @@ const createDeepSeekConfig = (): DeepSeekSiteConfig => {
       chatContent: [assistantResponse, userQuery],
       userQuery,
       assistantResponse,
-      newChatButton: ['a[href="/a/chat"]', 'a[href="/a/chat/"]'],
+      newChatButton,
       stopButton,
     },
     input: { mode: "textarea", submitKey: "Enter" },
