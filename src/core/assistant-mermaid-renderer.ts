@@ -1,12 +1,15 @@
 import { normalizeAssistantMermaidSource, type SiteAdapter } from "~adapters/base"
 import { DOMToolkit } from "~utils/dom-toolkit"
+import { collectChangedElements } from "~utils/dom-mutations"
 import { t } from "~utils/i18n"
 import { showToast } from "~utils/toast"
 import { setSafeScriptSrc } from "~utils/trusted-types"
 
 const STYLE_ID = "gh-assistant-mermaid-style"
-const INITIAL_DELAY = 1000
+const RESPONSE_UPDATE_DELAY = 200
+const RESPONSES_PER_BATCH = 16
 const RESCAN_INTERVAL = 2000
+const MAX_RENDER_RETRIES = 2
 const PANEL_SELECTOR = ".gh-assistant-mermaid"
 const BLOCK_MANAGED_ATTR = "data-ophel-assistant-mermaid-managed"
 const ORIGINAL_DISPLAY_ATTR = "data-ophel-assistant-mermaid-original-display"
@@ -322,11 +325,16 @@ export class AssistantMermaidRenderer {
   private enabled: boolean
   private stopWatch: (() => void) | null = null
   private rescanTimer: number | null = null
+  private responseUpdateTimer: number | null = null
+  private pendingResponses = new Set<Element>()
+  private retryTimers = new Map<HTMLElement, number>()
+  private retryAttempts = new WeakMap<HTMLElement, { key: string; count: number }>()
   private clickHandler: ((e: MouseEvent) => void) | null = null
   private messageHandler: ((event: MessageEvent) => void) | null = null
   private fullscreenChangeHandler: (() => void) | null = null
   private runtimePromise: Promise<void> | null = null
   private processedBlocks = new WeakMap<HTMLElement, string>()
+  private renderingBlocks = new WeakMap<HTMLElement, { key: string; requestId: string }>()
   private blockPanels = new WeakMap<HTMLElement, HTMLElement>()
   private panelBlocks = new WeakMap<HTMLElement, HTMLElement>()
   private injectedRoots = new WeakSet<Document | ShadowRoot>()
@@ -355,6 +363,16 @@ export class AssistantMermaidRenderer {
   }
 
   stop() {
+    this.enabled = false
+    if (this.responseUpdateTimer !== null) {
+      window.clearTimeout(this.responseUpdateTimer)
+      this.responseUpdateTimer = null
+    }
+    this.pendingResponses.clear()
+    for (const timer of this.retryTimers.values()) window.clearTimeout(timer)
+    this.retryTimers.clear()
+    this.retryAttempts = new WeakMap()
+
     if (this.stopWatch) {
       this.stopWatch()
       this.stopWatch = null
@@ -391,6 +409,7 @@ export class AssistantMermaidRenderer {
     this.pendingRequests.clear()
 
     this.processedBlocks = new WeakMap()
+    this.renderingBlocks = new WeakMap()
     this.blockPanels = new WeakMap()
     this.panelBlocks = new WeakMap()
 
@@ -480,15 +499,45 @@ export class AssistantMermaidRenderer {
     this.initMessageHandler()
     this.initFullscreenChangeHandler()
 
-    this.stopWatch = DOMToolkit.each(
-      selector,
-      (element) => {
-        this.processResponseElement(element)
-      },
-      { shadow: true },
-    )
+    const queueAllResponses = () => {
+      this.queueResponses(
+        DOMToolkit.query(selector, {
+          all: true,
+          shadow: this.adapter.usesShadowDOM(),
+        }) as Element[],
+      )
+    }
+    let currentTheme = this.getMermaidTheme()
+    const observer = new MutationObserver((mutations) => {
+      if (
+        mutations.some(
+          ({ target }) => target === document.documentElement || target === document.body,
+        )
+      ) {
+        const nextTheme = this.getMermaidTheme()
+        if (nextTheme !== currentTheme) {
+          currentTheme = nextTheme
+          queueAllResponses()
+        }
+      }
+      this.queueResponses(collectChangedElements(mutations, selector, PANEL_SELECTOR))
+    })
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+      attributes: true,
+      attributeFilter: ["class", "data-language", "data-test-language"],
+    })
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class", "dark-theme"],
+    })
+    this.stopWatch = () => observer.disconnect()
 
-    this.startRescanTimer()
+    queueAllResponses()
+    // Shadow Root 的延迟挂载不可被 body observer 捕获，仅这类站点保留发现轮询。
+    if (this.adapter.usesShadowDOM()) this.startRescanTimer()
   }
 
   private getAssistantSelector(): string | null {
@@ -624,12 +673,6 @@ export class AssistantMermaidRenderer {
   private startRescanTimer() {
     if (this.rescanTimer) return
 
-    window.setTimeout(() => {
-      if (this.enabled) {
-        this.rescan()
-      }
-    }, INITIAL_DELAY)
-
     this.rescanTimer = window.setInterval(() => {
       if (!this.enabled) return
       this.rescan()
@@ -643,9 +686,30 @@ export class AssistantMermaidRenderer {
     if (!selector) return
 
     const elements = DOMToolkit.query(selector, { all: true, shadow: true }) as Element[]
-    for (const element of elements) {
-      this.processResponseElement(element)
-    }
+    this.queueResponses(elements)
+  }
+
+  private queueResponses(elements: Iterable<Element>) {
+    if (!this.enabled) return
+    for (const element of elements) this.pendingResponses.add(element)
+    this.scheduleResponseUpdate(RESPONSE_UPDATE_DELAY)
+  }
+
+  private scheduleResponseUpdate(delay: number) {
+    if (this.responseUpdateTimer !== null || this.pendingResponses.size === 0) return
+    this.responseUpdateTimer = window.setTimeout(() => {
+      this.responseUpdateTimer = null
+      if (!this.enabled) return
+
+      let processed = 0
+      for (const element of this.pendingResponses) {
+        this.pendingResponses.delete(element)
+        if (element.isConnected) this.processResponseElement(element)
+        if (++processed >= RESPONSES_PER_BATCH) break
+      }
+      // 长历史分批处理并让出主线程；持续输出不会反复重置定时器、饿死待处理内容。
+      this.scheduleResponseUpdate(0)
+    }, delay)
   }
 
   private processResponseElement(element: Element) {
@@ -660,12 +724,12 @@ export class AssistantMermaidRenderer {
 
     const blocks = this.adapter.getAssistantMermaidBlocks(element as ParentNode)
     blocks.forEach(({ element: block, source }) => {
-      void this.processMermaidBlock(block, source)
+      void this.processMermaidBlock(block, source, element)
     })
   }
 
-  private async processMermaidBlock(block: HTMLElement, source: string) {
-    if (!block.isConnected) return
+  private async processMermaidBlock(block: HTMLElement, source: string, response: Element) {
+    if (!this.enabled || !block.isConnected) return
 
     const blockRoot = block.getRootNode()
     if (blockRoot instanceof ShadowRoot) {
@@ -677,9 +741,17 @@ export class AssistantMermaidRenderer {
 
     const theme = this.getMermaidTheme()
     const processedKey = `${theme}::${renderSource}`
-    if (this.processedBlocks.get(block) === processedKey) {
-      return
+    const retryTimer = this.retryTimers.get(block)
+    if (retryTimer !== undefined) {
+      window.clearTimeout(retryTimer)
+      this.retryTimers.delete(block)
     }
+    if (this.retryAttempts.get(block)?.key !== processedKey) {
+      this.retryAttempts.set(block, { key: processedKey, count: 0 })
+    }
+    const rendering = this.renderingBlocks.get(block)
+    if (rendering?.key === processedKey) return
+    if (!rendering && this.processedBlocks.get(block) === processedKey) return
 
     const panel = this.ensurePanel(block)
     const preview = panel.querySelector(".gh-assistant-mermaid-preview") as HTMLElement | null
@@ -689,11 +761,21 @@ export class AssistantMermaidRenderer {
     const previewId = this.ensurePreviewId(preview)
     const requestId = this.createRequestId()
     preview.setAttribute(PREVIEW_TOKEN_ATTR, requestId)
+    this.renderingBlocks.set(block, { key: processedKey, requestId })
 
     try {
       await this.ensureRuntime()
+      if (
+        !this.enabled ||
+        !block.isConnected ||
+        !panel.isConnected ||
+        !preview.isConnected ||
+        preview.getAttribute(PREVIEW_TOKEN_ATTR) !== requestId
+      )
+        return
+
       await this.requestRender(requestId, previewId, renderSource, theme)
-      if (!block.isConnected) return
+      if (!this.enabled || !block.isConnected) return
       if (!panel.isConnected || !preview.isConnected) {
         return
       }
@@ -708,9 +790,11 @@ export class AssistantMermaidRenderer {
       this.setZoomEnabled(panel, true)
       this.applyPreviewZoom(panel, DEFAULT_PREVIEW_ZOOM)
       this.processedBlocks.set(block, processedKey)
+      this.retryAttempts.delete(block)
       this.setView(block, panel, currentView)
     } catch (error) {
       if (
+        !this.enabled ||
         !block.isConnected ||
         !panel.isConnected ||
         !preview.isConnected ||
@@ -720,12 +804,28 @@ export class AssistantMermaidRenderer {
       }
 
       console.warn("[AssistantMermaidRenderer] Mermaid render skipped:", error)
-      if (shouldRetryMermaidRender(error)) {
+      const attempts = this.retryAttempts.get(block)!
+      if (shouldRetryMermaidRender(error) && attempts.count < MAX_RENDER_RETRIES) {
+        attempts.count++
         this.processedBlocks.delete(block)
         this.cleanupPanel(block)
+        // 重试只重新读取受影响的回复，不用历史轮询，也不复用可能已过期的源码。
+        this.retryTimers.set(
+          block,
+          window.setTimeout(() => {
+            this.retryTimers.delete(block)
+            if (this.enabled && block.isConnected && response.isConnected) {
+              this.queueResponses([response])
+            }
+          }, RESCAN_INTERVAL),
+        )
       } else {
         this.processedBlocks.set(block, processedKey)
         this.applyRenderFallback(block, panel, renderSource)
+      }
+    } finally {
+      if (this.renderingBlocks.get(block)?.requestId === requestId) {
+        this.renderingBlocks.delete(block)
       }
     }
   }

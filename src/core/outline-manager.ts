@@ -1324,19 +1324,9 @@ export class OutlineManager {
     this.flatNodes.forEach((node) => {
       if (node.isGhost) return
 
-      let element = node.element
-      if (!element || !element.isConnected) {
-        if (this.activeSourceId === "conversation") {
-          if (node.isUserQuery && node.level === 0 && node.queryIndex !== undefined) {
-            element = this.findUserQueryElement(node.queryIndex, node.text) as HTMLElement
-          } else {
-            element = this.findElementByHeading(node.level, node.text) as HTMLElement
-          }
-        }
-        if (element) {
-          node.element = element
-        }
-      }
+      // 虚拟列表卸载的节点保留坐标；新 DOM 引用由大纲刷新统一更新。
+      // 在滚动热路径逐项重新查询整页，会把长历史放大成 O(n²) 的扫描。
+      const element = node.element
 
       if (!element || !element.isConnected) {
         pushCachedEntry(node)

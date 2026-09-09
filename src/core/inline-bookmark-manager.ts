@@ -10,6 +10,7 @@ import type { OutlineManager } from "~core/outline-manager"
 import { useBookmarkStore } from "~stores/bookmarks-store"
 
 import { DOMToolkit } from "~utils/dom-toolkit"
+import { isIgnoredMutation } from "~utils/dom-mutations"
 import { createSVGElement } from "~utils/icons"
 
 // 显示模式
@@ -71,11 +72,6 @@ export class InlineBookmarkManager {
     this.unsubscribeBookmarks = useBookmarkStore.subscribe(() => {
       this.updateAllIconStates()
     })
-
-    this.startDomObserver()
-
-    // 初始注入
-    this.injectBookmarkIcons()
   }
 
   /**
@@ -202,18 +198,20 @@ export class InlineBookmarkManager {
     document.body.classList.add(`gh-inline-bookmark-mode-${mode}`)
 
     if (mode === "hidden") {
+      this.stopDomObserver()
       this.removeInjectedIcons()
+      return
     }
+
+    this.startDomObserver()
+    this.injectBookmarkIcons()
   }
 
   /**
    * 注入收藏图标到所有标题元素
    */
   injectBookmarkIcons(options: { includeAdapterScan?: boolean } = {}) {
-    if (this.displayMode === "hidden") {
-      this.removeInjectedIcons()
-      return
-    }
+    if (this.displayMode === "hidden") return
 
     const candidates = this.getInlineBookmarkItems(options.includeAdapterScan ?? true)
     const bookmarkStore = useBookmarkStore.getState()
@@ -280,30 +278,37 @@ export class InlineBookmarkManager {
   }
 
   private startDomObserver() {
+    if (this.displayMode === "hidden" || this.observer) return
     const target = this.adapter.getObserveTarget() ?? document.body
     if (!target) return
 
     this.observer = new MutationObserver((mutations) => {
       if (this.hasRelevantMutation(mutations)) {
-        this.scheduleInjectBookmarkIcons({ includeAdapterScan: true })
+        this.scheduleInjectBookmarkIcons()
       }
     })
 
     this.observer.observe(target, {
       childList: true,
       subtree: true,
+      characterData: true,
     })
   }
 
-  private scheduleInjectBookmarkIcons(options: { includeAdapterScan: boolean }) {
-    if (this.displayMode === "hidden") return
-    if (this.injectDebounceTimer) {
+  private stopDomObserver() {
+    this.observer?.disconnect()
+    this.observer = null
+    if (this.injectDebounceTimer !== null) {
       clearTimeout(this.injectDebounceTimer)
+      this.injectDebounceTimer = null
     }
+  }
 
+  private scheduleInjectBookmarkIcons() {
+    if (this.displayMode === "hidden" || this.injectDebounceTimer !== null) return
     this.injectDebounceTimer = setTimeout(() => {
       this.injectDebounceTimer = null
-      this.injectBookmarkIcons({ includeAdapterScan: options.includeAdapterScan })
+      this.injectBookmarkIcons()
     }, 120)
   }
 
@@ -312,6 +317,7 @@ export class InlineBookmarkManager {
     const contentChangeSelector = this.getInlineBookmarkContentChangeSelector()
 
     return mutations.some((mutation) => {
+      if (isIgnoredMutation(mutation, `.${ICON_CLASS}`)) return false
       if (this.nodeIsInsideInlineBookmarkContent(mutation.target, contentChangeSelector)) {
         return true
       }
@@ -451,10 +457,7 @@ export class InlineBookmarkManager {
    * 更新所有图标状态
    */
   updateAllIconStates() {
-    if (this.displayMode === "hidden") {
-      this.removeInjectedIcons()
-      return
-    }
+    if (this.displayMode === "hidden") return
 
     const bookmarkStore = useBookmarkStore.getState()
 
@@ -549,14 +552,7 @@ export class InlineBookmarkManager {
       this.unsubscribeBookmarks()
       this.unsubscribeBookmarks = null
     }
-    if (this.observer) {
-      this.observer.disconnect()
-      this.observer = null
-    }
-    if (this.injectDebounceTimer) {
-      clearTimeout(this.injectDebounceTimer)
-      this.injectDebounceTimer = null
-    }
+    this.stopDomObserver()
 
     InlineBookmarkManager.cleanupInjectedArtifacts()
     this.injectedSignatures = new WeakMap()

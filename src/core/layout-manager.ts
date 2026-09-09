@@ -99,6 +99,7 @@ export class LayoutManager {
   private panelAvoidanceScopeResizeObserver: ResizeObserver | null = null
   private panelAvoidanceObservedPanel: HTMLElement | null = null
   private panelAvoidanceObservedScope: HTMLElement | null = null
+  private panelAvoidanceScopeCache = new Map<string, HTMLElement | null>()
   private panelHoverWidthAvoidanceSuppressedUntil = 0
 
   constructor(siteAdapter: SiteAdapter, pageWidthConfig: PageWidthConfig) {
@@ -164,7 +165,7 @@ export class LayoutManager {
     document.addEventListener("visibilitychange", this.handlePanelAvoidanceVisibilityChange)
 
     if (document.body) {
-      this.panelAvoidanceHostObserver = new MutationObserver(this.schedulePanelAvoidanceUpdate)
+      this.panelAvoidanceHostObserver = new MutationObserver(this.handlePanelAvoidanceHostMutations)
       this.panelAvoidanceHostObserver.observe(document.body, {
         childList: true,
         subtree: true,
@@ -515,6 +516,10 @@ export class LayoutManager {
   }
 
   private findMainPanel(): HTMLElement | null {
+    if (this.panelAvoidanceObservedPanel?.isConnected) {
+      return this.panelAvoidanceObservedPanel
+    }
+
     let panel: HTMLElement | null = null
 
     DOMToolkit.walkShadowRoots((shadowRoot) => {
@@ -536,21 +541,25 @@ export class LayoutManager {
   ): HTMLElement | null {
     if (!selector) return null
 
-    const candidates = DOMToolkit.query(selector, {
-      all: true,
-      shadow: true,
-    }) as Element[] | null
-
-    for (const candidate of candidates || []) {
-      if (!(candidate instanceof HTMLElement)) continue
-
-      const rect = candidate.getBoundingClientRect()
-      if (rect.width > 0 && rect.height > 0) {
-        return candidate
-      }
+    if (this.panelAvoidanceScopeCache.has(selector)) {
+      return this.panelAvoidanceScopeCache.get(selector) ?? null
     }
 
-    return null
+    const findVisible = (candidates: Iterable<Element>): HTMLElement | null => {
+      for (const candidate of candidates) {
+        if (!(candidate instanceof HTMLElement)) continue
+        const rect = candidate.getBoundingClientRect()
+        if (rect.width > 0 && rect.height > 0) return candidate
+      }
+      return null
+    }
+
+    // 普通 DOM 中已找到可见容器时，不再为同一个选择器遍历整页 Shadow DOM。
+    const scope =
+      findVisible(document.querySelectorAll(selector)) ||
+      findVisible(DOMToolkit.query(selector, { all: true, shadow: true }) as Element[])
+    this.panelAvoidanceScopeCache.set(selector, scope)
+    return scope
   }
 
   private getPanelAvoidanceScopeRect(scope: HTMLElement | null): HorizontalRect {
@@ -875,6 +884,8 @@ export class LayoutManager {
   }
 
   private syncPanelAvoidanceStyle() {
+    // 一个布局帧内多个 inset 复用同一测量；跨帧重新查找以支持路由和面板切换。
+    this.panelAvoidanceScopeCache.clear()
     if (!this.panelAvoidanceConfig) {
       this.clearPanelAvoidanceStyle()
       return
@@ -908,13 +919,17 @@ export class LayoutManager {
       return
     }
 
-    this.panelAvoidanceShadowCss = this.generatePanelAvoidanceCSS(panel, reservation, false)
+    const shadowCss = this.generatePanelAvoidanceCSS(panel, reservation, false)
+    const shadowCssChanged = this.panelAvoidanceShadowCss !== shadowCss
+    this.panelAvoidanceShadowCss = shadowCss
     this.panelAvoidanceStyle = this.upsertStyle(
       STYLE_IDS.PANEL_AVOIDANCE,
       css,
       this.panelAvoidanceStyle,
     )
-    this.syncPanelAvoidanceShadowStyles()
+    if (shadowCssChanged) {
+      this.syncPanelAvoidanceShadowStyles()
+    }
   }
 
   private clearPanelAvoidanceStyle() {
@@ -926,6 +941,44 @@ export class LayoutManager {
     if (hadShadowCss) {
       this.syncPanelAvoidanceShadowStyles()
     }
+  }
+
+  private handlePanelAvoidanceHostMutations = (mutations: MutationRecord[]) => {
+    const contentSelector = [
+      ...this.siteAdapter.getChatContentSelectors(),
+      this.siteAdapter.getUserQuerySelector(),
+    ]
+      .filter(Boolean)
+      .join(", ")
+    const config = this.panelAvoidanceConfig
+    const layoutSelector = [
+      config?.scopeSelector,
+      ...(config?.obstacleSelectors || []),
+      ...(config?.insetSelectors || []).flatMap((inset) => [
+        inset.scopeSelector,
+        ...(inset.obstacleSelectors || []),
+      ]),
+    ]
+      .filter(Boolean)
+      .join(", ")
+
+    const affectsLayout = mutations.some((mutation) => {
+      const target =
+        mutation.target instanceof Element ? mutation.target : mutation.target.parentElement
+      if (!target || !contentSelector || !target.closest(contentSelector)) return true
+
+      // 回复内部的 token、收藏图标、Markdown 样式不改变安全区。
+      // 容器尺寸变化由 ResizeObserver 处理；显式配置的布局/障碍节点仍需响应。
+      if (!layoutSelector) return false
+      if (target.matches(layoutSelector)) return true
+      return [...mutation.addedNodes, ...mutation.removedNodes].some(
+        (node) =>
+          node instanceof Element &&
+          (node.matches(layoutSelector) || node.querySelector(layoutSelector) !== null),
+      )
+    })
+
+    if (affectsLayout) this.schedulePanelAvoidanceUpdate()
   }
 
   private schedulePanelAvoidanceUpdate = () => {
