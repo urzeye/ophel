@@ -1133,10 +1133,15 @@ export class ChatGPTAdapter extends SiteAdapter {
     return this.cloneZenModeConfig(this.config.cleanMode)
   }
 
+  getComposerContainerSelector(): string | null {
+    return "form:has(#prompt-textarea), div:has(> form #prompt-textarea), div.composer-parent"
+  }
+
   private cloneZenModeConfig(config: ZenModeConfig): ZenModeConfig {
-    const { hide, rootClass, styles } = config
+    const { hide, preserveFlow, rootClass, styles } = config
     return {
       ...(hide ? { hide: [...hide] } : {}),
+      ...(preserveFlow ? { preserveFlow: [...preserveFlow] } : {}),
       ...(rootClass ? { rootClass: { ...rootClass } } : {}),
       ...(styles ? { styles: styles.map((style) => ({ ...style })) } : {}),
     }

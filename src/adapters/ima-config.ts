@@ -187,11 +187,11 @@ const createImaConfig = (): ImaSiteConfig => {
     cleanMode: {
       hide: [
         '[class*="_downloadContainer_"]',
-        '[class*="footTips"]',
         '[class*="_activityBanner"]',
         '[class*="_activityBannerContent"]',
         '[class*="_qaDownloadGuide"]',
       ],
+      preserveFlow: ['[class*="footTips"]'],
     },
     widthSelectors: [
       {

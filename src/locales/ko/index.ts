@@ -1774,6 +1774,10 @@ export const ko = {
   cleanModeLabel: "클린 모드 활성화",
   cleanModeDesc:
     "면책 조항, 광고, 다운로드 버튼 등 불필요한 요소를 숨겨 더 깨끗한 인터페이스를 제공합니다 (각 사이트별 개별 설정)",
+  autoHideInputTitle: "입력창 자동 숨김",
+  autoHideInputLabel: "유휴 시 입력창 자동 접기",
+  autoHideInputDesc:
+    "작성 중인 텍스트가 없는 상태에서 마우스가 벗어나면 입력창을 숨기고 마우스 오버나 포커스 시 즉시 확장합니다 (사이트별 독립 설정)",
   extensionUpdateNoticeKicker: "확장 프로그램이 업데이트되었습니다",
   extensionUpdateNotice:
     "Ophel Atlas가 업데이트되었습니다. 최신 버전을 계속 사용하려면 이 페이지를 새로고침하세요.",

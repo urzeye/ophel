@@ -380,7 +380,7 @@ const createGeminiConfig = (): GeminiSiteConfig => {
       hide: ["bard-sidenav", "div.sidenav-with-history-container"],
     },
     cleanMode: {
-      hide: [
+      preserveFlow: [
         "hallucination-disclaimer",
         "condensed-tos-disclaimer",
         "model-response-disclaimers",
@@ -389,6 +389,8 @@ const createGeminiConfig = (): GeminiSiteConfig => {
         "freemium-rag-disclaimer",
         "freemium-file-upload-near-quota-disclaimer",
         "freemium-file-upload-quota-exceeded-disclaimer",
+      ],
+      hide: [
         "sensitive-memories-banner",
         "bot-banner",
         "g1-dynamic-upsell-button",

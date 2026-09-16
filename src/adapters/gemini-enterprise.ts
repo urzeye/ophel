@@ -838,9 +838,10 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
   }
 
   private cloneZenModeConfig(config: ZenModeConfig): ZenModeConfig {
-    const { hide, rootClass, styles } = config
+    const { hide, preserveFlow, rootClass, styles } = config
     return {
       ...(hide ? { hide: [...hide] } : {}),
+      ...(preserveFlow ? { preserveFlow: [...preserveFlow] } : {}),
       ...(rootClass ? { rootClass: { ...rootClass } } : {}),
       ...(styles ? { styles: styles.map((style) => ({ ...style })) } : {}),
     }
@@ -852,6 +853,10 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
 
   getCleanModeConfig(): ZenModeConfig {
     return this.cloneZenModeConfig(this.config.cleanMode)
+  }
+
+  getComposerContainerSelector(): string | null {
+    return ".input-area-container"
   }
 
   // ==================== 输入框操作 ====================

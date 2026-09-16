@@ -160,6 +160,8 @@ export interface ZenModeRootClassConfig {
 
 export interface ZenModeConfig {
   hide?: string[]
+  /** 仅在视觉上隐藏但完整保留物理占位与间距（如底部免责声明），避免输入框贴底 */
+  preserveFlow?: string[]
   rootClass?: ZenModeRootClassConfig
   styles?: ZenModeStyleRule[]
 }
@@ -777,6 +779,11 @@ export abstract class SiteAdapter {
 
   /** 返回净化模式配置（隐藏免责声明、广告、下载按钮等冗余元素） */
   getCleanModeConfig(): ZenModeConfig | null {
+    return null
+  }
+
+  /** 返回输入区域整体容器选择器（用于自动收起/展开输入框） */
+  getComposerContainerSelector(): string | null {
     return null
   }
 

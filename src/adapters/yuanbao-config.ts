@@ -334,7 +334,8 @@ const createYuanbaoConfig = (): YuanbaoSiteConfig => {
       ],
     },
     cleanMode: {
-      hide: [".agent-dialogue__content-copyright", ".yb__pc_download", ".agent-dialogue__tool"],
+      hide: [".yb__pc_download", ".agent-dialogue__tool"],
+      preserveFlow: [".agent-dialogue__content-copyright"],
     },
     sitePrivateSelectors: {
       inputContainer,

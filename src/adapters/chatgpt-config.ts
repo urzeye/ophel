@@ -214,9 +214,9 @@ const createChatGPTConfig = (): ChatGPTSiteConfig => {
       ],
     },
     cleanMode: {
+      preserveFlow: ["[data-testid='thread-disclaimer']"],
       hide: [
         "div.select-none:has(> .pointer-events-auto)",
-        "[data-testid='thread-disclaimer']",
         'div.border-token-border-default.border-t.py-4.text-sm:has(button[aria-label="Ad options"]):has([role="link"][tabindex="0"])',
       ],
     },

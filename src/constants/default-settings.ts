@@ -49,6 +49,11 @@ export const DEFAULT_CLEAN_MODE: ZenModeConfig = {
   enabled: true,
 }
 
+// 默认自动收起输入框配置
+export const DEFAULT_AUTO_HIDE_INPUT: ZenModeConfig = {
+  enabled: false,
+}
+
 const DEFAULT_COLLAPSED_BUTTONS: QuickButtonConfig[] = [
   { id: "panel", enabled: true },
   { id: "floatingToolbar", enabled: true },
@@ -233,6 +238,24 @@ export const DEFAULT_SETTINGS: Settings = {
       yuanbao: { ...DEFAULT_PANEL_AVOIDANCE },
       zai: { ...DEFAULT_PANEL_AVOIDANCE },
       _default: { ...DEFAULT_PANEL_AVOIDANCE },
+    },
+    autoHideInput: {
+      gemini: { ...DEFAULT_AUTO_HIDE_INPUT },
+      "gemini-enterprise": { ...DEFAULT_AUTO_HIDE_INPUT },
+      grok: { ...DEFAULT_AUTO_HIDE_INPUT },
+      aistudio: { ...DEFAULT_AUTO_HIDE_INPUT },
+      chatgpt: { ...DEFAULT_AUTO_HIDE_INPUT },
+      claude: { ...DEFAULT_AUTO_HIDE_INPUT },
+      chatglm: { ...DEFAULT_AUTO_HIDE_INPUT },
+      doubao: { ...DEFAULT_AUTO_HIDE_INPUT },
+      ima: { ...DEFAULT_AUTO_HIDE_INPUT },
+      deepseek: { ...DEFAULT_AUTO_HIDE_INPUT },
+      kimi: { ...DEFAULT_AUTO_HIDE_INPUT },
+      qianwen: { ...DEFAULT_AUTO_HIDE_INPUT },
+      qwenai: { ...DEFAULT_AUTO_HIDE_INPUT },
+      yuanbao: { ...DEFAULT_AUTO_HIDE_INPUT },
+      zai: { ...DEFAULT_AUTO_HIDE_INPUT },
+      _default: { ...DEFAULT_AUTO_HIDE_INPUT },
     },
   },
 

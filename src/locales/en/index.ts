@@ -1793,6 +1793,10 @@ Please output the optimized code block directly, followed by a brief summary of 
   cleanModeLabel: "Enable Clean Mode",
   cleanModeDesc:
     "Hide disclaimers, ads, download buttons, and other clutter for a cleaner interface (configured independently for each site)",
+  autoHideInputTitle: "Auto-hide Input",
+  autoHideInputLabel: "Auto-collapse input when idle",
+  autoHideInputDesc:
+    "Collapses and hides the input box when the cursor moves away with no drafted text; expands on hover or focus (configured independently for each site)",
   extensionUpdateNoticeKicker: "Extension updated",
   extensionUpdateNotice:
     "Ophel Atlas has been updated. Reload this page to keep using the latest version.",

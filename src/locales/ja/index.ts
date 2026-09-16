@@ -1793,6 +1793,10 @@ export const ja = {
   cleanModeLabel: "クリーンモードを有効にする",
   cleanModeDesc:
     "免責事項、広告、ダウンロードボタンなどの不要な要素を非表示にして、よりクリーンなインターフェースを実現します（各サイトごとに個別に設定）",
+  autoHideInputTitle: "入力欄の自動非表示",
+  autoHideInputLabel: "アイドル時に入力欄を自動折りたたみ",
+  autoHideInputDesc:
+    "未送信テキストがない状態でカーソルが離れると入力欄を非表示にし、ホバーまたはフォーカス時に即座に展開します（サイトごとに個別設定）",
   extensionUpdateNoticeKicker: "拡張機能を更新しました",
   extensionUpdateNotice:
     "Ophel Atlas が更新されました。最新バージョンを引き続き使うには、このページを再読み込みしてください。",

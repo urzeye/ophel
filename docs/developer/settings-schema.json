@@ -190,6 +190,24 @@
       "yuanbao": { "enabled": true },
       "zai": { "enabled": true },
       "_default": { "enabled": true }
+    },
+    "autoHideInput": {
+      "gemini": { "enabled": false },
+      "gemini-enterprise": { "enabled": false },
+      "grok": { "enabled": false },
+      "aistudio": { "enabled": false },
+      "chatgpt": { "enabled": false },
+      "claude": { "enabled": false },
+      "chatglm": { "enabled": false },
+      "doubao": { "enabled": false },
+      "ima": { "enabled": false },
+      "deepseek": { "enabled": false },
+      "kimi": { "enabled": false },
+      "qianwen": { "enabled": false },
+      "qwenai": { "enabled": false },
+      "yuanbao": { "enabled": false },
+      "zai": { "enabled": false },
+      "_default": { "enabled": false }
     }
   },
 

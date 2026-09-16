@@ -1858,6 +1858,10 @@ export const it = {
   cleanModeLabel: "Abilita la modalità pulita",
   cleanModeDesc:
     "Nascondi disclaimer, annunci, pulsanti di download e altri elementi inutili per un'interfaccia più pulita (configurata in modo indipendente per ciascun sito)",
+  autoHideInputTitle: "Nascondi automaticamente l'input",
+  autoHideInputLabel: "Comprimi automaticamente l'input quando inattivo",
+  autoHideInputDesc:
+    "Comprime e nasconde la casella di input quando il cursore si allontana e non c'è testo in bozza; si espande al passaggio del mouse o al focus (configurato per sito)",
   extensionUpdateNoticeKicker: "Estensione aggiornata",
   extensionUpdateNotice:
     "Ophel Atlas è stato aggiornato. Ricarica questa pagina per continuare a utilizzare la versione più recente.",

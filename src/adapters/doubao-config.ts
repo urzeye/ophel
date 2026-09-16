@@ -184,7 +184,10 @@ const createDoubaoConfig = (): DoubaoSiteConfig => {
       { selector: ".chrome70-container", property: "--center-content-max-width" },
     ],
     zenMode: { hide: ["nav", ".container-qOgFQp", ".container-hzjmF1"] },
-    cleanMode: { hide: [".container-qOgFQp", '[aria-label="活动入口"]'] },
+    cleanMode: {
+      hide: ['[aria-label="活动入口"]'],
+      preserveFlow: [".container-qOgFQp"],
+    },
     quickQuote: "native",
     supportsHostThemeSync: false,
     sitePrivateSelectors: {

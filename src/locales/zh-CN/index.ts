@@ -1731,6 +1731,10 @@ export const zhCN = {
   cleanModeLabel: "启用净化模式",
   cleanModeDesc:
     "隐藏页面中的免责声明、广告、下载按钮等冗余元素，获得更干净的界面（每个站点独立配置）",
+  autoHideInputTitle: "自动隐藏输入框",
+  autoHideInputLabel: "闲置时自动折叠输入框",
+  autoHideInputDesc:
+    "光标移开且无未发送内容时折叠隐藏输入框，鼠标悬停或聚焦时立即展开（每个站点独立配置）",
   extensionUpdateNoticeKicker: "插件已更新",
   extensionUpdateNotice: "Ophel Atlas 已更新。刷新当前页面后即可继续使用最新版本。",
   extensionUpdateNoticeWithVersion:

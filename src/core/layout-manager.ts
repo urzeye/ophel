@@ -24,6 +24,8 @@ const STYLE_IDS = {
   ZEN_MODE_SHADOW: "gh-zen-mode-shadow",
   CLEAN_MODE: "gh-clean-mode-styles",
   CLEAN_MODE_SHADOW: "gh-clean-mode-shadow",
+  AUTO_HIDE_INPUT: "gh-auto-hide-input-styles",
+  AUTO_HIDE_INPUT_SHADOW: "gh-auto-hide-input-shadow",
 } as const
 
 const ZEN_MODE_EXIT_HOST_ID = "gh-zen-mode-exit-host"
@@ -88,6 +90,10 @@ export class LayoutManager {
 
   private cleanModeStyle: HTMLStyleElement | null = null
   private cleanModeEnabled = false
+
+  private autoHideInputStyle: HTMLStyleElement | null = null
+  private autoHideInputEnabled = false
+  private composerActiveCleanup: (() => void) | null = null
 
   private processedShadowRoots = new WeakSet<ShadowRoot>()
   private shadowCheckInterval: ReturnType<typeof setTimeout> | null = null
@@ -226,12 +232,16 @@ export class LayoutManager {
     this.zenModeStyle = null
     this.removeStyle(this.cleanModeStyle)
     this.cleanModeStyle = null
+    this.unbindComposerActiveListeners()
+    this.removeStyle(this.autoHideInputStyle)
+    this.autoHideInputStyle = null
 
     // Zen 模式的根类只移除由本实例添加的那些，避免误删站点自带类名
     this.cleanupZenModeRootClass()
     this.unmountZenModeExitButton()
     this.zenModeEnabled = false
     this.cleanModeEnabled = false
+    this.autoHideInputEnabled = false
 
     if (this.shadowCheckInterval) {
       clearInterval(this.shadowCheckInterval)
@@ -328,6 +338,137 @@ export class LayoutManager {
     this.schedulePanelAvoidanceUpdate()
   }
 
+  // ==================== Auto Hide Input ====================
+
+  updateAutoHideInput(enabled: boolean) {
+    this.autoHideInputEnabled = enabled
+    this.applyAutoHideInput()
+  }
+
+  applyAutoHideInput() {
+    this.removeStyle(this.autoHideInputStyle)
+    this.autoHideInputStyle = null
+
+    if (!this.autoHideInputEnabled) {
+      this.unbindComposerActiveListeners()
+      this.refreshShadowInjection()
+      return
+    }
+
+    const css = this.generateAutoHideInputCSS()
+    if (css) {
+      this.autoHideInputStyle = this.injectStyle(STYLE_IDS.AUTO_HIDE_INPUT, css)
+      this.bindComposerActiveListeners()
+    } else {
+      this.unbindComposerActiveListeners()
+    }
+
+    this.refreshShadowInjection()
+  }
+
+  private generateAutoHideInputCSS(): string {
+    const selector = this.siteAdapter.getComposerContainerSelector()
+    if (!selector) return ""
+
+    return `
+${selector} {
+  transform: translateY(calc(100% - 14px)) !important;
+  opacity: 0.2 !important;
+  transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.24s ease !important;
+}
+${selector}:hover,
+${selector}:focus-within,
+${selector}:has(:focus),
+${selector}.gh-composer-active {
+  transform: translateY(0) !important;
+  opacity: 1 !important;
+  z-index: 100 !important;
+}
+`.trim()
+  }
+
+  private bindComposerActiveListeners() {
+    if (this.composerActiveCleanup) return
+
+    const handleEvent = () => {
+      this.syncComposerActiveState()
+    }
+
+    document.addEventListener("focusin", handleEvent, true)
+    document.addEventListener("focusout", handleEvent, true)
+    document.addEventListener("input", handleEvent, true)
+    document.addEventListener("keyup", handleEvent, true)
+
+    this.composerActiveCleanup = () => {
+      document.removeEventListener("focusin", handleEvent, true)
+      document.removeEventListener("focusout", handleEvent, true)
+      document.removeEventListener("input", handleEvent, true)
+      document.removeEventListener("keyup", handleEvent, true)
+      this.clearComposerActiveClasses()
+    }
+
+    this.syncComposerActiveState()
+  }
+
+  private unbindComposerActiveListeners() {
+    if (this.composerActiveCleanup) {
+      this.composerActiveCleanup()
+      this.composerActiveCleanup = null
+    }
+  }
+
+  private syncComposerActiveState = () => {
+    if (!this.autoHideInputEnabled) return
+
+    const selector = this.siteAdapter.getComposerContainerSelector()
+    if (!selector) return
+
+    const containers = document.querySelectorAll(selector)
+    if (containers.length === 0) return
+
+    containers.forEach((container) => {
+      if (!(container instanceof HTMLElement)) return
+
+      const hasFocus =
+        container.matches(":focus-within") || container.querySelector(":focus") !== null
+      let hasContent = false
+
+      const inputs = container.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>(
+        "input, textarea",
+      )
+      for (const input of inputs) {
+        if (input.value && input.value.trim().length > 0) {
+          hasContent = true
+          break
+        }
+      }
+
+      if (!hasContent) {
+        const editables = container.querySelectorAll<HTMLElement>('[contenteditable="true"]')
+        for (const ed of editables) {
+          if (ed.textContent && ed.textContent.trim().length > 0) {
+            hasContent = true
+            break
+          }
+        }
+      }
+
+      if (hasFocus || hasContent) {
+        container.classList.add("gh-composer-active")
+      } else {
+        container.classList.remove("gh-composer-active")
+      }
+    })
+  }
+
+  private clearComposerActiveClasses() {
+    const selector = this.siteAdapter.getComposerContainerSelector()
+    if (!selector) return
+    document.querySelectorAll(selector).forEach((el) => {
+      el.classList.remove("gh-composer-active")
+    })
+  }
+
   // ==================== CSS 生成 ====================
 
   private generatePageWidthCSS(): string {
@@ -362,14 +503,24 @@ export class LayoutManager {
 
     // 禅模式是超集，合并禅模式 + 净化模式的所有选择器
     const allHide = [...(zenConfig?.hide || []), ...(cleanConfig?.hide || [])]
+    const allPreserveFlow = [
+      ...(zenConfig?.preserveFlow || []),
+      ...(cleanConfig?.preserveFlow || []),
+    ]
     const allStyles = [...(zenConfig?.styles || []), ...(cleanConfig?.styles || [])]
 
     const hideCss = allHide
       .map((selector) => `${selector} { display: none !important; }`)
       .join("\n")
+    const preserveFlowCss = allPreserveFlow
+      .map(
+        (selector) =>
+          `${selector} { visibility: hidden !important; pointer-events: none !important; user-select: none !important; }`,
+      )
+      .join("\n")
     const styleCss = this.buildZenModeStyleCSS(allStyles)
 
-    return [hideCss, styleCss].filter(Boolean).join("\n")
+    return [hideCss, preserveFlowCss, styleCss].filter(Boolean).join("\n")
   }
 
   private generateCleanModeCSS(): string {
@@ -379,9 +530,15 @@ export class LayoutManager {
     const hideCss = (config.hide || [])
       .map((selector) => `${selector} { display: none !important; }`)
       .join("\n")
+    const preserveFlowCss = (config.preserveFlow || [])
+      .map(
+        (selector) =>
+          `${selector} { visibility: hidden !important; pointer-events: none !important; user-select: none !important; }`,
+      )
+      .join("\n")
     const styleCss = this.buildZenModeStyleCSS(config.styles || [])
 
-    return [hideCss, styleCss].filter(Boolean).join("\n")
+    return [hideCss, preserveFlowCss, styleCss].filter(Boolean).join("\n")
   }
 
   private buildCSSFromSelectors(
@@ -1286,7 +1443,8 @@ export class LayoutManager {
       this.userQueryWidthConfig?.enabled ||
       this.panelAvoidanceStarted ||
       this.zenModeEnabled ||
-      this.cleanModeEnabled
+      this.cleanModeEnabled ||
+      this.autoHideInputEnabled
 
     if (!hasAnyEnabled) {
       this.stopShadowInjection()
@@ -1378,6 +1536,18 @@ export class LayoutManager {
         this.removeStyleFromShadow(shadowRoot, STYLE_IDS.CLEAN_MODE_SHADOW)
       }
 
+      // Auto Hide Input
+      if (this.autoHideInputEnabled) {
+        const css = this.generateAutoHideInputCSS()
+        if (css) {
+          DOMToolkit.cssToShadow(shadowRoot, css, STYLE_IDS.AUTO_HIDE_INPUT_SHADOW)
+        } else {
+          this.removeStyleFromShadow(shadowRoot, STYLE_IDS.AUTO_HIDE_INPUT_SHADOW)
+        }
+      } else {
+        this.removeStyleFromShadow(shadowRoot, STYLE_IDS.AUTO_HIDE_INPUT_SHADOW)
+      }
+
       // Panel Avoidance
       if (this.panelAvoidanceShadowCss) {
         DOMToolkit.cssToShadow(
@@ -1426,6 +1596,7 @@ export class LayoutManager {
       this.removeStyleFromShadow(shadowRoot, STYLE_IDS.PANEL_AVOIDANCE_SHADOW)
       this.removeStyleFromShadow(shadowRoot, STYLE_IDS.ZEN_MODE_SHADOW)
       this.removeStyleFromShadow(shadowRoot, STYLE_IDS.CLEAN_MODE_SHADOW)
+      this.removeStyleFromShadow(shadowRoot, STYLE_IDS.AUTO_HIDE_INPUT_SHADOW)
       this.processedShadowRoots.delete(shadowRoot)
     })
   }

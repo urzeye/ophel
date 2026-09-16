@@ -860,9 +860,10 @@ export class QwenAiAdapter extends SiteAdapter {
   }
 
   private cloneZenModeConfig(config: ZenModeConfig): ZenModeConfig {
-    const { hide, rootClass, styles } = config
+    const { hide, preserveFlow, rootClass, styles } = config
     return {
       ...(hide ? { hide: [...hide] } : {}),
+      ...(preserveFlow ? { preserveFlow: [...preserveFlow] } : {}),
       ...(rootClass ? { rootClass: { ...rootClass } } : {}),
       ...(styles ? { styles: styles.map((style) => ({ ...style })) } : {}),
     }
@@ -874,6 +875,10 @@ export class QwenAiAdapter extends SiteAdapter {
 
   getCleanModeConfig(): ZenModeConfig {
     return this.cloneZenModeConfig(this.config.cleanMode)
+  }
+
+  getComposerContainerSelector(): string | null {
+    return ".chat-input-container, .qwen-input-wrapper"
   }
 
   getMarkdownFixerConfig(): MarkdownFixerConfig | null {

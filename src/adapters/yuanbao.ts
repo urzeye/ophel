@@ -743,19 +743,25 @@ export class YuanbaoAdapter extends SiteAdapter {
     return [...this.config.selectors.newChatButton]
   }
 
+  getComposerContainerSelector(): string | null {
+    return ".agent-dialogue__content--common__input, #search-bar, div:has(> .ql-editor[contenteditable='true'])"
+  }
+
   getZenModeConfig() {
-    const { hide, rootClass, styles } = this.config.zenMode
+    const { hide, preserveFlow, rootClass, styles } = this.config.zenMode
     return {
       ...(hide ? { hide: [...hide] } : {}),
+      ...(preserveFlow ? { preserveFlow: [...preserveFlow] } : {}),
       ...(rootClass ? { rootClass: { ...rootClass } } : {}),
       ...(styles ? { styles: styles.map((style) => ({ ...style })) } : {}),
     }
   }
 
   getCleanModeConfig() {
-    const { hide, rootClass, styles } = this.config.cleanMode
+    const { hide, preserveFlow, rootClass, styles } = this.config.cleanMode
     return {
       ...(hide ? { hide: [...hide] } : {}),
+      ...(preserveFlow ? { preserveFlow: [...preserveFlow] } : {}),
       ...(rootClass ? { rootClass: { ...rootClass } } : {}),
       ...(styles ? { styles: styles.map((style) => ({ ...style })) } : {}),
     }

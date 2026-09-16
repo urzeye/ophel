@@ -377,9 +377,10 @@ export class GrokAdapter extends SiteAdapter {
   }
 
   getZenModeConfig() {
-    const { hide, rootClass, styles } = this.config.zenMode
+    const { hide, preserveFlow, rootClass, styles } = this.config.zenMode
     return {
       ...(hide ? { hide: [...hide] } : {}),
+      ...(preserveFlow ? { preserveFlow: [...preserveFlow] } : {}),
       ...(rootClass ? { rootClass: { ...rootClass } } : {}),
       ...(styles ? { styles: styles.map((style) => ({ ...style })) } : {}),
     }
@@ -2561,5 +2562,9 @@ export class GrokAdapter extends SiteAdapter {
       console.error("[GrokAdapter] toggleTheme error:", error)
       return false
     }
+  }
+
+  getComposerContainerSelector(): string | null {
+    return 'form:has([contenteditable="true"]), .query-bar, div:has(> form [contenteditable="true"])'
   }
 }

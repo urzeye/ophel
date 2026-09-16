@@ -1386,10 +1386,20 @@ const validateZenMode = (
   context: ValidationContext,
   mode: ValidationMode,
 ): void => {
-  const zenMode = validateObject(value, path, context, ["hide", "rootClass", "styles"], [], mode)
+  const zenMode = validateObject(
+    value,
+    path,
+    context,
+    ["hide", "preserveFlow", "rootClass", "styles"],
+    [],
+    mode,
+  )
   if (!zenMode) return
   if (zenMode.hide !== undefined) {
     validateSelectorArray(zenMode.hide, `${path}.hide`, context, mode)
+  }
+  if (zenMode.preserveFlow !== undefined) {
+    validateSelectorArray(zenMode.preserveFlow, `${path}.preserveFlow`, context, mode)
   }
   if (zenMode.rootClass !== undefined) {
     validateZenRootClass(zenMode.rootClass, `${path}.rootClass`, context, mode)

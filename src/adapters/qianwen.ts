@@ -913,12 +913,17 @@ export class QianwenAdapter extends SiteAdapter {
   }
 
   getCleanModeConfig() {
-    const { hide, rootClass, styles } = this.config.cleanMode
+    const { hide, preserveFlow, rootClass, styles } = this.config.cleanMode
     return {
       ...(hide ? { hide: [...hide] } : {}),
+      ...(preserveFlow ? { preserveFlow: [...preserveFlow] } : {}),
       ...(rootClass ? { rootClass: { ...rootClass } } : {}),
       ...(styles ? { styles: styles.map((style) => ({ ...style })) } : {}),
     }
+  }
+
+  getComposerContainerSelector(): string | null {
+    return 'div[class*="inputArea"]:has(textarea), div[class*="input-container"]:has(textarea), div:has(> #ice-container textarea)'
   }
 
   getMarkdownFixerConfig(): MarkdownFixerConfig | null {

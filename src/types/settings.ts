@@ -191,6 +191,7 @@ export interface Settings {
     zenMode?: Record<string, ZenModeConfig>
     cleanMode?: Record<string, ZenModeConfig>
     panelAvoidance?: Record<string, PanelAvoidanceSettings>
+    autoHideInput?: Record<string, ZenModeConfig>
   }
 
   // 模型锁定（按站点独立）

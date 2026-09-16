@@ -1734,6 +1734,10 @@ export const zhTW = {
   cleanModeLabel: "啟用淨化模式",
   cleanModeDesc:
     "隱藏頁面中的免責聲明、廣告、下載按鈕等冗餘元素，獲得更乾淨的介面（每個站點獨立配置）",
+  autoHideInputTitle: "自動隱藏輸入框",
+  autoHideInputLabel: "閒置時自動收合輸入框",
+  autoHideInputDesc:
+    "游標移開且無未發送內容時收合隱藏輸入框，滑鼠懸停或聚焦時立即展開（每個站點獨立設定）",
   extensionUpdateNoticeKicker: "外掛已更新",
   extensionUpdateNotice: "Ophel Atlas 已更新。重新整理目前頁面後即可繼續使用最新版本。",
   extensionUpdateNoticeWithVersion:

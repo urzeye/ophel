@@ -9,6 +9,14 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### 🚀 New Features
+
+- **Auto-hide input** — Added an "Auto-hide Input" toggle under Site Settings for all built-in sites. The chat input box automatically collapses when idle and expands on mouse hover or focus, fully compatible with prompt insertion and the focus shortcut (`Alt + I`).
+
+### ✨ Improvements
+
+- **Clean Mode bottom spacing** — In Clean Mode, AI generation and legal disclaimers under the input box are now hidden while preserving their native DOM flow spacing, keeping the input area at the site's original intended height instead of sticking to the bottom edge.
+
 ### 🐛 Bug Fixes
 
 - **Zen Mode and Clean Mode state isolation** — Fixed an issue where enabling Zen Mode automatically enabled Clean Mode and left it active after exiting, now preserving your original Clean Mode preference.

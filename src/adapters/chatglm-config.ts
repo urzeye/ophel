@@ -233,7 +233,8 @@ const createChatGLMConfig = (): ChatGLMSiteConfig => {
     ],
     zenMode: { hide: [".el-aside"] },
     cleanMode: {
-      hide: [".policy-wrap, .policy-wrap *", ".vip-btn", ".slogan-banner"],
+      hide: [".vip-btn", ".slogan-banner"],
+      preserveFlow: [".policy-wrap, .policy-wrap *"],
     },
     quickQuote: "native",
     sitePrivateSelectors: {

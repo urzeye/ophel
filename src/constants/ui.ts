@@ -211,6 +211,10 @@ export const SETTING_ID_ROUTE_MAP: Record<string, SettingRoute> = {
     page: NAV_IDS.SITE_SETTINGS,
     subTab: SITE_SETTINGS_TAB_IDS.LAYOUT,
   },
+  "layout-auto-hide-input-card": {
+    page: NAV_IDS.SITE_SETTINGS,
+    subTab: SITE_SETTINGS_TAB_IDS.LAYOUT,
+  },
   "backup-export-card": { page: NAV_IDS.BACKUP, subTab: BACKUP_TAB_IDS.LOCAL },
   "backup-import-card": { page: NAV_IDS.BACKUP, subTab: BACKUP_TAB_IDS.LOCAL },
   "backup-reset-card": { page: NAV_IDS.BACKUP, subTab: BACKUP_TAB_IDS.LOCAL },
@@ -301,6 +305,10 @@ export const SETTING_ID_ROUTE_MAP: Record<string, SettingRoute> = {
     subTab: SITE_PACKS_TAB_IDS.UPDATES,
   },
   "layout-clean-mode-enabled": {
+    page: NAV_IDS.SITE_SETTINGS,
+    subTab: SITE_SETTINGS_TAB_IDS.LAYOUT,
+  },
+  "layout-auto-hide-input-enabled": {
     page: NAV_IDS.SITE_SETTINGS,
     subTab: SITE_SETTINGS_TAB_IDS.LAYOUT,
   },
@@ -1170,6 +1178,11 @@ const SETTING_CARD_SEARCH_ITEMS: SettingsSearchItem[] = [
     keywords: ["clean mode", "distraction free", "净化模式", "隐藏侧栏", "去杂质"],
   },
   {
+    settingId: "layout-auto-hide-input-card",
+    title: "自动隐藏输入框设置",
+    keywords: ["auto hide input", "collapse input", "自动隐藏输入框", "折叠输入框", "输入框收合"],
+  },
+  {
     settingId: "gemini-settings-card",
     title: "Gemini 专属",
     keywords: [
@@ -1361,6 +1374,11 @@ const ADDITIONAL_SETTING_SEARCH_ITEMS: SettingsSearchItem[] = [
     settingId: "layout-clean-mode-enabled",
     title: "开启净化模式",
     keywords: ["clean mode", "distraction free", "净化模式", "去杂质", "纯净模式"],
+  },
+  {
+    settingId: "layout-auto-hide-input-enabled",
+    title: "开启自动隐藏输入框",
+    keywords: ["auto hide input", "collapse input", "自动隐藏", "折叠输入框", "闲置隐藏"],
   },
   {
     settingId: "chatgpt-code-block-batch-mount",

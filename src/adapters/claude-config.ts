@@ -234,7 +234,7 @@ const createClaudeConfig = (): ClaudeSiteConfig => {
       ],
     },
     cleanMode: {
-      hide: ['[data-disclaimer="true"]'],
+      preserveFlow: ['[data-disclaimer="true"]'],
     },
     mermaidSupport: "native",
     quickQuote: "native",

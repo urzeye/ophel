@@ -245,12 +245,8 @@ const createKimiConfig = (): KimiSiteConfig => {
       ],
     },
     cleanMode: {
-      hide: [
-        ".chat-bottom .legal-footer, .legal-footer",
-        ".membership-upgrade",
-        ".download-app-btn",
-        ".activity-area",
-      ],
+      preserveFlow: [".chat-bottom .legal-footer, .legal-footer"],
+      hide: [".membership-upgrade", ".download-app-btn", ".activity-area"],
     },
     sitePrivateSelectors: {
       sidebarConversation,

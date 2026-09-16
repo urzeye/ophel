@@ -1,4 +1,5 @@
 import {
+  DEFAULT_AUTO_HIDE_INPUT,
   DEFAULT_CLEAN_MODE,
   DEFAULT_PANEL_AVOIDANCE,
   DEFAULT_PAGE_WIDTH,
@@ -79,4 +80,12 @@ export function getSitePanelAvoidance(settings: Settings, siteId: string): Panel
     return panelAvoidance[siteId]
   }
   return panelAvoidance?._default ?? DEFAULT_PANEL_AVOIDANCE
+}
+
+export function getSiteAutoHideInput(settings: Settings, siteId: string): ZenModeConfig {
+  const autoHideInput = settings.layout?.autoHideInput
+  if (autoHideInput && siteId in autoHideInput) {
+    return autoHideInput[siteId]
+  }
+  return autoHideInput?._default ?? DEFAULT_AUTO_HIDE_INPUT
 }
