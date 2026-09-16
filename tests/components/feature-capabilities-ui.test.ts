@@ -67,7 +67,7 @@ describe("feature capability panel boundaries", () => {
     expect(source).toContain("if (!isCollapsedButtonSupported(id)) return null")
     expect(source).toContain("if (!isToolsMenuItemSupported(item.id as ToolsMenuId)) continue")
     expect(source).toContain('if (!supportsCapability("zen")) return')
-    expect(source).toContain('if (newZenEnabled && supportsCapability("clean"))')
+    expect(source).not.toContain('updateNestedSetting("layout", "cleanMode"')
   })
 
   it("derives the conversation unsupported state from the shared matrix", () => {
@@ -106,6 +106,7 @@ describe("feature capability settings boundaries", () => {
     expect(source).toContain("{supportsUserQueryWidth && (")
     expect(source).toContain("{supportsZenMode && (")
     expect(source).toContain("{supportsCleanMode && (")
+    expect(source).not.toContain("updatedLayout.cleanMode =")
     expect(source).toContain("{isCommunitySitePack && (")
     expect(source).toContain('t("communitySitePackBadge")')
     expect(source).toContain('t("communitySitePackDesc")')

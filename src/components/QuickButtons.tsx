@@ -40,7 +40,6 @@ import {
 } from "~utils/scroll-helper"
 import {
   DEFAULT_SETTINGS,
-  getSiteCleanMode,
   getSiteTheme,
   getSiteZenMode,
   type QuickButtonsPosition,
@@ -803,14 +802,6 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
         ...(settings?.layout?.zenMode ?? {}),
         [siteInstanceKey]: { ...currentZenMode, enabled: newZenEnabled },
       })
-      // 开启禅模式时自动开启净化模式，关闭禅模式时不变净化模式
-      if (newZenEnabled && supportsCapability("clean")) {
-        const currentCleanMode = getSiteCleanMode(settings || DEFAULT_SETTINGS, siteInstanceKey)
-        updateNestedSetting("layout", "cleanMode", {
-          ...(settings?.layout?.cleanMode ?? {}),
-          [siteInstanceKey]: { ...currentCleanMode, enabled: true },
-        })
-      }
     },
     settings: (e) => {
       e?.stopPropagation()

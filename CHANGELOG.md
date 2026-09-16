@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### 🐛 Bug Fixes
+
+- **Zen Mode and Clean Mode state isolation** — Fixed an issue where enabling Zen Mode automatically enabled Clean Mode and left it active after exiting, now preserving your original Clean Mode preference.
+
 ---
 
 ## [1.2.7] - 2026-09-13

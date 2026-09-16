@@ -403,13 +403,6 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
                       },
                     },
                   }
-                  // 开启禅模式时自动开启净化模式
-                  if (newZenEnabled && supportsCleanMode) {
-                    updatedLayout.cleanMode = {
-                      ...settings.layout?.cleanMode,
-                      [siteInstanceKey]: { enabled: true },
-                    }
-                  }
                   setSettings({ layout: updatedLayout })
                 }}
               />
