@@ -1800,6 +1800,10 @@ Donnez le code puis un résumé des améliorations.`,
   cleanModeLabel: "Activer le mode Nettoyage",
   cleanModeDesc:
     "Masquez les mentions légales, publicités, boutons de téléchargement et autres éléments superflus pour une interface plus propre (configuré indépendamment pour chaque site)",
+  autoHideInputTitle: "Masquage automatique de la saisie",
+  autoHideInputLabel: "Réduire automatiquement la saisie en cas d'inactivité",
+  autoHideInputDesc:
+    "Réduit et masque la zone de saisie lorsque le curseur s'éloigne sans texte saisi ; se développe au survol ou au focus (configuré par site)",
   extensionUpdateNoticeKicker: "Extension mise à jour",
   extensionUpdateNotice:
     "Ophel Atlas a été mis à jour. Rechargez cette page pour continuer à utiliser la dernière version.",

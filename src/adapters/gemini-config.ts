@@ -1,6 +1,7 @@
 import { SITE_IDS } from "~constants/defaults"
 
 import type {
+  AutoHideInputConfig,
   ExportConfig,
   ModelSwitcherConfig,
   NetworkMonitorConfig,
@@ -163,6 +164,7 @@ export interface GeminiSiteConfig extends BuiltinSiteConfig {
   widthSelectors: Omit<WidthSelectorConfig, "transformValue">[]
   zenMode: ZenModeConfig
   cleanMode: ZenModeConfig
+  autoHideInput: AutoHideInputConfig
   mermaidSupport: NonNullable<BuiltinSiteConfig["mermaidSupport"]>
   quickQuote: NonNullable<BuiltinSiteConfig["quickQuote"]>
   supportsHostThemeSync: boolean
@@ -170,7 +172,7 @@ export interface GeminiSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const GEMINI_CONFIG_VERSION = 6
+export const GEMINI_CONFIG_VERSION = 7
 
 const createGeminiConfig = (): GeminiSiteConfig => {
   const userQuery = "user-query"
@@ -396,6 +398,24 @@ const createGeminiConfig = (): GeminiSiteConfig => {
         "g1-dynamic-upsell-button",
         ".share-viewer_footer_disclaimer",
         'share-landing-page immersive-share-landing-page .page:has(structured-content-container[data-test-id="deep-research-block"]) > .footer',
+      ],
+    },
+    autoHideInput: {
+      // 仅浮层化活跃对话的输入容器；新对话页的零态居中输入（fieldset.is-zero-state）保持原样
+      container: "input-container:has(> fieldset.input-area-container:not(.is-zero-state))",
+      styles: [
+        {
+          selector: ".conversation-container",
+          property: "min-height",
+          value: "0",
+        },
+        {
+          selector: "infinite-scroller.chat-history",
+          property: "mask-image",
+          value: "none",
+          extraCss:
+            "overflow-anchor: none; -webkit-mask-image: none !important; --bottom-gradient-color: transparent !important;",
+        },
       ],
     },
     mermaidSupport: "fallback",

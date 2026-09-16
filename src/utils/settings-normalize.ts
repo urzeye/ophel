@@ -149,6 +149,11 @@ export const migrateLegacySiteSettings = (
     legacySiteId,
     siteInstanceKey,
   )
+  const autoHideInput = migrateSiteRecordKey(
+    settings.layout.autoHideInput,
+    legacySiteId,
+    siteInstanceKey,
+  )
   const modelLock = migrateSiteRecordKey(settings.modelLock, legacySiteId, siteInstanceKey)
   const changed =
     themeSites.changed ||
@@ -157,6 +162,7 @@ export const migrateLegacySiteSettings = (
     zenMode.changed ||
     cleanMode.changed ||
     panelAvoidance.changed ||
+    autoHideInput.changed ||
     modelLock.changed
 
   if (!changed) return settings
@@ -174,6 +180,7 @@ export const migrateLegacySiteSettings = (
       zenMode: zenMode.record,
       cleanMode: cleanMode.record,
       panelAvoidance: panelAvoidance.record,
+      autoHideInput: autoHideInput.record,
     },
     modelLock: modelLock.record ?? settings.modelLock,
   })
@@ -396,6 +403,10 @@ export const normalizeSettings = (settings: SettingsInput): Settings => {
       panelAvoidance: normalizeSiteConfigRecord<PanelAvoidanceSettings>(
         settings.layout?.panelAvoidance,
         DEFAULT_SETTINGS.layout.panelAvoidance,
+      ),
+      autoHideInput: normalizeSiteConfigRecord(
+        settings.layout?.autoHideInput,
+        DEFAULT_SETTINGS.layout.autoHideInput,
       ),
     },
     modelLock: normalizeSiteConfigRecord(settings.modelLock, DEFAULT_SETTINGS.modelLock),

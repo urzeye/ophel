@@ -49,6 +49,11 @@ export const DEFAULT_CLEAN_MODE: ZenModeConfig = {
   enabled: true,
 }
 
+// 默认自动隐藏输入框配置（默认关闭，首发仅 Gemini 提供配置，其余站点走 _default）
+export const DEFAULT_AUTO_HIDE_INPUT: ZenModeConfig = {
+  enabled: false,
+}
+
 const DEFAULT_COLLAPSED_BUTTONS: QuickButtonConfig[] = [
   { id: "panel", enabled: true },
   { id: "floatingToolbar", enabled: true },
@@ -233,6 +238,10 @@ export const DEFAULT_SETTINGS: Settings = {
       yuanbao: { ...DEFAULT_PANEL_AVOIDANCE },
       zai: { ...DEFAULT_PANEL_AVOIDANCE },
       _default: { ...DEFAULT_PANEL_AVOIDANCE },
+    },
+    autoHideInput: {
+      gemini: { ...DEFAULT_AUTO_HIDE_INPUT },
+      _default: { ...DEFAULT_AUTO_HIDE_INPUT },
     },
   },
 

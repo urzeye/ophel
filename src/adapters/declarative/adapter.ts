@@ -6,6 +6,7 @@ import {
   type ExportConfig,
   type ModelSwitcherConfig,
   type NetworkMonitorConfig,
+  type AutoHideInputConfig,
   type OutlineItem,
   type OutlineSource,
   type PanelAvoidanceConfig,
@@ -1087,6 +1088,16 @@ export class DeclarativeAdapter extends SiteAdapter {
 
   getCleanModeConfig(): ZenModeConfig | null {
     return this.manifest.cleanMode ? cloneZenModeConfig(this.manifest.cleanMode) : null
+  }
+
+  getAutoHideInputConfig(): AutoHideInputConfig | null {
+    const config = this.manifest.autoHideInput
+    if (!config) return null
+    return {
+      container: config.container,
+      ...(config.spacerHeight !== undefined ? { spacerHeight: config.spacerHeight } : {}),
+      ...(config.styles ? { styles: config.styles.map((style) => ({ ...style })) } : {}),
+    }
   }
 
   getSubmitKeyConfig(): { key: "Enter" | "Ctrl+Enter" } {

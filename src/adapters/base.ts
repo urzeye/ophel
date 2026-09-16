@@ -166,6 +166,16 @@ export interface ZenModeConfig {
   styles?: ZenModeStyleRule[]
 }
 
+/** 输入框自动隐藏的声明式配置；站点差异全部收敛到此结构，机制由 LayoutManager 统一实现。 */
+export interface AutoHideInputConfig {
+  /** 输入区域整体容器选择器；应自带"活跃输入"判定（如 Gemini 排除新对话页的零态居中输入） */
+  container: string
+  /** 滚动容器内占位 spacer 高度 px，缺省 33 */
+  spacerHeight?: number
+  /** 站点附加样式规则（如释放会话容器 min-height、关闭底部渐变遮罩） */
+  styles?: ZenModeStyleRule[]
+}
+
 export interface WidthSelectorConfig {
   selector: string
   property: string
@@ -779,6 +789,11 @@ export abstract class SiteAdapter {
 
   /** 返回净化模式配置（隐藏免责声明、广告、下载按钮等冗余元素） */
   getCleanModeConfig(): ZenModeConfig | null {
+    return null
+  }
+
+  /** 返回输入框自动隐藏配置；默认 null = 不支持，由站点验证后逐步 opt-in。 */
+  getAutoHideInputConfig(): AutoHideInputConfig | null {
     return null
   }
 

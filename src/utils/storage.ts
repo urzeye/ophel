@@ -107,6 +107,7 @@ export interface ClaudeSessionKeysState {
 // ==================== 工具函数 ====================
 
 export {
+  getSiteAutoHideInput,
   getSiteCleanMode,
   getSiteModelLock,
   getSitePageWidth,

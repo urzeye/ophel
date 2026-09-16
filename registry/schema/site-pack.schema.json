@@ -95,6 +95,9 @@
     "cleanMode": {
       "$ref": "#/definitions/zenMode"
     },
+    "autoHideInput": {
+      "$ref": "#/definitions/autoHideInput"
+    },
     "widthSelectors": {
       "$ref": "#/definitions/widthSelectors"
     },
@@ -930,6 +933,28 @@
         },
         "rootClass": {
           "$ref": "#/definitions/zenRootClass"
+        },
+        "styles": {
+          "type": "array",
+          "maxItems": 50,
+          "items": {
+            "$ref": "#/definitions/zenStyle"
+          }
+        }
+      }
+    },
+    "autoHideInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["container"],
+      "properties": {
+        "container": {
+          "$ref": "#/definitions/selector"
+        },
+        "spacerHeight": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 400
         },
         "styles": {
           "type": "array",

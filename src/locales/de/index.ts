@@ -1789,6 +1789,10 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   cleanModeLabel: "Reinigungsmodus aktivieren",
   cleanModeDesc:
     "Haftungsausschlüsse, Werbung, Download-Buttons und andere überflüssige Elemente für eine sauberere Oberfläche ausblenden (individuell für jede Website konfiguriert)",
+  autoHideInputTitle: "Eingabefeld automatisch ausblenden",
+  autoHideInputLabel: "Eingabefeld bei Inaktivität automatisch einklappen",
+  autoHideInputDesc:
+    "Blendet das Eingabefeld ein und klappt es ein, wenn der Mauszeiger wegbewegt wird und kein Entwurf vorliegt; wird beim Hovern oder Fokussieren sofort erweitert (pro Website konfigurierbar)",
   extensionUpdateNoticeKicker: "Erweiterung aktualisiert",
   extensionUpdateNotice:
     "Ophel Atlas wurde aktualisiert. Laden Sie diese Seite neu, um die neueste Version weiter zu verwenden.",

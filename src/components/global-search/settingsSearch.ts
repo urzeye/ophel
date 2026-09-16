@@ -173,6 +173,8 @@ export const SETTING_SEARCH_TITLE_KEY_MAP: Record<string, string> = {
   "usage-monitor-auto-reset": "usageMonitorAutoResetLabel",
   "layout-clean-mode-enabled": "cleanModeLabel",
   "layout-clean-mode-card": "cleanModeTitle",
+  "layout-auto-hide-input-enabled": "autoHideInputLabel",
+  "layout-auto-hide-input-card": "autoHideInputTitle",
   "export-style": "exportStyleLabel",
   "export-show-index": "exportShowIndexLabel",
   "export-show-dialog": "exportShowDialogLabel",

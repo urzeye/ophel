@@ -33,6 +33,7 @@ import {
   getSiteUserQueryWidth,
   getSiteZenMode,
   getSiteCleanMode,
+  getSiteAutoHideInput,
   consumeClearAllFlag,
   consumeSkipReadingHistoryRestoreFlag,
   CLEAR_ALL_FLAG_TTL_MS,
@@ -272,13 +273,17 @@ export function initLayoutManager(ctx: ModulesContext): void {
   const hasPanelAvoidanceConfig = !!adapter.getPanelAvoidanceConfig()
   const panelAvoidanceEnabled =
     hasPanelAvoidanceConfig && getSitePanelAvoidance(settings, siteInstanceKey).enabled
+  const hasAutoHideInputConfig = !!adapter.getAutoHideInputConfig()
+  const autoHideInputEnabled =
+    hasAutoHideInputConfig && getSiteAutoHideInput(settings, siteInstanceKey).enabled
 
   if (
     sitePageWidth?.enabled ||
     siteUserQueryWidth?.enabled ||
     zenModeEnabled ||
     cleanModeEnabled ||
-    panelAvoidanceEnabled
+    panelAvoidanceEnabled ||
+    autoHideInputEnabled
   ) {
     modules.layoutManager = new LayoutManager(adapter, sitePageWidth)
     if (sitePageWidth?.enabled) modules.layoutManager.apply()
@@ -286,6 +291,7 @@ export function initLayoutManager(ctx: ModulesContext): void {
     if (siteUserQueryWidth?.enabled) modules.layoutManager.updateUserQueryConfig(siteUserQueryWidth)
     if (zenModeEnabled) modules.layoutManager.updateZenMode(siteZenMode)
     if (cleanModeEnabled) modules.layoutManager.updateCleanMode(true)
+    if (autoHideInputEnabled) modules.layoutManager.updateAutoHideInput(true)
   }
 }
 
@@ -597,6 +603,9 @@ export function subscribeModuleUpdates(ctx: ModulesContext): () => void {
     const hasPanelAvoidanceConfig = !!adapter.getPanelAvoidanceConfig()
     const panelAvoidanceEnabled =
       hasPanelAvoidanceConfig && getSitePanelAvoidance(newSettings, siteInstanceKey).enabled
+    const hasAutoHideInputConfig = !!adapter.getAutoHideInputConfig()
+    const newAutoHideInputEnabled =
+      hasAutoHideInputConfig && getSiteAutoHideInput(newSettings, siteInstanceKey).enabled
 
     if (modules.layoutManager) {
       modules.layoutManager.updateConfig(newSitePageWidth)
@@ -608,12 +617,14 @@ export function subscribeModuleUpdates(ctx: ModulesContext): () => void {
       modules.layoutManager.updateUserQueryConfig(newUserQueryWidth)
       modules.layoutManager.updateZenMode(newSiteZenMode)
       modules.layoutManager.updateCleanMode(newCleanModeEnabled)
+      modules.layoutManager.updateAutoHideInput(newAutoHideInputEnabled)
     } else if (
       newSitePageWidth?.enabled ||
       newUserQueryWidth?.enabled ||
       newZenModeEnabled ||
       newCleanModeEnabled ||
-      panelAvoidanceEnabled
+      panelAvoidanceEnabled ||
+      newAutoHideInputEnabled
     ) {
       modules.layoutManager = new LayoutManager(adapter, newSitePageWidth)
       if (newSitePageWidth?.enabled) modules.layoutManager.apply()
@@ -621,6 +632,7 @@ export function subscribeModuleUpdates(ctx: ModulesContext): () => void {
       if (newUserQueryWidth?.enabled) modules.layoutManager.updateUserQueryConfig(newUserQueryWidth)
       if (newZenModeEnabled) modules.layoutManager.updateZenMode(newSiteZenMode)
       if (newCleanModeEnabled) modules.layoutManager.updateCleanMode(true)
+      if (newAutoHideInputEnabled) modules.layoutManager.updateAutoHideInput(true)
     }
 
     // 6. Watermark Remover update

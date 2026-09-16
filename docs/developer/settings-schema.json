@@ -190,6 +190,10 @@
       "yuanbao": { "enabled": true },
       "zai": { "enabled": true },
       "_default": { "enabled": true }
+    },
+    "autoHideInput": {
+      "gemini": { "enabled": false },
+      "_default": { "enabled": false }
     }
   },
 

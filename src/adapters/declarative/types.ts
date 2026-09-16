@@ -1,4 +1,5 @@
 import type {
+  AutoHideInputConfig,
   ExportConfig,
   ModelSwitcherConfig,
   NetworkMonitorConfig,
@@ -107,6 +108,8 @@ export interface SitePackConfig {
   export?: ExportConfig
   zenMode?: ZenModeConfig
   cleanMode?: ZenModeConfig
+  /** 输入框自动隐藏；声明即启用，缺省不支持。 */
+  autoHideInput?: AutoHideInputConfig
   widthSelectors?: Omit<WidthSelectorConfig, "transformValue">[]
   /** 声明 panel-avoidance 能力时必填；驱动 Ophel 面板安全区避让布局。 */
   panelAvoidance?: SitePackPanelAvoidanceConfig

@@ -1782,6 +1782,10 @@ Dê o código e depois um resumo de melhorias.`,
   cleanModeLabel: "Ativar Modo Limpeza",
   cleanModeDesc:
     "Oculte avisos legais, anúncios, botões de download e outros elementos desnecessários para uma interface mais limpa (configurado de forma independente para cada site)",
+  autoHideInputTitle: "Ocultar automaticamente a entrada",
+  autoHideInputLabel: "Recolher automaticamente a entrada quando ociosa",
+  autoHideInputDesc:
+    "Recolhe e oculta a caixa de entrada quando o cursor se afasta sem texto rascunhado; expande ao passar o mouse ou focar (configurado por site)",
   extensionUpdateNoticeKicker: "Extensão atualizada",
   extensionUpdateNotice:
     "O Ophel Atlas foi atualizado. Recarregue esta página para continuar usando a versão mais recente.",

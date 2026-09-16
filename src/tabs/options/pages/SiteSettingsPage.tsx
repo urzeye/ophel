@@ -20,6 +20,7 @@ import { getCurrentLang, subscribeI18nChanges, t } from "~utils/i18n"
 import { MSG_CHECK_PERMISSIONS, MSG_REQUEST_PERMISSIONS, sendToBackground } from "~utils/messaging"
 import {
   getSiteCleanMode,
+  getSiteAutoHideInput,
   getSitePageWidth,
   getSitePanelAvoidance,
   getSiteUserQueryWidth,
@@ -68,6 +69,9 @@ const PANEL_AVOIDANCE_SUPPORTED_SITE_IDS = new Set<string>([
   SITE_IDS.YUANBAO,
   SITE_IDS.ZAI,
 ])
+
+// 自动隐藏输入框首发站点白名单；其余站点验证后逐步加入
+const AUTO_HIDE_INPUT_SUPPORTED_SITE_IDS = new Set<string>([SITE_IDS.GEMINI])
 
 const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
   siteId,
@@ -122,6 +126,8 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
     (supportsPageWidth && (adapter?.getUserQueryWidthSelectors().length ?? 0) > 0)
   const supportsZenMode = supportsFeature("zen")
   const supportsCleanMode = supportsFeature("clean")
+  const supportsAutoHideInput =
+    AUTO_HIDE_INPUT_SUPPORTED_SITE_IDS.has(siteId) || Boolean(adapter?.getAutoHideInputConfig())
   // 仅在面板内（有适配器上下文）且为内置站点时提供"在此站点停用"入口
   const canDisableCurrentSite = Boolean(adapter) && isBuiltinSiteId(siteId)
   const handleDisableCurrentSite = () => {
@@ -144,6 +150,9 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
   const currentCleanMode = settings
     ? getSiteCleanMode(settings, siteInstanceKey)
     : { enabled: true }
+  const currentAutoHideInput = settings
+    ? getSiteAutoHideInput(settings, siteInstanceKey)
+    : { enabled: false }
   const currentPanelAvoidance = settings
     ? getSitePanelAvoidance(settings, siteInstanceKey)
     : { enabled: true }
@@ -446,6 +455,32 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
                         [siteInstanceKey]: {
                           ...currentCleanMode,
                           enabled: !currentCleanMode.enabled,
+                        },
+                      },
+                    },
+                  })
+                }}
+              />
+            </SettingCard>
+          )}
+
+          {/* 自动隐藏输入框 (Auto Hide Input) 卡片 */}
+          {supportsAutoHideInput && (
+            <SettingCard title={t("autoHideInputTitle")} settingId="layout-auto-hide-input-card">
+              <ToggleRow
+                label={t("autoHideInputLabel")}
+                description={t("autoHideInputDesc")}
+                settingId="layout-auto-hide-input-enabled"
+                checked={currentAutoHideInput.enabled}
+                onChange={() => {
+                  setSettings({
+                    layout: {
+                      ...settings.layout,
+                      autoHideInput: {
+                        ...settings.layout?.autoHideInput,
+                        [siteInstanceKey]: {
+                          ...currentAutoHideInput,
+                          enabled: !currentAutoHideInput.enabled,
                         },
                       },
                     },

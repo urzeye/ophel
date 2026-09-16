@@ -1,4 +1,5 @@
 import type {
+  AutoHideInputConfig,
   LayoutCapability,
   PanelAvoidanceConfig,
   PanelAvoidanceInsetConfig,
@@ -24,9 +25,30 @@ const STYLE_IDS = {
   ZEN_MODE_SHADOW: "gh-zen-mode-shadow",
   CLEAN_MODE: "gh-clean-mode-styles",
   CLEAN_MODE_SHADOW: "gh-clean-mode-shadow",
+  AUTO_HIDE_INPUT: "gh-auto-hide-input-styles",
 } as const
 
 const ZEN_MODE_EXIT_HOST_ID = "gh-zen-mode-exit-host"
+
+// ==================== Auto Hide Input 常量 ====================
+const AUTO_HIDE_FLOAT_CLASS = "gh-ahi-float"
+const AUTO_HIDE_HIDDEN_CLASS = "gh-ahi-hidden"
+const AUTO_HIDE_SPACER_ID = "gh-auto-hide-input-spacer"
+/** 指针距视口底部 <= 该值时显示输入框 */
+const AUTO_HIDE_REVEAL_DISTANCE_PX = 210
+/** 指针距视口底部 >= 该值时隐藏输入框；与显示阈值形成迟滞区间避免抖动 */
+const AUTO_HIDE_HIDE_DISTANCE_PX = AUTO_HIDE_REVEAL_DISTANCE_PX + 180
+const AUTO_HIDE_POINTER_THROTTLE_MS = 50
+const AUTO_HIDE_SCROLL_THROTTLE_MS = 100
+const AUTO_HIDE_RESYNC_DEBOUNCE_MS = 120
+const AUTO_HIDE_DEFAULT_SPACER_HEIGHT = 33
+const AUTO_HIDE_CSS_VARS = [
+  "--gh-ahi-top",
+  "--gh-ahi-left",
+  "--gh-ahi-width",
+  "--gh-ahi-footer",
+  "--gh-ahi-bg",
+] as const
 const DEFAULT_ZEN_MODE_CONFIG: ZenModeConfig = {
   enabled: false,
   showExitButton: true,
@@ -88,6 +110,19 @@ export class LayoutManager {
 
   private cleanModeStyle: HTMLStyleElement | null = null
   private cleanModeEnabled = false
+
+  private autoHideInputStyle: HTMLStyleElement | null = null
+  private autoHideInputEnabled = false
+  private autoHideInputConfig: AutoHideInputConfig | null = null
+  private autoHideInputContainer: HTMLElement | null = null
+  private autoHideInputHidden: boolean | null = null
+  private autoHideInputLastPointer: PointerEvent | null = null
+  private autoHideInputListenersBound = false
+  private autoHideInputResizeObserver: ResizeObserver | null = null
+  private autoHideInputMutationObserver: MutationObserver | null = null
+  private autoHideInputPointerTimer: ReturnType<typeof setTimeout> | null = null
+  private autoHideInputScrollTimer: ReturnType<typeof setTimeout> | null = null
+  private autoHideInputResyncTimer: ReturnType<typeof setTimeout> | null = null
 
   private processedShadowRoots = new WeakSet<ShadowRoot>()
   private shadowCheckInterval: ReturnType<typeof setTimeout> | null = null
@@ -232,6 +267,10 @@ export class LayoutManager {
     this.unmountZenModeExitButton()
     this.zenModeEnabled = false
     this.cleanModeEnabled = false
+    this.autoHideInputEnabled = false
+    this.removeStyle(this.autoHideInputStyle)
+    this.autoHideInputStyle = null
+    this.teardownAutoHideInput()
 
     if (this.shadowCheckInterval) {
       clearInterval(this.shadowCheckInterval)
@@ -326,6 +365,332 @@ export class LayoutManager {
     }
     this.refreshShadowInjection()
     this.schedulePanelAvoidanceUpdate()
+  }
+
+  // ==================== Auto Hide Input ====================
+  //
+  // 机制：输入容器改为 position: fixed 浮层（脱离文档流，原位置让给聊天内容），
+  // 闲置时整体下移隐藏；滚动容器内追加隐形 spacer 保持滚动度量稳定。
+  // 显示触发：指针接近视口底部 / 聚焦（Alt+I、insertPrompt 均先 focus，由
+  // :focus-within 与 focusin 双通道覆盖）/ 输入框已有草稿内容。
+
+  updateAutoHideInput(enabled: boolean) {
+    this.autoHideInputEnabled = enabled
+    this.applyAutoHideInput()
+  }
+
+  applyAutoHideInput() {
+    this.removeStyle(this.autoHideInputStyle)
+    this.autoHideInputStyle = null
+
+    if (!this.autoHideInputEnabled) {
+      this.teardownAutoHideInput()
+      return
+    }
+
+    const config = this.siteAdapter.getAutoHideInputConfig()
+    if (!config) {
+      this.teardownAutoHideInput()
+      return
+    }
+
+    this.autoHideInputConfig = config
+    this.autoHideInputStyle = this.injectStyle(
+      STYLE_IDS.AUTO_HIDE_INPUT,
+      this.generateAutoHideInputCSS(config),
+    )
+    this.bindAutoHideListeners()
+    this.startAutoHideMutationObserver()
+    this.syncAutoHideLayout()
+    this.updateAutoHideVisibility()
+  }
+
+  private generateAutoHideInputCSS(config: AutoHideInputConfig): string {
+    const container = config.container
+    const floatCss = `
+html.${AUTO_HIDE_FLOAT_CLASS} ${container} {
+  position: fixed !important;
+  top: var(--gh-ahi-top) !important;
+  left: var(--gh-ahi-left) !important;
+  width: var(--gh-ahi-width) !important;
+  max-width: var(--gh-ahi-width) !important;
+  padding-bottom: var(--gh-ahi-footer, 0px) !important;
+  margin: 0 !important;
+  box-sizing: border-box;
+  overflow: visible !important;
+  z-index: 30 !important;
+  background: var(--gh-ahi-bg, transparent) !important;
+  transform: translateY(0);
+  opacity: 1;
+  transition:
+    transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  will-change: transform, opacity;
+}
+html.${AUTO_HIDE_FLOAT_CLASS}.${AUTO_HIDE_HIDDEN_CLASS} ${container} {
+  transform: translateY(calc(100% + 28px)) !important;
+  opacity: 0.01 !important;
+  pointer-events: none !important;
+}
+html.${AUTO_HIDE_FLOAT_CLASS}.${AUTO_HIDE_HIDDEN_CLASS} ${container}:focus-within {
+  transform: translateY(0) !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+#${AUTO_HIDE_SPACER_ID} {
+  flex-shrink: 0;
+  width: 100%;
+  pointer-events: none;
+  visibility: hidden;
+}`.trim()
+
+    return [floatCss, this.buildZenModeStyleCSS(config.styles || [])].filter(Boolean).join("\n")
+  }
+
+  /** 测量容器自然位置并浮层化；容器不存在或不可见时解除浮层。 */
+  private syncAutoHideLayout() {
+    const config = this.autoHideInputConfig
+    const container = config
+      ? (document.querySelector(config.container) as HTMLElement | null)
+      : null
+    if (!config || !container) {
+      this.unfloatAutoHideInput()
+      return
+    }
+
+    const root = document.documentElement
+    // 浮层状态下读到的是浮层几何，必须先摘掉浮层类再强制 reflow 读自然位置
+    if (root.classList.contains(AUTO_HIDE_FLOAT_CLASS)) {
+      root.classList.remove(AUTO_HIDE_FLOAT_CLASS)
+      void container.offsetHeight
+    }
+
+    const rect = container.getBoundingClientRect()
+    if (rect.width <= 0 || rect.height <= 0) {
+      this.unfloatAutoHideInput()
+      return
+    }
+
+    const footerPad = Math.max(0, Math.ceil(window.innerHeight - rect.bottom))
+    root.style.setProperty("--gh-ahi-top", `${rect.top}px`)
+    root.style.setProperty("--gh-ahi-left", `${rect.left}px`)
+    root.style.setProperty("--gh-ahi-width", `${rect.width}px`)
+    root.style.setProperty("--gh-ahi-footer", `${footerPad}px`)
+    root.style.setProperty("--gh-ahi-bg", this.resolveAutoHideBackground(container))
+    root.classList.add(AUTO_HIDE_FLOAT_CLASS)
+
+    this.autoHideInputContainer = container
+    this.syncAutoHideSpacer(config)
+    this.observeAutoHideContainer(container)
+  }
+
+  /** 浮层容器覆盖底部区域时需要实底背景；沿祖先链取第一个非透明背景色。 */
+  private resolveAutoHideBackground(container: HTMLElement): string {
+    let current: HTMLElement | null = container
+    while (current) {
+      const bg = getComputedStyle(current).backgroundColor
+      if (bg && bg !== "transparent" && bg !== "rgba(0, 0, 0, 0)") return bg
+      current = current.parentElement
+    }
+    return getComputedStyle(document.body).backgroundColor || "transparent"
+  }
+
+  private syncAutoHideSpacer(config: AutoHideInputConfig) {
+    const scroller = this.siteAdapter.getScrollContainer()
+    if (!scroller) return
+
+    let spacer = document.getElementById(AUTO_HIDE_SPACER_ID)
+    if (!spacer) {
+      spacer = document.createElement("div")
+      spacer.id = AUTO_HIDE_SPACER_ID
+      spacer.setAttribute("aria-hidden", "true")
+    }
+    if (spacer.parentElement !== scroller) {
+      scroller.appendChild(spacer)
+    }
+    spacer.style.height = `${config.spacerHeight ?? AUTO_HIDE_DEFAULT_SPACER_HEIGHT}px`
+  }
+
+  private unfloatAutoHideInput() {
+    const root = document.documentElement
+    root.classList.remove(AUTO_HIDE_FLOAT_CLASS)
+    root.classList.remove(AUTO_HIDE_HIDDEN_CLASS)
+    this.autoHideInputHidden = null
+    this.autoHideInputContainer = null
+    this.autoHideInputResizeObserver?.disconnect()
+    document.getElementById(AUTO_HIDE_SPACER_ID)?.remove()
+  }
+
+  private observeAutoHideContainer(container: HTMLElement) {
+    if (!this.autoHideInputResizeObserver) {
+      this.autoHideInputResizeObserver = new ResizeObserver(() => {
+        this.scheduleAutoHideResync()
+      })
+    }
+    this.autoHideInputResizeObserver.disconnect()
+    this.autoHideInputResizeObserver.observe(container)
+  }
+
+  private startAutoHideMutationObserver() {
+    if (this.autoHideInputMutationObserver || !document.body) return
+
+    // 发送消息 / 路由切换会重建输入区域 DOM；变异回调只做引用比较和
+    // 单次选择器匹配，重测量统一走防抖，避免流式输出期间的性能损耗
+    this.autoHideInputMutationObserver = new MutationObserver(() => {
+      const config = this.autoHideInputConfig
+      if (!config) return
+      const container = this.autoHideInputContainer
+      if (!container || !container.isConnected || !container.matches(config.container)) {
+        this.scheduleAutoHideResync()
+      }
+    })
+    this.autoHideInputMutationObserver.observe(document.body, { childList: true, subtree: true })
+  }
+
+  private scheduleAutoHideResync = () => {
+    if (!this.autoHideInputEnabled) return
+    if (this.autoHideInputResyncTimer) {
+      clearTimeout(this.autoHideInputResyncTimer)
+    }
+    this.autoHideInputResyncTimer = setTimeout(() => {
+      this.autoHideInputResyncTimer = null
+      if (!this.autoHideInputEnabled) return
+      this.syncAutoHideLayout()
+      this.updateAutoHideVisibility()
+    }, AUTO_HIDE_RESYNC_DEBOUNCE_MS)
+  }
+
+  private isAutoHideInputFocused(): boolean {
+    return !!(
+      this.autoHideInputContainer &&
+      document.activeElement &&
+      this.autoHideInputContainer.contains(document.activeElement)
+    )
+  }
+
+  private autoHideInputHasDraft(): boolean {
+    const editor = this.siteAdapter.getTextareaElement()
+    if (!editor) return false
+    if (editor instanceof HTMLTextAreaElement || editor instanceof HTMLInputElement) {
+      return editor.value.trim().length > 0
+    }
+    return (editor.textContent || "").trim().length > 0
+  }
+
+  private updateAutoHideVisibility = (event?: PointerEvent) => {
+    if (!this.autoHideInputEnabled) return
+    if (!document.documentElement.classList.contains(AUTO_HIDE_FLOAT_CLASS)) return
+
+    // 触屏设备没有 hover，聚焦与草稿状态必须始终可见
+    if (
+      window.matchMedia("(pointer: coarse)").matches ||
+      this.isAutoHideInputFocused() ||
+      this.autoHideInputHasDraft()
+    ) {
+      this.setAutoHideHidden(false)
+      return
+    }
+
+    const pointer = event ?? this.autoHideInputLastPointer
+    if (!pointer) {
+      this.setAutoHideHidden(true)
+      return
+    }
+
+    const distanceFromBottom = window.innerHeight - pointer.clientY
+    if (distanceFromBottom <= AUTO_HIDE_REVEAL_DISTANCE_PX) {
+      this.setAutoHideHidden(false)
+    } else if (distanceFromBottom >= AUTO_HIDE_HIDE_DISTANCE_PX) {
+      this.setAutoHideHidden(true)
+    }
+  }
+
+  private setAutoHideHidden(hidden: boolean) {
+    if (this.autoHideInputHidden === hidden) return
+    if (!document.documentElement.classList.contains(AUTO_HIDE_FLOAT_CLASS)) return
+    document.documentElement.classList.toggle(AUTO_HIDE_HIDDEN_CLASS, hidden)
+    this.autoHideInputHidden = hidden
+  }
+
+  private handleAutoHidePointerMove = (event: PointerEvent) => {
+    this.autoHideInputLastPointer = event
+    if (this.autoHideInputPointerTimer) return
+    this.autoHideInputPointerTimer = setTimeout(() => {
+      this.autoHideInputPointerTimer = null
+      this.updateAutoHideVisibility(this.autoHideInputLastPointer ?? undefined)
+    }, AUTO_HIDE_POINTER_THROTTLE_MS)
+  }
+
+  private handleAutoHideScroll = () => {
+    if (this.autoHideInputScrollTimer) return
+    this.autoHideInputScrollTimer = setTimeout(() => {
+      this.autoHideInputScrollTimer = null
+      this.updateAutoHideVisibility()
+    }, AUTO_HIDE_SCROLL_THROTTLE_MS)
+  }
+
+  private handleAutoHideFocusIn = () => {
+    this.updateAutoHideVisibility()
+  }
+
+  private handleAutoHideFocusOut = () => {
+    // focusout 时 activeElement 尚未切换，延迟到下一拍再判定
+    setTimeout(() => this.updateAutoHideVisibility(), 0)
+  }
+
+  private handleAutoHideInputEvent = () => {
+    this.updateAutoHideVisibility()
+  }
+
+  private handleAutoHideWindowResize = () => {
+    this.scheduleAutoHideResync()
+  }
+
+  private bindAutoHideListeners() {
+    if (this.autoHideInputListenersBound) return
+    document.addEventListener("pointermove", this.handleAutoHidePointerMove, { passive: true })
+    document.addEventListener("scroll", this.handleAutoHideScroll, { passive: true, capture: true })
+    document.addEventListener("focusin", this.handleAutoHideFocusIn, true)
+    document.addEventListener("focusout", this.handleAutoHideFocusOut, true)
+    document.addEventListener("input", this.handleAutoHideInputEvent, true)
+    window.addEventListener("resize", this.handleAutoHideWindowResize, { passive: true })
+    this.autoHideInputListenersBound = true
+  }
+
+  private unbindAutoHideListeners() {
+    if (!this.autoHideInputListenersBound) return
+    document.removeEventListener("pointermove", this.handleAutoHidePointerMove)
+    document.removeEventListener("scroll", this.handleAutoHideScroll, true)
+    document.removeEventListener("focusin", this.handleAutoHideFocusIn, true)
+    document.removeEventListener("focusout", this.handleAutoHideFocusOut, true)
+    document.removeEventListener("input", this.handleAutoHideInputEvent, true)
+    window.removeEventListener("resize", this.handleAutoHideWindowResize)
+    this.autoHideInputListenersBound = false
+    if (this.autoHideInputPointerTimer) {
+      clearTimeout(this.autoHideInputPointerTimer)
+      this.autoHideInputPointerTimer = null
+    }
+    if (this.autoHideInputScrollTimer) {
+      clearTimeout(this.autoHideInputScrollTimer)
+      this.autoHideInputScrollTimer = null
+    }
+  }
+
+  private teardownAutoHideInput() {
+    this.unbindAutoHideListeners()
+    this.autoHideInputMutationObserver?.disconnect()
+    this.autoHideInputMutationObserver = null
+    if (this.autoHideInputResyncTimer) {
+      clearTimeout(this.autoHideInputResyncTimer)
+      this.autoHideInputResyncTimer = null
+    }
+    this.unfloatAutoHideInput()
+    this.autoHideInputResizeObserver = null
+    for (const name of AUTO_HIDE_CSS_VARS) {
+      document.documentElement.style.removeProperty(name)
+    }
+    this.autoHideInputConfig = null
+    this.autoHideInputLastPointer = null
   }
 
   // ==================== CSS 生成 ====================
@@ -998,6 +1363,8 @@ export class LayoutManager {
   }
 
   private schedulePanelAvoidanceUpdate = () => {
+    // 页面宽度 / 禅模式 / 净化模式 / 面板避让都会改变输入框停靠位置，统一在此重测量
+    this.scheduleAutoHideResync()
     if (!this.panelAvoidanceStarted || !this.panelAvoidanceConfig) return
     if (this.panelAvoidanceRaf !== null) return
 
