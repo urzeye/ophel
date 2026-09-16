@@ -38,12 +38,12 @@ afterEach(() => {
 })
 
 describe("Doubao built-in config and new chat selectors", () => {
-  it("increments DOUBAO_CONFIG_VERSION to 4 to invalidate obsolete patches", () => {
-    expect(DOUBAO_CONFIG_VERSION).toBe(4)
+  it("increments DOUBAO_CONFIG_VERSION to 5 to invalidate obsolete patches", () => {
+    expect(DOUBAO_CONFIG_VERSION).toBe(5)
     const descriptor = resolveBuiltinConfig(SITE_IDS.DOUBAO)
     expect(descriptor).toEqual({
       siteId: SITE_IDS.DOUBAO,
-      configVersion: 4,
+      configVersion: 5,
       baseConfig: DOUBAO_CONFIG,
     })
   })

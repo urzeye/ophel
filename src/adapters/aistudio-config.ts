@@ -110,7 +110,7 @@ export interface AIStudioSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const AISTUDIO_CONFIG_VERSION = 1
+export const AISTUDIO_CONFIG_VERSION = 2
 
 const createAIStudioConfig = (): AIStudioSiteConfig => {
   const turn = "ms-chat-turn"
@@ -221,7 +221,7 @@ const createAIStudioConfig = (): AIStudioSiteConfig => {
       hide: ["ms-navbar", "ms-navbar-v2", "ms-right-side-panel"],
     },
     cleanMode: {
-      hide: ["ms-hallucinations-disclaimer"],
+      preserveFlow: ["ms-hallucinations-disclaimer"],
     },
     mermaidSupport: "fallback",
     quickQuote: "disabled",

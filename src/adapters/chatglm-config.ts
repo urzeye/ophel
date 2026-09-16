@@ -71,7 +71,7 @@ export interface ChatGLMSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const CHATGLM_CONFIG_VERSION = 2
+export const CHATGLM_CONFIG_VERSION = 3
 
 const createChatGLMConfig = (): ChatGLMSiteConfig => {
   const responseContainer = ".conversation-list"
@@ -233,7 +233,8 @@ const createChatGLMConfig = (): ChatGLMSiteConfig => {
     ],
     zenMode: { hide: [".el-aside"] },
     cleanMode: {
-      hide: [".policy-wrap, .policy-wrap *", ".vip-btn", ".slogan-banner"],
+      hide: [".vip-btn", ".slogan-banner"],
+      preserveFlow: [".policy-wrap, .policy-wrap *"],
     },
     quickQuote: "native",
     sitePrivateSelectors: {

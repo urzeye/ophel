@@ -925,6 +925,9 @@
         "hide": {
           "$ref": "#/definitions/selectorArray"
         },
+        "preserveFlow": {
+          "$ref": "#/definitions/selectorArray"
+        },
         "rootClass": {
           "$ref": "#/definitions/zenRootClass"
         },

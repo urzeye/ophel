@@ -15,7 +15,7 @@ vi.mock("~utils/i18n", () => ({
 
 describe("Gemini built-in config and DOM adaptation", () => {
   it("increments GEMINI_CONFIG_VERSION to invalidate obsolete patches", () => {
-    expect(GEMINI_CONFIG_VERSION).toBe(5)
+    expect(GEMINI_CONFIG_VERSION).toBe(6)
   })
 
   it("extracts conversation id from anchor href after sidebar jslog became base64-encoded", () => {
@@ -105,14 +105,15 @@ describe("Gemini built-in config and DOM adaptation", () => {
 
   it("hides new disclaimers and banners in clean mode", () => {
     const hideList = GEMINI_CONFIG.cleanMode.hide
-    expect(hideList).toContain("hallucination-disclaimer")
-    expect(hideList).toContain("condensed-tos-disclaimer")
-    expect(hideList).toContain("model-response-disclaimers")
-    expect(hideList).toContain("election-info-disclaimer")
-    expect(hideList).toContain("finance-info-disclaimer")
-    expect(hideList).toContain("freemium-rag-disclaimer")
-    expect(hideList).toContain("freemium-file-upload-near-quota-disclaimer")
-    expect(hideList).toContain("freemium-file-upload-quota-exceeded-disclaimer")
+    const preserveFlowList = GEMINI_CONFIG.cleanMode.preserveFlow
+    expect(preserveFlowList).toContain("hallucination-disclaimer")
+    expect(preserveFlowList).toContain("condensed-tos-disclaimer")
+    expect(preserveFlowList).toContain("model-response-disclaimers")
+    expect(preserveFlowList).toContain("election-info-disclaimer")
+    expect(preserveFlowList).toContain("finance-info-disclaimer")
+    expect(preserveFlowList).toContain("freemium-rag-disclaimer")
+    expect(preserveFlowList).toContain("freemium-file-upload-near-quota-disclaimer")
+    expect(preserveFlowList).toContain("freemium-file-upload-quota-exceeded-disclaimer")
     expect(hideList).toContain("sensitive-memories-banner")
     expect(hideList).toContain("bot-banner")
   })

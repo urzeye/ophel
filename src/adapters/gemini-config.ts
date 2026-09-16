@@ -170,7 +170,7 @@ export interface GeminiSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const GEMINI_CONFIG_VERSION = 5
+export const GEMINI_CONFIG_VERSION = 6
 
 const createGeminiConfig = (): GeminiSiteConfig => {
   const userQuery = "user-query"
@@ -380,7 +380,7 @@ const createGeminiConfig = (): GeminiSiteConfig => {
       hide: ["bard-sidenav", "div.sidenav-with-history-container"],
     },
     cleanMode: {
-      hide: [
+      preserveFlow: [
         "hallucination-disclaimer",
         "condensed-tos-disclaimer",
         "model-response-disclaimers",
@@ -389,6 +389,8 @@ const createGeminiConfig = (): GeminiSiteConfig => {
         "freemium-rag-disclaimer",
         "freemium-file-upload-near-quota-disclaimer",
         "freemium-file-upload-quota-exceeded-disclaimer",
+      ],
+      hide: [
         "sensitive-memories-banner",
         "bot-banner",
         "g1-dynamic-upsell-button",

@@ -98,7 +98,7 @@ export interface ChatGPTSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const CHATGPT_CONFIG_VERSION = 2
+export const CHATGPT_CONFIG_VERSION = 3
 
 const createChatGPTConfig = (): ChatGPTSiteConfig => {
   const userMessage = '[data-message-author-role="user"]'
@@ -214,9 +214,9 @@ const createChatGPTConfig = (): ChatGPTSiteConfig => {
       ],
     },
     cleanMode: {
+      preserveFlow: ["[data-testid='thread-disclaimer']"],
       hide: [
         "div.select-none:has(> .pointer-events-auto)",
-        "[data-testid='thread-disclaimer']",
         'div.border-token-border-default.border-t.py-4.text-sm:has(button[aria-label="Ad options"]):has([role="link"][tabindex="0"])',
       ],
     },

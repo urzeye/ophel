@@ -377,9 +377,10 @@ export class GrokAdapter extends SiteAdapter {
   }
 
   getZenModeConfig() {
-    const { hide, rootClass, styles } = this.config.zenMode
+    const { hide, preserveFlow, rootClass, styles } = this.config.zenMode
     return {
       ...(hide ? { hide: [...hide] } : {}),
+      ...(preserveFlow ? { preserveFlow: [...preserveFlow] } : {}),
       ...(rootClass ? { rootClass: { ...rootClass } } : {}),
       ...(styles ? { styles: styles.map((style) => ({ ...style })) } : {}),
     }

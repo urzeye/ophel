@@ -392,9 +392,10 @@ export class DeepSeekAdapter extends SiteAdapter {
   }
 
   getCleanModeConfig(): ZenModeConfig | null {
-    const { hide, rootClass, styles } = this.config.cleanMode
+    const { hide, preserveFlow, rootClass, styles } = this.config.cleanMode
     return {
       ...(hide ? { hide: [...hide] } : {}),
+      ...(preserveFlow ? { preserveFlow: [...preserveFlow] } : {}),
       ...(rootClass ? { rootClass: { ...rootClass } } : {}),
       ...(styles ? { styles: styles.map((style) => ({ ...style })) } : {}),
     }

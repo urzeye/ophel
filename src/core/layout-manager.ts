@@ -362,14 +362,24 @@ export class LayoutManager {
 
     // 禅模式是超集，合并禅模式 + 净化模式的所有选择器
     const allHide = [...(zenConfig?.hide || []), ...(cleanConfig?.hide || [])]
+    const allPreserveFlow = [
+      ...(zenConfig?.preserveFlow || []),
+      ...(cleanConfig?.preserveFlow || []),
+    ]
     const allStyles = [...(zenConfig?.styles || []), ...(cleanConfig?.styles || [])]
 
     const hideCss = allHide
       .map((selector) => `${selector} { display: none !important; }`)
       .join("\n")
+    const preserveFlowCss = allPreserveFlow
+      .map(
+        (selector) =>
+          `${selector} { visibility: hidden !important; pointer-events: none !important; user-select: none !important; }`,
+      )
+      .join("\n")
     const styleCss = this.buildZenModeStyleCSS(allStyles)
 
-    return [hideCss, styleCss].filter(Boolean).join("\n")
+    return [hideCss, preserveFlowCss, styleCss].filter(Boolean).join("\n")
   }
 
   private generateCleanModeCSS(): string {
@@ -379,9 +389,15 @@ export class LayoutManager {
     const hideCss = (config.hide || [])
       .map((selector) => `${selector} { display: none !important; }`)
       .join("\n")
+    const preserveFlowCss = (config.preserveFlow || [])
+      .map(
+        (selector) =>
+          `${selector} { visibility: hidden !important; pointer-events: none !important; user-select: none !important; }`,
+      )
+      .join("\n")
     const styleCss = this.buildZenModeStyleCSS(config.styles || [])
 
-    return [hideCss, styleCss].filter(Boolean).join("\n")
+    return [hideCss, preserveFlowCss, styleCss].filter(Boolean).join("\n")
   }
 
   private buildCSSFromSelectors(

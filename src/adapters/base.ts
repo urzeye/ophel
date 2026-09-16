@@ -160,6 +160,8 @@ export interface ZenModeRootClassConfig {
 
 export interface ZenModeConfig {
   hide?: string[]
+  /** 仅在视觉上隐藏但完整保留物理占位与间距（如底部免责声明），避免输入框贴底 */
+  preserveFlow?: string[]
   rootClass?: ZenModeRootClassConfig
   styles?: ZenModeStyleRule[]
 }

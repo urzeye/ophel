@@ -838,9 +838,10 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
   }
 
   private cloneZenModeConfig(config: ZenModeConfig): ZenModeConfig {
-    const { hide, rootClass, styles } = config
+    const { hide, preserveFlow, rootClass, styles } = config
     return {
       ...(hide ? { hide: [...hide] } : {}),
+      ...(preserveFlow ? { preserveFlow: [...preserveFlow] } : {}),
       ...(rootClass ? { rootClass: { ...rootClass } } : {}),
       ...(styles ? { styles: styles.map((style) => ({ ...style })) } : {}),
     }
