@@ -94,6 +94,10 @@ export interface ZenModeConfig {
 >
 > 复现环境备注：Plasmo CSUI 宿主内的全屏遮罩（如首启免责声明 `disclaimer-modal-overlay`、各类模态框）是 `pointer-events: auto`，命中测试会把全视口的指针事件重定向到宿主，`isOphelUiEvent` 全部判为 Ophel UI（此时冻结显隐正是期望行为）。用全新 profile 复现时必须先置 `hasAgreedToTerms: true`，否则免责声明遮罩一直盖住页面，所有指针交互都被冻结逻辑吞掉。
 
+> 实现教训（已修复）：**草稿出现要压倒冻结立即唤出**。插入无变量提示词后 toast 已提示"已插入"但输入框要等用户移动鼠标才出现（感知 3-4 秒）：指针冻结是粘性的，插入动作发生在 Ophel UI 内、不落手势门闩，insertPrompt 写入编辑器后的 input 事件虽到场，但冻结把整个求值挡在门外。修复：`updateAutoHideVisibility` 先查草稿再查冻结——页面草稿是明确的输入意图，直接解除指针冻结并唤出。
+>
+> 性能备注：MutationObserver 回调在每次 childList 变异批次都触发（流式输出期间很频繁），`:has()` 重校验只在容器断连或容器自身/父链/子树结构变化时执行，无关区域的变异只做几次 `contains()` 引用比较；容器不存在时只在有新节点加入的批次才调度重解析。可见态零测量零布局写入，整套机制对页面的持续开销约等于几次属性比较。
+
 ### 3.2 Ophel 通用机制
 
 站点差异收敛为适配器声明，机制全部沉淀在 `LayoutManager`（与 zen/clean 同处，复用样式注入与 Shadow DOM 注入链路）：

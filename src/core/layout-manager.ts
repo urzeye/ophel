@@ -596,13 +596,29 @@ html.${AUTO_HIDE_FLOAT_CLASS}.${AUTO_HIDE_NO_ANIM_CLASS} ${container} {
   private startAutoHideMutationObserver() {
     if (this.autoHideInputMutationObserver || !document.body) return
 
-    // 发送消息 / 路由切换会重建输入区域 DOM；变异回调只做引用比较和
-    // 单次选择器匹配，重测量统一走防抖，避免流式输出期间的性能损耗
-    this.autoHideInputMutationObserver = new MutationObserver(() => {
+    // 发送消息 / 路由切换会重建输入区域 DOM；重测量统一走防抖。
+    // 性能：回调在每次 childList 变异批次都触发（流式输出期间很频繁），
+    // 只在容器断连或容器相关子树结构变化时才做 :has() 重校验
+    this.autoHideInputMutationObserver = new MutationObserver((mutations) => {
       const config = this.autoHideInputConfig
       if (!config) return
       const container = this.autoHideInputContainer
-      if (!container || !container.isConnected || !container.matches(config.container)) {
+      if (!container || !container.isConnected) {
+        // 容器不存在（如零态页面）：只在有新节点加入时才尝试重新解析
+        if (mutations.some((mutation) => mutation.addedNodes.length > 0)) {
+          this.scheduleAutoHideResync()
+        }
+        return
+      }
+      const touchesContainer = mutations.some((mutation) => {
+        const target = mutation.target
+        return (
+          target === container ||
+          container.contains(target) ||
+          (target instanceof Element && target.contains(container))
+        )
+      })
+      if (touchesContainer && !container.matches(config.container)) {
         this.scheduleAutoHideResync()
       }
     })
@@ -665,6 +681,15 @@ html.${AUTO_HIDE_FLOAT_CLASS}.${AUTO_HIDE_NO_ANIM_CLASS} ${container} {
    */
   private updateAutoHideVisibility = (event?: PointerEvent) => {
     if (!this.autoHideInputEnabled) return
+
+    // 页面草稿是明确的输入意图（插入提示词、站点预填、正在打字）：
+    // 压倒指针/焦点冻结立即唤出，否则插入后要等用户动一下鼠标才解冻
+    if (this.autoHideInputHasDraft()) {
+      this.autoHideInputPointerInOphelUi = false
+      this.cancelAutoHideHideTimer()
+      this.setAutoHideHidden(false)
+      return
+    }
 
     if (this.isAutoHideInteractionFrozen()) {
       this.cancelAutoHideHideTimer()

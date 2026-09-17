@@ -67,6 +67,11 @@ let resizeObserverInstances: {
   observe: ReturnType<typeof vi.fn>
   disconnect: ReturnType<typeof vi.fn>
 }[]
+let mutationObserverInstances: {
+  callback: (mutations: { target: unknown; addedNodes: unknown[] }[]) => void
+  observe: ReturnType<typeof vi.fn>
+  disconnect: ReturnType<typeof vi.fn>
+}[]
 
 // document 级监听对 shadow 内事件的 target 会被重定向为宿主元素；
 // 用 closest 行为区分"Ophel 自身 UI"与页面元素
@@ -85,6 +90,7 @@ beforeEach(() => {
   documentListeners = new Map()
   windowListeners = new Map()
   resizeObserverInstances = []
+  mutationObserverInstances = []
   rootClassList = new MockClassList()
   rootStyle = { setProperty: vi.fn(), removeProperty: vi.fn() }
   styleEl = { id: "", textContent: "", remove: vi.fn() }
@@ -161,10 +167,19 @@ beforeEach(() => {
   vi.stubGlobal(
     "MutationObserver",
     class {
+      callback: (mutations: { target: unknown; addedNodes: unknown[] }[]) => void
       observe = vi.fn()
       disconnect = vi.fn()
+      constructor(callback: (mutations: { target: unknown; addedNodes: unknown[] }[]) => void) {
+        this.callback = callback
+        mutationObserverInstances.push(this)
+      }
     },
   )
+  // 测试环境无 DOM 类型全局，代码中的 instanceof 守卫需要它们存在
+  vi.stubGlobal("HTMLTextAreaElement", class {})
+  vi.stubGlobal("HTMLInputElement", class {})
+  vi.stubGlobal("Element", class {})
 
   adapter = {
     getCapabilities: () => ({}),
@@ -416,5 +431,45 @@ describe("LayoutManager auto-hide input", () => {
     documentListeners.get("focusin")?.({ target: editor })
     vi.advanceTimersByTime(500)
     expect(rootClassList.contains("gh-ahi-hidden")).toBe(false)
+  })
+
+  it("reveals immediately when a draft appears even while frozen over Ophel UI", () => {
+    manager.updateAutoHideInput(true)
+    vi.advanceTimersByTime(250)
+    expect(rootClassList.contains("gh-ahi-hidden")).toBe(true)
+
+    // 指针悬停在 Ophel 面板内（点击无变量提示词的场景），显隐冻结
+    documentListeners.get("pointermove")?.({ target: ophelUiTarget, clientY: 300 })
+    vi.advanceTimersByTime(60)
+    expect(rootClassList.contains("gh-ahi-hidden")).toBe(true)
+
+    // insertPrompt 写入编辑器触发 input 事件：草稿出现 → 压倒冻结立即唤出，
+    // 不等用户移动鼠标
+    adapter.getTextareaElement = () => ({ textContent: "inserted prompt" }) as never
+    documentListeners.get("input")?.({ target: pageTarget })
+    expect(rootClassList.contains("gh-ahi-hidden")).toBe(false)
+  })
+
+  it("skips :has() revalidation for mutations outside the container subtree", () => {
+    manager.updateAutoHideInput(true)
+    vi.advanceTimersByTime(250)
+    expect(mutationObserverInstances).toHaveLength(1)
+    const observer = mutationObserverInstances[0]
+    container.matches.mockClear()
+
+    // 流式输出等无关区域的结构变化：不触发 :has() 选择器匹配
+    observer.callback([{ target: { unrelated: true }, addedNodes: [{}] }])
+    expect(container.matches).not.toHaveBeenCalled()
+
+    // 容器自身/子树的结构变化：重校验选择器（仍匹配则不重同步）
+    observer.callback([{ target: container, addedNodes: [] }])
+    expect(container.matches).toHaveBeenCalled()
+
+    // 容器断连且本批次有新节点：调度重同步重新解析容器
+    container.isConnected = false
+    observer.callback([{ target: { unrelated: true }, addedNodes: [] }])
+    expect(vi.getTimerCount()).toBe(0)
+    observer.callback([{ target: { unrelated: true }, addedNodes: [{}] }])
+    expect(vi.getTimerCount()).toBeGreaterThan(0)
   })
 })
