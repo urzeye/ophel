@@ -183,10 +183,14 @@ const createDoubaoConfig = (): DoubaoSiteConfig => {
       { selector: '[style*="--content-max-width"]', property: "--content-max-width" },
       { selector: ".chrome70-container", property: "--center-content-max-width" },
     ],
-    zenMode: { hide: ["nav", ".container-qOgFQp", ".container-hzjmF1"] },
+    zenMode: {
+      hide: ["nav", ".container-qOgFQp", ".container-hzjmF1"],
+    },
     cleanMode: {
-      hide: ['[aria-label="活动入口"]'],
-      preserveFlow: [".container-qOgFQp"],
+      hide: [
+        '[aria-label="活动入口"]',
+        'main[data-container-name="main"] > div > div:first-child > div:nth-child(2) > div:first-child > div:first-child > div:nth-child(2)',
+      ],
     },
     quickQuote: "native",
     supportsHostThemeSync: false,

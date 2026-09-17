@@ -221,7 +221,7 @@ const createAIStudioConfig = (): AIStudioSiteConfig => {
       hide: ["ms-navbar", "ms-navbar-v2", "ms-right-side-panel"],
     },
     cleanMode: {
-      preserveFlow: ["ms-hallucinations-disclaimer"],
+      hide: ["ms-hallucinations-disclaimer"],
     },
     mermaidSupport: "fallback",
     quickQuote: "disabled",
