@@ -754,3 +754,57 @@ describe("validateSitePackManifest panel avoidance", () => {
     )
   })
 })
+
+describe("validateSitePackManifest autoHideInput", () => {
+  const createAutoHideManifest = (
+    autoHideInput: Record<string, unknown>,
+  ): Record<string, unknown> => ({
+    ...createMinimalManifest(),
+    autoHideInput,
+  })
+
+  it("accepts a minimal config with container only", () => {
+    expectValid(validateSitePackManifest(createAutoHideManifest({ container: ".composer" })))
+  })
+
+  it("requires container", () => {
+    expectInvalid(
+      validateSitePackManifest(createAutoHideManifest({ spacerHeight: 40 })),
+      "$.autoHideInput.container",
+      "missing_required",
+    )
+  })
+
+  it("rejects unknown keys", () => {
+    expectInvalid(
+      validateSitePackManifest(createAutoHideManifest({ container: ".composer", speed: 1 })),
+      "$.autoHideInput.speed",
+      "unknown_key",
+    )
+  })
+
+  it("rejects hideDistancePx not greater than revealDistancePx", () => {
+    expectInvalid(
+      validateSitePackManifest(
+        createAutoHideManifest({
+          container: ".composer",
+          revealDistancePx: 300,
+          hideDistancePx: 300,
+        }),
+      ),
+      "$.autoHideInput.hideDistancePx",
+      "invalid_value",
+    )
+
+    expectValid(
+      validateSitePackManifest(
+        createAutoHideManifest({
+          container: ".composer",
+          revealDistancePx: 200,
+          hideDistancePx: 300,
+          scrollContainer: "main",
+        }),
+      ),
+    )
+  })
+})

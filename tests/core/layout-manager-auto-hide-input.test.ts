@@ -38,6 +38,7 @@ class MockClassList {
 
 const AUTO_HIDE_CONFIG: AutoHideInputConfig = {
   container: ".composer",
+  scrollContainer: ".chat-scroll",
   styles: [{ selector: ".conversation-container", property: "min-height", value: "0" }],
 }
 
@@ -57,7 +58,6 @@ let container: {
   querySelector: ReturnType<typeof vi.fn>
   offsetHeight: number
 }
-let scroller: { appendChild: ReturnType<typeof vi.fn> }
 let adapter: SiteAdapter
 let manager: LayoutManager
 let documentListeners: Map<string, (event: unknown) => void>
@@ -109,8 +109,6 @@ beforeEach(() => {
     querySelector: vi.fn(() => null),
     offsetHeight: 80,
   }
-  scroller = { appendChild: vi.fn() }
-
   vi.stubGlobal("document", {
     documentElement: { classList: rootClassList, style: rootStyle },
     head: { appendChild: vi.fn((el: unknown) => el) },
@@ -185,8 +183,7 @@ beforeEach(() => {
     getCapabilities: () => ({}),
     getPanelAvoidanceConfig: () => null,
     getAutoHideInputConfig: () => AUTO_HIDE_CONFIG,
-    getScrollContainer: () => scroller,
-    getTextareaElement: () => null,
+    hasInputDraft: () => false,
   } as unknown as SiteAdapter
 
   manager = new LayoutManager(adapter, { enabled: false, value: "80", unit: "%" })
@@ -208,7 +205,8 @@ describe("LayoutManager auto-hide input", () => {
     // 聚焦唤出走 JS 手势门控，CSS 层不得保留无门槛的 :focus-within 强制显示
     expect(styleEl.textContent).not.toContain("focus-within")
     expect(styleEl.textContent).toContain("min-height: 0 !important")
-    expect(styleEl.textContent).toContain("gh-auto-hide-input-spacer")
+    // 滚动末尾占位用 ::after 伪元素，不往站点滚动容器注入真实 DOM 节点
+    expect(styleEl.textContent).toContain(".chat-scroll::after")
 
     // 启用后可见态保持纯自然文档流：不挂浮层类、不做测量
     expect(rootClassList.contains("gh-ahi-float")).toBe(false)
@@ -220,7 +218,6 @@ describe("LayoutManager auto-hide input", () => {
     expect(rootStyle.setProperty).toHaveBeenCalledWith("--gh-ahi-top", "800px")
     expect(rootStyle.setProperty).toHaveBeenCalledWith("--gh-ahi-width", "600px")
     expect(rootStyle.setProperty).toHaveBeenCalledWith("--gh-ahi-footer", "20px")
-    expect(scroller.appendChild).toHaveBeenCalled()
   })
 
   it("hides when idle and reveals when the pointer approaches the viewport bottom", () => {
@@ -445,7 +442,7 @@ describe("LayoutManager auto-hide input", () => {
 
     // insertPrompt 写入编辑器触发 input 事件：草稿出现 → 压倒冻结立即唤出，
     // 不等用户移动鼠标
-    adapter.getTextareaElement = () => ({ textContent: "inserted prompt" }) as never
+    adapter.hasInputDraft = () => true
     documentListeners.get("input")?.({ target: pageTarget })
     expect(rootClassList.contains("gh-ahi-hidden")).toBe(false)
   })

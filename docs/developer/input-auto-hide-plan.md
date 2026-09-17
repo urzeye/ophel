@@ -106,6 +106,8 @@ export interface ZenModeConfig {
 export interface AutoHideInputConfig {
   /** 输入区域整体容器选择器；应自带"活跃输入"判定（如 Gemini 排除新对话页零态居中输入） */
   container: string
+  /** 滚动容器选择器（可逗号列表），以 ::after 伪元素在滚动末尾占位；缺省不占位 */
+  scrollContainer?: string
   /** 滚动容器内占位 spacer 高度 px，缺省 33 */
   spacerHeight?: number
   /** 站点附加规则（如释放会话容器 min-height、关闭底部渐变遮罩） */
@@ -121,12 +123,12 @@ getAutoHideInputConfig(): AutoHideInputConfig | null
 1. `updateAutoHideInput(enabled)` 由 `modules-init.ts` 按站点设置驱动（含热更新路径）。
 2. 启用时：注入宿主样式（`<html>` 挂 `gh-auto-hide-input` 类作用域）→ 挂监听与 observer。**可见态保持纯自然文档流**（不浮层、不测量）；只有判定隐藏时才测量自然位置并浮层化（挂 `gh-ahi-float`，写 CSS 变量）。
 3. 隐藏判定（`setAutoHideHidden` 唯一出口）：指针距视口底迟滞显隐；真实页面手势后的 `focusin` 落闩唤出；**输入框已有未发送内容时强制显示**（监听 `input` 事件，优于 Better Gemini 的行为）。显示过渡结束后摘浮层类落回文档流；隐藏态的重测量全程挂 `gh-ahi-no-anim` 关闭过渡。
-4. 滚动容器末尾维护 spacer div；停用时全部清理（监听器、observer、spacer、CSS 变量、样式标签）。
+4. 滚动末尾占位用注入样式表里的 `scrollContainer::after` 伪元素（挂 `gh-ahi-float` 类作用域，只在浮层化期间生效），**不往站点滚动容器注入真实 DOM 节点**：伪元素不进站点的 children/reconcile 范围、不触发 MutationObserver，对虚拟滚动列表安全。停用时全部清理（监听器、observer、CSS 变量、样式标签）。
 
 既有基建的直接复用：
 
 - `Alt+I` 聚焦（`useShortcuts.ts` 的 `focusInput`）与各适配器 `insertPrompt()` 先 `editor.focus()` 的实现，使"聚焦/插入提示词时显示"由 `:focus-within` 免费覆盖——前提是隐藏态用 transform+opacity 而非 `display:none`（元素保持可聚焦）。
-- 滚动容器复用 `SiteAdapter.getScrollContainer()` 的通用回退链。
+- 滚动末尾占位只需站点在配置里给出 `scrollContainer` 选择器；草稿判定收敛在 `SiteAdapter.hasInputDraft()`（默认按编辑器文本非空判定），有预填内容的站点覆写该方法即可。
 - 设置形态与 `cleanMode` 同构：`layout.autoHideInput: Record<string, { enabled: boolean }>`，接入 `DEFAULT_SETTINGS`、`settings-normalize`、`settings-selectors`、备份恢复（随 layout 整体序列化，无额外迁移）。
 
 ### 3.3 联动与边界
@@ -142,7 +144,7 @@ getAutoHideInputConfig(): AutoHideInputConfig | null
 结论：**两个能力都可以对 SitePack 开放，均为纯声明式扩展，不需要函数字段。**
 
 - **`preserveFlow`**：天然可用。`ZenModeConfig` 是声明式配置面的一部分，`validate.ts` 的选择器数组校验与 `registry/schema/site-pack.schema.json` 的 `zenMode` 定义同步加入 `preserveFlow` 字段后，JSON 包即可声明。本方案将其纳入第一批改动。
-- **自动隐藏输入框**：机制在核心侧，SitePack 只需声明 `autoHideInput: { container, spacerHeight?, styles? }` 配置块 + 能力标记（如 `auto-hide-input` capability，参考 `zen`/`clean` 的 schema 条件约束）。字段全部为字符串/数字/结构化样式规则，可 JSON 序列化、可被现有 `validateSelectorArray` / `validateZenMode` 体系校验。
+- **自动隐藏输入框**：机制在核心侧，SitePack 只需声明 `autoHideInput: { container, scrollContainer?, spacerHeight?, styles? }` 配置块。`container` 为必填（校验器强制），`hideDistancePx` 必须大于 `revealDistancePx`（校验器与运行时双重防护，迟滞带是防抖动的硬前提）。字段全部为字符串/数字/结构化样式规则，可 JSON 序列化、可被现有 `validateSelectorString` / `validateZenStyle` 体系校验。
 - **约束与风险**（开放前需逐站验证）：
   - 站点输入框必须是底部停靠布局；居中零态输入需在选择器层排除，否则浮层化后位置异常。
   - `container` 必须选中"整体容器"而非输入框本身，否则浮层后工具行、附件预览等残留原位。
@@ -151,7 +153,7 @@ getAutoHideInputConfig(): AutoHideInputConfig | null
 
 ## 5. 普适性论证
 
-站点间差异（输入框 DOM 结构、停靠方式、零态页面、滚动容器）全部收敛到 3 个声明字段（`container` / `spacerHeight` / `styles`）加 1 个通用回退（滚动容器）。核心机制（测量、浮层、迟滞显隐、聚焦兜底、内容兜底、observer 重同步、spacer）不写任何站点名。新站点接入 = 适配器返回一个配置对象加实测验证；SitePack 接入 = JSON 增加一个配置块。
+站点间差异（输入框 DOM 结构、停靠方式、零态页面、滚动容器）全部收敛到声明字段（`container` / `scrollContainer` / `spacerHeight` / `styles`）加 1 个可覆写适配器钩子（`hasInputDraft()`，编辑器有预填内容的站点用）。核心机制（测量、浮层、迟滞显隐、聚焦兜底、内容兜底、observer 重同步、伪元素占位）不写任何站点名。新站点接入 = 适配器返回一个配置对象加实测验证；SitePack 接入 = JSON 增加一个配置块。
 
 ## 6. 实施拆分
 

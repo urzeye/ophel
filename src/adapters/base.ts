@@ -170,6 +170,12 @@ export interface ZenModeConfig {
 export interface AutoHideInputConfig {
   /** 输入区域整体容器选择器；应自带"活跃输入"判定（如 Gemini 排除新对话页的零态居中输入） */
   container: string
+  /**
+   * 滚动容器选择器（可逗号列表），用于以 ::after 伪元素在滚动末尾占位。
+   * 伪元素不是 DOM 节点：不进站点的 children/ reconcile 范围、不触发 MutationObserver，
+   * 对虚拟滚动列表安全。缺省表示该站点不需要占位（功能不受影响）。
+   */
+  scrollContainer?: string
   /** 滚动容器内占位 spacer 高度 px，缺省 33 */
   spacerHeight?: number
   /** 指针距视口底部 <= 该值时显示输入框，缺省 210 */
@@ -898,6 +904,20 @@ export abstract class SiteAdapter {
     }
     // 否则重新查找
     return this.findTextarea()
+  }
+
+  /**
+   * 页面编辑器是否已有草稿（明确的输入意图，驱动自动隐藏输入框立即唤出）。
+   * 默认按编辑器文本非空判定；编辑器有预填内容或占位文本残留的站点应覆写本方法，
+   * 否则会永不隐藏。
+   */
+  hasInputDraft(): boolean {
+    const editor = this.getTextareaElement()
+    if (!editor) return false
+    if (editor instanceof HTMLTextAreaElement || editor instanceof HTMLInputElement) {
+      return editor.value.trim().length > 0
+    }
+    return (editor.textContent || "").trim().length > 0
   }
 
   // ==================== 滚动控制 ====================

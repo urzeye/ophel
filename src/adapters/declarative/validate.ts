@@ -1437,6 +1437,7 @@ const validateAutoHideInput = (
     context,
     [
       "container",
+      "scrollContainer",
       "spacerHeight",
       "revealDistancePx",
       "hideDistancePx",
@@ -1444,12 +1445,15 @@ const validateAutoHideInput = (
       "zIndex",
       "styles",
     ],
-    [],
+    ["container"],
     mode,
   )
   if (!autoHideInput) return
   if (autoHideInput.container !== undefined) {
     validateSelectorString(autoHideInput.container, `${path}.container`, context, mode)
+  }
+  if (autoHideInput.scrollContainer !== undefined) {
+    validateSelectorString(autoHideInput.scrollContainer, `${path}.scrollContainer`, context, mode)
   }
   if (autoHideInput.spacerHeight !== undefined) {
     validateFiniteNumber(autoHideInput.spacerHeight, `${path}.spacerHeight`, context, mode, {
@@ -1465,6 +1469,21 @@ const validateAutoHideInput = (
         min: 0,
       })
     }
+  }
+  // 迟滞带是防抖动的硬前提：隐藏阈值必须大于显示阈值
+  const revealDistance = autoHideInput.revealDistancePx
+  const hideDistance = autoHideInput.hideDistancePx
+  if (
+    typeof revealDistance === "number" &&
+    typeof hideDistance === "number" &&
+    hideDistance <= revealDistance
+  ) {
+    addError(
+      context,
+      `${path}.hideDistancePx`,
+      "invalid_value",
+      "hideDistancePx must be greater than revealDistancePx to keep the hysteresis band",
+    )
   }
   if (autoHideInput.styles !== undefined) {
     if (isDeletion(autoHideInput.styles, mode)) return

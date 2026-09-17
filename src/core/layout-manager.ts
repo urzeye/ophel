@@ -35,7 +35,6 @@ const AUTO_HIDE_FLOAT_CLASS = "gh-ahi-float"
 const AUTO_HIDE_HIDDEN_CLASS = "gh-ahi-hidden"
 /** 测量/重同步期间挂在 <html> 上关闭过渡，避免摘挂浮层类重置 transition 重播动画 */
 const AUTO_HIDE_NO_ANIM_CLASS = "gh-ahi-no-anim"
-const AUTO_HIDE_SPACER_ID = "gh-auto-hide-input-spacer"
 /**
  * Ophel 自身 UI 的宿主节点（Shadow host 与挂在 body 的扩展元素）。
  * focusin/focusout/input/pointermove 都是 composed 事件，会穿透 Shadow DOM 到达
@@ -475,14 +474,26 @@ html.${AUTO_HIDE_FLOAT_CLASS}.${AUTO_HIDE_HIDDEN_CLASS} ${container} {
 html.${AUTO_HIDE_FLOAT_CLASS}.${AUTO_HIDE_NO_ANIM_CLASS} ${container} {
   transition: none !important;
 }
-#${AUTO_HIDE_SPACER_ID} {
+`.trim()
+
+    // 滚动末尾占位用 ::after 伪元素而非真实 DOM 节点：伪元素不进站点的
+    // children / reconcile 范围、不触发 MutationObserver，对虚拟滚动列表安全。
+    // 挂浮层类下，只在浮层化期间占位；未配置滚动容器选择器的站点不占位
+    const spacerCss = config.scrollContainer
+      ? `
+html.${AUTO_HIDE_FLOAT_CLASS} ${config.scrollContainer}::after {
+  content: "";
+  display: block;
   flex-shrink: 0;
   width: 100%;
+  height: ${config.spacerHeight ?? AUTO_HIDE_DEFAULT_SPACER_HEIGHT}px;
   pointer-events: none;
-  visibility: hidden;
 }`.trim()
+      : ""
 
-    return [floatCss, this.buildZenModeStyleCSS(config.styles || [])].filter(Boolean).join("\n")
+    return [floatCss, spacerCss, this.buildZenModeStyleCSS(config.styles || [])]
+      .filter(Boolean)
+      .join("\n")
   }
 
   /**
@@ -530,7 +541,6 @@ html.${AUTO_HIDE_FLOAT_CLASS}.${AUTO_HIDE_NO_ANIM_CLASS} ${container} {
       void container.offsetHeight
 
       this.autoHideInputContainer = container
-      this.syncAutoHideSpacer(config)
       this.observeAutoHideContainer(container)
     } finally {
       root.classList.remove(AUTO_HIDE_NO_ANIM_CLASS)
@@ -548,22 +558,6 @@ html.${AUTO_HIDE_FLOAT_CLASS}.${AUTO_HIDE_NO_ANIM_CLASS} ${container} {
     return getComputedStyle(document.body).backgroundColor || "transparent"
   }
 
-  private syncAutoHideSpacer(config: AutoHideInputConfig) {
-    const scroller = this.siteAdapter.getScrollContainer()
-    if (!scroller) return
-
-    let spacer = document.getElementById(AUTO_HIDE_SPACER_ID)
-    if (!spacer) {
-      spacer = document.createElement("div")
-      spacer.id = AUTO_HIDE_SPACER_ID
-      spacer.setAttribute("aria-hidden", "true")
-    }
-    if (spacer.parentElement !== scroller) {
-      scroller.appendChild(spacer)
-    }
-    spacer.style.height = `${config.spacerHeight ?? AUTO_HIDE_DEFAULT_SPACER_HEIGHT}px`
-  }
-
   private unfloatAutoHideInput() {
     const root = document.documentElement
     root.classList.remove(AUTO_HIDE_FLOAT_CLASS)
@@ -574,7 +568,6 @@ html.${AUTO_HIDE_FLOAT_CLASS}.${AUTO_HIDE_NO_ANIM_CLASS} ${container} {
     this.cancelAutoHideSettleTimer()
     this.autoHideInputResizeObserver?.disconnect()
     this.autoHideInputObservedTarget = null
-    document.getElementById(AUTO_HIDE_SPACER_ID)?.remove()
   }
 
   private observeAutoHideContainer(container: HTMLElement) {
@@ -665,12 +658,7 @@ html.${AUTO_HIDE_FLOAT_CLASS}.${AUTO_HIDE_NO_ANIM_CLASS} ${container} {
   }
 
   private autoHideInputHasDraft(): boolean {
-    const editor = this.siteAdapter.getTextareaElement()
-    if (!editor) return false
-    if (editor instanceof HTMLTextAreaElement || editor instanceof HTMLInputElement) {
-      return editor.value.trim().length > 0
-    }
-    return (editor.textContent || "").trim().length > 0
+    return this.siteAdapter.hasInputDraft()
   }
 
   /**
@@ -742,9 +730,12 @@ html.${AUTO_HIDE_FLOAT_CLASS}.${AUTO_HIDE_NO_ANIM_CLASS} ${container} {
     if (!pointer) return true
     const revealDistance =
       this.autoHideInputConfig?.revealDistancePx ?? DEFAULT_AUTO_HIDE_REVEAL_DISTANCE_PX
-    const hideDistance =
-      this.autoHideInputConfig?.hideDistancePx ??
-      Math.max(revealDistance + 1, DEFAULT_AUTO_HIDE_HIDE_DISTANCE_PX)
+    // 迟滞带是防抖动的硬前提：显式配置小于等于显示阈值时强制收敛到 reveal+1，
+    // 不能让站点配错把迟滞消掉
+    const hideDistance = Math.max(
+      this.autoHideInputConfig?.hideDistancePx ?? DEFAULT_AUTO_HIDE_HIDE_DISTANCE_PX,
+      revealDistance + 1,
+    )
     return window.innerHeight - pointer.clientY >= hideDistance
   }
 

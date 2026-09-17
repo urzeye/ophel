@@ -15,7 +15,7 @@ vi.mock("~utils/i18n", () => ({
 
 describe("Gemini built-in config and DOM adaptation", () => {
   it("increments GEMINI_CONFIG_VERSION to invalidate obsolete patches", () => {
-    expect(GEMINI_CONFIG_VERSION).toBe(6)
+    expect(GEMINI_CONFIG_VERSION).toBe(7)
   })
 
   it("extracts conversation id from anchor href after sidebar jslog became base64-encoded", () => {

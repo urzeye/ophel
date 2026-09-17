@@ -172,7 +172,7 @@ export interface GeminiSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const GEMINI_CONFIG_VERSION = 6
+export const GEMINI_CONFIG_VERSION = 7
 
 const createGeminiConfig = (): GeminiSiteConfig => {
   const userQuery = "user-query"
@@ -404,6 +404,8 @@ const createGeminiConfig = (): GeminiSiteConfig => {
     autoHideInput: {
       // 仅浮层化活跃对话的输入容器；新对话页的零态居中输入（fieldset.is-zero-state）保持原样
       container: "input-container:has(> fieldset.input-area-container:not(.is-zero-state))",
+      // 滚动末尾占位用 ::after 伪元素注入，不往 infinite-scroller 里塞真实 DOM 节点
+      scrollContainer: responseContainer,
       styles: [
         {
           selector: ".conversation-container",
