@@ -951,6 +951,9 @@
         "container": {
           "$ref": "#/definitions/selector"
         },
+        "scrollContainer": {
+          "$ref": "#/definitions/selector"
+        },
         "spacerHeight": {
           "type": "integer",
           "minimum": 0,

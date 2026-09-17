@@ -108,7 +108,7 @@ export interface SitePackConfig {
   export?: ExportConfig
   zenMode?: ZenModeConfig
   cleanMode?: ZenModeConfig
-  /** 输入框自动隐藏；声明即启用，缺省不支持。 */
+  /** 输入框自动隐藏；声明即支持（显示设置入口），实际开关由用户设置控制，缺省不支持。 */
   autoHideInput?: AutoHideInputConfig
   widthSelectors?: Omit<WidthSelectorConfig, "transformValue">[]
   /** 声明 panel-avoidance 能力时必填；驱动 Ophel 面板安全区避让布局。 */
