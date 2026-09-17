@@ -20,6 +20,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
+- **Pinned conversations on Doubao and DeepSeek** — Fixed pinned chats no longer being recognized after both sites redesigned their sidebars, so pinned status syncs correctly in Conversation Manager again. (#933)
 - **Zen Mode and Clean Mode state isolation** — Fixed an issue where enabling Zen Mode automatically enabled Clean Mode and left it active after exiting, now preserving your original Clean Mode preference. (#926)
 
 ---
