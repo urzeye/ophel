@@ -197,7 +197,7 @@ const createGeminiEnterpriseConfig = (): GeminiEnterpriseSiteConfig => {
       createWidthSelector(inputArea, undefined, "left: 0 !important; right: 0 !important;", true),
     ],
     zenMode: { hide: ["ucs-nav-panel"] },
-    cleanMode: { hide: [".disclaimer"] },
+    cleanMode: { preserveFlow: [".disclaimer"] },
     mermaidSupport: "fallback",
     quickQuote: "enabled",
     supportsHostThemeSync: true,

@@ -274,7 +274,10 @@ const createQianwenConfig = (): QianwenSiteConfig => {
       },
     ],
     zenMode: { hide: [sidebar] },
-    cleanMode: { hide: ["#ice-container .root-G6nVVr"] },
+    cleanMode: {
+      hide: ["#ice-container .root-G6nVVr"],
+      preserveFlow: ['[class*="mainContent"] > div:last-child'],
+    },
     sitePrivateSelectors: {
       chatInput,
       slateEditor,

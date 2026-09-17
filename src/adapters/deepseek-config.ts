@@ -165,8 +165,8 @@ const createDeepSeekConfig = (): DeepSeekSiteConfig => {
         noCenter: true,
       },
     ],
-    zenMode: { hide: [".dc04ec1d", "._0fcaa63"] },
-    cleanMode: { hide: ["._0fcaa63"] },
+    zenMode: { hide: [".dc04ec1d"] },
+    cleanMode: { preserveFlow: ["._0fcaa63"] },
     quickQuote: "enabled",
     sitePrivateSelectors: {
       sidebarScrollArea,
