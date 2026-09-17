@@ -13,6 +13,7 @@ import {
   type ExportAssetCollector,
 } from "~utils/export-assets"
 import { htmlToMarkdown, type ExportBundle } from "~utils/exporter"
+import { reconcileObservedTurnOrder, resolveOutlineGroupIndex } from "~utils/outline-turn-order"
 import { hashTextForCache } from "~utils/text-hash"
 
 import {
@@ -169,17 +170,10 @@ interface ChatGPTOutlineCacheEntry {
   level: number
   text: string
   turnId: string | null
-  /** turn 在本次对话内首次出现的全局序号（单调递增） */
-  firstSeenTurnIndex: number
   orderInTurn: number
   isUserQuery?: boolean
   isTruncated?: boolean
   wordCount?: number
-}
-
-interface ChatGPTTurnAnchor {
-  element: Element
-  index: number
 }
 
 interface ChatGPTNativeTocEntry {
@@ -214,9 +208,11 @@ export class ChatGPTAdapter extends SiteAdapter {
   private lastKnownModelSlugObservedAt = 0
   private outlineCacheSessionKey = ""
   private outlineItemCache = new Map<string, ChatGPTOutlineCacheEntry>()
-  // turn 首次出现的 DOM 顺序，用于 turn-shell 被完全卸载后仍能维持稳定排序
-  private outlineTurnFirstSeenIndex = new Map<string, number>()
-  private outlineTurnFirstSeenCounter = 0
+  // 全局 turn 顺序表：按真实 DOM 顺序归并所有观测过的 turn，
+  // 即使 turn-shell 被虚拟滚动完全卸载，仍能依靠它维持稳定排序
+  private outlineTurnOrder: string[] = []
+  // turnId → 原生 TOC 的全局提问序号；TOC 存在时作为大纲排序的 canonical 坐标
+  private outlineTurnTocIndex = new Map<string, number>()
   // SPA 切换对话后的过渡期截止时刻：在此之前 extractOutline 不写 cache 也不
   // merge cache，避免把上一个对话残留的 DOM 内容污染到新对话的 cache 里。
   private outlineCacheTransitionEndAt = 0
@@ -1936,13 +1932,17 @@ export class ChatGPTAdapter extends SiteAdapter {
     const turnId =
       turn.getAttribute("data-turn-id") || turn.getAttribute("data-turn-id-container") || null
 
-    if (turnId && !this.outlineTurnFirstSeenIndex.has(turnId)) {
-      this.outlineTurnFirstSeenIndex.set(turnId, this.outlineTurnFirstSeenCounter++)
+    // 导出采集按文档顺序逐 turn 滚动挂载，用当前所有已挂载 turn 的 DOM 顺序归并，
+    // 保证中途新发现的 turn 插入到正确位置而不是追加到尾部
+    const container = turn.closest(this.getResponseContainerSelector())
+    if (container) {
+      reconcileObservedTurnOrder(
+        this.outlineTurnOrder,
+        Array.from(this.getOrderedChatGPTTurnAnchors(container).keys()),
+      )
+    } else if (turnId) {
+      reconcileObservedTurnOrder(this.outlineTurnOrder, [turnId])
     }
-    const firstSeenTurnIndex =
-      turnId && this.outlineTurnFirstSeenIndex.has(turnId)
-        ? (this.outlineTurnFirstSeenIndex.get(turnId) as number)
-        : Number.MAX_SAFE_INTEGER
 
     // user query：用 data-message-id 作为缓存 key，与 extractOutline 同结构
     const userMessages = Array.from(turn.querySelectorAll(this.config.selectors.userQuery)).filter(
@@ -1967,7 +1967,6 @@ export class ChatGPTAdapter extends SiteAdapter {
         level: 0,
         text,
         turnId,
-        firstSeenTurnIndex,
         orderInTurn: 0,
         isUserQuery: true,
         isTruncated,
@@ -2004,7 +2003,6 @@ export class ChatGPTAdapter extends SiteAdapter {
           level: parseInt(tagName.charAt(1), 10),
           text,
           turnId,
-          firstSeenTurnIndex,
           orderInTurn: orderInTurn++,
           isUserQuery: false,
         })
@@ -3062,8 +3060,8 @@ export class ChatGPTAdapter extends SiteAdapter {
     const isFirstSession = this.outlineCacheSessionKey === ""
     this.outlineCacheSessionKey = sessionKey
     this.outlineItemCache.clear()
-    this.outlineTurnFirstSeenIndex.clear()
-    this.outlineTurnFirstSeenCounter = 0
+    this.outlineTurnOrder = []
+    this.outlineTurnTocIndex.clear()
     this.nativeTocTextCache = []
     this.nativeTocButtonElementSignatureCache = ""
     this.nativeTocRevealAttemptedSignature = ""
@@ -3105,17 +3103,15 @@ export class ChatGPTAdapter extends SiteAdapter {
     )
   }
 
-  private getOrderedChatGPTTurnAnchors(container: Element): Map<string, ChatGPTTurnAnchor> {
-    const anchors = new Map<string, ChatGPTTurnAnchor>()
-    let index = 0
+  private getOrderedChatGPTTurnAnchors(container: Element): Map<string, Element> {
+    const anchors = new Map<string, Element>()
 
     const addAnchor = (element: Element): void => {
       const turnId =
         element.getAttribute("data-turn-id-container") || element.getAttribute("data-turn-id")
       if (!turnId || anchors.has(turnId)) return
 
-      anchors.set(turnId, { element, index })
-      index += 1
+      anchors.set(turnId, element)
     }
 
     container.querySelectorAll("[data-turn-id-container], [data-turn-id]").forEach(addAnchor)
@@ -3124,45 +3120,14 @@ export class ChatGPTAdapter extends SiteAdapter {
   }
 
   /**
-   * 记录每个出现过的 turn 的 first-seen DOM 顺序。
-   * 即使后续 turn-shell 也被虚拟滚动卸载，仍能依靠这个稳定序号排序。
+   * 用当前已挂载 turn 的真实 DOM 顺序归并全局顺序表。
+   * 即使后续 turn-shell 被虚拟滚动卸载，仍能依靠这个全局表排序。
    */
-  private recordTurnDocumentOrders(turnAnchors: Map<string, ChatGPTTurnAnchor>): void {
-    if (turnAnchors.size === 0) return
-
-    // 收集本次还未记录的 turn 并按当前 DOM 顺序入册
-    const newTurns: string[] = []
-    turnAnchors.forEach((_anchor, turnId) => {
-      if (!this.outlineTurnFirstSeenIndex.has(turnId)) {
-        newTurns.push(turnId)
-      }
-    })
-
-    if (newTurns.length === 0) return
-
-    // 如果之前已经有记录，且首次出现的 turn 位于已知 turn 之前（比如用户向上滚动揭示出更早的 turn），
-    // 把新 turn 插入到对应位置之前。简单实现：用 turnAnchors 当前的 anchor.index 作为相对序，
-    // 但为保持全局单调性，统一在尾部追加，靠 anchor.index 的当前值作为合并排序时的次要键。
-    for (const turnId of newTurns) {
-      this.outlineTurnFirstSeenIndex.set(turnId, this.outlineTurnFirstSeenCounter++)
-    }
+  private syncOutlineTurnOrder(turnAnchors: Map<string, Element>): void {
+    reconcileObservedTurnOrder(this.outlineTurnOrder, Array.from(turnAnchors.keys()))
   }
 
-  private getTurnSortIndex(
-    turnId: string | null,
-    turnAnchors: Map<string, ChatGPTTurnAnchor>,
-  ): number {
-    if (!turnId) return Number.MAX_SAFE_INTEGER
-    const anchor = turnAnchors.get(turnId)
-    if (anchor) return anchor.index
-    const firstSeen = this.outlineTurnFirstSeenIndex.get(turnId)
-    return typeof firstSeen === "number" ? firstSeen + 1_000_000 : Number.MAX_SAFE_INTEGER
-  }
-
-  private updateChatGPTOutlineCache(
-    outline: OutlineItem[],
-    turnAnchors: Map<string, ChatGPTTurnAnchor>,
-  ): void {
+  private updateChatGPTOutlineCache(outline: OutlineItem[]): void {
     const orderByTurn = new Map<string, number>()
 
     for (const item of outline) {
@@ -3174,10 +3139,6 @@ export class ChatGPTAdapter extends SiteAdapter {
       const orderInTurn = orderByTurn.get(orderKey) || 0
       orderByTurn.set(orderKey, orderInTurn + 1)
 
-      const firstSeenTurnIndex =
-        turnId && this.outlineTurnFirstSeenIndex.has(turnId)
-          ? (this.outlineTurnFirstSeenIndex.get(turnId) as number)
-          : turnAnchors.get(turnId || "")?.index ?? Number.MAX_SAFE_INTEGER
       const cached = this.outlineItemCache.get(item.id)
 
       this.outlineItemCache.set(item.id, {
@@ -3185,7 +3146,6 @@ export class ChatGPTAdapter extends SiteAdapter {
         level: item.level,
         text: item.text,
         turnId,
-        firstSeenTurnIndex,
         orderInTurn,
         isUserQuery: item.isUserQuery,
         isTruncated: item.isTruncated,
@@ -3196,7 +3156,6 @@ export class ChatGPTAdapter extends SiteAdapter {
 
   private mergeCachedChatGPTOutlineItems(
     outline: OutlineItem[],
-    turnAnchors: Map<string, ChatGPTTurnAnchor>,
     maxLevel: number,
     includeUserQueries: boolean,
     showWordCount: boolean,
@@ -3232,13 +3191,28 @@ export class ChatGPTAdapter extends SiteAdapter {
 
     if (appended === 0) return outline
 
+    // 排序必须使用单一全局坐标：原生 TOC 提问用 TOC 序号，其余条目统一经
+    // resolveOutlineGroupIndex 换算到同一坐标系（有 TOC 时优先 turnId→TOC 绑定，
+    // 否则用全局 turn 顺序表）。绝不能混用"已挂载 turn 的局部序号"——它只反映
+    // 当前虚拟滚动窗口内的相对位置，会把缓存回填的标题排到错误的问题下面。
+    const turnOrderIndex = new Map<string, number>()
+    this.outlineTurnOrder.forEach((turnId, index) => turnOrderIndex.set(turnId, index))
+
     return merged
       .map((item, originalIndex) => {
         const cached = item.id ? this.outlineItemCache.get(item.id) : undefined
         const turnId = cached?.turnId || this.getChatGPTTurnId(item.element)
         const nativeTocIndex = this.getNativeTocOutlineIndex(item.navigationId || item.id)
         const turnIndex =
-          nativeTocIndex !== null ? nativeTocIndex * 2 : this.getTurnSortIndex(turnId, turnAnchors)
+          nativeTocIndex !== null
+            ? nativeTocIndex
+            : resolveOutlineGroupIndex({
+                turnId,
+                turnOrder: this.outlineTurnOrder,
+                turnOrderIndex,
+                turnTocIndex: this.outlineTurnTocIndex,
+                hasNativeToc: hasNativeTocUserQueries,
+              })
         return {
           item,
           originalIndex,
@@ -3289,7 +3263,7 @@ export class ChatGPTAdapter extends SiteAdapter {
 
     // 2) 退而求其次：返回 turn-shell
     if (entry.turnId) {
-      const shell = this.getOrderedChatGPTTurnAnchors(container).get(entry.turnId)?.element
+      const shell = this.getOrderedChatGPTTurnAnchors(container).get(entry.turnId)
       if (shell) return shell
     }
 
@@ -3755,14 +3729,22 @@ export class ChatGPTAdapter extends SiteAdapter {
       return outline
     }
 
-    this.recordTurnDocumentOrders(turnAnchors)
-    this.updateChatGPTOutlineCache(outline, turnAnchors)
+    // 原生 TOC 的提问序号是全局精确坐标：趁 turn 仍挂载、TOC 条目已绑定到
+    // 真实节点时记录 turnId → TOC 序号，merge 排序时整条大纲共用这一套坐标。
+    // 过渡期内 DOM 可能还是上一个对话的残留，不写绑定。
+    for (const entry of nativeTocEntries) {
+      if (!entry.element) continue
+      const turnId = this.getChatGPTTurnId(entry.element)
+      if (turnId) this.outlineTurnTocIndex.set(turnId, entry.index)
+    }
+
+    this.syncOutlineTurnOrder(turnAnchors)
+    this.updateChatGPTOutlineCache(outline)
 
     // 始终尝试与缓存合并：虚拟滚动可能让 shell 数量也缩水，仅靠"shell > role 数"
     // 的判定会漏掉只剩当前视口可见的极端情况。合并函数自身在没有可追加项时是 no-op。
     return this.mergeCachedChatGPTOutlineItems(
       outline,
-      turnAnchors,
       maxLevel,
       includeUserQueries,
       showWordCount,
