@@ -11,11 +11,11 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### ✨ Improvements
 
-- **Clean Mode bottom spacing** — In Clean Mode, AI generation and legal disclaimers under the input box are now hidden while preserving their native DOM flow spacing, keeping the input area at the site's original intended height instead of sticking to the bottom edge.(#929)
+- **Clean Mode bottom spacing** — In Clean Mode, AI generation and legal disclaimers under the input box are now hidden while preserving their native DOM flow spacing, keeping the input area at the site's original intended height instead of sticking to the bottom edge. (#929)
 
 ### 🐛 Bug Fixes
 
-- **Zen Mode and Clean Mode state isolation** — Fixed an issue where enabling Zen Mode automatically enabled Clean Mode and left it active after exiting, now preserving your original Clean Mode preference.(#926)
+- **Zen Mode and Clean Mode state isolation** — Fixed an issue where enabling Zen Mode automatically enabled Clean Mode and left it active after exiting, now preserving your original Clean Mode preference. (#926)
 
 ---
 
