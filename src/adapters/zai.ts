@@ -998,6 +998,16 @@ export class ZaiAdapter extends SiteAdapter {
     }
   }
 
+  getCleanModeConfig() {
+    const { hide, preserveFlow, rootClass, styles } = this.config.cleanMode
+    return {
+      ...(hide ? { hide: [...hide] } : {}),
+      ...(preserveFlow ? { preserveFlow: [...preserveFlow] } : {}),
+      ...(rootClass ? { rootClass: { ...rootClass } } : {}),
+      ...(styles ? { styles: styles.map((style) => ({ ...style })) } : {}),
+    }
+  }
+
   private extractConversationTitle(node: Element): string {
     const titleEl = node.querySelector(this.config.sitePrivateSelectors.sidebarTitle)
     return titleEl?.textContent?.trim() || ""

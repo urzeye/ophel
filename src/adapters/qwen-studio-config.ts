@@ -215,7 +215,7 @@ const createQwenStudioConfig = (): QwenStudioSiteConfig => {
       { selector: inputWidth, property: "max-width" },
     ],
     zenMode: { hide: [sidebarRoot] },
-    cleanMode: { hide: [".chat-container-statement"] },
+    cleanMode: { preserveFlow: [".chat-container-statement"] },
     mermaidSupport: "native",
     quickQuote: "enabled",
     supportsHostThemeSync: true,

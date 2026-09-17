@@ -58,6 +58,7 @@ export interface ZaiSiteConfig extends BuiltinSiteConfig {
   modelSwitcher: Omit<ModelSwitcherConfig, "targetModelKeyword">
   export: ExportConfig
   zenMode: ZenModeConfig
+  cleanMode: ZenModeConfig
   widthSelectors: Omit<WidthSelectorConfig, "transformValue">[]
   sitePrivateSelectors: ZaiPrivateSelectors
 }
@@ -67,7 +68,7 @@ const EXPORT_USER_QUERY_SELECTOR = `[${ZAI_EXPORT_ROLE_ATTR}="user"]`
 const EXPORT_ASSISTANT_SELECTOR = `[${ZAI_EXPORT_ROLE_ATTR}="assistant"]`
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const ZAI_CONFIG_VERSION = 1
+export const ZAI_CONFIG_VERSION = 2
 
 const createZaiConfig = (): ZaiSiteConfig => {
   const chatContainer = "#chat-container"
@@ -162,6 +163,7 @@ const createZaiConfig = (): ZaiSiteConfig => {
       useShadowDOM: false,
     },
     zenMode: { hide: ["#sidebar"] },
+    cleanMode: { preserveFlow: ["#chat-container > div:first-child > div:last-child"] },
     widthSelectors: [
       { selector: chatMessageWidth, property: "max-width" },
       { selector: chatInputWidth, property: "max-width" },
