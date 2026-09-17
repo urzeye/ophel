@@ -7,7 +7,7 @@
  * - 文本与按钮仅在必要时使用哈希 class 的局部模糊匹配
  *
  * 主题机制：
- * - <html data-theme="light">，仅支持浅色模式
+ * - 宿主页主题只写入 localStorage 键 dbx-web-theme，值为 light / dark / system
  * - 使用 Semi Design 组件库（semi-* class 前缀）
  *
  * 路由兼容：
@@ -49,6 +49,7 @@ import { DOUBAO_CONFIG, DOUBAO_CONFIG_VERSION, type DoubaoSiteConfig } from "./d
 
 /** 匹配 /chat/{id}、/code/chat/{id} 或 /thread/{id}，捕获对话 ID */
 const conversationPathPattern = /^(?:(?:\/code)?\/chat|\/thread)\/([^/?#]+)/
+const DOUBAO_THEME_STORAGE_KEY = "dbx-web-theme"
 const DOUBAO_ATTACHMENT_SOURCE_ATTRS = [
   "href",
   "src",
@@ -2576,8 +2577,37 @@ export class DoubaoAdapter extends SiteAdapter {
 
   // ===== 主题 =====
 
-  toggleTheme(): Promise<boolean> {
-    return Promise.resolve(false)
+  acceptsSystemThemePreference(): boolean {
+    return true
+  }
+
+  detectHostThemePreference(): "light" | "dark" | "system" | null {
+    try {
+      const storedTheme = localStorage.getItem(DOUBAO_THEME_STORAGE_KEY)
+      if (storedTheme === "light" || storedTheme === "dark" || storedTheme === "system") {
+        return storedTheme
+      }
+      return null
+    } catch {
+      return null
+    }
+  }
+
+  detectHostThemeMode(): "light" | "dark" | null {
+    const preference = this.detectHostThemePreference()
+    if (preference === null) return null
+    if (preference !== "system") return preference
+    return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light"
+  }
+
+  async toggleTheme(targetMode: "light" | "dark" | "system"): Promise<boolean> {
+    try {
+      localStorage.setItem(DOUBAO_THEME_STORAGE_KEY, targetMode)
+      return true
+    } catch (error) {
+      console.error("[DoubaoAdapter] toggleTheme error:", error)
+      return false
+    }
   }
 
   // ===== 其他 =====

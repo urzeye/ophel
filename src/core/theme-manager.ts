@@ -352,8 +352,8 @@ export class ThemeManager {
           return false
         }
         case SITE_IDS.DOUBAO:
-          // 豆包不支持深色模式
-          return false
+          localStorage.setItem("dbx-web-theme", "system")
+          return true
         case SITE_IDS.YUANBAO: {
           localStorage.setItem("yb_web_theme_mode", "system")
           window.dispatchEvent(
@@ -650,8 +650,13 @@ export class ThemeManager {
           if (selected.icon === "dark_mode") return "dark"
           return "light"
         }
-        case SITE_IDS.DOUBAO:
-          return "light"
+        case SITE_IDS.DOUBAO: {
+          const storedTheme = localStorage.getItem("dbx-web-theme")
+          if (storedTheme === "light" || storedTheme === "dark" || storedTheme === "system") {
+            return storedTheme
+          }
+          return null
+        }
         case SITE_IDS.YUANBAO: {
           const storedTheme = localStorage.getItem("yb_web_theme_mode")
           if (storedTheme === "light" || storedTheme === "dark" || storedTheme === "system") {
