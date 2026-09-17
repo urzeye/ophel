@@ -201,17 +201,23 @@ export async function syncHostThemeWithSettings(ctx: ModulesContext): Promise<vo
 
   // 检测页面实际的主题状态
   // 用 classList token 精确匹配，避免命中 Grok 常驻工具类（scheme-light / dark:scheme-dark）
+  // html[data-theme] 供豆包等不走 html.dark class 的站点；class / dark-theme 优先，避免覆盖 ChatGPT/Gemini
   const htmlHasDark = document.documentElement.classList.contains("dark")
   const htmlHasLight = document.documentElement.classList.contains("light")
   const bodyClass = document.body.className
   const bodyHasDarkTheme = /\bdark-theme\b/i.test(bodyClass)
   const pageColorScheme = document.body.style.colorScheme
+  const htmlDataTheme = document.documentElement.getAttribute("data-theme")
 
   // 判断页面实际主题
   let actualPageTheme: "light" | "dark" = "light"
   if (htmlHasDark || bodyHasDarkTheme || pageColorScheme === "dark") {
     actualPageTheme = "dark"
   } else if (htmlHasLight) {
+    actualPageTheme = "light"
+  } else if (htmlDataTheme === "dark") {
+    actualPageTheme = "dark"
+  } else if (htmlDataTheme === "light") {
     actualPageTheme = "light"
   }
 
