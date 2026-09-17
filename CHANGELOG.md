@@ -11,7 +11,8 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🚀 New Features
 
-- **Auto-hide input (Gemini)** — Added an "Auto-hide Input" toggle under Site Settings for Gemini. The chat input box floats as an overlay and slides away when idle, letting conversations use the freed space; it reappears when the pointer approaches the bottom, on prompt insertion, or via the focus shortcut (`Alt + I`).
+- **Auto-hide input (Gemini)** — Added an "Auto-hide Input" toggle under Site Settings for Gemini. The chat input box floats as an overlay and slides away when idle, letting conversations use the freed space; it reappears when the pointer approaches the bottom, on prompt insertion, or via the focus shortcut (`Alt + I`). (#930)
+- **Doubao page theme sync** — Doubao now supports bidirectional theme synchronization with Ophel and native page theme switches across light, dark, and system appearance preferences, keeping the page, input box, and panel in full sync. (#932)
 
 ### ✨ Improvements
 

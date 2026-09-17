@@ -38,14 +38,15 @@ afterEach(() => {
 })
 
 describe("Doubao built-in config and new chat selectors", () => {
-  it("increments DOUBAO_CONFIG_VERSION to 6 to invalidate obsolete patches", () => {
-    expect(DOUBAO_CONFIG_VERSION).toBe(6)
+  it("increments DOUBAO_CONFIG_VERSION to 7 to invalidate obsolete patches", () => {
+    expect(DOUBAO_CONFIG_VERSION).toBe(7)
     const descriptor = resolveBuiltinConfig(SITE_IDS.DOUBAO)
     expect(descriptor).toEqual({
       siteId: SITE_IDS.DOUBAO,
-      configVersion: 6,
+      configVersion: 7,
       baseConfig: DOUBAO_CONFIG,
     })
+    expect(DOUBAO_CONFIG.supportsHostThemeSync).toBe(true)
   })
 
   it("exposes cleanMode selectors to hide activity entry and header disclaimer", () => {
