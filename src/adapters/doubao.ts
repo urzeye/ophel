@@ -6,10 +6,33 @@
  * - 历史对话基于 `a[id^="conversation_"]`
  * - 文本与按钮仅在必要时使用哈希 class 的局部模糊匹配
  *
- * 主题机制：
- * - 宿主页主题通过 localStorage 键 dbx-web-theme 同步（system / light / dark）
- * - 根节点属性 <html data-theme="light|dark"> 与 Semi Design 属性 <body theme-mode="light|dark">
- * - 使用 Semi Design 组件库（semi-* class 前缀）
+ * 主题机制与豆包官方源码反编译分析：
+ * 1. 存储契约：
+ *    - 宿主页主题通过 localStorage 键 `dbx-web-theme` 持久化，有效值为 `"light"` | `"dark"` | `"system"`。
+ * 2. 豆包官方原生初始化（内联 script 源码）：
+ *    ```javascript
+ *    !function(){try{
+ *      var e,t=window.localStorage.getItem("dbx-web-theme");
+ *      if("dark"===t||"light"===t)e=t;
+ *      else e=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";
+ *      document.documentElement.setAttribute("data-theme",e)
+ *    }catch(a){}}()
+ *    ```
+ *    豆包官方在页面加载初期的唯一 DOM 操作即：`document.documentElement.setAttribute("data-theme", e)`。
+ * 3. 豆包官方前端运行时（打包模块 294248 源码）：
+ *    - 内部基于 React `useSyncExternalStore` 监听 `window` 的 `storage` 事件（`e.key === "dbx-web-theme"`）。
+ *    - 原生设置切换时，仅调用 `localStorage.setItem("dbx-web-theme", e)`，更新 Cookie，并派发内部通知
+ *      触发 `document.documentElement.setAttribute("data-theme", resolvedMode)`。
+ *    - 官方代码绝对未在 `document.body` 设置任何 `theme-mode`、`data-theme`，也未在根节点挂载 `dark`/`light` 类名。
+ * 4. Semi Design 选择器特异性与输入框反转根因：
+ *    - 豆包输入框与浮层采用 ByteDance Semi Design 组件库（`semi-*`），其样式规则包含了：
+ *      `[data-theme-mode=light],[data-theme=light],[theme-mode=light],[theme=light]` 以及 dark 对应规则。
+ *    - 若在 `<body>` 上硬写 `theme-mode` 或 `data-theme`，由于 `body` 属于 `:root` 的子级，组件样式变量
+ *      会以更高优先级优先继承 `body` 上的声明。
+ *    - 此时当用户在页面内原生切换主题时，豆包只更新 `html[data-theme]` 而不会清理 `body`，
+ *      导致输入框永远被锁死在 `body` 残留的旧主题模式上，造成主页面变白时输入框变黑、主页面变黑时输入框变白的严重反转。
+ *    - 因此，适配器必须严格遵守豆包官方契约：仅操作 `documentElement[data-theme]`，坚决不在 `body` 写任何属性，
+ *      并通过 cleanDoubaoThemeDomPollution 主动清理可能残留的历史属性。
  *
  * 路由兼容：
  * - /chat/{id} 和 /code/chat/{id} 指向同一对话
@@ -55,8 +78,17 @@ const DOUBAO_THEME_STORAGE_KEY = "dbx-web-theme"
 
 /**
  * 清理豆包 DOM 上的历史残留污染属性与类名。
- * 豆包官方原生只在 documentElement 上设置 data-theme，绝对不能在 body 上保留 theme-mode / data-theme，
- * 否则 Semi Design 的 [theme-mode=*] 选择器会直接覆盖组件级变量，导致输入框主题与主页面反转。
+ *
+ * 【深度排查背景与设计原因】
+ * 豆包官方前端采用 ByteDance Semi Design 组件库，其输入框组件有严格的选择器规则：
+ * `[theme-mode=dark]`, `[data-theme=dark]`, `[theme-mode=light]`, `[data-theme=light]`。
+ * 豆包官方原生实现仅在根节点 `html[data-theme="light|dark"]` 控制全局主题，从不在 `body` 写入任何主题属性。
+ *
+ * 若在 `<body>` 上写入 `theme-mode` 或 `data-theme`，其作为所有聊天元素祖先节点的特异性
+ * 会强行覆盖 `:root[data-theme]` 注入的 CSS 变量。当用户在豆包原生菜单切换主题时，
+ * 豆包原生代码绝不会主动清理 `body`，输入框组件将永久滞留在 `body` 旧属性指定的模式下，导致输入框黑白反转。
+ *
+ * 本方法用于在适配器初始化、宿主状态探测及主题切换时，彻底剥离残留的 body 属性与类名污染。
  */
 function cleanDoubaoThemeDomPollution(): void {
   if (typeof document === "undefined") return
@@ -73,6 +105,10 @@ function cleanDoubaoThemeDomPollution(): void {
   }
 }
 
+/**
+ * 将已解析的亮/暗主题应用到豆包 DOM。
+ * 严格契合豆包官方行为：仅且只在 documentElement 上设置 data-theme，绝不污染 body。
+ */
 function applyDoubaoThemeDom(mode: "light" | "dark"): void {
   if (typeof document === "undefined") return
   const root = document.documentElement
@@ -2632,6 +2668,12 @@ export class DoubaoAdapter extends SiteAdapter {
     }
   }
 
+  /**
+   * 探测宿主当前生效的明暗模式。
+   * 优先解析 localStorage 偏好（若为 system 则结合 matchMedia 解析），
+   * 若无偏好记录则回退到根节点的 data-theme 属性。
+   * 每次探测时顺带执行 cleanDoubaoThemeDomPollution，确保无任何历史残留属性干扰 Semi 组件。
+   */
   detectHostThemeMode(): "light" | "dark" | null {
     cleanDoubaoThemeDomPollution()
     const preference = this.detectHostThemePreference()
@@ -2654,6 +2696,12 @@ export class DoubaoAdapter extends SiteAdapter {
     return null
   }
 
+  /**
+   * 切换宿主页主题：
+   * 1. 写入持久化键 `dbx-web-theme`；
+   * 2. 纯净应用 DOM：仅修改 `documentElement[data-theme]`，严禁写入 body；
+   * 3. 派发合成 StorageEvent，通知豆包内部已注册的 storage 监听器即时刷新 React 状态。
+   */
   async toggleTheme(targetMode: "light" | "dark" | "system"): Promise<boolean> {
     try {
       const resolvedMode: "light" | "dark" =
