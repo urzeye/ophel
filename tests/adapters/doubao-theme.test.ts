@@ -215,10 +215,6 @@ describe("Doubao host theme storage", () => {
       fileURLToPath(new URL("../../src/adapters/doubao.ts", import.meta.url)),
       "utf8",
     )
-    const modulesSource = readFileSync(
-      fileURLToPath(new URL("../../src/core/modules-init.ts", import.meta.url)),
-      "utf8",
-    )
 
     const doubaoSystemWrite = source.slice(
       source.indexOf("case SITE_IDS.DOUBAO:"),
@@ -235,6 +231,5 @@ describe("Doubao host theme storage", () => {
     expect(adapterSource).toContain('const DOUBAO_THEME_STORAGE_KEY = "dbx-web-theme"')
     expect(adapterSource).toContain("localStorage.setItem(DOUBAO_THEME_STORAGE_KEY, targetMode)")
     expect(adapterSource).not.toContain("new StorageEvent")
-    expect(modulesSource).toContain("adapter.detectHostThemeMode()")
   })
 })

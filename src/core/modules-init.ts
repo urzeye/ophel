@@ -200,9 +200,7 @@ export async function syncHostThemeWithSettings(ctx: ModulesContext): Promise<vo
   }
 
   // 检测页面实际的主题状态
-  // 适配器按自身存储语义读回优先；否则用 classList token 精确匹配，
-  // 避免命中 Grok 常驻工具类（scheme-light / dark:scheme-dark）
-  const adapterHostMode = adapter.detectHostThemeMode()
+  // 用 classList token 精确匹配，避免命中 Grok 常驻工具类（scheme-light / dark:scheme-dark）
   const htmlHasDark = document.documentElement.classList.contains("dark")
   const htmlHasLight = document.documentElement.classList.contains("light")
   const bodyClass = document.body.className
@@ -211,9 +209,7 @@ export async function syncHostThemeWithSettings(ctx: ModulesContext): Promise<vo
 
   // 判断页面实际主题
   let actualPageTheme: "light" | "dark" = "light"
-  if (adapterHostMode === "dark" || adapterHostMode === "light") {
-    actualPageTheme = adapterHostMode
-  } else if (htmlHasDark || bodyHasDarkTheme || pageColorScheme === "dark") {
+  if (htmlHasDark || bodyHasDarkTheme || pageColorScheme === "dark") {
     actualPageTheme = "dark"
   } else if (htmlHasLight) {
     actualPageTheme = "light"
