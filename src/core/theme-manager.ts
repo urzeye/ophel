@@ -56,6 +56,7 @@ export class ThemeManager {
   private lightPresetId: string
   private darkPresetId: string
   private hostThemeObserver: MutationObserver | null = null
+  private storageListener: ((event: StorageEvent) => void) | null = null
   private onModeChange?: ThemeModeChangeCallback
   private adapter?: SiteAdapter | null
   private nativeThemeOverrideEnabled: boolean
@@ -542,8 +543,8 @@ export class ThemeManager {
       return "light"
     }
 
-    // 3. Data 属性
-    const dataTheme = document.body.dataset.theme || document.documentElement.dataset.theme
+    // 3. Data 属性：优先根节点 documentElement，其次 body
+    const dataTheme = document.documentElement.dataset.theme || document.body.dataset.theme
     if (dataTheme === "dark") {
       return "dark"
     } else if (dataTheme === "light") {
@@ -916,6 +917,25 @@ ${cssVars}
         attributeFilter: ["class", "data-theme", "yb-theme-mode"],
       })
     }
+
+    // 监听跨标签页或宿主内派发的 storage 事件（如 dbx-web-theme、theme、yb_web_theme_mode）
+    if (
+      !this.storageListener &&
+      typeof window !== "undefined" &&
+      typeof window.addEventListener === "function"
+    ) {
+      this.storageListener = (event: StorageEvent) => {
+        if (
+          !event.key ||
+          event.key === "dbx-web-theme" ||
+          event.key === "theme" ||
+          event.key === "yb_web_theme_mode"
+        ) {
+          reconcileObservedTheme()
+        }
+      }
+      window.addEventListener("storage", this.storageListener)
+    }
   }
 
   /**
@@ -925,6 +945,14 @@ ${cssVars}
     if (this.hostThemeObserver) {
       this.hostThemeObserver.disconnect()
       this.hostThemeObserver = null
+    }
+    if (
+      this.storageListener &&
+      typeof window !== "undefined" &&
+      typeof window.removeEventListener === "function"
+    ) {
+      window.removeEventListener("storage", this.storageListener)
+      this.storageListener = null
     }
   }
 
@@ -1225,7 +1253,9 @@ ${cssVars}
       return { mode: resolved, animated }
     }
 
-    const currentMode = this.isHostThemeSyncActive() ? this.detectHostThemeMode() : this.mode
+    const currentMode = this.isHostThemeSyncActive()
+      ? this.adapter?.detectHostThemeMode() ?? this.detectHostThemeMode()
+      : this.mode
 
     // 如果已经是目标模式，仅更新偏好
     if (currentMode === normalizedPreference) {

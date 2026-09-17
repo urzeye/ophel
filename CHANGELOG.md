@@ -11,7 +11,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🚀 New Features
 
-- **Doubao page theme sync** — Doubao now follows Ophel's light, dark, and system theme, so the Doubao page switches appearance together with the panel. (#931)
+- **Doubao page theme sync** — Doubao now supports bidirectional theme synchronization with Ophel and native page theme switches across light, dark, and system appearance preferences, keeping the page, input box, and panel in full sync. (#931)
 
 ### ✨ Improvements
 

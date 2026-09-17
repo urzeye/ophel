@@ -69,7 +69,6 @@ const createClassList = () => {
 
 const installDoubaoThemeGlobals = (options?: { systemDark?: boolean }) => {
   const storage = new MemoryStorage()
-  const dispatchEvent = vi.fn()
   const createdElements: Array<{ id: string; textContent: string }> = []
   const htmlStyle: Record<string, string> = {}
   const bodyStyle: Record<string, string> = {}
@@ -77,6 +76,7 @@ const installDoubaoThemeGlobals = (options?: { systemDark?: boolean }) => {
   const bodyAttrs: Record<string, string> = {}
   const htmlClassList = createClassList()
   const bodyClassList = createClassList()
+  const windowListeners = new Map<string, Set<(event: Event) => void>>()
 
   const documentStub = {
     getElementById: (id: string) => createdElements.find((element) => element.id === id) ?? null,
@@ -106,7 +106,7 @@ const installDoubaoThemeGlobals = (options?: { systemDark?: boolean }) => {
       removeAttribute: (name: string) => {
         delete bodyAttrs[name]
       },
-      dataset: {},
+      dataset: {} as Record<string, string>,
     },
     documentElement: {
       classList: htmlClassList,
@@ -124,11 +124,17 @@ const installDoubaoThemeGlobals = (options?: { systemDark?: boolean }) => {
       getAttribute: (name: string) => htmlAttrs[name] ?? null,
       setAttribute: (name: string, value: string) => {
         htmlAttrs[name] = value
+        if (name === "data-theme") {
+          documentStub.documentElement.dataset.theme = value
+        }
       },
       removeAttribute: (name: string) => {
         delete htmlAttrs[name]
+        if (name === "data-theme") {
+          delete documentStub.documentElement.dataset.theme
+        }
       },
-      dataset: {},
+      dataset: {} as Record<string, string>,
     },
     querySelectorAll: () => [],
     querySelector: () => null,
@@ -156,21 +162,60 @@ const installDoubaoThemeGlobals = (options?: { systemDark?: boolean }) => {
       this.storageArea = init?.storageArea ?? null
     }
   }
+
+  const observerCallbacks: Array<() => void> = []
+
+  class MockMutationObserver {
+    private callback: () => void
+
+    constructor(callback: () => void) {
+      this.callback = callback
+      observerCallbacks.push(callback)
+    }
+
+    observe = vi.fn(() => {
+      if (!observerCallbacks.includes(this.callback)) {
+        observerCallbacks.push(this.callback)
+      }
+    })
+    disconnect = vi.fn(() => {
+      const idx = observerCallbacks.indexOf(this.callback)
+      if (idx !== -1) observerCallbacks.splice(idx, 1)
+    })
+  }
+
+  const triggerObservers = () => {
+    for (const cb of [...observerCallbacks]) {
+      cb()
+    }
+  }
+
+  const dispatchEvent = vi.fn((event: Event) => {
+    const listeners = windowListeners.get(event.type)
+    if (listeners) {
+      listeners.forEach((listener) => listener(event))
+    }
+    return true
+  })
+
   vi.stubGlobal("StorageEvent", MockStorageEvent)
   vi.stubGlobal("localStorage", storage)
-  vi.stubGlobal(
-    "MutationObserver",
-    class {
-      observe = vi.fn()
-      disconnect = vi.fn()
-    },
-  )
+  vi.stubGlobal("MutationObserver", MockMutationObserver)
   vi.stubGlobal("document", documentStub)
   vi.stubGlobal("window", {
     location: new URL("https://www.doubao.com/chat/"),
     innerWidth: 1280,
     innerHeight: 720,
     dispatchEvent,
+    addEventListener: vi.fn((type: string, listener: (event: Event) => void) => {
+      if (!windowListeners.has(type)) {
+        windowListeners.set(type, new Set())
+      }
+      windowListeners.get(type)!.add(listener)
+    }),
+    removeEventListener: vi.fn((type: string, listener: (event: Event) => void) => {
+      windowListeners.get(type)?.delete(listener)
+    }),
     matchMedia: (query: string) => ({
       matches: options?.systemDark === true && query.includes("prefers-color-scheme: dark"),
       media: query,
@@ -181,7 +226,15 @@ const installDoubaoThemeGlobals = (options?: { systemDark?: boolean }) => {
     }),
   })
 
-  return { storage, dispatchEvent, htmlAttrs, bodyAttrs, htmlClassList, bodyClassList }
+  return {
+    storage,
+    dispatchEvent,
+    htmlAttrs,
+    bodyAttrs,
+    htmlClassList,
+    bodyClassList,
+    triggerObservers,
+  }
 }
 
 describe("Doubao theme adaptation", () => {
@@ -246,61 +299,131 @@ describe("Doubao theme adaptation", () => {
     expect(adapter.detectHostThemeMode()).toBe("light")
   })
 
-  it("toggles theme: writes storage, applies DOM hints, and dispatches StorageEvent", async () => {
+  it("toggles theme: writes storage, strictly sets html[data-theme], leaves body clean, and dispatches StorageEvent", async () => {
     const { storage, dispatchEvent, htmlAttrs, bodyAttrs, htmlClassList, bodyClassList } =
       installDoubaoThemeGlobals()
     const adapter = new DoubaoAdapter()
 
+    // 预设残存的旧污染属性
+    bodyAttrs["theme-mode"] = "light"
+    bodyAttrs["data-theme"] = "light"
+    bodyClassList.add("light")
+    htmlClassList.add("light")
+
     const result = await adapter.toggleTheme("dark")
     expect(result).toBe(true)
     expect(storage.getItem("dbx-web-theme")).toBe("dark")
+    // 仅在 html 根节点设置 data-theme，契合豆包原生规范
     expect(htmlAttrs["data-theme"]).toBe("dark")
-    expect(bodyAttrs["data-theme"]).toBe("dark")
-    expect(bodyAttrs["theme-mode"]).toBe("dark")
-    expect(htmlClassList.contains("dark")).toBe(true)
+
+    // 绝对不能在 body 上残留 theme-mode / data-theme，否则会强行覆盖 Semi Design 输入框
+    expect(bodyAttrs["theme-mode"]).toBeUndefined()
+    expect(bodyAttrs["data-theme"]).toBeUndefined()
+    expect(htmlClassList.contains("dark")).toBe(false)
     expect(htmlClassList.contains("light")).toBe(false)
-    expect(bodyClassList.contains("dark")).toBe(true)
+    expect(bodyClassList.contains("dark")).toBe(false)
     expect(bodyClassList.contains("light")).toBe(false)
 
-    expect(dispatchEvent).toHaveBeenCalledTimes(1)
-    const event = dispatchEvent.mock.calls[0][0]
-    expect(event).toBeInstanceOf(StorageEvent)
-    expect(event.key).toBe("dbx-web-theme")
-    expect(event.newValue).toBe("dark")
+    expect(dispatchEvent).toHaveBeenCalled()
+    const storageCall = dispatchEvent.mock.calls.find(
+      (call) => call[0] instanceof StorageEvent && call[0].key === "dbx-web-theme",
+    )
+    expect(storageCall).toBeDefined()
+    expect((storageCall![0] as StorageEvent).newValue).toBe("dark")
   })
 
-  it("resolves system mode during toggleTheme and applies correct DOM hints", async () => {
-    const { storage, htmlAttrs, htmlClassList } = installDoubaoThemeGlobals({ systemDark: true })
+  it("resolves system mode during toggleTheme without polluting body", async () => {
+    const { storage, htmlAttrs, bodyAttrs } = installDoubaoThemeGlobals({ systemDark: true })
     const adapter = new DoubaoAdapter()
 
     await adapter.toggleTheme("system")
     expect(storage.getItem("dbx-web-theme")).toBe("system")
     expect(htmlAttrs["data-theme"]).toBe("dark")
-    expect(htmlClassList.contains("dark")).toBe(true)
+    expect(bodyAttrs["theme-mode"]).toBeUndefined()
   })
 
-  it("initializes DOM hints on adapter construction if theme is already present", () => {
-    const { storage, htmlAttrs, htmlClassList } = installDoubaoThemeGlobals()
+  it("cleans existing DOM pollution on adapter construction without overriding html theme", () => {
+    const { storage, htmlAttrs, bodyAttrs, bodyClassList, htmlClassList } =
+      installDoubaoThemeGlobals()
     storage.setItem("dbx-web-theme", "dark")
+    htmlAttrs["data-theme"] = "dark"
+    bodyAttrs["theme-mode"] = "light" // 历史遗留污染
+    bodyClassList.add("light")
+    htmlClassList.add("light")
 
     new DoubaoAdapter()
     expect(htmlAttrs["data-theme"]).toBe("dark")
-    expect(htmlClassList.contains("dark")).toBe(true)
+    expect(bodyAttrs["theme-mode"]).toBeUndefined()
+    expect(bodyClassList.contains("light")).toBe(false)
+    expect(htmlClassList.contains("light")).toBe(false)
+  })
+
+  it("synchronizes ThemeManager when host switches theme natively or via storage", () => {
+    const { storage, htmlAttrs, triggerObservers } = installDoubaoThemeGlobals()
+    const adapter = new DoubaoAdapter()
+    const themeManager = new ThemeManager("light", undefined, adapter)
+    themeManager.startThemeMonitoring()
+
+    expect(themeManager.getMode()).toBe("light")
+
+    // 模拟豆包原生代码切换为深色模式：修改 dbx-web-theme 与 html[data-theme]
+    storage.setItem("dbx-web-theme", "dark")
+    htmlAttrs["data-theme"] = "dark"
+    triggerObservers()
+
+    expect(themeManager.getMode()).toBe("dark")
+    expect(themeManager.getPreference()).toBe("dark")
+
+    // 模拟豆包原生代码切换为浅色模式
+    storage.setItem("dbx-web-theme", "light")
+    htmlAttrs["data-theme"] = "light"
+    triggerObservers()
+
+    expect(themeManager.getMode()).toBe("light")
+    expect(themeManager.getPreference()).toBe("light")
+
+    themeManager.destroy()
+  })
+
+  it("synchronizes ThemeManager directly via window storage event", () => {
+    const { storage } = installDoubaoThemeGlobals()
+    const adapter = new DoubaoAdapter()
+    const themeManager = new ThemeManager("light", undefined, adapter)
+    themeManager.startThemeMonitoring()
+
+    expect(themeManager.getMode()).toBe("light")
+
+    storage.setItem("dbx-web-theme", "dark")
+    window.dispatchEvent(
+      new StorageEvent("storage", {
+        key: "dbx-web-theme",
+        newValue: "dark",
+        storageArea: storage as unknown as Storage,
+      }),
+    )
+
+    expect(themeManager.getMode()).toBe("dark")
+    expect(themeManager.getPreference()).toBe("dark")
+
+    themeManager.destroy()
   })
 
   it("integrates with ThemeManager setMode and system preference", async () => {
-    const { storage } = installDoubaoThemeGlobals({ systemDark: true })
+    const { storage, htmlAttrs } = installDoubaoThemeGlobals({ systemDark: true })
     const adapter = new DoubaoAdapter()
     const themeManager = new ThemeManager("light", undefined, adapter)
 
     await themeManager.setMode("dark")
     expect(storage.getItem("dbx-web-theme")).toBe("dark")
+    expect(htmlAttrs["data-theme"]).toBe("dark")
 
     await themeManager.setMode("light")
     expect(storage.getItem("dbx-web-theme")).toBe("light")
+    expect(htmlAttrs["data-theme"]).toBe("light")
 
     await themeManager.setMode("system")
     expect(storage.getItem("dbx-web-theme")).toBe("system")
+    expect(htmlAttrs["data-theme"]).toBe("dark")
 
     themeManager.destroy()
   })

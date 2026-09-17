@@ -53,24 +53,33 @@ import { DOUBAO_CONFIG, DOUBAO_CONFIG_VERSION, type DoubaoSiteConfig } from "./d
 const conversationPathPattern = /^(?:(?:\/code)?\/chat|\/thread)\/([^/?#]+)/
 const DOUBAO_THEME_STORAGE_KEY = "dbx-web-theme"
 
-function applyDoubaoThemeDomHints(mode: "light" | "dark"): void {
+/**
+ * 清理豆包 DOM 上的历史残留污染属性与类名。
+ * 豆包官方原生只在 documentElement 上设置 data-theme，绝对不能在 body 上保留 theme-mode / data-theme，
+ * 否则 Semi Design 的 [theme-mode=*] 选择器会直接覆盖组件级变量，导致输入框主题与主页面反转。
+ */
+function cleanDoubaoThemeDomPollution(): void {
   if (typeof document === "undefined") return
   const root = document.documentElement
-  const body = document.body
+  if (root) {
+    root.classList.remove("dark", "light")
+  }
 
+  const body = document.body
+  if (body) {
+    body.removeAttribute("theme-mode")
+    body.removeAttribute("data-theme")
+    body.classList.remove("dark", "light")
+  }
+}
+
+function applyDoubaoThemeDom(mode: "light" | "dark"): void {
+  if (typeof document === "undefined") return
+  const root = document.documentElement
   if (root) {
     root.setAttribute("data-theme", mode)
-    root.classList.toggle("dark", mode === "dark")
-    root.classList.toggle("light", mode === "light")
-    root.style.colorScheme = mode
   }
-
-  if (body) {
-    body.setAttribute("data-theme", mode)
-    body.setAttribute("theme-mode", mode)
-    body.classList.toggle("dark", mode === "dark")
-    body.classList.toggle("light", mode === "light")
-  }
+  cleanDoubaoThemeDomPollution()
 }
 const DOUBAO_ATTACHMENT_SOURCE_ATTRS = [
   "href",
@@ -162,12 +171,7 @@ export class DoubaoAdapter extends SiteAdapter {
     super()
     this.config = config
     try {
-      if (typeof document !== "undefined") {
-        const mode = this.detectHostThemeMode()
-        if (mode) {
-          applyDoubaoThemeDomHints(mode)
-        }
-      }
+      cleanDoubaoThemeDomPollution()
     } catch {}
   }
 
@@ -2629,6 +2633,7 @@ export class DoubaoAdapter extends SiteAdapter {
   }
 
   detectHostThemeMode(): "light" | "dark" | null {
+    cleanDoubaoThemeDomPollution()
     const preference = this.detectHostThemePreference()
     if (preference === "system") {
       return typeof window !== "undefined" &&
@@ -2663,7 +2668,7 @@ export class DoubaoAdapter extends SiteAdapter {
       const previousValue = localStorage.getItem(DOUBAO_THEME_STORAGE_KEY)
       localStorage.setItem(DOUBAO_THEME_STORAGE_KEY, targetMode)
 
-      applyDoubaoThemeDomHints(resolvedMode)
+      applyDoubaoThemeDom(resolvedMode)
 
       if (typeof window !== "undefined" && typeof window.dispatchEvent === "function") {
         if (typeof StorageEvent !== "undefined") {
