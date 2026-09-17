@@ -1291,7 +1291,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       <LoadingOverlay isVisible={isLoadingHistory} text={loadingText} onStop={stopLoading} />
       <div
         ref={groupRef}
-        className={`quick-btn-group gh-interactive ${!isPanelExpanded ? "collapsed" : ""} ${isDragging ? "dragging" : ""} ${isPressing ? "pressing" : ""} ${isScrolling ? "scroll-hidden" : ""} ${isLiquidCollapsed ? "liquid-collapsed" : ""} ${isGroupHidden ? "group-hidden" : ""}`}
+        className={`quick-btn-group gh-interactive ${!isPanelExpanded ? "collapsed" : ""} ${isDragging ? "dragging" : ""} ${isPressing ? "pressing" : ""} ${isScrolling ? "scroll-hidden" : ""} ${isLiquidCollapsed ? "liquid-collapsed" : ""} ${isGroupHidden ? "group-hidden" : ""} ${isToolsMenuOpen ? "menu-open" : ""}`}
         aria-hidden={isGroupHidden}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}

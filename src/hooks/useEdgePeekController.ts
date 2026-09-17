@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from "react"
 
-import { hasOphelInteractionLayer, isEditableKeyboardTarget } from "~utils/dom-toolkit"
+import { hasOphelEdgePeekOverlay, isEditableKeyboardTarget } from "~utils/dom-toolkit"
 
 type EdgeSnapSide = "left" | "right" | null
 type PanelMode = "edge-snap" | "floating" | undefined
@@ -91,7 +91,7 @@ export function useEdgePeekController({
   }, [])
 
   const hasOpenEdgePeekOverlay = useCallback(
-    () => hasOphelInteractionLayer(getQueryRoots()),
+    () => hasOphelEdgePeekOverlay(getQueryRoots()),
     [getQueryRoots],
   )
 

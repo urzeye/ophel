@@ -2048,6 +2048,14 @@
     transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
+/* 工具箱菜单打开期间，临时把按钮组抬到面板（z-index: 9999）之上。
+   菜单朝视口中心弹出，当面板展开/吸附弹出在按钮组与视口中心之间时，
+   菜单会被面板盖住无法操作；菜单是当前活跃交互元素，应置顶。
+   仍低于各类对话框（>= 999998），从菜单打开的弹窗不受影响 */
+.quick-btn-group.menu-open {
+  z-index: 10000;
+}
+
 /* ============= 液态折叠 (Liquid Collapse) ============= */
 .quick-btn-group.liquid-collapsed {
   height: 52px;

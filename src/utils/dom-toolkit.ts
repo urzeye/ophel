@@ -105,8 +105,9 @@ export const OPHEL_HOVER_WIDTH_RETAIN_LAYER_PROPS = {
   [OPHEL_HOVER_WIDTH_RETAIN_LAYER_ATTR]: "true",
 } as const
 
-export const OPHEL_INTERACTION_LAYER_SELECTOR = [
-  `[${OPHEL_INTERACTION_LAYER_ATTR}="true"]`,
+const QUICK_MENU_POPOVER_SELECTOR = ".quick-menu-popover"
+
+const OPHEL_INTERACTION_LAYER_CLASS_SELECTORS = [
   ".gh-dialog-overlay",
   ".conversations-dialog-overlay",
   ".conversations-folder-menu",
@@ -116,7 +117,21 @@ export const OPHEL_INTERACTION_LAYER_SELECTOR = [
   ".import-dialog",
   ".settings-modal-overlay",
   ".settings-search-overlay",
-  ".quick-menu-popover",
+  QUICK_MENU_POPOVER_SELECTOR,
+]
+
+export const OPHEL_INTERACTION_LAYER_SELECTOR = [
+  `[${OPHEL_INTERACTION_LAYER_ATTR}="true"]`,
+  ...OPHEL_INTERACTION_LAYER_CLASS_SELECTORS,
+].join(", ")
+
+// 边缘吸附面板的弹出/保活只应响应面板内浮层。工具箱菜单等工具栏自有浮层
+// 若纳入，菜单一打开面板就会弹出并盖住菜单（面板层级高于快捷工具栏）
+export const OPHEL_EDGE_PEEK_OVERLAY_SELECTOR = [
+  `[${OPHEL_INTERACTION_LAYER_ATTR}="true"]:not(${QUICK_MENU_POPOVER_SELECTOR})`,
+  ...OPHEL_INTERACTION_LAYER_CLASS_SELECTORS.filter(
+    (selector) => selector !== QUICK_MENU_POPOVER_SELECTOR,
+  ),
 ].join(", ")
 
 export const OPHEL_HOVER_WIDTH_RETAIN_LAYER_SELECTOR = [
@@ -143,6 +158,9 @@ const hasOphelLayer = (selector: string, roots?: Array<Element | ShadowRoot>): b
 
 export const hasOphelInteractionLayer = (roots?: Array<Element | ShadowRoot>): boolean =>
   hasOphelLayer(OPHEL_INTERACTION_LAYER_SELECTOR, roots)
+
+export const hasOphelEdgePeekOverlay = (roots?: Array<Element | ShadowRoot>): boolean =>
+  hasOphelLayer(OPHEL_EDGE_PEEK_OVERLAY_SELECTOR, roots)
 
 export const hasOphelHoverWidthRetainLayer = (roots?: Array<Element | ShadowRoot>): boolean =>
   hasOphelLayer(OPHEL_HOVER_WIDTH_RETAIN_LAYER_SELECTOR, roots)
