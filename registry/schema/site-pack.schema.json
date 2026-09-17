@@ -956,6 +956,22 @@
           "minimum": 0,
           "maximum": 400
         },
+        "revealDistancePx": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "hideDistancePx": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "hiddenOffsetPx": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "zIndex": {
+          "type": "integer",
+          "minimum": 0
+        },
         "styles": {
           "type": "array",
           "maxItems": 50,

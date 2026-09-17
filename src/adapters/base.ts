@@ -172,6 +172,14 @@ export interface AutoHideInputConfig {
   container: string
   /** 滚动容器内占位 spacer 高度 px，缺省 33 */
   spacerHeight?: number
+  /** 指针距视口底部 <= 该值时显示输入框，缺省 210 */
+  revealDistancePx?: number
+  /** 指针距视口底部 >= 该值时隐藏输入框，须大于 revealDistancePx 形成迟滞，缺省 revealDistancePx + 180 */
+  hideDistancePx?: number
+  /** 隐藏态在容器自身高度之外额外下移的偏移 px，缺省 28 */
+  hiddenOffsetPx?: number
+  /** 浮层 z-index，缺省 30 */
+  zIndex?: number
   /** 站点附加样式规则（如释放会话容器 min-height、关闭底部渐变遮罩） */
   styles?: ZenModeStyleRule[]
 }

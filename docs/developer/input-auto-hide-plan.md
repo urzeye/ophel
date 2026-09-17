@@ -76,6 +76,24 @@ export interface ZenModeConfig {
 - 显示/隐藏判定：`pointermove` 距视口底 ≤210px 显示、≥390px 隐藏（迟滞 + 50ms 节流）；`focusin/focusout` 同步；触屏设备（`pointer: coarse`）永不隐藏。
 - 重同步：ResizeObserver 观察输入容器、window resize、MutationObserver 侦测 SPA 重建 DOM；测量前临时移除浮层类并强制 reflow 读取自然位置。
 
+> 实现教训（已修复）：**ResizeObserver 不能在每次测量后 disconnect + 重挂**。重挂会重置上报基线，对每个"新"观察目标必投一次初始通知，形成 测量→重挂→初始通知→防抖重测量 的自激回路（约 8Hz），表现为输入框快速跳变。正确做法：同一容器元素只观察一次，仅容器身份变化时重挂；测量在同一任务内摘/挂浮层类，帧末尺寸净变化为零，不会触发自通知。
+
+> 实现教训（已修复）：**document 级监听必须过滤 Ophel 自身 UI 的事件**。`focusin`/`focusout`/`input`/`pointermove` 均为 composed 事件，穿透 Shadow DOM 后 target 被重定向为宿主元素（`plasmo-csui` / `#ophel-userscript-root` 等）。不过滤时，面板内的聚焦、打字、悬停会被当成页面交互驱动输入框显隐，造成与 Ophel UI 交互时输入框闪现。约定见下条：冻结而非重估。
+
+> 实现教训（已修复）：**DOM 聚焦不能单独作为唤出信号**。`:focus-within` 是纯 CSS 状态、focusin/focusout 不产生 DOM 变更，两者都绕过了基于 MutationObserver 的排查手段。Gemini 会在窗口重获焦点、编辑器失焦后做程序化 focus（自动重聚焦），无门槛的 `container:focus-within { 强制显示 }` 规则会被这些焦点抖动触发，表现为切回标签页、与 Ophel UI 交互时输入框闪现（此时 Ophel 侧事件与页面焦点发生拉锯）。正确做法：删除 CSS 的 `:focus-within` 兜底，JS 侧聚焦唤出必须紧跟真实页面手势（pointerdown/keydown 时间窗内才落闩）；草稿与指针接近仍是独立唤出通道。
+
+> 实现教训（已修复）：**显隐决策不能对每个原始事件立即应用——冻结 + 显示立即/隐藏防抖**。页面获得焦点、弹出/关闭 Ophel 设置弹窗、插入提示词填变量时的"极速闪现"根因是结构性的：一次用户动作会扇出成一串时序不同的求值（focusin 同步、focusout 延迟一拍、pointermove 节流 50ms、window blur、input 捕获），各自拿着不同的输入（陈旧 lastPointer vs 无指针、门闩刚被清除）得出相反结论，而每次翻转都播 300ms transform/opacity 过渡。逐事件立即应用 = 闪现。正确做法（`updateAutoHideVisibility` 为唯一决策入口）：
+>
+> 1. **冻结**：指针悬停在 Ophel UI 上、焦点在 Ophel UI 内、或窗口失焦（`document.hasFocus()` 为 false）时保持现状不做任何翻转——此前"指针进 Ophel UI 按离开页面隐藏 / 焦点进 Ophel UI 按无指针重估隐藏"正是开弹窗时输入框滑走、弹窗边缘鼠标移动时来回闪的直接原因；
+> 2. **门闩跨窗口失焦与 Ophel UI 焦点保留**：focusout 延迟判定中，仅焦点落到页面其他元素才清门闩；切窗口/开关弹窗后编辑器重聚焦即恢复原显隐，全程零翻转；
+> 3. **显示立即、隐藏防抖**：显示结论立即生效并取消待隐藏；隐藏结论须在 `AUTO_HIDE_HIDE_DELAY_MS`（200ms）内持续成立才落地，抖动窗口内的相反结论取消它，一连串矛盾求值被收敛为一次最终状态。
+>
+> 门闩保留方案依赖的 Chrome 事件时序已用 Playwright + CDP（`Emulation.setFocusEmulationEnabled`）实测：窗口失焦时 `focusout`（activeElement）先于 `window blur` 派发，且两个时刻 `document.hasFocus()` 均已为 false（含 setTimeout 延迟判定），focusout 延迟判定可可靠识别窗口失焦；重获焦点时 `window focus` 先于 activeElement 的 `focusin` 派发，DOM 焦点全程保留在编辑器上。
+
+> 实现教训（已修复，真实浏览器复现确认）：**摘/挂浮层类会重置 transition，每次重测量都把隐藏动画从头重播——这是"干什么都闪"的最终根因**。`syncAutoHideLayout` 测量前摘浮层类、强制 reflow、再挂回；强制 reflow 会把"无浮层"的中间计算样式（transform: none、opacity: 1）提交为 transition 起点，任务末重挂类后浏览器从可见态重新播 300ms 隐藏动画。于是任何触发重测量的页面动态（Angular 重渲染、流式输出、布局抖动、RO 初始通知）都表现为输入框重新出现再滑出。修复（已用 Playwright + 真实扩展构建 + 模拟 Gemini DOM 验证）：①测量全程在 `<html>` 挂 `gh-ahi-no-anim`（`transition: none !important`），且**重挂浮层类后、摘 no-anim 前再强制一次 reflow 提交最终样式**，否则中途提交的中间态仍会成为动画起点；②可见态改为纯自然文档流（不浮层、不测量、不挂类），仅隐藏态浮层化，显示过渡结束 350ms 后摘浮层类落回文档流——可见时页面任何动态都碰不到输入框。
+>
+> 复现环境备注：Plasmo CSUI 宿主内的全屏遮罩（如首启免责声明 `disclaimer-modal-overlay`、各类模态框）是 `pointer-events: auto`，命中测试会把全视口的指针事件重定向到宿主，`isOphelUiEvent` 全部判为 Ophel UI（此时冻结显隐正是期望行为）。用全新 profile 复现时必须先置 `hasAgreedToTerms: true`，否则免责声明遮罩一直盖住页面，所有指针交互都被冻结逻辑吞掉。
+
 ### 3.2 Ophel 通用机制
 
 站点差异收敛为适配器声明，机制全部沉淀在 `LayoutManager`（与 zen/clean 同处，复用样式注入与 Shadow DOM 注入链路）：
@@ -97,8 +115,8 @@ getAutoHideInputConfig(): AutoHideInputConfig | null
 工作流程：
 
 1. `updateAutoHideInput(enabled)` 由 `modules-init.ts` 按站点设置驱动（含热更新路径）。
-2. 启用时：注入宿主样式（`<html>` 挂 `gh-auto-hide-input` 类作用域）→ 测量并浮层化（挂 `gh-ahi-float`，写 CSS 变量）→ 挂监听与 observer。
-3. 隐藏判定（挂/摘 `gh-ahi-hidden`）：指针距视口底迟滞显隐；容器 `:focus-within`（CSS 层兜底）+ `focusin`（JS 层立即响应）；**输入框已有未发送内容时强制显示**（监听 `input` 事件，优于 Better Gemini 的行为）。
+2. 启用时：注入宿主样式（`<html>` 挂 `gh-auto-hide-input` 类作用域）→ 挂监听与 observer。**可见态保持纯自然文档流**（不浮层、不测量）；只有判定隐藏时才测量自然位置并浮层化（挂 `gh-ahi-float`，写 CSS 变量）。
+3. 隐藏判定（`setAutoHideHidden` 唯一出口）：指针距视口底迟滞显隐；真实页面手势后的 `focusin` 落闩唤出；**输入框已有未发送内容时强制显示**（监听 `input` 事件，优于 Better Gemini 的行为）。显示过渡结束后摘浮层类落回文档流；隐藏态的重测量全程挂 `gh-ahi-no-anim` 关闭过渡。
 4. 滚动容器末尾维护 spacer div；停用时全部清理（监听器、observer、spacer、CSS 变量、样式标签）。
 
 既有基建的直接复用：

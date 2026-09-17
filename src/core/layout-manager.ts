@@ -33,14 +33,32 @@ const ZEN_MODE_EXIT_HOST_ID = "gh-zen-mode-exit-host"
 // ==================== Auto Hide Input 常量 ====================
 const AUTO_HIDE_FLOAT_CLASS = "gh-ahi-float"
 const AUTO_HIDE_HIDDEN_CLASS = "gh-ahi-hidden"
+/** 测量/重同步期间挂在 <html> 上关闭过渡，避免摘挂浮层类重置 transition 重播动画 */
+const AUTO_HIDE_NO_ANIM_CLASS = "gh-ahi-no-anim"
 const AUTO_HIDE_SPACER_ID = "gh-auto-hide-input-spacer"
-/** 指针距视口底部 <= 该值时显示输入框 */
-const AUTO_HIDE_REVEAL_DISTANCE_PX = 210
+/**
+ * Ophel 自身 UI 的宿主节点（Shadow host 与挂在 body 的扩展元素）。
+ * focusin/focusout/input/pointermove 都是 composed 事件，会穿透 Shadow DOM 到达
+ * document；面板/设置模态框内的交互不能被误当成页面交互来驱动输入框显隐
+ */
+const OPHEL_UI_HOST_SELECTOR =
+  "plasmo-csui, #ophel-userscript-root, #ophel-binding-issue-notice, #ophel-extension-update-fallback, #gh-zen-mode-exit-host"
+/** 指针距视口底部 <= 该值时显示输入框（站点可用 config.revealDistancePx 覆盖） */
+const DEFAULT_AUTO_HIDE_REVEAL_DISTANCE_PX = 210
 /** 指针距视口底部 >= 该值时隐藏输入框；与显示阈值形成迟滞区间避免抖动 */
-const AUTO_HIDE_HIDE_DISTANCE_PX = AUTO_HIDE_REVEAL_DISTANCE_PX + 180
+const DEFAULT_AUTO_HIDE_HIDE_DISTANCE_PX = DEFAULT_AUTO_HIDE_REVEAL_DISTANCE_PX + 180
+/** 隐藏态在容器自身高度之外额外下移的偏移，保证完全移出视口 */
+const DEFAULT_AUTO_HIDE_HIDDEN_OFFSET_PX = 28
+const DEFAULT_AUTO_HIDE_Z_INDEX = 30
 const AUTO_HIDE_POINTER_THROTTLE_MS = 50
 const AUTO_HIDE_SCROLL_THROTTLE_MS = 100
 const AUTO_HIDE_RESYNC_DEBOUNCE_MS = 120
+/** 隐藏必须稳定持续该时长才生效；窗口内的相反结论会取消隐藏，避免事件扇出造成闪现 */
+const AUTO_HIDE_HIDE_DELAY_MS = 200
+/** 显示过渡（0.3s）结束后落回文档流的等待时长 */
+const AUTO_HIDE_SETTLE_DELAY_MS = 350
+/** 聚焦唤出必须紧跟的真实页面手势（pointerdown/keydown）时间窗 */
+const AUTO_HIDE_FOCUS_GESTURE_WINDOW_MS = 500
 const AUTO_HIDE_DEFAULT_SPACER_HEIGHT = 33
 const AUTO_HIDE_CSS_VARS = [
   "--gh-ahi-top",
@@ -119,10 +137,19 @@ export class LayoutManager {
   private autoHideInputLastPointer: PointerEvent | null = null
   private autoHideInputListenersBound = false
   private autoHideInputResizeObserver: ResizeObserver | null = null
+  private autoHideInputObservedTarget: HTMLElement | null = null
   private autoHideInputMutationObserver: MutationObserver | null = null
+  private autoHideInputCoarsePointer: MediaQueryList | null = null
   private autoHideInputPointerTimer: ReturnType<typeof setTimeout> | null = null
   private autoHideInputScrollTimer: ReturnType<typeof setTimeout> | null = null
   private autoHideInputResyncTimer: ReturnType<typeof setTimeout> | null = null
+  private autoHideInputHideTimer: ReturnType<typeof setTimeout> | null = null
+  private autoHideInputSettleTimer: ReturnType<typeof setTimeout> | null = null
+  /** 聚焦唤出门闩：只有紧跟真实页面手势的聚焦才允许唤出，窗口重获焦点等程序化聚焦不唤出 */
+  private autoHideInputFocusReveal = false
+  private autoHideInputLastPageGestureAt = 0
+  /** 指针当前是否悬停在 Ophel 自身 UI 上；悬停期间显隐冻结 */
+  private autoHideInputPointerInOphelUi = false
 
   private processedShadowRoots = new WeakSet<ShadowRoot>()
   private shadowCheckInterval: ReturnType<typeof setTimeout> | null = null
@@ -369,12 +396,22 @@ export class LayoutManager {
 
   // ==================== Auto Hide Input ====================
   //
-  // 机制：输入容器改为 position: fixed 浮层（脱离文档流，原位置让给聊天内容），
-  // 闲置时整体下移隐藏；滚动容器内追加隐形 spacer 保持滚动度量稳定。
-  // 显示触发：指针接近视口底部 / 聚焦（Alt+I、insertPrompt 均先 focus，由
-  // :focus-within 与 focusin 双通道覆盖）/ 输入框已有草稿内容。
+  // 机制：可见时输入容器保持纯自然文档流（零干预，页面布局变化、Angular 重渲染、
+  // 流式输出都不可能让它闪）；决定隐藏时才测量自然位置、改为 position: fixed 浮层
+  // 并下移出场（原位置让给聊天内容，滚动容器内追加隐形 spacer 保持滚动度量稳定）；
+  // 隐藏态不可见，期间可自由重测量重同步；显示时先重测量再滑回，过渡结束后落回
+  // 文档流（浮层位置 = 自然位置，零跳动）。
+  // 显示触发：指针接近视口底部 / 手势聚焦（点击输入框、Alt+I 等真实页面手势后
+  // 的 focusin 才唤出；窗口重获焦点、站点程序化 focus 不落闩）/ 输入框已有草稿。
+  // 显隐稳定性（一次动作会扇出成一串时序不同的事件求值，逐个立即翻转就是"闪现"）：
+  // 1. 冻结：指针/焦点在 Ophel 自身 UI 内、或窗口失焦时保持现状，不做任何翻转；
+  // 2. 门闩跨窗口失焦与 Ophel UI 焦点保留，回来/关闭弹窗后恢复原状；
+  // 3. 显示立即生效，隐藏必须稳定持续 AUTO_HIDE_HIDE_DELAY_MS 才落地。
 
   updateAutoHideInput(enabled: boolean) {
+    // 设置订阅在任意设置变更时都会回调；同值重入会触发"删样式→重注入→重测量"，
+    // 造成可见闪烁与多余 reflow，必须幂等
+    if (enabled === this.autoHideInputEnabled) return
     this.autoHideInputEnabled = enabled
     this.applyAutoHideInput()
   }
@@ -401,12 +438,15 @@ export class LayoutManager {
     )
     this.bindAutoHideListeners()
     this.startAutoHideMutationObserver()
-    this.syncAutoHideLayout()
+    // 初始为可见的自然文档流；只记录容器引用，是否隐藏由决策入口判定
+    this.autoHideInputContainer = document.querySelector(config.container) as HTMLElement | null
     this.updateAutoHideVisibility()
   }
 
   private generateAutoHideInputCSS(config: AutoHideInputConfig): string {
     const container = config.container
+    const hiddenOffset = config.hiddenOffsetPx ?? DEFAULT_AUTO_HIDE_HIDDEN_OFFSET_PX
+    const zIndex = config.zIndex ?? DEFAULT_AUTO_HIDE_Z_INDEX
     const floatCss = `
 html.${AUTO_HIDE_FLOAT_CLASS} ${container} {
   position: fixed !important;
@@ -418,7 +458,7 @@ html.${AUTO_HIDE_FLOAT_CLASS} ${container} {
   margin: 0 !important;
   box-sizing: border-box;
   overflow: visible !important;
-  z-index: 30 !important;
+  z-index: ${zIndex} !important;
   background: var(--gh-ahi-bg, transparent) !important;
   transform: translateY(0);
   opacity: 1;
@@ -428,14 +468,12 @@ html.${AUTO_HIDE_FLOAT_CLASS} ${container} {
   will-change: transform, opacity;
 }
 html.${AUTO_HIDE_FLOAT_CLASS}.${AUTO_HIDE_HIDDEN_CLASS} ${container} {
-  transform: translateY(calc(100% + 28px)) !important;
+  transform: translateY(calc(100% + ${hiddenOffset}px)) !important;
   opacity: 0.01 !important;
   pointer-events: none !important;
 }
-html.${AUTO_HIDE_FLOAT_CLASS}.${AUTO_HIDE_HIDDEN_CLASS} ${container}:focus-within {
-  transform: translateY(0) !important;
-  opacity: 1 !important;
-  pointer-events: auto !important;
+html.${AUTO_HIDE_FLOAT_CLASS}.${AUTO_HIDE_NO_ANIM_CLASS} ${container} {
+  transition: none !important;
 }
 #${AUTO_HIDE_SPACER_ID} {
   flex-shrink: 0;
@@ -447,41 +485,56 @@ html.${AUTO_HIDE_FLOAT_CLASS}.${AUTO_HIDE_HIDDEN_CLASS} ${container}:focus-withi
     return [floatCss, this.buildZenModeStyleCSS(config.styles || [])].filter(Boolean).join("\n")
   }
 
-  /** 测量容器自然位置并浮层化；容器不存在或不可见时解除浮层。 */
+  /**
+   * 测量容器自然位置并浮层化；容器不存在或不可见时解除浮层。
+   * 仅在隐藏/即将隐藏/即将显示时调用——这些时刻容器要么不可见、要么将在
+   * 同一任务内进入过渡，摘/挂浮层类不会上屏；可见态绝不调用本方法。
+   */
   private syncAutoHideLayout() {
     const config = this.autoHideInputConfig
     const container = config
       ? (document.querySelector(config.container) as HTMLElement | null)
       : null
-    if (!config || !container) {
-      this.unfloatAutoHideInput()
-      return
-    }
-
     const root = document.documentElement
-    // 浮层状态下读到的是浮层几何，必须先摘掉浮层类再强制 reflow 读自然位置
-    if (root.classList.contains(AUTO_HIDE_FLOAT_CLASS)) {
-      root.classList.remove(AUTO_HIDE_FLOAT_CLASS)
+    // 全程关闭过渡：摘/挂浮层类会重置 transform/opacity 的 transition，
+    // 不关闭时每次重测量都把隐藏动画从头重播一遍（表现为输入框反复闪现）
+    root.classList.add(AUTO_HIDE_NO_ANIM_CLASS)
+    try {
+      if (!config || !container) {
+        this.unfloatAutoHideInput()
+        return
+      }
+
+      // 浮层状态下读到的是浮层几何，必须先摘掉浮层类再强制 reflow 读自然位置
+      if (root.classList.contains(AUTO_HIDE_FLOAT_CLASS)) {
+        root.classList.remove(AUTO_HIDE_FLOAT_CLASS)
+        void container.offsetHeight
+      }
+
+      const rect = container.getBoundingClientRect()
+      if (rect.width <= 0 || rect.height <= 0) {
+        this.unfloatAutoHideInput()
+        return
+      }
+
+      const footerPad = Math.max(0, Math.ceil(window.innerHeight - rect.bottom))
+      root.style.setProperty("--gh-ahi-top", `${rect.top}px`)
+      root.style.setProperty("--gh-ahi-left", `${rect.left}px`)
+      root.style.setProperty("--gh-ahi-width", `${rect.width}px`)
+      root.style.setProperty("--gh-ahi-footer", `${footerPad}px`)
+      root.style.setProperty("--gh-ahi-bg", this.resolveAutoHideBackground(container))
+      root.classList.add(AUTO_HIDE_FLOAT_CLASS)
+
+      // 在 no-anim 仍挂时强制 reflow 提交最终计算样式；否则中途那次 reflow 提交的
+      // "无浮层"中间态会成为 transition 起点，finally 摘掉 no-anim 后隐藏动画从头重播
       void container.offsetHeight
+
+      this.autoHideInputContainer = container
+      this.syncAutoHideSpacer(config)
+      this.observeAutoHideContainer(container)
+    } finally {
+      root.classList.remove(AUTO_HIDE_NO_ANIM_CLASS)
     }
-
-    const rect = container.getBoundingClientRect()
-    if (rect.width <= 0 || rect.height <= 0) {
-      this.unfloatAutoHideInput()
-      return
-    }
-
-    const footerPad = Math.max(0, Math.ceil(window.innerHeight - rect.bottom))
-    root.style.setProperty("--gh-ahi-top", `${rect.top}px`)
-    root.style.setProperty("--gh-ahi-left", `${rect.left}px`)
-    root.style.setProperty("--gh-ahi-width", `${rect.width}px`)
-    root.style.setProperty("--gh-ahi-footer", `${footerPad}px`)
-    root.style.setProperty("--gh-ahi-bg", this.resolveAutoHideBackground(container))
-    root.classList.add(AUTO_HIDE_FLOAT_CLASS)
-
-    this.autoHideInputContainer = container
-    this.syncAutoHideSpacer(config)
-    this.observeAutoHideContainer(container)
   }
 
   /** 浮层容器覆盖底部区域时需要实底背景；沿祖先链取第一个非透明背景色。 */
@@ -517,11 +570,19 @@ html.${AUTO_HIDE_FLOAT_CLASS}.${AUTO_HIDE_HIDDEN_CLASS} ${container}:focus-withi
     root.classList.remove(AUTO_HIDE_HIDDEN_CLASS)
     this.autoHideInputHidden = null
     this.autoHideInputContainer = null
+    this.cancelAutoHideHideTimer()
+    this.cancelAutoHideSettleTimer()
     this.autoHideInputResizeObserver?.disconnect()
+    this.autoHideInputObservedTarget = null
     document.getElementById(AUTO_HIDE_SPACER_ID)?.remove()
   }
 
   private observeAutoHideContainer(container: HTMLElement) {
+    // 同一容器保持单次观察。重复 observe 会重置 ResizeObserver 的上报基线，
+    // 使其对每个"新"观察目标必投一次初始通知；而 syncAutoHideLayout 每次都会
+    // 调用本方法，于是形成 测量→重挂→初始通知→防抖重测量 的自激回路（约 8Hz），
+    // 表现为输入框位置快速跳变
+    if (this.autoHideInputObservedTarget === container) return
     if (!this.autoHideInputResizeObserver) {
       this.autoHideInputResizeObserver = new ResizeObserver(() => {
         this.scheduleAutoHideResync()
@@ -529,6 +590,7 @@ html.${AUTO_HIDE_FLOAT_CLASS}.${AUTO_HIDE_HIDDEN_CLASS} ${container}:focus-withi
     }
     this.autoHideInputResizeObserver.disconnect()
     this.autoHideInputResizeObserver.observe(container)
+    this.autoHideInputObservedTarget = container
   }
 
   private startAutoHideMutationObserver() {
@@ -555,7 +617,17 @@ html.${AUTO_HIDE_FLOAT_CLASS}.${AUTO_HIDE_HIDDEN_CLASS} ${container}:focus-withi
     this.autoHideInputResyncTimer = setTimeout(() => {
       this.autoHideInputResyncTimer = null
       if (!this.autoHideInputEnabled) return
-      this.syncAutoHideLayout()
+      if (this.autoHideInputHidden === true) {
+        // 隐藏态不可见：自由重测量重同步，不会上屏
+        this.syncAutoHideLayout()
+      } else {
+        // 可见态是纯自然布局：只刷新容器引用（SPA 重建 DOM），不做任何测量
+        const config = this.autoHideInputConfig
+        const container = config
+          ? (document.querySelector(config.container) as HTMLElement | null)
+          : null
+        if (container) this.autoHideInputContainer = container
+      }
       this.updateAutoHideVisibility()
     }, AUTO_HIDE_RESYNC_DEBOUNCE_MS)
   }
@@ -568,6 +640,14 @@ html.${AUTO_HIDE_FLOAT_CLASS}.${AUTO_HIDE_HIDDEN_CLASS} ${container}:focus-withi
     )
   }
 
+  /**
+   * 聚焦唤出需要门闩：DOM 焦点可能被站点脚本程序化移动（窗口重获焦点、
+   * blur 后自动重聚焦等），不代表输入意图；只有真实页面手势后的聚焦才算
+   */
+  private isAutoHideInputFocusRevealed(): boolean {
+    return this.autoHideInputFocusReveal && this.isAutoHideInputFocused()
+  }
+
   private autoHideInputHasDraft(): boolean {
     const editor = this.siteAdapter.getTextareaElement()
     if (!editor) return false
@@ -577,43 +657,168 @@ html.${AUTO_HIDE_FLOAT_CLASS}.${AUTO_HIDE_HIDDEN_CLASS} ${container}:focus-withi
     return (editor.textContent || "").trim().length > 0
   }
 
+  /**
+   * 显隐决策的唯一入口。一次用户动作（切窗口、开弹窗、填变量）会扇出成一串
+   * 时序不同的求值（focusin 同步、focusout 延迟一拍、pointermove 节流等），
+   * 逐个立即翻转 = 输入框极速闪现。因此：冻结场景不翻转；显示立即生效；
+   * 隐藏只在条件稳定持续 AUTO_HIDE_HIDE_DELAY_MS 后才落地。
+   */
   private updateAutoHideVisibility = (event?: PointerEvent) => {
     if (!this.autoHideInputEnabled) return
-    if (!document.documentElement.classList.contains(AUTO_HIDE_FLOAT_CLASS)) return
 
-    // 触屏设备没有 hover，聚焦与草稿状态必须始终可见
+    if (this.isAutoHideInteractionFrozen()) {
+      this.cancelAutoHideHideTimer()
+      return
+    }
+
+    if (this.shouldRevealAutoHideInput(event)) {
+      this.cancelAutoHideHideTimer()
+      this.setAutoHideHidden(false)
+      return
+    }
+
+    if (this.shouldHideAutoHideInput(event)) {
+      this.scheduleAutoHideHide()
+      return
+    }
+
+    // 迟滞区间：保持现状
+    this.cancelAutoHideHideTimer()
+  }
+
+  /** 冻结判定：指针/焦点在 Ophel 自身 UI 内、或窗口失焦时，任何翻转都是误动 */
+  private isAutoHideInteractionFrozen(): boolean {
+    return this.autoHideInputPointerInOphelUi || this.isOphelUiActive() || this.isWindowUnfocused()
+  }
+
+  private isWindowUnfocused(): boolean {
+    return typeof document.hasFocus === "function" && !document.hasFocus()
+  }
+
+  /** 显示条件：触屏 / 手势聚焦门闩 / 草稿 / 指针接近视口底部 */
+  private shouldRevealAutoHideInput(event?: PointerEvent): boolean {
     if (
-      window.matchMedia("(pointer: coarse)").matches ||
-      this.isAutoHideInputFocused() ||
+      this.isAutoHideCoarsePointer() ||
+      this.isAutoHideInputFocusRevealed() ||
       this.autoHideInputHasDraft()
     ) {
-      this.setAutoHideHidden(false)
-      return
+      return true
     }
-
     const pointer = event ?? this.autoHideInputLastPointer
-    if (!pointer) {
+    if (!pointer) return false
+    const revealDistance =
+      this.autoHideInputConfig?.revealDistancePx ?? DEFAULT_AUTO_HIDE_REVEAL_DISTANCE_PX
+    return window.innerHeight - pointer.clientY <= revealDistance
+  }
+
+  /** 隐藏条件：无指针记录，或指针已远离视口底部（越过迟滞带） */
+  private shouldHideAutoHideInput(event?: PointerEvent): boolean {
+    const pointer = event ?? this.autoHideInputLastPointer
+    if (!pointer) return true
+    const revealDistance =
+      this.autoHideInputConfig?.revealDistancePx ?? DEFAULT_AUTO_HIDE_REVEAL_DISTANCE_PX
+    const hideDistance =
+      this.autoHideInputConfig?.hideDistancePx ??
+      Math.max(revealDistance + 1, DEFAULT_AUTO_HIDE_HIDE_DISTANCE_PX)
+    return window.innerHeight - pointer.clientY >= hideDistance
+  }
+
+  private scheduleAutoHideHide() {
+    if (this.autoHideInputHideTimer) return
+    this.autoHideInputHideTimer = setTimeout(() => {
+      this.autoHideInputHideTimer = null
+      // 到点重新求值：条件仍成立才隐藏；期间被冻结或反转则放弃
+      if (!this.autoHideInputEnabled) return
+      if (this.isAutoHideInteractionFrozen()) return
+      if (this.shouldRevealAutoHideInput()) return
       this.setAutoHideHidden(true)
+    }, AUTO_HIDE_HIDE_DELAY_MS)
+  }
+
+  private cancelAutoHideHideTimer() {
+    if (!this.autoHideInputHideTimer) return
+    clearTimeout(this.autoHideInputHideTimer)
+    this.autoHideInputHideTimer = null
+  }
+
+  /** 事件是否源自 Ophel 自身 UI；target 在 shadow 边界处已被重定向为宿主元素 */
+  private isOphelUiEvent(event: Event): boolean {
+    const target = event.target as Element | null
+    if (!target || typeof target.closest !== "function") return false
+    return target.closest(OPHEL_UI_HOST_SELECTOR) !== null
+  }
+
+  /** 焦点是否落在 Ophel 自身 UI 内（shadow 内聚焦时 activeElement 重定向为宿主） */
+  private isOphelUiActive(): boolean {
+    const active = document.activeElement
+    return !!active && active.matches(OPHEL_UI_HOST_SELECTOR)
+  }
+
+  /** matchMedia 每次调用都会新建 MediaQueryList，显隐判定在指针/滚动热路径上，必须缓存 */
+  private isAutoHideCoarsePointer(): boolean {
+    if (!this.autoHideInputCoarsePointer) {
+      this.autoHideInputCoarsePointer = window.matchMedia("(pointer: coarse)")
+    }
+    return this.autoHideInputCoarsePointer.matches
+  }
+
+  /**
+   * 显隐状态机的唯一出口。
+   * 隐藏：先测量+浮层化（同一任务内完成，浮层位置=自然位置，不上屏），再挂
+   *   隐藏类，transform 过渡把容器滑出视口。
+   * 显示：先重测量（隐藏期间布局可能已变；此时容器不可见，测量不上屏），摘掉
+   *   隐藏类滑回浮层位置，过渡结束后落回自然文档流——可见态不受浮层机制影响。
+   */
+  private setAutoHideHidden(hidden: boolean) {
+    const currentlyHidden = this.autoHideInputHidden === true
+    if (hidden === currentlyHidden) {
+      this.autoHideInputHidden = hidden
       return
     }
-
-    const distanceFromBottom = window.innerHeight - pointer.clientY
-    if (distanceFromBottom <= AUTO_HIDE_REVEAL_DISTANCE_PX) {
-      this.setAutoHideHidden(false)
-    } else if (distanceFromBottom >= AUTO_HIDE_HIDE_DISTANCE_PX) {
-      this.setAutoHideHidden(true)
+    this.autoHideInputHidden = hidden
+    if (hidden) {
+      this.cancelAutoHideSettleTimer()
+      this.syncAutoHideLayout()
+      // 容器不存在/不可见（如零态页面）时浮层化失败：保持自然可见，不挂隐藏类
+      if (document.documentElement.classList.contains(AUTO_HIDE_FLOAT_CLASS)) {
+        document.documentElement.classList.add(AUTO_HIDE_HIDDEN_CLASS)
+      } else {
+        this.autoHideInputHidden = false
+      }
+      return
+    }
+    this.syncAutoHideLayout()
+    if (document.documentElement.classList.contains(AUTO_HIDE_FLOAT_CLASS)) {
+      document.documentElement.classList.remove(AUTO_HIDE_HIDDEN_CLASS)
+      this.scheduleAutoHideSettle()
+    } else {
+      this.autoHideInputHidden = false
     }
   }
 
-  private setAutoHideHidden(hidden: boolean) {
-    if (this.autoHideInputHidden === hidden) return
-    if (!document.documentElement.classList.contains(AUTO_HIDE_FLOAT_CLASS)) return
-    document.documentElement.classList.toggle(AUTO_HIDE_HIDDEN_CLASS, hidden)
-    this.autoHideInputHidden = hidden
+  /** 显示过渡结束后摘掉浮层类，容器落回自然文档流（可见态零干预） */
+  private scheduleAutoHideSettle() {
+    this.cancelAutoHideSettleTimer()
+    this.autoHideInputSettleTimer = setTimeout(() => {
+      this.autoHideInputSettleTimer = null
+      if (this.autoHideInputHidden !== false) return
+      if (!this.autoHideInputEnabled) return
+      document.documentElement.classList.remove(AUTO_HIDE_FLOAT_CLASS)
+    }, AUTO_HIDE_SETTLE_DELAY_MS)
+  }
+
+  private cancelAutoHideSettleTimer() {
+    if (!this.autoHideInputSettleTimer) return
+    clearTimeout(this.autoHideInputSettleTimer)
+    this.autoHideInputSettleTimer = null
   }
 
   private handleAutoHidePointerMove = (event: PointerEvent) => {
-    this.autoHideInputLastPointer = event
+    // 指针进入 Ophel UI 时冻结显隐：保持现状而不是按"离开页面"隐藏，
+    // 否则弹窗边缘的鼠标移动会让输入框在隐藏/显示间来回切换
+    const inOphelUi = this.isOphelUiEvent(event)
+    this.autoHideInputPointerInOphelUi = inOphelUi
+    this.autoHideInputLastPointer = inOphelUi ? null : event
     if (this.autoHideInputPointerTimer) return
     this.autoHideInputPointerTimer = setTimeout(() => {
       this.autoHideInputPointerTimer = null
@@ -629,16 +834,92 @@ html.${AUTO_HIDE_FLOAT_CLASS}.${AUTO_HIDE_HIDDEN_CLASS} ${container}:focus-withi
     }, AUTO_HIDE_SCROLL_THROTTLE_MS)
   }
 
-  private handleAutoHideFocusIn = () => {
+  private handleAutoHideFocusIn = (event: FocusEvent) => {
+    // 焦点进入 Ophel UI 不是页面输入意图：冻结显隐（取消待隐藏），不做任何翻转
+    if (this.isOphelUiEvent(event)) {
+      this.cancelAutoHideHideTimer()
+      return
+    }
+    // 窗口失焦期间的程序化焦点抖动（如站点自动重聚焦）冻结处理
+    if (this.isWindowUnfocused()) return
+    // 只有紧跟真实页面手势（点击/按键）的聚焦才允许唤出；窗口重获焦点、
+    // 站点脚本程序化 focus（如 Gemini 失焦后自动重聚焦）不落闩
+    const target = event.target as Element | null
+    const intoContainer = !!(
+      target &&
+      this.autoHideInputContainer &&
+      this.autoHideInputContainer.contains(target)
+    )
+    if (
+      intoContainer &&
+      Date.now() - this.autoHideInputLastPageGestureAt <= AUTO_HIDE_FOCUS_GESTURE_WINDOW_MS
+    ) {
+      this.autoHideInputFocusReveal = true
+    }
     this.updateAutoHideVisibility()
   }
 
-  private handleAutoHideFocusOut = () => {
+  private handleAutoHideFocusOut = (event: FocusEvent) => {
+    // Ophel UI 内部的焦点转移不影响页面输入框显隐
+    if (this.isOphelUiEvent(event)) return
+    const target = event.target as Element | null
     // focusout 时 activeElement 尚未切换，延迟到下一拍再判定
-    setTimeout(() => this.updateAutoHideVisibility(), 0)
+    setTimeout(() => {
+      // 窗口失焦（切标签页/切窗口）：保留门闩与现状，切回后恢复原显隐
+      if (this.isWindowUnfocused()) return
+      // 焦点落入 Ophel UI（设置弹窗、变量对话框等）：保留门闩并冻结，
+      // 关闭后编辑器重聚焦时恢复原状，全程零翻转
+      if (this.isOphelUiActive()) {
+        this.cancelAutoHideHideTimer()
+        return
+      }
+      // 焦点落到页面其他元素：聚焦唤出资格失效，按指针/草稿重估
+      if (target && this.autoHideInputContainer?.contains(target)) {
+        this.autoHideInputFocusReveal = false
+      }
+      this.updateAutoHideVisibility()
+    }, 0)
   }
 
-  private handleAutoHideInputEvent = () => {
+  /** 记录真实页面手势并刷新指针位置；点击容器时直接落闩（编辑器已聚焦时不再触发 focusin） */
+  private handleAutoHidePointerDown = (event: PointerEvent) => {
+    if (this.isOphelUiEvent(event)) {
+      this.autoHideInputPointerInOphelUi = true
+      this.autoHideInputLastPointer = null
+      this.cancelAutoHideHideTimer()
+      return
+    }
+    this.autoHideInputPointerInOphelUi = false
+    this.autoHideInputLastPointer = event
+    this.autoHideInputLastPageGestureAt = Date.now()
+    const target = event.target as Element | null
+    if (target && this.autoHideInputContainer?.contains(target)) {
+      this.autoHideInputFocusReveal = true
+    }
+    this.updateAutoHideVisibility(event)
+  }
+
+  private handleAutoHideKeyDown = (event: KeyboardEvent) => {
+    if (this.isOphelUiEvent(event)) return
+    this.autoHideInputLastPageGestureAt = Date.now()
+    // 编辑器内的真实键盘输入本身就是输入意图：直接落闩并解除指针冻结
+    //（覆盖面板关闭后鼠标未移动、指针冻结残留的键盘输入场景）
+    const target = event.target as Element | null
+    if (target && this.autoHideInputContainer?.contains(target)) {
+      this.autoHideInputFocusReveal = true
+      this.autoHideInputPointerInOphelUi = false
+      this.updateAutoHideVisibility()
+    }
+  }
+
+  private handleAutoHideWindowBlur = () => {
+    // 窗口失焦期间冻结显隐：不清门闩、不重估，切回后恢复原状而非闪一轮
+    this.cancelAutoHideHideTimer()
+  }
+
+  private handleAutoHideInputEvent = (event: Event) => {
+    // 只响应页面编辑器的输入；Ophel 面板内的输入不改变草稿状态
+    if (this.isOphelUiEvent(event)) return
     this.updateAutoHideVisibility()
   }
 
@@ -649,22 +930,28 @@ html.${AUTO_HIDE_FLOAT_CLASS}.${AUTO_HIDE_HIDDEN_CLASS} ${container}:focus-withi
   private bindAutoHideListeners() {
     if (this.autoHideInputListenersBound) return
     document.addEventListener("pointermove", this.handleAutoHidePointerMove, { passive: true })
+    document.addEventListener("pointerdown", this.handleAutoHidePointerDown, true)
+    document.addEventListener("keydown", this.handleAutoHideKeyDown, true)
     document.addEventListener("scroll", this.handleAutoHideScroll, { passive: true, capture: true })
     document.addEventListener("focusin", this.handleAutoHideFocusIn, true)
     document.addEventListener("focusout", this.handleAutoHideFocusOut, true)
     document.addEventListener("input", this.handleAutoHideInputEvent, true)
     window.addEventListener("resize", this.handleAutoHideWindowResize, { passive: true })
+    window.addEventListener("blur", this.handleAutoHideWindowBlur)
     this.autoHideInputListenersBound = true
   }
 
   private unbindAutoHideListeners() {
     if (!this.autoHideInputListenersBound) return
     document.removeEventListener("pointermove", this.handleAutoHidePointerMove)
+    document.removeEventListener("pointerdown", this.handleAutoHidePointerDown, true)
+    document.removeEventListener("keydown", this.handleAutoHideKeyDown, true)
     document.removeEventListener("scroll", this.handleAutoHideScroll, true)
     document.removeEventListener("focusin", this.handleAutoHideFocusIn, true)
     document.removeEventListener("focusout", this.handleAutoHideFocusOut, true)
     document.removeEventListener("input", this.handleAutoHideInputEvent, true)
     window.removeEventListener("resize", this.handleAutoHideWindowResize)
+    window.removeEventListener("blur", this.handleAutoHideWindowBlur)
     this.autoHideInputListenersBound = false
     if (this.autoHideInputPointerTimer) {
       clearTimeout(this.autoHideInputPointerTimer)
@@ -691,6 +978,9 @@ html.${AUTO_HIDE_FLOAT_CLASS}.${AUTO_HIDE_HIDDEN_CLASS} ${container}:focus-withi
     }
     this.autoHideInputConfig = null
     this.autoHideInputLastPointer = null
+    this.autoHideInputFocusReveal = false
+    this.autoHideInputLastPageGestureAt = 0
+    this.autoHideInputPointerInOphelUi = false
   }
 
   // ==================== CSS 生成 ====================

@@ -1435,7 +1435,15 @@ const validateAutoHideInput = (
     value,
     path,
     context,
-    ["container", "spacerHeight", "styles"],
+    [
+      "container",
+      "spacerHeight",
+      "revealDistancePx",
+      "hideDistancePx",
+      "hiddenOffsetPx",
+      "zIndex",
+      "styles",
+    ],
     [],
     mode,
   )
@@ -1448,6 +1456,15 @@ const validateAutoHideInput = (
       integer: true,
       min: 0,
     })
+  }
+  const numericFields = ["revealDistancePx", "hideDistancePx", "hiddenOffsetPx", "zIndex"] as const
+  for (const field of numericFields) {
+    if (autoHideInput[field] !== undefined) {
+      validateFiniteNumber(autoHideInput[field], `${path}.${field}`, context, mode, {
+        integer: true,
+        min: 0,
+      })
+    }
   }
   if (autoHideInput.styles !== undefined) {
     if (isDeletion(autoHideInput.styles, mode)) return

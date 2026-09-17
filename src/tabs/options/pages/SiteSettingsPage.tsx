@@ -162,6 +162,12 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
       <span className="settings-beta-badge">{t("betaBadge")}</span>
     </span>
   )
+  const autoHideInputTitle = (
+    <span className="settings-card-title-with-badge">
+      <span>{t("autoHideInputTitle")}</span>
+      <span className="settings-beta-badge">{t("betaBadge")}</span>
+    </span>
+  )
 
   const parseWidthValue = (value: string | undefined, fallback: string) => {
     const parsed = Number.parseInt(value ?? fallback, 10)
@@ -466,7 +472,7 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
 
           {/* 自动隐藏输入框 (Auto Hide Input) 卡片 */}
           {supportsAutoHideInput && (
-            <SettingCard title={t("autoHideInputTitle")} settingId="layout-auto-hide-input-card">
+            <SettingCard title={autoHideInputTitle} settingId="layout-auto-hide-input-card">
               <ToggleRow
                 label={t("autoHideInputLabel")}
                 description={t("autoHideInputDesc")}

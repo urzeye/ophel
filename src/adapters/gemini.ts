@@ -2579,11 +2579,11 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   getAutoHideInputConfig(): AutoHideInputConfig | null {
-    const { container, spacerHeight, styles } = this.config.autoHideInput
+    const config = this.config.autoHideInput
+    // 顶层字段直接展开，新增标量配置项时无需同步此处；styles 需要逐条拷贝
     return {
-      container,
-      ...(spacerHeight !== undefined ? { spacerHeight } : {}),
-      ...(styles ? { styles: styles.map((style) => ({ ...style })) } : {}),
+      ...config,
+      ...(config.styles ? { styles: config.styles.map((style) => ({ ...style })) } : {}),
     }
   }
 
