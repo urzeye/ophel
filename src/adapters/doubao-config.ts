@@ -80,7 +80,7 @@ export interface DoubaoSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const DOUBAO_CONFIG_VERSION = 6
+export const DOUBAO_CONFIG_VERSION = 7
 
 const createDoubaoConfig = (): DoubaoSiteConfig => {
   const sidebarRoot = "#flow_chat_sidebar"
@@ -193,7 +193,7 @@ const createDoubaoConfig = (): DoubaoSiteConfig => {
       ],
     },
     quickQuote: "native",
-    supportsHostThemeSync: false,
+    supportsHostThemeSync: true,
     sitePrivateSelectors: {
       nativeQuotePopover: [
         '[data-word-selection-toolbar="true"]',

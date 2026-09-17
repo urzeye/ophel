@@ -7,7 +7,8 @@
  * - 文本与按钮仅在必要时使用哈希 class 的局部模糊匹配
  *
  * 主题机制：
- * - <html data-theme="light">，仅支持浅色模式
+ * - 宿主页主题通过 localStorage 键 dbx-web-theme 同步（system / light / dark）
+ * - 根节点属性 <html data-theme="light|dark"> 与 Semi Design 属性 <body theme-mode="light|dark">
  * - 使用 Semi Design 组件库（semi-* class 前缀）
  *
  * 路由兼容：
@@ -39,6 +40,7 @@ import {
   type ExportLifecycleContext,
   type ModelSwitcherConfig,
   type OutlineItem,
+  type OutlineSource,
   type PanelAvoidanceConfig,
   type SiteDeleteConversationResult,
   type WidthSelectorConfig,
@@ -49,6 +51,27 @@ import { DOUBAO_CONFIG, DOUBAO_CONFIG_VERSION, type DoubaoSiteConfig } from "./d
 
 /** 匹配 /chat/{id}、/code/chat/{id} 或 /thread/{id}，捕获对话 ID */
 const conversationPathPattern = /^(?:(?:\/code)?\/chat|\/thread)\/([^/?#]+)/
+const DOUBAO_THEME_STORAGE_KEY = "dbx-web-theme"
+
+function applyDoubaoThemeDomHints(mode: "light" | "dark"): void {
+  if (typeof document === "undefined") return
+  const root = document.documentElement
+  const body = document.body
+
+  if (root) {
+    root.setAttribute("data-theme", mode)
+    root.classList.toggle("dark", mode === "dark")
+    root.classList.toggle("light", mode === "light")
+    root.style.colorScheme = mode
+  }
+
+  if (body) {
+    body.setAttribute("data-theme", mode)
+    body.setAttribute("theme-mode", mode)
+    body.classList.toggle("dark", mode === "dark")
+    body.classList.toggle("light", mode === "light")
+  }
+}
 const DOUBAO_ATTACHMENT_SOURCE_ATTRS = [
   "href",
   "src",
@@ -134,6 +157,19 @@ export class DoubaoAdapter extends SiteAdapter {
   private exportBundleCache: ExportBundle | null = null
   // 导出采集完整性报告（通过 getExportCollectionReport 暴露给 manager）
   private exportCollectionReport: ExportCollectionReport | null = null
+
+  constructor(config: DoubaoSiteConfig = DOUBAO_CONFIG) {
+    super()
+    this.config = config
+    try {
+      if (typeof document !== "undefined") {
+        const mode = this.detectHostThemeMode()
+        if (mode) {
+          applyDoubaoThemeDomHints(mode)
+        }
+      }
+    } catch {}
+  }
 
   // ===== 必选抽象方法 =====
 
@@ -2576,8 +2612,87 @@ export class DoubaoAdapter extends SiteAdapter {
 
   // ===== 主题 =====
 
-  toggleTheme(): Promise<boolean> {
-    return Promise.resolve(false)
+  acceptsSystemThemePreference(): boolean {
+    return true
+  }
+
+  detectHostThemePreference(): "light" | "dark" | "system" | null {
+    try {
+      const stored = localStorage.getItem(DOUBAO_THEME_STORAGE_KEY)
+      if (stored === "light" || stored === "dark" || stored === "system") {
+        return stored
+      }
+      return null
+    } catch {
+      return null
+    }
+  }
+
+  detectHostThemeMode(): "light" | "dark" | null {
+    const preference = this.detectHostThemePreference()
+    if (preference === "system") {
+      return typeof window !== "undefined" &&
+        typeof window.matchMedia === "function" &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light"
+    }
+    if (preference === "dark" || preference === "light") {
+      return preference
+    }
+    if (typeof document !== "undefined" && document.documentElement) {
+      const dataTheme = document.documentElement.getAttribute("data-theme")
+      if (dataTheme === "dark" || dataTheme === "light") {
+        return dataTheme
+      }
+    }
+    return null
+  }
+
+  async toggleTheme(targetMode: "light" | "dark" | "system"): Promise<boolean> {
+    try {
+      const resolvedMode: "light" | "dark" =
+        targetMode === "system"
+          ? typeof window !== "undefined" &&
+            typeof window.matchMedia === "function" &&
+            window.matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark"
+            : "light"
+          : targetMode
+
+      const previousValue = localStorage.getItem(DOUBAO_THEME_STORAGE_KEY)
+      localStorage.setItem(DOUBAO_THEME_STORAGE_KEY, targetMode)
+
+      applyDoubaoThemeDomHints(resolvedMode)
+
+      if (typeof window !== "undefined" && typeof window.dispatchEvent === "function") {
+        if (typeof StorageEvent !== "undefined") {
+          window.dispatchEvent(
+            new StorageEvent("storage", {
+              key: DOUBAO_THEME_STORAGE_KEY,
+              oldValue: previousValue,
+              newValue: targetMode,
+              storageArea: localStorage,
+            }),
+          )
+        } else if (typeof CustomEvent !== "undefined") {
+          window.dispatchEvent(
+            new CustomEvent("storage", {
+              detail: {
+                key: DOUBAO_THEME_STORAGE_KEY,
+                oldValue: previousValue,
+                newValue: targetMode,
+              },
+            }),
+          )
+        }
+      }
+
+      return true
+    } catch (error) {
+      console.error("[DoubaoAdapter] toggleTheme error:", error)
+      return false
+    }
   }
 
   // ===== 其他 =====
