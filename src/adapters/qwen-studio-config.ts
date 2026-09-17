@@ -109,7 +109,7 @@ export interface QwenStudioSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const QWEN_STUDIO_CONFIG_VERSION = 2
+export const QWEN_STUDIO_CONFIG_VERSION = 3
 
 const createQwenStudioConfig = (): QwenStudioSiteConfig => {
   const sidebarRoot = "#sidebar"

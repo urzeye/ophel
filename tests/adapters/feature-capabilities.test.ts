@@ -38,7 +38,7 @@ const DOCUMENTED_OMISSIONS = {
   [SITE_IDS.QIANWEN]: ["conversation-list", "panel-avoidance", "document-outline"],
   [SITE_IDS.QWENAI]: ["conversation-list", "panel-avoidance", "document-outline"],
   [SITE_IDS.YUANBAO]: ["panel-avoidance", "document-outline"],
-  [SITE_IDS.ZAI]: ["conversation-list", "clean", "panel-avoidance", "document-outline"],
+  [SITE_IDS.ZAI]: ["conversation-list", "panel-avoidance", "document-outline"],
 } as const satisfies Record<BuiltinSiteId, readonly SitePackCapability[]>
 
 class FixtureAdapter extends SiteAdapter {

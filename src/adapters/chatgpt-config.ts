@@ -207,11 +207,7 @@ const createChatGPTConfig = (): ChatGPTSiteConfig => {
       },
     ],
     zenMode: {
-      hide: [
-        "#stage-slideover-sidebar",
-        "div.select-none:has(> .pointer-events-auto)",
-        "[data-testid='thread-disclaimer']",
-      ],
+      hide: ["#stage-slideover-sidebar"],
     },
     cleanMode: {
       preserveFlow: ["[data-testid='thread-disclaimer']"],

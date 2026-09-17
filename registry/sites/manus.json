@@ -83,11 +83,7 @@
     "useShadowDOM": false
   },
   "zenMode": {
-    "hide": [
-      "nav[class*='background-nav']",
-      "div.desktop-drag",
-      "div.pointer-events-none.\\!max-w-\\[288px\\]"
-    ]
+    "hide": ["nav[class*='background-nav']"]
   },
   "cleanMode": {
     "hide": ["div.desktop-drag", "div.pointer-events-none.\\!max-w-\\[288px\\]"]
