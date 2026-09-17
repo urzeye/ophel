@@ -152,6 +152,7 @@ hasInputDraft(): boolean
 - **面板避让 / 页面宽度 / 用户问题宽度**：这些功能改变输入框位置或宽度，其应用路径末尾追加一次防抖重测量（与 `schedulePanelAvoidanceUpdate` 同节奏）。
 - **SPA 换 DOM**（发送消息后输入框重建、新对话页切换）：MutationObserver 侦测容器断连，防抖后重新测量挂载；零态居中输入不浮层化（选择器自带排除）。
 - **触屏设备**：`pointer: coarse` 时永不隐藏，避免无 hover 场景下输入框不可达。
+- **指针移出窗口**：鼠标从视口内移出窗口（窗口仍聚焦）后不再有 `pointermove`，`lastPointer` 停留在移出前的位置；若停在底部显示区，输入框会保持显示。这是有意的 fail-visible 方向（宁可不藏、绝不误藏），切窗口/失焦路径由 window blur 冻结逻辑接管。
 - **双平台**：不依赖扩展专有 API，扩展与油猴共用同一代码路径；样式注入走 `document.head`，Shadow DOM 注入沿用 `refreshShadowInjection` 路径。
 - **首发放量**：仅 Gemini 适配器返回配置；站点设置页开关用站点白名单（同 `PANEL_AVOIDANCE_SUPPORTED_SITE_IDS` 模式）门控，其余站点不显示入口。
 
@@ -166,6 +167,7 @@ hasInputDraft(): boolean
   - `container` 必须选中"整体容器"而非输入框本身，否则浮层后工具行、附件预览等残留原位。
   - 输入框位于 Shadow DOM 内的站点不支持（测量与 `position: fixed` 坐标系跨 Shadow 边界不可靠），选择器解析不到时功能自动关闭。
   - 依赖 `:has()` 的排除写法不新增浏览器基线负担（项目现有配置已大量使用 `:has()`）。
+  - 零态/活跃态切换必须伴随 DOM 重建。重同步的 MutationObserver 只观察 `childList`，不观察属性变化：站点若原地切换 class（如 `is-zero-state`）而不重建输入区 DOM，`:has()` 匹配状态的变化不会被侦测，浮层状态会滞留到下一次 childList 变异或 resize 才纠正。接入新站点时需实测确认该站点的页面切换是 DOM 重建式（Gemini 是）。
 
 ## 5. 普适性论证
 

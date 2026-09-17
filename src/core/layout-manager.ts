@@ -616,6 +616,9 @@ html.${AUTO_HIDE_FLOAT_CLASS} ${config.scrollContainer}::after {
         this.scheduleAutoHideResync()
       }
     })
+    // 只观察 childList、不观察 attributes：依赖 :has() 的零态排除（如 is-zero-state）
+    // 要求站点的页面切换是 DOM 重建式；原地切 class 的站点不适用，见
+    // docs/developer/input-auto-hide-plan.md §4 约束清单
     this.autoHideInputMutationObserver.observe(document.body, { childList: true, subtree: true })
   }
 
@@ -831,6 +834,8 @@ html.${AUTO_HIDE_FLOAT_CLASS} ${config.scrollContainer}::after {
   }
 
   private handleAutoHidePointerMove = (event: PointerEvent) => {
+    // 指针移出窗口后不再触发 pointermove，lastPointer 停留在移出前位置：
+    // 停在底部显示区时输入框保持可见，这是有意的 fail-visible 方向
     // 指针进入 Ophel UI 时冻结显隐：保持现状而不是按"离开页面"隐藏，
     // 否则弹窗边缘的鼠标移动会让输入框在隐藏/显示间来回切换
     const inOphelUi = this.isOphelUiEvent(event)
