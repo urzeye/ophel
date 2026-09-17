@@ -11,15 +11,15 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### ✨ Improvements
 
-- **Clean Mode bottom spacing** — In Clean Mode, AI generation and legal disclaimers under the input box are now hidden while preserving their native DOM flow spacing, keeping the input area at the site's original intended height instead of sticking to the bottom edge.
+- **Clean Mode bottom spacing** — In Clean Mode, AI generation and legal disclaimers under the input box are now hidden while preserving their native DOM flow spacing, keeping the input area at the site's original intended height instead of sticking to the bottom edge.(#928)
 
 ### 🐛 Bug Fixes
 
-- **Zen Mode and Clean Mode state isolation** — Fixed an issue where enabling Zen Mode automatically enabled Clean Mode and left it active after exiting, now preserving your original Clean Mode preference.
+- **Zen Mode and Clean Mode state isolation** — Fixed an issue where enabling Zen Mode automatically enabled Clean Mode and left it active after exiting, now preserving your original Clean Mode preference.(#926)
 
 ---
 
-## [1.2.7] - 2026-09-13
+## [1.2.7][1.2.7] - 2026-09-13
 
 **⚠️ Notice — Our GitHub account has been temporarily suspended in error, and we are actively appealing. Until it is restored, GitHub links (repository, issue tracker) and the online adapter library in the Adapter Center may be unavailable. If you run into any problems, please let us know on [Discord](https://discord.gg/rmPzb6Cx9u).**
 
@@ -54,7 +54,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.2.6] - 2026-08-28
+## [1.2.6][1.2.6] - 2026-08-28
 
 ### 🚀 New Features
 
