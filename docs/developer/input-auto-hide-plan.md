@@ -98,6 +98,10 @@ export interface ZenModeConfig {
 >
 > 性能备注：MutationObserver 回调在每次 childList 变异批次都触发（流式输出期间很频繁），`:has()` 重校验只在容器断连或容器自身/父链/子树结构变化时执行，无关区域的变异只做几次 `contains()` 引用比较；容器不存在时只在有新节点加入的批次才调度重解析。可见态零测量零布局写入，整套机制对页面的持续开销约等于几次属性比较。
 
+> 实现教训（已修复）：**滚动末尾占位不能用真实 DOM 节点注入站点滚动容器**。初版 spacer 是 appendChild 到滚动容器的隐形 div——对 Gemini 的 `infinite-scroller` 可用，但很多站点用虚拟滚动/框架 reconcile 严格管理子节点，外来 DOM 节点会干扰索引渲染、被站点脚本移出或触发多余的 MutationObserver 批次。修复：占位改为注入样式表里的 `scrollContainer::after` 伪元素（挂 `gh-ahi-float` 类作用域），伪元素不是 DOM 节点，站点的 children 枚举、reconcile、MutationObserver 全部看不到它，对虚拟滚动列表免疫；未配置 `scrollContainer` 的站点不占位，行为显式。例外边界：站点滚动容器自身已占用 `::after` 时会样式竞争，用 `spacerHeight: 0` 在配置级关闭占位即可。
+>
+> 配套加固（同批落地）：草稿判定从 LayoutManager 下沉为 `SiteAdapter.hasInputDraft()` 可覆写钩子（站点差异回到适配器层）；迟滞带改为双重防护——校验器拒绝 `hideDistancePx <= revealDistancePx` 且强制 `container` 必填，运行时用 `Math.max(hide, reveal + 1)` 钳制，SitePack 配错也不可能消掉迟滞让抖动回归。
+
 ### 3.2 Ophel 通用机制
 
 站点差异收敛为适配器声明，机制全部沉淀在 `LayoutManager`（与 zen/clean 同处，复用样式注入与 Shadow DOM 注入链路）：
@@ -110,12 +114,24 @@ export interface AutoHideInputConfig {
   scrollContainer?: string
   /** 滚动容器内占位 spacer 高度 px，缺省 33 */
   spacerHeight?: number
+  /** 指针距视口底部 <= 该值时显示输入框，缺省 210 */
+  revealDistancePx?: number
+  /** 指针距视口底部 >= 该值时隐藏输入框，须大于 revealDistancePx 形成迟滞，缺省 revealDistancePx + 180 */
+  hideDistancePx?: number
+  /** 隐藏态在容器自身高度之外额外下移的偏移 px，缺省 28 */
+  hiddenOffsetPx?: number
+  /** 浮层 z-index，缺省 30 */
+  zIndex?: number
   /** 站点附加规则（如释放会话容器 min-height、关闭底部渐变遮罩） */
   styles?: ZenModeStyleRule[]
 }
 
 // SiteAdapter 基类默认返回 null = 不支持；子类按需覆盖
 getAutoHideInputConfig(): AutoHideInputConfig | null
+
+// 草稿判定（明确的输入意图，驱动立即唤出）；默认按编辑器文本非空判定，
+// 编辑器有预填内容/占位文本残留的站点覆写本方法，否则会永不隐藏
+hasInputDraft(): boolean
 ```
 
 工作流程：
