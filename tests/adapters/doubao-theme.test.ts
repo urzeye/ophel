@@ -67,7 +67,7 @@ const createClassList = () => {
   }
 }
 
-const installDoubaoThemeGlobals = (options?: { systemDark?: boolean }) => {
+const installDoubaoThemeGlobals = (options?: { systemDark?: boolean; hostname?: string }) => {
   const storage = new MemoryStorage()
   const createdElements: Array<{ id: string; textContent: string }> = []
   const htmlStyle: Record<string, string> = {}
@@ -203,7 +203,7 @@ const installDoubaoThemeGlobals = (options?: { systemDark?: boolean }) => {
   vi.stubGlobal("MutationObserver", MockMutationObserver)
   vi.stubGlobal("document", documentStub)
   vi.stubGlobal("window", {
-    location: new URL("https://www.doubao.com/chat/"),
+    location: new URL(`https://${options?.hostname ?? "www.doubao.com"}/chat/`),
     innerWidth: 1280,
     innerHeight: 720,
     dispatchEvent,
@@ -356,6 +356,36 @@ describe("Doubao theme adaptation", () => {
     expect(bodyAttrs["theme-mode"]).toBeUndefined()
     expect(bodyClassList.contains("light")).toBe(false)
     expect(htmlClassList.contains("light")).toBe(false)
+  })
+
+  it("does not strip other sites' html.dark when constructed off Doubao", () => {
+    const { htmlClassList, bodyAttrs, bodyClassList } = installDoubaoThemeGlobals({
+      hostname: "chatgpt.com",
+    })
+    htmlClassList.add("dark")
+    bodyAttrs["data-theme"] = "dark"
+    bodyClassList.add("dark")
+
+    new DoubaoAdapter()
+
+    expect(htmlClassList.contains("dark")).toBe(true)
+    expect(bodyAttrs["data-theme"]).toBe("dark")
+    expect(bodyClassList.contains("dark")).toBe(true)
+  })
+
+  it("does not mutate host DOM while detecting theme mode", () => {
+    const { bodyAttrs, htmlClassList } = installDoubaoThemeGlobals()
+    bodyAttrs["theme-mode"] = "light"
+    htmlClassList.add("light")
+
+    const adapter = new DoubaoAdapter()
+    // 构造函数会在豆包域上清污染；先把残留写回去再探测
+    bodyAttrs["theme-mode"] = "light"
+    htmlClassList.add("light")
+
+    expect(adapter.detectHostThemeMode()).toBeNull()
+    expect(bodyAttrs["theme-mode"]).toBe("light")
+    expect(htmlClassList.contains("light")).toBe(true)
   })
 
   it("synchronizes ThemeManager when host switches theme natively or via storage", () => {

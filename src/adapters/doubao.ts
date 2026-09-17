@@ -63,7 +63,6 @@ import {
   type ExportLifecycleContext,
   type ModelSwitcherConfig,
   type OutlineItem,
-  type OutlineSource,
   type PanelAvoidanceConfig,
   type SiteDeleteConversationResult,
   type WidthSelectorConfig,
@@ -74,7 +73,12 @@ import { DOUBAO_CONFIG, DOUBAO_CONFIG_VERSION, type DoubaoSiteConfig } from "./d
 
 /** 匹配 /chat/{id}、/code/chat/{id} 或 /thread/{id}，捕获对话 ID */
 const conversationPathPattern = /^(?:(?:\/code)?\/chat|\/thread)\/([^/?#]+)/
+const DOUBAO_HOST = "www.doubao.com"
 const DOUBAO_THEME_STORAGE_KEY = "dbx-web-theme"
+
+function isDoubaoHost(): boolean {
+  return typeof window !== "undefined" && window.location.hostname === DOUBAO_HOST
+}
 
 /**
  * 清理豆包 DOM 上的历史残留污染属性与类名。
@@ -88,10 +92,11 @@ const DOUBAO_THEME_STORAGE_KEY = "dbx-web-theme"
  * 会强行覆盖 `:root[data-theme]` 注入的 CSS 变量。当用户在豆包原生菜单切换主题时，
  * 豆包原生代码绝不会主动清理 `body`，输入框组件将永久滞留在 `body` 旧属性指定的模式下，导致输入框黑白反转。
  *
- * 本方法用于在适配器初始化、宿主状态探测及主题切换时，彻底剥离残留的 body 属性与类名污染。
+ * 本方法用于在豆包页初始化与主题切换时剥离残留属性；探测路径保持只读。
  */
 function cleanDoubaoThemeDomPollution(): void {
-  if (typeof document === "undefined") return
+  // 内置适配器在每个站点都会被 new；禁止在非豆包页改 html/body 主题 class。
+  if (!isDoubaoHost() || typeof document === "undefined") return
   const root = document.documentElement
   if (root) {
     root.classList.remove("dark", "light")
@@ -208,13 +213,15 @@ export class DoubaoAdapter extends SiteAdapter {
     this.config = config
     try {
       cleanDoubaoThemeDomPollution()
-    } catch {}
+    } catch (error) {
+      console.error("[DoubaoAdapter] failed to clean theme DOM pollution:", error)
+    }
   }
 
   // ===== 必选抽象方法 =====
 
   match(): boolean {
-    return window.location.hostname === "www.doubao.com"
+    return isDoubaoHost()
   }
 
   getSiteId(): string {
@@ -2672,10 +2679,9 @@ export class DoubaoAdapter extends SiteAdapter {
    * 探测宿主当前生效的明暗模式。
    * 优先解析 localStorage 偏好（若为 system 则结合 matchMedia 解析），
    * 若无偏好记录则回退到根节点的 data-theme 属性。
-   * 每次探测时顺带执行 cleanDoubaoThemeDomPollution，确保无任何历史残留属性干扰 Semi 组件。
+   * 只读：不在探测路径改 DOM，避免 MutationObserver 重入。
    */
   detectHostThemeMode(): "light" | "dark" | null {
-    cleanDoubaoThemeDomPollution()
     const preference = this.detectHostThemePreference()
     if (preference === "system") {
       return typeof window !== "undefined" &&
@@ -2719,26 +2725,14 @@ export class DoubaoAdapter extends SiteAdapter {
       applyDoubaoThemeDom(resolvedMode)
 
       if (typeof window !== "undefined" && typeof window.dispatchEvent === "function") {
-        if (typeof StorageEvent !== "undefined") {
-          window.dispatchEvent(
-            new StorageEvent("storage", {
-              key: DOUBAO_THEME_STORAGE_KEY,
-              oldValue: previousValue,
-              newValue: targetMode,
-              storageArea: localStorage,
-            }),
-          )
-        } else if (typeof CustomEvent !== "undefined") {
-          window.dispatchEvent(
-            new CustomEvent("storage", {
-              detail: {
-                key: DOUBAO_THEME_STORAGE_KEY,
-                oldValue: previousValue,
-                newValue: targetMode,
-              },
-            }),
-          )
-        }
+        window.dispatchEvent(
+          new StorageEvent("storage", {
+            key: DOUBAO_THEME_STORAGE_KEY,
+            oldValue: previousValue,
+            newValue: targetMode,
+            storageArea: localStorage,
+          }),
+        )
       }
 
       return true

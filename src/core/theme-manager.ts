@@ -543,8 +543,8 @@ export class ThemeManager {
       return "light"
     }
 
-    // 3. Data 属性：优先根节点 documentElement，其次 body
-    const dataTheme = document.documentElement.dataset.theme || document.body.dataset.theme
+    // 3. Data 属性
+    const dataTheme = document.body.dataset.theme || document.documentElement.dataset.theme
     if (dataTheme === "dark") {
       return "dark"
     } else if (dataTheme === "light") {
@@ -918,19 +918,16 @@ ${cssVars}
       })
     }
 
-    // 监听跨标签页或宿主内派发的 storage 事件（如 dbx-web-theme、theme、yb_web_theme_mode）
+    // 豆包主题偏好写在 localStorage，跨标签或同页合成 storage 事件时 DOM 可能不变。
+    // 仅在豆包上监听 dbx-web-theme，避免 ChatGPT/Grok/元宝多一次全站 reconcile。
     if (
       !this.storageListener &&
+      this.adapter?.getSiteId() === SITE_IDS.DOUBAO &&
       typeof window !== "undefined" &&
       typeof window.addEventListener === "function"
     ) {
       this.storageListener = (event: StorageEvent) => {
-        if (
-          !event.key ||
-          event.key === "dbx-web-theme" ||
-          event.key === "theme" ||
-          event.key === "yb_web_theme_mode"
-        ) {
+        if (event.key === "dbx-web-theme") {
           reconcileObservedTheme()
         }
       }
