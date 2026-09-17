@@ -166,7 +166,9 @@ const createDeepSeekConfig = (): DeepSeekSiteConfig => {
       },
     ],
     zenMode: { hide: [".dc04ec1d"] },
-    cleanMode: { preserveFlow: ["._0fcaa63"] },
+    cleanMode: {
+      preserveFlow: ["._0fcaa63", ".ds-virtual-list > div:last-child > div:last-child"],
+    },
     quickQuote: "enabled",
     sitePrivateSelectors: {
       sidebarScrollArea,

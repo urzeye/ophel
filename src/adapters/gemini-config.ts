@@ -384,6 +384,7 @@ const createGeminiConfig = (): GeminiSiteConfig => {
     cleanMode: {
       preserveFlow: [
         "hallucination-disclaimer",
+        ".hallucination-disclaimer",
         "condensed-tos-disclaimer",
         "model-response-disclaimers",
         "election-info-disclaimer",
