@@ -112,6 +112,9 @@ const installDoubaoThemeGlobals = (options?: { systemDark?: boolean }) => {
     },
     querySelectorAll: () => [],
     querySelector: () => null,
+    startViewTransition: vi.fn(() => {
+      throw new Error("Doubao must not start a document view transition")
+    }),
   }
 
   vi.stubGlobal("localStorage", storage)
@@ -203,6 +206,19 @@ describe("Doubao host theme storage", () => {
     expect(storage.getItem("dbx-web-theme")).toBe("system")
 
     expect(dispatchEvent).not.toHaveBeenCalled()
+    themeManager.destroy()
+  })
+
+  it("writes dbx-web-theme from ThemeManager.toggle without starting a document view transition", async () => {
+    const { storage } = installDoubaoThemeGlobals()
+    storage.setItem("dbx-web-theme", "light")
+    const adapter = new DoubaoAdapter()
+    const themeManager = new ThemeManager("light", undefined, adapter)
+
+    await themeManager.toggle()
+
+    expect(storage.getItem("dbx-web-theme")).toBe("dark")
+    expect(document.startViewTransition).not.toHaveBeenCalled()
     themeManager.destroy()
   })
 

@@ -976,7 +976,12 @@ ${cssVars}
     this.stopThemeMonitoring()
 
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    if (!document.startViewTransition || prefersReducedMotion) {
+    // 豆包：宿主只认 localStorage，root View Transition 会卡住且回调里的 setItem 跑不到
+    if (
+      !document.startViewTransition ||
+      prefersReducedMotion ||
+      this.adapter?.getSiteId() === SITE_IDS.DOUBAO
+    ) {
       try {
         action()
       } finally {
@@ -1083,9 +1088,11 @@ ${cssVars}
     }
 
     // 检查是否支持 View Transitions API
+    // 豆包：宿主只认 localStorage，root View Transition 会卡住且回调里的 setItem 跑不到
     if (
       !document.startViewTransition ||
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+      this.adapter?.getSiteId() === SITE_IDS.DOUBAO
     ) {
       doToggle()
       this.mode = nextMode
