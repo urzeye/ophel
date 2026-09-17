@@ -80,7 +80,7 @@ export interface DoubaoSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const DOUBAO_CONFIG_VERSION = 5
+export const DOUBAO_CONFIG_VERSION = 6
 
 const createDoubaoConfig = (): DoubaoSiteConfig => {
   const sidebarRoot = "#flow_chat_sidebar"
@@ -184,12 +184,12 @@ const createDoubaoConfig = (): DoubaoSiteConfig => {
       { selector: ".chrome70-container", property: "--center-content-max-width" },
     ],
     zenMode: {
-      hide: ["nav", ".container-qOgFQp", ".container-hzjmF1"],
+      hide: ["nav", ".container-hzjmF1"],
     },
     cleanMode: {
       hide: [
         '[aria-label="活动入口"]',
-        'main[data-container-name="main"] > div > div:first-child > div:nth-child(2) > div:first-child > div:first-child > div:nth-child(2)',
+        `${mainLayoutScope} .h-header-height .s-font-small-strong + div`,
       ],
     },
     quickQuote: "native",

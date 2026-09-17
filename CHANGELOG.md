@@ -9,17 +9,13 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-### 🚀 New Features
-
-- **Auto-hide input (Gemini)** — Added an "Auto-hide Input" toggle under Site Settings for Gemini. The chat input box floats as an overlay and slides away when idle, letting conversations use the freed space; it reappears when the pointer approaches the bottom, on prompt insertion, or via the focus shortcut (`Alt + I`).
-
 ### ✨ Improvements
 
-- **Clean Mode bottom spacing** — In Clean Mode, AI generation and legal disclaimers under the input box are now hidden while preserving their native DOM flow spacing, keeping the input area at the site's original intended height instead of sticking to the bottom edge.
+- **Clean Mode bottom spacing** — In Clean Mode, AI generation and legal disclaimers under the input box are now hidden while preserving their native DOM flow spacing, keeping the input area at the site's original intended height instead of sticking to the bottom edge. (#929)
 
 ### 🐛 Bug Fixes
 
-- **Zen Mode and Clean Mode state isolation** — Fixed an issue where enabling Zen Mode automatically enabled Clean Mode and left it active after exiting, now preserving your original Clean Mode preference.
+- **Zen Mode and Clean Mode state isolation** — Fixed an issue where enabling Zen Mode automatically enabled Clean Mode and left it active after exiting, now preserving your original Clean Mode preference. (#926)
 
 ---
 

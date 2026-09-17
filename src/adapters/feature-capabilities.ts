@@ -253,6 +253,7 @@ export const BUILTIN_FEATURE_CAPABILITIES = {
     "stop-generation",
     "width",
     "zen",
+    "clean",
     "prompt-insert",
     "reading-history",
   ],

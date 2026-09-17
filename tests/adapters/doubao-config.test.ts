@@ -38,14 +38,21 @@ afterEach(() => {
 })
 
 describe("Doubao built-in config and new chat selectors", () => {
-  it("increments DOUBAO_CONFIG_VERSION to 5 to invalidate obsolete patches", () => {
-    expect(DOUBAO_CONFIG_VERSION).toBe(5)
+  it("increments DOUBAO_CONFIG_VERSION to 6 to invalidate obsolete patches", () => {
+    expect(DOUBAO_CONFIG_VERSION).toBe(6)
     const descriptor = resolveBuiltinConfig(SITE_IDS.DOUBAO)
     expect(descriptor).toEqual({
       siteId: SITE_IDS.DOUBAO,
-      configVersion: 5,
+      configVersion: 6,
       baseConfig: DOUBAO_CONFIG,
     })
+  })
+
+  it("exposes cleanMode selectors to hide activity entry and header disclaimer", () => {
+    expect(DOUBAO_CONFIG.cleanMode.hide).toEqual([
+      '[aria-label="活动入口"]',
+      `${DOUBAO_CONFIG.sitePrivateSelectors.mainLayoutScope} .h-header-height .s-font-small-strong + div`,
+    ])
   })
 
   it("exposes newChatButton selectors matching modern Doubao button structure", () => {

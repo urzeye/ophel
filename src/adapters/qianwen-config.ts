@@ -79,7 +79,7 @@ export interface QianwenSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const QIANWEN_CONFIG_VERSION = 1
+export const QIANWEN_CONFIG_VERSION = 2
 
 const createQianwenConfig = (): QianwenSiteConfig => {
   const questionItem =
