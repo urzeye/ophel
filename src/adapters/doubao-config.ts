@@ -184,7 +184,7 @@ const createDoubaoConfig = (): DoubaoSiteConfig => {
       { selector: ".chrome70-container", property: "--center-content-max-width" },
     ],
     zenMode: {
-      hide: ["nav", ".container-qOgFQp", ".container-hzjmF1"],
+      hide: ["nav", ".container-hzjmF1"],
     },
     cleanMode: {
       hide: [
