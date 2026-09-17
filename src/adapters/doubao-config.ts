@@ -26,7 +26,9 @@ type DoubaoPrivateSelectors = SitePrivateSelectors & {
   nativeQuotePopover: string[]
   slateElement: string
   historyContainer: string
-  pinnedConversation: string
+  conversationSection: string
+  conversationSectionHeader: string
+  pinnedSectionLabels: string[]
   virtualRow: string
   virtualScrollHolder: string
   shareMessageList: string
@@ -202,7 +204,11 @@ const createDoubaoConfig = (): DoubaoSiteConfig => {
       ],
       slateElement: '[data-slate-node="element"]',
       historyContainer: `${sidebarRoot} [data-history-container="true"]`,
-      pinnedConversation: '[class*="pin-"]',
+      conversationSection: `${sidebarRoot} section`,
+      conversationSectionHeader: '[class*="group/section-header"]',
+      // 新版侧边栏把置顶会话独立成分区，但分区结构与其他分区完全一致，
+      // 站点没有提供可区分的属性，只能按分区标题识别置顶区
+      pinnedSectionLabels: ["置顶", "Pinned"],
       virtualRow,
       virtualScrollHolder: '[data-name="scroll_holder"]',
       shareMessageList: '[class*="message-list-root-"]',

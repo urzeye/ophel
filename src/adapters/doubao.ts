@@ -435,6 +435,19 @@ export class DoubaoAdapter extends SiteAdapter {
     return activeMatch ? link.matches(activeMatch) : false
   }
 
+  private isConversationPinned(link: Element): boolean {
+    const { conversationSection, conversationSectionHeader, pinnedSectionLabels } =
+      this.config.sitePrivateSelectors
+    const section = link.closest(conversationSection)
+    if (!section) return false
+
+    const headerText = section.querySelector(conversationSectionHeader)?.textContent?.trim() ?? ""
+    if (!headerText) return false
+
+    const normalized = headerText.toLowerCase()
+    return pinnedSectionLabels.some((label) => label.toLowerCase() === normalized)
+  }
+
   private getConversationUrl(id: string): string {
     const path = this.config.conversation.urlTemplate.replace("{id}", id)
     return new URL(path, window.location.origin).href
@@ -593,7 +606,7 @@ export class DoubaoAdapter extends SiteAdapter {
 
       const title = this.extractConversationTitle(link)
       const isActive = this.isConversationActive(link)
-      const isPinned = !!link.querySelector(this.config.sitePrivateSelectors.pinnedConversation)
+      const isPinned = this.isConversationPinned(link)
 
       conversationMap.set(id, {
         id,
@@ -659,7 +672,7 @@ export class DoubaoAdapter extends SiteAdapter {
           title,
           url: this.getConversationUrl(id),
           isActive: this.isConversationActive(link),
-          isPinned: !!link.querySelector(this.config.sitePrivateSelectors.pinnedConversation),
+          isPinned: this.isConversationPinned(link),
         }
       },
       getTitleElement: (el: Element): Element | null => {

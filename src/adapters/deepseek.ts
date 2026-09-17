@@ -3015,51 +3015,33 @@ export class DeepSeekAdapter extends SiteAdapter {
   }
 
   private isPinnedConversationLink(link: Element): boolean {
-    const group = this.findConversationGroup(link)
-    if (!group) return false
-
-    const directChildren = Array.from(group.children)
-    const conversationChildren = directChildren.filter((child) => this.isConversationLink(child))
-    if (conversationChildren.length === 0) return false
-
-    const firstConversation = conversationChildren[0]
-    const firstConversationIndex = directChildren.indexOf(firstConversation)
-    if (firstConversationIndex <= 0) return false
-
-    const header = directChildren.find(
-      (child, index) => index < firstConversationIndex && !this.isConversationLink(child),
-    )
-    if (!header) return false
-
-    const hasElementChildren = header.children.length > 0
-    const hasFocusRing = header.querySelector(this.config.sitePrivateSelectors.focusRing) !== null
-    const hasSpan = header.querySelector(":scope > span, span") !== null
-
-    return hasElementChildren && hasFocusRing && hasSpan
-  }
-
-  private findConversationGroup(link: Element): HTMLElement | null {
     let current = link.parentElement
+    let pathChild = link
 
     while (current && current !== document.body) {
       const directChildren = Array.from(current.children)
-      const conversationChildren = directChildren.filter((child) => this.isConversationLink(child))
+      const pathIndex = directChildren.indexOf(pathChild)
 
-      if (conversationChildren.length > 0) {
-        const firstConversationIndex = directChildren.indexOf(conversationChildren[0])
-        const hasHeaderBeforeConversation = directChildren.some(
-          (child, index) => index < firstConversationIndex && !this.isConversationLink(child),
-        )
-
-        if (hasHeaderBeforeConversation && conversationChildren.some((child) => child === link)) {
-          return current
-        }
+      if (pathIndex > 0) {
+        const hasGroupHeader = directChildren
+          .slice(0, pathIndex)
+          .some((child) => this.isConversationGroupHeader(child))
+        // 新版侧边栏：置顶分组的会话列表被额外包了一层容器，
+        // 日期分组的会话则是分组容器的直接子节点
+        if (hasGroupHeader) return pathChild !== link
       }
 
+      pathChild = current
       current = current.parentElement
     }
 
-    return null
+    return false
+  }
+
+  private isConversationGroupHeader(element: Element): boolean {
+    if (this.isConversationLink(element)) return false
+    if (element.querySelector(this.config.conversation.itemSelector)) return false
+    return Boolean(element.textContent?.trim())
   }
 
   private isConversationLink(element: Element): boolean {
