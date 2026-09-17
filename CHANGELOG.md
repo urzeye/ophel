@@ -23,7 +23,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.2.7] - 2026-09-13
+## [1.2.7][1.2.7] - 2026-09-13
 
 **⚠️ Notice — Our GitHub account has been temporarily suspended in error, and we are actively appealing. Until it is restored, GitHub links (repository, issue tracker) and the online adapter library in the Adapter Center may be unavailable. If you run into any problems, please let us know on [Discord](https://discord.gg/rmPzb6Cx9u).**
 
@@ -58,7 +58,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.2.6] - 2026-08-28
+## [1.2.6][1.2.6] - 2026-08-28
 
 ### 🚀 New Features
 
