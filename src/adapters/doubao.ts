@@ -199,7 +199,7 @@ interface DoubaoExportRowSnapshot extends DoubaoExportMessageSnapshot {
 }
 
 export class DoubaoAdapter extends SiteAdapter {
-  private config: DoubaoSiteConfig = DOUBAO_CONFIG
+  private config: DoubaoSiteConfig
   private outlineCacheSessionKey = ""
   private outlineCacheTransitionEndAt = 0
   private outlineItemCache = new Map<string, DoubaoOutlineCacheEntry>()
@@ -2706,7 +2706,13 @@ export class DoubaoAdapter extends SiteAdapter {
    * 切换宿主页主题：
    * 1. 写入持久化键 `dbx-web-theme`；
    * 2. 纯净应用 DOM：仅修改 `documentElement[data-theme]`，严禁写入 body；
-   * 3. 派发合成 StorageEvent，通知豆包内部已注册的 storage 监听器即时刷新 React 状态。
+   * 3. 值变化时派发合成 StorageEvent。
+   *
+   * 注意：本代码运行在 content script 的 isolated world，合成事件只能通知
+   * 同世界的监听器（即 ThemeManager 自己的 storage 监听，用于 reconcile），
+   * 无法触达豆包主世界的 React storage 监听。宿主页视觉切换由第 2 步直接写
+   * `html[data-theme]` 保证（Semi 样式基于该属性选择器生效），localStorage
+   * 写入同源共享，刷新后与豆包原生状态自然对齐。
    */
   async toggleTheme(targetMode: "light" | "dark" | "system"): Promise<boolean> {
     try {
@@ -2724,7 +2730,12 @@ export class DoubaoAdapter extends SiteAdapter {
 
       applyDoubaoThemeDom(resolvedMode)
 
-      if (typeof window !== "undefined" && typeof window.dispatchEvent === "function") {
+      // 与真实 storage 事件语义对齐：仅在值变化时派发，避免 ThemeManager 无谓 reconcile
+      if (
+        previousValue !== targetMode &&
+        typeof window !== "undefined" &&
+        typeof window.dispatchEvent === "function"
+      ) {
         window.dispatchEvent(
           new StorageEvent("storage", {
             key: DOUBAO_THEME_STORAGE_KEY,

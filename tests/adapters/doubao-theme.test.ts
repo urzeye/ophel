@@ -342,6 +342,22 @@ describe("Doubao theme adaptation", () => {
     expect(bodyAttrs["theme-mode"]).toBeUndefined()
   })
 
+  it("does not dispatch StorageEvent when the stored value is unchanged", async () => {
+    const { storage, dispatchEvent, htmlAttrs } = installDoubaoThemeGlobals()
+    storage.setItem("dbx-web-theme", "light")
+    const adapter = new DoubaoAdapter()
+
+    const result = await adapter.toggleTheme("light")
+    expect(result).toBe(true)
+    expect(storage.getItem("dbx-web-theme")).toBe("light")
+    expect(htmlAttrs["data-theme"]).toBe("light")
+
+    const storageCall = dispatchEvent.mock.calls.find(
+      (call) => call[0] instanceof StorageEvent && call[0].key === "dbx-web-theme",
+    )
+    expect(storageCall).toBeUndefined()
+  })
+
   it("cleans existing DOM pollution on adapter construction without overriding html theme", () => {
     const { storage, htmlAttrs, bodyAttrs, bodyClassList, htmlClassList } =
       installDoubaoThemeGlobals()
