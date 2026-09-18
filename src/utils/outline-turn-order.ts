@@ -54,27 +54,40 @@ export function reconcileObservedTurnOrder(order: string[], observedTurnIds: str
 
 export interface OutlineGroupIndexContext {
   turnId: string | null
+  /** turnId → conversation-turn-N（ChatGPT DOM 自带的全局 1-based 序号，最精确） */
+  turnNumbers: ReadonlyMap<string, number>
   /** 全局顺序表（reconcileObservedTurnOrder 维护） */
   turnOrder: readonly string[]
   /** turnOrder 的反向索引，由调用方一次性构建 */
   turnOrderIndex: ReadonlyMap<string, number>
   /** turnId → 原生 TOC 的全局提问序号，仅原生 TOC 存在且有成功绑定时有值 */
   turnTocIndex: ReadonlyMap<string, number>
+  /** 原生 TOC 提问总数，仅用于全无绑定时的比例换算兜底 */
+  tocItemCount: number
   hasNativeToc: boolean
 }
 
 /**
  * 计算大纲条目所属 turn 的分组序号，全链路单一坐标：
- * - 无原生 TOC：全局顺序表位置；
- * - 有原生 TOC：优先用绑定到的 TOC 序号，未绑定的 turn 用相邻已绑定 turn 插值。
+ * - 优先用 conversation-turn-N：同一问答的 user/assistant section 编号连续
+ *   （user 在前），(N-1)/2 把提问映射到整数 K、回答映射到 K+0.5，与 TOC 序号
+ *   天然对齐，且不依赖文本匹配、不受跳跃滚动影响；
+ * - 无 N 且有原生 TOC：用绑定到的 TOC 序号，未绑定的 turn 在相邻绑定之间插值；
+ * - 无原生 TOC：同样在 N 坐标系内用相邻已知 N 插值；全表无 N（老版 DOM）
+ *   才退化为全局顺序表位置。
  * 查不到任何位置信息时返回 MAX_SAFE_INTEGER，排到末尾（与历史行为一致）。
  */
 export function resolveOutlineGroupIndex(context: OutlineGroupIndexContext): number {
-  const { turnId, turnOrderIndex, turnTocIndex, hasNativeToc } = context
+  const { turnId, turnNumbers, turnOrderIndex, turnTocIndex, hasNativeToc } = context
   if (!turnId) return Number.MAX_SAFE_INTEGER
 
+  const turnNumber = turnNumbers.get(turnId)
+  if (turnNumber !== undefined) return (turnNumber - 1) / 2
+
   if (!hasNativeToc) {
-    return turnOrderIndex.get(turnId) ?? Number.MAX_SAFE_INTEGER
+    const position = turnOrderIndex.get(turnId)
+    if (position === undefined) return Number.MAX_SAFE_INTEGER
+    return interpolateTurnNumberGroupIndex(context, position)
   }
 
   const bound = turnTocIndex.get(turnId)
@@ -110,10 +123,66 @@ function interpolateTocGroupIndex(context: OutlineGroupIndexContext): number {
     const ratio = (position - prevBound.position) / (nextBound.position - prevBound.position)
     return prevBound.tocIndex + ratio * (nextBound.tocIndex - prevBound.tocIndex)
   }
-  if (prevBound) return prevBound.tocIndex + (position - prevBound.position)
-  if (nextBound) return nextBound.tocIndex - (nextBound.position - position)
+  if (prevBound) {
+    // 只有下侧绑定时，把未绑定 turn 压缩进该问题的坐标区间 (K, K+1)：
+    // 外插整数步长会把回答标题恰好推到下一个问题的 TOC 序号上，造成错位
+    const delta = position - prevBound.position
+    return prevBound.tocIndex + delta / (delta + 1)
+  }
+  if (nextBound) {
+    // 只有上侧绑定时，按位置占比映射到 [0, K)：
+    // user/assistant 交替的完整顺序表下恰好落在 K-0.5 / K-1 等正确区间
+    return nextBound.tocIndex * (position / nextBound.position)
+  }
 
-  // TOC 存在但没有任何一条提问能绑定到 turn（如提问文本全部重复）：
-  // 退化为全局表顺序。它与 TOC 序号都从 0 开始且都随会话单调，能近似对齐。
-  return position
+  // TOC 存在但没有任何一条提问能绑定到 turn（如提问文本全部重复）。
+  // 顺序表里 user/assistant section 各占一格（步长 2），与 TOC 步长 1 不一致，
+  // 不能直接返回 position；按占比把顺序表全长映射到 TOC 序号全长。
+  const { tocItemCount } = context
+  if (turnOrder.length === 0 || tocItemCount === 0) return position
+  return position * (tocItemCount / turnOrder.length)
+}
+
+/**
+ * 无 TOC 模式下为缺 N 的 turn 估计 N 坐标：顺序表位置和 N 都按 section 单调
+ * 递增且步长一致，用相邻已知 N 线性插值/外插，无缺口时结果精确；
+ * 全表没有任何已知 N（老版 DOM）时退化为顺序表位置。
+ */
+function interpolateTurnNumberGroupIndex(
+  context: OutlineGroupIndexContext,
+  position: number,
+): number {
+  const { turnOrder, turnNumbers } = context
+
+  let prev: { position: number; turnNumber: number } | null = null
+  for (let i = position - 1; i >= 0; i--) {
+    const turnNumber = turnNumbers.get(turnOrder[i])
+    if (turnNumber !== undefined) {
+      prev = { position: i, turnNumber }
+      break
+    }
+  }
+
+  let next: { position: number; turnNumber: number } | null = null
+  for (let i = position + 1; i < turnOrder.length; i++) {
+    const turnNumber = turnNumbers.get(turnOrder[i])
+    if (turnNumber !== undefined) {
+      next = { position: i, turnNumber }
+      break
+    }
+  }
+
+  let estimated: number
+  if (prev && next) {
+    const ratio = (position - prev.position) / (next.position - prev.position)
+    estimated = prev.turnNumber + ratio * (next.turnNumber - prev.turnNumber)
+  } else if (prev) {
+    estimated = prev.turnNumber + (position - prev.position)
+  } else if (next) {
+    estimated = next.turnNumber - (next.position - position)
+  } else {
+    return position
+  }
+
+  return (estimated - 1) / 2
 }

@@ -49,13 +49,51 @@ const buildContext = (
   const turnOrder = overrides.turnOrder ?? []
   return {
     turnId: null,
+    turnNumbers: new Map(),
     turnOrder,
     turnOrderIndex: new Map(turnOrder.map((turnId, index) => [turnId, index])),
     turnTocIndex: new Map(),
+    tocItemCount: 0,
     hasNativeToc: false,
     ...overrides,
   }
 }
+
+describe("resolveOutlineGroupIndex（conversation-turn-N 优先）", () => {
+  it("同一问答的 user/assistant section 分别映射到 K 与 K+0.5", () => {
+    // ChatGPT 每个挂载 section 自带 conversation-turn-N，同一问答的两个 section
+    // 编号连续（user 在前）：N=9 → 第 5 问提问，N=10 → 第 5 问回答
+    const context = buildContext({
+      turnNumbers: new Map([
+        ["u5", 9],
+        ["a5", 10],
+      ]),
+      hasNativeToc: true,
+    })
+    expect(resolveOutlineGroupIndex({ ...context, turnId: "u5" })).toBe(4)
+    expect(resolveOutlineGroupIndex({ ...context, turnId: "a5" })).toBe(4.5)
+  })
+
+  it("N 与 TOC/顺序表无关，跳跃滚动后依然精确（缺陷2回归）", () => {
+    // 顺序表因跳跃滚动错序成 [t49, t50, t1, t2]，但 N 是绝对坐标，不受影响
+    const turnOrder = ["t49", "t50", "t1", "t2"]
+    const context = buildContext({
+      turnOrder,
+      turnNumbers: new Map([
+        ["t49", 97],
+        ["t50", 98],
+        ["t1", 1],
+        ["t2", 2],
+      ]),
+    })
+    const values = turnOrder.map(
+      (turnId) => resolveOutlineGroupIndex({ ...context, turnId }) as number,
+    )
+    expect(values[2]).toBeLessThan(values[0]) // t1 排在 t49 前
+    expect(values[3]).toBeLessThan(values[0]) // t2 排在 t49 前
+    expect(values[2]).toBeLessThan(values[3]) // t1 排在 t2 前
+  })
+})
 
 describe("resolveOutlineGroupIndex（无原生 TOC）", () => {
   it("已知 turn 返回全局表位置", () => {
@@ -67,6 +105,16 @@ describe("resolveOutlineGroupIndex（无原生 TOC）", () => {
     const context = buildContext({ turnOrder: ["t1"] })
     expect(resolveOutlineGroupIndex({ ...context, turnId: "tX" })).toBe(Number.MAX_SAFE_INTEGER)
     expect(resolveOutlineGroupIndex({ ...context, turnId: null })).toBe(Number.MAX_SAFE_INTEGER)
+  })
+
+  it("部分 turn 缺 N 时用相邻已知 N 插值，与 N 坐标系保持一致", () => {
+    // 顺序表位置与 N 都按 section 单调递增、步长一致：a2 位置 3，
+    // 估计 N = 1 + 3 = 4 → (4-1)/2 = 1.5（第 2 问的回答区间）
+    const context = buildContext({
+      turnOrder: ["u1", "a1", "u2", "a2"],
+      turnNumbers: new Map([["u1", 1]]),
+    })
+    expect(resolveOutlineGroupIndex({ ...context, turnId: "a2" })).toBe(1.5)
   })
 })
 
@@ -118,7 +166,46 @@ describe("resolveOutlineGroupIndex（有原生 TOC）", () => {
     expect(v3).toBeGreaterThan(v2)
   })
 
-  it("完全无绑定时退化为全局表顺序", () => {
+  it("末个绑定之后的外插被压缩在 (K, K+1) 内，不会撞上下一个问题的序号（缺陷1回归）", () => {
+    // 第 5 问的 user section 绑定 tocIndex=4，assistant section 紧随其后；
+    // 整数外插会算出 5，恰好等于第 6 问的 TOC 序号
+    const context = buildContext({
+      turnOrder: ["u1", "a1", "u5", "a5"],
+      turnTocIndex: new Map([["u5", 4]]),
+      hasNativeToc: true,
+    })
+    const assistant = resolveOutlineGroupIndex({ ...context, turnId: "a5" })
+    expect(assistant).toBeGreaterThan(4)
+    expect(assistant).toBeLessThan(5)
+  })
+
+  it("首个绑定之前按位置占比映射到 [0, K)，相对顺序保持（缺陷2插值方向）", () => {
+    const context = buildContext({
+      turnOrder: ["u1", "a1", "u2", "a2"],
+      turnTocIndex: new Map([["u2", 1]]),
+      hasNativeToc: true,
+    })
+    const a1 = resolveOutlineGroupIndex({ ...context, turnId: "a1" })
+    expect(a1).toBeGreaterThanOrEqual(0)
+    expect(a1).toBeLessThan(1)
+    const u1 = resolveOutlineGroupIndex({ ...context, turnId: "u1" })
+    expect(u1).toBeLessThan(a1)
+  })
+
+  it("完全无绑定时按占比换算，吸收顺序表与 TOC 的步长差（隐患3回归）", () => {
+    // 两轮问答共 4 个 section（步长 2），TOC 只有 2 个提问（步长 1）：
+    // 第 2 问的回答 position=3 必须落在第 2 问的坐标区间 (1, 2)，而不是漂移到 3
+    const context = buildContext({
+      turnOrder: ["u1", "a1", "u2", "a2"],
+      tocItemCount: 2,
+      hasNativeToc: true,
+    })
+    const a2 = resolveOutlineGroupIndex({ ...context, turnId: "a2" })
+    expect(a2).toBeGreaterThan(1)
+    expect(a2).toBeLessThan(2)
+  })
+
+  it("完全无绑定且缺少 TOC 计数时退化为全局表顺序", () => {
     const context = buildContext({ turnOrder: ["t1", "t2"], hasNativeToc: true })
     expect(resolveOutlineGroupIndex({ ...context, turnId: "t2" })).toBe(1)
   })
@@ -213,5 +300,25 @@ describe("大纲合并排序回归", () => {
     ]
     const sorted = sortOutline(items, context)
     expect(sorted).toEqual(["Q1", "H-of-Q1", "Q2"])
+  })
+
+  it("TOC 模式：assistant section 用 conversation-turn-N 精确定位（缺陷1端到端回归）", () => {
+    // 真实 DOM 中回答挂在 assistant section（独立 data-turn-id）下，TOC 文本绑定
+    // 只能覆盖 user section；旧外插会把回答推到下一问的坐标上。
+    // N=9 → 第 5 问提问，N=10 → 第 5 问回答（坐标 4.5，位于 Q5=4 与 Q6=5 之间）
+    const context = buildContext({
+      turnOrder: ["u5", "a5"],
+      turnNumbers: new Map([["a5", 10]]),
+      turnTocIndex: new Map([["u5", 4]]),
+      hasNativeToc: true,
+    })
+    const items: SortableItem[] = [
+      { text: "Q5", turnId: null, tocIndex: 4, orderInTurn: 0 },
+      { text: "Q6", turnId: null, tocIndex: 5, orderInTurn: 0 },
+      { text: "H-of-Q5", turnId: "a5", tocIndex: null, orderInTurn: 1 },
+    ]
+    const sorted = sortOutline(items, context)
+    expect(sorted.indexOf("H-of-Q5")).toBeGreaterThan(sorted.indexOf("Q5"))
+    expect(sorted.indexOf("H-of-Q5")).toBeLessThan(sorted.indexOf("Q6"))
   })
 })

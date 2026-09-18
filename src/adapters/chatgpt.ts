@@ -211,6 +211,9 @@ export class ChatGPTAdapter extends SiteAdapter {
   // 全局 turn 顺序表：按真实 DOM 顺序归并所有观测过的 turn，
   // 即使 turn-shell 被虚拟滚动完全卸载，仍能依靠它维持稳定排序
   private outlineTurnOrder: string[] = []
+  // turnId → conversation-turn-N（ChatGPT DOM 自带的全局 1-based 单调序号，
+  // 与滚动状态无关，是跨虚拟滚动最精确的排序坐标）
+  private outlineTurnNumbers = new Map<string, number>()
   // turnId → 原生 TOC 的全局提问序号；TOC 存在时作为大纲排序的 canonical 坐标
   private outlineTurnTocIndex = new Map<string, number>()
   // SPA 切换对话后的过渡期截止时刻：在此之前 extractOutline 不写 cache 也不
@@ -1943,6 +1946,10 @@ export class ChatGPTAdapter extends SiteAdapter {
     } else if (turnId) {
       reconcileObservedTurnOrder(this.outlineTurnOrder, [turnId])
     }
+    if (turnId) {
+      const turnNumber = this.getChatGPTTurnNumber(turn)
+      if (turnNumber !== null) this.outlineTurnNumbers.set(turnId, turnNumber)
+    }
 
     // user query：用 data-message-id 作为缓存 key，与 extractOutline 同结构
     const userMessages = Array.from(turn.querySelectorAll(this.config.selectors.userQuery)).filter(
@@ -2477,9 +2484,9 @@ export class ChatGPTAdapter extends SiteAdapter {
    * 由 collect 层的 first-seen 计数器兜底。
    */
   private getExportTurnSortIndex(turn: HTMLElement): number {
-    const testid = turn.getAttribute("data-testid") || ""
-    const match = /^conversation-turn-(\d+)/.exec(testid)
-    return match ? parseInt(match[1], 10) : Number.MAX_SAFE_INTEGER
+    return (
+      this.parseConversationTurnNumber(turn.getAttribute("data-testid")) ?? Number.MAX_SAFE_INTEGER
+    )
   }
 
   private normalizeExportMessageContent(content: string): string {
@@ -3061,6 +3068,7 @@ export class ChatGPTAdapter extends SiteAdapter {
     this.outlineCacheSessionKey = sessionKey
     this.outlineItemCache.clear()
     this.outlineTurnOrder = []
+    this.outlineTurnNumbers.clear()
     this.outlineTurnTocIndex.clear()
     this.nativeTocTextCache = []
     this.nativeTocButtonElementSignatureCache = ""
@@ -3125,6 +3133,29 @@ export class ChatGPTAdapter extends SiteAdapter {
    */
   private syncOutlineTurnOrder(turnAnchors: Map<string, Element>): void {
     reconcileObservedTurnOrder(this.outlineTurnOrder, Array.from(turnAnchors.keys()))
+    turnAnchors.forEach((element, turnId) => {
+      const turnNumber = this.getChatGPTTurnNumber(element)
+      if (turnNumber !== null) this.outlineTurnNumbers.set(turnId, turnNumber)
+    })
+  }
+
+  /**
+   * 解析 turn 的 conversation-turn-N。挂载态的 N 在内层 section 的 data-testid 上，
+   * 外层 shell（div[data-turn-id-container]）没有 N，需要向内层找；离屏空壳拿不到 N，
+   * 返回 null 由调用方保留旧值或走兜底。
+   */
+  private getChatGPTTurnNumber(element: Element): number | null {
+    const own = this.parseConversationTurnNumber(element.getAttribute("data-testid"))
+    if (own !== null) return own
+    const inner = element.querySelector('[data-testid^="conversation-turn-"]')
+    return inner ? this.parseConversationTurnNumber(inner.getAttribute("data-testid")) : null
+  }
+
+  private parseConversationTurnNumber(testid: string | null): number | null {
+    const match = /^conversation-turn-(\d+)/.exec(testid || "")
+    if (!match) return null
+    const value = parseInt(match[1], 10)
+    return Number.isNaN(value) ? null : value
   }
 
   private updateChatGPTOutlineCache(outline: OutlineItem[]): void {
@@ -3192,11 +3223,17 @@ export class ChatGPTAdapter extends SiteAdapter {
     if (appended === 0) return outline
 
     // 排序必须使用单一全局坐标：原生 TOC 提问用 TOC 序号，其余条目统一经
-    // resolveOutlineGroupIndex 换算到同一坐标系（有 TOC 时优先 turnId→TOC 绑定，
-    // 否则用全局 turn 顺序表）。绝不能混用"已挂载 turn 的局部序号"——它只反映
-    // 当前虚拟滚动窗口内的相对位置，会把缓存回填的标题排到错误的问题下面。
+    // resolveOutlineGroupIndex 换算到同一坐标系（优先 conversation-turn-N，
+    // 无 N 时依次退化到 TOC 绑定插值、全局 turn 顺序表）。绝不能混用"已挂载
+    // turn 的局部序号"——它只反映当前虚拟滚动窗口内的相对位置，会把缓存回填
+    // 的标题排到错误的问题下面。
     const turnOrderIndex = new Map<string, number>()
     this.outlineTurnOrder.forEach((turnId, index) => turnOrderIndex.set(turnId, index))
+    const tocItemCount = merged.reduce(
+      (count, item) =>
+        this.getNativeTocOutlineIndex(item.navigationId || item.id) !== null ? count + 1 : count,
+      0,
+    )
 
     return merged
       .map((item, originalIndex) => {
@@ -3208,9 +3245,11 @@ export class ChatGPTAdapter extends SiteAdapter {
             ? nativeTocIndex
             : resolveOutlineGroupIndex({
                 turnId,
+                turnNumbers: this.outlineTurnNumbers,
                 turnOrder: this.outlineTurnOrder,
                 turnOrderIndex,
                 turnTocIndex: this.outlineTurnTocIndex,
+                tocItemCount,
                 hasNativeToc: hasNativeTocUserQueries,
               })
         return {
