@@ -868,36 +868,25 @@
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--gh-primary, #4285f4) 8%, transparent);
 }
 
-/* 导出入口：自适应主题光感双层复合渐变（非纯色背景） + 周期性柔和微光扫过 + hover 箭头弹性微动效 */
+/* 导出入口：主题淡色微强调底色 + 周期性柔和微光扫过 + hover 适度加深微浮与箭头微动效 */
 .outline-toolbar-btn.export-accent {
   position: relative;
   overflow: hidden;
   margin-left: 4px;
   border: 1px solid
-    color-mix(in srgb, var(--gh-primary, #4285f4) 32%, var(--gh-input-border, #d1d5db));
-  background: radial-gradient(
-      circle at 50% -20%,
-      color-mix(in srgb, var(--gh-primary, #4285f4) 22%, transparent),
-      transparent 70%
-    ),
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--gh-primary, #4285f4) 10%, var(--gh-bg, #ffffff)) 0%,
-      color-mix(in srgb, var(--gh-primary, #4285f4) 3%, var(--gh-bg, #ffffff)) 100%
-    );
+    color-mix(in srgb, var(--gh-primary, #4285f4) 38%, var(--gh-input-border, #d1d5db));
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 7%, var(--gh-bg, #ffffff));
   color: var(--gh-primary, #4285f4);
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--gh-primary, #4285f4) 20%, transparent),
-    0 1px 2px color-mix(in srgb, var(--gh-primary, #4285f4) 10%, transparent);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--gh-primary, #4285f4) 8%, transparent);
   transition:
     transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1),
     box-shadow 0.22s cubic-bezier(0.2, 0.8, 0.2, 1),
     border-color 0.22s ease,
-    background 0.22s ease,
+    background-color 0.22s ease,
     color 0.22s ease;
 }
 
-/* 周期性优雅微光掠过，基于当前主题主色投射光泽感 */
+/* 周期性优雅微光掠过，赋予淡色按钮高级流光质感 */
 .outline-toolbar-btn.export-accent::after {
   content: "";
   position: absolute;
@@ -930,28 +919,15 @@
 
 .outline-toolbar-btn.export-accent:hover {
   border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 65%, var(--gh-input-border, #d1d5db));
-  background: radial-gradient(
-      circle at 50% -10%,
-      color-mix(in srgb, var(--gh-primary, #4285f4) 32%, transparent),
-      transparent 75%
-    ),
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--gh-primary, #4285f4) 16%, var(--gh-bg, #ffffff)) 0%,
-      color-mix(in srgb, var(--gh-primary, #4285f4) 6%, var(--gh-bg, #ffffff)) 100%
-    );
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 15%, var(--gh-bg, #ffffff));
   color: var(--gh-primary, #4285f4);
   transform: translateY(-1.5px);
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--gh-primary, #4285f4) 38%, transparent),
-    0 3px 10px color-mix(in srgb, var(--gh-primary, #4285f4) 22%, transparent);
+  box-shadow: 0 3px 8px color-mix(in srgb, var(--gh-primary, #4285f4) 22%, transparent);
 }
 
 .outline-toolbar-btn.export-accent:active {
   transform: translateY(0) scale(0.96);
-  box-shadow:
-    inset 0 1px 2px color-mix(in srgb, var(--gh-primary, #4285f4) 24%, transparent),
-    0 1px 2px color-mix(in srgb, var(--gh-primary, #4285f4) 10%, transparent);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--gh-primary, #4285f4) 12%, transparent);
 }
 
 .outline-toolbar-btn.export-accent:focus-visible {
