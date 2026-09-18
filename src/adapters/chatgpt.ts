@@ -214,6 +214,9 @@ export class ChatGPTAdapter extends SiteAdapter {
   // SPA 切换对话后的过渡期截止时刻：在此之前 extractOutline 不写 cache 也不
   // merge cache，避免把上一个对话残留的 DOM 内容污染到新对话的 cache 里。
   private outlineCacheTransitionEndAt = 0
+  // 切换瞬间记录的旧对话挂载 turnId 集合：DOM 完成替换后（完全不重合）可提前
+  // 结束过渡期，不必等满固定时长
+  private outlineCacheTransitionFromTurnIds = new Set<string>()
   private nativeTocTextCache: string[] = []
   private nativeTocButtonElementSignatureCache = ""
   private nativeTocRevealAttemptedSignature = ""
@@ -1938,7 +1941,7 @@ export class ChatGPTAdapter extends SiteAdapter {
       const anchors = this.getOrderedChatGPTTurnAnchors(container)
       anchors.forEach((element, id) => {
         const turnNumber = this.getChatGPTTurnNumber(element)
-        if (turnNumber !== null) this.outlineTurnNumbers.set(id, turnNumber)
+        if (turnNumber !== null) this.recordOutlineTurnNumber(id, turnNumber)
       })
       reconcileObservedTurnOrder(
         this.outlineTurnOrder,
@@ -1947,7 +1950,7 @@ export class ChatGPTAdapter extends SiteAdapter {
       )
     } else if (turnId) {
       const turnNumber = this.getChatGPTTurnNumber(turn)
-      if (turnNumber !== null) this.outlineTurnNumbers.set(turnId, turnNumber)
+      if (turnNumber !== null) this.recordOutlineTurnNumber(turnId, turnNumber)
       reconcileObservedTurnOrder(this.outlineTurnOrder, [turnId], getKnownTurnNumber)
     }
 
@@ -3067,6 +3070,18 @@ export class ChatGPTAdapter extends SiteAdapter {
     // 过渡期内 extractOutline 跳过 cache 写入与合并，只返回 DOM 实时内容；
     // 等过了过渡期再恢复正常的"虚拟滚动兜底"行为。
     this.outlineCacheTransitionEndAt = isFirstSession ? 0 : Date.now() + 2000
+    // 记录切换瞬间仍挂载的旧对话 turnId：固定时长对慢加载不够、对快切换又
+    // 白白降级 2 秒。过渡期内在 extractOutline 里对比当前挂载 turn，完全不
+    // 重合即视为 DOM 已替换完成，可提前结束过渡期。
+    this.outlineCacheTransitionFromTurnIds = new Set()
+    if (!isFirstSession) {
+      const container = this.getOutlineExtractionContainer()
+      if (container) {
+        this.getOrderedChatGPTTurnAnchors(container).forEach((_element, turnId) => {
+          this.outlineCacheTransitionFromTurnIds.add(turnId)
+        })
+      }
+    }
   }
 
   private isInOutlineCacheTransition(): boolean {
@@ -3101,7 +3116,9 @@ export class ChatGPTAdapter extends SiteAdapter {
     const addAnchor = (element: Element): void => {
       const turnId =
         element.getAttribute("data-turn-id-container") || element.getAttribute("data-turn-id")
-      if (!turnId || anchors.has(turnId)) return
+      // client-created-root 是输入草稿的占位容器，不是真实对话 turn，
+      // 收进锚点表会污染全局顺序表
+      if (!turnId || turnId === "client-created-root" || anchors.has(turnId)) return
 
       anchors.set(turnId, element)
     }
@@ -3119,11 +3136,37 @@ export class ChatGPTAdapter extends SiteAdapter {
     // 先记 N 再归并：观测窗口与已知表毫无重合（跳跃滚动）时，要靠 N 定位插入点
     turnAnchors.forEach((element, turnId) => {
       const turnNumber = this.getChatGPTTurnNumber(element)
-      if (turnNumber !== null) this.outlineTurnNumbers.set(turnId, turnNumber)
+      if (turnNumber !== null) this.recordOutlineTurnNumber(turnId, turnNumber)
     })
     reconcileObservedTurnOrder(this.outlineTurnOrder, Array.from(turnAnchors.keys()), (turnId) =>
       this.outlineTurnNumbers.get(turnId),
     )
+  }
+
+  /**
+   * 记录 turn 的 conversation-turn-N。同一 N 已被其他 turnId 占用时，说明该位置
+   * 挂载了新版本 turn（重新生成 / 分支编辑会卸载旧 turn、换上不同 id 的新 turn），
+   * 必须把旧版本的缓存条目一并淘汰——否则旧回答的标题会永久残留在大纲里，
+   * 点击时只能等到超时（节点早已销毁），形成"幽灵标题"死链。
+   */
+  private recordOutlineTurnNumber(turnId: string, turnNumber: number): void {
+    for (const [existingId, existingNumber] of this.outlineTurnNumbers) {
+      if (existingNumber === turnNumber && existingId !== turnId) {
+        this.evictOutlineTurnCache(existingId)
+      }
+    }
+    this.outlineTurnNumbers.set(turnId, turnNumber)
+  }
+
+  /** 淘汰某个 turnId 的全部大纲缓存：条目、全局顺序表、N 与 TOC 绑定一并清掉。 */
+  private evictOutlineTurnCache(turnId: string): void {
+    for (const [id, entry] of this.outlineItemCache) {
+      if (entry.turnId === turnId) this.outlineItemCache.delete(id)
+    }
+    const orderIndex = this.outlineTurnOrder.indexOf(turnId)
+    if (orderIndex >= 0) this.outlineTurnOrder.splice(orderIndex, 1)
+    this.outlineTurnNumbers.delete(turnId)
+    this.outlineTurnTocIndex.delete(turnId)
   }
 
   /**
@@ -3723,7 +3766,15 @@ export class ChatGPTAdapter extends SiteAdapter {
     // 过渡期内也不取原生 TOC（此时 TOC 还是上一个对话的），DOM 实时内容里
     // 已包含挂载态的用户提问，文档顺序即正确顺序。
     if (this.isInOutlineCacheTransition()) {
-      return outline
+      // 当前挂载 turn 与切换前记录的旧对话完全不重合，说明 DOM 已替换为
+      // 新对话：提前结束过渡期，恢复正常提取，避免固定时长的降级窗口。
+      // 仍有重合或暂无挂载 turn（替换中途）时保持过渡期，由超时兜底。
+      const currentTurnIds = Array.from(this.getOrderedChatGPTTurnAnchors(container).keys())
+      const domReplaced =
+        currentTurnIds.length > 0 &&
+        currentTurnIds.every((turnId) => !this.outlineCacheTransitionFromTurnIds.has(turnId))
+      if (!domReplaced) return outline
+      this.outlineCacheTransitionEndAt = 0
     }
 
     const nativeTocEntries =
@@ -3751,6 +3802,10 @@ export class ChatGPTAdapter extends SiteAdapter {
 
       // 原生 TOC 覆盖全部提问（含已离屏的），用它替换 DOM 扫描到的挂载态提问，
       // 避免同一条提问以两种来源重复出现
+      // 先把真实 DOM 提问写入缓存再过滤：原生 TOC 合成条目不入缓存，若不缓存
+      // 提问，TOC 被收起/响应式隐藏后离屏提问将无缓存可回填，从大纲中全部蒸发。
+      // merge 阶段在 TOC 存续期间会过滤缓存提问，不会造成重复显示。
+      this.updateChatGPTOutlineCache(outline)
       outline = outline.filter((item) => !item.isUserQuery)
 
       // 原生 TOC 提问先按 TOC 顺序追加到末尾；最终顺序由

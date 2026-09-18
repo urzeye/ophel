@@ -124,7 +124,7 @@ export function resolveOutlineGroupIndex(context: OutlineGroupIndexContext): num
 }
 
 function interpolateTocGroupIndex(context: OutlineGroupIndexContext): number {
-  const { turnId, turnOrder, turnOrderIndex, turnTocIndex } = context
+  const { turnId, turnNumbers, turnOrder, turnOrderIndex, turnTocIndex } = context
   const position = turnId === null ? undefined : turnOrderIndex.get(turnId)
   if (position === undefined) return Number.MAX_SAFE_INTEGER
 
@@ -151,13 +151,30 @@ function interpolateTocGroupIndex(context: OutlineGroupIndexContext): number {
     return prevBound.tocIndex + ratio * (nextBound.tocIndex - prevBound.tocIndex)
   }
   if (prevBound) {
-    // 只有下侧绑定时，把未绑定 turn 压缩进该问题的坐标区间 (K, K+1)：
-    // 外插整数步长会把回答标题恰好推到下一个问题的 TOC 序号上，造成错位
+    // 只有下侧绑定时优先按 conversation-turn-N 外插：末尾可能还有未成功绑定的
+    // 后续提问（如重复文本触发防歧义拦截），其原生 TOC 条目仍占整数序号；
+    // 一律压缩进 (K, K+1) 会把后续问题的回答标题排到该提问的 TOC 条目之前。
+    const prevTurnNumber = turnNumbers.get(turnOrder[prevBound.position])
+    const currentTurnNumber = turnId ? turnNumbers.get(turnId) : undefined
+    if (
+      prevTurnNumber !== undefined &&
+      currentTurnNumber !== undefined &&
+      currentTurnNumber > prevTurnNumber
+    ) {
+      return prevBound.tocIndex + (currentTurnNumber - prevTurnNumber) / 2
+    }
+    // 缺 N 时退化为压缩进该问题的坐标区间 (K, K+1)：
+    // 整数步长外插会把回答标题恰好推到下一个问题的 TOC 序号上，造成错位
     const delta = position - prevBound.position
     return prevBound.tocIndex + delta / (delta + 1)
   }
   if (nextBound) {
-    // 只有上侧绑定时，按位置占比映射到 [0, K)：
+    // 只有上侧绑定且其就是第 1 问时，前面的 turn（如 Custom GPT 开场白）
+    // 映射到 [-1, 0)，保证排在第 1 问上方而不是与它同坐标撞序
+    if (nextBound.tocIndex === 0) {
+      return -1 + position / nextBound.position
+    }
+    // 其余情况按位置占比映射到 [0, K)：
     // user/assistant 交替的完整顺序表下恰好落在 K-0.5 / K-1 等正确区间
     return nextBound.tocIndex * (position / nextBound.position)
   }

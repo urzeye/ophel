@@ -243,6 +243,60 @@ describe("resolveOutlineGroupIndex（有原生 TOC）", () => {
     expect(resolveOutlineGroupIndex({ ...context, turnId: "t2" })).toBe(1)
   })
 
+  it("末尾存在连续未绑定提问时按 N 外插，回答不错位到上一问（Bug1 回归）", () => {
+    // Q5 绑定 tocIndex=4；Q6 因重复文本未绑定（DOM 提问被过滤，仅 TOC 条目占 5.0）。
+    // 若把 A6 压缩进 (4, 5)，A6 的回答标题会排到 Q6 提问之前、错挂到 Q5 下。
+    const context = buildContext({
+      turnOrder: ["u5", "a5", "u6", "a6"],
+      turnNumbers: new Map([
+        ["u5", 9],
+        ["a5", 10],
+        ["u6", 11],
+        ["a6", 12],
+      ]),
+      turnTocIndex: new Map([["u5", 4]]),
+      hasNativeToc: true,
+    })
+    const a5 = resolveOutlineGroupIndex({ ...context, turnId: "a5" })
+    expect(a5).toBeGreaterThan(4)
+    expect(a5).toBeLessThan(5)
+    // A6 坐标必须大于 Q6 的 TOC 序号 5，才能排在 Q6 提问之后
+    const a6 = resolveOutlineGroupIndex({ ...context, turnId: "a6" })
+    expect(a6).toBeGreaterThan(5)
+    expect(a6).toBeLessThan(6)
+  })
+
+  it("末尾未绑定 turn 缺 N 时仍压缩在 (K, K+1) 兜底", () => {
+    const context = buildContext({
+      turnOrder: ["u5", "a5"],
+      turnTocIndex: new Map([["u5", 4]]),
+      hasNativeToc: true,
+    })
+    const a5 = resolveOutlineGroupIndex({ ...context, turnId: "a5" })
+    expect(a5).toBeGreaterThan(4)
+    expect(a5).toBeLessThan(5)
+  })
+
+  it("首个绑定之前的开场白映射到负坐标，排在第 1 问上方（Bug2 回归）", () => {
+    // Custom GPT 开场白 g0（Assistant 欢迎语，无 TOC 条目）位于第 1 问之前；
+    // 旧占比公式算出 0，与第 1 问同坐标，tie-break 后标题被排到第 1 问下方
+    const context = buildContext({
+      turnOrder: ["g0", "u1", "a1"],
+      turnNumbers: new Map([
+        ["g0", 1],
+        ["u1", 2],
+        ["a1", 3],
+      ]),
+      turnTocIndex: new Map([["u1", 0]]),
+      hasNativeToc: true,
+    })
+    const g0 = resolveOutlineGroupIndex({ ...context, turnId: "g0" })
+    expect(g0).toBeLessThan(0)
+    const a1 = resolveOutlineGroupIndex({ ...context, turnId: "a1" })
+    expect(a1).toBeGreaterThan(0)
+    expect(a1).toBeLessThan(1)
+  })
+
   it("有绑定时以真实 TOC 绑定为准，不按 (N-1)/2 硬算（Custom GPT 开场白回归）", () => {
     // Custom GPT 开场白：N=1 是 Assistant 欢迎语，第 1 问是 N=2（TOC index 0）、
     // 回答是 N=3。若按 (N-1)/2，回答坐标为 1.0，恰好撞上第 2 问的 TOC 序号，
