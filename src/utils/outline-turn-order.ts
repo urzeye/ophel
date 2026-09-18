@@ -31,8 +31,12 @@ export function reconcileObservedTurnOrder(
   // 之前"），最后一次重建数组。逐个 splice + 全量位置表更新是 O(k·n)，千轮对话的
   // 导出采集会逐 turn 调用本函数，批处理后摊到 O(n+k)。
   let insertions: Map<number, string[]> | null = null
+  // 批内已挂起的 turnId：position 只含原有 order，重复输入要靠它去重，
+  // 否则 ["tX", "tX"] 会把同一 turn 插入两次
+  const pended = new Set<string>()
   const pend = (anchor: number, turnId: string): void => {
     if (!insertions) insertions = new Map()
+    pended.add(turnId)
     const bucket = insertions.get(anchor)
     if (bucket) {
       bucket.push(turnId)
@@ -52,6 +56,9 @@ export function reconcileObservedTurnOrder(
       nextAnchor = known + 1
       return
     }
+    // 批内重复：旧实现在插入后即写入 position，重复项按已知处理只更新锚点；
+    // 这里跳过但不改 nextAnchor（仍指向该 turn 所在桶），语义等价
+    if (pended.has(turnId)) return
 
     if (nextAnchor !== null) {
       pend(nextAnchor, turnId)

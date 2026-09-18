@@ -43,6 +43,16 @@ describe("reconcileObservedTurnOrder", () => {
     expect(order).toEqual(["t1"])
   })
 
+  it("同批观测含重复未知 turnId 时只插入一次", () => {
+    const order = ["t1", "t4"]
+    reconcileObservedTurnOrder(order, ["t1", "t2", "t2", "t3", "t4"])
+    expect(order).toEqual(["t1", "t2", "t3", "t4"])
+
+    const leading: string[] = ["t5"]
+    reconcileObservedTurnOrder(leading, ["t2", "t2", "t5"])
+    expect(leading).toEqual(["t2", "t5"])
+  })
+
   it("与已知表毫无重合的跳跃观测按 turnNumber 定位，不倒挂（跳跃滚动回归）", () => {
     // 初次打开长会话时 DOM 停在底部，随后点击 TOC 跳到顶部：
     // 观测窗口与已知表无重合邻居，盲目追加会让 t1/t2 永久排在 t45 之后
