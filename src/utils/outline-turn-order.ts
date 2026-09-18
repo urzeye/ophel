@@ -12,8 +12,16 @@
  * 已知 turn 的相对顺序保持不变；未知 turn 插入到本次观测中它前后的已知邻居
  * 之间（向上滚动揭示更早的 turn 时插到前面，而不是简单追加到尾部）。同一段
  * 空隙被不同批观测填入时，后观测到的排在更靠近前一个已知邻居的位置。
+ *
+ * 与已知表毫无重合（拖动滚动条 / 点击 TOC 跳跃滚动）时，按
+ * conversation-turn-N 的单调性定位插入点，避免把更早的 turn 盲目追加到尾部
+ * 造成永久倒挂。
  */
-export function reconcileObservedTurnOrder(order: string[], observedTurnIds: string[]): void {
+export function reconcileObservedTurnOrder(
+  order: string[],
+  observedTurnIds: string[],
+  getTurnNumber?: (turnId: string) => number | undefined,
+): void {
   if (observedTurnIds.length === 0) return
 
   const position = new Map<string, number>()
@@ -40,7 +48,21 @@ export function reconcileObservedTurnOrder(order: string[], observedTurnIds: str
           break
         }
       }
-      insertAt = nextKnown >= 0 ? nextKnown : order.length
+      if (nextKnown >= 0) {
+        insertAt = nextKnown
+      } else {
+        insertAt = order.length
+        const observedNumber = getTurnNumber?.(turnId)
+        if (getTurnNumber && observedNumber !== undefined) {
+          for (let i = 0; i < order.length; i++) {
+            const knownNumber = getTurnNumber(order[i])
+            if (knownNumber !== undefined && knownNumber > observedNumber) {
+              insertAt = i
+              break
+            }
+          }
+        }
+      }
     }
 
     order.splice(insertAt, 0, turnId)
@@ -69,12 +91,13 @@ export interface OutlineGroupIndexContext {
 
 /**
  * 计算大纲条目所属 turn 的分组序号，全链路单一坐标：
- * - 优先用 conversation-turn-N：同一问答的 user/assistant section 编号连续
- *   （user 在前），(N-1)/2 把提问映射到整数 K、回答映射到 K+0.5，与 TOC 序号
- *   天然对齐，且不依赖文本匹配、不受跳跃滚动影响；
- * - 无 N 且有原生 TOC：用绑定到的 TOC 序号，未绑定的 turn 在相邻绑定之间插值；
- * - 无原生 TOC：同样在 N 坐标系内用相邻已知 N 插值；全表无 N（老版 DOM）
- *   才退化为全局顺序表位置。
+ * - 有原生 TOC：以真实 DOM 捕获建立的 TOC 绑定为准，未绑定的 turn 在相邻绑定
+ *   之间按全局顺序表位置插值。(N-1)/2 不能在这里优先——它硬编码了"首条必是
+ *   提问、user/assistant 严格交替"，Custom GPT 开场白、连续提问、工具回合都
+ *   会让 N 与 TOC 序号整体脱轨；只有完全没有任何绑定时才把 N 作为后备；
+ * - 无原生 TOC：优先用 conversation-turn-N（同一问答的 user/assistant section
+ *   编号连续，(N-1)/2 把提问映射到整数 K、回答映射到 K+0.5），缺 N 的 turn
+ *   用相邻已知 N 插值；全表无 N（老版 DOM）才退化为全局顺序表位置。
  * 查不到任何位置信息时返回 MAX_SAFE_INTEGER，排到末尾（与历史行为一致）。
  */
 export function resolveOutlineGroupIndex(context: OutlineGroupIndexContext): number {
@@ -82,18 +105,22 @@ export function resolveOutlineGroupIndex(context: OutlineGroupIndexContext): num
   if (!turnId) return Number.MAX_SAFE_INTEGER
 
   const turnNumber = turnNumbers.get(turnId)
-  if (turnNumber !== undefined) return (turnNumber - 1) / 2
 
-  if (!hasNativeToc) {
-    const position = turnOrderIndex.get(turnId)
-    if (position === undefined) return Number.MAX_SAFE_INTEGER
-    return interpolateTurnNumberGroupIndex(context, position)
+  if (hasNativeToc) {
+    const bound = turnTocIndex.get(turnId)
+    if (bound !== undefined) return bound
+
+    // 完全无绑定（如提问文本全部重复导致绑定失败）时，N 比位置占比更精确
+    if (turnTocIndex.size === 0 && turnNumber !== undefined) return (turnNumber - 1) / 2
+
+    return interpolateTocGroupIndex(context)
   }
 
-  const bound = turnTocIndex.get(turnId)
-  if (bound !== undefined) return bound
+  if (turnNumber !== undefined) return (turnNumber - 1) / 2
 
-  return interpolateTocGroupIndex(context)
+  const position = turnOrderIndex.get(turnId)
+  if (position === undefined) return Number.MAX_SAFE_INTEGER
+  return interpolateTurnNumberGroupIndex(context, position)
 }
 
 function interpolateTocGroupIndex(context: OutlineGroupIndexContext): number {

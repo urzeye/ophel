@@ -41,6 +41,39 @@ describe("reconcileObservedTurnOrder", () => {
     reconcileObservedTurnOrder(order, [])
     expect(order).toEqual(["t1"])
   })
+
+  it("与已知表毫无重合的跳跃观测按 turnNumber 定位，不倒挂（跳跃滚动回归）", () => {
+    // 初次打开长会话时 DOM 停在底部，随后点击 TOC 跳到顶部：
+    // 观测窗口与已知表无重合邻居，盲目追加会让 t1/t2 永久排在 t45 之后
+    const order = ["t45", "t46", "t47"]
+    const turnNumbers = new Map([
+      ["t45", 45],
+      ["t46", 46],
+      ["t47", 47],
+      ["t1", 1],
+      ["t2", 2],
+    ])
+    const getTurnNumber = (turnId: string): number | undefined => turnNumbers.get(turnId)
+    reconcileObservedTurnOrder(order, ["t1", "t2"], getTurnNumber)
+    expect(order).toEqual(["t1", "t2", "t45", "t46", "t47"])
+  })
+
+  it("跳跃到底部时按 turnNumber 仍追加在尾部", () => {
+    const order = ["t1", "t2"]
+    const turnNumbers = new Map([
+      ["t1", 1],
+      ["t2", 2],
+      ["t45", 45],
+    ])
+    reconcileObservedTurnOrder(order, ["t45"], (turnId) => turnNumbers.get(turnId))
+    expect(order).toEqual(["t1", "t2", "t45"])
+  })
+
+  it("无重合且缺少 turnNumber 时退化为追加（向后兼容）", () => {
+    const order = ["t3", "t4"]
+    reconcileObservedTurnOrder(order, ["t1", "t2"])
+    expect(order).toEqual(["t3", "t4", "t1", "t2"])
+  })
 })
 
 const buildContext = (
@@ -209,6 +242,46 @@ describe("resolveOutlineGroupIndex（有原生 TOC）", () => {
     const context = buildContext({ turnOrder: ["t1", "t2"], hasNativeToc: true })
     expect(resolveOutlineGroupIndex({ ...context, turnId: "t2" })).toBe(1)
   })
+
+  it("有绑定时以真实 TOC 绑定为准，不按 (N-1)/2 硬算（Custom GPT 开场白回归）", () => {
+    // Custom GPT 开场白：N=1 是 Assistant 欢迎语，第 1 问是 N=2（TOC index 0）、
+    // 回答是 N=3。若按 (N-1)/2，回答坐标为 1.0，恰好撞上第 2 问的 TOC 序号，
+    // 全篇标题错移一个问题；按绑定插值则落在 (0, 1) 区间。
+    const context = buildContext({
+      turnOrder: ["g0", "u1", "a1", "u2", "a2"],
+      turnNumbers: new Map([
+        ["g0", 1],
+        ["u1", 2],
+        ["a1", 3],
+        ["u2", 4],
+        ["a2", 5],
+      ]),
+      turnTocIndex: new Map([
+        ["u1", 0],
+        ["u2", 1],
+      ]),
+      hasNativeToc: true,
+    })
+    const a1 = resolveOutlineGroupIndex({ ...context, turnId: "a1" })
+    expect(a1).toBeGreaterThan(0)
+    expect(a1).toBeLessThan(1)
+    const a2 = resolveOutlineGroupIndex({ ...context, turnId: "a2" })
+    expect(a2).toBeGreaterThan(1)
+    expect(a2).toBeLessThan(2)
+    // 已绑定 turn 仍返回精确 TOC 序号
+    expect(resolveOutlineGroupIndex({ ...context, turnId: "u2" })).toBe(1)
+  })
+
+  it("完全无绑定时 conversation-turn-N 仍作为后备坐标", () => {
+    // 提问文本全部重复导致没有任何绑定成功：N 比位置占比更精确
+    const context = buildContext({
+      turnOrder: ["u1", "a1", "u2", "a2"],
+      turnNumbers: new Map([["a2", 4]]),
+      tocItemCount: 2,
+      hasNativeToc: true,
+    })
+    expect(resolveOutlineGroupIndex({ ...context, turnId: "a2" })).toBe(1.5)
+  })
 })
 
 // 复现用户反馈的错位场景，验证统一坐标后的排序结果。
@@ -320,5 +393,35 @@ describe("大纲合并排序回归", () => {
     const sorted = sortOutline(items, context)
     expect(sorted.indexOf("H-of-Q5")).toBeGreaterThan(sorted.indexOf("Q5"))
     expect(sorted.indexOf("H-of-Q5")).toBeLessThan(sorted.indexOf("Q6"))
+  })
+
+  it("TOC 模式：Custom GPT 开场白场景下标题不错移一个问题", () => {
+    // N=1 是 Assistant 欢迎语（无 TOC 条目），第 1 问是 N=2、回答 N=3。
+    // 标题坐标必须落在 Q1 与 Q2 之间，而不是撞上 Q2 的序号。
+    const context = buildContext({
+      turnOrder: ["g0", "u1", "a1", "u2", "a2"],
+      turnNumbers: new Map([
+        ["g0", 1],
+        ["u1", 2],
+        ["a1", 3],
+        ["u2", 4],
+        ["a2", 5],
+      ]),
+      turnTocIndex: new Map([
+        ["u1", 0],
+        ["u2", 1],
+      ]),
+      hasNativeToc: true,
+    })
+    const items: SortableItem[] = [
+      { text: "Q1", turnId: null, tocIndex: 0, orderInTurn: 0 },
+      { text: "Q2", turnId: null, tocIndex: 1, orderInTurn: 0 },
+      { text: "H-of-Q1", turnId: "a1", tocIndex: null, orderInTurn: 1 },
+      { text: "H-of-Q2", turnId: "a2", tocIndex: null, orderInTurn: 1 },
+    ]
+    const sorted = sortOutline(items, context)
+    expect(sorted.indexOf("H-of-Q1")).toBeGreaterThan(sorted.indexOf("Q1"))
+    expect(sorted.indexOf("H-of-Q1")).toBeLessThan(sorted.indexOf("Q2"))
+    expect(sorted.indexOf("H-of-Q2")).toBeGreaterThan(sorted.indexOf("Q2"))
   })
 })
