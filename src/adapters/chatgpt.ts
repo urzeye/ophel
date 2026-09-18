@@ -13,7 +13,10 @@ import {
   type ExportAssetCollector,
 } from "~utils/export-assets"
 import { htmlToMarkdown, type ExportBundle } from "~utils/exporter"
-import { reconcileObservedTurnOrder, resolveOutlineGroupIndex } from "~utils/outline-turn-order"
+import {
+  createOutlineGroupIndexResolver,
+  reconcileObservedTurnOrder,
+} from "~utils/outline-turn-order"
 import { hashTextForCache } from "~utils/text-hash"
 
 import {
@@ -209,6 +212,9 @@ export class ChatGPTAdapter extends SiteAdapter {
   // turnId → conversation-turn-N（ChatGPT DOM 自带的全局 1-based 单调序号，
   // 与滚动状态无关，是跨虚拟滚动最精确的排序坐标）
   private outlineTurnNumbers = new Map<string, number>()
+  // N → turnId 反向索引：重新生成/分支编辑的 N 冲突检测用，避免每次记录都
+  // 全表扫描 outlineTurnNumbers（长对话每次 extract 会对所有锚点调用）
+  private outlineTurnNumberOwners = new Map<number, string>()
   // turnId → 原生 TOC 的全局提问序号；TOC 存在时作为大纲排序的 canonical 坐标
   private outlineTurnTocIndex = new Map<string, number>()
   // SPA 切换对话后的过渡期截止时刻：在此之前 extractOutline 不写 cache 也不
@@ -1936,22 +1942,14 @@ export class ChatGPTAdapter extends SiteAdapter {
     // 导出采集按文档顺序逐 turn 滚动挂载，用当前所有已挂载 turn 的 DOM 顺序归并，
     // 保证中途新发现的 turn 插入到正确位置而不是追加到尾部
     const container = turn.closest(this.getResponseContainerSelector())
-    const getKnownTurnNumber = (id: string): number | undefined => this.outlineTurnNumbers.get(id)
     if (container) {
-      const anchors = this.getOrderedChatGPTTurnAnchors(container)
-      anchors.forEach((element, id) => {
-        const turnNumber = this.getChatGPTTurnNumber(element)
-        if (turnNumber !== null) this.recordOutlineTurnNumber(id, turnNumber)
-      })
-      reconcileObservedTurnOrder(
-        this.outlineTurnOrder,
-        Array.from(anchors.keys()),
-        getKnownTurnNumber,
-      )
+      this.syncOutlineTurnOrder(this.getOrderedChatGPTTurnAnchors(container))
     } else if (turnId) {
       const turnNumber = this.getChatGPTTurnNumber(turn)
       if (turnNumber !== null) this.recordOutlineTurnNumber(turnId, turnNumber)
-      reconcileObservedTurnOrder(this.outlineTurnOrder, [turnId], getKnownTurnNumber)
+      reconcileObservedTurnOrder(this.outlineTurnOrder, [turnId], (id) =>
+        this.outlineTurnNumbers.get(id),
+      )
     }
 
     // user query：用 data-message-id 作为缓存 key，与 extractOutline 同结构
@@ -3056,6 +3054,7 @@ export class ChatGPTAdapter extends SiteAdapter {
     this.outlineItemCache.clear()
     this.outlineTurnOrder = []
     this.outlineTurnNumbers.clear()
+    this.outlineTurnNumberOwners.clear()
     this.outlineTurnTocIndex.clear()
     this.nativeTocTextCache = []
     this.nativeTocButtonElementSignatureCache = ""
@@ -3135,6 +3134,9 @@ export class ChatGPTAdapter extends SiteAdapter {
   private syncOutlineTurnOrder(turnAnchors: Map<string, Element>): void {
     // 先记 N 再归并：观测窗口与已知表毫无重合（跳跃滚动）时，要靠 N 定位插入点
     turnAnchors.forEach((element, turnId) => {
+      // conversation-turn-N 对同一 turnId 不可变（分支编辑/重新生成会换新 id），
+      // 已记录过就跳过 DOM 查询，避免每次 extract 对所有锚点做 querySelector
+      if (this.outlineTurnNumbers.has(turnId)) return
       const turnNumber = this.getChatGPTTurnNumber(element)
       if (turnNumber !== null) this.recordOutlineTurnNumber(turnId, turnNumber)
     })
@@ -3150,12 +3152,19 @@ export class ChatGPTAdapter extends SiteAdapter {
    * 点击时只能等到超时（节点早已销毁），形成"幽灵标题"死链。
    */
   private recordOutlineTurnNumber(turnId: string, turnNumber: number): void {
-    for (const [existingId, existingNumber] of this.outlineTurnNumbers) {
-      if (existingNumber === turnNumber && existingId !== turnId) {
-        this.evictOutlineTurnCache(existingId)
-      }
+    if (this.outlineTurnNumbers.get(turnId) === turnNumber) return
+    const existingOwner = this.outlineTurnNumberOwners.get(turnNumber)
+    if (existingOwner && existingOwner !== turnId) {
+      this.evictOutlineTurnCache(existingOwner)
+    }
+    // turnId 换了 N（理论上不发生，防御性处理）：摘掉旧 N 的归属，
+    // 避免旧 N 之后被其他 turn 占用时误伤
+    const previous = this.outlineTurnNumbers.get(turnId)
+    if (previous !== undefined && this.outlineTurnNumberOwners.get(previous) === turnId) {
+      this.outlineTurnNumberOwners.delete(previous)
     }
     this.outlineTurnNumbers.set(turnId, turnNumber)
+    this.outlineTurnNumberOwners.set(turnNumber, turnId)
   }
 
   /** 淘汰某个 turnId 的全部大纲缓存：条目、全局顺序表、N 与 TOC 绑定一并清掉。 */
@@ -3165,7 +3174,11 @@ export class ChatGPTAdapter extends SiteAdapter {
     }
     const orderIndex = this.outlineTurnOrder.indexOf(turnId)
     if (orderIndex >= 0) this.outlineTurnOrder.splice(orderIndex, 1)
+    const turnNumber = this.outlineTurnNumbers.get(turnId)
     this.outlineTurnNumbers.delete(turnId)
+    if (turnNumber !== undefined && this.outlineTurnNumberOwners.get(turnNumber) === turnId) {
+      this.outlineTurnNumberOwners.delete(turnNumber)
+    }
     this.outlineTurnTocIndex.delete(turnId)
   }
 
@@ -3264,24 +3277,22 @@ export class ChatGPTAdapter extends SiteAdapter {
         this.getNativeTocOutlineIndex(item.navigationId || item.id) !== null ? count + 1 : count,
       0,
     )
+    // 预排序绑定表 + 二分查找：每条目一次解析的均摊成本从 O(n) 降到 O(log n)
+    const resolveGroupIndex = createOutlineGroupIndexResolver({
+      turnNumbers: this.outlineTurnNumbers,
+      turnOrder: this.outlineTurnOrder,
+      turnOrderIndex,
+      turnTocIndex: this.outlineTurnTocIndex,
+      tocItemCount,
+      hasNativeToc: hasNativeTocUserQueries,
+    })
 
     return merged
       .map((item, originalIndex) => {
         const cached = item.id ? this.outlineItemCache.get(item.id) : undefined
         const turnId = cached?.turnId || this.getChatGPTTurnId(item.element)
         const nativeTocIndex = this.getNativeTocOutlineIndex(item.navigationId || item.id)
-        const turnIndex =
-          nativeTocIndex !== null
-            ? nativeTocIndex
-            : resolveOutlineGroupIndex({
-                turnId,
-                turnNumbers: this.outlineTurnNumbers,
-                turnOrder: this.outlineTurnOrder,
-                turnOrderIndex,
-                turnTocIndex: this.outlineTurnTocIndex,
-                tocItemCount,
-                hasNativeToc: hasNativeTocUserQueries,
-              })
+        const turnIndex = nativeTocIndex !== null ? nativeTocIndex : resolveGroupIndex(turnId)
         return {
           item,
           originalIndex,

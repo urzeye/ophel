@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  createOutlineGroupIndexResolver,
   reconcileObservedTurnOrder,
   resolveOutlineGroupIndex,
   type OutlineGroupIndexContext,
@@ -73,6 +74,31 @@ describe("reconcileObservedTurnOrder", () => {
     const order = ["t3", "t4"]
     reconcileObservedTurnOrder(order, ["t1", "t2"])
     expect(order).toEqual(["t3", "t4", "t1", "t2"])
+  })
+
+  it("已知与未知交错的整批观测一次归并就绪（批处理插入等价性）", () => {
+    const order = ["t1", "t4", "t7"]
+    reconcileObservedTurnOrder(order, ["t1", "t2", "t3", "t4", "t5", "t6", "t7"])
+    expect(order).toEqual(["t1", "t2", "t3", "t4", "t5", "t6", "t7"])
+  })
+
+  it("leading 未知前缀批量插入到首个已知邻居之前，保持批内观测顺序", () => {
+    const order = ["t5", "t6"]
+    reconcileObservedTurnOrder(order, ["t2", "t3", "t4", "t5"])
+    expect(order).toEqual(["t2", "t3", "t4", "t5", "t6"])
+  })
+
+  it("跳跃观测的多条未知 turn 作为整体按 turnNumber 定位，保持批内顺序", () => {
+    const order = ["t1", "t40", "t41"]
+    const turnNumbers = new Map([
+      ["t1", 1],
+      ["t40", 40],
+      ["t41", 41],
+      ["t10", 10],
+      ["t11", 11],
+    ])
+    reconcileObservedTurnOrder(order, ["t10", "t11"], (turnId) => turnNumbers.get(turnId))
+    expect(order).toEqual(["t1", "t10", "t11", "t40", "t41"])
   })
 })
 
@@ -477,5 +503,53 @@ describe("大纲合并排序回归", () => {
     expect(sorted.indexOf("H-of-Q1")).toBeGreaterThan(sorted.indexOf("Q1"))
     expect(sorted.indexOf("H-of-Q1")).toBeLessThan(sorted.indexOf("Q2"))
     expect(sorted.indexOf("H-of-Q2")).toBeGreaterThan(sorted.indexOf("Q2"))
+  })
+})
+
+describe("createOutlineGroupIndexResolver", () => {
+  it("同一批 tables 下多次解析与 resolveOutlineGroupIndex 单发结果一致", () => {
+    // 混合场景：部分绑定、部分已知 N、部分全无信息，覆盖二分查找的所有分支
+    const turnOrder = ["g0", "u1", "a1", "u2", "a2", "u3", "a3", "x1"]
+    const tables = {
+      turnNumbers: new Map([
+        ["g0", 1],
+        ["u1", 2],
+        ["a1", 3],
+        ["a2", 5],
+        ["u3", 6],
+        ["a3", 7],
+      ]),
+      turnOrder,
+      turnOrderIndex: new Map(turnOrder.map((turnId, index) => [turnId, index])),
+      turnTocIndex: new Map([
+        ["u1", 0],
+        ["u3", 2],
+      ]),
+      tocItemCount: 3,
+      hasNativeToc: true,
+    }
+    const resolve = createOutlineGroupIndexResolver(tables)
+    for (const turnId of [...turnOrder, "unknown", null]) {
+      expect(resolve(turnId)).toBe(resolveOutlineGroupIndex({ ...tables, turnId }))
+    }
+  })
+
+  it("无 TOC 模式下多次解析与单发结果一致", () => {
+    const turnOrder = ["t1", "t2", "t3", "t4"]
+    const tables = {
+      turnNumbers: new Map([
+        ["t1", 1],
+        ["t4", 4],
+      ]),
+      turnOrder,
+      turnOrderIndex: new Map(turnOrder.map((turnId, index) => [turnId, index])),
+      turnTocIndex: new Map<string, number>(),
+      tocItemCount: 0,
+      hasNativeToc: false,
+    }
+    const resolve = createOutlineGroupIndexResolver(tables)
+    for (const turnId of [...turnOrder, "unknown", null]) {
+      expect(resolve(turnId)).toBe(resolveOutlineGroupIndex({ ...tables, turnId }))
+    }
   })
 })

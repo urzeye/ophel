@@ -27,55 +27,79 @@ export function reconcileObservedTurnOrder(
   const position = new Map<string, number>()
   order.forEach((turnId, index) => position.set(turnId, index))
 
-  let lastKnownPosition = -1
+  // 本批插入先按锚点收集（anchor → 依次插入的 turnId，语义为"插到原 order[anchor]
+  // 之前"），最后一次重建数组。逐个 splice + 全量位置表更新是 O(k·n)，千轮对话的
+  // 导出采集会逐 turn 调用本函数，批处理后摊到 O(n+k)。
+  let insertions: Map<number, string[]> | null = null
+  const pend = (anchor: number, turnId: string): void => {
+    if (!insertions) insertions = new Map()
+    const bucket = insertions.get(anchor)
+    if (bucket) {
+      bucket.push(turnId)
+    } else {
+      insertions.set(anchor, [turnId])
+    }
+  }
+
+  // 下一个未知 turn 的插入锚点：处理到已知 turn 时为其原始下标 +1；刚挂起一次
+  // 插入时保持同一锚点（同桶内按观测顺序追加，等价于逐个插在前者之后）。
+  // null 表示还在观测批的 leading 未知前缀里——该前缀里的 nextKnown 检索与
+  // turnNumber 定位每批至多执行一次（首个未知 turn 处理后 nextAnchor 即非空）。
+  let nextAnchor: number | null = null
   observedTurnIds.forEach((turnId, observedIndex) => {
     const known = position.get(turnId)
     if (known !== undefined) {
-      lastKnownPosition = known
+      nextAnchor = known + 1
       return
     }
 
-    let insertAt: number
-    if (lastKnownPosition >= 0) {
-      insertAt = lastKnownPosition + 1
-    } else {
-      // 本次观测中位于所有已知 turn 之前：插到其后第一个已知 turn 前面；没有已知 turn 则追加
-      let nextKnown = -1
-      for (let i = observedIndex + 1; i < observedTurnIds.length; i++) {
-        const candidate = position.get(observedTurnIds[i])
-        if (candidate !== undefined) {
-          nextKnown = candidate
-          break
-        }
+    if (nextAnchor !== null) {
+      pend(nextAnchor, turnId)
+      return
+    }
+
+    // 本次观测中位于所有已知 turn 之前：插到其后第一个已知 turn 前面；没有已知 turn 则追加
+    let anchor = -1
+    for (let i = observedIndex + 1; i < observedTurnIds.length; i++) {
+      const candidate = position.get(observedTurnIds[i])
+      if (candidate !== undefined) {
+        anchor = candidate
+        break
       }
-      if (nextKnown >= 0) {
-        insertAt = nextKnown
-      } else {
-        insertAt = order.length
-        const observedNumber = getTurnNumber?.(turnId)
-        if (getTurnNumber && observedNumber !== undefined) {
-          for (let i = 0; i < order.length; i++) {
-            const knownNumber = getTurnNumber(order[i])
-            if (knownNumber !== undefined && knownNumber > observedNumber) {
-              insertAt = i
-              break
-            }
+    }
+    if (anchor < 0) {
+      // 与已知表毫无重合（拖动滚动条 / 点击 TOC 跳跃滚动）：按 conversation-turn-N
+      // 的单调性定位插入点，避免把更早的 turn 盲目追加到尾部造成永久倒挂
+      anchor = order.length
+      const observedNumber = getTurnNumber?.(turnId)
+      if (getTurnNumber && observedNumber !== undefined) {
+        for (let i = 0; i < order.length; i++) {
+          const knownNumber = getTurnNumber(order[i])
+          if (knownNumber !== undefined && knownNumber > observedNumber) {
+            anchor = i
+            break
           }
         }
       }
     }
 
-    order.splice(insertAt, 0, turnId)
-    position.forEach((value, key) => {
-      if (value >= insertAt) position.set(key, value + 1)
-    })
-    position.set(turnId, insertAt)
-    lastKnownPosition = insertAt
+    pend(anchor, turnId)
+    nextAnchor = anchor
   })
+
+  if (!insertions) return
+
+  const merged: string[] = []
+  for (let i = 0; i <= order.length; i++) {
+    const bucket = insertions.get(i)
+    if (bucket) merged.push(...bucket)
+    if (i < order.length) merged.push(order[i])
+  }
+  order.length = 0
+  order.push(...merged)
 }
 
-export interface OutlineGroupIndexContext {
-  turnId: string | null
+export interface OutlineGroupIndexTables {
   /** turnId → conversation-turn-N（ChatGPT DOM 自带的全局 1-based 序号，最精确） */
   turnNumbers: ReadonlyMap<string, number>
   /** 全局顺序表（reconcileObservedTurnOrder 维护） */
@@ -87,6 +111,10 @@ export interface OutlineGroupIndexContext {
   /** 原生 TOC 提问总数，仅用于全无绑定时的比例换算兜底 */
   tocItemCount: number
   hasNativeToc: boolean
+}
+
+export interface OutlineGroupIndexContext extends OutlineGroupIndexTables {
+  turnId: string | null
 }
 
 /**
@@ -101,7 +129,44 @@ export interface OutlineGroupIndexContext {
  * 查不到任何位置信息时返回 MAX_SAFE_INTEGER，排到末尾（与历史行为一致）。
  */
 export function resolveOutlineGroupIndex(context: OutlineGroupIndexContext): number {
-  const { turnId, turnNumbers, turnOrderIndex, turnTocIndex, hasNativeToc } = context
+  return createOutlineGroupIndexResolver(context)(context.turnId)
+}
+
+/**
+ * 预计算版 resolveOutlineGroupIndex：merge 排序要为每个大纲条目各算一次分组序号，
+ * 若每次都线性扫全表找相邻绑定就是 O(m·n)。这里把 TOC 绑定与已知 N 按顺序表位置
+ * 预排序一次，之后每条目二分查找，整体 O(b log b + m log b)。
+ * 返回的解析器只在 tables 不变期间有效（merge 单次调用内成立）。
+ */
+export function createOutlineGroupIndexResolver(
+  tables: OutlineGroupIndexTables,
+): (turnId: string | null) => number {
+  const { turnNumbers, turnOrderIndex, turnTocIndex } = tables
+
+  const tocBindings: { position: number; tocIndex: number }[] = []
+  turnTocIndex.forEach((tocIndex, turnId) => {
+    const position = turnOrderIndex.get(turnId)
+    if (position !== undefined) tocBindings.push({ position, tocIndex })
+  })
+  tocBindings.sort((a, b) => a.position - b.position)
+
+  const numberedTurns: { position: number; turnNumber: number }[] = []
+  turnNumbers.forEach((turnNumber, turnId) => {
+    const position = turnOrderIndex.get(turnId)
+    if (position !== undefined) numberedTurns.push({ position, turnNumber })
+  })
+  numberedTurns.sort((a, b) => a.position - b.position)
+
+  return (turnId) => resolveGroupIndex(tables, tocBindings, numberedTurns, turnId)
+}
+
+function resolveGroupIndex(
+  tables: OutlineGroupIndexTables,
+  tocBindings: { position: number; tocIndex: number }[],
+  numberedTurns: { position: number; turnNumber: number }[],
+  turnId: string | null,
+): number {
+  const { turnNumbers, turnOrderIndex, turnTocIndex, hasNativeToc } = tables
   if (!turnId) return Number.MAX_SAFE_INTEGER
 
   const turnNumber = turnNumbers.get(turnId)
@@ -113,38 +178,49 @@ export function resolveOutlineGroupIndex(context: OutlineGroupIndexContext): num
     // 完全无绑定（如提问文本全部重复导致绑定失败）时，N 比位置占比更精确
     if (turnTocIndex.size === 0 && turnNumber !== undefined) return (turnNumber - 1) / 2
 
-    return interpolateTocGroupIndex(context)
+    return interpolateTocGroupIndex(tables, tocBindings, turnId)
   }
 
   if (turnNumber !== undefined) return (turnNumber - 1) / 2
 
   const position = turnOrderIndex.get(turnId)
   if (position === undefined) return Number.MAX_SAFE_INTEGER
-  return interpolateTurnNumberGroupIndex(context, position)
+  return interpolateTurnNumberGroupIndex(numberedTurns, position)
 }
 
-function interpolateTocGroupIndex(context: OutlineGroupIndexContext): number {
-  const { turnId, turnNumbers, turnOrder, turnOrderIndex, turnTocIndex } = context
-  const position = turnId === null ? undefined : turnOrderIndex.get(turnId)
+/** 在按 position 升序的条目里找 p 的严格前驱与严格后继（position 唯一，p 自身必无绑定） */
+function findNeighbors<T extends { position: number }>(
+  entries: T[],
+  position: number,
+): { prev: T | null; next: T | null } {
+  let lo = 0
+  let hi = entries.length
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1
+    if (entries[mid].position < position) {
+      lo = mid + 1
+    } else {
+      hi = mid
+    }
+  }
+  let nextIndex = lo
+  if (nextIndex < entries.length && entries[nextIndex].position === position) nextIndex += 1
+  return {
+    prev: lo > 0 ? entries[lo - 1] : null,
+    next: nextIndex < entries.length ? entries[nextIndex] : null,
+  }
+}
+
+function interpolateTocGroupIndex(
+  tables: OutlineGroupIndexTables,
+  tocBindings: { position: number; tocIndex: number }[],
+  turnId: string,
+): number {
+  const { turnNumbers, turnOrder, turnOrderIndex } = tables
+  const position = turnOrderIndex.get(turnId)
   if (position === undefined) return Number.MAX_SAFE_INTEGER
 
-  let prevBound: { position: number; tocIndex: number } | null = null
-  for (let i = position - 1; i >= 0; i--) {
-    const tocIndex = turnTocIndex.get(turnOrder[i])
-    if (tocIndex !== undefined) {
-      prevBound = { position: i, tocIndex }
-      break
-    }
-  }
-
-  let nextBound: { position: number; tocIndex: number } | null = null
-  for (let i = position + 1; i < turnOrder.length; i++) {
-    const tocIndex = turnTocIndex.get(turnOrder[i])
-    if (tocIndex !== undefined) {
-      nextBound = { position: i, tocIndex }
-      break
-    }
-  }
+  const { prev: prevBound, next: nextBound } = findNeighbors(tocBindings, position)
 
   if (prevBound && nextBound) {
     const ratio = (position - prevBound.position) / (nextBound.position - prevBound.position)
@@ -155,7 +231,7 @@ function interpolateTocGroupIndex(context: OutlineGroupIndexContext): number {
     // 后续提问（如重复文本触发防歧义拦截），其原生 TOC 条目仍占整数序号；
     // 一律压缩进 (K, K+1) 会把后续问题的回答标题排到该提问的 TOC 条目之前。
     const prevTurnNumber = turnNumbers.get(turnOrder[prevBound.position])
-    const currentTurnNumber = turnId ? turnNumbers.get(turnId) : undefined
+    const currentTurnNumber = turnNumbers.get(turnId)
     if (
       prevTurnNumber !== undefined &&
       currentTurnNumber !== undefined &&
@@ -182,7 +258,7 @@ function interpolateTocGroupIndex(context: OutlineGroupIndexContext): number {
   // TOC 存在但没有任何一条提问能绑定到 turn（如提问文本全部重复）。
   // 顺序表里 user/assistant section 各占一格（步长 2），与 TOC 步长 1 不一致，
   // 不能直接返回 position；按占比把顺序表全长映射到 TOC 序号全长。
-  const { tocItemCount } = context
+  const { tocItemCount } = tables
   if (turnOrder.length === 0 || tocItemCount === 0) return position
   return position * (tocItemCount / turnOrder.length)
 }
@@ -193,28 +269,10 @@ function interpolateTocGroupIndex(context: OutlineGroupIndexContext): number {
  * 全表没有任何已知 N（老版 DOM）时退化为顺序表位置。
  */
 function interpolateTurnNumberGroupIndex(
-  context: OutlineGroupIndexContext,
+  numberedTurns: { position: number; turnNumber: number }[],
   position: number,
 ): number {
-  const { turnOrder, turnNumbers } = context
-
-  let prev: { position: number; turnNumber: number } | null = null
-  for (let i = position - 1; i >= 0; i--) {
-    const turnNumber = turnNumbers.get(turnOrder[i])
-    if (turnNumber !== undefined) {
-      prev = { position: i, turnNumber }
-      break
-    }
-  }
-
-  let next: { position: number; turnNumber: number } | null = null
-  for (let i = position + 1; i < turnOrder.length; i++) {
-    const turnNumber = turnNumbers.get(turnOrder[i])
-    if (turnNumber !== undefined) {
-      next = { position: i, turnNumber }
-      break
-    }
-  }
+  const { prev, next } = findNeighbors(numberedTurns, position)
 
   let estimated: number
   if (prev && next) {
