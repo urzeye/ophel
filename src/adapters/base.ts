@@ -1396,19 +1396,23 @@ export abstract class SiteAdapter {
     if (elements.length >= queryIndex) {
       const candidate = elements[queryIndex - 1]
       const candidateText = this.extractUserQueryText(candidate)
+      // 无文本可验证（如纯图片提问）：只能按索引返回
+      if (!text) return candidate
       // 验证：文本匹配或包含关系（大纲可能显示截断的文本）
       if (
-        candidateText === text ||
-        candidateText.startsWith(text) ||
-        text.startsWith(candidateText)
+        candidateText &&
+        (candidateText === text || candidateText.startsWith(text) || text.startsWith(candidateText))
       ) {
         return candidate
       }
     }
 
     // 2. 回退：按文本内容搜索所有用户提问
+    if (!text) return null
     for (const el of elements) {
       const elText = this.extractUserQueryText(el)
+      // 空文本提问必须跳过：startsWith("") 恒真会把任何搜索都匹配到它身上
+      if (!elText) continue
       if (elText === text || elText.startsWith(text) || text.startsWith(elText)) {
         return el
       }

@@ -1783,16 +1783,10 @@ export class OutlineManager {
     if (this.settings.followMode !== "current") return null
     if (this.flatNodes.length === 0) return null
 
-    const nativeActiveId = this.siteAdapter.findActiveOutlineItemId()
-    if (nativeActiveId) {
-      const nativeActiveNode = this.flatNodes.find((node) => {
-        const nodeNavigationId = node.navigationId || node.id || ""
-        return nodeNavigationId === nativeActiveId || nodeNavigationId.startsWith(nativeActiveId)
-      })
-      if (nativeActiveNode && !nativeActiveNode.isGhost) {
-        return nativeActiveNode
-      }
-    }
+    const nativeActiveNode = this.findNativeActiveOutlineNode()
+    const nativeSectionEnd = nativeActiveNode
+      ? this.findUserQuerySectionEndIndex(nativeActiveNode)
+      : 0
 
     const viewportRect = this.getScrollViewportRect(scrollContainer)
     if (!viewportRect) return null
@@ -1813,6 +1807,18 @@ export class OutlineManager {
       viewportRect.height,
       latestCachedUserQuery,
     )
+    // 有原生导航激活项时，把它所在的整个问题区间加入候选：区间标题可能全部
+    // 离屏且 scrollPositions 过期，仅靠锚点附近的窗口会漏掉它们
+    if (nativeActiveNode) {
+      const candidateSet = new Set(candidateNodes)
+      for (let i = nativeActiveNode.index; i < nativeSectionEnd; i += 1) {
+        const node = this.flatNodes[i]
+        if (node && !node.isGhost && !candidateSet.has(node)) {
+          candidateSet.add(node)
+          candidateNodes.push(node)
+        }
+      }
+    }
     const mountedHeadings: MeasuredOutlineNode[] = []
     const mountedUserQueries: MeasuredOutlineNode[] = []
 
@@ -1890,6 +1896,18 @@ export class OutlineManager {
       }
     }
 
+    // 原生导航（如 ChatGPT 右侧 TOC）已给出当前问题：只用来锁定问题区间，
+    // 区间内仍按滚动位置高亮锚线上方最深的标题，而不是直接高亮用户问题本身
+    if (nativeActiveNode) {
+      const sectionHeading = this.findActiveHeadingInUserQuerySection(
+        nativeActiveNode,
+        nativeSectionEnd,
+        mountedHeadings,
+        anchorY,
+      )
+      return sectionHeading ?? nativeActiveNode
+    }
+
     if (activeUserQuery) {
       return activeUserQuery.node
     }
@@ -1925,6 +1943,43 @@ export class OutlineManager {
     }
 
     return nextVisibleHeading?.node ?? cachedVisibleNode
+  }
+
+  /** 站点原生导航（如 ChatGPT 右侧 TOC）报出的当前激活大纲节点 */
+  private findNativeActiveOutlineNode(): OutlineNode | null {
+    const nativeActiveId = this.siteAdapter.findActiveOutlineItemId()
+    if (!nativeActiveId) return null
+
+    const nativeActiveNode = this.flatNodes.find((node) => {
+      const nodeNavigationId = node.navigationId || node.id || ""
+      return nodeNavigationId === nativeActiveId || nodeNavigationId.startsWith(nativeActiveId)
+    })
+    return nativeActiveNode && !nativeActiveNode.isGhost ? nativeActiveNode : null
+  }
+
+  // flatNodes 为先序遍历且 node.index 与扁平下标一致；
+  // 用户问题区间 = 自身之后到下一个 level 0 节点（下一个用户问题）之前
+  private findUserQuerySectionEndIndex(sectionNode: OutlineNode): number {
+    for (let i = sectionNode.index + 1; i < this.flatNodes.length; i += 1) {
+      if (this.flatNodes[i].relativeLevel === 0) return i
+    }
+    return this.flatNodes.length
+  }
+
+  /** 问题区间内位于锚线上方、最靠近锚线的标题（即当前阅读到的最深一级） */
+  private findActiveHeadingInUserQuerySection(
+    sectionNode: OutlineNode,
+    sectionEnd: number,
+    mountedHeadings: MeasuredOutlineNode[],
+    anchorY: number,
+  ): OutlineNode | null {
+    let active: MeasuredOutlineNode | null = null
+    for (const heading of mountedHeadings) {
+      if (heading.node.index <= sectionNode.index || heading.node.index >= sectionEnd) continue
+      if (heading.top > anchorY) continue
+      if (!active || heading.top > active.top) active = heading
+    }
+    return active?.node ?? null
   }
 
   private collectActiveCandidateNodes(

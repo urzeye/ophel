@@ -16,7 +16,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### ✨ Improvements
 
-- **ChatGPT outline performance in long conversations** — Optimized heading sync and index calculation during long conversations, eliminating repeated full-tree DOM queries and reducing main thread lag during outline refreshes.
+- **ChatGPT outline performance in long conversations** — Optimized heading sync and index calculation during long conversations, eliminating repeated full-tree DOM queries and reducing main thread lag during outline refreshes. (#935)
 - **Tools menu covered by the panel** — Fixed Auto Snap panel mode making the panel slide out and cover the quick toolbar's tools menu when clicking its icon; the menu now also stays above the expanded panel while open, so it remains clickable at any toolbar position. (#934)
 - **Clean Mode bottom spacing** — In Clean Mode, AI generation and legal disclaimers under the input box are now hidden while preserving their native DOM flow spacing, keeping the input area at the site's original intended height instead of sticking to the bottom edge. (#929)
 

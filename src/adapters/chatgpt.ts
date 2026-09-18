@@ -2970,16 +2970,44 @@ export class ChatGPTAdapter extends SiteAdapter {
     timeoutMs = 1600,
   ): Promise<Element | null> {
     const deadline = Date.now() + timeoutMs
+    let lastScrollTop: number | null = null
     while (Date.now() < deadline) {
       await this.sleep(80)
-      const candidate = this.findNativeTocUserQueryCandidate(
+      const activeIndexMatched = this.getActiveNativeTocIndex() === entry.index
+      // 快路径：DOM 文本与 TOC 标签能匹配（未截断的短提问）时直接命中
+      const textMatched = this.findNativeTocUserQueryCandidate(
         text || entry.text,
-        this.getActiveNativeTocIndex() === entry.index,
+        activeIndexMatched,
       )
-      if (candidate) return candidate
+      if (textMatched) return textMatched
+
+      // 原生 TOC 标签可能被截断或带省略号，文本匹配会系统性失效。此时以站点
+      // 导航状态为准：激活项已切到被点击条目且滚动停止后，视口中心附近的问题
+      // 就是跳转目标，不再要求文本一致
+      const scrollTop = this.getNativeTocScrollTop()
+      if (activeIndexMatched && scrollTop !== null && scrollTop === lastScrollTop) {
+        const settled = this.findVisibleUserQueryNearViewportCenter()
+        if (settled) return settled
+      }
+      lastScrollTop = scrollTop
     }
 
     return null
+  }
+
+  private getNativeTocScrollTop(): number | null {
+    const container =
+      this.getScrollContainer() || document.querySelector(this.getResponseContainerSelector())
+    return container instanceof HTMLElement ? container.scrollTop : null
+  }
+
+  private findVisibleUserQueryNearViewportCenter(): Element | null {
+    const container =
+      this.getScrollContainer() || document.querySelector(this.getResponseContainerSelector())
+    const candidates = Array.from(document.querySelectorAll(this.getUserQuerySelector())).filter(
+      (element) => this.isVisible(element) && this.isElementInViewport(element, container),
+    )
+    return this.getClosestVisibleElementToViewportCenter(candidates, container)
   }
 
   private findNativeTocUserQueryCandidate(
@@ -3404,11 +3432,23 @@ export class ChatGPTAdapter extends SiteAdapter {
       if (nativeTocEntry) {
         if (nativeTocEntry.element) return nativeTocEntry.element
 
+        const scrollTopBefore = this.getNativeTocScrollTop()
+        const activeIndexBefore = this.getActiveNativeTocIndex()
+
         nativeTocEntry.button.scrollIntoView({ block: "nearest", inline: "nearest" })
         nativeTocEntry.button.click()
 
         const resolvedTarget = await this.waitForNativeTocUserQuery(nativeTocEntry, item.text)
         if (resolvedTarget) return resolvedTarget
+
+        // 点击已触发 ChatGPT 自身导航（激活项或滚动位置变化）：最终位置以站点为准，
+        // 不能再走文本/索引兜底——虚拟滚动下挂载的提问不全，且空文本提问（如纯图片
+        // 提问）会被 startsWith("") 通配命中，把页面拽到错误的问题上
+        const navigated =
+          this.getActiveNativeTocIndex() === nativeTocEntry.index ||
+          activeIndexBefore !== this.getActiveNativeTocIndex() ||
+          (scrollTopBefore !== null && this.getNativeTocScrollTop() !== scrollTopBefore)
+        if (navigated) return null
       }
     }
 
