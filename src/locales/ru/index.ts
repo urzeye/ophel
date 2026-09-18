@@ -815,7 +815,6 @@ export const ru = {
   outlineEmptyDescUserQueryOnly:
     "Сейчас отображаются только вопросы пользователя. Отправьте сообщение, чтобы появились пункты содержания.",
   outlineCopyFull: "Копировать план",
-  outlineCopyFullRunning: "Копирование плана...",
   outlineFullCopySuccess: "Скопировано пунктов плана: {count}",
   outlineRefresh: "Перезагрузить",
   outlineSettings: "Настройки содержания",

@@ -10,8 +10,8 @@ import {
   ClearIcon,
   CollapseAllIcon,
   CopyIcon,
-  CopyOutlineIcon,
   ExpandAllIcon,
+  ExportIcon,
   LocateIcon,
   OutlineDocumentIcon,
   ScrollBottomIcon,
@@ -749,7 +749,6 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
   const [outlineSources, setOutlineSources] = useState<OutlineSource[]>(initialState.sources)
   const [activeSourceId, setActiveSourceId] = useState(initialState.activeSourceId)
   const [isCopyingFullOutline, setIsCopyingFullOutline] = useState(false)
-  const [fullOutlineCopySuccess, setFullOutlineCopySuccess] = useState(false)
   const [outlineScrollTop, setOutlineScrollTop] = useState(0)
   const [outlineViewportHeight, setOutlineViewportHeight] = useState(0)
 
@@ -1601,9 +1600,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
       }
 
       await writeClipboardText(result.text)
-      setFullOutlineCopySuccess(true)
       showToast(t("outlineFullCopySuccess").replace("{count}", String(result.count)))
-      window.setTimeout(() => setFullOutlineCopySuccess(false), 1500)
     } catch (error) {
       console.error("[OutlineTab] Failed to copy outline:", error)
       showToast(t("copyFailed"))
@@ -1619,6 +1616,16 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
     tree,
     visibleMap,
   ])
+
+  // 大纲 tab 挂载期间把"复制大纲"暴露给导出对话框（对话框在 App 层，tab 未挂载时隐藏该入口）
+  useEffect(() => {
+    window.__ophelCopyFullOutline = handleCopyFullOutline
+    return () => {
+      if (window.__ophelCopyFullOutline === handleCopyFullOutline) {
+        delete window.__ophelCopyFullOutline
+      }
+    }
+  }, [handleCopyFullOutline])
 
   // 用于提取完整用户提问文本（当显示被截断时）
   const extractUserQueryText = useCallback(
@@ -1917,25 +1924,6 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
               </button>
             </Tooltip>
 
-            {/* Copy Outline */}
-            <Tooltip
-              content={isCopyingFullOutline ? t("outlineCopyFullRunning") : t("outlineCopyFull")}>
-              <button
-                type="button"
-                onClick={handleCopyFullOutline}
-                disabled={isCopyingFullOutline}
-                aria-label={
-                  isCopyingFullOutline ? t("outlineCopyFullRunning") : t("outlineCopyFull")
-                }
-                className={`outline-toolbar-btn ${isCopyingFullOutline ? "is-busy" : ""}`}>
-                {fullOutlineCopySuccess ? (
-                  <CheckIcon size={14} color="#10b981" />
-                ) : (
-                  <CopyOutlineIcon size={16} />
-                )}
-              </button>
-            </Tooltip>
-
             {/* Locate Current */}
             <Tooltip content={t("outlineLocateCurrent")}>
               <button
@@ -1962,6 +1950,17 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
                 ) : (
                   <ScrollTopIcon size={16} />
                 )}
+              </button>
+            </Tooltip>
+
+            {/* Export Conversation: 复用全局导出入口，按设置弹出选项弹窗或一键直出 */}
+            <Tooltip content={t("exportConversationTitle")}>
+              <button
+                type="button"
+                onClick={() => window.dispatchEvent(new CustomEvent("ophel:openExportDialog"))}
+                aria-label={t("exportConversationTitle")}
+                className="outline-toolbar-btn export-accent">
+                <ExportIcon size={16} />
               </button>
             </Tooltip>
           </div>

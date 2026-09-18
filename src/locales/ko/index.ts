@@ -814,7 +814,6 @@ export const ko = {
   outlineEmptyDescUserQueryOnly:
     "현재 사용자 질문만 표시 중입니다. 메시지를 보내면 개요 항목이 생성됩니다.",
   outlineCopyFull: "개요 복사",
-  outlineCopyFullRunning: "개요 복사 중...",
   outlineFullCopySuccess: "개요 항목 {count}개를 복사했습니다",
   outlineRefresh: "새로고침",
   outlineSettings: "개요 설정",

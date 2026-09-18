@@ -821,7 +821,6 @@ export const fr = {
   outlineEmptyDescUserQueryOnly:
     "Seules les questions utilisateur sont affichées pour le moment. Envoyez un message pour générer le sommaire.",
   outlineCopyFull: "Copier le sommaire",
-  outlineCopyFullRunning: "Copie du sommaire...",
   outlineFullCopySuccess: "{count} éléments du sommaire copiés",
   outlineRefresh: "Recharger",
   outlineSettings: "Réglages de Sommaire",

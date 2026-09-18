@@ -829,7 +829,6 @@ export const ja = {
   outlineEmptyDescUserQueryOnly:
     "現在はユーザーの質問のみ表示中です。メッセージ送信後に目次項目が表示されます。",
   outlineCopyFull: "目次をコピー",
-  outlineCopyFullRunning: "目次をコピー中...",
   outlineFullCopySuccess: "{count} 件の目次項目をコピーしました",
   outlineRefresh: "リロード",
   outlineSettings: "目次設定",

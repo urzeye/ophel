@@ -864,7 +864,6 @@ export const en = {
   outlineEmptyDescUserQueryOnly:
     "Only user queries are shown right now. Send a message to generate outline items.",
   outlineCopyFull: "Copy outline",
-  outlineCopyFullRunning: "Copying outline...",
   outlineFullCopySuccess: "Copied {count} outline items",
   outlineRefresh: "Refresh",
   outlineSettings: "Outline Settings",

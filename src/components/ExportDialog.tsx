@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react"
 
 import {
   CopyIcon,
+  CopyOutlineIcon,
   HTMLFileIcon,
   JSONFileIcon,
   MarkdownIcon,
@@ -146,11 +147,6 @@ const EXPORT_DIALOG_STYLES = `
     color: var(--gh-primary, #4285f4);
     font-weight: 600;
     box-shadow: 0 0 0 1px var(--gh-primary, #4285f4);
-  }
-
-  /* 剪贴板是动作而非文件格式，独占整行以容纳各语言长文案 */
-  .gh-export-format-btn-full {
-    grid-column: 1 / -1;
   }
 
   .gh-export-format-badge {
@@ -372,14 +368,14 @@ export interface ExportDialogProps {
 const getFormatOptions = (): {
   format: ExportFormat
   label: string
-  badge: string
+  badge?: string
   Icon: React.FC<{ size?: number; className?: string }>
 }[] => [
   { format: "markdown", label: "Markdown", badge: ".md", Icon: MarkdownIcon },
   { format: "html", label: "HTML", badge: ".html", Icon: HTMLFileIcon },
   { format: "json", label: "JSON", badge: ".json", Icon: JSONFileIcon },
   { format: "txt", label: "Text", badge: ".txt", Icon: TXTFileIcon },
-  { format: "clipboard", label: t("exportToClipboard"), badge: "copy", Icon: CopyIcon },
+  { format: "clipboard", label: t("exportToClipboard"), Icon: CopyIcon },
 ]
 
 export const ExportDialog: React.FC<ExportDialogProps> = ({
@@ -506,20 +502,34 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
             <button
               key={item.format}
               type="button"
-              className={
-                item.format === "clipboard"
-                  ? "gh-export-format-btn gh-export-format-btn-full"
-                  : "gh-export-format-btn"
-              }
+              className="gh-export-format-btn"
               data-active={selectedFormat === item.format}
+              title={item.label}
               onClick={() => setSelectedFormat(item.format)}>
               <span className="gh-export-format-label">
                 <item.Icon size={15} className="gh-export-format-icon" />
                 <span>{item.label}</span>
               </span>
-              <span className="gh-export-format-badge">{item.badge}</span>
+              {item.badge && <span className="gh-export-format-badge">{item.badge}</span>}
             </button>
           ))}
+          {/* 复制大纲：即时动作（非导出格式），能力由大纲 tab 挂载期间暴露；未挂载时不显示 */}
+          {typeof window.__ophelCopyFullOutline === "function" && (
+            <button
+              type="button"
+              className="gh-export-format-btn"
+              title={t("outlineCopyFull")}
+              disabled={isExporting}
+              onClick={() => {
+                onClose()
+                void window.__ophelCopyFullOutline?.()
+              }}>
+              <span className="gh-export-format-label">
+                <CopyOutlineIcon size={15} className="gh-export-format-icon" />
+                <span>{t("outlineCopyFull")}</span>
+              </span>
+            </button>
+          )}
         </div>
       </div>
 

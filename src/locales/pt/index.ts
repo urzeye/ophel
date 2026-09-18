@@ -818,7 +818,6 @@ export const pt = {
   outlineEmptyDescUserQueryOnly:
     "No momento, apenas as perguntas do usuário são exibidas. Envie uma mensagem para gerar itens no índice.",
   outlineCopyFull: "Copiar índice",
-  outlineCopyFullRunning: "Copiando índice...",
   outlineFullCopySuccess: "{count} itens do índice copiados",
   outlineRefresh: "Recarregar",
   outlineSettings: "Ajustes de Índice",

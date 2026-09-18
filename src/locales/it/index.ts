@@ -893,7 +893,6 @@ export const it = {
   outlineEmptyDescUserQueryOnly:
     "Al momento vengono visualizzate solo le query degli utenti. Invia un messaggio per generare elementi della struttura.",
   outlineCopyFull: "Copia contorno",
-  outlineCopyFullRunning: "Copia contorno...",
   outlineFullCopySuccess: "Elementi dello schema {count} copiati",
   outlineRefresh: "Aggiorna",
   outlineSettings: "Impostazioni del contorno",

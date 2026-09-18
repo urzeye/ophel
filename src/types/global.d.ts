@@ -73,6 +73,8 @@ declare global {
     __ophelPendingLocateOutline?: boolean
     /** 待处理的大纲搜索聚焦请求 */
     __ophelPendingSearchOutline?: boolean
+    /** 大纲 tab 挂载期间暴露的"复制大纲"能力，供导出对话框调用 */
+    __ophelCopyFullOutline?: () => Promise<void>
     /** 待处理的对话定位请求 */
     __ophelPendingLocateConversation?: boolean
     /** Tooltip：window.focus 监听器是否已注册（防 HMR 重复注册） */

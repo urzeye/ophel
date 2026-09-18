@@ -820,7 +820,6 @@ export const de = {
   outlineEmptyDescUserQueryOnly:
     "Derzeit werden nur Nutzerfragen angezeigt. Senden Sie eine Nachricht, um Verzeichnispunkte zu erzeugen.",
   outlineCopyFull: "Gliederung kopieren",
-  outlineCopyFullRunning: "Gliederung wird kopiert...",
   outlineFullCopySuccess: "{count} Gliederungspunkte kopiert",
   outlineRefresh: "Neu laden",
   outlineSettings: "Verzeichnis-Optionen",

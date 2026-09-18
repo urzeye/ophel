@@ -796,7 +796,6 @@ export const zhCN = {
   outlineEmptyDescDefault: "开始对话后将自动生成大纲",
   outlineEmptyDescUserQueryOnly: "当前仅显示用户提问，发送消息后将出现大纲内容",
   outlineCopyFull: "复制大纲",
-  outlineCopyFullRunning: "正在复制大纲...",
   outlineFullCopySuccess: "已复制 {count} 个大纲项",
   outlineRefresh: "刷新",
   outlineSettings: "大纲设置",

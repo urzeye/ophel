@@ -681,7 +681,6 @@ export const zhTW = {
   outlineEmptyDescDefault: "開始對話後將自動生成大綱",
   outlineEmptyDescUserQueryOnly: "目前僅顯示用戶提問，發送訊息後將出現大綱內容",
   outlineCopyFull: "複製大綱",
-  outlineCopyFullRunning: "正在複製大綱...",
   outlineFullCopySuccess: "已複製 {count} 個大綱項目",
   outlineRefresh: "刷新",
   outlineSettings: "大綱設置",
