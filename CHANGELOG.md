@@ -26,7 +26,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
-- **ChatGPT outline grouping across virtual scrolling** — Fixed an issue in long ChatGPT conversations where offscreen turns unmounted by virtual scrolling caused cached reply headings to misgroup under neighboring questions or jump out of order.
+- **ChatGPT outline order in long chats** — Fixed an issue where scrolling through long ChatGPT conversations could cause reply headings to be grouped under the wrong question or jump out of order in the outline.
 - **Pinned conversations on Doubao and DeepSeek** — Fixed pinned chats no longer being recognized after both sites redesigned their sidebars, so pinned status syncs correctly in Conversation Manager again. (#933)
 - **Zen Mode and Clean Mode state isolation** — Fixed an issue where enabling Zen Mode automatically enabled Clean Mode and left it active after exiting, now preserving your original Clean Mode preference. (#926)
 
