@@ -152,8 +152,8 @@ interface PointerPosition {
 
 const LAUNCHER_PEEK_DWELL_MS = 300
 const LAUNCHER_PEEK_HIDE_DELAY_MS = 250
-// 进入边缘触发区后的停留时间：过滤快速划过与屏幕边缘误触
-const EDGE_HOVER_ZONE_DWELL_MS = 300
+// 悬停边缘把手/触发区后的停留时间：过滤快速划过、屏幕边缘误触与跨屏滑过
+const EDGE_TRIGGER_DWELL_MS = 300
 
 const EXPORT_STAGE_TEXT_KEYS: Record<ConversationExportStage, string> = {
   "loading-history": "exportOverlayLoadingHistory",
@@ -984,7 +984,8 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
     }
   }, [])
 
-  const handleEdgeHoverZoneMouseEnter = useCallback(() => {
+  // 吸附收起状态下的统一展开入口：悬停需停留 EDGE_TRIGGER_DWELL_MS 才弹出面板
+  const scheduleEdgeTriggerDwell = useCallback(() => {
     clearEdgeHoverZoneDwellTimer()
 
     if (!edgeSnapState || settingsRef.current?.panel?.panelMode !== "edge-snap") {
@@ -994,7 +995,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
     edgeHoverZoneDwellTimerRef.current = setTimeout(() => {
       edgeHoverZoneDwellTimerRef.current = null
       handlePanelMouseEnter()
-    }, EDGE_HOVER_ZONE_DWELL_MS)
+    }, EDGE_TRIGGER_DWELL_MS)
   }, [clearEdgeHoverZoneDwellTimer, edgeSnapState, handlePanelMouseEnter])
 
   const handleEdgeHoverZoneMouseLeave = useCallback(() => {
@@ -1184,13 +1185,33 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
         return
       }
 
+      // 吸附收起状态下悬停把手需停留片刻再展开，避免指针路过边缘时误触
+      if (
+        edgeSnapState &&
+        settingsRef.current?.panel?.panelMode === "edge-snap" &&
+        !isEdgePeeking
+      ) {
+        scheduleEdgeTriggerDwell()
+        return
+      }
+
       handlePanelMouseEnter()
     },
-    [clearLauncherPeekDwellTimer, clearLauncherPeekHideTimer, handlePanelMouseEnter],
+    [
+      clearLauncherPeekDwellTimer,
+      clearLauncherPeekHideTimer,
+      edgeSnapState,
+      handlePanelMouseEnter,
+      isEdgePeeking,
+      scheduleEdgeTriggerDwell,
+    ],
   )
 
   const handleMainPanelMouseLeave = useCallback(
     (_event: React.MouseEvent<HTMLDivElement>) => {
+      // 取消未完成的悬停展开，避免指针已离开但面板延迟弹出
+      clearEdgeHoverZoneDwellTimer()
+
       if (isLauncherPeekingRef.current) {
         scheduleLauncherPeekHide()
         return
@@ -1198,7 +1219,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
 
       handlePanelMouseLeave()
     },
-    [handlePanelMouseLeave, scheduleLauncherPeekHide],
+    [clearEdgeHoverZoneDwellTimer, handlePanelMouseLeave, scheduleLauncherPeekHide],
   )
 
   useEffect(() => {
@@ -3339,7 +3360,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
         <div
           aria-hidden="true"
           className={`gh-edge-hover-zone gh-interactive ${edgeSnapState}`}
-          onMouseEnter={handleEdgeHoverZoneMouseEnter}
+          onMouseEnter={scheduleEdgeTriggerDwell}
           onMouseLeave={handleEdgeHoverZoneMouseLeave}
         />
       )}

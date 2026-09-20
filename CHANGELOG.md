@@ -23,7 +23,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
-- **Auto Snap panel flickering at screen edges** — Fixed the panel repeatedly popping out and collapsing when moving the pointer along the screen edge with a non-maximized window or a multi-monitor setup; the panel now stays open briefly when the pointer leaves the window on the snapped side, and fast sweeps across the edge no longer trigger it. (#937)
+- **Auto Snap panel accidental triggers and flickering at screen edges** — The panel now slides out only after the pointer pauses briefly on the edge handle or trigger zone, so quick sweeps across the edge or over to another monitor no longer pop it open; when the pointer leaves the window on the snapped side, the panel also stays open briefly instead of repeatedly popping out and collapsing. (#937)
 - **ChatGPT outline grouping across virtual scrolling** — Fixed an issue in long ChatGPT conversations where offscreen turns unmounted by virtual scrolling caused cached reply headings to misgroup under neighboring questions or jump out of order.
 - **Pinned conversations on Doubao and DeepSeek** — Fixed pinned chats no longer being recognized after both sites redesigned their sidebars, so pinned status syncs correctly in Conversation Manager again. (#933)
 - **Zen Mode and Clean Mode state isolation** — Fixed an issue where enabling Zen Mode automatically enabled Clean Mode and left it active after exiting, now preserving your original Clean Mode preference. (#926)
