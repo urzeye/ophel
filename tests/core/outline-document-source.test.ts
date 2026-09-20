@@ -40,6 +40,13 @@ describe("OutlineManager document source and user query handling", () => {
       removeEventListener: vi.fn(),
       location: { pathname: "/app/123" },
     })
+    vi.stubGlobal("document", { body: {} })
+    class MockMutationObserver {
+      observe = vi.fn()
+      disconnect = vi.fn()
+      takeRecords = vi.fn(() => [])
+    }
+    vi.stubGlobal("MutationObserver", MockMutationObserver)
   })
 
   afterEach(() => {
@@ -77,6 +84,7 @@ describe("OutlineManager document source and user query handling", () => {
       getOutlineSourcesSignature: () => "",
       isGenerating: () => false,
       usesPeriodicOutlineRefreshFallback: () => false,
+      getObserveTarget: () => null,
     } as unknown as SiteAdapter
 
     const settings: Settings["features"]["outline"] = {
@@ -131,6 +139,7 @@ describe("OutlineManager document source and user query handling", () => {
       getOutlineSourcesSignature: () => "",
       isGenerating: () => false,
       usesPeriodicOutlineRefreshFallback: () => false,
+      getObserveTarget: () => null,
     } as unknown as SiteAdapter
 
     const settings: Settings["features"]["outline"] = {

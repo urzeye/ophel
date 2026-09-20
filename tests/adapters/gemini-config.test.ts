@@ -15,7 +15,7 @@ vi.mock("~utils/i18n", () => ({
 
 describe("Gemini built-in config and DOM adaptation", () => {
   it("increments GEMINI_CONFIG_VERSION to invalidate obsolete patches", () => {
-    expect(GEMINI_CONFIG_VERSION).toBe(8)
+    expect(GEMINI_CONFIG_VERSION).toBe(9)
   })
 
   it("extracts conversation id from anchor href after sidebar jslog became base64-encoded", () => {
@@ -161,5 +161,27 @@ describe("Gemini built-in config and DOM adaptation", () => {
     expect(deepResearchPanelCloseButton).toContain("toolbar .close-button button")
     expect(deepResearchPanelCloseButton).toContain('toolbar button:has(mat-icon[fonticon="close"])')
     expect(deepResearchAppDocumentMarkdown).toContain("#extended-response-markdown-content")
+  })
+
+  it("adapts deep research card, uploaded file, and drive viewer selectors to current Gemini DOM", () => {
+    const {
+      canvasCard,
+      deepResearchAppTrigger,
+      uploadedFile,
+      driveViewer,
+      driveViewerCloseButton,
+    } = GEMINI_CONFIG.sitePrivateSelectors
+
+    expect(canvasCard).toContain("gem-processing-card")
+    expect(canvasCard).toContain('[data-test-id="gem-processing-card"]')
+    expect(deepResearchAppTrigger).toContain("model-response gem-processing-card")
+
+    expect(uploadedFile).toContain('[data-test-id="uploaded-file"]')
+    expect(uploadedFile).toContain("user-query-file-preview")
+    expect(uploadedFile).toContain(".new-file-preview-container")
+
+    expect(driveViewer).toContain("drive-viewer")
+    expect(driveViewer).toContain('[data-test-id="drive-viewer"]')
+    expect(driveViewerCloseButton).toContain("toolbar .close-button button")
   })
 })

@@ -172,7 +172,7 @@ export interface GeminiSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const GEMINI_CONFIG_VERSION = 8
+export const GEMINI_CONFIG_VERSION = 9
 
 const createGeminiConfig = (): GeminiSiteConfig => {
   const userQuery = "user-query"
@@ -185,7 +185,7 @@ const createGeminiConfig = (): GeminiSiteConfig => {
   const immersivePanel = "immersive-panel"
   const sharePage = "share-landing-page"
   const visuallyHidden = ".cdk-visually-hidden"
-  const canvasCard = '[data-test-id="gem-processing-card"]'
+  const canvasCard = 'gem-processing-card, [data-test-id="gem-processing-card"]'
   const canvasEntryChip = "immersive-entry-chip"
   const deepResearchPanel =
     "deep-research-immersive-panel, immersive-panel deep-research-immersive-panel"
@@ -550,7 +550,8 @@ const createGeminiConfig = (): GeminiSiteConfig => {
         "[data-image-attachment-index]",
       ],
       userQueryImage: ["img[data-test-id='uploaded-img']", ".preview-image"],
-      uploadedFile: '[data-test-id="uploaded-file"]',
+      uploadedFile:
+        '[data-test-id="uploaded-file"], user-query-file-preview, .new-file-preview-container',
       sharePage,
       shareTurn: `${sharePage} .share-turn-viewer`,
       shareAssistantMarkdown,
@@ -594,14 +595,22 @@ const createGeminiConfig = (): GeminiSiteConfig => {
         ".loader",
       ],
       generatedImageButton: "button.image-button",
-      driveViewer: `${immersivePanel} .drive-viewer`,
-      driveViewerOwner: ".drive-viewer",
+      driveViewer: `${immersivePanel} .drive-viewer, .drive-viewer, drive-viewer, [data-test-id="drive-viewer"]`,
+      driveViewerOwner: ".drive-viewer, drive-viewer",
       driveViewerTextContent: ".drive-viewer-text-content",
       driveViewerError: ".drive-viewer-msg-error",
       driveViewerTextCandidate: ".drive-viewer-text-content pre, .drive-viewer-text-content",
       driveViewerName: ".drive-viewer-toolstrip-name",
       driveActiveItemInfo: '[id="drive-active-item-info"], div[style*="display:none"]',
-      driveViewerCloseButton: ".drive-viewer-close-button",
+      driveViewerCloseButton: [
+        ".drive-viewer-close-button",
+        "toolbar .close-button button",
+        'toolbar button:has(mat-icon[fonticon="close"])',
+        'toolbar button:has(mat-icon[data-mat-icon-name="close"])',
+        'button[aria-label*="关闭"]',
+        'button[aria-label*="close" i]',
+        '[data-test-id="close-button"]',
+      ].join(", "),
       uploadedFileName: ['[data-test-id="filename-label"]', ".filename-label", ".new-file-name"],
       uploadedFileAriaAction: "a[aria-label], button[aria-label]",
       uploadedFileType: ".new-file-type",

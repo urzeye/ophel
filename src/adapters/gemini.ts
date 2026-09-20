@@ -3222,8 +3222,14 @@ export class GeminiAdapter extends SiteAdapter {
     trigger.scrollIntoView({ block: "center", inline: "nearest", behavior: "auto" })
     await new Promise((resolve) => setTimeout(resolve, 50))
     this.simulateClick(trigger)
+    trigger.click()
 
-    const viewer = (await this.waitForDriveViewer(previousViewer)) || previousViewer
+    let viewer = (await this.waitForDriveViewer(previousViewer)) || previousViewer
+    if (!viewer && file instanceof HTMLElement && file !== trigger) {
+      this.simulateClick(file)
+      file.click()
+      viewer = (await this.waitForDriveViewer(previousViewer)) || previousViewer
+    }
     if (!viewer) return null
 
     try {
@@ -3256,6 +3262,9 @@ export class GeminiAdapter extends SiteAdapter {
       file.matches("button, [role='button']") ? file : null,
       file.querySelector("button"),
       file.querySelector("[role='button']"),
+      file.querySelector(".new-file-preview-file"),
+      file.querySelector(".clickable"),
+      file.matches(".clickable") ? file : null,
     ]
 
     return (
@@ -3382,6 +3391,7 @@ export class GeminiAdapter extends SiteAdapter {
     )
     if (closeButton instanceof HTMLElement) {
       this.simulateClick(closeButton)
+      closeButton.click()
       await new Promise((resolve) => setTimeout(resolve, 150))
     }
   }
@@ -4106,7 +4116,7 @@ export class GeminiAdapter extends SiteAdapter {
       return this.extractDeepResearchAppMessages()
     }
 
-    if (this.hasGeminiCanvasAppArtifacts()) {
+    if (this.hasGeminiCanvasAppArtifacts() || this.hasUserQueryUploadedFiles()) {
       return this.extractGeminiConversationMessages()
     }
 
@@ -4396,6 +4406,14 @@ export class GeminiAdapter extends SiteAdapter {
     const root =
       document.querySelector(this.getResponseContainerSelector()) || this.getScrollContainer()
     return root ? this.getGeminiCanvasCardsFromResponse(root).length > 0 : false
+  }
+
+  private hasUserQueryUploadedFiles(): boolean {
+    if (this.isSharePage()) return false
+
+    const root =
+      document.querySelector(this.getResponseContainerSelector()) || this.getScrollContainer()
+    return root ? root.querySelector(this.config.sitePrivateSelectors.uploadedFile) !== null : false
   }
 
   private getGeminiCanvasCardsFromResponse(element: Element): HTMLElement[] {
@@ -5113,6 +5131,19 @@ export class GeminiAdapter extends SiteAdapter {
 
     trigger.scrollIntoView({ block: "center", inline: "nearest", behavior: "auto" })
     await new Promise((resolve) => setTimeout(resolve, 50))
+
+    const openButton =
+      trigger.querySelector<HTMLElement>(
+        'gem-button.open-button button, button[aria-label*="在 Canvas 中打开"], button[aria-label*="Canvas" i], button.open-button, .open-button button, button',
+      ) || (trigger.matches("button, [role='button']") ? trigger : null)
+
+    if (openButton) {
+      this.simulateClick(openButton)
+      openButton.click()
+      if (await this.waitForDeepResearchAppDocumentElement()) return true
+    }
+
+    this.simulateClick(trigger)
     trigger.click()
     if (await this.waitForDeepResearchAppDocumentElement()) return true
 
@@ -5120,6 +5151,7 @@ export class GeminiAdapter extends SiteAdapter {
       ? trigger
       : trigger.querySelector(this.config.sitePrivateSelectors.canvasCard)
     if (card instanceof HTMLElement && card !== trigger) {
+      this.simulateClick(card)
       card.click()
       return this.waitForDeepResearchAppDocumentElement()
     }
