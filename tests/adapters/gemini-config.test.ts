@@ -193,4 +193,113 @@ describe("Gemini built-in config and DOM adaptation", () => {
     expect(assistantExportNoise).toContain(".end-of-report-marker")
     expect(assistantExportNoise).toContain('[data-test-id="used-sources-button"]')
   })
+
+  it("merges deep research report into the assistant response instead of creating a separate message", async () => {
+    const originalDocument = globalThis.document
+    const originalWindow = globalThis.window
+    const originalHTMLElement = globalThis.HTMLElement
+    const originalElement = globalThis.Element
+    const originalNode = globalThis.Node
+
+    class MockNode {}
+    class MockElement extends MockNode {
+      cloneNode() {
+        return this
+      }
+    }
+    class MockHTMLElement extends MockElement {}
+
+    globalThis.Node = MockNode as unknown as typeof Node
+    globalThis.Element = MockElement as unknown as typeof Element
+    globalThis.HTMLElement = MockHTMLElement as unknown as typeof HTMLElement
+    globalThis.window = { location: { pathname: "/app/test-id" } } as unknown as Window &
+      typeof globalThis
+
+    const mockUserQuery = Object.assign(new MockHTMLElement(), {
+      matches: (sel: string) => sel.includes("user-query"),
+      closest: () => null,
+      querySelector: (sel: string) => (sel === ".query-text" ? { textContent: "开始研究" } : null),
+      querySelectorAll: () => [],
+      compareDocumentPosition: () => 2,
+    }) as unknown as Element
+
+    const mockAssistantResponse = Object.assign(new MockHTMLElement(), {
+      matches: (sel: string) => sel.includes("model-response"),
+      closest: () => null,
+      querySelector: (sel: string) => {
+        if (
+          sel.includes("shareAssistantMarkdown") ||
+          sel.includes("message-content") ||
+          sel.includes("model-response-text")
+        ) {
+          return {
+            cloneNode: () => ({
+              querySelectorAll: () => [],
+              textContent: "我已经完成了研究。你可以提出后续问题或者要求进行改动。",
+            }),
+            querySelectorAll: () => [],
+            textContent: "我已经完成了研究。你可以提出后续问题或者要求进行改动。",
+          }
+        }
+        return null
+      },
+      querySelectorAll: () => [],
+      compareDocumentPosition: () => 4,
+    }) as unknown as Element
+
+    const mockTrigger = Object.assign(new MockHTMLElement(), {
+      matches: () => true,
+      querySelector: (sel: string) => (sel.includes("travel_explore") ? {} : null),
+      closest: (sel: string) => (sel.includes("model-response") ? mockAssistantResponse : null),
+    })
+
+    const mockReportDoc = Object.assign(new MockHTMLElement(), {
+      cloneNode: () => ({
+        querySelectorAll: () => [],
+        textContent:
+          "AI活动平台PRD可行性调研\n\nAI驱动轻量级活动平台MVP技术可行性与商业演进深度调研报告",
+      }),
+      querySelectorAll: () => [],
+      textContent:
+        "AI活动平台PRD可行性调研\n\nAI驱动轻量级活动平台MVP技术可行性与商业演进深度调研报告",
+    }) as unknown as Element
+
+    globalThis.document = {
+      querySelector: (sel: string) => {
+        if (sel.includes("extended-response-markdown-content")) return mockReportDoc
+        return null
+      },
+      querySelectorAll: (sel: string) => {
+        if (sel.includes("deepResearchAppTrigger") || sel.includes("canvasCard")) {
+          return [mockTrigger] as unknown as NodeListOf<Element>
+        }
+        if (sel.includes("user-query") || sel.includes("model-response")) {
+          return [mockUserQuery, mockAssistantResponse] as unknown as NodeListOf<Element>
+        }
+        return [] as unknown as NodeListOf<Element>
+      },
+    } as unknown as Document
+
+    try {
+      const adapter = new GeminiAdapter()
+      const messages = await (
+        adapter as unknown as { extractDeepResearchAppMessages(): Promise<unknown[]> }
+      ).extractDeepResearchAppMessages()
+
+      expect(messages).toHaveLength(2)
+      expect(messages[0]).toEqual({
+        role: "user",
+        content: "开始研究",
+      })
+      expect(messages[1].role).toBe("assistant")
+      expect(messages[1].content).toContain("我已经完成了研究")
+      expect(messages[1].content).toContain("AI活动平台PRD可行性调研")
+    } finally {
+      globalThis.document = originalDocument
+      globalThis.window = originalWindow
+      globalThis.HTMLElement = originalHTMLElement
+      globalThis.Element = originalElement
+      globalThis.Node = originalNode
+    }
+  })
 })

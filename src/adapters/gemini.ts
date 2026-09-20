@@ -5243,6 +5243,24 @@ export class GeminiAdapter extends SiteAdapter {
     const collectedElements = new Set<Element>()
     const root = this.getScrollContainer() || document
 
+    let reportContent = ""
+    if (documentElement && !collectedElements.has(documentElement)) {
+      const rawContent = this.extractAssistantResponseTextWithAssets(
+        documentElement,
+        collector,
+      ).trim()
+      if (rawContent) {
+        reportContent = collector
+          ? this.appendDeepResearchReportAssetLink(collector, rawContent)
+          : rawContent
+      }
+    }
+
+    const trigger = this.getDeepResearchAppDocumentTrigger()
+    const triggerResponse = trigger
+      ? trigger.closest(this.config.selectors.assistantResponse)
+      : null
+
     const messageElements = Array.from(
       root.querySelectorAll(
         [this.config.selectors.userQuery, this.config.selectors.assistantResponse].join(", "),
@@ -5253,13 +5271,27 @@ export class GeminiAdapter extends SiteAdapter {
       if (element.closest(privateSelectors.immersivePanel)) continue
 
       const role = element.matches(this.config.selectors.userQuery) ? "user" : "assistant"
-      const content =
-        role === "user"
-          ? (collector
-              ? await this.extractUserQueryExportContentWithResolvedAssets(element, collector)
-              : this.extractUserQueryExportContentWithAssets(element)
-            ).trim()
-          : this.extractDeepResearchAppAssistantResponseContent(element, collector).trim()
+      let content = ""
+
+      if (role === "user") {
+        content = (
+          collector
+            ? await this.extractUserQueryExportContentWithResolvedAssets(element, collector)
+            : this.extractUserQueryExportContentWithAssets(element)
+        ).trim()
+      } else {
+        const assistantText = this.extractDeepResearchAppAssistantResponseContent(
+          element,
+          collector,
+        ).trim()
+
+        if (reportContent && triggerResponse && element === triggerResponse) {
+          content = this.joinExportSections(assistantText, reportContent)
+          reportContent = ""
+        } else {
+          content = assistantText
+        }
+      }
 
       if (!content) continue
 
@@ -5267,14 +5299,14 @@ export class GeminiAdapter extends SiteAdapter {
       messages.push({ role, content })
     }
 
-    if (documentElement && !collectedElements.has(documentElement)) {
-      const content = this.extractAssistantResponseTextWithAssets(documentElement, collector).trim()
-      if (content) {
-        messages.push({
-          role: "assistant",
-          content: collector ? this.appendDeepResearchReportAssetLink(collector, content) : content,
-        })
+    if (reportContent) {
+      const lastAssistant = [...messages].reverse().find((m) => m.role === "assistant")
+      if (lastAssistant) {
+        lastAssistant.content = this.joinExportSections(lastAssistant.content, reportContent)
+      } else {
+        messages.push({ role: "assistant", content: reportContent })
       }
+      reportContent = ""
     }
 
     return this.dedupeAdjacentExportMessages(messages)
@@ -5293,11 +5325,19 @@ export class GeminiAdapter extends SiteAdapter {
   ): Promise<ExportMessage[]> {
     const { messages, collectedElements } = await this.collectGeminiShareTurnMessages(collector)
 
-    this.collectDetachedDeepResearchArtifactMessages(collectedElements, collector).forEach(
-      (message) => {
-        messages.push(message)
-      },
+    const detachedMessages = this.collectDetachedDeepResearchArtifactMessages(
+      collectedElements,
+      collector,
     )
+    if (detachedMessages.length > 0) {
+      const detachedContent = detachedMessages.map((m) => m.content).join("\n\n")
+      const lastAssistant = [...messages].reverse().find((m) => m.role === "assistant")
+      if (lastAssistant) {
+        lastAssistant.content = this.joinExportSections(lastAssistant.content, detachedContent)
+      } else {
+        messages.push(...detachedMessages)
+      }
+    }
 
     return this.dedupeAdjacentExportMessages(messages)
   }
