@@ -16,6 +16,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### ✨ Improvements
 
+- **Full user questions in Copy Outline** — Copy Outline now copies the complete text of every user question instead of a truncated preview, so long questions are no longer cut off and the result matches copying a single outline item. (#939)
 - **Auto Snap panel accidental triggers and flickering at screen edges** — The panel now slides out only after the pointer pauses briefly on the edge handle or trigger zone, so quick sweeps across the edge or over to another monitor no longer pop it open; when the pointer leaves the window on the snapped side, the panel also stays open briefly instead of repeatedly popping out and collapsing. (#937)
 - **Export button in the outline tab** — The outline toolbar now includes a highlighted Export button that opens the export dialog in one click, instead of going through the toolbox or a conversation's menu; Copy Outline now lives inside the export dialog next to Copy Markdown. (#936)
 - **ChatGPT outline performance in long conversations** — Optimized heading sync and index calculation during long conversations, eliminating repeated full-tree DOM queries and reducing main thread lag during outline refreshes. (#935)
