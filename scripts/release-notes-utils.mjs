@@ -35,8 +35,13 @@ export function extractChangelogSection(content, version, fileName) {
     throw new Error(`${fileName}: [Unreleased] is not a released version`)
   }
 
+  // 标题允许 Keep a Changelog 的链接引用写法：`## [1.2.7][1.2.7] - 2026-09-13`；
+  // 日期分隔符两侧只匹配行内空白，避免把正文首行 "- entry" 误吞为日期
   const headingMatch = content.match(
-    new RegExp(`^## \\[${escapeRegExp(version)}\\](?:\\s+-\\s+([^\\n]+))?\\s*$`, "mu"),
+    new RegExp(
+      `^## \\[${escapeRegExp(version)}\\](?:\\[[^\\]]+\\])?(?:[^\\S\\n]+-[^\\S\\n]+([^\\n]+))?[^\\S\\n]*$`,
+      "mu",
+    ),
   )
 
   if (!headingMatch || headingMatch.index === undefined) {

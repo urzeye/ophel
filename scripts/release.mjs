@@ -234,7 +234,8 @@ function updateChangelog(fileName, version, date) {
     fail(`${fileName} has no unreleased content to release`)
   }
 
-  const heading = `## [${version}] - ${date}`
+  // 与现有 changelog 的链接引用标题格式保持一致（底部引用由 addReleaseReference 补充）
+  const heading = `## [${version}][${version}] - ${date}`
   const updated =
     original.slice(0, sections.afterUnreleased) +
     `\n\n---\n\n${heading}\n\n${unreleasedBody}\n\n---\n\n` +
