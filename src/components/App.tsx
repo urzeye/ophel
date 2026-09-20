@@ -152,7 +152,8 @@ interface PointerPosition {
 
 const LAUNCHER_PEEK_DWELL_MS = 300
 const LAUNCHER_PEEK_HIDE_DELAY_MS = 250
-const EDGE_HOVER_ZONE_DWELL_MS = 150
+// 进入边缘触发区后的停留时间：过滤快速划过与屏幕边缘误触
+const EDGE_HOVER_ZONE_DWELL_MS = 300
 
 const EXPORT_STAGE_TEXT_KEYS: Record<ConversationExportStage, string> = {
   "loading-history": "exportOverlayLoadingHistory",

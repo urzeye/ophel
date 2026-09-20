@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from "react"
 
 import { hasOphelEdgePeekOverlay, isEditableKeyboardTarget } from "~utils/dom-toolkit"
+import { resolveWindowExitSide, WINDOW_EXIT_HOLD_MS } from "~utils/edge-snap-exit"
 
 type EdgeSnapSide = "left" | "right" | null
 type PanelMode = "edge-snap" | "floating" | undefined
@@ -62,6 +63,12 @@ export function useEdgePeekController({
   const shouldSyncAfterOpenRef = useRef(false)
   const edgeSnapStateRef = useRef(edgeSnapState)
   const panelModeRef = useRef(panelMode)
+  // 指针从吸附侧直接离开窗口时的保持截止时间。
+  // 多显示器或窗口未最大化时，鼠标容易短暂越出窗口边缘又返回，
+  // 保持期内不触发收起，避免“弹出-收起-再弹出”闪烁
+  const windowExitHoldUntilRef = useRef(0)
+  // scheduleEdgePeekSync 始终调用最新的 sync，避免两个 useCallback 循环依赖
+  const syncEdgePeekVisibilityRef = useRef<() => void>(() => {})
 
   useEffect(() => {
     edgeSnapStateRef.current = edgeSnapState
@@ -95,6 +102,18 @@ export function useEdgePeekController({
     [getQueryRoots],
   )
 
+  const scheduleEdgePeekSync = useCallback(
+    (delayMs: number = 0) => {
+      clearHideTimer()
+
+      hideTimerRef.current = setTimeout(() => {
+        hideTimerRef.current = null
+        syncEdgePeekVisibilityRef.current()
+      }, delayMs)
+    },
+    [clearHideTimer],
+  )
+
   const syncEdgePeekVisibility = useCallback(() => {
     if (!edgeSnapStateRef.current || panelModeRef.current !== "edge-snap") {
       return
@@ -118,20 +137,24 @@ export function useEdgePeekController({
       return
     }
 
-    setIsEdgePeeking(panel.matches(":hover"))
-  }, [findUiElement, hasOpenEdgePeekOverlay, isSettingsOpenRef])
+    if (panel.matches(":hover")) {
+      setIsEdgePeeking(true)
+      return
+    }
 
-  const scheduleEdgePeekSync = useCallback(
-    (delayMs: number = 0) => {
-      clearHideTimer()
+    // 同侧离开窗口的保持期内推迟收起，到期后重新走完整判定
+    const holdRemainingMs = windowExitHoldUntilRef.current - Date.now()
+    if (holdRemainingMs > 0) {
+      scheduleEdgePeekSync(holdRemainingMs)
+      return
+    }
 
-      hideTimerRef.current = setTimeout(() => {
-        hideTimerRef.current = null
-        syncEdgePeekVisibility()
-      }, delayMs)
-    },
-    [clearHideTimer, syncEdgePeekVisibility],
-  )
+    setIsEdgePeeking(false)
+  }, [findUiElement, hasOpenEdgePeekOverlay, isSettingsOpenRef, scheduleEdgePeekSync])
+
+  useEffect(() => {
+    syncEdgePeekVisibilityRef.current = syncEdgePeekVisibility
+  }, [syncEdgePeekVisibility])
 
   const showEdgePeekFromShortcut = useCallback(() => {
     showEdgePeek()
@@ -330,6 +353,32 @@ export function useEdgePeekController({
     showEdgePeek,
     syncEdgePeekVisibility,
   ])
+
+  // 指针从吸附侧直接离开浏览器窗口（relatedTarget 为 null）时进入保持期。
+  // 与 launcher peek 的窗口外判定保持一致，同时监听 pointerout/mouseout
+  useEffect(() => {
+    if (!edgeSnapState || panelMode !== "edge-snap") return
+
+    const handleWindowExit = (event: PointerEvent | MouseEvent) => {
+      if (event.relatedTarget !== null) return
+
+      const snapSide = edgeSnapStateRef.current
+      if (!snapSide || panelModeRef.current !== "edge-snap") return
+
+      const exitSide = resolveWindowExitSide(event.clientX, window.innerWidth)
+      if (exitSide !== snapSide) return
+
+      windowExitHoldUntilRef.current = Date.now() + WINDOW_EXIT_HOLD_MS
+    }
+
+    document.addEventListener("pointerout", handleWindowExit, true)
+    document.addEventListener("mouseout", handleWindowExit, true)
+
+    return () => {
+      document.removeEventListener("pointerout", handleWindowExit, true)
+      document.removeEventListener("mouseout", handleWindowExit, true)
+    }
+  }, [edgeSnapState, panelMode])
 
   useEffect(() => {
     if (!shouldSyncAfterOpenRef.current) return
