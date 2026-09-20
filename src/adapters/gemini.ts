@@ -3987,8 +3987,9 @@ export class GeminiAdapter extends SiteAdapter {
   private shouldSkipOutlineHeading(heading: Element): boolean {
     if (this.isInRenderedMarkdownContainer(heading)) return true
 
-    // 仅过滤 Gemini 注入的辅助可访问性标题，避免误杀正常 Markdown 标题
+    // 仅过滤 Gemini 注入的辅助可访问性标题与来源列表，避免误杀正常 Markdown 标题
     if (heading.matches(this.config.sitePrivateSelectors.visuallyHidden)) return true
+    if (heading.closest("deep-research-source-lists")) return true
 
     return false
   }

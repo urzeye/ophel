@@ -172,7 +172,7 @@ export interface GeminiSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const GEMINI_CONFIG_VERSION = 9
+export const GEMINI_CONFIG_VERSION = 10
 
 const createGeminiConfig = (): GeminiSiteConfig => {
   const userQuery = "user-query"
@@ -560,6 +560,15 @@ const createGeminiConfig = (): GeminiSiteConfig => {
         "model-thoughts",
         "thinking-overlay",
         "sources-list",
+        "deep-research-source-lists",
+        ".deep-research-source-lists",
+        ".end-of-report-marker",
+        '[data-test-id="used-sources-button"]',
+        '[data-test-id="used-sources-list"]',
+        '[aria-controls="used-sources-list"]',
+        ".used-sources",
+        '[data-test-id="collapsible-thinking-button"]',
+        ".collapsible-thinking-button",
         canvasEntryChip,
         "gem-processing-card",
         canvasCard,

@@ -15,7 +15,7 @@ vi.mock("~utils/i18n", () => ({
 
 describe("Gemini built-in config and DOM adaptation", () => {
   it("increments GEMINI_CONFIG_VERSION to invalidate obsolete patches", () => {
-    expect(GEMINI_CONFIG_VERSION).toBe(9)
+    expect(GEMINI_CONFIG_VERSION).toBe(10)
   })
 
   it("extracts conversation id from anchor href after sidebar jslog became base64-encoded", () => {
@@ -100,6 +100,9 @@ describe("Gemini built-in config and DOM adaptation", () => {
     expect(GEMINI_CONFIG.sitePrivateSelectors.outlineThoughts).toContain("thinking-overlay")
     expect(GEMINI_CONFIG.sitePrivateSelectors.assistantExportNoise).toContain("thinking-overlay")
     expect(GEMINI_CONFIG.sitePrivateSelectors.assistantExportNoise).toContain("sources-list")
+    expect(GEMINI_CONFIG.sitePrivateSelectors.assistantExportNoise).toContain(
+      "deep-research-source-lists",
+    )
     expect(GEMINI_CONFIG.sitePrivateSelectors.assistantExportNoise).toContain("message-actions")
   })
 
@@ -183,5 +186,11 @@ describe("Gemini built-in config and DOM adaptation", () => {
     expect(driveViewer).toContain("drive-viewer")
     expect(driveViewer).toContain('[data-test-id="drive-viewer"]')
     expect(driveViewerCloseButton).toContain("toolbar .close-button button")
+
+    // 验证深度研究报告来源列表已被加入导出噪声列表进行过滤
+    const { assistantExportNoise } = GEMINI_CONFIG.sitePrivateSelectors
+    expect(assistantExportNoise).toContain("deep-research-source-lists")
+    expect(assistantExportNoise).toContain(".end-of-report-marker")
+    expect(assistantExportNoise).toContain('[data-test-id="used-sources-button"]')
   })
 })
