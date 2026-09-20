@@ -29,7 +29,17 @@ export function installGeminiCanvasCodeBridge(pageWindow: GeminiCanvasCodeBridge
   if (pageWindow.__ophelGeminiCanvasMainInitialized) return
 
   pageWindow.__ophelGeminiCanvasMainInitialized = true
-  pageWindow.document.documentElement.setAttribute("data-ophel-gemini-canvas-main", "1")
+  const markMainReady = () => {
+    try {
+      pageWindow.document?.documentElement?.setAttribute("data-ophel-gemini-canvas-main", "1")
+    } catch {
+      // 忽略 document 尚未准备好的异常
+    }
+  }
+  markMainReady()
+  if (!pageWindow.document?.documentElement && typeof pageWindow.addEventListener === "function") {
+    pageWindow.addEventListener("DOMContentLoaded", markMainReady, { once: true })
+  }
 
   const readMonacoModelData = (editorUri: string): { code: string; language: string } => {
     // 1. 全局 monaco 实例查找（含 AMD require 与全局 monaco）
@@ -75,14 +85,14 @@ export function installGeminiCanvasCodeBridge(pageWindow: GeminiCanvasCodeBridge
               return { code, language: model?.getLanguageId?.() || "" }
             }
           }
-        }
-
-        // 若未匹配到 editorUri，检查是否有任意非空模型的 editor
-        for (const ed of editors) {
-          const model = ed.getModel?.()
-          const code = model?.getValue?.() || ""
-          if (code) {
-            return { code, language: model?.getLanguageId?.() || "" }
+        } else {
+          // 若未指定 editorUri，检查是否有任意非空模型的 editor
+          for (const ed of editors) {
+            const model = ed.getModel?.()
+            const code = model?.getValue?.() || ""
+            if (code) {
+              return { code, language: model?.getLanguageId?.() || "" }
+            }
           }
         }
       }
@@ -103,25 +113,25 @@ export function installGeminiCanvasCodeBridge(pageWindow: GeminiCanvasCodeBridge
               return { code, language: matchingModel.getLanguageId?.() || "" }
             }
           }
-        }
-
-        // 若未指定 editorUri 或未匹配，选取最长非空内容的 model
-        let bestModel: MonacoModelLike | null = null
-        let maxLen = 0
-        for (const m of models) {
-          if (typeof m?.getValue === "function") {
-            const val = m.getValue() || ""
-            if (val.length > maxLen) {
-              maxLen = val.length
-              bestModel = m
+        } else {
+          // 若未指定 editorUri，选取最长非空内容的 model
+          let bestModel: MonacoModelLike | null = null
+          let maxLen = 0
+          for (const m of models) {
+            if (typeof m?.getValue === "function") {
+              const val = m.getValue() || ""
+              if (val.length > maxLen) {
+                maxLen = val.length
+                bestModel = m
+              }
             }
           }
-        }
 
-        if (bestModel && typeof bestModel.getValue === "function") {
-          return {
-            code: bestModel.getValue() || "",
-            language: bestModel.getLanguageId?.() || "",
+          if (bestModel && typeof bestModel.getValue === "function") {
+            return {
+              code: bestModel.getValue() || "",
+              language: bestModel.getLanguageId?.() || "",
+            }
           }
         }
       }

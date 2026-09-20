@@ -205,7 +205,7 @@ const createGeminiConfig = (): GeminiSiteConfig => {
   const canvasNextVersionButton =
     'gem-icon-button[arialabel*="下一版本" i] button, gem-icon-button[arialabel*="Next version" i] button, button[aria-label*="下一版本" i], button[aria-label*="Next version" i], gem-icon-button[fonticonname="redo"] button'
   const canvasVersionDisabled =
-    '.gem-button-disabled, [disabled="true"], [aria-disabled="true"], [inert]'
+    '.gem-button-disabled, .gem-icon-button-disabled, [disabled], [aria-disabled="true"], [inert], .disabled'
   const shareAssistantMarkdown = "message-content .markdown"
   const deepResearchDocumentShare = `${sharePage} immersive-share-landing-page structured-content-container[data-test-id="deep-research-block"]`
   const deepResearchArtifactShare = `${sharePage} structured-content-container[data-test-id="immersive-artifact-content"]`

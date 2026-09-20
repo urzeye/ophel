@@ -4220,31 +4220,39 @@ export class GeminiAdapter extends SiteAdapter {
     if (messageElements.length === 0) return null
 
     // 建立同会话内 Canvas 标题多版次映射，确保不同版次能准确导航和归属
-    const canvasContextMap = new Map<Element, GeminiCanvasArtifactContext>()
+    const canvasTargetContextMap = new Map<HTMLElement, GeminiCanvasArtifactContext>()
     const titleCounts = new Map<string, number>()
-    const responseTitles = new Map<Element, string>()
+    const targetTitles = new Map<HTMLElement, string>()
 
     for (const element of messageElements) {
       if (element.matches(this.config.selectors.assistantResponse)) {
         const targets = this.getGeminiCanvasTargetsFromResponse(element)
-        if (targets.length > 0) {
-          const title = this.extractGeminiCanvasTitle(targets[0].element)
-          responseTitles.set(element, title)
-          titleCounts.set(title, (titleCounts.get(title) || 0) + 1)
+        for (const target of targets) {
+          const title = this.extractGeminiCanvasTitle(target.element)
+          // 仅对具有有效且非兜底名称的主题统计多版次
+          if (title && title !== "Gemini Canvas") {
+            targetTitles.set(target.element, title)
+            titleCounts.set(title, (titleCounts.get(title) || 0) + 1)
+          }
         }
       }
     }
 
     const currentIndices = new Map<string, number>()
     for (const element of messageElements) {
-      const title = responseTitles.get(element)
-      if (title) {
-        const index = currentIndices.get(title) || 0
-        currentIndices.set(title, index + 1)
-        canvasContextMap.set(element, {
-          occurrenceIndex: index,
-          totalOccurrences: titleCounts.get(title) || 1,
-        })
+      if (element.matches(this.config.selectors.assistantResponse)) {
+        const targets = this.getGeminiCanvasTargetsFromResponse(element)
+        for (const target of targets) {
+          const title = targetTitles.get(target.element)
+          if (title) {
+            const index = currentIndices.get(title) || 0
+            currentIndices.set(title, index + 1)
+            canvasTargetContextMap.set(target.element, {
+              occurrenceIndex: index,
+              totalOccurrences: titleCounts.get(title) || 1,
+            })
+          }
+        }
       }
     }
 
@@ -4264,7 +4272,7 @@ export class GeminiAdapter extends SiteAdapter {
               await this.extractGeminiCanvasAppArtifactsFromResponse(
                 element,
                 collector,
-                canvasContextMap.get(element),
+                canvasTargetContextMap,
               ),
             )
 
@@ -4579,7 +4587,7 @@ export class GeminiAdapter extends SiteAdapter {
   private async extractGeminiCanvasAppArtifactsFromResponse(
     element: Element,
     collector?: GeminiExportAssetCollector,
-    context?: GeminiCanvasArtifactContext,
+    contextOrMap?: Map<HTMLElement, GeminiCanvasArtifactContext> | GeminiCanvasArtifactContext,
   ): Promise<string> {
     const targets = this.getGeminiCanvasTargetsFromResponse(element)
     if (targets.length === 0) return ""
@@ -4588,6 +4596,7 @@ export class GeminiAdapter extends SiteAdapter {
 
     for (const target of targets) {
       const title = this.extractGeminiCanvasTitle(target.element)
+      const context = contextOrMap instanceof Map ? contextOrMap.get(target.element) : contextOrMap
       try {
         let panel: HTMLElement | null = null
         if (target.type === "preview") {
@@ -4913,10 +4922,24 @@ export class GeminiAdapter extends SiteAdapter {
     const privateSelectors = this.config.sitePrivateSelectors
     const isButtonDisabled = (btn: HTMLElement | null): boolean => {
       if (!btn) return true
-      if (btn.hasAttribute("disabled") || (btn as HTMLButtonElement).disabled) return true
-      const container = btn.closest(privateSelectors.canvasVersionDisabled)
-      return container !== null
+      if (btn.hasAttribute?.("disabled") || (btn as HTMLButtonElement).disabled) return true
+      if (btn.getAttribute?.("aria-disabled") === "true") return true
+      if (btn.closest?.(privateSelectors.canvasVersionDisabled)) return true
+      const host = btn.closest?.("gem-icon-button, gem-button, button")
+      if (
+        host &&
+        (host.hasAttribute?.("disabled") ||
+          host.getAttribute?.("aria-disabled") === "true" ||
+          host.classList?.contains?.("disabled") ||
+          host.classList?.contains?.("gem-button-disabled") ||
+          host.classList?.contains?.("gem-icon-button-disabled"))
+      ) {
+        return true
+      }
+      return false
     }
+
+    let didNavigate = false
 
     if (occurrenceIndex === 0) {
       // 首个版次：回退到最早版本
@@ -4925,6 +4948,7 @@ export class GeminiAdapter extends SiteAdapter {
         if (!prevBtn || isButtonDisabled(prevBtn)) break
         if (typeof prevBtn.click === "function") prevBtn.click()
         this.simulateClick(prevBtn)
+        didNavigate = true
         await this.sleep(200)
       }
     } else if (occurrenceIndex === totalOccurrences - 1) {
@@ -4934,6 +4958,7 @@ export class GeminiAdapter extends SiteAdapter {
         if (!nextBtn || isButtonDisabled(nextBtn)) break
         if (typeof nextBtn.click === "function") nextBtn.click()
         this.simulateClick(nextBtn)
+        didNavigate = true
         await this.sleep(200)
       }
     } else {
@@ -4943,6 +4968,7 @@ export class GeminiAdapter extends SiteAdapter {
         if (!prevBtn || isButtonDisabled(prevBtn)) break
         if (typeof prevBtn.click === "function") prevBtn.click()
         this.simulateClick(prevBtn)
+        didNavigate = true
         await this.sleep(200)
       }
       for (let step = 0; step < occurrenceIndex; step++) {
@@ -4950,8 +4976,13 @@ export class GeminiAdapter extends SiteAdapter {
         if (!nextBtn || isButtonDisabled(nextBtn)) break
         if (typeof nextBtn.click === "function") nextBtn.click()
         this.simulateClick(nextBtn)
+        didNavigate = true
         await this.sleep(200)
       }
+    }
+
+    if (didNavigate) {
+      await this.sleep(250)
     }
   }
 

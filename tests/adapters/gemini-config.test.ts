@@ -936,4 +936,150 @@ describe("Gemini built-in config and DOM adaptation", () => {
     expect(capturedResponse?.code).toContain("AnimeLand")
     expect(capturedResponse?.language).toBe("html")
   })
+
+  it("strictly respects editorUri in bridge without leaking unrelated editor models", () => {
+    let capturedResponse: { code: string; language: string } | null = null
+
+    const mockDoc = {
+      documentElement: {
+        setAttribute: vi.fn(),
+      },
+      querySelectorAll: () => [],
+    }
+
+    const listeners: Array<(e: MessageEvent) => void> = []
+    const mockWindow = {
+      location: { origin: "https://gemini.google.com" },
+      document: mockDoc,
+      addEventListener: (_type: string, fn: (e: MessageEvent) => void) => {
+        listeners.push(fn)
+      },
+      postMessage: (msg: unknown) => {
+        const data = msg as { type: string; code: string; language: string }
+        if (data?.type === GEMINI_CANVAS_CODE_RESPONSE_EVENT) {
+          capturedResponse = { code: data.code, language: data.language }
+        }
+      },
+      monaco: {
+        editor: {
+          // 当前活动的 editor 绑定的是 other-model
+          getEditors: () => [
+            {
+              getModel: () => ({
+                uri: { toString: () => "inmemory://model/other" },
+                getValue: () => "const wrongCode = 'other';",
+                getLanguageId: () => "javascript",
+              }),
+            },
+          ],
+          // models 列表里包含目标 target-model
+          getModels: () => [
+            {
+              uri: { toString: () => "inmemory://model/other" },
+              getValue: () => "const wrongCode = 'other';",
+              getLanguageId: () => "javascript",
+            },
+            {
+              uri: { toString: () => "inmemory://model/target" },
+              getValue: () => "const correctCode = 'target';",
+              getLanguageId: () => "typescript",
+            },
+          ],
+        },
+      },
+    } as unknown as Window
+
+    installGeminiCanvasCodeBridge(mockWindow)
+
+    // 请求特定 editorUri "inmemory://model/target"
+    const reqEvent = {
+      origin: "https://gemini.google.com",
+      data: {
+        type: GEMINI_CANVAS_CODE_REQUEST_EVENT,
+        requestId: "req-target",
+        editorUri: "inmemory://model/target",
+      },
+    } as MessageEvent
+
+    for (const l of listeners) {
+      l(reqEvent)
+    }
+
+    expect(capturedResponse).not.toBeNull()
+    // 必须精确匹配到 target model 的代码，绝不能被 getEditors() 里的 other model 截胡
+    expect(capturedResponse?.code).toBe("const correctCode = 'target';")
+    expect(capturedResponse?.language).toBe("typescript")
+  })
+
+  it("detects button disabled status on host gem-icon-button element", async () => {
+    let prevClicked = 0
+    let hostDisabled = false
+
+    const mockHost = {
+      matches: (sel: string) => sel.includes("gem-icon-button"),
+      hasAttribute: (name: string) => (name === "disabled" ? hostDisabled : false),
+      getAttribute: (name: string) => (name === "aria-disabled" && hostDisabled ? "true" : null),
+      classList: {
+        contains: (cls: string) => cls === "disabled" && hostDisabled,
+      },
+      closest: () => null,
+    }
+
+    const mockBtn = {
+      matches: (sel: string) => sel.includes("button"),
+      hasAttribute: () => false,
+      getAttribute: () => null,
+      classList: { contains: () => false },
+      closest: (sel: string) => {
+        if (sel.includes("disabled")) {
+          return hostDisabled ? mockHost : null
+        }
+        if (sel.includes("gem-icon-button")) return mockHost
+        return null
+      },
+      click: () => {
+        prevClicked++
+        hostDisabled = true
+      },
+      dispatchEvent: () => true,
+    }
+
+    const mockPanel = {
+      querySelector: (sel: string) => {
+        if (sel.includes("canvasPrevVersionButton") || sel.includes("上一版本")) {
+          return mockBtn
+        }
+        return null
+      },
+    } as unknown as HTMLElement
+
+    const adapter = new GeminiAdapter()
+    const internal = adapter as unknown as {
+      navigateGeminiCanvasVersion(
+        panel: HTMLElement,
+        occurrenceIndex: number,
+        totalOccurrences: number,
+      ): Promise<void>
+    }
+
+    // 执行回退，宿主变为 disabled 后应该立刻停止循环
+    await internal.navigateGeminiCanvasVersion(mockPanel, 0, 2)
+    expect(prevClicked).toBeGreaterThan(0)
+    expect(hostDisabled).toBe(true)
+  })
+
+  it("does not map fallback 'Gemini Canvas' titles to multi-version context", () => {
+    const adapter = new GeminiAdapter()
+    const internal = adapter as unknown as {
+      extractGeminiCanvasTitle(element: Element): string
+    }
+
+    const mockCardWithoutTitle = {
+      querySelector: () => null,
+      closest: () => null,
+    } as unknown as Element
+
+    const title = internal.extractGeminiCanvasTitle(mockCardWithoutTitle)
+    expect(title).toBe("Gemini Canvas")
+  })
 })
