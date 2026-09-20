@@ -4028,7 +4028,19 @@ export class GeminiAdapter extends SiteAdapter {
   getOutlineScrollContainer(sourceId = "conversation"): HTMLElement | null {
     if (sourceId === GEMINI_DOCUMENT_OUTLINE_SOURCE_ID) {
       const root = this.getDeepResearchDocumentOutlineRoot()
-      return findScrollableAncestor(root) || null
+      return (
+        findScrollableAncestor(root) ||
+        (root
+          ? (root
+              .closest("deep-research-immersive-panel, immersive-panel")
+              ?.querySelector(
+                '[data-test-id="scroll-container"], [cdkscrollable]',
+              ) as HTMLElement | null)
+          : null) ||
+        (document.querySelector(
+          'deep-research-immersive-panel [data-test-id="scroll-container"], deep-research-immersive-panel [cdkscrollable]',
+        ) as HTMLElement | null)
+      )
     }
 
     return this.getScrollContainer()

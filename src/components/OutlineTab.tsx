@@ -2043,7 +2043,10 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
               if (bookmarkMode) {
                 title = t("bookmarkModeDisabled")
               } else if (lvl === 0) {
-                title = showUserQueries ? t("outlineUserQueryRoleLabel") : t("outlineCollapseAll")
+                title =
+                  showUserQueries && tree.some((node) => node.isUserQuery)
+                    ? t("outlineUserQueryRoleLabel")
+                    : t("outlineCollapseAll")
               } else {
                 title = `H${lvl}: ${levelCounts[lvl] || 0}`
               }
@@ -2143,8 +2146,9 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
           const hasVisibleBookmarks = hasBookmarkedNode(tree)
           const isTreeEmpty = tree.length === 0
           const isOutlineVisuallyEmpty = !searchQuery && (isTreeEmpty || !hasVisibleNodes)
+          const hasUserQueriesInTree = tree.some((node) => node.isUserQuery)
           const emptyDescription =
-            showUserQueries && displayLevel === 0
+            showUserQueries && hasUserQueriesInTree && displayLevel === 0
               ? t("outlineEmptyDescUserQueryOnly")
               : t("outlineEmptyDescDefault")
           const zhCommaIndex = emptyDescription.indexOf("，")

@@ -545,6 +545,15 @@ export class OutlineManager {
     this.preSearchExpandLevel = null
     this.searchLevelManual = false
     this.matchCount = 0
+
+    // 若切换到非对话源（如文档源），且当前 expandLevel 为 0（在对话中代表“仅用户提问”）
+    // 由于文档源中不存在用户提问节点，保留 0 级会导致文档所有标题被隐藏而呈现空状态，因此重置为默认展开级别 6
+    if (target.kind === "document" || sourceId !== "conversation") {
+      if (this.expandLevel === 0) {
+        this.expandLevel = 6
+      }
+    }
+
     this.updateAutoUpdateState()
     this.refresh()
     this.notify()
@@ -713,8 +722,13 @@ export class OutlineManager {
   }
 
   getState() {
-    // 根据是否开启用户提问，确定 minRelativeLevel
-    const minRelativeLevel = this.settings.showUserQueries ? 0 : 1
+    // 检查当前树或扁平节点中是否存在用户提问节点
+    const hasUserQueries =
+      this.activeSourceId === "conversation" &&
+      (this.tree.some((node) => node.isUserQuery) ||
+        this.flatNodes.some((node) => node.isUserQuery))
+    // 根据是否开启用户提问且当前源实际包含用户提问，确定 minRelativeLevel
+    const minRelativeLevel = this.settings.showUserQueries && hasUserQueries ? 0 : 1
 
     // 计算 displayLevel (Legacy logic)
     let displayLevel: number
@@ -723,8 +737,8 @@ export class OutlineManager {
     } else {
       displayLevel = this.expandLevel ?? 6
     }
-    // 限制最小值
-    const minDisplayLevel = this.settings.showUserQueries ? 0 : 1
+    // 限制最小值：若当前源不支持用户提问，最小显示级别强制为 1
+    const minDisplayLevel = this.settings.showUserQueries && hasUserQueries ? 0 : 1
     if (displayLevel < minDisplayLevel) {
       displayLevel = minDisplayLevel
     }
@@ -734,7 +748,7 @@ export class OutlineManager {
       expandLevel: this.expandLevel,
       levelCounts: this.levelCounts,
       isAllExpanded: this.isAllExpanded,
-      includeUserQueries: this.settings.showUserQueries,
+      includeUserQueries: this.settings.showUserQueries && hasUserQueries,
       minRelativeLevel,
       displayLevel,
       searchLevelManual: this.searchLevelManual,
@@ -1113,7 +1127,9 @@ export class OutlineManager {
     const displayLevel = overrideLevel !== undefined ? overrideLevel : this.expandLevel ?? 6
     this.expandLevel = displayLevel
 
-    const minDisplayLevel = this.settings.showUserQueries ? 0 : 1
+    const hasUserQueries =
+      this.activeSourceId === "conversation" && outlineData.some((i) => i.isUserQuery)
+    const minDisplayLevel = this.settings.showUserQueries && hasUserQueries ? 0 : 1
     const effectiveDisplayLevel = displayLevel < minDisplayLevel ? minDisplayLevel : displayLevel
 
     // 1. Initialize logic

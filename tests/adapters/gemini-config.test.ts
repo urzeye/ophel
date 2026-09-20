@@ -15,7 +15,7 @@ vi.mock("~utils/i18n", () => ({
 
 describe("Gemini built-in config and DOM adaptation", () => {
   it("increments GEMINI_CONFIG_VERSION to invalidate obsolete patches", () => {
-    expect(GEMINI_CONFIG_VERSION).toBe(7)
+    expect(GEMINI_CONFIG_VERSION).toBe(8)
   })
 
   it("extracts conversation id from anchor href after sidebar jslog became base64-encoded", () => {
@@ -151,5 +151,15 @@ describe("Gemini built-in config and DOM adaptation", () => {
     // 验证 userQuery 与 assistantResponse 保持对自定义组件标签的匹配
     expect(GEMINI_CONFIG.selectors.userQuery).toBe("user-query")
     expect(GEMINI_CONFIG.selectors.assistantResponse).toBe("model-response")
+  })
+
+  it("adapts deep research panel and close button selectors to current Gemini DOM", () => {
+    const { deepResearchPanel, deepResearchPanelCloseButton, deepResearchAppDocumentMarkdown } =
+      GEMINI_CONFIG.sitePrivateSelectors
+
+    expect(deepResearchPanel).toContain("deep-research-immersive-panel")
+    expect(deepResearchPanelCloseButton).toContain("toolbar .close-button button")
+    expect(deepResearchPanelCloseButton).toContain('toolbar button:has(mat-icon[fonticon="close"])')
+    expect(deepResearchAppDocumentMarkdown).toContain("#extended-response-markdown-content")
   })
 })

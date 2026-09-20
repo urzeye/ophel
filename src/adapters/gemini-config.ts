@@ -172,7 +172,7 @@ export interface GeminiSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const GEMINI_CONFIG_VERSION = 7
+export const GEMINI_CONFIG_VERSION = 8
 
 const createGeminiConfig = (): GeminiSiteConfig => {
   const userQuery = "user-query"
@@ -187,7 +187,8 @@ const createGeminiConfig = (): GeminiSiteConfig => {
   const visuallyHidden = ".cdk-visually-hidden"
   const canvasCard = '[data-test-id="gem-processing-card"]'
   const canvasEntryChip = "immersive-entry-chip"
-  const deepResearchPanel = "immersive-panel deep-research-immersive-panel"
+  const deepResearchPanel =
+    "deep-research-immersive-panel, immersive-panel deep-research-immersive-panel"
   const canvasCodePanel = "immersive-panel code-immersive-panel"
   const canvasDocumentPanel = "immersive-panel extended-response-panel:has(canvas-create-button)"
   const shareAssistantMarkdown = "message-content .markdown"
@@ -443,12 +444,26 @@ const createGeminiConfig = (): GeminiSiteConfig => {
       canvasDocumentPanel,
       panelToolbarActions: "toolbar .action-buttons",
       deepResearchPanelExportButton: '[data-test-id="export-menu-button"]',
-      deepResearchPanelCloseButton: `${deepResearchPanel} [data-test-id="close-button"], ${immersivePanel} [data-test-id="close-button"]`,
+      deepResearchPanelCloseButton: [
+        "deep-research-immersive-panel toolbar .close-button button",
+        'deep-research-immersive-panel toolbar button:has(mat-icon[fonticon="close"])',
+        'deep-research-immersive-panel toolbar button[aria-label*="关闭"]',
+        'deep-research-immersive-panel toolbar button[aria-label*="close" i]',
+        'deep-research-immersive-panel [data-test-id="close-button"]',
+        `${immersivePanel} [data-test-id="close-button"]`,
+      ].join(", "),
       canvasPanelDownloadButton: '[data-test-id="download-preview-button"]',
       panelThinking: "thinking-panel",
       panelToolbarTitle: "toolbar h2.title-text",
       canvasPanelTitle: "toolbar h2.title-text, .title-text",
-      canvasPanelCloseButton: 'toolbar [data-test-id="close-button"]',
+      canvasPanelCloseButton: [
+        "toolbar .close-button button",
+        'toolbar button:has(mat-icon[fonticon="close"])',
+        'toolbar button:has(mat-icon[data-mat-icon-name="close"])',
+        'toolbar button[aria-label*="关闭"]',
+        'toolbar button[aria-label*="close" i]',
+        'toolbar [data-test-id="close-button"]',
+      ].join(", "),
       chatsExpandableSection: 'expandable-section[data-test-id="chats-expandable-section"]',
       chatsExpandableSectionFallback: 'expandable-section[storagekey="chats"]',
       chatsExpandableSectionHost: "expandable-section",
@@ -594,10 +609,19 @@ const createGeminiConfig = (): GeminiSiteConfig => {
       deepResearchDocumentShare,
       deepResearchArtifactShare,
       deepResearchConfirmation: "deep-research-confirmation-widget",
-      deepResearchPanelMarkdown: ["#extended-response-markdown-content", shareAssistantMarkdown],
+      deepResearchPanelMarkdown: [
+        "#extended-response-markdown-content",
+        "message-content#extended-response-message-content .markdown",
+        shareAssistantMarkdown,
+      ],
       deepResearchAppDocumentMarkdown: [
         `${deepResearchPanel} #extended-response-markdown-content`,
+        `${deepResearchPanel} message-content#extended-response-message-content .markdown`,
+        `${deepResearchPanel} message-content .markdown`,
         `${deepResearchPanel} ${shareAssistantMarkdown}`,
+        "deep-research-immersive-panel #extended-response-markdown-content",
+        "deep-research-immersive-panel message-content .markdown",
+        "#extended-response-markdown-content",
       ],
       deepResearchAppTrigger: `${assistantResponse} ${canvasCard}, ${assistantResponse} ${canvasEntryChip}`,
       deepResearchIcon: [
