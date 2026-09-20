@@ -859,6 +859,7 @@ export const fr = {
   // Tab Order Settings
   tabOrderSettings: "Disposition UI",
   tabOrderDesc: "Ordre des onglets du panneau (glisser pour réorganiser)",
+  tabOrderAtLeastOne: "Au moins un onglet de fonctionnalité doit rester activé",
   moveUp: "Monter",
   moveDown: "Descendre",
   // Reading Navigation Settings

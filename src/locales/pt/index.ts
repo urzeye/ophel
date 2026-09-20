@@ -856,6 +856,7 @@ export const pt = {
   // Tab Order Settings
   tabOrderSettings: "Layout da UI",
   tabOrderDesc: "Ordem das abas do painel (arraste para reordenar)",
+  tabOrderAtLeastOne: "Pelo menos uma aba de funcionalidade deve permanecer ativada",
   moveUp: "Subir",
   moveDown: "Descer",
   // Reading Navigation Settings

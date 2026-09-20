@@ -853,6 +853,7 @@ export const ru = {
   // Tab Order Settings
   tabOrderSettings: "Расположение UI",
   tabOrderDesc: "Порядок вкладок панели (перетащите для сортировки)",
+  tabOrderAtLeastOne: "Должна оставаться включенной хотя бы одна вкладка функций",
   moveUp: "Выше",
   moveDown: "Ниже",
   // Reading Navigation Settings

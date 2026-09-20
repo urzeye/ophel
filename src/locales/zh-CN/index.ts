@@ -845,6 +845,7 @@ export const zhCN = {
   // Tab 顺序设置
   tabOrderSettings: "界面排版",
   tabOrderDesc: "调整面板 Tab 的显示顺序（拖动手柄可排序）",
+  tabOrderAtLeastOne: "至少需要保留一个功能标签页",
   moveUp: "上移",
   moveDown: "下移",
   // 阅读导航设置

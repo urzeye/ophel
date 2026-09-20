@@ -730,6 +730,7 @@ export const zhTW = {
   // Tab 順序設置
   tabOrderSettings: "介面排版",
   tabOrderDesc: "調整面板 Tab 的顯示順序（拖動手柄可排序）",
+  tabOrderAtLeastOne: "至少需要保留一個功能分頁",
   moveUp: "上移",
   moveDown: "下移",
   // 閱讀導航設置

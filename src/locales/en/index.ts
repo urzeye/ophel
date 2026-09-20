@@ -909,6 +909,7 @@ export const en = {
   // Tab Order Settings
   tabOrderSettings: "Interface Layout",
   tabOrderDesc: "Adjust the display order of panel tabs (drag handle to reorder)",
+  tabOrderAtLeastOne: "At least one feature tab must remain enabled",
   moveUp: "Move Up",
   moveDown: "Move Down",
   // Reading Navigation Settings

@@ -858,6 +858,7 @@ export const es = {
   // Tab Order Settings
   tabOrderSettings: "Distribución UI",
   tabOrderDesc: "Orden de las pestañas del panel (arrastra para reordenar)",
+  tabOrderAtLeastOne: "Debe permanecer activada al menos una pestaña de funciones",
   moveUp: "Subir",
   moveDown: "Bajar",
   // Reading Navigation Settings

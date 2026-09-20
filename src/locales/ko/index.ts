@@ -852,6 +852,7 @@ export const ko = {
   // Tab Order Settings
   tabOrderSettings: "인터페이스 레이아웃",
   tabOrderDesc: "패널 탭의 표시 순서 조정 (드래그하여 재정렬)",
+  tabOrderAtLeastOne: "최소 하나의 기능 탭을 유지해야 합니다",
   moveUp: "위로 이동",
   moveDown: "아래로 이동",
   // Reading Navigation Settings

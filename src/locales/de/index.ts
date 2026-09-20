@@ -858,6 +858,7 @@ export const de = {
   // Tab Order Settings
   tabOrderSettings: "UI-Anordnung",
   tabOrderDesc: "Reihenfolge der Panels (zum Neuordnen ziehen)",
+  tabOrderAtLeastOne: "Mindestens ein Funktions-Tab muss aktiviert bleiben",
   moveUp: "Hoch",
   moveDown: "Runter",
   // Reading Navigation Settings

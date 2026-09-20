@@ -941,6 +941,7 @@ export const it = {
   tabOrderSettings: "Disposizione dell'interfaccia",
   tabOrderDesc:
     "Regola l'ordine di visualizzazione delle schede del pannello (trascina la maniglia per riordinare)",
+  tabOrderAtLeastOne: "Almeno una scheda di funzionalità deve rimanere abilitata",
   moveUp: "Spostati in alto",
   moveDown: "Sposta giù",
   // Reading Navigation Settings

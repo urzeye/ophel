@@ -874,6 +874,7 @@ export const ja = {
   // Tab Order Settings
   tabOrderSettings: "表示配置",
   tabOrderDesc: "パネル内の各タブの並び順を調整します（ドラッグで並び替え可能）",
+  tabOrderAtLeastOne: "少なくとも1つの機能タブを有効にしておく必要があります",
   moveUp: "上へ",
   moveDown: "下へ",
   // Reading Navigation Settings
