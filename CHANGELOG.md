@@ -29,7 +29,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **ChatGPT outline order in long chats** — Fixed an issue where scrolling through long ChatGPT conversations could cause reply headings to be grouped under the wrong question or jump out of order in the outline. (#935)
 - **Zen Mode and Clean Mode state isolation** — Fixed an issue where enabling Zen Mode automatically enabled Clean Mode and left it active after exiting, now preserving your original Clean Mode preference. (#926)
 - **Pinned conversations on Doubao and DeepSeek** — Fixed pinned chats no longer being recognized after both sites redesigned their sidebars, so pinned status syncs correctly in Conversation Manager again. (#933)
-- **Gemini Canvas and Deep Research export** — Adapted to Gemini's new inline Canvas preview and Deep Research layout, resolving issues where Canvas export could fail on first attempt, misalign versions across multi-turn chats, or extract empty code.
+- **Gemini Canvas and Deep Research export** — Adapted to Gemini's new inline Canvas preview and Deep Research layout, resolving issues where Canvas export could fail on first attempt, misalign versions across multi-turn chats, or extract empty code. (#941)
 
 ---
 
