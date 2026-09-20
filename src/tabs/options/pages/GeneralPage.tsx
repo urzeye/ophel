@@ -19,6 +19,7 @@ import {
   TOOLS_MENU_ITEMS,
   getDefaultToolsMenuIds,
 } from "~constants"
+import { DEFAULT_SETTINGS } from "~constants/default-settings"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
 import { showToast } from "~utils/toast"
@@ -265,7 +266,7 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
     const fromIndex = draggedItem.index
     if (fromIndex === targetIndex) return
 
-    const newOrder = [...(settings.features?.order || [])]
+    const newOrder = [...(settings.features?.order || DEFAULT_SETTINGS.features.order)]
     const [moved] = newOrder.splice(fromIndex, 1)
     newOrder.splice(targetIndex, 0, moved)
     updateNestedSetting("features", "order", newOrder)
@@ -699,12 +700,14 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
       {/* ========== 界面排版 Tab ========== */}
       {activeTab === "tabOrder" &&
         (() => {
-          const orderList = settings.features?.order?.filter((id) => TAB_DEFINITIONS[id]) || []
+          const orderList = (settings.features?.order || DEFAULT_SETTINGS.features.order).filter(
+            (id) => TAB_DEFINITIONS[id],
+          )
           const isTabEnabled = (id: string) => {
             if (id === "prompts") return settings.features?.prompts?.enabled !== false
             if (id === "outline") return settings.features?.outline?.enabled !== false
             if (id === "conversations") return settings.features?.conversations?.enabled !== false
-            return true
+            return false
           }
           const enabledTabsCount = orderList.filter((id) => isTabEnabled(id)).length
 

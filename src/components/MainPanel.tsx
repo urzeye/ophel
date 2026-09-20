@@ -31,7 +31,7 @@ import {
   ThemeLightIcon,
 } from "~components/icons"
 import { SparkleIcon } from "~components/icons/SparkleIcon"
-import { TAB_IDS, isBuiltinSiteId } from "~constants"
+import { TAB_DEFINITIONS, TAB_IDS, type TabId, isBuiltinSiteId } from "~constants"
 import { isMacOS } from "~constants/shortcuts"
 import type { ConversationManager } from "~core/conversation-manager"
 import type { OutlineManager } from "~core/outline-manager"
@@ -196,7 +196,9 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   const visibleTabs = useMemo(
     () =>
       tabOrder.filter((tabId) => {
-        if (tabId === TAB_IDS.SETTINGS) return false
+        if (!TAB_DEFINITIONS[tabId as TabId]) {
+          return false
+        }
         if (tabId === TAB_IDS.PROMPTS && currentSettings.features?.prompts?.enabled === false) {
           return false
         }

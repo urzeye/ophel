@@ -26,7 +26,6 @@ export const TAB_IDS = {
   PROMPTS: "prompts",
   OUTLINE: "outline",
   CONVERSATIONS: "conversations",
-  SETTINGS: "settings",
 } as const
 
 export type TabId = (typeof TAB_IDS)[keyof typeof TAB_IDS]
@@ -2145,7 +2144,6 @@ export const TAB_DEFINITIONS: Record<
     IconComponent: ConversationIcon,
   },
   [TAB_IDS.OUTLINE]: { label: "tabOutline", icon: "📑", IconComponent: OutlineIcon },
-  [TAB_IDS.SETTINGS]: { label: "tabSettings", icon: "⚙️" },
 }
 
 // ==================== 折叠面板按钮定义 ====================

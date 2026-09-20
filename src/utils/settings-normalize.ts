@@ -30,6 +30,27 @@ const normalizeDisabledSites = (value: SettingsInput["disabledSites"]): string[]
   ]
 }
 
+// 功能 Tab 排序归一化：过滤废弃项（如历史 settings）与脏数据，去重并补齐缺失的功能项，避免 Tab 丢失或排序错位
+const normalizeFeaturesOrder = (value: unknown): string[] => {
+  const rawOrder = Array.isArray(value) ? value : DEFAULT_SETTINGS.features.order
+  const validTabs = new Set<string>(DEFAULT_SETTINGS.features.order)
+  const order: string[] = []
+
+  for (const id of rawOrder) {
+    if (typeof id === "string" && validTabs.has(id) && !order.includes(id)) {
+      order.push(id)
+    }
+  }
+
+  for (const defaultTab of DEFAULT_SETTINGS.features.order) {
+    if (!order.includes(defaultTab)) {
+      order.push(defaultTab)
+    }
+  }
+
+  return order
+}
+
 const ensureQuickButton = (
   buttons: QuickButtonConfig[],
   button: QuickButtonConfig,
@@ -421,6 +442,7 @@ export const normalizeSettings = (settings: SettingsInput): Settings => {
     features: {
       ...DEFAULT_SETTINGS.features,
       ...settings.features,
+      order: normalizeFeaturesOrder(settings.features?.order),
       outline: {
         ...DEFAULT_SETTINGS.features.outline,
         ...settings.features?.outline,
