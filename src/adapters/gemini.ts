@@ -1289,7 +1289,13 @@ export class GeminiAdapter extends SiteAdapter {
 
   private getDeepResearchPanelMarkdown(panel: Element): string {
     const markdown = this.getDeepResearchPanelMarkdownElement(panel)
-    return markdown ? this.extractAssistantResponseTextWithAssets(markdown).trim() : ""
+    if (!markdown) return ""
+    const target =
+      markdown.closest("structured-content-container") ||
+      markdown.querySelector("structured-content-container") ||
+      panel.querySelector("structured-content-container") ||
+      markdown
+    return this.extractAssistantResponseTextWithAssets(target).trim()
   }
 
   private async getGeminiCanvasPanelMarkdown(panel: Element): Promise<string> {
@@ -1322,6 +1328,7 @@ export class GeminiAdapter extends SiteAdapter {
     )
     return (
       candidates.find((candidate) => candidate.closest(privateSelectors.panelThinking) === null) ||
+      panel.querySelector("structured-content-container") ||
       null
     )
   }
@@ -3859,7 +3866,21 @@ export class GeminiAdapter extends SiteAdapter {
    * 导出前清理 Gemini 注入的辅助可访问性节点，避免进入 Markdown。
    */
   private sanitizeAssistantExportElement(element: Element): Element {
-    const clone = element.cloneNode(true) as Element
+    // 深度研究报告：若传入的节点包含或本身是深度研究面板外层容器，只保留 structured-content-container 内的内容
+    const structuredContainer = element.matches?.("structured-content-container")
+      ? element
+      : element.querySelector?.("structured-content-container")
+
+    const sourceElement =
+      structuredContainer &&
+      (element.matches?.(
+        "deep-research-immersive-panel, response-container, .presented-response-container, .response-container-content",
+      ) ||
+        element.querySelector?.("deep-research-source-lists, .end-of-report-marker"))
+        ? structuredContainer
+        : element
+
+    const clone = sourceElement.cloneNode(true) as Element
     clone
       .querySelectorAll(this.config.sitePrivateSelectors.assistantExportNoise.join(", "))
       .forEach((node) => node.remove())
@@ -3990,6 +4011,12 @@ export class GeminiAdapter extends SiteAdapter {
     // 仅过滤 Gemini 注入的辅助可访问性标题与来源列表，避免误杀正常 Markdown 标题
     if (heading.matches(this.config.sitePrivateSelectors.visuallyHidden)) return true
     if (heading.closest("deep-research-source-lists")) return true
+    if (
+      heading.closest("deep-research-immersive-panel") &&
+      !heading.closest("structured-content-container")
+    ) {
+      return true
+    }
 
     return false
   }
@@ -5245,8 +5272,12 @@ export class GeminiAdapter extends SiteAdapter {
 
     let reportContent = ""
     if (documentElement && !collectedElements.has(documentElement)) {
+      const targetElement =
+        documentElement.closest("structured-content-container") ||
+        documentElement.querySelector("structured-content-container") ||
+        documentElement
       const rawContent = this.extractAssistantResponseTextWithAssets(
-        documentElement,
+        targetElement,
         collector,
       ).trim()
       if (rawContent) {

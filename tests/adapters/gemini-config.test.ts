@@ -253,7 +253,10 @@ describe("Gemini built-in config and DOM adaptation", () => {
       closest: (sel: string) => (sel.includes("model-response") ? mockAssistantResponse : null),
     })
 
-    const mockReportDoc = Object.assign(new MockHTMLElement(), {
+    const mockStructuredContainer = Object.assign(new MockHTMLElement(), {
+      matches: (sel: string) => sel.includes("structured-content-container"),
+      closest: (sel: string) =>
+        sel.includes("structured-content-container") ? mockStructuredContainer : null,
       cloneNode: () => ({
         querySelectorAll: () => [],
         textContent:
@@ -264,9 +267,35 @@ describe("Gemini built-in config and DOM adaptation", () => {
         "AI活动平台PRD可行性调研\n\nAI驱动轻量级活动平台MVP技术可行性与商业演进深度调研报告",
     }) as unknown as Element
 
+    const mockSourceLists = Object.assign(new MockHTMLElement(), {
+      matches: (sel: string) => sel.includes("deep-research-source-lists"),
+      textContent: "报告中使用的来源\nhttps://example.com/source1",
+    })
+
+    const mockPanel = Object.assign(new MockHTMLElement(), {
+      matches: (sel: string) => sel.includes("deep-research-immersive-panel"),
+      querySelector: (sel: string) => {
+        if (sel.includes("structured-content-container")) return mockStructuredContainer
+        if (sel.includes("deep-research-source-lists")) return mockSourceLists
+        return null
+      },
+      querySelectorAll: (sel: string) => {
+        if (sel.includes("structured-content-container")) {
+          return [mockStructuredContainer] as unknown as NodeListOf<Element>
+        }
+        if (sel.includes("deep-research-source-lists")) {
+          return [mockSourceLists] as unknown as NodeListOf<Element>
+        }
+        return [] as unknown as NodeListOf<Element>
+      },
+      textContent:
+        "AI活动平台PRD可行性调研\n\nAI驱动轻量级活动平台MVP技术可行性与商业演进深度调研报告\n\n报告中使用的来源",
+    }) as unknown as Element
+
     globalThis.document = {
       querySelector: (sel: string) => {
-        if (sel.includes("extended-response-markdown-content")) return mockReportDoc
+        if (sel.includes("structured-content-container")) return mockStructuredContainer
+        if (sel.includes("extended-response-markdown-content")) return mockStructuredContainer
         return null
       },
       querySelectorAll: (sel: string) => {
@@ -283,7 +312,9 @@ describe("Gemini built-in config and DOM adaptation", () => {
     try {
       const adapter = new GeminiAdapter()
       const messages = await (
-        adapter as unknown as { extractDeepResearchAppMessages(): Promise<unknown[]> }
+        adapter as unknown as {
+          extractDeepResearchAppMessages(): Promise<Array<{ role: string; content: string }>>
+        }
       ).extractDeepResearchAppMessages()
 
       expect(messages).toHaveLength(2)
@@ -294,6 +325,14 @@ describe("Gemini built-in config and DOM adaptation", () => {
       expect(messages[1].role).toBe("assistant")
       expect(messages[1].content).toContain("我已经完成了研究")
       expect(messages[1].content).toContain("AI活动平台PRD可行性调研")
+      expect(messages[1].content).not.toContain("报告中使用的来源")
+
+      // 验证面板直接提取时也只保留 structured-content-container
+      const panelContent = (
+        adapter as unknown as { getDeepResearchPanelMarkdown(panel: Element): string }
+      ).getDeepResearchPanelMarkdown(mockPanel)
+      expect(panelContent).toContain("AI活动平台PRD可行性调研")
+      expect(panelContent).not.toContain("报告中使用的来源")
     } finally {
       globalThis.document = originalDocument
       globalThis.window = originalWindow
