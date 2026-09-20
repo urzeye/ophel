@@ -112,6 +112,11 @@ type GeminiPrivateSelectors = SitePrivateSelectors & {
   canvasCodeIcon: string[]
   canvasDocumentIcon: string[]
   canvasCard: string
+  canvasInlinePreview: string
+  canvasSidePanel: string
+  canvasPrevVersionButton: string
+  canvasNextVersionButton: string
+  canvasVersionDisabled: string
   canvasShareArtifact: string
   canvasArtifactContainer: string
   canvasEntryChip: string
@@ -189,14 +194,25 @@ const createGeminiConfig = (): GeminiSiteConfig => {
   const canvasEntryChip = "immersive-entry-chip"
   const deepResearchPanel =
     "deep-research-immersive-panel, immersive-panel deep-research-immersive-panel"
-  const canvasCodePanel = "immersive-panel code-immersive-panel"
-  const canvasDocumentPanel = "immersive-panel extended-response-panel:has(canvas-create-button)"
+  const canvasInlinePreview = "inline-preview, .inline-preview-container"
+  const canvasSidePanel =
+    "immersive-panel code-immersive-panel, code-immersive-panel, immersive-panel extended-response-panel:has(.code-editor), immersive-panel extended-response-panel:has(canvas-create-button)"
+  const canvasCodePanel = `${canvasInlinePreview}, immersive-entry-chip inline-preview, ${canvasSidePanel}`
+  const canvasDocumentPanel =
+    "immersive-panel extended-response-panel:has(canvas-create-button), extended-response-panel:has(canvas-create-button)"
+  const canvasPrevVersionButton =
+    'gem-icon-button[arialabel*="上一版本" i] button, gem-icon-button[arialabel*="Previous version" i] button, button[aria-label*="上一版本" i], button[aria-label*="Previous version" i], gem-icon-button[fonticonname="undo"] button'
+  const canvasNextVersionButton =
+    'gem-icon-button[arialabel*="下一版本" i] button, gem-icon-button[arialabel*="Next version" i] button, button[aria-label*="下一版本" i], button[aria-label*="Next version" i], gem-icon-button[fonticonname="redo"] button'
+  const canvasVersionDisabled =
+    '.gem-button-disabled, [disabled="true"], [aria-disabled="true"], [inert]'
   const shareAssistantMarkdown = "message-content .markdown"
   const deepResearchDocumentShare = `${sharePage} immersive-share-landing-page structured-content-container[data-test-id="deep-research-block"]`
   const deepResearchArtifactShare = `${sharePage} structured-content-container[data-test-id="immersive-artifact-content"]`
   const canvasArtifactContainer = ".immersive-artifact-container"
   const canvasCodeBlock = "code-block"
-  const canvasCodeEditor = 'xap-code-editor[data-test-id="code-editor"]'
+  const canvasCodeEditor =
+    'xap-code-editor[data-test-id="code-editor"], xap-code-editor, [data-test-id="code-editor"], code-editor, .code-editor, .monaco-editor'
   const messageWidth = ".conversation-container, conversation-container"
   const inputWidth = ".input-area-container"
   const layoutScope = "bard-sidenav-content, body:not(:has(bard-sidenav-content)) main.chat-app"
@@ -455,14 +471,17 @@ const createGeminiConfig = (): GeminiSiteConfig => {
       canvasPanelDownloadButton: '[data-test-id="download-preview-button"]',
       panelThinking: "thinking-panel",
       panelToolbarTitle: "toolbar h2.title-text",
-      canvasPanelTitle: "toolbar h2.title-text, .title-text",
+      canvasPanelTitle:
+        "toolbar h2.title-text, .title-wrapper .title, .title-container .title, .title-text, .title",
       canvasPanelCloseButton: [
-        "toolbar .close-button button",
-        'toolbar button:has(mat-icon[fonticon="close"])',
-        'toolbar button:has(mat-icon[data-mat-icon-name="close"])',
-        'toolbar button[aria-label*="关闭"]',
-        'toolbar button[aria-label*="close" i]',
-        'toolbar [data-test-id="close-button"]',
+        ".close-button button",
+        'button[aria-label*="关闭"]',
+        'button[aria-label*="close" i]',
+        'gem-icon-button[fonticonname="close"] button',
+        'gem-icon-button[arialabel*="关闭"] button',
+        'button:has(mat-icon[fonticon="close"])',
+        'button:has(mat-icon[data-mat-icon-name="close"])',
+        '[data-test-id="close-button"]',
       ].join(", "),
       chatsExpandableSection: 'expandable-section[data-test-id="chats-expandable-section"]',
       chatsExpandableSectionFallback: 'expandable-section[storagekey="chats"]',
@@ -668,6 +687,11 @@ const createGeminiConfig = (): GeminiSiteConfig => {
         'mat-icon[data-mat-icon-name="article"]',
       ],
       canvasCard,
+      canvasInlinePreview,
+      canvasSidePanel,
+      canvasPrevVersionButton,
+      canvasNextVersionButton,
+      canvasVersionDisabled,
       canvasShareArtifact: `${sharePage} ${canvasArtifactContainer}`,
       canvasArtifactContainer,
       canvasEntryChip,
@@ -686,14 +710,16 @@ const createGeminiConfig = (): GeminiSiteConfig => {
       canvasTabRadio: "button[role='radio']",
       canvasTabSelected: ".mat-button-toggle-checked",
       canvasHidden: ".hidden",
-      canvasCodeContent: '[data-test-id="code-content"], pre code, code',
+      canvasCodeContent:
+        '[data-test-id="code-content"], .code-content:not(web-preview):not(.hidden), pre code, code',
       canvasMonacoEditor: ".monaco-editor",
       canvasMonacoTextarea: "textarea.inputarea",
       canvasMonacoScrollable: ".monaco-scrollable-element",
       canvasMonacoLine: ".view-lines .view-line",
-      canvasMonacoContentHeight: ".view-lines, .margin, .lines-content",
-      canvasTitle: ".title-text, .card-title",
-      canvasNestedTitle: ".title-text",
+      canvasMonacoContentHeight: ".view-lines, .margin-view-overlays, .margin",
+      canvasTitle:
+        ".title-wrapper .title, .title-container .title, .title-text, .card-title, .title",
+      canvasNestedTitle: ".title-wrapper .title, .title-container .title, .title-text, .title",
       canvasCodeLanguage: ".code-block-decoration span",
       canvasMode: "[data-mode-id]",
       outlineMessageContent: "message-content",
