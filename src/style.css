@@ -1935,7 +1935,10 @@
   background: var(--gh-text-tertiary, rgba(150, 150, 150, 0.5));
   box-shadow: 0 0 10px var(--gh-primary, rgba(200, 200, 200, 0.3));
   opacity: 1;
-  transition: opacity 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition:
+    opacity 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+    background 0.15s ease,
+    box-shadow 0.15s ease;
   pointer-events: none;
 }
 
@@ -1983,8 +1986,18 @@
   background: var(--gh-text-tertiary, rgba(150, 150, 150, 0.5));
   box-shadow: 0 0 10px var(--gh-primary, rgba(200, 200, 200, 0.3));
   opacity: 1;
-  transition: opacity 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition:
+    opacity 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+    background 0.15s ease,
+    box-shadow 0.15s ease;
   pointer-events: none;
+}
+
+/* 悬停把手的即时视觉反馈：仅提示“已识别”，展开仍由 dwell + .edge-peek 驱动 */
+.gh-main-panel.edge-snapped-left:hover:not(.edge-peek)::after,
+.gh-main-panel.edge-snapped-right:hover:not(.edge-peek)::after {
+  background: var(--gh-primary, rgba(66, 133, 244, 0.9));
+  box-shadow: 0 0 12px var(--gh-primary, rgba(66, 133, 244, 0.6));
 }
 
 .gh-main-panel.edge-snapped-right.edge-peek {
@@ -2010,7 +2023,7 @@
   position: fixed;
   top: 0;
   bottom: 0;
-  width: 6px;
+  width: 8px;
   display: none;
   background: transparent;
   pointer-events: auto;
