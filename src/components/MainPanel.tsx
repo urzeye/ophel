@@ -1542,53 +1542,58 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             {t("tip1", { modifier: isMacOS() ? "⌘ Cmd" : "Ctrl" })}
           </span>
         </div>
-        <div className="gh-panel-tabs" role="tablist" aria-label={t("panelTitle")}>
-          {visibleTabs.map((tab) => {
-            let IconComp: React.FC<{ size?: number }> | null = null
-            if (tab === TAB_IDS.OUTLINE) IconComp = OutlineIcon
-            else if (tab === TAB_IDS.PROMPTS) IconComp = PromptIcon
-            else if (tab === TAB_IDS.CONVERSATIONS) IconComp = ConversationIcon
+        {/* 仅在有多个功能 Tab 时展示切换栏；单功能时自动隐藏以节省垂直空间 */}
+        {visibleTabs.length > 1 && (
+          <div className="gh-panel-tabs" role="tablist" aria-label={t("panelTitle")}>
+            {visibleTabs.map((tab) => {
+              let IconComp: React.FC<{ size?: number }> | null = null
+              if (tab === TAB_IDS.OUTLINE) IconComp = OutlineIcon
+              else if (tab === TAB_IDS.PROMPTS) IconComp = PromptIcon
+              else if (tab === TAB_IDS.CONVERSATIONS) IconComp = ConversationIcon
 
-            return (
-              <button
-                type="button"
-                key={tab}
-                id={`gh-panel-tab-${tab}`}
-                role="tab"
-                draggable={canDragPanelTabs}
-                aria-selected={activeTab === tab}
-                aria-controls={`gh-panel-tabpanel-${tab}`}
-                aria-grabbed={draggedPanelTab === tab}
-                className={`gh-panel-tab-btn ${activeTab === tab ? "active" : ""} ${canDragPanelTabs ? "is-draggable" : ""} ${draggedPanelTab === tab ? "is-dragging" : ""} ${dragOverPanelTab === tab ? "is-drag-over" : ""}`}
-                data-tip-target={
-                  tab === TAB_IDS.OUTLINE
-                    ? "outline-tab"
-                    : tab === TAB_IDS.CONVERSATIONS
-                      ? "conversations-tab"
-                      : tab === TAB_IDS.PROMPTS
-                        ? "prompts-tab"
-                        : undefined
-                }
-                onClick={() => handlePanelTabClick(tab)}
-                onKeyDown={(event) => handlePanelTabKeyDown(event, tab)}
-                onDragStart={(event) => handlePanelTabDragStart(event, tab)}
-                onDragOver={(event) => handlePanelTabDragOver(event, tab)}
-                onDragEnter={(event) => handlePanelTabDragOver(event, tab)}
-                onDragLeave={() => {
-                  if (dragOverPanelTab === tab) {
-                    setDragOverPanelTab(null)
+              return (
+                <button
+                  type="button"
+                  key={tab}
+                  id={`gh-panel-tab-${tab}`}
+                  role="tab"
+                  draggable={canDragPanelTabs}
+                  aria-selected={activeTab === tab}
+                  aria-controls={`gh-panel-tabpanel-${tab}`}
+                  aria-grabbed={draggedPanelTab === tab}
+                  className={`gh-panel-tab-btn ${activeTab === tab ? "active" : ""} ${canDragPanelTabs ? "is-draggable" : ""} ${draggedPanelTab === tab ? "is-dragging" : ""} ${dragOverPanelTab === tab ? "is-drag-over" : ""}`}
+                  data-tip-target={
+                    tab === TAB_IDS.OUTLINE
+                      ? "outline-tab"
+                      : tab === TAB_IDS.CONVERSATIONS
+                        ? "conversations-tab"
+                        : tab === TAB_IDS.PROMPTS
+                          ? "prompts-tab"
+                          : undefined
                   }
-                }}
-                onDrop={(event) => handlePanelTabDrop(event, tab)}
-                onDragEnd={resetPanelTabDragState}>
-                <span className="gh-panel-tab-btn-icon">{IconComp && <IconComp size={16} />}</span>
-                <span className="gh-panel-tab-btn-label">
-                  {t(`tab${tab.charAt(0).toUpperCase() + tab.slice(1)}`)}
-                </span>
-              </button>
-            )
-          })}
-        </div>
+                  onClick={() => handlePanelTabClick(tab)}
+                  onKeyDown={(event) => handlePanelTabKeyDown(event, tab)}
+                  onDragStart={(event) => handlePanelTabDragStart(event, tab)}
+                  onDragOver={(event) => handlePanelTabDragOver(event, tab)}
+                  onDragEnter={(event) => handlePanelTabDragOver(event, tab)}
+                  onDragLeave={() => {
+                    if (dragOverPanelTab === tab) {
+                      setDragOverPanelTab(null)
+                    }
+                  }}
+                  onDrop={(event) => handlePanelTabDrop(event, tab)}
+                  onDragEnd={resetPanelTabDragState}>
+                  <span className="gh-panel-tab-btn-icon">
+                    {IconComp && <IconComp size={16} />}
+                  </span>
+                  <span className="gh-panel-tab-btn-label">
+                    {t(`tab${tab.charAt(0).toUpperCase() + tab.slice(1)}`)}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        )}
 
         {/* Content - 内容区 */}
         {visibleTabs.includes(activeTab) && (

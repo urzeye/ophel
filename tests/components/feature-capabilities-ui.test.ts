@@ -44,6 +44,9 @@ describe("feature capability panel boundaries", () => {
     expect(source).toContain("if (visibleTabs.includes(TAB_IDS.CONVERSATIONS))")
     expect(source).toContain('if (typeof idx === "number" && visibleTabs[idx])')
     expect(source).toContain("const currentIndex = visibleTabs.indexOf(tab)")
+    expect(source).toContain(
+      '{visibleTabs.length > 1 && ( <div className="gh-panel-tabs" role="tablist"',
+    )
     expect(source).toContain("{visibleTabs.map((tab) => {")
     expect(source).toContain("{visibleTabs.includes(activeTab) && (")
     expect(source).toContain("currentSettings.tab?.openInNewTab && canOpenNewTab")
