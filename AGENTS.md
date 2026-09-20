@@ -83,6 +83,7 @@ Ophel Atlas 是 TypeScript + React 18 + Plasmo 的浏览器扩展，同时支持
 - 修改备份/恢复时，检查 `ZUSTAND_KEYS`、`MULTI_PROP_STORES`、schema 兼容和旧数据迁移。
 - 修改 background 消息时，使用 `src/utils/messaging.ts` 的常量，避免散落字符串。
 - 跨扩展和油猴的能力差异必须通过 `src/platform/` 显式表达，不在业务代码里分散判断。
+- 修改内置站点适配器默认配置（`*-config.ts`）时，对应 `*_CONFIG_VERSION` 仅需在同一个发版周期内相对上个 release 版本加 1（使旧缓存 patch 失效），无需在同一次发版的多次修改或 commit 中重复累加。
 - 修改 `src/platform/`、存储适配、内容脚本入口、样式注入或核心初始化时，必须同时考虑浏览器扩展和油猴脚本；高风险变更优先验证 `pnpm build` 和 `pnpm build:userscript`。
 
 ## UI 与 CSS 规则

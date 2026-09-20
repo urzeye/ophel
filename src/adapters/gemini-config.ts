@@ -171,8 +171,8 @@ export interface GeminiSiteConfig extends BuiltinSiteConfig {
   sitePrivateSelectors: GeminiPrivateSelectors
 }
 
-/** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const GEMINI_CONFIG_VERSION = 10
+/** 内置修复修改默认配置时递增（相对上一 release 版本 +1），使旧缓存 patch 自动失效。一次发版周期内无需重复递增。 */
+export const GEMINI_CONFIG_VERSION = 6
 
 const createGeminiConfig = (): GeminiSiteConfig => {
   const userQuery = "user-query"

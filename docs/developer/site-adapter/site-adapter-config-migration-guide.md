@@ -78,7 +78,7 @@ applyMergedConfig(config: BuiltinSiteConfig): void {
 - `resolveSiteConfig` 能把合法 patch 应用到目标站点，错误站点、错误 `baseConfigVersion` 或不兼容应用版本会被跳过。
 - 未登记的 `sitePrivateSelectors` 键、删除必需私有键、删除内置 capability 或产生非法合并结果时会显式拒绝。
 - 数组是整体替换；对象递归合并；`null` 删除键，但不能使最终配置缺少必需字段。
-- 修改内置默认配置时递增 `XXX_CONFIG_VERSION`；旧 patch 自动因基线版本不匹配而失效。
+- 修改内置默认配置时，在当次发版周期内相对上个 release 版本递增 `XXX_CONFIG_VERSION`（+1）；旧 patch 自动因基线版本不匹配而失效。同一次发版内的多次 commit 无需重复累加。
 
 ## 6. 回归与交付
 
