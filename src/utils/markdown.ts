@@ -72,6 +72,50 @@ type GithubReferenceStateInline = MarkdownItInlineState & {
 const GITHUB_REPOSITORY_URL = "https://github.com/urzeye/ophel"
 const GITHUB_USERNAME_PATTERN = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?/
 
+// linkify-it 的 path 字符集允许非 ASCII，识别裸域名/URL 时会把紧随其后的
+// CJK 正文与全角标点一并吞进链接；在第一个不可能属于 URL 的字符处截断
+const LINKIFY_CJK_TAIL_PATTERN =
+  /[\u3000-\u303F\u2E80-\u9FFF\uF900-\uFAFF\uFE30-\uFE4F\uFF00-\uFFEF]/u
+
+type MarkdownItCoreRule = NonNullable<Parameters<MarkdownIt["core"]["ruler"]["after"]>[2]>
+
+const trimLinkifyCjkTailRule: MarkdownItCoreRule = (state) => {
+  for (const blockToken of state.tokens) {
+    if (blockToken.type !== "inline" || !blockToken.children) continue
+
+    const children = blockToken.children
+    for (let i = 0; i < children.length; i++) {
+      const openToken = children[i]
+      if (openToken.type !== "link_open" || openToken.markup !== "linkify") continue
+
+      const textToken = children[i + 1]
+      const closeToken = children[i + 2]
+      if (textToken?.type !== "text" || closeToken?.type !== "link_close") continue
+
+      const trimIndex = textToken.content.search(LINKIFY_CJK_TAIL_PATTERN)
+      if (trimIndex === -1) continue
+
+      const keptText = textToken.content.slice(0, trimIndex)
+      const restText = textToken.content.slice(trimIndex)
+
+      const hrefAttr = openToken.attrs?.find(([name]) => name === "href")
+      if (hrefAttr) {
+        // 与 core linkify 规则一致：裸域名匹配要补回 http:// 前缀再规范化
+        hrefAttr[1] = state.md.normalizeLink(
+          keptText.includes("://") || /^mailto:/i.test(keptText) ? keptText : `http://${keptText}`,
+        )
+      }
+
+      textToken.content = keptText
+
+      const restToken = new state.Token("text", "", 0)
+      restToken.content = restText
+      restToken.level = closeToken.level
+      children.splice(i + 3, 0, restToken)
+    }
+  }
+}
+
 const isGithubReferenceBoundary = (value: string | undefined): boolean =>
   !value || !/[A-Za-z0-9_/-]/.test(value)
 
@@ -194,6 +238,8 @@ export const createMarkdownIt = (
     render: (tokens: { nesting: number }[], idx: number) =>
       tokens[idx].nesting === 1 ? '<div class="gh-container gh-container-danger">' : "</div>\n",
   })
+
+  instance.core.ruler.after("linkify", "linkify_cjk_tail_trim", trimLinkifyCjkTailRule)
 
   if (linkGithubReferences) {
     instance.inline.ruler.before("text", "github_reference", githubReferenceRule)
