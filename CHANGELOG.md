@@ -16,19 +16,19 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### ✨ Improvements
 
+- **Export button in the outline tab** — The outline toolbar now includes a highlighted Export button that opens the export dialog in one click, instead of going through the toolbox or a conversation's menu; Copy Outline now lives inside the export dialog next to Copy Markdown. (#936)
 - **Full user questions in Copy Outline** — Copy Outline now copies the complete text of every user question instead of a truncated preview, so long questions are no longer cut off and the result matches copying a single outline item. (#939)
 - **Auto Snap panel accidental triggers and flickering at screen edges** — The panel now slides out only after the pointer pauses briefly on the edge handle or trigger zone, so quick sweeps across the edge or over to another monitor no longer pop it open; when the pointer leaves the window on the snapped side, the panel also stays open briefly instead of repeatedly popping out and collapsing. (#937)
-- **Export button in the outline tab** — The outline toolbar now includes a highlighted Export button that opens the export dialog in one click, instead of going through the toolbox or a conversation's menu; Copy Outline now lives inside the export dialog next to Copy Markdown. (#936)
-- **ChatGPT outline performance in long conversations** — Optimized heading sync and index calculation during long conversations, eliminating repeated full-tree DOM queries and reducing main thread lag during outline refreshes. (#935)
 - **Tools menu covered by the panel** — Fixed Auto Snap panel mode making the panel slide out and cover the quick toolbar's tools menu when clicking its icon; the menu now also stays above the expanded panel while open, so it remains clickable at any toolbar position. (#934)
-- **Clean Mode bottom spacing** — In Clean Mode, AI generation and legal disclaimers under the input box are now hidden while preserving their native DOM flow spacing, keeping the input area at the site's original intended height instead of sticking to the bottom edge. (#929)
 - **Single tab display and layout protection** — The panel now automatically hides the top tab bar when only a single feature is enabled (such as outline-only mode or capability-restricted sites), reclaiming ~38px of vertical space; the layout settings also require at least one tab to remain enabled, preventing empty panel states. (#940)
+- **Clean Mode bottom spacing** — In Clean Mode, AI generation and legal disclaimers under the input box are now hidden while preserving their native DOM flow spacing, keeping the input area at the site's original intended height instead of sticking to the bottom edge. (#929)
+- **ChatGPT outline performance in long conversations** — Optimized heading sync and index calculation during long conversations, eliminating repeated full-tree DOM queries and reducing main thread lag during outline refreshes. (#935)
 
 ### 🐛 Bug Fixes
 
-- **ChatGPT outline order in long chats** — Fixed an issue where scrolling through long ChatGPT conversations could cause reply headings to be grouped under the wrong question or jump out of order in the outline.
-- **Pinned conversations on Doubao and DeepSeek** — Fixed pinned chats no longer being recognized after both sites redesigned their sidebars, so pinned status syncs correctly in Conversation Manager again. (#933)
+- **ChatGPT outline order in long chats** — Fixed an issue where scrolling through long ChatGPT conversations could cause reply headings to be grouped under the wrong question or jump out of order in the outline. (#935)
 - **Zen Mode and Clean Mode state isolation** — Fixed an issue where enabling Zen Mode automatically enabled Clean Mode and left it active after exiting, now preserving your original Clean Mode preference. (#926)
+- **Pinned conversations on Doubao and DeepSeek** — Fixed pinned chats no longer being recognized after both sites redesigned their sidebars, so pinned status syncs correctly in Conversation Manager again. (#933)
 
 ---
 
