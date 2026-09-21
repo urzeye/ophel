@@ -34,7 +34,9 @@ html.${ROOT_CLASS_NO_BLUR} *::after {
   backdrop-filter: none !important;
 }
 
-html.${ROOT_CLASS_STREAMING} [data-message-author-role] * {
+/* [CHATGPT-TURN-KEY]: 新结构消息单元为 [data-content-search-unit-key]，与旧 author-role 并存 */
+html.${ROOT_CLASS_STREAMING} [data-message-author-role] *,
+html.${ROOT_CLASS_STREAMING} [data-content-search-unit-key] * {
   animation: none !important;
   transition: none !important;
 }
