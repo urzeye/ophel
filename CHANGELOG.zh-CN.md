@@ -8,6 +8,10 @@
 
 ## [Unreleased]
 
+---
+
+## [1.2.8][1.2.8] - 2026-09-21
+
 **⚠️ 公告 — 我们的 GitHub 账号暂时被误封禁，目前正在积极申诉。恢复之前，GitHub 仓库、问题反馈页面以及适配中心的在线适配库可能暂时无法访问。如遇到任何问题，请前往 [Discord](https://discord.gg/rmPzb6Cx9u) 反馈。**
 
 **📢 公告 — ChatGPT 近期正在分批灰度全新网页架构，侧边栏历史记录、输入框及聊天窗口的底层结构发生重大调整，导致插件现有识别规则全面失效。由于开发者手头的所有账号均未命中灰度，缺乏动态交互排查环境，目前暂时无法开展适配。需等待开发者账号被灰度到、官方全量推送新版，或有命中灰度的用户协助借号调试后才能恢复支持。如您手头有已灰度的账号并愿意协助调试，欢迎前往 [Discord](https://discord.gg/rmPzb6Cx9u) 联系我们。**
@@ -1543,6 +1547,7 @@
 
 ---
 
+[1.2.8]: https://github.com/urzeye/ophel/releases/tag/v1.2.8
 [1.2.7]: https://github.com/urzeye/ophel/releases/tag/v1.2.7
 [1.2.6]: https://github.com/urzeye/ophel/releases/tag/v1.2.6
 [1.2.5]: https://github.com/urzeye/ophel/releases/tag/v1.2.5
