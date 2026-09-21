@@ -341,14 +341,33 @@ export class ChatGPTAdapter extends SiteAdapter {
 
   // ==================== 对话管理 ====================
 
-  private getChatGPTConversationLinks(): HTMLAnchorElement[] {
-    return Array.from(document.querySelectorAll(this.config.conversation.itemSelector)).filter(
-      (el): el is HTMLAnchorElement =>
-        el.tagName.toLowerCase() === "a" && Boolean(this.getChatGPTConversationId(el)),
-    )
+  private getChatGPTConversationLinks(): HTMLElement[] {
+    return Array.from(
+      document.querySelectorAll<HTMLElement>(this.config.conversation.itemSelector),
+    ).filter((el): el is HTMLElement => Boolean(this.getChatGPTConversationId(el)))
   }
 
   private getChatGPTConversationId(el: Element): string | null {
+    // [CHATGPT-APP-SHELL]: 优先从新版外层或自身 data-* 属性中提取 conversation ID
+    const closestKey =
+      typeof el.closest === "function"
+        ? el
+            .closest("[data-sidebar-chatgpt-conversation-key]")
+            ?.getAttribute("data-sidebar-chatgpt-conversation-key") ||
+          el
+            .closest("[data-pinned-content-tab-drop-key]")
+            ?.getAttribute("data-pinned-content-tab-drop-key")
+        : null
+    const dataKey =
+      el.getAttribute("data-sidebar-chatgpt-conversation-key") ||
+      el.getAttribute("data-pinned-content-tab-drop-key") ||
+      closestKey
+    if (dataKey) {
+      const match = dataKey.match(/(?:^|:)conversation:([a-z0-9-]+)/i)
+      if (match) return match[1]
+    }
+
+    // [LEGACY-CHATGPT-V1]: 旧版从 href 属性提取，待新版全量后清理
     const href = el.getAttribute(this.config.conversation.idFrom.attr ?? "href") || ""
     return href.match(new RegExp(this.config.conversation.idFrom.regex, "i"))?.[1] || null
   }
@@ -358,6 +377,20 @@ export class ChatGPTAdapter extends SiteAdapter {
   }
 
   private getChatGPTConversationTitleElement(el: Element): Element | null {
+    // [CHATGPT-APP-SHELL]: 新版在 .sidebar-item 或自身节点上带有 aria-label 标题
+    const sidebarItem = el.matches(".sidebar-item") ? el : el.querySelector(".sidebar-item")
+    if (sidebarItem?.getAttribute("aria-label")) {
+      return sidebarItem
+    }
+    if (el.getAttribute("aria-label")) {
+      return el
+    }
+
+    // [CHATGPT-APP-SHELL]: 新版跑马灯内容节点
+    const marqueeTitle = el.querySelector('[data-marquee-content="true"] [dir="auto"]')
+    if (marqueeTitle) return marqueeTitle
+
+    // [LEGACY-CHATGPT-V1]: 旧版标题选择器，待新版全量后清理
     const primarySelector = this.config.conversation.titleSelector
     if (primarySelector) {
       const primary = el.querySelector(primarySelector)
@@ -377,9 +410,10 @@ export class ChatGPTAdapter extends SiteAdapter {
     if (!id) return null
 
     const titleEl = this.getChatGPTConversationTitleElement(el)
-    const title = titleEl?.textContent?.trim() || ""
+    const title = (titleEl?.getAttribute("aria-label") || titleEl?.textContent || "").trim()
     const isActive = this.config.conversation.activeMatch
-      ? el.matches(this.config.conversation.activeMatch)
+      ? el.matches(this.config.conversation.activeMatch) ||
+        Boolean(el.querySelector(this.config.conversation.activeMatch))
       : false
     const path = this.getChatGPTConversationPath(id)
 
@@ -394,6 +428,17 @@ export class ChatGPTAdapter extends SiteAdapter {
   }
 
   private isChatGPTConversationPinned(el: Element): boolean {
+    // [CHATGPT-APP-SHELL]: 新版通过 data-pinned-content-tab-drop-key 或取消置顶按钮判断
+    const hasPinnedKey =
+      Boolean(el.getAttribute("data-pinned-content-tab-drop-key")) ||
+      (typeof el.closest === "function" &&
+        Boolean(el.closest("[data-pinned-content-tab-drop-key]"))) ||
+      Boolean(el.querySelector('button[aria-label*="取消置顶"], button[aria-label*="Unpin" i]'))
+    if (hasPinnedKey) {
+      return true
+    }
+
+    // [LEGACY-CHATGPT-V1]: 旧版置顶项不在 #history 内或含有多个 trailing 图标，待全量后清理
     const privateSelectors = this.config.sitePrivateSelectors
     const historySelector = this.config.selectors.sidebarScrollContainer
     const history = historySelector ? document.querySelector(historySelector) : null
@@ -401,7 +446,6 @@ export class ChatGPTAdapter extends SiteAdapter {
       return true
     }
 
-    // 旧版 ChatGPT：置顶项仍在 #history 内，但 trailing 区域会多一个置顶图标。
     const trailingPair = el.querySelector(privateSelectors.conversationPinnedTrailingPair)
     const trailingIcons =
       trailingPair?.querySelectorAll(privateSelectors.conversationPinnedTrailingIcon) || []
@@ -424,7 +468,11 @@ export class ChatGPTAdapter extends SiteAdapter {
   }
 
   getSidebarScrollContainer(): Element | null {
-    // 侧边栏滚动容器 - 通过 #history 向上查找最近的 nav 元素
+    // [CHATGPT-APP-SHELL]: 优先匹配新版专用侧边栏滚动容器
+    const newSidebarScroll = document.querySelector("div[data-app-action-sidebar-scroll]")
+    if (newSidebarScroll) return newSidebarScroll
+
+    // [LEGACY-CHATGPT-V1]: 侧边栏滚动容器 - 通过 #history 向上查找最近的 nav 元素，待全量后清理
     const historySelector = this.config.selectors.sidebarScrollContainer
     const history = historySelector ? document.querySelector(historySelector) : null
     if (history) {
@@ -450,11 +498,14 @@ export class ChatGPTAdapter extends SiteAdapter {
   }
 
   navigateToConversation(id: string, url?: string): boolean {
-    // 通过 href 属性查找侧边栏链接
+    // 通过对话 ID 查找侧边栏项
     const sidebarLink = this.findConversationRow(id)
 
     if (sidebarLink && this.config.conversation.navigationStrategy === "click-item") {
-      sidebarLink.click()
+      // [CHATGPT-APP-SHELL]: 如果是新版外层 div 容器，优先点击内部带 role="button" 的 sidebar-item
+      const clickable =
+        sidebarLink.querySelector<HTMLElement>('.sidebar-item[role="button"]') || sidebarLink
+      clickable.click()
       return true
     }
     // 降级：页面刷新
@@ -837,8 +888,8 @@ export class ChatGPTAdapter extends SiteAdapter {
 
     for (let depth = 0; depth < 8 && current; depth++) {
       const links = Array.from(
-        current.querySelectorAll(this.config.conversation.itemSelector),
-      ) as HTMLAnchorElement[]
+        current.querySelectorAll<HTMLElement>(this.config.conversation.itemSelector),
+      )
       const hasTargetLink = links.some((link) => this.getChatGPTConversationId(link) === id)
       if (hasTargetLink) {
         if (!fallback && links.length === 1) {
@@ -853,11 +904,23 @@ export class ChatGPTAdapter extends SiteAdapter {
         }
       }
 
-      if (current.id === "history") break
+      // [LEGACY-CHATGPT-V1]: current.id === "history" 待全量后清理
+      // [CHATGPT-APP-SHELL]: data-app-action-sidebar-scroll
+      if (
+        current.id === "history" ||
+        Boolean(current.getAttribute("data-app-action-sidebar-scroll"))
+      )
+        break
       current = current.parentElement
     }
 
-    return fallback || (row.closest("li") as HTMLElement | null) || row.parentElement || row
+    // [LEGACY-CHATGPT-V1] li / [CHATGPT-APP-SHELL] [role='listitem']
+    return (
+      fallback ||
+      (row.closest("li, [role='listitem']") as HTMLElement | null) ||
+      row.parentElement ||
+      row
+    )
   }
 
   private findFirstInScope(
@@ -881,11 +944,13 @@ export class ChatGPTAdapter extends SiteAdapter {
   ): boolean {
     if (!container.contains(button)) return false
 
-    const owner = button.closest("li")
+    // [LEGACY-CHATGPT-V1]: li 待全量后清理
+    // [CHATGPT-APP-SHELL]: [role="listitem"]
+    const owner = button.closest("li, [role='listitem']")
     if (owner) {
       const ownerLinks = Array.from(
-        owner.querySelectorAll(this.config.conversation.itemSelector),
-      ) as HTMLAnchorElement[]
+        owner.querySelectorAll<HTMLElement>(this.config.conversation.itemSelector),
+      )
       if (
         ownerLinks.length === 1 &&
         this.getChatGPTConversationId(ownerLinks[0]) === id &&
@@ -896,8 +961,8 @@ export class ChatGPTAdapter extends SiteAdapter {
     }
 
     const linksInContainer = Array.from(
-      container.querySelectorAll(this.config.conversation.itemSelector),
-    ) as HTMLAnchorElement[]
+      container.querySelectorAll<HTMLElement>(this.config.conversation.itemSelector),
+    )
     return (
       linksInContainer.length === 1 && this.getChatGPTConversationId(linksInContainer[0]) === id
     )

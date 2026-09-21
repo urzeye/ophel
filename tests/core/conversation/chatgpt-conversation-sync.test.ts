@@ -74,11 +74,34 @@ class MockNode {
           (this.getAttribute("href")?.includes("chatgpt.com/c/") ?? false)
         )
       }
+      if (sel === "div[data-sidebar-chatgpt-conversation-key]") {
+        return (
+          this.tagName === "DIV" &&
+          Boolean(this.getAttribute("data-sidebar-chatgpt-conversation-key"))
+        )
+      }
+      if (sel === "div[data-pinned-content-tab-drop-key]") {
+        return (
+          this.tagName === "DIV" && Boolean(this.getAttribute("data-pinned-content-tab-drop-key"))
+        )
+      }
       if (sel === "#history") {
         return this.getAttribute("id") === "history"
       }
+      if (sel === "div[data-app-action-sidebar-scroll]") {
+        return Boolean(this.getAttribute("data-app-action-sidebar-scroll"))
+      }
       if (sel === ".truncate [dir='auto']") {
         return this.getAttribute("data-role") === "title"
+      }
+      if (sel === '[data-marquee-content="true"] [dir="auto"]') {
+        return this.getAttribute("data-role") === "title"
+      }
+      if (sel === ".sidebar-item") {
+        return (this.getAttribute("class") || "").includes("sidebar-item")
+      }
+      if (sel === '[data-app-action-sidebar-thread-selected="true"]') {
+        return this.getAttribute("data-app-action-sidebar-thread-selected") === "true"
       }
       return false
     })
@@ -392,6 +415,110 @@ describe("ChatGPT conversation sync and CID normalization", () => {
       })
       const thirdLoad = manager.getAllConversations()
       expect(Object.keys(thirdLoad)).toHaveLength(4)
+    })
+  })
+
+  describe("Sidebar DOM parsing and conversation sync (App-Shell / Codex Architecture)", () => {
+    function buildMockAppShellSidebarDOM() {
+      const root = new MockNode("NAV")
+
+      const scrollContainer = new MockNode("DIV").setAttribute(
+        "data-app-action-sidebar-scroll",
+        "true",
+      )
+
+      // 1. 置顶对话：div[data-pinned-content-tab-drop-key]
+      const pinnedItem = new MockNode("DIV").setAttribute(
+        "data-pinned-content-tab-drop-key",
+        "chatgpt:conversation:6a238477-c670-83e8-b8fa-d509a3779898",
+      )
+      const pinnedBtn = new MockNode("DIV")
+        .setAttribute("class", "sidebar-item")
+        .setAttribute("aria-label", "食管裂孔疝影像组学研究")
+        .setAttribute("role", "button")
+      pinnedItem.append(pinnedBtn)
+
+      // 2. 普通对话：div[data-sidebar-chatgpt-conversation-key]
+      const item2 = new MockNode("DIV").setAttribute(
+        "data-sidebar-chatgpt-conversation-key",
+        "chatgpt:conversation:6aae3b46-9c40-83e8-bb6e-1a9d4eef6d17",
+      )
+      const item2Btn = new MockNode("DIV")
+        .setAttribute("class", "sidebar-item")
+        .setAttribute("aria-label", "期刊投稿注意事项")
+        .setAttribute("role", "button")
+      item2.append(item2Btn)
+
+      // 3. 激活项对话（带 data-app-action-sidebar-thread-selected="true"）
+      const item3 = new MockNode("DIV").setAttribute(
+        "data-sidebar-chatgpt-conversation-key",
+        "chatgpt:conversation:6a54c7f3-be44-83e8-a6a5-0bb59a0428db",
+      )
+      const item3Btn = new MockNode("DIV")
+        .setAttribute("class", "sidebar-item")
+        .setAttribute("data-app-action-sidebar-thread-selected", "true")
+      const item3Title = new MockNode("SPAN").setAttribute("data-role", "title")
+      item3Title.textContent = "医学英语学习PPT"
+      item3Btn.append(item3Title)
+      item3.append(item3Btn)
+
+      scrollContainer.append(pinnedItem, item2, item3)
+      root.append(scrollContainer)
+
+      return { root, pinnedItem, item2, item3, scrollContainer }
+    }
+
+    it("correctly extracts conversations, keys, titles and pinned states from App-Shell div structure", () => {
+      const { root } = buildMockAppShellSidebarDOM()
+      vi.stubGlobal("document", {
+        querySelectorAll: (sel: string) => root.querySelectorAll(sel),
+        querySelector: (sel: string) => root.querySelector(sel),
+        body: root,
+      })
+
+      const adapter = new ChatGPTAdapter()
+      const list = adapter.getConversationList()
+
+      expect(list).toHaveLength(3)
+
+      // 第一条：置顶会话 "食管裂孔疝影像组学研究"
+      expect(list[0].id).toBe("6a238477-c670-83e8-b8fa-d509a3779898")
+      expect(list[0].title).toBe("食管裂孔疝影像组学研究")
+      expect(list[0].isPinned).toBe(true)
+      expect(list[0].url).toContain("/c/6a238477-c670-83e8-b8fa-d509a3779898")
+
+      // 第二条：普通会话 "期刊投稿注意事项"
+      expect(list[1].id).toBe("6aae3b46-9c40-83e8-bb6e-1a9d4eef6d17")
+      expect(list[1].title).toBe("期刊投稿注意事项")
+      expect(list[1].isPinned).toBe(false)
+
+      // 第三条：当前激活会话 "医学英语学习PPT"
+      expect(list[2].id).toBe("6a54c7f3-be44-83e8-a6a5-0bb59a0428db")
+      expect(list[2].title).toBe("医学英语学习PPT")
+      expect(list[2].isActive).toBe(true)
+      expect(list[2].isPinned).toBe(false)
+    })
+
+    it("synchronizes App-Shell conversations into ConversationManager store", () => {
+      const { root } = buildMockAppShellSidebarDOM()
+      vi.stubGlobal("document", {
+        querySelectorAll: (sel: string) => root.querySelectorAll(sel),
+        querySelector: (sel: string) => root.querySelector(sel),
+        body: root,
+      })
+
+      const adapter = new ChatGPTAdapter()
+      const manager = new ConversationManager(adapter)
+
+      const syncResult = manager.syncConversations("inbox", false)
+      expect(syncResult.newCount).toBe(3)
+
+      const all = manager.getAllConversations()
+      expect(Object.keys(all)).toHaveLength(3)
+
+      const pinned = Object.values(all).find((c) => c.id === "6a238477-c670-83e8-b8fa-d509a3779898")
+      expect(pinned?.pinned).toBe(true)
+      expect(pinned?.title).toBe("食管裂孔疝影像组学研究")
     })
   })
 })

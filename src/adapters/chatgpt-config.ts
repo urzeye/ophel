@@ -98,7 +98,7 @@ export interface ChatGPTSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const CHATGPT_CONFIG_VERSION = 3
+export const CHATGPT_CONFIG_VERSION = 4
 
 const createChatGPTConfig = (): ChatGPTSiteConfig => {
   const userMessage = '[data-message-author-role="user"]'
@@ -107,17 +107,37 @@ const createChatGPTConfig = (): ChatGPTSiteConfig => {
   const srOnly = ".sr-only"
   const codexTaskMarkdown = ".markdown.markdown-new-styling"
   const codexTaskUserQuery = `.self-end.bg-token-bg-tertiary ${userQueryText}`
-  // 新版侧边栏对话链接可能输出绝对 URL（https://chatgpt.com/c/...），这里同时兼容相对 /c/... 写法。
-  const conversationItem =
-    'a[data-sidebar-item="true"][href^="/c/"], a[data-sidebar-item="true"][href*="chatgpt.com/c/"]'
+  // 侧边栏对话项选择器：
+  // [LEGACY-CHATGPT-V1]: 旧版 Next.js 结构，以 a[data-sidebar-item] 渲染，待全量迁移后清理
+  // [CHATGPT-APP-SHELL]: 新版 App-Shell 架构，以带 conversation-key 的 div 渲染
+  const conversationItem = [
+    'a[data-sidebar-item="true"][href^="/c/"]',
+    'a[data-sidebar-item="true"][href*="chatgpt.com/c/"]',
+    "div[data-sidebar-chatgpt-conversation-key]",
+    "div[data-pinned-content-tab-drop-key]",
+  ].join(", ")
   const stopButton = [
+    // [LEGACY-CHATGPT-V1]: 旧版停止生成按钮选择器
     '[data-testid="stop-button"]',
     'form[data-type="unified-composer"] #composer-submit-button[aria-label*="Stop"]',
     'form[data-type="unified-composer"] #composer-submit-button[aria-label*="停止"]',
     'form[data-type="unified-composer"] button.composer-submit-btn[aria-label*="Stop"]',
     'form[data-type="unified-composer"] button.composer-submit-btn[aria-label*="停止"]',
+    // [CHATGPT-APP-SHELL]: 新版 App-Shell 停止生成按钮选择器
+    'form[data-chatgpt-composer] button[aria-label*="Stop"]',
+    'form[data-chatgpt-composer] button[aria-label*="停止"]',
+    'form[data-thread-find-composer="true"] button[aria-label*="Stop"]',
+    'form[data-thread-find-composer="true"] button[aria-label*="停止"]',
   ]
-  const modelSelectorButton = ['button[class*="__composer-pill"][aria-haspopup="menu"]']
+  const modelSelectorButton = [
+    // [LEGACY-CHATGPT-V1]: 旧版模型切换胶囊按钮
+    'button[class*="__composer-pill"][aria-haspopup="menu"]',
+    // [CHATGPT-APP-SHELL]: 新版模型切换/推理强度菜单按钮
+    'button[data-composer-navigation-target="reasoning"][aria-haspopup="menu"]',
+    'button[data-codex-intelligence-trigger="true"][aria-haspopup="menu"]',
+    'button[aria-label*="模型"][aria-haspopup="menu"]',
+    'button[aria-label*="Model" i][aria-haspopup="menu"]',
+  ]
   const modelMenu = '[data-radix-popper-content-wrapper] [role="menu"][data-radix-menu-content]'
   const deepResearchIframe =
     'iframe[title="internal://deep-research"], iframe[src*="connector_openai_deep_research"]'
@@ -130,25 +150,63 @@ const createChatGPTConfig = (): ChatGPTSiteConfig => {
   return {
     capabilities: [...BUILTIN_FEATURE_CAPABILITIES[SITE_IDS.CHATGPT]],
     selectors: {
-      textarea: ["#prompt-textarea", 'textarea[data-id="root"]', '[contenteditable="true"]'],
+      textarea: [
+        // [LEGACY-CHATGPT-V1]: 旧版输入框
+        "#prompt-textarea",
+        'textarea[data-id="root"]',
+        // [CHATGPT-APP-SHELL]: 新版 ProseMirror 富文本输入框
+        'div[data-composer-markdown][contenteditable="true"]',
+        'div.ProseMirror[contenteditable="true"]',
+        '[contenteditable="true"]',
+      ],
       submitButton: [
+        // [LEGACY-CHATGPT-V1]: 旧版发送按钮
         '[data-testid="send-button"]',
         'button[aria-label="Send prompt"]',
         'button[aria-label="发送"]',
+        // [CHATGPT-APP-SHELL]: 新版表单发送按钮
+        'form[data-chatgpt-composer] button[aria-label*="发送"]',
+        'form[data-chatgpt-composer] button[aria-label*="Send"]',
+        'form[data-thread-find-composer="true"] button[aria-label*="发送"]',
+        'form[data-thread-find-composer="true"] button[aria-label*="Send"]',
+        "form[data-chatgpt-composer] button.bg-composer-primary",
       ],
-      responseContainer: `#thread, main#main, ${codexTaskMarkdown}`,
+      responseContainer: [
+        // [LEGACY-CHATGPT-V1]: 旧版消息容器
+        "#thread",
+        "main#main",
+        // [CHATGPT-APP-SHELL]: 新版 App-Shell 页面与滚动容器
+        "main[data-app-shell-main-surface]",
+        'div[data-app-shell-main-content-layout] [role="main"]',
+        'div[role="main"]',
+        codexTaskMarkdown,
+      ].join(", "),
       chatContent: [assistantMessage, userMessage, ".markdown"],
       userQuery: userMessage,
       assistantResponse: assistantMessage,
       newChatButton: [
+        // [LEGACY-CHATGPT-V1]: 旧版新建聊天按钮
         '[data-testid="create-new-chat-button"]',
         'a[href="/"]',
         'button[aria-label="New chat"]',
         'button[aria-label="新对话"]',
+        // [CHATGPT-APP-SHELL]: 新版侧边栏新建聊天按钮
+        'button.sidebar-item[aria-label*="新聊天"]',
+        'button.sidebar-item[aria-label*="New chat" i]',
+        "button.sidebar-item:has(> * > .text-fade-truncate)",
       ],
       stopButton: [...stopButton],
-      scrollContainer: ['[class*="scrollbar-gutter"], [class*="@container/main"] > div'],
-      sidebarScrollContainer: "#history",
+      scrollContainer: [
+        // [LEGACY-CHATGPT-V1]: 旧版滚动容器
+        '[class*="scrollbar-gutter"]',
+        '[class*="@container/main"] > div',
+        // [CHATGPT-APP-SHELL]: 新版主视口与滚动容器
+        'div[role="main"][class*="overflow-y-auto"]',
+        'div[data-app-shell-main-content-layout] [role="main"]',
+      ],
+      // [LEGACY-CHATGPT-V1]: #history 待全量后清理
+      // [CHATGPT-APP-SHELL]: div[data-app-action-sidebar-scroll]
+      sidebarScrollContainer: "#history, div[data-app-action-sidebar-scroll]",
     },
     input: { mode: "contenteditable", submitKey: "Enter" },
     conversation: {
@@ -159,7 +217,10 @@ const createChatGPTConfig = (): ChatGPTSiteConfig => {
       },
       titleSelector: ".truncate [dir='auto']",
       urlTemplate: "/c/{id}",
-      activeMatch: "[data-active]",
+      // [LEGACY-CHATGPT-V1]: [data-active] 待全量后清理
+      // [CHATGPT-APP-SHELL]: [data-app-action-sidebar-thread-selected="true"], [aria-current="page"]
+      activeMatch:
+        '[data-active], [data-app-action-sidebar-thread-selected="true"], [aria-current="page"]',
       navigationStrategy: "click-item",
       shadow: false,
     },
@@ -193,8 +254,12 @@ const createChatGPTConfig = (): ChatGPTSiteConfig => {
       useShadowDOM: false,
     },
     widthSelectors: [
+      // [LEGACY-CHATGPT-V1]: 旧版宽度限制
       { selector: '[class*="thread-content-max-width"]', property: "max-width" },
       { selector: '[style*="--thread-content-max-width"]', property: "max-width" },
+      // [CHATGPT-APP-SHELL]: 新版 Tailwind 变量类
+      { selector: '[class*="--thread-content-max-width:"]', property: "max-width" },
+      { selector: '[class*="--thread-body-max-width:"]', property: "max-width" },
       {
         selector: libraryEditor,
         property: "max-width",
@@ -225,10 +290,21 @@ const createChatGPTConfig = (): ChatGPTSiteConfig => {
         'div[style*="transform: translate3d"] .shadow-long',
         "button.btn-secondary.rounded-none.border-none",
       ],
-      conversationTitleFallback: [".truncate span", ".truncate", "span"],
+      conversationTitleFallback: [
+        // [CHATGPT-APP-SHELL]: 新版跑马灯标题容器
+        '[data-marquee-content="true"] [dir="auto"]',
+        // [LEGACY-CHATGPT-V1]: 旧版截断标题选择器，待全量后清理
+        ".truncate span",
+        ".truncate",
+        "span",
+      ],
       conversationPinnedTrailingPair: ".trailing-pair",
       conversationPinnedTrailingIcon: ".trailing svg",
       conversationActionButton: [
+        // [CHATGPT-APP-SHELL]: 新版操作菜单按钮
+        'button[aria-label="聊天操作"]',
+        'button[aria-label*="Chat options" i]',
+        // [LEGACY-CHATGPT-V1]: 旧版菜单按钮，待全量后清理
         'button[aria-haspopup="menu"]',
         'button[aria-label*="More"]',
         'button[aria-label*="more"]',
@@ -236,12 +312,15 @@ const createChatGPTConfig = (): ChatGPTSiteConfig => {
         'button[data-testid*="menu"]',
         ".trailing button",
       ].join(", "),
-      conversationActionIndicator: 'button[aria-haspopup="menu"], .trailing button',
+      conversationActionIndicator:
+        'button[aria-label="聊天操作"], button[aria-haspopup="menu"], .trailing button',
       conversationMenu: '[role="menu"]',
       conversationMenuItem: '[role="menuitem"], [data-radix-collection-item][role="menuitem"]',
       codexTaskMarkdown,
       codexTaskUserQuery,
-      validTextarea: '#prompt-textarea, [contenteditable="true"]',
+      // [LEGACY-CHATGPT-V1] & [CHATGPT-APP-SHELL] 有效输入框
+      validTextarea:
+        '#prompt-textarea, div[data-composer-markdown][contenteditable="true"], div.ProseMirror[contenteditable="true"], [contenteditable="true"]',
       userQueryText,
       srOnly,
       srOnlyFallback: "[class*='sr-only']",
@@ -257,13 +336,16 @@ const createChatGPTConfig = (): ChatGPTSiteConfig => {
       deepResearchIframe,
       markdownFixerParagraph: `${assistantMessage} p`,
       userQueryWidthRoot: ":root",
-      panelScope: "main#main",
+      // [LEGACY-CHATGPT-V1] main#main 待全量后清理
+      // [CHATGPT-APP-SHELL] main[data-app-shell-main-surface], main
+      panelScope: "main#main, main[data-app-shell-main-surface], main",
       panelObstacle: [[deepResearchIframe, "#stage-slideover-sidebar"].join(", ")],
       panelThreadContentWidth:
-        '#thread [class*="thread-content-max-width"]:not(:has(form[data-type="unified-composer"]))',
+        '#thread [class*="thread-content-max-width"]:not(:has(form[data-type="unified-composer"])), [data-app-shell-main-surface] [class*="--thread-content-max-width:"]',
       panelThreadLegacyWidth:
-        '#thread [style*="--thread-content-max-width"]:not(:has(form[data-type="unified-composer"]))',
-      panelComposerFormWidth: 'main#main form[data-type="unified-composer"]',
+        '#thread [style*="--thread-content-max-width"]:not(:has(form[data-type="unified-composer"])), [data-app-shell-main-surface] [class*="--thread-body-max-width:"]',
+      panelComposerFormWidth:
+        'main#main form[data-type="unified-composer"], form[data-chatgpt-composer], form[data-thread-find-composer="true"]',
       panelLibraryComposerFormWidth: libraryComposerForm,
       panelNewChatHeadingInset:
         "#thread .relative.basis-auto.flex-col.shrink.flex.justify-end:has(h1)",
