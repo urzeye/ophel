@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import React, { useCallback, useEffect, useState } from "react"
 
 import {
   CopyIcon,
@@ -7,6 +7,7 @@ import {
   JSONFileIcon,
   MarkdownIcon,
   SegmentedExportIcon,
+  SettingsIcon,
   TXTFileIcon,
 } from "~components/icons"
 import type { ConversationExportOptions } from "~core/conversation-manager"
@@ -94,12 +95,48 @@ const EXPORT_DIALOG_STYLES = `
     gap: 8px;
   }
 
+  .gh-export-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
   .gh-export-section-title {
     font-size: 12px;
     font-weight: 600;
     letter-spacing: 0.02em;
     color: var(--gh-text-secondary, #6b7280);
     margin: 0;
+  }
+
+  .gh-export-settings-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--gh-text-secondary, #6b7280);
+    padding: 3px;
+    margin: -3px 0;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease, color 0.15s ease;
+    outline: none;
+  }
+
+  .gh-export-settings-btn:hover:not(:disabled) {
+    background: var(--gh-hover, rgba(0, 0, 0, 0.05));
+    color: var(--gh-text, #1f2937);
+  }
+
+  .gh-export-settings-btn:focus-visible {
+    outline: 2px solid var(--gh-primary, #4285f4);
+    outline-offset: 1px;
+  }
+
+  .gh-export-settings-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 
   .gh-export-format-grid {
@@ -363,6 +400,7 @@ export interface ExportDialogProps {
   onClose: () => void
   onExport: (format: ExportFormat, options: ConversationExportOptions) => Promise<boolean | void>
   onSegmentedExport?: () => void
+  onOpenSettings?: () => void
 }
 
 const getFormatOptions = (): {
@@ -383,6 +421,7 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
   onClose,
   onExport,
   onSegmentedExport,
+  onOpenSettings,
 }) => {
   const settings = useSettingsStore((state) => state.settings)
   const defaultSettingFormat = settings.export?.defaultExportFormat ?? "markdown"
@@ -392,6 +431,19 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
     defaultSettingFormat === "txt"
       ? defaultSettingFormat
       : "markdown"
+
+  const handleOpenExportSettings = useCallback(() => {
+    onClose()
+    if (onOpenSettings) {
+      onOpenSettings()
+      return
+    }
+    window.dispatchEvent(
+      new CustomEvent("ophel:navigateSettingsPage", {
+        detail: { settingId: "export-settings-card" },
+      }),
+    )
+  }, [onClose, onOpenSettings])
 
   const [selectedFormat, setSelectedFormat] = useState<ExportFormat>(defaultFormat)
   const [includeThoughts, setIncludeThoughts] = useState<boolean>(
@@ -534,7 +586,18 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
       </div>
 
       <div className="gh-export-section">
-        <div className="gh-export-section-title">{t("exportOptions")}</div>
+        <div className="gh-export-section-header">
+          <div className="gh-export-section-title">{t("exportOptions")}</div>
+          <button
+            type="button"
+            className="gh-export-settings-btn"
+            title={t("exportSettings")}
+            aria-label={t("exportSettings")}
+            disabled={isExporting}
+            onClick={handleOpenExportSettings}>
+            <SettingsIcon size={14} />
+          </button>
+        </div>
         <div className="gh-export-options-list">
           <label className="gh-export-option-row">
             <span>{t("exportIncludeThoughtsLabel")}</span>

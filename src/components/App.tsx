@@ -3496,6 +3496,17 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
         onClose={() => setIsExportDialogOpen(false)}
         onExport={handleCustomExport}
         onSegmentedExport={handleFloatingToolbarSegmentedExport}
+        onOpenSettings={() => {
+          setIsExportDialogOpen(false)
+          openSettingsModal()
+          setTimeout(() => {
+            window.dispatchEvent(
+              new CustomEvent("ophel:navigateSettingsPage", {
+                detail: { settingId: "export-settings-card" },
+              }),
+            )
+          }, 50)
+        }}
       />
       <GlobalSearchOverlay
         isOpen={isGlobalSettingsSearchOpen}
