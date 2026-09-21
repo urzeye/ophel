@@ -85,6 +85,7 @@ beforeEach(() => {
     getPanelAvoidanceConfig: () => ({ scopeSelector: ".layout", widthSelectors: [] }),
     getChatContentSelectors: () => [".message"],
     getUserQuerySelector: () => ".query",
+    usesShadowDOM: () => true,
   } as unknown as SiteAdapter
   manager = new LayoutManager(adapter, { enabled: false, value: "80", unit: "%" })
   internals = manager as unknown as LayoutInternals
@@ -130,5 +131,21 @@ describe("LayoutManager mutation work", () => {
     expect(internals.findPanelAvoidanceScope(".missing")).toBeNull()
     expect(internals.findPanelAvoidanceScope(".missing")).toBeNull()
     expect(DOMToolkit.query).toHaveBeenCalledTimes(1)
+  })
+
+  it("skips the shadow piercing fallback on sites without shadow DOM", () => {
+    const plainAdapter = {
+      getCapabilities: () => ({}),
+      getPanelAvoidanceConfig: () => ({ scopeSelector: ".layout", widthSelectors: [] }),
+      getChatContentSelectors: () => [".message"],
+      getUserQuerySelector: () => ".query",
+      usesShadowDOM: () => false,
+    } as unknown as SiteAdapter
+    const plainManager = new LayoutManager(plainAdapter, { enabled: false, value: "80", unit: "%" })
+    const plainInternals = plainManager as unknown as LayoutInternals
+    vi.spyOn(plainInternals, "refreshShadowInjection").mockImplementation(() => {})
+
+    expect(plainInternals.findPanelAvoidanceScope(".missing")).toBeNull()
+    expect(DOMToolkit.query).not.toHaveBeenCalled()
   })
 })

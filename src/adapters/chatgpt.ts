@@ -1206,7 +1206,15 @@ export class ChatGPTAdapter extends SiteAdapter {
     }
 
     try {
-      document.execCommand("selectAll", false, undefined)
+      // 输入框为空时跳过 selectAll：空选择是全文档样式重算的触发点之一，
+      // 长对话页面上单次可达数十毫秒
+      const hasExistingContent =
+        editor.tagName === "TEXTAREA"
+          ? (editor as HTMLTextAreaElement).value.length > 0
+          : (editor.textContent?.length ?? 0) > 0
+      if (hasExistingContent) {
+        document.execCommand("selectAll", false, undefined)
+      }
       // Firefox 的 insertText 不会把 \n 拆成段落节点，ProseMirror 重新解析 DOM 时换行会被折叠丢失，
       // 改为显式插入 <p> 段落结构；Chrome 的 insertText 行为正常，保持原路径避免回归
       const isFirefox = /firefox/i.test(navigator.userAgent)

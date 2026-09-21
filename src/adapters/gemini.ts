@@ -210,10 +210,8 @@ class GeminiMyStuffEnhancer {
     this.started = true
 
     this.injectStyles()
-    DOMToolkit.each(
-      this.options.getConfig().sitePrivateSelectors.myStuffMediaCard,
-      (element) => this.enhanceMediaCard(element),
-      { shadow: true },
+    DOMToolkit.each(this.options.getConfig().sitePrivateSelectors.myStuffMediaCard, (element) =>
+      this.enhanceMediaCard(element),
     )
 
     document.addEventListener("click", this.handleDocumentClick, true)
@@ -877,7 +875,6 @@ export class GeminiAdapter extends SiteAdapter {
     this.deepResearchPanelWatchStop = DOMToolkit.each(
       this.config.sitePrivateSelectors.deepResearchPanel,
       (panel) => this.watchDeepResearchPanel(panel),
-      { shadow: true },
     )
   }
 
@@ -885,10 +882,8 @@ export class GeminiAdapter extends SiteAdapter {
     if (this.canvasPanelWatchStop) return
 
     this.injectGeminiPanelMarkdownActionStyles()
-    this.canvasPanelWatchStop = DOMToolkit.each(
-      this.getGeminiCanvasPanelSelector(),
-      (panel) => this.watchGeminiCanvasPanel(panel),
-      { shadow: true },
+    this.canvasPanelWatchStop = DOMToolkit.each(this.getGeminiCanvasPanelSelector(), (panel) =>
+      this.watchGeminiCanvasPanel(panel),
     )
   }
 
@@ -1722,7 +1717,6 @@ export class GeminiAdapter extends SiteAdapter {
     const conversations =
       (DOMToolkit.query(this.config.conversation.itemSelector, {
         all: true,
-        shadow: true,
       }) as Element[]) || []
 
     return conversations.length

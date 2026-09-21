@@ -493,7 +493,9 @@ class DOMToolkitClass {
     const {
       parent = this.doc,
       all = false,
-      shadow = true,
+      // 默认不做 Shadow DOM 穿透：穿透会对全文档执行 querySelectorAll("*")，
+      // 长对话页面上是主线程热点；仅 Gemini Enterprise 等确需穿透的站点显式开启
+      shadow = false,
       maxDepth = CONFIG.MAX_DEPTH,
       useCache = true,
       filter = null,
@@ -515,7 +517,7 @@ class DOMToolkitClass {
           const candidates = Array.from((parent as ParentNode).querySelectorAll(sel))
           const results = filter ? candidates.filter(filter) : [...candidates]
           if (shadow) {
-            this.collectInShadow(parent, sel, results, 0, maxDepth, filter)
+            this.collectInShadow(parent, sel, results, 0, maxDepth, filter, new Set(results))
           }
           if (results.length > 0) return results
         } else {
@@ -586,6 +588,7 @@ class DOMToolkitClass {
     depth: number,
     maxDepth: number,
     filter: ((el: Element) => boolean) | null,
+    seen: Set<Element>,
   ) {
     if (depth > maxDepth) return
 
@@ -593,7 +596,8 @@ class DOMToolkitClass {
       try {
         const candidates = (root as ParentNode).querySelectorAll(selector)
         for (const el of candidates) {
-          if (!results.includes(el) && (!filter || filter(el))) {
+          if (!seen.has(el) && (!filter || filter(el))) {
+            seen.add(el)
             results.push(el)
           }
         }
@@ -605,7 +609,7 @@ class DOMToolkitClass {
       : []
     for (const el of elements) {
       if (el.shadowRoot) {
-        this.collectInShadow(el.shadowRoot, selector, results, depth + 1, maxDepth, filter)
+        this.collectInShadow(el.shadowRoot, selector, results, depth + 1, maxDepth, filter, seen)
       }
     }
   }
@@ -619,7 +623,7 @@ class DOMToolkitClass {
     const {
       parent = this.doc,
       timeout = CONFIG.DEFAULT_TIMEOUT,
-      shadow = true,
+      shadow = false,
       filter = null,
     } = options
 
@@ -702,7 +706,7 @@ class DOMToolkitClass {
     callback: (el: Element, isNew: boolean) => void | false,
     options: EachOptions = {},
   ): () => void {
-    const { parent = this.doc, shadow = true } = options
+    const { parent = this.doc, shadow = false } = options
 
     if (typeof callback !== "function") {
       console.error("[DOMToolkit] each: callback must be a function")

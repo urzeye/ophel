@@ -421,7 +421,10 @@ export const QuickQuoteRenderer: React.FC<{ adapter: SiteAdapter; enabled: boole
     if (!userQuerySelector) return
 
     const userMessages =
-      (DOMToolkit.query(userQuerySelector, { all: true, shadow: true }) as Element[]) || []
+      (DOMToolkit.query(userQuerySelector, {
+        all: true,
+        shadow: adapter.usesShadowDOM(),
+      }) as Element[]) || []
     userMessages.forEach((message) => {
       if (!(message instanceof HTMLElement)) return
       message.querySelectorAll(QUICK_QUOTE_CHIP_ROW_SELECTOR).forEach((row) => row.remove())
@@ -459,7 +462,10 @@ export const QuickQuoteRenderer: React.FC<{ adapter: SiteAdapter; enabled: boole
       injectQuickQuoteHostStyles(document)
 
       const userMessages =
-        (DOMToolkit.query(userQuerySelector, { all: true, shadow: true }) as Element[]) || []
+        (DOMToolkit.query(userQuerySelector, {
+          all: true,
+          shadow: adapter.usesShadowDOM(),
+        }) as Element[]) || []
       const knownElements = knownUserMessageElementsRef.current
       const knownKeys = knownUserMessageKeysRef.current
       const messageSnapshots: Array<{

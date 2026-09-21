@@ -424,13 +424,9 @@ export class CopyManager {
       this.startRescanTimer()
     } else {
       // 普通站点：使用 DOMToolkit.each 持续监听
-      this.stopTableWatch = DOMToolkit.each(
-        "table",
-        (table) => {
-          this.injectTableButton(table as HTMLTableElement)
-        },
-        { shadow: true },
-      )
+      this.stopTableWatch = DOMToolkit.each("table", (table) => {
+        this.injectTableButton(table as HTMLTableElement)
+      })
     }
   }
 
@@ -666,20 +662,20 @@ export class CopyManager {
     }
 
     const style = document.getElementById("gh-table-copy-style")
-    if (style)
-      style.remove()
+    if (style) style.remove()
 
-      // 清理按钮和标记
+    // 清理按钮和标记
+    const shadow = this.siteAdapter?.usesShadowDOM() ?? false
     ;(
       DOMToolkit.query(".gh-table-copy-btn", {
         all: true,
-        shadow: true,
+        shadow,
       }) as Element[]
     )?.forEach((btn) => btn.remove())
     ;(
       DOMToolkit.query("[data-gh-table-copy]", {
         all: true,
-        shadow: true,
+        shadow,
       }) as Element[]
     )?.forEach((el) => {
       if (el instanceof HTMLElement) {
@@ -689,7 +685,7 @@ export class CopyManager {
     ;(
       DOMToolkit.query(".gh-table-container", {
         all: true,
-        shadow: true,
+        shadow,
       }) as Element[]
     )?.forEach((el) => {
       el.classList.remove("gh-table-container")
