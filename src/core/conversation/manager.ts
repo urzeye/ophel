@@ -258,6 +258,9 @@ export class ConversationManager {
       this.startGeminiMigrationRetry()
     }
 
+    // 清理历史 ChatGPT 对话中残留的 "personal" cid，归一化为 undefined（默认个人空间）
+    this.repairLegacyChatgptPersonalCid()
+
     // 修复历史数据中 folderId 指向已不存在文件夹的对话（面板只按现有文件夹渲染，
     // 这类对话会不可见）。同步的更新分支也会修复 folderId，但只覆盖本次侧边栏
     // 扫到的对话；这里在启动时兜底修复其余对话。
@@ -280,6 +283,36 @@ export class ConversationManager {
     }
 
     this.startSidebarObserver()
+  }
+
+  /**
+   * 将 ChatGPT 历史对话中残留的 "personal" cid 归一化为 undefined（默认个人空间）。
+   * 幂等，避免多账号与个人空间分裂。
+   */
+  private repairLegacyChatgptPersonalCid(): void {
+    const all = this.storedConversations
+    let changed = false
+    const nextConversations: Record<string, Conversation> = {}
+
+    for (const [storageKey, conversation] of Object.entries(all)) {
+      if (
+        (conversation.siteId === SITE_IDS.CHATGPT ||
+          conversation.siteInstanceKey === SITE_IDS.CHATGPT) &&
+        conversation.cid === "personal"
+      ) {
+        const cleaned = { ...conversation }
+        delete cleaned.cid
+        nextConversations[storageKey] = cleaned
+        changed = true
+      } else {
+        nextConversations[storageKey] = conversation
+      }
+    }
+
+    if (changed) {
+      useConversationsStore.setState({ conversations: nextConversations })
+      this.notifyDataChange()
+    }
   }
 
   /**
@@ -1179,9 +1212,14 @@ export class ConversationManager {
    */
   matchesCid(conv: Conversation, currentCid: string | null): boolean {
     if (!this.isCurrentSiteInstance(conv)) return false
-    if (!currentCid) return !conv.cid
-    if (!conv.cid) return true
-    return conv.cid === currentCid
+
+    // "personal" 在 ChatGPT 等站点中表示个人默认空间，与 null/undefined 语义等价
+    const normalizedCurrent = currentCid === "personal" ? null : currentCid
+    const normalizedConv = conv.cid === "personal" ? null : conv.cid || null
+
+    if (!normalizedCurrent) return !normalizedConv
+    if (!normalizedConv) return true
+    return normalizedConv === normalizedCurrent
   }
 
   /**

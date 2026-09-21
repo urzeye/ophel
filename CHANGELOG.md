@@ -30,6 +30,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **Zen Mode and Clean Mode state isolation** — Fixed an issue where enabling Zen Mode automatically enabled Clean Mode and left it active after exiting, now preserving your original Clean Mode preference. (#926)
 - **Pinned conversations on Doubao and DeepSeek** — Fixed pinned chats no longer being recognized after both sites redesigned their sidebars, so pinned status syncs correctly in Conversation Manager again. (#933)
 - **Gemini Canvas and Deep Research export** — Adapted to Gemini's new inline Canvas preview and Deep Research layout, resolving issues where Canvas export could fail on first attempt, misalign versions across multi-turn chats, or extract empty code. (#941)
+- **ChatGPT conversations disappearing in the Conversations tab** — Fixed an issue where conversations could disappear and show empty folders after switching tabs or pinning a chat on ChatGPT, and resolved active sync failing to restore the list.
 
 ---
 

@@ -316,15 +316,23 @@ export class ChatGPTAdapter extends SiteAdapter {
   /**
    * 获取当前账户标识（用于对话隔离）
    * ChatGPT 通过 localStorage._account 区分不同账户/团队
-   * 值可能为 "personal" 或团队 UUID
+   * 个人空间为 "personal"、空或缺失，统一返回 null
+   * 团队空间返回工作区 UUID
    */
   getCurrentCid(): string | null {
     try {
       const account = localStorage.getItem("_account")
-      if (account) {
-        // localStorage 存储的值带双引号（如 "personal"），需要 JSON.parse
-        return JSON.parse(account)
+      if (!account) return null
+      let parsed: unknown = account
+      try {
+        parsed = JSON.parse(account)
+      } catch {
+        // 静默处理非 JSON 字符串
       }
+      if (typeof parsed !== "string" || !parsed || parsed === "personal") {
+        return null
+      }
+      return parsed
     } catch {
       // 静默处理解析错误
     }
