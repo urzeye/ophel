@@ -155,8 +155,10 @@ const CHATGPT_NATIVE_TOC_PROMPT_LABEL_RE = /^Prompt\s+\d+$/i
 const CHATGPT_NATIVE_TOC_REVEAL_RETRY_COOLDOWN_MS = 5000
 // 新版结构：离屏 turn 只剩外层占位 div[data-turn-id-container]，挂载后内层才出现
 // section[data-turn][data-testid=conversation-turn-N]。提取内容前要先解析到内层。
+// [CHATGPT-TURN-KEY]: 最新结构外层为 div[data-turn-key]，挂载后内层出现
+// div[data-content-search-turn-key]，消息单元为 [data-content-search-unit-key]。
 const CHATGPT_EXPORT_MOUNTED_TURN_SELECTOR =
-  'section[data-turn], [data-testid^="conversation-turn"]'
+  'section[data-turn], [data-testid^="conversation-turn"], [data-content-search-turn-key]'
 
 interface ChatGPTExportMessageSnapshot {
   role: "user" | "assistant"
@@ -1100,8 +1102,12 @@ export class ChatGPTAdapter extends SiteAdapter {
   getConversationTitle(): string | null {
     // 从侧边栏获取当前选中项
     const activeMatch = this.config.conversation.activeMatch
+    // [CHATGPT-TURN-KEY]: 新结构 aria-current="page" 挂在内层 .sidebar-item 上，
+    // 外层会话项自身 matches 不到，需要同时查后代
     const selected = activeMatch
-      ? this.getChatGPTConversationLinks().find((link) => link.matches(activeMatch))
+      ? this.getChatGPTConversationLinks().find(
+          (link) => link.matches(activeMatch) || link.querySelector(activeMatch),
+        )
       : undefined
     const title = selected
       ? this.getChatGPTConversationTitleElement(selected)?.textContent?.trim()
@@ -1677,8 +1683,46 @@ export class ChatGPTAdapter extends SiteAdapter {
     const firstTurnNumber = this.getExportTurnSortIndex(turns[0])
     // 新版结构下离屏 shell（外层占位 div）没有 conversation-turn-N，无法确认起点，
     // 保守视为未加载完，让 catch-up 继续滚顶直到最早 turn 挂载出 N。
+    // [CHATGPT-TURN-KEY]: 最新结构彻底移除了 conversation-turn-N（data-turn-key 无序号），
+    // 整页都没有 N 时说明是新结构，无法再按序号判断起点；此时若仍返回 true，
+    // catch-up 会永远等不到 N 而空转到超时，反而误报"导出可能不完整"。
+    if (
+      firstTurnNumber === Number.MAX_SAFE_INTEGER &&
+      !document.querySelector('[data-testid^="conversation-turn-"]')
+    ) {
+      return false
+    }
     if (firstTurnNumber === Number.MAX_SAFE_INTEGER) return true
     return firstTurnNumber > 1
+  }
+
+  /**
+   * turn 的稳定 ID：旧结构为 data-turn-id / data-turn-id-container，新结构为 data-turn-key。
+   * 传入的可能是 resolveExportTurnElement 解析后的内层挂载节点（data-content-search-turn-key
+   * 与外层 data-turn-key 值不同），必须回溯到外层 shell 取 canonical id，
+   * 否则导出采集的"已收集 id 集合"与"shell 缺失检测"会对不上，导致重复补抓与快照串键。
+   */
+  private getExportTurnShellId(turn: HTMLElement): string {
+    const direct =
+      turn.getAttribute("data-turn-id") ||
+      turn.getAttribute("data-turn-id-container") ||
+      turn.getAttribute("data-turn-key") ||
+      ""
+    if (direct) return direct
+    // [CHATGPT-TURN-KEY]: 内层挂载节点回溯外层 shell
+    const outer = turn.closest("[data-turn-key]")
+    return outer?.getAttribute("data-turn-key") || ""
+  }
+
+  /** 消息单元的角色：旧结构读 data-message-author-role，新结构读 unit-key 的 :user/:assistant 后缀。 */
+  private getChatGPTMessageRole(message: Element): "user" | "assistant" | null {
+    const authorRole = message.getAttribute("data-message-author-role")
+    if (authorRole === "user" || authorRole === "assistant") return authorRole
+    // [CHATGPT-TURN-KEY]: data-content-search-unit-key="<turnKey>:<idx>:<role>"
+    const unitKey = message.getAttribute("data-content-search-unit-key") || ""
+    if (unitKey.endsWith(":user")) return "user"
+    if (unitKey.endsWith(":assistant")) return "assistant"
+    return null
   }
 
   private getAuthorMessageSelector(): string {
@@ -1774,8 +1818,7 @@ export class ChatGPTAdapter extends SiteAdapter {
         // Retry pass：第一遍没挂载成功的 turn 给更长 timeout 再试一次
         const collectedTurnIds = this.extractCollectedTurnIds(collected)
         const missingTurns = turns.filter((turn) => {
-          const turnId =
-            turn.getAttribute("data-turn-id") || turn.getAttribute("data-turn-id-container") || ""
+          const turnId = this.getExportTurnShellId(turn)
           return turnId.length > 0 && !collectedTurnIds.has(turnId)
         })
 
@@ -2037,8 +2080,7 @@ export class ChatGPTAdapter extends SiteAdapter {
    * mergeCachedChatGPTOutlineItems 就能拼回完整大纲。
    */
   private absorbTurnIntoOutlineCache(turn: HTMLElement): void {
-    const turnId =
-      turn.getAttribute("data-turn-id") || turn.getAttribute("data-turn-id-container") || null
+    const turnId = this.getExportTurnShellId(turn) || null
 
     // 导出采集按文档顺序逐 turn 滚动挂载，用当前所有已挂载 turn 的 DOM 顺序归并，
     // 保证中途新发现的 turn 插入到正确位置而不是追加到尾部
@@ -2058,10 +2100,7 @@ export class ChatGPTAdapter extends SiteAdapter {
       (element): element is HTMLElement => element instanceof HTMLElement,
     )
     for (const message of userMessages) {
-      const msgId =
-        message.getAttribute("data-message-id") ||
-        message.closest("[data-message-id]")?.getAttribute("data-message-id") ||
-        ""
+      const msgId = this.getChatGPTMessageId(message) || ""
       if (!msgId) continue
       const rawText = this.extractUserQueryText(message).trim()
       if (!rawText) continue
@@ -2087,10 +2126,7 @@ export class ChatGPTAdapter extends SiteAdapter {
       turn.querySelectorAll(this.config.selectors.assistantResponse),
     ).filter((element): element is HTMLElement => element instanceof HTMLElement)
     for (const message of assistantMessages) {
-      const msgId =
-        message.getAttribute("data-message-id") ||
-        message.closest("[data-message-id]")?.getAttribute("data-message-id") ||
-        ""
+      const msgId = this.getChatGPTMessageId(message) || ""
       if (!msgId) continue
 
       const headings = Array.from(message.querySelectorAll("h1,h2,h3,h4,h5,h6"))
@@ -2205,8 +2241,7 @@ export class ChatGPTAdapter extends SiteAdapter {
 
       if (imageParts.length > 0) {
         const content = imageParts.join("\n\n")
-        const turnId =
-          turn.getAttribute("data-turn-id") || turn.getAttribute("data-turn-id-container") || ""
+        const turnId = this.getExportTurnShellId(turn)
 
         return [
           {
@@ -2223,15 +2258,14 @@ export class ChatGPTAdapter extends SiteAdapter {
       return this.extractDeepResearchTurnExportSnapshot(turn)
     }
 
-    const firstRole = messages[0].getAttribute("data-message-author-role")
+    const firstRole = this.getChatGPTMessageRole(messages[0])
     const turnRoleAttr = turn.getAttribute("data-turn")
     const role: "user" | "assistant" =
       turnRoleAttr === "user" || firstRole === "user"
         ? CHATGPT_EXPORT_ROLE_USER
         : CHATGPT_EXPORT_ROLE_ASSISTANT
 
-    const turnId =
-      turn.getAttribute("data-turn-id") || turn.getAttribute("data-turn-id-container") || ""
+    const turnId = this.getExportTurnShellId(turn)
     const order = this.getExportTurnSortIndex(turn)
 
     if (role === CHATGPT_EXPORT_ROLE_USER) {
@@ -2312,7 +2346,7 @@ export class ChatGPTAdapter extends SiteAdapter {
     collector?: ExportAssetCollector | null,
   ): ChatGPTExportMessageSnapshot | null {
     const role =
-      message.getAttribute("data-message-author-role") === "assistant"
+      this.getChatGPTMessageRole(message) === "assistant"
         ? CHATGPT_EXPORT_ROLE_ASSISTANT
         : CHATGPT_EXPORT_ROLE_USER
 
@@ -2324,10 +2358,7 @@ export class ChatGPTAdapter extends SiteAdapter {
     )
     if (!content) return null
 
-    const messageId =
-      message.getAttribute("data-message-id") ||
-      message.closest("[data-message-id]")?.getAttribute("data-message-id") ||
-      ""
+    const messageId = this.getChatGPTMessageId(message) || ""
     const turnKey = messageId
       ? `${role}:${messageId}`
       : `${role}:content:${content.replace(/\s+/g, " ").slice(0, 120)}`
@@ -2504,8 +2535,7 @@ export class ChatGPTAdapter extends SiteAdapter {
     const title =
       rawTitle && !rawTitle.startsWith("internal://") ? rawTitle : "ChatGPT Deep Research"
     const content = source ? `[${escapeMarkdownLinkText(title)}](${source})` : title
-    const turnId =
-      turn.getAttribute("data-turn-id") || turn.getAttribute("data-turn-id-container") || ""
+    const turnId = this.getExportTurnShellId(turn)
 
     return [
       {
@@ -3224,10 +3254,16 @@ export class ChatGPTAdapter extends SiteAdapter {
     if (!element) return null
 
     const turnElement =
-      element.closest("[data-turn-id]") || element.closest("[data-turn-id-container]")
+      element.closest("[data-turn-id]") ||
+      element.closest("[data-turn-id-container]") ||
+      // [CHATGPT-TURN-KEY]: 新结构 turn 外层为 data-turn-key，内层挂载态另有 data-content-search-turn-key
+      element.closest("[data-turn-key]") ||
+      element.closest("[data-content-search-turn-key]")
     return (
       turnElement?.getAttribute("data-turn-id") ||
       turnElement?.getAttribute("data-turn-id-container") ||
+      turnElement?.getAttribute("data-turn-key") ||
+      turnElement?.getAttribute("data-content-search-turn-key") ||
       null
     )
   }
@@ -3238,6 +3274,11 @@ export class ChatGPTAdapter extends SiteAdapter {
     return (
       element.getAttribute("data-message-id") ||
       element.closest("[data-message-id]")?.getAttribute("data-message-id") ||
+      // [CHATGPT-TURN-KEY]: 新结构无 data-message-id，消息单元 id 为 data-content-search-unit-key
+      element.getAttribute("data-content-search-unit-key") ||
+      element
+        .closest("[data-content-search-unit-key]")
+        ?.getAttribute("data-content-search-unit-key") ||
       null
     )
   }
@@ -3247,7 +3288,9 @@ export class ChatGPTAdapter extends SiteAdapter {
 
     const addAnchor = (element: Element): void => {
       const turnId =
-        element.getAttribute("data-turn-id-container") || element.getAttribute("data-turn-id")
+        element.getAttribute("data-turn-id-container") ||
+        element.getAttribute("data-turn-id") ||
+        element.getAttribute("data-turn-key")
       // client-created-root 是输入草稿的占位容器，不是真实对话 turn，
       // 收进锚点表会污染全局顺序表
       if (!turnId || turnId === "client-created-root" || anchors.has(turnId)) return
@@ -3255,7 +3298,11 @@ export class ChatGPTAdapter extends SiteAdapter {
       anchors.set(turnId, element)
     }
 
-    container.querySelectorAll("[data-turn-id-container], [data-turn-id]").forEach(addAnchor)
+    // [CHATGPT-TURN-KEY]: data-turn-key 在新结构中等价于 data-turn-id-container；
+    // 不收集 data-content-search-turn-key——它与 data-turn-key 同 turn 但 id 不同，会产生重复锚点
+    container
+      .querySelectorAll("[data-turn-id-container], [data-turn-id], [data-turn-key]")
+      .forEach(addAnchor)
 
     return anchors
   }
@@ -3462,7 +3509,10 @@ export class ChatGPTAdapter extends SiteAdapter {
     const messageId = this.extractMessageIdFromCachedId(entry)
     if (messageId) {
       const escaped = this.escapeAttributeValue(messageId)
-      const messageElement = container.querySelector(`[data-message-id="${escaped}"]`)
+      // [CHATGPT-TURN-KEY]: 新结构消息 id 缓存在 data-content-search-unit-key 上
+      const messageElement = container.querySelector(
+        `[data-message-id="${escaped}"], [data-content-search-unit-key="${escaped}"]`,
+      )
       if (messageElement) {
         if (entry.isUserQuery) {
           return messageElement
@@ -3489,6 +3539,20 @@ export class ChatGPTAdapter extends SiteAdapter {
     // 标题 id 形如 msgId::tag-text::count；text 内可能含 "::"，所以只截首段
     const firstSep = entry.id.indexOf("::")
     return firstSep > 0 ? entry.id.slice(0, firstSep) : null
+  }
+
+  /**
+   * 判断元素是否只是 turn 的占位 shell（真实消息内容未挂载）。
+   * [CHATGPT-APP-SHELL]: div[data-turn-id-container] 恒为 shell；
+   * [CHATGPT-TURN-KEY]: div[data-turn-key] 只有在其内部还没有消息单元时才算 shell。
+   */
+  private isChatGPTTurnShell(element: Element | null): element is HTMLElement {
+    if (!(element instanceof HTMLElement)) return false
+    if (element.hasAttribute("data-turn-id-container")) return true
+    if (element.hasAttribute("data-turn-key")) {
+      return !element.querySelector(this.config.sitePrivateSelectors.exportMountedMessage)
+    }
+    return false
   }
 
   private escapeAttributeValue(value: string): string {
@@ -3561,8 +3625,7 @@ export class ChatGPTAdapter extends SiteAdapter {
     if (cachedTarget) {
       // 若拿到的是 turn-shell 而非真实消息节点，主动滚动让 ChatGPT 重新挂载真实内容，
       // 然后再尝试拿到真实节点。避免点击后只跳到一个空占位符且没办法高亮真实标题。
-      const isShell =
-        cachedTarget instanceof HTMLElement && cachedTarget.hasAttribute("data-turn-id-container")
+      const isShell = this.isChatGPTTurnShell(cachedTarget)
       if (isShell) {
         this.scrollIntoViewForRevive(cachedTarget)
         const remounted = await this.waitForCachedChatGPTOutlineTargetRemount(item.id)
@@ -3638,10 +3701,7 @@ export class ChatGPTAdapter extends SiteAdapter {
     while (Date.now() < deadline) {
       await this.sleep(60)
       const target = this.resolveCachedChatGPTOutlineTarget(id)
-      if (
-        target &&
-        !(target instanceof HTMLElement && target.hasAttribute("data-turn-id-container"))
-      ) {
+      if (target && !this.isChatGPTTurnShell(target)) {
         return target
       }
     }

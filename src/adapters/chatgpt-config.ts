@@ -98,11 +98,15 @@ export interface ChatGPTSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const CHATGPT_CONFIG_VERSION = 4
+export const CHATGPT_CONFIG_VERSION = 5
 
 const createChatGPTConfig = (): ChatGPTSiteConfig => {
-  const userMessage = '[data-message-author-role="user"]'
-  const assistantMessage = '[data-message-author-role="assistant"]'
+  // 消息单元选择器：
+  // [LEGACY-CHATGPT-V1] / [CHATGPT-APP-SHELL]: [data-message-author-role="user|assistant"]，待全量后清理
+  // [CHATGPT-TURN-KEY]: 新结构无 author-role，改用 data-content-search-unit-key="<turn>:<idx>:<role>"
+  const userMessage = '[data-message-author-role="user"], [data-content-search-unit-key$=":user"]'
+  const assistantMessage =
+    '[data-message-author-role="assistant"], [data-content-search-unit-key$=":assistant"]'
   const userQueryText = ".whitespace-pre-wrap"
   const srOnly = ".sr-only"
   const codexTaskMarkdown = ".markdown.markdown-new-styling"
@@ -203,6 +207,8 @@ const createChatGPTConfig = (): ChatGPTSiteConfig => {
         // [CHATGPT-APP-SHELL]: 新版主视口与滚动容器
         'div[role="main"][class*="overflow-y-auto"]',
         'div[data-app-shell-main-content-layout] [role="main"]',
+        // [CHATGPT-TURN-KEY]: 新结构会话滚动容器
+        "div[data-app-action-timeline-scroll]",
       ],
       // [LEGACY-CHATGPT-V1]: #history 待全量后清理
       // [CHATGPT-APP-SHELL]: div[data-app-action-sidebar-scroll]
@@ -250,7 +256,8 @@ const createChatGPTConfig = (): ChatGPTSiteConfig => {
     export: {
       userQuerySelector: userMessage,
       assistantResponseSelector: assistantMessage,
-      turnSelector: '[data-testid^="conversation-turn"]',
+      // [CHATGPT-APP-SHELL]: conversation-turn-N；[CHATGPT-TURN-KEY]: div[data-turn-key]
+      turnSelector: '[data-testid^="conversation-turn"], [data-turn-key]',
       useShadowDOM: false,
     },
     widthSelectors: [
@@ -258,6 +265,12 @@ const createChatGPTConfig = (): ChatGPTSiteConfig => {
       { selector: '[class*="thread-content-max-width"]', property: "max-width" },
       { selector: '[style*="--thread-content-max-width"]', property: "max-width" },
       // [CHATGPT-APP-SHELL]: 新版 Tailwind 变量类
+      {
+        // [CHATGPT-TURN-KEY]: 响应式宽度变量挂在外层容器上
+        selector: '[class*="--thread-content-responsive-max-width:"]',
+        property: "max-width",
+        extraCss: "--thread-content-responsive-max-width: 100% !important;",
+      },
       {
         selector: '[class*="--thread-content-max-width:"]',
         property: "max-width",
@@ -332,17 +345,23 @@ const createChatGPTConfig = (): ChatGPTSiteConfig => {
       userQueryText,
       srOnly,
       srOnlyFallback: "[class*='sr-only']",
-      assistantMarkdown: ".markdown, .prose, [class*='prose']",
+      // [CHATGPT-TURN-KEY]: 新结构助手正文容器为 [data-markdown-text-style="assistant-message"]（MarkdownRoot）
+      assistantMarkdown:
+        '.markdown, .prose, [class*="prose"], [data-markdown-text-style="assistant-message"]',
       exportCleanup: `${srOnly}, button, [role="button"], svg, [aria-hidden="true"]`,
       exportTurnContainer:
-        'section[data-turn], [data-testid^="conversation-turn"], [data-turn-id-container]',
-      exportMountedMessage: "[data-message-author-role]",
+        'section[data-turn], [data-testid^="conversation-turn"], [data-turn-id-container], [data-turn-key]',
+      // [CHATGPT-TURN-KEY]: 新结构无 author-role，挂载态消息单元为 [data-content-search-unit-key]
+      exportMountedMessage: "[data-message-author-role], [data-content-search-unit-key]",
       exportImageContainer: '[class*="imagegen-image"], [data-testid*="image-gen"]',
       exportFileTile: '[role="group"][aria-label], [class*="file-tile"]',
       exportFileLabel: "[aria-label]",
       exportFileName: ".truncate.font-semibold",
       deepResearchIframe,
-      markdownFixerParagraph: `${assistantMessage} p`,
+      markdownFixerParagraph: [
+        '[data-message-author-role="assistant"] p',
+        '[data-content-search-unit-key$=":assistant"] p',
+      ].join(", "),
       userQueryWidthRoot: ":root",
       // [LEGACY-CHATGPT-V1] main#main 待全量后清理
       // [CHATGPT-APP-SHELL] main[data-app-shell-main-surface], main
