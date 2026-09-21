@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+**⚠️ Notice — Our GitHub account has been temporarily suspended in error, and we are actively appealing. Until it is restored, GitHub links (repository, issue tracker) and the online adapter library in the Adapter Center may be unavailable. If you run into any problems, please let us know on [Discord](https://discord.gg/rmPzb6Cx9u).**
+
+**📢 Notice — OpenAI is currently rolling out a major redesign to select accounts, significantly changing the sidebar history, chat input box, and page layout. Dual-track compatibility is now supported (covering sidebar navigation, composer, model switcher, and layout avoidance). As the rollout is ongoing, please let us know on [Discord](https://discord.gg/rmPzb6Cx9u) if you encounter any issues on the new interface.**
+
 ### 🚀 New Features
 
 - **Auto-hide input (Gemini)** — Added an "Auto-hide Input" toggle under Site Settings for Gemini. The chat input box floats as an overlay and slides away when idle, letting conversations use the freed space; it reappears when the pointer approaches the bottom, on prompt insertion, or via the focus shortcut (`Alt + I`). (#930)
@@ -24,6 +28,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **Clean Mode bottom spacing** — In Clean Mode, AI generation and legal disclaimers under the input box are now hidden while preserving their native DOM flow spacing, keeping the input area at the site's original intended height instead of sticking to the bottom edge. (#929)
 - **ChatGPT outline performance in long conversations** — Optimized heading sync and index calculation during long conversations, eliminating repeated full-tree DOM queries and reducing main thread lag during outline refreshes. (#935)
 - **Prompt insert and clear performance in long conversations** — Optimized routine background checks on long-conversation pages such as ChatGPT, eliminating repeated full-page scans; inserting and clearing prompts now respond instantly instead of stalling for seconds. (#942)
+- **ChatGPT new interface dual-track compatibility** — Adapted to ChatGPT's new web architecture rollout, supporting conversation history sync, pinned chat detection, composer interaction, and layout avoidance while maintaining full compatibility with the existing interface. (#944)
 
 ### 🐛 Bug Fixes
 
