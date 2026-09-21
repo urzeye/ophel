@@ -128,13 +128,9 @@ export class UserQueryMarkdownRenderer {
       this.initCodeCopyHandler()
 
       // 使用 DOMToolkit.each() 监听
-      this.stopWatch = DOMToolkit.each(
-        selector,
-        (el) => {
-          this.processQueryElement(el)
-        },
-        { shadow: true },
-      )
+      this.stopWatch = DOMToolkit.each(selector, (el) => {
+        this.processQueryElement(el)
+      })
 
       // 兜底重扫：豆包 / Qwen Studio / 通义千问 可能先插入空节点，再异步填充文本
       // 仅靠 each() 的“新增节点回调一次”可能错过最终内容
@@ -262,7 +258,10 @@ export class UserQueryMarkdownRenderer {
     const selector = this.adapter.getUserQuerySelector()
     if (!selector) return
 
-    const elements = DOMToolkit.query(selector, { all: true, shadow: true }) as Element[]
+    const elements = DOMToolkit.query(selector, {
+      all: true,
+      shadow: this.adapter.usesShadowDOM(),
+    }) as Element[]
     for (const el of elements) {
       this.processQueryElement(el)
     }

@@ -119,7 +119,13 @@ export class PromptManager {
         await new Promise((resolve) => setTimeout(resolve, retryDelays[index]))
       }
 
-      this.adapter.findTextarea()
+      // 首次优先复用已缓存的输入框：findTextarea 的可见性校验（offsetParent）会强制同步布局，
+      // 在长对话页面上触发一次全文档样式重算；重试时仍重新查找，保留输入框失效后的恢复能力
+      if (index === 0) {
+        this.adapter.getTextareaElement()
+      } else {
+        this.adapter.findTextarea()
+      }
 
       const result = this.adapter.insertPrompt(content)
       if (result) {
@@ -188,7 +194,10 @@ export class PromptManager {
     const seen = new Set<HTMLElement>()
 
     for (const selector of submitSelectors) {
-      const matched = DOMToolkit.query(selector, { all: true, shadow: true }) as Element[] | null
+      const matched = DOMToolkit.query(selector, {
+        all: true,
+        shadow: this.adapter.usesShadowDOM(),
+      }) as Element[] | null
       if (!matched || !Array.isArray(matched)) continue
 
       for (const element of matched) {

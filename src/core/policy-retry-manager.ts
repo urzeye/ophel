@@ -207,7 +207,9 @@ export class PolicyRetryManager {
     // 2. 点击提交
     // 使用 adapter 的 helper 或者自己查找
     const btnSelectors = this.adapter.getSubmitButtonSelectors()
-    const submitBtn = DOMToolkit.query(btnSelectors, { shadow: true }) as HTMLElement
+    const submitBtn = DOMToolkit.query(btnSelectors, {
+      shadow: this.adapter.usesShadowDOM(),
+    }) as HTMLElement
 
     if (submitBtn) {
       submitBtn.click()

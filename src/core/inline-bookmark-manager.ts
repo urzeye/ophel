@@ -463,7 +463,7 @@ export class InlineBookmarkManager {
 
     const icons = DOMToolkit.query(`.${ICON_CLASS}`, {
       all: true,
-      shadow: true,
+      shadow: this.adapter.usesShadowDOM(),
     }) as Element[]
 
     icons.forEach((iconWrapper) => {
@@ -494,13 +494,13 @@ export class InlineBookmarkManager {
   private removeInjectedIcons() {
     const icons = DOMToolkit.query(`.${ICON_CLASS}`, {
       all: true,
-      shadow: true,
+      shadow: this.adapter.usesShadowDOM(),
     }) as Element[]
     icons.forEach((el) => el.remove())
 
     const containers = DOMToolkit.query(`[${MARKER_ATTRIBUTE}]`, {
       all: true,
-      shadow: true,
+      shadow: this.adapter.usesShadowDOM(),
     }) as Element[]
     containers.forEach((el) => {
       el.removeAttribute(MARKER_ATTRIBUTE)

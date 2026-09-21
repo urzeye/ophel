@@ -1525,8 +1525,8 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
 
     const markdownDoc = this.extractSummaryContent(summaryRoot)
     return markdownDoc
-      ? findAssistantMermaidBlocks(markdownDoc)
-      : findAssistantMermaidBlocks(summaryRoot)
+      ? findAssistantMermaidBlocks(markdownDoc, true)
+      : findAssistantMermaidBlocks(summaryRoot, true)
   }
 
   // ==================== 生成状态检测 ====================

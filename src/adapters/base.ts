@@ -380,14 +380,17 @@ function resolveAssistantMermaidBlockElement(candidate: HTMLElement): HTMLElemen
   return candidate
 }
 
-export function findAssistantMermaidBlocks(root: ParentNode): AssistantMermaidBlock[] {
+export function findAssistantMermaidBlocks(
+  root: ParentNode,
+  shadow = false,
+): AssistantMermaidBlock[] {
   const candidates =
     (DOMToolkit.query(
       "code-block, ms-code-block, pre, pre code, [data-language], [data-test-language], [data-test-id='code-content'], .cm-content, #code-block-viewer",
       {
         parent: root as Node,
         all: true,
-        shadow: true,
+        shadow,
       },
     ) as Element[]) || []
 
@@ -826,7 +829,7 @@ export abstract class SiteAdapter {
    * 子类可覆盖以适配非标准代码块结构。
    */
   getAssistantMermaidBlocks(root: ParentNode): AssistantMermaidBlock[] {
-    return findAssistantMermaidBlocks(root)
+    return findAssistantMermaidBlocks(root, this.usesShadowDOM())
   }
 
   // ==================== 输入框操作 ====================
@@ -1389,7 +1392,10 @@ export abstract class SiteAdapter {
     const selector = this.getUserQuerySelector()
     if (!selector) return null
 
-    const elements = DOMToolkit.query(selector, { all: true, shadow: true }) as Element[]
+    const elements = DOMToolkit.query(selector, {
+      all: true,
+      shadow: this.usesShadowDOM(),
+    }) as Element[]
     if (!elements || elements.length === 0) return null
 
     // 1. 尝试按索引查找并验证文本
@@ -1887,7 +1893,7 @@ export abstract class SiteAdapter {
     return (
       (DOMToolkit.query(selector, {
         all: true,
-        shadow: true,
+        shadow: this.usesShadowDOM(),
         filter: (el) => this.isElementVisible(el),
       }) as Element[]) || []
     )
@@ -1897,7 +1903,9 @@ export abstract class SiteAdapter {
     const menuId = anchor.getAttribute("aria-controls") || anchor.getAttribute("aria-owns")
     if (!menuId) return null
     const selector = `#${this.escapeSelector(menuId)}`
-    const container = DOMToolkit.query(selector, { shadow: true }) as Element | null
+    const container = DOMToolkit.query(selector, {
+      shadow: this.usesShadowDOM(),
+    }) as Element | null
     if (container && this.isElementVisible(container)) return container
     return null
   }
@@ -2041,14 +2049,21 @@ export abstract class SiteAdapter {
     }
   }
 
-  /** 通过选择器列表查找单个元素（支持 Shadow DOM 穿透） */
+  /** 通过选择器列表查找单个元素（Shadow DOM 站点自动穿透） */
   findElementBySelectors(selectors: string[]): HTMLElement | null {
-    return DOMToolkit.query(selectors, { shadow: true }) as HTMLElement | null
+    return DOMToolkit.query(selectors, {
+      shadow: this.usesShadowDOM(),
+    }) as HTMLElement | null
   }
 
-  /** 通过选择器查找所有元素（支持 Shadow DOM 穿透） */
+  /** 通过选择器查找所有元素（Shadow DOM 站点自动穿透） */
   findAllElementsBySelector(selector: string): Element[] {
-    return (DOMToolkit.query(selector, { all: true, shadow: true }) as Element[]) || []
+    return (
+      (DOMToolkit.query(selector, {
+        all: true,
+        shadow: this.usesShadowDOM(),
+      }) as Element[]) || []
+    )
   }
 
   // ==================== 生命周期 ====================
@@ -2083,7 +2098,7 @@ export abstract class SiteAdapter {
 
     const matched = DOMToolkit.query(selectors, {
       all: true,
-      shadow: true,
+      shadow: this.usesShadowDOM(),
       filter: (element) => this.isElementVisible(element),
     }) as Element[]
 
@@ -2123,7 +2138,7 @@ export abstract class SiteAdapter {
       (DOMToolkit.query("pre code, pre, pre.code-block, .code-block code", {
         parent: root as Node,
         all: true,
-        shadow: true,
+        shadow: this.usesShadowDOM(),
         filter: (element) => this.shouldIncludeCodeElement(element),
       }) as Element[]) || []
 
@@ -2157,7 +2172,7 @@ export abstract class SiteAdapter {
       (DOMToolkit.query(config.assistantResponseSelector, {
         parent: this.getPrimaryCodeSearchRoot() as Node,
         all: true,
-        shadow: true,
+        shadow: this.usesShadowDOM(),
         filter: (element) => this.shouldIncludeAssistantResponseElement(element),
       }) as Element[]) || []
     )
@@ -2166,7 +2181,9 @@ export abstract class SiteAdapter {
   protected getPrimaryCodeSearchRoot(): ParentNode {
     const containerSelector = this.getResponseContainerSelector()
     if (containerSelector) {
-      const container = DOMToolkit.query(containerSelector, { shadow: true }) as ParentNode | null
+      const container = DOMToolkit.query(containerSelector, {
+        shadow: this.usesShadowDOM(),
+      }) as ParentNode | null
       if (container) {
         return container
       }

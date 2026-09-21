@@ -419,7 +419,7 @@ export class AssistantMermaidRenderer {
   refreshLocalizedTexts() {
     const panels = DOMToolkit.query(PANEL_SELECTOR, {
       all: true,
-      shadow: true,
+      shadow: this.adapter.usesShadowDOM(),
     }) as Element[]
 
     panels.forEach((panel) => {
@@ -643,7 +643,7 @@ export class AssistantMermaidRenderer {
 
     this.fullscreenChangeHandler = () => {
       const activePanel = DOMToolkit.query(`${PANEL_SELECTOR}[${FULLSCREEN_ACTIVE_ATTR}='1']`, {
-        shadow: true,
+        shadow: this.adapter.usesShadowDOM(),
       }) as HTMLElement | null
       if (!activePanel) return
 
@@ -685,7 +685,10 @@ export class AssistantMermaidRenderer {
     const selector = this.getAssistantSelector()
     if (!selector) return
 
-    const elements = DOMToolkit.query(selector, { all: true, shadow: true }) as Element[]
+    const elements = DOMToolkit.query(selector, {
+      all: true,
+      shadow: this.adapter.usesShadowDOM(),
+    }) as Element[]
     this.queueResponses(elements)
   }
 
@@ -1458,7 +1461,7 @@ export class AssistantMermaidRenderer {
   private cleanupInjectedPanels() {
     const blocks = DOMToolkit.query(`[${BLOCK_MANAGED_ATTR}]`, {
       all: true,
-      shadow: true,
+      shadow: this.adapter.usesShadowDOM(),
     }) as Element[]
     blocks.forEach((element) => {
       if (!(element instanceof HTMLElement)) return
@@ -1469,7 +1472,7 @@ export class AssistantMermaidRenderer {
 
     const panels = DOMToolkit.query(PANEL_SELECTOR, {
       all: true,
-      shadow: true,
+      shadow: this.adapter.usesShadowDOM(),
     }) as Element[]
     panels.forEach((panel) => panel.remove())
   }

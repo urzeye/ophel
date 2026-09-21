@@ -1248,9 +1248,17 @@ html.${AUTO_HIDE_FLOAT_CLASS} ${config.scrollContainer}::after {
     }
 
     // 普通 DOM 中已找到可见容器时，不再为同一个选择器遍历整页 Shadow DOM。
+    // 仅 Shadow DOM 站点（Gemini Enterprise）需要穿透查询。
     const scope =
       findVisible(document.querySelectorAll(selector)) ||
-      findVisible(DOMToolkit.query(selector, { all: true, shadow: true }) as Element[])
+      (this.siteAdapter.usesShadowDOM()
+        ? findVisible(
+            DOMToolkit.query(selector, {
+              all: true,
+              shadow: true,
+            }) as Element[],
+          )
+        : null)
     this.panelAvoidanceScopeCache.set(selector, scope)
     return scope
   }
@@ -1319,7 +1327,7 @@ html.${AUTO_HIDE_FLOAT_CLASS} ${config.scrollContainer}::after {
     for (const selector of obstacleSelectors || []) {
       const candidates = DOMToolkit.query(selector, {
         all: true,
-        shadow: true,
+        shadow: this.siteAdapter.usesShadowDOM(),
       }) as Element[] | null
 
       for (const candidate of candidates || []) {
