@@ -23,6 +23,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **Single tab display and layout protection** — The panel now automatically hides the top tab bar when only a single feature is enabled (such as outline-only mode or capability-restricted sites), reclaiming ~38px of vertical space; the layout settings also require at least one tab to remain enabled, preventing empty panel states. (#940)
 - **Clean Mode bottom spacing** — In Clean Mode, AI generation and legal disclaimers under the input box are now hidden while preserving their native DOM flow spacing, keeping the input area at the site's original intended height instead of sticking to the bottom edge. (#929)
 - **ChatGPT outline performance in long conversations** — Optimized heading sync and index calculation during long conversations, eliminating repeated full-tree DOM queries and reducing main thread lag during outline refreshes. (#935)
+- **Prompt insert and clear performance in long conversations** — Optimized routine background checks on long-conversation pages such as ChatGPT, eliminating repeated full-page scans; inserting and clearing prompts now respond instantly instead of stalling for seconds. (#942)
 
 ### 🐛 Bug Fixes
 
