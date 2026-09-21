@@ -1544,7 +1544,6 @@ This is the first official release of Ophel, providing comprehensive enhancement
 
 ---
 
-[1.2.8]: https://github.com/urzeye/ophel/releases/tag/v1.2.8
 [1.2.7]: https://github.com/urzeye/ophel/releases/tag/v1.2.7
 [1.2.6]: https://github.com/urzeye/ophel/releases/tag/v1.2.6
 [1.2.5]: https://github.com/urzeye/ophel/releases/tag/v1.2.5
