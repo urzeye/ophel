@@ -193,7 +193,7 @@ const createChatGPTConfig = (): ChatGPTSiteConfig => {
         // [CHATGPT-APP-SHELL]: 新版侧边栏新建聊天按钮
         'button.sidebar-item[aria-label*="新聊天"]',
         'button.sidebar-item[aria-label*="New chat" i]',
-        "button.sidebar-item:has(> * > .text-fade-truncate)",
+        "button.sidebar-item:has(.text-fade-truncate)",
       ],
       stopButton: [...stopButton],
       scrollContainer: [
@@ -258,8 +258,16 @@ const createChatGPTConfig = (): ChatGPTSiteConfig => {
       { selector: '[class*="thread-content-max-width"]', property: "max-width" },
       { selector: '[style*="--thread-content-max-width"]', property: "max-width" },
       // [CHATGPT-APP-SHELL]: 新版 Tailwind 变量类
-      { selector: '[class*="--thread-content-max-width:"]', property: "max-width" },
-      { selector: '[class*="--thread-body-max-width:"]', property: "max-width" },
+      {
+        selector: '[class*="--thread-content-max-width:"]',
+        property: "max-width",
+        extraCss: "--thread-content-max-width: 100% !important;",
+      },
+      {
+        selector: '[class*="--thread-body-max-width:"]',
+        property: "max-width",
+        extraCss: "--thread-body-max-width: 100% !important;",
+      },
       {
         selector: libraryEditor,
         property: "max-width",

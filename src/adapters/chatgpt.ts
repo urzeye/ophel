@@ -686,7 +686,8 @@ export class ChatGPTAdapter extends SiteAdapter {
   private syncSidebarAfterRemoteDelete(id: string) {
     const row = this.findConversationRow(id)
     if (!row) return
-    const container = row.closest("li") || row
+    // [LEGACY-CHATGPT-V1] li / [CHATGPT-APP-SHELL] [role='listitem']
+    const container = row.closest("li, [role='listitem']") || row
     container.remove()
   }
 
@@ -857,7 +858,8 @@ export class ChatGPTAdapter extends SiteAdapter {
     const itemContainer = this.findConversationItemContainer(row, id)
     const rawCandidates = [
       itemContainer,
-      row.closest("li"),
+      // [LEGACY-CHATGPT-V1] li / [CHATGPT-APP-SHELL] [role='listitem']
+      row.closest("li, [role='listitem']"),
       row.parentElement,
       row,
     ] as Array<Element | null>
@@ -890,6 +892,13 @@ export class ChatGPTAdapter extends SiteAdapter {
       const links = Array.from(
         current.querySelectorAll<HTMLElement>(this.config.conversation.itemSelector),
       )
+      // 如果当前节点自身即为匹配项（如 App-Shell 的 div[data-sidebar-chatgpt-conversation-key]）
+      if (
+        typeof current.matches === "function" &&
+        current.matches(this.config.conversation.itemSelector)
+      ) {
+        links.push(current)
+      }
       const hasTargetLink = links.some((link) => this.getChatGPTConversationId(link) === id)
       if (hasTargetLink) {
         if (!fallback && links.length === 1) {
@@ -944,20 +953,29 @@ export class ChatGPTAdapter extends SiteAdapter {
   ): boolean {
     if (!container.contains(button)) return false
 
+    const targetRow = this.findConversationRow(id)
+
     // [LEGACY-CHATGPT-V1]: li 待全量后清理
     // [CHATGPT-APP-SHELL]: [role="listitem"]
     const owner = button.closest("li, [role='listitem']")
     if (owner) {
+      if (targetRow && (owner === targetRow || owner.contains(targetRow))) {
+        return true
+      }
       const ownerLinks = Array.from(
         owner.querySelectorAll<HTMLElement>(this.config.conversation.itemSelector),
       )
       if (
         ownerLinks.length === 1 &&
         this.getChatGPTConversationId(ownerLinks[0]) === id &&
-        owner.contains(this.findConversationRow(id))
+        owner.contains(targetRow || button)
       ) {
         return true
       }
+    }
+
+    if (targetRow && (container === targetRow || container.contains(targetRow))) {
+      return true
     }
 
     const linksInContainer = Array.from(
