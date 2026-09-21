@@ -11,7 +11,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 **⚠️ Notice — Our GitHub account has been temporarily suspended in error, and we are actively appealing. Until it is restored, GitHub links (repository, issue tracker) and the online adapter library in the Adapter Center may be unavailable. If you run into any problems, please let us know on [Discord](https://discord.gg/rmPzb6Cx9u).**
 
-**📢 Notice — OpenAI is currently rolling out a major redesign to select accounts, significantly changing the sidebar history, chat input box, and page layout. Dual-track compatibility is now supported (covering sidebar navigation, composer, model switcher, and layout avoidance). As the rollout is ongoing, please let us know on [Discord](https://discord.gg/rmPzb6Cx9u) if you encounter any issues on the new interface.**
+**📢 Notice — OpenAI is currently rolling out a major web redesign to select accounts, significantly restructuring the sidebar history, composer, and chat layout, which causes the extension's existing selectors to stop functioning. As none of our developer accounts have received this rollout yet, dynamic interactions cannot be tested and full adaptation is temporarily blocked until our accounts receive the update, OpenAI rolls it out globally, or a community member can grant temporary account access for debugging. If you have a test account on the new interface and are willing to assist, please reach out to us on [Discord](https://discord.gg/rmPzb6Cx9u).**
 
 ### 🚀 New Features
 
@@ -28,7 +28,6 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **Clean Mode bottom spacing** — In Clean Mode, AI generation and legal disclaimers under the input box are now hidden while preserving their native DOM flow spacing, keeping the input area at the site's original intended height instead of sticking to the bottom edge. (#929)
 - **ChatGPT outline performance in long conversations** — Optimized heading sync and index calculation during long conversations, eliminating repeated full-tree DOM queries and reducing main thread lag during outline refreshes. (#935)
 - **Prompt insert and clear performance in long conversations** — Optimized routine background checks on long-conversation pages such as ChatGPT, eliminating repeated full-page scans; inserting and clearing prompts now respond instantly instead of stalling for seconds. (#942)
-- **ChatGPT new interface dual-track compatibility** — Adapted to ChatGPT's new web architecture rollout, supporting conversation history sync, pinned chat detection, composer interaction, and layout avoidance while maintaining full compatibility with the existing interface. (#944)
 
 ### 🐛 Bug Fixes
 
