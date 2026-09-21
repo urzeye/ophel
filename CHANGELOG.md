@@ -11,7 +11,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 **⚠️ Notice — Our GitHub account has been temporarily suspended in error, and we are actively appealing. Until it is restored, GitHub links (repository, issue tracker) and the online adapter library in the Adapter Center may be unavailable. If you run into any problems, please let us know on [Discord](https://discord.gg/rmPzb6Cx9u).**
 
-**📢 Notice — OpenAI is currently rolling out a major web redesign to select accounts, significantly restructuring the sidebar history, composer, and chat layout, which causes the extension's existing selectors to stop functioning. As none of our developer accounts have received this rollout yet, dynamic interactions cannot be tested and full adaptation is temporarily blocked until our accounts receive the update, OpenAI rolls it out globally, or a community member can grant temporary account access for debugging. If you have a test account on the new interface and are willing to assist, please reach out to us on [Discord](https://discord.gg/rmPzb6Cx9u).**
+**📢 Notice — ChatGPT is currently rolling out a major web redesign to select accounts, significantly restructuring the sidebar history, composer, and chat layout, which causes the extension's existing selectors to stop functioning. As none of our developer accounts have received this rollout yet, dynamic interactions cannot be tested and full adaptation is temporarily blocked until our accounts receive the update, ChatGPT rolls it out globally, or a community member can grant temporary account access for debugging. If you have a test account on the new interface and are willing to assist, please reach out to us on [Discord](https://discord.gg/rmPzb6Cx9u).**
 
 ### 🚀 New Features
 
