@@ -78,6 +78,7 @@ Ophel Atlas 是 TypeScript + React 18 + Plasmo 的浏览器扩展，同时支持
 - 适配器层只处理站点识别、DOM 选择、输入/导航/导出等站点差异；通用行为放回 core 或 utils。
 - 修改 `src/adapters/*` 时优先使用稳定选择器，避免依赖易变 class、纯展示文案或单语言文本。
 - 修改单个站点适配器时，不要把站点特定逻辑泄漏到公共基类或影响其他站点。
+- 站点静态结构/加载特征统一声明在 config 的 `traits` 字段（`SiteTraits`，名词式命名），基类布尔方法只作薄封装；新增特征只加字段，不再新增 `xxx()` 布尔方法。布尔命名分层：功能开关 `supports*`、运行时状态查询 `has*`/`is*`、静态特征用名词式 config 字段；倒序渲染沿用既有顶层字段 `outlineReverse`。
 - 新增核心模块时，检查 `modules-init.ts` 的初始化顺序和 `subscribeModuleUpdates()` 热更新路径。
 - 修改 Zustand persist 时，注意油猴 GM API 是同步存储；不要把同步 `getItem` 包成 Promise。
 - 修改备份/恢复时，检查 `ZUSTAND_KEYS`、`MULTI_PROP_STORES`、schema 兼容和旧数据迁移。

@@ -2152,6 +2152,7 @@ export class ClaudeAdapter extends SiteAdapter {
     return headings[entry.orderInMessage - 1] || null
   }
 
+  // 动态判定：仅虚拟化长对话需要轮询兜底，无法静态声明为 traits 字段
   usesPeriodicOutlineRefreshFallback(): boolean {
     return this.isClaudeVirtualConversation()
   }

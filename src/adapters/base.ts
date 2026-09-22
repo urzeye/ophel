@@ -733,6 +733,8 @@ export abstract class SiteAdapter {
   /**
    * 是否由子类提供了站点专用主题切换逻辑。
    * 用于避免在自定义切换后再次套用通用 fallback，造成宿主页面状态冲突。
+   * 注意：这是“子类是否覆写了 toggleTheme”的静态派生判断，不是运行时状态查询；
+   * 前缀 has 仅因方法名冻结保留，新代码不要仿照此前缀声明静态特征。
    */
   hasCustomToggleTheme(): boolean {
     return this.toggleTheme !== SiteAdapter.prototype.toggleTheme
@@ -1488,9 +1490,11 @@ export abstract class SiteAdapter {
    * Whether the site renders messages in reverse DOM order (e.g.
    * flex-col-reverse). When true, the export pipeline reverses turn
    * order so exported messages follow visual (oldest-first) order.
+   * 声明字段为 config 顶层 `outlineReverse`（名词式，与站点包 JSON 一致）；
+   * 站点包适配器经 DeclarativeAdapter 覆写读取 manifest 同名字段。
    */
   isExportReversed(): boolean {
-    return false
+    return this.config?.outlineReverse ?? false
   }
 
   /**

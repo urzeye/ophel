@@ -1058,6 +1058,7 @@ export class DeclarativeAdapter extends SiteAdapter {
   }
 
   isExportReversed(): boolean {
+    // DeclarativeAdapter 不经 base.config，从 manifest 读取同名字段。
     return this.manifest.outlineReverse ?? false
   }
 

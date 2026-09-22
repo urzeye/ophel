@@ -95,6 +95,14 @@ export interface SitePackDocumentOutlineConfig {
  * capabilities 决定功能是否可用，traits 描述页面渲染与加载方式，
  * 驱动滚动、大纲、导出等通用行为。字段统一名词式命名；
  * 未声明的字段由基类访问方法回落到保守缺省值。
+ *
+ * 布尔命名分层约定（新代码遵守，不要跨层混用前缀）：
+ * - 静态结构/加载特征：声明在 traits 字段（名词式），基类方法只作薄封装；
+ *   新增特征只加字段，不再新增 `xxx()` 布尔方法。
+ *   例外：倒序渲染沿用既有顶层字段 `outlineReverse`（同时驱动大纲与导出
+ *   的顺序反转），不在 traits 重复声明。
+ * - 静态功能开关：`supports*` 方法（如 supportsFormulaCopy）。
+ * - 运行时状态查询：`has*` / `is*` 方法（如 hasUnloadedConversationHistory）。
  */
 export interface SiteTraits {
   /** 正文渲染在 Shadow DOM 内，抽取前需等待 Shadow DOM 渲染。缺省 false。 */
