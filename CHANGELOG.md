@@ -14,7 +14,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **Long conversation and streaming performance** — Reduced background scans and repeated calculations during long conversations and live AI replies across all sites, easing stutter when scrolling and typing. (#947)
 - **Quick jumps after scrolling to top** — Clicking "Scroll to Bottom" or "Return to Anchor" while earlier history is still loading after "Scroll to Top" now stops the loading and responds immediately, instead of ignoring the click for about a second. (#948)
 - **Faster jumps to top** — On sites where the conversation is already fully available locally (e.g. DeepSeek, Doubao, Claude), "Scroll to Top" now completes right away instead of waiting about a second for an unnecessary history-loading check. (#948)
-- **DeepSeek & AI Studio outlines in long chats** — Reply headings no longer disappear from the outline when scrolling back and forth in long conversations; the outline now always shows the full list of reply sections, and clicking any heading still jumps to it accurately.
+- **DeepSeek & AI Studio outlines in long chats** — Reply headings no longer disappear from the outline when scrolling back and forth in long conversations; the outline now always shows the full list of reply sections, and clicking any heading still jumps to it accurately. (#953)
 
 ### 🐛 Bug Fixes
 
