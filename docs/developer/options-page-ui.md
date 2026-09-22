@@ -89,7 +89,7 @@
 
 - 扩展端和油猴端共享大部分设置 UI，但权限、通知、跨域请求和默认开关可能不同。
 - 油猴端保存 SitePack 自定义域名后，会根据 `GM_info` 的有效匹配规则列出尚未覆盖的 origin，并引导用户在脚本管理器中添加持久化的用户匹配；扩展端继续走权限申请与动态注册。
-- `watermarkRemoval`、通知和部分 AI Studio 内容增强默认值会根据 `isUserscriptPlatform()` 分支确定。
+- 通知和部分 AI Studio 内容增强默认值会根据 `isUserscriptPlatform()` 分支确定。
 - 文档中的 `settings-schema.json` 以扩展端默认值为静态示例；油猴端差异以源码中的 `DEFAULT_SETTINGS` 平台分支为准。
 
 ## 8. 修改清单

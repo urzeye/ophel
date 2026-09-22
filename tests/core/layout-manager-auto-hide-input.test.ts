@@ -184,6 +184,8 @@ beforeEach(() => {
     getPanelAvoidanceConfig: () => null,
     getAutoHideInputConfig: () => AUTO_HIDE_CONFIG,
     hasInputDraft: () => false,
+    getChatContentSelectors: () => [],
+    getUserQuerySelector: () => null,
   } as unknown as SiteAdapter
 
   manager = new LayoutManager(adapter, { enabled: false, value: "80", unit: "%" })

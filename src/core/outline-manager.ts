@@ -59,13 +59,22 @@ interface TreeState {
 
 type OutlineActiveConsumer = "outlineTab" | "globalSearch"
 
-/** djb2 hash：将任意长度字符串压缩为 8 位十六进制字符串 */
-function djb2Hash(str: string): string {
+/**
+ * 增量 djb2 hash 器：逐段混入字符串，避免把全部大纲文本
+ * join 成一个长字符串再 hash（长对话每次刷新都会产生大字符串分配）
+ */
+function createDjb2Mixer() {
   let hash = 5381
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) + hash + str.charCodeAt(i)) >>> 0
+  return {
+    mix(str: string) {
+      for (let i = 0; i < str.length; i++) {
+        hash = ((hash << 5) + hash + str.charCodeAt(i)) >>> 0
+      }
+    },
+    digest(): string {
+      return hash.toString(16).padStart(8, "0")
+    },
   }
-  return hash.toString(16).padStart(8, "0")
 }
 
 export class OutlineManager {
@@ -1092,13 +1101,17 @@ export class OutlineManager {
     const sessionIdForKey = this.siteAdapter.getSessionId() || "no-session"
     const pathname = typeof window !== "undefined" ? window.location.pathname : ""
     const sessionScopeKey = `${this.siteAdapter.getSiteId()}:${sessionIdForKey}:${pathname}:${this.activeSourceId}`
-    const rawKey =
-      sessionScopeKey +
-      "|" +
-      showWordCountFlag +
-      "|" +
-      outlineData.map((i) => `${i.text}:${(i as ExtendedOutlineItem).isBookmarked}`).join("|")
-    const outlineKey = djb2Hash(rawKey)
+    const mixer = createDjb2Mixer()
+    mixer.mix(sessionScopeKey)
+    mixer.mix("|")
+    mixer.mix(showWordCountFlag)
+    outlineData.forEach((i) => {
+      mixer.mix("|")
+      mixer.mix(i.text)
+      mixer.mix(":")
+      mixer.mix(String((i as ExtendedOutlineItem).isBookmarked))
+    })
+    const outlineKey = mixer.digest()
     const currentStateMap: Record<string, TreeState> = {}
     if (this.tree.length > 0) {
       this.captureTreeState(this.tree, currentStateMap)

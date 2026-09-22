@@ -69,6 +69,7 @@ beforeEach(() => {
     cancelAnimationFrame: vi.fn(),
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
+    location: { pathname: "/chat" },
   })
   vi.stubGlobal(
     "MutationObserver",
@@ -147,5 +148,31 @@ describe("LayoutManager mutation work", () => {
 
     expect(plainInternals.findPanelAvoidanceScope(".missing")).toBeNull()
     expect(DOMToolkit.query).not.toHaveBeenCalled()
+  })
+
+  it("rebuilds cached mutation selectors when the URL path changes", () => {
+    // ChatGPT 的提问选择器随路由变化（Codex 任务页），缓存必须随路径失效
+    const dynamicAdapter = {
+      getCapabilities: () => ({}),
+      getPanelAvoidanceConfig: () => ({ scopeSelector: ".layout", widthSelectors: [] }),
+      getChatContentSelectors: () => [".message"],
+      getUserQuerySelector: () =>
+        window.location.pathname.startsWith("/codex") ? ".query, .codex-query" : ".query",
+      usesShadowDOM: () => false,
+    } as unknown as SiteAdapter
+    const dynamicManager = new LayoutManager(dynamicAdapter, {
+      enabled: false,
+      value: "80",
+      unit: "%",
+    })
+    const dynamicInternals = dynamicManager as unknown as {
+      panelAvoidanceContentSelector: string
+      handlePanelAvoidanceHostMutations: (mutations: MutationRecord[]) => void
+    }
+    expect(dynamicInternals.panelAvoidanceContentSelector).toBe(".message, .query")
+
+    window.location.pathname = "/codex/cloud/tasks/task_1"
+    dynamicInternals.handlePanelAvoidanceHostMutations([])
+    expect(dynamicInternals.panelAvoidanceContentSelector).toBe(".message, .query, .codex-query")
   })
 })

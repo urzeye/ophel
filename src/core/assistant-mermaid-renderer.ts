@@ -327,6 +327,7 @@ export class AssistantMermaidRenderer {
   private rescanTimer: number | null = null
   private responseUpdateTimer: number | null = null
   private pendingResponses = new Set<Element>()
+  private generationDeferralTimers = new Map<Element, number>()
   private retryTimers = new Map<HTMLElement, number>()
   private retryAttempts = new WeakMap<HTMLElement, { key: string; count: number }>()
   private clickHandler: ((e: MouseEvent) => void) | null = null
@@ -369,6 +370,8 @@ export class AssistantMermaidRenderer {
       this.responseUpdateTimer = null
     }
     this.pendingResponses.clear()
+    for (const timer of this.generationDeferralTimers.values()) window.clearTimeout(timer)
+    this.generationDeferralTimers.clear()
     for (const timer of this.retryTimers.values()) window.clearTimeout(timer)
     this.retryTimers.clear()
     this.retryAttempts = new WeakMap()
@@ -731,6 +734,15 @@ export class AssistantMermaidRenderer {
     })
   }
 
+  /** 站点是否处于生成中；适配器异常时按不在生成处理，保持原有即时渲染行为 */
+  private isSiteGenerating(): boolean {
+    try {
+      return this.adapter.isGenerating?.() ?? false
+    } catch {
+      return false
+    }
+  }
+
   private async processMermaidBlock(block: HTMLElement, source: string, response: Element) {
     if (!this.enabled || !block.isConnected) return
 
@@ -755,6 +767,22 @@ export class AssistantMermaidRenderer {
     const rendering = this.renderingBlocks.get(block)
     if (rendering?.key === processedKey) return
     if (!rendering && this.processedBlocks.get(block) === processedKey) return
+
+    // 流式输出期间源码持续增长：现在渲染必然很快过期，且不完整源码大多
+    // parse 失败，每个批次都重渲染是流式期间的主要开销。延迟到生成结束后
+    // 再渲染（定时器触发时重新入队，若仍在生成会继续顺延）。
+    if (this.isSiteGenerating()) {
+      if (!this.generationDeferralTimers.has(response)) {
+        const timer = window.setTimeout(() => {
+          this.generationDeferralTimers.delete(response)
+          if (this.enabled && response.isConnected) {
+            this.queueResponses([response])
+          }
+        }, RESCAN_INTERVAL)
+        this.generationDeferralTimers.set(response, timer)
+      }
+      return
+    }
 
     const panel = this.ensurePanel(block)
     const preview = panel.querySelector(".gh-assistant-mermaid-preview") as HTMLElement | null

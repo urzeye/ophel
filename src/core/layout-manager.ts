@@ -162,11 +162,38 @@ export class LayoutManager {
   private panelAvoidanceObservedScope: HTMLElement | null = null
   private panelAvoidanceScopeCache = new Map<string, HTMLElement | null>()
   private panelHoverWidthAvoidanceSuppressedUntil = 0
+  // host observer 回调每批 mutation 都会用到，缓存避免反复拼接选择器字符串
+  private panelAvoidanceContentSelector = ""
+  private panelAvoidanceLayoutSelector = ""
+  // 部分适配器的选择器随路由变化（如 ChatGPT Codex 任务页），记录构建时的路径用于失效检测
+  private panelAvoidanceSelectorPathname = ""
 
   constructor(siteAdapter: SiteAdapter, pageWidthConfig: PageWidthConfig) {
     this.siteAdapter = siteAdapter
     this.pageWidthConfig = pageWidthConfig
     this.panelAvoidanceConfig = this.getPanelAvoidanceConfig()
+    this.rebuildPanelAvoidanceMutationSelectors()
+  }
+
+  private rebuildPanelAvoidanceMutationSelectors() {
+    this.panelAvoidanceSelectorPathname = window.location?.pathname ?? ""
+    this.panelAvoidanceContentSelector = [
+      ...this.siteAdapter.getChatContentSelectors(),
+      this.siteAdapter.getUserQuerySelector(),
+    ]
+      .filter(Boolean)
+      .join(", ")
+    const config = this.panelAvoidanceConfig
+    this.panelAvoidanceLayoutSelector = [
+      config?.scopeSelector,
+      ...(config?.obstacleSelectors || []),
+      ...(config?.insetSelectors || []).flatMap((inset) => [
+        inset.scopeSelector,
+        ...(inset.obstacleSelectors || []),
+      ]),
+    ]
+      .filter(Boolean)
+      .join(", ")
   }
 
   private getLayoutCapability(): LayoutCapability | undefined {
@@ -197,6 +224,7 @@ export class LayoutManager {
     this.pageWidthConfig = config
     // 站点包热更新后避让规则可能变化，重新读取；内置站点配置为静态，重读等价。
     this.panelAvoidanceConfig = this.getPanelAvoidanceConfig()
+    this.rebuildPanelAvoidanceMutationSelectors()
     this.apply()
     this.schedulePanelAvoidanceUpdate()
   }
@@ -1645,23 +1673,12 @@ html.${AUTO_HIDE_FLOAT_CLASS} ${config.scrollContainer}::after {
   }
 
   private handlePanelAvoidanceHostMutations = (mutations: MutationRecord[]) => {
-    const contentSelector = [
-      ...this.siteAdapter.getChatContentSelectors(),
-      this.siteAdapter.getUserQuerySelector(),
-    ]
-      .filter(Boolean)
-      .join(", ")
-    const config = this.panelAvoidanceConfig
-    const layoutSelector = [
-      config?.scopeSelector,
-      ...(config?.obstacleSelectors || []),
-      ...(config?.insetSelectors || []).flatMap((inset) => [
-        inset.scopeSelector,
-        ...(inset.obstacleSelectors || []),
-      ]),
-    ]
-      .filter(Boolean)
-      .join(", ")
+    // 选择器可能随 SPA 路由变化（如 ChatGPT 进出 Codex 任务页），路径变了先重建缓存
+    if ((window.location?.pathname ?? "") !== this.panelAvoidanceSelectorPathname) {
+      this.rebuildPanelAvoidanceMutationSelectors()
+    }
+    const contentSelector = this.panelAvoidanceContentSelector
+    const layoutSelector = this.panelAvoidanceLayoutSelector
 
     const affectsLayout = mutations.some((mutation) => {
       const target =
@@ -2024,6 +2041,10 @@ html.${AUTO_HIDE_FLOAT_CLASS} ${config.scrollContainer}::after {
       this.syncZenModeRootClass()
     }
 
+    // 仅 Shadow DOM 站点（当前仅 Gemini Enterprise）存在注入目标；
+    // 其余站点跳过，避免每秒一次的全 DOM 递归遍历
+    if (!this.siteAdapter.usesShadowDOM()) return
+
     const siteAdapter = this.siteAdapter
 
     DOMToolkit.walkShadowRoots((shadowRoot, host) => {
@@ -2098,6 +2119,9 @@ html.${AUTO_HIDE_FLOAT_CLASS} ${config.scrollContainer}::after {
 
   private syncPanelAvoidanceShadowStyles() {
     if (!document.body) return
+
+    // 非 Shadow DOM 站点没有注入目标，跳过全 DOM 递归遍历
+    if (!this.siteAdapter.usesShadowDOM()) return
 
     const siteAdapter = this.siteAdapter
     DOMToolkit.walkShadowRoots((shadowRoot, host) => {

@@ -292,6 +292,9 @@ export class InlineBookmarkManager {
       childList: true,
       subtree: true,
       characterData: true,
+      // characterData 必须保留：React 系站点（ChatGPT/Gemini）对已有文本节点的
+      // 原地更新只产生 characterData；虚拟滚动复用节点同理。去掉会导致图标签名
+      // 陈旧（点击生成幽灵收藏）或图标缺失。
     })
   }
 
