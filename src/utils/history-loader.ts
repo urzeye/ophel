@@ -124,7 +124,13 @@ export async function loadHistoryUntil(options: LoadHistoryOptions): Promise<Loa
 
   // 站点无服务端历史懒加载（全量渲染或纯前端虚拟滚动）：
   // 上面的 smartScrollToTop 已滚动到位，跳过固定轮询等待（每轮约 1.2s）
-  if (adapter && !adapter.needsHistoryLazyLoad()) {
+  // 内容尚未就绪（页面刚打开仍在渲染）时不短路，保留下方循环的等待行为，
+  // 避免阅读位置恢复在内容渲染完成前跳转被钳制到错误位置
+  if (
+    adapter &&
+    !adapter.needsHistoryLazyLoad() &&
+    container.scrollHeight > container.clientHeight + 100
+  ) {
     return {
       success: true,
       finalHeight: container.scrollHeight,
