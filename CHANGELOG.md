@@ -15,6 +15,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **Quick jumps after scrolling to top** — Clicking "Scroll to Bottom" or "Return to Anchor" while earlier history is still loading after "Scroll to Top" now stops the loading and responds immediately, instead of ignoring the click for about a second. (#948)
 - **Faster jumps to top** — On sites where the conversation is already fully available locally (e.g. DeepSeek, Doubao, Claude), "Scroll to Top" now completes right away instead of waiting about a second for an unnecessary history-loading check. (#948)
 
+### 🐛 Bug Fixes
+
+- **"Show User Queries" toggle** — On pages without user questions (new chats, Gemini Canvas or Deep Research documents), the outline toggle always appeared off and clicking it seemed to do nothing until switching to another conversation; the toggle now always shows its real state and responds immediately. (#951)
+
 ---
 
 ## [1.2.8][1.2.8] - 2026-09-21

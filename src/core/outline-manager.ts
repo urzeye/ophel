@@ -757,7 +757,9 @@ export class OutlineManager {
       expandLevel: this.expandLevel,
       levelCounts: this.levelCounts,
       isAllExpanded: this.isAllExpanded,
-      includeUserQueries: this.settings.showUserQueries && hasUserQueries,
+      // 开关状态只反映设置值；当前源是否有用户提问仅影响层级钳制，
+      // 否则在无用户提问的页面按钮会恒为未选中且点击看似无响应
+      includeUserQueries: this.settings.showUserQueries,
       minRelativeLevel,
       displayLevel,
       searchLevelManual: this.searchLevelManual,

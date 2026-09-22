@@ -113,7 +113,8 @@ describe("OutlineManager document source and user query handling", () => {
     expect(state.expandLevel).toBe(6)
     expect(state.displayLevel).toBe(6)
     expect(state.minRelativeLevel).toBe(1)
-    expect(state.includeUserQueries).toBe(false)
+    // 开关状态跟随设置值，不受当前源是否有用户提问影响
+    expect(state.includeUserQueries).toBe(true)
   })
 
   it("clamps minRelativeLevel and minDisplayLevel to 1 when current source has no user queries", () => {
@@ -153,9 +154,52 @@ describe("OutlineManager document source and user query handling", () => {
 
     const state = manager.getState()
     expect(state.minRelativeLevel).toBe(1)
-    expect(state.includeUserQueries).toBe(false)
+    expect(state.includeUserQueries).toBe(true)
     expect(state.tree.length).toBeGreaterThan(0)
     // 树中根节点为 level 1，由于 minRelativeLevel 是 1，relativeLevel 为 1 的根节点正常显示
     expect(state.tree[0].relativeLevel).toBe(1)
+  })
+
+  it("toggles showUserQueries immediately on sources without user queries", () => {
+    const documentItems: OutlineItem[] = [
+      { level: 1, text: "Document Title", element: null },
+      { level: 2, text: "Document Section", element: null },
+    ]
+
+    const adapter = {
+      getSiteId: () => "gemini",
+      getSessionId: () => "sess-1",
+      getOutlineSources: () => [],
+      extractOutlineForSource: () => documentItems,
+      getScrollContainer: () => null,
+      getOutlineScrollContainer: () => null,
+      resolveOutlineTarget: async () => null,
+      scrollToOutlineSourceTarget: () => {},
+      supportsDynamicOutlineSources: () => false,
+      getOutlineSourcesSignature: () => "",
+      isGenerating: () => false,
+      usesPeriodicOutlineRefreshFallback: () => false,
+      getObserveTarget: () => null,
+    } as unknown as SiteAdapter
+
+    const settings: Settings["features"]["outline"] = {
+      ...DEFAULT_SETTINGS.features.outline,
+      showUserQueries: true,
+    }
+
+    const manager = new OutlineManager(adapter, settings)
+    manager.setActive(true)
+    manager.refresh(undefined, true)
+
+    // 开启状态：即使当前源没有用户提问，按钮也应显示为选中
+    expect(manager.getState().includeUserQueries).toBe(true)
+
+    // 点击关闭：状态立即翻转，而不是看起来“没反应”
+    manager.toggleGroupMode()
+    expect(manager.getState().includeUserQueries).toBe(false)
+
+    // 再次点击恢复
+    manager.toggleGroupMode()
+    expect(manager.getState().includeUserQueries).toBe(true)
   })
 })
