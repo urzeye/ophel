@@ -1351,11 +1351,6 @@ export class ChatGPTAdapter extends SiteAdapter {
 
   // ==================== 滚动容器 ====================
 
-  /** 会话历史已全部在客户端（仅渲染虚拟化），无服务端历史懒加载 */
-  needsHistoryLazyLoad(): boolean {
-    return false
-  }
-
   getScrollContainer(): HTMLElement | null {
     // ChatGPT 聊天内容的滚动容器
     // 查找具有 scrollbar-gutter 样式的 div，或父元素带有 @container/main 的子元素

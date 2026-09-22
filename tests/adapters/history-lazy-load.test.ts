@@ -30,10 +30,11 @@ describe("needsHistoryLazyLoad", () => {
     expect(new GeminiEnterpriseAdapter().needsHistoryLazyLoad()).toBe(true)
     expect(new QianwenAdapter().needsHistoryLazyLoad()).toBe(true)
     expect(new QwenAiAdapter().needsHistoryLazyLoad()).toBe(true)
+    // ChatGPT 长对话的早期轮次随向上滚动分页加载（conversation-turn-N > 1）
+    expect(new ChatGPTAdapter().needsHistoryLazyLoad()).toBe(true)
   })
 
   it("is disabled for full-render or client-virtualized sites", () => {
-    expect(new ChatGPTAdapter().needsHistoryLazyLoad()).toBe(false)
     expect(new ClaudeAdapter().needsHistoryLazyLoad()).toBe(false)
     expect(new DeepSeekAdapter().needsHistoryLazyLoad()).toBe(false)
     expect(new DoubaoAdapter().needsHistoryLazyLoad()).toBe(false)
