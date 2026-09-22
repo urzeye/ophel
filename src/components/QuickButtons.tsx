@@ -630,13 +630,14 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
 
   // 滚动到顶部（支持图文并茂模式）
   const scrollToTop = useCallback(async () => {
-    await withAnchorOp(async () => {
+    await withAnchorOp(async (signal) => {
       // 遮罩延迟显示
       const OVERLAY_DELAY_MS = 1600
       abortLoadingRef.current = false
 
-      // 创建 AbortController 用于中断
+      // 创建 AbortController 用于中断；锁被新锚点操作抢占时同步中断加载
       const abortController = new AbortController()
+      signal.addEventListener("abort", () => abortController.abort(), { once: true })
       const checkAbort = () => {
         if (abortLoadingRef.current) {
           abortController.abort()

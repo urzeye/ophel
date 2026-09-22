@@ -17,17 +17,38 @@ const listeners = new Set<Listener>()
  * 「读取当前位置 → 异步滚动 → 写回锚点」的非原子序列，
  * 中间的 await 会让第二次调用读到被第一次改过的状态，
  * 导致两个锚点塌缩成同一个位置（快速连点后锚点卡死）。
- * 该锁确保同一时刻只有一个锚点操作在飞；在飞期间的新触发直接忽略。
+ *
+ * 该锁确保同一时刻只有一个锚点操作在飞。在飞期间的新触发采用
+ * 抢占语义：中断旧操作（通过 signal）、等待其完全退出后再执行新操作，
+ * 避免去顶部的历史懒加载（每轮固定等待约 1.2s）持锁期间吞掉后续点击。
  */
-let anchorOpInFlight = false
+interface RunningAnchorOp {
+  abort: AbortController
+  done: Promise<void>
+}
 
-export async function withAnchorOp<T>(fn: () => Promise<T>): Promise<T | null> {
-  if (anchorOpInFlight) return null
-  anchorOpInFlight = true
+let runningAnchorOp: RunningAnchorOp | null = null
+
+export async function withAnchorOp<T>(fn: (signal: AbortSignal) => Promise<T>): Promise<T> {
+  // 抢占并等待旧操作完全退出；循环是因为等待期间可能又有更新的操作抢先进来
+  while (runningAnchorOp) {
+    runningAnchorOp.abort.abort()
+    await runningAnchorOp.done
+  }
+
+  const abort = new AbortController()
+  let markDone!: () => void
+  const done = new Promise<void>((resolve) => {
+    markDone = resolve
+  })
+  const self: RunningAnchorOp = { abort, done }
+  runningAnchorOp = self
+
   try {
-    return await fn()
+    return await fn(abort.signal)
   } finally {
-    anchorOpInFlight = false
+    if (runningAnchorOp === self) runningAnchorOp = null
+    markDone()
   }
 }
 

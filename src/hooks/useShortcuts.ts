@@ -105,7 +105,7 @@ export function useShortcuts({
   const scrollToTop = useCallback(async () => {
     if (!adapter) return
 
-    await withAnchorOp(async () => {
+    await withAnchorOp(async (signal) => {
       // 保存锚点到全局存储
       const scrollInfo = await getScrollInfo(adapter)
       // 已在顶部时不覆盖锚点，避免重复点击丢失原位置
@@ -115,7 +115,12 @@ export function useShortcuts({
         adapter,
         loadAll: true,
         allowShortCircuit: true,
+        signal,
       })
+
+      // 被新锚点操作抢占时，用户已离开顶部，不再回滚或提示
+      if (signal.aborted) return
+
       await smartScrollToTop(adapter)
 
       showToast(t("scrolledToTop"))

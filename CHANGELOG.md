@@ -12,6 +12,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 ### ✨ Improvements
 
 - **Long conversation and streaming performance** — Reduced background scans and repeated calculations during long conversations and live AI replies across all sites, easing stutter when scrolling and typing. (#947)
+- **Quick jumps after scrolling to top** — Clicking "Scroll to Bottom" or "Return to Anchor" while earlier history is still loading after "Scroll to Top" now stops the loading and responds immediately, instead of ignoring the click for about a second.
 
 ---
 
