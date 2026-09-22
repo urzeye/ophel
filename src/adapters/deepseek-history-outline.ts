@@ -31,6 +31,7 @@ interface DeepSeekHistoryMessage {
   message_id?: unknown
   parent_id?: unknown
   role?: unknown
+  content?: unknown
   fragments?: unknown
 }
 
@@ -110,10 +111,18 @@ export function parseDeepSeekHistoryOutline(
     assistantIdByQueryIndex.set(queryCount, messageId)
 
     const fragments = asObjectArray<DeepSeekHistoryFragment>(message.fragments)
-    const markdown = fragments
+    const fragmentMarkdown = fragments
       .filter((fragment) => fragment.type === "RESPONSE" && typeof fragment.content === "string")
       .map((fragment) => fragment.content as string)
       .join("\n\n")
+    // 当前版本的接口直接在 message.content 返回回复 markdown
+    // （思考链在独立的 thinking_content 字段，不参与标题解析）；
+    // 早期版本走 fragments，仅取 RESPONSE 片段。
+    const markdown = fragmentMarkdown.trim()
+      ? fragmentMarkdown
+      : typeof message.content === "string"
+        ? message.content
+        : ""
     if (!markdown.trim()) continue
 
     const headings = parseMarkdownHeadings(markdown, maxLevel)

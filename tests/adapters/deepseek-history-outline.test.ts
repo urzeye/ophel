@@ -116,4 +116,33 @@ describe("parseDeepSeekHistoryOutline", () => {
     const data = parseDeepSeekHistoryOutline(payload, 2)!
     expect(data.headingsByAssistantId.get(2)).toEqual([{ level: 1, text: "一" }])
   })
+
+  it("reads markdown from message.content when the response has no fragments", () => {
+    // 当前版本接口的真实结构：回复 markdown 直接在 content 字段，
+    // 思考链在独立的 thinking_content，无 fragments 数组
+    const payload = {
+      code: 0,
+      data: {
+        biz_code: 0,
+        biz_data: {
+          chat_session: { id: "session-1", version: 3, current_message_id: 2 },
+          chat_messages: [
+            { message_id: 1, parent_id: null, role: "USER", content: "问题一" },
+            {
+              message_id: 2,
+              parent_id: 1,
+              role: "ASSISTANT",
+              content: "## 结论\n正文",
+              thinking_content: "# 思考标题不应出现",
+            },
+          ],
+        },
+      },
+    }
+
+    const data = parseDeepSeekHistoryOutline(payload)!
+    expect(data.branchMessageIds).toEqual([1, 2])
+    expect(data.headingsByAssistantId.get(2)).toEqual([{ level: 2, text: "结论" }])
+    expect(data.queryIndexByAssistantId.get(2)).toBe(1)
+  })
 })
