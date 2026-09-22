@@ -38,12 +38,12 @@ afterEach(() => {
 })
 
 describe("DeepSeek built-in config and new chat selectors", () => {
-  it("increments DEEPSEEK_CONFIG_VERSION to 3 to invalidate obsolete patches", () => {
-    expect(DEEPSEEK_CONFIG_VERSION).toBe(3)
+  it("increments DEEPSEEK_CONFIG_VERSION to 4 to invalidate obsolete patches", () => {
+    expect(DEEPSEEK_CONFIG_VERSION).toBe(4)
     const descriptor = resolveBuiltinConfig(SITE_IDS.DEEPSEEK)
     expect(descriptor).toEqual({
       siteId: SITE_IDS.DEEPSEEK,
-      configVersion: 3,
+      configVersion: 4,
       baseConfig: DEEPSEEK_CONFIG,
     })
   })

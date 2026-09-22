@@ -93,7 +93,7 @@ export interface ClaudeSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const CLAUDE_CONFIG_VERSION = 6
+export const CLAUDE_CONFIG_VERSION = 7
 
 const createClaudeConfig = (): ClaudeSiteConfig => {
   // dframe 布局中侧栏列表容器是 div#frame-peek-popover（不再是 nav），

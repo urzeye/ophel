@@ -38,12 +38,12 @@ afterEach(() => {
 })
 
 describe("Doubao built-in config and new chat selectors", () => {
-  it("increments DOUBAO_CONFIG_VERSION to 7 to invalidate obsolete patches", () => {
-    expect(DOUBAO_CONFIG_VERSION).toBe(7)
+  it("increments DOUBAO_CONFIG_VERSION to 8 to invalidate obsolete patches", () => {
+    expect(DOUBAO_CONFIG_VERSION).toBe(8)
     const descriptor = resolveBuiltinConfig(SITE_IDS.DOUBAO)
     expect(descriptor).toEqual({
       siteId: SITE_IDS.DOUBAO,
-      configVersion: 7,
+      configVersion: 8,
       baseConfig: DOUBAO_CONFIG,
     })
     expect(DOUBAO_CONFIG.supportsHostThemeSync).toBe(true)

@@ -80,7 +80,7 @@ export interface GeminiEnterpriseSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const GEMINI_ENTERPRISE_CONFIG_VERSION = 2
+export const GEMINI_ENTERPRISE_CONFIG_VERSION = 3
 
 const createGeminiEnterpriseConfig = (): GeminiEnterpriseSiteConfig => {
   const conversationItem = ".conversation"
