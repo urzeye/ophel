@@ -1085,12 +1085,20 @@ export abstract class SiteAdapter {
     return document.querySelector(selector)
   }
 
-  /** 获取聊天内容元素的选择器列表 */
+  /**
+   * 获取聊天内容元素的选择器列表。
+   * 约束：返回值只允许随 location.pathname 变化——LayoutManager 的避让
+   * mutation 选择器按 pathname 缓存失效；若需要依赖 search/hash/DOM 状态，
+   * 必须同步更新 LayoutManager 的缓存失效逻辑。
+   */
   getChatContentSelectors(): string[] {
     return []
   }
 
-  /** 获取用户提问元素的选择器 */
+  /**
+   * 获取用户提问元素的选择器。
+   * 约束同 getChatContentSelectors：只允许随 location.pathname 变化。
+   */
   getUserQuerySelector(): string | null {
     return null
   }
