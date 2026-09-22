@@ -1232,6 +1232,36 @@
   display: block;
 }
 
+/* 大纲空态的更新日志横幅：仅升级后未读时显示，点击打开更新日志 */
+.outline-release-banner {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 6px 14px;
+  font-size: 12px;
+  line-height: 1.4;
+  border-radius: 999px;
+  cursor: pointer;
+  color: var(--gh-primary, #4285f4);
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 35%, transparent);
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.outline-release-banner:hover {
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 18%, transparent);
+  border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 55%, transparent);
+}
+
+.outline-release-banner:focus-visible {
+  outline: 2px solid var(--gh-primary, #4285f4);
+  outline-offset: 1px;
+}
+
 /* 大纲树容器 - 隐藏滚动条 */
 .gh-outline-tree-container {
   scrollbar-width: none; /* Firefox */

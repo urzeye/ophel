@@ -813,6 +813,7 @@ export const ru = {
   notificationBody: "Нажмите, чтобы увидеть",
   tabOutline: "Содержание",
   outlineEmpty: "Пусто",
+  outlineReleaseBanner: "Обновлено до v{version} — смотреть новшества",
   outlineEmptyDescDefault: "Пункты содержания появятся автоматически по мере развития диалога.",
   outlineEmptyDescUserQueryOnly:
     "Сейчас отображаются только вопросы пользователя. Отправьте сообщение, чтобы появились пункты содержания.",

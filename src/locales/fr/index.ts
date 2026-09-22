@@ -819,6 +819,7 @@ export const fr = {
   notificationBody: "Cliquez pour voir le résultat",
   tabOutline: "Sommaire",
   outlineEmpty: "Aucun contenu",
+  outlineReleaseBanner: "Mis à jour vers v{version} — découvrez les nouveautés",
   outlineEmptyDescDefault: "Les éléments du sommaire apparaîtront au fil de la conversation.",
   outlineEmptyDescUserQueryOnly:
     "Seules les questions utilisateur sont affichées pour le moment. Envoyez un message pour générer le sommaire.",

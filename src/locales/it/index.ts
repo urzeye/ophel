@@ -890,6 +890,7 @@ export const it = {
   notificationBody: "Fare clic per visualizzare i risultati",
   tabOutline: "Contorno",
   outlineEmpty: "Nessun contenuto di contorno",
+  outlineReleaseBanner: "Aggiornato alla v{version} — scopri le novità",
   outlineEmptyDescDefault:
     "Gli elementi della struttura appariranno man mano che la conversazione cresce.",
   outlineEmptyDescUserQueryOnly:

@@ -17,11 +17,13 @@ import {
   ScrollBottomIcon,
   ScrollTopIcon,
   SearchIcon,
+  SparkleIcon,
   StarIcon,
   UserQueryIcon,
 } from "~components/icons"
 import { Tooltip } from "~components/ui/Tooltip"
 import type { ConversationManager } from "~core/conversation-manager"
+import { useHasUnseenReleaseNotes } from "~hooks/useHasUnseenReleaseNotes"
 import { signalReadingHistoryUserNavigation } from "~utils/reading-history-navigation"
 import type { OutlineManager, OutlineNode } from "~core/outline-manager"
 import type { OutlineSource } from "~adapters/base"
@@ -32,6 +34,7 @@ import {
 } from "~utils/export-outline"
 import { cleanOutlineTitle } from "~utils/outline-text"
 import { t, getCurrentLang } from "~utils/i18n"
+import { APP_VERSION } from "~utils/config"
 import { formatWordCount } from "~utils/format"
 import { showToast } from "~utils/toast"
 
@@ -725,6 +728,13 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
   const currentSettings = settings
   const isMac = React.useMemo(() => isMacOS(), [])
   const shortcutNotSetLabel = t("shortcutNotSet")
+
+  // 当前版本更新日志未读时，在主空态显示更新横幅
+  const hasUnseenReleaseNotes = useHasUnseenReleaseNotes()
+
+  const openReleaseNotesFromBanner = useCallback(() => {
+    window.dispatchEvent(new CustomEvent("ophel:openReleaseNotes"))
+  }, [])
 
   const structuredTips = React.useMemo(
     () => buildStructuredTips(currentSettings.shortcuts?.keybindings, isMac, shortcutNotSetLabel),
@@ -2210,6 +2220,16 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
                     </span>
                   )}
                 </div>
+
+                {hasUnseenReleaseNotes && (
+                  <button
+                    type="button"
+                    className="outline-release-banner gh-interactive"
+                    onClick={openReleaseNotesFromBanner}>
+                    <SparkleIcon size={13} color="currentColor" />
+                    <span>{t("outlineReleaseBanner", { version: APP_VERSION })}</span>
+                  </button>
+                )}
 
                 <div
                   style={{

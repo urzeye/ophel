@@ -795,6 +795,7 @@ export const zhCN = {
   // 大纲功能
   tabOutline: "大纲",
   outlineEmpty: "暂无大纲内容",
+  outlineReleaseBanner: "已更新到 v{version}，看看有什么新内容",
   outlineEmptyDescDefault: "开始对话后将自动生成大纲",
   outlineEmptyDescUserQueryOnly: "当前仅显示用户提问，发送消息后将出现大纲内容",
   outlineCopyFull: "复制大纲",

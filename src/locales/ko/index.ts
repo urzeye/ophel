@@ -812,6 +812,7 @@ export const ko = {
   notificationBody: "클릭하여 결과 보기",
   tabOutline: "개요",
   outlineEmpty: "개요 내용 없음",
+  outlineReleaseBanner: "v{version}로 업데이트 — 새로운 기능 확인",
   outlineEmptyDescDefault: "대화가 진행되면 개요 항목이 자동으로 표시됩니다.",
   outlineEmptyDescUserQueryOnly:
     "현재 사용자 질문만 표시 중입니다. 메시지를 보내면 개요 항목이 생성됩니다.",

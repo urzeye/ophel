@@ -817,6 +817,7 @@ export const es = {
   notificationBody: "Clic para ver resultado",
   tabOutline: "Índice",
   outlineEmpty: "Sin contenido",
+  outlineReleaseBanner: "Actualizado a v{version} — descubre las novedades",
   outlineEmptyDescDefault:
     "Los elementos del índice aparecerán automáticamente a medida que avance la conversación.",
   outlineEmptyDescUserQueryOnly:

@@ -818,6 +818,7 @@ export const de = {
   notificationBody: "Klicken zum Ansehen",
   tabOutline: "Verzeichnis",
   outlineEmpty: "Kein Inhalt",
+  outlineReleaseBanner: "Aktualisiert auf v{version} — Neuigkeiten ansehen",
   outlineEmptyDescDefault: "Verzeichnispunkte erscheinen automatisch, sobald das Gespräch wächst.",
   outlineEmptyDescUserQueryOnly:
     "Derzeit werden nur Nutzerfragen angezeigt. Senden Sie eine Nachricht, um Verzeichnispunkte zu erzeugen.",

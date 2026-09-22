@@ -2209,6 +2209,18 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
     }
   }, [openGlobalSettingsSearch])
 
+  // 空态横幅等入口请求打开更新日志
+  useEffect(() => {
+    const handleOpenReleaseNotesEvent = () => {
+      openReleaseNotes()
+    }
+
+    window.addEventListener("ophel:openReleaseNotes", handleOpenReleaseNotesEvent)
+    return () => {
+      window.removeEventListener("ophel:openReleaseNotes", handleOpenReleaseNotesEvent)
+    }
+  }, [openReleaseNotes])
+
   useEffect(() => {
     if (!isGlobalSettingsSearchOpen || !showGlobalSearchSyntaxHelp) {
       return

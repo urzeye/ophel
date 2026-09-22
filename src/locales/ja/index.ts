@@ -827,6 +827,7 @@ export const ja = {
   notificationBody: "クリックして結果を確認してください",
   tabOutline: "目次",
   outlineEmpty: "目次データがありません",
+  outlineReleaseBanner: "v{version} に更新 — 新機能をチェック",
   outlineEmptyDescDefault: "会話が進むと目次項目が自動で表示されます。",
   outlineEmptyDescUserQueryOnly:
     "現在はユーザーの質問のみ表示中です。メッセージ送信後に目次項目が表示されます。",

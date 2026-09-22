@@ -862,6 +862,7 @@ export const en = {
   notificationBody: "Click to view results",
   tabOutline: "Outline",
   outlineEmpty: "No outline content",
+  outlineReleaseBanner: "Updated to v{version} — see what's new",
   outlineEmptyDescDefault: "Outline items will appear as the chat grows.",
   outlineEmptyDescUserQueryOnly:
     "Only user queries are shown right now. Send a message to generate outline items.",
