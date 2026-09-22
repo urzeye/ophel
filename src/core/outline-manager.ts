@@ -268,8 +268,19 @@ export class OutlineManager {
   private routeChangeVersion = 0
 
   private handleMessage(event: MessageEvent) {
-    if (event.source !== window) return
     const { type } = event.data || {}
+
+    // 油猴沙箱中 event.source 可能是代理对象而非 window 本身（与 network-monitor
+    // 的放宽校验一致）；该事件仅触发一次刷新，无安全风险，按类型放行
+    if (type === EVENT_OUTLINE_DATA_UPDATED) {
+      // 适配器从站外数据源（如 DeepSeek 历史消息接口）补齐了大纲数据
+      if (this.isActive) {
+        this.refresh()
+      }
+      return
+    }
+
+    if (event.source !== window) return
 
     if (type === EVENT_MONITOR_START) {
       if (this.settings.autoUpdate) {
@@ -279,11 +290,6 @@ export class OutlineManager {
       this.stopAutoUpdate()
       // Final refresh
       this.refresh()
-    } else if (type === EVENT_OUTLINE_DATA_UPDATED) {
-      // 适配器从站外数据源（如 DeepSeek 历史消息接口）补齐了大纲数据
-      if (this.isActive) {
-        this.refresh()
-      }
     }
   }
 
