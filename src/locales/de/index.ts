@@ -374,8 +374,10 @@ export const de = {
   snapToEdge: "Am Rand andocken",
   tip1: "{modifier} gedrückt halten für Durchreichmodus – Inhalte unter dem Panel bedienen",
 
-  tip3: "{shortcut} zeigt alle Tastaturkürzel",
-  tip4: "{shortcut} öffnet die globale Suche (folder: tag: level: Syntax)",
+  tip3: "{shortcut} zeigt {link}",
+  tip4: "{shortcut} öffnet die {link} und findet alles",
+  tipGlobalSearchLink: "globale Suche",
+  tipShortcutsLink: "alle Tastaturkürzel",
   tip5: "Installiere Pakete über {sitePacks}, um Ophel auf weiteren KI-Seiten zu nutzen",
   tip6: "{shortcut} springt zwischen Gliederungsüberschriften",
   edit: "Bearbeiten",

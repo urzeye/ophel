@@ -375,8 +375,10 @@ export const pt = {
   snapToEdge: "Fixar na borda",
   tip1: "Segure {modifier} para modo transparente e interagir com o conteúdo abaixo",
 
-  tip3: "{shortcut} mostra todos os atalhos de teclado",
-  tip4: "{shortcut} abre a busca global (sintaxe folder: tag: level:)",
+  tip3: "{shortcut} mostra {link}",
+  tip4: "{shortcut} abre {link} para encontrar qualquer conteúdo",
+  tipGlobalSearchLink: "a busca global",
+  tipShortcutsLink: "todos os atalhos de teclado",
   tip5: "Instale pacotes em {sitePacks} para usar o Ophel em mais sites de IA",
   tip6: "{shortcut} navega entre os títulos do esquema",
   edit: "Editar",

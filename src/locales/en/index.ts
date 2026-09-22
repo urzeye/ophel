@@ -379,8 +379,10 @@ export const en = {
   snapToEdge: "Snap to edge",
   tip1: "Long press {modifier} to enter passthrough mode and interact with content beneath the panel",
 
-  tip3: "Press {shortcut} to view all keyboard shortcuts",
-  tip4: "{shortcut} opens global search with folder: tag: level: syntax",
+  tip3: "Press {shortcut} to view {link}",
+  tip4: "{shortcut} opens {link} to find anything",
+  tipGlobalSearchLink: "global search",
+  tipShortcutsLink: "all keyboard shortcuts",
   tip5: "Install packs in {sitePacks} to bring Ophel to more AI sites",
   tip6: "{shortcut} to jump between outline headings",
   edit: "Edit",

@@ -372,8 +372,10 @@ export const ru = {
   snapToEdge: "Прикрепить к краю",
   tip1: "Удерживайте {modifier} для режима прозрачности — взаимодействие с контентом под панелью",
 
-  tip3: "{shortcut} показывает все горячие клавиши",
-  tip4: "{shortcut} — глобальный поиск (folder: tag: level:)",
+  tip3: "{shortcut} показывает {link}",
+  tip4: "{shortcut} — {link} по всему содержимому",
+  tipGlobalSearchLink: "глобальный поиск",
+  tipShortcutsLink: "все горячие клавиши",
   tip5: "Устанавливайте пакеты в разделе {sitePacks}, чтобы использовать Ophel на других ИИ-сайтах",
   tip6: "{shortcut} переход между заголовками оглавления",
   edit: "Изм.",

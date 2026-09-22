@@ -379,8 +379,10 @@ export const ja = {
   snapToEdge: "端にスナップ",
   tip1: "{modifier} を長押しで透過モード、パネルの下のコンテンツを操作可能",
 
-  tip3: "{shortcut} で全ショートカットを表示",
-  tip4: "{shortcut} でグローバル検索（folder: tag: level: 構文対応）",
+  tip3: "{shortcut} で{link}を表示",
+  tip4: "{shortcut} で{link}ですべてを検索",
+  tipGlobalSearchLink: "グローバル検索",
+  tipShortcutsLink: "全ショートカット",
   tip5: "{sitePacks}からインストールして、さらに多くのAIサイトでOphelを使えます",
   tip6: "{shortcut} でアウトラインの見出し間を移動",
   edit: "編集",

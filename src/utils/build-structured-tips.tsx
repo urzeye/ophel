@@ -7,39 +7,78 @@ import { t } from "~utils/i18n"
 
 type TipItem = { icon: string; text: React.ReactNode }
 
-function renderTip(transKey: string, placeholderName: string, kbValue: string): React.ReactNode {
-  const raw = t(transKey, { [placeholderName]: "___SC___" })
-  const parts = raw.split("___SC___")
-  if (parts.length === 1) return parts[0]
+const SC_MARK = "___SC___"
+const LINK_MARK = "___LINK___"
+
+function ShortcutChip({ value }: { value: string }) {
+  return (
+    <span
+      style={{
+        fontFamily: "monospace",
+        background: "var(--gh-bg-secondary, #f3f4f6)",
+        border: "1px solid var(--gh-border, #e5e7eb)",
+        padding: "2px 6px",
+        borderRadius: "4px",
+        fontSize: "11px",
+        fontWeight: 500,
+        color: "var(--gh-text, #1f2937)",
+        display: "inline-flex",
+        alignItems: "center",
+        margin: "0 4px",
+        verticalAlign: "bottom",
+      }}>
+      {value}
+    </span>
+  )
+}
+
+// 把文本中的 SC_MARK 占位渲染为快捷键 chip
+function renderWithShortcut(text: string, kbValue: string): React.ReactNode {
+  const parts = text.split(SC_MARK)
+  if (parts.length === 1) return text
   return (
     <span style={{ display: "inline" }}>
       {parts[0]}
-      <span
-        style={{
-          fontFamily: "monospace",
-          background: "var(--gh-bg-secondary, #f3f4f6)",
-          border: "1px solid var(--gh-border, #e5e7eb)",
-          padding: "2px 6px",
-          borderRadius: "4px",
-          fontSize: "11px",
-          fontWeight: 500,
-          color: "var(--gh-text, #1f2937)",
-          display: "inline-flex",
-          alignItems: "center",
-          margin: "0 4px",
-          verticalAlign: "bottom",
-        }}>
-        {kbValue}
-      </span>
+      <ShortcutChip value={kbValue} />
       {parts[1]}
+    </span>
+  )
+}
+
+function renderTip(transKey: string, placeholderName: string, kbValue: string): React.ReactNode {
+  return renderWithShortcut(t(transKey, { [placeholderName]: SC_MARK }), kbValue)
+}
+
+// 渲染同时包含快捷键 chip 和可点击链接的提示，链接文案取 linkLabelKey
+function renderLinkedTip(
+  transKey: string,
+  linkLabelKey: string,
+  kbValue: string,
+  onClick: () => void,
+): React.ReactNode {
+  const raw = t(transKey, { shortcut: SC_MARK, link: LINK_MARK })
+  const parts = raw.split(LINK_MARK)
+
+  const link = (
+    <button type="button" className="gh-tip-link" onClick={onClick}>
+      {t(linkLabelKey)}
+    </button>
+  )
+
+  if (parts.length === 1) return link
+  return (
+    <span style={{ display: "inline" }}>
+      {renderWithShortcut(parts[0], kbValue)}
+      {link}
+      {renderWithShortcut(parts[1], kbValue)}
     </span>
   )
 }
 
 // 「适配中心」提示中的链接：点击打开设置弹窗并跳到在线适配库
 function renderSitePacksTip(): React.ReactNode {
-  const raw = t("tip5", { sitePacks: "___LINK___" })
-  const parts = raw.split("___LINK___")
+  const raw = t("tip5", { sitePacks: LINK_MARK })
+  const parts = raw.split(LINK_MARK)
 
   const openSitePacksRegistry = () => {
     window.dispatchEvent(
@@ -95,6 +134,20 @@ export function buildStructuredTips(
 
   const panelModeShortcut = fmtOrNull("togglePanelMode")
 
+  // 打开全局搜索弹窗
+  const openGlobalSearch = () => {
+    window.dispatchEvent(new CustomEvent("ophel:openSettingsSearch"))
+  }
+
+  // 打开设置弹窗并跳到快捷键位页面
+  const openShortcutsSettings = () => {
+    window.dispatchEvent(
+      new CustomEvent("ophel:navigateSettingsPage", {
+        detail: { page: NAV_IDS.SHORTCUTS },
+      }),
+    )
+  }
+
   return [
     { icon: "👻", text: renderTip("tip1", "modifier", isMac ? "⌘ Cmd" : "Ctrl") },
     { icon: "🧩", text: renderSitePacksTip() },
@@ -104,8 +157,24 @@ export function buildStructuredTips(
         ? renderTip("featureTip-panel-mode-toggle-path", "shortcut", panelModeShortcut)
         : t("featureTip-panel-mode-toggle-path-dblclick"),
     },
-    { icon: "🔍", text: renderTip("tip4", "shortcut", fmt("openGlobalSearch")) },
-    { icon: "🚀", text: renderTip("tip3", "shortcut", fmt("showShortcuts")) },
+    {
+      icon: "🔍",
+      text: renderLinkedTip(
+        "tip4",
+        "tipGlobalSearchLink",
+        fmt("openGlobalSearch"),
+        openGlobalSearch,
+      ),
+    },
+    {
+      icon: "🚀",
+      text: renderLinkedTip(
+        "tip3",
+        "tipShortcutsLink",
+        fmt("showShortcuts"),
+        openShortcutsSettings,
+      ),
+    },
     {
       icon: "🧭",
       text: renderTip("tip6", "shortcut", fmt("prevHeading") + "/" + fmt("nextHeading")),

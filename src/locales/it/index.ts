@@ -388,8 +388,10 @@ export const it = {
   snapToEdge: "Aggancia al bordo",
   tip1: "Premi a lungo {modifier} per accedere alla modalità passthrough e interagire con i contenuti sotto il pannello",
 
-  tip3: "Premi {shortcut} per visualizzare tutte le scorciatoie da tastiera",
-  tip4: "{shortcut} apre la ricerca globale con la sintassi folder: tag: level:",
+  tip3: "Premi {shortcut} per visualizzare {link}",
+  tip4: "{shortcut} apre {link} per trovare qualsiasi contenuto",
+  tipGlobalSearchLink: "la ricerca globale",
+  tipShortcutsLink: "tutte le scorciatoie da tastiera",
   tip5: "Installa pacchetti in {sitePacks} per usare Ophel su più siti di IA",
   tip6: "{shortcut} per passare da un titolo all'altro",
   edit: "Modifica",
