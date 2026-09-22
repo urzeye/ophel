@@ -476,6 +476,8 @@ export class AIStudioAdapter extends SiteAdapter {
     }
   }
 
+  // ==================== 滚动容器 ====================
+
   getScrollContainer(): HTMLElement | null {
     for (const selector of this.config.selectors.scrollContainer) {
       const container = document.querySelector(selector) as HTMLElement

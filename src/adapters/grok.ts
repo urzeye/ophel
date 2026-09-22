@@ -1383,6 +1383,8 @@ export class GrokAdapter extends SiteAdapter {
     }
   }
 
+  // ==================== 滚动容器 ====================
+
   getScrollContainer(): HTMLElement | null {
     // 主内容区域的滚动容器
     const main = document.querySelector(this.config.selectors.responseContainer)
