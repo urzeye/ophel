@@ -11,7 +11,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### ✨ Improvements
 
-- **Long conversation and streaming performance** — Reduced background scans and repeated calculations during long conversations and live AI replies across all sites, easing stutter when scrolling and typing.
+- **Long conversation and streaming performance** — Reduced background scans and repeated calculations during long conversations and live AI replies across all sites, easing stutter when scrolling and typing. (#947)
 
 ---
 
