@@ -122,6 +122,19 @@ export async function loadHistoryUntil(options: LoadHistoryOptions): Promise<Loa
     }
   }
 
+  // 站点无服务端历史懒加载（全量渲染或纯前端虚拟滚动）：
+  // 上面的 smartScrollToTop 已滚动到位，跳过固定轮询等待（每轮约 1.2s）
+  if (adapter && !adapter.needsHistoryLazyLoad()) {
+    return {
+      success: true,
+      finalHeight: container.scrollHeight,
+      heightAdded: 0,
+      previousScrollTop,
+      isFlutterMode: false,
+      silent: true,
+    }
+  }
+
   // 获取滚动到顶部后的当前高度（重要：不是之前的高度）
   let initialHeight = container.scrollHeight
   let lastHeight = initialHeight

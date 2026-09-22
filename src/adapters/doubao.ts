@@ -718,6 +718,11 @@ export class DoubaoAdapter extends SiteAdapter {
     return results
   }
 
+  /** 会话历史已全部在客户端（仅渲染虚拟化），无服务端历史懒加载 */
+  needsHistoryLazyLoad(): boolean {
+    return false
+  }
+
   getScrollContainer(): HTMLElement | null {
     return this.getOutlineContentContainer()
   }

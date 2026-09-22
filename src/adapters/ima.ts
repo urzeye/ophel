@@ -259,6 +259,11 @@ export class ImaAdapter extends SiteAdapter {
     return document.querySelector(this.config.sitePrivateSelectors.sidebarScrollContainer)
   }
 
+  /** 会话全量加载，无服务端历史懒加载 */
+  needsHistoryLazyLoad(): boolean {
+    return false
+  }
+
   getScrollContainer(): HTMLElement | null {
     const container = document.querySelector(this.config.sitePrivateSelectors.scrollContainer)
     return container instanceof HTMLElement ? container : null

@@ -1085,6 +1085,11 @@ export class ClaudeAdapter extends SiteAdapter {
     return null
   }
 
+  /** 会话全量加载，无服务端历史懒加载 */
+  needsHistoryLazyLoad(): boolean {
+    return false
+  }
+
   getScrollContainer(): HTMLElement | null {
     const container = this.findClaudeScrollContainer()
     const scrollingElement = document.scrollingElement as HTMLElement | null

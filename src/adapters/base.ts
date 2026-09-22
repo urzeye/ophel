@@ -977,6 +977,18 @@ export abstract class SiteAdapter {
     return null
   }
 
+  /**
+   * 会话历史是否随向上滚动从服务端懒加载（Gemini、千问、Qwen Studio 等）。
+   *
+   * 全量渲染或仅前端虚拟滚动的站点覆盖为 false：去顶部/阅读恢复可直接
+   * 滚动到位，跳过 HistoryLoader 的固定轮询等待（每轮约 1.2s）。
+   * 默认 true 保持保守：未确认的站点维持原有加载行为，避免去顶部停在
+   * 未加载的历史中段。
+   */
+  needsHistoryLazyLoad(): boolean {
+    return true
+  }
+
   /** 获取当前视口中可见的锚点元素信息 */
   getVisibleAnchorElement(): AnchorData | null {
     const container = this.getScrollContainer()

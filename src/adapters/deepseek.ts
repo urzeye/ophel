@@ -401,6 +401,11 @@ export class DeepSeekAdapter extends SiteAdapter {
     }
   }
 
+  /** 会话历史已全部在客户端（仅渲染虚拟化），无服务端历史懒加载 */
+  needsHistoryLazyLoad(): boolean {
+    return false
+  }
+
   getScrollContainer(): HTMLElement | null {
     const messageSelector = this.config.sitePrivateSelectors.message
     const topLevelMessages = Array.from(document.querySelectorAll(messageSelector)).filter(

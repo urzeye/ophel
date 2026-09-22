@@ -450,6 +450,11 @@ export class YuanbaoAdapter extends SiteAdapter {
     return results
   }
 
+  /** 会话全量加载，无服务端历史懒加载 */
+  needsHistoryLazyLoad(): boolean {
+    return false
+  }
+
   getScrollContainer(): HTMLElement | null {
     for (const selector of this.config.selectors.scrollContainer) {
       const candidate = document.querySelector(selector)

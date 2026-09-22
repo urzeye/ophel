@@ -851,6 +851,11 @@ export class ZaiAdapter extends SiteAdapter {
     return document.querySelector(this.config.sitePrivateSelectors.sidebarScrollContainer)
   }
 
+  /** 会话全量加载，无服务端历史懒加载 */
+  needsHistoryLazyLoad(): boolean {
+    return false
+  }
+
   getScrollContainer(): HTMLElement | null {
     const roots = this.collectScrollAnchorRoots()
     const fromMessages = this.pickBestScrollableAncestor(roots)

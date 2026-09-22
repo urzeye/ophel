@@ -437,6 +437,11 @@ export class ChatGLMAdapter extends SiteAdapter {
     return button
   }
 
+  /** 会话全量加载，无服务端历史懒加载 */
+  needsHistoryLazyLoad(): boolean {
+    return false
+  }
+
   getScrollContainer(): HTMLElement | null {
     for (const selector of this.config.selectors.scrollContainer) {
       const container = document.querySelector(selector) as HTMLElement | null
