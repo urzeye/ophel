@@ -1226,7 +1226,7 @@
   display: block;
 }
 
-/* 大纲空态的更新日志横幅：仅升级后未读时显示，点击打开更新日志 */
+/* 大纲空态的更新日志横幅：当前版本更新日志未读时显示，点击打开更新日志 */
 .outline-release-banner {
   appearance: none;
   display: inline-flex;
