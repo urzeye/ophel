@@ -112,8 +112,8 @@ export const DEFAULT_SETTINGS: Settings = {
   content: {
     assistantMermaid: false, // 默认关闭，仅对非原生 Mermaid 站点生效
     markdownFix: false,
-    // 油猴脚本环境默认开启（GM_xmlhttpRequest 已通过 @grant 声明）
-    watermarkRemoval: isUserscript,
+    // 默认关闭：开启后会 hook 页面 fetch/XHR 并在流式期间监听图片 mutation，成本较高
+    watermarkRemoval: false,
     formulaCopy: true,
     formulaCopyFormat: "latex",
     formulaDelimiter: true,

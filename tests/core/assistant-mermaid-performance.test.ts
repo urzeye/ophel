@@ -263,4 +263,27 @@ describe("AssistantMermaidRenderer in-flight work", () => {
     await render
     expect(request.mock.calls.length).toBe(0)
   })
+
+  it("defers rendering while the site is generating and re-queues afterwards", async () => {
+    const { internals, block } = prepareBlock()
+    vi.spyOn(internals, "ensureRuntime").mockResolvedValue()
+    const request = vi.spyOn(internals, "requestRender").mockResolvedValue()
+    ;(adapter as { isGenerating?: () => boolean }).isGenerating = () => true
+
+    // 消化初始全量扫描的定时器
+    vi.advanceTimersByTime(300)
+    processResponse.mockClear()
+
+    await internals.processMermaidBlock(block, "graph TD; A-->B", block)
+    expect(request).not.toHaveBeenCalled()
+
+    // 延迟定时器触发后重新入队所在回复；真正处理时若仍在生成会继续顺延
+    vi.advanceTimersByTime(2200)
+    expect(processResponse.mock.calls.length).toBe(1)
+    expect(processResponse.mock.calls[0][0] === block).toBe(true)
+    expect(request).not.toHaveBeenCalled()
+
+    renderer?.stop()
+    expect(vi.getTimerCount()).toBe(0)
+  })
 })
