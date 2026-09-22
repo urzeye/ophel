@@ -18,6 +18,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 ### 🐛 Bug Fixes
 
 - **"Show User Queries" toggle** — On pages without user questions (new chats, Gemini Canvas or Deep Research documents), the outline toggle always appeared off and clicking it seemed to do nothing until switching to another conversation; the toggle now always shows its real state and responds immediately. (#951)
+- **Outline stuck expanded after locate** — In documents whose headings start at a deeper level (e.g. H3), using "Locate Current" with the outline level set to 1 or 2 left the temporarily expanded outline stuck open after the highlight ended; it now reliably returns to its previous collapsed state. (#952)
 
 ---
 

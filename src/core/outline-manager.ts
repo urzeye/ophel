@@ -1606,12 +1606,13 @@ export class OutlineManager {
         if (node.forceVisible) {
           node.forceVisible = false
           node.forceExpanded = false
-          // 根据当前层级设置决定是否折叠
+          // 根据当前层级设置决定是否折叠；
+          // 与 initializeCollapsedState / clearForceExpandedState 保持一致，
+          // 必须用原始 level 而非 relativeLevel 比较，
+          // 否则标题从 H2/H3 起始的文档（minLevel > 1）恢复后会错误保持展开
           if (node.children && node.children.length > 0) {
-            const hasChildBeyondLevel = node.children.every(
-              (child) => child.relativeLevel > this.expandLevel,
-            )
-            node.collapsed = hasChildBeyondLevel
+            const allChildrenHidden = node.children.every((child) => child.level > this.expandLevel)
+            node.collapsed = allChildrenHidden
           }
         }
         if (node.children && node.children.length > 0) {
