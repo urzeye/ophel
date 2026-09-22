@@ -264,6 +264,7 @@ const createYuanbaoConfig = (): YuanbaoSiteConfig => {
 
   return {
     capabilities: [...BUILTIN_FEATURE_CAPABILITIES[SITE_IDS.YUANBAO]],
+    traits: { historyLazyLoad: false },
     selectors: {
       textarea: [textarea],
       submitButton: [submitButton],

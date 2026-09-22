@@ -32,12 +32,7 @@ import { useSettingsStore } from "~stores/settings-store"
 import { loadHistoryUntil } from "~utils/history-loader"
 import { OPHEL_HOVER_WIDTH_RETAIN_LAYER_PROPS } from "~utils/dom-toolkit"
 import { t } from "~utils/i18n"
-import {
-  getScrollInfo,
-  isFlutterProxy,
-  smartScrollTo,
-  smartScrollToBottom,
-} from "~utils/scroll-helper"
+import { getScrollInfo, smartScrollTo, smartScrollToBottom } from "~utils/scroll-helper"
 import {
   DEFAULT_SETTINGS,
   getSiteTheme,
@@ -417,9 +412,6 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     quickButtonsSettings.hideWhenPanelOpen,
   ])
 
-  // 跟踪是否处于 Flutter 模式（图文并茂）
-  const [_isFlutterMode, setIsFlutterMode] = useState(false)
-
   // 加载状态
   const [isLoadingHistory, setIsLoadingHistory] = useState(false)
   const [loadingText, setLoadingText] = useState("")
@@ -628,7 +620,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     }
   }, [clampPixelGroupPosition, syncViewportSizeState, toLogicalGroupPosition])
 
-  // 滚动到顶部（支持图文并茂模式）
+  // 滚动到顶部
   const scrollToTop = useCallback(async () => {
     await withAnchorOp(async (signal) => {
       // 遮罩延迟显示
@@ -668,7 +660,6 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
         // 保存锚点到全局存储
         // 已在顶部时不覆盖锚点，避免重复点击丢失原位置
         if (result.previousScrollTop >= 4) anchorStore.set(result.previousScrollTop)
-        setIsFlutterMode(result.isFlutterMode)
 
         // 清理遮罩
         if (overlayTimer) {
@@ -696,7 +687,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     abortLoadingRef.current = true
   }, [])
 
-  // 滚动到底部（支持图文并茂模式）
+  // 滚动到底部
   const scrollToBottom = useCallback(async () => {
     await withAnchorOp(async () => {
       const { previousScrollTop, container } = await smartScrollToBottom(adapter)
@@ -707,13 +698,10 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       if (container.clientHeight <= 0 || maxScroll - previousScrollTop >= 4) {
         anchorStore.set(previousScrollTop)
       }
-
-      // 检测是否处于 Flutter 模式
-      setIsFlutterMode(isFlutterProxy(container))
     })
   }, [adapter])
 
-  // 锚点跳转（双向，支持图文并茂模式）
+  // 锚点跳转（双向）
   const handleAnchorClick = useCallback(async () => {
     await withAnchorOp(async () => {
       const savedAnchor = anchorStore.get()
@@ -734,12 +722,11 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     })
   }, [adapter])
 
-  // 手动锚点：设置（支持图文并茂模式）
+  // 手动锚点：设置
   const setAnchorManually = useCallback(async () => {
     await withAnchorOp(async () => {
       const scrollInfo = await getScrollInfo(adapter)
       anchorStore.set(scrollInfo.scrollTop)
-      setIsFlutterMode(scrollInfo.isFlutterMode)
     })
   }, [adapter])
 

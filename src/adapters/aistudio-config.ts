@@ -135,6 +135,7 @@ const createAIStudioConfig = (): AIStudioSiteConfig => {
 
   return {
     capabilities: [...BUILTIN_FEATURE_CAPABILITIES[SITE_IDS.AISTUDIO]],
+    traits: { historyLazyLoad: false },
     selectors: {
       textarea: [
         "textarea.textarea",

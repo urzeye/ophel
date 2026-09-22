@@ -97,7 +97,7 @@ interface QwenAiAssistantImage {
 type QwenAiModelLockFailureReason = "button_not_found" | "menu_empty" | "not_found"
 
 export class QwenAiAdapter extends SiteAdapter {
-  private config: QwenStudioSiteConfig = QWEN_STUDIO_CONFIG
+  protected config: QwenStudioSiteConfig = QWEN_STUDIO_CONFIG
   private conversationSnapshot: ConversationInfo[] = []
   private conversationSnapshotFetchedAt = 0
   private conversationSnapshotPromise: Promise<ConversationInfo[]> | null = null

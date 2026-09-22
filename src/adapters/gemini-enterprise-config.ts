@@ -122,6 +122,7 @@ const createGeminiEnterpriseConfig = (): GeminiEnterpriseSiteConfig => {
 
   return {
     capabilities: [...BUILTIN_FEATURE_CAPABILITIES[SITE_IDS.GEMINI_ENTERPRISE]],
+    traits: { shadowDOM: true },
     selectors: {
       textarea: [
         "div.ProseMirror",

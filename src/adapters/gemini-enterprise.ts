@@ -60,7 +60,7 @@ const GEMINI_ENTERPRISE_CANCEL_KEYWORDS = [
 ]
 
 export class GeminiEnterpriseAdapter extends SiteAdapter {
-  private config: GeminiEnterpriseSiteConfig = GEMINI_ENTERPRISE_CONFIG
+  protected config: GeminiEnterpriseSiteConfig = GEMINI_ENTERPRISE_CONFIG
   // 存储 clearOnInit 配置
   private clearOnInit = false
 
@@ -1205,13 +1205,6 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
     ;(markdownDoc as HTMLElement).style.display = "none"
 
     markdownDoc.after(rendered)
-    return true
-  }
-
-  /**
-   * Gemini Enterprise 使用 Shadow DOM 渲染用户提问
-   */
-  usesShadowDOM(): boolean {
     return true
   }
 

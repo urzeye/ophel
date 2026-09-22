@@ -199,7 +199,7 @@ interface DoubaoExportRowSnapshot extends DoubaoExportMessageSnapshot {
 }
 
 export class DoubaoAdapter extends SiteAdapter {
-  private config: DoubaoSiteConfig
+  protected declare config: DoubaoSiteConfig
   private outlineCacheSessionKey = ""
   private outlineCacheTransitionEndAt = 0
   private outlineItemCache = new Map<string, DoubaoOutlineCacheEntry>()
@@ -718,11 +718,6 @@ export class DoubaoAdapter extends SiteAdapter {
     return results
   }
 
-  /** 会话历史已全部在客户端（仅渲染虚拟化），无服务端历史懒加载 */
-  needsHistoryLazyLoad(): boolean {
-    return false
-  }
-
   getScrollContainer(): HTMLElement | null {
     return this.getOutlineContentContainer()
   }
@@ -733,10 +728,6 @@ export class DoubaoAdapter extends SiteAdapter {
 
   getResponseContainerSelector(): string {
     return this.config.selectors.responseContainer
-  }
-
-  usesPeriodicOutlineRefreshFallback(): boolean {
-    return true
   }
 
   getUserQuerySelector(): string | null {

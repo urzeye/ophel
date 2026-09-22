@@ -73,7 +73,7 @@ interface ImaAssistantImage {
 }
 
 export class ImaAdapter extends SiteAdapter {
-  private config: ImaSiteConfig = IMA_CONFIG
+  protected config: ImaSiteConfig = IMA_CONFIG
   private exportIncludeThoughts: boolean | undefined = undefined
 
   match(): boolean {
@@ -257,11 +257,6 @@ export class ImaAdapter extends SiteAdapter {
 
   getSidebarScrollContainer(): Element | null {
     return document.querySelector(this.config.sitePrivateSelectors.sidebarScrollContainer)
-  }
-
-  /** 会话全量加载，无服务端历史懒加载 */
-  needsHistoryLazyLoad(): boolean {
-    return false
   }
 
   getScrollContainer(): HTMLElement | null {

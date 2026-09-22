@@ -87,7 +87,7 @@ interface YuanbaoAssistantImage {
 }
 
 export class YuanbaoAdapter extends SiteAdapter {
-  private config: YuanbaoSiteConfig = YUANBAO_CONFIG
+  protected config: YuanbaoSiteConfig = YUANBAO_CONFIG
   private exportIncludeThoughtsOverride: boolean | null = null
 
   match(): boolean {
@@ -448,11 +448,6 @@ export class YuanbaoAdapter extends SiteAdapter {
     }
 
     return results
-  }
-
-  /** 会话全量加载，无服务端历史懒加载 */
-  needsHistoryLazyLoad(): boolean {
-    return false
   }
 
   getScrollContainer(): HTMLElement | null {

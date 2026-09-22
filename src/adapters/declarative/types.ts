@@ -90,6 +90,28 @@ export interface SitePackDocumentOutlineConfig {
   labelI18n?: Record<string, string>
 }
 
+/**
+ * 站点结构/加载特征（静态声明），与功能能力（capabilities）区分：
+ * capabilities 决定功能是否可用，traits 描述页面渲染与加载方式，
+ * 驱动滚动、大纲、导出等通用行为。字段统一名词式命名；
+ * 未声明的字段由基类访问方法回落到保守缺省值。
+ */
+export interface SiteTraits {
+  /** 正文渲染在 Shadow DOM 内，抽取前需等待 Shadow DOM 渲染。缺省 false。 */
+  shadowDOM?: boolean
+  /**
+   * 会话历史随向上滚动从服务端懒加载。缺省 true（保守）。
+   * 全量渲染或仅前端虚拟滚动的站点应声明 false：去顶部/阅读恢复可直接
+   * 滚动到位，跳过 HistoryLoader 的固定轮询等待。
+   */
+  historyLazyLoad?: boolean
+  /**
+   * 大纲需要轮询兜底刷新（虚拟化/懒挂载会话视图不可靠触发 DOM mutation 时声明）。
+   * 缺省 false。
+   */
+  periodicOutlineRefresh?: boolean
+}
+
 /** SitePack 与内置配置共同使用的声明式配置面。 */
 export interface SitePackConfig {
   theme?: {
@@ -117,6 +139,8 @@ export interface SitePackConfig {
   documentOutline?: SitePackDocumentOutlineConfig
   mermaidSupport?: "native" | "fallback"
   quickQuote?: "enabled" | "native" | "disabled"
+  /** 站点结构/加载特征声明；见 SiteTraits。 */
+  traits?: SiteTraits
   /** 缺省 false；由声明式适配器显式选择是否联动宿主页主题。 */
   supportsHostThemeSync?: boolean
   /** 声明后启用 localStorage + html class 机制的宿主页主题联动。 */

@@ -805,7 +805,7 @@ interface GeminiOutlineWordCountCacheEntry {
 }
 
 export class GeminiAdapter extends SiteAdapter {
-  private config: GeminiSiteConfig = GEMINI_CONFIG
+  protected config: GeminiSiteConfig = GEMINI_CONFIG
   private cachedAccountEmail: string | null = null
   private accountEmailLastDetectAt = 0
   private myStuffEnhancer: GeminiMyStuffEnhancer | null = null

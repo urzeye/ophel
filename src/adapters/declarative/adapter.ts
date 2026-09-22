@@ -25,7 +25,7 @@ import { getCurrentLang, t } from "~utils/i18n"
 
 import { resolveSitePackName } from "./localization"
 import { siteMatchPatternMatchesUrl, siteMatchPatternOrigin } from "./match-pattern"
-import type { SitePackManifest, SitePackThemeSyncConfig } from "./types"
+import type { SitePackManifest, SitePackThemeSyncConfig, SiteTraits } from "./types"
 
 const DEFAULT_THEME_COLORS = {
   primary: "#2563eb",
@@ -191,6 +191,11 @@ export class DeclarativeAdapter extends SiteAdapter {
       ? this.manifest.session.newConversationPathPatterns.map((pattern) => new RegExp(pattern))
       : null
     this.textarea = null
+  }
+
+  /** 站点包的结构特征声明来自 manifest，而非内置站点的 config 字段。 */
+  protected getSiteTraits(): SiteTraits {
+    return this.manifest.traits ?? {}
   }
 
   getSitePackMetadata(): DeclarativeAdapterPackageMetadata {

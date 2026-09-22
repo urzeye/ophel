@@ -118,6 +118,7 @@ const CONFIG_KEYS = [
   "documentOutline",
   "mermaidSupport",
   "quickQuote",
+  "traits",
   "supportsHostThemeSync",
   "scrollPinRelease",
   "outlineReverse",
@@ -1137,6 +1138,33 @@ const validateDocumentOutline = (
   }
 }
 
+const validateSiteTraits = (
+  value: unknown,
+  path: string,
+  context: ValidationContext,
+  mode: ValidationMode,
+): void => {
+  const traits = validateObject(
+    value,
+    path,
+    context,
+    ["shadowDOM", "historyLazyLoad", "periodicOutlineRefresh"],
+    [],
+    mode,
+  )
+  if (!traits) return
+
+  if (traits.shadowDOM !== undefined) {
+    validateBoolean(traits.shadowDOM, `${path}.shadowDOM`, context, mode)
+  }
+  if (traits.historyLazyLoad !== undefined) {
+    validateBoolean(traits.historyLazyLoad, `${path}.historyLazyLoad`, context, mode)
+  }
+  if (traits.periodicOutlineRefresh !== undefined) {
+    validateBoolean(traits.periodicOutlineRefresh, `${path}.periodicOutlineRefresh`, context, mode)
+  }
+}
+
 const validateNetworkMonitor = (
   value: unknown,
   path: string,
@@ -1920,6 +1948,9 @@ const validateConfigFields = (
       "native",
       "disabled",
     ])
+  }
+  if (config.traits !== undefined) {
+    validateSiteTraits(config.traits, `${path}.traits`, context, mode)
   }
   if (config.supportsHostThemeSync !== undefined) {
     validateBoolean(config.supportsHostThemeSync, `${path}.supportsHostThemeSync`, context, mode)

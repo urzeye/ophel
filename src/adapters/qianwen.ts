@@ -74,7 +74,7 @@ interface QianwenAssistantImage {
 }
 
 export class QianwenAdapter extends SiteAdapter {
-  private config: QianwenSiteConfig = QIANWEN_CONFIG
+  protected config: QianwenSiteConfig = QIANWEN_CONFIG
   private exportIncludeThoughts: boolean | undefined = undefined
 
   // ==================== 基础识别 ====================

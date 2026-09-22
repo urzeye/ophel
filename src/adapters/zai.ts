@@ -118,7 +118,7 @@ interface ZaiUserAttachment {
 }
 
 export class ZaiAdapter extends SiteAdapter {
-  private config: ZaiSiteConfig = ZAI_CONFIG
+  protected config: ZaiSiteConfig = ZAI_CONFIG
   private exportIncludeThoughtsOverride: boolean | null = null
   private exportUserAttachmentsByMessageId = new Map<string, ZaiUserAttachment[]>()
   private exportShareTitle: string | null = null
@@ -849,11 +849,6 @@ export class ZaiAdapter extends SiteAdapter {
 
   getSidebarScrollContainer(): Element | null {
     return document.querySelector(this.config.sitePrivateSelectors.sidebarScrollContainer)
-  }
-
-  /** 会话全量加载，无服务端历史懒加载 */
-  needsHistoryLazyLoad(): boolean {
-    return false
   }
 
   getScrollContainer(): HTMLElement | null {

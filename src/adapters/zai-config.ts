@@ -132,6 +132,7 @@ const createZaiConfig = (): ZaiSiteConfig => {
 
   return {
     capabilities: [...BUILTIN_FEATURE_CAPABILITIES[SITE_IDS.ZAI]],
+    traits: { historyLazyLoad: false },
     selectors: {
       textarea: ["#chat-input", "textarea#chat-input"],
       responseContainer: chatScrollContainer,

@@ -139,6 +139,7 @@ const createClaudeConfig = (): ClaudeSiteConfig => {
 
   return {
     capabilities: [...BUILTIN_FEATURE_CAPABILITIES[SITE_IDS.CLAUDE]],
+    traits: { historyLazyLoad: false },
     selectors: {
       textarea: ['[contenteditable="true"]', ".ProseMirror", 'div[role="textbox"]'],
       submitButton: [

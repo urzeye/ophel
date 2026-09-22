@@ -198,7 +198,7 @@ interface ChatGPTOutlineWordCountCacheEntry {
 }
 
 export class ChatGPTAdapter extends SiteAdapter {
-  private config: ChatGPTSiteConfig = CHATGPT_CONFIG
+  protected config: ChatGPTSiteConfig = CHATGPT_CONFIG
   private sessionAccessToken: string | null = null
   private sessionAccessTokenExpiresAt = 0
   private lastModelLockAttemptAt = 0

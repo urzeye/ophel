@@ -93,7 +93,7 @@ interface DeepSeekUserAttachment {
 }
 
 export class DeepSeekAdapter extends SiteAdapter {
-  private config: DeepSeekSiteConfig = DEEPSEEK_CONFIG
+  protected config: DeepSeekSiteConfig = DEEPSEEK_CONFIG
   private nativeOutlineCache: DeepSeekNativeOutlineCache | null = null
   private nativeOutlineRevealRequestId = 0
   private exportSnapshotRoot: HTMLElement | null = null
@@ -399,11 +399,6 @@ export class DeepSeekAdapter extends SiteAdapter {
       ...(rootClass ? { rootClass: { ...rootClass } } : {}),
       ...(styles ? { styles: styles.map((style) => ({ ...style })) } : {}),
     }
-  }
-
-  /** 会话历史已全部在客户端（仅渲染虚拟化），无服务端历史懒加载 */
-  needsHistoryLazyLoad(): boolean {
-    return false
   }
 
   getScrollContainer(): HTMLElement | null {

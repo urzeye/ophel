@@ -115,6 +115,25 @@
       "type": "string",
       "enum": ["enabled", "native", "disabled"]
     },
+    "traits": {
+      "type": "object",
+      "description": "Static structural/loading traits of the site. Distinct from capabilities: capabilities decide feature availability, traits describe how the page renders and loads.",
+      "additionalProperties": false,
+      "properties": {
+        "shadowDOM": {
+          "type": "boolean",
+          "description": "Conversation content renders inside Shadow DOM. Default false."
+        },
+        "historyLazyLoad": {
+          "type": "boolean",
+          "description": "History lazy-loads from the server on upward scroll. Default true (conservative); full-render or client-virtualized sites should set false."
+        },
+        "periodicOutlineRefresh": {
+          "type": "boolean",
+          "description": "Outline needs a periodic refresh fallback (virtualized/lazy-mounted views that do not reliably emit DOM mutations). Default false."
+        }
+      }
+    },
     "supportsHostThemeSync": {
       "type": "boolean"
     },

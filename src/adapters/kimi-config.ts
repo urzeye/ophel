@@ -151,6 +151,7 @@ const createKimiConfig = (): KimiSiteConfig => {
 
   return {
     capabilities: [...BUILTIN_FEATURE_CAPABILITIES[SITE_IDS.KIMI]],
+    traits: { historyLazyLoad: false },
     selectors: {
       textarea: [
         '.chat-input-editor[data-lexical-editor="true"]',

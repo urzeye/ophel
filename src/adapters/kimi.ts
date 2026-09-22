@@ -76,7 +76,7 @@ const KIMI_DELETE_REASON = {
 } as const
 
 export class KimiAdapter extends SiteAdapter {
-  private config: KimiSiteConfig = KIMI_CONFIG
+  protected config: KimiSiteConfig = KIMI_CONFIG
   private deleteReloadScheduled = false
   private loggedMissingDeleteToken = false
   private fullListSnapshot: ConversationInfo[] = []
@@ -614,11 +614,6 @@ export class KimiAdapter extends SiteAdapter {
     }
 
     return null
-  }
-
-  /** 会话全量加载，无服务端历史懒加载 */
-  needsHistoryLazyLoad(): boolean {
-    return false
   }
 
   getScrollContainer(): HTMLElement | null {

@@ -149,6 +149,7 @@ const createImaConfig = (): ImaSiteConfig => {
 
   return {
     capabilities: [...BUILTIN_FEATURE_CAPABILITIES[SITE_IDS.IMA]],
+    traits: { historyLazyLoad: false },
     selectors: {
       textarea: [input],
       responseContainer,

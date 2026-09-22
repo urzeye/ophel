@@ -134,6 +134,7 @@ const createDoubaoConfig = (): DoubaoSiteConfig => {
 
   return {
     capabilities: [...BUILTIN_FEATURE_CAPABILITIES[SITE_IDS.DOUBAO]],
+    traits: { historyLazyLoad: false, periodicOutlineRefresh: true },
     selectors: {
       textarea: [
         // v3 输入框为 TipTap（ProseMirror）编辑器

@@ -32,6 +32,6 @@ AI Studio 是 P3-07 大站批次的第四个配置化站点，当前 `configVers
 - 大纲稳定 ID、文本/字数缓存、时间线文本匹配、DOM/时间线混合排序与 Range 字数计算。
 - preserve 布局的 CSS 属性、默认宽度 `1000px`、16px 间距和 Run settings 右侧 edge 行为。
 - Ophel 自身 `.gh-*` / `data-gh-*`、动态对话 selector、通用 `button`、`main`、`script`、`textarea`、`h1-h6` 遍历原语，以及非 selector 常量。
-- 本仓库的 Flutter iframe 主世界脚本仅匹配 Gemini 域名；AI Studio 当前没有对应注入链路，新增此类能力需要代码发版。
+- Flutter iframe 主世界脚本已随 Gemini 图文并茂模式下线一并移除；AI Studio 没有对应注入链路，新增此类能力需要代码发版。
 
 修改内置默认配置时必须递增 `AISTUDIO_CONFIG_VERSION`，使旧 `baseConfigVersion` patch 自动失效。真实站点回归完成前，P3-07 继续保持“进行中”。

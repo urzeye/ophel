@@ -179,7 +179,7 @@ interface ClaudeOutlineCacheEntry {
 }
 
 export class ClaudeAdapter extends SiteAdapter {
-  private config: ClaudeSiteConfig = CLAUDE_CONFIG
+  protected config: ClaudeSiteConfig = CLAUDE_CONFIG
   private activeOrganizationId: string | null = null
   private activeOrganizationIdExpiresAt = 0
   private exportDocumentCache: ClaudeDocumentExportCacheEntry[] = []
@@ -1083,11 +1083,6 @@ export class ClaudeAdapter extends SiteAdapter {
     }
 
     return null
-  }
-
-  /** 会话全量加载，无服务端历史懒加载 */
-  needsHistoryLazyLoad(): boolean {
-    return false
   }
 
   getScrollContainer(): HTMLElement | null {

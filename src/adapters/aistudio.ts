@@ -125,7 +125,7 @@ interface AIStudioOutlineSortEntry {
 }
 
 export class AIStudioAdapter extends SiteAdapter {
-  private config: AIStudioSiteConfig = AISTUDIO_CONFIG
+  protected config: AIStudioSiteConfig = AISTUDIO_CONFIG
 
   // ==================== 缓存属性 ====================
 
@@ -474,13 +474,6 @@ export class AIStudioAdapter extends SiteAdapter {
       textarea.dispatchEvent(new Event("input", { bubbles: true }))
       textarea.dispatchEvent(new Event("change", { bubbles: true }))
     }
-  }
-
-  // ==================== 滚动容器 ====================
-
-  /** 会话历史已全部在客户端（仅渲染虚拟化），无服务端历史懒加载 */
-  needsHistoryLazyLoad(): boolean {
-    return false
   }
 
   getScrollContainer(): HTMLElement | null {

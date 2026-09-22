@@ -142,7 +142,7 @@ interface ChatGLMExportAttachment {
 }
 
 export class ChatGLMAdapter extends SiteAdapter {
-  private config: ChatGLMSiteConfig = CHATGLM_CONFIG
+  protected config: ChatGLMSiteConfig = CHATGLM_CONFIG
   private exportIncludeThoughtsOverride: boolean | null = null
   private exportApiMessages: ChatGLMApiMessage[] | null = null
 
@@ -435,11 +435,6 @@ export class ChatGLMAdapter extends SiteAdapter {
     }
     if (button.offsetParent === null) return null
     return button
-  }
-
-  /** 会话全量加载，无服务端历史懒加载 */
-  needsHistoryLazyLoad(): boolean {
-    return false
   }
 
   getScrollContainer(): HTMLElement | null {

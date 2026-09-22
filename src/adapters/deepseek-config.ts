@@ -118,6 +118,7 @@ const createDeepSeekConfig = (): DeepSeekSiteConfig => {
 
   return {
     capabilities: [...BUILTIN_FEATURE_CAPABILITIES[SITE_IDS.DEEPSEEK]],
+    traits: { historyLazyLoad: false },
     selectors: {
       textarea: [
         'textarea[placeholder*="DeepSeek"]',

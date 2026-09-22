@@ -152,6 +152,7 @@ const createChatGLMConfig = (): ChatGLMSiteConfig => {
 
   return {
     capabilities: [...BUILTIN_FEATURE_CAPABILITIES[SITE_IDS.CHATGLM]],
+    traits: { historyLazyLoad: false },
     selectors: {
       textarea,
       submitButton: [`${submitButton}:not(${submitButtonDisabled})`],
