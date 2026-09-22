@@ -5,7 +5,11 @@ import { useBookmarkStore, type Bookmark } from "~stores/bookmarks-store"
 import { useSettingsStore } from "~stores/settings-store"
 import { showToast } from "~utils/toast"
 import { t } from "~utils/i18n"
-import { EVENT_MONITOR_COMPLETE, EVENT_MONITOR_START } from "~utils/messaging"
+import {
+  EVENT_MONITOR_COMPLETE,
+  EVENT_MONITOR_START,
+  EVENT_OUTLINE_DATA_UPDATED,
+} from "~utils/messaging"
 import { signalReadingHistoryUserNavigation } from "~utils/reading-history-navigation"
 
 type ExtendedOutlineItem = OutlineItem & {
@@ -275,6 +279,11 @@ export class OutlineManager {
       this.stopAutoUpdate()
       // Final refresh
       this.refresh()
+    } else if (type === EVENT_OUTLINE_DATA_UPDATED) {
+      // 适配器从站外数据源（如 DeepSeek 历史消息接口）补齐了大纲数据
+      if (this.isActive) {
+        this.refresh()
+      }
     }
   }
 

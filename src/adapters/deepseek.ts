@@ -20,6 +20,8 @@ import {
 } from "~utils/export-assets"
 import { htmlToMarkdown, type ExportBundle } from "~utils/exporter"
 import { t } from "~utils/i18n"
+import { EVENT_OUTLINE_DATA_UPDATED } from "~utils/messaging"
+import { hashOutlineText } from "~utils/outline-heading-cache"
 
 import {
   SiteAdapter,
@@ -39,6 +41,10 @@ import {
   DEEPSEEK_CONFIG_VERSION,
   type DeepSeekSiteConfig,
 } from "./deepseek-config"
+import {
+  parseDeepSeekHistoryOutline,
+  type DeepSeekHistoryOutlineData,
+} from "./deepseek-history-outline"
 import type { BuiltinSiteConfig } from "./declarative"
 
 const CHAT_PATH_PATTERN = /\/a\/chat\/s\/([a-z0-9-]+)/i
@@ -48,6 +54,9 @@ const THEME_STORAGE_KEY = "__appKit_@deepseek/chat_themePreference"
 const USER_TOKEN_STORAGE_KEY = "userToken"
 const OUTLINE_HEADING_SELECTOR = "h1, h2, h3, h4, h5, h6"
 const CHAT_DELETE_API_PATH = "/api/v0/chat_session/delete"
+const CHAT_HISTORY_API_PATH = "/api/v0/chat/history_messages"
+/** 历史消息接口拉取失败后的退避间隔，避免每次 extractOutline 都重试 */
+const API_OUTLINE_FAILURE_BACKOFF_MS = 10_000
 const DEEPSEEK_HOME_URL = "https://chat.deepseek.com/"
 const DELETE_REFRESH_STORAGE_KEY = "gh.deepseek.delete.refresh"
 const DEEPSEEK_EXPORT_ROOT_ATTR = "data-gh-deepseek-export-root"
@@ -96,6 +105,9 @@ export class DeepSeekAdapter extends SiteAdapter {
   protected config: DeepSeekSiteConfig = DEEPSEEK_CONFIG
   private nativeOutlineCache: DeepSeekNativeOutlineCache | null = null
   private nativeOutlineRevealRequestId = 0
+  private apiOutlineData: DeepSeekHistoryOutlineData | null = null
+  private apiOutlineFetchPromise: Promise<void> | null = null
+  private apiOutlineLastFailureAt = 0
   private exportSnapshotRoot: HTMLElement | null = null
   private exportSnapshotActive = false
   private exportIncludeThoughtsOverride: boolean | null = null
@@ -546,6 +558,9 @@ export class DeepSeekAdapter extends SiteAdapter {
       this.getScrollContainer() || document.querySelector(this.getResponseContainerSelector())
     if (!container) return []
 
+    // 虚拟滚动兜底：异步拉取历史消息接口，补齐离屏回复的标题
+    this.maybeRefreshApiOutline(container)
+
     const outline: OutlineItem[] = []
     const domUserQueries: OutlineItem[] = []
     const messageSelector = this.config.sitePrivateSelectors.message
@@ -609,21 +624,33 @@ export class DeepSeekAdapter extends SiteAdapter {
     })
 
     if (!includeUserQueries) {
-      return outline
+      return this.mergeApiOutlineHeadings(outline, container, maxLevel, false)
     }
 
     const nativeUserQueries = this.extractNativeUserQueries(domUserQueries)
     if (nativeUserQueries.length <= domUserQueries.length) {
-      return outline
+      return this.mergeApiOutlineHeadings(outline, container, maxLevel, true)
     }
 
-    return this.mergeOutlineWithNativeUserQueries(outline, nativeUserQueries)
+    return this.mergeApiOutlineHeadings(
+      this.mergeOutlineWithNativeUserQueries(outline, nativeUserQueries),
+      container,
+      maxLevel,
+      true,
+    )
   }
 
   async resolveOutlineTarget(
-    item: Pick<OutlineItem, "level" | "text" | "isUserQuery">,
+    item: Pick<OutlineItem, "level" | "text" | "isUserQuery" | "id">,
     queryIndex?: number,
   ): Promise<Element | null> {
+    // 接口缓存的离屏标题：优先按 message_id 精确定位，而非全局文本匹配
+    const apiRef = this.parseApiOutlineItemId(item.id)
+    if (apiRef) {
+      const apiTarget = await this.resolveApiOutlineTarget(apiRef, item.text)
+      if (apiTarget) return apiTarget
+    }
+
     const isUserQueryTarget = item.isUserQuery && item.level === 0 && queryIndex !== undefined
     const revealRequestId = isUserQueryTarget
       ? ++this.nativeOutlineRevealRequestId
@@ -648,6 +675,251 @@ export class DeepSeekAdapter extends SiteAdapter {
     }
 
     return this.waitForUserQueryElement(queryIndex, item.text, revealRequestId)
+  }
+
+  // ==================== 大纲缓存（历史消息接口数据源） ====================
+
+  /**
+   * DeepSeek 消息列表走 ds-virtual-list 虚拟滚动，离屏回复的标题会从 DOM 卸载。
+   * 这里直接请求站点的 history_messages 接口（不带 cache_version 即全量 REPLACE），
+   * 从 RESPONSE markdown 解析标题，作为大纲标题的完整数据源。
+   */
+  private maybeRefreshApiOutline(container: Element): void {
+    if (!this.isUserConversationPage()) return
+    if (this.apiOutlineFetchPromise) return
+    // 生成中响应未入库，拉到的回复不完整；等生成结束后下一次 extract 再拉
+    if (this.isGenerating()) return
+    if (Date.now() - this.apiOutlineLastFailureAt < API_OUTLINE_FAILURE_BACKOFF_MS) return
+
+    const sessionId = this.getSessionId()
+    const data = this.apiOutlineData
+    let isStale = !data || data.sessionId !== sessionId
+    if (!isStale && data) {
+      // DOM 里出现了比缓存更新的 message_id，说明对话有新增/编辑
+      const maxMountedId = this.getMaxMountedVirtualMessageId(container)
+      isStale = maxMountedId !== null && maxMountedId > data.maxMessageId
+    }
+    if (!isStale) return
+
+    // 没有登录态时静默跳过（退化为纯 DOM 扫描），不进入 Promise 链避免每次 extract 空转
+    const token = this.getUserToken()
+    if (!token) return
+
+    this.apiOutlineFetchPromise = this.fetchApiOutline(sessionId, token)
+      .then((changed) => {
+        if (changed) {
+          window.postMessage({ type: EVENT_OUTLINE_DATA_UPDATED }, "*")
+        }
+      })
+      .catch((error) => {
+        this.apiOutlineLastFailureAt = Date.now()
+        console.warn("[DeepSeekAdapter] Failed to fetch history outline:", error)
+      })
+      .finally(() => {
+        this.apiOutlineFetchPromise = null
+      })
+  }
+
+  private getMaxMountedVirtualMessageId(container: Element): number | null {
+    let maxId: number | null = null
+    container.querySelectorAll("[data-virtual-list-item-key]").forEach((row) => {
+      const id = Number(row.getAttribute("data-virtual-list-item-key"))
+      if (Number.isFinite(id)) {
+        maxId = maxId === null ? id : Math.max(maxId, id)
+      }
+    })
+    return maxId
+  }
+
+  private async fetchApiOutline(sessionId: string, token: string): Promise<boolean> {
+    const response = await fetch(
+      `${window.location.origin}${CHAT_HISTORY_API_PATH}?chat_session_id=${encodeURIComponent(sessionId)}`,
+      {
+        headers: {
+          accept: "*/*",
+          authorization: `Bearer ${token}`,
+          "x-client-platform": "web",
+          "x-client-locale": this.getClientLocale(),
+        },
+        credentials: "include",
+      },
+    )
+    if (!response.ok) {
+      throw new Error(`history_messages responded ${response.status}`)
+    }
+
+    const parsed = parseDeepSeekHistoryOutline(await response.json())
+    if (!parsed || parsed.sessionId !== sessionId) return false
+
+    const previous = this.apiOutlineData
+    this.apiOutlineData = parsed
+    return (
+      !previous || previous.sessionId !== parsed.sessionId || previous.version !== parsed.version
+    )
+  }
+
+  /**
+   * 把接口数据源中"当前未挂载"的回复标题合并进大纲。
+   * 挂载中的消息以 DOM 实时扫描为准（内容最新、元素可直接跳转）。
+   */
+  private mergeApiOutlineHeadings(
+    items: OutlineItem[],
+    container: Element,
+    maxLevel: number,
+    includeUserQueries: boolean,
+  ): OutlineItem[] {
+    const data = this.apiOutlineData
+    if (!data || data.sessionId !== this.getSessionId()) return items
+
+    const mountedIds = new Set<number>()
+    container.querySelectorAll("[data-virtual-list-item-key]").forEach((row) => {
+      const id = Number(row.getAttribute("data-virtual-list-item-key"))
+      if (Number.isFinite(id)) mountedIds.add(id)
+    })
+
+    // 未挂载回复的缓存标题，按所属提问的 1-based 序号分组
+    const cachedByQueryIndex = new Map<number, OutlineItem[]>()
+    for (const [messageId, headings] of data.headingsByAssistantId) {
+      if (mountedIds.has(messageId)) continue
+      const queryIndex = data.queryIndexByAssistantId.get(messageId) ?? 0
+      const list = cachedByQueryIndex.get(queryIndex) ?? []
+      headings.forEach((heading, orderInMessage) => {
+        if (heading.level > maxLevel) return
+        list.push({
+          level: heading.level,
+          text: heading.text,
+          element: null,
+          id: `deepseek:api-h:${messageId}:${heading.level}:${orderInMessage}:${hashOutlineText(heading.text)}`,
+        })
+      })
+      if (list.length > 0) cachedByQueryIndex.set(queryIndex, list)
+    }
+    if (cachedByQueryIndex.size === 0) return items
+
+    if (!includeUserQueries) {
+      return this.mergeApiHeadingsWithoutUserQueries(items, cachedByQueryIndex, data)
+    }
+
+    // 含提问视图：缓存标题插到所属提问所在段的末尾（同一条回复要么挂载、
+    // 要么走缓存，两者不会并存）
+    const result: OutlineItem[] = []
+    let currentQueryIndex = 0
+    const flushCached = (queryIndex: number) => {
+      const cached = cachedByQueryIndex.get(queryIndex)
+      if (!cached) return
+      cachedByQueryIndex.delete(queryIndex)
+      result.push(...cached)
+    }
+    for (const item of items) {
+      if (item.isUserQuery && item.level === 0) {
+        flushCached(currentQueryIndex)
+        currentQueryIndex += 1
+      }
+      result.push(item)
+    }
+    flushCached(currentQueryIndex)
+    // 兜底：未能归属到任何提问的条目（如 queryIndex=0）按序号追加在最后
+    for (const queryIndex of [...cachedByQueryIndex.keys()].sort((a, b) => a - b)) {
+      flushCached(queryIndex)
+    }
+    return result
+  }
+
+  private mergeApiHeadingsWithoutUserQueries(
+    items: OutlineItem[],
+    cachedByQueryIndex: Map<number, OutlineItem[]>,
+    data: DeepSeekHistoryOutlineData,
+  ): OutlineItem[] {
+    // 纯标题视图：按 (所属提问序号, 原始顺序) 归并。任一实时标题拿不到
+    // message_id 时无法可靠定位，退化为不合并（保持虚拟滚动下的现状行为）
+    const keyed: { item: OutlineItem; queryIndex: number; sequence: number }[] = []
+    let sequence = 0
+    for (const item of items) {
+      const rowId = this.getMountedRowMessageId(item.element)
+      const queryIndex = rowId !== null ? data.queryIndexByAssistantId.get(rowId) : undefined
+      if (queryIndex === undefined) return items
+      keyed.push({ item, queryIndex, sequence: sequence++ })
+    }
+    for (const [queryIndex, cached] of cachedByQueryIndex) {
+      for (const item of cached) {
+        keyed.push({ item, queryIndex, sequence: sequence++ })
+      }
+    }
+    return keyed
+      .sort((a, b) => a.queryIndex - b.queryIndex || a.sequence - b.sequence)
+      .map((entry) => entry.item)
+  }
+
+  private getMountedRowMessageId(element: Element | null): number | null {
+    const row = element?.closest("[data-virtual-list-item-key]")
+    if (!row) return null
+    const id = Number(row.getAttribute("data-virtual-list-item-key"))
+    return Number.isFinite(id) ? id : null
+  }
+
+  private parseApiOutlineItemId(
+    id?: string,
+  ): { messageId: number; level: number; orderInMessage: number } | null {
+    if (!id) return null
+    const match = id.match(/^deepseek:api-h:(\d+):(\d+):(\d+):[0-9a-f]+$/)
+    if (!match) return null
+    return {
+      messageId: Number(match[1]),
+      level: Number(match[2]),
+      orderInMessage: Number(match[3]),
+    }
+  }
+
+  private findApiHeadingInRow(
+    row: Element,
+    ref: { level: number; orderInMessage: number },
+    text: string,
+  ): Element | null {
+    const headings = Array.from(row.querySelectorAll(OUTLINE_HEADING_SELECTOR))
+    const direct = headings[ref.orderInMessage]
+    if (direct && (direct.textContent || "").trim() === text) return direct
+    return (
+      headings.find(
+        (heading) =>
+          Number(heading.tagName.charAt(1)) === ref.level &&
+          (heading.textContent || "").trim() === text,
+      ) || null
+    )
+  }
+
+  private async resolveApiOutlineTarget(
+    ref: { messageId: number; level: number; orderInMessage: number },
+    text: string,
+  ): Promise<Element | null> {
+    const container =
+      this.getScrollContainer() || document.querySelector(this.getResponseContainerSelector())
+    if (!container) return null
+
+    const findMounted = () => {
+      const row = container.querySelector(`[data-virtual-list-item-key="${ref.messageId}"]`)
+      return row ? this.findApiHeadingInRow(row, ref, text) : null
+    }
+
+    const mounted = findMounted()
+    if (mounted) return mounted
+
+    // 行未挂载：借原生大纲跳到所属提问附近，让虚拟列表把目标回复挂载出来
+    const queryIndex = this.apiOutlineData?.queryIndexByAssistantId.get(ref.messageId)
+    if (!queryIndex) return null
+    const queryText = this.collectNativeOutlineEntries()[queryIndex - 1]?.text
+    if (!queryText) return null
+
+    const requestId = ++this.nativeOutlineRevealRequestId
+    const jumped = await this.revealUserQueryThroughNativeOutline(queryIndex, queryText, requestId)
+    if (!jumped) return null
+
+    const deadline = Date.now() + 2000
+    while (Date.now() < deadline) {
+      const target = findMounted()
+      if (target) return target
+      await this.sleep(80)
+    }
+    return null
   }
 
   private createUserQueryOutlineItem(
