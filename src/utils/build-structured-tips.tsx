@@ -17,14 +17,13 @@ function ShortcutChip({ value }: { value: string }) {
         fontFamily: "monospace",
         background: "var(--gh-bg-secondary, #f3f4f6)",
         border: "1px solid var(--gh-border, #e5e7eb)",
-        padding: "2px 6px",
+        padding: "1px 6px",
         borderRadius: "4px",
         fontSize: "11px",
         fontWeight: 500,
         color: "var(--gh-text, #1f2937)",
         display: "inline-flex",
         alignItems: "center",
-        margin: "0 4px",
         verticalAlign: "bottom",
       }}>
       {value}

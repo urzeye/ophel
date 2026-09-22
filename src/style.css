@@ -626,39 +626,33 @@
   line-height: 1.5;
 }
 
-/* 功能技巧内的可点击入口（如「适配中心」） */
+/* 功能技巧内的可点击入口（如「适配中心」）：行内文字链接，随文本自然断行 */
 .gh-tip-link {
   appearance: none;
-  border: 1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 35%, transparent);
-  background: color-mix(in srgb, var(--gh-primary, #4285f4) 10%, transparent);
-  color: var(--gh-primary, #4285f4);
+  border: none;
+  background: none;
+  padding: 0;
   cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  padding: 1px 7px;
-  margin: 0 3px;
-  border-radius: 6px;
-  font-size: 12px;
+  display: inline;
+  color: var(--gh-primary, #4285f4);
+  font-family: inherit;
+  font-size: inherit;
   font-weight: 600;
-  line-height: 1.5;
-  vertical-align: baseline;
-  transition:
-    background-color 0.2s ease,
-    border-color 0.2s ease;
+  line-height: inherit;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--gh-primary, #4285f4) 40%, transparent);
+  text-underline-offset: 2px;
+  transition: text-decoration-color 0.2s ease;
 }
 
 .gh-tip-link:hover {
-  background: color-mix(in srgb, var(--gh-primary, #4285f4) 18%, transparent);
-  border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 55%, transparent);
+  text-decoration-color: currentColor;
 }
 
 .gh-tip-link:focus-visible {
   outline: 2px solid var(--gh-primary, #4285f4);
   outline-offset: 1px;
-}
-
-.gh-tip-link:active {
-  transform: translateY(0.5px);
+  border-radius: 2px;
 }
 
 .gh-panel-tabs {

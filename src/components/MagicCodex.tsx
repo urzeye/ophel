@@ -145,6 +145,7 @@ export const MagicCodex: React.FC<Props> = ({
                 style={{
                   whiteSpace: "normal",
                   wordBreak: "break-word",
+                  textWrap: "pretty",
                   color: "var(--gh-text, #374151)",
                 }}>
                 {tip.text}
