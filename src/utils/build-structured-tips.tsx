@@ -160,17 +160,6 @@ export function buildStructuredTips(
     },
     { icon: "👻", text: renderTip("tip1", "modifier", isMac ? "⌘ Cmd" : "Ctrl") },
     {
-      icon: "🧭",
-      text: renderTip("tip6", "shortcut", fmt("prevHeading") + "/" + fmt("nextHeading")),
-    },
-    {
-      icon: "↔️",
-      text: panelModeShortcut
-        ? renderTip("featureTip-panel-mode-toggle-path", "shortcut", panelModeShortcut)
-        : t("featureTip-panel-mode-toggle-path-dblclick"),
-    },
-    { icon: "🧩", text: renderSitePacksTip() },
-    {
       icon: "🚀",
       text: renderLinkedTip(
         "tip3",
@@ -178,6 +167,17 @@ export function buildStructuredTips(
         fmt("showShortcuts"),
         openShortcutsSettings,
       ),
+    },
+    { icon: "🧩", text: renderSitePacksTip() },
+    {
+      icon: "↔️",
+      text: panelModeShortcut
+        ? renderTip("featureTip-panel-mode-toggle-path", "shortcut", panelModeShortcut)
+        : t("featureTip-panel-mode-toggle-path-dblclick"),
+    },
+    {
+      icon: "🧭",
+      text: renderTip("tip6", "shortcut", fmt("prevHeading") + "/" + fmt("nextHeading")),
     },
   ]
 }
