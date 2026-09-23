@@ -68,7 +68,7 @@ const EXPORT_USER_QUERY_SELECTOR = `[${ZAI_EXPORT_ROLE_ATTR}="user"]`
 const EXPORT_ASSISTANT_SELECTOR = `[${ZAI_EXPORT_ROLE_ATTR}="assistant"]`
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const ZAI_CONFIG_VERSION = 3
+export const ZAI_CONFIG_VERSION = 4
 
 const createZaiConfig = (): ZaiSiteConfig => {
   const chatContainer = "#chat-container"
@@ -164,7 +164,11 @@ const createZaiConfig = (): ZaiSiteConfig => {
       useShadowDOM: false,
     },
     zenMode: { hide: ["#sidebar"] },
-    cleanMode: { preserveFlow: ["#chat-container > div:first-child > div:last-child"] },
+    cleanMode: {
+      preserveFlow: [
+        '#chat-container > div:first-child > div:not(:has(#messages-container, textarea, [data-pane-id])):has(a[href*="beian.miit.gov.cn"])',
+      ],
+    },
     widthSelectors: [
       { selector: chatMessageWidth, property: "max-width" },
       { selector: chatInputWidth, property: "max-width" },

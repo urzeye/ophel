@@ -19,6 +19,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 - **"Show User Queries" toggle** — Fixed an issue on pages without user questions where the toggle showed an incorrect state and appeared unresponsive; it now always reflects its true state and updates immediately. (#951)
 - **Outline stuck expanded after locate** — Fixed an issue where temporarily expanding the outline via "Locate Current" remained stuck open; it now reliably returns to its collapsed state once highlighting ends. (#952)
+- **Z.ai clean mode overseas** — Fixed an issue where enabling clean mode or zen mode on Z.ai from outside China caused the chat area to disappear, leaving a blank page; page content now displays normally. (#955)
 
 ---
 
