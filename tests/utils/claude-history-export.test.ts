@@ -9,6 +9,12 @@ interface TestBlock {
   text?: string
   thinking?: string
   summaries?: { summary: string }[]
+  id?: string
+  name?: string
+  input?: Record<string, unknown>
+  content?: Record<string, unknown>[]
+  is_error?: boolean
+  tool_use_id?: string
 }
 
 interface TestMessage {
@@ -16,8 +22,8 @@ interface TestMessage {
   parent_message_uuid: string
   sender: "human" | "assistant"
   content: TestBlock[]
-  attachments?: unknown[]
-  files?: unknown[]
+  attachments?: Record<string, unknown>[]
+  files?: Record<string, unknown>[]
 }
 
 const buildPayload = (messages: TestMessage[], currentLeafUuid?: string, sessionId = "conv-1") => ({
@@ -39,13 +45,22 @@ const assistantMessage = (uuid: string, parentUuid: string, markdown: string): T
   parent_message_uuid: parentUuid,
   sender: "assistant",
   content: [
-    {
-      type: "thinking",
-      thinking: "思考过程",
-      summaries: [{ summary: "思考摘要" }],
-    },
+    { type: "thinking", thinking: "思考过程", summaries: [{ summary: "思考摘要" }] },
     { type: "text", text: markdown },
   ],
+})
+
+const createFileBlock = (id: string, path: string, fileText?: string): TestBlock => ({
+  type: "tool_use",
+  id,
+  name: "create_file",
+  input: { path, file_text: fileText },
+})
+
+const presentFilesResult = (path: string, name: string, mimeType: string): TestBlock => ({
+  type: "tool_result",
+  name: "present_files",
+  content: [{ type: "local_resource", file_path: path, name, mime_type: mimeType }],
 })
 
 describe("parseClaudeHistoryExport", () => {
@@ -69,50 +84,159 @@ describe("parseClaudeHistoryExport", () => {
     ])
     expect(data!.messages[0].requestText).toBe("问题 u1")
     // 激活分支绕过旧回复
-    expect(data!.messages[1].responseMarkdown).toBe("新回复")
+    expect(data!.messages[1].segments).toEqual([{ type: "text", text: "新回复" }])
     expect(data!.messages[1].thinkingMarkdown).toBe("思考过程")
     expect(data!.messages[1].thinkingTitle).toBe("思考摘要")
-    expect(data!.messages[3].responseMarkdown).toBe("后续回复")
   })
 
-  it("returns null when the leaf is missing from chat_messages", () => {
-    const payload = buildPayload(
+  it("returns null when the leaf is missing or history is truncated", () => {
+    const missingLeaf = buildPayload(
       [userMessage("u1", ZERO_UUID), assistantMessage("a1", "u1", "回复")],
       "missing-leaf",
     )
-    expect(parseClaudeHistoryExport(payload)).toBeNull()
-  })
+    expect(parseClaudeHistoryExport(missingLeaf)).toBeNull()
 
-  it("returns null when history is truncated", () => {
-    const payload = buildPayload([
+    const truncated = buildPayload([
       userMessage("u9", "missing-parent"),
       assistantMessage("a9", "u9", "尾部回复"),
     ])
-    expect(parseClaudeHistoryExport(payload)).toBeNull()
+    expect(parseClaudeHistoryExport(truncated)).toBeNull()
   })
 
-  it("returns null when any user message carries attachments or files", () => {
-    const withAttachment = userMessage("u1", ZERO_UUID)
-    withAttachment.attachments = [{ file_name: "a.png" }]
-    expect(
-      parseClaudeHistoryExport(
-        buildPayload([withAttachment, assistantMessage("a1", "u1", "回复")]),
-      ),
-    ).toBeNull()
+  it("extracts user attachments and files instead of vetoing", () => {
+    const message = userMessage("u1", ZERO_UUID, "看看这些")
+    message.attachments = [
+      { file_name: "笔记.md", extracted_content: "# 笔记\n内容" },
+      { file_name: "空文档.txt" },
+    ]
+    message.files = [
+      {
+        file_kind: "image",
+        file_uuid: "img-1",
+        file_name: "头像.gif",
+        preview_url: "/api/org/files/img-1/preview",
+      },
+    ]
 
-    const withFile = userMessage("u1", ZERO_UUID)
-    withFile.files = [{ file_name: "b.pdf" }]
-    expect(
-      parseClaudeHistoryExport(buildPayload([withFile, assistantMessage("a1", "u1", "回复")])),
-    ).toBeNull()
+    const data = parseClaudeHistoryExport(
+      buildPayload([message, assistantMessage("a1", "u1", "回复")]),
+    )
+    expect(data).not.toBeNull()
+    expect(data!.messages[0].attachments).toEqual([
+      { fileName: "笔记.md", extractedContent: "# 笔记\n内容" },
+      { fileName: "空文档.txt", extractedContent: "" },
+    ])
+    expect(data!.messages[0].files).toEqual([
+      {
+        fileName: "头像.gif",
+        fileUuid: "img-1",
+        fileKind: "image",
+        previewUrl: "/api/org/files/img-1/preview",
+      },
+    ])
   })
 
-  it("returns null when any assistant message contains a tool_use block", () => {
-    const withTool = assistantMessage("a1", "u1", "回复")
-    withTool.content.push({ type: "tool_use" })
-    expect(
-      parseClaudeHistoryExport(buildPayload([userMessage("u1", ZERO_UUID), withTool])),
-    ).toBeNull()
+  it("turns create_file blocks into document segments in block order", () => {
+    const reply = assistantMessage("a1", "u1", "")
+    reply.content = [
+      { type: "text", text: "先看这个：" },
+      createFileBlock("t1", "/mnt/user-data/outputs/canvas.html", "<html>v1</html>"),
+      presentFilesResult("/mnt/user-data/outputs/canvas.html", "robot canvas", "text/html"),
+      { type: "text", text: "以上是初版。" },
+    ]
+
+    const data = parseClaudeHistoryExport(buildPayload([userMessage("u1", ZERO_UUID), reply]))
+    expect(data).not.toBeNull()
+    expect(data!.messages[1].segments).toEqual([
+      { type: "text", text: "先看这个：" },
+      {
+        type: "document",
+        document: {
+          name: "robot canvas",
+          path: "/mnt/user-data/outputs/canvas.html",
+          content: "<html>v1</html>",
+          mimeType: "text/html",
+        },
+      },
+      { type: "text", text: "以上是初版。" },
+    ])
+  })
+
+  it("keeps only the final content for repeated paths", () => {
+    const reply = assistantMessage("a1", "u1", "")
+    reply.content = [
+      createFileBlock("t1", "/mnt/o/doc.md", "# 旧版"),
+      { type: "text", text: "改一版：" },
+      createFileBlock("t2", "/mnt/o/doc.md", "# 新版"),
+    ]
+
+    const data = parseClaudeHistoryExport(buildPayload([userMessage("u1", ZERO_UUID), reply]))
+    expect(data).not.toBeNull()
+    const documents = data!.messages[1].segments.filter((segment) => segment.type === "document")
+    expect(documents).toHaveLength(2)
+    // 同 path 仅最后一次保留正文，早前版本降级为占位符
+    expect(documents[0]).toMatchObject({ document: { content: null } })
+    expect(documents[1]).toMatchObject({
+      document: { content: "# 新版", mimeType: "text/markdown" },
+    })
+  })
+
+  it("marks create_file without file_text as placeholder document", () => {
+    const reply = assistantMessage("a1", "u1", "")
+    reply.content = [createFileBlock("t1", "/mnt/o/report.docx", undefined)]
+
+    const data = parseClaudeHistoryExport(buildPayload([userMessage("u1", ZERO_UUID), reply]))
+    expect(data).not.toBeNull()
+    expect(data!.messages[1].segments).toEqual([
+      {
+        type: "document",
+        document: { name: "report.docx", path: "/mnt/o/report.docx", content: null, mimeType: "" },
+      },
+    ])
+  })
+
+  it("ignores unknown tool_use names and non-text tool blocks", () => {
+    const reply = assistantMessage("a1", "u1", "")
+    reply.content = [
+      { type: "text", text: "前" },
+      { type: "tool_use", name: "bash_tool", input: { command: "ls" } },
+      { type: "tool_result", name: "bash_tool", content: [{ type: "text", text: "输出" }] },
+      { type: "tool_use", name: "some_future_tool", input: {} },
+      { type: "token_budget" },
+      { type: "text", text: "后" },
+    ]
+
+    const data = parseClaudeHistoryExport(buildPayload([userMessage("u1", ZERO_UUID), reply]))
+    expect(data).not.toBeNull()
+    expect(data!.messages[1].segments).toEqual([
+      { type: "text", text: "前" },
+      { type: "text", text: "后" },
+    ])
+  })
+
+  it("skips create_file whose tool_result is an error", () => {
+    const reply = assistantMessage("a1", "u1", "")
+    reply.content = [
+      createFileBlock("t1", "/mnt/o/broken.html", "<html>失败版</html>"),
+      { type: "tool_result", name: "create_file", tool_use_id: "t1", is_error: true },
+      createFileBlock("t2", "/mnt/o/ok.md", "# 成功"),
+      { type: "text", text: "只成功了一个。" },
+    ]
+
+    const data = parseClaudeHistoryExport(buildPayload([userMessage("u1", ZERO_UUID), reply]))
+    expect(data).not.toBeNull()
+    expect(data!.messages[1].segments).toEqual([
+      {
+        type: "document",
+        document: {
+          name: "ok.md",
+          path: "/mnt/o/ok.md",
+          content: "# 成功",
+          mimeType: "text/markdown",
+        },
+      },
+      { type: "text", text: "只成功了一个。" },
+    ])
   })
 
   it("returns null for malformed payloads", () => {

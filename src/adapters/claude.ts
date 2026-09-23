@@ -12,9 +12,18 @@ import {
   parseClaudeHistoryOutline,
   type ClaudeHistoryOutlineData,
 } from "~utils/claude-history-outline"
-import { parseClaudeHistoryExport } from "~utils/claude-history-export"
+import {
+  parseClaudeHistoryExport,
+  type ClaudeHistoryExportDocument,
+  type ClaudeHistoryExportMessage,
+  type ClaudeHistoryExportUserFile,
+} from "~utils/claude-history-export"
 import {
   createMarkdownDocumentAssetLink,
+  addImageExportAsset,
+  addMarkdownDocumentAsset,
+  createExportAssetCollector,
+  escapeMarkdownLinkText,
   formatExportFileAttachments,
   formatExportImageAttachments,
   isDownloadableExportAssetUrl,
@@ -201,6 +210,7 @@ export class ClaudeAdapter extends SiteAdapter {
   private activeOrganizationIdExpiresAt = 0
   private exportDocumentCache: ClaudeDocumentExportCacheEntry[] = []
   private exportApiMessages: ExportMessage[] | null = null
+  private exportApiBundle: ExportBundle | null = null
   private exportDocumentCollectionRequired = false
   private exportIncludeThoughtsOverride: boolean | null = null
   private exportThoughtBlocks = new WeakMap<Element, string[]>()
@@ -2479,11 +2489,12 @@ export class ClaudeAdapter extends SiteAdapter {
 
   /**
    * 会话接口导出数据源：拉全量历史并解析为导出消息序列。
-   * 任何无法证明完整/可忠实还原的情形（解析器判 null、接口失败、未登录）
+   * 无法证明历史完整的情形（解析器判 null、接口失败、未登录）
    * 都返回 null，调用方回退现有滚动快照收集。
    */
   private async collectApiExportMessages(
     context: ExportLifecycleContext,
+    collector?: ExportAssetCollector,
   ): Promise<ExportMessage[] | null> {
     if (!this.isUserConversationPage()) return null
     const sessionId = this.getSessionId()
@@ -2504,9 +2515,8 @@ export class ClaudeAdapter extends SiteAdapter {
       const messages: ExportMessage[] = []
       for (const message of parsed.messages) {
         if (message.role === "user") {
-          if (message.requestText) {
-            messages.push({ role: "user", content: message.requestText })
-          }
+          const content = this.formatApiUserExportMessage(message, collector)
+          if (content) messages.push({ role: "user", content })
           continue
         }
 
@@ -2516,10 +2526,14 @@ export class ClaudeAdapter extends SiteAdapter {
             this.formatAsThoughtBlockquote(message.thinkingMarkdown, message.thinkingTitle),
           )
         }
-        if (message.responseMarkdown) {
-          parts.push(message.responseMarkdown)
+        for (const segment of message.segments) {
+          parts.push(
+            segment.type === "text"
+              ? segment.text
+              : this.formatApiDocumentSegment(segment.document, collector),
+          )
         }
-        const content = parts.join("\n\n").trim()
+        const content = parts.filter(Boolean).join("\n\n").trim()
         if (content) {
           messages.push({ role: "assistant", content })
         }
@@ -2532,6 +2546,92 @@ export class ClaudeAdapter extends SiteAdapter {
     }
   }
 
+  // 与 extractClaudeUserQueryExportContent 同一输出结构：图片、附件列表、正文
+  private formatApiUserExportMessage(
+    message: ClaudeHistoryExportMessage,
+    collector?: ExportAssetCollector,
+  ): string {
+    const imageMarkdown = message.files
+      .filter((file) => file.fileKind === "image")
+      .map((file) => this.formatApiUserImage(file, collector))
+      .filter(Boolean)
+    // 非图片 files[]（未见真实样本）降级为链接行，避免误嵌图片语法
+    const otherFileLines = message.files
+      .filter((file) => file.fileKind !== "image")
+      .map((file) => {
+        const fileName = file.fileName || "file"
+        return file.previewUrl
+          ? `- [${escapeMarkdownLinkText(fileName)}](${file.previewUrl})`
+          : `- ${fileName}`
+      })
+    const fileLines = message.attachments.map((attachment) => {
+      const fileName = attachment.fileName || "file"
+      if (collector && attachment.extractedContent.trim()) {
+        const asset = addMarkdownDocumentAsset(collector, attachment.extractedContent, {
+          // buildMarkdownFilename 固定补 .md 后缀，先去掉文件名里已有的
+          title: fileName.replace(/\.md$/i, ""),
+          directory: "assets/files",
+          idPrefix: "claude-user-file",
+        })
+        return `- [${escapeMarkdownLinkText(fileName)}](${asset.path})`
+      }
+      return `- ${fileName}`
+    })
+    fileLines.push(...otherFileLines)
+    const fileBlock =
+      fileLines.length > 0 ? `${t("exportAttachmentsLabel")}:\n${fileLines.join("\n")}` : ""
+
+    return [imageMarkdown.join("\n\n"), fileBlock, message.requestText].filter(Boolean).join("\n\n")
+  }
+
+  private formatApiUserImage(
+    file: ClaudeHistoryExportUserFile,
+    collector?: ExportAssetCollector,
+  ): string {
+    if (!file.previewUrl) return ""
+    const source = file.previewUrl.startsWith("http")
+      ? file.previewUrl
+      : `${window.location.origin}${file.previewUrl}`
+    const alt = file.fileName || "image"
+    const assetPath = collector
+      ? addImageExportAsset(collector, {
+          source,
+          alt,
+          extensionHint: file.fileName,
+          idPrefix: "claude-user-image",
+          filenamePrefix: "claude-user-image",
+        })
+      : source
+    return assetPath ? `![${escapeMarkdownLinkText(alt)}](${assetPath})` : ""
+  }
+
+  private formatApiDocumentSegment(
+    document: ClaudeHistoryExportDocument,
+    collector?: ExportAssetCollector,
+  ): string {
+    // 与 formatClaudeArtifactPlaceholder 同风格的占位符（接口侧无元数据/下载地址）
+    if (!document.content) return `[Artifact: ${document.name}]`
+
+    if (document.mimeType === "text/markdown") {
+      if (collector) {
+        return createMarkdownDocumentAssetLink(collector, document.content, {
+          // buildMarkdownFilename 固定补 .md 后缀，先去掉名称里已有的
+          title: document.name.replace(/\.md$/i, ""),
+          fallbackTitle: "claude-document",
+          directory: "assets/documents",
+          idPrefix: "claude-document",
+        })
+      }
+      // 与 formatClaudeDocumentInlineContent 同规则
+      const trimmed = document.content.trim()
+      return /^#{1,6}\s+/m.test(trimmed) ? trimmed : `### ${document.name}\n\n${trimmed}`
+    }
+
+    // html 等其他源码：围栏代码块内联（~~~ 避免与正文 ``` 冲突）
+    const lang = document.path.split(".").pop() || ""
+    return `### ${document.name}\n\n~~~${lang}\n${document.content.trim()}\n~~~`
+  }
+
   async prepareConversationExport(context: ExportLifecycleContext): Promise<unknown> {
     this.ensureClaudeOutlineCacheSession()
     this.exportIncludeThoughtsOverride = context.includeThoughts
@@ -2540,11 +2640,19 @@ export class ClaudeAdapter extends SiteAdapter {
     this.exportThoughtBlocks = new WeakMap<Element, string[]>()
     this.exportThoughtBlocksByAssistantIndex = new Map<number, string[]>()
     this.removeClaudeExportSnapshot()
+    this.exportApiBundle = null
 
     // 常规会话优先走会话接口拿全量 markdown（公式/代码零损耗、无需滚动收集）；
     // 接口不可用或无法证明历史完整时返回 null，回退现有快照收集
-    this.exportApiMessages = await this.collectApiExportMessages(context)
+    const collector =
+      context.format === "markdown" && context.packaging === "zip"
+        ? createExportAssetCollector()
+        : undefined
+    this.exportApiMessages = await this.collectApiExportMessages(context, collector)
     if (this.exportApiMessages) {
+      this.exportApiBundle = collector
+        ? { messages: this.exportApiMessages, assets: collector.assets }
+        : null
       return {
         documentPanelWasOpen: false,
         thoughtContainersExpandedForExport: [],
@@ -2623,6 +2731,7 @@ export class ClaudeAdapter extends SiteAdapter {
       this.exportThoughtBlocksByAssistantIndex = new Map<number, string[]>()
       this.removeClaudeExportSnapshot()
       this.exportApiMessages = null
+      this.exportApiBundle = null
     }
   }
 
@@ -2697,9 +2806,9 @@ export class ClaudeAdapter extends SiteAdapter {
   }
 
   async extractExportBundle(_context: ExportLifecycleContext): Promise<ExportBundle | null> {
-    // 接口数据源导出为纯 markdown 消息序列，无 bundle 资产
+    // 接口数据源导出：zip 打包时携带 collector 收集的图片/文档资产
     if (this.exportApiMessages) {
-      return null
+      return this.exportApiBundle
     }
 
     if (!this.hasClaudeExportAssets()) {

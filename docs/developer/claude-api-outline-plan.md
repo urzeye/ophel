@@ -1,6 +1,7 @@
 # Claude.ai API 数据源大纲与导出适配方案
 
 > 状态：已实施（分支 `feat/claude-api-outline`，大纲 + 导出均已落地，实机冒烟待做）
+> 证据样本追加：`claude-curl-response-2.json`（含 HTML canvas 两版、用户上传图片与 markdown 文档；本地参考，勿提交）
 > 参考实现：DeepSeek API 数据源（`src/utils/outline-api-source.ts`、`src/utils/deepseek-history-outline.ts`、`src/utils/deepseek-history-export.ts`、`src/adapters/deepseek.ts`）
 > 证据样本：`claude-demo.html`（本地参考，勿提交）、`claude-curl.sh` / `claude-curl-response.json`（含登录态，勿提交）
 
@@ -36,6 +37,15 @@ GET /api/organizations/{orgId}/chat_conversations/{conversationId}
   `tool_result` 11、`token_budget` 11。正文 markdown 在 `type:"text"` 块的 `text` 字段。
 - 样本为单链（无重生旁支），40 条消息 `index` 连续 0..39，`current_leaf_message_uuid`
   即最后一条。接口无 version 字段，变更检测须自建签名（见 4.4）。
+- 第二样本确认的附件/工具形态：
+  - 用户图片在 `files[]`：`file_kind/file_uuid/file_name/preview_url`，
+    `preview_url` 为同源 org 作用域下载地址（带会话 cookie 可下载原图）；
+  - 用户文本附件在 `attachments[]`：`file_name/extracted_content`（全文）；
+  - `create_file` 即 Artifact/文档机制：`tool_use.input.file_text` 为完整源码、
+    `input.path` 为 `/mnt/user-data/outputs/` 路径；配套 `present_files` 的
+    `tool_result.content[].type=="local_resource"` 给显示名与 mime_type（按 file_path 对应）；
+  - canvas「改版」实为新 path 新文件（非同 path 编辑）；`bash_tool`/`view` 为
+    分析工具过程，DOM 导出不包含。
 
 ### 2.2 DOM（claude-demo.html，dframe 布局）
 
@@ -145,19 +155,23 @@ extractOutline()
 
 `parseClaudeHistoryExport`：激活分支 → 消息序列。
 
-- 用户消息：`content` 中 `text` 块拼接；`attachments/files` 样本为空、schema 未验证，
-  v1 保守门槛：任一用户消息带非空 attachments/files 即判不可用回退 DOM 路径；
-- 助手消息：`text` 块拼接为正文；`thinking` 块（正文在 `thinking` 字段、标题取
-  首个 summary）在 includeThoughts 时按现有 `> [Thoughts]` 引用块格式输出；
-- Artifact/文档面板：样本已确认 `create_file` tool_use 即 Artifact 文档机制
-  （`input.file_text` 为完整文档），DOM 导出对其有完整处理，v1 门槛为
-  任一助手消息含 `tool_use` 块即回退 DOM 路径，拿到更多真实样本后可按
-  tool_use name 细化放开；
-- 完整性门槛：4.5 的截断判定 + 分支非空。
-- 集成点：`prepareConversationExport` 先尝试 `collectApiExportMessages`，成功则
-  跳过快照/文档面板/思考块收集（state 标记 `usedApiExport`，恢复逻辑短路），
-  `extractExportMessages` 直接返回接口消息；`extractExportBundle` 在接口路径下
-  返回 null（纯 markdown，无 bundle 资产）。
+- 用户消息：`text` 块拼接为正文；`files[]` 图片以 `![name](preview_url)` 输出
+  （zip 时经 `addImageExportAsset` 入 bundle）；`attachments[]` 按现有
+  `exportAttachmentsLabel` 列表输出（zip 且 extracted_content 非空时写成
+  `assets/files` 文档资产并链接）；
+- 助手消息：按块顺序产出有序片段——`text` 为正文；`create_file` 为文档片段
+  （markdown 文档按 `formatClaudeDocumentInlineContent` 同规则内联，zip 时走
+  `createMarkdownDocumentAssetLink`；html 等其他源码以 `~~~ext` 围栏代码块内联；
+  缺 `file_text` 的二进制为 `[Artifact: name]` 占位符；同 path 重复创建仅
+  最后一次保留正文，早前版本降级为占位符）；`thinking` 块在 includeThoughts 时
+  按现有 `> [Thoughts]` 引用块格式输出（标题取首个 summary）；
+  `bash_tool`/`view`/`present_files`/`tool_result`/`token_budget` 及未知
+  tool_use 一律跳过（DOM 导出本就不含工具过程，保持等价）；
+- 完整性门槛（仅这两条回退 DOM）：4.5 的截断判定 + leaf 未收录 + 分支非空。
+- 集成点：`prepareConversationExport` 先尝试 `collectApiExportMessages`（zip 打包时
+  带 `ExportAssetCollector`），成功则跳过快照/文档面板/思考块收集（state 标记
+  `usedApiExport`，恢复逻辑短路），`extractExportMessages` 直接返回接口消息；
+  `extractExportBundle` 返回 collector 收集的图片/文档资产。
 
 ## 5. 改动清单
 
@@ -189,8 +203,9 @@ extractOutline()
   漂移会表现为持续指纹不一致，熔断后回退滚动回填，行为不劣于现状；
 - R4 orgId 获取失败（cookie 缺失）→ `getActiveOrganizationId` 已有三级回退，
   最终失败则静默走 DOM + 滚动回填；
-- R5 attachments/files/Artifact 接口形态未验证 → 导出 v1 保守门槛全部回退 DOM 路径，
-  拿到真实样本再放开。
+- R5 附件/Artifact 形态已经两个真实样本验证；残留未知：同 path 编辑工具
+  （update_file 类）未观察到（按「同 path 仅取最后一次」兜底）、二进制文档
+  无 file_text（输出占位符，与 DOM 路径等价）。
 
 ## 7. 实施步骤
 

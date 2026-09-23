@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { ExportLifecycleContext, OutlineItem } from "~adapters/base"
 import { ClaudeAdapter } from "~adapters/claude"
 import type { ExportMessage } from "~utils/exporter"
+import { t } from "~utils/i18n"
 import {
   parseClaudeHistoryOutline,
   type ClaudeHistoryOutlineData,
@@ -20,6 +21,7 @@ vi.stubGlobal("window", {
   location: {
     href: "https://claude.ai/chat/b56ad8d3-7271-432f-8651-75dc609c7f08",
     pathname: "/chat/b56ad8d3-7271-432f-8651-75dc609c7f08",
+    origin: "https://claude.ai",
   },
 })
 
@@ -247,6 +249,7 @@ describe("ClaudeAdapter API export", () => {
       location: {
         href: "https://claude.ai/chat/b56ad8d3-7271-432f-8651-75dc609c7f08",
         pathname: "/chat/b56ad8d3-7271-432f-8651-75dc609c7f08",
+        origin: "https://claude.ai",
       },
     })
   })
@@ -308,7 +311,7 @@ describe("ClaudeAdapter API export", () => {
     ])
   })
 
-  it("returns null when the api payload is not exportable", async () => {
+  it("extracts create_file documents instead of vetoing tool conversations", async () => {
     const adapter = new ClaudeAdapter()
     stubOrg(adapter)
     stubFetchPayload({
@@ -327,9 +330,243 @@ describe("ClaudeAdapter API export", () => {
           parent_message_uuid: "u1",
           sender: "assistant",
           content: [
-            { type: "tool_use", name: "create_file" },
-            { type: "text", text: "回复正文" },
+            { type: "text", text: "文档如下：" },
+            {
+              type: "tool_use",
+              id: "t1",
+              name: "create_file",
+              input: { path: "/mnt/user-data/outputs/canvas.html", file_text: "<html>v1</html>" },
+            },
+            {
+              type: "tool_result",
+              name: "present_files",
+              content: [
+                {
+                  type: "local_resource",
+                  file_path: "/mnt/user-data/outputs/canvas.html",
+                  name: "robot canvas",
+                  mime_type: "text/html",
+                },
+              ],
+            },
           ],
+        },
+      ],
+    })
+
+    const messages = await internals(adapter).collectApiExportMessages(exportContext(false))
+    expect(messages).toEqual([
+      { role: "user", content: "问题" },
+      {
+        role: "assistant",
+        content: "文档如下：\n\n### robot canvas\n\n~~~html\n<html>v1</html>\n~~~",
+      },
+    ])
+  })
+
+  it("formats markdown documents inline following DOM parity rules", async () => {
+    const adapter = new ClaudeAdapter()
+    stubOrg(adapter)
+    stubFetchPayload({
+      uuid: "b56ad8d3-7271-432f-8651-75dc609c7f08",
+      updated_at: "2026-05-25T04:00:00.000000Z",
+      current_leaf_message_uuid: "a1",
+      chat_messages: [
+        {
+          uuid: "u1",
+          parent_message_uuid: ZERO_UUID,
+          sender: "human",
+          content: [{ type: "text", text: "问题" }],
+        },
+        {
+          uuid: "a1",
+          parent_message_uuid: "u1",
+          sender: "assistant",
+          content: [
+            {
+              type: "tool_use",
+              id: "t1",
+              name: "create_file",
+              input: { path: "/mnt/o/doc.md", file_text: "# 标题\n正文" },
+            },
+            {
+              type: "tool_result",
+              name: "present_files",
+              content: [
+                {
+                  type: "local_resource",
+                  file_path: "/mnt/o/doc.md",
+                  name: "散文",
+                  mime_type: "text/markdown",
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    })
+
+    const messages = await internals(adapter).collectApiExportMessages(exportContext(false))
+    // markdown 文档自带一级标题时原样内联（与 formatClaudeDocumentInlineContent 同规则）
+    expect(messages).toEqual([
+      { role: "user", content: "问题" },
+      { role: "assistant", content: "# 标题\n正文" },
+    ])
+  })
+
+  it("renders binary documents without file_text as artifact placeholders", async () => {
+    const adapter = new ClaudeAdapter()
+    stubOrg(adapter)
+    stubFetchPayload({
+      uuid: "b56ad8d3-7271-432f-8651-75dc609c7f08",
+      updated_at: "2026-05-25T04:00:00.000000Z",
+      current_leaf_message_uuid: "a1",
+      chat_messages: [
+        {
+          uuid: "u1",
+          parent_message_uuid: ZERO_UUID,
+          sender: "human",
+          content: [{ type: "text", text: "问题" }],
+        },
+        {
+          uuid: "a1",
+          parent_message_uuid: "u1",
+          sender: "assistant",
+          content: [
+            { type: "text", text: "做好了：" },
+            {
+              type: "tool_use",
+              id: "t1",
+              name: "create_file",
+              input: { path: "/mnt/o/report.docx" },
+            },
+            {
+              type: "tool_result",
+              name: "present_files",
+              content: [
+                {
+                  type: "local_resource",
+                  file_path: "/mnt/o/report.docx",
+                  name: "报告",
+                  mime_type:
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    })
+
+    const messages = await internals(adapter).collectApiExportMessages(exportContext(false))
+    expect(messages).toEqual([
+      { role: "user", content: "问题" },
+      { role: "assistant", content: "做好了：\n\n[Artifact: 报告]" },
+    ])
+  })
+
+  it("formats user uploaded images and text attachments", async () => {
+    const adapter = new ClaudeAdapter()
+    stubOrg(adapter)
+    stubFetchPayload({
+      uuid: "b56ad8d3-7271-432f-8651-75dc609c7f08",
+      updated_at: "2026-05-25T04:00:00.000000Z",
+      current_leaf_message_uuid: "a1",
+      chat_messages: [
+        {
+          uuid: "u1",
+          parent_message_uuid: ZERO_UUID,
+          sender: "human",
+          content: [{ type: "text", text: "看看这些" }],
+          attachments: [{ file_name: "笔记.md", extracted_content: "# 笔记" }],
+          files: [
+            {
+              file_kind: "image",
+              file_uuid: "img-1",
+              file_name: "头像.gif",
+              preview_url: "/api/org/files/img-1/preview",
+            },
+          ],
+        },
+        {
+          uuid: "a1",
+          parent_message_uuid: "u1",
+          sender: "assistant",
+          content: [{ type: "text", text: "收到" }],
+        },
+      ],
+    })
+
+    const messages = await internals(adapter).collectApiExportMessages(exportContext(false))
+    expect(messages).toEqual([
+      {
+        role: "user",
+        content: `![头像.gif](https://claude.ai/api/org/files/img-1/preview)\n\n${t("exportAttachmentsLabel")}:\n- 笔记.md\n\n看看这些`,
+      },
+      { role: "assistant", content: "收到" },
+    ])
+  })
+
+  it("degrades non-image user files to attachment links", async () => {
+    const adapter = new ClaudeAdapter()
+    stubOrg(adapter)
+    stubFetchPayload({
+      uuid: "b56ad8d3-7271-432f-8651-75dc609c7f08",
+      updated_at: "2026-05-25T04:00:00.000000Z",
+      current_leaf_message_uuid: "a1",
+      chat_messages: [
+        {
+          uuid: "u1",
+          parent_message_uuid: ZERO_UUID,
+          sender: "human",
+          content: [{ type: "text", text: "看这个文件" }],
+          files: [
+            {
+              file_kind: "pdf",
+              file_uuid: "doc-1",
+              file_name: "报告.pdf",
+              preview_url: "/api/org/files/doc-1/preview",
+            },
+          ],
+        },
+        {
+          uuid: "a1",
+          parent_message_uuid: "u1",
+          sender: "assistant",
+          content: [{ type: "text", text: "收到" }],
+        },
+      ],
+    })
+
+    const messages = await internals(adapter).collectApiExportMessages(exportContext(false))
+    expect(messages).toEqual([
+      {
+        role: "user",
+        content: `${t("exportAttachmentsLabel")}:\n- [报告.pdf](/api/org/files/doc-1/preview)\n\n看这个文件`,
+      },
+      { role: "assistant", content: "收到" },
+    ])
+  })
+
+  it("returns null when history cannot be proven complete", async () => {
+    const adapter = new ClaudeAdapter()
+    stubOrg(adapter)
+    stubFetchPayload({
+      uuid: "b56ad8d3-7271-432f-8651-75dc609c7f08",
+      updated_at: "2026-05-25T04:00:00.000000Z",
+      current_leaf_message_uuid: "a9",
+      chat_messages: [
+        {
+          uuid: "u9",
+          parent_message_uuid: "missing-parent",
+          sender: "human",
+          content: [{ type: "text", text: "问题" }],
+        },
+        {
+          uuid: "a9",
+          parent_message_uuid: "u9",
+          sender: "assistant",
+          content: [{ type: "text", text: "回复正文" }],
         },
       ],
     })
@@ -373,5 +610,74 @@ describe("ClaudeAdapter API export", () => {
     expect(messages).toHaveLength(2)
     // bundle 路径在接口数据源下不提供资产
     expect(await adapter.extractExportBundle(exportContext(false))).toBeNull()
+  })
+
+  it("collects image and document assets into the zip bundle", async () => {
+    const adapter = new ClaudeAdapter()
+    stubOrg(adapter)
+    stubFetchPayload({
+      uuid: "b56ad8d3-7271-432f-8651-75dc609c7f08",
+      updated_at: "2026-05-25T04:00:00.000000Z",
+      current_leaf_message_uuid: "a1",
+      chat_messages: [
+        {
+          uuid: "u1",
+          parent_message_uuid: ZERO_UUID,
+          sender: "human",
+          content: [{ type: "text", text: "看图" }],
+          files: [
+            {
+              file_kind: "image",
+              file_uuid: "img-1",
+              file_name: "头像.gif",
+              preview_url: "/api/org/files/img-1/preview",
+            },
+          ],
+        },
+        {
+          uuid: "a1",
+          parent_message_uuid: "u1",
+          sender: "assistant",
+          content: [
+            {
+              type: "tool_use",
+              id: "t1",
+              name: "create_file",
+              input: { path: "/mnt/o/doc.md", file_text: "# 散文\n正文" },
+            },
+            {
+              type: "tool_result",
+              name: "present_files",
+              content: [
+                {
+                  type: "local_resource",
+                  file_path: "/mnt/o/doc.md",
+                  name: "散文",
+                  mime_type: "text/markdown",
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    })
+
+    const zipContext = {
+      format: "markdown",
+      packaging: "zip",
+      includeThoughts: false,
+    } as unknown as ExportLifecycleContext
+    await adapter.prepareConversationExport(zipContext)
+    const bundle = await adapter.extractExportBundle(zipContext)
+
+    expect(bundle).not.toBeNull()
+    expect(bundle!.assets).toHaveLength(2)
+    const image = bundle!.assets!.find((asset) => asset.kind === "image")
+    expect(image?.sourceUrl).toBe("https://claude.ai/api/org/files/img-1/preview")
+    const document = bundle!.assets!.find((asset) => asset.kind === "document")
+    expect(document?.content).toBe("# 散文\n正文")
+    // 正文引用资产相对路径
+    expect(bundle!.messages[0].content).toContain(image?.relativePath)
+    expect(bundle!.messages[1].content).toContain(document?.relativePath)
   })
 })
