@@ -451,3 +451,56 @@ describe("shouldAttemptApiOutlineFetch", () => {
     ).toBe(false)
   })
 })
+
+describe("parseDeepSeekHistoryOutline branch fallback", () => {
+  const dropCurrentMessageId = (payload: ReturnType<typeof buildPayload>) => {
+    delete (payload.data.biz_data.chat_session as { current_message_id?: number })
+      .current_message_id
+    return payload
+  }
+
+  it("degrades to null when current_message_id is missing and the history has a fork", () => {
+    // 字段缺失（疑似接口改版）且存在重新生成的旁支：无法确定激活分支，
+    // 退化为纯 DOM 扫描，好过展示混入旁支的错误大纲
+    const payload = dropCurrentMessageId(
+      buildPayload([
+        userMessage(1, null),
+        assistantMessage(2, 1, "## 分支 A"),
+        assistantMessage(3, 1, "## 分支 B"),
+      ]),
+    )
+
+    expect(parseDeepSeekHistoryOutline(payload)).toBeNull()
+  })
+
+  it("keeps full order when current_message_id is missing but the history is linear", () => {
+    const payload = dropCurrentMessageId(
+      buildPayload([
+        userMessage(1, null),
+        assistantMessage(2, 1, "## 第一节"),
+        userMessage(3, 2),
+        assistantMessage(4, 3, "## 第二节"),
+      ]),
+    )
+
+    const data = parseDeepSeekHistoryOutline(payload)
+    expect(data).not.toBeNull()
+    expect(data!.branchMessageIds).toEqual([1, 2, 3, 4])
+  })
+
+  it("keeps full order when current_message_id is not in the message page", () => {
+    // 分页/删除导致 current 未收录：保留全量顺序的尽力而为，不放弃长对话大纲
+    const payload = buildPayload(
+      [
+        userMessage(1, null),
+        assistantMessage(2, 1, "## 分支 A"),
+        assistantMessage(3, 1, "## 分支 B"),
+      ],
+      999,
+    )
+
+    const data = parseDeepSeekHistoryOutline(payload)
+    expect(data).not.toBeNull()
+    expect(data!.branchMessageIds).toEqual([1, 2, 3])
+  })
+})

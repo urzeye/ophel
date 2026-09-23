@@ -27,15 +27,21 @@ type AdapterInternals = {
 const ROW_HEIGHT = 100
 const WINDOW_SIZE = 6
 
+// node 环境没有 HTMLElement；resolve 方法里有 instanceof HTMLElement 窄化
+class FakeHTMLElement {}
+vi.stubGlobal("HTMLElement", FakeHTMLElement)
+
 /**
  * 模拟 ds-virtual-list 的同步重挂载：设置 scrollTop 后窗口立即切换到
  * 对应 key 区间；行高固定，key 可以有空洞（编辑/删除场景）。
  */
-class FakeVirtualContainer {
+class FakeVirtualContainer extends FakeHTMLElement {
   scrollTop = 0
   readonly clientHeight = 500
 
-  constructor(private readonly keys: number[]) {}
+  constructor(private readonly keys: number[]) {
+    super()
+  }
 
   get scrollHeight(): number {
     return this.keys.length * ROW_HEIGHT
@@ -211,10 +217,57 @@ describe("DeepSeekAdapter.findApiHeadingInRow", () => {
     expect((found as unknown as { textContent: string }).textContent).toBe("目标")
   })
 
+  it("prefers the precise level+text hit when an unparsed heading shifted the order", () => {
+    const adapter = new DeepSeekAdapter()
+    // setext/引用块标题渲染进 DOM 但不参与 ATX 序号：接口第 2 个标题
+    // (orderInMessage=1) 在 DOM 全量列表错位到 index 2，index 1 是同级的
+    // 未解析标题——层级巧合不能采信，必须命中文本精确项
+    const row = fakeRowWithHeadings([
+      fakeHeading("H2", "第一个"),
+      fakeHeading("H2", "未解析标题"),
+      fakeHeading("H2", "目标"),
+    ])
+
+    const found = find(adapter, row, { level: 2, orderInMessage: 1 }, "目标")
+
+    expect((found as unknown as { textContent: string }).textContent).toBe("目标")
+  })
+
   it("returns null when nothing matches", () => {
     const adapter = new DeepSeekAdapter()
     const row = fakeRowWithHeadings([fakeHeading("H3", "其他")])
 
     expect(find(adapter, row, { level: 2, orderInMessage: 5 }, "不存在")).toBeNull()
+  })
+})
+
+type ResolveInternals = {
+  apiOutlineData: DeepSeekHistoryOutlineData | null
+  getSessionId: () => string | null
+  getScrollContainer: () => HTMLElement | null
+  resolveApiOutlineTarget: (
+    ref: { messageId: number; level: number; orderInMessage: number },
+    text: string,
+  ) => Promise<Element | null>
+}
+
+describe("DeepSeekAdapter.resolveApiOutlineTarget failure recovery", () => {
+  it("restores the entry scroll position when offscreen resolution ultimately fails", async () => {
+    const adapter = new DeepSeekAdapter()
+    const internals = adapter as unknown as ResolveInternals
+    const container = new FakeVirtualContainer(keys(40))
+    internals.apiOutlineData = branchData(keys(40))
+    internals.getSessionId = () => "session-1"
+    internals.getScrollContainer = () => container as unknown as HTMLElement
+
+    // 目标行不存在（messageId 999 不在列表中）：探测滚到底部边界后失败，
+    // 也没有所属提问可走 TOC 兜底——必须复原进入时的滚动位置
+    const result = await internals.resolveApiOutlineTarget(
+      { messageId: 999, level: 2, orderInMessage: 0 },
+      "不存在",
+    )
+
+    expect(result).toBeNull()
+    expect(container.scrollTop).toBe(0)
   })
 })

@@ -934,21 +934,20 @@ export class DeepSeekAdapter extends SiteAdapter {
   ): Element | null {
     const headings = Array.from(row.querySelectorAll(OUTLINE_HEADING_SELECTOR))
     const direct = headings[ref.orderInMessage]
-    if (direct) {
-      // 序号与接口解析同源（同一 markdown 的全量标题），reference 角标等渲染
-      // 差异只影响文本比对；层级一致即采信序号命中，文本完全一致时直接采信
-      const directText = (direct.textContent || "").trim()
-      if (directText === text || Number(direct.tagName.charAt(1)) === ref.level) {
-        return direct
-      }
-    }
-    return (
-      headings.find(
-        (heading) =>
-          Number(heading.tagName.charAt(1)) === ref.level &&
-          (heading.textContent || "").trim() === text,
-      ) || null
+    if (direct && (direct.textContent || "").trim() === text) return direct
+
+    // setext/引用块/原生 HTML 标题会渲染进 DOM 但不参与 ATX 序号，序号可能
+    // 错位：先用「层级+文本」精确命中真正的目标，避免层级巧合跳错标题
+    const precise = headings.find(
+      (heading) =>
+        Number(heading.tagName.charAt(1)) === ref.level &&
+        (heading.textContent || "").trim() === text,
     )
+    if (precise) return precise
+
+    // reference 角标等渲染差异导致文本无法精确比对时，才采信同层级的序号命中
+    if (direct && Number(direct.tagName.charAt(1)) === ref.level) return direct
+    return null
   }
 
   /**
@@ -1068,6 +1067,15 @@ export class DeepSeekAdapter extends SiteAdapter {
 
     // 快路径：直接滚动探测把目标回复行挂载出来，行内按序号定位标题
     const requestId = ++this.nativeOutlineRevealRequestId
+    // 探测/跳转会移动滚动位置；彻底失败时复原，避免把用户甩到无关位置。
+    // 请求已被更新的定位接管时不复原
+    const entryScrollTop = container.scrollTop
+    const fail = (): null => {
+      if (requestId === this.nativeOutlineRevealRequestId) {
+        container.scrollTop = entryScrollTop
+      }
+      return null
+    }
     const probedRow =
       container instanceof HTMLElement
         ? await this.probeMountVirtualRow(ref.messageId, container, data, requestId)
@@ -1080,14 +1088,14 @@ export class DeepSeekAdapter extends SiteAdapter {
     // 慢路径回退：借原生大纲跳到所属提问附近，让虚拟列表把目标回复挂载出来。
     // 匹配文本优先用接口的提问文本，TOC 只做点击跳板
     const queryIndex = data.queryIndexByAssistantId.get(ref.messageId)
-    if (!queryIndex) return null
+    if (!queryIndex) return fail()
     const queryText =
       data.userQueries.find((query) => query.queryIndex === queryIndex)?.text ||
       this.collectNativeOutlineEntries()[queryIndex - 1]?.text
-    if (!queryText) return null
+    if (!queryText) return fail()
 
     const jumped = await this.revealUserQueryThroughNativeOutline(queryIndex, queryText, requestId)
-    if (!jumped) return null
+    if (!jumped) return fail()
 
     const deadline = Date.now() + 2000
     while (Date.now() < deadline) {
@@ -1095,7 +1103,7 @@ export class DeepSeekAdapter extends SiteAdapter {
       if (target) return target
       await this.sleep(80)
     }
-    return null
+    return fail()
   }
 
   /** 接口回填的提问条目：行挂载则直接返回，否则借原生 TOC 跳转后轮询挂载 */
@@ -1123,6 +1131,14 @@ export class DeepSeekAdapter extends SiteAdapter {
     if (!query) return null
 
     const requestId = ++this.nativeOutlineRevealRequestId
+    // 同 resolveApiOutlineTarget：彻底失败时复原滚动位置
+    const entryScrollTop = container.scrollTop
+    const fail = (): null => {
+      if (requestId === this.nativeOutlineRevealRequestId) {
+        container.scrollTop = entryScrollTop
+      }
+      return null
+    }
     // 快路径：直接滚动探测把目标提问行挂载出来
     const probedRow =
       container instanceof HTMLElement
@@ -1138,7 +1154,7 @@ export class DeepSeekAdapter extends SiteAdapter {
       query.text || text,
       requestId,
     )
-    if (!jumped) return null
+    if (!jumped) return fail()
 
     const deadline = Date.now() + 2000
     while (Date.now() < deadline) {
@@ -1146,7 +1162,7 @@ export class DeepSeekAdapter extends SiteAdapter {
       if (target) return target
       await this.sleep(80)
     }
-    return null
+    return fail()
   }
 
   private createUserQueryOutlineItem(

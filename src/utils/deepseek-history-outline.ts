@@ -56,11 +56,16 @@ const asRecord = (value: unknown): Record<string, unknown> | null =>
 const asObjectArray = <T>(value: unknown): T[] =>
   Array.isArray(value) ? (value.filter(Boolean) as T[]) : []
 
-/** 沿 parent_id 从 current_message_id 回溯激活分支；结构异常时退化为接口返回顺序。 */
+/**
+ * 沿 parent_id 从 current_message_id 回溯激活分支。
+ * current_message_id 未收录（分页/删除）或历史为单链时，退化为接口返回顺序；
+ * 字段缺失（疑似接口改版）且存在重新生成的旁支时返回 null——无法确定激活
+ * 分支，退化为纯 DOM 扫描好过展示混入旁支的错误大纲。
+ */
 const resolveActiveBranch = (
   messages: DeepSeekHistoryMessage[],
   currentMessageId: number | null,
-): DeepSeekHistoryMessage[] => {
+): DeepSeekHistoryMessage[] | null => {
   const byId = new Map<number, DeepSeekHistoryMessage>()
   for (const message of messages) {
     if (typeof message.message_id === "number") {
@@ -78,6 +83,16 @@ const resolveActiveBranch = (
       current = typeof current.parent_id === "number" ? byId.get(current.parent_id) : undefined
     }
     if (chain.length > 0) return chain
+  }
+
+  if (currentMessageId === null) {
+    const childCount = new Map<number, number>()
+    for (const message of messages) {
+      if (typeof message.parent_id !== "number") continue
+      const count = (childCount.get(message.parent_id) ?? 0) + 1
+      childCount.set(message.parent_id, count)
+      if (count > 1) return null
+    }
   }
 
   return messages
@@ -102,6 +117,7 @@ export function parseDeepSeekHistoryOutline(
   const currentMessageId =
     typeof session?.current_message_id === "number" ? session.current_message_id : null
   const branch = resolveActiveBranch(messages, currentMessageId)
+  if (!branch) return null
 
   const branchMessageIds: number[] = []
   const headingsByAssistantId = new Map<number, DeepSeekHistoryOutlineHeading[]>()
@@ -292,7 +308,8 @@ export function mergeByBranchMessageOrder<T>(
       unknownOffset = 0
       keyed.push({ key: index, seq, item: entry.item })
     } else {
-      // 小步偏移保证连续多个未知 id 也不会越过下一个已知序号
+      // 小步偏移让未知 id 按 DOM 相对顺序贴在最近已知序号之后；未知 id
+      // 实际只有生成中的一两条，达不到越过下一个已知序号的数量级
       unknownOffset += 1
       keyed.push({ key: lastKnownKey + unknownOffset * 0.01, seq, item: entry.item })
     }
