@@ -1,4 +1,5 @@
-import { resolveActiveBranch, type DeepSeekHistoryMessage } from "~utils/deepseek-history-outline"
+import { resolveActiveBranch } from "~utils/outline-api-source"
+import type { DeepSeekHistoryMessage } from "~utils/deepseek-history-outline"
 
 /** history_messages 中一条消息提取出的导出素材（格式化由适配器负责） */
 export interface DeepSeekHistoryExportMessage {

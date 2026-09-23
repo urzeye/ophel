@@ -1,13 +1,15 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  parseDeepSeekHistoryOutline,
+  type DeepSeekHistoryOutlineData,
+} from "~utils/deepseek-history-outline"
+import {
   API_OUTLINE_PARSE_FAILURE_LIMIT,
   isApiOutlineStale,
   mergeByBranchMessageOrder,
-  parseDeepSeekHistoryOutline,
   shouldAttemptApiOutlineFetch,
-  type DeepSeekHistoryOutlineData,
-} from "~utils/deepseek-history-outline"
+} from "~utils/outline-api-source"
 
 interface TestMessage {
   message_id: number

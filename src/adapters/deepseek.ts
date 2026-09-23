@@ -42,12 +42,14 @@ import {
   type DeepSeekSiteConfig,
 } from "./deepseek-config"
 import {
-  isApiOutlineStale,
-  mergeByBranchMessageOrder,
   parseDeepSeekHistoryOutline,
-  shouldAttemptApiOutlineFetch,
   type DeepSeekHistoryOutlineData,
 } from "~utils/deepseek-history-outline"
+import {
+  isApiOutlineStale,
+  mergeByBranchMessageOrder,
+  shouldAttemptApiOutlineFetch,
+} from "~utils/outline-api-source"
 import { parseDeepSeekHistoryExport } from "~utils/deepseek-history-export"
 import type { BuiltinSiteConfig } from "./declarative"
 

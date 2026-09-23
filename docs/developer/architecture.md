@@ -247,6 +247,18 @@ import { useSettingsStore } from "~stores/settings-store"
 
 支持的站点标识（`SITE_IDS`）：`gemini`, `gemini-enterprise`, `chatgpt`, `claude`, `grok`, `aistudio`, `deepseek`, `doubao`, `kimi`, `qwenai`（文件为 `qwen-studio.ts`）, `qianwen`, `yuanbao`, `zai`, `chatglm`, `ima`
 
+#### API 数据源大纲与导出（虚拟滚动站点）
+
+消息列表虚拟滚动的站点（DeepSeek 首发），大纲与导出可以直接请求站点历史消息接口，替代纯 DOM 扫描/滚动收集。站无关机制统一在 `src/utils/outline-api-source.ts`（分支回溯、缓存过期判定、拉取闸门、分支序号归并）与 `src/utils/outline-heading-cache.ts`（markdown 标题解析、文本清洗、哈希）；站点文件（如 `src/utils/deepseek-history-outline.ts` / `deepseek-history-export.ts`）只负责把接口 payload 解析为通用数据形态。
+
+新站点接入清单：
+
+1. 解析器返回 extends `ApiOutlineSourceData` 的数据（`sessionId` / `branchMessageIds` / `maxMessageId` 为契约字段）；导出解析的完整性要求必须严于大纲（无法证明历史完整时返回 null，回退滚动收集）。
+2. config `traits` 声明 `virtualOutlineFill: true`，并 bump 对应 `*_CONFIG_VERSION`；声明后跳转即时刷新与高亮重算经 `usesVirtualOutlineFill()` / `hasPositionlessOutlineNodes()` 门控，不影响其他站点。
+3. 拉取必须过 `shouldAttemptApiOutlineFetch` 闸门（单飞、生成中跳过、冷却、解析失败熔断），会话切换时重置冷却与熔断计数；数据更新后 `postMessage(EVENT_OUTLINE_DATA_UPDATED)` 请求大纲刷新。
+4. 大纲条目统一按 `mergeByBranchMessageOrder` 归并：挂载项以 DOM 为准，接口只补未挂载条目；回填条目用 `navigationId` 携带定位信息（如 `{site}:api-h:{messageId}:...`），`resolveOutlineTarget` 优先按它精确定位。
+5. 接口主机与附件 CDN 加入 `package.json` `host_permissions`（油猴端 `connect: ["*"]` 无需改）；manifest 权限保持最小授权。
+
 ### 核心模块 (`src/core/modules-init.ts`)
 
 `initCoreModules()` 按以下顺序初始化管理器（共 13 个，见 `modules-init.ts`）：
