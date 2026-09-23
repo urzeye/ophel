@@ -53,6 +53,8 @@ export interface OutlineNode extends OutlineItem {
   bookmarkId?: string
   scrollTop?: number
   scrollHeight?: number
+  // scrollTop 写入时的滚动内容高度；内容高度变化说明坐标系已偏移，缓存坐标作废
+  scrollTopBaseline?: number
 }
 
 interface TreeState {
@@ -1324,10 +1326,19 @@ export class OutlineManager {
     const entries: Array<{ node: OutlineNode; top: number; height: number; order: number }> = []
     const measuredElements = new WeakMap<Element, MeasuredOutlineElement | null>()
     let order = 0
+    const contentHeight = this.getScrollContentHeight(container)
 
     const pushCachedEntry = (node: OutlineNode): boolean => {
       const cachedTop = node.scrollTop
       if (typeof cachedTop !== "number" || Number.isNaN(cachedTop)) {
+        return false
+      }
+      if (node.scrollTopBaseline !== contentHeight) {
+        // 内容高度变化说明坐标系整体偏移（历史回填/布局瞬态），离屏节点
+        // 无法复测，缓存坐标直接作废，避免高亮间谍信任幻影位置
+        node.scrollTop = undefined
+        node.scrollHeight = undefined
+        node.scrollTopBaseline = undefined
         return false
       }
 
@@ -1387,6 +1398,7 @@ export class OutlineManager {
 
       node.scrollTop = measured.top
       node.scrollHeight = measured.height
+      node.scrollTopBaseline = contentHeight
 
       entries.push({ node, top: measured.top, height: measured.height, order })
       order += 1
@@ -1841,6 +1853,8 @@ export class OutlineManager {
     const viewportScrollTop = this.getViewportScrollTop(scrollContainer, viewportRect)
     if (viewportScrollTop === null) return null
 
+    const contentHeight = this.getScrollContentHeight(scrollContainer)
+
     if (this.scrollPositionsStale) {
       this.updateScrollPositions()
     }
@@ -1893,12 +1907,15 @@ export class OutlineManager {
         if (measured) {
           node.scrollTop = viewportScrollTop + (measured.top - viewportRect.top)
           node.scrollHeight = measured.height
+          node.scrollTopBaseline = contentHeight
           return { node, ...measured }
         }
       }
 
       const cachedTop = node.scrollTop
       if (typeof cachedTop !== "number" || Number.isNaN(cachedTop)) return null
+      // 离屏节点坐标必须与当前内容高度同代，否则是回填/瞬态前的幻影位置
+      if (node.scrollTopBaseline !== contentHeight) return null
 
       const cachedHeight =
         typeof node.scrollHeight === "number" && !Number.isNaN(node.scrollHeight)
@@ -2146,6 +2163,19 @@ export class OutlineManager {
       scrollContainer === doc.scrollingElement ||
       scrollContainer === doc.documentElement ||
       scrollContainer === doc.body
+    )
+  }
+
+  private getScrollContentHeight(scrollContainer: HTMLElement): number {
+    if (!this.isDocumentScrollContainer(scrollContainer)) {
+      return scrollContainer.scrollHeight
+    }
+
+    const doc = scrollContainer.ownerDocument
+    return Math.max(
+      scrollContainer.scrollHeight,
+      doc.documentElement?.scrollHeight ?? 0,
+      doc.body?.scrollHeight ?? 0,
     )
   }
 

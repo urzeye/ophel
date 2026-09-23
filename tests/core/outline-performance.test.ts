@@ -19,7 +19,10 @@ let manager: OutlineManager
 let internals: OutlineInternals
 let adapter: SiteAdapter
 let geometryReads: number
-let container: HTMLElement
+// scrollHeight 在 HTMLElement 上只读，mock 容器需要可变内容高度来模拟回填/瞬态
+let container: HTMLElement & { scrollHeight: number }
+
+const CONTENT_HEIGHT = 5000 * 72
 
 function createNode(index: number, connected = true): OutlineNode {
   return {
@@ -31,6 +34,7 @@ function createNode(index: number, connected = true): OutlineNode {
     collapsed: false,
     scrollTop: index * 72,
     scrollHeight: 36,
+    scrollTopBaseline: CONTENT_HEIGHT,
     element: {
       isConnected: connected,
       getClientRects: () => {
@@ -48,6 +52,7 @@ beforeEach(() => {
   container = {
     ownerDocument: doc,
     scrollTop: 0,
+    scrollHeight: CONTENT_HEIGHT,
     getBoundingClientRect: () => ({
       left: 0,
       right: 1000,
@@ -102,5 +107,47 @@ describe("OutlineManager scroll-path budget", () => {
     manager.findMountedActiveNode(container)
     expect(geometryReads).toBeGreaterThanOrEqual(2)
     expect(vi.mocked(adapter.findElementByHeading).mock.calls.length).toBe(0)
+  })
+
+  it("drops cached positions when content height shifts after history backfill", () => {
+    const node = createNode(0, false)
+    internals.flatNodes = [node]
+    manager.updateScrollPositions()
+    expect(internals.scrollPositions.length).toBe(1)
+
+    // 历史回填/内容加载改变了内容总高度：此前缓存的绝对坐标整体失效
+    container.scrollHeight = CONTENT_HEIGHT + 50_000
+    manager.updateScrollPositions()
+
+    expect(internals.scrollPositions.length).toBe(0)
+    expect(node.scrollTop).toBeUndefined()
+    expect(node.scrollTopBaseline).toBeUndefined()
+  })
+
+  it("refuses to highlight an offscreen node whose cached position is from an older content height", () => {
+    const node = createNode(0, false)
+    internals.flatNodes = [node]
+    manager.updateScrollPositions()
+    expect(internals.scrollPositions.length).toBe(1)
+
+    // 内容高度在两次滚动同步之间变化（MutationObserver 合批窗口内），
+    // 高亮间谍必须逐读校验基线，不能信任上一代的缓存坐标
+    container.scrollHeight = CONTENT_HEIGHT + 50_000
+
+    expect(manager.findMountedActiveNode(container)).toBeNull()
+  })
+
+  it("rebinds measured positions to the current content height", () => {
+    const node = createNode(0)
+    internals.flatNodes = [node]
+    manager.updateScrollPositions()
+    expect(node.scrollTopBaseline).toBe(CONTENT_HEIGHT)
+
+    container.scrollHeight = CONTENT_HEIGHT + 50_000
+    manager.markScrollPositionsStale()
+    manager.updateScrollPositions()
+
+    expect(node.scrollTopBaseline).toBe(CONTENT_HEIGHT + 50_000)
+    expect(internals.scrollPositions.length).toBe(1)
   })
 })
