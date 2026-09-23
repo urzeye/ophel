@@ -1836,10 +1836,12 @@ export class OutlineManager {
     return this.findMountedActiveNode(scrollContainer)?.index ?? null
   }
 
-  // 树里是否存在既未挂载又无缓存滚动位置的条目（虚拟滚动 + 外部数据回填，
-  // 如 DeepSeek API 回填大纲）。普通站点恒为 false，用于把跳转后的即时刷新
-  // 和高亮重算限定在真正需要它的场景，不改变其他站点行为
+  // 树里是否存在既未挂载又无缓存滚动位置的回填条目。仅限声明了
+  // traits.virtualOutlineFill 的虚拟滚动站点（DeepSeek API 回填大纲）；
+  // ChatGPT/Claude/豆包的缓存回填条目不声明该特征，恒为 false，
+  // 用于把跳转后的即时刷新和高亮重算限定在真正需要它的场景
   hasPositionlessOutlineNodes(): boolean {
+    if (!this.siteAdapter.usesVirtualOutlineFill()) return false
     return this.flatNodes.some(
       (node) => !node.isGhost && !node.element && typeof node.scrollTop !== "number",
     )

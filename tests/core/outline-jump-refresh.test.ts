@@ -33,10 +33,11 @@ vi.mock("~stores/settings-store", () => ({
 vi.mock("~utils/i18n", () => ({ t: (key: string) => key }))
 vi.mock("~utils/toast", () => ({ showToast: vi.fn() }))
 
-const buildAdapter = (items: OutlineItem[]): SiteAdapter =>
+const buildAdapter = (items: OutlineItem[], usesVirtualOutlineFill = true): SiteAdapter =>
   ({
     getSiteId: () => "deepseek",
     getSessionId: () => "sess-1",
+    usesVirtualOutlineFill: () => usesVirtualOutlineFill,
     getOutlineSources: () => [
       { id: "conversation", kind: "conversation", label: "对话", available: true },
     ],
@@ -116,5 +117,26 @@ describe("OutlineManager jump-completed refresh gating", () => {
     const refreshSpy = vi.spyOn(manager as unknown as { refresh(): void }, "refresh")
     sendJumpCompleted(manager)
     expect(refreshSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it("ignores positionless nodes on sites that do not declare virtual outline fill", () => {
+    // ChatGPT/Claude/豆包等站点的缓存回填条目同样 element: null，
+    // 但未声明 traits.virtualOutlineFill，跳转后不得改变其原有行为
+    const items: OutlineItem[] = [
+      { level: 0, text: "提问一", isUserQuery: true, element: null },
+      { level: 2, text: "回答标题", element: null },
+    ]
+    const manager = new OutlineManager(buildAdapter(items, false), {
+      ...DEFAULT_SETTINGS.features.outline,
+      showUserQueries: true,
+    })
+    manager.setActive(true)
+    manager.refresh(undefined, true)
+
+    expect(manager.hasPositionlessOutlineNodes()).toBe(false)
+
+    const refreshSpy = vi.spyOn(manager as unknown as { refresh(): void }, "refresh")
+    sendJumpCompleted(manager)
+    expect(refreshSpy).not.toHaveBeenCalled()
   })
 })

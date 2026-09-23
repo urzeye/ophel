@@ -118,6 +118,12 @@ export interface SiteTraits {
    * 缺省 false。
    */
   periodicOutlineRefresh?: boolean
+  /**
+   * 会话视口虚拟滚动，大纲含未挂载、无缓存位置的回填条目（如 DeepSeek 历史
+   * 消息接口回填）。声明后大纲在程序化跳转后立即刷新并重算高亮；普通站点的
+   * 缓存回填条目（ChatGPT/Claude/豆包）不适用。缺省 false。
+   */
+  virtualOutlineFill?: boolean
 }
 
 /** SitePack 与内置配置共同使用的声明式配置面。 */

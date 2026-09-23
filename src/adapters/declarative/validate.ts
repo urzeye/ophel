@@ -1148,7 +1148,7 @@ const validateSiteTraits = (
     value,
     path,
     context,
-    ["shadowDOM", "historyLazyLoad", "periodicOutlineRefresh"],
+    ["shadowDOM", "historyLazyLoad", "periodicOutlineRefresh", "virtualOutlineFill"],
     [],
     mode,
   )
@@ -1162,6 +1162,9 @@ const validateSiteTraits = (
   }
   if (traits.periodicOutlineRefresh !== undefined) {
     validateBoolean(traits.periodicOutlineRefresh, `${path}.periodicOutlineRefresh`, context, mode)
+  }
+  if (traits.virtualOutlineFill !== undefined) {
+    validateBoolean(traits.virtualOutlineFill, `${path}.virtualOutlineFill`, context, mode)
   }
 }
 

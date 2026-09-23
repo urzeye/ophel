@@ -1337,6 +1337,15 @@ export abstract class SiteAdapter {
     return this.getSiteTraits().periodicOutlineRefresh ?? false
   }
 
+  /**
+   * 大纲是否含虚拟滚动场景下的无位置回填条目（config `traits.virtualOutlineFill`
+   * 声明）。仅这类站点需要在程序化跳转后立即刷新大纲并按页面位置重算高亮；
+   * 其他站点的缓存回填条目（ChatGPT/Claude/豆包）不声明，行为保持不变。
+   */
+  usesVirtualOutlineFill(): boolean {
+    return this.getSiteTraits().virtualOutlineFill ?? false
+  }
+
   getOutlineSourcesSignature(): string {
     return this.getOutlineSources()
       .map((source) => `${source.id}:${source.kind}:${source.available}:${source.count ?? ""}`)
