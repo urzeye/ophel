@@ -21,7 +21,7 @@ import {
 import { htmlToMarkdown, type ExportBundle } from "~utils/exporter"
 import { t } from "~utils/i18n"
 import { EVENT_OUTLINE_DATA_UPDATED } from "~utils/messaging"
-import { hashOutlineText } from "~utils/outline-heading-cache"
+import { hashOutlineText, stripMarkdownInline } from "~utils/outline-heading-cache"
 
 import {
   SiteAdapter,
@@ -838,9 +838,33 @@ export class DeepSeekAdapter extends SiteAdapter {
       item,
     }))
 
-    const fillEntries: { messageId: number; item: OutlineItem }[] = []
     // 收藏签名的 occurrence 需要在完整提问序列上按未截断文本计数
     const queryFullTexts = new Map<OutlineItem, string>(domQueryFullTexts)
+
+    // 发送/生成中的新消息可能还挂在临时行 key 上（或尚未进入虚拟列表），
+    // DOM 条目归属不到分支；接口重拉后回填条目与它们并存会重复。
+    // 按文本统计这类 DOM 条目，回填时从尾部丢掉同名条目（尾部才是新消息；
+    // 同文本的旧提问/旧标题若未挂载，保留其回填不受影响）
+    const branchIdSet = new Set(data.branchMessageIds)
+    const unmatchedQueryKeys = new Map<string, number>()
+    const unmatchedHeadingKeys = new Map<string, number>()
+    for (const entry of domEntries) {
+      if (entry.messageId !== null && branchIdSet.has(entry.messageId)) continue
+      const item = entry.item
+      if (item.isUserQuery && item.level === 0) {
+        // 与接口文本口径对齐（接口文本已经过 stripMarkdownInline）
+        const key = this.normalizeUserQueryMatchText(
+          stripMarkdownInline(queryFullTexts.get(item) ?? item.text),
+        )
+        unmatchedQueryKeys.set(key, (unmatchedQueryKeys.get(key) ?? 0) + 1)
+      } else if (!item.isUserQuery) {
+        const key = `${item.level}:${item.text}`
+        unmatchedHeadingKeys.set(key, (unmatchedHeadingKeys.get(key) ?? 0) + 1)
+      }
+    }
+
+    const fillQueryEntries: { messageId: number; item: OutlineItem }[] = []
+    const fillHeadingEntries: { messageId: number; item: OutlineItem }[] = []
 
     if (includeUserQueries) {
       for (const query of data.userQueries) {
@@ -855,7 +879,7 @@ export class DeepSeekAdapter extends SiteAdapter {
         const item = this.createUserQueryOutlineItem(query.text, null, wordCount)
         item.navigationId = `deepseek:api-u:${query.messageId}`
         queryFullTexts.set(item, query.text)
-        fillEntries.push({ messageId: query.messageId, item })
+        fillQueryEntries.push({ messageId: query.messageId, item })
       }
     }
 
@@ -864,7 +888,7 @@ export class DeepSeekAdapter extends SiteAdapter {
       headings.forEach((heading, orderInMessage) => {
         if (heading.level > maxLevel) return
         const id = `deepseek:api-h:${messageId}:${heading.level}:${orderInMessage}:${hashOutlineText(heading.text)}`
-        fillEntries.push({
+        fillHeadingEntries.push({
           messageId,
           item: {
             level: heading.level,
@@ -878,12 +902,45 @@ export class DeepSeekAdapter extends SiteAdapter {
       })
     }
 
+    const fillEntries = [
+      ...this.dropTrailingFillDuplicates(
+        fillQueryEntries,
+        (item) => this.normalizeUserQueryMatchText(queryFullTexts.get(item) ?? item.text),
+        unmatchedQueryKeys,
+      ),
+      ...this.dropTrailingFillDuplicates(
+        fillHeadingEntries,
+        (item) => `${item.level}:${item.text}`,
+        unmatchedHeadingKeys,
+      ),
+    ]
+
     const merged = mergeByBranchMessageOrder(data.branchMessageIds, domEntries, fillEntries)
 
     if (includeUserQueries) {
       this.assignUserQueryOutlineIds(merged, queryFullTexts)
     }
     return merged
+  }
+
+  /** 从回填条目尾部丢弃与「无分支归属的 DOM 条目」同名的重复项（计数式，见上） */
+  private dropTrailingFillDuplicates(
+    fillEntries: { messageId: number; item: OutlineItem }[],
+    keyOf: (item: OutlineItem) => string,
+    unmatchedCounts: Map<string, number>,
+  ): { messageId: number; item: OutlineItem }[] {
+    if (unmatchedCounts.size === 0 || fillEntries.length === 0) return fillEntries
+
+    const kept = [...fillEntries]
+    for (let i = kept.length - 1; i >= 0; i -= 1) {
+      const key = keyOf(kept[i].item)
+      const count = unmatchedCounts.get(key) ?? 0
+      if (count === 0) continue
+      if (count === 1) unmatchedCounts.delete(key)
+      else unmatchedCounts.set(key, count - 1)
+      kept.splice(i, 1)
+    }
+    return kept
   }
 
   /**

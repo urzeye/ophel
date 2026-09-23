@@ -315,19 +315,39 @@ describe("mergeByBranchMessageOrder", () => {
       ],
       [{ messageId: 3, item: "q2" }],
     )
-    expect(merged).toEqual(["a", "new-q", "new-h", "q2", "b"])
+    // 99/100 大于分支最大 id：判定为缓存未覆盖的新消息，追加到末尾
+    // （真实 DOM 顺序里新消息本就在尾部，这里的人造乱序验证尾部判定优先）
+    expect(merged).toEqual(["a", "q2", "b", "new-q", "new-h"])
   })
 
-  it("keeps unknown ids before any known entry at the front", () => {
+  it("keeps non-new unknown ids before any known entry at the front", () => {
+    // id 未超过分支最大值的未知行（如已删除/旁支残留）保持原有相对位置
     const merged = mergeByBranchMessageOrder(
       branch,
       [
-        { messageId: 99, item: "x" },
+        { messageId: 0, item: "x" },
         { messageId: 2, item: "a" },
       ],
       [],
     )
     expect(merged).toEqual(["x", "a"])
+  })
+
+  it("appends brand-new messages to the tail even when no known row is mounted", () => {
+    // 回归：发送新消息后挂载窗口只有新行（没有任何已知 id），
+    // 未知条目不能顶到最前，否则新提问会出现在大纲顶部
+    const merged = mergeByBranchMessageOrder(
+      branch,
+      [
+        { messageId: 99, item: "new-q" },
+        { messageId: 100, item: "new-h" },
+      ],
+      [
+        { messageId: 1, item: "q1" },
+        { messageId: 3, item: "q2" },
+      ],
+    )
+    expect(merged).toEqual(["q1", "q2", "new-q", "new-h"])
   })
 
   it("treats null messageId as unknown and skips fill entries outside the branch", () => {
@@ -339,7 +359,8 @@ describe("mergeByBranchMessageOrder", () => {
       ],
       [{ messageId: 999, item: "not-in-branch" }],
     )
-    expect(merged).toEqual(["no-row", "a"])
+    // null = 行未进虚拟列表/临时 key，即未入库的新消息，追加到末尾
+    expect(merged).toEqual(["a", "no-row"])
   })
 })
 

@@ -296,6 +296,9 @@ export function mergeByBranchMessageOrder<T>(
   branchMessageIds.forEach((id, index) => {
     branchIndex.set(id, index)
   })
+  // 同一会话内 message_id 随时间递增，分支最大 id 即「缓存已知的最新一条」
+  const maxBranchId =
+    branchMessageIds.length > 0 ? branchMessageIds[branchMessageIds.length - 1] : null
 
   const keyed: { key: number; seq: number; item: T }[] = []
   let lastKnownKey = -1
@@ -309,10 +312,18 @@ export function mergeByBranchMessageOrder<T>(
       unknownOffset = 0
       keyed.push({ key: index, seq, item: entry.item })
     } else {
-      // 小步偏移让未知 id 按 DOM 相对顺序贴在最近已知序号之后；未知 id
-      // 实际只有生成中的一两条，达不到越过下一个已知序号的数量级
       unknownOffset += 1
-      keyed.push({ key: lastKnownKey + unknownOffset * 0.01, seq, item: entry.item })
+      // 刚发送/生成中的新消息还没入库：行 key 是临时值（数值大于分支最大 id）
+      // 或行根本不在虚拟列表里（messageId 为 null）。这类条目必须追加到末尾，
+      // 否则挂载窗口里没有已知行时会被顶到大纲最前。
+      // 其余未知 id（删除残留/旁支行）按 DOM 相对顺序贴在最近已知序号之后
+      // （数量级只有一两条，小步偏移不会越过下一个已知序号）
+      const isNewTail =
+        entry.messageId === null || (maxBranchId !== null && entry.messageId > maxBranchId)
+      const key = isNewTail
+        ? branchMessageIds.length + unknownOffset * 0.01
+        : lastKnownKey + unknownOffset * 0.01
+      keyed.push({ key, seq, item: entry.item })
     }
     seq += 1
   }

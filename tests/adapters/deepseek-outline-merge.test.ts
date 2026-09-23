@@ -33,6 +33,9 @@ const fakeContainer = (mountedIds: number[]) =>
 
 const fakeElementInRow = (id: number) => ({ closest: () => fakeRow(id) }) as unknown as Element
 
+// 新消息尚未进入虚拟列表（或挂着非数字临时 key）：归属不到任何行
+const fakeUnkeyedElement = () => ({ closest: () => null }) as unknown as Element
+
 const buildData = (
   messages: {
     message_id: number
@@ -199,5 +202,51 @@ describe("DeepSeekAdapter.mergeOutlineByBranchOrder", () => {
     const merged = merge(adapter, [], baseData(), [], new Map(), { showWordCount: false })
 
     expect(merged.every((item) => item.wordCount === undefined)).toBe(true)
+  })
+
+  it("dedupes api fill against an unkeyed dom row of the same new message", () => {
+    // 回归：新提问挂着临时行 key（归属不到分支），接口重拉后回填同名条目，
+    // 不去重会在大纲底部出现两个一样的提问
+    const adapter = new DeepSeekAdapter()
+    const domQuery = queryItem(0, "问题二")
+    ;(domQuery as { element: Element }).element = fakeUnkeyedElement()
+
+    const merged = merge(adapter, [domQuery], baseData(), [], new Map([[domQuery, "问题二"]]))
+
+    // 回填重复项被丢弃，只保留 DOM 条目（元素在手、可定位），且排在尾部
+    expect(merged.map((item) => item.text)).toEqual(["问题一", "标题A", "标题B", "问题二"])
+    const query = merged.find((item) => item.text === "问题二")
+    expect(query?.element).not.toBeNull()
+  })
+
+  it("keeps the older unmounted occurrence when the same question was asked twice", () => {
+    // 同一提问问了两次：旧的未挂载（接口回填）、新的挂临时 key（DOM）。
+    // 计数式去重只丢尾部那条回填，两条都必须在
+    const adapter = new DeepSeekAdapter()
+    const data = buildData([
+      userMessage(1, null, "重复问题"),
+      assistantMessage(2, 1, "无标题"),
+      userMessage(3, 2, "重复问题"),
+      assistantMessage(4, 3, "无标题"),
+    ])
+    const domQuery = queryItem(0, "重复问题")
+    ;(domQuery as { element: Element }).element = fakeUnkeyedElement()
+
+    const merged = merge(adapter, [domQuery], data, [2, 4], new Map([[domQuery, "重复问题"]]))
+
+    expect(merged.map((item) => item.text)).toEqual(["重复问题", "重复问题"])
+    expect(merged[0].element).toBeNull()
+    expect(merged[1].element).not.toBeNull()
+  })
+
+  it("dedupes fill headings against unkeyed dom headings of the streaming reply", () => {
+    const adapter = new DeepSeekAdapter()
+    const domHeading = headingItem(0, "标题B")
+    ;(domHeading as { element: Element }).element = fakeUnkeyedElement()
+
+    const merged = merge(adapter, [domHeading], baseData(), [2], new Map())
+
+    expect(merged.map((item) => item.text)).toEqual(["问题一", "问题二", "标题B"])
+    expect(merged.filter((item) => item.text === "标题B")).toHaveLength(1)
   })
 })
