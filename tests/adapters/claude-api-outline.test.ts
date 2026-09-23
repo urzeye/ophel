@@ -207,7 +207,7 @@ describe("ClaudeAdapter API outline entries", () => {
     expect(state.apiOutlineForceRefetch).toBe(true)
   })
 
-  it("does not flag force-refetch for matching or DOM-owned entries", () => {
+  it("flags force-refetch when a DOM-owned heading changes irreconcilably", () => {
     const adapter = new ClaudeAdapter()
     const state = internals(adapter)
     state.rebuildApiOutlineEntries(
@@ -223,11 +223,97 @@ describe("ClaudeAdapter API outline entries", () => {
     ])
     expect(state.apiOutlineForceRefetch).toBe(false)
 
-    // 已转 DOM 来源的条目之后文本再变也不触发（DOM 自身即真值，无需重拉）
+    // 挂载行的 < > 版本切换不经过生成态：DOM 归属条目文本不可调和也必须触发
     state.updateClaudeOutlineCache([
       { level: 2, text: "另一个标题", element: fakeElementInRow(1), isUserQuery: false },
     ])
+    expect(state.apiOutlineForceRefetch).toBe(true)
+  })
+
+  it("tolerates prefix-only text differences as render or truncation artifacts", () => {
+    const adapter = new ClaudeAdapter()
+    const state = internals(adapter)
+    state.rebuildApiOutlineEntries(
+      buildData([
+        { uuid: "u1", parent: ZERO_UUID, sender: "human", text: "问题" },
+        { uuid: "a1", parent: "u1", sender: "assistant", text: "## 分支标题" },
+      ]),
+    )
+
+    // DOM 文本更短（截断差异）：互为前缀，不触发
+    state.updateClaudeOutlineCache([
+      { level: 2, text: "分支", element: fakeElementInRow(1), isUserQuery: false },
+    ])
     expect(state.apiOutlineForceRefetch).toBe(false)
+
+    // DOM 文本更长（KaTeX 重复等渲染差异）：互为前缀，不触发
+    state.updateClaudeOutlineCache([
+      { level: 2, text: "分支标题分支标题", element: fakeElementInRow(1), isUserQuery: false },
+    ])
+    expect(state.apiOutlineForceRefetch).toBe(false)
+  })
+
+  it("purges DOM-owned zombie entries when the branch is truncated", () => {
+    const adapter = new ClaudeAdapter()
+    const state = internals(adapter)
+    state.rebuildApiOutlineEntries(
+      buildData([
+        { uuid: "u1", parent: ZERO_UUID, sender: "human", text: "问题一" },
+        { uuid: "a1", parent: "u1", sender: "assistant", text: "## 标题一" },
+        { uuid: "u2", parent: "a1", sender: "human", text: "问题二" },
+        { uuid: "a2", parent: "u2", sender: "assistant", text: "## 标题二" },
+      ]),
+    )
+    // 模拟行挂载后条目转为 DOM 归属（不再计入 apiOutlineEntryIds）
+    state.updateClaudeOutlineCache([
+      { level: 2, text: "标题二", element: fakeElementInRow(3), isUserQuery: false },
+    ])
+    expect(state.apiOutlineEntryIds.has("claude-message:3:heading:0")).toBe(false)
+
+    // 编辑问题一后分支截断为 2 条：旧分支的 DOM 归属条目必须清除
+    state.rebuildApiOutlineEntries(
+      buildData([
+        { uuid: "u1", parent: ZERO_UUID, sender: "human", text: "问题一" },
+        { uuid: "a1", parent: "u1", sender: "assistant", text: "## 新标题一" },
+      ]),
+    )
+    const cache = state.outlineItemCache
+    expect(cache.has("claude-message:2:user")).toBe(false)
+    expect(cache.has("claude-message:3:heading:0")).toBe(false)
+    expect(cache.get("claude-message:1:heading:0")!.text).toBe("新标题一")
+  })
+
+  it("replaces irreconcilable DOM-owned entries with api values on rebuild", () => {
+    const adapter = new ClaudeAdapter()
+    const state = internals(adapter)
+    state.rebuildApiOutlineEntries(
+      buildData([
+        { uuid: "u1", parent: ZERO_UUID, sender: "human", text: "问题" },
+        { uuid: "a1", parent: "u1", sender: "assistant", text: "## 旧标题\n正文" },
+      ]),
+    )
+    // 行挂载后 DOM 精化（带精确字数）
+    state.updateClaudeOutlineCache([
+      {
+        level: 2,
+        text: "旧标题",
+        element: fakeElementInRow(1),
+        isUserQuery: false,
+        wordCount: 999,
+      },
+    ])
+
+    // 重新生成后同位置出现不可调和的新标题：以接口为准替换并转回 API 归属
+    state.rebuildApiOutlineEntries(
+      buildData([
+        { uuid: "u1", parent: ZERO_UUID, sender: "human", text: "问题" },
+        { uuid: "a1", parent: "u1", sender: "assistant", text: "## 新标题\n新正文" },
+      ]),
+    )
+    const entry = state.outlineItemCache.get("claude-message:1:heading:0")!
+    expect(entry.text).toBe("新标题")
+    expect(entry.wordCount).not.toBe(999)
+    expect(state.apiOutlineEntryIds.has("claude-message:1:heading:0")).toBe(true)
   })
 })
 
@@ -345,6 +431,36 @@ describe("ClaudeAdapter API outline refresh gate", () => {
     expect(superSpy).toHaveBeenCalledWith(1, "第一个问题")
     expect(result).toBeNull()
     superSpy.mockRestore()
+  })
+
+  it("skips the cache path when the cached query text does not match", () => {
+    const adapter = new ClaudeAdapter()
+    // 中间夹一条纯图片提问（无文本，不占大纲条目），缓存序号与调用序号可能错位
+    internals(adapter).rebuildApiOutlineEntries(
+      buildData([
+        { uuid: "u1", parent: ZERO_UUID, sender: "human", text: "第一个问题" },
+        { uuid: "a1", parent: "u1", sender: "assistant", text: "回复一" },
+        { uuid: "u2", parent: "a1", sender: "human", text: "" },
+        { uuid: "a2", parent: "u2", sender: "assistant", text: "回复二" },
+        { uuid: "u3", parent: "a2", sender: "human", text: "第三个问题" },
+        { uuid: "a3", parent: "u3", sender: "assistant", text: "回复三" },
+      ]),
+    )
+    const mountLookup = vi.spyOn(
+      adapter as unknown as { findClaudeOutlineTargetInMountedRow: () => Element | null },
+      "findClaudeOutlineTargetInMountedRow",
+    )
+    const superSpy = vi.spyOn(SiteAdapter.prototype, "findUserQueryElement").mockReturnValue(null)
+
+    // 序号 1 的缓存条目是「第一个问题」，与目标文本不可调和：
+    // 必须跳过缓存路径，绝不允许按错位条目定位到错误提问
+    const result = adapter.findUserQueryElement(1, "第三个问题")
+
+    expect(mountLookup).not.toHaveBeenCalled()
+    expect(superSpy).toHaveBeenCalledWith(1, "第三个问题")
+    expect(result).toBeNull()
+    superSpy.mockRestore()
+    mountLookup.mockRestore()
   })
 })
 

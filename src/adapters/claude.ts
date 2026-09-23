@@ -113,6 +113,14 @@ const CLAUDE_EXPORT_ROOT_ATTR = "data-gh-claude-export-root"
 const CLAUDE_API_OUTLINE_FETCH_BACKOFF_MS = 10_000
 const CLAUDE_API_OUTLINE_BOTTOM_TOLERANCE_PX = 100
 
+/**
+ * 大纲文本可调和判定：相等或互为前缀。
+ * 200 字截断、KaTeX 重复等渲染/截断差异都表现为一方向另一方的前缀扩展；
+ * 互不前缀才视为分支/版本切换产生的真实文本变化。
+ */
+const isReconcilableOutlineText = (a: string, b: string): boolean =>
+  a === b || a.startsWith(b) || b.startsWith(a)
+
 interface ClaudeExportLifecycleState {
   documentPanelWasOpen: boolean
   documentSignature?: string
@@ -1589,15 +1597,14 @@ export class ClaudeAdapter extends SiteAdapter {
         this.createClaudeOutlineItemId(item.element as Element, isUserQuery, headingOrder)
       if (!id) continue
 
-      // 分支切换信号：同 id 的 API 回填标题与新挂载行的标题文本不一致。
-      // DOM 提问/标题文本有 200 字符截断，前缀一致即视为未漂移
+      // 分支/版本切换信号：挂载行标题与缓存同 id 条目文本不可调和。
+      // 不限于 API 归属条目：挂载行的 < > 版本切换不经过生成态，
+      // DOM 归属条目也必须能触发强制重拉
       const existing = this.outlineItemCache.get(id)
       if (
         existing &&
         !existing.isUserQuery &&
-        this.apiOutlineEntryIds.has(id) &&
-        existing.text !== item.text &&
-        !existing.text.startsWith(item.text)
+        !isReconcilableOutlineText(existing.text, item.text)
       ) {
         this.apiOutlineForceRefetch = true
       }
@@ -1881,27 +1888,22 @@ export class ClaudeAdapter extends SiteAdapter {
   }
 
   /**
-   * 用接口数据重建缓存条目：先清掉上一轮 API 来源条目，再写入新条目。
-   * 不覆盖同 id 的 DOM 来源条目（DOM 的 wordCount 是精确值，
-   * 行重新挂载后由 updateClaudeOutlineCache 自然精化）。
+   * 用接口数据重建缓存条目。接口数据是激活分支结构的真值：
+   * 不在新分支中的缓存条目（含 DOM 归属）一律清除——编辑/重新生成截断
+   * 分支后它们已成为无法跳转的僵尸，仍挂载的行会在下次 extract 由
+   * updateClaudeOutlineCache 重建精确值。
+   * 同 id 且文本可调和的 DOM 归属条目保留（wordCount 是精确值）；
+   * 文本不可调和说明分支/版本已切换，以接口为准替换并转回 API 归属。
    */
   private rebuildApiOutlineEntries(data: ClaudeHistoryOutlineData): void {
     this.ensureClaudeOutlineCacheSession()
     this.sortedCachedUserQueries = null
-    for (const id of this.apiOutlineEntryIds) {
-      this.outlineItemCache.delete(id)
-    }
-    this.apiOutlineEntryIds.clear()
+    const previousApiIds = new Set(this.apiOutlineEntryIds)
 
-    const addEntry = (entry: ClaudeOutlineCacheEntry): void => {
-      if (this.outlineItemCache.has(entry.id)) return
-      this.outlineItemCache.set(entry.id, entry)
-      this.apiOutlineEntryIds.add(entry.id)
-    }
-
+    const nextEntries: ClaudeOutlineCacheEntry[] = []
     for (const query of data.userQueries) {
       // 与 DOM 条目同一截断规则：文本截 200，isTruncated 阈值 60
-      addEntry({
+      nextEntries.push({
         id: `claude-message:${query.messageIndex}:user`,
         messageIndex: query.messageIndex,
         orderInMessage: 0,
@@ -1917,7 +1919,7 @@ export class ClaudeAdapter extends SiteAdapter {
       headings.forEach((heading, order) => {
         // id 中标题序号为 0 基（与 createClaudeOutlineItemId 一致），
         // orderInMessage 为 1 基（findClaudeOutlineTargetInMountedRow 按下标 -1 定位）
-        addEntry({
+        nextEntries.push({
           id: `claude-message:${messageIndex}:heading:${order}`,
           messageIndex,
           orderInMessage: order + 1,
@@ -1928,6 +1930,24 @@ export class ClaudeAdapter extends SiteAdapter {
           wordCount: heading.wordCount,
         })
       })
+    }
+
+    // 僵尸清理：不在新分支中的条目（含 DOM 归属）全部移除
+    const nextIds = new Set(nextEntries.map((entry) => entry.id))
+    for (const id of Array.from(this.outlineItemCache.keys())) {
+      if (!nextIds.has(id)) this.outlineItemCache.delete(id)
+    }
+    this.apiOutlineEntryIds.clear()
+
+    for (const entry of nextEntries) {
+      const existing = this.outlineItemCache.get(entry.id)
+      if (existing && isReconcilableOutlineText(existing.text, entry.text)) {
+        // 保留现有条目；若其值仍来自上一轮接口，维持 API 归属记账
+        if (previousApiIds.has(entry.id)) this.apiOutlineEntryIds.add(entry.id)
+        continue
+      }
+      this.outlineItemCache.set(entry.id, entry)
+      this.apiOutlineEntryIds.add(entry.id)
     }
   }
 
@@ -2336,7 +2356,9 @@ export class ClaudeAdapter extends SiteAdapter {
     this.sortedCachedUserQueries = cachedUserQueries
     const entry = cachedUserQueries[queryIndex - 1]
 
-    if (entry) {
+    // 文本校验：序号压缩错位（如纯图片提问不占大纲序号）时缓存条目与
+    // 目标文本不可调和，跳过缓存路径交给基类按序号/文本搜索
+    if (entry && (!text || isReconcilableOutlineText(entry.text, text))) {
       // 缓存条目可能对应未挂载行（或缓存来自接口回填而非虚拟扫描）：
       // 挂载查找落空时回退基类按序号/文本搜索，而不是直接判失
       return (

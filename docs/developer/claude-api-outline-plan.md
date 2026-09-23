@@ -119,8 +119,10 @@ extractOutline()
 - 分支切换（重新生成/左右切换版本）位置不变、内容变，位置法检测不到，补两个
   粘性信号（置位后直到一次成功拉取才清除，避免被冷却/单飞闸门吞掉）：
   1. 生成结束：`isGenerating()` 下降沿。重新生成与编辑必经过生成态，
-  2. 标题漂移：挂载行的标题与同 id 的 API 回填条目文本不一致（200 字符截断
-     内前缀一致即视为未漂移）——覆盖不经过生成态的版本切换。
+  2. 标题漂移：挂载行的标题与缓存同 id 条目文本不可调和（相等或互为前缀
+     视为截断/渲染差异，如 200 字符截断、KaTeX 重复）——覆盖不经过生成态的
+     版本切换；不限于 API 归属条目，DOM 归属条目同样参与（`<`/`>` 切换
+     不经过生成态，首轮挂载后漂移检测不能短路）。
   已放弃的方案：用户提问文本指纹。重生分支叉在 assistant 消息上，用户提问文本
   跨分支不变，检测不到；且 DOM 提问文本混有附件名，误报率高。
 - 拉取闸门复用 `shouldAttemptApiOutlineFetch`（单飞/生成中跳过/冷却/熔断）。
@@ -129,10 +131,14 @@ extractOutline()
 
 ### 4.3 缓存条目重建策略
 
-- 适配器侧维护 `apiOutlineEntryIds: Set<string>` 记录 API 来源条目；
-- 每次拉取成功：先删旧 API 条目，再写入新条目，不覆盖同 id 的 DOM 来源条目
-  （DOM 条目的 wordCount 是精确值，API 条目是 `markdownPlainLength` 估算值，
-  DOM 挂载后由 `updateClaudeOutlineCache` 自然精化）；
+- 接口数据是激活分支结构的真值。每次拉取成功：先按新分支展开全部条目 id，
+  不在其中的缓存条目（含 DOM 归属）一律清除——编辑/重新生成截断分支后，
+  旧位置条目已成为无法跳转的僵尸，仍挂载的行会在下次 extract 由
+  `updateClaudeOutlineCache` 重建精确值；
+- 同 id 且文本可调和的 DOM 归属条目保留（DOM 的 wordCount 是精确值，API 条目
+  是 `markdownPlainLength` 估算值）；文本不可调和说明分支/版本已切换，
+  以接口为准替换并转回 API 归属（`apiOutlineEntryIds` 记录当前值为 API 来源的
+  条目，供记账与调试）；
 - 会话切换清缓存走现有 `ensureClaudeOutlineCacheSession`，同步清空 API 状态。
 
 ### 4.4 变更检测签名
