@@ -13,7 +13,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 - **Long conversation and streaming performance** — Reduced background scans and repeated calculations during long conversations and live AI replies across all sites, easing stutter when scrolling and typing. (#947)
 - **Scroll to top and quick jumps** — On sites where conversations are already fully loaded locally (e.g. DeepSeek, Doubao, Claude), "Scroll to Top" now finishes immediately without unnecessary history checks; clicking "Return to Anchor" or "Scroll to Bottom" right after "Scroll to Top" also responds immediately instead of ignoring the click. (#948)
-- **DeepSeek outline and export** — Reply headings in long conversations stay complete while scrolling and jump accurately when clicked, and exporting no longer requires scrolling page-by-page while keeping reasoning, formulas, and code intact. (#953)
+- **Claude, DeepSeek outline and export** — Reply headings in long conversations stay complete while scrolling and jump accurately when clicked, and exporting no longer requires scrolling page-by-page while keeping reasoning, formulas, and code intact. (#953, #954)
 
 ### 🐛 Bug Fixes
 
