@@ -12,15 +12,13 @@ versioning follows [Semantic Versioning](https://semver.org/).
 ### ✨ Improvements
 
 - **Long conversation and streaming performance** — Reduced background scans and repeated calculations during long conversations and live AI replies across all sites, easing stutter when scrolling and typing. (#947)
-- **Quick jumps after scrolling to top** — Clicking "Scroll to Bottom" or "Return to Anchor" while earlier history is still loading after "Scroll to Top" now stops the loading and responds immediately, instead of ignoring the click for about a second. (#948)
-- **Faster jumps to top** — On sites where the conversation is already fully available locally (e.g. DeepSeek, Doubao, Claude), "Scroll to Top" now completes right away instead of waiting about a second for an unnecessary history-loading check. (#948)
-- **DeepSeek outlines in long chats** — Reply headings no longer disappear from the outline when scrolling back and forth in long conversations; the outline now always shows the full list of reply sections, and clicking any heading still jumps to it accurately. (#953)
-- **Faster and more complete DeepSeek exports** — Exporting now collects the conversation content in one step instead of scrolling through the whole chat, so long conversations export much faster and formulas, code, and reasoning content are preserved more accurately.
+- **Scroll to top and quick jumps** — On sites where conversations are already fully loaded locally (e.g. DeepSeek, Doubao, Claude), "Scroll to Top" now finishes immediately without unnecessary history checks; clicking "Return to Anchor" or "Scroll to Bottom" right after "Scroll to Top" also responds immediately instead of ignoring the click. (#948)
+- **DeepSeek outline and export** — Reply headings in long conversations stay complete while scrolling and jump accurately when clicked, and exporting no longer requires scrolling page-by-page while keeping reasoning, formulas, and code intact. (#953)
 
 ### 🐛 Bug Fixes
 
-- **"Show User Queries" toggle** — On pages without user questions (new chats, Gemini Canvas or Deep Research documents), the outline toggle always appeared off and clicking it seemed to do nothing until switching to another conversation; the toggle now always shows its real state and responds immediately. (#951)
-- **Outline stuck expanded after locate** — In documents whose headings start at a deeper level (e.g. H3), using "Locate Current" with the outline level set to 1 or 2 left the temporarily expanded outline stuck open after the highlight ended; it now reliably returns to its previous collapsed state. (#952)
+- **"Show User Queries" toggle** — Fixed an issue on pages without user questions where the toggle showed an incorrect state and appeared unresponsive; it now always reflects its true state and updates immediately. (#951)
+- **Outline stuck expanded after locate** — Fixed an issue where temporarily expanding the outline via "Locate Current" remained stuck open; it now reliably returns to its collapsed state once highlighting ends. (#952)
 
 ---
 
