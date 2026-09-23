@@ -231,10 +231,8 @@ describe("Z.ai built-in config", () => {
   it("configures cleanMode with safe preserveFlow selector preventing overseas chat blanking", () => {
     const selector = ZAI_CONFIG.cleanMode.preserveFlow?.[0]
     expect(selector).toBeDefined()
-    expect(selector).toContain(":not(:first-child)")
+    expect(selector).toContain(":not(:has(#messages-container, textarea, [data-pane-id]))")
     expect(selector).toContain("beian.miit.gov.cn")
-    expect(selector).toContain("terms-of-service")
-    expect(selector).toContain(":last-child")
   })
 
   it("keeps every private selector allowlist key connected to a runtime consumer", () => {

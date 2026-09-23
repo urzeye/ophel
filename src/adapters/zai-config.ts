@@ -166,7 +166,7 @@ const createZaiConfig = (): ZaiSiteConfig => {
     zenMode: { hide: ["#sidebar"] },
     cleanMode: {
       preserveFlow: [
-        '#chat-container > div:first-child > div:last-child:not(:first-child):has(a[href*="beian.miit.gov.cn"], a[href*="terms-of-service"])',
+        '#chat-container > div:first-child > div:not(:has(#messages-container, textarea, [data-pane-id])):has(a[href*="beian.miit.gov.cn"])',
       ],
     },
     widthSelectors: [
