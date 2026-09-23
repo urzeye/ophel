@@ -24,7 +24,10 @@ describe("outline active highlight resync after tree rebuild", () => {
     // 树重建会替换全部节点对象并重排 index（如 AI 回复标题并入），
     // 但根节点数不变时滚动同步不会重跑；此时必须用间谍按页面位置重算
     expect(outlineTabSource).toContain(
-      'if ( followMode === "current" && activeIndexRef.current !== null && (!nodeIsCurrent || manager.hasPositionlessOutlineNodes()) ) { const container = manager.getScrollContainer() const freshActive = container ? manager.findMountedActiveNode(container) : null',
+      "const hasPositionless = manager.hasPositionlessOutlineNodes()",
+    )
+    expect(outlineTabSource).toContain(
+      'if ( followMode === "current" && (activeIndexRef.current !== null || hasPositionless) && (!nodeIsCurrent || hasPositionless) ) { const container = manager.getScrollContainer() const freshActive = container ? manager.findMountedActiveNode(container) : null',
     )
     expect(outlineTabSource).toContain("updateActiveIndex(freshActive?.index ?? null, freshActive)")
 

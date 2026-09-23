@@ -139,6 +139,9 @@ export class OutlineManager {
   // Global refresh debounce (防止多处同时触发时的重复执行)
   private refreshDebounceTimer: ReturnType<typeof setTimeout> | null = null
   private readonly REFRESH_DEBOUNCE_MS = 300
+  // 程序化跳转后的错峰刷新节奏（与 handleUrlChange 同理）：虚拟滚动站点的
+  // DOM 换挂载是异步的，单次过早 refresh 会抽到旧 DOM 且因文本未变静默跳过
+  private readonly JUMP_REFRESH_DELAYS = [80, 250, 600, 1200]
 
   // 设置变更回调
   private onExpandLevelChange?: (level: number) => void
@@ -282,10 +285,16 @@ export class OutlineManager {
     }
 
     if (type === EVENT_OUTLINE_JUMP_COMPLETED) {
-      // 程序化跳转完成后立即刷新：仅当树里存在未挂载且无缓存位置的条目
-      // （虚拟滚动 + 外部数据回填）才有意义，普通站点不受影响
+      // 程序化跳转完成后错峰刷新：仅当树里存在未挂载且无缓存位置的条目
+      // （虚拟滚动 + 外部数据回填）才有意义，普通站点不受影响。
+      // 必须用 immediate 绕过全局防抖，否则多次探测会被合并成一次过早的扫描
       if (this.isActive && this.hasPositionlessOutlineNodes()) {
-        this.refresh()
+        for (const delay of this.JUMP_REFRESH_DELAYS) {
+          setTimeout(() => {
+            if (this.destroyed || !this.isActive) return
+            this.refresh(undefined, true)
+          }, delay)
+        }
       }
       return
     }

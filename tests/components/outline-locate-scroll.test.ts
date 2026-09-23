@@ -9,8 +9,18 @@ const readSource = (relativePath: string): string =>
 const compact = (source: string): string => source.replace(/\s+/g, " ")
 
 const outlineTabSource = readSource("../../src/components/OutlineTab.tsx")
+const outlineTabCompact = compact(outlineTabSource)
 
 describe("outline locate scroll & highlight jitter prevention", () => {
+  it("refreshes and retries with the latest tree when locate finds nothing on virtual-fill sites", () => {
+    expect(outlineTabCompact).toContain(
+      "if (!currentItem && manager.hasPositionlessOutlineNodes()) {",
+    )
+    expect(outlineTabCompact).toContain(
+      "manager.refresh(undefined, true) currentItem = findCurrentItem(flattenTree(manager.getState().tree))",
+    )
+  })
+
   it("decouples locate retry limit from 3s highlight duration to prevent infinite scroll fighting", () => {
     expect(outlineTabSource).toContain("const OUTLINE_LOCATE_HIGHLIGHT_MS = 3000")
     expect(outlineTabSource).toContain("const OUTLINE_LOCATE_MAX_RETRIES = 20")

@@ -81,6 +81,7 @@ describe("OutlineManager jump-completed refresh gating", () => {
   })
 
   it("ignores jump-completed events when every node is mounted or has a cached position", () => {
+    vi.useFakeTimers()
     const items: OutlineItem[] = [
       { level: 0, text: "提问一", isUserQuery: true, element: {} as Element },
       { level: 2, text: "回答标题", element: {} as Element },
@@ -96,10 +97,15 @@ describe("OutlineManager jump-completed refresh gating", () => {
 
     const refreshSpy = vi.spyOn(manager as unknown as { refresh(): void }, "refresh")
     sendJumpCompleted(manager)
+    vi.advanceTimersByTime(2000)
     expect(refreshSpy).not.toHaveBeenCalled()
+    vi.useRealTimers()
   })
 
-  it("refreshes immediately on jump-completed when the tree has positionless fill nodes", () => {
+  it("schedules staggered refreshes on jump-completed when the tree has positionless fill nodes", () => {
+    // 虚拟列表换挂载是异步的，单次过早 refresh 会抽到旧 DOM 且因文本未变
+    // 静默跳过，必须错峰多次探测（与 handleUrlChange 同理）
+    vi.useFakeTimers()
     // 虚拟滚动 + 外部数据回填：条目既未挂载也没有缓存滚动位置
     const items: OutlineItem[] = [
       { level: 0, text: "提问一", isUserQuery: true, element: null },
@@ -116,10 +122,14 @@ describe("OutlineManager jump-completed refresh gating", () => {
 
     const refreshSpy = vi.spyOn(manager as unknown as { refresh(): void }, "refresh")
     sendJumpCompleted(manager)
-    expect(refreshSpy).toHaveBeenCalledTimes(1)
+    expect(refreshSpy).not.toHaveBeenCalled()
+    vi.advanceTimersByTime(1300)
+    expect(refreshSpy.mock.calls.length).toBeGreaterThanOrEqual(3)
+    vi.useRealTimers()
   })
 
   it("ignores positionless nodes on sites that do not declare virtual outline fill", () => {
+    vi.useFakeTimers()
     // ChatGPT/Claude/豆包等站点的缓存回填条目同样 element: null，
     // 但未声明 traits.virtualOutlineFill，跳转后不得改变其原有行为
     const items: OutlineItem[] = [
@@ -137,6 +147,8 @@ describe("OutlineManager jump-completed refresh gating", () => {
 
     const refreshSpy = vi.spyOn(manager as unknown as { refresh(): void }, "refresh")
     sendJumpCompleted(manager)
+    vi.advanceTimersByTime(2000)
     expect(refreshSpy).not.toHaveBeenCalled()
+    vi.useRealTimers()
   })
 })

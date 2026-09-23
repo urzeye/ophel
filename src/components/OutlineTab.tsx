@@ -1107,12 +1107,14 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
     // 指向完全不同的条目，而根节点数不变不会触发滚动同步重跑）：跟随模式下
     // 按页面当前阅读位置重算高亮，不能沿用旧 index，否则高亮停在错位条目上。
     // 虚拟滚动回填场景节点对象按 index 复用（回填条目换成同 index 的挂载条目），
-    // 对象仍“有效”但高亮停在旧位置，因此树里存在无位置条目时也走重算；
+    // 对象仍“有效”但高亮停在旧位置；且跳转换挂载的瞬时窗口内滚动间谍可能
+    // 已把高亮清成 null——这两种情况都按页面位置重算自愈。
     // 普通站点 hasPositionlessOutlineNodes 恒为 false，行为不变
+    const hasPositionless = manager.hasPositionlessOutlineNodes()
     if (
       followMode === "current" &&
-      activeIndexRef.current !== null &&
-      (!nodeIsCurrent || manager.hasPositionlessOutlineNodes())
+      (activeIndexRef.current !== null || hasPositionless) &&
+      (!nodeIsCurrent || hasPositionless)
     ) {
       const container = manager.getScrollContainer()
       const freshActive = container ? manager.findMountedActiveNode(container) : null
@@ -1639,40 +1641,53 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
     const viewportTop = containerRect.top
     const viewportBottom = containerRect.bottom
 
-    const mountedActiveIndex = manager.findMountedActiveItemIndex(scrollContainer)
-    let currentItem =
-      mountedActiveIndex !== null
-        ? allItems.find((item) => item.index === mountedActiveIndex) || null
-        : null
+    const findCurrentItem = (items: typeof tree): (typeof tree)[number] | null => {
+      const mountedActiveIndex = manager.findMountedActiveItemIndex(scrollContainer)
+      let found =
+        mountedActiveIndex !== null
+          ? items.find((item) => item.index === mountedActiveIndex) || null
+          : null
 
-    if (!currentItem) {
-      for (const item of allItems) {
-        if (!item.element || !item.element.isConnected) continue
+      if (!found) {
+        for (const item of items) {
+          if (!item.element || !item.element.isConnected) continue
 
-        const rect = item.element.getBoundingClientRect()
-        if (rect.top >= viewportTop && rect.top < viewportBottom) {
-          currentItem = item
-          break
-        }
-        if (rect.top < viewportTop && rect.bottom > viewportTop) {
-          currentItem = item
-          break
+          const rect = item.element.getBoundingClientRect()
+          if (rect.top >= viewportTop && rect.top < viewportBottom) {
+            found = item
+            break
+          }
+          if (rect.top < viewportTop && rect.bottom > viewportTop) {
+            found = item
+            break
+          }
         }
       }
+
+      if (!found) {
+        // 找最接近视口顶部的元素
+        let minDistance = Infinity
+        for (const item of items) {
+          if (!item.element || !item.element.isConnected) continue
+          const rect = item.element.getBoundingClientRect()
+          const distance = Math.abs(rect.top - viewportTop)
+          if (distance < minDistance) {
+            minDistance = distance
+            found = item
+          }
+        }
+      }
+
+      return found
     }
 
-    if (!currentItem) {
-      // 找最接近视口顶部的元素
-      let minDistance = Infinity
-      for (const item of allItems) {
-        if (!item.element || !item.element.isConnected) continue
-        const rect = item.element.getBoundingClientRect()
-        const distance = Math.abs(rect.top - viewportTop)
-        if (distance < minDistance) {
-          minDistance = distance
-          currentItem = item
-        }
-      }
+    let currentItem = findCurrentItem(allItems)
+
+    if (!currentItem && manager.hasPositionlessOutlineNodes()) {
+      // 虚拟滚动回填站点：树可能冻结在跳转前的旧视口（元素全部卸载），
+      // 立即刷新后基于最新树重找一次
+      manager.refresh(undefined, true)
+      currentItem = findCurrentItem(flattenTree(manager.getState().tree))
     }
 
     if (!currentItem) return
