@@ -59,6 +59,14 @@ const USER_TOKEN_STORAGE_KEY = "userToken"
 const OUTLINE_HEADING_SELECTOR = "h1, h2, h3, h4, h5, h6"
 const CHAT_DELETE_API_PATH = "/api/v0/chat_session/delete"
 const CHAT_HISTORY_API_PATH = "/api/v0/chat/history_messages"
+/**
+ * history_messages 接口按请求头返回两种数据形态：不带 x-client-version 时
+ * fragments 整体为空，思考链只有 thinking_content（其中混入"已浏览网页。"等
+ * 本地化工具状态行），图片附件的 FILE 片段也拿不到；带上后 fragments 完整
+ * （THINK/FILE/TOOL_* 齐全），thinking_content 为空。版本号过期时服务端只会
+ * 退回旧形态，不会报错。
+ */
+const DEEPSEEK_CLIENT_VERSION = "2.5.0"
 /** 历史消息接口拉取冷却间隔（含失败与 version 未变的成功重拉），避免每次 extractOutline 都重试 */
 const API_OUTLINE_FETCH_BACKOFF_MS = 10_000
 /** 尾部删除复合判定中的贴底容差（约一行高度） */
@@ -790,12 +798,7 @@ export class DeepSeekAdapter extends SiteAdapter {
     const response = await fetch(
       `${window.location.origin}${CHAT_HISTORY_API_PATH}?chat_session_id=${encodeURIComponent(sessionId)}`,
       {
-        headers: {
-          accept: "*/*",
-          authorization: `Bearer ${token}`,
-          "x-client-platform": "web",
-          "x-client-locale": this.getClientLocale(),
-        },
+        headers: this.buildHistoryApiHeaders(token),
         credentials: "include",
       },
     )
@@ -2388,12 +2391,7 @@ export class DeepSeekAdapter extends SiteAdapter {
       const response = await fetch(
         `${window.location.origin}${CHAT_HISTORY_API_PATH}?chat_session_id=${encodeURIComponent(sessionId)}`,
         {
-          headers: {
-            accept: "*/*",
-            authorization: `Bearer ${token}`,
-            "x-client-platform": "web",
-            "x-client-locale": this.getClientLocale(),
-          },
+          headers: this.buildHistoryApiHeaders(token),
           credentials: "include",
         },
       )
@@ -2542,10 +2540,32 @@ export class DeepSeekAdapter extends SiteAdapter {
           name,
           type: this.extractFileTypeFromName(name),
           size,
-          source: signedPath ? normalizeExportAssetUrl(signedPath) : "",
+          // 非图片附件不产出下载地址，导出只保留文件名标签
+          source: isImage && signedPath ? this.resolveSignedImageUrl(signedPath) : "",
         },
       ]
     })
+  }
+
+  /**
+   * signed_path 形如 /file?file_id=...&state=...，是相对地址且缺 ty 参数；
+   * 真实文件托管在 files.deepseeksvc.com/api/file，ty 必传（实测仅支持
+   * p/t/r，图片用 p=大图，t=缩略图）。签名 state 原样透传。
+   * 形态不符时回退按原地址解析。
+   */
+  private resolveSignedImageUrl(signedPath: string): string {
+    try {
+      const url = new URL(signedPath, window.location.origin)
+      const fileId = url.searchParams.get("file_id")
+      const state = url.searchParams.get("state")
+      if (url.pathname !== "/file" || !fileId || !state) {
+        return normalizeExportAssetUrl(signedPath)
+      }
+      const params = new URLSearchParams({ file_id: fileId, state, ty: "p" })
+      return `https://files.deepseeksvc.com/api/file?${params.toString()}`
+    } catch {
+      return normalizeExportAssetUrl(signedPath)
+    }
   }
 
   private getNestedRecord(source: unknown, path: string[]): Record<string, unknown> | null {
@@ -3408,6 +3428,17 @@ export class DeepSeekAdapter extends SiteAdapter {
       "x-client-platform": "web",
       "x-client-locale": this.getClientLocale(),
       "x-client-timezone-offset": String(-new Date().getTimezoneOffset() * 60),
+    }
+  }
+
+  private buildHistoryApiHeaders(token: string): Record<string, string> {
+    return {
+      accept: "*/*",
+      authorization: `Bearer ${token}`,
+      "x-client-platform": "web",
+      "x-client-locale": this.getClientLocale(),
+      // 见 DEEPSEEK_CLIENT_VERSION：该头决定接口返回完整 fragments 形态
+      "x-client-version": DEEPSEEK_CLIENT_VERSION,
     }
   }
 
