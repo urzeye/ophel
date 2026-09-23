@@ -1100,16 +1100,20 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
 
   useEffect(() => {
     const activeNode = activeNodeRef.current
-    if (activeNode && isCurrentVisibilityNode(activeNode)) {
-      updateVisibleHighlightIndex(getVisibleHeadingHighlightIndex(activeNode))
-      return
-    }
+    const nodeIsCurrent = activeNode !== null && isCurrentVisibilityNode(activeNode)
+    const followMode = settings?.features?.outline?.followMode || "current"
 
     // 树重建后旧节点对象与 index 一并失效（AI 回复标题并入会让同一 index
     // 指向完全不同的条目，而根节点数不变不会触发滚动同步重跑）：跟随模式下
-    // 按页面当前阅读位置重算高亮，不能沿用旧 index，否则高亮停在错位条目上
-    const followMode = settings?.features?.outline?.followMode || "current"
-    if (followMode === "current" && activeIndexRef.current !== null) {
+    // 按页面当前阅读位置重算高亮，不能沿用旧 index，否则高亮停在错位条目上。
+    // 虚拟滚动回填场景节点对象按 index 复用（回填条目换成同 index 的挂载条目），
+    // 对象仍“有效”但高亮停在旧位置，因此树里存在无位置条目时也走重算；
+    // 普通站点 hasPositionlessOutlineNodes 恒为 false，行为不变
+    if (
+      followMode === "current" &&
+      activeIndexRef.current !== null &&
+      (!nodeIsCurrent || manager.hasPositionlessOutlineNodes())
+    ) {
       const container = manager.getScrollContainer()
       const freshActive = container ? manager.findMountedActiveNode(container) : null
       const freshVisible = getVisibleHeadingHighlightIndex(freshActive)
@@ -1119,6 +1123,11 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
       if (visibleChanged && freshVisible !== null && !userScrollingOutlineRef.current) {
         scrollOutlineNodeIntoView(freshVisible, "center")
       }
+      return
+    }
+
+    if (nodeIsCurrent && activeNode) {
+      updateVisibleHighlightIndex(getVisibleHeadingHighlightIndex(activeNode))
       return
     }
 

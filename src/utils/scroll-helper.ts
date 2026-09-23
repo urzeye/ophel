@@ -6,7 +6,16 @@
  */
 
 import type { SiteAdapter } from "~adapters/base"
+import { EVENT_OUTLINE_JUMP_COMPLETED } from "~utils/messaging"
 import { signalReadingHistoryUserNavigation } from "~utils/reading-history-navigation"
+
+// 与 signalReadingHistoryUserNavigation 同条件：用户主动跳转完成后广播，
+// 大纲管理器收到后立即刷新对齐新阅读位置（阅读历史自动恢复不触发）
+function notifyOutlineJumpCompleted(preserveReadingHistoryRestore?: boolean): void {
+  if (preserveReadingHistoryRestore) return
+  if (typeof window === "undefined") return
+  window.postMessage({ type: EVENT_OUTLINE_JUMP_COMPLETED }, "*")
+}
 
 // column-reverse 容器的滚动原点在视觉底部：scrollTop 为 0，向上滚动为负值。
 // 该语义由 CSS 规范定义，对任意站点通用，直接按 computed style 检测。
@@ -89,6 +98,7 @@ export async function smartScrollToTop(
       ...{ __bypassLock: true },
     } as any)
 
+    notifyOutlineJumpCompleted(options.preserveReadingHistoryRestore)
     return { container, previousScrollTop, scrollHeight }
   }
 
@@ -126,6 +136,7 @@ export async function smartScrollToBottom(
       ...{ __bypassLock: true },
     } as any)
 
+    notifyOutlineJumpCompleted(options.preserveReadingHistoryRestore)
     return { container, previousScrollTop }
   }
 
@@ -163,6 +174,7 @@ export async function smartScrollTo(
     if (options.preservePositionLock) {
       syncPositionLock(container.scrollTop)
     }
+    notifyOutlineJumpCompleted(options.preserveReadingHistoryRestore)
     return { success: true, currentScrollTop: container.scrollTop }
   }
 
@@ -175,6 +187,7 @@ export async function smartScrollTo(
   if (options.preservePositionLock) {
     syncPositionLock(document.documentElement.scrollTop)
   }
+  notifyOutlineJumpCompleted(options.preserveReadingHistoryRestore)
   return { success: true, currentScrollTop: document.documentElement.scrollTop }
 }
 

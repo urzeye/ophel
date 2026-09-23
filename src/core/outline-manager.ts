@@ -9,6 +9,7 @@ import {
   EVENT_MONITOR_COMPLETE,
   EVENT_MONITOR_START,
   EVENT_OUTLINE_DATA_UPDATED,
+  EVENT_OUTLINE_JUMP_COMPLETED,
 } from "~utils/messaging"
 import { signalReadingHistoryUserNavigation } from "~utils/reading-history-navigation"
 
@@ -271,10 +272,19 @@ export class OutlineManager {
     const { type } = event.data || {}
 
     // 油猴沙箱中 event.source 可能是代理对象而非 window 本身（与 network-monitor
-    // 的放宽校验一致）；该事件仅触发一次刷新，无安全风险，按类型放行
+    // 的放宽校验一致）；这两类事件仅触发一次刷新，无安全风险，按类型放行
     if (type === EVENT_OUTLINE_DATA_UPDATED) {
       // 适配器从站外数据源（如 DeepSeek 历史消息接口）补齐了大纲数据
       if (this.isActive) {
+        this.refresh()
+      }
+      return
+    }
+
+    if (type === EVENT_OUTLINE_JUMP_COMPLETED) {
+      // 程序化跳转完成后立即刷新：仅当树里存在未挂载且无缓存位置的条目
+      // （虚拟滚动 + 外部数据回填）才有意义，普通站点不受影响
+      if (this.isActive && this.hasPositionlessOutlineNodes()) {
         this.refresh()
       }
       return
@@ -1824,6 +1834,15 @@ export class OutlineManager {
 
   findMountedActiveItemIndex(scrollContainer: HTMLElement): number | null {
     return this.findMountedActiveNode(scrollContainer)?.index ?? null
+  }
+
+  // 树里是否存在既未挂载又无缓存滚动位置的条目（虚拟滚动 + 外部数据回填，
+  // 如 DeepSeek API 回填大纲）。普通站点恒为 false，用于把跳转后的即时刷新
+  // 和高亮重算限定在真正需要它的场景，不改变其他站点行为
+  hasPositionlessOutlineNodes(): boolean {
+    return this.flatNodes.some(
+      (node) => !node.isGhost && !node.element && typeof node.scrollTop !== "number",
+    )
   }
 
   findMountedActiveNode(scrollContainer: HTMLElement): OutlineNode | null {
