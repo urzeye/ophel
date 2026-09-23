@@ -65,15 +65,29 @@ const joinTextBlocks = (message: ClaudeHistoryMessage): string =>
     .join("\n\n")
 
 /**
- * 解析 chat_conversations 响应；结构不符合预期时返回 null（调用方退化为 DOM 路径）。
- * totalMessages 为 DOM aria-setsize 的总消息数，仅在接口历史截断时用于尾部对齐；
- * 截断且 totalMessages 缺失或小于分支长度时判解析失败（位置无法对齐，宁缺毋错）。
+ * chat_conversations 响应的激活分支解析结果（大纲与导出共用）。
  */
-export function parseClaudeHistoryOutline(
-  payload: unknown,
-  maxLevel = 6,
-  totalMessages?: number,
-): ClaudeHistoryOutlineData | null {
+export interface ClaudeHistoryBranch {
+  sessionId: string
+  /** current_leaf_message_uuid（可能缺失） */
+  leafUuid: string | null
+  /** 会话级 updated_at（变更检测签名用） */
+  updatedAt: string
+  /** 激活分支消息（根 → 叶顺序） */
+  branch: ClaudeHistoryMessage[]
+  /** 接口历史被截断（链顶 parent 不是哨兵零 uuid） */
+  truncated: boolean
+  /** leaf uuid 存在但未收录于 chat_messages（疑似分页） */
+  leafMissing: boolean
+}
+
+/**
+ * 解析 chat_conversations 响应并回溯激活分支（大纲与导出共用）。
+ * resolveActiveBranch 要求数值 id：按数组下标预映射 uuid -> int，
+ * 位置序号与 DOM data-rs-index 的对齐由调用方处理。
+ * 结构不符合预期时返回 null（调用方退化为 DOM 路径）。
+ */
+export function parseClaudeHistoryBranch(payload: unknown): ClaudeHistoryBranch | null {
   const root = asRecord(payload)
   if (!root) return null
 
@@ -83,8 +97,6 @@ export function parseClaudeHistoryOutline(
   const messages = asObjectArray<ClaudeHistoryMessage>(root.chat_messages)
   if (messages.length === 0) return null
 
-  // resolveActiveBranch 要求数值 id：按数组下标预映射 uuid -> int，
-  // 分支解析后再重编号为位置序号（与 DOM data-rs-index 对齐）
   const positionByUuid = new Map<string, number>()
   messages.forEach((message, index) => {
     if (typeof message.uuid === "string") {
@@ -102,7 +114,9 @@ export function parseClaudeHistoryOutline(
   })
 
   const leafUuid =
-    typeof root.current_leaf_message_uuid === "string" ? root.current_leaf_message_uuid : null
+    typeof root.current_leaf_message_uuid === "string" && root.current_leaf_message_uuid
+      ? root.current_leaf_message_uuid
+      : null
   const currentMessageId = leafUuid !== null ? positionByUuid.get(leafUuid) ?? null : null
 
   const branch = resolveActiveBranch(mapped, currentMessageId)
@@ -112,6 +126,30 @@ export function parseClaudeHistoryOutline(
   const head = messages[branch[0].message_id]
   const headParent = head?.parent_message_uuid
   const truncated = typeof headParent === "string" && headParent !== CLAUDE_ROOT_PARENT_UUID
+
+  return {
+    sessionId,
+    leafUuid,
+    updatedAt: typeof root.updated_at === "string" ? root.updated_at : "",
+    branch: branch.map((mappedMessage) => messages[mappedMessage.message_id]),
+    truncated,
+    leafMissing: leafUuid !== null && currentMessageId === null,
+  }
+}
+
+/**
+ * 解析 chat_conversations 响应为大纲数据；结构不符合预期时返回 null（调用方退化为 DOM 路径）。
+ * totalMessages 为 DOM aria-setsize 的总消息数，仅在接口历史截断时用于尾部对齐；
+ * 截断且 totalMessages 缺失或小于分支长度时判解析失败（位置无法对齐，宁缺毋错）。
+ */
+export function parseClaudeHistoryOutline(
+  payload: unknown,
+  maxLevel = 6,
+  totalMessages?: number,
+): ClaudeHistoryOutlineData | null {
+  const parsed = parseClaudeHistoryBranch(payload)
+  if (!parsed) return null
+  const { sessionId, leafUuid, updatedAt, branch, truncated } = parsed
 
   let offset = 0
   if (truncated) {
@@ -131,8 +169,7 @@ export function parseClaudeHistoryOutline(
   const userQueries: { messageIndex: number; queryIndex: number; text: string }[] = []
   let queryCount = 0
 
-  branch.forEach((mappedMessage, branchPosition) => {
-    const message = messages[mappedMessage.message_id]
+  branch.forEach((message, branchPosition) => {
     const messageIndex = offset + branchPosition
     branchMessageIds.push(messageIndex)
 
@@ -166,7 +203,6 @@ export function parseClaudeHistoryOutline(
     }
   })
 
-  const updatedAt = typeof root.updated_at === "string" ? root.updated_at : ""
   return {
     sessionId,
     signature: `${branch.length}:${leafUuid ?? ""}:${updatedAt}`,

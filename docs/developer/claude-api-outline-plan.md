@@ -1,6 +1,6 @@
 # Claude.ai API 数据源大纲与导出适配方案
 
-> 状态：大纲部分已实施（分支 `feat/claude-api-outline`），导出为第二阶段
+> 状态：已实施（分支 `feat/claude-api-outline`，大纲 + 导出均已落地，实机冒烟待做）
 > 参考实现：DeepSeek API 数据源（`src/utils/outline-api-source.ts`、`src/utils/deepseek-history-outline.ts`、`src/utils/deepseek-history-export.ts`、`src/adapters/deepseek.ts`）
 > 证据样本：`claude-demo.html`（本地参考，勿提交）、`claude-curl.sh` / `claude-curl-response.json`（含登录态，勿提交）
 
@@ -141,19 +141,23 @@ extractOutline()
 - 导出：直接判不可用，回退 DOM 快照路径（同 DeepSeek 导出的完整性哲学：
   静默缺开头比不用接口更伤）。
 
-### 4.6 导出（第二阶段，独立可发布）
+### 4.6 导出
 
 `parseClaudeHistoryExport`：激活分支 → 消息序列。
 
 - 用户消息：`content` 中 `text` 块拼接；`attachments/files` 样本为空、schema 未验证，
   v1 保守门槛：任一用户消息带非空 attachments/files 即判不可用回退 DOM 路径；
-- 助手消息：`text` 块拼接为正文；`thinking` 块在 includeThoughts 时按现有
-  `> [Thoughts]` 引用块格式输出；`tool_use/tool_result/token_budget` 跳过；
-- Artifact/文档面板内容在接口中的形态未验证（当前 DOM 导出对其有完整处理），
-  v1 门槛：助手消息含 `tool_use` 块时回退 DOM 路径，避免导出丢 Artifact；
+- 助手消息：`text` 块拼接为正文；`thinking` 块（正文在 `thinking` 字段、标题取
+  首个 summary）在 includeThoughts 时按现有 `> [Thoughts]` 引用块格式输出；
+- Artifact/文档面板：样本已确认 `create_file` tool_use 即 Artifact 文档机制
+  （`input.file_text` 为完整文档），DOM 导出对其有完整处理，v1 门槛为
+  任一助手消息含 `tool_use` 块即回退 DOM 路径，拿到更多真实样本后可按
+  tool_use name 细化放开；
 - 完整性门槛：4.5 的截断判定 + 分支非空。
-- 集成点：`extractExportMessages` 开头尝试 API 路径，返回 null 走现有快照逻辑，
-  成功时可跳过 `collectClaudeVirtualExportSnapshot` 的全量滚动。
+- 集成点：`prepareConversationExport` 先尝试 `collectApiExportMessages`，成功则
+  跳过快照/文档面板/思考块收集（state 标记 `usedApiExport`，恢复逻辑短路），
+  `extractExportMessages` 直接返回接口消息；`extractExportBundle` 在接口路径下
+  返回 null（纯 markdown，无 bundle 资产）。
 
 ## 5. 改动清单
 
@@ -193,7 +197,7 @@ extractOutline()
 1. `claude-history-outline.ts` 解析器 + 单测（纯函数先行）；
 2. claude.ts 接入：状态机 + 缓存重建 + 指纹比对 + 滚动回填降级为兜底；
 3. config traits + version，跑全量测试与 typecheck；
-4. 第二阶段：导出解析器 + 集成 + 单测；
+4. 第二阶段：导出解析器 + 集成 + 单测（已完成）；
 5. 实机冒烟：长对话大纲完整性、定位跳转、重新生成后大纲刷新、导出对比 DOM 路径。
 
 ## 8. 验证计划

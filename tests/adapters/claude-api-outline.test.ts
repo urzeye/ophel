@@ -1,7 +1,8 @@
-import { describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import type { OutlineItem } from "~adapters/base"
+import type { ExportLifecycleContext, OutlineItem } from "~adapters/base"
 import { ClaudeAdapter } from "~adapters/claude"
+import type { ExportMessage } from "~utils/exporter"
 import {
   parseClaudeHistoryOutline,
   type ClaudeHistoryOutlineData,
@@ -16,7 +17,10 @@ vi.mock("~utils/dom-toolkit", () => ({
 
 // ensureClaudeOutlineCacheSession 经 getSessionId 读 location
 vi.stubGlobal("window", {
-  location: { href: "https://claude.ai/chat/conv-1", pathname: "/chat/conv-1" },
+  location: {
+    href: "https://claude.ai/chat/b56ad8d3-7271-432f-8651-75dc609c7f08",
+    pathname: "/chat/b56ad8d3-7271-432f-8651-75dc609c7f08",
+  },
 })
 
 interface CacheEntry {
@@ -34,8 +38,11 @@ type AdapterInternals = {
   outlineItemCache: Map<string, CacheEntry>
   apiOutlineEntryIds: Set<string>
   apiOutlineForceRefetch: boolean
+  exportApiMessages: ExportMessage[] | null
+  getActiveOrganizationId: () => Promise<string | null>
   rebuildApiOutlineEntries: (data: ClaudeHistoryOutlineData) => void
   updateClaudeOutlineCache: (items: OutlineItem[]) => void
+  collectApiExportMessages: (context: ExportLifecycleContext) => Promise<ExportMessage[] | null>
   mergeCachedClaudeOutlineItems: (
     currentItems: OutlineItem[],
     maxLevel: number,
@@ -55,7 +62,7 @@ const buildData = (
   }[],
 ): ClaudeHistoryOutlineData =>
   parseClaudeHistoryOutline({
-    uuid: "conv-1",
+    uuid: "b56ad8d3-7271-432f-8651-75dc609c7f08",
     updated_at: "2026-05-25T04:00:00.000000Z",
     current_leaf_message_uuid: messages[messages.length - 1]?.uuid,
     chat_messages: messages.map((message, index) => ({
@@ -217,5 +224,154 @@ describe("ClaudeAdapter API outline entries", () => {
       { level: 2, text: "另一个标题", element: fakeElementInRow(1), isUserQuery: false },
     ])
     expect(state.apiOutlineForceRefetch).toBe(false)
+  })
+})
+
+describe("ClaudeAdapter API export", () => {
+  beforeEach(() => {
+    // prepareConversationExport 的 removeClaudeExportSnapshot 会访问 document；
+    // buildNativeApiHeaders 经 getCookieValue 读 document.cookie
+    vi.stubGlobal("document", {
+      querySelector: () => null,
+      querySelectorAll: () => [],
+      cookie: "",
+    })
+    // buildNativeApiHeaders 的 anthropic-* 头读取会访问 localStorage
+    vi.stubGlobal("localStorage", { getItem: () => null })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    // stubGlobal 会覆盖文件顶部的 window 桩，后续用例需要时自行补回
+    vi.stubGlobal("window", {
+      location: {
+        href: "https://claude.ai/chat/b56ad8d3-7271-432f-8651-75dc609c7f08",
+        pathname: "/chat/b56ad8d3-7271-432f-8651-75dc609c7f08",
+      },
+    })
+  })
+
+  const exportContext = (includeThoughts: boolean) =>
+    ({ format: "markdown", includeThoughts }) as unknown as ExportLifecycleContext
+
+  const stubFetchPayload = (payload: unknown) => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({ ok: true, json: async () => payload })),
+    )
+  }
+
+  const stubOrg = (adapter: ClaudeAdapter) => {
+    internals(adapter).getActiveOrganizationId = async () => "org-1"
+  }
+
+  it("collects export messages from the conversations api", async () => {
+    const adapter = new ClaudeAdapter()
+    stubOrg(adapter)
+    stubFetchPayload({
+      uuid: "b56ad8d3-7271-432f-8651-75dc609c7f08",
+      updated_at: "2026-05-25T04:00:00.000000Z",
+      current_leaf_message_uuid: "a1",
+      chat_messages: [
+        {
+          uuid: "u1",
+          parent_message_uuid: ZERO_UUID,
+          sender: "human",
+          content: [{ type: "text", text: "问题" }],
+        },
+        {
+          uuid: "a1",
+          parent_message_uuid: "u1",
+          sender: "assistant",
+          content: [
+            { type: "thinking", thinking: "思考过程", summaries: [{ summary: "摘要" }] },
+            { type: "text", text: "回复正文" },
+          ],
+        },
+      ],
+    })
+
+    const messages = await internals(adapter).collectApiExportMessages(exportContext(true))
+    expect(messages).toEqual([
+      { role: "user", content: "问题" },
+      {
+        role: "assistant",
+        content: "> [Thoughts]\n> **摘要**\n>\n> 思考过程\n\n回复正文",
+      },
+    ])
+
+    // includeThoughts=false 时不带思考链
+    const withoutThoughts = await internals(adapter).collectApiExportMessages(exportContext(false))
+    expect(withoutThoughts).toEqual([
+      { role: "user", content: "问题" },
+      { role: "assistant", content: "回复正文" },
+    ])
+  })
+
+  it("returns null when the api payload is not exportable", async () => {
+    const adapter = new ClaudeAdapter()
+    stubOrg(adapter)
+    stubFetchPayload({
+      uuid: "b56ad8d3-7271-432f-8651-75dc609c7f08",
+      updated_at: "2026-05-25T04:00:00.000000Z",
+      current_leaf_message_uuid: "a1",
+      chat_messages: [
+        {
+          uuid: "u1",
+          parent_message_uuid: ZERO_UUID,
+          sender: "human",
+          content: [{ type: "text", text: "问题" }],
+        },
+        {
+          uuid: "a1",
+          parent_message_uuid: "u1",
+          sender: "assistant",
+          content: [
+            { type: "tool_use", name: "create_file" },
+            { type: "text", text: "回复正文" },
+          ],
+        },
+      ],
+    })
+
+    expect(await internals(adapter).collectApiExportMessages(exportContext(false))).toBeNull()
+  })
+
+  it("prepareConversationExport short-circuits snapshot collection on api success", async () => {
+    const adapter = new ClaudeAdapter()
+    stubOrg(adapter)
+    stubFetchPayload({
+      uuid: "b56ad8d3-7271-432f-8651-75dc609c7f08",
+      updated_at: "2026-05-25T04:00:00.000000Z",
+      current_leaf_message_uuid: "a1",
+      chat_messages: [
+        {
+          uuid: "u1",
+          parent_message_uuid: ZERO_UUID,
+          sender: "human",
+          content: [{ type: "text", text: "问题" }],
+        },
+        {
+          uuid: "a1",
+          parent_message_uuid: "u1",
+          sender: "assistant",
+          content: [{ type: "text", text: "回复正文" }],
+        },
+      ],
+    })
+
+    const state = (await adapter.prepareConversationExport(exportContext(false))) as {
+      usedApiExport?: boolean
+    }
+    expect(state.usedApiExport).toBe(true)
+    expect(internals(adapter).exportApiMessages).toEqual([
+      { role: "user", content: "问题" },
+      { role: "assistant", content: "回复正文" },
+    ])
+
+    const messages = await adapter.extractExportMessages(exportContext(false))
+    expect(messages).toHaveLength(2)
+    // bundle 路径在接口数据源下不提供资产
+    expect(await adapter.extractExportBundle(exportContext(false))).toBeNull()
   })
 })

@@ -12,6 +12,7 @@ import {
   parseClaudeHistoryOutline,
   type ClaudeHistoryOutlineData,
 } from "~utils/claude-history-outline"
+import { parseClaudeHistoryExport } from "~utils/claude-history-export"
 import {
   createMarkdownDocumentAssetLink,
   formatExportFileAttachments,
@@ -109,6 +110,8 @@ interface ClaudeExportLifecycleState {
   documentTitle?: string | null
   documentArtifactIndex?: number | null
   thoughtContainersExpandedForExport?: HTMLElement[]
+  /** 本次导出走会话接口数据源：跳过快照/文档面板收集与恢复 */
+  usedApiExport?: boolean
 }
 
 interface ClaudeDocumentExportCacheEntry {
@@ -197,6 +200,7 @@ export class ClaudeAdapter extends SiteAdapter {
   private activeOrganizationId: string | null = null
   private activeOrganizationIdExpiresAt = 0
   private exportDocumentCache: ClaudeDocumentExportCacheEntry[] = []
+  private exportApiMessages: ExportMessage[] | null = null
   private exportDocumentCollectionRequired = false
   private exportIncludeThoughtsOverride: boolean | null = null
   private exportThoughtBlocks = new WeakMap<Element, string[]>()
@@ -1829,15 +1833,7 @@ export class ClaudeAdapter extends SiteAdapter {
     const orgId = await this.getActiveOrganizationId()
     if (!orgId) return "no-org"
 
-    const params = new URLSearchParams({
-      tree: "True",
-      rendering_mode: "messages",
-      render_all_tools: "true",
-      include_inline_comparison: "true",
-      consistency: "strong",
-    })
-    const endpoint = `${window.location.origin}/api/organizations/${encodeURIComponent(orgId)}/chat_conversations/${encodeURIComponent(sessionId)}?${params}`
-    const response = await fetch(endpoint, {
+    const response = await fetch(this.buildConversationApiUrl(orgId, sessionId), {
       headers: this.buildNativeApiHeaders(),
       credentials: "include",
     })
@@ -1858,6 +1854,17 @@ export class ClaudeAdapter extends SiteAdapter {
       previous.signature !== parsed.signature
       ? "changed"
       : "unchanged"
+  }
+
+  private buildConversationApiUrl(orgId: string, sessionId: string): string {
+    const params = new URLSearchParams({
+      tree: "True",
+      rendering_mode: "messages",
+      render_all_tools: "true",
+      include_inline_comparison: "true",
+      consistency: "strong",
+    })
+    return `${window.location.origin}/api/organizations/${encodeURIComponent(orgId)}/chat_conversations/${encodeURIComponent(sessionId)}?${params}`
   }
 
   /**
@@ -2470,6 +2477,61 @@ export class ClaudeAdapter extends SiteAdapter {
     return this.config.selectors.responseContainer
   }
 
+  /**
+   * 会话接口导出数据源：拉全量历史并解析为导出消息序列。
+   * 任何无法证明完整/可忠实还原的情形（解析器判 null、接口失败、未登录）
+   * 都返回 null，调用方回退现有滚动快照收集。
+   */
+  private async collectApiExportMessages(
+    context: ExportLifecycleContext,
+  ): Promise<ExportMessage[] | null> {
+    if (!this.isUserConversationPage()) return null
+    const sessionId = this.getSessionId()
+
+    try {
+      const orgId = await this.getActiveOrganizationId()
+      if (!orgId) return null
+
+      const response = await fetch(this.buildConversationApiUrl(orgId, sessionId), {
+        headers: this.buildNativeApiHeaders(),
+        credentials: "include",
+      })
+      if (!response.ok) return null
+
+      const parsed = parseClaudeHistoryExport(await response.json())
+      if (!parsed || parsed.sessionId !== sessionId) return null
+
+      const messages: ExportMessage[] = []
+      for (const message of parsed.messages) {
+        if (message.role === "user") {
+          if (message.requestText) {
+            messages.push({ role: "user", content: message.requestText })
+          }
+          continue
+        }
+
+        const parts: string[] = []
+        if (context.includeThoughts && message.thinkingMarkdown) {
+          parts.push(
+            this.formatAsThoughtBlockquote(message.thinkingMarkdown, message.thinkingTitle),
+          )
+        }
+        if (message.responseMarkdown) {
+          parts.push(message.responseMarkdown)
+        }
+        const content = parts.join("\n\n").trim()
+        if (content) {
+          messages.push({ role: "assistant", content })
+        }
+      }
+
+      return messages.length > 0 ? messages : null
+    } catch (error) {
+      console.warn("[ClaudeAdapter] Failed to collect api export payload:", error)
+      return null
+    }
+  }
+
   async prepareConversationExport(context: ExportLifecycleContext): Promise<unknown> {
     this.ensureClaudeOutlineCacheSession()
     this.exportIncludeThoughtsOverride = context.includeThoughts
@@ -2478,6 +2540,17 @@ export class ClaudeAdapter extends SiteAdapter {
     this.exportThoughtBlocks = new WeakMap<Element, string[]>()
     this.exportThoughtBlocksByAssistantIndex = new Map<number, string[]>()
     this.removeClaudeExportSnapshot()
+
+    // 常规会话优先走会话接口拿全量 markdown（公式/代码零损耗、无需滚动收集）；
+    // 接口不可用或无法证明历史完整时返回 null，回退现有快照收集
+    this.exportApiMessages = await this.collectApiExportMessages(context)
+    if (this.exportApiMessages) {
+      return {
+        documentPanelWasOpen: false,
+        thoughtContainersExpandedForExport: [],
+        usedApiExport: true,
+      } satisfies ClaudeExportLifecycleState
+    }
 
     const state: ClaudeExportLifecycleState = {
       documentPanelWasOpen: this.isClaudeDocumentPanelOpen(),
@@ -2531,6 +2604,7 @@ export class ClaudeAdapter extends SiteAdapter {
   ): Promise<void> {
     try {
       if (!this.isClaudeExportLifecycleState(state)) return
+      if (state.usedApiExport) return
 
       if (state.documentPanelWasOpen) {
         await this.restoreClaudeDocumentPanel(state)
@@ -2548,6 +2622,7 @@ export class ClaudeAdapter extends SiteAdapter {
       this.exportThoughtBlocks = new WeakMap<Element, string[]>()
       this.exportThoughtBlocksByAssistantIndex = new Map<number, string[]>()
       this.removeClaudeExportSnapshot()
+      this.exportApiMessages = null
     }
   }
 
@@ -2622,6 +2697,11 @@ export class ClaudeAdapter extends SiteAdapter {
   }
 
   async extractExportBundle(_context: ExportLifecycleContext): Promise<ExportBundle | null> {
+    // 接口数据源导出为纯 markdown 消息序列，无 bundle 资产
+    if (this.exportApiMessages) {
+      return null
+    }
+
     if (!this.hasClaudeExportAssets()) {
       return null
     }
@@ -2632,6 +2712,10 @@ export class ClaudeAdapter extends SiteAdapter {
   }
 
   async extractExportMessages(_context: ExportLifecycleContext): Promise<ExportMessage[] | null> {
+    if (this.exportApiMessages) {
+      return this.exportApiMessages
+    }
+
     if (
       !this.exportSnapshotRoot &&
       this.exportDocumentCache.length === 0 &&
