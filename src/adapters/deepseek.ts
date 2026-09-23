@@ -48,6 +48,7 @@ import {
   shouldAttemptApiOutlineFetch,
   type DeepSeekHistoryOutlineData,
 } from "~utils/deepseek-history-outline"
+import { parseDeepSeekHistoryExport } from "~utils/deepseek-history-export"
 import type { BuiltinSiteConfig } from "./declarative"
 
 const CHAT_PATH_PATTERN = /\/a\/chat\/s\/([a-z0-9-]+)/i
@@ -1207,15 +1208,12 @@ export class DeepSeekAdapter extends SiteAdapter {
         : undefined
     const shareMessages = await this.collectShareExportMessageSnapshots(collector)
     if (shareMessages?.length) {
-      if (collector) {
-        this.exportBundleCache = {
-          messages: shareMessages,
-          assets: collector.assets,
-        }
-      }
+      return this.finishExportWithSnapshots(shareMessages, collector)
+    }
 
-      this.mountExportSnapshot(shareMessages)
-      return { count: shareMessages.length }
+    const apiMessages = await this.collectApiExportMessageSnapshots(collector)
+    if (apiMessages?.length) {
+      return this.finishExportWithSnapshots(apiMessages, collector)
     }
 
     const scrollContainer =
@@ -1229,6 +1227,13 @@ export class DeepSeekAdapter extends SiteAdapter {
       return null
     }
 
+    return this.finishExportWithSnapshots(messages, collector)
+  }
+
+  private finishExportWithSnapshots(
+    messages: DeepSeekExportMessageSnapshot[],
+    collector?: ExportAssetCollector,
+  ): { count: number } {
     if (collector) {
       this.exportBundleCache = {
         messages,
@@ -2364,6 +2369,70 @@ export class DeepSeekAdapter extends SiteAdapter {
       return messages.length > 0 ? messages : null
     } catch (error) {
       console.warn("[DeepSeekAdapter] Failed to collect share export payload:", error)
+      return null
+    }
+  }
+
+  /**
+   * 常规会话优先走 history_messages 接口拿全量 markdown（公式/代码零损耗、
+   * 无需滚动收集）；接口不可用或无法证明历史完整时返回 null，回退滚动收集。
+   */
+  private async collectApiExportMessageSnapshots(
+    collector?: ExportAssetCollector,
+  ): Promise<DeepSeekExportMessageSnapshot[] | null> {
+    const sessionId = this.getSessionId()
+    const token = this.getUserToken()
+    if (!sessionId || !token) return null
+
+    try {
+      const response = await fetch(
+        `${window.location.origin}${CHAT_HISTORY_API_PATH}?chat_session_id=${encodeURIComponent(sessionId)}`,
+        {
+          headers: {
+            accept: "*/*",
+            authorization: `Bearer ${token}`,
+            "x-client-platform": "web",
+            "x-client-locale": this.getClientLocale(),
+          },
+          credentials: "include",
+        },
+      )
+      if (!response.ok) return null
+
+      const parsed = parseDeepSeekHistoryExport(await response.json())
+      if (!parsed || parsed.sessionId !== sessionId) return null
+
+      const includeThoughts = this.shouldIncludeThoughtsInExport()
+      const messages: DeepSeekExportMessageSnapshot[] = []
+
+      for (const message of parsed.messages) {
+        if (message.role === "user") {
+          const attachments = message.fileFragments.flatMap((fragment) =>
+            this.extractShareUserAttachments(fragment),
+          )
+          const content = this.normalizeExportMessageContent(
+            this.formatUserQueryExportContent(message.requestText, attachments, collector),
+          )
+          if (content) {
+            messages.push({ role: DEEPSEEK_EXPORT_ROLE_USER, content })
+          }
+          continue
+        }
+
+        const thinking = message.thinkingMarkdown.trim()
+        const thoughtBlocks =
+          includeThoughts && thinking ? [this.formatAsThoughtBlockquote(thinking)] : []
+        const content = this.normalizeExportMessageContent(
+          [...thoughtBlocks, message.responseMarkdown.trim()].filter(Boolean).join("\n\n"),
+        )
+        if (content) {
+          messages.push({ role: DEEPSEEK_EXPORT_ROLE_ASSISTANT, content })
+        }
+      }
+
+      return messages.length > 0 ? messages : null
+    } catch (error) {
+      console.warn("[DeepSeekAdapter] Failed to collect api export payload:", error)
       return null
     }
   }

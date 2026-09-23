@@ -42,12 +42,13 @@ interface DeepSeekHistoryFragment {
   content?: unknown
 }
 
-interface DeepSeekHistoryMessage {
+export interface DeepSeekHistoryMessage {
   message_id?: unknown
   parent_id?: unknown
   role?: unknown
   content?: unknown
   fragments?: unknown
+  thinking_content?: unknown
 }
 
 const asRecord = (value: unknown): Record<string, unknown> | null =>
@@ -62,7 +63,7 @@ const asObjectArray = <T>(value: unknown): T[] =>
  * 字段缺失（疑似接口改版）且存在重新生成的旁支时返回 null——无法确定激活
  * 分支，退化为纯 DOM 扫描好过展示混入旁支的错误大纲。
  */
-const resolveActiveBranch = (
+export const resolveActiveBranch = (
   messages: DeepSeekHistoryMessage[],
   currentMessageId: number | null,
 ): DeepSeekHistoryMessage[] | null => {

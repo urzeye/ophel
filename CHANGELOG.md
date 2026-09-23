@@ -15,6 +15,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **Quick jumps after scrolling to top** — Clicking "Scroll to Bottom" or "Return to Anchor" while earlier history is still loading after "Scroll to Top" now stops the loading and responds immediately, instead of ignoring the click for about a second. (#948)
 - **Faster jumps to top** — On sites where the conversation is already fully available locally (e.g. DeepSeek, Doubao, Claude), "Scroll to Top" now completes right away instead of waiting about a second for an unnecessary history-loading check. (#948)
 - **DeepSeek outlines in long chats** — Reply headings no longer disappear from the outline when scrolling back and forth in long conversations; the outline now always shows the full list of reply sections, and clicking any heading still jumps to it accurately. (#953)
+- **Faster and more complete DeepSeek exports** — Exporting now collects the conversation content in one step instead of scrolling through the whole chat, so long conversations export much faster and formulas, code, and reasoning content are preserved more accurately.
 
 ### 🐛 Bug Fixes
 
