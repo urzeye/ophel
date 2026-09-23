@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import {
-  hashOutlineText,
-  parseMarkdownHeadings,
-  SessionOutlineCache,
-} from "~utils/outline-heading-cache"
+import { hashOutlineText, parseMarkdownHeadings } from "~utils/outline-heading-cache"
 
 describe("parseMarkdownHeadings", () => {
   it("parses ATX headings with levels", () => {
@@ -59,28 +55,5 @@ describe("hashOutlineText", () => {
   it("is deterministic and differs across inputs", () => {
     expect(hashOutlineText("标题")).toBe(hashOutlineText("标题"))
     expect(hashOutlineText("标题A")).not.toBe(hashOutlineText("标题B"))
-  })
-})
-
-describe("SessionOutlineCache", () => {
-  it("stores and reads values", () => {
-    const cache = new SessionOutlineCache<number>()
-    cache.ensureSession("s1")
-    cache.set("a", 1)
-    expect(cache.get("a")).toBe(1)
-    expect(cache.size).toBe(1)
-  })
-
-  it("clears entries when session key changes", () => {
-    const cache = new SessionOutlineCache<number>()
-    expect(cache.ensureSession("s1")).toBe(true)
-    cache.set("a", 1)
-
-    expect(cache.ensureSession("s1")).toBe(false)
-    expect(cache.get("a")).toBe(1)
-
-    expect(cache.ensureSession("s2")).toBe(true)
-    expect(cache.get("a")).toBeUndefined()
-    expect(cache.size).toBe(0)
   })
 })

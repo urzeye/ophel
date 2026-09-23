@@ -2,7 +2,6 @@
  * 虚拟滚动站点的大纲缓存共享工具：
  * - parseMarkdownHeadings：从接口返回的 markdown 正文解析标题（跳过围栏代码块）；
  * - hashOutlineText：大纲条目 id 的短哈希；
- * - SessionOutlineCache：按会话 key 隔离的条目缓存，切换会话时自动清空。
  */
 
 export interface ParsedMarkdownHeading {
@@ -50,49 +49,4 @@ export function hashOutlineText(value: string): string {
     hash = ((hash << 5) + hash + value.charCodeAt(i)) >>> 0
   }
   return hash.toString(16)
-}
-
-/**
- * 会话作用域的大纲条目缓存：ensureSession 的 key 变化时自动清空，
- * 避免虚拟滚动站点切换对话后旧会话的条目污染新会话。
- */
-export class SessionOutlineCache<T> {
-  private sessionKey: string | null = null
-  private readonly store = new Map<string, T>()
-
-  /** 校验当前会话；key 变化时清空缓存并返回 true。 */
-  ensureSession(key: string): boolean {
-    if (key === this.sessionKey) return false
-    this.sessionKey = key
-    this.store.clear()
-    return true
-  }
-
-  get size(): number {
-    return this.store.size
-  }
-
-  get(key: string): T | undefined {
-    return this.store.get(key)
-  }
-
-  set(key: string, value: T): void {
-    this.store.set(key, value)
-  }
-
-  delete(key: string): void {
-    this.store.delete(key)
-  }
-
-  clear(): void {
-    this.store.clear()
-  }
-
-  values(): IterableIterator<T> {
-    return this.store.values()
-  }
-
-  entries(): IterableIterator<[string, T]> {
-    return this.store.entries()
-  }
 }

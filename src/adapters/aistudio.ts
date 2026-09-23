@@ -22,7 +22,6 @@ import {
 } from "~utils/export-assets"
 import { htmlToMarkdown, type ExportBundle } from "~utils/exporter"
 import { t } from "~utils/i18n"
-import { SessionOutlineCache } from "~utils/outline-heading-cache"
 
 import {
   SiteAdapter,
@@ -125,21 +124,11 @@ interface AIStudioOutlineSortEntry {
   order: number
 }
 
-/** 按 turn 缓存的大纲标题：外层 turn 常驻 DOM，仅内部内容离屏卸载 */
-interface AIStudioCachedHeading {
-  level: number
-  text: string
-  id: string
-  wordCount?: number
-}
-
 export class AIStudioAdapter extends SiteAdapter {
   protected config: AIStudioSiteConfig = AISTUDIO_CONFIG
 
   // ==================== 缓存属性 ====================
 
-  // 大纲标题缓存（解决 turn 内部虚拟滚动卸载 .turn-content 导致的标题丢失）
-  private outlineHeadingCache = new SessionOutlineCache<AIStudioCachedHeading[]>()
   // 缓存从 library 页面抓取的对话列表
   private cachedLibraryConversations: ConversationInfo[] | null = null
   private cachedApiKey: string | null = null
@@ -2239,33 +2228,6 @@ export class AIStudioAdapter extends SiteAdapter {
       document.querySelector(privateSelectors.outlineContainer) || document.querySelector("main")
     if (!container) return outline
 
-    // AI Studio 外层 ms-chat-turn 常驻 DOM，仅内部 .turn-content 离屏卸载：
-    // 挂载的 turn 实时提取并写入缓存，未挂载的 turn 用缓存回填标题
-    this.outlineHeadingCache.ensureSession(this.getSessionId())
-    const outlineTurns = Array.from(container.querySelectorAll(privateSelectors.turn)).filter(
-      (turn): turn is HTMLElement => turn instanceof HTMLElement,
-    )
-    const mountedTurnIds = new Set<string>()
-    for (const turn of outlineTurns) {
-      const turnId = this.normalizeTurnId(turn.id)
-      if (turnId && this.turnHasMountedContent(turn)) {
-        mountedTurnIds.add(turnId)
-      }
-    }
-    const headingCacheBuckets = new Map<string, AIStudioCachedHeading[]>()
-    const cacheLiveHeading = (turnId: string | null, entry: AIStudioCachedHeading) => {
-      if (!turnId || !mountedTurnIds.has(turnId)) return
-      const bucket = headingCacheBuckets.get(turnId) ?? []
-      bucket.push(entry)
-      headingCacheBuckets.set(turnId, bucket)
-    }
-    const flushHeadingCache = () => {
-      // 已挂载但没有标题的 turn 也要写入空数组，清掉旧缓存（内容可能编辑过）
-      for (const turnId of mountedTurnIds) {
-        this.outlineHeadingCache.set(turnId, headingCacheBuckets.get(turnId) ?? [])
-      }
-    }
-
     // 辅助函数：提取 ms-chat-turn 的 ID
     // 格式: turn-XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
     // 返回 UUID 部分
@@ -2397,26 +2359,10 @@ export class AIStudioAdapter extends SiteAdapter {
             )
           }
 
-          if (turnId && item.id) {
-            cacheLiveHeading(turnId, {
-              level: item.level,
-              text: item.text,
-              id: item.id,
-              wordCount: item.wordCount,
-            })
-          }
-
           outline.push(item)
         }
       })
-      flushHeadingCache()
-      return this.mergeCachedTurnHeadings(
-        outline,
-        outlineTurns,
-        mountedTurnIds,
-        maxLevel,
-        showWordCount,
-      )
+      return outline
     }
 
     // 包含用户提问的模式。AI Studio 会虚拟滚动聊天 DOM，时间线滚动条更适合作为完整用户问题来源。
@@ -2540,53 +2486,11 @@ export class AIStudioAdapter extends SiteAdapter {
         const orderBase =
           previousUserOrder !== undefined ? previousUserOrder : estimateUserOrderForHeading(heading)
 
-        if (turnId && item.id) {
-          cacheLiveHeading(turnId, {
-            level: item.level,
-            text: item.text,
-            id: item.id,
-            wordCount: item.wordCount,
-          })
-        }
-
         sortedEntries.push({
           item,
           order: orderBase * 100000 + 50000 + headingIndex,
         })
       })
-
-      // 未挂载 turn 的缓存标题回填：order 用 turn 所属提问段推算，
-      // 序号接在实时标题之后避免冲突
-      flushHeadingCache()
-      let cachedHeadingIndex = 0
-      for (const turn of outlineTurns) {
-        const cachedTurnId = this.normalizeTurnId(turn.id)
-        if (!cachedTurnId || mountedTurnIds.has(cachedTurnId)) continue
-        const cached = this.outlineHeadingCache.get(cachedTurnId)
-        if (!cached || cached.length === 0) continue
-
-        const previousUserTurnId = this.findPreviousUserTurnIdForElement(turn)
-        const previousUserOrder = previousUserTurnId
-          ? scrollbarOrderByTurnId.get(previousUserTurnId)
-          : undefined
-        const orderBase =
-          previousUserOrder !== undefined ? previousUserOrder : estimateUserOrderForHeading(turn)
-
-        for (const entry of cached) {
-          if (entry.level > maxLevel) continue
-          sortedEntries.push({
-            item: {
-              level: entry.level,
-              text: entry.text,
-              element: null,
-              id: entry.id,
-              wordCount: showWordCount ? entry.wordCount : undefined,
-            },
-            order: orderBase * 100000 + 50000 + headingElements.length + cachedHeadingIndex,
-          })
-          cachedHeadingIndex += 1
-        }
-      }
 
       return sortedEntries.sort((left, right) => left.order - right.order).map(({ item }) => item)
     }
@@ -2653,84 +2557,12 @@ export class AIStudioAdapter extends SiteAdapter {
             )
           }
 
-          const turnId = getTurnId(element)
-          if (turnId) {
-            cacheLiveHeading(turnId, {
-              level: item.level,
-              text: item.text,
-              id: generateHeaderId(turnId, tagName, item.text),
-              wordCount: item.wordCount,
-            })
-          }
-
           outline.push(item)
         }
       }
     })
 
-    flushHeadingCache()
-    return this.mergeCachedTurnHeadings(
-      outline,
-      outlineTurns,
-      mountedTurnIds,
-      maxLevel,
-      showWordCount,
-    )
-  }
-
-  /**
-   * 把未挂载 turn 的缓存标题按 turn 的 DOM 顺序插回大纲。
-   * 外层 turn 常驻 DOM，因此位置锚定是精确的。
-   */
-  private mergeCachedTurnHeadings(
-    items: OutlineItem[],
-    turns: HTMLElement[],
-    mountedTurnIds: Set<string>,
-    maxLevel: number,
-    showWordCount: boolean,
-  ): OutlineItem[] {
-    if (this.outlineHeadingCache.size === 0) return items
-
-    const privateSelectors = this.config.sitePrivateSelectors
-    const turnIndexById = new Map<string, number>()
-    turns.forEach((turn, index) => {
-      const turnId = this.normalizeTurnId(turn.id)
-      if (turnId) turnIndexById.set(turnId, index)
-    })
-
-    const getItemTurnIndex = (item: OutlineItem): number => {
-      const turn = item.element?.closest(privateSelectors.turn)
-      const turnId = turn ? this.normalizeTurnId((turn as HTMLElement).id) : ""
-      if (!turnId) return Number.MAX_SAFE_INTEGER
-      return turnIndexById.get(turnId) ?? Number.MAX_SAFE_INTEGER
-    }
-
-    const result: OutlineItem[] = []
-    let cursor = 0
-    for (const turn of turns) {
-      const turnId = this.normalizeTurnId(turn.id)
-      if (!turnId || mountedTurnIds.has(turnId)) continue
-      const cached = this.outlineHeadingCache.get(turnId)
-      if (!cached || cached.length === 0) continue
-
-      const turnIndex = turnIndexById.get(turnId) as number
-      while (cursor < items.length && getItemTurnIndex(items[cursor]) < turnIndex) {
-        result.push(items[cursor])
-        cursor += 1
-      }
-      for (const entry of cached) {
-        if (entry.level > maxLevel) continue
-        result.push({
-          level: entry.level,
-          text: entry.text,
-          element: null,
-          id: entry.id,
-          wordCount: showWordCount ? entry.wordCount : undefined,
-        })
-      }
-    }
-    result.push(...items.slice(cursor))
-    return result
+    return outline
   }
 
   async resolveOutlineTarget(
@@ -2758,80 +2590,12 @@ export class AIStudioAdapter extends SiteAdapter {
       }
     }
 
-    // 缓存标题条目：按 id 里的 turnId 定位外层 turn（常驻 DOM），
-    // 必要时先滚动触发内部内容挂载
-    if (!item.isUserQuery) {
-      const cachedTarget = await this.resolveCachedHeadingTarget(item.id, item.text)
-      if (cachedTarget) return cachedTarget
-    }
-
     const directTarget = await super.resolveOutlineTarget(item, queryIndex)
     if (directTarget) {
       return directTarget
     }
 
     return null
-  }
-
-  /** 解析 generateHeaderId 生成的大纲标题 id：`{turnId}::{tagName}-{text}::{occurrence}` */
-  private parseOutlineHeadingItemId(
-    id?: string,
-  ): { turnId: string; tagName: string; occurrence: number } | null {
-    if (!id) return null
-    const firstSep = id.indexOf("::")
-    const lastSep = id.lastIndexOf("::")
-    if (firstSep <= 0 || lastSep <= firstSep + 1) return null
-
-    const occurrence = Number(id.slice(lastSep + 2))
-    if (!Number.isInteger(occurrence) || occurrence < 1) return null
-
-    const key = id.slice(firstSep + 2, lastSep)
-    const dashIndex = key.indexOf("-")
-    if (dashIndex <= 0) return null
-    const tagName = key.slice(0, dashIndex)
-    if (!/^h[1-6]$/.test(tagName)) return null
-
-    return { turnId: id.slice(0, firstSep), tagName, occurrence }
-  }
-
-  private findTurnElementByTurnId(turnId: string): HTMLElement | null {
-    const normalizedTurnId = this.normalizeTurnId(turnId)
-    if (!normalizedTurnId) return null
-
-    const direct = document.getElementById(`turn-${normalizedTurnId}`)
-    if (direct) return direct
-
-    const turns = Array.from(document.querySelectorAll(this.config.sitePrivateSelectors.turn))
-    return (
-      (turns.find((turn) => this.normalizeTurnId((turn as HTMLElement).id) === normalizedTurnId) as
-        | HTMLElement
-        | undefined) || null
-    )
-  }
-
-  private async resolveCachedHeadingTarget(
-    id: string | undefined,
-    text: string,
-  ): Promise<Element | null> {
-    const ref = this.parseOutlineHeadingItemId(id)
-    if (!ref) return null
-
-    const turn = this.findTurnElementByTurnId(ref.turnId)
-    if (!turn) return null
-
-    if (!this.turnHasMountedContent(turn)) {
-      try {
-        turn.scrollIntoView({ block: "center", behavior: "instant" })
-      } catch {
-        turn.scrollIntoView({ block: "center" })
-      }
-      await this.waitForTurnContentMounted(turn, 1800)
-    }
-
-    const matches = Array.from(turn.querySelectorAll(ref.tagName)).filter(
-      (heading) => (heading.textContent || "").trim() === text,
-    )
-    return matches[ref.occurrence - 1] || matches[0] || null
   }
 
   // ==================== 生成状态检测 ====================
