@@ -62,6 +62,10 @@ const CHAT_HISTORY_API_PATH = "/api/v0/chat/history_messages"
 const API_OUTLINE_FETCH_BACKOFF_MS = 10_000
 /** 尾部删除复合判定中的贴底容差（约一行高度） */
 const API_OUTLINE_BOTTOM_TOLERANCE_PX = 100
+/** 直接滚动探测虚拟列表的最大尝试次数（闭环收敛，通常 1-3 次） */
+const VIRTUAL_ROW_PROBE_MAX_ATTEMPTS = 8
+/** 挂载窗口无变化时的短等待（给异步重挂载一帧时间） */
+const VIRTUAL_ROW_PROBE_SETTLE_MS = 60
 const DEEPSEEK_HOME_URL = "https://chat.deepseek.com/"
 const DELETE_REFRESH_STORAGE_KEY = "gh.deepseek.delete.refresh"
 const DEEPSEEK_EXPORT_ROOT_ATTR = "data-gh-deepseek-export-root"
@@ -930,7 +934,14 @@ export class DeepSeekAdapter extends SiteAdapter {
   ): Element | null {
     const headings = Array.from(row.querySelectorAll(OUTLINE_HEADING_SELECTOR))
     const direct = headings[ref.orderInMessage]
-    if (direct && (direct.textContent || "").trim() === text) return direct
+    if (direct) {
+      // 序号与接口解析同源（同一 markdown 的全量标题），reference 角标等渲染
+      // 差异只影响文本比对；层级一致即采信序号命中，文本完全一致时直接采信
+      const directText = (direct.textContent || "").trim()
+      if (directText === text || Number(direct.tagName.charAt(1)) === ref.level) {
+        return direct
+      }
+    }
     return (
       headings.find(
         (heading) =>
@@ -938,6 +949,102 @@ export class DeepSeekAdapter extends SiteAdapter {
           (heading.textContent || "").trim() === text,
       ) || null
     )
+  }
+
+  /**
+   * 直接滚动探测聊天虚拟列表，把目标 message_id 的行挂载出来。
+   * scrollTop 与挂载窗口的 key 区间单调对应，每次用真实挂载行做锚点闭环逼近，
+   * 通常 1-3 次收敛；ds-virtual-list 在程序化 scrollTop + 强制 layout 后同步
+   * 重挂载（与 scanNativeOutlineEntries 同一手法），成功时全程无需借道原生
+   * TOC 点击（省掉站点 React 的同步处理与逐位置 settle 等待）。
+   * 失败返回 null，调用方回退 TOC 跳转链路。
+   */
+  private async probeMountVirtualRow(
+    messageId: number,
+    container: HTMLElement,
+    data: DeepSeekHistoryOutlineData | null,
+    requestId: number,
+  ): Promise<Element | null> {
+    if (container.scrollHeight <= container.clientHeight) return null
+
+    const branchIndex = data ? new Map(data.branchMessageIds.map((id, i) => [id, i])) : null
+    const findRow = () => container.querySelector(`[data-virtual-list-item-key="${messageId}"]`)
+    // 编辑/删除造成的 id 空洞下，分支序号距离比 id 差值更接近真实行距
+    const rowDistance = (key: number): number => {
+      const targetIdx = branchIndex?.get(messageId)
+      const keyIdx = branchIndex?.get(key)
+      return targetIdx !== undefined && keyIdx !== undefined ? targetIdx - keyIdx : messageId - key
+    }
+
+    let prevSignature = ""
+    for (let attempt = 0; attempt < VIRTUAL_ROW_PROBE_MAX_ATTEMPTS; attempt += 1) {
+      const existing = findRow()
+      if (existing) return existing
+      if (requestId !== this.nativeOutlineRevealRequestId) return null
+
+      const rows = this.readMountedVirtualRows(container)
+      if (rows.length === 0) return null
+
+      const signature = `${rows[0].key}:${rows[rows.length - 1].key}:${Math.round(container.scrollTop)}`
+      if (signature === prevSignature) {
+        // 窗口无变化：重挂载可能是异步的，给一帧时间
+        await this.sleep(VIRTUAL_ROW_PROBE_SETTLE_MS)
+      }
+      prevSignature = signature
+
+      const first = rows[0]
+      const last = rows[rows.length - 1]
+      let deltaRows = 0
+      if (rowDistance(first.key) < 0) {
+        deltaRows = rowDistance(first.key)
+      } else if (rowDistance(last.key) > 0) {
+        deltaRows = rowDistance(last.key)
+      }
+
+      if (deltaRows === 0) {
+        // 目标 key 落在窗口 key 区间内却未挂载（id 空洞或挂载滞后）
+        await this.sleep(VIRTUAL_ROW_PROBE_SETTLE_MS)
+        continue
+      }
+
+      const spanRows = Math.max(
+        1,
+        Math.abs(
+          (branchIndex?.get(last.key) ?? last.key) - (branchIndex?.get(first.key) ?? first.key),
+        ),
+      )
+      const spanPx = last.top - first.top
+      const pxPerRow =
+        spanPx > 0 ? spanPx / spanRows : container.clientHeight / Math.max(1, rows.length)
+      if (!(pxPerRow > 0)) return null
+
+      const maxScroll = Math.max(0, container.scrollHeight - container.clientHeight)
+      // 至少移动一行，避免小步长在原地打转
+      const deltaPx = Math.sign(deltaRows) * Math.max(Math.abs(deltaRows) * pxPerRow, pxPerRow)
+      const nextTop = Math.min(maxScroll, Math.max(0, container.scrollTop + deltaPx))
+      if (nextTop === container.scrollTop && (nextTop === 0 || nextTop === maxScroll)) {
+        // 已到滚动边界仍未挂载：目标行不存在（可能被删除）
+        return null
+      }
+
+      container.scrollTop = nextTop
+      container.dispatchEvent(new Event("scroll", { bubbles: true }))
+      // 强制同步 layout，促使虚拟列表本轮完成重挂载
+      container.getBoundingClientRect()
+    }
+
+    return findRow()
+  }
+
+  private readMountedVirtualRows(container: HTMLElement): { key: number; top: number }[] {
+    const rows: { key: number; top: number }[] = []
+    container.querySelectorAll("[data-virtual-list-item-key]").forEach((row) => {
+      const key = Number(row.getAttribute("data-virtual-list-item-key"))
+      if (Number.isFinite(key)) {
+        rows.push({ key, top: row.getBoundingClientRect().top })
+      }
+    })
+    return rows.sort((a, b) => a.key - b.key)
   }
 
   private async resolveApiOutlineTarget(
@@ -956,10 +1063,22 @@ export class DeepSeekAdapter extends SiteAdapter {
     const mounted = findMounted()
     if (mounted) return mounted
 
-    // 行未挂载：借原生大纲跳到所属提问附近，让虚拟列表把目标回复挂载出来。
-    // 匹配文本优先用接口的提问文本，TOC 只做点击跳板
     const data = this.apiOutlineData
     if (!data || data.sessionId !== this.getSessionId()) return null
+
+    // 快路径：直接滚动探测把目标回复行挂载出来，行内按序号定位标题
+    const requestId = ++this.nativeOutlineRevealRequestId
+    const probedRow =
+      container instanceof HTMLElement
+        ? await this.probeMountVirtualRow(ref.messageId, container, data, requestId)
+        : null
+    if (probedRow) {
+      const heading = this.findApiHeadingInRow(probedRow, ref, text)
+      if (heading) return heading
+    }
+
+    // 慢路径回退：借原生大纲跳到所属提问附近，让虚拟列表把目标回复挂载出来。
+    // 匹配文本优先用接口的提问文本，TOC 只做点击跳板
     const queryIndex = data.queryIndexByAssistantId.get(ref.messageId)
     if (!queryIndex) return null
     const queryText =
@@ -967,7 +1086,6 @@ export class DeepSeekAdapter extends SiteAdapter {
       this.collectNativeOutlineEntries()[queryIndex - 1]?.text
     if (!queryText) return null
 
-    const requestId = ++this.nativeOutlineRevealRequestId
     const jumped = await this.revealUserQueryThroughNativeOutline(queryIndex, queryText, requestId)
     if (!jumped) return null
 
@@ -1005,6 +1123,16 @@ export class DeepSeekAdapter extends SiteAdapter {
     if (!query) return null
 
     const requestId = ++this.nativeOutlineRevealRequestId
+    // 快路径：直接滚动探测把目标提问行挂载出来
+    const probedRow =
+      container instanceof HTMLElement
+        ? await this.probeMountVirtualRow(messageId, container, data, requestId)
+        : null
+    if (probedRow) {
+      const message = probedRow.querySelector(this.config.selectors.userQuery)
+      if (message instanceof HTMLElement) return message
+    }
+
     const jumped = await this.revealUserQueryThroughNativeOutline(
       query.queryIndex,
       query.text || text,
