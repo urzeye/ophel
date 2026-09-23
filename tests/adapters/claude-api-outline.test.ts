@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import type { ExportLifecycleContext, OutlineItem } from "~adapters/base"
+import { SiteAdapter } from "~adapters/base"
 import { ClaudeAdapter } from "~adapters/claude"
 import type { ExportMessage } from "~utils/exporter"
 import { t } from "~utils/i18n"
@@ -45,6 +46,7 @@ type AdapterInternals = {
   rebuildApiOutlineEntries: (data: ClaudeHistoryOutlineData) => void
   updateClaudeOutlineCache: (items: OutlineItem[]) => void
   collectApiExportMessages: (context: ExportLifecycleContext) => Promise<ExportMessage[] | null>
+  maybeRefreshApiOutline: () => void
   mergeCachedClaudeOutlineItems: (
     currentItems: OutlineItem[],
     maxLevel: number,
@@ -226,6 +228,123 @@ describe("ClaudeAdapter API outline entries", () => {
       { level: 2, text: "另一个标题", element: fakeElementInRow(1), isUserQuery: false },
     ])
     expect(state.apiOutlineForceRefetch).toBe(false)
+  })
+})
+
+describe("ClaudeAdapter API outline refresh gate", () => {
+  beforeEach(() => {
+    // isClaudeVirtualConversation / isGenerating / buildNativeApiHeaders 的访问面
+    vi.stubGlobal("document", {
+      querySelector: () => null,
+      querySelectorAll: () => [],
+      cookie: "",
+    })
+    vi.stubGlobal("localStorage", { getItem: () => null })
+    vi.stubGlobal("window", {
+      location: {
+        href: "https://claude.ai/chat/b56ad8d3-7271-432f-8651-75dc609c7f08",
+        pathname: "/chat/b56ad8d3-7271-432f-8651-75dc609c7f08",
+        origin: "https://claude.ai",
+      },
+      postMessage: vi.fn(),
+    })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+    // stubGlobal 会覆盖文件顶部的 window 桩，后续用例需要时自行补回
+    vi.stubGlobal("window", {
+      location: {
+        href: "https://claude.ai/chat/b56ad8d3-7271-432f-8651-75dc609c7f08",
+        pathname: "/chat/b56ad8d3-7271-432f-8651-75dc609c7f08",
+        origin: "https://claude.ai",
+      },
+    })
+  })
+
+  const outlinePayload = {
+    uuid: "b56ad8d3-7271-432f-8651-75dc609c7f08",
+    updated_at: "2026-05-25T04:00:00.000000Z",
+    current_leaf_message_uuid: "a1",
+    chat_messages: [
+      {
+        uuid: "u1",
+        parent_message_uuid: ZERO_UUID,
+        sender: "human",
+        index: 0,
+        content: [{ type: "text", text: "问题" }],
+      },
+      {
+        uuid: "a1",
+        parent_message_uuid: "u1",
+        sender: "assistant",
+        index: 1,
+        content: [{ type: "text", text: "## 标题\n回复" }],
+      },
+    ],
+  }
+
+  it("does not fetch the api outline on non-virtual conversation pages", async () => {
+    const fetchSpy = vi.fn()
+    vi.stubGlobal("fetch", fetchSpy)
+    const adapter = new ClaudeAdapter()
+    internals(adapter).getActiveOrganizationId = async () => "org-1"
+
+    internals(adapter).maybeRefreshApiOutline()
+    await Promise.resolve()
+
+    expect(fetchSpy).not.toHaveBeenCalled()
+  })
+
+  it("fetches the api outline on virtual conversation pages", async () => {
+    // 最小虚拟列表桩：virtualSizer + 一行 virtualRow（getClaudeVirtualRows 过滤 closest 链）
+    class FakeHTMLElement {}
+    vi.stubGlobal("HTMLElement", FakeHTMLElement)
+    const virtualSizer = {}
+    const row = Object.assign(new FakeHTMLElement(), {
+      getAttribute: (name: string) =>
+        name === "data-rs-index" || name === "data-index" ? "1" : null,
+      closest: (selector: string) => (selector === "[data-rocksteady-sizer]" ? virtualSizer : null),
+      querySelector: () => null,
+    })
+    vi.stubGlobal("document", {
+      querySelector: (selector: string) =>
+        selector === "[data-rocksteady-sizer]" ? virtualSizer : null,
+      querySelectorAll: (selector: string) =>
+        selector === "[data-rs-index][data-index]" ? [row] : [],
+      cookie: "",
+    })
+    const fetchSpy = vi.fn(async () => ({ ok: true, json: async () => outlinePayload }))
+    vi.stubGlobal("fetch", fetchSpy)
+    const adapter = new ClaudeAdapter()
+    internals(adapter).getActiveOrganizationId = async () => "org-1"
+
+    internals(adapter).maybeRefreshApiOutline()
+    await vi.waitFor(() => {
+      expect(internals(adapter).outlineItemCache.size).toBeGreaterThan(0)
+    })
+
+    expect(fetchSpy).toHaveBeenCalledTimes(1)
+    expect(internals(adapter).outlineItemCache.has("claude-message:1:heading:0")).toBe(true)
+  })
+
+  it("falls back to base query search when the cached query row is not mounted", () => {
+    const adapter = new ClaudeAdapter()
+    internals(adapter).rebuildApiOutlineEntries(
+      buildData([
+        { uuid: "u1", parent: ZERO_UUID, sender: "human", text: "第一个问题" },
+        { uuid: "a1", parent: "u1", sender: "assistant", text: "回复" },
+      ]),
+    )
+    const superSpy = vi.spyOn(SiteAdapter.prototype, "findUserQueryElement").mockReturnValue(null)
+
+    const result = adapter.findUserQueryElement(1, "第一个问题")
+
+    // 缓存命中但行未挂载：必须回退基类搜索，而不是直接判失
+    expect(superSpy).toHaveBeenCalledWith(1, "第一个问题")
+    expect(result).toBeNull()
+    superSpy.mockRestore()
   })
 })
 
@@ -527,6 +646,11 @@ describe("ClaudeAdapter API export", () => {
               file_name: "报告.pdf",
               preview_url: "/api/org/files/doc-1/preview",
             },
+            {
+              file_kind: "image",
+              file_uuid: "img-2",
+              file_name: "无地址.gif",
+            },
           ],
         },
         {
@@ -542,7 +666,7 @@ describe("ClaudeAdapter API export", () => {
     expect(messages).toEqual([
       {
         role: "user",
-        content: `${t("exportAttachmentsLabel")}:\n- [报告.pdf](/api/org/files/doc-1/preview)\n\n看这个文件`,
+        content: `${t("exportAttachmentsLabel")}:\n- [报告.pdf](/api/org/files/doc-1/preview)\n- 无地址.gif\n\n看这个文件`,
       },
       { role: "assistant", content: "收到" },
     ])

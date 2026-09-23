@@ -1748,6 +1748,9 @@ export class ClaudeAdapter extends SiteAdapter {
    */
   private maybeRefreshApiOutline(): void {
     if (!this.isUserConversationPage()) return
+    // 仅虚拟滚动会话需要接口回填：非虚拟会话 DOM 条目没有 data-rs-index，
+    // 接口条目写入缓存会导致大纲重复、提问定位被缓存路径劫持
+    if (!this.isClaudeVirtualConversation()) return
 
     const sessionId = this.getSessionId()
     if (sessionId !== this.apiOutlineSessionId) {
@@ -2334,7 +2337,12 @@ export class ClaudeAdapter extends SiteAdapter {
     const entry = cachedUserQueries[queryIndex - 1]
 
     if (entry) {
-      return this.findClaudeOutlineTargetInMountedRow(entry)
+      // 缓存条目可能对应未挂载行（或缓存来自接口回填而非虚拟扫描）：
+      // 挂载查找落空时回退基类按序号/文本搜索，而不是直接判失
+      return (
+        this.findClaudeOutlineTargetInMountedRow(entry) ??
+        super.findUserQueryElement(queryIndex, text)
+      )
     }
 
     return super.findUserQueryElement(queryIndex, text)
@@ -2551,13 +2559,16 @@ export class ClaudeAdapter extends SiteAdapter {
     message: ClaudeHistoryExportMessage,
     collector?: ExportAssetCollector,
   ): string {
+    // 仅「图片且有可下载地址」按图片嵌入；其余（非图片、缺 preview_url）
+    // 一律降级为附件链接行，避免静默丢失或误嵌图片语法
+    const isEmbeddableImage = (file: ClaudeHistoryExportUserFile): boolean =>
+      file.fileKind === "image" && Boolean(file.previewUrl)
     const imageMarkdown = message.files
-      .filter((file) => file.fileKind === "image")
+      .filter(isEmbeddableImage)
       .map((file) => this.formatApiUserImage(file, collector))
       .filter(Boolean)
-    // 非图片 files[]（未见真实样本）降级为链接行，避免误嵌图片语法
     const otherFileLines = message.files
-      .filter((file) => file.fileKind !== "image")
+      .filter((file) => !isEmbeddableImage(file))
       .map((file) => {
         const fileName = file.fileName || "file"
         return file.previewUrl
