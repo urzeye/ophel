@@ -1,13 +1,10 @@
 /**
  * 虚拟滚动站点的大纲缓存共享工具：
- * - parseMarkdownHeadings：从接口返回的 markdown 正文解析标题（跳过围栏代码块）；
+ * - parseMarkdownHeadingSections：从接口返回的 markdown 正文解析标题及章节正文
+ *   （完整层级，跳过围栏代码块）；
  * - hashOutlineText：大纲条目 id 的短哈希；
+ * - stripMarkdownInline / markdownPlainLength：回填条目的文本清洗与字数估算。
  */
-
-export interface ParsedMarkdownHeading {
-  level: number
-  text: string
-}
 
 export interface MarkdownHeadingSection {
   level: number
@@ -67,13 +64,6 @@ export function parseMarkdownHeadingSections(markdown: string): MarkdownHeadingS
   })
 }
 
-/** 提取 markdown 中的 ATX 标题；围栏代码块内的 # 行不算标题。 */
-export function parseMarkdownHeadings(markdown: string, maxLevel = 6): ParsedMarkdownHeading[] {
-  return parseMarkdownHeadingSections(markdown)
-    .filter((section) => section.level <= maxLevel)
-    .map((section) => ({ level: section.level, text: section.text }))
-}
-
 /** djb2 短哈希，用于大纲条目 id 的文本区分段。 */
 export function hashOutlineText(value: string): string {
   let hash = 5381
@@ -86,6 +76,8 @@ export function hashOutlineText(value: string): string {
 /**
  * 去掉 markdown 行内格式，返回接近页面渲染效果的纯文本。
  * 供接口回填条目的显示文本清洗与字数估算共用（DeepSeek 方案 C §8.1）。
+ * 只处理 * 系强调：CommonMark 中 _ 在词内不构成强调，snake_case 标识符
+ * （vt9_pro_max、__init__ 等）必须原样保留，否则显示文本与 DOM 对不上。
  */
 export function stripMarkdownInline(text: string): string {
   const stripped = text
@@ -95,8 +87,8 @@ export function stripMarkdownInline(text: string): string {
     .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
     .replace(/\[([^\]]*)\]\[[^\]]*\]/g, "$1")
     .replace(/`([^`]*)`/g, "$1")
-    .replace(/(\*\*|__)(.*?)\1/g, "$2")
-    .replace(/([*_])(.*?)\1/g, "$2")
+    .replace(/\*\*(.*?)\*\*/g, "$1")
+    .replace(/\*(.*?)\*/g, "$1")
     .replace(/~~(.*?)~~/g, "$1")
     .replace(/<[^>]*>/g, "")
   return stripped.replace(/\s+/g, " ").trim()

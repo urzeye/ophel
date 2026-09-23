@@ -3,14 +3,16 @@ import { describe, expect, it } from "vitest"
 import {
   hashOutlineText,
   markdownPlainLength,
-  parseMarkdownHeadings,
+  parseMarkdownHeadingSections,
   stripMarkdownInline,
 } from "~utils/outline-heading-cache"
 
-describe("parseMarkdownHeadings", () => {
+describe("parseMarkdownHeadingSections", () => {
   it("parses ATX headings with levels", () => {
     const markdown = ["# 一级", "正文", "### 三级标题", "###### 六级"].join("\n")
-    expect(parseMarkdownHeadings(markdown)).toEqual([
+    expect(
+      parseMarkdownHeadingSections(markdown).map(({ level, text }) => ({ level, text })),
+    ).toEqual([
       { level: 1, text: "一级" },
       { level: 3, text: "三级标题" },
       { level: 6, text: "六级" },
@@ -18,12 +20,14 @@ describe("parseMarkdownHeadings", () => {
   })
 
   it("strips optional closing hash sequences", () => {
-    expect(parseMarkdownHeadings("## 标题 ##")).toEqual([{ level: 2, text: "标题" }])
+    expect(parseMarkdownHeadingSections("## 标题 ##")).toEqual([
+      { level: 2, text: "标题", body: "" },
+    ])
   })
 
   it("requires a space after # and skips empty headings", () => {
-    expect(parseMarkdownHeadings("#没有空格")).toEqual([])
-    expect(parseMarkdownHeadings("# ")).toEqual([])
+    expect(parseMarkdownHeadingSections("#没有空格")).toEqual([])
+    expect(parseMarkdownHeadingSections("# ")).toEqual([])
   })
 
   it("ignores # lines inside fenced code blocks", () => {
@@ -37,22 +41,24 @@ describe("parseMarkdownHeadings", () => {
       "~~~",
       "### 结尾",
     ].join("\n")
-    expect(parseMarkdownHeadings(markdown)).toEqual([
-      { level: 2, text: "真正的标题" },
-      { level: 3, text: "结尾" },
+    expect(parseMarkdownHeadingSections(markdown).map(({ text }) => text)).toEqual([
+      "真正的标题",
+      "结尾",
     ])
   })
 
-  it("respects maxLevel", () => {
-    const markdown = ["# 一", "### 三", "##### 五"].join("\n")
-    expect(parseMarkdownHeadings(markdown, 3)).toEqual([
-      { level: 1, text: "一" },
-      { level: 3, text: "三" },
+  it("captures section body up to the next same-or-higher level heading", () => {
+    const markdown = ["# 一", "正文一", "### 小节", "小节正文", "# 二", "正文二"].join("\n")
+    const sections = parseMarkdownHeadingSections(markdown)
+    expect(sections).toEqual([
+      { level: 1, text: "一", body: "正文一\n小节\n小节正文" },
+      { level: 3, text: "小节", body: "小节正文" },
+      { level: 1, text: "二", body: "正文二" },
     ])
   })
 
   it("returns empty array for empty input", () => {
-    expect(parseMarkdownHeadings("")).toEqual([])
+    expect(parseMarkdownHeadingSections("")).toEqual([])
   })
 })
 
@@ -65,9 +71,15 @@ describe("hashOutlineText", () => {
 
 describe("stripMarkdownInline", () => {
   it("strips emphasis marks", () => {
-    expect(stripMarkdownInline("**粗体** 和 __粗体__")).toBe("粗体 和 粗体")
-    expect(stripMarkdownInline("*斜体* 和 _斜体_")).toBe("斜体 和 斜体")
+    expect(stripMarkdownInline("**粗体** 和 *斜体*")).toBe("粗体 和 斜体")
     expect(stripMarkdownInline("~~删除线~~")).toBe("删除线")
+  })
+
+  it("preserves underscores inside identifiers (not emphasis in CommonMark)", () => {
+    expect(stripMarkdownInline("vt9_pro_max 详解")).toBe("vt9_pro_max 详解")
+    expect(stripMarkdownInline("调用 __init__ 方法")).toBe("调用 __init__ 方法")
+    expect(stripMarkdownInline("snake_case_name")).toBe("snake_case_name")
+    expect(stripMarkdownInline("_两侧下划线_ 也保留")).toBe("_两侧下划线_ 也保留")
   })
 
   it("strips links and keeps link text", () => {

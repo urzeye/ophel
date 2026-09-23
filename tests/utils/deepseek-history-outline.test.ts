@@ -211,6 +211,24 @@ describe("parseDeepSeekHistoryOutline", () => {
     ])
   })
 
+  it("preserves underscores in heading and query text (snake_case identifiers)", () => {
+    const payload = buildPayload([
+      {
+        message_id: 1,
+        parent_id: null,
+        role: "USER",
+        fragments: [{ type: "REQUEST", content: "讲讲 vt9_pro_max" }],
+      },
+      assistantMessage(2, 1, "## vt9_pro_max 配置\n调用 __init__ 方法"),
+    ])
+
+    const data = parseDeepSeekHistoryOutline(payload)!
+    expect(data.headingsByAssistantId.get(2)).toEqual([
+      { level: 2, text: "vt9_pro_max 配置", wordCount: "调用 __init__ 方法".length },
+    ])
+    expect(data.userQueries).toEqual([{ messageId: 1, queryIndex: 1, text: "讲讲 vt9_pro_max" }])
+  })
+
   it("drops headings whose cleaned text is empty", () => {
     const payload = buildPayload([
       userMessage(1, null),
