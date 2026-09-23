@@ -709,9 +709,10 @@ export class DeepSeekAdapter extends SiteAdapter {
 
     const sessionId = this.getSessionId()
     if (sessionId !== this.apiOutlineSessionId) {
-      // 会话切换时解除解析失败熔断
+      // 会话切换时解除解析失败熔断与拉取冷却，新会话应立即补齐大纲
       this.apiOutlineSessionId = sessionId
       this.apiOutlineParseFailures = 0
+      this.apiOutlineLastFetchAt = 0
     }
 
     const scrollable = container instanceof HTMLElement ? container : null
