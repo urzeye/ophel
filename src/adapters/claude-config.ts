@@ -93,7 +93,7 @@ export interface ClaudeSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const CLAUDE_CONFIG_VERSION = 7
+export const CLAUDE_CONFIG_VERSION = 8
 
 const createClaudeConfig = (): ClaudeSiteConfig => {
   // dframe 布局中侧栏列表容器是 div#frame-peek-popover（不再是 nav），
@@ -139,7 +139,8 @@ const createClaudeConfig = (): ClaudeSiteConfig => {
 
   return {
     capabilities: [...BUILTIN_FEATURE_CAPABILITIES[SITE_IDS.CLAUDE]],
-    traits: { historyLazyLoad: false },
+    // virtualOutlineFill：长对话虚拟滚动，离屏标题由会话接口回填
+    traits: { historyLazyLoad: false, virtualOutlineFill: true },
     selectors: {
       textarea: ['[contenteditable="true"]', ".ProseMirror", 'div[role="textbox"]'],
       submitButton: [

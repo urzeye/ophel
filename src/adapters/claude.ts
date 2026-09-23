@@ -9,6 +9,10 @@ import {
   scrollElementInContainer,
 } from "~core/outline/dom-outline"
 import {
+  parseClaudeHistoryOutline,
+  type ClaudeHistoryOutlineData,
+} from "~utils/claude-history-outline"
+import {
   createMarkdownDocumentAssetLink,
   formatExportFileAttachments,
   formatExportImageAttachments,
@@ -19,6 +23,12 @@ import {
 import { htmlToMarkdown, type ExportBundle, type ExportMessage } from "~utils/exporter"
 import { t } from "~utils/i18n"
 import { renderMarkdown } from "~utils/markdown"
+import { EVENT_OUTLINE_DATA_UPDATED } from "~utils/messaging"
+import {
+  API_OUTLINE_PARSE_FAILURE_LIMIT,
+  isApiOutlineStale,
+  shouldAttemptApiOutlineFetch,
+} from "~utils/outline-api-source"
 import { hashTextForCache } from "~utils/text-hash"
 
 import {
@@ -88,6 +98,10 @@ const CLAUDE_INLINE_MATH_PATTERNS = [
 
 const CLAUDE_DOCUMENT_OUTLINE_SOURCE_ID = "document"
 const CLAUDE_EXPORT_ROOT_ATTR = "data-gh-claude-export-root"
+
+// 会话接口大纲数据源的拉取冷却与贴底判定（与 deepseek 同值）
+const CLAUDE_API_OUTLINE_FETCH_BACKOFF_MS = 10_000
+const CLAUDE_API_OUTLINE_BOTTOM_TOLERANCE_PX = 100
 
 interface ClaudeExportLifecycleState {
   documentPanelWasOpen: boolean
@@ -197,6 +211,18 @@ export class ClaudeAdapter extends SiteAdapter {
   private outlineScanPromise: Promise<void> | null = null
   private isCollectingVirtualOutline = false
   private outlineWordCountCache = new WeakMap<Element, ClaudeOutlineWordCountCacheEntry>()
+  // 会话接口大纲数据源（替代全量滚动回填的首选路径）
+  private apiOutlineData: ClaudeHistoryOutlineData | null = null
+  private apiOutlineFetchPromise: Promise<void> | null = null
+  private apiOutlineLastFetchAt = 0
+  private apiOutlineFailures = 0
+  private apiOutlineSessionId = ""
+  private apiOutlineOrgMissing = false
+  private apiOutlineWasGenerating = false
+  private apiOutlineEntryIds = new Set<string>()
+  // 强制重拉信号（粘性，直到一次成功拉取才清除）：
+  // 生成/重新生成结束使分支叶变化、挂载行标题与 API 同 id 条目文本不一致（分支切换）
+  private apiOutlineForceRefetch = false
 
   match(): boolean {
     return (
@@ -451,7 +477,7 @@ export class ClaudeAdapter extends SiteAdapter {
       for (const body of bodies) {
         const response = await fetch(endpoint, {
           method: "DELETE",
-          headers: this.buildNativeDeleteHeaders(Boolean(body)),
+          headers: this.buildNativeApiHeaders(Boolean(body)),
           body,
           credentials: "include",
         })
@@ -501,7 +527,8 @@ export class ClaudeAdapter extends SiteAdapter {
     }
   }
 
-  private buildNativeDeleteHeaders(withBody: boolean): Record<string, string> {
+  // 站点原生 API 请求头（删除、会话拉取共用）
+  private buildNativeApiHeaders(withBody = false): Record<string, string> {
     const headers: Record<string, string> = {
       accept: "*/*",
       "anthropic-client-platform": "web_claude_ai",
@@ -1511,6 +1538,8 @@ export class ClaudeAdapter extends SiteAdapter {
     this.sortedCachedUserQueries = null
     this.outlineScannedMessageIndexes.clear()
     this.hasCompletedInitialVirtualOutlineScan = false
+    this.apiOutlineEntryIds.clear()
+    this.apiOutlineForceRefetch = false
   }
 
   private createClaudeOutlineItemId(
@@ -1546,6 +1575,19 @@ export class ClaudeAdapter extends SiteAdapter {
         this.createClaudeOutlineItemId(item.element as Element, isUserQuery, headingOrder)
       if (!id) continue
 
+      // 分支切换信号：同 id 的 API 回填标题与新挂载行的标题文本不一致。
+      // DOM 提问/标题文本有 200 字符截断，前缀一致即视为未漂移
+      const existing = this.outlineItemCache.get(id)
+      if (
+        existing &&
+        !existing.isUserQuery &&
+        this.apiOutlineEntryIds.has(id) &&
+        existing.text !== item.text &&
+        !existing.text.startsWith(item.text)
+      ) {
+        this.apiOutlineForceRefetch = true
+      }
+
       item.id = id
       item.navigationId = id
       this.outlineItemCache.set(id, {
@@ -1558,6 +1600,8 @@ export class ClaudeAdapter extends SiteAdapter {
         isTruncated: item.isTruncated,
         wordCount: item.wordCount,
       })
+      // 条目被 DOM 精确值精化后转为 DOM 来源，后续 API 重建不再删除/覆盖它
+      this.apiOutlineEntryIds.delete(id)
     }
   }
 
@@ -1612,6 +1656,10 @@ export class ClaudeAdapter extends SiteAdapter {
     ) {
       return
     }
+
+    // 会话接口仍可用时不做全量滚动回填：等接口数据到达或明确不可用
+    // （orgId 缺失 / 连续失败熔断）再退化为滚动扫描
+    if (!this.isApiOutlineUnavailable()) return
 
     if (this.completeInitialClaudeVirtualOutlineScanIfCovered()) return
 
@@ -1673,6 +1721,193 @@ export class ClaudeAdapter extends SiteAdapter {
       if (messageIndex !== null) {
         this.outlineScannedMessageIndexes.add(messageIndex)
       }
+    }
+  }
+
+  // ==================== 大纲缓存（会话接口数据源） ====================
+
+  /**
+   * Claude 长对话走 rocksteady 虚拟滚动，离屏回复的标题会从 DOM 卸载。
+   * 首选直接请求站点 chat_conversations 接口，从 text 内容块的 markdown 解析
+   * 标题与提问回填 outlineItemCache（与 DOM 扫描同一 id 体系，下游归并/定位不变）；
+   * 接口不可用（未登录/连续失败）时才退化为全量滚动回填。
+   */
+  private maybeRefreshApiOutline(): void {
+    if (!this.isUserConversationPage()) return
+
+    const sessionId = this.getSessionId()
+    if (sessionId !== this.apiOutlineSessionId) {
+      // 会话切换时解除失败熔断与拉取冷却，新会话应立即补齐大纲
+      this.apiOutlineSessionId = sessionId
+      this.apiOutlineFailures = 0
+      this.apiOutlineLastFetchAt = 0
+      this.apiOutlineOrgMissing = false
+    }
+
+    // 生成结束（含重新生成）后分支叶已变化，位置序号不变，必须强制重拉
+    const generating = this.isGenerating()
+    if (this.apiOutlineWasGenerating && !generating) {
+      this.apiOutlineForceRefetch = true
+    }
+    this.apiOutlineWasGenerating = generating
+
+    const scrollable = this.getScrollContainer()
+    const atBottom = scrollable
+      ? scrollable.scrollTop + scrollable.clientHeight >=
+        scrollable.scrollHeight - CLAUDE_API_OUTLINE_BOTTOM_TOLERANCE_PX
+      : true
+    const stale =
+      this.apiOutlineForceRefetch ||
+      isApiOutlineStale({
+        data: this.apiOutlineData,
+        sessionId,
+        mountedIds: this.collectMountedVirtualMessageIndexes(),
+        atBottom,
+      })
+
+    if (
+      !shouldAttemptApiOutlineFetch({
+        now: Date.now(),
+        lastFetchAt: this.apiOutlineLastFetchAt,
+        backoffMs: CLAUDE_API_OUTLINE_FETCH_BACKOFF_MS,
+        parseFailures: this.apiOutlineFailures,
+        inFlight: this.apiOutlineFetchPromise !== null,
+        generating,
+        stale,
+      })
+    ) {
+      return
+    }
+
+    // 任何一次实际发起的拉取都记入冷却，成功但数据未变的重拉也不会连续重试
+    this.apiOutlineLastFetchAt = Date.now()
+    this.apiOutlineFetchPromise = this.fetchApiOutline(sessionId)
+      .then((result) => {
+        if (result === "parse-failed") {
+          this.apiOutlineFailures += 1
+          return
+        }
+        if (result === "no-org") {
+          // 未登录态：不计失败（避免误熔断），但标记后滚动回填兜底才会启动
+          this.apiOutlineOrgMissing = true
+          return
+        }
+        this.apiOutlineFailures = 0
+        this.apiOutlineOrgMissing = false
+        if (result === "changed") {
+          window.postMessage({ type: EVENT_OUTLINE_DATA_UPDATED }, "*")
+        }
+      })
+      .catch((error) => {
+        // 网络/HTTP 失败同样计入熔断：连续失败时滚动回填兜底需要启动
+        this.apiOutlineFailures += 1
+        console.warn("[ClaudeAdapter] Failed to fetch conversation outline:", error)
+      })
+      .finally(() => {
+        this.apiOutlineFetchPromise = null
+      })
+  }
+
+  private isApiOutlineUnavailable(): boolean {
+    return this.apiOutlineOrgMissing || this.apiOutlineFailures >= API_OUTLINE_PARSE_FAILURE_LIMIT
+  }
+
+  private collectMountedVirtualMessageIndexes(): Set<number> {
+    const indexes = new Set<number>()
+    for (const row of this.getClaudeVirtualRows()) {
+      const messageIndex = this.getClaudeVirtualMessageIndex(row)
+      if (messageIndex !== null) {
+        indexes.add(messageIndex)
+      }
+    }
+    return indexes
+  }
+
+  private async fetchApiOutline(
+    sessionId: string,
+  ): Promise<"changed" | "unchanged" | "parse-failed" | "no-org"> {
+    const orgId = await this.getActiveOrganizationId()
+    if (!orgId) return "no-org"
+
+    const params = new URLSearchParams({
+      tree: "True",
+      rendering_mode: "messages",
+      render_all_tools: "true",
+      include_inline_comparison: "true",
+      consistency: "strong",
+    })
+    const endpoint = `${window.location.origin}/api/organizations/${encodeURIComponent(orgId)}/chat_conversations/${encodeURIComponent(sessionId)}?${params}`
+    const response = await fetch(endpoint, {
+      headers: this.buildNativeApiHeaders(),
+      credentials: "include",
+    })
+    if (!response.ok) {
+      throw new Error(`chat_conversations responded ${response.status}`)
+    }
+
+    const totalMessages = this.getClaudeVirtualMessageCount() ?? undefined
+    const parsed = parseClaudeHistoryOutline(await response.json(), 6, totalMessages)
+    if (!parsed || parsed.sessionId !== sessionId) return "parse-failed"
+
+    const previous = this.apiOutlineData
+    this.apiOutlineData = parsed
+    this.apiOutlineForceRefetch = false
+    this.rebuildApiOutlineEntries(parsed)
+    return !previous ||
+      previous.sessionId !== parsed.sessionId ||
+      previous.signature !== parsed.signature
+      ? "changed"
+      : "unchanged"
+  }
+
+  /**
+   * 用接口数据重建缓存条目：先清掉上一轮 API 来源条目，再写入新条目。
+   * 不覆盖同 id 的 DOM 来源条目（DOM 的 wordCount 是精确值，
+   * 行重新挂载后由 updateClaudeOutlineCache 自然精化）。
+   */
+  private rebuildApiOutlineEntries(data: ClaudeHistoryOutlineData): void {
+    this.ensureClaudeOutlineCacheSession()
+    this.sortedCachedUserQueries = null
+    for (const id of this.apiOutlineEntryIds) {
+      this.outlineItemCache.delete(id)
+    }
+    this.apiOutlineEntryIds.clear()
+
+    const addEntry = (entry: ClaudeOutlineCacheEntry): void => {
+      if (this.outlineItemCache.has(entry.id)) return
+      this.outlineItemCache.set(entry.id, entry)
+      this.apiOutlineEntryIds.add(entry.id)
+    }
+
+    for (const query of data.userQueries) {
+      // 与 DOM 条目同一截断规则：文本截 200，isTruncated 阈值 60
+      addEntry({
+        id: `claude-message:${query.messageIndex}:user`,
+        messageIndex: query.messageIndex,
+        orderInMessage: 0,
+        level: 0,
+        text: query.text.length > 200 ? query.text.slice(0, 200) : query.text,
+        isUserQuery: true,
+        isTruncated: query.text.length > 60,
+        wordCount: data.replyWordCountByMessageIndex.get(query.messageIndex + 1),
+      })
+    }
+
+    for (const [messageIndex, headings] of data.headingsByMessageIndex) {
+      headings.forEach((heading, order) => {
+        // id 中标题序号为 0 基（与 createClaudeOutlineItemId 一致），
+        // orderInMessage 为 1 基（findClaudeOutlineTargetInMountedRow 按下标 -1 定位）
+        addEntry({
+          id: `claude-message:${messageIndex}:heading:${order}`,
+          messageIndex,
+          orderInMessage: order + 1,
+          level: heading.level,
+          text: heading.text.length > 200 ? heading.text.slice(0, 200) : heading.text,
+          isUserQuery: false,
+          isTruncated: heading.text.length > 80,
+          wordCount: heading.wordCount,
+        })
+      })
     }
   }
 
@@ -1837,6 +2072,9 @@ export class ClaudeAdapter extends SiteAdapter {
     // 扫描覆盖与是否生成大纲项无关：用户消息被隐藏、助手回复没有标题时，
     // 这些已挂载行也必须记为已检查，避免消息总数增长后误触发全量回扫。
     this.recordMountedClaudeVirtualMessageIndexes(outlineRoot)
+
+    // 虚拟滚动首选数据源：异步拉取会话接口，补齐离屏回复的标题与提问
+    this.maybeRefreshApiOutline()
 
     // 辅助函数：从文本中移除思维链内容
     const removeThinkingContent = (text: string): string => {

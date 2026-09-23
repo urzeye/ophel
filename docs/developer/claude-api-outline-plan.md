@@ -1,6 +1,6 @@
 # Claude.ai API 数据源大纲与导出适配方案
 
-> 状态：方案已定稿待实施（分支 `feat/claude-api-outline`）
+> 状态：大纲部分已实施（分支 `feat/claude-api-outline`），导出为第二阶段
 > 参考实现：DeepSeek API 数据源（`src/utils/outline-api-source.ts`、`src/utils/deepseek-history-outline.ts`、`src/utils/deepseek-history-export.ts`、`src/adapters/deepseek.ts`）
 > 证据样本：`claude-demo.html`（本地参考，勿提交）、`claude-curl.sh` / `claude-curl-response.json`（含登录态，勿提交）
 
@@ -101,16 +101,21 @@ extractOutline()
 4. 分支重编号：分支内位置 `0..N-1` 作为全链路统一「messageIndex」，
    与 DOM `data-rs-index` 对齐（样本已验证）。
 
-### 4.2 过期判定（位置语义 + 内容指纹）
+### 4.2 过期判定（位置语义 + 粘性强制重拉信号）
 
 - `isApiOutlineStale` 直接复用：`branchMessageIds = [0..N-1]`、`maxMessageId = N-1`、
   `mountedIds` = 挂载行 `data-rs-index` 集合。新增消息（尾部出现 ≥N 的行）、
   贴底尾部删除均可检出，语义与 DeepSeek 一致。
-- 分支切换（重新生成后左右切换版本）位置不变、内容变，位置法检测不到。
-  补充内容指纹：extractOutline 已遍历挂载行，顺手比对挂载用户行文本
-  （归一化后前 80 字符）与分支同位置用户消息文本，不一致即判过期重拉。
-  开销可忽略，只挂在 extractOutline 路径上。
+- 分支切换（重新生成/左右切换版本）位置不变、内容变，位置法检测不到，补两个
+  粘性信号（置位后直到一次成功拉取才清除，避免被冷却/单飞闸门吞掉）：
+  1. 生成结束：`isGenerating()` 下降沿。重新生成与编辑必经过生成态，
+  2. 标题漂移：挂载行的标题与同 id 的 API 回填条目文本不一致（200 字符截断
+     内前缀一致即视为未漂移）——覆盖不经过生成态的版本切换。
+  已放弃的方案：用户提问文本指纹。重生分支叉在 assistant 消息上，用户提问文本
+  跨分支不变，检测不到；且 DOM 提问文本混有附件名，误报率高。
 - 拉取闸门复用 `shouldAttemptApiOutlineFetch`（单飞/生成中跳过/冷却/熔断）。
+  与 DeepSeek 的差异：网络/HTTP 失败同样计入熔断计数——Claude 有滚动回填兜底，
+  连续失败时需要让它启动。
 
 ### 4.3 缓存条目重建策略
 
@@ -172,7 +177,9 @@ extractOutline()
 ## 6. 风险与缓解
 
 - R1 超长对话接口截断 → 4.5 尾部对齐 / 导出回退，实机长对话验证；
-- R2 分支切换位置法检测不到 → 4.2 内容指纹；
+- R2 分支切换位置法检测不到 → 4.2 生成下降沿 + 标题漂移双信号；已知残留：
+  切换到一个从未挂载过的历史版本且其标题恰好与现分支同位置一致时检测不到
+  （与改动前行为一致，不劣化）；
 - R3 `data-rs-index` 语义随站点改版漂移（如把非消息行计入序号）→ 挂载行同时带
   `data-testid=transcript-row` 与 `data-rs-index` 才采信；指纹比对作为二次校验，
   漂移会表现为持续指纹不一致，熔断后回退滚动回填，行为不劣于现状；
