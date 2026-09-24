@@ -58,6 +58,10 @@ import {
   settleVirtualScroll,
   waitForVirtualScrollQuiet,
 } from "~utils/virtual-scroll-settle"
+import type {
+  VirtualOutlinePositionSnapshot,
+  VirtualPositionAnchor,
+} from "~utils/virtual-outline-position"
 import type { BuiltinSiteConfig } from "./declarative"
 
 const CHAT_PATH_PATTERN = /\/a\/chat\/s\/([a-z0-9-]+)/i
@@ -137,6 +141,10 @@ export class DeepSeekAdapter extends SiteAdapter {
   private apiOutlineLastFetchAt = 0
   private apiOutlineParseFailures = 0
   private apiOutlineSessionId = ""
+  private apiBranchIndexCache: {
+    data: DeepSeekHistoryOutlineData
+    map: Map<number, number>
+  } | null = null
   private exportSnapshotRoot: HTMLElement | null = null
   private exportSnapshotActive = false
   private exportIncludeThoughtsOverride: boolean | null = null
@@ -621,6 +629,62 @@ export class DeepSeekAdapter extends SiteAdapter {
       samples.slice(-12),
     )
     return false
+  }
+
+  /**
+   * 高亮估算快照：以当前挂载窗口的 key（= 服务端 message_id）映射分支序号做锚点，
+   * 行顶、行底各记一个点；边界取分支消息总数与最大 scrollTop（与大纲高亮同一
+   * 内容坐标系）。
+   */
+  override getVirtualOutlinePositionSnapshot(): VirtualOutlinePositionSnapshot | null {
+    const container = this.getScrollContainer()
+    if (!container || !this.isVirtualScrollConversation()) return null
+    const data = this.apiOutlineData
+    if (!data || data.sessionId !== this.getSessionId()) return null
+
+    const branchIndex = this.getApiBranchIndex(data)
+    const containerRect = container.getBoundingClientRect()
+    const anchors: VirtualPositionAnchor[] = []
+    container.querySelectorAll("[data-virtual-list-item-key]").forEach((row) => {
+      const key = Number(row.getAttribute("data-virtual-list-item-key"))
+      const index = branchIndex.get(key)
+      if (index === undefined) return
+      const rect = row.getBoundingClientRect()
+      const top = rect.top - containerRect.top + container.scrollTop
+      anchors.push({ index, top })
+      anchors.push({ index: index + 1, top: top + rect.height })
+    })
+    if (anchors.length === 0) return null
+
+    return {
+      anchors,
+      bounds: {
+        endSlot: data.branchMessageIds.length,
+        endTop: Math.max(0, container.scrollHeight - container.clientHeight),
+      },
+    }
+  }
+
+  override getVirtualOutlineRowIndex(item: OutlineItem): number | null {
+    const data = this.apiOutlineData
+    if (!data || data.sessionId !== this.getSessionId()) return null
+    const branchIndex = this.getApiBranchIndex(data)
+
+    const ref = item.navigationId || item.id
+    const headingRef = this.parseApiOutlineItemId(ref)
+    if (headingRef) return branchIndex.get(headingRef.messageId) ?? null
+    const queryMessageId = this.parseApiUserQueryItemId(ref)
+    if (queryMessageId !== null) return branchIndex.get(queryMessageId) ?? null
+
+    const mountedId = this.getMountedRowMessageId(item.element)
+    return mountedId !== null ? branchIndex.get(mountedId) ?? null : null
+  }
+
+  private getApiBranchIndex(data: DeepSeekHistoryOutlineData): Map<number, number> {
+    if (this.apiBranchIndexCache?.data === data) return this.apiBranchIndexCache.map
+    const map = new Map(data.branchMessageIds.map((id, index) => [id, index]))
+    this.apiBranchIndexCache = { data, map }
+    return map
   }
 
   getResponseContainerSelector(): string {

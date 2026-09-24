@@ -43,6 +43,10 @@ import {
   isClaudeVirtualEdgeSettled,
   settleVirtualScroll,
 } from "~utils/virtual-scroll-settle"
+import type {
+  VirtualOutlinePositionSnapshot,
+  VirtualPositionAnchor,
+} from "~utils/virtual-outline-position"
 
 import {
   SiteAdapter,
@@ -2131,6 +2135,44 @@ export class ClaudeAdapter extends SiteAdapter {
       console.warn("[Ophel] Reading history restore incomplete: Claude scroll did not settle")
     }
     return settled
+  }
+
+  /**
+   * 高亮估算快照：以当前挂载行的 data-rs-index（= 消息序号）做锚点，行顶、行底
+   * 各记一个点；边界取 aria-setsize 的消息总数与最大 scrollTop（与大纲高亮同一
+   * 内容坐标系）。
+   */
+  override getVirtualOutlinePositionSnapshot(): VirtualOutlinePositionSnapshot | null {
+    if (!this.isClaudeVirtualConversation()) return null
+    const container = this.getScrollContainer()
+    if (!container) return null
+    const totalMessages = this.getClaudeVirtualMessageCount()
+    if (!totalMessages || totalMessages <= 0) return null
+
+    const anchors: VirtualPositionAnchor[] = []
+    for (const row of this.getClaudeVirtualRows()) {
+      const index = this.parseClaudeVirtualMessageIndex(row)
+      if (index === null) continue
+      const top = this.getRelativeTop(container, row)
+      anchors.push({ index, top })
+      anchors.push({ index: index + 1, top: top + row.getBoundingClientRect().height })
+    }
+    if (anchors.length === 0) return null
+
+    return {
+      anchors,
+      bounds: {
+        endSlot: totalMessages,
+        endTop: Math.max(0, container.scrollHeight - container.clientHeight),
+      },
+    }
+  }
+
+  override getVirtualOutlineRowIndex(item: OutlineItem): number | null {
+    const ref = item.navigationId || item.id
+    const match = ref?.match(/^claude-message:(\d+):/)
+    if (match) return Number(match[1])
+    return this.getClaudeVirtualMessageIndex(item.element)
   }
 
   getVisibleAnchorElement(): AnchorData | null {

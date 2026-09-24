@@ -12,6 +12,7 @@ import type { ExportBundle, ExportFormat, ExportMessage } from "~utils/exporter"
 import { t } from "~utils/i18n"
 import { createSiteInstanceKey } from "~utils/site-identity"
 import type { ExportPackaging } from "~utils/storage"
+import type { VirtualOutlinePositionSnapshot } from "~utils/virtual-outline-position"
 
 import type { BuiltinSiteConfig, SiteTraits } from "./declarative/types"
 import { getBuiltinFeatureCapabilities, type SitePackCapability } from "./feature-capabilities"
@@ -1385,6 +1386,24 @@ export abstract class SiteAdapter {
    */
   async restoreVirtualAnchor(_anchor: AnchorData, _signal?: AbortSignal): Promise<boolean> {
     return false
+  }
+
+  /**
+   * 虚拟滚动会话的大纲高亮估算快照：当前挂载窗口的内容坐标锚点 + 完整列表边界。
+   * 大纲树冻结在旧挂载窗口时（自动更新关闭、跳转后尚未刷新），树内元素引用
+   * 整体失效，高亮需要靠估算兜底。仅 virtualOutlineFill 站点覆写；快照不可用
+   * （非虚拟会话、缺少总行数、无挂载行）返回 null，高亮保持上一次结果。
+   */
+  getVirtualOutlinePositionSnapshot(): VirtualOutlinePositionSnapshot | null {
+    return null
+  }
+
+  /**
+   * 大纲条目归属的虚拟行序号（与快照 anchors 的 index 同一坐标系）。
+   * 无法归属（缺少分支数据、非虚拟行内元素）返回 null，该条目不参与估算。
+   */
+  getVirtualOutlineRowIndex(_item: OutlineItem): number | null {
+    return null
   }
 
   getOutlineSourcesSignature(): string {

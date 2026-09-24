@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { SiteAdapter } from "~adapters/base"
 import { OutlineManager, type OutlineNode } from "~core/outline-manager"
 import type { Settings } from "~utils/storage"
+import type { VirtualOutlinePositionSnapshot } from "~utils/virtual-outline-position"
 
 vi.mock("~stores/bookmarks-store", () => ({ useBookmarkStore: { subscribe: () => () => {} } }))
 vi.mock("~stores/settings-store", () => ({ useSettingsStore: { getState: vi.fn() } }))
@@ -139,5 +140,72 @@ describe("virtual outline highlight", () => {
     })
 
     expect(manager.findRetainedOutlineNode(previous)).toBe(rebuilt)
+  })
+})
+
+describe("virtual outline highlight with frozen tree (estimated fallback)", () => {
+  // 挂载窗口只有第 4、5 行：行顶 4000/5000，第 5 行底边 6000
+  const SNAPSHOT: VirtualOutlinePositionSnapshot = {
+    anchors: [
+      { index: 4, top: 4000 },
+      { index: 5, top: 5000 },
+      { index: 6, top: 6000 },
+    ],
+    bounds: { endSlot: 10, endTop: 9000 },
+  }
+
+  const ROWS = [0, 2, 4, 6, 8]
+
+  const buildFrozenManager = (snapshot: VirtualOutlinePositionSnapshot | null): OutlineManager => {
+    const adapter = {
+      getSiteId: () => "deepseek",
+      usesVirtualOutlineFill: () => true,
+      getOutlineSources: () => [],
+      getOutlineScrollContainer: () => container,
+      findActiveOutlineItemId: () => null,
+      getVirtualOutlinePositionSnapshot: () => snapshot,
+      getVirtualOutlineRowIndex: (item: { id?: string }) => {
+        const match = item.id?.match(/^deepseek:api-u:(\d+)$/)
+        return match ? Number(match[1]) : null
+      },
+    } as unknown as SiteAdapter
+    const settings = { enabled: true, followMode: "current" } as Settings["features"]["outline"]
+    return new OutlineManager(adapter, settings)
+  }
+
+  // 树冻结在旧挂载窗口：元素引用整体失效（isConnected 为假）
+  const frozenNodes = (): OutlineNode[] =>
+    ROWS.map((row, index) =>
+      node(index, {
+        text: `提问 ${row}`,
+        isUserQuery: true,
+        id: `deepseek:api-u:${row}`,
+        element: { isConnected: false } as unknown as HTMLElement,
+      }),
+    )
+
+  it("estimates the active item from mounted-row anchors when every element is stale", () => {
+    const frozen = buildFrozenManager(SNAPSHOT)
+    ;(frozen as unknown as { flatNodes: OutlineNode[] }).flatNodes = frozenNodes()
+    // 锚线 = scrollTop + 160：5160 落在第 4 行（4000-6000）区间内
+    container.scrollTop = 5000
+
+    expect(frozen.findMountedActiveNode(container)?.text).toBe("提问 4")
+  })
+
+  it("reaches the true last item at the bottom instead of sticking to the mounted window", () => {
+    const frozen = buildFrozenManager(SNAPSHOT)
+    ;(frozen as unknown as { flatNodes: OutlineNode[] }).flatNodes = frozenNodes()
+    container.scrollTop = 9000
+
+    expect(frozen.findMountedActiveNode(container)?.text).toBe("提问 8")
+  })
+
+  it("returns null when the snapshot is unavailable, keeping the previous highlight", () => {
+    const frozen = buildFrozenManager(null)
+    ;(frozen as unknown as { flatNodes: OutlineNode[] }).flatNodes = frozenNodes()
+    container.scrollTop = 5000
+
+    expect(frozen.findMountedActiveNode(container)).toBeNull()
   })
 })

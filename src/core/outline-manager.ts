@@ -12,6 +12,10 @@ import {
   EVENT_OUTLINE_JUMP_COMPLETED,
 } from "~utils/messaging"
 import { signalReadingHistoryUserNavigation } from "~utils/reading-history-navigation"
+import {
+  estimateGroupedVirtualTops,
+  type VirtualOutlineSlot,
+} from "~utils/virtual-outline-position"
 
 type ExtendedOutlineItem = OutlineItem & {
   isBookmarked?: boolean
@@ -1915,7 +1919,9 @@ export class OutlineManager {
       live.push({ node, ...measured })
     }
 
-    if (live.length === 0) return null
+    if (live.length === 0) {
+      return this.findEstimatedVirtualActiveNode(scrollContainer, viewportRect, anchorY)
+    }
 
     let activeUserQuery: MeasuredOutlineNode | null = null
     let latestUserQueryBeforeAnchor: MeasuredOutlineNode | null = null
@@ -1965,6 +1971,51 @@ export class OutlineManager {
     }
 
     return activeHeading?.node ?? nextVisibleHeading?.node ?? null
+  }
+
+  /**
+   * 视口内没有任何仍挂载的大纲节点时的兜底。自动更新关闭或跳转后尚未刷新的
+   * 虚拟滚动站点（DeepSeek/Claude），大纲树冻结在旧挂载窗口，元素引用整体失效，
+   * 不高亮重算就会一直停在旧位置。这里用适配器提供的挂载行锚点给每条大纲估
+   * 一个单调的内容坐标，再按同一锚线选高亮；估算不可用返回 null，由调用方
+   * 保持上一次结果。
+   */
+  private findEstimatedVirtualActiveNode(
+    scrollContainer: HTMLElement,
+    viewportRect: ScrollViewportRect,
+    anchorY: number,
+  ): OutlineNode | null {
+    const snapshot = this.siteAdapter.getVirtualOutlinePositionSnapshot?.()
+    if (!snapshot) return null
+
+    const slots: VirtualOutlineSlot[] = []
+    const slotNodes: OutlineNode[] = []
+    const orderByRow = new Map<number, number>()
+    for (const node of this.flatNodes) {
+      if (node.isGhost) continue
+      const rowIndex = this.siteAdapter.getVirtualOutlineRowIndex?.(node)
+      if (rowIndex === null || rowIndex === undefined) continue
+      const order = orderByRow.get(rowIndex) ?? 0
+      orderByRow.set(rowIndex, order + 1)
+      slots.push({ index: rowIndex, order })
+      slotNodes.push(node)
+    }
+    if (slots.length === 0) return null
+
+    const viewportScrollTop = this.getViewportScrollTop(scrollContainer, viewportRect)
+    if (viewportScrollTop === null) return null
+
+    const tops = estimateGroupedVirtualTops(slots, snapshot.anchors, snapshot.bounds)
+    const anchorTop = viewportScrollTop + (anchorY - viewportRect.top)
+
+    // 估算坐标随文档顺序单调不减：取锚线之前（含）的最后一条
+    let active: OutlineNode | null = null
+    for (let i = 0; i < tops.length; i += 1) {
+      if (tops[i] <= anchorTop) {
+        active = slotNodes[i]
+      }
+    }
+    return active
   }
 
   findMountedActiveNode(scrollContainer: HTMLElement): OutlineNode | null {
