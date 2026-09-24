@@ -51,6 +51,11 @@ import {
   shouldAttemptApiOutlineFetch,
 } from "~utils/outline-api-source"
 import { parseDeepSeekHistoryExport } from "~utils/deepseek-history-export"
+import {
+  alignScrollTop,
+  isDeepSeekVirtualEdgeSettled,
+  settleVirtualScroll,
+} from "~utils/virtual-scroll-settle"
 import type { BuiltinSiteConfig } from "./declarative"
 
 const CHAT_PATH_PATTERN = /\/a\/chat\/s\/([a-z0-9-]+)/i
@@ -451,6 +456,18 @@ export class DeepSeekAdapter extends SiteAdapter {
       ),
     ).filter((element) => !element.closest(".gh-root, .gh-table-container"))
     return this.pickBestScrollableAncestor(fallbackRoots)
+  }
+
+  override async waitForVirtualListEdge(
+    edge: "start" | "end",
+    signal?: AbortSignal,
+  ): Promise<boolean> {
+    return settleVirtualScroll(
+      () => this.getScrollContainer(),
+      (container) => isDeepSeekVirtualEdgeSettled(container, edge),
+      (container) => alignScrollTop(container, edge === "start" ? 0 : container.scrollHeight),
+      signal,
+    )
   }
 
   getResponseContainerSelector(): string {

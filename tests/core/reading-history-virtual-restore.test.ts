@@ -40,6 +40,7 @@ vi.mock("~stores/reading-history-store", () => ({
   }),
 }))
 
+import { loadHistoryUntil } from "~utils/history-loader"
 import { smartScrollTo } from "~utils/scroll-helper"
 
 function createAdapter(virtual: boolean): SiteAdapter {
@@ -76,6 +77,7 @@ describe("virtual reading history restore", () => {
   beforeEach(() => {
     positions.clear()
     vi.mocked(smartScrollTo).mockClear()
+    vi.mocked(loadHistoryUntil).mockClear()
     vi.stubGlobal("requestAnimationFrame", () => 1)
     vi.stubGlobal("cancelAnimationFrame", () => {})
     vi.stubGlobal("window", {
@@ -99,7 +101,7 @@ describe("virtual reading history restore", () => {
     vi.unstubAllGlobals()
   })
 
-  it("restores the saved container scroll and ignores a stored window index", async () => {
+  it("does not auto-restore virtual conversations from a saved scroll position", async () => {
     const adapter = createAdapter(true)
     positions.set("v1:deepseek:session-1", {
       top: 4200,
@@ -110,15 +112,10 @@ describe("virtual reading history restore", () => {
     })
     const manager = new ReadingHistoryManager(adapter, settings)
 
-    const restored = await manager.restoreProgress()
-
-    expect(restored).toBe(true)
+    await expect(manager.restoreProgress()).resolves.toBe(false)
     expect(adapter.restoreScroll).not.toHaveBeenCalled()
-    expect(smartScrollTo).toHaveBeenCalledWith(
-      adapter,
-      4200,
-      expect.objectContaining({ preservePositionLock: true, preserveReadingHistoryRestore: true }),
-    )
+    expect(loadHistoryUntil).not.toHaveBeenCalled()
+    expect(smartScrollTo).not.toHaveBeenCalled()
     manager.stopRecording()
   })
 

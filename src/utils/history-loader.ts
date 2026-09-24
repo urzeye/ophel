@@ -93,7 +93,7 @@ export async function loadHistoryUntil(options: LoadHistoryOptions): Promise<Loa
   } = options
 
   // 获取初始滚动信息并滚动到顶部
-  let { previousScrollTop, container } = await smartScrollToTop(adapter, {
+  let { previousScrollTop, container, virtualEdgeSettled } = await smartScrollToTop(adapter, {
     preserveReadingHistoryRestore,
     restoreToken,
     signal,
@@ -108,6 +108,17 @@ export async function loadHistoryUntil(options: LoadHistoryOptions): Promise<Loa
     !adapter.needsHistoryLazyLoad() &&
     container.scrollHeight > container.clientHeight + 100
   ) {
+    // 普通免懒加载站点：scrollTop 到位即可返回。
+    // DeepSeek / Claude 是否真的到顶，由 smartScrollToTop 的虚拟列表等待给出。
+    if (adapter.usesVirtualOutlineFill() && !virtualEdgeSettled) {
+      return {
+        success: false,
+        finalHeight: container.scrollHeight,
+        heightAdded: 0,
+        previousScrollTop,
+        silent: false,
+      }
+    }
     return {
       success: true,
       finalHeight: container.scrollHeight,

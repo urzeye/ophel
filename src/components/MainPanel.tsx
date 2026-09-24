@@ -975,13 +975,17 @@ export const MainPanel: React.FC<MainPanelProps> = ({
       }
       const abortCheckInterval = setInterval(checkAbort, 100)
 
-      // 延迟显示遮罩的定时器
-      let overlayTimer: ReturnType<typeof setTimeout> | null = setTimeout(() => {
-        if (!abortLoadingRef.current) {
-          setIsLoadingHistory(true)
-          setLoadingText(t("loadingHistory"))
-        }
-      }, OVERLAY_DELAY_MS)
+      // 延迟显示遮罩的定时器。DeepSeek / Claude 没有服务端历史加载，
+      // 去顶部只是在等虚拟列表换窗口，不能弹出「正在加载历史记录」。
+      let overlayTimer: ReturnType<typeof setTimeout> | null = null
+      if (!adapter?.usesVirtualOutlineFill?.()) {
+        overlayTimer = setTimeout(() => {
+          if (!abortLoadingRef.current) {
+            setIsLoadingHistory(true)
+            setLoadingText(t("loadingHistory"))
+          }
+        }, OVERLAY_DELAY_MS)
+      }
 
       try {
         const result = await loadHistoryUntil({

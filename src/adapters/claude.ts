@@ -40,6 +40,11 @@ import {
   shouldAttemptApiOutlineFetch,
 } from "~utils/outline-api-source"
 import { hashTextForCache } from "~utils/text-hash"
+import {
+  alignScrollTop,
+  isClaudeVirtualEdgeSettled,
+  settleVirtualScroll,
+} from "~utils/virtual-scroll-settle"
 
 import {
   SiteAdapter,
@@ -1168,6 +1173,20 @@ export class ClaudeAdapter extends SiteAdapter {
     }
 
     return super.getScrollContainer()
+  }
+
+  override async waitForVirtualListEdge(
+    edge: "start" | "end",
+    signal?: AbortSignal,
+  ): Promise<boolean> {
+    // 短对话没有虚拟列表，滚动到边缘就是到位，不能空等第一条虚拟行。
+    if (!this.isClaudeVirtualConversation()) return true
+    return settleVirtualScroll(
+      () => this.getScrollContainer(),
+      (container) => isClaudeVirtualEdgeSettled(container, edge),
+      (container) => alignScrollTop(container, edge === "start" ? 0 : container.scrollHeight),
+      signal,
+    )
   }
 
   getChatContentSelectors(): string[] {

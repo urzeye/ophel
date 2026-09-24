@@ -1346,6 +1346,14 @@ export abstract class SiteAdapter {
     return this.getSiteTraits().virtualOutlineFill ?? false
   }
 
+  /**
+   * 虚拟列表把滚动位置写上之后，对应消息可能还没挂进视口。
+   * 只有声明了 virtualOutlineFill 的站点覆写等待；默认视为已经到位。
+   */
+  async waitForVirtualListEdge(_edge: "start" | "end", _signal?: AbortSignal): Promise<boolean> {
+    return true
+  }
+
   getOutlineSourcesSignature(): string {
     return this.getOutlineSources()
       .map((source) => `${source.id}:${source.kind}:${source.available}:${source.count ?? ""}`)

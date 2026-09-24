@@ -455,6 +455,11 @@ export class ReadingHistoryManager {
       return false
     }
 
+    // DeepSeek / Claude 的滚动像素对不上某一轮消息。自动恢复会跳错，这里直接跳过。
+    if (this.prefersContainerScrollRestore()) {
+      return false
+    }
+
     this.cancelRestore()
     const restoreController = new AbortController()
     const restoreToken = this.createRestoreToken()
