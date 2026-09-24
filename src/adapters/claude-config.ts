@@ -72,6 +72,7 @@ type ClaudePrivateSelectors = SitePrivateSelectors & {
   panelScrollSafeArea: string
   panelNewChatSafeArea: string
   panelCanvasScope: string
+  panelFilePreviewScope: string
   userQueryWidth: string
 }
 
@@ -93,7 +94,7 @@ export interface ClaudeSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const CLAUDE_CONFIG_VERSION = 8
+export const CLAUDE_CONFIG_VERSION = 9
 
 const createClaudeConfig = (): ClaudeSiteConfig => {
   // dframe 布局中侧栏列表容器是 div#frame-peek-popover（不再是 nav），
@@ -127,10 +128,27 @@ const createClaudeConfig = (): ClaudeSiteConfig => {
     chatColumnScope,
     `${layoutScope}:not(:has([data-autoscroll-container="true"]))`,
   ].join(", ")
-  const panelCanvasScope = [
-    `${layoutScope} [data-testid="chat-stale-nav-frame"] > div > div:not([aria-hidden="true"]):has([data-skill-file-viewer="true"])`,
-    `${layoutScope} [data-testid="chat-stale-nav-inert"] > div > div:not([aria-hidden="true"]):has([data-skill-file-viewer="true"])`,
+  // 右侧面板打开态：skill 文件查看器、Artifacts 文件侧栏（可见时包裹层不带 inert，
+  // 被预览面板压住或收起时标记 inert）。打开时给聊天行容器加右 padding，整行左移
+  // 为 Ophel 面板让出空间。
+  const panelRowRightPaneOpen = [
+    '[data-skill-file-viewer="true"]',
+    "> div.contents > div:not([inert])",
   ].join(", ")
+  const panelCanvasScope = ["chat-stale-nav-frame", "chat-stale-nav-inert"]
+    .map(
+      (host) =>
+        `${layoutScope} [data-testid="${host}"] > div > div:not([aria-hidden="true"]):has(${panelRowRightPaneOpen})`,
+    )
+    .join(", ")
+  // 文档/文件预览面板（打开时头部带 close-file-preview 关闭按钮）打开后 Artifacts
+  // 侧栏会被藏在视口右侧，整行左移会把它带回来，所以只给预览面板自身加右 padding。
+  const panelFilePreviewScope = ["chat-stale-nav-frame", "chat-stale-nav-inert"]
+    .map(
+      (host) =>
+        `${layoutScope} [data-testid="${host}"] > div > div > div:has([data-testid="close-file-preview"])`,
+    )
+    .join(", ")
   const panelObstacle = [
     documentRoot,
     '[data-testid="artifact-panel"]',
@@ -293,6 +311,7 @@ const createClaudeConfig = (): ClaudeSiteConfig => {
       panelScrollSafeArea: `${layoutScope} [data-autoscroll-container="true"]`,
       panelNewChatSafeArea: `${layoutScope}:has(.ProseMirror):not(:has([data-autoscroll-container="true"]))`,
       panelCanvasScope,
+      panelFilePreviewScope,
       userQueryWidth: userQuery,
     },
   }

@@ -14,6 +14,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **Long conversation and streaming performance** — Reduced background scans and repeated calculations during long conversations and live AI replies across all sites, easing stutter when scrolling and typing. (#947)
 - **Scroll to top and quick jumps** — On sites where conversations are already fully loaded locally (e.g. DeepSeek, Doubao, Claude), "Scroll to Top" now finishes immediately without unnecessary history checks; clicking "Return to Anchor" or "Scroll to Bottom" right after "Scroll to Top" also responds immediately instead of ignoring the click. (#948)
 - **Claude, DeepSeek outline, export and reading history** — Reply headings in long conversations stay complete while scrolling and jump accurately when clicked, exporting no longer requires scrolling page-by-page while keeping reasoning, formulas, and code intact, and refreshing now returns to where you left off reading. (#953, #954)
+- **Claude document canvas and Artifacts panel avoidance** — When a document canvas preview or the Artifacts file panel is open on Claude, the Ophel panel no longer covers them; content now shifts aside so titles, close buttons, and file lists stay fully visible and clickable. (#956)
 
 ### 🐛 Bug Fixes
 

@@ -1189,6 +1189,7 @@ html.${AUTO_HIDE_FLOAT_CLASS} ${config.scrollContainer}::after {
       panel,
       this.getPanelAvoidanceScopeRect(scope),
       config.obstacleSelectors,
+      config.minSafeWidth,
     )
   }
 
@@ -1326,6 +1327,7 @@ html.${AUTO_HIDE_FLOAT_CLASS} ${config.scrollContainer}::after {
     panel: HTMLElement,
     scopeRect: HorizontalRect,
     obstacleSelectors = this.panelAvoidanceConfig?.obstacleSelectors,
+    minSafeWidth?: number,
   ): PanelReservation | null {
     const config = this.panelAvoidanceConfig
     if (!config || !panel.isConnected) return null
@@ -1336,7 +1338,7 @@ html.${AUTO_HIDE_FLOAT_CLASS} ${config.scrollContainer}::after {
 
     const obstacles = this.getPanelAvoidanceObstacles(panel, obstacleSelectors)
     if (obstacles.length === 0) return null
-    return this.getPanelReservationFromObstacles(obstacles, scopeRect)
+    return this.getPanelReservationFromObstacles(obstacles, scopeRect, minSafeWidth)
   }
 
   private getPanelAvoidanceObstacles(
@@ -1453,6 +1455,7 @@ html.${AUTO_HIDE_FLOAT_CLASS} ${config.scrollContainer}::after {
   private getPanelReservationFromObstacles(
     obstacles: PanelAvoidanceObstacle[],
     scopeRect: HorizontalRect,
+    minSafeWidthOverride?: number,
   ): PanelReservation | null {
     const config = this.panelAvoidanceConfig
     if (!config) return null
@@ -1482,7 +1485,8 @@ html.${AUTO_HIDE_FLOAT_CLASS} ${config.scrollContainer}::after {
     if (reservedLeft <= 0 && reservedRight <= 0) return null
 
     const gap = config.gap ?? DEFAULT_PANEL_AVOIDANCE_GAP
-    const minSafeWidth = config.minSafeWidth ?? DEFAULT_PANEL_AVOIDANCE_MIN_SAFE_WIDTH
+    const minSafeWidth =
+      minSafeWidthOverride ?? config.minSafeWidth ?? DEFAULT_PANEL_AVOIDANCE_MIN_SAFE_WIDTH
     const leftGap = reservedLeft > 0 ? gap : 0
     const rightGap = reservedRight > 0 ? gap : 0
     const safeLeft = scopeRect.left + reservedLeft + leftGap

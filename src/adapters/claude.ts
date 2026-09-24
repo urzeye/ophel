@@ -3990,8 +3990,20 @@ export class ClaudeAdapter extends SiteAdapter {
           obstacleSelectors: [],
           applySide: "right",
           insetMode: "edge",
+          // 行内还有原生右侧面板占位（Artifacts 侧栏约 384px），安全区需同时
+          // 容纳正文最小可读宽度 360 + 侧栏宽度，否则窄视口下正文会被压垮。
+          minSafeWidth: 744,
           extraCss:
             "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
+        },
+        {
+          // 预览面板宽度由 flex 驱动，只加右 padding 内缩内容，不强制宽度
+          selector: privateSelectors.panelFilePreviewScope,
+          scopeSelector: privateSelectors.panelFilePreviewScope,
+          obstacleSelectors: [],
+          applySide: "right",
+          insetMode: "edge",
+          extraCss: "box-sizing: border-box; min-width: 0 !important;",
         },
       ],
       defaultWidth: "768px",

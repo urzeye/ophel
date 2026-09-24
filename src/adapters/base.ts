@@ -215,6 +215,8 @@ export interface PanelAvoidanceInsetConfig {
   applySide?: "both" | "left" | "right"
   /** centered 会包含内容居中余量；edge 只使用避让面板所需的边缘余量。 */
   insetMode?: "centered" | "edge"
+  /** 该 inset 独立的最小安全区宽度，用于原生侧栏与 Ophel 面板同时占位时防止正文被压垮。 */
+  minSafeWidth?: number
   leftProperty?: string
   rightProperty?: string
   extraCss?: string
