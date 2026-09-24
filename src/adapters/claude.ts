@@ -1143,7 +1143,14 @@ export class ClaudeAdapter extends SiteAdapter {
       ? scrollingElement.scrollHeight - scrollingElement.clientHeight
       : -1
 
+    // 对话列表自己滚动时，不要因为外层页面可滚范围更大就改绑 document。
+    // 高屏上内层可滚距离变小，误绑后滚动位置会和大纲高亮一起错。
+    const conversationScroller =
+      container?.getAttribute("data-autoscroll-container") === "true" ||
+      container?.querySelector("[data-autoscroll-container='true']") != null
+
     if (
+      !conversationScroller &&
       container &&
       scrollingElement &&
       scrollingRange > containerRange + 100 &&

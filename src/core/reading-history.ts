@@ -289,6 +289,10 @@ export class ReadingHistoryManager {
     }
   }
 
+  private prefersContainerScrollRestore(): boolean {
+    return this.adapter.usesVirtualOutlineFill?.() ?? false
+  }
+
   private getKey(sessionId = this.getSessionId()): string {
     const normalizedSessionId = sessionId || "unknown"
     return createSiteScopedStorageKey(this.adapter.getSiteInstanceKey(), normalizedSessionId)
@@ -422,12 +426,15 @@ export class ReadingHistoryManager {
     this.claimLegacyPosition(sessionId)
 
     let anchorInfo = {}
-    try {
-      if (this.adapter.getVisibleAnchorElement) {
-        anchorInfo = this.adapter.getVisibleAnchorElement() || {}
+    // 虚拟滚动的窗口下标和 offsetTop 不是全局位置，保存下来会在恢复时覆盖正确的 scrollTop
+    if (!this.prefersContainerScrollRestore()) {
+      try {
+        if (this.adapter.getVisibleAnchorElement) {
+          anchorInfo = this.adapter.getVisibleAnchorElement() || {}
+        }
+      } catch {
+        // 静默处理锚点获取错误
       }
-    } catch {
-      // 静默处理锚点获取错误
     }
 
     const data: ReadingPosition = {
@@ -487,8 +494,9 @@ export class ReadingHistoryManager {
         return false
       }
 
-      // 1. 精确恢复：尝试通过内容锚点定位
-      if (data.type && this.adapter.restoreScroll) {
+      // 1. 精确恢复：尝试通过内容锚点定位。
+      // 虚拟滚动站点只认容器 scrollTop，已保存的 selector/index 也跳过。
+      if (!this.prefersContainerScrollRestore() && data.type && this.adapter.restoreScroll) {
         try {
           const contentRestored = await this.adapter.restoreScroll(data as any)
           if (restoreController.signal.aborted) return false

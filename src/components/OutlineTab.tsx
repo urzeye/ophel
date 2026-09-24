@@ -1118,6 +1118,22 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
     ) {
       const container = manager.getScrollContainer()
       const freshActive = container ? manager.findMountedActiveNode(container) : null
+      if (!freshActive && manager.holdsVirtualHighlight()) {
+        const retained = manager.findRetainedOutlineNode(activeNode)
+        if (retained) {
+          const retainedVisible = getVisibleHeadingHighlightIndex(retained)
+          const retainedChanged = retainedVisible !== visibleHighlightRef.current
+          updateActiveIndex(retained.index, retained)
+          updateVisibleHighlightIndex(retainedVisible)
+          if (retainedChanged && retainedVisible !== null && !userScrollingOutlineRef.current) {
+            scrollOutlineNodeIntoView(retainedVisible, "center")
+          }
+        } else {
+          updateActiveIndex(null, null)
+          updateVisibleHighlightIndex(null)
+        }
+        return
+      }
       const freshVisible = getVisibleHeadingHighlightIndex(freshActive)
       const visibleChanged = freshVisible !== visibleHighlightRef.current
       updateActiveIndex(freshActive?.index ?? null, freshActive)
@@ -1239,6 +1255,8 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
       const idx = activeNode?.index ?? null
 
       if (idx === null) {
+        // 虚拟列表当前屏幕没有可测标题时保持上一次高亮，避免用离屏缓存跳到别的条目
+        if (manager.holdsVirtualHighlight()) return
         if (activeIndexRef.current !== null) {
           updateActiveIndex(null)
         }

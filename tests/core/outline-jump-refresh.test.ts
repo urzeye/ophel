@@ -130,8 +130,8 @@ describe("OutlineManager jump-completed refresh gating", () => {
 
   it("ignores positionless nodes on sites that do not declare virtual outline fill", () => {
     vi.useFakeTimers()
-    // ChatGPT/Claude/豆包等站点的缓存回填条目同样 element: null，
-    // 但未声明 traits.virtualOutlineFill，跳转后不得改变其原有行为
+    // 未声明 traits.virtualOutlineFill 的缓存回填条目同样 element: null，
+    // 跳转后不得改变其原有行为
     const items: OutlineItem[] = [
       { level: 0, text: "提问一", isUserQuery: true, element: null },
       { level: 2, text: "回答标题", element: null },

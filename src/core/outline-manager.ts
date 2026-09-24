@@ -1846,19 +1846,133 @@ export class OutlineManager {
   }
 
   // 树里是否存在既未挂载又无缓存滚动位置的回填条目。仅限声明了
-  // traits.virtualOutlineFill 的虚拟滚动站点（DeepSeek API 回填大纲）；
-  // ChatGPT/Claude/豆包的缓存回填条目不声明该特征，恒为 false，
-  // 用于把跳转后的即时刷新和高亮重算限定在真正需要它的场景
+  // traits.virtualOutlineFill 的站点（DeepSeek、Claude）。未声明的缓存回填
+  // 恒为 false，避免把跳转后的即时刷新扩到不需要它的站点。
   hasPositionlessOutlineNodes(): boolean {
-    if (!this.siteAdapter.usesVirtualOutlineFill()) return false
+    if (!this.usesVirtualOutlineFill()) return false
     return this.flatNodes.some(
       (node) => !node.isGhost && !node.element && typeof node.scrollTop !== "number",
     )
   }
 
+  /**
+   * 虚拟滚动站点没有可用的离屏坐标。当前视口量不到标题时保留上一次高亮，
+   * 不能把缓存 scrollTop 投影回视口，否则卸载条目会和屏幕上的条目抢高亮。
+   */
+  holdsVirtualHighlight(): boolean {
+    return this.usesVirtualOutlineFill()
+  }
+
+  /** 树重建后按对象身份或稳定 id 找回同一条，避免沿用已经错位的 index。 */
+  findRetainedOutlineNode(previous: OutlineNode | null): OutlineNode | null {
+    if (!previous) return null
+    if (this.flatNodes.includes(previous)) return previous
+    if (!previous.id) return null
+    return this.flatNodes.find((node) => node.id === previous.id) ?? null
+  }
+
+  private usesVirtualOutlineFill(): boolean {
+    return this.siteAdapter.usesVirtualOutlineFill?.() ?? false
+  }
+
+  /**
+   * 只比较本帧仍挂在视口里的节点。API 回填条目和已卸载条目没有视觉坐标，
+   * 不参与高亮；一个都没有时返回 null，由调用方保持上一次结果。
+   */
+  private findLiveVirtualActiveNode(scrollContainer: HTMLElement): OutlineNode | null {
+    const viewportRect = this.getScrollViewportRect(scrollContainer)
+    if (!viewportRect) return null
+
+    const anchorY = viewportRect.top + Math.min(Math.max(viewportRect.height * 0.25, 48), 160)
+    const live: MeasuredOutlineNode[] = []
+
+    const measureElement = (element: Element): MeasuredOutlineElement | null => {
+      const clientRects = element.getClientRects()
+      if (clientRects.length === 0) return null
+
+      let top = clientRects[0].top
+      let bottom = clientRects[0].bottom
+      for (let i = 1; i < clientRects.length; i += 1) {
+        const rect = clientRects[i]
+        top = Math.min(top, rect.top)
+        bottom = Math.max(bottom, rect.bottom)
+      }
+
+      const height = Math.max(0, bottom - top)
+      if (height <= 0) return null
+      return { top, height }
+    }
+
+    for (const node of this.flatNodes) {
+      if (node.isGhost) continue
+      const element = node.element
+      if (!element?.isConnected) continue
+
+      const measured = measureElement(element)
+      if (!measured) continue
+      const bottom = measured.top + measured.height
+      if (bottom <= viewportRect.top || measured.top >= viewportRect.bottom) continue
+      live.push({ node, ...measured })
+    }
+
+    if (live.length === 0) return null
+
+    let activeUserQuery: MeasuredOutlineNode | null = null
+    let latestUserQueryBeforeAnchor: MeasuredOutlineNode | null = null
+    for (const query of live) {
+      if (!query.node.isUserQuery) continue
+      const bottom = query.top + query.height
+      if (query.top <= anchorY && bottom > anchorY) {
+        if (!activeUserQuery || query.top > activeUserQuery.top) {
+          activeUserQuery = query
+        }
+      }
+      if (
+        query.top <= anchorY &&
+        (!latestUserQueryBeforeAnchor || query.top > latestUserQueryBeforeAnchor.top)
+      ) {
+        latestUserQueryBeforeAnchor = query
+      }
+    }
+
+    if (activeUserQuery) return activeUserQuery.node
+
+    let activeHeading: MeasuredOutlineNode | null = null
+    let nextVisibleHeading: MeasuredOutlineNode | null = null
+    for (const heading of live) {
+      if (heading.node.isUserQuery) continue
+      const bottom = heading.top + heading.height
+      if (heading.top <= anchorY) {
+        if (!activeHeading || heading.top > activeHeading.top) {
+          activeHeading = heading
+        }
+      } else if (heading.top < viewportRect.bottom && bottom > viewportRect.top) {
+        if (!nextVisibleHeading || heading.top < nextVisibleHeading.top) {
+          nextVisibleHeading = heading
+        }
+      }
+    }
+
+    if (
+      latestUserQueryBeforeAnchor &&
+      (!activeHeading || activeHeading.top < latestUserQueryBeforeAnchor.top)
+    ) {
+      const firstHeading = this.findFirstHeadingInUserQuerySection(latestUserQueryBeforeAnchor.node)
+      const liveFirst = firstHeading
+        ? live.find((item) => item.node === firstHeading && item.top <= anchorY)
+        : undefined
+      return liveFirst?.node ?? latestUserQueryBeforeAnchor.node
+    }
+
+    return activeHeading?.node ?? nextVisibleHeading?.node ?? null
+  }
+
   findMountedActiveNode(scrollContainer: HTMLElement): OutlineNode | null {
     if (this.settings.followMode !== "current") return null
     if (this.flatNodes.length === 0) return null
+    if (this.usesVirtualOutlineFill()) {
+      return this.findLiveVirtualActiveNode(scrollContainer)
+    }
 
     const nativeActiveNode = this.findNativeActiveOutlineNode()
     const nativeSectionEnd = nativeActiveNode
