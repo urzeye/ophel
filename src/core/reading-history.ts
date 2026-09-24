@@ -491,6 +491,9 @@ export class ReadingHistoryManager {
       const data = this.claimLegacyPosition(sessionId)
 
       if (!data) {
+        if (this.prefersContainerScrollRestore()) {
+          console.warn("[Ophel] Reading history restore skipped: no saved position", sessionId)
+        }
         return false
       }
 
@@ -606,14 +609,31 @@ export class ReadingHistoryManager {
         textSignature: data.textSignature,
       }
       const restored = await this.adapter.restoreVirtualAnchor(anchor, signal)
-      if (signal.aborted || !restored) return false
+      if (signal.aborted) return false
+      if (!restored) {
+        console.warn("[Ophel] Reading history restore failed for virtual row", data.rowKey)
+        return false
+      }
       return true
     }
 
-    if (!data.type || !this.adapter.restoreScroll) return false
+    if (!data.type || !this.adapter.restoreScroll) {
+      // 旧版本只存了像素位置的记录走到这里：像素在虚拟列表里会落到另一段对话，放弃
+      console.warn(
+        "[Ophel] Reading history restore skipped: saved position predates stable anchors",
+        { top: data.top },
+      )
+      return false
+    }
 
     const isVirtual = await this.waitForVirtualConversation(signal)
-    if (signal.aborted || isVirtual) return false
+    if (signal.aborted) return false
+    if (isVirtual) {
+      console.warn(
+        "[Ophel] Reading history restore skipped: stale anchor inside a virtual conversation",
+      )
+      return false
+    }
 
     try {
       const restored = this.adapter.restoreScroll(data as AnchorData)

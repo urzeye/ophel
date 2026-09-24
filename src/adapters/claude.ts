@@ -2041,10 +2041,15 @@ export class ClaudeAdapter extends SiteAdapter {
     const rowKey = anchor.rowKey
     const offset = anchor.offset || 0
 
-    // 虚拟列表的挂载晚于会话 id 就绪，有界等待其出现
-    const deadline = Date.now() + 3000
+    // 虚拟列表的挂载晚于会话 id 就绪，冷加载可能要数秒，有界等待其出现；
+    // 期间用户主动滚动会通过 signal 中止等待
+    const deadline = Date.now() + 10000
     while (!this.isClaudeVirtualConversation()) {
-      if (signal?.aborted || Date.now() >= deadline) return false
+      if (signal?.aborted) return false
+      if (Date.now() >= deadline) {
+        console.warn("[Ophel] Reading history restore skipped: Claude message list not ready")
+        return false
+      }
       await this.sleep(100)
     }
 
@@ -2076,15 +2081,25 @@ export class ClaudeAdapter extends SiteAdapter {
         if (row) break
       }
     }
-    if (!row) return false
+    if (signal?.aborted) return false
+    if (!row) {
+      console.warn("[Ophel] Reading history restore skipped: Claude message not found", rowKey)
+      return false
+    }
 
     // 分支切换/编辑后序号可能指向另一条消息：文本不符宁可不跳，也不跳错
     if (anchor.textSignature) {
       const current = (row.textContent || "").trim().substring(0, 50)
-      if (current !== anchor.textSignature) return false
+      if (current !== anchor.textSignature) {
+        console.warn(
+          "[Ophel] Reading history restore skipped: Claude message content changed",
+          rowKey,
+        )
+        return false
+      }
     }
 
-    return settleVirtualScroll(
+    const settled = await settleVirtualScroll(
       () => this.getScrollContainer(),
       (container) => {
         const target = findRow()
@@ -2099,6 +2114,10 @@ export class ClaudeAdapter extends SiteAdapter {
       },
       signal,
     )
+    if (!settled && !signal?.aborted) {
+      console.warn("[Ophel] Reading history restore incomplete: Claude scroll did not settle")
+    }
+    return settled
   }
 
   getVisibleAnchorElement(): AnchorData | null {

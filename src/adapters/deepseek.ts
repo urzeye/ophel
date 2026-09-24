@@ -513,10 +513,15 @@ export class DeepSeekAdapter extends SiteAdapter {
     const rowKey = anchor.rowKey
     const offset = anchor.offset || 0
 
-    // 虚拟窗口的挂载晚于会话 id 就绪，有界等待其出现
-    const deadline = Date.now() + 3000
+    // 虚拟窗口的挂载晚于会话 id 就绪，冷加载可能要数秒，有界等待其出现；
+    // 期间用户主动滚动会通过 signal 中止等待
+    const deadline = Date.now() + 10000
     while (!this.isVirtualScrollConversation()) {
-      if (signal?.aborted || Date.now() >= deadline) return false
+      if (signal?.aborted) return false
+      if (Date.now() >= deadline) {
+        console.warn("[Ophel] Reading history restore skipped: DeepSeek message list not ready")
+        return false
+      }
       await this.sleep(100)
     }
 
@@ -525,12 +530,22 @@ export class DeepSeekAdapter extends SiteAdapter {
 
     // 复用大纲跳转的探测闭环：按 message_id 把目标行挂出来
     const row = await this.probeMountVirtualRow(rowKey, container, null, null)
-    if (!row || signal?.aborted) return false
+    if (signal?.aborted) return false
+    if (!row) {
+      console.warn("[Ophel] Reading history restore skipped: DeepSeek message not found", rowKey)
+      return false
+    }
 
     // key 是服务端 message_id，天然稳定；文本签名兜底防极端错位
     if (anchor.textSignature) {
       const current = (row.textContent || "").trim().substring(0, 50)
-      if (current !== anchor.textSignature) return false
+      if (current !== anchor.textSignature) {
+        console.warn(
+          "[Ophel] Reading history restore skipped: DeepSeek message content changed",
+          rowKey,
+        )
+        return false
+      }
     }
 
     const findRow = (c: HTMLElement) => c.querySelector(`[data-virtual-list-item-key="${rowKey}"]`)
@@ -540,7 +555,7 @@ export class DeepSeekAdapter extends SiteAdapter {
       return rRect.top - cRect.top + c.scrollTop
     }
 
-    return settleVirtualScroll(
+    const settled = await settleVirtualScroll(
       () => this.getScrollContainer(),
       (c) => {
         const target = findRow(c)
@@ -552,6 +567,10 @@ export class DeepSeekAdapter extends SiteAdapter {
       },
       signal,
     )
+    if (!settled && !signal?.aborted) {
+      console.warn("[Ophel] Reading history restore incomplete: DeepSeek scroll did not settle")
+    }
+    return settled
   }
 
   getResponseContainerSelector(): string {
