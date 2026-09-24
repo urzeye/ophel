@@ -22,7 +22,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **Z.ai clean mode overseas** — Fixed an issue where enabling clean mode or zen mode on Z.ai from outside China caused the chat area to disappear, leaving a blank page; page content now displays normally. (#955)
 - **Long chat outline highlight** — Fixed DeepSeek and Claude long conversations highlighting the wrong outline item while scrolling.
 - **Claude scroll to top** — Fixed long Claude chats where Scroll to Top stopped partway down the conversation. It now finishes only when the first message is on screen.
-- **Claude and DeepSeek reading position** — Conversations on these sites no longer jump back to a saved scroll position after refresh, because that position can land on the wrong part of the conversation.
+- **Claude and DeepSeek reading position** — Long conversations on these sites now return to the exact message you were reading after refresh, instead of staying at the bottom or landing on the wrong part of the conversation.
 
 ---
 

@@ -1999,6 +1999,108 @@ export class ClaudeAdapter extends SiteAdapter {
     await this.sleep(100)
   }
 
+  override isVirtualScrollConversation(): boolean {
+    return this.isClaudeVirtualConversation()
+  }
+
+  override getVirtualAnchorElement(): AnchorData | null {
+    if (!this.isClaudeVirtualConversation()) return null
+    const container = this.getScrollContainer()
+    if (!container) return null
+    const rows = this.getClaudeVirtualRows(container)
+    if (!rows.length) return null
+
+    // 视口上沿那条已挂载的虚拟行，语义与 getVisibleAnchorElement 一致
+    let bestRow: HTMLElement | null = null
+    let bestTop = Number.NEGATIVE_INFINITY
+    for (const row of rows) {
+      const top = this.getRelativeTop(container, row)
+      if (top <= container.scrollTop + 100 && top > bestTop) {
+        bestRow = row
+        bestTop = top
+      }
+    }
+    if (!bestRow) {
+      bestRow = rows[0]
+      bestTop = this.getRelativeTop(container, bestRow)
+    }
+
+    const rowKey = this.getClaudeVirtualMessageIndex(bestRow)
+    if (rowKey === null) return null
+
+    return {
+      type: "virtual-row",
+      rowKey,
+      offset: container.scrollTop - bestTop,
+      textSignature: (bestRow.textContent || "").trim().substring(0, 50),
+    }
+  }
+
+  override async restoreVirtualAnchor(anchor: AnchorData, signal?: AbortSignal): Promise<boolean> {
+    if (anchor.type !== "virtual-row" || typeof anchor.rowKey !== "number") return false
+    const rowKey = anchor.rowKey
+    const offset = anchor.offset || 0
+
+    // 虚拟列表的挂载晚于会话 id 就绪，有界等待其出现
+    const deadline = Date.now() + 3000
+    while (!this.isClaudeVirtualConversation()) {
+      if (signal?.aborted || Date.now() >= deadline) return false
+      await this.sleep(100)
+    }
+
+    const scrollContainer = this.getScrollContainer()
+    if (!scrollContainer) return false
+
+    const findRow = () =>
+      this.getClaudeVirtualRows().find(
+        (row) => this.getClaudeVirtualMessageIndex(row) === rowKey,
+      ) ?? null
+
+    // 与 resolveCachedClaudeOutlineTarget 同一手法：按序号比例估算落点，
+    // 从近到远探测候选位置，直到目标行挂出
+    let row = findRow()
+    if (!row) {
+      const totalMessages = this.getClaudeVirtualMessageCount()
+      const maxScroll = Math.max(0, scrollContainer.scrollHeight - scrollContainer.clientHeight)
+      const estimatedTop =
+        totalMessages && totalMessages > 1
+          ? (maxScroll * rowKey) / (totalMessages - 1)
+          : scrollContainer.scrollTop
+      const positions = this.buildClaudeVirtualScrollPositions(scrollContainer)
+      positions.sort((a, b) => Math.abs(a - estimatedTop) - Math.abs(b - estimatedTop))
+
+      for (const top of new Set([estimatedTop, ...positions])) {
+        if (signal?.aborted) return false
+        await this.scrollClaudeVirtualContainer(scrollContainer, top)
+        row = findRow()
+        if (row) break
+      }
+    }
+    if (!row) return false
+
+    // 分支切换/编辑后序号可能指向另一条消息：文本不符宁可不跳，也不跳错
+    if (anchor.textSignature) {
+      const current = (row.textContent || "").trim().substring(0, 50)
+      if (current !== anchor.textSignature) return false
+    }
+
+    return settleVirtualScroll(
+      () => this.getScrollContainer(),
+      (container) => {
+        const target = findRow()
+        return (
+          !!target &&
+          Math.abs(container.scrollTop - (this.getRelativeTop(container, target) + offset)) <= 4
+        )
+      },
+      (container) => {
+        const target = findRow()
+        if (target) alignScrollTop(container, this.getRelativeTop(container, target) + offset)
+      },
+      signal,
+    )
+  }
+
   getVisibleAnchorElement(): AnchorData | null {
     const container = this.getScrollContainer()
     if (!container) return null

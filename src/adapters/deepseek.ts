@@ -25,6 +25,7 @@ import { hashOutlineText, stripMarkdownInline } from "~utils/outline-heading-cac
 
 import {
   SiteAdapter,
+  type AnchorData,
   type ConversationDeleteTarget,
   type ConversationInfo,
   type ConversationObserverConfig,
@@ -466,6 +467,89 @@ export class DeepSeekAdapter extends SiteAdapter {
       () => this.getScrollContainer(),
       (container) => isDeepSeekVirtualEdgeSettled(container, edge),
       (container) => alignScrollTop(container, edge === "start" ? 0 : container.scrollHeight),
+      signal,
+    )
+  }
+
+  override isVirtualScrollConversation(): boolean {
+    const container = this.getScrollContainer()
+    if (!container) return false
+    return container.querySelector("[data-virtual-list-item-key]") !== null
+  }
+
+  override getVirtualAnchorElement(): AnchorData | null {
+    if (!this.isVirtualScrollConversation()) return null
+    const container = this.getScrollContainer()
+    if (!container) return null
+    const rows = this.readMountedVirtualRows(container)
+    if (!rows.length) return null
+
+    // 视口上沿那条已挂载的行；readMountedVirtualRows 的 top 是视口坐标，
+    // translateY 位移已包含在内
+    const containerRect = container.getBoundingClientRect()
+    const viewportLine = containerRect.top + 100
+    let best: { key: number; top: number } | null = null
+    for (const row of rows) {
+      if (row.top <= viewportLine && (!best || row.top > best.top)) {
+        best = row
+      }
+    }
+    if (!best) best = rows[0]
+
+    const element = container.querySelector(`[data-virtual-list-item-key="${best.key}"]`)
+    if (!element) return null
+
+    const rowTop = best.top - containerRect.top + container.scrollTop
+    return {
+      type: "virtual-row",
+      rowKey: best.key,
+      offset: container.scrollTop - rowTop,
+      textSignature: (element.textContent || "").trim().substring(0, 50),
+    }
+  }
+
+  override async restoreVirtualAnchor(anchor: AnchorData, signal?: AbortSignal): Promise<boolean> {
+    if (anchor.type !== "virtual-row" || typeof anchor.rowKey !== "number") return false
+    const rowKey = anchor.rowKey
+    const offset = anchor.offset || 0
+
+    // 虚拟窗口的挂载晚于会话 id 就绪，有界等待其出现
+    const deadline = Date.now() + 3000
+    while (!this.isVirtualScrollConversation()) {
+      if (signal?.aborted || Date.now() >= deadline) return false
+      await this.sleep(100)
+    }
+
+    const container = this.getScrollContainer()
+    if (!container) return false
+
+    // 复用大纲跳转的探测闭环：按 message_id 把目标行挂出来
+    const row = await this.probeMountVirtualRow(rowKey, container, null, null)
+    if (!row || signal?.aborted) return false
+
+    // key 是服务端 message_id，天然稳定；文本签名兜底防极端错位
+    if (anchor.textSignature) {
+      const current = (row.textContent || "").trim().substring(0, 50)
+      if (current !== anchor.textSignature) return false
+    }
+
+    const findRow = (c: HTMLElement) => c.querySelector(`[data-virtual-list-item-key="${rowKey}"]`)
+    const docTop = (c: HTMLElement, el: Element) => {
+      const cRect = c.getBoundingClientRect()
+      const rRect = el.getBoundingClientRect()
+      return rRect.top - cRect.top + c.scrollTop
+    }
+
+    return settleVirtualScroll(
+      () => this.getScrollContainer(),
+      (c) => {
+        const target = findRow(c)
+        return !!target && Math.abs(c.scrollTop - (docTop(c, target) + offset)) <= 4
+      },
+      (c) => {
+        const target = findRow(c)
+        if (target) alignScrollTop(c, docTop(c, target) + offset)
+      },
       signal,
     )
   }
@@ -1042,7 +1126,7 @@ export class DeepSeekAdapter extends SiteAdapter {
     messageId: number,
     container: HTMLElement,
     data: DeepSeekHistoryOutlineData | null,
-    requestId: number,
+    requestId: number | null,
   ): Promise<Element | null> {
     if (container.scrollHeight <= container.clientHeight) return null
 
@@ -1059,7 +1143,8 @@ export class DeepSeekAdapter extends SiteAdapter {
     for (let attempt = 0; attempt < VIRTUAL_ROW_PROBE_MAX_ATTEMPTS; attempt += 1) {
       const existing = findRow()
       if (existing) return existing
-      if (requestId !== this.nativeOutlineRevealRequestId) return null
+      // requestId 为 null 表示非大纲链路调用（阅读历史恢复），不参与大纲请求失效判断
+      if (requestId !== null && requestId !== this.nativeOutlineRevealRequestId) return null
 
       const rows = this.readMountedVirtualRows(container)
       if (rows.length === 0) return null

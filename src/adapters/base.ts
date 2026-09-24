@@ -132,9 +132,14 @@ export interface ConversationObserverConfig {
 }
 
 export interface AnchorData {
-  type: "selector" | "index"
+  type: "selector" | "index" | "virtual-row"
   selector?: string
   index?: number
+  /**
+   * virtual-row：虚拟行的稳定身份。
+   * Claude 为 data-rs-index 全对话序号，DeepSeek 为服务端 message_id。
+   */
+  rowKey?: number
   offset: number
   textSignature?: string
 }
@@ -1352,6 +1357,32 @@ export abstract class SiteAdapter {
    */
   async waitForVirtualListEdge(_edge: "start" | "end", _signal?: AbortSignal): Promise<boolean> {
     return true
+  }
+
+  /**
+   * 当前会话是否为虚拟滚动渲染（运行时动态判定，如 Claude 长对话、DeepSeek 消息
+   * 列表）。区别于站点级 traits.virtualOutlineFill：同一站点短对话可能不虚拟化。
+   * 阅读历史据此决定保存稳定行身份还是普通内容锚点。默认 false。
+   */
+  isVirtualScrollConversation(): boolean {
+    return false
+  }
+
+  /**
+   * 虚拟滚动会话中，返回视口上沿行的稳定锚点（type 为 "virtual-row"）。
+   * 非虚拟会话或暂时不可用时返回 null。
+   */
+  getVirtualAnchorElement(): AnchorData | null {
+    return null
+  }
+
+  /**
+   * 按虚拟锚点把目标行挂载出来并对齐保存时的行内偏移。
+   * 失败（行不存在、文本签名不符、超时）返回 false；调用方不得回退像素恢复，
+   * 否则虚拟列表里同一像素会落到另一段对话上。
+   */
+  async restoreVirtualAnchor(_anchor: AnchorData, _signal?: AbortSignal): Promise<boolean> {
+    return false
   }
 
   getOutlineSourcesSignature(): string {
