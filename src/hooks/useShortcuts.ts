@@ -111,7 +111,7 @@ export function useShortcuts({
       // 已在顶部时不覆盖锚点，避免重复点击丢失原位置
       if (scrollInfo.scrollTop >= 4) anchorStore.set(scrollInfo.scrollTop)
 
-      await loadHistoryUntil({
+      const result = await loadHistoryUntil({
         adapter,
         loadAll: true,
         allowShortCircuit: true,
@@ -120,6 +120,9 @@ export function useShortcuts({
 
       // 被新锚点操作抢占时，用户已离开顶部，不再回滚或提示
       if (signal.aborted) return
+
+      // 虚拟列表站点没等到真正到顶时，不再二次滚动，也不提示成功
+      if (!result.success) return
 
       await smartScrollToTop(adapter)
 
@@ -131,7 +134,7 @@ export function useShortcuts({
   const scrollToBottom = useCallback(async () => {
     if (!adapter) return
 
-    await withAnchorOp(async () => {
+    await withAnchorOp(async (signal) => {
       // 保存锚点到全局存储
       const scrollInfo = await getScrollInfo(adapter)
       // 已在底部时不覆盖锚点，避免重复点击丢失原位置
@@ -140,7 +143,10 @@ export function useShortcuts({
         scrollInfo.scrollHeight - scrollInfo.clientHeight - scrollInfo.scrollTop < 4
       if (!atBottom) anchorStore.set(scrollInfo.scrollTop)
 
-      await smartScrollToBottom(adapter)
+      const { virtualEdgeSettled } = await smartScrollToBottom(adapter, { signal })
+
+      // 被新锚点操作抢占，或虚拟列表没等到真正到底时，不提示成功
+      if (signal.aborted || !virtualEdgeSettled) return
 
       showToast(t("scrolledToBottom"))
     })

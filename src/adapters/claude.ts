@@ -34,6 +34,7 @@ import { htmlToMarkdown, type ExportBundle, type ExportMessage } from "~utils/ex
 import { t } from "~utils/i18n"
 import { renderMarkdown } from "~utils/markdown"
 import { EVENT_OUTLINE_DATA_UPDATED } from "~utils/messaging"
+import { READING_HISTORY_RESTORE_TOKEN_ATTRIBUTE } from "~utils/reading-history-navigation"
 import {
   API_OUTLINE_PARSE_FAILURE_LIMIT,
   isApiOutlineStale,
@@ -1699,7 +1700,10 @@ export class ClaudeAdapter extends SiteAdapter {
       this.isCollectingVirtualOutline ||
       this.outlineScanPromise ||
       this.isGenerating() ||
-      !this.isClaudeVirtualConversation()
+      !this.isClaudeVirtualConversation() ||
+      // 阅读历史恢复正在探测/对齐虚拟行，扫描的全段滚动会争抢同一容器；
+      // 恢复结束后下一次大纲刷新会重新触发调度
+      this.isReadingHistoryRestoreActive()
     ) {
       return
     }
@@ -1755,11 +1759,19 @@ export class ClaudeAdapter extends SiteAdapter {
       }
     } finally {
       if (this.outlineCacheSessionKey === expectedSessionKey) {
-        await this.scrollClaudeVirtualContainer(scrollContainer, originalScrollTop)
+        // 恢复在扫描中途启动时不再回滚到扫描起点，避免拽走恢复好的位置
+        if (!this.isReadingHistoryRestoreActive()) {
+          await this.scrollClaudeVirtualContainer(scrollContainer, originalScrollTop)
+        }
         this.completeInitialClaudeVirtualOutlineScanIfCovered()
       }
       this.isCollectingVirtualOutline = false
     }
+  }
+
+  /** 阅读历史恢复是否进行中（恢复期间会持有 restore token） */
+  private isReadingHistoryRestoreActive(): boolean {
+    return document.documentElement.hasAttribute(READING_HISTORY_RESTORE_TOKEN_ATTRIBUTE)
   }
 
   private recordMountedClaudeVirtualMessageIndexes(root: ParentNode): void {
