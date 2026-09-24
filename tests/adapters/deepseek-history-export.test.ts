@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { parseDeepSeekHistoryExport } from "~utils/deepseek-history-export"
+import { parseDeepSeekHistoryExport } from "~adapters/deepseek-history-export"
 
 interface TestMessage {
   message_id: number

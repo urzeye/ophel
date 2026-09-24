@@ -8,7 +8,7 @@ import { t } from "~utils/i18n"
 import {
   parseClaudeHistoryOutline,
   type ClaudeHistoryOutlineData,
-} from "~utils/claude-history-outline"
+} from "~adapters/claude-history-outline"
 
 // base.ts 在模块顶层实例化 DOMToolkit（依赖 document）；node 环境下打桩
 vi.mock("~utils/dom-toolkit", () => ({

@@ -249,7 +249,7 @@ import { useSettingsStore } from "~stores/settings-store"
 
 #### API 数据源大纲与导出（虚拟滚动站点）
 
-消息列表虚拟滚动的站点（DeepSeek 首发），大纲与导出可以直接请求站点历史消息接口，替代纯 DOM 扫描/滚动收集。站无关机制统一在 `src/utils/outline-api-source.ts`（分支回溯、缓存过期判定、拉取闸门、分支序号归并）与 `src/utils/outline-heading-cache.ts`（markdown 标题解析、文本清洗、哈希）；站点文件（如 `src/utils/deepseek-history-outline.ts` / `deepseek-history-export.ts`）只负责把接口 payload 解析为通用数据形态。
+消息列表虚拟滚动的站点（DeepSeek 首发），大纲与导出可以直接请求站点历史消息接口，替代纯 DOM 扫描/滚动收集。站无关机制统一在 `src/utils/outline-api-source.ts`（分支回溯、缓存过期判定、拉取闸门、分支序号归并）与 `src/utils/outline-heading-cache.ts`（markdown 标题解析、文本清洗、哈希）；站点文件（如 `src/adapters/deepseek-history-outline.ts` / `deepseek-history-export.ts`）只负责把接口 payload 解析为通用数据形态。
 
 新站点接入清单：
 
@@ -259,7 +259,7 @@ import { useSettingsStore } from "~stores/settings-store"
 4. 大纲条目统一按 `mergeByBranchMessageOrder` 归并：挂载项以 DOM 为准，接口只补未挂载条目；回填条目用 `navigationId` 携带定位信息（如 `{site}:api-h:{messageId}:...`），`resolveOutlineTarget` 优先按它精确定位。
 5. 接口主机与附件 CDN 加入 `package.json` `host_permissions`（油猴端 `connect: ["*"]` 无需改）；manifest 权限保持最小授权。
 
-Claude 接入的差异点（`src/utils/claude-history-outline.ts`、`src/adapters/claude.ts`）：DOM 虚拟行没有消息 id、只有位置序号（`data-rs-index`），消息 id 为 uuid 字符串。解析器内部做 uuid 到数值的预映射后复用 `resolveActiveBranch`，全链路统一用「分支位置序号」作为 messageIndex（接口历史截断时按 aria-setsize 尾部对齐，无法对齐判解析失败）；过期判定在位置语义之外补充两个粘性强制重拉信号——生成结束（含重新生成）与同 id 标题文本漂移；回填直接写入站点已有的 `outlineItemCache`（id 体系与 DOM 扫描一致，下游归并/定位不变），不走 `mergeByBranchMessageOrder`；全量滚动回填保留为接口不可用时的兜底。
+Claude 接入的差异点（`src/adapters/claude-history-outline.ts`、`src/adapters/claude.ts`）：DOM 虚拟行没有消息 id、只有位置序号（`data-rs-index`），消息 id 为 uuid 字符串。解析器内部做 uuid 到数值的预映射后复用 `resolveActiveBranch`，全链路统一用「分支位置序号」作为 messageIndex（接口历史截断时按 aria-setsize 尾部对齐，无法对齐判解析失败）；过期判定在位置语义之外补充两个粘性强制重拉信号——生成结束（含重新生成）与同 id 标题文本漂移；回填直接写入站点已有的 `outlineItemCache`（id 体系与 DOM 扫描一致，下游归并/定位不变），不走 `mergeByBranchMessageOrder`；全量滚动回填保留为接口不可用时的兜底。
 
 ### 核心模块 (`src/core/modules-init.ts`)
 

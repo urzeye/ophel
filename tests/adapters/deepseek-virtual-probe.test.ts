@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest"
 
 import { DeepSeekAdapter } from "~adapters/deepseek"
-import type { DeepSeekHistoryOutlineData } from "~utils/deepseek-history-outline"
+import type { DeepSeekHistoryOutlineData } from "~adapters/deepseek-history-outline"
 
 // base.ts 在模块顶层实例化 DOMToolkit（依赖 document）；node 环境下打桩
 vi.mock("~utils/dom-toolkit", () => ({

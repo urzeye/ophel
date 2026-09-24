@@ -8,16 +8,13 @@ import {
   findScrollableAncestor,
   scrollElementInContainer,
 } from "~core/outline/dom-outline"
-import {
-  parseClaudeHistoryOutline,
-  type ClaudeHistoryOutlineData,
-} from "~utils/claude-history-outline"
+import { parseClaudeHistoryOutline, type ClaudeHistoryOutlineData } from "./claude-history-outline"
 import {
   parseClaudeHistoryExport,
   type ClaudeHistoryExportDocument,
   type ClaudeHistoryExportMessage,
   type ClaudeHistoryExportUserFile,
-} from "~utils/claude-history-export"
+} from "./claude-history-export"
 import {
   createMarkdownDocumentAssetLink,
   addImageExportAsset,

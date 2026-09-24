@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest"
 import {
   parseDeepSeekHistoryOutline,
   type DeepSeekHistoryOutlineData,
-} from "~utils/deepseek-history-outline"
+} from "~adapters/deepseek-history-outline"
 import {
   API_OUTLINE_PARSE_FAILURE_LIMIT,
   isApiOutlineStale,

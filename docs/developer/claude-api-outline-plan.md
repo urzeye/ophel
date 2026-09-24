@@ -2,7 +2,7 @@
 
 > 状态：已实施（分支 `feat/claude-api-outline`，大纲 + 导出均已落地，实机冒烟待做）
 > 证据样本追加：`claude-curl-response-2.json`（含 HTML canvas 两版、用户上传图片与 markdown 文档；本地参考，勿提交）
-> 参考实现：DeepSeek API 数据源（`src/utils/outline-api-source.ts`、`src/utils/deepseek-history-outline.ts`、`src/utils/deepseek-history-export.ts`、`src/adapters/deepseek.ts`）
+> 参考实现：DeepSeek API 数据源（`src/utils/outline-api-source.ts`、`src/adapters/deepseek-history-outline.ts`、`src/adapters/deepseek-history-export.ts`、`src/adapters/deepseek.ts`）
 > 证据样本：`claude-demo.html`（本地参考，勿提交）、`claude-curl.sh` / `claude-curl-response.json`（含登录态，勿提交）
 
 ## 1. 背景与目标
@@ -183,12 +183,12 @@ extractOutline()
 
 | 文件 | 改动 |
 | --- | --- |
-| `src/utils/claude-history-outline.ts` | 新增。`parseClaudeHistoryOutline`：载荷 → 分支解析 → headingsByMessageIndex / userQueries / 字数估算 / 截断标记 |
-| `src/utils/claude-history-export.ts` | 新增（第二阶段）。`parseClaudeHistoryExport` + 保守可用性门槛 |
+| `src/adapters/claude-history-outline.ts` | 新增。`parseClaudeHistoryOutline`：载荷 → 分支解析 → headingsByMessageIndex / userQueries / 字数估算 / 截断标记 |
+| `src/adapters/claude-history-export.ts` | 新增（第二阶段）。`parseClaudeHistoryExport` + 保守可用性门槛 |
 | `src/adapters/claude.ts` | `maybeRefreshApiOutline` 状态机（镜像 deepseek.ts 的同名实现）；API 条目重建；内容指纹比对；`scheduleClaudeVirtualOutlineScan` 改为仅 API 不可用时触发；导出 API 优先路径 |
 | `src/adapters/claude-config.ts` | `traits` 加 `virtualOutlineFill: true`；`CLAUDE_CONFIG_VERSION` 7 → 8 |
-| `tests/utils/claude-history-outline.test.ts` | 新增。合成载荷：单链、重生旁支、截断、空文本提问、content 块混杂 |
-| `tests/utils/claude-history-export.test.ts` | 新增（第二阶段） |
+| `tests/adapters/claude-history-outline.test.ts` | 新增。合成载荷：单链、重生旁支、截断、空文本提问、content 块混杂 |
+| `tests/adapters/claude-history-export.test.ts` | 新增（第二阶段） |
 | `docs/developer/architecture.md` | 「API 数据源大纲与导出」小节补 Claude 位置映射差异说明 |
 
 不改动：`outline-api-source.ts`（id 预映射在解析器内消化）、`package.json`

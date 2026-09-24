@@ -1,4 +1,4 @@
-import { parseClaudeHistoryBranch, type ClaudeHistoryMessage } from "~utils/claude-history-outline"
+import { parseClaudeHistoryBranch, type ClaudeHistoryMessage } from "./claude-history-outline"
 
 /** create_file 工具产出的文档（Artifact/文档面板内容，file_text 为原始源码） */
 export interface ClaudeHistoryExportDocument {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { parseClaudeHistoryOutline } from "~utils/claude-history-outline"
+import { parseClaudeHistoryOutline } from "~adapters/claude-history-outline"
 
 const ZERO_UUID = "00000000-0000-4000-8000-000000000000"
 

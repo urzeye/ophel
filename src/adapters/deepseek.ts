@@ -45,13 +45,13 @@ import {
 import {
   parseDeepSeekHistoryOutline,
   type DeepSeekHistoryOutlineData,
-} from "~utils/deepseek-history-outline"
+} from "./deepseek-history-outline"
 import {
   isApiOutlineStale,
   mergeByBranchMessageOrder,
   shouldAttemptApiOutlineFetch,
 } from "~utils/outline-api-source"
-import { parseDeepSeekHistoryExport } from "~utils/deepseek-history-export"
+import { parseDeepSeekHistoryExport } from "./deepseek-history-export"
 import {
   alignScrollTop,
   isDeepSeekVirtualEdgeSettled,
