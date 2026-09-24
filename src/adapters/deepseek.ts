@@ -538,8 +538,11 @@ export class DeepSeekAdapter extends SiteAdapter {
       return false
     }
 
-    // 复用大纲跳转的探测闭环：按 message_id 把目标行挂出来
-    const row = await this.probeMountVirtualRow(rowKey, container, null, null)
+    // 复用大纲跳转的探测闭环：按 message_id 把目标行挂出来；
+    // 有大纲接口缓存数据时传入，分支序号距离比 id 差值更准
+    const apiData = this.apiOutlineData
+    const outlineData = apiData && apiData.sessionId === this.getSessionId() ? apiData : null
+    const row = await this.probeMountVirtualRow(rowKey, container, outlineData, null, signal)
     if (signal?.aborted) return false
     if (!row) {
       console.warn("[Ophel] Reading history restore skipped: DeepSeek message not found", rowKey)
@@ -1193,6 +1196,7 @@ export class DeepSeekAdapter extends SiteAdapter {
     container: HTMLElement,
     data: DeepSeekHistoryOutlineData | null,
     requestId: number | null,
+    signal?: AbortSignal,
   ): Promise<Element | null> {
     if (container.scrollHeight <= container.clientHeight) return null
 
@@ -1211,6 +1215,7 @@ export class DeepSeekAdapter extends SiteAdapter {
       if (existing) return existing
       // requestId 为 null 表示非大纲链路调用（阅读历史恢复），不参与大纲请求失效判断
       if (requestId !== null && requestId !== this.nativeOutlineRevealRequestId) return null
+      if (signal?.aborted) return null
 
       const rows = this.readMountedVirtualRows(container)
       if (rows.length === 0) return null
@@ -1261,6 +1266,59 @@ export class DeepSeekAdapter extends SiteAdapter {
       container.dispatchEvent(new Event("scroll", { bubbles: true }))
       // 强制同步 layout，促使虚拟列表本轮完成重挂载
       container.getBoundingClientRect()
+    }
+
+    return this.bisectMountVirtualRow(messageId, container, findRow, requestId, signal)
+  }
+
+  /**
+   * probeMountVirtualRow 的兜底：启发式逼近依赖行高估算，id 空洞或行高不均时
+   * 会过冲震荡。挂载窗口的 key 区间随 scrollTop 单调移动，二分不依赖行高，
+   * 对长对话 log 级收敛。
+   */
+  private async bisectMountVirtualRow(
+    messageId: number,
+    container: HTMLElement,
+    findRow: () => Element | null,
+    requestId: number | null,
+    signal?: AbortSignal,
+  ): Promise<Element | null> {
+    const maxScroll = Math.max(0, container.scrollHeight - container.clientHeight)
+    let lo = 0
+    let hi = maxScroll
+    let mid = Math.min(maxScroll, Math.max(0, container.scrollTop))
+
+    for (let attempt = 0; attempt < 14; attempt += 1) {
+      const existing = findRow()
+      if (existing) return existing
+      if (requestId !== null && requestId !== this.nativeOutlineRevealRequestId) return null
+      if (signal?.aborted) return null
+
+      const rows = this.readMountedVirtualRows(container)
+      if (rows.length === 0) return null
+
+      const firstKey = rows[0].key
+      const lastKey = rows[rows.length - 1].key
+      if (messageId < firstKey) {
+        hi = mid
+      } else if (messageId > lastKey) {
+        lo = mid
+      } else {
+        // 目标 key 落在窗口区间内却未挂载：等几拍排除挂载滞后，仍没有就是 id 空洞
+        for (let wait = 0; wait < 3; wait += 1) {
+          await this.sleep(VIRTUAL_ROW_PROBE_SETTLE_MS)
+          const mounted = findRow()
+          if (mounted) return mounted
+        }
+        return null
+      }
+      if (hi - lo <= 2) return null
+
+      mid = Math.round((lo + hi) / 2)
+      container.scrollTop = mid
+      container.dispatchEvent(new Event("scroll", { bubbles: true }))
+      container.getBoundingClientRect()
+      await this.sleep(VIRTUAL_ROW_PROBE_SETTLE_MS)
     }
 
     return findRow()
