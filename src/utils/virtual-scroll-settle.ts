@@ -40,6 +40,40 @@ export async function settleVirtualScroll(
   return false
 }
 
+/**
+ * 等容器自己的滚动安静下来（站点加载完成后的自动滚动可能持续数秒）。
+ * 连续 quietMs 无滚动变化才返回 true；超时返回 false。
+ */
+export async function waitForVirtualScrollQuiet(
+  readContainer: () => HTMLElement | null,
+  signal?: AbortSignal,
+  options?: { quietMs?: number; timeoutMs?: number },
+): Promise<boolean> {
+  const quietMs = options?.quietMs ?? 600
+  const deadline = Date.now() + (options?.timeoutMs ?? 8000)
+  let lastTop: number | null = null
+  let quietStart = 0
+
+  while (Date.now() <= deadline) {
+    if (signal?.aborted) return false
+    const container = readContainer()
+    if (container) {
+      const top = container.scrollTop
+      if (lastTop === null || Math.abs(top - lastTop) > 2) {
+        lastTop = top
+        quietStart = Date.now()
+      } else if (Date.now() - quietStart >= quietMs) {
+        return true
+      }
+    }
+
+    const continued = await delay(SETTLE_INTERVAL_MS, signal)
+    if (!continued) return false
+  }
+
+  return false
+}
+
 export function alignScrollTop(container: HTMLElement, top: number): void {
   const maxScroll = Math.max(0, container.scrollHeight - container.clientHeight)
   const next = Math.min(maxScroll, Math.max(0, top))

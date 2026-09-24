@@ -56,6 +56,7 @@ import {
   alignScrollTop,
   isDeepSeekVirtualEdgeSettled,
   settleVirtualScroll,
+  waitForVirtualScrollQuiet,
 } from "~utils/virtual-scroll-settle"
 import type { BuiltinSiteConfig } from "./declarative"
 
@@ -528,6 +529,15 @@ export class DeepSeekAdapter extends SiteAdapter {
     const container = this.getScrollContainer()
     if (!container) return false
 
+    // 等站点自己的开场滚动（自动去底部、渲染引发的调整）安静下来再动手，
+    // 否则恢复期间会被站点反复拽走，永远无法落定
+    const quiet = await waitForVirtualScrollQuiet(() => this.getScrollContainer(), signal)
+    if (signal?.aborted) return false
+    if (!quiet) {
+      console.warn("[Ophel] Reading history restore skipped: DeepSeek page kept scrolling")
+      return false
+    }
+
     // 复用大纲跳转的探测闭环：按 message_id 把目标行挂出来
     const row = await this.probeMountVirtualRow(rowKey, container, null, null)
     if (signal?.aborted) return false
@@ -557,26 +567,57 @@ export class DeepSeekAdapter extends SiteAdapter {
 
     // 落定判定用「行相对容器顶部的视觉位置」而不是 scrollTop 像素：刷新后页面仍在
     // 渲染，文档高度在漂，像素值几秒内稳定不下来；视觉位置才是保存 offset 的本义
+    const samples: string[] = []
+    let lastAlignedTop: number | null = null
     const isAligned = (c: HTMLElement) => {
       const target = findRow(c)
-      if (!target) return false
+      if (!target) {
+        samples.push("row-unmounted")
+        return false
+      }
       const visualOffset = target.getBoundingClientRect().top - c.getBoundingClientRect().top
+      samples.push(`vo=${Math.round(visualOffset + offset)} st=${Math.round(c.scrollTop)}`)
       return Math.abs(visualOffset + offset) <= 24
     }
     const settled = await settleVirtualScroll(
       () => this.getScrollContainer(),
       isAligned,
       (c) => {
+        // 上一拍对准之后 scrollTop 又被改动：站点自己的滚动在与恢复竞争
+        if (lastAlignedTop !== null && Math.abs(c.scrollTop - lastAlignedTop) > 2) {
+          samples.push(`external-scroll=${Math.round(c.scrollTop)}`)
+        }
         const target = findRow(c)
-        if (target) alignScrollTop(c, docTop(c, target) + offset)
+        if (target) {
+          alignScrollTop(c, docTop(c, target) + offset)
+          lastAlignedTop = c.scrollTop
+        }
       },
       signal,
       { timeoutMs: 4000 },
     )
-    if (!settled && !signal?.aborted) {
-      console.warn("[Ophel] Reading history restore incomplete: DeepSeek scroll did not settle")
+    if (settled || signal?.aborted) return settled
+
+    // 收敛失败但行仍在目标附近（渲染抖动导致始终差几像素）则接受现状；
+    // 行已不在 DOM（被站点拽走）才算失败
+    const finalContainer = this.getScrollContainer()
+    const finalRow = finalContainer ? findRow(finalContainer) : null
+    if (finalContainer && finalRow) {
+      const visualOffset =
+        finalRow.getBoundingClientRect().top - finalContainer.getBoundingClientRect().top
+      if (Math.abs(visualOffset + offset) <= 240) {
+        console.warn(
+          "[Ophel] Reading history restore accepted with loose alignment",
+          samples.slice(-12),
+        )
+        return true
+      }
     }
-    return settled
+    console.warn(
+      "[Ophel] Reading history restore incomplete: DeepSeek scroll did not settle",
+      samples.slice(-12),
+    )
+    return false
   }
 
   getResponseContainerSelector(): string {
