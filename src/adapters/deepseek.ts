@@ -555,17 +555,23 @@ export class DeepSeekAdapter extends SiteAdapter {
       return rRect.top - cRect.top + c.scrollTop
     }
 
+    // 落定判定用「行相对容器顶部的视觉位置」而不是 scrollTop 像素：刷新后页面仍在
+    // 渲染，文档高度在漂，像素值几秒内稳定不下来；视觉位置才是保存 offset 的本义
+    const isAligned = (c: HTMLElement) => {
+      const target = findRow(c)
+      if (!target) return false
+      const visualOffset = target.getBoundingClientRect().top - c.getBoundingClientRect().top
+      return Math.abs(visualOffset + offset) <= 24
+    }
     const settled = await settleVirtualScroll(
       () => this.getScrollContainer(),
-      (c) => {
-        const target = findRow(c)
-        return !!target && Math.abs(c.scrollTop - (docTop(c, target) + offset)) <= 4
-      },
+      isAligned,
       (c) => {
         const target = findRow(c)
         if (target) alignScrollTop(c, docTop(c, target) + offset)
       },
       signal,
+      { timeoutMs: 4000 },
     )
     if (!settled && !signal?.aborted) {
       console.warn("[Ophel] Reading history restore incomplete: DeepSeek scroll did not settle")

@@ -13,8 +13,9 @@ export async function settleVirtualScroll(
   isSettled: (container: HTMLElement) => boolean,
   align: (container: HTMLElement) => void,
   signal?: AbortSignal,
+  options?: { timeoutMs?: number },
 ): Promise<boolean> {
-  const deadline = Date.now() + SETTLE_TIMEOUT_MS
+  const deadline = Date.now() + (options?.timeoutMs ?? SETTLE_TIMEOUT_MS)
   let stablePasses = 0
 
   while (Date.now() <= deadline) {
