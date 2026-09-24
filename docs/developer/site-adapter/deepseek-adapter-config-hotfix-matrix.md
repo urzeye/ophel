@@ -11,7 +11,7 @@ DeepSeek 是 P3-06 批次的首个配置化站点，当前 `configVersion` 为 `
 | 大纲与正文 | `assistantMarkdown`、`thoughtContainer`、`iconButton`、`focusRing`、`nativeOutline*`、`mainRegion` | 标题提取、用户问题正文、思维内容、原生大纲扫描与跳转 |
 | 导出与复制 | `export.*`、`assistantMarkdown`、`thoughtContainer`、`iconButton`、`focusRing`、`shareTitleMeta` | DOM/分享页导出正文、思维链清理、最新回复、代码块和分享标题 |
 | 生成、模型与网络 | `generating.existsSelectors`、`selectedModel`、`networkMonitor.*` | 生成检测、停止入口、当前模型文本和 SSE 请求识别 |
-| 宽度与面板避让 | `widthSelectors`、`newChatLayoutScope`、`canvasLayoutScope`、`canvasPreviewSafeArea`、`panelAvoidanceScope`、`messageListItems`、`messageComposer`、`userMessageContent` | 历史消息/输入区、新对话页、用户问题宽度和 Canvas 预览安全区 |
+| 宽度与面板避让 | `widthSelectors`、`newChatLayoutScope`、`panelPreviewScope`、`panelPreviewContent`、`panelAvoidanceScope`、`messageListItems`、`messageComposer`、`userMessageContent` | 历史消息/输入区、新对话页、用户问题宽度和文档/Canvas 预览安全区 |
 | 模式开关 | `zenMode.*`、`cleanMode.*`、`quickQuote` | 侧栏/页面元素隐藏与 Quick Quote 启用状态 |
 
 `sitePrivateSelectors` 使用 DeepSeek 专属精确键白名单。数组整体替换，对象递归合并；patch 不能增加未知私有键、删除已登记键或移除内置 capability。

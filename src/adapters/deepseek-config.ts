@@ -32,8 +32,8 @@ type DeepSeekPrivateSelectors = SitePrivateSelectors & {
   composerButton: string
   selectedModel: string
   newChatLayoutScope: string
-  canvasLayoutScope: string
-  canvasPreviewSafeArea: string
+  panelPreviewScope: string
+  panelPreviewContent: string
   panelAvoidanceScope: string
   messageListItems: string
   messageComposer: string
@@ -63,7 +63,7 @@ export interface DeepSeekSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const DEEPSEEK_CONFIG_VERSION = 5
+export const DEEPSEEK_CONFIG_VERSION = 6
 
 const createDeepSeekConfig = (): DeepSeekSiteConfig => {
   const conversationLink = 'a[href*="/a/chat/s/"]'
@@ -103,8 +103,10 @@ const createDeepSeekConfig = (): DeepSeekSiteConfig => {
   const messageLayoutWidthScope = ":root"
   const messageLayoutScope = `:is(.ds-virtual-list:has(${message}), .ds-virtual-list:has(textarea${sidebarScrollArea}))`
   const newChatLayoutScope = `#root > div:has(textarea${sidebarScrollArea}):not(:has(${message}))`
-  const canvasLayoutScope = '#root > div:has(.ds-virtual-list):has(div[aria-hidden="false"] iframe)'
-  const canvasPreviewSafeArea = `div[aria-hidden="false"]:has(iframe) ${sidebarScrollArea}`
+  // 文档预览与 Canvas 预览共用同一个右侧边栏（aria-hidden 切换显隐，标题栏带
+  // role="heading"），避让只需内缩边栏自己的内容列，不影响左侧聊天列。
+  const panelPreviewScope = '#root div[aria-hidden="false"]:has(div[role="heading"])'
+  const panelPreviewContent = `${panelPreviewScope} > div:has(div[role="heading"])`
   const panelAvoidanceScope = [messageLayoutScope, newChatLayoutScope].join(", ")
   const messageListItems = `${messageLayoutScope} .ds-virtual-list-items`
   const messageComposer = `${messageLayoutScope} > div:has(textarea${sidebarScrollArea})`
@@ -185,8 +187,8 @@ const createDeepSeekConfig = (): DeepSeekSiteConfig => {
       ].join(", "),
       selectedModel: ".ds-toggle-button--selected",
       newChatLayoutScope,
-      canvasLayoutScope,
-      canvasPreviewSafeArea,
+      panelPreviewScope,
+      panelPreviewContent,
       panelAvoidanceScope,
       messageListItems,
       messageComposer,

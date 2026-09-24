@@ -1732,8 +1732,11 @@ export class DeepSeekAdapter extends SiteAdapter {
           extraCss: "box-sizing: border-box !important; min-width: 0 !important;",
         },
         {
-          selector: this.config.sitePrivateSelectors.canvasPreviewSafeArea,
-          scopeSelector: this.config.sitePrivateSelectors.canvasLayoutScope,
+          // 文档预览 / Canvas 预览右侧边栏：内容列带内联 width 且为 content-box，
+          // 必须强制 border-box，padding 内缩才能真正压缩内容而不是把内容挤出去。
+          selector: this.config.sitePrivateSelectors.panelPreviewContent,
+          scopeSelector: this.config.sitePrivateSelectors.panelPreviewScope,
+          obstacleSelectors: [],
           applySide: "right",
           insetMode: "edge",
           extraCss: "box-sizing: border-box !important; min-width: 0 !important;",
