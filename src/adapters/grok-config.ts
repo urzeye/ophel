@@ -79,7 +79,7 @@ export interface GrokSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const GROK_CONFIG_VERSION = 3
+export const GROK_CONFIG_VERSION = 4
 
 const createGrokConfig = (): GrokSiteConfig => {
   const sidebarScrollContainer = '[data-sidebar="content"]'
@@ -129,7 +129,6 @@ const createGrokConfig = (): GrokSiteConfig => {
       titleSelector: "span.flex-1, span.truncate, span",
       urlTemplate: "/c/{id}",
       activeMatch: ".bg-button-ghost-hover",
-      navigationStrategy: "location",
       shadow: false,
     },
     generating: {

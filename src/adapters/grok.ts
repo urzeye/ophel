@@ -440,15 +440,40 @@ export class GrokAdapter extends SiteAdapter {
   }
 
   navigateToConversation(id: string, url?: string): boolean {
-    if (url) {
-      window.location.href = url
-      return true
-    }
-    window.location.href = this.config.conversation.urlTemplate.replace(
-      "{id}",
-      encodeURIComponent(id),
-    )
+    const targetUrl =
+      url || this.config.conversation.urlTemplate.replace("{id}", encodeURIComponent(id))
+    // Grok 路由响应 popstate，优先用 history 导航免刷新切换（已实测验证）
+    if (this.navigateViaHistory(targetUrl)) return true
+    // 降级：整页跳转
+    window.location.href = targetUrl
     return true
+  }
+
+  /** 通过 pushState + popstate 触发 SPA 路由切换，避免整页刷新 */
+  private navigateViaHistory(url: string): boolean {
+    let target: URL
+    try {
+      target = new URL(url, window.location.origin)
+    } catch {
+      return false
+    }
+    if (target.origin !== window.location.origin) return false
+
+    const targetPath = `${target.pathname}${target.search}${target.hash}`
+    const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`
+    if (targetPath === currentPath) return true
+
+    try {
+      window.history.pushState(window.history.state, "", targetPath)
+      const event =
+        typeof PopStateEvent === "function"
+          ? new PopStateEvent("popstate", { state: window.history.state })
+          : new Event("popstate")
+      window.dispatchEvent(event)
+      return true
+    } catch {
+      return false
+    }
   }
 
   async deleteConversationOnSite(
