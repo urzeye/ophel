@@ -623,6 +623,38 @@ export abstract class SiteAdapter {
     return false
   }
 
+  /**
+   * 通过 pushState + popstate 触发站点 SPA 路由切换，避免整页刷新。
+   * 主流前端路由（React Router / Vue Router / Next.js / Angular 等）都会响应
+   * popstate；仅对同源且与当前路径不同的 URL 生效，失败时返回 false 由调用方降级。
+   * 注意：站点是否真正响应需逐站实测，未验证的站点不要盲目接入。
+   */
+  protected navigateViaHistory(url: string): boolean {
+    let target: URL
+    try {
+      target = new URL(url, window.location.origin)
+    } catch {
+      return false
+    }
+    if (target.origin !== window.location.origin) return false
+
+    const targetPath = `${target.pathname}${target.search}${target.hash}`
+    const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`
+    if (targetPath === currentPath) return true
+
+    try {
+      window.history.pushState(window.history.state, "", targetPath)
+      const event =
+        typeof PopStateEvent === "function"
+          ? new PopStateEvent("popstate", { state: window.history.state })
+          : new Event("popstate")
+      window.dispatchEvent(event)
+      return true
+    } catch {
+      return false
+    }
+  }
+
   /** 滚动加载全部对话 */
   async deleteConversationOnSite(
     target: ConversationDeleteTarget,
