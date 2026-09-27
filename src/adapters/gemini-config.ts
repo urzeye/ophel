@@ -177,7 +177,7 @@ export interface GeminiSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时递增（相对上一 release 版本 +1），使旧缓存 patch 自动失效。一次发版周期内无需重复递增。 */
-export const GEMINI_CONFIG_VERSION = 6
+export const GEMINI_CONFIG_VERSION = 7
 
 const createGeminiConfig = (): GeminiSiteConfig => {
   const userQuery = "user-query"
@@ -419,8 +419,10 @@ const createGeminiConfig = (): GeminiSiteConfig => {
       ],
     },
     autoHideInput: {
-      // 仅浮层化活跃对话的输入容器；新对话页的零态居中输入（fieldset.is-zero-state）保持原样
-      container: "input-container:has(> fieldset.input-area-container:not(.is-zero-state))",
+      // 仅浮层化活跃对话的输入容器；新对话页的零态居中输入（.input-area-container.is-zero-state）保持原样。
+      // Gemini 2026 下半年改版后 input-area-container 从 fieldset 挪到了外层 div，
+      // fieldset 改用 input-area-fieldset 类，这里只依赖稳定的标签层级
+      container: "input-container:has(> .input-area-container:not(.is-zero-state) > fieldset)",
       // 滚动末尾占位用 ::after 伪元素注入，不往 infinite-scroller 里塞真实 DOM 节点
       scrollContainer: responseContainer,
       styles: [

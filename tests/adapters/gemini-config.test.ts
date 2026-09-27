@@ -20,7 +20,15 @@ vi.mock("~utils/i18n", () => ({
 
 describe("Gemini built-in config and DOM adaptation", () => {
   it("increments GEMINI_CONFIG_VERSION to invalidate obsolete patches", () => {
-    expect(GEMINI_CONFIG_VERSION).toBe(6)
+    expect(GEMINI_CONFIG_VERSION).toBe(7)
+  })
+
+  it("targets the current input area wrapper for auto-hide (fieldset class moved to a div)", () => {
+    const { container } = GEMINI_CONFIG.autoHideInput
+    // 2026 改版后 input-area-container 在 wrapper div 上，fieldset 改为 input-area-fieldset；
+    // 旧写法 fieldset.input-area-container 在新结构中匹配不到任何元素，自动隐藏会整体失效
+    expect(container).toContain("> .input-area-container:not(.is-zero-state) > fieldset")
+    expect(container).not.toContain("fieldset.input-area-container")
   })
 
   it("extracts conversation id from anchor href after sidebar jslog became base64-encoded", () => {

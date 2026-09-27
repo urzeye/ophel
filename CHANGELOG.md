@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### 🐛 Bug Fixes
+
+- **Auto-hide input on Gemini** — Adapted to Gemini's new page structure; the "Auto-hide Input" feature works again, with the input box collapsing when idle and reappearing when the pointer nears the bottom or the input is focused.
+
 ---
 
 ## [1.2.9][1.2.9] - 2026-09-24
