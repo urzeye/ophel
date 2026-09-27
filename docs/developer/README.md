@@ -15,6 +15,7 @@
 | `site-adapter/` | 站点适配 | SitePack 审核清单、本地调试工作流、配置迁移手册、各站点热修字段矩阵 |
 | `review-consolidated.md` | 进行中工作 | 三方审查汇总与未完成的修复项，收尾后删除 |
 | `input-auto-hide-plan.md` | 进行中工作 | 清洁模式占位保留与输入框自动隐藏的技术方案与 SitePack 可行性分析，落地后删除 |
+| `aistudio-api-outline-plan.md` | 进行中工作 | AI Studio RPC 数据源大纲的接口/凭证/附件实测结论与实施计划，落地后删除 |
 
 ## 规范文档（conventions/）
 
