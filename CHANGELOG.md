@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### ✨ Improvements
+
+- **Switch conversations without reloading** — Switching to another conversation from the Chats tab now happens in place instead of reloading the whole page, making switching faster while keeping your current reading state.
+
 ### 🐛 Bug Fixes
 
 - **Auto-hide input on Gemini** — Adapted to Gemini's new page structure; the "Auto-hide Input" feature works again, with the input box collapsing when idle and reappearing when the pointer nears the bottom or the input is focused.
