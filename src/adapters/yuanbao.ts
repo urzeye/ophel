@@ -394,13 +394,20 @@ export class YuanbaoAdapter extends SiteAdapter {
       this.simulateClick(clickable)
       window.setTimeout(() => {
         if (!this.hasConversationNavigationChanged(beforeState)) {
-          super.navigateToConversation(id, url || this.buildConversationUrl(id))
+          // 点击未生效时优先 history 导航免刷新（路由响应 popstate，已实测）
+          const targetUrl = url || this.buildConversationUrl(id)
+          if (!this.navigateViaHistory(targetUrl)) {
+            super.navigateToConversation(id, targetUrl)
+          }
         }
       }, 800)
       return true
     }
 
-    return super.navigateToConversation(id, url || this.buildConversationUrl(id))
+    // 降级：优先 history 导航免刷新，失败再整页刷新
+    const targetUrl = url || this.buildConversationUrl(id)
+    if (this.navigateViaHistory(targetUrl)) return true
+    return super.navigateToConversation(id, targetUrl)
   }
 
   async deleteConversationOnSite(

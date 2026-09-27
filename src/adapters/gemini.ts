@@ -1831,6 +1831,8 @@ export class GeminiAdapter extends SiteAdapter {
         card.click()
         return true
       }
+      // 降级：优先 history 导航免刷新（Angular 路由响应 popstate，已实测）
+      if (url && this.navigateViaHistory(url)) return true
       return super.navigateToConversation(id, url)
     }
 
@@ -1842,7 +1844,8 @@ export class GeminiAdapter extends SiteAdapter {
       anchor.click()
       return true
     }
-    // 降级：页面刷新
+    // 降级：优先 history 导航免刷新，失败再整页刷新
+    if (url && this.navigateViaHistory(url)) return true
     return super.navigateToConversation(id, url)
   }
 

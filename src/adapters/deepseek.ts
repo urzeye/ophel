@@ -423,7 +423,10 @@ export class DeepSeekAdapter extends SiteAdapter {
     }
 
     const path = this.config.conversation.urlTemplate.replace("{id}", encodeURIComponent(id))
-    return super.navigateToConversation(id, url || new URL(path, DEEPSEEK_HOME_URL).toString())
+    const targetUrl = url || new URL(path, DEEPSEEK_HOME_URL).toString()
+    // 降级：优先 history 导航免刷新（路由响应 popstate，已实测），失败再整页刷新
+    if (this.navigateViaHistory(targetUrl)) return true
+    return super.navigateToConversation(id, targetUrl)
   }
 
   getSidebarScrollContainer(): Element | null {

@@ -1144,8 +1144,10 @@ export class AIStudioAdapter extends SiteAdapter {
       link.click()
       return true
     }
-    // 降级：硬跳转
-    window.location.href = url || this.config.conversation.urlTemplate.replace("{id}", id)
+    // 降级：优先 history 导航免刷新（Angular 路由响应 popstate，已实测），失败再硬跳转
+    const targetUrl = url || this.config.conversation.urlTemplate.replace("{id}", id)
+    if (this.navigateViaHistory(targetUrl)) return true
+    window.location.href = targetUrl
     return true
   }
 

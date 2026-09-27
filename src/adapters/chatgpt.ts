@@ -510,7 +510,8 @@ export class ChatGPTAdapter extends SiteAdapter {
       clickable.click()
       return true
     }
-    // 降级：页面刷新
+    // 降级：优先 history 导航免刷新（路由响应 popstate，已实测），失败再整页刷新
+    if (url && this.navigateViaHistory(url)) return true
     return super.navigateToConversation(id, url)
   }
 

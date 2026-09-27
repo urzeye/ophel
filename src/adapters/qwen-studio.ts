@@ -271,7 +271,10 @@ export class QwenAiAdapter extends SiteAdapter {
       }
     }
 
-    return super.navigateToConversation(id, url || this.getConversationUrl(id))
+    // 降级：优先 history 导航免刷新（路由响应 popstate，已实测），失败再整页刷新
+    const targetUrl = url || this.getConversationUrl(id)
+    if (this.navigateViaHistory(targetUrl)) return true
+    return super.navigateToConversation(id, targetUrl)
   }
 
   getTextareaSelectors(): string[] {

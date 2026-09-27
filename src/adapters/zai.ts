@@ -876,7 +876,10 @@ export class ZaiAdapter extends SiteAdapter {
         return true
       }
     }
-    return super.navigateToConversation(id, url || `https://chat.z.ai/c/${id}`)
+    // 降级：优先 history 导航免刷新（路由响应 popstate，已实测），失败再整页刷新
+    const targetUrl = url || `https://chat.z.ai/c/${id}`
+    if (this.navigateViaHistory(targetUrl)) return true
+    return super.navigateToConversation(id, targetUrl)
   }
 
   getModelName(): string | null {

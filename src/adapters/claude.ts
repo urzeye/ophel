@@ -3975,7 +3975,8 @@ export class ClaudeAdapter extends SiteAdapter {
       link.click()
       return true
     }
-    // 降级：直接跳转
+    // 降级：优先 history 导航免刷新（路由响应 popstate，已实测），失败再直接跳转
+    if (this.navigateViaHistory(targetUrl)) return true
     window.location.href = targetUrl
     return true
   }
