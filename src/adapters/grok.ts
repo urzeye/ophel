@@ -1298,7 +1298,7 @@ export class GrokAdapter extends SiteAdapter {
   }
 
   getUserQueryWidthSelectors() {
-    // Grok 用户消息气泡使用 .message-bubble.rounded-br-lg 类
+    // Grok 用户消息气泡（选择器见 config.selectors.userQuery）
     // 默认有 max-w-[100%] 和响应式 @sm/mainview:max-w-[90%]
     return [
       {
@@ -2021,7 +2021,7 @@ export class GrokAdapter extends SiteAdapter {
 
   replaceUserQueryContent(element: Element, html: string): boolean {
     // Grok 用户消息结构：
-    // .message-bubble.rounded-br-lg > div.relative > div.relative > .response-content-markdown
+    // [data-testid="user-message"] > div.relative > .response-content-markdown
     // 内部直接是 <p> 标签，没有 .whitespace-pre-wrap 容器
     const markdownContainer = element.querySelector(
       this.config.sitePrivateSelectors.responseMarkdown,
@@ -2229,7 +2229,7 @@ export class GrokAdapter extends SiteAdapter {
           break // 遇到下一个用户提问的容器，结束
         }
 
-        // 查找 AI 回复内容：没有 rounded-br-lg 的 message-bubble
+        // 查找 AI 回复内容（选择器见 config.selectors.assistantResponse）
         const aiMessage = current.querySelector(this.config.selectors.assistantResponse)
         if (aiMessage) {
           const markdownContent = aiMessage.querySelector(

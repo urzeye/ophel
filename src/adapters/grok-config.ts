@@ -86,8 +86,11 @@ const createGrokConfig = (): GrokSiteConfig => {
   const conversationItem = 'a[href^="/c/"]'
   const cmdkItem = "[cmdk-item]"
   const messageBubble = ".message-bubble"
-  const userQuery = `${messageBubble}.rounded-br-lg`
-  const assistantResponse = `${messageBubble}:not(.rounded-br-lg)`
+  // 新版页面用 data-testid 区分用户/AI 消息；保留 rounded-br-lg 兼容未改版页面
+  const userQuery = `[data-testid="user-message"], ${messageBubble}.rounded-br-lg`
+  // 新版用户气泡已无 rounded-br-lg，旧反选必须额外排除用户气泡，
+  // 否则会把用户消息误判为 AI 回复
+  const assistantResponse = `[data-testid="assistant-message"], ${messageBubble}:not(.rounded-br-lg):not([data-testid="user-message"])`
   const responseMarkdown = ".response-content-markdown"
   const stopButton = ['button[aria-label*="停止"]', 'button[aria-label*="Stop"]']
   const appLayoutScope = "#grok-app-root"
@@ -148,7 +151,9 @@ const createGrokConfig = (): GrokSiteConfig => {
     },
     export: {
       userQuerySelector: userQuery,
-      assistantResponseSelector: `${assistantResponse} ${responseMarkdown}`,
+      // assistantResponse 是逗号并集，必须用 :is() 包裹，
+      // 否则后代组合器只作用于最后一个分支
+      assistantResponseSelector: `:is(${assistantResponse}) ${responseMarkdown}`,
       turnSelector: null,
       useShadowDOM: false,
     },
@@ -168,9 +173,10 @@ const createGrokConfig = (): GrokSiteConfig => {
         ".absolute.bg-surface-l2.p-1.rounded-full button",
       ],
       sidebarScrollContainer,
-      // 新版聊天滚动容器为 overflow-y-auto + px-gutter；保留 overflow-auto 兼容旧结构
+      // 新版聊天滚动容器带 data-testid（px-gutter 已移至内部行元素）；
+      // 保留 overflow-y-auto + px-gutter 与 overflow-auto 兼容旧结构
       mainScrollContainer:
-        '[class*="overflow-y-auto"][class*="px-gutter"], [class*="overflow-auto"]',
+        '[data-testid="chat-transcript-scroller"], [class*="overflow-y-auto"][class*="px-gutter"], [class*="overflow-auto"]',
       fallbackScrollContainers: '[class*="overflow-y-auto"], [class*="overflow-auto"]',
       viewAllButton: "button.w-full.justify-start.text-xs.text-secondary.font-semibold",
       cmdkList: '[cmdk-list-sizer=""], [cmdk-list]',
@@ -198,7 +204,7 @@ const createGrokConfig = (): GrokSiteConfig => {
       modelName: ".font-semibold",
       appLayoutScope,
       panelAvoidanceScope,
-      chatSafeArea: `${panelAvoidanceScope} [class*="overflow-y-auto"][class*="px-gutter"]`,
+      chatSafeArea: `${panelAvoidanceScope} [data-testid="chat-transcript-scroller"], ${panelAvoidanceScope} [class*="overflow-y-auto"][class*="px-gutter"]`,
       newChatLogoSafeArea: `${panelAvoidanceScope} .flex.flex-col.items-center.justify-center.w-full.max-w-breakout:has(svg[variant="hero"])`,
       inputSafeArea: `${panelAvoidanceScope} .absolute.inset-x-0.bottom-0.mx-auto.max-w-breakout`,
       canvasSafeArea: `${appLayoutScope} aside:has(iframe.w-full.flex-1)`,
