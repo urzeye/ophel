@@ -1,6 +1,6 @@
 # AI Studio API 数据源大纲适配方案
 
-> 状态：分析完成，待实施（分支 `feat/aistudio-api-outline`）
+> 状态：已实施（分支 `feat/aistudio-api-outline`）
 > 参考实现：DeepSeek/Claude API 数据源（`src/utils/outline-api-source.ts`、
 > `src/adapters/deepseek-history-outline.ts`、`src/adapters/claude-history-outline.ts`、
 > `docs/developer/claude-api-outline-plan.md`）
@@ -124,22 +124,42 @@ GET https://drive.usercontent.google.com/download?id=<fileId>&export=download&au
 大纲场景不需要附件内容（空文本 chunk 按无文本提问处理：计入 queryIndex 但不进大纲，
 同 DeepSeek 约定）；附件下载链路是给后续「接口导出」阶段备用的。
 
-## 5. 实施计划
+## 5. 实施计划（已落地，偏差见各条备注）
 
 1. 新增 `src/adapters/aistudio-history-outline.ts` 解析器，输出 `ApiOutlineSourceData` 形态：
    - messageIndex = chunk 位置序号（`[13][0]` 数组下标）；
    - 变更检测签名：chunk 数 + 元数据最后更新时间戳（prompt 对象 `[4][4][0]`）+ 末条 chunk 文本长度；
    - 跳过草稿组 / 思考 chunk / 错误 chunk / 附件 chunk（§2.3 规则）。
+   - 落地偏差：branchMessageIds/maxMessageId 改用「带文本提问的 1-based 序号」空间
+     （与时间线滚动条条目序号同构），解析器同时输出 userQueries 与
+     headingsByQueryIndex 供滚动条序号映射。
 2. 拉取链路：main world 代发 fetch（Origin 约束，§3），结果 postMessage 回 isolated world；
    复用现有 `buildGoogleAuthorizationHeader` / `resolveGoogleApiKey` /
    `resolveRpcOriginsFromPerformance`（从删除逻辑中抽出共用）。
+   - 落地：`src/core/aistudio-rpc-bridge.ts`（postMessage 协议 + 就绪标记 attr）
+     + `src/contents/aistudio-rpc-main.ts`（`world: "MAIN"`，Plasmo 自动在
+     background 生成 `chrome.scripting.registerContentScripts` 注册，无需手改
+     manifest）；共用函数抽到 `src/utils/google-rpc-auth.ts`；
+     油猴端由适配器直接把桥安装到 `unsafeWindow`。
 3. `aistudio-config.ts` traits 加 `virtualOutlineFill`（并递增 `AISTUDIO_CONFIG_VERSION`）。
+   - 落地：已加（版本 3 → 4）。该 trait 同时启用阅读历史的虚拟锚点路径，
+     因此适配器补齐了 `isVirtualScrollConversation` / `getVirtualAnchorElement` /
+     `restoreVirtualAnchor` / `waitForVirtualListEdge` /
+     `getVirtualOutlinePositionSnapshot` / `getVirtualOutlineRowIndex`
+     六个覆写（对齐 DeepSeek/Claude 契约）。
 4. `package.json` host_permissions 增加 `https://*.clients6.google.com/*`
    （参照 `files.deepseeksvc.com` 先例放 host_permissions）。
+   - 落地偏差：**未新增**。请求由 main world 页面上下文代发，不经过扩展
+     fetch 通道，不需要扩展主机权限（遵循最小授权原则）。
 5. 接线沿用既有契约：过期判定/拉取闸门（`isApiOutlineStale` / `shouldAttemptApiOutlineFetch`）、
    数据更新后 postMessage `EVENT_OUTLINE_DATA_UPDATED`。
+   - 落地：`maybeRefreshApiOutline` 挂在 `extractOutline` 开头，仅虚拟滚动会话拉取；
+     生成结束强制重拉；接口回填条目 id 为 `aistudio-api:q<queryIndex>:h<order>`，
+     跳转走「滚动条 reveal → 挂载后按文本定位标题」。
 6. 验证：`pnpm typecheck` + `pnpm test` + `pnpm build`，实机冒烟覆盖
    纯文本对话 / 含附件对话 / 生成中跳过 / 会话切换。
+   - 落地：typecheck / 820 测试 / build / build:firefox / build:userscript 全过；
+     实机冒烟待人工进行。
 
 ## 6. 风险与未验证点
 
@@ -148,5 +168,7 @@ GET https://drive.usercontent.google.com/download?id=<fileId>&export=download&au
   本次读路径实测正常，但需实机长测；失效兜底 = 退化为现有纯 DOM 扫描。
 - R2：超长对话接口是否截断未验证。
 - R3：freeform prompt（非 `CHUNKED_PROMPT`）的响应结构未验证。
-- R4：main world 代发的消息通道需与现有 main world 基建（`aistudio-preload.ts` 等）对齐。
+- R4：~~main world 代发的消息通道需与现有 main world 基建对齐~~ 已解决：
+  Plasmo 把 `world: "MAIN"` 内容脚本编译为 background 动态注册
+  （`.plasmo/static/background/main-world-scripts.ts`），与 scroll-lock-main 等同一机制。
 - R5：附件下载的两步病毒扫描确认流增加导出阶段复杂度；大纲阶段不涉及。

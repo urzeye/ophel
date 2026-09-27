@@ -11,6 +11,13 @@
  * - 使用语义化属性（如 placeholder, aria-label）
  */
 import { SITE_IDS } from "~constants"
+import {
+  AISTUDIO_RPC_BRIDGE_ATTR,
+  AISTUDIO_RPC_REQUEST_EVENT,
+  AISTUDIO_RPC_RESPONSE_EVENT,
+  installAIStudioRpcBridge,
+  type AIStudioRpcBridgeWindow,
+} from "~core/aistudio-rpc-bridge"
 import { useSettingsStore } from "~stores/settings-store"
 import {
   createExportAssetCollector,
@@ -21,10 +28,26 @@ import {
   type ExportAssetCollector,
 } from "~utils/export-assets"
 import { htmlToMarkdown, type ExportBundle } from "~utils/exporter"
+import {
+  buildGoogleAuthorizationHeader,
+  GOOGLE_MAKER_SUITE_RPC_PATH,
+  recordGoogleRpcOrigin,
+  resolveGoogleApiKey,
+  resolveGoogleAuthUser,
+  resolveGoogleRpcOrigins,
+} from "~utils/google-rpc-auth"
 import { t } from "~utils/i18n"
+import { EVENT_OUTLINE_DATA_UPDATED } from "~utils/messaging"
+import { isApiOutlineStale, shouldAttemptApiOutlineFetch } from "~utils/outline-api-source"
+import { alignScrollTop, settleVirtualScroll } from "~utils/virtual-scroll-settle"
+import type {
+  VirtualOutlinePositionSnapshot,
+  VirtualPositionAnchor,
+} from "~utils/virtual-outline-position"
 
 import {
   SiteAdapter,
+  type AnchorData,
   type ConversationDeleteTarget,
   type ConversationInfo,
   type ConversationObserverConfig,
@@ -43,6 +66,10 @@ import {
   AISTUDIO_CONFIG_VERSION,
   type AIStudioSiteConfig,
 } from "./aistudio-config"
+import {
+  parseAIStudioHistoryOutline,
+  type AIStudioHistoryOutlineData,
+} from "./aistudio-history-outline"
 import type { BuiltinSiteConfig } from "./declarative"
 
 const AISTUDIO_DELETE_REASON = {
@@ -83,10 +110,7 @@ const AISTUDIO_CANCEL_KEYWORDS = [
   "отмена",
 ]
 
-const AISTUDIO_RPC_SERVICE_PATH =
-  "/$rpc/google.internal.alkali.applications.makersuite.v1.MakerSuiteService"
 const AISTUDIO_DELETE_PROMPT_METHOD = "DeletePrompt"
-const AISTUDIO_FALLBACK_RPC_ORIGIN = "https://alkalimakersuite-pa.clients6.google.com"
 const AISTUDIO_EXPORT_ROOT_ATTR = "data-gh-aistudio-export-root"
 const AISTUDIO_EXPORT_TURN_ATTR = "data-gh-aistudio-export-turn"
 const AISTUDIO_EXPORT_ROLE_ATTR = "data-gh-aistudio-export-role"
@@ -95,6 +119,10 @@ const AISTUDIO_EXPORT_ROLE_ASSISTANT = "assistant"
 const AISTUDIO_EXPORT_TURN_SELECTOR = `[${AISTUDIO_EXPORT_ROOT_ATTR}="1"] [${AISTUDIO_EXPORT_TURN_ATTR}="1"]`
 const AISTUDIO_EXPORT_USER_SELECTOR = `[${AISTUDIO_EXPORT_ROOT_ATTR}="1"] [${AISTUDIO_EXPORT_ROLE_ATTR}="${AISTUDIO_EXPORT_ROLE_USER}"]`
 const AISTUDIO_EXPORT_ASSISTANT_SELECTOR = `[${AISTUDIO_EXPORT_ROOT_ATTR}="1"] [${AISTUDIO_EXPORT_ROLE_ATTR}="${AISTUDIO_EXPORT_ROLE_ASSISTANT}"]`
+
+const AISTUDIO_API_OUTLINE_FETCH_BACKOFF_MS = 10_000
+const AISTUDIO_API_OUTLINE_BOTTOM_TOLERANCE_PX = 100
+const AISTUDIO_RPC_REQUEST_TIMEOUT_MS = 10_000
 
 interface AIStudioExportMessageSnapshot {
   role: "user" | "assistant"
@@ -131,14 +159,24 @@ export class AIStudioAdapter extends SiteAdapter {
 
   // 缓存从 library 页面抓取的对话列表
   private cachedLibraryConversations: ConversationInfo[] | null = null
-  private cachedApiKey: string | null = null
-  private cachedRpcOrigin: string | null = null
   private exportSnapshotRoot: HTMLElement | null = null
   private exportSnapshotActive = false
   private exportIncludeThoughtsOverride: boolean | null = null
   private exportBundleCache: ExportBundle | null = null
   // 导出采集完整性报告（通过 getExportCollectionReport 暴露给 manager）
   private exportCollectionReport: ExportCollectionReport | null = null
+
+  // ==================== API 数据源大纲状态 ====================
+
+  private apiOutlineData: AIStudioHistoryOutlineData | null = null
+  private apiOutlineFetchPromise: Promise<void> | null = null
+  private apiOutlineLastFetchAt = 0
+  private apiOutlineFailures = 0
+  private apiOutlineSessionId = ""
+  private apiOutlineForceRefetch = false
+  private apiOutlineWasGenerating = false
+  /** 桥未安装（启动竞态/极端环境）：不计熔断，下次 extract 再试 */
+  private apiOutlineBridgeMissing = false
 
   // ==================== 基础信息 ====================
 
@@ -1251,7 +1289,7 @@ export class AIStudioAdapter extends SiteAdapter {
   }
 
   private async tryDeleteViaGrpcApi(id: string): Promise<SiteDeleteConversationResult> {
-    const authorization = await this.buildGoogleAuthorizationHeader(window.location.origin)
+    const authorization = await buildGoogleAuthorizationHeader(window.location.origin)
     if (!authorization) {
       return {
         id,
@@ -1261,7 +1299,7 @@ export class AIStudioAdapter extends SiteAdapter {
       }
     }
 
-    const apiKey = this.resolveGoogleApiKey()
+    const apiKey = resolveGoogleApiKey()
     if (!apiKey) {
       return {
         id,
@@ -1285,7 +1323,7 @@ export class AIStudioAdapter extends SiteAdapter {
             authorization,
             "content-type": "application/json+protobuf",
             "x-goog-api-key": apiKey,
-            "x-goog-authuser": this.resolveGoogAuthUser(),
+            "x-goog-authuser": resolveGoogleAuthUser(),
             "x-user-agent": "grpc-web-javascript/0.1",
           },
           body: JSON.stringify([promptName]),
@@ -1293,14 +1331,14 @@ export class AIStudioAdapter extends SiteAdapter {
 
         lastStatus = response.status
         if (response.ok) {
-          this.cachedRpcOrigin = this.normalizeRpcOriginFromEndpoint(endpoint)
+          recordGoogleRpcOrigin(new URL(endpoint).origin)
           this.syncConversationListAfterDelete(id)
           return { id, success: true, method: "api" }
         }
 
         if (response.status === 404) {
           if (!this.isConversationVisible(id)) {
-            this.cachedRpcOrigin = this.normalizeRpcOriginFromEndpoint(endpoint)
+            recordGoogleRpcOrigin(new URL(endpoint).origin)
             this.syncConversationListAfterDelete(id)
             return { id, success: true, method: "api" }
           }
@@ -1364,157 +1402,231 @@ export class AIStudioAdapter extends SiteAdapter {
   }
 
   private getDeletePromptEndpoints(): string[] {
-    const origins: string[] = []
-
-    if (this.cachedRpcOrigin) {
-      origins.push(this.cachedRpcOrigin)
-    }
-
-    origins.push(...this.resolveRpcOriginsFromPerformance())
-    origins.push(AISTUDIO_FALLBACK_RPC_ORIGIN)
-
-    const uniqueOrigins = Array.from(new Set(origins.filter(Boolean)))
-    return uniqueOrigins.map(
-      (origin) => `${origin}${AISTUDIO_RPC_SERVICE_PATH}/${AISTUDIO_DELETE_PROMPT_METHOD}`,
+    return resolveGoogleRpcOrigins().map(
+      (origin) => `${origin}${GOOGLE_MAKER_SUITE_RPC_PATH}/${AISTUDIO_DELETE_PROMPT_METHOD}`,
     )
   }
 
-  private resolveRpcOriginsFromPerformance(): string[] {
-    const entries = performance.getEntriesByType("resource") as PerformanceResourceTiming[]
-    if (!entries || entries.length === 0) return []
+  // ==================== API 数据源大纲 ====================
 
-    const origins: string[] = []
-    for (let index = entries.length - 1; index >= 0; index--) {
-      const name = entries[index]?.name
-      if (!name || !name.includes(AISTUDIO_RPC_SERVICE_PATH)) continue
+  /**
+   * 解析 ResolveDriveResource 响应；结构不符合预期时返回 null（调用方退化为纯 DOM 扫描）。
+   * 过期判定与拉取闸门复用 outline-api-source 的站无关机制；
+   * mountedIds 用语义等同的「时间线滚动条条目序号」（滚动条始终列出全部带文本提问）。
+   */
+  private maybeRefreshApiOutline(): void {
+    if (this.isSharePage()) return
+    const sessionId = this.getSessionId()
+    if (!sessionId) return
+    // 仅虚拟滚动会话需要接口回填：非虚拟会话 DOM 扫描已是全量，
+    // 接口条目只会与 DOM 条目重复
+    if (!this.isVirtualScrollConversation()) return
 
-      const origin = this.normalizeRpcOriginFromEndpoint(name)
-      if (origin) origins.push(origin)
+    if (sessionId !== this.apiOutlineSessionId) {
+      // 会话切换时解除失败熔断与拉取冷却，新会话应立即补齐大纲
+      this.apiOutlineSessionId = sessionId
+      this.apiOutlineFailures = 0
+      this.apiOutlineLastFetchAt = 0
+      this.apiOutlineBridgeMissing = false
     }
 
-    return Array.from(new Set(origins))
+    // 生成结束（含编辑后重跑）后内容已变化，提问序号不变，必须强制重拉
+    const generating = this.isGenerating()
+    if (this.apiOutlineWasGenerating && !generating) {
+      this.apiOutlineForceRefetch = true
+    }
+    this.apiOutlineWasGenerating = generating
+
+    const scrollable = this.getScrollContainer()
+    const atBottom = scrollable
+      ? scrollable.scrollTop + scrollable.clientHeight >=
+        scrollable.scrollHeight - AISTUDIO_API_OUTLINE_BOTTOM_TOLERANCE_PX
+      : true
+    const scrollbarQueryIndexes = new Set(
+      this.getScrollbarQueryEntries().map((entry) => entry.index + 1),
+    )
+    const stale =
+      this.apiOutlineForceRefetch ||
+      isApiOutlineStale({
+        data: this.apiOutlineData,
+        sessionId,
+        mountedIds: scrollbarQueryIndexes,
+        atBottom,
+      })
+
+    if (
+      !shouldAttemptApiOutlineFetch({
+        now: Date.now(),
+        lastFetchAt: this.apiOutlineLastFetchAt,
+        backoffMs: AISTUDIO_API_OUTLINE_FETCH_BACKOFF_MS,
+        parseFailures: this.apiOutlineFailures,
+        inFlight: this.apiOutlineFetchPromise !== null,
+        generating,
+        stale,
+      })
+    ) {
+      return
+    }
+
+    // 任何一次实际发起的拉取都记入冷却，成功但数据未变的重拉也不会连续重试
+    this.apiOutlineLastFetchAt = Date.now()
+    this.apiOutlineFetchPromise = this.fetchApiOutline(sessionId)
+      .then((result) => {
+        if (result === "parse-failed") {
+          this.apiOutlineFailures += 1
+          return
+        }
+        if (result === "no-bridge") {
+          // 桥未就绪（启动竞态）：不计失败，等下次 extract 再试
+          this.apiOutlineBridgeMissing = true
+          return
+        }
+        this.apiOutlineFailures = 0
+        this.apiOutlineBridgeMissing = false
+        if (result === "changed") {
+          window.postMessage({ type: EVENT_OUTLINE_DATA_UPDATED }, "*")
+        }
+      })
+      .catch((error) => {
+        // 网络/HTTP 失败计入熔断：连续失败时回退纯 DOM 扫描（行为同改动前）
+        this.apiOutlineFailures += 1
+        console.warn("[AIStudioAdapter] Failed to fetch conversation outline:", error)
+      })
+      .finally(() => {
+        this.apiOutlineFetchPromise = null
+      })
   }
 
-  private normalizeRpcOriginFromEndpoint(endpoint: string): string | null {
-    try {
-      const url = new URL(endpoint)
-      if (!this.isLikelyRpcHost(url.hostname)) return null
-      return `${url.protocol}//${url.host}`
-    } catch {
-      return null
+  private async fetchApiOutline(
+    sessionId: string,
+  ): Promise<"changed" | "unchanged" | "parse-failed" | "no-bridge"> {
+    const result = await this.requestRpcResolveDriveResource(sessionId)
+    if (result.kind === "no-bridge") return "no-bridge"
+    if (result.kind === "failed") {
+      throw new Error(`ResolveDriveResource responded ${result.status}`)
     }
+
+    const parsed = parseAIStudioHistoryOutline(result.payload)
+    if (!parsed || parsed.sessionId !== sessionId) return "parse-failed"
+
+    const previous = this.apiOutlineData
+    this.apiOutlineData = parsed
+    this.apiOutlineForceRefetch = false
+    return !previous ||
+      previous.sessionId !== parsed.sessionId ||
+      previous.signature !== parsed.signature
+      ? "changed"
+      : "unchanged"
   }
 
-  private isLikelyRpcHost(hostname: string): boolean {
-    return /(?:^|\.)alkalimakersuite-[a-z0-9-]+\.clients\d+\.google\.com$/i.test(hostname)
-  }
-
-  private async buildGoogleAuthorizationHeader(origin: string): Promise<string | null> {
-    const timestamp = Math.floor(Date.now() / 1000)
-    const sapisid = this.getCookieValue("SAPISID")
-    const oneP = this.getCookieValue("__Secure-1PAPISID")
-    const threeP = this.getCookieValue("__Secure-3PAPISID")
-
-    const parts: string[] = []
-
-    const primary = sapisid || oneP || threeP
-    if (primary) {
-      const token = await this.buildSapisidHashToken(primary, origin, timestamp)
-      if (token) parts.push(`SAPISIDHASH ${token}`)
-    }
-
-    if (oneP) {
-      const token = await this.buildSapisidHashToken(oneP, origin, timestamp)
-      if (token) parts.push(`SAPISID1PHASH ${token}`)
-    }
-
-    if (threeP) {
-      const token = await this.buildSapisidHashToken(threeP, origin, timestamp)
-      if (token) parts.push(`SAPISID3PHASH ${token}`)
-    }
-
-    if (parts.length === 0) return null
-    return parts.join(" ")
-  }
-
-  private async buildSapisidHashToken(
-    value: string,
-    origin: string,
-    timestamp: number,
-  ): Promise<string | null> {
-    try {
-      const source = `${timestamp} ${value} ${origin}`
-      const hashBuffer = await crypto.subtle.digest("SHA-1", new TextEncoder().encode(source))
-      const hash = Array.from(new Uint8Array(hashBuffer))
-        .map((byte) => byte.toString(16).padStart(2, "0"))
-        .join("")
-      return `${timestamp}_${hash}`
-    } catch {
-      return null
-    }
-  }
-
-  private resolveGoogleApiKey(): string | null {
-    if (this.cachedApiKey && this.isValidGoogleApiKey(this.cachedApiKey)) {
-      return this.cachedApiKey
-    }
-
-    const fromWiz = (window as unknown as Record<string, unknown>).WIZ_global_data as
-      | Record<string, unknown>
+  /**
+   * 经 main world 桥代发 ResolveDriveResource（SAPISIDHASH 校验绑定 Origin，
+   * isolated world 的跨域 fetch 会被改写 Origin，见 aistudio-rpc-bridge.ts 头注释）。
+   * no-bridge：桥未安装；failed：桥返回非 2xx 或请求超时。
+   */
+  private requestRpcResolveDriveResource(
+    promptId: string,
+  ): Promise<
+    { kind: "ok"; payload: unknown } | { kind: "no-bridge" } | { kind: "failed"; status: number }
+  > {
+    // 油猴端没有 Plasmo 的 world:"MAIN" 机制，直接把桥装进页面 window
+    const unsafeWin = (window as unknown as Record<string, unknown>).unsafeWindow as
+      | AIStudioRpcBridgeWindow
       | undefined
-    const wizKey = fromWiz?.SNlM0e
-    if (this.isValidGoogleApiKey(wizKey)) {
-      this.cachedApiKey = wizKey
-      return wizKey
+    if (unsafeWin && typeof unsafeWin === "object") {
+      installAIStudioRpcBridge(unsafeWin)
     }
 
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i)
-      if (!key) continue
-      const value = localStorage.getItem(key)
-      if (!value) continue
-      const match = value.match(/AIza[0-9A-Za-z_-]{20,}/)
-      if (match) {
-        this.cachedApiKey = match[0]
-        return match[0]
+    if (!document.documentElement?.hasAttribute?.(AISTUDIO_RPC_BRIDGE_ATTR)) {
+      return Promise.resolve({ kind: "no-bridge" })
+    }
+
+    const requestId = `ophel-aistudio-rpc-${Date.now()}-${Math.random().toString(36).slice(2)}`
+
+    return new Promise((resolve) => {
+      let settled = false
+      let timeoutId = 0
+      const cleanup = () => {
+        window.clearTimeout(timeoutId)
+        window.removeEventListener("message", handleMessage)
+      }
+      const finish = (
+        result:
+          | { kind: "ok"; payload: unknown }
+          | { kind: "no-bridge" }
+          | { kind: "failed"; status: number },
+      ) => {
+        if (settled) return
+        settled = true
+        cleanup()
+        resolve(result)
+      }
+
+      const handleMessage = (event: MessageEvent) => {
+        if (event.source !== window) return
+        const data = event.data as {
+          type?: unknown
+          requestId?: unknown
+          ok?: unknown
+          status?: unknown
+          payload?: unknown
+        }
+        if (data?.type !== AISTUDIO_RPC_RESPONSE_EVENT || data.requestId !== requestId) return
+        if (data.ok === true) {
+          finish({ kind: "ok", payload: data.payload })
+        } else {
+          finish({ kind: "failed", status: typeof data.status === "number" ? data.status : 0 })
+        }
+      }
+
+      timeoutId = window.setTimeout(
+        () => finish({ kind: "failed", status: 0 }),
+        AISTUDIO_RPC_REQUEST_TIMEOUT_MS,
+      )
+      window.addEventListener("message", handleMessage)
+      window.postMessage(
+        {
+          type: AISTUDIO_RPC_REQUEST_EVENT,
+          requestId,
+          method: "ResolveDriveResource",
+          args: [promptId],
+        },
+        "*",
+      )
+    })
+  }
+
+  /**
+   * 滚动条条目（仅带文本提问）→ 接口提问序号（全部轮次空间）的映射。
+   * 两者都只收录带文本的提问：数量一致时按位置对齐（快路径）；
+   * 不一致时按归一化文本匹配（截断容忍），匹配不上的条目不做接口回填。
+   */
+  private mapScrollbarEntriesToApiQueries(
+    entries: AIStudioScrollbarQueryEntry[],
+    data: AIStudioHistoryOutlineData,
+  ): Map<string, number> {
+    const mapping = new Map<string, number>()
+
+    if (entries.length === data.userQueries.length) {
+      entries.forEach((entry, index) => {
+        const query = data.userQueries[index]
+        if (query) mapping.set(entry.turnId, query.queryIndex)
+      })
+      return mapping
+    }
+
+    const usedQueryIndexes = new Set<number>()
+    for (const entry of entries) {
+      const hit = data.userQueries.find(
+        (query) =>
+          !usedQueryIndexes.has(query.queryIndex) && this.isSameOutlineText(query.text, entry.text),
+      )
+      if (hit) {
+        usedQueryIndexes.add(hit.queryIndex)
+        mapping.set(entry.turnId, hit.queryIndex)
       }
     }
-
-    const scripts = Array.from(document.querySelectorAll("script"))
-    for (const script of scripts) {
-      const text = script.textContent
-      if (!text) continue
-      const match = text.match(/AIza[0-9A-Za-z_-]{20,}/)
-      if (match) {
-        this.cachedApiKey = match[0]
-        return match[0]
-      }
-    }
-
-    return null
-  }
-
-  private isValidGoogleApiKey(value: unknown): value is string {
-    return typeof value === "string" && /^AIza[0-9A-Za-z_-]{20,}$/.test(value)
-  }
-
-  private resolveGoogAuthUser(): string {
-    const fromQuery = new URLSearchParams(window.location.search).get("authuser")
-    if (fromQuery && /^\d+$/.test(fromQuery)) {
-      return fromQuery
-    }
-    return "0"
-  }
-
-  private getCookieValue(name: string): string | null {
-    const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-    const match = document.cookie.match(new RegExp(`(?:^|; )${escaped}=([^;]*)`))
-    if (!match) return null
-    try {
-      return decodeURIComponent(match[1])
-    } catch {
-      return match[1]
-    }
+    return mapping
   }
 
   private syncConversationListAfterDelete(id: string): void {
@@ -2225,6 +2337,10 @@ export class AIStudioAdapter extends SiteAdapter {
     const outline: OutlineItem[] = []
     const privateSelectors = this.config.sitePrivateSelectors
 
+    // 虚拟滚动会话的接口回填数据源：异步拉取 ResolveDriveResource，
+    // 补齐离屏轮次的回答标题（数据就绪后通过 EVENT_OUTLINE_DATA_UPDATED 触发刷新）
+    this.maybeRefreshApiOutline()
+
     // AI Studio 整个 main 区域都可能是滚动容器，或者 .chat-container
     const container =
       document.querySelector(privateSelectors.outlineContainer) || document.querySelector("main")
@@ -2438,6 +2554,8 @@ export class AIStudioAdapter extends SiteAdapter {
       })
 
       const headingElements = Array.from(container.querySelectorAll(headingSelectors.join(", ")))
+      // 已挂载轮次（有 DOM 标题）的滚动条序号集合：接口回填跳过这些轮次，避免重复
+      const domHeadingOrderBases = new Set<number>()
       headingElements.forEach((heading, headingIndex) => {
         if (heading.closest(privateSelectors.userPromptContainer) || heading.closest("textarea"))
           return
@@ -2488,11 +2606,43 @@ export class AIStudioAdapter extends SiteAdapter {
         const orderBase =
           previousUserOrder !== undefined ? previousUserOrder : estimateUserOrderForHeading(heading)
 
+        if (previousUserOrder !== undefined) {
+          domHeadingOrderBases.add(previousUserOrder)
+        }
+
         sortedEntries.push({
           item,
           order: orderBase * 100000 + 50000 + headingIndex,
         })
       })
+
+      // 接口回填：为未挂载（无 DOM 标题）的提问轮补回答标题
+      const apiData = this.apiOutlineData
+      if (apiData && apiData.sessionId === this.getSessionId()) {
+        const apiQueryByTurnId = this.mapScrollbarEntriesToApiQueries(scrollbarEntries, apiData)
+        scrollbarEntries.forEach((entry) => {
+          if (domHeadingOrderBases.has(entry.index)) return
+          const queryIndex = apiQueryByTurnId.get(entry.turnId)
+          if (queryIndex === undefined) return
+          const apiHeadings = apiData.headingsByQueryIndex.get(queryIndex)
+          if (!apiHeadings) return
+          apiHeadings.forEach((apiHeading, headingOrder) => {
+            // 与 DOM 条目同一截断规则：文本截 200，isTruncated 阈值 80
+            sortedEntries.push({
+              item: {
+                level: apiHeading.level,
+                text:
+                  apiHeading.text.length > 200 ? apiHeading.text.slice(0, 200) : apiHeading.text,
+                element: null,
+                isTruncated: apiHeading.text.length > 80,
+                id: `aistudio-api:q${queryIndex}:h${headingOrder}`,
+                ...(showWordCount ? { wordCount: apiHeading.wordCount } : {}),
+              },
+              order: entry.index * 100000 + 50000 + headingOrder,
+            })
+          })
+        })
+      }
 
       return sortedEntries.sort((left, right) => left.order - right.order).map(({ item }) => item)
     }
@@ -2592,12 +2742,271 @@ export class AIStudioAdapter extends SiteAdapter {
       }
     }
 
+    // API 回填标题（无 DOM 元素）：先经时间线滚动条把所属轮次挂载出来，
+    // 再在已挂载区域内按文本定位标题；找不到标题时落到该轮提问
+    const apiHeadingTarget = await this.resolveApiOutlineHeadingTarget(item)
+    if (apiHeadingTarget) {
+      return apiHeadingTarget
+    }
+
     const directTarget = await super.resolveOutlineTarget(item, queryIndex)
     if (directTarget) {
       return directTarget
     }
 
     return null
+  }
+
+  private parseApiOutlineItemId(id?: string): { queryIndex: number; order: number } | null {
+    const match = id?.match(/^aistudio-api:q(\d+):h(\d+)$/)
+    if (!match) return null
+    return { queryIndex: Number(match[1]), order: Number(match[2]) }
+  }
+
+  private async resolveApiOutlineHeadingTarget(
+    item: Pick<OutlineItem, "text"> & { id?: string },
+  ): Promise<Element | null> {
+    const ref = this.parseApiOutlineItemId(item.id)
+    const data = this.apiOutlineData
+    if (!ref || !data || data.sessionId !== this.getSessionId()) return null
+
+    const heading = data.headingsByQueryIndex.get(ref.queryIndex)?.[ref.order]
+    if (!heading) return null
+
+    const entries = this.getScrollbarQueryEntries()
+    const apiQueryByTurnId = this.mapScrollbarEntriesToApiQueries(entries, data)
+    const entry = entries.find(
+      (candidate) => apiQueryByTurnId.get(candidate.turnId) === ref.queryIndex,
+    )
+    if (!entry) return null
+
+    if (!this.findUserQueryElementByTurnId(entry.turnId)) {
+      this.revealUserQueryThroughScrollbar(entry.turnId)
+    }
+    const userElement = await this.waitForUserQueryElementByTurnId(entry.turnId, entry.text)
+    if (!userElement) return null
+
+    return this.findMountedHeadingAfterUserQuery(userElement, heading.text) || userElement
+  }
+
+  /** 在提问所属轮次之后（下一个提问之前）的已挂载区域内按文本找标题 */
+  private findMountedHeadingAfterUserQuery(
+    userElement: Element,
+    headingText: string,
+  ): Element | null {
+    const privateSelectors = this.config.sitePrivateSelectors
+    const turn = userElement.closest(privateSelectors.turn)
+    if (!turn) return null
+
+    const normalizedTarget = this.normalizeScrollbarQueryText(headingText)
+    let current = turn.nextElementSibling
+    while (current) {
+      if (current.querySelector(this.config.selectors.userQuery)) break
+      const headings = current.matches("h1, h2, h3, h4, h5, h6")
+        ? [current]
+        : Array.from(current.querySelectorAll("h1, h2, h3, h4, h5, h6"))
+      for (const candidate of headings) {
+        if (
+          candidate.closest(privateSelectors.userPromptContainer) ||
+          candidate.closest("textarea")
+        )
+          continue
+        if (this.isInRenderedMarkdownContainer(candidate)) continue
+        const candidateText = this.normalizeScrollbarQueryText(candidate.textContent?.trim() || "")
+        if (
+          candidateText &&
+          (candidateText === normalizedTarget ||
+            candidateText.startsWith(normalizedTarget) ||
+            normalizedTarget.startsWith(candidateText))
+        ) {
+          return candidate
+        }
+      }
+      current = current.nextElementSibling
+    }
+    return null
+  }
+
+  // ==================== 虚拟滚动会话（阅读历史锚点） ====================
+
+  /**
+   * 当前会话是否为虚拟滚动渲染：时间线滚动条列出全部提问，
+   * 存在未挂载的提问条目即说明会话被虚拟化。
+   */
+  override isVirtualScrollConversation(): boolean {
+    const entries = this.getScrollbarQueryEntries()
+    if (entries.length < 2) return false
+    return entries.some((entry) => !entry.element)
+  }
+
+  override getVirtualAnchorElement(): AnchorData | null {
+    if (!this.isVirtualScrollConversation()) return null
+    const container = this.getScrollContainer()
+    if (!container) return null
+
+    const mountedEntries = this.getScrollbarQueryEntries().filter(
+      (entry): entry is AIStudioScrollbarQueryEntry & { element: Element } =>
+        Boolean(entry.element),
+    )
+    if (mountedEntries.length === 0) return null
+
+    const containerRect = container.getBoundingClientRect()
+    const viewportLine = containerRect.top + 100
+    let best: (AIStudioScrollbarQueryEntry & { element: Element }) | null = null
+    let bestTop = -Infinity
+    for (const entry of mountedEntries) {
+      const turn = entry.element.closest(this.config.sitePrivateSelectors.turn)
+      if (!turn) continue
+      const top = turn.getBoundingClientRect().top
+      if (top <= viewportLine && top > bestTop) {
+        best = entry
+        bestTop = top
+      }
+    }
+    if (!best) best = mountedEntries[0]
+
+    const bestTurn = best.element.closest(this.config.sitePrivateSelectors.turn)
+    if (!bestTurn) return null
+    const rowTop = bestTurn.getBoundingClientRect().top - containerRect.top + container.scrollTop
+    return {
+      type: "virtual-row",
+      rowKey: best.index,
+      offset: container.scrollTop - rowTop,
+      textSignature: best.text.substring(0, 50),
+    }
+  }
+
+  /**
+   * 按滚动条序号把目标提问挂载出来并对齐保存时的行内偏移。
+   * 滚动条按钮点击由站点自己完成虚拟列表跳转，无需探测滚动。
+   */
+  override async restoreVirtualAnchor(anchor: AnchorData, signal?: AbortSignal): Promise<boolean> {
+    if (anchor.type !== "virtual-row" || typeof anchor.rowKey !== "number") return false
+
+    // 冷加载时滚动条出现晚于会话 id 就绪，有界等待；期间用户交互经 signal 中止
+    const deadline = Date.now() + 10000
+    let entries = this.getScrollbarQueryEntries()
+    while (entries.length === 0) {
+      if (signal?.aborted) return false
+      if (Date.now() >= deadline) {
+        console.warn("[Ophel] Reading history restore skipped: AI Studio scrollbar not ready")
+        return false
+      }
+      await this.sleep(100)
+      entries = this.getScrollbarQueryEntries()
+    }
+
+    const entry = entries[anchor.rowKey]
+    if (!entry) {
+      console.warn(
+        "[Ophel] Reading history restore skipped: AI Studio query not found",
+        anchor.rowKey,
+      )
+      return false
+    }
+    if (anchor.textSignature && !this.isSameOutlineText(entry.text, anchor.textSignature)) {
+      console.warn("[Ophel] Reading history restore skipped: AI Studio query text changed")
+      return false
+    }
+
+    this.revealUserQueryThroughScrollbar(entry.turnId)
+    const element = await this.waitForUserQueryElementByTurnId(entry.turnId, entry.text)
+    if (signal?.aborted) return false
+    if (!element) return false
+
+    const container = this.getScrollContainer()
+    const turn = element.closest(this.config.sitePrivateSelectors.turn)
+    if (!container || !turn) return true
+
+    const turnTop =
+      turn.getBoundingClientRect().top - container.getBoundingClientRect().top + container.scrollTop
+    container.scrollTop = turnTop + (anchor.offset || 0)
+    return true
+  }
+
+  /**
+   * 滚动到顶/底后等虚拟列表把边缘轮次挂出来。边缘以时间线滚动条的首/末条目
+   * 是否挂载为准（滚动条始终列出全部提问）；非虚拟会话滚动即到位，不空等。
+   */
+  override async waitForVirtualListEdge(
+    edge: "start" | "end",
+    signal?: AbortSignal,
+  ): Promise<boolean> {
+    if (!this.isVirtualScrollConversation()) return true
+    return settleVirtualScroll(
+      () => this.getScrollContainer(),
+      () => {
+        const entries = this.getScrollbarQueryEntries()
+        if (entries.length === 0) return false
+        const edgeEntry = edge === "start" ? entries[0] : entries[entries.length - 1]
+        return Boolean(edgeEntry.element?.isConnected)
+      },
+      (container) => alignScrollTop(container, edge === "start" ? 0 : container.scrollHeight),
+      signal,
+    )
+  }
+
+  /**
+   * 高亮估算快照：已挂载提问轮的内容坐标 + 完整轮数边界。
+   * 序号空间为时间线滚动条条目序号（与 getVirtualOutlineRowIndex 同一坐标系）。
+   */
+  override getVirtualOutlinePositionSnapshot(): VirtualOutlinePositionSnapshot | null {
+    if (!this.isVirtualScrollConversation()) return null
+    const container = this.getScrollContainer()
+    if (!container) return null
+    const entries = this.getScrollbarQueryEntries()
+    if (entries.length === 0) return null
+
+    const containerRect = container.getBoundingClientRect()
+    const anchors: VirtualPositionAnchor[] = []
+    for (const entry of entries) {
+      if (!entry.element?.isConnected) continue
+      const turn = (entry.element.closest(this.config.sitePrivateSelectors.turn) ||
+        entry.element) as HTMLElement
+      const rect = turn.getBoundingClientRect()
+      const top = rect.top - containerRect.top + container.scrollTop
+      anchors.push({ index: entry.index, top })
+      anchors.push({ index: entry.index + 1, top: top + rect.height })
+    }
+    if (anchors.length === 0) return null
+
+    return {
+      anchors,
+      bounds: {
+        endSlot: entries.length,
+        endTop: Math.max(0, container.scrollHeight - container.clientHeight),
+      },
+    }
+  }
+
+  /**
+   * 大纲条目归属的滚动条序号：接口回填条目按 id 解析提问序号再映射回滚动条；
+   * 用户提问条目按 id 里的 turnId；DOM 标题条目取所属轮次的提问。
+   */
+  override getVirtualOutlineRowIndex(item: OutlineItem): number | null {
+    const entries = this.getScrollbarQueryEntries()
+    if (entries.length === 0) return null
+    const indexByTurnId = new Map(entries.map((entry) => [entry.turnId, entry.index]))
+
+    const ref = item.navigationId || item.id
+    const apiRef = this.parseApiOutlineItemId(ref)
+    if (apiRef) {
+      const data = this.apiOutlineData
+      if (!data || data.sessionId !== this.getSessionId()) return null
+      const apiQueryByTurnId = this.mapScrollbarEntriesToApiQueries(entries, data)
+      const entry = entries.find(
+        (candidate) => apiQueryByTurnId.get(candidate.turnId) === apiRef.queryIndex,
+      )
+      return entry?.index ?? null
+    }
+
+    const userTurnId = ref?.match(/^aistudio-user:(.+)$/)?.[1]
+    if (userTurnId) return indexByTurnId.get(userTurnId) ?? null
+
+    if (!item.element) return null
+    const previousTurnId = this.findPreviousUserTurnIdForElement(item.element)
+    if (!previousTurnId) return null
+    return indexByTurnId.get(previousTurnId) ?? null
   }
 
   // ==================== 生成状态检测 ====================

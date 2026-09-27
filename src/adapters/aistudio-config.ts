@@ -110,7 +110,7 @@ export interface AIStudioSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const AISTUDIO_CONFIG_VERSION = 3
+export const AISTUDIO_CONFIG_VERSION = 4
 
 const createAIStudioConfig = (): AIStudioSiteConfig => {
   const turn = "ms-chat-turn"
@@ -135,7 +135,9 @@ const createAIStudioConfig = (): AIStudioSiteConfig => {
 
   return {
     capabilities: [...BUILTIN_FEATURE_CAPABILITIES[SITE_IDS.AISTUDIO]],
-    traits: { historyLazyLoad: false },
+    // virtualOutlineFill：长对话虚拟滚动，离屏轮次的回答标题由
+    // ResolveDriveResource 接口回填（见 docs/developer/aistudio-api-outline-plan.md）
+    traits: { historyLazyLoad: false, virtualOutlineFill: true },
     selectors: {
       textarea: [
         "textarea.textarea",
