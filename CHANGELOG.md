@@ -9,6 +9,19 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### 🚀 New Features
+
+- **Faster batch organizing** — In batch mode on the Chats tab, you can now Shift-click to select a range of conversations at once, and add or remove tags for all selected conversations in one go.
+
+### ✨ Improvements
+
+- **Smoother conversation list scrolling** — Conversations inside a folder no longer have their own separate scrollbar; long lists now scroll together with the panel, so inner and outer scrollbars no longer fight each other.
+- **Clearer filter state** — When pinned or tag filters are active, removable filter pills now appear below the search bar so you can see and clear them individually; the sync target folder selector has moved to the right side of the toolbar, no longer taking the most prominent spot.
+
+### 🐛 Bug Fixes
+
+- **Missing result count when filtering** — Fixed an issue where filtering chats by pinned status or tags without typing a keyword did not show the number of matching results.
+
 ---
 
 ## [1.2.10][1.2.10] - 2026-09-28

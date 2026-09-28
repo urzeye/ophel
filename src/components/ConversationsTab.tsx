@@ -15,6 +15,7 @@ import { getCurrentLang, t } from "~utils/i18n"
 import { showToast } from "~utils/toast"
 
 import {
+  BatchTagDialog,
   ConfirmDialog,
   FolderDialog,
   FolderSelectDialog,
@@ -77,6 +78,7 @@ type DialogType =
       activeFolderId?: string
     }
   | { type: "tagManager"; conv?: Conversation }
+  | { type: "batchTag" }
   | null
 
 type MenuType =
@@ -423,6 +425,37 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
     return folderConversationsMap.get(folderId) || []
   }
 
+  // Shift + 点击范围选择的锚点（最近一次普通点击的对话）
+  const lastClickedConvIdRef = useRef<string | null>(null)
+
+  // 批量选择：支持 Shift 范围连选（锚点与目标须在同一个文件夹的当前列表内）
+  const handleBatchSelect = useCallback(
+    (conv: Conversation, shiftKey: boolean) => {
+      const anchorId = lastClickedConvIdRef.current
+      if (shiftKey && anchorId && anchorId !== conv.id) {
+        const list = folderConversationsMap.get(conv.folderId) || []
+        const anchorIndex = list.findIndex((c) => c.id === anchorId)
+        const targetIndex = list.findIndex((c) => c.id === conv.id)
+        if (anchorIndex >= 0 && targetIndex >= 0) {
+          const [start, end] =
+            anchorIndex < targetIndex ? [anchorIndex, targetIndex] : [targetIndex, anchorIndex]
+          const rangeIds = list.slice(start, end + 1).map((c) => c.id)
+          setSelectedIds((prev) => new Set([...prev, ...rangeIds]))
+          return
+        }
+      }
+
+      lastClickedConvIdRef.current = conv.id
+      setSelectedIds((prev) => {
+        const next = new Set(prev)
+        if (next.has(conv.id)) next.delete(conv.id)
+        else next.add(conv.id)
+        return next
+      })
+    },
+    [folderConversationsMap],
+  )
+
   // 获取文件夹计数
   const getFolderCount = (folderId: string): number => {
     return getConversationsInFolder(folderId).length
@@ -545,12 +578,14 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
   const toggleBatchMode = () => {
     if (batchMode) {
       setSelectedIds(new Set())
+      lastClickedConvIdRef.current = null
     }
     setBatchMode(!batchMode)
   }
 
   const clearSelection = () => {
     setSelectedIds(new Set())
+    lastClickedConvIdRef.current = null
     setBatchMode(false)
   }
 
@@ -631,21 +666,16 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
 
   // 点击对话
   const handleConversationClick = useCallback(
-    (conv: Conversation) => {
+    (conv: Conversation, shiftKey = false) => {
       if (batchMode) {
-        setSelectedIds((prev) => {
-          const next = new Set(prev)
-          if (next.has(conv.id)) next.delete(conv.id)
-          else next.add(conv.id)
-          return next
-        })
+        handleBatchSelect(conv, shiftKey)
         return
       }
 
       // 使用适配器的 navigateToConversation 方法（SPA 导航）
       manager.siteAdapter?.navigateToConversation(conv.id, conv.url)
     },
-    [batchMode, manager],
+    [batchMode, handleBatchSelect, manager],
   )
 
   const handleOpenConversationInNewTab = useCallback((conv: Conversation) => {
@@ -746,8 +776,59 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
         )}
         {/* 工具栏 */}
         <div className="conversations-toolbar gh-panel-toolbar">
-          {/* 1. 同步目标选择 */}
-          <Tooltip content={t("conversationsSelectFolder")} triggerStyle={{ flex: 1, minWidth: 0 }}>
+          {/* 1. 同步按钮 */}
+          <Tooltip content={t("conversationsSync")}>
+            <button
+              type="button"
+              className="conversations-toolbar-btn gh-panel-icon-btn sync"
+              disabled={syncing || isConversationUnsupported}
+              aria-label={t("conversationsSync")}
+              onClick={handleSync}>
+              {syncing ? <HourglassIcon size={18} /> : <SyncIcon size={18} />}
+            </button>
+          </Tooltip>
+
+          {/* 2. 定位按钮 */}
+          <Tooltip content={t("conversationsLocate")}>
+            <button
+              type="button"
+              className="conversations-toolbar-btn gh-panel-icon-btn locate"
+              aria-label={t("conversationsLocate")}
+              onClick={handleLocate}>
+              <LocateIcon size={18} />
+            </button>
+          </Tooltip>
+
+          {/* 3. 批量模式 */}
+          <Tooltip content={t("conversationsBatchMode")}>
+            <button
+              type="button"
+              className={`conversations-toolbar-btn gh-panel-icon-btn batch-mode ${batchMode ? "active" : ""}`}
+              aria-label={t("conversationsBatchMode")}
+              aria-pressed={batchMode}
+              onClick={toggleBatchMode}>
+              <BatchIcon size={18} />
+            </button>
+          </Tooltip>
+
+          {/* 4. 新建文件夹 */}
+          <Tooltip content={t("conversationsAddFolder")}>
+            <button
+              type="button"
+              className="conversations-toolbar-btn gh-panel-icon-btn add-folder"
+              aria-label={t("conversationsAddFolder")}
+              onClick={() => {
+                onInteractionStateChange?.(true)
+                setDialog({ type: "folder" })
+              }}>
+              <FolderPlusIcon size={18} />
+            </button>
+          </Tooltip>
+
+          {/* 5. 同步目标文件夹（辅助配置，靠右弱化展示） */}
+          <Tooltip
+            content={t("conversationsSelectFolder")}
+            triggerStyle={{ marginLeft: "auto", flex: "0 1 auto", minWidth: 0, maxWidth: "150px" }}>
             <SelectDropdown
               className="conversations-folder-select-dropdown"
               buttonClassName="conversations-folder-select"
@@ -762,55 +843,6 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                 manager.setLastUsedFolder(selectedFolderId)
               }}
             />
-          </Tooltip>
-
-          {/* 2. 同步按钮 */}
-          <Tooltip content={t("conversationsSync")}>
-            <button
-              type="button"
-              className="conversations-toolbar-btn gh-panel-icon-btn sync"
-              disabled={syncing || isConversationUnsupported}
-              aria-label={t("conversationsSync")}
-              onClick={handleSync}>
-              {syncing ? <HourglassIcon size={18} /> : <SyncIcon size={18} />}
-            </button>
-          </Tooltip>
-
-          {/* 3. 定位按钮 */}
-          <Tooltip content={t("conversationsLocate")}>
-            <button
-              type="button"
-              className="conversations-toolbar-btn gh-panel-icon-btn locate"
-              aria-label={t("conversationsLocate")}
-              onClick={handleLocate}>
-              <LocateIcon size={18} />
-            </button>
-          </Tooltip>
-
-          {/* 4. 批量模式 */}
-          <Tooltip content={t("conversationsBatchMode")}>
-            <button
-              type="button"
-              className={`conversations-toolbar-btn gh-panel-icon-btn batch-mode ${batchMode ? "active" : ""}`}
-              aria-label={t("conversationsBatchMode")}
-              aria-pressed={batchMode}
-              onClick={toggleBatchMode}>
-              <BatchIcon size={18} />
-            </button>
-          </Tooltip>
-
-          {/* 5. 新建文件夹 */}
-          <Tooltip content={t("conversationsAddFolder")}>
-            <button
-              type="button"
-              className="conversations-toolbar-btn gh-panel-icon-btn add-folder"
-              aria-label={t("conversationsAddFolder")}
-              onClick={() => {
-                onInteractionStateChange?.(true)
-                setDialog({ type: "folder" })
-              }}>
-              <FolderPlusIcon size={18} />
-            </button>
           </Tooltip>
         </div>
 
@@ -922,9 +954,49 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
           </div>
 
           {/* 搜索结果计数 */}
-          {searchQuery && searchResult && (
+          {searchResult && (
             <div className="conversations-result-bar visible">
               {searchResult.totalCount} {t("conversationsSearchResult")}
+            </div>
+          )}
+
+          {/* 活动筛选胶囊：置顶 / 标签筛选可单独移除 */}
+          {(filterPinned || filterTagIds.size > 0) && (
+            <div className="conversations-filter-chips">
+              {filterPinned && (
+                <button
+                  type="button"
+                  className="conversations-filter-chip"
+                  aria-label={`${t("conversationsPinned")} - ${t("conversationsClearAll")}`}
+                  onClick={() => setFilterPinned(false)}>
+                  <PinIcon size={11} />
+                  <span>{t("conversationsPinned")}</span>
+                  <ClearIcon size={10} />
+                </button>
+              )}
+              {Array.from(filterTagIds).map((tagId) => {
+                const tag = tagMap.get(tagId)
+                if (!tag) return null
+                return (
+                  <button
+                    key={tag.id}
+                    type="button"
+                    className="conversations-filter-chip"
+                    aria-label={`${tag.name} - ${t("conversationsClearAll")}`}
+                    onClick={() => {
+                      const next = new Set(filterTagIds)
+                      next.delete(tag.id)
+                      setFilterTagIds(next)
+                    }}>
+                    <span
+                      className="conversations-tag-dot"
+                      style={{ backgroundColor: tag.color }}
+                    />
+                    <span>{tag.name}</span>
+                    <ClearIcon size={10} />
+                  </button>
+                )
+              })}
             </div>
           )}
         </div>
@@ -1174,7 +1246,6 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                                 tagMap={tagMap}
                                 draggedConvId={draggedConvId}
                                 onConversationClick={handleConversationClick}
-                                onSelectionChange={setSelectedIds}
                                 onInteractionStateChange={onInteractionStateChange}
                                 onMenuChange={setMenu}
                                 onDragStart={(convId: string) => {
@@ -1257,6 +1328,17 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                     setDialog({ type: "folderSelect", convIds: Array.from(selectedIds) })
                   }}>
                   <FolderMoveIcon size={16} />
+                </button>
+              </Tooltip>
+              <Tooltip content={t("batchTag")}>
+                <button
+                  className="conversations-batch-btn"
+                  style={{ padding: "4px 6px", minWidth: "auto", marginLeft: "4px" }}
+                  onClick={() => {
+                    onInteractionStateChange?.(true)
+                    setDialog({ type: "batchTag" })
+                  }}>
+                  <TagIcon size={16} />
                 </button>
               </Tooltip>
               <Tooltip content={t("batchDelete")}>
@@ -1402,6 +1484,29 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
           onRefresh={() => loadData()}
         />
       )}
+      {dialog?.type === "batchTag" && (
+        <BatchTagDialog
+          tags={tags}
+          selectedCount={selectedIds.size}
+          onCancel={() => setDialog(null)}
+          onApply={async (tagIds, mode) => {
+            const ids = Array.from(selectedIds)
+            for (const convId of ids) {
+              const conv = conversations[convId]
+              if (!conv) continue
+              const current = conv.tagIds || []
+              const next =
+                mode === "add"
+                  ? Array.from(new Set([...current, ...tagIds]))
+                  : current.filter((tagId) => !tagIds.includes(tagId))
+              await manager.setConversationTags(convId, next)
+            }
+            showToast(t("conversationsTagUpdated"))
+            setDialog(null)
+            loadData()
+          }}
+        />
+      )}
 
       {/* 菜单渲染 */}
       {menu?.type === "folder" && (
@@ -1512,8 +1617,7 @@ interface ConversationItemProps {
   searchResult: SearchResult | null
   tagMap: Map<string, Tag>
   draggedConvId: string | null
-  onConversationClick: (conv: Conversation) => void
-  onSelectionChange: React.Dispatch<React.SetStateAction<Set<string>>>
+  onConversationClick: (conv: Conversation, shiftKey?: boolean) => void
   onInteractionStateChange?: (isActive: boolean) => void
   onMenuChange: React.Dispatch<React.SetStateAction<MenuType>>
   onDragStart: (convId: string) => void
@@ -1531,7 +1635,6 @@ const ConversationItem = React.memo<ConversationItemProps>(
     tagMap,
     draggedConvId,
     onConversationClick,
-    onSelectionChange,
     onInteractionStateChange,
     onMenuChange,
     onDragStart,
@@ -1555,7 +1658,7 @@ const ConversationItem = React.memo<ConversationItemProps>(
           e.dataTransfer.setData("text/plain", conv.id)
         }}
         onDragEnd={onDragEnd}
-        onClick={() => onConversationClick(conv)}
+        onClick={(e) => onConversationClick(conv, e.shiftKey)}
         onContextMenu={(e) => {
           e.preventDefault()
           e.stopPropagation()
@@ -1575,12 +1678,7 @@ const ConversationItem = React.memo<ConversationItemProps>(
             onChange={() => {}}
             onClick={(e) => {
               e.stopPropagation()
-              onSelectionChange((prev) => {
-                const next = new Set(prev)
-                if (next.has(conv.id)) next.delete(conv.id)
-                else next.add(conv.id)
-                return next
-              })
+              onConversationClick(conv, e.shiftKey)
             }}
           />
         )}

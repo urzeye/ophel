@@ -508,6 +508,47 @@ html[data-theme="dark"] .conversations-unsupported-icon {
   display: block;
 }
 
+/* 活动筛选胶囊（可单独移除） */
+.conversations-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.conversations-filter-chips:empty {
+  display: none;
+}
+
+.conversations-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--gh-border, #e5e7eb);
+  background: var(--gh-bg-secondary, #f9fafb);
+  color: var(--gh-text, #374151);
+  font-size: 11px;
+  line-height: 1.4;
+  font-family: inherit;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  max-width: 160px;
+}
+
+.conversations-filter-chip:hover {
+  border-color: var(--gh-primary, #4285f4);
+  color: var(--gh-primary, #4285f4);
+}
+
+.conversations-filter-chip span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* 标签样式 */
 .conversations-tag {
   display: inline-flex;
@@ -810,15 +851,7 @@ html[data-theme="dark"] .conversations-unsupported-icon {
   border-top: none;
   border-radius: 0 0 8px 8px;
   margin-top: -4px;
-  max-height: 300px;
-  overflow-y: auto;
   overflow-x: hidden;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.conversations-list::-webkit-scrollbar {
-  display: none;
 }
 
 .conversations-list-empty {

@@ -88,6 +88,38 @@ const DIALOG_STYLES = `
   .conversations-folder-select-highlight {
     animation: gh-highlight-fade 2s ease-out;
   }
+  .conversations-batch-tag-list {
+    max-height: 240px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 12px;
+  }
+  .conversations-batch-tag-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--gh-text, #1f2937);
+  }
+  .conversations-batch-tag-item:hover {
+    background: var(--gh-hover, #f3f4f6);
+  }
+  .conversations-batch-tag-item .conversations-batch-tag-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .conversations-batch-tag-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    flex-shrink: 0;
+  }
 `
 
 // 样式注入状态
@@ -197,6 +229,85 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         </Button>
         <Button variant={danger ? "danger" : "primary"} onClick={onConfirm}>
           {confirmText || t("confirm")}
+        </Button>
+      </div>
+    </DialogOverlay>
+  )
+}
+
+// ==================== 批量标签对话框 ====================
+
+interface BatchTagDialogProps {
+  tags: Tag[]
+  selectedCount: number
+  onApply: (tagIds: string[], mode: "add" | "remove") => void
+  onCancel: () => void
+}
+
+/**
+ * 批量打标签 / 批量移除标签
+ * 勾选标签后选择“添加”或“移除”，一次作用于所有选中的对话
+ */
+export const BatchTagDialog: React.FC<BatchTagDialogProps> = ({
+  tags,
+  selectedCount,
+  onApply,
+  onCancel,
+}) => {
+  const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set())
+
+  const toggleTag = (tagId: string) => {
+    setCheckedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(tagId)) next.delete(tagId)
+      else next.add(tagId)
+      return next
+    })
+  }
+
+  const apply = (mode: "add" | "remove") => {
+    if (checkedIds.size === 0) return
+    onApply(Array.from(checkedIds), mode)
+  }
+
+  return (
+    <DialogOverlay onClose={onCancel}>
+      <div className="conversations-dialog-title">{t("batchTagDialogTitle")}</div>
+      <div className="conversations-dialog-message">
+        {t("batchSelected").replace("{n}", String(selectedCount))}
+      </div>
+      {tags.length === 0 ? (
+        <div className="conversations-dialog-message">{t("conversationsNoTags")}</div>
+      ) : (
+        <div className="conversations-batch-tag-list">
+          {tags.map((tag) => (
+            <label key={tag.id} className="conversations-batch-tag-item">
+              <input
+                type="checkbox"
+                checked={checkedIds.has(tag.id)}
+                onChange={() => toggleTag(tag.id)}
+              />
+              <span
+                className="conversations-batch-tag-dot"
+                style={{ backgroundColor: tag.color }}
+              />
+              <span className="conversations-batch-tag-name">{tag.name}</span>
+            </label>
+          ))}
+        </div>
+      )}
+      <div className="conversations-dialog-buttons">
+        <Button variant="secondary" onClick={onCancel}>
+          {t("cancel")}
+        </Button>
+        <Button
+          variant="secondary"
+          disabled={checkedIds.size === 0}
+          onClick={() => apply("remove")}>
+          {t("batchTagRemove")}
+        </Button>
+        <Button variant="primary" disabled={checkedIds.size === 0} onClick={() => apply("add")}>
+          {t("batchTagAdd")}
         </Button>
       </div>
     </DialogOverlay>
