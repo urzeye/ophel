@@ -378,8 +378,12 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     // 液态折叠态必然包含 panel logo（且 isLiquidCollapsed 隐含 !isPanelExpanded），不隐藏
     if (isLiquidCollapsed) return false
 
-    // 用户明确开启"面板展开时隐藏快捷按钮组"设置
-    if ((quickButtonsSettings.hideWhenPanelOpen ?? false) && isPanelExpanded) return true
+    // 用户开启"面板展开时隐藏快捷按钮组"设置（默认开启）
+    if (
+      (quickButtonsSettings.hideWhenPanelOpen ?? DEFAULT_SETTINGS.quickButtons.hideWhenPanelOpen) &&
+      isPanelExpanded
+    )
+      return true
 
     // 兜底：当所有按钮均不可见时，自动隐藏空容器
     const isFloatingOpen =

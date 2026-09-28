@@ -771,12 +771,18 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
               label={t("quickButtonsHideWhenPanelOpenLabel")}
               description={t("quickButtonsHideWhenPanelOpenDesc")}
               settingId="quick-buttons-hide-when-panel-open"
-              checked={settings.quickButtons?.hideWhenPanelOpen ?? false}
+              checked={
+                settings.quickButtons?.hideWhenPanelOpen ??
+                DEFAULT_SETTINGS.quickButtons.hideWhenPanelOpen
+              }
               onChange={() =>
                 updateNestedSetting(
                   "quickButtons",
                   "hideWhenPanelOpen",
-                  !(settings.quickButtons?.hideWhenPanelOpen ?? false),
+                  !(
+                    settings.quickButtons?.hideWhenPanelOpen ??
+                    DEFAULT_SETTINGS.quickButtons.hideWhenPanelOpen
+                  ),
                 )
               }
             />

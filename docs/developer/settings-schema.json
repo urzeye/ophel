@@ -289,7 +289,7 @@
     "floatingToolbar": {
       "open": true
     },
-    "hideWhenPanelOpen": false,
+    "hideWhenPanelOpen": true,
     "proximityRadius": 150
   },
 

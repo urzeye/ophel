@@ -73,7 +73,7 @@ export const DEFAULT_QUICK_BUTTONS_SETTINGS: QuickButtonsSettings = {
   floatingToolbar: {
     open: true,
   },
-  hideWhenPanelOpen: false,
+  hideWhenPanelOpen: true,
   proximityRadius: 150,
 }
 
