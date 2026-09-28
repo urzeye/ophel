@@ -3214,7 +3214,12 @@ export class GrokAdapter extends SiteAdapter {
   override getVirtualAnchorElement(): AnchorData | null {
     if (!this.isVirtualScrollConversation()) return null
     const data = this.apiOutlineData
-    if (!data || data.sessionId !== this.getSessionId()) return null
+    if (!data || data.sessionId !== this.getSessionId()) {
+      // 接口数据只在大纲面板激活时随 extractOutline 加载；用户未开面板时
+      // 这里补一次触发（内部有冷却/单飞闸门），让后续保存能拿到分支位置
+      this.maybeRefreshApiOutline()
+      return null
+    }
     const container = this.getScrollContainer()
     if (!container) return null
 
