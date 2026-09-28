@@ -27,6 +27,7 @@ vi.mock("~utils/i18n", () => ({
 const TRIGGER_SELECTOR = 'button[data-sidebar="trigger"]'
 const CONTENT_SELECTOR = '[data-sidebar="content"]'
 const CONVERSATION_ITEM = 'a[href^="/c/"]'
+const COLLAPSED_ROOT_SELECTOR = '[data-collapsible][data-state="collapsed"]'
 
 interface SidebarState {
   expanded: boolean
@@ -34,10 +35,10 @@ interface SidebarState {
 
 /**
  * 最小假 document：模拟 Grok 侧边栏折叠（icon 模式）结构。
- * 折叠时 content 容器在 DOM 但不渲染对话条目；trigger.click() 模拟站点展开。
+ * 折叠时状态容器带 data-state="collapsed"，content 容器在 DOM 但不渲染
+ * 对话条目；trigger.click() 模拟站点展开。
  */
 const createSidebarDocument = (state: SidebarState, withTrigger = true) => {
-  const collapsedWrapper = {} as Element
   const sidebar = {
     querySelector: (selector: string) =>
       selector === CONVERSATION_ITEM && state.expanded ? ({} as Element) : null,
@@ -46,19 +47,22 @@ const createSidebarDocument = (state: SidebarState, withTrigger = true) => {
     click: vi.fn(() => {
       state.expanded = true
     }),
-    getAttribute: (name: string) =>
-      name === "data-state" ? (state.expanded ? "open" : "closed") : null,
-    closest: (selector: string) =>
-      selector === '[data-state="collapsed"]' && !state.expanded ? collapsedWrapper : null,
+  }
+  // shadcn 侧栏状态容器：折叠时 data-state="collapsed"，展开后整个容器不再命中
+  const collapsedRoot = {
+    querySelector: (selector: string) =>
+      selector === TRIGGER_SELECTOR && withTrigger ? trigger : null,
   }
   const doc = {
     querySelector: (selector: string) => {
-      if (selector === TRIGGER_SELECTOR) return withTrigger ? trigger : null
+      if (selector === COLLAPSED_ROOT_SELECTOR) {
+        return !state.expanded ? collapsedRoot : null
+      }
       if (selector === CONTENT_SELECTOR) return sidebar
       return null
     },
   }
-  return { trigger, doc: doc as unknown as Document }
+  return { trigger, collapsedRoot, doc: doc as unknown as Document }
 }
 
 afterEach(() => {

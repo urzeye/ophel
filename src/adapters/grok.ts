@@ -290,16 +290,16 @@ export class GrokAdapter extends SiteAdapter {
    * 侧边栏折叠时点击 trigger 展开，并有界等待对话列表挂载。
    * 折叠（icon 模式）下 content 容器仍在 DOM 但不渲染对话条目，
    * 不展开直接扫描会误判为"侧边栏无对话"。
+   * 折叠态以 shadcn 侧栏的状态容器为准（trigger 的 data-state 不可靠，
+   * 展开页也可能命中 closed 状态的同名按钮），且只点容器内的 trigger。
    */
   private async ensureSidebarExpanded(): Promise<void> {
-    const trigger = document.querySelector<HTMLElement>(
+    const collapsedRoot = document.querySelector('[data-collapsible][data-state="collapsed"]')
+    if (!collapsedRoot) return
+    const trigger = collapsedRoot.querySelector<HTMLElement>(
       this.config.sitePrivateSelectors.sidebarTrigger,
     )
     if (!trigger) return
-    const collapsed =
-      trigger.getAttribute("data-state") === "closed" ||
-      trigger.closest('[data-state="collapsed"]') !== null
-    if (!collapsed) return
 
     trigger.click()
 
