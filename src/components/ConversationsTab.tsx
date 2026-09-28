@@ -372,6 +372,13 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
     return map
   }, [tags])
 
+  // 标签被删除后清理失效的筛选 id，避免列表被不可见的筛选条件清空
+  useEffect(() => {
+    if (filterTagIds.size === 0) return
+    const valid = new Set([...filterTagIds].filter((id) => tagMap.has(id)))
+    if (valid.size !== filterTagIds.size) setFilterTagIds(valid)
+  }, [tagMap, filterTagIds])
+
   // 缓存每个文件夹的对话列表（过滤并排序），避免重复计算
   const folderConversationsMap = useMemo(() => {
     const sidebarOrder = manager.getSidebarConversationOrder()

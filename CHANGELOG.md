@@ -13,6 +13,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 - **Chats tab improvements** — Improved filter visibility and batch actions on the Chats tab.
 
+### 🐛 Bug Fixes
+
+- **Deleted tag still filtering** — Fixed an issue where deleting a tag that was active as a filter on the Chats tab left the list showing no results; the filter is now cleared together with the tag.
+
 ---
 
 ## [1.2.10][1.2.10] - 2026-09-28
