@@ -34,7 +34,6 @@ import {
   BatchIcon,
   ChevronDownIcon,
   ClearIcon,
-  CopyIcon,
   DeleteIcon,
   ExportIcon,
   FolderMoveIcon,
@@ -828,7 +827,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
           {/* 5. 同步目标文件夹（辅助配置，靠右弱化展示） */}
           <Tooltip
             content={t("conversationsSelectFolder")}
-            triggerStyle={{ marginLeft: "auto", flex: "0 1 auto", minWidth: 0, maxWidth: "150px" }}>
+            triggerStyle={{ marginLeft: "auto", flex: 1, minWidth: 0 }}>
             <SelectDropdown
               className="conversations-folder-select-dropdown"
               buttonClassName="conversations-folder-select"
@@ -1302,27 +1301,14 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
             <div className="conversations-batch-btns">
               {/* 导出只支持单条对话，仅在选中 1 个时展示 */}
               {selectedIds.size === 1 && (
-                <>
-                  <Tooltip content={t("exportToClipboard")}>
-                    <button
-                      className="conversations-batch-btn"
-                      style={{ padding: "4px 6px", minWidth: "auto", marginLeft: "4px" }}
-                      onClick={async () => {
-                        const convId = Array.from(selectedIds)[0]
-                        await manager.exportConversation(convId, "clipboard")
-                      }}>
-                      <CopyIcon size={16} />
-                    </button>
-                  </Tooltip>
-                  <Tooltip content={t("batchExport")}>
-                    <button
-                      className="conversations-batch-btn"
-                      style={{ padding: "4px 6px", minWidth: "auto", marginLeft: "4px" }}
-                      onClick={() => openExportDialog()}>
-                      <ExportIcon size={16} />
-                    </button>
-                  </Tooltip>
-                </>
+                <Tooltip content={t("batchExport")}>
+                  <button
+                    className="conversations-batch-btn"
+                    style={{ padding: "4px 6px", minWidth: "auto", marginLeft: "4px" }}
+                    onClick={() => openExportDialog()}>
+                    <ExportIcon size={16} />
+                  </button>
+                </Tooltip>
               )}
               <Tooltip content={t("batchMove")}>
                 <button

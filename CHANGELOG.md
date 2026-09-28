@@ -11,7 +11,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### ✨ Improvements
 
-- **Chats tab improvements** — Improved the Chats tab experience: smoother conversation list scrolling, clearer filter state, and more efficient batch actions.
+- **Chats tab improvements** — Improved filter visibility and batch actions on the Chats tab.
 
 ---
 

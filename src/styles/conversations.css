@@ -851,7 +851,15 @@ html[data-theme="dark"] .conversations-unsupported-icon {
   border-top: none;
   border-radius: 0 0 8px 8px;
   margin-top: -4px;
+  max-height: 300px;
+  overflow-y: auto;
   overflow-x: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.conversations-list::-webkit-scrollbar {
+  display: none;
 }
 
 .conversations-list-empty {
