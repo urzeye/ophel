@@ -2805,8 +2805,6 @@ export class AIStudioAdapter extends SiteAdapter {
       })
 
       const headingElements = Array.from(container.querySelectorAll(headingSelectors.join(", ")))
-      // 已挂载轮次（有 DOM 标题）的滚动条序号集合：接口回填跳过这些轮次，避免重复
-      const domHeadingOrderBases = new Set<number>()
       headingElements.forEach((heading, headingIndex) => {
         if (heading.closest(privateSelectors.userPromptContainer) || heading.closest("textarea"))
           return
@@ -2857,10 +2855,6 @@ export class AIStudioAdapter extends SiteAdapter {
         const orderBase =
           previousUserOrder !== undefined ? previousUserOrder : estimateUserOrderForHeading(heading)
 
-        if (previousUserOrder !== undefined) {
-          domHeadingOrderBases.add(previousUserOrder)
-        }
-
         sortedEntries.push({
           item,
           order: orderBase * 100000 + 50000 + headingIndex,
@@ -2870,6 +2864,13 @@ export class AIStudioAdapter extends SiteAdapter {
       // 接口回填：为未挂载（无 DOM 标题）的提问轮补回答标题
       const apiData = this.apiOutlineData
       if (apiData && apiData.sessionId === this.getSessionId()) {
+        // 已挂载轮次按 DOM 标题条目实际占用的序号带去重（含归属失败后的估算落位；
+        // 用户提问条目在同一带内的偏移小于 50000，需排除），接口回填跳过这些轮次
+        const domHeadingOrderBases = new Set(
+          sortedEntries
+            .filter((entry) => entry.order % 100000 >= 50000)
+            .map((entry) => Math.floor(entry.order / 100000)),
+        )
         const apiQueryByTurnId = this.mapScrollbarEntriesToApiQueries(scrollbarEntries, apiData)
         scrollbarEntries.forEach((entry) => {
           if (domHeadingOrderBases.has(entry.index)) return
