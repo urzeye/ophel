@@ -1300,25 +1300,30 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
               {t("batchSelected").replace("{n}", String(selectedIds.size))}
             </span>
             <div className="conversations-batch-btns">
-              <Tooltip content={t("exportToClipboard")}>
-                <button
-                  className="conversations-batch-btn"
-                  style={{ padding: "4px 6px", minWidth: "auto", marginLeft: "4px" }}
-                  onClick={async () => {
-                    const convId = Array.from(selectedIds)[0]
-                    await manager.exportConversation(convId, "clipboard")
-                  }}>
-                  <CopyIcon size={16} />
-                </button>
-              </Tooltip>
-              <Tooltip content={t("batchExport")}>
-                <button
-                  className="conversations-batch-btn"
-                  style={{ padding: "4px 6px", minWidth: "auto", marginLeft: "4px" }}
-                  onClick={() => openExportDialog()}>
-                  <ExportIcon size={16} />
-                </button>
-              </Tooltip>
+              {/* 导出只支持单条对话，仅在选中 1 个时展示 */}
+              {selectedIds.size === 1 && (
+                <>
+                  <Tooltip content={t("exportToClipboard")}>
+                    <button
+                      className="conversations-batch-btn"
+                      style={{ padding: "4px 6px", minWidth: "auto", marginLeft: "4px" }}
+                      onClick={async () => {
+                        const convId = Array.from(selectedIds)[0]
+                        await manager.exportConversation(convId, "clipboard")
+                      }}>
+                      <CopyIcon size={16} />
+                    </button>
+                  </Tooltip>
+                  <Tooltip content={t("batchExport")}>
+                    <button
+                      className="conversations-batch-btn"
+                      style={{ padding: "4px 6px", minWidth: "auto", marginLeft: "4px" }}
+                      onClick={() => openExportDialog()}>
+                      <ExportIcon size={16} />
+                    </button>
+                  </Tooltip>
+                </>
+              )}
               <Tooltip content={t("batchMove")}>
                 <button
                   className="conversations-batch-btn"
