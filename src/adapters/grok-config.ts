@@ -79,7 +79,7 @@ export interface GrokSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const GROK_CONFIG_VERSION = 4
+export const GROK_CONFIG_VERSION = 5
 
 const createGrokConfig = (): GrokSiteConfig => {
   const sidebarScrollContainer = '[data-sidebar="content"]'
@@ -100,7 +100,9 @@ const createGrokConfig = (): GrokSiteConfig => {
 
   return {
     capabilities: [...BUILTIN_FEATURE_CAPABILITIES[SITE_IDS.GROK]],
-    traits: { historyLazyLoad: false },
+    // virtualOutlineFill：长对话虚拟滚动，离屏轮次的提问与回答标题由
+    // response-node / load-responses 接口回填
+    traits: { historyLazyLoad: false, virtualOutlineFill: true },
     selectors: {
       textarea: [
         ".tiptap.ProseMirror[contenteditable='true']",

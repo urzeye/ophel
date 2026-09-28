@@ -24,9 +24,27 @@ import {
 } from "~utils/export-assets"
 import { htmlToMarkdown, type ExportBundle, type ExportMessage } from "~utils/exporter"
 import { t } from "~utils/i18n"
+import { EVENT_OUTLINE_DATA_UPDATED } from "~utils/messaging"
+import { hashOutlineText } from "~utils/outline-heading-cache"
+import {
+  API_OUTLINE_PARSE_FAILURE_LIMIT,
+  isApiOutlineStale,
+  mergeByBranchMessageOrder,
+  shouldAttemptApiOutlineFetch,
+} from "~utils/outline-api-source"
+import {
+  alignScrollTop,
+  settleVirtualScroll,
+  waitForVirtualScrollQuiet,
+} from "~utils/virtual-scroll-settle"
+import type {
+  VirtualOutlinePositionSnapshot,
+  VirtualPositionAnchor,
+} from "~utils/virtual-outline-position"
 
 import {
   SiteAdapter,
+  type AnchorData,
   type ConversationDeleteTarget,
   type ConversationInfo,
   type ConversationObserverConfig,
@@ -40,6 +58,23 @@ import {
 } from "./base"
 import { GROK_CONFIG, GROK_CONFIG_VERSION, type GrokSiteConfig } from "./grok-config"
 import type { BuiltinSiteConfig } from "./declarative"
+import { parseGrokHistoryExport, type GrokHistoryExportData } from "./grok-history-export"
+import {
+  parseGrokHistoryOutline,
+  parseGrokResponseTree,
+  type GrokHistoryOutlineData,
+  type GrokResponseTree,
+} from "./grok-history-outline"
+
+const API_OUTLINE_FETCH_BACKOFF_MS = 10_000
+const API_OUTLINE_BOTTOM_TOLERANCE_PX = 100
+/** load-responses 批量拉取的单批条数（页面自身的可视窗口批次约 10 条） */
+const LOAD_RESPONSES_BATCH_SIZE = 20
+const VIRTUAL_ROW_PROBE_MAX_ATTEMPTS = 8
+const VIRTUAL_ROW_PROBE_SETTLE_MS = 60
+const OUTLINE_HEADING_SELECTOR = "h1, h2, h3, h4, h5, h6"
+/** 虚拟行内消息元素的 id 前缀（id="response-<uuid>"） */
+const RESPONSE_ID_PREFIX = "response-"
 
 const PIN_ICON_PATH_SIGNATURES = [
   "M13 21L12 23L11 21V16H4.5V13.7129L4.65234 13.4697L6.95801 9.78027L6.41797 5.99512C6.11675 3.8866 7.75289 2 9.88281 2H14.1172C16.2471 2 17.8832 3.8866 17.582 5.99512L17.041 9.78027L19.5 13.7129V16H13V21Z",
@@ -171,6 +206,19 @@ export class GrokAdapter extends SiteAdapter {
   private exportUserAttachmentsByResponseId: Map<string, GrokUserAttachment[]> | null = null
 
   private reloadScheduled = false
+
+  // ==================== API 数据源大纲（虚拟滚动回填） ====================
+
+  private apiOutlineData: GrokHistoryOutlineData | null = null
+  private apiOutlineFetchPromise: Promise<void> | null = null
+  private apiOutlineLastFetchAt = 0
+  private apiOutlineFailures = 0
+  private apiOutlineSessionId = ""
+  private apiOutlineForceRefetch = false
+  private apiOutlineWasGenerating = false
+  private apiOutlineRevealRequestId = 0
+  /** 导出链路缓存的接口全量数据（prepareConversationExport 拉取，导出结束清空） */
+  private exportApiData: GrokHistoryExportData | null = null
 
   async loadAllConversations(): Promise<void> {
     const sidebar = document.querySelector(this.config.sitePrivateSelectors.sidebarScrollContainer)
@@ -2061,6 +2109,9 @@ export class GrokAdapter extends SiteAdapter {
 
   async prepareConversationExport(_context: ExportLifecycleContext): Promise<unknown> {
     this.exportUserAttachmentsByResponseId = await this.collectGrokShareUserAttachments()
+    // 常规会话优先走接口拿全量历史（虚拟列表只挂载可视窗口，DOM 收集不全）；
+    // 失败返回 null，extractExportMessages 回退 DOM 路径
+    this.exportApiData = await this.fetchApiExportData()
     return null
   }
 
@@ -2069,6 +2120,87 @@ export class GrokAdapter extends SiteAdapter {
     _state: unknown,
   ): Promise<void> {
     this.exportUserAttachmentsByResponseId = null
+    this.exportApiData = null
+  }
+
+  /**
+   * 常规会话的接口导出数据源：response-node 骨架 + load-responses 全文。
+   * 完整性门槛严于大纲（见 parseGrokHistoryExport），无法证明完整时返回 null。
+   */
+  private async fetchApiExportData(): Promise<GrokHistoryExportData | null> {
+    if (!this.isUserConversationPage()) return null
+    const sessionId = this.getSessionId()
+    if (!sessionId) return null
+
+    try {
+      const treeResult = await this.fetchResponseTree(sessionId)
+      if (!treeResult) return null
+      const responses = await this.fetchBranchResponses(sessionId, treeResult.tree)
+      if (!responses) return null
+      return parseGrokHistoryExport(
+        treeResult.treePayload,
+        { responses },
+        sessionId,
+        this.getUrlLeafResponseId(),
+      )
+    } catch (error) {
+      console.warn("[GrokAdapter] Failed to collect api export payload:", error)
+      return null
+    }
+  }
+
+  /** 把接口导出素材格式化为导出消息（与 DOM 路径同一套附件/图片格式化） */
+  private formatApiExportMessages(
+    data: GrokHistoryExportData,
+    collector?: ExportAssetCollector,
+  ): ExportMessage[] {
+    const messages: ExportMessage[] = []
+
+    for (const message of data.messages) {
+      if (message.role === "user") {
+        const attachments = message.fileAttachmentsMetadata
+          .map((metadata) => this.parseGrokFileAttachmentMetadata(metadata))
+          .filter((attachment): attachment is GrokUserAttachment => attachment !== null)
+        const imageMarkdown = this.formatGrokUserImageAttachments(attachments, collector)
+        const fileMarkdown = this.formatGrokUserFileAttachments(attachments, collector)
+        const fileBlock =
+          fileMarkdown.length > 0
+            ? `${t("exportAttachmentsLabel")}:\n${fileMarkdown.join("\n")}`
+            : ""
+        const content = [imageMarkdown.join("\n\n"), fileBlock, message.requestText]
+          .filter(Boolean)
+          .join("\n\n")
+          .trim()
+        if (content) {
+          messages.push({ role: "user", content })
+        }
+        continue
+      }
+
+      const imageMarkdown: string[] = []
+      for (const url of message.generatedImageUrls) {
+        const source = this.buildGrokAssetSource(url)
+        if (!this.isExportableGrokImageSource(source)) continue
+        const alt = this.extractFilenameFromUrl(source) || "generated image"
+        const markdown = formatExportImageMarkdown({ source, alt, extensionHint: alt }, collector, {
+          siteId: this.getSiteId(),
+          role: "assistant",
+          category: "generated-image",
+          fallbackAlt: "generated image",
+        })
+        if (markdown) imageMarkdown.push(markdown)
+      }
+
+      const content = [message.responseMarkdown, imageMarkdown.join("\n\n")]
+        .filter(Boolean)
+        .join("\n\n")
+        .trim()
+      if (content) {
+        messages.push({ role: "assistant", content })
+      }
+    }
+
+    return messages
   }
 
   private async collectGrokShareUserAttachments(): Promise<Map<
@@ -2172,14 +2304,23 @@ export class GrokAdapter extends SiteAdapter {
   }
 
   async extractExportMessages(_context: ExportLifecycleContext): Promise<ExportMessage[] | null> {
+    // 接口数据可用时优先（虚拟列表 DOM 只有挂载窗口，长对话必然不全）
+    if (this.exportApiData) {
+      const apiMessages = this.formatApiExportMessages(this.exportApiData)
+      if (apiMessages.length > 0) return apiMessages
+    }
     const messages = this.extractGrokExportMessages()
     return messages.length > 0 ? messages : null
   }
 
   async extractExportBundle(_context: ExportLifecycleContext): Promise<ExportBundle | null> {
-    return this.createExportBundleFromMessages((collector) =>
-      this.extractGrokExportMessages(collector),
-    )
+    return this.createExportBundleFromMessages((collector) => {
+      if (this.exportApiData) {
+        const apiMessages = this.formatApiExportMessages(this.exportApiData, collector)
+        if (apiMessages.length > 0) return apiMessages
+      }
+      return this.extractGrokExportMessages(collector)
+    })
   }
 
   getAssistantMermaidSupportMode() {
@@ -2187,6 +2328,27 @@ export class GrokAdapter extends SiteAdapter {
   }
 
   extractOutline(maxLevel = 6, includeUserQueries = false, showWordCount = false): OutlineItem[] {
+    // 虚拟滚动回填：异步拉取 response-node / load-responses 接口，
+    // 补齐离屏轮次的提问与回答标题
+    this.maybeRefreshApiOutline()
+
+    const outline = this.extractDomOutline(maxLevel, includeUserQueries, showWordCount)
+
+    // 接口数据可用：DOM 条目与接口回填条目按分支位置序号统一归并
+    const apiData = this.apiOutlineData
+    if (!apiData || apiData.sessionId !== this.getSessionId()) return outline
+    return this.mergeOutlineByBranchOrder(outline, apiData, {
+      maxLevel,
+      includeUserQueries,
+      showWordCount,
+    })
+  }
+
+  private extractDomOutline(
+    maxLevel = 6,
+    includeUserQueries = false,
+    showWordCount = false,
+  ): OutlineItem[] {
     const outline: OutlineItem[] = []
     const container = document.querySelector(this.getResponseContainerSelector())
     if (!container) return outline
@@ -2420,6 +2582,805 @@ export class GrokAdapter extends SiteAdapter {
     })
 
     return outline
+  }
+
+  // ==================== API 数据源大纲（虚拟滚动回填） ====================
+
+  /**
+   * Grok 消息列表是 plane 虚拟列表（absolute + translateY，只挂可视窗口），
+   * 离屏轮次的标题会从 DOM 卸载。这里直接请求站点的 response-node（全量
+   * 分支骨架）+ load-responses（按 responseId 批量取正文）接口，从回复
+   * markdown 解析标题，作为大纲标题的完整数据源。
+   */
+  private maybeRefreshApiOutline(): void {
+    if (!this.isUserConversationPage()) return
+    // 仅虚拟滚动会话需要接口回填：内容不足一屏时 DOM 本身就是完整的
+    if (!this.isVirtualScrollConversation()) return
+
+    const sessionId = this.getSessionId()
+    if (sessionId !== this.apiOutlineSessionId) {
+      // 会话切换时解除解析失败熔断与拉取冷却，新会话应立即补齐大纲
+      this.apiOutlineSessionId = sessionId
+      this.apiOutlineFailures = 0
+      this.apiOutlineLastFetchAt = 0
+      this.apiOutlineForceRefetch = false
+    }
+
+    // 生成结束（含中断）后强制重拉：生成期间被闸门跳过，且流式完成后树
+    // 签名不再变化，仅靠签名比对会漏掉正文补全
+    const generating = this.isGenerating()
+    if (this.apiOutlineWasGenerating && !generating) {
+      this.apiOutlineForceRefetch = true
+    }
+    this.apiOutlineWasGenerating = generating
+
+    const scrollable = this.getScrollContainer()
+    const atBottom = scrollable
+      ? scrollable.scrollTop + scrollable.clientHeight >=
+        scrollable.scrollHeight - API_OUTLINE_BOTTOM_TOLERANCE_PX
+      : true
+    const stale =
+      this.apiOutlineForceRefetch ||
+      isApiOutlineStale({
+        data: this.apiOutlineData,
+        sessionId,
+        mountedIds: this.collectMountedVirtualMessageIndexes(),
+        atBottom,
+      })
+
+    if (
+      !shouldAttemptApiOutlineFetch({
+        now: Date.now(),
+        lastFetchAt: this.apiOutlineLastFetchAt,
+        backoffMs: API_OUTLINE_FETCH_BACKOFF_MS,
+        parseFailures: this.apiOutlineFailures,
+        inFlight: this.apiOutlineFetchPromise !== null,
+        generating,
+        stale,
+      })
+    ) {
+      return
+    }
+
+    // 任何一次实际发起的拉取都记入冷却：签名未变的成功重拉也不会连续重试
+    this.apiOutlineLastFetchAt = Date.now()
+    this.apiOutlineFetchPromise = this.fetchApiOutline(sessionId)
+      .then((result) => {
+        if (result === "parse-failed") {
+          this.apiOutlineFailures += 1
+          return
+        }
+        this.apiOutlineFailures = 0
+        if (result === "changed") {
+          window.postMessage({ type: EVENT_OUTLINE_DATA_UPDATED }, "*")
+        }
+      })
+      .catch((error) => {
+        // 网络/HTTP 失败同样计入熔断
+        this.apiOutlineFailures += 1
+        console.warn("[GrokAdapter] Failed to fetch conversation outline:", error)
+      })
+      .finally(() => {
+        this.apiOutlineFetchPromise = null
+      })
+  }
+
+  /**
+   * 收集挂载窗口内消息行的分支位置序号。DOM 行携带 responseId
+   * （id="response-<uuid>"），经接口缓存映射为分支位置；未入库的新行
+   * （刚发送/生成中/分支切换残留）统一映射为 maxMessageId + 1，
+   * 让过期判定按「出现更大 id」触发重拉。
+   */
+  private collectMountedVirtualMessageIndexes(): Set<number> {
+    const indexes = new Set<number>()
+    const container =
+      this.getScrollContainer() || document.querySelector(this.getResponseContainerSelector())
+    if (!container) return indexes
+
+    const data = this.apiOutlineData
+    const fallback = data ? data.maxMessageId + 1 : 0
+    container.querySelectorAll(this.config.sitePrivateSelectors.responseRoot).forEach((element) => {
+      const position = data?.positionByResponseId.get(element.id.slice(RESPONSE_ID_PREFIX.length))
+      indexes.add(position ?? fallback)
+    })
+    return indexes
+  }
+
+  private getUrlLeafResponseId(): string | null {
+    const rid = new URLSearchParams(window.location.search).get("rid")
+    return rid && /^[0-9a-f-]{36}$/i.test(rid) ? rid : null
+  }
+
+  private async fetchApiOutline(
+    sessionId: string,
+  ): Promise<"changed" | "unchanged" | "parse-failed"> {
+    const treeResult = await this.fetchResponseTree(sessionId)
+    if (!treeResult) return "parse-failed"
+    const { tree } = treeResult
+
+    // 树签名未变且非强制重拉：正文不可能变化（编辑/重新生成都会产生新节点），
+    // 跳过 load-responses 的全文拉取
+    const previous = this.apiOutlineData
+    if (
+      !this.apiOutlineForceRefetch &&
+      previous &&
+      previous.sessionId === sessionId &&
+      previous.signature === tree.signature
+    ) {
+      return "unchanged"
+    }
+
+    const responses = await this.fetchBranchResponses(sessionId, tree)
+    if (!responses) return "parse-failed"
+
+    const parsed = parseGrokHistoryOutline(tree, { responses })
+    if (!parsed || parsed.sessionId !== sessionId) return "parse-failed"
+
+    this.apiOutlineData = parsed
+    this.apiOutlineForceRefetch = false
+    return "changed"
+  }
+
+  /**
+   * 拉取 response-node 骨架并解析激活分支（大纲与导出共用）。
+   * HTTP 失败抛出（调用方按各自语义处理），结构解析失败返回 null。
+   */
+  private async fetchResponseTree(sessionId: string): Promise<{
+    treePayload: unknown
+    tree: GrokResponseTree
+  } | null> {
+    const treeResponse = await fetch(
+      `${window.location.origin}/rest/app-chat/conversations/${encodeURIComponent(sessionId)}/response-node`,
+      { credentials: "include" },
+    )
+    if (!treeResponse.ok) {
+      throw new Error(`response-node responded ${treeResponse.status}`)
+    }
+
+    const treePayload: unknown = await treeResponse.json()
+    const tree = parseGrokResponseTree(treePayload, sessionId, this.getUrlLeafResponseId())
+    if (!tree) return null
+    return { treePayload, tree }
+  }
+
+  /** 分批拉取激活分支全文（load-responses）；HTTP 失败抛出，结构非法返回 null */
+  private async fetchBranchResponses(
+    sessionId: string,
+    tree: GrokResponseTree,
+  ): Promise<unknown[] | null> {
+    const responses: unknown[] = []
+    for (let i = 0; i < tree.branchResponseIds.length; i += LOAD_RESPONSES_BATCH_SIZE) {
+      const chunk = tree.branchResponseIds.slice(i, i + LOAD_RESPONSES_BATCH_SIZE)
+      const contentResponse = await fetch(
+        `${window.location.origin}/rest/app-chat/conversations/${encodeURIComponent(sessionId)}/load-responses`,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ responseIds: chunk }),
+        },
+      )
+      if (!contentResponse.ok) {
+        throw new Error(`load-responses responded ${contentResponse.status}`)
+      }
+      const payload: unknown = await contentResponse.json()
+      const list =
+        payload && typeof payload === "object"
+          ? (payload as { responses?: unknown }).responses
+          : null
+      if (!Array.isArray(list)) return null
+      responses.push(...list)
+    }
+
+    return responses
+  }
+
+  /**
+   * 统一归并：DOM 条目与接口回填条目按分支位置序号归并。挂载项以 DOM 为准
+   * （文本真实、元素在手），接口只补未挂载的提问与回复标题。
+   * Grok DOM 条目的 id 本身携带 responseId（response-<uuid>），天然稳定，
+   * 无需像 DeepSeek 那样按未截断文本重算收藏签名。
+   */
+  private mergeOutlineByBranchOrder(
+    domItems: OutlineItem[],
+    data: GrokHistoryOutlineData,
+    options: { maxLevel: number; includeUserQueries: boolean; showWordCount: boolean },
+  ): OutlineItem[] {
+    const { maxLevel, includeUserQueries, showWordCount } = options
+    const mountedIndexes = this.collectMountedVirtualMessageIndexes()
+
+    const domEntries = domItems.map((item) => ({
+      messageId: this.getMountedRowMessageIndex(item.element),
+      item,
+    }))
+
+    const fillEntries: { messageId: number; item: OutlineItem }[] = []
+
+    if (includeUserQueries) {
+      for (const query of data.userQueries) {
+        if (mountedIndexes.has(query.messageIndex)) continue
+        let wordCount: number | undefined
+        if (showWordCount) {
+          // 提问条目的字数口径 = 对应回复的文本长度，未挂载时取接口估算值
+          const assistantIndex = data.assistantIndexByQueryIndex.get(query.queryIndex)
+          wordCount =
+            assistantIndex !== undefined
+              ? data.replyWordCountByMessageIndex.get(assistantIndex) ?? 0
+              : 0
+        }
+        const responseId = data.branchResponseIds[query.messageIndex]
+        fillEntries.push({
+          messageId: query.messageIndex,
+          item: {
+            level: 0,
+            text: query.text.length > 200 ? query.text.substring(0, 200) : query.text,
+            isUserQuery: true,
+            isTruncated: query.text.length > 200,
+            element: null,
+            // id 与 DOM 挂载后的条目一致（response-<uuid>），挂载切换时收藏不失效
+            id: responseId ? `${RESPONSE_ID_PREFIX}${responseId}` : undefined,
+            navigationId: `grok:api-u:${query.messageIndex}`,
+            wordCount,
+          },
+        })
+      }
+    }
+
+    for (const [messageIndex, headings] of data.headingsByMessageIndex) {
+      if (mountedIndexes.has(messageIndex)) continue
+      headings.forEach((heading, orderInMessage) => {
+        if (heading.level > maxLevel) return
+        const id = `grok:api-h:${messageIndex}:${heading.level}:${orderInMessage}:${hashOutlineText(heading.text)}`
+        fillEntries.push({
+          messageId: messageIndex,
+          item: {
+            level: heading.level,
+            text: heading.text,
+            element: null,
+            id,
+            navigationId: id,
+            wordCount: showWordCount ? heading.wordCount : undefined,
+          },
+        })
+      })
+    }
+
+    return mergeByBranchMessageOrder(data.branchMessageIds, domEntries, fillEntries)
+  }
+
+  private getMountedRowMessageIndex(element: Element | null): number | null {
+    const data = this.apiOutlineData
+    if (!data || !element) return null
+    const row = element.closest(this.config.sitePrivateSelectors.responseRoot)
+    if (!row) return null
+    return data.positionByResponseId.get(row.id.slice(RESPONSE_ID_PREFIX.length)) ?? null
+  }
+
+  private parseApiOutlineItemId(
+    id?: string,
+  ): { messageIndex: number; level: number; orderInMessage: number } | null {
+    if (!id) return null
+    const match = id.match(/^grok:api-h:(\d+):(\d+):(\d+):[0-9a-f]+$/)
+    if (!match) return null
+    return {
+      messageIndex: Number(match[1]),
+      level: Number(match[2]),
+      orderInMessage: Number(match[3]),
+    }
+  }
+
+  private parseApiUserQueryItemId(id?: string): number | null {
+    if (!id) return null
+    const match = id.match(/^grok:api-u:(\d+)$/)
+    return match ? Number(match[1]) : null
+  }
+
+  async resolveOutlineTarget(
+    item: Pick<OutlineItem, "level" | "text" | "isUserQuery" | "id" | "navigationId">,
+    queryIndex?: number,
+    sourceId = "conversation",
+  ): Promise<Element | null> {
+    // 接口回填的离屏条目：优先按分支位置挂载目标行精确定位，而非全局文本匹配
+    const ref = item.navigationId || item.id
+    const apiHeadingRef = this.parseApiOutlineItemId(ref)
+    if (apiHeadingRef) {
+      const apiTarget = await this.resolveApiOutlineTarget(apiHeadingRef, item.text)
+      if (apiTarget) return apiTarget
+    } else {
+      const apiQueryIndex = this.parseApiUserQueryItemId(ref)
+      if (apiQueryIndex !== null) {
+        const apiTarget = await this.resolveApiUserQueryTarget(apiQueryIndex)
+        if (apiTarget) return apiTarget
+      }
+    }
+
+    return super.resolveOutlineTarget(item, queryIndex, sourceId)
+  }
+
+  private async resolveApiOutlineTarget(
+    ref: { messageIndex: number; level: number; orderInMessage: number },
+    text: string,
+  ): Promise<Element | null> {
+    const row = await this.mountApiRow(ref.messageIndex)
+    return row ? this.findApiHeadingInRow(row, ref, text) : null
+  }
+
+  private async resolveApiUserQueryTarget(messageIndex: number): Promise<Element | null> {
+    const row = await this.mountApiRow(messageIndex)
+    const message = row?.querySelector(this.config.selectors.userQuery)
+    return message instanceof HTMLElement ? message : null
+  }
+
+  /**
+   * 把分支位置对应的消息行挂载出来：先查已挂载行，未挂载则滚动探测。
+   * 探测会移动滚动位置；彻底失败时复原，避免把用户甩到无关位置。
+   */
+  private async mountApiRow(messageIndex: number): Promise<Element | null> {
+    const data = this.apiOutlineData
+    if (!data || data.sessionId !== this.getSessionId()) return null
+    const responseId = data.branchResponseIds[messageIndex]
+    if (!responseId) return null
+
+    const container = this.getScrollContainer()
+    if (!container) return null
+
+    const findRow = () => container.querySelector(`[id="response-${responseId}"]`)
+    const mounted = findRow()
+    if (mounted) return mounted
+
+    const requestId = ++this.apiOutlineRevealRequestId
+    const entryScrollTop = container.scrollTop
+    const row = await this.probeMountVirtualRow(
+      responseId,
+      messageIndex,
+      container,
+      data,
+      requestId,
+    )
+    if (row) return row
+
+    if (requestId === this.apiOutlineRevealRequestId) {
+      container.scrollTop = entryScrollTop
+    }
+    return null
+  }
+
+  private findApiHeadingInRow(
+    row: Element,
+    ref: { level: number; orderInMessage: number },
+    text: string,
+  ): Element | null {
+    const headings = Array.from(row.querySelectorAll(OUTLINE_HEADING_SELECTOR)).filter(
+      (heading) => !this.isInRenderedMarkdownContainer(heading),
+    )
+    const direct = headings[ref.orderInMessage]
+    if (direct && (direct.textContent || "").trim() === text) return direct
+
+    // setext/引用块/原生 HTML 标题会渲染进 DOM 但不参与 ATX 序号，序号可能
+    // 错位：先用「层级+文本」精确命中真正的目标，避免层级巧合跳错标题
+    const precise = headings.find(
+      (heading) =>
+        Number(heading.tagName.charAt(1)) === ref.level &&
+        (heading.textContent || "").trim() === text,
+    )
+    if (precise) return precise
+
+    // 渲染差异导致文本无法精确比对时，才采信同层级的序号命中
+    if (direct && Number(direct.tagName.charAt(1)) === ref.level) return direct
+    return null
+  }
+
+  /**
+   * 直接滚动探测聊天虚拟列表，把目标分支位置的行挂载出来。
+   * scrollTop 与挂载窗口的位置区间单调对应，每次用真实挂载行做锚点闭环逼近，
+   * 通常 1-3 次收敛；失败回退二分（不依赖行高估算）。
+   */
+  private async probeMountVirtualRow(
+    responseId: string,
+    position: number,
+    container: HTMLElement,
+    data: GrokHistoryOutlineData,
+    requestId: number | null,
+    signal?: AbortSignal,
+  ): Promise<Element | null> {
+    if (container.scrollHeight <= container.clientHeight) {
+      return container.querySelector(`[id="response-${responseId}"]`)
+    }
+
+    const findRow = () => container.querySelector(`[id="response-${responseId}"]`)
+
+    let prevSignature = ""
+    for (let attempt = 0; attempt < VIRTUAL_ROW_PROBE_MAX_ATTEMPTS; attempt += 1) {
+      const existing = findRow()
+      if (existing) return existing
+      // requestId 为 null 表示非大纲链路调用（阅读历史恢复），不参与大纲请求失效判断
+      if (requestId !== null && requestId !== this.apiOutlineRevealRequestId) return null
+      if (signal?.aborted) return null
+
+      const rows = this.readMountedVirtualRows(container, data)
+      if (rows.length === 0) return null
+
+      const signature = `${rows[0].key}:${rows[rows.length - 1].key}:${Math.round(container.scrollTop)}`
+      if (signature === prevSignature) {
+        // 窗口无变化：重挂载可能是异步的，给一帧时间
+        await this.sleep(VIRTUAL_ROW_PROBE_SETTLE_MS)
+      }
+      prevSignature = signature
+
+      const first = rows[0]
+      const last = rows[rows.length - 1]
+      let deltaRows = 0
+      if (position < first.key) {
+        deltaRows = position - first.key
+      } else if (position > last.key) {
+        deltaRows = position - last.key
+      }
+
+      if (deltaRows === 0) {
+        // 目标落在窗口位置区间内却未挂载（挂载滞后）
+        await this.sleep(VIRTUAL_ROW_PROBE_SETTLE_MS)
+        continue
+      }
+
+      const spanRows = Math.max(1, last.key - first.key)
+      const spanPx = last.top - first.top
+      const pxPerRow =
+        spanPx > 0 ? spanPx / spanRows : container.clientHeight / Math.max(1, rows.length)
+      if (!(pxPerRow > 0)) return null
+
+      const maxScroll = Math.max(0, container.scrollHeight - container.clientHeight)
+      // 至少移动一行，避免小步长在原地打转
+      const deltaPx = Math.sign(deltaRows) * Math.max(Math.abs(deltaRows) * pxPerRow, pxPerRow)
+      const nextTop = Math.min(maxScroll, Math.max(0, container.scrollTop + deltaPx))
+      if (nextTop === container.scrollTop && (nextTop === 0 || nextTop === maxScroll)) {
+        // 已到滚动边界仍未挂载：目标行不存在（可能被删除）
+        return null
+      }
+
+      container.scrollTop = nextTop
+      container.dispatchEvent(new Event("scroll", { bubbles: true }))
+      // 强制同步 layout，促使虚拟列表本轮完成重挂载
+      container.getBoundingClientRect()
+    }
+
+    return this.bisectMountVirtualRow(position, container, findRow, requestId, signal)
+  }
+
+  /**
+   * probeMountVirtualRow 的兜底：启发式逼近依赖行高估算，行高不均时会过冲
+   * 震荡。挂载窗口的位置区间随 scrollTop 单调移动，二分不依赖行高，对长对
+   * 话 log 级收敛。
+   */
+  private async bisectMountVirtualRow(
+    position: number,
+    container: HTMLElement,
+    findRow: () => Element | null,
+    requestId: number | null,
+    signal?: AbortSignal,
+  ): Promise<Element | null> {
+    const maxScroll = Math.max(0, container.scrollHeight - container.clientHeight)
+    let lo = 0
+    let hi = maxScroll
+    let mid = Math.min(maxScroll, Math.max(0, container.scrollTop))
+
+    for (let attempt = 0; attempt < 14; attempt += 1) {
+      const existing = findRow()
+      if (existing) return existing
+      if (requestId !== null && requestId !== this.apiOutlineRevealRequestId) return null
+      if (signal?.aborted) return null
+
+      const rows = this.readMountedVirtualRows(container, this.apiOutlineData)
+      if (rows.length === 0) return null
+
+      const firstKey = rows[0].key
+      const lastKey = rows[rows.length - 1].key
+      if (position < firstKey) {
+        hi = mid
+      } else if (position > lastKey) {
+        lo = mid
+      } else {
+        // 目标落在窗口区间内却未挂载：等几拍排除挂载滞后
+        for (let wait = 0; wait < 3; wait += 1) {
+          await this.sleep(VIRTUAL_ROW_PROBE_SETTLE_MS)
+          const mounted = findRow()
+          if (mounted) return mounted
+        }
+        return null
+      }
+      if (hi - lo <= 2) return null
+
+      mid = Math.round((lo + hi) / 2)
+      container.scrollTop = mid
+      container.dispatchEvent(new Event("scroll", { bubbles: true }))
+      container.getBoundingClientRect()
+      await this.sleep(VIRTUAL_ROW_PROBE_SETTLE_MS)
+    }
+
+    return findRow()
+  }
+
+  /** 读取挂载窗口内的消息行：key 为分支位置序号，top 为视口坐标 */
+  private readMountedVirtualRows(
+    container: HTMLElement,
+    data: GrokHistoryOutlineData | null,
+  ): { key: number; top: number }[] {
+    const rows: { key: number; top: number }[] = []
+    if (!data) return rows
+    container.querySelectorAll(this.config.sitePrivateSelectors.responseRoot).forEach((element) => {
+      const position = data.positionByResponseId.get(element.id.slice(RESPONSE_ID_PREFIX.length))
+      if (position === undefined) return
+      rows.push({ key: position, top: element.getBoundingClientRect().top })
+    })
+    return rows.sort((a, b) => a.key - b.key)
+  }
+
+  // ==================== 虚拟滚动会话 ====================
+
+  override async waitForVirtualListEdge(
+    edge: "start" | "end",
+    signal?: AbortSignal,
+  ): Promise<boolean> {
+    return settleVirtualScroll(
+      () => this.getScrollContainer(),
+      (container) => this.isVirtualEdgeSettled(container, edge),
+      (container) => alignScrollTop(container, edge === "start" ? 0 : container.scrollHeight),
+      signal,
+    )
+  }
+
+  private isVirtualEdgeSettled(container: HTMLElement, edge: "start" | "end"): boolean {
+    const rows = Array.from(container.querySelectorAll("[data-plane-row]"))
+    if (rows.length === 0) return true
+
+    const maxScroll = Math.max(0, container.scrollHeight - container.clientHeight)
+    if (edge === "start") {
+      if (container.scrollTop > 40) return false
+      // 最上方挂载行的 translateY 贴近 0 才算真正到顶
+      const firstOffset = Math.min(...rows.map((row) => this.readRowTranslateY(row)))
+      return firstOffset <= 80
+    }
+
+    if (maxScroll <= 40) return true
+    if (container.scrollTop < maxScroll - 80) return false
+    const containerRect = container.getBoundingClientRect()
+    return rows.some((row) => {
+      const rect = row.getBoundingClientRect()
+      return rect.bottom > containerRect.top + 1 && rect.top < containerRect.bottom - 1
+    })
+  }
+
+  private readRowTranslateY(row: Element): number {
+    const style = row instanceof HTMLElement ? row.style.transform || "" : ""
+    const match = /translateY\(\s*([-\d.]+)px\s*\)/.exec(style)
+    if (!match) return 0
+    const value = Number(match[1])
+    return Number.isFinite(value) ? value : 0
+  }
+
+  override isVirtualScrollConversation(): boolean {
+    const container = this.getScrollContainer()
+    if (!container) return false
+    return container.querySelector("[data-plane-row]") !== null
+  }
+
+  /**
+   * 高亮估算快照：以当前挂载窗口的分支位置序号做锚点，行顶、行底各记一个点；
+   * 边界取分支消息总数与最大 scrollTop（与大纲高亮同一内容坐标系）。
+   */
+  override getVirtualOutlinePositionSnapshot(): VirtualOutlinePositionSnapshot | null {
+    const container = this.getScrollContainer()
+    if (!container || !this.isVirtualScrollConversation()) return null
+    const data = this.apiOutlineData
+    if (!data || data.sessionId !== this.getSessionId()) return null
+
+    const containerRect = container.getBoundingClientRect()
+    const anchors: VirtualPositionAnchor[] = []
+    container.querySelectorAll(this.config.sitePrivateSelectors.responseRoot).forEach((element) => {
+      const position = data.positionByResponseId.get(element.id.slice(RESPONSE_ID_PREFIX.length))
+      if (position === undefined) return
+      const rect = element.getBoundingClientRect()
+      const top = rect.top - containerRect.top + container.scrollTop
+      anchors.push({ index: position, top })
+      anchors.push({ index: position + 1, top: top + rect.height })
+    })
+    if (anchors.length === 0) return null
+
+    return {
+      anchors,
+      bounds: {
+        endSlot: data.branchMessageIds.length,
+        endTop: Math.max(0, container.scrollHeight - container.clientHeight),
+      },
+    }
+  }
+
+  override getVirtualOutlineRowIndex(item: OutlineItem): number | null {
+    const data = this.apiOutlineData
+    if (!data || data.sessionId !== this.getSessionId()) return null
+
+    const ref = item.navigationId || item.id
+    const headingRef = this.parseApiOutlineItemId(ref)
+    if (headingRef) return headingRef.messageIndex
+    const queryIndex = this.parseApiUserQueryItemId(ref)
+    if (queryIndex !== null) return queryIndex
+
+    return this.getMountedRowMessageIndex(item.element)
+  }
+
+  /**
+   * 虚拟滚动会话的阅读锚点：行身份用 responseId（uuid），跨编辑/重排稳定。
+   * 像素与窗口序号都不是全局位置，不存。
+   */
+  override getVirtualAnchorElement(): AnchorData | null {
+    if (!this.isVirtualScrollConversation()) return null
+    const data = this.apiOutlineData
+    if (!data || data.sessionId !== this.getSessionId()) return null
+    const container = this.getScrollContainer()
+    if (!container) return null
+
+    const rows: { responseId: string; top: number; element: Element }[] = []
+    container.querySelectorAll(this.config.sitePrivateSelectors.responseRoot).forEach((element) => {
+      const responseId = element.id.slice(RESPONSE_ID_PREFIX.length)
+      if (!data.positionByResponseId.has(responseId)) return
+      rows.push({ responseId, top: element.getBoundingClientRect().top, element })
+    })
+    if (rows.length === 0) return null
+    rows.sort((a, b) => a.top - b.top)
+
+    // 视口上沿那条已挂载的行
+    const containerRect = container.getBoundingClientRect()
+    const viewportLine = containerRect.top + 100
+    let best = rows[0]
+    for (const row of rows) {
+      if (row.top <= viewportLine && row.top > best.top) {
+        best = row
+      }
+    }
+
+    const rowTop = best.top - containerRect.top + container.scrollTop
+    return {
+      type: "virtual-row",
+      rowKey: best.responseId,
+      offset: container.scrollTop - rowTop,
+      textSignature: (best.element.textContent || "").trim().substring(0, 50),
+    }
+  }
+
+  override async restoreVirtualAnchor(anchor: AnchorData, signal?: AbortSignal): Promise<boolean> {
+    if (anchor.type !== "virtual-row" || typeof anchor.rowKey !== "string") return false
+    const responseId = anchor.rowKey
+    const offset = anchor.offset || 0
+
+    // 虚拟窗口的挂载晚于会话 id 就绪，冷加载可能要数秒，有界等待其出现；
+    // 期间用户主动滚动会通过 signal 中止等待
+    const deadline = Date.now() + 10000
+    while (!this.isVirtualScrollConversation()) {
+      if (signal?.aborted) return false
+      if (Date.now() >= deadline) {
+        console.warn("[Ophel] Reading history restore skipped: Grok message list not ready")
+        return false
+      }
+      await this.sleep(100)
+    }
+
+    const container = this.getScrollContainer()
+    if (!container) return false
+
+    // 等站点自己的开场滚动（自动去底部、渲染引发的调整）安静下来再动手，
+    // 否则恢复期间会被站点反复拽走，永远无法落定
+    const quiet = await waitForVirtualScrollQuiet(() => this.getScrollContainer(), signal)
+    if (signal?.aborted) return false
+    if (!quiet) {
+      console.warn("[Ophel] Reading history restore skipped: Grok page kept scrolling")
+      return false
+    }
+
+    // responseId 本身不含位置信息，滚动估计需要接口缓存的分支位置
+    const data = await this.ensureApiOutlineData(signal)
+    if (!data || signal?.aborted) return false
+    const position = data.positionByResponseId.get(responseId)
+    if (position === undefined) {
+      console.warn("[Ophel] Reading history restore skipped: Grok message not found", responseId)
+      return false
+    }
+
+    const row = await this.probeMountVirtualRow(responseId, position, container, data, null, signal)
+    if (signal?.aborted) return false
+    if (!row) {
+      console.warn("[Ophel] Reading history restore skipped: Grok message not found", responseId)
+      return false
+    }
+
+    // key 是 responseId，天然稳定；文本签名兜底防极端错位
+    if (anchor.textSignature) {
+      const current = (row.textContent || "").trim().substring(0, 50)
+      if (current !== anchor.textSignature) {
+        console.warn(
+          "[Ophel] Reading history restore skipped: Grok message content changed",
+          responseId,
+        )
+        return false
+      }
+    }
+
+    const findRow = (c: HTMLElement) => c.querySelector(`[id="response-${responseId}"]`)
+    const docTop = (c: HTMLElement, el: Element) => {
+      const cRect = c.getBoundingClientRect()
+      const rRect = el.getBoundingClientRect()
+      return rRect.top - cRect.top + c.scrollTop
+    }
+
+    // 落定判定用「行相对容器顶部的视觉位置」而不是 scrollTop 像素：刷新后页面仍在
+    // 渲染，文档高度在漂，像素值几秒内稳定不下来；视觉位置才是保存 offset 的本义
+    const samples: string[] = []
+    let lastAlignedTop: number | null = null
+    const isAligned = (c: HTMLElement) => {
+      const target = findRow(c)
+      if (!target) {
+        samples.push("row-unmounted")
+        return false
+      }
+      const visualOffset = target.getBoundingClientRect().top - c.getBoundingClientRect().top
+      samples.push(`vo=${Math.round(visualOffset + offset)} st=${Math.round(c.scrollTop)}`)
+      return Math.abs(visualOffset + offset) <= 24
+    }
+    const settled = await settleVirtualScroll(
+      () => this.getScrollContainer(),
+      isAligned,
+      (c) => {
+        // 上一拍对准之后 scrollTop 又被改动：站点自己的滚动在与恢复竞争
+        if (lastAlignedTop !== null && Math.abs(c.scrollTop - lastAlignedTop) > 2) {
+          samples.push(`external-scroll=${Math.round(c.scrollTop)}`)
+        }
+        const target = findRow(c)
+        if (target) {
+          alignScrollTop(c, docTop(c, target) + offset)
+          lastAlignedTop = c.scrollTop
+        }
+      },
+      signal,
+      { timeoutMs: 4000 },
+    )
+    if (settled || signal?.aborted) return settled
+
+    // 收敛失败但行仍在目标附近（渲染抖动导致始终差几像素）则接受现状；
+    // 行已不在 DOM（被站点拽走）才算失败
+    const finalContainer = this.getScrollContainer()
+    const finalRow = finalContainer ? findRow(finalContainer) : null
+    if (finalContainer && finalRow) {
+      const visualOffset =
+        finalRow.getBoundingClientRect().top - finalContainer.getBoundingClientRect().top
+      if (Math.abs(visualOffset + offset) <= 240) {
+        console.warn(
+          "[Ophel] Reading history restore accepted with loose alignment",
+          samples.slice(-12),
+        )
+        return true
+      }
+    }
+    console.warn(
+      "[Ophel] Reading history restore incomplete: Grok scroll did not settle",
+      samples.slice(-12),
+    )
+    return false
+  }
+
+  /** 阅读历史恢复链路用：有界等待接口大纲数据就绪（按需触发一次拉取） */
+  private async ensureApiOutlineData(signal?: AbortSignal): Promise<GrokHistoryOutlineData | null> {
+    const sessionId = this.getSessionId()
+    const deadline = Date.now() + 8000
+    while (Date.now() < deadline) {
+      if (signal?.aborted) return null
+      const data = this.apiOutlineData
+      if (data && data.sessionId === sessionId) return data
+      // 连续解析失败已熔断，等下去也不会再有数据
+      if (this.apiOutlineFailures >= API_OUTLINE_PARSE_FAILURE_LIMIT) return null
+      if (!this.apiOutlineFetchPromise) {
+        this.maybeRefreshApiOutline()
+      }
+      await this.sleep(100)
+    }
+    return this.apiOutlineData?.sessionId === sessionId ? this.apiOutlineData : null
   }
 
   // ==================== 生成状态检测 ====================

@@ -601,7 +601,10 @@ export class ReadingHistoryManager {
     data: ReadingPosition,
     signal: AbortSignal,
   ): Promise<boolean> {
-    if (data.type === "virtual-row" && typeof data.rowKey === "number") {
+    if (
+      data.type === "virtual-row" &&
+      (typeof data.rowKey === "number" || typeof data.rowKey === "string")
+    ) {
       const anchor: AnchorData = {
         type: "virtual-row",
         rowKey: data.rowKey,

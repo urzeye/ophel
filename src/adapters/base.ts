@@ -138,9 +138,10 @@ export interface AnchorData {
   index?: number
   /**
    * virtual-row：虚拟行的稳定身份。
-   * Claude 为 data-rs-index 全对话序号，DeepSeek 为服务端 message_id。
+   * Claude 为 data-rs-index 全对话序号，DeepSeek 为服务端 message_id，
+   * Grok 为 responseId（uuid 字符串）。
    */
-  rowKey?: number
+  rowKey?: number | string
   offset: number
   textSignature?: string
 }

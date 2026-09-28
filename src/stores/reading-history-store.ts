@@ -18,7 +18,7 @@ export interface ReadingPosition {
   selector?: string
   textSignature?: string
   index?: number
-  rowKey?: number // virtual-row：虚拟行的稳定身份（Claude 全局序号 / DeepSeek message_id）
+  rowKey?: number | string // virtual-row：虚拟行的稳定身份（Claude 全局序号 / DeepSeek message_id / Grok responseId）
   offset?: number
   scrollHeight?: number // 保存时的容器高度
 }
