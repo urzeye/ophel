@@ -182,7 +182,6 @@ export class AIStudioAdapter extends SiteAdapter {
   private apiOutlineSessionId = ""
   private apiOutlineForceRefetch = false
   private apiOutlineWasGenerating = false
-  /** 桥未安装（启动竞态/极端环境）：不计熔断，下次 extract 再试 */
   // ==================== 基础信息 ====================
 
   match(): boolean {
