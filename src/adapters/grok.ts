@@ -221,6 +221,10 @@ export class GrokAdapter extends SiteAdapter {
   private exportApiData: GrokHistoryExportData | null = null
 
   async loadAllConversations(): Promise<void> {
+    // 侧边栏折叠（icon 模式）时对话列表不渲染，先主动展开再加载，
+    // 否则同步会扫不到任何对话
+    await this.ensureSidebarExpanded()
+
     const sidebar = document.querySelector(this.config.sitePrivateSelectors.sidebarScrollContainer)
     if (!sidebar) return
 
@@ -279,6 +283,34 @@ export class GrokAdapter extends SiteAdapter {
       }, 5000)
 
       return
+    }
+  }
+
+  /**
+   * 侧边栏折叠时点击 trigger 展开，并有界等待对话列表挂载。
+   * 折叠（icon 模式）下 content 容器仍在 DOM 但不渲染对话条目，
+   * 不展开直接扫描会误判为"侧边栏无对话"。
+   */
+  private async ensureSidebarExpanded(): Promise<void> {
+    const trigger = document.querySelector<HTMLElement>(
+      this.config.sitePrivateSelectors.sidebarTrigger,
+    )
+    if (!trigger) return
+    const collapsed =
+      trigger.getAttribute("data-state") === "closed" ||
+      trigger.closest('[data-state="collapsed"]') !== null
+    if (!collapsed) return
+
+    trigger.click()
+
+    // 展开后站点异步渲染对话列表，有界等待其出现（含"查看全部"入口）
+    const containerSelector = this.config.sitePrivateSelectors.sidebarScrollContainer
+    const itemSelector = this.config.conversation.itemSelector
+    const viewAllSelector = this.config.sitePrivateSelectors.viewAllButton
+    for (let i = 0; i < 30; i++) {
+      await this.sleep(100)
+      const sidebar = document.querySelector(containerSelector)
+      if (sidebar?.querySelector(itemSelector) || sidebar?.querySelector(viewAllSelector)) return
     }
   }
 

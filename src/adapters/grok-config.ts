@@ -45,6 +45,7 @@ type GrokPrivateSelectors = SitePrivateSelectors & {
   sidebarMenuItem: string
   sidebarMenu: string
   sidebarIcon: string
+  sidebarTrigger: string
   actionDialog: string
   cmdkRoot: string
   actionIconNodes: string
@@ -192,6 +193,7 @@ const createGrokConfig = (): GrokSiteConfig => {
       sidebarMenuItem: '[data-sidebar="menu-item"]',
       sidebarMenu: '[data-sidebar="menu"]',
       sidebarIcon: '[data-sidebar="icon"] svg',
+      sidebarTrigger: 'button[data-sidebar="trigger"]',
       actionDialog: '[role="dialog"]',
       cmdkRoot: "[cmdk-root]",
       actionIconNodes: "svg, path, use, [data-icon], [class*='icon'], [aria-label]",
