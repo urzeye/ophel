@@ -606,10 +606,14 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
             throw new Error(`HTTP error! status: ${response.status}`)
           }
 
+          // 附件导出场景需要响应头识别真实文件名与类型（如 Drive 下载）
+          const contentType = response.headers.get("content-type") || undefined
+          const contentDisposition = response.headers.get("content-disposition") || undefined
+
           const blob = await response.blob()
           const reader = new FileReader()
           reader.onloadend = () => {
-            sendResponse({ success: true, data: reader.result })
+            sendResponse({ success: true, data: reader.result, contentType, contentDisposition })
           }
           reader.onerror = () => {
             sendResponse({ success: false, error: "Failed to read blob" })

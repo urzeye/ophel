@@ -185,6 +185,8 @@ export const platform: Platform = {
       ok: true,
       status: 200,
       statusText: "OK",
+      contentType: response.contentType,
+      contentDisposition: response.contentDisposition,
       async text() {
         return typeof data === "string" ? data : JSON.stringify(data)
       },

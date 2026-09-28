@@ -12,7 +12,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 ### ✨ Improvements
 
 - **Switch conversations without reloading** — Switching to another conversation from the Chats tab now happens in place instead of reloading the whole page, making switching faster while keeping your current reading state.
-- **AI Studio long conversation outline and reading history** — In long AI Studio conversations, reply headings in the outline now stay complete no matter how far you scroll and clicking them jumps to the right spot; refreshing or reopening the page also returns you to where you left off reading.
+- **AI Studio long conversation outline, export, and reading history** — In long AI Studio conversations, reply headings in the outline now stay complete no matter how far you scroll and clicking them jumps to the right spot; exporting now captures the entire conversation at once without scrolling, keeping reasoning, attachments with real names, and images; refreshing or reopening the page also returns you to where you left off reading.
 
 ### 🐛 Bug Fixes
 

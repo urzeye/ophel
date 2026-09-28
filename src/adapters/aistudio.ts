@@ -18,6 +18,7 @@ import {
   installAIStudioRpcBridge,
   type AIStudioRpcBridgeWindow,
 } from "~core/aistudio-rpc-bridge"
+import { platform } from "~platform"
 import { useSettingsStore } from "~stores/settings-store"
 import {
   createExportAssetCollector,
@@ -68,6 +69,7 @@ import {
 } from "./aistudio-config"
 import {
   parseAIStudioHistoryOutline,
+  type AIStudioHistoryAttachment,
   type AIStudioHistoryOutlineData,
 } from "./aistudio-history-outline"
 import type { BuiltinSiteConfig } from "./declarative"
@@ -1629,6 +1631,235 @@ export class AIStudioAdapter extends SiteAdapter {
     return mapping
   }
 
+  // ==================== API 数据源导出 ====================
+
+  /**
+   * 导出优先走 ResolveDriveResource 接口拿全量 markdown（公式/代码零损耗、
+   * 无需滚动收集，且主动调用不依赖页面自身的请求时机）；接口不可用或结构
+   * 异常时返回 null，回退现有 DOM/滚动收集。
+   */
+  private async collectApiExportMessageSnapshots(
+    context: ExportLifecycleContext,
+    collector?: ExportAssetCollector,
+  ): Promise<AIStudioExportMessageSnapshot[] | null> {
+    if (this.isSharePage()) return null
+    const sessionId = this.getSessionId()
+    if (!sessionId) return null
+
+    const result = await this.requestRpcResolveDriveResource(sessionId)
+    if (result.kind !== "ok") return null
+
+    const parsed = parseAIStudioHistoryOutline(result.payload)
+    if (!parsed || parsed.sessionId !== sessionId) return null
+
+    // 轮次空间为绝对序号（含纯附件轮）：提问、附件、回答取并集后按序组装
+    const turnIndexes = new Set<number>()
+    parsed.userQueries.forEach((query) => turnIndexes.add(query.queryIndex))
+    parsed.attachmentsByQueryIndex.forEach((_, index) => turnIndexes.add(index))
+    parsed.replyMarkdownByQueryIndex.forEach((_, index) => turnIndexes.add(index))
+    if (turnIndexes.size === 0) return null
+
+    const includeThoughts = this.shouldIncludeThoughtsInExport()
+    const inlineImages = context.format === "markdown" && context.packaging !== "zip"
+    const messages: AIStudioExportMessageSnapshot[] = []
+    let order = 0
+
+    for (const turnIndex of Array.from(turnIndexes).sort((left, right) => left - right)) {
+      const query = parsed.userQueries.find((entry) => entry.queryIndex === turnIndex)
+      const attachment = parsed.attachmentsByQueryIndex.get(turnIndex)
+      if (query || attachment) {
+        const content = await this.buildApiExportUserContent(
+          query?.markdown ?? "",
+          attachment,
+          collector,
+          inlineImages,
+        )
+        if (content) {
+          messages.push({
+            role: "user",
+            turnKey: `api-user-${turnIndex}`,
+            order: order++,
+            content,
+          })
+        }
+      }
+
+      const thoughtBlocks = includeThoughts
+        ? (parsed.thoughtsByQueryIndex.get(turnIndex) ?? []).map((thought) =>
+            this.formatAsThoughtBlockquote(thought),
+          )
+        : []
+      const reply = parsed.replyMarkdownByQueryIndex.get(turnIndex)?.trim() ?? ""
+      const assistantContent = [...thoughtBlocks, reply].filter(Boolean).join("\n\n")
+      if (assistantContent) {
+        messages.push({
+          role: "assistant",
+          turnKey: `api-model-${turnIndex}`,
+          order: order++,
+          content: assistantContent,
+        })
+      }
+    }
+
+    return messages.length > 0 ? messages : null
+  }
+
+  /** 组装 API 路径的用户消息：提问原文 + 附件（图片 zip 内嵌 / 单文件 data URL / 真实链接） */
+  private async buildApiExportUserContent(
+    markdown: string,
+    attachment: AIStudioHistoryAttachment | undefined,
+    collector: ExportAssetCollector | undefined,
+    inlineImages: boolean,
+  ): Promise<string> {
+    if (!attachment || (attachment.images.length === 0 && attachment.files.length === 0)) {
+      return markdown.trim()
+    }
+
+    const downloaded = new Map<string, Blob>()
+
+    // Promise.all + map 保持与响应一致的原顺序（不能用 forEach+push，完成顺序乱序）
+    const images: AIStudioUserAttachment[] = await Promise.all(
+      attachment.images.map(async (fileId, index): Promise<AIStudioUserAttachment> => {
+        const needBytes = Boolean(collector) || inlineImages
+        const info = await this.fetchDriveAttachment(fileId, needBytes)
+        if (info.blob) downloaded.set(fileId, info.blob)
+        return {
+          kind: "image",
+          name: info.name || `image-${index + 1}.png`,
+          source: this.buildDriveDownloadUrl(fileId),
+        }
+      }),
+    )
+    const files: AIStudioUserAttachment[] = await Promise.all(
+      attachment.files.map(async (fileId, index): Promise<AIStudioUserAttachment> => {
+        const info = await this.fetchDriveAttachment(fileId, false)
+        return {
+          kind: "file",
+          name: info.name || `attachment-${index + 1}`,
+          source: this.buildDriveDownloadUrl(fileId),
+        }
+      }),
+    )
+
+    let imageMarkdown: string[]
+    if (inlineImages) {
+      // 单文件导出：图片转 data URL 内嵌，保证脱离登录态也能查看
+      const inlined = await Promise.all(
+        images.map(async (image) => {
+          const blob = downloaded.get(this.extractDriveFileIdFromUrl(image.source) || "")
+          if (!blob) return `![${image.name}](${image.source})`
+          const dataUrl = await this.convertBlobToDataUrl(blob)
+          return dataUrl ? `![${image.name}](${dataUrl})` : `![${image.name}](${image.source})`
+        }),
+      )
+      imageMarkdown = inlined
+    } else {
+      imageMarkdown = this.formatAIStudioUserImageAttachments(images, collector)
+      // zip 打包：collector 只登记了 sourceUrl，页面上下文无法跨域下载
+      // drive.usercontent（CORS 不允许带凭证），这里把后台通道取回的字节补上
+      if (collector) {
+        for (const asset of collector.assets) {
+          if (!asset.sourceUrl || asset.content !== undefined) continue
+          const blob = downloaded.get(this.extractDriveFileIdFromUrl(asset.sourceUrl) || "")
+          if (blob) asset.content = blob
+        }
+      }
+    }
+
+    // 文件附件不打包字节（可能触发 Drive 病毒扫描两步流且体积不可控），统一给真实链接
+    const fileMarkdown = this.formatAIStudioUserFileAttachments(files, undefined)
+    const fileBlock =
+      fileMarkdown.length > 0 ? `${t("exportAttachmentsLabel")}:\n${fileMarkdown.join("\n")}` : ""
+
+    return [imageMarkdown.join("\n\n"), fileBlock, markdown.trim()].filter(Boolean).join("\n\n")
+  }
+
+  /** AI Studio 附件即用户 Drive 文件，下载端点带登录态可打开（真实链接） */
+  private buildDriveDownloadUrl(fileId: string, extraParams = ""): string {
+    return `https://drive.usercontent.google.com/download?id=${encodeURIComponent(fileId)}&export=download&authuser=${resolveGoogleAuthUser()}${extraParams}`
+  }
+
+  private extractDriveFileIdFromUrl(url: string): string | null {
+    try {
+      return new URL(url).searchParams.get("id")
+    } catch {
+      return null
+    }
+  }
+
+  /**
+   * 经平台通道（扩展 background / 油猴 GM_xhr，均带登录 cookie）获取附件信息。
+   * 浏览器页面上下文读不到 Content-Disposition（CORS 暴露头不含），必须走这里。
+   * 大文件首次返回病毒扫描警告页：从页内解析文件名与确认参数，需要字节时二次请求。
+   */
+  private async fetchDriveAttachment(
+    fileId: string,
+    withContent: boolean,
+  ): Promise<{ name: string | null; blob: Blob | null }> {
+    try {
+      const response = await platform.fetch(this.buildDriveDownloadUrl(fileId))
+      if (!response.ok) return { name: null, blob: null }
+
+      if (response.contentType?.includes("text/html")) {
+        const html = await response.text()
+        const name = this.parseDriveInterstitialFileName(html)
+        if (!withContent) return { name, blob: null }
+        const uuid = html.match(/name="uuid" value="([^"]+)"/)?.[1]
+        const at = html.match(/name="at" value="([^"]+)"/)?.[1]
+        if (!uuid || !at) return { name, blob: null }
+        const confirmed = await platform.fetch(
+          this.buildDriveDownloadUrl(
+            fileId,
+            `&confirm=t&uuid=${encodeURIComponent(uuid)}&at=${encodeURIComponent(at)}`,
+          ),
+        )
+        if (!confirmed.ok) return { name, blob: null }
+        return {
+          name: this.parseContentDispositionFilename(confirmed.contentDisposition) || name,
+          blob: await confirmed.blob(),
+        }
+      }
+
+      const name = this.parseContentDispositionFilename(response.contentDisposition)
+      if (!withContent) return { name, blob: null }
+      return { name, blob: await response.blob() }
+    } catch (error) {
+      console.warn("[AIStudioAdapter] Failed to fetch attachment:", fileId, error)
+      return { name: null, blob: null }
+    }
+  }
+
+  private parseContentDispositionFilename(disposition?: string): string | null {
+    if (!disposition) return null
+    const encoded = disposition.match(/filename\*\s*=\s*(?:UTF-8|utf-8)''([^;]+)/)
+    if (encoded?.[1]) {
+      try {
+        return decodeURIComponent(encoded[1].trim())
+      } catch {
+        return encoded[1].trim()
+      }
+    }
+    const quoted = disposition.match(/filename\s*=\s*"([^"]+)"/)
+    if (quoted?.[1]) return quoted[1].trim()
+    const bare = disposition.match(/filename\s*=\s*([^;]+)/)
+    return bare?.[1]?.trim() || null
+  }
+
+  /** 病毒扫描警告页的文件名在 uc-name-size 锚点文本里 */
+  private parseDriveInterstitialFileName(html: string): string | null {
+    const match = html.match(/uc-name-size[^>]*>\s*<a[^>]*>([^<]+)</)
+    return match?.[1]?.trim() || null
+  }
+
+  private convertBlobToDataUrl(blob: Blob): Promise<string | null> {
+    return new Promise((resolve) => {
+      const reader = new FileReader()
+      reader.onloadend = () => resolve(typeof reader.result === "string" ? reader.result : null)
+      reader.onerror = () => resolve(null)
+      reader.readAsDataURL(blob)
+    })
+  }
+
   private syncConversationListAfterDelete(id: string): void {
     if (this.cachedLibraryConversations) {
       this.cachedLibraryConversations = this.cachedLibraryConversations.filter(
@@ -2288,6 +2519,26 @@ export class AIStudioAdapter extends SiteAdapter {
       context.format === "markdown" && context.packaging === "zip"
         ? createExportAssetCollector()
         : undefined
+
+    // 优先走 ResolveDriveResource 接口：全量 markdown + 思考链 + 附件真实链接，
+    // 主动发起、无需滚动收集；失败回退 DOM/滚动收集
+    const apiMessages = await this.collectApiExportMessageSnapshots(context, collector)
+    if (apiMessages && apiMessages.length > 0) {
+      this.exportCollectionReport = {
+        expectedCount: apiMessages.length,
+        collectedCount: apiMessages.length,
+        missingAnchors: [],
+        hasTruncated: false,
+      }
+      if (collector) {
+        this.exportBundleCache = {
+          messages: apiMessages.map(({ role, content }) => ({ role, content })),
+          assets: collector.assets,
+        }
+      }
+      this.mountExportSnapshot(apiMessages)
+      return { count: apiMessages.length }
+    }
 
     const scrollContainer =
       this.getScrollContainer() || document.querySelector(this.getResponseContainerSelector())

@@ -57,6 +57,10 @@ export interface FetchResponse {
   ok: boolean
   status: number
   statusText: string
+  /** 响应 Content-Type（导出附件类型识别用；平台不支持时缺省） */
+  contentType?: string
+  /** 响应 Content-Disposition（导出附件真实文件名用；平台不支持时缺省） */
+  contentDisposition?: string
   text(): Promise<string>
   json<T>(): Promise<T>
   blob(): Promise<Blob>

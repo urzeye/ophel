@@ -42,6 +42,7 @@ declare function GM_xmlhttpRequest(details: {
     statusText: string
     responseText: string
     response: unknown
+    responseHeaders?: string
   }) => void
   onerror?: (error: unknown) => void
 }): void
@@ -130,10 +131,18 @@ export const platform: Platform = {
         responseType: "text",
         onload(response) {
           const ok = response.status >= 200 && response.status < 300
+          const readHeader = (name: string): string | undefined => {
+            const match = response.responseHeaders?.match(
+              new RegExp(`^${name}:\\s*(.+?)\\s*$`, "im"),
+            )
+            return match?.[1] || undefined
+          }
           resolve({
             ok,
             status: response.status,
             statusText: response.statusText,
+            contentType: readHeader("content-type"),
+            contentDisposition: readHeader("content-disposition"),
             async text() {
               return response.responseText
             },

@@ -121,8 +121,20 @@ GET https://drive.usercontent.google.com/download?id=<fileId>&export=download&au
   `files/<id>?alt=media`（页面加载时确实会调 `GenerateAccessToken`），未实测，
   仅当 usercontent 路径失效时再启用。
 
+### 4.1 附件文件名与浏览器侧下载（2026-09-28 补测）
+
+- chunk 里**只有 Drive 文件 ID，没有文件名/MIME**（attachment chunk 全槽位 dump 确认）。
+- 真实文件名获取：图片 HEAD/GET 即返回 `content-disposition: attachment; filename="…"`；
+  大文件返回病毒扫描警告页，文件名在页内 `uc-name-size` 锚点文本里。
+- **浏览器页面上下文拿不到文件名**：drive.usercontent 响应 `ACAO: *` 与
+  `credentials: include` 冲突，且 `content-disposition` 不在 CORS 暴露头里——
+  必须走平台通道（扩展 background `PROXY_FETCH` / 油猴 GM_xhr），
+  `FetchResponse` 因此新增 `contentType`/`contentDisposition` 可选字段。
+- 附件为私有 Drive 资源（无 cookie 返回 HTML 登录页），导出链接仅用户本人登录态可开。
+- `GenerateAccessToken` 换 OAuth token 的路径实测 body 形状不明（400），弃用。
+
 大纲场景不需要附件内容（空文本 chunk 按无文本提问处理：计入 queryIndex 但不进大纲，
-同 DeepSeek 约定）；附件下载链路是给后续「接口导出」阶段备用的。
+同 DeepSeek 约定）；附件与思考链由导出路使用（§5 第 7 条）。
 
 ## 5. 实施计划（已落地，偏差见各条备注）
 
@@ -160,6 +172,17 @@ GET https://drive.usercontent.google.com/download?id=<fileId>&export=download&au
    纯文本对话 / 含附件对话 / 生成中跳过 / 会话切换。
    - 落地：typecheck / 820 测试 / build / build:firefox / build:userscript 全过；
      实机冒烟待人工进行。
+7. 导出接入（2026-09-28 追加）：
+   - `prepareConversationExport` 先走 `collectApiExportMessageSnapshots`
+     （主动调用接口，不依赖页面自身请求时机，也不要求虚拟滚动会话），
+     失败回退 DOM/滚动收集；解析器扩展输出 thoughts/attachments/replyMarkdown。
+   - 思考链按导出对话框「包含思考过程」开关拼接（与 DOM 路径同一
+     `formatAsThoughtBlockquote` 渲染）。
+   - 附件经平台通道取真实文件名；图片在 zip 打包时下载字节嵌入、单文件
+     markdown 时转 data URL 内嵌，其他情况给真实链接；文件附件统一给真实
+     链接（病毒扫描两步流字节不打包，体积不可控）。
+   - `package.json` host_permissions 新增 `https://drive.usercontent.google.com/*`
+     （background 代取附件的唯一权限需求；RPC 本身走页面上下文无需权限）。
 
 ## 6. 风险与未验证点
 

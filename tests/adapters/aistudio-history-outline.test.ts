@@ -55,8 +55,8 @@ describe("parseAIStudioHistoryOutline", () => {
     expect(data).not.toBeNull()
     expect(data!.sessionId).toBe("abc123")
     expect(data!.userQueries).toEqual([
-      { queryIndex: 1, text: "第一个问题" },
-      { queryIndex: 2, text: "第二个问题" },
+      { queryIndex: 1, text: "第一个问题", markdown: "第一个问题" },
+      { queryIndex: 2, text: "第二个问题", markdown: "第二个问题" },
     ])
     // 带文本提问序号空间：branchMessageIds/maxMessageId 与滚动条条目同构
     expect(data!.branchMessageIds).toEqual([1, 2])
@@ -74,6 +74,10 @@ describe("parseAIStudioHistoryOutline", () => {
     ).toBe(false)
     // 第二轮无标题
     expect(data!.headingsByQueryIndex.has(2)).toBe(false)
+    // 思考链单独收集，不进回答正文
+    expect(data!.thoughtsByQueryIndex.get(1)).toEqual(["**Thinking**\n\nLet me think..."])
+    expect(data!.replyMarkdownByQueryIndex.get(1)).toContain("## 第一节")
+    expect(data!.replyMarkdownByQueryIndex.get(1)).not.toContain("Thinking")
   })
 
   it("合并同一轮的附件与文本 chunk，纯附件轮计入轮次序号但不进提问序列", () => {
@@ -92,9 +96,15 @@ describe("parseAIStudioHistoryOutline", () => {
     expect(data).not.toBeNull()
     // 纯附件轮占用了绝对序号 2，但不进提问序列
     expect(data!.userQueries).toEqual([
-      { queryIndex: 1, text: "看看这些" },
-      { queryIndex: 3, text: "谢谢" },
+      { queryIndex: 1, text: "看看这些", markdown: "看看这些" },
+      { queryIndex: 3, text: "谢谢", markdown: "谢谢" },
     ])
+    // 附件按轮次（绝对序号）收集：第 1 轮图片+文件，第 2 轮纯图片无文本
+    expect(data!.attachmentsByQueryIndex.get(1)).toEqual({
+      images: ["img-1"],
+      files: ["file-1"],
+    })
+    expect(data!.attachmentsByQueryIndex.get(2)).toEqual({ images: ["img-2"], files: [] })
     // 附件所属轮的回答标题挂在该轮（绝对序号 1）上
     expect(data!.headingsByQueryIndex.get(1)).toEqual([{ level: 2, text: "分析", wordCount: 4 }])
     // branchMessageIds 只含带文本提问（与滚动条对齐）
