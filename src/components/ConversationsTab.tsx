@@ -428,32 +428,30 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
   const lastClickedConvIdRef = useRef<string | null>(null)
 
   // 批量选择：支持 Shift 范围连选（锚点与目标须在同一个文件夹的当前列表内）
-  const handleBatchSelect = useCallback(
-    (conv: Conversation, shiftKey: boolean) => {
-      const anchorId = lastClickedConvIdRef.current
-      if (shiftKey && anchorId && anchorId !== conv.id) {
-        const list = folderConversationsMap.get(conv.folderId) || []
-        const anchorIndex = list.findIndex((c) => c.id === anchorId)
-        const targetIndex = list.findIndex((c) => c.id === conv.id)
-        if (anchorIndex >= 0 && targetIndex >= 0) {
-          const [start, end] =
-            anchorIndex < targetIndex ? [anchorIndex, targetIndex] : [targetIndex, anchorIndex]
-          const rangeIds = list.slice(start, end + 1).map((c) => c.id)
-          setSelectedIds((prev) => new Set([...prev, ...rangeIds]))
-          return
-        }
+  const handleBatchSelect = useCallback((conv: Conversation, shiftKey: boolean) => {
+    const anchorId = lastClickedConvIdRef.current
+    if (shiftKey && anchorId && anchorId !== conv.id) {
+      // 通过 ref 读取最新列表，保持回调引用稳定，避免数据刷新时对话项 memo 失效
+      const list = folderConversationsMapRef.current.get(conv.folderId) || []
+      const anchorIndex = list.findIndex((c) => c.id === anchorId)
+      const targetIndex = list.findIndex((c) => c.id === conv.id)
+      if (anchorIndex >= 0 && targetIndex >= 0) {
+        const [start, end] =
+          anchorIndex < targetIndex ? [anchorIndex, targetIndex] : [targetIndex, anchorIndex]
+        const rangeIds = list.slice(start, end + 1).map((c) => c.id)
+        setSelectedIds((prev) => new Set([...prev, ...rangeIds]))
+        return
       }
+    }
 
-      lastClickedConvIdRef.current = conv.id
-      setSelectedIds((prev) => {
-        const next = new Set(prev)
-        if (next.has(conv.id)) next.delete(conv.id)
-        else next.add(conv.id)
-        return next
-      })
-    },
-    [folderConversationsMap],
-  )
+    lastClickedConvIdRef.current = conv.id
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(conv.id)) next.delete(conv.id)
+      else next.add(conv.id)
+      return next
+    })
+  }, [])
 
   // 获取文件夹计数
   const getFolderCount = (folderId: string): number => {
@@ -1001,7 +999,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
         </div>
 
         {/* 文件夹列表 */}
-        <div className="conversations-folder-list">
+        <div className={`conversations-folder-list ${batchMode ? "is-batch-mode" : ""}`}>
           {folders.filter(shouldShowFolder).length === 0 ? (
             <div className="conversations-empty">
               {searchResult ? t("conversationsNoSearchResult") : t("conversationsEmpty")}

@@ -151,6 +151,11 @@
   height: 0;
 } /* Chrome */
 
+/* 批量模式下禁用文本选择，避免 Shift 连选时触发原生文本高亮 */
+.conversations-folder-list.is-batch-mode {
+  user-select: none;
+}
+
 /* 对话 Tab 主容器隐藏滚动条 */
 .conversations-content {
   scrollbar-width: none; /* Firefox */
