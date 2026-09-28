@@ -166,6 +166,7 @@ const createAIStudioConfig = (): AIStudioSiteConfig => {
         'button mat-icon[fonticon="stop"]',
       ],
       scrollContainer: [
+        "ms-autoscroll-container",
         ".chat-container",
         ".virtual-scroll-container",
         '[class*="scroll"]',

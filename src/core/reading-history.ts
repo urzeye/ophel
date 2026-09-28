@@ -637,7 +637,13 @@ export class ReadingHistoryManager {
 
     try {
       const restored = this.adapter.restoreScroll(data as AnchorData)
-      if (signal.aborted || !restored) return false
+      if (signal.aborted) return false
+      if (!restored) {
+        console.warn("[Ophel] Reading history restore failed: content anchor not found", {
+          type: data.type,
+        })
+        return false
+      }
       const container = this.adapter.getScrollContainer() || document.documentElement
       this.restoredTop = (container as HTMLElement).scrollTop || window.scrollY
       document.documentElement.dataset.ophelPositionLock = String(this.restoredTop)

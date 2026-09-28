@@ -170,6 +170,11 @@ GET https://drive.usercontent.google.com/download?id=<fileId>&export=download&au
      `restoreVirtualAnchor` / `waitForVirtualListEdge` /
      `getVirtualOutlinePositionSnapshot` / `getVirtualOutlineRowIndex`
      六个覆写（对齐 DeepSeek/Claude 契约）。
+     恢复链路要点（2026-09-28 实测定稿）：离屏轮次是固定 100px 高度的占位空壳，
+     且打开会话后站点会持续自动滚到底部——`restoreVirtualAnchor` 必须先
+     `waitForVirtualScrollQuiet` 等开场滚动安静，再经滚动条 reveal，
+     最后用「turn 相对容器顶部的视觉位置」做落定判定反复校正
+     （`settleVirtualScroll`），与 DeepSeek 同一闭环。
 4. `package.json` host_permissions 增加 `https://*.clients6.google.com/*`
    （参照 `files.deepseeksvc.com` 先例放 host_permissions）。
    - 落地偏差：**未新增**。请求由 main world 页面上下文代发，不经过扩展

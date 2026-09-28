@@ -40,7 +40,11 @@ import {
 import { t } from "~utils/i18n"
 import { EVENT_OUTLINE_DATA_UPDATED } from "~utils/messaging"
 import { isApiOutlineStale, shouldAttemptApiOutlineFetch } from "~utils/outline-api-source"
-import { alignScrollTop, settleVirtualScroll } from "~utils/virtual-scroll-settle"
+import {
+  alignScrollTop,
+  settleVirtualScroll,
+  waitForVirtualScrollQuiet,
+} from "~utils/virtual-scroll-settle"
 import type {
   VirtualOutlinePositionSnapshot,
   VirtualPositionAnchor,
@@ -519,9 +523,12 @@ export class AIStudioAdapter extends SiteAdapter {
 
   getScrollContainer(): HTMLElement | null {
     for (const selector of this.config.selectors.scrollContainer) {
-      const container = document.querySelector(selector) as HTMLElement
-      if (container && container.scrollHeight > container.clientHeight) {
-        return container
+      // 同一选择器可能命中多个候选（如 virtual-scroll-container 会命中
+      // 每个 turn 的内层容器），逐个检查可滚动性，不能只验第一个
+      for (const container of Array.from(document.querySelectorAll(selector))) {
+        if (container instanceof HTMLElement && container.scrollHeight > container.clientHeight) {
+          return container
+        }
       }
     }
 
@@ -3108,11 +3115,19 @@ export class AIStudioAdapter extends SiteAdapter {
   /**
    * 当前会话是否为虚拟滚动渲染：时间线滚动条列出全部提问，
    * 存在未挂载的提问条目即说明会话被虚拟化。
+   * 内容级虚拟化下 turn 空壳仍在 DOM（命中 .chat-turn-container.user），
+   * 因此挂载判定以 turn 内是否渲染出真实内容为准。
    */
   override isVirtualScrollConversation(): boolean {
     const entries = this.getScrollbarQueryEntries()
     if (entries.length < 2) return false
-    return entries.some((entry) => !entry.element)
+    if (entries.some((entry) => !entry.element)) return true
+    const turnSelector = this.config.sitePrivateSelectors.turn
+    const contentSelector = this.config.sitePrivateSelectors.mountedContent
+    return entries.some((entry) => {
+      const turn = entry.element?.closest(turnSelector)
+      return !turn || !turn.querySelector(contentSelector)
+    })
   }
 
   override getVirtualAnchorElement(): AnchorData | null {
@@ -3155,6 +3170,9 @@ export class AIStudioAdapter extends SiteAdapter {
   /**
    * 按滚动条序号把目标提问挂载出来并对齐保存时的行内偏移。
    * 滚动条按钮点击由站点自己完成虚拟列表跳转，无需探测滚动。
+   * 站点打开会话后会持续自动滚到底部，且离屏轮次是固定高度占位空壳
+   * （坐标随渲染漂移），因此先等开场滚动安静再动手，对齐 DeepSeek 的
+   * 恢复闭环。
    */
   override async restoreVirtualAnchor(anchor: AnchorData, signal?: AbortSignal): Promise<boolean> {
     if (anchor.type !== "virtual-row" || typeof anchor.rowKey !== "number") return false
@@ -3185,19 +3203,63 @@ export class AIStudioAdapter extends SiteAdapter {
       return false
     }
 
+    // 等站点开场滚动（自动去底部、渲染引发的调整）安静下来，
+    // 否则恢复期间会被站点反复拽走，永远无法落定
+    const quiet = await waitForVirtualScrollQuiet(() => this.getScrollContainer(), signal)
+    if (signal?.aborted) return false
+    if (!quiet) {
+      console.warn("[Ophel] Reading history restore skipped: AI Studio page kept scrolling")
+      return false
+    }
+
     this.revealUserQueryThroughScrollbar(entry.turnId)
     const element = await this.waitForUserQueryElementByTurnId(entry.turnId, entry.text)
     if (signal?.aborted) return false
     if (!element) return false
 
-    const container = this.getScrollContainer()
-    const turn = element.closest(this.config.sitePrivateSelectors.turn)
-    if (!container || !turn) return true
+    const offset = anchor.offset || 0
+    const turnSelector = this.config.sitePrivateSelectors.turn
+    const findTurn = () =>
+      this.findUserQueryElementByTurnId(entry.turnId)?.closest(turnSelector) ?? null
 
-    const turnTop =
-      turn.getBoundingClientRect().top - container.getBoundingClientRect().top + container.scrollTop
-    container.scrollTop = turnTop + (anchor.offset || 0)
-    return true
+    // 落定判定用「turn 相对容器顶部的视觉位置」而不是 scrollTop 像素：
+    // 页面仍在渲染，文档高度在漂，像素值几秒内稳定不下来；
+    // 视觉位置才是保存 offset 的本义
+    const isAligned = (c: HTMLElement) => {
+      const target = findTurn()
+      if (!target) return false
+      const visualOffset = target.getBoundingClientRect().top - c.getBoundingClientRect().top
+      return Math.abs(visualOffset + offset) <= 24
+    }
+    const settled = await settleVirtualScroll(
+      () => this.getScrollContainer(),
+      isAligned,
+      (c) => {
+        const target = findTurn()
+        if (!target) return
+        const turnTop =
+          target.getBoundingClientRect().top - c.getBoundingClientRect().top + c.scrollTop
+        alignScrollTop(c, turnTop + offset)
+      },
+      signal,
+      { timeoutMs: 4000 },
+    )
+    if (settled || signal?.aborted) return settled
+
+    // 收敛失败但 turn 仍在目标附近（渲染抖动导致始终差几像素）则接受现状；
+    // turn 已不在 DOM（被站点拽走）才算失败
+    const finalContainer = this.getScrollContainer()
+    const finalTurn = finalContainer ? findTurn() : null
+    if (finalContainer && finalTurn) {
+      const visualOffset =
+        finalTurn.getBoundingClientRect().top - finalContainer.getBoundingClientRect().top
+      if (Math.abs(visualOffset + offset) <= 240) {
+        console.warn("[Ophel] Reading history restore accepted with loose alignment")
+        return true
+      }
+    }
+    console.warn("[Ophel] Reading history restore failed: AI Studio turn did not settle")
+    return false
   }
 
   /**
