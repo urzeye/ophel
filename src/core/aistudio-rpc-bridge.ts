@@ -14,8 +14,9 @@
 import {
   buildGoogleAuthorizationHeader,
   GOOGLE_MAKER_SUITE_RPC_PATH,
+  recordGoogleApiKey,
   recordGoogleRpcOrigin,
-  resolveGoogleApiKey,
+  resolveGoogleApiKeys,
   resolveGoogleAuthUser,
   resolveGoogleRpcOrigins,
 } from "~utils/google-rpc-auth"
@@ -45,36 +46,43 @@ const executeRpc = async (
 ): Promise<{ ok: boolean; status: number; payload: unknown }> => {
   const origin = pageWindow.location.origin
   const authorization = await buildGoogleAuthorizationHeader(origin)
-  const apiKey = resolveGoogleApiKey(pageWindow)
-  if (!authorization || !apiKey) {
+  const apiKeys = resolveGoogleApiKeys(pageWindow)
+  if (!authorization || apiKeys.length === 0) {
     return { ok: false, status: 0, payload: { error: "rpc-auth-missing" } }
   }
 
   let lastStatus = 0
-  for (const rpcOrigin of resolveGoogleRpcOrigins()) {
-    try {
-      const response = await pageWindow.fetch(
-        `${rpcOrigin}${GOOGLE_MAKER_SUITE_RPC_PATH}/${method}`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            accept: "*/*",
-            authorization,
-            "content-type": "application/json+protobuf",
-            "x-goog-api-key": apiKey,
-            "x-goog-authuser": resolveGoogleAuthUser(),
-            "x-user-agent": "grpc-web-javascript/0.1",
+  const rpcOrigins = resolveGoogleRpcOrigins()
+  // 服务端按 key 粒度封禁方法，候选 key 逐个尝试
+  for (const apiKey of apiKeys) {
+    for (const rpcOrigin of rpcOrigins) {
+      try {
+        const response = await pageWindow.fetch(
+          `${rpcOrigin}${GOOGLE_MAKER_SUITE_RPC_PATH}/${method}`,
+          {
+            method: "POST",
+            credentials: "include",
+            headers: {
+              accept: "*/*",
+              authorization,
+              "content-type": "application/json+protobuf",
+              "x-goog-api-key": apiKey,
+              "x-goog-authuser": resolveGoogleAuthUser(),
+              "x-user-agent": "grpc-web-javascript/0.1",
+            },
+            body: JSON.stringify(args),
           },
-          body: JSON.stringify(args),
-        },
-      )
-      lastStatus = response.status
-      if (!response.ok) continue
-      recordGoogleRpcOrigin(rpcOrigin)
-      return { ok: true, status: response.status, payload: await response.json() }
-    } catch {
-      // 单个 origin 网络失败，尝试下一个候选
+        )
+        lastStatus = response.status
+        // 403 是 key 级封禁：同一 key 换 origin 无意义，直接试下一个 key
+        if (response.status === 403) break
+        if (!response.ok) continue
+        recordGoogleRpcOrigin(rpcOrigin)
+        recordGoogleApiKey(apiKey)
+        return { ok: true, status: response.status, payload: await response.json() }
+      } catch {
+        // 单个 origin 网络失败，尝试下一个候选
+      }
     }
   }
   return { ok: false, status: lastStatus, payload: null }

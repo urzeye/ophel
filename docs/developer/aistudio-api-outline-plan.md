@@ -74,8 +74,19 @@ body: ["<promptId>"]        // 裸 ID，不带 "prompts/" 前缀（注意 Delete
 | --- | --- | --- |
 | 登录 cookie | 401 missing credential | 不用读；`fetch` 带 `credentials:"include"` 浏览器自动附带（HttpOnly 无影响） |
 | `authorization: SAPISIDHASH <ts>_<sha1>` | 401 | 本地计算 `sha1("${ts} ${SAPISID} ${origin}")`；`SAPISID` 非 HttpOnly，`document.cookie` 可读 |
-| `x-goog-api-key` | 403 unregistered caller | 公开站点 key：`WIZ_global_data.SNlM0e`（仅 main world 可见）或 localStorage/script 扫描 |
+| `x-goog-api-key` | 403 unregistered caller | 公开站点 key（AIza 开头，非用户凭证），候选解析见下方「API key 实测」 |
 | `origin: https://aistudio.google.com` | 401 invalid credentials | 页面上下文发请求时浏览器自动携带 |
+
+API key 实测（2026-09-28 复测，结论更新）：
+
+- `WIZ_global_data.SNlM0e` **已不再存放 API key**（现为 `ABPs…:<时间戳>` 形态的 token），
+  不能再用它取 key。
+- 页面同时存在多个 AIza key（当前在 `WIu0Nc`、`PeqOqb` 字段），**服务端按 key 粒度
+  封禁方法**：`PeqOqb` 的 key 调 ResolveDriveResource 返回 403
+  `API_KEY_SERVICE_BLOCKED`（consumer project 823511539352），`WIu0Nc` 的 key 返回 200。
+- 落地：`resolveGoogleApiKeys()` 按「上次实测可用 → `WIu0Nc` → `SNlM0e`（若合法）→
+  WIZ 其他 AIza 值 → localStorage → script 扫描」返回候选列表；RPC 桥在 403 时换下一个
+  候选 key 重试，200 后 `recordGoogleApiKey()` 缓存，后续请求直接用可用 key。
 
 其他实测要点：
 
@@ -168,6 +179,11 @@ GET https://drive.usercontent.google.com/download?id=<fileId>&export=download&au
    - 落地：`maybeRefreshApiOutline` 挂在 `extractOutline` 开头，仅虚拟滚动会话拉取；
      生成结束强制重拉；接口回填条目 id 为 `aistudio-api:q<queryIndex>:h<order>`，
      跳转走「滚动条 reveal → 挂载后按文本定位标题」。
+   - 落地修正（2026-09-28）：**取消"仅虚拟滚动会话拉取"的闸门，所有会话统一拉取**。
+     原因：AI Studio 新版虚拟化改为挂载全部轮次的无内容空壳（`ms-chat-turn` 壳仍在、
+     命中 `.chat-turn-container.user`，但无 `ms-text-chunk` 等内容节点），
+     "滚动条条目是否挂载"已无法识别虚拟化，空壳会话 DOM 扫描必然缺内容且不触发接口。
+     接口回填本身按轮次跳过已有 DOM 标题的条目，短会话不会重复，统一拉取无副作用。
 6. 验证：`pnpm typecheck` + `pnpm test` + `pnpm build`，实机冒烟覆盖
    纯文本对话 / 含附件对话 / 生成中跳过 / 会话切换。
    - 落地：typecheck / 820 测试 / build / build:firefox / build:userscript 全过；

@@ -178,8 +178,6 @@ export class AIStudioAdapter extends SiteAdapter {
   private apiOutlineForceRefetch = false
   private apiOutlineWasGenerating = false
   /** 桥未安装（启动竞态/极端环境）：不计熔断，下次 extract 再试 */
-  private apiOutlineBridgeMissing = false
-
   // ==================== 基础信息 ====================
 
   match(): boolean {
@@ -1412,7 +1410,8 @@ export class AIStudioAdapter extends SiteAdapter {
   // ==================== API 数据源大纲 ====================
 
   /**
-   * 解析 ResolveDriveResource 响应；结构不符合预期时返回 null（调用方退化为纯 DOM 扫描）。
+   * 所有会话统一拉取接口大纲：页面可能把轮次渲染为无内容空壳，DOM 扫描不全；
+   * 回填只补 DOM 缺失的标题，已渲染轮次不会产生重复条目。
    * 过期判定与拉取闸门复用 outline-api-source 的站无关机制；
    * mountedIds 用语义等同的「时间线滚动条条目序号」（滚动条始终列出全部带文本提问）。
    */
@@ -1420,16 +1419,12 @@ export class AIStudioAdapter extends SiteAdapter {
     if (this.isSharePage()) return
     const sessionId = this.getSessionId()
     if (!sessionId) return
-    // 仅虚拟滚动会话需要接口回填：非虚拟会话 DOM 扫描已是全量，
-    // 接口条目只会与 DOM 条目重复
-    if (!this.isVirtualScrollConversation()) return
 
     if (sessionId !== this.apiOutlineSessionId) {
       // 会话切换时解除失败熔断与拉取冷却，新会话应立即补齐大纲
       this.apiOutlineSessionId = sessionId
       this.apiOutlineFailures = 0
       this.apiOutlineLastFetchAt = 0
-      this.apiOutlineBridgeMissing = false
     }
 
     // 生成结束（含编辑后重跑）后内容已变化，提问序号不变，必须强制重拉
@@ -1480,17 +1475,15 @@ export class AIStudioAdapter extends SiteAdapter {
         }
         if (result === "no-bridge") {
           // 桥未就绪（启动竞态）：不计失败，等下次 extract 再试
-          this.apiOutlineBridgeMissing = true
           return
         }
         this.apiOutlineFailures = 0
-        this.apiOutlineBridgeMissing = false
         if (result === "changed") {
           window.postMessage({ type: EVENT_OUTLINE_DATA_UPDATED }, "*")
         }
       })
       .catch((error) => {
-        // 网络/HTTP 失败计入熔断：连续失败时回退纯 DOM 扫描（行为同改动前）
+        // 网络/HTTP 失败计入熔断：连续失败时回退纯 DOM 扫描
         this.apiOutlineFailures += 1
         console.warn("[AIStudioAdapter] Failed to fetch conversation outline:", error)
       })
@@ -2588,8 +2581,8 @@ export class AIStudioAdapter extends SiteAdapter {
     const outline: OutlineItem[] = []
     const privateSelectors = this.config.sitePrivateSelectors
 
-    // 虚拟滚动会话的接口回填数据源：异步拉取 ResolveDriveResource，
-    // 补齐离屏轮次的回答标题（数据就绪后通过 EVENT_OUTLINE_DATA_UPDATED 触发刷新）
+    // 接口回填数据源：异步拉取 ResolveDriveResource，补齐 DOM 缺失的回答标题
+    // （数据就绪后通过 EVENT_OUTLINE_DATA_UPDATED 触发刷新）
     this.maybeRefreshApiOutline()
 
     // AI Studio 整个 main 区域都可能是滚动容器，或者 .chat-container
@@ -3559,21 +3552,9 @@ export class AIStudioAdapter extends SiteAdapter {
   /**
    * 收集导出快照。
    *
-   * **AI Studio 的关键事实**（用户在控制台跑诊断脚本拿到的 ground truth）：
-   *   - 长对话里**所有** `ms-chat-turn` 都常驻 DOM（358 turn 全部存在），不外层
-   *     虚拟化；
-   *   - 页面**没有** `<cdk-virtual-scroll-viewport>`，普通浏览器滚动，无 CDK；
-   *   - 真正的虚拟化在 turn 内部——`<div class="virtual-scroll-container">` 内
-   *     有 `<div style="height: Xpx">` 高度占位 + `<div class="turn-content">`
-   *     真实内容；离视口远的 turn 的 `.turn-content` 会被卸载只剩占位（见 demo.html）。
-   *
-   * 既然外层不虚拟化，正确做法就是**按 DOM 顺序遍历所有 ms-chat-turn**——这就是
-   * 天然的对话全集，不需要 sidebar 时间线，也不需要 click 任何按钮触发 CDK。
-   * 每个 turn 内部如果 `.turn-content` 没挂载，`scrollIntoView({block:"center"})`
-   * 让它进视口，等 Angular 内部虚拟化把内容渲染出来再抓。
-   *
-   * 旧的 sidebar-driven / scrollTop step-sweep / lookahead-click 方案都基于错误
-   * 的"外层 CDK 虚拟化"假设，已彻底废弃。
+   * 所有 `ms-chat-turn` 常驻 DOM（外层不虚拟化），真正的虚拟化在 turn 内部：
+   * 离视口远的 turn 的 `.turn-content` 会被卸载只剩高度占位。因此按 DOM 顺序
+   * 遍历所有 turn，对内容未挂载的 turn 先 `scrollIntoView` 触发渲染再抓。
    */
   private async collectExportMessageSnapshots(
     scrollContainer: HTMLElement,
@@ -3592,7 +3573,7 @@ export class AIStudioAdapter extends SiteAdapter {
     })
 
     if (allTurns.length === 0) {
-      // 极端兜底：完全找不到 turn（站点结构变更），退回原来的 step-sweep + repair
+      // 极端兜底：完全找不到 turn（站点结构变更），退回 step-sweep + repair
       return this.collectExportMessageSnapshotsByScrollSweep(scrollContainer, collector)
     }
 
@@ -3919,18 +3900,11 @@ export class AIStudioAdapter extends SiteAdapter {
     return stillMissing
   }
 
-  /** turn 内部是否已经渲染出真实内容（不是只剩高度占位）。 */
   /**
-   * 严格判定 turn 内部是否真的渲染出了可抓取的实际内容。
-   *
-   * AI Studio 的内层虚拟化会先挂载 `<ms-prompt-chunk>` 外壳、再异步填充内部的
-   * `<ms-text-chunk>` / `<ms-thought-chunk>` / `<ms-image-chunk>`。如果只检测
-   * `<ms-prompt-chunk>` 是否存在，会在内部 chunk 还没渲染时就误以为"已挂载"，
-   * 然后 `extractUserQueryMarkdown` 抓到空字符串——这就是用户报告里 9 条 user 提问
-   * 缺失的原因（实测 158 个 user shell 在 DOM、156 个内部是空的）。
-   *
-   * 现在要求 `<ms-prompt-chunk>` 内部至少有一个真实内容 chunk
-   * （text / thought / image / file）才算挂载好。
+   * turn 内部是否已经渲染出真实内容（不是只剩高度占位）。
+   * 内层虚拟化先挂载 `<ms-prompt-chunk>` 外壳、再异步填充内部 chunk，
+   * 因此要求 prompt-chunk 内至少有一个真实内容 chunk（text/thought/image/file）
+   * 才算挂载好。
    */
   private turnHasMountedContent(turn: HTMLElement): boolean {
     const privateSelectors = this.config.sitePrivateSelectors
