@@ -125,6 +125,7 @@ const AISTUDIO_EXPORT_ASSISTANT_SELECTOR = `[${AISTUDIO_EXPORT_ROOT_ATTR}="1"] [
 const AISTUDIO_API_OUTLINE_FETCH_BACKOFF_MS = 10_000
 const AISTUDIO_API_OUTLINE_BOTTOM_TOLERANCE_PX = 100
 const AISTUDIO_RPC_REQUEST_TIMEOUT_MS = 10_000
+const AISTUDIO_API_HEADING_MOUNT_TIMEOUT_MS = 2_000
 
 interface AIStudioExportMessageSnapshot {
   role: "user" | "assistant"
@@ -2987,7 +2988,7 @@ export class AIStudioAdapter extends SiteAdapter {
     }
 
     // API 回填标题（无 DOM 元素）：先经时间线滚动条把所属轮次挂载出来，
-    // 再在已挂载区域内按文本定位标题；找不到标题时落到该轮提问
+    // 再等回答内容渲染后按文本定位标题；找不到标题时落到该轮提问
     const apiHeadingTarget = await this.resolveApiOutlineHeadingTarget(item)
     if (apiHeadingTarget) {
       return apiHeadingTarget
@@ -3030,7 +3031,38 @@ export class AIStudioAdapter extends SiteAdapter {
     const userElement = await this.waitForUserQueryElementByTurnId(entry.turnId, entry.text)
     if (!userElement) return null
 
-    return this.findMountedHeadingAfterUserQuery(userElement, heading.text) || userElement
+    return (await this.waitForApiHeadingMounted(userElement, heading.text)) || userElement
+  }
+
+  /**
+   * 揭示提问后目标回答可能仍是无内容空壳（内容按需渲染），把提问之后的
+   * 回答 turn 依次滚入视口触发渲染后重试文本定位；超时返回 null，
+   * 由调用方落到提问位置（对齐 DeepSeek 的揭示后轮询挂载逻辑）。
+   */
+  private async waitForApiHeadingMounted(
+    userElement: Element,
+    headingText: string,
+  ): Promise<Element | null> {
+    const immediate = this.findMountedHeadingAfterUserQuery(userElement, headingText)
+    if (immediate) return immediate
+
+    const privateSelectors = this.config.sitePrivateSelectors
+    const userTurn = userElement.closest(privateSelectors.turn)
+    if (!userTurn) return null
+
+    const deadline = Date.now() + AISTUDIO_API_HEADING_MOUNT_TIMEOUT_MS
+    let sibling = userTurn.nextElementSibling
+    while (sibling && Date.now() < deadline) {
+      // 到下一个提问轮为止
+      if (sibling.querySelector(this.config.selectors.userQuery)) break
+      if (sibling instanceof HTMLElement && !this.turnHasMountedContent(sibling)) {
+        await this.waitForTurnContentMounted(sibling, deadline - Date.now())
+      }
+      const found = this.findMountedHeadingAfterUserQuery(userElement, headingText)
+      if (found) return found
+      sibling = sibling.nextElementSibling
+    }
+    return null
   }
 
   /** 在提问所属轮次之后（下一个提问之前）的已挂载区域内按文本找标题 */

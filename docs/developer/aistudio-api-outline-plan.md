@@ -178,7 +178,8 @@ GET https://drive.usercontent.google.com/download?id=<fileId>&export=download&au
    数据更新后 postMessage `EVENT_OUTLINE_DATA_UPDATED`。
    - 落地：`maybeRefreshApiOutline` 挂在 `extractOutline` 开头，仅虚拟滚动会话拉取；
      生成结束强制重拉；接口回填条目 id 为 `aistudio-api:q<queryIndex>:h<order>`，
-     跳转走「滚动条 reveal → 挂载后按文本定位标题」。
+     跳转走「滚动条 reveal → 把提问之后的回答 turn 滚入视口触发内容渲染 →
+     按文本定位标题」，超时落到该轮提问（对齐 DeepSeek 揭示后轮询挂载的慢路径）。
    - 落地修正（2026-09-28）：**取消"仅虚拟滚动会话拉取"的闸门，所有会话统一拉取**。
      原因：AI Studio 新版虚拟化改为挂载全部轮次的无内容空壳（`ms-chat-turn` 壳仍在、
      命中 `.chat-turn-container.user`，但无 `ms-text-chunk` 等内容节点），
