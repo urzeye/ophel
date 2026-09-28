@@ -150,6 +150,45 @@ describe("parseGrokHistoryOutline", () => {
     expect(data!.headingsByMessageIndex.get(3)).toEqual([{ level: 2, text: "标题", wordCount: 0 }])
   })
 
+  it("normalizes uppercase senders from load-responses (observed in real payloads)", () => {
+    const nodes = linearNodes()
+    const tree = parseGrokResponseTree(buildTreePayload(nodes), SESSION_ID)!
+    const load = {
+      responses: [
+        { responseId: "u1", sender: "HUMAN", message: "问题" },
+        { responseId: "a1", sender: "ASSISTANT", message: "## 标题" },
+        { responseId: "u2", sender: "human", message: "问题二" },
+        { responseId: "a2", sender: "assistant", message: "回复二" },
+      ],
+    }
+
+    const data = parseGrokHistoryOutline(tree, load)
+    expect(data).not.toBeNull()
+    expect(data!.queryCount).toBe(2)
+    expect(data!.userQueries.map((query) => query.queryIndex)).toEqual([1, 2])
+    expect(data!.headingsByMessageIndex.get(1)).toEqual([{ level: 2, text: "标题", wordCount: 0 }])
+  })
+
+  it("keeps queryIndex absolute order when a human response is missing from load-responses", () => {
+    const nodes = linearNodes()
+    const tree = parseGrokResponseTree(buildTreePayload(nodes), SESSION_ID)!
+    const load = {
+      responses: [
+        { responseId: "u1", sender: "human", message: "问题" },
+        { responseId: "a1", sender: "assistant", message: "回复一" },
+        // u2 缺失：骨架 sender 标记它是提问，占住 queryIndex=2，不进大纲序列
+        { responseId: "a2", sender: "assistant", message: "## 标题" },
+      ],
+    }
+
+    const data = parseGrokHistoryOutline(tree, load)
+    expect(data).not.toBeNull()
+    expect(data!.queryCount).toBe(2)
+    expect(data!.userQueries).toEqual([{ messageIndex: 0, queryIndex: 1, text: "问题" }])
+    expect(data!.assistantIndexByQueryIndex.get(2)).toBe(3)
+    expect(data!.headingsByMessageIndex.get(3)).toEqual([{ level: 2, text: "标题", wordCount: 0 }])
+  })
+
   it("returns null for malformed load payloads", () => {
     const tree = parseGrokResponseTree(buildTreePayload(linearNodes()), SESSION_ID)!
     expect(parseGrokHistoryOutline(tree, null)).toBeNull()

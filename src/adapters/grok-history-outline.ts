@@ -21,6 +21,8 @@ export interface GrokResponseTree {
   sessionId: string
   /** 激活分支上的 responseId（根 → 叶顺序）；数组下标即分支位置序号 */
   branchResponseIds: string[]
+  /** 分支上各 responseId 的 sender（骨架自带，已归一小写；load-responses 缺失条目时兜底用） */
+  branchSenderByResponseId: Map<string, string>
   /** 变更检测签名（接口无 version）：节点总数 + 叶 responseId */
   signature: string
   /** 激活分支叶节点 responseId */
@@ -152,9 +154,19 @@ export function parseGrokResponseTree(
   const branchResponseIds = branch.map((message) => nodes[message.message_id].responseId)
   const leafResponseId = branchResponseIds[branchResponseIds.length - 1]
 
+  // sender 实测存在 "ASSISTANT" 大写形式，统一归一小写
+  const branchSenderByResponseId = new Map<string, string>()
+  for (const message of branch) {
+    const node = nodes[message.message_id]
+    if (typeof node.sender === "string" && node.sender) {
+      branchSenderByResponseId.set(node.responseId, node.sender.toLowerCase())
+    }
+  }
+
   return {
     sessionId,
     branchResponseIds,
+    branchSenderByResponseId,
     signature: `${nodes.length}:${leafResponseId}`,
     leafResponseId,
   }
@@ -180,7 +192,8 @@ export function parseGrokHistoryOutline(
   for (const item of responses) {
     if (typeof item?.responseId !== "string") continue
     if (typeof item.sender === "string") {
-      senderByResponseId.set(item.responseId, item.sender)
+      // sender 实测存在 "ASSISTANT" 大写形式，统一归一小写（与导出解析器同口径）
+      senderByResponseId.set(item.responseId, item.sender.toLowerCase())
     }
     if (typeof item.message === "string") {
       messageByResponseId.set(item.responseId, item.message)
@@ -201,7 +214,10 @@ export function parseGrokHistoryOutline(
     positionByResponseId.set(responseId, position)
 
     const message = messageByResponseId.get(responseId) ?? ""
-    const sender = senderByResponseId.get(responseId)
+    // load-responses 缺失（或无 sender）的条目按骨架 sender 保留结构位：
+    // human 仍计入 queryCount（保持 queryIndex 绝对序），assistant 跳过标题
+    const sender =
+      senderByResponseId.get(responseId) ?? tree.branchSenderByResponseId.get(responseId)
 
     if (sender === "human") {
       queryCount += 1
