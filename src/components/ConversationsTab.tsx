@@ -873,6 +873,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
               options={folderSelectOptions}
               value={lastUsedFolderId}
               ariaLabel={t("conversationsSelectFolder")}
+              buttonTitle={null}
               onOpenChange={setIsFolderSelectOpen}
               onChange={(selectedFolderId) => {
                 setLastUsedFolderId(selectedFolderId)

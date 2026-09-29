@@ -24,6 +24,8 @@ export interface SelectDropdownProps {
   menuClassName?: string
   optionClassName?: string
   ariaLabel?: string
+  /** 显式覆盖按钮的原生 title；传 null 可关闭（例如外层已有自定义 Tooltip 时避免双提示） */
+  buttonTitle?: string | null
   onOpenChange?: (open: boolean) => void
 }
 
@@ -48,6 +50,7 @@ export const SelectDropdown: React.FC<SelectDropdownProps> = ({
   menuClassName,
   optionClassName,
   ariaLabel,
+  buttonTitle,
   onOpenChange,
 }) => {
   const [open, setOpen] = useState(false)
@@ -247,7 +250,7 @@ export const SelectDropdown: React.FC<SelectDropdownProps> = ({
         aria-expanded={open}
         onClick={() => !disabled && setOpen((previous) => !previous)}
         onKeyDown={handleButtonKeyDown}
-        title={selectedOption?.title}
+        title={buttonTitle === undefined ? selectedOption?.title : buttonTitle || undefined}
         style={{
           width: "100%",
           display: "flex",
