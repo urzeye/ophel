@@ -13,6 +13,13 @@ export const markExportDiscovered = async (): Promise<void> => {
   await platform.storage.set(EXPORT_DISCOVERED_KEY, true)
 }
 
+/** 静默标记：持久化失败仅告警，不阻断导出主流程 */
+export const markExportDiscoveredQuiet = (): void => {
+  markExportDiscovered().catch((error) => {
+    console.warn("[Ophel] Failed to persist export discovery state:", error)
+  })
+}
+
 /**
  * 导出功能引导状态：大纲工具栏导出按钮的流光提示只在用户从未用过导出时展示，
  * 首次触发导出（任意入口）后永久停用，避免常驻动效干扰。
