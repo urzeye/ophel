@@ -3442,35 +3442,42 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                     alignItems: "flex-start",
                     marginBottom: "8px",
                   }}>
-                  {cardVariables.length > 0 && (
-                    <Tooltip
-                      content={cardVariables.map((v) => `{{${v.raw}}}`).join(", ")}
-                      triggerStyle={{ marginRight: "6px", flexShrink: 0, alignSelf: "center" }}>
-                      <span
-                        style={{
-                          fontSize: "12px",
-                          padding: "2px 7px",
-                          background: "var(--gh-bg-secondary, #f3f4f6)",
-                          borderRadius: "4px",
-                          color: "var(--gh-text-secondary, #6b7280)",
-                          fontFamily: "monospace",
-                        }}>
-                        {`{{×${cardVariables.length}}}`}
-                      </span>
-                    </Tooltip>
-                  )}
                   <div
                     style={{
-                      fontWeight: 600,
-                      fontSize: "14px",
-                      color: "var(--gh-text, #1f2937)",
                       flex: 1,
+                      display: "flex",
+                      alignItems: "center",
+                      minWidth: 0,
                       overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
                       paddingRight: "8px",
                     }}>
-                    {p.title}
+                    <span
+                      style={{
+                        fontWeight: 600,
+                        fontSize: "14px",
+                        color: "var(--gh-text, #1f2937)",
+                        minWidth: 0,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}>
+                      {p.title}
+                    </span>
+                    {cardVariables.length > 0 && (
+                      <Tooltip
+                        content={cardVariables.map((v) => `{{${v.raw}}}`).join(", ")}
+                        triggerStyle={{ flexShrink: 0, marginLeft: "6px" }}>
+                        <span
+                          style={{
+                            fontSize: "12px",
+                            color: "var(--gh-text-tertiary, #9ca3af)",
+                            fontFamily: "monospace",
+                            whiteSpace: "nowrap",
+                          }}>
+                          {`{{×${cardVariables.length}}}`}
+                        </span>
+                      </Tooltip>
+                    )}
                   </div>
                   <div
                     style={{
