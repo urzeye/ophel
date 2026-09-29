@@ -1591,9 +1591,9 @@
 
   /* 字体与排版 */
   font-weight: 600;
-  /* 与 outline-level-0 保持同一左内边距，让折叠箭头与同级标题纵向对齐；
-     左侧竖条锚点为绝对定位（::before），不占用布局空间 */
-  padding-left: 2px !important;
+  /* 折叠箭头保持在子级标题箭头（level-1 为 10px）左侧以维持层级方向，
+     同时给左缘竖条锚点留出间距，避免与箭头挤在一起 */
+  padding-left: 8px !important;
   margin-top: 14px;
   margin-bottom: 4px;
   border-radius: 8px !important; /* 强制圆角，防止被通用高亮样式变成直角 */
@@ -1616,7 +1616,7 @@
 .outline-item.user-query-node::before {
   content: "";
   position: absolute;
-  left: 4px;
+  left: 1px;
   top: 50%;
   transform: translateY(-50%);
   width: 4px;
