@@ -501,6 +501,7 @@ export const zhTW = {
   // 分類管理
   categoryManage: "分類管理",
   categoryEmpty: "暫無分類，新增提示詞時會自動建立分類",
+  promptsEmpty: "暫無提示詞",
   rename: "重新命名",
   newCategoryName: "請輸入新的分類名稱：",
   categoryRenamed: "分類已重新命名",

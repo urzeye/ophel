@@ -639,6 +639,7 @@ export const en = {
   // Category management
   categoryManage: "Category Management",
   categoryEmpty: "No categories yet. Categories are created when you add prompts.",
+  promptsEmpty: "No prompts yet",
   rename: "Rename",
   newCategoryName: "Enter new category name:",
   categoryRenamed: "Category renamed",

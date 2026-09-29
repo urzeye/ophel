@@ -628,6 +628,7 @@ export const ko = {
   // Category management
   categoryManage: "카테고리 관리",
   categoryEmpty: "아직 카테고리가 없습니다. 프롬프트를 추가할 때 카테고리가 생성됩니다.",
+  promptsEmpty: "프롬프트가 없습니다",
   rename: "이름 바꾸기",
   newCategoryName: "새 카테고리 이름 입력:",
   categoryRenamed: "카테고리 이름이 변경되었습니다",

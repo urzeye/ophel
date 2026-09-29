@@ -634,6 +634,7 @@ export const de = {
   // Category management
   categoryManage: "Kategorien",
   categoryEmpty: "Noch keine Kategorien.",
+  promptsEmpty: "Keine Prompts",
   rename: "Umbenennen",
   newCategoryName: "Neuer Name:",
   categoryRenamed: "Name geändert",

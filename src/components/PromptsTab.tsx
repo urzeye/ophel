@@ -3389,7 +3389,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
               color: "var(--gh-text-tertiary, #9ca3af)",
               fontSize: "14px",
             }}>
-            暂无提示词
+            {t("promptsEmpty")}
           </div>
         ) : (
           filtered.map((p) => {

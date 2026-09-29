@@ -648,6 +648,7 @@ export const zhCN = {
   // 分类管理
   categoryManage: "分类管理",
   categoryEmpty: "暂无分类，添加提示词时会自动创建分类",
+  promptsEmpty: "暂无提示词",
   rename: "重命名",
   newCategoryName: "请输入新的分类名称：",
   categoryRenamed: "分类已重命名",

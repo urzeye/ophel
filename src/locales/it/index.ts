@@ -655,6 +655,7 @@ export const it = {
   categoryManage: "Gestione delle categorie",
   categoryEmpty:
     "Nessuna categoria ancora. Le categorie vengono create quando si aggiungono prompt.",
+  promptsEmpty: "Nessun prompt",
   rename: "Rinominare",
   newCategoryName: "Inserisci il nuovo nome della categoria:",
   categoryRenamed: "Categoria rinominata",

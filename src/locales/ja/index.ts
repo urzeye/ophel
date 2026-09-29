@@ -639,6 +639,7 @@ export const ja = {
   // Category management
   categoryManage: "カテゴリ管理",
   categoryEmpty: "カテゴリがありません。プロンプト作成時にカテゴリを指定して作成してください。",
+  promptsEmpty: "プロンプトがありません",
   rename: "名前変更",
   newCategoryName: "新しいカテゴリ名を入力:",
   categoryRenamed: "名前を変更しました",

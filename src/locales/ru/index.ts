@@ -629,6 +629,7 @@ export const ru = {
   // Category management
   categoryManage: "Категории",
   categoryEmpty: "Категорий пока нет.",
+  promptsEmpty: "Нет промптов",
   rename: "Переименовать",
   newCategoryName: "Новое имя:",
   categoryRenamed: "Имя изменено",
