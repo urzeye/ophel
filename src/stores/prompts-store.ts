@@ -8,6 +8,7 @@ import { create } from "zustand"
 import { createJSONStorage, persist } from "zustand/middleware"
 
 import { getDefaultPrompts, VIRTUAL_CATEGORY } from "~constants"
+import { getAllLocalizedTexts } from "~utils/i18n"
 import type { Prompt } from "~utils/storage"
 
 import { chromeStorageAdapter } from "./chrome-adapter"
@@ -36,6 +37,15 @@ interface PromptsState {
 
 // Captured set for safe hydration (avoids referencing store variable before assignment in sync hydration)
 let _completeHydration: (() => void) | null = null
+
+// 历史版本会把保存时的界面语言「未分类」文案写进 category（如"未分类"/"Uncategorized"），
+// 切换语言后同一批提示词被拆进不同分组；统一归一为空串（未分类），展示层按当前语言渲染
+const normalizeLegacyUncategorized = (prompts: Prompt[]): Prompt[] => {
+  const legacyNames = new Set(getAllLocalizedTexts("uncategorized"))
+  return prompts.map((p) =>
+    p.category && legacyNames.has(p.category) ? { ...p, category: "" } : p,
+  )
+}
 
 export const usePromptsStore = create<PromptsState>()(
   persist(
@@ -118,6 +128,14 @@ export const usePromptsStore = create<PromptsState>()(
       name: "prompts", // chrome.storage key
       storage: createJSONStorage(() => chromeStorageAdapter),
       partialize: (state) => ({ prompts: state.prompts }),
+      version: 1,
+      migrate: (persistedState, version) => {
+        const state = persistedState as { prompts?: Prompt[] } | undefined
+        if (version < 1 && Array.isArray(state?.prompts)) {
+          return { ...state, prompts: normalizeLegacyUncategorized(state.prompts) }
+        }
+        return state
+      },
       onRehydrateStorage: () => () => {
         _completeHydration?.()
       },

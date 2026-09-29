@@ -1901,7 +1901,8 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
       return
     }
 
-    const newCategory = editingPrompt.category || t("uncategorized")
+    // 未选择分类时保持空串（未分类），展示层按当前语言渲染，避免把本地化文案写进数据
+    const newCategory = editingPrompt.category || ""
     let shouldSwitchToNewCategory = false
 
     if (editingPrompt.id) {
@@ -2019,12 +2020,10 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     if (prompt) {
       setEditingPrompt({ ...prompt })
     } else {
-      // 新建时：如果当前选中了真实分类，使用该分类；否则使用第一个真实分类或「未分类」
+      // 新建时：如果当前选中了真实分类，使用该分类；否则使用第一个真实分类或留空（未分类）
       const isVirtualCategory =
         selectedCategory === VIRTUAL_CATEGORY.ALL || selectedCategory === VIRTUAL_CATEGORY.RECENT
-      const defaultCategory = isVirtualCategory
-        ? categories[0] || t("uncategorized")
-        : selectedCategory
+      const defaultCategory = isVirtualCategory ? categories[0] || "" : selectedCategory
       setEditingPrompt({ title: "", content: "", category: defaultCategory })
     }
     setIsModalOpen(true)
