@@ -250,6 +250,13 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
     return () => unsubscribe()
   }, [manager, loadData])
 
+  // Tag 查表 Map（O(1) 查找替代 tags.find()）
+  const tagMap = useMemo(() => {
+    const map = new Map<string, Tag>()
+    tags.forEach((tag) => map.set(tag.id, tag))
+    return map
+  }, [tags])
+
   // 搜索处理
   const handleSearch = useCallback(
     (query: string) => {
@@ -274,12 +281,10 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
         if (query) {
           // 标题或任一标签名命中即算匹配
           const titleMatch = conv.title.toLowerCase().includes(lowerQuery)
-          const tagMatch = conv.tagIds?.some((tid) =>
-            tags
-              .find((tag) => tag.id === tid)
-              ?.name.toLowerCase()
-              .includes(lowerQuery),
-          )
+          const tagMatch = conv.tagIds?.some((tid) => {
+            const tagName = tagMap.get(tid)?.name
+            return tagName ? tagName.toLowerCase().includes(lowerQuery) : false
+          })
           if (!titleMatch && !tagMatch) matched = false
         }
         if (filterPinned && !conv.pinned) matched = false
@@ -300,7 +305,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
         totalCount: conversationMatches.size,
       })
     },
-    [folders, conversations, tags, filterPinned, filterTagIds],
+    [folders, conversations, tagMap, filterPinned, filterTagIds],
   )
 
   // 监听筛选条件变化，自动触发搜索
@@ -374,13 +379,6 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
     },
     [getCurrentExportConversationId, manager],
   )
-
-  // Tag 查表 Map（O(1) 查找替代 tags.find()）
-  const tagMap = useMemo(() => {
-    const map = new Map<string, Tag>()
-    tags.forEach((tag) => map.set(tag.id, tag))
-    return map
-  }, [tags])
 
   // 标签被删除后清理失效的筛选 id，避免列表被不可见的筛选条件清空
   useEffect(() => {
