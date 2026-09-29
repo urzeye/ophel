@@ -13,6 +13,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 - **Chats tab improvements** — Improved filters, batch actions, search, and drag-and-drop in conversation management, and fixed several related issues.
 - **Outline tab improvements** — The level slider now supports dragging, the toolbar adapts to narrow panels, rows are better aligned, and the export button's shimmer hint stops after the first click. (#966)
+- **Prompts tab improvements** — Improved category filters, variable markers, and empty-state messaging for prompts, and fixed several related issues. (#967)
 
 ---
 
