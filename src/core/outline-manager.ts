@@ -979,18 +979,30 @@ export class OutlineManager {
     const liveSettings = useSettingsStore.getState().settings
     const showWordCount = liveSettings?.features?.outline?.showWordCount ?? false
 
-    let outlineData = this.siteAdapter.extractOutlineForSource(
-      this.activeSourceId,
-      this.settings.maxLevel,
-      this.settings.showUserQueries,
-      showWordCount,
-    )
+    // 新对话页的欢迎/推荐内容可能命中对话容器选择器，其中的标题不是真实对话结构。
+    // 对话源在新对话落地页直接视为空（含书签合并，避免幽灵书签重新撑起树），
+    // 让空态与下游消费方（复制大纲、页内收藏）行为一致；文档源不受影响。
+    // URL 不跳转的临时对话（Claude 隐身、Gemini 临时对话）发消息后 DOM 已有用户提问，
+    // 此时不抑制，大纲正常工作。
+    const suppressConversationOutline =
+      this.activeSourceId === "conversation" &&
+      (this.siteAdapter.isNewConversation?.() ?? false) &&
+      !(this.siteAdapter.hasUserMessagesInDom?.() ?? false)
+
+    let outlineData = suppressConversationOutline
+      ? []
+      : this.siteAdapter.extractOutlineForSource(
+          this.activeSourceId,
+          this.settings.maxLevel,
+          this.settings.showUserQueries,
+          showWordCount,
+        )
     // --- Merge Bookmarks ---
     const sessionId = this.getBookmarkSessionId()
     const bookmarks = useBookmarkStore.getState().getBookmarksBySession(sessionId)
     this.ghostBookmarkIds = new Set()
 
-    if (bookmarks.length > 0) {
+    if (!suppressConversationOutline && bookmarks.length > 0) {
       const bookmarkById = new Map(bookmarks.map((bookmark) => [bookmark.id, bookmark]))
       const bookmarksBySignature = new Map<string, Map<string, Bookmark>>()
       bookmarks.forEach((bookmark) => {
@@ -1114,6 +1126,7 @@ export class OutlineManager {
     if (outlineData.length === 0) {
       if (this.tree.length > 0) {
         this.tree = []
+        this.flatItems = []
         this.flatNodes = []
         this.scrollNodes = []
         this.scrollPositions = []

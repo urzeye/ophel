@@ -520,6 +520,18 @@ export abstract class SiteAdapter {
     return false
   }
 
+  /**
+   * 当前页面是否已渲染用户提问消息（运行时 DOM 查询）。
+   * 用于区分新对话落地页与 URL 不跳转的临时对话（如 Claude 隐身、Gemini 临时对话）：
+   * 前者没有真实消息，后者发消息后 URL 不变但 DOM 中已有用户提问。
+   * 不使用 DOMToolkit 缓存，避免路由切换后读到残留的命中元素。
+   */
+  hasUserMessagesInDom(): boolean {
+    const selector = this.getUserQuerySelector()
+    if (!selector) return false
+    return Boolean(DOMToolkit.query(selector, { shadow: this.usesShadowDOM(), useCache: false }))
+  }
+
   /** 检测是否为分享页面（只读） */
   isSharePage(): boolean {
     // 大多数站点的分享链接格式：/share/{id}
