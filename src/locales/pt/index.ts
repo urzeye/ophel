@@ -1019,6 +1019,10 @@ export const pt = {
   batchTagDialogTitle: "Editar tags em lote",
   batchTagAdd: "Adicionar tags selecionadas",
   batchTagRemove: "Remover tags selecionadas",
+  batchPin: "Fixar",
+  batchUnpin: "Desafixar",
+  conversationsBatchDeletePartial:
+    "{local} excluídos localmente; {failed} não puderam ser excluídos da nuvem",
   batchExit: "Sair",
   batchExport: "Exportar",
   exportToMarkdown: "Markdown",

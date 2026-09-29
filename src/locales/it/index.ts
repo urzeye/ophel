@@ -1141,6 +1141,10 @@ export const it = {
   batchTagDialogTitle: "Modifica tag in batch",
   batchTagAdd: "Aggiungi tag selezionati",
   batchTagRemove: "Rimuovi tag selezionati",
+  batchPin: "Spilla",
+  batchUnpin: "Sblocca",
+  conversationsBatchDeletePartial:
+    "{local} eliminati in locale; {failed} non è stato possibile eliminarli dal cloud",
   batchExit: "Esci",
   batchExport: "Esporta",
   exportToMarkdown: "Markdown",

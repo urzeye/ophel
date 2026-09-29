@@ -48,6 +48,9 @@ interface ConversationsState {
   deleteConversation: (id: string) => void
   applyConversationChanges: (changes: ConversationBatchChanges) => void
   moveToFolder: (id: string, folderId: string) => void
+  moveConversations: (ids: string[], folderId: string) => void
+  setPinnedFor: (ids: string[], pinned: boolean) => void
+  setTagsFor: (updates: Record<string, string[]>) => void
   togglePin: (id: string) => boolean
   setConversationTags: (id: string, tagIds: string[]) => void
   removeTagFromAll: (tagId: string) => void
@@ -244,6 +247,50 @@ export const useConversationsStore = create<ConversationsState>()(
                 [id]: { ...state.conversations[id], folderId, updatedAt: Date.now() },
               },
             }
+          }),
+
+        moveConversations: (ids, folderId) =>
+          set((state) => {
+            const patch: Record<string, Conversation> = {}
+            for (const id of ids) {
+              const conv = state.conversations[id]
+              if (conv && conv.folderId !== folderId) {
+                patch[id] = { ...conv, folderId, updatedAt: Date.now() }
+              }
+            }
+            if (Object.keys(patch).length === 0) return state
+            return { conversations: { ...state.conversations, ...patch } }
+          }),
+
+        setPinnedFor: (ids, pinned) =>
+          set((state) => {
+            const patch: Record<string, Conversation> = {}
+            for (const id of ids) {
+              const conv = state.conversations[id]
+              if (conv && Boolean(conv.pinned) !== pinned) {
+                patch[id] = { ...conv, pinned, updatedAt: Date.now() }
+              }
+            }
+            if (Object.keys(patch).length === 0) return state
+            return { conversations: { ...state.conversations, ...patch } }
+          }),
+
+        setTagsFor: (updates) =>
+          set((state) => {
+            const patch: Record<string, Conversation> = {}
+            for (const [id, tagIds] of Object.entries(updates)) {
+              const conv = state.conversations[id]
+              if (!conv) continue
+              const next = { ...conv }
+              if (tagIds.length > 0) {
+                next.tagIds = tagIds
+              } else {
+                delete next.tagIds
+              }
+              patch[id] = next
+            }
+            if (Object.keys(patch).length === 0) return state
+            return { conversations: { ...state.conversations, ...patch } }
           }),
 
         togglePin: (id) => {

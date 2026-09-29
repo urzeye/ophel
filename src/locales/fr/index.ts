@@ -1022,6 +1022,10 @@ export const fr = {
   batchTagDialogTitle: "Modifier les étiquettes en lot",
   batchTagAdd: "Ajouter les étiquettes sélectionnées",
   batchTagRemove: "Retirer les étiquettes sélectionnées",
+  batchPin: "Épingler",
+  batchUnpin: "Désépingler",
+  conversationsBatchDeletePartial:
+    "{local} supprimés localement ; {failed} n'ont pas pu être supprimés du cloud",
   batchExit: "Quitter",
   batchExport: "Exporter",
   exportToMarkdown: "Markdown",

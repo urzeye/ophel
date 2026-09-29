@@ -1016,6 +1016,10 @@ export const ru = {
   batchTagDialogTitle: "Пакетное редактирование тегов",
   batchTagAdd: "Добавить выбранные теги",
   batchTagRemove: "Удалить выбранные теги",
+  batchPin: "Закрепить",
+  batchUnpin: "Открепить",
+  conversationsBatchDeletePartial:
+    "Удалено локально: {local}; не удалось удалить из облака: {failed}",
   batchExit: "Выход",
   batchExport: "Экспорт",
   exportToMarkdown: "Markdown",

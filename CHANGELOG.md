@@ -12,10 +12,13 @@ versioning follows [Semantic Versioning](https://semver.org/).
 ### ✨ Improvements
 
 - **Chats tab improvements** — Improved filter visibility and batch actions on the Chats tab.
+- **Pin chats in batch** — The batch action bar on the Chats tab now supports pinning or unpinning all selected chats at once.
+- **Move selected chats by dragging** — In batch mode, dragging a selected chat onto a folder now moves all selected chats together, and batch move and tag actions take effect faster.
 
 ### 🐛 Bug Fixes
 
 - **Deleted tag still filtering** — Fixed an issue where deleting a tag that was active as a filter on the Chats tab left the list showing no results; the filter is now cleared together with the tag.
+- **Chinese text in non-Chinese interfaces** — Fixed an issue where untitled chats and the batch deletion result message on the Chats tab always appeared in Chinese regardless of the interface language.
 
 ---
 

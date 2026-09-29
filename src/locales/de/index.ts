@@ -1022,6 +1022,10 @@ export const de = {
   batchTagDialogTitle: "Tags stapelweise bearbeiten",
   batchTagAdd: "Ausgewählte Tags hinzufügen",
   batchTagRemove: "Ausgewählte Tags entfernen",
+  batchPin: "Anpinnen",
+  batchUnpin: "Lösen",
+  conversationsBatchDeletePartial:
+    "{local} lokal gelöscht; {failed} konnten nicht aus der Cloud gelöscht werden",
   batchExit: "Beenden",
   batchExport: "Exportieren",
   exportToMarkdown: "Markdown",

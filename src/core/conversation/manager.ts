@@ -1026,6 +1026,13 @@ export class ConversationManager {
     getConversationsStore().moveToFolder(this.getConversationStorageKey(id), targetFolderId)
   }
 
+  moveConversations(ids: string[], targetFolderId: string) {
+    getConversationsStore().moveConversations(
+      ids.map((id) => this.getConversationStorageKey(id)),
+      targetFolderId,
+    )
+  }
+
   setLastUsedFolder(folderId: string) {
     getConversationsStore().setLastUsedFolderId(folderId)
   }
@@ -1054,10 +1061,25 @@ export class ConversationManager {
     getConversationsStore().setConversationTags(this.getConversationStorageKey(convId), tagIds)
   }
 
+  setConversationsTags(updates: Record<string, string[]>) {
+    const mapped: Record<string, string[]> = {}
+    for (const [convId, tagIds] of Object.entries(updates)) {
+      mapped[this.getConversationStorageKey(convId)] = tagIds
+    }
+    getConversationsStore().setTagsFor(mapped)
+  }
+
   // ================= Conversation Operations Extended =================
 
   togglePin(convId: string): boolean {
     return getConversationsStore().togglePin(this.getConversationStorageKey(convId))
+  }
+
+  setConversationsPinned(ids: string[], pinned: boolean) {
+    getConversationsStore().setPinnedFor(
+      ids.map((id) => this.getConversationStorageKey(id)),
+      pinned,
+    )
   }
 
   renameConversation(convId: string, newTitle: string) {

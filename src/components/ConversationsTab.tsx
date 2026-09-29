@@ -603,6 +603,11 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
 
   const hasFilters = searchQuery || filterPinned || filterTagIds.size > 0
 
+  // 选中项是否全部已置顶，决定批量置顶按钮的行为（置顶全部 / 取消置顶全部）
+  const allSelectedPinned =
+    selectedIds.size > 0 &&
+    Array.from(selectedIds).every((id) => Boolean(conversations[id]?.pinned))
+
   // 文件夹展开/折叠时重置已显示数量
   const prevExpandedFolderId = useRef<string | null>(null)
   useEffect(() => {
@@ -1155,9 +1160,17 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                         setDragOverFolderId(null)
                         dragOverFolderTargetRef.current = null
                       } else if (draggedConvId) {
-                        const conv = conversations[draggedConvId]
-                        if (conv && conv.folderId !== folder.id) {
-                          manager.moveConversation(draggedConvId, folder.id)
+                        // 批量模式下拖动已选中的对话时，移动整个选中集合
+                        const candidateIds =
+                          batchMode && selectedIds.has(draggedConvId)
+                            ? Array.from(selectedIds)
+                            : [draggedConvId]
+                        const moveIds = candidateIds.filter((id) => {
+                          const target = conversations[id]
+                          return target && target.folderId !== folder.id
+                        })
+                        if (moveIds.length > 0) {
+                          manager.moveConversations(moveIds, folder.id)
                           loadData()
                         }
                         setDraggedConvId(null)
@@ -1307,18 +1320,24 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
               {/* 导出只支持单条对话，仅在选中 1 个时展示 */}
               {selectedIds.size === 1 && (
                 <Tooltip content={t("batchExport")}>
-                  <button
-                    className="conversations-batch-btn"
-                    style={{ padding: "4px 6px", minWidth: "auto", marginLeft: "4px" }}
-                    onClick={() => openExportDialog()}>
+                  <button className="conversations-batch-btn" onClick={() => openExportDialog()}>
                     <ExportIcon size={16} />
                   </button>
                 </Tooltip>
               )}
+              <Tooltip content={allSelectedPinned ? t("batchUnpin") : t("batchPin")}>
+                <button
+                  className="conversations-batch-btn"
+                  onClick={() => {
+                    manager.setConversationsPinned(Array.from(selectedIds), !allSelectedPinned)
+                    loadData()
+                  }}>
+                  <PinIcon size={16} />
+                </button>
+              </Tooltip>
               <Tooltip content={t("batchMove")}>
                 <button
                   className="conversations-batch-btn"
-                  style={{ padding: "4px 6px", minWidth: "auto", marginLeft: "4px" }}
                   onClick={() => {
                     onInteractionStateChange?.(true)
                     setDialog({ type: "folderSelect", convIds: Array.from(selectedIds) })
@@ -1329,7 +1348,6 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
               <Tooltip content={t("batchTag")}>
                 <button
                   className="conversations-batch-btn"
-                  style={{ padding: "4px 6px", minWidth: "auto", marginLeft: "4px" }}
                   onClick={() => {
                     onInteractionStateChange?.(true)
                     setDialog({ type: "batchTag" })
@@ -1340,7 +1358,6 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
               <Tooltip content={t("batchDelete")}>
                 <button
                   className="conversations-batch-btn danger"
-                  style={{ padding: "4px 6px", minWidth: "auto", marginLeft: "4px" }}
                   onClick={() => {
                     onInteractionStateChange?.(true)
                     setDialog({
@@ -1361,7 +1378,10 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                           }
                           if (result.remoteAttemptedCount > 0 && result.remoteFailedCount > 0) {
                             showToast(
-                              `已删除 ${result.localDeletedCount} 个，本地成功，云端失败 ${result.remoteFailedCount} 个`,
+                              t("conversationsBatchDeletePartial", {
+                                local: String(result.localDeletedCount),
+                                failed: String(result.remoteFailedCount),
+                              }),
                             )
                           }
                           clearSelection()
@@ -1376,10 +1396,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                 </button>
               </Tooltip>
               <Tooltip content={t("batchExit")}>
-                <button
-                  className="conversations-batch-btn cancel"
-                  style={{ padding: "4px 6px", minWidth: "auto", marginLeft: "4px" }}
-                  onClick={clearSelection}>
+                <button className="conversations-batch-btn cancel" onClick={clearSelection}>
                   <ClearIcon size={16} />
                 </button>
               </Tooltip>
@@ -1449,9 +1466,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
             if (dialog.conv) {
               await manager.moveConversation(dialog.conv.id, folderId)
             } else if (dialog.convIds) {
-              for (const id of dialog.convIds) {
-                await manager.moveConversation(id, folderId)
-              }
+              manager.moveConversations(dialog.convIds, folderId)
               clearSelection()
             }
             loadData()
@@ -1487,16 +1502,17 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
           onCancel={() => setDialog(null)}
           onApply={async (tagIds, mode) => {
             const ids = Array.from(selectedIds)
+            const updates: Record<string, string[]> = {}
             for (const convId of ids) {
               const conv = conversations[convId]
               if (!conv) continue
               const current = conv.tagIds || []
-              const next =
+              updates[convId] =
                 mode === "add"
                   ? Array.from(new Set([...current, ...tagIds]))
                   : current.filter((tagId) => !tagIds.includes(tagId))
-              await manager.setConversationTags(convId, next)
             }
+            manager.setConversationsTags(updates)
             showToast(t("conversationsTagUpdated"))
             setDialog(null)
             loadData()
@@ -1703,8 +1719,8 @@ const ConversationItem = React.memo<ConversationItemProps>(
                   />
                 )}
                 {searchQuery && searchResult?.conversationMatches.has(conv.id)
-                  ? highlightText(conv.title || "无标题", searchQuery)
-                  : conv.title || "无标题"}
+                  ? highlightText(conv.title || t("untitledConversation"), searchQuery)
+                  : conv.title || t("untitledConversation")}
               </span>
             </Tooltip>
 

@@ -1142,6 +1142,7 @@ html[data-theme="dark"] .conversations-unsupported-icon {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
   border-radius: 8px;
   margin-top: 8px;
   border: 1px solid var(--gh-border, #e5e7eb);
@@ -1152,15 +1153,22 @@ html[data-theme="dark"] .conversations-unsupported-icon {
   color: var(--gh-text, #374151);
   font-size: 13px;
   font-weight: 500;
+  /* 长文案语言下计数不换行、不被压缩，按钮区不足时整体换行 */
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .conversations-batch-btns {
   display: flex;
-  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px 6px;
+  min-width: 0;
 }
 
 .conversations-batch-btn {
-  padding: 4px 10px;
+  padding: 4px 6px;
+  min-width: auto;
   border: 1px solid var(--gh-input-border, #d1d5db);
   border-radius: 6px;
   font-size: 12px;

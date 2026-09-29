@@ -1013,6 +1013,10 @@ export const ko = {
   batchTagDialogTitle: "태그 일괄 설정",
   batchTagAdd: "선택한 태그 추가",
   batchTagRemove: "선택한 태그 제거",
+  batchPin: "고정",
+  batchUnpin: "고정 해제",
+  conversationsBatchDeletePartial:
+    "{local}개를 로컬에서 삭제했습니다. {failed}개는 클라우드에서 삭제하지 못했습니다",
   batchExit: "나가기",
   batchExport: "내보내기",
   exportToMarkdown: "Markdown",

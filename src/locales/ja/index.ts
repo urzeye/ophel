@@ -1048,6 +1048,10 @@ export const ja = {
   batchTagDialogTitle: "タグの一括設定",
   batchTagAdd: "選択したタグを追加",
   batchTagRemove: "選択したタグを削除",
+  batchPin: "ピン留め",
+  batchUnpin: "解除",
+  conversationsBatchDeletePartial:
+    "{local} 件をローカルで削除しました。{failed} 件はクラウドから削除できませんでした",
   batchExit: "解除",
   batchExport: "一括出力",
   exportToMarkdown: "Markdown形式",

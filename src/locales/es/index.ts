@@ -1020,6 +1020,10 @@ export const es = {
   batchTagDialogTitle: "Editar etiquetas en lote",
   batchTagAdd: "Añadir etiquetas seleccionadas",
   batchTagRemove: "Quitar etiquetas seleccionadas",
+  batchPin: "Fijar",
+  batchUnpin: "Desfijar",
+  conversationsBatchDeletePartial:
+    "{local} eliminados localmente; {failed} no se pudieron eliminar de la nube",
   batchExit: "Salir",
   batchExport: "Exportar",
   exportToMarkdown: "Markdown",
