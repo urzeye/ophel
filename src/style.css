@@ -1616,7 +1616,7 @@
 .outline-item.user-query-node::before {
   content: "";
   position: absolute;
-  left: 1px;
+  left: 3px;
   top: 50%;
   transform: translateY(-50%);
   width: 4px;
@@ -1730,8 +1730,13 @@
   justify-content: center;
   width: 24px;
   height: 24px;
-  margin-right: 4px;
+  margin-right: 2px;
   flex-shrink: 0;
+}
+
+/* 提问行内部收紧：箭头与徽章盒子各有约 4px 视觉留白，去掉无效外边距 */
+.outline-item.user-query-node .outline-item-toggle {
+  margin-right: 0;
 }
 
 .outline-item.user-query-node .user-query-badge-icon {
