@@ -11,7 +11,6 @@ import { SHORTCUT_ACTIONS, isMacOS, type ShortcutActionId } from "~constants/sho
 import type { ConversationManager } from "~core/conversation-manager"
 import type { OutlineManager } from "~core/outline-manager"
 import { getShortcutManager } from "~core/shortcut-manager"
-import { markExportDiscoveredQuiet } from "~hooks/useExportDiscovered"
 import { anchorStore, withAnchorOp } from "~stores/anchor-store"
 import { useSettingsStore } from "~stores/settings-store"
 import { loadHistoryUntil } from "~utils/history-loader"
@@ -480,8 +479,6 @@ export function useShortcuts({
       showToast(t("exportNeedOpenFirst"))
       return
     }
-    // 快捷键导出同样视为已发现导出入口，停用大纲导出按钮的流光引导
-    markExportDiscoveredQuiet()
 
     try {
       // 默认按用户在设置中选择的默认导出格式导出文件

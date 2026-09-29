@@ -23,7 +23,7 @@ import {
 } from "~components/icons"
 import { Tooltip } from "~components/ui/Tooltip"
 import type { ConversationManager } from "~core/conversation-manager"
-import { useExportDiscovered } from "~hooks/useExportDiscovered"
+import { markExportDiscoveredQuiet, useExportDiscovered } from "~hooks/useExportDiscovered"
 import { useHasUnseenReleaseNotes } from "~hooks/useHasUnseenReleaseNotes"
 import { signalReadingHistoryUserNavigation } from "~utils/reading-history-navigation"
 import type { OutlineManager, OutlineNode } from "~core/outline-manager"
@@ -1966,7 +1966,11 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
             <Tooltip content={t("exportConversationTitle")}>
               <button
                 type="button"
-                onClick={() => window.dispatchEvent(new CustomEvent("ophel:openExportDialog"))}
+                onClick={() => {
+                  // 只有点击大纲工具栏的导出按钮才视为发现了该入口，停用流光引导
+                  markExportDiscoveredQuiet()
+                  window.dispatchEvent(new CustomEvent("ophel:openExportDialog"))
+                }}
                 aria-label={t("exportConversationTitle")}
                 className={`outline-toolbar-btn export-accent ${exportDiscovered ? "" : "export-shimmer"}`}>
                 <ExportIcon size={16} />

@@ -26,7 +26,6 @@ import { QueueDispatcher } from "~core/queue-dispatcher"
 import { QuickQuoteActions } from "~components/QuickQuoteActions"
 import { ensureGlobalThemeManager, type ThemeTransitionOrigin } from "~core/theme-manager"
 import { useEdgePeekController } from "~hooks/useEdgePeekController"
-import { markExportDiscoveredQuiet } from "~hooks/useExportDiscovered"
 import { useShortcuts } from "~hooks/useShortcuts"
 import { platform } from "~platform"
 import {
@@ -2709,8 +2708,6 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
       showToast(t("exportNeedOpenFirst"))
       return
     }
-    // 用户已发现导出入口（任意入口触发即算），停用大纲导出按钮的流光引导
-    markExportDiscoveredQuiet()
     // 用户关闭“导出前显示选项弹窗”时，保持按默认格式一键直出
     if (settings.export?.exportShowDialog === false) {
       const format = settings.export?.defaultExportFormat ?? "markdown"
@@ -2764,8 +2761,6 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
       showToast(t("exportNeedOpenFirst"))
       return
     }
-    // 分段导出同样属于导出入口，触发后停用流光引导
-    markExportDiscoveredQuiet()
 
     setIsSegmentedExporting(true)
     try {
@@ -2834,8 +2829,6 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
       showToast(t("exportNeedOpenFirst"))
       return
     }
-    // 复制为 Markdown 属于导出入口，触发后停用流光引导
-    markExportDiscoveredQuiet()
     const success = await conversationManager.exportConversation(sessionId, "clipboard")
     if (!success) {
       showToast(t("exportFailed"))
@@ -2850,8 +2843,6 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
       showToast(t("exportNeedOpenFirst"))
       return
     }
-    // 直接导出 HTML 属于导出入口，触发后停用流光引导
-    markExportDiscoveredQuiet()
     const success = await conversationManager.exportConversation(sessionId, "html")
     if (!success) {
       showToast(t("exportFailed"))

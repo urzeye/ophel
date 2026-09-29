@@ -12,7 +12,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 ### ✨ Improvements
 
 - **Chats tab improvements** — Improved filters, batch actions, search, and drag-and-drop in conversation management, and fixed several related issues.
-- **Outline tab experience** — The outline level slider now supports dragging to adjust levels; narrowing the panel automatically hides rarely used toolbar buttons so the search box stays roomy; the collapse arrow on user question rows now aligns with the headings below instead of sitting further in; when bookmark icons are hidden, the copy button moves to the right edge instead of leaving a gap; the export button's shimmer hint no longer appears once you have used export. (#966)
+- **Outline tab experience** — The outline level slider now supports dragging to adjust levels; narrowing the panel automatically hides rarely used toolbar buttons so the search box stays roomy; the collapse arrow on user question rows now aligns with the headings below instead of sitting further in; when bookmark icons are hidden, the copy button moves to the right edge instead of leaving a gap; the export button's shimmer hint no longer appears once you have clicked it. (#966)
 
 ---
 
