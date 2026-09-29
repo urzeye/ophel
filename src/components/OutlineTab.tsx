@@ -1592,27 +1592,6 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
     manager.setSearchQuery("")
   }, [manager])
 
-  // 搜索框键盘操作：Enter 跳转到首个匹配项，Esc 清空搜索
-  const handleSearchKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>) => {
-      // IME 组合输入（中文/日文候选词）期间的按键不触发搜索操作
-      if (e.nativeEvent.isComposing) return
-      if (e.key === "Escape") {
-        e.preventDefault()
-        manager.setSearchQuery("")
-        return
-      }
-      if (e.key === "Enter") {
-        e.preventDefault()
-        const firstMatch = visibleItems.find((item) => item.node.isMatch)?.node
-        if (firstMatch) {
-          void handleClick(firstMatch)
-        }
-      }
-    },
-    [manager, visibleItems, handleClick],
-  )
-
   const handleExpandAll = useCallback(() => {
     if (isAllExpanded) {
       manager.collapseAll()
@@ -2008,7 +1987,6 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
               aria-label={t("outlineSearch")}
               value={searchQuery}
               onChange={handleSearchChange}
-              onKeyDown={handleSearchKeyDown}
             />
             {searchQuery && (
               <button
