@@ -3442,6 +3442,23 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                     alignItems: "flex-start",
                     marginBottom: "8px",
                   }}>
+                  {cardVariables.length > 0 && (
+                    <Tooltip
+                      content={cardVariables.map((v) => `{{${v.raw}}}`).join(", ")}
+                      triggerStyle={{ marginRight: "6px", flexShrink: 0, alignSelf: "center" }}>
+                      <span
+                        style={{
+                          fontSize: "12px",
+                          padding: "2px 7px",
+                          background: "var(--gh-bg-secondary, #f3f4f6)",
+                          borderRadius: "4px",
+                          color: "var(--gh-text-secondary, #6b7280)",
+                          fontFamily: "monospace",
+                        }}>
+                        {`{{×${cardVariables.length}}}`}
+                      </span>
+                    </Tooltip>
+                  )}
                   <div
                     style={{
                       fontWeight: 600,
@@ -3468,22 +3485,6 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                       iconSize={14}
                       currentPlatformId={currentPlatform?.id}
                     />
-                    {cardVariables.length > 0 && (
-                      <Tooltip content={cardVariables.map((v) => `{{${v.raw}}}`).join(", ")}>
-                        <span
-                          style={{
-                            fontSize: "12px",
-                            padding: "2px 7px",
-                            background: "var(--gh-bg-secondary, #f3f4f6)",
-                            borderRadius: "4px",
-                            color: "var(--gh-text-secondary, #6b7280)",
-                            flexShrink: 0,
-                            fontFamily: "monospace",
-                          }}>
-                          {`{{×${cardVariables.length}}}`}
-                        </span>
-                      </Tooltip>
-                    )}
                     <span
                       style={{
                         fontSize: "12px",
