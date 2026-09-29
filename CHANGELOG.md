@@ -13,7 +13,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 - **Chats tab improvements** — Improved filter visibility and batch actions on the Chats tab.
 - **Pin chats in batch** — The batch action bar on the Chats tab now supports pinning or unpinning all selected chats at once.
-- **Move selected chats by dragging** — In batch mode, dragging a selected chat onto a folder now moves all selected chats together, and batch move and tag actions take effect faster.
+- **Move selected chats by dragging** — In batch mode, dragging a selected chat onto a folder now moves all selected chats together, and batch move and tag actions take effect faster. After a batch move, the selection is cleared while batch mode stays on, so you can keep organizing the next batch.
 
 ### 🐛 Bug Fixes
 

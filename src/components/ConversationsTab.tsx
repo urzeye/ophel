@@ -593,6 +593,12 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
     setBatchMode(false)
   }
 
+  // 仅清空选中、保留批量模式：用于移动类操作完成后，避免选中集移到别处后不可见却仍生效
+  const resetSelection = () => {
+    setSelectedIds(new Set())
+    lastClickedConvIdRef.current = null
+  }
+
   // 清除筛选
   const clearFilters = () => {
     setSearchQuery("")
@@ -1171,6 +1177,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                         })
                         if (moveIds.length > 0) {
                           manager.moveConversations(moveIds, folder.id)
+                          resetSelection()
                           loadData()
                         }
                         setDraggedConvId(null)
@@ -1467,7 +1474,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
               await manager.moveConversation(dialog.conv.id, folderId)
             } else if (dialog.convIds) {
               manager.moveConversations(dialog.convIds, folderId)
-              clearSelection()
+              resetSelection()
             }
             loadData()
             setDialog(null)
