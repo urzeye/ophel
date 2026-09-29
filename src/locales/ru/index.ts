@@ -990,6 +990,7 @@ export const ru = {
   hoursAgo: "ч. назад",
   daysAgo: "дн. назад",
   conversationsSelectFolder: "Куда",
+  conversationsSelectAllFolder: "Выбрать все в этой папке",
   conversationsMoveTo: "Переместить разговор",
   conversationsSetTag: "Установить тег",
   conversationsMoved: "Ушло в: ",

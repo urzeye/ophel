@@ -1031,6 +1031,7 @@ export const zhCN = {
   hoursAgo: "小时前",
   daysAgo: "天前",
   conversationsSelectFolder: "选择同步目标文件夹",
+  conversationsSelectAllFolder: "全选此文件夹",
   conversationsMoveTo: "移动对话",
   conversationsSetTag: "设置标签",
   conversationsMoved: "已移动到",

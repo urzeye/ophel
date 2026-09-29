@@ -987,6 +987,7 @@ export const ko = {
   hoursAgo: "시간 전",
   daysAgo: "일 전",
   conversationsSelectFolder: "동기화 폴더 선택",
+  conversationsSelectAllFolder: "이 폴더 모두 선택",
   conversationsMoveTo: "대화 이동",
   conversationsSetTag: "태그 설정",
   conversationsMoved: "다음으로 이동됨: ",

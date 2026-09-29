@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 
 import { ExportIcon, LinkIcon } from "~components/icons"
+import { BatchIcon } from "~components/icons/BatchIcon"
 import { DeleteIcon } from "~components/icons/DeleteIcon"
 import { FolderMoveIcon } from "~components/icons/FolderMoveIcon"
 import { PinIcon } from "~components/icons/PinIcon"
@@ -199,6 +200,7 @@ interface FolderMenuProps {
   folder: Folder
   anchorEl: HTMLElement | null
   onClose: () => void
+  onSelectAll: () => void
   onRename: () => void
   onDelete: () => void
 }
@@ -207,11 +209,28 @@ export const FolderMenu: React.FC<FolderMenuProps> = ({
   folder: _folder,
   anchorEl,
   onClose,
+  onSelectAll,
   onRename,
   onDelete,
 }) => {
   return (
     <ContextMenu anchorEl={anchorEl} onClose={onClose}>
+      <MenuButton
+        onClick={() => {
+          onClose()
+          onSelectAll()
+        }}>
+        <span
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "16px",
+          }}>
+          <span>{t("conversationsSelectAllFolder")}</span>
+          <BatchIcon size={13} />
+        </span>
+      </MenuButton>
       <MenuButton
         onClick={() => {
           onClose()

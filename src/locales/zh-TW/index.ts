@@ -921,6 +921,7 @@ export const zhTW = {
   hoursAgo: "小時前",
   daysAgo: "天前",
   conversationsSelectFolder: "選擇同步目標資料夾",
+  conversationsSelectAllFolder: "全選此資料夾",
   conversationsMoveTo: "移動到...",
   conversationsMoved: "已移動到",
   conversationsSyncDeleteTitle: "同步刪除",

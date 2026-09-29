@@ -993,6 +993,7 @@ export const pt = {
   hoursAgo: "h atrás",
   daysAgo: "dias atrás",
   conversationsSelectFolder: "Destino",
+  conversationsSelectAllFolder: "Selecionar tudo nesta pasta",
   conversationsMoveTo: "Mover conversa",
   conversationsSetTag: "Definir etiqueta",
   conversationsMoved: "Movido para: ",

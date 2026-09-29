@@ -1066,6 +1066,7 @@ export const en = {
   hoursAgo: "hr ago",
   daysAgo: "days ago",
   conversationsSelectFolder: "Select Sync Folder",
+  conversationsSelectAllFolder: "Select all in this folder",
   conversationsMoveTo: "Move Chat",
   conversationsSetTag: "Set Tag",
   conversationsMoved: "Moved to",

@@ -1112,6 +1112,7 @@ export const it = {
   hoursAgo: "ora fa",
   daysAgo: "giorni fa",
   conversationsSelectFolder: "Seleziona Sincronizza cartella",
+  conversationsSelectAllFolder: "Seleziona tutto in questa cartella",
   conversationsMoveTo: "Sposta conversazione",
   conversationsSetTag: "Imposta etichetta",
   conversationsMoved: "Trasferito a",

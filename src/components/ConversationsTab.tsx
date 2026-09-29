@@ -271,7 +271,17 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
 
       Object.values(conversations).forEach((conv) => {
         let matched = true
-        if (query && !conv.title.toLowerCase().includes(lowerQuery)) matched = false
+        if (query) {
+          // 标题或任一标签名命中即算匹配
+          const titleMatch = conv.title.toLowerCase().includes(lowerQuery)
+          const tagMatch = conv.tagIds?.some((tid) =>
+            tags
+              .find((tag) => tag.id === tid)
+              ?.name.toLowerCase()
+              .includes(lowerQuery),
+          )
+          if (!titleMatch && !tagMatch) matched = false
+        }
         if (filterPinned && !conv.pinned) matched = false
         if (filterTagIds.size > 0) {
           const hasTag = conv.tagIds?.some((tid) => filterTagIds.has(tid))
@@ -290,7 +300,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
         totalCount: conversationMatches.size,
       })
     },
-    [folders, conversations, filterPinned, filterTagIds],
+    [folders, conversations, tags, filterPinned, filterTagIds],
   )
 
   // 监听筛选条件变化，自动触发搜索
@@ -728,6 +738,17 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
     return selected.length > 0 && selected.length < convs.length
   }
 
+  // 拖拽放置到目标文件夹时实际会移动的对话（批量模式下拖动已选项则含整个选中集）
+  const getMovableDragIds = (targetFolderId: string): string[] => {
+    if (!draggedConvId) return []
+    const candidateIds =
+      batchMode && selectedIds.has(draggedConvId) ? Array.from(selectedIds) : [draggedConvId]
+    return candidateIds.filter((id) => {
+      const conv = conversations[id]
+      return conv && conv.folderId !== targetFolderId
+    })
+  }
+
   // 判断文件夹是否应显示
   const shouldShowFolder = (folder: Folder): boolean => {
     if (!searchResult) return true
@@ -1094,8 +1115,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                         dragOverFolderTargetRef.current = folder.id
                         setDragOverFolderId(folder.id)
                       } else if (draggedConvId) {
-                        const conv = conversations[draggedConvId]
-                        if (conv && conv.folderId !== folder.id) {
+                        if (getMovableDragIds(folder.id).length > 0) {
                           e.preventDefault()
                           dragOverConvTargetRef.current = folder.id
                           setDragOverFolderForConvId(folder.id)
@@ -1110,8 +1130,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                         dragOverFolderTargetRef.current = folder.id
                         setDragOverFolderId(folder.id)
                       } else if (draggedConvId) {
-                        const conv = conversations[draggedConvId]
-                        if (conv && conv.folderId !== folder.id) {
+                        if (getMovableDragIds(folder.id).length > 0) {
                           e.preventDefault()
                           e.dataTransfer.dropEffect = "move"
                           dragOverConvTargetRef.current = folder.id
@@ -1166,15 +1185,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                         setDragOverFolderId(null)
                         dragOverFolderTargetRef.current = null
                       } else if (draggedConvId) {
-                        // 批量模式下拖动已选中的对话时，移动整个选中集合
-                        const candidateIds =
-                          batchMode && selectedIds.has(draggedConvId)
-                            ? Array.from(selectedIds)
-                            : [draggedConvId]
-                        const moveIds = candidateIds.filter((id) => {
-                          const target = conversations[id]
-                          return target && target.folderId !== folder.id
-                        })
+                        const moveIds = getMovableDragIds(folder.id)
                         if (moveIds.length > 0) {
                           manager.moveConversations(moveIds, folder.id)
                           resetSelection()
@@ -1533,6 +1544,13 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
           folder={menu.folder}
           anchorEl={menu.anchorEl}
           onClose={() => setMenu(null)}
+          onSelectAll={() => {
+            setMenu(null)
+            // 选中该文件夹当前列表内的全部对话（替换原选中），并进入批量模式
+            setBatchMode(true)
+            setSelectedIds(new Set(getConversationsInFolder(menu.folder.id).map((conv) => conv.id)))
+            lastClickedConvIdRef.current = null
+          }}
           onRename={() => {
             setMenu(null)
             setDialog({ type: "folder", folder: menu.folder })
@@ -1541,17 +1559,13 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
             setMenu(null)
             const folderName = getFolderDisplayName(menu.folder)
             const inboxName = getInboxDisplayName()
-            const deleteMessage = t("conversationsDeleteConfirm", {
-              folder: folderName,
-              inbox: inboxName,
-            })
             setDialog({
               type: "confirm",
               title: t("conversationsDelete"),
-              message:
-                deleteMessage === "conversationsDeleteConfirm"
-                  ? `Delete folder "${folderName}"? Conversations will be moved to ${inboxName}.`
-                  : deleteMessage,
+              message: t("conversationsDeleteConfirm", {
+                folder: folderName,
+                inbox: inboxName,
+              }),
               danger: true,
               onConfirm: async () => {
                 await manager.deleteFolder(menu.folder.id)

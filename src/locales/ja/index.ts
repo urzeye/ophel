@@ -1018,6 +1018,7 @@ export const ja = {
   hoursAgo: "時間前",
   daysAgo: "日前",
   conversationsSelectFolder: "同期先フォルダを選択",
+  conversationsSelectAllFolder: "このフォルダをすべて選択",
   conversationsMoveTo: "会話を移動",
   shortcutToggleScrollLock: "AI生成時の自動スクロールを防止",
   shortcutToggleModelLock: "モデルロック切り替え",

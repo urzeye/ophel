@@ -996,6 +996,7 @@ export const fr = {
   hoursAgo: "h",
   daysAgo: "j",
   conversationsSelectFolder: "Destination",
+  conversationsSelectAllFolder: "Tout sélectionner dans ce dossier",
   conversationsMoveTo: "Déplacer la conversation",
   conversationsSetTag: "Définir l'étiquette",
   conversationsMoved: "Déplacé vers : ",
