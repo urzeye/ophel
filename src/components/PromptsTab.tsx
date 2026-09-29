@@ -1126,9 +1126,9 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     setPrompts(allPrompts)
     setCategories(allCategories)
 
-    // 分类有效性检查：如果当前选中的分类不再存在或变空，回退到「全部」
+    // 分类有效性检查：如果当前选中的分类不再存在或变空，回退到「全部」（虚拟分类始终有效）
     setSelectedCategory((prev) => {
-      if (prev === VIRTUAL_CATEGORY.ALL) return prev
+      if (prev === VIRTUAL_CATEGORY.ALL || prev === VIRTUAL_CATEGORY.RECENT) return prev
       // 检查分类是否还存在
       if (!allCategories.includes(prev)) return VIRTUAL_CATEGORY.ALL
       // 检查分类下是否还有提示词
