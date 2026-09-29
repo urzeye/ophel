@@ -3088,7 +3088,10 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                     : "var(--gh-hover, #f3f4f6)",
                 borderRadius: "12px",
                 fontSize: "12px",
-                color: selectedCategory === VIRTUAL_CATEGORY.ALL ? "white" : "#4b5563",
+                color:
+                  selectedCategory === VIRTUAL_CATEGORY.ALL
+                    ? "var(--gh-text-on-primary, #ffffff)"
+                    : "var(--gh-text-secondary, #6b7280)",
                 cursor: "pointer",
                 flexShrink: 0,
                 border:
@@ -3113,14 +3116,17 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                           : `var(--gh-category-${colorIndex})`,
                       borderRadius: "12px",
                       fontSize: "12px",
-                      color: selectedCategory === cat ? "white" : "#4b5563",
+                      color:
+                        selectedCategory === cat
+                          ? "var(--gh-text-on-primary, #ffffff)"
+                          : "var(--gh-text-secondary, #6b7280)",
                       cursor: "pointer",
                       flexShrink: 0,
                       border:
                         selectedCategory === cat
                           ? "1px solid var(--gh-primary, #4285f4)"
                           : "1px solid transparent",
-                      maxWidth: "80px",
+                      maxWidth: "120px",
                       overflow: "hidden",
                       textOverflow: "ellipsis",
                       whiteSpace: "nowrap",
@@ -3342,7 +3348,10 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                       ? "var(--gh-primary, #4285f4)"
                       : "var(--gh-hover, #f3f4f6)",
                   borderRadius: "10px",
-                  color: selectedCategory === VIRTUAL_CATEGORY.RECENT ? "white" : "#4b5563",
+                  color:
+                    selectedCategory === VIRTUAL_CATEGORY.RECENT
+                      ? "var(--gh-text-on-primary, #ffffff)"
+                      : "var(--gh-text-secondary, #6b7280)",
                   cursor: "pointer",
                   border:
                     selectedCategory === VIRTUAL_CATEGORY.RECENT
@@ -3396,6 +3405,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
             const isSelected = selectedPromptId === p.id
             const isLocated = locatedPromptId === p.id
             const isHighlighted = isSelected || isLocated
+            const cardVariables = extractVariables(p.content)
 
             return (
               <div
@@ -3458,6 +3468,22 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                       iconSize={14}
                       currentPlatformId={currentPlatform?.id}
                     />
+                    {cardVariables.length > 0 && (
+                      <Tooltip content={cardVariables.map((v) => `{{${v.raw}}}`).join(", ")}>
+                        <span
+                          style={{
+                            fontSize: "12px",
+                            padding: "2px 7px",
+                            background: "var(--gh-bg-secondary, #f3f4f6)",
+                            borderRadius: "4px",
+                            color: "var(--gh-text-secondary, #6b7280)",
+                            flexShrink: 0,
+                            fontFamily: "monospace",
+                          }}>
+                          {`{{×${cardVariables.length}}}`}
+                        </span>
+                      </Tooltip>
+                    )}
                     <span
                       style={{
                         fontSize: "12px",
