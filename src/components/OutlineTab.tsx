@@ -1819,6 +1819,8 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
 
   const handleLevelPointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
+      // 只响应主键：右键/中键不应触发层级调整，也避免吞掉右键菜单
+      if (e.button !== 0) return
       if (bookmarkMode) return
       e.preventDefault()
       e.currentTarget.setPointerCapture(e.pointerId)
@@ -2013,7 +2015,10 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
             className="outline-level-dots"
             onPointerDown={handleLevelPointerDown}
             onPointerMove={handleLevelPointerMove}
-            onPointerUp={(e) => finishLevelDrag(e, true)}
+            onPointerUp={(e) => {
+              // 拖拽中副键抬起不提交，等主键抬起再应用层级
+              if (e.button === 0) finishLevelDrag(e, true)
+            }}
             onPointerCancel={(e) => finishLevelDrag(e, false)}
             style={{
               display: "flex",
