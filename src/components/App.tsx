@@ -26,6 +26,7 @@ import { QueueDispatcher } from "~core/queue-dispatcher"
 import { QuickQuoteActions } from "~components/QuickQuoteActions"
 import { ensureGlobalThemeManager, type ThemeTransitionOrigin } from "~core/theme-manager"
 import { useEdgePeekController } from "~hooks/useEdgePeekController"
+import { markExportDiscovered } from "~hooks/useExportDiscovered"
 import { useShortcuts } from "~hooks/useShortcuts"
 import { platform } from "~platform"
 import {
@@ -2708,6 +2709,10 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
       showToast(t("exportNeedOpenFirst"))
       return
     }
+    // 用户已发现导出入口（任意入口触发即算），停用大纲导出按钮的流光引导
+    markExportDiscovered().catch((error) => {
+      console.warn("[Ophel] Failed to persist export discovery state:", error)
+    })
     // 用户关闭“导出前显示选项弹窗”时，保持按默认格式一键直出
     if (settings.export?.exportShowDialog === false) {
       const format = settings.export?.defaultExportFormat ?? "markdown"

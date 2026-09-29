@@ -23,6 +23,7 @@ import {
 } from "~components/icons"
 import { Tooltip } from "~components/ui/Tooltip"
 import type { ConversationManager } from "~core/conversation-manager"
+import { useExportDiscovered } from "~hooks/useExportDiscovered"
 import { useHasUnseenReleaseNotes } from "~hooks/useHasUnseenReleaseNotes"
 import { signalReadingHistoryUserNavigation } from "~utils/reading-history-navigation"
 import type { OutlineManager, OutlineNode } from "~core/outline-manager"
@@ -614,6 +615,9 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
 
   // 当前版本更新日志未读时，在主空态显示更新横幅
   const hasUnseenReleaseNotes = useHasUnseenReleaseNotes()
+
+  // 导出按钮流光引导：仅在用户从未触发过导出时展示
+  const exportDiscovered = useExportDiscovered()
 
   const openReleaseNotesFromBanner = useCallback(() => {
     window.dispatchEvent(new CustomEvent("ophel:openReleaseNotes"))
@@ -1588,6 +1592,27 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
     manager.setSearchQuery("")
   }, [manager])
 
+  // 搜索框键盘操作：Enter 跳转到首个匹配项，Esc 清空搜索
+  const handleSearchKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      // IME 组合输入（中文/日文候选词）期间的按键不触发搜索操作
+      if (e.nativeEvent.isComposing) return
+      if (e.key === "Escape") {
+        e.preventDefault()
+        manager.setSearchQuery("")
+        return
+      }
+      if (e.key === "Enter") {
+        e.preventDefault()
+        const firstMatch = visibleItems.find((item) => item.node.isMatch)?.node
+        if (firstMatch) {
+          void handleClick(firstMatch)
+        }
+      }
+    },
+    [manager, visibleItems, handleClick],
+  )
+
   const handleExpandAll = useCallback(() => {
     if (isAllExpanded) {
       manager.collapseAll()
@@ -1795,6 +1820,54 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
     [manager],
   )
 
+  // 层级滑块拖拽：拖动过程中只更新视觉预览（进度条与高亮点），
+  // 松手后才真正应用层级，避免快速拖过多个层级时反复重建大纲树
+  const [levelDragPreview, setLevelDragPreview] = useState<number | null>(null)
+  const levelDotsRef = useRef<HTMLDivElement>(null)
+  const sliderLevel = levelDragPreview ?? expandLevel
+
+  const getLevelFromClientX = useCallback((clientX: number): number => {
+    const el = levelDotsRef.current
+    if (!el) return 0
+    const rect = el.getBoundingClientRect()
+    // 圆点按 space-between 分布：首点中心在 dotSize/2，末点中心在 width - dotSize/2
+    const dotSize = 14
+    const usableWidth = rect.width - dotSize
+    if (usableWidth <= 0) return 0
+    const ratio = (clientX - rect.left - dotSize / 2) / usableWidth
+    return Math.min(6, Math.max(0, Math.round(ratio * 6)))
+  }, [])
+
+  const handleLevelPointerDown = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (bookmarkMode) return
+      e.preventDefault()
+      e.currentTarget.setPointerCapture(e.pointerId)
+      setLevelDragPreview(getLevelFromClientX(e.clientX))
+    },
+    [bookmarkMode, getLevelFromClientX],
+  )
+
+  const handleLevelPointerMove = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (!e.currentTarget.hasPointerCapture(e.pointerId)) return
+      setLevelDragPreview(getLevelFromClientX(e.clientX))
+    },
+    [getLevelFromClientX],
+  )
+
+  const finishLevelDrag = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>, commit: boolean) => {
+      if (!e.currentTarget.hasPointerCapture(e.pointerId)) return
+      e.currentTarget.releasePointerCapture(e.pointerId)
+      if (commit) {
+        handleLevelClick(getLevelFromClientX(e.clientX))
+      }
+      setLevelDragPreview(null)
+    },
+    [getLevelFromClientX, handleLevelClick],
+  )
+
   // 监听快捷键触发的定位事件
   useEffect(() => {
     const handleLocateEvent = () => {
@@ -1876,7 +1949,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
                       ? t("outlineCollapseAll")
                       : t("outlineExpandAll")
                 }
-                className="outline-toolbar-btn">
+                className="outline-toolbar-btn outline-narrow-optional">
                 {isAllExpanded ? <CollapseAllIcon size={18} /> : <ExpandAllIcon size={18} />}
               </button>
             </Tooltip>
@@ -1901,7 +1974,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
                 aria-label={
                   scrollState === "bottom" ? t("outlineScrollBottom") : t("outlineScrollTop")
                 }
-                className="outline-toolbar-btn">
+                className="outline-toolbar-btn outline-narrow-optional">
                 {scrollState === "bottom" ? (
                   <ScrollBottomIcon size={16} />
                 ) : (
@@ -1916,7 +1989,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
                 type="button"
                 onClick={() => window.dispatchEvent(new CustomEvent("ophel:openExportDialog"))}
                 aria-label={t("exportConversationTitle")}
-                className="outline-toolbar-btn export-accent">
+                className={`outline-toolbar-btn export-accent ${exportDiscovered ? "" : "export-shimmer"}`}>
                 <ExportIcon size={16} />
               </button>
             </Tooltip>
@@ -1935,6 +2008,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
               aria-label={t("outlineSearch")}
               value={searchQuery}
               onChange={handleSearchChange}
+              onKeyDown={handleSearchKeyDown}
             />
             {searchQuery && (
               <button
@@ -1953,13 +2027,19 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
         <div className="outline-level-slider-container" style={{ padding: "0 4px" }}>
           {/* Level Dots */}
           <div
+            ref={levelDotsRef}
             className="outline-level-dots"
+            onPointerDown={handleLevelPointerDown}
+            onPointerMove={handleLevelPointerMove}
+            onPointerUp={(e) => finishLevelDrag(e, true)}
+            onPointerCancel={(e) => finishLevelDrag(e, false)}
             style={{
               display: "flex",
               justifyContent: "space-between",
               position: "relative",
               padding: "6px 0",
               alignItems: "center",
+              touchAction: "none",
             }}>
             {/* Background Line */}
             <div
@@ -1989,7 +2069,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
                 zIndex: 0,
                 transform: "translateY(-50%)",
                 borderRadius: "2px",
-                width: `calc((${expandLevel} / 6) * (100% - 8px))`,
+                width: `calc((${sliderLevel} / 6) * (100% - 8px))`,
                 transition: "width 0.2s ease",
               }}></div>
 
@@ -2008,13 +2088,12 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
                 title = `H${lvl}: ${levelCounts[lvl] || 0}`
               }
 
-              const isActive = lvl <= expandLevel
+              const isActive = lvl <= sliderLevel
               return (
                 <Tooltip key={lvl} content={title}>
                   <div
                     className={`outline-level-dot ${isActive ? "active" : ""} ${bookmarkMode ? "disabled" : ""}`}
                     data-level={lvl}
-                    onClick={bookmarkMode ? undefined : () => handleLevelClick(lvl)}
                     style={{
                       width: "14px",
                       height: "14px",

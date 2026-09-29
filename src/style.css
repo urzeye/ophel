@@ -784,6 +784,12 @@
   min-width: 0;
 }
 
+/* 窄面板（宽度 < 280px，由 MainPanel 打 data-panel-narrow 标记）下
+   隐藏大纲工具栏的低频按钮（折叠全部、滚动到顶/底），优先保证搜索框可用宽度 */
+.gh-main-panel[data-panel-narrow="true"] .outline-toolbar-btn.outline-narrow-optional {
+  display: none;
+}
+
 .gh-panel-icon-btn,
 .outline-toolbar-btn {
   width: 30px;
@@ -898,6 +904,10 @@
   );
   transform: translateX(-120%) rotate(25deg);
   pointer-events: none;
+}
+
+/* 流光仅作为首次发现引导：用户用过导出后（无 export-shimmer 类）即永久停用 */
+.outline-toolbar-btn.export-accent.export-shimmer::after {
   animation: gh-export-shimmer 3.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
@@ -1508,7 +1518,8 @@
 
 .outline-item-toggle:hover {
   color: var(--gh-border-active);
-  background-color: rgba(0, 0, 0, 0.05);
+  /* 用 currentColor 低透明度着色：在行 hover 底色上仍可分辨，深浅主题下都是"提亮"而非发黑 */
+  background-color: color-mix(in srgb, currentColor 12%, transparent);
 }
 
 .outline-item-toggle.expanded {
@@ -1580,7 +1591,9 @@
 
   /* 字体与排版 */
   font-weight: 600;
-  padding-left: 14px !important;
+  /* 与 outline-level-0 保持同一左内边距，让折叠箭头与同级标题纵向对齐；
+     左侧竖条锚点为绝对定位（::before），不占用布局空间 */
+  padding-left: 2px !important;
   margin-top: 14px;
   margin-bottom: 4px;
   border-radius: 8px !important; /* 强制圆角，防止被通用高亮样式变成直角 */
@@ -1900,6 +1913,11 @@
 /* 适配：Hidden 模式下移除 hover 的渐变遮罩 */
 .gh-panel-bookmark-mode-hidden .outline-item:hover .outline-item-bookmark-btn::before {
   display: none !important;
+}
+
+/* Hidden 模式下收藏按钮不渲染，复制按钮移到最右侧，避免右侧留出死区 */
+.gh-panel-bookmark-mode-hidden .outline-item-copy-btn {
+  right: 4px;
 }
 
 /* Ghost 节点样式（收藏内容不存在时） */

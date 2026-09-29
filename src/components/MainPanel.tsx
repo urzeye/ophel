@@ -1369,6 +1369,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         data-panel-hover-width-active={isHoverWidthPreviewActive ? "true" : undefined}
         data-panel-base-width={basePanelWidth}
         data-panel-anchor-side={panelAnchorSide}
+        data-panel-narrow={panelWidth < 280 ? "true" : undefined}
         style={
           {
             position: "fixed",
