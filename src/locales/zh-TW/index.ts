@@ -970,7 +970,6 @@ export const zhTW = {
   exportNotSupported: "目前站點不支援匯出",
   exportToTXT: "TXT",
   exportToHTML: "HTML",
-  exportToHTMLMenu: "HTML 匯出",
   exportMetaUrl: "連結",
   exportUntitled: "未命名",
   exportToClipboard: "複製 Markdown",

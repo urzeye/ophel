@@ -1049,7 +1049,6 @@ export const de = {
   exportNotSupported: "Hier nicht unterstützt",
   exportToTXT: "TXT",
   exportToHTML: "HTML",
-  exportToHTMLMenu: "HTML exportieren",
   exportMetaUrl: "Link",
   exportUntitled: "Unbenannt",
   exportToClipboard: "Markdown kopieren",

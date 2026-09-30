@@ -1040,7 +1040,6 @@ export const ko = {
   exportNotSupported: "이 사이트에서는 내보내기를 지원하지 않습니다",
   exportToTXT: "TXT",
   exportToHTML: "HTML",
-  exportToHTMLMenu: "HTML 내보내기",
   exportMetaUrl: "링크",
   exportUntitled: "제목 없음",
   exportToClipboard: "Markdown 복사",

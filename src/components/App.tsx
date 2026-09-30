@@ -2821,34 +2821,6 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
     showToast(`${t("cleared")} (${cleared})`)
   }, [outlineManager])
 
-  // 复制为 Markdown 处理器
-  const handleCopyMarkdown = useCallback(async () => {
-    if (!conversationManager || !adapter) return
-    const sessionId = adapter.getSessionId()
-    if (!sessionId) {
-      showToast(t("exportNeedOpenFirst"))
-      return
-    }
-    const success = await conversationManager.exportConversation(sessionId, "clipboard")
-    if (!success) {
-      showToast(t("exportFailed"))
-    }
-  }, [conversationManager, adapter])
-
-  // 工具箱直接导出 HTML 处理器
-  const handleFloatingToolbarHTMLExport = useCallback(async () => {
-    if (!conversationManager || !adapter) return
-    const sessionId = adapter.getSessionId()
-    if (!sessionId) {
-      showToast(t("exportNeedOpenFirst"))
-      return
-    }
-    const success = await conversationManager.exportConversation(sessionId, "html")
-    if (!success) {
-      showToast(t("exportFailed"))
-    }
-  }, [conversationManager, adapter])
-
   // 模型锁定切换处理器 (按站点)
   const handleModelLockToggle = useCallback(() => {
     if (!adapter) return
@@ -3455,9 +3427,6 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
           setIsFloatingToolbarClearOpen(true)
         }}
         onGlobalSearch={openGlobalSettingsSearch}
-        onCopyMarkdown={handleCopyMarkdown}
-        onExportHTML={handleFloatingToolbarHTMLExport}
-        onSegmentedExport={handleFloatingToolbarSegmentedExport}
         onModelLockToggle={handleModelLockToggle}
         isModelLocked={isModelLocked}
         onOpenSettings={openSettingsModal}

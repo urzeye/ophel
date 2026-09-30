@@ -1597,16 +1597,6 @@ export const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
     keywords: ["tools menu", "export", "工具箱", "导出"],
   },
   {
-    settingId: "tools-menu-exportHTML",
-    title: "工具箱：显示 HTML 导出",
-    keywords: ["tools menu", "html", "export", "工具箱", "导出", "HTML"],
-  },
-  {
-    settingId: "tools-menu-copyMarkdown",
-    title: "工具箱：显示复制 Markdown",
-    keywords: ["tools menu", "copy", "markdown", "工具箱"],
-  },
-  {
     settingId: "tools-menu-move",
     title: "工具箱：显示移动按钮",
     keywords: ["tools menu", "move", "folder", "工具箱"],

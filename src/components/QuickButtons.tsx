@@ -62,9 +62,6 @@ interface QuickButtonsProps {
   onGlobalSearch?: () => void
   scrollLocked?: boolean
   // 新增功能
-  onCopyMarkdown?: () => void
-  onExportHTML?: () => void
-  onSegmentedExport?: () => void
   onModelLockToggle?: () => void
   isModelLocked?: boolean
   onOpenSettings?: () => void
@@ -115,9 +112,6 @@ const COLLAPSED_BUTTON_CAPABILITY_REQUIREMENTS: Partial<Record<string, SitePackC
 
 const TOOLS_MENU_CAPABILITY_REQUIREMENTS: Partial<Record<ToolsMenuId, SitePackCapability>> = {
   [TOOLS_MENU_IDS.EXPORT]: "export-basic",
-  [TOOLS_MENU_IDS.SEGMENTED_EXPORT]: "export-basic",
-  [TOOLS_MENU_IDS.EXPORT_HTML]: "export-basic",
-  [TOOLS_MENU_IDS.COPY_MARKDOWN]: "export-basic",
   [TOOLS_MENU_IDS.MOVE]: "conversation-list",
   [TOOLS_MENU_IDS.SET_TAG]: "conversation-list",
   [TOOLS_MENU_IDS.MODEL_LOCK]: "model-lock",
@@ -141,9 +135,6 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   onCleanup,
   onGlobalSearch,
   scrollLocked,
-  onCopyMarkdown,
-  onExportHTML,
-  onSegmentedExport,
   onModelLockToggle,
   isModelLocked,
   onOpenSettings,
@@ -1003,9 +994,6 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   // 工具菜单按钮点击处理器映射
   const toolsMenuActions: Record<string, () => void> = {
     [TOOLS_MENU_IDS.EXPORT]: () => onExport?.(),
-    [TOOLS_MENU_IDS.SEGMENTED_EXPORT]: () => onSegmentedExport?.(),
-    [TOOLS_MENU_IDS.EXPORT_HTML]: () => onExportHTML?.(),
-    [TOOLS_MENU_IDS.COPY_MARKDOWN]: () => onCopyMarkdown?.(),
     [TOOLS_MENU_IDS.MOVE]: () => onMove?.(),
     [TOOLS_MENU_IDS.SET_TAG]: () => onSetTag?.(),
     [TOOLS_MENU_IDS.SCROLL_LOCK]: () => onScrollLock?.(!scrollLocked),

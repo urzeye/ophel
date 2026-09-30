@@ -61,8 +61,6 @@ describe("feature capability panel boundaries", () => {
     )
     expect(source).toContain('zenMode: "zen"')
     expect(source).toContain('[TOOLS_MENU_IDS.EXPORT]: "export-basic"')
-    expect(source).toContain('[TOOLS_MENU_IDS.SEGMENTED_EXPORT]: "export-basic"')
-    expect(source).toContain('[TOOLS_MENU_IDS.COPY_MARKDOWN]: "export-basic"')
     expect(source).toContain('[TOOLS_MENU_IDS.MOVE]: "conversation-list"')
     expect(source).toContain('[TOOLS_MENU_IDS.SET_TAG]: "conversation-list"')
     expect(source).toContain('[TOOLS_MENU_IDS.MODEL_LOCK]: "model-lock"')

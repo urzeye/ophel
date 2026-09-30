@@ -1046,7 +1046,6 @@ export const pt = {
   exportNotSupported: "Não suportado aqui",
   exportToTXT: "TXT",
   exportToHTML: "HTML",
-  exportToHTMLMenu: "Exportar HTML",
   exportMetaUrl: "Link",
   exportUntitled: "Sem Título",
   exportToClipboard: "Copiar Markdown",

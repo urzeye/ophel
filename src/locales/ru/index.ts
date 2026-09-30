@@ -1043,7 +1043,6 @@ export const ru = {
   exportNotSupported: "Не работает здесь",
   exportToTXT: "TXT",
   exportToHTML: "HTML",
-  exportToHTMLMenu: "Экспорт HTML",
   exportMetaUrl: "Ссылка",
   exportUntitled: "Без темы",
   exportToClipboard: "Скопировать Markdown",

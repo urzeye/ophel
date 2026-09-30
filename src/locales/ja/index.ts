@@ -1075,7 +1075,6 @@ export const ja = {
   exportNotSupported: "このサイトでは出力がサポートされていません",
   exportToTXT: "TXT形式",
   exportToHTML: "HTML",
-  exportToHTMLMenu: "HTML 書き出し",
   exportMetaUrl: "リンク",
   exportUntitled: "無題",
   exportToClipboard: "Markdownをコピー",
