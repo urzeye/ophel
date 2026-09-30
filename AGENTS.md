@@ -105,7 +105,7 @@ Ophel Atlas 是 TypeScript + React 18 + Plasmo 的浏览器扩展，同时支持
 ## 更新日志写法
 
 - 详细规范见 `docs/developer/conventions/changelog.md`；写更新日志前必读。
-- 核心禁令：中英文两份日志必须同步；只使用三类固定标题（New Features / Improvements / Bug Fixes 及对应中文）；说通俗人话，严禁出现虚拟滚动、DOM、离屏卸载等技术黑话与实现细节；新条目必须追加在 `[Unreleased]` 对应分类列表的最末尾，禁止插在首行。
+- 核心禁令：中英文两份日志必须同步；只使用三类固定标题（New Features / Improvements / Bug Fixes 及对应中文）；说通俗人话，严禁出现虚拟滚动、DOM、离屏卸载等技术黑话与实现细节；新条目必须追加在 `[Unreleased]` 对应分类列表的最末尾，禁止插在首行；一个分支（一个 PR）只写一条日志，同一分支的多处相关改动必须合并为一条，禁止按站点或 commit 逐条罗列。
 
 ## 提交与 PR
 

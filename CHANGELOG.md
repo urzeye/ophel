@@ -17,9 +17,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
-- **DeepSeek image-only questions missing from outline** — Fixed an issue where DeepSeek questions that contain only an image or file with no text did not appear in the outline; they now show the attachment file name, matching DeepSeek's built-in outline.
-- **Claude image-only questions missing from outline** — Fixed an issue where Claude questions that contain only an image or file with no text did not appear in the outline; they now show the attachment file name.
-- **AI Studio pasted images missing from export** — Fixed an issue where AI Studio questions that contain only a pasted image were left out of exported conversations; the image is now exported together with the question.
+- **Image-only questions missing from outline and export** — Fixed issues where questions that contain only an image or file with no text did not appear in the outline on DeepSeek and Claude, and pasted-image questions were left out of AI Studio exports; the outline now shows these questions with the attachment file name, and pasted images are exported together with the question. (#970)
 
 ---
 
