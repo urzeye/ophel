@@ -36,6 +36,7 @@ export interface DeepSeekHistoryOutlineData extends ApiOutlineSourceData {
 interface DeepSeekHistoryFragment {
   type?: unknown
   content?: unknown
+  files?: unknown
 }
 
 export interface DeepSeekHistoryMessage {
@@ -52,6 +53,23 @@ const asRecord = (value: unknown): Record<string, unknown> | null =>
 
 const asObjectArray = <T>(value: unknown): T[] =>
   Array.isArray(value) ? (value.filter(Boolean) as T[]) : []
+
+/**
+ * 取首个附件的文件名。纯附件提问（如只发图片）没有 REQUEST 文本，
+ * 原生 TOC 此时的标题逻辑是 getUserQuery || 首个附件 fileName，
+ * 这里保持一致，保证大纲条目文案与借原生 TOC 跳转时的文本校验对齐。
+ */
+const firstAttachmentFileName = (fragments: DeepSeekHistoryFragment[]): string => {
+  for (const fragment of fragments) {
+    if (fragment.type !== "FILE") continue
+    for (const file of asObjectArray<Record<string, unknown>>(fragment.files)) {
+      if (typeof file.file_name === "string" && file.file_name.trim()) {
+        return file.file_name.trim()
+      }
+    }
+  }
+  return ""
+}
 
 /** 解析 history_messages 响应；结构不符合预期时返回 null（调用方退化为纯 DOM 扫描）。 */
 export function parseDeepSeekHistoryOutline(
@@ -104,9 +122,12 @@ export function parseDeepSeekHistoryOutline(
           ? message.content
           : ""
       const text = stripMarkdownInline(rawText)
-      // 无文本的提问仍计入 queryCount（保持 queryIndex 绝对序），但不进入大纲序列
-      if (text) {
-        userQueries.push({ messageId, queryIndex: queryCount, text })
+      // 无文本的纯附件提问回退用首个附件文件名；文件名不过 stripMarkdownInline，
+      // 与原生 TOC 展示口径一致（借 TOC 跳转时按文本校验）
+      const displayText = text || firstAttachmentFileName(fragments)
+      // 完全无展示文本的提问仍计入 queryCount（保持 queryIndex 绝对序），但不进入大纲序列
+      if (displayText) {
+        userQueries.push({ messageId, queryIndex: queryCount, text: displayText })
       }
       continue
     }

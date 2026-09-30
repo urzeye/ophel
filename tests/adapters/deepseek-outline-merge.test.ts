@@ -41,7 +41,7 @@ const buildData = (
     message_id: number
     parent_id: number | null
     role: "USER" | "ASSISTANT"
-    fragments: { type: string; content: string }[]
+    fragments: { type: string; content?: string; files?: { file_name?: string }[] }[]
   }[],
 ): DeepSeekHistoryOutlineData =>
   parseDeepSeekHistoryOutline({
@@ -164,6 +164,33 @@ describe("DeepSeekAdapter.mergeOutlineByBranchOrder", () => {
       "新问题",
       "流式标题",
     ])
+  })
+
+  it("fills image-only queries even when their row is mounted (DOM scan yields no text)", () => {
+    const adapter = new DeepSeekAdapter()
+    const data = buildData([
+      {
+        message_id: 1,
+        parent_id: null,
+        role: "USER",
+        fragments: [{ type: "FILE", files: [{ file_name: "image.png" }] }],
+      },
+      assistantMessage(2, 1, "## 标题A\n正文"),
+      userMessage(3, 2, "问题二"),
+      assistantMessage(4, 3, "## 标题B\n正文"),
+    ])
+    // 纯图片提问的行挂载着，但 DOM 扫描提不出文本、没有 DOM 条目
+    const domQuery = queryItem(3, "问题二")
+    const domItems = [domQuery, headingItem(4, "标题B")]
+
+    const merged = merge(adapter, domItems, data, [1, 3, 4], new Map([[domQuery, "问题二"]]))
+
+    expect(merged.map((item) => item.text)).toEqual(["image.png", "标题A", "问题二", "标题B"])
+    const fillQuery = merged[0]
+    expect(fillQuery.isUserQuery).toBe(true)
+    expect(fillQuery.element).toBeNull()
+    expect(fillQuery.navigationId).toBe("deepseek:api-u:1")
+    expect(fillQuery.id).toBe("deepseek-user-query::0::image.png")
   })
 
   it("counts query id occurrences on the full merged sequence", () => {

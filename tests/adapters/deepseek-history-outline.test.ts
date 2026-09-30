@@ -16,7 +16,7 @@ interface TestMessage {
   parent_id: number | null
   role: "USER" | "ASSISTANT"
   content?: string | null
-  fragments: { type: string; content: string }[]
+  fragments: { type: string; content?: string; files?: { file_name?: string }[] }[]
 }
 
 const buildPayload = (
@@ -199,6 +199,68 @@ describe("parseDeepSeekHistoryOutline", () => {
     // queryIndex 绝对序不因无文本提问而平移
     expect(data.queryIndexByAssistantId.get(2)).toBe(1)
     expect(data.queryIndexByAssistantId.get(4)).toBe(2)
+  })
+
+  it("uses the first attachment file name for image-only USER messages (native TOC parity)", () => {
+    const payload = buildPayload([
+      {
+        message_id: 1,
+        parent_id: null,
+        role: "USER",
+        content: null,
+        fragments: [{ type: "FILE", files: [{ file_name: "image.png" }] }],
+      },
+      assistantMessage(2, 1, "无标题"),
+      userMessage(3, 2),
+      assistantMessage(4, 3, "无标题"),
+    ])
+
+    const data = parseDeepSeekHistoryOutline(payload)!
+    expect(data.queryCount).toBe(2)
+    expect(data.userQueries).toEqual([
+      { messageId: 1, queryIndex: 1, text: "image.png" },
+      { messageId: 3, queryIndex: 2, text: "问题 3" },
+    ])
+    expect(data.queryIndexByAssistantId.get(2)).toBe(1)
+    expect(data.queryIndexByAssistantId.get(4)).toBe(2)
+  })
+
+  it("prefers REQUEST text over attachment file names", () => {
+    const payload = buildPayload([
+      {
+        message_id: 1,
+        parent_id: null,
+        role: "USER",
+        content: null,
+        fragments: [
+          { type: "FILE", files: [{ file_name: "image.png" }] },
+          { type: "REQUEST", content: "看图说话" },
+        ],
+      },
+      assistantMessage(2, 1, "无标题"),
+    ])
+
+    const data = parseDeepSeekHistoryOutline(payload)!
+    expect(data.userQueries).toEqual([{ messageId: 1, queryIndex: 1, text: "看图说话" }])
+  })
+
+  it("keeps FILE-only USER messages without file names out of userQueries", () => {
+    const payload = buildPayload([
+      {
+        message_id: 1,
+        parent_id: null,
+        role: "USER",
+        content: null,
+        fragments: [{ type: "FILE", files: [{}] }],
+      },
+      assistantMessage(2, 1, "无标题"),
+      userMessage(3, 2),
+      assistantMessage(4, 3, "无标题"),
+    ])
+
+    const data = parseDeepSeekHistoryOutline(payload)!
+    expect(data.queryCount).toBe(2)
+    expect(data.userQueries).toEqual([{ messageId: 3, queryIndex: 2, text: "问题 3" }])
   })
 
   it("strips markdown formatting and reference marks from heading text", () => {

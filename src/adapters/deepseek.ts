@@ -1077,6 +1077,15 @@ export class DeepSeekAdapter extends SiteAdapter {
       item,
     }))
 
+    // 已产出 DOM 条目的提问 message_id：挂载行未必有条目（纯附件提问无文本可提取，
+    // DOM 扫描会丢弃），回填跳过必须以实际条目为准，否则这类提问在挂载后反而消失
+    const domQueryMessageIds = new Set<number>()
+    for (const entry of domEntries) {
+      if (entry.messageId !== null && entry.item.isUserQuery && entry.item.level === 0) {
+        domQueryMessageIds.add(entry.messageId)
+      }
+    }
+
     // 收藏签名的 occurrence 需要在完整提问序列上按未截断文本计数
     const queryFullTexts = new Map<OutlineItem, string>(domQueryFullTexts)
 
@@ -1107,7 +1116,7 @@ export class DeepSeekAdapter extends SiteAdapter {
 
     if (includeUserQueries) {
       for (const query of data.userQueries) {
-        if (mountedIds.has(query.messageId)) continue
+        if (domQueryMessageIds.has(query.messageId)) continue
         let wordCount: number | undefined
         if (showWordCount) {
           // 提问条目的字数口径 = 对应回复的文本长度，未挂载时取接口估算值

@@ -256,7 +256,7 @@ import { useSettingsStore } from "~stores/settings-store"
 1. 解析器返回 extends `ApiOutlineSourceData` 的数据（`sessionId` / `branchMessageIds` / `maxMessageId` 为契约字段）；导出解析的完整性要求必须严于大纲（无法证明历史完整时返回 null，回退滚动收集）。
 2. config `traits` 声明 `virtualOutlineFill: true`，并 bump 对应 `*_CONFIG_VERSION`；声明后跳转即时刷新与高亮重算经 `usesVirtualOutlineFill()` / `hasPositionlessOutlineNodes()` 门控，不影响其他站点。
 3. 拉取必须过 `shouldAttemptApiOutlineFetch` 闸门（单飞、生成中跳过、冷却、解析失败熔断），会话切换时重置冷却与熔断计数；数据更新后 `postMessage(EVENT_OUTLINE_DATA_UPDATED)` 请求大纲刷新。
-4. 大纲条目统一按 `mergeByBranchMessageOrder` 归并：挂载项以 DOM 为准，接口只补未挂载条目；回填条目用 `navigationId` 携带定位信息（如 `{site}:api-h:{messageId}:...`），`resolveOutlineTarget` 优先按它精确定位。
+4. 大纲条目统一按 `mergeByBranchMessageOrder` 归并：挂载项以 DOM 为准，接口只补未挂载条目（DeepSeek 提问条目按「是否产出 DOM 条目」判定——纯附件提问行挂载但无文本可提取，仍需接口回填）；回填条目用 `navigationId` 携带定位信息（如 `{site}:api-h:{messageId}:...`），`resolveOutlineTarget` 优先按它精确定位。纯附件（如只发图片）的提问没有文本，条目文案回退用首个附件文件名，与站点原生 TOC 的标题口径一致。
 5. 接口主机与附件 CDN 加入 `package.json` `host_permissions`（油猴端 `connect: ["*"]` 无需改）；manifest 权限保持最小授权。
 
 Claude 接入的差异点（`src/adapters/claude-history-outline.ts`、`src/adapters/claude.ts`）：DOM 虚拟行没有消息 id、只有位置序号（`data-rs-index`），消息 id 为 uuid 字符串。解析器内部做 uuid 到数值的预映射后复用 `resolveActiveBranch`，全链路统一用「分支位置序号」作为 messageIndex（接口历史截断时按 aria-setsize 尾部对齐，无法对齐判解析失败）；过期判定在位置语义之外补充两个粘性强制重拉信号——生成结束（含重新生成）与同 id 标题文本漂移；回填直接写入站点已有的 `outlineItemCache`（id 体系与 DOM 扫描一致，下游归并/定位不变），不走 `mergeByBranchMessageOrder`；全量滚动回填保留为接口不可用时的兜底。
