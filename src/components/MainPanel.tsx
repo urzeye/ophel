@@ -46,7 +46,6 @@ import { t } from "~utils/i18n"
 import { getScrollInfo, smartScrollTo, smartScrollToBottom } from "~utils/scroll-helper"
 import { DEFAULT_SETTINGS, getSiteTheme, type Prompt } from "~utils/storage"
 import { showToast } from "~utils/toast"
-import { OPHEL_FONT_FAMILY_CSS_VAR } from "~utils/font"
 import { anchorStore, withAnchorOp } from "~stores/anchor-store"
 
 import { ConversationsTab } from "./ConversationsTab"
@@ -1383,19 +1382,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             height: `${panelHeightVh}vh`,
             "--panel-width": `${panelWidth}px`,
             "--panel-base-width": `${basePanelWidth}px`,
-            minHeight: "500px",
-            backgroundColor: "var(--gh-bg, #ffffff)",
-            backgroundImage: "var(--gh-bg-image, none)",
-            backgroundBlendMode: "overlay",
-            animation: "var(--gh-bg-animation, none)",
-            borderRadius: "12px",
-            boxShadow: "var(--gh-shadow, 0 10px 40px rgba(0,0,0,0.15))",
-            display: "flex",
-            flexDirection: "column",
-            overflow: "hidden",
-            border: "1px solid var(--gh-border, #e5e7eb)",
-            zIndex: 9999,
-            fontFamily: OPHEL_FONT_FAMILY_CSS_VAR,
+            // 静态展示属性（圆角/阴影/边框/背景/层叠等）在 .gh-main-panel 类中定义
             // 面板定位由 useDraggable 通过直接 DOM 写入控制
           } as React.CSSProperties
         }>

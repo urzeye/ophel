@@ -422,6 +422,25 @@
     filter 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
+/* ============= 主面板基础样式 ============= */
+/* 静态展示属性集中在类中；定位/尺寸等运行时几何仍由 MainPanel 内联 style 控制 */
+.gh-main-panel {
+  min-height: 500px;
+  background-color: var(--gh-bg, #ffffff);
+  background-image: var(--gh-bg-image, none);
+  background-blend-mode: overlay;
+  animation: var(--gh-bg-animation, none);
+  border-radius: 12px;
+  box-shadow: var(--gh-shadow, 0 10px 40px rgba(0, 0, 0, 0.15));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--gh-border, #e5e7eb);
+  z-index: 9999;
+  /* --gh-font-family 由本文件的 :host 规则保证存在，fallback 仅为防御 */
+  font-family: var(--gh-font-family, system-ui, sans-serif);
+}
+
 /* ============= 面板宽度调整 ============= */
 .gh-main-panel.hover-width-active {
   transition: width 0.18s ease;
@@ -1274,9 +1293,9 @@
 
 /* ============= Tooltip 样式 ============= */
 .ophel-tooltip {
-  /* Universal Dark Theme */
-  background-color: rgba(24, 24, 28, 0.94);
-  color: #ffffff;
+  /* 反色派生：浅色主题下为深色气泡（沿用主题墨色），深色主题下自动反转为浅色气泡 */
+  background-color: color-mix(in srgb, var(--gh-text, rgb(24, 24, 28)) 94%, transparent);
+  color: var(--gh-bg, #ffffff);
   padding: 4px 8px;
   border-radius: 4px;
   font-size: 12px;
@@ -1287,7 +1306,7 @@
   white-space: pre-wrap;
   word-wrap: break-word;
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid color-mix(in srgb, var(--gh-bg, rgb(255, 255, 255)) 12%, transparent);
   backdrop-filter: blur(6px);
   /* Animation */
   animation: tooltip-fade-in 0.12s ease-out;

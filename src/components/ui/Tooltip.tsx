@@ -40,8 +40,9 @@ function isFocusFromWindowRestoration(): boolean {
 
 export const GLOBAL_TOOLTIP_STYLE_TEXT = `
   .ophel-tooltip {
-    background-color: rgba(24, 24, 28, 0.94);
-    color: #ffffff;
+    /* 与 src/style.css 的 .ophel-tooltip 保持一致：反色派生，跟随主题变量 */
+    background-color: color-mix(in srgb, var(--gh-text, rgb(24, 24, 28)) 94%, transparent);
+    color: var(--gh-bg, #ffffff);
     padding: 4px 8px;
     border-radius: 4px;
     font-size: 12px;
@@ -51,7 +52,7 @@ export const GLOBAL_TOOLTIP_STYLE_TEXT = `
     white-space: pre-wrap;
     word-wrap: break-word;
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    border: 1px solid color-mix(in srgb, var(--gh-bg, rgb(255, 255, 255)) 12%, transparent);
     backdrop-filter: blur(6px);
     animation: tooltip-fade-in 0.12s ease-out;
   }
