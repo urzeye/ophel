@@ -65,6 +65,25 @@ const joinTextBlocks = (message: ClaudeHistoryMessage): string =>
     .join("\n\n")
 
 /**
+ * 取首个附件的文件名。纯附件提问（如只发图片）text 块为空，
+ * 页面文件卡片按 file_name 展示，大纲条目文案与导出解析
+ * （parseUserFiles/parseUserAttachments）保持同一字段口径。
+ */
+const firstUserFileName = (message: ClaudeHistoryMessage): string => {
+  for (const file of asObjectArray<Record<string, unknown>>(message.files)) {
+    if (typeof file.file_name === "string" && file.file_name.trim()) {
+      return file.file_name.trim()
+    }
+  }
+  for (const attachment of asObjectArray<Record<string, unknown>>(message.attachments)) {
+    if (typeof attachment.file_name === "string" && attachment.file_name.trim()) {
+      return attachment.file_name.trim()
+    }
+  }
+  return ""
+}
+
+/**
  * chat_conversations 响应的激活分支解析结果（大纲与导出共用）。
  */
 export interface ClaudeHistoryBranch {
@@ -176,9 +195,12 @@ export function parseClaudeHistoryOutline(
     if (message.sender === "human") {
       queryCount += 1
       const text = stripMarkdownInline(joinTextBlocks(message))
-      // 无文本的提问仍计入 queryCount（保持 queryIndex 绝对序），但不进入大纲序列
-      if (text) {
-        userQueries.push({ messageIndex, queryIndex: queryCount, text })
+      // 无文本的纯附件提问回退用首个附件文件名；文件名不过 stripMarkdownInline，
+      // 与页面文件卡片的展示口径一致
+      const displayText = text || firstUserFileName(message)
+      // 完全无展示文本的提问仍计入 queryCount（保持 queryIndex 绝对序），但不进入大纲序列
+      if (displayText) {
+        userQueries.push({ messageIndex, queryIndex: queryCount, text: displayText })
       }
       return
     }

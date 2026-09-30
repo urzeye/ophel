@@ -149,7 +149,6 @@ describe("parseClaudeHistoryOutline", () => {
   it("keeps queryIndex absolute for text-less user messages", () => {
     const attachmentOnly = userMessage("u2", "a1", "")
     attachmentOnly.content = []
-    attachmentOnly.attachments = [{ file_name: "a.png" }]
 
     const payload = buildPayload([
       userMessage("u1", ZERO_UUID),
@@ -162,10 +161,56 @@ describe("parseClaudeHistoryOutline", () => {
     const data = parseClaudeHistoryOutline(payload)
     expect(data).not.toBeNull()
     expect(data!.queryCount).toBe(3)
-    // 无文本提问不进入大纲序列，但后续提问序号保持绝对序
+    // 无文本且无可用附件名的提问不进入大纲序列，但后续提问序号保持绝对序
     expect(data!.userQueries).toEqual([
       { messageIndex: 0, queryIndex: 1, text: "问题 u1" },
       { messageIndex: 3, queryIndex: 3, text: "问题 u3" },
+    ])
+  })
+
+  it("uses the first attachment file name for attachment-only human messages", () => {
+    const imageOnly = userMessage("u2", "a1", "")
+    imageOnly.content = [{ type: "text", text: "" }]
+    imageOnly.files = [{ file_kind: "image", file_name: "1790749585780_image.png" }]
+
+    const payload = buildPayload([
+      userMessage("u1", ZERO_UUID),
+      assistantMessage("a1", "u1", "## 标题"),
+      imageOnly,
+      userMessage("u3", "u2"),
+      assistantMessage("a2", "u3", "回复"),
+    ])
+
+    const data = parseClaudeHistoryOutline(payload)
+    expect(data).not.toBeNull()
+    expect(data!.queryCount).toBe(3)
+    // 纯图片提问回退用首个附件文件名，序号保持绝对序
+    expect(data!.userQueries).toEqual([
+      { messageIndex: 0, queryIndex: 1, text: "问题 u1" },
+      { messageIndex: 2, queryIndex: 2, text: "1790749585780_image.png" },
+      { messageIndex: 3, queryIndex: 3, text: "问题 u3" },
+    ])
+  })
+
+  it("prefers text over attachment file names and falls back to attachments", () => {
+    const withText = userMessage("u1", ZERO_UUID, "看图说话")
+    withText.files = [{ file_kind: "image", file_name: "image.png" }]
+    const docOnly = userMessage("u2", "a1", "")
+    docOnly.content = []
+    docOnly.attachments = [{ file_name: "需求文档.pdf" }]
+
+    const payload = buildPayload([
+      withText,
+      assistantMessage("a1", "u1", "回复一"),
+      docOnly,
+      assistantMessage("a2", "u2", "回复二"),
+    ])
+
+    const data = parseClaudeHistoryOutline(payload)
+    expect(data).not.toBeNull()
+    expect(data!.userQueries).toEqual([
+      { messageIndex: 0, queryIndex: 1, text: "看图说话" },
+      { messageIndex: 2, queryIndex: 2, text: "需求文档.pdf" },
     ])
   })
 
