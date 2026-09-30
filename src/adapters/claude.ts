@@ -2558,8 +2558,8 @@ export class ClaudeAdapter extends SiteAdapter {
     this.sortedCachedUserQueries = cachedUserQueries
     const entry = cachedUserQueries[queryIndex - 1]
 
-    // 文本校验：序号压缩错位（如纯图片提问不占大纲序号）时缓存条目与
-    // 目标文本不可调和，跳过缓存路径交给基类按序号/文本搜索
+    // 文本校验：序号压缩错位（无任何展示文本的提问不占大纲序号）时缓存条目
+    // 与目标文本不可调和，跳过缓存路径交给基类按序号/文本搜索
     if (entry && (!text || isReconcilableOutlineText(entry.text, text))) {
       // 缓存条目可能对应未挂载行（或缓存来自接口回填而非虚拟扫描）：
       // 挂载查找落空时回退基类按序号/文本搜索，而不是直接判失
