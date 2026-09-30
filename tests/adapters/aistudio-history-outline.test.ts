@@ -9,15 +9,17 @@ interface TestChunkOptions {
   error?: string
   imageIds?: string[]
   fileIds?: string[]
+  inlineImage?: { mimeType: string; data: string }
 }
 
-/** 构造 37 槽位 chunk：文本 [0]、图片 [1]、文件 [3]、角色 [8]、正式回答 [16]、思考 [19]、错误 [28] */
+/** 构造 37 槽位 chunk：文本 [0]、图片 [1]、文件 [3]、角色 [8]、内联图片 [12]、正式回答 [16]、思考 [19]、错误 [28] */
 const makeChunk = (options: TestChunkOptions): unknown[] => {
   const chunk: unknown[] = new Array(37).fill(null)
   chunk[0] = options.text ?? ""
   if (options.imageIds) chunk[1] = options.imageIds
   if (options.fileIds) chunk[3] = options.fileIds
   chunk[8] = options.role
+  if (options.inlineImage) chunk[12] = [options.inlineImage.mimeType, options.inlineImage.data]
   if (options.role === "model" && !options.thought && !options.error) chunk[16] = 1
   if (options.thought) chunk[19] = 1
   if (options.error) chunk[28] = options.error
@@ -103,12 +105,57 @@ describe("parseAIStudioHistoryOutline", () => {
     expect(data!.attachmentsByQueryIndex.get(1)).toEqual({
       images: ["img-1"],
       files: ["file-1"],
+      inlineImages: [],
     })
-    expect(data!.attachmentsByQueryIndex.get(2)).toEqual({ images: ["img-2"], files: [] })
+    expect(data!.attachmentsByQueryIndex.get(2)).toEqual({
+      images: ["img-2"],
+      files: [],
+      inlineImages: [],
+    })
     // 附件所属轮的回答标题挂在该轮（绝对序号 1）上
     expect(data!.headingsByQueryIndex.get(1)).toEqual([{ level: 2, text: "分析", wordCount: 4 }])
     // branchMessageIds 只含带文本提问（与滚动条对齐）
     expect(data!.branchMessageIds).toEqual([1, 2])
+  })
+
+  it("粘贴的内联图片仅在导出解析（includeInlineImages）时捕获", () => {
+    const buildImagePayload = () =>
+      buildPayload([
+        makeChunk({ role: "user", inlineImage: { mimeType: "image/png", data: "aGVsbG8=" } }),
+        makeChunk({ role: "model", text: "图片分析结果" }),
+        makeChunk({ role: "user", text: "谢谢" }),
+        makeChunk({ role: "model", text: "不客气" }),
+      ])
+
+    // 大纲解析（默认）：不捕获内联字节，纯图片轮不产生附件条目
+    const outlineData = parseAIStudioHistoryOutline(buildImagePayload())
+    expect(outlineData).not.toBeNull()
+    expect(outlineData!.attachmentsByQueryIndex.size).toBe(0)
+    expect(outlineData!.userQueries).toEqual([{ queryIndex: 2, text: "谢谢", markdown: "谢谢" }])
+
+    // 导出解析：捕获内联图片，纯图片轮进入附件轮次空间
+    const exportData = parseAIStudioHistoryOutline(buildImagePayload(), 6, {
+      includeInlineImages: true,
+    })
+    expect(exportData).not.toBeNull()
+    expect(exportData!.attachmentsByQueryIndex.get(1)).toEqual({
+      images: [],
+      files: [],
+      inlineImages: [{ mimeType: "image/png", data: "aGVsbG8=" }],
+    })
+    expect(exportData!.replyMarkdownByQueryIndex.get(1)).toBe("图片分析结果")
+  })
+
+  it("内联图片槽位形态不符时忽略", () => {
+    const payload = buildPayload([
+      makeChunk({ role: "user", inlineImage: { mimeType: "text/plain", data: "aGVsbG8=" } }),
+      makeChunk({ role: "user", text: "问题" }),
+      makeChunk({ role: "model", text: "回答" }),
+    ])
+
+    const data = parseAIStudioHistoryOutline(payload, 6, { includeInlineImages: true })
+    expect(data).not.toBeNull()
+    expect(data!.attachmentsByQueryIndex.size).toBe(0)
   })
 
   it("跳过错误 chunk 与空回答", () => {

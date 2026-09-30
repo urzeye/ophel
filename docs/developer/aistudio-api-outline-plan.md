@@ -108,6 +108,7 @@ API key 实测（2026-09-28 复测，结论更新）：
 | --- | --- | --- |
 | `[1]` | 图片附件 ID 数组 | `["1o5LxYDU9-4HELPHHq0bSiQf00vhtxegy"]` |
 | `[3]` | 文件附件 ID 数组 | `["1iwgUh8OUVM537HX1dEWxW_a4dcl9k28u"]` |
+| `[12]` | 粘贴图片的内联字节（非 Drive 上传）：`[mime, base64]` 二元组 | `["image/png","iVBOR…"]`（2026-09-30 实测） |
 
 - 附件 chunk 的 `[0]` 文本为空，`[18]` token 数很大（图片 1105 / 文件 1141），
   `[32]` 时间戳与相邻文本 chunk 相同（同一轮提问拆成多个 chunk）。
@@ -146,6 +147,11 @@ GET https://drive.usercontent.google.com/download?id=<fileId>&export=download&au
 
 大纲场景不需要附件内容（空文本 chunk 按无文本提问处理：计入 queryIndex 但不进大纲，
 同 DeepSeek 约定）；附件与思考链由导出路使用（§5 第 7 条）。
+
+粘贴图片（截图直接 Ctrl+V，未存 Drive）不走 `[1]`/`[3]`，而是内联在 `[12]`，
+字节量随图片大小可达数百 KB。解析器仅在导出解析（`includeInlineImages`）时捕获，
+大纲解析保持不读，避免 base64 常驻大纲缓存；导出时转 data URL 复用现有
+zip 打包 / 单文件内嵌通路。
 
 ## 5. 实施计划（已落地，偏差见各条备注）
 

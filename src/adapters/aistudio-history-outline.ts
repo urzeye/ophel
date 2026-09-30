@@ -18,6 +18,8 @@ export interface AIStudioHistoryAttachment {
   images: string[]
   /** 文件附件的 Drive 文件 ID 列表（chunk [3] 槽位） */
   files: string[]
+  /** 直接粘贴的内联图片（chunk [12] 槽位 [mime, base64]；仅导出解析时捕获） */
+  inlineImages: { mimeType: string; data: string }[]
 }
 
 /**
@@ -50,6 +52,7 @@ const CHUNK_SLOT_TEXT = 0
 const CHUNK_SLOT_IMAGE_IDS = 1
 const CHUNK_SLOT_FILE_IDS = 3
 const CHUNK_SLOT_ROLE = 8
+const CHUNK_SLOT_INLINE_IMAGE = 12
 const CHUNK_SLOT_THOUGHT = 19
 const CHUNK_SLOT_ERROR = 28
 
@@ -73,6 +76,22 @@ const chunkDriveFileIds = (chunk: unknown[], slot: number): string[] => {
   return value.filter((item): item is string => typeof item === "string" && item.length > 0)
 }
 
+/** 内联图片槽位只认 [mime, base64] 二元组（粘贴图片的形态）；其他形态一律忽略 */
+const chunkInlineImage = (chunk: unknown[]): { mimeType: string; data: string } | null => {
+  const value = asArray(chunk[CHUNK_SLOT_INLINE_IMAGE])
+  const mimeType = value?.[0]
+  const data = value?.[1]
+  if (
+    typeof mimeType !== "string" ||
+    !mimeType.startsWith("image/") ||
+    typeof data !== "string" ||
+    !data
+  ) {
+    return null
+  }
+  return { mimeType, data }
+}
+
 /** 元数据最后更新时间戳（prompt[4][4][0][0]，秒级字符串）；缺失时返回空串 */
 const readUpdatedAt = (prompt: unknown[]): string => {
   const meta = asArray(prompt[4])
@@ -90,6 +109,7 @@ const readUpdatedAt = (prompt: unknown[]): string => {
 export function parseAIStudioHistoryOutline(
   payload: unknown,
   maxLevel = 6,
+  options?: { includeInlineImages?: boolean },
 ): AIStudioHistoryOutlineData | null {
   const batch = asArray(payload)
   const prompt = asArray(batch?.[0])
@@ -122,10 +142,18 @@ export function parseAIStudioHistoryOutline(
       }
       const imageIds = chunkDriveFileIds(chunk, CHUNK_SLOT_IMAGE_IDS)
       const fileIds = chunkDriveFileIds(chunk, CHUNK_SLOT_FILE_IDS)
-      if (imageIds.length > 0 || fileIds.length > 0) {
-        const attachment = attachmentsByQueryIndex.get(turnCount) ?? { images: [], files: [] }
+      // 粘贴图片不存 Drive，以内联 [mime, base64] 出现在 [12]；字节量大，
+      // 只在导出解析时捕获（大纲路径不开启，避免 base64 常驻大纲缓存）
+      const inlineImage = options?.includeInlineImages ? chunkInlineImage(chunk) : null
+      if (imageIds.length > 0 || fileIds.length > 0 || inlineImage) {
+        const attachment = attachmentsByQueryIndex.get(turnCount) ?? {
+          images: [],
+          files: [],
+          inlineImages: [],
+        }
         attachment.images.push(...imageIds)
         attachment.files.push(...fileIds)
+        if (inlineImage) attachment.inlineImages.push(inlineImage)
         attachmentsByQueryIndex.set(turnCount, attachment)
       }
       // 纯附件轮次仍计入 turnCount（保持 queryIndex 绝对序），但不进入提问序列

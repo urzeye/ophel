@@ -26,6 +26,7 @@ import {
   formatExportImageAttachments,
   isDownloadableExportAssetUrl,
   normalizeExportAssetUrl,
+  normalizeImageExtension,
   type ExportAssetCollector,
 } from "~utils/export-assets"
 import { htmlToMarkdown, type ExportBundle } from "~utils/exporter"
@@ -1649,7 +1650,10 @@ export class AIStudioAdapter extends SiteAdapter {
     const result = await this.requestRpcResolveDriveResource(sessionId)
     if (result.kind !== "ok") return null
 
-    const parsed = parseAIStudioHistoryOutline(result.payload)
+    // 导出需要粘贴图片的内联字节（chunk [12]）；大纲解析不开启，避免 base64 常驻缓存
+    const parsed = parseAIStudioHistoryOutline(result.payload, 6, {
+      includeInlineImages: true,
+    })
     if (!parsed || parsed.sessionId !== sessionId) return null
 
     // 轮次空间为绝对序号（含纯附件轮）：提问、附件、回答取并集后按序组装
@@ -1711,7 +1715,12 @@ export class AIStudioAdapter extends SiteAdapter {
     collector: ExportAssetCollector | undefined,
     inlineImages: boolean,
   ): Promise<string> {
-    if (!attachment || (attachment.images.length === 0 && attachment.files.length === 0)) {
+    if (
+      !attachment ||
+      (attachment.images.length === 0 &&
+        attachment.files.length === 0 &&
+        attachment.inlineImages.length === 0)
+    ) {
       return markdown.trim()
     }
 
@@ -1739,6 +1748,17 @@ export class AIStudioAdapter extends SiteAdapter {
           source: this.buildDriveDownloadUrl(fileId),
         }
       }),
+    )
+    // 粘贴图片（非 Drive 上传）字节已在响应里，直接转 data URL；
+    // zip 打包与单文件内嵌均走现有 data URL 通路
+    images.push(
+      ...attachment.inlineImages.map(
+        (image, index): AIStudioUserAttachment => ({
+          kind: "image",
+          name: `image-${index + 1}.${normalizeImageExtension(image.mimeType.split("/")[1] || "")}`,
+          source: `data:${image.mimeType};base64,${image.data}`,
+        }),
+      ),
     )
 
     let imageMarkdown: string[]
