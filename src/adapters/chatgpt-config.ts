@@ -98,7 +98,46 @@ export interface ChatGPTSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const CHATGPT_CONFIG_VERSION = 5
+export const CHATGPT_CONFIG_VERSION = 8
+
+export const CHATGPT_NEW_UX_SCOPE =
+  'main[data-app-shell-main-surface]:has([data-app-action-timeline-scroll], [data-thread-user-message-navigation-content="true"])'
+export const CHATGPT_HOME_COMPOSER_SELECTOR =
+  'form[data-composer-placement="home"]:is([data-chatgpt-composer], [data-thread-find-composer="true"])'
+export const CHATGPT_HOME_UX_SCOPE = `main[data-app-shell-main-surface]:has(${CHATGPT_HOME_COMPOSER_SELECTOR})`
+export const CHATGPT_PAGE_WIDTH_SCOPE = `:is(${CHATGPT_NEW_UX_SCOPE}, ${CHATGPT_HOME_UX_SCOPE})`
+// Normalize local width owners after broad legacy rules, which also affect nested rows and their margins.
+export const CHATGPT_NEW_UX_WIDTH_SELECTORS: Omit<WidthSelectorConfig, "transformValue">[] = [
+  {
+    selector: `${CHATGPT_PAGE_WIDTH_SCOPE} [class*="--thread-content-responsive-max-width:"]`,
+    property: "max-width",
+    value: "none",
+    extraCss:
+      "--thread-content-responsive-max-width: 100% !important; width: 100% !important; min-width: 0 !important; margin-left: 0 !important; margin-right: 0 !important;",
+    noCenter: true,
+  },
+  {
+    selector: `${CHATGPT_PAGE_WIDTH_SCOPE} [class*="thread-content-max-width"]:not([class*="--thread-body-max-width:"])`,
+    property: "max-width",
+    value: "100%",
+    extraCss:
+      "--thread-content-max-width: 100% !important; width: 100% !important; min-width: 0 !important; margin-left: 0 !important; margin-right: 0 !important;",
+    noCenter: true,
+  },
+  {
+    selector: `${CHATGPT_PAGE_WIDTH_SCOPE} [class*="--thread-body-max-width:"]`,
+    property: "max-width",
+    extraCss:
+      "--thread-content-max-width: 100% !important; --thread-body-max-width: 100% !important; width: 100% !important; min-width: 0 !important;",
+  },
+  {
+    // Project homes have no body-width owner; constrain only the content owner containing the composer.
+    selector: `${CHATGPT_HOME_UX_SCOPE} [data-chatgpt-project-conversation-drop-target] [class~="max-w-[var(--thread-content-max-width)]"]:has(${CHATGPT_HOME_COMPOSER_SELECTOR})`,
+    property: "max-width",
+    extraCss:
+      "width: 100% !important; min-width: 0 !important; margin-left: auto !important; margin-right: auto !important;",
+  },
+]
 
 const createChatGPTConfig = (): ChatGPTSiteConfig => {
   // 消息单元选择器：
@@ -291,6 +330,7 @@ const createChatGPTConfig = (): ChatGPTSiteConfig => {
         property: "width",
         extraCss: "max-width: calc(100vw - 32px) !important; min-width: 0 !important;",
       },
+      ...CHATGPT_NEW_UX_WIDTH_SELECTORS,
     ],
     zenMode: {
       hide: ["#stage-slideover-sidebar"],

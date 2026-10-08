@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### 🐛 Bug Fixes
+
+- **ChatGPT page width controls** — Fixed page width and panel avoidance on redesigned home, project, and conversation pages, including Work, empty, and read-only conversations, plus user message width.
+
 ---
 
 ## [1.2.11][1.2.11] - 2026-09-30

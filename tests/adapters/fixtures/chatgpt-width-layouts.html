@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>ChatGPT width layout regression fixtures</title>
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; font: 16px system-ui; color: #ddd; background: #111318; }
+      header { padding: 16px; background: #242832; }
+      h1 { font-size: 19px; margin: 0 0 10px; }
+      label { display: inline-flex; gap: 8px; margin: 6px; }
+      button, select { font: inherit; }
+      main { width: 100%; height: 650px; }
+      .responsive { display: flex; width: 100%; height: 100%; --thread-content-responsive-max-width: 48rem; }
+      .focus { display: flex; flex: 1; min-width: 0; flex-direction: column; }
+      .content { display: flex; flex: 1; min-height: 0; flex-direction: column; --thread-content-max-width: 42rem; }
+      .home-main { display: flex; flex: 1; min-height: 0; width: 100%; flex-direction: column; }
+      .home-layout { display: flex; flex-direction: column; width: 100%; }
+      .project-scroll { width: 100%; height: 100%; overflow: auto; }
+      .project-drop { flex: 1; min-height: 0; }
+      .body-owner { width: 100%; max-width: var(--thread-body-max-width); padding: 20px; margin: 0 auto; --thread-content-max-width: var(--thread-content-responsive-max-width, inherit); --thread-body-max-width: calc(var(--thread-content-max-width) + 40px); }
+      .project-owner { width: 100%; max-width: var(--thread-content-max-width); margin: 0 auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+      .thread-scroll-container { position: relative; width: 100%; height: 100%; overflow: auto; }
+      .transcript { min-height: 300px; }
+      .message { display: flex; justify-content: flex-end; width: 100%; margin: 15px 0; }
+      .bubble { --user-chat-width: 70%; max-width: var(--user-chat-width); background: #303744; border-radius: 16px; padding: 10px; overflow-wrap: anywhere; }
+      .footer { position: absolute; left: 0; right: 0; bottom: 0; }
+      form { width: 100%; padding: 16px; background: #303744; border-radius: 20px; }
+      .panel { display: none; position: absolute; top: 180px; width: 320px; height: 300px; background: #65318b; padding: 20px; }
+      .native-source { max-width: 672px; width: 100%; margin: auto; }
+      output { display: block; font-size: 13px; padding: 10px; white-space: pre-wrap; }
+    </style>
+    <style id="page"></style><style id="query"></style><style id="avoid"></style>
+  </head>
+  <body>
+    <header>
+      <h1>ChatGPT width regression — sanitized structures</h1>
+      <label>Layout <select id="layout"><option value="home">Initial prompt</option><option value="work-home">Work initial prompt</option><option value="gpt-home">Custom GPT home</option><option value="empty-thread">Empty thread</option><option value="read-only">Read-only transcript</option><option value="images">Images (excluded)</option><option value="project-empty">Empty project</option><option value="project-populated">Populated project</option><option value="conversation">Conversation</option><option value="legacy">Legacy conversation</option><option value="split">Two visible panes</option><option value="sources">Sources only</option></select></label>
+      <label><input id="page-enabled" type="checkbox" />Page widening</label>
+      <label>Page width <select id="page-value"><option>40</option><option selected>81</option><option>99</option></select>%</label>
+      <label><input id="query-enabled" type="checkbox" />Query widening</label>
+      <label>Query width <select id="query-value"><option>40</option><option selected>81</option><option>99</option></select>%</label>
+      <label>Panel <select id="panel"><option value="none">Collapsed</option><option value="left">Floating left</option><option value="right">Floating right</option><option value="snap">Snapped (suppressed)</option></select></label>
+      <button id="remount">Remount composer</button><button id="transition">Mount first message</button>
+      <output id="result">Loading generated CSS…</output>
+    </header>
+    <div id="fixture"></div><div class="panel">Panel fixture</div>
+    <script>
+      const $ = (id) => document.getElementById(id);
+      const bodyClass = "body-owner [--thread-content-max-width:var(--thread-content-responsive-max-width,inherit)] [--thread-body-max-width:calc(var(--thread-content-max-width)+40px)]";
+      const composer = (placement) => `<form data-chatgpt-composer data-composer-placement="${placement}" data-thread-find-composer="true"><div contenteditable="true" role="textbox" aria-label="Synthetic prompt">Prompt placeholder</div></form>`;
+      const hiddenConversation = `<main data-app-shell-main-surface="browser" style="display:none"><div data-thread-user-message-navigation-content="true"></div></main>`;
+      const shell = (body) => `${hiddenConversation}<main data-app-shell-main-surface="browser"><div class="responsive [--thread-content-responsive-max-width:var(--thread-content-expanded-max-width,inherit)]"><div class="focus"><div class="content [--thread-content-max-width:42rem]">${body}</div></div></div></main>`;
+      const homeMain = (body) => `<div role="main" class="home-main [container-name:home-main-content]">${body}</div>`;
+      let rules;
+      function mount() {
+        const kind = $("layout").value;
+        let body;
+        if (["home", "work-home", "gpt-home"].includes(kind)) body = homeMain(`<div class="home-layout"><div class="${bodyClass}" data-fixture-owner="home">${composer("home")}</div></div>`);
+        else if (kind.startsWith("project")) body = homeMain(`<div data-chatgpt-project-conversation-drop-target class="project-drop"><div class="project-scroll"><div class="project-owner mx-auto w-full max-w-[var(--thread-content-max-width)] px-panel py-panel" data-fixture-owner="project"><h2>Synthetic project</h2>${composer("home")}<div role="tablist">Chats / Sources</div><div>${kind === "project-empty" ? "No chats" : "Synthetic chat list"}</div></div></div></div>`);
+        else if (kind === "sources") body = `<div data-chatgpt-project-conversation-drop-target><div class="native-source max-w-[var(--thread-content-max-width)]" data-fixture-owner="sources">Synthetic Sources view without a composer</div></div>`;
+        else if (kind === "images") body = `<div class="${bodyClass}" data-fixture-owner="images">${composer("thread")}</div>`;
+        else body = `<div class="thread-scroll-container" data-app-action-timeline-scroll><div class="${bodyClass} transcript" data-thread-user-message-navigation-content="true" data-fixture-owner="transcript"><div class="message"><div class="bubble" data-user-message-bubble="true" id="long">${"Synthetic long query. ".repeat(90)}</div></div><div class="message"><div class="bubble" data-user-message-bubble="true" id="short">Short query.</div></div><div class="max-w-(--thread-content-max-width)">Actions</div></div><div class="footer" data-thread-scroll-footer="true"><div class="${bodyClass}" data-fixture-owner="composer">${composer("thread")}</div></div></div>`;
+        if (kind === "work-home") body = body.replace("data-chatgpt-composer ", "");
+        if (kind === "empty-thread" || kind === "read-only") body = body.replace('data-thread-user-message-navigation-content="true"', "");
+        if (kind === "empty-thread") body = body.replace(/<div class="message">[\s\S]*?<div class="max-w-/, '<div class="max-w-');
+        if (kind === "read-only") body = body.replace(/<div class="footer"[\s\S]*$/, "</div>");
+        $("fixture").innerHTML = kind === "legacy" ? `<main id="thread"><div class="max-w-(--thread-content-max-width) body-owner" data-fixture-owner="legacy" style="--thread-content-max-width:768px">${composer("thread")}</div></main>` : shell(body);
+        if (kind === "split") {
+          $("fixture").innerHTML = `<div style="display:flex">${shell(homeMain(`<div class="${bodyClass}" data-fixture-owner="split-left">${composer("home")}</div>`))}${shell(homeMain(`<div class="${bodyClass}" data-fixture-owner="split-right">${composer("home")}</div>`))}</div>`;
+          const panes = Array.from($("fixture").querySelectorAll("main[data-app-shell-main-surface]")).filter(e => e.style.display !== "none");
+          panes[0].setAttribute("data-gh-panel-avoidance-scope", "fixture-left");
+          panes[1].setAttribute("data-gh-panel-avoidance-scope", "fixture-right");
+        }
+        update();
+      }
+      function update() {
+        if (!rules) return;
+        $("page").textContent = $("page-enabled").checked ? rules.page[$("page-value").value] : "";
+        $("query").textContent = $("query-enabled").checked ? rules.query[$("query-value").value] : "";
+        const side = $("panel").value;
+        $("avoid").textContent = $("layout").value === "split" && (side === "left" || side === "right") ? rules.split : (side === "left" || side === "right") && innerWidth >= 768 ? rules.avoidance[side] : "";
+        const panel = document.querySelector(".panel");
+        panel.style.display = side === "left" || side === "right" ? "block" : "none";
+        panel.style.left = side === "left" ? "0" : "auto";
+        panel.style.right = side === "right" ? "0" : "auto";
+        const matches = rules.config.widthSelectors.filter((s) => s.selector.includes("main[data-app-shell-main-surface]")).map((s) => ({selector: s.selector, count: document.querySelectorAll(s.selector).length}));
+        const kind = $("layout").value;
+        const expected = kind === "split" ? [2, 2, 2, 0] : ["home", "work-home", "gpt-home"].includes(kind) ? [1, 1, 1, 0] : kind.startsWith("project") ? [1, 2, 0, 1] : ["conversation", "empty-thread"].includes(kind) ? [1, 2, 2, 0] : kind === "read-only" ? [1, 2, 1, 0] : [0, 0, 0, 0];
+        const failures = [];
+        matches.forEach((match, index) => {
+          if (match.count !== expected[index]) failures.push(`Selector ${index}: ${match.count} matches; expected ${expected[index]}`);
+        });
+        const reserved = (side === "left" || side === "right") && innerWidth >= 768;
+        for (const owner of document.querySelectorAll("[data-fixture-owner]")) {
+          if (kind === "sources" || kind === "images") continue;
+          const rect = owner.getBoundingClientRect();
+          const parentStyle = getComputedStyle(owner.parentElement);
+          const available = owner.parentElement.clientWidth - parseFloat(parentStyle.paddingLeft) - parseFloat(parentStyle.paddingRight);
+          if ($("page-enabled").checked && !reserved) {
+            const percent = innerWidth <= 480 ? 95 : Number($("page-value").value);
+            if (Math.abs(rect.width - available * percent / 100) > 1) failures.push("Page percentage applied more than once");
+          }
+          if (getComputedStyle(owner).paddingLeft !== "20px") failures.push("Native padding changed");
+          if (kind === "split" && reserved) { const target = owner.dataset.fixtureOwner === "split-left" ? 800 : 516; if (Math.abs(rect.width - Math.min(target, available)) > 1) failures.push("Per-pane reservation crossed surfaces"); continue; }
+          if (reserved && Math.abs(rect.width - Math.min(1400, available)) > 1) failures.push("Reserved pixel width lost precedence");
+        }
+        $("result").textContent = failures.length ? "FAIL: " + failures.join("; ") : "PASS — scoped selector matching, width geometry, and padding";
+        document.body.dataset.checks = failures.length ? "failed" : "passed";
+        document.body.dataset.ready = "true";
+      }
+      $("layout").addEventListener("change", mount);
+      for (const id of ["page-enabled", "page-value", "query-enabled", "query-value", "panel"]) $(id).addEventListener("change", update);
+      $("remount").onclick = () => { const f = document.querySelector("#fixture form"); if (f) f.replaceWith(f.cloneNode(true)); update(); };
+      $("transition").onclick = () => { $("layout").value = "conversation"; mount(); };
+      fetch("/width-rules.json").then((r) => r.json()).then((data) => { rules = data; mount(); });
+    </script>
+  </body>
+</html>

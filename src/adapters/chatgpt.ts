@@ -36,7 +36,14 @@ import {
   type ZenModeConfig,
 } from "./base"
 import type { BuiltinSiteConfig } from "./declarative"
-import { CHATGPT_CONFIG, CHATGPT_CONFIG_VERSION, type ChatGPTSiteConfig } from "./chatgpt-config"
+import {
+  CHATGPT_CONFIG,
+  CHATGPT_CONFIG_VERSION,
+  CHATGPT_HOME_UX_SCOPE,
+  CHATGPT_NEW_UX_SCOPE,
+  CHATGPT_NEW_UX_WIDTH_SELECTORS,
+  type ChatGPTSiteConfig,
+} from "./chatgpt-config"
 
 const DEFAULT_TITLE = "ChatGPT"
 
@@ -1160,13 +1167,19 @@ export class ChatGPTAdapter extends SiteAdapter {
         property: "--user-chat-width",
         noCenter: true,
       },
+      {
+        selector: `${CHATGPT_NEW_UX_SCOPE} [data-user-message-bubble="true"]`,
+        property: "--user-chat-width",
+        noCenter: true,
+      },
     ]
   }
 
   getPanelAvoidanceConfig(): PanelAvoidanceConfig {
     const privateSelectors = this.config.sitePrivateSelectors
     return {
-      scopeSelector: privateSelectors.panelScope,
+      scopeSelector: `:is(${privateSelectors.panelScope}):not(main main)`,
+      scopeEachMatch: true,
       obstacleSelectors: [...privateSelectors.panelObstacle],
       widthSelectors: [
         {
@@ -1189,8 +1202,29 @@ export class ChatGPTAdapter extends SiteAdapter {
           property: "max-width",
           extraCss: "width: 100% !important; min-width: 0 !important;",
         },
+        ...CHATGPT_NEW_UX_WIDTH_SELECTORS,
       ],
       insetSelectors: [
+        {
+          selector: `${CHATGPT_HOME_UX_SCOPE} [role="main"][class*="[container-name:home-main-content]"]`,
+          insetMode: "edge",
+          extraCss:
+            "box-sizing: border-box !important; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
+        },
+        {
+          selector: `${CHATGPT_NEW_UX_SCOPE} .thread-scroll-container[data-app-action-timeline-scroll]`,
+          insetMode: "edge",
+          extraCss:
+            "box-sizing: border-box !important; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
+        },
+        {
+          selector: `${CHATGPT_NEW_UX_SCOPE} [data-thread-scroll-footer="true"]`,
+          leftProperty: "left",
+          rightProperty: "right",
+          insetMode: "edge",
+          extraCss:
+            "width: auto !important; max-width: none !important; min-width: 0 !important; box-sizing: border-box !important;",
+        },
         {
           selector: privateSelectors.panelNewChatHeadingInset,
           insetMode: "edge",

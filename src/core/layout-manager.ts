@@ -81,6 +81,8 @@ const PANEL_HOVER_WIDTH_ACTIVE_ATTR = "data-panel-hover-width-active"
 const PANEL_BASE_WIDTH_ATTR = "data-panel-base-width"
 const PANEL_ANCHOR_SIDE_ATTR = "data-panel-anchor-side"
 const PANEL_HOVER_WIDTH_AVOIDANCE_SUPPRESSION_MS = 260
+const PANEL_AVOIDANCE_SCOPE_ATTR = "data-gh-panel-avoidance-scope"
+let panelAvoidanceScopeToken = 0
 
 interface PanelReservation {
   targetWidth: number
@@ -160,6 +162,11 @@ export class LayoutManager {
   private panelAvoidanceScopeResizeObserver: ResizeObserver | null = null
   private panelAvoidanceObservedPanel: HTMLElement | null = null
   private panelAvoidanceObservedScope: HTMLElement | null = null
+  private panelAvoidanceObservedScopes: HTMLElement[] = []
+  private panelAvoidanceScopeMarkers = new Map<
+    HTMLElement,
+    { token: string; previousValue: string | null }
+  >()
   private panelAvoidanceScopeCache = new Map<string, HTMLElement | null>()
   private panelHoverWidthAvoidanceSuppressedUntil = 0
   // host observer 回调每批 mutation 都会用到，缓存避免反复拼接选择器字符串
@@ -293,6 +300,7 @@ export class LayoutManager {
     this.panelAvoidanceScopeResizeObserver = null
     this.panelAvoidanceObservedPanel = null
     this.panelAvoidanceObservedScope = null
+    this.panelAvoidanceObservedScopes = []
     this.panelHoverWidthAvoidanceSuppressedUntil = 0
     this.clearPanelAvoidanceStyle()
     this.refreshShadowInjection()
@@ -1130,28 +1138,52 @@ html.${AUTO_HIDE_FLOAT_CLASS} ${config.scrollContainer}::after {
     panel: HTMLElement,
     reservation: PanelReservation | null,
     useGlobalSelector = true,
+    measuredScope?: HTMLElement,
+    scopeMarker?: string,
   ): string {
     const config = this.panelAvoidanceConfig
     if (!config) return ""
 
     const widthCss = reservation
       ? this.buildCSSFromSelectors(
-          config.widthSelectors,
+          measuredScope && scopeMarker
+            ? config.widthSelectors
+                .filter((rule) =>
+                  this.hasPanelAvoidanceTarget(measuredScope, rule.globalSelector || rule.selector),
+                )
+                .map((rule) => ({
+                  ...rule,
+                  selector: this.scopePanelAvoidanceSelector(
+                    rule.globalSelector || rule.selector,
+                    scopeMarker,
+                  ),
+                  globalSelector: undefined,
+                }))
+            : config.widthSelectors,
           `${Math.max(0, Math.floor(reservation.targetWidth))}px`,
           useGlobalSelector,
         )
       : ""
     const insetCss = (config.insetSelectors || [])
       .map((insetConfig) => {
+        if (measuredScope && !this.hasPanelAvoidanceTarget(measuredScope, insetConfig.selector)) {
+          return ""
+        }
         const insetReservation = this.getPanelAvoidanceInsetReservation(
           panel,
           insetConfig,
           reservation,
+          measuredScope,
         )
         if (!insetReservation) return ""
 
         return this.buildPanelAvoidanceInsetCSS(
-          insetConfig,
+          scopeMarker
+            ? {
+                ...insetConfig,
+                selector: this.scopePanelAvoidanceSelector(insetConfig.selector, scopeMarker),
+              }
+            : insetConfig,
           `${Math.max(
             0,
             Math.floor(
@@ -1179,10 +1211,19 @@ html.${AUTO_HIDE_FLOAT_CLASS} ${config.scrollContainer}::after {
     panel: HTMLElement,
     config: PanelAvoidanceInsetConfig,
     fallbackReservation: PanelReservation | null,
+    measuredScope?: HTMLElement,
   ): PanelReservation | null {
     if (!config.scopeSelector) return fallbackReservation
 
-    const scope = this.findPanelAvoidanceScope(config.scopeSelector)
+    // A pane's independent inset scope must never resolve to another pane's first match.
+    const scope = measuredScope
+      ? [measuredScope, ...measuredScope.querySelectorAll(config.scopeSelector)].find(
+          (candidate): candidate is HTMLElement =>
+            candidate instanceof HTMLElement &&
+            candidate.matches(config.scopeSelector!) &&
+            this.isPanelAvoidanceScopeVisible(candidate),
+        )
+      : this.findPanelAvoidanceScope(config.scopeSelector)
     if (!scope) return null
 
     return this.getPanelReservation(
@@ -1290,6 +1331,69 @@ html.${AUTO_HIDE_FLOAT_CLASS} ${config.scrollContainer}::after {
         : null)
     this.panelAvoidanceScopeCache.set(selector, scope)
     return scope
+  }
+
+  private isPanelAvoidanceScopeVisible(scope: HTMLElement): boolean {
+    const rect = scope.getBoundingClientRect()
+    if (rect.width <= 0 || rect.height <= 0 || rect.right <= 0 || rect.left >= window.innerWidth) {
+      return false
+    }
+    if (scope.closest('[hidden], [aria-hidden="true"], [inert]')) return false
+    const style = window.getComputedStyle(scope)
+    return (
+      style.display !== "none" && style.visibility !== "hidden" && style.visibility !== "collapse"
+    )
+  }
+
+  private hasPanelAvoidanceTarget(scope: HTMLElement, selector: string): boolean {
+    return scope.matches(selector) || Boolean(scope.querySelector(selector))
+  }
+
+  private scopePanelAvoidanceSelector(selector: string, marker: string): string {
+    // Split only top-level commas, preserving each branch's specificity and quoted/nested commas.
+    const branches: string[] = []
+    let start = 0
+    let depth = 0
+    let quote = ""
+    let escaped = false
+    for (let index = 0; index < selector.length; index++) {
+      const char = selector[index]
+      if (escaped) {
+        escaped = false
+        continue
+      }
+      if (char === "\\") {
+        escaped = true
+        continue
+      }
+      if (quote) {
+        if (char === quote) quote = ""
+        continue
+      }
+      if (char === '"' || char === "'") {
+        quote = char
+        continue
+      }
+      if (char === "(" || char === "[") depth++
+      else if (char === ")" || char === "]") depth--
+      else if (char === "," && depth === 0) {
+        branches.push(selector.slice(start, index).trim())
+        start = index + 1
+      }
+    }
+    branches.push(selector.slice(start).trim())
+    return branches.map((branch) => `${marker}:is(${branch}), ${marker} :is(${branch})`).join(", ")
+  }
+
+  private clearPanelAvoidanceScopeMarkers(keep = new Set<HTMLElement>()) {
+    for (const [scope, { token, previousValue }] of this.panelAvoidanceScopeMarkers) {
+      if (keep.has(scope)) continue
+      if (scope.getAttribute(PANEL_AVOIDANCE_SCOPE_ATTR) === token) {
+        if (previousValue === null) scope.removeAttribute(PANEL_AVOIDANCE_SCOPE_ATTR)
+        else scope.setAttribute(PANEL_AVOIDANCE_SCOPE_ATTR, previousValue)
+      }
+      this.panelAvoidanceScopeMarkers.delete(scope)
+    }
   }
 
   private getPanelAvoidanceScopeRect(scope: HTMLElement | null): HorizontalRect {
@@ -1567,7 +1671,11 @@ html.${AUTO_HIDE_FLOAT_CLASS} ${config.scrollContainer}::after {
     this.schedulePanelAvoidanceUpdate()
   }
 
-  private syncPanelAvoidanceObservers(panel: HTMLElement | null, scope: HTMLElement | null) {
+  private syncPanelAvoidanceObservers(
+    panel: HTMLElement | null,
+    scope: HTMLElement | null,
+    scopes?: HTMLElement[],
+  ) {
     if (this.panelAvoidanceObservedPanel !== panel) {
       this.panelAvoidancePanelObserver?.disconnect()
       this.panelAvoidancePanelObserver = null
@@ -1600,15 +1708,37 @@ html.${AUTO_HIDE_FLOAT_CLASS} ${config.scrollContainer}::after {
       }
     }
 
-    this.syncPanelAvoidanceScopeObserver(scope)
+    if (scopes) this.syncPanelAvoidanceScopeObservers(scopes)
+    else this.syncPanelAvoidanceScopeObserver(scope)
+  }
+
+  private syncPanelAvoidanceScopeObservers(scopes: HTMLElement[]) {
+    if (
+      this.panelAvoidanceObservedScope === null &&
+      scopes.length === this.panelAvoidanceObservedScopes.length &&
+      scopes.every((scope, index) => scope === this.panelAvoidanceObservedScopes[index])
+    ) {
+      return
+    }
+    this.panelAvoidanceScopeResizeObserver?.disconnect()
+    this.panelAvoidanceScopeResizeObserver = null
+    this.panelAvoidanceObservedScope = null
+    this.panelAvoidanceObservedScopes = scopes
+    if (!scopes.length || typeof ResizeObserver === "undefined") return
+
+    // Reuse the scope observer for all opted-in panes; no observer is allocated per pane.
+    this.panelAvoidanceScopeResizeObserver = new ResizeObserver(this.schedulePanelAvoidanceUpdate)
+    scopes.forEach((scope) => this.panelAvoidanceScopeResizeObserver!.observe(scope))
   }
 
   private syncPanelAvoidanceScopeObserver(scope: HTMLElement | null) {
-    if (this.panelAvoidanceObservedScope === scope) return
+    if (this.panelAvoidanceObservedScope === scope && !this.panelAvoidanceObservedScopes.length)
+      return
 
     this.panelAvoidanceScopeResizeObserver?.disconnect()
     this.panelAvoidanceScopeResizeObserver = null
     this.panelAvoidanceObservedScope = scope
+    this.panelAvoidanceObservedScopes = []
 
     if (!scope || typeof ResizeObserver === "undefined") return
 
@@ -1630,6 +1760,11 @@ html.${AUTO_HIDE_FLOAT_CLASS} ${config.scrollContainer}::after {
     }
 
     const panel = this.findMainPanel()
+    if (this.panelAvoidanceConfig.scopeEachMatch) {
+      this.syncPanelAvoidanceEachScope(panel)
+      return
+    }
+    this.clearPanelAvoidanceScopeMarkers()
     const scope = this.findPanelAvoidanceScope()
     if (this.panelAvoidanceConfig.scopeSelector && !scope) {
       this.syncPanelAvoidanceObservers(panel, null)
@@ -1665,7 +1800,60 @@ html.${AUTO_HIDE_FLOAT_CLASS} ${config.scrollContainer}::after {
     }
   }
 
+  private syncPanelAvoidanceEachScope(panel: HTMLElement | null) {
+    const selector = this.panelAvoidanceConfig?.scopeSelector
+    const scopes = selector
+      ? Array.from(document.querySelectorAll(selector)).filter(
+          (scope): scope is HTMLElement =>
+            scope instanceof HTMLElement && this.isPanelAvoidanceScopeVisible(scope),
+        )
+      : []
+    this.syncPanelAvoidanceObservers(panel, null, scopes)
+    if (!panel) {
+      this.clearPanelAvoidanceStyle()
+      return
+    }
+
+    const activeScopes = new Set<HTMLElement>()
+    const rules: string[] = []
+    for (const scope of scopes) {
+      const existing = this.panelAvoidanceScopeMarkers.get(scope)
+      const token = existing?.token ?? `pane-${++panelAvoidanceScopeToken}`
+      const marker = `[${PANEL_AVOIDANCE_SCOPE_ATTR}="${token}"]`
+      const reservation = this.getPanelReservation(panel, this.getPanelAvoidanceScopeRect(scope))
+      const css = this.generatePanelAvoidanceCSS(panel, reservation, true, scope, marker).trim()
+      if (!css) continue
+
+      // Do not mutate panes without effective width/inset rules, and preserve any prior attribute.
+      if (!existing) {
+        this.panelAvoidanceScopeMarkers.set(scope, {
+          token,
+          previousValue: scope.getAttribute(PANEL_AVOIDANCE_SCOPE_ATTR),
+        })
+        scope.setAttribute(PANEL_AVOIDANCE_SCOPE_ATTR, token)
+      }
+      activeScopes.add(scope)
+      rules.push(css)
+    }
+    this.clearPanelAvoidanceScopeMarkers(activeScopes)
+    if (!rules.length) {
+      this.clearPanelAvoidanceStyle()
+      return
+    }
+
+    // Per-match scopes are ordinary DOM panes; global marker selectors do not enter Shadow DOM.
+    const hadShadowCss = Boolean(this.panelAvoidanceShadowCss)
+    this.panelAvoidanceShadowCss = ""
+    this.panelAvoidanceStyle = this.upsertStyle(
+      STYLE_IDS.PANEL_AVOIDANCE,
+      rules.join("\n"),
+      this.panelAvoidanceStyle,
+    )
+    if (hadShadowCss) this.syncPanelAvoidanceShadowStyles()
+  }
+
   private clearPanelAvoidanceStyle() {
+    this.clearPanelAvoidanceScopeMarkers()
     const hadShadowCss = Boolean(this.panelAvoidanceShadowCss)
 
     this.removeStyle(this.panelAvoidanceStyle)
