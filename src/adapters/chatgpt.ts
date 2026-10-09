@@ -35,6 +35,7 @@ import {
   type ZenModeConfig,
 } from "./base"
 import type { BuiltinSiteConfig } from "./declarative"
+import { parseChatGPTHistoryExport, parseChatGPTHistoryPage } from "./chatgpt-history-export"
 import {
   CHATGPT_CONFIG,
   CHATGPT_CONFIG_VERSION,
@@ -159,6 +160,10 @@ const CHATGPT_EXPORT_ASSISTANT_SELECTOR = `[${CHATGPT_EXPORT_ROOT_ATTR}="1"] [${
 // div[data-content-search-turn-key]，消息单元为 [data-content-search-unit-key]。
 const CHATGPT_EXPORT_MOUNTED_TURN_SELECTOR =
   'section[data-turn], [data-testid^="conversation-turn"], [data-content-search-turn-key]'
+
+// conversations 接口导出：每页拉取的 turn 数与分页上限（防止游标链断裂时无限翻页）
+const CHATGPT_API_PAGE_TURNS = 100
+const CHATGPT_API_EXPORT_MAX_PAGES = 50
 
 interface ChatGPTExportMessageSnapshot {
   role: "user" | "assistant"
@@ -592,16 +597,17 @@ export class ChatGPTAdapter extends SiteAdapter {
     }
   }
 
-  private buildNativeDeleteHeaders(
+  /** 站点原生 backend-api 请求头（删除/导出共用同一认证链路） */
+  private buildNativeApiHeaders(
     token: string,
-    method: "PATCH" | "DELETE",
+    options?: { json?: boolean },
   ): Record<string, string> {
     const headers: Record<string, string> = {
       accept: "*/*",
       authorization: `Bearer ${token}`,
     }
 
-    if (method === "PATCH") {
+    if (options?.json) {
       headers["content-type"] = "application/json"
     }
 
@@ -628,7 +634,7 @@ export class ChatGPTAdapter extends SiteAdapter {
     token: string,
     method: "PATCH" | "DELETE" = "PATCH",
   ): Promise<Response> {
-    const headers = this.buildNativeDeleteHeaders(token, method)
+    const headers = this.buildNativeApiHeaders(token, { json: method === "PATCH" })
 
     return fetch(endpoint, {
       method,
@@ -1642,6 +1648,17 @@ export class ChatGPTAdapter extends SiteAdapter {
         ? createExportAssetCollector()
         : null
 
+    // 新版虚拟窗口会话优先走 conversations 接口拿全量历史（markdown 源文本，
+    // 公式/代码零损耗，无需滚动分页）；接口不可用或无法证明历史完整时回退滚动收集
+    const apiMessages = await this.collectApiExportMessageSnapshots()
+    if (apiMessages?.length) {
+      this.mountExportSnapshot(apiMessages)
+      this.exportBundle = {
+        messages: apiMessages.map(({ role, content }) => ({ role, content })),
+      }
+      return { count: apiMessages.length }
+    }
+
     const responseRoot = this.findCurrentResponseContainer() || (document.body as HTMLElement)
     const scrollContainer = this.getScrollContainer() || responseRoot
 
@@ -1690,6 +1707,92 @@ export class ChatGPTAdapter extends SiteAdapter {
 
   getExportCollectionReport(): ExportCollectionReport | null {
     return this.exportCollectionReport
+  }
+
+  /**
+   * 新版 TURN-KEY 结构判定：会话区出现 data-turn-key 即新版（服务端懒加载 +
+   * 虚拟窗口）。旧版结构不出现该属性，继续走 DOM 滚动收集。
+   */
+  private isChatGPTTurnKeyConversation(): boolean {
+    const root: ParentNode = this.findCurrentResponseContainer() || document
+    return root.querySelector("[data-turn-key]") !== null
+  }
+
+  /**
+   * 新版虚拟窗口会话优先走 conversations 接口拿全量 markdown（公式/代码零损耗、
+   * 无需滚动收集）；接口不可用或无法证明历史完整时返回 null，回退滚动收集。
+   * 翻页：沿 page_info.start_cursor 向前（cursor 参数），直至 has_previous_page=false。
+   */
+  private async collectApiExportMessageSnapshots(): Promise<ChatGPTExportMessageSnapshot[] | null> {
+    if (!this.isUserConversationPage()) return null
+    if (!this.isChatGPTTurnKeyConversation()) return null
+    const cid = this.getSessionId()
+    if (!cid) return null
+
+    try {
+      const pages: unknown[] = []
+      let cursor: string | undefined
+      for (let pageIndex = 0; pageIndex < CHATGPT_API_EXPORT_MAX_PAGES; pageIndex += 1) {
+        const payload = await this.fetchConversationApiPage(cid, cursor)
+        if (payload === null) return null
+        const page = parseChatGPTHistoryPage(payload)
+        if (!page || page.sessionId !== cid) return null
+        pages.push(payload)
+        if (!page.pageInfo.hasPreviousPage) break
+        cursor = page.pageInfo.startCursor
+      }
+
+      const parsed = parseChatGPTHistoryExport(pages)
+      if (!parsed || parsed.sessionId !== cid) return null
+
+      const snapshots: ChatGPTExportMessageSnapshot[] = []
+      parsed.messages.forEach((message, index) => {
+        const content = this.normalizeExportMessageContent(message.text)
+        if (!content) return
+        snapshots.push({
+          role: message.role,
+          turnKey: `api:${message.role}:${index}`,
+          order: index + 1,
+          content,
+        })
+      })
+      return snapshots.length > 0 ? snapshots : null
+    } catch (error) {
+      console.warn("[ChatGPTAdapter] Failed to collect api export payload:", error)
+      return null
+    }
+  }
+
+  /** 拉取 conversations 接口单页；token 缺失返回 null，HTTP 失败抛错（401/403 强制刷新重试一次） */
+  private async fetchConversationApiPage(cid: string, cursor?: string): Promise<unknown | null> {
+    let token = await this.getSessionAccessToken()
+    if (!token) return null
+
+    let response = await fetch(this.buildConversationApiUrl(cid, cursor), {
+      headers: this.buildNativeApiHeaders(token),
+      credentials: "include",
+    })
+    if (response.status === 401 || response.status === 403) {
+      token = await this.getSessionAccessToken(true)
+      if (!token) return null
+      response = await fetch(this.buildConversationApiUrl(cid, cursor), {
+        headers: this.buildNativeApiHeaders(token),
+        credentials: "include",
+      })
+    }
+    if (!response.ok) {
+      throw new Error(`conversations api responded ${response.status}`)
+    }
+    return response.json()
+  }
+
+  private buildConversationApiUrl(cid: string, cursor?: string): string {
+    const params = new URLSearchParams({
+      num_turns: String(CHATGPT_API_PAGE_TURNS),
+      include_has_versions: "true",
+    })
+    if (cursor) params.set("cursor", cursor)
+    return `${window.location.origin}/backend-api/conversations/${encodeURIComponent(cid)}?${params}`
   }
 
   /**

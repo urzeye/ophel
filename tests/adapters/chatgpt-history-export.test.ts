@@ -1,0 +1,126 @@
+import { describe, expect, it } from "vitest"
+
+import { parseChatGPTHistoryExport } from "~adapters/chatgpt-history-export"
+
+const SESSION_ID = "aaaaaaaa-1111-4000-8000-000000000001"
+
+const msg = (
+  id: string,
+  role: string,
+  turnExchangeId: string,
+  text: string,
+  contentType = "text",
+) => ({
+  id,
+  author: { role, name: null, metadata: {} },
+  create_time: 0,
+  content: { content_type: contentType, parts: text ? [text] : [] },
+  status: "finished_successfully",
+  metadata: { turn_exchange_id: turnExchangeId },
+})
+
+const pagePayload = (
+  messages: ReturnType<typeof msg>[],
+  options: {
+    hasPreviousPage?: boolean
+    hasNextPage?: boolean
+    currentNode?: string | null
+    sessionId?: string
+  } = {},
+) => ({
+  conversation_id: options.sessionId ?? SESSION_ID,
+  current_node:
+    options.currentNode === null
+      ? undefined
+      : options.currentNode ?? messages[messages.length - 1]?.id,
+  page_info: {
+    start_cursor: messages[0]?.id,
+    end_cursor: messages[messages.length - 1]?.id,
+    has_previous_page: options.hasPreviousPage ?? false,
+    has_next_page: options.hasNextPage ?? false,
+  },
+  messages,
+})
+
+// 旧页（历史起点）
+const olderPage = () =>
+  pagePayload(
+    [
+      msg("u1", "user", "te1", "第一个问题"),
+      msg("a1", "assistant", "te1", "## 答复一\n正文"),
+      msg("u2", "user", "te2", "第二个问题"),
+      msg("a2", "assistant", "te2", "答复二"),
+    ],
+    { hasPreviousPage: false, hasNextPage: true },
+  )
+
+// 新页（首页抓取，含 current_node）
+const newerPage = () =>
+  pagePayload(
+    [
+      msg("u3", "user", "te3", "第三个问题"),
+      msg("a3-thoughts", "assistant", "te3", "思考", "thoughts"),
+      msg("tool3", "tool", "te3", "工具输出"),
+      msg("a3", "assistant", "te3", "答复三"),
+      msg("a3-recap", "assistant", "te3", "回顾", "reasoning_recap"),
+    ],
+    { hasPreviousPage: true, hasNextPage: false, currentNode: "a3-recap" },
+  )
+
+describe("parseChatGPTHistoryExport", () => {
+  it("exports all pages in chronological order, skipping tool/thoughts messages", () => {
+    const data = parseChatGPTHistoryExport([newerPage(), olderPage()])
+    expect(data).not.toBeNull()
+    expect(data!.sessionId).toBe(SESSION_ID)
+    expect(data!.messages).toEqual([
+      { role: "user", text: "第一个问题" },
+      { role: "assistant", text: "## 答复一\n正文" },
+      { role: "user", text: "第二个问题" },
+      { role: "assistant", text: "答复二" },
+      { role: "user", text: "第三个问题" },
+      { role: "assistant", text: "答复三" },
+    ])
+  })
+
+  it("allows missing assistant message (generation interrupted)", () => {
+    const page = pagePayload([msg("u1", "user", "te1", "问题")], { currentNode: "u1" })
+    const data = parseChatGPTHistoryExport([page])
+    expect(data).not.toBeNull()
+    expect(data!.messages).toEqual([{ role: "user", text: "问题" }])
+  })
+
+  it("returns null when the oldest page still has a previous page (truncated history)", () => {
+    const truncatedOlder = olderPage()
+    truncatedOlder.page_info.has_previous_page = true
+    expect(parseChatGPTHistoryExport([newerPage(), truncatedOlder])).toBeNull()
+  })
+
+  it("returns null on duplicated message ids across pages (cursor chain broken)", () => {
+    // 翻页游标失效时服务端会拉回与首页重复的页
+    const duplicated = newerPage()
+    duplicated.page_info.has_previous_page = false
+    expect(parseChatGPTHistoryExport([newerPage(), duplicated])).toBeNull()
+  })
+
+  it("returns null when current_node is missing on the first page", () => {
+    expect(parseChatGPTHistoryExport([newerPage(), olderPage()].slice(1))).not.toBeNull()
+    const noCurrentNode = pagePayload([msg("u1", "user", "te1", "问题")], { currentNode: null })
+    expect(parseChatGPTHistoryExport([noCurrentNode])).toBeNull()
+  })
+
+  it("returns null when a turn has no user message", () => {
+    const orphan = pagePayload([msg("a1", "assistant", "te1", "孤儿回复")])
+    expect(parseChatGPTHistoryExport([orphan])).toBeNull()
+  })
+
+  it("returns null when pages come from different conversations", () => {
+    const foreign = olderPage()
+    foreign.conversation_id = "bbbbbbbb-2222-4000-8000-000000000002"
+    expect(parseChatGPTHistoryExport([newerPage(), foreign])).toBeNull()
+  })
+
+  it("returns null for empty input", () => {
+    expect(parseChatGPTHistoryExport([])).toBeNull()
+    expect(parseChatGPTHistoryExport([null])).toBeNull()
+  })
+})
