@@ -1076,7 +1076,7 @@ export class ChatGPTAdapter extends SiteAdapter {
   }
 
   getLatestReplyText(): string | null {
-    const container = document.querySelector(this.getResponseContainerSelector())
+    const container = this.findCurrentResponseContainer()
     if (!container) return null
 
     // ChatGPT 的回复通常在 [data-message-author-role="assistant"] 中
@@ -1400,11 +1400,36 @@ export class ChatGPTAdapter extends SiteAdapter {
     return markdown
   }
 
-  private getOutlineExtractionContainer(): Element | null {
+  /**
+   * 新版 App-Shell 切换对话后会把上一个对话的 main surface 隐藏保留在 DOM 里，
+   * querySelector 首个匹配会命中旧对话容器，导致大纲/导出永远停在第一个对话。
+   * 统一从所有匹配中挑第一个可见容器；都不可见时退回首个匹配，保持旧行为兜底。
+   */
+  private findCurrentResponseContainer(): HTMLElement | null {
+    const matches = Array.from(
+      document.querySelectorAll(this.getResponseContainerSelector()),
+    ).filter((el): el is HTMLElement => el instanceof HTMLElement)
+    return matches.find((el) => this.isResponseContainerVisible(el)) ?? matches[0] ?? null
+  }
+
+  private isResponseContainerVisible(el: HTMLElement): boolean {
+    if (el.closest('[hidden], [aria-hidden="true"], [inert]')) return false
+    const style = window.getComputedStyle(el)
     return (
-      this.getCodexTaskOutlineContainer() ||
-      document.querySelector(this.getResponseContainerSelector())
+      style.display !== "none" && style.visibility !== "hidden" && style.visibility !== "collapse"
     )
+  }
+
+  /**
+   * 新版界面切换对话会隐藏/替换整个 main surface：观察固定容器会在切换后失效，
+   * 改为观察 body（mutation 回调本身有防抖），保证任何容器替换都能触发大纲刷新。
+   */
+  getObserveTarget(): Element | null {
+    return document.body
+  }
+
+  private getOutlineExtractionContainer(): Element | null {
+    return this.getCodexTaskOutlineContainer() || this.findCurrentResponseContainer()
   }
 
   extractUserQueryText(element: Element): string {
@@ -1603,9 +1628,7 @@ export class ChatGPTAdapter extends SiteAdapter {
         ? createExportAssetCollector()
         : null
 
-    const responseRoot =
-      (document.querySelector(this.getResponseContainerSelector()) as HTMLElement | null) ||
-      (document.body as HTMLElement)
+    const responseRoot = this.findCurrentResponseContainer() || (document.body as HTMLElement)
     const scrollContainer = this.getScrollContainer() || responseRoot
 
     let messages =
@@ -1852,7 +1875,7 @@ export class ChatGPTAdapter extends SiteAdapter {
   private getAllTurnShellsSorted(): HTMLElement[] {
     // scrollContainer 在 ChatGPT 上未必包含 #thread（它可能是后者的祖先 / 兄弟节点），
     // 用响应容器选择器作为查询根更稳。
-    const root: ParentNode = document.querySelector(this.getResponseContainerSelector()) || document
+    const root: ParentNode = this.findCurrentResponseContainer() || document
     const candidates = Array.from(
       root.querySelectorAll(this.config.sitePrivateSelectors.exportTurnContainer),
     ).filter((element): element is HTMLElement => {
@@ -2038,9 +2061,7 @@ export class ChatGPTAdapter extends SiteAdapter {
     collector?: ExportAssetCollector | null,
   ): ChatGPTExportMessageSnapshot[] {
     const referenceContainer =
-      container instanceof HTMLElement
-        ? container
-        : (document.querySelector(this.getResponseContainerSelector()) as HTMLElement | null)
+      container instanceof HTMLElement ? container : this.findCurrentResponseContainer()
 
     const turns = this.findExportTurnContainers(container)
     if (turns.length === 0) {

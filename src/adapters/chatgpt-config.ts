@@ -187,6 +187,9 @@ const createChatGPTConfig = (): ChatGPTSiteConfig => {
 
   return {
     capabilities: [...BUILTIN_FEATURE_CAPABILITIES[SITE_IDS.CHATGPT]],
+    // 新版 App-Shell 切换对话可能只是 surface 显隐切换、没有 childList 变更，
+    // MutationObserver 链路不保证触发；开启周期性保底刷新让大纲收敛到当前对话。
+    traits: { periodicOutlineRefresh: true },
     selectors: {
       textarea: [
         // [LEGACY-CHATGPT-V1]: 旧版输入框
