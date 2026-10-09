@@ -1414,6 +1414,10 @@ export class ChatGPTAdapter extends SiteAdapter {
 
   private isResponseContainerVisible(el: HTMLElement): boolean {
     if (el.closest('[hidden], [aria-hidden="true"], [inert]')) return false
+    // 实测：切换对话后旧 surface 以 0x0 零尺寸占位保留（display 仍为 flex），
+    // display/visibility 判定无法识别，必须用实际布局尺寸
+    const rect = el.getBoundingClientRect()
+    if (rect.width <= 0 || rect.height <= 0) return false
     const style = window.getComputedStyle(el)
     return (
       style.display !== "none" && style.visibility !== "hidden" && style.visibility !== "collapse"

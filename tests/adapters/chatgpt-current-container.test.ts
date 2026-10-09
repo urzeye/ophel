@@ -40,12 +40,17 @@ interface ContainerInternals {
 
 type FakeSurface = HTMLElement & { __display: string }
 
-const createSurface = (display = "block", hiddenByAncestor = false): FakeSurface => {
+const createSurface = (
+  display = "block",
+  hiddenByAncestor = false,
+  rect: { width: number; height: number } = { width: 900, height: 1000 },
+): FakeSurface => {
   const HTMLElementCtor = (globalThis as Record<string, unknown>)
     .HTMLElement as new () => FakeSurface
   const el = new HTMLElementCtor()
   el.__display = display
   el.closest = () => (hiddenByAncestor ? ({} as Element) : null)
+  el.getBoundingClientRect = () => ({ width: rect.width, height: rect.height }) as DOMRect
   return el
 }
 
@@ -81,6 +86,16 @@ describe("ChatGPT current conversation container resolution", () => {
   it("skips surfaces hidden by an ancestor (hidden / aria-hidden / inert)", () => {
     const stale = createSurface("block", true)
     const current = createSurface("block")
+    stubDom([stale, current])
+
+    const adapter = new ChatGPTAdapter() as unknown as ContainerInternals
+    expect(adapter.findCurrentResponseContainer()).toBe(current)
+  })
+
+  // 实测：切换对话后旧 surface 以 0x0 零尺寸占位保留，display 仍为 flex
+  it("skips zero-size kept-alive surfaces from previous conversations", () => {
+    const stale = createSurface("flex", false, { width: 0, height: 0 })
+    const current = createSurface("flex", false, { width: 917, height: 1039 })
     stubDom([stale, current])
 
     const adapter = new ChatGPTAdapter() as unknown as ContainerInternals
