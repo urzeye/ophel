@@ -1761,15 +1761,21 @@ export class ChatGPTAdapter extends SiteAdapter {
     try {
       const pages: unknown[] = []
       let cursor: string | undefined
+      let reachedHistoryStart = false
       for (let pageIndex = 0; pageIndex < CHATGPT_API_EXPORT_MAX_PAGES; pageIndex += 1) {
         const payload = await this.fetchConversationApiPage(cid, cursor)
         if (payload === null) return null
         const page = parseChatGPTHistoryPage(payload)
         if (!page || page.sessionId !== cid) return null
         pages.push(payload)
-        if (!page.pageInfo.hasPreviousPage) break
+        if (!page.pageInfo.hasPreviousPage) {
+          reachedHistoryStart = true
+          break
+        }
         cursor = page.pageInfo.startCursor
       }
+      // 达到翻页上限仍有更早历史：无法证明历史完整，回退滚动收集而不是静默截断
+      if (!reachedHistoryStart) return null
 
       const parsed = parseChatGPTHistoryExport(pages)
       if (!parsed || parsed.sessionId !== cid) return null
