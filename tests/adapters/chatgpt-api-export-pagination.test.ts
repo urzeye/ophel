@@ -41,7 +41,6 @@ interface ApiExportInternals {
     collector?: null,
   ): Promise<{ role: string; content: string }[] | null>
   isUserConversationPage(): boolean
-  isChatGPTTurnKeyConversation(): boolean
   getSessionId(): string | null
   fetchConversationApiPage(cid: string, cursor?: string): Promise<unknown | null>
 }
@@ -68,7 +67,6 @@ const pagePayload = (messageIds: string[], hasPreviousPage: boolean) => ({
 const createAdapter = (fetchPage: ApiExportInternals["fetchConversationApiPage"]) => {
   const adapter = new ChatGPTAdapter() as unknown as ApiExportInternals
   adapter.isUserConversationPage = () => true
-  adapter.isChatGPTTurnKeyConversation = () => true
   adapter.getSessionId = () => CID
   adapter.fetchConversationApiPage = fetchPage
   return adapter
@@ -109,7 +107,6 @@ describe("ChatGPT api export pagination", () => {
 describe("ChatGPT api-first export preload skip", () => {
   interface PrepareInternals {
     isUserConversationPage(): boolean
-    isChatGPTTurnKeyConversation(): boolean
     canSkipExportHistoryPreload(): boolean
     clearExportSnapshot(): void
     collectApiExportMessageSnapshots(): Promise<null>
@@ -129,16 +126,12 @@ describe("ChatGPT api-first export preload skip", () => {
     }
   }
 
-  it("allows skipping preload only on new-ux conversation pages", () => {
+  // 接口导出与 DOM 世代无关：新老版本的会话页都允许跳过预加载，非会话页不允许
+  it("allows skipping preload on conversation pages regardless of DOM generation", () => {
     const adapter = createPrepareAdapter()
     adapter.isUserConversationPage = () => true
-    adapter.isChatGPTTurnKeyConversation = () => true
     expect(adapter.canSkipExportHistoryPreload()).toBe(true)
 
-    adapter.isChatGPTTurnKeyConversation = () => false
-    expect(adapter.canSkipExportHistoryPreload()).toBe(false)
-
-    adapter.isChatGPTTurnKeyConversation = () => true
     adapter.isUserConversationPage = () => false
     expect(adapter.canSkipExportHistoryPreload()).toBe(false)
   })

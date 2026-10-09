@@ -1674,8 +1674,8 @@ export class ChatGPTAdapter extends SiteAdapter {
         ? createExportAssetCollector()
         : null
 
-    // 新版虚拟窗口会话优先走 conversations 接口拿全量历史（markdown 源文本，
-    // 公式/代码零损耗，无需滚动分页）；接口不可用或无法证明历史完整时回退滚动收集
+    // 会话页统一优先走 conversations 接口拿全量历史（markdown 源文本，公式/代码
+    // 零损耗，无需滚动分页）；接口不可用或无法证明历史完整时回退滚动收集
     const apiMessages = await this.collectApiExportMessageSnapshots(exportAssetCollector)
     if (apiMessages?.length) {
       this.mountExportSnapshot(apiMessages)
@@ -1742,24 +1742,15 @@ export class ChatGPTAdapter extends SiteAdapter {
   }
 
   /**
-   * 新版 TURN-KEY 结构判定：会话区出现 data-turn-key 即新版（服务端懒加载 +
-   * 虚拟窗口）。旧版结构不出现该属性，继续走 DOM 滚动收集。
-   */
-  private isChatGPTTurnKeyConversation(): boolean {
-    const root: ParentNode = this.findCurrentResponseContainer() || document
-    return root.querySelector("[data-turn-key]") !== null
-  }
-
-  /**
-   * 新版虚拟窗口会话优先走 conversations 接口拿全量 markdown（公式/代码零损耗、
-   * 无需滚动收集）；接口不可用或无法证明历史完整时返回 null，回退滚动收集。
+   * 会话页统一优先走 conversations 接口拿全量 markdown（公式/代码零损耗、无需
+   * 滚动收集）；接口是纯服务端数据源，与 DOM 世代无关，新老版本均可用。
+   * 接口不可用或无法证明历史完整时返回 null，回退滚动收集。
    * 翻页：沿 page_info.start_cursor 向前（cursor 参数），直至 has_previous_page=false。
    */
   private async collectApiExportMessageSnapshots(
     collector?: ExportAssetCollector | null,
   ): Promise<ChatGPTExportMessageSnapshot[] | null> {
     if (!this.isUserConversationPage()) return null
-    if (!this.isChatGPTTurnKeyConversation()) return null
     const cid = this.getSessionId()
     if (!cid) return null
 
@@ -1956,15 +1947,11 @@ export class ChatGPTAdapter extends SiteAdapter {
   }
 
   /**
-   * 新版 TURN-KEY 会话页可走 conversations 接口导出全量历史，无需 DOM 预加载；
-   * 其余页面（旧版结构、首页等）维持导出前的滚顶预加载。
+   * 会话页可走 conversations 接口导出全量历史（接口与 DOM 世代无关，新老版本
+   * 均可用），无需 DOM 预加载；其余页面（首页等）维持导出前的滚顶预加载。
    */
   canSkipExportHistoryPreload(): boolean {
-    return (
-      super.canSkipExportHistoryPreload() &&
-      this.isUserConversationPage() &&
-      this.isChatGPTTurnKeyConversation()
-    )
+    return super.canSkipExportHistoryPreload() && this.isUserConversationPage()
   }
 
   /**
