@@ -35,7 +35,11 @@ import {
   type ZenModeConfig,
 } from "./base"
 import type { BuiltinSiteConfig } from "./declarative"
-import { parseChatGPTHistoryExport, parseChatGPTHistoryPage } from "./chatgpt-history-export"
+import {
+  parseChatGPTHistoryExport,
+  parseChatGPTHistoryPage,
+  type ChatGPTHistoryExportMessage,
+} from "./chatgpt-history-export"
 import {
   CHATGPT_CONFIG,
   CHATGPT_CONFIG_VERSION,
@@ -1672,11 +1676,12 @@ export class ChatGPTAdapter extends SiteAdapter {
 
     // 新版虚拟窗口会话优先走 conversations 接口拿全量历史（markdown 源文本，
     // 公式/代码零损耗，无需滚动分页）；接口不可用或无法证明历史完整时回退滚动收集
-    const apiMessages = await this.collectApiExportMessageSnapshots()
+    const apiMessages = await this.collectApiExportMessageSnapshots(exportAssetCollector)
     if (apiMessages?.length) {
       this.mountExportSnapshot(apiMessages)
       this.exportBundle = {
         messages: apiMessages.map(({ role, content }) => ({ role, content })),
+        assets: exportAssetCollector?.assets,
       }
       return { count: apiMessages.length }
     }
@@ -1745,7 +1750,9 @@ export class ChatGPTAdapter extends SiteAdapter {
    * 无需滚动收集）；接口不可用或无法证明历史完整时返回 null，回退滚动收集。
    * 翻页：沿 page_info.start_cursor 向前（cursor 参数），直至 has_previous_page=false。
    */
-  private async collectApiExportMessageSnapshots(): Promise<ChatGPTExportMessageSnapshot[] | null> {
+  private async collectApiExportMessageSnapshots(
+    collector?: ExportAssetCollector | null,
+  ): Promise<ChatGPTExportMessageSnapshot[] | null> {
     if (!this.isUserConversationPage()) return null
     if (!this.isChatGPTTurnKeyConversation()) return null
     const cid = this.getSessionId()
@@ -1768,16 +1775,19 @@ export class ChatGPTAdapter extends SiteAdapter {
       if (!parsed || parsed.sessionId !== cid) return null
 
       const snapshots: ChatGPTExportMessageSnapshot[] = []
-      parsed.messages.forEach((message, index) => {
-        const content = this.normalizeExportMessageContent(message.text)
-        if (!content) return
+      for (const [index, message] of parsed.messages.entries()) {
+        const blocks: string[] = []
+        if (message.text) blocks.push(message.text)
+        blocks.push(...(await this.renderApiExportAttachments(message, collector)))
+        const content = this.normalizeExportMessageContent(blocks.join("\n\n"))
+        if (!content) continue
         snapshots.push({
           role: message.role,
           turnKey: `api:${message.role}:${index}`,
           order: index + 1,
           content,
         })
-      })
+      }
       return snapshots.length > 0 ? snapshots : null
     } catch (error) {
       console.warn("[ChatGPTAdapter] Failed to collect api export payload:", error)
@@ -1785,27 +1795,121 @@ export class ChatGPTAdapter extends SiteAdapter {
     }
   }
 
+  /**
+   * 把接口消息里的附件/图片指针渲染为 markdown 块。
+   * 指针（file-service:// / sediment://）与附件 id 统一经
+   * backend-api/files/{id}/download 换签名下载地址；单个失败只跳过该附件，
+   * 不影响整次导出。
+   */
+  private async renderApiExportAttachments(
+    message: ChatGPTHistoryExportMessage,
+    collector?: ExportAssetCollector | null,
+  ): Promise<string[]> {
+    if (message.attachments.length === 0 && message.imageAssetPointers.length === 0) {
+      return []
+    }
+
+    const siteId = this.getSiteId()
+    const blocks: string[] = []
+    const imageSources: { source: string; alt: string }[] = []
+    const fileAttachments: { kind: "file"; name: string; source?: string; type?: string }[] = []
+    const seenFileIds = new Set<string>()
+
+    for (const attachment of message.attachments) {
+      if (seenFileIds.has(attachment.id)) continue
+      seenFileIds.add(attachment.id)
+      const url = await this.fetchChatGPTFileDownloadUrl(attachment.id)
+      if (attachment.mimeType.startsWith("image/")) {
+        if (url) imageSources.push({ source: url, alt: attachment.name || "image" })
+      } else {
+        fileAttachments.push({
+          kind: "file",
+          name: attachment.name || "attachment",
+          source: url ?? undefined,
+          type: attachment.mimeType || attachment.name,
+        })
+      }
+    }
+
+    for (const pointer of message.imageAssetPointers) {
+      const fileId = this.extractApiFileId(pointer)
+      if (!fileId || seenFileIds.has(fileId)) continue
+      seenFileIds.add(fileId)
+      const url = await this.fetchChatGPTFileDownloadUrl(fileId)
+      if (url) imageSources.push({ source: url, alt: "" })
+    }
+
+    for (const image of imageSources) {
+      const markdown = formatExportImageMarkdown(image, collector || undefined, {
+        siteId,
+        role: message.role,
+        category: message.role === "user" ? "uploaded-image" : "generated-image",
+        fallbackAlt: message.role === "user" ? "uploaded image" : "generated image",
+      })
+      if (markdown) blocks.push(markdown)
+    }
+
+    if (fileAttachments.length > 0) {
+      const fileMarkdown = formatExportFileAttachments(fileAttachments, collector || undefined, {
+        siteId,
+        role: message.role,
+      }).join("\n")
+      if (fileMarkdown) blocks.push(`**Attachments:**\n\n${fileMarkdown}`)
+    }
+
+    return blocks
+  }
+
+  /** file-service://file-XXX / sediment://file_YYY → file id；裸 id 原样返回。 */
+  private extractApiFileId(pointer: string): string {
+    const schemeEnd = pointer.indexOf("://")
+    const raw = schemeEnd >= 0 ? pointer.slice(schemeEnd + 3) : pointer
+    return raw.split(/[?#]/)[0].trim()
+  }
+
+  /** backend-api/files/{id}/download 换签名下载地址；失败返回 null（调用方跳过该附件）。 */
+  private async fetchChatGPTFileDownloadUrl(fileId: string): Promise<string | null> {
+    try {
+      const response = await this.fetchNativeApiWithAuth(
+        `${window.location.origin}/backend-api/files/${encodeURIComponent(fileId)}/download`,
+      )
+      if (!response?.ok) return null
+      const data = (await response.json()) as Record<string, unknown>
+      const url = data?.download_url
+      return typeof url === "string" && url ? url : null
+    } catch {
+      return null
+    }
+  }
+
   /** 拉取 conversations 接口单页；token 缺失返回 null，HTTP 失败抛错（401/403 强制刷新重试一次） */
   private async fetchConversationApiPage(cid: string, cursor?: string): Promise<unknown | null> {
+    const response = await this.fetchNativeApiWithAuth(this.buildConversationApiUrl(cid, cursor))
+    if (!response) return null
+    if (!response.ok) {
+      throw new Error(`conversations api responded ${response.status}`)
+    }
+    return response.json()
+  }
+
+  /** 带认证的站点原生接口 GET；token 缺失返回 null，401/403 强制刷新重试一次。 */
+  private async fetchNativeApiWithAuth(url: string): Promise<Response | null> {
     let token = await this.getSessionAccessToken()
     if (!token) return null
 
-    let response = await fetch(this.buildConversationApiUrl(cid, cursor), {
+    let response = await fetch(url, {
       headers: this.buildNativeApiHeaders(token),
       credentials: "include",
     })
     if (response.status === 401 || response.status === 403) {
       token = await this.getSessionAccessToken(true)
       if (!token) return null
-      response = await fetch(this.buildConversationApiUrl(cid, cursor), {
+      response = await fetch(url, {
         headers: this.buildNativeApiHeaders(token),
         credentials: "include",
       })
     }
-    if (!response.ok) {
-      throw new Error(`conversations api responded ${response.status}`)
-    }
-    return response.json()
+    return response
   }
 
   private buildConversationApiUrl(cid: string, cursor?: string): string {

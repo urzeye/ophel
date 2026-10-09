@@ -10,6 +10,16 @@ export interface ChatGPTHistoryExportMessage {
   role: "user" | "assistant"
   /** user 提问原文 / assistant 回复 markdown 源文本 */
   text: string
+  /** 用户上传的附件（metadata.attachments），图片也在其中（mimeType 区分） */
+  attachments: ChatGPTHistoryAttachment[]
+  /** 非文本 parts 中的图片指针原文（file-service:// / sediment://） */
+  imageAssetPointers: string[]
+}
+
+export interface ChatGPTHistoryAttachment {
+  id: string
+  name: string
+  mimeType: string
 }
 
 export interface ChatGPTHistoryExportData {
@@ -24,6 +34,8 @@ interface ChatGPTHistoryNormalizedMessage {
   /** content.parts 中字符串元素拼接（非字符串元素不提取） */
   text: string
   turnExchangeId: string
+  attachments: ChatGPTHistoryAttachment[]
+  imageAssetPointers: string[]
 }
 
 interface ChatGPTHistoryPage {
@@ -45,6 +57,42 @@ const joinTextParts = (content: Record<string, unknown> | null): string => {
   const parts = content?.parts
   if (!Array.isArray(parts)) return ""
   return parts.filter((part): part is string => typeof part === "string").join("\n\n")
+}
+
+/** 提取非文本 parts 中的图片指针（multimodal_text 的 image_asset_pointer）。 */
+const collectImageAssetPointers = (content: Record<string, unknown> | null): string[] => {
+  const parts = content?.parts
+  if (!Array.isArray(parts)) return []
+  const pointers: string[] = []
+  for (const part of parts) {
+    const record = asRecord(part)
+    if (!record) continue
+    if (record.content_type !== "image_asset_pointer") continue
+    const pointer = record.asset_pointer
+    if (typeof pointer === "string" && pointer) pointers.push(pointer)
+  }
+  return pointers
+}
+
+/** 提取 metadata.attachments（用户上传的文件/图片）。 */
+const collectAttachments = (
+  metadata: Record<string, unknown> | null,
+): ChatGPTHistoryAttachment[] => {
+  const raw = metadata?.attachments
+  if (!Array.isArray(raw)) return []
+  const attachments: ChatGPTHistoryAttachment[] = []
+  for (const item of raw) {
+    const record = asRecord(item)
+    if (!record) continue
+    const id = typeof record.id === "string" ? record.id : ""
+    if (!id) continue
+    attachments.push({
+      id,
+      name: typeof record.name === "string" ? record.name : "",
+      mimeType: typeof record.mime_type === "string" ? record.mime_type : "",
+    })
+  }
+  return attachments
 }
 
 /**
@@ -94,7 +142,15 @@ export function parseChatGPTHistoryPage(payload: unknown): ChatGPTHistoryPage | 
     const turnExchangeId =
       typeof metadata?.turn_exchange_id === "string" ? metadata.turn_exchange_id : ""
     if (!id || !turnExchangeId) return null
-    messages.push({ id, role, contentType, text: joinTextParts(content), turnExchangeId })
+    messages.push({
+      id,
+      role,
+      contentType,
+      text: joinTextParts(content),
+      turnExchangeId,
+      attachments: collectAttachments(metadata),
+      imageAssetPointers: collectImageAssetPointers(content),
+    })
   }
 
   if (messages[0].id !== startCursor || messages[messages.length - 1].id !== endCursor) {
@@ -168,7 +224,12 @@ export function parseChatGPTHistoryExport(pages: unknown[]): ChatGPTHistoryExpor
     if (message.role === "user" && !turn.userMessage) {
       turn.userMessage = message
     }
-    if (message.role === "assistant" && message.contentType === "text") {
+    // 同 turn 可能有多条 assistant/text（工具调用后追答），导出口径取末条；
+    // multimodal_text 同样承载正文（生成图片场景）
+    if (
+      message.role === "assistant" &&
+      (message.contentType === "text" || message.contentType === "multimodal_text")
+    ) {
       turn.assistantMessage = message
     }
   }
@@ -176,10 +237,30 @@ export function parseChatGPTHistoryExport(pages: unknown[]): ChatGPTHistoryExpor
   const messages: ChatGPTHistoryExportMessage[] = []
   for (const turn of turns) {
     if (!turn.userMessage) return null
-    const userText = turn.userMessage.text.trim()
-    if (userText) messages.push({ role: "user", text: userText })
-    const assistantText = turn.assistantMessage?.text.trim() ?? ""
-    if (assistantText) messages.push({ role: "assistant", text: assistantText })
+    const user = turn.userMessage
+    const userText = user.text.trim()
+    // 纯附件提问（无文本）也要导出附件
+    if (userText || user.attachments.length > 0 || user.imageAssetPointers.length > 0) {
+      messages.push({
+        role: "user",
+        text: userText,
+        attachments: user.attachments,
+        imageAssetPointers: user.imageAssetPointers,
+      })
+    }
+    const assistant = turn.assistantMessage
+    const assistantText = assistant?.text.trim() ?? ""
+    if (
+      assistant &&
+      (assistantText || assistant.attachments.length > 0 || assistant.imageAssetPointers.length > 0)
+    ) {
+      messages.push({
+        role: "assistant",
+        text: assistantText,
+        attachments: assistant.attachments,
+        imageAssetPointers: assistant.imageAssetPointers,
+      })
+    }
   }
 
   if (messages.length === 0) return null

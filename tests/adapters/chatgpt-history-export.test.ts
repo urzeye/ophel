@@ -10,13 +10,20 @@ const msg = (
   turnExchangeId: string,
   text: string,
   contentType = "text",
+  options: { attachments?: unknown[]; extraParts?: unknown[] } = {},
 ) => ({
   id,
   author: { role, name: null, metadata: {} },
   create_time: 0,
-  content: { content_type: contentType, parts: text ? [text] : [] },
+  content: {
+    content_type: contentType,
+    parts: [...(text ? [text] : []), ...(options.extraParts ?? [])],
+  },
   status: "finished_successfully",
-  metadata: { turn_exchange_id: turnExchangeId },
+  metadata: {
+    turn_exchange_id: turnExchangeId,
+    ...(options.attachments ? { attachments: options.attachments } : {}),
+  },
 })
 
 const pagePayload = (
@@ -72,7 +79,7 @@ describe("parseChatGPTHistoryExport", () => {
     const data = parseChatGPTHistoryExport([newerPage(), olderPage()])
     expect(data).not.toBeNull()
     expect(data!.sessionId).toBe(SESSION_ID)
-    expect(data!.messages).toEqual([
+    expect(data!.messages.map(({ role, text }) => ({ role, text }))).toEqual([
       { role: "user", text: "第一个问题" },
       { role: "assistant", text: "## 答复一\n正文" },
       { role: "user", text: "第二个问题" },
@@ -86,7 +93,9 @@ describe("parseChatGPTHistoryExport", () => {
     const page = pagePayload([msg("u1", "user", "te1", "问题")], { currentNode: "u1" })
     const data = parseChatGPTHistoryExport([page])
     expect(data).not.toBeNull()
-    expect(data!.messages).toEqual([{ role: "user", text: "问题" }])
+    expect(data!.messages.map(({ role, text }) => ({ role, text }))).toEqual([
+      { role: "user", text: "问题" },
+    ])
   })
 
   it("returns null when the oldest page still has a previous page (truncated history)", () => {
@@ -122,5 +131,45 @@ describe("parseChatGPTHistoryExport", () => {
   it("returns null for empty input", () => {
     expect(parseChatGPTHistoryExport([])).toBeNull()
     expect(parseChatGPTHistoryExport([null])).toBeNull()
+  })
+
+  it("keeps user-uploaded attachments, including attachment-only queries", () => {
+    const page = pagePayload([
+      msg("u1", "user", "te1", "", "text", {
+        attachments: [
+          { id: "file-abc", name: "需求.pdf", mime_type: "application/pdf", size: 1024 },
+          { id: "file-img", name: "截图.png", mime_type: "image/png", size: 2048 },
+        ],
+      }),
+      msg("a1", "assistant", "te1", "收到附件"),
+    ])
+    const data = parseChatGPTHistoryExport([page])
+    expect(data).not.toBeNull()
+    expect(data!.messages[0]).toEqual({
+      role: "user",
+      text: "",
+      attachments: [
+        { id: "file-abc", name: "需求.pdf", mimeType: "application/pdf" },
+        { id: "file-img", name: "截图.png", mimeType: "image/png" },
+      ],
+      imageAssetPointers: [],
+    })
+  })
+
+  it("collects image asset pointers from multimodal parts (generated images)", () => {
+    const page = pagePayload([
+      msg("u1", "user", "te1", "画一只猫"),
+      msg("a1", "assistant", "te1", "给你画好了", "multimodal_text", {
+        extraParts: [{ content_type: "image_asset_pointer", asset_pointer: "sediment://file_xyz" }],
+      }),
+    ])
+    const data = parseChatGPTHistoryExport([page])
+    expect(data).not.toBeNull()
+    expect(data!.messages[1]).toEqual({
+      role: "assistant",
+      text: "给你画好了",
+      attachments: [],
+      imageAssetPointers: ["sediment://file_xyz"],
+    })
   })
 })
