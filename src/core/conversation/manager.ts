@@ -1692,53 +1692,43 @@ export class ConversationManager {
     }
 
     try {
-      notifyProgress("loading-history")
-
-      // 加载完整历史（滚动到顶部）。
-      // 收敛条件：scrollHeight 连续 3 轮不变；
-      // 旧逻辑只看高度，慢网络下单页加载超过 1.5s 会被误判为"没有更多历史"而提前停止，
-      // 导致长对话开头若干段从未进入 DOM（导出缺段的来源之一）。
+      // 接口导出优先的站点（traits.apiFirstExport，如新版 ChatGPT 会话页）不依赖
+      // DOM 历史，跳过滚顶预加载；接口路径失败回退 DOM 采集时，补做预加载再重试一次
+      const skipHistoryPreload = this.siteAdapter.canSkipExportHistoryPreload()
       let historyPossiblyIncomplete = false
-      if (scrollContainer) {
-        const deadline = Date.now() + HISTORY_LOAD_TIME_BUDGET_MS
-        let prevHeight = -1
-        let stableRounds = 0
-
-        while (Date.now() < deadline) {
-          scrollContainer.scrollTop = getTopScrollPosition(scrollContainer)
-          await new Promise((resolve) => setTimeout(resolve, 500))
-
-          const currentHeight = scrollContainer.scrollHeight
-          if (currentHeight === prevHeight) {
-            stableRounds++
-            if (stableRounds >= 3) break
-          } else {
-            stableRounds = 0
-            prevHeight = currentHeight
-          }
+      if (skipHistoryPreload) {
+        // 标记 DOM 历史未预加载：适配器的 DOM 回退路径应返回 null 触发下方补载重试
+        exportContext.domHistoryPreloaded = false
+      } else {
+        notifyProgress("loading-history")
+        if (scrollContainer) {
+          historyPossiblyIncomplete =
+            await this.preloadConversationHistoryForExport(scrollContainer)
         }
-
-        if (Date.now() >= deadline) {
-          historyPossiblyIncomplete = true
-          console.warn(
-            "[ConversationManager] History load hit time budget; export may miss early messages",
-          )
-        } else if (this.siteAdapter.hasUnloadedConversationHistory()) {
-          // 高度收敛但历史起点未加载完（如 ChatGPT 起始 turn-N > 1）：
-          // 分页请求可能在飞但高度暂未变化，继续滚顶做有界补载
-          if (!(await this.waitForHistoryCatchUp(scrollContainer))) {
-            historyPossiblyIncomplete = true
-            console.warn(
-              "[ConversationManager] History start still incomplete after catch-up budget",
-            )
-          }
-        }
+        exportContext.domHistoryPreloaded = true
       }
 
       // 导出前钩子（站点可选实现）
       notifyProgress("preparing")
       exportLifecycleEnabled = true
       exportLifecycleState = await this.siteAdapter.prepareConversationExport(exportContext)
+
+      // 接口导出失败（返回 null）且此前跳过了预加载：补做历史预加载，
+      // 让适配器的 DOM 回退路径在完整历史上重试一次
+      if (
+        exportLifecycleState === null &&
+        skipHistoryPreload &&
+        exportContext.domHistoryPreloaded !== true
+      ) {
+        notifyProgress("loading-history")
+        if (scrollContainer) {
+          historyPossiblyIncomplete =
+            await this.preloadConversationHistoryForExport(scrollContainer)
+        }
+        exportContext.domHistoryPreloaded = true
+        notifyProgress("preparing")
+        exportLifecycleState = await this.siteAdapter.prepareConversationExport(exportContext)
+      }
 
       // 只有 ZIP 模式才收集附件资产；Markdown 模式保持单文件导出路径。
       notifyProgress("extracting")
@@ -1790,6 +1780,51 @@ export class ConversationManager {
 
       this.notifyExportProgress(null)
     }
+  }
+
+  /**
+   * 导出前的 DOM 历史预加载：滚动到顶部并等待加载收敛。
+   * 收敛条件：scrollHeight 连续 3 轮不变；
+   * 旧逻辑只看高度，慢网络下单页加载超过 1.5s 会被误判为"没有更多历史"而提前停止，
+   * 导致长对话开头若干段从未进入 DOM（导出缺段的来源之一）。
+   * 返回 true 表示历史可能不完整（加载触顶或补载后起点仍有缺口）。
+   */
+  private async preloadConversationHistoryForExport(
+    scrollContainer: HTMLElement,
+  ): Promise<boolean> {
+    const deadline = Date.now() + HISTORY_LOAD_TIME_BUDGET_MS
+    let prevHeight = -1
+    let stableRounds = 0
+
+    while (Date.now() < deadline) {
+      scrollContainer.scrollTop = getTopScrollPosition(scrollContainer)
+      await new Promise((resolve) => setTimeout(resolve, 500))
+
+      const currentHeight = scrollContainer.scrollHeight
+      if (currentHeight === prevHeight) {
+        stableRounds++
+        if (stableRounds >= 3) break
+      } else {
+        stableRounds = 0
+        prevHeight = currentHeight
+      }
+    }
+
+    if (Date.now() >= deadline) {
+      console.warn(
+        "[ConversationManager] History load hit time budget; export may miss early messages",
+      )
+      return true
+    }
+    if (this.siteAdapter.hasUnloadedConversationHistory()) {
+      // 高度收敛但历史起点未加载完（如 ChatGPT 起始 turn-N > 1）：
+      // 分页请求可能在飞但高度暂未变化，继续滚顶做有界补载
+      if (!(await this.waitForHistoryCatchUp(scrollContainer))) {
+        console.warn("[ConversationManager] History start still incomplete after catch-up budget")
+        return true
+      }
+    }
+    return false
   }
 
   /**

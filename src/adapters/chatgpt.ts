@@ -1686,6 +1686,11 @@ export class ChatGPTAdapter extends SiteAdapter {
       return { count: apiMessages.length }
     }
 
+    // 接口路径不可用且 DOM 历史未预加载（manager 因 apiFirstExport 跳过了预加载）：
+    // 返回 null 让导出流程补做预加载后重试，避免在只加载了部分历史的 DOM 上
+    // 滚动采集得到不完整的导出
+    if (context.domHistoryPreloaded === false) return null
+
     const responseRoot = this.findCurrentResponseContainer() || (document.body as HTMLElement)
     const scrollContainer = this.getScrollContainer() || responseRoot
 
@@ -1948,6 +1953,18 @@ export class ChatGPTAdapter extends SiteAdapter {
     }
     if (firstTurnNumber === Number.MAX_SAFE_INTEGER) return true
     return firstTurnNumber > 1
+  }
+
+  /**
+   * 新版 TURN-KEY 会话页可走 conversations 接口导出全量历史，无需 DOM 预加载；
+   * 其余页面（旧版结构、首页等）维持导出前的滚顶预加载。
+   */
+  canSkipExportHistoryPreload(): boolean {
+    return (
+      super.canSkipExportHistoryPreload() &&
+      this.isUserConversationPage() &&
+      this.isChatGPTTurnKeyConversation()
+    )
   }
 
   /**

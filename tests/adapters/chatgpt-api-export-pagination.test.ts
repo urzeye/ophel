@@ -32,6 +32,7 @@ vi.hoisted(() => {
 })
 
 import { ChatGPTAdapter } from "~adapters/chatgpt"
+import { CHATGPT_CONFIG } from "~adapters/chatgpt-config"
 
 const CID = "aaaaaaaa-1111-4000-8000-000000000001"
 
@@ -100,5 +101,89 @@ describe("ChatGPT api export pagination", () => {
     const snapshots = await adapter.collectApiExportMessageSnapshots()
     expect(snapshots).toBeNull()
     expect(calls).toBe(50)
+  })
+})
+
+// apiFirstExport：接口导出优先的会话页允许导出流程跳过 DOM 历史预加载；
+// 接口失败且未预加载时 prepare 返回 null，让导出流程补做预加载后重试
+describe("ChatGPT api-first export preload skip", () => {
+  interface PrepareInternals {
+    isUserConversationPage(): boolean
+    isChatGPTTurnKeyConversation(): boolean
+    canSkipExportHistoryPreload(): boolean
+    clearExportSnapshot(): void
+    collectApiExportMessageSnapshots(): Promise<null>
+    findCurrentResponseContainer(): null
+    getScrollContainer(): null
+    readVisibleExportMessageSnapshots(
+      container: unknown,
+    ): { role: "user"; content: string; turnKey: string; order: number }[]
+    mountExportSnapshot(messages: unknown[]): void
+  }
+
+  const createPrepareAdapter = () => {
+    const adapter = new ChatGPTAdapter()
+    adapter.applyMergedConfig(CHATGPT_CONFIG)
+    return adapter as unknown as PrepareInternals & {
+      prepareConversationExport: ChatGPTAdapter["prepareConversationExport"]
+    }
+  }
+
+  it("allows skipping preload only on new-ux conversation pages", () => {
+    const adapter = createPrepareAdapter()
+    adapter.isUserConversationPage = () => true
+    adapter.isChatGPTTurnKeyConversation = () => true
+    expect(adapter.canSkipExportHistoryPreload()).toBe(true)
+
+    adapter.isChatGPTTurnKeyConversation = () => false
+    expect(adapter.canSkipExportHistoryPreload()).toBe(false)
+
+    adapter.isChatGPTTurnKeyConversation = () => true
+    adapter.isUserConversationPage = () => false
+    expect(adapter.canSkipExportHistoryPreload()).toBe(false)
+  })
+
+  it("returns null from prepare when api export fails without a DOM history preload", async () => {
+    const adapter = createPrepareAdapter()
+    adapter.clearExportSnapshot = () => {}
+    adapter.collectApiExportMessageSnapshots = async () => null
+    let domFallbackCalled = false
+    adapter.readVisibleExportMessageSnapshots = () => {
+      domFallbackCalled = true
+      return []
+    }
+
+    const result = await adapter.prepareConversationExport({
+      conversationId: CID,
+      format: "markdown",
+      includeThoughts: true,
+      packaging: "markdown",
+      domHistoryPreloaded: false,
+    })
+
+    expect(result).toBeNull()
+    expect(domFallbackCalled).toBe(false)
+  })
+
+  it("falls back to scroll collection once the DOM history has been preloaded", async () => {
+    const adapter = createPrepareAdapter()
+    adapter.clearExportSnapshot = () => {}
+    adapter.collectApiExportMessageSnapshots = async () => null
+    adapter.findCurrentResponseContainer = () => null
+    adapter.getScrollContainer = () => null
+    adapter.readVisibleExportMessageSnapshots = () => [
+      { role: "user", content: "你好", turnKey: "t1", order: 1 },
+    ]
+    adapter.mountExportSnapshot = () => {}
+
+    const result = await adapter.prepareConversationExport({
+      conversationId: CID,
+      format: "markdown",
+      includeThoughts: true,
+      packaging: "markdown",
+      domHistoryPreloaded: true,
+    })
+
+    expect(result).toEqual({ count: 1 })
   })
 })

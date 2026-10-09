@@ -1148,7 +1148,13 @@ const validateSiteTraits = (
     value,
     path,
     context,
-    ["shadowDOM", "historyLazyLoad", "periodicOutlineRefresh", "virtualOutlineFill"],
+    [
+      "shadowDOM",
+      "historyLazyLoad",
+      "periodicOutlineRefresh",
+      "virtualOutlineFill",
+      "apiFirstExport",
+    ],
     [],
     mode,
   )
@@ -1165,6 +1171,9 @@ const validateSiteTraits = (
   }
   if (traits.virtualOutlineFill !== undefined) {
     validateBoolean(traits.virtualOutlineFill, `${path}.virtualOutlineFill`, context, mode)
+  }
+  if (traits.apiFirstExport !== undefined) {
+    validateBoolean(traits.apiFirstExport, `${path}.apiFirstExport`, context, mode)
   }
 }
 

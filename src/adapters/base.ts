@@ -105,6 +105,13 @@ export interface ExportLifecycleContext {
   format: ExportFormat
   includeThoughts: boolean
   packaging: ExportPackaging
+  /**
+   * 导出前是否已完成 DOM 历史预加载（滚顶收敛）。接口导出优先的站点
+   * （traits.apiFirstExport）会跳过预加载，此时为 false：适配器的 DOM
+   * 回退路径应返回 null，由导出流程补做预加载后置 true 重试。
+   * 缺省 undefined 视为未跳过预加载，保持旧行为。
+   */
+  domHistoryPreloaded?: boolean
 }
 
 /**
@@ -1026,6 +1033,17 @@ export abstract class SiteAdapter {
    */
   needsHistoryLazyLoad(): boolean {
     return this.getSiteTraits().historyLazyLoad ?? true
+  }
+
+  /**
+   * 本次导出能否跳过 DOM 历史预加载（滚顶等收敛）。
+   * 静态能力在 config `traits.apiFirstExport` 声明；运行时才可判定的站点
+   * （如 ChatGPT 仅新版会话页可走接口导出）覆写本方法收窄。
+   * 跳过后接口路径失败回退 DOM 采集时，导出流程会补做预加载再重试一次。
+   * 缺省 false：维持导出前滚顶预加载的保守行为。
+   */
+  canSkipExportHistoryPreload(): boolean {
+    return this.getSiteTraits().apiFirstExport ?? false
   }
 
   /** 获取当前视口中可见的锚点元素信息 */

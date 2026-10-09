@@ -124,6 +124,12 @@ export interface SiteTraits {
    * 缓存回填条目（ChatGPT/Claude/豆包）不适用。缺省 false。
    */
   virtualOutlineFill?: boolean
+  /**
+   * 导出主路径走站点接口拿全量数据，不依赖 DOM 历史预加载（如 ChatGPT
+   * conversations 接口导出）。声明后导出跳过滚顶预加载；接口不可用回退
+   * DOM 采集时，由导出流程补做预加载再重试一次。缺省 false。
+   */
+  apiFirstExport?: boolean
 }
 
 /** SitePack 与内置配置共同使用的声明式配置面。 */
