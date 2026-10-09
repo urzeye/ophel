@@ -28,7 +28,7 @@ const msg = (
 })
 
 const pagePayload = (
-  messages: ReturnType<typeof msg>[],
+  messages: { id: string }[],
   options: {
     hasPreviousPage?: boolean
     hasNextPage?: boolean
@@ -207,5 +207,42 @@ describe("parseChatGPTHistoryExport", () => {
         { pointer: "sediment://file_gen", mimeType: "image/png", alt: "夕阳下的樱花街景" },
       ],
     })
+  })
+
+  // 老版页面的响应：没有 metadata.turn_exchange_id，且开头多一条 system 消息
+  const legacyMsg = (id: string, role: string, text: string) => ({
+    id,
+    author: { role, name: null, metadata: {} },
+    create_time: 0,
+    content: { content_type: "text", parts: text ? [text] : [] },
+    status: "finished_successfully",
+    metadata: {},
+  })
+
+  it("groups legacy responses without turn_exchange_id by user message boundaries", () => {
+    const page = pagePayload([
+      legacyMsg("sys", "system", "系统提示"),
+      legacyMsg("u1", "user", "第一个问题"),
+      legacyMsg("a1", "assistant", "答复一"),
+      legacyMsg("u2", "user", "第二个问题"),
+      legacyMsg("a2", "assistant", "答复二"),
+    ])
+    const data = parseChatGPTHistoryExport([page])
+    expect(data).not.toBeNull()
+    expect(data!.messages.map(({ role, text }) => ({ role, text }))).toEqual([
+      { role: "user", text: "第一个问题" },
+      { role: "assistant", text: "答复一" },
+      { role: "user", text: "第二个问题" },
+      { role: "assistant", text: "答复二" },
+    ])
+  })
+
+  it("returns null for legacy responses whose first non-system message is not a user turn", () => {
+    const page = pagePayload([
+      legacyMsg("sys", "system", "系统提示"),
+      legacyMsg("a1", "assistant", "孤儿回复"),
+      legacyMsg("u1", "user", "问题"),
+    ])
+    expect(parseChatGPTHistoryExport([page])).toBeNull()
   })
 })

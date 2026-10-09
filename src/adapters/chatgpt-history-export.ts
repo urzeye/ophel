@@ -116,7 +116,8 @@ const collectAttachments = (
  * 解析 conversations 分页响应为规范化消息序列；结构不符预期返回 null
  * （调用方回退滚动收集）。硬校验（均为实测事实）：
  * - page_info.start_cursor = 首条消息 id、end_cursor = 末条消息 id；
- * - 每条消息都有 id 与 metadata.turn_exchange_id（turn 分组唯一依据）。
+ * - 每条消息都有 id；metadata.turn_exchange_id 仅新版响应携带（turn 分组依据），
+ *   老版响应缺失时由导出解析改按 user 消息边界分组。
  * thoughts / reasoning_recap / tool 消息原样保留，由导出解析按 role/contentType 过滤。
  */
 export function parseChatGPTHistoryPage(payload: unknown): ChatGPTHistoryPage | null {
@@ -158,7 +159,7 @@ export function parseChatGPTHistoryPage(payload: unknown): ChatGPTHistoryPage | 
     const metadata = asRecord(record.metadata)
     const turnExchangeId =
       typeof metadata?.turn_exchange_id === "string" ? metadata.turn_exchange_id : ""
-    if (!id || !turnExchangeId) return null
+    if (!id) return null
     messages.push({
       id,
       role,
@@ -225,25 +226,14 @@ export function parseChatGPTHistoryExport(pages: unknown[]): ChatGPTHistoryExpor
     .reverse()
     .flatMap((page) => page.messages)
 
-  // 按 turn_exchange_id 首次出现顺序分组；同 turn 可能有多条 assistant/text
-  // （工具调用后追答），导出口径取末条
-  const turns: {
+  type TurnGroup = {
     userMessage: ChatGPTHistoryNormalizedMessage | null
     assistantMessage: ChatGPTHistoryNormalizedMessage | null
     /** 生成图挂在 tool 消息上（图像生成工具结果），assistant 正文可能完全为空 */
     generatedImages: ChatGPTHistoryImagePointer[]
-  }[] = []
-  const byExchangeId = new Map<string, (typeof turns)[number]>()
-  for (const message of allMessages) {
-    let turn = byExchangeId.get(message.turnExchangeId)
-    if (!turn) {
-      turn = { userMessage: null, assistantMessage: null, generatedImages: [] }
-      byExchangeId.set(message.turnExchangeId, turn)
-      turns.push(turn)
-    }
-    if (message.role === "user" && !turn.userMessage) {
-      turn.userMessage = message
-    }
+  }
+
+  const applyToTurn = (turn: TurnGroup, message: ChatGPTHistoryNormalizedMessage): void => {
     // 同 turn 可能有多条 assistant/text（工具调用后追答），导出口径取末条；
     // multimodal_text 同样承载正文（生成图片场景）
     if (
@@ -259,6 +249,41 @@ export function parseChatGPTHistoryExport(pages: unknown[]): ChatGPTHistoryExpor
           alt: pointer.alt || message.imageGenTitle,
         })),
       )
+    }
+  }
+
+  // turn 分组：新版响应每条消息带 metadata.turn_exchange_id，按 id 首次出现
+  // 顺序分组；老版响应没有该字段，改按消息序边界分组——system 消息跳过
+  // （系统提示，不参与导出），user 消息开启新 turn，assistant/tool 归入当前
+  // turn。老版结构里 user 之前出现其它角色说明结构不符预期，返回 null 回退
+  // 滚动收集。
+  const useExchangeIds = allMessages.every((message) => message.turnExchangeId)
+  const turns: TurnGroup[] = []
+  if (useExchangeIds) {
+    const byExchangeId = new Map<string, TurnGroup>()
+    for (const message of allMessages) {
+      let turn = byExchangeId.get(message.turnExchangeId)
+      if (!turn) {
+        turn = { userMessage: null, assistantMessage: null, generatedImages: [] }
+        byExchangeId.set(message.turnExchangeId, turn)
+        turns.push(turn)
+      }
+      if (message.role === "user" && !turn.userMessage) {
+        turn.userMessage = message
+      }
+      applyToTurn(turn, message)
+    }
+  } else {
+    let current: TurnGroup | null = null
+    for (const message of allMessages) {
+      if (message.role === "system") continue
+      if (message.role === "user") {
+        current = { userMessage: message, assistantMessage: null, generatedImages: [] }
+        turns.push(current)
+        continue
+      }
+      if (!current) return null
+      applyToTurn(current, message)
     }
   }
 
