@@ -7,6 +7,7 @@
 
 import type { SiteAdapter } from "~adapters/base"
 import { SITE_IDS } from "~constants/defaults"
+import { ensureChatGPTThemeToggleStyle } from "~styles/native-theme-adapters/chatgpt"
 import { DOMToolkit } from "~utils/dom-toolkit"
 import type { CustomStyle } from "~utils/storage"
 import { getPreset, themeVariablesToCSS, type ThemeVariables } from "~utils/themes"
@@ -177,7 +178,16 @@ export class ThemeManager {
       switch (siteId) {
         case SITE_IDS.CHATGPT: {
           localStorage.setItem("theme", "system")
-          document.documentElement.className = targetMode
+          // [CHATGPT-APP-SHELL]: 新版主题由 html 的 data-theme / data-appearance-theme
+          // 属性驱动（class 固定为 chatgpt-theme）；旧版用 html.dark / html.light class
+          const root = document.documentElement
+          if (root.hasAttribute("data-appearance-theme")) {
+            ensureChatGPTThemeToggleStyle()
+            root.setAttribute("data-theme", targetMode)
+            root.setAttribute("data-appearance-theme", targetMode)
+          } else {
+            root.className = targetMode
+          }
           window.dispatchEvent(
             new StorageEvent("storage", {
               key: "theme",

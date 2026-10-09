@@ -61,3 +61,41 @@ a.decorated-link:where(:not(.not-markdown *)) {
   color: var(--gh-primary) !important;
 }
 `
+
+/**
+ * [CHATGPT-APP-SHELL] 新版界面主题开关补丁。
+ *
+ * 新版主题由 html 的 data-theme / data-appearance-theme 属性标记，颜色值编译为
+ * lightningcss 的 light-dark() 双分支模式：
+ *   var(--lightningcss-light, <亮色>) var(--lightningcss-dark, <暗色>)
+ * 由 --lightningcss-light / --lightningcss-dark 两个开关变量决定哪个分支生效。
+ * 但页面只内联了当前主题对应的 toggle 规则（如亮色页只有 [data-theme=light] 的
+ * toggle），直接改属性没有对应的 dark toggle 规则可命中，页面不会变色。
+ * 这里以站点自己的 data-appearance-theme 属性为锚补全双向 toggle：
+ * 与站点状态一致时只是同值重复声明，被我们改写属性后则真正驱动换肤。
+ */
+export const CHATGPT_THEME_TOGGLE_STYLE_ID = "gh-chatgpt-theme-toggle"
+
+export const chatgptThemeToggleCss = `
+html[data-appearance-theme="dark"] {
+  --theme-variant: dark;
+  --lightningcss-light: ;
+  --lightningcss-dark: initial;
+  color-scheme: dark;
+}
+html[data-appearance-theme="light"] {
+  --theme-variant: light;
+  --lightningcss-light: initial;
+  --lightningcss-dark: ;
+  color-scheme: light;
+}
+`
+
+/** 幂等注入主题开关补丁样式。 */
+export const ensureChatGPTThemeToggleStyle = (): void => {
+  if (document.getElementById(CHATGPT_THEME_TOGGLE_STYLE_ID)) return
+  const style = document.createElement("style")
+  style.id = CHATGPT_THEME_TOGGLE_STYLE_ID
+  style.textContent = chatgptThemeToggleCss
+  document.head.appendChild(style)
+}

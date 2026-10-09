@@ -2,7 +2,10 @@
  * ChatGPT 适配器 (chatgpt.com)
  */
 import { SITE_IDS } from "~constants"
-import { chatgptNativeThemeCss } from "~styles/native-theme-adapters/chatgpt"
+import {
+  chatgptNativeThemeCss,
+  ensureChatGPTThemeToggleStyle,
+} from "~styles/native-theme-adapters/chatgpt"
 import {
   createExportAssetCollector,
   escapeMarkdownLinkText,
@@ -3186,9 +3189,19 @@ export class ChatGPTAdapter extends SiteAdapter {
       // ChatGPT 使用 "theme" 键存储主题，值为 "dark" / "light" / "system"
       localStorage.setItem("theme", targetMode)
 
-      // 2. 直接修改 html.className 实现即时视觉变化
-      // ChatGPT 通过 html 元素的 class 控制主题：class="dark" 或 class="light"
-      document.documentElement.className = targetMode
+      // 2. 即时视觉变化
+      // [LEGACY-CHATGPT-V1]: 旧版通过 html class 控制主题（class="dark" / "light"）
+      // [CHATGPT-APP-SHELL]: 新版主题完全由 html 的 data-theme / data-appearance-theme
+      // 属性驱动（class 固定为 chatgpt-theme），不存在 .dark class 选择器
+      const root = document.documentElement
+      if (root.hasAttribute("data-appearance-theme")) {
+        // 页面只内联了当前主题的 toggle 规则，需补全另一方向的开关变量才能即时换肤
+        ensureChatGPTThemeToggleStyle()
+        root.setAttribute("data-theme", targetMode)
+        root.setAttribute("data-appearance-theme", targetMode)
+      } else {
+        root.className = targetMode
+      }
 
       // 3. 触发 storage 事件，通知其他可能监听的组件
       window.dispatchEvent(
