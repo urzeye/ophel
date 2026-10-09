@@ -12,14 +12,22 @@ export interface ChatGPTHistoryExportMessage {
   text: string
   /** 用户上传的附件（metadata.attachments），图片也在其中（mimeType 区分） */
   attachments: ChatGPTHistoryAttachment[]
-  /** 非文本 parts 中的图片指针原文（file-service:// / sediment://） */
-  imageAssetPointers: string[]
+  /** 非文本 parts 中的图片指针（file-service:// / sediment://） */
+  imageAssetPointers: ChatGPTHistoryImagePointer[]
 }
 
 export interface ChatGPTHistoryAttachment {
   id: string
   name: string
   mimeType: string
+}
+
+export interface ChatGPTHistoryImagePointer {
+  /** asset_pointer 原文（sediment://file_... / file-service://file-...） */
+  pointer: string
+  mimeType: string
+  /** 生成图的标题（tool 消息 metadata.image_gen_title），作图片 alt */
+  alt: string
 }
 
 export interface ChatGPTHistoryExportData {
@@ -35,7 +43,9 @@ interface ChatGPTHistoryNormalizedMessage {
   text: string
   turnExchangeId: string
   attachments: ChatGPTHistoryAttachment[]
-  imageAssetPointers: string[]
+  imageAssetPointers: ChatGPTHistoryImagePointer[]
+  /** 生成图标题（tool 消息的 metadata.image_gen_title） */
+  imageGenTitle: string
 }
 
 interface ChatGPTHistoryPage {
@@ -60,16 +70,23 @@ const joinTextParts = (content: Record<string, unknown> | null): string => {
 }
 
 /** 提取非文本 parts 中的图片指针（multimodal_text 的 image_asset_pointer）。 */
-const collectImageAssetPointers = (content: Record<string, unknown> | null): string[] => {
+const collectImageAssetPointers = (
+  content: Record<string, unknown> | null,
+): ChatGPTHistoryImagePointer[] => {
   const parts = content?.parts
   if (!Array.isArray(parts)) return []
-  const pointers: string[] = []
+  const pointers: ChatGPTHistoryImagePointer[] = []
   for (const part of parts) {
     const record = asRecord(part)
     if (!record) continue
     if (record.content_type !== "image_asset_pointer") continue
     const pointer = record.asset_pointer
-    if (typeof pointer === "string" && pointer) pointers.push(pointer)
+    if (typeof pointer !== "string" || !pointer) continue
+    pointers.push({
+      pointer,
+      mimeType: typeof record.mime_type === "string" ? record.mime_type : "",
+      alt: "",
+    })
   }
   return pointers
 }
@@ -150,6 +167,7 @@ export function parseChatGPTHistoryPage(payload: unknown): ChatGPTHistoryPage | 
       turnExchangeId,
       attachments: collectAttachments(metadata),
       imageAssetPointers: collectImageAssetPointers(content),
+      imageGenTitle: typeof metadata?.image_gen_title === "string" ? metadata.image_gen_title : "",
     })
   }
 
@@ -212,12 +230,14 @@ export function parseChatGPTHistoryExport(pages: unknown[]): ChatGPTHistoryExpor
   const turns: {
     userMessage: ChatGPTHistoryNormalizedMessage | null
     assistantMessage: ChatGPTHistoryNormalizedMessage | null
+    /** 生成图挂在 tool 消息上（图像生成工具结果），assistant 正文可能完全为空 */
+    generatedImages: ChatGPTHistoryImagePointer[]
   }[] = []
   const byExchangeId = new Map<string, (typeof turns)[number]>()
   for (const message of allMessages) {
     let turn = byExchangeId.get(message.turnExchangeId)
     if (!turn) {
-      turn = { userMessage: null, assistantMessage: null }
+      turn = { userMessage: null, assistantMessage: null, generatedImages: [] }
       byExchangeId.set(message.turnExchangeId, turn)
       turns.push(turn)
     }
@@ -231,6 +251,14 @@ export function parseChatGPTHistoryExport(pages: unknown[]): ChatGPTHistoryExpor
       (message.contentType === "text" || message.contentType === "multimodal_text")
     ) {
       turn.assistantMessage = message
+    }
+    if (message.role === "tool" && message.imageAssetPointers.length > 0) {
+      turn.generatedImages.push(
+        ...message.imageAssetPointers.map((pointer) => ({
+          ...pointer,
+          alt: pointer.alt || message.imageGenTitle,
+        })),
+      )
     }
   }
 
@@ -250,15 +278,14 @@ export function parseChatGPTHistoryExport(pages: unknown[]): ChatGPTHistoryExpor
     }
     const assistant = turn.assistantMessage
     const assistantText = assistant?.text.trim() ?? ""
-    if (
-      assistant &&
-      (assistantText || assistant.attachments.length > 0 || assistant.imageAssetPointers.length > 0)
-    ) {
+    const assistantImages = [...(assistant?.imageAssetPointers ?? []), ...turn.generatedImages]
+    const assistantAttachments = assistant?.attachments ?? []
+    if (assistantText || assistantAttachments.length > 0 || assistantImages.length > 0) {
       messages.push({
         role: "assistant",
         text: assistantText,
-        attachments: assistant.attachments,
-        imageAssetPointers: assistant.imageAssetPointers,
+        attachments: assistantAttachments,
+        imageAssetPointers: assistantImages,
       })
     }
   }

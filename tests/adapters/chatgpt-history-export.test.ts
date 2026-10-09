@@ -10,7 +10,7 @@ const msg = (
   turnExchangeId: string,
   text: string,
   contentType = "text",
-  options: { attachments?: unknown[]; extraParts?: unknown[] } = {},
+  options: { attachments?: unknown[]; extraParts?: unknown[]; imageGenTitle?: string } = {},
 ) => ({
   id,
   author: { role, name: null, metadata: {} },
@@ -23,6 +23,7 @@ const msg = (
   metadata: {
     turn_exchange_id: turnExchangeId,
     ...(options.attachments ? { attachments: options.attachments } : {}),
+    ...(options.imageGenTitle ? { image_gen_title: options.imageGenTitle } : {}),
   },
 })
 
@@ -160,7 +161,13 @@ describe("parseChatGPTHistoryExport", () => {
     const page = pagePayload([
       msg("u1", "user", "te1", "画一只猫"),
       msg("a1", "assistant", "te1", "给你画好了", "multimodal_text", {
-        extraParts: [{ content_type: "image_asset_pointer", asset_pointer: "sediment://file_xyz" }],
+        extraParts: [
+          {
+            content_type: "image_asset_pointer",
+            asset_pointer: "sediment://file_xyz",
+            mime_type: "image/png",
+          },
+        ],
       }),
     ])
     const data = parseChatGPTHistoryExport([page])
@@ -169,7 +176,36 @@ describe("parseChatGPTHistoryExport", () => {
       role: "assistant",
       text: "给你画好了",
       attachments: [],
-      imageAssetPointers: ["sediment://file_xyz"],
+      imageAssetPointers: [{ pointer: "sediment://file_xyz", mimeType: "image/png", alt: "" }],
+    })
+  })
+
+  it("collects generated images from tool messages when the turn has no assistant text", () => {
+    const page = pagePayload([
+      msg("u1", "user", "te1", "画一张夕阳图", "multimodal_text"),
+      msg("a1", "assistant", "te1", "", "model_editable_context"),
+      msg("a2", "assistant", "te1", "", "code"),
+      msg("t1", "tool", "te1", "", "multimodal_text", {
+        extraParts: [
+          {
+            content_type: "image_asset_pointer",
+            asset_pointer: "sediment://file_gen",
+            mime_type: "image/png",
+          },
+        ],
+        imageGenTitle: "夕阳下的樱花街景",
+      }),
+    ])
+    const data = parseChatGPTHistoryExport([page])
+    expect(data).not.toBeNull()
+    expect(data!.messages).toHaveLength(2)
+    expect(data!.messages[1]).toEqual({
+      role: "assistant",
+      text: "",
+      attachments: [],
+      imageAssetPointers: [
+        { pointer: "sediment://file_gen", mimeType: "image/png", alt: "夕阳下的樱花街景" },
+      ],
     })
   })
 })

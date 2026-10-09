@@ -1811,7 +1811,7 @@ export class ChatGPTAdapter extends SiteAdapter {
 
     const siteId = this.getSiteId()
     const blocks: string[] = []
-    const imageSources: { source: string; alt: string }[] = []
+    const imageSources: { source: string; alt: string; extensionHint?: string }[] = []
     const fileAttachments: { kind: "file"; name: string; source?: string; type?: string }[] = []
     const seenFileIds = new Set<string>()
 
@@ -1831,12 +1831,12 @@ export class ChatGPTAdapter extends SiteAdapter {
       }
     }
 
-    for (const pointer of message.imageAssetPointers) {
-      const fileId = this.extractApiFileId(pointer)
+    for (const item of message.imageAssetPointers) {
+      const fileId = this.extractApiFileId(item.pointer)
       if (!fileId || seenFileIds.has(fileId)) continue
       seenFileIds.add(fileId)
       const url = await this.fetchChatGPTFileDownloadUrl(fileId)
-      if (url) imageSources.push({ source: url, alt: "" })
+      if (url) imageSources.push({ source: url, alt: item.alt, extensionHint: item.mimeType })
     }
 
     for (const image of imageSources) {
