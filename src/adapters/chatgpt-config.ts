@@ -67,11 +67,6 @@ type ChatGPTPrivateSelectors = SitePrivateSelectors & {
   panelCanvasDialogInset: string
   panelLibraryShellInset: string
   panelLibraryComposerWrapperInset: string
-  nativeTocRail: string
-  nativeTocButton: string
-  nativeTocHoverAncestor: string[]
-  nativeTocTitleElement: string[]
-  nativeTocActive: string
   modelMenu: string
   modelMenuItem: string
   modelMessageSlug: string
@@ -427,17 +422,6 @@ const createChatGPTConfig = (): ChatGPTSiteConfig => {
         'main#main [role="dialog"][class*="fixed"][class*="inset-0"]:has(.cm-editor)',
       panelLibraryShellInset: libraryShell,
       panelLibraryComposerWrapperInset: libraryComposerWrapper,
-      nativeTocRail: "div:has(> button[data-toc-item-index])",
-      nativeTocButton: "button[data-toc-item-index]",
-      nativeTocHoverAncestor: [".relative.flex.items-start", ".fixed"],
-      nativeTocTitleElement: [
-        "button[data-fill] [title]",
-        'button[class*="__menu-item"] [title]',
-        "ul button [title]",
-        "[role='menu'] [title]",
-        ".absolute [title]",
-      ],
-      nativeTocActive: "[data-toc-active]",
       modelMenu,
       modelMenuItem: `${modelMenu} [data-testid^="model-switcher-"]`,
       modelMessageSlug: "[data-message-model-slug]",
