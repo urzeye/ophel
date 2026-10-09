@@ -560,7 +560,7 @@ export class ChatGPTAdapter extends SiteAdapter {
 
       if (typeof token === "string" && token.length > 0) {
         this.sessionAccessToken = token
-        this.sessionAccessTokenExpiresAt = now + 5 * 60 * 1000
+        this.sessionAccessTokenExpiresAt = this.getAccessTokenCacheExpiresAt(token, now)
         return token
       }
 
@@ -570,6 +570,28 @@ export class ChatGPTAdapter extends SiteAdapter {
       this.clearSessionAccessToken()
       return null
     }
+  }
+
+  /**
+   * access token 的缓存截止：取 JWT payload 的 exp（服务端真实有效期，实测约 10 天），
+   * 预留 5 分钟余量避免边界时刻用到将过期 token；解析失败回退 5 分钟短缓存。
+   * token 真失效由调用方 401/403 强制刷新重试兜底（fetchConversationApiPage / 删除链路）。
+   */
+  private getAccessTokenCacheExpiresAt(token: string, now: number): number {
+    const fallback = now + 5 * 60 * 1000
+    try {
+      const payload = token.split(".")[1]
+      if (!payload) return fallback
+      const base64 = payload.replace(/-/g, "+").replace(/_/g, "/")
+      const padded = base64 + "=".repeat((4 - (base64.length % 4)) % 4)
+      const decoded = JSON.parse(atob(padded)) as { exp?: unknown }
+      if (typeof decoded.exp === "number" && decoded.exp > 0) {
+        return decoded.exp * 1000 - 5 * 60 * 1000
+      }
+    } catch {
+      // 非 JWT 形态（不透明 token）：回退短缓存
+    }
+    return fallback
   }
 
   private getCookieValue(name: string): string | null {

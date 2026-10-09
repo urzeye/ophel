@@ -37,6 +37,7 @@ interface ContainerInternals {
   findCurrentResponseContainer(): HTMLElement | null
   getObserveTarget(): Element | null
   getScrollContainer(): HTMLElement | null
+  getAccessTokenCacheExpiresAt(token: string, now: number): number
 }
 
 type FakeSurface = HTMLElement & {
@@ -175,5 +176,30 @@ describe("ChatGPT current conversation container resolution", () => {
 
     const adapter = new ChatGPTAdapter() as unknown as ContainerInternals
     expect(adapter.getScrollContainer()).toBeNull()
+  })
+})
+
+describe("ChatGPT session access token caching", () => {
+  const encodeJwt = (payload: Record<string, unknown>): string => {
+    const encode = (value: object) => Buffer.from(JSON.stringify(value)).toString("base64url")
+    return `${encode({ alg: "RS256", typ: "JWT" })}.${encode(payload)}.sig`
+  }
+
+  // token 有效期实测约 10 天：按 JWT exp 缓存（预留 5 分钟），而不是写死 5 分钟
+  it("caches the token until its JWT exp minus margin", () => {
+    const now = 1_791_550_000_000
+    const expSeconds = Math.floor(now / 1000) + 10 * 24 * 60 * 60
+    const token = encodeJwt({ exp: expSeconds })
+
+    const adapter = new ChatGPTAdapter() as unknown as ContainerInternals
+    expect(adapter.getAccessTokenCacheExpiresAt(token, now)).toBe(expSeconds * 1000 - 5 * 60 * 1000)
+  })
+
+  it("falls back to a short cache for non-JWT tokens", () => {
+    const now = 1_791_550_000_000
+
+    const adapter = new ChatGPTAdapter() as unknown as ContainerInternals
+    expect(adapter.getAccessTokenCacheExpiresAt("opaque-token", now)).toBe(now + 5 * 60 * 1000)
+    expect(adapter.getAccessTokenCacheExpiresAt("a.b.c", now)).toBe(now + 5 * 60 * 1000)
   })
 })
