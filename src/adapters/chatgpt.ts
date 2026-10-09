@@ -1336,10 +1336,16 @@ export class ChatGPTAdapter extends SiteAdapter {
   getScrollContainer(): HTMLElement | null {
     // ChatGPT 聊天内容的滚动容器
     // 查找具有 scrollbar-gutter 样式的 div，或父元素带有 @container/main 的子元素
+    // 保留的旧对话 surface 是 0x0 零尺寸但 scrollHeight 仍大于 clientHeight，
+    // 且在 DOM 序上先于当前对话，必须先按可见性过滤，否则会选中旧对话的滚动容器
     const container = this.config.selectors.scrollContainer
-      .map((selector) => document.querySelector(selector))
-      .find((element): element is HTMLElement => element instanceof HTMLElement)
-    if (container && container.scrollHeight > container.clientHeight) {
+      .flatMap((selector) => Array.from(document.querySelectorAll(selector)))
+      .filter(
+        (element): element is HTMLElement =>
+          element instanceof HTMLElement && this.isResponseContainerVisible(element),
+      )
+      .find((element) => element.scrollHeight > element.clientHeight)
+    if (container) {
       return container
     }
 
@@ -1348,6 +1354,7 @@ export class ChatGPTAdapter extends SiteAdapter {
     let bestContainer: HTMLElement | null = null
     let maxScrollHeight = 0
     for (const div of Array.from(allDivs)) {
+      if (!this.isResponseContainerVisible(div as HTMLElement)) continue
       const style = getComputedStyle(div)
       if (
         (style.overflowY === "auto" || style.overflowY === "scroll") &&

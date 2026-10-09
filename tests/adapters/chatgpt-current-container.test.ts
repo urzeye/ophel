@@ -36,14 +36,20 @@ import { ChatGPTAdapter } from "~adapters/chatgpt"
 interface ContainerInternals {
   findCurrentResponseContainer(): HTMLElement | null
   getObserveTarget(): Element | null
+  getScrollContainer(): HTMLElement | null
 }
 
-type FakeSurface = HTMLElement & { __display: string }
+type FakeSurface = HTMLElement & {
+  __display: string
+  scrollHeight: number
+  clientHeight: number
+}
 
 const createSurface = (
   display = "block",
   hiddenByAncestor = false,
   rect: { width: number; height: number } = { width: 900, height: 1000 },
+  scroll: { scrollHeight: number; clientHeight: number } = { scrollHeight: 0, clientHeight: 0 },
 ): FakeSurface => {
   const HTMLElementCtor = (globalThis as Record<string, unknown>)
     .HTMLElement as new () => FakeSurface
@@ -51,6 +57,8 @@ const createSurface = (
   el.__display = display
   el.closest = () => (hiddenByAncestor ? ({} as Element) : null)
   el.getBoundingClientRect = () => ({ width: rect.width, height: rect.height }) as DOMRect
+  el.scrollHeight = scroll.scrollHeight
+  el.clientHeight = scroll.clientHeight
   return el
 }
 
@@ -124,5 +132,48 @@ describe("ChatGPT current conversation container resolution", () => {
 
     const adapter = new ChatGPTAdapter() as unknown as ContainerInternals
     expect(adapter.getObserveTarget()).toBe(documentBody)
+  })
+
+  // 旧对话 surface 是 0x0 零尺寸，但其滚动容器 scrollHeight 仍大于 clientHeight，
+  // 且在 DOM 序上先于当前对话；不过滤可见性会选中旧对话的滚动容器
+  it("resolves the scroll container from the visible conversation surface", () => {
+    const stale = createSurface(
+      "flex",
+      false,
+      { width: 0, height: 0 },
+      {
+        scrollHeight: 500,
+        clientHeight: 0,
+      },
+    )
+    const current = createSurface(
+      "flex",
+      false,
+      { width: 917, height: 1039 },
+      {
+        scrollHeight: 2000,
+        clientHeight: 1000,
+      },
+    )
+    stubDom([stale, current])
+
+    const adapter = new ChatGPTAdapter() as unknown as ContainerInternals
+    expect(adapter.getScrollContainer()).toBe(current)
+  })
+
+  it("ignores zero-size kept-alive scroll containers in the fallback scan", () => {
+    const stale = createSurface(
+      "flex",
+      false,
+      { width: 0, height: 0 },
+      {
+        scrollHeight: 500,
+        clientHeight: 0,
+      },
+    )
+    stubDom([stale])
+
+    const adapter = new ChatGPTAdapter() as unknown as ContainerInternals
+    expect(adapter.getScrollContainer()).toBeNull()
   })
 })
