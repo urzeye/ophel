@@ -333,7 +333,12 @@ const createChatGPTConfig = (): ChatGPTSiteConfig => {
       ...CHATGPT_NEW_UX_WIDTH_SELECTORS,
     ],
     zenMode: {
-      hide: ["#stage-slideover-sidebar"],
+      hide: [
+        "#stage-slideover-sidebar",
+        // [CHATGPT-APP-SHELL]: 新版侧栏容器。注意不能用 div[data-app-shell-responsive-sidebar]——
+        // 那是 app-shell 根 frame（包含 main），隐藏会导致整页消失（实测）
+        "aside[data-app-shell-left-panel-appearance]",
+      ],
     },
     cleanMode: {
       preserveFlow: ["[data-testid='thread-disclaimer']"],

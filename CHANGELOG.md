@@ -11,7 +11,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
-- **ChatGPT page width controls** — Fixed page width and panel avoidance on redesigned home, project, and conversation pages, including Work, empty, and read-only conversations, plus user message width.
+- **ChatGPT page width controls and Zen Mode on redesigned pages** — Fixed page width, panel avoidance, and user message width on redesigned home, project, and conversation pages, including Work, empty, and read-only conversations; Zen Mode now hides only the sidebar instead of blanking the whole page.
 
 ---
 
