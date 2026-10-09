@@ -31,6 +31,11 @@ const DIALOG_STYLES = `
     max-width: min(480px, calc(100vw - 40px));
     box-shadow: var(--gh-shadow-lg, 0 10px 40px rgba(0,0,0,0.2));
   }
+  /* 弹窗 portal 到宿主页面，宿主（如 ChatGPT 新版）对 input 全局 appearance:none
+     会把原生勾选框剥成透明盒子；这里恢复原生渲染 */
+  .conversations-dialog-overlay input[type="checkbox"] {
+    appearance: auto;
+  }
   .conversations-dialog-title {
     font-size: 16px;
     font-weight: 600;

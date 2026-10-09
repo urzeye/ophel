@@ -92,6 +92,11 @@ const DIALOG_STYLES = `
     outline: none;
     border-color: var(--gh-input-focus-border, #4285f4);
   }
+  /* 弹窗 portal 到宿主页面，宿主（如 ChatGPT 新版）对 input 全局 appearance:none
+     会把原生勾选框剥成透明盒子；这里恢复原生渲染 */
+  .gh-dialog-overlay input[type="checkbox"] {
+    appearance: auto;
+  }
 `
 
 // 样式注入状态
