@@ -276,4 +276,64 @@ describe("DeepSeekAdapter.mergeOutlineByBranchOrder", () => {
     expect(merged.map((item) => item.text)).toEqual(["问题一", "问题二", "标题B"])
     expect(merged.filter((item) => item.text === "标题B")).toHaveLength(1)
   })
+
+  it("maps negative temp keys of session-sent user rows back to real ids by position", () => {
+    // 回归：不刷新页面连发消息时，DeepSeek 给本会话新发的提问行挂负数临时 key
+    // （-2、-4…，永不回改）。点击跳转后目标提问行成为挂载窗口第一行，
+    // 负数 id 归属不到分支会被当成删除残留，key 取 lastKnownKey+0.01 = -0.99，
+    // 把该提问顶到大纲最前。映射回真实 id 后顺序恢复正常。
+    const adapter = new DeepSeekAdapter()
+    const data = buildData([
+      userMessage(1, null, "问题一"),
+      assistantMessage(2, 1, "## 标题A\n正文"),
+      userMessage(3, 2, "问题二"),
+      assistantMessage(4, 3, "## 标题B\n正文"),
+      userMessage(5, 4, "问题三"),
+      assistantMessage(6, 5, "## 标题C\n正文"),
+    ])
+    // 窗口挂在对话中部：提问行是负数临时 key，回复行是真实 id
+    const domQuery2 = queryItem(-4, "问题二")
+    const domQuery3 = queryItem(-6, "问题三")
+    const domItems = [domQuery2, headingItem(4, "标题B"), domQuery3, headingItem(6, "标题C")]
+
+    const merged = merge(adapter, domItems, data, [-4, 4, -6, 6], new Map())
+
+    expect(merged.map((item) => item.text)).toEqual([
+      "问题一",
+      "标题A",
+      "问题二",
+      "标题B",
+      "问题三",
+      "标题C",
+    ])
+    // 映射成功的提问以 DOM 条目为准（元素在手），且占用真实分支位置：
+    // 完整序列上的 occurrence 计数正确（第二个提问 occurrence 为 0 系各自文本独立）
+    const query2 = merged.find((item) => item.text === "问题二")
+    expect(query2?.element).not.toBeNull()
+    expect(query2?.id).toBe("deepseek-user-query::0::问题二")
+  })
+
+  it("leaves temp keys unmapped when neighbor candidates conflict", () => {
+    // prev/next 行映射候选不一致（id 空洞等异常）：保守不映射，
+    // 不能把提问错挂到别的 message_id 上导致接口回填被误去重
+    const adapter = new DeepSeekAdapter()
+    const data = buildData([
+      userMessage(1, null, "问题一"),
+      assistantMessage(2, 1, "无标题"),
+      userMessage(3, 2, "问题二"),
+      assistantMessage(4, 3, "无标题"),
+      userMessage(5, 4, "问题三"),
+      assistantMessage(6, 5, "无标题"),
+    ])
+    // -4 的上一行真实 id 是 2（候选 3）、下一行真实 id 是 6（候选 5）：冲突
+    const domQuery = queryItem(-4, "问题X")
+
+    const merged = merge(adapter, [domQuery], data, [2, -4, 6], new Map([[domQuery, "问题X"]]))
+
+    // 三条提问的接口回填都还在（未被错误的 domQueryMessageIds 抑制）
+    expect(merged.map((item) => item.text)).toContain("问题一")
+    expect(merged.map((item) => item.text)).toContain("问题二")
+    expect(merged.map((item) => item.text)).toContain("问题三")
+    expect(merged.map((item) => item.text)).toContain("问题X")
+  })
 })

@@ -648,8 +648,10 @@ export class DeepSeekAdapter extends SiteAdapter {
     const branchIndex = this.getApiBranchIndex(data)
     const containerRect = container.getBoundingClientRect()
     const anchors: VirtualPositionAnchor[] = []
+    const idMap = this.buildTempRowIdMap(container, data)
     container.querySelectorAll("[data-virtual-list-item-key]").forEach((row) => {
-      const key = Number(row.getAttribute("data-virtual-list-item-key"))
+      const rawKey = Number(row.getAttribute("data-virtual-list-item-key"))
+      const key = idMap.get(rawKey) ?? rawKey
       const index = branchIndex.get(key)
       if (index === undefined) return
       const rect = row.getBoundingClientRect()
@@ -680,7 +682,15 @@ export class DeepSeekAdapter extends SiteAdapter {
     if (queryMessageId !== null) return branchIndex.get(queryMessageId) ?? null
 
     const mountedId = this.getMountedRowMessageId(item.element)
-    return mountedId !== null ? branchIndex.get(mountedId) ?? null : null
+    if (mountedId === null) return null
+    if (mountedId >= 0 || branchIndex.has(mountedId)) {
+      return branchIndex.get(mountedId) ?? null
+    }
+    // 负数临时 key（本会话新发的提问行）：按位置映射回真实 id 再查分支序号
+    const container = this.getScrollContainer()
+    if (!container) return null
+    const realId = this.buildTempRowIdMap(container, data).get(mountedId)
+    return realId !== undefined ? branchIndex.get(realId) ?? null : null
   }
 
   private getApiBranchIndex(data: DeepSeekHistoryOutlineData): Map<number, number> {
@@ -688,6 +698,72 @@ export class DeepSeekAdapter extends SiteAdapter {
     const map = new Map(data.branchMessageIds.map((id, index) => [id, index]))
     this.apiBranchIndexCache = { data, map }
     return map
+  }
+
+  /**
+   * 不刷新页面连发消息时，DeepSeek 给本会话新发的提问行挂负数临时 key
+   * （-2、-4…，永不回改成真实 message_id；assistant 行是真实 id）。
+   * 负数 id 不在分支序列里，会被归并/过期判定误当成删除残留。
+   * 这里按位置把临时 key 映射回真实 id：提问行的上/下相邻行都是 assistant 行，
+   * 其真实 id 在分支序列中的后/前一条即为该提问的真实 id。
+   * 两侧候选冲突或都不可得时放弃映射（保守，不臆造归属）。
+   */
+  private buildTempRowIdMap(
+    container: Element,
+    data: DeepSeekHistoryOutlineData | null,
+  ): Map<number, number> {
+    const map = new Map<number, number>()
+    if (!data) return map
+
+    const keys = Array.from(container.querySelectorAll("[data-virtual-list-item-key]")).map((row) =>
+      Number(row.getAttribute("data-virtual-list-item-key")),
+    )
+    const branchIndex = this.getApiBranchIndex(data)
+    const branchIds = data.branchMessageIds
+
+    for (let i = 0; i < keys.length; i++) {
+      const key = keys[i]
+      if (!Number.isFinite(key) || key >= 0 || branchIndex.has(key)) continue
+
+      let fromPrev: number | null = null
+      let fromNext: number | null = null
+      const prevKey = i > 0 ? keys[i - 1] : undefined
+      if (prevKey !== undefined && branchIndex.has(prevKey)) {
+        const prevIndex = branchIndex.get(prevKey)!
+        if (prevIndex + 1 < branchIds.length) fromPrev = branchIds[prevIndex + 1]
+      }
+      const nextKey = i + 1 < keys.length ? keys[i + 1] : undefined
+      if (nextKey !== undefined && branchIndex.has(nextKey)) {
+        const nextIndex = branchIndex.get(nextKey)!
+        if (nextIndex > 0) fromNext = branchIds[nextIndex - 1]
+      }
+
+      const realId =
+        fromPrev !== null && fromNext !== null
+          ? fromPrev === fromNext
+            ? fromPrev
+            : null
+          : fromPrev ?? fromNext
+      if (realId !== null) map.set(key, realId)
+    }
+    return map
+  }
+
+  /** 按真实 message_id 找挂载行；提问行挂负数临时 key 时经位置映射命中 */
+  private findMountedVirtualRow(
+    container: Element,
+    messageId: number,
+    data: DeepSeekHistoryOutlineData | null,
+  ): Element | null {
+    const direct = container.querySelector(`[data-virtual-list-item-key="${messageId}"]`)
+    if (direct) return direct
+    const idMap = this.buildTempRowIdMap(container, data)
+    for (const [tempKey, realId] of idMap) {
+      if (realId === messageId) {
+        return container.querySelector(`[data-virtual-list-item-key="${tempKey}"]`)
+      }
+    }
+    return null
   }
 
   getResponseContainerSelector(): string {
@@ -975,7 +1051,15 @@ export class DeepSeekAdapter extends SiteAdapter {
     const stale = isApiOutlineStale({
       data: this.apiOutlineData,
       sessionId,
-      mountedIds: this.collectMountedVirtualMessageIds(container),
+      mountedIds: this.collectMountedVirtualMessageIds(
+        container,
+        this.buildTempRowIdMap(
+          container,
+          this.apiOutlineData && this.apiOutlineData.sessionId === sessionId
+            ? this.apiOutlineData
+            : null,
+        ),
+      ),
       atBottom,
     })
 
@@ -1019,12 +1103,15 @@ export class DeepSeekAdapter extends SiteAdapter {
       })
   }
 
-  private collectMountedVirtualMessageIds(container: Element): Set<number> {
+  private collectMountedVirtualMessageIds(
+    container: Element,
+    idMap?: Map<number, number>,
+  ): Set<number> {
     const ids = new Set<number>()
     container.querySelectorAll("[data-virtual-list-item-key]").forEach((row) => {
       const id = Number(row.getAttribute("data-virtual-list-item-key"))
       if (Number.isFinite(id)) {
-        ids.add(id)
+        ids.add(idMap?.get(id) ?? id)
       }
     })
     return ids
@@ -1070,10 +1157,11 @@ export class DeepSeekAdapter extends SiteAdapter {
     options: { maxLevel: number; includeUserQueries: boolean; showWordCount: boolean },
   ): OutlineItem[] {
     const { maxLevel, includeUserQueries, showWordCount } = options
-    const mountedIds = this.collectMountedVirtualMessageIds(container)
+    const idMap = this.buildTempRowIdMap(container, data)
+    const mountedIds = this.collectMountedVirtualMessageIds(container, idMap)
 
     const domEntries = domItems.map((item) => ({
-      messageId: this.getMountedRowMessageId(item.element),
+      messageId: this.getMountedRowMessageId(item.element, idMap),
       item,
     }))
 
@@ -1210,11 +1298,15 @@ export class DeepSeekAdapter extends SiteAdapter {
     }
   }
 
-  private getMountedRowMessageId(element: Element | null): number | null {
+  private getMountedRowMessageId(
+    element: Element | null,
+    idMap?: Map<number, number>,
+  ): number | null {
     const row = element?.closest("[data-virtual-list-item-key]")
     if (!row) return null
     const id = Number(row.getAttribute("data-virtual-list-item-key"))
-    return Number.isFinite(id) ? id : null
+    if (!Number.isFinite(id)) return null
+    return idMap?.get(id) ?? id
   }
 
   private parseApiOutlineItemId(
@@ -1277,7 +1369,7 @@ export class DeepSeekAdapter extends SiteAdapter {
     if (container.scrollHeight <= container.clientHeight) return null
 
     const branchIndex = data ? new Map(data.branchMessageIds.map((id, i) => [id, i])) : null
-    const findRow = () => container.querySelector(`[data-virtual-list-item-key="${messageId}"]`)
+    const findRow = () => this.findMountedVirtualRow(container, messageId, data)
     // 编辑/删除造成的 id 空洞下，分支序号距离比 id 差值更接近真实行距
     const rowDistance = (key: number): number => {
       const targetIdx = branchIndex?.get(messageId)
@@ -1293,7 +1385,7 @@ export class DeepSeekAdapter extends SiteAdapter {
       if (requestId !== null && requestId !== this.nativeOutlineRevealRequestId) return null
       if (signal?.aborted) return null
 
-      const rows = this.readMountedVirtualRows(container)
+      const rows = this.readMountedVirtualRows(container, this.buildTempRowIdMap(container, data))
       if (rows.length === 0) return null
 
       const signature = `${rows[0].key}:${rows[rows.length - 1].key}:${Math.round(container.scrollTop)}`
@@ -1344,7 +1436,7 @@ export class DeepSeekAdapter extends SiteAdapter {
       container.getBoundingClientRect()
     }
 
-    return this.bisectMountVirtualRow(messageId, container, findRow, requestId, signal)
+    return this.bisectMountVirtualRow(messageId, container, findRow, requestId, signal, data)
   }
 
   /**
@@ -1358,6 +1450,7 @@ export class DeepSeekAdapter extends SiteAdapter {
     findRow: () => Element | null,
     requestId: number | null,
     signal?: AbortSignal,
+    data: DeepSeekHistoryOutlineData | null = null,
   ): Promise<Element | null> {
     const maxScroll = Math.max(0, container.scrollHeight - container.clientHeight)
     let lo = 0
@@ -1370,7 +1463,7 @@ export class DeepSeekAdapter extends SiteAdapter {
       if (requestId !== null && requestId !== this.nativeOutlineRevealRequestId) return null
       if (signal?.aborted) return null
 
-      const rows = this.readMountedVirtualRows(container)
+      const rows = this.readMountedVirtualRows(container, this.buildTempRowIdMap(container, data))
       if (rows.length === 0) return null
 
       const firstKey = rows[0].key
@@ -1400,10 +1493,14 @@ export class DeepSeekAdapter extends SiteAdapter {
     return findRow()
   }
 
-  private readMountedVirtualRows(container: HTMLElement): { key: number; top: number }[] {
+  private readMountedVirtualRows(
+    container: HTMLElement,
+    idMap?: Map<number, number>,
+  ): { key: number; top: number }[] {
     const rows: { key: number; top: number }[] = []
     container.querySelectorAll("[data-virtual-list-item-key]").forEach((row) => {
-      const key = Number(row.getAttribute("data-virtual-list-item-key"))
+      const rawKey = Number(row.getAttribute("data-virtual-list-item-key"))
+      const key = idMap?.get(rawKey) ?? rawKey
       if (Number.isFinite(key)) {
         rows.push({ key, top: row.getBoundingClientRect().top })
       }
@@ -1419,16 +1516,20 @@ export class DeepSeekAdapter extends SiteAdapter {
       this.getScrollContainer() || document.querySelector(this.getResponseContainerSelector())
     if (!container) return null
 
+    const scopedData =
+      this.apiOutlineData && this.apiOutlineData.sessionId === this.getSessionId()
+        ? this.apiOutlineData
+        : null
     const findMounted = () => {
-      const row = container.querySelector(`[data-virtual-list-item-key="${ref.messageId}"]`)
+      const row = this.findMountedVirtualRow(container, ref.messageId, scopedData)
       return row ? this.findApiHeadingInRow(row, ref, text) : null
     }
 
     const mounted = findMounted()
     if (mounted) return mounted
 
-    const data = this.apiOutlineData
-    if (!data || data.sessionId !== this.getSessionId()) return null
+    const data = scopedData
+    if (!data) return null
 
     // 快路径：直接滚动探测把目标回复行挂载出来，行内按序号定位标题
     const requestId = ++this.nativeOutlineRevealRequestId
@@ -1480,8 +1581,12 @@ export class DeepSeekAdapter extends SiteAdapter {
       this.getScrollContainer() || document.querySelector(this.getResponseContainerSelector())
     if (!container) return null
 
+    const scopedData =
+      this.apiOutlineData && this.apiOutlineData.sessionId === this.getSessionId()
+        ? this.apiOutlineData
+        : null
     const findMounted = () => {
-      const row = container.querySelector(`[data-virtual-list-item-key="${messageId}"]`)
+      const row = this.findMountedVirtualRow(container, messageId, scopedData)
       // data-virtual-list-item-key 行是 .ds-message 的包裹层，需向下找用户消息元素
       const message = row?.querySelector(this.config.selectors.userQuery)
       return message instanceof HTMLElement ? message : null
@@ -1490,8 +1595,8 @@ export class DeepSeekAdapter extends SiteAdapter {
     const mounted = findMounted()
     if (mounted) return mounted
 
-    const data = this.apiOutlineData
-    if (!data || data.sessionId !== this.getSessionId()) return null
+    const data = scopedData
+    if (!data) return null
     const query = data.userQueries.find((entry) => entry.messageId === messageId)
     if (!query) return null
 

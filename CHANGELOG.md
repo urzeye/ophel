@@ -12,6 +12,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 ### 🐛 Bug Fixes
 
 - **ChatGPT redesigned pages adaptation** — Fixed page width, Zen Mode, outline, theme switching, and conversation export on ChatGPT's redesigned pages.
+- **DeepSeek outline entry jumping to top** — Fixed an issue on DeepSeek where, after sending several messages without refreshing the page, clicking a message in the outline could suddenly move it to the top of the outline list.
 
 ---
 
