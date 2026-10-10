@@ -278,7 +278,14 @@ export class ChatGPTAdapter extends SiteAdapter {
   }
 
   isUserConversationPage(): boolean {
-    return !this.isSharePage() && /^\/c\/[a-z0-9-]+(?:\/|$)/i.test(window.location.pathname)
+    if (this.isSharePage()) return false
+    const path = window.location.pathname
+    // GPTs/项目会话挂在 /g/<gizmo>/c/<cid> 下，与 /c/<cid> 一样是用户自有对话，
+    // conversations 接口导出同样可用（getSessionId 的非锚定匹配已能取出 cid）
+    return (
+      /^\/c\/[a-z0-9-]+(?:\/|$)/i.test(path) ||
+      /^\/g\/[a-z0-9-]+\/c\/[a-z0-9-]+(?:\/|$)/i.test(path)
+    )
   }
 
   /**
