@@ -63,7 +63,7 @@ export interface DeepSeekSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const DEEPSEEK_CONFIG_VERSION = 4
+export const DEEPSEEK_CONFIG_VERSION = 5
 
 const createDeepSeekConfig = (): DeepSeekSiteConfig => {
   const conversationLink = 'a[href*="/a/chat/s/"]'
@@ -120,7 +120,10 @@ const createDeepSeekConfig = (): DeepSeekSiteConfig => {
 
   return {
     capabilities: [...BUILTIN_FEATURE_CAPABILITIES[SITE_IDS.DEEPSEEK]],
-    traits: { historyLazyLoad: false, virtualOutlineFill: true },
+    // apiFirstExport：会话页/分享页可走 history_messages/share 接口导出全量历史，
+    // 不依赖 DOM 历史预加载；接口失败时由 prepareConversationExport 返回 null
+    // 触发导出流程补做预加载后重试。
+    traits: { historyLazyLoad: false, virtualOutlineFill: true, apiFirstExport: true },
     selectors: {
       textarea: [
         'textarea[placeholder*="DeepSeek"]',

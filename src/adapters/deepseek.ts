@@ -1580,6 +1580,11 @@ export class DeepSeekAdapter extends SiteAdapter {
       return this.finishExportWithSnapshots(apiMessages, collector)
     }
 
+    // 接口路径不可用且 DOM 历史未预加载（manager 因 apiFirstExport 跳过了预加载）：
+    // 返回 null 让导出流程补做预加载后重试，避免在只加载了部分历史的 DOM 上
+    // 滚动采集得到不完整的导出
+    if (context.domHistoryPreloaded === false) return null
+
     const scrollContainer =
       this.getScrollContainer() || document.querySelector(this.getResponseContainerSelector())
     if (!(scrollContainer instanceof HTMLElement)) {
