@@ -12,7 +12,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 ### 🐛 Bug Fixes
 
 - **ChatGPT redesigned pages adaptation** — Fixed page width, Zen Mode, outline, theme switching, and conversation export on ChatGPT's redesigned pages.
-- **DeepSeek export no longer jumps to the top** — Exporting a DeepSeek conversation no longer scrolls the page to the top first; the complete conversation is fetched directly.
+- **Export no longer jumps to the top on DeepSeek, Claude, Grok, and AI Studio** — Exporting a conversation on these sites no longer scrolls the page to the top first; the complete conversation is fetched directly.
 
 ---
 

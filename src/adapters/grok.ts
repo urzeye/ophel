@@ -2142,9 +2142,10 @@ export class GrokAdapter extends SiteAdapter {
   async prepareConversationExport(_context: ExportLifecycleContext): Promise<unknown> {
     this.exportUserAttachmentsByResponseId = await this.collectGrokShareUserAttachments()
     // 常规会话优先走接口拿全量历史（虚拟列表只挂载可视窗口，DOM 收集不全）；
-    // 失败返回 null，extractExportMessages 回退 DOM 路径
+    // 接口成功返回非空标记：apiFirstExport 下 manager 依此判断无需补做 DOM
+    // 历史预加载并重试；失败返回 null，extractExportMessages 回退 DOM 路径
     this.exportApiData = await this.fetchApiExportData()
-    return null
+    return this.exportApiData ? { usedApiExport: true } : null
   }
 
   async restoreConversationAfterExport(
