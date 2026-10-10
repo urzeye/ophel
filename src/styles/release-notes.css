@@ -214,24 +214,21 @@
   margin: 0;
 }
 
-/* 突出显示的节日横幅（如国庆快乐） */
+/* 节日问候横幅（如国庆快乐）：柔和红金渐层面 + 低透明描边，不用左侧粗竖条 */
 .gh-release-notes-markdown .gh-release-notes-festive,
 .gh-release-notes-markdown blockquote.gh-release-notes-festive {
   margin: 0 0 14px;
-  padding: 12px 18px;
+  padding: 12px 16px;
   border-radius: 10px;
-  border: 1px solid color-mix(in srgb, #ea4335 36%, var(--gh-border, #e5e7eb));
-  border-left: 4px solid #ea4335;
+  border: 1px solid color-mix(in srgb, var(--gh-danger, #dc2626) 22%, transparent);
   background: linear-gradient(
-    135deg,
-    color-mix(in srgb, #ea4335 12%, var(--gh-bg, #ffffff)),
-    color-mix(in srgb, #fbbc04 10%, var(--gh-bg-secondary, #f8fafc))
+    120deg,
+    color-mix(in srgb, var(--gh-danger, #dc2626) 9%, var(--gh-bg, #ffffff)),
+    color-mix(in srgb, #f5b83d 7%, var(--gh-bg, #ffffff))
   );
   color: var(--gh-text, #111827);
-  font-size: 14.5px;
-  font-weight: 600;
+  font-size: 14px;
   line-height: 1.6;
-  box-shadow: 0 3px 12px rgba(234, 67, 53, 0.08);
 }
 
 .gh-release-notes-markdown .gh-release-notes-festive p,
@@ -241,23 +238,26 @@
 
 .gh-release-notes-markdown .gh-release-notes-festive strong,
 .gh-release-notes-markdown blockquote.gh-release-notes-festive strong {
-  color: color-mix(in srgb, #ea4335 85%, var(--gh-text, #111827));
+  color: color-mix(in srgb, var(--gh-danger, #dc2626) 88%, var(--gh-text, #111827));
 }
 
-/* 重要公告卡片 */
+/* 重要公告卡片：琥珀色淡色面，层级靠描边与加粗文字，不用左侧粗竖条 */
 .gh-release-notes-markdown .gh-release-notes-notice {
   margin: 0 0 12px;
-  padding: 10px 14px;
-  border-radius: 8px;
-  border: 1px solid color-mix(in srgb, var(--gh-warning, #f59e0b) 32%, var(--gh-border, #e5e7eb));
-  border-left: 4px solid var(--gh-warning, #f59e0b);
-  background: color-mix(in srgb, var(--gh-warning, #f59e0b) 8%, var(--gh-bg-secondary, #f8fafc));
+  padding: 11px 16px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--gh-warning, #d97706) 26%, transparent);
+  background: color-mix(in srgb, var(--gh-warning, #d97706) 7%, var(--gh-bg, #ffffff));
   font-size: 13.5px;
-  line-height: 1.55;
+  line-height: 1.6;
 }
 
 .gh-release-notes-markdown .gh-release-notes-notice p {
   margin: 0;
+}
+
+.gh-release-notes-markdown .gh-release-notes-notice strong {
+  color: color-mix(in srgb, var(--gh-warning, #d97706) 45%, var(--gh-text, #111827));
 }
 
 .gh-release-notes-markdown strong {
