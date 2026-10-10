@@ -108,7 +108,8 @@ export interface ExportLifecycleContext {
   /**
    * 导出前是否已完成 DOM 历史预加载（滚顶收敛）。接口导出优先的站点
    * （traits.apiFirstExport）会跳过预加载，此时为 false：适配器的 DOM
-   * 回退路径应返回 null，由导出流程补做预加载后置 true 重试。
+   * 回退路径若依赖预加载才完整，应返回 null，由导出流程补做预加载后
+   * 置 true 重试；回退路径能自行覆盖全量历史（如全幅扫屏）的站点可直接采集。
    * 缺省 undefined 视为未跳过预加载，保持旧行为。
    */
   domHistoryPreloaded?: boolean
