@@ -575,13 +575,6 @@ function IndexPopup() {
                 const resolvedUrl = resolveQuickAccessUrl(site, lastEntryUrls)
                 // 停用的内置站点：保留导航能力，弱化展示并标注状态
                 const tileDisabled = isQuickAccessTileDisabled(site.platform, disabledSites)
-                const subtitle = tileDisabled
-                  ? t("popupSiteDisabled")
-                  : site.urls.length === 0
-                    ? t("popupSitePackUnbound")
-                    : site.urls.length > 1 && resolvedUrl
-                      ? hostOf(resolvedUrl)
-                      : null
                 return (
                   <div className="popup-site-tile" key={site.key}>
                     <Tooltip
@@ -602,7 +595,6 @@ function IndexPopup() {
                           fallbackClassName="popup-site-emoji"
                         />
                         <span className="popup-site-title">{site.platform.name}</span>
-                        {subtitle && <span className="popup-site-subtitle">{subtitle}</span>}
                       </button>
                     </Tooltip>
                     {site.urls.length > 1 && (
