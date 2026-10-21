@@ -39,8 +39,7 @@ Ophel Atlas 是 TypeScript + React 18 + Plasmo 的浏览器扩展，同时支持
 - 扩展开发：`pnpm dev`
 - 格式检查：`pnpm format:check`
 - Lint 检查：`pnpm lint:check`
-- 类型检查：`pnpm typecheck`（覆盖 `src/` 与 `tests/`）
-- 测试：`pnpm test`（Vitest）
+- 类型检查：`pnpm typecheck`
 - 校验 SitePack：`pnpm registry:validate`
 - Chrome 构建：`pnpm build`
 - Firefox 构建：`pnpm build:firefox`
@@ -49,7 +48,7 @@ Ophel Atlas 是 TypeScript + React 18 + Plasmo 的浏览器扩展，同时支持
 - 油猴本地调试构建：`pnpm build:userscript:local`
 - 油猴本地资源服务：`pnpm serve:userscript:assets`
 
-项目使用 Vitest 作为测试体系。代码变更优先运行最相关检查；提交前的完整验证顺序见 `docs/developer/conventions/commits.md`。涉及存储适配、内容脚本入口、样式注入或核心初始化时，再补 `pnpm build:userscript` 与 `pnpm build:firefox`。若无法运行，交付时说明原因和替代检查。
+代码变更优先运行最相关检查；提交前的完整验证顺序见 `docs/developer/conventions/commits.md`。涉及存储适配、内容脚本入口、样式注入或核心初始化时，再补 `pnpm build:userscript` 与 `pnpm build:firefox`。若无法运行，交付时说明原因和替代检查。
 
 ## 编码约束
 

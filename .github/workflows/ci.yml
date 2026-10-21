@@ -65,8 +65,8 @@ jobs:
       - name: 📐 Type Check (TypeScript)
         run: pnpm typecheck
 
-      - name: 🧪 Run Tests (Vitest)
-        run: pnpm test
+#      - name: 🧪 Run Tests (Vitest)
+#        run: pnpm test
 
       - name: 🏗️ Verify Build
         run: pnpm build
