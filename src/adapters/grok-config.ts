@@ -80,11 +80,11 @@ export interface GrokSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const GROK_CONFIG_VERSION = 6
+export const GROK_CONFIG_VERSION = 7
 
 const createGrokConfig = (): GrokSiteConfig => {
   const sidebarScrollContainer = '[data-sidebar="content"]'
-  const conversationItem = 'a[href^="/c/"]'
+  const conversationItem = 'a[href^="/c/"], a[href^="https://grok.com/c/"]'
   const cmdkItem = "[cmdk-item]"
   const messageBubble = ".message-bubble"
   // 新版页面用 data-testid 区分用户/AI 消息；保留 rounded-br-lg 兼容未改版页面
@@ -95,7 +95,11 @@ const createGrokConfig = (): GrokSiteConfig => {
   const responseMarkdown = ".response-content-markdown"
   const stopButton = ['button[aria-label*="停止"]', 'button[aria-label*="Stop"]']
   const appLayoutScope = "#grok-app-root"
-  const panelAvoidanceScope = "main[data-mcp-app-fullscreen-container]"
+  // 新版布局主区域是 div#grok-content-area[role="main"]，不再渲染 <main>；
+  // 选择器优先 id / role 等语义锚点，旧的 main 作用域仅作兼容回退
+  const contentAreaScope = "#grok-content-area"
+  const legacyMainScope = "main[data-mcp-app-fullscreen-container]"
+  const panelAvoidanceScope = `${contentAreaScope}, [role="main"]`
   const contentWidth = '[class*="[--content-max-width:"]'
   const inlineContentWidth = '[style*="--content-max-width"]'
 
@@ -118,11 +122,12 @@ const createGrokConfig = (): GrokSiteConfig => {
         'form button[type="submit"]',
         '.query-bar button[type="submit"]',
       ],
-      responseContainer: "main",
+      responseContainer: "#grok-content-area, [role='main'], main",
       chatContent: ['[class*="prose"]', '[dir="ltr"]'],
       userQuery,
       assistantResponse,
       newChatButton: [
+        '[data-testid="new-chat"]',
         'a[href="/"]',
         '[data-sidebar="header"] a',
         'button[aria-label*="新"]',
@@ -210,9 +215,11 @@ const createGrokConfig = (): GrokSiteConfig => {
       modelName: ".font-semibold",
       appLayoutScope,
       panelAvoidanceScope,
-      chatSafeArea: `${panelAvoidanceScope} [data-testid="chat-transcript-scroller"], ${panelAvoidanceScope} [class*="overflow-y-auto"][class*="px-gutter"]`,
-      newChatLogoSafeArea: `${panelAvoidanceScope} .flex.flex-col.items-center.justify-center.w-full.max-w-breakout:has(svg[variant="hero"])`,
-      inputSafeArea: `${panelAvoidanceScope} .absolute.inset-x-0.bottom-0.mx-auto.max-w-breakout`,
+      // chat-transcript-scroller 的 data-testid 全页唯一，不需作用域前缀；
+      // px-gutter 分支仅服务旧版 <main> 布局
+      chatSafeArea: `[data-testid="chat-transcript-scroller"], ${legacyMainScope} [class*="overflow-y-auto"][class*="px-gutter"]`,
+      newChatLogoSafeArea: `${contentAreaScope} .flex.flex-col.items-center.justify-center.w-full.max-w-breakout:has(svg[variant="hero"]), ${legacyMainScope} .flex.flex-col.items-center.justify-center.w-full.max-w-breakout:has(svg[variant="hero"])`,
+      inputSafeArea: `${contentAreaScope} .absolute.inset-x-0.bottom-0.mx-auto.max-w-breakout, ${legacyMainScope} .absolute.inset-x-0.bottom-0.mx-auto.max-w-breakout`,
       canvasSafeArea: `${appLayoutScope} aside:has(iframe.w-full.flex-1)`,
     },
   }

@@ -15,6 +15,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **Z.ai adaptation updates** — The extension now recognizes Z.ai's new domain zchat.z.ai, so outline, export, Zen Mode, and other Z.ai features work on both chat.z.ai and zchat.z.ai; also fixed an issue where enabling panel avoidance squeezed the input box on the new chat page, making it much narrower than normal.
 - **Current site domain in popup** — The popup's current-site card now shows the exact domain you're on (like chat.z.ai), and for sites with multiple domains (Kimi, Z.ai) you can click the domain to switch to another entry without leaving the popup.
 
+### 🐛 Bug Fixes
+
+- **Grok page layout update adaptation** — Fixed issues caused by Grok's page update: the outline no longer generated, the panel covered the chat area instead of making room for it, and the panel's scroll-to-top/bottom buttons scrolled the sidebar instead of the conversation.
+
 ---
 
 ## [1.2.12][1.2.12] - 2026-10-12

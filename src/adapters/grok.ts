@@ -474,7 +474,7 @@ export class GrokAdapter extends SiteAdapter {
 
     return {
       // 同时匹配侧边栏和 cmdk 对话框中的对话链接
-      // - 侧边栏：[data-sidebar="content"] a[href^="/c/"]
+      // - 侧边栏：[data-sidebar="content"] 内的对话链接（相对 /c/ 或绝对 https://grok.com/c/）
       // - 对话框：[cmdk-item][data-value^="conversation:"] a[href^="/c/"]
       selector: `${sidebarSelector} ${itemSelector}, ${privateSelectors.cmdkConversationItem} ${itemSelector}`,
       shadow: false,
@@ -1467,12 +1467,23 @@ export class GrokAdapter extends SiteAdapter {
     // 主内容区域的滚动容器
     const main = document.querySelector(this.config.selectors.responseContainer)
     if (main) {
-      // 查找可滚动的子元素
-      const scrollable = main.querySelector(
-        this.config.sitePrivateSelectors.mainScrollContainer,
-      ) as HTMLElement
-      if (scrollable && scrollable.scrollHeight > scrollable.clientHeight) {
-        return scrollable
+      // 按配置分支的优先级逐个尝试：querySelector 的逗号并集按文档序返回
+      // 首个命中，代码块等内部 overflow 元素可能排在真正的滚动容器之前
+      const branches = this.config.sitePrivateSelectors.mainScrollContainer
+        .split(",")
+        .map((branch) => branch.trim())
+        .filter(Boolean)
+      for (const branch of branches) {
+        const el = main.querySelector(branch)
+        if (el instanceof HTMLElement && el.scrollHeight > el.clientHeight) {
+          return el
+        }
+      }
+      // 短对话内容未撑高时仍返回首选滚动容器：此时不滚动是正确行为，
+      // 跌进全局回退会误滚侧边栏
+      if (branches.length > 0) {
+        const primary = main.querySelector(branches[0])
+        if (primary instanceof HTMLElement) return primary
       }
       // 或者 main 本身可滚动
       if (main.scrollHeight > main.clientHeight) {
@@ -1480,12 +1491,15 @@ export class GrokAdapter extends SiteAdapter {
       }
     }
 
-    // 回退：查找任何大的可滚动容器
+    // 回退：查找任何大的可滚动容器，但排除侧边栏，
+    // 避免主区域定位失败时滚动操作误伤导航
+    const sidebarSelector = this.config.sitePrivateSelectors.sidebarScrollContainer
     const containers = document.querySelectorAll(
       this.config.sitePrivateSelectors.fallbackScrollContainers,
     )
     for (const container of Array.from(containers)) {
       const el = container as HTMLElement
+      if (el.closest(sidebarSelector)) continue
       if (el.scrollHeight > el.clientHeight + 100) {
         return el
       }
@@ -2377,6 +2391,20 @@ export class GrokAdapter extends SiteAdapter {
     })
   }
 
+  /**
+   * 新版 DOM 为屏幕阅读器注入了无障碍标题（h1.sr-only 页面标题、
+   * 消息气泡内的 h2#turn-heading "You"/"Grok"），它们不是内容标题，
+   * 必须从大纲提取与 API 标题的 ATX 序号对齐中一并排除。
+   */
+  private isOutlineHeadingExcluded(element: Element): boolean {
+    return (
+      this.isInRenderedMarkdownContainer(element) ||
+      element.hasAttribute("data-no-copy") ||
+      element.classList.contains("sr-only") ||
+      element.getAttribute("aria-hidden") === "true"
+    )
+  }
+
   private extractDomOutline(
     maxLevel = 6,
     includeUserQueries = false,
@@ -2483,7 +2511,7 @@ export class GrokAdapter extends SiteAdapter {
 
       const headings = Array.from(container.querySelectorAll(headingSelectors.join(", ")))
       headings.forEach((heading, index) => {
-        if (this.isInRenderedMarkdownContainer(heading)) return
+        if (this.isOutlineHeadingExcluded(heading)) return
         const level = parseInt(heading.tagName.charAt(1), 10)
         if (level <= maxLevel) {
           const item: OutlineItem = {
@@ -2566,7 +2594,7 @@ export class GrokAdapter extends SiteAdapter {
 
         outline.push(item)
       } else if (/^h[1-6]$/.test(tagName)) {
-        if (this.isInRenderedMarkdownContainer(element)) return
+        if (this.isOutlineHeadingExcluded(element)) return
         const level = parseInt(tagName.charAt(1), 10)
         if (level <= maxLevel) {
           const item: OutlineItem = {
@@ -2984,7 +3012,7 @@ export class GrokAdapter extends SiteAdapter {
     text: string,
   ): Element | null {
     const headings = Array.from(row.querySelectorAll(OUTLINE_HEADING_SELECTOR)).filter(
-      (heading) => !this.isInRenderedMarkdownContainer(heading),
+      (heading) => !this.isOutlineHeadingExcluded(heading),
     )
     const direct = headings[ref.orderInMessage]
     if (direct && (direct.textContent || "").trim() === text) return direct
