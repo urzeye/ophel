@@ -1436,8 +1436,6 @@ export class GeminiAdapter extends SiteAdapter {
     const path = window.location.pathname.replace(/^\/u\/\d+/, "")
     // 普通新对话
     if (path === "/app" || path === "/app/") return true
-    // Spark 首页与列表/配置页不是具体对话，/spark/chat/{id} 才是线程页
-    if (this.isSparkRoute() && !this.isSparkThreadPage()) return true
     // Gem 相关页面：创建、编辑、使用 gem 新对话
     if (path === "/gems/create" || path === "/gems/create/") return true
     if (path.startsWith("/gems/edit/")) return true
@@ -1453,36 +1451,13 @@ export class GeminiAdapter extends SiteAdapter {
     const path = window.location.pathname.replace(/^\/u\/\d+(?=\/)/, "")
     return (
       !this.isSharePage() &&
-      (/^\/app\/[^/?#]+(?:\/|$)/i.test(path) ||
-        /^\/gem\/[^/?#]+\/[^/?#]+(?:\/|$)/i.test(path) ||
-        this.isSparkThreadPage())
+      (/^\/app\/[^/?#]+(?:\/|$)/i.test(path) || /^\/gem\/[^/?#]+\/[^/?#]+(?:\/|$)/i.test(path))
     )
-  }
-
-  /** Spark 路由（/spark、/spark/tasks、/spark/chat/... 等），对话以任务卡片而非侧边栏列表呈现 */
-  private isSparkRoute(): boolean {
-    const path = window.location.pathname.replace(/^\/u\/\d+(?=\/|$)/, "")
-    return path === "/spark" || path.startsWith("/spark/")
-  }
-
-  /** Spark 线程页：/spark/chat/{id} */
-  private isSparkThreadPage(): boolean {
-    const path = window.location.pathname.replace(/^\/u\/\d+(?=\/|$)/, "")
-    return /^\/spark\/chat\/[^/?#]+(?:\/|$)/i.test(path)
   }
 
   // ==================== 对话管理 ====================
 
-  getConversationDeletionScope(): ((conv: ConversationInfo) => boolean) | null {
-    // /app 侧边栏与 Spark 任务列表互不相交；删除同步只能作用于当前路由可见的那一类对话，
-    // 否则在任一侧全量同步都会把另一侧的对话误判为“已从站点删除”。
-    const spark = this.isSparkRoute()
-    return (conv) => (conv.url || "").includes("/spark/chat/") === spark
-  }
-
   getConversationList(): ConversationInfo[] {
-    if (this.isSparkRoute()) return this.getSparkConversationList()
-
     const { conversation, sitePrivateSelectors } = this.config
     const items =
       (DOMToolkit.query(conversation.itemSelector, {
@@ -1518,77 +1493,12 @@ export class GeminiAdapter extends SiteAdapter {
       .filter((c) => c.id)
   }
 
-  /** Spark 路由下的对话列表：扫描 remy-task-list 里的任务卡片（首页为近期对话，tasks/线程页左窗格为完整列表） */
-  private getSparkConversationList(): ConversationInfo[] {
-    const { sitePrivateSelectors } = this.config
-    const cards =
-      (DOMToolkit.query(sitePrivateSelectors.sparkGoalCard, {
-        all: true,
-      }) as Element[]) || []
-    const cid = this.getCurrentCid()
-    const prefix = this.getUserPathPrefix()
-    return cards
-      .map((card) => {
-        const id = this.extractSparkConversationId(card)
-        const title =
-          card.querySelector(sitePrivateSelectors.sparkGoalTitle)?.textContent?.trim() || ""
-        const isPinned = !!card.querySelector(sitePrivateSelectors.sparkGoalPinnedMenu)
-        const isActive =
-          card.classList.contains("goal-card-selected") ||
-          card.getAttribute("aria-selected") === "true"
-
-        return {
-          id,
-          cid,
-          title,
-          url: id ? `https://gemini.google.com${prefix}/spark/chat/${id}` : "",
-          isActive,
-          isPinned,
-        }
-      })
-      .filter((c) => c.id)
-  }
-
-  private extractSparkConversationId(card: Element): string {
-    // 卡片 DOM id 为 goal-c_{对话id}，与 jslog 里的 ["c_..."] 信号一致
-    const domId = card.getAttribute("id")?.match(/^goal-c_(.+)$/)
-    if (domId) return domId[1]
-    return this.extractConversationIdFromSignal(card.getAttribute("jslog") || "")
-  }
-
   getSidebarScrollContainer(): Element | null {
-    if (this.isSparkRoute()) return this.getSparkGoalListContainer()
     // Gemini 正文聊天也使用 infinite-scroller，必须限定在侧边栏对话区域内查找。
     return this.getChatsScrollableContainer()
   }
 
-  getConversationObserverContainer(): Element | null {
-    // Spark 的 task-list 位于路由出口内，首页 ↔ 线程页切换时随旧页面销毁重建；
-    // 观察器绑定该易失节点会在导航后永久失效，Spark 路由下返回 null 回退 document 根全覆盖
-    if (this.isSparkRoute()) return null
-    return super.getConversationObserverContainer()
-  }
-
-  private getSparkGoalListContainer(): Element | null {
-    const anchor = document.querySelector("remy-task-list .goal-list")
-    if (!(anchor instanceof HTMLElement)) return null
-
-    let current: HTMLElement | null = anchor
-    while (current && current !== document.body) {
-      const style = window.getComputedStyle(current)
-      if (/(auto|scroll|overlay)/i.test(style.overflowY) && current.scrollHeight > 0) {
-        return current
-      }
-      current = current.parentElement
-    }
-
-    // 列表不可滚动时（如首页 capped 近期列表）仍返回其本身，作为「列表已就绪」信号
-    return anchor
-  }
-
   async loadAllConversations(): Promise<boolean> {
-    if (this.isSparkRoute()) return this.loadAllSparkConversations()
-
     const sectionReady = await this.ensureChatsExpandableSectionOpen()
     if (!sectionReady) return false
 
@@ -1634,39 +1544,6 @@ export class GeminiAdapter extends SiteAdapter {
     }
 
     return false
-  }
-
-  /**
-   * Spark 列表滚动加载。只有“所有任务”页（/spark/tasks）的列表是完整集合；
-   * 首页和线程页左窗格是截断的近期列表，返回 false 让上层跳过删除同步，避免误删未展示的线程。
-   */
-  private async loadAllSparkConversations(): Promise<boolean> {
-    const container = this.getSparkGoalListContainer() as HTMLElement | null
-    if (!container) return false
-
-    let lastCount = this.getSparkConversationList().length
-    let stableRounds = 0
-    const maxRounds = 12
-    const waitMs = 800
-
-    for (let round = 0; round < maxRounds; round++) {
-      this.scrollGeminiConversationHistoryToBottom(container)
-      await this.sleep(waitMs)
-
-      const currentCount = this.getSparkConversationList().length
-      if (currentCount > lastCount) {
-        lastCount = currentCount
-        stableRounds = 0
-      } else {
-        stableRounds++
-      }
-
-      if (round >= 2 && stableRounds >= 2) break
-    }
-
-    const path = window.location.pathname.replace(/^\/u\/\d+(?=\/|$)/, "")
-    const isFullListPage = /^\/spark\/tasks\/?$/i.test(path)
-    return isFullListPage && lastCount > 0
   }
 
   private async ensureChatsExpandableSectionOpen(timeout = 2500): Promise<boolean> {
@@ -1770,25 +1647,10 @@ export class GeminiAdapter extends SiteAdapter {
 
   getConversationObserverConfig(): ConversationObserverConfig {
     const { conversation, sitePrivateSelectors } = this.config
-    const sparkCardSelector = sitePrivateSelectors.sparkGoalCard
     return {
-      // 同时监听 /app 侧边栏对话项与 Spark 任务卡片；两类元素不会出现在同一路由下
-      selector: `${conversation.itemSelector}, ${sparkCardSelector}`,
+      selector: conversation.itemSelector,
       shadow: conversation.shadow ?? false,
       extractInfo: (el) => {
-        if (el.matches(sparkCardSelector)) {
-          const sparkId = this.extractSparkConversationId(el)
-          if (!sparkId) return null
-          const sparkTitle =
-            el.querySelector(sitePrivateSelectors.sparkGoalTitle)?.textContent?.trim() || ""
-          return {
-            id: sparkId,
-            cid: this.getCurrentCid(),
-            title: sparkTitle,
-            url: `https://gemini.google.com${this.getUserPathPrefix()}/spark/chat/${sparkId}`,
-            isPinned: !!el.querySelector(sitePrivateSelectors.sparkGoalPinnedMenu),
-          }
-        }
         // 新版侧边栏：jslog 在内部 <a> 上，标题在 .title-text 中
         const anchor = el.querySelector(sitePrivateSelectors.conversationAnchor)
         const idAttribute = conversation.idFrom.attr ?? "href"
@@ -1811,9 +1673,6 @@ export class GeminiAdapter extends SiteAdapter {
         }
       },
       getTitleElement: (el) => {
-        if (el.matches(sparkCardSelector)) {
-          return el.querySelector(sitePrivateSelectors.sparkGoalTitle) || el
-        }
         return (conversation.titleSelector && el.querySelector(conversation.titleSelector)) || el
       },
     }
@@ -1821,18 +1680,6 @@ export class GeminiAdapter extends SiteAdapter {
 
   navigateToConversation(id: string, url?: string): boolean {
     if (this.config.conversation.navigationStrategy === "location") {
-      return super.navigateToConversation(id, url)
-    }
-
-    // Spark 路由：任务卡片没有 anchor，点击卡片本身走 Angular 路由
-    if (this.isSparkRoute()) {
-      const card = this.findSparkGoalCard(id)
-      if (card) {
-        card.click()
-        return true
-      }
-      // 降级：优先 history 导航免刷新（Angular 路由响应 popstate，已实测）
-      if (url && this.navigateViaHistory(url)) return true
       return super.navigateToConversation(id, url)
     }
 
@@ -1847,16 +1694,6 @@ export class GeminiAdapter extends SiteAdapter {
     // 降级：优先 history 导航免刷新，失败再整页刷新
     if (url && this.navigateViaHistory(url)) return true
     return super.navigateToConversation(id, url)
-  }
-
-  private findSparkGoalCard(id: string): HTMLElement | null {
-    const normalized = this.normalizeConversationId(id)
-    if (!normalized) return null
-    const card = document.getElementById(`goal-c_${normalized}`)
-    return card instanceof HTMLElement &&
-      card.matches(this.config.sitePrivateSelectors.sparkGoalCard)
-      ? card
-      : null
   }
 
   async deleteConversationOnSite(
@@ -2437,13 +2274,6 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   getSessionName(): string | null {
-    // Spark 线程页：标题在左窗格顶部的线程标题中（文档标题恒为 "Gemini Spark"，不可用）
-    if (this.isSparkRoute()) {
-      const sparkTitle = document
-        .querySelector(this.config.sitePrivateSelectors.sparkThreadTitle)
-        ?.textContent?.trim()
-      if (sparkTitle) return sparkTitle
-    }
     // 新版侧边栏：激活项标题在 a.mdc-list-item--activated .title-text 中
     const activeTitle = document.querySelector(
       this.config.sitePrivateSelectors.conversationActiveTitle,
@@ -2486,17 +2316,6 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   getConversationTitle(): string | null {
-    // Spark 线程页：优先取选中任务卡片的标题
-    if (this.isSparkRoute()) {
-      const activeCard = document.querySelector(
-        `${this.config.sitePrivateSelectors.sparkGoalCard}.goal-card-selected`,
-      )
-      const cardTitle = activeCard
-        ?.querySelector(this.config.sitePrivateSelectors.sparkGoalTitle)
-        ?.textContent?.trim()
-      if (cardTitle) return cardTitle
-      return this.getSessionName()
-    }
     // 新版侧边栏：激活项标题
     const activeTitle = document.querySelector(
       this.config.sitePrivateSelectors.conversationActiveTitle,

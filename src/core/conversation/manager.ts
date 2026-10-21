@@ -384,10 +384,7 @@ export class ConversationManager {
       nextConversations[storageKey] = {
         ...conv,
         cid: currentCid,
-        // Spark 线程的 URL 是 /spark/chat/{id}，不能按 /app 模板重建
-        url: (conv.url || "").includes("/spark/chat/")
-          ? conv.url
-          : this.buildGeminiConversationUrl(conv.id, userPathPrefix),
+        url: this.buildGeminiConversationUrl(conv.id, userPathPrefix),
       }
     })
 
@@ -1207,11 +1204,9 @@ export class ConversationManager {
 
     if (options.syncDeleted) {
       const currentCid = this.siteAdapter.getCurrentCid?.() || null
-      const deletionScope = this.siteAdapter.getConversationDeletionScope?.() ?? null
 
       Object.entries(conversations).forEach(([id, conv]) => {
         if (!this.matchesCid(conv, currentCid)) return
-        if (deletionScope && !deletionScope(conv)) return
         if (sidebarIds.has(id)) return
 
         deleteIds.push(this.getConversationStorageKey(id))

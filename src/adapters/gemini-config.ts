@@ -152,10 +152,6 @@ type GeminiPrivateSelectors = SitePrivateSelectors & {
   inputSafeArea: string
   newChatInputSafeArea: string
   userQueryWidth: string
-  sparkGoalCard: string
-  sparkGoalTitle: string
-  sparkGoalPinnedMenu: string
-  sparkThreadTitle: string
 }
 
 export interface GeminiSiteConfig extends BuiltinSiteConfig {
@@ -177,7 +173,7 @@ export interface GeminiSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时递增（相对上一 release 版本 +1），使旧缓存 patch 自动失效。一次发版周期内无需重复递增。 */
-export const GEMINI_CONFIG_VERSION = 7
+export const GEMINI_CONFIG_VERSION = 8
 
 const createGeminiConfig = (): GeminiSiteConfig => {
   const userQuery = "user-query"
@@ -737,12 +733,6 @@ const createGeminiConfig = (): GeminiSiteConfig => {
       newChatInputSafeArea:
         "chat-window.center-input-layout .input-area-container.is-zero-state, .center-input-layout .input-area-container, .zero-state-theme .input-area-container",
       userQueryWidth: ".user-query-bubble-with-background:not(.edit-mode)",
-      // Gemini Spark（/spark 路由）：对话列表是主内容区/左窗格里的任务卡片，没有侧边栏列表
-      sparkGoalCard: 'remy-task-list .goal-card[id^="goal-c_"]',
-      sparkGoalTitle: ".goal-description",
-      // 置顶标记：操作菜单宿主上的语义类。pin 图标的 sf-hidden 只是显隐工具类，hover/渲染时序下不可靠
-      sparkGoalPinnedMenu: "remy-goal-action-menu.is-pinned",
-      sparkThreadTitle: '[data-test-id="remy-split-pane-title"]',
     },
   }
 }
