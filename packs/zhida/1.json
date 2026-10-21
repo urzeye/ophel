@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 1,
+  "id": "zhida",
+  "version": 1,
+  "minAppVersion": "1.2.5",
+  "name": "知乎直答",
+  "nameI18n": {
+    "zh-CN": "知乎直答",
+    "zh-TW": "知乎直答",
+    "en": "Zhihu Zhida",
+    "ja": "知乎直答",
+    "ko": "Zhihu Zhida",
+    "it": "Zhihu Zhida",
+    "de": "Zhihu Zhida",
+    "es": "Zhihu Zhida",
+    "fr": "Zhihu Zhida",
+    "pt-BR": "Zhihu Zhida",
+    "ru": "Zhihu Zhida"
+  },
+  "description": "Adds Ophel outlines, basic export, new chat, chat width, Zen Mode and prompt insertion to Zhihu Zhida (zhida.zhihu.com).",
+  "descriptionI18n": {
+    "zh-CN": "为知乎直答添加 Ophel 大纲、基础导出、新对话、对话宽度、禅模式和提示词插入功能。",
+    "zh-TW": "為知乎直答加入 Ophel 大綱、基本匯出、新對話、對話寬度、禪模式與提示詞插入功能。",
+    "en": "Adds Ophel outlines, basic export, new chat, chat width, Zen Mode and prompt insertion to Zhihu Zhida (zhida.zhihu.com).",
+    "ja": "知乎直答に、Ophel のアウトライン、基本エクスポート、新規チャット、チャット幅、Zen モード、プロンプト挿入機能を追加します。",
+    "ko": "Zhihu Zhida에 Ophel의 개요, 기본 내보내기, 새 채팅, 대화 너비, Zen 모드, 프롬프트 삽입 기능을 추가합니다.",
+    "it": "Aggiunge a Zhihu Zhida le funzioni Ophel per struttura, esportazione di base, nuova chat, larghezza della chat, modalità Zen e inserimento dei prompt.",
+    "de": "Ergänzt Zhihu Zhida um Ophel-Funktionen für Gliederung, Basisexport, neuen Chat, Chatbreite, Zen-Modus und Prompt-Einfügung.",
+    "es": "Añade a Zhihu Zhida las funciones de Ophel para esquema, exportación básica, nuevo chat, ancho del chat, modo zen e inserción de prompts.",
+    "fr": "Ajoute à Zhihu Zhida les fonctions Ophel de plan, d’exportation de base, de nouvelle discussion, de largeur de discussion, de mode Zen et d’insertion de prompts.",
+    "pt-BR": "Adiciona ao Zhihu Zhida os recursos do Ophel para estrutura, exportação básica, novo chat, largura da conversa, modo Zen e inserção de prompts.",
+    "ru": "Добавляет в Zhihu Zhida функции Ophel для структуры, базового экспорта, нового чата, ширины чата, режима Zen и вставки промптов."
+  },
+  "matches": [
+    "https://zhida.zhihu.com/*"
+  ],
+  "logoUrl": "https://pica.zhimg.com/v2-793ea13f76a2bd45599c1849cad804b5.png",
+  "theme": {
+    "primary": "#5a4df8",
+    "secondary": "#3730b8"
+  },
+  "capabilities": [
+    "outline",
+    "outline-user-queries",
+    "export-basic",
+    "new-chat",
+    "width",
+    "zen",
+    "prompt-insert"
+  ],
+  "selectors": {
+    "textarea": [
+      "div[contenteditable='true'][role='textbox']",
+      ".public-DraftEditor-content[contenteditable='true']"
+    ],
+    "responseContainer": "#fullScreen [data-scroller='true']",
+    "userQuery": "[style*='background-color: rgba(90, 77, 248, 0.15)'], [style*='background-color:rgba(90, 77, 248, 0.15)']",
+    "assistantResponse": "[data-testid='Block:zhida_answer_result_block'] .Render-markdown",
+    "newChatButton": [
+      "[data-testid='Button:toolbar_new_answer_button']",
+      "[data-testid='Button:zhida_multi_round_dialogue']"
+    ],
+    "scrollContainer": [
+      "#fullScreen [data-scroller='true']",
+      "#fullScreen"
+    ]
+  },
+  "input": {
+    "mode": "contenteditable",
+    "submitKey": "Enter"
+  },
+  "session": {
+    "idFromPathRegex": "^/(?:search|share)/([^/?#]+)",
+    "newConversationPathPatterns": [
+      "^/?$"
+    ],
+    "sharePathPrefix": "/share/",
+    "newTabPath": "/"
+  },
+  "export": {
+    "userQuerySelector": "[style*='background-color: rgba(90, 77, 248, 0.15)'], [style*='background-color:rgba(90, 77, 248, 0.15)']",
+    "assistantResponseSelector": "[data-testid='Block:zhida_answer_result_block'] .Render-markdown",
+    "turnSelector": null,
+    "useShadowDOM": false
+  },
+  "widthSelectors": [
+    {
+      "selector": "#fullScreen [style*='width: 712px'], #fullScreen [style*='width:712px']",
+      "property": "width"
+    },
+    {
+      "selector": "#fullScreen [style*='width: 712px'], #fullScreen [style*='width:712px']",
+      "property": "max-width"
+    }
+  ],
+  "zenMode": {
+    "hide": [
+      "div:has(> div > a > [data-testid='Button:toolbar_new_answer_button'])"
+    ]
+  },
+  "themeSync": {
+    "storageKey": "theme@sync",
+    "valuePath": "theme",
+    "timestampPath": "ts",
+    "staticFields": {
+      "mode": "manual"
+    },
+    "values": {
+      "dark": "dark",
+      "light": "light"
+    },
+    "extraKeys": [
+      {
+        "storageKey": "zhida:theme_mode",
+        "values": {
+          "dark": "true",
+          "light": "false"
+        }
+      }
+    ]
+  }
+}

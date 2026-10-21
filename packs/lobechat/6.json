@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "id": "lobechat",
+  "version": 6,
+  "minAppVersion": "1.2.0",
+  "name": "LobeChat",
+  "nameI18n": {
+    "zh-CN": "LobeChat",
+    "zh-TW": "LobeChat",
+    "en": "LobeChat",
+    "ja": "LobeChat",
+    "ko": "LobeChat",
+    "it": "LobeChat",
+    "de": "LobeChat",
+    "es": "LobeChat",
+    "fr": "LobeChat",
+    "pt-BR": "LobeChat",
+    "ru": "LobeChat"
+  },
+  "description": "Adds Ophel outlines, basic export, generation detection, Zen Mode, new chat, and prompt insertion to LobeChat instances.",
+  "descriptionI18n": {
+    "zh-CN": "为 LobeChat 实例添加 Ophel 大纲、基础导出、生成检测、禅模式、新对话和提示词插入功能。",
+    "zh-TW": "為 LobeChat 實例加入 Ophel 大綱、基本匯出、生成偵測、禪模式、新對話與提示詞插入功能。",
+    "en": "Adds Ophel outlines, basic export, generation detection, Zen Mode, new chat, and prompt insertion to LobeChat instances.",
+    "ja": "LobeChat に、Ophel のアウトライン、基本エクスポート、生成検出、Zen モード、新規チャット、プロンプト挿入機能を追加します。",
+    "ko": "LobeChat 인스턴스에 Ophel의 개요, 기본 내보내기, 생성 감지, Zen 모드, 새 채팅 및 프롬프트 삽입 기능을 추가합니다.",
+    "it": "Aggiunge alle istanze LobeChat le funzioni Ophel per struttura, esportazione di base, rilevamento della generazione, modalità Zen, nuova chat e inserimento dei prompt.",
+    "de": "Ergänzt LobeChat-Instanzen um Ophel-Funktionen für Gliederung, Basisexport, Generierungserkennung, Zen-Modus, neuen Chat und Prompt-Einfügung.",
+    "es": "Añade a las instancias de LobeChat las funciones de Ophel para esquema, exportación básica, detección de generación, modo zen, nuevo chat e inserción de prompts.",
+    "fr": "Ajoute aux instances LobeChat les fonctions Ophel de plan, d’exportation de base, de détection de génération, de mode Zen, de nouvelle discussion et d’insertion de prompts.",
+    "pt-BR": "Adiciona às instâncias do LobeChat os recursos do Ophel para estrutura, exportação básica, detecção de geração, modo Zen, novo chat e inserção de prompts.",
+    "ru": "Добавляет в экземпляры LobeChat функции Ophel для структуры, базового экспорта, отслеживания генерации, режима Zen, нового чата и вставки промптов."
+  },
+  "matches": [
+    "https://app.lobehub.com/*"
+  ],
+  "capabilities": [
+    "outline",
+    "outline-user-queries",
+    "export-basic",
+    "generation-detect",
+    "new-chat",
+    "zen",
+    "prompt-insert",
+    "panel-avoidance"
+  ],
+  "selectors": {
+    "textarea": [
+      "[contenteditable='true'][data-lexical-editor='true']"
+    ],
+    "submitButton": [
+      "button:has(svg[viewBox='0 0 14 14'] > path[d^='M.743 3.773'])"
+    ],
+    "responseContainer": "#chatlist-list, div[style*='overflow-y: auto'][style*='contain: strict']:has(.message-wrapper[data-message-id])",
+    "userQuery": "#chatlist-list [data-index]:not(:has([data-layout='vertical'])) article[data-code-type='markdown'], .message-wrapper[data-message-id][style*='--lobe-flex-align: flex-end'] article[data-code-type='markdown']",
+    "newChatButton": [
+      "button:has(svg.lucide-message-square-plus)",
+      "[role='button']:has(svg.lucide-message-square-plus)"
+    ],
+    "scrollContainer": [
+      "[data-virtuoso-scroller]",
+      "div[style*='overflow-y: auto'][style*='contain: strict']:has(.message-wrapper[data-message-id])"
+    ]
+  },
+  "input": {
+    "mode": "contenteditable",
+    "submitKey": "Enter"
+  },
+  "networkMonitor": {
+    "urlPatterns": [
+      "/webapi/chat/"
+    ],
+    "silenceThreshold": 500
+  },
+  "export": {
+    "userQuerySelector": "#chatlist-list [data-index]:not(:has([data-layout='vertical'])) article[data-code-type='markdown'], .message-wrapper[data-message-id][style*='--lobe-flex-align: flex-end'] article[data-code-type='markdown']",
+    "assistantResponseSelector": "#chatlist-list [data-index]:has([data-layout='vertical']) article[data-code-type='markdown'], .message-wrapper[data-message-id][style*='--lobe-flex-align: flex-start'] article[data-code-type='markdown']",
+    "turnSelector": "#chatlist-list [data-index], .message-wrapper[data-message-id]",
+    "useShadowDOM": false
+  },
+  "zenMode": {
+    "hide": [
+      "aside"
+    ]
+  },
+  "panelAvoidance": {
+    "widthSelectors": [
+      {
+        "selector": "div.lobe-flex[style*='--lobe-flex-width']",
+        "property": "max-width",
+        "extraCss": "--lobe-flex-width: 100% !important;"
+      }
+    ],
+    "gap": 16
+  },
+  "themeSync": {
+    "storageKey": "theme",
+    "values": {
+      "dark": "dark",
+      "light": "light",
+      "system": "system"
+    }
+  }
+}
