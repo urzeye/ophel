@@ -18,6 +18,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 ### 🐛 Bug Fixes
 
 - **Grok page layout update adaptation** — Fixed issues caused by Grok's page update: the outline no longer generated, the panel covered the chat area instead of making room for it, and the panel's scroll-to-top/bottom buttons scrolled the sidebar instead of the conversation.
+- **Missing questions in Doubao long-chat outline** — Fixed an issue in long Doubao conversations where the outline only kept recently viewed questions and earlier ones went missing; the outline now fills in every question using Doubao's own conversation index, and clicking an entry jumps to it correctly.
 
 ---
 

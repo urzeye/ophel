@@ -41,6 +41,14 @@
  */
 import { SITE_IDS } from "~constants"
 import {
+  DOUBAO_TOC_BRIDGE_ATTR,
+  DOUBAO_TOC_REQUEST_EVENT,
+  DOUBAO_TOC_RESPONSE_EVENT,
+  installDoubaoTocBridge,
+  type DoubaoTocBridgeEntry,
+  type DoubaoTocBridgeWindow,
+} from "~core/doubao-toc-bridge"
+import {
   createExportAssetCollector,
   formatExportFileAttachments,
   formatExportImageAttachments,
@@ -51,6 +59,7 @@ import {
 } from "~utils/export-assets"
 import { htmlToMarkdown, type ExportBundle, type ExportMessage } from "~utils/exporter"
 import { t } from "~utils/i18n"
+import { EVENT_OUTLINE_DATA_UPDATED } from "~utils/messaging"
 
 import {
   SiteAdapter,
@@ -160,6 +169,8 @@ interface DoubaoOutlineCacheEntry {
   isUserQuery?: boolean
   isTruncated?: boolean
   wordCount?: number
+  /** 原生 TOC 条目的 data-index-entry-key；仅虚拟滚动未挂载、由原生 TOC 补入的提问携带 */
+  nativeTocKey?: string
 }
 
 interface DoubaoUserAttachment {
@@ -203,6 +214,10 @@ export class DoubaoAdapter extends SiteAdapter {
   private outlineCacheSessionKey = ""
   private outlineCacheTransitionEndAt = 0
   private outlineItemCache = new Map<string, DoubaoOutlineCacheEntry>()
+  private nativeTocEntriesCache: DoubaoTocBridgeEntry[] = []
+  private nativeTocEntriesSignature = ""
+  private nativeTocRequestInFlight = false
+  private nativeTocLastRequestAt = 0
   private exportMessagesCache: ExportMessage[] | null = null
   private exportBundleCache: ExportBundle | null = null
   // 导出采集完整性报告（通过 getExportCollectionReport 暴露给 manager）
@@ -1662,6 +1677,8 @@ export class DoubaoAdapter extends SiteAdapter {
     const isFirstSession = this.outlineCacheSessionKey === ""
     this.outlineCacheSessionKey = sessionKey
     this.outlineItemCache.clear()
+    this.nativeTocEntriesCache = []
+    this.nativeTocEntriesSignature = ""
     this.outlineCacheTransitionEndAt = isFirstSession ? 0 : Date.now() + 1200
   }
 
@@ -1830,6 +1847,162 @@ export class DoubaoAdapter extends SiteAdapter {
     return value.replace(/["\\]/g, "\\$&")
   }
 
+  // ===== 原生 TOC（右侧索引栏）补全提问 =====
+
+  /**
+   * 异步刷新原生 TOC 条目缓存。React fiber 的 __reactFiber$* expando 只在
+   * main world 可见，实际读取由 doubao-toc-bridge 代做（postMessage 往返）；
+   * 本轮 extractOutline 用上一轮缓存，新数据到达后通过
+   * EVENT_OUTLINE_DATA_UPDATED 触发 outline-manager 重新提取。
+   * 桥未安装或短会话无索引栏时静默跳过，回退 DOM + 缓存路径。
+   */
+  private requestNativeTocEntries(): void {
+    const now = Date.now()
+    if (this.nativeTocRequestInFlight) return
+    if (now - this.nativeTocLastRequestAt < 800) return
+
+    // 油猴端没有 Plasmo 的 world:"MAIN" 机制，直接把桥装进页面 window
+    const unsafeWin = (window as unknown as Record<string, unknown>).unsafeWindow as
+      | DoubaoTocBridgeWindow
+      | undefined
+    if (unsafeWin && typeof unsafeWin === "object") {
+      installDoubaoTocBridge(unsafeWin)
+    }
+
+    if (!document.documentElement?.hasAttribute?.(DOUBAO_TOC_BRIDGE_ATTR)) return
+
+    // DOM 跨世界共享，索引栏是否存在在 isolated 侧即可判断
+    if (!document.querySelector("button[data-index-entry-key]")) {
+      this.nativeTocEntriesCache = []
+      this.nativeTocEntriesSignature = ""
+      return
+    }
+
+    this.nativeTocRequestInFlight = true
+    this.nativeTocLastRequestAt = now
+    const requestId = `ophel-doubao-toc-${now}-${Math.random().toString(36).slice(2)}`
+
+    let timeoutId = 0
+    const cleanup = () => {
+      window.clearTimeout(timeoutId)
+      window.removeEventListener("message", handleMessage)
+      this.nativeTocRequestInFlight = false
+    }
+    const handleMessage = (event: MessageEvent) => {
+      if (event.source !== window) return
+      const data = event.data as { type?: unknown; requestId?: unknown; entries?: unknown }
+      if (data?.type !== DOUBAO_TOC_RESPONSE_EVENT || data.requestId !== requestId) return
+      cleanup()
+
+      const entries = this.sanitizeNativeTocEntries(data.entries)
+      const signature = entries.map((entry) => entry.key).join("|")
+      if (signature === this.nativeTocEntriesSignature) return
+      this.nativeTocEntriesSignature = signature
+      this.nativeTocEntriesCache = entries
+      if (entries.length > 0) {
+        window.postMessage({ type: EVENT_OUTLINE_DATA_UPDATED }, "*")
+      }
+    }
+
+    timeoutId = window.setTimeout(cleanup, 2000)
+    window.addEventListener("message", handleMessage)
+    window.postMessage({ type: DOUBAO_TOC_REQUEST_EVENT, requestId }, "*")
+  }
+
+  private sanitizeNativeTocEntries(value: unknown): DoubaoTocBridgeEntry[] {
+    if (!Array.isArray(value)) return []
+    const entries: DoubaoTocBridgeEntry[] = []
+    for (const item of value) {
+      if (!item || typeof item !== "object") continue
+      const record = item as Record<string, unknown>
+      const key = typeof record.key === "string" ? record.key : ""
+      const messageId = typeof record.messageId === "string" ? record.messageId : ""
+      const text = typeof record.text === "string" ? record.text.trim() : ""
+      if (!key || !messageId || !text) continue
+      entries.push({ key, messageId, text })
+    }
+    return entries
+  }
+
+  /**
+   * 把原生 TOC 里未被 DOM/缓存覆盖的提问写入大纲缓存，解决虚拟滚动导致的
+   * 提问抽取不全。未挂载消息没有虚拟行号，按相邻已知行号插值出小数行号，
+   * 保证 mergeCachedOutlineItems 的排序与对话顺序一致。
+   */
+  private mergeNativeTocEntriesIntoCache(): void {
+    this.requestNativeTocEntries()
+
+    const tocEntries = this.nativeTocEntriesCache
+    if (tocEntries.length === 0) return
+
+    const rowIndexByMessageId = new Map<string, number>()
+    const coveredMessageIds = new Set<string>()
+    for (const cached of this.outlineItemCache.values()) {
+      if (!cached.messageId) continue
+      rowIndexByMessageId.set(cached.messageId, cached.rowIndex)
+      if (cached.isUserQuery) coveredMessageIds.add(cached.messageId)
+    }
+
+    const knownRowIndexes = tocEntries.map(
+      (entry) => rowIndexByMessageId.get(entry.messageId) ?? null,
+    )
+
+    const cacheEntryIfUncovered = (entry: DoubaoTocBridgeEntry, rowIndex: number): void => {
+      if (coveredMessageIds.has(entry.messageId)) return
+      const meta: DoubaoVirtualMessageMeta = { messageId: entry.messageId, rowIndex }
+      const id = this.buildOutlineItemId(meta, { level: 0, text: entry.text, isUserQuery: true })
+      this.outlineItemCache.set(id, {
+        id,
+        level: 0,
+        text: entry.text.length > 80 ? `${entry.text.slice(0, 80)}...` : entry.text,
+        messageId: entry.messageId,
+        rowIndex,
+        scrollTop: 0,
+        orderInMessage: 0,
+        isUserQuery: true,
+        isTruncated: entry.text.length > 80,
+        nativeTocKey: entry.key,
+      })
+    }
+
+    let start = 0
+    while (start < tocEntries.length) {
+      if (knownRowIndexes[start] !== null) {
+        cacheEntryIfUncovered(tocEntries[start], knownRowIndexes[start] as number)
+        start += 1
+        continue
+      }
+      let end = start
+      while (end < tocEntries.length && knownRowIndexes[end] === null) end += 1
+
+      const prevRow =
+        start > 0
+          ? (knownRowIndexes[start - 1] as number)
+          : end < tocEntries.length
+            ? (knownRowIndexes[end] as number) - 1
+            : 0
+      const nextRow = end < tocEntries.length ? (knownRowIndexes[end] as number) : prevRow + 1
+      const runLength = end - start
+
+      for (let i = 0; i < runLength; i += 1) {
+        const entry = tocEntries[start + i]
+        const rowIndex = prevRow + ((nextRow - prevRow) * (i + 1)) / (runLength + 1)
+        cacheEntryIfUncovered(entry, rowIndex)
+      }
+      start = end
+    }
+  }
+
+  /** 点击原生 TOC 按钮，借站点自身的滚动定位跳到对应消息 */
+  private clickNativeTocEntry(key: string): boolean {
+    const button = document.querySelector(
+      `button[data-index-entry-key="${this.escapeAttributeValue(key)}"]`,
+    )
+    if (!(button instanceof HTMLElement)) return false
+    button.click()
+    return true
+  }
+
   private findMessageElementByCacheEntry(
     container: HTMLElement,
     entry: DoubaoOutlineCacheEntry,
@@ -1929,6 +2102,16 @@ export class DoubaoAdapter extends SiteAdapter {
       const entry = this.outlineItemCache.get(item.id)
       const container = this.getVirtualScrollContainer()
       if (!entry) return null
+
+      // 原生 TOC 补入的条目没有可靠的虚拟滚动位置，借原生按钮点击让站点自己定位
+      if (entry.nativeTocKey) {
+        if (this.clickNativeTocEntry(entry.nativeTocKey)) {
+          const revivedTarget = await this.waitForCachedDoubaoOutlineTargetMount(item.id, 2500)
+          if (revivedTarget) return revivedTarget
+        }
+        return super.resolveOutlineTarget(item, queryIndex)
+      }
+
       if (!container) return super.resolveOutlineTarget(item, queryIndex)
 
       this.scrollVirtualContainerTo(container, entry.scrollTop)
@@ -2132,6 +2315,7 @@ export class DoubaoAdapter extends SiteAdapter {
 
     if (isInTransition) return items
 
+    this.mergeNativeTocEntriesIntoCache()
     this.trimOutlineCache()
     return this.mergeCachedOutlineItems(
       items,
