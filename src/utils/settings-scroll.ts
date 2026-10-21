@@ -33,7 +33,8 @@ export const scrollWithinSettingsContent = (
     const bottomOverflow = targetRect.bottom - (scrollerRect.bottom - margin)
     if (topOverflow <= 0 && bottomOverflow <= 0) return
     // 目标比可视区还高时优先顶对齐，否则按越界方向滚最小量
-    delta = topOverflow > 0 ? -topOverflow : bottomOverflow
+    const viewportHeight = scrollerRect.height - margin * 2
+    delta = topOverflow > 0 || targetRect.height > viewportHeight ? -topOverflow : bottomOverflow
   }
 
   scroller.scrollTo({ top: scroller.scrollTop + delta, behavior })
