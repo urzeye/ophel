@@ -82,7 +82,7 @@ export interface DoubaoSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const DOUBAO_CONFIG_VERSION = 8
+export const DOUBAO_CONFIG_VERSION = 9
 
 const createDoubaoConfig = (): DoubaoSiteConfig => {
   const sidebarRoot = "#flow_chat_sidebar"
@@ -134,7 +134,7 @@ const createDoubaoConfig = (): DoubaoSiteConfig => {
 
   return {
     capabilities: [...BUILTIN_FEATURE_CAPABILITIES[SITE_IDS.DOUBAO]],
-    traits: { historyLazyLoad: false, periodicOutlineRefresh: true },
+    traits: { historyLazyLoad: true, periodicOutlineRefresh: true },
     selectors: {
       textarea: [
         // v3 输入框为 TipTap（ProseMirror）编辑器
