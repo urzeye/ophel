@@ -416,9 +416,11 @@ const createGeminiConfig = (): GeminiSiteConfig => {
     },
     autoHideInput: {
       // 仅浮层化活跃对话的输入容器；新对话页的零态居中输入（.input-area-container.is-zero-state）保持原样。
-      // Gemini 2026 下半年改版后 input-area-container 从 fieldset 挪到了外层 div，
-      // fieldset 改用 input-area-fieldset 类，这里只依赖稳定的标签层级
-      container: "input-container:has(> .input-area-container:not(.is-zero-state) > fieldset)",
+      // 内部结构屡次变动（input-area-container 从 fieldset 挪到 wrapper div、2026-10 又新增
+      // input-area-v2 > .input-area 包裹层），选择器不得依赖内部层级，只用「input-container 内
+      // 含非零态输入区」作活跃对话判定，零态排除再以祖先主题类兜底。
+      container:
+        "input-container:has(.input-area-container:not(.is-zero-state)):not(.center-input-layout input-container, .zero-state-theme input-container)",
       // 滚动末尾占位用 ::after 伪元素注入，不往 infinite-scroller 里塞真实 DOM 节点
       scrollContainer: responseContainer,
       styles: [

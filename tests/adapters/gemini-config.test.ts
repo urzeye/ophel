@@ -23,11 +23,15 @@ describe("Gemini built-in config and DOM adaptation", () => {
     expect(GEMINI_CONFIG_VERSION).toBe(8)
   })
 
-  it("targets the current input area wrapper for auto-hide (fieldset class moved to a div)", () => {
+  it("targets the input area for auto-hide without depending on fragile inner hierarchy", () => {
     const { container } = GEMINI_CONFIG.autoHideInput
-    // 2026 改版后 input-area-container 在 wrapper div 上，fieldset 改为 input-area-fieldset；
-    // 旧写法 fieldset.input-area-container 在新结构中匹配不到任何元素，自动隐藏会整体失效
-    expect(container).toContain("> .input-area-container:not(.is-zero-state) > fieldset")
+    // 活跃对话判定：新对话页的零态居中输入必须排除；类名与祖先主题类任一信号存在即可
+    expect(container).toContain(".input-area-container:not(.is-zero-state)")
+    expect(container).toContain(".center-input-layout")
+    expect(container).toContain(".zero-state-theme")
+    // 内部结构屡次变动（fieldset.input-area-container → wrapper div → input-area-v2 包裹层），
+    // 选择器一旦依赖内部层级就会在下次改版静默失效
+    expect(container).not.toContain("> fieldset")
     expect(container).not.toContain("fieldset.input-area-container")
   })
 
