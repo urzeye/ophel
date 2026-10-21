@@ -183,6 +183,72 @@ body {
   gap: 8px;
 }
 
+/* 站点名行：名称与入口域名同行展示 */
+.popup-site-name-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+
+.popup-site-name-row .popup-site-name {
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+/* 当前站点入口域名：单入口静态展示，多入口为文字式切换器 */
+.popup-site-entry-anchor {
+  position: relative;
+  display: flex;
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+.popup-site-entry-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  max-width: 200px;
+  padding: 1px 4px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--popup-text-secondary);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+button.popup-site-entry-pill {
+  font-family: inherit;
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease;
+}
+
+button.popup-site-entry-pill:hover,
+button.popup-site-entry-pill[aria-expanded="true"] {
+  color: var(--popup-accent);
+  background: var(--popup-border);
+}
+
+button.popup-site-entry-pill:focus-visible {
+  outline: 2px solid var(--popup-accent);
+  outline-offset: 1px;
+}
+
+.popup-site-entry-pill svg {
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+.popup-site-entry-host {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* 当前站点启停开关 */
 .popup-site-switch {
   position: relative;
