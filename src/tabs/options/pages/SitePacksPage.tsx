@@ -28,7 +28,7 @@ import {
 } from "~components/icons"
 import { PlatformIcon } from "~components/PlatformIcon"
 import { Button, Input, SelectDropdown, Switch, type SelectDropdownOption } from "~components/ui"
-import { SITE_PACKS_TAB_IDS } from "~constants"
+import { SITE_PACKS_TAB_IDS, sitePackInstalledSettingId } from "~constants"
 import { SUPPORTED_AI_PLATFORMS } from "~constants/defaults"
 import {
   INSTALLED_SITE_PACKS_STORAGE_KEY,
@@ -1637,7 +1637,10 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
     const needsBinding = pack.manifest.matches.length === 0 && !boundPackIds.has(packId)
 
     return (
-      <div className="settings-pack-item" key={packId}>
+      <div
+        className="settings-pack-item"
+        key={packId}
+        data-setting-id={sitePackInstalledSettingId(packId)}>
         <div
           className="settings-pack-icon"
           style={getPackIconStyle(pack.manifest.theme)}

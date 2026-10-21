@@ -209,7 +209,8 @@ const OptionsPage = () => {
         return
       }
 
-      if (attempt >= 12) {
+      // 目标可能由异步数据渲染（如适配中心已安装列表），多等一段时间再放弃
+      if (attempt >= 30) {
         console.warn(`[Ophel] Failed to locate setting in options page: ${locateRequest.settingId}`)
         setLocateRequest(null)
         return

@@ -47,6 +47,10 @@ export const NAV_IDS = {
 // 关于页“赞助支持”区块的定位 ID，供设置导航的滚动/高亮机制使用
 export const ABOUT_SPONSOR_SETTING_ID = "about-sponsor"
 
+// 适配中心「已安装」列表中单个包卡片的定位 ID，供深链滚动/高亮机制使用
+export const sitePackInstalledSettingId = (packId: string): string =>
+  `site-pack-installed-${packId}`
+
 // ==================== Features Page Tab IDs ====================
 export const FEATURES_TAB_IDS = {
   OUTLINE: "outline",
