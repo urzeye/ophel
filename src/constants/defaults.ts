@@ -271,8 +271,8 @@ export const SUPPORTED_AI_PLATFORMS: SupportedAiPlatform[] = [
   createSupportedAiPlatform({
     id: SITE_IDS.ZAI,
     name: "Z.ai",
-    matchPatterns: ["https://chat.z.ai/*"],
-    entryUrls: ["https://chat.z.ai"],
+    matchPatterns: ["https://chat.z.ai/*", "https://zchat.z.ai/*", "https://www.zchat.z.ai/*"],
+    entryUrls: ["https://chat.z.ai", "https://zchat.z.ai"],
     icon: "⚡",
   }),
   createSupportedAiPlatform({

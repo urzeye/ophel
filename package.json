@@ -143,7 +143,9 @@
       "https://chat.qwen.ai/*",
       "https://www.qianwen.com/*",
       "https://yuanbao.tencent.com/*",
-      "https://chat.z.ai/*"
+      "https://chat.z.ai/*",
+      "https://zchat.z.ai/*",
+      "https://www.zchat.z.ai/*"
     ],
     "optional_host_permissions": [
       "<all_urls>"

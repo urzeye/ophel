@@ -28,6 +28,8 @@ export const config: PlasmoCSConfig = {
     "https://qianwen.com/*",
     "https://yuanbao.tencent.com/*",
     "https://chat.z.ai/*",
+    "https://zchat.z.ai/*",
+    "https://www.zchat.z.ai/*",
   ],
   world: "MAIN",
   run_at: "document_start", // 尽早运行以劫持 API

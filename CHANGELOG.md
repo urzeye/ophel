@@ -12,6 +12,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 ### ✨ Improvements
 
 - **Gemini unified layout adaptation** — Adapted to Gemini's unified layout: task (formerly Spark) conversations now sync into conversation management like regular chats, auto-hide input works again on conversation pages, and outdated special handling for the old standalone Spark interface was removed.
+- **Z.ai new domain** — The extension now also recognizes Z.ai's new domain zchat.z.ai, so outline, export, Zen Mode, and other Z.ai features work on both chat.z.ai and zchat.z.ai.
 
 ---
 

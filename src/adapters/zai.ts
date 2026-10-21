@@ -1,5 +1,5 @@
 /**
- * Z.ai 适配器（chat.z.ai）
+ * Z.ai 适配器（chat.z.ai / zchat.z.ai）
  *
  * 选择器策略：
  * - 优先使用 ID / data-* / class 等稳定属性
@@ -34,7 +34,7 @@ import {
   type ZaiSiteConfig,
 } from "./zai-config"
 
-const HOSTNAME = "chat.z.ai"
+const ZAI_HOSTS = new Set(["chat.z.ai", "zchat.z.ai", "www.zchat.z.ai"])
 const CHAT_PATH_PATTERN = /\/(?:c|s)\/([a-z0-9-]+)(?:\/|$)/i
 const SHARE_PATH_PATTERN = /\/s\/([a-z0-9-]+)(?:\/|$)/i
 const ZAI_ATTACHMENT_SOURCE_ATTRS = [
@@ -124,7 +124,7 @@ export class ZaiAdapter extends SiteAdapter {
   private exportShareTitle: string | null = null
 
   match(): boolean {
-    return window.location.hostname === HOSTNAME
+    return ZAI_HOSTS.has(window.location.hostname)
   }
 
   getSiteId(): string {
@@ -757,7 +757,7 @@ export class ZaiAdapter extends SiteAdapter {
   }
 
   getNewTabUrl(): string {
-    return "https://chat.z.ai/"
+    return `${window.location.origin}/`
   }
 
   getSessionId(): string {
@@ -817,7 +817,7 @@ export class ZaiAdapter extends SiteAdapter {
         id,
         cid,
         title,
-        url: `https://chat.z.ai/c/${id}`,
+        url: `${window.location.origin}/c/${id}`,
         isActive: id === this.getSessionId(),
       })
     })
@@ -837,7 +837,7 @@ export class ZaiAdapter extends SiteAdapter {
         return {
           id,
           title,
-          url: `https://chat.z.ai/c/${id}`,
+          url: `${window.location.origin}/c/${id}`,
           cid: this.getCurrentCid() || undefined,
           isActive: id === this.getSessionId(),
         }
@@ -877,7 +877,7 @@ export class ZaiAdapter extends SiteAdapter {
       }
     }
     // 降级：优先 history 导航免刷新（路由响应 popstate，已实测），失败再整页刷新
-    const targetUrl = url || `https://chat.z.ai/c/${id}`
+    const targetUrl = url || `${window.location.origin}/c/${id}`
     if (this.navigateViaHistory(targetUrl)) return true
     return super.navigateToConversation(id, targetUrl)
   }
@@ -1480,7 +1480,7 @@ export class ZaiAdapter extends SiteAdapter {
 
     try {
       const url = new URL(source, window.location.href)
-      if (url.hostname === HOSTNAME && /^\/icons\//i.test(url.pathname)) return ""
+      if (ZAI_HOSTS.has(url.hostname) && /^\/icons\//i.test(url.pathname)) return ""
       if (url.hostname === "z-cdn.chatglm.cn" && /\/z-ai\/static\/logo\.svg$/i.test(url.pathname)) {
         return ""
       }

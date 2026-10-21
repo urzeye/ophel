@@ -469,6 +469,8 @@ export const config: PlasmoCSConfig = {
     "https://qianwen.com/*",
     "https://yuanbao.tencent.com/*",
     "https://chat.z.ai/*",
+    "https://zchat.z.ai/*",
+    "https://www.zchat.z.ai/*",
   ],
   run_at: "document_idle",
 }

@@ -42,6 +42,7 @@ docs/site/.vitepress/.temp
 docs/site/.vitepress/cache
 docs/site/.vitepress/dist
 
+.impeccable/
 .playwright-mcp
 .playwright-cli
 assets/assistant-mermaid-vendor.js
