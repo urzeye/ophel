@@ -94,6 +94,9 @@ export async function smartScrollToTop(
     const previousScrollTop = container.scrollTop
     const scrollHeight = container.scrollHeight
 
+    // 站点级去顶部准备（如豆包：补合成 wheel 解除吸底，避免跳顶后被拉回）
+    await adapter?.prepareScrollToTop(container)
+
     container.scrollTo({
       top: getTopScrollPosition(container),
       behavior: "instant",

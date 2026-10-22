@@ -1008,6 +1008,13 @@ export abstract class SiteAdapter {
   }
 
   /**
+   * 程序化去顶部之前的站点级准备钩子（默认无需处理）。
+   * 豆包等站点在「用户尚未真实滚动」时保持吸底/初始定位，会把程序化跳顶
+   * 拉回底部；子类可在此补一个合成手势（如 wheel）让站点解除该状态。
+   */
+  prepareScrollToTop(_container: HTMLElement): Promise<void> | void {}
+
+  /**
    * 站点静态结构/加载特征声明（`*-config.ts` 的 `traits` 字段；站点包为
    * `manifest.traits`）。新增特征优先扩展 SiteTraits，不再新增布尔方法。
    */

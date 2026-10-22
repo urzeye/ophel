@@ -740,6 +740,18 @@ export class DoubaoAdapter extends SiteAdapter {
     return this.getOutlineContentContainer()
   }
 
+  /**
+   * 豆包在「用户尚未真实滚动」前保持吸底/初始定位，程序化跳顶会在虚拟列表
+   * 换窗重渲染时被拉回底部。先向滚动容器补发一个向上的合成 wheel，让站点
+   * 按用户滚动意图解除吸底，留一拍给 React 提交状态后再跳顶。
+   */
+  async prepareScrollToTop(container: HTMLElement): Promise<void> {
+    container.dispatchEvent(
+      new WheelEvent("wheel", { deltaY: -120, bubbles: true, cancelable: true }),
+    )
+    await this.sleep(60)
+  }
+
   getObserveTarget(): Element | null {
     return this.getOutlineContentContainer() || super.getObserveTarget()
   }
