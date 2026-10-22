@@ -88,8 +88,8 @@ Ophel Atlas 是 TypeScript + React 18 + Plasmo 的浏览器扩展，同时支持
 
 ## UI 与 CSS 规则
 
-- `DESIGN.md` 是本项目 UI 与交互规范的唯一入口；触及 UI、交互、主题、排版、动效时按其 `0. 使用方式` 执行。
-- Shadow DOM 样式注入、主题变量、Firefox 兼容等硬约束以 `DESIGN.md` 的 `9. 实现约束` 为准，机制细节见 `docs/developer/css-architecture.md`；不要在本文件或其他文档里另写一份。
+- `DESIGN.md` 是本项目 UI 与交互规范的唯一入口；触及 UI、交互、主题、排版、动效时按其附录 A「使用方式与代理执行约定」执行。
+- Shadow DOM 样式注入、主题变量、Firefox 兼容等硬约束以 `DESIGN.md` 的附录 B「实现约束」为准，机制细节见 `docs/developer/css-architecture.md`；不要在本文件或其他文档里另写一份。
 
 ## 排查优先读的文档
 

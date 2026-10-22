@@ -1,15 +1,378 @@
-# DESIGN.md
+---
+# 官方 DESIGN.md frontmatter（impeccable document 扫描生成，2026-10-22）
+# 取值 = 默认浅色主题（src/styles/theme-variables.css :root 基准）；24 套预置主题在运行时覆盖这些变量
+name: Ophel Atlas
+description: AI 对话结构化与导航工具——实时大纲、对话文件夹与 Prompt 词库，让对话成为可组织、可复用的工作流
+colors:
+  primary: "#4285f4"
+  secondary: "#34a853"
+  danger: "#ef4444"
+  bg: "#ffffff"
+  bg-secondary: "#f9fafb"
+  bg-tertiary: "#f3f4f6"
+  text: "#1f2937"
+  text-secondary: "#6b7280"
+  text-tertiary: "#9ca3af"
+  border: "#e5e7eb"
+  input-bg: "#ffffff"
+  input-border: "#d1d5db"
+  hover: "#f3f4f6"
+  card-bg: "#ffffff"
+  overlay: "rgba(0, 0, 0, 0.5)"
+typography:
+  body:
+    fontFamily: "Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+    fontSize: "13px"
+    fontWeight: 400
+    lineHeight: 1.5
+  label:
+    fontFamily: "Inter, system-ui, sans-serif"
+    fontSize: "12px"
+    fontWeight: 500
+  title:
+    fontFamily: "Inter, system-ui, sans-serif"
+    fontSize: "15px"
+    fontWeight: 600
+  button:
+    fontFamily: "Inter, system-ui, sans-serif"
+    fontSize: "14px"
+    fontWeight: 500
+  mono:
+    fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace"
+    fontSize: "13px"
+rounded:
+  xs: "4px"
+  sm: "6px"
+  md: "8px"
+  lg: "10px"
+  xl: "12px"
+  container: "16px"
+  pill: "999px"
+spacing:
+  xs: "4px"
+  sm: "8px"
+  md: "12px"
+  lg: "16px"
+  xl: "20px"
+components:
+  button-primary:
+    backgroundColor: "{colors.primary}"
+    textColor: "#ffffff"
+    rounded: "{rounded.md}"
+    padding: "8px 16px"
+    typography: "{typography.button}"
+  button-secondary:
+    backgroundColor: "{colors.bg}"
+    textColor: "{colors.text}"
+    rounded: "{rounded.md}"
+    padding: "8px 16px"
+    typography: "{typography.button}"
+  button-danger:
+    backgroundColor: "{colors.danger}"
+    textColor: "#ffffff"
+    rounded: "{rounded.md}"
+    padding: "8px 16px"
+    typography: "{typography.button}"
+  input-text:
+    backgroundColor: "{colors.input-bg}"
+    textColor: "{colors.text}"
+    rounded: "{rounded.sm}"
+    padding: "6px 12px"
+    typography: "{typography.body}"
+  card-settings:
+    backgroundColor: "{colors.card-bg}"
+    textColor: "{colors.text}"
+    rounded: "{rounded.xl}"
+    padding: "20px"
+  tab-segmented-active:
+    backgroundColor: "{colors.bg}"
+    textColor: "{colors.text}"
+    rounded: "{rounded.md}"
+    padding: "8px 16px"
+    typography: "{typography.button}"
+  tab-panel-active:
+    textColor: "{colors.primary}"
+    rounded: "10px 10px 0 0"
+    padding: "8px 10px 9px"
+    typography: "{typography.body}"
+---
+
+# Design System: Ophel Atlas
 
 Ophel Atlas 项目级设计规范。此文档服务于现有浏览器扩展与油猴脚本界面，不是营销页规范。它综合了 `design-taste-frontend`、`redesign-existing-projects`、`ui-ux-pro-max`、`stitch-design-taste` 四个 skill，并按现有代码、主题系统和双平台约束裁剪。目标是让后续 UI、交互、主题和样式改动在不破坏现有能力的前提下保持一致、克制、可维护。
 
-## 0. 使用方式
+文档结构遵循官方 DESIGN.md 格式规范：frontmatter 是机器可读 token 层（取值 = 默认浅色主题基准，24 套预置主题在运行时覆盖），正文为 8 个 canonical 章节，项目特有的执行约定与实现硬约束收在文末附录。
 
-- 触及 UI、交互、主题、排版、动效时，先读 `0.1 代理执行约定`、`1. 设计定位`、`2. 主题系统规范`、`9. 实现约束`、`10. 禁止清单`、`11. 交付检查清单`。
-- 如果任务只涉及某个局部界面，也仍然要遵守全局主题规则、状态规则和禁止清单。
-- 纯逻辑、适配器、数据、文案翻译等不涉及界面渲染的改动不需要通读本文档，只需遵守 `10. 禁止清单` 中与之相关的条目。
+## Overview
+
+**Creative North Star: "The Ordered Console（有秩序的操作台）"**
+
+### 设计定位
+
+- 产品类型：高频 AI 工作流工具，不是展示型网站。
+- 主要界面：内容面板、设置弹窗、独立 Options 页面、主题选择器。
+- 用户心智：用户依赖它快速浏览、定位、整理对话内容，优先级是清晰、稳定、可扫读、可操作。
+- 重设计模式：`preserve`。默认保留信息架构、核心布局与现有功能入口，只升级视觉层级、操作反馈和主题表达。
+
+### 总体原则
+
+- 优先做工具型产品的秩序感，不做营销页式戏剧化表达。
+- 允许轻度不对称和层次变化，但不做实验性布局。
+- 保留有目的的过渡、悬停和切换动画，禁止持续炫技动效。
+- 信息密度偏高，但必须靠分组、留白和对齐维持可读性。
+- 先解决层级、间距、状态和主题一致性，再考虑装饰性升级。
+- 默认做针对性重构，不做整页推倒重来。
+- 所有视觉优化都要与 24 套预置主题兼容。
+
+**Key Characteristics:**
+
+- 工具型秩序感：高密度但可扫读，靠分组、留白、对齐维持秩序
+- 单一主题源：颜色与状态只通过 `--gh-*` 变量表达，24 套预置主题全部成立
+- 有目的的动效：150-300ms，尊重 `prefers-reduced-motion`
+- 双平台双浏览器：Shadow DOM 注入链路不可绕开，Chrome / Firefox 都成立
+
+## Colors
+
+主题色板由 24 套预置主题承载，运行时覆盖 frontmatter 中的默认基准值；颜色、边框、阴影、背景、交互态都通过 `--gh-*` 变量表达。
+
+### 主题系统：当前事实
+
+- 项目当前内置 `24` 套主题预置：
+  - `12` 套浅色主题，定义于 `src/utils/themes/light/index.ts`
+  - `12` 套深色主题，定义于 `src/utils/themes/dark/index.ts`
+- 主题注入由 `src/core/theme-manager.ts` 负责。
+- 静态样式通过 `src/contents/ui-entry.tsx` 的 `getStyle()` 注入 Shadow DOM。
+
+### 主题变量优先级
+
+- 颜色、边框、阴影、背景、交互态优先使用 `--gh-*` 变量。
+- 非必要不要直接写死十六进制颜色。
+- 如果现有变量不够表达新组件，再新增语义变量。
+- 新增语义变量时必须同步：
+  - `src/utils/themes/types.ts`
+  - `src/styles/theme-variables.css`
+  - `src/utils/themes/light/index.ts`
+  - `src/utils/themes/dark/index.ts`
+  - 使用该变量的组件样式
+
+**The Single Theme Source Rule.** 颜色、边框、阴影、背景、交互态只通过 `--gh-*` 变量表达，由 `ThemeManager` 统一注入；不要把主题兼容建立在多个硬编码 fallback 上，不要在组件内部绕过 `ThemeManager` 再造一套主题源。
+
+### 主题表达规则
+
+- 主题差异必须通过以下维度体现，而不只是主色变化：
+  - 背景主次层级
+  - 边框与分隔强度
+  - 头部或品牌区背景
+  - 交互态色彩
+  - 阴影或玻璃感
+  - 可选纹理与背景动画
+- 主题预览必须尽量呈现真实界面语义，不要退化成纯色块集合。
+
+**The One Theme Per Surface Rule.** 每个界面一次只表达一套主题，不允许同一页面突然插入反相深浅块。
+
+### 色彩使用
+
+- 单个界面的强调色以当前主题的 `--gh-primary` 为核心。
+- 中性色保持同一温度，不要混搭冷暖灰。
+- 纯黑 `#000000` 和纯白 `#ffffff` 只用于必要对比，不作为大面积默认底色。
+- 不要只改浅色或只改深色，除非需求明确限定；不要新增无法在 24 套预置上成立的局部样式规则。
+
+## Typography
+
+**Body Font:** Inter（可变字体，`assets/fonts/InterVariable.woff2`，在 `src/style.css` 通过 `@font-face` 注册），系统栈兜底；中文回退 Hiragino Sans SC / PingFang SC 等。
+**Mono Font:** `ui-monospace, SFMono-Regular, Menlo, Consolas` 栈，用于代码与等宽场景。
+
+**Character:** 稳定、紧凑、好扫读的工具型无衬线排版；层级靠字号、字重、间距，不靠颜色。
+
+### 字号与层级
+
+- 工具界面优先稳定、紧凑、好扫读的无衬线排版。
+- 面板与设置页正文字号以 `12px` / `13px` / `14px` 为主，卡片标题等层级用 `15px`+ 配合字重区分。
+- 标题通过字号、字重、间距拉开层级，不靠过多颜色切换。
+- 正文和说明文字单行长度控制在易读范围内，避免一整行横跨内容区。
+- 面向用户的文案使用句式大小写或自然大小写，不用全大写标签堆叠。
+- 不在界面中使用装饰性表情符号。
+
+**The Quiet Hierarchy Rule.** 标题层级通过字号、字重、间距拉开，不靠颜色切换；不用全大写标签堆叠，不使用装饰性表情符号。
+
+## Layout
+
+### 通用布局
+
+- 优先稳定网格和垂直流布局，不用花哨拼贴。
+- 内容区需要明确的主列宽度和节奏，不允许无限制横向拉伸。
+- 高密度设置页靠"卡片内分组 + 行级对齐 + 一致留白"建立秩序。
+- 同类控件的宽度、按钮对齐和字段起始线要尽量统一。
+
+### 面板 `MainPanel`
+
+- Header、Tabs、Content、Footer 四段结构保持稳定。
+- Header 是品牌区加高频控制区，视觉上要比内容区更紧凑、更明确。
+- Tabs 必须一眼可辨当前激活项，且点击目标足够大。
+- Footer 动作按钮属于工具动作，不要做成营销 CTA。
+- 吸附、展开、悬浮三种位置状态要共享同一套视觉骨架。
+
+### 设置弹窗与 Options
+
+- 侧边栏负责一级导航，内容区负责扫描和操作，不要在视觉上抢主内容。
+- 侧边栏动效和装饰应低干扰，避免持续性脉冲、旋转或喧闹反馈。
+- 卡片之间的层级要清晰，避免所有卡片看起来一样重。
+- 弹窗和独立页面虽然载体不同，但应共享同一套设计语言。
+
+### 主题选择器
+
+- 主题网格应优先强调差异识别，而不是仅强调"能点"。
+- 主题卡片必须同时传达：
+  - 大背景
+  - 头部或品牌色
+  - 内容面
+  - 按钮或强调态
+  - 可选纹理
+- 选中态依靠边框、轻度底色、阴影和标识，不要依赖大幅缩放或夸张虚线。
+
+### 响应式断点（代码现状）
+
+- 面板与设置样式中的现有断点：`520px`、`640px`（设置分段组折行）、`720px`、`760px`、`900px`。
+- 能力媒体查询：`@media (hover: hover) and (pointer: fine)` 用于仅限精确指针的 hover 增强；`@media (prefers-reduced-motion: reduce)` 用于减弱动效。
+
+## Elevation & Depth
+
+内容表面在静止态保持平坦，靠边框与留白分层；阴影服务于浮层面板、模态弹窗与状态反馈，且优先跟随主题色调，不用死黑阴影覆盖所有主题。
+
+- 允许非常轻的径向渐变、噪点、纹理和玻璃层。
+- 装饰只作为氛围层，不能压过信息和交互。
+- 项目已有主题自带 `--gh-bg-image` 或 `--gh-bg-animation` 时，优先复用，不另外叠加无关装饰。
+
+### Shadow Vocabulary（默认浅色主题基准）
+
+- **ambient-sm**（`0 1px 3px rgba(0, 0, 0, 0.1)`）：最轻分层，分段选中项、徽章。
+- **panel**（`0 10px 40px rgba(0, 0, 0, 0.15)`）：主面板浮层，悬浮于站点页面之上。
+- **overlay-lg**（`0 20px 60px rgba(0, 0, 0, 0.3)`）：模态弹窗与导出对话框。
+- **button-rest / button-hover**（`0 2px 6px` / `0 4px 12px rgba(0, 0, 0, 0.15-0.2)`）：浮动按钮静止态与 hover 抬升。
+- **brand**（`0 4px 12px rgba(66, 133, 244, 0.3)`）：品牌色元素的染色阴影。
+- **focus-ring**（`0 0 0 2px rgba(66, 133, 244, 0.1)`）：输入框聚焦外环，跟随 `--gh-input-focus-shadow`。
+
+**The Flat-By-Default Rule.** 表面在静止态保持平坦，靠边框与留白分层；阴影只服务于浮层、弹窗与状态反馈，并优先跟随主题色调而非死黑。
+
+## Shapes
+
+- 全项目保持统一圆角体系（阶梯与现有代码实际用量对齐）：
+  - 微型控件（图标按钮、输入框、小徽章）：`4px` 到 `6px`
+  - 常规控件（按钮、分段项、菜单）：`8px`
+  - 分组与卡片：`10px` 到 `12px`
+  - 大容器（弹窗、面板级容器）：`12px` 到 `16px`
+  - 胶囊型（`999px`）仅用于分段选择、标签、计数、滑块轨道和特殊模式按钮
+  - 正圆（`50%`）仅用于滑块圆点、头像等真正的圆形元素
+- 能用留白分组时，少用厚重卡片。
+- 卡片存在的理由必须是分层，不是为了把每一块内容都装进盒子里。
+
+## Components
+
+- 通用控件优先复用 `src/components/ui/` 共享控件库（Button、Dialog、Input、NumberInput、SelectDropdown、Slider、Switch、Tooltip、PlaceholderInput），不要在业务组件里重造同名基础控件。
+
+### 按钮
+
+- 主按钮使用主题强调色或主题头部背景。
+- 次按钮使用中性表面，不与主按钮争夺注意力。
+- 危险按钮必须只在危险语义出现。
+- 所有按钮都要有 `hover`、`active`、`focus-visible`、`disabled` 状态。
+- `active` 推荐使用 `translateY(1px)` 或 `scale(0.98)` 的轻微触感反馈。
+
+### 标签页与分段切换
+
+- 当前项必须有清晰的高亮面和文字对比。
+- 非激活项保持可读，不使用过低透明度。
+- 切换动效控制在 `150ms` 到 `250ms`。
+
+### 表单
+
+- 标签、说明、输入框和错误信息保持固定顺序。
+- 输入框、下拉、文本域和代码编辑器的边框、圆角和聚焦环语言要统一。
+- 不用漂浮标签，不做多余动画。
+
+### 卡片与列表
+
+- 卡片标题、描述、操作区之间要有清晰的间距节奏。
+- 操作列表优先使用规则对齐，不要用大量内联样式临时拼装。
+- 列表项中的主信息、元信息和操作按钮要有固定层次。
+
+### 图标
+
+- 复用 `src/components/icons/` 内现有图标体系。
+- 同一块区域尽量保持统一笔触和视觉重量。
+- 不使用 emoji 代替功能图标。
+
+### 可访问性
+
+- `icon-only` 按钮必须有可访问名称，点击区域不应小于 `32px × 32px`。
+- 焦点态不能只靠颜色变化，必须有清晰可见的轮廓、底色或阴影反馈。
+- 次级文字可以弱化，但不能弱化到在深浅主题下都难以辨认。
+- 面板、弹窗和设置页的键盘焦点流保持自然，不制造隐藏焦点或键盘陷阱。
+
+### 交互与动效
+
+- 动效只服务于以下场景：进入与退出、悬停反馈、点击反馈、展开与折叠、主题切换、状态确认。
+- 默认时长：
+  - 微交互：`150ms` 到 `200ms`
+  - 面切换：`200ms` 到 `300ms`
+  - 主题切换：沿用 `ThemeManager` 的过渡策略
+- 默认缓动：微交互用柔和 `ease`；位移动作用 `cubic-bezier(0.2, 0.8, 0.2, 1)`。
+- 禁止无目的的常驻脉冲动画。
+- 禁止每个图标都在 hover 时剧烈旋转或跳跃。
+- 禁止用动画掩盖布局和层级问题。
+- 必须尊重 `prefers-reduced-motion`。
+
+### 状态设计
+
+所有交互组件至少考虑以下状态：默认态、Hover、Active、Focus-visible、Disabled。
+
+所有内容模块至少考虑以下状态：Loading、Empty、Error、Success 或 Applied。
+
+要求：
+
+- 不用 `alert()` 作为错误交互。
+- Loading 优先使用骨架或局部占位，不用笼统转圈。
+- Empty 状态要说明当前为空以及下一步能做什么。
+
+### 文案与信息表达
+
+- 文案直接、简短、面向操作结果。
+- 不使用营销腔、口号式标题和 AI 套话。
+- 不堆叠小标签、编号标签或全大写眉题。
+- 用户已经知道在滚动，不需要"向下滚动查看"类提示。
+- 设置说明优先解释影响和结果，不解释内部实现。
+
+## Do's and Don'ts
+
+### Do:
+
+- **Do** 颜色、边框、阴影、交互态优先使用 `--gh-*` 变量，并提供合理 fallback。
+- **Do** 通用控件复用 `src/components/ui/`，图标复用 `src/components/icons/`。
+- **Do** 为所有按钮补齐 `hover`、`active`、`focus-visible`、`disabled` 状态，`icon-only` 按钮提供可访问名称。
+- **Do** 新增面板样式文件时通过 `src/contents/ui-entry.tsx` 的 `getStyle()` 以 `data-text:` 合并注入 Shadow DOM。
+- **Do** 深浅两套主题都验证后再交付；Shadow DOM 内深浅选择器统一用 `:host([data-theme="dark"])`。
+- **Do** 主题预览同时呈现大背景、头部品牌色、内容面、按钮强调态与可选纹理。
+
+### Don't:
+
+- **Don't** 引入第二套平行主题系统。
+- **Don't** 在设置页和面板里混用两种明显不同的设计语言。
+- **Don't** 用 emoji 作为正式 UI 的主要信息承载。
+- **Don't** 靠 dashed 边框、夸张缩放、常驻 pulse 来制造"设计感"。
+- **Don't** 只优化单个主题后假定其他 23 套也成立。
+- **Don't** 在没有检查 Shadow DOM 注入链路的情况下新增样式文件。
+- **Don't** 在主题相关组件中写死浅色假设。
+
+## 附录 A：使用方式与代理执行约定
+
+### 使用方式
+
+- 触及 UI、交互、主题、排版、动效时，先读 Overview、Colors、附录 B（实现约束）、Do's and Don'ts、附录 C（交付检查清单）。
+- 如果任务只涉及某个局部界面，也仍然要遵守全局主题规则、状态规则和 Do's and Don'ts。
+- 纯逻辑、适配器、数据、文案翻译等不涉及界面渲染的改动不需要通读本文档，只需遵守 Do's and Don'ts 中与之相关的条目。
 - 若本文档与用户当前明确要求冲突，以用户要求为准；若与实现现状冲突，以不破坏 24 套主题兼容和双平台构建为先。
 
-### 0.1 代理执行约定
+### 代理执行约定
 
 - `design read` 的行为协议定义在 `AGENTS.md` 的"工作方式"一节，本文档不重复定义。
 - 如果任务涉及主题系统、Shadow DOM、样式注入或平台差异，再同时检查：
@@ -22,258 +385,29 @@ Ophel Atlas 项目级设计规范。此文档服务于现有浏览器扩展与�
   - 验证了哪些状态、主题兼容或样式注入路径
   - 是否保留了现有信息架构和双平台行为
 
-## 1. 设计定位
+## 附录 B：实现约束
 
-### 1.1 设计读取
-
-- 产品类型：高频 AI 工作流工具，不是展示型网站。
-- 主要界面：内容面板、设置弹窗、独立 Options 页面、主题选择器。
-- 用户心智：用户依赖它快速浏览、定位、整理对话内容，优先级是清晰、稳定、可扫读、可操作。
-- 重设计模式：`preserve`。默认保留信息架构、核心布局与现有功能入口，只升级视觉层级、操作反馈和主题表达。
-
-### 1.2 总体原则
-
-- 优先做工具型产品的秩序感，不做营销页式戏剧化表达。
-- 允许轻度不对称和层次变化，但不做实验性布局。
-- 保留有目的的过渡、悬停和切换动画，禁止持续炫技动效。
-- 信息密度偏高，但必须靠分组、留白和对齐维持可读性。
-- 先解决层级、间距、状态和主题一致性，再考虑装饰性升级。
-- 默认做针对性重构，不做整页推倒重来。
-- 所有视觉优化都要与 24 套预置主题兼容。
-
-## 2. 主题系统规范
-
-### 2.1 当前事实
-
-- 项目当前内置 `24` 套主题预置：
-  - `12` 套浅色主题，定义于 `src/utils/themes/light/index.ts`
-  - `12` 套深色主题，定义于 `src/utils/themes/dark/index.ts`
-- 主题注入由 `src/core/theme-manager.ts` 负责。
-- 静态样式通过 `src/contents/ui-entry.tsx` 的 `getStyle()` 注入 Shadow DOM。
-
-### 2.2 主题优先级
-
-- 颜色、边框、阴影、背景、交互态优先使用 `--gh-*` 变量。
-- 非必要不要直接写死十六进制颜色。
-- 如果现有变量不够表达新组件，再新增语义变量。
-- 新增语义变量时必须同步：
-  - `src/utils/themes/types.ts`
-  - `src/styles/theme-variables.css`
-  - `src/utils/themes/light/index.ts`
-  - `src/utils/themes/dark/index.ts`
-  - 使用该变量的组件样式
-
-### 2.3 主题表达规则
-
-- 每个界面一次只表达一套主题，不允许同一页面突然插入反相深浅块。
-- 主题差异必须通过以下维度体现，而不只是主色变化：
-  - 背景主次层级
-  - 边框与分隔强度
-  - 头部或品牌区背景
-  - 交互态色彩
-  - 阴影或玻璃感
-  - 可选纹理与背景动画
-- 主题预览必须尽量呈现真实界面语义，不要退化成纯色块集合。
-
-### 2.4 禁止事项
-
-- 不要把主题兼容建立在多个硬编码 fallback 上。
-- 不要只改浅色或只改深色，除非需求明确限定。
-- 不要新增无法在 24 套预置上成立的局部样式规则。
-- 不要在组件内部绕过 `ThemeManager` 再造一套主题源。
-
-## 3. 视觉系统
-
-### 3.1 色彩
-
-- 单个界面的强调色以当前主题的 `--gh-primary` 为核心。
-- 中性色保持同一温度，不要混搭冷暖灰。
-- 纯黑 `#000000` 和纯白 `#ffffff` 只用于必要对比，不作为大面积默认底色。
-- 阴影优先跟随主题色调，不用死黑阴影覆盖所有主题。
-
-### 3.2 排版
-
-- 工具界面优先稳定、紧凑、好扫读的无衬线排版。
-- 标题通过字号、字重、间距拉开层级，不靠过多颜色切换。
-- 正文和说明文字单行长度控制在易读范围内，避免一整行横跨内容区。
-- 面向用户的文案使用句式大小写或自然大小写，不用全大写标签堆叠。
-- 不在界面中使用装饰性表情符号。
-
-### 3.3 形态
-
-- 全项目保持统一圆角体系：
-  - 大容器：`12px` 到 `16px`
-  - 中型控件：`10px` 到 `12px`
-  - 小型控件：`8px`
-  - 胶囊型仅用于分段选择、标签、计数和特殊模式按钮
-- 能用留白分组时，少用厚重卡片。
-- 卡片存在的理由必须是分层，不是为了把每一块内容都装进盒子里。
-
-### 3.4 纹理与背景
-
-- 允许非常轻的径向渐变、噪点、纹理和玻璃层。
-- 装饰只作为氛围层，不能压过信息和交互。
-- 项目已有主题自带 `--gh-bg-image` 或 `--gh-bg-animation` 时，优先复用，不另外叠加无关装饰。
-
-## 4. 布局规范
-
-### 4.1 通用布局
-
-- 优先稳定网格和垂直流布局，不用花哨拼贴。
-- 内容区需要明确的主列宽度和节奏，不允许无限制横向拉伸。
-- 高密度设置页靠“卡片内分组 + 行级对齐 + 一致留白”建立秩序。
-- 同类控件的宽度、按钮对齐和字段起始线要尽量统一。
-
-### 4.2 面板 `MainPanel`
-
-- Header、Tabs、Content、Footer 四段结构保持稳定。
-- Header 是品牌区加高频控制区，视觉上要比内容区更紧凑、更明确。
-- Tabs 必须一眼可辨当前激活项，且点击目标足够大。
-- Footer 动作按钮属于工具动作，不要做成营销 CTA。
-- 吸附、展开、悬浮三种位置状态要共享同一套视觉骨架。
-
-### 4.3 设置弹窗与 Options
-
-- 侧边栏负责一级导航，内容区负责扫描和操作，不要在视觉上抢主内容。
-- 侧边栏动效和装饰应低干扰，避免持续性脉冲、旋转或喧闹反馈。
-- 卡片之间的层级要清晰，避免所有卡片看起来一样重。
-- 弹窗和独立页面虽然载体不同，但应共享同一套设计语言。
-
-### 4.4 主题选择器
-
-- 主题网格应优先强调差异识别，而不是仅强调“能点”。
-- 主题卡片必须同时传达：
-  - 大背景
-  - 头部或品牌色
-  - 内容面
-  - 按钮或强调态
-  - 可选纹理
-- 选中态依靠边框、轻度底色、阴影和标识，不要依赖大幅缩放或夸张虚线。
-
-## 5. 组件规范
-
-### 5.1 按钮
-
-- 主按钮使用主题强调色或主题头部背景。
-- 次按钮使用中性表面，不与主按钮争夺注意力。
-- 危险按钮必须只在危险语义出现。
-- 所有按钮都要有 `hover`、`active`、`focus-visible`、`disabled` 状态。
-- `active` 推荐使用 `translateY(1px)` 或 `scale(0.98)` 的轻微触感反馈。
-
-### 5.2 标签页与分段切换
-
-- 当前项必须有清晰的高亮面和文字对比。
-- 非激活项保持可读，不使用过低透明度。
-- 切换动效控制在 `150ms` 到 `250ms`。
-
-### 5.3 表单
-
-- 标签、说明、输入框和错误信息保持固定顺序。
-- 输入框、下拉、文本域和代码编辑器的边框、圆角和聚焦环语言要统一。
-- 不用漂浮标签，不做多余动画。
-
-### 5.4 卡片与列表
-
-- 卡片标题、描述、操作区之间要有清晰的间距节奏。
-- 操作列表优先使用规则对齐，不要用大量内联样式临时拼装。
-- 列表项中的主信息、元信息和操作按钮要有固定层次。
-
-### 5.5 图标
-
-- 复用 `src/components/icons/` 内现有图标体系。
-- 同一块区域尽量保持统一笔触和视觉重量。
-- 不使用 emoji 代替功能图标。
-
-### 5.6 可访问性
-
-- `icon-only` 按钮必须有可访问名称，点击区域不应小于 `32px × 32px`。
-- 焦点态不能只靠颜色变化，必须有清晰可见的轮廓、底色或阴影反馈。
-- 次级文字可以弱化，但不能弱化到在深浅主题下都难以辨认。
-- 面板、弹窗和设置页的键盘焦点流保持自然，不制造隐藏焦点或键盘陷阱。
-
-## 6. 交互与动效
-
-### 6.1 动效目标
-
-- 动效只服务于以下场景：
-  - 进入与退出
-  - 悬停反馈
-  - 点击反馈
-  - 展开与折叠
-  - 主题切换
-  - 状态确认
-
-### 6.2 动效强度
-
-- 默认时长：
-  - 微交互：`150ms` 到 `200ms`
-  - 面切换：`200ms` 到 `300ms`
-  - 主题切换：沿用 `ThemeManager` 的过渡策略
-- 默认缓动：
-  - 微交互用柔和 `ease`
-  - 位移动作用 `cubic-bezier(0.2, 0.8, 0.2, 1)`
-
-### 6.3 动效限制
-
-- 禁止无目的的常驻脉冲动画。
-- 禁止每个图标都在 hover 时剧烈旋转或跳跃。
-- 禁止用动画掩盖布局和层级问题。
-- 必须尊重 `prefers-reduced-motion`。
-
-## 7. 状态设计
-
-所有交互组件至少考虑以下状态：
-
-- 默认态
-- Hover
-- Active
-- Focus-visible
-- Disabled
-
-所有内容模块至少考虑以下状态：
-
-- Loading
-- Empty
-- Error
-- Success 或 Applied
-
-要求：
-
-- 不用 `alert()` 作为错误交互。
-- Loading 优先使用骨架或局部占位，不用笼统转圈。
-- Empty 状态要说明当前为空以及下一步能做什么。
-
-## 8. 文案与信息表达
-
-- 文案直接、简短、面向操作结果。
-- 不使用营销腔、口号式标题和 AI 套话。
-- 不堆叠小标签、编号标签或全大写眉题。
-- 用户已经知道在滚动，不需要“向下滚动查看”类提示。
-- 设置说明优先解释影响和结果，不解释内部实现。
-
-## 9. 实现约束
-
-### 9.1 样式来源
+### 样式来源
 
 - 面板及弹窗样式优先落在 `src/style.css`、`src/styles/*.css`。
 - Options 页面样式优先落在 `src/styles/settings.css` 和 `src/tabs/options.css`。
 - 新增面板样式文件时，必须通过 `src/contents/ui-entry.tsx` 的 `getStyle()` 注入。
 - 需要作用于主文档或第三方 Shadow DOM 的样式，继续按 `docs/developer/css-architecture.md` 的机制处理。
 
-### 9.2 组件实现
+### 组件实现
 
 - 优先提炼可复用 CSS 类，不要在 JSX 中堆大量内联样式。
 - 只有运行时几何、过渡起点或单次动态值适合内联样式。
 - 组件结构先语义化，再谈装饰。
 - 新视觉规则优先通过现有变量体系表达。
 
-### 9.3 主题兼容实现
+### 主题兼容实现
 
 - 预览、卡片、按钮等若使用主题背景，优先支持纯色与渐变两种情况。
 - 若组件读取主题变量，应兼容 `--gh-bg-image`、`--gh-header-bg`、`--gh-selected-gradient` 这类复合值。
 - 自定义样式能力不能被新规范削弱。
 
-### 9.4 Shadow DOM 与样式注入
+### Shadow DOM 与样式注入
 
 - 面板运行在 Plasmo Shadow DOM 中；普通 CSS import 不会自动作用于面板。
 - 面板样式必须通过 `src/contents/ui-entry.tsx` 的 `getStyle()` 注入，新增 CSS 文件需用 `data-text:` 合并进去。
@@ -282,24 +416,14 @@ Ophel Atlas 项目级设计规范。此文档服务于现有浏览器扩展与�
 - Gemini Enterprise 等第三方 Shadow DOM 场景，样式要注入目标 shadowRoot，而不是只注入页面或插件 Shadow DOM。
 - CSS 类名延续 `gh-` 前缀，颜色优先使用 `--gh-*` 变量并提供合理 fallback。
 
-### 9.5 浏览器兼容
+### 浏览器兼容
 
 - 样式必须同时兼容 Chrome 与 Firefox，新增 CSS 前先确认特性在两端的支持情况（参考 MDN）。
 - 禁止使用 Firefox 未实现的选择器/特性，典型如 `:host-context()`：Firefox 不支持，且选择器列表中含任何一个无效选择器会导致整条规则被丢弃，连累同规则内其他有效选择器。
 - Shadow DOM 内的深浅主题选择器统一使用 `:host([data-theme="dark"])`（`ThemeManager` 会向 host 写入 `data-theme`），不要用 `:host-context()` 或 `body[data-gh-mode]` 这类 Shadow 内不可达/不兼容的写法。
 - 浏览器表现不一致的选择器不要与通用选择器合并在同一条规则里，应拆成独立规则分别声明。
 
-## 10. 禁止清单
-
-- 不要引入第二套平行主题系统。
-- 不要在设置页和面板里混用两种明显不同的设计语言。
-- 不要用 emoji 作为正式 UI 的主要信息承载。
-- 不要靠 dashed 边框、夸张缩放、常驻 pulse 来制造“设计感”。
-- 不要只优化单个主题后假定其他 23 套也成立。
-- 不要在没有检查 Shadow DOM 注入链路的情况下新增样式文件。
-- 不要在主题相关组件中写死浅色假设。
-
-## 11. 交付检查清单
+## 附录 C：交付检查清单
 
 进行 UI、交互、主题相关改动时，默认按以下顺序执行：
 
