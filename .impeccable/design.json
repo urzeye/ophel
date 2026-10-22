@@ -1,0 +1,289 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-22T17:55:44+08:00",
+  "title": "Design System: Ophel Atlas",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Google 蓝（默认主题主色）",
+        "canonical": "#4285f4",
+        "tonalRamp": [
+          "oklch(20% 0.09 262)",
+          "oklch(30% 0.13 261)",
+          "oklch(40% 0.16 260)",
+          "oklch(50% 0.18 260)",
+          "oklch(62.3% 0.188 259.7)",
+          "oklch(72% 0.15 258)",
+          "oklch(82% 0.1 257)",
+          "oklch(92% 0.05 255)"
+        ]
+      },
+      "secondary": {
+        "role": "secondary",
+        "displayName": "信号绿（品牌渐变另一端）",
+        "canonical": "#34a853",
+        "tonalRamp": [
+          "oklch(20% 0.06 150)",
+          "oklch(30% 0.09 150)",
+          "oklch(40% 0.12 149)",
+          "oklch(50% 0.15 149)",
+          "oklch(62% 0.17 149)",
+          "oklch(72% 0.14 148)",
+          "oklch(82% 0.1 147)",
+          "oklch(92% 0.05 146)"
+        ]
+      },
+      "danger": {
+        "role": "tertiary",
+        "displayName": "警示红（仅危险语义）",
+        "canonical": "#ef4444",
+        "tonalRamp": [
+          "oklch(22% 0.09 25)",
+          "oklch(32% 0.14 25)",
+          "oklch(42% 0.19 25)",
+          "oklch(52% 0.23 25)",
+          "oklch(63.7% 0.237 25.3)",
+          "oklch(73% 0.19 25)",
+          "oklch(83% 0.12 24)",
+          "oklch(93% 0.05 23)"
+        ]
+      },
+      "bg": {
+        "role": "neutral",
+        "displayName": "面板底色（默认浅色）",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "oklch(25% 0.01 260)",
+          "oklch(35% 0.01 260)",
+          "oklch(45% 0.01 260)",
+          "oklch(55% 0.01 260)",
+          "oklch(65% 0.01 260)",
+          "oklch(78% 0.008 255)",
+          "oklch(90% 0.005 250)",
+          "oklch(100% 0 0)"
+        ]
+      },
+      "text": {
+        "role": "neutral",
+        "displayName": "主文字（冷灰黑）",
+        "canonical": "#1f2937",
+        "tonalRamp": [
+          "oklch(15% 0.02 258)",
+          "oklch(28% 0.03 255)",
+          "oklch(38% 0.025 255)",
+          "oklch(48% 0.02 255)",
+          "oklch(58% 0.015 255)",
+          "oklch(70% 0.01 255)",
+          "oklch(82% 0.008 255)",
+          "oklch(94% 0.005 255)"
+        ]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "分隔边框（浅灰）",
+        "canonical": "#e5e7eb",
+        "tonalRamp": [
+          "oklch(22% 0.015 258)",
+          "oklch(34% 0.015 258)",
+          "oklch(46% 0.012 258)",
+          "oklch(58% 0.01 258)",
+          "oklch(70% 0.008 258)",
+          "oklch(80% 0.007 255)",
+          "oklch(92% 0.01 250)",
+          "oklch(97% 0.005 250)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "body": { "displayName": "正文", "purpose": "面板与设置页默认正文，13px 为主，紧凑可扫读。" },
+      "label": { "displayName": "标签", "purpose": "辅助说明、元信息、小标签，12px/500。" },
+      "title": {
+        "displayName": "标题",
+        "purpose": "卡片标题与分组标题，15px/600，靠字重与间距拉开层级。"
+      },
+      "button": { "displayName": "按钮文字", "purpose": "按钮与分段项文字，14px/500。" },
+      "mono": { "displayName": "等宽", "purpose": "代码块、变量输入、JSON 片段，ui-monospace 栈。" }
+    },
+    "shadows": [
+      {
+        "name": "ambient-sm",
+        "value": "0 1px 3px rgba(0, 0, 0, 0.1)",
+        "purpose": "最轻分层：分段选中项、徽章底色。"
+      },
+      {
+        "name": "panel",
+        "value": "0 10px 40px rgba(0, 0, 0, 0.15)",
+        "purpose": "主面板浮层，悬浮于站点页面之上。"
+      },
+      {
+        "name": "overlay-lg",
+        "value": "0 20px 60px rgba(0, 0, 0, 0.3)",
+        "purpose": "模态弹窗与导出对话框。"
+      },
+      {
+        "name": "button-rest",
+        "value": "0 2px 6px rgba(0, 0, 0, 0.15)",
+        "purpose": "浮动按钮静止态。"
+      },
+      {
+        "name": "button-hover",
+        "value": "0 4px 12px rgba(0, 0, 0, 0.2)",
+        "purpose": "浮动按钮 hover 抬升。"
+      },
+      {
+        "name": "brand",
+        "value": "0 4px 12px rgba(66, 133, 244, 0.3)",
+        "purpose": "品牌色元素的染色阴影，跟随主题色调。"
+      },
+      {
+        "name": "focus-ring",
+        "value": "0 0 0 2px rgba(66, 133, 244, 0.1)",
+        "purpose": "输入框聚焦外环，跟随 --gh-input-focus-shadow。"
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-emphasis",
+        "value": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+        "purpose": "位移与按钮触感反馈（translateY/scale）。"
+      },
+      {
+        "name": "duration-micro",
+        "value": "150ms",
+        "purpose": "微交互（hover、颜色、透明度），区间 150-200ms。"
+      },
+      {
+        "name": "duration-surface",
+        "value": "250ms",
+        "purpose": "面板与页面切换，区间 200-300ms。"
+      },
+      {
+        "name": "reduced-motion",
+        "value": "prefers-reduced-motion: reduce",
+        "purpose": "必须尊重系统减弱动效设置，已有媒体查询兜底。"
+      }
+    ],
+    "breakpoints": [
+      { "name": "panel-compact", "value": "520px" },
+      { "name": "settings-tabs", "value": "640px" },
+      { "name": "panel-narrow", "value": "720px" },
+      { "name": "options-sidebar", "value": "760px" },
+      { "name": "options-wide", "value": "900px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "设置与弹窗中的主操作按钮（settings-btn-primary），主题强调色填充。",
+      "html": "<button class=\"ds-btn-primary\">保存更改</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; padding: 8px 16px; border: none; border-radius: 8px; font-family: Inter, system-ui, sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; background: var(--gh-primary, #4285f4); color: #ffffff; transition: background 0.15s ease, filter 0.15s ease; } .ds-btn-primary:hover { filter: brightness(1.1); } .ds-btn-primary:active { transform: translateY(1px); } .ds-btn-primary:focus-visible { outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 48%, transparent); outline-offset: 2px; } .ds-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "中性表面的次操作按钮（settings-btn-secondary），不与主按钮争夺注意力。",
+      "html": "<button class=\"ds-btn-secondary\">取消</button>",
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; padding: 8px 16px; border-radius: 8px; font-family: Inter, system-ui, sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; background: var(--gh-bg, #ffffff); border: 1px solid var(--gh-border, #d1d5db); color: var(--gh-text, #374151); transition: background 0.15s ease; } .ds-btn-secondary:hover { background: var(--gh-hover, #f3f4f6); } .ds-btn-secondary:active { transform: translateY(1px); } .ds-btn-secondary:focus-visible { outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 48%, transparent); outline-offset: 2px; }"
+    },
+    {
+      "name": "Danger Button",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "危险操作专用（settings-btn-danger），只在删除、清空等危险语义出现。",
+      "html": "<button class=\"ds-btn-danger\">删除</button>",
+      "css": ".ds-btn-danger { display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; padding: 8px 16px; border: none; border-radius: 8px; font-family: Inter, system-ui, sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; background: var(--gh-text-danger, #ef4444); color: #ffffff; transition: filter 0.15s ease; } .ds-btn-danger:hover { filter: brightness(1.08); } .ds-btn-danger:active { transform: translateY(1px); } .ds-btn-danger:focus-visible { outline: 2px solid color-mix(in srgb, var(--gh-text-danger, #ef4444) 48%, transparent); outline-offset: 2px; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input-text",
+      "description": "设置行内的文本输入框（settings-input），6px 圆角，聚焦时主题色描边加浅色外环。",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"输入名称\" />",
+      "css": ".ds-input { padding: 6px 12px; border-radius: 6px; border: 1px solid var(--gh-input-border, #d1d5db); font-family: Inter, system-ui, sans-serif; font-size: 13px; background: var(--gh-input-bg, #ffffff); color: var(--gh-text, #1f2937); transition: border-color 0.15s ease, box-shadow 0.15s ease; } .ds-input:focus { outline: none; border-color: var(--gh-input-focus-border, #4285f4); box-shadow: var(--gh-input-focus-shadow, 0 0 0 2px rgba(66, 133, 244, 0.1)); } .ds-input:disabled { opacity: 0.6; cursor: not-allowed; }"
+    },
+    {
+      "name": "Settings Card",
+      "kind": "card",
+      "refersTo": "card-settings",
+      "description": "设置页分组卡片（settings-card），边框分层而非阴影堆叠，卡片间靠留白与边框区分层级。",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-title\">外观</div><div class=\"ds-card-desc\">主题、面板位置与显示密度的偏好设置。</div></div>",
+      "css": ".ds-card { background: var(--gh-card-bg, #ffffff); border: 1px solid var(--gh-card-border, #e5e7eb); border-radius: 12px; padding: 20px; font-family: Inter, system-ui, sans-serif; } .ds-card-title { font-size: 15px; font-weight: 600; color: var(--gh-text, #374151); margin-bottom: 4px; } .ds-card-desc { font-size: 13px; color: var(--gh-text-secondary, #6b7280); }"
+    },
+    {
+      "name": "Segmented Tabs",
+      "kind": "nav",
+      "refersTo": "tab-segmented-active",
+      "description": "设置弹窗内的分段切换（settings-tab-group），选中项以白面 + 轻阴影浮出。",
+      "html": "<div class=\"ds-segmented\"><button class=\"ds-segmented-item ds-active\">大纲</button><button class=\"ds-segmented-item\">对话</button><button class=\"ds-segmented-item\">Prompt</button></div>",
+      "css": ".ds-segmented { display: flex; gap: 4px; padding: 4px; background: var(--gh-bg-secondary, #f3f4f6); border-radius: 10px; font-family: Inter, system-ui, sans-serif; } .ds-segmented-item { flex: 1; padding: 8px 16px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.15s ease, box-shadow 0.15s ease, color 0.15s ease; border: none; background: transparent; color: var(--gh-text-secondary, #6b7280); } .ds-segmented-item:hover { color: var(--gh-text, #374151); } .ds-segmented-item.ds-active { background: var(--gh-bg, #ffffff); color: var(--gh-text, #374151); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); } .ds-segmented-item:focus-visible { outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 48%, transparent); outline-offset: -2px; }"
+    },
+    {
+      "name": "Panel Tab",
+      "kind": "nav",
+      "refersTo": "tab-panel-active",
+      "description": "主面板顶部页签（gh-panel-tab-btn），激活项以主题色下划线与加粗文字标识。",
+      "html": "<div class=\"ds-panel-tabs\"><button class=\"ds-panel-tab ds-active\">大纲</button><button class=\"ds-panel-tab\">对话</button></div>",
+      "css": ".ds-panel-tabs { display: flex; font-family: Inter, system-ui, sans-serif; } .ds-panel-tab { flex: 1; min-width: 0; padding: 8px 10px 9px; border: none; border-bottom: 2px solid transparent; border-radius: 10px 10px 0 0; background: transparent; color: var(--gh-text-secondary, #6b7280); font-weight: 500; cursor: pointer; font-size: 13px; white-space: nowrap; transition: color 0.15s ease, background 0.15s ease; } .ds-panel-tab:hover { color: var(--gh-text, #1f2937); } .ds-panel-tab.ds-active { color: var(--gh-primary, #4285f4); border-bottom-color: var(--gh-primary, #4285f4); background: color-mix(in srgb, var(--gh-bg, #ffffff) 82%, transparent); font-weight: 600; } .ds-panel-tab:focus-visible { outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 34%, transparent); outline-offset: -2px; }"
+    },
+    {
+      "name": "Header Icon Button",
+      "kind": "button",
+      "description": "面板品牌区头部的图标按钮（gh-header-icon-btn），玻璃质感，用于高频控制。",
+      "html": "<button class=\"ds-icon-btn\" aria-label=\"设置\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"3\"/><path d=\"M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z\"/></svg></button>",
+      "css": ".ds-icon-btn { background: transparent; border: none; color: var(--gh-glass-text, #ffffff); width: 24px; height: 24px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0; transition: background 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1); } .ds-icon-btn:hover { background: var(--gh-glass-bg, rgba(255, 255, 255, 0.2)); } .ds-icon-btn:active { transform: scale(0.94); } .ds-icon-btn:focus-visible { outline: 2px solid color-mix(in srgb, var(--gh-glass-text, #ffffff) 60%, transparent); outline-offset: 1px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Ordered Console（有秩序的操作台）",
+    "overview": "Ophel Atlas 是高频 AI 工作流工具，不是展示型网站。设计目标是秩序感：用户依赖它快速浏览、定位、整理对话内容，优先级是清晰、稳定、可扫读、可操作。\n\n信息密度偏高，但必须靠分组、留白和对齐维持可读性；保留有目的的过渡、悬停和切换动画，不做持续炫技动效；允许轻度不对称和层次变化，不做实验性布局。\n\n所有视觉决策必须兼容 24 套预置主题与扩展/油猴双平台，先解决层级、间距、状态和主题一致性，再考虑装饰性升级。",
+    "keyCharacteristics": [
+      "工具型秩序感：高密度但可扫读，靠分组、留白、对齐维持秩序",
+      "单一主题源：颜色与状态只通过 `--gh-*` 变量表达，24 套预置主题全部成立",
+      "有目的的动效：150-300ms，尊重 `prefers-reduced-motion`",
+      "双平台双浏览器：Shadow DOM 注入链路不可绕开，Chrome / Firefox 都成立"
+    ],
+    "rules": [
+      {
+        "name": "The Single Theme Source Rule",
+        "body": "颜色、边框、阴影、背景、交互态只通过 --gh-* 变量表达，由 ThemeManager 统一注入；组件内不得再造第二套主题源，也不要把主题兼容建立在多个硬编码 fallback 上。",
+        "section": "colors"
+      },
+      {
+        "name": "The One Theme Per Surface Rule",
+        "body": "每个界面一次只表达一套主题，不允许同一页面突然插入反相深浅块；主题差异靠背景层级、边框强度、头部背景、交互态色彩与阴影体现，而不只是主色变化。",
+        "section": "colors"
+      },
+      {
+        "name": "The Quiet Hierarchy Rule",
+        "body": "标题层级通过字号、字重、间距拉开，不靠过多颜色切换；正文与说明文字单行长度控制在易读范围内，不用全大写标签堆叠。",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat-By-Default Rule",
+        "body": "内容表面静止态保持平坦，靠边框与留白分层；阴影服务于浮层面板、模态弹窗与状态反馈，且优先跟随主题色调而非死黑。",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do 颜色、边框、阴影、交互态优先使用 `--gh-*` 变量，并提供合理 fallback。",
+      "Do 通用控件复用 `src/components/ui/`，图标复用 `src/components/icons/`。",
+      "Do 为所有按钮补齐 `hover`、`active`、`focus-visible`、`disabled` 状态，`icon-only` 按钮提供可访问名称。",
+      "Do 新增面板样式文件时通过 `src/contents/ui-entry.tsx` 的 `getStyle()` 以 `data-text:` 合并注入 Shadow DOM。",
+      "Do 深浅两套主题都验证后再交付；Shadow DOM 内深浅选择器统一用 `:host([data-theme=\"dark\"])`。",
+      "Do 主题预览同时呈现大背景、头部品牌色、内容面、按钮强调态与可选纹理。"
+    ],
+    "donts": [
+      "Don't 引入第二套平行主题系统。",
+      "Don't 在设置页和面板里混用两种明显不同的设计语言。",
+      "Don't 用 emoji 作为正式 UI 的主要信息承载。",
+      "Don't 靠 dashed 边框、夸张缩放、常驻 pulse 来制造\"设计感\"。",
+      "Don't 只优化单个主题后假定其他 23 套也成立。",
+      "Don't 在没有检查 Shadow DOM 注入链路的情况下新增样式文件。",
+      "Don't 在主题相关组件中写死浅色假设。"
+    ]
+  }
+}

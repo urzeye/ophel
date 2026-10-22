@@ -1,0 +1,14 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "overused-font",
+        "value": "inter",
+        "createdAt": "2026-10-21T07:13:05.013Z",
+        "reason": "repo design system: Inter is the project's bundled panel UI font (assets/fonts/InterVariable.woff2), injected intentionally since commit d3fcc8346 (Apr 2026), predates this session; not introduced by the zchat.z.ai domain change"
+      }
+    ]
+  }
+}
