@@ -281,7 +281,6 @@ Grok 接入的差异点（`src/adapters/grok-history-outline.ts`、`src/adapters
 10. **ScrollLockManager** - 滚动锁定
 11. **UserQueryMarkdownRenderer** - 用户提问 Markdown 渲染
 12. **AssistantMermaidRenderer** - AI 回复 Mermaid 兜底渲染
-13. **PolicyRetryManager** - Gemini Enterprise 策略重试
 
 其他核心模块（不在 init 序列中，独立管理）：`ConversationManager`、`OutlineManager`、`PromptManager`、`WebDAVSyncManager`、`ShortcutManager`、`GeminiMystuffBridge`、`InlineBookmarkManager`、`NetworkMonitor`、`QueueDispatcher`。
 

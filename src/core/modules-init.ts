@@ -14,7 +14,6 @@ import { CopyManager } from "~core/copy-manager"
 import { LayoutManager } from "~core/layout-manager"
 import { MarkdownFixer } from "~core/markdown-fixer"
 import { ModelLocker } from "~core/model-locker"
-import { PolicyRetryManager } from "~core/policy-retry-manager"
 import { ReadingHistoryManager } from "~core/reading-history"
 import { ScrollLockManager } from "~core/scroll-lock-manager"
 import { TabManager } from "~core/tab-manager"
@@ -71,7 +70,6 @@ export interface ModuleInstances {
   modelLocker: ModelLocker | null
   scrollLockManager: ScrollLockManager | null
   userQueryMarkdownRenderer: UserQueryMarkdownRenderer | null
-  policyRetryManager: PolicyRetryManager | null
   usageCounterManager: UsageCounterManager | null
 }
 
@@ -89,7 +87,6 @@ let modules: ModuleInstances = {
   modelLocker: null,
   scrollLockManager: null,
   userQueryMarkdownRenderer: null,
-  policyRetryManager: null,
   usageCounterManager: null,
 }
 
@@ -522,26 +519,10 @@ export async function initCoreModules(ctx: ModulesContext): Promise<ModuleInstan
   await initAssistantMermaidRenderer(ctx)
   if (isAborted()) return modules
 
-  // 13. Policy Retry Manager
-  initPolicyRetryManager(ctx)
-
-  // 14. ChatGPT 长对话渲染性能优化
+  // 13. ChatGPT 长对话渲染性能优化
   initChatGptPerfManager(ctx)
 
   return modules
-}
-
-/**
- * 初始化 Policy Retry Manager
- */
-export function initPolicyRetryManager(ctx: ModulesContext): void {
-  const { adapter, settings, siteId } = ctx
-  if (siteId === SITE_IDS.GEMINI_ENTERPRISE) {
-    modules.policyRetryManager = new PolicyRetryManager(
-      adapter,
-      settings.geminiEnterprise?.policyRetry || { enabled: false, maxRetries: 3 },
-    )
-  }
 }
 
 /**
@@ -722,18 +703,7 @@ export function subscribeModuleUpdates(ctx: ModulesContext): () => void {
       console.error("[Ophel] Assistant Mermaid renderer update failed:", error)
     })
 
-    // 13. Policy Retry Manager update
-    if (
-      newSettings?.geminiEnterprise &&
-      siteId === SITE_IDS.GEMINI_ENTERPRISE &&
-      modules.policyRetryManager
-    ) {
-      modules.policyRetryManager.updateSettings(
-        newSettings.geminiEnterprise?.policyRetry || { enabled: false, maxRetries: 3 },
-      )
-    }
-
-    // 14. ChatGPT 长对话渲染性能优化 update
+    // 13. ChatGPT 长对话渲染性能优化 update
     if (siteId === SITE_IDS.CHATGPT && newSettings?.chatgpt) {
       if (modules.chatgptPerfManager) {
         modules.chatgptPerfManager.update(newSettings.chatgpt)
@@ -940,7 +910,6 @@ export function destroyCoreModules(): void {
   modules.modelLocker?.stop()
   modules.scrollLockManager?.stop()
   modules.userQueryMarkdownRenderer?.destroy()
-  modules.policyRetryManager?.stop()
   modules.usageCounterManager?.destroy()
 
   modules = {
@@ -956,7 +925,6 @@ export function destroyCoreModules(): void {
     modelLocker: null,
     scrollLockManager: null,
     userQueryMarkdownRenderer: null,
-    policyRetryManager: null,
     usageCounterManager: null,
   }
 }

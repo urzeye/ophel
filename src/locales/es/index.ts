@@ -34,7 +34,15 @@ export const es = {
 
   // ======== Options Page Titles & Descriptions ========
   // Site Settings
-  siteSettingsPageDesc: "Configurar diseño y procesamiento por sitio",
+  siteSettingsPageDesc:
+    "Configura el diseño de página, el bloqueo de modelo y las funciones específicas por sitio",
+  siteSelectorLabel: "Sitio a configurar",
+  globalDefaultSite: "Predeterminado global",
+  currentSiteBadge: "Sitio actual",
+  siteExclusiveSettingsLabel: "Específicos del sitio",
+  noSiteExclusiveSettings: "Este sitio aún no tiene ajustes específicos",
+  globalDefaultSiteHint:
+    "Selecciona un sitio específico para configurar el bloqueo de modelo y los ajustes específicos",
   communitySitePackBadge: "Paquete de la comunidad (funciones principales)",
   communitySitePackDesc:
     "Este sitio funciona con un paquete de la comunidad. Solo se muestran las funciones que admite.",
@@ -222,7 +230,6 @@ export const es = {
   layoutSettingsTitle: "Control de Ancho",
   tabLayout: "Diseño",
   tabModelLock: "Bloqueo de Modelo",
-  tabGemini: "Gemini",
   enablePageWidthDesc: "Ajustar el ancho máximo del chat",
   userQueryWidthSettings: "Ancho de Usuario",
   scrollSettings: "Desplazamiento",
@@ -1589,13 +1596,6 @@ Dame el código y luego un resumen de mejoras.`,
   popupSettings: "Ajustes",
 
   // Policy Retry
-  policyRetryLabel: "Reintento automático por política",
-  policyRetryDesc:
-    "Reenviar automáticamente el mensaje cuando sea bloqueado por la política empresarial",
-  maxRetriesLabel: "Máx. Reintentos",
-  retryCountSuffix: "veces (misma pregunta)",
-  policyRetryActive: "Bloqueo de política, reintentando ({current}/{max})",
-  policyRetryLimitReached: "Límite de reintentos alcanzado",
   preventAutoScrollEnabled: "Bloqueo de desplazamiento activado",
   preventAutoScrollDisabled: "Bloqueo de desplazamiento desactivado",
 
@@ -1621,6 +1621,8 @@ Dame el código y luego un resumen de mejoras.`,
   globalSearchSiteClaude: "Claude",
   globalSearchSiteGrok: "Grok",
   globalSearchSiteZai: "Z.ai",
+  globalSearchSiteChatglm: "ChatGLM",
+  globalSearchSiteDoubao: "Doubao",
   globalSearchPlaceholderAll: "Buscar en todo",
   globalSearchPlaceholderOutline: "Buscar en esquema",
   globalSearchPlaceholderSettings: "Buscar en configuración",

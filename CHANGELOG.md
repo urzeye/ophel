@@ -9,6 +9,11 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### ✨ Improvements
+
+- **Gemini Enterprise auto-retry removed** — Removed the "auto-retry on policy block" option for Gemini Enterprise; when a reply is blocked by enterprise policy, it will no longer be resent automatically.
+- **Site settings reorganized by site** — Site settings now start with a site picker pinned at the top, grouping the selected site's page layout, model lock, and site-specific options in one view instead of mixing them across tabs.
+
 ### 🐛 Bug Fixes
 
 - **Doubao scroll-to-top bounce-back** — Fixed an issue where, right after refreshing a Doubao conversation page, clicking scroll-to-top before scrolling the page reached the top but then got pulled back to the bottom. (#983)

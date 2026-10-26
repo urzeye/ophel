@@ -33,7 +33,13 @@ export const ko = {
 
   // ======== Options Page Titles & Descriptions ========
   // Site Settings
-  siteSettingsPageDesc: "사이트별 레이아웃 및 콘텐츠 처리 구성",
+  siteSettingsPageDesc: "사이트별로 페이지 레이아웃, 모델 잠금, 전용 기능을 설정합니다",
+  siteSelectorLabel: "설정할 사이트",
+  globalDefaultSite: "전역 기본값",
+  currentSiteBadge: "현재 사이트",
+  siteExclusiveSettingsLabel: "전용 설정",
+  noSiteExclusiveSettings: "이 사이트에는 전용 설정이 없습니다",
+  globalDefaultSiteHint: "모델 잠금과 사이트 전용 기능은 특정 사이트를 선택한 후 설정하세요",
   communitySitePackBadge: "커뮤니티 팩(핵심 기능)",
   communitySitePackDesc: "이 사이트는 커뮤니티 팩으로 지원되며, 팩이 지원하는 기능만 표시됩니다.",
   sitePacksPageDesc: "사이트 팩을 설치하고 관리하여 Ophel이 더 많은 AI 사이트를 지원하도록 합니다.",
@@ -220,7 +226,6 @@ export const ko = {
   layoutSettingsTitle: "페이지 너비 제어",
   tabLayout: "레이아웃",
   tabModelLock: "모델 잠금",
-  tabGemini: "Gemini",
   enablePageWidthDesc: "채팅 페이지의 최대 너비를 조정합니다",
   userQueryWidthSettings: "사용자 쿼리 너비",
   scrollSettings: "스크롤 설정",
@@ -1581,12 +1586,6 @@ export const ko = {
   popupSettings: "설정",
 
   // Policy Retry
-  policyRetryLabel: "정책 차단 시 자동 재시도",
-  policyRetryDesc: "기업 정책에 의해 메시지가 차단될 경우 자동으로 메시지를 다시 보냅니다.",
-  maxRetriesLabel: "최대 재시도 횟수",
-  retryCountSuffix: "회 (동일 질문)",
-  policyRetryActive: "정책 차단됨, 재시도 중 ({current}/{max})",
-  policyRetryLimitReached: "재시도 횟수 초과",
   preventAutoScrollEnabled: "스크롤 잠금이 활성화되었습니다",
   preventAutoScrollDisabled: "스크롤 잠금이 비활성화되었습니다",
 
@@ -1611,6 +1610,8 @@ export const ko = {
   globalSearchSiteClaude: "Claude",
   globalSearchSiteGrok: "Grok",
   globalSearchSiteZai: "Z.ai",
+  globalSearchSiteChatglm: "ChatGLM",
+  globalSearchSiteDoubao: "Doubao",
   globalSearchPlaceholderAll: "전체 검색",
   globalSearchPlaceholderOutline: "개요 검색",
   globalSearchPlaceholderSettings: "설정 검색",

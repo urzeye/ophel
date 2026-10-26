@@ -53,7 +53,7 @@
 
 - `GeneralPage`：语言、面板行为、快捷按钮、工具箱菜单。
 - `FeaturesPage`：大纲、对话、提示词、标签页行为、提醒、内容增强、阅读历史和用量统计。
-- `SiteSettingsPage`：页面布局、模型锁定、Gemini/AI Studio/ChatGPT/Claude 等站点专属设置。
+- `SiteSettingsPage`：站点选择器（全局默认 + 内置站点 + 当前社区适配包实例）+ 选中站点的聚合设置视图，按「页面布局 / 模型锁定 / 站点专属」分组；布局类设置按站点 key 存储，`全局默认` 编辑 `_default` 兜底值；模型锁定仅展示当前选中站点的一行配置；Gemini/AI Studio/ChatGPT/Claude 有专属设置分组。深链的 `subTab` 直接承载站点 id。
 - `SitePacksPage`：按 `SITE_PACKS_TAB_IDS` 分为三个 tab——已安装（启停/卸载/检查更新）、自定义站点（自定义 origin、自动识别、油猴 @match 补充）、获取与更新（自动更新、检查更新、内置配置补丁与回滚、在线适配库、本地 JSON 导入）。两处“检查更新”是同一操作（全量检查并同步所有在线适配库包，检查即更新）；不设单包刷新按钮——它实际也是全量检查，语义有误导。适配配置更新原先位于基本设置，已并入此页。
 - `GlobalSearchPage`：全局搜索触发方式、模糊搜索和提示词回车行为。
 - `ShortcutsPage`：快捷键总开关、全局 URL 和各动作绑定。

@@ -102,13 +102,6 @@ export const DEFAULT_SETTINGS: Settings = {
     hoverWidth: 520,
   },
 
-  geminiEnterprise: {
-    policyRetry: {
-      enabled: false,
-      maxRetries: 3,
-    },
-  },
-
   content: {
     assistantMermaid: false, // 默认关闭，仅对非原生 Mermaid 站点生效
     markdownFix: false,

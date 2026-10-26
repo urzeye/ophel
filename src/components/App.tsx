@@ -2861,7 +2861,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
         setTimeout(() => {
           window.dispatchEvent(
             new CustomEvent("ophel:navigateSettingsPage", {
-              detail: { page: "siteSettings", subTab: "modelLock" },
+              detail: { page: "siteSettings" },
             }),
           )
         }, 100)

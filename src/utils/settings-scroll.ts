@@ -22,9 +22,13 @@ export const scrollWithinSettingsContent = (
   if (!scroller) return
 
   const { block = "nearest", behavior = "smooth", margin = 12 } = options
+  // 吸顶条（如站点设置的站点选择器）会遮挡可视区顶部，定位时额外留出其高度
+  const stickyHeader = scroller.querySelector<HTMLElement>("[data-settings-sticky]")
+  const stickyOffset = stickyHeader ? stickyHeader.getBoundingClientRect().height + 8 : 0
+  const effectiveMargin = margin + stickyOffset
   const targetRect = target.getBoundingClientRect()
   const scrollerRect = scroller.getBoundingClientRect()
-  const topOverflow = scrollerRect.top + margin - targetRect.top
+  const topOverflow = scrollerRect.top + effectiveMargin - targetRect.top
 
   let delta: number
   if (block === "start") {
@@ -33,7 +37,7 @@ export const scrollWithinSettingsContent = (
     const bottomOverflow = targetRect.bottom - (scrollerRect.bottom - margin)
     if (topOverflow <= 0 && bottomOverflow <= 0) return
     // 目标比可视区还高时优先顶对齐，否则按越界方向滚最小量
-    const viewportHeight = scrollerRect.height - margin * 2
+    const viewportHeight = scrollerRect.height - effectiveMargin * 2
     delta = topOverflow > 0 || targetRect.height > viewportHeight ? -topOverflow : bottomOverflow
   }
 

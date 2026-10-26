@@ -31,7 +31,13 @@ export const zhCN = {
 
   // ======== Options 页面标题与描述 ========
   // Site Settings
-  siteSettingsPageDesc: "配置站点相关的页面布局和内容处理",
+  siteSettingsPageDesc: "按站点配置页面布局、模型锁定和专属功能",
+  siteSelectorLabel: "配置站点",
+  globalDefaultSite: "全局默认",
+  currentSiteBadge: "当前站点",
+  siteExclusiveSettingsLabel: "专属设置",
+  noSiteExclusiveSettings: "该站点暂无专属设置",
+  globalDefaultSiteHint: "模型锁定和站点专属功能需选择具体站点后配置",
   communitySitePackBadge: "社区适配包（核心功能）",
   communitySitePackDesc: "此站点由社区适配包提供支持，仅显示其支持的功能。",
   sitePacksPageDesc: "安装和管理站点适配包，让 Ophel 支持更多 AI 站点",
@@ -211,7 +217,6 @@ export const zhCN = {
   layoutSettingsTitle: "页面宽度控制",
   tabLayout: "页面布局",
   tabModelLock: "模型锁定",
-  tabGemini: "Gemini",
   enablePageWidthDesc: "调整聊天页面的最大宽度",
   userQueryWidthSettings: "用户问题宽度",
   scrollSettings: "滚动设置",
@@ -1571,12 +1576,6 @@ export const zhCN = {
   popupSettings: "设置",
 
   // Policy Retry
-  policyRetryLabel: "策略拦截自动重发",
-  policyRetryDesc: "当回复被企业策略拦截时，尝试自动重新发送消息",
-  maxRetriesLabel: "最大重试次数",
-  retryCountSuffix: "次 (同一问题)",
-  policyRetryActive: "策略拦截，自动重试 ({current}/{max})",
-  policyRetryLimitReached: "重试次数已达上限",
   preventAutoScrollEnabled: "滚动锁定已开启",
   preventAutoScrollDisabled: "滚动锁定已关闭",
 
@@ -1601,6 +1600,8 @@ export const zhCN = {
   globalSearchSiteClaude: "Claude",
   globalSearchSiteGrok: "Grok",
   globalSearchSiteZai: "Z.ai",
+  globalSearchSiteChatglm: "ChatGLM",
+  globalSearchSiteDoubao: "豆包",
   globalSearchPlaceholderAll: "搜索全部",
   globalSearchPlaceholderOutline: "搜索大纲",
   globalSearchPlaceholderSettings: "搜索设置项",

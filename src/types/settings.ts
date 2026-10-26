@@ -154,14 +154,6 @@ export interface Settings {
     hoverWidth: number // 悬停时的临时面板宽度 (240-600, 默认 520, 单位 px)
   }
 
-  // Gemini Enterprise 专属设置
-  geminiEnterprise?: {
-    policyRetry: {
-      enabled: boolean
-      maxRetries: number
-    }
-  }
-
   // 内容处理（含复制、导出）
   content: {
     assistantMermaid: boolean // AI 回复 Mermaid 渲染增强

@@ -23,13 +23,6 @@
     "hoverWidth": 520
   },
 
-  "geminiEnterprise": {
-    "policyRetry": {
-      "enabled": false,
-      "maxRetries": 3
-    }
-  },
-
   "content": {
     "assistantMermaid": false,
     "markdownFix": false,

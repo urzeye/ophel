@@ -95,7 +95,6 @@ const ModelLockRow: React.FC<{
         display: "flex",
         alignItems: "center",
         gap: "12px",
-        marginBottom: "12px",
         cursor: currentConfig.enabled ? "default" : "not-allowed",
       }}
       data-setting-id={settingId}>
@@ -144,12 +143,13 @@ const ModelLockRow: React.FC<{
 }
 
 const AIStudioModelLockRow: React.FC<{
+  label: string
   settings: Settings
   setSettings: (settings: Partial<Settings>) => void
   onDisabledClick?: () => void
   settingId?: string
-}> = ({ settings, setSettings, onDisabledClick, settingId }) => {
-  const siteKey = "aistudio"
+}> = ({ label, settings, setSettings, onDisabledClick, settingId }) => {
+  const siteKey = SITE_IDS.AISTUDIO
   const currentConfig = settings.modelLock?.[siteKey] || { enabled: false, keyword: "" }
 
   const [modelList, setModelList] = useState<AIStudioModelInfo[]>(
@@ -214,7 +214,6 @@ const AIStudioModelLockRow: React.FC<{
         display: "flex",
         alignItems: "center",
         gap: "12px",
-        marginBottom: "12px",
         cursor: currentConfig.enabled ? "default" : "not-allowed",
       }}
       data-setting-id={settingId}>
@@ -227,7 +226,7 @@ const AIStudioModelLockRow: React.FC<{
             ? "var(--gh-text, #374151)"
             : "var(--gh-text-secondary, #9ca3af)",
         }}>
-        AI Studio
+        {label}
       </span>
       <Tooltip content={t("aistudioRefreshModelListTooltip")}>
         <button
@@ -278,159 +277,55 @@ const AIStudioModelLockRow: React.FC<{
   )
 }
 
-interface ModelLockSettingsContentProps {
-  siteId?: string
-  siteName?: string
+interface ModelLockSiteCardProps {
+  /** 模型锁定配置 key：内置站点为 siteId，社区适配包为站点实例 key */
+  siteKey: string
+  siteName: string
 }
 
-const ModelLockSettingsContent: React.FC<ModelLockSettingsContentProps> = ({
-  siteId,
-  siteName,
-}) => {
+/** 单个站点的模型锁定卡片，由站点设置页按当前选中的站点渲染 */
+export const ModelLockSiteCard: React.FC<ModelLockSiteCardProps> = ({ siteKey, siteName }) => {
   const { settings, setSettings } = useSettingsStore()
   const prerequisiteToastTemplate = t("enablePrerequisiteToast")
   const modelLockLabel = t("modelLockTitle")
-  const showPrerequisiteToast = (label: string) =>
-    showToastThrottled(prerequisiteToastTemplate.replace("{setting}", label), 2000, {}, 1500, label)
+  const showPrerequisiteToast = () =>
+    showToastThrottled(
+      prerequisiteToastTemplate.replace("{setting}", modelLockLabel),
+      2000,
+      {},
+      1500,
+      modelLockLabel,
+    )
 
   if (!settings) return null
 
-  if (siteId && !isBuiltinSiteId(siteId)) {
-    return (
-      <SettingCard title={t("modelLockTitle")} description={t("modelLockDesc")}>
-        <ModelLockRow
-          label={siteName || siteId}
-          siteKey={siteId}
-          settings={settings}
-          setSettings={setSettings}
-          placeholder={t("modelKeywordPlaceholder")}
-          onDisabledClick={() => showPrerequisiteToast(modelLockLabel)}
-          settingId="model-lock-community-site-pack"
-        />
-      </SettingCard>
-    )
-  }
+  const settingId = isBuiltinSiteId(siteKey)
+    ? `model-lock-${siteKey}`
+    : "model-lock-community-site-pack"
 
   return (
     <SettingCard title={t("modelLockTitle")} description={t("modelLockDesc")}>
-      <ModelLockRow
-        label="Gemini"
-        siteKey="gemini"
-        settings={settings}
-        setSettings={setSettings}
-        placeholder={t("modelKeywordPlaceholder")}
-        onDisabledClick={() => showPrerequisiteToast(modelLockLabel)}
-        settingId="model-lock-gemini"
-      />
-
-      <ModelLockRow
-        label="Gemini Enterprise"
-        siteKey="gemini-enterprise"
-        settings={settings}
-        setSettings={setSettings}
-        placeholder={t("modelKeywordPlaceholder")}
-        onDisabledClick={() => showPrerequisiteToast(modelLockLabel)}
-        settingId="model-lock-gemini-enterprise"
-      />
-
-      <AIStudioModelLockRow
-        settings={settings}
-        setSettings={setSettings}
-        onDisabledClick={() => showPrerequisiteToast(modelLockLabel)}
-        settingId="model-lock-aistudio"
-      />
-
-      <ModelLockRow
-        label="ChatGPT"
-        siteKey="chatgpt"
-        settings={settings}
-        setSettings={setSettings}
-        placeholder={t("modelKeywordPlaceholder")}
-        onDisabledClick={() => showPrerequisiteToast(modelLockLabel)}
-        settingId="model-lock-chatgpt"
-      />
-
-      <ModelLockRow
-        label="Claude"
-        siteKey="claude"
-        settings={settings}
-        setSettings={setSettings}
-        placeholder={t("modelKeywordPlaceholder")}
-        onDisabledClick={() => showPrerequisiteToast(modelLockLabel)}
-        settingId="model-lock-claude"
-      />
-
-      <ModelLockRow
-        label="Grok"
-        siteKey="grok"
-        settings={settings}
-        setSettings={setSettings}
-        placeholder={t("modelKeywordPlaceholder")}
-        onDisabledClick={() => showPrerequisiteToast(modelLockLabel)}
-        settingId="model-lock-grok"
-      />
-
-      <ModelLockRow
-        label="Kimi"
-        siteKey="kimi"
-        settings={settings}
-        setSettings={setSettings}
-        placeholder={t("modelKeywordPlaceholder")}
-        onDisabledClick={() => showPrerequisiteToast(modelLockLabel)}
-        settingId="model-lock-kimi"
-      />
-
-      <ModelLockRow
-        label="Qianwen"
-        siteKey="qianwen"
-        settings={settings}
-        setSettings={setSettings}
-        placeholder={t("modelKeywordPlaceholder")}
-        onDisabledClick={() => showPrerequisiteToast(modelLockLabel)}
-        settingId="model-lock-qianwen"
-      />
-
-      <ModelLockRow
-        label="Qwen Studio"
-        siteKey="qwenai"
-        settings={settings}
-        setSettings={setSettings}
-        placeholder={t("modelKeywordPlaceholder")}
-        onDisabledClick={() => showPrerequisiteToast(modelLockLabel)}
-        settingId="model-lock-qwenai"
-      />
-
-      <ModelLockRow
-        label="Yuanbao"
-        siteKey="yuanbao"
-        settings={settings}
-        setSettings={setSettings}
-        placeholder={t("modelKeywordPlaceholder")}
-        onDisabledClick={() => showPrerequisiteToast(modelLockLabel)}
-        settingId="model-lock-yuanbao"
-      />
-
-      <ModelLockRow
-        label="ima"
-        siteKey="ima"
-        settings={settings}
-        setSettings={setSettings}
-        placeholder={t("modelKeywordPlaceholder")}
-        onDisabledClick={() => showPrerequisiteToast(modelLockLabel)}
-        settingId="model-lock-ima"
-      />
-
-      <ModelLockRow
-        label="Z.ai"
-        siteKey="zai"
-        settings={settings}
-        setSettings={setSettings}
-        placeholder={t("modelKeywordPlaceholder")}
-        onDisabledClick={() => showPrerequisiteToast(modelLockLabel)}
-        settingId="model-lock-zai"
-      />
+      {siteKey === SITE_IDS.AISTUDIO ? (
+        <AIStudioModelLockRow
+          label={siteName}
+          settings={settings}
+          setSettings={setSettings}
+          onDisabledClick={showPrerequisiteToast}
+          settingId={settingId}
+        />
+      ) : (
+        <ModelLockRow
+          label={siteName}
+          siteKey={siteKey}
+          settings={settings}
+          setSettings={setSettings}
+          placeholder={t("modelKeywordPlaceholder")}
+          onDisabledClick={showPrerequisiteToast}
+          settingId={settingId}
+        />
+      )}
     </SettingCard>
   )
 }
 
-export default ModelLockSettingsContent
+export default ModelLockSiteCard

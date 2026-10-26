@@ -18,9 +18,15 @@ type LegacyQuickButtonsSettings = {
   }
 }
 
+// 已下线的 Gemini Enterprise 策略重试设置，归一化时从旧数据中剔除
+type RemovedGeminiEnterpriseSettings = {
+  geminiEnterprise?: unknown
+}
+
 export type SettingsInput = Omit<Partial<Settings>, "quickButtons"> & {
   quickButtons?: Partial<Settings["quickButtons"]>
-} & LegacyQuickButtonsSettings
+} & LegacyQuickButtonsSettings &
+  RemovedGeminiEnterpriseSettings
 
 // 停用列表只保留合法的内置站点 ID，过滤掉脏数据与已下线的站点
 const normalizeDisabledSites = (value: SettingsInput["disabledSites"]): string[] => {
@@ -383,6 +389,7 @@ export const normalizeSettings = (settings: SettingsInput): Settings => {
     quickButtonsOpacity: _legacyQuickButtonsOpacity,
     toolsMenu: _legacyToolsMenu,
     floatingToolbar: _legacyFloatingToolbar,
+    geminiEnterprise: _removedGeminiEnterprise,
     quickButtons: _quickButtons,
     ...rest
   } = settings
@@ -465,14 +472,6 @@ export const normalizeSettings = (settings: SettingsInput): Settings => {
       ...settings.readingHistory,
     },
     export: normalizeExportSettings(settings.export),
-    geminiEnterprise: {
-      ...DEFAULT_SETTINGS.geminiEnterprise,
-      ...settings.geminiEnterprise,
-      policyRetry: {
-        ...DEFAULT_SETTINGS.geminiEnterprise?.policyRetry,
-        ...settings.geminiEnterprise?.policyRetry,
-      },
-    },
     webdav: {
       ...DEFAULT_SETTINGS.webdav,
       ...settings.webdav,

@@ -709,7 +709,7 @@ export function useShortcuts({
     [navigateToSettings],
   )
   const openModelLockSettings = useCallback(
-    () => navigateToSettings("siteSettings", "modelLock"),
+    () => navigateToSettings("siteSettings"),
     [navigateToSettings],
   )
 

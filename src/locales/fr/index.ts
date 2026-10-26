@@ -34,7 +34,15 @@ export const fr = {
 
   // ======== Options Page Titles & Descriptions ========
   // Site Settings
-  siteSettingsPageDesc: "Configurer la mise en page et le traitement par site",
+  siteSettingsPageDesc:
+    "Configurer la mise en page, le verrouillage du modèle et les fonctions spécifiques par site",
+  siteSelectorLabel: "Site à configurer",
+  globalDefaultSite: "Valeur globale par défaut",
+  currentSiteBadge: "Site actuel",
+  siteExclusiveSettingsLabel: "Spécifiques au site",
+  noSiteExclusiveSettings: "Aucun réglage spécifique pour ce site",
+  globalDefaultSiteHint:
+    "Sélectionnez un site précis pour configurer le verrouillage du modèle et les réglages spécifiques",
   communitySitePackBadge: "Pack communautaire (fonctions principales)",
   communitySitePackDesc:
     "Ce site est pris en charge par un pack communautaire. Seules les fonctionnalités qu'il prend en charge sont affichées.",
@@ -223,7 +231,6 @@ export const fr = {
   layoutSettingsTitle: "Contrôle de Largeur",
   tabLayout: "Mise en page",
   tabModelLock: "Blocage de Modèle",
-  tabGemini: "Gemini",
   enablePageWidthDesc: "Ajuster la largeur maximale du chat",
   userQueryWidthSettings: "Largeur Utilisateur",
   scrollSettings: "Défilement",
@@ -1595,13 +1602,6 @@ Donnez le code puis un résumé des améliorations.`,
   popupSettings: "Réglages",
 
   // Policy Retry
-  policyRetryLabel: "Réessai auto après blocage politique",
-  policyRetryDesc:
-    "Renvoyer automatiquement le message s'il est bloqué par la politique de l'entreprise",
-  maxRetriesLabel: "Max Réessais",
-  retryCountSuffix: "fois (même question)",
-  policyRetryActive: "Politique bloquée, nouvel essai ({current}/{max})",
-  policyRetryLimitReached: "Limite de réessais atteinte",
   preventAutoScrollEnabled: "Verrouillage du défilement activé",
   preventAutoScrollDisabled: "Verrouillage du défilement désactivé",
 
@@ -1627,6 +1627,8 @@ Donnez le code puis un résumé des améliorations.`,
   globalSearchSiteClaude: "Claude",
   globalSearchSiteGrok: "Grok",
   globalSearchSiteZai: "Z.ai",
+  globalSearchSiteChatglm: "ChatGLM",
+  globalSearchSiteDoubao: "Doubao",
   globalSearchPlaceholderAll: "Rechercher partout",
   globalSearchPlaceholderOutline: "Rechercher dans le plan",
   globalSearchPlaceholderSettings: "Rechercher dans les paramètres",

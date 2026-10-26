@@ -34,7 +34,15 @@ export const pt = {
 
   // ======== Options Page Titles & Descriptions ========
   // Site Settings
-  siteSettingsPageDesc: "Configurar layout e processamento por site",
+  siteSettingsPageDesc:
+    "Configurar layout de página, bloqueio de modelo e funções específicas por site",
+  siteSelectorLabel: "Site a configurar",
+  globalDefaultSite: "Padrão global",
+  currentSiteBadge: "Site atual",
+  siteExclusiveSettingsLabel: "Específicas do site",
+  noSiteExclusiveSettings: "Este site ainda não tem configurações específicas",
+  globalDefaultSiteHint:
+    "Selecione um site específico para configurar o bloqueio de modelo e as configurações específicas",
   communitySitePackBadge: "Pacote da comunidade (recursos principais)",
   communitySitePackDesc:
     "Este site é suportado por um pacote da comunidade. Somente os recursos suportados por ele são exibidos.",
@@ -221,7 +229,6 @@ export const pt = {
   layoutSettingsTitle: "Controle de Largura",
   tabLayout: "Layout",
   tabModelLock: "Bloqueio de Modelo",
-  tabGemini: "Gemini",
   enablePageWidthDesc: "Ajustar a largura máxima do chat",
   userQueryWidthSettings: "Largura do Usuário",
   scrollSettings: "Rolagem",
@@ -1316,6 +1323,8 @@ Dê o código e depois um resumo de melhorias.`,
   globalSearchSiteClaude: "Claude",
   globalSearchSiteGrok: "Grok",
   globalSearchSiteZai: "Z.ai",
+  globalSearchSiteChatglm: "ChatGLM",
+  globalSearchSiteDoubao: "Doubao",
   globalSearchPlaceholderAll: "Buscar em tudo",
   globalSearchPlaceholderOutline: "Buscar na estrutura",
   globalSearchPlaceholderSettings: "Buscar nas configurações",
@@ -1718,12 +1727,6 @@ Dê o código e depois um resumo de melhorias.`,
   popupSettings: "Ajustes",
 
   // Policy Retry
-  policyRetryLabel: "Auto-repetição por Política",
-  policyRetryDesc: "Reenviar mensagem automaticamente quando bloqueada pela política empresarial",
-  maxRetriesLabel: "Máx. Tentativas",
-  retryCountSuffix: "vezes (mesma pergunta)",
-  policyRetryActive: "Bloqueio de política, tentando novamente ({current}/{max})",
-  policyRetryLimitReached: "Limite de tentativas alcançado",
   preventAutoScrollEnabled: "Bloqueio de rolagem ativado",
   preventAutoScrollDisabled: "Bloqueio de rolagem desativado",
 
