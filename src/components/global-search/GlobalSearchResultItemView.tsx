@@ -1,6 +1,7 @@
 import React from "react"
 
 import { PlatformIcon } from "~components/PlatformIcon"
+import { getReadableTextColor } from "~utils/color"
 
 import { splitGlobalSearchHighlightSegments } from "./highlight"
 import type { GlobalSearchMatchReason, GlobalSearchResultItem } from "./types"
@@ -201,7 +202,7 @@ export const GlobalSearchResultItemView = React.memo(
                   <span
                     key={tag.id}
                     className="settings-search-tag"
-                    style={{ backgroundColor: tag.color }}
+                    style={{ backgroundColor: tag.color, color: getReadableTextColor(tag.color) }}
                     title={tag.name}>
                     {renderSearchHighlightedParts(tag.name, "tag")}
                   </span>

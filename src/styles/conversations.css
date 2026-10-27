@@ -9,22 +9,6 @@
   height: 0;
 }
 
-/* ========== createUI 内联样式修复 ========== */
-.conversations-folder-item.expanded {
-  border-bottom-left-radius: 0 !important;
-  border-bottom-right-radius: 0 !important;
-  border-bottom: none !important;
-}
-
-.conversations-list {
-  width: 100% !important;
-  box-sizing: border-box !important;
-  margin: 0 !important;
-  border-top-left-radius: 0 !important;
-  border-top-right-radius: 0 !important;
-  border-top: none !important;
-}
-
 /* ========== 对话面板样式 ========== */
 .conversations-content {
   display: flex;
@@ -70,12 +54,6 @@
   height: 16px;
 }
 
-.conversations-toolbar-btn.batch-mode.active {
-  background: var(--gh-primary, #4285f4);
-  color: var(--gh-text-on-primary, #ffffff);
-  border-color: var(--gh-primary, #4285f4);
-}
-
 .conversations-toolbar-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
@@ -85,11 +63,9 @@
   width: 100%;
 }
 
+/* 底色、边框、悬停与聚焦与面板搜索框共用 style.css 里的填充式定义，这里只管布局 */
 .conversations-folder-select {
   padding: 0 9px;
-  border: 1px solid var(--gh-input-border, #d1d5db);
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--gh-input-bg, #ffffff) 94%, transparent);
   font-size: 13px;
   color: var(--gh-text, #374151);
   cursor: pointer;
@@ -100,6 +76,10 @@
   font-family: inherit;
   appearance: none;
   -webkit-appearance: none;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background-color 0.18s ease;
 }
 
 .conversations-folder-select-icon {
@@ -114,14 +94,8 @@
   line-height: 1;
 }
 
-.conversations-folder-select:hover {
-  background: color-mix(in srgb, var(--gh-primary, #4285f4) 8%, var(--gh-bg, #ffffff));
-}
-
 .conversations-folder-select:focus {
   outline: none;
-  border-color: var(--gh-primary, #4285f4);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--gh-primary, #4285f4) 18%, transparent);
 }
 
 .conversations-folder-select:disabled {
@@ -280,13 +254,6 @@ html[data-theme="dark"] .conversations-unsupported-icon {
   background: var(--gh-folder-bg-default);
 }
 
-.conversations-folder-item.expanded {
-  /* background 由组件内联样式控制 */
-  border: 2px solid var(--gh-border-active);
-  box-shadow: 0 2px 8px var(--gh-shadow-sm);
-  border-radius: 8px 8px 0 0;
-}
-
 .conversations-folder-info {
   display: flex;
   align-items: center;
@@ -408,33 +375,6 @@ html[data-theme="dark"] .conversations-unsupported-icon {
   transform: translateY(-1px);
 }
 
-.conversations-folder-menu {
-  background: var(--gh-bg, white);
-  border: 1px solid var(--gh-border, #e5e7eb);
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 1000002;
-  padding: 4px;
-  min-width: 100px;
-}
-
-.conversations-folder-menu button {
-  display: block;
-  width: 100%;
-  padding: 8px 12px;
-  border: none;
-  background: none;
-  text-align: left;
-  font-size: 13px;
-  color: var(--gh-text, #374151);
-  cursor: pointer;
-  border-radius: 4px;
-}
-
-.conversations-folder-menu button:hover {
-  background: var(--gh-hover, #f3f4f6);
-}
-
 .conversations-empty {
   text-align: center;
   padding: 40px 20px;
@@ -492,33 +432,19 @@ html[data-theme="dark"] .conversations-unsupported-icon {
   -webkit-appearance: none;
 }
 
-.conversations-pin-filter-btn.active {
-  color: var(--gh-primary, #4285f4);
-  background: color-mix(in srgb, var(--gh-primary, #4285f4) 12%, var(--gh-bg, #ffffff));
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--gh-primary, #4285f4) 20%, transparent);
-}
-
-.conversations-result-bar {
-  text-align: center;
-  padding: 6px;
-  color: var(--gh-border-active);
-  font-size: 13px;
-  background: var(--gh-folder-bg-default);
-  border-radius: 4px;
-  margin-top: 8px;
-  display: none;
-}
-
-.conversations-result-bar.visible {
-  display: block;
-}
-
-/* 活动筛选胶囊（可单独移除） */
+/* 结果数与活动筛选胶囊同一行：结果数用次级文字，胶囊可单独移除（原来的通栏色条只为显示一个数字，太重） */
 .conversations-filter-chips {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 6px;
   margin-top: 6px;
+}
+
+.conversations-result-count {
+  font-size: 12px;
+  color: var(--gh-text-secondary, #6b7280);
+  white-space: nowrap;
 }
 
 .conversations-filter-chips:empty {
@@ -534,7 +460,7 @@ html[data-theme="dark"] .conversations-unsupported-icon {
   border: 1px solid var(--gh-border, #e5e7eb);
   background: var(--gh-bg-secondary, #f9fafb);
   color: var(--gh-text, #374151);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.4;
   font-family: inherit;
   cursor: pointer;
@@ -624,21 +550,14 @@ html[data-theme="dark"] .conversations-unsupported-icon {
   -webkit-appearance: none;
 }
 
-.conversations-tag-search-btn.active {
-  color: var(--gh-primary, #4285f4);
-  background: color-mix(in srgb, var(--gh-primary, #4285f4) 12%, var(--gh-bg, #ffffff));
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--gh-primary, #4285f4) 20%, transparent);
-}
-
 .conversations-tag-search-btn.empty {
   opacity: 0.5;
 }
 
-/* Clear Button：外层容器 overflow 可见（标签菜单要溢出），右侧圆角需与容器内圆角（8px - 1px 边框）一致 */
+/* Clear Button */
 .conversations-search-clear {
   appearance: none;
   -webkit-appearance: none;
-  border-radius: 0 7px 7px 0;
 }
 
 .conversations-search-clear:hover:not(:disabled) {
@@ -746,115 +665,13 @@ html[data-theme="dark"] .conversations-unsupported-icon {
   justify-content: center;
 }
 
-/* 标签管理弹窗 */
-.conversations-tag-manager-list {
-  max-height: 250px;
-  overflow-y: auto;
-  border: 1px solid var(--gh-border, #e5e7eb);
-  border-radius: 4px;
-  margin-bottom: 12px;
-  padding: 4px;
-}
-
-.conversations-tag-manager-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px;
-  border-bottom: 1px solid var(--gh-hover, #f3f4f6);
-}
-
-.conversations-tag-manager-item:last-child {
-  border-bottom: none;
-}
-
-.conversations-tag-manager-item:hover {
-  background: var(--gh-bg-secondary, #f9fafb);
-}
-
-.conversations-tag-preview {
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  color: white;
-  max-width: 150px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  vertical-align: middle;
-  display: inline-block;
-}
-
-.conversations-tag-actions {
-  display: flex;
-  gap: 4px;
-  flex-shrink: 0;
-}
-
-.conversations-tag-btn {
-  width: 24px;
-  height: 24px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--gh-text-tertiary, #9ca3af);
-  border-radius: 4px;
-  transition:
-    background 0.2s,
-    color 0.2s;
-}
-
-.conversations-tag-btn:hover {
-  background: var(--gh-bg-danger-hover, #fee2e2);
-  color: var(--gh-text-danger, #ef4444);
-}
-
-.conversations-tag-btn.edit:hover {
-  background: var(--gh-folder-bg-default, #e0f2fe);
-  color: var(--gh-primary, #3b82f6);
-}
-
-/* 颜色选择器 */
-.conversations-color-picker {
-  display: grid;
-  grid-template-columns: repeat(10, 1fr);
-  gap: 6px;
-  margin: 12px 0;
-}
-
-.conversations-color-item {
-  width: 24px;
-  height: 24px;
-  border-radius: 4px;
-  cursor: pointer;
-  border: 2px solid transparent;
-  transition: transform 0.1s;
-}
-
-.conversations-color-item:hover {
-  transform: scale(1.1);
-}
-
-.conversations-color-item.selected {
-  border-color: var(--gh-text, #374151);
-  transform: scale(1.1);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-/* 对话列表样式 */
+/* 展开后的对话列表：不再套主色粗框和灰底（读起来像“选中”，多个文件夹展开时一排框叠在一起）。
+   左侧一条细引导线把对话归到上方文件夹下，也标出 300px 限高滚动区的范围；
+   引导线落在文件夹图标中线（12 + 24/2），对话标题与文件夹名同一起始线（24 + 8 + 12 = 12 + 24 + 8） */
 .conversations-list {
-  width: calc(100% - 8px);
-  margin-left: 4px;
-  margin-right: 4px;
-  padding: 8px;
-  background: var(--gh-bg-secondary);
-  border: 2px solid var(--gh-border-active);
-  border-top: none;
-  border-radius: 0 0 8px 8px;
-  margin-top: -4px;
+  margin: 2px 0 4px 23px;
+  padding: 2px 0 2px 8px;
+  border-left: 1px solid var(--gh-border, #e5e7eb);
   max-height: 300px;
   overflow-y: auto;
   overflow-x: hidden;
@@ -873,13 +690,14 @@ html[data-theme="dark"] .conversations-unsupported-icon {
   text-align: center;
 }
 
+/* 对话行：透明底、悬停才出底色，与大纲列表一致；不再每条一张卡片 */
 .conversations-item {
   display: flex;
   align-items: center;
   padding: 8px 34px 8px 12px;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
   border-radius: 6px;
-  background: var(--gh-bg, white);
+  background: transparent;
   cursor: pointer;
   transition: background-color 0.2s;
   gap: 8px;
@@ -892,24 +710,6 @@ html[data-theme="dark"] .conversations-unsupported-icon {
 
 .conversations-item:hover {
   background: var(--gh-hover, #f3f4f6);
-}
-
-/* Rounded Blue Bar on Hover */
-.conversations-item::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%) scaleY(0);
-  width: 4px;
-  height: 80%;
-  background-color: var(--gh-primary, #428cf1);
-  border-radius: 0 4px 4px 0;
-  transition: transform 0.2s;
-}
-
-.conversations-item:hover::before {
-  transform: translateY(-50%) scaleY(1);
 }
 
 .conversations-item-title {
@@ -1130,22 +930,19 @@ html[data-theme="dark"] .conversations-unsupported-icon {
   flex-shrink: 0;
 }
 
-/* 底部批量操作栏 */
+/* 底部批量操作栏：与面板底栏同一形态的平铺条（上边框分隔），不再是浮起的卡片 */
 .conversations-batch-bar {
   position: sticky;
   bottom: 0;
   left: 0;
   right: 0;
   background: var(--gh-bg, white);
-  padding: 8px 12px;
+  padding: 6px 10px 6px 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  border-radius: 8px;
-  margin-top: 8px;
-  border: 1px solid var(--gh-border, #e5e7eb);
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+  border-top: 1px solid var(--gh-border, #e5e7eb);
 }
 
 .conversations-batch-info {
@@ -1161,51 +958,52 @@ html[data-theme="dark"] .conversations-unsupported-icon {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
-  gap: 4px 6px;
+  align-items: center;
+  gap: 2px;
   min-width: 0;
 }
 
+/* 与工具栏图标按钮同一形态：无边框，悬停才出底色 */
 .conversations-batch-btn {
-  padding: 4px 6px;
-  min-width: auto;
-  border: 1px solid var(--gh-input-border, #d1d5db);
-  border-radius: 6px;
-  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--gh-text-secondary, #6b7280);
   cursor: pointer;
   transition:
-    background 0.2s,
-    border-color 0.2s,
-    color 0.2s;
-  background: var(--gh-hover, #f3f4f6);
-  color: var(--gh-text, #374151);
+    background-color 0.16s ease,
+    color 0.16s ease;
 }
 
 .conversations-batch-btn:hover {
-  background: var(--gh-border, #e5e7eb);
-  border-color: var(--gh-text-tertiary, #9ca3af);
+  background: var(--gh-hover, #f3f4f6);
+  color: var(--gh-text, #1f2937);
 }
 
+.conversations-batch-btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 38%, transparent);
+  outline-offset: 1px;
+}
+
+/* 删除平时只用红色图标，悬停才出红底 */
 .conversations-batch-btn.danger {
-  background: var(--gh-bg-danger-hover, #fee2e2);
-  color: var(--gh-text-danger, #dc2626);
-  border-color: var(--gh-bg-danger-hover, #fecaca);
+  color: var(--gh-text-danger, #ef4444);
 }
 
 .conversations-batch-btn.danger:hover {
-  background: var(--gh-bg-danger-hover, #fecaca);
-  border-color: var(--gh-text-danger, #f87171);
+  background: var(--gh-bg-danger, #fef2f2);
+  color: var(--gh-text-danger, #ef4444);
 }
 
+/* 退出批量与操作按钮之间留出间隔 */
 .conversations-batch-btn.cancel {
-  background: transparent;
-  border: none;
-  color: var(--gh-text-secondary, #6b7280);
-}
-
-.conversations-batch-btn.cancel:hover {
-  background: var(--gh-hover, #f3f4f6);
-  color: var(--gh-text, #374151);
-  border: none;
+  margin-left: 6px;
 }
 
 /* 对话弹窗样式 */
@@ -1349,16 +1147,14 @@ html[data-theme="dark"] .conversations-unsupported-icon {
 }
 
 /* 隐藏滚动条 */
-.conversations-tag-filter-list,
-.conversations-tag-manager-list {
+.conversations-tag-filter-list {
   max-height: 200px;
   overflow-y: auto;
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE/Edge */
 }
 
-.conversations-tag-filter-list::-webkit-scrollbar,
-.conversations-tag-manager-list::-webkit-scrollbar {
+.conversations-tag-filter-list::-webkit-scrollbar {
   display: none; /* Chrome/Safari */
   width: 0;
   height: 0;

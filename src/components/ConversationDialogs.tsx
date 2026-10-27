@@ -5,6 +5,7 @@ import { ChevronDownIcon, ClearIcon, EditIcon } from "~components/icons"
 import { Button, Tooltip } from "~components/ui"
 import { PRESET_EMOJIS, TAG_COLORS } from "~constants"
 import type { Conversation, Folder, Tag } from "~core/conversation-manager"
+import { getReadableTextColor } from "~utils/color"
 import { OPHEL_HOVER_WIDTH_RETAIN_LAYER_PROPS } from "~utils/dom-toolkit"
 import { t } from "~utils/i18n"
 
@@ -124,6 +125,49 @@ const DIALOG_STYLES = `
     height: 10px;
     border-radius: 999px;
     flex-shrink: 0;
+  }
+  /* 标签管理：行与图标按钮的状态。弹窗渲染在宿主页面，只能用 ThemeManager 写在 html 上的预置变量；
+     已选与编辑中都用主色淡底（编辑中更深一档），不用警告色，否则深色主题下会冒出浅色块 */
+  .conversations-tag-manager-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--gh-border, #e5e7eb);
+    transition: background-color 0.15s;
+  }
+  .conversations-tag-manager-row:hover {
+    background: var(--gh-hover, #f3f4f6);
+  }
+  .conversations-tag-manager-row.is-selected {
+    background: color-mix(in srgb, var(--gh-primary, #4285f4) 8%, transparent);
+  }
+  .conversations-tag-manager-row.is-editing {
+    background: color-mix(in srgb, var(--gh-primary, #4285f4) 14%, transparent);
+  }
+  .conversations-tag-manager-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--gh-text-tertiary, #9ca3af);
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s;
+  }
+  .conversations-tag-manager-icon-btn:hover {
+    background: var(--gh-hover, #f3f4f6);
+    color: var(--gh-text, #1f2937);
+  }
+  .conversations-tag-manager-icon-btn.is-active {
+    background: color-mix(in srgb, var(--gh-primary, #4285f4) 16%, transparent);
+    color: var(--gh-primary-text, var(--gh-primary, #4285f4));
+  }
+  .conversations-tag-manager-icon-btn.danger:hover {
+    background: var(--gh-bg-danger, #fef2f2);
+    color: var(--gh-text-danger, #ef4444);
   }
 `
 
@@ -871,33 +915,17 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
               return (
                 <div
                   key={tag.id}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    padding: "10px 12px",
-                    borderBottom: "1px solid var(--gh-border, #f3f4f6)",
-                    cursor: conv ? "pointer" : "default",
-                    background: isEditing
-                      ? "var(--gh-bg-warning-light, #fffbeb)"
-                      : isSelected
-                        ? "var(--gh-folder-bg-default)" // 使用主题色变体
-                        : "transparent",
-                    transition: "background 0.15s",
-                  }}
+                  className={[
+                    "conversations-tag-manager-row",
+                    isSelected ? "is-selected" : "",
+                    isEditing ? "is-editing" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                  style={{ cursor: conv ? "pointer" : "default" }}
                   onClick={() => {
                     if (conv) {
                       handleToggleConvTag(tag.id, !isSelected)
-                    }
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isEditing && !isSelected) {
-                      e.currentTarget.style.background = "var(--gh-hover, #f9fafb)"
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isEditing && !isSelected) {
-                      e.currentTarget.style.background = "transparent"
                     }
                   }}>
                   {/* 左侧：复选框 + 标签预览 */}
@@ -924,7 +952,7 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
                         padding: "4px 10px",
                         borderRadius: "4px",
                         fontSize: "13px",
-                        color: "white",
+                        color: getReadableTextColor(tag.color),
                         backgroundColor: tag.color,
                         fontWeight: isSelected ? 500 : 400,
                         boxShadow: isSelected
@@ -940,58 +968,25 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
                   <div style={{ display: "flex", gap: "2px" }}>
                     <Tooltip content={t("edit")}>
                       <button
-                        style={{
-                          background: isEditing ? "#fed7aa" : "transparent",
-                          border: "none",
-                          color: isEditing ? "#ea580c" : "#9ca3af",
-                          cursor: "pointer",
-                          padding: "6px",
-                          fontSize: "14px",
-                          borderRadius: "4px",
-                          transition: "all 0.15s",
-                        }}
+                        type="button"
+                        className={`conversations-tag-manager-icon-btn ${isEditing ? "is-active" : ""}`}
+                        aria-label={t("edit")}
+                        aria-pressed={isEditing}
                         onClick={(e) => {
                           e.stopPropagation()
                           handleEdit(tag)
-                        }}
-                        onMouseEnter={(e) => {
-                          if (!isEditing) {
-                            e.currentTarget.style.background = "#e0f2fe"
-                            e.currentTarget.style.color = "#0284c7"
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          if (!isEditing) {
-                            e.currentTarget.style.background = "transparent"
-                            e.currentTarget.style.color = "#9ca3af"
-                          }
                         }}>
                         <EditIcon size={14} />
                       </button>
                     </Tooltip>
                     <Tooltip content={t("delete")}>
                       <button
-                        style={{
-                          background: "transparent",
-                          border: "none",
-                          color: "var(--gh-text-tertiary, #9ca3af)",
-                          cursor: "pointer",
-                          padding: "6px",
-                          fontSize: "14px",
-                          borderRadius: "4px",
-                          transition: "all 0.15s",
-                        }}
+                        type="button"
+                        className="conversations-tag-manager-icon-btn danger"
+                        aria-label={t("delete")}
                         onClick={(e) => {
                           e.stopPropagation()
                           handleDeleteClick(tag.id)
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = "#fee2e2"
-                          e.currentTarget.style.color = "#dc2626"
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = "transparent"
-                          e.currentTarget.style.color = "#9ca3af"
                         }}>
                         <ClearIcon size={18} />
                       </button>
@@ -1010,15 +1005,14 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
           border: "1px solid var(--gh-border, #e5e7eb)",
           borderRadius: "8px",
           padding: "12px",
-          background: editingId ? "var(--gh-bg-warning-light, #fffbeb)" : "var(--gh-bg, #ffffff)",
-          transition: "background 0.2s",
+          background: "var(--gh-bg, #ffffff)",
         }}>
-        {/* 区域标题 */}
+        {/* 区域标题：编辑中用主色标出当前模式 */}
         <div
           style={{
             fontSize: "12px",
             color: editingId
-              ? "var(--gh-text-warning, #b45309)"
+              ? "var(--gh-primary-text, var(--gh-primary, #4285f4))"
               : "var(--gh-text-secondary, #6b7280)",
             fontWeight: 500,
             marginBottom: "10px",
@@ -1056,10 +1050,7 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
           value={tagName}
           onChange={(e) => setTagName(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-          style={{
-            marginBottom: "12px",
-            borderColor: editingId ? "#fbbf24" : undefined,
-          }}
+          style={{ marginBottom: "12px" }}
         />
 
         {/* 颜色选择 - 可折叠 */}
@@ -1145,7 +1136,7 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
                         cursor: "pointer",
                         border:
                           selectedColor.toLowerCase() === color.toLowerCase()
-                            ? "2px solid #333"
+                            ? "2px solid var(--gh-text, #1f2937)"
                             : "1px solid rgba(0,0,0,0.05)",
                         transition: "transform 0.1s",
                         boxSizing: "border-box",
@@ -1174,7 +1165,7 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
                     cursor: "pointer",
                     boxShadow: "var(--gh-shadow-sm, 0 1px 3px rgba(0,0,0,0.1))",
                     border: !TAG_COLORS.includes(selectedColor.toUpperCase())
-                      ? "2px solid #666"
+                      ? "2px solid var(--gh-text, #1f2937)"
                       : "2px solid transparent",
                     flexShrink: 0,
                   }}>
@@ -1260,13 +1251,7 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
         {/* 提交按钮 */}
         <Button
           variant="primary"
-          style={{
-            width: "100%",
-            ...(editingId && {
-              background:
-                "var(--gh-warning-gradient, linear-gradient(135deg, #f59e0b 0%, #d97706 100%))",
-            }),
-          }}
+          style={{ width: "100%" }}
           disabled={!tagName.trim() || loading}
           onClick={handleSubmit}>
           {editingId ? t("conversationsUpdateTag") : t("conversationsNewTag")}

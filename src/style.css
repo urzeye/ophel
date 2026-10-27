@@ -1033,23 +1033,26 @@
   padding-right: 10px;
 }
 
-/* 三个标签页共用的填充式搜索框（大纲、提示词是输入框本身，对话页是带筛选按钮的外层容器）：
-   静止时用文字色混出淡底、不画边框，浅色主题压暗、深色主题提亮，各主题与工具栏的区分度一致；
-   聚焦时换成输入框底色，加主色边框与外圈 */
+/* 面板里的填充式输入控件共用这一份：三个标签页的搜索框（大纲、提示词是输入框本身，对话页是带筛选按钮的
+   外层容器）和对话页的文件夹选择框。静止时用文字色混出淡底、不画边框，浅色主题压暗、深色主题提亮，
+   各主题与工具栏的区分度一致；聚焦时换成输入框底色，加主色边框与外圈 */
 .gh-panel-search-input,
-.gh-panel-search--segmented {
+.gh-panel-search--segmented,
+.conversations-folder-select {
   border: 1px solid transparent;
   border-radius: 8px;
   background: color-mix(in srgb, var(--gh-text, #1f2937) 6%, var(--gh-bg, #ffffff));
 }
 
 .gh-panel-search-input:hover,
-.gh-panel-search--segmented:hover {
+.gh-panel-search--segmented:hover,
+.conversations-folder-select:hover {
   background: color-mix(in srgb, var(--gh-text, #1f2937) 9%, var(--gh-bg, #ffffff));
 }
 
 .gh-panel-search-input:focus,
-.gh-panel-search--segmented:focus-within {
+.gh-panel-search--segmented:focus-within,
+.conversations-folder-select:focus {
   border-color: var(--gh-primary, #4285f4);
   background: var(--gh-input-bg, #ffffff);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--gh-primary, #4285f4) 18%, transparent);
@@ -1146,7 +1149,8 @@
   outline-offset: -2px;
 }
 
-/* 外观（底色、边框、聚焦）与 .gh-panel-search-input 共用上面那一份，这里只管内部分段 */
+/* 带内联操作按钮的搜索框：外观（底色、边框、聚焦）与 .gh-panel-search-input 共用上面那一份，
+   这里只管布局：输入框占满剩余宽度，按钮依次排在右侧 */
 .gh-panel-search--segmented {
   overflow: hidden;
   transition:
@@ -1155,12 +1159,13 @@
     background-color 0.18s ease;
 }
 
+/* 与大纲搜索框的清除按钮同一形态：圆角小按钮、不画分隔线 */
 .gh-panel-search--segmented .gh-panel-search-action {
   position: static;
-  width: 30px;
-  height: 100%;
-  border-left: 1px solid color-mix(in srgb, var(--gh-text, #1f2937) 12%, transparent);
-  border-radius: 0;
+  width: 24px;
+  height: 24px;
+  margin-right: 2px;
+  border-radius: 6px;
   flex-shrink: 0;
 }
 
@@ -1178,9 +1183,10 @@
   box-shadow: none !important;
 }
 
+/* 筛选已开启：主色图标 + 半透明主色淡底（与工具栏激活按钮同一配方），叠在填充底上深浅主题都看得出 */
 .gh-panel-search-action.active {
-  color: var(--gh-primary, #4285f4);
-  background: color-mix(in srgb, var(--gh-primary, #4285f4) 12%, var(--gh-bg, #ffffff));
+  color: var(--gh-primary-text, var(--gh-primary, #4285f4));
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 14%, transparent);
 }
 
 .gh-panel-search-action:disabled,

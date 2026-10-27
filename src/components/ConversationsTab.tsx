@@ -11,6 +11,7 @@ import { useConversationsStore } from "~stores/conversations-store"
 import { useFoldersStore } from "~stores/folders-store"
 import { useSettingsStore } from "~stores/settings-store"
 import { useTagsStore } from "~stores/tags-store"
+import { getReadableTextColor } from "~utils/color"
 import { getCurrentLang, t } from "~utils/i18n"
 import { showToast } from "~utils/toast"
 
@@ -837,7 +838,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
           <Tooltip content={t("conversationsBatchMode")}>
             <button
               type="button"
-              className={`conversations-toolbar-btn gh-panel-icon-btn batch-mode ${batchMode ? "active" : ""}`}
+              className={`conversations-toolbar-btn gh-panel-icon-btn batch-mode ${batchMode ? "active-subtle" : ""}`}
               aria-label={t("conversationsBatchMode")}
               aria-pressed={batchMode}
               onClick={toggleBatchMode}>
@@ -988,16 +989,14 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
             </Tooltip>
           </div>
 
-          {/* 搜索结果计数 */}
-          {searchResult && (
-            <div className="conversations-result-bar visible">
-              {searchResult.totalCount} {t("conversationsSearchResult")}
-            </div>
-          )}
-
-          {/* 活动筛选胶囊：置顶 / 标签筛选可单独移除 */}
-          {(filterPinned || filterTagIds.size > 0) && (
+          {/* 结果数 + 活动筛选胶囊：置顶 / 标签筛选可单独移除 */}
+          {(searchResult || filterPinned || filterTagIds.size > 0) && (
             <div className="conversations-filter-chips">
+              {searchResult && (
+                <span className="conversations-result-count">
+                  {searchResult.totalCount} {t("conversationsSearchResult")}
+                </span>
+              )}
               {filterPinned && (
                 <button
                   type="button"
@@ -1750,7 +1749,7 @@ const ConversationItem = React.memo<ConversationItemProps>(
                   <span
                     key={tag.id}
                     className="conversations-tag"
-                    style={{ backgroundColor: tag.color }}>
+                    style={{ backgroundColor: tag.color, color: getReadableTextColor(tag.color) }}>
                     {tag.name}
                   </span>
                 ))}
