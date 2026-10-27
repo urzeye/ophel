@@ -52,6 +52,21 @@ const SEGMENTED_EXPORT_DIALOG_STYLES = `
     margin-top: 12px;
     flex-wrap: wrap;
   }
+  /* 工具栏最左的全选：头部左内边距 18px = 列表 8px + 行 10px，复选框正对下方各行的复选框 */
+  .gh-segmented-export-select-all {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--gh-text, #1f2937);
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+  }
+  .gh-segmented-export-select-all .gh-segmented-export-checkbox {
+    margin: 0;
+  }
   .gh-segmented-export-input,
   .gh-segmented-export-select {
     height: 34px;
@@ -135,7 +150,8 @@ const SEGMENTED_EXPORT_DIALOG_STYLES = `
     max-width: 100%;
     min-width: 0;
     display: grid;
-    grid-template-columns: 28px 42px minmax(0, 1fr);
+    /* 复选框 + 序号（三位数也放得下）+ 正文；序号列不再留大段空白 */
+    grid-template-columns: 16px 24px minmax(0, 1fr);
     gap: 8px;
     padding: 10px;
     border: 1px solid transparent;
@@ -316,6 +332,9 @@ export const SegmentedExportDialog: React.FC<SegmentedExportDialogProps> = ({
   }, [draft.segments, searchQuery])
 
   const selectedCount = selectedIds.size
+  const allVisibleSelected =
+    filteredSegments.length > 0 && filteredSegments.every((segment) => selectedIds.has(segment.id))
+  const someVisibleSelected = filteredSegments.some((segment) => selectedIds.has(segment.id))
 
   const setVisibleSelection = (selected: boolean) => {
     setSelectedIds((current) => {
@@ -368,6 +387,27 @@ export const SegmentedExportDialog: React.FC<SegmentedExportDialogProps> = ({
           </div>
         </div>
         <div className="gh-segmented-export-toolbar">
+          {/* 全选（三态）与反选：作用于当前搜索结果；放在工具栏最左并紧挨着，复选框正对下方列表的复选框列 */}
+          <label className="gh-segmented-export-select-all">
+            <input
+              className="gh-segmented-export-checkbox"
+              type="checkbox"
+              checked={allVisibleSelected}
+              ref={(element) => {
+                if (element) element.indeterminate = someVisibleSelected && !allVisibleSelected
+              }}
+              disabled={filteredSegments.length === 0}
+              onChange={() => setVisibleSelection(!allVisibleSelected)}
+            />
+            <span>{t("segmentedExportSelectAll")}</span>
+          </label>
+          <button
+            type="button"
+            className="gh-segmented-export-button"
+            disabled={filteredSegments.length === 0}
+            onClick={invertVisibleSelection}>
+            {t("segmentedExportInvert")}
+          </button>
           <input
             className="gh-segmented-export-input gh-segmented-export-search"
             value={searchQuery}
@@ -379,18 +419,15 @@ export const SegmentedExportDialog: React.FC<SegmentedExportDialogProps> = ({
             value={rangeInput}
             placeholder={t("segmentedExportRangePlaceholder")}
             onChange={(event) => setRangeInput(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") applyRangeSelection()
+            }}
           />
-          <button className="gh-segmented-export-button" onClick={applyRangeSelection}>
+          <button
+            type="button"
+            className="gh-segmented-export-button"
+            onClick={applyRangeSelection}>
             {t("segmentedExportApplyRange")}
-          </button>
-          <button className="gh-segmented-export-button" onClick={() => setVisibleSelection(true)}>
-            {t("segmentedExportSelectVisible")}
-          </button>
-          <button className="gh-segmented-export-button" onClick={() => setVisibleSelection(false)}>
-            {t("segmentedExportClearVisible")}
-          </button>
-          <button className="gh-segmented-export-button" onClick={invertVisibleSelection}>
-            {t("segmentedExportInvertVisible")}
           </button>
         </div>
       </div>
