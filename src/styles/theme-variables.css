@@ -148,15 +148,6 @@
 
   /* === 滑块圆点颜色 === */
   --gh-slider-dot-bg: #d1d5db;
-
-  /* === 分类颜色（柔和背景色） === */
-  --gh-category-1: #fecaca; /* 红 */
-  --gh-category-2: #fed7aa; /* 橙 */
-  --gh-category-3: #fef08a; /* 黄 */
-  --gh-category-4: #bbf7d0; /* 绿 */
-  --gh-category-5: #a5f3fc; /* 青 */
-  --gh-category-6: #c7d2fe; /* 蓝紫 */
-  --gh-category-7: #f5d0fe; /* 粉紫 */
 }
 
 /* ==================== 深色模式 ==================== */
@@ -283,15 +274,6 @@ html[data-theme="dark"] {
   /* === 设置页层级（深色模式）：面比画布亮，各深色主题方向一致 === */
   --gh-surface: color-mix(in srgb, var(--gh-bg) 92%, #ffffff);
   --gh-canvas: color-mix(in srgb, var(--gh-bg) 78%, #000000);
-
-  /* === 分类颜色（深色模式 - 半透明） === */
-  --gh-category-1: rgba(248, 113, 113, 0.3); /* 红 */
-  --gh-category-2: rgba(251, 146, 60, 0.3); /* 橙 */
-  --gh-category-3: rgba(250, 204, 21, 0.3); /* 黄 */
-  --gh-category-4: rgba(74, 222, 128, 0.3); /* 绿 */
-  --gh-category-5: rgba(34, 211, 238, 0.3); /* 青 */
-  --gh-category-6: rgba(129, 140, 248, 0.3); /* 蓝紫 */
-  --gh-category-7: rgba(232, 121, 249, 0.3); /* 粉紫 */
 
   /* === 品牌色（深色模式） === */
   --gh-brand-gradient: linear-gradient(135deg, #8ab4f8 0%, #81c995 100%);

@@ -565,26 +565,31 @@ export const PromptEditorDialog: React.FC<PromptEditorDialogProps> = ({
                 userSelect: "none",
               }}>
               {categories.map((cat) => (
-                <span
+                <button
+                  type="button"
                   key={cat}
+                  aria-pressed={editingPrompt?.category === cat}
                   onClick={() => setEditingPrompt({ ...editingPrompt, category: cat })}
                   style={{
                     padding: "2px 8px",
-                    fontSize: "11px",
+                    border: "none",
+                    fontFamily: "inherit",
+                    fontSize: "12px",
+                    // 选中用主色淡底 + 主色字，与面板里的分类筛选胶囊一致
                     background:
                       editingPrompt?.category === cat
-                        ? "var(--gh-primary, #4285f4)"
+                        ? "color-mix(in srgb, var(--gh-primary, #4285f4) 14%, transparent)"
                         : "var(--gh-hover, #f3f4f6)",
                     color:
                       editingPrompt?.category === cat
-                        ? "var(--gh-text-on-primary, white)"
+                        ? "var(--gh-primary-text, var(--gh-primary, #4285f4))"
                         : "var(--gh-text-secondary, #6b7280)",
                     borderRadius: "10px",
                     cursor: "pointer",
                     transition: "all 0.15s",
                   }}>
                   {cat}
-                </span>
+                </button>
               ))}
             </div>
           )}

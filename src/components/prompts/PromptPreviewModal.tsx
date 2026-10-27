@@ -16,8 +16,6 @@ interface PromptPreviewModalProps {
   previewRef: React.RefObject<HTMLDivElement>
   onClose: () => void
   currentPlatformId?: string | null
-  getCategoryColorIndex: (categoryName: string) => number
-  getResolvedCategoryColor: (colorIndex: number) => string
 }
 
 const PROMPT_PREVIEW_MODAL_STYLES = `
@@ -127,16 +125,10 @@ const PROMPT_PREVIEW_MODAL_STYLES = `
   min-height: 22px;
   padding: 2px 8px;
   box-sizing: border-box;
-  border: 1px solid
-    color-mix(
-      in srgb,
-      var(--gh-prompt-preview-category-bg, var(--gh-hover, #f3f4f6)) 72%,
-      var(--gh-border, #e5e7eb)
-    );
+  /* 与卡片上的分类标签一致的中性灰：分类不再按名称哈希分配彩色底 */
   border-radius: 999px;
-  background: var(--gh-prompt-preview-category-bg, var(--gh-hover, #f3f4f6));
-  color: var(--gh-prompt-preview-category-text, #1f2937);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, #ffffff 18%, transparent);
+  background: var(--gh-bg-secondary, #f3f4f6);
+  color: var(--gh-text-secondary, #6b7280);
   font-size: 12px;
   font-weight: 500;
   line-height: 1.15;
@@ -271,17 +263,10 @@ export const PromptPreviewModal = ({
   previewRef,
   onClose,
   currentPlatformId,
-  getCategoryColorIndex,
-  getResolvedCategoryColor,
 }: PromptPreviewModalProps) => {
   if (!isOpen || !prompt) return null
 
   const categoryLabel = prompt.category || t("uncategorized")
-  const categoryColorIndex = getCategoryColorIndex(categoryLabel)
-  const categoryStyle = {
-    "--gh-prompt-preview-category-bg": getResolvedCategoryColor(categoryColorIndex),
-    "--gh-prompt-preview-category-text": "#1f2937",
-  } as React.CSSProperties
 
   return createPortal(
     <>
@@ -305,9 +290,7 @@ export const PromptPreviewModal = ({
             <div className="gh-prompt-preview-title-block">
               <div className="gh-prompt-preview-title-row">
                 <div className="gh-prompt-preview-title">{prompt.title}</div>
-                <span className="gh-prompt-preview-category" style={categoryStyle}>
-                  {categoryLabel}
-                </span>
+                <span className="gh-prompt-preview-category">{categoryLabel}</span>
               </div>
               <PromptPlatformSummary
                 platforms={prompt.platforms}

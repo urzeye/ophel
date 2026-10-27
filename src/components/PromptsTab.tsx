@@ -21,6 +21,7 @@ import {
   SplitLinesToQueueIcon,
   SettingsIcon,
   TimeIcon,
+  VariableIcon,
 } from "~components/icons"
 import { ContextMenu, MenuButton } from "~components/ConversationMenus"
 import { Button, ConfirmDialog, InputDialog, SafeSvgMarkup, Tooltip } from "~components/ui"
@@ -229,7 +230,7 @@ const CHAIN_EDITOR_PORTAL_STYLES = `
 .gh-chain-field textarea:focus,
 .gh-chain-step-row select:focus {
   border-color: var(--gh-primary, #4285f4);
-  box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.12);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--gh-primary, #4285f4) 12%, transparent);
 }
 
 .gh-chain-icon-header {
@@ -430,6 +431,39 @@ const CHAIN_EDITOR_PORTAL_STYLES = `
   gap: 10px;
 }
 
+/* 添加步骤：放在步骤列表末尾的一整行（原来是标题栏右上角的文字按钮，不容易发现）；
+   与面板底部的添加按钮同一形态：实线描边、主色文字，悬停出淡底 */
+.gh-chain-add-step-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  margin-top: 10px;
+  padding: 8px 12px;
+  border: 1px solid var(--gh-border, #e5e7eb);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--gh-primary-text, var(--gh-primary, #4285f4));
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.gh-chain-add-step-btn:hover {
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 8%, transparent);
+  border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 40%, var(--gh-border, #e5e7eb));
+}
+
+.gh-chain-add-step-btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 40%, transparent);
+  outline-offset: 2px;
+}
+
 .gh-chain-step-row {
   display: flex;
   flex-direction: column;
@@ -552,14 +586,14 @@ const CHAIN_EDITOR_PORTAL_STYLES = `
 }
 
 .gh-chain-step-delete-btn:hover {
-  background: rgba(254, 226, 226, 1);
+  background: var(--gh-bg-danger, #fef2f2);
   color: var(--gh-text-danger, #ef4444);
   transform: scale(1.05);
 }
 
 .gh-chain-step-delete-btn:active {
   transform: scale(0.95);
-  background: rgba(254, 202, 202, 1);
+  background: var(--gh-bg-danger-hover, #fee2e2);
 }
 
 .gh-chain-step-delete-btn svg {
@@ -592,7 +626,7 @@ const CHAIN_EDITOR_PORTAL_STYLES = `
 .gh-chain-step-inline-input:focus {
   border-color: var(--gh-primary, #4285f4);
   background: var(--gh-bg, #ffffff);
-  box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.08);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--gh-primary, #4285f4) 8%, transparent);
 }
 
 .gh-chain-step-inline-input::placeholder {
@@ -616,7 +650,7 @@ const CHAIN_EDITOR_PORTAL_STYLES = `
 .gh-chain-step-prompt-select:focus {
   border-color: var(--gh-primary, #4285f4);
   background: var(--gh-bg, #ffffff);
-  box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.08);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--gh-primary, #4285f4) 8%, transparent);
 }
 
 .gh-chain-step-actions {
@@ -649,9 +683,9 @@ const CHAIN_EDITOR_PORTAL_STYLES = `
 }
 
 .gh-chain-variable-chip {
-  border: 1px solid rgba(66, 133, 244, 0.25);
-  background: rgba(66, 133, 244, 0.08);
-  color: var(--gh-primary, #4285f4);
+  border: 1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 25%, transparent);
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 8%, transparent);
+  color: var(--gh-primary-text, var(--gh-primary, #4285f4));
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
@@ -736,8 +770,8 @@ const CHAIN_EDITOR_PORTAL_STYLES = `
 }
 
 .gh-chain-preview-nav-btn:hover {
-  background: rgba(66, 133, 244, 0.08);
-  color: var(--gh-primary, #4285f4);
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 8%, transparent);
+  color: var(--gh-primary-text, var(--gh-primary, #4285f4));
 }
 
 .gh-chain-preview-nav-btn .nav-btn-num {
@@ -761,8 +795,8 @@ const CHAIN_EDITOR_PORTAL_STYLES = `
 }
 
 .gh-chain-preview-nav-btn:hover .nav-btn-num {
-  background: rgba(66, 133, 244, 0.15);
-  color: var(--gh-primary, #4285f4);
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 15%, transparent);
+  color: var(--gh-primary-text, var(--gh-primary, #4285f4));
 }
 
 .gh-chain-preview-content {
@@ -862,7 +896,7 @@ const CHAIN_EDITOR_PORTAL_STYLES = `
   margin: 0.75em 0;
   padding: 8px 14px;
   border-left: 3px solid var(--gh-primary, #4285f4);
-  background: rgba(66, 133, 244, 0.04);
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 4%, transparent);
   border-radius: 0 6px 6px 0;
   color: var(--gh-text-secondary, #6b7280);
 }
@@ -909,6 +943,49 @@ const CHAIN_EDITOR_PORTAL_STYLES = `
     backdrop-filter: none;
   }
 }
+
+/* 编辑器渲染在页面 body 上，面板 style.css 里的减弱动效规则够不到，这里单独声明 */
+@media (prefers-reduced-motion: reduce) {
+  .gh-chain-editor,
+  .gh-chain-step-row,
+  .gh-chain-step-delete-btn,
+  .gh-chain-step-inline-input,
+  .gh-chain-step-prompt-select,
+  .gh-chain-step-mode-btn,
+  .gh-chain-preview-toggle,
+  .gh-chain-preview-nav-btn,
+  .gh-chain-add-step-btn {
+    transition: none !important;
+  }
+}
+`
+
+// 分类管理弹窗同样渲染在页面 body 上，行内图标按钮的悬停态随弹窗一起注入；只用 html 上的预置主题变量
+const CATEGORY_MODAL_PORTAL_STYLES = `
+.gh-prompt-category-manage-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--gh-text-tertiary, #9ca3af);
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+.gh-prompt-category-manage-btn:hover {
+  background: var(--gh-hover, #f3f4f6);
+  color: var(--gh-text, #1f2937);
+}
+.gh-prompt-category-manage-btn.danger:hover {
+  background: var(--gh-bg-danger, #fef2f2);
+  color: var(--gh-text-danger, #ef4444);
+}
+.gh-prompt-category-manage-btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 40%, transparent);
+  outline-offset: 1px;
+}
 `
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -951,53 +1028,6 @@ const parseImportedPrompts = (value: unknown): Prompt[] | null => {
   if (!promptList || !promptList.every(isPromptLike)) return null
 
   return promptList
-}
-// 根据分类名称哈希自动分配颜色索引 1-7
-const getCategoryColorIndex = (categoryName: string): number => {
-  let hash = 0
-  for (let i = 0; i < categoryName.length; i++) {
-    hash = categoryName.charCodeAt(i) + ((hash << 5) - hash)
-  }
-  return (Math.abs(hash) % 7) + 1
-}
-
-const CATEGORY_COLOR_FALLBACKS: Record<number, string> = {
-  1: "#fecaca",
-  2: "#fed7aa",
-  3: "#fef08a",
-  4: "#bbf7d0",
-  5: "#a5f3fc",
-  6: "#c7d2fe",
-  7: "#f5d0fe",
-}
-
-const getResolvedCategoryColor = (colorIndex: number): string => {
-  const variableName = `--gh-category-${colorIndex}`
-
-  if (typeof window !== "undefined" && typeof document !== "undefined") {
-    const targets: HTMLElement[] = []
-    const hosts = document.querySelectorAll<HTMLElement>("plasmo-csui, #ophel-userscript-root")
-
-    hosts.forEach((host) => {
-      targets.push(host)
-
-      const root = host.shadowRoot?.querySelector<HTMLElement>(".gh-root")
-      if (root) {
-        targets.push(root)
-      }
-    })
-
-    targets.push(document.documentElement)
-
-    for (const target of targets) {
-      const color = window.getComputedStyle(target).getPropertyValue(variableName).trim()
-      if (color) {
-        return color
-      }
-    }
-  }
-
-  return CATEGORY_COLOR_FALLBACKS[colorIndex] || "var(--gh-hover, #f3f4f6)"
 }
 
 export const PromptsTab: React.FC<PromptsTabProps> = ({
@@ -2597,9 +2627,6 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                     <div className="gh-chain-section-title">{t("chainSteps")}</div>
                     <div className="gh-chain-section-subtitle">{t("chainStepsHelp")}</div>
                   </div>
-                  <Button variant="ghost" size="sm" onClick={addChainStep}>
-                    {t("chainAddStep")}
-                  </Button>
                 </div>
 
                 <div className="gh-chain-step-list">
@@ -2686,6 +2713,11 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                     ))
                   )}
                 </div>
+
+                <button type="button" className="gh-chain-add-step-btn" onClick={addChainStep}>
+                  <span aria-hidden="true">+</span>
+                  {t("chainAddStep")}
+                </button>
               </div>
 
               <div className="gh-chain-editor-section">
@@ -2723,27 +2755,30 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                   </div>
                   {chainEditorState.showExecutionPreview && (
                     <>
-                      <div className="gh-chain-preview-nav-float">
-                        <span className="gh-chain-preview-nav-label">{t("chainSteps")}</span>
-                        {draft.steps.map((step, idx) => {
-                          const title = getChainStepTitles(draft)[idx] || `Step ${idx + 1}`
-                          return (
-                            <Tooltip key={step.id} content={title}>
-                              <button
-                                type="button"
-                                className="gh-chain-preview-nav-btn"
-                                onClick={() => {
-                                  document
-                                    .getElementById(`chain-preview-step-${idx}`)
-                                    ?.scrollIntoView({ behavior: "smooth", block: "nearest" })
-                                }}>
-                                <span className="nav-btn-num">{idx + 1}</span>
-                                <span className="nav-btn-title">{title}</span>
-                              </button>
-                            </Tooltip>
-                          )
-                        })}
-                      </div>
+                      {/* 只有一步时，导航与下方步骤卡的标题完全重复，不显示 */}
+                      {draft.steps.length > 1 && (
+                        <div className="gh-chain-preview-nav-float">
+                          <span className="gh-chain-preview-nav-label">{t("chainSteps")}</span>
+                          {draft.steps.map((step, idx) => {
+                            const title = getChainStepTitles(draft)[idx] || `Step ${idx + 1}`
+                            return (
+                              <Tooltip key={step.id} content={title}>
+                                <button
+                                  type="button"
+                                  className="gh-chain-preview-nav-btn"
+                                  onClick={() => {
+                                    document
+                                      .getElementById(`chain-preview-step-${idx}`)
+                                      ?.scrollIntoView({ behavior: "smooth", block: "nearest" })
+                                  }}>
+                                  <span className="nav-btn-num">{idx + 1}</span>
+                                  <span className="nav-btn-title">{title}</span>
+                                </button>
+                              </Tooltip>
+                            )
+                          })}
+                        </div>
+                      )}
                       <div className="gh-chain-preview-content">
                         {getChainExecutionPreview(draft).map((content, index) => (
                           <div
@@ -2813,110 +2848,114 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     if (!isCategoryModalOpen) return null
 
     return createPortal(
-      <div
-        className="prompt-modal gh-interactive"
-        {...OPHEL_HOVER_WIDTH_RETAIN_LAYER_PROPS}
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: "var(--gh-overlay-bg)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 2147483646,
-          animation: "fadeIn 0.2s",
-        }}>
+      <>
+        <style>{CATEGORY_MODAL_PORTAL_STYLES}</style>
         <div
-          onClick={(e) => e.stopPropagation()}
+          className="prompt-modal gh-interactive"
+          {...OPHEL_HOVER_WIDTH_RETAIN_LAYER_PROPS}
           style={{
-            background: "var(--gh-bg, white)",
-            borderRadius: "12px",
-            width: "90%",
-            maxWidth: "400px",
-            padding: "24px",
-            animation: "slideUp 0.3s",
-            boxShadow: "var(--gh-shadow-lg, 0 20px 50px rgba(0,0,0,0.3))",
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "var(--gh-overlay-bg)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 2147483646,
+            animation: "fadeIn 0.2s",
           }}>
           <div
+            onClick={(e) => e.stopPropagation()}
             style={{
-              fontSize: "18px",
-              fontWeight: 600,
-              marginBottom: "20px",
-              color: "var(--gh-text, #1f2937)",
+              background: "var(--gh-bg, white)",
+              borderRadius: "12px",
+              width: "90%",
+              maxWidth: "400px",
+              padding: "24px",
+              animation: "slideUp 0.3s",
+              boxShadow: "var(--gh-shadow-lg, 0 20px 50px rgba(0,0,0,0.3))",
             }}>
-            {t("categoryManage")}
-          </div>
+            <div
+              style={{
+                fontSize: "18px",
+                fontWeight: 600,
+                marginBottom: "20px",
+                color: "var(--gh-text, #1f2937)",
+              }}>
+              {t("categoryManage")}
+            </div>
 
-          <div style={{ maxHeight: "300px", overflowY: "auto" }}>
-            {categories.length === 0 ? (
-              <div
-                style={{
-                  textAlign: "center",
-                  color: "var(--gh-text-tertiary, #9ca3af)",
-                  padding: "20px",
-                }}>
-                {t("categoryEmpty")}
-              </div>
-            ) : (
-              categories.map((cat) => {
-                const count = prompts.filter((p) => p.category === cat).length
-                return (
-                  <div
-                    key={cat}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      padding: "10px 0",
-                      borderBottom: "1px solid var(--gh-border, #e5e7eb)",
-                    }}>
-                    <div>
-                      <div style={{ fontWeight: 500, color: "var(--gh-text, #374151)" }}>{cat}</div>
-                      <div style={{ fontSize: "12px", color: "var(--gh-text-tertiary, #9ca3af)" }}>
-                        {count} {t("promptCountSuffix")}
+            <div style={{ maxHeight: "300px", overflowY: "auto" }}>
+              {categories.length === 0 ? (
+                <div
+                  style={{
+                    textAlign: "center",
+                    color: "var(--gh-text-tertiary, #9ca3af)",
+                    padding: "20px",
+                  }}>
+                  {t("categoryEmpty")}
+                </div>
+              ) : (
+                categories.map((cat) => {
+                  const count = prompts.filter((p) => p.category === cat).length
+                  return (
+                    <div
+                      key={cat}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        padding: "10px 0",
+                        borderBottom: "1px solid var(--gh-border, #e5e7eb)",
+                      }}>
+                      <div>
+                        <div style={{ fontWeight: 500, color: "var(--gh-text, #374151)" }}>
+                          {cat}
+                        </div>
+                        <div
+                          style={{ fontSize: "12px", color: "var(--gh-text-tertiary, #9ca3af)" }}>
+                          {count} {t("promptCountSuffix")}
+                        </div>
+                      </div>
+                      <div style={{ display: "flex", gap: "2px" }}>
+                        <Tooltip content={t("rename")}>
+                          <button
+                            type="button"
+                            className="gh-prompt-category-manage-btn"
+                            aria-label={t("rename")}
+                            onClick={(e) => handleRenameCategory(cat, e)}>
+                            <EditIcon size={14} />
+                          </button>
+                        </Tooltip>
+                        <Tooltip content={t("delete")}>
+                          <button
+                            type="button"
+                            className="gh-prompt-category-manage-btn danger"
+                            aria-label={t("delete")}
+                            onClick={(e) => handleDeleteCategory(cat, e)}>
+                            <ClearIcon size={18} />
+                          </button>
+                        </Tooltip>
                       </div>
                     </div>
-                    <div style={{ display: "flex", gap: "8px" }}>
-                      <Tooltip content={t("rename")}>
-                        <Button
-                          size="sm"
-                          onClick={(e) => handleRenameCategory(cat, e)}
-                          style={{ color: "var(--gh-primary, #4285f4)" }}>
-                          {t("rename")}
-                        </Button>
-                      </Tooltip>
-                      <Tooltip content={t("delete")}>
-                        <Button
-                          size="sm"
-                          onClick={(e) => handleDeleteCategory(cat, e)}
-                          style={{
-                            border: "1px solid var(--gh-border-danger, #fecaca)",
-                            background: "var(--gh-bg-danger, #fef2f2)",
-                            color: "var(--gh-text-danger, #ef4444)",
-                          }}>
-                          {t("delete")}
-                        </Button>
-                      </Tooltip>
-                    </div>
-                  </div>
-                )
-              })
-            )}
-          </div>
+                  )
+                })
+              )}
+            </div>
 
-          <div style={{ marginTop: "20px", display: "flex", justifyContent: "flex-end" }}>
-            <Button
-              variant="ghost"
-              onClick={closeCategoryModal}
-              style={{ background: "var(--gh-hover, #f3f4f6)" }}>
-              {t("close")}
-            </Button>
+            <div style={{ marginTop: "20px", display: "flex", justifyContent: "flex-end" }}>
+              <Button
+                variant="ghost"
+                onClick={closeCategoryModal}
+                style={{ background: "var(--gh-hover, #f3f4f6)" }}>
+                {t("close")}
+              </Button>
+            </div>
           </div>
         </div>
-      </div>,
+      </>,
       document.body,
     )
   }
@@ -2929,8 +2968,6 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
       previewRef={modalPreviewRef}
       onClose={closePreviewModal}
       currentPlatformId={currentPlatform?.id}
-      getCategoryColorIndex={getCategoryColorIndex}
-      getResolvedCategoryColor={getResolvedCategoryColor}
     />
   )
 
@@ -3078,64 +3115,25 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                 e.currentTarget.scrollLeft += e.deltaY
               }
             }}>
-            <span
-              onClick={() => setSelectedCategory(VIRTUAL_CATEGORY.ALL)}
-              style={{
-                padding: "4px 10px",
-                background:
-                  selectedCategory === VIRTUAL_CATEGORY.ALL
-                    ? "var(--gh-primary, #4285f4)"
-                    : "var(--gh-hover, #f3f4f6)",
-                borderRadius: "12px",
-                fontSize: "12px",
-                color:
-                  selectedCategory === VIRTUAL_CATEGORY.ALL
-                    ? "var(--gh-text-on-primary, #ffffff)"
-                    : "var(--gh-text-secondary, #6b7280)",
-                cursor: "pointer",
-                flexShrink: 0,
-                border:
-                  selectedCategory === VIRTUAL_CATEGORY.ALL
-                    ? "1px solid var(--gh-primary, #4285f4)"
-                    : "1px solid transparent",
-              }}>
+            <button
+              type="button"
+              className={`gh-prompt-category-chip ${selectedCategory === VIRTUAL_CATEGORY.ALL ? "is-active" : ""}`}
+              aria-pressed={selectedCategory === VIRTUAL_CATEGORY.ALL}
+              onClick={() => setSelectedCategory(VIRTUAL_CATEGORY.ALL)}>
               {t("allCategory")}
-            </span>
+            </button>
 
-            {categories.map((cat) => {
-              const colorIndex = getCategoryColorIndex(cat)
-              return (
-                <Tooltip key={cat} content={cat} showOnlyWhenTruncated>
-                  <span
-                    onClick={() => setSelectedCategory(cat)}
-                    style={{
-                      padding: "4px 10px",
-                      background:
-                        selectedCategory === cat
-                          ? "var(--gh-primary, #4285f4)"
-                          : `var(--gh-category-${colorIndex})`,
-                      borderRadius: "12px",
-                      fontSize: "12px",
-                      color:
-                        selectedCategory === cat
-                          ? "var(--gh-text-on-primary, #ffffff)"
-                          : "var(--gh-text-secondary, #6b7280)",
-                      cursor: "pointer",
-                      flexShrink: 0,
-                      border:
-                        selectedCategory === cat
-                          ? "1px solid var(--gh-primary, #4285f4)"
-                          : "1px solid transparent",
-                      maxWidth: "120px",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}>
-                    {cat}
-                  </span>
-                </Tooltip>
-              )
-            })}
+            {categories.map((cat) => (
+              <Tooltip key={cat} content={cat} showOnlyWhenTruncated>
+                <button
+                  type="button"
+                  className={`gh-prompt-category-chip ${selectedCategory === cat ? "is-active" : ""}`}
+                  aria-pressed={selectedCategory === cat}
+                  onClick={() => setSelectedCategory(cat)}>
+                  {cat}
+                </button>
+              </Tooltip>
+            ))}
           </div>
 
           {/* 右侧固定：最近使用 + 管理（仅图标） */}
@@ -3143,8 +3141,8 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
             style={{
               display: "flex",
               alignItems: "center",
-              gap: "4px",
-              padding: "6px 8px",
+              gap: "2px",
+              padding: "4px 6px",
               flexShrink: 0,
               borderLeft: "1px solid var(--gh-border, #e5e7eb)",
             }}>
@@ -3158,11 +3156,11 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                   aria-label={platformFilterAccessibleLabel}
                   aria-haspopup="dialog"
                   aria-expanded={platformFilterOpen}
-                  className="gh-prompt-platform-filter-btn">
+                  className="gh-panel-icon-btn gh-prompt-platform-filter-btn">
                   {selectedPlatform ? (
                     <PlatformIcon platform={selectedPlatform} size={16} />
                   ) : (
-                    <GlobeIcon size={14} />
+                    <GlobeIcon size={16} />
                   )}
                 </button>
               </Tooltip>
@@ -3181,8 +3179,9 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                     alignItems: "center",
                     justifyContent: "center",
                     borderRadius: "999px",
-                    background: "var(--gh-danger, #ef4444)",
-                    color: "white",
+                    // 自定义筛选只是提示数量，不是错误状态，用主色而非危险红
+                    background: "var(--gh-primary, #4285f4)",
+                    color: "var(--gh-text-on-primary, #ffffff)",
                     fontSize: "9px",
                     fontWeight: 700,
                     lineHeight: 1,
@@ -3335,48 +3334,23 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
             </div>
             {/* ⭐ 最近使用（仅图标） */}
             <Tooltip content={t("promptRecentUsed")}>
-              <span
-                onClick={() => setSelectedCategory(VIRTUAL_CATEGORY.RECENT)}
-                style={{
-                  padding: "3px 6px",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  lineHeight: 1,
-                  background:
-                    selectedCategory === VIRTUAL_CATEGORY.RECENT
-                      ? "var(--gh-primary, #4285f4)"
-                      : "var(--gh-hover, #f3f4f6)",
-                  borderRadius: "10px",
-                  color:
-                    selectedCategory === VIRTUAL_CATEGORY.RECENT
-                      ? "var(--gh-text-on-primary, #ffffff)"
-                      : "var(--gh-text-secondary, #6b7280)",
-                  cursor: "pointer",
-                  border:
-                    selectedCategory === VIRTUAL_CATEGORY.RECENT
-                      ? "1px solid var(--gh-primary, #4285f4)"
-                      : "1px solid transparent",
-                }}>
-                <TimeIcon size={14} />
-              </span>
+              <button
+                type="button"
+                className={`gh-panel-icon-btn ${selectedCategory === VIRTUAL_CATEGORY.RECENT ? "active-subtle" : ""}`}
+                aria-label={t("promptRecentUsed")}
+                aria-pressed={selectedCategory === VIRTUAL_CATEGORY.RECENT}
+                onClick={() => setSelectedCategory(VIRTUAL_CATEGORY.RECENT)}>
+                <TimeIcon size={16} />
+              </button>
             </Tooltip>
             {categories.length > 0 && (
               <Tooltip content={t("manageCategory")}>
                 <button
-                  onClick={() => setIsCategoryModalOpen(true)}
-                  style={{
-                    padding: "3px 6px",
-                    background: "transparent",
-                    border: "1px dashed var(--gh-border, #d1d5db)",
-                    borderRadius: "10px",
-                    color: "var(--gh-text-secondary, #9ca3af)",
-                    cursor: "pointer",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}>
-                  <SettingsIcon size={13} />
+                  type="button"
+                  className="gh-panel-icon-btn"
+                  aria-label={t("manageCategory")}
+                  onClick={() => setIsCategoryModalOpen(true)}>
+                  <SettingsIcon size={16} />
                 </button>
               </Tooltip>
             )}
@@ -3467,14 +3441,9 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                       <Tooltip
                         content={cardVariables.map((v) => `{{${v.raw}}}`).join(", ")}
                         triggerStyle={{ flexShrink: 0, marginLeft: "6px" }}>
-                        <span
-                          style={{
-                            fontSize: "12px",
-                            color: "var(--gh-text-tertiary, #9ca3af)",
-                            fontFamily: "monospace",
-                            whiteSpace: "nowrap",
-                          }}>
-                          {`{{×${cardVariables.length}}}`}
+                        <span className="gh-prompt-variable-badge">
+                          <VariableIcon size={11} />
+                          {cardVariables.length}
                         </span>
                       </Tooltip>
                     )}
