@@ -29,7 +29,7 @@ export const ru = {
   navPageContent: "Контент",
   navFeatures: "Функции",
   navPermissions: "Доступа",
-  navBackup: "Данные",
+  navBackup: "Данные и разрешения",
   navAbout: "О проекте",
 
   // ======== Options Page Titles & Descriptions ========
@@ -156,8 +156,7 @@ export const ru = {
   appearancePageDesc: "Персонализация стилей и тем",
   pageContentPageDesc: "Настройка макета страницы и отображения контента",
   featuresPageDesc: "Настройка функциональных модулей",
-  permissionsPageDesc: "Просмотр и управление разрешениями расширения.",
-  backupPageDesc: "Управление резервным копированием и облачной синхронизацией",
+  backupPageDesc: "Управление резервным копированием, облачной синхронизацией и разрешениями",
   aboutPageDesc: "Преимущества ИИ под рукой.",
   tsPlasmoDesc: "Фреймворк для браузерных расширений",
   tsReactDesc: "Библиотека интерфейса",
@@ -1600,7 +1599,6 @@ export const ru = {
   globalSearchEmptyPrompts: "Нет результатов по промптам",
   globalSearchEmptyCurrentSession: "Нет результатов в текущей сессии",
   globalSearchCategoriesLabel: "Категории глобального поиска",
-  globalSearchPageDesc: "Настройка поведения и взаимодействия Search Everywhere",
   globalSearchTriggerHint: "Запуск: {shortcut}",
   globalSearchTriggerDoubleShift: "двойное нажатие Shift",
   globalSearchMatchingSettingsTitle: "Сопоставление поиска",

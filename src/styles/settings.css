@@ -853,6 +853,7 @@ html[data-theme="dark"] .platform-icon-dark-invert {
 
 .settings-tab-group {
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
   padding: 4px;
   background: var(--gh-bg-secondary, #f3f4f6);
@@ -860,11 +861,12 @@ html[data-theme="dark"] .platform-icon-dark-invert {
 }
 
 .settings-tab-item {
-  flex: 1;
+  flex: 1 1 auto;
   padding: 8px 16px;
   border-radius: 8px;
   font-size: 14px;
   font-weight: 500;
+  white-space: nowrap;
   cursor: pointer;
   transition:
     background 0.15s ease,
@@ -886,10 +888,6 @@ html[data-theme="dark"] .platform-icon-dark-invert {
 }
 
 @media (max-width: 640px) {
-  .settings-tab-group {
-    flex-wrap: wrap;
-  }
-
   .settings-tab-item {
     flex: 1 1 120px;
     min-width: 0;

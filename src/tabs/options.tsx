@@ -12,8 +12,6 @@ import {
   GeneralIcon,
   KeyboardIcon,
   PageContentIcon,
-  PermissionsIcon,
-  SearchIcon,
   SitePacksIcon,
 } from "~components/icons"
 import {
@@ -45,8 +43,6 @@ import BackupPage from "./options/pages/BackupPage"
 import FeaturesPage from "./options/pages/FeaturesPage"
 // 页面组件
 import GeneralPage from "./options/pages/GeneralPage"
-import GlobalSearchPage from "./options/pages/GlobalSearchPage"
-import PermissionsPage from "./options/pages/PermissionsPage"
 import ShortcutsPage from "./options/pages/ShortcutsPage"
 import SitePacksPage from "./options/pages/SitePacksPage"
 import SiteSettingsPage from "./options/pages/SiteSettingsPage"
@@ -86,12 +82,6 @@ const NAV_ITEMS: Array<{
     label: "适配中心",
     beta: true,
   },
-  {
-    id: "globalSearch",
-    Icon: SearchIcon,
-    labelKey: "navGlobalSearch",
-    label: "全局搜索",
-  },
   { id: "shortcuts", Icon: KeyboardIcon, labelKey: "navShortcuts", label: "快捷键位" },
   {
     id: "appearance",
@@ -99,13 +89,7 @@ const NAV_ITEMS: Array<{
     labelKey: "navAppearance",
     label: "外观主题",
   },
-  { id: "backup", Icon: BackupIcon, labelKey: "navBackup", label: "备份与同步" },
-  {
-    id: "permissions",
-    Icon: PermissionsIcon,
-    labelKey: "navPermissions",
-    label: "权限管理",
-  },
+  { id: "backup", Icon: BackupIcon, labelKey: "navBackup", label: "数据与权限" },
   { id: "about", Icon: AboutIcon, labelKey: "navAbout", label: "关于" },
 ]
 
@@ -313,14 +297,10 @@ const OptionsPage = () => {
         return <SiteSettingsPage siteId={siteId} initialTab={initialSubTab} />
       case "sitePacks":
         return <SitePacksPage initialTab={initialSubTab} />
-      case "globalSearch":
-        return <GlobalSearchPage siteId={siteId} />
       case "shortcuts":
         return <ShortcutsPage siteId={siteId} />
       case "features":
         return <FeaturesPage siteId={siteId} initialTab={initialSubTab} />
-      case "permissions":
-        return <PermissionsPage siteId={siteId} />
       case "backup":
         return <BackupPage siteId={siteId} initialTab={initialSubTab} onNavigate={setActivePage} />
       case "about":
@@ -349,10 +329,8 @@ const OptionsPage = () => {
   const isStandalonePage = !window.__ophelThemeManager
 
   // 在独立页面中过滤掉 appearance 导航项
-  // 在油猴脚本环境中过滤掉 permissions 导航项（因为没有权限 API）
   const filteredNavItems = NAV_ITEMS.filter((item) => {
     if (isStandalonePage && item.id === "appearance") return false
-    if (!platform.hasCapability("permissions") && item.id === "permissions") return false
     return true
   })
 

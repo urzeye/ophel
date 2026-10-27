@@ -29,7 +29,7 @@ export const fr = {
   navPageContent: "Contenu",
   navFeatures: "Fonctions",
   navPermissions: "Autorisations",
-  navBackup: "Données",
+  navBackup: "Données et autorisations",
   navAbout: "À propos",
 
   // ======== Options Page Titles & Descriptions ========
@@ -160,8 +160,7 @@ export const fr = {
   appearancePageDesc: "Personnaliser les styles visuels et les thèmes",
   pageContentPageDesc: "Ajuster la mise en page et l'affichage du contenu",
   featuresPageDesc: "Configurer les modules de fonctionnalités",
-  permissionsPageDesc: "Voir et gérer les permissions de l'extension.",
-  backupPageDesc: "Gérer la sauvegarde des données et la synchronisation cloud",
+  backupPageDesc: "Gérer la sauvegarde, la synchronisation cloud et les permissions",
   aboutPageDesc: "L'IA à votre portée.",
   tsPlasmoDesc: "Framework d'extensions de navigateur",
   tsReactDesc: "Bibliothèque d'interface utilisateur",
@@ -1652,8 +1651,6 @@ Donnez le code puis un résumé des améliorations.`,
   globalSearchEmptyPrompts: "Aucun résultat de prompt",
   globalSearchEmptyCurrentSession: "Aucun résultat dans la session actuelle",
   globalSearchCategoriesLabel: "Catégories de recherche globale",
-  globalSearchPageDesc:
-    "Configurer le comportement et les détails d'interaction de Search Everywhere",
   globalSearchTriggerHint: "Déclenchement : {shortcut}",
   globalSearchTriggerDoubleShift: "double appui sur Shift",
   globalSearchMatchingSettingsTitle: "Correspondance de recherche",

@@ -29,7 +29,7 @@ export const en = {
   navPageContent: "Page & Content",
   navFeatures: "Features",
   navPermissions: "Permissions",
-  navBackup: "Data Management",
+  navBackup: "Data & Permissions",
   navAbout: "About",
 
   // ======== Options Page Titles & Descriptions ========
@@ -155,8 +155,7 @@ export const en = {
   appearancePageDesc: "Customize visual styles and themes",
   pageContentPageDesc: "Adjust page layout and content display",
   featuresPageDesc: "Configure extension feature modules",
-  permissionsPageDesc: "View and manage extension permissions.",
-  backupPageDesc: "Manage data backup and cloud sync",
+  backupPageDesc: "Manage data backup, cloud sync, and extension permissions",
   aboutPageDesc: "AI's Benefit, Within Reach.",
   tsPlasmoDesc: "Browser Extension Framework",
   tsReactDesc: "User Interface Library",
@@ -1682,7 +1681,6 @@ Please output the optimized code block directly, followed by a brief summary of 
   globalSearchEmptyPrompts: "No prompt results",
   globalSearchEmptyCurrentSession: "No results in current session",
   globalSearchCategoriesLabel: "Global search categories",
-  globalSearchPageDesc: "Configure Search Everywhere behavior and interaction details",
   globalSearchTriggerHint: "Trigger: {shortcut}",
   globalSearchTriggerDoubleShift: "double-press Shift",
   globalSearchMatchingSettingsTitle: "Search Matching",

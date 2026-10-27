@@ -27,7 +27,7 @@ export const zhTW = {
   navPageContent: "頁面與內容",
   navFeatures: "功能模組",
   navPermissions: "權限管理",
-  navBackup: "資料管理",
+  navBackup: "資料與權限",
   navAbout: "關於",
 
   // ======== Options 頁面標題與描述 ========
@@ -147,7 +147,7 @@ export const zhTW = {
   appearancePageDesc: "自定義擴充功能的視覺樣式和主題",
   pageContentPageDesc: "調整頁面排版和內容顯示樣式",
   featuresPageDesc: "配置擴充功能的各項功能模組",
-  backupPageDesc: "管理資料備份和雲端同步",
+  backupPageDesc: "管理資料備份、雲端同步和擴充功能權限",
   aboutPageDesc: "AI 之益，觸手可及",
   tsPlasmoDesc: "瀏覽器擴充功能框架",
   tsReactDesc: "使用者介面函式庫",
@@ -1202,7 +1202,6 @@ export const zhTW = {
   backupManagementDesc: "測試連接、上傳備份或從雲端恢復",
 
   // ======== 權限管理頁面 ========
-  permissionsPageDesc: "查看和管理擴充功能的權限。",
   requiredPermissions: "必需權限",
   requiredPermissionsDesc: "這些權限是擴充功能正常運行所必需的，無法關閉",
   optionalPermissions: "可選權限",
@@ -1626,7 +1625,6 @@ export const zhTW = {
   globalSearchEmptyPrompts: "暫無提示詞搜尋結果",
   globalSearchEmptyCurrentSession: "暫無當前對話搜尋結果",
   globalSearchCategoriesLabel: "全域搜尋分類",
-  globalSearchPageDesc: "設定 Search Everywhere 的搜尋行為與互動細節",
   globalSearchTriggerHint: "觸發方式：{shortcut}",
   globalSearchTriggerDoubleShift: "連按兩下 Shift",
   globalSearchMatchingSettingsTitle: "搜尋匹配",

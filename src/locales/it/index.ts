@@ -29,7 +29,7 @@ export const it = {
   navPageContent: "Pagina e contenuto",
   navFeatures: "Funzionalità",
   navPermissions: "Autorizzazioni",
-  navBackup: "Gestione dei dati",
+  navBackup: "Dati e autorizzazioni",
   navAbout: "Informazioni",
 
   // ======== Options Page Titles & Descriptions ========
@@ -158,8 +158,7 @@ export const it = {
   appearancePageDesc: "Personalizza stili e temi visivi",
   pageContentPageDesc: "Modifica il layout della pagina e la visualizzazione dei contenuti",
   featuresPageDesc: "Configurare i moduli delle funzionalità di estensione",
-  permissionsPageDesc: "Visualizza e gestisci le autorizzazioni delle estensioni.",
-  backupPageDesc: "Gestisci il backup dei dati e la sincronizzazione cloud",
+  backupPageDesc: "Gestisci backup dei dati, sincronizzazione cloud e autorizzazioni",
   aboutPageDesc: "I vantaggi dell'intelligenza artificiale, a portata di mano.",
   tsPlasmoDesc: "Framework di estensione del browser",
   tsReactDesc: "Libreria dell'interfaccia utente",
@@ -1740,8 +1739,6 @@ export const it = {
   globalSearchEmptyPrompts: "Nessun risultato immediato",
   globalSearchEmptyCurrentSession: "Nessun risultato nella sessione corrente",
   globalSearchCategoriesLabel: "Categorie di ricerca globali",
-  globalSearchPageDesc:
-    "Configura il comportamento di Search Everywhere e i dettagli di interazione",
   globalSearchTriggerHint: "Grilletto: {shortcut}",
   globalSearchTriggerDoubleShift: "premere due volte Maiusc",
   globalSearchMatchingSettingsTitle: "Ricerca corrispondente",

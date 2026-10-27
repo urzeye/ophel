@@ -12,6 +12,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 ### ✨ Improvements
 
 - **Site settings grouped by site** — Site settings now open with a site picker at the top; the selected site's page layout, model lock, and site-specific options are shown together in one view instead of being spread across tabs. (#987)
+- **Streamlined settings menu** — Global search settings now live under the Features page, and permissions moved into the data management page (renamed to Data & Permissions, with its own tab), trimming the settings menu from 10 entries to 8. (#988)
 
 ### 🐛 Bug Fixes
 

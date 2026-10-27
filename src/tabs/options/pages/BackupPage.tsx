@@ -1,6 +1,6 @@
 /**
- * 备份与同步页面
- * 包含：本地备份导出/导入 (支持部分导出) | WebDAV 同步配置与管理
+ * 数据与权限页面
+ * 包含：本地备份导出/导入 (支持部分导出) | WebDAV 同步配置与管理 | 权限管理
  */
 import React, { useEffect, useRef, useState } from "react"
 
@@ -54,6 +54,7 @@ import { CLEAR_ALL_FLAG_KEY, DEFAULT_SETTINGS, RESTORE_FLAG_KEY } from "~utils/s
 import { showToast as showDomToast } from "~utils/toast"
 
 import { PageTitle, SettingCard, SettingRow, TabGroup } from "../components"
+import PermissionsPage from "./PermissionsPage"
 
 interface BackupPageProps {
   siteId: string
@@ -282,15 +283,27 @@ const RemoteBackupModal: React.FC<{
 }
 
 // ==================== 主页面组件 ====================
+
+// 油猴环境无权限 API：权限 tab 不展示，深链指向它时回退到本地备份
+const resolveBackupTab = (tab: string | undefined, permissionsAvailable: boolean): string => {
+  if (tab === BACKUP_TAB_IDS.PERMISSIONS && !permissionsAvailable) {
+    return BACKUP_TAB_IDS.LOCAL
+  }
+  return tab || BACKUP_TAB_IDS.LOCAL
+}
+
 const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavigate }) => {
-  const [activeTab, setActiveTab] = useState<string>(initialTab || BACKUP_TAB_IDS.LOCAL)
+  const permissionsAvailable = platform.hasCapability("permissions")
+  const [activeTab, setActiveTab] = useState<string>(
+    resolveBackupTab(initialTab, permissionsAvailable),
+  )
   const { settings, setSettings, resetSettings } = useSettingsStore()
 
   useEffect(() => {
     if (initialTab) {
-      setActiveTab(initialTab)
+      setActiveTab(resolveBackupTab(initialTab, permissionsAvailable))
     }
-  }, [initialTab])
+  }, [initialTab, permissionsAvailable])
 
   // 状态管理
   const [showRemoteBackups, setShowRemoteBackups] = useState(false)
@@ -351,6 +364,9 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
   const tabs = [
     { id: BACKUP_TAB_IDS.LOCAL, label: t("localBackupTab") },
     { id: BACKUP_TAB_IDS.WEBDAV, label: t("webdavTab") },
+    ...(permissionsAvailable
+      ? [{ id: BACKUP_TAB_IDS.PERMISSIONS, label: t("navPermissions") }]
+      : []),
   ]
 
   // -------------------- 导出功能 --------------------
@@ -964,6 +980,9 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
           </div>
         </SettingCard>
       )}
+
+      {/* 权限管理 Tab */}
+      {activeTab === BACKUP_TAB_IDS.PERMISSIONS && permissionsAvailable && <PermissionsPage />}
     </div>
   )
 }

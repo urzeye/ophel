@@ -37,10 +37,8 @@ export const NAV_IDS = {
   FEATURES: "features",
   SITE_SETTINGS: "siteSettings",
   SITE_PACKS: "sitePacks",
-  GLOBAL_SEARCH: "globalSearch",
   SHORTCUTS: "shortcuts",
   BACKUP: "backup",
-  PERMISSIONS: "permissions",
   ABOUT: "about",
 } as const
 
@@ -60,6 +58,7 @@ export const FEATURES_TAB_IDS = {
   REMINDER: "reminder",
   CONTENT: "content",
   READING_HISTORY: "readingHistory",
+  GLOBAL_SEARCH: "globalSearch",
   TOOLBOX: "toolbox",
 } as const
 
@@ -81,6 +80,7 @@ export const APPEARANCE_TAB_IDS = {
 export const BACKUP_TAB_IDS = {
   LOCAL: "local",
   WEBDAV: "webdav",
+  PERMISSIONS: "permissions",
 } as const
 
 // ==================== Settings Deep Link ====================
@@ -112,11 +112,11 @@ export const SETTING_ID_ROUTE_MAP: Record<string, SettingRoute> = {
   "page-features": { page: NAV_IDS.FEATURES },
   "page-site-settings": { page: NAV_IDS.SITE_SETTINGS },
   "page-site-packs": { page: NAV_IDS.SITE_PACKS },
-  "page-global-search": { page: NAV_IDS.GLOBAL_SEARCH },
+  "page-global-search": { page: NAV_IDS.FEATURES, subTab: FEATURES_TAB_IDS.GLOBAL_SEARCH },
   "page-shortcuts": { page: NAV_IDS.SHORTCUTS },
   "page-appearance": { page: NAV_IDS.APPEARANCE },
   "page-backup": { page: NAV_IDS.BACKUP },
-  "page-permissions": { page: NAV_IDS.PERMISSIONS },
+  "page-permissions": { page: NAV_IDS.BACKUP, subTab: BACKUP_TAB_IDS.PERMISSIONS },
   "page-about": { page: NAV_IDS.ABOUT },
 
   // --- 二级子 Tab (SubTab) ---
@@ -139,6 +139,10 @@ export const SETTING_ID_ROUTE_MAP: Record<string, SettingRoute> = {
   "subtab-features-reading-history": {
     page: NAV_IDS.FEATURES,
     subTab: FEATURES_TAB_IDS.READING_HISTORY,
+  },
+  "subtab-features-global-search": {
+    page: NAV_IDS.FEATURES,
+    subTab: FEATURES_TAB_IDS.GLOBAL_SEARCH,
   },
   // 站点设置页已无 tab 结构：站点即二级维度，subTab 直接承载站点 id
   "subtab-site-settings-layout": { page: NAV_IDS.SITE_SETTINGS },
@@ -184,6 +188,10 @@ export const SETTING_ID_ROUTE_MAP: Record<string, SettingRoute> = {
   },
   "subtab-backup-local": { page: NAV_IDS.BACKUP, subTab: BACKUP_TAB_IDS.LOCAL },
   "subtab-backup-webdav": { page: NAV_IDS.BACKUP, subTab: BACKUP_TAB_IDS.WEBDAV },
+  "subtab-backup-permissions": {
+    page: NAV_IDS.BACKUP,
+    subTab: BACKUP_TAB_IDS.PERMISSIONS,
+  },
 
   // --- 设置集合 Card ---
   "panel-settings-card": { page: NAV_IDS.GENERAL, subTab: "panel" },
@@ -219,8 +227,8 @@ export const SETTING_ID_ROUTE_MAP: Record<string, SettingRoute> = {
   "backup-reset-card": { page: NAV_IDS.BACKUP, subTab: BACKUP_TAB_IDS.LOCAL },
   "backup-webdav-card": { page: NAV_IDS.BACKUP, subTab: BACKUP_TAB_IDS.WEBDAV },
   "shortcuts-global-card": { page: NAV_IDS.SHORTCUTS },
-  "permissions-optional-card": { page: NAV_IDS.PERMISSIONS },
-  "permissions-required-card": { page: NAV_IDS.PERMISSIONS },
+  "permissions-optional-card": { page: NAV_IDS.BACKUP, subTab: BACKUP_TAB_IDS.PERMISSIONS },
+  "permissions-required-card": { page: NAV_IDS.BACKUP, subTab: BACKUP_TAB_IDS.PERMISSIONS },
   [ABOUT_SPONSOR_SETTING_ID]: { page: NAV_IDS.ABOUT },
 
   // --- 具体设置项 ---
@@ -338,16 +346,20 @@ export const SETTING_ID_ROUTE_MAP: Record<string, SettingRoute> = {
     subTab: FEATURES_TAB_IDS.CONVERSATIONS,
   },
   "permission-item-storage": {
-    page: NAV_IDS.PERMISSIONS,
+    page: NAV_IDS.BACKUP,
+    subTab: BACKUP_TAB_IDS.PERMISSIONS,
   },
   "permission-item-notifications": {
-    page: NAV_IDS.PERMISSIONS,
+    page: NAV_IDS.BACKUP,
+    subTab: BACKUP_TAB_IDS.PERMISSIONS,
   },
   "permission-item-cookies": {
-    page: NAV_IDS.PERMISSIONS,
+    page: NAV_IDS.BACKUP,
+    subTab: BACKUP_TAB_IDS.PERMISSIONS,
   },
   "permission-item-webdav": {
-    page: NAV_IDS.PERMISSIONS,
+    page: NAV_IDS.BACKUP,
+    subTab: BACKUP_TAB_IDS.PERMISSIONS,
   },
   "backup-webdav-url": {
     page: NAV_IDS.BACKUP,
@@ -365,8 +377,14 @@ export const SETTING_ID_ROUTE_MAP: Record<string, SettingRoute> = {
     page: NAV_IDS.BACKUP,
     subTab: BACKUP_TAB_IDS.WEBDAV,
   },
-  "global-search-matching-card": { page: NAV_IDS.GLOBAL_SEARCH },
-  "global-search-prompt-card": { page: NAV_IDS.GLOBAL_SEARCH },
+  "global-search-matching-card": {
+    page: NAV_IDS.FEATURES,
+    subTab: FEATURES_TAB_IDS.GLOBAL_SEARCH,
+  },
+  "global-search-prompt-card": {
+    page: NAV_IDS.FEATURES,
+    subTab: FEATURES_TAB_IDS.GLOBAL_SEARCH,
+  },
   "collapsed-buttons-order-card": {
     page: NAV_IDS.GENERAL,
     subTab: "shortcuts",
@@ -427,7 +445,7 @@ const SETTING_ID_ROUTE_RULES: SettingRouteRule[] = [
   },
   {
     prefix: "permission-item-",
-    route: { page: NAV_IDS.PERMISSIONS },
+    route: { page: NAV_IDS.BACKUP, subTab: BACKUP_TAB_IDS.PERMISSIONS },
   },
   {
     prefix: "backup-webdav-",
@@ -439,7 +457,7 @@ const SETTING_ID_ROUTE_RULES: SettingRouteRule[] = [
   },
   {
     prefix: "global-search-",
-    route: { page: NAV_IDS.GLOBAL_SEARCH },
+    route: { page: NAV_IDS.FEATURES, subTab: FEATURES_TAB_IDS.GLOBAL_SEARCH },
   },
   {
     prefix: "tab-notification-",
@@ -532,15 +550,27 @@ export const resolveSettingRoute = (settingId?: string): SettingRoute | undefine
   return SETTING_ID_ROUTE_RULES.find((rule) => resolvedSettingId.startsWith(rule.prefix))?.route
 }
 
+// 已合并的一级页面旧 ID 重定向：历史深链与 URL 参数（page=globalSearch / page=permissions）仍可落地
+const LEGACY_SETTINGS_PAGE_REDIRECTS: Record<string, SettingRoute> = {
+  globalSearch: { page: NAV_IDS.FEATURES, subTab: FEATURES_TAB_IDS.GLOBAL_SEARCH },
+  permissions: { page: NAV_IDS.BACKUP, subTab: BACKUP_TAB_IDS.PERMISSIONS },
+}
+
 export const resolveSettingsNavigateDetail = (
   detail: SettingsNavigateDetail,
 ): SettingsNavigateDetail => {
   const resolvedSettingId = resolveSettingId(detail.settingId)
   const route = resolveSettingRoute(resolvedSettingId)
+  const legacyRedirect = detail.page ? LEGACY_SETTINGS_PAGE_REDIRECTS[detail.page] : undefined
 
-  const resolvedPage = detail.page ?? route?.page
+  const resolvedPage = legacyRedirect?.page ?? detail.page ?? route?.page
   const resolvedSubTab =
-    detail.subTab ?? (detail.page && detail.page !== route?.page ? undefined : route?.subTab)
+    detail.subTab ??
+    (legacyRedirect
+      ? legacyRedirect.subTab
+      : detail.page && detail.page !== route?.page
+        ? undefined
+        : route?.subTab)
 
   const isTabOnlyTarget = Boolean(
     resolvedSettingId?.startsWith("page-") || resolvedSettingId?.startsWith("subtab-"),
@@ -677,7 +707,7 @@ const PAGE_TAB_SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
   },
   {
     settingId: "page-backup",
-    title: "备份与同步",
+    title: "数据与权限",
     keywords: [
       "backup",
       "sync",
@@ -687,6 +717,9 @@ const PAGE_TAB_SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
       "备份",
       "同步",
       "数据管理",
+      "数据与权限",
+      "权限",
+      "权限管理",
       "导入导出",
       "云端同步",
       "还原",

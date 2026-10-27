@@ -29,7 +29,7 @@ export const ja = {
   navPageContent: "ページと内容",
   navFeatures: "機能",
   navPermissions: "権限管理",
-  navBackup: "データ管理",
+  navBackup: "データと権限",
   navAbout: "Ophelについて",
 
   // ======== Options Page Titles & Descriptions ========
@@ -156,8 +156,7 @@ export const ja = {
   appearancePageDesc: "視覚スタイルとテーマのカスタマイズ",
   pageContentPageDesc: "ページレイアウトと表示設定の調整",
   featuresPageDesc: "機能モジュールの有効化と設定",
-  permissionsPageDesc: "拡張機能の権限を確認・管理します。",
-  backupPageDesc: "データのバックアップとクラウド同期の管理",
+  backupPageDesc: "データのバックアップ、クラウド同期、拡張機能の権限を管理",
   aboutPageDesc: "AIの恩恵を、もっと身近に。",
   tsPlasmoDesc: "ブラウザ拡張機能フレームワーク",
   tsReactDesc: "ユーザーインターフェースライブラリ",
@@ -1681,7 +1680,6 @@ export const ja = {
   globalSearchEmptyPrompts: "プロンプト結果がありません",
   globalSearchEmptyCurrentSession: "現在のセッションに結果がありません",
   globalSearchCategoriesLabel: "グローバル検索カテゴリ",
-  globalSearchPageDesc: "Search Everywhere の検索動作と操作の詳細を設定します",
   globalSearchTriggerHint: "起動方法：{shortcut}",
   globalSearchTriggerDoubleShift: "Shift を2回押す",
   globalSearchMatchingSettingsTitle: "検索マッチング",

@@ -28,7 +28,7 @@ export const ko = {
   navPageContent: "페이지 및 콘텐츠",
   navFeatures: "기능",
   navPermissions: "권한 관리",
-  navBackup: "데이터 관리",
+  navBackup: "데이터 및 권한",
   navAbout: "Ophel 정보",
 
   // ======== Options Page Titles & Descriptions ========
@@ -154,8 +154,7 @@ export const ko = {
   appearancePageDesc: "시각적 스타일 및 테마 사용자 정의",
   pageContentPageDesc: "페이지 레이아웃 및 콘텐츠 표시 조정",
   featuresPageDesc: "확장 프로그램 기능 모듈 구성",
-  permissionsPageDesc: "확장 프로그램 권한을 확인하고 관리합니다.",
-  backupPageDesc: "데이터 백업 및 클라우드 동기화 관리",
+  backupPageDesc: "데이터 백업, 클라우드 동기화 및 확장 권한 관리",
   aboutPageDesc: "AI의 혜택을 더 가까이.",
   tsPlasmoDesc: "브라우저 확장 프로그램 프레임워크",
   tsReactDesc: "사용자 인터페이스 라이브러리",
@@ -1635,7 +1634,6 @@ export const ko = {
   globalSearchEmptyPrompts: "프롬프트 결과가 없습니다",
   globalSearchEmptyCurrentSession: "현재 세션에 결과가 없습니다",
   globalSearchCategoriesLabel: "전체 검색 카테고리",
-  globalSearchPageDesc: "Search Everywhere의 검색 동작과 인터랙션 세부 항목을 설정합니다",
   globalSearchTriggerHint: "실행: {shortcut}",
   globalSearchTriggerDoubleShift: "Shift 두 번",
   globalSearchMatchingSettingsTitle: "검색 매칭",

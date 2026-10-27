@@ -7,17 +7,24 @@ import React, { useCallback, useEffect, useState } from "react"
 
 import { FeaturesIcon } from "~components/icons"
 import { Button, NumberInput, PlaceholderInput, SelectDropdown } from "~components/ui"
-import { FEATURES_TAB_IDS, NOTIFICATION_SOUND_PRESETS } from "~constants"
+import { FEATURES_TAB_IDS, NAV_IDS, NOTIFICATION_SOUND_PRESETS } from "~constants"
+import {
+  DEFAULT_KEYBINDINGS,
+  formatShortcut,
+  isMacOS,
+  SHORTCUT_ACTIONS,
+} from "~constants/shortcuts"
 import { useSupportedAiPlatforms } from "~hooks/useSupportedAiPlatforms"
 import { platform } from "~platform"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
 import { MSG_CHECK_PERMISSIONS, MSG_REQUEST_PERMISSIONS, sendToBackground } from "~utils/messaging"
-import type {
-  ExportFormatSetting,
-  ExportPackaging,
-  ExportStyle,
-  FormulaCopyFormat,
+import {
+  DEFAULT_SETTINGS,
+  type ExportFormatSetting,
+  type ExportPackaging,
+  type ExportStyle,
+  type FormulaCopyFormat,
 } from "~utils/storage"
 import {
   aggregateUsageEvents,
@@ -577,6 +584,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
     { id: FEATURES_TAB_IDS.PROMPTS, label: t("tabPrompts") },
     { id: FEATURES_TAB_IDS.TAB_SETTINGS, label: t("tabSettingsTab") },
     { id: FEATURES_TAB_IDS.REMINDER, label: t("reminderTab") },
+    { id: FEATURES_TAB_IDS.GLOBAL_SEARCH, label: t("navGlobalSearch") },
     { id: FEATURES_TAB_IDS.CONTENT, label: t("navContent") },
     { id: FEATURES_TAB_IDS.READING_HISTORY, label: t("readingHistoryTitle") },
   ]
@@ -585,6 +593,42 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
   const [isPreviewPlaying, setIsPreviewPlaying] = useState(false)
   const previewAudioRef = React.useRef<HTMLAudioElement | null>(null)
   const { settings, updateDeepSetting, updateNestedSetting } = useSettingsStore()
+
+  // 全局搜索 tab：触发方式提示与快捷键跳转
+  const doubleShiftToSearch =
+    settings?.globalSearch?.doubleShift ?? DEFAULT_SETTINGS.globalSearch.doubleShift
+  const enableFuzzySearch = settings?.globalSearch?.enableFuzzySearch ?? false
+  const promptEnterBehavior = settings?.globalSearch?.promptEnterBehavior || "smart"
+  const userGlobalSearchBinding =
+    settings?.shortcuts?.keybindings?.[SHORTCUT_ACTIONS.OPEN_GLOBAL_SEARCH]
+  const globalSearchBinding =
+    userGlobalSearchBinding === null
+      ? null
+      : userGlobalSearchBinding || DEFAULT_KEYBINDINGS[SHORTCUT_ACTIONS.OPEN_GLOBAL_SEARCH]
+  const globalSearchShortcutLabel = globalSearchBinding
+    ? formatShortcut(globalSearchBinding, isMacOS())
+    : ""
+  const globalSearchTriggers: string[] = []
+  if (doubleShiftToSearch) {
+    globalSearchTriggers.push(t("globalSearchTriggerDoubleShift"))
+  }
+  if (globalSearchShortcutLabel) {
+    globalSearchTriggers.push(globalSearchShortcutLabel)
+  }
+  const globalSearchTriggerHint = t("globalSearchTriggerHint", {
+    shortcut: globalSearchTriggers.join(" / ") || t("shortcutNotSet"),
+  })
+
+  const handleNavigateToGlobalSearchShortcut = () => {
+    window.dispatchEvent(
+      new CustomEvent("ophel:navigateSettingsPage", {
+        detail: {
+          page: NAV_IDS.SHORTCUTS,
+          settingId: `shortcut-binding-${SHORTCUT_ACTIONS.OPEN_GLOBAL_SEARCH}`,
+        },
+      }),
+    )
+  }
 
   const clearPreviewAudioHandlers = useCallback(() => {
     if (!previewAudioRef.current) return
@@ -1688,6 +1732,73 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
             }
           />
         </SettingCard>
+      )}
+
+      {/* ========== 全局搜索 Tab ========== */}
+      {activeTab === FEATURES_TAB_IDS.GLOBAL_SEARCH && (
+        <>
+          <p className="settings-page-desc">{globalSearchTriggerHint}</p>
+
+          <SettingCard
+            title={t("globalSearchMatchingSettingsTitle")}
+            description={t("globalSearchMatchingSettingsDesc")}
+            settingId="global-search-matching-card">
+            <SettingRow
+              label={t("globalSearchShortcutSettingLabel")}
+              description={t("globalSearchShortcutSettingDesc")}
+              settingId="global-search-shortcut-setting-link">
+              <button
+                className="settings-btn settings-btn-secondary"
+                onClick={handleNavigateToGlobalSearchShortcut}>
+                {t("globalSearchShortcutSettingAction")}
+              </button>
+            </SettingRow>
+
+            <ToggleRow
+              label={t("doubleShiftToSearch")}
+              description={t("doubleShiftToSearchDesc")}
+              checked={doubleShiftToSearch}
+              onChange={() =>
+                updateNestedSetting("globalSearch", "doubleShift", !doubleShiftToSearch)
+              }
+              settingId="global-search-double-shift"
+            />
+
+            <ToggleRow
+              label={t("globalSearchEnableFuzzySearchLabel")}
+              description={t("globalSearchEnableFuzzySearchDesc")}
+              checked={enableFuzzySearch}
+              onChange={() =>
+                updateNestedSetting("globalSearch", "enableFuzzySearch", !enableFuzzySearch)
+              }
+              settingId="global-search-fuzzy-search"
+            />
+          </SettingCard>
+
+          <SettingCard
+            title={t("globalSearchPromptSettingsTitle")}
+            description={t("globalSearchPromptSettingsDesc")}
+            settingId="global-search-prompt-card">
+            <SettingRow
+              label={t("globalSearchPromptEnterBehaviorLabel")}
+              description={t("globalSearchPromptEnterBehaviorDesc")}
+              settingId="global-search-prompt-enter-behavior">
+              <select
+                className="settings-select"
+                value={promptEnterBehavior}
+                onChange={(e) =>
+                  updateNestedSetting(
+                    "globalSearch",
+                    "promptEnterBehavior",
+                    e.target.value as "smart" | "locate",
+                  )
+                }>
+                <option value="smart">{t("globalSearchPromptEnterBehaviorSmart")}</option>
+                <option value="locate">{t("globalSearchPromptEnterBehaviorLocate")}</option>
+              </select>
+            </SettingRow>
+          </SettingCard>
+        </>
       )}
     </div>
   )

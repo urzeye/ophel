@@ -1,16 +1,10 @@
 /**
- * 权限管理页面
- * 显示和管理扩展的权限
+ * 权限管理内容
+ * 作为「数据与权限」页的权限 tab 内容渲染，不再是一级页面
  */
 import React, { useCallback, useEffect, useState } from "react"
 
-import {
-  CloudIcon,
-  CookieIcon,
-  NotificationIcon,
-  PermissionsIcon,
-  SaveIcon,
-} from "~components/icons"
+import { CloudIcon, CookieIcon, NotificationIcon, SaveIcon } from "~components/icons"
 import { ConfirmDialog } from "~components/ui"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
@@ -22,7 +16,7 @@ import {
 } from "~utils/messaging"
 import { showToast } from "~utils/toast"
 
-import { PageTitle, SettingCard, SettingRow } from "../components"
+import { SettingCard, SettingRow } from "../components"
 
 // 必需权限（在 manifest 中声明，无法动态修改）
 const REQUIRED_PERMISSIONS = [
@@ -67,11 +61,7 @@ const OPTIONAL_HOST_PERMISSIONS = [
   },
 ]
 
-interface PermissionsPageProps {
-  siteId: string
-}
-
-const PermissionsPage: React.FC<PermissionsPageProps> = () => {
+const PermissionsPage: React.FC = () => {
   const { updateNestedSetting } = useSettingsStore()
   // 可选权限状态
   const [optionalPermissionStatus, setOptionalPermissionStatus] = useState<Record<string, boolean>>(
@@ -258,9 +248,6 @@ const PermissionsPage: React.FC<PermissionsPageProps> = () => {
 
   return (
     <div>
-      <PageTitle title={t("navPermissions")} Icon={PermissionsIcon} />
-      <p className="settings-page-desc">{t("permissionsPageDesc")}</p>
-
       {/* 可选权限 */}
       <SettingCard
         title={t("optionalPermissions")}

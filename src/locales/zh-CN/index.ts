@@ -26,7 +26,7 @@ export const zhCN = {
   navPageContent: "页面与内容",
   navFeatures: "功能模块",
   navPermissions: "权限管理",
-  navBackup: "数据管理",
+  navBackup: "数据与权限",
   navAbout: "关于",
 
   // ======== Options 页面标题与描述 ========
@@ -145,8 +145,7 @@ export const zhCN = {
   appearancePageDesc: "自定义扩展的视觉样式和主题",
   pageContentPageDesc: "调整页面布局和内容显示样式",
   featuresPageDesc: "配置扩展的各项功能模块",
-  permissionsPageDesc: "查看和管理扩展的权限。",
-  backupPageDesc: "管理数据备份和云端同步",
+  backupPageDesc: "管理数据备份、云端同步和扩展权限",
   aboutPageDesc: "AI 之益，触手可及",
   tsPlasmoDesc: "浏览器扩展框架",
   tsReactDesc: "用户界面库",
@@ -1624,7 +1623,6 @@ export const zhCN = {
   globalSearchEmptyPrompts: "暂无提示词搜索结果",
   globalSearchEmptyCurrentSession: "暂无当前对话搜索结果",
   globalSearchCategoriesLabel: "全局搜索分类",
-  globalSearchPageDesc: "配置 Search Everywhere 的搜索行为与交互细节",
   globalSearchTriggerHint: "触发方式：{shortcut}",
   globalSearchTriggerDoubleShift: "双击 Shift",
   globalSearchMatchingSettingsTitle: "搜索匹配",
