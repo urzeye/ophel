@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useMemo, useRef } from "react"
 
 import type { SiteAdapter } from "~adapters/base"
+import { isBuiltinSiteId } from "~constants"
 import { SHORTCUT_ACTIONS, isMacOS, type ShortcutActionId } from "~constants/shortcuts"
 import type { ConversationManager } from "~core/conversation-manager"
 import type { OutlineManager } from "~core/outline-manager"
@@ -677,10 +678,9 @@ export function useShortcuts({
     window.dispatchEvent(new CustomEvent("ophel:togglePromptQueue"))
   }, [])
 
-  // 导航到设置页面的通用函数
-  // 导航到设置页面的通用函数
+  // 导航到设置页面的通用函数；settingId 用于页内滚动定位到具体设置项
   const navigateToSettings = useCallback(
-    (page: string, subTab?: string) => {
+    (page: string, subTab?: string, settingId?: string) => {
       // 1. 打开设置面板
       openSettings()
 
@@ -688,7 +688,7 @@ export function useShortcuts({
       setTimeout(() => {
         window.dispatchEvent(
           new CustomEvent("ophel:navigateSettingsPage", {
-            detail: { page, subTab },
+            detail: { page, subTab, settingId },
           }),
         )
       }, 100)
@@ -708,10 +708,17 @@ export function useShortcuts({
     () => navigateToSettings("appearance"),
     [navigateToSettings],
   )
-  const openModelLockSettings = useCallback(
-    () => navigateToSettings("siteSettings"),
-    [navigateToSettings],
-  )
+  const openModelLockSettings = useCallback(() => {
+    // 当前站点支持模型锁定时定位到对应卡片，否则只打开站点设置页
+    const siteId = adapter?.getSiteId()
+    const modelLockSettingId =
+      siteId && adapter?.getFeatureCapabilities().has("model-lock")
+        ? isBuiltinSiteId(siteId)
+          ? `model-lock-${siteId}`
+          : "model-lock-community-site-pack"
+        : undefined
+    navigateToSettings("siteSettings", undefined, modelLockSettingId)
+  }, [navigateToSettings, adapter])
 
   // 一键切换 Claude Key
   const switchClaudeKey = useCallback(async () => {

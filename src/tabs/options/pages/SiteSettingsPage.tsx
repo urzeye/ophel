@@ -743,8 +743,8 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
         </SettingCard>
       )}
 
-      {/* Claude 专属 */}
-      {selectedSite === SITE_IDS.CLAUDE && <ClaudeSettings siteId={selectedSite} />}
+      {/* Claude 专属；siteId 传真实当前站点，用于「不在 Claude 站点」的操作门控 */}
+      {selectedSite === SITE_IDS.CLAUDE && <ClaudeSettings siteId={siteId} />}
 
       {/* ChatGPT 专属 */}
       {selectedSite === SITE_IDS.CHATGPT && (

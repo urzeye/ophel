@@ -66,7 +66,6 @@ export const SETTING_SEARCH_SUB_TAB_LABEL_DEFINITIONS: Record<string, LocalizedL
   zai: { key: "globalSearchSiteZai", fallback: "Z.ai" },
   chatglm: { key: "globalSearchSiteChatglm", fallback: "ChatGLM" },
   doubao: { key: "globalSearchSiteDoubao", fallback: "Doubao" },
-  deepseek: { key: "globalSearchSiteDeepSeek", fallback: "DeepSeek" },
   [APPEARANCE_TAB_IDS.PRESETS]: { key: "themePresetsTab", fallback: "Theme Presets" },
   [APPEARANCE_TAB_IDS.CUSTOM]: { key: "customStylesTab", fallback: "Custom Styles" },
 }
@@ -244,6 +243,9 @@ export const MODEL_LOCK_SITE_LABEL_DEFINITIONS: Record<string, LocalizedLabelDef
   chatgpt: { key: "globalSearchSiteChatGPT", fallback: "ChatGPT" },
   claude: { key: "globalSearchSiteClaude", fallback: "Claude" },
   grok: { key: "globalSearchSiteGrok", fallback: "Grok" },
+  kimi: { key: "globalSearchSiteKimi", fallback: "Kimi" },
+  qianwen: { key: "globalSearchSiteQianwen", fallback: "Qianwen" },
+  yuanbao: { key: "globalSearchSiteYuanbao", fallback: "Yuanbao" },
   qwenai: { key: "globalSearchSiteQwenAi", fallback: "Qwen Studio" },
   ima: { key: "globalSearchSiteIma", fallback: "ima" },
   zai: { key: "globalSearchSiteZai", fallback: "Z.ai" },

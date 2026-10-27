@@ -118,6 +118,7 @@ import {
   ABOUT_SPONSOR_SETTING_ID,
   NAV_IDS,
   TAB_IDS,
+  isBuiltinSiteId,
   resolveSettingRoute,
   searchSettingsItems,
   type SettingsSearchItem,
@@ -2858,10 +2859,15 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
           },
         })
         openSettingsModal()
+        // 带上模型锁定卡片的 settingId，让设置页滚动定位到关键词输入处
+        const currentSiteId = adapter.getSiteId()
+        const modelLockSettingId = isBuiltinSiteId(currentSiteId)
+          ? `model-lock-${currentSiteId}`
+          : "model-lock-community-site-pack"
         setTimeout(() => {
           window.dispatchEvent(
             new CustomEvent("ophel:navigateSettingsPage", {
-              detail: { page: "siteSettings" },
+              detail: { page: "siteSettings", settingId: modelLockSettingId },
             }),
           )
         }, 100)
