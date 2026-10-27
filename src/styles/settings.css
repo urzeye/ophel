@@ -5420,6 +5420,13 @@ html[data-theme="dark"] .about-privacy-banner {
   font-style: italic;
 }
 
+/* 连按次数标记（如 Shift ×2） */
+.settings-kbd-multiplier {
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 11px;
+  margin-left: 1px;
+}
+
 .settings-shortcut-remove-btn {
   display: inline-flex;
   align-items: center;

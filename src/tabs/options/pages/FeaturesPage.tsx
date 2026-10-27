@@ -1737,14 +1737,22 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
               description={t("globalSearchShortcutSettingDesc")}
               settingId="global-search-shortcut-setting-link">
               <span className="settings-global-search-shortcut">
-                {globalSearchShortcutParts.length > 0 ? (
-                  globalSearchShortcutParts.map((part, index) => (
-                    <React.Fragment key={index}>
-                      {index > 0 && !isMacLike && <span className="settings-kbd-separator">+</span>}
-                      <kbd className="settings-kbd">{part}</kbd>
-                    </React.Fragment>
-                  ))
-                ) : (
+                {globalSearchShortcutParts.map((part, index) => (
+                  <React.Fragment key={index}>
+                    {index > 0 && !isMacLike && <span className="settings-kbd-separator">+</span>}
+                    <kbd className="settings-kbd">{part}</kbd>
+                  </React.Fragment>
+                ))}
+                {doubleShiftToSearch && (
+                  <>
+                    {globalSearchShortcutParts.length > 0 && (
+                      <span className="settings-kbd-separator">/</span>
+                    )}
+                    <kbd className="settings-kbd">Shift</kbd>
+                    <span className="settings-kbd-multiplier">×2</span>
+                  </>
+                )}
+                {globalSearchShortcutParts.length === 0 && !doubleShiftToSearch && (
                   <span className="settings-kbd-empty">{t("shortcutNotSet")}</span>
                 )}
               </span>
