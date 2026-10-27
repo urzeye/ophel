@@ -28,7 +28,14 @@ import {
   SlidersHorizontalIcon,
 } from "~components/icons"
 import { PlatformIcon } from "~components/PlatformIcon"
-import { Button, Input, SelectDropdown, Switch, type SelectDropdownOption } from "~components/ui"
+import {
+  Button,
+  Input,
+  SelectDropdown,
+  Switch,
+  Tooltip,
+  type SelectDropdownOption,
+} from "~components/ui"
 import { NAV_IDS, SITE_PACKS_TAB_IDS, sitePackInstalledSettingId } from "~constants"
 import { SUPPORTED_AI_PLATFORMS } from "~constants/defaults"
 import {
@@ -1512,15 +1519,16 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
         </div>
         <div className="settings-pack-info">
           <div className="settings-pack-title-line">
-            <button
-              type="button"
-              className="settings-pack-origin-link"
-              title={`${t("sitePacksOpenSite")}: ${origin}`}
-              aria-label={`${t("sitePacksOpenSite")}: ${origin}`}
-              onClick={() => platform.openTab(origin)}>
-              <span className="settings-pack-origin">{origin}</span>
-              <ExternalLinkIcon size={12} />
-            </button>
+            <Tooltip content={`${t("sitePacksOpenSite")}: ${origin}`}>
+              <button
+                type="button"
+                className="settings-pack-origin-link"
+                aria-label={`${t("sitePacksOpenSite")}: ${origin}`}
+                onClick={() => platform.openTab(origin)}>
+                <span className="settings-pack-origin">{origin}</span>
+                <ExternalLinkIcon size={12} />
+              </button>
+            </Tooltip>
             <span className={`settings-pack-badge ${status.tone}`}>{status.label}</span>
           </div>
           <div className="settings-pack-meta">
@@ -1528,24 +1536,26 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
           </div>
         </div>
         <div className="settings-pack-controls">
-          <button
-            type="button"
-            className="settings-pack-icon-btn"
-            disabled={busy || isBindingBusy}
-            title={t("edit")}
-            aria-label={`${t("edit")}: ${origin}`}
-            onClick={() => handleEditOriginBinding(origin, binding)}>
-            <EditIcon size={15} />
-          </button>
-          <button
-            type="button"
-            className="settings-pack-icon-btn danger"
-            disabled={busy || isBindingBusy}
-            title={t("delete")}
-            aria-label={`${t("delete")}: ${origin}`}
-            onClick={() => void handleRemoveOriginBinding(origin)}>
-            <DeleteIcon size={15} />
-          </button>
+          <Tooltip content={t("edit")}>
+            <button
+              type="button"
+              className="settings-pack-icon-btn"
+              disabled={busy || isBindingBusy}
+              aria-label={`${t("edit")}: ${origin}`}
+              onClick={() => handleEditOriginBinding(origin, binding)}>
+              <EditIcon size={15} />
+            </button>
+          </Tooltip>
+          <Tooltip content={t("delete")}>
+            <button
+              type="button"
+              className="settings-pack-icon-btn danger"
+              disabled={busy || isBindingBusy}
+              aria-label={`${t("delete")}: ${origin}`}
+              onClick={() => void handleRemoveOriginBinding(origin)}>
+              <DeleteIcon size={15} />
+            </button>
+          </Tooltip>
         </div>
       </div>
     )
@@ -1617,14 +1627,15 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
           </div>
         </div>
         <div className="settings-pack-controls">
-          <button
-            type="button"
-            className="settings-pack-icon-btn ghost"
-            title={t("navSiteSettings")}
-            aria-label={`${site.name}: ${t("navSiteSettings")}`}
-            onClick={() => handleOpenSiteSettings(site.id)}>
-            <SlidersHorizontalIcon size={15} />
-          </button>
+          <Tooltip content={t("navSiteSettings")}>
+            <button
+              type="button"
+              className="settings-pack-icon-btn ghost"
+              aria-label={`${site.name}: ${t("navSiteSettings")}`}
+              onClick={() => handleOpenSiteSettings(site.id)}>
+              <SlidersHorizontalIcon size={15} />
+            </button>
+          </Tooltip>
           <Switch
             size="sm"
             checked={!isDisabled}
@@ -1667,7 +1678,9 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
         </div>
         <div className="settings-pack-info">
           <div className="settings-pack-title-line">
-            <strong title={packId}>{name}</strong>
+            <Tooltip content={packId}>
+              <strong>{name}</strong>
+            </Tooltip>
             {needsBinding && (
               <span className="settings-pack-badge warning">{t("sitePacksNeedsBindingBadge")}</span>
             )}
@@ -1681,19 +1694,20 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
             </span>
             {firstMatch &&
               (firstSiteUrl ? (
-                <button
-                  type="button"
-                  className="settings-pack-origin-link"
-                  title={firstMatch}
-                  aria-label={`${t("sitePacksOpenSite")}: ${firstSiteUrl}`}
-                  onClick={() => platform.openTab(firstSiteUrl)}>
-                  <span className="settings-pack-origin">{firstSiteUrl}</span>
-                  <ExternalLinkIcon size={12} />
-                </button>
+                <Tooltip content={firstMatch}>
+                  <button
+                    type="button"
+                    className="settings-pack-origin-link"
+                    aria-label={`${t("sitePacksOpenSite")}: ${firstSiteUrl}`}
+                    onClick={() => platform.openTab(firstSiteUrl)}>
+                    <span className="settings-pack-origin">{firstSiteUrl}</span>
+                    <ExternalLinkIcon size={12} />
+                  </button>
+                </Tooltip>
               ) : (
-                <code className="settings-pack-match" title={firstMatch}>
-                  {firstMatch}
-                </code>
+                <Tooltip content={firstMatch} showOnlyWhenTruncated>
+                  <code className="settings-pack-match">{firstMatch}</code>
+                </Tooltip>
               ))}
             {needsBinding && (
               <button
@@ -1707,27 +1721,29 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
         </div>
         <div className="settings-pack-controls">
           {firstSiteUrl && (
+            <Tooltip content={t("sitePacksOpenSite")}>
+              <button
+                type="button"
+                className="settings-pack-icon-btn"
+                aria-label={`${t("sitePacksOpenSite")}: ${name}`}
+                onClick={() => platform.openTab(firstSiteUrl)}>
+                <ExternalLinkIcon size={15} />
+              </button>
+            </Tooltip>
+          )}
+          <Tooltip content={t("sitePacksUninstall")}>
             <button
               type="button"
-              className="settings-pack-icon-btn"
-              title={t("sitePacksOpenSite")}
-              aria-label={`${t("sitePacksOpenSite")}: ${name}`}
-              onClick={() => platform.openTab(firstSiteUrl)}>
-              <ExternalLinkIcon size={15} />
+              className="settings-pack-icon-btn danger"
+              disabled={isBusy}
+              aria-label={`${t("sitePacksUninstall")}: ${name}`}
+              onClick={(event) => {
+                confirmationTriggerRef.current = event.currentTarget
+                setConfirmation({ type: "uninstall", pack })
+              }}>
+              <DeleteIcon size={15} />
             </button>
-          )}
-          <button
-            type="button"
-            className="settings-pack-icon-btn danger"
-            disabled={isBusy}
-            title={t("sitePacksUninstall")}
-            aria-label={`${t("sitePacksUninstall")}: ${name}`}
-            onClick={(event) => {
-              confirmationTriggerRef.current = event.currentTarget
-              setConfirmation({ type: "uninstall", pack })
-            }}>
-            <DeleteIcon size={15} />
-          </button>
+          </Tooltip>
           <Switch
             size="sm"
             checked={pack.enabled}
@@ -1772,7 +1788,9 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
         </div>
         <div className="settings-pack-info">
           <div className="settings-pack-title-line">
-            <strong title={view.id}>{view.name}</strong>
+            <Tooltip content={view.id}>
+              <strong>{view.name}</strong>
+            </Tooltip>
             {isSelfHosted && (
               <span className="settings-pack-badge">{t("sitePacksSelfHostedBadge")}</span>
             )}
@@ -1788,19 +1806,20 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
             <span className="settings-pack-version">v{version}</span>
             {firstMatch &&
               (firstSiteUrl ? (
-                <button
-                  type="button"
-                  className="settings-pack-origin-link"
-                  title={firstMatch}
-                  aria-label={`${t("sitePacksOpenSite")}: ${firstSiteUrl}`}
-                  onClick={() => platform.openTab(firstSiteUrl)}>
-                  <span className="settings-pack-origin">{firstSiteUrl}</span>
-                  <ExternalLinkIcon size={12} />
-                </button>
+                <Tooltip content={firstMatch}>
+                  <button
+                    type="button"
+                    className="settings-pack-origin-link"
+                    aria-label={`${t("sitePacksOpenSite")}: ${firstSiteUrl}`}
+                    onClick={() => platform.openTab(firstSiteUrl)}>
+                    <span className="settings-pack-origin">{firstSiteUrl}</span>
+                    <ExternalLinkIcon size={12} />
+                  </button>
+                </Tooltip>
               ) : (
-                <code className="settings-pack-match" title={firstMatch}>
-                  {firstMatch}
-                </code>
+                <Tooltip content={firstMatch} showOnlyWhenTruncated>
+                  <code className="settings-pack-match">{firstMatch}</code>
+                </Tooltip>
               ))}
             {isSelfHosted && <span>{t("sitePacksSelfHostedHint")}</span>}
             {view.availability === "incompatible" && (
@@ -2242,16 +2261,16 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
                           </span>
                         </div>
                         <div className="settings-pack-meta">
-                          <span
-                            className="settings-pack-version"
-                            title={t("remoteConfigPatchVersionLabel")}>
-                            v{patch.patchVersion}
-                          </span>
+                          <Tooltip content={t("remoteConfigPatchVersionLabel")}>
+                            <span className="settings-pack-version">v{patch.patchVersion}</span>
+                          </Tooltip>
                           <span>
                             {t("remoteConfigBaseVersionLabel")} {patch.baseConfigVersion}
                           </span>
                           {patch.fileName ? (
-                            <span title={patch.fileName}>{patch.fileName}</span>
+                            <Tooltip content={patch.fileName} showOnlyWhenTruncated>
+                              <span>{patch.fileName}</span>
+                            </Tooltip>
                           ) : null}
                         </div>
                       </div>

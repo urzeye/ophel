@@ -24,6 +24,7 @@ import {
   StarIcon,
 } from "~components/icons"
 import { SparkleIcon } from "~components/icons/SparkleIcon"
+import { Tooltip } from "~components/ui"
 import { ABOUT_SPONSOR_SETTING_ID } from "~constants"
 import { STORE_LINKS } from "~constants/store-links"
 import { useHasUnseenReleaseNotes } from "~hooks/useHasUnseenReleaseNotes"
@@ -394,16 +395,16 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
             }
 
             return (
-              <a
-                key={platform.id}
-                href={entryUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="about-platform-chip"
-                title={entryUrl}>
-                {icon}
-                <span>{platform.name}</span>
-              </a>
+              <Tooltip key={platform.id} content={entryUrl}>
+                <a
+                  href={entryUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="about-platform-chip">
+                  {icon}
+                  <span>{platform.name}</span>
+                </a>
+              </Tooltip>
             )
           })}
         </div>

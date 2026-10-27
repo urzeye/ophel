@@ -766,39 +766,41 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
                           autoFocus
                         />
                         <div className="gh-queue-item-edit-actions-row">
-                          <button
-                            className="gh-queue-item-edit-btn-save"
-                            onClick={() => handleEditSave(item.id)}
-                            title={t("queueEditSave")}>
-                            <svg
-                              viewBox="0 0 24 24"
-                              width="14"
-                              height="14"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round">
-                              <polyline points="20 6 9 17 4 12"></polyline>
-                            </svg>
-                          </button>
-                          <button
-                            className="gh-queue-item-edit-btn-cancel"
-                            onClick={handleEditCancel}
-                            title={t("queueEditCancel")}>
-                            <svg
-                              viewBox="0 0 24 24"
-                              width="14"
-                              height="14"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round">
-                              <line x1="18" y1="6" x2="6" y2="18"></line>
-                              <line x1="6" y1="6" x2="18" y2="18"></line>
-                            </svg>
-                          </button>
+                          <Tooltip content={t("queueEditSave")}>
+                            <button
+                              className="gh-queue-item-edit-btn-save"
+                              onClick={() => handleEditSave(item.id)}>
+                              <svg
+                                viewBox="0 0 24 24"
+                                width="14"
+                                height="14"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                              </svg>
+                            </button>
+                          </Tooltip>
+                          <Tooltip content={t("queueEditCancel")}>
+                            <button
+                              className="gh-queue-item-edit-btn-cancel"
+                              onClick={handleEditCancel}>
+                              <svg
+                                viewBox="0 0 24 24"
+                                width="14"
+                                height="14"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                              </svg>
+                            </button>
+                          </Tooltip>
                         </div>
                       </div>
                     ) : (
@@ -819,29 +821,49 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
                         </span>
                         <div className="gh-queue-item-actions">
                           {item.status === "pending" && (
-                            <button
-                              className="gh-queue-item-edit"
-                              onClick={() => handleEditClick(item.id, item.content)}
-                              title={t("queueEdit")}>
-                              <svg
-                                viewBox="0 0 24 24"
-                                width="14"
-                                height="14"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                              </svg>
-                            </button>
+                            <Tooltip content={t("queueEdit")}>
+                              <button
+                                className="gh-queue-item-edit"
+                                onClick={() => handleEditClick(item.id, item.content)}>
+                                <svg
+                                  viewBox="0 0 24 24"
+                                  width="14"
+                                  height="14"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round">
+                                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                </svg>
+                              </button>
+                            </Tooltip>
                           )}
                           {item.status === "pending" && (
+                            <Tooltip content={t("queueForceSend")}>
+                              <button
+                                className="gh-queue-item-force-send"
+                                onClick={() => handleForceSend(item)}>
+                                <svg
+                                  viewBox="0 0 24 24"
+                                  width="14"
+                                  height="14"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round">
+                                  <line x1="12" y1="19" x2="12" y2="5"></line>
+                                  <polyline points="5 12 12 5 19 12"></polyline>
+                                </svg>
+                              </button>
+                            </Tooltip>
+                          )}
+                          <Tooltip content={t("queueRemove")}>
                             <button
-                              className="gh-queue-item-force-send"
-                              onClick={() => handleForceSend(item)}
-                              title={t("queueForceSend")}>
+                              className="gh-queue-item-remove"
+                              onClick={() => handleRemoveItem(item.id)}>
                               <svg
                                 viewBox="0 0 24 24"
                                 width="14"
@@ -851,28 +873,11 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
                                 strokeWidth="2"
                                 strokeLinecap="round"
                                 strokeLinejoin="round">
-                                <line x1="12" y1="19" x2="12" y2="5"></line>
-                                <polyline points="5 12 12 5 19 12"></polyline>
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
                               </svg>
                             </button>
-                          )}
-                          <button
-                            className="gh-queue-item-remove"
-                            onClick={() => handleRemoveItem(item.id)}
-                            title={t("queueRemove")}>
-                            <svg
-                              viewBox="0 0 24 24"
-                              width="14"
-                              height="14"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round">
-                              <line x1="18" y1="6" x2="6" y2="18"></line>
-                              <line x1="6" y1="6" x2="18" y2="18"></line>
-                            </svg>
-                          </button>
+                          </Tooltip>
                         </div>
                       </>
                     )}
@@ -896,24 +901,25 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
                 }
                 rows={1}
               />
-              <button
-                className="gh-queue-send-btn"
-                onClick={handleSubmit}
-                disabled={!inputValue.trim()}
-                title={submitKeyDisplay}>
-                <svg
-                  viewBox="0 0 24 24"
-                  width="16"
-                  height="16"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round">
-                  <line x1="12" y1="19" x2="12" y2="5"></line>
-                  <polyline points="5 12 12 5 19 12"></polyline>
-                </svg>
-              </button>
+              <Tooltip content={submitKeyDisplay}>
+                <button
+                  className="gh-queue-send-btn"
+                  onClick={handleSubmit}
+                  disabled={!inputValue.trim()}>
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="16"
+                    height="16"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round">
+                    <line x1="12" y1="19" x2="12" y2="5"></line>
+                    <polyline points="5 12 12 5 19 12"></polyline>
+                  </svg>
+                </button>
+              </Tooltip>
             </div>
           </div>
 
@@ -924,9 +930,9 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
               data-generating={isGenerating ? "true" : "false"}
             />
             <span>{isGenerating ? t("queueStatusBusy") : t("queueStatusIdle")}</span>
-            <span className="gh-queue-disable-hint" title={t("queueSettingDesc")}>
-              ({t("queueDisableHint")})
-            </span>
+            <Tooltip content={t("queueSettingDesc")}>
+              <span className="gh-queue-disable-hint">({t("queueDisableHint")})</span>
+            </Tooltip>
             {shortcutText && <span className="gh-queue-shortcut-hint">{shortcutText}</span>}
           </div>
         </div>,
@@ -1040,31 +1046,37 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
                     filteredLibraryPrompts.slice(0, 80).map((prompt) => {
                       const hasVariables = extractVariables(prompt.content).length > 0
                       return (
-                        <label
+                        <Tooltip
                           key={prompt.id}
-                          className="gh-queue-batch-library-item"
-                          data-disabled={hasVariables ? "true" : "false"}
-                          title={hasVariables ? t("queueBatchLibraryVariablePrompt") : undefined}>
-                          <input
-                            type="checkbox"
-                            disabled={hasVariables}
-                            checked={!hasVariables && selectedPromptIds.includes(prompt.id)}
-                            onChange={() => {
-                              if (!hasVariables) {
-                                toggleLibraryPrompt(prompt.id)
-                              }
-                            }}
-                          />
-                          <span className="gh-queue-batch-library-main">
-                            <span className="gh-queue-batch-library-title">{prompt.title}</span>
-                            <span className="gh-queue-batch-library-content">
-                              {hasVariables ? t("queueBatchLibraryVariablePrompt") : prompt.content}
+                          content={t("queueBatchLibraryVariablePrompt")}
+                          disabled={!hasVariables}
+                          triggerStyle={{ display: "block" }}>
+                          <label
+                            className="gh-queue-batch-library-item"
+                            data-disabled={hasVariables ? "true" : "false"}>
+                            <input
+                              type="checkbox"
+                              disabled={hasVariables}
+                              checked={!hasVariables && selectedPromptIds.includes(prompt.id)}
+                              onChange={() => {
+                                if (!hasVariables) {
+                                  toggleLibraryPrompt(prompt.id)
+                                }
+                              }}
+                            />
+                            <span className="gh-queue-batch-library-main">
+                              <span className="gh-queue-batch-library-title">{prompt.title}</span>
+                              <span className="gh-queue-batch-library-content">
+                                {hasVariables
+                                  ? t("queueBatchLibraryVariablePrompt")
+                                  : prompt.content}
+                              </span>
                             </span>
-                          </span>
-                          <span className="gh-queue-batch-library-category">
-                            {prompt.category || t("uncategorized")}
-                          </span>
-                        </label>
+                            <span className="gh-queue-batch-library-category">
+                              {prompt.category || t("uncategorized")}
+                            </span>
+                          </label>
+                        </Tooltip>
                       )
                     })
                   )}

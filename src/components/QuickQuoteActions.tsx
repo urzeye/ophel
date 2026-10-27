@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { QuickQuoteSupportMode, SiteAdapter } from "~adapters/base"
 import { CheckIcon, CopyIcon, MoreHorizontalIcon } from "~components/icons"
 import { QuoteIcon } from "~components/icons/QuoteIcon"
-import { SafeSvgMarkup } from "~components/ui"
+import { SafeSvgMarkup, Tooltip } from "~components/ui"
 import { VariableInputDialog } from "~components/VariableInputDialog"
 import { QUICK_QUOTE_REPLY_CHAIN_ID } from "~constants"
 import {
@@ -1057,19 +1057,19 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
           }}>
           {quickQuoteEnabled && (
             <>
-              <button
-                className={`gh-quick-quote-action gh-quick-quote-copy-action${
-                  copySucceeded ? " active" : ""
-                }`}
-                title={copySucceeded ? t("copySuccess") : t("copy")}
-                aria-label={copySucceeded ? t("copySuccess") : t("copy")}
-                onClick={() => void handleCopy()}>
-                {copySucceeded ? <CheckIcon size={15} /> : <CopyIcon size={15} />}
-              </button>
-              <button
-                className="gh-quick-quote-action"
-                title={t("quickQuoteQuote")}
-                onClick={() => void handleQuote()}>
+              <Tooltip
+                content={copySucceeded ? t("copySuccess") : t("copy")}
+                triggerStyle={{ flex: "0 0 auto" }}>
+                <button
+                  className={`gh-quick-quote-action gh-quick-quote-copy-action${
+                    copySucceeded ? " active" : ""
+                  }`}
+                  aria-label={copySucceeded ? t("copySuccess") : t("copy")}
+                  onClick={() => void handleCopy()}>
+                  {copySucceeded ? <CheckIcon size={15} /> : <CopyIcon size={15} />}
+                </button>
+              </Tooltip>
+              <button className="gh-quick-quote-action" onClick={() => void handleQuote()}>
                 <QuoteIcon size={15} />
                 <span>{t("quickQuoteQuote")}</span>
               </button>
@@ -1079,50 +1079,62 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
             <span className="gh-quick-quote-divider" />
           )}
           {primaryChains.map((chain) => (
-            <button
+            <Tooltip
               key={chain.id}
-              className="gh-quick-quote-action icon-only"
-              title={chain.title}
-              onClick={() => handleRunChain(chain)}>
-              <SafeSvgMarkup
-                className="gh-quick-quote-svg"
-                svg={chain.iconSvg}
-                fallback={<ChainLetterFallback title={chain.title} />}
-              />
-              <span>{chain.title}</span>
-            </button>
+              content={chain.title}
+              showOnlyWhenTruncated
+              triggerStyle={{ flex: "0 1 110px", maxWidth: "120px", minWidth: 0 }}>
+              <button
+                className="gh-quick-quote-action icon-only"
+                style={{ width: "100%" }}
+                onClick={() => handleRunChain(chain)}>
+                <SafeSvgMarkup
+                  className="gh-quick-quote-svg"
+                  svg={chain.iconSvg}
+                  fallback={<ChainLetterFallback title={chain.title} />}
+                />
+                <span>{chain.title}</span>
+              </button>
+            </Tooltip>
           ))}
           {overflowChains.length > 0 && (
             <span className="gh-quick-quote-more-wrap">
-              <button
-                type="button"
-                className={`gh-quick-quote-action gh-quick-quote-more-trigger${
-                  chainMenuOpen ? " active" : ""
-                }`}
-                title={`${t("floatingToolbarMore")} (${overflowChains.length})`}
-                aria-haspopup="menu"
-                aria-expanded={chainMenuOpen}
-                onClick={() => setChainMenuOpen((open) => !open)}>
-                <MoreHorizontalIcon size={15} />
-                <span>+{overflowChains.length}</span>
-              </button>
+              <Tooltip
+                content={`${t("floatingToolbarMore")} (${overflowChains.length})`}
+                triggerStyle={{ flex: "0 0 auto" }}>
+                <button
+                  type="button"
+                  className={`gh-quick-quote-action gh-quick-quote-more-trigger${
+                    chainMenuOpen ? " active" : ""
+                  }`}
+                  aria-haspopup="menu"
+                  aria-expanded={chainMenuOpen}
+                  onClick={() => setChainMenuOpen((open) => !open)}>
+                  <MoreHorizontalIcon size={15} />
+                  <span>+{overflowChains.length}</span>
+                </button>
+              </Tooltip>
               {chainMenuOpen && (
                 <div className="gh-quick-quote-more-menu" role="menu">
                   {overflowChains.map((chain) => (
-                    <button
+                    <Tooltip
                       key={chain.id}
-                      type="button"
-                      className="gh-quick-quote-more-item"
-                      title={chain.title}
-                      role="menuitem"
-                      onClick={() => handleRunChain(chain)}>
-                      <SafeSvgMarkup
-                        className="gh-quick-quote-svg"
-                        svg={chain.iconSvg}
-                        fallback={<ChainLetterFallback title={chain.title} />}
-                      />
-                      <span>{chain.title}</span>
-                    </button>
+                      content={chain.title}
+                      showOnlyWhenTruncated
+                      triggerStyle={{ display: "block" }}>
+                      <button
+                        type="button"
+                        className="gh-quick-quote-more-item"
+                        role="menuitem"
+                        onClick={() => handleRunChain(chain)}>
+                        <SafeSvgMarkup
+                          className="gh-quick-quote-svg"
+                          svg={chain.iconSvg}
+                          fallback={<ChainLetterFallback title={chain.title} />}
+                        />
+                        <span>{chain.title}</span>
+                      </button>
+                    </Tooltip>
                   ))}
                 </div>
               )}

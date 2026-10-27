@@ -1,6 +1,7 @@
 import React from "react"
 
 import { SearchIcon } from "~components/icons"
+import { Tooltip } from "~components/ui"
 import { attachEditableKeyboardFocusGuard } from "~utils/dom-toolkit"
 import { t } from "~utils/i18n"
 
@@ -286,17 +287,17 @@ export const GlobalSearchOverlay = <TItem, TCategoryId extends string>(
         {activeFilterChips.length > 0 ? (
           <div className="settings-search-filter-chips" aria-label={t("activeSearchFilters")}>
             {activeFilterChips.map((chip) => (
-              <button
-                key={chip.id}
-                type="button"
-                className="settings-search-filter-chip"
-                onClick={() => onRemoveFilterChip(chip.id)}
-                title={filterChipRemoveTitle}>
-                <span className="settings-search-filter-chip-label">{chip.label}</span>
-                <span className="settings-search-filter-chip-close" aria-hidden>
-                  ×
-                </span>
-              </button>
+              <Tooltip key={chip.id} content={filterChipRemoveTitle}>
+                <button
+                  type="button"
+                  className="settings-search-filter-chip"
+                  onClick={() => onRemoveFilterChip(chip.id)}>
+                  <span className="settings-search-filter-chip-label">{chip.label}</span>
+                  <span className="settings-search-filter-chip-close" aria-hidden>
+                    ×
+                  </span>
+                </button>
+              </Tooltip>
             ))}
             {hasOverflowFilterChips ? (
               <span className="settings-search-filter-chip-overflow">{overflowFilterChipText}</span>

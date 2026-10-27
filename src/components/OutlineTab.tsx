@@ -1995,14 +1995,15 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
               onChange={handleSearchChange}
             />
             {searchQuery && (
-              <button
-                type="button"
-                className="outline-search-clear gh-panel-search-action"
-                onClick={handleSearchClear}
-                aria-label={t("clear")}
-                title={t("clear")}>
-                <ClearIcon size={14} />
-              </button>
+              <Tooltip content={t("clear")}>
+                <button
+                  type="button"
+                  className="outline-search-clear gh-panel-search-action"
+                  onClick={handleSearchClear}
+                  aria-label={t("clear")}>
+                  <ClearIcon size={14} />
+                </button>
+              </Tooltip>
             )}
           </div>
         </div>

@@ -15,7 +15,7 @@ import {
   ThemeDarkIcon,
   ThemeLightIcon,
 } from "~components/icons"
-import { ConfirmDialog } from "~components/ui"
+import { ConfirmDialog, Tooltip } from "~components/ui"
 import { APPEARANCE_TAB_IDS } from "~constants"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
@@ -78,8 +78,7 @@ const ThemeCard: React.FC<{
       type="button"
       className={`settings-theme-card ${isActive ? "active" : ""}`}
       onClick={onClick}
-      aria-pressed={isActive}
-      title={displayName}>
+      aria-pressed={isActive}>
       <div className="settings-theme-card-preview">
         <ThemePreview preset={preset} />
         {isActive ? (
@@ -353,9 +352,7 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
                         <div className="settings-custom-style-item-title">
                           {style.name || t("unnamedStyle")}
                         </div>
-                        <span
-                          className={`settings-custom-style-mode-badge ${style.mode}`}
-                          title={style.mode === "light" ? t("lightMode") : t("darkMode")}>
+                        <span className={`settings-custom-style-mode-badge ${style.mode}`}>
                           {style.mode === "light" ? (
                             <ThemeLightIcon size={12} />
                           ) : (
@@ -376,14 +373,15 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
                         <EditIcon size={14} />
                         <span>{t("edit")}</span>
                       </button>
-                      <button
-                        type="button"
-                        className="settings-btn settings-btn-danger settings-icon-only-btn"
-                        onClick={() => setStyleToDelete(style.id)}
-                        aria-label={t("confirmDeleteStyle")}
-                        title={t("confirmDeleteStyle")}>
-                        <DeleteIcon size={14} />
-                      </button>
+                      <Tooltip content={t("confirmDeleteStyle")}>
+                        <button
+                          type="button"
+                          className="settings-btn settings-btn-danger settings-icon-only-btn"
+                          onClick={() => setStyleToDelete(style.id)}
+                          aria-label={t("confirmDeleteStyle")}>
+                          <DeleteIcon size={14} />
+                        </button>
+                      </Tooltip>
                     </div>
                   </article>
                 ))}
@@ -401,14 +399,15 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
               <h3 className="settings-style-editor-title">
                 {editingStyle.id ? t("editStyleTitle") : t("newStyle")}
               </h3>
-              <button
-                type="button"
-                className="settings-style-editor-close"
-                onClick={() => setShowStyleEditor(false)}
-                aria-label={t("close")}
-                title={t("close")}>
-                <ClearIcon size={16} />
-              </button>
+              <Tooltip content={t("close")}>
+                <button
+                  type="button"
+                  className="settings-style-editor-close"
+                  onClick={() => setShowStyleEditor(false)}
+                  aria-label={t("close")}>
+                  <ClearIcon size={16} />
+                </button>
+              </Tooltip>
             </div>
 
             <div className="settings-style-editor-body">

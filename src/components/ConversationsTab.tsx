@@ -1778,16 +1778,17 @@ const ConversationItem = React.memo<ConversationItemProps>(
         </div>
 
         <div className="conversations-item-meta">
-          <button
-            className="conversations-item-menu-btn"
-            title={t("more")}
-            onClick={(e) => {
-              e.stopPropagation()
-              onInteractionStateChange?.(true)
-              onMenuChange({ type: "conversation", conv, anchorEl: e.currentTarget })
-            }}>
-            <MoreHorizontalIcon size={20} />
-          </button>
+          <Tooltip content={t("more")}>
+            <button
+              className="conversations-item-menu-btn"
+              onClick={(e) => {
+                e.stopPropagation()
+                onInteractionStateChange?.(true)
+                onMenuChange({ type: "conversation", conv, anchorEl: e.currentTarget })
+              }}>
+              <MoreHorizontalIcon size={20} />
+            </button>
+          </Tooltip>
         </div>
       </div>
     )

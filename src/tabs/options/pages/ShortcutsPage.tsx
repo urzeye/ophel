@@ -8,7 +8,6 @@ import { KeyboardIcon } from "~components/icons"
 import { ConfirmDialog, Tooltip } from "~components/ui"
 import {
   DEFAULT_KEYBINDINGS,
-  formatShortcut,
   getShortcutParts,
   isMacOS,
   normalizeShortcutBinding,
@@ -111,14 +110,7 @@ const ShortcutInput: React.FC<{
         className={`settings-shortcut-input ${isRecording ? "is-recording" : ""} ${!binding ? "is-empty" : ""}`}
         onClick={() => setIsRecording(true)}
         onKeyDown={handleKeyDown}
-        onBlur={handleBlur}
-        title={
-          isRecording
-            ? t("pressAnyKey")
-            : binding
-              ? formatShortcut(binding, isMac)
-              : t("shortcutNotSet")
-        }>
+        onBlur={handleBlur}>
         {isRecording ? (
           <span>{t("pressAnyKey")}</span>
         ) : parts.length > 0 ? (

@@ -1394,7 +1394,6 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             type="button"
             className={`gh-panel-resize-handle gh-panel-resize-handle-${resizeHandleSide}`}
             aria-label={t("panelResizeHandleLabel")}
-            title={t("panelResizeHandleLabel")}
             data-no-header-press-hint="true"
             onPointerDown={handleResizePointerDown}
             onPointerMove={handleResizePointerMove}

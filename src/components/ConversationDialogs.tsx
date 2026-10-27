@@ -656,16 +656,17 @@ export const FolderSelectDialog: React.FC<FolderSelectDialogProps> = ({
           onChange={(e) => setSearchQuery(e.target.value)}
         />
         {onCreateFolder && (
-          <Button
-            variant="primary"
-            style={{ padding: "8px 12px" }}
-            onClick={() => {
-              onCancel()
-              onCreateFolder()
-            }}
-            title={t("conversationsAddFolder")}>
-            +
-          </Button>
+          <Tooltip content={t("conversationsAddFolder")}>
+            <Button
+              variant="primary"
+              style={{ padding: "8px 12px" }}
+              onClick={() => {
+                onCancel()
+                onCreateFolder()
+              }}>
+              +
+            </Button>
+          </Tooltip>
         )}
       </div>
 

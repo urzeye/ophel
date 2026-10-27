@@ -1,6 +1,7 @@
 import React from "react"
 
 import { PlatformIcon } from "~components/PlatformIcon"
+import { Tooltip } from "~components/ui"
 import { getReadableTextColor } from "~utils/color"
 
 import { splitGlobalSearchHighlightSegments } from "./highlight"
@@ -133,31 +134,42 @@ export const GlobalSearchResultItemView = React.memo(
           onMouseLeave()
         }}
         onClick={onClick}>
-        <div className="settings-search-item-title" title={item.title}>
+        <div className="settings-search-item-title">
           {isTipItem ? (
             <div className="gs-tip-item-head">
               <span className="gs-tip-icon" aria-hidden="true">
                 💡
               </span>
-              <span className="settings-search-item-title-text">
-                {renderSearchHighlightedParts(item.title, "default", fuzzyTitleIndexes)}
-              </span>
+              <Tooltip
+                content={item.title}
+                showOnlyWhenTruncated
+                triggerStyle={{ display: "block", flex: 1, minWidth: 0 }}>
+                <span className="settings-search-item-title-text">
+                  {renderSearchHighlightedParts(item.title, "default", fuzzyTitleIndexes)}
+                </span>
+              </Tooltip>
             </div>
           ) : isOutlineItem ? (
             <div className="settings-search-outline-head">
               <span
-                className={`settings-search-outline-role ${isOutlineQuery ? "query" : "reply"}`}
-                title={outlineRoleLabel}>
+                className={`settings-search-outline-role ${isOutlineQuery ? "query" : "reply"}`}>
                 {outlineRoleLabel}
               </span>
               {item.code ? (
-                <span className="settings-search-outline-code" title={item.code}>
-                  {renderSearchHighlightedParts(item.code, "code", fuzzyCodeIndexes)}
-                </span>
+                <Tooltip content={item.code} showOnlyWhenTruncated>
+                  <span className="settings-search-outline-code">
+                    {renderSearchHighlightedParts(item.code, "code", fuzzyCodeIndexes)}
+                  </span>
+                </Tooltip>
               ) : null}
-              <span className="settings-search-item-title-text">
-                {renderSearchHighlightedParts(item.title, "default", fuzzyTitleIndexes)}
-              </span>
+              <Tooltip
+                content={item.title}
+                showOnlyWhenTruncated
+                triggerStyle={{ display: "block", flex: 1, minWidth: 0 }}>
+                <span className="settings-search-item-title-text">
+                  {renderSearchHighlightedParts(item.title, "default", fuzzyTitleIndexes)}
+                </span>
+              </Tooltip>
             </div>
           ) : isConversationItem && item.sourceSite ? (
             <div className="settings-search-conversation-head">
@@ -166,46 +178,64 @@ export const GlobalSearchResultItemView = React.memo(
                 size={14}
                 className="settings-search-conversation-site-icon"
               />
-              <span className="settings-search-item-title-text">
-                {renderSearchHighlightedParts(item.title, "default", fuzzyTitleIndexes)}
-              </span>
-              {item.sourceSite.isOffsite ? (
-                <span className="settings-search-offsite-badge" title={item.sourceSite.name}>
-                  {offsiteConversationLabel}
+              <Tooltip
+                content={item.title}
+                showOnlyWhenTruncated
+                triggerStyle={{ display: "block", flex: 1, minWidth: 0 }}>
+                <span className="settings-search-item-title-text">
+                  {renderSearchHighlightedParts(item.title, "default", fuzzyTitleIndexes)}
                 </span>
+              </Tooltip>
+              {item.sourceSite.isOffsite ? (
+                <Tooltip content={item.sourceSite.name}>
+                  <span className="settings-search-offsite-badge">{offsiteConversationLabel}</span>
+                </Tooltip>
               ) : null}
             </div>
           ) : (
-            <span className="settings-search-item-title-text">
-              {renderSearchHighlightedParts(item.title, "default", fuzzyTitleIndexes)}
-            </span>
+            <Tooltip
+              content={item.title}
+              showOnlyWhenTruncated
+              triggerStyle={{ display: "block", flex: 1, minWidth: 0 }}>
+              <span className="settings-search-item-title-text">
+                {renderSearchHighlightedParts(item.title, "default", fuzzyTitleIndexes)}
+              </span>
+            </Tooltip>
           )}
         </div>
         {item.snippet ? (
-          <div
-            className="settings-search-item-snippet"
-            title={`${promptSnippetPrefix}${item.snippet}`}>
-            {promptSnippetPrefix ? (
-              <span className="settings-search-item-snippet-prefix">{promptSnippetPrefix}</span>
-            ) : null}
-            {renderSearchHighlightedParts(item.snippet, "default", fuzzySnippetIndexes)}
-          </div>
+          <Tooltip
+            content={`${promptSnippetPrefix}${item.snippet}`}
+            showOnlyWhenTruncated
+            triggerStyle={{ display: "block" }}>
+            <div className="settings-search-item-snippet">
+              {promptSnippetPrefix ? (
+                <span className="settings-search-item-snippet-prefix">{promptSnippetPrefix}</span>
+              ) : null}
+              {renderSearchHighlightedParts(item.snippet, "default", fuzzySnippetIndexes)}
+            </div>
+          </Tooltip>
         ) : null}
         <div className={`settings-search-item-meta ${showCodeOnMeta ? "" : "no-code"}`.trim()}>
           <div className="settings-search-item-meta-left">
-            <span className="settings-search-item-breadcrumb" title={item.breadcrumb}>
-              {renderSearchHighlightedParts(item.breadcrumb, "default", fuzzyBreadcrumbIndexes)}
-            </span>
+            <Tooltip content={item.breadcrumb} showOnlyWhenTruncated>
+              <span className="settings-search-item-breadcrumb">
+                {renderSearchHighlightedParts(item.breadcrumb, "default", fuzzyBreadcrumbIndexes)}
+              </span>
+            </Tooltip>
             {item.category === "conversations" && item.tagBadges && item.tagBadges.length > 0 ? (
               <div className="settings-search-tag-list">
                 {item.tagBadges.map((tag) => (
-                  <span
-                    key={tag.id}
-                    className="settings-search-tag"
-                    style={{ backgroundColor: tag.color, color: getReadableTextColor(tag.color) }}
-                    title={tag.name}>
-                    {renderSearchHighlightedParts(tag.name, "tag")}
-                  </span>
+                  <Tooltip key={tag.id} content={tag.name} showOnlyWhenTruncated>
+                    <span
+                      className="settings-search-tag"
+                      style={{
+                        backgroundColor: tag.color,
+                        color: getReadableTextColor(tag.color),
+                      }}>
+                      {renderSearchHighlightedParts(tag.name, "tag")}
+                    </span>
+                  </Tooltip>
                 ))}
               </div>
             ) : null}
@@ -220,9 +250,9 @@ export const GlobalSearchResultItemView = React.memo(
             ) : null}
           </div>
           {showCodeOnMeta ? (
-            <code title={item.code}>
-              {renderSearchHighlightedParts(item.code!, "code", fuzzyCodeIndexes)}
-            </code>
+            <Tooltip content={item.code!} showOnlyWhenTruncated>
+              <code>{renderSearchHighlightedParts(item.code!, "code", fuzzyCodeIndexes)}</code>
+            </Tooltip>
           ) : null}
         </div>
       </div>

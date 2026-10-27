@@ -3,6 +3,8 @@ import React, { useCallback, useEffect, useRef, useState } from "react"
 import { RestoreIcon } from "~components/icons"
 import { t } from "~utils/i18n"
 
+import { Tooltip } from "./Tooltip"
+
 export interface SliderProps {
   value: number
   onChange: (value: number) => void
@@ -179,15 +181,16 @@ export const Slider: React.FC<SliderProps> = ({
         </div>
         <span className="settings-slider-value">{displayValue}</span>
         {safeDefaultValue !== undefined && (
-          <button
-            type="button"
-            className="settings-slider-reset"
-            onClick={handleReset}
-            disabled={disabled || isDefaultValue}
-            title={t("restore")}
-            aria-label={t("restore")}>
-            <RestoreIcon size={14} />
-          </button>
+          <Tooltip content={t("restore")}>
+            <button
+              type="button"
+              className="settings-slider-reset"
+              onClick={handleReset}
+              disabled={disabled || isDefaultValue}
+              aria-label={t("restore")}>
+              <RestoreIcon size={14} />
+            </button>
+          </Tooltip>
         )}
       </div>
     </div>

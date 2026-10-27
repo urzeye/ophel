@@ -17,6 +17,7 @@ import { t } from "~utils/i18n"
 import { useSettingsStore } from "~stores/settings-store"
 
 import { DialogOverlay } from "./ui/Dialog"
+import { Tooltip } from "./ui/Tooltip"
 
 const EXPORT_DIALOG_STYLES = `
   .gh-export-dialog {
@@ -574,7 +575,6 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
               type="button"
               className="gh-export-format-btn"
               data-active={!outlineCopySelected && selectedFormat === item.format}
-              title={item.label}
               onClick={() => {
                 setSelectedFormat(item.format)
                 setOutlineCopySelected(false)
@@ -592,7 +592,6 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
               type="button"
               className="gh-export-format-btn"
               data-active={outlineCopySelected}
-              title={t("outlineCopyFull")}
               onClick={() => setOutlineCopySelected(true)}>
               <span className="gh-export-format-label">
                 <CopyOutlineIcon size={15} className="gh-export-format-icon" />
@@ -606,86 +605,91 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
       <div className="gh-export-section">
         <div className="gh-export-section-header">
           <div className="gh-export-section-title">{t("exportOptions")}</div>
-          <button
-            type="button"
-            className="gh-export-settings-btn"
-            title={t("exportSettings")}
-            aria-label={t("exportSettings")}
-            disabled={isExporting}
-            onClick={handleOpenExportSettings}>
-            <SettingsIcon size={14} />
-          </button>
+          <Tooltip content={t("exportSettings")}>
+            <button
+              type="button"
+              className="gh-export-settings-btn"
+              aria-label={t("exportSettings")}
+              disabled={isExporting}
+              onClick={handleOpenExportSettings}>
+              <SettingsIcon size={14} />
+            </button>
+          </Tooltip>
         </div>
-        <div
-          className="gh-export-options-list"
-          data-disabled={outlineCopySelected}
-          aria-disabled={outlineCopySelected}
-          title={outlineCopySelected ? t("exportOptionsOutlineCopyHint") : undefined}>
-          <label className="gh-export-option-row">
-            <span>{t("exportIncludeThoughtsLabel")}</span>
-            <input
-              type="checkbox"
-              checked={includeThoughts}
-              disabled={outlineCopySelected}
-              onChange={(e) => setIncludeThoughts(e.target.checked)}
-            />
-          </label>
-
-          <label
-            className="gh-export-option-row"
-            data-disabled={!outlineCopySelected && selectedFormat === "json"}
-            title={
-              !outlineCopySelected && selectedFormat === "json"
-                ? t("exportShowIndexJsonUnsupported")
-                : undefined
-            }>
-            <span>{t("exportShowIndexLabel")}</span>
-            <input
-              type="checkbox"
-              checked={showIndex}
-              disabled={outlineCopySelected || selectedFormat === "json"}
-              onChange={(e) => setShowIndex(e.target.checked)}
-            />
-          </label>
-
-          {isMarkdownLike && (
-            <div className="gh-export-divider-wrap">
-              <span>{t("exportMarkdownDividerLabel")}</span>
-              <input
-                type="text"
-                className="gh-export-divider-input"
-                value={customDivider}
-                disabled={outlineCopySelected}
-                onChange={(e) => setCustomDivider(e.target.value)}
-                placeholder="---"
-              />
-            </div>
-          )}
-
-          {selectedFormat === "markdown" && (
+        <Tooltip
+          content={t("exportOptionsOutlineCopyHint")}
+          disabled={!outlineCopySelected}
+          triggerStyle={{ display: "block" }}>
+          <div
+            className="gh-export-options-list"
+            data-disabled={outlineCopySelected}
+            aria-disabled={outlineCopySelected}>
             <label className="gh-export-option-row">
-              <span>{t("exportPackagingZipOption")}</span>
+              <span>{t("exportIncludeThoughtsLabel")}</span>
               <input
                 type="checkbox"
-                checked={packageZip}
+                checked={includeThoughts}
                 disabled={outlineCopySelected}
-                onChange={(e) => setPackageZip(e.target.checked)}
+                onChange={(e) => setIncludeThoughts(e.target.checked)}
               />
             </label>
-          )}
 
-          {isMarkdownLike && (
-            <label className="gh-export-option-row">
-              <span>{t("exportStyleCleanOption")}</span>
-              <input
-                type="checkbox"
-                checked={exportStyle === "clean"}
-                disabled={outlineCopySelected}
-                onChange={(e) => setExportStyle(e.target.checked ? "clean" : "standard")}
-              />
-            </label>
-          )}
-        </div>
+            <Tooltip
+              content={t("exportShowIndexJsonUnsupported")}
+              disabled={outlineCopySelected || selectedFormat !== "json"}
+              triggerStyle={{ display: "block" }}>
+              <label
+                className="gh-export-option-row"
+                data-disabled={!outlineCopySelected && selectedFormat === "json"}>
+                <span>{t("exportShowIndexLabel")}</span>
+                <input
+                  type="checkbox"
+                  checked={showIndex}
+                  disabled={outlineCopySelected || selectedFormat === "json"}
+                  onChange={(e) => setShowIndex(e.target.checked)}
+                />
+              </label>
+            </Tooltip>
+
+            {isMarkdownLike && (
+              <div className="gh-export-divider-wrap">
+                <span>{t("exportMarkdownDividerLabel")}</span>
+                <input
+                  type="text"
+                  className="gh-export-divider-input"
+                  value={customDivider}
+                  disabled={outlineCopySelected}
+                  onChange={(e) => setCustomDivider(e.target.value)}
+                  placeholder="---"
+                />
+              </div>
+            )}
+
+            {selectedFormat === "markdown" && (
+              <label className="gh-export-option-row">
+                <span>{t("exportPackagingZipOption")}</span>
+                <input
+                  type="checkbox"
+                  checked={packageZip}
+                  disabled={outlineCopySelected}
+                  onChange={(e) => setPackageZip(e.target.checked)}
+                />
+              </label>
+            )}
+
+            {isMarkdownLike && (
+              <label className="gh-export-option-row">
+                <span>{t("exportStyleCleanOption")}</span>
+                <input
+                  type="checkbox"
+                  checked={exportStyle === "clean"}
+                  disabled={outlineCopySelected}
+                  onChange={(e) => setExportStyle(e.target.checked ? "clean" : "standard")}
+                />
+              </label>
+            )}
+          </div>
+        </Tooltip>
       </div>
 
       <div className="gh-export-footer">

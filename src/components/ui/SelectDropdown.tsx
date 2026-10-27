@@ -4,6 +4,8 @@ import { ChevronDownIcon } from "~components/icons"
 import { OPHEL_INTERACTION_LAYER_PROPS } from "~utils/dom-toolkit"
 import { t } from "~utils/i18n"
 
+import { Tooltip } from "./Tooltip"
+
 export interface SelectDropdownOption {
   value: string
   label: React.ReactNode
@@ -24,7 +26,7 @@ export interface SelectDropdownProps {
   menuClassName?: string
   optionClassName?: string
   ariaLabel?: string
-  /** 显式覆盖按钮的原生 title；传 null 可关闭（例如外层已有自定义 Tooltip 时避免双提示） */
+  /** 显式覆盖按钮的悬浮提示；传 null 可关闭（例如外层已有自定义 Tooltip 时避免双提示） */
   buttonTitle?: string | null
   onOpenChange?: (open: boolean) => void
 }
@@ -240,46 +242,50 @@ export const SelectDropdown: React.FC<SelectDropdownProps> = ({
         position: "relative",
         width: "100%",
       }}>
-      <button
-        ref={buttonRef}
-        type="button"
-        className={buttonClassName}
-        disabled={disabled}
-        aria-label={ariaLabel}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        onClick={() => !disabled && setOpen((previous) => !previous)}
-        onKeyDown={handleButtonKeyDown}
-        title={buttonTitle === undefined ? selectedOption?.title : buttonTitle || undefined}
-        style={{
-          width: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: "8px",
-          textAlign: "left",
-        }}>
-        <span
+      <Tooltip
+        content={buttonTitle === undefined ? selectedOption?.title ?? "" : buttonTitle || ""}
+        disabled={buttonTitle === undefined ? !selectedOption?.title : !buttonTitle}
+        triggerStyle={{ display: "flex", width: "100%" }}>
+        <button
+          ref={buttonRef}
+          type="button"
+          className={buttonClassName}
+          disabled={disabled}
+          aria-label={ariaLabel}
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          onClick={() => !disabled && setOpen((previous) => !previous)}
+          onKeyDown={handleButtonKeyDown}
           style={{
-            minWidth: 0,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-            display: "inline-flex",
+            width: "100%",
+            display: "flex",
             alignItems: "center",
+            justifyContent: "space-between",
             gap: "8px",
+            textAlign: "left",
           }}>
-          {selectedOption?.label || placeholder}
-        </span>
-        <ChevronDownIcon
-          size={16}
-          style={{
-            flexShrink: 0,
-            transition: "transform 0.2s ease",
-            transform: open ? "rotate(180deg)" : "rotate(0deg)",
-          }}
-        />
-      </button>
+          <span
+            style={{
+              minWidth: 0,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+            }}>
+            {selectedOption?.label || placeholder}
+          </span>
+          <ChevronDownIcon
+            size={16}
+            style={{
+              flexShrink: 0,
+              transition: "transform 0.2s ease",
+              transform: open ? "rotate(180deg)" : "rotate(0deg)",
+            }}
+          />
+        </button>
+      </Tooltip>
 
       {open && (
         <div
@@ -320,46 +326,50 @@ export const SelectDropdown: React.FC<SelectDropdownProps> = ({
               const isActive = index === activeIndex
 
               return (
-                <button
+                <Tooltip
                   key={option.value}
-                  ref={(element) => {
-                    optionRefs.current[index] = element
-                  }}
-                  type="button"
-                  role="option"
-                  aria-selected={isSelected}
-                  className={optionClassName}
-                  disabled={option.disabled}
-                  title={option.title}
-                  onMouseEnter={() => {
-                    if (!option.disabled) {
-                      setActiveIndex(index)
-                    }
-                  }}
-                  onClick={() => selectAtIndex(index)}
-                  style={{
-                    width: "100%",
-                    border: "none",
-                    borderRadius: "6px",
-                    padding: "7px 10px",
-                    textAlign: "left",
-                    background: isSelected
-                      ? "var(--gh-border-active, #3b82f6)"
-                      : isActive
-                        ? "var(--gh-hover, #f3f4f6)"
-                        : "transparent",
-                    color: isSelected
-                      ? "var(--gh-text-on-primary, #ffffff)"
-                      : "var(--gh-text, #1f2937)",
-                    cursor: option.disabled ? "not-allowed" : "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    fontSize: "14px",
-                    lineHeight: 1.4,
-                  }}>
-                  {option.label}
-                </button>
+                  content={option.title ?? ""}
+                  disabled={!option.title}
+                  triggerStyle={{ display: "flex", width: "100%" }}>
+                  <button
+                    ref={(element) => {
+                      optionRefs.current[index] = element
+                    }}
+                    type="button"
+                    role="option"
+                    aria-selected={isSelected}
+                    className={optionClassName}
+                    disabled={option.disabled}
+                    onMouseEnter={() => {
+                      if (!option.disabled) {
+                        setActiveIndex(index)
+                      }
+                    }}
+                    onClick={() => selectAtIndex(index)}
+                    style={{
+                      width: "100%",
+                      border: "none",
+                      borderRadius: "6px",
+                      padding: "7px 10px",
+                      textAlign: "left",
+                      background: isSelected
+                        ? "var(--gh-border-active, #3b82f6)"
+                        : isActive
+                          ? "var(--gh-hover, #f3f4f6)"
+                          : "transparent",
+                      color: isSelected
+                        ? "var(--gh-text-on-primary, #ffffff)"
+                        : "var(--gh-text, #1f2937)",
+                      cursor: option.disabled ? "not-allowed" : "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      fontSize: "14px",
+                      lineHeight: 1.4,
+                    }}>
+                    {option.label}
+                  </button>
+                </Tooltip>
               )
             })
           )}

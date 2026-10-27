@@ -181,8 +181,7 @@ export const PlaceholderInput: React.FC<PlaceholderInputProps> = ({
             className="placeholder-input-button"
             disabled={disabled}
             onMouseDown={(event) => event.preventDefault()}
-            onClick={() => insertPlaceholder(token)}
-            title={token}>
+            onClick={() => insertPlaceholder(token)}>
             {token}
           </button>
         ))}

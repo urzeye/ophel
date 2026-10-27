@@ -4,7 +4,7 @@
  */
 
 import React from "react"
-import { SafeSvgMarkup } from "~components/ui"
+import { SafeSvgMarkup, Tooltip } from "~components/ui"
 import { CHAIN_ICON_PRESETS } from "~constants/chain-icons"
 import { t } from "~utils/i18n"
 
@@ -206,16 +206,17 @@ export function ChainIconPicker({ value, onChange, onClose }: ChainIconPickerPro
           const title = label === labelKey ? icon.labelEn || icon.label : label
 
           return (
-            <button
-              type="button"
-              key={icon.id}
-              className={`gh-chain-icon-picker-item${value === icon.svg ? " active" : ""}`}
-              onClick={() => onChange(icon.id, icon.svg)}
-              aria-label={title}
-              aria-pressed={value === icon.svg}
-              title={title}>
-              <SafeSvgMarkup className="gh-chain-icon-picker-icon" svg={icon.svg} />
-            </button>
+            <Tooltip key={icon.id} content={title} triggerStyle={{ display: "flex" }}>
+              <button
+                type="button"
+                className={`gh-chain-icon-picker-item${value === icon.svg ? " active" : ""}`}
+                onClick={() => onChange(icon.id, icon.svg)}
+                aria-label={title}
+                aria-pressed={value === icon.svg}
+                style={{ width: "100%" }}>
+                <SafeSvgMarkup className="gh-chain-icon-picker-icon" svg={icon.svg} />
+              </button>
+            </Tooltip>
           )
         })}
       </div>

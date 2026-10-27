@@ -326,14 +326,15 @@ export const ReleaseNotesModal: React.FC<ReleaseNotesModalProps> = ({
             </Tooltip>
           </div>
           <div className="gh-release-notes-footer-actions">
-            <button
-              type="button"
-              className="gh-release-notes-secondary"
-              title={fullChangelogUrl}
-              onClick={onOpenFullChangelog}>
-              <ExternalLinkIcon size={14} />
-              <span>{t("releaseNotesViewFull")}</span>
-            </button>
+            <Tooltip content={fullChangelogUrl}>
+              <button
+                type="button"
+                className="gh-release-notes-secondary"
+                onClick={onOpenFullChangelog}>
+                <ExternalLinkIcon size={14} />
+                <span>{t("releaseNotesViewFull")}</span>
+              </button>
+            </Tooltip>
             <button type="button" className="gh-release-notes-primary" onClick={onClose}>
               <CheckIcon size={14} />
               <span>{t("releaseNotesGotIt")}</span>

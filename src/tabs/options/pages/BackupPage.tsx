@@ -248,9 +248,12 @@ const RemoteBackupModal: React.FC<{
             backups.map((file) => (
               <div key={file.name} className="settings-backup-remote-item">
                 <div style={{ minWidth: 0, flex: 1 }}>
-                  <div className="settings-backup-remote-name" title={file.name}>
-                    {file.name}
-                  </div>
+                  <Tooltip
+                    content={file.name}
+                    showOnlyWhenTruncated
+                    triggerStyle={{ display: "block" }}>
+                    <div className="settings-backup-remote-name">{file.name}</div>
+                  </Tooltip>
                   <div className="settings-backup-remote-meta">
                     {formatSize(file.size)} • {file.lastModified.toLocaleString()}
                   </div>

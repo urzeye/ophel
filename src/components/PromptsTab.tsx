@@ -2642,16 +2642,18 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                         onDragOver={(e) => handleStepDragOver(e, step.id)}
                         onDragEnd={handleStepDragEnd}>
                         <div className="gh-chain-step-header-row">
-                          <div className="gh-chain-step-drag-handle" title={t("drag")}>
-                            <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
-                              <circle cx="6" cy="4" r="1.2" />
-                              <circle cx="10" cy="4" r="1.2" />
-                              <circle cx="6" cy="8" r="1.2" />
-                              <circle cx="10" cy="8" r="1.2" />
-                              <circle cx="6" cy="12" r="1.2" />
-                              <circle cx="10" cy="12" r="1.2" />
-                            </svg>
-                          </div>
+                          <Tooltip content={t("drag")}>
+                            <div className="gh-chain-step-drag-handle">
+                              <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
+                                <circle cx="6" cy="4" r="1.2" />
+                                <circle cx="10" cy="4" r="1.2" />
+                                <circle cx="6" cy="8" r="1.2" />
+                                <circle cx="10" cy="8" r="1.2" />
+                                <circle cx="6" cy="12" r="1.2" />
+                                <circle cx="10" cy="12" r="1.2" />
+                              </svg>
+                            </div>
+                          </Tooltip>
                           <div className="gh-chain-step-index">{index + 1}</div>
                           <div className="gh-chain-step-mode-switch">
                             <button
@@ -3526,8 +3528,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                         setPromptActionMenu({ prompt: p, anchorEl: e.currentTarget })
                       }}
                       className="prompt-action-btn"
-                      aria-label={t("more")}
-                      title={t("more")}>
+                      aria-label={t("more")}>
                       <MoreHorizontalIcon size={16} />
                     </button>
                   </Tooltip>
