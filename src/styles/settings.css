@@ -59,10 +59,12 @@
   padding: 18px 16px 14px;
 }
 
+/* 品牌文字与下方菜单文字左对齐：header 16 + logo 34 + 间距 8 = nav 10 + 菜单项 12 + 图标位 24 + 12；
+   logo 图片自带约 1.6px 透明边，视觉间距约 9px，logo 中心也正好落在菜单图标列的中线上 */
 .settings-sidebar-logo {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   font-size: 17px;
   font-weight: 600;
   color: var(--gh-text, #1f2937);
@@ -223,10 +225,9 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   opacity: 0.6;
 }
 
-/* 2. 主题切换：与设置项里的分段控件同一套样式（凹下的轨道 + 凸起的选中项） */
+/* 2. 主题切换：与设置项里的分段控件同一套样式（凹下的轨道 + 凸起的选中项），配色见 .settings-segmented 处的共用定义 */
 .settings-theme-segmented {
   display: flex;
-  background: color-mix(in srgb, var(--gh-text, #1f2937) 7%, var(--gh-surface, #ffffff));
   padding: 3px;
   border-radius: 10px;
   gap: 2px;
@@ -300,11 +301,8 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   color: var(--gh-text, #374151);
 }
 
-/* 选中项：比轨道亮一档的面色 + 主文字色；深浅主题共用同一套变量，不再单独写死深色值 */
+/* 选中项的底色与文字色来自分段控件共用定义；各段等宽，加粗不会引起宽度跳动 */
 .settings-theme-segment.active {
-  background: color-mix(in srgb, var(--gh-surface, #ffffff) 92%, #ffffff);
-  color: var(--gh-text, #111827);
-  box-shadow: var(--gh-shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.1));
   font-weight: 500;
 }
 
@@ -361,8 +359,8 @@ html[data-theme="dark"] .platform-icon-dark-invert {
 .lang-link {
   background: none;
   border: none;
-  padding: 3px 5px;
-  color: var(--gh-text-tertiary, #9ca3af);
+  padding: 3px 7px;
+  color: var(--gh-text-secondary, #6b7280);
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
@@ -378,23 +376,33 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   background: color-mix(in srgb, var(--gh-hover, #f3f4f6) 85%, transparent);
 }
 
+.lang-link:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 38%, transparent);
+  outline-offset: 1px;
+}
+
+/* 当前语言：主题色淡底 + 可读主色文字，与大纲工具栏的激活按钮同一配方。
+   不能只靠文字颜色区分：部分主题的次级文字与主色同色相（如极光主题都是天蓝），只换颜色会完全看不出 */
 .lang-link.active {
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 14%, var(--gh-surface, #ffffff));
   color: var(--gh-primary-text, var(--gh-primary, #4285f4));
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .lang-divider {
-  color: var(--gh-text-secondary, #d1d5db);
+  color: var(--gh-text-tertiary, #9ca3af);
   font-size: 12px;
   margin: 0 1px;
 }
 
+/* 行高 40px（10 + 20 + 10）：固定 line-height，避免 CJK 与拉丁字体的默认行盒不同导致各语言行高不一 */
 .settings-nav-item {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 11px 12px;
+  padding: 10px 12px;
   margin-bottom: 2px;
+  line-height: 20px;
   border-radius: 12px;
   cursor: pointer;
   transition:
@@ -749,12 +757,12 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   border-radius: 12px;
 }
 
+/* 轨道与选中项配色见 .settings-segmented 处的分段控件共用定义 */
 .settings-tab-group {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
   padding: 4px;
-  background: color-mix(in srgb, var(--gh-text, #1f2937) 6%, var(--gh-canvas, #f3f4f6));
   border-radius: 10px;
 }
 
@@ -777,12 +785,6 @@ html[data-theme="dark"] .platform-icon-dark-invert {
 
 .settings-tab-item:hover {
   color: var(--gh-text, #374151);
-}
-
-.settings-tab-item.active {
-  background: color-mix(in srgb, var(--gh-surface, #ffffff) 92%, #ffffff);
-  color: var(--gh-text, #374151);
-  box-shadow: var(--gh-shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.1));
 }
 
 @media (max-width: 640px) {
@@ -924,14 +926,30 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   box-sizing: border-box;
 }
 
-/* 设置项里的分段控件：轨道比所在卡片深一档，选中项比轨道亮一档，选中项的图标用主色 */
+/* 分段控件共用配色：页签栏、设置项分段、侧栏主题切换只在这里定义，避免各写一份再分叉。
+   轨道取画布层（低于卡片和侧栏），选中项取比面再亮一档的颜色，深浅主题都是“轨道凹下、选中项凸起”。
+   轨道不能用“面 + 文字色”：深色主题的文字色偏亮，混出来反而比面更亮，会和选中项几乎同色 */
+.settings-tab-group,
+.settings-segmented,
+.settings-theme-segmented {
+  background: color-mix(in srgb, var(--gh-text, #1f2937) 6%, var(--gh-canvas, #f3f4f6));
+}
+
+.settings-tab-item.active,
+.settings-segmented-item[aria-pressed="true"],
+.settings-theme-segment.active {
+  background: color-mix(in srgb, var(--gh-surface, #ffffff) 92%, #ffffff);
+  color: var(--gh-text, #1f2937);
+  box-shadow: var(--gh-shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.1));
+}
+
+/* 设置项里的分段控件，选中项的图标用主色 */
 .settings-segmented {
   display: inline-flex;
   align-items: center;
   gap: 2px;
   padding: 3px;
   border-radius: 8px;
-  background: color-mix(in srgb, var(--gh-text, #1f2937) 7%, var(--gh-surface, #ffffff));
 }
 
 .settings-segmented-item {
@@ -960,12 +978,6 @@ html[data-theme="dark"] .platform-icon-dark-invert {
 .settings-segmented-item:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 45%, transparent);
   outline-offset: 1px;
-}
-
-.settings-segmented-item[aria-pressed="true"] {
-  background: color-mix(in srgb, var(--gh-surface, #ffffff) 92%, #ffffff);
-  color: var(--gh-text, #1f2937);
-  box-shadow: var(--gh-shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.1));
 }
 
 .settings-segmented-item[aria-pressed="true"] svg {

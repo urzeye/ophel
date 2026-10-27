@@ -446,7 +446,7 @@ html[data-theme="dark"] .conversations-unsupported-icon {
 .conversations-search-bar {
   padding: 7px 10px;
   border-bottom: 1px solid var(--gh-border, #e5e7eb);
-  background: color-mix(in srgb, var(--gh-bg-secondary, #f9fafb) 86%, var(--gh-bg, #ffffff));
+  background: var(--gh-bg, #ffffff);
   flex-shrink: 0;
 }
 
@@ -634,11 +634,11 @@ html[data-theme="dark"] .conversations-unsupported-icon {
   opacity: 0.5;
 }
 
-/* Clear Button */
+/* Clear Button：外层容器 overflow 可见（标签菜单要溢出），右侧圆角需与容器内圆角（8px - 1px 边框）一致 */
 .conversations-search-clear {
   appearance: none;
   -webkit-appearance: none;
-  border-radius: 0 9px 9px 0;
+  border-radius: 0 7px 7px 0;
 }
 
 .conversations-search-clear:hover:not(:disabled) {
@@ -650,7 +650,6 @@ html[data-theme="dark"] .conversations-unsupported-icon {
 .conversations-search-clear:disabled {
   opacity: 0.4;
   cursor: not-allowed;
-  background: var(--gh-bg-secondary, #f9fafb);
   pointer-events: none;
 }
 

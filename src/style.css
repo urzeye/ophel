@@ -1012,10 +1012,7 @@
   height: 100%;
   min-width: 0;
   padding: 0 28px;
-  border: 1px solid var(--gh-border, #e5e7eb);
-  border-radius: 8px;
   box-sizing: border-box;
-  background: var(--gh-bg-secondary, #f9fafb);
   color: var(--gh-text, #1f2937);
   font: inherit;
   font-size: 13px;
@@ -1036,7 +1033,23 @@
   padding-right: 10px;
 }
 
-.gh-panel-search-input:focus {
+/* 三个标签页共用的填充式搜索框（大纲、提示词是输入框本身，对话页是带筛选按钮的外层容器）：
+   静止时用文字色混出淡底、不画边框，浅色主题压暗、深色主题提亮，各主题与工具栏的区分度一致；
+   聚焦时换成输入框底色，加主色边框与外圈 */
+.gh-panel-search-input,
+.gh-panel-search--segmented {
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--gh-text, #1f2937) 6%, var(--gh-bg, #ffffff));
+}
+
+.gh-panel-search-input:hover,
+.gh-panel-search--segmented:hover {
+  background: color-mix(in srgb, var(--gh-text, #1f2937) 9%, var(--gh-bg, #ffffff));
+}
+
+.gh-panel-search-input:focus,
+.gh-panel-search--segmented:focus-within {
   border-color: var(--gh-primary, #4285f4);
   background: var(--gh-input-bg, #ffffff);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--gh-primary, #4285f4) 18%, transparent);
@@ -1063,10 +1076,11 @@
     transform 0.18s ease;
 }
 
+/* 按钮都在填充底上：用半透明叠色，静止底、悬停底、聚焦后的输入框底上都看得出 */
 .gh-panel-search-action:hover,
 .gh-panel-search-action:focus-visible {
   color: var(--gh-text, #374151);
-  background: var(--gh-hover, #f3f4f6);
+  background: color-mix(in srgb, var(--gh-text, #1f2937) 8%, transparent);
 }
 
 .gh-panel-search-action:focus-visible {
@@ -1132,27 +1146,20 @@
   outline-offset: -2px;
 }
 
+/* 外观（底色、边框、聚焦）与 .gh-panel-search-input 共用上面那一份，这里只管内部分段 */
 .gh-panel-search--segmented {
-  height: 32px;
   overflow: hidden;
-  border: 1px solid var(--gh-input-border, #d1d5db);
-  border-radius: 10px;
-  background: var(--gh-input-bg, #ffffff);
   transition:
     border-color 0.18s ease,
-    box-shadow 0.18s ease;
-}
-
-.gh-panel-search--segmented:focus-within {
-  border-color: var(--gh-primary, #4285f4);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--gh-primary, #4285f4) 18%, transparent);
+    box-shadow 0.18s ease,
+    background-color 0.18s ease;
 }
 
 .gh-panel-search--segmented .gh-panel-search-action {
   position: static;
   width: 30px;
   height: 100%;
-  border-left: 1px solid var(--gh-input-border, #d1d5db);
+  border-left: 1px solid color-mix(in srgb, var(--gh-text, #1f2937) 12%, transparent);
   border-radius: 0;
   flex-shrink: 0;
 }
@@ -2690,6 +2697,7 @@
   .gh-panel-resize-handle,
   .outline-toolbar-btn,
   .gh-panel-search-input,
+  .gh-panel-search--segmented,
   .gh-panel-search-action,
   .gh-panel-menu-item,
   .quick-prompt-btn,

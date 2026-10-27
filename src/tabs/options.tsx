@@ -354,7 +354,7 @@ const OptionsPage = () => {
                 setLocateRequest(null)
               }}>
               <span className="settings-nav-item-icon">
-                <item.Icon size={22} />
+                <item.Icon size={20} />
               </span>
               <span className={`settings-nav-item-label${item.beta ? " has-badge" : ""}`}>
                 {t(item.labelKey)}
