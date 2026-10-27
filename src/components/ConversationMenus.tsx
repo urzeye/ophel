@@ -206,7 +206,7 @@ interface FolderMenuProps {
 }
 
 export const FolderMenu: React.FC<FolderMenuProps> = ({
-  folder: _folder,
+  folder,
   anchorEl,
   onClose,
   onSelectAll,
@@ -231,39 +231,44 @@ export const FolderMenu: React.FC<FolderMenuProps> = ({
           <BatchIcon size={13} />
         </span>
       </MenuButton>
-      <MenuButton
-        onClick={() => {
-          onClose()
-          onRename()
-        }}>
-        <span
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: "16px",
-          }}>
-          <span>{t("conversationsRename")}</span>
-          <RenameIcon size={13} />
-        </span>
-      </MenuButton>
-      <MenuButton
-        danger
-        onClick={() => {
-          onClose()
-          onDelete()
-        }}>
-        <span
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: "16px",
-          }}>
-          <span>{t("conversationsDelete")}</span>
-          <DeleteIcon size={13} />
-        </span>
-      </MenuButton>
+      {/* 默认文件夹（收件箱）不能重命名、删除，只保留全选 */}
+      {!folder.isDefault && (
+        <>
+          <MenuButton
+            onClick={() => {
+              onClose()
+              onRename()
+            }}>
+            <span
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "16px",
+              }}>
+              <span>{t("conversationsRename")}</span>
+              <RenameIcon size={13} />
+            </span>
+          </MenuButton>
+          <MenuButton
+            danger
+            onClick={() => {
+              onClose()
+              onDelete()
+            }}>
+            <span
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "16px",
+              }}>
+              <span>{t("conversationsDelete")}</span>
+              <DeleteIcon size={13} />
+            </span>
+          </MenuButton>
+        </>
+      )}
     </ContextMenu>
   )
 }

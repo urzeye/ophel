@@ -1211,8 +1211,11 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
                     height: "30px",
                     boxSizing: "border-box",
                   }}>
+                  {/* 弹窗渲染在宿主页面，会继承宿主的断行规则（如 word-break: break-all），标签需显式不换行 */}
                   <span
                     style={{
+                      flexShrink: 0,
+                      whiteSpace: "nowrap",
                       fontSize: "11px",
                       color: "var(--gh-text-secondary, #6b7280)",
                       marginRight: "6px",
@@ -1237,7 +1240,8 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
                       outline: "none",
                       fontSize: "13px",
                       fontFamily: "monospace",
-                      width: "100%",
+                      flex: 1,
+                      minWidth: 0,
                       color: "var(--gh-text, #374151)",
                       textTransform: "uppercase",
                     }}

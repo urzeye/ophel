@@ -1225,13 +1225,10 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                     <div className="conversations-folder-controls">
                       <span className="conversations-folder-count">({count})</span>
 
+                      {/* 收件箱也有菜单（只含“全选此文件夹”），重命名、删除由 FolderMenu 按 isDefault 隐藏 */}
                       <button
                         className="conversations-folder-menu-btn"
-                        style={{
-                          userSelect: "none",
-                          visibility: folder.isDefault ? "hidden" : "visible",
-                          pointerEvents: folder.isDefault ? "none" : "auto",
-                        }}
+                        style={{ userSelect: "none" }}
                         onClick={(e) => {
                           e.stopPropagation()
                           onInteractionStateChange?.(true)
