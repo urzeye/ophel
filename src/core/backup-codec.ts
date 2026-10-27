@@ -21,11 +21,6 @@ export interface BackupDocument {
   data: Record<string, unknown>
 }
 
-export interface BackupValidationResult {
-  valid: boolean
-  errorKeys: string[]
-}
-
 export interface BackupRestoreResult {
   document: BackupDocument
   restoredKeys: string[]
@@ -284,19 +279,6 @@ export const normalizeBackupDocument = (input: unknown): BackupDocument => {
     timestamp: typeof input.timestamp === "string" ? input.timestamp : "",
     type,
     data: normalizedData,
-  }
-}
-
-export const validateBackupData = (input: unknown): BackupValidationResult => {
-  try {
-    normalizeBackupDocument(input)
-    return { valid: true, errorKeys: [] }
-  } catch (error) {
-    return {
-      valid: false,
-      errorKeys:
-        error instanceof BackupCodecError ? error.errorKeys : ["backupValidationInvalidFormat"],
-    }
   }
 }
 

@@ -32,7 +32,11 @@ import ShortcutsPage from "~tabs/options/pages/ShortcutsPage"
 import SitePacksPage from "~tabs/options/pages/SitePacksPage"
 import SiteSettingsPage from "~tabs/options/pages/SiteSettingsPage"
 import { APP_DISPLAY_NAME, getAppIconUrl } from "~utils/config"
-import { attachEditableKeyboardFocusGuard, OPHEL_INTERACTION_LAYER_PROPS } from "~utils/dom-toolkit"
+import {
+  attachEditableKeyboardFocusGuard,
+  isEventFromEscapeLayer,
+  OPHEL_INTERACTION_LAYER_PROPS,
+} from "~utils/dom-toolkit"
 import { setLanguage, t } from "~utils/i18n"
 import { scrollWithinSettingsContent } from "~utils/settings-scroll"
 
@@ -201,6 +205,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
+        // 内部浮层（下拉、快捷键录制、语言菜单）自行消费 Esc，只关最上层
+        if (isEventFromEscapeLayer(e)) return
         onClose()
         return
       }

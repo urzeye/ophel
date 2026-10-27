@@ -1,4 +1,4 @@
-import React, { useSyncExternalStore } from "react"
+import React, { useCallback, useMemo, useRef } from "react"
 
 import { SidebarCommunityLinks } from "~components/SidebarCommunityLinks"
 import {
@@ -22,12 +22,6 @@ export const SidebarFooter = ({ siteId = "_default" }: { siteId?: string }) => {
   // 如果是独立页面，不显示主题切换（因为主题是按站点配置的）
   const isStandalonePage = !window.__ophelThemeManager
 
-  // 从全局 ThemeManager 订阅当前主题模式（Single Source of Truth）
-  const themeManager = window.__ophelThemeManager
-  const currentThemeMode = useSyncExternalStore(
-    themeManager?.subscribe ?? (() => () => {}),
-    themeManager?.getSnapshot ?? (() => "light" as const),
-  )
   const siteTheme = settings ? getSiteTheme(settings, siteId) : undefined
   const currentThemePreference = siteTheme?.mode || "light"
 
@@ -74,7 +68,10 @@ export const SidebarFooter = ({ siteId = "_default" }: { siteId?: string }) => {
   const effectiveLang = getEffectiveLanguage(settingLang)
 
   const [isMenuOpen, setIsMenuOpen] = React.useState(false)
-  const moreBtnRef = React.useRef<HTMLButtonElement>(null)
+  const langIconRef = useRef<HTMLButtonElement>(null)
+  const moreBtnRef = useRef<HTMLButtonElement>(null)
+  const languageMenuTriggerRefs = useMemo(() => [langIconRef, moreBtnRef], [])
+  const closeLanguageMenu = useCallback(() => setIsMenuOpen(false), [])
   const themeSegmentRef = React.useRef<HTMLDivElement>(null)
   const [themeSegmentState, setThemeSegmentState] = React.useState<"normal" | "compact" | "icon">(
     "normal",
@@ -95,15 +92,16 @@ export const SidebarFooter = ({ siteId = "_default" }: { siteId?: string }) => {
     pt: "PT",
   }
 
-  // 动态槽位逻辑：
-  // 1. 固定显示 zh-CN 和 EN
-  // 2. 如果当前语言不是 zh-CN/EN，则第三个槽位显示当前语言
-  // 3. 如果当前语言是 zh-CN/EN，则第三个槽位显示推荐语言 (默认 es，或者可以记录上次使用的其他语言)
+  // 语言快捷位：固定显示简体中文与英文；第三个位置优先放当前语言，
+  // 当前语言已在固定位时放浏览器语言（两者都已在固定位就只显示两个），其余语言走更多菜单
   const fixedSlots = ["zh-CN", "en"]
-  const dynamicSlot = fixedSlots.includes(effectiveLang) ? "es" : effectiveLang
-
-  // 去重（虽然逻辑上 dynamicSlot 应该不会和 fixed 重复，除非有效语言列表只有2个）
-  const visibleSlots = Array.from(new Set([...fixedSlots, dynamicSlot]))
+  const browserLang = getEffectiveLanguage("auto")
+  const extraSlot = !fixedSlots.includes(effectiveLang)
+    ? effectiveLang
+    : !fixedSlots.includes(browserLang)
+      ? browserLang
+      : null
+  const visibleSlots = extraSlot ? [...fixedSlots, extraSlot] : fixedSlots
 
   React.useEffect(() => {
     themeSegmentStateRef.current = themeSegmentState
@@ -215,11 +213,13 @@ export const SidebarFooter = ({ siteId = "_default" }: { siteId?: string }) => {
       <div className="settings-lang-inline">
         {/* 左侧语言图标 */}
         <button
+          ref={langIconRef}
+          type="button"
           className="lang-icon"
-          onClick={(e) => {
-            e.stopPropagation()
-            setIsMenuOpen(!isMenuOpen)
-          }}>
+          aria-label={t("moreLanguages")}
+          aria-haspopup="menu"
+          aria-expanded={isMenuOpen}
+          onClick={() => setIsMenuOpen((open) => !open)}>
           <EarthIcon size={16} />
         </button>
 
@@ -241,11 +241,12 @@ export const SidebarFooter = ({ siteId = "_default" }: { siteId?: string }) => {
         <Tooltip content={t("moreLanguages")}>
           <button
             ref={moreBtnRef}
+            type="button"
             className={`lang-more-btn ${isMenuOpen ? "active" : ""}`}
-            onClick={(e) => {
-              e.stopPropagation()
-              setIsMenuOpen(!isMenuOpen)
-            }}>
+            aria-label={t("moreLanguages")}
+            aria-haspopup="menu"
+            aria-expanded={isMenuOpen}
+            onClick={() => setIsMenuOpen((open) => !open)}>
             <TranslateIcon size={18} />
           </button>
         </Tooltip>
@@ -253,13 +254,14 @@ export const SidebarFooter = ({ siteId = "_default" }: { siteId?: string }) => {
         {isMenuOpen && (
           <LanguageMenu
             currentLang={effectiveLang}
-            themeMode={currentThemeMode}
             onSelect={(lang) => {
               handleLanguageChange(lang)
               setIsMenuOpen(false)
+              moreBtnRef.current?.focus({ preventScroll: true })
             }}
-            onClose={() => setIsMenuOpen(false)}
-            triggerRef={moreBtnRef}
+            onClose={closeLanguageMenu}
+            restoreFocusRef={moreBtnRef}
+            triggerRefs={languageMenuTriggerRefs}
           />
         )}
       </div>

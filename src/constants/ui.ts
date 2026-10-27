@@ -2358,14 +2358,6 @@ export const TOAST_DURATION = {
   LONG: 3000,
 } as const
 
-// ==================== 状态颜色 ====================
-export const STATUS_COLORS = {
-  SUCCESS: "#10b981", // green-500
-  ERROR: "#ef4444", // red-500
-  WARNING: "#f59e0b", // amber-500
-  INFO: "var(--gh-text-secondary)",
-} as const
-
 // ==================== 通知声音预设 ====================
 export const NOTIFICATION_SOUND_PRESETS = [
   {

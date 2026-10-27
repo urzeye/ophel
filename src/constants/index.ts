@@ -26,7 +26,6 @@ export {
   NOTIFICATION_SOUND_PRESETS,
   TAG_COLORS,
   TOAST_DURATION,
-  STATUS_COLORS,
   type NotificationSoundPresetId,
   type SettingsNavigateDetail,
   type SettingsSearchItem,

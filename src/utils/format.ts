@@ -29,3 +29,14 @@ export function formatWordCount(count: number, locale: string): string {
 
   return count.toString()
 }
+
+/**
+ * 格式化日期时间（中等日期 + 短时间），用于「上次检查」「上次同步」「备份时间」等状态展示
+ * @param value - 时间戳、ISO 字符串或 Date；无法解析时原样返回，不吞掉异常值
+ * @param locale - BCP 47 locale，调用方传入 getCurrentLocale()
+ */
+export function formatDateTime(value: number | string | Date, locale: string): string {
+  const date = value instanceof Date ? value : new Date(value)
+  if (Number.isNaN(date.getTime())) return String(value)
+  return new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(date)
+}

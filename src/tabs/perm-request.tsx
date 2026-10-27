@@ -8,6 +8,7 @@
 import React, { useEffect, useState } from "react"
 
 import { isSiteMatchPatternOriginPattern } from "~adapters/declarative/match-pattern"
+import { CheckIcon, ClearIcon, ShieldCheckIcon } from "~components/icons"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
 import { getPlatformFontFamily } from "~utils/font"
 import { setLanguage, t } from "~utils/i18n"
@@ -189,7 +190,9 @@ const PermissionRequestPage: React.FC = () => {
         {status === "pending" && (
           <>
             {/* 图标 */}
-            <div style={{ fontSize: "48px", marginBottom: "16px" }}>🔐</div>
+            <div className="perm-request-icon" aria-hidden="true">
+              <ShieldCheckIcon size={28} />
+            </div>
 
             {/* 标题 */}
             <h1
@@ -248,12 +251,14 @@ const PermissionRequestPage: React.FC = () => {
 
         {status === "granted" && (
           <>
-            <div style={{ fontSize: "48px", marginBottom: "16px" }}>✅</div>
+            <div className="perm-request-icon is-success" aria-hidden="true">
+              <CheckIcon size={28} />
+            </div>
             <h1
               style={{
                 fontSize: "18px",
                 fontWeight: 600,
-                color: "#10b981",
+                color: "var(--gh-success, #10b981)",
               }}>
               {t("permissionGranted")}
             </h1>
@@ -270,12 +275,14 @@ const PermissionRequestPage: React.FC = () => {
 
         {status === "denied" && (
           <>
-            <div style={{ fontSize: "48px", marginBottom: "16px" }}>❌</div>
+            <div className="perm-request-icon is-danger" aria-hidden="true">
+              <ClearIcon size={28} />
+            </div>
             <h1
               style={{
                 fontSize: "18px",
                 fontWeight: 600,
-                color: "#ef4444",
+                color: "var(--gh-text-danger, #ef4444)",
               }}>
               {t(config.deniedKey, config.descParams)}
             </h1>

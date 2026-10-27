@@ -333,7 +333,7 @@ Grok 接入的差异点（`src/adapters/grok-history-outline.ts`、`src/adapters
 **当前状态：项目尚未建立测试体系。** 源码中无 test/spec 文件，`package.json` 中无测试相关命令或依赖（如 Jest、Vitest、Playwright）。
 
 建议优先引入的测试：
-1. **单元测试**：适配器的 `match()` / `getSiteId()` 逻辑、`backup-validator.ts`、`format.ts`、`syntax.ts`（搜索语法解析）
+1. **单元测试**：适配器的 `match()` / `getSiteId()` 逻辑、`backup-codec.ts`（备份解析与校验）、`format.ts`、`syntax.ts`（搜索语法解析）
 2. **集成测试**：`modules-init.ts` 的模块编排、`webdav-sync.ts` 的同步逻辑
 3. **E2E 测试**：使用 Playwright + 浏览器扩展测试框架验证核心用户流程
 

@@ -4,15 +4,19 @@
  */
 import React, { useState } from "react"
 
-import { CopyIcon } from "~components/icons"
-import { ConfirmDialog, DialogOverlay, InputDialog, Tooltip } from "~components/ui"
 import {
-  BATCH_TEST_CONFIG,
-  SITE_IDS,
-  STATUS_COLORS,
-  TOAST_DURATION,
-  VALIDATION_PATTERNS,
-} from "~constants"
+  CheckIcon,
+  CopyIcon,
+  ExportIcon,
+  GlobeIcon,
+  ImportIcon,
+  InfoIcon,
+  PlusIcon,
+  RefreshIcon,
+  ShieldCheckIcon,
+} from "~components/icons"
+import { ConfirmDialog, DialogOverlay, InputDialog, Tooltip } from "~components/ui"
+import { BATCH_TEST_CONFIG, SITE_IDS, TOAST_DURATION, VALIDATION_PATTERNS } from "~constants"
 import { platform } from "~platform"
 import { useClaudeSessionKeysStore } from "~stores/claude-sessionkeys-store"
 import { t } from "~utils/i18n"
@@ -37,12 +41,22 @@ type DialogState =
   | { type: "import-name"; sessionKey: string }
   | { type: "delete"; id: string; name: string }
 
+// 只露出固定前缀与末 4 位：足以区分不同 key，又不在界面上展示可直接使用的凭证
+const maskSessionKey = (key: string): string =>
+  key.length > 20 ? `${key.slice(0, 12)}••••••••${key.slice(-4)}` : `••••••••${key.slice(-4)}`
+
+const getKeyStatus = (isValid: boolean | undefined): { tone: string; labelKey: string } => {
+  if (isValid === undefined) return { tone: "is-muted", labelKey: "claudeKeyUntested" }
+  return isValid
+    ? { tone: "is-success", labelKey: "claudeKeyValid" }
+    : { tone: "is-danger", labelKey: "claudeKeyInvalid" }
+}
+
 const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
   const { keys, currentKeyId, addKey, deleteKey, setCurrentKey, testKey, setKeys } =
     useClaudeSessionKeysStore()
   const [testing, setTesting] = useState<Record<string, boolean>>({})
   const [dialog, setDialog] = useState<DialogState>({ type: "none" })
-  const [hoveredKeyId, setHoveredKeyId] = useState<string | null>(null)
   const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null)
 
   const [isBatchTesting, setIsBatchTesting] = useState(false)
@@ -396,34 +410,6 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
     closeDialog()
   }
 
-  // 渲染状态标签
-  const renderStatusBadge = (isValid: boolean | undefined) => {
-    if (isValid === undefined) return <span style={{ color: STATUS_COLORS.INFO }}>-</span>
-    return isValid ? (
-      <span style={{ color: STATUS_COLORS.SUCCESS, fontWeight: 500 }}>✓ {t("claudeKeyValid")}</span>
-    ) : (
-      <span style={{ color: STATUS_COLORS.ERROR, fontWeight: 500 }}>✗ {t("claudeKeyInvalid")}</span>
-    )
-  }
-
-  // 渲染类型标签
-  const renderTypeBadge = (type: string | undefined) => {
-    if (!type)
-      return <span style={{ color: "var(--gh-text-secondary)" }}>{t("claudeKeyUntested")}</span>
-    return (
-      <span
-        style={{
-          padding: "2px 8px",
-          borderRadius: "4px",
-          fontSize: "11px",
-          fontWeight: 500,
-          backgroundColor: "var(--gh-bg-secondary)",
-        }}>
-        {type}
-      </span>
-    )
-  }
-
   return (
     <div>
       {/* Session Key 管理（合并后的卡片） */}
@@ -431,418 +417,163 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
         title={t("claudeSessionKeyTitle")}
         description={t("claudeSessionKeyDesc")}
         settingId="claude-session-keys">
-        {/* 当前使用状态栏 */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "16px",
-            marginBottom: "20px",
-            backgroundColor: "var(--gh-bg-secondary)",
-            borderRadius: "12px",
-            border: "1px solid var(--gh-border)",
-            flexWrap: "wrap",
-            gap: "12px",
-          }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", flex: "1 1 auto" }}>
-            <span style={{ fontSize: "13px", color: "var(--gh-text-secondary)" }}>
-              {t("claudeCurrentUsing")}
-            </span>
-            <span
-              style={{
-                fontSize: "14px",
-                fontWeight: 500,
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-              }}>
-              {currentKey ? (
-                <>
-                  <span style={{ fontWeight: 600 }}>🔑 {currentKey.name}</span>
-                  {currentKey.accountType && (
-                    <span
-                      style={{
-                        padding: "2px 8px",
-                        borderRadius: "12px",
-                        fontSize: "11px",
-                        fontWeight: 500,
-                        backgroundColor: "var(--gh-bg)",
-                        border: "1px solid var(--gh-border)",
-                        color: "var(--gh-text-secondary)",
-                      }}>
-                      {currentKey.accountType}
-                    </span>
-                  )}
-                </>
-              ) : (
-                <span style={{ color: "var(--gh-text-secondary)" }}>
-                  {t("claudeNoKeySelected")}
-                </span>
+        {/* 当前使用状态：切换统一由下方每行的「使用」完成 */}
+        <div className="settings-claude-current">
+          <span className="settings-claude-current-label">{t("claudeCurrentUsing")}</span>
+          {currentKey ? (
+            <span className="settings-claude-current-key">
+              <strong>{currentKey.name}</strong>
+              {currentKey.accountType && (
+                <span className="settings-claude-type-badge">{currentKey.accountType}</span>
               )}
             </span>
-          </div>
-
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
-            {!isClaudeSite && (
-              <div
-                style={{
-                  color: "#ca8a04", // 保持醒目的黄色，但在暗色模式下可能需要调整
-                  backgroundColor: "rgba(234, 179, 8, 0.1)",
-                  fontSize: "12px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  padding: "6px 10px",
-                  borderRadius: "6px",
-                  border: "1px solid rgba(234, 179, 8, 0.2)",
-                  whiteSpace: "nowrap",
-                }}>
-                <span>⚠️</span>
-                <span>{t("claudeNotOnSiteHint")}</span>
-              </div>
-            )}
-            {/* 快捷切换下拉 */}
-            <Tooltip content={!isClaudeSite ? t("claudeNotOnSiteHint") : ""}>
-              <select
-                className="settings-select"
-                value={currentKeyId}
-                onChange={(e) => handleSwitchToken(e.target.value)}
-                disabled={!isClaudeSite || keys.length === 0 || isBatchTesting}
-                style={{
-                  minWidth: "200px",
-                  padding: "8px 12px",
-                  fontSize: "13px",
-                  borderRadius: "8px",
-                  opacity: !isClaudeSite || keys.length === 0 || isBatchTesting ? 0.6 : 1,
-                  cursor: !isClaudeSite || isBatchTesting ? "not-allowed" : "pointer",
-                  backgroundColor: "var(--gh-bg)",
-                  border: "1px solid var(--gh-border)",
-                  color: "var(--gh-text)",
-                }}>
-                {keys.length === 0 ? (
-                  <option value="">{t("claudePleaseAddKey")}</option>
-                ) : (
-                  keys.map((k) => (
-                    <option key={k.id} value={k.id}>
-                      🔑 {k.name} {k.accountType ? `(${k.accountType})` : ""}
-                    </option>
-                  ))
-                )}
-              </select>
-            </Tooltip>
-          </div>
+          ) : (
+            <span className="settings-claude-current-empty">{t("claudeNoKeySelected")}</span>
+          )}
+          {!isClaudeSite && (
+            <span className="settings-claude-site-hint">
+              <InfoIcon size={14} />
+              {t("claudeNotOnSiteHint")}
+            </span>
+          )}
         </div>
 
-        {/* 操作按钮栏 */}
-        <div
-          style={{
-            display: "flex", // 改为 Flex 布局
-            gap: "10px", // 间距适中
-            marginBottom: "20px",
-            flexWrap: "nowrap", // 强制不换行
-          }}>
+        {/* 操作栏：空间不足时换行，长语言下不会溢出 */}
+        <div className="settings-claude-toolbar">
           <button
+            type="button"
             className="settings-btn settings-btn-primary"
             onClick={handleAddToken}
-            disabled={isBatchTesting}
-            style={{
-              justifyContent: "center",
-              padding: "8px 12px", // 减小一点内边距以便容纳更多
-              flex: "1 1 auto", // 自适应宽度
-              opacity: isBatchTesting ? 0.6 : 1,
-              whiteSpace: "nowrap", // 防止文字换行
-            }}>
-            ➕ {t("claudeAddKey")}
+            disabled={isBatchTesting}>
+            <PlusIcon size={16} />
+            {t("claudeAddKey")}
           </button>
 
           <button
+            type="button"
             className="settings-btn settings-btn-secondary"
             onClick={handleBatchTest}
-            disabled={keys.length === 0 || isBatchTesting}
-            style={{
-              justifyContent: "center",
-              padding: "8px 12px",
-              flex: "1 1 auto",
-              opacity: keys.length === 0 || isBatchTesting ? 0.6 : 1,
-              // --gh-primary-rgb 从未定义，用 color-mix 基于 --gh-primary 取 12% 透明度
-              backgroundColor: isBatchTesting
-                ? "color-mix(in srgb, var(--gh-primary, #3b82f6) 12%, transparent)"
-                : undefined,
-              color: isBatchTesting ? "var(--gh-primary)" : undefined,
-              borderColor: isBatchTesting ? "var(--gh-primary)" : undefined,
-              whiteSpace: "nowrap",
-            }}>
+            disabled={keys.length === 0 || isBatchTesting}>
             {isBatchTesting ? (
-              <>
-                <div
-                  style={{
-                    marginRight: "8px",
-                    width: "14px",
-                    height: "14px",
-                    border: "2px solid currentColor",
-                    borderTopColor: "transparent",
-                    borderRadius: "50%",
-                    animation: "spin 1s linear infinite",
-                  }}
-                />
-                {batchProgress}
-              </>
+              <RefreshIcon size={16} className="settings-spin" />
             ) : (
-              <>⚡ {t("claudeBatchTest")}</>
+              <ShieldCheckIcon size={16} />
             )}
+            {isBatchTesting ? batchProgress : t("claudeBatchTest")}
           </button>
 
           {/* 从浏览器导入按钮仅在扩展环境显示（油猴脚本无法读取 HttpOnly cookie） */}
           {platform.hasCapability("cookies") && (
-            <Tooltip content={!isClaudeSite ? t("claudeNotOnSiteHint") : ""}>
+            <Tooltip content={t("claudeNotOnSiteHint")} disabled={isClaudeSite}>
               <button
+                type="button"
                 className="settings-btn settings-btn-secondary"
                 onClick={handleImportFromBrowser}
-                disabled={!isClaudeSite || isBatchTesting}
-                style={{
-                  justifyContent: "center",
-                  padding: "8px 12px",
-                  flex: "1 1 auto",
-                  opacity: !isClaudeSite || isBatchTesting ? 0.6 : 1,
-                  backgroundColor: isClaudeSite ? "var(--gh-bg)" : "var(--gh-bg-secondary)",
-                  color: isClaudeSite ? "var(--gh-primary)" : "var(--gh-text-secondary)",
-                  borderColor: isClaudeSite ? "var(--gh-primary)" : "var(--gh-border)",
-                  whiteSpace: "nowrap",
-                }}>
-                🌐 {t("claudeImportFromBrowser")}
+                disabled={!isClaudeSite || isBatchTesting}>
+                <GlobeIcon size={16} />
+                {t("claudeImportFromBrowser")}
               </button>
             </Tooltip>
           )}
+
           <button
+            type="button"
             className="settings-btn settings-btn-secondary"
             onClick={handleImportTokens}
-            disabled={isBatchTesting}
-            style={{
-              justifyContent: "center",
-              padding: "8px 12px",
-              flex: "1 1 auto",
-              opacity: isBatchTesting ? 0.6 : 1,
-              whiteSpace: "nowrap",
-            }}>
-            📥 {t("claudeImportJSON")}
+            disabled={isBatchTesting}>
+            <ImportIcon size={16} />
+            {t("claudeImportJSON")}
           </button>
+
           <button
+            type="button"
             className="settings-btn settings-btn-secondary"
             onClick={handleExportTokens}
-            disabled={keys.length === 0 || isBatchTesting}
-            style={{
-              justifyContent: "center",
-              padding: "8px 12px",
-              flex: "1 1 auto",
-              opacity: keys.length === 0 || isBatchTesting ? 0.6 : 1,
-              whiteSpace: "nowrap",
-            }}>
-            📤 {t("claudeExportJSON")}
+            disabled={keys.length === 0 || isBatchTesting}>
+            <ExportIcon size={16} />
+            {t("claudeExportJSON")}
           </button>
         </div>
 
         {/* Token 列表 */}
         {keys.length === 0 ? (
-          <div
-            style={{
-              padding: "48px 24px",
-              textAlign: "center",
-              color: "var(--gh-text-secondary)",
-              backgroundColor: "var(--gh-bg-secondary)",
-              borderRadius: "8px",
-              border: "1px dashed var(--gh-border)",
-            }}>
-            <div style={{ marginBottom: "8px", fontSize: "24px" }}>🔑</div>
-            <div>{t("claudeNoKeys")}</div>
-            <div style={{ fontSize: "12px", marginTop: "4px" }}>{t("claudeNoKeysHint")}</div>
+          <div className="settings-claude-empty">
+            <strong>{t("claudeNoKeys")}</strong>
+            <span>{t("claudeNoKeysHint")}</span>
           </div>
         ) : (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "12px",
-            }}>
+          <div className="settings-claude-key-list">
             {keys.map((key) => {
               const isCurrent = key.id === currentKeyId
-              const isHovered = hoveredKeyId === key.id
+              const isCopied = copiedKeyId === key.id
+              const status = getKeyStatus(key.isValid)
 
               return (
                 <div
                   key={key.id}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: "16px",
-                    padding: "16px 20px",
-                    backgroundColor: isCurrent ? "var(--gh-bg)" : "var(--gh-bg-secondary)",
-                    borderRadius: "12px",
-                    border: isCurrent
-                      ? "2px solid var(--gh-primary)"
-                      : "1px solid var(--gh-border)",
-                    transition: "all 0.2s ease",
-                    boxShadow: isCurrent ? "var(--gh-shadow-brand)" : "none",
-                  }}
-                  onMouseEnter={() => setHoveredKeyId(key.id)}
-                  onMouseLeave={() => setHoveredKeyId(null)}>
-                  {/* 左侧信息区 */}
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "6px",
-                      flex: "1 1 auto",
-                      minWidth: 0,
-                    }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      <span
-                        style={{
-                          fontWeight: 600,
-                          fontSize: "15px",
-                          color: "var(--gh-text)",
-                        }}>
-                        {key.name}
-                      </span>
+                  className={`settings-claude-key${isCurrent ? " is-current" : ""}`}>
+                  <div className="settings-claude-key-info">
+                    <div className="settings-claude-key-title">
+                      <span className="settings-claude-key-name">{key.name}</span>
                       {isCurrent && (
-                        <span
-                          style={{
-                            fontSize: "11px",
-                            color: "var(--gh-primary)",
-                            backgroundColor: "var(--gh-bg-secondary)",
-                            padding: "1px 6px",
-                            borderRadius: "4px",
-                            fontWeight: 500,
-                            border: "1px solid var(--gh-border)",
-                          }}>
-                          {t("claudeKeyUsing")}
-                        </span>
+                        <span className="settings-claude-using-badge">{t("claudeKeyUsing")}</span>
                       )}
-                      {renderTypeBadge(key.accountType)}
+                      {key.accountType && (
+                        <span className="settings-claude-type-badge">{key.accountType}</span>
+                      )}
                     </div>
-
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      {/* Session Key Preview */}
-                      <Tooltip content={t("claudeKeyDoubleTapCopy")}>
-                        <code
-                          onDoubleClick={() => handleCopyKey(key.id, key.key)}
-                          style={{
-                            fontSize: "12px",
-                            fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
-                            color: "var(--gh-text-secondary)",
-                            backgroundColor: "var(--gh-bg-tertiary)",
-                            padding: "2px 6px",
-                            borderRadius: "4px",
-                            cursor: "pointer",
-                            maxWidth: "300px",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                          }}>
-                          {key.key.substring(0, 32)}...
-                        </code>
+                    <div className="settings-claude-key-value">
+                      <code>{maskSessionKey(key.key)}</code>
+                      <Tooltip content={isCopied ? t("claudeCopied") : t("claudeCopyKey")}>
+                        <button
+                          type="button"
+                          className="settings-claude-copy-btn"
+                          aria-label={t("claudeCopyKey")}
+                          onClick={() => handleCopyKey(key.id, key.key)}>
+                          {isCopied ? <CheckIcon size={14} /> : <CopyIcon size={14} />}
+                        </button>
                       </Tooltip>
-                      {(isHovered || copiedKeyId === key.id) && (
-                        <Tooltip
-                          content={copiedKeyId === key.id ? t("claudeCopied") : t("claudeCopyKey")}>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleCopyKey(key.id, key.key)
-                            }}
-                            style={{
-                              background: "none",
-                              border: "none",
-                              cursor: copiedKeyId === key.id ? "default" : "pointer",
-                              fontSize: "12px",
-                              padding: "2px",
-                              color:
-                                copiedKeyId === key.id
-                                  ? "var(--gh-secondary)"
-                                  : "var(--gh-text-tertiary)",
-                            }}>
-                            {copiedKeyId === key.id ? "✓" : <CopyIcon size={14} />}
-                          </button>
-                        </Tooltip>
-                      )}
                     </div>
                   </div>
 
-                  {/* 右侧状态与操作区 */}
-                  <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-                    {/* 状态 */}
-                    <div style={{ fontSize: "13px", color: "var(--gh-text-secondary)" }}>
-                      {renderStatusBadge(key.isValid)}
-                    </div>
-
-                    {/* 操作按钮组 */}
-                    <div style={{ display: "flex", gap: "8px" }}>
-                      <Tooltip
-                        content={
-                          isCurrent
-                            ? t("claudeAlreadyUsing")
-                            : !isClaudeSite
-                              ? t("claudeNotOnSiteHint")
-                              : t("claudeKeyUse")
-                        }>
-                        <button
-                          className="settings-btn settings-btn-secondary"
-                          onClick={() => handleSwitchToken(key.id)}
-                          disabled={!isClaudeSite || isCurrent}
-                          style={{
-                            padding: "6px 12px",
-                            fontSize: "13px",
-                            opacity: !isClaudeSite || isCurrent ? 0.5 : 1,
-                            cursor: !isClaudeSite || isCurrent ? "not-allowed" : "pointer",
-                          }}>
-                          {isCurrent ? t("claudeKeyUsing") : t("claudeKeyUse")}
-                        </button>
-                      </Tooltip>
+                  <div className="settings-claude-key-actions">
+                    <span className={`settings-status-badge ${status.tone}`}>
+                      {t(status.labelKey)}
+                    </span>
+                    <Tooltip
+                      content={
+                        isCurrent
+                          ? t("claudeAlreadyUsing")
+                          : !isClaudeSite
+                            ? t("claudeNotOnSiteHint")
+                            : t("claudeKeyUse")
+                      }>
                       <button
-                        className="settings-btn settings-btn-secondary"
-                        style={{
-                          padding: "6px 12px",
-                          fontSize: "13px",
-                          minWidth: "60px",
-                          justifyContent: "center",
-                        }}
-                        onClick={() => handleTestToken(key.id)}
-                        disabled={testing[key.id]}>
-                        {testing[key.id] ? (
-                          <div
-                            style={{
-                              width: "14px",
-                              height: "14px",
-                              border: "2px solid currentColor",
-                              borderTopColor: "transparent",
-                              borderRadius: "50%",
-                              animation: "spin 1s linear infinite",
-                            }}
-                          />
-                        ) : (
-                          t("claudeKeyTest")
-                        )}
+                        type="button"
+                        className="settings-btn settings-btn-secondary settings-btn-sm"
+                        onClick={() => handleSwitchToken(key.id)}
+                        disabled={!isClaudeSite || isCurrent}>
+                        {isCurrent ? t("claudeKeyUsing") : t("claudeKeyUse")}
                       </button>
-                      <button
-                        className="settings-btn settings-btn-secondary"
-                        style={{
-                          padding: "6px 12px",
-                          fontSize: "13px",
-                          color: "var(--gh-danger)",
-                          borderColor: "rgba(239, 68, 68, 0.2)",
-                          backgroundColor: "rgba(239, 68, 68, 0.05)",
-                        }}
-                        onClick={() => handleDeleteToken(key.id, key.name)}>
-                        {t("claudeKeyDelete")}
-                      </button>
-                      <style>{`
-                        @keyframes spin {
-                          from { transform: rotate(0deg); }
-                          to { transform: rotate(360deg); }
-                        }
-                      `}</style>
-                    </div>
+                    </Tooltip>
+                    <button
+                      type="button"
+                      className="settings-btn settings-btn-secondary settings-btn-sm settings-claude-test-btn"
+                      aria-label={t("claudeKeyTest")}
+                      onClick={() => handleTestToken(key.id)}
+                      disabled={testing[key.id]}>
+                      {testing[key.id] ? (
+                        <RefreshIcon size={14} className="settings-spin" />
+                      ) : (
+                        t("claudeKeyTest")
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      className="settings-btn settings-btn-danger settings-btn-sm"
+                      onClick={() => handleDeleteToken(key.id, key.name)}>
+                      {t("claudeKeyDelete")}
+                    </button>
                   </div>
                 </div>
               )
@@ -885,6 +616,7 @@ interface AddKeyDialogProps {
   onCancel: () => void
 }
 
+// 弹窗 portal 到宿主页 body，设置页样式不可用，字段样式来自共享 Dialog 的 gh-dialog-* 类
 const AddKeyDialog: React.FC<AddKeyDialogProps> = ({ onConfirm, onCancel }) => {
   const [name, setName] = useState("")
   const [key, setKey] = useState("")
@@ -902,17 +634,9 @@ const AddKeyDialog: React.FC<AddKeyDialogProps> = ({ onConfirm, onCancel }) => {
     <DialogOverlay onClose={onCancel}>
       <div className="gh-dialog-title">{t("claudeAddKey")}</div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "24px" }}>
-        <div>
-          <div
-            style={{
-              marginBottom: "6px",
-              fontSize: "14px",
-              fontWeight: 500,
-              color: "var(--gh-text)",
-            }}>
-            {t("claudeAddKeyNameTitle").split("-")[1].trim().replace("输入", "")}
-          </div>
+      <div className="gh-dialog-fields">
+        <label className="gh-dialog-field">
+          <span className="gh-dialog-label">{t("claudeKeyNameLabel")}</span>
           <input
             ref={nameInputRef}
             type="text"
@@ -920,23 +644,14 @@ const AddKeyDialog: React.FC<AddKeyDialogProps> = ({ onConfirm, onCancel }) => {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder={t("claudeAddKeyNamePlaceholder")}
-            style={{ marginBottom: 0 }}
             onKeyDown={(e) =>
               e.key === "Enter" && document.getElementById("claude-key-input")?.focus()
             }
           />
-        </div>
+        </label>
 
-        <div>
-          <div
-            style={{
-              marginBottom: "6px",
-              fontSize: "14px",
-              fontWeight: 500,
-              color: "var(--gh-text)",
-            }}>
-            Session Key
-          </div>
+        <label className="gh-dialog-field">
+          <span className="gh-dialog-label">Session Key</span>
           <input
             id="claude-key-input"
             type="text"
@@ -944,10 +659,9 @@ const AddKeyDialog: React.FC<AddKeyDialogProps> = ({ onConfirm, onCancel }) => {
             value={key}
             onChange={(e) => setKey(e.target.value)}
             placeholder={t("claudeAddKeyValuePlaceholder")}
-            style={{ marginBottom: 0 }}
             onKeyDown={(e) => e.key === "Enter" && handleConfirm()}
           />
-        </div>
+        </label>
       </div>
 
       <div className="gh-dialog-buttons">

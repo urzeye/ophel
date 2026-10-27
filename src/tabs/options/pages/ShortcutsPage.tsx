@@ -4,7 +4,7 @@
  */
 import React, { useCallback, useState } from "react"
 
-import { KeyboardIcon } from "~components/icons"
+import { ClearIcon, KeyboardIcon } from "~components/icons"
 import { ConfirmDialog, Tooltip } from "~components/ui"
 import {
   DEFAULT_KEYBINDINGS,
@@ -19,6 +19,7 @@ import {
 } from "~constants/shortcuts"
 import { platform } from "~platform"
 import { useSettingsStore } from "~stores/settings-store"
+import { OPHEL_ESCAPE_LAYER_PROPS } from "~utils/dom-toolkit"
 import { t } from "~utils/i18n"
 import { MSG_OPEN_URL, sendToBackground } from "~utils/messaging"
 
@@ -45,6 +46,12 @@ const ShortcutInput: React.FC<{
       e.preventDefault()
       e.stopPropagation()
 
+      // 不带修饰键的 Esc 用于取消录制；设置弹窗通过 escape-layer 标记跳过关闭
+      if (e.key === "Escape" && !e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+        setIsRecording(false)
+        return
+      }
+
       // 忽略单独的修饰键
       if (["Control", "Alt", "Shift", "Meta"].includes(e.key)) {
         return
@@ -67,7 +74,6 @@ const ShortcutInput: React.FC<{
       if (!newBinding.alt && !newBinding.ctrl && !newBinding.meta && !newBinding.shift) {
         // 对于功能键允许单独使用
         const allowedSingleKeys = [
-          "Escape",
           "F1",
           "F2",
           "F3",
@@ -108,6 +114,7 @@ const ShortcutInput: React.FC<{
       <button
         type="button"
         className={`settings-shortcut-input ${isRecording ? "is-recording" : ""} ${!binding ? "is-empty" : ""}`}
+        {...(isRecording ? OPHEL_ESCAPE_LAYER_PROPS : {})}
         onClick={() => setIsRecording(true)}
         onKeyDown={handleKeyDown}
         onBlur={handleBlur}>
@@ -131,7 +138,7 @@ const ShortcutInput: React.FC<{
             className="settings-shortcut-remove-btn"
             onClick={onRemove}
             aria-label={t("shortcutRemove")}>
-            ✕
+            <ClearIcon size={12} />
           </button>
         </Tooltip>
       )}
@@ -263,16 +270,7 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
           <>
             <SettingRow
               label={t("globalShortcutUrl")}
-              description={(() => {
-                const translated = t("globalShortcutUrlDesc", {
-                  shortcut: isMac ? "⌥O" : "Alt+O",
-                })
-                return translated === "globalShortcutUrlDesc"
-                  ? isMac
-                    ? "按下全局快捷键 ⌥O 时打开的网址"
-                    : "按下全局快捷键 Alt+O 时打开的网址"
-                  : translated
-              })()}
+              description={t("globalShortcutUrlDesc", { shortcut: isMac ? "⌥O" : "Alt+O" })}
               settingId="shortcuts-global-url">
               <input
                 type="text"

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react"
 
 import { ChevronDownIcon } from "~components/icons"
-import { OPHEL_INTERACTION_LAYER_PROPS } from "~utils/dom-toolkit"
+import { OPHEL_ESCAPE_LAYER_PROPS, OPHEL_INTERACTION_LAYER_PROPS } from "~utils/dom-toolkit"
 import { t } from "~utils/i18n"
 
 import { Tooltip } from "./Tooltip"
@@ -238,6 +238,7 @@ export const SelectDropdown: React.FC<SelectDropdownProps> = ({
     <div
       ref={rootRef}
       className={className}
+      {...(open ? OPHEL_ESCAPE_LAYER_PROPS : {})}
       style={{
         position: "relative",
         width: "100%",

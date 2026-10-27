@@ -2316,19 +2316,26 @@
   position: relative;
 }
 
-.quick-prompt-btn:hover {
-  transform: translateY(-1px) scale(1.04);
+/* 悬停只加深底色、不上浮缩放：一列 8 个图标逐个跳动会很吵，与面板列表的平稳悬停保持一致。
+   :where() 不增加优先级，激活态（.active）等后续规则在悬停时仍然生效 */
+.quick-prompt-btn:hover:where(:not(:disabled)) {
   background: color-mix(in srgb, var(--gh-text) 6%, transparent);
   color: var(--gh-text, #111827);
 }
 
-.quick-prompt-btn:active {
-  transform: translateY(0) scale(0.97);
+.quick-prompt-btn:active:where(:not(:disabled)) {
+  transform: scale(0.97);
 }
 
 .quick-prompt-btn:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 34%, transparent);
   outline-offset: 2px;
+}
+
+/* 无锚点时的返回锚点按钮等：置灰且不响应悬停 */
+.quick-prompt-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 
 .quick-prompt-btn.active {
@@ -2354,7 +2361,6 @@
   background: color-mix(in srgb, var(--gh-primary) 24%, transparent);
   color: var(--gh-primary) !important;
   box-shadow: 0 4px 16px color-mix(in srgb, var(--gh-primary) 35%, transparent);
-  transform: translateY(-1px) scale(1.04);
 }
 
 .quick-prompt-btn.panel-btn:hover svg {
@@ -2369,30 +2375,11 @@
   color: var(--gh-primary);
 }
 
-/* 工具箱悬浮菜单按钮：打开时保留旋转反馈，表示工具箱处于展开状态 */
-.quick-prompt-btn.tools-trigger-btn {
-  transition:
-    background 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
-    box-shadow 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
-    color 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
-    transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
+/* 工具箱悬浮菜单按钮：展开时用主色实心底表示打开状态，不再持续旋转 */
 .quick-prompt-btn.tools-trigger-btn.active {
   background: var(--gh-primary);
   color: var(--gh-text-on-primary, white);
   box-shadow: 0 4px 12px color-mix(in srgb, var(--gh-primary) 40%, transparent);
-  animation: tools-spin 3s linear infinite;
-  transform: scale(1.03);
-}
-
-@keyframes tools-spin {
-  from {
-    transform: rotate(0deg) scale(1.03);
-  }
-  to {
-    transform: rotate(360deg) scale(1.03);
-  }
 }
 
 .quick-prompt-btn.zen-mode-btn.active svg {
@@ -2727,7 +2714,6 @@
     transition: none !important;
   }
 
-  .quick-prompt-btn.tools-trigger-btn.active,
   .quick-btn-group.pressing .quick-btn-drag-handle::after,
   .quick-menu-popover,
   .outline-item.highlight,

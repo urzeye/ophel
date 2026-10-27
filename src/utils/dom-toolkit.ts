@@ -105,6 +105,20 @@ export const OPHEL_HOVER_WIDTH_RETAIN_LAYER_PROPS = {
   [OPHEL_HOVER_WIDTH_RETAIN_LAYER_ATTR]: "true",
 } as const
 
+/**
+ * 自行处理 Esc 的浮层（展开的下拉、录制中的快捷键、语言菜单等）挂上此属性，
+ * 外层弹窗据此跳过「Esc 关闭整个弹窗」，避免一次 Esc 连带关掉外层。
+ */
+export const OPHEL_ESCAPE_LAYER_ATTR = "data-ophel-escape-layer"
+export const OPHEL_ESCAPE_LAYER_PROPS = {
+  [OPHEL_ESCAPE_LAYER_ATTR]: "true",
+} as const
+
+export const isEventFromEscapeLayer = (event: Event): boolean =>
+  event
+    .composedPath()
+    .some((node) => node instanceof HTMLElement && node.hasAttribute(OPHEL_ESCAPE_LAYER_ATTR))
+
 const QUICK_MENU_POPOVER_SELECTOR = ".quick-menu-popover"
 
 const OPHEL_INTERACTION_LAYER_CLASS_SELECTORS = [

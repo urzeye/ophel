@@ -1,5 +1,8 @@
-import React, { useEffect, useRef, useState } from "react"
-import { createPortal } from "react-dom"
+import React, { useEffect, useRef } from "react"
+
+import { CheckIcon } from "~components/icons"
+import { OPHEL_ESCAPE_LAYER_PROPS } from "~utils/dom-toolkit"
+import { t } from "~utils/i18n"
 
 export const LANG_MAP: Record<string, string> = {
   "zh-CN": "简体中文",
@@ -15,137 +18,110 @@ export const LANG_MAP: Record<string, string> = {
   ko: "한국어",
 }
 
+const getMenuItems = (menu: HTMLElement | null): HTMLButtonElement[] =>
+  Array.from(menu?.querySelectorAll<HTMLButtonElement>('[role="menuitemradio"]') ?? [])
+
 interface LanguageMenuProps {
   currentLang: string
-  themeMode: "light" | "dark"
   onSelect: (lang: string) => void
   onClose: () => void
-  triggerRef: React.RefObject<HTMLButtonElement>
+  /** 关闭后焦点回到的按钮 */
+  restoreFocusRef: React.RefObject<HTMLElement>
+  /** 打开菜单的按钮：它们自己负责开关，按下时不算「点到菜单外」 */
+  triggerRefs: ReadonlyArray<React.RefObject<HTMLElement>>
 }
 
+/**
+ * 侧栏底部的语言菜单：渲染在侧栏内（不 portal），颜色跟随主题变量；
+ * 打开后焦点进入菜单，支持方向键 / Home / End 切换，Esc 关闭并回到触发按钮
+ */
 export const LanguageMenu: React.FC<LanguageMenuProps> = ({
   currentLang,
-  themeMode = "light",
   onSelect,
   onClose,
-  triggerRef,
+  restoreFocusRef,
+  triggerRefs,
 }) => {
   const menuRef = useRef<HTMLDivElement>(null)
-  const [position, setPosition] = useState({ top: 0, left: 0 })
+  // 只在打开时把焦点移到当前语言，之后切换语言不再抢焦点
+  const initialLangRef = useRef(currentLang)
 
-  // Calculate position on mount
   useEffect(() => {
-    if (!triggerRef.current) return
-    const rect = triggerRef.current.getBoundingClientRect()
-    // Position: Bottom-Right aligned with trigger, appearing ABOVE it
-    // Note: Since we are in Portal (Light DOM), coordinates are relative to viewport, which matches rect.
-    setPosition({
-      top: rect.top - 10, // Slight offset
-      left: rect.right, // Align to right edge
-    })
-  }, [triggerRef])
+    const items = getMenuItems(menuRef.current)
+    const currentItem =
+      items.find((item) => item.dataset.lang === initialLangRef.current) ?? items[0]
+    currentItem?.focus({ preventScroll: true })
+  }, [])
 
-  const colors =
-    themeMode === "dark"
-      ? {
-          bg: "#1f2937",
-          border: "#374151",
-          text: "#e5e7eb",
-          hover: "#374151",
-          activeBg: "rgba(59, 130, 246, 0.2)",
-        }
-      : {
-          bg: "#ffffff",
-          border: "#e5e7eb",
-          text: "#374151",
-          hover: "#f3f4f6",
-          activeBg: "rgba(59, 130, 246, 0.1)",
-        }
+  useEffect(() => {
+    const handlePointerDown = (event: PointerEvent) => {
+      const path = event.composedPath()
+      if (menuRef.current && path.includes(menuRef.current)) return
+      if (triggerRefs.some((ref) => ref.current && path.includes(ref.current))) return
+      onClose()
+    }
 
-  // Use createPortal to render outside of any overflow:hidden containers
-  return createPortal(
-    <div className="lang-menu-portal" style={{ position: "relative", zIndex: 2147483647 }}>
-      {/* Backdrop */}
-      <div
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          width: "100vw",
-          height: "100vh",
-          zIndex: 2000000,
-          background: "transparent",
-        }}
-        onClick={(e) => {
-          e.stopPropagation()
-          onClose()
-        }}
-      />
+    window.addEventListener("pointerdown", handlePointerDown, true)
+    return () => window.removeEventListener("pointerdown", handlePointerDown, true)
+  }, [onClose, triggerRefs])
 
-      {/* Menu Content */}
-      <div
-        ref={menuRef}
-        style={{
-          position: "fixed",
-          // Position relative to viewport
-          bottom: window.innerHeight - position.top + 5,
-          left: position.left - 150, // Shift left by width
-          width: "150px",
-          background: colors.bg,
-          border: `1px solid ${colors.border}`,
-          borderRadius: "8px",
-          boxShadow: "0 4px 20px rgba(0, 0, 0, 0.15)",
-          padding: "4px",
-          zIndex: 2000001,
-          animation: "ophel-lang-pop 0.1s ease-out",
-          display: "flex",
-          flexDirection: "column",
-          maxHeight: "500px",
-          overflowY: "auto",
-        }}>
-        {Object.entries(LANG_MAP).map(([key, label]) => (
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    const items = getMenuItems(menuRef.current)
+    const currentIndex = items.indexOf(event.target as HTMLButtonElement)
+    const focusAt = (index: number) => {
+      event.preventDefault()
+      items[(index + items.length) % items.length]?.focus({ preventScroll: true })
+    }
+
+    switch (event.key) {
+      case "ArrowDown":
+        focusAt(currentIndex + 1)
+        break
+      case "ArrowUp":
+        focusAt(currentIndex - 1)
+        break
+      case "Home":
+        focusAt(0)
+        break
+      case "End":
+        focusAt(items.length - 1)
+        break
+      case "Escape":
+        event.preventDefault()
+        onClose()
+        restoreFocusRef.current?.focus({ preventScroll: true })
+        break
+      case "Tab":
+        onClose()
+        break
+    }
+  }
+
+  return (
+    <div
+      ref={menuRef}
+      className="settings-lang-menu"
+      role="menu"
+      aria-label={t("moreLanguages")}
+      {...OPHEL_ESCAPE_LAYER_PROPS}
+      onKeyDown={handleKeyDown}>
+      {Object.entries(LANG_MAP).map(([lang, label]) => {
+        const isActive = currentLang === lang
+        return (
           <button
-            key={key}
-            onClick={(e) => {
-              e.stopPropagation()
-              onSelect(key)
-            }}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "8px 12px",
-              border: "none",
-              background: currentLang === key ? colors.activeBg : "transparent",
-              color: currentLang === key ? "#3b82f6" : colors.text,
-              fontSize: "13px",
-              cursor: "pointer",
-              borderRadius: "4px",
-              textAlign: "left",
-              width: "100%",
-              fontWeight: currentLang === key ? 500 : 400,
-              transition: "background-color 0.1s",
-            }}
-            onMouseEnter={(e) => {
-              if (currentLang !== key) e.currentTarget.style.backgroundColor = colors.hover
-            }}
-            onMouseLeave={(e) => {
-              if (currentLang !== key)
-                e.currentTarget.style.backgroundColor =
-                  currentLang === key ? colors.activeBg : "transparent"
-            }}>
-            <span>{label}</span>
-            {currentLang === key && <span>✓</span>}
+            key={lang}
+            type="button"
+            role="menuitemradio"
+            aria-checked={isActive}
+            tabIndex={-1}
+            data-lang={lang}
+            className={`settings-lang-menu-item${isActive ? " active" : ""}`}
+            onClick={() => onSelect(lang)}>
+            <span lang={lang}>{label}</span>
+            {isActive ? <CheckIcon size={14} /> : null}
           </button>
-        ))}
-      </div>
-      <style>{`
-        @keyframes ophel-lang-pop {
-          from { opacity: 0; transform: scale(0.95); }
-          to { opacity: 1; transform: scale(1); }
-        }
-      `}</style>
-    </div>,
-    document.body,
+        )
+      })}
+    </div>
   )
 }

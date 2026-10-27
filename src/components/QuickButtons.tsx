@@ -877,10 +877,6 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
                     ? "settings-btn"
                     : undefined
           }
-          style={{
-            opacity: anchorDisabled ? 0.4 : 1,
-            cursor: anchorDisabled ? "default" : "pointer",
-          }}
           disabled={anchorDisabled}>
           {/* 锚点按鈕动画目标：key 递增保证每次点击都重播 */}
           {isAnchorBtn ? (

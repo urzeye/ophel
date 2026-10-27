@@ -521,6 +521,81 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   outline: none;
 }
 
+/* 语言菜单：渲染在侧栏内、向上弹出，配色取主题变量（24 套主题与自定义样式下一致） */
+.settings-lang-inline {
+  position: relative;
+}
+
+.settings-lang-menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 6px);
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  width: 168px;
+  max-height: min(380px, calc(100vh - 120px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px;
+  border: 1px solid var(--gh-border, #e5e7eb);
+  border-radius: 10px;
+  background: var(--gh-surface, var(--gh-card-bg, #ffffff));
+  box-shadow: var(--gh-shadow-md, 0 8px 24px rgba(0, 0, 0, 0.12));
+  animation: settings-lang-menu-in 0.12s ease-out;
+}
+
+@keyframes settings-lang-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.settings-lang-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--gh-text, #374151);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.settings-lang-menu-item:hover,
+.settings-lang-menu-item:focus-visible {
+  background: var(--gh-hover, #f3f4f6);
+  outline: none;
+}
+
+.settings-lang-menu-item:focus-visible {
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--gh-primary, #4285f4) 40%, transparent);
+}
+
+.settings-lang-menu-item.active {
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 10%, transparent);
+  color: var(--gh-primary-text, var(--gh-primary, #4285f4));
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .settings-lang-menu {
+    animation: none;
+  }
+}
+
 /* 内容区 */
 .settings-content {
   flex: 1;
@@ -757,17 +832,52 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   border-radius: 12px;
 }
 
-/* 轨道与选中项配色见 .settings-segmented 处的分段控件共用定义 */
+/* 轨道与选中项配色见 .settings-segmented 处的分段控件共用定义。
+   标签放不下时单行横向滚动而不是折成两行（弹窗里内容区比视口窄，视口断点不起作用），
+   两端渐隐提示还有内容，激活项由 TabGroup 自动滚入可视区 */
 .settings-tab-group {
   display: flex;
-  flex-wrap: wrap;
   gap: 4px;
   padding: 4px;
   border-radius: 10px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+
+.settings-tab-group::-webkit-scrollbar {
+  display: none;
+}
+
+.settings-tab-group[data-overflow-end] {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
+}
+
+.settings-tab-group[data-overflow-start] {
+  -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 32px), transparent);
+  mask-image: linear-gradient(to left, #000 calc(100% - 32px), transparent);
+}
+
+.settings-tab-group[data-overflow-start][data-overflow-end] {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 32px,
+    #000 calc(100% - 32px),
+    transparent
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 32px,
+    #000 calc(100% - 32px),
+    transparent
+  );
 }
 
 .settings-tab-item {
-  flex: 1 1 auto;
+  flex: 1 0 auto;
   padding: 8px 16px;
   border-radius: 8px;
   font-size: 14px;
@@ -787,12 +897,9 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   color: var(--gh-text, #374151);
 }
 
-@media (max-width: 640px) {
-  .settings-tab-item {
-    flex: 1 1 120px;
-    min-width: 0;
-    padding-inline: 10px;
-  }
+.settings-tab-item:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 42%, transparent);
+  outline-offset: -2px;
 }
 
 /* ==================== 设置卡片 ==================== */
@@ -924,6 +1031,23 @@ html[data-theme="dark"] .platform-icon-dark-invert {
 /* 确保控件容器内的 input 尊重宽度设置 */
 .settings-row-control .settings-input {
   box-sizing: border-box;
+}
+
+/* 设置行里的自绘下拉给一个下限宽度：不随选中项文字长短跳动，上下相邻的下拉也能对齐 */
+.settings-row-control .settings-select-dropdown {
+  min-width: 160px;
+}
+
+/* 一行内并排的多个控件（如提示音下拉 + 试听按钮） */
+.settings-inline-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 用量图表的站点筛选：外层定宽，避免下拉宽度在 inline-flex 容器里随百分比循环计算 */
+.settings-usage-site-select {
+  width: 180px;
 }
 
 /* 分段控件共用配色：页签栏、设置项分段、侧栏主题切换只在这里定义，避免各写一份再分叉。
@@ -1334,15 +1458,15 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   overflow-wrap: anywhere;
 }
 
+/* 描述多为同一句模板，只占一行；被截断时由 Tooltip 展示全文 */
 .settings-pack-description {
   margin: 3px 0 0;
   font-size: 12px;
   line-height: 1.5;
   color: var(--gh-text-secondary, #6b7280);
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  white-space: nowrap;
   overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .settings-pack-meta {
@@ -1668,42 +1792,99 @@ html[data-theme="dark"] .platform-icon-dark-invert {
 
 /* ---------- 更新与来源 ---------- */
 
-.settings-pack-import-card {
-  padding-top: 16px;
-  padding-bottom: 16px;
+/* 页首更新状态条：自动更新开关 · 上次检查 · 立即检查 */
+.settings-pack-update-bar {
+  padding: 14px 16px;
 }
 
-.settings-pack-import-row {
+.settings-pack-update-bar-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  flex-wrap: wrap;
+  gap: 8px 16px;
 }
 
-.settings-pack-import-row .settings-pack-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
-  flex-shrink: 0;
-}
-
-.settings-pack-import-text {
-  flex: 1;
-  min-width: 0;
-}
-
-.settings-pack-import-row .settings-card-title {
-  margin-bottom: 2px;
+.settings-pack-update-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   font-size: 14px;
   font-weight: 500;
   color: var(--gh-text, #374151);
 }
 
-.settings-pack-import-row .settings-card-desc {
-  margin-bottom: 0;
+.settings-pack-update-summary {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--gh-text-secondary, #6b7280);
+}
+
+.settings-pack-update-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 10px 0 0;
   font-size: 12px;
   line-height: 1.5;
-  color: var(--gh-text-secondary, #9ca3af);
+  color: var(--gh-text-secondary, #6b7280);
+}
+
+.settings-pack-update-note svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  opacity: 0.8;
+}
+
+/* 在线适配库标题栏右侧：搜索 + 从文件导入 */
+.settings-pack-section-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* 贡献者用的热修补丁收进默认折叠的「高级」，收起时右侧仍显示当前补丁状态 */
+.settings-pack-advanced-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.settings-pack-advanced-summary::-webkit-details-marker {
+  display: none;
+}
+
+.settings-pack-advanced-summary::before {
+  content: "›";
+  display: inline-block;
+  width: 12px;
+  color: var(--gh-text-secondary, #6b7280);
+  transition: transform 0.18s ease;
+}
+
+.settings-pack-advanced[open] > .settings-pack-advanced-summary::before {
+  transform: rotate(90deg);
+}
+
+.settings-pack-advanced-summary:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 42%, transparent);
+  outline-offset: 2px;
+}
+
+.settings-pack-advanced-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gh-text, #374151);
+}
+
+.settings-pack-advanced-status {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--gh-text-secondary, #6b7280);
 }
 
 .settings-pack-check-summary {
@@ -1864,13 +2045,14 @@ html[data-theme="dark"] .platform-icon-dark-invert {
 }
 
 .settings-pack-search {
-  width: min(240px, 48%);
-  flex-shrink: 0;
+  flex: 0 1 220px;
+  min-width: 120px;
 }
 
 .settings-pack-patches {
-  margin-top: 0;
-  padding-top: 16px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--gh-border, #f3f4f6);
 }
 
 .settings-pack-patches .settings-pack-section-head {
@@ -1891,43 +2073,6 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   font-size: 13px;
   font-weight: 600;
   color: var(--gh-text, #374151);
-}
-
-.settings-pack-patch-empty {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
-  border-radius: 8px;
-  background: var(--gh-bg-secondary, #f9fafb);
-  border: 1px solid var(--gh-border, #f3f4f6);
-  font-size: 12px;
-  color: var(--gh-text-secondary, #6b7280);
-}
-
-.settings-pack-patch-empty-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--gh-primary, #4285f4) 65%, transparent);
-}
-
-.settings-pack-privacy-note {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  margin: 16px 0 0;
-  padding-top: 12px;
-  border-top: 1px solid var(--gh-border, #f3f4f6);
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--gh-text-secondary, #6b7280);
-}
-
-.settings-pack-privacy-note svg {
-  flex-shrink: 0;
-  margin-top: 1px;
-  opacity: 0.8;
 }
 
 .settings-pack-file-input {
@@ -2060,8 +2205,12 @@ html[data-theme="dark"] .platform-icon-dark-invert {
     flex-direction: column;
   }
 
-  .settings-pack-search {
+  .settings-pack-section-tools {
     width: 100%;
+  }
+
+  .settings-pack-search {
+    flex: 1 1 auto;
   }
 
   .settings-pack-source-input-row {
@@ -2091,6 +2240,7 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   .settings-pack-origin-link,
   .settings-pack-origin-link > svg,
   .settings-pack-issues > summary::before,
+  .settings-pack-advanced-summary::before,
   .settings-pack-skeleton-icon,
   .settings-pack-skeleton-lines span {
     transition: none !important;
@@ -2607,16 +2757,37 @@ html[data-theme="dark"] .platform-icon-dark-invert {
     background 0.15s ease,
     border-color 0.15s ease,
     color 0.15s ease,
-    filter 0.15s ease;
+    filter 0.15s ease,
+    transform 0.15s ease;
   border: none;
+}
+
+.settings-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.settings-btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 42%, transparent);
+  outline-offset: 2px;
+}
+
+.settings-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 列表行内的小号按钮 */
+.settings-btn-sm {
+  padding: 5px 10px;
+  font-size: 13px;
 }
 
 .settings-btn-primary {
   background: var(--gh-primary, #4285f4);
-  color: #ffffff;
+  color: var(--gh-text-on-primary, #ffffff);
 }
 
-.settings-btn-primary:hover {
+.settings-btn-primary:hover:not(:disabled) {
   filter: brightness(1.1);
 }
 
@@ -2626,26 +2797,37 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   color: var(--gh-text, #374151);
 }
 
-.settings-btn-secondary:hover {
+.settings-btn-secondary:hover:not(:disabled) {
   background: var(--gh-hover, #f3f4f6);
 }
 
+/* 危险操作用描边而不是实心：单色主题（如 mono-pro）的危险色与主色同为深色，实心会和主按钮撞色 */
 .settings-btn-danger {
-  background: var(--gh-text-danger, #ef4444);
-  color: #ffffff;
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--gh-text-danger, #ef4444) 45%, transparent);
+  color: var(--gh-text-danger, #ef4444);
 }
 
-.settings-btn-danger:hover {
-  filter: brightness(1.1);
+.settings-btn-danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--gh-text-danger, #ef4444) 8%, transparent);
+  border-color: var(--gh-text-danger, #ef4444);
 }
 
-.settings-btn-success {
-  background: #10b981;
-  color: #ffffff;
+/* 进行中按钮里的旋转图标 */
+.settings-spin {
+  animation: settings-pack-spin 0.9s linear infinite;
 }
 
-.settings-btn-success:hover {
-  filter: brightness(1.1);
+@media (prefers-reduced-motion: reduce) {
+  .settings-btn,
+  .settings-spin {
+    transition: none;
+    animation: none;
+  }
+
+  .settings-btn:active:not(:disabled) {
+    transform: none;
+  }
 }
 
 .settings-inline-icon-btn {
@@ -2982,187 +3164,25 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   word-break: break-word;
 }
 
+/* 浅色 / 深色由徽章内的太阳、月亮图标区分，配色统一取主题变量，24 套主题下都可读 */
 .settings-custom-style-mode-badge {
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   gap: 6px;
   padding: 5px 9px;
+  border: 1px solid color-mix(in srgb, var(--gh-text, #1f2937) 12%, transparent);
   border-radius: 999px;
+  background: color-mix(in srgb, var(--gh-text, #1f2937) 6%, transparent);
+  color: var(--gh-text-secondary, #6b7280);
   font-size: 12px;
   font-weight: 600;
   line-height: 1;
-  border: 1px solid transparent;
-}
-
-.settings-custom-style-mode-badge.light {
-  color: #a16207;
-  background: rgba(245, 158, 11, 0.12);
-  border-color: rgba(245, 158, 11, 0.2);
-}
-
-.settings-custom-style-mode-badge.dark {
-  color: #4338ca;
-  background: rgba(99, 102, 241, 0.12);
-  border-color: rgba(99, 102, 241, 0.18);
 }
 
 .settings-custom-style-item-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
-}
-
-/* ==================== 自定义样式编辑器 ==================== */
-
-.settings-style-editor-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10000;
-  padding: 20px;
-}
-
-.settings-style-editor-modal {
-  background: var(--gh-bg, #ffffff);
-  border: 1px solid var(--gh-card-border, var(--gh-border, #e5e7eb));
-  border-radius: 18px;
-  width: min(960px, 100%);
-  height: min(85vh, 820px);
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22);
-  overflow: hidden;
-}
-
-.settings-style-editor-header {
-  padding: 16px 18px;
-  border-bottom: 1px solid var(--gh-border, #e5e7eb);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-}
-
-.settings-style-editor-title {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--gh-text, #1f2937);
-}
-
-.settings-style-editor-close {
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
-  border: none;
-  background: var(--gh-bg-secondary, #f3f4f6);
-  color: var(--gh-text-secondary, #6b7280);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition:
-    background-color 0.16s ease,
-    color 0.16s ease,
-    transform 0.16s ease;
-}
-
-.settings-style-editor-close:hover {
-  background: var(--gh-hover, #e5e7eb);
-  color: var(--gh-text, #374151);
-  transform: translateY(-1px);
-}
-
-.settings-style-editor-close:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 42%, transparent);
-  outline-offset: 2px;
-}
-
-.settings-style-editor-body {
-  padding: 18px;
-  overflow-y: auto;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.settings-style-editor-field {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.settings-style-editor-label {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--gh-text, #374151);
-}
-
-.settings-style-editor-input {
-  width: 100%;
-}
-
-.settings-style-editor-radio-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.settings-style-editor-radio {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-  border: 1px solid var(--gh-border, #e5e7eb);
-  border-radius: 12px;
-  background: var(--gh-bg-secondary, #f9fafb);
-  cursor: pointer;
-}
-
-.settings-style-editor-radio:focus-within {
-  border-color: var(--gh-primary, #4285f4);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--gh-primary, #4285f4) 12%, transparent);
-}
-
-.settings-style-editor-radio input {
-  margin: 0;
-}
-
-.settings-style-editor-radio-text {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: var(--gh-text, #374151);
-}
-
-.settings-style-editor-code-section {
-  min-height: 0;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.settings-style-editor-code-frame {
-  flex: 1;
-  min-height: 320px;
-  padding: 0;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.settings-style-editor-footer {
-  padding: 16px 18px;
-  border-top: 1px solid var(--gh-border, #e5e7eb);
-  display: flex;
-  justify-content: flex-end;
   gap: 8px;
 }
 
@@ -3184,29 +3204,6 @@ html[data-theme="dark"] .platform-icon-dark-invert {
 @media (max-width: 720px) {
   .settings-theme-grid {
     grid-template-columns: repeat(auto-fill, minmax(144px, 1fr));
-  }
-
-  .settings-style-editor-overlay {
-    padding: 10px;
-  }
-
-  .settings-style-editor-modal {
-    width: 100%;
-    height: calc(100vh - 20px);
-    border-radius: 14px;
-  }
-
-  .settings-style-editor-body {
-    padding: 16px;
-  }
-
-  .settings-style-editor-footer {
-    padding: 14px 16px;
-    flex-wrap: wrap;
-  }
-
-  .settings-style-editor-footer .settings-btn {
-    flex: 1 1 160px;
   }
 }
 
@@ -3593,83 +3590,18 @@ html[data-theme="dark"] .about-hero-card {
 
 .about-platforms-card {
   background: var(--gh-card-bg, #fff);
-  border: 1px solid rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--gh-card-border, var(--gh-border, #e5e7eb));
   border-radius: 16px;
   padding: 24px;
   margin-bottom: 32px;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
 }
 
-html[data-theme="dark"] .about-platforms-card {
-  border-color: rgba(255, 255, 255, 0.05);
-}
-
-.about-platforms-card::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #4f46e5, #ec4899, #f59e0b);
-}
-
-.about-platforms-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 20px;
-}
-
+/* 平台数量已在描述文字里，不再额外放计数徽章 */
 .about-platforms-desc {
+  margin-bottom: 20px;
   font-size: 13px;
   line-height: 1.6;
   color: var(--gh-text-secondary, #6b7280);
-}
-
-.about-platforms-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 48px;
-  height: 36px;
-  padding: 0 16px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, rgba(236, 72, 153, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
-  color: #d946ef;
-  font-family:
-    ui-rounded,
-    "SF Pro Rounded",
-    system-ui,
-    -apple-system,
-    sans-serif;
-  font-size: 16px;
-  font-weight: 800;
-  flex-shrink: 0;
-  border: 1px solid rgba(219, 39, 119, 0.2);
-  box-shadow:
-    inset 0 2px 4px rgba(255, 255, 255, 0.3),
-    0 4px 12px rgba(219, 39, 119, 0.1);
-  position: relative;
-  overflow: hidden;
-}
-
-@media (prefers-color-scheme: dark) {
-  .about-platforms-count {
-    background: linear-gradient(
-      135deg,
-      rgba(244, 114, 182, 0.15) 0%,
-      rgba(167, 139, 250, 0.15) 100%
-    );
-    color: #f0abfc;
-    border-color: rgba(236, 72, 153, 0.3);
-    box-shadow:
-      inset 0 2px 4px rgba(255, 255, 255, 0.05),
-      0 4px 12px rgba(219, 39, 119, 0.2);
-  }
 }
 
 .about-platforms-grid {
@@ -3977,11 +3909,6 @@ html[data-theme="dark"] .about-privacy-banner {
 }
 
 @media (max-width: 640px) {
-  .about-platforms-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
   .about-links-grid.community-grid-triple {
     grid-template-columns: 1fr;
   }
@@ -4998,80 +4925,215 @@ html[data-theme="dark"] .about-privacy-banner {
   margin-bottom: 20px;
 }
 
-.settings-backup-export-list {
+/* 导入：拖放 / 选择区，选中后换成解析摘要；粘贴 JSON 收在默认折叠的次要入口里 */
+.settings-backup-dropzone {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-}
-
-.settings-backup-export-item {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 12px 14px;
-  background: var(--gh-bg-secondary, #f3f4f6);
-  border-radius: 10px;
-  border: 1px solid var(--gh-border, #e5e7eb);
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 128px;
+  padding: 20px 16px;
+  border: 1px dashed color-mix(in srgb, var(--gh-text, #1f2937) 22%, var(--gh-border, #e5e7eb));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--gh-bg-secondary, #f9fafb) 70%, transparent);
+  color: var(--gh-text-secondary, #6b7280);
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
   transition:
-    border-color 0.15s ease,
-    background-color 0.15s ease;
+    border-color 0.18s ease,
+    background-color 0.18s ease;
 }
 
-.settings-backup-export-item:hover {
-  border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 30%, var(--gh-border, #e5e7eb));
+.settings-backup-dropzone > svg {
+  color: color-mix(in srgb, var(--gh-primary, #4285f4) 70%, var(--gh-text, #374151));
 }
 
-.settings-backup-export-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+.settings-backup-dropzone:hover,
+.settings-backup-import.is-drag-over .settings-backup-dropzone,
+.settings-backup-import.is-drag-over .settings-backup-preview {
+  border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 55%, transparent);
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 6%, var(--gh-card-bg, #ffffff));
 }
 
-.settings-backup-export-title {
+.settings-backup-dropzone:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 42%, transparent);
+  outline-offset: 2px;
+}
+
+.settings-backup-dropzone-title {
+  font-size: 13px;
   font-weight: 500;
-  font-size: 14px;
-  color: var(--gh-text, #1f2937);
+  color: var(--gh-text, #374151);
 }
 
-.settings-backup-export-desc {
+.settings-backup-dropzone-hint {
   font-size: 12px;
+}
+
+.settings-backup-preview {
+  padding: 12px 14px;
+  border: 1px solid var(--gh-border, #e5e7eb);
+  border-radius: 12px;
+  background: var(--gh-bg-secondary, #f9fafb);
+  transition:
+    border-color 0.18s ease,
+    background-color 0.18s ease;
+}
+
+.settings-backup-preview.is-invalid {
+  border-color: color-mix(in srgb, var(--gh-text-danger, #ef4444) 40%, var(--gh-border, #e5e7eb));
+}
+
+.settings-backup-preview-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   color: var(--gh-text-secondary, #6b7280);
 }
 
-.settings-backup-import-box {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.settings-backup-file-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 2px 0;
-}
-
-.settings-backup-file-label {
-  font-size: 14px;
+.settings-backup-preview-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
   font-weight: 500;
   color: var(--gh-text, #1f2937);
 }
 
-.settings-backup-preview-container {
+.settings-backup-preview-clear,
+.settings-backup-password-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--gh-text-secondary, #6b7280);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.settings-backup-preview-clear:hover,
+.settings-backup-password-toggle:hover {
+  background: var(--gh-hover, #f3f4f6);
+  color: var(--gh-text, #1f2937);
+}
+
+.settings-backup-preview-clear:focus-visible,
+.settings-backup-password-toggle:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 42%, transparent);
+  outline-offset: 1px;
+}
+
+.settings-backup-preview-meta {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: baseline;
+  gap: 8px 14px;
+  margin: 10px 0 0;
+  font-size: 13px;
+}
+
+.settings-backup-preview-meta dt {
+  color: var(--gh-text-secondary, #6b7280);
+}
+
+.settings-backup-preview-meta dd {
+  margin: 0;
+  color: var(--gh-text, #1f2937);
+}
+
+.settings-backup-preview-tags {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: 6px;
 }
 
-.settings-backup-preview-label {
+.settings-backup-preview-tag {
+  padding: 0 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--gh-text, #1f2937) 7%, transparent);
   font-size: 12px;
-  font-weight: 500;
+  line-height: 20px;
+}
+
+.settings-backup-preview-error {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 8px;
+  font-size: 12px;
   color: var(--gh-text-secondary, #6b7280);
 }
 
-.settings-backup-preview-textarea {
+.settings-backup-preview-error strong {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gh-text-danger, #ef4444);
+}
+
+.settings-backup-paste {
+  margin-top: 12px;
+}
+
+.settings-backup-paste > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gh-text-secondary, #6b7280);
+  cursor: pointer;
+  list-style: none;
+}
+
+.settings-backup-paste > summary::-webkit-details-marker {
+  display: none;
+}
+
+.settings-backup-paste > summary::before {
+  content: "›";
+  display: inline-block;
+  width: 10px;
+  transition: transform 0.18s ease;
+}
+
+.settings-backup-paste[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .settings-backup-paste > summary::before {
+    transition: none;
+  }
+}
+
+.settings-backup-paste > summary:hover {
+  color: var(--gh-text, #1f2937);
+}
+
+.settings-backup-paste > summary:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 42%, transparent);
+  outline-offset: 2px;
+}
+
+.settings-backup-paste-textarea {
+  display: block;
   width: 100%;
   height: 110px;
+  margin-top: 8px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
     "Courier New", monospace;
   font-size: 12px;
@@ -5079,10 +5141,10 @@ html[data-theme="dark"] .about-privacy-banner {
   box-sizing: border-box;
 }
 
-.settings-backup-import-btn {
-  width: 100%;
-  justify-content: center;
-  padding: 9px;
+.settings-backup-import-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 14px;
 }
 
 .settings-backup-tip {
@@ -5109,17 +5171,74 @@ html[data-theme="dark"] .about-privacy-banner {
   font-size: 12px;
 }
 
+/* WebDAV 表单：标签在上、输入在下；最多两列，内容区放不下两列时自动并成一列。
+   弹窗内容区比视口窄，这里用轨道最小宽度控制列数，而不是视口断点 */
+.settings-backup-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(max(220px, calc((100% - 16px) / 2)), 1fr));
+  gap: 14px 16px;
+}
+
+.settings-backup-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.settings-backup-field.is-wide,
+.settings-backup-provider-hint {
+  grid-column: 1 / -1;
+}
+
+.settings-backup-field-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gh-text, #374151);
+}
+
+.settings-backup-field-hint {
+  font-size: 12px;
+  color: var(--gh-text-secondary, #6b7280);
+}
+
+.settings-backup-field .settings-input {
+  display: block;
+  width: 100%;
+  min-height: 34px;
+}
+
+.settings-backup-password {
+  position: relative;
+}
+
+.settings-backup-password .settings-input {
+  padding-right: 38px;
+}
+
+.settings-backup-password-toggle-wrap {
+  position: absolute;
+  top: 50%;
+  right: 3px;
+  transform: translateY(-50%);
+}
+
 .settings-backup-provider-hint {
   background: color-mix(in srgb, var(--gh-primary, #4285f4) 8%, transparent);
   border: 1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 22%, transparent);
   border-radius: 10px;
   padding: 10px 12px;
-  margin-bottom: 16px;
   font-size: 12px;
   color: var(--gh-text-secondary, #6b7280);
   display: flex;
   align-items: flex-start;
   gap: 8px;
+}
+
+.settings-backup-provider-hint > svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--gh-primary, #4285f4);
 }
 
 .settings-backup-provider-hint a {
@@ -5128,9 +5247,21 @@ html[data-theme="dark"] .about-privacy-banner {
   margin-left: 4px;
 }
 
+.settings-backup-sync-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 18px;
+  font-size: 12px;
+  color: var(--gh-text-secondary, #6b7280);
+}
+
+.settings-backup-sync-status > svg {
+  flex-shrink: 0;
+}
+
 .settings-backup-actions-row {
-  margin-top: 16px;
-  padding-top: 2px;
+  margin-top: 12px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -5142,6 +5273,11 @@ html[data-theme="dark"] .about-privacy-banner {
   display: flex;
   gap: 10px;
   align-items: center;
+}
+
+.settings-backup-save {
+  position: relative;
+  display: inline-flex;
 }
 
 .settings-backup-unsaved-dot {
@@ -5159,23 +5295,24 @@ html[data-theme="dark"] .about-privacy-banner {
   border-color: color-mix(in srgb, var(--gh-danger, #ef4444) 30%, var(--gh-border, #e5e7eb));
 }
 
+/* 危险区只留一句说明和描边危险按钮；说明用正文色，避免单色主题下灰色文字看起来像禁用 */
 .settings-backup-danger-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 16px;
+  margin-top: 12px;
 }
 
-.settings-backup-danger-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--gh-danger, #ef4444);
+.settings-backup-danger-text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--gh-text, #1f2937);
 }
 
-.settings-backup-danger-desc {
-  font-size: 12px;
-  color: var(--gh-text-secondary, #6b7280);
-  margin-top: 2px;
+.settings-backup-danger-row .settings-btn {
+  flex-shrink: 0;
 }
 
 .settings-backup-remote-modal {
@@ -5510,6 +5647,227 @@ html[data-theme="dark"] .about-privacy-banner {
   border: 1px solid color-mix(in srgb, var(--gh-text-secondary, #6b7280) 20%, transparent);
 }
 
+/* ==================== 权限请求窗口 (perm-request) ==================== */
+
+/* 状态图标：主题色浅底圆 + 线性图标，替代原先的 emoji */
+.perm-request-icon {
+  --perm-request-icon-color: var(--gh-primary, #4285f4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--perm-request-icon-color) 12%, transparent);
+  color: var(--perm-request-icon-color);
+}
+
+.perm-request-icon.is-success {
+  --perm-request-icon-color: var(--gh-success, #10b981);
+}
+
+.perm-request-icon.is-danger {
+  --perm-request-icon-color: var(--gh-text-danger, #ef4444);
+}
+
+/* ==================== Claude Session Key (ClaudeSettings) ==================== */
+
+.settings-claude-current {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--gh-border, #e5e7eb);
+  border-radius: 10px;
+  background: var(--gh-bg-secondary, #f9fafb);
+  font-size: 13px;
+}
+
+.settings-claude-current-label,
+.settings-claude-current-empty {
+  color: var(--gh-text-secondary, #6b7280);
+}
+
+.settings-claude-current-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--gh-text, #1f2937);
+}
+
+/* 不在 Claude 站点时，切换与从浏览器导入不可用 */
+.settings-claude-site-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--gh-text-secondary, #6b7280);
+}
+
+.settings-claude-site-hint > svg {
+  flex-shrink: 0;
+}
+
+/* 操作栏允许换行：德语、俄语等长文案下不会溢出卡片 */
+.settings-claude-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.settings-claude-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 32px 16px;
+  border: 1px solid var(--gh-border, #e5e7eb);
+  border-radius: 10px;
+  background: var(--gh-bg-secondary, #f9fafb);
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 12px;
+  text-align: center;
+}
+
+.settings-claude-empty strong {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gh-text, #374151);
+}
+
+.settings-claude-key-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.settings-claude-key {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--gh-border, #e5e7eb);
+  border-radius: 10px;
+  background: var(--gh-bg-secondary, #f9fafb);
+}
+
+.settings-claude-key.is-current {
+  border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 45%, var(--gh-border, #e5e7eb));
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 5%, var(--gh-card-bg, #ffffff));
+}
+
+.settings-claude-key-info {
+  display: flex;
+  flex: 1 1 240px;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.settings-claude-key-title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.settings-claude-key-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gh-text, #1f2937);
+  overflow-wrap: anywhere;
+}
+
+.settings-claude-using-badge,
+.settings-claude-type-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 18px;
+  padding: 0 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.settings-claude-using-badge {
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 12%, transparent);
+  color: var(--gh-primary-text, var(--gh-primary, #4285f4));
+}
+
+.settings-claude-type-badge {
+  background: color-mix(in srgb, var(--gh-text, #1f2937) 7%, transparent);
+  color: var(--gh-text-secondary, #6b7280);
+}
+
+.settings-claude-key-value {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.settings-claude-key-value code {
+  min-width: 0;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: var(--gh-bg-tertiary, #f3f4f6);
+  color: var(--gh-text-secondary, #6b7280);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 复制按钮常驻显示，键盘可以聚焦，不再只在鼠标悬停时出现 */
+.settings-claude-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--gh-text-secondary, #6b7280);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.settings-claude-copy-btn:hover {
+  background: var(--gh-hover, #f3f4f6);
+  color: var(--gh-text, #1f2937);
+}
+
+.settings-claude-copy-btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 42%, transparent);
+  outline-offset: 1px;
+}
+
+.settings-claude-key-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* 检测中只显示旋转图标，固定最小宽度避免按钮宽度跳动 */
+.settings-claude-test-btn {
+  min-width: 60px;
+}
+
 /* ==================== 关于页面 (AboutPage) 辅助类 ==================== */
 
 .about-slogan-container {
@@ -5519,8 +5877,75 @@ html[data-theme="dark"] .about-privacy-banner {
   margin-bottom: 32px;
 }
 
-.about-links-grid.reviews-grid {
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+/* 评分入口：一行商店链接，当前平台对应的商店排在最前并带「评分」提示 */
+.about-store-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 32px;
+}
+
+.about-store-link {
+  --about-store-link-bg: var(--gh-card-bg, #ffffff);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--gh-card-border, var(--gh-border, #e5e7eb));
+  border-radius: 10px;
+  background: var(--about-store-link-bg);
+  color: var(--gh-text, #374151);
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  transition:
+    border-color 0.18s ease,
+    background-color 0.18s ease;
+}
+
+.about-store-link > svg:last-child {
+  flex-shrink: 0;
+  color: var(--gh-text-tertiary, #9ca3af);
+}
+
+/* GreasyFork 图标的叉形是镂空效果，填充色要跟随所在链接的底色 */
+.about-store-link .greasyfork-icon .greasyfork-fork {
+  fill: var(--about-store-link-bg);
+}
+
+.about-store-link:hover {
+  --about-store-link-bg: color-mix(
+    in srgb,
+    var(--gh-primary, #4285f4) 6%,
+    var(--gh-card-bg, #ffffff)
+  );
+  border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 40%, var(--gh-border, #e5e7eb));
+}
+
+.about-store-link:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 42%, transparent);
+  outline-offset: 2px;
+}
+
+.about-store-link.is-current {
+  --about-store-link-bg: color-mix(
+    in srgb,
+    var(--gh-primary, #4285f4) 9%,
+    var(--gh-card-bg, #ffffff)
+  );
+  border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 45%, var(--gh-border, #e5e7eb));
+  font-weight: 600;
+}
+
+.about-store-link-cta {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--gh-primary, #4285f4);
+  color: var(--gh-text-on-primary, #ffffff);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 18px;
 }
 
 .about-links-grid.community-grid {

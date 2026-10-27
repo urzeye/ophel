@@ -2,7 +2,7 @@
  * 关于页面
  * 显示扩展信息、版本、链接等
  */
-import React, { useEffect, useState, useSyncExternalStore } from "react"
+import React, { useEffect, useMemo, useState, useSyncExternalStore } from "react"
 
 import { PlatformIcon } from "~components/PlatformIcon"
 import {
@@ -29,6 +29,7 @@ import { ABOUT_SPONSOR_SETTING_ID } from "~constants"
 import { STORE_LINKS } from "~constants/store-links"
 import { useHasUnseenReleaseNotes } from "~hooks/useHasUnseenReleaseNotes"
 import { useSupportedAiPlatforms } from "~hooks/useSupportedAiPlatforms"
+import { isScriptCatUserscriptManager } from "~platform/utils"
 import { APP_DISPLAY_NAME, APP_VERSION, getAppIconUrl } from "~utils/config"
 import {
   AFDIAN_URL,
@@ -37,6 +38,7 @@ import {
   getDonateChannels,
   resolveSupportImageUrl,
 } from "~utils/donate-channels"
+import { getStoreInfo } from "~utils/getStoreInfo"
 import { getCurrentLang, subscribeI18nChanges, t } from "~utils/i18n"
 
 import { PageTitle } from "../components"
@@ -52,6 +54,40 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
   const donateChannels = getDonateChannels(language)
   const hasUnseenReleaseNotes = useHasUnseenReleaseNotes()
   const [sponsorPreview, setSponsorPreview] = useState<{ src: string; alt: string } | null>(null)
+  // 当前运行平台对应的商店排在最前并高亮；ScriptCat 管理器下优先 ScriptCat，其余与侧栏评分入口一致
+  const currentStoreUrl = useMemo(
+    () => (isScriptCatUserscriptManager() ? STORE_LINKS.scriptCat : getStoreInfo().url),
+    [],
+  )
+  const storeLinks = [
+    {
+      id: "chrome",
+      url: STORE_LINKS.chrome,
+      label: t("chromeStore"),
+      icon: <ChromeIcon size={18} />,
+    },
+    { id: "edge", url: STORE_LINKS.edge, label: t("edgeAddons"), icon: <EdgeIcon size={18} /> },
+    {
+      id: "firefox",
+      url: STORE_LINKS.firefox,
+      label: t("firefoxAddons"),
+      icon: <FirefoxIcon size={18} />,
+    },
+    {
+      id: "greasyFork",
+      url: STORE_LINKS.greasyFork,
+      label: t("greasyFork"),
+      icon: <GreasyForkIcon size={18} color="currentColor" />,
+    },
+    {
+      id: "scriptCat",
+      url: STORE_LINKS.scriptCat,
+      label: t("scriptCat"),
+      icon: <ScriptCatIcon size={18} color="#1296db" />,
+    },
+  ].sort(
+    (left, right) => Number(right.url === currentStoreUrl) - Number(left.url === currentStoreUrl),
+  )
 
   useEffect(() => {
     if (!sponsorPreview) return
@@ -287,90 +323,29 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
       ) : null}
 
       <div className="about-section-title">{t("rateAndReview")}</div>
-      <div className="about-links-grid reviews-grid">
-        {/* Chrome Store */}
-        <a
-          href={STORE_LINKS.chrome}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="about-link-card">
-          <div className="about-link-header">
-            <ChromeIcon size={24} />
-            <span style={{ fontWeight: 600 }}>{t("chromeStore")}</span>
-          </div>
-          <span className="about-link-btn" aria-hidden="true">
-            {t("reviewBtn")}
-          </span>
-        </a>
-
-        {/* Edge Add-ons */}
-        <a
-          href={STORE_LINKS.edge}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="about-link-card">
-          <div className="about-link-header">
-            <EdgeIcon size={24} />
-            <span style={{ fontWeight: 600 }}>{t("edgeAddons")}</span>
-          </div>
-          <span className="about-link-btn" aria-hidden="true">
-            {t("reviewBtn")}
-          </span>
-        </a>
-
-        {/* Firefox Add-on */}
-        <a
-          href={STORE_LINKS.firefox}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="about-link-card">
-          <div className="about-link-header">
-            <FirefoxIcon size={24} />
-            <span style={{ fontWeight: 600 }}>{t("firefoxAddons")}</span>
-          </div>
-          <span className="about-link-btn" aria-hidden="true">
-            {t("reviewBtn")}
-          </span>
-        </a>
-
-        {/* GreasyFork */}
-        <a
-          href={STORE_LINKS.greasyFork}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="about-link-card">
-          <div className="about-link-header">
-            <GreasyForkIcon size={24} color="currentColor" />
-            <span style={{ fontWeight: 600, color: "var(--gh-text)" }}>{t("greasyFork")}</span>
-          </div>
-          <span className="about-link-btn" aria-hidden="true">
-            {t("reviewBtn")}
-          </span>
-        </a>
-
-        {/* ScriptCat */}
-        <a
-          href={STORE_LINKS.scriptCat}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="about-link-card">
-          <div className="about-link-header">
-            <ScriptCatIcon size={24} color="#1296db" />
-            <span style={{ fontWeight: 600, color: "var(--gh-text)" }}>{t("scriptCat")}</span>
-          </div>
-          <span className="about-link-btn" aria-hidden="true">
-            {t("reviewBtn")}
-          </span>
-        </a>
+      <div className="about-store-links">
+        {storeLinks.map((store) => {
+          const isCurrent = store.url === currentStoreUrl
+          return (
+            <a
+              key={store.id}
+              href={store.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`about-store-link${isCurrent ? " is-current" : ""}`}>
+              {store.icon}
+              <span>{store.label}</span>
+              {isCurrent ? <span className="about-store-link-cta">{t("reviewBtn")}</span> : null}
+              <ExternalLinkIcon size={12} />
+            </a>
+          )
+        })}
       </div>
 
       <div className="about-section-title">{t("aboutSupportedPlatforms")}</div>
       <div className="about-platforms-card">
-        <div className="about-platforms-header">
-          <div className="about-platforms-desc">
-            {t("aboutSupportedPlatformsDesc", { count: supportedPlatformsCount })}
-          </div>
-          <span className="about-platforms-count">{supportedPlatformsCount}</span>
+        <div className="about-platforms-desc">
+          {t("aboutSupportedPlatformsDesc", { count: supportedPlatformsCount })}
         </div>
         <div className="about-platforms-grid">
           {supportedPlatforms.map((platform) => {

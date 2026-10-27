@@ -2,27 +2,41 @@
  * 数据与权限页面
  * 包含：本地备份导出/导入 (支持部分导出) | WebDAV 同步配置与管理 | 权限管理
  */
-import React, { useEffect, useRef, useState } from "react"
+import React, { useEffect, useId, useMemo, useRef, useState } from "react"
 
 import {
+  ClearIcon,
   CloudIcon,
-  SaveIcon,
-  LinkIcon,
   CloudUploadIcon,
-  FileRestoreIcon,
   DeleteIcon,
-  RefreshIcon,
+  EyeClosedIcon,
+  EyeIcon,
+  FileRestoreIcon,
+  ImportIcon,
   InfoIcon,
+  JSONFileIcon,
+  LinkIcon,
+  RefreshIcon,
+  SaveIcon,
+  TimeIcon,
 } from "~components/icons"
-import { ConfirmDialog, Tooltip } from "~components/ui"
+import { ConfirmDialog, SelectDropdown, Tooltip } from "~components/ui"
 import { BACKUP_TAB_IDS } from "~constants"
 import { DEFAULT_FOLDERS, getDefaultPromptChains, getDefaultPrompts } from "~constants/defaults"
 import {
+  BackupCodecError,
+  BOOKMARKS_STORAGE_KEY,
   createBackupDocument,
-  normalizeBackupDocument,
+  createBackupRestorePlan,
   restoreBackupDocument,
+  USAGE_MONITOR_STORAGE_KEY,
+  type BackupDocument,
   type BackupType,
 } from "~core/backup-codec"
+import {
+  INSTALLED_SITE_PACKS_STORAGE_KEY,
+  SITE_PACK_ORIGIN_BINDINGS_STORAGE_KEY,
+} from "~core/site-pack-storage-constants"
 import {
   WEBDAV_PROVIDER_PRESETS,
   detectProviderFromUrl,
@@ -41,8 +55,8 @@ import { usePromptsStore } from "~stores/prompts-store"
 import { useReadingHistoryStore } from "~stores/reading-history-store"
 import { useSettingsStore } from "~stores/settings-store"
 import { useTagsStore } from "~stores/tags-store"
-import { validateBackupData } from "~utils/backup-validator"
-import { t } from "~utils/i18n"
+import { formatDateTime } from "~utils/format"
+import { getCurrentLocale, t } from "~utils/i18n"
 import {
   MSG_CHECK_PERMISSION,
   MSG_CLEAR_ALL_DATA,
@@ -70,6 +84,51 @@ interface WebDAVFormState {
   provider: WebDAVProvider
 }
 
+type WebDAVAction = "test" | "upload" | "restore"
+
+// 导入预览按用户能理解的功能归类展示备份内容；存储键与 backup-codec 的用户数据键一一对应
+const BACKUP_CONTENT_GROUPS: ReadonlyArray<{ labelKey: string; storageKeys: readonly string[] }> = [
+  { labelKey: "backupContentSettings", storageKeys: ["settings"] },
+  { labelKey: "backupContentPrompts", storageKeys: ["prompts", "promptChains"] },
+  { labelKey: "backupContentConversations", storageKeys: ["conversations", "folders", "tags"] },
+  { labelKey: "backupContentReadingHistory", storageKeys: ["readingHistory"] },
+  { labelKey: "backupContentBookmarks", storageKeys: [BOOKMARKS_STORAGE_KEY] },
+  { labelKey: "backupContentClaudeKeys", storageKeys: ["claudeSessionKeys"] },
+  { labelKey: "backupContentUsage", storageKeys: [USAGE_MONITOR_STORAGE_KEY] },
+  {
+    labelKey: "backupContentSitePacks",
+    storageKeys: [INSTALLED_SITE_PACKS_STORAGE_KEY, SITE_PACK_ORIGIN_BINDINGS_STORAGE_KEY],
+  },
+]
+
+type ImportPreview =
+  | { status: "empty" }
+  | { status: "invalid"; reasonKey: string }
+  | { status: "valid"; document: BackupDocument; contentLabelKeys: string[] }
+
+// 与真正恢复走同一套解析与校验（createBackupRestorePlan），预览里看到的就是将被写入的内容
+const getImportPreview = (rawText: string): ImportPreview => {
+  const text = rawText.trim()
+  if (!text) return { status: "empty" }
+
+  try {
+    const { document, restoredKeys } = createBackupRestorePlan(JSON.parse(text))
+    const contentLabelKeys = BACKUP_CONTENT_GROUPS.filter((group) =>
+      group.storageKeys.some((key) => restoredKeys.includes(key)),
+    ).map((group) => group.labelKey)
+    return { status: "valid", document, contentLabelKeys }
+  } catch (error) {
+    const reasonKey =
+      error instanceof BackupCodecError && error.errorKeys.length > 0
+        ? error.errorKeys[0]
+        : "backupValidationInvalidFormat"
+    return { status: "invalid", reasonKey }
+  }
+}
+
+const hasDraggedFiles = (event: React.DragEvent): boolean =>
+  Array.from(event.dataTransfer.types).includes("Files")
+
 // 辅助函数：格式化文件大小
 const formatSize = (bytes: number) => {
   if (bytes === 0) return "0 B"
@@ -90,6 +149,9 @@ const formatBackupTypeLabel = (type: unknown): string => {
   if (type === "settings") return t("settingsBackup")
   return String(type || t("unknown"))
 }
+
+const formatBackupTime = (timestamp: string): string =>
+  timestamp ? formatDateTime(timestamp, getCurrentLocale()) : "-"
 
 const notifyRestoreContexts = async (): Promise<string[]> => {
   if (platform.type !== "extension" || typeof chrome === "undefined") return []
@@ -311,7 +373,11 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
   // 状态管理
   const [showRemoteBackups, setShowRemoteBackups] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [pasteContent, setPasteContent] = useState("")
+  // 导入内容的唯一来源：选择或拖入的文件读成文本后写到这里，「粘贴 JSON」直接编辑它
+  const [importText, setImportText] = useState("")
+  const [importFileName, setImportFileName] = useState<string | null>(null)
+  const [isImportDragOver, setIsImportDragOver] = useState(false)
+  const importPreview = useMemo(() => getImportPreview(importText), [importText])
 
   // WebDAV 本地表单状态（与 Store 解耦，仅点击保存时同步）
   const [webdavForm, setWebdavForm] = useState<WebDAVFormState>({
@@ -321,6 +387,11 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
     remoteDir: "ophel",
     provider: "custom",
   })
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false)
+  const [webdavBusyAction, setWebdavBusyAction] = useState<WebDAVAction | null>(null)
+  // 同步锁：按钮禁用状态渲染出来之前的连点也只放行一次
+  const webdavBusyRef = useRef(false)
+  const webdavFieldId = useId()
 
   // 初始化表单
   useEffect(() => {
@@ -402,78 +473,96 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
   }
 
   // -------------------- 导入功能 --------------------
-  const processImport = async (jsonString: string) => {
+  const loadImportFile = async (file: File) => {
     try {
-      const parsedData = JSON.parse(jsonString)
-
-      // 数据格式验证
-      const validation = validateBackupData(parsedData)
-      if (!validation.valid) {
-        console.error("Backup validation failed:", validation.errorKeys)
-        showDomToast(t("invalidBackupFile"))
-        return
-      }
-      const data = normalizeBackupDocument(parsedData)
-
-      setConfirmConfig({
-        show: true,
-        title: t("importData"),
-        message: (
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            <div>{t("importConfirm")}</div>
-            <div className="settings-backup-confirm-box">
-              <div className="settings-backup-confirm-grid">
-                <div className="settings-backup-confirm-label">{t("backupTime")}</div>
-                <div className="settings-backup-confirm-value">{String(data.timestamp || "-")}</div>
-                <div className="settings-backup-confirm-label">{t("backupType")}</div>
-                <div className="settings-backup-confirm-value">
-                  {formatBackupTypeLabel(data.type)}
-                </div>
-              </div>
-            </div>
-            <div style={{ fontSize: "12px", color: "var(--gh-text-secondary, #6b7280)" }}>
-              {t("openAiPagesWillRefresh")}
-            </div>
-          </div>
-        ),
-        danger: true,
-        onConfirm: async () => {
-          setConfirmConfig((prev) => ({ ...prev, show: false }))
-          try {
-            await restoreBackupDocument(platform.storage, data)
-            const missingPermissionOrigins = await notifyRestoreContexts()
-
-            showDomToast(getRestoreSuccessMessage(t("importSuccess"), missingPermissionOrigins))
-            setTimeout(
-              () => window.location.reload(),
-              missingPermissionOrigins.length > 0 ? 2500 : 1000,
-            )
-          } catch (err) {
-            console.error("[Backup] import storage write failed:", err)
-            showDomToast(`${t("importError")}${getErrorMessage(err)}`)
-          }
-        },
-      })
-    } catch (e) {
-      console.error("[Backup] import parse failed:", e)
-      showDomToast(`${t("importError")}${getErrorMessage(e)}`)
+      const text = await file.text()
+      setImportText(text)
+      setImportFileName(file.name)
+    } catch (error) {
+      console.error("[Backup] read import file failed:", error)
+      showDomToast(`${t("importError")}${getErrorMessage(error)}`)
     }
   }
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (!file) return
-    const text = await file.text()
-    setPasteContent(text)
-    if (fileInputRef.current) fileInputRef.current.value = ""
+    e.target.value = ""
+    if (file) await loadImportFile(file)
+  }
+
+  const clearImport = () => {
+    setImportText("")
+    setImportFileName(null)
+  }
+
+  // 拖入文件时拦截默认行为与冒泡：避免浏览器直接打开文件，或宿主页把它当成聊天附件
+  const handleImportDragOver = (event: React.DragEvent<HTMLElement>) => {
+    if (!hasDraggedFiles(event)) return
+    event.preventDefault()
+    event.stopPropagation()
+    event.dataTransfer.dropEffect = "copy"
+    setIsImportDragOver(true)
+  }
+
+  const handleImportDragLeave = (event: React.DragEvent<HTMLElement>) => {
+    if (event.currentTarget.contains(event.relatedTarget as Node | null)) return
+    setIsImportDragOver(false)
+  }
+
+  const handleImportDrop = (event: React.DragEvent<HTMLElement>) => {
+    if (!hasDraggedFiles(event)) return
+    event.preventDefault()
+    event.stopPropagation()
+    setIsImportDragOver(false)
+    const file = event.dataTransfer.files[0]
+    if (file) void loadImportFile(file)
   }
 
   const handleImportClick = () => {
-    if (!pasteContent.trim()) {
-      showDomToast(t("selectFileOrPasteFirst"))
-      return
-    }
-    processImport(pasteContent)
+    if (importPreview.status !== "valid") return
+    const backupDocument = importPreview.document
+
+    setConfirmConfig({
+      show: true,
+      title: t("importData"),
+      message: (
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+          <div>{t("importConfirm")}</div>
+          <div className="settings-backup-confirm-box">
+            <div className="settings-backup-confirm-grid">
+              <div className="settings-backup-confirm-label">{t("backupTime")}</div>
+              <div className="settings-backup-confirm-value">
+                {formatBackupTime(backupDocument.timestamp)}
+              </div>
+              <div className="settings-backup-confirm-label">{t("backupType")}</div>
+              <div className="settings-backup-confirm-value">
+                {formatBackupTypeLabel(backupDocument.type)}
+              </div>
+            </div>
+          </div>
+          <div style={{ fontSize: "12px", color: "var(--gh-text-secondary, #6b7280)" }}>
+            {t("openAiPagesWillRefresh")}
+          </div>
+        </div>
+      ),
+      danger: true,
+      onConfirm: async () => {
+        setConfirmConfig((prev) => ({ ...prev, show: false }))
+        try {
+          await restoreBackupDocument(platform.storage, backupDocument)
+          const missingPermissionOrigins = await notifyRestoreContexts()
+
+          showDomToast(getRestoreSuccessMessage(t("importSuccess"), missingPermissionOrigins))
+          setTimeout(
+            () => window.location.reload(),
+            missingPermissionOrigins.length > 0 ? 2500 : 1000,
+          )
+        } catch (err) {
+          console.error("[Backup] import storage write failed:", err)
+          showDomToast(`${t("importError")}${getErrorMessage(err)}`)
+        }
+      },
+    })
   }
 
   const resetLocalStores = () => {
@@ -547,65 +636,84 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
     return false
   }
 
-  const checkAndRequestWebDAVPermission = async (
-    onGranted: () => void | Promise<void>,
-  ): Promise<boolean> => {
-    const url = webdavForm.url
-    if (!url) {
-      showDomToast(t("webdavConfigIncomplete"))
-      return false
-    }
-
-    if (!platform.hasCapability("permissions")) {
-      await onGranted()
-      return true
-    }
-
+  // 扩展端未授予目标地址的访问权限时需要先申请；油猴端或地址无法解析时直接执行，由请求本身给出错误
+  const needsWebDAVPermissionRequest = async (url: string): Promise<boolean> => {
+    if (!platform.hasCapability("permissions")) return false
     try {
-      const urlObj = new URL(url)
-      const origin = urlObj.origin + "/*"
+      const origin = `${new URL(url).origin}/*`
       const checkResult: { hasPermission?: boolean } = await chrome.runtime.sendMessage({
         type: MSG_CHECK_PERMISSION,
         origin,
       })
-      if (!checkResult.hasPermission) {
-        setPermissionConfirm({
-          show: true,
-          onConfirm: async () => {
-            setPermissionConfirm((prev) => ({ ...prev, show: false }))
-            try {
-              const requestResult: { success?: boolean; error?: string } =
-                await chrome.runtime.sendMessage({
-                  type: MSG_REQUEST_PERMISSIONS,
-                  permType: "allUrls",
-                })
-              if (!requestResult.success) {
-                showDomToast(requestResult.error || t("permissionRequired"))
-                return
-              }
+      return !checkResult.hasPermission
+    } catch (error) {
+      console.warn("[Backup] WebDAV permission check skipped:", error)
+      return false
+    }
+  }
 
-              const granted = await waitForWebDAVPermission("<all_urls>")
-              if (!granted) {
-                showDomToast(t("permissionRequired"))
-                return
-              }
-
-              await onGranted()
-            } catch (error) {
-              console.warn("WebDAV permission request failed:", error)
-              showDomToast(t("permissionRequired"))
-            }
-          },
-        })
+  const requestWebDAVPermission = async (): Promise<boolean> => {
+    try {
+      const requestResult: { success?: boolean; error?: string } = await chrome.runtime.sendMessage(
+        {
+          type: MSG_REQUEST_PERMISSIONS,
+          permType: "allUrls",
+        },
+      )
+      if (!requestResult.success) {
+        showDomToast(requestResult.error || t("permissionRequired"))
         return false
       }
-      await onGranted()
-      return true
-    } catch (e) {
-      console.warn("Perm check logic skipped:", e)
-      await onGranted()
-      return true
+
+      const granted = await waitForWebDAVPermission("<all_urls>")
+      if (!granted) showDomToast(t("permissionRequired"))
+      return granted
+    } catch (error) {
+      console.warn("WebDAV permission request failed:", error)
+      showDomToast(t("permissionRequired"))
+      return false
     }
+  }
+
+  // 执行期间锁定测试连接 / 恢复 / 立即备份三个按钮，并在当前按钮上显示进行中状态
+  const withWebDAVBusy = async (action: WebDAVAction, run: () => Promise<void>) => {
+    if (webdavBusyRef.current) return
+    webdavBusyRef.current = true
+    setWebdavBusyAction(action)
+    try {
+      await run()
+    } catch (error) {
+      console.error(`[Backup] WebDAV ${action} failed:`, error)
+      showDomToast(`${t("error")}: ${getErrorMessage(error)}`)
+    } finally {
+      webdavBusyRef.current = false
+      setWebdavBusyAction(null)
+    }
+  }
+
+  // 三个 WebDAV 操作的共用入口：缺少访问权限时先弹确认，用户确认后申请权限再继续执行
+  const runWebDAVAction = (action: WebDAVAction, task: () => Promise<void>) => {
+    if (!webdavForm.url) {
+      showDomToast(t("webdavConfigIncomplete"))
+      return
+    }
+
+    void withWebDAVBusy(action, async () => {
+      if (!(await needsWebDAVPermissionRequest(webdavForm.url))) {
+        await task()
+        return
+      }
+
+      setPermissionConfirm({
+        show: true,
+        onConfirm: () => {
+          setPermissionConfirm((prev) => ({ ...prev, show: false }))
+          void withWebDAVBusy(action, async () => {
+            if (await requestWebDAVPermission()) await task()
+          })
+        },
+      })
+    })
   }
 
   const handleSaveConfig = () => {
@@ -619,27 +727,30 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
     showDomToast(t("saveSuccess"))
   }
 
-  const testWebDAVConnection = async () => {
-    await checkAndRequestWebDAVPermission(async () => {
+  const handleTestConnection = () =>
+    runWebDAVAction("test", async () => {
       const manager = getWebDAVSyncManager()
       await manager.setConfig(webdavForm, false)
 
       const res = await manager.testConnection()
-      if (res.success) showDomToast(t("webdavConnectionSuccess"))
-      else showDomToast(t("webdavConnectionFailed"))
+      showDomToast(t(res.success ? "webdavConnectionSuccess" : "webdavConnectionFailed"))
     })
-  }
 
-  const uploadToWebDAV = async () => {
-    await checkAndRequestWebDAVPermission(async () => {
+  const handleUpload = () =>
+    runWebDAVAction("upload", async () => {
       const manager = getWebDAVSyncManager()
       await manager.setConfig(webdavForm, false)
 
       const res = await manager.upload()
-      if (res.success) showDomToast(t("webdavUploadSuccess"))
-      else showDomToast(t("webdavUploadFailed"))
+      showDomToast(t(res.success ? "webdavUploadSuccess" : "webdavUploadFailed"))
     })
-  }
+
+  const handleOpenRestore = () =>
+    runWebDAVAction("restore", async () => {
+      const manager = getWebDAVSyncManager()
+      await manager.setConfig(webdavForm, false)
+      setShowRemoteBackups(true)
+    })
 
   const isWebDAVUnsaved = (() => {
     const base = settings.webdav ?? DEFAULT_SETTINGS.webdav
@@ -653,6 +764,28 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
       webdavForm.provider !== normalizedBaseProvider
     )
   })()
+
+  const isWebDAVBusy = webdavBusyAction !== null
+  const currentProvider = webdavForm.provider || "custom"
+  const providerPreset = WEBDAV_PROVIDER_PRESETS.find((preset) => preset.id === currentProvider)
+  const providerOptions = WEBDAV_PROVIDER_PRESETS.map((preset) => ({
+    value: preset.id,
+    label: t(preset.labelKey),
+  }))
+  const lastSyncTime = settings.webdav?.lastSyncTime
+
+  const handleProviderChange = (value: string) => {
+    const provider = value as WebDAVProvider
+    const preset = WEBDAV_PROVIDER_PRESETS.find((p) => p.id === provider)
+    setWebdavForm((prev) => ({
+      ...prev,
+      provider,
+      ...(preset?.urlTemplate ? { url: preset.urlTemplate } : {}),
+    }))
+  }
+
+  const renderBusyIcon = (action: WebDAVAction, icon: React.ReactNode) =>
+    webdavBusyAction === action ? <RefreshIcon size={16} className="settings-spin" /> : icon
 
   return (
     <div>
@@ -695,114 +828,153 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
       {activeTab === BACKUP_TAB_IDS.LOCAL && (
         <>
           <div className="settings-backup-grid">
-            {/* 导出 */}
+            {/* 导出：完整备份是推荐路径，只有它用主按钮 */}
             <SettingCard
               title={t("exportData")}
               description={t("exportDataDesc")}
               settingId="backup-export-card">
-              <div className="settings-backup-export-list">
-                {/* 完整备份 */}
-                <div className="settings-backup-export-item">
-                  <div className="settings-backup-export-info">
-                    <div className="settings-backup-export-title">{t("fullBackup")}</div>
-                    <div className="settings-backup-export-desc">{t("fullBackupDesc")}</div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleExport("full")}
-                    className="settings-btn settings-btn-success">
-                    {t("export")}
-                  </button>
-                </div>
-
-                {/* 提示词备份 */}
-                <div className="settings-backup-export-item">
-                  <div className="settings-backup-export-info">
-                    <div className="settings-backup-export-title">{t("promptsBackup")}</div>
-                    <div className="settings-backup-export-desc">{t("promptsBackupDesc")}</div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleExport("prompts")}
-                    className="settings-btn settings-btn-primary">
-                    {t("export")}
-                  </button>
-                </div>
-
-                {/* 设置备份 */}
-                <div className="settings-backup-export-item">
-                  <div className="settings-backup-export-info">
-                    <div className="settings-backup-export-title">{t("settingsBackup")}</div>
-                    <div className="settings-backup-export-desc">{t("settingsBackupDesc")}</div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleExport("settings")}
-                    className="settings-btn settings-btn-secondary">
-                    {t("export")}
-                  </button>
-                </div>
-              </div>
+              <SettingRow
+                label={
+                  <span className="settings-row-label-with-badge">
+                    <span>{t("fullBackup")}</span>
+                    <span className="settings-beta-badge">{t("recommendedBadge")}</span>
+                  </span>
+                }
+                description={t("fullBackupDesc")}>
+                <button
+                  type="button"
+                  onClick={() => handleExport("full")}
+                  className="settings-btn settings-btn-primary">
+                  {t("export")}
+                </button>
+              </SettingRow>
+              <SettingRow label={t("promptsBackup")} description={t("promptsBackupDesc")}>
+                <button
+                  type="button"
+                  onClick={() => handleExport("prompts")}
+                  className="settings-btn settings-btn-secondary">
+                  {t("export")}
+                </button>
+              </SettingRow>
+              <SettingRow label={t("settingsBackup")} description={t("settingsBackupDesc")}>
+                <button
+                  type="button"
+                  onClick={() => handleExport("settings")}
+                  className="settings-btn settings-btn-secondary">
+                  {t("export")}
+                </button>
+              </SettingRow>
             </SettingCard>
 
-            {/* 导入 */}
+            {/* 导入：先选择或拖入文件，解析出摘要后再导入；粘贴 JSON 作为次要入口 */}
             <SettingCard
               title={t("importData")}
               description={t("importDataDesc")}
               settingId="backup-import-card">
-              <div className="settings-backup-import-box">
-                {/* 文件选择 */}
-                <div className="settings-backup-file-row">
-                  <div className="settings-backup-file-label">{t("selectFile")}</div>
+              <div
+                className={`settings-backup-import${isImportDragOver ? " is-drag-over" : ""}`}
+                onDragEnter={handleImportDragOver}
+                onDragOver={handleImportDragOver}
+                onDragLeave={handleImportDragLeave}
+                onDrop={handleImportDrop}>
+                {importPreview.status === "empty" ? (
                   <button
                     type="button"
-                    className="settings-btn settings-btn-secondary"
+                    className="settings-backup-dropzone"
                     onClick={() => fileInputRef.current?.click()}>
-                    {t("browse")}
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept=".json"
-                      style={{ display: "none" }}
-                      onChange={handleFileChange}
-                    />
+                    <ImportIcon size={22} />
+                    <span className="settings-backup-dropzone-title">
+                      {t("backupDropZoneTitle")}
+                    </span>
+                    <span className="settings-backup-dropzone-hint">{t("backupDropZoneHint")}</span>
                   </button>
-                </div>
+                ) : (
+                  <div
+                    className={`settings-backup-preview${
+                      importPreview.status === "invalid" ? " is-invalid" : ""
+                    }`}>
+                    <div className="settings-backup-preview-head">
+                      <JSONFileIcon size={18} />
+                      <span className="settings-backup-preview-name">
+                        {importFileName ?? t("backupPastedSource")}
+                      </span>
+                      <Tooltip content={t("clear")}>
+                        <button
+                          type="button"
+                          className="settings-backup-preview-clear"
+                          aria-label={t("clear")}
+                          onClick={clearImport}>
+                          <ClearIcon size={14} />
+                        </button>
+                      </Tooltip>
+                    </div>
+                    {importPreview.status === "valid" ? (
+                      <dl className="settings-backup-preview-meta">
+                        <dt>{t("backupType")}</dt>
+                        <dd>{formatBackupTypeLabel(importPreview.document.type)}</dd>
+                        <dt>{t("backupTime")}</dt>
+                        <dd>{formatBackupTime(importPreview.document.timestamp)}</dd>
+                        <dt>{t("backupSummaryContents")}</dt>
+                        <dd className="settings-backup-preview-tags">
+                          {importPreview.contentLabelKeys.length > 0
+                            ? importPreview.contentLabelKeys.map((labelKey) => (
+                                <span key={labelKey} className="settings-backup-preview-tag">
+                                  {t(labelKey)}
+                                </span>
+                              ))
+                            : "-"}
+                        </dd>
+                      </dl>
+                    ) : (
+                      <div className="settings-backup-preview-error" role="alert">
+                        <strong>{t("invalidBackupFile")}</strong>
+                        <span>{t(importPreview.reasonKey)}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".json,application/json"
+                  hidden
+                  onChange={handleFileChange}
+                />
+              </div>
 
-                {/* 预览区域 */}
-                <div className="settings-backup-preview-container">
-                  <div className="settings-backup-preview-label">{t("dataPreview")}</div>
-                  <textarea
-                    className="settings-input settings-backup-preview-textarea"
-                    value={pasteContent}
-                    onChange={(e) => setPasteContent(e.target.value)}
-                    placeholder={t("pastePlaceholder")}
-                  />
-                </div>
+              <details className="settings-backup-paste">
+                <summary>{t("backupPasteJson")}</summary>
+                <textarea
+                  className="settings-input settings-backup-paste-textarea"
+                  value={importText}
+                  onChange={(e) => {
+                    setImportText(e.target.value)
+                    setImportFileName(null)
+                  }}
+                  placeholder={t("pastePlaceholder")}
+                  spellCheck={false}
+                />
+              </details>
 
-                {/* 导入按钮 */}
+              <div className="settings-backup-import-actions">
                 <button
                   type="button"
                   onClick={handleImportClick}
-                  className="settings-btn settings-btn-primary settings-backup-import-btn"
-                  disabled={!pasteContent.trim()}>
+                  className="settings-btn settings-btn-primary"
+                  disabled={importPreview.status !== "valid"}>
                   {t("importBtn")}
                 </button>
               </div>
             </SettingCard>
           </div>
 
-          {/* 危险操作区 */}
+          {/* 危险操作区：一句说明 + 描边危险按钮 */}
           <SettingCard
             title={t("dangerZone")}
-            description={t("dangerZoneDesc")}
             className="settings-backup-danger-card"
             settingId="backup-reset-card">
             <div className="settings-backup-danger-row">
-              <div>
-                <div className="settings-backup-danger-title">{t("clearAllData")}</div>
-                <div className="settings-backup-danger-desc">{t("clearAllDataDesc")}</div>
-              </div>
+              <p className="settings-backup-danger-text">{t("clearAllDataDesc")}</p>
               <button
                 type="button"
                 className="settings-btn settings-btn-danger"
@@ -828,116 +1000,122 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
             <div className="settings-backup-tip-content">{t("restoreTipContent")}</div>
           </div>
 
-          <SettingRow label={t("webdavProvider")} settingId="backup-webdav-provider">
-            <select
-              className="settings-input settings-select"
-              value={webdavForm.provider || "custom"}
-              onChange={(e) => {
-                const provider = e.target.value as WebDAVProvider
-                const preset = WEBDAV_PROVIDER_PRESETS.find((p) => p.id === provider)
-                setWebdavForm((prev) => ({
-                  ...prev,
-                  provider,
-                  ...(preset?.urlTemplate ? { url: preset.urlTemplate } : {}),
-                }))
-              }}
-              style={{ width: "280px" }}>
-              {WEBDAV_PROVIDER_PRESETS.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {t(p.labelKey)}
-                </option>
-              ))}
-            </select>
-          </SettingRow>
+          {/* 上下排列的表单：地址独占一行，用户名与密码并排 */}
+          <div className="settings-backup-form">
+            <div className="settings-backup-field" data-setting-id="backup-webdav-provider">
+              <span className="settings-backup-field-label">{t("webdavProvider")}</span>
+              <SelectDropdown
+                className="settings-select-dropdown"
+                buttonClassName="settings-select"
+                options={providerOptions}
+                value={currentProvider}
+                ariaLabel={t("webdavProvider")}
+                onChange={handleProviderChange}
+              />
+            </div>
 
-          {/* 服务商专属提示 */}
-          {(() => {
-            const preset = WEBDAV_PROVIDER_PRESETS.find(
-              (p) => p.id === (webdavForm.provider || "custom"),
-            )
-            if (!preset?.hintKey) return null
-            return (
+            {/* 服务商专属提示 */}
+            {providerPreset?.hintKey && (
               <div className="settings-backup-provider-hint">
-                <InfoIcon
-                  size={14}
-                  color="var(--gh-primary, #4285f4)"
-                  style={{ flexShrink: 0, marginTop: "1px" }}
-                />
+                <InfoIcon size={14} />
                 <div>
-                  {t(preset.hintKey)}
-                  {preset.helpUrl && (
-                    <a href={preset.helpUrl} target="_blank" rel="noreferrer noopener">
+                  {t(providerPreset.hintKey)}
+                  {providerPreset.helpUrl && (
+                    <a href={providerPreset.helpUrl} target="_blank" rel="noreferrer noopener">
                       {t("learnMore")}
                     </a>
                   )}
                 </div>
               </div>
-            )
-          })()}
+            )}
 
-          <SettingRow label={t("webdavAddress")} settingId="backup-webdav-url">
-            {(() => {
-              const preset = WEBDAV_PROVIDER_PRESETS.find(
-                (p) => p.id === (webdavForm.provider || "custom"),
-              )
-              const placeholder = preset?.urlPlaceholder || "https://dav.example.com/dav/"
-              return (
+            <div className="settings-backup-field is-wide" data-setting-id="backup-webdav-url">
+              <label className="settings-backup-field-label" htmlFor={`${webdavFieldId}-url`}>
+                {t("webdavAddress")}
+              </label>
+              <input
+                id={`${webdavFieldId}-url`}
+                type="text"
+                inputMode="url"
+                spellCheck={false}
+                className="settings-input"
+                placeholder={providerPreset?.urlPlaceholder || "https://dav.example.com/dav/"}
+                value={webdavForm.url}
+                onChange={(e) => setWebdavForm({ ...webdavForm, url: e.target.value })}
+              />
+            </div>
+
+            <div className="settings-backup-field" data-setting-id="backup-webdav-username">
+              <label className="settings-backup-field-label" htmlFor={`${webdavFieldId}-username`}>
+                {t("username")}
+              </label>
+              <input
+                id={`${webdavFieldId}-username`}
+                type="text"
+                spellCheck={false}
+                className="settings-input"
+                value={webdavForm.username}
+                onChange={(e) => setWebdavForm({ ...webdavForm, username: e.target.value })}
+              />
+            </div>
+
+            <div className="settings-backup-field" data-setting-id="backup-webdav-password">
+              <label className="settings-backup-field-label" htmlFor={`${webdavFieldId}-password`}>
+                {t("password")}
+              </label>
+              <div className="settings-backup-password">
                 <input
-                  type="text"
+                  id={`${webdavFieldId}-password`}
+                  type={isPasswordVisible ? "text" : "password"}
                   className="settings-input"
-                  placeholder={placeholder}
-                  value={webdavForm.url}
-                  onChange={(e) => setWebdavForm({ ...webdavForm, url: e.target.value })}
-                  style={{ width: "280px" }}
-                />
-              )
-            })()}
-          </SettingRow>
-
-          <SettingRow label={t("username")} settingId="backup-webdav-username">
-            <input
-              type="text"
-              className="settings-input"
-              value={webdavForm.username}
-              onChange={(e) => setWebdavForm({ ...webdavForm, username: e.target.value })}
-              style={{ width: "280px" }}
-            />
-          </SettingRow>
-
-          <SettingRow label={t("password")} settingId="backup-webdav-password">
-            {(() => {
-              const preset = WEBDAV_PROVIDER_PRESETS.find(
-                (p) => p.id === (webdavForm.provider || "custom"),
-              )
-              const pwdPlaceholder = preset?.passwordPlaceholderKey
-                ? t(preset.passwordPlaceholderKey)
-                : t("webdavPasswordPlaceholder")
-              return (
-                <input
-                  type="password"
-                  className="settings-input"
-                  placeholder={pwdPlaceholder}
+                  placeholder={
+                    providerPreset?.passwordPlaceholderKey
+                      ? t(providerPreset.passwordPlaceholderKey)
+                      : t("webdavPasswordPlaceholder")
+                  }
                   value={webdavForm.password}
                   onChange={(e) => setWebdavForm({ ...webdavForm, password: e.target.value })}
-                  style={{ width: "280px" }}
                 />
-              )
-            })()}
-          </SettingRow>
+                <Tooltip
+                  content={isPasswordVisible ? t("hidePassword") : t("showPassword")}
+                  triggerClassName="settings-backup-password-toggle-wrap">
+                  <button
+                    type="button"
+                    className="settings-backup-password-toggle"
+                    aria-label={isPasswordVisible ? t("hidePassword") : t("showPassword")}
+                    aria-pressed={isPasswordVisible}
+                    onClick={() => setIsPasswordVisible((visible) => !visible)}>
+                    {isPasswordVisible ? <EyeClosedIcon size={16} /> : <EyeIcon size={16} />}
+                  </button>
+                </Tooltip>
+              </div>
+            </div>
 
-          <SettingRow
-            label={t("defaultDir")}
-            description={t("defaultDirHint")}
-            settingId="backup-webdav-dir">
-            <input
-              type="text"
-              className="settings-input"
-              placeholder="ophel"
-              value={webdavForm.remoteDir}
-              onChange={(e) => setWebdavForm({ ...webdavForm, remoteDir: e.target.value })}
-              style={{ width: "280px" }}
-            />
-          </SettingRow>
+            <div className="settings-backup-field" data-setting-id="backup-webdav-dir">
+              <label className="settings-backup-field-label" htmlFor={`${webdavFieldId}-dir`}>
+                {t("defaultDir")}
+              </label>
+              <input
+                id={`${webdavFieldId}-dir`}
+                type="text"
+                spellCheck={false}
+                className="settings-input"
+                placeholder="ophel"
+                value={webdavForm.remoteDir}
+                onChange={(e) => setWebdavForm({ ...webdavForm, remoteDir: e.target.value })}
+              />
+              <span className="settings-backup-field-hint">{t("defaultDirHint")}</span>
+            </div>
+          </div>
+
+          <div className="settings-backup-sync-status">
+            <TimeIcon size={14} />
+            <span>
+              {lastSyncTime
+                ? t("webdavLastSync", { time: formatDateTime(lastSyncTime, getCurrentLocale()) })
+                : t("webdavNeverSynced")}
+            </span>
+          </div>
 
           {/* 操作按钮行 */}
           <div className="settings-backup-actions-row">
@@ -946,10 +1124,12 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
               <button
                 type="button"
                 className="settings-btn settings-btn-secondary"
-                onClick={testWebDAVConnection}>
-                <LinkIcon size={16} /> {t("webdavTestBtn")}
+                disabled={isWebDAVBusy}
+                onClick={handleTestConnection}>
+                {renderBusyIcon("test", <LinkIcon size={16} />)}
+                {webdavBusyAction === "test" ? t("webdavTesting") : t("webdavTestBtn")}
               </button>
-              <div style={{ position: "relative" }}>
+              <div className="settings-backup-save">
                 <button
                   type="button"
                   className={`settings-btn ${isWebDAVUnsaved ? "settings-btn-primary" : "settings-btn-secondary"}`}
@@ -964,20 +1144,18 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
               <button
                 type="button"
                 className="settings-btn settings-btn-secondary"
-                onClick={async () => {
-                  await checkAndRequestWebDAVPermission(async () => {
-                    const manager = getWebDAVSyncManager()
-                    await manager.setConfig(webdavForm, false)
-                    setShowRemoteBackups(true)
-                  })
-                }}>
-                <FileRestoreIcon size={16} color="currentColor" /> {t("restore")}
+                disabled={isWebDAVBusy}
+                onClick={handleOpenRestore}>
+                {renderBusyIcon("restore", <FileRestoreIcon size={16} color="currentColor" />)}
+                {t("restore")}
               </button>
               <button
                 type="button"
                 className={`settings-btn ${!isWebDAVUnsaved ? "settings-btn-primary" : "settings-btn-secondary"}`}
-                onClick={uploadToWebDAV}>
-                <CloudUploadIcon size={16} color="currentColor" /> {t("backupNow")}
+                disabled={isWebDAVBusy}
+                onClick={handleUpload}>
+                {renderBusyIcon("upload", <CloudUploadIcon size={16} color="currentColor" />)}
+                {webdavBusyAction === "upload" ? t("webdavUploading") : t("backupNow")}
               </button>
             </div>
           </div>

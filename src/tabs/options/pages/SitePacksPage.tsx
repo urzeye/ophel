@@ -78,9 +78,10 @@ import {
   getBuiltinSiteEntryUrls,
   orderBuiltinSitesByCurrentUrl,
 } from "~tabs/options/builtin-sites-list"
-import { PageTitle, SettingRow, TabGroup, ToggleRow } from "~tabs/options/components"
+import { PageTitle, TabGroup } from "~tabs/options/components"
 import { IS_DEVELOPMENT_BUILD } from "~utils/config"
-import { getCurrentLang, subscribeI18nChanges, t } from "~utils/i18n"
+import { formatDateTime } from "~utils/format"
+import { getCurrentLang, getCurrentLocale, subscribeI18nChanges, t } from "~utils/i18n"
 import { scrollWithinSettingsContent } from "~utils/settings-scroll"
 import { showToast } from "~utils/toast"
 
@@ -356,12 +357,6 @@ const getRegistryAvailabilityTone = (
   if (availability === "incompatible") return "warning"
   return "success"
 }
-
-const formatCheckTime = (timestamp: number): string =>
-  new Intl.DateTimeFormat(getCurrentLang(), {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(timestamp))
 
 const notify = (message: string) => showToast(message)
 const notifyError = (message: string) => showToast(message, ERROR_TOAST_DURATION)
@@ -1604,7 +1599,6 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
         <div className="settings-pack-info">
           <div className="settings-pack-title-line">
             <strong>{site.name}</strong>
-            <span className="settings-pack-badge">{t("builtinSiteBadge")}</span>
             {isCurrentSite && (
               <span className="settings-pack-badge current">{t("builtinSiteCurrentBadge")}</span>
             )}
@@ -1647,6 +1641,14 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
     )
   }
 
+  // 包描述多是同一句模板，只占一行；被截断时悬停查看全文。
+  // Tooltip 触发层默认 inline-flex 会按全文撑宽，这里改成块级才能截断
+  const renderPackDescription = (description: string) => (
+    <Tooltip content={description} showOnlyWhenTruncated triggerStyle={{ display: "block" }}>
+      <p className="settings-pack-description">{description}</p>
+    </Tooltip>
+  )
+
   const renderInstalledPack = (pack: InstalledSitePack) => {
     const packId = pack.manifest.id
     const status = getInstalledPackStatus(pack)
@@ -1686,7 +1688,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
             )}
             {status && <span className={`settings-pack-badge ${status.tone}`}>{status.label}</span>}
           </div>
-          {description && <p className="settings-pack-description">{description}</p>}
+          {description && renderPackDescription(description)}
           <div className="settings-pack-meta">
             <span className="settings-pack-version">v{pack.manifest.version}</span>
             <span className="settings-pack-source">
@@ -1801,7 +1803,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
               </span>
             )}
           </div>
-          {view.description && <p className="settings-pack-description">{view.description}</p>}
+          {view.description && renderPackDescription(view.description)}
           <div className="settings-pack-meta">
             <span className="settings-pack-version">v{version}</span>
             {firstMatch &&
@@ -1873,7 +1875,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
       </span>
       <span className="settings-pack-check-time">
         {t("remoteConfigLastCheckTime", {
-          time: formatCheckTime(lastCheckAt),
+          time: formatDateTime(lastCheckAt, getCurrentLocale()),
         })}
       </span>
     </span>
@@ -2113,22 +2115,83 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
 
       {activeTab === SITE_PACKS_TAB_IDS.UPDATES && (
         <>
+          {/* 更新状态条放在页首：开关、上次检查与立即检查不再被长列表压到页面底部 */}
+          <section
+            className="settings-card settings-pack-update-bar"
+            data-setting-id="remote-config-status">
+            <div className="settings-pack-update-bar-row">
+              <div
+                className="settings-pack-update-toggle"
+                data-setting-id="remote-config-auto-update">
+                <Switch
+                  size="sm"
+                  checked={settings.remoteConfig?.autoUpdate ?? true}
+                  ariaLabel={t("remoteConfigAutoUpdateLabel")}
+                  onChange={() =>
+                    updateNestedSetting(
+                      "remoteConfig",
+                      "autoUpdate",
+                      !(settings.remoteConfig?.autoUpdate ?? true),
+                    )
+                  }
+                />
+                <span>{t("remoteConfigAutoUpdateLabel")}</span>
+              </div>
+              <div className="settings-pack-update-summary">{registryStatusSummary}</div>
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                className="settings-pack-action-button"
+                data-setting-id="remote-config-check-now"
+                disabled={isRegistryBusy}
+                onClick={() => void refreshRegistry()}>
+                <RefreshIcon size={14} className={isCheckingRegistry ? "spinning" : ""} />
+                {isCheckingRegistry
+                  ? t("remoteConfigCheckingButton")
+                  : t("remoteConfigCheckNowButton")}
+              </Button>
+            </div>
+            <p className="settings-pack-update-note">
+              <InfoIcon size={13} aria-hidden="true" />
+              <span>
+                {t("remoteConfigAutoUpdateDesc")} {t("remoteConfigPrivacyDesc")}
+              </span>
+            </p>
+          </section>
+
           <section className="settings-card" data-setting-id="site-packs-registry">
             <div className="settings-pack-section-head">
               <div className="settings-card-title">{t("sitePacksRegistryTitle")}</div>
-              {registryViews.length > 0 && (
-                <div className="settings-pack-search">
-                  <Input
-                    type="search"
-                    autoComplete="off"
-                    spellCheck={false}
-                    value={registryQuery}
-                    placeholder={t("sitePacksRegistrySearchPlaceholder")}
-                    aria-label={t("sitePacksRegistrySearchPlaceholder")}
-                    onChange={(event) => setRegistryQuery(event.target.value)}
-                  />
-                </div>
-              )}
+              <div className="settings-pack-section-tools">
+                {registryViews.length > 0 && (
+                  <div className="settings-pack-search">
+                    <Input
+                      type="search"
+                      autoComplete="off"
+                      spellCheck={false}
+                      value={registryQuery}
+                      placeholder={t("sitePacksRegistrySearchPlaceholder")}
+                      aria-label={t("sitePacksRegistrySearchPlaceholder")}
+                      onChange={(event) => setRegistryQuery(event.target.value)}
+                    />
+                  </div>
+                )}
+                <Tooltip content={t("sitePacksLocalImportDesc")}>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    className="settings-pack-action-button"
+                    data-setting-id="site-packs-local-import"
+                    data-site-pack-import-trigger="persistent"
+                    disabled={isImportBusy}
+                    onClick={(event) => openImportPicker(event.currentTarget)}>
+                    <ImportIcon size={14} />
+                    {t("importBtn")}
+                  </Button>
+                </Tooltip>
+              </div>
             </div>
 
             {registryError && (
@@ -2158,65 +2221,16 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
             )}
           </section>
 
-          <section
-            className="settings-card settings-pack-import-card"
-            data-setting-id="site-packs-local-import">
-            <div className="settings-pack-import-row">
-              <div className="settings-pack-icon" aria-hidden="true">
-                <ImportIcon size={20} />
-              </div>
-              <div className="settings-pack-import-text">
-                <div className="settings-card-title">{t("sitePacksLocalImportTitle")}</div>
-                <div className="settings-card-desc">{t("sitePacksLocalImportDesc")}</div>
-              </div>
-              <Button
-                type="button"
-                size="sm"
-                variant="secondary"
-                className="settings-pack-action-button"
-                data-site-pack-import-trigger="persistent"
-                disabled={isImportBusy}
-                onClick={(event) => openImportPicker(event.currentTarget)}>
-                <ImportIcon size={14} />
-                {t("importBtn")}
-              </Button>
-            </div>
-          </section>
-
-          <section className="settings-card" data-setting-id="remote-config-status">
-            <div className="settings-card-title">{t("remoteConfigSettingsTitle")}</div>
-
-            <ToggleRow
-              label={t("remoteConfigAutoUpdateLabel")}
-              description={t("remoteConfigAutoUpdateDesc")}
-              settingId="remote-config-auto-update"
-              checked={settings.remoteConfig?.autoUpdate ?? true}
-              onChange={() =>
-                updateNestedSetting(
-                  "remoteConfig",
-                  "autoUpdate",
-                  !(settings.remoteConfig?.autoUpdate ?? true),
-                )
-              }
-            />
-
-            <SettingRow
-              label={t("remoteConfigCheckNowLabel")}
-              description={registryStatusSummary}
-              settingId="remote-config-check-now">
-              <Button
-                type="button"
-                size="sm"
-                variant="secondary"
-                className="settings-pack-action-button"
-                disabled={isRegistryBusy}
-                onClick={() => void refreshRegistry()}>
-                <RefreshIcon size={14} className={isCheckingRegistry ? "spinning" : ""} />
-                {isCheckingRegistry
-                  ? t("remoteConfigCheckingButton")
-                  : t("remoteConfigCheckNowButton")}
-              </Button>
-            </SettingRow>
+          {/* 内置站点热修补丁是给贡献者用的，收进默认折叠的「高级」；收起时仍显示当前补丁状态 */}
+          <details className="settings-card settings-pack-advanced">
+            <summary className="settings-pack-advanced-summary">
+              <span className="settings-pack-advanced-title">{t("sitePacksAdvancedTitle")}</span>
+              <span className="settings-pack-advanced-status">
+                {activePatches.length > 0
+                  ? `${t("remoteConfigActivePatchesLabel")} · ${activePatches.length}`
+                  : t("remoteConfigUsingBuiltin")}
+              </span>
+            </summary>
 
             <div className="settings-pack-patches" data-setting-id="remote-config-active-patches">
               <div className="settings-pack-section-head">
@@ -2240,12 +2254,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
                   {t("remoteConfigLocalPatchImportButton")}
                 </Button>
               </div>
-              {activePatches.length === 0 ? (
-                <div className="settings-pack-patch-empty">
-                  <span className="settings-pack-patch-empty-dot" aria-hidden="true" />
-                  <span>{t("remoteConfigUsingBuiltin")}</span>
-                </div>
-              ) : (
+              {activePatches.length > 0 && (
                 <div className="settings-pack-list">
                   {activePatches.map((patch) => (
                     <div className="settings-pack-item" key={`${patch.source}:${patch.siteId}`}>
@@ -2309,12 +2318,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
                 </div>
               )}
             </div>
-
-            <div className="settings-pack-privacy-note">
-              <InfoIcon size={13} aria-hidden="true" />
-              <span>{t("remoteConfigPrivacyDesc")}</span>
-            </div>
-          </section>
+          </details>
 
           {IS_DEVELOPMENT_BUILD && (
             <section

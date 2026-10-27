@@ -21,6 +21,13 @@ export const scrollWithinSettingsContent = (
   const scroller = target.closest<HTMLElement>(".settings-content")
   if (!scroller) return
 
+  // 目标在折叠的 <details> 内（如适配中心的「高级」区）时先展开，否则测不到位置也看不到高亮
+  let collapsed = target.closest<HTMLDetailsElement>("details:not([open])")
+  while (collapsed && scroller.contains(collapsed)) {
+    collapsed.open = true
+    collapsed = collapsed.parentElement?.closest<HTMLDetailsElement>("details:not([open])") ?? null
+  }
+
   const { block = "nearest", behavior = "smooth", margin = 12 } = options
   // 吸顶条（如站点设置的站点选择器）会遮挡可视区顶部，定位时额外留出其高度
   const stickyHeader = scroller.querySelector<HTMLElement>("[data-settings-sticky]")

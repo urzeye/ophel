@@ -92,6 +92,26 @@ const DIALOG_STYLES = `
     outline: none;
     border-color: var(--gh-input-focus-border, #4285f4);
   }
+  /* 多字段表单：标签在上、输入在下，字段之间统一间距 */
+  .gh-dialog-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .gh-dialog-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .gh-dialog-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--gh-text, #1f2937);
+  }
+  .gh-dialog-field .gh-dialog-input {
+    margin-bottom: 0;
+  }
   /* 弹窗 portal 到宿主页面，宿主（如 ChatGPT 新版）对 input 全局 appearance:none
      会把原生勾选框剥成透明盒子；这里恢复原生渲染 */
   .gh-dialog-overlay input[type="checkbox"] {

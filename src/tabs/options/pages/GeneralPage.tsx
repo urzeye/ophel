@@ -168,6 +168,11 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
     setSettings(buildPanelPreview("hoverWidth", val))
   }
 
+  // 拖动快捷按钮组滑块时实时预览，松手后再写入设置
+  const handleQuickButtonsPreview = (key: "proximityRadius" | "opacity", value: number) => {
+    setPreviewSettings({ quickButtons: { ...settings.quickButtons, [key]: value } })
+  }
+
   const activateHoverWidthPreview = () => {
     if (!isHoverResizeEnabled) {
       return
@@ -715,47 +720,39 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
               label={t("quickButtonsProximityRadiusLabel")}
               description={t("quickButtonsProximityRadiusDesc")}
               settingId="quick-buttons-proximity-radius">
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <input
-                  type="range"
-                  min="0"
-                  max="300"
-                  step="10"
-                  value={settings.quickButtons?.proximityRadius ?? 150}
-                  onChange={(e) =>
-                    updateNestedSetting(
-                      "quickButtons",
-                      "proximityRadius",
-                      parseInt(e.target.value, 10),
-                    )
-                  }
-                  style={{ width: "120px" }}
-                />
-                <span style={{ fontSize: "12px", minWidth: "36px" }}>
-                  {settings.quickButtons?.proximityRadius ?? 150}px
-                </span>
-              </div>
+              <Slider
+                value={
+                  settings.quickButtons?.proximityRadius ??
+                  DEFAULT_SETTINGS.quickButtons.proximityRadius
+                }
+                onChange={(value) => updateNestedSetting("quickButtons", "proximityRadius", value)}
+                onPreviewChange={(value) => handleQuickButtonsPreview("proximityRadius", value)}
+                onCancelPreview={clearPreviewSettings}
+                min={0}
+                max={300}
+                step={10}
+                unit="px"
+                defaultValue={DEFAULT_SETTINGS.quickButtons.proximityRadius}
+                formatValue={(value) => `${value}px`}
+                ariaLabel={t("quickButtonsProximityRadiusLabel")}
+              />
             </SettingRow>
             <SettingRow
               label={t("quickButtonsOpacityLabel")}
               description={t("quickButtonsOpacityDesc")}
               settingId="quick-buttons-opacity">
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <input
-                  type="range"
-                  min="0.4"
-                  max="1"
-                  step="0.05"
-                  value={settings.quickButtons?.opacity ?? 1}
-                  onChange={(e) =>
-                    updateNestedSetting("quickButtons", "opacity", parseFloat(e.target.value))
-                  }
-                  style={{ width: "120px" }}
-                />
-                <span style={{ fontSize: "12px", minWidth: "36px" }}>
-                  {Math.round((settings.quickButtons?.opacity ?? 1) * 100)}%
-                </span>
-              </div>
+              <Slider
+                value={settings.quickButtons?.opacity ?? DEFAULT_SETTINGS.quickButtons.opacity}
+                onChange={(value) => updateNestedSetting("quickButtons", "opacity", value)}
+                onPreviewChange={(value) => handleQuickButtonsPreview("opacity", value)}
+                onCancelPreview={clearPreviewSettings}
+                min={0.4}
+                max={1}
+                step={0.05}
+                defaultValue={DEFAULT_SETTINGS.quickButtons.opacity}
+                formatValue={(value) => `${Math.round(value * 100)}%`}
+                ariaLabel={t("quickButtonsOpacityLabel")}
+              />
             </SettingRow>
           </SettingCard>
           <SettingCard

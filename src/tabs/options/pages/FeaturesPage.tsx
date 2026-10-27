@@ -6,7 +6,7 @@
 import React, { useCallback, useEffect, useState } from "react"
 
 import { FeaturesIcon } from "~components/icons"
-import { Button, NumberInput, PlaceholderInput, SelectDropdown } from "~components/ui"
+import { Button, NumberInput, PlaceholderInput, SelectDropdown, Slider } from "~components/ui"
 import { FEATURES_TAB_IDS, NAV_IDS, NOTIFICATION_SOUND_PRESETS } from "~constants"
 import {
   DEFAULT_KEYBINDINGS,
@@ -295,17 +295,16 @@ const UsageHistoryChart: React.FC<{ siteId: string }> = ({ siteId }) => {
             <span style={{ fontSize: "12px", color: "var(--gh-text-secondary, #6b7280)" }}>
               {t("usageMonitorChartSiteLabel")}
             </span>
-            <select
-              className="settings-select"
-              value={selectedSiteId}
-              onChange={(e) => setSelectedSiteId(e.target.value)}
-              style={{ minWidth: "170px" }}>
-              {siteOptions.map((site) => (
-                <option key={site.id} value={site.id}>
-                  {site.label}
-                </option>
-              ))}
-            </select>
+            <div className="settings-usage-site-select">
+              <SelectDropdown
+                className="settings-select-dropdown"
+                buttonClassName="settings-select"
+                options={siteOptions.map((site) => ({ value: site.id, label: site.label }))}
+                value={selectedSiteId}
+                ariaLabel={t("usageMonitorChartSiteLabel")}
+                onChange={setSelectedSiteId}
+              />
+            </div>
           </div>
         </div>
         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "flex-start" }}>
@@ -730,6 +729,14 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
   const hasMultipleNotificationSoundPresets = NOTIFICATION_SOUND_PRESETS.length > 1
   const formatSecondsOptionLabel = (value: number) => t("secondsValueLabel", { val: String(value) })
   const formatRepeatCountOptionLabel = (value: number) => `${value}x`
+  // 数值类设置的下拉选项：SelectDropdown 的值是字符串，提交时再转回数字
+  const toNumberOptions = (values: readonly number[], formatLabel: (value: number) => string) =>
+    values.map((value) => ({ value: String(value), label: formatLabel(value) }))
+  const bookmarkModeOptions = [
+    { value: "always", label: t("inlineBookmarkModeAlways") },
+    { value: "hover", label: t("inlineBookmarkModeHover") },
+    { value: "hidden", label: t("inlineBookmarkModeHidden") },
+  ]
   const previewSoundButtonLabel = t("notificationSoundPreviewButtonLabel")
   const playNotificationSoundPreview = (presetId?: string) => {
     const targetPresetId =
@@ -833,23 +840,22 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
           settingId="tab-notification-sound-preset"
           disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}
           onDisabledClick={() => showPrerequisiteToast(showNotificationLabel)}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <select
-              className="settings-select"
+          <div className="settings-inline-controls">
+            <SelectDropdown
+              className="settings-select-dropdown"
+              buttonClassName="settings-select"
+              options={NOTIFICATION_SOUND_PRESETS.map((preset) => ({
+                value: preset.id,
+                label: t(preset.labelKey),
+              }))}
               value={settings.tab?.notificationSoundPreset || NOTIFICATION_SOUND_PRESETS[0].id}
-              onChange={(e) => {
-                const nextPresetId = e.target.value
+              ariaLabel={t("notificationSoundPresetLabel")}
+              disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}
+              onChange={(nextPresetId) => {
                 updateNestedSetting("tab", "notificationSoundPreset", nextPresetId)
                 playNotificationSoundPreview(nextPresetId)
               }}
-              disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}
-              style={{ flex: 1 }}>
-              {NOTIFICATION_SOUND_PRESETS.map((preset) => (
-                <option key={preset.id} value={preset.id}>
-                  {t(preset.labelKey)}
-                </option>
-              ))}
-            </select>
+            />
             <Button
               type="button"
               variant={isPreviewPlaying ? "primary" : "secondary"}
@@ -868,23 +874,17 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
         settingId="tab-notification-volume"
         disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}
         onDisabledClick={() => showPrerequisiteToast(showNotificationLabel)}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <input
-            type="range"
-            min="0.1"
-            max="1.0"
-            step="0.1"
-            value={settings.tab?.notificationVolume || 0.5}
-            onChange={(e) =>
-              updateNestedSetting("tab", "notificationVolume", parseFloat(e.target.value))
-            }
-            disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}
-            style={{ width: "100px" }}
-          />
-          <span style={{ fontSize: "12px", minWidth: "36px" }}>
-            {Math.round((settings.tab?.notificationVolume || 0.5) * 100)}%
-          </span>
-        </div>
+        <Slider
+          value={settings.tab?.notificationVolume || 0.5}
+          onChange={(value) => updateNestedSetting("tab", "notificationVolume", value)}
+          min={0.1}
+          max={1}
+          step={0.1}
+          defaultValue={0.5}
+          disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}
+          formatValue={(value) => `${Math.round(value * 100)}%`}
+          ariaLabel={t("notificationVolumeLabel")}
+        />
       </SettingRow>
 
       <SettingRow
@@ -892,19 +892,15 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
         settingId="tab-notification-repeat-count"
         disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}
         onDisabledClick={() => showPrerequisiteToast(showNotificationLabel)}>
-        <select
-          className="settings-select"
-          value={settings.tab?.notificationRepeatCount ?? 1}
-          onChange={(e) =>
-            updateNestedSetting("tab", "notificationRepeatCount", parseInt(e.target.value))
-          }
-          disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}>
-          {[1, 2, 3, 5].map((value) => (
-            <option key={value} value={value}>
-              {formatRepeatCountOptionLabel(value)}
-            </option>
-          ))}
-        </select>
+        <SelectDropdown
+          className="settings-select-dropdown"
+          buttonClassName="settings-select"
+          options={toNumberOptions([1, 2, 3, 5], formatRepeatCountOptionLabel)}
+          value={String(settings.tab?.notificationRepeatCount ?? 1)}
+          ariaLabel={t("notificationRepeatCountLabel")}
+          disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}
+          onChange={(value) => updateNestedSetting("tab", "notificationRepeatCount", Number(value))}
+        />
       </SettingRow>
 
       <SettingRow
@@ -912,19 +908,17 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
         settingId="tab-notification-repeat-interval"
         disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}
         onDisabledClick={() => showPrerequisiteToast(showNotificationLabel)}>
-        <select
-          className="settings-select"
-          value={settings.tab?.notificationRepeatInterval ?? 3}
-          onChange={(e) =>
-            updateNestedSetting("tab", "notificationRepeatInterval", parseInt(e.target.value))
+        <SelectDropdown
+          className="settings-select-dropdown"
+          buttonClassName="settings-select"
+          options={toNumberOptions([1, 2, 3, 5, 10], formatSecondsOptionLabel)}
+          value={String(settings.tab?.notificationRepeatInterval ?? 3)}
+          ariaLabel={t("notificationRepeatIntervalLabel")}
+          disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}
+          onChange={(value) =>
+            updateNestedSetting("tab", "notificationRepeatInterval", Number(value))
           }
-          disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}>
-          {[1, 2, 3, 5, 10].map((value) => (
-            <option key={value} value={value}>
-              {formatSecondsOptionLabel(value)}
-            </option>
-          ))}
-        </select>
+        />
       </SettingRow>
 
       <ToggleRow
@@ -1066,19 +1060,15 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
               settingId="tab-rename-interval"
               disabled={!settings.tab?.autoRename}
               onDisabledClick={() => showPrerequisiteToast(autoRenameLabel)}>
-              <select
-                className="settings-select"
-                value={settings.tab?.renameInterval || 3}
-                onChange={(e) =>
-                  updateNestedSetting("tab", "renameInterval", parseInt(e.target.value))
-                }
-                disabled={!settings.tab?.autoRename}>
-                {[1, 3, 5, 10, 30, 60].map((v) => (
-                  <option key={v} value={v}>
-                    {formatSecondsOptionLabel(v)}
-                  </option>
-                ))}
-              </select>
+              <SelectDropdown
+                className="settings-select-dropdown"
+                buttonClassName="settings-select"
+                options={toNumberOptions([1, 3, 5, 10, 30, 60], formatSecondsOptionLabel)}
+                value={String(settings.tab?.renameInterval || 3)}
+                ariaLabel={t("renameIntervalLabel")}
+                disabled={!settings.tab?.autoRename}
+                onChange={(value) => updateNestedSetting("tab", "renameInterval", Number(value))}
+              />
             </SettingRow>
 
             <SettingRow
@@ -1201,21 +1191,25 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
                     : t("outlineFollowManualDesc")
               }
               settingId="outline-follow-mode">
-              <select
-                className="settings-select"
+              <SelectDropdown
+                className="settings-select-dropdown"
+                buttonClassName="settings-select"
+                options={[
+                  { value: "current", label: t("outlineFollowCurrent") },
+                  { value: "latest", label: t("outlineFollowLatest") },
+                  { value: "manual", label: t("outlineFollowManual") },
+                ]}
                 value={settings.features?.outline?.followMode || "current"}
-                onChange={(e) =>
+                ariaLabel={t("outlineFollowModeLabel")}
+                onChange={(value) =>
                   updateDeepSetting(
                     "features",
                     "outline",
                     "followMode",
-                    e.target.value as "current" | "latest" | "manual",
+                    value as "current" | "latest" | "manual",
                   )
-                }>
-                <option value="current">{t("outlineFollowCurrent")}</option>
-                <option value="latest">{t("outlineFollowLatest")}</option>
-                <option value="manual">{t("outlineFollowManual")}</option>
-              </select>
+                }
+              />
             </SettingRow>
 
             <ToggleRow
@@ -1243,42 +1237,42 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
               label={t("inlineBookmarkModeLabel")}
               description={t("inlineBookmarkModeDesc")}
               settingId="outline-inline-bookmark-mode">
-              <select
-                className="settings-select"
+              <SelectDropdown
+                className="settings-select-dropdown"
+                buttonClassName="settings-select"
+                options={bookmarkModeOptions}
                 value={settings.features?.outline?.inlineBookmarkMode || "always"}
-                onChange={(e) =>
+                ariaLabel={t("inlineBookmarkModeLabel")}
+                onChange={(value) =>
                   updateDeepSetting(
                     "features",
                     "outline",
                     "inlineBookmarkMode",
-                    e.target.value as "always" | "hover" | "hidden",
+                    value as "always" | "hover" | "hidden",
                   )
-                }>
-                <option value="always">{t("inlineBookmarkModeAlways")}</option>
-                <option value="hover">{t("inlineBookmarkModeHover")}</option>
-                <option value="hidden">{t("inlineBookmarkModeHidden")}</option>
-              </select>
+                }
+              />
             </SettingRow>
 
             <SettingRow
               label={t("panelBookmarkModeLabel")}
               description={t("panelBookmarkModeDesc")}
               settingId="outline-panel-bookmark-mode">
-              <select
-                className="settings-select"
+              <SelectDropdown
+                className="settings-select-dropdown"
+                buttonClassName="settings-select"
+                options={bookmarkModeOptions}
                 value={settings.features?.outline?.panelBookmarkMode || "always"}
-                onChange={(e) =>
+                ariaLabel={t("panelBookmarkModeLabel")}
+                onChange={(value) =>
                   updateDeepSetting(
                     "features",
                     "outline",
                     "panelBookmarkMode",
-                    e.target.value as "always" | "hover" | "hidden",
+                    value as "always" | "hover" | "hidden",
                   )
-                }>
-                <option value="always">{t("inlineBookmarkModeAlways")}</option>
-                <option value="hover">{t("inlineBookmarkModeHover")}</option>
-                <option value="hidden">{t("inlineBookmarkModeHidden")}</option>
-              </select>
+                }
+              />
             </SettingRow>
           </SettingCard>
 
@@ -1526,15 +1520,19 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
               label={t("promptSubmitShortcutLabel")}
               description={t("promptSubmitShortcutDesc")}
               settingId="shortcuts-prompt-submit-shortcut">
-              <select
-                className="settings-select"
+              <SelectDropdown
+                className="settings-select-dropdown"
+                buttonClassName="settings-select"
+                options={[
+                  { value: "enter", label: t("promptSubmitShortcutEnter") },
+                  { value: "ctrlEnter", label: t("promptSubmitShortcutCtrlEnter") },
+                ]}
                 value={settings.features?.prompts?.submitShortcut ?? "enter"}
-                onChange={(e) =>
-                  updateDeepSetting("features", "prompts", "submitShortcut", e.target.value)
-                }>
-                <option value="enter">{t("promptSubmitShortcutEnter")}</option>
-                <option value="ctrlEnter">{t("promptSubmitShortcutCtrlEnter")}</option>
-              </select>
+                ariaLabel={t("promptSubmitShortcutLabel")}
+                onChange={(value) =>
+                  updateDeepSetting("features", "prompts", "submitShortcut", value)
+                }
+              />
             </SettingRow>
 
             <ToggleRow
@@ -1616,20 +1614,19 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
             settingId="reading-history-cleanup-days"
             disabled={!settings.readingHistory?.persistence}
             onDisabledClick={() => showPrerequisiteToast(readingHistoryLabel)}>
-            <select
-              className="settings-select"
-              value={settings.readingHistory?.cleanupDays || 30}
-              onChange={(e) =>
-                updateNestedSetting("readingHistory", "cleanupDays", parseInt(e.target.value))
+            <SelectDropdown
+              className="settings-select-dropdown"
+              buttonClassName="settings-select"
+              options={toNumberOptions([1, 3, 7, 30, 90, -1], (days) =>
+                days === -1 ? t("forever") : `${days} ${t(days === 1 ? "day" : "days")}`,
+              )}
+              value={String(settings.readingHistory?.cleanupDays || 30)}
+              ariaLabel={t("readingHistoryCleanup")}
+              disabled={!settings.readingHistory?.persistence}
+              onChange={(value) =>
+                updateNestedSetting("readingHistory", "cleanupDays", Number(value))
               }
-              disabled={!settings.readingHistory?.persistence}>
-              <option value={1}>1 {t("day")}</option>
-              <option value={3}>3 {t("days")}</option>
-              <option value={7}>7 {t("days")}</option>
-              <option value={30}>30 {t("days")}</option>
-              <option value={90}>90 {t("days")}</option>
-              <option value={-1}>{t("forever")}</option>
-            </select>
+            />
           </SettingRow>
         </SettingCard>
       )}
@@ -1792,19 +1789,23 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
               label={t("globalSearchPromptEnterBehaviorLabel")}
               description={t("globalSearchPromptEnterBehaviorDesc")}
               settingId="global-search-prompt-enter-behavior">
-              <select
-                className="settings-select"
+              <SelectDropdown
+                className="settings-select-dropdown"
+                buttonClassName="settings-select"
+                options={[
+                  { value: "smart", label: t("globalSearchPromptEnterBehaviorSmart") },
+                  { value: "locate", label: t("globalSearchPromptEnterBehaviorLocate") },
+                ]}
                 value={promptEnterBehavior}
-                onChange={(e) =>
+                ariaLabel={t("globalSearchPromptEnterBehaviorLabel")}
+                onChange={(value) =>
                   updateNestedSetting(
                     "globalSearch",
                     "promptEnterBehavior",
-                    e.target.value as "smart" | "locate",
+                    value as "smart" | "locate",
                   )
-                }>
-                <option value="smart">{t("globalSearchPromptEnterBehaviorSmart")}</option>
-                <option value="locate">{t("globalSearchPromptEnterBehaviorLocate")}</option>
-              </select>
+                }
+              />
             </SettingRow>
           </SettingCard>
         </>
