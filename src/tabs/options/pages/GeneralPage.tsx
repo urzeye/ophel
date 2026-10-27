@@ -317,7 +317,8 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
 
       {/* ========== 面板 Tab ========== */}
       {activeTab === "panel" && (
-        <SettingCard title={t("panelSettings")} settingId="panel-settings-card">
+        // 卡片标题与当前分段“面板”同名，省掉一层重复标题；全局搜索仍按 settingId 定位到这张卡片
+        <SettingCard settingId="panel-settings-card">
           {/* 面板模式 */}
           <div
             className={`settings-panel-mode-accordion ${isPanelModeAdvancedVisible ? "open" : ""}`}
@@ -350,13 +351,7 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
                   </div>
                 </div>
               )}
-              <div
-                style={{
-                  display: "inline-flex",
-                  borderRadius: "6px",
-                  overflow: "hidden",
-                  border: "1px solid var(--gh-border, #e5e7eb)",
-                }}>
+              <div className="settings-segmented">
                 {(
                   [
                     {
@@ -370,31 +365,13 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
                       Icon: FloatingModeIcon,
                     },
                   ] as const
-                ).map((option, index) => (
+                ).map((option) => (
                   <button
                     type="button"
                     key={option.value}
+                    className="settings-segmented-item"
                     aria-pressed={(settings.panel?.panelMode ?? "floating") === option.value}
-                    onClick={() => updateNestedSetting("panel", "panelMode", option.value)}
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "5px",
-                      padding: "4px 12px",
-                      fontSize: "13px",
-                      border: "none",
-                      borderLeft: index > 0 ? "1px solid var(--gh-border, #e5e7eb)" : "none",
-                      cursor: "pointer",
-                      background:
-                        (settings.panel?.panelMode ?? "floating") === option.value
-                          ? "var(--gh-primary, #4285f4)"
-                          : "var(--gh-bg, #fff)",
-                      color:
-                        (settings.panel?.panelMode ?? "floating") === option.value
-                          ? "#fff"
-                          : "var(--gh-text-secondary, #6b7280)",
-                      transition: "all 0.2s",
-                    }}>
+                    onClick={() => updateNestedSetting("panel", "panelMode", option.value)}>
                     <option.Icon size={14} />
                     {option.label}
                   </button>
@@ -411,44 +388,23 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
                     <div className="settings-row-label">{t("edgeTriggerModeLabel")}</div>
                     <div className="settings-row-desc">{t("edgeTriggerModeDesc")}</div>
                   </div>
-                  <div
-                    style={{
-                      display: "inline-flex",
-                      borderRadius: "6px",
-                      overflow: "hidden",
-                      border: "1px solid var(--gh-border, #e5e7eb)",
-                    }}>
+                  <div className="settings-segmented">
                     {(
                       [
                         { value: "handle", label: t("edgeTriggerModeHandle") },
                         { value: "hidden", label: t("edgeTriggerModeHidden") },
                       ] as const
-                    ).map((option, index) => (
+                    ).map((option) => (
                       <button
                         type="button"
                         key={option.value}
+                        className="settings-segmented-item"
                         aria-pressed={
                           (settings.panel?.edgeTriggerMode ?? "handle") === option.value
                         }
                         onClick={() =>
                           updateNestedSetting("panel", "edgeTriggerMode", option.value)
-                        }
-                        style={{
-                          padding: "4px 12px",
-                          fontSize: "13px",
-                          border: "none",
-                          borderLeft: index > 0 ? "1px solid var(--gh-border, #e5e7eb)" : "none",
-                          cursor: "pointer",
-                          background:
-                            (settings.panel?.edgeTriggerMode ?? "handle") === option.value
-                              ? "var(--gh-primary, #4285f4)"
-                              : "var(--gh-bg, #fff)",
-                          color:
-                            (settings.panel?.edgeTriggerMode ?? "handle") === option.value
-                              ? "#fff"
-                              : "var(--gh-text-secondary, #6b7280)",
-                          transition: "all 0.2s",
-                        }}>
+                        }>
                         {option.label}
                       </button>
                     ))}
@@ -463,50 +419,19 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
             label={t("defaultPositionLabel")}
             description={t("defaultPositionDesc")}
             settingId="panel-default-position">
-            <div
-              style={{
-                display: "inline-flex",
-                borderRadius: "6px",
-                overflow: "hidden",
-                border: "1px solid var(--gh-border, #e5e7eb)",
-              }}>
+            <div className="settings-segmented">
               <button
-                onClick={() => updateNestedSetting("panel", "defaultPosition", "left")}
-                style={{
-                  padding: "4px 12px",
-                  fontSize: "13px",
-                  border: "none",
-                  cursor: "pointer",
-                  background:
-                    (settings.panel?.defaultPosition || "right") === "left"
-                      ? "var(--gh-primary, #4285f4)"
-                      : "var(--gh-bg, #fff)",
-                  color:
-                    (settings.panel?.defaultPosition || "right") === "left"
-                      ? "#fff"
-                      : "var(--gh-text-secondary, #6b7280)",
-                  transition: "all 0.2s",
-                }}>
+                type="button"
+                className="settings-segmented-item"
+                aria-pressed={(settings.panel?.defaultPosition || "right") === "left"}
+                onClick={() => updateNestedSetting("panel", "defaultPosition", "left")}>
                 {t("defaultPositionLeft")}
               </button>
               <button
-                onClick={() => updateNestedSetting("panel", "defaultPosition", "right")}
-                style={{
-                  padding: "4px 12px",
-                  fontSize: "13px",
-                  border: "none",
-                  borderLeft: "1px solid var(--gh-border, #e5e7eb)",
-                  cursor: "pointer",
-                  background:
-                    (settings.panel?.defaultPosition || "right") === "right"
-                      ? "var(--gh-primary, #4285f4)"
-                      : "var(--gh-bg, #fff)",
-                  color:
-                    (settings.panel?.defaultPosition || "right") === "right"
-                      ? "#fff"
-                      : "var(--gh-text-secondary, #6b7280)",
-                  transition: "all 0.2s",
-                }}>
+                type="button"
+                className="settings-segmented-item"
+                aria-pressed={(settings.panel?.defaultPosition || "right") === "right"}
+                onClick={() => updateNestedSetting("panel", "defaultPosition", "right")}>
                 {t("defaultPositionRight")}
               </button>
             </div>

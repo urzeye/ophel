@@ -508,7 +508,8 @@
 .gh-panel-header {
   /* 使用 CSS 变量，支持动态主题切换 */
   background: var(--gh-header-bg, linear-gradient(135deg, #4285f4 0%, #34a853 100%));
-  color: white;
+  /* 标题与品牌图标（currentColor）跟随主题：浅色头部背景的预置会给深色 */
+  color: var(--gh-header-text, #ffffff);
   /* 整个 header 区域可拖动，按住后切换为抓取手势 */
   cursor: grab;
   position: relative;
@@ -781,7 +782,7 @@
   gap: 6px;
   padding: 7px 10px;
   border-bottom: 1px solid var(--gh-border, #e5e7eb);
-  background: color-mix(in srgb, var(--gh-bg-secondary, #f9fafb) 86%, var(--gh-bg, #ffffff));
+  background: var(--gh-bg, #ffffff);
 }
 
 .gh-panel-toolbar {
@@ -814,9 +815,10 @@
   width: 30px;
   height: 30px;
   padding: 0;
-  border: 1px solid var(--gh-input-border, #d1d5db);
+  /* 静止时不画边框：工具栏读作一组图标，悬停与激活再给底色 */
+  border: 1px solid transparent;
   border-radius: 8px;
-  background: color-mix(in srgb, var(--gh-bg, #ffffff) 92%, transparent);
+  background: transparent;
   color: var(--gh-text-secondary, #6b7280);
   box-sizing: border-box;
   cursor: pointer;
@@ -837,15 +839,12 @@
 .outline-toolbar-btn {
   width: 28px;
   height: 28px;
-  border-radius: 7px;
 }
 
 .gh-panel-icon-btn:hover,
 .outline-toolbar-btn:hover {
-  border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 36%, var(--gh-input-border, #d1d5db));
-  color: var(--gh-primary, #4285f4);
-  background: color-mix(in srgb, var(--gh-primary, #4285f4) 8%, var(--gh-bg, #ffffff));
-  transform: translateY(-1px);
+  color: var(--gh-text, #1f2937);
+  background: var(--gh-hover, #f3f4f6);
 }
 
 .gh-panel-icon-btn:active,
@@ -862,6 +861,7 @@
 .gh-panel-icon-btn:disabled,
 .outline-toolbar-btn:disabled {
   color: var(--gh-text-disabled, #9ca3af);
+  background: transparent;
   cursor: not-allowed;
   opacity: 0.5;
   transform: none;
@@ -881,22 +881,19 @@
 
 .gh-panel-icon-btn.active-subtle,
 .outline-toolbar-btn.active-subtle {
-  border-color: var(--gh-primary, #4285f4);
-  color: var(--gh-primary, #4285f4);
-  background: color-mix(in srgb, var(--gh-primary, #4285f4) 13%, var(--gh-bg, #ffffff));
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--gh-primary, #4285f4) 8%, transparent);
+  border-color: transparent;
+  color: var(--gh-primary-text, var(--gh-primary, #4285f4));
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 14%, var(--gh-bg, #ffffff));
 }
 
-/* 导出入口：主题淡色微强调底色 + 周期性柔和微光扫过 + hover 适度加深微浮与箭头微动效 */
+/* 导出入口：图标用主色与其它工具按钮区分 + 首次引导期间的微光扫过 + hover 淡色底与箭头微动效 */
 .outline-toolbar-btn.export-accent {
   position: relative;
   overflow: hidden;
-  margin-left: 4px;
-  border: 1px solid
-    color-mix(in srgb, var(--gh-primary, #4285f4) 38%, var(--gh-input-border, #d1d5db));
-  background: color-mix(in srgb, var(--gh-primary, #4285f4) 7%, var(--gh-bg, #ffffff));
-  color: var(--gh-primary, #4285f4);
-  box-shadow: 0 1px 2px color-mix(in srgb, var(--gh-primary, #4285f4) 8%, transparent);
+  margin-left: 2px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--gh-primary-text, var(--gh-primary, #4285f4));
   transition:
     transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1),
     box-shadow 0.22s cubic-bezier(0.2, 0.8, 0.2, 1),
@@ -941,16 +938,13 @@
 }
 
 .outline-toolbar-btn.export-accent:hover {
-  border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 65%, var(--gh-input-border, #d1d5db));
-  background: color-mix(in srgb, var(--gh-primary, #4285f4) 15%, var(--gh-bg, #ffffff));
-  color: var(--gh-primary, #4285f4);
-  transform: translateY(-1.5px);
-  box-shadow: 0 3px 8px color-mix(in srgb, var(--gh-primary, #4285f4) 22%, transparent);
+  border-color: transparent;
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 12%, var(--gh-bg, #ffffff));
+  color: var(--gh-primary-text, var(--gh-primary, #4285f4));
 }
 
 .outline-toolbar-btn.export-accent:active {
-  transform: translateY(0) scale(0.96);
-  box-shadow: 0 1px 2px color-mix(in srgb, var(--gh-primary, #4285f4) 12%, transparent);
+  transform: scale(0.96);
 }
 
 .outline-toolbar-btn.export-accent:focus-visible {
@@ -1018,10 +1012,10 @@
   height: 100%;
   min-width: 0;
   padding: 0 28px;
-  border: 1px solid var(--gh-input-border, #d1d5db);
-  border-radius: 9px;
+  border: 1px solid var(--gh-border, #e5e7eb);
+  border-radius: 8px;
   box-sizing: border-box;
-  background: color-mix(in srgb, var(--gh-input-bg, #ffffff) 94%, transparent);
+  background: var(--gh-bg-secondary, #f9fafb);
   color: var(--gh-text, #1f2937);
   font: inherit;
   font-size: 13px;
@@ -1035,6 +1029,11 @@
 
 .gh-panel-search-input::placeholder {
   color: var(--gh-text-tertiary, #9ca3af);
+}
+
+/* 大纲搜索框的清除按钮只在输入后出现：空态时把右侧留白还给占位文字，避免窄面板下被截断 */
+.outline-search-input.gh-panel-search-input:placeholder-shown {
+  padding-right: 10px;
 }
 
 .gh-panel-search-input:focus {
@@ -1205,13 +1204,6 @@
   height: var(--gh-outline-item-height);
   min-height: var(--gh-outline-item-height);
   box-sizing: border-box;
-}
-
-.outline-list-virtual .outline-item.highlight {
-  border-width: 1px !important;
-  box-shadow:
-    0 0 0 1px var(--gh-outline-locate-border),
-    inset 0 0 8px var(--gh-outline-locate-shadow);
 }
 
 .outline-empty-state {
@@ -1400,7 +1392,7 @@
 /* 单个大纲项 */
 .outline-item {
   padding: 6px 10px;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   background: transparent;
   border: 1px solid transparent;
@@ -1422,24 +1414,12 @@
   background: var(--gh-hover, #f3f4f6);
 }
 
-/* 定位高亮效果 (Locate Current) - EMERALD GREEN */
-/* 定位高亮效果 (Locate Current) - EMERALD GREEN */
+/* 定位高亮（Locate Current）：每套主题自带的撞色描边与淡底，外圈短暂呼吸后保持到高亮结束 */
 .outline-item.highlight {
-  /* 背景与边框 */
   background: var(--gh-outline-locate-bg) !important;
-  border: 2px solid var(--gh-outline-locate-border) !important;
-
-  /* 强制圆角一致，覆盖 sync-highlight 的直角样式 */
-  border-radius: 6px !important;
-
-  /* 视觉效果 */
-  box-shadow: inset 0 0 8px var(--gh-outline-locate-shadow);
+  border: 1px solid var(--gh-outline-locate-border) !important;
+  border-radius: 8px !important;
   animation: outlineLocatePulse 0.6s ease-in-out 2;
-
-  /* 确保右侧边框宽度一致 (防止 sync-highlight 的 3px 覆盖) */
-  border-right-width: 2px !important;
-  border-right-style: solid !important;
-  border-right-color: var(--gh-outline-locate-border) !important;
 }
 
 /* ===== 功能技巧高亮动画 ===== */
@@ -1487,30 +1467,35 @@
 @keyframes outlineLocatePulse {
   0%,
   100% {
-    transform: scale(1);
-    box-shadow: inset 0 0 8px var(--gh-outline-locate-shadow);
+    box-shadow: 0 0 0 0 var(--gh-outline-locate-shadow);
   }
   50% {
-    transform: scale(1.02);
-    /* 呼吸时增强光晕 */
-    box-shadow:
-      inset 0 0 12px var(--gh-outline-locate-shadow),
-      0 0 8px var(--gh-outline-locate-shadow);
+    /* 只用外圈呼吸提示位置，不缩放整行，避免文字抖动 */
+    box-shadow: 0 0 0 4px var(--gh-outline-locate-shadow);
   }
 }
 
-/* 同步滚动高亮 */
-.outline-item.sync-highlight {
-  background: var(--gh-outline-sync-bg) !important;
-  border-right: 3px solid var(--gh-outline-sync-border) !important;
-  border-radius: 4px 0 0 4px;
-}
-
-/* 同步滚动高亮 - 通过 DOM 操作添加（用于父级回退） */
+/* 同步滚动高亮（sync-highlight-visible 由 DOM 操作添加，用于父级回退）：
+   每套主题自带的撞色淡底，让“当前位置”在一排主色提问行里一眼可见 */
+.outline-item.sync-highlight,
 .outline-item.sync-highlight-visible {
   background: var(--gh-outline-sync-bg) !important;
-  border-right: 3px solid var(--gh-outline-sync-border) !important;
-  border-radius: 4px 0 0 4px;
+}
+
+/* 标题行的当前位置再加一条左侧短直色条：与提问行色条同形状、同位置，只是换成撞色。
+   用独立元素画直条，不用 inset 阴影（会顺着圆角弯成月牙形） */
+.outline-item.sync-highlight:not(.user-query-node)::before,
+.outline-item.sync-highlight-visible:not(.user-query-node)::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 22px;
+  border-radius: 0 3px 3px 0;
+  background-color: var(--gh-outline-sync-border);
+  pointer-events: none;
 }
 
 /* 折叠箭头 */
@@ -1521,7 +1506,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #9ca3af;
+  color: var(--gh-text-secondary, #6b7280);
   cursor: pointer;
   transition:
     background-color 0.2s ease,
@@ -1536,14 +1521,14 @@
 }
 
 .outline-item-toggle:hover {
-  color: var(--gh-border-active);
+  color: var(--gh-primary-text, var(--gh-border-active));
   /* 用 currentColor 低透明度着色：在行 hover 底色上仍可分辨，深浅主题下都是"提亮"而非发黑 */
   background-color: color-mix(in srgb, currentColor 12%, transparent);
 }
 
 .outline-item-toggle.expanded {
   transform: rotate(90deg);
-  color: var(--gh-border-active);
+  color: var(--gh-primary-text, var(--gh-border-active));
 }
 
 .outline-item-toggle.invisible {
@@ -1592,21 +1577,21 @@
 .outline-level-6 {
   padding-left: 100px;
   font-size: 12px;
-  color: #9ca3af;
+  color: var(--gh-text-tertiary, #9ca3af);
+}
+
+/* 提问分组内的一级标题（只有挂在提问下面时 level-1 才会出现在 depth ≥ 1 的虚拟行里）：
+   字号字重低于提问行，避免子级比父级更大更粗 */
+.outline-virtual-row:not([data-depth="0"]) .outline-item.outline-level-1 {
+  font-size: 13px;
+  font-weight: 500;
 }
 
 /* ============= 用户提问节点样式 ============= */
-/* ============= 用户提问节点样式 (Focus Card - Theme Adaptive) ============= */
 .outline-item.user-query-node {
-  /* 背景适配：使用更柔和的浅底色，突出当前激活项 */
-  background: color-mix(in srgb, var(--gh-primary, #4285f4) 6%, var(--gh-bg-secondary, #f9fafb));
-
-  /* 边框适配：四边完整，微弱主色勾边 */
-  border: 1px solid
-    color-mix(in srgb, var(--gh-border, #e5e7eb) 75%, var(--gh-primary, #4285f4) 25%);
-
-  /* 阴影：移除硬编码的白色内发光, 使用通用阴影变量 */
-  box-shadow: var(--gh-shadow-sm);
+  /* 淡主色底 + 左侧短色条区分提问；不画边框和阴影，描边只留给“定位”状态 */
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 7%, var(--gh-bg, #ffffff));
+  border: 1px solid transparent;
 
   /* 字体与排版 */
   font-weight: 600;
@@ -1635,15 +1620,13 @@
 .outline-item.user-query-node::before {
   content: "";
   position: absolute;
-  left: 3px;
+  left: 0;
   top: 50%;
   transform: translateY(-50%);
-  width: 4px;
-  height: 18px;
-  border-radius: 4px;
+  width: 3px;
+  height: 16px;
+  border-radius: 0 3px 3px 0;
   background-color: var(--gh-primary, #4285f4);
-  /* 使用透明度阴影，适应深色背景 */
-  box-shadow: 0 1px 4px color-mix(in srgb, var(--gh-primary, #4285f4) 40%, transparent);
   transition:
     background-color 0.2s ease,
     box-shadow 0.2s ease,
@@ -1654,91 +1637,39 @@
   margin-top: 0;
 }
 
-/* Hover 状态 */
+/* Hover 状态：底色加深一档，色条略拉长 */
 .outline-item.user-query-node:hover {
-  /* Hover 时微加深混合比例 */
-  background: color-mix(in srgb, var(--gh-primary, #4285f4) 10%, var(--gh-bg-secondary, #f9fafb));
-  border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 45%, transparent);
-  /* 悬浮阴影 */
-  box-shadow: var(--gh-shadow-brand);
-  transform: translateY(-1px);
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 11%, var(--gh-bg, #ffffff));
 }
 
-.outline-list-virtual .outline-item.user-query-node:hover {
-  transform: none;
-}
-
-/* Hover 时指示器 */
 .outline-item.user-query-node:hover::before {
-  height: 22px;
-  background-color: var(--gh-primary, #4285f4);
-  box-shadow: 0 0 10px color-mix(in srgb, var(--gh-primary, #4285f4) 60%, transparent);
+  height: 20px;
 }
 
 /* ============= 状态覆盖：同步高亮 (Sync) ============= */
-/* ============= 状态覆盖：同步高亮 (Sync) ============= */
-/* 必须使用 !important 覆盖通用的 .outline-item.sync-highlight 样式 */
+/* 提问行的“当前位置”：底色换成撞色淡底，左侧色条换成撞色并拉长；不画描边环。
+   通用 .outline-item.sync-highlight 的背景带 !important，这里同样需要 !important 覆盖。
+   数字徽章保持原样：多数撞色偏亮，拿来做底色或文字都不够清楚 */
 .outline-item.user-query-node.sync-highlight,
 .outline-item.user-query-node.sync-highlight-visible {
-  /* 覆盖通用高亮样式的竖条与直角 */
-  border-right: none !important;
-  border-radius: 8px !important;
-
-  /* 卡片式高亮：边框变色 + 呼吸光晕 */
-  border: 1px solid var(--gh-outline-sync-border) !important;
-  box-shadow:
-    0 0 0 1px var(--gh-outline-sync-border),
-    var(--gh-shadow-sm) !important;
-
-  /* 背景稍微加深，混合同步色 */
-  background: color-mix(in srgb, var(--gh-outline-sync-bg) 40%, var(--gh-bg)) !important;
+  background: var(--gh-outline-sync-bg) !important;
 }
 
-/* 同步高亮时，视觉锚点变色 */
 .outline-item.user-query-node.sync-highlight::before,
 .outline-item.user-query-node.sync-highlight-visible::before {
-  background-color: var(--gh-outline-sync-border) !important;
-  box-shadow: 0 0 6px color-mix(in srgb, var(--gh-outline-sync-border) 60%, transparent) !important;
-}
-
-/* 同步高亮时，徽章变色 */
-.outline-item.user-query-node.sync-highlight .user-query-badge-number,
-.outline-item.user-query-node.sync-highlight-visible .user-query-badge-number {
-  color: var(--gh-outline-sync-border) !important;
-  border-color: var(--gh-outline-sync-border) !important;
-  background: var(--gh-bg) !important;
+  height: 22px;
+  background-color: var(--gh-outline-sync-border);
 }
 
 /* ============= 状态覆盖：定位高亮 (Locate) ============= */
+/* 撞色描边、圆角与外圈呼吸来自通用 .outline-item.highlight，这里只换底色和色条 */
 .outline-item.user-query-node.highlight {
-  /* 去除可能的冲突样式 */
-  border-right: none !important;
-  border-radius: 8px !important;
-
-  /* 强烈的定位高亮：双层边框光晕 */
-  border: 1px solid var(--gh-outline-locate-border) !important;
-  box-shadow:
-    0 0 0 2px var(--gh-outline-locate-shadow),
-    var(--gh-shadow-lg) !important;
-
-  /* 背景混合定位色 */
-  background: color-mix(in srgb, var(--gh-outline-locate-bg) 50%, var(--gh-bg)) !important;
-
-  /* 保持动画 */
-  animation: outlineLocatePulse 0.6s ease-in-out 2;
+  background: var(--gh-outline-locate-bg) !important;
 }
 
-/* 定位高亮时，视觉锚点变色 */
 .outline-item.user-query-node.highlight::before {
-  background-color: var(--gh-outline-locate-border) !important;
-  box-shadow: 0 0 8px var(--gh-outline-locate-shadow) !important;
-}
-
-/* 定位高亮时，徽章变色 */
-.outline-item.user-query-node.highlight .user-query-badge-number {
-  color: var(--gh-bg) !important;
-  background: var(--gh-outline-locate-border) !important;
-  border-color: var(--gh-outline-locate-border) !important;
+  height: 22px;
+  background-color: var(--gh-outline-locate-border);
 }
 
 /* 用户问题徽章 */
@@ -1749,7 +1680,7 @@
   justify-content: center;
   width: 24px;
   height: 24px;
-  margin-right: 2px;
+  margin-right: 5px;
   flex-shrink: 0;
 }
 
@@ -1766,14 +1697,14 @@
 
 .outline-item.user-query-node .user-query-badge-number {
   position: absolute;
-  bottom: -2px;
-  right: -4px;
-  min-width: 12px;
-  height: 12px;
-  padding: 0 2px;
-  font-size: 8px;
+  bottom: -3px;
+  right: -5px;
+  min-width: 13px;
+  height: 13px;
+  padding: 0 3px;
+  font-size: 10px;
   font-weight: 700;
-  line-height: 12px;
+  line-height: 13px;
   text-align: center;
   color: var(--gh-badge-text, #4b5563);
   background: var(--gh-badge-bg, #ffffff);
@@ -2641,15 +2572,11 @@
   gap: 8px;
   padding: 10px 14px;
   border-top: 1px solid var(--gh-border, #e5e7eb);
-  background: color-mix(in srgb, var(--gh-bg-secondary, #f9fafb) 92%, transparent);
+  background: var(--gh-bg, #ffffff);
 }
 
 .gh-panel-footer-action {
   width: 100%;
-}
-
-.gh-panel-footer-anchor {
-  color: var(--gh-footer-text, var(--gh-text-on-primary, white));
 }
 
 .gh-panel-footer-anchor .anchor-tap-wrapper,
@@ -2670,18 +2597,17 @@
   width: 100%;
   height: 32px;
   border-radius: 8px;
-  border: 1px solid
-    color-mix(in srgb, var(--gh-border, #e5e7eb) 80%, var(--gh-primary, #4285f4) 20%);
+  /* 底栏是工具动作，静止时与工具栏一样不画边框和阴影 */
+  border: 1px solid transparent;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 13px;
   font-weight: 500;
-  color: var(--gh-text, #374151);
+  color: var(--gh-text-secondary, #6b7280);
   gap: 5px;
-  background: color-mix(in srgb, var(--gh-bg, #ffffff) 90%, var(--gh-bg-secondary, #f3f4f6));
-  box-shadow: var(--gh-shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.08));
+  background: transparent;
   transition:
     color 0.16s ease,
     background 0.16s ease,
@@ -2691,15 +2617,12 @@
 }
 
 .scroll-nav-btn:hover {
-  color: var(--gh-primary, #4285f4);
-  border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 45%, var(--gh-border, #e5e7eb));
-  background: color-mix(in srgb, var(--gh-primary, #4285f4) 9%, var(--gh-bg, #ffffff));
-  transform: translateY(-1px);
-  box-shadow: 0 3px 8px color-mix(in srgb, var(--gh-primary, #4285f4) 14%, transparent);
+  color: var(--gh-text, #1f2937);
+  background: var(--gh-hover, #f3f4f6);
 }
 
 .scroll-nav-btn:active {
-  transform: translateY(0) scale(0.97);
+  transform: scale(0.97);
 }
 
 .scroll-nav-btn:focus-visible {
@@ -2720,7 +2643,7 @@
 }
 
 .scroll-nav-btn.anchor-btn:hover {
-  color: var(--gh-primary, #4285f4);
+  color: var(--gh-primary-text, var(--gh-primary, #4285f4));
 }
 
 .scroll-nav-btn.anchor-btn:not(:disabled):hover .gh-panel-footer-anchor-icon {
@@ -2731,7 +2654,7 @@
 .scroll-nav-btn:disabled {
   opacity: 0.4;
   cursor: default;
-  box-shadow: none;
+  background: transparent;
 }
 
 .scroll-nav-btn:disabled:hover {

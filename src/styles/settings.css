@@ -47,17 +47,16 @@
 .settings-sidebar {
   width: 228px;
   flex-shrink: 0;
-  background: color-mix(in srgb, var(--gh-bg, #ffffff) 88%, var(--gh-bg-secondary, #f3f4f6));
+  /* 侧栏与卡片同为“面”，内容区是“画布”；深浅主题下面都比画布亮 */
+  background: var(--gh-surface, var(--gh-card-bg, #ffffff));
   border-right: 1px solid var(--gh-border, #e5e7eb);
   display: flex;
   flex-direction: column;
   height: 100%;
-  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.12);
 }
 
 .settings-sidebar-header {
   padding: 18px 16px 14px;
-  border-bottom: 1px solid var(--gh-border, #e5e7eb);
 }
 
 .settings-sidebar-logo {
@@ -102,17 +101,12 @@
   gap: 2px;
 }
 
-/* 侧边栏底部社区链接（替代原 GitHub Star 特效链接） */
+/* 侧边栏底部社区链接：放在底部工具区第一行，与主题切换、语言切换同一组、同样 8px 间距；
+   静止时单色、等距排开，悬停才出现各自的品牌色 */
 .sidebar-community-links {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-  margin: auto 6px 10px;
-  padding: 8px 10px;
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--gh-bg-secondary, #f3f4f6) 78%, transparent);
-  border: 1px solid color-mix(in srgb, var(--gh-border, #e5e7eb) 72%, transparent);
+  justify-content: space-evenly;
 }
 
 .sidebar-social-btn {
@@ -125,21 +119,31 @@
   padding: 0;
   cursor: pointer;
   border-radius: 10px;
-  color: var(--gh-text-tertiary, #9ca3af);
+  color: var(--gh-text-secondary, #6b7280);
   text-decoration: none;
-  background: var(--pulse-bg, transparent);
+  background: transparent;
   transition:
     transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1),
     color 0.18s ease,
-    background 0.18s ease,
-    box-shadow 0.18s ease,
-    border-color 0.18s ease;
+    background 0.18s ease;
   position: relative;
   border: 1px solid transparent;
 }
 
+/* 商店图标是多色 logo：静止时去色，与其它单色图标保持一致 */
+.sidebar-social-btn svg {
+  filter: grayscale(1);
+  transition: filter 0.18s ease;
+}
+
 .sidebar-social-btn:hover {
+  color: var(--brand, var(--gh-text, #1f2937));
+  background: color-mix(in srgb, var(--brand, var(--gh-text, #1f2937)) 12%, transparent);
   transform: translateY(-1px);
+}
+
+.sidebar-social-btn:hover svg {
+  filter: none;
 }
 
 .sidebar-social-btn:focus-visible {
@@ -147,31 +151,15 @@
   outline-offset: 2px;
 }
 
+/* 各入口只声明品牌色，静止/悬停的表现统一由 .sidebar-social-btn 处理 */
 /* 1. Review (Chrome/Firefox/Greasyfork) */
 .sidebar-social-btn.review-btn {
-  color: #4285f4;
-  --pulse-bg: rgba(66, 133, 244, 0.08);
-  --pulse-bg-hover: rgba(66, 133, 244, 0.14);
-}
-.sidebar-social-btn.review-btn:hover {
-  color: #4285f4 !important;
-  background: rgba(66, 133, 244, 0.1) !important;
-  box-shadow: 0 4px 10px rgba(66, 133, 244, 0.16);
-  transform: translateY(-2px);
+  --brand: #4285f4;
 }
 
-/* GreasyFork 图标（油猴平台）：圆形跟随文字色、叉形跟随 dock 背景色，深浅主题自动反相 */
-.sidebar-social-btn.review-btn .greasyfork-icon {
-  color: var(--gh-text, #1f2328);
-}
+/* GreasyFork 图标（油猴平台）：圆形随按钮文字色，叉形与侧栏底色一致做出镂空 */
 .sidebar-social-btn.review-btn .greasyfork-icon .greasyfork-fork {
-  fill: var(--gh-bg-secondary, #f3f4f6);
-}
-.sidebar-social-btn.review-btn:hover .greasyfork-icon {
-  color: #4285f4;
-}
-.sidebar-social-btn.review-btn:hover .greasyfork-icon .greasyfork-fork {
-  fill: #ffffff;
+  fill: var(--gh-surface, var(--gh-card-bg, #ffffff));
 }
 
 /* 纯黑透明底的站点 logo（如 ChatGPT）在深色主题下反白 */
@@ -185,64 +173,22 @@ html[data-theme="dark"] .platform-icon-dark-invert {
 
 /* 2. ScriptCat */
 .sidebar-social-btn.scriptcat-btn {
-  color: #1296db;
-  --pulse-bg: rgba(18, 150, 219, 0.08);
-  --pulse-bg-hover: rgba(18, 150, 219, 0.15);
-}
-.sidebar-social-btn.scriptcat-btn:hover {
-  color: #ffffff !important;
-  background: #1296db !important;
-  box-shadow: 0 4px 10px rgba(18, 150, 219, 0.25);
-  transform: translateY(-2px);
+  --brand: #1296db;
 }
 
-/* 3. GitHub */
+/* 3. GitHub：品牌色就是文字色，深浅主题自动适配 */
 .sidebar-social-btn.github-btn {
-  color: #24292f;
-  --pulse-bg: rgba(36, 41, 47, 0.05);
-  --pulse-bg-hover: rgba(36, 41, 47, 0.1);
-}
-:host([data-theme="dark"]) .sidebar-social-btn.github-btn {
-  color: #ffffff;
-  --pulse-bg: rgba(255, 255, 255, 0.08);
-  --pulse-bg-hover: rgba(255, 255, 255, 0.15);
-}
-.sidebar-social-btn.github-btn:hover {
-  color: #ffffff !important;
-  background: #24292f !important;
-  box-shadow: 0 4px 10px rgba(36, 41, 47, 0.25);
-  transform: translateY(-2px);
-}
-:host([data-theme="dark"]) .sidebar-social-btn.github-btn:hover {
-  background: #ffffff !important;
-  color: #000000 !important;
-  box-shadow: 0 4px 10px rgba(255, 255, 255, 0.25);
+  --brand: var(--gh-text, #24292f);
 }
 
 /* 4. Ko-fi */
 .sidebar-social-btn.kofi-btn {
-  color: #ff5e5b;
-  --pulse-bg: rgba(255, 94, 91, 0.08);
-  --pulse-bg-hover: rgba(255, 94, 91, 0.15);
-}
-.sidebar-social-btn.kofi-btn:hover {
-  color: #ffffff !important;
-  background: #ff5e5b !important;
-  box-shadow: 0 4px 10px rgba(255, 94, 91, 0.25);
-  transform: translateY(-2px);
+  --brand: #ff5e5b;
 }
 
 /* 5. Discord */
 .sidebar-social-btn.discord-btn {
-  color: #5865f2;
-  --pulse-bg: rgba(88, 101, 242, 0.08);
-  --pulse-bg-hover: rgba(88, 101, 242, 0.15);
-}
-.sidebar-social-btn.discord-btn:hover {
-  color: #ffffff !important;
-  background: #5865f2 !important;
-  box-shadow: 0 4px 10px rgba(88, 101, 242, 0.25);
-  transform: translateY(-2px);
+  --brand: #5865f2;
 }
 
 /* =========================================
@@ -276,34 +222,18 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   );
   opacity: 0.6;
 }
-:host([data-theme="dark"]) .settings-sidebar-footer::before {
-  background: linear-gradient(
-    to right,
-    transparent,
-    rgba(255, 255, 255, 0.08) 20%,
-    rgba(255, 255, 255, 0.08) 80%,
-    transparent
-  );
-}
 
-/* 2. 主题切换 - The Pill Dock */
+/* 2. 主题切换：与设置项里的分段控件同一套样式（凹下的轨道 + 凸起的选中项） */
 .settings-theme-segmented {
   display: flex;
-  background: color-mix(in srgb, var(--gh-bg-tertiary, #f3f4f6) 82%, transparent);
-  padding: 4px;
-  border-radius: 14px;
-  gap: 4px;
+  background: color-mix(in srgb, var(--gh-text, #1f2937) 7%, var(--gh-surface, #ffffff));
+  padding: 3px;
+  border-radius: 10px;
+  gap: 2px;
   min-width: 0;
   max-width: 100%;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--gh-border, #e5e7eb) 72%, transparent);
-  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04);
   transition: background 0.3s ease;
-}
-
-:host([data-theme="dark"]) .settings-theme-segmented {
-  background: rgba(255, 255, 255, 0.04);
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 .settings-theme-segment {
@@ -314,7 +244,7 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   gap: 6px;
   padding: 6px 4px;
   min-width: 0;
-  border-radius: 10px;
+  border-radius: 8px;
   border: none;
   background: transparent;
   color: var(--gh-text-secondary, #6b7280);
@@ -370,41 +300,23 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   color: var(--gh-text, #374151);
 }
 
-/* 激活状态的拔出立体感 */
+/* 选中项：比轨道亮一档的面色 + 主文字色；深浅主题共用同一套变量，不再单独写死深色值 */
 .settings-theme-segment.active {
-  background: var(--gh-bg, #ffffff);
+  background: color-mix(in srgb, var(--gh-surface, #ffffff) 92%, #ffffff);
   color: var(--gh-text, #111827);
-  box-shadow:
-    0 2px 6px rgba(0, 0, 0, 0.06),
-    0 1px 2px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--gh-shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.1));
   font-weight: 500;
-  transform: translateY(-1px);
 }
 
-/* 深色模式下的 Theme Segment Active */
-:host([data-theme="dark"]) .settings-theme-segment {
-  color: #9ca3af;
-}
-:host([data-theme="dark"]) .settings-theme-segment:hover {
-  color: #e5e7eb;
-}
-:host([data-theme="dark"]) .settings-theme-segment.active {
-  background: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
-  box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
-}
-
-/* 3. 语言切换 - Minimalist Bubble Label */
+/* 3. 语言切换 - 极简文字链，不再套一层边框盒子 */
 .settings-lang-inline {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 4px;
   padding: 4px;
-  background: color-mix(in srgb, var(--gh-bg-secondary, #f3f4f6) 82%, transparent);
-  border: 1px solid color-mix(in srgb, var(--gh-border, #e5e7eb) 72%, transparent);
+  background: transparent;
+  border: 1px solid transparent;
   border-radius: 12px;
   margin-top: 2px;
   height: 36px;
@@ -467,12 +379,8 @@ html[data-theme="dark"] .platform-icon-dark-invert {
 }
 
 .lang-link.active {
-  color: var(--gh-primary, #4285f4);
+  color: var(--gh-primary-text, var(--gh-primary, #4285f4));
   font-weight: 700;
-  background: var(--gh-bg, #ffffff);
-  box-shadow:
-    0 1px 3px rgba(15, 23, 42, 0.12),
-    0 0 0 1px color-mix(in srgb, var(--gh-border, #e5e7eb) 80%, transparent);
 }
 
 .lang-divider {
@@ -516,23 +424,11 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   outline-offset: 2px;
 }
 
+/* 选中项：主题色淡底 + 可读主色文字（原先的灰块与“按下”态难以区分） */
 .settings-nav-item.active {
-  background: color-mix(in srgb, var(--gh-active-bg, rgba(66, 133, 244, 0.08)) 92%, transparent);
-  color: var(--gh-primary, #4285f4);
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 11%, var(--gh-surface, #ffffff));
+  color: var(--gh-primary-text, var(--gh-primary, #4285f4));
   font-weight: 600;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-}
-
-.settings-nav-item.active::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  height: 50%;
-  width: 3px;
-  background-color: var(--gh-primary, #4285f4);
-  border-radius: 0 4px 4px 0;
 }
 
 .settings-nav-item-icon {
@@ -623,6 +519,8 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   overflow-y: auto;
   scrollbar-gutter: stable;
   padding: 24px 32px;
+  /* 画布比卡片和侧栏低一层，卡片因此有了分层的理由 */
+  background: var(--gh-canvas, var(--gh-bg, #f9fafb));
 }
 
 /* 内容区自定义滚动条 - Webkit (Chrome, Edge, Safari) */
@@ -732,7 +630,7 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   padding: 10px 14px;
   border: 1px solid var(--gh-border, #e5e7eb);
   border-radius: 10px;
-  background: color-mix(in srgb, var(--gh-bg, #ffffff) 88%, transparent);
+  background: color-mix(in srgb, var(--gh-surface, var(--gh-bg, #ffffff)) 88%, transparent);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
 }
@@ -843,7 +741,7 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   margin-bottom: 20px;
   padding-top: 4px;
   padding-bottom: 6px;
-  background: color-mix(in srgb, var(--gh-bg, #ffffff) 86%, transparent);
+  background: color-mix(in srgb, var(--gh-canvas, var(--gh-bg, #ffffff)) 86%, transparent);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   margin-inline: -8px;
@@ -856,7 +754,7 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   flex-wrap: wrap;
   gap: 4px;
   padding: 4px;
-  background: var(--gh-bg-secondary, #f3f4f6);
+  background: color-mix(in srgb, var(--gh-text, #1f2937) 6%, var(--gh-canvas, #f3f4f6));
   border-radius: 10px;
 }
 
@@ -882,9 +780,9 @@ html[data-theme="dark"] .platform-icon-dark-invert {
 }
 
 .settings-tab-item.active {
-  background: var(--gh-bg, #ffffff);
+  background: color-mix(in srgb, var(--gh-surface, #ffffff) 92%, #ffffff);
   color: var(--gh-text, #374151);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--gh-shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.1));
 }
 
 @media (max-width: 640px) {
@@ -898,7 +796,7 @@ html[data-theme="dark"] .platform-icon-dark-invert {
 /* ==================== 设置卡片 ==================== */
 
 .settings-card {
-  background: var(--gh-card-bg, #ffffff);
+  background: var(--gh-surface, var(--gh-card-bg, #ffffff));
   border: 1px solid var(--gh-card-border, #e5e7eb);
   border-radius: 12px;
   padding: 20px;
@@ -1026,6 +924,54 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   box-sizing: border-box;
 }
 
+/* 设置项里的分段控件：轨道比所在卡片深一档，选中项比轨道亮一档，选中项的图标用主色 */
+.settings-segmented {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--gh-text, #1f2937) 7%, var(--gh-surface, #ffffff));
+}
+
+.settings-segmented-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 12px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--gh-text-secondary, #6b7280);
+  font: inherit;
+  font-size: 13px;
+  line-height: 18px;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.settings-segmented-item:hover {
+  color: var(--gh-text, #1f2937);
+}
+
+.settings-segmented-item:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 45%, transparent);
+  outline-offset: 1px;
+}
+
+.settings-segmented-item[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--gh-surface, #ffffff) 92%, #ffffff);
+  color: var(--gh-text, #1f2937);
+  box-shadow: var(--gh-shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.1));
+}
+
+.settings-segmented-item[aria-pressed="true"] svg {
+  color: var(--gh-primary-text, var(--gh-primary, #4285f4));
+}
+
 .settings-row.disabled {
   opacity: 0.5;
   pointer-events: none;
@@ -1057,7 +1003,7 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   margin-bottom: 20px;
   padding-top: 4px;
   padding-bottom: 6px;
-  background: color-mix(in srgb, var(--gh-bg, #ffffff) 86%, transparent);
+  background: color-mix(in srgb, var(--gh-canvas, var(--gh-bg, #ffffff)) 86%, transparent);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   margin-inline: -8px;
@@ -2156,6 +2102,12 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   padding: 14px 0;
 }
 
+/* 卡片没有标题时，首个折叠行与普通首行（.settings-row:first-child）一样贴住卡片内边距 */
+.settings-panel-mode-accordion:first-child > .settings-row.settings-panel-mode-main,
+.settings-panel-width-accordion:first-child > .settings-row.settings-panel-width-main {
+  padding-top: 0;
+}
+
 .settings-panel-mode-trigger,
 .settings-panel-width-trigger {
   display: flex;
@@ -2494,9 +2446,10 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   min-width: 0;
 }
 
+/* 未填充段用文字色混出的中性色：在白卡片上也看得清（原先的 --gh-hover 几乎与卡片同色） */
 .settings-slider-input {
   width: 100%;
-  height: 6px;
+  height: 4px;
   border-radius: 999px;
   outline: none;
   appearance: none;
@@ -2504,48 +2457,50 @@ html[data-theme="dark"] .platform-icon-dark-invert {
     90deg,
     var(--gh-primary, #4285f4) 0%,
     var(--gh-primary, #4285f4) var(--slider-progress, 0%),
-    var(--gh-hover, #e5e7eb) var(--slider-progress, 0%),
-    var(--gh-hover, #e5e7eb) 100%
+    color-mix(in srgb, var(--gh-text, #1f2937) 14%, var(--gh-surface, #ffffff))
+      var(--slider-progress, 0%),
+    color-mix(in srgb, var(--gh-text, #1f2937) 14%, var(--gh-surface, #ffffff)) 100%
   );
   cursor: pointer;
 }
 
 .settings-slider-input::-webkit-slider-runnable-track {
-  height: 6px;
+  height: 4px;
   border-radius: 999px;
   background: transparent;
 }
 
+/* 拇指描边取所在卡片的面色、阴影跟随主色，换主题后不会残留默认蓝 */
 .settings-slider-input::-webkit-slider-thumb {
   appearance: none;
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   margin-top: -5px;
-  border: 2px solid var(--gh-bg, #ffffff);
+  border: 2px solid var(--gh-surface, var(--gh-bg, #ffffff));
   border-radius: 50%;
   background: var(--gh-primary, #4285f4);
-  box-shadow: 0 1px 4px rgba(66, 133, 244, 0.35);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--gh-primary, #4285f4) 45%, transparent);
 }
 
 .settings-slider-input::-moz-range-track {
-  height: 6px;
+  height: 4px;
   border-radius: 999px;
   background: transparent;
 }
 
 .settings-slider-input::-moz-range-progress {
-  height: 6px;
+  height: 4px;
   border-radius: 999px;
   background: var(--gh-primary, #4285f4);
 }
 
 .settings-slider-input::-moz-range-thumb {
-  width: 16px;
-  height: 16px;
-  border: 2px solid var(--gh-bg, #ffffff);
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--gh-surface, var(--gh-bg, #ffffff));
   border-radius: 50%;
   background: var(--gh-primary, #4285f4);
-  box-shadow: 0 1px 4px rgba(66, 133, 244, 0.35);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--gh-primary, #4285f4) 45%, transparent);
 }
 
 .settings-slider-input:disabled {
@@ -2556,7 +2511,7 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   min-width: 52px;
   padding: 4px 8px;
   border: 1px solid var(--gh-input-border, #d1d5db);
-  border-radius: 999px;
+  border-radius: 8px;
   font-size: 12px;
   font-variant-numeric: tabular-nums;
   text-align: center;
@@ -2590,16 +2545,16 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   background: color-mix(in srgb, var(--gh-primary, #4285f4) 8%, var(--gh-input-bg, #ffffff));
 }
 
+/* 值等于默认值（或整个滑块禁用）时没有可恢复的内容：隐藏但保留占位，避免布局跳动 */
 .settings-slider-reset:disabled {
-  cursor: not-allowed;
-  opacity: 0.45;
+  visibility: hidden;
 }
 
 .settings-slider-boundary {
   display: flex;
   justify-content: space-between;
   margin-top: 4px;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--gh-text-secondary, #9ca3af);
   user-select: none;
   -webkit-user-select: none;
@@ -3417,7 +3372,7 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   max-width: 1000px;
   height: 85vh;
   max-height: 700px;
-  background: var(--gh-bg, #f9fafb);
+  background: var(--gh-canvas, var(--gh-bg, #f9fafb));
   border-radius: 16px;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   overflow: hidden;

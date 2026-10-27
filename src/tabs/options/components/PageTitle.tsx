@@ -17,7 +17,7 @@ export const PageTitle: React.FC<PageTitleProps> = ({ title, Icon, action }) => 
               className="settings-page-title-icon"
               style={{
                 marginRight: 8,
-                color: "var(--gh-primary, #4285f4)",
+                color: "var(--gh-primary-text, var(--gh-primary, #4285f4))",
               }}
             />
           )}

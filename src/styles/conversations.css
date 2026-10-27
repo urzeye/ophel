@@ -57,7 +57,7 @@
   padding: 7px 10px;
   border-bottom: 1px solid var(--gh-border, #e5e7eb);
   flex-shrink: 0;
-  background: color-mix(in srgb, var(--gh-bg-secondary, #f9fafb) 86%, var(--gh-bg, #ffffff));
+  background: var(--gh-bg, #ffffff);
 }
 
 .conversations-toolbar-btn {

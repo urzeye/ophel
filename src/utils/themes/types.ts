@@ -121,8 +121,14 @@ export interface ThemeVariables {
   "--gh-bg-image"?: string
   // 背景动画 (可选)
   "--gh-bg-animation"?: string
-  // 更高优先级的底栏文字颜色 (可选)
-  "--gh-footer-text"?: string
+
+  // 面板头部标题与品牌图标颜色 (可选，默认白色；浅色头部背景的主题需要深色)
+  "--gh-header-text"?: string
+  // 主色用作文字/图标时的可读版本 (可选，默认等于 --gh-primary；浅色主色需要加深)
+  "--gh-primary-text"?: string
+  // 设置页层级：画布在下、面在上 (可选，默认由 --gh-bg / --gh-card-bg 派生)
+  "--gh-canvas"?: string
+  "--gh-surface"?: string
 }
 
 // 主题预置定义

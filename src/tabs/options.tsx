@@ -32,7 +32,6 @@ import { markReleaseNotesSeen } from "~release-notes/storage"
 import { ReleaseNotesModal } from "~components/ReleaseNotesModal"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
 import { APP_DISPLAY_NAME, APP_VERSION, getAppIconUrl } from "~utils/config"
-import { SidebarCommunityLinks } from "~components/SidebarCommunityLinks"
 import { getOphelPlatformFontClassName } from "~utils/font"
 import { setLanguage, t } from "~utils/i18n"
 import { scrollWithinSettingsContent } from "~utils/settings-scroll"
@@ -366,9 +365,6 @@ const OptionsPage = () => {
               {item.beta && <span className="settings-beta-badge">{t("betaBadge")}</span>}
             </button>
           ))}
-
-          {/* 左下角社区链接图标 */}
-          <SidebarCommunityLinks />
         </nav>
 
         {/* 侧边栏底部快捷设置 */}

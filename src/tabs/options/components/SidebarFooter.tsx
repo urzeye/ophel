@@ -1,5 +1,6 @@
 import React, { useSyncExternalStore } from "react"
 
+import { SidebarCommunityLinks } from "~components/SidebarCommunityLinks"
 import {
   EarthIcon,
   ThemeDarkIcon,
@@ -159,6 +160,9 @@ export const SidebarFooter = ({ siteId = "_default" }: { siteId?: string }) => {
 
   return (
     <div className="settings-sidebar-footer">
+      {/* 社区链接与下面的主题、语言切换同属底部工具区 */}
+      <SidebarCommunityLinks />
+
       {/* 主题切换 - 仅在 content script 环境显示（站点内） */}
       {!isStandalonePage && (
         <div

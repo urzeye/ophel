@@ -19,7 +19,6 @@ import {
   SitePacksIcon,
 } from "~components/icons"
 import { Tooltip } from "~components/ui/Tooltip"
-import { SidebarCommunityLinks } from "~components/SidebarCommunityLinks"
 import { NAV_IDS, resolveSettingsNavigateDetail, type SettingsNavigateDetail } from "~constants"
 import { useHasUnseenReleaseNotes } from "~hooks/useHasUnseenReleaseNotes"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
@@ -499,9 +498,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 )}
               </button>
             ))}
-
-            {/* 左下角社区链接图标 */}
-            <SidebarCommunityLinks />
           </nav>
 
           {/* 侧边栏底部快捷设置 */}

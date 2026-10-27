@@ -400,12 +400,15 @@ src/utils/themes/
 | 文字颜色   | `--gh-text`, `--gh-text-secondary`, `--gh-text-tertiary`        |
 | 边框/交互  | `--gh-border`, `--gh-hover`, `--gh-active-bg`                   |
 | 输入框     | `--gh-input-bg`, `--gh-input-border`, `--gh-input-focus-border` |
-| 品牌色     | `--gh-primary`, `--gh-secondary`, `--gh-danger`                 |
+| 品牌色     | `--gh-primary`, `--gh-primary-text`, `--gh-secondary`, `--gh-danger` |
+| 头部       | `--gh-header-bg`, `--gh-header-text`, `--gh-glass-*`（头部图标） |
 | 阴影       | `--gh-shadow`, `--gh-shadow-sm`, `--gh-shadow-lg`               |
+| 设置页层级 | `--gh-canvas`（内容画布）, `--gh-surface`（侧栏与卡片）         |
 | 文件夹色板 | `--gh-folder-bg-0` ~ `--gh-folder-bg-7`（10 个）                |
-| 大纲高亮   | `--gh-outline-locate-bg`, `--gh-outline-sync-*`                 |
-| 玻璃拟态   | `--gh-glass-*`                                                  |
+| 大纲高亮   | `--gh-outline-locate-*`, `--gh-outline-sync-*`                  |
 | 分类颜色   | `--gh-category-1` ~ `--gh-category-7`                           |
+
+派生变量：`--gh-primary-text`（默认等于主色）、`--gh-header-text`（默认白色）、`--gh-canvas` / `--gh-surface`（由 `--gh-bg` / `--gh-card-bg` 派生，深色另行派生）都在 `theme-variables.css` 给出默认值，预置主题只在需要时覆盖，自定义样式也可直接覆盖。大纲高亮色由每套预置单独给出与主色撞色的值，用来让当前位置一眼可见。
 
 **特殊前缀**：`--popup-*`（Popup 页面独立体系）、`--panel-width`（布局动态变量）、`--theme-x/y`（View Transitions 坐标）。
 
