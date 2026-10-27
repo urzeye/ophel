@@ -37,6 +37,7 @@ export const ru = {
   siteSettingsPageDesc:
     "Настройка макета страницы, блокировки модели и специальных функций для каждого сайта",
   siteSelectorLabel: "Настраиваемый сайт",
+  siteSettingsOtherSiteToast: "Настройка {site}; изменения не затронут текущий сайт",
   currentSiteBadge: "Текущий сайт",
   siteExclusiveSettingsLabel: "Специальные настройки",
   noSiteExclusiveSettings: "Для этого сайта нет специальных настроек",

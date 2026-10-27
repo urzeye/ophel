@@ -36,6 +36,7 @@ export const ja = {
   // Site Settings
   siteSettingsPageDesc: "サイトごとにページレイアウト、モデルロック、専用機能を設定",
   siteSelectorLabel: "設定するサイト",
+  siteSettingsOtherSiteToast: "{site} の設定を編集中です。変更は現在のサイトには適用されません",
   currentSiteBadge: "現在のサイト",
   siteExclusiveSettingsLabel: "専用設定",
   noSiteExclusiveSettings: "このサイトには専用設定がありません",

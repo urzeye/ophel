@@ -33,6 +33,7 @@ export const zhCN = {
   // Site Settings
   siteSettingsPageDesc: "按站点配置页面布局、模型锁定和专属功能",
   siteSelectorLabel: "配置站点",
+  siteSettingsOtherSiteToast: "正在配置 {site} 的设置，更改不会影响当前站点",
   currentSiteBadge: "当前站点",
   siteExclusiveSettingsLabel: "专属设置",
   noSiteExclusiveSettings: "该站点暂无专属设置",

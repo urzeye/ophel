@@ -34,6 +34,7 @@ export const zhTW = {
   // Site Settings
   siteSettingsPageDesc: "按站點配置頁面佈局、模型鎖定和專屬功能",
   siteSelectorLabel: "配置站點",
+  siteSettingsOtherSiteToast: "正在配置 {site} 的設定，變更不會影響目前站點",
   currentSiteBadge: "目前站點",
   siteExclusiveSettingsLabel: "專屬設定",
   noSiteExclusiveSettings: "此站點暫無專屬設定",

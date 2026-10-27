@@ -36,6 +36,8 @@ export const it = {
   // Site Settings
   siteSettingsPageDesc: "Configura layout di pagina, blocco modello e funzioni specifiche per sito",
   siteSelectorLabel: "Sito da configurare",
+  siteSettingsOtherSiteToast:
+    "Modifica delle impostazioni di {site}; le modifiche non influiscono sul sito corrente",
   currentSiteBadge: "Sito corrente",
   siteExclusiveSettingsLabel: "Specifiche del sito",
   noSiteExclusiveSettings: "Nessuna impostazione specifica per questo sito",

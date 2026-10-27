@@ -140,6 +140,22 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
   const enablePageWidthLabel = t("enablePageWidth")
   const enableUserQueryWidthLabel = t("enableUserQueryWidth")
 
+  const otherSiteToastTemplate = t("siteSettingsOtherSiteToast")
+  const handleSiteChange = (value: string) => {
+    setSelectedSite(value)
+    // 面板内切到非当前站点时提示上下文，避免误以为在改当前站点；Options 页无当前站点概念不提示
+    if (adapter && value !== currentSiteValue) {
+      const name = siteOptions.find((option) => option.value === value)?.name ?? value
+      showToastThrottled(
+        otherSiteToastTemplate.replace("{site}", name),
+        2000,
+        {},
+        800,
+        "site-switch",
+      )
+    }
+  }
+
   const isCommunitySelected = isCommunitySitePack && selectedSite === siteInstanceKey
   const selectedSiteName =
     siteOptions.find((option) => option.value === selectedSite)?.name ?? selectedSite
@@ -310,7 +326,7 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
             options={selectorOptions}
             value={selectedSite}
             ariaLabel={t("siteSelectorLabel")}
-            onChange={setSelectedSite}
+            onChange={handleSiteChange}
           />
         </div>
         {selectedSite === currentSiteValue && (

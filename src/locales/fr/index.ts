@@ -37,6 +37,8 @@ export const fr = {
   siteSettingsPageDesc:
     "Configurer la mise en page, le verrouillage du modèle et les fonctions spécifiques par site",
   siteSelectorLabel: "Site à configurer",
+  siteSettingsOtherSiteToast:
+    "Configuration de {site} ; les modifications n'affectent pas le site actuel",
   currentSiteBadge: "Site actuel",
   siteExclusiveSettingsLabel: "Spécifiques au site",
   noSiteExclusiveSettings: "Aucun réglage spécifique pour ce site",

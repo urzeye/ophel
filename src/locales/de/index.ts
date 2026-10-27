@@ -37,6 +37,8 @@ export const de = {
   siteSettingsPageDesc:
     "Seitenlayout, Modellsperre und websitespezifische Funktionen pro Website konfigurieren",
   siteSelectorLabel: "Website konfigurieren",
+  siteSettingsOtherSiteToast:
+    "Einstellungen für {site} werden bearbeitet; Änderungen wirken sich nicht auf die aktuelle Website aus",
   currentSiteBadge: "Aktuelle Website",
   siteExclusiveSettingsLabel: "Websitespezifisch",
   noSiteExclusiveSettings: "Keine websitespezifischen Einstellungen für diese Website",

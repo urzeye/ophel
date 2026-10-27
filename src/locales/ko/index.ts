@@ -35,6 +35,8 @@ export const ko = {
   // Site Settings
   siteSettingsPageDesc: "사이트별로 페이지 레이아웃, 모델 잠금, 전용 기능을 설정합니다",
   siteSelectorLabel: "설정할 사이트",
+  siteSettingsOtherSiteToast:
+    "{site} 설정을 구성하는 중입니다. 변경 사항은 현재 사이트에 적용되지 않습니다",
   currentSiteBadge: "현재 사이트",
   siteExclusiveSettingsLabel: "전용 설정",
   noSiteExclusiveSettings: "이 사이트에는 전용 설정이 없습니다",

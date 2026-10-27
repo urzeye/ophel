@@ -36,6 +36,8 @@ export const en = {
   // Site Settings
   siteSettingsPageDesc: "Configure page layout, model lock, and site-specific features per site",
   siteSelectorLabel: "Configure site",
+  siteSettingsOtherSiteToast:
+    "Configuring settings for {site}; changes won't affect the current site",
   currentSiteBadge: "Current site",
   siteExclusiveSettingsLabel: "Site-specific",
   noSiteExclusiveSettings: "No site-specific settings for this site yet",
