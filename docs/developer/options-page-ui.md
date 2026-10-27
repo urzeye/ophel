@@ -20,13 +20,11 @@
 - 功能模块：`FeaturesPage`
 - 站点设置：`SiteSettingsPage`
 - 适配中心：`SitePacksPage`
-- 全局搜索：`GlobalSearchPage`
 - 快捷键位：`ShortcutsPage`
-- 数据管理：`BackupPage`
-- 权限管理：`PermissionsPage`
+- 数据与权限：`BackupPage`
 - 关于：`AboutPage`
 
-油猴脚本环境没有 Chrome permissions API，`platform.hasCapability("permissions")` 为 false 时隐藏权限管理入口。
+全局搜索已并入功能模块页的 tab；权限管理已并入数据与权限页的 tab。油猴脚本环境没有 Chrome permissions API，`platform.hasCapability("permissions")` 为 false 时隐藏权限 tab。
 
 ### 2.2 独立 Options 页面
 
@@ -37,11 +35,10 @@
 - 站点设置：`SiteSettingsPage`
 - 适配中心：`SitePacksPage`
 - 外观主题：`AppearancePage`
-- 备份与同步：`BackupPage`
-- 权限管理：`PermissionsPage`
+- 数据与权限：`BackupPage`
 - 关于：`AboutPage`
 
-独立页面检测不到内容脚本中的 `__ophelThemeManager` 时，会隐藏外观主题入口；油猴脚本环境同样隐藏权限管理入口。
+独立页面检测不到内容脚本中的 `__ophelThemeManager` 时，会隐藏外观主题入口；油猴脚本环境隐藏数据与权限页内的权限 tab。
 
 ### 2.3 深链与设置搜索
 
@@ -55,11 +52,10 @@
 - `FeaturesPage`：大纲、对话、提示词、标签页行为、提醒、内容增强、阅读历史和用量统计。
 - `SiteSettingsPage`：站点选择器（内置站点 + 当前社区适配包实例，面板内当前站点置顶）+ 选中站点的聚合设置视图，按「页面布局 / 模型锁定 / 站点专属」分组；布局类设置按站点 key 存储，未单独配置的站点读取时回退到 `_default` 兜底值；模型锁定仅展示当前选中站点的一行配置；Gemini/AI Studio/ChatGPT/Claude 有专属设置分组。深链的 `subTab` 直接承载站点 id。
 - `SitePacksPage`：按 `SITE_PACKS_TAB_IDS` 分为三个 tab——已安装（启停/卸载/检查更新）、自定义站点（自定义 origin、自动识别、油猴 @match 补充）、获取与更新（自动更新、检查更新、内置配置补丁与回滚、在线适配库、本地 JSON 导入）。两处“检查更新”是同一操作（全量检查并同步所有在线适配库包，检查即更新）；不设单包刷新按钮——它实际也是全量检查，语义有误导。适配配置更新原先位于基本设置，已并入此页。
-- `GlobalSearchPage`：全局搜索触发方式、模糊搜索和提示词回车行为。
 - `ShortcutsPage`：快捷键总开关、全局 URL 和各动作绑定。
 - `AppearancePage`：主题同步、预置主题和自定义样式。
-- `BackupPage`：本地备份/恢复、WebDAV 配置与同步操作。
-- `PermissionsPage`：扩展权限状态与可选权限申请/撤销。
+- `BackupPage`：本地备份/恢复、WebDAV 配置与同步操作，以及权限 tab（`PermissionsPage`，扩展权限状态与可选权限申请/撤销）。
+- 全局搜索设置（触发方式、模糊搜索、提示词回车行为）是 `FeaturesPage` 的一个 tab，不再是一级页面。
 
 ## 4. 设置数据流
 
