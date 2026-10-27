@@ -149,6 +149,9 @@ export const SETTING_SEARCH_TITLE_KEY_MAP: Record<string, string> = {
   "shortcuts-global-url": "globalShortcutUrl",
   "shortcuts-browser-shortcuts": "globalShortcutsTitle",
   "shortcuts-prompt-submit-shortcut": "promptSubmitShortcutLabel",
+  // 站点设置页已无 tab 结构，这两个 subtab 项的 route 不带 subTab，标题改走 key 映射以保持多语言
+  "subtab-site-settings-layout": "tabLayout",
+  "subtab-site-settings-model-lock": "tabModelLock",
   "tab-auto-focus": "autoFocusLabel",
   "tab-auto-rename": "autoRenameTabLabel",
   "tab-notification-sound": "notificationSoundLabel",

@@ -875,7 +875,6 @@ const SUB_TAB_SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
       "gemini 专属",
       "markdown fix",
       "watermark",
-      "重试",
     ],
   },
   {
@@ -1181,7 +1180,6 @@ const SETTING_CARD_SEARCH_ITEMS: SettingsSearchItem[] = [
       "markdown fix",
       "watermark",
       "水印",
-      "策略重试",
     ],
   },
   {
