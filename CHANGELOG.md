@@ -11,14 +11,14 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### ✨ Improvements
 
-- **Site settings grouped by site** — Site settings now open with a site picker at the top; the selected site's page layout, model lock, and site-specific options are shown together in one view instead of being spread across tabs. (#987)
-- **Streamlined settings menu** — Global search settings now live under the Features page, and permissions moved into the data management page (renamed to Data & Permissions, with its own tab), trimming the settings menu from 10 entries to 8. (#988)
-- **Cleaner panel and settings look** — The outline now marks questions with a soft tint, and the current position keeps its eye-catching accent color but shows as a soft highlight instead of a heavy glowing frame. The toolbar, footer, and settings page have less visual clutter. Header titles and icons are now readable in light themes such as Sakura, Ocean, Mint, and Lemon Soda. (#989)
+- **Site settings in one place** — Pick a site at the top of Site Settings to see all of its settings on one page, without switching back and forth. (#987)
+- **Simpler settings menu** — The settings menu now has 8 entries instead of 10: global search settings moved to Features, and permissions moved to Data & Permissions. (#988)
+- **Refreshed look** — The panel, settings, and dialogs now look cleaner and more consistent. (#989)
 
 ### 🐛 Bug Fixes
 
-- **Doubao scroll-to-top bounce-back** — Fixed an issue where, right after refreshing a Doubao conversation page, clicking scroll-to-top before scrolling the page reached the top but then got pulled back to the bottom. (#983)
-- **Shortcut recording triggering site shortcuts** — Fixed an issue where pressing a key combination while recording a shortcut in the settings dialog (for example Ctrl+K on DeepSeek) also triggered the website's own shortcut. (#988)
+- **Doubao scroll to top not sticking** — Fixed an issue where clicking Scroll to Top right after refreshing a Doubao chat reached the top and then jumped back to the bottom. (#983)
+- **Shortcut recording conflict** — Fixed an issue where pressing a key combination while recording a shortcut in settings (such as Ctrl+K on DeepSeek) also triggered the website's own action. (#988)
 
 ---
 
