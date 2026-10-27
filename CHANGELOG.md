@@ -11,8 +11,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### ✨ Improvements
 
-- **Gemini Enterprise auto-retry removed** — Removed the "auto-retry on policy block" option for Gemini Enterprise; when a reply is blocked by enterprise policy, it will no longer be resent automatically. (#987)
-- **Site settings reorganized by site** — Site settings now start with a site picker pinned at the top, grouping the selected site's page layout, model lock, and site-specific options in one view instead of mixing them across tabs. (#987)
+- **Site settings grouped by site** — Site settings now open with a site picker at the top; the selected site's page layout, model lock, and site-specific options are shown together in one view instead of being spread across tabs. (#987)
 
 ### 🐛 Bug Fixes
 
