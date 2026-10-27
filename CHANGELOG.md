@@ -13,7 +13,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 - **Site settings grouped by site** — Site settings now open with a site picker at the top; the selected site's page layout, model lock, and site-specific options are shown together in one view instead of being spread across tabs. (#987)
 - **Streamlined settings menu** — Global search settings now live under the Features page, and permissions moved into the data management page (renamed to Data & Permissions, with its own tab), trimming the settings menu from 10 entries to 8. (#988)
-- **Cleaner panel and settings look** — The outline now marks questions with a soft tint, and the current position keeps its eye-catching accent color but shows as a soft highlight instead of a heavy glowing frame. The toolbar, footer, and settings page have less visual clutter. Header titles and icons are now readable in light themes such as Sakura, Ocean, Mint, and Lemon Soda.
+- **Cleaner panel and settings look** — The outline now marks questions with a soft tint, and the current position keeps its eye-catching accent color but shows as a soft highlight instead of a heavy glowing frame. The toolbar, footer, and settings page have less visual clutter. Header titles and icons are now readable in light themes such as Sakura, Ocean, Mint, and Lemon Soda. (#989)
 
 ### 🐛 Bug Fixes
 
