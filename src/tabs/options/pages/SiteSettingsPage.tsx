@@ -129,9 +129,6 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
   const [selectedSite, setSelectedSite] = useState<string>(() => pickInitialSite(initialTab))
   const [showDisableSiteConfirm, setShowDisableSiteConfirm] = useState(false)
 
-  useEffect(() => {
-    setSelectedSite(pickInitialSite(initialTab))
-  }, [initialTab, pickInitialSite])
   const { settings, setSettings, setPreviewSettings, clearPreviewSettings, updateNestedSetting } =
     useSettingsStore()
   const prerequisiteToastTemplate = t("enablePrerequisiteToast")
@@ -141,10 +138,10 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
   const enableUserQueryWidthLabel = t("enableUserQueryWidth")
 
   const otherSiteToastTemplate = t("siteSettingsOtherSiteToast")
-  const handleSiteChange = (value: string) => {
-    setSelectedSite(value)
-    // 面板内切到非当前站点时提示上下文，避免误以为在改当前站点；Options 页无当前站点概念不提示
-    if (adapter && value !== currentSiteValue) {
+  // 面板内切到非当前站点时提示上下文，避免误以为在改当前站点；Options 页无当前站点概念不提示
+  const showOtherSiteToast = useCallback(
+    (value: string) => {
+      if (!adapter || value === currentSiteValue) return
       const name = siteOptions.find((option) => option.value === value)?.name ?? value
       showToastThrottled(
         otherSiteToastTemplate.replace("{site}", name),
@@ -153,7 +150,20 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
         800,
         "site-switch",
       )
-    }
+    },
+    [adapter, currentSiteValue, siteOptions, otherSiteToastTemplate],
+  )
+
+  useEffect(() => {
+    const next = pickInitialSite(initialTab)
+    setSelectedSite(next)
+    // 深链跳入（如从适配中心点站点设置）落到非当前站点时同样提示
+    showOtherSiteToast(next)
+  }, [initialTab, pickInitialSite, showOtherSiteToast])
+
+  const handleSiteChange = (value: string) => {
+    setSelectedSite(value)
+    showOtherSiteToast(value)
   }
 
   const isCommunitySelected = isCommunitySitePack && selectedSite === siteInstanceKey

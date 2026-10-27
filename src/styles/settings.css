@@ -1542,6 +1542,17 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   cursor: not-allowed;
 }
 
+/* 幽灵变体：无边框无底色，与开关等控件并列时减少视觉噪音 */
+.settings-pack-icon-btn.ghost {
+  border-color: transparent;
+  background: transparent;
+}
+
+.settings-pack-icon-btn.ghost:hover:not(:disabled) {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 7%, transparent);
+}
+
 .settings-pack-icon-btn.danger:hover:not(:disabled) {
   border-color: color-mix(in srgb, var(--gh-danger, #ef4444) 38%, transparent);
   background: color-mix(in srgb, var(--gh-danger, #ef4444) 7%, var(--gh-card-bg, #ffffff));

@@ -25,10 +25,11 @@ import {
   PuzzleIcon,
   RefreshIcon,
   SitePacksIcon,
+  SlidersHorizontalIcon,
 } from "~components/icons"
 import { PlatformIcon } from "~components/PlatformIcon"
 import { Button, Input, SelectDropdown, Switch, type SelectDropdownOption } from "~components/ui"
-import { SITE_PACKS_TAB_IDS, sitePackInstalledSettingId } from "~constants"
+import { NAV_IDS, SITE_PACKS_TAB_IDS, sitePackInstalledSettingId } from "~constants"
 import { SUPPORTED_AI_PLATFORMS } from "~constants/defaults"
 import {
   INSTALLED_SITE_PACKS_STORAGE_KEY,
@@ -1567,6 +1568,15 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
   const pageUrl = typeof window === "undefined" ? "" : window.location.href
   const builtinSites = orderBuiltinSitesByCurrentUrl(SUPPORTED_AI_PLATFORMS, pageUrl)
 
+  // 跳到站点设置页并预选该站点；弹窗与独立 Options 页都监听此事件
+  const handleOpenSiteSettings = (siteId: string) => {
+    window.dispatchEvent(
+      new CustomEvent("ophel:navigateSettingsPage", {
+        detail: { page: NAV_IDS.SITE_SETTINGS, subTab: siteId },
+      }),
+    )
+  }
+
   const renderBuiltinSite = (site: (typeof SUPPORTED_AI_PLATFORMS)[number]) => {
     const isDisabled = disabledSites.includes(site.id)
     const isCurrentSite = site.pattern.test(pageUrl)
@@ -1607,6 +1617,14 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
           </div>
         </div>
         <div className="settings-pack-controls">
+          <button
+            type="button"
+            className="settings-pack-icon-btn ghost"
+            title={t("navSiteSettings")}
+            aria-label={`${site.name}: ${t("navSiteSettings")}`}
+            onClick={() => handleOpenSiteSettings(site.id)}>
+            <SlidersHorizontalIcon size={15} />
+          </button>
           <Switch
             size="sm"
             checked={!isDisabled}
