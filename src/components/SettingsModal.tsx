@@ -353,6 +353,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     }
   }, [isOpen, siteId])
 
+  // 弹窗打开期间开启键盘屏障：站点在 window/document 捕获阶段的快捷键监听
+  // 由主世界劫持层跳过（keyboard-guard-main.ts / keyboard-guard-inject.ts），
+  // 避免弹窗内按键（如录制快捷键）穿透触发站点自身快捷键
+  useEffect(() => {
+    if (!isOpen) return
+
+    document.documentElement.dataset.ophelKeyboardShield = "1"
+    return () => {
+      delete document.documentElement.dataset.ophelKeyboardShield
+    }
+  }, [isOpen])
+
   // 禁止背景滚动
   useEffect(() => {
     if (isOpen) {

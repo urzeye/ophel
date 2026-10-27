@@ -22,6 +22,8 @@ declare global {
     __ophelThemeManager?: ThemeManager
     /** 滚动锁定初始化标记 */
     __ophelScrollLockInitialized?: boolean
+    /** 键盘屏障初始化标记 */
+    __ophelKeyboardShieldInitialized?: boolean
     /** 滚动锁定是否启用 */
     __ophelScrollLockEnabled?: boolean
     /** Mermaid 页面内 runner 初始化标记 */

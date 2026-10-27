@@ -17,6 +17,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 ### 🐛 Bug Fixes
 
 - **Doubao scroll-to-top bounce-back** — Fixed an issue where, right after refreshing a Doubao conversation page, clicking scroll-to-top before scrolling the page reached the top but then got pulled back to the bottom. (#983)
+- **Shortcut recording triggering site shortcuts** — Fixed an issue where pressing a key combination while recording a shortcut in the settings dialog (for example Ctrl+K on DeepSeek) also triggered the website's own shortcut. (#988)
 
 ---
 

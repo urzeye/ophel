@@ -21,7 +21,11 @@ export const SITE_PACK_REGISTRATION_STATE_SCHEMA_VERSION = 1 as const
 export const SITE_PACK_DYNAMIC_SCRIPT_ID_PREFIX = "ophel-sitepack-"
 
 const GENERIC_ISOLATED_ENTRY_NAMES = ["main", "ui-entry"] as const
-const GENERIC_MAIN_ENTRY_NAMES = ["monitor-entry", "scroll-lock-main"] as const
+const GENERIC_MAIN_ENTRY_NAMES = [
+  "monitor-entry",
+  "scroll-lock-main",
+  "keyboard-guard-main",
+] as const
 
 type ScriptRunAt = NonNullable<chrome.scripting.RegisteredContentScript["runAt"]>
 type ScriptWorld = NonNullable<chrome.scripting.RegisteredContentScript["world"]>
