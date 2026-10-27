@@ -1681,8 +1681,6 @@ Please output the optimized code block directly, followed by a brief summary of 
   globalSearchEmptyPrompts: "No prompt results",
   globalSearchEmptyCurrentSession: "No results in current session",
   globalSearchCategoriesLabel: "Global search categories",
-  globalSearchTriggerHint: "Trigger: {shortcut}",
-  globalSearchTriggerDoubleShift: "double-press Shift",
   globalSearchMatchingSettingsTitle: "Search Matching",
   globalSearchMatchingSettingsDesc: "Configure how Search Everywhere matches search results",
   globalSearchShortcutSettingLabel: "Global Search shortcut",

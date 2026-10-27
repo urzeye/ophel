@@ -1599,8 +1599,6 @@ export const ru = {
   globalSearchEmptyPrompts: "Нет результатов по промптам",
   globalSearchEmptyCurrentSession: "Нет результатов в текущей сессии",
   globalSearchCategoriesLabel: "Категории глобального поиска",
-  globalSearchTriggerHint: "Запуск: {shortcut}",
-  globalSearchTriggerDoubleShift: "двойное нажатие Shift",
   globalSearchMatchingSettingsTitle: "Сопоставление поиска",
   globalSearchMatchingSettingsDesc:
     "Настройте, как Search Everywhere сопоставляет результаты поиска.",

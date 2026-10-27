@@ -1680,8 +1680,6 @@ export const ja = {
   globalSearchEmptyPrompts: "プロンプト結果がありません",
   globalSearchEmptyCurrentSession: "現在のセッションに結果がありません",
   globalSearchCategoriesLabel: "グローバル検索カテゴリ",
-  globalSearchTriggerHint: "起動方法：{shortcut}",
-  globalSearchTriggerDoubleShift: "Shift を2回押す",
   globalSearchMatchingSettingsTitle: "検索マッチング",
   globalSearchMatchingSettingsDesc: "Search Everywhere の結果マッチング方式を設定します",
   globalSearchShortcutSettingLabel: "グローバル検索ショートカット",

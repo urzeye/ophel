@@ -1643,8 +1643,6 @@ Dame el código y luego un resumen de mejoras.`,
   globalSearchEmptyPrompts: "Sin resultados de prompts",
   globalSearchEmptyCurrentSession: "Sin resultados en la sesión actual",
   globalSearchCategoriesLabel: "Categorías de búsqueda global",
-  globalSearchTriggerHint: "Activación: {shortcut}",
-  globalSearchTriggerDoubleShift: "doble pulsación de Shift",
   globalSearchMatchingSettingsTitle: "Coincidencia de búsqueda",
   globalSearchMatchingSettingsDesc:
     "Configura cómo Search Everywhere hace coincidir los resultados de búsqueda.",

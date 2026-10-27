@@ -1623,8 +1623,6 @@ export const zhCN = {
   globalSearchEmptyPrompts: "暂无提示词搜索结果",
   globalSearchEmptyCurrentSession: "暂无当前对话搜索结果",
   globalSearchCategoriesLabel: "全局搜索分类",
-  globalSearchTriggerHint: "触发方式：{shortcut}",
-  globalSearchTriggerDoubleShift: "双击 Shift",
   globalSearchMatchingSettingsTitle: "搜索匹配",
   globalSearchMatchingSettingsDesc: "配置全局搜索如何匹配搜索结果",
   globalSearchShortcutSettingLabel: "全局搜索快捷键",

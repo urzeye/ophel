@@ -1345,8 +1345,6 @@ Dê o código e depois um resumo de melhorias.`,
   globalSearchEmptyPrompts: "Sem resultados de prompts",
   globalSearchEmptyCurrentSession: "Sem resultados na sessão atual",
   globalSearchCategoriesLabel: "Categorias da busca global",
-  globalSearchTriggerHint: "Atalho: {shortcut}",
-  globalSearchTriggerDoubleShift: "pressione Shift duas vezes",
   globalSearchMatchingSettingsTitle: "Correspondência de busca",
   globalSearchMatchingSettingsDesc:
     "Configure como o Search Everywhere corresponde os resultados de busca.",

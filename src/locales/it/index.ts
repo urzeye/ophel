@@ -1739,8 +1739,6 @@ export const it = {
   globalSearchEmptyPrompts: "Nessun risultato immediato",
   globalSearchEmptyCurrentSession: "Nessun risultato nella sessione corrente",
   globalSearchCategoriesLabel: "Categorie di ricerca globali",
-  globalSearchTriggerHint: "Grilletto: {shortcut}",
-  globalSearchTriggerDoubleShift: "premere due volte Maiusc",
   globalSearchMatchingSettingsTitle: "Ricerca corrispondente",
   globalSearchMatchingSettingsDesc:
     "Configura il modo in cui Search Everywhere corrisponde ai risultati della ricerca",

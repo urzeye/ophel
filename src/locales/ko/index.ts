@@ -1634,8 +1634,6 @@ export const ko = {
   globalSearchEmptyPrompts: "프롬프트 결과가 없습니다",
   globalSearchEmptyCurrentSession: "현재 세션에 결과가 없습니다",
   globalSearchCategoriesLabel: "전체 검색 카테고리",
-  globalSearchTriggerHint: "실행: {shortcut}",
-  globalSearchTriggerDoubleShift: "Shift 두 번",
   globalSearchMatchingSettingsTitle: "검색 매칭",
   globalSearchMatchingSettingsDesc: "Search Everywhere가 검색 결과를 매칭하는 방식을 설정합니다",
   globalSearchShortcutSettingLabel: "전역 검색 단축키",

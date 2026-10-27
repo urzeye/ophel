@@ -5406,6 +5406,20 @@ html[data-theme="dark"] .about-privacy-banner {
   margin: 0 1px;
 }
 
+/* 全局搜索设置里的当前键位展示（只读键帽 + 跳转按钮） */
+.settings-global-search-shortcut {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-right: 8px;
+}
+
+.settings-kbd-empty {
+  color: var(--gh-text-tertiary, #9ca3af);
+  font-size: 13px;
+  font-style: italic;
+}
+
 .settings-shortcut-remove-btn {
   display: inline-flex;
   align-items: center;

@@ -1625,8 +1625,6 @@ export const zhTW = {
   globalSearchEmptyPrompts: "暫無提示詞搜尋結果",
   globalSearchEmptyCurrentSession: "暫無當前對話搜尋結果",
   globalSearchCategoriesLabel: "全域搜尋分類",
-  globalSearchTriggerHint: "觸發方式：{shortcut}",
-  globalSearchTriggerDoubleShift: "連按兩下 Shift",
   globalSearchMatchingSettingsTitle: "搜尋匹配",
   globalSearchMatchingSettingsDesc: "設定全域搜尋如何匹配搜尋結果",
   globalSearchShortcutSettingLabel: "全域搜尋快捷鍵",

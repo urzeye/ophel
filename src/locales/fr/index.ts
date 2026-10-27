@@ -1651,8 +1651,6 @@ Donnez le code puis un résumé des améliorations.`,
   globalSearchEmptyPrompts: "Aucun résultat de prompt",
   globalSearchEmptyCurrentSession: "Aucun résultat dans la session actuelle",
   globalSearchCategoriesLabel: "Catégories de recherche globale",
-  globalSearchTriggerHint: "Déclenchement : {shortcut}",
-  globalSearchTriggerDoubleShift: "double appui sur Shift",
   globalSearchMatchingSettingsTitle: "Correspondance de recherche",
   globalSearchMatchingSettingsDesc:
     "Configure la façon dont Search Everywhere met en correspondance les résultats.",

@@ -10,7 +10,7 @@ import { Button, NumberInput, PlaceholderInput, SelectDropdown } from "~componen
 import { FEATURES_TAB_IDS, NAV_IDS, NOTIFICATION_SOUND_PRESETS } from "~constants"
 import {
   DEFAULT_KEYBINDINGS,
-  formatShortcut,
+  getShortcutParts,
   isMacOS,
   SHORTCUT_ACTIONS,
 } from "~constants/shortcuts"
@@ -594,7 +594,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
   const previewAudioRef = React.useRef<HTMLAudioElement | null>(null)
   const { settings, updateDeepSetting, updateNestedSetting } = useSettingsStore()
 
-  // 全局搜索 tab：触发方式提示与快捷键跳转
+  // 全局搜索 tab：当前键位展示与快捷键跳转
   const doubleShiftToSearch =
     settings?.globalSearch?.doubleShift ?? DEFAULT_SETTINGS.globalSearch.doubleShift
   const enableFuzzySearch = settings?.globalSearch?.enableFuzzySearch ?? false
@@ -605,19 +605,10 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
     userGlobalSearchBinding === null
       ? null
       : userGlobalSearchBinding || DEFAULT_KEYBINDINGS[SHORTCUT_ACTIONS.OPEN_GLOBAL_SEARCH]
-  const globalSearchShortcutLabel = globalSearchBinding
-    ? formatShortcut(globalSearchBinding, isMacOS())
-    : ""
-  const globalSearchTriggers: string[] = []
-  if (doubleShiftToSearch) {
-    globalSearchTriggers.push(t("globalSearchTriggerDoubleShift"))
-  }
-  if (globalSearchShortcutLabel) {
-    globalSearchTriggers.push(globalSearchShortcutLabel)
-  }
-  const globalSearchTriggerHint = t("globalSearchTriggerHint", {
-    shortcut: globalSearchTriggers.join(" / ") || t("shortcutNotSet"),
-  })
+  const isMacLike = isMacOS()
+  const globalSearchShortcutParts = globalSearchBinding
+    ? getShortcutParts(globalSearchBinding, isMacLike)
+    : []
 
   const handleNavigateToGlobalSearchShortcut = () => {
     window.dispatchEvent(
@@ -1737,8 +1728,6 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
       {/* ========== 全局搜索 Tab ========== */}
       {activeTab === FEATURES_TAB_IDS.GLOBAL_SEARCH && (
         <>
-          <p className="settings-page-desc">{globalSearchTriggerHint}</p>
-
           <SettingCard
             title={t("globalSearchMatchingSettingsTitle")}
             description={t("globalSearchMatchingSettingsDesc")}
@@ -1747,6 +1736,18 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
               label={t("globalSearchShortcutSettingLabel")}
               description={t("globalSearchShortcutSettingDesc")}
               settingId="global-search-shortcut-setting-link">
+              <span className="settings-global-search-shortcut">
+                {globalSearchShortcutParts.length > 0 ? (
+                  globalSearchShortcutParts.map((part, index) => (
+                    <React.Fragment key={index}>
+                      {index > 0 && !isMacLike && <span className="settings-kbd-separator">+</span>}
+                      <kbd className="settings-kbd">{part}</kbd>
+                    </React.Fragment>
+                  ))
+                ) : (
+                  <span className="settings-kbd-empty">{t("shortcutNotSet")}</span>
+                )}
+              </span>
               <button
                 className="settings-btn settings-btn-secondary"
                 onClick={handleNavigateToGlobalSearchShortcut}>
