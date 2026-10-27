@@ -36,12 +36,9 @@ export const ja = {
   // Site Settings
   siteSettingsPageDesc: "サイトごとにページレイアウト、モデルロック、専用機能を設定",
   siteSelectorLabel: "設定するサイト",
-  globalDefaultSite: "グローバルデフォルト",
   currentSiteBadge: "現在のサイト",
   siteExclusiveSettingsLabel: "専用設定",
   noSiteExclusiveSettings: "このサイトには専用設定がありません",
-  globalDefaultSiteHint:
-    "モデルロックとサイト専用機能は、特定のサイトを選択してから設定してください",
   communitySitePackBadge: "コミュニティパック（コア機能）",
   communitySitePackDesc:
     "このサイトはコミュニティパックによって対応しており、パックがサポートする機能のみ表示されます。",
@@ -1660,6 +1657,11 @@ export const ja = {
   globalSearchSiteZai: "Z.ai",
   globalSearchSiteChatglm: "ChatGLM",
   globalSearchSiteDoubao: "Doubao",
+  globalSearchSiteKimi: "Kimi",
+  globalSearchSiteQianwen: "Qianwen",
+  globalSearchSiteQwenAi: "Qwen Studio",
+  globalSearchSiteYuanbao: "Yuanbao",
+  globalSearchSiteIma: "ima",
   globalSearchPlaceholderAll: "すべてを検索",
   globalSearchPlaceholderOutline: "アウトラインを検索",
   globalSearchPlaceholderSettings: "設定を検索",

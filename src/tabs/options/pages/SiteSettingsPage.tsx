@@ -1,7 +1,7 @@
 /**
  * 站点设置页面
  * 结构：站点选择器 + 选中站点的聚合设置（页面布局 / 模型锁定 / 站点专属）
- * 设置按站点 key 存储；选择「全局默认」时编辑各站点未单独配置时的兜底值（_default）
+ * 设置按站点 key 存储；未单独配置的站点读取时回退到 _default 兜底值
  */
 import React, { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react"
 
@@ -12,7 +12,7 @@ import {
   getFeatureCapabilitiesSignature,
   type SitePackCapability,
 } from "~adapters/feature-capabilities"
-import { GlobeIcon, PageContentIcon as LayoutIcon, PowerIcon } from "~components/icons"
+import { PageContentIcon as LayoutIcon, PowerIcon } from "~components/icons"
 import { ModelLockSiteCard } from "~components/ModelLockSiteCard"
 import { PlatformIcon } from "~components/PlatformIcon"
 import { ConfirmDialog, SelectDropdown, Slider, Tooltip } from "~components/ui"
@@ -42,9 +42,6 @@ interface SiteSettingsPageProps {
   /** 深链传入的目标站点（siteId 或站点实例 key），非法值回退到当前站点 */
   initialTab?: string
 }
-
-/** 选择器中「全局默认」选项的值，与设置存储中的兜底 key 一致 */
-const DEFAULT_SITE_OPTION_VALUE = "_default"
 
 const SITE_PACK_INFO_URL_EN = "https://ophel.app/docs/enhancements/site-extensions/capabilities"
 const SITE_PACK_INFO_URL_ZH = "https://ophel.app/docs/zh/enhancements/site-extensions/capabilities"
@@ -95,32 +92,39 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
     [featureCapabilitiesSignature],
   )
   const isCommunitySitePack = Boolean(adapter && !isBuiltinSiteId(siteId))
-  // 弹窗内当前站点：内置站点用 siteId，社区适配包用站点实例 key；独立 Options 页为 _default
+  // 弹窗内当前站点：内置站点用 siteId，社区适配包用站点实例 key；独立 Options 页无站点上下文
   const currentSiteValue = isCommunitySitePack ? siteInstanceKey : siteId
   const currentLanguage = useSyncExternalStore(subscribeI18nChanges, getCurrentLang, getCurrentLang)
   const siteOptions = useMemo(() => {
     const options: Array<{
       value: string
-      /** 内置站点/适配包名称；「全局默认」为空，文案在渲染期取 t() 以跟随语言切换 */
-      name?: string
+      name: string
       platform?: { name: string; faviconUrl?: string }
-      isDefault?: boolean
     }> = SUPPORTED_AI_PLATFORMS.map((p) => ({
       value: p.id,
       name: p.name,
       platform: { name: p.name, faviconUrl: p.faviconUrl },
     }))
-    options.unshift({ value: DEFAULT_SITE_OPTION_VALUE, isDefault: true })
     // 社区适配包按实例 key 存配置，仅在面板内（有适配器上下文）提供当前实例入口
     if (isCommunitySitePack && adapter) {
       options.push({ value: siteInstanceKey, name: adapter.getName() })
     }
+    // 与适配中心内置站点列表一致：当前站点置顶；独立 Options 页无匹配时保持目录顺序
+    const currentIndex = options.findIndex((option) => option.value === currentSiteValue)
+    if (currentIndex > 0) {
+      const [current] = options.splice(currentIndex, 1)
+      options.unshift(current)
+    }
     return options
-  }, [isCommunitySitePack, adapter, siteInstanceKey])
+  }, [isCommunitySitePack, adapter, siteInstanceKey, currentSiteValue])
+  // 独立 Options 页的 siteId 是 _default 占位，不在选项里，此时回退到第一个站点
+  const fallbackSiteValue = siteOptions.some((option) => option.value === currentSiteValue)
+    ? currentSiteValue
+    : siteOptions[0].value
   const pickInitialSite = useCallback(
     (value: string | undefined): string =>
-      value && siteOptions.some((option) => option.value === value) ? value : currentSiteValue,
-    [siteOptions, currentSiteValue],
+      value && siteOptions.some((option) => option.value === value) ? value : fallbackSiteValue,
+    [siteOptions, fallbackSiteValue],
   )
   const [selectedSite, setSelectedSite] = useState<string>(() => pickInitialSite(initialTab))
   const [showDisableSiteConfirm, setShowDisableSiteConfirm] = useState(false)
@@ -136,35 +140,28 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
   const enablePageWidthLabel = t("enablePageWidth")
   const enableUserQueryWidthLabel = t("enableUserQueryWidth")
 
-  const isDefaultSelected = selectedSite === DEFAULT_SITE_OPTION_VALUE
   const isCommunitySelected = isCommunitySitePack && selectedSite === siteInstanceKey
   const selectedSiteName =
-    selectedSite === DEFAULT_SITE_OPTION_VALUE
-      ? t("globalDefaultSite")
-      : siteOptions.find((option) => option.value === selectedSite)?.name ?? selectedSite
+    siteOptions.find((option) => option.value === selectedSite)?.name ?? selectedSite
   const selectedCapabilities = isCommunitySelected
     ? featureCapabilities
     : getBuiltinFeatureCapabilities(selectedSite)
-  // 「全局默认」展示全部布局卡片；具体站点按能力表/白名单过滤
   const supportsCapability = (capability: SitePackCapability): boolean =>
-    isDefaultSelected || selectedCapabilities.has(capability)
+    selectedCapabilities.has(capability)
   const supportsPanelAvoidance =
-    isDefaultSelected ||
     PANEL_AVOIDANCE_SUPPORTED_SITE_IDS.has(selectedSite) ||
     (isCommunitySelected && selectedCapabilities.has("panel-avoidance"))
   const supportsPageWidth = supportsCapability("width")
   const supportsUserQueryWidth =
     supportsPageWidth &&
-    (isDefaultSelected ||
-      isBuiltinSiteId(selectedSite) ||
+    (isBuiltinSiteId(selectedSite) ||
       (isCommunitySelected && (adapter?.getUserQueryWidthSelectors().length ?? 0) > 0))
   const supportsZenMode = supportsCapability("zen")
   const supportsCleanMode = supportsCapability("clean")
   const supportsAutoHideInput =
-    isDefaultSelected ||
     AUTO_HIDE_INPUT_SUPPORTED_SITE_IDS.has(selectedSite) ||
     (isCommunitySelected && Boolean(adapter?.getAutoHideInputConfig()))
-  const supportsModelLock = !isDefaultSelected && supportsCapability("model-lock")
+  const supportsModelLock = supportsCapability("model-lock")
   const hasExclusiveSettings = EXCLUSIVE_SETTINGS_SITE_IDS.has(selectedSite)
   // 仅在面板内（有适配器上下文）且选中当前内置站点时提供"在此站点停用"入口
   const canDisableCurrentSite =
@@ -262,15 +259,11 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
     value: option.value,
     label: (
       <span className="settings-site-option">
-        {option.isDefault ? (
-          <GlobeIcon size={16} />
-        ) : (
-          <PlatformIcon
-            platform={option.platform ?? { name: option.name ?? option.value }}
-            size={16}
-          />
-        )}
-        <span>{option.isDefault ? t("globalDefaultSite") : option.name}</span>
+        <PlatformIcon
+          platform={option.platform ?? { name: option.name ?? option.value }}
+          size={16}
+        />
+        <span>{option.name}</span>
       </span>
     ),
   }))
@@ -320,7 +313,7 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
             onChange={setSelectedSite}
           />
         </div>
-        {selectedSite === currentSiteValue && currentSiteValue !== DEFAULT_SITE_OPTION_VALUE && (
+        {selectedSite === currentSiteValue && (
           <span className="settings-current-site-badge">{t("currentSiteBadge")}</span>
         )}
       </div>
@@ -546,7 +539,7 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
         </SettingCard>
       )}
 
-      {/* ========== 模型锁定分组（全局默认无意义，不展示） ========== */}
+      {/* ========== 模型锁定分组 ========== */}
       {supportsModelLock && (
         <>
           <div className="settings-section-label">
@@ -562,10 +555,9 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
           {selectedSiteName} · {t("siteExclusiveSettingsLabel")}
         </div>
       )}
-      {!isDefaultSelected && !hasExclusiveSettings && !isCommunitySelected && (
+      {!hasExclusiveSettings && !isCommunitySelected && (
         <p className="settings-section-hint">{t("noSiteExclusiveSettings")}</p>
       )}
-      {isDefaultSelected && <p className="settings-section-hint">{t("globalDefaultSiteHint")}</p>}
 
       {/* Gemini 专属 */}
       {selectedSite === SITE_IDS.GEMINI && (

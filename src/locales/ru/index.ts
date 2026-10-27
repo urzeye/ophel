@@ -37,12 +37,9 @@ export const ru = {
   siteSettingsPageDesc:
     "Настройка макета страницы, блокировки модели и специальных функций для каждого сайта",
   siteSelectorLabel: "Настраиваемый сайт",
-  globalDefaultSite: "Глобально по умолчанию",
   currentSiteBadge: "Текущий сайт",
   siteExclusiveSettingsLabel: "Специальные настройки",
   noSiteExclusiveSettings: "Для этого сайта нет специальных настроек",
-  globalDefaultSiteHint:
-    "Выберите конкретный сайт, чтобы настроить блокировку модели и специальные функции",
   communitySitePackBadge: "Пакет сообщества (основные функции)",
   communitySitePackDesc:
     "Этот сайт поддерживается пакетом сообщества. Отображаются только поддерживаемые им функции.",
@@ -1579,6 +1576,11 @@ export const ru = {
   globalSearchSiteZai: "Z.ai",
   globalSearchSiteChatglm: "ChatGLM",
   globalSearchSiteDoubao: "Doubao",
+  globalSearchSiteKimi: "Kimi",
+  globalSearchSiteQianwen: "Qianwen",
+  globalSearchSiteQwenAi: "Qwen Studio",
+  globalSearchSiteYuanbao: "Yuanbao",
+  globalSearchSiteIma: "ima",
   globalSearchPlaceholderAll: "Искать везде",
   globalSearchPlaceholderOutline: "Искать в оглавлении",
   globalSearchPlaceholderSettings: "Искать в настройках",

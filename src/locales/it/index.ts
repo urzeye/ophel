@@ -36,12 +36,9 @@ export const it = {
   // Site Settings
   siteSettingsPageDesc: "Configura layout di pagina, blocco modello e funzioni specifiche per sito",
   siteSelectorLabel: "Sito da configurare",
-  globalDefaultSite: "Predefinito globale",
   currentSiteBadge: "Sito corrente",
   siteExclusiveSettingsLabel: "Specifiche del sito",
   noSiteExclusiveSettings: "Nessuna impostazione specifica per questo sito",
-  globalDefaultSiteHint:
-    "Seleziona un sito specifico per configurare il blocco del modello e le funzioni specifiche",
   communitySitePackBadge: "Pacchetto della community (funzioni principali)",
   communitySitePackDesc:
     "Questo sito è supportato da un pacchetto della community. Vengono mostrate solo le funzioni che supporta.",
@@ -1718,6 +1715,11 @@ export const it = {
   globalSearchSiteZai: "Z.ai",
   globalSearchSiteChatglm: "ChatGLM",
   globalSearchSiteDoubao: "Doubao",
+  globalSearchSiteKimi: "Kimi",
+  globalSearchSiteQianwen: "Qianwen",
+  globalSearchSiteQwenAi: "Qwen Studio",
+  globalSearchSiteYuanbao: "Yuanbao",
+  globalSearchSiteIma: "ima",
   globalSearchPlaceholderAll: "Cerca tutto",
   globalSearchPlaceholderOutline: "Schema di ricerca",
   globalSearchPlaceholderSettings: "Impostazioni di ricerca",

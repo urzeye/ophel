@@ -36,12 +36,9 @@ export const en = {
   // Site Settings
   siteSettingsPageDesc: "Configure page layout, model lock, and site-specific features per site",
   siteSelectorLabel: "Configure site",
-  globalDefaultSite: "Global default",
   currentSiteBadge: "Current site",
   siteExclusiveSettingsLabel: "Site-specific",
   noSiteExclusiveSettings: "No site-specific settings for this site yet",
-  globalDefaultSiteHint:
-    "Select a specific site to configure model lock and site-specific features",
   communitySitePackBadge: "Community pack (core features)",
   communitySitePackDesc:
     "This site is powered by a community pack. Only the features it supports are shown.",
@@ -1660,6 +1657,11 @@ Please output the optimized code block directly, followed by a brief summary of 
   globalSearchSiteZai: "Z.ai",
   globalSearchSiteChatglm: "ChatGLM",
   globalSearchSiteDoubao: "Doubao",
+  globalSearchSiteKimi: "Kimi",
+  globalSearchSiteQianwen: "Qianwen",
+  globalSearchSiteQwenAi: "Qwen Studio",
+  globalSearchSiteYuanbao: "Yuanbao",
+  globalSearchSiteIma: "ima",
   globalSearchPlaceholderAll: "Search all",
   globalSearchPlaceholderOutline: "Search outline",
   globalSearchPlaceholderSettings: "Search settings",

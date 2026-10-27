@@ -295,6 +295,8 @@ export const SelectDropdown: React.FC<SelectDropdownProps> = ({
             right: 0,
             maxHeight: `${maxMenuHeight}px`,
             overflowY: "auto",
+            // 滚动到列表边缘时阻止滚动链到下层页面
+            overscrollBehavior: "contain",
             zIndex: 100,
             borderRadius: "8px",
             border: "1px solid var(--gh-input-border, #d1d5db)",
