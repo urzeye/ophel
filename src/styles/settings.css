@@ -5414,6 +5414,11 @@ html[data-theme="dark"] .about-privacy-banner {
   margin-right: 8px;
 }
 
+/* 只读场景去掉键帽的按压阴影，避免看起来像可点击按钮 */
+.settings-global-search-shortcut .settings-kbd {
+  box-shadow: none;
+}
+
 .settings-kbd-empty {
   color: var(--gh-text-tertiary, #9ca3af);
   font-size: 13px;
