@@ -731,17 +731,10 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   color: var(--gh-text-secondary, #6b7280);
 }
 
-/* 下拉只按所选站点名称的宽度走，不参与伸展：一行的空间留给右侧的徽标与提示。
-   flex-grow 为 0 是关键，改 flex-basis 改不动宽度 */
 .settings-site-selector-dropdown {
-  flex: 0 1 auto;
+  flex: 1 1 80px;
   min-width: 0;
-  max-width: 280px;
-}
-
-/* 菜单不受触发器变窄的影响：至少撑到最长站点名（如 Gemini Enterprise）的宽度，不换行 */
-.settings-site-select-menu {
-  min-width: max-content;
+  max-width: 180px;
 }
 
 .settings-site-option {
