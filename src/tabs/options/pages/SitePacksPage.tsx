@@ -2276,11 +2276,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
                           <span>
                             {t("remoteConfigBaseVersionLabel")} {patch.baseConfigVersion}
                           </span>
-                          {patch.fileName ? (
-                            <Tooltip content={patch.fileName} showOnlyWhenTruncated>
-                              <span>{patch.fileName}</span>
-                            </Tooltip>
-                          ) : null}
+                          {patch.fileName ? <span>{patch.fileName}</span> : null}
                         </div>
                       </div>
                       <div className="settings-pack-controls">

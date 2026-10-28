@@ -1451,7 +1451,8 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   gap: 8px;
 }
 
-.settings-pack-title-line > strong {
+/* 已安装、注册表包名外层套了 Tooltip 触发器，用后代选择器与内置站点名统一 */
+.settings-pack-title-line strong {
   font-size: 14px;
   font-weight: 600;
   color: var(--gh-text, #1f2937);

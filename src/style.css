@@ -1095,6 +1095,17 @@
   transform: scale(0.96);
 }
 
+/* 按钮外层套了 Tooltip 触发器时，绝对定位挪到触发器上：否则触发器塌成 0×0，提示会偏离按钮 */
+.gh-panel-search-action-anchor {
+  position: absolute;
+  right: 3px;
+  z-index: 1;
+}
+
+.gh-panel-search-action-anchor > .gh-panel-search-action {
+  position: static;
+}
+
 .gh-panel-menu-anchor {
   position: relative;
   flex-shrink: 0;

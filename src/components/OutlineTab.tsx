@@ -1995,7 +1995,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
               onChange={handleSearchChange}
             />
             {searchQuery && (
-              <Tooltip content={t("clear")}>
+              <Tooltip content={t("clear")} triggerClassName="gh-panel-search-action-anchor">
                 <button
                   type="button"
                   className="outline-search-clear gh-panel-search-action"
