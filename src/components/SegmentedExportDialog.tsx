@@ -420,7 +420,10 @@ export const SegmentedExportDialog: React.FC<SegmentedExportDialogProps> = ({
             placeholder={t("segmentedExportRangePlaceholder")}
             onChange={(event) => setRangeInput(event.target.value)}
             onKeyDown={(event) => {
-              if (event.key === "Enter") applyRangeSelection()
+              // 输入法确认候选词的回车不算应用
+              if (event.key !== "Enter" || event.nativeEvent.isComposing || event.keyCode === 229)
+                return
+              applyRangeSelection()
             }}
           />
           <button
