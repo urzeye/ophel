@@ -27,7 +27,7 @@ jobs:
     name: "Audit Code Quality"
     if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 2
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
