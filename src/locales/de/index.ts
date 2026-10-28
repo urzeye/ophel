@@ -271,6 +271,7 @@ export const de = {
   websiteDesc: "Dokumentation und Anleitungen",
   visitWebsite: "Webseite besuchen",
   rateAndReview: "Gefällt Ihnen Ophel?",
+  rateAndReviewAction: "Ophel bewerten",
   rateDesc:
     "Wenn Ihnen Ophel gefällt, geben Sie uns bitte eine 5-Sterne-Bewertung! Das hilft uns sehr.",
   chromeStore: "Chrome Store",

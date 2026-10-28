@@ -270,6 +270,7 @@ export const pt = {
   websiteDesc: "Documentação e guias",
   visitWebsite: "Visitar Web",
   rateAndReview: "Gosta do Ophel?",
+  rateAndReviewAction: "Avaliar o Ophel",
   rateDesc:
     "Se você gosta do Ophel, por favor nos dê uma avaliação de 5 estrelas! Isso nos ajuda muito.",
   chromeStore: "Chrome Store",

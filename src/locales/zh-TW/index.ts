@@ -217,6 +217,7 @@ export const zhTW = {
   websiteDesc: "檢視詳細文件、使用指南和更多資訊",
   visitWebsite: "前往官網",
   rateAndReview: "好評鼓勵",
+  rateAndReviewAction: "好評鼓勵",
   rateDesc: "如果您喜歡 Ophel，請在應用商店給我們一個五星好評，這是我們更新的最大動力！",
   communityAndSupport: "社群與支援",
 

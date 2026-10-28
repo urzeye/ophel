@@ -669,7 +669,7 @@ function IndexPopup() {
       <div className="popup-footer">
         <span className="popup-version">v{version}</span>
         <div className="popup-footer-actions">
-          <Tooltip content={t("rateAndReview")}>
+          <Tooltip content={t("rateAndReviewAction")}>
             <button
               className="popup-action-pill review-btn icon-only"
               onClick={() => openUrl(storeInfo.url)}>

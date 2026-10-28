@@ -269,6 +269,7 @@ export const en = {
   githubRepository: "GitHub Repository",
   communityAndSupport: "Community & Support",
   rateAndReview: "Love Ophel?",
+  rateAndReviewAction: "Rate Ophel",
   rateDesc: "If you enjoy using Ophel, please give us a 5-star rating! It helps us a lot.",
   chromeStore: "Chrome Store",
   firefoxAddons: "Firefox Add-on",

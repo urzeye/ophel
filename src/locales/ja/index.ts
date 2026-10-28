@@ -272,6 +272,7 @@ export const ja = {
   websiteDesc: "ドキュメントやガイドなどを確認",
   visitWebsite: "サイトを訪問",
   rateAndReview: "Ophelを応援",
+  rateAndReviewAction: "ストアで評価する",
   rateDesc:
     "Ophelを気に入っていただけましたら、ストアで5つ星評価をお願いします！開発の励みになります。",
   communityAndSupport: "コミュニティとサポート",

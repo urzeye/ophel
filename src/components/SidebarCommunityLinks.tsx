@@ -28,12 +28,12 @@ export function SidebarCommunityLinks() {
 
   return (
     <div className="sidebar-community-links">
-      <Tooltip content={t("rateAndReview")}>
+      <Tooltip content={t("rateAndReviewAction")}>
         <a
           href={storeInfo.url}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label={t("rateAndReview")}
+          aria-label={t("rateAndReviewAction")}
           className="sidebar-social-btn review-btn">
           {React.cloneElement(storeInfo.icon as React.ReactElement, { size: 18 })}
         </a>

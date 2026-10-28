@@ -277,6 +277,7 @@ export const it = {
   githubRepository: "Archivio GitHub",
   communityAndSupport: "Comunità e supporto",
   rateAndReview: "Ti piace Ophel?",
+  rateAndReviewAction: "Valuta Ophel",
   rateDesc:
     "Se ti piace usare Ophel, ti preghiamo di darci una valutazione a 5 stelle! Ci aiuta molto.",
   chromeStore: "Chrome Negozio",

@@ -269,6 +269,7 @@ export const ru = {
   websiteDesc: "Документация и руководства",
   visitWebsite: "Перейти на сайт",
   rateAndReview: "Нравится Ophel?",
+  rateAndReviewAction: "Оценить Ophel",
   rateDesc: "Если вам нравится Ophel, пожалуйста, поставьте нам 5 звезд! Это очень помогает нам.",
   chromeStore: "Интернет-магазин Chrome",
   firefoxAddons: "Дополнение Firefox",
