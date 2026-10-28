@@ -364,7 +364,7 @@ Grok 接入的差异点（`src/adapters/grok-history-outline.ts`、`src/adapters
 | 样式隔离  | Shadow DOM（`:host` 选择器 + 动态 style 注入）                        |
 | 命名前缀  | `--gh-*`（项目前身 Gemini Helper 缩写）                               |
 | 布局      | Flexbox 为主，Grid 辅助，固定定位用于浮动 UI                          |
-| 响应式    | 极少媒体查询，主要依赖 JS 动态类名（`.is-narrow`）                    |
+| 响应式    | 极少媒体查询，主要依赖 JS 动态类名（`.is-narrow`、`.is-compact`、`.is-drawer`、`.is-touch`），断点与触屏判定集中在 `src/constants/ui.ts` |
 | 现代特性  | `color-mix()`、`backdrop-filter`、View Transitions、`scrollbar-width` |
 
 ### 主题系统

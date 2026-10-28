@@ -1,6 +1,8 @@
 import { isIgnoredMutation } from "~utils/dom-mutations"
 import { MagicCodex } from "~components/MagicCodex"
+import { TOUCH_INPUT_MEDIA_QUERY } from "~constants"
 import { isMacOS } from "~constants/shortcuts"
+import { useMediaQuery } from "~hooks/useMediaQuery"
 import { buildStructuredTips } from "~utils/build-structured-tips"
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
@@ -44,6 +46,8 @@ interface OutlineTabProps {
   manager: OutlineManager
   conversationManager: ConversationManager
   onJumpBefore?: () => void
+  // 点击大纲条目并已滚动到目标后调用；触屏抽屉据此收起，让用户看到跳转结果
+  onJumped?: () => void
   showUserQueryToggle?: boolean
 }
 
@@ -605,6 +609,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
   manager,
   conversationManager,
   onJumpBefore,
+  onJumped,
   showUserQueryToggle = true,
 }) => {
   // 获取设置 - 使用 Zustand Store
@@ -623,9 +628,19 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
     window.dispatchEvent(new CustomEvent("ophel:openReleaseNotes"))
   }, [])
 
+  const isTouchInput = useMediaQuery(TOUCH_INPUT_MEDIA_QUERY)
   const structuredTips = React.useMemo(
-    () => buildStructuredTips(currentSettings.shortcuts?.keybindings, isMac, shortcutNotSetLabel),
-    [currentSettings.shortcuts?.keybindings, currentSettings.language, isMac, shortcutNotSetLabel],
+    () =>
+      buildStructuredTips(currentSettings.shortcuts?.keybindings, isMac, shortcutNotSetLabel, {
+        includeKeyboardTips: !isTouchInput,
+      }),
+    [
+      currentSettings.shortcuts?.keybindings,
+      currentSettings.language,
+      isMac,
+      isTouchInput,
+      shortcutNotSetLabel,
+    ],
   )
 
   // Initialize state from manager to prevent flicker
@@ -1496,6 +1511,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
         // 高亮效果
         targetElement.classList.add("outline-highlight")
         setTimeout(() => targetElement?.classList.remove("outline-highlight"), 2000)
+        onJumped?.()
       } else if (
         node.isGhost &&
         node.scrollTop !== undefined &&
@@ -1505,6 +1521,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
         updateActiveIndex(node.index, node)
         updateVisibleHighlightIndex(getVisibleHighlightIndex(node.index))
         showToast(t("bookmarkContentMissing"), 3000)
+        onJumped?.()
       }
     },
     [
@@ -1512,6 +1529,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
       getVisibleHighlightIndex,
       manager,
       onJumpBefore,
+      onJumped,
       updateActiveIndex,
       updateVisibleHighlightIndex,
     ],

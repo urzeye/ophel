@@ -30,6 +30,7 @@ export const ko = {
   navPermissions: "권한 관리",
   navBackup: "데이터 및 권한",
   navAbout: "Ophel 정보",
+  navBack: "뒤로",
 
   // ======== Options Page Titles & Descriptions ========
   // Site Settings

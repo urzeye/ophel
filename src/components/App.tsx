@@ -25,7 +25,9 @@ import { AI_STUDIO_SHORTCUT_SYNC_EVENT, PromptManager } from "~core/prompt-manag
 import { QueueDispatcher } from "~core/queue-dispatcher"
 import { QuickQuoteActions } from "~components/QuickQuoteActions"
 import { ensureGlobalThemeManager, type ThemeTransitionOrigin } from "~core/theme-manager"
+import { SparkleIcon } from "~components/icons/SparkleIcon"
 import { useEdgePeekController } from "~hooks/useEdgePeekController"
+import { useMediaQuery } from "~hooks/useMediaQuery"
 import { useShortcuts } from "~hooks/useShortcuts"
 import { platform } from "~platform"
 import {
@@ -117,7 +119,9 @@ import { useTagsStore } from "~stores/tags-store"
 import {
   ABOUT_SPONSOR_SETTING_ID,
   NAV_IDS,
+  PANEL_DRAWER_MEDIA_QUERY,
   TAB_IDS,
+  TOUCH_INPUT_MEDIA_QUERY,
   isBuiltinSiteId,
   resolveSettingRoute,
   searchSettingsItems,
@@ -528,6 +532,23 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
     },
     [setPanelExpandedState, updateNestedSetting],
   )
+
+  // 触屏窄屏下面板改为侧边抽屉；宽屏触屏保留悬浮/吸附，但悬停交互换成点按。
+  // 按设备能力自动切换，不新增设置项：设置会在多设备间同步，形态必须跟随当前设备
+  const isTouchInput = useMediaQuery(TOUCH_INPUT_MEDIA_QUERY)
+  const isDrawerViewport = useMediaQuery(PANEL_DRAWER_MEDIA_QUERY)
+  const isPanelDrawer = isTouchInput && isDrawerViewport
+  // 抽屉开合只属于当前页面：每次加载都从收起开始，也不写回 panelExpanded，
+  // 避免手机上的开合经同步改动桌面端的面板状态
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false)
+  const closeDrawer = useCallback(() => setIsDrawerOpen(false), [])
+  // 面板当前是否展开：抽屉形态看抽屉开合，其余看持久化的展开状态
+  const isPanelShown = isPanelDrawer ? isDrawerOpen : isPanelExpanded
+
+  // 离开抽屉形态（旋转屏幕、接上鼠标）时收起抽屉，回到持久化的面板状态
+  useEffect(() => {
+    if (!isPanelDrawer) setIsDrawerOpen(false)
+  }, [isPanelDrawer])
 
   // 使用 ref 保持 settings 的最新引用，避免闭包捕获过期值
   const settingsRef = useRef(settings)
@@ -970,9 +991,11 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
     handlePanelMouseLeave,
     handleInteractionChange,
   } = useEdgePeekController({
-    edgeSnapState,
+    // 抽屉形态没有吸附边条，整套吸附展开逻辑停用
+    edgeSnapState: isPanelDrawer ? null : edgeSnapState,
     panelMode: settings?.panel?.panelMode,
     isPanelExpanded,
+    isTouchInput,
     findUiElement,
     getQueryRoots: getEdgePeekQueryRoots,
     isSettingsOpenRef,
@@ -1135,7 +1158,8 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
 
   const handlePanelLogoHoverStart = useCallback(
     (anchorRect: DOMRect, options?: { waitForGroupDwell?: boolean }) => {
-      if (isPanelExpandedRef.current) return
+      // 触屏上的 mouseenter 只是点按的模拟事件，点按本身已经负责开关面板
+      if (isTouchInput || isPanelExpandedRef.current) return
 
       isLauncherPeekPointerStaleRef.current = false
       clearLauncherPeekDwellTimer()
@@ -1166,7 +1190,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
         setIsLauncherPeeking(true)
       }, dwellMs)
     },
-    [clearLauncherPeekDwellTimer, clearLauncherPeekHideTimer],
+    [clearLauncherPeekDwellTimer, clearLauncherPeekHideTimer, isTouchInput],
   )
 
   const handlePanelLogoHoverEnd = useCallback(() => {
@@ -2899,6 +2923,11 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
   // 面板统一切换：快捷键与快捷按钮组共用，确保 edge-snap 模式下同步进入 peek 状态
   const handlePanelToggle = useCallback(() => {
     hideLauncherPeek()
+    if (isPanelDrawer) {
+      setIsDrawerOpen((open) => !open)
+      return
+    }
+
     const expanding = !isPanelExpandedRef.current
     if (expanding && settingsRef.current?.panel?.panelMode === "edge-snap") {
       // 若 edgeSnapState 为 null（拖拽脱吸附后关闭了面板），恢复到默认边缘位置
@@ -2917,10 +2946,24 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
     edgeSnapState,
     hideEdgePeek,
     hideLauncherPeek,
+    isPanelDrawer,
     markSyncAfterOpen,
     persistPanelExpanded,
     showEdgePeek,
   ])
+
+  // 面板内「跳转」完成后：触屏抽屉收起，触屏吸附收回边缘，让用户看到跳转结果。
+  // 鼠标设备保持原有行为，吸附面板仍由指针离开时自动收回
+  const handlePanelNavigate = useCallback(() => {
+    if (isPanelDrawer) {
+      setIsDrawerOpen(false)
+      return
+    }
+
+    if (isTouchInput && edgeSnapState && settingsRef.current?.panel?.panelMode === "edge-snap") {
+      hideEdgePeek()
+    }
+  }, [edgeSnapState, hideEdgePeek, isPanelDrawer, isTouchInput])
 
   // 快捷键管理
   useShortcuts({
@@ -2932,8 +2975,8 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
     onThemeToggle: handleThemeToggle,
     onOpenSettings: openSettingsModal,
     onOpenGlobalSearch: openGlobalSearchByShortcut,
-    isPanelVisible: isPanelExpanded,
-    isSnapped: !!edgeSnapState && !isEdgePeeking, // 吸附且未显示
+    isPanelVisible: isPanelShown,
+    isSnapped: !isPanelDrawer && !!edgeSnapState && !isEdgePeeking, // 吸附且未显示
     onShowSnappedPanel: showEdgePeekFromShortcut,
     onToggleScrollLock: handleToggleScrollLock,
   })
@@ -3336,16 +3379,21 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
   }
 
   const edgeTriggerMode = settings?.panel?.edgeTriggerMode ?? DEFAULT_SETTINGS.panel.edgeTriggerMode
-  const shouldRenderEdgeHoverZone =
+  const isEdgeSnapCollapsed =
+    !isPanelDrawer &&
     isPanelExpanded &&
     Boolean(edgeSnapState) &&
     (settings?.panel?.panelMode ?? "floating") === "edge-snap" &&
-    edgeTriggerMode === "hidden" &&
     !isLauncherPeeking &&
     !isSettingsOpen
+  const shouldRenderEdgeHoverZone = isEdgeSnapCollapsed && edgeTriggerMode === "hidden"
+  // 触屏没有悬停：吸附收起时用一个够大的把手代替边条，点按展开。
+  // 无论把手设置为显示还是隐藏都要提供，否则触屏上没有展开入口
+  const shouldRenderEdgeTouchHandle = isTouchInput && isEdgeSnapCollapsed && !isEdgePeeking
 
   return (
-    <div className={`gh-root ${isPassThrough ? "gh-pass-through" : ""}`}>
+    <div
+      className={`gh-root ${isPassThrough ? "gh-pass-through" : ""} ${isTouchInput ? "is-touch" : ""}`}>
       {shouldRenderEdgeHoverZone && edgeSnapState && (
         <div
           aria-hidden="true"
@@ -3355,15 +3403,31 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
         />
       )}
 
+      {shouldRenderEdgeTouchHandle && edgeSnapState && (
+        <button
+          type="button"
+          className={`gh-edge-touch-handle gh-interactive ${edgeSnapState}`}
+          aria-label={`${t("expand")} ${t("panelTitle")}`}
+          onClick={showEdgePeek}>
+          <SparkleIcon size={16} color="currentColor" />
+        </button>
+      )}
+
       <MainPanel
-        isOpen={isPanelExpanded || isLauncherPeeking}
-        isLauncherPeeking={isLauncherPeeking}
+        isOpen={isPanelShown || (!isPanelDrawer && isLauncherPeeking)}
+        isDrawer={isPanelDrawer}
+        onNavigate={handlePanelNavigate}
+        isLauncherPeeking={!isPanelDrawer && isLauncherPeeking}
         launcherPeekAnchorRect={launcherPeekAnchorRect}
-        onClose={() => {
-          hideLauncherPeek()
-          hideEdgePeek()
-          persistPanelExpanded(false)
-        }}
+        onClose={
+          isPanelDrawer
+            ? closeDrawer
+            : () => {
+                hideLauncherPeek()
+                hideEdgePeek()
+                persistPanelExpanded(false)
+              }
+        }
         promptManager={promptManager}
         conversationManager={conversationManager}
         outlineManager={outlineManager}
@@ -3372,8 +3436,8 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
         themeMode={themeMode}
         selectedPromptId={selectedPrompt?.id}
         onPromptSelect={handlePromptSelect}
-        edgeSnapState={edgeSnapState}
-        isEdgePeeking={isEdgePeeking}
+        edgeSnapState={isPanelDrawer ? null : edgeSnapState}
+        isEdgePeeking={!isPanelDrawer && isEdgePeeking}
         onEdgeSnap={(side) => setEdgeSnapState(side)}
         onUnsnap={() => {
           setEdgeSnapState(null)
@@ -3391,13 +3455,13 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
           hasUnseenReleaseNotes
         }
         onOpenReleaseNotes={canShowCurrentReleaseNotes ? openReleaseNotes : undefined}
-        onMouseEnter={handleMainPanelMouseEnter}
-        onMouseLeave={handleMainPanelMouseLeave}
+        onMouseEnter={isPanelDrawer ? undefined : handleMainPanelMouseEnter}
+        onMouseLeave={isPanelDrawer ? undefined : handleMainPanelMouseLeave}
       />
 
       <QuickButtons
         adapter={adapter}
-        isPanelExpanded={isPanelExpanded}
+        isPanelExpanded={isPanelShown}
         hasUnseenReleaseNotes={
           canShowCurrentReleaseNotes &&
           Boolean(releaseNotesMarkdown.trim()) &&

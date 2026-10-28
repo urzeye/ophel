@@ -31,6 +31,7 @@ export const ru = {
   navPermissions: "Доступа",
   navBackup: "Данные и разрешения",
   navAbout: "О проекте",
+  navBack: "Назад",
 
   // ======== Options Page Titles & Descriptions ========
   // Site Settings

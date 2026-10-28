@@ -10,6 +10,8 @@ interface UseEdgePeekControllerOptions {
   edgeSnapState: EdgeSnapSide
   panelMode: PanelMode
   isPanelExpanded: boolean
+  // 触屏没有悬停：展开后保持到点按面板外为止，不按 :hover 自动缩回
+  isTouchInput: boolean
   findUiElement: (selector: string) => HTMLElement | null
   getQueryRoots: () => Array<Element | ShadowRoot>
   isSettingsOpenRef: MutableRefObject<boolean>
@@ -48,6 +50,7 @@ export function useEdgePeekController({
   edgeSnapState,
   panelMode,
   isPanelExpanded,
+  isTouchInput,
   findUiElement,
   getQueryRoots,
   isSettingsOpenRef,
@@ -63,6 +66,7 @@ export function useEdgePeekController({
   const shouldSyncAfterOpenRef = useRef(false)
   const edgeSnapStateRef = useRef(edgeSnapState)
   const panelModeRef = useRef(panelMode)
+  const isTouchInputRef = useRef(isTouchInput)
   // 指针从吸附侧直接离开窗口时的保持截止时间。
   // 多显示器或窗口未最大化时，鼠标容易短暂越出窗口边缘又返回，
   // 保持期内不触发收起，避免“弹出-收起-再弹出”闪烁
@@ -73,7 +77,8 @@ export function useEdgePeekController({
   useEffect(() => {
     edgeSnapStateRef.current = edgeSnapState
     panelModeRef.current = panelMode
-  }, [edgeSnapState, panelMode])
+    isTouchInputRef.current = isTouchInput
+  }, [edgeSnapState, isTouchInput, panelMode])
 
   const clearHideTimer = useCallback(() => {
     if (hideTimerRef.current) {
@@ -116,6 +121,12 @@ export function useEdgePeekController({
 
   const syncEdgePeekVisibility = useCallback(() => {
     if (!edgeSnapStateRef.current || panelModeRef.current !== "edge-snap") {
+      return
+    }
+
+    // 触屏的 :hover 只是点按的残留，不能代表指针仍在面板上；
+    // 展开态由「点按面板外」和跳转后的收起显式结束
+    if (isTouchInputRef.current) {
       return
     }
 
@@ -379,6 +390,40 @@ export function useEdgePeekController({
       document.removeEventListener("mouseout", handleWindowExit, true)
     }
   }, [edgeSnapState, panelMode])
+
+  // 触屏展开后，点按面板以外的区域收起。面板内的浮层（菜单、对话框）、设置弹窗与
+  // 快捷按钮组不算「面板外」：前两者属于面板的延伸，按钮组的面板按钮自己负责开关
+  useEffect(() => {
+    if (!isTouchInput || !isEdgePeeking || !edgeSnapState || panelMode !== "edge-snap") return
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (isSettingsOpenRef.current || hasOpenEdgePeekOverlay()) return
+
+      const panel = findUiElement(".gh-main-panel")
+      if (!panel) return
+
+      const path = event.composedPath()
+      if (path.includes(panel)) return
+      if (
+        path.some((node) => node instanceof Element && node.classList.contains("quick-btn-group"))
+      ) {
+        return
+      }
+
+      setIsEdgePeeking(false)
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown, true)
+    return () => document.removeEventListener("pointerdown", handlePointerDown, true)
+  }, [
+    edgeSnapState,
+    findUiElement,
+    hasOpenEdgePeekOverlay,
+    isEdgePeeking,
+    isSettingsOpenRef,
+    isTouchInput,
+    panelMode,
+  ])
 
   useEffect(() => {
     if (!shouldSyncAfterOpenRef.current) return

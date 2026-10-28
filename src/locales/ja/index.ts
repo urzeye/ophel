@@ -31,6 +31,7 @@ export const ja = {
   navPermissions: "権限管理",
   navBackup: "データと権限",
   navAbout: "Ophelについて",
+  navBack: "戻る",
 
   // ======== Options Page Titles & Descriptions ========
   // Site Settings

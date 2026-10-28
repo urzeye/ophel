@@ -2086,6 +2086,197 @@
   }
 }
 
+/* ============= 触屏：吸附把手与侧边抽屉 ============= */
+
+/* 触屏吸附收起时整块面板移出视口：12px 边条点不准，还会把点按漏给面板里的条目，
+   展开入口统一交给下面的把手 */
+.gh-root.is-touch .gh-main-panel.edge-snapped-left:not(.edge-peek) {
+  left: calc(0px - var(--panel-width, 320px) - 24px) !important;
+  box-shadow: none !important;
+  pointer-events: none;
+}
+
+.gh-root.is-touch .gh-main-panel.edge-snapped-right:not(.edge-peek) {
+  right: calc(0px - var(--panel-width, 320px) - 24px) !important;
+  box-shadow: none !important;
+  pointer-events: none;
+}
+
+/* 吸附把手：贴边的品牌色拉手，点按展开面板。层级低于快捷按钮组：两者都贴右侧居中，
+   用户关闭「面板展开时隐藏按钮组」时按钮组压住把手内侧，按钮保持可点，把手外侧仍可点 */
+.gh-edge-touch-handle {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 9997;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 64px;
+  padding: 0;
+  border: 1px solid var(--gh-brand-border, transparent);
+  background: var(--gh-header-bg, linear-gradient(135deg, #4285f4 0%, #34a853 100%));
+  color: var(--gh-header-text, #ffffff);
+  box-shadow: var(--gh-btn-shadow, 0 2px 6px rgba(0, 0, 0, 0.15));
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.15s ease;
+}
+
+/* 可见部分偏窄，向页面内侧扩出点按热区，凑足 44px 以上的触控尺寸 */
+.gh-edge-touch-handle::before {
+  content: "";
+  position: absolute;
+  top: -12px;
+  bottom: -12px;
+}
+
+.gh-edge-touch-handle.right {
+  right: 0;
+  border-right: none;
+  border-radius: 12px 0 0 12px;
+}
+
+.gh-edge-touch-handle.right::before {
+  left: -16px;
+  right: 0;
+}
+
+.gh-edge-touch-handle.left {
+  left: 0;
+  border-left: none;
+  border-radius: 0 12px 12px 0;
+}
+
+.gh-edge-touch-handle.left::before {
+  left: 0;
+  right: -16px;
+}
+
+.gh-edge-touch-handle:active {
+  opacity: 0.82;
+}
+
+.gh-edge-touch-handle:focus-visible {
+  outline: 2px solid var(--gh-primary, #4285f4);
+  outline-offset: 2px;
+}
+
+/* 侧边抽屉：触屏窄屏下的面板形态。定位与尺寸一律 !important —— 拖拽、模式切换等逻辑
+   会向面板写入行内定位，抽屉形态始终贴边全高；入场动画用独立的 translate 属性，
+   不与 transform 冲突，并和主题背景动画并列 */
+.gh-main-panel.is-drawer {
+  position: fixed !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  min-height: 0;
+  width: min(var(--panel-width, 320px), 88vw) !important;
+  max-width: 88vw;
+  transform: none !important;
+  z-index: 10002;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  box-shadow: var(--gh-shadow-lg, 0 20px 60px rgba(0, 0, 0, 0.3));
+}
+
+.gh-main-panel.is-drawer.drawer-right {
+  left: auto !important;
+  right: 0 !important;
+  border-width: 0 0 0 1px;
+  border-radius: 16px 0 0 16px;
+  padding-right: env(safe-area-inset-right, 0px);
+  animation:
+    gh-drawer-in-right 0.26s cubic-bezier(0.2, 0.8, 0.2, 1),
+    var(--gh-bg-animation, none);
+}
+
+.gh-main-panel.is-drawer.drawer-left {
+  left: 0 !important;
+  right: auto !important;
+  border-width: 0 1px 0 0;
+  border-radius: 0 16px 16px 0;
+  padding-left: env(safe-area-inset-left, 0px);
+  animation:
+    gh-drawer-in-left 0.26s cubic-bezier(0.2, 0.8, 0.2, 1),
+    var(--gh-bg-animation, none);
+}
+
+/* 抽屉内的列表滚到头时不带动背后的页面一起滚 */
+.gh-main-panel.is-drawer,
+.gh-main-panel.is-drawer * {
+  overscroll-behavior: contain;
+}
+
+.gh-main-panel.is-drawer .gh-panel-header {
+  cursor: default;
+  border-radius: 0;
+}
+
+/* 非抽屉形态的顶栏可拖动：禁止触屏在顶栏上发起页面滚动，否则拖动会被系统手势打断 */
+.gh-main-panel:not(.is-drawer) .gh-panel-header {
+  touch-action: none;
+}
+
+.gh-panel-drawer-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 10001;
+  background: var(--gh-overlay-bg, rgba(0, 0, 0, 0.5));
+  /* 挡住在遮罩上发起的滚动，避免抽屉打开时误滚背后的页面 */
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  animation: gh-drawer-scrim-in 0.2s ease;
+}
+
+@keyframes gh-drawer-in-right {
+  from {
+    translate: 100% 0;
+  }
+
+  to {
+    translate: 0 0;
+  }
+}
+
+@keyframes gh-drawer-in-left {
+  from {
+    translate: -100% 0;
+  }
+
+  to {
+    translate: 0 0;
+  }
+}
+
+@keyframes gh-drawer-scrim-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gh-main-panel.is-drawer.drawer-right,
+  .gh-main-panel.is-drawer.drawer-left {
+    animation: var(--gh-bg-animation, none);
+  }
+
+  .gh-panel-drawer-scrim {
+    animation: none;
+  }
+
+  .gh-edge-touch-handle {
+    transition: none;
+  }
+}
+
 @keyframes gh-popover-enter {
   from {
     opacity: 0;

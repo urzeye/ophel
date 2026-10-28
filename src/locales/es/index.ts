@@ -31,6 +31,7 @@ export const es = {
   navPermissions: "Permisos",
   navBackup: "Datos y permisos",
   navAbout: "Acerca de",
+  navBack: "Atrás",
 
   // ======== Options Page Titles & Descriptions ========
   // Site Settings

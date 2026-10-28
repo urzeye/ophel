@@ -5,16 +5,6 @@
 import React, { useEffect, useRef, useState } from "react"
 
 import {
-  AboutIcon,
-  AppearanceIcon,
-  BackupIcon,
-  FeaturesIcon,
-  GeneralIcon,
-  KeyboardIcon,
-  PageContentIcon,
-  SitePacksIcon,
-} from "~components/icons"
-import {
   ABOUT_SPONSOR_SETTING_ID,
   NAV_IDS,
   resolveSettingsNavigateDetail,
@@ -31,11 +21,12 @@ import { currentReleaseNotes } from "~release-notes/current"
 import { markReleaseNotesSeen } from "~release-notes/storage"
 import { ReleaseNotesModal } from "~components/ReleaseNotesModal"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
-import { APP_DISPLAY_NAME, APP_VERSION, getAppIconUrl } from "~utils/config"
+import { APP_VERSION } from "~utils/config"
 import { getOphelPlatformFontClassName } from "~utils/font"
 import { setLanguage, t } from "~utils/i18n"
 import { scrollWithinSettingsContent } from "~utils/settings-scroll"
 
+import { SettingsCompactBar, SettingsSidebar } from "./options/components/SettingsSidebar"
 import AboutPage from "./options/pages/AboutPage"
 import AppearancePage from "./options/pages/AppearancePage"
 import BackupPage from "./options/pages/BackupPage"
@@ -45,55 +36,26 @@ import GeneralPage from "./options/pages/GeneralPage"
 import ShortcutsPage from "./options/pages/ShortcutsPage"
 import SitePacksPage from "./options/pages/SitePacksPage"
 import SiteSettingsPage from "./options/pages/SiteSettingsPage"
+import {
+  isSettingsNavPage,
+  SETTINGS_NAV_ITEMS,
+  useSettingsCompactNav,
+} from "./options/settings-nav"
 // 样式
 import "./options.css"
 
-import { SidebarFooter } from "./options/components/SidebarFooter"
-
-// 图标组件
-
-// 导航菜单定义
-const NAV_ITEMS: Array<{
-  id: string
-  Icon: React.ComponentType<{ size?: number }>
-  labelKey: string
-  label: string
-  beta?: boolean
-}> = [
-  // 导航项定义
-  {
-    id: "general",
-    Icon: GeneralIcon,
-    labelKey: "navGeneral",
-    label: "基本设置",
-  },
-  { id: "features", Icon: FeaturesIcon, labelKey: "navFeatures", label: "功能模块" },
-  {
-    id: "siteSettings",
-    Icon: PageContentIcon,
-    labelKey: "navSiteSettings",
-    label: "站点设置",
-  },
-  {
-    id: "sitePacks",
-    Icon: SitePacksIcon,
-    labelKey: "navSitePacks",
-    label: "适配中心",
-    beta: true,
-  },
-  { id: "shortcuts", Icon: KeyboardIcon, labelKey: "navShortcuts", label: "快捷键位" },
-  {
-    id: "appearance",
-    Icon: AppearanceIcon,
-    labelKey: "navAppearance",
-    label: "外观主题",
-  },
-  { id: "backup", Icon: BackupIcon, labelKey: "navBackup", label: "数据与权限" },
-  { id: "about", Icon: AboutIcon, labelKey: "navAbout", label: "关于" },
-]
+// 带页面参数的深链直接进入页面屏，否则窄屏从导航屏开始
+const hasPageDeepLink = () =>
+  typeof window !== "undefined" && new URLSearchParams(window.location.search).has("page")
 
 const OptionsPage = () => {
-  const [activePage, setActivePage] = useState("general")
+  const [activePage, setActivePage] = useState<string>(NAV_IDS.GENERAL)
+  const {
+    isCompact,
+    pane: compactPane,
+    showPage,
+    showNav,
+  } = useSettingsCompactNav(hasPageDeepLink() ? "page" : "nav")
   const hasUnseenReleaseNotes = useHasUnseenReleaseNotes()
   const [initialSubTab, setInitialSubTab] = useState<string | undefined>(undefined)
   const [locateRequest, setLocateRequest] = useState<{ settingId: string; token: number } | null>(
@@ -113,7 +75,7 @@ const OptionsPage = () => {
         settingId: params.get("settingId") || undefined,
       })
 
-      if (resolved.page && NAV_ITEMS.some((item) => item.id === resolved.page)) {
+      if (resolved.page && isSettingsNavPage(resolved.page)) {
         setActivePage(resolved.page)
       }
 
@@ -130,7 +92,7 @@ const OptionsPage = () => {
     const handleNavigate = (e: CustomEvent<SettingsNavigateDetail>) => {
       const resolved = resolveSettingsNavigateDetail(e.detail || {})
 
-      if (resolved.page && NAV_ITEMS.some((item) => item.id === resolved.page)) {
+      if (resolved.page && isSettingsNavPage(resolved.page)) {
         setActivePage(resolved.page)
       }
 
@@ -139,11 +101,14 @@ const OptionsPage = () => {
       if (resolved.settingId) {
         setLocateRequest({ settingId: resolved.settingId, token: Date.now() })
       }
+
+      // 页内导航指向具体页面或设置项，窄屏直接进入页面屏
+      showPage()
     }
     window.addEventListener("ophel:navigateSettingsPage", handleNavigate as EventListener)
     return () =>
       window.removeEventListener("ophel:navigateSettingsPage", handleNavigate as EventListener)
-  }, [])
+  }, [showPage])
 
   // URL 深链定位并高亮目标设置项
   useEffect(() => {
@@ -326,52 +291,31 @@ const OptionsPage = () => {
   // 检测是否在独立 Options 页面（非 content script 环境）
   // 如果是独立页面，不显示外观主题菜单（因为主题是按站点配置的）
   const isStandalonePage = !window.__ophelThemeManager
-
-  // 在独立页面中过滤掉 appearance 导航项
-  const filteredNavItems = NAV_ITEMS.filter((item) => {
-    if (isStandalonePage && item.id === "appearance") return false
-    return true
-  })
+  const navItems = isStandalonePage
+    ? SETTINGS_NAV_ITEMS.filter((item) => item.id !== NAV_IDS.APPEARANCE)
+    : SETTINGS_NAV_ITEMS
 
   return (
-    <div className={`settings-layout ${platformFontClassName}`}>
-      {/* 侧边栏 */}
-      <aside className="settings-sidebar">
-        <div className="settings-sidebar-header">
-          <div className="settings-sidebar-logo">
-            <img src={getAppIconUrl()} alt={APP_DISPLAY_NAME} />
-            <span>{APP_DISPLAY_NAME}</span>
-          </div>
-        </div>
-        <nav className="settings-sidebar-nav">
-          {filteredNavItems.map((item) => (
-            <button
-              key={item.id}
-              className={`settings-nav-item ${activePage === item.id ? "active" : ""}`}
-              onClick={() => {
-                setActivePage(item.id)
-                setInitialSubTab(undefined)
-                setLocateRequest(null)
-              }}>
-              <span className="settings-nav-item-icon">
-                <item.Icon size={20} />
-              </span>
-              <span className={`settings-nav-item-label${item.beta ? " has-badge" : ""}`}>
-                {t(item.labelKey)}
-                {item.id === "about" && hasUnseenReleaseNotes ? (
-                  <span className="settings-nav-unread-dot" aria-hidden="true" />
-                ) : null}
-              </span>
-              {item.beta && <span className="settings-beta-badge">{t("betaBadge")}</span>}
-            </button>
-          ))}
-        </nav>
+    <div
+      className={`settings-layout ${platformFontClassName} ${isCompact ? "is-compact" : ""}`}
+      data-compact-pane={isCompact ? compactPane : undefined}>
+      {/* 侧边栏；窄屏下是导航屏 */}
+      <SettingsSidebar
+        items={navItems}
+        activePage={activePage}
+        onSelect={(page) => {
+          setActivePage(page)
+          setInitialSubTab(undefined)
+          setLocateRequest(null)
+          showPage()
+        }}
+        hasUnseenReleaseNotes={hasUnseenReleaseNotes}
+        siteId={siteId}
+      />
 
-        {/* 侧边栏底部快捷设置 */}
-        <SidebarFooter siteId={siteId} />
-      </aside>
+      {isCompact && compactPane === "page" && <SettingsCompactBar onBack={showNav} />}
 
-      {/* 内容区 */}
+      {/* 内容区；窄屏下是页面屏 */}
       <main className="settings-content" ref={contentRef}>
         {renderPage()}
       </main>
@@ -391,6 +335,7 @@ const OptionsPage = () => {
             setIsReleaseNotesOpen(false)
             setActivePage(NAV_IDS.ABOUT)
             setLocateRequest({ settingId: ABOUT_SPONSOR_SETTING_ID, token: Date.now() })
+            showPage()
           }}
         />
       ) : null}

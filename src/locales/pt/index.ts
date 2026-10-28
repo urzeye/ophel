@@ -31,6 +31,7 @@ export const pt = {
   navPermissions: "Permissões",
   navBackup: "Dados e permissões",
   navAbout: "Sobre",
+  navBack: "Voltar",
 
   // ======== Options Page Titles & Descriptions ========
   // Site Settings

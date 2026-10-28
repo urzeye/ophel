@@ -13,7 +13,7 @@
 
 ### 2.1 设置弹窗
 
-`SettingsModal.tsx` 使用 `NAV_IDS` 和本地 `NAV_ITEMS` 组织一级导航：
+`SettingsModal.tsx` 与独立 Options 页共用 `src/tabs/options/settings-nav.ts` 的 `SETTINGS_NAV_ITEMS` 组织一级导航，侧栏统一由 `src/tabs/options/components/SettingsSidebar.tsx` 渲染：
 
 - 基本设置：`GeneralPage`
 - 外观主题：`AppearancePage`
@@ -28,19 +28,18 @@
 
 ### 2.2 独立 Options 页面
 
-`src/tabs/options.tsx` 当前提供：
+`src/tabs/options.tsx` 使用同一份导航定义与顺序。独立页面检测不到内容脚本中的 `__ophelThemeManager` 时，会隐藏外观主题入口；油猴脚本环境隐藏数据与权限页内的权限 tab。
 
-- 基本设置：`GeneralPage`
-- 功能模块：`FeaturesPage`
-- 站点设置：`SiteSettingsPage`
-- 适配中心：`SitePacksPage`
-- 外观主题：`AppearancePage`
-- 数据与权限：`BackupPage`
-- 关于：`AboutPage`
+### 2.3 窄屏两级导航
 
-独立页面检测不到内容脚本中的 `__ophelThemeManager` 时，会隐藏外观主题入口；油猴脚本环境隐藏数据与权限页内的权限 tab。
+视口不超过 `SETTINGS_COMPACT_MEDIA_QUERY`（640px，定义在 `src/constants/ui.ts`）时，两个入口都由 `useSettingsCompactNav()` 切换为全屏单栏：
 
-### 2.3 深链与设置搜索
+- 导航屏：侧栏全宽，每项右侧带进入箭头；设置弹窗右上角保留关闭按钮，不提供最大化。
+- 页面屏：顶部 `SettingsCompactBar`（返回）加页面内容；设置行放不下「说明 + 控件」时控件换到下一行。
+- 设置弹窗每次关闭时复位到导航屏；外部导航请求（深链、设置搜索、`ophel:navigateSettingsPage`）直接进入页面屏。独立页 URL 带 `page` 参数时同样直接进入页面屏。
+- 布局只认 JS 挂载的 `.is-compact` 与 `data-compact-pane`，断点不在 CSS 里重复定义。
+
+### 2.4 深链与设置搜索
 
 - 深链解析集中在 `src/constants/ui.ts` 的 `resolveSettingsNavigateDetail()`。
 - 设置搜索索引使用同文件中的 `SETTING_ID_ROUTE_MAP`、`SETTING_ID_ROUTE_RULES`、`SETTING_ID_ALIASES` 和 `SETTINGS_SEARCH_ITEMS`。

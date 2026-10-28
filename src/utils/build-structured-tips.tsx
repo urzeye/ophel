@@ -111,7 +111,14 @@ export function buildStructuredTips(
   keybindings: Record<string, ShortcutBinding | null> | undefined,
   isMac: boolean,
   shortcutNotSetLabel: string,
+  // 触屏设备没有键盘、悬停和双击，只保留不依赖这些操作的提示
+  { includeKeyboardTips = true }: { includeKeyboardTips?: boolean } = {},
 ): TipItem[] {
+  const sitePacksTip: TipItem = { icon: "🧩", text: renderSitePacksTip() }
+  if (!includeKeyboardTips) {
+    return [sitePacksTip]
+  }
+
   const kb = keybindings ?? DEFAULT_KEYBINDINGS
   const fmt = (id: string) => {
     const shortcut = kb[id]
@@ -167,7 +174,7 @@ export function buildStructuredTips(
         openShortcutsSettings,
       ),
     },
-    { icon: "🧩", text: renderSitePacksTip() },
+    sitePacksTip,
     {
       icon: "↔️",
       text: panelModeShortcut

@@ -54,6 +54,8 @@ import { SelectDropdown, Tooltip } from "~components/ui"
 interface ConversationsTabProps {
   manager: ConversationManager
   onInteractionStateChange?: (isActive: boolean) => void
+  // 在当前页切换到所点会话后调用；触屏抽屉据此收起
+  onConversationOpen?: () => void
 }
 
 interface SearchResult {
@@ -148,6 +150,7 @@ const getSafeConversationOpenUrl = (conv: Conversation): string | null => {
 export const ConversationsTab: React.FC<ConversationsTabProps> = ({
   manager,
   onInteractionStateChange,
+  onConversationOpen,
 }) => {
   // 设置 - 使用 Zustand store，确保设置变更实时生效
   const { settings } = useSettingsStore()
@@ -698,8 +701,9 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
 
       // 使用适配器的 navigateToConversation 方法（SPA 导航）
       manager.siteAdapter?.navigateToConversation(conv.id, conv.url)
+      onConversationOpen?.()
     },
-    [batchMode, handleBatchSelect, manager],
+    [batchMode, handleBatchSelect, manager, onConversationOpen],
   )
 
   const handleOpenConversationInNewTab = useCallback((conv: Conversation) => {

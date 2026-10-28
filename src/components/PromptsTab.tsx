@@ -64,6 +64,8 @@ interface PromptsTabProps {
   selectedPlatforms: string[]
   setSelectedPlatforms: React.Dispatch<React.SetStateAction<string[]>>
   onPromptSelect?: (prompt: Prompt | null) => void
+  // 提示词已写入输入框（插入或发送）后调用；触屏抽屉据此收起，让用户看到输入框
+  onPromptUsed?: () => void
   selectedPromptId?: string | null
 }
 
@@ -1037,6 +1039,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   selectedPlatforms,
   setSelectedPlatforms,
   onPromptSelect,
+  onPromptUsed,
   selectedPromptId,
 }) => {
   const DOUBLE_CLICK_DELAY_MS = 340
@@ -1638,6 +1641,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     if (success) {
       manager.updateLastUsed(prompt.id)
       onPromptSelect?.(prompt)
+      onPromptUsed?.()
       showToast(`${t("inserted")}: ${prompt.title}`)
     } else {
       showToast(t("insertFailed"))
@@ -1662,6 +1666,8 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     }
 
     manager.updateLastUsed(prompt.id)
+    // 内容已进入输入框或发送队列，发送失败时同样留在输入框里待用户处理
+    onPromptUsed?.()
 
     if (result.status === "send-failed") {
       showToast(t("promptSendFailed"))

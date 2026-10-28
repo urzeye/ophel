@@ -1,18 +1,20 @@
 /**
  * 面板拖拽 Hook（高性能版本）
  *
- * - 通过 header 拖拽移动面板
+ * - 通过 header 拖拽移动面板，鼠标与触屏共用 Pointer Events
  * - 拖拽结束时检测边缘吸附
  * - 窗口 resize 时边界检测
+ * - disabled 时不绑定任何监听（触屏抽屉形态的面板不可拖动，也不做视口夹取）
  *
  * ⭐ 性能优化：
  * - 使用 useRef 存储位置，避免频繁触发 React 渲染
- * - 在 mousemove 中直接操作 DOM，绕过 React 更新周期
+ * - 在 pointermove 中直接操作 DOM，绕过 React 更新周期
  */
 
 import { useCallback, useEffect, useRef } from "react"
 
 interface UseDraggableOptions {
+  disabled?: boolean
   edgeSnapHide?: boolean
   edgeSnapState?: "left" | "right" | null // 当前吸附状态
   snapThreshold?: number // 吸附触发距离，默认 30
@@ -24,7 +26,14 @@ const PANEL_HORIZONTAL_MARGIN = 0
 const PANEL_VERTICAL_MARGIN = 10
 
 export function useDraggable(options: UseDraggableOptions = {}) {
-  const { edgeSnapHide = false, edgeSnapState, snapThreshold = 30, onEdgeSnap, onUnsnap } = options
+  const {
+    disabled = false,
+    edgeSnapHide = false,
+    edgeSnapState,
+    snapThreshold = 30,
+    onEdgeSnap,
+    onUnsnap,
+  } = options
 
   const panelRef = useRef<HTMLDivElement>(null)
   const headerRef = useRef<HTMLDivElement>(null)
@@ -33,8 +42,10 @@ export function useDraggable(options: UseDraggableOptions = {}) {
   const isDraggingRef = useRef(false)
   const hasMovedRef = useRef(false)
   const offsetRef = useRef({ x: 0, y: 0 })
+  // 只跟随按下时的那个指针，忽略多指触控中的其他手指
+  const activePointerIdRef = useRef<number | null>(null)
 
-  // 延迟取消吸附：记录 mousedown 时的吸附状态，仅在实际拖拽移动时才执行取消
+  // 延迟取消吸附：记录 pointerdown 时的吸附状态，仅在实际拖拽移动时才执行取消
   // 这样单击/双击不会导致面板脱离吸附
   const pendingUnsnapRef = useRef<"left" | "right" | null>(null)
   // 动画 RAF ID，用于组件卸载时取消
@@ -71,8 +82,10 @@ export function useDraggable(options: UseDraggableOptions = {}) {
   )
 
   // 开始拖拽
-  const handleMouseDown = useCallback(
-    (e: MouseEvent) => {
+  const handlePointerDown = useCallback(
+    (e: PointerEvent) => {
+      // 鼠标只响应主键，右键菜单等不触发拖拽
+      if (e.pointerType === "mouse" && e.button !== 0) return
       // 排除控制按钮区域
       if ((e.target as Element).closest(".gh-panel-controls")) return
 
@@ -80,6 +93,7 @@ export function useDraggable(options: UseDraggableOptions = {}) {
       if (!panel) return
 
       e.preventDefault() // 阻止文本选中
+      activePointerIdRef.current = e.pointerId
 
       // 记录当前吸附状态，延迟到实际移动时才取消吸附
       pendingUnsnapRef.current = edgeSnapState || null
@@ -103,9 +117,9 @@ export function useDraggable(options: UseDraggableOptions = {}) {
   )
 
   // 拖拽移动 - 直接操作 DOM，不触发 React 渲染
-  const handleMouseMove = useCallback(
-    (e: MouseEvent) => {
-      if (!isDraggingRef.current) return
+  const handlePointerMove = useCallback(
+    (e: PointerEvent) => {
+      if (!isDraggingRef.current || e.pointerId !== activePointerIdRef.current) return
 
       const panel = panelRef.current
       if (!panel) return
@@ -184,49 +198,53 @@ export function useDraggable(options: UseDraggableOptions = {}) {
     [],
   )
 
-  // 结束拖拽
-  const handleMouseUp = useCallback(() => {
-    if (!isDraggingRef.current) return
+  // 结束拖拽（pointerup 与 pointercancel 共用：触屏手势被系统接管时同样要收尾）
+  const handlePointerUp = useCallback(
+    (e: PointerEvent) => {
+      if (!isDraggingRef.current || e.pointerId !== activePointerIdRef.current) return
 
-    const panel = panelRef.current
-    const hasMoved = hasMovedRef.current
+      const panel = panelRef.current
+      const hasMoved = hasMovedRef.current
 
-    isDraggingRef.current = false
-    pendingUnsnapRef.current = null
+      isDraggingRef.current = false
+      activePointerIdRef.current = null
+      pendingUnsnapRef.current = null
 
-    // 恢复文本选中
-    document.body.style.userSelect = ""
+      // 恢复文本选中
+      document.body.style.userSelect = ""
 
-    // 移除 dragging 类（但保持 left/top 样式，面板会停留在当前位置）
-    panel?.classList.remove("dragging")
+      // 移除 dragging 类（但保持 left/top 样式，面板会停留在当前位置）
+      panel?.classList.remove("dragging")
 
-    // 拖拽完成后将位置存为比例，供 resize/zoom 时等比恢复
-    if (hasMoved && panel && !edgeSnapHide) {
-      const rect = panel.getBoundingClientRect()
-      positionRatioRef.current = readPositionRatio(rect)
-    }
-
-    // 边缘吸附检测
-    if (edgeSnapHide && hasMoved && panel) {
-      const rect = panel.getBoundingClientRect()
-      const vw = window.innerWidth
-      const pw = rect.width
-      const pTop = rect.top
-
-      if (rect.left < snapThreshold) {
-        animateToPosition(12 - pw, pTop, 250, () => {
-          onEdgeSnap?.("left")
-        })
-      } else if (vw - rect.right < snapThreshold) {
-        animateToPosition(vw - 12, pTop, 250, () => {
-          onEdgeSnap?.("right")
-        })
-      } else {
-        // 未触发吸附，面板停留在当前位置，保存比例用于 zoom 恢复
-        positionRatioRef.current = readPositionRatio(rect, vw, window.innerHeight)
+      // 拖拽完成后将位置存为比例，供 resize/zoom 时等比恢复
+      if (hasMoved && panel && !edgeSnapHide) {
+        const rect = panel.getBoundingClientRect()
+        positionRatioRef.current = readPositionRatio(rect)
       }
-    }
-  }, [edgeSnapHide, onEdgeSnap, snapThreshold, animateToPosition, readPositionRatio])
+
+      // 边缘吸附检测
+      if (edgeSnapHide && hasMoved && panel) {
+        const rect = panel.getBoundingClientRect()
+        const vw = window.innerWidth
+        const pw = rect.width
+        const pTop = rect.top
+
+        if (rect.left < snapThreshold) {
+          animateToPosition(12 - pw, pTop, 250, () => {
+            onEdgeSnap?.("left")
+          })
+        } else if (vw - rect.right < snapThreshold) {
+          animateToPosition(vw - 12, pTop, 250, () => {
+            onEdgeSnap?.("right")
+          })
+        } else {
+          // 未触发吸附，面板停留在当前位置，保存比例用于 zoom 恢复
+          positionRatioRef.current = readPositionRatio(rect, vw, window.innerHeight)
+        }
+      }
+    },
+    [edgeSnapHide, onEdgeSnap, snapThreshold, animateToPosition, readPositionRatio],
+  )
 
   // 边界检测：确保面板在视口内可见
   // positionRatioRef 代表用户意图位置，只能由拖拽或初次像素定位接管时写入。
@@ -325,25 +343,41 @@ export function useDraggable(options: UseDraggableOptions = {}) {
 
   // 绑定事件
   useEffect(() => {
+    if (disabled) return
+
     const header = headerRef.current
     if (!header) return
 
-    header.addEventListener("mousedown", handleMouseDown)
-    document.addEventListener("mousemove", handleMouseMove)
-    document.addEventListener("mouseup", handleMouseUp)
+    header.addEventListener("pointerdown", handlePointerDown)
+    document.addEventListener("pointermove", handlePointerMove)
+    document.addEventListener("pointerup", handlePointerUp)
+    document.addEventListener("pointercancel", handlePointerUp)
     window.addEventListener("resize", clampToViewport)
 
     return () => {
-      header.removeEventListener("mousedown", handleMouseDown)
-      document.removeEventListener("mousemove", handleMouseMove)
-      document.removeEventListener("mouseup", handleMouseUp)
+      header.removeEventListener("pointerdown", handlePointerDown)
+      document.removeEventListener("pointermove", handlePointerMove)
+      document.removeEventListener("pointerup", handlePointerUp)
+      document.removeEventListener("pointercancel", handlePointerUp)
       window.removeEventListener("resize", clampToViewport)
       if (animationRafRef.current !== null) {
         cancelAnimationFrame(animationRafRef.current)
         animationRafRef.current = null
       }
     }
-  }, [handleMouseDown, handleMouseMove, handleMouseUp, clampToViewport])
+  }, [disabled, handlePointerDown, handlePointerMove, handlePointerUp, clampToViewport])
+
+  // 拖拽中途被禁用（如旋转屏幕切到抽屉形态）时复原拖拽期间改动的全局状态。
+  // 不能放进上面的绑定 effect：取消吸附会改变回调引用触发重新绑定，拖拽必须延续
+  useEffect(() => {
+    if (!disabled || !isDraggingRef.current) return
+
+    isDraggingRef.current = false
+    activePointerIdRef.current = null
+    pendingUnsnapRef.current = null
+    document.body.style.userSelect = ""
+    panelRef.current?.classList.remove("dragging")
+  }, [disabled])
 
   return {
     panelRef,

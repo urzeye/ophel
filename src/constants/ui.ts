@@ -30,6 +30,15 @@ export const TAB_IDS = {
 
 export type TabId = (typeof TAB_IDS)[keyof typeof TAB_IDS]
 
+// ==================== 输入方式与窄屏 ====================
+// 触屏为主要输入：没有悬停、指针粗。悬停展开、拖拽吸附等鼠标交互在这里要换成点按
+export const TOUCH_INPUT_MEDIA_QUERY = "(hover: none) and (pointer: coarse)"
+// 触屏下面板改为侧边抽屉的视口上限；与页面避让的最小视口宽度（768px）一致，
+// 窄于此页面无法为面板让位，面板只能临时盖在页面上
+export const PANEL_DRAWER_MEDIA_QUERY = "(max-width: 767px)"
+// 设置弹窗与 Options 页改为全屏单栏、两级导航的视口上限
+export const SETTINGS_COMPACT_MEDIA_QUERY = "(max-width: 640px)"
+
 // ==================== Settings Navigation IDs ====================
 export const NAV_IDS = {
   GENERAL: "general",

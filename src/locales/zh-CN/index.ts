@@ -28,6 +28,7 @@ export const zhCN = {
   navPermissions: "权限管理",
   navBackup: "数据与权限",
   navAbout: "关于",
+  navBack: "返回",
 
   // ======== Options 页面标题与描述 ========
   // Site Settings

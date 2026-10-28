@@ -5,24 +5,12 @@
 import React, { useEffect, useRef, useState } from "react"
 
 import type { SiteAdapter } from "~adapters/base"
-import {
-  AboutIcon,
-  AppearanceIcon,
-  BackupIcon,
-  ClearIcon,
-  FeaturesIcon,
-  GeneralIcon,
-  KeyboardIcon,
-  MaximizeIcon,
-  PageContentIcon,
-  RestoreIcon,
-  SitePacksIcon,
-} from "~components/icons"
+import { ClearIcon, MaximizeIcon, RestoreIcon } from "~components/icons"
 import { Tooltip } from "~components/ui/Tooltip"
 import { NAV_IDS, resolveSettingsNavigateDetail, type SettingsNavigateDetail } from "~constants"
 import { useHasUnseenReleaseNotes } from "~hooks/useHasUnseenReleaseNotes"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
-import { SidebarFooter } from "~tabs/options/components/SidebarFooter"
+import { SettingsCompactBar, SettingsSidebar } from "~tabs/options/components/SettingsSidebar"
 import AboutPage from "~tabs/options/pages/AboutPage"
 import AppearancePage from "~tabs/options/pages/AppearancePage"
 import BackupPage from "~tabs/options/pages/BackupPage"
@@ -31,7 +19,11 @@ import GeneralPage from "~tabs/options/pages/GeneralPage"
 import ShortcutsPage from "~tabs/options/pages/ShortcutsPage"
 import SitePacksPage from "~tabs/options/pages/SitePacksPage"
 import SiteSettingsPage from "~tabs/options/pages/SiteSettingsPage"
-import { APP_DISPLAY_NAME, getAppIconUrl } from "~utils/config"
+import {
+  isSettingsNavPage,
+  SETTINGS_NAV_ITEMS,
+  useSettingsCompactNav,
+} from "~tabs/options/settings-nav"
 import {
   attachEditableKeyboardFocusGuard,
   isEventFromEscapeLayer,
@@ -39,11 +31,6 @@ import {
 } from "~utils/dom-toolkit"
 import { setLanguage, t } from "~utils/i18n"
 import { scrollWithinSettingsContent } from "~utils/settings-scroll"
-
-const getLocalizedLabel = (labelKey: string, fallback: string): string => {
-  const localized = t(labelKey)
-  return localized === labelKey ? fallback : localized
-}
 
 const FOCUSABLE_SETTINGS_MODAL_SELECTOR = [
   "a[href]",
@@ -75,45 +62,6 @@ const getFocusableElements = (container: HTMLElement): HTMLElement[] =>
     isFocusableElementVisible,
   )
 
-// 导航菜单定义
-const NAV_ITEMS: Array<{
-  id: string
-  Icon: React.ComponentType<{ size?: number }>
-  labelKey: string
-  label: string
-  beta?: boolean
-}> = [
-  {
-    id: NAV_IDS.GENERAL,
-    Icon: GeneralIcon,
-    labelKey: "navGeneral",
-    label: "General",
-  },
-  {
-    id: NAV_IDS.APPEARANCE,
-    Icon: AppearanceIcon,
-    labelKey: "navAppearance",
-    label: "Appearance",
-  },
-  { id: NAV_IDS.FEATURES, Icon: FeaturesIcon, labelKey: "navFeatures", label: "Features" },
-  {
-    id: NAV_IDS.SITE_SETTINGS,
-    Icon: PageContentIcon,
-    labelKey: "navSiteSettings",
-    label: "Site Settings",
-  },
-  {
-    id: NAV_IDS.SITE_PACKS,
-    Icon: SitePacksIcon,
-    labelKey: "navSitePacks",
-    label: "Site Packs",
-    beta: true,
-  },
-  { id: NAV_IDS.SHORTCUTS, Icon: KeyboardIcon, labelKey: "navShortcuts", label: "Shortcuts" },
-  { id: NAV_IDS.BACKUP, Icon: BackupIcon, labelKey: "navBackup", label: "Data & Permissions" },
-  { id: NAV_IDS.ABOUT, Icon: AboutIcon, labelKey: "navAbout", label: "About" },
-]
-
 interface SettingsModalProps {
   isOpen: boolean
   onClose: () => void
@@ -138,6 +86,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     null,
   )
   const [isMaximized, setIsMaximized] = useState(false)
+  const { isCompact, pane: compactPane, showPage, showNav } = useSettingsCompactNav()
   const { settings } = useSettingsStore()
   const isHydrated = useSettingsHydrated()
   const contentRef = useRef<HTMLDivElement>(null)
@@ -162,6 +111,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       contentRef.current.scrollTop = 0
     }
   }, [activePage])
+
+  // 窄屏下每次打开都从导航屏开始。在关闭时复位而不是打开时：带页面的导航请求
+  // 会在打开的同一轮把 pane 切到页面屏，打开时复位会把它覆盖掉
+  useEffect(() => {
+    if (!isOpen) showNav()
+  }, [isOpen, showNav])
 
   // 打开时聚焦弹窗标题，关闭时恢复到触发元素
   useEffect(() => {
@@ -249,7 +204,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     const handleNavigate = (e: CustomEvent<SettingsNavigateDetail>) => {
       const resolved = resolveSettingsNavigateDetail(e.detail || {})
 
-      if (resolved.page && NAV_ITEMS.some((item) => item.id === resolved.page)) {
+      if (resolved.page && isSettingsNavPage(resolved.page)) {
         setActivePage(resolved.page)
       }
 
@@ -260,11 +215,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       } else {
         setLocateRequest(null)
       }
+
+      // 外部导航指向具体页面或设置项，窄屏直接进入页面屏
+      showPage()
     }
     window.addEventListener("ophel:navigateSettingsPage", handleNavigate as EventListener)
     return () =>
       window.removeEventListener("ophel:navigateSettingsPage", handleNavigate as EventListener)
-  }, [])
+  }, [showPage])
 
   // 定位并高亮目标设置项
   useEffect(() => {
@@ -445,23 +403,26 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     <div className="settings-modal-overlay" {...OPHEL_INTERACTION_LAYER_PROPS} onClick={onClose}>
       <div
         ref={containerRef}
-        className={`settings-modal-container ${isMaximized ? "maximized" : ""}`}
+        className={`settings-modal-container ${isMaximized ? "maximized" : ""} ${isCompact ? "is-compact" : ""}`}
+        data-compact-pane={isCompact ? compactPane : undefined}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}>
-        {/* 关闭按钮 */}
+        {/* 关闭按钮；窄屏已经全屏，不提供最大化 */}
         <div className="settings-modal-actions">
-          <Tooltip content={isMaximized ? t("restore") : t("maximize")}>
-            <button
-              type="button"
-              className="settings-modal-action-btn"
-              aria-label={isMaximized ? t("restore") : t("maximize")}
-              onClick={() => setIsMaximized(!isMaximized)}>
-              {isMaximized ? <RestoreIcon size={16} /> : <MaximizeIcon size={16} />}
-            </button>
-          </Tooltip>
+          {!isCompact && (
+            <Tooltip content={isMaximized ? t("restore") : t("maximize")}>
+              <button
+                type="button"
+                className="settings-modal-action-btn"
+                aria-label={isMaximized ? t("restore") : t("maximize")}
+                onClick={() => setIsMaximized(!isMaximized)}>
+                {isMaximized ? <RestoreIcon size={16} /> : <MaximizeIcon size={16} />}
+              </button>
+            </Tooltip>
+          )}
           <Tooltip content={t("close")}>
             <button
               type="button"
@@ -473,49 +434,24 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </Tooltip>
         </div>
 
-        {/* 侧边栏 */}
-        <aside className="settings-sidebar">
-          <div className="settings-sidebar-header">
-            <div className="settings-sidebar-logo">
-              <img src={getAppIconUrl()} alt={APP_DISPLAY_NAME} />
-              <span id={titleId} tabIndex={-1}>
-                {APP_DISPLAY_NAME}
-              </span>
-            </div>
-          </div>
-          <nav className="settings-sidebar-nav">
-            {NAV_ITEMS.map((item) => (
-              <button
-                key={item.id}
-                className={`settings-nav-item ${activePage === item.id ? "active" : ""}`}
-                onClick={() => {
-                  setActivePage(item.id)
-                  setInitialSubTab(undefined)
-                  setLocateRequest(null)
-                }}>
-                <span className="settings-nav-item-icon">
-                  <item.Icon size={20} />
-                </span>
-                <span className={`settings-nav-item-label${item.beta ? " has-badge" : ""}`}>
-                  {getLocalizedLabel(item.labelKey, item.label)}
-                  {item.id === NAV_IDS.ABOUT && hasUnseenReleaseNotes ? (
-                    <span className="settings-nav-unread-dot" aria-hidden="true" />
-                  ) : null}
-                </span>
-                {item.beta && (
-                  <span className="settings-beta-badge">
-                    {getLocalizedLabel("betaBadge", "Beta")}
-                  </span>
-                )}
-              </button>
-            ))}
-          </nav>
+        {/* 侧边栏；窄屏下是导航屏 */}
+        <SettingsSidebar
+          items={SETTINGS_NAV_ITEMS}
+          activePage={activePage}
+          onSelect={(page) => {
+            setActivePage(page)
+            setInitialSubTab(undefined)
+            setLocateRequest(null)
+            showPage()
+          }}
+          hasUnseenReleaseNotes={hasUnseenReleaseNotes}
+          siteId={siteInstanceKey}
+          titleId={titleId}
+        />
 
-          {/* 侧边栏底部快捷设置 */}
-          <SidebarFooter siteId={siteInstanceKey} />
-        </aside>
+        {isCompact && compactPane === "page" && <SettingsCompactBar onBack={showNav} />}
 
-        {/* 内容区 */}
+        {/* 内容区；窄屏下是页面屏 */}
         <main className="settings-content" ref={contentRef}>
           {renderPage()}
         </main>

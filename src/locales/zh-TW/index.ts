@@ -29,6 +29,7 @@ export const zhTW = {
   navPermissions: "權限管理",
   navBackup: "資料與權限",
   navAbout: "關於",
+  navBack: "返回",
 
   // ======== Options 頁面標題與描述 ========
   // Site Settings

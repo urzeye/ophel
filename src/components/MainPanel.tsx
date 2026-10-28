@@ -40,7 +40,12 @@ import type { ThemeTransitionOrigin } from "~core/theme-manager"
 import { useDraggable } from "~hooks/useDraggable"
 import { useSupportedAiPlatforms } from "~hooks/useSupportedAiPlatforms"
 import { useSettingsStore } from "~stores/settings-store"
-import { attachEditableKeyboardFocusGuard, hasOphelHoverWidthRetainLayer } from "~utils/dom-toolkit"
+import {
+  attachEditableKeyboardFocusGuard,
+  hasOphelHoverWidthRetainLayer,
+  hasOphelInteractionLayer,
+  isEventFromEscapeLayer,
+} from "~utils/dom-toolkit"
 import { loadHistoryUntil } from "~utils/history-loader"
 import { t } from "~utils/i18n"
 import { getScrollInfo, smartScrollTo, smartScrollToBottom } from "~utils/scroll-helper"
@@ -57,6 +62,10 @@ import { Tooltip } from "~components/ui/Tooltip"
 interface MainPanelProps {
   onClose: () => void
   isOpen: boolean
+  // 触屏窄屏：面板以侧边抽屉呈现（全高、带遮罩、不可拖动），由 App 按设备能力决定
+  isDrawer?: boolean
+  // 大纲跳转、切换会话、使用提示词、页面滚动等「跳转」完成后调用
+  onNavigate?: () => void
   isLauncherPeeking?: boolean
   launcherPeekAnchorRect?: LauncherPeekAnchorRect | null
   isScrolling?: boolean
@@ -147,6 +156,8 @@ const clampPanelWidth = (value: number) =>
 export const MainPanel: React.FC<MainPanelProps> = ({
   onClose,
   isOpen,
+  isDrawer = false,
+  onNavigate,
   isLauncherPeeking = false,
   launcherPeekAnchorRect = null,
   isScrolling,
@@ -283,8 +294,9 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     hasMoved: boolean
   } | null>(null)
 
-  // 拖拽功能（高性能版本：直接 DOM 操作，不触发 React 渲染）
+  // 拖拽功能（高性能版本：直接 DOM 操作，不触发 React 渲染）；抽屉形态固定贴边，不可拖动
   const { panelRef, headerRef } = useDraggable({
+    disabled: isDrawer,
     edgeSnapHide: !isLauncherPeeking && currentSettings.panel?.panelMode === "edge-snap",
     edgeSnapState: isLauncherPeeking ? null : edgeSnapState, // 传递当前吸附状态
     snapThreshold: currentSettings.panel?.edgeSnapThreshold ?? 30,
@@ -771,7 +783,8 @@ export const MainPanel: React.FC<MainPanelProps> = ({
 
   const handleHeaderPointerDown = useCallback(
     (event: React.PointerEvent<HTMLDivElement>) => {
-      if (!shouldShowHeaderPressHint(event.target)) {
+      // 抽屉不可拖动，按住顶栏也就没有拖拽提示可展示
+      if (isDrawer || !shouldShowHeaderPressHint(event.target)) {
         resetHeaderPressHint()
         return
       }
@@ -784,7 +797,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         setIsHeaderPressed(true)
       }, HEADER_PRESS_HINT_DELAY_MS)
     },
-    [clearHeaderPressHintTimer, resetHeaderPressHint, shouldShowHeaderPressHint],
+    [clearHeaderPressHintTimer, isDrawer, resetHeaderPressHint, shouldShowHeaderPressHint],
   )
 
   const handleHeaderPointerMove = useCallback(
@@ -843,6 +856,8 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   // Double click to toggle panel mode
   const handleHeaderDoubleClick = useCallback(
     (e: React.MouseEvent) => {
+      // 抽屉形态不区分悬浮/吸附，双击切换模式没有可见效果，只会改动其他设备同步来的设置
+      if (isDrawer) return
       // 忽略在控制按钮上的双击
       const target = e.target
       if (target instanceof Element && target.closest(".gh-panel-controls")) return
@@ -856,6 +871,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     },
     [
       currentSettings.panel?.panelMode,
+      isDrawer,
       panelRef,
       prepareEdgeSnapToFloatingSwitch,
       updateNestedSetting,
@@ -939,6 +955,25 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     // 直接在面板元素上监听，覆盖 Shadow DOM 内部的输入控件
     return attachEditableKeyboardFocusGuard(panel)
   }, [isOpen, panelRef])
+
+  // 抽屉打开时 Esc 收起。挂在 document 捕获阶段：面板上的输入框守卫会截断冒泡；
+  // 设置弹窗、提示词对话框等 Ophel 浮层打开时 Esc 交给最上层自己处理
+  useEffect(() => {
+    if (!isOpen || !isDrawer) return
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || event.isComposing) return
+      if (isEventFromEscapeLayer(event) || hasOphelInteractionLayer(getPanelInteractionRoots())) {
+        return
+      }
+
+      event.stopPropagation()
+      onClose()
+    }
+
+    document.addEventListener("keydown", handleKeyDown, true)
+    return () => document.removeEventListener("keydown", handleKeyDown, true)
+  }, [getPanelInteractionRoots, isDrawer, isOpen, onClose])
 
   // === 锚点状态（使用全局存储） ===
   const anchorPosition = useSyncExternalStore(anchorStore.subscribe, anchorStore.getSnapshot)
@@ -1240,6 +1275,38 @@ export const MainPanel: React.FC<MainPanelProps> = ({
 
   if (!isOpen) return null
 
+  // 抽屉的定位、尺寸都由 .is-drawer 样式接管（!important 盖过拖拽等逻辑写入的行内定位），
+  // 这里只传面板宽度给样式取值
+  const panelClassName = isDrawer
+    ? `gh-main-panel gh-interactive is-drawer drawer-${defaultPosition === "left" ? "left" : "right"}`
+    : `gh-main-panel gh-interactive ${!isLauncherPeeking && edgeSnapState ? `edge-snapped-${edgeSnapState}` : ""} ${isEdgeTriggerHidden ? "edge-trigger-hidden" : ""} ${isLauncherPeeking ? "launcher-peek" : ""} ${isEdgePeeking ? "edge-peek" : ""} ${isScrolling ? "scroll-hidden" : ""} ${isPanelResizing ? "is-resizing" : ""} ${isHoverWidthActive && !isPanelResizing ? "hover-width-active" : ""}`
+  const panelStyle: React.CSSProperties = isDrawer
+    ? ({
+        "--panel-width": `${basePanelWidth}px`,
+        "--panel-base-width": `${basePanelWidth}px`,
+      } as React.CSSProperties)
+    : ({
+        position: "fixed",
+        top: "50%",
+        // 仅在 floating 模式下通过 React style prop 设置位置；
+        // edge-snap 模式下由 useLayoutEffect + CSS class 控制，避免切换首帧
+        // 与后续重渲染写回 inline style 覆盖 CSS transition，导致动画抖动
+        ...panelPositionStyle,
+        transform: isLauncherPeeking ? "none" : "translateY(-50%)",
+        width: `${panelWidth}px`,
+        height: `${panelHeightVh}vh`,
+        "--panel-width": `${panelWidth}px`,
+        "--panel-base-width": `${basePanelWidth}px`,
+        // 静态展示属性（圆角/阴影/边框/背景/层叠等）在 .gh-main-panel 类中定义
+        // 面板定位由 useDraggable 通过直接 DOM 写入控制
+      } as React.CSSProperties)
+
+  // 页面滚动类操作完成后同样视为一次跳转
+  const runPageJump = (action: () => Promise<void>) => async () => {
+    await action()
+    onNavigate?.()
+  }
+
   const canDragPanelTabs = visibleTabs.length > 1
 
   const resetPanelTabDragState = () => {
@@ -1357,6 +1424,14 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     <>
       {/* 加载历史遮罩 */}
       <LoadingOverlay isVisible={isLoadingHistory} text={loadingText} onStop={stopLoading} />
+      {/* 抽屉遮罩：点按收起，同时挡住手势避免误操作背后的页面 */}
+      {isDrawer && (
+        <div
+          className="gh-panel-drawer-scrim gh-interactive"
+          aria-hidden="true"
+          onClick={onClose}
+        />
+      )}
       <div
         ref={panelRef}
         onMouseEnter={handlePanelPointerEnter}
@@ -1364,32 +1439,16 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         onPointerDownCapture={handlePanelPointerDownCapture}
         onFocus={handlePanelFocus}
         onBlur={handlePanelBlur}
-        className={`gh-main-panel gh-interactive ${!isLauncherPeeking && edgeSnapState ? `edge-snapped-${edgeSnapState}` : ""} ${isEdgeTriggerHidden ? "edge-trigger-hidden" : ""} ${isLauncherPeeking ? "launcher-peek" : ""} ${isEdgePeeking ? "edge-peek" : ""} ${isScrolling ? "scroll-hidden" : ""} ${isPanelResizing ? "is-resizing" : ""} ${isHoverWidthActive && !isPanelResizing ? "hover-width-active" : ""}`}
+        className={panelClassName}
         data-panel-hover-width-active={isHoverWidthPreviewActive ? "true" : undefined}
         data-panel-base-width={basePanelWidth}
         data-panel-anchor-side={panelAnchorSide}
         data-panel-narrow={panelWidth < 280 ? "true" : undefined}
-        style={
-          {
-            position: "fixed",
-            top: "50%",
-            // 仅在 floating 模式下通过 React style prop 设置位置；
-            // edge-snap 模式下由 useLayoutEffect + CSS class 控制，避免切换首帧
-            // 与后续重渲染写回 inline style 覆盖 CSS transition，导致动画抖动
-            ...panelPositionStyle,
-            transform: isLauncherPeeking ? "none" : "translateY(-50%)",
-            width: `${panelWidth}px`,
-            height: `${panelHeightVh}vh`,
-            "--panel-width": `${panelWidth}px`,
-            "--panel-base-width": `${basePanelWidth}px`,
-            // 静态展示属性（圆角/阴影/边框/背景/层叠等）在 .gh-main-panel 类中定义
-            // 面板定位由 useDraggable 通过直接 DOM 写入控制
-          } as React.CSSProperties
-        }>
+        style={panelStyle}>
         {/* 自定义 CSS 注入：根据当前站点的样式 ID 查找自定义样式 */}
         {currentCustomStyle ? <style>{currentCustomStyle.css}</style> : null}
 
-        {!isLauncherPeeking && !isEdgeSnapMode && (
+        {!isDrawer && !isLauncherPeeking && !isEdgeSnapMode && (
           <button
             type="button"
             className={`gh-panel-resize-handle gh-panel-resize-handle-${resizeHandleSide}`}
@@ -1439,41 +1498,43 @@ export const MainPanel: React.FC<MainPanelProps> = ({
 
           {/* 右侧：按钮组 - 需要 gh-panel-controls 以排除拖拽 */}
           <div className="gh-panel-controls" data-no-header-press-hint="true">
-            {/* 面板模式切换按钮 */}
-            <Tooltip
-              content={
-                (currentSettings.panel?.panelMode ?? "floating") === "edge-snap"
-                  ? t("pinPanel")
-                  : t("snapToEdge")
-              }>
-              <button
-                type="button"
-                aria-label={
+            {/* 面板模式切换按钮：抽屉形态不区分悬浮/吸附，不展示 */}
+            {!isDrawer && (
+              <Tooltip
+                content={
                   (currentSettings.panel?.panelMode ?? "floating") === "edge-snap"
                     ? t("pinPanel")
                     : t("snapToEdge")
-                }
-                onClick={() => {
-                  const current = currentSettings.panel?.panelMode ?? "floating"
-                  // 从吸附切换到悬浮时，保存当前可见位置用于保留垂直位置
-                  if (current === "edge-snap" && panelRef.current) {
-                    savedPeekingRectRef.current = panelRef.current.getBoundingClientRect()
-                    prepareEdgeSnapToFloatingSwitch()
+                }>
+                <button
+                  type="button"
+                  aria-label={
+                    (currentSettings.panel?.panelMode ?? "floating") === "edge-snap"
+                      ? t("pinPanel")
+                      : t("snapToEdge")
                   }
-                  updateNestedSetting(
-                    "panel",
-                    "panelMode",
-                    current === "edge-snap" ? "floating" : "edge-snap",
-                  )
-                }}
-                className="gh-header-icon-btn">
-                {(currentSettings.panel?.panelMode ?? "floating") === "edge-snap" ? (
-                  <FloatingModeIcon size={14} />
-                ) : (
-                  <SnapToEdgeIcon size={14} />
-                )}
-              </button>
-            </Tooltip>
+                  onClick={() => {
+                    const current = currentSettings.panel?.panelMode ?? "floating"
+                    // 从吸附切换到悬浮时，保存当前可见位置用于保留垂直位置
+                    if (current === "edge-snap" && panelRef.current) {
+                      savedPeekingRectRef.current = panelRef.current.getBoundingClientRect()
+                      prepareEdgeSnapToFloatingSwitch()
+                    }
+                    updateNestedSetting(
+                      "panel",
+                      "panelMode",
+                      current === "edge-snap" ? "floating" : "edge-snap",
+                    )
+                  }}
+                  className="gh-header-icon-btn">
+                  {(currentSettings.panel?.panelMode ?? "floating") === "edge-snap" ? (
+                    <FloatingModeIcon size={14} />
+                  ) : (
+                    <SnapToEdgeIcon size={14} />
+                  )}
+                </button>
+              </Tooltip>
+            )}
 
             {/* 主题切换按钮 */}
             {onThemeToggle && (
@@ -1527,15 +1588,17 @@ export const MainPanel: React.FC<MainPanelProps> = ({
           </div>
         </div>
 
-        {/* 拖拽/悬停 即时提示层 (幽灵模式) */}
-        <div className={`gh-panel-header-hint ${isHeaderPressed ? "is-visible" : ""}`}>
-          <span className="gh-panel-header-hint-icon" aria-hidden="true">
-            <DragIcon size={14} />
-          </span>
-          <span className="gh-panel-header-hint-text">
-            {t("tip1", { modifier: isMacOS() ? "⌘ Cmd" : "Ctrl" })}
-          </span>
-        </div>
+        {/* 拖拽/悬停 即时提示层 (幽灵模式)；抽屉不可拖动，不渲染 */}
+        {!isDrawer && (
+          <div className={`gh-panel-header-hint ${isHeaderPressed ? "is-visible" : ""}`}>
+            <span className="gh-panel-header-hint-icon" aria-hidden="true">
+              <DragIcon size={14} />
+            </span>
+            <span className="gh-panel-header-hint-text">
+              {t("tip1", { modifier: isMacOS() ? "⌘ Cmd" : "Ctrl" })}
+            </span>
+          </div>
+        )}
         {/* 仅在有多个功能 Tab 时展示切换栏；单功能时自动隐藏以节省垂直空间 */}
         {visibleTabs.length > 1 && (
           <div className="gh-panel-tabs" role="tablist" aria-label={t("panelTitle")}>
@@ -1605,12 +1668,14 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                 setSelectedPlatforms={setSelectedPromptPlatforms}
                 selectedPromptId={selectedPromptId}
                 onPromptSelect={onPromptSelect}
+                onPromptUsed={onNavigate}
               />
             )}
             {activeTab === TAB_IDS.CONVERSATIONS && (
               <ConversationsTab
                 manager={conversationManager}
                 onInteractionStateChange={onInteractionStateChange}
+                onConversationOpen={onNavigate}
               />
             )}
             {activeTab === TAB_IDS.OUTLINE && (
@@ -1618,6 +1683,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                 manager={outlineManager}
                 conversationManager={conversationManager}
                 onJumpBefore={saveAnchor}
+                onJumped={onNavigate}
                 showUserQueryToggle={canShowOutlineUserQueries}
               />
             )}
@@ -1634,7 +1700,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             <button
               type="button"
               className="gh-interactive scroll-nav-btn gh-panel-footer-action"
-              onClick={scrollToTop}>
+              onClick={runPageJump(scrollToTop)}>
               <ScrollTopIcon size={14} />
               <span>{t("scrollTop")}</span>
             </button>
@@ -1648,7 +1714,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             <button
               type="button"
               className="gh-interactive scroll-nav-btn anchor-btn gh-panel-footer-anchor"
-              onClick={goToAnchor}
+              onClick={runPageJump(goToAnchor)}
               disabled={!hasAnchor}>
               {/* 动画目标：独立于按钮的 inline transform，key 变化强制重新挂载以重播动画 */}
               <span
@@ -1670,7 +1736,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             <button
               type="button"
               className="gh-interactive scroll-nav-btn gh-panel-footer-action"
-              onClick={scrollToBottom}>
+              onClick={runPageJump(scrollToBottom)}>
               <ScrollBottomIcon size={14} />
               <span>{t("scrollBottom")}</span>
             </button>
