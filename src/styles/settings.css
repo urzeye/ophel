@@ -839,8 +839,8 @@ html[data-theme="dark"] .platform-icon-dark-invert {
 }
 
 /* 轨道与选中项配色见 .settings-segmented 处的分段控件共用定义。
-   标签放不下时单行横向滚动而不是折成两行（弹窗里内容区比视口窄，视口断点不起作用），
-   两端渐隐提示还有内容，激活项由 TabGroup 自动滚入可视区 */
+   标签放不下时单行横向滚动而不是折成两行（弹窗里内容区比视口窄，视口断点不起作用）：
+   两端渐隐并出现箭头按钮，鼠标滚轮可横向滚动，激活项由 TabGroup 自动滚入可视区 */
 .settings-tab-group {
   display: flex;
   gap: 4px;
@@ -880,6 +880,58 @@ html[data-theme="dark"] .platform-icon-dark-invert {
     #000 calc(100% - 32px),
     transparent
   );
+}
+
+/* 箭头叠在渐隐区上，只在对应一侧还有被裁掉的标签时出现 */
+.settings-tab-group-scroller {
+  position: relative;
+}
+
+.settings-tab-group-arrow {
+  position: absolute;
+  top: 50%;
+  z-index: 1;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--gh-card-border, var(--gh-border, #e5e7eb));
+  border-radius: 8px;
+  background: var(--gh-surface, var(--gh-card-bg, #ffffff));
+  color: var(--gh-text-secondary, #6b7280);
+  box-shadow: var(--gh-shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.1));
+  cursor: pointer;
+  transform: translateY(-50%);
+  transition: color 0.15s ease;
+}
+
+.settings-tab-group-arrow.is-start {
+  left: 6px;
+}
+
+.settings-tab-group-arrow.is-end {
+  right: 6px;
+}
+
+.settings-tab-group[data-overflow-start] ~ .settings-tab-group-arrow.is-start,
+.settings-tab-group[data-overflow-end] ~ .settings-tab-group-arrow.is-end {
+  display: inline-flex;
+}
+
+.settings-tab-group-arrow:hover {
+  color: var(--gh-text, #1f2937);
+}
+
+.settings-tab-group-arrow:active {
+  transform: translateY(-50%) scale(0.94);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .settings-tab-group-arrow {
+    transition: none;
+  }
 }
 
 .settings-tab-item {

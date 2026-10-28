@@ -405,6 +405,8 @@ export const pt = {
   more: "Mais",
   default: "Padrão",
   unknown: "Desconhecido",
+  settingsTabsScrollLeft: "Rolar abas para a esquerda",
+  settingsTabsScrollRight: "Rolar abas para a direita",
   error: "Erro",
   operationFailed: "Falha na operação",
   deleteSuccess: "Excluído com sucesso",

@@ -405,6 +405,8 @@ export const es = {
   more: "Más",
   default: "Predeterminado",
   unknown: "Desconocido",
+  settingsTabsScrollLeft: "Desplazar pestañas a la izquierda",
+  settingsTabsScrollRight: "Desplazar pestañas a la derecha",
   error: "Error",
   operationFailed: "Operación fallida",
   deleteSuccess: "Eliminado con éxito",

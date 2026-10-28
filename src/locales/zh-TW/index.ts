@@ -258,6 +258,8 @@ export const zhTW = {
   more: "更多",
   default: "預設",
   unknown: "未知",
+  settingsTabsScrollLeft: "向左捲動標籤頁",
+  settingsTabsScrollRight: "向右捲動標籤頁",
   error: "錯誤",
   operationFailed: "操作失敗",
   deleteSuccess: "刪除成功",

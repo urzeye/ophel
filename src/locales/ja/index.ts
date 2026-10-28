@@ -408,6 +408,8 @@ export const ja = {
   more: "その他",
   default: "デフォルト",
   unknown: "不明",
+  settingsTabsScrollLeft: "タブを左にスクロール",
+  settingsTabsScrollRight: "タブを右にスクロール",
   error: "エラー",
   operationFailed: "操作に失敗しました",
   deleteSuccess: "削除しました",

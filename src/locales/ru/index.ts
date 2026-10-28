@@ -402,6 +402,8 @@ export const ru = {
   more: "Ещё",
   default: "По умолчанию",
   unknown: "Неизвестно",
+  settingsTabsScrollLeft: "Прокрутить вкладки влево",
+  settingsTabsScrollRight: "Прокрутить вкладки вправо",
   error: "Ошибка",
   operationFailed: "Операция не удалась",
   deleteSuccess: "Удалено успешно",

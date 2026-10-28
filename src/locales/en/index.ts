@@ -409,6 +409,8 @@ export const en = {
   more: "More",
   default: "Default",
   unknown: "Unknown",
+  settingsTabsScrollLeft: "Scroll tabs left",
+  settingsTabsScrollRight: "Scroll tabs right",
   error: "Error",
   operationFailed: "Operation failed",
   deleteSuccess: "Deleted successfully",

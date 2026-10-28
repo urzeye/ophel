@@ -401,6 +401,8 @@ export const ko = {
   more: "더보기",
   default: "기본값",
   unknown: "알 수 없음",
+  settingsTabsScrollLeft: "탭을 왼쪽으로 스크롤",
+  settingsTabsScrollRight: "탭을 오른쪽으로 스크롤",
   error: "오류",
   operationFailed: "작업에 실패했습니다",
   deleteSuccess: "삭제되었습니다",

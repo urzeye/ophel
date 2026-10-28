@@ -412,6 +412,8 @@ export const zhCN = {
   more: "更多",
   default: "默认",
   unknown: "未知",
+  settingsTabsScrollLeft: "向左滚动标签页",
+  settingsTabsScrollRight: "向右滚动标签页",
   error: "错误",
   operationFailed: "操作失败",
   deleteSuccess: "删除成功",

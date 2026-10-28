@@ -405,6 +405,8 @@ export const de = {
   more: "Mehr",
   default: "Standard",
   unknown: "Unbekannt",
+  settingsTabsScrollLeft: "Tabs nach links scrollen",
+  settingsTabsScrollRight: "Tabs nach rechts scrollen",
   error: "Fehler",
   operationFailed: "Vorgang fehlgeschlagen",
   deleteSuccess: "Erfolgreich gelöscht",

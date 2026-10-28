@@ -408,6 +408,8 @@ export const fr = {
   more: "Plus",
   default: "Par défaut",
   unknown: "Inconnu",
+  settingsTabsScrollLeft: "Faire défiler les onglets vers la gauche",
+  settingsTabsScrollRight: "Faire défiler les onglets vers la droite",
   error: "Erreur",
   operationFailed: "Opération échouée",
   deleteSuccess: "Suppression réussie",

@@ -418,6 +418,8 @@ export const it = {
   more: "Altro",
   default: "Predefinito",
   unknown: "Sconosciuto",
+  settingsTabsScrollLeft: "Scorri le schede a sinistra",
+  settingsTabsScrollRight: "Scorri le schede a destra",
   error: "Errore",
   operationFailed: "Operazione fallita",
   deleteSuccess: "Eliminato con successo",
