@@ -547,11 +547,11 @@ export const zhTW = {
   themeDark: "深色",
   themeSettings: "主題設置",
   currentThemeMode: "當前模式",
-  themeSettingsDesc: "選擇淺色和深色模式下使用的主題預設",
+  themeSettingsDesc: "選擇淺色和深色模式下使用的預置主題",
   syncNativePageThemeLabel: "同步原生頁面顏色",
   syncNativePageThemeDesc:
     "目前網站的明暗模式會始終跟隨 Ophel；開啟後還會同步調整部分原生元素顏色（僅對部分站點生效）",
-  themePresetsTab: "主題預設",
+  themePresetsTab: "預置主題",
   customStylesTab: "自定義樣式",
   pleaseEnterStyleName: "請輸入樣式名稱",
   code: "代碼",

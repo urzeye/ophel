@@ -196,7 +196,7 @@ export const zhCN = {
   panelSettings: "面板设置",
 
   // ======== 外观页面 ========
-  themePresetsTab: "主题预置",
+  themePresetsTab: "预置主题",
   customStylesTab: "自定义样式",
   pleaseEnterStyleName: "请输入样式名称",
   enterStyleName: "输入样式名称",
@@ -692,7 +692,7 @@ export const zhCN = {
   themeDark: "深色",
   themeSettings: "主题设置",
   currentThemeMode: "当前模式",
-  themeSettingsDesc: "选择浅色和深色模式下使用的主题预置",
+  themeSettingsDesc: "选择浅色和深色模式下使用的预置主题",
   syncNativePageThemeLabel: "同步原生页面颜色",
   syncNativePageThemeDesc:
     "当前网站的亮暗模式始终跟随 Ophel；开启后还会同步调整部分原生元素颜色（仅对部分站点生效）",
