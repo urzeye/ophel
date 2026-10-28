@@ -143,6 +143,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const contentRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null) // 容器引用
   const restoreFocusRef = useRef<HTMLElement | null>(null)
+  // 打开弹窗时触发元素是否处于键盘焦点；鼠标点开的关闭后不归还焦点，避免 ESC 关闭时凭空出现焦点环和 tooltip
+  const triggerHadFocusVisibleRef = useRef(false)
   const titleId = "ophel-settings-modal-title"
   const highlightTimerRef = useRef<number | undefined>(undefined)
   const highlightedElementRef = useRef<HTMLElement | null>(null)
@@ -166,6 +168,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     if (!isOpen) return
 
     restoreFocusRef.current = getDeepActiveElement()
+    triggerHadFocusVisibleRef.current = restoreFocusRef.current?.matches(":focus-visible") ?? false
     const focusTimer = window.setTimeout(() => {
       const container = containerRef.current
       if (!container) return
@@ -180,8 +183,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       window.clearTimeout(focusTimer)
       const restoreElement = restoreFocusRef.current
       restoreFocusRef.current = null
+      const shouldRestoreFocus = triggerHadFocusVisibleRef.current
+      triggerHadFocusVisibleRef.current = false
 
-      if (!restoreElement?.isConnected) {
+      if (!shouldRestoreFocus || !restoreElement?.isConnected) {
         return
       }
 

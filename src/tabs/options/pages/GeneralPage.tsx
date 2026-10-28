@@ -50,6 +50,7 @@ const SortableItem: React.FC<{
   onDragEnd?: () => void
   onDrop: (e: React.DragEvent, index: number) => void
   isDragging?: boolean
+  dropPosition?: "before" | "after" | null
 }> = ({
   iconNode,
   label,
@@ -63,9 +64,12 @@ const SortableItem: React.FC<{
   onDragEnd,
   onDrop,
   isDragging = false,
+  dropPosition = null,
 }) => (
   <div
-    className={`settings-sortable-item ${isDragging ? "is-dragging" : ""}`}
+    className={`settings-sortable-item ${isDragging ? "is-dragging" : ""} ${
+      dropPosition === "before" ? "drop-above" : dropPosition === "after" ? "drop-below" : ""
+    }`}
     draggable
     onDragStart={(e) => onDragStart(e, index)}
     onDragOver={(e) => onDragOver(e, index)}
@@ -119,6 +123,12 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
   const [draggedItem, setDraggedItem] = useState<{ type: "tab" | "button"; index: number } | null>(
     null,
   )
+  // 拖拽落点提示（目标项 + 插入到其上方/下方）
+  const [dropTarget, setDropTarget] = useState<{
+    type: "tab" | "button"
+    index: number
+    position: "before" | "after"
+  } | null>(null)
 
   const buildPanelPreview = (key: keyof typeof settings.panel, value: number) => ({
     panel: {
@@ -258,10 +268,30 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
     e.dataTransfer.setData("text/plain", `${type}:${index}`)
   }
 
+  // 按光标在目标项的上/下半区判定插入位置
+  const getDropPosition = (e: React.DragEvent): "before" | "after" => {
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+    return e.clientY < rect.top + rect.height / 2 ? "before" : "after"
+  }
+
   // 处理拖拽经过
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragOver = (e: React.DragEvent, type: "tab" | "button", index: number) => {
     e.preventDefault()
     e.dataTransfer.dropEffect = "move"
+
+    if (!draggedItem || draggedItem.type !== type || draggedItem.index === index) {
+      if (dropTarget) setDropTarget(null)
+      return
+    }
+
+    const position = getDropPosition(e)
+    if (
+      dropTarget?.type !== type ||
+      dropTarget.index !== index ||
+      dropTarget.position !== position
+    ) {
+      setDropTarget({ type, index, position })
+    }
   }
 
   // 处理放置 - Tab 排序
@@ -269,13 +299,21 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
     e.preventDefault()
     if (!draggedItem || draggedItem.type !== "tab") return
     const fromIndex = draggedItem.index
-    if (fromIndex === targetIndex) return
+    if (fromIndex === targetIndex) {
+      setDraggedItem(null)
+      setDropTarget(null)
+      return
+    }
 
     const newOrder = [...(settings.features?.order || DEFAULT_SETTINGS.features.order)]
     const [moved] = newOrder.splice(fromIndex, 1)
-    newOrder.splice(targetIndex, 0, moved)
+    let insertIndex = targetIndex
+    if (fromIndex < insertIndex) insertIndex--
+    if (getDropPosition(e) === "after") insertIndex++
+    newOrder.splice(insertIndex, 0, moved)
     updateNestedSetting("features", "order", newOrder)
     setDraggedItem(null)
+    setDropTarget(null)
   }
 
   // 处理放置 - 按钮排序
@@ -283,18 +321,27 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
     e.preventDefault()
     if (!draggedItem || draggedItem.type !== "button") return
     const fromIndex = draggedItem.index
-    if (fromIndex === targetIndex) return
+    if (fromIndex === targetIndex) {
+      setDraggedItem(null)
+      setDropTarget(null)
+      return
+    }
 
     const newButtons = [...(settings.quickButtons?.collapsed || [])]
     const [moved] = newButtons.splice(fromIndex, 1)
-    newButtons.splice(targetIndex, 0, moved)
+    let insertIndex = targetIndex
+    if (fromIndex < insertIndex) insertIndex--
+    if (getDropPosition(e) === "after") insertIndex++
+    newButtons.splice(insertIndex, 0, moved)
     updateNestedSetting("quickButtons", "collapsed", newButtons)
     setDraggedItem(null)
+    setDropTarget(null)
   }
 
   // 处理拖拽结束
   const handleDragEnd = () => {
     setDraggedItem(null)
+    setDropTarget(null)
   }
 
   // 切换按钮启用状态
@@ -679,10 +726,15 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
                         updateDeepSetting("features", "conversations", "enabled", !isEnabled)
                     }}
                     onDragStart={(e) => handleDragStart(e, "tab", index)}
-                    onDragOver={handleDragOver}
+                    onDragOver={(e) => handleDragOver(e, "tab", index)}
                     onDragEnd={handleDragEnd}
                     onDrop={handleTabDrop}
                     isDragging={draggedItem?.type === "tab" && draggedItem?.index === index}
+                    dropPosition={
+                      dropTarget?.type === "tab" && dropTarget.index === index
+                        ? dropTarget.position
+                        : null
+                    }
                   />
                 )
               })}
@@ -781,10 +833,15 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
                   showToggle={def.canToggle}
                   onToggle={() => toggleButton(index)}
                   onDragStart={(e) => handleDragStart(e, "button", index)}
-                  onDragOver={handleDragOver}
+                  onDragOver={(e) => handleDragOver(e, "button", index)}
                   onDragEnd={handleDragEnd}
                   onDrop={handleButtonDrop}
                   isDragging={draggedItem?.type === "button" && draggedItem?.index === index}
+                  dropPosition={
+                    dropTarget?.type === "button" && dropTarget.index === index
+                      ? dropTarget.position
+                      : null
+                  }
                 />
               )
             })}

@@ -3360,6 +3360,37 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   box-shadow: var(--gh-shadow-md, 0 4px 14px rgba(0, 0, 0, 0.1));
 }
 
+/* 拖拽落点提示：虚线框 + 插入位置指示条，与提示词列表的排序反馈一致 */
+.settings-sortable-item.drop-above,
+.settings-sortable-item.drop-below {
+  position: relative;
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 7%, var(--gh-bg-secondary, #f9fafb));
+  outline: 2px dashed color-mix(in srgb, var(--gh-primary, #4285f4) 70%, transparent);
+  outline-offset: -3px;
+}
+
+.settings-sortable-item.drop-above::after,
+.settings-sortable-item.drop-below::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  width: 36px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--gh-primary, #4285f4);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--gh-primary, #4285f4) 30%, transparent);
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+
+.settings-sortable-item.drop-above::after {
+  top: -7px;
+}
+
+.settings-sortable-item.drop-below::after {
+  bottom: -7px;
+}
+
 .settings-sortable-handle {
   display: flex;
   align-items: center;
