@@ -1821,8 +1821,7 @@ export const zhTW = {
   remoteConfigAutoUpdateLabel: "自動更新適配配置",
   remoteConfigAutoUpdateDesc: "最多每 24 小時檢查一次。",
   remoteConfigRegistrySourceLabel: "開發 Registry 來源",
-  remoteConfigRegistrySourceDesc:
-    "僅開發建置可用。請輸入完整的 index.json 位址；留空使用預設來源。",
+  remoteConfigRegistrySourceDesc: "請輸入完整的 index.json 位址；留空使用預設來源。",
   remoteConfigRegistrySourcePlaceholder: "https://staging.example.com/index.json",
   remoteConfigRegistrySourceApplyButton: "套用",
   remoteConfigRegistrySourceApplied: "開發 Registry 來源已儲存；下次檢查更新時生效。",
@@ -1860,7 +1859,7 @@ export const zhTW = {
     "本機 Registry 檢查失敗（{url}）：{error}。請確認已執行 pnpm registry:serve。",
   remoteConfigLocalRegistryUseButton: "使用本機 Registry",
   remoteConfigLocalRegistryHint:
-    "先執行 pnpm registry:serve，再點「{button}」。僅開發建置會信任本機簽名金鑰。",
+    "先執行 pnpm registry:serve，再點「{button}」。回環位址（127.0.0.1 / localhost）的來源在所有建置中都信任本機簽名金鑰。",
   remoteConfigLocalRegistrySourceApplied: "已切換到本機 Registry 來源並開始檢查更新。",
   remoteConfigLocalRegistryPermissionDenied:
     "未取得本機 Registry 存取權限。請允許 127.0.0.1 主機權限後重試。",

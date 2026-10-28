@@ -35,7 +35,7 @@ export const createRuntimeRemoteConfigManager = (
   transport: RegistryTransport,
   options: RuntimeRemoteConfigManagerOptions = {},
 ): RemoteConfigManager => {
-  const allowRegistrySourceOverride = options.allowRegistrySourceOverride ?? IS_DEVELOPMENT_BUILD
+  const allowRegistrySourceOverride = options.allowRegistrySourceOverride ?? true
   const trustLocalDevRegistrySigningKey =
     options.trustLocalDevRegistrySigningKey ?? IS_DEVELOPMENT_BUILD
 

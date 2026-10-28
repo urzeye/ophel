@@ -1883,7 +1883,7 @@ export const ru = {
   remoteConfigAutoUpdateDesc: "Проверяет не чаще одного раза в 24 часа.",
   remoteConfigRegistrySourceLabel: "Источник Registry для разработки",
   remoteConfigRegistrySourceDesc:
-    "Доступно только в dev-сборках. Укажите полный URL index.json; оставьте поле пустым, чтобы использовать источники по умолчанию.",
+    "Укажите полный URL index.json; оставьте поле пустым, чтобы использовать источники по умолчанию.",
   remoteConfigRegistrySourcePlaceholder: "https://staging.example.com/index.json",
   remoteConfigRegistrySourceApplyButton: "Применить",
   remoteConfigRegistrySourceApplied:
@@ -1925,7 +1925,7 @@ export const ru = {
     "Проверка локального registry не удалась ({url}): {error}. Убедитесь, что запущен pnpm registry:serve.",
   remoteConfigLocalRegistryUseButton: "Использовать локальный registry",
   remoteConfigLocalRegistryHint:
-    "Сначала запустите pnpm registry:serve, затем нажмите «{button}». Локальный ключ подписи доверяется только dev-сборкам.",
+    "Сначала запустите pnpm registry:serve, затем нажмите «{button}». Loopback-источники (127.0.0.1 / localhost) доверяют локальному ключу подписи во всех сборках.",
   remoteConfigLocalRegistrySourceApplied:
     "Переключено на локальный registry и запущена проверка обновлений.",
   remoteConfigLocalRegistryPermissionDenied:

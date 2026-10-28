@@ -1,8 +1,10 @@
 /**
  * Fixed local-development registry signing material.
  *
- * Production builds never trust this key. The matching private key lives only in
- * registry/scripts/local-dev-signing.mjs for `pnpm registry:build` / `pnpm registry:serve`.
+ * This key is trusted only for loopback (127.0.0.1/localhost) registry sources, so
+ * production remote sources never accept payloads signed with it. The matching
+ * private key lives only in registry/scripts/local-dev-signing.mjs for
+ * `pnpm registry:build` / `pnpm registry:serve`.
  */
 import type { TrustedRegistrySigningKey } from "./remote-config-signature"
 

@@ -1891,7 +1891,7 @@ Please output the optimized code block directly, followed by a brief summary of 
   remoteConfigAutoUpdateDesc: "Checks at most once every 24 hours.",
   remoteConfigRegistrySourceLabel: "Development registry source",
   remoteConfigRegistrySourceDesc:
-    "Development builds only. Enter a full index.json URL; leave blank to use the default sources.",
+    "Enter a full index.json URL; leave blank to use the default sources.",
   remoteConfigRegistrySourcePlaceholder: "https://staging.example.com/index.json",
   remoteConfigRegistrySourceApplyButton: "Apply",
   remoteConfigRegistrySourceApplied: "Development registry source saved; checking for updates now.",
@@ -1931,7 +1931,7 @@ Please output the optimized code block directly, followed by a brief summary of 
     "Local registry check failed ({url}): {error}. Make sure pnpm registry:serve is running.",
   remoteConfigLocalRegistryUseButton: "Use local registry",
   remoteConfigLocalRegistryHint:
-    "Run pnpm registry:serve first, then click “{button}”. Only development builds trust the local signing key.",
+    "Run pnpm registry:serve first, then click “{button}”. Loopback sources (127.0.0.1 / localhost) trust the local signing key in all builds.",
   remoteConfigLocalRegistrySourceApplied:
     "Switched to the local registry source and started an update check.",
   remoteConfigLocalRegistryPermissionDenied:

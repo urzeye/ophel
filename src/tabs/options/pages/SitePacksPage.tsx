@@ -79,7 +79,6 @@ import {
   orderBuiltinSitesByCurrentUrl,
 } from "~tabs/options/builtin-sites-list"
 import { PageTitle, TabGroup } from "~tabs/options/components"
-import { IS_DEVELOPMENT_BUILD } from "~utils/config"
 import { formatDateTime } from "~utils/format"
 import { getCurrentLang, getCurrentLocale, subscribeI18nChanges, t } from "~utils/i18n"
 import { scrollWithinSettingsContent } from "~utils/settings-scroll"
@@ -2329,123 +2328,119 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
             </div>
           </details>
 
-          {IS_DEVELOPMENT_BUILD && (
-            <section
-              className="settings-card settings-pack-dev-card"
-              data-setting-id="remote-config-registry-source">
-              <div className="settings-pack-dev-head">
-                <label
-                  className="settings-card-title"
-                  htmlFor="remote-config-registry-source-input">
-                  {t("remoteConfigRegistrySourceLabel")}
-                </label>
-                <span className="settings-pack-badge warning">DEV</span>
-              </div>
-              <p className="settings-pack-source-desc">{t("remoteConfigRegistrySourceDesc")}</p>
+          <section
+            className="settings-card settings-pack-dev-card"
+            data-setting-id="remote-config-registry-source">
+            <div className="settings-pack-dev-head">
+              <label className="settings-card-title" htmlFor="remote-config-registry-source-input">
+                {t("remoteConfigRegistrySourceLabel")}
+              </label>
+              <span className="settings-pack-badge warning">DEV</span>
+            </div>
+            <p className="settings-pack-source-desc">{t("remoteConfigRegistrySourceDesc")}</p>
 
-              <div className="settings-pack-dev-status-row">
-                <span className="settings-pack-dev-status-label">
-                  {t("remoteConfigRegistryActiveSourceLabel")}:
+            <div className="settings-pack-dev-status-row">
+              <span className="settings-pack-dev-status-label">
+                {t("remoteConfigRegistryActiveSourceLabel")}:
+              </span>
+              <code className="settings-pack-dev-status-code">
+                {remoteState?.active?.sourceUrl ?? t("remoteConfigRegistryActiveSourceDefault")}
+              </code>
+              {remoteState?.active?.index.registryRevision !== undefined && (
+                <span className="settings-pack-badge success">
+                  rev {remoteState.active.index.registryRevision}
                 </span>
-                <code className="settings-pack-dev-status-code">
-                  {remoteState?.active?.sourceUrl ?? t("remoteConfigRegistryActiveSourceDefault")}
-                </code>
-                {remoteState?.active?.index.registryRevision !== undefined && (
-                  <span className="settings-pack-badge success">
-                    rev {remoteState.active.index.registryRevision}
-                  </span>
-                )}
-                {configuredRegistrySource && (
-                  <span className="settings-pack-badge warning">
-                    {t("remoteConfigRegistryOverrideLabel")}
-                  </span>
-                )}
-              </div>
-
-              {remoteState?.lastError?.message && (
-                <div className="settings-pack-dev-error-box" role="status">
-                  <span className="settings-pack-dev-error-indicator" aria-hidden="true" />
-                  <span>
-                    <strong>{t("remoteConfigRegistryLastErrorLabel")}:</strong>{" "}
-                    {remoteState.lastError.message}
-                  </span>
-                </div>
               )}
-
-              <div className="settings-pack-source-controls">
-                <div className="settings-pack-source-input-row">
-                  <Input
-                    id="remote-config-registry-source-input"
-                    type="text"
-                    inputMode="url"
-                    autoComplete="off"
-                    spellCheck={false}
-                    value={registrySourceInput}
-                    placeholder={t("remoteConfigRegistrySourcePlaceholder")}
-                    aria-invalid={registrySourceError ? "true" : undefined}
-                    disabled={isRegistryBusy}
-                    onChange={(event) => {
-                      setRegistrySourceInput(event.target.value)
-                      setRegistrySourceError(null)
-                    }}
-                  />
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="secondary"
-                    className="settings-pack-action-button settings-pack-source-apply"
-                    disabled={
-                      isRegistryBusy ||
-                      (registrySourceInput.trim() === configuredRegistrySource &&
-                        !isReapplyableLoopbackRegistrySource(registrySourceInput))
-                    }
-                    onClick={() => void handleApplyRegistrySource({ forceCheck: true })}>
-                    {t("remoteConfigRegistrySourceApplyButton")}
-                  </Button>
-                </div>
-                <div className="settings-pack-source-actions">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="secondary"
-                    className="settings-pack-action-button"
-                    disabled={isRegistryBusy}
-                    onClick={() => void handleUseLocalRegistrySource()}>
-                    {t("remoteConfigLocalRegistryUseButton")}
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="secondary"
-                    className="settings-pack-action-button"
-                    disabled={isRegistryBusy}
-                    onClick={() => void handleRestoreDefaultRegistrySource()}>
-                    {t("remoteConfigRegistryRestoreDefaultsButton")}
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="secondary"
-                    className="settings-pack-action-button"
-                    disabled={isRegistryBusy || (!remoteState?.active && !remoteState?.lastError)}
-                    onClick={() => void handleClearRegistryCache()}>
-                    {t("remoteConfigRegistryCacheClearButton")}
-                  </Button>
-                </div>
-              </div>
-              <p className="settings-pack-source-desc settings-pack-source-hint">
-                {t("remoteConfigLocalRegistryHint", {
-                  button: t("remoteConfigLocalRegistryUseButton"),
-                })}
-              </p>
-              {registrySourceError && (
-                <div className="settings-pack-dev-error-box" role="alert">
-                  <span className="settings-pack-dev-error-indicator" aria-hidden="true" />
-                  <span>{registrySourceError}</span>
-                </div>
+              {configuredRegistrySource && (
+                <span className="settings-pack-badge warning">
+                  {t("remoteConfigRegistryOverrideLabel")}
+                </span>
               )}
-            </section>
-          )}
+            </div>
+
+            {remoteState?.lastError?.message && (
+              <div className="settings-pack-dev-error-box" role="status">
+                <span className="settings-pack-dev-error-indicator" aria-hidden="true" />
+                <span>
+                  <strong>{t("remoteConfigRegistryLastErrorLabel")}:</strong>{" "}
+                  {remoteState.lastError.message}
+                </span>
+              </div>
+            )}
+
+            <div className="settings-pack-source-controls">
+              <div className="settings-pack-source-input-row">
+                <Input
+                  id="remote-config-registry-source-input"
+                  type="text"
+                  inputMode="url"
+                  autoComplete="off"
+                  spellCheck={false}
+                  value={registrySourceInput}
+                  placeholder={t("remoteConfigRegistrySourcePlaceholder")}
+                  aria-invalid={registrySourceError ? "true" : undefined}
+                  disabled={isRegistryBusy}
+                  onChange={(event) => {
+                    setRegistrySourceInput(event.target.value)
+                    setRegistrySourceError(null)
+                  }}
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  className="settings-pack-action-button settings-pack-source-apply"
+                  disabled={
+                    isRegistryBusy ||
+                    (registrySourceInput.trim() === configuredRegistrySource &&
+                      !isReapplyableLoopbackRegistrySource(registrySourceInput))
+                  }
+                  onClick={() => void handleApplyRegistrySource({ forceCheck: true })}>
+                  {t("remoteConfigRegistrySourceApplyButton")}
+                </Button>
+              </div>
+              <div className="settings-pack-source-actions">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  className="settings-pack-action-button"
+                  disabled={isRegistryBusy}
+                  onClick={() => void handleUseLocalRegistrySource()}>
+                  {t("remoteConfigLocalRegistryUseButton")}
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  className="settings-pack-action-button"
+                  disabled={isRegistryBusy}
+                  onClick={() => void handleRestoreDefaultRegistrySource()}>
+                  {t("remoteConfigRegistryRestoreDefaultsButton")}
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  className="settings-pack-action-button"
+                  disabled={isRegistryBusy || (!remoteState?.active && !remoteState?.lastError)}
+                  onClick={() => void handleClearRegistryCache()}>
+                  {t("remoteConfigRegistryCacheClearButton")}
+                </Button>
+              </div>
+            </div>
+            <p className="settings-pack-source-desc settings-pack-source-hint">
+              {t("remoteConfigLocalRegistryHint", {
+                button: t("remoteConfigLocalRegistryUseButton"),
+              })}
+            </p>
+            {registrySourceError && (
+              <div className="settings-pack-dev-error-box" role="alert">
+                <span className="settings-pack-dev-error-indicator" aria-hidden="true" />
+                <span>{registrySourceError}</span>
+              </div>
+            )}
+          </section>
         </>
       )}
 

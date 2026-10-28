@@ -1869,7 +1869,7 @@ export const ko = {
   remoteConfigAutoUpdateDesc: "24시간에 최대 한 번 확인합니다.",
   remoteConfigRegistrySourceLabel: "개발용 Registry 소스",
   remoteConfigRegistrySourceDesc:
-    "개발 빌드에서만 사용할 수 있습니다. 전체 index.json URL을 입력하고 비워 두면 기본 소스를 사용합니다.",
+    "전체 index.json URL을 입력하세요. 비워 두면 기본 소스를 사용합니다.",
   remoteConfigRegistrySourcePlaceholder: "https://staging.example.com/index.json",
   remoteConfigRegistrySourceApplyButton: "적용",
   remoteConfigRegistrySourceApplied:
@@ -1910,7 +1910,7 @@ export const ko = {
     "로컬 레지스트리 확인 실패({url}): {error}. pnpm registry:serve 실행 여부를 확인하세요.",
   remoteConfigLocalRegistryUseButton: "로컬 레지스트리 사용",
   remoteConfigLocalRegistryHint:
-    "먼저 pnpm registry:serve를 실행한 뒤 “{button}”을 누르세요. 로컬 서명 키는 개발 빌드에서만 신뢰됩니다.",
+    "먼저 pnpm registry:serve를 실행한 뒤 “{button}”을 누르세요. 루프백(127.0.0.1 / localhost) 소스는 모든 빌드에서 로컬 서명 키를 신뢰합니다.",
   remoteConfigLocalRegistrySourceApplied:
     "로컬 레지스트리 소스로 전환하고 업데이트 확인을 시작했습니다.",
   remoteConfigLocalRegistryPermissionDenied:

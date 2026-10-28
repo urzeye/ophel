@@ -1887,7 +1887,7 @@ export const ja = {
   remoteConfigAutoUpdateDesc: "24 時間に 1 回までチェックします。",
   remoteConfigRegistrySourceLabel: "開発用 Registry ソース",
   remoteConfigRegistrySourceDesc:
-    "開発ビルドのみ使用できます。完全な index.json URL を入力し、空欄にすると既定のソースを使います。",
+    "完全な index.json URL を入力してください。空欄にすると既定のソースを使います。",
   remoteConfigRegistrySourcePlaceholder: "https://staging.example.com/index.json",
   remoteConfigRegistrySourceApplyButton: "適用",
   remoteConfigRegistrySourceApplied:
@@ -1928,7 +1928,7 @@ export const ja = {
     "ローカル Registry の確認に失敗（{url}）：{error}。pnpm registry:serve が起動しているか確認してください。",
   remoteConfigLocalRegistryUseButton: "ローカル Registry を使う",
   remoteConfigLocalRegistryHint:
-    "先に pnpm registry:serve を実行してから「{button}」を押してください。ローカル署名鍵は開発ビルドでのみ信頼されます。",
+    "先に pnpm registry:serve を実行してから「{button}」を押してください。ループバック（127.0.0.1 / localhost）のソースはすべてのビルドでローカル署名鍵を信頼します。",
   remoteConfigLocalRegistrySourceApplied:
     "ローカル Registry ソースに切り替え、更新確認を開始しました。",
   remoteConfigLocalRegistryPermissionDenied:

@@ -1894,7 +1894,7 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   remoteConfigAutoUpdateDesc: "Prüft höchstens einmal alle 24 Stunden.",
   remoteConfigRegistrySourceLabel: "Registry-Quelle für die Entwicklung",
   remoteConfigRegistrySourceDesc:
-    "Nur in Entwicklungs-Builds verfügbar. Vollständige index.json-URL eingeben; leer lassen, um die Standardquellen zu verwenden.",
+    "Vollständige index.json-URL eingeben; leer lassen, um die Standardquellen zu verwenden.",
   remoteConfigRegistrySourcePlaceholder: "https://staging.example.com/index.json",
   remoteConfigRegistrySourceApplyButton: "Anwenden",
   remoteConfigRegistrySourceApplied:
@@ -1937,7 +1937,7 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
     "Lokale Registry-Prüfung fehlgeschlagen ({url}): {error}. Stelle sicher, dass pnpm registry:serve läuft.",
   remoteConfigLocalRegistryUseButton: "Lokales Registry nutzen",
   remoteConfigLocalRegistryHint:
-    "Zuerst pnpm registry:serve ausführen, dann “{button}” klicken. Nur Entwicklungsbuilds vertrauen dem lokalen Signaturschlüssel.",
+    "Zuerst pnpm registry:serve ausführen, dann “{button}” klicken. Loopback-Quellen (127.0.0.1 / localhost) vertrauen dem lokalen Signaturschlüssel in allen Builds.",
   remoteConfigLocalRegistrySourceApplied:
     "Auf lokale Registry-Quelle umgestellt und Update-Prüfung gestartet.",
   remoteConfigLocalRegistryPermissionDenied:

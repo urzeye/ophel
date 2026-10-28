@@ -1819,7 +1819,7 @@ export const zhCN = {
   remoteConfigAutoUpdateLabel: "自动更新适配配置",
   remoteConfigAutoUpdateDesc: "最多每 24 小时检查一次。",
   remoteConfigRegistrySourceLabel: "开发 Registry 源",
-  remoteConfigRegistrySourceDesc: "仅开发构建可用。请输入完整的 index.json 地址；留空使用默认源。",
+  remoteConfigRegistrySourceDesc: "请输入完整的 index.json 地址；留空使用默认源。",
   remoteConfigRegistrySourcePlaceholder: "https://staging.example.com/index.json",
   remoteConfigRegistrySourceApplyButton: "应用",
   remoteConfigRegistrySourceApplied: "开发 Registry 源已保存，并立即检查更新。",
@@ -1857,7 +1857,7 @@ export const zhCN = {
     "本地 Registry 检查失败（{url}）：{error}。请确认已运行 pnpm registry:serve。",
   remoteConfigLocalRegistryUseButton: "使用本地 Registry",
   remoteConfigLocalRegistryHint:
-    "先运行 pnpm registry:serve，再点「{button}」。仅开发构建会信任本地签名密钥。",
+    "先运行 pnpm registry:serve，再点「{button}」。回环地址（127.0.0.1 / localhost）的源在所有构建中都信任本地签名密钥。",
   remoteConfigLocalRegistrySourceApplied: "已切换到本地 Registry 源并开始检查更新。",
   remoteConfigLocalRegistryPermissionDenied:
     "未获得访问本地 Registry 的权限。请允许 127.0.0.1 主机权限后重试。",

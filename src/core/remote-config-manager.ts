@@ -39,7 +39,11 @@ import {
   verifyRegistryIndexSignature,
   type TrustedRegistrySigningKey,
 } from "./remote-config-signature"
-import { shouldRelaxRegistryRevisionGuards } from "./remote-config-local-dev"
+import {
+  isLoopbackRegistrySourceUrl,
+  LOCAL_DEV_REGISTRY_TRUSTED_KEY,
+  shouldRelaxRegistryRevisionGuards,
+} from "./remote-config-local-dev"
 import { normalizeRemoteConfigSourceUrl } from "./remote-config-source"
 import { loadRemoteConfigState } from "./remote-config-state"
 
@@ -654,11 +658,14 @@ export class RemoteConfigManager {
       signatureUrl,
       REMOTE_CONFIG_MAX_SIGNATURE_BYTES,
     )
-    const signingKey = await verifyRegistryIndexSignature(
-      indexBytes,
-      signatureBytes,
-      this.trustedSigningKeys,
-    )
+    // 回环源（本机调试 registry）始终信任本地开发签名 key：内容来自用户本机，
+    // 不会削弱默认远程源的签名校验；非回环源仍只信任构造时传入的 key
+    const signingKeys =
+      isLoopbackRegistrySourceUrl(sourceUrl) &&
+      !this.trustedSigningKeys.some((key) => key.keyId === LOCAL_DEV_REGISTRY_TRUSTED_KEY.keyId)
+        ? [...this.trustedSigningKeys, LOCAL_DEV_REGISTRY_TRUSTED_KEY]
+        : this.trustedSigningKeys
+    const signingKey = await verifyRegistryIndexSignature(indexBytes, signatureBytes, signingKeys)
     const index = validateRemoteConfigRegistryIndex(decodeJson(indexBytes, sourceUrl))
     assertRegistrySigningKeyAllowsRevision(signingKey, index.registryRevision)
     const relaxRevisionGuards = shouldRelaxRegistryRevisionGuards(
