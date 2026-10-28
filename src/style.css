@@ -2396,9 +2396,9 @@
 }
 
 .quick-prompt-btn.tools-trigger-btn.active {
-  background: var(--gh-primary);
-  color: var(--gh-text-on-primary, white);
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--gh-primary) 40%, transparent);
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 14%, var(--gh-bg, #ffffff));
+  color: var(--gh-primary-text, var(--gh-primary, #4285f4));
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--gh-primary, #4285f4) 18%, transparent);
   animation: tools-spin 3s linear infinite;
   transform: scale(1.03);
 }
