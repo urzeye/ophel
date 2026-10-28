@@ -11,11 +11,86 @@ import { ClearIcon, ThemeDarkIcon, ThemeLightIcon } from "~components/icons"
 import { DialogOverlay, Tooltip } from "~components/ui"
 import { t } from "~utils/i18n"
 import type { CustomStyle } from "~utils/storage"
-import { createSafeHTML } from "~utils/trusted-types"
 
 import { SafeCodeEditor } from "./SafeCodeEditor"
 
 hljs.registerLanguage("css", css)
+
+const HTML_ENTITIES: Record<string, string> = {
+  amp: "&",
+  lt: "<",
+  gt: ">",
+  quot: '"',
+  apos: "'",
+}
+
+function decodeHighlightText(text: string): string {
+  return text.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (match, entity: string) => {
+    if (entity.startsWith("#")) {
+      const codePoint =
+        entity[1].toLowerCase() === "x"
+          ? Number.parseInt(entity.slice(2), 16)
+          : Number.parseInt(entity.slice(1), 10)
+      return Number.isInteger(codePoint) && codePoint >= 0 && codePoint <= 0x10ffff
+        ? String.fromCodePoint(codePoint)
+        : match
+    }
+    return HTML_ENTITIES[entity.toLowerCase()] ?? match
+  })
+}
+
+/**
+ * highlight.js 输出的是 HTML 字符串。这里转成 React 节点，
+ * 避免把 TrustedHTML 交给 react-simple-code-editor 当 children 渲染。
+ */
+function highlightHtmlToReact(html: string): React.ReactNode {
+  const root: React.ReactNode[] = []
+  const stack: Array<{ className: string; children: React.ReactNode[] }> = []
+  let key = 0
+
+  const currentChildren = () => (stack.length ? stack[stack.length - 1].children : root)
+  const append = (node: React.ReactNode) => currentChildren().push(node)
+
+  for (const part of html.split(/(<span class="[^"]*">|<\/span>)/g)) {
+    if (!part) continue
+
+    if (part === "</span>") {
+      const node = stack.pop()
+      if (node) {
+        append(
+          React.createElement(
+            "span",
+            { key: `token-${key++}`, className: node.className },
+            node.children,
+          ),
+        )
+      }
+      continue
+    }
+
+    if (part.startsWith('<span class="')) {
+      stack.push({ className: part.slice('<span class="'.length, -2), children: [] })
+      continue
+    }
+
+    append(decodeHighlightText(part))
+  }
+
+  // highlight.js 的输出是闭合的；这里兜底处理异常片段，避免丢内容。
+  while (stack.length) {
+    const node = stack.pop()!
+    append(
+      React.createElement(
+        "span",
+        { key: `token-${key++}`, className: node.className },
+        node.children,
+      ),
+    )
+  }
+
+  root.push(React.createElement("br", { key: "trailing-line" }))
+  return root
+}
 
 const STYLE_EDITOR_DIALOG_STYLES = `
   .gh-dialog.gh-style-editor-dialog {
@@ -308,7 +383,9 @@ export const CustomStyleEditorDialog: React.FC<CustomStyleEditorDialogProps> = (
             <SafeCodeEditor
               value={style.css}
               onValueChange={(code) => onChange({ ...style, css: code })}
-              highlight={(code) => createSafeHTML(hljs.highlight(code, { language: "css" }).value)}
+              highlight={(code) =>
+                highlightHtmlToReact(hljs.highlight(code, { language: "css" }).value)
+              }
               padding={12}
               style={{
                 fontFamily: '"Menlo", "Monaco", "Consolas", monospace',

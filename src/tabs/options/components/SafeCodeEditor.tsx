@@ -59,6 +59,8 @@ export class SafeCodeEditor extends Component<SafeCodeEditorProps, SafeCodeEdito
               fontFamily: '"Menlo", "Monaco", "Consolas", monospace',
               resize: "none",
               flex: 1,
+              boxSizing: "border-box",
+              minHeight: 0,
               width: "100%",
               height: "100%",
               border: "none",
