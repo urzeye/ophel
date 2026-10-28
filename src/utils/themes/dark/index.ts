@@ -268,7 +268,7 @@ export const darkPresets: ThemePreset[] = [
       "--gh-folder-bg-7": "rgba(232, 121, 249, 0.2)",
       "--gh-outline-locate-bg": "rgba(244, 114, 182, 0.2)",
       "--gh-outline-locate-border": "#facc15", // Neon Yellow (Contrast to Cyberpunk Pink/Cyan)
-      "--gh-outline-locate-shadow": "0 0 10px rgba(250, 204, 21, 0.6)",
+      "--gh-outline-locate-shadow": "rgba(250, 204, 21, 0.6)",
       "--gh-outline-sync-bg": "rgba(250, 204, 21, 0.15)",
       "--gh-outline-sync-border": "#eab308",
       "--gh-user-query-bg": "rgba(34, 211, 238, 0.1)",
@@ -709,7 +709,7 @@ export const darkPresets: ThemePreset[] = [
       "--gh-folder-bg-7": "rgba(34, 197, 94, 0.1)",
       "--gh-outline-locate-bg": "rgba(34, 197, 94, 0.5)",
       "--gh-outline-locate-border": "#f59e0b", // Amber (Contrast to Terminal Green)
-      "--gh-outline-locate-shadow": "0 0 15px rgba(245, 158, 11, 0.6)",
+      "--gh-outline-locate-shadow": "rgba(245, 158, 11, 0.6)",
       "--gh-outline-sync-bg": "rgba(245, 158, 11, 0.1)",
       "--gh-outline-sync-border": "#d97706",
       "--gh-user-query-bg": "rgba(34, 197, 94, 0.05)",
