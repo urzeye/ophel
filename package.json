@@ -16,6 +16,7 @@
   "scripts": {
     "prepare:mermaid-assets": "node scripts/prepare-mermaid-assets.mjs",
     "dev": "pnpm prepare:mermaid-assets && plasmo dev",
+    "dev:firefox": "pnpm prepare:mermaid-assets && plasmo dev --target=firefox-mv3",
     "lint": "eslint . --fix",
     "lint:check": "eslint .",
     "format": "prettier --write .",
@@ -36,9 +37,9 @@
     "build:userscript:local": "node scripts/build-userscript-local.mjs",
     "serve:userscript:assets": "node scripts/serve-userscript-assets.mjs",
     "sync:supporters": "node scripts/generate-supporters-readmes.mjs",
-    "generate:badges": "node scripts/generate-badges.mjs",
     "sync:contributors": "node scripts/sync-contributors.mjs && npx all-contributors-cli generate",
     "sync:all": "pnpm sync:supporters && pnpm sync:contributors",
+    "generate:badges": "node scripts/generate-badges.mjs",
     "release": "node scripts/release.mjs",
     "release-notes:sync": "node scripts/sync-release-notes.mjs",
     "release:redo": "node scripts/release.mjs redo",
