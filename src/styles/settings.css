@@ -2776,9 +2776,10 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   background: color-mix(in srgb, var(--gh-primary, #4285f4) 8%, var(--gh-input-bg, #ffffff));
 }
 
-/* 值等于默认值（或整个滑块禁用）时没有可恢复的内容：隐藏但保留占位，避免布局跳动 */
+/* 值等于默认值（或整个滑块禁用）时没有可恢复的内容：保留可见的禁用态，不隐藏 */
 .settings-slider-reset:disabled {
-  visibility: hidden;
+  cursor: not-allowed;
+  opacity: 0.45;
 }
 
 .settings-slider-boundary {
