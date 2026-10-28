@@ -36,15 +36,30 @@ export const themeVariablesToCSS = (variables: ThemeVariables): string => {
  * 从 CSS 字符串中解析主题变量
  * 用于自定义样式的实时预览
  */
-export const parseThemeVariablesFromCSS = (css: string): Partial<ThemeVariables> => {
+export const parseThemeVariablesFromCSS = (
+  css: string,
+  mode?: "light" | "dark",
+): Partial<ThemeVariables> => {
   const variables: Partial<ThemeVariables> = {}
+
+  // 同一样式可以同时提供 :host（浅色）和 :host([data-theme="dark"])（深色）
+  // 两套色板。预览浅色样式时跳过深色规则，避免深色变量覆盖浅色预览。
+  // 先移除注释：模板把可选变量留在注释里，这些值不应影响预览。
+  const withoutComments = css.replace(/\/\*[\s\S]*?\*\//g, "")
+  const source =
+    mode === "light"
+      ? withoutComments.replace(
+          /:host\(\s*\[data-theme\s*=\s*["']?dark["']?\s*\]\s*\)\s*\{[^{}]*\}/gi,
+          "",
+        )
+      : withoutComments
 
   // 匹配 CSS 变量声明: --variable-name: value;
   // 兼容多行和不同格式
   const regex = /(--[\w-]+)\s*:\s*([^;]+);/g
 
   let match
-  while ((match = regex.exec(css)) !== null) {
+  while ((match = regex.exec(source)) !== null) {
     const key = match[1] as keyof ThemeVariables
     const value = match[2].trim()
     variables[key] = value

@@ -36,26 +36,454 @@ interface AppearancePageProps {
   initialTab?: string
 }
 
-// CSS 模板
-const CSS_TEMPLATE = `/* Custom CSS Cheat Sheet
- * 以下是本扩展使用的主要 CSS 类名，您可以自由覆盖。
- */
+// CSS 模板：完整示例，同时作为新建自定义样式的起点
+const CSS_TEMPLATE = `/* ==========================================================================
+   Ophel custom style starter
+   --------------------------------------------------------------------------
+   This file contains two complete palettes:
+   - the light palette in ":host", based on the built-in "Google Gradient";
+   - the dark palette in ':host([data-theme="dark"])', based on the built-in
+     "Classic Dark".
+   All 24 built-in presets use the same --gh-* variable contract, so any value
+   can be copied from src/utils/themes/light/index.ts or
+   src/utils/themes/dark/index.ts.
 
-/* === 主题变量 === */
-/*
+   How it works
+   - Custom styles are injected inside Ophel's Shadow DOM.
+   - :host is the panel host element. Variables declared here cascade to
+     every panel component inside the Shadow DOM.
+   - ThemeManager writes data-theme="light" or data-theme="dark" to the host.
+     The second block wins only in dark mode, so both blocks can stay active.
+   - The Light/Dark radio in the editor decides which picker list this style
+     appears in and which palette the preview uses. It does not change the CSS
+     selectors; the host attribute does.
+   - Prefer changing variables over overriding component CSS. Variables keep
+     hover, focus, disabled states, and every built-in theme coherent.
+   - Every declaration is optional. Remove one to inherit the default from
+     Ophel's base stylesheet.
+   - The most useful starting points are --gh-primary, --gh-header-bg,
+     --gh-bg, --gh-text, --gh-card-bg, and the selected/folder colors.
+
+   Tip: change one group at a time and use the style preview in the list to
+   compare the result before saving.
+   ========================================================================== */
+
 :host {
+  /* Keep native controls (scrollbars, form widgets) in the matching mode. */
+  color-scheme: light;
+
+  /* ------------------------------------------------------------------------
+     1. Surfaces
+     The main panel, secondary surfaces, and subtle fills such as hovered rows.
+     ------------------------------------------------------------------------ */
   --gh-bg: #ffffff;
+  --gh-bg-secondary: #f9fafb;
+  --gh-bg-tertiary: #f3f4f6;
+
+  /* ------------------------------------------------------------------------
+     2. Text
+     Primary text, supporting text, muted text, and text placed on top of the
+     primary/accent color.
+     ------------------------------------------------------------------------ */
   --gh-text: #1f2937;
+  --gh-text-secondary: #6b7280;
+  --gh-text-tertiary: #8d94a1;
+  --gh-text-on-primary: #ffffff;
+
+  /* Optional icon colors. They normally derive from the text and primary
+     colors; override them only when icons need different contrast.
+  --gh-icon: var(--gh-text-secondary);
+  --gh-icon-active: var(--gh-primary);
+  --gh-icon-hover: var(--gh-text);
+  */
+
+  /* ------------------------------------------------------------------------
+     3. Borders and interaction
+     Base border, active/accent border, hover fill, and pressed/selected fill.
+     ------------------------------------------------------------------------ */
+  --gh-border: #e5e7eb;
+  --gh-border-active: #4285f4;
+  --gh-hover: #f3f4f6;
+  --gh-active-bg: #e5e7eb;
+
+  /* ------------------------------------------------------------------------
+     4. Inputs
+     Text fields, search boxes, and the focus ring.
+     ------------------------------------------------------------------------ */
+  --gh-input-bg: #ffffff;
+  --gh-input-border: #d1d5db;
+  --gh-input-focus-border: #4285f4;
+  --gh-input-focus-shadow: 0 0 0 2px rgba(66, 133, 244, 0.1);
+
+  /* ------------------------------------------------------------------------
+     5. Elevation
+     Panel shadow, small control shadow, large dialog shadow, and the colored
+     shadow used by primary actions.
+     ------------------------------------------------------------------------ */
+  --gh-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  --gh-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --gh-shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.3);
+  --gh-shadow-brand: 0 4px 12px rgba(66, 133, 244, 0.3);
+
+  /* ------------------------------------------------------------------------
+     6. Brand and accents
+     --gh-primary is the main accent. --gh-primary-text is the readable
+     variant used for text and icons on light surfaces.
+     ------------------------------------------------------------------------ */
   --gh-primary: #4285f4;
+  --gh-primary-text: #1a73e8;
+  --gh-secondary: #34a853;
+  --gh-danger: #ef4444;
+
+  /* ------------------------------------------------------------------------
+     7. Panel header and tabs
+     --gh-header-bg accepts a solid color or any CSS gradient. When the header
+     background is light, set --gh-header-text to a dark color.
+     ------------------------------------------------------------------------ */
+  --gh-header-bg: linear-gradient(135deg, #4285f4 0%, #34a853 100%);
+  --gh-header-text: #ffffff;
+  --gh-tag-active-bg: #4285f4;
+  --gh-checkbox-bg: #4f46e5;
+
+  /* ------------------------------------------------------------------------
+     8. Badges
+     Small labels such as counts, "New" markers, and mode badges.
+     ------------------------------------------------------------------------ */
+  --gh-badge-text: #4b5563;
+  --gh-badge-bg: #ffffff;
+  --gh-badge-border: #e5e7eb;
+  --gh-badge-shadow: #ffffff;
+
+  /* ------------------------------------------------------------------------
+     9. Selection and folders
+     Selected row background plus eight folder accent colors. Folder colors
+     are intentionally light; text continues to use --gh-text.
+     ------------------------------------------------------------------------ */
+  --gh-selected-gradient: linear-gradient(
+    135deg,
+    rgba(66, 133, 244, 0.1) 0%,
+    rgba(52, 211, 153, 0.1) 100%
+  );
+  --gh-folder-bg-default: #e0f2fe;
+  --gh-folder-bg-expanded: #c7d2fe;
+  --gh-folder-bg-0: #fef9e7;
+  --gh-folder-bg-1: #fdf2f8;
+  --gh-folder-bg-2: #eff6ff;
+  --gh-folder-bg-3: #ecfdf5;
+  --gh-folder-bg-4: #faf5ff;
+  --gh-folder-bg-5: #fefce8;
+  --gh-folder-bg-6: #ecfeff;
+  --gh-folder-bg-7: #fdf4ff;
+
+  /* ------------------------------------------------------------------------
+     10. Outline highlights
+     Locate is the strong highlight used when jumping to an outline item.
+     Sync is the softer background used while following the page scroll.
+     ------------------------------------------------------------------------ */
+  --gh-outline-locate-bg: rgba(16, 185, 129, 0.25);
+  --gh-outline-locate-border: #10b981;
+  --gh-outline-locate-shadow: rgba(16, 185, 129, 0.5);
+  --gh-outline-sync-bg: rgba(52, 211, 153, 0.1);
+  --gh-outline-sync-border: #34d399;
+
+  /* ------------------------------------------------------------------------
+     11. User question blocks
+     Backgrounds for quoted user messages and their hover state.
+     ------------------------------------------------------------------------ */
+  --gh-user-query-bg: rgba(66, 133, 244, 0.08);
+  --gh-user-query-hover-bg: rgba(66, 133, 244, 0.15);
+
+  /* ------------------------------------------------------------------------
+     12. Destructive actions
+     Delete buttons, warnings, and confirmation dialogs.
+     ------------------------------------------------------------------------ */
+  --gh-bg-danger: #fef2f2;
+  --gh-text-danger: #ef4444;
+  --gh-bg-danger-hover: #fee2e2;
+
+  /* ------------------------------------------------------------------------
+     13. Brand gradient and glass controls
+     The gradient is used by the logo and brand accents. Glass colors are used
+     by translucent controls placed on top of the header.
+     ------------------------------------------------------------------------ */
+  --gh-brand-gradient: linear-gradient(135deg, #4285f4 0%, #34a853 100%);
+  --gh-brand-border: transparent;
+  --gh-glass-bg: rgba(255, 255, 255, 0.2);
+  --gh-glass-bg-hover: rgba(255, 255, 255, 0.3);
+  --gh-glass-text: #ffffff;
+
+  /* ------------------------------------------------------------------------
+     14. Settings surfaces
+     Cards and borders used by the in-panel settings dialog.
+     ------------------------------------------------------------------------ */
+  --gh-card-bg: #ffffff;
+  --gh-card-border: #e5e7eb;
+
+  /* Optional settings-page layers. Leave these unset to derive them from the
+     background and card colors above.
+  --gh-surface: var(--gh-card-bg);
+  --gh-canvas: color-mix(in srgb, var(--gh-bg) 96%, var(--gh-text));
+  */
+
+  /* ------------------------------------------------------------------------
+     15. Overlays and small details
+     ------------------------------------------------------------------------ */
+  --gh-overlay-bg: rgba(0, 0, 0, 0.5);
+  --gh-btn-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  --gh-btn-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.2);
+  --gh-search-highlight-bg: rgba(255, 235, 59, 0.5);
+  --gh-emoji-selected-bg: #dbeafe;
+  --gh-highlight-pulse: rgba(59, 130, 246, 0.3);
+  --gh-slider-dot-bg: #d1d5db;
+  --gh-code-bg: rgba(0, 0, 0, 0.05);
+
+  /* Optional: global search result badges inside the outline.
+  --gh-search-outline-query-accent: #3b82f6;
+  --gh-search-outline-query-bg: rgba(59, 130, 246, 0.14);
+  --gh-search-outline-query-text: #1d4ed8;
+  --gh-search-outline-query-border: rgba(59, 130, 246, 0.32);
+  --gh-search-outline-reply-accent: #8b5cf6;
+  --gh-search-outline-reply-bg: rgba(139, 92, 246, 0.14);
+  --gh-search-outline-reply-text: #7c3aed;
+  --gh-search-outline-reply-border: rgba(139, 92, 246, 0.3);
+  */
+
+  /* Optional: a background image or animation behind the panel.
+  --gh-bg-image: url("https://example.com/texture.png");
+  --gh-bg-animation: none;
+  */
+}
+
+/* ==========================================================================
+   Optional component-level overrides
+   --------------------------------------------------------------------------
+   The variables above cover most of the UI. Use class selectors only when a
+   change cannot be expressed with variables. Keep overrides small so future
+   updates remain safe. Uncomment an example and adjust it.
+
+.gh-main-panel {
+  border-radius: 16px;
+  border-color: var(--gh-primary);
+}
+
+.gh-panel-header {
+  background: var(--gh-header-bg);
+  color: var(--gh-header-text, #ffffff);
+}
+
+.gh-panel-tab-btn.active {
+  color: var(--gh-primary-text, var(--gh-primary));
+  border-bottom-color: var(--gh-primary);
+}
+
+.gh-panel-content {
+  background: linear-gradient(180deg, var(--gh-bg) 0%, var(--gh-bg-secondary) 100%);
 }
 */
 
-/* === 面板样式 === */
-/*
-.gh-main-panel { }
-.gh-panel-header { }
-.gh-panel-content { }
-*/
+/* ==========================================================================
+   Dark palette
+   --------------------------------------------------------------------------
+   ThemeManager writes data-theme="dark" to the panel host, so this block only
+   applies in dark mode. The values mirror the built-in "Classic Dark" preset.
+   Keep the variable names identical to the light block: that makes the two
+   palettes easy to compare and keeps the editor preview accurate.
+   ========================================================================== */
+
+:host([data-theme="dark"]) {
+  color-scheme: dark;
+
+  /* ------------------------------------------------------------------------
+     1. Surfaces
+     The secondary surface is intentionally darker than the panel. This adds
+     depth in dark mode without relying on heavy shadows.
+     ------------------------------------------------------------------------ */
+  --gh-bg: #1e1e1e;
+  --gh-bg-secondary: #0b0b0b;
+  --gh-bg-tertiary: #262626;
+
+  /* ------------------------------------------------------------------------
+     2. Text
+     Dark themes reverse the light relationship: text gets lighter as the
+     surface gets darker. --gh-text-on-primary is dark here because the accent
+     color is light enough to need dark text on top.
+     ------------------------------------------------------------------------ */
+  --gh-text: #e3e3e3;
+  --gh-text-secondary: #a0a0a0;
+  --gh-text-tertiary: #6b7280;
+  --gh-text-on-primary: #1e1b4b;
+
+  /* Optional icon colors. They normally derive from the text and primary
+     colors; override them only when icons need different contrast.
+  --gh-icon: var(--gh-text-secondary);
+  --gh-icon-active: var(--gh-primary);
+  --gh-icon-hover: var(--gh-text);
+  */
+
+  /* ------------------------------------------------------------------------
+     3. Borders and interaction
+     Keep borders one step lighter than their surface so controls remain
+     visible without turning into bright outlines.
+     ------------------------------------------------------------------------ */
+  --gh-border: #333333;
+  --gh-border-active: #818cf8;
+  --gh-hover: #262626;
+  --gh-active-bg: #333333;
+
+  /* ------------------------------------------------------------------------
+     4. Inputs
+     Inputs sit slightly above the panel surface. The focus ring uses the
+     accent color with transparency so it does not glow too aggressively.
+     ------------------------------------------------------------------------ */
+  --gh-input-bg: #262626;
+  --gh-input-border: #404040;
+  --gh-input-focus-border: #818cf8;
+  --gh-input-focus-shadow: 0 0 0 2px rgba(129, 140, 248, 0.2);
+
+  /* ------------------------------------------------------------------------
+     5. Elevation
+     Dark surfaces need stronger black shadows to separate floating layers
+     from the page. The brand shadow keeps the accent hue.
+     ------------------------------------------------------------------------ */
+  --gh-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  --gh-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --gh-shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.7);
+  --gh-shadow-brand: 0 4px 12px rgba(129, 140, 248, 0.3);
+
+  /* ------------------------------------------------------------------------
+     6. Brand and accents
+     --gh-primary is the main accent. --gh-primary-text is the readable
+     version used for text and icons; dark themes usually keep both identical.
+     ------------------------------------------------------------------------ */
+  --gh-primary: #818cf8;
+  --gh-primary-text: #818cf8;
+  --gh-secondary: #6366f1;
+  --gh-danger: #fca5a5;
+
+  /* ------------------------------------------------------------------------
+     7. Panel header and tabs
+     A solid header color works better than a bright gradient in dark mode.
+     --gh-header-text must stay readable against --gh-header-bg.
+     ------------------------------------------------------------------------ */
+  --gh-header-bg: #1e1e1e;
+  --gh-header-text: #ffffff;
+  --gh-tag-active-bg: rgba(129, 140, 248, 0.6);
+  --gh-checkbox-bg: #818cf8;
+
+  /* ------------------------------------------------------------------------
+     8. Badges
+     Badges use a raised neutral surface instead of the light theme's white
+     pill, otherwise they would become the brightest element on the panel.
+     ------------------------------------------------------------------------ */
+  --gh-badge-text: #e5e7eb;
+  --gh-badge-bg: #374151;
+  --gh-badge-border: #4b5563;
+  --gh-badge-shadow: #1f2937;
+
+  /* ------------------------------------------------------------------------
+     9. Selection and folders
+     Folder colors are translucent so the panel background still shows through
+     and the eight accent colors stay distinguishable in dark mode.
+     ------------------------------------------------------------------------ */
+  --gh-selected-gradient: linear-gradient(
+    135deg,
+    rgba(129, 140, 248, 0.25) 0%,
+    rgba(99, 102, 241, 0.15) 100%
+  );
+  --gh-folder-bg-default: rgba(66, 133, 244, 0.15);
+  --gh-folder-bg-expanded: rgba(66, 133, 244, 0.3);
+  --gh-folder-bg-0: rgba(253, 224, 71, 0.15);
+  --gh-folder-bg-1: rgba(244, 114, 182, 0.15);
+  --gh-folder-bg-2: rgba(96, 165, 250, 0.15);
+  --gh-folder-bg-3: rgba(52, 211, 153, 0.15);
+  --gh-folder-bg-4: rgba(167, 139, 250, 0.15);
+  --gh-folder-bg-5: rgba(253, 224, 71, 0.1);
+  --gh-folder-bg-6: rgba(34, 211, 238, 0.15);
+  --gh-folder-bg-7: rgba(232, 121, 249, 0.15);
+
+  /* ------------------------------------------------------------------------
+     10. Outline highlights
+     Locate is the strong highlight used when jumping to an outline item.
+     Sync is the softer background used while following the page scroll.
+     Classic Dark uses amber for both so they stand out from the blue accent.
+     ------------------------------------------------------------------------ */
+  --gh-outline-locate-bg: rgba(52, 211, 153, 0.3);
+  --gh-outline-locate-border: #fbbf24;
+  --gh-outline-locate-shadow: rgba(251, 191, 36, 0.6);
+  --gh-outline-sync-bg: rgba(251, 191, 36, 0.15);
+  --gh-outline-sync-border: #f59e0b;
+
+  /* ------------------------------------------------------------------------
+     11. User question blocks
+     Quoted user messages use a translucent accent so they read as related to
+     the primary color without competing with the outline highlight.
+     ------------------------------------------------------------------------ */
+  --gh-user-query-bg: rgba(66, 133, 244, 0.15);
+  --gh-user-query-hover-bg: rgba(66, 133, 244, 0.25);
+
+  /* ------------------------------------------------------------------------
+     12. Destructive actions
+     Destructive colors stay translucent so warnings feel integrated with the
+     dark surface instead of appearing as bright red blocks.
+     ------------------------------------------------------------------------ */
+  --gh-bg-danger: rgba(239, 68, 68, 0.15);
+  --gh-text-danger: #fca5a5;
+  --gh-bg-danger-hover: rgba(239, 68, 68, 0.25);
+
+  /* ------------------------------------------------------------------------
+     13. Brand gradient and glass controls
+     The brand gradient is used by the logo and brand accents. Glass colors
+     are used by translucent controls placed on top of the header.
+     ------------------------------------------------------------------------ */
+  --gh-brand-gradient: linear-gradient(135deg, #1a73e8 0%, #1e8e3e 100%);
+  --gh-brand-border: #333333;
+  --gh-glass-bg: rgba(255, 255, 255, 0.08);
+  --gh-glass-bg-hover: rgba(255, 255, 255, 0.12);
+  --gh-glass-text: #e3e3e3;
+
+  /* ------------------------------------------------------------------------
+     14. Settings surfaces
+     Cards and borders used by the in-panel settings dialog.
+     ------------------------------------------------------------------------ */
+  --gh-card-bg: #0b0b0b;
+  --gh-card-border: #333333;
+
+  /* Optional settings-page layers. Leave these unset to use the dark
+     derivations from theme-variables.css.
+  --gh-surface: color-mix(in srgb, var(--gh-bg) 92%, #ffffff);
+  --gh-canvas: color-mix(in srgb, var(--gh-bg) 78%, #000000);
+  */
+
+  /* ------------------------------------------------------------------------
+     15. Overlays and small details
+     These tokens cover masks, button elevation, search marks, emoji
+     selection, the locate pulse, slider dots, and inline code backgrounds.
+     ------------------------------------------------------------------------ */
+  --gh-overlay-bg: rgba(0, 0, 0, 0.7);
+  --gh-btn-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  --gh-btn-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --gh-search-highlight-bg: rgba(255, 235, 59, 0.4);
+  --gh-emoji-selected-bg: rgba(129, 140, 248, 0.3);
+  --gh-highlight-pulse: rgba(129, 140, 248, 0.4);
+  --gh-slider-dot-bg: #4b5563;
+  --gh-code-bg: rgba(255, 255, 255, 0.08);
+
+  /* Optional: global search result badges inside the outline.
+  --gh-search-outline-query-accent: #60a5fa;
+  --gh-search-outline-query-bg: rgba(96, 165, 250, 0.25);
+  --gh-search-outline-query-text: #bfdbfe;
+  --gh-search-outline-query-border: rgba(96, 165, 250, 0.42);
+  --gh-search-outline-reply-accent: #a78bfa;
+  --gh-search-outline-reply-bg: rgba(167, 139, 250, 0.24);
+  --gh-search-outline-reply-text: #ddd6fe;
+  --gh-search-outline-reply-border: rgba(167, 139, 250, 0.4);
+  */
+
+  /* Optional: a background image or animation behind the panel.
+  --gh-bg-image: url("https://example.com/texture.png");
+  --gh-bg-animation: none;
+  */
+}
 `
 
 // 主题卡片组件
@@ -216,7 +644,7 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
   // 将自定义样式转换为 ThemePreset 格式以兼容 UI 显示
   const customStyleToPreset = (style: CustomStyle): ThemePreset => {
     // 解析用户输入的 CSS 变量
-    const parsedVariables = parseThemeVariablesFromCSS(style.css)
+    const parsedVariables = parseThemeVariablesFromCSS(style.css, style.mode)
 
     // 默认变量（作为回退）
     const defaults = {
