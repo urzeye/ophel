@@ -208,14 +208,14 @@ const STYLE_EDITOR_DIALOG_STYLES = `
   }
   .gh-style-editor-code {
     flex: 1;
-    min-height: 0;
     display: flex;
     flex-direction: column;
     gap: 8px;
   }
   .gh-style-editor-code-frame {
     flex: 1;
-    min-height: 0;
+    /* 保留最小编辑高度：极矮视口下由 body 整体滚动，而不是把代码框压到不可用 */
+    min-height: 160px;
     border: 1px solid var(--gh-input-border, #d1d5db);
     border-radius: 8px;
     background: var(--gh-bg-secondary, #f9fafb);
