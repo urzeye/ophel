@@ -792,6 +792,12 @@
   min-width: 0;
 }
 
+/* 提示词 tab：有分类 chips 行时，搜索行与 chips 合并为一个控制区块，
+   去掉中间分隔线（chips 行自带底线）；Chains 视图无 chips，保留搜索行底线 */
+.gh-prompts-tool-stack.has-category-bar {
+  border-bottom: none;
+}
+
 .gh-panel-toolbar-group {
   display: inline-flex;
   align-items: center;

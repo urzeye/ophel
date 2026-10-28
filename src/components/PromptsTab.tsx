@@ -2989,7 +2989,11 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
       className="gh-prompts-tab"
       style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       {/* 搜索栏 + 操作按钮 */}
-      <div className="gh-panel-tool-stack gh-prompts-tool-stack">
+      {/* has-category-bar：提示词视图下有 chips 行自带底线，搜索行的分隔线可去掉；Chains 视图保留底线 */}
+      <div
+        className={`gh-panel-tool-stack gh-prompts-tool-stack ${
+          activeLibraryView === "prompts" ? "has-category-bar" : ""
+        }`}>
         <div className="gh-panel-toolbar">
           <div className="gh-prompt-library-switch" role="tablist">
             <button

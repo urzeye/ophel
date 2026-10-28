@@ -39,7 +39,6 @@
   align-items: center;
   gap: 6px;
   padding: 7px 10px;
-  border-bottom: 1px solid var(--gh-border, #e5e7eb);
   flex-shrink: 0;
   background: var(--gh-bg, #ffffff);
 }
