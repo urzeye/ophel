@@ -358,7 +358,6 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
         <div className="settings-site-selector-dropdown">
           <SelectDropdown
             buttonClassName="settings-select"
-            menuClassName="settings-site-select-menu"
             options={selectorOptions}
             value={selectedSite}
             ariaLabel={t("siteSelectorLabel")}
