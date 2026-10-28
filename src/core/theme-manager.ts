@@ -62,6 +62,7 @@ export class ThemeManager {
   private adapter?: SiteAdapter | null
   private nativeThemeOverrideEnabled: boolean
   private customStyles: CustomStyle[] = [] // 存储自定义样式列表
+  private rootVariableKeys: string[] = [] // 上一次写到 :root 的预置变量名，换预置时据此清掉新预置没有的
   private skipNextDetection = false // 标志：跳过下一次主题检测，避免 toggle 后被 observer 立即反写
   private listeners: Set<Listener> = new Set() // 订阅者集合
   private systemMediaQuery: MediaQueryList | null = null
@@ -778,10 +779,16 @@ export class ThemeManager {
 
     // 在 :root 上设置变量（仅对预置主题有效）
     // 自定义样式通常包含选择器，可能直接覆盖 :root 这里的变量，或者通过 CSS 规则生效
+    // 可选变量（如 --gh-primary-text）只有部分预置定义：先清掉上一套写过、这一套没有的，
+    // 否则 portal 到 body 的弹窗会沿用上一套主题的值，直到刷新页面
     if (vars) {
+      for (const key of this.rootVariableKeys) {
+        if (!(key in vars)) root.style.removeProperty(key)
+      }
       for (const [key, value] of Object.entries(vars)) {
         root.style.setProperty(key, value)
       }
+      this.rootVariableKeys = Object.keys(vars)
     }
 
     // 提前构建主题 CSS 字符串（供注入和缓存复用）
