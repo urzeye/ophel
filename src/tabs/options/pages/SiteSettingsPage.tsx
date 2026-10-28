@@ -358,6 +358,7 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
         <div className="settings-site-selector-dropdown">
           <SelectDropdown
             buttonClassName="settings-select"
+            menuClassName="settings-site-select-menu"
             options={selectorOptions}
             value={selectedSite}
             ariaLabel={t("siteSelectorLabel")}
@@ -411,6 +412,8 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
                   label={t("zenModeExitButtonVisibleLabel")}
                   description={t("zenModeExitButtonVisibleDesc")}
                   settingId="layout-zen-mode-exit-button-visible"
+                  disabled={!currentZenMode.enabled}
+                  onDisabledClick={() => showPrerequisiteToast(t("zenModeTitle"))}
                   checked={currentZenMode.showExitButton ?? true}
                   onChange={() =>
                     updateLayout("zenMode", currentZenMode, {

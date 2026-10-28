@@ -731,11 +731,17 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   color: var(--gh-text-secondary, #6b7280);
 }
 
-/* 下拉随容器伸缩（上限 280px），窄容器里不再把「当前站点」徽标挤出栏外 */
+/* 下拉只按所选站点名称的宽度走，不参与伸展：一行的空间留给右侧的徽标与提示。
+   flex-grow 为 0 是关键，改 flex-basis 改不动宽度 */
 .settings-site-selector-dropdown {
-  flex: 1 1 120px;
+  flex: 0 1 auto;
   min-width: 0;
   max-width: 280px;
+}
+
+/* 菜单不受触发器变窄的影响：至少撑到最长站点名（如 Gemini Enterprise）的宽度，不换行 */
+.settings-site-select-menu {
+  min-width: max-content;
 }
 
 .settings-site-option {
@@ -3665,10 +3671,14 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   top: -16px;
 }
 
-/* 站点选择器栏窄屏只留下拉与徽标（下拉自带可访问名称，标签可省）；
+/* 站点选择器栏窄屏只留下拉与徽标（下拉自带可访问名称，标签可省），下拉铺满徽标之外的宽度；
    选中非当前站点时，说明独占一行，不去挤下拉 */
 .is-compact .settings-site-selector-label {
   display: none;
+}
+
+.is-compact .settings-site-selector-dropdown {
+  flex: 1 1 120px;
 }
 
 .is-compact .settings-site-selector-hint {
