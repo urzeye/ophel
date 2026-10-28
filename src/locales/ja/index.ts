@@ -125,7 +125,7 @@ export const ja = {
   sitePacksCustomOriginsTitle: "カスタムサイトを追加",
   sitePacksCustomOriginsDesc:
     "自分でホストしている AI サイト（Open WebUI など）を追加し、どのパックで対応するかを選択します。",
-  sitePacksCustomOriginLabel: "HTTPS ドメイン",
+  sitePacksCustomOriginLabel: "サイトのアドレス",
   sitePacksCustomOriginPlaceholder: "https://chat.example.com",
   sitePacksBindingPackLabel: "パック",
   sitePacksBindingPackPlaceholder: "インストール済みパックを選択",

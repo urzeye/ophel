@@ -126,7 +126,7 @@ export const ru = {
   sitePacksCustomOriginsTitle: "Добавить свой сайт",
   sitePacksCustomOriginsDesc:
     "Добавьте собственный ИИ-сайт (например, Open WebUI) и выберите пакет, который его поддерживает.",
-  sitePacksCustomOriginLabel: "HTTPS-домен",
+  sitePacksCustomOriginLabel: "Адрес сайта",
   sitePacksCustomOriginPlaceholder: "https://chat.example.com",
   sitePacksBindingPackLabel: "Пакет",
   sitePacksBindingPackPlaceholder: "Выберите установленный пакет",

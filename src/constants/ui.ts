@@ -1256,7 +1256,19 @@ const SETTING_CARD_SEARCH_ITEMS: SettingsSearchItem[] = [
   {
     settingId: "site-pack-custom-origin",
     title: "自定义域名覆盖",
-    keywords: ["custom origin", "domains", "自定义域名", "域名覆盖", "绑定"],
+    keywords: [
+      "custom origin",
+      "custom site",
+      "site address",
+      "domains",
+      "http",
+      "https",
+      "自定义域名",
+      "自定义站点",
+      "站点地址",
+      "域名覆盖",
+      "绑定",
+    ],
   },
   {
     settingId: "backup-export-card",

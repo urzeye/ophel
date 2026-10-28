@@ -118,7 +118,7 @@ export const zhTW = {
   sitePacksRequiresNewerApp: "需要 Ophel {version} 或更新版本",
   sitePacksCustomOriginsTitle: "新增自訂網站",
   sitePacksCustomOriginsDesc: "新增你自己部署的 AI 網站（如 Open WebUI），選擇用哪個適配包支援它。",
-  sitePacksCustomOriginLabel: "HTTPS 網域",
+  sitePacksCustomOriginLabel: "站點網址",
   sitePacksCustomOriginPlaceholder: "https://chat.example.com",
   sitePacksBindingPackLabel: "適配包",
   sitePacksBindingPackPlaceholder: "選擇已安裝的適配包",

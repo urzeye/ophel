@@ -125,7 +125,7 @@ export const en = {
   sitePacksCustomOriginsTitle: "Add a custom site",
   sitePacksCustomOriginsDesc:
     "Add your self-hosted AI site (e.g. Open WebUI) and choose which pack supports it.",
-  sitePacksCustomOriginLabel: "HTTPS origin",
+  sitePacksCustomOriginLabel: "Site address",
   sitePacksCustomOriginPlaceholder: "https://chat.example.com",
   sitePacksBindingPackLabel: "Pack",
   sitePacksBindingPackPlaceholder: "Choose an installed pack",

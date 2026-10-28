@@ -777,6 +777,12 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
     [loadOriginBindings, packManager, syncRuntimeStatus],
   )
 
+  /** 跳到「获取与更新」并定位在线适配库；没有适配包的空状态共用 */
+  const openRegistry = () => {
+    setActiveTab(SITE_PACKS_TAB_IDS.UPDATES)
+    setPendingLocateId("site-packs-registry")
+  }
+
   const handleSaveOriginBinding = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const key = "binding:save"
@@ -785,7 +791,9 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
     try {
       const origin = canonicalizeSitePackBindingOrigin(normalizeBindingOriginInput(bindingOrigin))
       if (!installedById.has(bindingPackId)) {
-        throw new Error(t("sitePacksBindingPackRequired"))
+        throw new Error(
+          t(installedPacks.length === 0 ? "sitePacksNoInstalled" : "sitePacksBindingPackRequired"),
+        )
       }
       const binding: SitePackOriginBinding = { mode: "explicit", packId: bindingPackId }
 
@@ -1968,14 +1976,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
               </div>
               <strong>{t("sitePacksNoInstalled")}</strong>
               <div className="settings-pack-empty-actions">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="primary"
-                  onClick={() => {
-                    setActiveTab(SITE_PACKS_TAB_IDS.UPDATES)
-                    setPendingLocateId("site-packs-registry")
-                  }}>
+                <Button type="button" size="sm" variant="primary" onClick={openRegistry}>
                   {t("sitePacksRegistryTitle")}
                 </Button>
                 <Button
@@ -2064,8 +2065,15 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
                   options={bindingPackOptions}
                   value={bindingPackId}
                   placeholder={t("sitePacksBindingPackPlaceholder")}
-                  emptyText={t("sitePacksBindingPackPlaceholder")}
-                  disabled={isBindingBusy || bindingPackOptions.length === 0}
+                  emptyText={
+                    <div className="settings-pack-select-empty">
+                      <span>{t("sitePacksNoInstalled")}</span>
+                      <Button type="button" size="sm" variant="primary" onClick={openRegistry}>
+                        {t("sitePacksRegistryTitle")}
+                      </Button>
+                    </div>
+                  }
+                  disabled={isBindingBusy || isInstalledLoading}
                   ariaLabel={t("sitePacksBindingPackLabel")}
                   onChange={setBindingPackId}
                 />

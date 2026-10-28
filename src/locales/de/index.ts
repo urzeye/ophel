@@ -127,7 +127,7 @@ export const de = {
   sitePacksCustomOriginsTitle: "Eigene Website hinzufügen",
   sitePacksCustomOriginsDesc:
     "Füge deine selbst gehostete KI-Website hinzu (z. B. Open WebUI) und wähle, welches Paket sie unterstützt.",
-  sitePacksCustomOriginLabel: "HTTPS-Ursprung",
+  sitePacksCustomOriginLabel: "Website-Adresse",
   sitePacksCustomOriginPlaceholder: "https://chat.example.com",
   sitePacksBindingPackLabel: "Paket",
   sitePacksBindingPackPlaceholder: "Installiertes Pack auswählen",

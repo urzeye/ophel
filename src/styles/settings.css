@@ -1801,7 +1801,7 @@ html[data-theme="dark"] .platform-icon-dark-invert {
 }
 
 .settings-pack-field-pack {
-  flex: 0 1 160px;
+  flex: 0 1 200px;
 }
 
 .settings-pack-field > span {
@@ -1832,6 +1832,20 @@ html[data-theme="dark"] .platform-icon-dark-invert {
 .settings-pack-field-hint.editing {
   color: var(--gh-primary, #4285f4);
   font-weight: 500;
+}
+
+/* 适配包下拉在没有已安装适配包时的空状态：一句说明 + 去在线适配库；
+   说明文字用次级文字色，比下拉默认的空状态灰更易读 */
+.settings-pack-select-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.settings-pack-select-empty > span {
+  line-height: 1.45;
+  color: var(--gh-text-secondary, #6b7280);
 }
 
 @media (max-width: 760px) {

@@ -129,7 +129,7 @@ export const fr = {
   sitePacksCustomOriginsTitle: "Ajouter un site personnalisé",
   sitePacksCustomOriginsDesc:
     "Ajoutez votre site d'IA auto-hébergé (par ex. Open WebUI) et choisissez le pack qui le prend en charge.",
-  sitePacksCustomOriginLabel: "Origine HTTPS",
+  sitePacksCustomOriginLabel: "Adresse du site",
   sitePacksCustomOriginPlaceholder: "https://chat.example.com",
   sitePacksBindingPackLabel: "Pack",
   sitePacksBindingPackPlaceholder: "Choisir un pack installé",

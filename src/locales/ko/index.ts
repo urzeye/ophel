@@ -124,7 +124,7 @@ export const ko = {
   sitePacksCustomOriginsTitle: "사용자 지정 사이트 추가",
   sitePacksCustomOriginsDesc:
     "직접 호스팅하는 AI 사이트(예: Open WebUI)를 추가하고 어떤 팩으로 지원할지 선택하세요.",
-  sitePacksCustomOriginLabel: "HTTPS 도메인",
+  sitePacksCustomOriginLabel: "사이트 주소",
   sitePacksCustomOriginPlaceholder: "https://chat.example.com",
   sitePacksBindingPackLabel: "팩",
   sitePacksBindingPackPlaceholder: "설치된 팩 선택",
