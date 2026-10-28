@@ -474,10 +474,10 @@
   flex-shrink: 0;
   gap: 7px;
   padding: 0 12px;
-  border: 1px solid rgba(66, 133, 244, 0.24);
+  border: 1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 24%, transparent);
   border-radius: 8px;
-  background: rgba(66, 133, 244, 0.08);
-  color: var(--gh-primary, #4285f4);
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 8%, transparent);
+  color: var(--gh-primary-text, var(--gh-primary, #4285f4));
   cursor: pointer;
   font-size: 13px;
   font-weight: 650;
@@ -486,8 +486,12 @@
 
 .about-release-notes-btn:hover,
 .about-release-notes-btn:focus-visible {
-  background: rgba(66, 133, 244, 0.14);
-  outline: none;
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 14%, transparent);
+}
+
+.about-release-notes-btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 42%, transparent);
+  outline-offset: 2px;
 }
 
 /* 关于页“查看更新日志”按钮上的未读红点 */

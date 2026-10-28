@@ -3603,21 +3603,22 @@ html[data-theme="dark"] .about-slogan-badge {
   border-color: rgba(167, 139, 250, 0.2);
 }
 
-/* Hero Card */
+/* Hero Card：全页视觉锚点。底色和边框与设置卡片一致，左上角叠一层极淡的主色径向渐变 */
 .about-hero-card {
-  background: var(--gh-bg-secondary, #f3f4f6);
-  border: 1px solid rgba(0, 0, 0, 0.04);
-  border-radius: 16px;
+  background: radial-gradient(
+      120% 120% at 0% 0%,
+      color-mix(in srgb, var(--gh-primary, #4285f4) 8%, transparent),
+      transparent 55%
+    ),
+    var(--gh-surface, var(--gh-card-bg, #ffffff));
+  border: 1px solid var(--gh-card-border, var(--gh-border, #e5e7eb));
+  border-radius: 12px;
   padding: 24px;
   display: flex;
   gap: 20px;
   align-items: flex-start;
   margin-bottom: 32px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
-}
-
-html[data-theme="dark"] .about-hero-card {
-  border-color: rgba(255, 255, 255, 0.05);
 }
 
 .about-hero-logo {
@@ -3690,9 +3691,9 @@ html[data-theme="dark"] .about-hero-card {
 }
 
 .about-platforms-card {
-  background: var(--gh-card-bg, #fff);
+  background: var(--gh-surface, var(--gh-card-bg, #ffffff));
   border: 1px solid var(--gh-card-border, var(--gh-border, #e5e7eb));
-  border-radius: 16px;
+  border-radius: 12px;
   padding: 24px;
   margin-bottom: 32px;
 }
@@ -3717,7 +3718,7 @@ html[data-theme="dark"] .about-hero-card {
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  border-radius: 12px;
+  border-radius: 8px;
   background: var(--gh-bg-secondary, #f9fafb);
   border: 1px solid var(--gh-border, #e5e7eb);
   color: var(--gh-text, #374151);
@@ -3737,10 +3738,10 @@ html[data-theme="dark"] .about-hero-card {
 
 .about-platform-chip:hover {
   background: var(--gh-bg, #fff);
-  border-color: rgba(139, 92, 246, 0.4);
+  border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 40%, var(--gh-border, #e5e7eb));
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.1);
-  color: var(--gh-primary, #6d28d9);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--gh-primary, #4285f4) 12%, transparent);
+  color: var(--gh-primary-text, var(--gh-primary, #4285f4));
 }
 
 .about-platform-chip-icon {
@@ -3764,9 +3765,9 @@ html[data-theme="dark"] .about-hero-card {
 }
 
 .about-link-card {
-  background: var(--gh-card-bg, #fff);
-  border: 1px solid rgba(0, 0, 0, 0.04);
-  border-radius: 16px;
+  background: var(--gh-surface, var(--gh-card-bg, #ffffff));
+  border: 1px solid var(--gh-card-border, var(--gh-border, #e5e7eb));
+  border-radius: 12px;
   padding: 24px;
   display: flex;
   flex-direction: column;
@@ -3780,10 +3781,6 @@ html[data-theme="dark"] .about-hero-card {
   position: relative;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
-}
-
-html[data-theme="dark"] .about-link-card {
-  border-color: rgba(255, 255, 255, 0.05);
 }
 
 .about-link-card:hover {
@@ -3909,22 +3906,26 @@ html[data-theme="dark"]
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
 }
 
-/* Tech Grid */
-.about-tech-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 12px;
+/* Tech Stack：一张卡内平铺条目，分隔线画在条目的上边和左边；
+   网格上移、左移 1px，让第一行、第一列多出的线被卡片裁掉，最后一行填不满时空位只是留白 */
+.about-tech-card {
+  background: var(--gh-surface, var(--gh-card-bg, #ffffff));
+  border: 1px solid var(--gh-card-border, var(--gh-border, #e5e7eb));
+  border-radius: 12px;
+  overflow: hidden;
   margin-bottom: 32px;
 }
 
-.about-tech-card {
-  background: var(--gh-card-bg, #fff);
-  border: 1px solid var(--gh-border, #e5e7eb);
-  border-radius: 8px;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+.about-tech-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  margin: -1px 0 0 -1px;
+}
+
+.about-tech-item {
+  padding: 14px 16px;
+  border-top: 1px solid var(--gh-border, #e5e7eb);
+  border-left: 1px solid var(--gh-border, #e5e7eb);
 }
 
 .about-tech-header {
@@ -3941,6 +3942,9 @@ html[data-theme="dark"]
 }
 
 .about-tech-version {
+  /* 与主卡版本号同一套等宽字体 */
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
   font-size: 12px;
   color: var(--gh-text-secondary);
   background: var(--gh-bg-secondary);
@@ -3955,8 +3959,8 @@ html[data-theme="dark"]
 
 /* Credits & Privacy */
 .about-simple-card {
-  background: var(--gh-card-bg, #fff);
-  border: 1px solid var(--gh-border, #e5e7eb);
+  background: var(--gh-surface, var(--gh-card-bg, #ffffff));
+  border: 1px solid var(--gh-card-border, var(--gh-border, #e5e7eb));
   border-radius: 12px;
   padding: 20px;
   margin-bottom: 24px;
@@ -3980,10 +3984,12 @@ html[data-theme="dark"]
   display: flex;
   gap: 16px;
   align-items: flex-start;
-  color: #059669; /* Tailwind green-600 */
+  /* 保留绿色，取 emerald-700 让正文在浅绿底上对比度达到 AA（约 4.8:1） */
+  color: #047857;
 }
 
-/* Dark theme Privacy */
+/* 深色：设置弹窗在 Shadow DOM 里，html 选择器匹配不到，需同时写 :host */
+:host([data-theme="dark"]) .about-privacy-banner,
 html[data-theme="dark"] .about-privacy-banner {
   background: rgba(16, 185, 129, 0.15);
   border-color: rgba(16, 185, 129, 0.1);
@@ -4005,14 +4011,7 @@ html[data-theme="dark"] .about-privacy-banner {
 
 .about-privacy-desc {
   font-size: 13px;
-  opacity: 0.9;
   line-height: 1.5;
-}
-
-@media (max-width: 640px) {
-  .about-links-grid.community-grid-triple {
-    grid-template-columns: 1fr;
-  }
 }
 
 /* ==================== Global Settings Search ==================== */
@@ -5993,7 +5992,7 @@ html[data-theme="dark"] .about-privacy-banner {
 }
 
 .about-store-link {
-  --about-store-link-bg: var(--gh-card-bg, #ffffff);
+  --about-store-link-bg: var(--gh-surface, var(--gh-card-bg, #ffffff));
   display: flex;
   align-items: center;
   gap: 10px;
@@ -6037,7 +6036,7 @@ html[data-theme="dark"] .about-privacy-banner {
   --about-store-link-bg: color-mix(
     in srgb,
     var(--gh-primary, #4285f4) 6%,
-    var(--gh-card-bg, #ffffff)
+    var(--gh-surface, var(--gh-card-bg, #ffffff))
   );
   border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 40%, var(--gh-border, #e5e7eb));
 }
@@ -6051,7 +6050,7 @@ html[data-theme="dark"] .about-privacy-banner {
   --about-store-link-bg: color-mix(
     in srgb,
     var(--gh-primary, #4285f4) 9%,
-    var(--gh-card-bg, #ffffff)
+    var(--gh-surface, var(--gh-card-bg, #ffffff))
   );
   border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 45%, var(--gh-border, #e5e7eb));
   min-height: 46px;
@@ -6069,12 +6068,16 @@ html[data-theme="dark"] .about-privacy-banner {
   line-height: 18px;
 }
 
-.about-links-grid.community-grid {
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+/* 中文三卡：按内容区宽度折行，不用视口断点（设置弹窗比视口窄）。
+   单卡外宽不小于 180px，标题和按钮不断行；放不下三列时末张占满整行，不留空格 */
+.about-links-grid.community-grid-triple {
+  display: flex;
+  flex-wrap: wrap;
 }
 
-.about-links-grid.community-grid-triple {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+.about-links-grid.community-grid-triple > .about-link-card {
+  flex: 1 1 180px;
+  box-sizing: border-box;
 }
 
 .about-community-motto {
@@ -6104,19 +6107,22 @@ html[data-theme="dark"] .about-privacy-banner {
   gap: 16px;
 }
 
+/* 三张卡同级排布，单卡在 130–170px 之间伸缩：内容区放得下三张 130px 时始终一行，
+   不会再拆成上 1 下 2 */
 .about-sponsor-afdian-card,
 .about-sponsor-qr {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  width: 170px;
+  flex: 1 1 130px;
+  max-width: 170px;
   box-sizing: border-box;
   margin: 0;
   padding: 10px;
-  border: 1px solid var(--gh-border, #e5e7eb);
+  border: 1px solid var(--gh-card-border, var(--gh-border, #e5e7eb));
   border-radius: 12px;
-  background: var(--gh-card-bg, #fff);
+  background: var(--gh-surface, var(--gh-card-bg, #ffffff));
   color: inherit;
   font: inherit;
   text-decoration: none;
@@ -6128,13 +6134,6 @@ html[data-theme="dark"] .about-privacy-banner {
 
 .about-sponsor-qr {
   cursor: zoom-in;
-}
-
-.about-sponsor-qrs {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 16px;
 }
 
 .about-sponsor-qr figcaption,
@@ -6178,8 +6177,8 @@ html[data-theme="dark"] .about-privacy-banner {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  width: 150px;
-  height: 150px;
+  width: 100%;
+  aspect-ratio: 1;
   border-radius: 8px;
   background: linear-gradient(165deg, rgba(148, 108, 230, 0.08), rgba(148, 108, 230, 0.02));
 }
@@ -6298,8 +6297,9 @@ html[data-theme="dark"] .about-sponsor-qr-alipay:hover {
 
 .about-sponsor-qr-img {
   display: block;
-  width: 150px;
-  height: 150px;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
   object-fit: contain;
   background: #fff;
   border-radius: 8px;

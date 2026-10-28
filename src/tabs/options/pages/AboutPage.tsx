@@ -197,7 +197,7 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
             rel="noopener noreferrer"
             className="about-link-card kofi-card"
             style={{ "--card-color": "#FF5E5B" } as React.CSSProperties}>
-            <div className="about-link-header" style={{ color: "var(--card-color)" }}>
+            <div className="about-link-header">
               <KofiIcon size={22} color="var(--card-color)" />
               <span style={{ fontWeight: 600 }}>{t("kofiSupport")}</span>
             </div>
@@ -222,9 +222,7 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
           style={{ "--card-color": "#3B82F6" } as React.CSSProperties}>
           <div className="about-link-header">
             <GlobeIcon size={22} color="var(--card-color)" />
-            <span style={{ fontWeight: 600, color: "var(--card-color)" }}>
-              {t("projectWebsite")}
-            </span>
+            <span style={{ fontWeight: 600 }}>{t("projectWebsite")}</span>
           </div>
           <div className="about-link-desc">{t("websiteDesc")}</div>
           <span className="about-link-btn" aria-hidden="true">
@@ -242,7 +240,7 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
           rel="noopener noreferrer"
           className="about-link-card discord-card"
           style={{ "--card-color": "#5865F2" } as React.CSSProperties}>
-          <div className="about-link-header" style={{ color: "var(--card-color)" }}>
+          <div className="about-link-header">
             <DiscordIcon size={22} color="var(--card-color)" />
             <span style={{ fontWeight: 600 }}>{t("discordCommunity")}</span>
           </div>
@@ -280,40 +278,38 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
               </span>
               <span className="about-sponsor-afdian-title">{t("afdianSupport")}</span>
             </a>
-            <div className="about-sponsor-qrs">
-              <button
-                type="button"
-                className="about-sponsor-qr about-sponsor-qr-zoom about-sponsor-qr-wechat"
-                onClick={() =>
-                  setSponsorPreview({
-                    src: resolveSupportImageUrl(donateChannels.wechatImagePath),
-                    alt: t("wechatPay"),
-                  })
-                }>
-                <img
-                  src={resolveSupportImageUrl(donateChannels.wechatImagePath)}
-                  alt={t("wechatPay")}
-                  className="about-sponsor-qr-img"
-                />
-                <span className="about-sponsor-qr-title">{t("wechatPay")}</span>
-              </button>
-              <button
-                type="button"
-                className="about-sponsor-qr about-sponsor-qr-zoom about-sponsor-qr-alipay"
-                onClick={() =>
-                  setSponsorPreview({
-                    src: resolveSupportImageUrl(donateChannels.alipayImagePath),
-                    alt: t("alipayPay"),
-                  })
-                }>
-                <img
-                  src={resolveSupportImageUrl(donateChannels.alipayImagePath)}
-                  alt={t("alipayPay")}
-                  className="about-sponsor-qr-img"
-                />
-                <span className="about-sponsor-qr-title">{t("alipayPay")}</span>
-              </button>
-            </div>
+            <button
+              type="button"
+              className="about-sponsor-qr about-sponsor-qr-zoom about-sponsor-qr-wechat"
+              onClick={() =>
+                setSponsorPreview({
+                  src: resolveSupportImageUrl(donateChannels.wechatImagePath),
+                  alt: t("wechatPay"),
+                })
+              }>
+              <img
+                src={resolveSupportImageUrl(donateChannels.wechatImagePath)}
+                alt={t("wechatPay")}
+                className="about-sponsor-qr-img"
+              />
+              <span className="about-sponsor-qr-title">{t("wechatPay")}</span>
+            </button>
+            <button
+              type="button"
+              className="about-sponsor-qr about-sponsor-qr-zoom about-sponsor-qr-alipay"
+              onClick={() =>
+                setSponsorPreview({
+                  src: resolveSupportImageUrl(donateChannels.alipayImagePath),
+                  alt: t("alipayPay"),
+                })
+              }>
+              <img
+                src={resolveSupportImageUrl(donateChannels.alipayImagePath)}
+                alt={t("alipayPay")}
+                className="about-sponsor-qr-img"
+              />
+              <span className="about-sponsor-qr-title">{t("alipayPay")}</span>
+            </button>
           </div>
           {sponsorPreview ? (
             <div
@@ -389,12 +385,14 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
 
       <div className="about-section-title">{t("techStack")}</div>
 
-      <div className="about-tech-grid">
-        <TechCard name="Plasmo" version="v0.89.0" desc={t("tsPlasmoDesc")} />
-        <TechCard name="React" version="v18.2.0" desc={t("tsReactDesc")} />
-        <TechCard name="TypeScript" version="v5.3.3" desc={t("tsTypescriptDesc")} />
-        <TechCard name="Zustand" version="v5.0.3" desc={t("tsZustandDesc")} />
-        <TechCard name="Vite" version="v5.0.0" desc={t("tsViteDesc")} />
+      <div className="about-tech-card">
+        <div className="about-tech-grid">
+          <TechItem name="Plasmo" version="v0.90.5" desc={t("tsPlasmoDesc")} />
+          <TechItem name="React" version="v18.3.1" desc={t("tsReactDesc")} />
+          <TechItem name="TypeScript" version="v5.3.3" desc={t("tsTypescriptDesc")} />
+          <TechItem name="Zustand" version="v5.0.10" desc={t("tsZustandDesc")} />
+          <TechItem name="Vite" version="v7.3.1" desc={t("tsViteDesc")} />
+        </div>
       </div>
 
       <div className="about-section-title">{t("credits")}</div>
@@ -427,8 +425,8 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
   )
 }
 
-const TechCard = ({ name, version, desc }: { name: string; version: string; desc: string }) => (
-  <div className="about-tech-card">
+const TechItem = ({ name, version, desc }: { name: string; version: string; desc: string }) => (
+  <div className="about-tech-item">
     <div className="about-tech-header">
       <div className="about-tech-name">{name}</div>
       <div className="about-tech-version">{version}</div>
