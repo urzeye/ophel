@@ -2256,51 +2256,6 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   margin-top: 18px;
 }
 
-@media (max-width: 520px) {
-  .settings-pack-toolbar,
-  .settings-pack-item,
-  .settings-pack-import-footer,
-  .settings-pack-inline-error {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .settings-pack-controls {
-    justify-content: flex-start;
-  }
-
-  .settings-pack-section-head {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .settings-pack-section-tools {
-    width: 100%;
-  }
-
-  .settings-pack-search {
-    flex: 1 1 auto;
-  }
-
-  .settings-pack-source-input-row {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .settings-pack-source-apply {
-    width: 100%;
-  }
-
-  .settings-pack-source-actions {
-    align-items: stretch;
-  }
-
-  .settings-pack-source-actions .settings-pack-action-button {
-    flex: 1 1 auto;
-    justify-content: center;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .settings-pack-action-button,
   .settings-pack-action-button .spinning,
@@ -3683,6 +3638,60 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   flex-direction: column;
   gap: 16px;
   padding: 20px;
+}
+
+/* 适配中心列表项：窄屏保持「图标 + 信息 + 控件」同行；信息列至少 150px，
+   控件整体放不下时落到下一行并靠右，不再把图标、标题、控件逐项竖排 */
+.is-compact .settings-pack-item {
+  flex-wrap: wrap;
+  column-gap: 10px;
+  row-gap: 10px;
+}
+
+.is-compact .settings-pack-info {
+  flex: 1 1 150px;
+}
+
+.is-compact .settings-pack-controls {
+  margin-left: auto;
+}
+
+/* 标签栏与「使用指南」上下排列，标签组吃满整行，放不下的标签横向滚动 */
+.is-compact .settings-pack-toolbar {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* 在线适配库标题栏：标题与「搜索 + 导入」尽量同行，放不下时工具组占满一行、搜索框吃满剩余宽度 */
+.is-compact .settings-pack-section-head {
+  flex-wrap: wrap;
+}
+
+.is-compact .settings-pack-section-tools {
+  flex: 1 1 180px;
+  justify-content: flex-end;
+}
+
+.is-compact .settings-pack-search {
+  flex: 1 1 auto;
+}
+
+/* 更新源与错误条：窄屏下输入与按钮竖排，底部按钮组平分整行 */
+.is-compact .settings-pack-inline-error {
+  flex-wrap: wrap;
+}
+
+.is-compact .settings-pack-source-input-row {
+  flex-direction: column;
+}
+
+.is-compact .settings-pack-source-apply {
+  width: 100%;
+}
+
+.is-compact .settings-pack-source-actions .settings-pack-action-button {
+  flex: 1 1 auto;
+  justify-content: center;
 }
 
 .settings-compact-bar {
