@@ -3484,6 +3484,7 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   top: 12px;
   right: 12px;
   display: flex;
+  flex-direction: column;
   gap: 8px;
   z-index: 20;
 }
@@ -3521,7 +3522,7 @@ html[data-theme="dark"] .platform-icon-dark-invert {
 }
 
 .settings-modal-container .settings-content {
-  padding-right: 48px; /* 为关闭按钮留出空间 */
+  padding-right: 40px; /* 为关闭按钮留出空间 */
 }
 
 /* ==================== 窄屏：全屏单栏、两级导航 ==================== */

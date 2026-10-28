@@ -410,8 +410,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         aria-labelledby={titleId}
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}>
-        {/* 关闭按钮；窄屏已经全屏，不提供最大化 */}
+        {/* 窗口操作：关闭在上，最大化在下；窄屏已经全屏，不提供最大化 */}
         <div className="settings-modal-actions">
+          <Tooltip content={t("close")}>
+            <button
+              type="button"
+              className="settings-modal-action-btn close"
+              aria-label={t("close")}
+              onClick={onClose}>
+              <ClearIcon size={16} />
+            </button>
+          </Tooltip>
           {!isCompact && (
             <Tooltip content={isMaximized ? t("restore") : t("maximize")}>
               <button
@@ -423,15 +432,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </button>
             </Tooltip>
           )}
-          <Tooltip content={t("close")}>
-            <button
-              type="button"
-              className="settings-modal-action-btn close"
-              aria-label={t("close")}
-              onClick={onClose}>
-              <ClearIcon size={16} />
-            </button>
-          </Tooltip>
         </div>
 
         {/* 侧边栏；窄屏下是导航屏 */}
