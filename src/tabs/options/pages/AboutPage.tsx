@@ -54,7 +54,7 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
   const donateChannels = getDonateChannels(language)
   const hasUnseenReleaseNotes = useHasUnseenReleaseNotes()
   const [sponsorPreview, setSponsorPreview] = useState<{ src: string; alt: string } | null>(null)
-  // 当前运行平台对应的商店排在最前并高亮；ScriptCat 管理器下优先 ScriptCat，其余与侧栏评分入口一致
+  // 当前运行平台对应的商店单独一行并带「评分」；ScriptCat 管理器下优先 ScriptCat，其余与侧栏评分入口一致
   const currentStoreUrl = useMemo(
     () => (isScriptCatUserscriptManager() ? STORE_LINKS.scriptCat : getStoreInfo().url),
     [],
@@ -85,8 +85,22 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
       label: t("scriptCat"),
       icon: <ScriptCatIcon size={18} color="#1296db" />,
     },
-  ].sort(
-    (left, right) => Number(right.url === currentStoreUrl) - Number(left.url === currentStoreUrl),
+  ]
+  const currentStore = storeLinks.find((store) => store.url === currentStoreUrl)
+  const otherStores = storeLinks.filter((store) => store !== currentStore)
+
+  const renderStoreLink = (store: (typeof storeLinks)[number], isCurrent: boolean) => (
+    <a
+      key={store.id}
+      href={store.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={`about-store-link${isCurrent ? " is-current" : ""}`}>
+      {store.icon}
+      <span className="about-store-link-label">{store.label}</span>
+      {isCurrent ? <span className="about-store-link-cta">{t("reviewBtn")}</span> : null}
+      <ExternalLinkIcon size={12} />
+    </a>
   )
 
   useEffect(() => {
@@ -324,22 +338,10 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
 
       <div className="about-section-title">{t("rateAndReview")}</div>
       <div className="about-store-links">
-        {storeLinks.map((store) => {
-          const isCurrent = store.url === currentStoreUrl
-          return (
-            <a
-              key={store.id}
-              href={store.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`about-store-link${isCurrent ? " is-current" : ""}`}>
-              {store.icon}
-              <span>{store.label}</span>
-              {isCurrent ? <span className="about-store-link-cta">{t("reviewBtn")}</span> : null}
-              <ExternalLinkIcon size={12} />
-            </a>
-          )
-        })}
+        {currentStore ? renderStoreLink(currentStore, true) : null}
+        <div className="about-store-links-grid">
+          {otherStores.map((store) => renderStoreLink(store, false))}
+        </div>
       </div>
 
       <div className="about-section-title">{t("aboutSupportedPlatforms")}</div>

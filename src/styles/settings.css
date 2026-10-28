@@ -5894,21 +5894,28 @@ html[data-theme="dark"] .about-privacy-banner {
   margin-bottom: 32px;
 }
 
-/* 评分入口：一行商店链接，当前平台对应的商店排在最前并带「评分」提示 */
+/* 评分入口：当前平台的商店单独一行并带「评分」，其余商店固定两列等宽，任何宽度下都左右对齐 */
 .about-store-links {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 8px;
   margin-bottom: 32px;
 }
 
+.about-store-links-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
 .about-store-link {
   --about-store-link-bg: var(--gh-card-bg, #ffffff);
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 8px;
-  min-height: 36px;
-  padding: 0 12px;
+  gap: 10px;
+  min-width: 0;
+  min-height: 40px;
+  padding: 0 14px;
   border: 1px solid var(--gh-card-border, var(--gh-border, #e5e7eb));
   border-radius: 10px;
   background: var(--about-store-link-bg);
@@ -5921,9 +5928,20 @@ html[data-theme="dark"] .about-privacy-banner {
     background-color 0.18s ease;
 }
 
-.about-store-link > svg:last-child {
+.about-store-link > svg {
   flex-shrink: 0;
+}
+
+.about-store-link > svg:last-child {
   color: var(--gh-text-tertiary, #9ca3af);
+}
+
+.about-store-link-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* GreasyFork 图标的叉形是镂空效果，填充色要跟随所在链接的底色 */
@@ -5952,10 +5970,12 @@ html[data-theme="dark"] .about-privacy-banner {
     var(--gh-card-bg, #ffffff)
   );
   border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 45%, var(--gh-border, #e5e7eb));
+  min-height: 46px;
   font-weight: 600;
 }
 
 .about-store-link-cta {
+  flex-shrink: 0;
   padding: 1px 8px;
   border-radius: 999px;
   background: var(--gh-primary, #4285f4);
