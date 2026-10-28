@@ -110,7 +110,7 @@ Ophel Atlas 是 TypeScript + React 18 + Plasmo 的浏览器扩展，同时支持
 ## 提交与 PR
 
 - 详细规范见 `docs/developer/conventions/commits.md`；提交或创建 PR 前必读。
-- 核心禁令：Commit 与 PR 使用英文 Conventional Commits（`type(scope): subject`）；PR 标题默认在末尾追加 `[skip ci]`；PR 默认创建为 Draft；提交前先看 `git status` 和 `git diff`，不混入无关改动。
+- 核心禁令：Commit 与 PR 使用英文 Conventional Commits（`type(scope): subject`）；PR 默认创建为 Draft；提交前先看 `git status` 和 `git diff`，不混入无关改动。
 
 ## 验证与交付
 

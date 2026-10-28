@@ -23,9 +23,8 @@ Commit type 按改动意图选择，不要把"优化""清理""移除"默认写�
 ## PR
 
 - 创建 PR 使用英文；PR 标题也参考 commit message 格式，例如 `refactor(core): remove obsolete prompt pipeline`、`perf(adapter): reduce DOM observer work`、`ux(panel): simplify quick actions`、`fix(adapter): prevent duplicate panel injection`。
-- PR 标题默认在末尾追加 `[skip ci]`，除非用户显式要求不加。
 - 创建 PR 默认一律创建为 Draft PR（如 `gh pr create --draft`），除非用户显式要求创建正式 PR；避免未审阅的提交提前触发 CI 消耗额度或发生误合。
-- CI 已配置 Draft PR 自动跳过执行，转换为 Ready for review 后方会触发全量构建与检查。
+- CI 只在 PR 上运行（`pull_request`），main 的 push 不再触发。Draft PR 自动跳过，转换为 Ready for review 后才触发全量构建与检查；Ready 之后每次 push 都会重跑一次完整 CI，因此转 Ready 前先本地跑完下面的“提交前检查”。需要验证 main 时手动运行：`gh workflow run ci.yml --ref main`。
 - 纯文档与元配置（`docs/**`、`*.md`、`.gitattributes`、`.editorconfig`、`.all-contributorsrc` 等）已被配置在 CI `paths-ignore` 中不会触发流水线。
 
 ## 提交前检查

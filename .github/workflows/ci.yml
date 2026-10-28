@@ -1,20 +1,6 @@
 name: "🛡️ CI / Automated Audit"
 
 on:
-  push:
-    branches: ["main"]
-    paths-ignore:
-      - "**.md"
-      - "docs/**"
-      - ".vscode/**"
-      - ".idea/**"
-      - ".github/**"
-      - "!.github/workflows/ci.yml"
-      - "LICENSE"
-      - ".gitignore"
-      - ".gitattributes"
-      - ".editorconfig"
-      - ".all-contributorsrc"
   pull_request:
     branches: ["main"]
     types: [opened, synchronize, reopened, ready_for_review]
@@ -30,6 +16,7 @@ on:
       - ".gitattributes"
       - ".editorconfig"
       - ".all-contributorsrc"
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -40,6 +27,7 @@ jobs:
     name: "Audit Code Quality"
     if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -64,9 +52,6 @@ jobs:
 
       - name: 📐 Type Check (TypeScript)
         run: pnpm typecheck
-
-#      - name: 🧪 Run Tests (Vitest)
-#        run: pnpm test
 
       - name: 🏗️ Verify Build
         run: pnpm build
