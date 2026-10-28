@@ -838,7 +838,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
           <Tooltip content={t("conversationsBatchMode")}>
             <button
               type="button"
-              className={`conversations-toolbar-btn gh-panel-icon-btn batch-mode ${batchMode ? "active-subtle" : ""}`}
+              className={`conversations-toolbar-btn gh-panel-icon-btn ${batchMode ? "active-subtle" : ""}`}
               aria-label={t("conversationsBatchMode")}
               aria-pressed={batchMode}
               onClick={toggleBatchMode}>
