@@ -19,7 +19,7 @@
 
 ## 规范文档（conventions/）
 
-- `changelog.md`：CHANGELOG 中英文同步写法、标题分类、条目格式。
+- `changelog.md`：更新日志怎么写：写到什么程度、自检清单、分类、条目格式、示例、中英文同步。
 - `commits.md`：Commit message、PR 与提交前检查规范。
 
 `AGENTS.md` 只保留这两条规范的核心禁令与指针，细节以本目录为准。
