@@ -3608,6 +3608,14 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   padding: 16px 16px 24px;
 }
 
+/* 吸顶栏的 top 偏移要抵消内容区上内边距：桌面是 24px，窄屏改为 16px 后同步收敛，
+   否则吸顶时标签轨道顶部会被裁掉一截 */
+.is-compact .settings-site-selector,
+.is-compact .settings-tab-group-container,
+.is-compact .settings-pack-toolbar {
+  top: -16px;
+}
+
 /* 设置行放不下「说明 + 控件」时换行：说明（首个子元素，可能是展开按钮包着的说明）
    至少留 180px，宽控件（滑块、分段、下拉）落到下一行、与说明左对齐；
    开关等窄控件仍与说明同行，由说明撑满剩余宽度把控件推到右侧 */
