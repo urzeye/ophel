@@ -101,6 +101,9 @@ const getSitePackGuideUrl = (lang: string): string =>
 
 const ERROR_TOAST_DURATION = 3500
 
+// 元信息行里可截断的匹配规则：Tooltip 触发层默认按全文撑宽，限制在行宽内省略号才会生效
+const TRUNCATED_META_TRIGGER_STYLE: React.CSSProperties = { minWidth: 0, maxWidth: "100%" }
+
 const builtinPlatformNames = new Map(
   SUPPORTED_AI_PLATFORMS.map(({ id, name }) => [id as string, name] as const),
 )
@@ -1707,7 +1710,10 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
                   </button>
                 </Tooltip>
               ) : (
-                <Tooltip content={firstMatch} showOnlyWhenTruncated>
+                <Tooltip
+                  content={firstMatch}
+                  showOnlyWhenTruncated
+                  triggerStyle={TRUNCATED_META_TRIGGER_STYLE}>
                   <code className="settings-pack-match">{firstMatch}</code>
                 </Tooltip>
               ))}
@@ -1819,7 +1825,10 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
                   </button>
                 </Tooltip>
               ) : (
-                <Tooltip content={firstMatch} showOnlyWhenTruncated>
+                <Tooltip
+                  content={firstMatch}
+                  showOnlyWhenTruncated
+                  triggerStyle={TRUNCATED_META_TRIGGER_STYLE}>
                   <code className="settings-pack-match">{firstMatch}</code>
                 </Tooltip>
               ))}

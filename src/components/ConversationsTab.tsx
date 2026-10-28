@@ -1213,7 +1213,11 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                         {folder.icon}
                       </span>
 
-                      <Tooltip content={folderName} showOnlyWhenTruncated>
+                      {/* 触发层默认按全文撑宽，允许收缩后长文件夹名才会显示省略号，不压住右侧计数和菜单 */}
+                      <Tooltip
+                        content={folderName}
+                        showOnlyWhenTruncated
+                        triggerStyle={{ minWidth: 0 }}>
                         <span className="conversations-folder-name">
                           {searchQuery && searchResult?.folderMatches.has(folder.id)
                             ? highlightText(folderName, searchQuery)
