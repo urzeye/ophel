@@ -404,7 +404,7 @@ src/utils/themes/
 | 头部       | `--gh-header-bg`, `--gh-header-text`, `--gh-glass-*`（头部图标） |
 | 阴影       | `--gh-shadow`, `--gh-shadow-sm`, `--gh-shadow-lg`               |
 | 设置页层级 | `--gh-canvas`（内容画布）, `--gh-surface`（侧栏与卡片）         |
-| 文件夹色板 | `--gh-folder-bg-0` ~ `--gh-folder-bg-7`（10 个）                |
+| 文件夹色板 | `--gh-folder-bg-0` ~ `--gh-folder-bg-7`（8 个）                 |
 | 大纲高亮   | `--gh-outline-locate-*`, `--gh-outline-sync-*`                  |
 
 派生变量：`--gh-primary-text`（默认等于主色）、`--gh-header-text`（默认白色）、`--gh-canvas` / `--gh-surface`（由 `--gh-bg` / `--gh-card-bg` 派生，深色另行派生）都在 `theme-variables.css` 给出默认值，预置主题只在需要时覆盖，自定义样式也可直接覆盖。大纲高亮色由每套预置单独给出与主色撞色的值，用来让当前位置一眼可见。

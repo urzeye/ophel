@@ -56,9 +56,9 @@ _(推断：差异点优先级未经用户确认)_
 ## Brand Commitments
 
 - 名称：Ophel Atlas；仓库与包名：ophel。
-- 口号："Turn Conversations into Knowledge, Not Just History"（让对话成为知识，而不只是历史记录）。
+- 口号：README 标题用 "Turn Conversations into Knowledge, Not Just History"（让对话成为知识，而不只是历史记录）；应用内用「AI 之益，触手可及」（`welcomeSlogan` / `aboutPageDesc`），出现在欢迎弹窗标题和关于页口号徽章。
 - 图标：`assets/icon.png`。
-- 语气：直接、简短、面向操作结果；不用营销腔、口号式标题与 AI 套话（DESIGN.md Components 章节「文案与信息表达」）。
+- 语气：功能界面直接、简短、面向操作结果，不用营销腔、口号式标题与 AI 套话；口号只放在品牌位（DESIGN.md Components 章节「文案与信息表达」）。
 
 ## Evidence on Hand
 
