@@ -3648,6 +3648,13 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   padding: 20px;
 }
 
+/* 窄屏导航屏里侧栏全宽，主题分段被拉宽：label 不再吃掉剩余空间
+   （UA 让 button 的 text-align: center 继承进 label，文字会在剩余空间里居中），
+   改为图标与文字作为一个整体居中，只保留固定间距 */
+.is-compact .settings-theme-segment .segment-label {
+  flex: 0 1 auto;
+}
+
 /* 适配中心列表项：窄屏保持「图标 + 信息 + 控件」同行；信息列至少 150px，
    控件整体放不下时落到下一行并靠右，不再把图标、标题、控件逐项竖排 */
 .is-compact .settings-pack-item {
