@@ -502,6 +502,12 @@
   animation: gh-unread-dot-pulse 2s infinite;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .about-release-notes-unread {
+    animation: none;
+  }
+}
+
 @keyframes gh-release-notes-enter {
   from {
     opacity: 0;

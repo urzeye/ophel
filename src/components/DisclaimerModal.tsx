@@ -139,6 +139,12 @@ export const DisclaimerModal: React.FC = () => {
           box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.2);
         }
 
+        @media (prefers-reduced-motion: reduce) {
+          .disclaimer-icon-img {
+            transition: none;
+          }
+        }
+
         .disclaimer-slogan-container {
           display: flex;
           align-items: center;

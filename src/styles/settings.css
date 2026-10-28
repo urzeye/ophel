@@ -485,6 +485,12 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .settings-nav-unread-dot {
+    animation: none;
+  }
+}
+
 /* 导航项内的 beta 徽标使用更紧凑的尺寸，避免挤压菜单文字 */
 .settings-nav-item .settings-beta-badge {
   height: 16px;

@@ -44,6 +44,11 @@ export const MoreHorizontalIcon = ({
           5% { transform: translateY(-3px); }
           10% { transform: translateY(0); }
         }
+        @media (prefers-reduced-motion: reduce) {
+          .more-horizontal-icon .dot {
+            animation: none;
+          }
+        }
       `}</style>
     </svg>
   )
