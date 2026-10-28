@@ -2,7 +2,7 @@
  * 数据与权限页面
  * 包含：本地备份导出/导入 (支持部分导出) | WebDAV 同步配置与管理 | 权限管理
  */
-import React, { useEffect, useId, useMemo, useRef, useState } from "react"
+import React, { useDeferredValue, useEffect, useId, useMemo, useRef, useState } from "react"
 
 import {
   ClearIcon,
@@ -377,7 +377,11 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
   const [importText, setImportText] = useState("")
   const [importFileName, setImportFileName] = useState<string | null>(null)
   const [isImportDragOver, setIsImportDragOver] = useState(false)
-  const importPreview = useMemo(() => getImportPreview(importText), [importText])
+  // 大备份整份解析较重：预览按延后的文本计算，编辑粘贴区时不会逐键卡顿；
+  // 预览追上输入之前禁止导入，避免导入的是旧内容
+  const deferredImportText = useDeferredValue(importText)
+  const importPreview = useMemo(() => getImportPreview(deferredImportText), [deferredImportText])
+  const isImportPreviewPending = deferredImportText !== importText
 
   // WebDAV 本地表单状态（与 Store 解耦，仅点击保存时同步）
   const [webdavForm, setWebdavForm] = useState<WebDAVFormState>({
@@ -519,7 +523,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
   }
 
   const handleImportClick = () => {
-    if (importPreview.status !== "valid") return
+    if (isImportPreviewPending || importPreview.status !== "valid") return
     const backupDocument = importPreview.document
 
     setConfirmConfig({
@@ -961,7 +965,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
                   type="button"
                   onClick={handleImportClick}
                   className="settings-btn settings-btn-primary"
-                  disabled={importPreview.status !== "valid"}>
+                  disabled={isImportPreviewPending || importPreview.status !== "valid"}>
                   {t("importBtn")}
                 </button>
               </div>
