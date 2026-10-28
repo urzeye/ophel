@@ -2124,7 +2124,8 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
 
       {activeTab === SITE_PACKS_TAB_IDS.UPDATES && (
         <>
-          {/* 更新状态条放在页首：开关、上次检查与立即检查不再被长列表压到页面底部 */}
+          {/* 更新状态条放在页首：开关、上次检查与立即检查不再被长列表压到页面底部。
+              首行只放开关和「立即检查」，状态与说明缩进排在开关文字下方，长语言下按钮也不会被挤到下一行 */}
           <section
             className="settings-card settings-pack-update-bar"
             data-setting-id="remote-config-status">
@@ -2146,7 +2147,6 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
                 />
                 <span>{t("remoteConfigAutoUpdateLabel")}</span>
               </div>
-              <div className="settings-pack-update-summary">{registryStatusSummary}</div>
               <Button
                 type="button"
                 size="sm"
@@ -2161,12 +2161,15 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
                   : t("remoteConfigCheckNowButton")}
               </Button>
             </div>
-            <p className="settings-pack-update-note">
-              <InfoIcon size={13} aria-hidden="true" />
-              <span>
-                {t("remoteConfigAutoUpdateDesc")} {t("remoteConfigPrivacyDesc")}
-              </span>
-            </p>
+            <div className="settings-pack-update-details">
+              <div className="settings-pack-update-summary">
+                {registryStatusSummary}
+                <span className="settings-pack-update-cadence">
+                  {t("remoteConfigAutoUpdateDesc")}
+                </span>
+              </div>
+              <p className="settings-pack-update-note">{t("remoteConfigPrivacyDesc")}</p>
+            </div>
           </section>
 
           <section className="settings-card" data-setting-id="site-packs-registry">
@@ -2186,7 +2189,8 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
                     />
                   </div>
                 )}
-                <Tooltip content={t("sitePacksLocalImportDesc")}>
+                {/* 窄宽度时先压缩搜索框，导入按钮保持完整宽度 */}
+                <Tooltip content={t("sitePacksLocalImportDesc")} triggerStyle={{ flexShrink: 0 }}>
                   <Button
                     type="button"
                     size="sm"
