@@ -5,7 +5,7 @@ import { Switch, Tooltip } from "~components/ui"
 import { SITE_IDS, isBuiltinSiteId } from "~constants"
 import { platform } from "~platform"
 import { useSettingsStore } from "~stores/settings-store"
-import { SettingCard } from "~tabs/options/components"
+import { SettingCard, SettingRow } from "~tabs/options/components"
 import { t } from "~utils/i18n"
 import {
   MSG_GET_AISTUDIO_MODELS,
@@ -51,14 +51,13 @@ async function fetchAIStudioModels(): Promise<AIStudioModelsResponse> {
 }
 
 const ModelLockRow: React.FC<{
-  label: string
   siteKey: string
   settings: Settings
   setSettings: (settings: Partial<Settings>) => void
   placeholder: string
   onDisabledClick?: () => void
   settingId?: string
-}> = ({ label, siteKey, settings, setSettings, placeholder, onDisabledClick, settingId }) => {
+}> = ({ siteKey, settings, setSettings, placeholder, onDisabledClick, settingId }) => {
   const currentConfig = useMemo(
     () => settings.modelLock?.[siteKey] || { enabled: false, keyword: "" },
     [settings.modelLock, siteKey],
@@ -90,65 +89,50 @@ const ModelLockRow: React.FC<{
   }
 
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "12px",
-        cursor: currentConfig.enabled ? "default" : "not-allowed",
-      }}
-      data-setting-id={settingId}>
-      <span
-        style={{
-          fontSize: "14px",
-          fontWeight: 500,
-          flex: 1,
-          color: currentConfig.enabled
-            ? "var(--gh-text, #374151)"
-            : "var(--gh-text-secondary, #9ca3af)",
-        }}>
-        {label}
-      </span>
-      <div
-        onMouseDown={(e) => {
-          if (!currentConfig.enabled) {
-            e.preventDefault()
-            onDisabledClick?.()
-          }
-        }}>
-        <input
-          type="text"
-          className="settings-input"
-          value={localKeyword}
-          onChange={(e) => setLocalKeyword(e.target.value)}
-          onBlur={saveKeyword}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              saveKeyword()
-              ;(e.target as HTMLInputElement).blur()
+    <SettingRow label={t("modelLockDesc")} settingId={settingId}>
+      <div className="settings-inline-controls">
+        {/* 输入框禁用时不接收指针事件，点击落到外层并提示先开启 */}
+        <div
+          className={`settings-model-lock-field ${currentConfig.enabled ? "" : "is-disabled"}`}
+          onMouseDown={(e) => {
+            if (!currentConfig.enabled) {
+              e.preventDefault()
+              onDisabledClick?.()
             }
-          }}
-          placeholder={placeholder}
-          disabled={!currentConfig.enabled}
-          style={{
-            width: "200px",
-            opacity: currentConfig.enabled ? 1 : 0.5,
-            pointerEvents: currentConfig.enabled ? "auto" : "none",
-          }}
+          }}>
+          <input
+            type="text"
+            className="settings-input"
+            value={localKeyword}
+            onChange={(e) => setLocalKeyword(e.target.value)}
+            onBlur={saveKeyword}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                saveKeyword()
+                ;(e.target as HTMLInputElement).blur()
+              }
+            }}
+            placeholder={placeholder}
+            aria-label={placeholder}
+            disabled={!currentConfig.enabled}
+          />
+        </div>
+        <Switch
+          checked={currentConfig.enabled}
+          onChange={toggleEnabled}
+          ariaLabel={t("modelLockTitle")}
         />
       </div>
-      <Switch checked={currentConfig.enabled} onChange={toggleEnabled} />
-    </div>
+    </SettingRow>
   )
 }
 
 const AIStudioModelLockRow: React.FC<{
-  label: string
   settings: Settings
   setSettings: (settings: Partial<Settings>) => void
   onDisabledClick?: () => void
   settingId?: string
-}> = ({ label, settings, setSettings, onDisabledClick, settingId }) => {
+}> = ({ settings, setSettings, onDisabledClick, settingId }) => {
   const siteKey = SITE_IDS.AISTUDIO
   const currentConfig = settings.modelLock?.[siteKey] || { enabled: false, keyword: "" }
 
@@ -209,82 +193,59 @@ const AIStudioModelLockRow: React.FC<{
   }
 
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "12px",
-        cursor: currentConfig.enabled ? "default" : "not-allowed",
-      }}
-      data-setting-id={settingId}>
-      <span
-        style={{
-          fontSize: "14px",
-          fontWeight: 500,
-          flex: 1,
-          color: currentConfig.enabled
-            ? "var(--gh-text, #374151)"
-            : "var(--gh-text-secondary, #9ca3af)",
-        }}>
-        {label}
-      </span>
-      <Tooltip content={t("aistudioRefreshModelListTooltip")}>
-        <button
-          className="icon-button"
-          onClick={handleRefresh}
-          disabled={isLoading}
-          style={{
-            padding: "4px",
-            opacity: isLoading ? 0.5 : 1,
-            cursor: isLoading ? "not-allowed" : "pointer",
-            background: "transparent",
-            border: "none",
-            borderRadius: "4px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+    <SettingRow label={t("modelLockDesc")} settingId={settingId}>
+      <div className="settings-inline-controls">
+        <Tooltip content={t("aistudioRefreshModelListTooltip")}>
+          <button
+            type="button"
+            className="settings-btn settings-btn-secondary settings-icon-only-btn"
+            onClick={handleRefresh}
+            disabled={isLoading}
+            aria-label={t("aistudioRefreshModelListTooltip")}>
+            <RefreshIcon size={16} />
+          </button>
+        </Tooltip>
+        <div
+          className={`settings-model-lock-field ${currentConfig.enabled ? "" : "is-disabled"}`}
+          onMouseDown={(e) => {
+            if (!currentConfig.enabled) {
+              e.preventDefault()
+              onDisabledClick?.()
+            }
           }}>
-          <RefreshIcon size={16} />
-        </button>
-      </Tooltip>
-      <div
-        onMouseDown={(e) => {
-          if (!currentConfig.enabled) {
-            e.preventDefault()
-            onDisabledClick?.()
-          }
-        }}>
-        <select
-          className="settings-select"
-          value={currentConfig.keyword || ""}
-          onChange={(e) => handleModelChange(e.target.value)}
-          disabled={!currentConfig.enabled || modelList.length === 0}
-          style={{
-            width: "200px",
-            opacity: currentConfig.enabled ? 1 : 0.5,
-            pointerEvents: currentConfig.enabled ? "auto" : "none",
-          }}>
-          {modelList.length === 0 && <option value="">{t("aistudioRefreshModelListFirst")}</option>}
-          {modelList.map((model) => (
-            <option key={model.id} value={model.id}>
-              {model.name}
-            </option>
-          ))}
-        </select>
+          <select
+            className="settings-select"
+            value={currentConfig.keyword || ""}
+            onChange={(e) => handleModelChange(e.target.value)}
+            aria-label={t("modelLockDesc")}
+            disabled={!currentConfig.enabled || modelList.length === 0}>
+            {modelList.length === 0 && (
+              <option value="">{t("aistudioRefreshModelListFirst")}</option>
+            )}
+            {modelList.map((model) => (
+              <option key={model.id} value={model.id}>
+                {model.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <Switch
+          checked={currentConfig.enabled}
+          onChange={toggleEnabled}
+          ariaLabel={t("modelLockTitle")}
+        />
       </div>
-      <Switch checked={currentConfig.enabled} onChange={toggleEnabled} />
-    </div>
+    </SettingRow>
   )
 }
 
 interface ModelLockSiteCardProps {
   /** 模型锁定配置 key：内置站点为 siteId，社区适配包为站点实例 key */
   siteKey: string
-  siteName: string
 }
 
-/** 单个站点的模型锁定卡片，由站点设置页按当前选中的站点渲染 */
-export const ModelLockSiteCard: React.FC<ModelLockSiteCardProps> = ({ siteKey, siteName }) => {
+/** 单个站点的模型锁定卡片，由站点设置页按当前选中的站点渲染；分组标题由页面提供 */
+export const ModelLockSiteCard: React.FC<ModelLockSiteCardProps> = ({ siteKey }) => {
   const { settings, setSettings } = useSettingsStore()
   const prerequisiteToastTemplate = t("enablePrerequisiteToast")
   const modelLockLabel = t("modelLockTitle")
@@ -304,10 +265,9 @@ export const ModelLockSiteCard: React.FC<ModelLockSiteCardProps> = ({ siteKey, s
     : "model-lock-community-site-pack"
 
   return (
-    <SettingCard title={t("modelLockTitle")} description={t("modelLockDesc")}>
+    <SettingCard settingId="site-settings-model-lock">
       {siteKey === SITE_IDS.AISTUDIO ? (
         <AIStudioModelLockRow
-          label={siteName}
           settings={settings}
           setSettings={setSettings}
           onDisabledClick={showPrerequisiteToast}
@@ -315,7 +275,6 @@ export const ModelLockSiteCard: React.FC<ModelLockSiteCardProps> = ({ siteKey, s
         />
       ) : (
         <ModelLockRow
-          label={siteName}
           siteKey={siteKey}
           settings={settings}
           setSettings={setSettings}

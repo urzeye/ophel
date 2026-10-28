@@ -37,10 +37,9 @@ export const ja = {
   // Site Settings
   siteSettingsPageDesc: "サイトごとにページレイアウト、モデルロック、専用機能を設定",
   siteSelectorLabel: "設定するサイト",
-  siteSettingsOtherSiteToast: "{site} の設定を編集中です。変更は現在のサイトには適用されません",
+  siteSettingsOtherSiteHint: "{site} の設定を編集中です。変更は現在のサイトには適用されません",
   currentSiteBadge: "現在のサイト",
   siteExclusiveSettingsLabel: "専用設定",
-  noSiteExclusiveSettings: "このサイトには専用設定がありません",
   communitySitePackBadge: "コミュニティパック（コア機能）",
   communitySitePackDesc:
     "このサイトはコミュニティパックによって対応しており、パックがサポートする機能のみ表示されます。",
@@ -232,7 +231,6 @@ export const ja = {
   userQueryWidthSettings: "ユーザー入力幅",
   scrollSettings: "スクロール設定",
   contentProcessing: "コンテンツ処理",
-  contentProcessingDesc: "AI回答の処理方法を設定",
   interactionEnhance: "インタラクション強化",
   interactionEnhanceDesc: "数式やテーブルの操作性を向上",
   exportSettings: "出力設定",
@@ -641,7 +639,7 @@ export const ja = {
   geminiMystuffOpenInNewTab: "新しいタブで開く",
   geminiMystuffLocateFailed: "元の会話位置を特定できませんでした",
 
-  userQueryWidthDesc: "ユーザーの発言バブルの最大幅を調整（サイトごとに設定）",
+  userQueryWidthDesc: "ユーザーの発言バブルの最大幅を調整",
   // Category management
   categoryManage: "カテゴリ管理",
   categoryEmpty: "カテゴリがありません。プロンプト作成時にカテゴリを指定して作成してください。",
@@ -772,11 +770,9 @@ export const ja = {
   pageWidthLabel: "ページ幅",
   pageWidthValueLabel: "幅の指定",
   pageWidthDesc:
-    "チャットページの幅をリアルタイムに調整します（サイトごとに設定）。スマート回避が有効な場合、実際の幅はパネルの安全領域によって制限されることがあります。",
-  enablePageWidth: "ページ幅の拡張を有効化",
+    "チャットページの幅をリアルタイムに調整します。スマート回避が有効な場合、実際の幅はパネルの安全領域によって制限されることがあります。",
   panelAvoidanceTitle: "スマート回避",
   betaBadge: "Beta",
-  panelAvoidanceLabel: "Ophel パネルを避ける",
   panelAvoidanceDesc:
     "パネル表示中に現在のサイトのコンテンツ領域を自動調整します。狭い画面では自動的に無効になります。",
   widthValue: "幅",
@@ -787,7 +783,6 @@ export const ja = {
   unitPercent: "パーセント (%)",
 
   // User Query Width Settings
-  enableUserQueryWidth: "ユーザー入力幅の拡張",
   enableUserQueryWidthDesc: "ユーザーの発言バブルの最大幅を調整します",
   userQueryWidthValueLabel: "入力幅",
   // Tab Settings
@@ -1474,7 +1469,6 @@ export const ja = {
   modelSelectorNotFound: "モデル選択ボタンが見つかりませんでした",
 
   // ======== Claude Session Key Management ========
-  geminiSettingsTab: "Gemini専用",
   claudeSessionKeyTitle: "セッションキー管理",
   claudeSessionKeyDesc: "Claudeアカウントの管理と切り替え",
   claudeCurrentUsing: "現在:",
@@ -1536,8 +1530,6 @@ export const ja = {
   restoreSuccess: "復元成功、ページを更新します...",
 
   // ======== AI Studio 設定 ========
-  aistudioSettingsTitle: "AI Studio 設定",
-  aistudioSettingsDesc: "AI Studio ページ読み込み時のデフォルト動作を設定",
   aistudioDefaultModel: "デフォルトモデル",
   aistudioDefaultModelNone: "指定なし（システムデフォルト）",
   aistudioDefaultModelCustom: "カスタムモデルID...",
@@ -1560,8 +1552,6 @@ export const ja = {
   aistudioModelsError: "モデルリストの取得に失敗しました",
 
   // ======== ChatGPT 設定 ========
-  chatgptSettingsTitle: "ChatGPT 設定",
-  chatgptSettingsDesc: "ChatGPT ページのデフォルト動作を構成",
   chatgptMarkdownFixLabel: "Markdown 太字修正",
   chatgptMarkdownFixDesc: "ChatGPT の回答でレンダリングされない **太字** テキストを修正します",
   chatgptCodeBlockBatchMountLabel: "コードブロックの一括マウント",
@@ -1813,21 +1803,17 @@ export const ja = {
   queueBatchImportSuccess: "{count}件のプロンプトをキューに追加しました",
   queueBatchImportEmpty: "追加できるプロンプトがありません",
   zenModeTitle: "禅モード",
-  zenModeLabel: "禅モードを有効にする",
-  zenModeDesc:
-    "サイドバーとナビゲーション要素を非表示にして、現在の会話に集中します（各サイトごとに個別に設定）",
+  zenModeDesc: "サイドバーとナビゲーション要素を非表示にして、現在の会話に集中します",
   zenModeExitButton: "禅モードを終了",
   zenModeExitButtonVisibleLabel: "終了ボタンを表示",
   zenModeExitButtonVisibleDesc:
     "オフにすると、ページ上の「禅モードを終了」ボタンを非表示にします。クイックボタンまたはショートカットから引き続き禅モードを終了できます。",
   cleanModeTitle: "クリーンモード",
-  cleanModeLabel: "クリーンモードを有効にする",
   cleanModeDesc:
-    "免責事項、広告、ダウンロードボタンなどの不要な要素を非表示にして、よりクリーンなインターフェースを実現します（各サイトごとに個別に設定）",
+    "免責事項、広告、ダウンロードボタンなどの不要な要素を非表示にして、よりクリーンなインターフェースを実現します",
   autoHideInputTitle: "入力欄の自動非表示",
-  autoHideInputLabel: "アイドル時に入力欄を自動折りたたみ",
   autoHideInputDesc:
-    "未送信テキストがない状態でカーソルが離れると入力欄を非表示にし、ホバーまたはフォーカス時に即座に展開します（サイトごとに個別設定）",
+    "未送信テキストがない状態でカーソルが離れると入力欄を非表示にし、ホバーまたはフォーカス時に即座に展開します",
   extensionUpdateNoticeKicker: "拡張機能を更新しました",
   extensionUpdateNotice:
     "Ophel Atlas が更新されました。最新バージョンを引き続き使うには、このページを再読み込みしてください。",

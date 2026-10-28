@@ -713,10 +713,11 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   z-index: 10;
   display: flex;
   align-items: center;
-  flex-wrap: nowrap;
-  gap: 10px;
-  margin-bottom: 20px;
-  padding: 10px 14px;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  /* 与首个分组标题的上边距折叠，分组间距统一由 .settings-section-label 决定 */
+  margin-bottom: 4px;
+  padding: 8px 12px;
   border: 1px solid var(--gh-border, #e5e7eb);
   border-radius: 10px;
   background: color-mix(in srgb, var(--gh-surface, var(--gh-bg, #ffffff)) 88%, transparent);
@@ -730,9 +731,11 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   color: var(--gh-text-secondary, #6b7280);
 }
 
+/* 下拉随容器伸缩（上限 280px），窄容器里不再把「当前站点」徽标挤出栏外 */
 .settings-site-selector-dropdown {
-  flex: 0 0 auto;
-  width: 208px;
+  flex: 1 1 120px;
+  min-width: 0;
+  max-width: 280px;
 }
 
 .settings-site-option {
@@ -755,18 +758,22 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   white-space: nowrap;
 }
 
-.settings-section-label {
-  margin: 24px 2px 10px;
+/* 选中的不是当前站点时，替代「当前站点」徽标的常驻说明；放不下时整句换行，不截断 */
+.settings-site-selector-hint {
+  flex: 1 1 160px;
+  min-width: 0;
   font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  line-height: 1.45;
   color: var(--gh-text-secondary, #6b7280);
 }
 
-.settings-section-hint {
-  margin: 4px 2px 8px;
-  font-size: 13px;
-  color: var(--gh-text-secondary, #6b7280);
+/* 站点设置页的分组标题：靠字号与字重拉开层级，站点名由选择器承担，标题里不再重复 */
+.settings-section-label {
+  margin: 28px 2px 12px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--gh-text, #1f2937);
 }
 
 .settings-site-pack-notice {
@@ -995,13 +1002,6 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   flex-shrink: 0;
 }
 
-.settings-card-title-with-badge {
-  display: inline-flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
 .settings-beta-badge {
   display: inline-flex;
   align-items: center;
@@ -1075,6 +1075,22 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   padding-top: 0;
 }
 
+/* 从属行（宽度滑块、退出按钮）：紧贴上级开关、缩进，并去掉与上级之间的分隔线；
+   与下一组设置之间的分隔线仍由从属行自己的 border-bottom 承担 */
+.settings-row.has-sub {
+  padding-bottom: 8px;
+  border-bottom: none;
+}
+
+.settings-row.is-sub {
+  padding-top: 0;
+  padding-left: 16px;
+}
+
+.settings-row.is-sub .settings-row-label {
+  font-size: 13px;
+}
+
 .settings-row-info {
   flex: 1;
   min-width: 0;
@@ -1119,6 +1135,27 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+/* 模型锁定的关键词输入 / 模型下拉：宽度随容器收缩；未开启时置灰，点击落到外层提示先开启 */
+.settings-model-lock-field {
+  flex: 0 1 200px;
+  min-width: 0;
+}
+
+.settings-model-lock-field .settings-input,
+.settings-model-lock-field .settings-select {
+  width: 100%;
+}
+
+.settings-model-lock-field.is-disabled {
+  cursor: not-allowed;
+}
+
+.settings-model-lock-field.is-disabled .settings-input,
+.settings-model-lock-field.is-disabled .settings-select {
+  opacity: 0.5;
+  pointer-events: none;
 }
 
 /* 用量图表的站点筛选：外层定宽，避免下拉宽度在 inline-flex 容器里随百分比循环计算 */
@@ -3533,7 +3570,7 @@ html[data-theme="dark"] .platform-icon-dark-invert {
 }
 
 .settings-modal-container .settings-content {
-  padding-right: 40px; /* 为关闭按钮留出空间 */
+  padding-right: 46px; /* 为关闭按钮留出空间 */
 }
 
 /* ==================== 窄屏：全屏单栏、两级导航 ==================== */
@@ -3626,6 +3663,16 @@ html[data-theme="dark"] .platform-icon-dark-invert {
 .is-compact .settings-tab-group-container,
 .is-compact .settings-pack-toolbar {
   top: -16px;
+}
+
+/* 站点选择器栏窄屏只留下拉与徽标（下拉自带可访问名称，标签可省）；
+   选中非当前站点时，说明独占一行，不去挤下拉 */
+.is-compact .settings-site-selector-label {
+  display: none;
+}
+
+.is-compact .settings-site-selector-hint {
+  flex-basis: 100%;
 }
 
 /* 设置行放不下「说明 + 控件」时换行：说明（首个子元素，可能是展开按钮包着的说明）

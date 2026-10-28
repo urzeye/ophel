@@ -38,10 +38,9 @@ export const es = {
   siteSettingsPageDesc:
     "Configura el diseño de página, el bloqueo de modelo y las funciones específicas por sitio",
   siteSelectorLabel: "Sitio a configurar",
-  siteSettingsOtherSiteToast: "Configurando {site}; los cambios no afectan al sitio actual",
+  siteSettingsOtherSiteHint: "Configurando {site}; los cambios no afectan al sitio actual",
   currentSiteBadge: "Sitio actual",
   siteExclusiveSettingsLabel: "Específicos del sitio",
-  noSiteExclusiveSettings: "Este sitio aún no tiene ajustes específicos",
   communitySitePackBadge: "Paquete de la comunidad (funciones principales)",
   communitySitePackDesc:
     "Este sitio funciona con un paquete de la comunidad. Solo se muestran las funciones que admite.",
@@ -231,7 +230,6 @@ export const es = {
   userQueryWidthSettings: "Ancho de Usuario",
   scrollSettings: "Desplazamiento",
   contentProcessing: "Procesamiento de Contenido",
-  contentProcessingDesc: "Configurar cómo se tratan las respuestas",
   interactionEnhance: "Mejoras de Interacción",
   interactionEnhanceDesc: "Mejorar tablas y fórmulas",
   exportSettings: "Exportación",
@@ -636,7 +634,7 @@ export const es = {
   geminiMystuffOpenInNewTab: "Abrir en una pestaña nueva",
   geminiMystuffLocateFailed: "No se pudo encontrar la ubicación original de la conversación",
 
-  userQueryWidthDesc: "Ancho máximo del globo de usuario (por sitio)",
+  userQueryWidthDesc: "Ancho máximo del globo de usuario",
   // Category management
   categoryManage: "Categorías",
   categoryEmpty: "Sin categorías aún.",
@@ -763,11 +761,9 @@ export const es = {
   pageWidthLabel: "Ancho de Página",
   pageWidthValueLabel: "Valor de Ancho",
   pageWidthDesc:
-    "Ajusta el ancho de la página del chat en tiempo real (configurado por sitio). Con Evitación inteligente activada, el ancho real puede estar limitado por el área segura del panel.",
-  enablePageWidth: "Activar Ampliación",
+    "Ajusta el ancho de la página del chat en tiempo real. Con Evitación inteligente activada, el ancho real puede estar limitado por el área segura del panel.",
   panelAvoidanceTitle: "Evitación inteligente",
   betaBadge: "Beta",
-  panelAvoidanceLabel: "Evitar el panel de Ophel",
   panelAvoidanceDesc:
     "Ajusta automáticamente el área de contenido del sitio actual mientras el panel está abierto; se desactiva en pantallas estrechas.",
   widthValue: "Ancho",
@@ -778,7 +774,6 @@ export const es = {
   unitPercent: "Porcentaje (%)",
 
   // User Query Width Settings
-  enableUserQueryWidth: "Ampliación de Usuario",
   enableUserQueryWidthDesc: "Globo del usuario más ancho",
   userQueryWidthValueLabel: "Ancho",
   // Tab Settings
@@ -1429,7 +1424,6 @@ Dame el código y luego un resumen de mejoras.`,
   modelSelectorNotFound: "No hay selector",
 
   // ======== Claude Session Key Management ========
-  geminiSettingsTab: "Solo Gemini",
   claudeSessionKeyTitle: "Gestión de Sesiones",
   claudeSessionKeyDesc: "Cuentas de Claude",
   claudeCurrentUsing: "Usando:",
@@ -1491,8 +1485,6 @@ Dame el código y luego un resumen de mejoras.`,
   restoreSuccess: "Restauración exitosa, la página se actualizará...",
 
   // ======== Configuración de AI Studio ========
-  aistudioSettingsTitle: "Configuración de AI Studio",
-  aistudioSettingsDesc: "Configura el comportamiento predeterminado al cargar AI Studio",
   aistudioDefaultModel: "Modelo predeterminado",
   aistudioDefaultModelNone: "No especificado (usar predeterminado del sistema)",
   aistudioDefaultModelCustom: "ID de modelo personalizado...",
@@ -1518,8 +1510,6 @@ Dame el código y luego un resumen de mejoras.`,
   aistudioModelsError: "Error al obtener la lista de modelos",
 
   // ======== Configuración de ChatGPT ========
-  chatgptSettingsTitle: "Configuración de ChatGPT",
-  chatgptSettingsDesc: "Configurar el comportamiento predeterminado de la página ChatGPT",
   chatgptMarkdownFixLabel: "Corrección de Markdown Negrita",
   chatgptMarkdownFixDesc: "Corregir texto **negrita** no renderizado en respuestas de ChatGPT",
   chatgptCodeBlockBatchMountLabel: "Montaje por lotes de bloques de código",
@@ -1808,21 +1798,18 @@ Dame el código y luego un resumen de mejoras.`,
   queueBatchImportSuccess: "Se añadieron {count} prompt(s) a la cola",
   queueBatchImportEmpty: "No hay prompts para añadir",
   zenModeTitle: "Modo Zen",
-  zenModeLabel: "Habilitar modo Zen",
   zenModeDesc:
-    "Oculte la barra lateral y los elementos de navegación para centrarse en la conversación actual (configurado de forma independiente para cada sitio)",
+    "Oculte la barra lateral y los elementos de navegación para centrarse en la conversación actual",
   zenModeExitButton: "Salir del modo Zen",
   zenModeExitButtonVisibleLabel: "Mostrar botón de salida",
   zenModeExitButtonVisibleDesc:
     "Al desactivarlo, se oculta el botón de salida del modo Zen en la página; aún puede salir del modo Zen con el botón rápido o el atajo.",
   cleanModeTitle: "Modo Limpio",
-  cleanModeLabel: "Habilitar modo Limpio",
   cleanModeDesc:
-    "Oculte avisos legales, anuncios, botones de descarga y otros elementos innecesarios para una interfaz más limpia (configurado de forma independiente para cada sitio)",
+    "Oculte avisos legales, anuncios, botones de descarga y otros elementos innecesarios para una interfaz más limpia",
   autoHideInputTitle: "Ocultar automáticamente la entrada",
-  autoHideInputLabel: "Colapsar automáticamente la entrada cuando esté inactiva",
   autoHideInputDesc:
-    "Contrae y oculta el cuadro de entrada cuando el cursor se aleja sin texto redactado; se expande al pasar el cursor o enfocar (configurado por sitio)",
+    "Contrae y oculta el cuadro de entrada cuando el cursor se aleja sin texto redactado; se expande al pasar el cursor o enfocar",
   extensionUpdateNoticeKicker: "Extensión actualizada",
   extensionUpdateNotice:
     "Ophel Atlas se ha actualizado. Recarga esta página para seguir usando la versión más reciente.",

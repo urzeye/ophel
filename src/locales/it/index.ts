@@ -37,11 +37,10 @@ export const it = {
   // Site Settings
   siteSettingsPageDesc: "Configura layout di pagina, blocco modello e funzioni specifiche per sito",
   siteSelectorLabel: "Sito da configurare",
-  siteSettingsOtherSiteToast:
+  siteSettingsOtherSiteHint:
     "Modifica delle impostazioni di {site}; le modifiche non influiscono sul sito corrente",
   currentSiteBadge: "Sito corrente",
   siteExclusiveSettingsLabel: "Specifiche del sito",
-  noSiteExclusiveSettings: "Nessuna impostazione specifica per questo sito",
   communitySitePackBadge: "Pacchetto della community (funzioni principali)",
   communitySitePackDesc:
     "Questo sito è supportato da un pacchetto della community. Vengono mostrate solo le funzioni che supporta.",
@@ -240,7 +239,6 @@ export const it = {
   userQueryWidthSettings: "Larghezza query utente",
   scrollSettings: "Scorri Impostazioni",
   contentProcessing: "Elaborazione dei contenuti",
-  contentProcessingDesc: "Configura il modo in cui vengono elaborate le risposte dell'IA",
   interactionEnhance: "Miglioramenti dell'interazione",
   interactionEnhanceDesc: "Migliora le interazioni tra formule e tabelle",
   exportSettings: "Impostazioni di esportazione",
@@ -657,7 +655,7 @@ export const it = {
   geminiMystuffLocateFailed: "Posizione della conversazione originale non trovata",
 
   userQueryWidthDesc:
-    "Regola la larghezza massima del contenitore dei fumetti delle query degli utenti (per sito)",
+    "Regola la larghezza massima del contenitore dei fumetti delle query degli utenti",
   // Category management
   categoryManage: "Gestione delle categorie",
   categoryEmpty:
@@ -831,11 +829,9 @@ export const it = {
   pageWidthLabel: "Larghezza della pagina",
   pageWidthValueLabel: "Valore larghezza",
   pageWidthDesc:
-    "Regola la larghezza della pagina della chat in tempo reale (configurata per sito). Quando l'evitamento intelligente è attivo, la larghezza effettiva può essere limitata dall'area sicura del pannello.",
-  enablePageWidth: "Abilita l'ampliamento della pagina",
+    "Regola la larghezza della pagina della chat in tempo reale. Quando l'evitamento intelligente è attivo, la larghezza effettiva può essere limitata dall'area sicura del pannello.",
   panelAvoidanceTitle: "Evitamento intelligente",
   betaBadge: "Beta",
-  panelAvoidanceLabel: "Evita il pannello Ophel",
   panelAvoidanceDesc:
     "Regola automaticamente l'area dei contenuti del sito corrente mentre il pannello è aperto; disattivato sugli schermi stretti.",
   widthValue: "Valore larghezza",
@@ -846,7 +842,6 @@ export const it = {
   unitPercent: "Percentuale (%)",
 
   // User Query Width Settings
-  enableUserQueryWidth: "Abilita l'ampliamento delle query utente",
   enableUserQueryWidthDesc:
     "Regola la larghezza massima dei contenitori dei fumetti delle query degli utenti",
   userQueryWidthValueLabel: "Larghezza della query",
@@ -1571,7 +1566,6 @@ export const it = {
   modelSelectorNotFound: "Selettore del modello non trovato",
 
   // ======== Claude Session Key Management ========
-  geminiSettingsTab: "Gemini Esclusivo",
   claudeSessionKeyTitle: "Gestione delle chiavi di sessione",
   claudeSessionKeyDesc: "Gestisci e cambia i tuoi account Claude",
   claudeCurrentUsing: "Corrente:",
@@ -1634,9 +1628,6 @@ export const it = {
   restoreSuccess: "Ripristino riuscito, la pagina si aggiornerà...",
 
   // ======== AI Studio Settings ========
-  aistudioSettingsTitle: "Impostazioni AI Studio",
-  aistudioSettingsDesc:
-    "Configura il comportamento predefinito al caricamento della pagina AI Studio",
   aistudioDefaultModel: "Modello predefinito",
   aistudioDefaultModelNone: "Non specificato (utilizza l'impostazione predefinita del sistema)",
   aistudioDefaultModelCustom: "ID modello personalizzato...",
@@ -1666,8 +1657,6 @@ export const it = {
   aistudioModelsError: "Impossibile recuperare l'elenco dei modelli",
 
   // ======== ChatGPT Settings ========
-  chatgptSettingsTitle: "ChatGPT Impostazioni",
-  chatgptSettingsDesc: "Configura il comportamento predefinito per la pagina ChatGPT",
   chatgptMarkdownFixLabel: "Markdown Correzione audace",
   chatgptMarkdownFixDesc:
     "Correzione del testo in **grassetto** non visualizzato nelle risposte ChatGPT",
@@ -1877,21 +1866,18 @@ export const it = {
   queueBatchImportSuccess: "Aggiunti i prompt {count} alla coda",
   queueBatchImportEmpty: "Nessuna richiesta disponibile da aggiungere",
   zenModeTitle: "Zen Mode",
-  zenModeLabel: "Abilita Zen Mode",
   zenModeDesc:
-    "Nascondi la barra laterale e gli elementi di navigazione per concentrarti sulla conversazione corrente (configurata in modo indipendente per ciascun sito)",
+    "Nascondi la barra laterale e gli elementi di navigazione per concentrarti sulla conversazione corrente",
   zenModeExitButton: "Esci da Zen Mode",
   zenModeExitButtonVisibleLabel: "Mostra il pulsante di uscita",
   zenModeExitButtonVisibleDesc:
     "Quando è disattivato, il pulsante Esci Zen Mode sulla pagina è nascosto; puoi comunque uscire da Zen Mode dal pulsante rapido o dalla scorciatoia.",
   cleanModeTitle: "Modalità pulita",
-  cleanModeLabel: "Abilita la modalità pulita",
   cleanModeDesc:
-    "Nascondi disclaimer, annunci, pulsanti di download e altri elementi inutili per un'interfaccia più pulita (configurata in modo indipendente per ciascun sito)",
+    "Nascondi disclaimer, annunci, pulsanti di download e altri elementi inutili per un'interfaccia più pulita",
   autoHideInputTitle: "Nascondi automaticamente l'input",
-  autoHideInputLabel: "Comprimi automaticamente l'input quando inattivo",
   autoHideInputDesc:
-    "Comprime e nasconde la casella di input quando il cursore si allontana e non c'è testo in bozza; si espande al passaggio del mouse o al focus (configurato per sito)",
+    "Comprime e nasconde la casella di input quando il cursore si allontana e non c'è testo in bozza; si espande al passaggio del mouse o al focus",
   extensionUpdateNoticeKicker: "Estensione aggiornata",
   extensionUpdateNotice:
     "Ophel Atlas è stato aggiornato. Ricarica questa pagina per continuare a utilizzare la versione più recente.",
