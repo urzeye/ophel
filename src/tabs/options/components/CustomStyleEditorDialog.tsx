@@ -74,7 +74,8 @@ const STYLE_EDITOR_DIALOG_STYLES = `
     flex-direction: column;
     gap: 18px;
     padding: 18px;
-    overflow-y: auto;
+    /* 代码框随高度自适应；只有极矮视口才让表单区整体滚动，正常尺寸不会出现外层滚动条 */
+    overflow: auto;
   }
   .gh-style-editor-field {
     display: flex;
@@ -139,18 +140,67 @@ const STYLE_EDITOR_DIALOG_STYLES = `
   }
   .gh-style-editor-code-frame {
     flex: 1;
-    min-height: 320px;
+    min-height: 0;
     border: 1px solid var(--gh-input-border, #d1d5db);
     border-radius: 8px;
     background: var(--gh-bg-secondary, #f9fafb);
     color: var(--gh-text, #374151);
     overflow: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--gh-border, #d1d5db) transparent;
+    scrollbar-gutter: stable;
+  }
+  .gh-style-editor-code-frame::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  .gh-style-editor-code-frame::-webkit-scrollbar-track,
+  .gh-style-editor-code-frame::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+  .gh-style-editor-code-frame::-webkit-scrollbar-thumb {
+    min-height: 40px;
+    border: 3px solid transparent;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--gh-text-tertiary, #8d94a1) 58%, transparent);
+    background-clip: content-box;
+  }
+  .gh-style-editor-code-frame::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in srgb, var(--gh-text-tertiary, #8d94a1) 80%, transparent);
+    background-clip: content-box;
   }
   .gh-style-editor-code-frame:focus-within {
     border-color: var(--gh-primary, #4285f4);
   }
   .gh-style-editor-code-frame textarea:focus {
     outline: none;
+  }
+  .gh-style-editor-code-frame .hljs-comment,
+  .gh-style-editor-code-frame .hljs-quote {
+    color: var(--gh-text-tertiary, #8d94a1);
+    font-style: italic;
+  }
+  .gh-style-editor-code-frame .hljs-keyword,
+  .gh-style-editor-code-frame .hljs-selector-tag,
+  .gh-style-editor-code-frame .hljs-doctag {
+    color: var(--gh-danger, #ef4444);
+  }
+  .gh-style-editor-code-frame .hljs-selector-class,
+  .gh-style-editor-code-frame .hljs-selector-id,
+  .gh-style-editor-code-frame .hljs-selector-pseudo,
+  .gh-style-editor-code-frame .hljs-title,
+  .gh-style-editor-code-frame .hljs-section {
+    color: var(--gh-primary, #4285f4);
+  }
+  .gh-style-editor-code-frame .hljs-string,
+  .gh-style-editor-code-frame .hljs-attr,
+  .gh-style-editor-code-frame .hljs-attribute {
+    color: var(--gh-secondary, #34a853);
+  }
+  .gh-style-editor-code-frame .hljs-number,
+  .gh-style-editor-code-frame .hljs-literal,
+  .gh-style-editor-code-frame .hljs-built_in {
+    color: var(--gh-primary, #4285f4);
   }
   .gh-style-editor-footer {
     display: flex;
