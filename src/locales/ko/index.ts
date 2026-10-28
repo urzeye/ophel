@@ -36,11 +36,10 @@ export const ko = {
   // Site Settings
   siteSettingsPageDesc: "사이트별로 페이지 레이아웃, 모델 잠금, 전용 기능을 설정합니다",
   siteSelectorLabel: "설정할 사이트",
-  siteSettingsOtherSiteToast:
+  siteSettingsOtherSiteHint:
     "{site} 설정을 구성하는 중입니다. 변경 사항은 현재 사이트에 적용되지 않습니다",
   currentSiteBadge: "현재 사이트",
   siteExclusiveSettingsLabel: "전용 설정",
-  noSiteExclusiveSettings: "이 사이트에는 전용 설정이 없습니다",
   communitySitePackBadge: "커뮤니티 팩(핵심 기능)",
   communitySitePackDesc: "이 사이트는 커뮤니티 팩으로 지원되며, 팩이 지원하는 기능만 표시됩니다.",
   sitePacksPageDesc: "사이트 팩을 설치하고 관리하여 Ophel이 더 많은 AI 사이트를 지원하도록 합니다.",
@@ -229,7 +228,6 @@ export const ko = {
   userQueryWidthSettings: "사용자 쿼리 너비",
   scrollSettings: "스크롤 설정",
   contentProcessing: "콘텐츠 처리",
-  contentProcessingDesc: "AI 응답 처리 방식 구성",
   interactionEnhance: "상호작용 강화",
   interactionEnhanceDesc: "수식 및 표 상호작용 강화",
   exportSettings: "내보내기 설정",
@@ -631,7 +629,7 @@ export const ko = {
   geminiMystuffOpenInNewTab: "새 탭에서 열기",
   geminiMystuffLocateFailed: "원본 대화 위치 정보를 찾을 수 없습니다",
 
-  userQueryWidthDesc: "사용자 쿼리 버블 컨테이너의 최대 너비 조정 (사이트별)",
+  userQueryWidthDesc: "사용자 쿼리 버블 컨테이너의 최대 너비 조정",
   // Category management
   categoryManage: "카테고리 관리",
   categoryEmpty: "아직 카테고리가 없습니다. 프롬프트를 추가할 때 카테고리가 생성됩니다.",
@@ -758,11 +756,9 @@ export const ko = {
   pageWidthLabel: "페이지 너비",
   pageWidthValueLabel: "너비 값",
   pageWidthDesc:
-    "채팅 페이지 너비를 실시간으로 조정합니다(사이트별 구성). 스마트 회피가 켜져 있으면 실제 너비가 패널 안전 영역에 의해 제한될 수 있습니다.",
-  enablePageWidth: "페이지 너비 확장 활성화",
+    "채팅 페이지 너비를 실시간으로 조정합니다. 스마트 회피가 켜져 있으면 실제 너비가 패널 안전 영역에 의해 제한될 수 있습니다.",
   panelAvoidanceTitle: "스마트 회피",
   betaBadge: "Beta",
-  panelAvoidanceLabel: "Ophel 패널 피하기",
   panelAvoidanceDesc:
     "패널이 열려 있을 때 현재 사이트의 콘텐츠 영역을 자동으로 조정합니다. 좁은 화면에서는 자동으로 비활성화됩니다.",
   widthValue: "너비 값",
@@ -773,7 +769,6 @@ export const ko = {
   unitPercent: "백분율 (%)",
 
   // User Query Width Settings
-  enableUserQueryWidth: "사용자 쿼리 너비 확장 활성화",
   enableUserQueryWidthDesc: "사용자 쿼리 버블 컨테이너의 최대 너비 조정",
   userQueryWidthValueLabel: "쿼리 너비",
   // Tab Settings
@@ -1428,7 +1423,6 @@ export const ko = {
   modelSelectorNotFound: "모델 선택기를 찾을 수 없습니다",
 
   // ======== Claude Session Key Management ========
-  geminiSettingsTab: "Gemini 전용",
   claudeSessionKeyTitle: "세션 키 관리",
   claudeSessionKeyDesc: "Claude 계정 관리 및 전환",
   claudeCurrentUsing: "사용 중:",
@@ -1490,8 +1484,6 @@ export const ko = {
   restoreSuccess: "복원 성공, 페이지가 새로 고침됩니다...",
 
   // ======== AI Studio 설정 ========
-  aistudioSettingsTitle: "AI Studio 설정",
-  aistudioSettingsDesc: "AI Studio 페이지 로드 시 기본 동작 구성",
   aistudioDefaultModel: "기본 모델",
   aistudioDefaultModelNone: "지정 안 함 (시스템 기본값 사용)",
   aistudioDefaultModelCustom: "사용자 정의 모델 ID...",
@@ -1513,8 +1505,6 @@ export const ko = {
   aistudioModelsError: "모델 목록을 가져오지 못했습니다",
 
   // ======== ChatGPT 설정 ========
-  chatgptSettingsTitle: "ChatGPT 설정",
-  chatgptSettingsDesc: "ChatGPT 페이지의 기본 동작 구성",
   chatgptMarkdownFixLabel: "Markdown 굵게 수정",
   chatgptMarkdownFixDesc: "ChatGPT 응답에서 렌더링되지 않은 **굵게** 텍스트를 수정합니다",
   chatgptCodeBlockBatchMountLabel: "코드 블록 일괄 마운트",
@@ -1796,20 +1786,17 @@ export const ko = {
   queueBatchImportSuccess: "{count}개의 프롬프트를 대기열에 추가했습니다",
   queueBatchImportEmpty: "추가할 프롬프트가 없습니다",
   zenModeTitle: "선 모드",
-  zenModeLabel: "선 모드 활성화",
-  zenModeDesc: "사이드바 및 내비게이션 요소를 숨겨 현재 대화에 집중합니다 (각 사이트별 개별 설정)",
+  zenModeDesc: "사이드바 및 내비게이션 요소를 숨겨 현재 대화에 집중합니다",
   zenModeExitButton: "선 모드 종료",
   zenModeExitButtonVisibleLabel: "종료 버튼 표시",
   zenModeExitButtonVisibleDesc:
     "끄면 페이지의 선 모드 종료 버튼이 숨겨집니다. 빠른 버튼이나 단축키로 계속 선 모드를 종료할 수 있습니다.",
   cleanModeTitle: "클린 모드",
-  cleanModeLabel: "클린 모드 활성화",
   cleanModeDesc:
-    "면책 조항, 광고, 다운로드 버튼 등 불필요한 요소를 숨겨 더 깨끗한 인터페이스를 제공합니다 (각 사이트별 개별 설정)",
+    "면책 조항, 광고, 다운로드 버튼 등 불필요한 요소를 숨겨 더 깨끗한 인터페이스를 제공합니다",
   autoHideInputTitle: "입력창 자동 숨김",
-  autoHideInputLabel: "유휴 시 입력창 자동 접기",
   autoHideInputDesc:
-    "작성 중인 텍스트가 없는 상태에서 마우스가 벗어나면 입력창을 숨기고 마우스 오버나 포커스 시 즉시 확장합니다 (사이트별 독립 설정)",
+    "작성 중인 텍스트가 없는 상태에서 마우스가 벗어나면 입력창을 숨기고 마우스 오버나 포커스 시 즉시 확장합니다",
   extensionUpdateNoticeKicker: "확장 프로그램이 업데이트되었습니다",
   extensionUpdateNotice:
     "Ophel Atlas가 업데이트되었습니다. 최신 버전을 계속 사용하려면 이 페이지를 새로고침하세요.",

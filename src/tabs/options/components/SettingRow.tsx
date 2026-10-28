@@ -19,6 +19,8 @@ export interface SettingRowProps {
   onDisabledClick?: () => void
   /** 自定义样式 */
   style?: React.CSSProperties
+  /** 附加类名：has-sub 标记带从属行的上级行，is-sub 标记从属行（缩进、紧贴上级） */
+  className?: string
   /** 稳定 setting id（用于定位/高亮） */
   settingId?: string
 }
@@ -33,6 +35,7 @@ export const SettingRow: React.FC<SettingRowProps> = ({
   disabled = false,
   onDisabledClick,
   style,
+  className = "",
   settingId,
 }) => {
   const isDisabledClickable = disabled && !!onDisabledClick
@@ -40,7 +43,7 @@ export const SettingRow: React.FC<SettingRowProps> = ({
     <div
       className={`settings-row ${disabled ? "disabled" : ""} ${
         isDisabledClickable ? "disabled-clickable" : ""
-      }`}
+      } ${className}`.trim()}
       data-setting-id={settingId}
       style={style}
       onClick={() => {
@@ -61,12 +64,16 @@ export const SettingRow: React.FC<SettingRowProps> = ({
  * 带开关的设置行（常用快捷组件）
  */
 export interface ToggleRowProps {
-  label: string
+  /** 标签文本或元素（带 Beta 标签时传元素，同时需要提供 ariaLabel） */
+  label: React.ReactNode
   description?: string
   checked: boolean
   onChange: () => void
   disabled?: boolean
   onDisabledClick?: () => void
+  className?: string
+  /** 开关的可访问名称；label 为元素时无法自动推导，需显式传入 */
+  ariaLabel?: string
   settingId?: string
 }
 
@@ -77,6 +84,8 @@ export const ToggleRow: React.FC<ToggleRowProps> = ({
   onChange,
   disabled = false,
   onDisabledClick,
+  className,
+  ariaLabel,
   settingId,
 }) => {
   return (
@@ -85,8 +94,9 @@ export const ToggleRow: React.FC<ToggleRowProps> = ({
       description={description}
       disabled={disabled}
       onDisabledClick={onDisabledClick}
+      className={className}
       settingId={settingId}>
-      <Switch checked={checked} onChange={onChange} disabled={disabled} />
+      <Switch checked={checked} onChange={onChange} disabled={disabled} ariaLabel={ariaLabel} />
     </SettingRow>
   )
 }

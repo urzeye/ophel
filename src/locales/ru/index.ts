@@ -38,10 +38,9 @@ export const ru = {
   siteSettingsPageDesc:
     "Настройка макета страницы, блокировки модели и специальных функций для каждого сайта",
   siteSelectorLabel: "Настраиваемый сайт",
-  siteSettingsOtherSiteToast: "Настройка {site}; изменения не затронут текущий сайт",
+  siteSettingsOtherSiteHint: "Настройка {site}; изменения не затронут текущий сайт",
   currentSiteBadge: "Текущий сайт",
   siteExclusiveSettingsLabel: "Специальные настройки",
-  noSiteExclusiveSettings: "Для этого сайта нет специальных настроек",
   communitySitePackBadge: "Пакет сообщества (основные функции)",
   communitySitePackDesc:
     "Этот сайт поддерживается пакетом сообщества. Отображаются только поддерживаемые им функции.",
@@ -229,7 +228,6 @@ export const ru = {
   userQueryWidthSettings: "Ширина запроса",
   scrollSettings: "Прокрутка",
   contentProcessing: "Обработка контента",
-  contentProcessingDesc: "Как обрабатывать ответы ИИ",
   interactionEnhance: "Улучшение интерфейса",
   interactionEnhanceDesc: "Улучшенные таблицы и формулы",
   exportSettings: "Экспорт",
@@ -632,7 +630,7 @@ export const ru = {
   geminiMystuffOpenInNewTab: "Открыть в новой вкладке",
   geminiMystuffLocateFailed: "Не удалось найти исходное место беседы",
 
-  userQueryWidthDesc: "Ширина пузыря сообщения (на сайт)",
+  userQueryWidthDesc: "Ширина пузыря сообщения",
   // Category management
   categoryManage: "Категории",
   categoryEmpty: "Категорий пока нет.",
@@ -759,11 +757,9 @@ export const ru = {
   pageWidthLabel: "Ширина страницы",
   pageWidthValueLabel: "Значение",
   pageWidthDesc:
-    "Настраивает ширину страницы чата в реальном времени (отдельно для каждого сайта). Когда включен умный обход, фактическая ширина может быть ограничена безопасной областью панели.",
-  enablePageWidth: "Включить расширение",
+    "Настраивает ширину страницы чата в реальном времени. Когда включен умный обход, фактическая ширина может быть ограничена безопасной областью панели.",
   panelAvoidanceTitle: "Умный обход",
   betaBadge: "Beta",
-  panelAvoidanceLabel: "Обходить панель Ophel",
   panelAvoidanceDesc:
     "Автоматически подстраивает область контента текущего сайта, пока панель открыта; отключается на узких экранах.",
   widthValue: "Ширина",
@@ -774,7 +770,6 @@ export const ru = {
   unitPercent: "Проценты (%)",
 
   // User Query Width Settings
-  enableUserQueryWidth: "Ширина моих сообщений",
   enableUserQueryWidthDesc: "Расширить пузырь запроса",
   userQueryWidthValueLabel: "Ширина",
   // Tab Settings
@@ -1426,7 +1421,6 @@ export const ru = {
   modelSelectorNotFound: "Нет селектора",
 
   // ======== Claude Session Key Management ========
-  geminiSettingsTab: "Только Gemini",
   claudeSessionKeyTitle: "Сессии Claude",
   claudeSessionKeyDesc: "Аккаунты",
   claudeCurrentUsing: "В деле:",
@@ -1488,8 +1482,6 @@ export const ru = {
   restoreSuccess: "Восстановление успешно, страница обновится...",
 
   // ======== Настройки AI Studio ========
-  aistudioSettingsTitle: "Настройки AI Studio",
-  aistudioSettingsDesc: "Настройте поведение по умолчанию при загрузке страницы AI Studio",
   aistudioDefaultModel: "Модель по умолчанию",
   aistudioDefaultModelNone: "Не указано (использовать системную)",
   aistudioDefaultModelCustom: "Пользовательский ID модели...",
@@ -1514,8 +1506,6 @@ export const ru = {
   aistudioModelsError: "Ошибка получения списка моделей",
 
   // ======== Настройки ChatGPT ========
-  chatgptSettingsTitle: "Настройки ChatGPT",
-  chatgptSettingsDesc: "Настроить поведение по умолчанию для страницы ChatGPT",
   chatgptMarkdownFixLabel: "Исправление жирного Markdown",
   chatgptMarkdownFixDesc: "Исправить нерендеренный **жирный** текст в ответах ChatGPT",
   chatgptCodeBlockBatchMountLabel: "Пакетное монтирование блоков кода",
@@ -1802,21 +1792,17 @@ export const ru = {
   queueBatchImportSuccess: "В очередь добавлено: {count}",
   queueBatchImportEmpty: "Нет промптов для добавления",
   zenModeTitle: "Дзен-режим",
-  zenModeLabel: "Включить дзен-режим",
-  zenModeDesc:
-    "Скрыть боковую панель и элементы навигации для концентрации на текущем разговоре (настраивается индивидуально для каждого сайта)",
+  zenModeDesc: "Скрыть боковую панель и элементы навигации для концентрации на текущем разговоре",
   zenModeExitButton: "Выйти из дзен-режима",
   zenModeExitButtonVisibleLabel: "Показывать кнопку выхода",
   zenModeExitButtonVisibleDesc:
     "Если отключено, кнопка выхода из дзен-режима на странице скрывается; выйти из дзен-режима по-прежнему можно через быструю кнопку или сочетание клавиш.",
   cleanModeTitle: "Режим очистки",
-  cleanModeLabel: "Включить режим очистки",
   cleanModeDesc:
-    "Скрыть отказ от ответственности, рекламу, кнопки загрузки и другие лишние элементы для более чистого интерфейса (настраивается индивидуально для каждого сайта)",
+    "Скрыть отказ от ответственности, рекламу, кнопки загрузки и другие лишние элементы для более чистого интерфейса",
   autoHideInputTitle: "Автоскрытие поля ввода",
-  autoHideInputLabel: "Автоматически сворачивать поле ввода при бездействии",
   autoHideInputDesc:
-    "Сворачивает и скрывает поле ввода, когда курсор убран и нет черновика; раскрывается при наведении или фокусе (настраивается для каждого сайта)",
+    "Сворачивает и скрывает поле ввода, когда курсор убран и нет черновика; раскрывается при наведении или фокусе",
   extensionUpdateNoticeKicker: "Расширение обновлено",
   extensionUpdateNotice:
     "Ophel Atlas обновлён. Перезагрузите эту страницу, чтобы продолжить пользоваться последней версией.",

@@ -37,11 +37,10 @@ export const en = {
   // Site Settings
   siteSettingsPageDesc: "Configure page layout, model lock, and site-specific features per site",
   siteSelectorLabel: "Configure site",
-  siteSettingsOtherSiteToast:
+  siteSettingsOtherSiteHint:
     "Configuring settings for {site}; changes won't affect the current site",
   currentSiteBadge: "Current site",
   siteExclusiveSettingsLabel: "Site-specific",
-  noSiteExclusiveSettings: "No site-specific settings for this site yet",
   communitySitePackBadge: "Community pack (core features)",
   communitySitePackDesc:
     "This site is powered by a community pack. Only the features it supports are shown.",
@@ -233,7 +232,6 @@ export const en = {
   userQueryWidthSettings: "User Query Width",
   scrollSettings: "Scroll Settings",
   contentProcessing: "Content Processing",
-  contentProcessingDesc: "Configure how AI responses are processed",
   interactionEnhance: "Interaction Enhancements",
   interactionEnhanceDesc: "Enhance formula and table interactions",
   exportSettings: "Export Settings",
@@ -642,7 +640,7 @@ export const en = {
   geminiMystuffOpenInNewTab: "Open in new tab",
   geminiMystuffLocateFailed: "Original chat location not found",
 
-  userQueryWidthDesc: "Adjust max width of user query bubble container (per site)",
+  userQueryWidthDesc: "Adjust max width of user query bubble container",
   // Category management
   categoryManage: "Category Management",
   categoryEmpty: "No categories yet. Categories are created when you add prompts.",
@@ -807,11 +805,9 @@ export const en = {
   pageWidthLabel: "Page Width",
   pageWidthValueLabel: "Width Value",
   pageWidthDesc:
-    "Adjust the chat page width in real time (configured per site). When Smart Avoidance is enabled, the actual width may be limited by the panel safe area.",
-  enablePageWidth: "Enable Page Widening",
+    "Adjust the chat page width in real time. When Smart Avoidance is enabled, the actual width may be limited by the panel safe area.",
   panelAvoidanceTitle: "Smart Avoidance",
   betaBadge: "Beta",
-  panelAvoidanceLabel: "Avoid Ophel panel",
   panelAvoidanceDesc:
     "Automatically adjusts the current site's content area while the panel is open; disabled on narrow screens.",
   widthValue: "Width Value",
@@ -822,7 +818,6 @@ export const en = {
   unitPercent: "Percentage (%)",
 
   // User Query Width Settings
-  enableUserQueryWidth: "Enable User Query Widening",
   enableUserQueryWidthDesc: "Adjust the max-width of user query bubble containers",
   userQueryWidthValueLabel: "Query Width",
   // Tab Settings
@@ -1524,7 +1519,6 @@ Please output the optimized code block directly, followed by a brief summary of 
   modelSelectorNotFound: "Model selector not found",
 
   // ======== Claude Session Key Management ========
-  geminiSettingsTab: "Gemini Exclusive",
   claudeSessionKeyTitle: "Session Key Management",
   claudeSessionKeyDesc: "Manage and switch your Claude accounts",
   claudeCurrentUsing: "Current:",
@@ -1586,8 +1580,6 @@ Please output the optimized code block directly, followed by a brief summary of 
   restoreSuccess: "Restore successful, page will refresh...",
 
   // ======== AI Studio Settings ========
-  aistudioSettingsTitle: "AI Studio Settings",
-  aistudioSettingsDesc: "Configure default behavior when AI Studio page loads",
   aistudioDefaultModel: "Default Model",
   aistudioDefaultModelNone: "Not specified (use system default)",
   aistudioDefaultModelCustom: "Custom Model ID...",
@@ -1611,8 +1603,6 @@ Please output the optimized code block directly, followed by a brief summary of 
   aistudioModelsError: "Failed to fetch model list",
 
   // ======== ChatGPT Settings ========
-  chatgptSettingsTitle: "ChatGPT Settings",
-  chatgptSettingsDesc: "Configure default behavior for ChatGPT page",
   chatgptMarkdownFixLabel: "Markdown Bold Fix",
   chatgptMarkdownFixDesc: "Fix unrendered **bold** text in ChatGPT responses",
   chatgptCodeBlockBatchMountLabel: "Code Block Batch Mount",
@@ -1814,21 +1804,17 @@ Please output the optimized code block directly, followed by a brief summary of 
   queueBatchImportSuccess: "Added {count} prompt(s) to queue",
   queueBatchImportEmpty: "No prompts available to add",
   zenModeTitle: "Zen Mode",
-  zenModeLabel: "Enable Zen Mode",
-  zenModeDesc:
-    "Hide sidebar and navigation elements to focus on the current chat (configured independently for each site)",
+  zenModeDesc: "Hide sidebar and navigation elements to focus on the current chat",
   zenModeExitButton: "Exit Zen Mode",
   zenModeExitButtonVisibleLabel: "Show exit button",
   zenModeExitButtonVisibleDesc:
     "When off, the on-page Exit Zen Mode button is hidden; you can still leave Zen Mode from the quick button or shortcut.",
   cleanModeTitle: "Clean Mode",
-  cleanModeLabel: "Enable Clean Mode",
   cleanModeDesc:
-    "Hide disclaimers, ads, download buttons, and other clutter for a cleaner interface (configured independently for each site)",
+    "Hide disclaimers, ads, download buttons, and other clutter for a cleaner interface",
   autoHideInputTitle: "Auto-hide Input",
-  autoHideInputLabel: "Auto-collapse input when idle",
   autoHideInputDesc:
-    "Collapses and hides the input box when the cursor moves away with no drafted text; expands on hover or focus (configured independently for each site)",
+    "Collapses and hides the input box when the cursor moves away with no drafted text; expands on hover or focus",
   extensionUpdateNoticeKicker: "Extension updated",
   extensionUpdateNotice:
     "Ophel Atlas has been updated. Reload this page to keep using the latest version.",

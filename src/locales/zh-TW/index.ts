@@ -35,10 +35,9 @@ export const zhTW = {
   // Site Settings
   siteSettingsPageDesc: "按站點配置頁面佈局、模型鎖定和專屬功能",
   siteSelectorLabel: "配置站點",
-  siteSettingsOtherSiteToast: "正在配置 {site} 的設定，變更不會影響目前站點",
+  siteSettingsOtherSiteHint: "正在配置 {site} 的設定，變更不會影響目前站點",
   currentSiteBadge: "目前站點",
   siteExclusiveSettingsLabel: "專屬設定",
-  noSiteExclusiveSettings: "此站點暫無專屬設定",
   communitySitePackBadge: "社群適配包（核心功能）",
   communitySitePackDesc: "此網站由社群適配包提供支援，僅顯示其支援的功能。",
   sitePacksPageDesc: "安裝和管理網站適配包，讓 Ophel 支援更多 AI 網站",
@@ -517,7 +516,7 @@ export const zhTW = {
   geminiMystuffOpenInNewTab: "在新分頁中開啟",
   geminiMystuffLocateFailed: "找不到原始對話定位資訊",
 
-  userQueryWidthDesc: "調整使用者問題氣泡容器的最大寬度（每個站點獨立配置）",
+  userQueryWidthDesc: "調整使用者問題氣泡容器的最大寬度",
   // 分類管理
   categoryManage: "分類管理",
   categoryEmpty: "暫無分類，新增提示詞時會自動建立分類",
@@ -630,7 +629,6 @@ export const zhTW = {
   userQueryWidthSettings: "使用者問題寬度",
   scrollSettings: "滾動設定",
   contentProcessing: "內容處理",
-  contentProcessingDesc: "配置 AI 回覆內容的處理方式",
   interactionEnhance: "互動增強",
   interactionEnhanceDesc: "增強公式和表格的互動功能",
   exportSettings: "匯出設定",
@@ -638,12 +636,9 @@ export const zhTW = {
   markdownFixDesc: "修復 Gemini 回應中未正確渲染的 **加粗** 語法",
   pageWidthLabel: "頁面寬度",
   pageWidthValueLabel: "寬度值",
-  pageWidthDesc:
-    "調整聊天頁面的寬度，即時生效（每個站點獨立配置）；開啟智慧避讓時，實際寬度可能會受面板安全區限制。",
-  enablePageWidth: "啟用頁面加寬",
+  pageWidthDesc: "調整聊天頁面的寬度，即時生效；開啟智慧避讓時，實際寬度可能會受面板安全區限制。",
   panelAvoidanceTitle: "智慧避讓",
   betaBadge: "Beta",
-  panelAvoidanceLabel: "避讓 Ophel 面板",
   panelAvoidanceDesc: "面板展開時自動調整目前站點的內容區域，減少遮擋；窄螢幕裝置會自動停用。",
   widthValue: "寬度值",
   widthUnit: "單位",
@@ -653,7 +648,6 @@ export const zhTW = {
   unitPercent: "百分比 (%)",
 
   // 使用者問題寬度設置
-  enableUserQueryWidth: "啟用使用者問題加寬",
   enableUserQueryWidthDesc: "調整使用者問題氣泡容器的最大寬度",
   userQueryWidthValueLabel: "問題寬度",
   // 標籤頁設置
@@ -1428,7 +1422,6 @@ export const zhTW = {
   modelSelectorNotFound: "未找到模型選擇器",
 
   // ======== Claude Session Key 管理 ========
-  geminiSettingsTab: "Gemini 專屬",
   claudeSessionKeyTitle: "Session Key 管理",
   claudeSessionKeyDesc: "管理和切換你的 Claude 多帳號",
   claudeCurrentUsing: "當前使用:",
@@ -1490,8 +1483,6 @@ export const zhTW = {
   restoreSuccess: "恢復成功，即將重新整理頁面...",
 
   // ======== AI Studio 設定 ========
-  aistudioSettingsTitle: "AI Studio 設定",
-  aistudioSettingsDesc: "配置 AI Studio 頁面載入後的預設行為",
   aistudioDefaultModel: "預設模型",
   aistudioDefaultModelNone: "不指定（使用系統預設）",
   aistudioDefaultModelCustom: "自訂模型 ID...",
@@ -1513,8 +1504,6 @@ export const zhTW = {
   aistudioModelsError: "獲取模型列表失敗",
 
   // ======== ChatGPT 設定 ========
-  chatgptSettingsTitle: "ChatGPT 設定",
-  chatgptSettingsDesc: "配置 ChatGPT 頁面的預設行為",
   chatgptMarkdownFixLabel: "Markdown 加粗修復",
   chatgptMarkdownFixDesc: "修復 ChatGPT 回應中未渲染的 **加粗** 文字",
   chatgptCodeBlockBatchMountLabel: "程式碼區塊批次掛載",
@@ -1754,20 +1743,15 @@ export const zhTW = {
   queueBatchImportSuccess: "已加入隊列 {count} 條",
   queueBatchImportEmpty: "沒有可加入隊列的提示詞",
   zenModeTitle: "禪模式",
-  zenModeLabel: "啟用禪模式",
-  zenModeDesc: "隱藏側邊欄和導航元素，專注於當前對話（每個站點獨立配置）",
+  zenModeDesc: "隱藏側邊欄和導航元素，專注於當前對話",
   zenModeExitButton: "退出禪模式",
   zenModeExitButtonVisibleLabel: "顯示退出按鈕",
   zenModeExitButtonVisibleDesc:
     "關閉後會隱藏頁面上的「退出禪模式」按鈕；仍可透過快捷按鈕或快捷鍵退出禪模式。",
   cleanModeTitle: "淨化模式",
-  cleanModeLabel: "啟用淨化模式",
-  cleanModeDesc:
-    "隱藏頁面中的免責聲明、廣告、下載按鈕等冗餘元素，獲得更乾淨的介面（每個站點獨立配置）",
+  cleanModeDesc: "隱藏頁面中的免責聲明、廣告、下載按鈕等冗餘元素，獲得更乾淨的介面",
   autoHideInputTitle: "自動隱藏輸入框",
-  autoHideInputLabel: "閒置時自動收合輸入框",
-  autoHideInputDesc:
-    "游標移開且無未發送內容時收合隱藏輸入框，滑鼠懸停或聚焦時立即展開（每個站點獨立設定）",
+  autoHideInputDesc: "游標移開且無未發送內容時收合隱藏輸入框，滑鼠懸停或聚焦時立即展開",
   extensionUpdateNoticeKicker: "外掛已更新",
   extensionUpdateNotice: "Ophel Atlas 已更新。重新整理目前頁面後即可繼續使用最新版本。",
   extensionUpdateNoticeWithVersion:

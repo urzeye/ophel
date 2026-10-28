@@ -38,11 +38,10 @@ export const de = {
   siteSettingsPageDesc:
     "Seitenlayout, Modellsperre und websitespezifische Funktionen pro Website konfigurieren",
   siteSelectorLabel: "Website konfigurieren",
-  siteSettingsOtherSiteToast:
+  siteSettingsOtherSiteHint:
     "Einstellungen für {site} werden bearbeitet; Änderungen wirken sich nicht auf die aktuelle Website aus",
   currentSiteBadge: "Aktuelle Website",
   siteExclusiveSettingsLabel: "Websitespezifisch",
-  noSiteExclusiveSettings: "Keine websitespezifischen Einstellungen für diese Website",
   communitySitePackBadge: "Community-Paket (Kernfunktionen)",
   communitySitePackDesc:
     "Diese Website wird durch ein Community-Paket unterstützt. Es werden nur die Funktionen angezeigt, die das Paket unterstützt.",
@@ -231,7 +230,6 @@ export const de = {
   userQueryWidthSettings: "Benutzerbreite",
   scrollSettings: "Scrollen",
   contentProcessing: "Inhaltsverarbeitung",
-  contentProcessingDesc: "Umgang mit Antworten konfigurieren",
   interactionEnhance: "Interaktions-Upgrades",
   interactionEnhanceDesc: "Tabellen und Formeln verbessern",
   exportSettings: "Export",
@@ -638,7 +636,7 @@ export const de = {
   geminiMystuffOpenInNewTab: "In neuem Tab öffnen",
   geminiMystuffLocateFailed: "Ursprüngliche Gesprächsposition konnte nicht gefunden werden",
 
-  userQueryWidthDesc: "Maximale Breite der Benutzerblase (pro Website)",
+  userQueryWidthDesc: "Maximale Breite der Benutzerblase",
   // Category management
   categoryManage: "Kategorien",
   categoryEmpty: "Noch keine Kategorien.",
@@ -765,11 +763,9 @@ export const de = {
   pageWidthLabel: "Seitenbreite",
   pageWidthValueLabel: "Breitenwert",
   pageWidthDesc:
-    "Passt die Breite der Chatseite in Echtzeit an (pro Website konfiguriert). Bei aktiviertem intelligentem Ausweichen kann die tatsächliche Breite durch den sicheren Bereich des Panels begrenzt werden.",
-  enablePageWidth: "Verbreiterung aktivieren",
+    "Passt die Breite der Chatseite in Echtzeit an. Bei aktiviertem intelligentem Ausweichen kann die tatsächliche Breite durch den sicheren Bereich des Panels begrenzt werden.",
   panelAvoidanceTitle: "Intelligentes Ausweichen",
   betaBadge: "Beta",
-  panelAvoidanceLabel: "Ophel-Panel vermeiden",
   panelAvoidanceDesc:
     "Passt den Inhaltsbereich der aktuellen Website automatisch an, solange das Panel geöffnet ist; auf schmalen Bildschirmen deaktiviert.",
   widthValue: "Breite",
@@ -780,7 +776,6 @@ export const de = {
   unitPercent: "Prozent (%)",
 
   // User Query Width Settings
-  enableUserQueryWidth: "Benutzer-Verbreiterung",
   enableUserQueryWidthDesc: "Benutzerblase breiter machen",
   userQueryWidthValueLabel: "Breite",
   // Tab Settings
@@ -1433,7 +1428,6 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   modelSelectorNotFound: "Kein Wähler",
 
   // ======== Claude Session Key Management ========
-  geminiSettingsTab: "Nur Gemini",
   claudeSessionKeyTitle: "Session-Verwaltung",
   claudeSessionKeyDesc: "Claude-Konten",
   claudeCurrentUsing: "Nutzt:",
@@ -1495,8 +1489,6 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   restoreSuccess: "Wiederherstellung erfolgreich, Seite wird aktualisiert...",
 
   // ======== AI Studio Einstellungen ========
-  aistudioSettingsTitle: "AI Studio Einstellungen",
-  aistudioSettingsDesc: "Standardverhalten beim Laden der AI Studio-Seite konfigurieren",
   aistudioDefaultModel: "Standardmodell",
   aistudioDefaultModelNone: "Nicht angegeben (Systemstandard)",
   aistudioDefaultModelCustom: "Benutzerdefinierte Modell-ID...",
@@ -1520,8 +1512,6 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   aistudioModelsError: "Fehler beim Abrufen der Modellliste",
 
   // ======== ChatGPT Einstellungen ========
-  chatgptSettingsTitle: "ChatGPT Einstellungen",
-  chatgptSettingsDesc: "Standardverhalten für die ChatGPT-Seite konfigurieren",
   chatgptMarkdownFixLabel: "Markdown Fettschrift-Fix",
   chatgptMarkdownFixDesc: "Nicht gerenderten **fetten** Text in ChatGPT-Antworten reparieren",
   chatgptCodeBlockBatchMountLabel: "Codeblöcke gebündelt einhängen",
@@ -1810,21 +1800,18 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   queueBatchImportSuccess: "{count} Prompt(s) zur Warteschlange hinzugefügt",
   queueBatchImportEmpty: "Keine Prompts zum Hinzufügen vorhanden",
   zenModeTitle: "Zen-Modus",
-  zenModeLabel: "Zen-Modus aktivieren",
   zenModeDesc:
-    "Seitenleiste und Navigationselemente ausblenden, um sich auf das aktuelle Gespräch zu konzentrieren (individuell für jede Website konfiguriert)",
+    "Seitenleiste und Navigationselemente ausblenden, um sich auf das aktuelle Gespräch zu konzentrieren",
   zenModeExitButton: "Zen-Modus beenden",
   zenModeExitButtonVisibleLabel: "Beenden-Schaltfläche anzeigen",
   zenModeExitButtonVisibleDesc:
     "Wenn deaktiviert, wird die Schaltfläche zum Beenden des Zen-Modus auf der Seite ausgeblendet; der Zen-Modus kann weiterhin über die Schnellschaltfläche oder das Tastenkürzel beendet werden.",
   cleanModeTitle: "Reinigungsmodus",
-  cleanModeLabel: "Reinigungsmodus aktivieren",
   cleanModeDesc:
-    "Haftungsausschlüsse, Werbung, Download-Buttons und andere überflüssige Elemente für eine sauberere Oberfläche ausblenden (individuell für jede Website konfiguriert)",
+    "Haftungsausschlüsse, Werbung, Download-Buttons und andere überflüssige Elemente für eine sauberere Oberfläche ausblenden",
   autoHideInputTitle: "Eingabefeld automatisch ausblenden",
-  autoHideInputLabel: "Eingabefeld bei Inaktivität automatisch einklappen",
   autoHideInputDesc:
-    "Blendet das Eingabefeld ein und klappt es ein, wenn der Mauszeiger wegbewegt wird und kein Entwurf vorliegt; wird beim Hovern oder Fokussieren sofort erweitert (pro Website konfigurierbar)",
+    "Blendet das Eingabefeld ein und klappt es ein, wenn der Mauszeiger wegbewegt wird und kein Entwurf vorliegt; wird beim Hovern oder Fokussieren sofort erweitert",
   extensionUpdateNoticeKicker: "Erweiterung aktualisiert",
   extensionUpdateNotice:
     "Ophel Atlas wurde aktualisiert. Laden Sie diese Seite neu, um die neueste Version weiter zu verwenden.",

@@ -49,7 +49,7 @@
 
 - `GeneralPage`：语言、面板行为、快捷按钮、工具箱菜单。
 - `FeaturesPage`：大纲、对话、提示词、标签页行为、提醒、内容增强、阅读历史和用量统计。
-- `SiteSettingsPage`：站点选择器（内置站点 + 当前社区适配包实例，面板内当前站点置顶）+ 选中站点的聚合设置视图，按「页面布局 / 模型锁定 / 站点专属」分组；布局类设置按站点 key 存储，未单独配置的站点读取时回退到 `_default` 兜底值；模型锁定仅展示当前选中站点的一行配置；Gemini/AI Studio/ChatGPT/Claude 有专属设置分组。深链的 `subTab` 直接承载站点 id。
+- `SiteSettingsPage`：站点选择器（内置站点 + 当前社区适配包实例，面板内当前站点置顶；选中非当前站点时，选择器栏常驻一行说明）+ 选中站点的聚合设置视图，按「页面布局 / 模型锁定 / 专属设置」三个分组，每组一个分组标题加一张卡，卡内不再重复标题。页面布局是一张卡：智能避让在首行，其后是页面宽度、用户问题宽度、禅模式、净化模式，Gemini 另有自动隐藏输入框；宽度滑块与「显示退出按钮」是缩进在上级开关下方的从属行（`SettingRow` 的 `has-sub` / `is-sub`），上级开关关闭时从属行置灰、点击提示先开启。布局类设置按站点 key 存储，未单独配置的站点读取时回退到 `_default` 兜底值（写入走 `buildSiteLayoutPatch`，存储结构不变）；模型锁定仅展示当前选中站点的一行配置；Gemini / AI Studio / ChatGPT 的专属设置分别是 `GeminiSettings` / `AIStudioSettings` / `ChatGPTSettings`，Claude 为 `ClaudeSettings`。深链的 `subTab` 直接承载站点 id；`site-settings-layout`、`site-settings-model-lock` 是供设置搜索定位的分组锚点。
 - `SitePacksPage`：按 `SITE_PACKS_TAB_IDS` 分为四个 tab——内置站点（启停、跳转站点设置）、已安装（启停/卸载/检查更新）、自定义站点（自定义 origin、自动识别、油猴 @match 补充）、获取与更新（页首更新状态条：自动更新、上次检查与立即检查；在线适配库，标题栏含搜索与本地 JSON 导入；默认折叠的「高级」：内置配置补丁导入与回滚）。深链定位到折叠区内的设置项时，`scrollWithinSettingsContent` 会先展开所在的 `<details>`。两处“检查更新”是同一操作（全量检查并同步所有在线适配库包，检查即更新）；不设单包刷新按钮——它实际也是全量检查，语义有误导。适配配置更新原先位于基本设置，已并入此页。
 - `ShortcutsPage`：快捷键总开关、全局 URL 和各动作绑定。
 - `AppearancePage`：主题同步、预置主题和自定义样式。

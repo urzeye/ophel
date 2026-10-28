@@ -34,10 +34,9 @@ export const zhCN = {
   // Site Settings
   siteSettingsPageDesc: "按站点配置页面布局、模型锁定和专属功能",
   siteSelectorLabel: "配置站点",
-  siteSettingsOtherSiteToast: "正在配置 {site} 的设置，更改不会影响当前站点",
+  siteSettingsOtherSiteHint: "正在配置 {site} 的设置，更改不会影响当前站点",
   currentSiteBadge: "当前站点",
   siteExclusiveSettingsLabel: "专属设置",
-  noSiteExclusiveSettings: "该站点暂无专属设置",
   communitySitePackBadge: "社区适配包（核心功能）",
   communitySitePackDesc: "此站点由社区适配包提供支持，仅显示其支持的功能。",
   sitePacksPageDesc: "安装和管理站点适配包，让 Ophel 支持更多 AI 站点",
@@ -219,7 +218,6 @@ export const zhCN = {
   userQueryWidthSettings: "用户问题宽度",
   scrollSettings: "滚动设置",
   contentProcessing: "内容处理",
-  contentProcessingDesc: "配置 AI 回复内容的处理方式",
   interactionEnhance: "交互增强",
   interactionEnhanceDesc: "增强公式和表格的交互功能",
   exportSettings: "导出设置",
@@ -662,7 +660,7 @@ export const zhCN = {
   modelLockNoKeyword: "请先在设置中配置模型关键词",
   geminiMystuffOpenInNewTab: "在新标签页中打开",
   geminiMystuffLocateFailed: "未找到原始对话定位信息",
-  userQueryWidthDesc: "调整用户问题气泡容器的最大宽度（每个站点独立配置）",
+  userQueryWidthDesc: "调整用户问题气泡容器的最大宽度",
   // 分类管理
   categoryManage: "分类管理",
   categoryEmpty: "暂无分类，添加提示词时会自动创建分类",
@@ -750,12 +748,9 @@ export const zhCN = {
   // 页面宽度设置
   pageWidthLabel: "页面宽度",
   pageWidthValueLabel: "宽度值",
-  pageWidthDesc:
-    "调整聊天页面的宽度，即时生效（每个站点独立配置）；开启智能避让时，实际宽度可能会受面板安全区限制。",
-  enablePageWidth: "启用页面加宽",
+  pageWidthDesc: "调整聊天页面的宽度，即时生效；开启智能避让时，实际宽度可能会受面板安全区限制。",
   panelAvoidanceTitle: "智能避让",
   betaBadge: "Beta",
-  panelAvoidanceLabel: "避让 Ophel 面板",
   panelAvoidanceDesc: "面板展开时自动调整当前站点的内容区域，减少遮挡；窄屏设备会自动停用。",
   widthValue: "宽度值",
   widthUnit: "单位",
@@ -765,7 +760,6 @@ export const zhCN = {
   unitPercent: "百分比 (%)",
 
   // 用户问题宽度设置
-  enableUserQueryWidth: "启用用户问题加宽",
   enableUserQueryWidthDesc: "调整用户问题气泡容器的最大宽度",
   userQueryWidthValueLabel: "问题宽度",
   // 标签页设置
@@ -1469,7 +1463,6 @@ export const zhCN = {
   modelSelectorNotFound: "未找到模型选择器",
 
   // ======== Claude Session Key 管理 ========
-  geminiSettingsTab: "Gemini 专属",
   claudeSessionKeyTitle: "Session Key 管理",
   claudeSessionKeyDesc: "管理和切换你的 Claude 多账号",
   claudeCurrentUsing: "当前使用:",
@@ -1531,8 +1524,6 @@ export const zhCN = {
   restoreSuccess: "恢复成功，即将刷新页面...",
 
   // ======== AI Studio 设置 ========
-  aistudioSettingsTitle: "AI Studio 设置",
-  aistudioSettingsDesc: "配置 AI Studio 页面加载后的默认行为",
   aistudioDefaultModel: "默认模型",
   aistudioDefaultModelNone: "不指定（使用系统默认）",
   aistudioDefaultModelCustom: "自定义模型 ID...",
@@ -1556,8 +1547,6 @@ export const zhCN = {
   aistudioModelsError: "获取模型列表失败",
 
   // ======== ChatGPT 设置 ========
-  chatgptSettingsTitle: "ChatGPT 设置",
-  chatgptSettingsDesc: "配置 ChatGPT 页面的默认行为",
   chatgptMarkdownFixLabel: "Markdown 加粗修复",
   chatgptMarkdownFixDesc: "修复 ChatGPT 响应中未渲染的 **加粗** 文本",
   chatgptCodeBlockBatchMountLabel: "代码块批量挂载",
@@ -1751,20 +1740,15 @@ export const zhCN = {
   queueBatchImportSuccess: "已加入队列 {count} 条",
   queueBatchImportEmpty: "没有可加入队列的提示词",
   zenModeTitle: "禅模式",
-  zenModeLabel: "启用禅模式",
-  zenModeDesc: "隐藏侧边栏和导航元素，专注于当前对话（每个站点独立配置）",
+  zenModeDesc: "隐藏侧边栏和导航元素，专注于当前对话",
   zenModeExitButton: "退出禅模式",
   zenModeExitButtonVisibleLabel: "显示退出按钮",
   zenModeExitButtonVisibleDesc:
     "关闭后会隐藏页面上的“退出禅模式”按钮；仍可通过快捷按钮或快捷键退出禅模式。",
   cleanModeTitle: "净化模式",
-  cleanModeLabel: "启用净化模式",
-  cleanModeDesc:
-    "隐藏页面中的免责声明、广告、下载按钮等冗余元素，获得更干净的界面（每个站点独立配置）",
+  cleanModeDesc: "隐藏页面中的免责声明、广告、下载按钮等冗余元素，获得更干净的界面",
   autoHideInputTitle: "自动隐藏输入框",
-  autoHideInputLabel: "闲置时自动折叠输入框",
-  autoHideInputDesc:
-    "光标移开且无未发送内容时折叠隐藏输入框，鼠标悬停或聚焦时立即展开（每个站点独立配置）",
+  autoHideInputDesc: "光标移开且无未发送内容时折叠隐藏输入框，鼠标悬停或聚焦时立即展开",
   extensionUpdateNoticeKicker: "插件已更新",
   extensionUpdateNotice: "Ophel Atlas 已更新。刷新当前页面后即可继续使用最新版本。",
   extensionUpdateNoticeWithVersion:
