@@ -9,6 +9,8 @@ export interface SettingCardProps {
   title?: React.ReactNode
   /** 卡片描述 */
   description?: string
+  /** 标题行右侧操作区 */
+  action?: React.ReactNode
   /** 子元素 */
   children: React.ReactNode
   /** 自定义类名 */
@@ -22,6 +24,7 @@ export interface SettingCardProps {
 export const SettingCard: React.FC<SettingCardProps> = ({
   title,
   description,
+  action,
   children,
   className = "",
   style,
@@ -29,8 +32,20 @@ export const SettingCard: React.FC<SettingCardProps> = ({
 }) => {
   return (
     <div className={`settings-card ${className}`} style={style} data-setting-id={settingId}>
-      {title && <div className="settings-card-title">{title}</div>}
-      {description && <div className="settings-card-desc">{description}</div>}
+      {action ? (
+        <>
+          <div className="settings-card-head">
+            {title && <div className="settings-card-title">{title}</div>}
+            <div className="settings-card-head-action">{action}</div>
+          </div>
+          {description && <div className="settings-card-desc">{description}</div>}
+        </>
+      ) : (
+        <>
+          {title && <div className="settings-card-title">{title}</div>}
+          {description && <div className="settings-card-desc">{description}</div>}
+        </>
+      )}
       {children}
     </div>
   )

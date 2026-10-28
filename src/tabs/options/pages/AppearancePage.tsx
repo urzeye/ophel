@@ -316,8 +316,8 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
           <SettingCard
             title={t("customCSS")}
             description={t("customCSSDesc")}
-            settingId="appearance-custom-styles">
-            <div className="settings-custom-style-toolbar">
+            settingId="appearance-custom-styles"
+            action={
               <button
                 type="button"
                 className="settings-btn settings-btn-primary"
@@ -333,8 +333,7 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
                 <PlusIcon size={16} />
                 {t("addCustomStyle")}
               </button>
-            </div>
-
+            }>
             {(settings?.theme?.customStyles || []).length === 0 ? (
               <div className="settings-custom-style-empty">{t("noCustomStyles")}</div>
             ) : (

@@ -977,6 +977,24 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   margin-bottom: 4px;
 }
 
+.settings-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.settings-card-head .settings-card-title {
+  margin-bottom: 0;
+}
+
+.settings-card-head-action {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
 .settings-card-title-with-badge {
   display: inline-flex;
   align-items: center;
@@ -3130,13 +3148,6 @@ html[data-theme="dark"] .platform-icon-dark-invert {
 }
 
 /* ==================== 自定义样式 ==================== */
-
-.settings-custom-style-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  margin-bottom: 16px;
-}
 
 .settings-custom-style-empty {
   padding: 20px;
