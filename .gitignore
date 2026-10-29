@@ -44,6 +44,8 @@ docs/site/.vitepress/dist
 
 .impeccable/hook.cache.json
 .impeccable/config.local.json
+.impeccable/critique
+
 .playwright-mcp
 .playwright-cli
 assets/assistant-mermaid-vendor.js
