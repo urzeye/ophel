@@ -1709,7 +1709,8 @@ Please output the optimized code block directly, followed by a brief summary of 
   doubleShiftToSearch: "Double Shift to open Global Search",
   globalSearchEnabledLabel: "Enable Global Search",
   globalSearchEnabledDesc:
-    "When off, all ways to open Global Search are disabled and Cmd+K / Ctrl+K is returned to the site's native feature",
+    "When off, all ways to open Global Search are disabled and {shortcut} is returned to the site's native feature",
+  globalSearchEnabledDescNoShortcut: "When off, all ways to open Global Search are disabled",
   globalSearchShortcutNudgeDismiss: "Don't remind me",
   globalSearchContextCurrentItem: "Item {current}",
   globalSearchContextShownProgress: "Shown {shown}/{total}",

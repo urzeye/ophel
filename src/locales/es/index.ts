@@ -1672,7 +1672,9 @@ Dame el código y luego un resumen de mejoras.`,
   doubleShiftToSearch: "Doble Shift para abrir la búsqueda global",
   globalSearchEnabledLabel: "Activar búsqueda global",
   globalSearchEnabledDesc:
-    "Si se desactiva, todas las formas de abrir la búsqueda global quedan deshabilitadas y Cmd+K / Ctrl+K vuelve a la función nativa del sitio",
+    "Si se desactiva, todas las formas de abrir la búsqueda global quedan deshabilitadas y {shortcut} vuelve a la función nativa del sitio",
+  globalSearchEnabledDescNoShortcut:
+    "Si se desactiva, todas las formas de abrir la búsqueda global quedan deshabilitadas",
   globalSearchShortcutNudgeDismiss: "No volver a recordar",
   globalSearchContextCurrentItem: "Elemento {current}",
   globalSearchContextShownProgress: "Mostrados {shown}/{total}",

@@ -3,7 +3,7 @@
  * 包含：标签页、提醒、内容处理、大纲、对话、模型锁定、阅读历史
  * 使用顶部 Tab 切换
  */
-import React, { useCallback, useEffect, useState } from "react"
+import React, { useCallback, useEffect, useMemo, useState } from "react"
 
 import { FeaturesIcon } from "~components/icons"
 import { Button, NumberInput, PlaceholderInput, SelectDropdown, Slider } from "~components/ui"
@@ -605,9 +605,32 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
       ? null
       : userGlobalSearchBinding || DEFAULT_KEYBINDINGS[SHORTCUT_ACTIONS.OPEN_GLOBAL_SEARCH]
   const isMacLike = isMacOS()
-  const globalSearchShortcutParts = globalSearchBinding
-    ? getShortcutParts(globalSearchBinding, isMacLike)
-    : []
+  const globalSearchShortcutParts = useMemo(
+    () => (globalSearchBinding ? getShortcutParts(globalSearchBinding, isMacLike) : []),
+    [globalSearchBinding, isMacLike],
+  )
+
+  // 描述里内嵌当前实际生效的快捷键，键位被改绑后文案不会过期；
+  // 用户已移除绑定时没有按键可交还，退回到不提快捷键的版本
+  const globalSearchEnabledDesc = useMemo<React.ReactNode>(() => {
+    if (globalSearchShortcutParts.length === 0) {
+      return t("globalSearchEnabledDescNoShortcut")
+    }
+
+    const [before, after = ""] = t("globalSearchEnabledDesc").split("{shortcut}")
+    return (
+      <>
+        {before}
+        {globalSearchShortcutParts.map((part, index) => (
+          <React.Fragment key={index}>
+            {index > 0 && !isMacLike && <span className="settings-kbd-separator">+</span>}
+            <kbd className="settings-kbd">{part}</kbd>
+          </React.Fragment>
+        ))}
+        {after}
+      </>
+    )
+  }, [globalSearchShortcutParts, isMacLike])
 
   const handleNavigateToGlobalSearchShortcut = () => {
     window.dispatchEvent(
@@ -1678,7 +1701,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
             settingId="global-search-matching-card">
             <ToggleRow
               label={t("globalSearchEnabledLabel")}
-              description={t("globalSearchEnabledDesc")}
+              description={globalSearchEnabledDesc}
               checked={globalSearchEnabled}
               onChange={() => updateNestedSetting("globalSearch", "enabled", !globalSearchEnabled)}
               settingId="global-search-enabled"

@@ -66,7 +66,7 @@ export const SettingRow: React.FC<SettingRowProps> = ({
 export interface ToggleRowProps {
   /** 标签文本或元素（带 Beta 标签时传元素，同时需要提供 ariaLabel） */
   label: React.ReactNode
-  description?: string
+  description?: React.ReactNode
   checked: boolean
   onChange: () => void
   disabled?: boolean

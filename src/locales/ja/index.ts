@@ -1712,7 +1712,8 @@ export const ja = {
   doubleShiftToSearch: "Shift を2回押してグローバル検索を開く",
   globalSearchEnabledLabel: "グローバル検索を有効化",
   globalSearchEnabledDesc:
-    "オフにするとグローバル検索のすべての起動方法が無効になり、Cmd+K / Ctrl+K はサイト本来の機能に戻ります",
+    "オフにするとグローバル検索のすべての起動方法が無効になり、{shortcut} はサイト本来の機能に戻ります",
+  globalSearchEnabledDescNoShortcut: "オフにするとグローバル検索のすべての起動方法が無効になります",
   globalSearchShortcutNudgeDismiss: "今後は表示しない",
   globalSearchContextCurrentItem: "{current}件目",
   globalSearchContextShownProgress: "表示済み {shown}/{total}",

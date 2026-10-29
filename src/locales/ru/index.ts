@@ -1630,7 +1630,9 @@ export const ru = {
   doubleShiftToSearch: "Двойной Shift для открытия глобального поиска",
   globalSearchEnabledLabel: "Включить глобальный поиск",
   globalSearchEnabledDesc:
-    "При отключении все способы открытия глобального поиска недоступны, а Cmd+K / Ctrl+K возвращается встроенной функции сайта",
+    "При отключении все способы открытия глобального поиска недоступны, а {shortcut} возвращается встроенной функции сайта",
+  globalSearchEnabledDescNoShortcut:
+    "При отключении все способы открытия глобального поиска недоступны",
   globalSearchShortcutNudgeDismiss: "Больше не напоминать",
   globalSearchContextCurrentItem: "Элемент {current}",
   globalSearchContextShownProgress: "Показано {shown}/{total}",

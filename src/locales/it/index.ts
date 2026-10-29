@@ -1764,7 +1764,9 @@ export const it = {
   doubleShiftToSearch: "Doppio spostamento per aprire la ricerca globale",
   globalSearchEnabledLabel: "Abilita ricerca globale",
   globalSearchEnabledDesc:
-    "Se disattivata, tutti i modi per aprire la ricerca globale sono disabilitati e Cmd+K / Ctrl+K torna alla funzione nativa del sito",
+    "Se disattivata, tutti i modi per aprire la ricerca globale sono disabilitati e {shortcut} torna alla funzione nativa del sito",
+  globalSearchEnabledDescNoShortcut:
+    "Se disattivata, tutti i modi per aprire la ricerca globale sono disabilitati",
   globalSearchShortcutNudgeDismiss: "Non ricordarmelo",
   globalSearchContextCurrentItem: "Articolo {current}",
   globalSearchContextShownProgress: "Nella foto {shown}/{total}",
