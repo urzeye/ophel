@@ -1697,13 +1697,21 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
     }
 
     const label = resolvedGlobalSearchResultCategoryLabels[activeItem.category]
+    // 全部视图里序号按所在分组计数，与「已显示 x/y」同一口径；单分类视图里两者本就相同
+    const activeGroup =
+      activeGlobalSearchCategory === "all"
+        ? groupedGlobalSearchResults.find((group) => group.category === activeItem.category)
+        : undefined
+    const currentPosition = activeGroup
+      ? activeGroup.items.findIndex((item) => item.id === activeItem.id) + 1
+      : activeVisibleGlobalSearchIndex + 1
     const currentItemText = formatLocalizedText(
       {
         key: "globalSearchContextCurrentItem",
         fallback: "第 {current} 项",
       },
       {
-        current: String(activeVisibleGlobalSearchIndex + 1),
+        current: String(currentPosition),
       },
     )
 
@@ -1721,10 +1729,6 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
         )}`,
       }
     }
-
-    const activeGroup = groupedGlobalSearchResults.find(
-      (group) => group.category === activeItem.category,
-    )
 
     if (!activeGroup) {
       return {
