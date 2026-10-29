@@ -290,9 +290,11 @@ export interface BackupFile {
 export class WebDAVSyncManager {
   private config: WebDAVConfig = DEFAULT_WEBDAV_CONFIG
   private autoSyncTimer: ReturnType<typeof setTimeout> | null = null
+  // 首次加载必须先于任何 setConfig 完成：它晚到时会把调用方刚设置的配置覆盖回已保存的值
+  private readonly initialLoad: Promise<WebDAVConfig>
 
   constructor() {
-    this.loadConfig()
+    this.initialLoad = this.loadConfig()
   }
 
   /**
@@ -330,6 +332,7 @@ export class WebDAVSyncManager {
    * @param persist 是否持久化到 storage (默认 true)
    */
   async setConfig(config: Partial<WebDAVConfig>, persist: boolean = true): Promise<void> {
+    await this.initialLoad
     this.config = { ...this.config, ...config }
     if (persist) {
       // 动态导入避免循环依赖
