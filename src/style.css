@@ -3022,17 +3022,14 @@
 .prompt-item.dragging {
   opacity: 0.74;
   background: color-mix(in srgb, var(--gh-primary, #4285f4) 9%, var(--gh-bg, #fff)) !important;
-  border: 1px dashed var(--gh-primary, #4285f4) !important;
+  border: 1px solid var(--gh-primary, #4285f4) !important;
   box-shadow:
     0 8px 18px color-mix(in srgb, var(--gh-primary, #4285f4) 18%, transparent),
     inset 0 0 0 1px color-mix(in srgb, var(--gh-primary, #4285f4) 18%, transparent) !important;
-  transform: scale(0.985) !important;
 }
 
 .prompt-item.drop-above {
   background: color-mix(in srgb, var(--gh-primary, #4285f4) 7%, var(--gh-bg, #fff)) !important;
-  outline: 2px dashed color-mix(in srgb, var(--gh-primary, #4285f4) 70%, transparent);
-  outline-offset: -3px;
   box-shadow:
     inset 0 3px 0 var(--gh-primary, #4285f4),
     0 6px 16px color-mix(in srgb, var(--gh-primary, #4285f4) 16%, transparent) !important;
@@ -3059,8 +3056,6 @@
 
 .prompt-item.drop-below {
   background: color-mix(in srgb, var(--gh-primary, #4285f4) 7%, var(--gh-bg, #fff)) !important;
-  outline: 2px dashed color-mix(in srgb, var(--gh-primary, #4285f4) 70%, transparent);
-  outline-offset: -3px;
   box-shadow:
     inset 0 -3px 0 var(--gh-primary, #4285f4),
     0 6px 16px rgba(66, 133, 244, 0.16) !important;
@@ -3372,17 +3367,14 @@
 .gh-chain-card.dragging {
   opacity: 0.74;
   background: color-mix(in srgb, var(--gh-primary, #4285f4) 9%, var(--gh-bg, #fff));
-  border: 1px dashed var(--gh-primary, #4285f4);
+  border-color: var(--gh-primary, #4285f4);
   box-shadow:
     0 8px 18px rgba(66, 133, 244, 0.18),
     inset 0 0 0 1px color-mix(in srgb, var(--gh-primary, #4285f4) 18%, transparent);
-  transform: scale(0.985);
 }
 
 .gh-chain-card.drop-above {
   background: color-mix(in srgb, var(--gh-primary, #4285f4) 7%, var(--gh-bg, #fff));
-  outline: 2px dashed color-mix(in srgb, var(--gh-primary, #4285f4) 70%, transparent);
-  outline-offset: -3px;
   box-shadow:
     inset 0 3px 0 var(--gh-primary, #4285f4),
     0 6px 16px rgba(66, 133, 244, 0.16);
@@ -3409,8 +3401,6 @@
 
 .gh-chain-card.drop-below {
   background: color-mix(in srgb, var(--gh-primary, #4285f4) 7%, var(--gh-bg, #fff));
-  outline: 2px dashed color-mix(in srgb, var(--gh-primary, #4285f4) 70%, transparent);
-  outline-offset: -3px;
   box-shadow:
     inset 0 -3px 0 var(--gh-primary, #4285f4),
     0 6px 16px rgba(66, 133, 244, 0.16);
@@ -3621,7 +3611,7 @@
 .gh-chain-empty {
   padding: 40px 20px;
   text-align: center;
-  color: var(--gh-text-tertiary, #9ca3af);
+  color: var(--gh-text-secondary, #6b7280);
 }
 
 .gh-chain-empty-title {
