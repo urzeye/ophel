@@ -382,6 +382,16 @@ html[data-theme="dark"] .conversations-unsupported-icon {
   user-select: none;
 }
 
+.conversations-folder-menu-btn,
+.conversations-item-menu-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  box-sizing: border-box;
+  line-height: 1;
+}
+
 .conversations-folder-menu-btn {
   width: 24px;
   height: 24px;
