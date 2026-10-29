@@ -66,16 +66,38 @@ const DIALOG_STYLES = `
     background: var(--gh-card-bg, var(--gh-bg, #ffffff));
     color: var(--gh-text, #374151);
   }
-  .gh-dialog-btn-secondary:hover {
+  .gh-dialog-btn-secondary:hover:not(:disabled) {
     background: var(--gh-hover, #f3f4f6);
   }
   .gh-dialog-btn-primary {
     background: var(--gh-primary, #4285f4);
     color: var(--gh-text-on-primary, #ffffff);
   }
+  .gh-dialog-btn-primary:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--gh-primary, #4285f4) 88%, black);
+  }
   .gh-dialog-btn-danger {
     background: var(--gh-danger, #ef4444);
     color: var(--gh-text-on-primary, #ffffff);
+  }
+  .gh-dialog-btn-danger:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--gh-danger, #ef4444) 88%, black);
+  }
+  .gh-dialog-btn:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+  .gh-dialog-btn:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 55%, transparent);
+    outline-offset: 2px;
+  }
+  .gh-dialog-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .gh-dialog-btn {
+      transition: none;
+    }
   }
   .gh-dialog-input {
     width: 100%;
@@ -140,6 +162,8 @@ export interface DialogOverlayProps {
   closeOnEscape?: boolean
   dialogClassName?: string
   dialogStyle?: React.CSSProperties
+  /** 弹窗的可访问名称（读屏器朗读），通常传标题文字 */
+  ariaLabel?: string
 }
 
 /**
@@ -152,6 +176,7 @@ export const DialogOverlay: React.FC<DialogOverlayProps> = ({
   closeOnEscape = true,
   dialogClassName,
   dialogStyle,
+  ariaLabel,
 }) => {
   const overlayRef = useRef<HTMLDivElement>(null)
 
@@ -184,6 +209,9 @@ export const DialogOverlay: React.FC<DialogOverlayProps> = ({
       <div
         className={dialogClassName ? `gh-dialog ${dialogClassName}` : "gh-dialog"}
         style={dialogStyle}
+        role="dialog"
+        aria-modal="true"
+        aria-label={ariaLabel}
         onClick={(e) => e.stopPropagation()}>
         {children}
       </div>
@@ -226,7 +254,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   extraAction,
 }) => {
   return (
-    <DialogOverlay onClose={onCancel} closeOnOverlayClick={closeOnOverlayClick}>
+    <DialogOverlay onClose={onCancel} closeOnOverlayClick={closeOnOverlayClick} ariaLabel={title}>
       <div className="gh-dialog-title">{title}</div>
       <div className="gh-dialog-message">{message}</div>
       <div
@@ -299,7 +327,7 @@ export const InputDialog: React.FC<InputDialogProps> = ({
   }
 
   return (
-    <DialogOverlay onClose={onCancel} closeOnOverlayClick={closeOnOverlayClick}>
+    <DialogOverlay onClose={onCancel} closeOnOverlayClick={closeOnOverlayClick} ariaLabel={title}>
       <div className="gh-dialog-title">{title}</div>
       <input
         ref={inputRef}
