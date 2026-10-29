@@ -20,6 +20,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 - **Doubao scroll to top not sticking** — Fixed an issue where clicking Scroll to Top right after refreshing a Doubao chat reached the top and then jumped back to the bottom. (#983)
 - **Shortcut recording conflict** — Fixed an issue where pressing a key combination while recording a shortcut in settings (such as Ctrl+K on DeepSeek) also triggered the website's own action. (#988)
+- **Desktop notifications not showing on Firefox** — Fixed an issue on Firefox-based browsers (such as Zen Browser) where desktop notifications did not appear when AI replies finished, even with desktop notifications enabled. (#1003)
 
 ---
 

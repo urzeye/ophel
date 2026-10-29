@@ -436,21 +436,22 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
           : `ophel|${crypto.randomUUID()}`
 
       if (chrome.notifications?.create) {
-        chrome.notifications.create(
-          notifId,
-          {
-            type: "basic",
-            iconUrl: chrome.runtime.getURL("assets/icon.png"),
-            title: message.title || APP_DISPLAY_NAME,
-            message: message.body || "",
-            silent: true, // 禁用系统默认通知声音，由扩展自行播放自定义声音
-          },
-          () => {
-            if (chrome.runtime.lastError) {
-              console.error("[Ophel] Notification create failed:", chrome.runtime.lastError.message)
-            }
-          },
-        )
+        const options: chrome.notifications.NotificationOptions<true> = {
+          type: "basic",
+          iconUrl: chrome.runtime.getURL("assets/icon.png"),
+          title: message.title || APP_DISPLAY_NAME,
+          message: message.body || "",
+        }
+        // silent 用于禁用系统默认通知声音，由扩展自行播放自定义声音；
+        // Firefox 对 options 做严格校验、不支持 silent，传入会同步抛错导致通知创建失败
+        if (!/firefox/i.test(navigator.userAgent)) {
+          options.silent = true
+        }
+        chrome.notifications.create(notifId, options, () => {
+          if (chrome.runtime.lastError) {
+            console.error("[Ophel] Notification create failed:", chrome.runtime.lastError.message)
+          }
+        })
       }
       sendResponse({ success: true })
       break
