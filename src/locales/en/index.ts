@@ -1786,9 +1786,11 @@ Please output the optimized code block directly, followed by a brief summary of 
   queueBatchLibrarySearchPlaceholder: "Search prompts",
   queueBatchLibraryEmpty: "No prompts found",
   queueBatchLibraryVariablePrompt:
-    "Prompts with variables must be filled in on the Prompts tab before they can be added to the queue.",
+    "Prompts with variables will ask you to fill them in after you click Add to Queue.",
   queueBatchLibraryVariableBadge: "Has variables",
   queueBatchLibraryLimitHint: "Showing the first {count}. Use search to narrow the list.",
+  queueBatchLibrarySelectAll: "Select all",
+  queueBatchLibrarySelectedCount: "{selected} of {total} selected",
   queueBatchSplitModeLabel: "Split Mode",
   queueBatchSplitModeLine: "Split by Line",
   queueBatchSplitModeDelimiter: "Custom Delimiter",

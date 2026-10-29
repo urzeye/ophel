@@ -1775,10 +1775,12 @@ Dê o código e depois um resumo de melhorias.`,
   queueBatchLibrarySearchPlaceholder: "Pesquisar prompts",
   queueBatchLibraryEmpty: "Nenhum prompt encontrado",
   queueBatchLibraryVariablePrompt:
-    "Prompts com variáveis devem ser preenchidos primeiro na aba “Comandos” antes de serem adicionados à fila.",
+    "Prompts com variáveis pedirão o preenchimento das variáveis ao clicar em “Adicionar à fila”.",
   queueBatchLibraryVariableBadge: "Com variáveis",
   queueBatchLibraryLimitHint:
     "Apenas os primeiros {count} são exibidos. Use a pesquisa para refinar a lista.",
+  queueBatchLibrarySelectAll: "Selecionar tudo",
+  queueBatchLibrarySelectedCount: "{selected} de {total} selecionados",
   queueBatchSplitModeLabel: "Modo de divisão",
   queueBatchSplitModeLine: "Dividir por linha",
   queueBatchSplitModeDelimiter: "Delimitador personalizado",

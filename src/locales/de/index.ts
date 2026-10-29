@@ -1784,10 +1784,12 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   queueBatchLibrarySearchPlaceholder: "Prompts suchen",
   queueBatchLibraryEmpty: "Keine Prompts gefunden",
   queueBatchLibraryVariablePrompt:
-    "Prompts mit Variablen müssen zuerst im Tab „Prompt-Bibliothek“ ausgefüllt werden, bevor sie der Warteschlange hinzugefügt werden können.",
+    "Bei Prompts mit Variablen werden die Variablen nach dem Klick auf „Zur Warteschlange hinzufügen“ abgefragt.",
   queueBatchLibraryVariableBadge: "Mit Variablen",
   queueBatchLibraryLimitHint:
     "Es werden nur die ersten {count} angezeigt. Verwenden Sie die Suche, um die Liste einzugrenzen.",
+  queueBatchLibrarySelectAll: "Alle auswählen",
+  queueBatchLibrarySelectedCount: "{selected} von {total} ausgewählt",
   queueBatchSplitModeLabel: "Trennmethode",
   queueBatchSplitModeLine: "Nach Zeilen trennen",
   queueBatchSplitModeDelimiter: "Benutzerdefiniertes Trennzeichen",

@@ -1792,10 +1792,12 @@ Donnez le code puis un résumé des améliorations.`,
   queueBatchLibrarySearchPlaceholder: "Rechercher des prompts",
   queueBatchLibraryEmpty: "Aucun prompt trouvé",
   queueBatchLibraryVariablePrompt:
-    "Les prompts avec variables doivent d'abord être renseignés dans l'onglet « Invites » avant d'être ajoutés à la file.",
+    "Les prompts avec variables demanderont de renseigner les variables après un clic sur « Ajouter à la file ».",
   queueBatchLibraryVariableBadge: "Avec variables",
   queueBatchLibraryLimitHint:
     "Seuls les {count} premiers sont affichés. Utilisez la recherche pour affiner la liste.",
+  queueBatchLibrarySelectAll: "Tout sélectionner",
+  queueBatchLibrarySelectedCount: "{selected} sur {total} sélectionnés",
   queueBatchSplitModeLabel: "Mode de découpe",
   queueBatchSplitModeLine: "Découper par ligne",
   queueBatchSplitModeDelimiter: "Délimiteur personnalisé",

@@ -32,6 +32,8 @@ interface Variable {
 
 interface VariableInputDialogProps {
   variables: ParsedVariable[] // 解析后的变量列表
+  /** 显示在标题下方的来源名称（如提示词标题），连续填写多个提示词时用来区分 */
+  subtitle?: string
   onConfirm: (values: Record<string, string>) => void
   onCancel: () => void
 }
@@ -65,6 +67,7 @@ const VARIABLE_TEXTAREA_STYLES = `
 
 export const VariableInputDialog: React.FC<VariableInputDialogProps> = ({
   variables,
+  subtitle,
   onConfirm,
   onCancel,
 }) => {
@@ -146,15 +149,28 @@ export const VariableInputDialog: React.FC<VariableInputDialogProps> = ({
             justifyContent: "space-between",
             alignItems: "center",
           }}>
-          <h3
-            style={{
-              margin: 0,
-              fontSize: "16px",
-              fontWeight: 600,
-              color: "var(--gh-text, #374151)",
-            }}>
-            {t("promptVariableTitle")}
-          </h3>
+          <div style={{ minWidth: 0 }}>
+            <h3
+              style={{
+                margin: 0,
+                fontSize: "16px",
+                fontWeight: 600,
+                color: "var(--gh-text, #374151)",
+              }}>
+              {t("promptVariableTitle")}
+            </h3>
+            {subtitle && (
+              <div
+                style={{
+                  marginTop: "2px",
+                  fontSize: "12px",
+                  color: "var(--gh-text-secondary, #6b7280)",
+                  wordBreak: "break-all",
+                }}>
+                {subtitle}
+              </div>
+            )}
+          </div>
           <button
             onClick={onCancel}
             style={{

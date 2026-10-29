@@ -1790,9 +1790,11 @@ export const ja = {
   queueBatchLibrarySearchPlaceholder: "プロンプトを検索",
   queueBatchLibraryEmpty: "プロンプトが見つかりません",
   queueBatchLibraryVariablePrompt:
-    "変数を含むプロンプトは、「プロンプト」タブで変数を入力してからキューに追加してください。",
+    "変数を含むプロンプトは、「キューに追加」を押した後に変数の入力を求められます。",
   queueBatchLibraryVariableBadge: "変数あり",
   queueBatchLibraryLimitHint: "先頭の {count} 件のみ表示しています。検索で絞り込んでください",
+  queueBatchLibrarySelectAll: "すべて選択",
+  queueBatchLibrarySelectedCount: "{selected} / {total} 件を選択中",
   queueBatchSplitModeLabel: "分割方法",
   queueBatchSplitModeLine: "行ごとに分割",
   queueBatchSplitModeDelimiter: "カスタム区切り文字",

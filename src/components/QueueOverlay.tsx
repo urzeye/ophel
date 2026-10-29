@@ -18,7 +18,11 @@ import {
   VariableIcon,
 } from "~components/icons"
 import { DialogOverlay, Tooltip } from "~components/ui"
-import { extractVariables } from "~components/VariableInputDialog"
+import {
+  extractVariables,
+  replaceVariables,
+  VariableInputDialog,
+} from "~components/VariableInputDialog"
 import { formatShortcut, normalizeShortcutBinding } from "~constants/shortcuts"
 import type { QueueDispatcher } from "~core/queue-dispatcher"
 import { appendQuickQuoteMarker, stripQuickQuoteMarkers } from "~core/quick-quote-marker"
@@ -33,6 +37,7 @@ import {
 import { t } from "~utils/i18n"
 import { createWeakModalRegistry, isViewportCovering } from "~utils/page-modal-policy"
 import { parseQueueBatchInput, splitQueueLines, type QueueBatchSplitMode } from "~utils/queue-batch"
+import type { Prompt } from "~utils/storage"
 import { showToast } from "~utils/toast"
 
 import "~styles/queue-overlay.css"
@@ -60,6 +65,11 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
   const [librarySearchQuery, setLibrarySearchQuery] = useState("")
   const [libraryMode, setLibraryMode] = useState<QueueLibraryMode>("single")
   const [selectedPromptIds, setSelectedPromptIds] = useState<string[]>([])
+  // 含变量的提示词逐个填写：queue 是还没填的，contents 是已填好并替换完变量的内容
+  const [variableFill, setVariableFill] = useState<{
+    queue: Prompt[]
+    contents: Record<string, string>
+  } | null>(null)
   const [editingItemId, setEditingItemId] = useState<string | null>(null)
   const [editValue, setEditValue] = useState("")
   const [position, setPosition] = useState<{
@@ -123,9 +133,7 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
 
   const selectedLibraryPrompts = React.useMemo(() => {
     const selectedIds = new Set(selectedPromptIds)
-    return prompts.filter(
-      (prompt) => selectedIds.has(prompt.id) && extractVariables(prompt.content).length === 0,
-    )
+    return prompts.filter((prompt) => selectedIds.has(prompt.id))
   }, [prompts, selectedPromptIds])
 
   const libraryPreviewItems = React.useMemo(() => {
@@ -154,6 +162,22 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
   const visibleLibraryRows = libraryRows.slice(0, BATCH_LIBRARY_LIST_LIMIT)
   const hiddenLibraryCount = libraryRows.length - visibleLibraryRows.length
   const hasVariableLibraryRows = visibleLibraryRows.some((row) => row.hasVariables)
+
+  // 「全选」只作用于当前列表里看得到的提示词（受搜索与 80 条上限影响）
+  const visiblePromptIds = visibleLibraryRows.map(({ prompt }) => prompt.id)
+  const selectedVisibleCount = visiblePromptIds.filter((id) =>
+    selectedPromptIds.includes(id),
+  ).length
+  const allVisibleSelected =
+    visiblePromptIds.length > 0 && selectedVisibleCount === visiblePromptIds.length
+  const someVisibleSelected = selectedVisibleCount > 0 && !allVisibleSelected
+
+  const toggleAllVisiblePrompts = () =>
+    setSelectedPromptIds((prev) =>
+      allVisibleSelected
+        ? prev.filter((id) => !visiblePromptIds.includes(id))
+        : [...prev, ...visiblePromptIds.filter((id) => !prev.includes(id))],
+    )
 
   const isDelimiterMissing =
     batchSource === "text" && batchSplitMode === "delimiter" && !batchDelimiter.trim()
@@ -590,11 +614,39 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
   // Esc / × 只收起弹窗并保留已填内容；"取消"和导入成功才清空
   const closeBatchDialog = useCallback(() => setIsBatchDialogOpen(false), [])
 
+  const openQueueSettings = useCallback(() => {
+    window.dispatchEvent(
+      new CustomEvent("ophel:navigateSettingsPage", { detail: { settingId: "prompt-queue" } }),
+    )
+  }, [])
+
   const toggleLibraryPrompt = useCallback((promptId: string) => {
     setSelectedPromptIds((prev) =>
       prev.includes(promptId) ? prev.filter((id) => id !== promptId) : [...prev, promptId],
     )
   }, [])
+
+  const enqueueBatchItems = useCallback(
+    async (batchItems: string[]) => {
+      const importedItems = store.enqueueMany(batchItems)
+      if (importedItems.length === 0) {
+        showToast(t("queueBatchImportEmpty"), 2500)
+        return
+      }
+
+      if (!dispatcher.isRunning()) {
+        dispatcher.start()
+      }
+
+      if (!adapter.isGenerating()) {
+        await dispatcher.processNextNow()
+      }
+
+      showToast(t("queueBatchImportSuccess", { count: String(importedItems.length) }), 2500)
+      resetBatchImportState()
+    },
+    [adapter, dispatcher, resetBatchImportState, store],
+  )
 
   const handleBatchImportConfirm = useCallback(async () => {
     if (isDelimiterMissing) {
@@ -607,23 +659,50 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
       return
     }
 
-    const importedItems = store.enqueueMany(batchPreviewItems)
-    if (importedItems.length === 0) {
-      showToast(t("queueBatchImportEmpty"), 2500)
+    // 含变量的提示词：先逐个让用户填写变量，全部填完再统一入队
+    const promptsWithVariables =
+      batchSource === "library"
+        ? selectedLibraryPrompts.filter((prompt) => extractVariables(prompt.content).length > 0)
+        : []
+    if (promptsWithVariables.length > 0) {
+      setVariableFill({ queue: promptsWithVariables, contents: {} })
       return
     }
 
-    if (!dispatcher.isRunning()) {
-      dispatcher.start()
-    }
+    await enqueueBatchItems(batchPreviewItems)
+  }, [
+    batchPreviewItems,
+    batchSource,
+    enqueueBatchItems,
+    isDelimiterMissing,
+    selectedLibraryPrompts,
+  ])
 
-    if (!adapter.isGenerating()) {
-      await dispatcher.processNextNow()
-    }
+  const handleVariableFillConfirm = useCallback(
+    async (values: Record<string, string>) => {
+      if (!variableFill) return
 
-    showToast(t("queueBatchImportSuccess", { count: String(importedItems.length) }), 2500)
-    resetBatchImportState()
-  }, [adapter, batchPreviewItems, dispatcher, isDelimiterMissing, resetBatchImportState, store])
+      const [current, ...rest] = variableFill.queue
+      const contents = {
+        ...variableFill.contents,
+        [current.id]: replaceVariables(current.content, values),
+      }
+      if (rest.length > 0) {
+        setVariableFill({ queue: rest, contents })
+        return
+      }
+
+      setVariableFill(null)
+      const filledItems = selectedLibraryPrompts.flatMap((prompt) => {
+        const content = contents[prompt.id] ?? prompt.content
+        return libraryMode === "line" ? splitQueueLines(content) : [content.trim()].filter(Boolean)
+      })
+      await enqueueBatchItems(filledItems)
+    },
+    [enqueueBatchItems, libraryMode, selectedLibraryPrompts, variableFill],
+  )
+
+  const handleVariableFillCancel = useCallback(() => setVariableFill(null), [])
 
   const handleEditClick = useCallback((id: string, content: string) => {
     setEditingItemId(id)
@@ -691,20 +770,28 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
 
   // 折叠态：胶囊
   if (!isExpanded) {
+    const capsuleLabel =
+      activeCount > 0 ? t("queueInQueue", { count: String(activeCount) }) : t("queueQuickAsk")
+
     return createPortal(
       <Tooltip content={shortcutText || t("queueQuickAsk")}>
         <div
           className="gh-queue-capsule gh-interactive"
           style={capsuleStyle}
-          onClick={() => setIsExpanded(true)}>
+          role="button"
+          tabIndex={0}
+          aria-label={capsuleLabel}
+          onClick={() => setIsExpanded(true)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault()
+              setIsExpanded(true)
+            }
+          }}>
           <span className="gh-queue-capsule-icon">
             <PromptQueueIcon size={18} color="currentColor" />
           </span>
-          <span>
-            {activeCount > 0
-              ? t("queueInQueue", { count: String(activeCount) })
-              : t("queueQuickAsk")}
-          </span>
+          <span>{capsuleLabel}</span>
         </div>
       </Tooltip>,
       targetContainer,
@@ -768,7 +855,14 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
           {/* 队列列表 */}
           <div className="gh-queue-list">
             {items.filter((i) => i.status === "pending" || i.status === "sending").length === 0 ? (
-              <div className="gh-queue-empty">{t("queueEmpty", { key: submitKeyDisplay })}</div>
+              <div className="gh-queue-empty">
+                <div>{t("queueEmpty", { key: submitKeyDisplay })}</div>
+                <Tooltip content={t("queueSettingDesc")}>
+                  <button type="button" className="gh-queue-empty-link" onClick={openQueueSettings}>
+                    {t("queueDisableHint")}
+                  </button>
+                </Tooltip>
+              </div>
             ) : (
               items
                 .filter((i) => i.status === "pending" || i.status === "sending")
@@ -968,9 +1062,6 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
               data-generating={isGenerating ? "true" : "false"}
             />
             <span>{isGenerating ? t("queueStatusBusy") : t("queueStatusIdle")}</span>
-            <Tooltip content={t("queueSettingDesc")}>
-              <span className="gh-queue-disable-hint">{t("queueDisableHint")}</span>
-            </Tooltip>
             {shortcutText && <span className="gh-queue-shortcut-hint">{shortcutText}</span>}
           </div>
         </div>,
@@ -981,13 +1072,14 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
         <DialogOverlay
           onClose={closeBatchDialog}
           closeOnOverlayClick={false}
-          dialogClassName="gh-queue-batch-dialog"
-          dialogStyle={{ maxWidth: 560, width: "min(560px, calc(100vw - 32px))", padding: 0 }}
+          closeOnEscape={!variableFill}
+          dialogClassName="gh-dialog-frame gh-queue-batch-dialog"
+          dialogStyle={{ maxWidth: 560, width: "min(560px, calc(100vw - 32px))" }}
           ariaLabel={t("queueBatchImportTitle")}>
-          <div className="gh-queue-batch-header">
+          <div className="gh-dialog-frame-header">
             <div>
-              <div className="gh-queue-batch-title">{t("queueBatchImportTitle")}</div>
-              <div className="gh-queue-batch-subtitle">
+              <div className="gh-dialog-frame-title">{t("queueBatchImportTitle")}</div>
+              <div className="gh-dialog-frame-subtitle">
                 {t(
                   batchSource === "library"
                     ? "queueBatchImportDescLibrary"
@@ -996,14 +1088,14 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
               </div>
             </div>
             <button
-              className="gh-queue-batch-close"
+              className="gh-dialog-frame-close"
               aria-label={t("close")}
               onClick={closeBatchDialog}>
               <ClearIcon size={18} />
             </button>
           </div>
 
-          <div className="gh-queue-batch-body">
+          <div className="gh-dialog-frame-body gh-queue-batch-body">
             <div className="gh-queue-batch-tabs" role="tablist">
               <button
                 className="gh-queue-batch-tab"
@@ -1111,6 +1203,26 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
                       {t("queueBatchLibraryVariablePrompt")}
                     </div>
                   )}
+                  <div className="gh-queue-batch-library-toolbar">
+                    <label className="gh-queue-batch-select-all">
+                      <input
+                        type="checkbox"
+                        checked={allVisibleSelected}
+                        disabled={visiblePromptIds.length === 0}
+                        ref={(element) => {
+                          if (element) element.indeterminate = someVisibleSelected
+                        }}
+                        onChange={toggleAllVisiblePrompts}
+                      />
+                      {t("queueBatchLibrarySelectAll")}
+                    </label>
+                    <span>
+                      {t("queueBatchLibrarySelectedCount", {
+                        selected: String(selectedLibraryPrompts.length),
+                        total: String(prompts.length),
+                      })}
+                    </span>
+                  </div>
                   <div className="gh-queue-batch-library-list">
                     {visibleLibraryRows.length === 0 ? (
                       <div className="gh-queue-batch-library-empty">
@@ -1118,14 +1230,10 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
                       </div>
                     ) : (
                       visibleLibraryRows.map(({ prompt, hasVariables }) => (
-                        <label
-                          key={prompt.id}
-                          className="gh-queue-batch-library-item"
-                          data-disabled={hasVariables ? "true" : "false"}>
+                        <label key={prompt.id} className="gh-queue-batch-library-item">
                           <input
                             type="checkbox"
-                            disabled={hasVariables}
-                            checked={!hasVariables && selectedPromptIds.includes(prompt.id)}
+                            checked={selectedPromptIds.includes(prompt.id)}
                             onChange={() => toggleLibraryPrompt(prompt.id)}
                           />
                           <span className="gh-queue-batch-library-main">
@@ -1191,7 +1299,7 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
             </div>
           </div>
 
-          <div className="gh-queue-batch-footer">
+          <div className="gh-dialog-frame-footer">
             <button
               className="gh-dialog-btn gh-dialog-btn-secondary"
               onClick={resetBatchImportState}>
@@ -1205,6 +1313,16 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
             </button>
           </div>
         </DialogOverlay>
+      )}
+
+      {variableFill && (
+        <VariableInputDialog
+          key={variableFill.queue[0].id}
+          variables={extractVariables(variableFill.queue[0].content)}
+          subtitle={variableFill.queue[0].title}
+          onConfirm={(values) => void handleVariableFillConfirm(values)}
+          onCancel={handleVariableFillCancel}
+        />
       )}
     </>
   )

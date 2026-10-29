@@ -1777,9 +1777,11 @@ export const ko = {
   queueBatchLibrarySearchPlaceholder: "프롬프트 검색",
   queueBatchLibraryEmpty: "프롬프트를 찾을 수 없습니다",
   queueBatchLibraryVariablePrompt:
-    "변수가 포함된 프롬프트는 “프롬프트” 탭에서 변수를 입력한 뒤 대기열에 추가하세요.",
+    "변수가 포함된 프롬프트는 “대기열에 추가”를 누르면 변수 입력을 요청합니다.",
   queueBatchLibraryVariableBadge: "변수 포함",
   queueBatchLibraryLimitHint: "처음 {count}개만 표시합니다. 검색으로 범위를 좁혀 보세요",
+  queueBatchLibrarySelectAll: "전체 선택",
+  queueBatchLibrarySelectedCount: "{selected} / {total}개 선택됨",
   queueBatchInputLabel: "일괄 내용",
   queueBatchInputPlaceholder: "여러 프롬프트를 붙여넣으면 규칙에 따라 나누어 대기열에 추가합니다",
   queueBatchPreviewTitle: "미리보기",

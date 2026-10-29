@@ -1843,10 +1843,12 @@ export const it = {
   queueBatchLibrarySearchPlaceholder: "Richieste di ricerca",
   queueBatchLibraryEmpty: "Nessun suggerimento trovato",
   queueBatchLibraryVariablePrompt:
-    "I prompt con variabili vanno prima compilati nella scheda «Suggerimenti», poi aggiunti alla coda.",
+    "I prompt con variabili chiederanno di compilare le variabili dopo il clic su «Aggiungi alla coda».",
   queueBatchLibraryVariableBadge: "Con variabili",
   queueBatchLibraryLimitHint:
     "Vengono mostrati solo i primi {count}. Usa la ricerca per restringere l'elenco.",
+  queueBatchLibrarySelectAll: "Seleziona tutto",
+  queueBatchLibrarySelectedCount: "{selected} di {total} selezionati",
   queueBatchSplitModeLabel: "Modalità divisa",
   queueBatchSplitModeLine: "Dividi per linea",
   queueBatchSplitModeDelimiter: "Delimitatore personalizzato",

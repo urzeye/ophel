@@ -1779,10 +1779,12 @@ Dame el código y luego un resumen de mejoras.`,
   queueBatchLibrarySearchPlaceholder: "Buscar prompts",
   queueBatchLibraryEmpty: "No se encontraron prompts",
   queueBatchLibraryVariablePrompt:
-    "Los prompts con variables deben rellenarse primero en la pestaña «Indicaciones» antes de añadirse a la cola.",
+    "Los prompts con variables pedirán rellenar las variables al pulsar «Añadir a la cola».",
   queueBatchLibraryVariableBadge: "Con variables",
   queueBatchLibraryLimitHint:
     "Solo se muestran los primeros {count}. Usa la búsqueda para acotar la lista.",
+  queueBatchLibrarySelectAll: "Seleccionar todo",
+  queueBatchLibrarySelectedCount: "{selected} de {total} seleccionados",
   queueBatchSplitModeLabel: "Modo de división",
   queueBatchSplitModeLine: "Dividir por línea",
   queueBatchSplitModeDelimiter: "Delimitador personalizado",

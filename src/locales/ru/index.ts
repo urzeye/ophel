@@ -1776,10 +1776,12 @@ export const ru = {
   queueBatchLibrarySearchPlaceholder: "Искать промпты",
   queueBatchLibraryEmpty: "Промпты не найдены",
   queueBatchLibraryVariablePrompt:
-    "Промпты с переменными сначала нужно заполнить во вкладке «Промпты», а затем добавить в очередь.",
+    "Для промптов с переменными после нажатия «Добавить в очередь» будет предложено заполнить переменные.",
   queueBatchLibraryVariableBadge: "С переменными",
   queueBatchLibraryLimitHint:
     "Показаны только первые {count}. Используйте поиск, чтобы сузить список.",
+  queueBatchLibrarySelectAll: "Выбрать все",
+  queueBatchLibrarySelectedCount: "Выбрано {selected} из {total}",
   queueBatchSplitModeLabel: "Способ разделения",
   queueBatchSplitModeLine: "Разделять по строкам",
   queueBatchSplitModeDelimiter: "Свой разделитель",
