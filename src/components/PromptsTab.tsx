@@ -57,6 +57,16 @@ import type { Prompt } from "~utils/storage"
 import { showToast } from "~utils/toast"
 import { createSafeHTML } from "~utils/trusted-types"
 
+// 步骤里选择提示词的下拉按分类分组，便于在较长的提示词列表里查找
+const groupPromptsByCategory = (prompts: Prompt[], fallbackCategory: string) => {
+  const groups = new Map<string, Prompt[]>()
+  prompts.forEach((prompt) => {
+    const category = prompt.category || fallbackCategory
+    groups.set(category, [...(groups.get(category) ?? []), prompt])
+  })
+  return Array.from(groups, ([category, items]) => ({ category, items }))
+}
+
 interface PromptsTabProps {
   manager: PromptManager
   adapter?: SiteAdapter | null
@@ -132,14 +142,15 @@ const CHAIN_EDITOR_PORTAL_STYLES = `
 .gh-chain-editor-subtitle,
 .gh-chain-section-subtitle,
 .gh-chain-field-help {
-  color: var(--gh-text-tertiary, #9ca3af);
+  color: var(--gh-text-secondary, #6b7280);
   font-size: 12px;
+  font-weight: 400;
   line-height: 1.45;
 }
 
 .gh-chain-editor-close {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border: none;
   border-radius: 6px;
   background: var(--gh-hover, #f3f4f6);
@@ -148,6 +159,19 @@ const CHAIN_EDITOR_PORTAL_STYLES = `
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+
+.gh-chain-editor-close:hover {
+  background: color-mix(in srgb, var(--gh-text, #1f2937) 10%, var(--gh-bg, #ffffff));
+  color: var(--gh-text, #1f2937);
+}
+
+.gh-chain-editor-close:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 55%, transparent);
+  outline-offset: 2px;
 }
 
 .gh-chain-editor-scroll {
@@ -235,13 +259,6 @@ const CHAIN_EDITOR_PORTAL_STYLES = `
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--gh-primary, #4285f4) 12%, transparent);
 }
 
-.gh-chain-icon-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
 .gh-chain-visibility-toggle {
   display: inline-flex;
   align-items: center;
@@ -291,6 +308,11 @@ const CHAIN_EDITOR_PORTAL_STYLES = `
   background: var(--gh-primary, #4285f4);
 }
 
+.gh-chain-visibility-toggle input:focus-visible + .gh-chain-visibility-switch {
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 55%, transparent);
+  outline-offset: 2px;
+}
+
 .gh-chain-visibility-toggle input:checked + .gh-chain-visibility-switch::after {
   transform: translateX(12px);
 }
@@ -304,6 +326,23 @@ const CHAIN_EDITOR_PORTAL_STYLES = `
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.gh-chain-icon-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
+}
+
+/* 放不下时（窄弹窗、长文案）整块换到图标控件下面，而不是把图标控件挤变形 */
+.gh-chain-visibility {
+  display: flex;
+  flex: 1 1 260px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
 }
 
 .gh-chain-icon-preview {
@@ -324,8 +363,16 @@ const CHAIN_EDITOR_PORTAL_STYLES = `
 }
 
 .gh-chain-icon-preview.empty {
-  color: var(--gh-text-tertiary, #9ca3af);
+  color: var(--gh-text-secondary, #6b7280);
   font-weight: 400;
+}
+
+/* 已选图标只需一个方块预览，不再铺满整行 */
+.gh-chain-icon-preview:not(.empty) {
+  flex: 0 0 44px;
+  width: 44px;
+  padding: 0;
+  justify-content: center;
 }
 
 .gh-chain-icon-preview-svg {
@@ -545,7 +592,7 @@ const CHAIN_EDITOR_PORTAL_STYLES = `
   border: none;
   border-radius: 5px;
   background: transparent;
-  color: var(--gh-text-tertiary, #9ca3af);
+  color: var(--gh-text-secondary, #6b7280);
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
@@ -555,7 +602,7 @@ const CHAIN_EDITOR_PORTAL_STYLES = `
 }
 
 .gh-chain-step-mode-btn:hover {
-  color: var(--gh-text-secondary, #6b7280);
+  color: var(--gh-text, #1f2937);
 }
 
 .gh-chain-step-mode-btn.active {
@@ -566,25 +613,20 @@ const CHAIN_EDITOR_PORTAL_STYLES = `
 }
 
 .gh-chain-step-delete-btn {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   margin-left: auto;
   flex-shrink: 0;
-  border-radius: 7px;
+  border-radius: 8px;
   border: none;
   background: transparent;
-  color: var(--gh-text-tertiary, #d1d5db);
-  opacity: 0;
+  color: var(--gh-text-secondary, #6b7280);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   position: relative;
-}
-
-.gh-chain-step-row:hover .gh-chain-step-delete-btn {
-  opacity: 1;
 }
 
 .gh-chain-step-delete-btn:hover {
@@ -662,9 +704,9 @@ const CHAIN_EDITOR_PORTAL_STYLES = `
 
 .gh-chain-step-empty {
   padding: 20px;
-  border: 1.5px dashed var(--gh-border, #d1d5db);
+  border: 1px solid var(--gh-border, #e5e7eb);
   border-radius: 10px;
-  color: var(--gh-text-tertiary, #9ca3af);
+  color: var(--gh-text-secondary, #6b7280);
   font-size: 13px;
   text-align: center;
 }
@@ -674,6 +716,20 @@ const CHAIN_EDITOR_PORTAL_STYLES = `
   flex-wrap: wrap;
   gap: 6px;
   margin-top: 8px;
+}
+
+.gh-chain-variable-group {
+  margin-top: 10px;
+}
+
+.gh-chain-variable-group .gh-chain-variable-preview {
+  margin-top: 6px;
+}
+
+.gh-chain-variable-label {
+  display: block;
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 12px;
 }
 
 .gh-chain-variable-chip,
@@ -698,7 +754,7 @@ const CHAIN_EDITOR_PORTAL_STYLES = `
 }
 
 .gh-chain-variable-muted {
-  color: var(--gh-text-tertiary, #9ca3af);
+  color: var(--gh-text-secondary, #6b7280);
 }
 
 .gh-chain-preview-section {
@@ -918,7 +974,6 @@ const CHAIN_EDITOR_PORTAL_STYLES = `
     grid-template-columns: 1fr;
   }
 
-  .gh-chain-icon-header,
   .gh-chain-icon-control-row {
     align-items: stretch;
     flex-direction: column;
@@ -2321,8 +2376,8 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     })
 
   const getChainExecutionPreview = (draft: ChainDraft | PromptChain): string[] => {
-    const exampleSelection = "Selected text from conversation"
-    const exampleQuote = "> Selected text from conversation"
+    const exampleSelection = t("chainPreviewSampleSelection")
+    const exampleQuote = `> ${exampleSelection}`
     const exampleValues: Record<string, string> = {
       selection: exampleSelection,
       quote: exampleQuote,
@@ -2442,12 +2497,16 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
           const showInSelectionPopover = chain.showInSelectionPopover !== false
           const stepTitles = getChainStepTitles(chain)
           const flowText = stepTitles.length > 0 ? stepTitles.join(" → ") : t("chainNoSteps")
+          // 有描述时优先展示描述，没有再展示步骤摘要
+          const summaryText = chain.description?.trim() || flowText
+          const popoverToggleLabel = showInSelectionPopover
+            ? t("chainHideFromPopover")
+            : t("chainShowInPopover")
 
           return (
             <div
               key={chain.id}
               className={`gh-chain-card${draggedChainId === chain.id ? " dragging" : ""}`}
-              data-disabled={!showInSelectionPopover}
               onClick={() => openChainEditor(chain)}
               draggable
               onDragStart={(e) =>
@@ -2459,31 +2518,30 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
               <div className="gh-chain-card-main">
                 <div className="gh-chain-icon" data-enabled={showInSelectionPopover}>
                   {renderChainIcon(chain.iconSvg)}
-                  <span
-                    className="gh-chain-icon-status-dot"
-                    data-enabled={showInSelectionPopover}
-                  />
                 </div>
                 <div className="gh-chain-body">
                   <div className="gh-chain-title-row">
                     <span className="gh-chain-title">{chain.title}</span>
+                    {!showInSelectionPopover && (
+                      <span className="gh-chain-hidden-badge">{t("chainHiddenBadge")}</span>
+                    )}
                   </div>
-                  <Tooltip content={flowText} showOnlyWhenTruncated>
+                  <Tooltip content={summaryText} showOnlyWhenTruncated>
                     <div className="gh-chain-flow">
-                      <span className="gh-chain-meta-badge">{chain.steps.length}</span>
-                      <span className="gh-chain-flow-text">{flowText}</span>
+                      <span className="gh-chain-meta-badge">
+                        {t("chainStepCount", { count: String(chain.steps.length) })}
+                      </span>
+                      <span className="gh-chain-flow-text">{summaryText}</span>
                     </div>
                   </Tooltip>
                 </div>
               </div>
 
               <div className="gh-chain-card-actions">
-                <Tooltip
-                  content={
-                    showInSelectionPopover ? t("chainShownInPopover") : t("chainHiddenInPopover")
-                  }>
+                <Tooltip content={popoverToggleLabel}>
                   <button
                     className={`prompt-action-btn${showInSelectionPopover ? " active" : ""}`}
+                    aria-label={popoverToggleLabel}
                     onClick={(e) => {
                       e.stopPropagation()
                       updateChain(chain.id, {
@@ -2493,9 +2551,10 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                     <CheckIcon size={15} />
                   </button>
                 </Tooltip>
-                <Tooltip content={t("copy")}>
+                <Tooltip content={t("chainDuplicate")}>
                   <button
                     className="prompt-action-btn"
+                    aria-label={t("chainDuplicate")}
                     onClick={(e) => {
                       e.stopPropagation()
                       const copy = duplicateChain(chain.id)
@@ -2507,6 +2566,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                 <Tooltip content={t("delete")}>
                   <button
                     className="prompt-action-btn danger"
+                    aria-label={t("delete")}
                     onClick={(e) => {
                       e.stopPropagation()
                       showConfirm(t("confirmDelete"), t("chainDeleteConfirm"), () => {
@@ -2530,6 +2590,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
 
     const draft = chainEditorState.draft
     const variables = getChainVariables(draft)
+    const promptOptionGroups = groupPromptsByCategory(prompts, t("uncategorized"))
 
     return createPortal(
       <>
@@ -2552,6 +2613,9 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
           }}>
           <div
             className="prompt-modal-content gh-chain-editor"
+            role="dialog"
+            aria-modal="true"
+            aria-label={draft.id ? t("chainEditorEditTitle") : t("chainEditorNewTitle")}
             onClick={(e) => e.stopPropagation()}>
             <div className="gh-chain-editor-header">
               <div>
@@ -2560,7 +2624,10 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                 </div>
                 <div className="gh-chain-editor-subtitle">{t("chainEditorSubtitle")}</div>
               </div>
-              <button className="gh-chain-editor-close" onClick={closeChainEditor}>
+              <button
+                className="gh-chain-editor-close"
+                aria-label={t("close")}
+                onClick={closeChainEditor}>
                 <ClearIcon size={18} />
               </button>
             </div>
@@ -2592,38 +2659,42 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
               </div>
 
               <div className="gh-chain-field">
-                <div className="gh-chain-icon-header">
-                  <span>{t("chainIconSvg")}</span>
-                  <label className="gh-chain-visibility-toggle">
-                    <input
-                      type="checkbox"
-                      checked={draft.showInSelectionPopover !== false}
-                      onChange={(e) =>
-                        updateChainDraft({ showInSelectionPopover: e.target.checked })
-                      }
-                    />
-                    <span className="gh-chain-visibility-switch" aria-hidden="true" />
-                    <span className="gh-chain-visibility-toggle-text">
-                      {t("chainShowInPopover")}
-                    </span>
-                  </label>
-                </div>
-                <div className="gh-chain-icon-control-row">
-                  {/* 当前选中的图标预览 */}
-                  {draft.iconSvg ? (
-                    <div className="gh-chain-icon-preview">
-                      <SafeSvgMarkup className="gh-chain-icon-preview-svg" svg={draft.iconSvg} />
-                      <span>{t("chainIconSelected")}</span>
-                    </div>
-                  ) : (
-                    <div className="gh-chain-icon-preview empty">{t("chainIconNotSelected")}</div>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => setShowChainIconPicker(true)}
-                    className="gh-chain-icon-select-btn">
-                    {t("chainIconSelect")}
-                  </button>
+                <span>{t("chainIconSvg")}</span>
+                <div className="gh-chain-icon-row">
+                  <div className="gh-chain-icon-control-row">
+                    {/* 当前选中的图标预览 */}
+                    {draft.iconSvg ? (
+                      <div className="gh-chain-icon-preview">
+                        <SafeSvgMarkup className="gh-chain-icon-preview-svg" svg={draft.iconSvg} />
+                      </div>
+                    ) : (
+                      <div className="gh-chain-icon-preview empty">{t("chainIconNotSelected")}</div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setShowChainIconPicker(true)}
+                      className="gh-chain-icon-select-btn">
+                      {t("chainIconSelect")}
+                    </button>
+                  </div>
+
+                  {/* 图标就是它在选区工具栏里的样子：开关与用法说明放在图标控件右侧，不单独占行 */}
+                  <div className="gh-chain-visibility">
+                    <label className="gh-chain-visibility-toggle">
+                      <input
+                        type="checkbox"
+                        checked={draft.showInSelectionPopover !== false}
+                        onChange={(e) =>
+                          updateChainDraft({ showInSelectionPopover: e.target.checked })
+                        }
+                      />
+                      <span className="gh-chain-visibility-switch" aria-hidden="true" />
+                      <span className="gh-chain-visibility-toggle-text">
+                        {t("chainShowInPopover")}
+                      </span>
+                    </label>
+                    <div className="gh-chain-field-help">{t("chainPopoverUsageHint")}</div>
+                  </div>
                 </div>
               </div>
 
@@ -2665,6 +2736,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                             <button
                               type="button"
                               className={`gh-chain-step-mode-btn${step.mode !== "inline" ? " active" : ""}`}
+                              aria-pressed={step.mode !== "inline"}
                               onClick={() =>
                                 updateChainStep(step.id, { mode: "prompt", inlineContent: "" })
                               }>
@@ -2673,6 +2745,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                             <button
                               type="button"
                               className={`gh-chain-step-mode-btn${step.mode === "inline" ? " active" : ""}`}
+                              aria-pressed={step.mode === "inline"}
                               onClick={() =>
                                 updateChainStep(step.id, { mode: "inline", promptId: "" })
                               }>
@@ -2682,6 +2755,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                           <Tooltip content={t("delete")}>
                             <button
                               className="gh-chain-step-delete-btn"
+                              aria-label={t("delete")}
                               onClick={(e) => {
                                 e.stopPropagation()
                                 removeChainStep(step.id)
@@ -2709,10 +2783,14 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                                 updateChainStep(step.id, { promptId: e.target.value })
                               }>
                               <option value="">{t("chainSelectPrompt")}</option>
-                              {prompts.map((prompt) => (
-                                <option key={prompt.id} value={prompt.id}>
-                                  {prompt.title}
-                                </option>
+                              {promptOptionGroups.map(({ category, items }) => (
+                                <optgroup key={category} label={category}>
+                                  {items.map((prompt) => (
+                                    <option key={prompt.id} value={prompt.id}>
+                                      {prompt.title}
+                                    </option>
+                                  ))}
+                                </optgroup>
                               ))}
                             </select>
                           )}
@@ -2730,18 +2808,26 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
 
               <div className="gh-chain-editor-section">
                 <div className="gh-chain-section-title">{t("chainVariablesPreview")}</div>
-                <div className="gh-chain-variable-preview">
-                  <span className="gh-chain-variable-chip">{`{{selection}}`}</span>
-                  <span className="gh-chain-variable-chip">{`{{quote}}`}</span>
-                  {variables.length === 0 ? (
-                    <span className="gh-chain-variable-muted">{t("chainVariablesNone")}</span>
-                  ) : (
-                    variables.map((variable) => (
-                      <span key={variable.raw} className="gh-chain-variable-chip custom">
-                        {`{{${variable.raw}}}`}
-                      </span>
-                    ))
-                  )}
+                <div className="gh-chain-variable-group">
+                  <span className="gh-chain-variable-label">{t("chainVariablesBuiltin")}</span>
+                  <div className="gh-chain-variable-preview">
+                    <span className="gh-chain-variable-chip">{`{{selection}}`}</span>
+                    <span className="gh-chain-variable-chip">{`{{quote}}`}</span>
+                  </div>
+                </div>
+                <div className="gh-chain-variable-group">
+                  <span className="gh-chain-variable-label">{t("chainVariablesManual")}</span>
+                  <div className="gh-chain-variable-preview">
+                    {variables.length === 0 ? (
+                      <span className="gh-chain-variable-muted">{t("chainVariablesNone")}</span>
+                    ) : (
+                      variables.map((variable) => (
+                        <span key={variable.raw} className="gh-chain-variable-chip custom">
+                          {`{{${variable.raw}}}`}
+                        </span>
+                      ))
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -2768,7 +2854,8 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                         <div className="gh-chain-preview-nav-float">
                           <span className="gh-chain-preview-nav-label">{t("chainSteps")}</span>
                           {draft.steps.map((step, idx) => {
-                            const title = getChainStepTitles(draft)[idx] || `Step ${idx + 1}`
+                            const title =
+                              getChainStepTitles(draft)[idx] || `${t("chainStep")} ${idx + 1}`
                             return (
                               <Tooltip key={step.id} content={title}>
                                 <button
@@ -2796,7 +2883,9 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                             <div className="gh-chain-preview-step-header">
                               <span className="gh-chain-preview-step-number">{index + 1}</span>
                               <span className="gh-chain-preview-step-title">
-                                {getChainStepTitles(draft)[index] || t("chainStep")}
+                                {draft.steps[index]?.mode === "inline"
+                                  ? t("chainStepModeInline")
+                                  : getChainStepTitles(draft)[index] || t("chainStep")}
                               </span>
                             </div>
                             <div
@@ -2819,10 +2908,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
             </div>
 
             <div className="gh-chain-editor-footer">
-              <Button
-                variant="ghost"
-                onClick={closeChainEditor}
-                style={{ background: "var(--gh-hover, #f3f4f6)" }}>
+              <Button variant="secondary" onClick={closeChainEditor}>
                 {t("cancel")}
               </Button>
               <Button variant="primary" onClick={saveChainDraft}>

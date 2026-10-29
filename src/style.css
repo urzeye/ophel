@@ -3362,10 +3362,6 @@
   box-shadow: 0 2px 8px rgba(66, 133, 244, 0.1);
 }
 
-.gh-chain-card[data-disabled="true"] {
-  opacity: 0.55;
-}
-
 .gh-chain-card.drop-above,
 .gh-chain-card.drop-below,
 .gh-chain-card.dragging,
@@ -3451,23 +3447,6 @@
   position: relative;
 }
 
-.gh-chain-icon-status-dot {
-  position: absolute;
-  top: -2px;
-  right: -2px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--gh-success, #22c55e);
-  border: 2px solid var(--gh-bg, #ffffff);
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-.gh-chain-icon[data-enabled="true"] .gh-chain-icon-status-dot {
-  opacity: 1;
-}
-
 .gh-chain-icon[data-enabled="false"] {
   opacity: 0.5;
 }
@@ -3526,16 +3505,32 @@
 .gh-chain-meta-badge {
   display: inline-flex;
   align-items: center;
-  padding: 0 5px;
-  height: 16px;
-  border-radius: 3px;
+  padding: 0 6px;
+  height: 18px;
+  border-radius: 4px;
   background: var(--gh-bg-secondary, #f3f4f6);
-  color: var(--gh-text-tertiary, #9ca3af);
-  font-size: 10px;
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 11px;
   font-weight: 600;
   white-space: nowrap;
   line-height: 1;
   flex-shrink: 0;
+}
+
+/* 未显示在选区工具栏的 Chain：用文字说明状态，不靠整卡变灰 */
+.gh-chain-hidden-badge {
+  flex: 0 1 auto;
+  min-width: 0;
+  height: 16px;
+  padding: 0 6px;
+  overflow: hidden;
+  border: 1px solid var(--gh-border, #e5e7eb);
+  border-radius: 999px;
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 11px;
+  line-height: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .gh-chain-status-dot {
@@ -3584,28 +3579,43 @@
   font-style: italic;
 }
 
+/* 默认（触屏等无 hover 设备）：操作按钮常驻在卡片底部右侧，不遮挡文字 */
 .gh-chain-card-actions {
-  position: absolute;
-  top: 8px;
-  right: 8px;
   display: flex;
-  gap: 2px;
-  opacity: 0;
-  transition: opacity 0.15s;
-  z-index: 1;
-  background: var(--gh-bg, #ffffff);
-  border-radius: 6px;
-  padding: 2px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-}
-
-.gh-chain-card:hover .gh-chain-card-actions {
-  opacity: 1;
+  align-self: flex-end;
+  gap: 4px;
 }
 
 .gh-chain-card-actions .prompt-action-btn {
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
+}
+
+.gh-root.is-touch .gh-chain-card-actions .prompt-action-btn {
+  width: 44px;
+  height: 44px;
+}
+
+/* 精确指针设备：悬停或键盘聚焦时才以浮层形式显示在右上角 */
+@media (hover: hover) and (pointer: fine) {
+  .gh-chain-card-actions {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    gap: 2px;
+    opacity: 0;
+    transition: opacity 0.15s;
+    z-index: 1;
+    background: var(--gh-bg, #ffffff);
+    border-radius: 6px;
+    padding: 2px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  }
+
+  .gh-chain-card:hover .gh-chain-card-actions,
+  .gh-chain-card:focus-within .gh-chain-card-actions {
+    opacity: 1;
+  }
 }
 
 .gh-chain-empty {
@@ -3624,26 +3634,6 @@
   margin-top: 6px;
   font-size: 12px;
   line-height: 1.5;
-}
-
-.gh-chain-empty-cta {
-  margin-top: 14px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 14px;
-  border: 1px dashed var(--gh-primary, #4285f4);
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--gh-primary, #4285f4) 5%, var(--gh-bg, #ffffff));
-  color: var(--gh-primary, #4285f4);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.gh-chain-empty-cta:hover {
-  background: color-mix(in srgb, var(--gh-primary, #4285f4) 12%, var(--gh-bg, #ffffff));
 }
 
 .gh-chain-queue-gate {
@@ -3689,25 +3679,6 @@
 .prompt-action-btn:disabled {
   opacity: 0.35;
   cursor: not-allowed;
-}
-
-@media (max-width: 520px) {
-  .gh-chain-card {
-    grid-template-columns: 1fr;
-  }
-
-  .gh-chain-card-main,
-  .gh-chain-card-actions,
-  .gh-chain-flow,
-  .gh-chain-variable-list {
-    grid-column: 1;
-  }
-
-  .gh-chain-card-actions {
-    grid-row: auto;
-    align-self: flex-end;
-    justify-self: end;
-  }
 }
 
 /* 提示词列表隐藏滚动条 */
