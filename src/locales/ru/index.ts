@@ -1777,6 +1777,8 @@ export const ru = {
   queueBatchLibraryEmpty: "Промпты не найдены",
   queueBatchLibraryVariablePrompt:
     "Для промптов с переменными после нажатия «Добавить в очередь» будет предложено заполнить переменные.",
+  queueBatchVariableFillEmpty:
+    "«{title}» остается пустым после заполнения переменных. Заполните хотя бы одну",
   queueBatchLibraryVariableBadge: "С переменными",
   queueBatchLibraryLimitHint:
     "Показаны только первые {count}. Используйте поиск, чтобы сузить список.",

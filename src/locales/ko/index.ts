@@ -1777,6 +1777,8 @@ export const ko = {
   queueBatchLibraryEmpty: "프롬프트를 찾을 수 없습니다",
   queueBatchLibraryVariablePrompt:
     "변수가 포함된 프롬프트는 “대기열에 추가”를 누르면 변수 입력을 요청합니다.",
+  queueBatchVariableFillEmpty:
+    "“{title}” 프롬프트는 변수를 입력해도 내용이 비어 있습니다. 하나 이상 입력하세요",
   queueBatchLibraryVariableBadge: "변수 포함",
   queueBatchLibraryLimitHint: "처음 {count}개만 표시합니다. 검색으로 범위를 좁혀 보세요",
   queueBatchLibrarySelectAll: "전체 선택",

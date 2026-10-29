@@ -1790,6 +1790,8 @@ export const ja = {
   queueBatchLibraryEmpty: "プロンプトが見つかりません",
   queueBatchLibraryVariablePrompt:
     "変数を含むプロンプトは、「キューに追加」を押した後に変数の入力を求められます。",
+  queueBatchVariableFillEmpty:
+    "「{title}」は変数を入力しても内容が空です。少なくとも1つ入力してください",
   queueBatchLibraryVariableBadge: "変数あり",
   queueBatchLibraryLimitHint: "先頭の {count} 件のみ表示しています。検索で絞り込んでください",
   queueBatchLibrarySelectAll: "すべて選択",

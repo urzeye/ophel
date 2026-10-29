@@ -1780,6 +1780,8 @@ Dame el código y luego un resumen de mejoras.`,
   queueBatchLibraryEmpty: "No se encontraron prompts",
   queueBatchLibraryVariablePrompt:
     "Los prompts con variables pedirán rellenar las variables al pulsar «Añadir a la cola».",
+  queueBatchVariableFillEmpty:
+    "«{title}» queda vacío tras rellenar las variables. Rellena al menos una",
   queueBatchLibraryVariableBadge: "Con variables",
   queueBatchLibraryLimitHint:
     "Solo se muestran los primeros {count}. Usa la búsqueda para acotar la lista.",

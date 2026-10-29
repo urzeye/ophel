@@ -1785,6 +1785,8 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   queueBatchLibraryEmpty: "Keine Prompts gefunden",
   queueBatchLibraryVariablePrompt:
     "Bei Prompts mit Variablen werden die Variablen nach dem Klick auf „Zur Warteschlange hinzufügen“ abgefragt.",
+  queueBatchVariableFillEmpty:
+    "„{title}“ ist nach dem Ausfüllen der Variablen leer. Füllen Sie mindestens eine aus",
   queueBatchLibraryVariableBadge: "Mit Variablen",
   queueBatchLibraryLimitHint:
     "Es werden nur die ersten {count} angezeigt. Verwenden Sie die Suche, um die Liste einzugrenzen.",

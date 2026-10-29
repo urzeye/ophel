@@ -1722,6 +1722,7 @@ export const zhCN = {
   queueBatchLibrarySearchPlaceholder: "搜索提示词",
   queueBatchLibraryEmpty: "没有找到提示词",
   queueBatchLibraryVariablePrompt: "含变量的提示词会在点击「加入队列」后让你填写变量。",
+  queueBatchVariableFillEmpty: "「{title}」填写变量后内容为空，请至少填写一个变量",
   queueBatchLibraryVariableBadge: "含变量",
   queueBatchLibraryLimitHint: "仅显示前 {count} 条，请通过搜索缩小范围",
   queueBatchLibrarySelectAll: "全选",

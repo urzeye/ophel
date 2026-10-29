@@ -1845,6 +1845,8 @@ export const it = {
   queueBatchLibraryEmpty: "Nessun suggerimento trovato",
   queueBatchLibraryVariablePrompt:
     "I prompt con variabili chiederanno di compilare le variabili dopo il clic su «Aggiungi alla coda».",
+  queueBatchVariableFillEmpty:
+    "«{title}» resta vuoto dopo la compilazione delle variabili. Compilane almeno una",
   queueBatchLibraryVariableBadge: "Con variabili",
   queueBatchLibraryLimitHint:
     "Vengono mostrati solo i primi {count}. Usa la ricerca per restringere l'elenco.",

@@ -1776,6 +1776,8 @@ Dê o código e depois um resumo de melhorias.`,
   queueBatchLibraryEmpty: "Nenhum prompt encontrado",
   queueBatchLibraryVariablePrompt:
     "Prompts com variáveis pedirão o preenchimento das variáveis ao clicar em “Adicionar à fila”.",
+  queueBatchVariableFillEmpty:
+    "“{title}” fica vazio após preencher as variáveis. Preencha pelo menos uma",
   queueBatchLibraryVariableBadge: "Com variáveis",
   queueBatchLibraryLimitHint:
     "Apenas os primeiros {count} são exibidos. Use a pesquisa para refinar a lista.",

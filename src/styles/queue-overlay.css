@@ -560,9 +560,11 @@
   outline-offset: 2px;
 }
 
-/* 最小高度让两个 Tab 的内容高度接近，切换时弹窗不再上下跳动；小窗口下仍可滚动 */
-.gh-queue-batch-body {
-  min-height: min(440px, 60vh);
+/* 最小高度让两个 Tab 的内容高度接近，切换时弹窗不再上下跳动。
+   必须带上 .gh-queue-batch-dialog：共享的 .gh-dialog-frame-body（min-height: 0）是后注入的，
+   权重相同会盖掉这里；上限扣掉头部和页脚，矮窗口里也不会把页脚顶出弹窗 */
+.gh-queue-batch-dialog .gh-queue-batch-body {
+  min-height: min(440px, calc(86vh - 150px));
 }
 
 .gh-queue-batch-section {

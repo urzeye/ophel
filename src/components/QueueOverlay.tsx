@@ -53,6 +53,10 @@ const INPUT_CONTAINER_GAP_PX = 6
 type QueueBatchSource = "text" | "library"
 type QueueLibraryMode = "single" | "line"
 
+// 一个提示词变成队列项：「每个提示词一条」或「按行拆分」；内容为空时返回空数组
+const toBatchItems = (content: string, mode: QueueLibraryMode): string[] =>
+  mode === "line" ? splitQueueLines(content) : [content.trim()].filter(Boolean)
+
 export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher }) => {
   const [isExpanded, setIsExpanded] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
@@ -137,11 +141,7 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
   }, [prompts, selectedPromptIds])
 
   const libraryPreviewItems = React.useMemo(() => {
-    return selectedLibraryPrompts.flatMap((prompt) =>
-      libraryMode === "line"
-        ? splitQueueLines(prompt.content)
-        : [prompt.content.trim()].filter(Boolean),
-    )
+    return selectedLibraryPrompts.flatMap((prompt) => toBatchItems(prompt.content, libraryMode))
   }, [libraryMode, selectedLibraryPrompts])
 
   const textPreviewItems = React.useMemo(
@@ -683,20 +683,23 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
       if (!variableFill) return
 
       const [current, ...rest] = variableFill.queue
-      const contents = {
-        ...variableFill.contents,
-        [current.id]: replaceVariables(current.content, values),
+      const filledContent = replaceVariables(current.content, values)
+      // 变量全部留空时内容可能变成空：留在变量弹窗里并说明是哪一项，不要事后静默丢掉
+      if (toBatchItems(filledContent, libraryMode).length === 0) {
+        showToast(t("queueBatchVariableFillEmpty", { title: current.title }), 3000)
+        return
       }
+
+      const contents = { ...variableFill.contents, [current.id]: filledContent }
       if (rest.length > 0) {
         setVariableFill({ queue: rest, contents })
         return
       }
 
       setVariableFill(null)
-      const filledItems = selectedLibraryPrompts.flatMap((prompt) => {
-        const content = contents[prompt.id] ?? prompt.content
-        return libraryMode === "line" ? splitQueueLines(content) : [content.trim()].filter(Boolean)
-      })
+      const filledItems = selectedLibraryPrompts.flatMap((prompt) =>
+        toBatchItems(contents[prompt.id] ?? prompt.content, libraryMode),
+      )
       await enqueueBatchItems(filledItems)
     },
     [enqueueBatchItems, libraryMode, selectedLibraryPrompts, variableFill],

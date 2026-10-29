@@ -1788,6 +1788,8 @@ Please output the optimized code block directly, followed by a brief summary of 
   queueBatchLibraryEmpty: "No prompts found",
   queueBatchLibraryVariablePrompt:
     "Prompts with variables will ask you to fill them in after you click Add to Queue.",
+  queueBatchVariableFillEmpty:
+    "“{title}” is empty after filling in the variables. Fill in at least one",
   queueBatchLibraryVariableBadge: "Has variables",
   queueBatchLibraryLimitHint: "Showing the first {count}. Use search to narrow the list.",
   queueBatchLibrarySelectAll: "Select all",

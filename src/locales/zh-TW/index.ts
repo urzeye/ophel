@@ -1724,6 +1724,7 @@ export const zhTW = {
   queueBatchLibrarySearchPlaceholder: "搜尋提示詞",
   queueBatchLibraryEmpty: "沒有找到提示詞",
   queueBatchLibraryVariablePrompt: "含變數的提示詞會在點擊「加入隊列」後請你填寫變數。",
+  queueBatchVariableFillEmpty: "「{title}」填寫變數後內容為空，請至少填寫一個變數",
   queueBatchLibraryVariableBadge: "含變數",
   queueBatchLibraryLimitHint: "僅顯示前 {count} 條，請透過搜尋縮小範圍",
   queueBatchLibrarySelectAll: "全選",

@@ -1794,6 +1794,8 @@ Donnez le code puis un résumé des améliorations.`,
   queueBatchLibraryEmpty: "Aucun prompt trouvé",
   queueBatchLibraryVariablePrompt:
     "Les prompts avec variables demanderont de renseigner les variables après un clic sur « Ajouter à la file ».",
+  queueBatchVariableFillEmpty:
+    "« {title} » reste vide après le remplissage des variables. Renseignez-en au moins une",
   queueBatchLibraryVariableBadge: "Avec variables",
   queueBatchLibraryLimitHint:
     "Seuls les {count} premiers sont affichés. Utilisez la recherche pour affiner la liste.",
