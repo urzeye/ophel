@@ -10,7 +10,13 @@ import React, { useCallback, useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 
 import type { SiteAdapter } from "~adapters/base"
-import { CleanupIcon, ImportIcon, PromptQueueIcon } from "~components/icons"
+import {
+  AddToQueueIcon,
+  CleanupIcon,
+  ClearIcon,
+  PromptQueueIcon,
+  VariableIcon,
+} from "~components/icons"
 import { DialogOverlay, Tooltip } from "~components/ui"
 import { extractVariables } from "~components/VariableInputDialog"
 import { formatShortcut, normalizeShortcutBinding } from "~constants/shortcuts"
@@ -37,6 +43,7 @@ interface QueueOverlayProps {
 }
 
 const BATCH_PREVIEW_LIMIT = 5
+const BATCH_LIBRARY_LIST_LIMIT = 80
 const INPUT_CONTAINER_GAP_PX = 6
 type QueueBatchSource = "text" | "library"
 type QueueLibraryMode = "single" | "line"
@@ -135,6 +142,29 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
   )
 
   const batchPreviewItems = batchSource === "library" ? libraryPreviewItems : textPreviewItems
+
+  const libraryRows = React.useMemo(
+    () =>
+      filteredLibraryPrompts.map((prompt) => ({
+        prompt,
+        hasVariables: extractVariables(prompt.content).length > 0,
+      })),
+    [filteredLibraryPrompts],
+  )
+  const visibleLibraryRows = libraryRows.slice(0, BATCH_LIBRARY_LIST_LIMIT)
+  const hiddenLibraryCount = libraryRows.length - visibleLibraryRows.length
+  const hasVariableLibraryRows = visibleLibraryRows.some((row) => row.hasVariables)
+
+  const isDelimiterMissing =
+    batchSource === "text" && batchSplitMode === "delimiter" && !batchDelimiter.trim()
+
+  // 预览为空时说明下一步该做什么，而不是只说"暂无内容"
+  let batchPreviewEmptyKey = "queueBatchPreviewEmptyText"
+  if (batchSource === "library") {
+    batchPreviewEmptyKey = "queueBatchPreviewEmptyLibrary"
+  } else if (isDelimiterMissing) {
+    batchPreviewEmptyKey = "queueBatchDelimiterRequired"
+  }
 
   // ==================== 位置计算 ====================
 
@@ -557,6 +587,9 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
     setIsBatchDialogOpen(false)
   }, [])
 
+  // Esc / × 只收起弹窗并保留已填内容；"取消"和导入成功才清空
+  const closeBatchDialog = useCallback(() => setIsBatchDialogOpen(false), [])
+
   const toggleLibraryPrompt = useCallback((promptId: string) => {
     setSelectedPromptIds((prev) =>
       prev.includes(promptId) ? prev.filter((id) => id !== promptId) : [...prev, promptId],
@@ -564,7 +597,7 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
   }, [])
 
   const handleBatchImportConfirm = useCallback(async () => {
-    if (batchSource === "text" && batchSplitMode === "delimiter" && !batchDelimiter.trim()) {
+    if (isDelimiterMissing) {
       showToast(t("queueBatchDelimiterRequired"), 2500)
       return
     }
@@ -590,16 +623,7 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
 
     showToast(t("queueBatchImportSuccess", { count: String(importedItems.length) }), 2500)
     resetBatchImportState()
-  }, [
-    adapter,
-    batchDelimiter,
-    batchPreviewItems,
-    batchSource,
-    batchSplitMode,
-    dispatcher,
-    resetBatchImportState,
-    store,
-  ])
+  }, [adapter, batchPreviewItems, dispatcher, isDelimiterMissing, resetBatchImportState, store])
 
   const handleEditClick = useCallback((id: string, content: string) => {
     setEditingItemId(id)
@@ -703,19 +727,28 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
             </div>
             <div className="gh-queue-header-actions">
               <Tooltip content={t("queueBatchImport")}>
-                <button className="gh-queue-header-btn" onClick={() => setIsBatchDialogOpen(true)}>
-                  <ImportIcon size={16} color="currentColor" />
+                <button
+                  className="gh-queue-header-btn"
+                  aria-label={t("queueBatchImport")}
+                  onClick={() => setIsBatchDialogOpen(true)}>
+                  <AddToQueueIcon size={16} color="currentColor" accentColor="currentColor" />
                 </button>
               </Tooltip>
               {displayCount > 0 && (
                 <Tooltip content={t("queueClearAll")}>
-                  <button className="gh-queue-header-btn" onClick={handleClearAll}>
+                  <button
+                    className="gh-queue-header-btn"
+                    aria-label={t("queueClearAll")}
+                    onClick={handleClearAll}>
                     <CleanupIcon size={16} color="currentColor" />
                   </button>
                 </Tooltip>
               )}
               <Tooltip content={t("collapse")}>
-                <button className="gh-queue-header-btn" onClick={() => setIsExpanded(false)}>
+                <button
+                  className="gh-queue-header-btn"
+                  aria-label={t("collapse")}
+                  onClick={() => setIsExpanded(false)}>
                   <svg
                     viewBox="0 0 24 24"
                     width="16"
@@ -725,8 +758,7 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
                   </svg>
                 </button>
               </Tooltip>
@@ -769,6 +801,7 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
                           <Tooltip content={t("queueEditSave")}>
                             <button
                               className="gh-queue-item-edit-btn-save"
+                              aria-label={t("queueEditSave")}
                               onClick={() => handleEditSave(item.id)}>
                               <svg
                                 viewBox="0 0 24 24"
@@ -786,6 +819,7 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
                           <Tooltip content={t("queueEditCancel")}>
                             <button
                               className="gh-queue-item-edit-btn-cancel"
+                              aria-label={t("queueEditCancel")}
                               onClick={handleEditCancel}>
                               <svg
                                 viewBox="0 0 24 24"
@@ -824,6 +858,7 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
                             <Tooltip content={t("queueEdit")}>
                               <button
                                 className="gh-queue-item-edit"
+                                aria-label={t("queueEdit")}
                                 onClick={() => handleEditClick(item.id, item.content)}>
                                 <svg
                                   viewBox="0 0 24 24"
@@ -844,6 +879,7 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
                             <Tooltip content={t("queueForceSend")}>
                               <button
                                 className="gh-queue-item-force-send"
+                                aria-label={t("queueForceSend")}
                                 onClick={() => handleForceSend(item)}>
                                 <svg
                                   viewBox="0 0 24 24"
@@ -863,6 +899,7 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
                           <Tooltip content={t("queueRemove")}>
                             <button
                               className="gh-queue-item-remove"
+                              aria-label={t("queueRemove")}
                               onClick={() => handleRemoveItem(item.id)}>
                               <svg
                                 viewBox="0 0 24 24"
@@ -904,6 +941,7 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
               <Tooltip content={submitKeyDisplay}>
                 <button
                   className="gh-queue-send-btn"
+                  aria-label={isGenerating ? t("queueEnqueue") : t("queueSend")}
                   onClick={handleSubmit}
                   disabled={!inputValue.trim()}>
                   <svg
@@ -931,7 +969,7 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
             />
             <span>{isGenerating ? t("queueStatusBusy") : t("queueStatusIdle")}</span>
             <Tooltip content={t("queueSettingDesc")}>
-              <span className="gh-queue-disable-hint">({t("queueDisableHint")})</span>
+              <span className="gh-queue-disable-hint">{t("queueDisableHint")}</span>
             </Tooltip>
             {shortcutText && <span className="gh-queue-shortcut-hint">{shortcutText}</span>}
           </div>
@@ -941,185 +979,219 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
 
       {isBatchDialogOpen && (
         <DialogOverlay
-          onClose={resetBatchImportState}
+          onClose={closeBatchDialog}
           closeOnOverlayClick={false}
-          closeOnEscape={false}
           dialogClassName="gh-queue-batch-dialog"
-          dialogStyle={{ maxWidth: 560, width: "min(560px, calc(100vw - 32px))" }}>
-          <div className="gh-dialog-title">{t("queueBatchImportTitle")}</div>
-          <div className="gh-dialog-message">{t("queueBatchImportDesc")}</div>
-
-          <div className="gh-queue-batch-tabs">
+          dialogStyle={{ maxWidth: 560, width: "min(560px, calc(100vw - 32px))", padding: 0 }}
+          ariaLabel={t("queueBatchImportTitle")}>
+          <div className="gh-queue-batch-header">
+            <div>
+              <div className="gh-queue-batch-title">{t("queueBatchImportTitle")}</div>
+              <div className="gh-queue-batch-subtitle">
+                {t(
+                  batchSource === "library"
+                    ? "queueBatchImportDescLibrary"
+                    : "queueBatchImportDesc",
+                )}
+              </div>
+            </div>
             <button
-              className="gh-queue-batch-tab"
-              data-active={batchSource === "library"}
-              onClick={() => setBatchSource("library")}>
-              {t("queueBatchLibraryTab")}
-            </button>
-            <button
-              className="gh-queue-batch-tab"
-              data-active={batchSource === "text"}
-              onClick={() => setBatchSource("text")}>
-              {t("queueBatchTextTab")}
+              className="gh-queue-batch-close"
+              aria-label={t("close")}
+              onClick={closeBatchDialog}>
+              <ClearIcon size={18} />
             </button>
           </div>
 
-          {batchSource === "text" && (
-            <>
-              <div className="gh-queue-batch-section">
-                <div className="gh-queue-batch-label">{t("queueBatchSplitModeLabel")}</div>
-                <div className="gh-queue-batch-mode-group">
-                  <button
-                    className="gh-queue-batch-mode-btn"
-                    data-active={batchSplitMode === "line"}
-                    onClick={() => setBatchSplitMode("line")}>
-                    {t("queueBatchSplitModeLine")}
-                  </button>
-                  <button
-                    className="gh-queue-batch-mode-btn"
-                    data-active={batchSplitMode === "delimiter"}
-                    onClick={() => setBatchSplitMode("delimiter")}>
-                    {t("queueBatchSplitModeDelimiter")}
-                  </button>
-                </div>
-              </div>
+          <div className="gh-queue-batch-body">
+            <div className="gh-queue-batch-tabs" role="tablist">
+              <button
+                className="gh-queue-batch-tab"
+                role="tab"
+                aria-selected={batchSource === "library"}
+                data-active={batchSource === "library"}
+                onClick={() => setBatchSource("library")}>
+                {t("queueBatchLibraryTab")}
+              </button>
+              <button
+                className="gh-queue-batch-tab"
+                role="tab"
+                aria-selected={batchSource === "text"}
+                data-active={batchSource === "text"}
+                onClick={() => setBatchSource("text")}>
+                {t("queueBatchTextTab")}
+              </button>
+            </div>
 
-              {batchSplitMode === "delimiter" && (
+            {batchSource === "text" && (
+              <>
                 <div className="gh-queue-batch-section">
-                  <div className="gh-queue-batch-label">{t("queueBatchDelimiterLabel")}</div>
-                  <input
-                    className="gh-dialog-input gh-queue-batch-delimiter-input"
-                    value={batchDelimiter}
-                    onChange={(e) => setBatchDelimiter(e.target.value)}
-                    placeholder={t("queueBatchDelimiterPlaceholder")}
+                  <div className="gh-queue-batch-label">{t("queueBatchSplitModeLabel")}</div>
+                  <div
+                    className="gh-queue-batch-mode-group"
+                    role="group"
+                    aria-label={t("queueBatchSplitModeLabel")}>
+                    <button
+                      className="gh-queue-batch-mode-btn"
+                      aria-pressed={batchSplitMode === "line"}
+                      data-active={batchSplitMode === "line"}
+                      onClick={() => setBatchSplitMode("line")}>
+                      {t("queueBatchSplitModeLine")}
+                    </button>
+                    <button
+                      className="gh-queue-batch-mode-btn"
+                      aria-pressed={batchSplitMode === "delimiter"}
+                      data-active={batchSplitMode === "delimiter"}
+                      onClick={() => setBatchSplitMode("delimiter")}>
+                      {t("queueBatchSplitModeDelimiter")}
+                    </button>
+                  </div>
+                </div>
+
+                {batchSplitMode === "delimiter" && (
+                  <div className="gh-queue-batch-section">
+                    <div className="gh-queue-batch-label">{t("queueBatchDelimiterLabel")}</div>
+                    <input
+                      className="gh-dialog-input gh-queue-batch-delimiter-input"
+                      value={batchDelimiter}
+                      onChange={(e) => setBatchDelimiter(e.target.value)}
+                      placeholder={t("queueBatchDelimiterPlaceholder")}
+                    />
+                  </div>
+                )}
+
+                <div className="gh-queue-batch-section">
+                  <div className="gh-queue-batch-label">{t("queueBatchInputLabel")}</div>
+                  <textarea
+                    ref={batchTextareaRef}
+                    className="gh-queue-batch-textarea"
+                    value={batchInputValue}
+                    onChange={(e) => setBatchInputValue(e.target.value)}
+                    placeholder={t("queueBatchInputPlaceholder")}
                   />
                 </div>
-              )}
+              </>
+            )}
 
-              <div className="gh-queue-batch-section">
-                <div className="gh-queue-batch-label">{t("queueBatchInputLabel")}</div>
-                <textarea
-                  ref={batchTextareaRef}
-                  className="gh-queue-batch-textarea"
-                  value={batchInputValue}
-                  onChange={(e) => setBatchInputValue(e.target.value)}
-                  placeholder={t("queueBatchInputPlaceholder")}
-                />
-              </div>
-            </>
-          )}
-
-          {batchSource === "library" && (
-            <>
-              <div className="gh-queue-batch-section">
-                <div className="gh-queue-batch-label">{t("queueBatchLibraryModeLabel")}</div>
-                <div className="gh-queue-batch-mode-group">
-                  <button
-                    className="gh-queue-batch-mode-btn"
-                    data-active={libraryMode === "single"}
-                    onClick={() => setLibraryMode("single")}>
-                    {t("queueBatchLibraryModeSingle")}
-                  </button>
-                  <button
-                    className="gh-queue-batch-mode-btn"
-                    data-active={libraryMode === "line"}
-                    onClick={() => setLibraryMode("line")}>
-                    {t("queueBatchSplitModeLine")}
-                  </button>
+            {batchSource === "library" && (
+              <>
+                <div className="gh-queue-batch-section">
+                  <div className="gh-queue-batch-label">{t("queueBatchLibraryModeLabel")}</div>
+                  <div
+                    className="gh-queue-batch-mode-group"
+                    role="group"
+                    aria-label={t("queueBatchLibraryModeLabel")}>
+                    <button
+                      className="gh-queue-batch-mode-btn"
+                      aria-pressed={libraryMode === "single"}
+                      data-active={libraryMode === "single"}
+                      onClick={() => setLibraryMode("single")}>
+                      {t("queueBatchLibraryModeSingle")}
+                    </button>
+                    <button
+                      className="gh-queue-batch-mode-btn"
+                      aria-pressed={libraryMode === "line"}
+                      data-active={libraryMode === "line"}
+                      onClick={() => setLibraryMode("line")}>
+                      {t("queueBatchLibraryModeLine")}
+                    </button>
+                  </div>
                 </div>
-              </div>
 
-              <div className="gh-queue-batch-section">
-                <div className="gh-queue-batch-label">{t("queueBatchLibrarySearchLabel")}</div>
-                <input
-                  className="gh-dialog-input gh-queue-batch-library-search"
-                  value={librarySearchQuery}
-                  onChange={(e) => setLibrarySearchQuery(e.target.value)}
-                  placeholder={t("queueBatchLibrarySearchPlaceholder")}
-                />
-                <div className="gh-queue-batch-library-list">
-                  {filteredLibraryPrompts.length === 0 ? (
-                    <div className="gh-queue-batch-library-empty">
-                      {t("queueBatchLibraryEmpty")}
+                <div className="gh-queue-batch-section">
+                  <div className="gh-queue-batch-label">{t("queueBatchLibrarySearchLabel")}</div>
+                  <input
+                    className="gh-dialog-input gh-queue-batch-library-search"
+                    value={librarySearchQuery}
+                    onChange={(e) => setLibrarySearchQuery(e.target.value)}
+                    placeholder={t("queueBatchLibrarySearchPlaceholder")}
+                  />
+                  {hasVariableLibraryRows && (
+                    <div className="gh-queue-batch-hint gh-queue-batch-hint-above">
+                      {t("queueBatchLibraryVariablePrompt")}
                     </div>
-                  ) : (
-                    filteredLibraryPrompts.slice(0, 80).map((prompt) => {
-                      const hasVariables = extractVariables(prompt.content).length > 0
-                      return (
-                        <Tooltip
+                  )}
+                  <div className="gh-queue-batch-library-list">
+                    {visibleLibraryRows.length === 0 ? (
+                      <div className="gh-queue-batch-library-empty">
+                        {t("queueBatchLibraryEmpty")}
+                      </div>
+                    ) : (
+                      visibleLibraryRows.map(({ prompt, hasVariables }) => (
+                        <label
                           key={prompt.id}
-                          content={t("queueBatchLibraryVariablePrompt")}
-                          disabled={!hasVariables}
-                          triggerStyle={{ display: "block" }}>
-                          <label
-                            className="gh-queue-batch-library-item"
-                            data-disabled={hasVariables ? "true" : "false"}>
-                            <input
-                              type="checkbox"
-                              disabled={hasVariables}
-                              checked={!hasVariables && selectedPromptIds.includes(prompt.id)}
-                              onChange={() => {
-                                if (!hasVariables) {
-                                  toggleLibraryPrompt(prompt.id)
-                                }
-                              }}
-                            />
-                            <span className="gh-queue-batch-library-main">
-                              <span className="gh-queue-batch-library-title">{prompt.title}</span>
-                              <span className="gh-queue-batch-library-content">
-                                {hasVariables
-                                  ? t("queueBatchLibraryVariablePrompt")
-                                  : prompt.content}
+                          className="gh-queue-batch-library-item"
+                          data-disabled={hasVariables ? "true" : "false"}>
+                          <input
+                            type="checkbox"
+                            disabled={hasVariables}
+                            checked={!hasVariables && selectedPromptIds.includes(prompt.id)}
+                            onChange={() => toggleLibraryPrompt(prompt.id)}
+                          />
+                          <span className="gh-queue-batch-library-main">
+                            <span className="gh-queue-batch-library-title">{prompt.title}</span>
+                            <span className="gh-queue-batch-library-content">{prompt.content}</span>
+                          </span>
+                          <span className="gh-queue-batch-library-tags">
+                            {hasVariables && (
+                              <span className="gh-queue-batch-library-badge">
+                                <VariableIcon size={11} />
+                                {t("queueBatchLibraryVariableBadge")}
                               </span>
-                            </span>
+                            )}
                             <span className="gh-queue-batch-library-category">
                               {prompt.category || t("uncategorized")}
                             </span>
-                          </label>
-                        </Tooltip>
-                      )
-                    })
-                  )}
-                </div>
-              </div>
-            </>
-          )}
-
-          <div className="gh-queue-batch-preview">
-            <div className="gh-queue-batch-preview-header">
-              <span>{t("queueBatchPreviewTitle")}</span>
-              <span>
-                {t("queueBatchPreviewCount", { count: String(batchPreviewItems.length) })}
-              </span>
-            </div>
-
-            <div className="gh-queue-batch-preview-body">
-              {batchPreviewItems.length === 0 ? (
-                <div className="gh-queue-batch-preview-empty">{t("queueBatchPreviewEmpty")}</div>
-              ) : (
-                <>
-                  <ol className="gh-queue-batch-preview-list">
-                    {batchPreviewItems.slice(0, BATCH_PREVIEW_LIMIT).map((item, index) => (
-                      <li
-                        key={`${index}-${item.slice(0, 20)}`}
-                        className="gh-queue-batch-preview-item">
-                        {item}
-                      </li>
-                    ))}
-                  </ol>
-                  {batchPreviewItems.length > BATCH_PREVIEW_LIMIT && (
-                    <div className="gh-queue-batch-preview-more">
-                      {t("queueBatchPreviewMore", {
-                        count: String(batchPreviewItems.length - BATCH_PREVIEW_LIMIT),
-                      })}
+                          </span>
+                        </label>
+                      ))
+                    )}
+                  </div>
+                  {hiddenLibraryCount > 0 && (
+                    <div className="gh-queue-batch-hint">
+                      {t("queueBatchLibraryLimitHint", { count: String(BATCH_LIBRARY_LIST_LIMIT) })}
                     </div>
                   )}
-                </>
-              )}
+                </div>
+              </>
+            )}
+
+            <div className="gh-queue-batch-preview">
+              <div className="gh-queue-batch-preview-header">
+                <span>{t("queueBatchPreviewTitle")}</span>
+                <span>
+                  {t("queueBatchPreviewCount", { count: String(batchPreviewItems.length) })}
+                </span>
+              </div>
+
+              <div className="gh-queue-batch-preview-body">
+                {batchPreviewItems.length === 0 ? (
+                  <div className="gh-queue-batch-preview-empty">{t(batchPreviewEmptyKey)}</div>
+                ) : (
+                  <>
+                    <ol className="gh-queue-batch-preview-list">
+                      {batchPreviewItems.slice(0, BATCH_PREVIEW_LIMIT).map((item, index) => (
+                        <li
+                          key={`${index}-${item.slice(0, 20)}`}
+                          className="gh-queue-batch-preview-item">
+                          {item}
+                        </li>
+                      ))}
+                    </ol>
+                    {batchPreviewItems.length > BATCH_PREVIEW_LIMIT && (
+                      <div className="gh-queue-batch-preview-more">
+                        {t("queueBatchPreviewMore", {
+                          count: String(batchPreviewItems.length - BATCH_PREVIEW_LIMIT),
+                        })}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
-          <div className="gh-dialog-buttons">
+          <div className="gh-queue-batch-footer">
             <button
               className="gh-dialog-btn gh-dialog-btn-secondary"
               onClick={resetBatchImportState}>
@@ -1128,10 +1200,7 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
             <button
               className="gh-dialog-btn gh-dialog-btn-primary"
               onClick={() => void handleBatchImportConfirm()}
-              disabled={
-                batchPreviewItems.length === 0 ||
-                (batchSource === "text" && batchSplitMode === "delimiter" && !batchDelimiter.trim())
-              }>
+              disabled={batchPreviewItems.length === 0 || isDelimiterMissing}>
               {t("queueBatchImportAction")}
             </button>
           </div>
