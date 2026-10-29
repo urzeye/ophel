@@ -83,6 +83,8 @@ export const GlobalSearchResultItemView = React.memo(
     const isOutlineQuery = isOutlineItem && Boolean(item.outlineTarget?.isUserQuery)
     const outlineRoleLabel = isOutlineQuery ? outlineRoleLabels.query : outlineRoleLabels.reply
     const showCodeOnMeta = Boolean(item.code) && !isOutlineItem
+    // 大纲行的面包屑只有「大纲 / 角色 / 层级」，已由分组标题、角色徽章和编号徽章表达，不再重复渲染
+    const showBreadcrumb = !isOutlineItem
     const fuzzyMatchField = item.fuzzyMatch?.field
     const fuzzyTitleIndexes = fuzzyMatchField === "title" ? item.fuzzyMatch?.indexes : undefined
     const fuzzyBreadcrumbIndexes =
@@ -100,6 +102,7 @@ export const GlobalSearchResultItemView = React.memo(
             label: matchReasonLabels[reason],
           }))
         : []
+    const showMeta = showBreadcrumb || matchReasonBadges.length > 0
 
     return (
       <div
@@ -114,8 +117,8 @@ export const GlobalSearchResultItemView = React.memo(
         } ${
           isOutlineItem
             ? isOutlineQuery
-              ? "outline-item outline-query"
-              : "outline-item outline-reply"
+              ? "settings-search-outline-item outline-query"
+              : "settings-search-outline-item outline-reply"
             : ""
         } ${isConversationItem ? "conversation-item" : ""}`.trim()}
         onMouseMove={onMouseMove}
@@ -153,7 +156,7 @@ export const GlobalSearchResultItemView = React.memo(
             <div className="settings-search-outline-head">
               <span
                 className={`settings-search-outline-role ${isOutlineQuery ? "query" : "reply"}`}>
-                {outlineRoleLabel}
+                {renderSearchHighlightedParts(outlineRoleLabel)}
               </span>
               {item.code ? (
                 <Tooltip content={item.code} showOnlyWhenTruncated>
@@ -216,45 +219,53 @@ export const GlobalSearchResultItemView = React.memo(
             </div>
           </Tooltip>
         ) : null}
-        <div className={`settings-search-item-meta ${showCodeOnMeta ? "" : "no-code"}`.trim()}>
-          <div className="settings-search-item-meta-left">
-            <Tooltip content={item.breadcrumb} showOnlyWhenTruncated>
-              <span className="settings-search-item-breadcrumb">
-                {renderSearchHighlightedParts(item.breadcrumb, "default", fuzzyBreadcrumbIndexes)}
-              </span>
-            </Tooltip>
-            {item.category === "conversations" && item.tagBadges && item.tagBadges.length > 0 ? (
-              <div className="settings-search-tag-list">
-                {item.tagBadges.map((tag) => (
-                  <Tooltip key={tag.id} content={tag.name} showOnlyWhenTruncated>
-                    <span
-                      className="settings-search-tag"
-                      style={{
-                        backgroundColor: tag.color,
-                        color: getReadableTextColor(tag.color),
-                      }}>
-                      {renderSearchHighlightedParts(tag.name, "tag")}
-                    </span>
-                  </Tooltip>
-                ))}
-              </div>
-            ) : null}
-            {matchReasonBadges.length > 0 ? (
-              <div className="settings-search-match-reason-list">
-                {matchReasonBadges.map((reasonBadge) => (
-                  <span key={reasonBadge.reason} className="settings-search-match-reason-badge">
-                    {reasonBadge.label}
+        {showMeta ? (
+          <div className={`settings-search-item-meta ${showCodeOnMeta ? "" : "no-code"}`.trim()}>
+            <div className="settings-search-item-meta-left">
+              {showBreadcrumb ? (
+                <Tooltip content={item.breadcrumb} showOnlyWhenTruncated>
+                  <span className="settings-search-item-breadcrumb">
+                    {renderSearchHighlightedParts(
+                      item.breadcrumb,
+                      "default",
+                      fuzzyBreadcrumbIndexes,
+                    )}
                   </span>
-                ))}
-              </div>
+                </Tooltip>
+              ) : null}
+              {item.category === "conversations" && item.tagBadges && item.tagBadges.length > 0 ? (
+                <div className="settings-search-tag-list">
+                  {item.tagBadges.map((tag) => (
+                    <Tooltip key={tag.id} content={tag.name} showOnlyWhenTruncated>
+                      <span
+                        className="settings-search-tag"
+                        style={{
+                          backgroundColor: tag.color,
+                          color: getReadableTextColor(tag.color),
+                        }}>
+                        {renderSearchHighlightedParts(tag.name, "tag")}
+                      </span>
+                    </Tooltip>
+                  ))}
+                </div>
+              ) : null}
+              {matchReasonBadges.length > 0 ? (
+                <div className="settings-search-match-reason-list">
+                  {matchReasonBadges.map((reasonBadge) => (
+                    <span key={reasonBadge.reason} className="settings-search-match-reason-badge">
+                      {reasonBadge.label}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+            {showCodeOnMeta ? (
+              <Tooltip content={item.code!} showOnlyWhenTruncated>
+                <code>{renderSearchHighlightedParts(item.code!, "code", fuzzyCodeIndexes)}</code>
+              </Tooltip>
             ) : null}
           </div>
-          {showCodeOnMeta ? (
-            <Tooltip content={item.code!} showOnlyWhenTruncated>
-              <code>{renderSearchHighlightedParts(item.code!, "code", fuzzyCodeIndexes)}</code>
-            </Tooltip>
-          ) : null}
-        </div>
+        ) : null}
       </div>
     )
   },

@@ -2514,7 +2514,8 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   .about-star-btn,
   .about-sponsor-afdian-card,
   .about-sponsor-qr,
-  .settings-search-category {
+  .settings-search-category,
+  .settings-search-item {
     transition: none !important;
   }
 
@@ -4386,6 +4387,8 @@ html[data-theme="dark"] .about-privacy-banner {
 
 .settings-search-modal {
   width: min(980px, calc(100vw - 32px));
+  /* 语法帮助浮层依附在弹窗内，结果少时不能被 overflow 裁掉；同时避免底边随结果数跳动 */
+  min-height: min(480px, 70vh);
   max-height: min(74vh, 700px);
   border: 1px solid var(--gh-border, #e5e7eb);
   border-radius: 14px;
@@ -5020,12 +5023,12 @@ html[data-theme="dark"] .about-privacy-banner {
   background: var(--gh-active-bg, #e0e7ff);
 }
 
-.settings-search-item.outline-item {
+.settings-search-item.settings-search-outline-item {
   position: relative;
   padding-left: 16px;
 }
 
-.settings-search-item.outline-item::before {
+.settings-search-item.settings-search-outline-item::before {
   content: "";
   position: absolute;
   left: 0;
@@ -5208,20 +5211,12 @@ html[data-theme="dark"] .about-privacy-banner {
   word-break: break-word;
 }
 
-.settings-search-item.outline-item .settings-search-item-meta {
+.settings-search-item.settings-search-outline-item .settings-search-item-meta {
   margin-top: 3px;
 }
 
-.settings-search-item.outline-item .settings-search-item-meta-left {
+.settings-search-item.settings-search-outline-item .settings-search-item-meta-left {
   width: 100%;
-}
-
-.settings-search-item.outline-item .settings-search-item-breadcrumb {
-  display: block;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  word-break: normal;
 }
 
 .settings-search-item.conversation-item .settings-search-item-meta-left {
