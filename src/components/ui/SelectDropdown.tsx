@@ -73,6 +73,7 @@ export const SelectDropdown: React.FC<SelectDropdownProps> = ({
   const rootRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
   const searchRef = useRef<HTMLInputElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
   const optionRefs = useRef<Array<HTMLButtonElement | null>>([])
 
   const selectedIndex = useMemo(
@@ -115,6 +116,12 @@ export const SelectDropdown: React.FC<SelectDropdownProps> = ({
   useEffect(() => {
     if (open && searchable) searchRef.current?.focus({ preventScroll: true })
   }, [open, searchable])
+
+  // 菜单是绝对定位的：放在带滚动的容器里（如弹窗内容区）时，下半截可能落在可视区域之外。
+  // 展开时把整个菜单滚进可视区域，不需要用户再手动滚动才能看全选项
+  useEffect(() => {
+    if (open) menuRef.current?.scrollIntoView({ block: "nearest" })
+  }, [open])
 
   useEffect(() => {
     if (!open || activeIndex < 0) return
@@ -326,6 +333,7 @@ export const SelectDropdown: React.FC<SelectDropdownProps> = ({
 
       {open && (
         <div
+          ref={menuRef}
           role="listbox"
           tabIndex={-1}
           className={menuClassName}
