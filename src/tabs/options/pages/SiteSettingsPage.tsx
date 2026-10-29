@@ -1,6 +1,6 @@
 /**
  * 站点设置页面
- * 结构：站点选择器 + 选中站点的聚合设置（页面布局 / 模型锁定 / 专属设置）
+ * 结构：站点选择器 + 选中站点的聚合设置（页面布局 / 模型锁定 / 隐藏页面 / 专属设置）
  * 设置按站点 key 存储；未单独配置的站点读取时回退到 _default 兜底值
  */
 import React, { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react"
@@ -12,6 +12,7 @@ import {
   getFeatureCapabilitiesSignature,
   type SitePackCapability,
 } from "~adapters/feature-capabilities"
+import { HiddenPathsSiteCard } from "~components/HiddenPathsSiteCard"
 import { PageContentIcon as LayoutIcon, PowerIcon } from "~components/icons"
 import { ModelLockSiteCard } from "~components/ModelLockSiteCard"
 import { PlatformIcon } from "~components/PlatformIcon"
@@ -462,6 +463,16 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
           <ModelLockSiteCard siteKey={selectedSite} />
         </>
       )}
+
+      {/* ========== 隐藏页面分组：所有站点可用；切换站点时重建卡片，丢弃未提交的输入 ========== */}
+      <h2 className="settings-section-label">{t("hiddenPathsTitle")}</h2>
+      <HiddenPathsSiteCard
+        key={selectedSite}
+        siteKey={selectedSite}
+        currentPath={
+          adapter && selectedSite === currentSiteValue ? window.location.pathname : undefined
+        }
+      />
 
       {/* ========== 专属设置分组 ========== */}
       {hasExclusiveSettings && (

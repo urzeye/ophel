@@ -618,6 +618,24 @@ export const es = {
   panelSettingsTitle: "Ajustes del Panel",
   settingOn: "Activado",
   settingOff: "Desactivado",
+  // Hidden pages
+  hiddenPathsTitle: "Ocultar Ophel en páginas concretas",
+  hiddenPathsDesc:
+    "En las páginas siguientes no se muestran el panel ni los botones rápidos de Ophel, y los atajos no funcionan. Todo vuelve al salir de ellas.",
+  hiddenPathsPlaceholder: "p. ej. /artifact/*",
+  hiddenPathsRegexPlaceholder: "p. ej. ^/(artifact|share)/",
+  hiddenPathsHint:
+    "Escribe la parte de la URL que va después del dominio; * equivale a cualquier contenido. También puedes pegar la URL completa.",
+  hiddenPathsRegexHint:
+    "La expresión regular se compara con la parte de la URL que va después del dominio, p. ej. /artifact/abc.",
+  hiddenPathsUseRegex: "Usar expresión regular",
+  hiddenPathsRegexBadge: "Regex",
+  hiddenPathsUseCurrentPage: "Usar página actual",
+  hiddenPathsHidesCurrentPage:
+    "Esta regla incluye la página actual. Al añadirla, Ophel desaparecerá de aquí al instante.",
+  hiddenPathsInvalidUrl: "No se reconoce esta URL",
+  hiddenPathsInvalidRegex: "No es una expresión regular válida",
+  hiddenPathsDuplicate: "Esta regla ya está añadida",
   // Model Lock
   modelLockTitle: "Bloqueo de Modelo",
   modelLockEnabledLabel: "Activar Bloqueo",

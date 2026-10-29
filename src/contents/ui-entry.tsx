@@ -11,6 +11,7 @@ import { App } from "~components/App"
 import { startPageUrlChangeBroadcaster } from "~core/modules-init"
 import { useSettingsStore } from "~stores/settings-store"
 import { applyOphelPlatformFontClass } from "~utils/font"
+import { matchesHiddenPath } from "~utils/hidden-paths"
 import { EVENT_PAGE_URL_CHANGE } from "~utils/messaging"
 
 export const config: PlasmoCSConfig = {
@@ -148,10 +149,17 @@ export const mountShadowHost: PlasmoMountShadowHost = ({
 const PlasmoApp = () => {
   const [isRegistryReady, setIsRegistryReady] = React.useState(false)
   const [adapter, setAdapter] = React.useState<SiteAdapter | null>(() => getAdapter())
+  // SPA 路由切换后重算路径：同站内导航不会改变适配器实例，需要独立的状态驱动重渲染
+  const [pathname, setPathname] = React.useState(() => window.location.pathname)
   const settingsHydrated = useSettingsStore((state) => state._hasHydrated)
   const disabledSites = useSettingsStore((state) => state.settings.disabledSites)
+  const hiddenPaths = useSettingsStore((state) => state.settings.hiddenPaths)
   // 内置适配器被停用时跳过，允许已安装的 SitePack 接管同站点
   const effectiveAdapter = adapter && settingsHydrated ? getEffectiveAdapter(disabledSites) : null
+  // 当前页面命中该站点的隐藏规则时不挂载 UI；离开这些页面会自动恢复
+  const isPageHidden = effectiveAdapter
+    ? matchesHiddenPath(hiddenPaths[effectiveAdapter.getSiteInstanceKey()], pathname)
+    : false
 
   React.useEffect(() => {
     let mounted = true
@@ -174,6 +182,7 @@ const PlasmoApp = () => {
     const stopBroadcaster = startPageUrlChangeBroadcaster()
 
     const handleUrlChange = () => {
+      setPathname(window.location.pathname)
       const nextAdapter = getAdapter()
       setAdapter((prev) => (prev === nextAdapter ? prev : nextAdapter))
     }
@@ -190,7 +199,7 @@ const PlasmoApp = () => {
   }, [])
 
   // 设置 hydration 完成前不渲染，避免停用站点上面板闪现
-  if (!isRegistryReady || !settingsHydrated || !effectiveAdapter) return null
+  if (!isRegistryReady || !settingsHydrated || !effectiveAdapter || isPageHidden) return null
   return <App key={effectiveAdapter.getSiteInstanceKey()} adapter={effectiveAdapter} />
 }
 

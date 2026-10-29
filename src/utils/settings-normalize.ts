@@ -2,6 +2,7 @@ import { LAYOUT_CONFIG, isBuiltinSiteId } from "~constants"
 import { normalizeShortcutsSettings } from "~constants/shortcuts"
 import { DEFAULT_QUICK_BUTTONS_SETTINGS, DEFAULT_SETTINGS } from "~constants/default-settings"
 import type {
+  HiddenPathRule,
   PageWidthConfig,
   PanelAvoidanceSettings,
   QuickButtonConfig,
@@ -34,6 +35,30 @@ const normalizeDisabledSites = (value: SettingsInput["disabledSites"]): string[]
   return [
     ...new Set(value.filter((id): id is string => typeof id === "string" && isBuiltinSiteId(id))),
   ]
+}
+
+// 隐藏页面规则归一化：丢弃结构不合法的规则，同站点内去重，没有规则的站点条目不保留
+const normalizeHiddenPaths = (value: SettingsInput["hiddenPaths"]): Settings["hiddenPaths"] => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {}
+
+  const result: Settings["hiddenPaths"] = {}
+  for (const [siteKey, rawRules] of Object.entries(value)) {
+    if (!Array.isArray(rawRules)) continue
+
+    const rules: HiddenPathRule[] = []
+    for (const raw of rawRules as unknown[]) {
+      if (!raw || typeof raw !== "object") continue
+      const { pattern, regex } = raw as Partial<HiddenPathRule>
+      if (typeof pattern !== "string" || !pattern.trim()) continue
+
+      const rule = { pattern: pattern.trim(), regex: regex === true }
+      if (!rules.some((item) => item.pattern === rule.pattern && item.regex === rule.regex)) {
+        rules.push(rule)
+      }
+    }
+    if (rules.length > 0) result[siteKey] = rules
+  }
+  return result
 }
 
 // 功能 Tab 排序归一化：过滤废弃项（如历史 settings）与脏数据，去重并补齐缺失的功能项，避免 Tab 丢失或排序错位
@@ -182,6 +207,7 @@ export const migrateLegacySiteSettings = (
     siteInstanceKey,
   )
   const modelLock = migrateSiteRecordKey(settings.modelLock, legacySiteId, siteInstanceKey)
+  const hiddenPaths = migrateSiteRecordKey(settings.hiddenPaths, legacySiteId, siteInstanceKey)
   const changed =
     themeSites.changed ||
     pageWidth.changed ||
@@ -190,7 +216,8 @@ export const migrateLegacySiteSettings = (
     cleanMode.changed ||
     panelAvoidance.changed ||
     autoHideInput.changed ||
-    modelLock.changed
+    modelLock.changed ||
+    hiddenPaths.changed
 
   if (!changed) return settings
 
@@ -210,6 +237,7 @@ export const migrateLegacySiteSettings = (
       autoHideInput: autoHideInput.record,
     },
     modelLock: modelLock.record ?? settings.modelLock,
+    hiddenPaths: hiddenPaths.record ?? settings.hiddenPaths,
   })
 }
 
@@ -398,6 +426,7 @@ export const normalizeSettings = (settings: SettingsInput): Settings => {
     ...DEFAULT_SETTINGS,
     ...rest,
     disabledSites: normalizeDisabledSites(settings.disabledSites),
+    hiddenPaths: normalizeHiddenPaths(settings.hiddenPaths),
     remoteConfig: {
       ...DEFAULT_SETTINGS.remoteConfig,
       ...settings.remoteConfig,

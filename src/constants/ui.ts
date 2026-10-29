@@ -1168,6 +1168,26 @@ const SETTING_CARD_SEARCH_ITEMS: SettingsSearchItem[] = [
     keywords: ["model lock", "lock", "模型锁定", "锁定模型", "默认模型"],
   },
   {
+    settingId: "site-settings-hidden-paths",
+    title: "在指定页面隐藏 Ophel",
+    keywords: [
+      "hide on pages",
+      "hidden pages",
+      "exclude pages",
+      "url",
+      "path",
+      "regex",
+      "artifact",
+      "隐藏页面",
+      "隐藏面板",
+      "不显示",
+      "排除页面",
+      "网址",
+      "路径",
+      "正则",
+    ],
+  },
+  {
     settingId: "gemini-settings-card",
     title: "Gemini 专属",
     keywords: [

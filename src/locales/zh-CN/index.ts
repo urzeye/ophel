@@ -642,6 +642,21 @@ export const zhCN = {
   panelSettingsTitle: "面板设置",
   settingOn: "开",
   settingOff: "关",
+  // 隐藏页面
+  hiddenPathsTitle: "在指定页面隐藏 Ophel",
+  hiddenPathsDesc:
+    "打开下列页面时，不显示 Ophel 的面板和快捷按钮，快捷键也不生效；离开这些页面后自动恢复。",
+  hiddenPathsPlaceholder: "例如 /artifact/*",
+  hiddenPathsRegexPlaceholder: "例如 ^/(artifact|share)/",
+  hiddenPathsHint: "填写网址中域名后面的部分，* 代表任意内容；也可以直接粘贴整个网址。",
+  hiddenPathsRegexHint: "正则表达式会与网址中域名后面的部分比对，例如 /artifact/abc。",
+  hiddenPathsUseRegex: "使用正则表达式",
+  hiddenPathsRegexBadge: "正则",
+  hiddenPathsUseCurrentPage: "填入当前页面",
+  hiddenPathsHidesCurrentPage: "这条规则包含当前页面，添加后 Ophel 会立即从这里消失。",
+  hiddenPathsInvalidUrl: "无法识别这个网址",
+  hiddenPathsInvalidRegex: "不是有效的正则表达式",
+  hiddenPathsDuplicate: "这条规则已经添加过了",
   // 模型锁定
   modelLockTitle: "模型锁定",
   modelLockEnabledLabel: "启用模型锁定",

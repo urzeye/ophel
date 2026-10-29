@@ -2833,6 +2833,92 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   border-color: var(--gh-primary, #4285f4);
 }
 
+/* 隐藏页面：已添加的规则逐条成行，下方是添加表单 */
+.settings-hidden-paths-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.settings-hidden-paths-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 4px 4px 4px 12px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--gh-text, #374151) 5%, transparent);
+}
+
+/* 规则和输入框都用等宽字体，* . / 等字符一眼能分清；长路径折行而不是撑出卡片 */
+.settings-hidden-paths-pattern,
+.settings-hidden-paths-input {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+}
+
+/* 规则文字按内容宽度排，「正则」等标记紧跟其后，删除按钮靠右 */
+.settings-hidden-paths-pattern {
+  flex: 0 1 auto;
+  min-width: 0;
+  line-height: 1.5;
+  color: var(--gh-text, #374151);
+  overflow-wrap: anywhere;
+}
+
+.settings-hidden-paths-remove {
+  margin-left: auto;
+}
+
+.settings-hidden-paths-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.settings-hidden-paths-input {
+  flex: 1 1 220px;
+  min-width: 0;
+  height: 32px;
+}
+
+.settings-hidden-paths-form .settings-btn {
+  height: 32px;
+}
+
+.settings-hidden-paths-regex-toggle {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.settings-hidden-paths-regex-toggle[aria-pressed="true"] {
+  border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 45%, var(--gh-input-border, #d1d5db));
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 12%, var(--gh-card-bg, #ffffff));
+  color: var(--gh-primary-text, var(--gh-primary, #4285f4));
+}
+
+.settings-hidden-paths-hint {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--gh-text-secondary, #6b7280);
+}
+
+/* 待添加的规则包含当前页面：比普通说明醒目一档，但不是错误 */
+.settings-hidden-paths-hint.is-notice {
+  color: var(--gh-text, #374151);
+  font-weight: 500;
+}
+
+.settings-hidden-paths-hint.is-error {
+  color: var(--gh-text-danger, #ef4444);
+}
+
 /* ==================== 按钮 ==================== */
 
 .settings-btn {

@@ -4,6 +4,13 @@
 
   "disabledSites": [],
 
+  "hiddenPaths": {
+    "<siteId 或站点实例 key>": [
+      { "pattern": "/artifact/*", "regex": false },
+      { "pattern": "^/(share|public)/", "regex": true }
+    ]
+  },
+
   "remoteConfig": {
     "autoUpdate": true,
     "registrySourceUrl": ""

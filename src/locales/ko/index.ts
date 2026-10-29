@@ -613,6 +613,23 @@ export const ko = {
   panelSettingsTitle: "패널 설정",
   settingOn: "켜짐",
   settingOff: "꺼짐",
+  // Hidden pages
+  hiddenPathsTitle: "특정 페이지에서 Ophel 숨기기",
+  hiddenPathsDesc:
+    "아래 페이지에서는 Ophel 패널과 빠른 버튼이 표시되지 않고 단축키도 작동하지 않습니다. 페이지를 벗어나면 다시 나타납니다.",
+  hiddenPathsPlaceholder: "예: /artifact/*",
+  hiddenPathsRegexPlaceholder: "예: ^/(artifact|share)/",
+  hiddenPathsHint:
+    "URL에서 도메인 뒤의 부분을 입력하세요. *는 어떤 내용이든 일치합니다. 전체 URL을 그대로 붙여 넣어도 됩니다.",
+  hiddenPathsRegexHint: "정규식은 URL에서 도메인 뒤의 부분(예: /artifact/abc)과 비교됩니다.",
+  hiddenPathsUseRegex: "정규식 사용",
+  hiddenPathsRegexBadge: "정규식",
+  hiddenPathsUseCurrentPage: "현재 페이지 입력",
+  hiddenPathsHidesCurrentPage:
+    "이 규칙에는 현재 페이지도 포함됩니다. 추가하면 이 페이지에서 Ophel이 바로 사라집니다.",
+  hiddenPathsInvalidUrl: "이 URL을 인식할 수 없습니다",
+  hiddenPathsInvalidRegex: "유효한 정규식이 아닙니다",
+  hiddenPathsDuplicate: "이미 추가된 규칙입니다",
   // Model Lock
   modelLockTitle: "모델 잠금",
   modelLockEnabledLabel: "모델 잠금 활성화",

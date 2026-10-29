@@ -614,6 +614,24 @@ export const ru = {
   panelSettingsTitle: "Настройки панели",
   settingOn: "ВКЛ",
   settingOff: "ВЫКЛ",
+  // Hidden pages
+  hiddenPathsTitle: "Скрывать Ophel на отдельных страницах",
+  hiddenPathsDesc:
+    "На страницах ниже панель и быстрые кнопки Ophel не показываются, а горячие клавиши не работают. Всё вернётся, когда вы уйдёте с этих страниц.",
+  hiddenPathsPlaceholder: "напр. /artifact/*",
+  hiddenPathsRegexPlaceholder: "напр. ^/(artifact|share)/",
+  hiddenPathsHint:
+    "Укажите часть адреса после домена; * означает любое содержимое. Можно также вставить адрес целиком.",
+  hiddenPathsRegexHint:
+    "Регулярное выражение сравнивается с частью адреса после домена, напр. /artifact/abc.",
+  hiddenPathsUseRegex: "Использовать регулярное выражение",
+  hiddenPathsRegexBadge: "Regex",
+  hiddenPathsUseCurrentPage: "Вставить текущую страницу",
+  hiddenPathsHidesCurrentPage:
+    "Это правило включает текущую страницу: после добавления Ophel сразу исчезнет с неё.",
+  hiddenPathsInvalidUrl: "Не удалось распознать этот адрес",
+  hiddenPathsInvalidRegex: "Недопустимое регулярное выражение",
+  hiddenPathsDuplicate: "Это правило уже добавлено",
   // Model Lock
   modelLockTitle: "Замок модели",
   modelLockEnabledLabel: "Включить замок",

@@ -83,6 +83,8 @@ export const DEFAULT_SETTINGS: Settings = {
 
   disabledSites: [],
 
+  hiddenPaths: {},
+
   remoteConfig: {
     autoUpdate: true,
     registrySourceUrl: "",

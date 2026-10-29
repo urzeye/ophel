@@ -497,6 +497,21 @@ export const zhTW = {
   panelSettingsTitle: "面板設定",
   settingOn: "開",
   settingOff: "關",
+  // 隱藏頁面
+  hiddenPathsTitle: "在指定頁面隱藏 Ophel",
+  hiddenPathsDesc:
+    "開啟下列頁面時，不顯示 Ophel 的面板和快捷按鈕，快捷鍵也不會生效；離開這些頁面後自動恢復。",
+  hiddenPathsPlaceholder: "例如 /artifact/*",
+  hiddenPathsRegexPlaceholder: "例如 ^/(artifact|share)/",
+  hiddenPathsHint: "填寫網址中網域後面的部分，* 代表任意內容；也可以直接貼上整個網址。",
+  hiddenPathsRegexHint: "正規表示式會與網址中網域後面的部分比對，例如 /artifact/abc。",
+  hiddenPathsUseRegex: "使用正規表示式",
+  hiddenPathsRegexBadge: "正規式",
+  hiddenPathsUseCurrentPage: "填入目前頁面",
+  hiddenPathsHidesCurrentPage: "這條規則包含目前頁面，新增後 Ophel 會立即從這裡消失。",
+  hiddenPathsInvalidUrl: "無法辨識這個網址",
+  hiddenPathsInvalidRegex: "不是有效的正規表示式",
+  hiddenPathsDuplicate: "這條規則已經新增過了",
   // 模型鎖定
   modelLockTitle: "模型鎖定",
   modelLockEnabledLabel: "啟用模型鎖定",

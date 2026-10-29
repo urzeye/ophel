@@ -5,6 +5,7 @@ import type { SiteAdapter } from "~adapters/base"
 import { BACKUP_EXCLUDED_STORAGE_KEYS, BACKUP_USER_DATA_STORAGE_KEYS } from "~core/backup-codec"
 import { startPageUrlChangeBroadcaster } from "~core/modules-init"
 import { applyOphelPlatformFontClass } from "~utils/font"
+import { matchesHiddenPath } from "~utils/hidden-paths"
 import { EVENT_PAGE_URL_CHANGE } from "~utils/messaging"
 
 import { USERSCRIPT_RESOURCE_DEFINITIONS } from "./resource-manifest"
@@ -523,6 +524,19 @@ async function init() {
           return getEffectiveAdapter(store.getState().settings.disabledSites)
         }, [])
 
+        // settings-store 加载前不渲染：与扩展端等 hydration 完成再挂载一致，避免隐藏页面上面板先闪一下
+        const [settingsLoaded, setSettingsLoaded] = React.useState(false)
+        // 当前页面命中该站点的隐藏规则时不挂载 UI；离开这些页面会自动恢复
+        const [isPageHidden, setIsPageHidden] = React.useState(false)
+        const resolvePageHidden = React.useCallback((adapter: SiteAdapter | null): boolean => {
+          const store = settingsStoreRef.current
+          if (!store || !adapter) return false
+          return matchesHiddenPath(
+            store.getState().settings.hiddenPaths[adapter.getSiteInstanceKey()],
+            window.location.pathname,
+          )
+        }, [])
+
         React.useEffect(
           () =>
             subscribeI18nChanges(() => {
@@ -542,15 +556,17 @@ async function init() {
             const syncAdapter = () => {
               const next = resolveCurrentAdapter()
               setCurrentAdapter((prev) => (prev === next ? prev : next))
+              setIsPageHidden(resolvePageHidden(next))
             }
             syncAdapter()
+            setSettingsLoaded(true)
             unsubscribe = useSettingsStore.subscribe(syncAdapter)
           })
           return () => {
             disposed = true
             unsubscribe?.()
           }
-        }, [resolveCurrentAdapter])
+        }, [resolveCurrentAdapter, resolvePageHidden])
 
         React.useEffect(() => {
           const stopBroadcaster = startPageUrlChangeBroadcaster()
@@ -558,6 +574,7 @@ async function init() {
           const handleUrlChange = () => {
             const nextAdapter = resolveCurrentAdapter()
             setCurrentAdapter((prev) => (prev === nextAdapter ? prev : nextAdapter))
+            setIsPageHidden(resolvePageHidden(nextAdapter))
           }
 
           window.addEventListener(EVENT_PAGE_URL_CHANGE, handleUrlChange)
@@ -569,9 +586,9 @@ async function init() {
             window.removeEventListener("hashchange", handleUrlChange)
             stopBroadcaster()
           }
-        }, [resolveCurrentAdapter])
+        }, [resolveCurrentAdapter, resolvePageHidden])
 
-        if (!currentAdapter) return null
+        if (!settingsLoaded || !currentAdapter || isPageHidden) return null
         return React.createElement(App, {
           key: currentAdapter.getSiteInstanceKey(),
           adapter: currentAdapter,

@@ -620,6 +620,24 @@ export const ja = {
   panelSettingsTitle: "パネル設定",
   settingOn: "オン",
   settingOff: "オフ",
+  // Hidden pages
+  hiddenPathsTitle: "特定のページで Ophel を非表示",
+  hiddenPathsDesc:
+    "以下のページでは Ophel のパネルとクイックボタンを表示せず、ショートカットも使えなくなります。ページを離れると元に戻ります。",
+  hiddenPathsPlaceholder: "例: /artifact/*",
+  hiddenPathsRegexPlaceholder: "例: ^/(artifact|share)/",
+  hiddenPathsHint:
+    "URL のドメインより後ろの部分を入力します。* は任意の内容に一致します。URL をそのまま貼り付けることもできます。",
+  hiddenPathsRegexHint:
+    "正規表現は URL のドメインより後ろの部分（例: /artifact/abc）と照合されます。",
+  hiddenPathsUseRegex: "正規表現を使う",
+  hiddenPathsRegexBadge: "正規表現",
+  hiddenPathsUseCurrentPage: "現在のページを入力",
+  hiddenPathsHidesCurrentPage:
+    "このルールには現在のページも含まれます。追加するとすぐにこのページから Ophel が消えます。",
+  hiddenPathsInvalidUrl: "この URL を認識できません",
+  hiddenPathsInvalidRegex: "有効な正規表現ではありません",
+  hiddenPathsDuplicate: "このルールはすでに追加されています",
   // Model Lock
   modelLockTitle: "モデルロック",
   modelLockEnabledLabel: "モデルロックを有効化",

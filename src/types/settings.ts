@@ -38,6 +38,14 @@ export interface ModelLockConfig {
   keyword: string
 }
 
+// 隐藏页面规则：页面路径命中时不显示面板与快捷按钮
+export interface HiddenPathRule {
+  /** 与 location.pathname 比对；非正则时 * 代表任意内容，其余字符须整条一致 */
+  pattern: string
+  /** true 时 pattern 作为正则表达式匹配 pathname */
+  regex: boolean
+}
+
 // 禅模式配置
 export interface ZenModeConfig {
   enabled: boolean
@@ -132,6 +140,10 @@ export interface Settings {
 
   // 已停用的内置站点 ID 列表（SITE_IDS 值）；停用后该站点不再初始化任何功能
   disabledSites: string[]
+
+  // 按站点配置的隐藏页面规则（key 为 siteId，SitePack 为站点实例 key）：
+  // 页面路径命中任一规则时不挂载面板与快捷按钮，核心模块照常运行
+  hiddenPaths: Record<string, HiddenPathRule[]>
 
   // 适配配置远程更新
   remoteConfig: {

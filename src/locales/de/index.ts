@@ -620,6 +620,24 @@ export const de = {
   panelSettingsTitle: "Panel-Einstellungen",
   settingOn: "AN",
   settingOff: "AUS",
+  // Hidden pages
+  hiddenPathsTitle: "Ophel auf bestimmten Seiten ausblenden",
+  hiddenPathsDesc:
+    "Auf den folgenden Seiten sind Ophels Panel und Schnellschaltflächen ausgeblendet und die Tastenkürzel inaktiv. Sobald du die Seiten verlässt, ist alles wieder da.",
+  hiddenPathsPlaceholder: "z. B. /artifact/*",
+  hiddenPathsRegexPlaceholder: "z. B. ^/(artifact|share)/",
+  hiddenPathsHint:
+    "Gib den Teil der URL nach der Domain ein; * steht für beliebigen Inhalt. Du kannst auch eine vollständige URL einfügen.",
+  hiddenPathsRegexHint:
+    "Der reguläre Ausdruck wird mit dem Teil der URL nach der Domain verglichen, z. B. /artifact/abc.",
+  hiddenPathsUseRegex: "Regulären Ausdruck verwenden",
+  hiddenPathsRegexBadge: "Regex",
+  hiddenPathsUseCurrentPage: "Aktuelle Seite einfügen",
+  hiddenPathsHidesCurrentPage:
+    "Diese Regel umfasst die aktuelle Seite. Nach dem Hinzufügen verschwindet Ophel sofort von hier.",
+  hiddenPathsInvalidUrl: "Diese URL wurde nicht erkannt",
+  hiddenPathsInvalidRegex: "Kein gültiger regulärer Ausdruck",
+  hiddenPathsDuplicate: "Diese Regel ist bereits vorhanden",
   // Model Lock
   modelLockTitle: "Modellsperre",
   modelLockEnabledLabel: "Sperre aktivieren",
