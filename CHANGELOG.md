@@ -18,8 +18,8 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **Site settings in one place** — Pick a site at the top of Site Settings to see all of its settings on one page, without switching back and forth. (#987)
 - **Simpler settings menu** — The settings menu now has 8 entries instead of 10: global search settings moved to Features, and permissions moved to Data & Permissions. (#988)
 - **Consistent hover tooltips** — Hover hints across the panel, settings, and dialogs now use the same styled tooltip instead of the browser's default look. (#989)
-- **Phone and tablet support** — On phones, the panel now slides in from the side and closes after you jump to a heading, switch chats, or use a prompt. On tablets, tap the edge tab to open a panel snapped to the edge. Settings now fit small screens with a full-screen, two-step menu. (#990)
-- **Settings text cleanup** — Removed repeated descriptions from the Settings pages and reworded unclear labels in plain language (for example, "Privacy Mode" is now "Hide Tab Title", since it only changes the browser tab title). WebDAV connection tests and backups now tell you what to check when they fail (such as a wrong username or password) instead of a bare "Connection failed". (#999)
+- **Phone and tablet support** — On phones, the panel now slides in from the side and closes after you jump to a heading, switch chats, or use a prompt. (#990)
+- **Settings text cleanup** — Removed repeated descriptions from the Settings pages and reworded unclear labels in plain language. (#999)
 
 ### 🐛 Bug Fixes
 
