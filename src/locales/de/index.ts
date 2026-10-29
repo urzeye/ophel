@@ -1176,8 +1176,9 @@ export const de = {
   webdavDownloadSuccess: "Heruntergeladen",
   webdavConfigIncomplete: "WebDAV-Adresse, Benutzername und Passwort eingeben",
   webdavAuthFailed: "Benutzer/Passwort falsch",
-  webdavConnectionFailed: "Verbindung fehlgeschlagen – WebDAV-Adresse und Netzwerk prüfen",
-  webdavUploadFailed: "Upload fehlgeschlagen – Kontorechte, Ordner und Netzwerk prüfen",
+  webdavConnectionFailed:
+    "Verbindung fehlgeschlagen ({detail}) – WebDAV-Adresse und Netzwerk prüfen",
+  webdavUploadFailed: "Upload fehlgeschlagen ({detail}) – Kontorechte, Ordner und Netzwerk prüfen",
   webdavDownloadFailed: "Download fehlgeschlagen",
   webdavFileNotFound: "Datei nicht gefunden",
   webdavInvalidFormat: "Datei ungültig",

@@ -43,7 +43,6 @@ import {
   isValidWebDAVProvider,
   getWebDAVSyncManager,
   type BackupFile,
-  type SyncResult,
   type WebDAVProvider,
 } from "~core/webdav-sync"
 import { platform } from "~platform"
@@ -169,14 +168,6 @@ const getRestoreSuccessMessage = (message: string, missingPermissionOrigins: rea
   missingPermissionOrigins.length > 0
     ? `${message} ${t("sitePacksPermissionReviewTitle")}`
     : message
-
-// 管理器已按失败原因（认证失败 / HTTP 状态 / 异常）选好 messageKey，页面直接展示，
-// 不再把所有失败归并成一句笼统的「连接失败」
-const getSyncResultMessage = (result: SyncResult): string =>
-  t(
-    result.messageKey,
-    Object.fromEntries(Object.entries(result.messageArgs ?? {}).map(([k, v]) => [k, String(v)])),
-  )
 
 // ==================== 远程备份列表模态框 ====================
 const RemoteBackupModal: React.FC<{
@@ -764,7 +755,9 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
       const manager = getWebDAVSyncManager()
       await manager.setConfig(webdavForm, false)
 
-      showDomToast(getSyncResultMessage(await manager.testConnection()))
+      // 管理器按失败原因选好 messageKey（认证失败有专属文案），其余失败的文案带 {detail}
+      const res = await manager.testConnection()
+      showDomToast(t(res.messageKey, res.messageArgs))
     })
 
   const handleUpload = () =>
@@ -772,7 +765,8 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
       const manager = getWebDAVSyncManager()
       await manager.setConfig(webdavForm, false)
 
-      showDomToast(getSyncResultMessage(await manager.upload()))
+      const res = await manager.upload()
+      showDomToast(t(res.messageKey, res.messageArgs))
     })
 
   const handleOpenRestore = () =>

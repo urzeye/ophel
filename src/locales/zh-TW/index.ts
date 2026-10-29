@@ -142,7 +142,7 @@ export const zhTW = {
   sitePacksBindingPackRequired: "請先選擇一個已安裝的適配包。",
 
   pageContentPageDesc: "調整頁面排版和內容顯示樣式",
-  backupPageDesc: "管理本機備份、WebDAV 備份和擴充功能權限",
+  backupPageDesc: "管理資料備份、雲端同步和擴充功能權限",
   aboutPageDesc: "AI 之益，觸手可及",
   tsPlasmoDesc: "瀏覽器擴充功能框架",
   tsReactDesc: "使用者介面函式庫",
@@ -1163,9 +1163,9 @@ export const zhTW = {
   webdavUploadBtn: "上傳",
   webdavDownloadBtn: "下載",
   webdavDownloadConfirm: "下載將覆蓋當前資料，確定繼續？",
-  webdavLastSync: "上次備份：{time}",
+  webdavLastSync: "上次同步：{time}",
   webdavConnectionSuccess: "連接成功",
-  webdavUploadSuccess: "備份成功",
+  webdavUploadSuccess: "上傳成功",
   webdavDownloadSuccess: "下載成功，即將重新整理頁面",
   allDataCleared: "所有資料已清除，頁面即將刷新...",
   clearError: "清除失敗",
@@ -1175,8 +1175,8 @@ export const zhTW = {
 
   webdavConfigIncomplete: "請填寫 WebDAV 位址、使用者名稱和密碼",
   webdavAuthFailed: "認證失敗，請檢查用戶名和密碼",
-  webdavConnectionFailed: "連線失敗，請檢查 WebDAV 位址和網路",
-  webdavUploadFailed: "備份失敗，請檢查帳號權限、目錄和網路",
+  webdavConnectionFailed: "連線失敗（{detail}），請檢查 WebDAV 位址和網路",
+  webdavUploadFailed: "上傳失敗（{detail}），請檢查帳號權限、目錄和網路",
   webdavDownloadFailed: "下載失敗",
   webdavFileNotFound: "遠端檔案不存在",
   webdavInvalidFormat: "無效的備份檔案格式",
@@ -1191,14 +1191,14 @@ export const zhTW = {
   hidePassword: "隱藏密碼",
   webdavTesting: "測試中…",
   webdavUploading: "備份中…",
-  webdavNeverSynced: "尚未備份",
+  webdavNeverSynced: "尚未同步",
   unsavedChanges: "未儲存",
   restore: "恢復",
   localBackup: "本地備份",
   exportToFile: "匯出為檔案",
   importBackupFile: "備份檔案匯入",
   localBackupTab: "本地備份",
-  webdavTab: "WebDAV 備份",
+  webdavTab: "WebDAV 同步",
   localBackupDesc: "將資料匯出為 JSON 檔案儲存到本地",
   webdavServerDesc: "配置 WebDAV 伺服器用於雲端備份",
   backupManagementDesc: "測試連接、上傳備份或從雲端恢復",
@@ -1223,7 +1223,7 @@ export const zhTW = {
   // 可選權限
   permissionWebdavAccess: "進階功能權限",
   permissionWebdavAccessDesc:
-    "允許 Ophel 存取所有網站，用於 WebDAV 備份、移除 AI 圖片浮水印，以及讓適配包無需逐站點授權即可執行",
+    "允許 Ophel 存取所有網站，用於 WebDAV 同步、移除 AI 圖片浮水印，以及讓適配包無需逐站點授權即可執行",
 
   // 權限管理
   permissionStorage: "儲存",
@@ -1261,7 +1261,7 @@ export const zhTW = {
   revokeConfirmNotifications:
     "確定要撤銷通知權限嗎？\n\n撤銷後，「桌面通知」功能將自動關閉。如需再次使用，需重新授權。",
   revokeConfirmWebdav:
-    "確定要撤銷進階功能權限嗎？\n\n撤銷後，「移除圖片浮水印」和「WebDAV 備份」功能將自動關閉。如需再次使用，需重新授權。",
+    "確定要撤銷進階功能權限嗎？\n\n撤銷後，「移除圖片浮水印」和「WebDAV 同步」功能將自動關閉。如需再次使用，需重新授權。",
   warning: "警告",
   windowClosing: "視窗即將關閉...",
   allow: "允許",

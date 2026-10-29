@@ -140,7 +140,7 @@ export const zhCN = {
   sitePacksBindingPackRequired: "请先选择一个已安装的适配包。",
 
   pageContentPageDesc: "调整页面布局和内容显示样式",
-  backupPageDesc: "管理本地备份、WebDAV 备份和扩展权限",
+  backupPageDesc: "管理数据备份、云端同步和扩展权限",
   aboutPageDesc: "AI 之益，触手可及",
   tsPlasmoDesc: "浏览器扩展框架",
   tsReactDesc: "用户界面库",
@@ -167,7 +167,7 @@ export const zhCN = {
   // 可选权限
   permissionWebdavAccess: "高级功能权限",
   permissionWebdavAccessDesc:
-    "允许 Ophel 访问所有网站，用于 WebDAV 备份、移除 AI 图片水印，以及让适配包无需逐站点授权即可运行",
+    "允许 Ophel 访问所有网站，用于 WebDAV 同步、移除 AI 图片水印，以及让适配包无需逐站点授权即可运行",
 
   // 必需权限
   permissionStorage: "存储",
@@ -225,7 +225,7 @@ export const zhCN = {
 
   // ======== 备份页面 ========
   localBackupTab: "本地备份",
-  webdavTab: "WebDAV 备份",
+  webdavTab: "WebDAV 同步",
   localBackupDesc: "将数据导出为 JSON 文件保存到本地",
   webdavServerDesc: "配置 WebDAV 服务器用于云端备份",
   backupManagementDesc: "测试连接、上传备份或从云端恢复",
@@ -316,7 +316,7 @@ export const zhCN = {
   techStack: "技术栈",
   privacyStatement: "隐私声明",
   privacyText:
-    "Ophel 的所有数据都存储在你的浏览器本地，不会上传到任何远程服务器。WebDAV 备份由你自行配置的服务器处理，Ophel 不会收集或存储你的任何个人信息。",
+    "Ophel 的所有数据都存储在你的浏览器本地，不会上传到任何远程服务器。WebDAV 同步功能由你自行配置的服务器处理，Ophel 不会收集或存储你的任何个人信息。",
   license: "开源协议",
 
   // ======== 通用按钮/标签 ========
@@ -1248,14 +1248,14 @@ export const zhCN = {
   webdavUploadBtn: "上传",
   webdavDownloadBtn: "下载",
   webdavDownloadConfirm: "下载将覆盖当前数据，确定继续？",
-  webdavLastSync: "上次备份：{time}",
+  webdavLastSync: "上次同步：{time}",
   webdavConnectionSuccess: "连接成功",
-  webdavUploadSuccess: "备份成功",
+  webdavUploadSuccess: "上传成功",
   webdavDownloadSuccess: "下载成功，即将刷新页面",
   webdavConfigIncomplete: "请填写 WebDAV 地址、用户名和密码",
   webdavAuthFailed: "认证失败，请检查用户名和密码",
-  webdavConnectionFailed: "连接失败，请检查 WebDAV 地址和网络",
-  webdavUploadFailed: "备份失败，请检查账号权限、目录和网络",
+  webdavConnectionFailed: "连接失败（{detail}），请检查 WebDAV 地址和网络",
+  webdavUploadFailed: "上传失败（{detail}），请检查账号权限、目录和网络",
   webdavDownloadFailed: "下载失败",
   webdavFileNotFound: "远程文件不存在",
   webdavInvalidFormat: "无效的备份文件格式",
@@ -1270,7 +1270,7 @@ export const zhCN = {
   hidePassword: "隐藏密码",
   webdavTesting: "测试中…",
   webdavUploading: "备份中…",
-  webdavNeverSynced: "尚未备份",
+  webdavNeverSynced: "尚未同步",
   unsavedChanges: "未保存",
   restore: "恢复",
   localBackup: "本地备份",
@@ -1300,7 +1300,7 @@ export const zhCN = {
   revokeConfirmNotifications:
     "确定要撤销通知权限吗？\n\n撤销后，「桌面通知」功能将自动关闭。如需再次使用，需重新授权。",
   revokeConfirmWebdav:
-    "确定要撤销高级功能权限吗？\n\n撤销后，「移除图片水印」和「WebDAV 备份」功能将自动关闭。如需再次使用，需重新授权。",
+    "确定要撤销高级功能权限吗？\n\n撤销后，「移除图片水印」和「WebDAV 同步」功能将自动关闭。如需再次使用，需重新授权。",
   warning: "警告",
   windowClosing: "窗口即将关闭...",
   allow: "允许",

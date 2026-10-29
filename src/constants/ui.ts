@@ -1001,7 +1001,7 @@ const SUB_TAB_SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
   },
   {
     settingId: "subtab-backup-webdav",
-    title: "WebDAV 备份",
+    title: "WebDAV 同步",
     keywords: [
       "webdav",
       "cloud sync",
@@ -1322,7 +1322,7 @@ const SETTING_CARD_SEARCH_ITEMS: SettingsSearchItem[] = [
   },
   {
     settingId: "backup-webdav-card",
-    title: "WebDAV 备份配置",
+    title: "WebDAV 云端同步配置",
     keywords: [
       "webdav config",
       "cloud sync",

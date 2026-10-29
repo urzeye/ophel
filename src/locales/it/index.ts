@@ -1302,8 +1302,10 @@ export const it = {
   webdavDownloadSuccess: "Download riuscito", // Modified from "Download successful, refreshing page"
   webdavConfigIncomplete: "Inserisci indirizzo WebDAV, nome utente e password",
   webdavAuthFailed: "Autenticazione fallita, controlla nome utente e password",
-  webdavConnectionFailed: "Connessione non riuscita. Controlla l'indirizzo WebDAV e la rete",
-  webdavUploadFailed: "Caricamento non riuscito. Controlla permessi dell'account, cartella e rete",
+  webdavConnectionFailed:
+    "Connessione non riuscita ({detail}). Controlla l'indirizzo WebDAV e la rete",
+  webdavUploadFailed:
+    "Caricamento non riuscito ({detail}). Controlla permessi dell'account, cartella e rete",
   webdavDownloadFailed: "Download non riuscito",
   webdavFileNotFound: "File remoto non trovato",
   webdavInvalidFormat: "Formato file di backup non valido",

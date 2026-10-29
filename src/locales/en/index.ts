@@ -1250,8 +1250,10 @@ export const en = {
   webdavDownloadSuccess: "Download successful", // Modified from "Download successful, refreshing page"
   webdavConfigIncomplete: "Enter the WebDAV address, username and password first.",
   webdavAuthFailed: "Authentication failed, please check username and password",
-  webdavConnectionFailed: "Connection failed. Check the WebDAV address and your network.",
-  webdavUploadFailed: "Upload failed. Check account permissions, the directory and your network.",
+  webdavConnectionFailed:
+    "Connection failed ({detail}). Check the WebDAV address and your network.",
+  webdavUploadFailed:
+    "Upload failed ({detail}). Check account permissions, the directory and your network.",
   webdavDownloadFailed: "Download failed",
   webdavFileNotFound: "Remote file not found",
   webdavInvalidFormat: "Invalid backup file format",

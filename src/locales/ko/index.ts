@@ -1166,8 +1166,8 @@ export const ko = {
   webdavDownloadSuccess: "다운로드 성공", // Modified from "Download successful, refreshing page"
   webdavConfigIncomplete: "WebDAV 주소, 사용자 이름, 비밀번호를 입력하세요",
   webdavAuthFailed: "인증 실패. 사용자 이름과 비밀번호를 확인하세요",
-  webdavConnectionFailed: "연결에 실패했습니다. WebDAV 주소와 네트워크를 확인하세요",
-  webdavUploadFailed: "업로드에 실패했습니다. 계정 권한, 폴더, 네트워크를 확인하세요",
+  webdavConnectionFailed: "연결에 실패했습니다({detail}). WebDAV 주소와 네트워크를 확인하세요",
+  webdavUploadFailed: "업로드에 실패했습니다({detail}). 계정 권한, 폴더, 네트워크를 확인하세요",
   webdavDownloadFailed: "다운로드 실패",
   webdavFileNotFound: "원격 파일을 찾을 수 없습니다",
   webdavInvalidFormat: "잘못된 백업 파일 형식",

@@ -1210,9 +1210,10 @@ export const ja = {
   webdavDownloadSuccess: "ダウンロード成功",
   webdavConfigIncomplete: "WebDAV のアドレス、ユーザー名、パスワードを入力してください",
   webdavAuthFailed: "認証に失敗しました。ユーザー名とパスワードを確認してください",
-  webdavConnectionFailed: "接続に失敗しました。WebDAV のアドレスとネットワークを確認してください",
+  webdavConnectionFailed:
+    "接続に失敗しました（{detail}）。WebDAV のアドレスとネットワークを確認してください",
   webdavUploadFailed:
-    "アップロードに失敗しました。アカウントの権限、フォルダー、ネットワークを確認してください",
+    "アップロードに失敗しました（{detail}）。アカウントの権限、フォルダー、ネットワークを確認してください",
   webdavDownloadFailed: "ダウンロード失敗",
   webdavFileNotFound: "リモートファイルが見つかりません",
   webdavInvalidFormat: "バックアップファイルの形式が不正です",
