@@ -18,6 +18,7 @@ export interface SelectDropdownProps {
   value: string
   onChange: (value: string) => void
   placeholder?: React.ReactNode
+  menuHeader?: React.ReactNode
   disabled?: boolean
   emptyText?: React.ReactNode
   maxMenuHeight?: number
@@ -44,6 +45,7 @@ export const SelectDropdown: React.FC<SelectDropdownProps> = ({
   value,
   onChange,
   placeholder,
+  menuHeader,
   disabled = false,
   emptyText,
   maxMenuHeight = 260,
@@ -311,6 +313,25 @@ export const SelectDropdown: React.FC<SelectDropdownProps> = ({
             background: "var(--gh-bg, #ffffff)",
             padding: "4px",
           }}>
+          {menuHeader && (
+            <div
+              role="presentation"
+              aria-hidden="true"
+              style={{
+                position: "sticky",
+                top: 0,
+                zIndex: 1,
+                padding: "5px 10px 4px",
+                fontSize: 11,
+                fontWeight: 600,
+                letterSpacing: "0.02em",
+                color: "var(--gh-text-secondary, #6b7280)",
+                background: "var(--gh-bg, #ffffff)",
+                userSelect: "none",
+              }}>
+              {menuHeader}
+            </div>
+          )}
           {options.length === 0 ? (
             <div
               style={{

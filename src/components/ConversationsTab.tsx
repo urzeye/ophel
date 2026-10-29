@@ -5,6 +5,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
+import { SYNC_TARGET_HINT_STORAGE_KEY } from "~constants/storage-keys"
 import type { Conversation, ConversationManager, Folder, Tag } from "~core/conversation-manager"
 import { platform } from "~platform"
 import { useConversationsStore } from "~stores/conversations-store"
@@ -13,6 +14,7 @@ import { useSettingsStore } from "~stores/settings-store"
 import { useTagsStore } from "~stores/tags-store"
 import { getReadableTextColor } from "~utils/color"
 import { getCurrentLang, t } from "~utils/i18n"
+import { localStorage as appStorage } from "~utils/storage"
 import { showToast } from "~utils/toast"
 
 import {
@@ -187,6 +189,8 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
   const unsupportedTitle = t("conversationsUnsupportedTitle", { site: unsupportedSiteLabel })
   const unsupportedDesc = t("conversationsUnsupportedDesc")
   const unsupportedSync = t("conversationsUnsupportedSync", { site: unsupportedSiteLabel })
+  const [syncTargetHintSeen, setSyncTargetHintSeen] = useState<boolean | null>(null)
+  const showSyncHint = syncTargetHintSeen === false && !isConversationUnsupported
 
   const showUnsupportedMask = isConversationUnsupported
 
@@ -481,12 +485,41 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
   const [visibleCounts, setVisibleCounts] = useState<Record<string, number>>({})
   const loadMoreSentinelRefs = useRef<Map<string, HTMLDivElement | null>>(new Map())
 
+  useEffect(() => {
+    let cancelled = false
+    appStorage
+      .get<boolean>(SYNC_TARGET_HINT_STORAGE_KEY)
+      .then((seen) => {
+        if (!cancelled) setSyncTargetHintSeen(Boolean(seen))
+      })
+      .catch(() => {
+        if (!cancelled) setSyncTargetHintSeen(true)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const markSyncHintSeen = useCallback(() => {
+    setSyncTargetHintSeen(true)
+    appStorage.set(SYNC_TARGET_HINT_STORAGE_KEY, true).catch(() => {
+      // 存储不可用时只在本次会话隐藏提示
+    })
+  }, [])
+
+  useEffect(() => {
+    if (!showSyncHint) return
+    const timer = window.setTimeout(markSyncHintSeen, 12000)
+    return () => window.clearTimeout(timer)
+  }, [showSyncHint, markSyncHintSeen])
+
   // 同步
   const handleSync = useCallback(async () => {
     if (isConversationUnsupported) {
       showToast(unsupportedSync)
       return
     }
+    markSyncHintSeen()
     setSyncing(true)
     try {
       const loadResult = await manager.siteAdapter?.loadAllConversations?.()
@@ -500,19 +533,40 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
       loadData()
       if (sidebarCount === 0) {
         showToast(t("conversationsSyncNoSidebarItems"))
-      } else {
+        return
+      }
+
+      const targetFolder = folders.find((folder) => folder.id === lastUsedFolderId)
+      const targetFolderName = targetFolder
+        ? getFolderDisplayName(targetFolder)
+        : getInboxDisplayName()
+
+      if (newCount > 0) {
         showToast(
-          t("conversationsSyncResult")
-            .replace("{scanned}", String(sidebarCount))
-            .replace("{added}", String(newCount))
-            .replace("{updated}", String(updatedCount))
-            .replace("{deleted}", String(deletedCount)),
+          t("conversationsSyncResult", {
+            added: String(newCount),
+            folder: targetFolderName,
+          }),
         )
+      } else if (deletedCount > 0) {
+        showToast(t("conversationsSyncRemoved", { removed: String(deletedCount) }))
+      } else if (updatedCount > 0) {
+        showToast(t("conversationsSyncUpdated", { updated: String(updatedCount) }))
+      } else {
+        showToast(t("conversationsSyncNoChange", { folder: targetFolderName }))
       }
     } finally {
       setSyncing(false)
     }
-  }, [isConversationUnsupported, unsupportedSync, manager, lastUsedFolderId, loadData])
+  }, [
+    isConversationUnsupported,
+    unsupportedSync,
+    manager,
+    lastUsedFolderId,
+    loadData,
+    folders,
+    markSyncHintSeen,
+  ])
 
   // 定位当前对话
   const handleLocate = useCallback(() => {
@@ -815,42 +869,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
         )}
         {/* 工具栏 */}
         <div className="conversations-toolbar gh-panel-toolbar">
-          {/* 1. 同步按钮 */}
-          <Tooltip content={t("conversationsSync")}>
-            <button
-              type="button"
-              className="conversations-toolbar-btn gh-panel-icon-btn sync"
-              disabled={syncing || isConversationUnsupported}
-              aria-label={t("conversationsSync")}
-              onClick={handleSync}>
-              {syncing ? <HourglassIcon size={18} /> : <SyncIcon size={18} />}
-            </button>
-          </Tooltip>
-
-          {/* 2. 定位按钮 */}
-          <Tooltip content={t("conversationsLocate")}>
-            <button
-              type="button"
-              className="conversations-toolbar-btn gh-panel-icon-btn locate"
-              aria-label={t("conversationsLocate")}
-              onClick={handleLocate}>
-              <LocateIcon size={18} />
-            </button>
-          </Tooltip>
-
-          {/* 3. 批量模式 */}
-          <Tooltip content={t("conversationsBatchMode")}>
-            <button
-              type="button"
-              className={`conversations-toolbar-btn gh-panel-icon-btn ${batchMode ? "active-subtle" : ""}`}
-              aria-label={t("conversationsBatchMode")}
-              aria-pressed={batchMode}
-              onClick={toggleBatchMode}>
-              <BatchIcon size={18} />
-            </button>
-          </Tooltip>
-
-          {/* 4. 新建文件夹 */}
+          {/* 1. 新建文件夹 */}
           <Tooltip content={t("conversationsAddFolder")}>
             <button
               type="button"
@@ -864,10 +883,46 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
             </button>
           </Tooltip>
 
-          {/* 5. 同步目标文件夹（辅助配置，靠右弱化展示） */}
+          {/* 2. 批量模式 */}
+          <Tooltip content={t("conversationsBatchMode")}>
+            <button
+              type="button"
+              className={`conversations-toolbar-btn gh-panel-icon-btn ${batchMode ? "active-subtle" : ""}`}
+              aria-label={t("conversationsBatchMode")}
+              aria-pressed={batchMode}
+              onClick={toggleBatchMode}>
+              <BatchIcon size={18} />
+            </button>
+          </Tooltip>
+
+          {/* 3. 定位当前对话 */}
           <Tooltip
-            content={t("conversationsSelectFolder")}
-            triggerStyle={{ marginLeft: "auto", flex: 1, minWidth: 0 }}>
+            content={t("conversationsLocate")}
+            triggerClassName="conversations-narrow-optional">
+            <button
+              type="button"
+              className="conversations-toolbar-btn gh-panel-icon-btn locate"
+              aria-label={t("conversationsLocate")}
+              onClick={handleLocate}>
+              <LocateIcon size={18} />
+            </button>
+          </Tooltip>
+
+          <span className="conversations-toolbar-divider" aria-hidden="true" />
+
+          {/* 4. 同步与目标文件夹：左侧执行，右侧选择落点 */}
+          <div className="conversations-sync-group">
+            <Tooltip content={t("conversationsSyncTooltip")}>
+              <button
+                type="button"
+                className="conversations-toolbar-btn gh-panel-icon-btn sync"
+                disabled={syncing || isConversationUnsupported}
+                aria-label={t("conversationsSync")}
+                onClick={handleSync}>
+                {syncing ? <HourglassIcon size={18} /> : <SyncIcon size={18} />}
+              </button>
+            </Tooltip>
+
             <SelectDropdown
               className="conversations-folder-select-dropdown"
               buttonClassName="conversations-folder-select"
@@ -876,15 +931,43 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
               options={folderSelectOptions}
               value={lastUsedFolderId}
               ariaLabel={t("conversationsSelectFolder")}
-              buttonTitle={null}
-              onOpenChange={setIsFolderSelectOpen}
+              buttonTitle={t("conversationsSelectFolder")}
+              menuHeader={t("conversationsSyncFolderMenuTitle")}
+              onOpenChange={(open) => {
+                setIsFolderSelectOpen(open)
+                if (open) markSyncHintSeen()
+              }}
               onChange={(selectedFolderId) => {
+                if (selectedFolderId === lastUsedFolderId) return
                 setLastUsedFolderId(selectedFolderId)
                 manager.setLastUsedFolder(selectedFolderId)
+                markSyncHintSeen()
+                const selectedFolder = folders.find((folder) => folder.id === selectedFolderId)
+                showToast(
+                  t("conversationsSyncTargetChanged", {
+                    folder: selectedFolder
+                      ? getFolderDisplayName(selectedFolder)
+                      : getInboxDisplayName(),
+                  }),
+                )
               }}
             />
-          </Tooltip>
+          </div>
         </div>
+
+        {/* 首次使用提示：解释同步落点，只出现一次 */}
+        {showSyncHint && (
+          <div className="conversations-sync-hint" role="note">
+            <span className="conversations-sync-hint-text">{t("conversationsEmptyHint")}</span>
+            <button
+              type="button"
+              className="conversations-sync-hint-close"
+              aria-label={t("close")}
+              onClick={markSyncHintSeen}>
+              <ClearIcon size={14} />
+            </button>
+          </div>
+        )}
 
         {/* 搜索栏 */}
         <div className="conversations-search-bar">
@@ -1261,7 +1344,19 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                         if (allConvs.length === 0) {
                           return (
                             <div className="conversations-list-empty">
-                              {t("conversationsEmpty")}
+                              <span>{t("conversationsEmpty")}</span>
+                              {folder.isDefault &&
+                                Object.keys(conversations).length === 0 &&
+                                !searchResult &&
+                                !isConversationUnsupported && (
+                                  <button
+                                    type="button"
+                                    className="conversations-empty-sync"
+                                    disabled={syncing}
+                                    onClick={handleSync}>
+                                    {syncing ? t("conversationsSyncing") : t("conversationsSync")}
+                                  </button>
+                                )}
                             </div>
                           )
                         }

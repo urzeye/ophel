@@ -1058,10 +1058,10 @@ export const it = {
   toggleConversations: "Attiva/disattiva conversazioni",
   // Conversations
   tabConversations: "Chat",
-  conversationsEmpty: "Nessuna conversazione ancora",
-  conversationsEmptyHint:
-    "Fai clic sul pulsante di sincronizzazione in alto per importare dalla barra laterale",
+  conversationsEmpty: "Ancora nessuna conversazione",
+  conversationsEmptyHint: "I nuovi chat vanno nella cartella scelta",
   conversationsSync: "Sincronizzazione",
+  conversationsSyncTooltip: "Importa chat da questo sito",
   conversationsSyncing: "Sincronizzazione...",
   conversationsSynced: "Sincronizzato",
   conversationsAddFolder: "Nuova cartella",
@@ -1081,11 +1081,13 @@ export const it = {
   conversationsFolderName: "Nome",
   conversationsFolderNamePlaceholder: "Inserisci il nome della cartella",
   conversationsSyncEmpty: "Nessuna conversazione trovata",
-  conversationsSyncNoChange: "Nessuna nuova conversazione",
+  conversationsSyncNoChange: "«{folder}» è aggiornata",
+  conversationsSyncUpdated: "{updated} conversazioni aggiornate",
+  conversationsSyncRemoved: "{removed} record locali rimossi",
   conversationsSyncNoSidebarItems:
     "Nessuna conversazione rilevata nella barra laterale. Espandi/apri la barra laterale e riprova.",
-  conversationsSyncResult:
-    "Sincronizzazione completata: {scanned} scansionato, {added} aggiunto, {updated} aggiornato, {deleted} eliminato",
+  conversationsSyncResult: "{added} conversazioni sincronizzate in «{folder}»",
+  conversationsSyncTargetChanged: "Le nuove conversazioni andranno in «{folder}»",
   conversationsUnsupportedTitle: "Conversazioni {site} non supportate",
   conversationsUnsupportedDesc:
     "Le attuali restrizioni del sito impediscono il recupero affidabile dell'elenco delle conversazioni.",
@@ -1100,7 +1102,8 @@ export const it = {
   minutesAgo: "minuto fa",
   hoursAgo: "ora fa",
   daysAgo: "giorni fa",
-  conversationsSelectFolder: "Seleziona Sincronizza cartella",
+  conversationsSelectFolder: "Cartella di sincronizzazione",
+  conversationsSyncFolderMenuTitle: "Salva chat in",
   conversationsSelectAllFolder: "Seleziona tutto in questa cartella",
   conversationsMoveTo: "Sposta conversazione",
   conversationsSetTag: "Imposta etichetta",

@@ -58,8 +58,100 @@
   cursor: not-allowed;
 }
 
+.conversations-toolbar-divider {
+  flex: 0 0 1px;
+  width: 1px;
+  height: 16px;
+  margin: 0 1px;
+  background: var(--gh-border, #e5e7eb);
+  opacity: 0.75;
+}
+
+.conversations-sync-group {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
 .conversations-folder-select-dropdown {
-  width: 100%;
+  flex: 1 1 0;
+  min-width: 88px;
+}
+
+/* 面板最窄 240px：定位属于低频操作，让位给同步目标和文件夹名 */
+.gh-main-panel[data-panel-narrow="true"] .conversations-toolbar .conversations-narrow-optional {
+  display: none;
+}
+
+.conversations-sync-hint {
+  display: flex;
+  flex-shrink: 0;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 7px 10px;
+  border-bottom: 1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 14%, transparent);
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 8%, transparent);
+  color: var(--gh-text, #374151);
+  font-size: 12px;
+  line-height: 1.4;
+  animation: conversations-sync-hint-in 180ms ease-out;
+}
+
+.conversations-sync-hint-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.conversations-sync-hint-close {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  margin: -3px -3px -3px 0;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--gh-text-secondary, #6b7280);
+  cursor: pointer;
+}
+
+.conversations-sync-hint-close::before {
+  content: "";
+  position: absolute;
+  inset: -5px;
+}
+
+.conversations-sync-hint-close:hover {
+  color: var(--gh-text, #1f2937);
+  background: var(--gh-hover, rgba(0, 0, 0, 0.06));
+}
+
+.conversations-sync-hint-close:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 32%, transparent);
+  outline-offset: 1px;
+}
+
+@keyframes conversations-sync-hint-in {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .conversations-sync-hint {
+    animation: none;
+  }
 }
 
 /* 底色、边框、悬停与聚焦与面板搜索框共用 style.css 里的填充式定义，这里只管布局 */
@@ -683,10 +775,45 @@ html[data-theme="dark"] .conversations-unsupported-icon {
 }
 
 .conversations-list-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
   padding: 12px;
   color: var(--gh-text-secondary, #9ca3af);
   font-size: 13px;
   text-align: center;
+}
+
+.conversations-empty-sync {
+  height: 30px;
+  padding: 0 14px;
+  border: 1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 22%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 10%, transparent);
+  color: var(--gh-primary-text, var(--gh-primary, #4285f4));
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.conversations-empty-sync:hover {
+  border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 32%, transparent);
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 16%, transparent);
+}
+
+.conversations-empty-sync:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 32%, transparent);
+  outline-offset: 2px;
+}
+
+.conversations-empty-sync:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* 对话行：透明底、悬停才出底色，与大纲列表一致；不再每条一张卡片 */
