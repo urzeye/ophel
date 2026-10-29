@@ -1345,7 +1345,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                           return (
                             <div className="conversations-list-empty">
                               <span>{t("conversationsEmpty")}</span>
-                              {folder.isDefault &&
+                              {folder.id === lastUsedFolderId &&
                                 Object.keys(conversations).length === 0 &&
                                 !searchResult &&
                                 !isConversationUnsupported && (
