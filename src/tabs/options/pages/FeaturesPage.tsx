@@ -1710,6 +1710,8 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
             <SettingRow
               label={t("globalSearchShortcutSettingLabel")}
               description={t("globalSearchShortcutSettingDesc")}
+              disabled={!globalSearchEnabled}
+              onDisabledClick={() => showPrerequisiteToast(t("globalSearchEnabledLabel"))}
               settingId="global-search-shortcut-setting-link">
               <span className="settings-global-search-shortcut">
                 {globalSearchShortcutParts.map((part, index) => (
@@ -1733,6 +1735,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
               </span>
               <button
                 className="settings-btn settings-btn-secondary"
+                disabled={!globalSearchEnabled}
                 onClick={handleNavigateToGlobalSearchShortcut}>
                 {t("globalSearchShortcutSettingAction")}
               </button>
@@ -1741,6 +1744,8 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
             <ToggleRow
               label={t("doubleShiftToSearch")}
               checked={doubleShiftToSearch}
+              disabled={!globalSearchEnabled}
+              onDisabledClick={() => showPrerequisiteToast(t("globalSearchEnabledLabel"))}
               onChange={() =>
                 updateNestedSetting("globalSearch", "doubleShift", !doubleShiftToSearch)
               }
@@ -1751,6 +1756,8 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
               label={t("globalSearchEnableFuzzySearchLabel")}
               description={t("globalSearchEnableFuzzySearchDesc")}
               checked={enableFuzzySearch}
+              disabled={!globalSearchEnabled}
+              onDisabledClick={() => showPrerequisiteToast(t("globalSearchEnabledLabel"))}
               onChange={() =>
                 updateNestedSetting("globalSearch", "enableFuzzySearch", !enableFuzzySearch)
               }
@@ -1764,10 +1771,13 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
             <SettingRow
               label={t("globalSearchPromptEnterBehaviorLabel")}
               description={t("globalSearchPromptEnterBehaviorDesc")}
+              disabled={!globalSearchEnabled}
+              onDisabledClick={() => showPrerequisiteToast(t("globalSearchEnabledLabel"))}
               settingId="global-search-prompt-enter-behavior">
               <SelectDropdown
                 className="settings-select-dropdown"
                 buttonClassName="settings-select"
+                disabled={!globalSearchEnabled}
                 options={[
                   { value: "smart", label: t("globalSearchPromptEnterBehaviorSmart") },
                   { value: "locate", label: t("globalSearchPromptEnterBehaviorLocate") },
