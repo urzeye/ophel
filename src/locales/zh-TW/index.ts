@@ -1295,7 +1295,7 @@ export const zhTW = {
 請直接輸出優化後的程式碼區塊，並在後面附帶簡短的優化點總結。`,
 
   // ======== 快捷鍵設置頁面 ========
-  navShortcuts: "快捷鍵",
+  navShortcuts: "快捷鍵位",
   shortcutsInteractionGroup: "獨立設定",
   shortcutsInteractionGroupDesc: "此分組設定會持續生效，不受「啟用自訂快捷鍵」開關影響",
   shortcutsGlobalSettings: "快捷鍵設置",

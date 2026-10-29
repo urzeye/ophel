@@ -1334,7 +1334,7 @@ export const zhCN = {
 请直接输出优化后的代码块，并在后面附带简短的优化点总结。`,
 
   // ======== 快捷键设置页面 ========
-  navShortcuts: "快捷键",
+  navShortcuts: "快捷键位",
   shortcutsInteractionGroup: "独立设置",
   shortcutsInteractionGroupDesc: "此分组设置始终生效，不受“启用自定义快捷键”开关影响",
   shortcutsGlobalSettings: "快捷键设置",
