@@ -246,12 +246,10 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
   return (
     <div>
       <PageTitle title={t("navShortcuts")} Icon={KeyboardIcon} />
-      <p className="settings-page-desc">{t("shortcutsPageDesc")}</p>
 
       <SettingCard title={t("shortcutsGlobalSettings")} settingId="shortcuts-global-card">
         <ToggleRow
           label={t("enableShortcuts")}
-          description={t("enableShortcutsDesc")}
           checked={shortcuts?.enabled ?? true}
           settingId="shortcuts-enabled"
           onChange={() =>
@@ -381,6 +379,7 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
         <ConfirmDialog
           title={t("resetShortcuts")}
           message={t("resetShortcutsConfirm")}
+          confirmText={t("resetShortcuts")}
           danger
           onConfirm={resetToDefault}
           onCancel={() => setShowResetConfirm(false)}

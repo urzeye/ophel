@@ -83,7 +83,6 @@ export const it = {
   sitePacksSourceRegistry: "Online",
   sitePacksSourceLocal: "Importazione locale",
   sitePacksStatusAvailable: "Disponibile",
-  sitePacksStatusMatchRequired: "Regola richiesta",
   sitePacksStatusDisabled: "Disattivato",
   sitePacksStatusIncompatible: "Non compatibile",
   sitePacksStatusPackMissing: "Pacchetto mancante",
@@ -153,10 +152,7 @@ export const it = {
   sitePacksMatchGuideAction: "Vedi guida all'aggiunta",
   sitePacksBindingPackRequired: "Scegli prima un pacchetto installato.",
 
-  generalPageDesc: "Configura il comportamento e l'interfaccia dell'estensione",
-  appearancePageDesc: "Personalizza stili e temi visivi",
   pageContentPageDesc: "Modifica il layout della pagina e la visualizzazione dei contenuti",
-  featuresPageDesc: "Configurare i moduli delle funzionalità di estensione",
   backupPageDesc: "Gestisci backup dei dati, sincronizzazione cloud e autorizzazioni",
   aboutPageDesc: "I vantaggi dell'intelligenza artificiale, a portata di mano.",
   tsPlasmoDesc: "Framework di estensione del browser",
@@ -180,6 +176,7 @@ export const it = {
   granted: "Concesso",
   notGranted: "Non concesso",
   revoke: "Revoca",
+  revokePermissionTitle: "Revoca autorizzazione",
   grant: "Concedere",
   allowRecommended: "Consenti (consigliato)",
   required: "Obbligatorio",
@@ -240,15 +237,9 @@ export const it = {
   scrollSettings: "Scorri Impostazioni",
   contentProcessing: "Elaborazione dei contenuti",
   interactionEnhance: "Miglioramenti dell'interazione",
-  interactionEnhanceDesc: "Migliora le interazioni tra formule e tabelle",
   exportSettings: "Impostazioni di esportazione",
 
   // ======== Features ========
-  outlineSettingsDesc: "Configura la generazione del contorno e segui il comportamento",
-  outlineUpdateIntervalDesc: "Intervallo di aggiornamento automatico per la struttura (secondi)",
-  conversationsSettingsDesc:
-    "Configura la sincronizzazione e la visualizzazione della conversazione",
-  readingHistoryDesc: "Traccia e ripristina le posizioni di lettura delle conversazioni",
   day: "giorno",
   days: "giorni",
   forever: "Per sempre",
@@ -270,8 +261,7 @@ export const it = {
   aboutDescription:
     "{appName} è un'estensione del browser per piattaforme AI come ChatGPT, Claude, Gemini, DeepSeek e Doubao, espandibile ad altri siti tramite pacchetti di adattatori (regole JSON). Offre gestione delle conversazioni, esportazione multi-formato, outline intelligenti, ricerca globale e code di prompt, oltre a ripristino del progresso di lettura, rendering e copia delle formule, avvisi di completamento, blocco del modello e regolazione del layout. Con temi, modalità Zen e sincronizzazione WebDAV, rende le tue interazioni con l'IA più fluide e piacevoli.",
   aboutSupportedPlatforms: "Piattaforme supportate",
-  aboutSupportedPlatformsDesc:
-    "Attualmente copre le piattaforme AI {count}, mantenute sincronizzate con il rilevamento dei popup e l'accesso rapido.",
+  aboutSupportedPlatformsDesc: "Attualmente supporta {count} piattaforme AI.",
   projectLinks: "Collegamenti al progetto",
   githubRepository: "Archivio GitHub",
   communityAndSupport: "Comunità e supporto",
@@ -307,26 +297,16 @@ export const it = {
   // ======== Common Buttons/Labels ========
   tabBehaviorTitle: "Comportamento della scheda",
   notificationSettings: "Azioni successive al completamento",
-  usageMonitorSettingsTitle: "Contatore e stima dell'utilizzo locale",
-  usageMonitorSettingsDesc:
-    "Mostra i conteggi degli invii locali, l'avanzamento della soglia e le stime approssimative dei token vicino alla casella di input.",
-  usageMonitorExplainLocalOnly:
-    "Nota: questa è una stima solo locale. L'estensione non conosce la quota rimanente ufficiale o il limite effettivo lato server.",
-  usageMonitorExplainNoBackend:
-    "Comportamento: memorizza i conteggi solo localmente e visualizza un pannello leggero vicino al compositore. Non scrive alcuno stato aggiuntivo nel backend del sito.",
-  usageMonitorExplainReset:
-    "Reset: i tempi di reset della quota della piattaforma possono variare e non sono sempre legati alla mezzanotte locale. Il ripristino automatico è disattivato per impostazione predefinita; il ripristino manuale è l'impostazione predefinita più sicura.",
-  usageMonitorExplainRender:
-    "Il pannello viene visualizzato sopra il compositore corrente e riserva spazio per il contenuto della pagina. Se il rendering appare anomalo subito dopo averlo abilitato, l'aggiornamento della pagina dovrebbe stabilizzare il layout.",
-  usageMonitorEnabledLabel: "Abilita contatore e stima del modello avanzato locale",
+  usageMonitorSettingsTitle: "Stima dell'utilizzo dei modelli avanzati",
+  usageMonitorEnabledLabel: "Mostra la stima dell'utilizzo",
   usageMonitorEnabledDesc:
-    "Utilizza un pannello locale leggero vicino al compositore per stimare l'utilizzo dell'account corrente senza modificare il comportamento del sito.",
-  usageMonitorDailyLimitLabel: "Limite di conversazioni giornaliere stimato",
+    "Mostra sopra la casella di input il numero di invii da questo dispositivo e una stima dei token. Ophel non può vedere la quota reale del sito, quindi i numeri sono solo indicativi. Se la visualizzazione è anomala, aggiorna la pagina.",
+  usageMonitorDailyLimitLabel: "Limite giornaliero di invii",
   usageMonitorDailyLimitDesc:
-    "Utilizzato per le soglie di avviso 80%/100%. Questa è solo una stima locale.",
-  usageMonitorAutoResetLabel: "Abilita il ripristino automatico",
+    "Avvisa al raggiungimento dell'80% e del 100% di questo valore. È un riferimento impostato da te, non il limite reale del sito.",
+  usageMonitorAutoResetLabel: "Azzera automaticamente ogni giorno",
   usageMonitorAutoResetDesc:
-    "Sperimentale: si ripristina automaticamente quando cambia la data locale. Disabilitato per impostazione predefinita perché i tempi effettivi di ripristino della piattaforma possono variare.",
+    "Azzera il conteggio ogni giorno a mezzanotte (ora locale). Il sito può azzerare la quota in un altro momento, quindi è disattivato per impostazione predefinita.",
   usageMonitorTodayUsed: "Usato oggi",
   usageMonitorLocallyUsed: "Conteggiato localmente",
   usageMonitorInputChars: "Inserisci caratteri",
@@ -342,7 +322,7 @@ export const it = {
   usageMonitorManualMode: "Modalità manuale",
   usageMonitorChartTitle: "Cronologia dell'utilizzo",
   usageMonitorChartDesc:
-    "Aggregato da eventi di invio locale. Visualizza i conteggi o i token stimati per ora, giorno o mese.",
+    "Visualizza invii o token stimati per ora, giorno o mese, in base ai dati registrati su questo dispositivo.",
   usageMonitorChartHour: "Ora",
   usageMonitorChartDay: "Giorno",
   usageMonitorChartMonth: "Mese",
@@ -355,27 +335,22 @@ export const it = {
   usageMonitorChartMetricConversation: "Contesto caricato",
   usageMonitorChartMetricOutput: "Gettoni di uscita",
   usageMonitorChartDelta: "rispetto al precedente",
+  usageMonitorChartMax: "Max",
   usageMonitorChartMaxConversation: "Contesto massimo caricato",
   usageMonitorChartMaxRequest: "Richiesta singola massima",
   usageMonitorChartMaxRoundTrip: "Max singolo andata e ritorno",
   usageMonitorChartMaxOutput: "Uscita singola massima",
-  usageMonitorChartScrollHint: "Scorri orizzontalmente per visualizzare la timeline completa",
   usageMonitorChartEmpty: "Nessuna storia ancora",
   enablePrerequisiteToast: 'Abilita prima "{setting}".',
-  privacyModeTitle: "Modalità privacy",
+  privacyModeTitle: "Privacy delle schede",
   collapsedButtonsOrderTitle: "Pulsanti rapidi",
   quickButtonsOpacityLabel: "Opacità dei pulsanti rapidi",
-  quickButtonsOpacityDesc: "Regola l'opacità complessiva dei pulsanti rapidi",
   quickButtonsProximityRadiusLabel: "Distanza della scia di prossimità",
   quickButtonsProximityRadiusDesc:
     "Espande automaticamente i pulsanti rapidi quando il cursore entra in questo intervallo (px). Imposta su 0 per espandersi solo al passaggio diretto del mouse",
   quickButtonsHideWhenPanelOpenLabel: "Nascondi i pulsanti rapidi quando il pannello è aperto",
-  quickButtonsHideWhenPanelOpenDesc:
-    "Nascondi automaticamente il gruppo di pulsanti rapidi quando il pannello viene espanso; si ripristina alla chiusura del pannello",
 
   quickButtonsBehaviorTitle: "Comportamento dei pulsanti rapidi",
-  quickButtonsBehaviorDesc:
-    "Regola l'aspetto e il comportamento di interazione del gruppo di pulsanti rapidi",
   // ======== Continue existing translations ========
   searchPlaceholder: "Richieste di ricerca...",
   addPrompt: "Aggiungi nuovo prompt",
@@ -432,11 +407,12 @@ export const it = {
     'Eliminare il backup nel cloud "{name}"? Questa azione è irreversibile.',
   insertFailed: "Inserimento non riuscito",
   maximize: "Massimizzare",
+  restoreWindow: "Ripristina",
   clearAllData: "Cancella tutti i dati",
   clearAllDataDesc:
     "Elimina definitivamente tutte le impostazioni, i suggerimenti e le chat locali.",
   clearAllDataConfirm:
-    "Sei sicuro di voler cancellare tutti i dati? Il funzionamento è irreversibile e tutte le impostazioni, i messaggi e le conversazioni verranno eliminati!",
+    "Cancellare tutti i dati? Impostazioni, prompt, conversazioni e altro verranno eliminati senza possibilità di recupero. Meglio esportare prima un backup.",
   clearSuccess: "Dati cancellati, aggiornamento...",
   defaultDir: "Directory predefinita",
   dangerZone: "Zona pericolosa",
@@ -483,7 +459,6 @@ export const it = {
   promptMergeSuccess: "Unificato: {updated} aggiornato, {added} aggiunto",
   promptDeleteConfirm: "Questo prompt verrà eliminato definitivamente.",
   promptSettingsTitle: "Impostazioni dei suggerimenti",
-  promptSettingsDesc: "Configura le interazioni nella scheda dei prompt",
   promptSubmitShortcutLabel: "Invia scorciatoia",
   promptSubmitShortcutDesc:
     "Si applica sia all'invio manuale che all'invio automatico tramite richiesta.",
@@ -617,8 +592,6 @@ export const it = {
   quickQuoteReply: "Citazione risposta",
   quickQuoteChainQueueSource: "Chain: {title} · {index}/{total}",
   quickQuoteSettingsTitle: "Preventivo di selezione",
-  quickQuoteSettingsDesc:
-    "Controlla se Ophel mostra il popover delle quote di selezione sui siti compatibili.",
   quickQuoteEnabledLabel: "Citazione di selezione Ophel",
   quickQuoteEnabledDesc:
     "Se abilitati, i siti compatibili mostrano la citazione popover Ophel dopo la selezione del testo. I siti con popover di citazioni native vengono lasciati al sito.",
@@ -672,8 +645,7 @@ export const it = {
   geminiMystuffOpenInNewTab: "Apri in una nuova scheda",
   geminiMystuffLocateFailed: "Posizione della conversazione originale non trovata",
 
-  userQueryWidthDesc:
-    "Regola la larghezza massima del contenitore dei fumetti delle query degli utenti",
+  userQueryWidthDesc: "Regola la larghezza massima dei fumetti delle query degli utenti",
   // Category management
   categoryManage: "Gestione delle categorie",
   categoryEmpty:
@@ -704,9 +676,9 @@ export const it = {
   themeSettings: "Impostazioni del tema",
   currentThemeMode: "Modalità corrente",
   themeSettingsDesc: "Scegli le preimpostazioni per la modalità luce e buio",
-  syncNativePageThemeLabel: "Sincronizza i colori nativi della pagina",
+  syncNativePageThemeLabel: "Sincronizza i colori della pagina del sito",
   syncNativePageThemeDesc:
-    "La modalità chiaro/scuro del sito segue sempre Ophel. Abilita questa opzione per regolare anche alcuni colori degli elementi nativi (funziona solo su alcuni siti).",
+    "La modalità chiaro/scuro del sito segue sempre Ophel. Abilita questa opzione per regolare anche i colori di alcuni elementi dell'interfaccia del sito (solo su alcuni siti).",
   themeLight: "Luce",
   themeSystem: "Sistema",
   customCSS: "Stili personalizzati",
@@ -730,10 +702,8 @@ export const it = {
   styleNameRequired: "Inserisci il nome dello stile",
   newStyle: "Nuovo stile",
   editStyleTitle: "Modifica stile",
-  lightModePreset: "Modalità luce",
-  lightModePresetDesc: "Efficace solo in modalità Luce",
-  darkModePreset: "Modalità oscura",
-  darkModePresetDesc: "Efficace solo in modalità oscura",
+  lightModePreset: "Tema modalità chiara",
+  darkModePreset: "Tema modalità scura",
   primaryColor: "Primario",
   secondaryColor: "Secondario",
   // Theme preset names
@@ -787,7 +757,6 @@ export const it = {
   exportCustomModelNameDesc:
     "Nome visualizzato per AI nelle esportazioni (impostazione predefinita: nome sito)",
   exportFilenameTimestamp: "Aggiungi timestamp al nome file",
-  exportFilenameTimestampDesc: "Aggiungi un timestamp alla fine del nome del file esportato",
   exportIncludeThoughtsLabel: "Includi pensieri nell'esportazione",
   exportThoughtCollapsedLabel: "Processo di pensiero",
   exportIncludeThoughtsDesc:
@@ -847,7 +816,7 @@ export const it = {
   pageWidthLabel: "Larghezza della pagina",
   pageWidthValueLabel: "Valore larghezza",
   pageWidthDesc:
-    "Regola la larghezza della pagina della chat in tempo reale. Quando l'evitamento intelligente è attivo, la larghezza effettiva può essere limitata dall'area sicura del pannello.",
+    "Regola la larghezza della pagina della chat in tempo reale. Con l'evitamento intelligente attivo, la pagina lascia spazio al pannello aperto, quindi la larghezza effettiva può essere un po' minore.",
   panelAvoidanceTitle: "Evitamento intelligente",
   betaBadge: "Beta",
   panelAvoidanceDesc:
@@ -902,8 +871,9 @@ export const it = {
   notifyWhenFocusedDesc: "Invia notifiche anche quando la pagina corrente è visibile",
   autoFocusLabel: "Messa a fuoco automatica della finestra",
   autoFocusDesc: "Porta la finestra in primo piano al termine della generazione",
-  privacyModeLabel: "Modalità privacy",
-  privacyModeDesc: "Nascondi il titolo della conversazione reale, mostra il titolo esca",
+  privacyModeLabel: "Nascondi il titolo della scheda",
+  privacyModeDesc:
+    "Sostituisce il titolo della scheda del browser con il titolo esca qui sotto. Il contenuto della pagina non cambia.",
   privacyTitleLabel: "Titolo esca",
   privacyTitlePlaceholder: "ad esempio, Google, Documento di lavoro",
   titleFormatLabel: "Formato del titolo",
@@ -928,7 +898,6 @@ export const it = {
   bookmarkSettings: "Impostazioni dei segnalibri",
 
   bookmarkModeDisableLevel: "Impossibile regolare i livelli in modalità segnalibro",
-  bookmarkSettingsDesc: "Impostazioni relative ai segnalibri",
   inlineBookmarkModeLabel: "Icone dei segnalibri in linea",
   inlineBookmarkModeDesc:
     "Controlla la visibilità delle icone dei segnalibri accanto ai titoli delle pagine",
@@ -963,7 +932,7 @@ export const it = {
   syncingConversations: "Sincronizzazione delle conversazioni...",
   grokSyncingConversations: "Sincronizzazione delle conversazioni, attendere...",
   // Tab Order Settings
-  tabOrderSettings: "Disposizione dell'interfaccia",
+  tabOrderSettings: "Ordine delle schede",
   tabOrderDesc:
     "Regola l'ordine di visualizzazione delle schede del pannello (trascina la maniglia per riordinare)",
   tabOrderAtLeastOne: "Almeno una scheda di funzionalità deve rimanere abilitata",
@@ -1027,8 +996,7 @@ export const it = {
   floatingToolbarClearGhostEmpty: "Nessun segnalibro non valido da cancellare.",
   showCollapsedThemeDesc:
     "Visualizza il pulsante di attivazione/disattivazione del tema nella barra laterale quando il pannello è compresso",
-  collapsedButtonsOrderDesc:
-    "Regola l'ordine di visualizzazione dei pulsanti del pannello compresso (trascina la maniglia per riordinare)",
+  collapsedButtonsOrderDesc: "Trascina la maniglia per riordinare i pulsanti rapidi.",
   preventAutoScrollLabel: "Impedisci lo scorrimento automatico",
   preventAutoScrollDesc:
     "Interrompi lo scorrimento automatico della pagina verso il basso durante la generazione dell'intelligenza artificiale",
@@ -1066,7 +1034,6 @@ export const it = {
   defaultEdgeDistanceDesc:
     "Distanza predefinita dal bordo della finestra del browser dopo l'aggiornamento della pagina",
   panelWidthLabel: "Larghezza del pannello",
-  panelWidthDesc: "Larghezza del pannello (px)",
   panelResizeOnHoverLabel: "Allarga al passaggio",
   panelResizeOnHoverDesc:
     "Allarga temporaneamente il pannello flottante quando il puntatore ci passa sopra, poi ripristina la larghezza normale",
@@ -1147,12 +1114,12 @@ export const it = {
   conversationsSettingsTitle: "Impostazioni di conversazione",
   conversationsSyncUnpinLabel: "Sincronizza lo stato di sblocco",
   conversationsSyncUnpinDesc:
-    "Sblocca la conversazione locale se sbloccata nel cloud durante la sincronizzazione",
+    "Durante la sincronizzazione, sblocca in locale le conversazioni sbloccate sul sito",
   folderRainbowLabel: "Cartella Colori Arcobaleno",
   folderRainbowDesc: "Assegna diversi colori di sfondo alle cartelle",
-  conversationsSyncDeleteLabel: "Sincronizza Elimina Cloud",
+  conversationsSyncDeleteLabel: "Elimina anche la conversazione sul sito",
   conversationsSyncDeleteDesc:
-    "Elimina la conversazione cloud sul sito corrispondente durante l'eliminazione del record locale",
+    "Quando elimini una conversazione in Ophel, viene eliminata anche l'originale sul sito. L'operazione non è reversibile.",
   conversationsSyncRenameLabel: "Sincronizza Rinomina Cloud",
   conversationsSyncRenameDesc:
     "Aggiorna il titolo della barra laterale {site} durante la ridenominazione locale",
@@ -1274,8 +1241,7 @@ export const it = {
   exportDataBtn: "Esporta tutti i dati",
   importDataBtn: "Importa dati",
   exportError: "Esportazione non riuscita:",
-  importConfirm:
-    "Sei sicuro di voler importare i dati? Ciò sovrascriverà tutte le impostazioni e i dati correnti.",
+  importConfirm: "L'importazione sovrascriverà i dati attuali con quelli inclusi nel backup.",
   importSuccess:
     "Importazione riuscita! La pagina si aggiornerà per applicare le nuove impostazioni.",
   importError: "Importazione non riuscita:",
@@ -1334,10 +1300,10 @@ export const it = {
   webdavConnectionSuccess: "Connessione riuscita",
   webdavUploadSuccess: "Caricamento riuscito",
   webdavDownloadSuccess: "Download riuscito", // Modified from "Download successful, refreshing page"
-  webdavConfigIncomplete: "Completare prima la configurazione WebDAV", // Modified from "Please complete WebDAV configuration"
+  webdavConfigIncomplete: "Inserisci indirizzo WebDAV, nome utente e password",
   webdavAuthFailed: "Autenticazione fallita, controlla nome utente e password",
-  webdavConnectionFailed: "Connessione non riuscita",
-  webdavUploadFailed: "Caricamento non riuscito",
+  webdavConnectionFailed: "Connessione non riuscita. Controlla l'indirizzo WebDAV e la rete",
+  webdavUploadFailed: "Caricamento non riuscito. Controlla permessi dell'account, cartella e rete",
   webdavDownloadFailed: "Download non riuscito",
   webdavFileNotFound: "File remoto non trovato",
   webdavInvalidFormat: "Formato file di backup non valido",
@@ -1353,7 +1319,8 @@ export const it = {
   importDataDesc: "Ripristina i dati dal file di backup",
 
   fullBackup: "Backup completo",
-  fullBackupDesc: "Esporta tutti i dati e le impostazioni dell'account.",
+  fullBackupDesc:
+    "Esporta tutti i dati e le impostazioni. Include le Session Key di Claude: conserva il file con cura.",
   promptsBackup: "Solo suggerimenti",
   promptsBackupDesc: "Esporta solo la libreria dei prompt (senza tag/cartelle)",
   settingsBackup: "Solo impostazioni",
@@ -1459,13 +1426,11 @@ export const it = {
 
   // ======== Shortcuts Settings Page ========
   navShortcuts: "Scorciatoie da tastiera",
-  shortcutsPageDesc: "Configura le scorciatoie da tastiera per azioni rapide",
   shortcutsInteractionGroup: "Impostazioni indipendenti",
   shortcutsInteractionGroupDesc:
     "Le impostazioni in questo gruppo sono sempre attive e non sono influenzate dall'interruttore Abilita scorciatoie personalizzate",
   shortcutsGlobalSettings: "Impostazioni di scelta rapida",
   enableShortcuts: "Abilita scorciatoie personalizzate",
-  enableShortcutsDesc: "Abilita o disabilita tutte le scorciatoie da tastiera personalizzate",
   globalShortcutUrl: "Scorciatoia globale URL",
   globalShortcutUrlDesc: "URL da aprire quando si preme la scorciatoia globale {shortcut}",
   resetShortcuts: "Ripristina le impostazioni predefinite",
@@ -1593,6 +1558,8 @@ export const it = {
   claudeImportFromBrowser: "Importa dal browser",
   claudeImportJSON: "Importa JSON",
   claudeExportJSON: "Esporta JSON",
+  claudeExportWarning:
+    "Il file esportato contiene le Session Key complete. Equivalgono alle credenziali di accesso all'account: conservalo con cura e non condividerlo.",
   claudeNoKeys: "Nessuna chiave di sessione",
   claudeNoKeysHint: 'Fai clic su "Aggiungi" o "Importa dal browser" per iniziare',
   claudeKeyValid: "Valido",
@@ -1678,12 +1645,12 @@ export const it = {
   chatgptMarkdownFixLabel: "Markdown Correzione audace",
   chatgptMarkdownFixDesc:
     "Correzione del testo in **grassetto** non visualizzato nelle risposte ChatGPT",
-  chatgptCodeBlockBatchMountLabel: "Montaggio batch dei blocchi di codice",
+  chatgptCodeBlockBatchMountLabel: "Carica i blocchi di codice a gruppi",
   chatgptCodeBlockBatchMountDesc:
-    "Monta gli editor di codice in batch all'apertura o al cambio di conversazioni lunghe, riducendo i blocchi della pagina",
-  chatgptStreamingRenderOptimizeLabel: "Ottimizzazione rendering in streaming",
+    "Carica i blocchi di codice a gruppi quando apri o cambi conversazioni lunghe, riducendo i blocchi della pagina",
+  chatgptStreamingRenderOptimizeLabel: "Riduci le animazioni durante la generazione",
   chatgptStreamingRenderOptimizeDesc:
-    "Sospende animazioni e transizioni nell'area dei messaggi durante la generazione della risposta per ridurre il carico di rendering",
+    "Sospende animazioni e transizioni nell'area dei messaggi durante la generazione della risposta, riducendo i rallentamenti",
   chatgptDisableBackdropBlurLabel: "Disattiva sfocatura dello sfondo",
   chatgptDisableBackdropBlurDesc:
     "Disattiva gli effetti di sfocatura dello sfondo per ridurre i cali di frame nello scorrimento delle conversazioni lunghe; modifica leggermente l'aspetto della pagina",
@@ -1720,8 +1687,6 @@ export const it = {
   // Toolbox Menu
   toolboxMenu: "Cassetta degli attrezzi",
   toolboxMenuTitle: "Menù Casella degli strumenti",
-  toolboxMenuDesc:
-    "Configura quali funzionalità appaiono nel menu a comparsa della casella degli strumenti",
 
   // Global Settings Search
   globalSearchCategoryAll: "Tutto",
@@ -1765,15 +1730,11 @@ export const it = {
   globalSearchEmptyCurrentSession: "Nessun risultato nella sessione corrente",
   globalSearchCategoriesLabel: "Categorie di ricerca globali",
   globalSearchMatchingSettingsTitle: "Ricerca corrispondente",
-  globalSearchMatchingSettingsDesc:
-    "Configura il modo in cui Search Everywhere corrisponde ai risultati della ricerca",
   globalSearchShortcutSettingLabel: "Scorciatoia per la ricerca globale",
   globalSearchShortcutSettingDesc:
     "Passa alle impostazioni delle scorciatoie da tastiera per personalizzare o disabilitare la scorciatoia di ricerca globale.",
   globalSearchShortcutSettingAction: "Vai alle impostazioni",
   globalSearchPromptSettingsTitle: "Comportamento dei prompt",
-  globalSearchPromptSettingsDesc:
-    "Scegli cosa succede quando si preme Enter su un prompt, il risultato sarà Search Everywhere",
   globalSearchPromptEnterBehaviorLabel: "Search Everywhere richiede il comportamento di Enter",
   globalSearchPromptEnterBehaviorDesc:
     "Intelligente: inserisci direttamente quando non ci sono variabili, apri la finestra di dialogo delle variabili quando necessario; Solo localizzazione: passa a Prompt e individua l'elemento.",
@@ -1781,14 +1742,13 @@ export const it = {
   globalSearchPromptEnterBehaviorLocate: "Individua solo",
   globalSearchEnableFuzzySearchLabel: "Abilita la ricerca fuzzy",
   globalSearchEnableFuzzySearchDesc:
-    "Quando abilitato, Search Everywhere utilizza la corrispondenza fuzzy per titolo, cartella, tag, contenuto del prompt e identificatori di impostazione.",
+    "Quando abilitato, Search Everywhere utilizza la corrispondenza fuzzy per titoli, cartelle, tag, contenuto dei prompt e impostazioni.",
   globalSearchFuzzySearchToggle: "Sfocato",
   globalSearchFuzzySearchToggleAria: "Attiva/disattiva la ricerca fuzzy",
   globalSearchFooterTips:
     "Enter per saltare · ↑↓ per selezionare · Categoria scheda · Esc per chiudere",
   globalSearchShortcutNudge: "Premi {shortcut} per aprire la prossima volta",
   doubleShiftToSearch: "Doppio spostamento per aprire la ricerca globale",
-  doubleShiftToSearchDesc: "Premi Maiusc due volte rapidamente per aprire la ricerca globale",
   globalSearchShortcutNudgeDismiss: "Non ricordarmelo",
   globalSearchContextCurrentItem: "Articolo {current}",
   globalSearchContextShownProgress: "Nella foto {shown}/{total}",
@@ -1961,7 +1921,8 @@ export const it = {
   // Aggiornamenti della configurazione degli adattatori
   remoteConfigSettingsTitle: "Aggiornamenti della configurazione degli adattatori",
   remoteConfigAutoUpdateLabel: "Aggiorna automaticamente le configurazioni degli adattatori",
-  remoteConfigAutoUpdateDesc: "Controlla al massimo una volta ogni 24 ore.",
+  remoteConfigAutoUpdateDesc:
+    "Scarica le regole aggiornate dei siti integrati per correggere i malfunzionamenti dopo le modifiche dei siti. Controlla al massimo una volta ogni 24 ore.",
   remoteConfigRegistrySourceLabel: "Sorgente Registry di sviluppo",
   remoteConfigRegistrySourceDesc:
     "Inserisci un URL completo di index.json; lascia vuoto per usare le sorgenti predefinite.",
@@ -1983,8 +1944,8 @@ export const it = {
   remoteConfigResetBuiltinButton: "Ripristina integrata",
   remoteConfigResettingButton: "Ripristino…",
   remoteConfigPrivacyDesc:
-    "I controlli inviano solo richieste GET a CDN statiche, senza conversazioni né dati dell'account.",
-  sitePacksAdvancedTitle: "Avanzate",
+    "I controlli scaricano solo file di configurazione: nessun dato di chat o account viene caricato.",
+  sitePacksAdvancedTitle: "Opzioni sviluppatore",
   remoteConfigCheckUpdated:
     "Sono state scaricate nuove configurazioni. Aggiorna le pagine AI corrispondenti per applicarle.",
   remoteConfigCheckUpToDate: "Le configurazioni degli adattatori sono aggiornate.",

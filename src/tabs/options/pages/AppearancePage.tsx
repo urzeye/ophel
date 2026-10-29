@@ -680,7 +680,6 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
   return (
     <div>
       <PageTitle title={t("navAppearance")} Icon={AppearanceIcon} />
-      <p className="settings-page-desc">{t("appearancePageDesc")}</p>
 
       <SettingCard>
         <ToggleRow
@@ -704,10 +703,7 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
       {activeTab === APPEARANCE_TAB_IDS.PRESETS && (
         <>
           {/* 浅色模式预置 */}
-          <SettingCard
-            title={t("lightModePreset")}
-            description={t("lightModePresetDesc")}
-            settingId="appearance-preset-light">
+          <SettingCard title={t("lightModePreset")} settingId="appearance-preset-light">
             <div className="settings-theme-grid">
               {displayLightPresets.map((preset) => (
                 <ThemeCard
@@ -721,10 +717,7 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
           </SettingCard>
 
           {/* 深色模式预置 */}
-          <SettingCard
-            title={t("darkModePreset")}
-            description={t("darkModePresetDesc")}
-            settingId="appearance-preset-dark">
+          <SettingCard title={t("darkModePreset")} settingId="appearance-preset-dark">
             <div className="settings-theme-grid">
               {displayDarkPresets.map((preset) => (
                 <ThemeCard
@@ -829,6 +822,7 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
         <ConfirmDialog
           title={t("deleteStyle")}
           message={t("confirmDeleteStyle")}
+          confirmText={t("deleteStyle")}
           danger
           onConfirm={() => {
             deleteCustomStyle(styleToDelete)

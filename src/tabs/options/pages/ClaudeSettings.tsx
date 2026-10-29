@@ -493,6 +493,11 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
             <ExportIcon size={16} />
             {t("claudeExportJSON")}
           </button>
+
+          <p className="settings-claude-toolbar-hint">
+            <InfoIcon size={14} />
+            <span>{t("claudeExportWarning")}</span>
+          </p>
         </div>
 
         {/* Token 列表 */}
@@ -592,6 +597,7 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
           title={t("claudeImportNameTitle")}
           defaultValue={`Import-${new Date().toLocaleDateString()}`}
           placeholder={t("claudeImportNamePlaceholder")}
+          confirmText={t("importBtn")}
           onConfirm={handleImportComplete}
           onCancel={closeDialog}
         />
@@ -669,7 +675,7 @@ const AddKeyDialog: React.FC<AddKeyDialogProps> = ({ onConfirm, onCancel }) => {
           {t("cancel")}
         </button>
         <button className="gh-dialog-btn gh-dialog-btn-primary" onClick={handleConfirm}>
-          {t("confirm")}
+          {t("claudeAddKey")}
         </button>
       </div>
     </DialogOverlay>

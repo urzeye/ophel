@@ -22,7 +22,6 @@ import { SettingCard, SettingRow } from "../components"
 const REQUIRED_PERMISSIONS = [
   {
     id: "storage",
-    name: "存储",
     nameKey: "permissionStorage",
     description: "permissionStorageDesc",
     Icon: SaveIcon,
@@ -33,7 +32,6 @@ const REQUIRED_PERMISSIONS = [
 const OPTIONAL_PERMISSIONS = [
   {
     id: "notifications",
-    name: "通知",
     nameKey: "permissionNotifications",
     description: "permissionNotificationsDesc",
     Icon: NotificationIcon,
@@ -41,7 +39,6 @@ const OPTIONAL_PERMISSIONS = [
   },
   {
     id: "cookies",
-    name: "Cookie管理",
     nameKey: "permissionCookies",
     description: "permissionCookiesDesc",
     Icon: CookieIcon,
@@ -53,7 +50,6 @@ const OPTIONAL_PERMISSIONS = [
 const OPTIONAL_HOST_PERMISSIONS = [
   {
     id: "webdav",
-    name: "WebDAV 访问权限",
     nameKey: "permissionWebdavAccess",
     description: "permissionWebdavAccessDesc",
     Icon: CloudIcon,
@@ -346,9 +342,9 @@ const PermissionsPage: React.FC = () => {
       {/* 确认弹窗 */}
       {confirmDialog.open && (
         <ConfirmDialog
-          title={t("warning")}
+          title={t("revokePermissionTitle")}
           message={confirmDialog.message}
-          confirmText={t("confirm")}
+          confirmText={t("revoke")}
           cancelText={t("cancel")}
           danger={true}
           onConfirm={confirmDialog.onConfirm}

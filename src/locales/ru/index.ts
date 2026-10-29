@@ -84,7 +84,6 @@ export const ru = {
   sitePacksSourceRegistry: "Онлайн-каталог",
   sitePacksSourceLocal: "Локальный импорт",
   sitePacksStatusAvailable: "Доступен",
-  sitePacksStatusMatchRequired: "Требуется правило",
   sitePacksStatusDisabled: "Отключён",
   sitePacksStatusIncompatible: "Несовместим",
   sitePacksStatusPackMissing: "Пакет отсутствует",
@@ -151,10 +150,7 @@ export const ru = {
   sitePacksMatchGuideAction: "Открыть инструкцию",
   sitePacksBindingPackRequired: "Сначала выберите установленный пакет.",
 
-  generalPageDesc: "Настройте поведение расширения и интерфейс",
-  appearancePageDesc: "Персонализация стилей и тем",
   pageContentPageDesc: "Настройка макета страницы и отображения контента",
-  featuresPageDesc: "Настройка функциональных модулей",
   backupPageDesc: "Управление резервным копированием, облачной синхронизацией и разрешениями",
   aboutPageDesc: "Преимущества ИИ под рукой.",
   tsPlasmoDesc: "Фреймворк для браузерных расширений",
@@ -176,6 +172,7 @@ export const ru = {
   granted: "Разрешено",
   notGranted: "Запрещено",
   revoke: "Отозвать",
+  revokePermissionTitle: "Отозвать разрешение",
   grant: "Разрешить",
   allowRecommended: "Разрешить (рекомендуется)",
   required: "Обязательно",
@@ -229,14 +226,9 @@ export const ru = {
   scrollSettings: "Прокрутка",
   contentProcessing: "Обработка контента",
   interactionEnhance: "Улучшение интерфейса",
-  interactionEnhanceDesc: "Улучшенные таблицы и формулы",
   exportSettings: "Экспорт",
 
   // ======== Features ========
-  outlineSettingsDesc: "Настройка генерации содержания",
-  outlineUpdateIntervalDesc: "Интервал обновления (сек.)",
-  conversationsSettingsDesc: "Синхронизация и отображение",
-  readingHistoryDesc: "Запоминать позицию чтения",
   day: "день",
   days: "дней",
   forever: "Всегда",
@@ -258,8 +250,7 @@ export const ru = {
   aboutDescription:
     "{appName} — браузерное расширение для ИИ-платформ вроде ChatGPT, Claude, Gemini, DeepSeek и Doubao, расширяемое на другие сайты пакетами адаптеров (JSON-правил). Оно предлагает управление диалогами, экспорт в нескольких форматах, умные оглавления, глобальный поиск и очереди промптов, а также восстановление прогресса чтения, рендеринг и копирование формул, уведомления о завершении, блокировку модели и настройку макета. Темы, дзен-режим и синхронизация WebDAV делают работу с ИИ комфортнее.",
   aboutSupportedPlatforms: "Поддерживаемые платформы",
-  aboutSupportedPlatformsDesc:
-    "Сейчас поддерживается {count} AI-платформ, синхронизированных с определением сайта и быстрым доступом в popup.",
+  aboutSupportedPlatformsDesc: "Сейчас поддерживается {count} AI-платформ.",
   projectLinks: "Ссылки",
   githubRepository: "Репозиторий GitHub",
   githubDesc: "Поставьте звезду репозиторию, чтобы поддержать развитие",
@@ -292,26 +283,16 @@ export const ru = {
   // ======== Common Buttons/Labels ========
   tabBehaviorTitle: "Поведение",
   notificationSettings: "Действия после завершения",
-  usageMonitorSettingsTitle: "Локальный счетчик использования и оценка",
-  usageMonitorSettingsDesc:
-    "Показывает рядом с полем ввода локальное число отправок, прогресс по порогам и примерные оценки токенов.",
-  usageMonitorExplainLocalOnly:
-    "Примечание: это только локальная оценка. Расширение не знает официальный оставшийся лимит или реальное серверное ограничение.",
-  usageMonitorExplainNoBackend:
-    "Поведение: счетчики сохраняются только локально, а рядом с полем ввода показывается легкая панель. Никакое дополнительное состояние в бэкенд сайта не записывается.",
-  usageMonitorExplainReset:
-    "Сброс: фактическое время сброса лимитов на платформе может меняться и не всегда совпадает с местной полночью. Автосброс по умолчанию выключен; ручной сброс безопаснее.",
-  usageMonitorExplainRender:
-    "Панель отображается над текущим полем ввода и резервирует место для содержимого страницы. Если сразу после включения она отображается некорректно, обновление страницы обычно стабилизирует верстку.",
-  usageMonitorEnabledLabel: "Включить локальный счетчик и оценку для продвинутых моделей",
+  usageMonitorSettingsTitle: "Оценка использования продвинутых моделей",
+  usageMonitorEnabledLabel: "Показывать оценку использования",
   usageMonitorEnabledDesc:
-    "Использует легкую локальную панель рядом с полем ввода, чтобы оценивать использование текущего аккаунта без изменения поведения сайта.",
-  usageMonitorDailyLimitLabel: "Оценочный дневной лимит диалогов",
+    "Показывает над полем ввода число отправок, посчитанных на этом устройстве, и примерную оценку токенов. Ophel не видит реальный лимит сайта, поэтому цифры ориентировочные. Если отображение сбилось, обновите страницу.",
+  usageMonitorDailyLimitLabel: "Дневной лимит отправок",
   usageMonitorDailyLimitDesc:
-    "Используется для порогов предупреждения 80% / 100%. Это только локальная оценка.",
-  usageMonitorAutoResetLabel: "Включить автосброс",
+    "Предупреждает при достижении 80% и 100% этого значения. Это ваш собственный ориентир, а не реальный лимит сайта.",
+  usageMonitorAutoResetLabel: "Сбрасывать автоматически каждый день",
   usageMonitorAutoResetDesc:
-    "Экспериментально: автоматически сбрасывает счетчик при смене локальной даты. По умолчанию выключено, так как фактическое время сброса на платформе может отличаться.",
+    "Сбрасывает счётчик каждый день в полночь по местному времени. Сайт может сбрасывать лимит в другое время, поэтому по умолчанию выключено.",
   usageMonitorTodayUsed: "Использовано сегодня",
   usageMonitorLocallyUsed: "Учтено локально",
   usageMonitorInputChars: "Символы ввода",
@@ -327,7 +308,7 @@ export const ru = {
   usageMonitorManualMode: "Ручной режим",
   usageMonitorChartTitle: "История использования",
   usageMonitorChartDesc:
-    "Собрано из локальных событий отправки. Просматривайте количество или примерные токены по часам, дням или месяцам.",
+    "Показывает число отправок или примерные токены по часам, дням и месяцам на основе записей, хранящихся на этом устройстве.",
   usageMonitorChartHour: "Час",
   usageMonitorChartDay: "День",
   usageMonitorChartMonth: "Месяц",
@@ -340,26 +321,22 @@ export const ru = {
   usageMonitorChartMetricConversation: "Загруженный контекст",
   usageMonitorChartMetricOutput: "Токены вывода",
   usageMonitorChartDelta: "к предыдущему",
+  usageMonitorChartMax: "Макс.",
   usageMonitorChartMaxConversation: "Макс. загруженный контекст",
   usageMonitorChartMaxRequest: "Макс. один запрос",
   usageMonitorChartMaxRoundTrip: "Макс. один цикл",
   usageMonitorChartMaxOutput: "Макс. один вывод",
-  usageMonitorChartScrollHint: "Прокручивайте горизонтально, чтобы увидеть всю временную шкалу",
   usageMonitorChartEmpty: "Истории пока нет",
   enablePrerequisiteToast: "Сначала включите «{setting}»",
-  privacyModeTitle: "Приватность",
+  privacyModeTitle: "Приватность вкладок",
   collapsedButtonsOrderTitle: "Кнопки",
   quickButtonsOpacityLabel: "Непрозрачность быстрых кнопок",
-  quickButtonsOpacityDesc: "Настройте общую непрозрачность группы быстрых кнопок",
   quickButtonsProximityRadiusLabel: "Дальность обнаружения",
   quickButtonsProximityRadiusDesc:
     "Автоматически разворачивает кнопки, когда курсор входит в эту зону (px). 0 — только при прямом наведении",
   quickButtonsHideWhenPanelOpenLabel: "Скрыть кнопки при открытой панели",
-  quickButtonsHideWhenPanelOpenDesc:
-    "Автоматически скрывает группу быстрых кнопок при открытии панели; восстанавливается при закрытии",
 
   quickButtonsBehaviorTitle: "Поведение быстрых кнопок",
-  quickButtonsBehaviorDesc: "Настройка внешнего вида и поведения группы быстрых кнопок",
   // ======== Continue existing translations ========
   searchPlaceholder: "Поиск промптов...",
   addPrompt: "Новый промпт",
@@ -416,9 +393,11 @@ export const ru = {
     'Удалить облачную резервную копию "{name}"? Это действие необратимо.',
   insertFailed: "Не удалось вставить",
   maximize: "Развернуть",
+  restoreWindow: "Восстановить",
   clearAllData: "Удалить все",
   clearAllDataDesc: "Безвозвратно удаляет все локальные настройки, промпты и чаты.",
-  clearAllDataConfirm: "Удалить все данные? Это действие необратимо.",
+  clearAllDataConfirm:
+    "Удалить все данные? Это действие необратимо. Сначала экспортируйте резервную копию.",
   clearSuccess: "Очищено, перезагрузка...",
   defaultDir: "Папка по умолчанию",
   dangerZone: "Опасная зона",
@@ -464,7 +443,6 @@ export const ru = {
   promptMergeSuccess: "Готово: {updated} обновлено, {added} новых",
   promptDeleteConfirm: "Этот промпт будет удалён безвозвратно.",
   promptSettingsTitle: "Настройки промптов",
-  promptSettingsDesc: "Настройка взаимодействия во вкладке промптов",
   promptSubmitShortcutLabel: "Горячая клавиша отправки",
   promptSubmitShortcutDesc: "Применяется и к ручной отправке, и к автоотправке промптов.",
   promptSubmitShortcutEnter: "Enter",
@@ -597,7 +575,6 @@ export const ru = {
   quickQuoteReply: "Ответ с цитатой",
   quickQuoteChainQueueSource: "Chain: {title} · {index}/{total}",
   quickQuoteSettingsTitle: "Цитата выделения",
-  quickQuoteSettingsDesc: "Управляет показом всплывающего меню цитаты Ophel на совместимых сайтах.",
   quickQuoteEnabledLabel: "Цитата выделения Ophel",
   quickQuoteEnabledDesc:
     "Если включено, совместимые сайты показывают меню цитаты Ophel после выделения текста. Сайты с нативным меню цитаты остаются под управлением сайта.",
@@ -676,9 +653,9 @@ export const ru = {
   themeSettings: "Настройки темы",
   currentThemeMode: "Режим",
   themeSettingsDesc: "Темы для светлого/темного режимов",
-  syncNativePageThemeLabel: "Синхронизировать нативные цвета страницы",
+  syncNativePageThemeLabel: "Синхронизировать цвета страницы сайта",
   syncNativePageThemeDesc:
-    "Светлый/тёмный режим сайта всегда следует за Ophel. Включите это, чтобы дополнительно менять некоторые цвета нативных элементов (работает только на части сайтов).",
+    "Светлый/тёмный режим сайта всегда следует за Ophel. Включите это, чтобы дополнительно менять цвета некоторых элементов интерфейса самого сайта (работает только на части сайтов).",
   themeLight: "Светлая",
   themeSystem: "Система",
   customCSS: "CSS-стили",
@@ -702,9 +679,7 @@ export const ru = {
   newStyle: "Новый стиль",
   editStyleTitle: "Правка стиля",
   lightModePreset: "Светлая тема",
-  lightModePresetDesc: "Только для светлого режима",
   darkModePreset: "Темная тема",
-  darkModePresetDesc: "Только для темного режима",
   primaryColor: "Основной",
   secondaryColor: "Второй",
   // Theme preset names
@@ -775,7 +750,7 @@ export const ru = {
   pageWidthLabel: "Ширина страницы",
   pageWidthValueLabel: "Значение",
   pageWidthDesc:
-    "Настраивает ширину страницы чата в реальном времени. Когда включен умный обход, фактическая ширина может быть ограничена безопасной областью панели.",
+    "Настраивает ширину страницы чата в реальном времени. Когда включён умный обход, страница уступает место открытой панели, поэтому фактическая ширина может быть немного меньше.",
   panelAvoidanceTitle: "Умный обход",
   betaBadge: "Beta",
   panelAvoidanceDesc:
@@ -824,8 +799,9 @@ export const ru = {
   notifyWhenFocusedDesc: "Пищать, даже если страница открыта",
   autoFocusLabel: "Авто-вывод окна вперед",
   autoFocusDesc: "Выводить окно вперед в конце",
-  privacyModeLabel: "Приватный режим",
-  privacyModeDesc: "Фальшивый заголовок",
+  privacyModeLabel: "Скрывать заголовок вкладки",
+  privacyModeDesc:
+    "Заменяет заголовок вкладки браузера на фальшивый заголовок ниже. Содержимое страницы не меняется.",
   privacyTitleLabel: "Фальш-имя",
   privacyTitlePlaceholder: "Напр.: Google, Работа",
   titleFormatLabel: "Формат имени",
@@ -844,7 +820,6 @@ export const ru = {
   outlineSettings: "Настройки содержания",
   bookmarkSettings: "Настройки закладок",
   bookmarkModeDisableLevel: "Невозможно настроить уровни в режиме закладок",
-  bookmarkSettingsDesc: "Настройки, связанные с закладками",
   inlineBookmarkModeLabel: "Значки закладок",
   inlineBookmarkModeDesc: "Отображение значков рядом с заголовками",
   panelBookmarkModeLabel: "Значки в панели",
@@ -875,7 +850,7 @@ export const ru = {
   syncingConversations: "Синхронизация...",
   grokSyncingConversations: "Грузим историю, подождите...",
   // Tab Order Settings
-  tabOrderSettings: "Расположение UI",
+  tabOrderSettings: "Порядок вкладок",
   tabOrderDesc: "Порядок вкладок панели (перетащите для сортировки)",
   tabOrderAtLeastOne: "Должна оставаться включенной хотя бы одна вкладка функций",
   moveUp: "Выше",
@@ -922,7 +897,7 @@ export const ru = {
   floatingToolbarClearGhostConfirm: "Удалить {count} недействительных закладок в этой сессии?",
   floatingToolbarClearGhostEmpty: "Нет недействительных закладок для удаления.",
   showCollapsedThemeDesc: "Смена темы в сайдбаре",
-  collapsedButtonsOrderDesc: "Порядок кнопок в сайдбаре (перетащите для сортировки)",
+  collapsedButtonsOrderDesc: "Перетащите ручку, чтобы изменить порядок кнопок.",
   preventAutoScrollLabel: "Блок авто-скролла",
   preventAutoScrollDesc: "Не скроллить вниз самовольно",
   // Panel Mode
@@ -956,7 +931,6 @@ export const ru = {
   defaultEdgeDistanceDesc:
     "Расстояние по умолчанию от края окна браузера после обновления страницы",
   panelWidthLabel: "Ширина панели",
-  panelWidthDesc: "Ширина панели (px)",
   panelResizeOnHoverLabel: "Расширять при наведении",
   panelResizeOnHoverDesc:
     "Временно расширяет плавающую панель, пока указатель находится над ней, затем возвращает обычную ширину",
@@ -1022,12 +996,12 @@ export const ru = {
   // Conversation Settings
   conversationsSettingsTitle: "Настройки чатов",
   conversationsSyncUnpinLabel: "Синхро открепления",
-  conversationsSyncUnpinDesc: "Откреплять здесь, если откреплено в облаке",
+  conversationsSyncUnpinDesc: "При синхронизации откреплять здесь то, что откреплено на сайте",
   folderRainbowLabel: "Радужные папки",
   folderRainbowDesc: "Случайные цвета папок",
-  conversationsSyncDeleteLabel: "Удалять в облаке",
+  conversationsSyncDeleteLabel: "Удалять и на сайте",
   conversationsSyncDeleteDesc:
-    "При удалении локальной записи также удалять облачный диалог на соответствующем сайте",
+    "При удалении диалога в Ophel исходный диалог на сайте тоже удаляется. Это нельзя отменить.",
   conversationsSyncRenameLabel: "Имя в облаке",
   conversationsSyncRenameDesc: "Менять имя в {site} тоже",
   conversationsCustomIcon: "Свой значок",
@@ -1139,7 +1113,7 @@ export const ru = {
   exportDataBtn: "Экспорт всего",
   importDataBtn: "Импорт",
   exportError: "Ошибка: ",
-  importConfirm: "Уверены? Всё текущее сотрется.",
+  importConfirm: "Импорт заменит текущие данные теми, что содержатся в резервной копии.",
   importSuccess: "Успех. Перезагрузка...",
   importError: "Ошибка: ",
   invalidBackupFile: "Не тот формат",
@@ -1194,10 +1168,10 @@ export const ru = {
   webdavConnectionSuccess: "ОК",
   webdavUploadSuccess: "Залито",
   webdavDownloadSuccess: "Скачано",
-  webdavConfigIncomplete: "Настройка не полная",
+  webdavConfigIncomplete: "Укажите адрес WebDAV, имя пользователя и пароль",
   webdavAuthFailed: "Имя/Пароль не те",
-  webdavConnectionFailed: "Сеть упала",
-  webdavUploadFailed: "Ошибка заливки",
+  webdavConnectionFailed: "Не удалось подключиться: проверьте адрес WebDAV и сеть",
+  webdavUploadFailed: "Не удалось загрузить: проверьте права, папку и сеть",
   webdavDownloadFailed: "Ошибка скачки",
   webdavFileNotFound: "Файл не найден",
   webdavInvalidFormat: "Файл битый",
@@ -1208,7 +1182,8 @@ export const ru = {
   importDataDesc: "Вернуть из файла",
 
   fullBackup: "Всё сразу",
-  fullBackupDesc: "Экспортирует все данные аккаунта и настройки.",
+  fullBackupDesc:
+    "Экспортирует все данные и настройки. Включает Session Key Claude — храните файл надёжно.",
   promptsBackup: "Только промпты",
   promptsBackupDesc: "Без папок и тегов",
   settingsBackup: "Только настройки",
@@ -1320,13 +1295,11 @@ export const ru = {
 
   // ======== Shortcuts Settings Page ========
   navShortcuts: "Горячие клавиши",
-  shortcutsPageDesc: "Ускорение работы кнопками",
   shortcutsInteractionGroup: "Независимые настройки",
   shortcutsInteractionGroupDesc:
     "Настройки этой группы всегда активны и не зависят от переключателя «Включить пользовательские сочетания»",
   shortcutsGlobalSettings: "Настройки клавиш",
   enableShortcuts: "Включить пользовательские сочетания",
-  enableShortcutsDesc: "Включить или отключить все пользовательские клавиатурные сочетания",
   globalShortcutUrl: "Глобальная ссылка",
   globalShortcutUrlDesc: "Что открывать через {shortcut}",
   resetShortcuts: "Сброс в ноль",
@@ -1448,6 +1421,8 @@ export const ru = {
   claudeImportFromBrowser: "Из браузера",
   claudeImportJSON: "Из JSON",
   claudeExportJSON: "В JSON",
+  claudeExportWarning:
+    "Экспортированный файл содержит Session Key целиком. Это всё равно что данные для входа в аккаунт: храните файл надёжно и никому не передавайте.",
   claudeNoKeys: "Пусто",
   claudeNoKeysHint: "Натимите 'Добавить'",
   claudeKeyValid: "ОК",
@@ -1526,12 +1501,12 @@ export const ru = {
   // ======== Настройки ChatGPT ========
   chatgptMarkdownFixLabel: "Исправление жирного Markdown",
   chatgptMarkdownFixDesc: "Исправить нерендеренный **жирный** текст в ответах ChatGPT",
-  chatgptCodeBlockBatchMountLabel: "Пакетное монтирование блоков кода",
+  chatgptCodeBlockBatchMountLabel: "Загружать блоки кода порциями",
   chatgptCodeBlockBatchMountDesc:
-    "Монтирует редакторы кода пакетно при открытии или переключении длинных диалогов, уменьшая зависания страницы",
-  chatgptStreamingRenderOptimizeLabel: "Оптимизация рендеринга при стриминге",
+    "Загружает блоки кода порциями при открытии или переключении длинных диалогов, уменьшая зависания страницы",
+  chatgptStreamingRenderOptimizeLabel: "Меньше анимаций при генерации",
   chatgptStreamingRenderOptimizeDesc:
-    "Приостанавливает анимации и переходы в области сообщений во время генерации ответа, снижая нагрузку на отрисовку",
+    "Приостанавливает анимации и переходы в области сообщений во время генерации ответа, чтобы уменьшить подтормаживания",
   chatgptDisableBackdropBlurLabel: "Отключить размытие фона",
   chatgptDisableBackdropBlurDesc:
     "Отключает эффекты размытия фона, чтобы уменьшить просадки кадров при прокрутке длинных диалогов; немного меняет внешний вид страницы",
@@ -1581,7 +1556,6 @@ export const ru = {
   // Меню инструментов
   toolboxMenu: "Инструменты",
   toolboxMenuTitle: "Меню инструментов",
-  toolboxMenuDesc: "Настройка функций, отображаемых во всплывающем меню инструментов",
 
   // Global Settings Search
   globalSearchCategoryAll: "Все",
@@ -1625,15 +1599,11 @@ export const ru = {
   globalSearchEmptyCurrentSession: "Нет результатов в текущей сессии",
   globalSearchCategoriesLabel: "Категории глобального поиска",
   globalSearchMatchingSettingsTitle: "Сопоставление поиска",
-  globalSearchMatchingSettingsDesc:
-    "Настройте, как Search Everywhere сопоставляет результаты поиска.",
   globalSearchShortcutSettingLabel: "Горячая клавиша глобального поиска",
   globalSearchShortcutSettingDesc:
     "Перейдите в настройки горячих клавиш, чтобы настроить или отключить горячую клавишу глобального поиска.",
   globalSearchShortcutSettingAction: "Перейти в настройки",
   globalSearchPromptSettingsTitle: "Поведение промптов",
-  globalSearchPromptSettingsDesc:
-    "Выберите действие при нажатии Enter на результате промпта в Search Everywhere",
   globalSearchPromptEnterBehaviorLabel: "Действие Enter для промптов в Search Everywhere",
   globalSearchPromptEnterBehaviorDesc:
     "Умный режим: вставляет сразу без переменных, а при необходимости открывает окно переменных; Только перейти: переключает на список промптов и находит элемент.",
@@ -1641,13 +1611,12 @@ export const ru = {
   globalSearchPromptEnterBehaviorLocate: "Только перейти",
   globalSearchEnableFuzzySearchLabel: "Включить нечеткий поиск",
   globalSearchEnableFuzzySearchDesc:
-    "При включении Search Everywhere использует нечеткое совпадение по заголовку, папке, тегу, содержимому промпта и идентификатору настройки.",
+    "При включении Search Everywhere использует нечёткое совпадение по заголовкам, папкам, тегам, содержимому промптов и настройкам.",
   globalSearchFuzzySearchToggle: "Нечетк.",
   globalSearchFuzzySearchToggleAria: "Переключить нечеткий поиск",
   globalSearchFooterTips: "Enter — перейти · ↑↓ — выбрать · Tab — категории · Esc — закрыть",
   globalSearchShortcutNudge: "В следующий раз используйте {shortcut}, чтобы открыть быстрее",
   doubleShiftToSearch: "Двойной Shift для открытия глобального поиска",
-  doubleShiftToSearchDesc: "Быстро нажмите Shift дважды, чтобы открыть глобальный поиск",
   globalSearchShortcutNudgeDismiss: "Больше не напоминать",
   globalSearchContextCurrentItem: "Элемент {current}",
   globalSearchContextShownProgress: "Показано {shown}/{total}",
@@ -1721,7 +1690,6 @@ export const ru = {
   watermarkFailed: "Ошибка удаления",
   shortcutToggleModelLock: "Переключить блокировку модели",
   exportFilenameTimestamp: "Добавлять отметку времени к имени файла",
-  exportFilenameTimestampDesc: "Добавляет отметку времени в конец имени экспортируемого файла",
   exportIncludeThoughtsLabel: "Включать рассуждения при экспорте",
   exportThoughtCollapsedLabel: "Процесс мышления",
   exportIncludeThoughtsDesc:
@@ -1885,7 +1853,8 @@ export const ru = {
   // Обновления конфигурации адаптеров
   remoteConfigSettingsTitle: "Обновления конфигурации адаптеров",
   remoteConfigAutoUpdateLabel: "Автоматически обновлять конфигурации адаптеров",
-  remoteConfigAutoUpdateDesc: "Проверяет не чаще одного раза в 24 часа.",
+  remoteConfigAutoUpdateDesc:
+    "Скачивает актуальные правила для встроенных сайтов и исправляет поломки после изменений на сайте. Проверяет не чаще одного раза в 24 часа.",
   remoteConfigRegistrySourceLabel: "Источник Registry для разработки",
   remoteConfigRegistrySourceDesc:
     "Укажите полный URL index.json; оставьте поле пустым, чтобы использовать источники по умолчанию.",
@@ -1907,8 +1876,8 @@ export const ru = {
   remoteConfigResetBuiltinButton: "Вернуть встроенную",
   remoteConfigResettingButton: "Возврат…",
   remoteConfigPrivacyDesc:
-    "Проверки отправляют только GET-запросы к статическим CDN, без переписки и данных аккаунта.",
-  sitePacksAdvancedTitle: "Дополнительно",
+    "Проверки лишь скачивают файлы конфигурации. Переписка и данные аккаунта не отправляются.",
+  sitePacksAdvancedTitle: "Для разработчиков",
   remoteConfigCheckUpdated:
     "Новые конфигурации загружены. Обновите соответствующие страницы AI, чтобы применить их.",
   remoteConfigCheckUpToDate: "Конфигурации адаптеров актуальны.",

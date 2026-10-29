@@ -706,6 +706,13 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   margin-bottom: 24px;
 }
 
+/* 页面标题后直接接页签条或卡片（没有页面简介）时补足间距：
+   与标题的 8px 下边距会合并，实际间距取较大值，对齐页签条下方的 20px 节奏 */
+.settings-page-header + .settings-tab-group-container,
+.settings-page-header + .settings-card {
+  margin-top: 20px;
+}
+
 .settings-site-selector {
   /* 吸顶：与 .settings-tab-group-container 同一范式，top 抵消内容区 24px 上内边距 */
   position: sticky;
@@ -6167,6 +6174,23 @@ html[data-theme="dark"] .about-privacy-banner {
   flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 16px;
+}
+
+/* 导出 JSON 会写出完整 Session Key：风险提示常驻在操作栏末尾，独占一行 */
+.settings-claude-toolbar-hint {
+  display: flex;
+  flex: 0 0 100%;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--gh-text-secondary, #6b7280);
+}
+
+.settings-claude-toolbar-hint > svg {
+  flex-shrink: 0;
+  margin-top: 2px;
 }
 
 .settings-claude-empty {

@@ -101,9 +101,21 @@ export const SHORTCUT_META: Record<
     category: "panel",
   },
   toggleTheme: { labelKey: "shortcutToggleTheme", label: "切换主题", category: "panel" },
-  switchTab1: { labelKey: "shortcutSwitchTab1", label: "切换到第 1 个标签", category: "panel" },
-  switchTab2: { labelKey: "shortcutSwitchTab2", label: "切换到第 2 个标签", category: "panel" },
-  switchTab3: { labelKey: "shortcutSwitchTab3", label: "切换到第 3 个标签", category: "panel" },
+  switchTab1: {
+    labelKey: "shortcutSwitchTab1",
+    label: "切换到第 1 个面板标签",
+    category: "panel",
+  },
+  switchTab2: {
+    labelKey: "shortcutSwitchTab2",
+    label: "切换到第 2 个面板标签",
+    category: "panel",
+  },
+  switchTab3: {
+    labelKey: "shortcutSwitchTab3",
+    label: "切换到第 3 个面板标签",
+    category: "panel",
+  },
 
   // 大纲类
   toggleUserQueries: {
@@ -249,17 +261,17 @@ export const SHORTCUT_META: Record<
 
   openGeminiSettings: {
     labelKey: "shortcutOpenGeminiSettings",
-    label: "打开 Gemini 专属",
+    label: "打开 Gemini 专属设置",
     category: "settings",
   },
   openClaudeSettings: {
     labelKey: "shortcutOpenClaudeSettings",
-    label: "打开 Claude 专属",
+    label: "打开 Claude 专属设置",
     category: "settings",
   },
   switchClaudeKey: {
     labelKey: "shortcutSwitchClaudeKey",
-    label: "一键切换可用 Claude Key",
+    label: "一键切换可用 Session Key",
     category: "settings",
   },
 }

@@ -339,6 +339,7 @@ const UsageHistoryChart: React.FC<{ siteId: string }> = ({ siteId }) => {
                 key={value}
                 size="sm"
                 variant={metric === value ? "primary" : "secondary"}
+                title={value === "roundTripTokens" ? t("usageMonitorRoundTripDesc") : undefined}
                 onClick={() => setMetric(value)}>
                 {label}
               </Button>
@@ -364,11 +365,8 @@ const UsageHistoryChart: React.FC<{ siteId: string }> = ({ siteId }) => {
           <strong style={{ color: "var(--gh-text, #374151)" }}>{selectedSiteLabel}</strong>
         </div>
         <div style={{ fontSize: "12px", color: "var(--gh-text-secondary, #6b7280)" }}>
-          <span>MAX: </span>
+          <span>{t("usageMonitorChartMax")}: </span>
           <strong style={{ color: "var(--gh-text, #374151)" }}>{maxValue}</strong>
-        </div>
-        <div style={{ fontSize: "12px", color: "var(--gh-text-secondary, #6b7280)" }}>
-          <span>{t("usageMonitorChartScrollHint")}</span>
         </div>
       </div>
 
@@ -943,26 +941,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
     </SettingCard>
   )
   const usageMonitorCard = (
-    <SettingCard
-      title={t("usageMonitorSettingsTitle")}
-      description={t("usageMonitorSettingsDesc")}
-      settingId="usage-monitor-card">
-      <div
-        style={{
-          marginBottom: "12px",
-          padding: "10px 12px",
-          borderRadius: "10px",
-          border: "1px solid var(--gh-border, #e5e7eb)",
-          background: "var(--gh-bg-secondary, #f9fafb)",
-          color: "var(--gh-text-secondary, #6b7280)",
-          fontSize: "12px",
-          lineHeight: 1.6,
-        }}>
-        <div>{t("usageMonitorExplainLocalOnly")}</div>
-        <div>{t("usageMonitorExplainNoBackend")}</div>
-        <div>{t("usageMonitorExplainReset")}</div>
-      </div>
-
+    <SettingCard title={t("usageMonitorSettingsTitle")} settingId="usage-monitor-card">
       <ToggleRow
         label={t("usageMonitorEnabledLabel")}
         description={t("usageMonitorEnabledDesc")}
@@ -972,21 +951,6 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
           updateNestedSetting("usageMonitor", "enabled", !(settings.usageMonitor?.enabled ?? false))
         }
       />
-
-      <div
-        style={{
-          marginTop: "-2px",
-          marginBottom: "12px",
-          padding: "10px 12px",
-          borderRadius: "10px",
-          border: "1px solid var(--gh-border-active, #6366f1)",
-          background: "var(--gh-user-query-bg, rgba(66, 133, 244, 0.08))",
-          color: "var(--gh-text, #374151)",
-          fontSize: "12px",
-          lineHeight: 1.55,
-        }}>
-        {t("usageMonitorExplainRender")}
-      </div>
 
       <SettingRow
         label={t("usageMonitorDailyLimitLabel")}
@@ -1006,7 +970,13 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
       </SettingRow>
 
       <ToggleRow
-        label={t("usageMonitorAutoResetLabel")}
+        label={
+          <span className="settings-row-label-with-badge">
+            <span>{t("usageMonitorAutoResetLabel")}</span>
+            <span className="settings-beta-badge">{t("betaBadge")}</span>
+          </span>
+        }
+        ariaLabel={t("usageMonitorAutoResetLabel")}
         description={t("usageMonitorAutoResetDesc")}
         settingId="usage-monitor-auto-reset"
         checked={settings.usageMonitor?.autoResetEnabled ?? false}
@@ -1028,7 +998,6 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
   return (
     <div>
       <PageTitle title={t("navFeatures")} Icon={FeaturesIcon} />
-      <p className="settings-page-desc">{t("featuresPageDesc")}</p>
 
       <TabGroup tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
@@ -1148,10 +1117,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
       {/* ========== 大纲 Tab ========== */}
       {activeTab === FEATURES_TAB_IDS.OUTLINE && (
         <>
-          <SettingCard
-            title={t("outlineSettings")}
-            description={t("outlineSettingsDesc")}
-            settingId="outline-settings-card">
+          <SettingCard title={t("outlineSettings")} settingId="outline-settings-card">
             <ToggleRow
               label={t("outlineAutoUpdateLabel")}
               description={t("outlineAutoUpdateDesc")}
@@ -1167,10 +1133,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
               }
             />
 
-            <SettingRow
-              label={t("outlineUpdateIntervalLabel")}
-              description={t("outlineUpdateIntervalDesc")}
-              settingId="outline-update-interval">
+            <SettingRow label={t("outlineUpdateIntervalLabel")} settingId="outline-update-interval">
               <NumberInput
                 value={settings.features?.outline?.updateInterval ?? 2}
                 onChange={(val) => updateDeepSetting("features", "outline", "updateInterval", val)}
@@ -1229,10 +1192,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
           </SettingCard>
 
           {/* 收藏图标设置卡片 */}
-          <SettingCard
-            title={t("bookmarkSettings")}
-            description={t("bookmarkSettingsDesc")}
-            settingId="bookmark-settings-card">
+          <SettingCard title={t("bookmarkSettings")} settingId="bookmark-settings-card">
             <SettingRow
               label={t("inlineBookmarkModeLabel")}
               description={t("inlineBookmarkModeDesc")}
@@ -1376,7 +1336,6 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
 
             <ToggleRow
               label={t("exportFilenameTimestamp")}
-              description={t("exportFilenameTimestampDesc")}
               settingId="export-filename-timestamp"
               checked={settings.export?.exportFilenameTimestamp ?? false}
               onChange={() =>
@@ -1446,7 +1405,6 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
 
           <SettingCard
             title={t("conversationsSettingsTitle")}
-            description={t("conversationsSettingsDesc")}
             settingId="conversations-settings-card">
             <ToggleRow
               label={t("folderRainbowLabel")}
@@ -1497,10 +1455,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
       {/* ========== Prompt Tab ========== */}
       {activeTab === FEATURES_TAB_IDS.PROMPTS && (
         <>
-          <SettingCard
-            title={t("promptSettingsTitle")}
-            description={t("promptSettingsDesc")}
-            settingId="prompts-settings-card">
+          <SettingCard title={t("promptSettingsTitle")} settingId="prompts-settings-card">
             <ToggleRow
               label={t("promptDoubleClickSendLabel")}
               description={t("promptDoubleClickSendDesc")}
@@ -1551,10 +1506,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
             />
           </SettingCard>
 
-          <SettingCard
-            title={t("quickQuoteSettingsTitle")}
-            description={t("quickQuoteSettingsDesc")}
-            settingId="quick-quote-settings-card">
+          <SettingCard title={t("quickQuoteSettingsTitle")} settingId="quick-quote-settings-card">
             <ToggleRow
               label={t("quickQuoteEnabledLabel")}
               description={t("quickQuoteEnabledDesc")}
@@ -1575,10 +1527,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
 
       {/* ========== Reading History Tab ========== */}
       {activeTab === FEATURES_TAB_IDS.READING_HISTORY && (
-        <SettingCard
-          title={t("readingHistoryTitle")}
-          description={t("readingHistoryDesc")}
-          settingId="reading-history-card">
+        <SettingCard title={t("readingHistoryTitle")} settingId="reading-history-card">
           <ToggleRow
             label={t("readingHistoryPersistenceLabel")}
             description={t("readingHistoryPersistenceDesc")}
@@ -1633,10 +1582,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
 
       {/* ========== 内容交互 Tab ========== */}
       {activeTab === FEATURES_TAB_IDS.CONTENT && (
-        <SettingCard
-          title={t("interactionEnhance")}
-          description={t("interactionEnhanceDesc")}
-          settingId="content-interaction-card">
+        <SettingCard title={t("interactionEnhance")} settingId="content-interaction-card">
           <ToggleRow
             label={t("assistantMermaidLabel")}
             description={t("assistantMermaidDesc")}
@@ -1727,7 +1673,6 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
         <>
           <SettingCard
             title={t("globalSearchMatchingSettingsTitle")}
-            description={t("globalSearchMatchingSettingsDesc")}
             settingId="global-search-matching-card">
             <SettingRow
               label={t("globalSearchShortcutSettingLabel")}
@@ -1762,7 +1707,6 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
 
             <ToggleRow
               label={t("doubleShiftToSearch")}
-              description={t("doubleShiftToSearchDesc")}
               checked={doubleShiftToSearch}
               onChange={() =>
                 updateNestedSetting("globalSearch", "doubleShift", !doubleShiftToSearch)
@@ -1783,7 +1727,6 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
 
           <SettingCard
             title={t("globalSearchPromptSettingsTitle")}
-            description={t("globalSearchPromptSettingsDesc")}
             settingId="global-search-prompt-card">
             <SettingRow
               label={t("globalSearchPromptEnterBehaviorLabel")}

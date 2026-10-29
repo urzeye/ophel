@@ -363,7 +363,6 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
   return (
     <div>
       <PageTitle title={t("navGeneral")} Icon={GeneralIcon} />
-      <p className="settings-page-desc">{t("generalPageDesc")}</p>
 
       <TabGroup tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
@@ -508,7 +507,6 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
                         <ChevronDownIcon size={14} className="settings-panel-width-icon" />
                       </span>
                     </div>
-                    <div className="settings-row-desc">{t("panelWidthDesc")}</div>
                   </div>
                 </button>
                 <div className="settings-row-control">
@@ -588,10 +586,7 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
               )}
             </div>
           ) : (
-            <SettingRow
-              label={t("panelWidthLabel")}
-              description={t("panelWidthDesc")}
-              settingId="panel-width">
+            <SettingRow label={t("panelWidthLabel")} settingId="panel-width">
               <Slider
                 value={Math.max(settings.panel?.width ?? 320, 240)}
                 onChange={handleWidthChange}
@@ -745,13 +740,9 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
       {/* ========== 快捷按钮 Tab ========== */}
       {activeTab === "shortcuts" && (
         <>
-          <SettingCard
-            title={t("quickButtonsBehaviorTitle")}
-            description={t("quickButtonsBehaviorDesc")}
-            settingId="quick-buttons-card">
+          <SettingCard title={t("quickButtonsBehaviorTitle")} settingId="quick-buttons-card">
             <ToggleRow
               label={t("quickButtonsHideWhenPanelOpenLabel")}
-              description={t("quickButtonsHideWhenPanelOpenDesc")}
               settingId="quick-buttons-hide-when-panel-open"
               checked={
                 settings.quickButtons?.hideWhenPanelOpen ??
@@ -789,10 +780,7 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
                 ariaLabel={t("quickButtonsProximityRadiusLabel")}
               />
             </SettingRow>
-            <SettingRow
-              label={t("quickButtonsOpacityLabel")}
-              description={t("quickButtonsOpacityDesc")}
-              settingId="quick-buttons-opacity">
+            <SettingRow label={t("quickButtonsOpacityLabel")} settingId="quick-buttons-opacity">
               <Slider
                 value={settings.quickButtons?.opacity ?? DEFAULT_SETTINGS.quickButtons.opacity}
                 onChange={(value) => updateNestedSetting("quickButtons", "opacity", value)}
@@ -851,10 +839,7 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
 
       {/* ========== 工具箱菜单 Tab ========== */}
       {activeTab === "toolsMenu" && (
-        <SettingCard
-          title={t("toolboxMenuTitle")}
-          description={t("toolboxMenuDesc")}
-          settingId="toolbox-menu-card">
+        <SettingCard title={t("toolboxMenuTitle")} settingId="toolbox-menu-card">
           {TOOLS_MENU_ITEMS.filter((item) => item.id !== TOOLS_MENU_IDS.SETTINGS).map((item) => {
             const enabledIds = settings.quickButtons?.toolsMenu ?? getDefaultToolsMenuIds()
             const isEnabled = enabledIds.includes(item.id)

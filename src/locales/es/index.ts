@@ -83,7 +83,6 @@ export const es = {
   sitePacksSourceRegistry: "En línea",
   sitePacksSourceLocal: "Importación local",
   sitePacksStatusAvailable: "Disponible",
-  sitePacksStatusMatchRequired: "Falta regla de coincidencia",
   sitePacksStatusDisabled: "Desactivado",
   sitePacksStatusIncompatible: "Incompatible",
   sitePacksStatusPackMissing: "Falta el paquete",
@@ -153,10 +152,7 @@ export const es = {
   sitePacksMatchGuideAction: "Ver guía de configuración",
   sitePacksBindingPackRequired: "Elige primero un paquete instalado.",
 
-  generalPageDesc: "Configurar el comportamiento de la extensión",
-  appearancePageDesc: "Personalizar estilos visuales y temas",
   pageContentPageDesc: "Ajustar diseño de página y visualización",
-  featuresPageDesc: "Configurar módulos de funciones",
   backupPageDesc: "Gestionar copias de seguridad, sincronización y permisos",
   aboutPageDesc: "La IA a su alcance.",
   tsPlasmoDesc: "Framework de extensiones de navegador",
@@ -178,6 +174,7 @@ export const es = {
   granted: "Concedido",
   notGranted: "No Concedido",
   revoke: "Revocar",
+  revokePermissionTitle: "Revocar permiso",
   grant: "Conceder",
   allowRecommended: "Permitir (Recomendado)",
   required: "Requerido",
@@ -231,14 +228,9 @@ export const es = {
   scrollSettings: "Desplazamiento",
   contentProcessing: "Procesamiento de Contenido",
   interactionEnhance: "Mejoras de Interacción",
-  interactionEnhanceDesc: "Mejorar tablas y fórmulas",
   exportSettings: "Exportación",
 
   // ======== Features ========
-  outlineSettingsDesc: "Configurar generación de índice",
-  outlineUpdateIntervalDesc: "Intervalo de actualización (segundos)",
-  conversationsSettingsDesc: "Sincronización y visualización",
-  readingHistoryDesc: "Recordar posición de lectura",
   day: "día",
   days: "días",
   forever: "Siempre",
@@ -260,8 +252,7 @@ export const es = {
   aboutDescription:
     "{appName} es una extensión de navegador para plataformas de IA como ChatGPT, Claude, Gemini, DeepSeek y Doubao, ampliable a más sitios mediante paquetes de adaptadores (reglas JSON). Ofrece gestión de conversaciones, exportación multiformato, esquemas inteligentes, búsqueda global y colas de prompts, además de restauración del progreso de lectura, renderizado y copia de fórmulas, avisos de finalización, bloqueo de modelo y ajuste del diseño. Con temas, modo Zen y sincronización WebDAV, hace que tu interacción con la IA sea más fluida y agradable.",
   aboutSupportedPlatforms: "Plataformas compatibles",
-  aboutSupportedPlatformsDesc:
-    "Actualmente cubre {count} plataformas de IA, sincronizadas con la detección y el acceso rápido del popup.",
+  aboutSupportedPlatformsDesc: "Actualmente admite {count} plataformas de IA.",
   projectLinks: "Enlaces del Proyecto",
   githubRepository: "Repositorio de GitHub",
   githubDesc: "Da una estrella al repositorio para apoyar el desarrollo",
@@ -295,26 +286,16 @@ export const es = {
   // ======== Common Buttons/Labels ========
   tabBehaviorTitle: "Comportamiento",
   notificationSettings: "Acciones al Finalizar",
-  usageMonitorSettingsTitle: "Contador local de uso y estimación",
-  usageMonitorSettingsDesc:
-    "Muestra recuentos locales de envíos, progreso de umbrales y estimaciones aproximadas de tokens cerca del cuadro de entrada.",
-  usageMonitorExplainLocalOnly:
-    "Nota: esto es solo una estimación local. La extensión no conoce la cuota oficial restante ni el límite real del servidor.",
-  usageMonitorExplainNoBackend:
-    "Comportamiento: solo guarda los contadores localmente y muestra un panel ligero cerca del cuadro de redacción. No escribe estado adicional en el backend del sitio.",
-  usageMonitorExplainReset:
-    "Reinicio: las horas reales de reinicio de la plataforma pueden variar y no siempre coinciden con la medianoche local. El reinicio automático está desactivado por defecto; el reinicio manual es la opción más segura.",
-  usageMonitorExplainRender:
-    "El panel se muestra encima del cuadro de redacción actual y reserva espacio para el contenido de la página. Si el renderizado se ve extraño justo después de activarlo, recargar la página debería estabilizar el diseño.",
-  usageMonitorEnabledLabel: "Activar contador y estimación local para modelos avanzados",
+  usageMonitorSettingsTitle: "Estimación de uso de modelos avanzados",
+  usageMonitorEnabledLabel: "Mostrar estimación de uso",
   usageMonitorEnabledDesc:
-    "Usa un panel local ligero cerca del cuadro de redacción para estimar el uso de la cuenta actual sin cambiar el comportamiento del sitio.",
-  usageMonitorDailyLimitLabel: "Límite diario estimado de conversaciones",
+    "Muestra encima del cuadro de entrada los envíos contados en este dispositivo y una estimación de tokens. Ophel no ve la cuota real del sitio, así que las cifras son orientativas. Si la visualización falla, recarga la página.",
+  usageMonitorDailyLimitLabel: "Límite diario de envíos",
   usageMonitorDailyLimitDesc:
-    "Se usa para los umbrales de aviso del 80 % / 100 %. Esto es solo una estimación local.",
-  usageMonitorAutoResetLabel: "Activar reinicio automático",
+    "Avisa al llegar al 80 % y al 100 % de este valor. Es una referencia que defines tú, no el límite real del sitio.",
+  usageMonitorAutoResetLabel: "Reiniciar automáticamente cada día",
   usageMonitorAutoResetDesc:
-    "Experimental: reinicia automáticamente cuando cambia la fecha local. Está desactivado por defecto porque las horas reales de reinicio de la plataforma pueden variar.",
+    "Reinicia el contador cada día a medianoche (hora local). El sitio puede reiniciar su cuota a otra hora, por eso está desactivado por defecto.",
   usageMonitorTodayUsed: "Usado hoy",
   usageMonitorLocallyUsed: "Contado localmente",
   usageMonitorInputChars: "Caracteres de entrada",
@@ -330,7 +311,7 @@ export const es = {
   usageMonitorManualMode: "Modo manual",
   usageMonitorChartTitle: "Historial de uso",
   usageMonitorChartDesc:
-    "Agregado a partir de eventos de envío locales. Consulta recuentos o tokens estimados por hora, día o mes.",
+    "Consulta envíos o tokens estimados por hora, día o mes, a partir de los registros guardados en este dispositivo.",
   usageMonitorChartHour: "Hora",
   usageMonitorChartDay: "Día",
   usageMonitorChartMonth: "Mes",
@@ -343,26 +324,22 @@ export const es = {
   usageMonitorChartMetricConversation: "Contexto cargado",
   usageMonitorChartMetricOutput: "Tokens de salida",
   usageMonitorChartDelta: "vs anterior",
+  usageMonitorChartMax: "Máx.",
   usageMonitorChartMaxConversation: "Máx. contexto cargado",
   usageMonitorChartMaxRequest: "Máx. solicitud individual",
   usageMonitorChartMaxRoundTrip: "Máx. ida y vuelta",
   usageMonitorChartMaxOutput: "Máx. salida individual",
-  usageMonitorChartScrollHint: "Desplázate horizontalmente para ver toda la línea de tiempo",
   usageMonitorChartEmpty: "Aún no hay historial",
   enablePrerequisiteToast: 'Activa primero "{setting}"',
-  privacyModeTitle: "Modo Privado",
+  privacyModeTitle: "Privacidad de pestañas",
   collapsedButtonsOrderTitle: "Botones Rápidos",
   quickButtonsOpacityLabel: "Opacidad de los botones rápidos",
-  quickButtonsOpacityDesc: "Ajusta la opacidad general del grupo de botones rápidos",
   quickButtonsProximityRadiusLabel: "Distancia de detección",
   quickButtonsProximityRadiusDesc:
     "Expande los botones rápidos automáticamente cuando el cursor entra en este rango (px). 0 = solo al pasar el ratón directamente",
   quickButtonsHideWhenPanelOpenLabel: "Ocultar botones rápidos cuando el panel está abierto",
-  quickButtonsHideWhenPanelOpenDesc:
-    "Oculta automáticamente el grupo de botones rápidos cuando el panel está expandido; se restaura al cerrar el panel",
 
   quickButtonsBehaviorTitle: "Comportamiento de botones rápidos",
-  quickButtonsBehaviorDesc: "Ajusta la apariencia y el comportamiento del grupo de botones rápidos",
   // ======== Continue existing translations ========
   searchPlaceholder: "Buscar prompts...",
   addPrompt: "Nuevo Prompt",
@@ -419,9 +396,11 @@ export const es = {
     '¿Eliminar la copia de seguridad en la nube "{name}"? Esta acción es irreversible.',
   insertFailed: "Error al insertar",
   maximize: "Maximizar",
+  restoreWindow: "Restaurar",
   clearAllData: "Borrar Todo",
   clearAllDataDesc: "Elimina para siempre todos los ajustes, indicaciones y chats locales.",
-  clearAllDataConfirm: "¿Seguro que quieres borrar todo? Esta acción no se puede deshacer.",
+  clearAllDataConfirm:
+    "¿Seguro que quieres borrar todo? Esta acción no se puede deshacer. Mejor exporta antes una copia.",
   clearSuccess: "Datos borrados, recargando...",
   defaultDir: "Carpeta por defecto",
   dangerZone: "Zona Peligrosa",
@@ -467,7 +446,6 @@ export const es = {
   promptMergeSuccess: "Combinado: {updated} actualizados, {added} nuevos",
   promptDeleteConfirm: "Este prompt se eliminará permanentemente.",
   promptSettingsTitle: "Configuración de prompts",
-  promptSettingsDesc: "Configura las interacciones en la pestaña de prompts",
   promptSubmitShortcutLabel: "Atajo de envío",
   promptSubmitShortcutDesc: "Se aplica tanto al envío manual como al envío automático de prompts.",
   promptSubmitShortcutEnter: "Enter",
@@ -600,8 +578,6 @@ export const es = {
   quickQuoteReply: "Responder con cita",
   quickQuoteChainQueueSource: "Chain: {title} · {index}/{total}",
   quickQuoteSettingsTitle: "Cita de selección",
-  quickQuoteSettingsDesc:
-    "Controla si Ophel muestra su panel de cita de selección en sitios compatibles.",
   quickQuoteEnabledLabel: "Cita de selección Ophel",
   quickQuoteEnabledDesc:
     "Al activarlo, los sitios compatibles muestran el panel de cita de Ophel tras seleccionar texto. Los sitios con panel de cita nativo quedan a cargo del sitio.",
@@ -680,9 +656,9 @@ export const es = {
   themeSettings: "Ajustes de Tema",
   currentThemeMode: "Modo actual",
   themeSettingsDesc: "Elegir estilos claro/oscuro",
-  syncNativePageThemeLabel: "Sincronizar colores nativos de la página",
+  syncNativePageThemeLabel: "Sincronizar colores de la página del sitio",
   syncNativePageThemeDesc:
-    "El modo claro/oscuro del sitio siempre sigue a Ophel. Activa esto para ajustar también algunos colores de elementos nativos (solo funciona en algunos sitios).",
+    "El modo claro/oscuro del sitio siempre sigue a Ophel. Activa esto para ajustar también los colores de algunos elementos de la interfaz del propio sitio (solo en algunos sitios).",
   themeLight: "Claro",
   themeSystem: "Sistema",
   customCSS: "Estilos CSS",
@@ -706,9 +682,7 @@ export const es = {
   newStyle: "Nuevo Estilo",
   editStyleTitle: "Editar Estilo",
   lightModePreset: "Tema Claro",
-  lightModePresetDesc: "Solo para modo claro",
   darkModePreset: "Tema Oscuro",
-  darkModePresetDesc: "Solo para modo oscuro",
   primaryColor: "Primario",
   secondaryColor: "Secundario",
   // Theme preset names
@@ -779,7 +753,7 @@ export const es = {
   pageWidthLabel: "Ancho de Página",
   pageWidthValueLabel: "Valor de Ancho",
   pageWidthDesc:
-    "Ajusta el ancho de la página del chat en tiempo real. Con Evitación inteligente activada, el ancho real puede estar limitado por el área segura del panel.",
+    "Ajusta el ancho de la página del chat en tiempo real. Con Evitación inteligente activada, la página deja sitio al panel abierto, por lo que el ancho real puede ser algo menor.",
   panelAvoidanceTitle: "Evitación inteligente",
   betaBadge: "Beta",
   panelAvoidanceDesc:
@@ -828,8 +802,9 @@ export const es = {
   notifyWhenFocusedDesc: "Enviar aviso aunque estés viendo la página",
   autoFocusLabel: "Auto Poner la Ventana al Frente",
   autoFocusDesc: "Traer al frente al terminar",
-  privacyModeLabel: "Modo Privado",
-  privacyModeDesc: "Título falso",
+  privacyModeLabel: "Ocultar título de la pestaña",
+  privacyModeDesc:
+    "Sustituye el título de la pestaña del navegador por el título falso de abajo. El contenido de la página no cambia.",
   privacyTitleLabel: "Título Falso",
   privacyTitlePlaceholder: "Ej: Google, Trabajo",
   titleFormatLabel: "Formato del Título",
@@ -849,7 +824,6 @@ export const es = {
   outlineSettings: "Ajustes de Índice",
   bookmarkSettings: "Ajustes de Marcadores",
   bookmarkModeDisableLevel: "No se pueden ajustar los niveles en el modo marcadores",
-  bookmarkSettingsDesc: "Configuración relacionada con marcadores",
   inlineBookmarkModeLabel: "Iconos de marcadores",
   inlineBookmarkModeDesc: "Controlar visibilidad junto a los encabezados",
   panelBookmarkModeLabel: "Iconos del panel",
@@ -880,7 +854,7 @@ export const es = {
   syncingConversations: "Sincronizando...",
   grokSyncingConversations: "Sincronizando chats, espera...",
   // Tab Order Settings
-  tabOrderSettings: "Distribución UI",
+  tabOrderSettings: "Orden de las pestañas",
   tabOrderDesc: "Orden de las pestañas del panel (arrastra para reordenar)",
   tabOrderAtLeastOne: "Debe permanecer activada al menos una pestaña de funciones",
   moveUp: "Subir",
@@ -927,7 +901,7 @@ export const es = {
   floatingToolbarClearGhostConfirm: "¿Borrar {count} marcadores inválidos en esta sesión?",
   floatingToolbarClearGhostEmpty: "No hay marcadores inválidos para borrar.",
   showCollapsedThemeDesc: "Cambio de tema en barra lateral",
-  collapsedButtonsOrderDesc: "Orden de botones en barra lateral (arrastra para reordenar)",
+  collapsedButtonsOrderDesc: "Arrastra el control para reordenar los botones rápidos.",
   preventAutoScrollLabel: "Evitar Auto-Scroll",
   preventAutoScrollDesc: "Que no baje solo mientras escribe la IA",
   // Panel Mode
@@ -960,7 +934,6 @@ export const es = {
   defaultEdgeDistanceDesc:
     "Distancia predeterminada desde el borde de la ventana del navegador después de actualizar la página",
   panelWidthLabel: "Ancho del panel",
-  panelWidthDesc: "Ancho del panel (px)",
   panelResizeOnHoverLabel: "Ampliar al pasar el cursor",
   panelResizeOnHoverDesc:
     "Amplía temporalmente el panel flotante mientras el puntero está encima y luego restaura el ancho normal",
@@ -1026,12 +999,12 @@ export const es = {
   // Conversation Settings
   conversationsSettingsTitle: "Ajustes de Chats",
   conversationsSyncUnpinLabel: "Sincro Desfijar",
-  conversationsSyncUnpinDesc: "Desfijar si se hizo en la nube",
+  conversationsSyncUnpinDesc: "Al sincronizar, desfijar en local lo que se desfijó en el sitio",
   folderRainbowLabel: "Carpetas Arcoíris",
   folderRainbowDesc: "Colores aleatorios para carpetas",
-  conversationsSyncDeleteLabel: "Borrar en Nube",
+  conversationsSyncDeleteLabel: "Borrar también en el sitio",
   conversationsSyncDeleteDesc:
-    "Al borrar el registro local, borrar también la conversación en la nube del sitio correspondiente",
+    "Al borrar un chat en Ophel, también se borra el original en el sitio. No se puede deshacer.",
   conversationsSyncRenameLabel: "Renombrar en Nube",
   conversationsSyncRenameDesc: "Cambiar nombre en {site} también",
   conversationsCustomIcon: "Icono Propio",
@@ -1143,7 +1116,7 @@ export const es = {
   exportDataBtn: "Exportar Todo",
   importDataBtn: "Importar Datos",
   exportError: "Fallo: ",
-  importConfirm: "¿Seguro? Se pisará todo lo actual.",
+  importConfirm: "La importación sustituirá tus datos actuales por los incluidos en la copia.",
   importSuccess: "Éxito. Recargando...",
   importError: "Fallo: ",
   invalidBackupFile: "Formato mal",
@@ -1197,10 +1170,10 @@ export const es = {
   webdavConnectionSuccess: "OK",
   webdavUploadSuccess: "Subido",
   webdavDownloadSuccess: "Bajado",
-  webdavConfigIncomplete: "Falta config",
+  webdavConfigIncomplete: "Introduce dirección WebDAV, usuario y contraseña",
   webdavAuthFailed: "Usuario/Clave mal",
-  webdavConnectionFailed: "Fallo red",
-  webdavUploadFailed: "Fallo subida",
+  webdavConnectionFailed: "Conexión fallida: revisa la dirección WebDAV y la red",
+  webdavUploadFailed: "Subida fallida: revisa permisos, carpeta y red",
   webdavDownloadFailed: "Fallo bajada",
   webdavFileNotFound: "No hay archivo",
   webdavInvalidFormat: "Archivo mal",
@@ -1211,7 +1184,8 @@ export const es = {
   importDataDesc: "Traer desde archivo",
 
   fullBackup: "Copia Total",
-  fullBackupDesc: "Exporta todos los datos de la cuenta y los ajustes.",
+  fullBackupDesc:
+    "Exporta todos los datos y ajustes. Incluye las Session Key de Claude: guarda bien el archivo.",
   promptsBackup: "Solo Prompts",
   promptsBackupDesc: "Sin carpetas ni etiquetas",
   settingsBackup: "Solo Ajustes",
@@ -1323,13 +1297,11 @@ Dame el código y luego un resumen de mejoras.`,
 
   // ======== Shortcuts Settings Page ========
   navShortcuts: "Atajos de Teclado",
-  shortcutsPageDesc: "Atajos para ir más rápido",
   shortcutsInteractionGroup: "Ajustes independientes",
   shortcutsInteractionGroupDesc:
     "Los ajustes de este grupo están siempre activos y no se ven afectados por la opción Activar atajos personalizados",
   shortcutsGlobalSettings: "Ajustes de Atajos",
   enableShortcuts: "Activar atajos personalizados",
-  enableShortcutsDesc: "Activar o desactivar todos los atajos de teclado personalizados",
   globalShortcutUrl: "URL Atajo Global",
   globalShortcutUrlDesc: "Qué abrir al pulsar {shortcut}",
   resetShortcuts: "Poner Defecto",
@@ -1451,6 +1423,8 @@ Dame el código y luego un resumen de mejoras.`,
   claudeImportFromBrowser: "Del navegador",
   claudeImportJSON: "Meter JSON",
   claudeExportJSON: "Sacar JSON",
+  claudeExportWarning:
+    "El archivo exportado contiene las Session Key completas. Equivalen a credenciales de acceso a la cuenta: guárdalo bien y no lo compartas.",
   claudeNoKeys: "Sin sesiones",
   claudeNoKeysHint: "Usa 'Añadir' para empezar",
   claudeKeyValid: "Bien",
@@ -1530,12 +1504,12 @@ Dame el código y luego un resumen de mejoras.`,
   // ======== Configuración de ChatGPT ========
   chatgptMarkdownFixLabel: "Corrección de Markdown Negrita",
   chatgptMarkdownFixDesc: "Corregir texto **negrita** no renderizado en respuestas de ChatGPT",
-  chatgptCodeBlockBatchMountLabel: "Montaje por lotes de bloques de código",
+  chatgptCodeBlockBatchMountLabel: "Cargar bloques de código por lotes",
   chatgptCodeBlockBatchMountDesc:
-    "Monta los editores de código por lotes al abrir o cambiar conversaciones largas para reducir los bloqueos de la página",
-  chatgptStreamingRenderOptimizeLabel: "Optimización de renderizado en streaming",
+    "Carga los bloques de código por lotes al abrir o cambiar conversaciones largas para reducir los bloqueos de la página",
+  chatgptStreamingRenderOptimizeLabel: "Reducir animaciones al generar",
   chatgptStreamingRenderOptimizeDesc:
-    "Pausa las animaciones y transiciones del área de mensajes mientras se genera la respuesta para reducir la carga de renderizado",
+    "Pausa las animaciones y transiciones del área de mensajes mientras se genera la respuesta, para reducir los tirones",
   chatgptDisableBackdropBlurLabel: "Desactivar desenfoque de fondo",
   chatgptDisableBackdropBlurDesc:
     "Desactiva los efectos de desenfoque de fondo para reducir las caídas de fotogramas al desplazarse por conversaciones largas; cambia ligeramente el aspecto de la página",
@@ -1552,8 +1526,6 @@ Dame el código y luego un resumen de mejoras.`,
   exportCustomModelName: "Nombre de IA",
   exportCustomModelNameDesc: "Nombre para mostrar de IA en exportaciones (Predeterminado: Sitio)",
   exportFilenameTimestamp: "Agregar marca de tiempo al nombre del archivo",
-  exportFilenameTimestampDesc:
-    "Agrega una marca de tiempo al final del nombre del archivo exportado",
   exportIncludeThoughtsLabel: "Incluir razonamiento en la exportación",
   exportThoughtCollapsedLabel: "Proceso de pensamiento",
   exportIncludeThoughtsDesc:
@@ -1625,8 +1597,6 @@ Dame el código y luego un resumen de mejoras.`,
   // Menú de Caja de herramientas
   toolboxMenu: "Caja de herramientas",
   toolboxMenuTitle: "Menú de Caja de herramientas",
-  toolboxMenuDesc:
-    "Configurar las funciones mostradas en el menú emergente de la caja de herramientas",
 
   // Global Settings Search
   globalSearchCategoryAll: "Todo",
@@ -1670,15 +1640,11 @@ Dame el código y luego un resumen de mejoras.`,
   globalSearchEmptyCurrentSession: "Sin resultados en la sesión actual",
   globalSearchCategoriesLabel: "Categorías de búsqueda global",
   globalSearchMatchingSettingsTitle: "Coincidencia de búsqueda",
-  globalSearchMatchingSettingsDesc:
-    "Configura cómo Search Everywhere hace coincidir los resultados de búsqueda.",
   globalSearchShortcutSettingLabel: "Atajo de búsqueda global",
   globalSearchShortcutSettingDesc:
     "Ve a la configuración de atajos para personalizar o desactivar el atajo de búsqueda global.",
   globalSearchShortcutSettingAction: "Ir a ajustes",
   globalSearchPromptSettingsTitle: "Comportamiento de Prompt",
-  globalSearchPromptSettingsDesc:
-    "Define qué ocurre al pulsar Enter sobre un resultado de prompt en Search Everywhere",
   globalSearchPromptEnterBehaviorLabel: "Comportamiento de Enter para prompts en Search Everywhere",
   globalSearchPromptEnterBehaviorDesc:
     "Inteligente: inserta directo sin variables y abre el diálogo cuando sea necesario; Solo localizar: cambia a Prompts y localiza el elemento.",
@@ -1686,14 +1652,13 @@ Dame el código y luego un resumen de mejoras.`,
   globalSearchPromptEnterBehaviorLocate: "Solo localizar",
   globalSearchEnableFuzzySearchLabel: "Activar búsqueda difusa",
   globalSearchEnableFuzzySearchDesc:
-    "Cuando está activado, Search Everywhere usa coincidencia difusa para título, carpeta, etiqueta, contenido del prompt e identificadores de ajustes.",
+    "Cuando está activado, Search Everywhere usa coincidencia difusa para títulos, carpetas, etiquetas, contenido de prompts y ajustes.",
   globalSearchFuzzySearchToggle: "Difusa",
   globalSearchFuzzySearchToggleAria: "Alternar búsqueda difusa",
   globalSearchFooterTips:
     "Enter para saltar · ↑↓ para seleccionar · Tab para categorías · Esc para cerrar",
   globalSearchShortcutNudge: "La próxima vez, usa {shortcut} para abrir más rápido",
   doubleShiftToSearch: "Doble Shift para abrir la búsqueda global",
-  doubleShiftToSearchDesc: "Pulsa Shift dos veces rápidamente para abrir la búsqueda global",
   globalSearchShortcutNudgeDismiss: "No volver a recordar",
   globalSearchContextCurrentItem: "Elemento {current}",
   globalSearchContextShownProgress: "Mostrados {shown}/{total}",
@@ -1889,7 +1854,8 @@ Dame el código y luego un resumen de mejoras.`,
   // Actualizaciones de configuración de adaptadores
   remoteConfigSettingsTitle: "Actualizaciones de configuración de adaptadores",
   remoteConfigAutoUpdateLabel: "Actualizar automáticamente las configuraciones de adaptadores",
-  remoteConfigAutoUpdateDesc: "Comprueba como máximo una vez cada 24 horas.",
+  remoteConfigAutoUpdateDesc:
+    "Descarga las reglas más recientes de los sitios integrados para corregir fallos tras cambios en un sitio. Comprueba como máximo una vez cada 24 horas.",
   remoteConfigRegistrySourceLabel: "Fuente de Registry para desarrollo",
   remoteConfigRegistrySourceDesc:
     "Introduce una URL completa de index.json; déjala vacía para usar las fuentes predeterminadas.",
@@ -1911,8 +1877,8 @@ Dame el código y luego un resumen de mejoras.`,
   remoteConfigResetBuiltinButton: "Restaurar integrada",
   remoteConfigResettingButton: "Restaurando…",
   remoteConfigPrivacyDesc:
-    "Las comprobaciones solo envían solicitudes GET a CDN estáticas, sin conversaciones ni datos de la cuenta.",
-  sitePacksAdvancedTitle: "Avanzado",
+    "Las comprobaciones solo descargan archivos de configuración. No se sube ninguna conversación ni dato de la cuenta.",
+  sitePacksAdvancedTitle: "Opciones de desarrollador",
   remoteConfigCheckUpdated:
     "Se descargaron nuevas configuraciones. Actualiza las páginas de IA correspondientes para aplicarlas.",
   remoteConfigCheckUpToDate: "Las configuraciones de adaptadores están actualizadas.",

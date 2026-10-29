@@ -43,6 +43,7 @@ import {
   isValidWebDAVProvider,
   getWebDAVSyncManager,
   type BackupFile,
+  type SyncResult,
   type WebDAVProvider,
 } from "~core/webdav-sync"
 import { platform } from "~platform"
@@ -169,6 +170,14 @@ const getRestoreSuccessMessage = (message: string, missingPermissionOrigins: rea
     ? `${message} ${t("sitePacksPermissionReviewTitle")}`
     : message
 
+// 管理器已按失败原因（认证失败 / HTTP 状态 / 异常）选好 messageKey，页面直接展示，
+// 不再把所有失败归并成一句笼统的「连接失败」
+const getSyncResultMessage = (result: SyncResult): string =>
+  t(
+    result.messageKey,
+    Object.fromEntries(Object.entries(result.messageArgs ?? {}).map(([k, v]) => [k, String(v)])),
+  )
+
 // ==================== 远程备份列表模态框 ====================
 const RemoteBackupModal: React.FC<{
   onClose: () => void
@@ -180,6 +189,7 @@ const RemoteBackupModal: React.FC<{
     show: boolean
     title: string
     message: string
+    confirmText?: string
     danger?: boolean
     onConfirm: () => void
   }>({
@@ -211,6 +221,7 @@ const RemoteBackupModal: React.FC<{
       show: true,
       title: t("restore"),
       message: t("backupRestoreConfirmMsg", { name: file.name }),
+      confirmText: t("restore"),
       danger: true,
       onConfirm: async () => {
         setConfirmConfig((prev) => ({ ...prev, show: false }))
@@ -244,6 +255,7 @@ const RemoteBackupModal: React.FC<{
       show: true,
       title: t("delete"),
       message: t("backupDeleteCloudConfirmMsg", { name: file.name }),
+      confirmText: t("delete"),
       danger: true,
       onConfirm: async () => {
         setConfirmConfig((prev) => ({ ...prev, show: false }))
@@ -272,6 +284,7 @@ const RemoteBackupModal: React.FC<{
         <ConfirmDialog
           title={confirmConfig.title}
           message={confirmConfig.message}
+          confirmText={confirmConfig.confirmText}
           danger={confirmConfig.danger}
           onConfirm={confirmConfig.onConfirm}
           onCancel={() => setConfirmConfig((prev) => ({ ...prev, show: false }))}
@@ -419,6 +432,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
     show: boolean
     title: string
     message: React.ReactNode
+    confirmText?: string
     danger?: boolean
     onConfirm: () => void
   }>({
@@ -525,6 +539,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
   const handleImportClick = () => {
     if (isImportPreviewPending || importPreview.status !== "valid") return
     const backupDocument = importPreview.document
+    const contentLabelKeys = importPreview.contentLabelKeys
 
     setConfirmConfig({
       show: true,
@@ -542,6 +557,16 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
               <div className="settings-backup-confirm-value">
                 {formatBackupTypeLabel(backupDocument.type)}
               </div>
+              <div className="settings-backup-confirm-label">{t("backupSummaryContents")}</div>
+              <div className="settings-backup-confirm-value settings-backup-preview-tags">
+                {contentLabelKeys.length > 0
+                  ? contentLabelKeys.map((labelKey) => (
+                      <span key={labelKey} className="settings-backup-preview-tag">
+                        {t(labelKey)}
+                      </span>
+                    ))
+                  : "-"}
+              </div>
             </div>
           </div>
           <div style={{ fontSize: "12px", color: "var(--gh-text-secondary, #6b7280)" }}>
@@ -549,6 +574,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
           </div>
         </div>
       ),
+      confirmText: t("importBtn"),
       danger: true,
       onConfirm: async () => {
         setConfirmConfig((prev) => ({ ...prev, show: false }))
@@ -587,6 +613,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
       show: true,
       title: t("clearAllData"),
       message: t("clearAllDataConfirm"),
+      confirmText: t("clearAllData"),
       danger: true,
       onConfirm: async () => {
         setConfirmConfig((prev) => ({ ...prev, show: false }))
@@ -697,7 +724,8 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
 
   // 三个 WebDAV 操作的共用入口：缺少访问权限时先弹确认，用户确认后申请权限再继续执行
   const runWebDAVAction = (action: WebDAVAction, task: () => Promise<void>) => {
-    if (!webdavForm.url) {
+    // 管理器要求三项齐全；先在这里拦下，避免用户还没填完就先被要求授权
+    if (!webdavForm.url || !webdavForm.username || !webdavForm.password) {
       showDomToast(t("webdavConfigIncomplete"))
       return
     }
@@ -736,8 +764,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
       const manager = getWebDAVSyncManager()
       await manager.setConfig(webdavForm, false)
 
-      const res = await manager.testConnection()
-      showDomToast(t(res.success ? "webdavConnectionSuccess" : "webdavConnectionFailed"))
+      showDomToast(getSyncResultMessage(await manager.testConnection()))
     })
 
   const handleUpload = () =>
@@ -745,8 +772,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
       const manager = getWebDAVSyncManager()
       await manager.setConfig(webdavForm, false)
 
-      const res = await manager.upload()
-      showDomToast(t(res.success ? "webdavUploadSuccess" : "webdavUploadFailed"))
+      showDomToast(getSyncResultMessage(await manager.upload()))
     })
 
   const handleOpenRestore = () =>
@@ -804,6 +830,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
         <ConfirmDialog
           title={confirmConfig.title}
           message={confirmConfig.message}
+          confirmText={confirmConfig.confirmText}
           danger={confirmConfig.danger}
           onConfirm={confirmConfig.onConfirm}
           onCancel={() => setConfirmConfig((prev) => ({ ...prev, show: false }))}
@@ -815,6 +842,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
         <ConfirmDialog
           title={t("permissionRequired")}
           message={t("webdavPermissionDesc")}
+          confirmText={t("allow")}
           onConfirm={permissionConfirm.onConfirm}
           onCancel={() => setPermissionConfirm((prev) => ({ ...prev, show: false }))}
         />

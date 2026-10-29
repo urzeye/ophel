@@ -85,7 +85,6 @@ export const de = {
   sitePacksSourceRegistry: "Online",
   sitePacksSourceLocal: "Lokaler Import",
   sitePacksStatusAvailable: "Verfügbar",
-  sitePacksStatusMatchRequired: "Match-Regel erforderlich",
   sitePacksStatusDisabled: "Deaktiviert",
   sitePacksStatusIncompatible: "Nicht kompatibel",
   sitePacksStatusPackMissing: "Paket fehlt",
@@ -153,10 +152,7 @@ export const de = {
   sitePacksMatchGuideAction: "Anleitung anzeigen",
   sitePacksBindingPackRequired: "Wähle zuerst ein installiertes Paket aus.",
 
-  generalPageDesc: "Verhalten der Erweiterung konfigurieren",
-  appearancePageDesc: "Visuelle Stile und Themes anpassen",
   pageContentPageDesc: "Seitenlayout und Inhaltsanzeige anpassen",
-  featuresPageDesc: "Funktionsmodule konfigurieren",
   backupPageDesc: "Datensicherung, Cloud-Synchronisierung und Berechtigungen verwalten",
   aboutPageDesc: "KI-Vorteile, greifbar nah.",
   tsPlasmoDesc: "Framework für Browser-Erweiterungen",
@@ -178,6 +174,7 @@ export const de = {
   granted: "Gewährt",
   notGranted: "Nicht gewährt",
   revoke: "Entziehen",
+  revokePermissionTitle: "Berechtigung entziehen",
   grant: "Zulassen",
   allowRecommended: "Zulassen (Empfohlen)",
   required: "Erforderlich",
@@ -231,14 +228,9 @@ export const de = {
   scrollSettings: "Scrollen",
   contentProcessing: "Inhaltsverarbeitung",
   interactionEnhance: "Interaktions-Upgrades",
-  interactionEnhanceDesc: "Tabellen und Formeln verbessern",
   exportSettings: "Export",
 
   // ======== Features ========
-  outlineSettingsDesc: "Inhaltsverzeichnis-Generierung konfigurieren",
-  outlineUpdateIntervalDesc: "Aktualisierungsintervall (Sekunden)",
-  conversationsSettingsDesc: "Synchronisation und Anzeige",
-  readingHistoryDesc: "Leseposition merken",
   day: "Tag",
   days: "Tage",
   forever: "Immer",
@@ -260,8 +252,7 @@ export const de = {
   aboutDescription:
     "{appName} ist eine Browser-Erweiterung für KI-Plattformen wie ChatGPT, Claude, Gemini, DeepSeek und Doubao, erweiterbar über Adapter-Pakete (JSON-Regeln). Sie bietet Konversationsverwaltung, Multi-Format-Export, intelligente Gliederungen, globale Suche und Prompt-Warteschlangen, dazu Wiederherstellung des Lesefortschritts, Formel-Rendering und -Kopie, Fertigstellungs-Hinweise, Modell-Sperre und Layout-Anpassung. Mit Themes, Zen-Modus und WebDAV-Synchronisation macht {appName} deine KI-Interaktionen flüssiger und angenehmer.",
   aboutSupportedPlatforms: "Unterstützte Plattformen",
-  aboutSupportedPlatformsDesc:
-    "Derzeit werden {count} KI-Plattformen unterstützt, synchron mit Erkennung und Schnellzugriff im Popup.",
+  aboutSupportedPlatformsDesc: "Derzeit werden {count} KI-Plattformen unterstützt.",
   projectLinks: "Projekt-Links",
   githubRepository: "GitHub-Repository",
   githubDesc: "Gib dem Repository einen Stern, um die Weiterentwicklung zu unterstützen",
@@ -295,26 +286,16 @@ export const de = {
   // ======== Common Buttons/Labels ========
   tabBehaviorTitle: "Verhalten",
   notificationSettings: "Aktionen nach Abschluss",
-  usageMonitorSettingsTitle: "Lokaler Nutzungszähler & Schätzung",
-  usageMonitorSettingsDesc:
-    "Zeigt lokale Sendungszahlen, Schwellenfortschritt und grobe Token-Schätzungen in der Nähe des Eingabefelds an.",
-  usageMonitorExplainLocalOnly:
-    "Hinweis: Dies ist nur eine lokale Schätzung. Die Erweiterung kennt weder das offizielle Restkontingent noch das tatsächliche serverseitige Limit.",
-  usageMonitorExplainNoBackend:
-    "Verhalten: Zähler werden nur lokal gespeichert und ein leichtes Panel neben dem Eingabebereich angezeigt. Es wird kein zusätzlicher Status an das Backend der Website geschrieben.",
-  usageMonitorExplainReset:
-    "Zurücksetzen: Die tatsächlichen Reset-Zeiten der Plattform können abweichen und sind nicht immer an Mitternacht gebunden. Automatisches Zurücksetzen ist standardmäßig deaktiviert; manuelles Zurücksetzen ist die sicherere Voreinstellung.",
-  usageMonitorExplainRender:
-    "Das Panel wird über dem aktuellen Eingabebereich gerendert und reserviert Platz für den Seiteninhalt. Wenn die Darstellung direkt nach dem Aktivieren ungewöhnlich aussieht, sollte ein Neuladen der Seite das Layout stabilisieren.",
-  usageMonitorEnabledLabel: "Lokalen Zähler und Schätzer für fortgeschrittene Modelle aktivieren",
+  usageMonitorSettingsTitle: "Nutzungsschätzung für fortgeschrittene Modelle",
+  usageMonitorEnabledLabel: "Nutzungsschätzung anzeigen",
   usageMonitorEnabledDesc:
-    "Verwendet ein leichtes lokales Panel nahe dem Eingabebereich, um die Nutzung des aktuellen Kontos zu schätzen, ohne das Verhalten der Website zu ändern.",
-  usageMonitorDailyLimitLabel: "Geschätztes tägliches Gesprächslimit",
+    "Zeigt über dem Eingabefeld die auf diesem Gerät gezählten Sendungen und eine Token-Schätzung an. Ophel sieht das echte Kontingent der Website nicht, die Werte sind nur Richtwerte. Bei Anzeigeproblemen die Seite neu laden.",
+  usageMonitorDailyLimitLabel: "Tägliches Sendelimit",
   usageMonitorDailyLimitDesc:
-    "Wird für die Warnschwellen bei 80 % / 100 % verwendet. Dies ist nur eine lokale Schätzung.",
-  usageMonitorAutoResetLabel: "Automatisches Zurücksetzen aktivieren",
+    "Warnt bei 80 % und 100 % dieses Werts. Es ist ein von Ihnen gesetzter Richtwert, nicht das echte Limit der Website.",
+  usageMonitorAutoResetLabel: "Täglich automatisch zurücksetzen",
   usageMonitorAutoResetDesc:
-    "Experimentell: Setzt automatisch zurück, wenn sich das lokale Datum ändert. Standardmäßig deaktiviert, da die tatsächlichen Reset-Zeiten der Plattform variieren können.",
+    "Setzt den Zähler täglich um Mitternacht (Ortszeit) zurück. Websites können ihr Kontingent zu anderer Zeit zurücksetzen, daher ist die Option standardmäßig aus.",
   usageMonitorTodayUsed: "Heute verwendet",
   usageMonitorLocallyUsed: "Lokal gezählt",
   usageMonitorInputChars: "Eingegebene Zeichen",
@@ -330,7 +311,7 @@ export const de = {
   usageMonitorManualMode: "Manueller Modus",
   usageMonitorChartTitle: "Nutzungsverlauf",
   usageMonitorChartDesc:
-    "Aus lokalen Sendeereignissen aggregiert. Zeigt Anzahl oder geschätzte Tokens nach Stunde, Tag oder Monat.",
+    "Zeigt Sendungen oder geschätzte Tokens nach Stunde, Tag oder Monat, basierend auf den auf diesem Gerät gespeicherten Daten.",
   usageMonitorChartHour: "Stunde",
   usageMonitorChartDay: "Tag",
   usageMonitorChartMonth: "Monat",
@@ -343,26 +324,22 @@ export const de = {
   usageMonitorChartMetricConversation: "Geladener Kontext",
   usageMonitorChartMetricOutput: "Ausgabe-Tokens",
   usageMonitorChartDelta: "ggü. vorher",
+  usageMonitorChartMax: "Max.",
   usageMonitorChartMaxConversation: "Max. geladener Kontext",
   usageMonitorChartMaxRequest: "Max. einzelne Anfrage",
   usageMonitorChartMaxRoundTrip: "Max. einzelner Hin- und Rückweg",
   usageMonitorChartMaxOutput: "Max. einzelne Ausgabe",
-  usageMonitorChartScrollHint: "Horizontal scrollen, um die vollständige Zeitleiste zu sehen",
   usageMonitorChartEmpty: "Noch kein Verlauf",
   enablePrerequisiteToast: 'Bitte zuerst "{setting}" aktivieren',
-  privacyModeTitle: "Privatmodus",
+  privacyModeTitle: "Tab-Datenschutz",
   collapsedButtonsOrderTitle: "Schnelltasten",
   quickButtonsOpacityLabel: "Deckkraft der Schnellschaltflächen",
-  quickButtonsOpacityDesc: "Die Gesamtsichtbarkeit der Schnellschaltflächen anpassen",
   quickButtonsProximityRadiusLabel: "Näherungsbereich",
   quickButtonsProximityRadiusDesc:
     "Klappt die Schnellschaltflächen automatisch aus, wenn der Cursor diesen Bereich (px) betritt. 0 = nur beim direkten Hovern",
   quickButtonsHideWhenPanelOpenLabel: "Schnelltasten bei geöffnetem Panel ausblenden",
-  quickButtonsHideWhenPanelOpenDesc:
-    "Schnelltastengruppe automatisch ausblenden, wenn das Panel geöffnet ist; wird beim Schließen wieder eingeblendet",
 
   quickButtonsBehaviorTitle: "Schnelltasten-Verhalten",
-  quickButtonsBehaviorDesc: "Darstellung und Verhalten der Schnelltastengruppe anpassen",
   // ======== Continue existing translations ========
   searchPlaceholder: "Prompts suchen...",
   addPrompt: "Neuer Prompt",
@@ -419,9 +396,11 @@ export const de = {
     'Cloud-Backup "{name}" löschen? Diese Aktion ist nicht rückgängig zu machen.',
   insertFailed: "Einfügen fehlgeschlagen",
   maximize: "Maximieren",
+  restoreWindow: "Wiederherstellen",
   clearAllData: "Alles löschen",
   clearAllDataDesc: "Löscht alle lokalen Einstellungen, Prompts und Chats dauerhaft.",
-  clearAllDataConfirm: "Wirklich alles löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+  clearAllDataConfirm:
+    "Wirklich alles löschen? Diese Aktion kann nicht rückgängig gemacht werden. Erstellen Sie vorher am besten ein Backup.",
   clearSuccess: "Daten gelöscht, wird neu geladen...",
   defaultDir: "Standardordner",
   dangerZone: "Gefahrenzone",
@@ -467,7 +446,6 @@ export const de = {
   promptMergeSuccess: "Fertig: {updated} aktualisiert, {added} neu",
   promptDeleteConfirm: "Dieser Prompt wird endgültig gelöscht.",
   promptSettingsTitle: "Prompt-Einstellungen",
-  promptSettingsDesc: "Interaktionen im Prompt-Tab konfigurieren",
   promptSubmitShortcutLabel: "Sende-Tastenkürzel",
   promptSubmitShortcutDesc:
     "Gilt sowohl für manuelles Senden als auch für automatisches Senden von Prompts.",
@@ -602,8 +580,6 @@ export const de = {
   quickQuoteReply: "Zitatantwort",
   quickQuoteChainQueueSource: "Chain: {title} · {index}/{total}",
   quickQuoteSettingsTitle: "Auswahlzitat",
-  quickQuoteSettingsDesc:
-    "Legt fest, ob Ophel auf kompatiblen Websites ein Auswahlzitat-Popover zeigt.",
   quickQuoteEnabledLabel: "Ophel-Auswahlzitat",
   quickQuoteEnabledDesc:
     "Wenn aktiviert, zeigen kompatible Websites nach der Textauswahl das Ophel-Zitat-Popover. Websites mit nativem Zitat-Popover bleiben der Website überlassen.",
@@ -682,9 +658,9 @@ export const de = {
   themeSettings: "Theme-Einstellungen",
   currentThemeMode: "Modus",
   themeSettingsDesc: "Designs für Hell/Dunkel wählen",
-  syncNativePageThemeLabel: "Native Seitenfarben synchronisieren",
+  syncNativePageThemeLabel: "Seitenfarben der Website synchronisieren",
   syncNativePageThemeDesc:
-    "Der Hell/Dunkelmodus der Website folgt Ophel immer. Aktivieren Sie dies, um zusätzlich einige native Elementfarben anzupassen (funktioniert nur auf manchen Websites).",
+    "Der Hell/Dunkelmodus der Website folgt Ophel immer. Aktivieren Sie dies, um zusätzlich die Farben einiger Oberflächenelemente der Website anzupassen (nur auf manchen Websites).",
   themeLight: "Hell",
   themeSystem: "System",
   customCSS: "CSS-Stile",
@@ -708,9 +684,7 @@ export const de = {
   newStyle: "Neuer Stil",
   editStyleTitle: "Stil bearbeiten",
   lightModePreset: "Helles Theme",
-  lightModePresetDesc: "Nur für hellen Modus",
   darkModePreset: "Dunkles Theme",
-  darkModePresetDesc: "Nur für dunklen Modus",
   primaryColor: "Primär",
   secondaryColor: "Sekundär",
   // Theme preset names
@@ -781,7 +755,7 @@ export const de = {
   pageWidthLabel: "Seitenbreite",
   pageWidthValueLabel: "Breitenwert",
   pageWidthDesc:
-    "Passt die Breite der Chatseite in Echtzeit an. Bei aktiviertem intelligentem Ausweichen kann die tatsächliche Breite durch den sicheren Bereich des Panels begrenzt werden.",
+    "Passt die Breite der Chatseite in Echtzeit an. Bei aktiviertem intelligentem Ausweichen macht die Seite Platz für das geöffnete Panel, daher kann die tatsächliche Breite etwas kleiner sein.",
   panelAvoidanceTitle: "Intelligentes Ausweichen",
   betaBadge: "Beta",
   panelAvoidanceDesc:
@@ -830,8 +804,9 @@ export const de = {
   notifyWhenFocusedDesc: "Meldung senden, auch wenn die Seite offen ist",
   autoFocusLabel: "Fenster automatisch fokussieren",
   autoFocusDesc: "Fenster bei Fertigstellung in den Vordergrund holen",
-  privacyModeLabel: "Privatmodus",
-  privacyModeDesc: "Scheintitel",
+  privacyModeLabel: "Tab-Titel verbergen",
+  privacyModeDesc:
+    "Ersetzt den Tab-Titel des Browsers durch den Scheintitel unten. Der Seiteninhalt bleibt unverändert.",
   privacyTitleLabel: "Scheintitel",
   privacyTitlePlaceholder: "Z. B. Google, Arbeit",
   titleFormatLabel: "Titelformat",
@@ -850,7 +825,6 @@ export const de = {
   outlineSettings: "Verzeichnis-Optionen",
   bookmarkSettings: "Lesezeichen-Einstellungen",
   bookmarkModeDisableLevel: "Ebenen können im Lesezeichen-Modus nicht angepasst werden",
-  bookmarkSettingsDesc: "Einstellungen für Lesezeichen",
   inlineBookmarkModeLabel: "Lesezeichen-Symbole",
   inlineBookmarkModeDesc: "Sichtbarkeit der Symbole neben Überschriften steuern",
   panelBookmarkModeLabel: "Panel-Lesezeichen-Symbole",
@@ -881,7 +855,7 @@ export const de = {
   syncingConversations: "Synchronisierung...",
   grokSyncingConversations: "Chats werden geladen, bitte warten...",
   // Tab Order Settings
-  tabOrderSettings: "UI-Anordnung",
+  tabOrderSettings: "Reihenfolge der Tabs",
   tabOrderDesc: "Reihenfolge der Panels (zum Neuordnen ziehen)",
   tabOrderAtLeastOne: "Mindestens ein Funktions-Tab muss aktiviert bleiben",
   moveUp: "Hoch",
@@ -929,7 +903,7 @@ export const de = {
     "Sollen {count} ungültige Lesezeichen in dieser Sitzung gelöscht werden?",
   floatingToolbarClearGhostEmpty: "Keine ungültigen Lesezeichen zum Löschen.",
   showCollapsedThemeDesc: "Theme-Wechsel in Sidebar",
-  collapsedButtonsOrderDesc: "Button-Reihenfolge in Sidebar (zum Neuordnen ziehen)",
+  collapsedButtonsOrderDesc: "Griff ziehen, um die Schnelltasten neu anzuordnen.",
   preventAutoScrollLabel: "Auto-Scroll verhindern",
   preventAutoScrollDesc: "Nicht automatisch nach unten springen",
   // Panel Mode
@@ -962,7 +936,6 @@ export const de = {
   defaultEdgeDistanceDesc:
     "Standardabstand zum Browserfensterrand nach dem Aktualisieren der Seite",
   panelWidthLabel: "Panelbreite",
-  panelWidthDesc: "Breite des Panels (px)",
   panelResizeOnHoverLabel: "Beim Hover verbreitern",
   panelResizeOnHoverDesc:
     "Verbreitert das schwebende Panel vorübergehend, solange der Zeiger darüber ist, und stellt danach die normale Breite wieder her",
@@ -1029,12 +1002,12 @@ export const de = {
   // Conversation Settings
   conversationsSettingsTitle: "Chat-Einstellungen",
   conversationsSyncUnpinLabel: "Lösen-Synchro",
-  conversationsSyncUnpinDesc: "Lösen, wenn in der Cloud geschehen",
+  conversationsSyncUnpinDesc: "Beim Synchronisieren lokal lösen, was auf der Website gelöst wurde",
   folderRainbowLabel: "Regenbogen-Ordner",
   folderRainbowDesc: "Zufällige Ordnerfarben",
-  conversationsSyncDeleteLabel: "Cloud-Löschung",
+  conversationsSyncDeleteLabel: "Auch auf der Website löschen",
   conversationsSyncDeleteDesc:
-    "Beim lokalen Löschen auch die Cloud-Konversation der jeweiligen Site löschen",
+    "Beim Löschen eines Chats in Ophel wird auch der Original-Chat auf der Website gelöscht. Nicht rückgängig zu machen.",
   conversationsSyncRenameLabel: "Cloud-Umbenennung",
   conversationsSyncRenameDesc: "Name in {site} auch ändern",
   conversationsCustomIcon: "Eignes Icon",
@@ -1146,7 +1119,7 @@ export const de = {
   exportDataBtn: "Alles exportieren",
   importDataBtn: "Daten importieren",
   exportError: "Fehler: ",
-  importConfirm: "Sicher? Bestehendes wird überschrieben.",
+  importConfirm: "Der Import überschreibt die aktuellen Daten mit den im Backup enthaltenen.",
   importSuccess: "Erfolg. Wird neu geladen...",
   importError: "Fehler: ",
   invalidBackupFile: "Ungültiges Format",
@@ -1201,10 +1174,10 @@ export const de = {
   webdavConnectionSuccess: "OK",
   webdavUploadSuccess: "Hochgeladen",
   webdavDownloadSuccess: "Heruntergeladen",
-  webdavConfigIncomplete: "Konfiguration fehlt",
+  webdavConfigIncomplete: "WebDAV-Adresse, Benutzername und Passwort eingeben",
   webdavAuthFailed: "Benutzer/Passwort falsch",
-  webdavConnectionFailed: "Netzwerkfehler",
-  webdavUploadFailed: "Upload fehlgeschlagen",
+  webdavConnectionFailed: "Verbindung fehlgeschlagen – WebDAV-Adresse und Netzwerk prüfen",
+  webdavUploadFailed: "Upload fehlgeschlagen – Kontorechte, Ordner und Netzwerk prüfen",
   webdavDownloadFailed: "Download fehlgeschlagen",
   webdavFileNotFound: "Datei nicht gefunden",
   webdavInvalidFormat: "Datei ungültig",
@@ -1215,7 +1188,8 @@ export const de = {
   importDataDesc: "Aus Datei wiederherstellen",
 
   fullBackup: "Vollständige Kopie",
-  fullBackupDesc: "Exportiert alle Kontodaten und Einstellungen.",
+  fullBackupDesc:
+    "Exportiert alle Daten und Einstellungen. Enthält die Claude Session Keys – Datei sicher aufbewahren.",
   promptsBackup: "Nur Prompts",
   promptsBackupDesc: "Ohne Ordner oder Tags",
   settingsBackup: "Nur Einstellungen",
@@ -1327,13 +1301,11 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
 
   // ======== Shortcuts Settings Page ========
   navShortcuts: "Tastaturkürzel",
-  shortcutsPageDesc: "Schneller arbeiten mit Shortcuts",
   shortcutsInteractionGroup: "Unabhängige Einstellungen",
   shortcutsInteractionGroupDesc:
     "Die Einstellungen in dieser Gruppe sind immer aktiv und werden nicht vom Schalter „Benutzerdefinierte Shortcuts aktivieren“ beeinflusst",
   shortcutsGlobalSettings: "Shortcut-Einstellungen",
   enableShortcuts: "Benutzerdefinierte Shortcuts aktivieren",
-  enableShortcutsDesc: "Alle benutzerdefinierten Tastaturkürzel aktivieren oder deaktivieren",
   globalShortcutUrl: "Globaler URL-Shortcut",
   globalShortcutUrlDesc: "Was bei {shortcut} geöffnet wird",
   resetShortcuts: "Werkszustand",
@@ -1455,6 +1427,8 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   claudeImportFromBrowser: "Vom Browser",
   claudeImportJSON: "JSON einlesen",
   claudeExportJSON: "JSON ausgeben",
+  claudeExportWarning:
+    "Die exportierte Datei enthält vollständige Session Keys. Sie wirken wie Zugangsdaten zum Konto – sicher aufbewahren und nicht weitergeben.",
   claudeNoKeys: "Keine Sessions",
   claudeNoKeysHint: "Start durch 'Hinzufügen'",
   claudeKeyValid: "OK",
@@ -1532,12 +1506,12 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   // ======== ChatGPT Einstellungen ========
   chatgptMarkdownFixLabel: "Markdown Fettschrift-Fix",
   chatgptMarkdownFixDesc: "Nicht gerenderten **fetten** Text in ChatGPT-Antworten reparieren",
-  chatgptCodeBlockBatchMountLabel: "Codeblöcke gebündelt einhängen",
+  chatgptCodeBlockBatchMountLabel: "Codeblöcke in Gruppen laden",
   chatgptCodeBlockBatchMountDesc:
-    "Beim Öffnen oder Wechseln langer Unterhaltungen Code-Editoren gebündelt einhängen, um Seitenruckler zu reduzieren",
-  chatgptStreamingRenderOptimizeLabel: "Streaming-Render-Optimierung",
+    "Lädt Codeblöcke beim Öffnen oder Wechseln langer Unterhaltungen in Gruppen, um Seitenruckler zu reduzieren",
+  chatgptStreamingRenderOptimizeLabel: "Animationen beim Generieren reduzieren",
   chatgptStreamingRenderOptimizeDesc:
-    "Pausiert Animationen und Übergänge im Nachrichtenbereich während der Antwortgenerierung, um den Renderaufwand zu verringern",
+    "Pausiert Animationen und Übergänge im Nachrichtenbereich, solange eine Antwort generiert wird, um Ruckeln zu verringern",
   chatgptDisableBackdropBlurLabel: "Hintergrundunschärfe deaktivieren",
   chatgptDisableBackdropBlurDesc:
     "Deaktiviert Hintergrundunschärfe-Effekte, um Frame-Einbrüche beim Scrollen langer Unterhaltungen zu reduzieren; verändert das Erscheinungsbild der Seite leicht",
@@ -1554,7 +1528,6 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   exportCustomModelName: "Benutzerdefinierter AI-Name",
   exportCustomModelNameDesc: "Anzeigename der AI für den Export (Standard: Website-Name)",
   exportFilenameTimestamp: "Zeitstempel an Dateinamen anhängen",
-  exportFilenameTimestampDesc: "Dem exportierten Dateinamen am Ende einen Zeitstempel hinzufügen",
   exportIncludeThoughtsLabel: "Gedankengang beim Export einbeziehen",
   exportThoughtCollapsedLabel: "Denkprozess",
   exportIncludeThoughtsDesc:
@@ -1626,7 +1599,6 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   // Werkzeugkasten-Menü
   toolboxMenu: "Werkzeugkasten",
   toolboxMenuTitle: "Werkzeugkasten-Menü",
-  toolboxMenuDesc: "Konfigurieren Sie, welche Funktionen im Werkzeugkasten-Popup erscheinen",
 
   // Global Settings Search
   globalSearchCategoryAll: "Alle",
@@ -1670,14 +1642,11 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   globalSearchEmptyCurrentSession: "Keine Ergebnisse in der aktuellen Sitzung",
   globalSearchCategoriesLabel: "Kategorien der globalen Suche",
   globalSearchMatchingSettingsTitle: "Suchabgleich",
-  globalSearchMatchingSettingsDesc: "Legt fest, wie Search Everywhere Suchergebnisse abgleicht.",
   globalSearchShortcutSettingLabel: "Shortcut für globale Suche",
   globalSearchShortcutSettingDesc:
     "Zu den Shortcut-Einstellungen springen, um den Shortcut für die globale Suche anzupassen oder zu deaktivieren.",
   globalSearchShortcutSettingAction: "Zu den Einstellungen",
   globalSearchPromptSettingsTitle: "Prompt-Verhalten",
-  globalSearchPromptSettingsDesc:
-    "Festlegen, was beim Drücken von Enter auf einem Prompt-Ergebnis in Search Everywhere passiert",
   globalSearchPromptEnterBehaviorLabel: "Enter-Verhalten für Prompts in Search Everywhere",
   globalSearchPromptEnterBehaviorDesc:
     "Smart: direkt einfügen ohne Variablen, Variablendialog öffnen wenn nötig; Nur lokalisieren: zu Prompts wechseln und Eintrag markieren.",
@@ -1685,14 +1654,13 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   globalSearchPromptEnterBehaviorLocate: "Nur lokalisieren",
   globalSearchEnableFuzzySearchLabel: "Fuzzy-Suche aktivieren",
   globalSearchEnableFuzzySearchDesc:
-    "Wenn aktiviert, nutzt Search Everywhere unscharfe Treffer für Titel, Ordner, Tags, Prompt-Inhalte und Einstellungskennungen.",
+    "Wenn aktiviert, nutzt Search Everywhere unscharfe Treffer für Titel, Ordner, Tags, Prompt-Inhalte und Einstellungen.",
   globalSearchFuzzySearchToggle: "Unscharf",
   globalSearchFuzzySearchToggleAria: "Fuzzy-Suche umschalten",
   globalSearchFooterTips:
     "Enter zum Springen · ↑↓ zum Auswählen · Tab für Kategorien · Esc zum Schließen",
   globalSearchShortcutNudge: "Nächstes Mal kannst du mit {shortcut} schneller öffnen",
   doubleShiftToSearch: "Double Shift zum Öffnen der globalen Suche",
-  doubleShiftToSearchDesc: "Drücke Shift zweimal schnell, um die globale Suche zu öffnen",
   globalSearchShortcutNudgeDismiss: "Nicht mehr erinnern",
   globalSearchContextCurrentItem: "Eintrag {current}",
   globalSearchContextShownProgress: "Angezeigt {shown}/{total}",
@@ -1897,7 +1865,8 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   // Aktualisierungen der Adapterkonfiguration
   remoteConfigSettingsTitle: "Aktualisierungen der Adapterkonfiguration",
   remoteConfigAutoUpdateLabel: "Adapterkonfigurationen automatisch aktualisieren",
-  remoteConfigAutoUpdateDesc: "Prüft höchstens einmal alle 24 Stunden.",
+  remoteConfigAutoUpdateDesc:
+    "Lädt die neuesten Regeln für integrierte Websites herunter und behebt Ausfälle nach Website-Änderungen. Prüft höchstens einmal alle 24 Stunden.",
   remoteConfigRegistrySourceLabel: "Registry-Quelle für die Entwicklung",
   remoteConfigRegistrySourceDesc:
     "Vollständige index.json-URL eingeben; leer lassen, um die Standardquellen zu verwenden.",
@@ -1919,8 +1888,8 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   remoteConfigResetBuiltinButton: "Auf integriert zurücksetzen",
   remoteConfigResettingButton: "Wird zurückgesetzt…",
   remoteConfigPrivacyDesc:
-    "Update-Prüfungen senden nur GET-Anfragen an statische CDNs, ohne Konversations- oder Kontodaten.",
-  sitePacksAdvancedTitle: "Erweitert",
+    "Update-Prüfungen laden nur Konfigurationsdateien herunter. Es werden keine Konversations- oder Kontodaten hochgeladen.",
+  sitePacksAdvancedTitle: "Entwickleroptionen",
   remoteConfigCheckUpdated:
     "Neue Adapterkonfigurationen wurden heruntergeladen. Laden Sie die passenden AI-Seiten neu, um sie anzuwenden.",
   remoteConfigCheckUpToDate: "Ihre Adapterkonfigurationen sind aktuell.",

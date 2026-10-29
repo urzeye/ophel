@@ -83,7 +83,6 @@ export const ja = {
   sitePacksSourceRegistry: "オンライン",
   sitePacksSourceLocal: "ローカルインポート",
   sitePacksStatusAvailable: "利用可能",
-  sitePacksStatusMatchRequired: "マッチルールが必要",
   sitePacksStatusDisabled: "無効",
   sitePacksStatusIncompatible: "非対応",
   sitePacksStatusPackMissing: "パック未検出",
@@ -151,10 +150,7 @@ export const ja = {
   sitePacksMatchGuideAction: "追加手順を見る",
   sitePacksBindingPackRequired: "先にインストール済みのパックを選択してください。",
 
-  generalPageDesc: "拡張機能の動作とインターフェースの設定",
-  appearancePageDesc: "視覚スタイルとテーマのカスタマイズ",
   pageContentPageDesc: "ページレイアウトと表示設定の調整",
-  featuresPageDesc: "機能モジュールの有効化と設定",
   backupPageDesc: "データのバックアップ、クラウド同期、拡張機能の権限を管理",
   aboutPageDesc: "AIの恩恵を、もっと身近に。",
   tsPlasmoDesc: "ブラウザ拡張機能フレームワーク",
@@ -176,6 +172,7 @@ export const ja = {
   granted: "許可済み",
   notGranted: "未許可",
   revoke: "取り消す",
+  revokePermissionTitle: "権限を取り消す",
   grant: "許可する",
   allowRecommended: "許可（推奨）",
   required: "必須",
@@ -232,14 +229,9 @@ export const ja = {
   scrollSettings: "スクロール設定",
   contentProcessing: "コンテンツ処理",
   interactionEnhance: "インタラクション強化",
-  interactionEnhanceDesc: "数式やテーブルの操作性を向上",
   exportSettings: "出力設定",
 
   // ======== Features ========
-  outlineSettingsDesc: "アウトライン生成と追従動作の設定",
-  outlineUpdateIntervalDesc: "アウトラインの自動更新間隔（秒）",
-  conversationsSettingsDesc: "会話の同期と表示の設定",
-  readingHistoryDesc: "会話の既読位置を記録し、再開時に復元します",
   day: "日",
   days: "日",
   forever: "永久",
@@ -261,8 +253,7 @@ export const ja = {
   aboutDescription:
     "{appName}は、ChatGPT、Claude、Gemini、DeepSeek、DoubaoなどのAIプラットフォーム向けのブラウザ拡張機能で、アダプターパック（JSONルール）で対応サイトを拡張できます。会話管理、多形式エクスポート、スマートアウトライン、グローバル検索、プロンプトキューなどの効率化ツールに加え、読書進捗の復元、数式レンダリング・コピー、完了通知、モデルロック、ページレイアウト調整などの便利機能を備え、テーマ、ゼンモード、WebDAV同期にも対応。AIとのやり取りをより快適にします。",
   aboutSupportedPlatforms: "対応プラットフォーム",
-  aboutSupportedPlatformsDesc:
-    "現在 {count} 個の AI プラットフォームに対応しており、ポップアップのサイト判定とクイックアクセスと同期しています。",
+  aboutSupportedPlatformsDesc: "現在 {count} 個の AI プラットフォームに対応しています。",
   projectLinks: "プロジェクトリンク",
   githubRepository: "GitHub リポジトリ",
   githubDesc: "GitHub でスターを付けて開発を応援してください",
@@ -299,25 +290,16 @@ export const ja = {
   // ======== Common Buttons/Labels ========
   tabBehaviorTitle: "タブの動作",
   notificationSettings: "完了後の操作",
-  usageMonitorSettingsTitle: "ローカル利用カウンターと推定",
-  usageMonitorSettingsDesc:
-    "入力欄の近くに、ローカル送信回数、しきい値の進捗、概算トークン数を表示します。",
-  usageMonitorExplainLocalOnly:
-    "注: これはローカルのみの推定です。拡張機能は公式の残り枠やサーバー側の実際の上限を把握していません。",
-  usageMonitorExplainNoBackend:
-    "動作: カウントはローカルにのみ保存され、入力欄の近くに軽量パネルを表示します。サイトのバックエンドへ追加の状態は書き込みません。",
-  usageMonitorExplainReset:
-    "リセット: プラットフォームの実際のリセット時刻は変動することがあり、必ずしもローカルの深夜とは一致しません。自動リセットは既定でオフで、手動リセットのほうが安全です。",
-  usageMonitorExplainRender:
-    "パネルは現在の入力欄の上に表示され、ページ内容のための余白を確保します。有効化直後に表示が崩れる場合は、ページを再読み込みするとレイアウトが安定します。",
-  usageMonitorEnabledLabel: "高度なモデル向けのローカルカウンターと推定を有効化",
+  usageMonitorSettingsTitle: "高度なモデルの利用量推定",
+  usageMonitorEnabledLabel: "利用量の推定を表示",
   usageMonitorEnabledDesc:
-    "入力欄の近くに軽量なローカルパネルを表示し、サイトの動作を変えずに現在のアカウント使用量を推定します。",
-  usageMonitorDailyLimitLabel: "1日の会話数の推定上限",
-  usageMonitorDailyLimitDesc: "80% / 100% の警告しきい値に使用します。これはローカル推定値です。",
-  usageMonitorAutoResetLabel: "自動リセットを有効化",
+    "入力欄の上に、この端末で送信した回数とトークン数の推定値を表示します。Ophel はサイトの実際の残り枠を取得できないため、数値は目安です。表示が崩れたときはページを再読み込みしてください。",
+  usageMonitorDailyLimitLabel: "1日の送信回数の上限",
+  usageMonitorDailyLimitDesc:
+    "この回数の 80% と 100% に達すると警告します。これは自分で決める目安で、サイトの実際の上限ではありません。",
+  usageMonitorAutoResetLabel: "毎日自動でリセット",
   usageMonitorAutoResetDesc:
-    "実験的機能: ローカルの日付が変わったときに自動でリセットします。実際のリセット時刻は変動するため、既定では無効です。",
+    "ローカルの日付が変わる 0 時に毎日リセットします。サイトの実際のリセット時刻は異なる場合があるため、既定ではオフです。",
   usageMonitorTodayUsed: "今日の使用",
   usageMonitorLocallyUsed: "ローカル記録",
   usageMonitorInputChars: "入力文字数",
@@ -333,7 +315,7 @@ export const ja = {
   usageMonitorManualMode: "手動モード",
   usageMonitorChartTitle: "利用履歴",
   usageMonitorChartDesc:
-    "ローカルの送信イベントを集計して表示します。時間・日・月ごとに回数または推定トークン数を確認できます。",
+    "時間・日・月ごとに、送信回数またはトークン数の推定値を確認できます。この端末に保存された記録をもとにしています。",
   usageMonitorChartHour: "時間",
   usageMonitorChartDay: "日",
   usageMonitorChartMonth: "月",
@@ -345,27 +327,23 @@ export const ja = {
   usageMonitorChartMetricRoundTrip: "往復",
   usageMonitorChartMetricConversation: "読み込み済みコンテキスト",
   usageMonitorChartMetricOutput: "出力 Tokens",
-  usageMonitorChartDelta: "前のバケット比",
+  usageMonitorChartDelta: "前の期間比",
+  usageMonitorChartMax: "最大値",
   usageMonitorChartMaxConversation: "最大読み込みコンテキスト",
   usageMonitorChartMaxRequest: "最大単一リクエスト",
   usageMonitorChartMaxRoundTrip: "最大単一往復",
   usageMonitorChartMaxOutput: "最大単一出力",
-  usageMonitorChartScrollHint: "横にスクロールしてタイムライン全体を表示できます",
   usageMonitorChartEmpty: "履歴はまだありません",
   enablePrerequisiteToast: "先に「{setting}」を有効にしてください",
-  privacyModeTitle: "プライバシーモード",
+  privacyModeTitle: "タブのプライバシー",
   collapsedButtonsOrderTitle: "クイックボタン",
   quickButtonsOpacityLabel: "クイックボタンの不透明度",
-  quickButtonsOpacityDesc: "クイックボタングループ全体の不透明度を調整します",
   quickButtonsProximityRadiusLabel: "近接検知距離",
   quickButtonsProximityRadiusDesc:
     "マウスがこの範囲（px）に入るとクイックボタンを自動展開。０に設定すると直接ホバー時のみ展開",
   quickButtonsHideWhenPanelOpenLabel: "パネル展開時にクイックボタンを隠す",
-  quickButtonsHideWhenPanelOpenDesc:
-    "パネルを展開したときにクイックボタングループを自動的に非表示にし、パネルを閉じると元に戻します",
 
   quickButtonsBehaviorTitle: "クイックボタンの動作",
-  quickButtonsBehaviorDesc: "クイックボタングループの外観と動作を調整します",
   // ======== Continue existing translations ========
   searchPlaceholder: "プロンプトを検索...",
   addPrompt: "新規プロンプト",
@@ -422,10 +400,11 @@ export const ja = {
     'クラウドバックアップ "{name}" を削除しますか？この操作は元に戻せません。',
   insertFailed: "挿入に失敗しました",
   maximize: "最大化",
+  restoreWindow: "元のサイズに戻す",
   clearAllData: "すべてのデータを消去",
   clearAllDataDesc: "ローカルの設定、プロンプト、会話データをすべて完全に削除します。",
   clearAllDataConfirm:
-    "本当にすべてのデータを消去しますか？この操作は取り消せず、すべての設定、プロンプト、会話が削除されます！",
+    "すべてのデータを消去しますか？設定・プロンプト・会話などがすべて削除され、元に戻せません。先にバックアップを書き出すことをおすすめします。",
   clearSuccess: "消去完了。再読み込み中...",
   defaultDir: "デフォルトディレクトリ",
   dangerZone: "危険な操作",
@@ -471,7 +450,6 @@ export const ja = {
   promptMergeSuccess: "統合完了：{updated} 更新、{added} 追加",
   promptDeleteConfirm: "このプロンプトは完全に削除されます。",
   promptSettingsTitle: "プロンプト設定",
-  promptSettingsDesc: "プロンプトタブの操作を設定",
   promptSubmitShortcutLabel: "送信ショートカット",
   promptSubmitShortcutDesc: "手動送信とプロンプト自動送信の両方に適用されます。",
   promptSubmitShortcutEnter: "Enter",
@@ -602,8 +580,6 @@ export const ja = {
   quickQuoteReply: "引用返信",
   quickQuoteChainQueueSource: "Chain: {title} · {index}/{total}",
   quickQuoteSettingsTitle: "選択範囲の引用",
-  quickQuoteSettingsDesc:
-    "対応サイトで Ophel の選択範囲引用ポップオーバーを表示するかを制御します。",
   quickQuoteEnabledLabel: "Ophel 選択範囲引用",
   quickQuoteEnabledDesc:
     "有効にすると、対応サイトでテキスト選択後に Ophel の引用ポップオーバーを表示します。ネイティブ引用ポップオーバーがあるサイトはサイト側に任せます。",
@@ -688,9 +664,9 @@ export const ja = {
   themeSettings: "テーマ設定",
   currentThemeMode: "現在のモード",
   themeSettingsDesc: "ライトモードとダークモードのプリセットを選択",
-  syncNativePageThemeLabel: "ネイティブページカラーを同期",
+  syncNativePageThemeLabel: "サイトのページ色を同期",
   syncNativePageThemeDesc:
-    "サイトのライト/ダークモードは常に Ophel に追従します。オンにすると、一部のネイティブ要素の色も同期して調整します（一部のサイトでのみ有効）。",
+    "サイトのライト/ダークモードは常に Ophel に追従します。オンにすると、サイト自体の一部の画面要素の色も調整します（一部のサイトのみ対応）。",
   themeLight: "ライト",
   themeSystem: "システム",
   customCSS: "カスタムスタイル",
@@ -713,10 +689,8 @@ export const ja = {
   styleNameRequired: "スタイル名を入力してください",
   newStyle: "新規スタイル",
   editStyleTitle: "スタイルの編集",
-  lightModePreset: "ライトモード設定",
-  lightModePresetDesc: "ライトモード選択時に適用",
-  darkModePreset: "ダークモード設定",
-  darkModePresetDesc: "ダークモード選択時に適用",
+  lightModePreset: "ライトモードのテーマ",
+  darkModePreset: "ダークモードのテーマ",
   primaryColor: "メインカラー",
   secondaryColor: "サブカラー",
   // Theme preset names
@@ -788,7 +762,7 @@ export const ja = {
   pageWidthLabel: "ページ幅",
   pageWidthValueLabel: "幅の指定",
   pageWidthDesc:
-    "チャットページの幅をリアルタイムに調整します。スマート回避が有効な場合、実際の幅はパネルの安全領域によって制限されることがあります。",
+    "チャットページの幅をリアルタイムに調整します。「スマート回避」が有効な場合、パネルを開くとページが場所を空けるため、実際の幅は少し小さくなることがあります。",
   panelAvoidanceTitle: "スマート回避",
   betaBadge: "Beta",
   panelAvoidanceDesc:
@@ -837,8 +811,9 @@ export const ja = {
   notifyWhenFocusedDesc: "該当ページがアクティブな場合でも通知を送信します",
   autoFocusLabel: "自動でウィンドウを最前面に",
   autoFocusDesc: "回答完了時にブラウザのウィンドウをアクティブにします",
-  privacyModeLabel: "プライバシーモード",
-  privacyModeDesc: "実際の会話タイトルを隠し、ダミーを表示します",
+  privacyModeLabel: "タブのタイトルを隠す",
+  privacyModeDesc:
+    "ブラウザのタブのタイトルを、下で設定したダミータイトルに置き換えます。ページの内容は変わりません。",
   privacyTitleLabel: "ダミータイトル",
   privacyTitlePlaceholder: "例: Google, 作業用ドキュメント",
   titleFormatLabel: "タイトルフォーマット",
@@ -862,7 +837,6 @@ export const ja = {
 
   bookmarkSettings: "ブックマーク設定",
   bookmarkModeDisableLevel: "ブックマークモードではレベルを調整できません",
-  bookmarkSettingsDesc: "ブックマーク関連の設定",
   inlineBookmarkModeLabel: "ブックマークアイコン",
   inlineBookmarkModeDesc: "見出し横のアイコン表示方法を設定",
   panelBookmarkModeLabel: "パネルのブックマーク",
@@ -895,7 +869,7 @@ export const ja = {
   syncingConversations: "会話を同期中...",
   grokSyncingConversations: "会話リストを同期しています。お待ちください...",
   // Tab Order Settings
-  tabOrderSettings: "表示配置",
+  tabOrderSettings: "タブ順序",
   tabOrderDesc: "パネル内の各タブの並び順を調整します（ドラッグで並び替え可能）",
   tabOrderAtLeastOne: "少なくとも1つの機能タブを有効にしておく必要があります",
   moveUp: "上へ",
@@ -941,7 +915,7 @@ export const ja = {
   floatingToolbarClearGhostConfirm: "このセッションの無効なブックマーク {count} 件を削除しますか？",
   floatingToolbarClearGhostEmpty: "削除する無効なブックマークはありません。",
   showCollapsedThemeDesc: "パネルを閉じたとき、サイドバーにテーマ切り替えを表示",
-  collapsedButtonsOrderDesc: "サイドバーに表示されるボタンの順序を調整（ドラッグで並び替え可能）",
+  collapsedButtonsOrderDesc: "ハンドルをドラッグしてクイックボタンの表示順を変更します。",
   preventAutoScrollLabel: "自動スクロールを防止",
   preventAutoScrollDesc: "AIの生成中に、ページが勝手に一番下へ移動するのを防ぎます",
   // Panel Mode
@@ -974,7 +948,6 @@ export const ja = {
   defaultEdgeDistanceLabel: "基本マージン",
   defaultEdgeDistanceDesc: "ページ更新後、ブラウザウィンドウの端からのデフォルトの距離",
   panelWidthLabel: "パネルの幅",
-  panelWidthDesc: "パネルの幅 (px)",
   panelResizeOnHoverLabel: "ホバー時に広げる",
   panelResizeOnHoverDesc:
     "ポインターがフローティングパネル上にある間だけ一時的に広げ、離れると通常の幅に戻します",
@@ -1053,11 +1026,13 @@ export const ja = {
   // Conversation Settings
   conversationsSettingsTitle: "会話設定",
   conversationsSyncUnpinLabel: "ピン留め解除を同期",
-  conversationsSyncUnpinDesc: "クラウドでピン留めが解除された場合、ローカルも解除します",
+  conversationsSyncUnpinDesc:
+    "同期時、サイト側でピン留めが解除された会話は、ローカルでも解除します",
   folderRainbowLabel: "フォルダのレインボー表示",
   folderRainbowDesc: "フォルダごとに背景色をランダムに設定します",
-  conversationsSyncDeleteLabel: "クラウドと同期して削除",
-  conversationsSyncDeleteDesc: "ローカル履歴を削除した際、対応サイトのクラウド履歴も削除します",
+  conversationsSyncDeleteLabel: "サイト上の会話も一緒に削除",
+  conversationsSyncDeleteDesc:
+    "Ophel で会話を削除すると、サイト上の元の会話も削除されます。元に戻せません。",
   conversationsSyncRenameLabel: "クラウドと同期して名前変更",
   conversationsSyncRenameDesc:
     "ローカルで名前を変更した際、{site} のサイドバータイトルも更新します",
@@ -1177,7 +1152,7 @@ export const ja = {
   exportDataBtn: "全データを書き出し",
   importDataBtn: "データを読み込み",
   exportError: "書き出し失敗: ",
-  importConfirm: "データをインポートしますか？現在のすべての設定とデータが上書きされます。",
+  importConfirm: "インポートすると、バックアップに含まれるデータで現在のデータが上書きされます。",
   importSuccess: "インポート完了！ページを再読み込みして適用します。",
   importError: "インポート失敗: ",
   invalidBackupFile: "バックアップファイルの形式が正しくありません",
@@ -1233,10 +1208,11 @@ export const ja = {
   webdavConnectionSuccess: "接続成功",
   webdavUploadSuccess: "アップロード成功",
   webdavDownloadSuccess: "ダウンロード成功",
-  webdavConfigIncomplete: "先にWebDAVの設定を完了してください",
+  webdavConfigIncomplete: "WebDAV のアドレス、ユーザー名、パスワードを入力してください",
   webdavAuthFailed: "認証に失敗しました。ユーザー名とパスワードを確認してください",
-  webdavConnectionFailed: "接続に失敗しました",
-  webdavUploadFailed: "アップロード失敗",
+  webdavConnectionFailed: "接続に失敗しました。WebDAV のアドレスとネットワークを確認してください",
+  webdavUploadFailed:
+    "アップロードに失敗しました。アカウントの権限、フォルダー、ネットワークを確認してください",
   webdavDownloadFailed: "ダウンロード失敗",
   webdavFileNotFound: "リモートファイルが見つかりません",
   webdavInvalidFormat: "バックアップファイルの形式が不正です",
@@ -1252,7 +1228,8 @@ export const ja = {
   importDataDesc: "バックアップファイルから復元します",
 
   fullBackup: "全データバックアップ",
-  fullBackupDesc: "すべてのアカウントデータと設定を書き出します",
+  fullBackupDesc:
+    "すべてのデータと設定を書き出します。Claude の Session Key も含まれるため、ファイルは大切に保管してください。",
   promptsBackup: "プロンプトのみ",
   promptsBackupDesc: "プロンプトライブラリのみを書き出します（タグ・フォルダ除く）",
   settingsBackup: "設定のみ",
@@ -1368,13 +1345,11 @@ export const ja = {
 
   // ======== Shortcuts Settings Page ========
   navShortcuts: "ショートカット設定",
-  shortcutsPageDesc: "クイック操作のためのキーボードショートカットを設定",
   shortcutsInteractionGroup: "独立設定",
   shortcutsInteractionGroupDesc:
     "このグループの設定は常に有効で、「カスタムショートカットを有効化」トグルの影響を受けません",
   shortcutsGlobalSettings: "全般ショートカット設定",
   enableShortcuts: "カスタムショートカットを有効化",
-  enableShortcutsDesc: "すべてのカスタムキーボードショートカットを有効または無効にします",
   globalShortcutUrl: "グローバルショートカットURL",
   globalShortcutUrlDesc: "グローバルショートカット {shortcut} を押したときに開くURL",
   resetShortcuts: "デフォルトに戻す",
@@ -1496,6 +1471,8 @@ export const ja = {
   claudeImportFromBrowser: "ブラウザからインポート",
   claudeImportJSON: "JSONインポート",
   claudeExportJSON: "JSONエクスポート",
+  claudeExportWarning:
+    "書き出したファイルには Session Key がそのまま含まれます。アカウントのログイン情報と同じ扱いなので、大切に保管し、他人に共有しないでください。",
   claudeNoKeys: "セッションキーがありません",
   claudeNoKeysHint: "「追加」または「ブラウザからインポート」で開始してください",
   claudeKeyValid: "有効",
@@ -1572,12 +1549,12 @@ export const ja = {
   // ======== ChatGPT 設定 ========
   chatgptMarkdownFixLabel: "Markdown 太字修正",
   chatgptMarkdownFixDesc: "ChatGPT の回答でレンダリングされない **太字** テキストを修正します",
-  chatgptCodeBlockBatchMountLabel: "コードブロックの一括マウント",
+  chatgptCodeBlockBatchMountLabel: "コードブロックを分割して読み込む",
   chatgptCodeBlockBatchMountDesc:
-    "長い会話を開く・切り替える際にコードエディターをまとめてマウントし、ページのフリーズを軽減します",
-  chatgptStreamingRenderOptimizeLabel: "ストリーミング描画の最適化",
+    "長い会話を開く・切り替えるときに、コードブロックを分割して読み込み、ページのフリーズを軽減します",
+  chatgptStreamingRenderOptimizeLabel: "生成中はアニメーションを減らす",
   chatgptStreamingRenderOptimizeDesc:
-    "回答の生成中にメッセージ領域のアニメーションとトランジションを一時停止し、描画負荷を抑えます",
+    "回答の生成中はメッセージ領域のアニメーションとトランジションを一時停止し、動作の重さを軽減します",
   chatgptDisableBackdropBlurLabel: "背景ぼかしを無効化",
   chatgptDisableBackdropBlurDesc:
     "背景ぼかし効果をオフにして、長い会話をスクロールしたときのコマ落ちを減らします。ページの見た目が少し変わります",
@@ -1594,7 +1571,6 @@ export const ja = {
   exportCustomModelName: "カスタムAI名",
   exportCustomModelNameDesc: "エクスポート時のAI表示名（デフォルト: サイト名）",
   exportFilenameTimestamp: "エクスポート名にタイムスタンプを追加",
-  exportFilenameTimestampDesc: "エクスポートしたファイル名の末尾にタイムスタンプを追加します",
   exportIncludeThoughtsLabel: "エクスポートに思考過程を含める",
   exportThoughtCollapsedLabel: "思考過程",
   exportIncludeThoughtsDesc:
@@ -1664,7 +1640,6 @@ export const ja = {
   // ツールボックスメニュー
   toolboxMenu: "ツールボックス",
   toolboxMenuTitle: "ツールボックスメニュー",
-  toolboxMenuDesc: "ツールボックスのポップアップメニューに表示する機能を設定",
   // Global Settings Search
   globalSearchCategoryAll: "すべて",
   globalSearchCategoryOutline: "アウトライン",
@@ -1707,14 +1682,11 @@ export const ja = {
   globalSearchEmptyCurrentSession: "現在のセッションに結果がありません",
   globalSearchCategoriesLabel: "グローバル検索カテゴリ",
   globalSearchMatchingSettingsTitle: "検索マッチング",
-  globalSearchMatchingSettingsDesc: "Search Everywhere の結果マッチング方式を設定します",
   globalSearchShortcutSettingLabel: "グローバル検索ショートカット",
   globalSearchShortcutSettingDesc:
     "ショートカット設定に移動して、グローバル検索ショートカットをカスタマイズまたは無効化します。",
   globalSearchShortcutSettingAction: "設定へ移動",
   globalSearchPromptSettingsTitle: "プロンプト動作",
-  globalSearchPromptSettingsDesc:
-    "Search Everywhere でプロンプト結果に Enter を押したときの動作を選択します",
   globalSearchPromptEnterBehaviorLabel: "Search Everywhere のプロンプト Enter 動作",
   globalSearchPromptEnterBehaviorDesc:
     "スマート：変数がなければ直接挿入し、必要時は変数ダイアログを開きます。位置のみ：プロンプト一覧へ切り替えて対象を定位します。",
@@ -1722,13 +1694,12 @@ export const ja = {
   globalSearchPromptEnterBehaviorLocate: "位置のみ",
   globalSearchEnableFuzzySearchLabel: "あいまい検索を有効化",
   globalSearchEnableFuzzySearchDesc:
-    "有効にすると、Search Everywhere はタイトル、フォルダー、タグ、プロンプト内容、設定IDに対してあいまい一致を使用します。",
+    "有効にすると、Search Everywhere はタイトル、フォルダー、タグ、プロンプト内容、設定項目にあいまい一致を使用します。",
   globalSearchFuzzySearchToggle: "あいまい",
   globalSearchFuzzySearchToggleAria: "あいまい検索を切り替え",
   globalSearchFooterTips: "Enter で移動 · ↑↓ で選択 · Tab でカテゴリ切替 · Esc で閉じる",
   globalSearchShortcutNudge: "次回からは {shortcut} ですばやく開けます",
   doubleShiftToSearch: "Shift を2回押してグローバル検索を開く",
-  doubleShiftToSearchDesc: "Shift キーを素早く2回押すとグローバル検索を開きます",
   globalSearchShortcutNudgeDismiss: "今後は表示しない",
   globalSearchContextCurrentItem: "{current}件目",
   globalSearchContextShownProgress: "表示済み {shown}/{total}",
@@ -1889,7 +1860,8 @@ export const ja = {
   // アダプター設定の更新
   remoteConfigSettingsTitle: "アダプター設定の更新",
   remoteConfigAutoUpdateLabel: "アダプター設定を自動更新",
-  remoteConfigAutoUpdateDesc: "24 時間に 1 回までチェックします。",
+  remoteConfigAutoUpdateDesc:
+    "内蔵サイトの最新ルールを自動でダウンロードし、サイトの仕様変更による不具合を修正します。確認は 24 時間に 1 回までです。",
   remoteConfigRegistrySourceLabel: "開発用 Registry ソース",
   remoteConfigRegistrySourceDesc:
     "完全な index.json URL を入力してください。空欄にすると既定のソースを使います。",
@@ -1911,8 +1883,8 @@ export const ja = {
   remoteConfigResetBuiltinButton: "組み込み設定に戻す",
   remoteConfigResettingButton: "復元中…",
   remoteConfigPrivacyDesc:
-    "更新確認は静的 CDN への GET リクエストのみで、会話内容やアカウント情報は含みません。",
-  sitePacksAdvancedTitle: "詳細設定",
+    "更新の確認では設定ファイルをダウンロードするだけで、会話内容やアカウント情報はアップロードしません。",
+  sitePacksAdvancedTitle: "開発者向けオプション",
   remoteConfigCheckUpdated:
     "新しいアダプター設定をダウンロードしました。対象の AI ページを再読み込みすると適用されます。",
   remoteConfigCheckUpToDate: "アダプター設定は最新です。",

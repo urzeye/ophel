@@ -422,11 +422,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </button>
           </Tooltip>
           {!isCompact && (
-            <Tooltip content={isMaximized ? t("restore") : t("maximize")}>
+            <Tooltip content={isMaximized ? t("restoreWindow") : t("maximize")}>
               <button
                 type="button"
                 className="settings-modal-action-btn"
-                aria-label={isMaximized ? t("restore") : t("maximize")}
+                aria-label={isMaximized ? t("restoreWindow") : t("maximize")}
                 onClick={() => setIsMaximized(!isMaximized)}>
                 {isMaximized ? <RestoreIcon size={16} /> : <MaximizeIcon size={16} />}
               </button>

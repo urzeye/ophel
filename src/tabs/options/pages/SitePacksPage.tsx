@@ -1488,7 +1488,6 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
       (entry) => entry.originPattern === originPattern,
     )
     const issue = referenceGraph.bindingIssues.find((candidate) => candidate.origin === origin)
-    const userscriptMatchRequired = false
     const missingPermission =
       !userscriptReferenceGraph && runtimeStatus.missingPermissionOrigins.includes(originPattern)
     const active = userscriptReferenceGraph
@@ -1504,13 +1503,11 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
               ? t("sitePacksStatusPackMissing")
               : t("sitePacksStatusIncompatible"),
         }
-      : userscriptMatchRequired
-        ? { tone: "warning", label: t("sitePacksStatusMatchRequired") }
-        : missingPermission
-          ? { tone: "warning", label: t("notGranted") }
-          : active
-            ? { tone: "success", label: t("sitePacksStatusAvailable") }
-            : { tone: "neutral", label: t("sitePacksStatusDisabled") }
+      : missingPermission
+        ? { tone: "warning", label: t("notGranted") }
+        : active
+          ? { tone: "success", label: t("sitePacksStatusAvailable") }
+          : { tone: "neutral", label: t("sitePacksStatusDisabled") }
     const boundPack = installedById.get(binding.packId)
     const summary = boundPack
       ? resolveSitePackName(boundPack.manifest, currentLanguage)
@@ -2470,7 +2467,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
       {confirmation?.type === "import" && (
         <SitePackDialog
           title={t("sitePacksImportConfirmTitle")}
-          confirmText={t("confirm")}
+          confirmText={t("importBtn")}
           busy={isDialogBusy}
           restoreFocusTo={confirmationTriggerRef.current}
           restoreFocusFallback={getConfirmationFocusFallback}
@@ -2492,7 +2489,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
       {confirmation?.type === "import-patch" && (
         <SitePackDialog
           title={t("remoteConfigLocalPatchConfirmTitle")}
-          confirmText={t("confirm")}
+          confirmText={t("importBtn")}
           busy={isDialogBusy}
           restoreFocusTo={confirmationTriggerRef.current}
           restoreFocusFallback={getConfirmationFocusFallback}
