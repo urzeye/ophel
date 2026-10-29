@@ -102,6 +102,10 @@ export function useShortcuts({
 }: UseShortcutsOptions) {
   const shortcutManager = useMemo(() => getShortcutManager(), [])
 
+  // 全局搜索关闭时不注册快捷键 handler，避免拦截按键，
+  // 让 Cmd+K / Ctrl+K 等组合键回落到网站原生功能
+  const isGlobalSearchEnabled = settings?.globalSearch?.enabled ?? true
+
   // 去顶部
   const scrollToTop = useCallback(async () => {
     if (!adapter) return
@@ -824,7 +828,7 @@ export function useShortcuts({
       [SHORTCUT_ACTIONS.TOGGLE_SCROLL_LOCK]: toggleScrollLock,
       [SHORTCUT_ACTIONS.TOGGLE_ZEN_MODE]: toggleZenMode,
       [SHORTCUT_ACTIONS.FOCUS_INPUT]: focusInput,
-      [SHORTCUT_ACTIONS.OPEN_GLOBAL_SEARCH]: openGlobalSearch,
+      [SHORTCUT_ACTIONS.OPEN_GLOBAL_SEARCH]: isGlobalSearchEnabled ? openGlobalSearch : undefined,
       [SHORTCUT_ACTIONS.STOP_GENERATION]: stopGeneration,
       [SHORTCUT_ACTIONS.SHOW_SHORTCUTS]: showShortcuts,
       [SHORTCUT_ACTIONS.SHOW_MODEL_SELECTOR]: showModelSelector,
@@ -879,6 +883,7 @@ export function useShortcuts({
     toggleZenMode,
     focusInput,
     openGlobalSearch,
+    isGlobalSearchEnabled,
     stopGeneration,
     showShortcuts,
     openClaudeSettings,

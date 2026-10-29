@@ -251,7 +251,13 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
     : ""
   const isDoubleShiftSearchShortcutEnabled =
     settings?.globalSearch?.doubleShift ?? DEFAULT_SETTINGS.globalSearch.doubleShift
+  const isGlobalSearchEnabled =
+    settings?.globalSearch?.enabled ?? DEFAULT_SETTINGS.globalSearch.enabled
   const globalSearchShortcutHintLabel = useMemo(() => {
+    if (!isGlobalSearchEnabled) {
+      return ""
+    }
+
     const labels: string[] = []
 
     if (globalSearchPrimaryShortcutLabel) {
@@ -262,7 +268,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
     }
 
     return labels.join(" / ")
-  }, [globalSearchPrimaryShortcutLabel, isDoubleShiftSearchShortcutEnabled])
+  }, [globalSearchPrimaryShortcutLabel, isDoubleShiftSearchShortcutEnabled, isGlobalSearchEnabled])
   const passThroughModifierLabel = isMacLike ? "⌘" : "Ctrl"
   const resolveShortcutLabel = useCallback(
     (actionId: ShortcutActionId): string | null => {
@@ -1794,6 +1800,11 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
 
   const openGlobalSettingsSearch = useCallback(
     (source: GlobalSearchOpenSource = "ui") => {
+      // 全局搜索总开关关闭时，所有入口统一不响应
+      if (!(settingsRef.current?.globalSearch?.enabled ?? true)) {
+        return
+      }
+
       globalSearchOpenSourceRef.current = source
 
       if (isSettingsOpenRef.current) {
@@ -2174,6 +2185,10 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
   }, [isGlobalSettingsSearchOpen])
 
   const openGlobalSearchByShortcut = useCallback(() => {
+    if (!(settingsRef.current?.globalSearch?.enabled ?? true)) {
+      return
+    }
+
     if (isGlobalSettingsSearchOpenRef.current) {
       return
     }
@@ -2202,10 +2217,16 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
 
       const now = Date.now()
       // Use settingsRef to get the latest settings without re-binding listener
+      const isGlobalSearchEnabled =
+        settingsRef.current?.globalSearch?.enabled ?? DEFAULT_SETTINGS.globalSearch.enabled
       const isDoubleShiftEnabled =
         settingsRef.current?.globalSearch?.doubleShift ?? DEFAULT_SETTINGS.globalSearch.doubleShift
 
-      if (isDoubleShiftEnabled && now - lastShiftPressedAtRef.current <= 360) {
+      if (
+        isGlobalSearchEnabled &&
+        isDoubleShiftEnabled &&
+        now - lastShiftPressedAtRef.current <= 360
+      ) {
         event.preventDefault()
         event.stopPropagation()
         lastShiftPressedAtRef.current = 0
@@ -2225,6 +2246,10 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
 
   useEffect(() => {
     const handleOpenSearchEvent = () => {
+      if (!(settingsRef.current?.globalSearch?.enabled ?? true)) {
+        return
+      }
+
       openGlobalSettingsSearch("event")
     }
 

@@ -592,6 +592,8 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
   const { settings, updateDeepSetting, updateNestedSetting } = useSettingsStore()
 
   // 全局搜索 tab：当前键位展示与快捷键跳转
+  const globalSearchEnabled =
+    settings?.globalSearch?.enabled ?? DEFAULT_SETTINGS.globalSearch.enabled
   const doubleShiftToSearch =
     settings?.globalSearch?.doubleShift ?? DEFAULT_SETTINGS.globalSearch.doubleShift
   const enableFuzzySearch = settings?.globalSearch?.enableFuzzySearch ?? false
@@ -1674,6 +1676,14 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
           <SettingCard
             title={t("globalSearchMatchingSettingsTitle")}
             settingId="global-search-matching-card">
+            <ToggleRow
+              label={t("globalSearchEnabledLabel")}
+              description={t("globalSearchEnabledDesc")}
+              checked={globalSearchEnabled}
+              onChange={() => updateNestedSetting("globalSearch", "enabled", !globalSearchEnabled)}
+              settingId="global-search-enabled"
+            />
+
             <SettingRow
               label={t("globalSearchShortcutSettingLabel")}
               description={t("globalSearchShortcutSettingDesc")}

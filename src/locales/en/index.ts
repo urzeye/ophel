@@ -1707,6 +1707,9 @@ Please output the optimized code block directly, followed by a brief summary of 
   globalSearchFooterTips: "Enter to jump · ↑↓ to select · Tab category · Esc to close",
   globalSearchShortcutNudge: "Press {shortcut} to open next time",
   doubleShiftToSearch: "Double Shift to open Global Search",
+  globalSearchEnabledLabel: "Enable Global Search",
+  globalSearchEnabledDesc:
+    "When off, all ways to open Global Search are disabled and Cmd+K / Ctrl+K is returned to the site's native feature",
   globalSearchShortcutNudgeDismiss: "Don't remind me",
   globalSearchContextCurrentItem: "Item {current}",
   globalSearchContextShownProgress: "Shown {shown}/{total}",

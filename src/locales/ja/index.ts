@@ -1710,6 +1710,9 @@ export const ja = {
   globalSearchFooterTips: "Enter で移動 · ↑↓ で選択 · Tab でカテゴリ切替 · Esc で閉じる",
   globalSearchShortcutNudge: "次回からは {shortcut} ですばやく開けます",
   doubleShiftToSearch: "Shift を2回押してグローバル検索を開く",
+  globalSearchEnabledLabel: "グローバル検索を有効化",
+  globalSearchEnabledDesc:
+    "オフにするとグローバル検索のすべての起動方法が無効になり、Cmd+K / Ctrl+K はサイト本来の機能に戻ります",
   globalSearchShortcutNudgeDismiss: "今後は表示しない",
   globalSearchContextCurrentItem: "{current}件目",
   globalSearchContextShownProgress: "表示済み {shown}/{total}",

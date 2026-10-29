@@ -203,6 +203,7 @@ export interface Settings {
 
   // 全局搜索配置
   globalSearch: {
+    enabled: boolean
     promptEnterBehavior: "smart" | "locate"
     enableFuzzySearch: boolean
     doubleShift: boolean

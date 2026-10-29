@@ -178,10 +178,15 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   )
   const isCollapsedButtonSupported = useCallback(
     (id: string) => {
+      // 全局搜索功能关闭时隐藏入口按钮
+      if (id === "globalSearch" && !(settings?.globalSearch?.enabled ?? true)) {
+        return false
+      }
+
       const capability = COLLAPSED_BUTTON_CAPABILITY_REQUIREMENTS[id]
       return !capability || supportsCapability(capability)
     },
-    [supportsCapability],
+    [supportsCapability, settings?.globalSearch?.enabled],
   )
   const isToolsMenuItemSupported = useCallback(
     (id: ToolsMenuId) => {

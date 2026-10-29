@@ -88,6 +88,7 @@ export const SETTING_SEARCH_TITLE_KEY_MAP: Record<string, string> = {
   "chatgpt-disable-backdrop-blur": "chatgptDisableBackdropBlurLabel",
   "conversation-sync-delete": "conversationsSyncDeleteLabel",
   "global-search-fuzzy-search": "globalSearchEnableFuzzySearchLabel",
+  "global-search-enabled": "globalSearchEnabledLabel",
   "global-search-double-shift": "doubleShiftToSearch",
   "global-search-shortcut-setting-link": "globalSearchShortcutSettingLabel",
   "global-search-prompt-enter-behavior": "globalSearchPromptEnterBehaviorLabel",

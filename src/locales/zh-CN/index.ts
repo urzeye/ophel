@@ -1645,6 +1645,8 @@ export const zhCN = {
   globalSearchFooterTips: "Enter 跳转 · ↑↓ 选择 · Tab 分类 · Esc 关闭",
   globalSearchShortcutNudge: "下次可按 {shortcut} 快速打开",
   doubleShiftToSearch: "双击 Shift 打开全局搜索",
+  globalSearchEnabledLabel: "启用全局搜索",
+  globalSearchEnabledDesc: "关闭后停用全局搜索的所有打开方式，Cmd+K / Ctrl+K 将交还给网站原生功能",
   globalSearchShortcutNudgeDismiss: "不再提示",
   globalSearchContextCurrentItem: "第 {current} 项",
   globalSearchContextShownProgress: "已显示 {shown}/{total}",

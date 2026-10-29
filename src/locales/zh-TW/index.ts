@@ -1646,6 +1646,8 @@ export const zhTW = {
   globalSearchFooterTips: "Enter 跳轉 · ↑↓ 選擇 · Tab 分類 · Esc 關閉",
   globalSearchShortcutNudge: "下次可按 {shortcut} 快速開啟",
   doubleShiftToSearch: "連按兩下 Shift 開啟全域搜尋",
+  globalSearchEnabledLabel: "啟用全域搜尋",
+  globalSearchEnabledDesc: "關閉後停用全域搜尋的所有開啟方式，Cmd+K / Ctrl+K 將交還給網站原生功能",
   globalSearchShortcutNudgeDismiss: "不再提醒",
   globalSearchContextCurrentItem: "第 {current} 項",
   globalSearchContextShownProgress: "已顯示 {shown}/{total}",

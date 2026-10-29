@@ -249,6 +249,7 @@ export const DEFAULT_SETTINGS: Settings = {
   },
 
   globalSearch: {
+    enabled: true,
     promptEnterBehavior: "smart",
     enableFuzzySearch: false,
     doubleShift: false,

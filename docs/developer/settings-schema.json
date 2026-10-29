@@ -206,6 +206,7 @@
   },
 
   "globalSearch": {
+    "enabled": true,
     "promptEnterBehavior": "smart",
     "enableFuzzySearch": false,
     "doubleShift": false
