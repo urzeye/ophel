@@ -210,7 +210,12 @@ export class ConversationManager {
   }
 
   private get lastUsedFolderId(): string {
-    return getConversationsStore().lastUsedFolderId
+    return this.getValidFolderId(getConversationsStore().lastUsedFolderId)
+  }
+
+  private getValidFolderId(folderId: string | null | undefined): string {
+    if (!folderId) return "inbox"
+    return this.folders.some((folder) => folder.id === folderId) ? folderId : "inbox"
   }
 
   private get tags(): Tag[] {
@@ -265,6 +270,7 @@ export class ConversationManager {
     // 这类对话会不可见）。同步的更新分支也会修复 folderId，但只覆盖本次侧边栏
     // 扫到的对话；这里在启动时兜底修复其余对话。
     this.repairOrphanedConversationFolders()
+    this.repairLastUsedFolderId()
 
     // 检查是否刚恢复了备份数据，如果是则跳过自动同步以保持备份的干净状态
     const isRestore = await consumeRestoreFlag()
@@ -343,6 +349,17 @@ export class ConversationManager {
       useConversationsStore.setState({ conversations: nextConversations })
       this.notifyDataChange()
     }
+  }
+
+  /**
+   * 修复指向已删除文件夹的同步目标，避免新对话继续写入不可见文件夹。
+   */
+  private repairLastUsedFolderId(): void {
+    const store = getConversationsStore()
+    const persistedFolderId = store.lastUsedFolderId
+    if (this.getValidFolderId(persistedFolderId) === persistedFolderId) return
+
+    store.setLastUsedFolderId("inbox")
   }
 
   // Gemini 老数据迁移：数字 cid(0/1/2...) -> 当前邮箱 cid
@@ -879,11 +896,16 @@ export class ConversationManager {
 
   deleteFolder(id: string) {
     if (id === "inbox") return // 禁止删除 inbox
+    const wasSyncTarget = getConversationsStore().lastUsedFolderId === id
 
     // 将对话移动到 inbox
     getConversationsStore().moveConversationsToInbox(id)
 
     getFoldersStore().deleteFolder(id)
+
+    if (wasSyncTarget) {
+      this.setLastUsedFolder("inbox")
+    }
   }
 
   moveFolder(id: string, direction: "up" | "down") {
@@ -1031,7 +1053,7 @@ export class ConversationManager {
   }
 
   setLastUsedFolder(folderId: string) {
-    getConversationsStore().setLastUsedFolderId(folderId)
+    getConversationsStore().setLastUsedFolderId(this.getValidFolderId(folderId))
   }
 
   // ================= Tag Operations =================
@@ -1133,8 +1155,9 @@ export class ConversationManager {
     let updatedCount = 0
     let deletedCount = 0
     const now = Date.now()
-    const folderId = targetFolderId || this.lastUsedFolderId || "inbox"
     const validFolderIds = new Set(this.folders.map((folder) => folder.id))
+    const requestedFolderId = targetFolderId || this.lastUsedFolderId || "inbox"
+    const folderId = validFolderIds.has(requestedFolderId) ? requestedFolderId : "inbox"
     const store = getConversationsStore()
     const sidebarIds = new Set(sidebarItems.map((item) => item.id))
     const upserts: Conversation[] = []
@@ -1218,7 +1241,7 @@ export class ConversationManager {
       upserts,
       updates: updateEntries,
       deleteIds,
-      lastUsedFolderId: targetFolderId || undefined,
+      lastUsedFolderId: targetFolderId !== null ? folderId : undefined,
     })
 
     return { newCount, updatedCount, deletedCount }
