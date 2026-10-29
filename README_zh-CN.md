@@ -111,7 +111,7 @@
     </tr>
     <tr>
       <td>💡 <a href="https://ophel.app/docs/zh/features/prompts">提示词库</a></td>
-      <td>变量模板、分类管理、一键填充，支持提示词链与队列自动排队发送，选择文本快捷引用</td>
+      <td>变量模板、分类管理、一键填充，支持链式提示词与队列自动排队发送，选择文本快捷引用</td>
     </tr>
     <tr>
       <td>🧩 <a href="https://ophel.app/docs/zh/enhancements/site-extensions">站点适配</a></td>
