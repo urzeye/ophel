@@ -1069,10 +1069,12 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
                   {copySucceeded ? <CheckIcon size={15} /> : <CopyIcon size={15} />}
                 </button>
               </Tooltip>
-              <button className="gh-quick-quote-action" onClick={() => void handleQuote()}>
-                <QuoteIcon size={15} />
-                <span>{t("quickQuoteQuote")}</span>
-              </button>
+              <Tooltip content={t("quickQuoteQuoteHint")} triggerStyle={{ flex: "0 0 auto" }}>
+                <button className="gh-quick-quote-action" onClick={() => void handleQuote()}>
+                  <QuoteIcon size={15} />
+                  <span>{t("quickQuoteQuote")}</span>
+                </button>
+              </Tooltip>
             </>
           )}
           {quickQuoteEnabled && primaryChains.length > 0 && (
@@ -1081,8 +1083,8 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
           {primaryChains.map((chain) => (
             <Tooltip
               key={chain.id}
-              content={chain.title}
-              showOnlyWhenTruncated
+              content={chain.description?.trim() || chain.title}
+              showOnlyWhenTruncated={!chain.description?.trim()}
               triggerStyle={{ flex: "0 1 110px", maxWidth: "120px", minWidth: 0 }}>
               <button
                 className="gh-quick-quote-action icon-only"
@@ -1119,8 +1121,8 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
                   {overflowChains.map((chain) => (
                     <Tooltip
                       key={chain.id}
-                      content={chain.title}
-                      showOnlyWhenTruncated
+                      content={chain.description?.trim() || chain.title}
+                      showOnlyWhenTruncated={!chain.description?.trim()}
                       triggerStyle={{ display: "block" }}>
                       <button
                         type="button"

@@ -580,6 +580,7 @@ export const en = {
   quickQuoteInserted: "Quote inserted",
   quickQuoteChainQueued: "Added {count} item(s) to queue",
   quickQuoteQuote: "Quote",
+  quickQuoteQuoteHint: "Insert the selected text as a quote in the input box",
   quickQuoteReply: "Quote Reply",
   quickQuoteChainQueueSource: "Chain: {title} · {index}/{total}",
   quickQuoteSettingsTitle: "Selection Quote",

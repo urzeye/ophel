@@ -575,6 +575,7 @@ export const ko = {
   quickQuoteInserted: "인용이 삽입되었습니다",
   quickQuoteChainQueued: "{count}개 항목을 대기열에 추가했습니다",
   quickQuoteQuote: "인용",
+  quickQuoteQuoteHint: "선택한 텍스트를 인용으로 입력창에 삽입합니다",
   quickQuoteReply: "인용 답변",
   quickQuoteChainQueueSource: "Chain: {title} · {index}/{total}",
   quickQuoteSettingsTitle: "선택 영역 인용",

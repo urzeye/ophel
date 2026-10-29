@@ -191,8 +191,8 @@
   align-items: center;
   justify-content: center;
   gap: 5px;
-  min-width: 30px;
-  height: 28px;
+  min-width: 32px;
+  height: 32px;
   padding: 0 8px;
   border: none;
   border-radius: 6px;
@@ -220,10 +220,10 @@
 }
 
 .gh-quick-quote-copy-action {
-  width: 30px;
-  min-width: 30px;
+  width: 32px;
+  min-width: 32px;
   padding: 0;
-  flex: 0 0 30px;
+  flex: 0 0 32px;
 }
 
 .gh-quick-quote-action.icon-only {

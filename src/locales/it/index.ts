@@ -595,6 +595,7 @@ export const it = {
   quickQuoteInserted: "Citazione inserita",
   quickQuoteChainQueued: "Aggiunti elementi {count} alla coda",
   quickQuoteQuote: "Citazione",
+  quickQuoteQuoteHint: "Inserisci il testo selezionato come citazione nella casella di input",
   quickQuoteReply: "Citazione risposta",
   quickQuoteChainQueueSource: "Chain: {title} · {index}/{total}",
   quickQuoteSettingsTitle: "Preventivo di selezione",

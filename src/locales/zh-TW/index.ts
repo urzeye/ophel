@@ -467,6 +467,7 @@ export const zhTW = {
   quickQuoteInserted: "引用已插入",
   quickQuoteChainQueued: "已加入隊列 {count} 條",
   quickQuoteQuote: "引用",
+  quickQuoteQuoteHint: "把選取的文字作為引用插入輸入框",
   quickQuoteReply: "引用回覆",
   quickQuoteChainQueueSource: "鏈式提示詞：{title} · {index}/{total}",
   quickQuoteSettingsTitle: "選區引用",

@@ -582,6 +582,7 @@ export const de = {
   quickQuoteInserted: "Zitat eingefügt",
   quickQuoteChainQueued: "{count} Element(e) zur Warteschlange hinzugefügt",
   quickQuoteQuote: "Zitat",
+  quickQuoteQuoteHint: "Markierten Text als Zitat ins Eingabefeld einfügen",
   quickQuoteReply: "Zitatantwort",
   quickQuoteChainQueueSource: "Chain: {title} · {index}/{total}",
   quickQuoteSettingsTitle: "Auswahlzitat",

@@ -584,6 +584,7 @@ export const fr = {
   quickQuoteInserted: "Citation insérée",
   quickQuoteChainQueued: "{count} élément(s) ajoutés à la file",
   quickQuoteQuote: "Citer",
+  quickQuoteQuoteHint: "Insérer le texte sélectionné comme citation dans la zone de saisie",
   quickQuoteReply: "Répondre avec citation",
   quickQuoteChainQueueSource: "Chain: {title} · {index}/{total}",
   quickQuoteSettingsTitle: "Citation de sélection",
