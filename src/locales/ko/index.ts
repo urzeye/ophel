@@ -352,7 +352,7 @@ export const ko = {
   snapToEdge: "가장자리에 스냅",
   tip1: "{modifier} 길게 누르면 패널을 투과하여 아래 콘텐츠를 조작할 수 있습니다",
   tip3: "{shortcut} 을 누르면 {link}를 확인할 수 있습니다",
-  tip4: "{shortcut}로 {link}를 열어 모든 항목 검색",
+  tip4: "{shortcut}로 {link}을 열어 개요, 대화, 프롬프트, 설정을 한 번에 검색",
   tipGlobalSearchLink: "글로벌 검색",
   tipShortcutsLink: "모든 단축키",
   tip5: "{sitePacks}에서 팩을 설치하면 더 많은 AI 사이트에서 Ophel을 사용할 수 있습니다",
@@ -1829,9 +1829,9 @@ export const ko = {
   "featureTip-panel-mode-toggle-title": "패널 모드 전환",
   "featureTip-panel-mode-toggle-desc": "플로팅 모드와 가장자리 스냅 모드 사이를 빠르게 전환",
   "featureTip-panel-mode-toggle-path":
-    "{shortcut}을 누르거나 제목 표시줄을 더블 클릭하여 패널 표시 모드를 빠르게 전환",
+    "{shortcut}을 누르거나 제목 표시줄을 더블 클릭하여 플로팅과 자동 스냅 모드 사이를 전환",
   "featureTip-panel-mode-toggle-path-dblclick":
-    "제목 표시줄을 더블 클릭하여 패널 표시 모드를 빠르게 전환",
+    "제목 표시줄을 더블 클릭하여 플로팅과 자동 스냅 모드 사이를 전환",
   "featureTip-shortcuts-title": "키보드 단축키 모아보기",
   "featureTip-shortcuts-desc": "모든 키보드 단축키 확인 및 사용자 지정",
   "featureTip-shortcuts-path": "{shortcut}으로 단축키 모아보기 열기",

@@ -360,7 +360,7 @@ export const ja = {
   tip1: "{modifier} を長押しで透過モード、パネルの下のコンテンツを操作可能",
 
   tip3: "{shortcut} で{link}を表示",
-  tip4: "{shortcut} で{link}ですべてを検索",
+  tip4: "{shortcut} で{link}を開き、アウトライン・会話・プロンプト・設定をまとめて検索",
   tipGlobalSearchLink: "グローバル検索",
   tipShortcutsLink: "全ショートカット",
   tip5: "{sitePacks}からインストールして、さらに多くのAIサイトでOphelを使えます",
@@ -1849,9 +1849,9 @@ export const ja = {
   "featureTip-panel-mode-toggle-desc":
     "フローティングモードとエッジスナップモードを素早く切り替える",
   "featureTip-panel-mode-toggle-path":
-    "{shortcut}を押すかタイトルバーをダブルクリックしてパネル表示モードを素早く切り替え",
+    "{shortcut}を押すかタイトルバーをダブルクリックして、フローティングと自動スナップを切り替え",
   "featureTip-panel-mode-toggle-path-dblclick":
-    "タイトルバーをダブルクリックしてパネル表示モードを素早く切り替え",
+    "タイトルバーをダブルクリックして、フローティングと自動スナップを切り替え",
   "featureTip-shortcuts-title": "キーボードショートカット一覧",
   "featureTip-shortcuts-desc": "すべてのキーボードショートカットを確認・カスタマイズ",
   "featureTip-shortcuts-path": "{shortcut}でショートカット一覧を開く",

@@ -356,7 +356,7 @@ export const de = {
   tip1: "{modifier} gedrückt halten für Durchreichmodus – Inhalte unter dem Panel bedienen",
 
   tip3: "{shortcut} zeigt {link}",
-  tip4: "{shortcut} öffnet die {link} und findet alles",
+  tip4: "{shortcut} öffnet die {link} und durchsucht Gliederung, Konversationen, Promptsammlung und Einstellungen auf einmal",
   tipGlobalSearchLink: "globale Suche",
   tipShortcutsLink: "alle Tastaturkürzel",
   tip5: "Installiere Pakete über {sitePacks}, um Ophel auf weiteren KI-Seiten zu nutzen",
@@ -1848,9 +1848,9 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   "featureTip-panel-mode-toggle-desc":
     "Schnell zwischen schwebendem und eingebettetem Modus wechseln",
   "featureTip-panel-mode-toggle-path":
-    "{shortcut} drücken oder Doppelklick auf die Titelleiste zum schnellen Wechsel des Panel-Anzeigemodus",
+    "{shortcut} drücken oder Doppelklick auf die Titelleiste, um zwischen dem schwebenden und dem Auto-Snap-Modus zu wechseln",
   "featureTip-panel-mode-toggle-path-dblclick":
-    "Doppelklick auf die Titelleiste zum schnellen Wechsel des Panel-Anzeigemodus",
+    "Doppelklick auf die Titelleiste, um zwischen dem schwebenden und dem Auto-Snap-Modus zu wechseln",
   "featureTip-shortcuts-title": "Tastaturkürzel-Übersicht",
   "featureTip-shortcuts-desc": "Alle Tastaturkürzel anzeigen und anpassen",
   "featureTip-shortcuts-path": "{shortcut} zum Öffnen der Tastaturkürzel-Übersicht",

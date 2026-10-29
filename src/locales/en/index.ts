@@ -359,7 +359,7 @@ export const en = {
   tip1: "Long press {modifier} to enter passthrough mode and interact with content beneath the panel",
 
   tip3: "Press {shortcut} to view {link}",
-  tip4: "{shortcut} opens {link} to find anything",
+  tip4: "{shortcut} opens {link} to search across the outline, chats, prompts and settings",
   tipGlobalSearchLink: "global search",
   tipShortcutsLink: "all keyboard shortcuts",
   tip5: "Install packs in {sitePacks} to bring Ophel to more AI sites",
@@ -1848,9 +1848,9 @@ Please output the optimized code block directly, followed by a brief summary of 
   "featureTip-panel-mode-toggle-title": "Switch Panel Mode",
   "featureTip-panel-mode-toggle-desc": "Quickly switch between floating and edge-snap mode",
   "featureTip-panel-mode-toggle-path":
-    "Press {shortcut}, or double-click the title bar, to quickly switch the panel display mode",
+    "Press {shortcut}, or double-click the title bar, to switch between Floating and Auto Snap modes",
   "featureTip-panel-mode-toggle-path-dblclick":
-    "Double-click the panel title bar to quickly switch the panel display mode",
+    "Double-click the panel title bar to switch between Floating and Auto Snap modes",
   "featureTip-shortcuts-title": "Keyboard Shortcuts Overview",
   "featureTip-shortcuts-desc": "View and customize all keyboard shortcuts",
   "featureTip-shortcuts-path": "{shortcut} to open shortcuts overview",

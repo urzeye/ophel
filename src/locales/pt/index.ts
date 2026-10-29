@@ -356,7 +356,7 @@ export const pt = {
   tip1: "Segure {modifier} para modo transparente e interagir com o conteúdo abaixo",
 
   tip3: "{shortcut} mostra {link}",
-  tip4: "{shortcut} abre {link} para encontrar qualquer conteúdo",
+  tip4: "{shortcut} abre {link} para pesquisar de uma vez a estrutura, as conversas, os comandos e as configurações",
   tipGlobalSearchLink: "a busca global",
   tipShortcutsLink: "todos os atalhos de teclado",
   tip5: "Instale pacotes em {sitePacks} para usar o Ophel em mais sites de IA",
@@ -1837,9 +1837,9 @@ Dê o código e depois um resumo de melhorias.`,
   "featureTip-panel-mode-toggle-desc":
     "Alterne rapidamente entre o modo flutuante e o modo de encaixe",
   "featureTip-panel-mode-toggle-path":
-    "Pressione {shortcut} ou clique duplo na barra de título para alternar rapidamente o modo do painel",
+    "Pressione {shortcut} ou clique duplo na barra de título para alternar entre o modo flutuante e o modo de ajuste automático",
   "featureTip-panel-mode-toggle-path-dblclick":
-    "Clique duplo na barra de título para alternar rapidamente o modo de exibição do painel",
+    "Clique duplo na barra de título para alternar entre o modo flutuante e o modo de ajuste automático",
   "featureTip-shortcuts-title": "Visão Geral dos Atalhos",
   "featureTip-shortcuts-desc": "Visualize e personalize todos os atalhos de teclado",
   "featureTip-shortcuts-path": "{shortcut} para abrir a visão geral dos atalhos",

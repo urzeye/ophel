@@ -367,7 +367,7 @@ export const it = {
   tip1: "Premi a lungo {modifier} per accedere alla modalità passthrough e interagire con i contenuti sotto il pannello",
 
   tip3: "Premi {shortcut} per visualizzare {link}",
-  tip4: "{shortcut} apre {link} per trovare qualsiasi contenuto",
+  tip4: "{shortcut} apre {link} per cercare in un colpo solo nel contorno, nelle conversazioni, nei suggerimenti e nelle impostazioni",
   tipGlobalSearchLink: "la ricerca globale",
   tipShortcutsLink: "tutte le scorciatoie da tastiera",
   tip5: "Installa pacchetti in {sitePacks} per usare Ophel su più siti di IA",
@@ -1907,9 +1907,9 @@ export const it = {
   "featureTip-panel-mode-toggle-title": "Cambia modalità pannello",
   "featureTip-panel-mode-toggle-desc": "Passa rapidamente dalla modalità mobile a quella edge-snap",
   "featureTip-panel-mode-toggle-path":
-    "Premere {shortcut} o fare doppio clic sulla barra del titolo per cambiare rapidamente la modalità di visualizzazione del pannello",
+    "Premere {shortcut} o fare doppio clic sulla barra del titolo per alternare tra la modalità galleggiante e quella a scatto automatico",
   "featureTip-panel-mode-toggle-path-dblclick":
-    "Fare doppio clic sulla barra del titolo del pannello per cambiare rapidamente la modalità di visualizzazione del pannello",
+    "Fare doppio clic sulla barra del titolo del pannello per alternare tra la modalità galleggiante e quella a scatto automatico",
   "featureTip-shortcuts-title": "Panoramica sulle scorciatoie da tastiera",
   "featureTip-shortcuts-desc": "Visualizza e personalizza tutte le scorciatoie da tastiera",
   "featureTip-shortcuts-path": "{shortcut} per aprire la panoramica delle scorciatoie",

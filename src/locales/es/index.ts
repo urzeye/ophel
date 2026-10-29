@@ -356,7 +356,7 @@ export const es = {
   tip1: "Mantén {modifier} para activar el modo transparente e interactuar con el contenido debajo",
 
   tip3: "{shortcut} muestra {link}",
-  tip4: "{shortcut} abre {link} para encontrar cualquier contenido",
+  tip4: "{shortcut} abre {link} para buscar a la vez en el esquema, las conversaciones, las indicaciones y la configuración",
   tipGlobalSearchLink: "la búsqueda global",
   tipShortcutsLink: "todos los atajos de teclado",
   tip5: "Instala paquetes en {sitePacks} para usar Ophel en más sitios de IA",
@@ -1842,9 +1842,9 @@ Dame el código y luego un resumen de mejoras.`,
   "featureTip-panel-mode-toggle-desc":
     "Cambia rápidamente entre el modo flotante y el modo de anclaje",
   "featureTip-panel-mode-toggle-path":
-    "Pulsa {shortcut} o haz doble clic en la barra de título para cambiar rápidamente el modo del panel",
+    "Pulsa {shortcut} o haz doble clic en la barra de título para alternar entre el modo flotante y el modo de auto-ajuste",
   "featureTip-panel-mode-toggle-path-dblclick":
-    "Doble clic en la barra de título para cambiar rápidamente el modo de visualización del panel",
+    "Doble clic en la barra de título para alternar entre el modo flotante y el modo de auto-ajuste",
   "featureTip-shortcuts-title": "Atajos de teclado",
   "featureTip-shortcuts-desc": "Ver y personalizar todos los atajos de teclado",
   "featureTip-shortcuts-path": "{shortcut} para abrir los atajos",

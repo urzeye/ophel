@@ -359,7 +359,7 @@ export const fr = {
   tip1: "Maintenez {modifier} pour le mode transparent et interagir avec le contenu en dessous",
 
   tip3: "{shortcut} affiche {link}",
-  tip4: "{shortcut} ouvre {link} pour tout trouver",
+  tip4: "{shortcut} ouvre {link} pour chercher à la fois dans le plan, les conversations, les invites et les paramètres",
   tipGlobalSearchLink: "la recherche globale",
   tipShortcutsLink: "tous les raccourcis clavier",
   tip5: "Installez des packs dans {sitePacks} pour utiliser Ophel sur plus de sites d'IA",
@@ -1856,9 +1856,9 @@ Donnez le code puis un résumé des améliorations.`,
   "featureTip-panel-mode-toggle-desc":
     "Basculer rapidement entre le mode flottant et le mode d'ancrage",
   "featureTip-panel-mode-toggle-path":
-    "Appuyez sur {shortcut} ou double-cliquez sur la barre de titre pour changer rapidement le mode d'affichage du panneau",
+    "Appuyez sur {shortcut} ou double-cliquez sur la barre de titre pour basculer entre le mode flottant et le mode d'accrochage auto",
   "featureTip-panel-mode-toggle-path-dblclick":
-    "Double-cliquer sur la barre de titre pour changer rapidement le mode d'affichage du panneau",
+    "Double-cliquer sur la barre de titre pour basculer entre le mode flottant et le mode d'accrochage auto",
   "featureTip-shortcuts-title": "Raccourcis clavier",
   "featureTip-shortcuts-desc": "Voir et personnaliser tous les raccourcis clavier",
   "featureTip-shortcuts-path": "{shortcut} pour ouvrir les raccourcis",
