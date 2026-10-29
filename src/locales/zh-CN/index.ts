@@ -606,6 +606,7 @@ export const zhCN = {
   quickQuoteChainQueued: "已加入队列 {count} 条",
   quickQuoteQuote: "引用",
   quickQuoteQuoteHint: "把选中的文字作为引用插入输入框",
+  quickQuoteReplyHint: "把选中的文字作为引用，连同回复指令一起放入输入框",
   quickQuoteReply: "引用回复",
   quickQuoteChainQueueSource: "链式提示词：{title} · {index}/{total}",
   quickQuoteSettingsTitle: "选区引用",

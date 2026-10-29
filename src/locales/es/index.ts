@@ -580,6 +580,8 @@ export const es = {
   quickQuoteChainQueued: "{count} elemento(s) añadidos a la cola",
   quickQuoteQuote: "Citar",
   quickQuoteQuoteHint: "Insertar el texto seleccionado como cita en el cuadro de entrada",
+  quickQuoteReplyHint:
+    "Insertar el texto seleccionado como cita, con una instrucción de respuesta, en el cuadro de entrada",
   quickQuoteReply: "Responder con cita",
   quickQuoteChainQueueSource: "Chain: {title} · {index}/{total}",
   quickQuoteSettingsTitle: "Cita de selección",

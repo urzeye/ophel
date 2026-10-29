@@ -577,6 +577,8 @@ export const ru = {
   quickQuoteChainQueued: "Добавлено в очередь: {count}",
   quickQuoteQuote: "Цитата",
   quickQuoteQuoteHint: "Вставить выделенный текст как цитату в поле ввода",
+  quickQuoteReplyHint:
+    "Вставить выделенный текст как цитату вместе с инструкцией для ответа в поле ввода",
   quickQuoteReply: "Ответ с цитатой",
   quickQuoteChainQueueSource: "Chain: {title} · {index}/{total}",
   quickQuoteSettingsTitle: "Цитата выделения",

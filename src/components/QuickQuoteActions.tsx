@@ -246,6 +246,15 @@ const createQuickQuoteMessageScopeKey = (index: number, text: string): string =>
 const isDefaultQuickQuoteReplyChain = (chain: PromptChain): boolean =>
   chain.id === QUICK_QUOTE_REPLY_CHAIN_ID
 
+// 选区工具栏按钮的悬浮说明：用户写了描述就用描述；内置的「引用回复」没有描述，用内置说明；其余只显示标题
+const getChainTooltip = (chain: PromptChain): string =>
+  chain.description?.trim() ||
+  (isDefaultQuickQuoteReplyChain(chain) ? t("quickQuoteReplyHint") : chain.title)
+
+// 有说明文字时 tooltip 始终可用；只有标题时仅在标题被截断才显示
+const hasChainExplanation = (chain: PromptChain): boolean =>
+  Boolean(chain.description?.trim()) || isDefaultQuickQuoteReplyChain(chain)
+
 const canRunChainWithoutPromptQueue = (chain: PromptChain): boolean =>
   chain.steps.length > 0 && chain.steps.every((step) => step.runMode === "insert")
 
@@ -1083,8 +1092,8 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
           {primaryChains.map((chain) => (
             <Tooltip
               key={chain.id}
-              content={chain.description?.trim() || chain.title}
-              showOnlyWhenTruncated={!chain.description?.trim()}
+              content={getChainTooltip(chain)}
+              showOnlyWhenTruncated={!hasChainExplanation(chain)}
               triggerStyle={{ flex: "0 1 110px", maxWidth: "120px", minWidth: 0 }}>
               <button
                 className="gh-quick-quote-action icon-only"
@@ -1121,8 +1130,8 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
                   {overflowChains.map((chain) => (
                     <Tooltip
                       key={chain.id}
-                      content={chain.description?.trim() || chain.title}
-                      showOnlyWhenTruncated={!chain.description?.trim()}
+                      content={getChainTooltip(chain)}
+                      showOnlyWhenTruncated={!hasChainExplanation(chain)}
                       triggerStyle={{ display: "block" }}>
                       <button
                         type="button"

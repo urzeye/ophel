@@ -581,6 +581,7 @@ export const ja = {
   quickQuoteChainQueued: "{count} 件をキューに追加しました",
   quickQuoteQuote: "引用",
   quickQuoteQuoteHint: "選択したテキストを引用として入力欄に挿入します",
+  quickQuoteReplyHint: "選択したテキストを引用し、返信の指示とともに入力欄に入れます",
   quickQuoteReply: "引用返信",
   quickQuoteChainQueueSource: "Chain: {title} · {index}/{total}",
   quickQuoteSettingsTitle: "選択範囲の引用",
