@@ -12,6 +12,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 ### 🚀 New Features
 
 - **Hide Ophel on specific pages** — Site Settings has a new "Hide Ophel on specific pages" list: add pages of a site (such as Claude's artifact pages), and Ophel's panel and quick buttons stay hidden there and come back when you leave, so you no longer have to disable Ophel for the whole site. (#995)
+- **Turn off Global Search** — Features settings has a new "Enable Global Search" switch. When it's off, every way of opening Global Search is disabled and its shortcut (Ctrl/⌘+K by default) goes back to the website's own feature. (#1005)
 
 ### ✨ Improvements
 
@@ -25,6 +26,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **Doubao scroll to top not sticking** — Fixed an issue where clicking Scroll to Top right after refreshing a Doubao chat reached the top and then jumped back to the bottom. (#983)
 - **Shortcut recording conflict** — Fixed an issue where pressing a key combination while recording a shortcut in settings (such as Ctrl+K on DeepSeek) also triggered the website's own action. (#988)
 - **Desktop notifications not showing on Firefox** — Fixed an issue on Firefox-based browsers (such as Zen Browser) where desktop notifications did not appear when AI replies finished, even with desktop notifications enabled. (#1003)
+- **Global Search popup display** — Fixed an issue where an outline result's title ran straight into the text after it (such as "Outline / User queries") on the same line; each result now shows just its type, number and title. Also fixed the "Search syntax examples" panel opened by "?" being cut off by the popup's edge when only a few results match. (#1005)
 
 ---
 
