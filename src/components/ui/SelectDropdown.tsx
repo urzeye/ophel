@@ -11,6 +11,10 @@ export interface SelectDropdownOption {
   label: React.ReactNode
   title?: string
   disabled?: boolean
+  /** 仅显示在菜单项右侧的次要说明（如分类），不会出现在按钮上 */
+  description?: string
+  /** 搜索匹配用的文本；缺省时使用 string 类型的 label */
+  searchText?: string
 }
 
 export interface SelectDropdownProps {
@@ -30,6 +34,9 @@ export interface SelectDropdownProps {
   /** 显式覆盖按钮的悬浮提示；传 null 可关闭（例如外层已有自定义 Tooltip 时避免双提示） */
   buttonTitle?: string | null
   onOpenChange?: (open: boolean) => void
+  /** 在菜单顶部显示搜索框，按 label / searchText / description 过滤选项（选项很多时使用） */
+  searchable?: boolean
+  searchPlaceholder?: string
 }
 
 const getComposedPath = (event: Event): EventTarget[] => {
@@ -56,12 +63,16 @@ export const SelectDropdown: React.FC<SelectDropdownProps> = ({
   ariaLabel,
   buttonTitle,
   onOpenChange,
+  searchable = false,
+  searchPlaceholder,
 }) => {
   const [open, setOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState(-1)
+  const [query, setQuery] = useState("")
 
   const rootRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
+  const searchRef = useRef<HTMLInputElement>(null)
   const optionRefs = useRef<Array<HTMLButtonElement | null>>([])
 
   const selectedIndex = useMemo(
@@ -71,6 +82,17 @@ export const SelectDropdown: React.FC<SelectDropdownProps> = ({
 
   const selectedOption = selectedIndex >= 0 ? options[selectedIndex] : null
 
+  // 搜索只影响菜单里显示哪些选项；按钮上的已选项始终取自完整的 options
+  const visibleOptions = useMemo(() => {
+    const keyword = query.trim().toLowerCase()
+    if (!searchable || !keyword) return options
+
+    return options.filter((option) => {
+      const text = option.searchText ?? (typeof option.label === "string" ? option.label : "")
+      return `${text} ${option.description ?? ""}`.toLowerCase().includes(keyword)
+    })
+  }, [options, query, searchable])
+
   useEffect(() => {
     onOpenChange?.(open)
   }, [open, onOpenChange])
@@ -78,10 +100,21 @@ export const SelectDropdown: React.FC<SelectDropdownProps> = ({
   useEffect(() => {
     if (!open) return
 
-    const initialIndex =
-      selectedIndex >= 0 ? selectedIndex : options.findIndex((option) => !option.disabled)
-    setActiveIndex(initialIndex)
-  }, [open, options, selectedIndex])
+    const selectedVisibleIndex = visibleOptions.findIndex((option) => option.value === value)
+    setActiveIndex(
+      selectedVisibleIndex >= 0
+        ? selectedVisibleIndex
+        : visibleOptions.findIndex((option) => !option.disabled),
+    )
+  }, [open, visibleOptions, value])
+
+  useEffect(() => {
+    if (!open) setQuery("")
+  }, [open])
+
+  useEffect(() => {
+    if (open && searchable) searchRef.current?.focus({ preventScroll: true })
+  }, [open, searchable])
 
   useEffect(() => {
     if (!open || activeIndex < 0) return
@@ -134,21 +167,21 @@ export const SelectDropdown: React.FC<SelectDropdownProps> = ({
   }
 
   const getNextEnabledIndex = (start: number, direction: 1 | -1): number => {
-    if (options.length === 0) return -1
+    if (visibleOptions.length === 0) return -1
 
     let index = start
-    for (let i = 0; i < options.length; i += 1) {
+    for (let i = 0; i < visibleOptions.length; i += 1) {
       index += direction
-      if (index >= options.length) index = 0
-      if (index < 0) index = options.length - 1
-      if (!options[index]?.disabled) return index
+      if (index >= visibleOptions.length) index = 0
+      if (index < 0) index = visibleOptions.length - 1
+      if (!visibleOptions[index]?.disabled) return index
     }
 
     return -1
   }
 
   const selectAtIndex = (index: number) => {
-    const option = options[index]
+    const option = visibleOptions[index]
     if (!option || option.disabled) return
 
     onChange(option.value)
@@ -201,18 +234,19 @@ export const SelectDropdown: React.FC<SelectDropdownProps> = ({
       return
     }
 
-    if (event.key === "Home") {
+    // 带搜索框时，Home / End 留给输入框移动光标
+    if (event.key === "Home" && !searchable) {
       event.preventDefault()
-      const first = options.findIndex((option) => !option.disabled)
+      const first = visibleOptions.findIndex((option) => !option.disabled)
       if (first >= 0) setActiveIndex(first)
       return
     }
 
-    if (event.key === "End") {
+    if (event.key === "End" && !searchable) {
       event.preventDefault()
-      const reversedIndex = [...options].reverse().findIndex((option) => !option.disabled)
+      const reversedIndex = [...visibleOptions].reverse().findIndex((option) => !option.disabled)
       if (reversedIndex >= 0) {
-        setActiveIndex(options.length - reversedIndex - 1)
+        setActiveIndex(visibleOptions.length - reversedIndex - 1)
       }
       return
     }
@@ -332,18 +366,55 @@ export const SelectDropdown: React.FC<SelectDropdownProps> = ({
               {menuHeader}
             </div>
           )}
-          {options.length === 0 ? (
+          {searchable && (
+            <div
+              style={{
+                position: "sticky",
+                top: 0,
+                zIndex: 1,
+                padding: "2px 0 6px",
+                background: "var(--gh-bg, #ffffff)",
+              }}>
+              <input
+                ref={searchRef}
+                type="text"
+                value={query}
+                placeholder={searchPlaceholder}
+                aria-label={searchPlaceholder}
+                onChange={(event) => setQuery(event.target.value)}
+                onFocus={(event) => {
+                  event.target.style.borderColor = "var(--gh-primary, #4285f4)"
+                }}
+                onBlur={(event) => {
+                  event.target.style.borderColor = "var(--gh-input-border, #d1d5db)"
+                }}
+                style={{
+                  width: "100%",
+                  boxSizing: "border-box",
+                  height: "30px",
+                  padding: "0 8px",
+                  border: "1px solid var(--gh-input-border, #d1d5db)",
+                  borderRadius: "6px",
+                  background: "var(--gh-input-bg, var(--gh-bg, #ffffff))",
+                  color: "var(--gh-text, #1f2937)",
+                  fontSize: "13px",
+                  outline: "none",
+                }}
+              />
+            </div>
+          )}
+          {visibleOptions.length === 0 ? (
             <div
               style={{
                 padding: "8px 10px",
-                color: "var(--gh-text-tertiary, #9ca3af)",
+                color: "var(--gh-text-secondary, #6b7280)",
                 fontSize: "13px",
                 textAlign: "left",
               }}>
               {emptyText || t("selectNoOptions")}
             </div>
           ) : (
-            options.map((option, index) => {
+            visibleOptions.map((option, index) => {
               const isSelected = option.value === value
               const isActive = index === activeIndex
 
@@ -389,7 +460,34 @@ export const SelectDropdown: React.FC<SelectDropdownProps> = ({
                       fontSize: "14px",
                       lineHeight: 1.4,
                     }}>
-                    {option.label}
+                    {option.description ? (
+                      <>
+                        <span
+                          style={{
+                            minWidth: 0,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}>
+                          {option.label}
+                        </span>
+                        <span
+                          style={{
+                            flexShrink: 0,
+                            maxWidth: "40%",
+                            marginLeft: "auto",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                            fontSize: "12px",
+                            opacity: 0.7,
+                          }}>
+                          {option.description}
+                        </span>
+                      </>
+                    ) : (
+                      option.label
+                    )}
                   </button>
                 </Tooltip>
               )
