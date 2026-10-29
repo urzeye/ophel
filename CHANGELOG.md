@@ -11,7 +11,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🚀 New Features
 
-- **Hide Ophel on specific pages** — Site Settings has a new "Hide Ophel on specific pages" list: add pages of a site (such as Claude's artifact pages), and Ophel's panel and quick buttons stay hidden there and come back when you leave, so you no longer have to disable Ophel for the whole site.
+- **Hide Ophel on specific pages** — Site Settings has a new "Hide Ophel on specific pages" list: add pages of a site (such as Claude's artifact pages), and Ophel's panel and quick buttons stay hidden there and come back when you leave, so you no longer have to disable Ophel for the whole site. (#995)
 
 ### ✨ Improvements
 
