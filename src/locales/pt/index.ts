@@ -752,7 +752,8 @@ export const pt = {
   assistantMermaidDownloadFailed: "Falha ao baixar PNG",
   assistantMermaidFullscreenFailed: "Falha ao entrar em tela cheia",
   watermarkRemovalLabel: "Remover Marcas d'Água",
-  watermarkRemovalDesc: "Remover marcas do NanoBanana automaticamente",
+  watermarkRemovalDesc:
+    "Remove automaticamente a marca d'água NanoBanana das imagens geradas por IA. Você também pode desativar marcas d'água de mídia nas configurações do Gemini.",
   refreshPrompts: "Atualizar Prompts",
   themeDark: "Escuro",
   // Page width settings

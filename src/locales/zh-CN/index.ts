@@ -895,7 +895,8 @@ export const zhCN = {
   assistantMermaidDownloadFailed: "PNG 下载失败",
   assistantMermaidFullscreenFailed: "全屏失败",
   watermarkRemovalLabel: "移除图片水印",
-  watermarkRemovalDesc: "自动移除 Gemini AI 生成图像中的 NanoBanana 水印",
+  watermarkRemovalDesc:
+    "自动移除 Gemini AI 生成图像中的 NanoBanana 水印；也可在 Gemini 设置中关闭媒体水印。",
   aistudioRemoveWatermark: "移除图片水印",
   aistudioRemoveWatermarkDesc: "移除 AI Studio 生成图片的水印（需刷新页面生效）",
   aistudioMarkdownFixLabel: "Markdown 加粗修复",

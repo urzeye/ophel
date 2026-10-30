@@ -745,7 +745,8 @@ export const ko = {
   assistantMermaidDownloadFailed: "PNG 다운로드 실패",
   assistantMermaidFullscreenFailed: "전체 화면 전환 실패",
   watermarkRemovalLabel: "이미지 워터마크 제거",
-  watermarkRemovalDesc: "AI 생성 이미지에서 NanoBanana 워터마크를 자동으로 제거합니다",
+  watermarkRemovalDesc:
+    "AI 생성 이미지에서 NanoBanana 워터마크를 자동으로 제거합니다. Gemini 설정에서 미디어 워터마크를 끌 수도 있습니다.",
   refreshPrompts: "프롬프트 새로고침",
   themeDark: "다크",
   // Page width settings

@@ -757,7 +757,8 @@ export const fr = {
   assistantMermaidDownloadFailed: "Échec du téléchargement PNG",
   assistantMermaidFullscreenFailed: "Échec du plein ecran",
   watermarkRemovalLabel: "Supprimer les Filigranes",
-  watermarkRemovalDesc: "Effacer les marques de NanoBanana automatiquement",
+  watermarkRemovalDesc:
+    "Supprime automatiquement le filigrane NanoBanana des images générées par IA. Vous pouvez aussi désactiver les filigranes des médias dans les paramètres Gemini.",
   refreshPrompts: "Actualiser les Prompts",
   themeDark: "Sombre",
   // Page width settings

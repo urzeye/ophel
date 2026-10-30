@@ -754,7 +754,8 @@ export const de = {
   assistantMermaidDownloadFailed: "PNG-Download fehlgeschlagen",
   assistantMermaidFullscreenFailed: "Vollbild fehlgeschlagen",
   watermarkRemovalLabel: "Wasserzeichen entfernen",
-  watermarkRemovalDesc: "NanoBanana-Wasserzeichen automatisch löschen",
+  watermarkRemovalDesc:
+    "NanoBanana-Wasserzeichen automatisch aus KI-generierten Bildern entfernen. Medienwasserzeichen lassen sich auch in den Gemini-Einstellungen deaktivieren.",
   refreshPrompts: "Prompts aktualisieren",
   themeDark: "Dunkel",
   // Page width settings

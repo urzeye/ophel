@@ -760,7 +760,8 @@ export const ja = {
   assistantMermaidDownloadFailed: "PNGのダウンロードに失敗しました",
   assistantMermaidFullscreenFailed: "全画面表示に失敗しました",
   watermarkRemovalLabel: "画像の透かし除去",
-  watermarkRemovalDesc: "AI生成画像からNanoBananaの透かしを自動的に除去します",
+  watermarkRemovalDesc:
+    "AI生成画像からNanoBananaの透かしを自動的に除去します。Geminiの設定でメディアの透かしをオフにすることもできます。",
   refreshPrompts: "プロンプトを更新",
   themeDark: "ダーク",
   // Page width settings

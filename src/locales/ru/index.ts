@@ -750,7 +750,8 @@ export const ru = {
   assistantMermaidDownloadFailed: "Не удалось скачать PNG",
   assistantMermaidFullscreenFailed: "Не удалось открыть во весь экран",
   watermarkRemovalLabel: "Удалять вотермарки",
-  watermarkRemovalDesc: "Чистить знаки NanoBanana автоматически",
+  watermarkRemovalDesc:
+    "Автоматически удаляет водяной знак NanoBanana с изображений, созданных ИИ. Вы также можете отключить водяные знаки медиафайлов в настройках Gemini.",
   refreshPrompts: "Обновить промпты",
   themeDark: "Темная",
   // Page width settings

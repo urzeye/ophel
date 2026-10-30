@@ -793,7 +793,8 @@ export const en = {
   assistantMermaidDownloadFailed: "PNG download failed",
   assistantMermaidFullscreenFailed: "Fullscreen failed",
   watermarkRemovalLabel: "Remove Image Watermark",
-  watermarkRemovalDesc: "Automatically remove NanoBanana watermark from AI generated images",
+  watermarkRemovalDesc:
+    "Automatically remove NanoBanana watermarks from AI-generated images. You can also disable media watermarks in Gemini settings.",
   refreshPrompts: "Refresh Prompts",
   themeDark: "Dark",
   // Page width settings

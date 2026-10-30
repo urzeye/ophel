@@ -817,7 +817,7 @@ export const it = {
   assistantMermaidFullscreenFailed: "Schermo intero non riuscito",
   watermarkRemovalLabel: "Rimuovi filigrana immagine",
   watermarkRemovalDesc:
-    "Rimuovi automaticamente la filigrana NanoBanana dalle immagini generate dall'intelligenza artificiale",
+    "Rimuovi automaticamente la filigrana NanoBanana dalle immagini generate dall'intelligenza artificiale. Puoi anche disattivare le filigrane dei media nelle impostazioni di Gemini.",
   refreshPrompts: "Aggiorna prompt",
   themeDark: "Buio",
   // Page width settings

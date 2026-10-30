@@ -1085,7 +1085,8 @@ export const zhTW = {
   manualAnchorDesc: "在快捷工具欄顯示手動錨點按鈕",
   // 浮水印移除
   watermarkRemovalLabel: "移除圖片浮水印",
-  watermarkRemovalDesc: "自動移除 Gemini AI 生成圖像中的 NanoBanana 浮水印",
+  watermarkRemovalDesc:
+    "自動移除 Gemini AI 生成圖像中的 NanoBanana 浮水印；也可在 Gemini 設定中關閉媒體浮水印。",
   watermarkProcessing: "正在處理圖片...",
   watermarkProcessed: "浮水印已移除",
   watermarkFailed: "處理失敗",
