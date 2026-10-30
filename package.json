@@ -142,6 +142,7 @@
       "https://www.kimi.ai/*",
       "https://chatglm.cn/*",
       "https://chat.qwen.ai/*",
+      "https://cdn.qwenlm.ai/*",
       "https://www.qianwen.com/*",
       "https://yuanbao.tencent.com/*",
       "https://chat.z.ai/*",
