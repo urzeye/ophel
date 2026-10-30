@@ -66,6 +66,7 @@ const QWENAI_ATTACHMENT_SOURCE_ATTRS = [
   "data-image-src",
 ]
 const QWENAI_CONVERSATION_SNAPSHOT_TTL_MS = 30_000
+const QWENAI_CONVERSATION_SNAPSHOT_RETRY_MS = 30_000
 const QWENAI_FETCH_PAGE_LIMIT = 100
 const QWENAI_BOOTSTRAP_PAGE_LIMIT = 5
 
@@ -102,6 +103,7 @@ export class QwenAiAdapter extends SiteAdapter {
   protected config: QwenStudioSiteConfig = QWEN_STUDIO_CONFIG
   private conversationSnapshot: ConversationInfo[] = []
   private conversationSnapshotFetchedAt = 0
+  private conversationSnapshotRetryAt = 0
   private conversationSnapshotPromise: Promise<ConversationInfo[]> | null = null
   private exportIncludeThoughtsOverride: boolean | null = null
   private exportThoughtBlocks = new WeakMap<Element, string[]>()
@@ -171,7 +173,7 @@ export class QwenAiAdapter extends SiteAdapter {
   getCurrentCid(): string | null {
     const fromCookie = this.readCookieValue("aui") || this.readCookieValue("cnaui")
     if (fromCookie) return fromCookie
-    return this.extractUidFromToken(this.getQwenAccessToken())
+    return this.extractUidFromToken(localStorage.getItem(QWENAI_TOKEN_STORAGE_KEY))
   }
 
   getSessionName(): string | null {
@@ -898,7 +900,6 @@ export class QwenAiAdapter extends SiteAdapter {
 
   private getFreshConversationSnapshot(): ConversationInfo[] {
     const isFresh =
-      this.conversationSnapshot.length > 0 &&
       Date.now() - this.conversationSnapshotFetchedAt < QWENAI_CONVERSATION_SNAPSHOT_TTL_MS
 
     if (!isFresh && !this.conversationSnapshotPromise) {
@@ -913,10 +914,13 @@ export class QwenAiAdapter extends SiteAdapter {
   ): Promise<ConversationInfo[]> {
     const { force = false, fetchAllPages = false } = options
     const isFresh =
-      this.conversationSnapshot.length > 0 &&
       Date.now() - this.conversationSnapshotFetchedAt < QWENAI_CONVERSATION_SNAPSHOT_TTL_MS
 
     if (!force && isFresh) {
+      return this.conversationSnapshot.map((item) => ({ ...item }))
+    }
+
+    if (!force && Date.now() < this.conversationSnapshotRetryAt) {
       return this.conversationSnapshot.map((item) => ({ ...item }))
     }
 
@@ -929,9 +933,11 @@ export class QwenAiAdapter extends SiteAdapter {
         const list = await this.fetchConversationSnapshot(fetchAllPages)
         if (list.length > 0) {
           this.conversationSnapshot = list
-          this.conversationSnapshotFetchedAt = Date.now()
         }
+        this.conversationSnapshotFetchedAt = Date.now()
+        this.conversationSnapshotRetryAt = 0
       } catch (error) {
+        this.conversationSnapshotRetryAt = Date.now() + QWENAI_CONVERSATION_SNAPSHOT_RETRY_MS
         console.warn("[QwenAiAdapter] Failed to refresh conversation snapshot:", error)
       } finally {
         this.conversationSnapshotPromise = null
@@ -972,12 +978,14 @@ export class QwenAiAdapter extends SiteAdapter {
     const url = new URL("/api/v2/chats/", window.location.origin)
     url.searchParams.set("page", String(page))
     url.searchParams.set("exclude_project", "true")
+    const authorization = this.getQwenAuthorizationHeader()
 
     const response = await fetch(url.toString(), {
       method: "GET",
       credentials: "include",
       cache: "no-store",
       headers: {
+        ...(authorization ? { Authorization: authorization } : {}),
         Accept: "application/json, text/plain, */*",
         "X-Request-Id": crypto.randomUUID(),
         source: "web",
@@ -990,7 +998,7 @@ export class QwenAiAdapter extends SiteAdapter {
 
     const payload = (await response.json()) as QwenAiConversationApiResponse
     if (payload.success === false) {
-      return []
+      throw new Error("fetch conversations failed: response unsuccessful")
     }
 
     const data = Array.isArray(payload.data) ? payload.data : []
@@ -2035,8 +2043,7 @@ export class QwenAiAdapter extends SiteAdapter {
   }
 
   private async updateThemePreference(targetMode: "light" | "dark" | "system"): Promise<boolean> {
-    const token = this.getQwenAccessToken()
-    const authorization = token ? (/^Bearer\s+/i.test(token) ? token : `Bearer ${token}`) : null
+    const authorization = this.getQwenAuthorizationHeader()
 
     const response = await fetch("/api/v2/users/user/settings/update", {
       method: "POST",
@@ -2390,6 +2397,12 @@ export class QwenAiAdapter extends SiteAdapter {
     }
 
     return localStorage.getItem(QWENAI_TOKEN_STORAGE_KEY)?.trim() || null
+  }
+
+  private getQwenAuthorizationHeader(): string | null {
+    const token = this.getQwenAccessToken()
+    if (!token) return null
+    return /^Bearer\s+/i.test(token) ? token : `Bearer ${token}`
   }
 
   private extractUidFromToken(token: string | null): string | null {
