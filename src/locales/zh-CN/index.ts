@@ -167,15 +167,16 @@ export const zhCN = {
   // 可选权限
   permissionWebdavAccess: "高级功能权限",
   permissionWebdavAccessDesc:
-    "允许 Ophel 访问所有网站，用于 WebDAV 同步、移除 AI 图片水印，以及让适配包无需逐站点授权即可运行",
+    "允许 Ophel 跨站访问资源，用于 WebDAV 同步、AI 图片去水印、导出对话中的图片/附件，以及让适配包无需逐站授权即可运行",
 
   // 必需权限
   permissionStorage: "存储",
   permissionStorageDesc: "存储用户设置和数据",
   permissionNotifications: "通知",
-  permissionNotificationsDesc: "显示桌面通知",
+  permissionNotificationsDesc: "AI 回复完成时发送桌面通知",
   permissionCookies: "Cookie 管理",
-  permissionCookiesDesc: "管理 Claude 站点的 Cookie，用于快速切换 Session Key",
+  permissionCookiesDesc:
+    "读取并切换 claude.ai 的 Session Key Cookie，用于导入、测试和快速切换 Claude 账号",
   permissionTabs: "标签页",
   permissionTabsDesc: "可选权限。用于检测当前标签页状态和管理对话。",
   permissionDNR: "网络请求规则",
@@ -895,7 +896,8 @@ export const zhCN = {
   assistantMermaidDownloadFailed: "PNG 下载失败",
   assistantMermaidFullscreenFailed: "全屏失败",
   watermarkRemovalLabel: "移除图片水印",
-  watermarkRemovalDesc: "自动移除 Gemini AI 生成图像中的 NanoBanana 水印",
+  watermarkRemovalDesc:
+    "自动移除 Gemini AI 生成图像中的 NanoBanana 水印；也可在 Gemini 设置中关闭媒体水印。",
   aistudioRemoveWatermark: "移除图片水印",
   aistudioRemoveWatermarkDesc: "移除 AI Studio 生成图片的水印（需刷新页面生效）",
   aistudioMarkdownFixLabel: "Markdown 加粗修复",

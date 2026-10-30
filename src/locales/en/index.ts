@@ -178,16 +178,16 @@ export const en = {
   // Optional permissions
   permissionWebdavAccess: "Advanced Features Access",
   permissionWebdavAccessDesc:
-    "Access to all websites. Required for WebDAV sync, AI image watermark removal, and letting installed Site Packs run on their target sites without per-site prompts.",
+    "Allow Ophel to access resources across sites for WebDAV sync, AI image watermark removal, exporting images and attachments from conversations, and running Site Packs without per-site prompts.",
 
   // Required permissions
   permissionStorage: "Storage",
   permissionStorageDesc: "Used to save extension settings, prompts, and chat data.",
   permissionNotifications: "Notifications",
-  permissionNotificationsDesc:
-    "Optional. Used to send desktop notifications when AI responses are complete.",
+  permissionNotificationsDesc: "Send a desktop notification when an AI response is complete",
   permissionCookies: "Cookie Management",
-  permissionCookiesDesc: "Manage Claude site cookies for quick SessionKey switching",
+  permissionCookiesDesc:
+    "Read and switch the Session Key cookie for claude.ai to import, test, and quickly switch Claude accounts",
   permissionTabs: "Tabs",
   permissionTabsDesc: "Optional. Used to detect current tab status and manage sessions.",
   permissionDNR: "Network Request Rules",
@@ -793,7 +793,8 @@ export const en = {
   assistantMermaidDownloadFailed: "PNG download failed",
   assistantMermaidFullscreenFailed: "Fullscreen failed",
   watermarkRemovalLabel: "Remove Image Watermark",
-  watermarkRemovalDesc: "Automatically remove NanoBanana watermark from AI generated images",
+  watermarkRemovalDesc:
+    "Automatically remove NanoBanana watermarks from AI-generated images. You can also disable media watermarks in Gemini settings.",
   refreshPrompts: "Refresh Prompts",
   themeDark: "Dark",
   // Page width settings

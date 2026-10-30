@@ -180,15 +180,17 @@ export const de = {
   required: "Erforderlich",
   permissionWebdavAccess: "Zugriff auf erweiterte Funktionen",
   permissionWebdavAccessDesc:
-    "Zugriff auf alle Websites. Erforderlich für WebDAV, Wasserzeichen-Entfernung und die Ausführung installierter Site Packs auf ihren Zielseiten ohne sitebezogene Abfragen.",
+    "Erlaubt Ophel den Website-übergreifenden Zugriff auf Ressourcen für WebDAV-Synchronisierung, Entfernung von KI-Bildwasserzeichen, Export von Bildern und Anhängen aus Unterhaltungen sowie die Ausführung von Site Packs ohne Abfragen pro Website.",
 
   // Required permissions
   permissionStorage: "Speicher",
   permissionStorageDesc: "Zum Speichern von Einstellungen, Prompts und Chats.",
   permissionNotifications: "Benachrichtigungen",
-  permissionNotificationsDesc: "Optional. Informiert, wenn die KI fertig geantwortet hat.",
+  permissionNotificationsDesc:
+    "Sendet eine Desktop-Benachrichtigung, wenn eine KI-Antwort abgeschlossen ist",
   permissionCookies: "Cookie-Verwaltung",
-  permissionCookiesDesc: "Claude-Cookies für schnellen SessionKey-Wechsel verwalten.",
+  permissionCookiesDesc:
+    "Liest und wechselt das Session-Key-Cookie von claude.ai, um Claude-Konten zu importieren, zu testen und schnell zu wechseln",
   permissionTabs: "Registerkarten",
   permissionTabsDesc: "Optional. Erkennt Tab-Status und verwaltet Sessions.",
   permissionDNR: "Netzwerkregeln",
@@ -754,7 +756,8 @@ export const de = {
   assistantMermaidDownloadFailed: "PNG-Download fehlgeschlagen",
   assistantMermaidFullscreenFailed: "Vollbild fehlgeschlagen",
   watermarkRemovalLabel: "Wasserzeichen entfernen",
-  watermarkRemovalDesc: "NanoBanana-Wasserzeichen automatisch löschen",
+  watermarkRemovalDesc:
+    "NanoBanana-Wasserzeichen automatisch aus KI-generierten Bildern entfernen. Medienwasserzeichen lassen sich auch in den Gemini-Einstellungen deaktivieren.",
   refreshPrompts: "Prompts aktualisieren",
   themeDark: "Dunkel",
   // Page width settings

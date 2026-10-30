@@ -183,17 +183,17 @@ export const it = {
   // Optional permissions
   permissionWebdavAccess: "Accesso alle funzionalità avanzate",
   permissionWebdavAccessDesc:
-    "Accesso a tutti i siti web. Richiesto per la sincronizzazione WebDAV, la rimozione della filigrana dell'immagine AI e l'esecuzione dei Site Pack installati sui loro siti target senza richieste per singolo sito.",
+    "Consenti a Ophel di accedere alle risorse tra siti per la sincronizzazione WebDAV, la rimozione della filigrana dalle immagini AI, l'esportazione di immagini e allegati dalle conversazioni e l'esecuzione dei Site Pack senza richieste per sito.",
 
   // Required permissions
   permissionStorage: "Archiviazione",
   permissionStorageDesc:
     "Utilizzato per salvare impostazioni dell'estensione, prompt e dati delle conversazioni.",
   permissionNotifications: "Notifiche",
-  permissionNotificationsDesc:
-    "Opzionale. Utilizzato per inviare notifiche desktop quando le risposte AI sono complete.",
+  permissionNotificationsDesc: "Invia una notifica desktop quando una risposta AI è completa",
   permissionCookies: "Gestione dei cookie",
-  permissionCookiesDesc: "Gestisci i cookie del sito Claude per un rapido passaggio a SessionKey",
+  permissionCookiesDesc:
+    "Leggi e cambia il cookie Session Key di claude.ai per importare, testare e cambiare rapidamente account Claude",
   permissionTabs: "Schede",
   permissionTabsDesc:
     "Opzionale. Utilizzato per rilevare lo stato corrente della scheda e gestire le sessioni.",
@@ -817,7 +817,7 @@ export const it = {
   assistantMermaidFullscreenFailed: "Schermo intero non riuscito",
   watermarkRemovalLabel: "Rimuovi filigrana immagine",
   watermarkRemovalDesc:
-    "Rimuovi automaticamente la filigrana NanoBanana dalle immagini generate dall'intelligenza artificiale",
+    "Rimuovi automaticamente la filigrana NanoBanana dalle immagini generate dall'intelligenza artificiale. Puoi anche disattivare le filigrane dei media nelle impostazioni di Gemini.",
   refreshPrompts: "Aggiorna prompt",
   themeDark: "Buio",
   // Page width settings

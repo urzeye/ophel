@@ -179,15 +179,17 @@ export const pt = {
   required: "Obrigatório",
   permissionWebdavAccess: "Acesso a Recursos Avançados",
   permissionWebdavAccessDesc:
-    "Acesso a todos os sites. Necessário para WebDAV, remoção de marcas d'água e execução dos Site Packs instalados em seus sites de destino sem solicitações por site.",
+    "Permitir que o Ophel acesse recursos entre sites para sincronização WebDAV, remoção de marcas d'água em imagens de IA, exportação de imagens e anexos das conversas e execução de Site Packs sem solicitações por site.",
 
   // Required permissions
   permissionStorage: "Armazenamento",
   permissionStorageDesc: "Para salvar ajustes, prompts e dados de conversa.",
   permissionNotifications: "Notificações",
-  permissionNotificationsDesc: "Opcional. Para avisar quando a IA terminar de responder.",
+  permissionNotificationsDesc:
+    "Enviar uma notificação de desktop quando uma resposta de IA for concluída",
   permissionCookies: "Gerenciamento de Cookies",
-  permissionCookiesDesc: "Gerenciar cookies do Claude para troca rápida de SessionKey.",
+  permissionCookiesDesc:
+    "Ler e alternar o cookie Session Key do claude.ai para importar, testar e trocar rapidamente de conta Claude",
   permissionTabs: "Abas",
   permissionTabsDesc: "Opcional. Para detectar status de abas e gerenciar sessões.",
   permissionDNR: "Regras de Rede",
@@ -752,7 +754,8 @@ export const pt = {
   assistantMermaidDownloadFailed: "Falha ao baixar PNG",
   assistantMermaidFullscreenFailed: "Falha ao entrar em tela cheia",
   watermarkRemovalLabel: "Remover Marcas d'Água",
-  watermarkRemovalDesc: "Remover marcas do NanoBanana automaticamente",
+  watermarkRemovalDesc:
+    "Remove automaticamente a marca d'água NanoBanana das imagens geradas por IA. Você também pode desativar marcas d'água de mídia nas configurações do Gemini.",
   refreshPrompts: "Atualizar Prompts",
   themeDark: "Escuro",
   // Page width settings

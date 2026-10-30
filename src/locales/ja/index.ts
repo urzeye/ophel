@@ -178,16 +178,16 @@ export const ja = {
   required: "必須",
   permissionWebdavAccess: "高度な機能へのアクセス",
   permissionWebdavAccessDesc:
-    "すべてのウェブサイトへのアクセス。WebDAV同期、AI画像の透かし除去、およびインストール済みSite Packがサイトごとの承認なしに対象サイトで動作するために必要です。",
+    "Ophel がサイトをまたいでリソースにアクセスできるようにします。WebDAV 同期、AI 画像の透かし除去、会話内の画像・添付ファイルの書き出し、Site Pack をサイトごとの承認なしで実行するために使用します。",
 
   // Required permissions
   permissionStorage: "ストレージ",
   permissionStorageDesc: "設定、プロンプト、会話データの保存に使用します。",
   permissionNotifications: "通知",
-  permissionNotificationsDesc:
-    "オプション。AIの回答完了時にデスクトップ通知を送信するために使用します。",
+  permissionNotificationsDesc: "AI の回答が完了したらデスクトップ通知を送信します",
   permissionCookies: "クッキー管理",
-  permissionCookiesDesc: "Claudeサイトのクッキーを管理し、SessionKeyの切り替えに使用します。",
+  permissionCookiesDesc:
+    "claude.ai の Session Key クッキーを読み取り・切り替え、Claude アカウントのインポート、テスト、すばやい切り替えに使用します",
   permissionTabs: "タブ",
   permissionTabsDesc: "オプション。現在のタブ状態の検出やセッション管理に使用します。",
   permissionDNR: "ネットワークリクエストルール",
@@ -760,7 +760,8 @@ export const ja = {
   assistantMermaidDownloadFailed: "PNGのダウンロードに失敗しました",
   assistantMermaidFullscreenFailed: "全画面表示に失敗しました",
   watermarkRemovalLabel: "画像の透かし除去",
-  watermarkRemovalDesc: "AI生成画像からNanoBananaの透かしを自動的に除去します",
+  watermarkRemovalDesc:
+    "AI生成画像からNanoBananaの透かしを自動的に除去します。Geminiの設定でメディアの透かしをオフにすることもできます。",
   refreshPrompts: "プロンプトを更新",
   themeDark: "ダーク",
   // Page width settings
