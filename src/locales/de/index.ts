@@ -1328,6 +1328,7 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   openBrowserShortcuts: "Chrome-Einstellungen",
   shortcutNotSet: "Nicht gesetzt",
   shortcutRemove: "Entfernen",
+  shortcutsGlobalSearchOpenSettings: "Einstellungen der globalen Suche öffnen",
 
   // Shortcut Categories
   shortcutCategoryNavigation: "Navigation",

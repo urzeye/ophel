@@ -1413,6 +1413,7 @@ Please output the optimized code block directly, followed by a brief summary of 
   openBrowserShortcuts: "Open Browser Shortcut Settings",
   shortcutNotSet: "Not set",
   shortcutRemove: "Remove",
+  shortcutsGlobalSearchOpenSettings: "Open Global Search settings",
 
   // Shortcut Categories
   shortcutCategoryNavigation: "Navigation",

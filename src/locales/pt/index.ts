@@ -1460,6 +1460,7 @@ Dê o código e depois um resumo de melhorias.`,
   openBrowserShortcuts: "Config do Chrome",
   shortcutNotSet: "Não definido",
   shortcutRemove: "Remover",
+  shortcutsGlobalSearchOpenSettings: "Abrir configurações da pesquisa global",
 
   // Shortcut Categories
   shortcutCategoryNavigation: "Navegação",

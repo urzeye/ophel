@@ -1371,6 +1371,7 @@ export const ja = {
   openBrowserShortcuts: "ブラウザのショートカット設定を開く",
   shortcutNotSet: "未設定",
   shortcutRemove: "削除",
+  shortcutsGlobalSearchOpenSettings: "グローバル検索の設定を開く",
 
   // Shortcut Categories
   shortcutCategoryNavigation: "ナビゲーション",

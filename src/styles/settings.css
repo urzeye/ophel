@@ -5998,7 +5998,8 @@ html[data-theme="dark"] .about-privacy-banner {
   margin-left: 1px;
 }
 
-.settings-shortcut-remove-btn {
+.settings-shortcut-remove-btn,
+.settings-shortcut-link-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -6021,6 +6022,18 @@ html[data-theme="dark"] .about-privacy-banner {
   background: color-mix(in srgb, var(--gh-danger, #ef4444) 10%, transparent);
   color: var(--gh-danger, #ef4444);
   border-color: color-mix(in srgb, var(--gh-danger, #ef4444) 30%, transparent);
+}
+
+.settings-shortcut-link-btn:hover,
+.settings-shortcut-link-btn:focus-visible {
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 8%, transparent);
+  color: var(--gh-primary-text, var(--gh-primary, #4285f4));
+  border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 30%, transparent);
+}
+
+.settings-shortcut-link-btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 42%, transparent);
+  outline-offset: 2px;
 }
 
 .settings-shortcut-conflict {

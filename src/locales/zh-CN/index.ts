@@ -1359,6 +1359,7 @@ export const zhCN = {
   openBrowserShortcuts: "打开浏览器快捷键设置",
   shortcutNotSet: "未设置",
   shortcutRemove: "移除",
+  shortcutsGlobalSearchOpenSettings: "前往全局搜索设置",
 
   // 快捷键分类
   shortcutCategoryNavigation: "导航",

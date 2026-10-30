@@ -1457,6 +1457,7 @@ export const it = {
   openBrowserShortcuts: "Apri le Impostazioni dei collegamenti del browser",
   shortcutNotSet: "Non impostato",
   shortcutRemove: "Rimuovi",
+  shortcutsGlobalSearchOpenSettings: "Apri le impostazioni della ricerca globale",
 
   // Shortcut Categories
   shortcutCategoryNavigation: "Navigazione",

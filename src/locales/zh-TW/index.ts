@@ -1320,6 +1320,7 @@ export const zhTW = {
   openBrowserShortcuts: "開啟瀏覽器快捷鍵設置",
   shortcutNotSet: "未設置",
   shortcutRemove: "移除",
+  shortcutsGlobalSearchOpenSettings: "前往全域搜尋設定",
 
   // 快捷鍵分類
   shortcutCategoryNavigation: "導航",

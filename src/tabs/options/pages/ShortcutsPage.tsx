@@ -4,8 +4,9 @@
  */
 import React, { useCallback, useState } from "react"
 
-import { ClearIcon, KeyboardIcon } from "~components/icons"
+import { ClearIcon, KeyboardIcon, SlidersHorizontalIcon } from "~components/icons"
 import { ConfirmDialog, Tooltip } from "~components/ui"
+import { FEATURES_TAB_IDS, NAV_IDS } from "~constants"
 import {
   DEFAULT_KEYBINDINGS,
   getShortcutParts,
@@ -13,6 +14,7 @@ import {
   normalizeShortcutBinding,
   normalizeShortcutKey,
   SHORTCUT_CATEGORIES,
+  SHORTCUT_ACTIONS,
   SHORTCUT_META,
   type ShortcutActionId,
   type ShortcutBinding,
@@ -35,7 +37,8 @@ const ShortcutInput: React.FC<{
   onChange: (binding: ShortcutBinding) => void
   onRemove: () => void
   conflictWarning?: string
-}> = ({ binding, onChange, onRemove, conflictWarning }) => {
+  leadingAction?: React.ReactNode
+}> = ({ binding, onChange, onRemove, conflictWarning, leadingAction }) => {
   const [isRecording, setIsRecording] = useState(false)
   const isMac = isMacOS()
 
@@ -111,6 +114,7 @@ const ShortcutInput: React.FC<{
 
   return (
     <div className="settings-shortcut-container">
+      {leadingAction}
       <button
         type="button"
         className={`settings-shortcut-input ${isRecording ? "is-recording" : ""} ${!binding ? "is-empty" : ""}`}
@@ -218,6 +222,17 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
     },
     [shortcuts, setSettings],
   )
+
+  const openGlobalSearchSettings = useCallback(() => {
+    window.dispatchEvent(
+      new CustomEvent("ophel:navigateSettingsPage", {
+        detail: {
+          page: NAV_IDS.FEATURES,
+          subTab: FEATURES_TAB_IDS.GLOBAL_SEARCH,
+        },
+      }),
+    )
+  }, [])
 
   // 恢复默认快捷键确认弹窗状态
   const [showResetConfirm, setShowResetConfirm] = useState(false)
@@ -368,6 +383,19 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
                   onChange={(b) => updateKeybinding(actionId, b)}
                   onRemove={() => removeKeybinding(actionId)}
                   conflictWarning={conflict || undefined}
+                  leadingAction={
+                    actionId === SHORTCUT_ACTIONS.OPEN_GLOBAL_SEARCH ? (
+                      <Tooltip content={t("shortcutsGlobalSearchOpenSettings")}>
+                        <button
+                          type="button"
+                          className="settings-shortcut-link-btn"
+                          onClick={openGlobalSearchSettings}
+                          aria-label={t("shortcutsGlobalSearchOpenSettings")}>
+                          <SlidersHorizontalIcon size={13} />
+                        </button>
+                      </Tooltip>
+                    ) : undefined
+                  }
                 />
               </SettingRow>
             )

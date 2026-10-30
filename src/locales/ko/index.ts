@@ -1321,6 +1321,7 @@ export const ko = {
   openBrowserShortcuts: "브라우저 단축키 설정 열기",
   shortcutNotSet: "미설정",
   shortcutRemove: "제거",
+  shortcutsGlobalSearchOpenSettings: "전역 검색 설정 열기",
 
   // Shortcut Categories
   shortcutCategoryNavigation: "탐색",

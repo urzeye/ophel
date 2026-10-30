@@ -1322,6 +1322,7 @@ export const ru = {
   openBrowserShortcuts: "Настройки Chrome",
   shortcutNotSet: "Не задано",
   shortcutRemove: "Удалить",
+  shortcutsGlobalSearchOpenSettings: "Открыть настройки глобального поиска",
 
   // Shortcut Categories
   shortcutCategoryNavigation: "Навигация",
