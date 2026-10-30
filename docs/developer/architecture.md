@@ -271,7 +271,7 @@ Qwen Studio 接入的差异点（`src/adapters/qwen-studio-history-outline.ts`�
 
 页面自己会请求、我们只需复用其数据的场景（Qwen Studio 对话列表首发），不另行轮询，由 main world 的 `src/core/network-monitor.ts` 转发页面请求的响应。NetworkMonitor 是单例，统一持有 fetch / XHR hook，服务两类互不影响的消费方：
 
-- 生成检测：`EVENT_MONITOR_INIT` 配置目标 URL，产出 `EVENT_MONITOR_START` / `EVENT_MONITOR_COMPLETE`。INIT 由 `TabManager.start()` 发送，关闭「标签页自动重命名」时不会发。
+- 生成检测：`EVENT_MONITOR_INIT` 配置目标 URL，产出 `EVENT_MONITOR_START` / `EVENT_MONITOR_COMPLETE`。INIT 由 `TabManager.start()` 发送，与是否开启「自动重命名标签页」无关（完成通知、提示音、窗口置顶都依赖它），收到 `EVENT_MONITOR_READY` 时重发。
 - 响应转发：`EVENT_MONITOR_CAPTURE_REGISTER` / `EVENT_MONITOR_CAPTURE_UNREGISTER` 注册/注销规则，命中请求的 2xx 响应体经 `EVENT_MONITOR_RESPONSE` 转发。不依赖 INIT，也不参与生成检测。
 
 hook 在首个消费方出现时安装、之后不再卸载，重新 INIT 只替换生成检测配置。新需求不要另起一套 fetch / XHR hook：卸载时写回的「原始 fetch」会冲掉后装的那套。
@@ -294,7 +294,7 @@ hook 在首个消费方出现时安装、之后不再卸载，重新 INIT 只替
 2. **MarkdownFixer** - AI 响应中的 Markdown 渲染修复
 3. **LayoutManager** - 页面宽度、用户提问宽度、禅模式（Zen Mode）、净化模式
 4. **CopyManager** - 公式复制（LaTeX）、表格复制
-5. **TabManager** - 标签页自动重命名、隐私模式
+5. **TabManager** - 生成完成通知（始终启用）、标签页自动重命名、隐私模式
 6. **WatermarkRemover** - Gemini 去水印（仅 gemini/gemini-enterprise）
 7. **UsageCounterManager** - 本地使用量计数与预估面板
 8. **ReadingHistoryManager** - 阅读历史记录与进度恢复

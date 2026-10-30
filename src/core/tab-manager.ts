@@ -15,6 +15,7 @@ import { t } from "~utils/i18n"
 import {
   EVENT_MONITOR_COMPLETE,
   EVENT_MONITOR_INIT,
+  EVENT_MONITOR_READY,
   EVENT_MONITOR_START,
   type MonitorEventPayload,
 } from "~utils/messaging"
@@ -26,7 +27,10 @@ const DEFAULT_RENAME_INTERVAL_SECONDS = 5
 export class TabManager {
   private adapter: SiteAdapter
   private settings: Settings["tab"]
+  // 是否在接管标签页标题（开启「自动重命名标签页」时）
   private isRunning = false
+  // 生成检测是否已启用：通知、提示音、窗口置顶都依赖它，与是否接管标题无关
+  private isTrackingGeneration = false
   private intervalId: ReturnType<typeof setTimeout> | null = null
   private titleObserver: MutationObserver | null = null
   private expectedTitle: string | null = null
@@ -68,7 +72,7 @@ export class TabManager {
   private boundBlurHandler: () => void
   private readonly handleTitleUpdateTimer = () => {
     this.intervalId = null
-    if (!this.isRunning) return
+    if (!this.shouldRunUpdateLoop()) return
 
     this.updateTabName()
     this.scheduleNextTitleUpdate()
@@ -125,6 +129,9 @@ export class TabManager {
       this.stop()
     }
 
+    // 通知与窗口置顶开关同样决定更新循环是否需要运行
+    this.syncUpdateLoop()
+
     // 如果检测频率变化且正在运行，更新间隔
     if (this.isRunning && oldInterval !== this.settings.renameInterval) {
       this.setInterval(this.settings.renameInterval || 5)
@@ -136,48 +143,22 @@ export class TabManager {
     }
   }
 
+  /** 启用生成检测（通知依赖它，与自动重命名无关）；开启自动重命名时再接管标签页标题 */
   start() {
-    if (!this.settings.autoRename) return
-    if (this.isRunning) return
-
-    // 检查适配器是否支持标签页重命名
-    if (this.adapter.supportsTabRename && !this.adapter.supportsTabRename()) {
-      return
+    if (!this.isTrackingGeneration) {
+      this.isTrackingGeneration = true
+      this.postMonitorInit()
     }
 
-    this.isRunning = true
-    this.startTitleObserver()
-
-    this.updateTabName()
-
-    // 定时更新标签页标题（使用可配置的检测频率，后台空闲时自动降频）
-    this.startTitleUpdateLoop()
-
-    // Init Monitor
-    const config = this.adapter.getNetworkMonitorConfig
-      ? this.adapter.getNetworkMonitorConfig()
-      : null
-    if (config) {
-      window.postMessage(
-        {
-          type: EVENT_MONITOR_INIT,
-          payload: {
-            urlPatterns: config.urlPatterns,
-            urlPathEndsWith: config.urlPathEndsWith,
-            silenceThreshold: config.silenceThreshold,
-            requestBodyRules: config.requestBodyRules,
-          },
-        },
-        "*",
-      )
-    }
+    this.startTitleManagement()
+    this.syncUpdateLoop()
   }
 
+  /** 停止接管标签页标题；生成检测与通知照常运行，随 destroy 一起停止 */
   stop() {
     if (!this.isRunning) return
 
     this.isRunning = false
-    this.resetGenerationConfirmationState()
     this.stopTitleObserver()
     this.expectedTitle = null
     this.staleManagedTitleAfterRouteChange = null
@@ -185,14 +166,16 @@ export class TabManager {
     forgetManagedTabTitle()
     forgetStaleManagedTabTitle()
 
-    this.clearTitleUpdateTimer()
+    this.syncUpdateLoop()
   }
 
   /**
    * 销毁管理器，移除所有监听器
    */
   destroy() {
+    this.isTrackingGeneration = false
     this.stop()
+    this.clearTitleUpdateTimer()
     this.stopNotificationPlayback()
     this.resetGenerationConfirmationState()
     this.stopTitleObserver()
@@ -212,13 +195,60 @@ export class TabManager {
     this.scheduleNextTitleUpdate(true)
   }
 
-  private startTitleUpdateLoop() {
-    if (this.intervalId) return
-    this.scheduleNextTitleUpdate()
+  private startTitleManagement() {
+    if (!this.settings.autoRename || this.isRunning) return
+
+    // 检查适配器是否支持标签页重命名
+    if (this.adapter.supportsTabRename && !this.adapter.supportsTabRename()) {
+      return
+    }
+
+    this.isRunning = true
+    this.startTitleObserver()
+    this.updateTabName()
+  }
+
+  /** 网络监控的生成检测配置；没有配置的站点只靠更新循环里的 DOM 兜底检测 */
+  private postMonitorInit() {
+    const config = this.adapter.getNetworkMonitorConfig
+      ? this.adapter.getNetworkMonitorConfig()
+      : null
+    if (!config) return
+
+    window.postMessage(
+      {
+        type: EVENT_MONITOR_INIT,
+        payload: {
+          urlPatterns: config.urlPatterns,
+          urlPathEndsWith: config.urlPathEndsWith,
+          silenceThreshold: config.silenceThreshold,
+          requestBodyRules: config.requestBodyRules,
+        },
+      },
+      "*",
+    )
+  }
+
+  /**
+   * 更新循环兼做标题刷新与 DOM 兜底的完成检测：接管标题时一直运行；
+   * 关闭自动重命名后只为通知与窗口置顶保留，两者都关闭时停掉。
+   */
+  private shouldRunUpdateLoop(): boolean {
+    if (!this.isTrackingGeneration) return false
+    return this.isRunning || this.settings.showNotification || this.settings.autoFocus
+  }
+
+  /** 按 shouldRunUpdateLoop 启停更新循环（使用可配置的检测频率，后台空闲时自动降频） */
+  private syncUpdateLoop() {
+    if (this.shouldRunUpdateLoop()) {
+      this.scheduleNextTitleUpdate()
+    } else {
+      this.clearTitleUpdateTimer()
+    }
   }
 
   private scheduleNextTitleUpdate(reset = false) {
-    if (!this.isRunning) return
+    if (!this.shouldRunUpdateLoop()) return
 
     if (this.intervalId) {
       if (!reset) return
@@ -257,15 +287,6 @@ export class TabManager {
       this.generationConfirmationIntervalId === null &&
       this.domCompletionIntervalId === null
     )
-  }
-
-  /**
-   * 切换隐私模式
-   */
-  togglePrivacyMode(): boolean {
-    this.settings.privacyMode = !this.settings.privacyMode
-    this.updateTabName(true)
-    return this.settings.privacyMode
   }
 
   /**
@@ -309,7 +330,11 @@ export class TabManager {
    * 设为 public 以支持 SPA 导航切换时外部调用
    */
   updateTabName(force = false) {
-    if (!this.isRunning && !force) return
+    const isGenerating = this.isCurrentlyGenerating()
+    this.detectDomCompletion(isGenerating)
+
+    // 关闭自动重命名后不改写站点标题；隐私模式在强制刷新（如切换对话）时仍套用伪装标题
+    if (!this.isRunning && !(force && this.settings.privacyMode)) return
 
     // 检查适配器是否支持标签页重命名
     if (this.adapter.supportsTabRename && !this.adapter.supportsTabRename()) {
@@ -325,20 +350,6 @@ export class TabManager {
 
     // 获取对话标题（防止读取被污染的 title）
     const conversationTitle = this.getCleanConversationTitle()
-
-    // 检查生成状态
-    const isGenerating = this.isCurrentlyGenerating()
-
-    // DOM 检测的状态变更通知（用于没有网络监控的站点或后备检测）
-    if (
-      this.lastAiState === "generating" &&
-      !isGenerating &&
-      this.isUserAway() &&
-      this.aiState !== "completed"
-    ) {
-      this.sendCompletionNotification()
-    }
-    this.lastAiState = isGenerating ? "generating" : "idle"
 
     // 构建标题
     // 开启 showStatus 时：生成中显示 ⏳，生成完成显示 ✅
@@ -361,6 +372,22 @@ export class TabManager {
     if (finalTitle) {
       this.applyManagedTitle(finalTitle, force)
     }
+  }
+
+  /**
+   * DOM 兜底的完成通知：没有网络监控的站点、以及网络监控漏掉的生成靠它发通知。
+   * 与是否改写标题无关，所以在标题门控之前执行。
+   */
+  private detectDomCompletion(isGenerating: boolean) {
+    if (
+      this.lastAiState === "generating" &&
+      !isGenerating &&
+      this.isUserAway() &&
+      this.aiState !== "completed"
+    ) {
+      this.sendCompletionNotification()
+    }
+    this.lastAiState = isGenerating ? "generating" : "idle"
   }
 
   /**
@@ -734,6 +761,9 @@ export class TabManager {
       this.beginNetworkGeneration(payload as MonitorEventPayload | undefined)
     } else if (type === EVENT_MONITOR_COMPLETE) {
       this.onAiComplete()
+    } else if (type === EVENT_MONITOR_READY && this.isTrackingGeneration) {
+      // main world 晚于 INIT 才开始监听时（油猴端先发 INIT 后注册监听）INIT 已丢失，重发一次
+      this.postMonitorInit()
     }
   }
 
@@ -805,8 +835,8 @@ export class TabManager {
 
     if (this.isRunning) {
       this.updateTabName(true)
-      this.scheduleNextTitleUpdate(true)
     }
+    this.scheduleNextTitleUpdate(true)
   }
 
   /**
@@ -1034,12 +1064,5 @@ export class TabManager {
   private normalizeNotificationRepeatInterval(value?: number) {
     if (!Number.isFinite(value)) return 3
     return Math.max(1, Math.min(60, value as number))
-  }
-
-  /**
-   * 获取当前状态
-   */
-  isActive(): boolean {
-    return this.isRunning
   }
 }
