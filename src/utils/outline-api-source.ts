@@ -13,6 +13,12 @@
  * 4. 接口主机（含附件 CDN）需加入 package.json host_permissions。
  */
 
+/** 大纲消息 ID：数字站点保留原有递增 ID 语义，UUID 站点直接使用字符串 */
+export type OutlineMessageId = string | number
+
+const isOutlineMessageId = (value: unknown): value is OutlineMessageId =>
+  typeof value === "string" || typeof value === "number"
+
 /** 分支回溯所需的最小消息形态（各站点消息类型结构满足即可复用） */
 export interface BranchMessageRef {
   message_id?: unknown
@@ -23,9 +29,12 @@ export interface BranchMessageRef {
 export interface ApiOutlineSourceData {
   sessionId: string
   /** 激活分支上的 message_id 顺序 */
-  branchMessageIds: number[]
-  /** 分支上最大 message_id（和 DOM 挂载行比对判断数据是否过期） */
-  maxMessageId: number
+  branchMessageIds: OutlineMessageId[]
+  /**
+   * 缓存已知的尾部消息 ID（数字站点为最大 ID，UUID 站点为最新回复 ID）。
+   * 和 DOM 挂载行比对判断数据是否过期。
+   */
+  maxMessageId: OutlineMessageId
 }
 
 /**
@@ -36,31 +45,31 @@ export interface ApiOutlineSourceData {
  */
 export const resolveActiveBranch = <T extends BranchMessageRef>(
   messages: T[],
-  currentMessageId: number | null,
+  currentMessageId: OutlineMessageId | null,
 ): T[] | null => {
-  const byId = new Map<number, T>()
+  const byId = new Map<OutlineMessageId, T>()
   for (const message of messages) {
-    if (typeof message.message_id === "number") {
+    if (isOutlineMessageId(message.message_id)) {
       byId.set(message.message_id, message)
     }
   }
 
   if (currentMessageId !== null && byId.has(currentMessageId)) {
     const chain: T[] = []
-    const seen = new Set<number>()
+    const seen = new Set<OutlineMessageId>()
     let current: T | undefined = byId.get(currentMessageId)
-    while (current && typeof current.message_id === "number" && !seen.has(current.message_id)) {
+    while (current && isOutlineMessageId(current.message_id) && !seen.has(current.message_id)) {
       seen.add(current.message_id)
       chain.unshift(current)
-      current = typeof current.parent_id === "number" ? byId.get(current.parent_id) : undefined
+      current = isOutlineMessageId(current.parent_id) ? byId.get(current.parent_id) : undefined
     }
     if (chain.length > 0) return chain
   }
 
   if (currentMessageId === null) {
-    const childCount = new Map<number, number>()
+    const childCount = new Map<OutlineMessageId, number>()
     for (const message of messages) {
-      if (typeof message.parent_id !== "number") continue
+      if (!isOutlineMessageId(message.parent_id)) continue
       const count = (childCount.get(message.parent_id) ?? 0) + 1
       childCount.set(message.parent_id, count)
       if (count > 1) return null
@@ -77,7 +86,7 @@ export interface ApiOutlineStaleCheckInput {
   data: ApiOutlineSourceData | null
   sessionId: string
   /** 当前挂载行的 message_id 集合 */
-  mountedIds: ReadonlySet<number>
+  mountedIds: ReadonlySet<OutlineMessageId>
   /** 滚动容器是否处于底部（尾部删除信号的必要前提） */
   atBottom: boolean
 }
@@ -100,18 +109,31 @@ export function isApiOutlineStale({
   if (!data || data.sessionId !== sessionId) return true
   if (mountedIds.size === 0) return false
 
-  let maxMountedId = 0
+  let maxMountedId: number | null = null
   mountedIds.forEach((id) => {
-    maxMountedId = Math.max(maxMountedId, id)
+    if (typeof id === "number") {
+      maxMountedId = maxMountedId === null ? id : Math.max(maxMountedId, id)
+    }
   })
-  if (maxMountedId > data.maxMessageId) return true
+  if (
+    maxMountedId !== null &&
+    typeof data.maxMessageId === "number" &&
+    maxMountedId > data.maxMessageId
+  ) {
+    return true
+  }
 
   const branchIds = new Set(data.branchMessageIds)
   for (const id of mountedIds) {
     if (!branchIds.has(id)) return true
   }
 
-  return atBottom && maxMountedId < data.maxMessageId
+  if (!atBottom) return false
+  if (typeof data.maxMessageId === "number") {
+    return maxMountedId !== null && maxMountedId < data.maxMessageId
+  }
+  // UUID 无法比较大小：贴底时缓存尾部回复未挂载，说明有新消息或分支变化。
+  return !mountedIds.has(data.maxMessageId)
 }
 
 export interface ApiOutlineFetchGateInput {
@@ -142,7 +164,7 @@ export function shouldAttemptApiOutlineFetch({
 
 export interface BranchMergeEntry<T> {
   /** 条目所属消息的 message_id；null 表示未知（生成中的新消息） */
-  messageId: number | null
+  messageId: OutlineMessageId | null
   item: T
 }
 
@@ -153,11 +175,11 @@ export interface BranchMergeEntry<T> {
  * 按 DOM 相对顺序挂在最近一个已知分支序号之后，重拉后自动归位。
  */
 export function mergeByBranchMessageOrder<T>(
-  branchMessageIds: readonly number[],
+  branchMessageIds: readonly OutlineMessageId[],
   domEntries: readonly BranchMergeEntry<T>[],
   fillEntries: readonly BranchMergeEntry<T>[],
 ): T[] {
-  const branchIndex = new Map<number, number>()
+  const branchIndex = new Map<OutlineMessageId, number>()
   branchMessageIds.forEach((id, index) => {
     branchIndex.set(id, index)
   })
@@ -184,7 +206,12 @@ export function mergeByBranchMessageOrder<T>(
       // 其余未知 id（删除残留/旁支行）按 DOM 相对顺序贴在最近已知序号之后
       // （数量级只有一两条，小步偏移不会越过下一个已知序号）
       const isNewTail =
-        entry.messageId === null || (maxBranchId !== null && entry.messageId > maxBranchId)
+        entry.messageId === null ||
+        typeof entry.messageId === "string" ||
+        (maxBranchId !== null &&
+          typeof maxBranchId === "number" &&
+          typeof entry.messageId === "number" &&
+          entry.messageId > maxBranchId)
       const key = isNewTail
         ? branchMessageIds.length + unknownOffset * 0.01
         : lastKnownKey + unknownOffset * 0.01

@@ -2757,7 +2757,7 @@ export class GrokAdapter extends SiteAdapter {
     if (!container) return indexes
 
     const data = this.apiOutlineData
-    const fallback = data ? data.maxMessageId + 1 : 0
+    const fallback = data && typeof data.maxMessageId === "number" ? data.maxMessageId + 1 : 0
     container.querySelectorAll(this.config.sitePrivateSelectors.responseRoot).forEach((element) => {
       const position = data?.positionByResponseId.get(element.id.slice(RESPONSE_ID_PREFIX.length))
       indexes.add(position ?? fallback)

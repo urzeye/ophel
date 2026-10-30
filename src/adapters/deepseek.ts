@@ -695,7 +695,10 @@ export class DeepSeekAdapter extends SiteAdapter {
 
   private getApiBranchIndex(data: DeepSeekHistoryOutlineData): Map<number, number> {
     if (this.apiBranchIndexCache?.data === data) return this.apiBranchIndexCache.map
-    const map = new Map(data.branchMessageIds.map((id, index) => [id, index]))
+    const map = new Map<number, number>()
+    data.branchMessageIds.forEach((id, index) => {
+      if (typeof id === "number") map.set(id, index)
+    })
     this.apiBranchIndexCache = { data, map }
     return map
   }
@@ -719,7 +722,7 @@ export class DeepSeekAdapter extends SiteAdapter {
       Number(row.getAttribute("data-virtual-list-item-key")),
     )
     const branchIndex = this.getApiBranchIndex(data)
-    const branchIds = data.branchMessageIds
+    const branchIds = data.branchMessageIds.filter((id): id is number => typeof id === "number")
 
     for (let i = 0; i < keys.length; i++) {
       const key = keys[i]

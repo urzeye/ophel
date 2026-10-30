@@ -24,6 +24,14 @@ import {
 import { htmlToMarkdown, type ExportBundle, type ExportMessage } from "~utils/exporter"
 import { loadCompleteHistoryForExport } from "~utils/history-loader"
 import { t } from "~utils/i18n"
+import { EVENT_OUTLINE_DATA_UPDATED } from "~utils/messaging"
+import { hashOutlineText } from "~utils/outline-heading-cache"
+import {
+  isApiOutlineStale,
+  mergeByBranchMessageOrder,
+  shouldAttemptApiOutlineFetch,
+  type BranchMergeEntry,
+} from "~utils/outline-api-source"
 
 import {
   SiteAdapter,
@@ -47,6 +55,7 @@ import {
   QWEN_STUDIO_CONFIG_VERSION,
   type QwenStudioSiteConfig,
 } from "./qwen-studio-config"
+import { parseQwenHistoryOutline, type QwenHistoryOutlineData } from "./qwen-studio-history-outline"
 
 const QWENAI_CHAT_PATH_PATTERN = /\/c\/([a-f0-9-]+)/i
 const QWENAI_THEME_STORAGE_KEY = "theme"
@@ -75,6 +84,10 @@ const QWENAI_BOOTSTRAP_PAGE_LIMIT = 5
 // 单对话接口的 limit 按“轮次”计，100 轮约 200 条消息；更早历史用 cursor 向前翻页。
 const QWENAI_CHAT_API_PAGE_LIMIT = 100
 const QWENAI_CHAT_API_MAX_PAGES = 100
+const QWENAI_API_OUTLINE_FETCH_BACKOFF_MS = 10_000
+const QWENAI_API_OUTLINE_BOTTOM_TOLERANCE_PX = 100
+const QWENAI_API_OUTLINE_REVEAL_MAX_ROUNDS = 60
+const QWENAI_API_OUTLINE_REVEAL_WAIT_MS = 600
 
 interface QwenAiConversationApiResponse {
   success?: boolean
@@ -175,6 +188,13 @@ export class QwenAiAdapter extends SiteAdapter {
   private exportApiMessages: ExportMessage[] | null = null
   private exportApiBundle: ExportBundle | null = null
   private exportThoughtBlocks = new WeakMap<Element, string[]>()
+  private apiOutlineData: QwenHistoryOutlineData | null = null
+  private apiOutlineFetchPromise: Promise<void> | null = null
+  private apiOutlineLastFetchAt = 0
+  private apiOutlineParseFailures = 0
+  private apiOutlineSessionId = ""
+  private apiOutlineWasGenerating = false
+  private apiOutlineForceRefetch = false
 
   afterPropertiesSet(
     options: { modelLockConfig?: { enabled: boolean; keyword: string } } = {},
@@ -626,6 +646,8 @@ export class QwenAiAdapter extends SiteAdapter {
     const container =
       document.querySelector(this.config.selectors.responseContainer) || this.getScrollContainer()
     if (!container) return items
+    this.maybeRefreshApiOutline(container)
+
     const userQuerySelector = this.config.selectors.userQuery
     const assistantResponseSelector = this.config.selectors.assistantResponse
 
@@ -634,6 +656,29 @@ export class QwenAiAdapter extends SiteAdapter {
         container.querySelectorAll(`${userQuerySelector}, ${assistantResponseSelector}`),
       ).filter((el) => !el.closest(".gh-root")),
     )
+    const apiData =
+      this.apiOutlineData && this.apiOutlineData.sessionId === this.getSessionId()
+        ? this.apiOutlineData
+        : null
+    const assistantIdByBlock = new WeakMap<Element, string>()
+    blocks.forEach((block) => {
+      if (!block.matches(assistantResponseSelector)) return
+      const messageId = this.extractQwenAssistantMessageId(block)
+      if (messageId) assistantIdByBlock.set(block, messageId)
+    })
+    const getNextAssistantMessageId = (startIndex: number): string => {
+      for (let i = startIndex + 1; i < blocks.length; i += 1) {
+        if (blocks[i].matches(userQuerySelector)) return ""
+        if (blocks[i].matches(assistantResponseSelector)) {
+          return assistantIdByBlock.get(blocks[i]) || ""
+        }
+      }
+      return ""
+    }
+
+    const domEntries: BranchMergeEntry<OutlineItem>[] = []
+    const domHeadingAssistantIds = new Set<string>()
+    const domQueryMessageIds = new Set<string>()
 
     blocks.forEach((block, index) => {
       const isUserBlock = block.matches(userQuerySelector)
@@ -652,13 +697,24 @@ export class QwenAiAdapter extends SiteAdapter {
           wordCount = nextAnswer ? this.extractAssistantPlainText(nextAnswer).length : 0
         }
 
-        items.push({
+        const item: OutlineItem = {
           level: 0,
           text: this.truncateText(text, 80),
           element: block,
           isUserQuery: true,
           isTruncated: text.length > 80,
           wordCount,
+        }
+        items.push(item)
+
+        const nextAssistantId = getNextAssistantMessageId(index)
+        const queryMessageId = nextAssistantId
+          ? apiData?.queryMessageIdByAssistantId.get(nextAssistantId) ?? null
+          : null
+        if (queryMessageId) domQueryMessageIds.add(queryMessageId)
+        domEntries.push({
+          messageId: queryMessageId || nextAssistantId || null,
+          item,
         })
         return
       }
@@ -690,16 +746,367 @@ export class QwenAiAdapter extends SiteAdapter {
           wordCount = this.calculateRangeWordCount(heading, nextBoundary, block)
         }
 
-        items.push({
+        const item: OutlineItem = {
           level,
           text,
           element: heading,
           wordCount,
-        })
+        }
+        items.push(item)
+
+        const assistantId = assistantIdByBlock.get(block) || ""
+        if (assistantId) domHeadingAssistantIds.add(assistantId)
+        domEntries.push({ messageId: assistantId || null, item })
       })
     })
 
-    return items
+    if (!apiData) return items
+    return this.mergeQwenOutlineByBranchOrder(
+      domEntries,
+      domHeadingAssistantIds,
+      domQueryMessageIds,
+      apiData,
+      { maxLevel, includeUserQueries, showWordCount },
+    )
+  }
+
+  async resolveOutlineTarget(
+    item: Pick<OutlineItem, "level" | "text" | "isUserQuery" | "id" | "navigationId">,
+    queryIndex?: number,
+  ): Promise<Element | null> {
+    const ref = item.navigationId || item.id || ""
+    const data =
+      this.apiOutlineData && this.apiOutlineData.sessionId === this.getSessionId()
+        ? this.apiOutlineData
+        : null
+
+    const headingRef = this.parseQwenApiHeadingItemId(ref)
+    if (headingRef && data) {
+      const target = await this.resolveQwenApiHeadingTarget(headingRef, item.text)
+      if (target) return target
+    }
+
+    const queryMessageId = this.parseQwenApiUserQueryItemId(ref)
+    if (queryMessageId && data) {
+      const target = await this.resolveQwenApiUserQueryTarget(queryMessageId, item.text, data)
+      if (target) return target
+    }
+
+    return super.resolveOutlineTarget(item, queryIndex)
+  }
+
+  private parseQwenApiHeadingItemId(
+    id: string,
+  ): { messageId: string; level: number; orderInMessage: number } | null {
+    const match = id.match(/^qwen:api-h:(.+):(\d+):(\d+):[0-9a-f]+$/)
+    if (!match) return null
+    return {
+      messageId: match[1],
+      level: Number(match[2]),
+      orderInMessage: Number(match[3]),
+    }
+  }
+
+  private parseQwenApiUserQueryItemId(id: string): string | null {
+    return id.match(/^qwen:api-u:(.+)$/)?.[1] || null
+  }
+
+  private async resolveQwenApiHeadingTarget(
+    ref: { messageId: string; level: number; orderInMessage: number },
+    text: string,
+  ): Promise<Element | null> {
+    const message = await this.revealQwenAssistantMessage(ref.messageId)
+    if (!message) return null
+    return (
+      (await this.findQwenApiHeadingInBlock(message, ref.level, ref.orderInMessage, text)) ||
+      message
+    )
+  }
+
+  private async resolveQwenApiUserQueryTarget(
+    messageId: string,
+    text: string,
+    data: QwenHistoryOutlineData,
+  ): Promise<Element | null> {
+    const query = data.userQueries.find((entry) => entry.messageId === messageId)
+    if (!query) return null
+
+    const assistantId = data.assistantIdByQueryIndex.get(query.queryIndex)
+    if (assistantId) {
+      const message = await this.revealQwenAssistantMessage(assistantId)
+      if (message) {
+        return this.findPreviousQwenUserBlock(message) || message
+      }
+    }
+
+    return this.findUserQueryElement(query.queryIndex, text || query.text)
+  }
+
+  private async revealQwenAssistantMessage(messageId: string): Promise<Element | null> {
+    const findMessage = () => this.findQwenAssistantBlockById(messageId)
+    const existing = findMessage()
+    if (existing) return existing
+
+    const container = this.getScrollContainer()
+    if (!container || container.scrollHeight <= container.clientHeight) return null
+
+    const previousScrollTop = container.scrollTop
+    let lastHeight = container.scrollHeight
+    let stableRounds = 0
+
+    for (let round = 0; round < QWENAI_API_OUTLINE_REVEAL_MAX_ROUNDS; round += 1) {
+      container.scrollTop = 0
+      container.dispatchEvent(new Event("scroll", { bubbles: true }))
+      container.dispatchEvent(
+        new WheelEvent("wheel", {
+          bubbles: true,
+          cancelable: true,
+          deltaY: -900,
+        }),
+      )
+      await this.sleep(QWENAI_API_OUTLINE_REVEAL_WAIT_MS)
+
+      const message = findMessage()
+      if (message) return message
+
+      if (container.scrollHeight === lastHeight) {
+        stableRounds += 1
+        if (stableRounds >= 2) break
+      } else {
+        lastHeight = container.scrollHeight
+        stableRounds = 0
+      }
+    }
+
+    container.scrollTop = previousScrollTop
+    return null
+  }
+
+  private findQwenAssistantBlockById(messageId: string): Element | null {
+    const selector = this.config.selectors.assistantResponse
+    const directIds = [
+      `chat-response-message-${messageId}`,
+      `qwen-chat-message-assistant-${messageId}`,
+    ]
+    for (const id of directIds) {
+      const element = document.getElementById(id)
+      const block = element?.closest(selector)
+      if (block) return block
+    }
+
+    const blocks = document.querySelectorAll(selector)
+    for (const block of Array.from(blocks)) {
+      if (this.extractQwenAssistantMessageId(block) === messageId) return block
+    }
+    return null
+  }
+
+  private findPreviousQwenUserBlock(message: Element): Element | null {
+    const root = this.getQwenExportRoot()
+    const userSelector = this.config.selectors.userQuery
+    const assistantSelector = this.config.selectors.assistantResponse
+    const blocks = this.collectTopLevelBlocks(
+      Array.from(root.querySelectorAll(`${userSelector}, ${assistantSelector}`)),
+    )
+    const index = blocks.findIndex((block) => block === message || block.contains(message))
+    for (let i = index - 1; i >= 0; i -= 1) {
+      if (blocks[i].matches(userSelector)) return blocks[i]
+      if (blocks[i].matches(assistantSelector)) return null
+    }
+    return null
+  }
+
+  private async findQwenApiHeadingInBlock(
+    message: Element,
+    level: number,
+    orderInMessage: number,
+    text: string,
+  ): Promise<Element | null> {
+    const normalizedTarget = text.replace(/\s+/g, " ").trim()
+    for (let attempt = 0; attempt < 6; attempt += 1) {
+      const headings = Array.from(message.querySelectorAll("h1, h2, h3, h4, h5, h6")).filter(
+        (heading) =>
+          !heading.closest(this.config.sitePrivateSelectors.thinkingCard) &&
+          !this.isInRenderedMarkdownContainer(heading),
+      )
+      const direct = headings[orderInMessage]
+      if (direct && parseInt(direct.tagName[1], 10) === level) {
+        const directText = (direct.textContent || "").replace(/\s+/g, " ").trim()
+        if (directText === normalizedTarget) return direct
+      }
+
+      const precise = headings.find((heading) => {
+        if (parseInt(heading.tagName[1], 10) !== level) return false
+        const candidate = (heading.textContent || "").replace(/\s+/g, " ").trim()
+        return candidate === normalizedTarget
+      })
+      if (precise) return precise
+      if (direct && parseInt(direct.tagName[1], 10) === level) return direct
+      await this.sleep(80)
+    }
+    return null
+  }
+
+  private mergeQwenOutlineByBranchOrder(
+    domEntries: BranchMergeEntry<OutlineItem>[],
+    domHeadingAssistantIds: ReadonlySet<string>,
+    domQueryMessageIds: ReadonlySet<string>,
+    data: QwenHistoryOutlineData,
+    options: { maxLevel: number; includeUserQueries: boolean; showWordCount: boolean },
+  ): OutlineItem[] {
+    const { maxLevel, includeUserQueries, showWordCount } = options
+    const fillEntries: BranchMergeEntry<OutlineItem>[] = []
+
+    if (includeUserQueries) {
+      for (const query of data.userQueries) {
+        if (domQueryMessageIds.has(query.messageId)) continue
+
+        let wordCount: number | undefined
+        if (showWordCount) {
+          const assistantId = data.assistantIdByQueryIndex.get(query.queryIndex)
+          wordCount = assistantId ? data.replyWordCountByAssistantId.get(assistantId) ?? 0 : 0
+        }
+        const isTruncated = query.text.length > 80
+        fillEntries.push({
+          messageId: query.messageId,
+          item: {
+            level: 0,
+            text: this.truncateText(query.text, 80),
+            element: null,
+            isUserQuery: true,
+            isTruncated,
+            navigationId: `qwen:api-u:${query.messageId}`,
+            wordCount,
+          },
+        })
+      }
+    }
+
+    for (const [assistantId, headings] of data.headingsByAssistantId) {
+      if (domHeadingAssistantIds.has(assistantId)) continue
+      headings.forEach((heading, orderInMessage) => {
+        if (heading.level > maxLevel) return
+        const id = `qwen:api-h:${assistantId}:${heading.level}:${orderInMessage}:${hashOutlineText(heading.text)}`
+        fillEntries.push({
+          messageId: assistantId,
+          item: {
+            level: heading.level,
+            text: heading.text,
+            element: null,
+            id,
+            navigationId: id,
+            wordCount: showWordCount ? heading.wordCount : undefined,
+          },
+        })
+      })
+    }
+
+    return mergeByBranchMessageOrder(data.branchMessageIds, domEntries, fillEntries)
+  }
+
+  private maybeRefreshApiOutline(container: Element): void {
+    if (!this.isUserConversationPage()) return
+
+    const sessionId = this.getSessionId()
+    if (!sessionId || sessionId === "default") return
+    if (sessionId !== this.apiOutlineSessionId) {
+      this.apiOutlineSessionId = sessionId
+      this.apiOutlineParseFailures = 0
+      this.apiOutlineLastFetchAt = 0
+    }
+
+    const generating = this.isGenerating()
+    if (this.apiOutlineWasGenerating && !generating) {
+      this.apiOutlineForceRefetch = true
+    }
+    this.apiOutlineWasGenerating = generating
+
+    const scrollable = this.getScrollContainer()
+    const atBottom = scrollable
+      ? scrollable.scrollTop + scrollable.clientHeight >=
+        scrollable.scrollHeight - QWENAI_API_OUTLINE_BOTTOM_TOLERANCE_PX
+      : false
+    const stale =
+      this.apiOutlineForceRefetch ||
+      isApiOutlineStale({
+        data: this.apiOutlineData,
+        sessionId,
+        mountedIds: this.collectQwenMountedAssistantMessageIds(container),
+        atBottom,
+      })
+
+    if (
+      !shouldAttemptApiOutlineFetch({
+        now: Date.now(),
+        lastFetchAt: this.apiOutlineLastFetchAt,
+        backoffMs: QWENAI_API_OUTLINE_FETCH_BACKOFF_MS,
+        parseFailures: this.apiOutlineParseFailures,
+        inFlight: this.apiOutlineFetchPromise !== null,
+        generating,
+        stale,
+      })
+    ) {
+      return
+    }
+
+    this.apiOutlineLastFetchAt = Date.now()
+    this.apiOutlineFetchPromise = this.fetchQwenApiOutline(sessionId)
+      .then((result) => {
+        if (result === "parse-failed") {
+          this.apiOutlineParseFailures += 1
+          return
+        }
+        this.apiOutlineParseFailures = 0
+        if (result === "changed") {
+          window.postMessage({ type: EVENT_OUTLINE_DATA_UPDATED }, "*")
+        }
+      })
+      .catch((error) => {
+        this.apiOutlineParseFailures += 1
+        console.warn("[QwenAiAdapter] Failed to fetch conversation outline:", error)
+      })
+      .finally(() => {
+        this.apiOutlineFetchPromise = null
+      })
+  }
+
+  private collectQwenMountedAssistantMessageIds(container: Element): Set<string> {
+    const ids = new Set<string>()
+    container.querySelectorAll(this.config.selectors.assistantResponse).forEach((message) => {
+      const id = this.extractQwenAssistantMessageId(message)
+      if (id) ids.add(id)
+    })
+    return ids
+  }
+
+  private async fetchQwenApiOutline(
+    sessionId: string,
+  ): Promise<"changed" | "unchanged" | "parse-failed"> {
+    const pages = await this.fetchQwenChatHistoryPages(sessionId)
+    if (!pages) return "parse-failed"
+
+    const messages: Record<string, QwenAiChatApiMessage> = {}
+    let currentId: string | null = null
+    pages.forEach((history) => {
+      if (!currentId && history.currentId) currentId = history.currentId
+      Object.entries(history.messages || {}).forEach(([key, value]) => {
+        if (!value || typeof value !== "object") return
+        const id = typeof value.id === "string" && value.id.trim() ? value.id.trim() : key
+        messages[id] = { ...value, id }
+      })
+    })
+
+    const parsed = parseQwenHistoryOutline({ id: sessionId, messages, currentId }, sessionId)
+    if (!parsed || parsed.sessionId !== sessionId) return "parse-failed"
+
+    const previous = this.apiOutlineData
+    this.apiOutlineData = parsed
+    this.apiOutlineForceRefetch = false
+    return !previous ||
+      previous.sessionId !== parsed.sessionId ||
+      previous.signature !== parsed.signature
+      ? "changed"
+      : "unchanged"
   }
 
   getExportConfig(): ExportConfig | null {
