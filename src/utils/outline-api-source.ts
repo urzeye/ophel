@@ -8,7 +8,8 @@
  *
  * 站点接入契约（详见 docs/developer/architecture.md「API 数据源大纲与导出」）：
  * 1. 解析器把接口响应转换为满足 ApiOutlineSourceData 的数据形态；
- * 2. config traits 声明 virtualOutlineFill，跳转后的即时刷新与高亮重算才会启用；
+ * 2. 虚拟滚动站点在 config traits 声明 virtualOutlineFill，跳转后的即时刷新与高亮重算才会启用；
+ *    服务端懒加载、DOM 不卸载的站点（如 Qwen Studio）不声明，否则会切到虚拟列表专用路径；
  * 3. 数据更新后 postMessage EVENT_OUTLINE_DATA_UPDATED 请求大纲刷新；
  * 4. 接口主机（含附件 CDN）需加入 package.json host_permissions。
  */
@@ -191,6 +192,13 @@ export function mergeByBranchMessageOrder<T>(
   let lastKnownKey = -1
   let unknownOffset = 0
   let seq = 0
+  // 字符串 id 不能和 maxBranchId 比大小，区分不了「新消息」与「旁支残留行」：
+  // DOM 里已有已知行时，未知行按 DOM 顺序贴在最近的已知行之后（新消息本来就在
+  // 已知行后面，切到旧分支时的残留行也不会越过后面的回填）；
+  // 一个已知行都没有时才当作尾部新消息。
+  const hasKnownDomEntry = domEntries.some(
+    (entry) => entry.messageId !== null && branchIndex.has(entry.messageId),
+  )
 
   for (const entry of domEntries) {
     const index = entry.messageId !== null ? branchIndex.get(entry.messageId) : undefined
@@ -207,7 +215,7 @@ export function mergeByBranchMessageOrder<T>(
       // （数量级只有一两条，小步偏移不会越过下一个已知序号）
       const isNewTail =
         entry.messageId === null ||
-        typeof entry.messageId === "string" ||
+        (typeof entry.messageId === "string" && !hasKnownDomEntry) ||
         (maxBranchId !== null &&
           typeof maxBranchId === "number" &&
           typeof entry.messageId === "number" &&
@@ -228,4 +236,29 @@ export function mergeByBranchMessageOrder<T>(
   }
 
   return keyed.sort((a, b) => a.key - b.key || a.seq - b.seq).map((entry) => entry.item)
+}
+
+/**
+ * 从回填条目尾部丢弃与「无分支归属的 DOM 条目」同名的重复项（计数式）。
+ * 发送/生成中的新消息可能挂在临时 key 上，DOM 条目归属不到分支；
+ * 接口重拉后回填条目与它们并存会重复。新消息在尾部，所以从尾部往前扣；
+ * 同文本的旧条目若未挂载，其回填不受影响。会消耗传入的 unmatchedCounts。
+ */
+export function dropTrailingFillDuplicates<T>(
+  fillEntries: readonly BranchMergeEntry<T>[],
+  keyOf: (item: T) => string,
+  unmatchedCounts: Map<string, number>,
+): BranchMergeEntry<T>[] {
+  const kept = [...fillEntries]
+  if (unmatchedCounts.size === 0) return kept
+
+  for (let i = kept.length - 1; i >= 0; i -= 1) {
+    const key = keyOf(kept[i].item)
+    const count = unmatchedCounts.get(key) ?? 0
+    if (count === 0) continue
+    if (count === 1) unmatchedCounts.delete(key)
+    else unmatchedCounts.set(key, count - 1)
+    kept.splice(i, 1)
+  }
+  return kept
 }

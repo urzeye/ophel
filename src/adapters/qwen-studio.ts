@@ -27,6 +27,7 @@ import { t } from "~utils/i18n"
 import { EVENT_OUTLINE_DATA_UPDATED } from "~utils/messaging"
 import { hashOutlineText } from "~utils/outline-heading-cache"
 import {
+  dropTrailingFillDuplicates,
   isApiOutlineStale,
   mergeByBranchMessageOrder,
   shouldAttemptApiOutlineFetch,
@@ -38,6 +39,7 @@ import {
   type ConversationDeleteTarget,
   type ConversationInfo,
   type ConversationObserverConfig,
+  type ExportCollectionReport,
   type ExportLifecycleContext,
   type ExportConfig,
   type FormulaCopySource,
@@ -55,7 +57,11 @@ import {
   QWEN_STUDIO_CONFIG_VERSION,
   type QwenStudioSiteConfig,
 } from "./qwen-studio-config"
-import { parseQwenHistoryOutline, type QwenHistoryOutlineData } from "./qwen-studio-history-outline"
+import {
+  parseQwenHistoryOutline,
+  resolveQwenActiveBranch,
+  type QwenHistoryOutlineData,
+} from "./qwen-studio-history-outline"
 
 const QWENAI_CHAT_PATH_PATTERN = /\/c\/([a-f0-9-]+)/i
 const QWENAI_THEME_STORAGE_KEY = "theme"
@@ -131,6 +137,8 @@ interface QwenAiChatApiContentPhase {
   } | null
 }
 
+// 字段口径以 2026-10-30 的真实响应为准：消息用 camelCase 的 parentId（根消息为 null），
+// pagination 用 snake_case，content_list 阶段名见 thinking_summary / answer 等。
 interface QwenAiChatApiMessage {
   id?: string
   role?: string
@@ -186,15 +194,29 @@ interface QwenAiAssistantImage {
 
 type QwenAiModelLockFailureReason = "button_not_found" | "menu_empty" | "not_found"
 
+/** success:false 的响应是 HTTP 200，data 形如 { code, details }（如 Unauthorized），附进错误信息便于定位 */
+const formatQwenApiErrorDetail = (data: unknown): string => {
+  if (!data || typeof data !== "object") return ""
+  const { code, details } = data as { code?: unknown; details?: unknown }
+  const parts = [code, details].filter(
+    (value): value is string => typeof value === "string" && value.length > 0,
+  )
+  return parts.length > 0 ? ` (${parts.join(": ")})` : ""
+}
+
 export class QwenAiAdapter extends SiteAdapter {
   protected config: QwenStudioSiteConfig = QWEN_STUDIO_CONFIG
   private conversationSnapshot: ConversationInfo[] = []
   private conversationSnapshotFetchedAt = 0
   private conversationSnapshotRetryAt = 0
-  private conversationSnapshotPromise: Promise<ConversationInfo[]> | null = null
+  // 进行中的刷新；resolve 为 true 表示该次请求的范围已完整拿到（失败或不完整为 false）
+  private conversationSnapshotPromise: Promise<boolean> | null = null
+  private conversationSnapshotFetchesAll = false
   private exportIncludeThoughtsOverride: boolean | null = null
   private exportApiMessages: ExportMessage[] | null = null
   private exportApiBundle: ExportBundle | null = null
+  // 接口导出失败回退 DOM 且历史加载未收敛时记录一份「可能缺开头」的报告，供 manager 提示
+  private exportCollectionReport: ExportCollectionReport | null = null
   private exportThoughtBlocks = new WeakMap<Element, string[]>()
   private apiOutlineData: QwenHistoryOutlineData | null = null
   private apiOutlineFetchPromise: Promise<void> | null = null
@@ -204,6 +226,8 @@ export class QwenAiAdapter extends SiteAdapter {
   private apiOutlineWasGenerating = false
   private apiOutlineForceRefetch = false
   private outlineJumpRequestSeq = 0
+  // 回填跳转为触发懒加载会把容器滚到顶，这里记下滚动前的位置，跳转最终没有目标时还原
+  private outlineRevealOrigin: number | null = null
   private outlineJumpTargetResolvers = new WeakMap<Element, () => Element | null>()
 
   afterPropertiesSet(
@@ -271,7 +295,8 @@ export class QwenAiAdapter extends SiteAdapter {
   getCurrentCid(): string | null {
     const fromCookie = this.readCookieValue("aui") || this.readCookieValue("cnaui")
     if (fromCookie) return fromCookie
-    return this.extractUidFromToken(localStorage.getItem(QWENAI_TOKEN_STORAGE_KEY))
+    // 与接口鉴权同一取数口径：站点已把 token 迁到 qwen_access_token_state，旧 token 可能是上个账号残留
+    return this.extractUidFromToken(this.getQwenAccessToken())
   }
 
   getSessionName(): string | null {
@@ -352,8 +377,12 @@ export class QwenAiAdapter extends SiteAdapter {
     )
   }
 
-  async loadAllConversations(): Promise<void> {
-    await this.refreshConversationSnapshot({ force: true, fetchAllPages: true })
+  /**
+   * 返回 false 表示没能拿到完整列表（请求失败、置顶接口失败或页数触顶）：
+   * 调用方据此不做「同步删除」，否则会拿残缺列表去清本地记录。
+   */
+  async loadAllConversations(): Promise<boolean> {
+    return this.refreshConversationSnapshot({ force: true, fetchAllPages: true })
   }
 
   navigateToConversation(id: string, url?: string): boolean {
@@ -785,6 +814,31 @@ export class QwenAiAdapter extends SiteAdapter {
     queryIndex?: number,
   ): Promise<Element | null> {
     const requestId = ++this.outlineJumpRequestSeq
+    let target: Element | null = null
+    try {
+      target = await this.resolveQwenOutlineTarget(item, queryIndex, requestId)
+      return target
+    } finally {
+      // 只有最新一次请求负责收尾（含异常路径）；被取代的请求把滚动起点交给后继者
+      if (requestId === this.outlineJumpRequestSeq) this.settleOutlineReveal(target !== null)
+    }
+  }
+
+  /** 跳转结束：找到目标由随后的跳转接管视口，没有目标则回到触发懒加载前的位置 */
+  private settleOutlineReveal(found: boolean): void {
+    const origin = this.outlineRevealOrigin
+    this.outlineRevealOrigin = null
+    if (found || origin === null) return
+
+    const container = this.getScrollContainer()
+    if (container) container.scrollTop = origin
+  }
+
+  private async resolveQwenOutlineTarget(
+    item: Pick<OutlineItem, "level" | "text" | "isUserQuery" | "id" | "navigationId">,
+    queryIndex: number | undefined,
+    requestId: number,
+  ): Promise<Element | null> {
     const ref = item.navigationId || item.id || ""
     const data =
       this.apiOutlineData && this.apiOutlineData.sessionId === this.getSessionId()
@@ -825,6 +879,10 @@ export class QwenAiAdapter extends SiteAdapter {
   }
 
   scrollToOutlineSourceTarget(element: HTMLElement, sourceId = "conversation"): void {
+    // 任何新的跳转都取代进行中的回填定位（含跳到已挂载条目），否则后者还会把容器滚回顶部
+    const requestId = ++this.outlineJumpRequestSeq
+    this.outlineRevealOrigin = null
+
     const resolveTarget = this.outlineJumpTargetResolvers.get(element)
     if (sourceId !== "conversation" || !resolveTarget) {
       super.scrollToOutlineSourceTarget(element, sourceId)
@@ -832,7 +890,6 @@ export class QwenAiAdapter extends SiteAdapter {
     }
 
     // 目标出现后 Qwen 仍可能继续插入旧消息并修正滚动位置；短时重锚定以最后一次跳转为准。
-    const requestId = ++this.outlineJumpRequestSeq
     const container = this.getOutlineScrollContainer(sourceId)
     const timers: number[] = []
     let disposed = false
@@ -968,43 +1025,56 @@ export class QwenAiAdapter extends SiteAdapter {
     const container = this.getScrollContainer()
     if (!container || container.scrollHeight <= container.clientHeight) return null
 
-    const previousScrollTop = container.scrollTop
+    // 连续被取代的几次跳转共用同一个起点：后继者不能把已被滚到顶部的位置当成「原位置」
+    if (this.outlineRevealOrigin === null) this.outlineRevealOrigin = container.scrollTop
+
+    // 用户自己滚动 = 放弃这次跳转，并且不再还原位置。派发的合成 wheel 不是用户操作（isTrusted 为 false）
+    const cancelOnUserIntent = (event: Event) => {
+      if (!event.isTrusted || requestId !== this.outlineJumpRequestSeq) return
+      this.outlineJumpRequestSeq += 1
+      this.outlineRevealOrigin = null
+    }
+    const userIntentEvents = ["wheel", "touchmove", "pointerdown"] as const
+    userIntentEvents.forEach((name) =>
+      container.addEventListener(name, cancelOnUserIntent, { passive: true }),
+    )
+
     let lastHeight = container.scrollHeight
     let stableRounds = 0
 
-    for (let round = 0; round < QWENAI_API_OUTLINE_REVEAL_MAX_ROUNDS; round += 1) {
-      if (requestId !== this.outlineJumpRequestSeq) return null
-      container.scrollTop = 0
-      container.dispatchEvent(new Event("scroll", { bubbles: true }))
-      container.dispatchEvent(
-        new WheelEvent("wheel", {
-          bubbles: true,
-          cancelable: true,
-          deltaY: -900,
-        }),
-      )
-      await this.sleep(QWENAI_API_OUTLINE_REVEAL_WAIT_MS)
-
-      const message = findMessage()
-      if (message) {
-        const stableMessage = await this.waitForQwenMessageLayoutStable(messageId, requestId)
+    try {
+      for (let round = 0; round < QWENAI_API_OUTLINE_REVEAL_MAX_ROUNDS; round += 1) {
         if (requestId !== this.outlineJumpRequestSeq) return null
-        if (stableMessage) return stableMessage
-      }
+        container.scrollTop = 0
+        container.dispatchEvent(new Event("scroll", { bubbles: true }))
+        container.dispatchEvent(
+          new WheelEvent("wheel", {
+            bubbles: true,
+            cancelable: true,
+            deltaY: -900,
+          }),
+        )
+        await this.sleep(QWENAI_API_OUTLINE_REVEAL_WAIT_MS)
 
-      if (container.scrollHeight === lastHeight) {
-        stableRounds += 1
-        if (stableRounds >= 2) break
-      } else {
-        lastHeight = container.scrollHeight
-        stableRounds = 0
-      }
-    }
+        const message = findMessage()
+        if (message) {
+          const stableMessage = await this.waitForQwenMessageLayoutStable(messageId, requestId)
+          if (requestId !== this.outlineJumpRequestSeq) return null
+          if (stableMessage) return stableMessage
+        }
 
-    if (requestId === this.outlineJumpRequestSeq) {
-      container.scrollTop = previousScrollTop
+        if (container.scrollHeight === lastHeight) {
+          stableRounds += 1
+          if (stableRounds >= 2) break
+        } else {
+          lastHeight = container.scrollHeight
+          stableRounds = 0
+        }
+      }
+      return null
+    } finally {
+      userIntentEvents.forEach((name) => container.removeEventListener(name, cancelOnUserIntent))
     }
-    return null
   }
 
   private async waitForQwenMessageLayoutStable(
@@ -1144,7 +1214,8 @@ export class QwenAiAdapter extends SiteAdapter {
     options: { maxLevel: number; includeUserQueries: boolean; showWordCount: boolean },
   ): OutlineItem[] {
     const { maxLevel, includeUserQueries, showWordCount } = options
-    const fillEntries: BranchMergeEntry<OutlineItem>[] = []
+    const fillQueryEntries: BranchMergeEntry<OutlineItem>[] = []
+    const fillHeadingEntries: BranchMergeEntry<OutlineItem>[] = []
 
     if (includeUserQueries) {
       for (const query of data.userQueries) {
@@ -1156,7 +1227,7 @@ export class QwenAiAdapter extends SiteAdapter {
           wordCount = assistantId ? data.replyWordCountByAssistantId.get(assistantId) ?? 0 : 0
         }
         const isTruncated = query.text.length > 80
-        fillEntries.push({
+        fillQueryEntries.push({
           messageId: query.messageId,
           item: {
             level: 0,
@@ -1176,7 +1247,7 @@ export class QwenAiAdapter extends SiteAdapter {
       headings.forEach((heading, orderInMessage) => {
         if (heading.level > maxLevel) return
         const id = `qwen:api-h:${assistantId}:${heading.level}:${orderInMessage}:${hashOutlineText(heading.text)}`
-        fillEntries.push({
+        fillHeadingEntries.push({
           messageId: assistantId,
           item: {
             level: heading.level,
@@ -1190,7 +1261,50 @@ export class QwenAiAdapter extends SiteAdapter {
       })
     }
 
-    return mergeByBranchMessageOrder(data.branchMessageIds, domEntries, fillEntries)
+    // 刚发送/生成中的新消息，DOM 行 id 可能暂时归属不到分支（或与接口 id 对不上），
+    // 接口重拉后回填条目会与这些 DOM 条目并存而重复。按文本计数，只在最后一个已知
+    // DOM 条目之后的回填里扣除同名项：更早的未挂载旧消息不受影响。
+    const branchIndex = new Map(data.branchMessageIds.map((id, index) => [id, index] as const))
+    let lastKnownDomIndex = -1
+    const unmatchedQueryKeys = new Map<string, number>()
+    const unmatchedHeadingKeys = new Map<string, number>()
+    for (const entry of domEntries) {
+      const index = entry.messageId !== null ? branchIndex.get(entry.messageId) : undefined
+      if (index !== undefined) {
+        lastKnownDomIndex = Math.max(lastKnownDomIndex, index)
+        continue
+      }
+      const bucket = entry.item.isUserQuery ? unmatchedQueryKeys : unmatchedHeadingKeys
+      const key = this.getQwenOutlineDedupeKey(entry.item)
+      bucket.set(key, (bucket.get(key) ?? 0) + 1)
+    }
+
+    const dropDuplicates = (
+      entries: BranchMergeEntry<OutlineItem>[],
+      unmatchedKeys: Map<string, number>,
+    ): BranchMergeEntry<OutlineItem>[] => {
+      if (unmatchedKeys.size === 0) return entries
+      const isTrailing = (entry: BranchMergeEntry<OutlineItem>) =>
+        entry.messageId !== null && (branchIndex.get(entry.messageId) ?? -1) > lastKnownDomIndex
+      return [
+        ...entries.filter((entry) => !isTrailing(entry)),
+        ...dropTrailingFillDuplicates(
+          entries.filter(isTrailing),
+          (item) => this.getQwenOutlineDedupeKey(item),
+          unmatchedKeys,
+        ),
+      ]
+    }
+
+    return mergeByBranchMessageOrder(data.branchMessageIds, domEntries, [
+      ...dropDuplicates(fillQueryEntries, unmatchedQueryKeys),
+      ...dropDuplicates(fillHeadingEntries, unmatchedHeadingKeys),
+    ])
+  }
+
+  private getQwenOutlineDedupeKey(item: OutlineItem): string {
+    const text = item.text.replace(/\s+/g, " ").trim()
+    return item.isUserQuery ? text : `${item.level}:${text}`
   }
 
   private maybeRefreshApiOutline(container: Element): void {
@@ -1251,7 +1365,8 @@ export class QwenAiAdapter extends SiteAdapter {
         }
       })
       .catch((error) => {
-        this.apiOutlineParseFailures += 1
+        // 网络、HTTP 失败和鉴权失败（token 过期到站点刷新之间接口返回 Unauthorized）都是暂态，
+        // 只靠拉取间隔重试，不计入熔断；熔断只留给解析失败（接口改版或历史不完整）
         console.warn("[QwenAiAdapter] Failed to fetch conversation outline:", error)
       })
       .finally(() => {
@@ -1274,19 +1389,15 @@ export class QwenAiAdapter extends SiteAdapter {
     const pages = await this.fetchQwenChatHistoryPages(sessionId)
     if (!pages) return "parse-failed"
 
-    const messages: Record<string, QwenAiChatApiMessage> = {}
-    let currentId: string | null = null
-    pages.forEach((history) => {
-      if (!currentId && history.currentId) currentId = history.currentId
-      Object.entries(history.messages || {}).forEach(([key, value]) => {
-        if (!value || typeof value !== "object") return
-        const id = typeof value.id === "string" && value.id.trim() ? value.id.trim() : key
-        messages[id] = { ...value, id }
-      })
-    })
-
-    const parsed = parseQwenHistoryOutline({ id: sessionId, messages, currentId }, sessionId)
-    if (!parsed || parsed.sessionId !== sessionId) return "parse-failed"
+    const { messages, currentId } = this.mergeQwenHistoryPages(pages)
+    const parsed = parseQwenHistoryOutline(
+      { id: sessionId, messages: Object.fromEntries(messages), currentId },
+      sessionId,
+    )
+    if (!parsed || parsed.sessionId !== sessionId) {
+      console.warn("[QwenAiAdapter] Conversation history does not resolve to a complete branch")
+      return "parse-failed"
+    }
 
     const previous = this.apiOutlineData
     this.apiOutlineData = parsed
@@ -1308,6 +1419,7 @@ export class QwenAiAdapter extends SiteAdapter {
     this.exportIncludeThoughtsOverride = context.includeThoughts
     this.exportApiMessages = null
     this.exportApiBundle = null
+    this.exportCollectionReport = null
     this.clearThoughtExportCache()
 
     if (!this.isSharePage()) {
@@ -1332,7 +1444,16 @@ export class QwenAiAdapter extends SiteAdapter {
       }
     }
 
-    await this.loadCompleteExportHistory()
+    // 接口导出不可用时回退 DOM：manager 因 apiFirstExport 跳过了预加载，这里自己滚顶加载，
+    // 加载未收敛要通过 getExportCollectionReport 让 manager 提示「可能不完整」
+    if (!(await this.loadCompleteExportHistory())) {
+      this.exportCollectionReport = {
+        expectedCount: null,
+        collectedCount: this.getOrderedQwenMessages(this.getQwenExportRoot()).length,
+        missingAnchors: [],
+        hasTruncated: true,
+      }
+    }
     await this.prepareMermaidBlocksForExport()
 
     const panelWasOpen = this.getVisibleThoughtPanel() !== null
@@ -1354,7 +1475,8 @@ export class QwenAiAdapter extends SiteAdapter {
     }
   }
 
-  private async loadCompleteExportHistory(): Promise<void> {
+  /** 返回历史加载是否收敛；false 表示触顶轮次仍在变化，导出可能缺开头 */
+  private async loadCompleteExportHistory(): Promise<boolean> {
     const result = await loadCompleteHistoryForExport({
       adapter: this,
       waitMs: 800,
@@ -1371,6 +1493,11 @@ export class QwenAiAdapter extends SiteAdapter {
         finalHeight: result.finalHeight,
       })
     }
+    return result.success
+  }
+
+  getExportCollectionReport(): ExportCollectionReport | null {
+    return this.exportCollectionReport
   }
 
   private getExportHistoryLoadSignature(container: HTMLElement): string {
@@ -1417,6 +1544,7 @@ export class QwenAiAdapter extends SiteAdapter {
     } finally {
       this.exportApiMessages = null
       this.exportApiBundle = null
+      this.exportCollectionReport = null
       this.exportIncludeThoughtsOverride = null
       this.clearThoughtExportCache()
     }
@@ -1448,7 +1576,8 @@ export class QwenAiAdapter extends SiteAdapter {
 
   /**
    * 通过单对话接口导出完整主链。接口 limit 按轮次计，先取最新一段，
-   * 再沿 pagination.oldest_id 向前翻页；无法证明已到历史起点时返回 null。
+   * 再沿 pagination.oldest_id 向前翻页；回溯链必须到达根消息，
+   * 无法证明历史完整时返回 null（调用方回退 DOM 或报导出失败），不产出残缺文件。
    */
   private async collectQwenApiExportMessages(
     conversationId: string,
@@ -1461,24 +1590,15 @@ export class QwenAiAdapter extends SiteAdapter {
       const pages = await this.fetchQwenChatHistoryPages(conversationId)
       if (!pages) return null
 
-      const messageMap = new Map<string, QwenAiChatApiMessage>()
-      let currentId: string | null | undefined
+      const { messages: messageMap, currentId } = this.mergeQwenHistoryPages(pages)
+      const chain = resolveQwenActiveBranch(messageMap, currentId)
+      if (!chain) {
+        console.warn("[QwenAiAdapter] API history does not resolve to a complete branch")
+        return null
+      }
 
-      pages.forEach((history) => {
-        if (!currentId && history.currentId) currentId = history.currentId
-        Object.entries(history.messages || {}).forEach(([key, value]) => {
-          if (!value || typeof value !== "object") return
-          const id = typeof value.id === "string" && value.id.trim() ? value.id.trim() : key
-          messageMap.set(id, { ...value, id })
-        })
-      })
-
-      if (messageMap.size === 0) return null
-
-      const chain = this.buildQwenApiMessageChain(messageMap, currentId)
       const messages: ExportMessage[] = []
-
-      for (const message of chain) {
+      for (const { message } of chain) {
         const role = message.role
         if (role !== "user" && role !== "assistant") continue
 
@@ -1497,13 +1617,18 @@ export class QwenAiAdapter extends SiteAdapter {
     }
   }
 
+  /**
+   * 逐页拉取单对话历史（direction=up，从最新一页向前）。
+   * - 网络错误、HTTP 非 2xx、success:false（含鉴权失败）直接抛错：这些是暂态，不等于数据不可用；
+   * - 响应结构不符、翻页走不到起点返回 null：数据本身不可用。
+   * pagination 缺失按「已到起点」处理，完整性由调用方回溯到根消息来校验。
+   */
   private async fetchQwenChatHistoryPages(
     conversationId: string,
   ): Promise<QwenAiChatApiHistory[] | null> {
     const authorization = this.getQwenAuthorizationHeader()
     const pages: QwenAiChatApiHistory[] = []
     let cursor: string | undefined
-    let reachedHistoryStart = false
 
     for (let page = 0; page < QWENAI_CHAT_API_MAX_PAGES; page += 1) {
       const url = new URL(
@@ -1526,65 +1651,51 @@ export class QwenAiAdapter extends SiteAdapter {
         },
       })
 
-      if (!response.ok) return null
+      if (!response.ok) throw new Error(`chat history responded ${response.status}`)
 
       const payload = (await response.json()) as QwenAiChatApiResponse
-      if (payload.success === false) return null
+      if (payload.success === false) {
+        throw new Error(`chat history unsuccessful${formatQwenApiErrorDetail(payload.data)}`)
+      }
 
       const chat = payload.data?.chat || payload.data
       const history = chat?.history
-      if (!history?.messages || Array.isArray(history.messages)) return null
+      if (!history?.messages || Array.isArray(history.messages)) {
+        console.warn("[QwenAiAdapter] Unexpected chat history response shape")
+        return null
+      }
       pages.push(history)
 
       const pagination = history.pagination
-      if (!pagination?.has_more_older) {
-        reachedHistoryStart = true
-        break
-      }
+      if (!pagination?.has_more_older) return pages
 
       const nextCursor = typeof pagination.oldest_id === "string" ? pagination.oldest_id.trim() : ""
       if (!nextCursor || nextCursor === cursor) break
       cursor = nextCursor
     }
 
-    return reachedHistoryStart ? pages : null
+    console.warn("[QwenAiAdapter] Chat history pagination did not reach the conversation start")
+    return null
   }
 
-  private buildQwenApiMessageChain(
-    messages: Map<string, QwenAiChatApiMessage>,
-    currentId?: string | null,
-  ): QwenAiChatApiMessage[] {
-    const preferredLeaf =
-      (currentId && messages.has(currentId) ? currentId : "") ||
-      this.findNewestQwenApiLeafId(messages)
-    if (!preferredLeaf) return Array.from(messages.values())
+  /** 把逐页响应合并成一张消息表；currentId 以最新一页（首页）为准 */
+  private mergeQwenHistoryPages(pages: readonly QwenAiChatApiHistory[]): {
+    messages: Map<string, QwenAiChatApiMessage>
+    currentId: string | null
+  } {
+    const messages = new Map<string, QwenAiChatApiMessage>()
+    let currentId: string | null = null
 
-    const chain: QwenAiChatApiMessage[] = []
-    const seen = new Set<string>()
-    let cursor: string | null | undefined = preferredLeaf
-
-    while (cursor && messages.has(cursor) && !seen.has(cursor)) {
-      const message = messages.get(cursor)
-      if (!message) break
-      chain.push(message)
-      seen.add(cursor)
-      cursor = typeof message.parentId === "string" ? message.parentId : undefined
+    for (const history of pages) {
+      if (!currentId && history.currentId) currentId = history.currentId
+      for (const [key, value] of Object.entries(history.messages || {})) {
+        if (!value || typeof value !== "object") continue
+        const id = typeof value.id === "string" && value.id.trim() ? value.id.trim() : key
+        messages.set(id, { ...value, id })
+      }
     }
 
-    return chain.length > 0 ? chain.reverse() : Array.from(messages.values())
-  }
-
-  private findNewestQwenApiLeafId(messages: Map<string, QwenAiChatApiMessage>): string | undefined {
-    const parentIds = new Set<string>()
-    messages.forEach((message) => {
-      if (typeof message.parentId === "string" && message.parentId) {
-        parentIds.add(message.parentId)
-      }
-    })
-
-    return Array.from(messages.values())
-      .filter((message) => Boolean(message.id) && !parentIds.has(message.id || ""))
-      .sort((left, right) => (right.timestamp || 0) - (left.timestamp || 0))[0]?.id
+    return { messages, currentId }
   }
 
   private formatQwenApiUserMessage(
@@ -1958,55 +2069,65 @@ export class QwenAiAdapter extends SiteAdapter {
     return this.conversationSnapshot.map((item) => ({ ...item }))
   }
 
+  /**
+   * 刷新对话快照。返回 true 表示该次请求的范围已完整拿到：
+   * 普通刷新 = 请求成功；fetchAllPages = 翻到了空页且置顶接口也成功。
+   * 失败或不完整返回 false，loadAllConversations 据此让调用方拒绝「同步删除」。
+   */
   private async refreshConversationSnapshot(
     options: { force?: boolean; fetchAllPages?: boolean } = {},
-  ): Promise<ConversationInfo[]> {
+  ): Promise<boolean> {
     const { force = false, fetchAllPages = false } = options
     const isFresh =
       Date.now() - this.conversationSnapshotFetchedAt < QWENAI_CONVERSATION_SNAPSHOT_TTL_MS
 
-    if (!force && isFresh) {
-      return this.conversationSnapshot.map((item) => ({ ...item }))
+    if (!force && isFresh) return true
+    if (!force && Date.now() < this.conversationSnapshotRetryAt) return false
+
+    // 进行中的是部分刷新而本次要全量：等它结束再补一次，不能被它吞掉
+    while (this.conversationSnapshotPromise) {
+      if (!fetchAllPages || this.conversationSnapshotFetchesAll) {
+        return this.conversationSnapshotPromise
+      }
+      await this.conversationSnapshotPromise
     }
 
-    if (!force && Date.now() < this.conversationSnapshotRetryAt) {
-      return this.conversationSnapshot.map((item) => ({ ...item }))
-    }
-
-    if (this.conversationSnapshotPromise) {
-      return this.conversationSnapshotPromise
-    }
-
+    this.conversationSnapshotFetchesAll = fetchAllPages
     this.conversationSnapshotPromise = (async () => {
       try {
-        const list = await this.fetchConversationSnapshot(fetchAllPages)
-        if (list.length > 0) {
-          this.conversationSnapshot = list
-        }
+        const { list, complete } = await this.fetchConversationSnapshot(fetchAllPages)
+        this.conversationSnapshot = list
         this.conversationSnapshotFetchedAt = Date.now()
         this.conversationSnapshotRetryAt = 0
+        return !fetchAllPages || complete
       } catch (error) {
         this.conversationSnapshotRetryAt = Date.now() + QWENAI_CONVERSATION_SNAPSHOT_RETRY_MS
         console.warn("[QwenAiAdapter] Failed to refresh conversation snapshot:", error)
+        return false
       } finally {
         this.conversationSnapshotPromise = null
       }
-
-      return this.conversationSnapshot.map((item) => ({ ...item }))
     })()
 
     return this.conversationSnapshotPromise
   }
 
-  private async fetchConversationSnapshot(fetchAllPages: boolean): Promise<ConversationInfo[]> {
+  private async fetchConversationSnapshot(
+    fetchAllPages: boolean,
+  ): Promise<{ list: ConversationInfo[]; complete: boolean }> {
     const currentSessionId = this.getSessionId()
     const maxPages = fetchAllPages ? QWENAI_FETCH_PAGE_LIMIT : QWENAI_BOOTSTRAP_PAGE_LIMIT
     const all: ConversationInfo[] = []
     const seen = new Set<string>()
+    // 只有翻到空页才证明列表到底；页数触顶、接口不再前进都不算
+    let reachedEnd = false
 
     for (let page = 1; page <= maxPages; page++) {
       const items = await this.fetchConversationPage(page)
-      if (items.length === 0) break
+      if (items.length === 0) {
+        reachedEnd = true
+        break
+      }
 
       let newCount = 0
       for (const item of items) {
@@ -2021,16 +2142,17 @@ export class QwenAiAdapter extends SiteAdapter {
     }
 
     const pinned = await this.fetchPinnedConversations(this.getCurrentCid() || undefined)
-    if (pinned.length === 0) return all
+    const complete = reachedEnd && pinned.ok
+    if (pinned.items.length === 0) return { list: all, complete }
 
-    const pinnedById = new Map(pinned.map((item) => [item.id, item]))
+    const pinnedById = new Map(pinned.items.map((item) => [item.id, item]))
     const merged = all.map((item) => {
       if (!pinnedById.has(item.id)) return item
       pinnedById.delete(item.id)
       return { ...item, isPinned: true }
     })
     pinnedById.forEach((item) => merged.push(item))
-    return merged
+    return { list: merged, complete }
   }
 
   private async fetchConversationPage(page: number): Promise<ConversationInfo[]> {
@@ -2057,14 +2179,19 @@ export class QwenAiAdapter extends SiteAdapter {
 
     const payload = (await response.json()) as QwenAiConversationApiResponse
     if (payload.success === false) {
-      throw new Error("fetch conversations failed: response unsuccessful")
+      throw new Error(
+        `fetch conversations failed: response unsuccessful${formatQwenApiErrorDetail(payload.data)}`,
+      )
+    }
+    // 空列表也是数组；data 不是数组说明接口结构变了，不能当成「没有对话」
+    if (!Array.isArray(payload.data)) {
+      throw new Error("fetch conversations failed: unexpected response shape")
     }
 
-    const data = Array.isArray(payload.data) ? payload.data : []
     const cid = this.getCurrentCid() || undefined
     const items: ConversationInfo[] = []
 
-    data.forEach((entry) => {
+    payload.data.forEach((entry) => {
       const info = this.normalizeConversationApiItem(entry, cid)
       if (info) items.push(info)
     })
@@ -2072,8 +2199,10 @@ export class QwenAiAdapter extends SiteAdapter {
     return items
   }
 
-  private async fetchPinnedConversations(cid?: string): Promise<ConversationInfo[]> {
-    const pinned: ConversationInfo[] = []
+  private async fetchPinnedConversations(
+    cid?: string,
+  ): Promise<{ items: ConversationInfo[]; ok: boolean }> {
+    const items: ConversationInfo[] = []
     try {
       const url = new URL("/api/v2/chats/pinned", window.location.origin)
       const authorization = this.getQwenAuthorizationHeader()
@@ -2089,22 +2218,28 @@ export class QwenAiAdapter extends SiteAdapter {
         },
       })
 
-      if (!response.ok) return pinned
+      if (!response.ok) throw new Error(`fetch pinned conversations failed: ${response.status}`)
 
       const payload = (await response.json()) as QwenAiConversationApiResponse
-      if (payload.success === false || !Array.isArray(payload.data)) return pinned
+      if (payload.success === false || !Array.isArray(payload.data)) {
+        throw new Error(
+          `fetch pinned conversations failed: unexpected response${formatQwenApiErrorDetail(payload.data)}`,
+        )
+      }
 
       payload.data.forEach((entry) => {
         if (!entry || typeof entry !== "object") return
         const projectId = (entry as Record<string, unknown>).project_id
         if (typeof projectId === "string" && projectId.trim()) return
         const info = this.normalizeConversationApiItem(entry, cid)
-        if (info) pinned.push({ ...info, isPinned: true })
+        if (info) items.push({ ...info, isPinned: true })
       })
+      return { items, ok: true }
     } catch (error) {
+      // 置顶只是主列表的补充，失败不拖垮主列表刷新；但快照因此不完整，不能用于同步删除
       console.warn("[QwenAiAdapter] Failed to fetch pinned conversations:", error)
+      return { items: [], ok: false }
     }
-    return pinned
   }
 
   private normalizeConversationApiItem(entry: unknown, cid?: string): ConversationInfo | null {

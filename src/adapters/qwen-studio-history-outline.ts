@@ -3,7 +3,7 @@ import {
   parseMarkdownHeadingSections,
   stripMarkdownInline,
 } from "~utils/outline-heading-cache"
-import { resolveActiveBranch, type ApiOutlineSourceData } from "~utils/outline-api-source"
+import type { ApiOutlineSourceData } from "~utils/outline-api-source"
 
 export interface QwenHistoryOutlineHeading {
   level: number
@@ -14,6 +14,10 @@ export interface QwenHistoryOutlineHeading {
 /**
  * Qwen Studio 单对话接口解析出的大纲数据（仅当前激活分支）。
  * 对话详情从 currentId 沿 parentId 回溯；重新生成产生的旁支不会进入大纲。
+ *
+ * 响应结构（2026-10-30 实测）：data.chat.history = { messages, currentId, pagination }，
+ * 消息为 camelCase 的 id / parentId / childrenIds，content_list 的阶段名见
+ * thinking_summary、answer 等；pagination 为 snake_case（has_more_older / oldest_id）。
  */
 export interface QwenHistoryOutlineData extends ApiOutlineSourceData {
   signature: string
@@ -43,13 +47,6 @@ interface QwenHistoryOutlineMessage {
   parentId?: unknown
   files?: unknown
   content_list?: unknown
-  timestamp?: unknown
-}
-
-interface QwenHistoryBranchRef {
-  message_id: string
-  parent_id?: string
-  message: QwenHistoryOutlineMessage
 }
 
 const asRecord = (value: unknown): Record<string, unknown> | null =>
@@ -68,23 +65,33 @@ const getFirstAttachmentName = (message: QwenHistoryOutlineMessage): string => {
   return ""
 }
 
-const findNewestLeafId = (messages: Map<string, QwenHistoryOutlineMessage>): string | null => {
-  const parentIds = new Set<string>()
-  messages.forEach((message) => {
-    if (typeof message.parentId === "string" && message.parentId.trim()) {
-      parentIds.add(message.parentId.trim())
-    }
-  })
+/**
+ * 沿 parentId 从 currentId 回溯激活分支（根 → 叶）。
+ *
+ * 只有回溯到 `parentId === null` 的根消息才算历史完整：缺 currentId、父消息不在表里
+ * （分页没拉全/被删）、成环，或 parentId 字段缺失（接口改版）都返回 null，
+ * 由调用方显式失败或回退——不猜分支，也不返回残缺链。大纲与导出共用这一条规则。
+ */
+export function resolveQwenActiveBranch<T extends { parentId?: unknown }>(
+  messages: ReadonlyMap<string, T>,
+  currentId: string | null,
+): { id: string; message: T }[] | null {
+  if (!currentId) return null
 
-  let newest: { id: string; timestamp: number } | null = null
-  messages.forEach((message, id) => {
-    if (parentIds.has(id)) return
-    const timestamp = typeof message.timestamp === "number" ? message.timestamp : 0
-    if (!newest || timestamp > newest.timestamp) {
-      newest = { id, timestamp }
-    }
-  })
-  return newest?.id ?? null
+  const chain: { id: string; message: T }[] = []
+  const seen = new Set<string>()
+  let cursor = currentId
+  while (true) {
+    const message = messages.get(cursor)
+    if (!message || seen.has(cursor)) return null
+    seen.add(cursor)
+    chain.push({ id: cursor, message })
+
+    const parentId = message.parentId
+    if (parentId === null) return chain.reverse()
+    if (typeof parentId !== "string" || !parentId) return null
+    cursor = parentId
+  }
 }
 
 /**
@@ -168,22 +175,9 @@ export function parseQwenHistoryOutline(
   const sessionId = resolved.sessionId || fallbackSessionId.trim()
   if (!sessionId) return null
 
-  const mapped: QwenHistoryBranchRef[] = Array.from(resolved.messages.entries()).map(
-    ([id, message]) => ({
-      message_id: id,
-      parent_id:
-        typeof message.parentId === "string" && message.parentId.trim()
-          ? message.parentId.trim()
-          : undefined,
-      message,
-    }),
-  )
-  const currentId =
-    resolved.currentId && resolved.messages.has(resolved.currentId)
-      ? resolved.currentId
-      : findNewestLeafId(resolved.messages)
-  const branch = resolveActiveBranch(mapped, currentId)
-  if (!branch || branch.length === 0) return null
+  const { currentId } = resolved
+  const branch = resolveQwenActiveBranch(resolved.messages, currentId)
+  if (!currentId || !branch || branch.length === 0) return null
 
   const branchMessageIds: string[] = []
   const headingsByAssistantId = new Map<string, QwenHistoryOutlineHeading[]>()
@@ -198,9 +192,7 @@ export function parseQwenHistoryOutline(
   let headingCount = 0
   let replyLength = 0
 
-  for (const item of branch) {
-    const message = item.message
-    const messageId = item.message_id
+  for (const { id: messageId, message } of branch) {
     branchMessageIds.push(messageId)
 
     if (message.role === "user") {
@@ -252,7 +244,7 @@ export function parseQwenHistoryOutline(
     sessionId,
     signature: [
       sessionId,
-      currentId || "",
+      currentId,
       branchMessageIds.length,
       maxMessageId,
       queryCount,
