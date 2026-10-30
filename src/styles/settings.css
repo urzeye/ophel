@@ -2546,6 +2546,60 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   border-color: var(--gh-primary, #4285f4);
 }
 
+/* 公共下拉菜单：浏览器默认滚动条在窄菜单里过于抢眼，统一收成细轨 */
+.gh-select-dropdown-menu {
+  scrollbar-gutter: stable;
+  /* 设置内容区会把 thin/scrollbar-color 继承下来，先复位以免 Chromium 改用原生滚动条 */
+  scrollbar-width: auto;
+  scrollbar-color: auto;
+}
+
+/* Firefox 不支持 ::-webkit-scrollbar，只在这里启用标准细滚动条 */
+@supports (-moz-appearance: none) {
+  .gh-select-dropdown-menu {
+    scrollbar-width: thin;
+    scrollbar-color: var(--gh-border, #d1d5db) transparent;
+  }
+}
+
+.gh-select-dropdown-menu::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.gh-select-dropdown-menu::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 4px 0;
+}
+
+.gh-select-dropdown-menu::-webkit-scrollbar-thumb {
+  min-height: 28px;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: var(--gh-border, #d1d5db);
+  background-clip: padding-box;
+}
+
+.gh-select-dropdown-menu::-webkit-scrollbar-thumb:hover {
+  background: var(--gh-text-secondary, #9ca3af);
+  background-clip: padding-box;
+}
+
+.gh-select-dropdown-menu::-webkit-scrollbar-thumb:active {
+  background: var(--gh-primary, #4285f4);
+  background-clip: padding-box;
+}
+
+.gh-select-dropdown-menu::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.gh-select-dropdown-menu::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 .settings-input {
   padding: 6px 12px;
   border-radius: 6px;

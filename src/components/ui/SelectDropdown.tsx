@@ -336,7 +336,9 @@ export const SelectDropdown: React.FC<SelectDropdownProps> = ({
           ref={menuRef}
           role="listbox"
           tabIndex={-1}
-          className={menuClassName}
+          className={
+            menuClassName ? `gh-select-dropdown-menu ${menuClassName}` : "gh-select-dropdown-menu"
+          }
           {...OPHEL_INTERACTION_LAYER_PROPS}
           onKeyDown={handleMenuKeyDown}
           style={{
