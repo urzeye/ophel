@@ -47,7 +47,9 @@ import {
 
 const QWENAI_CHAT_PATH_PATTERN = /\/c\/([a-f0-9-]+)/i
 const QWENAI_THEME_STORAGE_KEY = "theme"
+const QWENAI_THEME_COOKIE_KEY = "qwen-theme"
 const QWENAI_TOKEN_STORAGE_KEY = "token"
+const QWENAI_ACCESS_TOKEN_STATE_KEY = "qwen_access_token_state"
 const QWENAI_MERMAID_EXPORT_SWITCHED_ATTR = "data-ophel-qwenai-mermaid-export-switched"
 const QWENAI_ATTACHMENT_SOURCE_ATTRS = [
   "href",
@@ -169,7 +171,7 @@ export class QwenAiAdapter extends SiteAdapter {
   getCurrentCid(): string | null {
     const fromCookie = this.readCookieValue("aui") || this.readCookieValue("cnaui")
     if (fromCookie) return fromCookie
-    return this.extractUidFromToken(localStorage.getItem(QWENAI_TOKEN_STORAGE_KEY))
+    return this.extractUidFromToken(this.getQwenAccessToken())
   }
 
   getSessionName(): string | null {
@@ -2033,10 +2035,14 @@ export class QwenAiAdapter extends SiteAdapter {
   }
 
   private async updateThemePreference(targetMode: "light" | "dark" | "system"): Promise<boolean> {
+    const token = this.getQwenAccessToken()
+    const authorization = token ? (/^Bearer\s+/i.test(token) ? token : `Bearer ${token}`) : null
+
     const response = await fetch("/api/v2/users/user/settings/update", {
       method: "POST",
       credentials: "include",
       headers: {
+        ...(authorization ? { Authorization: authorization } : {}),
         Accept: "application/json, text/plain, */*",
         "Content-Type": "application/json",
         "X-Request-Id": crypto.randomUUID(),
@@ -2060,6 +2066,7 @@ export class QwenAiAdapter extends SiteAdapter {
     preference: "light" | "dark" | "system" = resolvedMode,
   ): void {
     localStorage.setItem(QWENAI_THEME_STORAGE_KEY, preference)
+    document.cookie = `${QWENAI_THEME_COOKIE_KEY}=${resolvedMode}; path=/; max-age=31536000`
 
     const html = document.documentElement
     html.classList.remove("light", "dark")
@@ -2367,6 +2374,22 @@ export class QwenAiAdapter extends SiteAdapter {
     } catch {
       return matched[1].trim() || null
     }
+  }
+
+  private getQwenAccessToken(): string | null {
+    const rawState = localStorage.getItem(QWENAI_ACCESS_TOKEN_STATE_KEY)
+    if (rawState) {
+      try {
+        const state = JSON.parse(rawState) as { token?: unknown }
+        if (typeof state.token === "string" && state.token.trim()) {
+          return state.token.trim()
+        }
+      } catch {
+        // 状态损坏时回退到旧版 token，保持与站点旧缓存兼容
+      }
+    }
+
+    return localStorage.getItem(QWENAI_TOKEN_STORAGE_KEY)?.trim() || null
   }
 
   private extractUidFromToken(token: string | null): string | null {
