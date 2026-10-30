@@ -28,6 +28,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **Doubao scroll to top not sticking** — Fixed an issue where clicking Scroll to Top right after refreshing a Doubao chat reached the top and then jumped back to the bottom. (#983)
 - **Shortcut recording conflict** — Fixed an issue where a key combination pressed while recording a shortcut in settings also triggered the website's own action; Esc now only cancels the recording instead of closing settings. (#988, #989)
 - **Desktop notifications not showing on Firefox** — Fixed an issue on Firefox-based browsers where desktop notifications did not appear when AI replies finished. (#1003, #1004)
+- **No notifications with Auto Rename Tab off** — Fixed an issue where desktop notifications and the notification sound did not fire when AI replies finished with Auto Rename Tab turned off; switching chats also no longer changes the tab title in that case. (#1012)
 
 ---
 
