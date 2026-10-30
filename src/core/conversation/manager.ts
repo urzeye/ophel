@@ -1730,6 +1730,15 @@ export class ConversationManager {
     }
   }
 
+  /**
+   * 当前页面可导出的对话 ID，没有时返回 null，由调用方提示先打开对话。
+   * 新对话落地页的 getSessionId() 仍会返回路径片段（如 "app"），不能直接拿来导出。
+   */
+  getCurrentExportSessionId(): string | null {
+    if (this.siteAdapter.isNewConversationLanding()) return null
+    return this.siteAdapter.getSessionId() || null
+  }
+
   /** 导出目标属于哪条路径，见 ConversationExportRoute */
   getConversationExportRoute(convId: string): ConversationExportRoute {
     if (this.siteAdapter.getSessionId() === convId) return "current"
@@ -1997,7 +2006,7 @@ export class ConversationManager {
   async collectCurrentConversationExportMessages(
     format: ExportFormat = "clipboard",
   ): Promise<ExportMessage[] | null> {
-    const currentSessionId = this.siteAdapter.getSessionId()
+    const currentSessionId = this.getCurrentExportSessionId()
     if (!currentSessionId) {
       showToast(t("exportNeedOpenFirst"))
       return null

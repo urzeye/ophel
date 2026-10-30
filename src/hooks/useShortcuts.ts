@@ -477,9 +477,9 @@ export function useShortcuts({
 
   // 导出对话
   const exportConversation = useCallback(async () => {
-    if (!conversationManager || !adapter) return
+    if (!conversationManager) return
 
-    const sessionId = adapter.getSessionId()
+    const sessionId = conversationManager.getCurrentExportSessionId()
     if (!sessionId) {
       showToast(t("exportNeedOpenFirst"))
       return
@@ -497,7 +497,7 @@ export function useShortcuts({
       console.error("Export failed:", error)
       showToast(t("exportFailed"))
     }
-  }, [conversationManager, adapter])
+  }, [conversationManager])
 
   // 复制最新回复
   const copyLatestReply = useCallback(async () => {

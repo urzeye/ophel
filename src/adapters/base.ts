@@ -542,6 +542,14 @@ export abstract class SiteAdapter {
     return Boolean(DOMToolkit.query(selector, { shadow: this.usesShadowDOM(), useCache: false }))
   }
 
+  /**
+   * 是否为还没有真实消息的新对话落地页。落地页的欢迎/推荐内容可能命中对话选择器，
+   * 大纲、页内收藏和导出都按"没有对话"处理；URL 不跳转的临时对话发消息后不再算落地页。
+   */
+  isNewConversationLanding(): boolean {
+    return this.isNewConversation() && !this.hasUserMessagesInDom()
+  }
+
   /** 检测是否为分享页面（只读） */
   isSharePage(): boolean {
     // 大多数站点的分享链接格式：/share/{id}

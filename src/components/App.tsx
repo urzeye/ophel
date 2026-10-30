@@ -2764,11 +2764,12 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
     setExportTarget(null)
   }, [])
 
-  // 导出入口：conversationId 为空表示导出当前页面的对话，否则按目标对话选择路径
+  // 导出入口：conversationId 为空表示导出当前页面的对话，否则按目标对话选择路径。
+  // 当前页面没有可导出的对话（如新对话页）时直接提示，不弹出注定失败的导出弹窗
   const requestConversationExport = useCallback(
     async (conversationId?: string) => {
-      if (!conversationManager || !adapter) return
-      const targetId = conversationId || adapter.getSessionId()
+      if (!conversationManager) return
+      const targetId = conversationId || conversationManager.getCurrentExportSessionId()
       if (!targetId) {
         showToast(t("exportNeedOpenFirst"))
         return
@@ -2805,12 +2806,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
       )
       setIsExportDialogOpen(true)
     },
-    [
-      conversationManager,
-      adapter,
-      settings.export?.exportShowDialog,
-      settings.export?.defaultExportFormat,
-    ],
+    [conversationManager, settings.export?.exportShowDialog, settings.export?.defaultExportFormat],
   )
 
   const handleFloatingToolbarExport = useCallback(
@@ -2820,11 +2816,11 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
 
   const handleCustomExport = useCallback(
     async (format: ExportFormat, options: ConversationExportOptions) => {
-      if (!conversationManager || !adapter) {
+      if (!conversationManager) {
         showToast(t("exportFailed"))
         return false
       }
-      const sessionId = exportTarget?.id ?? adapter.getSessionId()
+      const sessionId = exportTarget?.id ?? conversationManager.getCurrentExportSessionId()
       if (!sessionId) {
         showToast(t("exportNeedOpenFirst"))
         return false
@@ -2835,7 +2831,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
       }
       return success
     },
-    [conversationManager, adapter, exportTarget],
+    [conversationManager, exportTarget],
   )
 
   // 对话列表菜单通过事件请求导出（带目标对话 ID），工具箱、大纲按钮不带 ID，
@@ -2861,8 +2857,8 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
   }, [conversationManager, isSettingsHydrated])
 
   const handleFloatingToolbarSegmentedExport = useCallback(async () => {
-    if (!conversationManager || !adapter) return
-    const sessionId = adapter.getSessionId()
+    if (!conversationManager) return
+    const sessionId = conversationManager.getCurrentExportSessionId()
     if (!sessionId) {
       showToast(t("exportNeedOpenFirst"))
       return
@@ -2880,7 +2876,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
     } finally {
       setIsSegmentedExporting(false)
     }
-  }, [conversationManager, adapter])
+  }, [conversationManager])
 
   const handleSegmentedExport = useCallback(
     async (segmentIds: string[], mode: ConversationSegmentedExportMode) => {

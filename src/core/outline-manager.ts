@@ -979,15 +979,10 @@ export class OutlineManager {
     const liveSettings = useSettingsStore.getState().settings
     const showWordCount = liveSettings?.features?.outline?.showWordCount ?? false
 
-    // 新对话页的欢迎/推荐内容可能命中对话容器选择器，其中的标题不是真实对话结构。
     // 对话源在新对话落地页直接视为空（含书签合并，避免幽灵书签重新撑起树），
     // 让空态与下游消费方（复制大纲、页内收藏）行为一致；文档源不受影响。
-    // URL 不跳转的临时对话（Claude 隐身、Gemini 临时对话）发消息后 DOM 已有用户提问，
-    // 此时不抑制，大纲正常工作。
     const suppressConversationOutline =
-      this.activeSourceId === "conversation" &&
-      (this.siteAdapter.isNewConversation?.() ?? false) &&
-      !(this.siteAdapter.hasUserMessagesInDom?.() ?? false)
+      this.activeSourceId === "conversation" && this.siteAdapter.isNewConversationLanding()
 
     let outlineData = suppressConversationOutline
       ? []

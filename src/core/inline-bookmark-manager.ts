@@ -399,12 +399,7 @@ export class InlineBookmarkManager {
     if (includeAdapterScan) {
       // 与 OutlineManager 的新对话页抑制保持一致：落地页欢迎内容命中的标题
       // 不是真实对话结构，不给它们注入收藏图标，避免产生永不匹配的垃圾书签。
-      // URL 不跳转的临时对话（Claude 隐身、Gemini 临时对话）发消息后有用户提问，
-      // 此时不抑制。
-      const suppressLandingScan =
-        (this.adapter.isNewConversation?.() ?? false) &&
-        !(this.adapter.hasUserMessagesInDom?.() ?? false)
-      if (!suppressLandingScan) {
+      if (!this.adapter.isNewConversationLanding()) {
         pushItems(this.adapter.getInlineBookmarkItems(), "conversation")
       }
     }
