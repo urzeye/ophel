@@ -286,6 +286,8 @@ interface ConversationMenuProps {
   onSetTags: () => void
   onMoveTo: () => void
   onExport: () => void
+  /** 导出这条对话需要先在页面里打开它（站点无法按 ID 直接导出），菜单文案要说明这一点 */
+  exportOpensConversation?: boolean
   onDelete: () => void
 }
 
@@ -300,6 +302,7 @@ export const ConversationMenu: React.FC<ConversationMenuProps> = ({
   onSetTags,
   onMoveTo,
   onExport,
+  exportOpensConversation = false,
   onDelete,
 }) => {
   return (
@@ -396,7 +399,9 @@ export const ConversationMenu: React.FC<ConversationMenuProps> = ({
             justifyContent: "space-between",
             gap: "16px",
           }}>
-          <span>{t("exportMenuItem")}</span>
+          <span>
+            {t(exportOpensConversation ? "exportOpenAndExportMenuItem" : "exportMenuItem")}
+          </span>
           <ExportIcon size={13} />
         </span>
       </MenuButton>

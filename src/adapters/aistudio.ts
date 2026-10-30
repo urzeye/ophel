@@ -29,7 +29,7 @@ import {
   normalizeImageExtension,
   type ExportAssetCollector,
 } from "~utils/export-assets"
-import { htmlToMarkdown, type ExportBundle } from "~utils/exporter"
+import { htmlToMarkdown, type ExportBundle, type ExportMessage } from "~utils/exporter"
 import {
   buildGoogleAuthorizationHeader,
   GOOGLE_MAKER_SUITE_RPC_PATH,
@@ -1638,13 +1638,14 @@ export class AIStudioAdapter extends SiteAdapter {
    * 导出优先走 ResolveDriveResource 接口拿全量 markdown（公式/代码零损耗、
    * 无需滚动收集，且主动调用不依赖页面自身的请求时机）；接口不可用或结构
    * 异常时返回 null，回退现有 DOM/滚动收集。
+   * sessionId 由调用方显式传入：导出目标可能不是当前页面显示的对话；
+   * 是否包含思考链取 context.includeThoughts，不依赖仅在导出生命周期里设置的实例状态。
    */
   private async collectApiExportMessageSnapshots(
+    sessionId: string,
     context: ExportLifecycleContext,
     collector?: ExportAssetCollector,
   ): Promise<AIStudioExportMessageSnapshot[] | null> {
-    if (this.isSharePage()) return null
-    const sessionId = this.getSessionId()
     if (!sessionId) return null
 
     const result = await this.requestRpcResolveDriveResource(sessionId)
@@ -1663,7 +1664,7 @@ export class AIStudioAdapter extends SiteAdapter {
     parsed.replyMarkdownByQueryIndex.forEach((_, index) => turnIndexes.add(index))
     if (turnIndexes.size === 0) return null
 
-    const includeThoughts = this.shouldIncludeThoughtsInExport()
+    const includeThoughts = context.includeThoughts
     const inlineImages = context.format === "markdown" && context.packaging !== "zip"
     const messages: AIStudioExportMessageSnapshot[] = []
     let order = 0
@@ -2542,7 +2543,10 @@ export class AIStudioAdapter extends SiteAdapter {
 
     // 优先走 ResolveDriveResource 接口：全量 markdown + 思考链 + 附件真实链接，
     // 主动发起、无需滚动收集；失败回退 DOM/滚动收集
-    const apiMessages = await this.collectApiExportMessageSnapshots(context, collector)
+    const apiSessionId = this.isSharePage() ? "" : this.getSessionId()
+    const apiMessages = apiSessionId
+      ? await this.collectApiExportMessageSnapshots(apiSessionId, context, collector)
+      : null
     if (apiMessages && apiMessages.length > 0) {
       this.exportCollectionReport = {
         expectedCount: apiMessages.length,
@@ -2598,6 +2602,22 @@ export class AIStudioAdapter extends SiteAdapter {
     this.clearExportSnapshot()
     this.exportIncludeThoughtsOverride = null
     this.exportBundleCache = null
+  }
+
+  supportsExportByConversationId(): boolean {
+    return true
+  }
+
+  protected async fetchConversationExportMessagesById(
+    context: ExportLifecycleContext,
+    collector?: ExportAssetCollector,
+  ): Promise<ExportMessage[] | null> {
+    const snapshots = await this.collectApiExportMessageSnapshots(
+      context.conversationId,
+      context,
+      collector,
+    )
+    return snapshots?.map(({ role, content }) => ({ role, content })) ?? null
   }
 
   getExportCollectionReport(): ExportCollectionReport | null {

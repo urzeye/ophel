@@ -2158,8 +2158,24 @@ export class GrokAdapter extends SiteAdapter {
     // 常规会话优先走接口拿全量历史（虚拟列表只挂载可视窗口，DOM 收集不全）；
     // 接口成功返回非空标记：apiFirstExport 下 manager 依此判断无需补做 DOM
     // 历史预加载并重试；失败返回 null，extractExportMessages 回退 DOM 路径
-    this.exportApiData = await this.fetchApiExportData()
+    const apiSessionId = this.isUserConversationPage() ? this.getSessionId() : ""
+    this.exportApiData = apiSessionId
+      ? await this.fetchApiExportData(apiSessionId, this.getUrlLeafResponseId())
+      : null
     return this.exportApiData ? { usedApiExport: true } : null
+  }
+
+  supportsExportByConversationId(): boolean {
+    return true
+  }
+
+  protected async fetchConversationExportMessagesById(
+    context: ExportLifecycleContext,
+    collector?: ExportAssetCollector,
+  ): Promise<ExportMessage[] | null> {
+    // 目标不是当前页面的对话：URL 上的 rid 属于别的对话，不能当作分支叶子
+    const data = await this.fetchApiExportData(context.conversationId, null)
+    return data ? this.formatApiExportMessages(data, collector) : null
   }
 
   async restoreConversationAfterExport(
@@ -2173,14 +2189,16 @@ export class GrokAdapter extends SiteAdapter {
   /**
    * 常规会话的接口导出数据源：response-node 骨架 + load-responses 全文。
    * 完整性门槛严于大纲（见 parseGrokHistoryExport），无法证明完整时返回 null。
+   * sessionId 与分支叶子 preferredLeafId 由调用方显式传入：导出目标可能不是当前页面的对话。
    */
-  private async fetchApiExportData(): Promise<GrokHistoryExportData | null> {
-    if (!this.isUserConversationPage()) return null
-    const sessionId = this.getSessionId()
+  private async fetchApiExportData(
+    sessionId: string,
+    preferredLeafId: string | null,
+  ): Promise<GrokHistoryExportData | null> {
     if (!sessionId) return null
 
     try {
-      const treeResult = await this.fetchResponseTree(sessionId)
+      const treeResult = await this.fetchResponseTree(sessionId, preferredLeafId)
       if (!treeResult) return null
       const responses = await this.fetchBranchResponses(sessionId, treeResult.tree)
       if (!responses) return null
@@ -2188,7 +2206,7 @@ export class GrokAdapter extends SiteAdapter {
         treeResult.treePayload,
         { responses },
         sessionId,
-        this.getUrlLeafResponseId(),
+        preferredLeafId,
       )
     } catch (error) {
       console.warn("[GrokAdapter] Failed to collect api export payload:", error)
@@ -2785,8 +2803,12 @@ export class GrokAdapter extends SiteAdapter {
   /**
    * 拉取 response-node 骨架并解析激活分支（大纲与导出共用）。
    * HTTP 失败抛出（调用方按各自语义处理），结构解析失败返回 null。
+   * 分支叶子默认取当前 URL 的 rid（大纲针对当前页）；导出其他对话时显式传 null。
    */
-  private async fetchResponseTree(sessionId: string): Promise<{
+  private async fetchResponseTree(
+    sessionId: string,
+    preferredLeafId: string | null = this.getUrlLeafResponseId(),
+  ): Promise<{
     treePayload: unknown
     tree: GrokResponseTree
   } | null> {
@@ -2799,7 +2821,7 @@ export class GrokAdapter extends SiteAdapter {
     }
 
     const treePayload: unknown = await treeResponse.json()
-    const tree = parseGrokResponseTree(treePayload, sessionId, this.getUrlLeafResponseId())
+    const tree = parseGrokResponseTree(treePayload, sessionId, preferredLeafId)
     if (!tree) return null
     return { treePayload, tree }
   }

@@ -18,7 +18,7 @@ import {
   normalizeExportAssetUrl,
   type ExportAssetCollector,
 } from "~utils/export-assets"
-import { htmlToMarkdown, type ExportBundle } from "~utils/exporter"
+import { htmlToMarkdown, type ExportBundle, type ExportMessage } from "~utils/exporter"
 import { t } from "~utils/i18n"
 import { EVENT_OUTLINE_DATA_UPDATED } from "~utils/messaging"
 import { hashOutlineText, stripMarkdownInline } from "~utils/outline-heading-cache"
@@ -1680,7 +1680,11 @@ export class DeepSeekAdapter extends SiteAdapter {
       return this.finishExportWithSnapshots(shareMessages, collector)
     }
 
-    const apiMessages = await this.collectApiExportMessageSnapshots(collector)
+    const apiMessages = await this.collectApiExportMessageSnapshots(
+      this.getSessionId(),
+      this.shouldIncludeThoughtsInExport(),
+      collector,
+    )
     if (apiMessages?.length) {
       return this.finishExportWithSnapshots(apiMessages, collector)
     }
@@ -1730,6 +1734,22 @@ export class DeepSeekAdapter extends SiteAdapter {
     this.clearExportSnapshot()
     this.exportIncludeThoughtsOverride = null
     this.exportBundleCache = null
+  }
+
+  supportsExportByConversationId(): boolean {
+    return true
+  }
+
+  protected async fetchConversationExportMessagesById(
+    context: ExportLifecycleContext,
+    collector?: ExportAssetCollector,
+  ): Promise<ExportMessage[] | null> {
+    const snapshots = await this.collectApiExportMessageSnapshots(
+      context.conversationId,
+      context.includeThoughts,
+      collector,
+    )
+    return snapshots?.map(({ role, content }) => ({ role, content })) ?? null
   }
 
   getLatestReplyText(): string | null {
@@ -2853,11 +2873,14 @@ export class DeepSeekAdapter extends SiteAdapter {
   /**
    * 常规会话优先走 history_messages 接口拿全量 markdown（公式/代码零损耗、
    * 无需滚动收集）；接口不可用或无法证明历史完整时返回 null，回退滚动收集。
+   * sessionId 与 includeThoughts 由调用方显式传入：导出目标可能不是当前页面显示的对话，
+   * 也不能依赖仅在导出生命周期里才设置的实例状态。
    */
   private async collectApiExportMessageSnapshots(
+    sessionId: string,
+    includeThoughts: boolean,
     collector?: ExportAssetCollector,
   ): Promise<DeepSeekExportMessageSnapshot[] | null> {
-    const sessionId = this.getSessionId()
     const token = this.getUserToken()
     if (!sessionId || !token) return null
 
@@ -2874,7 +2897,6 @@ export class DeepSeekAdapter extends SiteAdapter {
       const parsed = parseDeepSeekHistoryExport(await response.json())
       if (!parsed || parsed.sessionId !== sessionId) return null
 
-      const includeThoughts = this.shouldIncludeThoughtsInExport()
       const messages: DeepSeekExportMessageSnapshot[] = []
 
       for (const message of parsed.messages) {

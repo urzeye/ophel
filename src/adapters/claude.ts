@@ -2723,13 +2723,14 @@ export class ClaudeAdapter extends SiteAdapter {
    * 会话接口导出数据源：拉全量历史并解析为导出消息序列。
    * 无法证明历史完整的情形（解析器判 null、接口失败、未登录）
    * 都返回 null，调用方回退现有滚动快照收集。
+   * sessionId 由调用方显式传入：导出目标可能不是当前页面显示的对话。
    */
   private async collectApiExportMessages(
+    sessionId: string,
     context: ExportLifecycleContext,
     collector?: ExportAssetCollector,
   ): Promise<ExportMessage[] | null> {
-    if (!this.isUserConversationPage()) return null
-    const sessionId = this.getSessionId()
+    if (!sessionId) return null
 
     try {
       const orgId = await this.getActiveOrganizationId()
@@ -2883,7 +2884,9 @@ export class ClaudeAdapter extends SiteAdapter {
       context.format === "markdown" && context.packaging === "zip"
         ? createExportAssetCollector()
         : undefined
-    this.exportApiMessages = await this.collectApiExportMessages(context, collector)
+    this.exportApiMessages = this.isUserConversationPage()
+      ? await this.collectApiExportMessages(this.getSessionId(), context, collector)
+      : null
     if (this.exportApiMessages) {
       this.exportApiBundle = collector
         ? { messages: this.exportApiMessages, assets: collector.assets }
@@ -2968,6 +2971,17 @@ export class ClaudeAdapter extends SiteAdapter {
       this.exportApiMessages = null
       this.exportApiBundle = null
     }
+  }
+
+  supportsExportByConversationId(): boolean {
+    return true
+  }
+
+  protected async fetchConversationExportMessagesById(
+    context: ExportLifecycleContext,
+    collector?: ExportAssetCollector,
+  ): Promise<ExportMessage[] | null> {
+    return this.collectApiExportMessages(context.conversationId, context, collector)
   }
 
   private isClaudeExportLifecycleState(state: unknown): state is ClaudeExportLifecycleState {

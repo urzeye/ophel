@@ -90,6 +90,21 @@ const EXPORT_DIALOG_STYLES = `
     cursor: not-allowed;
   }
 
+  /* 导出的不是当前页面的对话时，用标题说明导出对象；过长省略，完整标题在悬浮提示里 */
+  .gh-export-dialog-target {
+    padding: 8px 12px;
+    border-radius: 9px;
+    border: 1px solid var(--gh-border, #e5e7eb);
+    background: var(--gh-bg-secondary, #f9fafb);
+    color: var(--gh-text, #1f2937);
+    font-size: 13px;
+    font-weight: 500;
+    box-sizing: border-box;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   .gh-export-section {
     display: flex;
     flex-direction: column;
@@ -408,6 +423,11 @@ export interface ExportDialogProps {
   isOpen: boolean
   onClose: () => void
   onExport: (format: ExportFormat, options: ConversationExportOptions) => Promise<boolean | void>
+  /**
+   * 导出的是当前页面之外的对话。传入后弹窗显示该对话的标题，并隐藏只对当前页面
+   * 对话有效的入口（分段导出、复制大纲），避免它们作用到错误的对话。
+   */
+  target?: { title: string }
   onSegmentedExport?: () => void
   onOpenSettings?: () => void
 }
@@ -429,6 +449,7 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
   isOpen,
   onClose,
   onExport,
+  target,
   onSegmentedExport,
   onOpenSettings,
 }) => {
@@ -566,6 +587,12 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
         </button>
       </div>
 
+      {target && (
+        <Tooltip content={target.title} triggerStyle={{ display: "block", minWidth: 0 }}>
+          <div className="gh-export-dialog-target">{target.title}</div>
+        </Tooltip>
+      )}
+
       <div className="gh-export-section">
         <div className="gh-export-section-title">{t("exportFormat")}</div>
         <div className="gh-export-format-grid">
@@ -586,8 +613,8 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
               {item.badge && <span className="gh-export-format-badge">{item.badge}</span>}
             </button>
           ))}
-          {/* 复制大纲：与“复制 Markdown”一样先选中、再点底部“复制”；能力由大纲 tab 挂载期间暴露，未挂载时不显示 */}
-          {typeof window.__ophelCopyFullOutline === "function" && (
+          {/* 复制大纲：与“复制 Markdown”一样先选中、再点底部“复制”；能力由大纲 tab 挂载期间暴露，未挂载时不显示；只针对当前页面的对话，导出其他对话时隐藏 */}
+          {!target && typeof window.__ophelCopyFullOutline === "function" && (
             <button
               type="button"
               className="gh-export-format-btn"
@@ -693,7 +720,7 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
       </div>
 
       <div className="gh-export-footer">
-        {onSegmentedExport ? (
+        {onSegmentedExport && !target ? (
           <button
             type="button"
             className="gh-export-segmented-link"

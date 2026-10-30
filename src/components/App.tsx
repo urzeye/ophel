@@ -161,6 +161,7 @@ const LAUNCHER_PEEK_HIDE_DELAY_MS = 250
 const EDGE_TRIGGER_DWELL_MS = 300
 
 const EXPORT_STAGE_TEXT_KEYS: Record<ConversationExportStage, string> = {
+  opening: "exportOverlayOpening",
   "loading-history": "exportOverlayLoadingHistory",
   preparing: "exportOverlayPreparing",
   extracting: "exportOverlayExtracting",
@@ -171,6 +172,7 @@ const EXPORT_STAGE_TEXT_KEYS: Record<ConversationExportStage, string> = {
 }
 
 const OUTLINE_COPY_STAGE_TEXT_KEYS: Record<ConversationExportStage, string> = {
+  opening: "exportOverlayOpening",
   "loading-history": "outlineCopyOverlayLoadingHistory",
   preparing: "outlineCopyOverlayPreparing",
   extracting: "outlineCopyOverlayExtracting",
@@ -2754,30 +2756,67 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
   }, [setSettings])
 
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false)
+  // 导出的是当前页面之外的对话（站点支持按 ID 走接口）时记录目标；为空表示导出当前页面的对话
+  const [exportTarget, setExportTarget] = useState<{ id: string; title: string } | null>(null)
 
-  const handleFloatingToolbarExport = useCallback(async () => {
-    if (!conversationManager || !adapter) return
-    const sessionId = adapter.getSessionId()
-    if (!sessionId) {
-      showToast(t("exportNeedOpenFirst"))
-      return
-    }
-    // 用户关闭“导出前显示选项弹窗”时，保持按默认格式一键直出
-    if (settings.export?.exportShowDialog === false) {
-      const format = settings.export?.defaultExportFormat ?? "markdown"
-      const success = await conversationManager.exportConversation(sessionId, format)
-      if (!success) {
-        showToast(t("exportFailed"))
+  const closeExportDialog = useCallback(() => {
+    setIsExportDialogOpen(false)
+    setExportTarget(null)
+  }, [])
+
+  // 导出入口：conversationId 为空表示导出当前页面的对话，否则按目标对话选择路径
+  const requestConversationExport = useCallback(
+    async (conversationId?: string) => {
+      if (!conversationManager || !adapter) return
+      const targetId = conversationId || adapter.getSessionId()
+      if (!targetId) {
+        showToast(t("exportNeedOpenFirst"))
+        return
       }
-      return
-    }
-    setIsExportDialogOpen(true)
-  }, [
-    conversationManager,
-    adapter,
-    settings.export?.exportShowDialog,
-    settings.export?.defaultExportFormat,
-  ])
+
+      const route = conversationManager.getConversationExportRoute(targetId)
+      // 依赖 DOM 的站点：先打开目标对话，到达后它就是当前对话，沿用下面的弹窗或一键直出流程
+      if (
+        route === "open-first" &&
+        (await conversationManager.openConversationForExport(targetId)) !== "ready"
+      ) {
+        return
+      }
+
+      // 用户关闭“导出前显示选项弹窗”时，保持按默认格式一键直出
+      if (settings.export?.exportShowDialog === false) {
+        const format = settings.export?.defaultExportFormat ?? "markdown"
+        const success = await conversationManager.exportConversation(targetId, format)
+        if (!success) {
+          showToast(t("exportFailed"))
+        }
+        return
+      }
+
+      // 接口按 ID 导出不切页：弹窗里显示目标标题，说明导出的不是当前页面的对话
+      setExportTarget(
+        route === "api"
+          ? {
+              id: targetId,
+              title:
+                conversationManager.getConversation(targetId)?.title || t("untitledConversation"),
+            }
+          : null,
+      )
+      setIsExportDialogOpen(true)
+    },
+    [
+      conversationManager,
+      adapter,
+      settings.export?.exportShowDialog,
+      settings.export?.defaultExportFormat,
+    ],
+  )
+
+  const handleFloatingToolbarExport = useCallback(
+    () => requestConversationExport(),
+    [requestConversationExport],
+  )
 
   const handleCustomExport = useCallback(
     async (format: ExportFormat, options: ConversationExportOptions) => {
@@ -2785,7 +2824,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
         showToast(t("exportFailed"))
         return false
       }
-      const sessionId = adapter.getSessionId()
+      const sessionId = exportTarget?.id ?? adapter.getSessionId()
       if (!sessionId) {
         showToast(t("exportNeedOpenFirst"))
         return false
@@ -2796,17 +2835,30 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
       }
       return success
     },
-    [conversationManager, adapter],
+    [conversationManager, adapter, exportTarget],
   )
 
-  // 对话列表菜单通过事件请求打开导出弹窗（或按设置直出），与工具箱按钮共用同一入口逻辑
+  // 对话列表菜单通过事件请求导出（带目标对话 ID），工具箱、大纲按钮不带 ID，
+  // 都走同一个入口：弹出导出选项弹窗，或按设置一键直出
   useEffect(() => {
-    const handleOpenExportDialog = () => {
-      void handleFloatingToolbarExport()
+    const handleOpenExportDialog = (event: Event) => {
+      const detail = (event as CustomEvent<{ conversationId?: string } | null>).detail
+      void requestConversationExport(detail?.conversationId)
     }
     window.addEventListener("ophel:openExportDialog", handleOpenExportDialog)
     return () => window.removeEventListener("ophel:openExportDialog", handleOpenExportDialog)
-  }, [handleFloatingToolbarExport])
+  }, [requestConversationExport])
+
+  // 先打开再导出时若导航退化为整页刷新，页面重新加载后在这里接回：
+  // 等页面换成目标对话，再按当前对话继续导出流程
+  const requestConversationExportRef = useRef(requestConversationExport)
+  requestConversationExportRef.current = requestConversationExport
+  useEffect(() => {
+    if (!conversationManager || !isSettingsHydrated) return
+    void conversationManager.resumePendingExportOpen().then((ready) => {
+      if (ready) void requestConversationExportRef.current()
+    })
+  }, [conversationManager, isSettingsHydrated])
 
   const handleFloatingToolbarSegmentedExport = useCallback(async () => {
     if (!conversationManager || !adapter) return
@@ -3348,8 +3400,13 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
           : EXPORT_STAGE_TEXT_KEYS)[exportProgress.stage],
       )
     : ""
+  // 按 ID 走接口的后台导出不碰页面，不需要“保持页面静止”的提示
   const exportOverlayHint = t(
-    exportProgress?.operation === "outline-copy" ? "outlineCopyOverlayHint" : "exportOverlayHint",
+    exportProgress?.operation === "outline-copy"
+      ? "outlineCopyOverlayHint"
+      : exportProgress?.operation === "background-export"
+        ? "exportOverlayHintBackground"
+        : "exportOverlayHint",
   )
 
   const outlineRoleLabels = useMemo(
@@ -3573,11 +3630,12 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
       )}
       <ExportDialog
         isOpen={isExportDialogOpen}
-        onClose={() => setIsExportDialogOpen(false)}
+        onClose={closeExportDialog}
         onExport={handleCustomExport}
+        target={exportTarget ? { title: exportTarget.title } : undefined}
         onSegmentedExport={handleFloatingToolbarSegmentedExport}
         onOpenSettings={() => {
-          setIsExportDialogOpen(false)
+          closeExportDialog()
           openSettingsModal()
           setTimeout(() => {
             window.dispatchEvent(

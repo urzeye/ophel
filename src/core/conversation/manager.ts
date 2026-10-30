@@ -42,11 +42,19 @@ import { createSiteScopedStorageKey, resolvePersistedSiteInstanceKey } from "~ut
 import { consumeRestoreFlag, type ExportPackaging, type ExportStyle } from "~utils/storage"
 import { showToast } from "~utils/toast"
 
+import {
+  clearPendingExportOpen,
+  consumePendingExportOpen,
+  markPendingExportOpen,
+  readConversationSignature,
+  waitForConversationReady,
+} from "./open-for-export"
 import type { Conversation, ConversationData, Tag } from "./types"
 
 export type { Conversation, ConversationData, Folder, Tag }
 
 export type ConversationExportStage =
+  | "opening"
   | "loading-history"
   | "preparing"
   | "extracting"
@@ -55,7 +63,22 @@ export type ConversationExportStage =
   | "copying"
   | "restoring"
 
-export type ConversationExportOperation = "export" | "outline-copy" | "segment-export"
+/** background-export：按会话 ID 走站点接口导出，不触碰当前页面 */
+export type ConversationExportOperation =
+  | "export"
+  | "background-export"
+  | "outline-copy"
+  | "segment-export"
+
+/**
+ * 导出某个对话的路径：
+ * - current：目标就是当前页面的对话
+ * - api：目标是其他对话，站点支持按 ID 走接口，不需要切页
+ * - open-first：目标是其他对话，必须先打开它再走 DOM 导出
+ */
+export type ConversationExportRoute = "current" | "api" | "open-first"
+
+export type ConversationOpenResult = "ready" | "blocked" | "failed"
 
 export type ConversationSegmentedExportMode = "zip-markdown" | "merged-markdown" | "clipboard"
 
@@ -97,7 +120,8 @@ export interface ConversationSegmentedExportDraft {
 
 export interface ConversationExportProgress {
   conversationId: string
-  format: ExportFormat
+  /** 还没选定格式的阶段（如打开目标对话）为空 */
+  format?: ExportFormat
   stage: ConversationExportStage
   operation: ConversationExportOperation
 }
@@ -138,6 +162,8 @@ interface ConversationExportData {
   exportBundle: ExportBundle | null
   exportPackaging: ExportLifecycleContext["packaging"]
   notifyProgress: (stage: ConversationExportStage) => void
+  /** 导出目标不是当前页面的对话时，写入元数据的该对话地址；缺省取当前页面地址 */
+  sourceUrl?: string
 }
 
 export interface ConversationExportOptions {
@@ -1665,6 +1691,75 @@ export class ConversationManager {
 
   // ================= Export Functionality =================
 
+  /** 导出选项缺省时回落到用户的导出设置 */
+  private createExportContext(
+    convId: string,
+    format: ExportFormat,
+    options: ConversationExportOptions = {},
+  ): ExportLifecycleContext {
+    const settings = useSettingsStore.getState().settings
+    return {
+      conversationId: convId,
+      format,
+      includeThoughts: options.includeThoughts ?? settings.export?.includeThoughts ?? true,
+      packaging: options.packaging ?? (settings.export?.packaging === "zip" ? "zip" : "markdown"),
+    }
+  }
+
+  /** 导出目标属于哪条路径，见 ConversationExportRoute */
+  getConversationExportRoute(convId: string): ConversationExportRoute {
+    if (this.siteAdapter.getSessionId() === convId) return "current"
+    return this.siteAdapter.supportsExportByConversationId() ? "api" : "open-first"
+  }
+
+  /**
+   * 导出非当前对话前先打开它（导出依赖 DOM 的站点）：发起导航，并等页面真正换成目标对话。
+   * 失败会显式提示用户；导航若退化为整页刷新，由续做标记在刷新后接回（见 resumePendingExportOpen）。
+   */
+  async openConversationForExport(convId: string): Promise<ConversationOpenResult> {
+    const adapter = this.siteAdapter
+    if (adapter.getSessionId() === convId) return "ready"
+
+    // 正在生成回复时切页可能打断流式输出：直接拒绝，而不是替用户冒这个险
+    if (adapter.isGenerating()) {
+      showToast(t("exportOpenBlockedGenerating"))
+      return "blocked"
+    }
+
+    const previousSignature = readConversationSignature(adapter)
+    this.notifyExportProgress({ conversationId: convId, stage: "opening", operation: "export" })
+    markPendingExportOpen(convId)
+    try {
+      const started = adapter.navigateToConversation(convId, this.getConversation(convId)?.url)
+      if (started && (await waitForConversationReady(adapter, convId, previousSignature))) {
+        return "ready"
+      }
+      showToast(t("exportOpenFailed"))
+      return "failed"
+    } finally {
+      clearPendingExportOpen()
+      this.notifyExportProgress(null)
+    }
+  }
+
+  /**
+   * 整页刷新后接回"先打开再导出"：读取并清除续做标记，等页面换成目标对话后返回 true，
+   * 调用方继续走当前对话的导出流程。标记过期、用户已不在目标对话或等待超时返回 false。
+   */
+  async resumePendingExportOpen(): Promise<boolean> {
+    const convId = consumePendingExportOpen()
+    if (!convId || this.siteAdapter.getSessionId() !== convId) return false
+
+    this.notifyExportProgress({ conversationId: convId, stage: "opening", operation: "export" })
+    try {
+      if (await waitForConversationReady(this.siteAdapter, convId, "")) return true
+      showToast(t("exportOpenFailed"))
+      return false
+    } finally {
+      this.notifyExportProgress(null)
+    }
+  }
+
   private async withConversationExportData<T>(
     convId: string,
     format: ExportFormat,
@@ -1687,16 +1782,8 @@ export class ConversationManager {
     const scrollContainer = this.siteAdapter.getScrollContainer?.() || null
     const initialScrollTop = scrollContainer?.scrollTop ?? null
     const initialWindowScrollY = window.scrollY
-    const settings = useSettingsStore.getState().settings
-    const exportPackaging =
-      options.packaging ?? (settings.export?.packaging === "zip" ? "zip" : "markdown")
-
-    const exportContext: ExportLifecycleContext = {
-      conversationId: convId,
-      format,
-      includeThoughts: options.includeThoughts ?? settings.export?.includeThoughts ?? true,
-      packaging: exportPackaging,
-    }
+    const exportContext = this.createExportContext(convId, format, options)
+    const exportPackaging = exportContext.packaging
 
     let exportLifecycleEnabled = false
     let exportLifecycleState: unknown = null
@@ -2000,103 +2087,193 @@ export class ConversationManager {
   }
 
   /**
-   * 导出对话
+   * 导出对话。目标是当前页面的对话时直接导出；目标是其他对话时，站点支持按 ID 走接口则后台导出，
+   * 接口无法给出完整内容就先打开该对话再导出。依赖 DOM 的站点（open-first 路径）由调用方
+   * 先 openConversationForExport，否则仍提示先打开对话。
    */
   async exportConversation(
     convId: string,
     format: ExportFormat,
     options?: ConversationExportOptions,
   ): Promise<boolean> {
+    if (this.getConversationExportRoute(convId) === "api") {
+      const outcome = await this.exportConversationViaApi(convId, format, options)
+      if (outcome !== "unavailable") return outcome === "exported"
+
+      // 接口无法给出完整内容：公开降级为先打开对话再走 DOM 导出（遮罩会显示"正在打开对话"）
+      console.warn(
+        "[ConversationManager] API export unavailable, opening the conversation:",
+        convId,
+      )
+      if ((await this.openConversationForExport(convId)) !== "ready") return false
+    }
+
     const result = await this.withConversationExportData(
       convId,
       format,
-      async ({ conv, messages, exportBundle, exportPackaging, notifyProgress }) => {
-        const settings = useSettingsStore.getState().settings
-
-        // 格式化
-        const localizedUntitledConversation = t("untitledConversation")
-        const exportTitle =
-          this.sanitizeConversationTitleForUse(conv.title) || localizedUntitledConversation
-        const safeTitle = exportTitle.replace(/[<>:"/\\|?*]/g, "_").substring(0, 50)
-
-        const metadata = createExportMetadata(exportTitle, this.siteAdapter.getName(), conv.id, {
-          customUserName: settings.export?.customUserName,
-          customModelName: settings.export?.customModelName,
-          showIndex: options?.showIndex ?? settings.export?.exportShowIndex,
-          customDivider: options?.customDivider ?? settings.export?.exportMarkdownDivider,
-          style: options?.style ?? settings.export?.exportStyle,
-        })
-
-        let content: string
-        let filename: string
-        let mimeType: string
-
-        let timestampSuffix = ""
-        if (settings.export?.exportFilenameTimestamp) {
-          const now = new Date()
-          const year = now.getFullYear()
-          const month = String(now.getMonth() + 1).padStart(2, "0")
-          const day = String(now.getDate()).padStart(2, "0")
-          const hours = String(now.getHours()).padStart(2, "0")
-          const minutes = String(now.getMinutes()).padStart(2, "0")
-          const seconds = String(now.getSeconds()).padStart(2, "0")
-          timestampSuffix = `_${year}-${month}-${day}_${hours}-${minutes}-${seconds}`
-        }
-
-        const siteName = this.siteAdapter.getName()
-        const safeSiteName = siteName.replace(/[<>:"/\\|?*]/g, "_")
-        const filenamePrefix = `${safeSiteName} - `
-
-        if (format === "clipboard") {
-          notifyProgress("copying")
-          content = formatToMarkdown(metadata, messages)
-          await navigator.clipboard.writeText(content)
-          showToast(t("copySuccess"))
-          return true
-        } else if (format === "markdown") {
-          content = formatToMarkdown(metadata, messages)
-          filename = `${filenamePrefix}${safeTitle}${timestampSuffix}.md`
-          mimeType = "text/markdown;charset=utf-8"
-
-          const shouldPackageAssets = exportPackaging === "zip"
-          if (shouldPackageAssets) {
-            notifyProgress("packaging")
-            const downloaded = await downloadExportPackage({
-              markdownFilename: filename,
-              markdownContent: content,
-              assets: this.normalizeExportAssets(exportBundle),
-              packageFilename: `${filenamePrefix}${safeTitle}${timestampSuffix}.zip`,
-              metadata,
-            })
-            if (!downloaded) return false
-            showToast(t("exportSuccess"))
-            return true
-          }
-        } else if (format === "json") {
-          content = formatToJSON(metadata, messages)
-          filename = `${filenamePrefix}${safeTitle}${timestampSuffix}.json`
-          mimeType = "application/json;charset=utf-8"
-        } else if (format === "html") {
-          content = formatToHTML(metadata, messages)
-          filename = `${filenamePrefix}${safeTitle}${timestampSuffix}.${HTML_FILE_EXT}`
-          mimeType = "text/html;charset=utf-8"
-        } else {
-          content = formatToTXT(metadata, messages)
-          filename = `${filenamePrefix}${safeTitle}${timestampSuffix}.txt`
-          mimeType = "text/plain;charset=utf-8"
-        }
-
-        notifyProgress("downloading")
-        const downloaded = await downloadFile(content, filename, mimeType)
-        if (!downloaded) return false
-        showToast(t("exportSuccess"))
-        return true
-      },
+      (data) => this.deliverConversationExport(format, options, data),
       "export",
       options,
     )
 
     return result === true
+  }
+
+  /**
+   * 按会话 ID 走站点接口导出，不触碰当前页面。
+   * unavailable：接口没能给出完整内容，由调用方决定降级；failed：原因已记录到控制台，
+   * 面向用户的失败提示由 exportConversation 的调用方负责。
+   */
+  private async exportConversationViaApi(
+    convId: string,
+    format: ExportFormat,
+    options?: ConversationExportOptions,
+  ): Promise<"exported" | "failed" | "unavailable"> {
+    const conv = this.getConversation(convId)
+    if (!conv) {
+      console.error("[ConversationManager] Conversation not found:", convId)
+      return "failed"
+    }
+
+    const exportContext = this.createExportContext(convId, format, options)
+    const notifyProgress = (stage: ConversationExportStage) => {
+      this.notifyExportProgress({
+        conversationId: convId,
+        format,
+        stage,
+        operation: "background-export",
+      })
+    }
+
+    try {
+      notifyProgress("preparing")
+      const exportBundle = await this.siteAdapter.exportConversationById(exportContext)
+      if (!exportBundle) return "unavailable"
+
+      notifyProgress("extracting")
+      const exported = await this.deliverConversationExport(format, options, {
+        conv,
+        messages: this.stripQuickQuoteMarkersFromExportMessages(exportBundle.messages),
+        exportBundle,
+        exportPackaging: exportContext.packaging,
+        notifyProgress,
+        sourceUrl: this.resolveConversationSourceUrl(conv),
+      })
+      return exported ? "exported" : "failed"
+    } catch (error) {
+      console.error("[ConversationManager] API export failed:", error)
+      return "failed"
+    } finally {
+      this.notifyExportProgress(null)
+    }
+  }
+
+  /** 对话库里存的地址可能是相对路径，写进导出元数据前补全为绝对地址；没有地址时留空而不是借用当前页地址 */
+  private resolveConversationSourceUrl(conv: Conversation): string {
+    const rawUrl = (conv.url || "").trim()
+    if (!rawUrl) return ""
+
+    try {
+      return new URL(rawUrl, window.location.origin).toString()
+    } catch {
+      return rawUrl
+    }
+  }
+
+  /** 把导出数据格式化并交付：下载文件、打包附件，或复制到剪贴板 */
+  private async deliverConversationExport(
+    format: ExportFormat,
+    options: ConversationExportOptions | undefined,
+    {
+      conv,
+      messages,
+      exportBundle,
+      exportPackaging,
+      notifyProgress,
+      sourceUrl,
+    }: ConversationExportData,
+  ): Promise<boolean> {
+    const settings = useSettingsStore.getState().settings
+
+    // 格式化
+    const localizedUntitledConversation = t("untitledConversation")
+    const exportTitle =
+      this.sanitizeConversationTitleForUse(conv.title) || localizedUntitledConversation
+    const safeTitle = exportTitle.replace(/[<>:"/\\|?*]/g, "_").substring(0, 50)
+
+    const metadata = createExportMetadata(exportTitle, this.siteAdapter.getName(), conv.id, {
+      customUserName: settings.export?.customUserName,
+      customModelName: settings.export?.customModelName,
+      showIndex: options?.showIndex ?? settings.export?.exportShowIndex,
+      customDivider: options?.customDivider ?? settings.export?.exportMarkdownDivider,
+      style: options?.style ?? settings.export?.exportStyle,
+      url: sourceUrl,
+    })
+
+    let content: string
+    let filename: string
+    let mimeType: string
+
+    let timestampSuffix = ""
+    if (settings.export?.exportFilenameTimestamp) {
+      const now = new Date()
+      const year = now.getFullYear()
+      const month = String(now.getMonth() + 1).padStart(2, "0")
+      const day = String(now.getDate()).padStart(2, "0")
+      const hours = String(now.getHours()).padStart(2, "0")
+      const minutes = String(now.getMinutes()).padStart(2, "0")
+      const seconds = String(now.getSeconds()).padStart(2, "0")
+      timestampSuffix = `_${year}-${month}-${day}_${hours}-${minutes}-${seconds}`
+    }
+
+    const siteName = this.siteAdapter.getName()
+    const safeSiteName = siteName.replace(/[<>:"/\\|?*]/g, "_")
+    const filenamePrefix = `${safeSiteName} - `
+
+    if (format === "clipboard") {
+      notifyProgress("copying")
+      content = formatToMarkdown(metadata, messages)
+      await navigator.clipboard.writeText(content)
+      showToast(t("copySuccess"))
+      return true
+    } else if (format === "markdown") {
+      content = formatToMarkdown(metadata, messages)
+      filename = `${filenamePrefix}${safeTitle}${timestampSuffix}.md`
+      mimeType = "text/markdown;charset=utf-8"
+
+      const shouldPackageAssets = exportPackaging === "zip"
+      if (shouldPackageAssets) {
+        notifyProgress("packaging")
+        const downloaded = await downloadExportPackage({
+          markdownFilename: filename,
+          markdownContent: content,
+          assets: this.normalizeExportAssets(exportBundle),
+          packageFilename: `${filenamePrefix}${safeTitle}${timestampSuffix}.zip`,
+          metadata,
+        })
+        if (!downloaded) return false
+        showToast(t("exportSuccess"))
+        return true
+      }
+    } else if (format === "json") {
+      content = formatToJSON(metadata, messages)
+      filename = `${filenamePrefix}${safeTitle}${timestampSuffix}.json`
+      mimeType = "application/json;charset=utf-8"
+    } else if (format === "html") {
+      content = formatToHTML(metadata, messages)
+      filename = `${filenamePrefix}${safeTitle}${timestampSuffix}.${HTML_FILE_EXT}`
+      mimeType = "text/html;charset=utf-8"
+    } else {
+      content = formatToTXT(metadata, messages)
+      filename = `${filenamePrefix}${safeTitle}${timestampSuffix}.txt`
+      mimeType = "text/plain;charset=utf-8"
+    }
+
+    notifyProgress("downloading")
+    const downloaded = await downloadFile(content, filename, mimeType)
+    if (!downloaded) return false
+    showToast(t("exportSuccess"))
+    return true
   }
 
   /**

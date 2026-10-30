@@ -375,17 +375,20 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
     [manager, selectedIds],
   )
 
-  // 列表菜单的导出统一交给 App 层的导出选项弹窗（或按设置一键直出）
+  // 列表菜单的导出统一交给 App 层：由它按目标对话选择路径（直接导出、后台导出或先打开再导出），
+  // 再弹出导出选项弹窗或按设置一键直出
   const openExportDialog = useCallback(
     (conv?: Conversation) => {
       const convId = getCurrentExportConversationId(conv)
-      if (!convId || manager.siteAdapter.getSessionId() !== convId) {
+      if (!convId) {
         showToast(t("exportNeedOpenFirst"))
         return
       }
-      window.dispatchEvent(new CustomEvent("ophel:openExportDialog"))
+      window.dispatchEvent(
+        new CustomEvent("ophel:openExportDialog", { detail: { conversationId: convId } }),
+      )
     },
-    [getCurrentExportConversationId, manager],
+    [getCurrentExportConversationId],
   )
 
   // 标签被删除后清理失效的筛选 id，避免列表被不可见的筛选条件清空
@@ -1435,7 +1438,12 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
             <div className="conversations-batch-btns">
               {/* 导出只支持单条对话，仅在选中 1 个时展示 */}
               {selectedIds.size === 1 && (
-                <Tooltip content={t("batchExport")}>
+                <Tooltip
+                  content={t(
+                    manager.getConversationExportRoute(Array.from(selectedIds)[0]) === "open-first"
+                      ? "exportOpenAndExportMenuItem"
+                      : "batchExport",
+                  )}>
                   <button className="conversations-batch-btn" onClick={() => openExportDialog()}>
                     <ExportIcon size={16} />
                   </button>
@@ -1703,6 +1711,9 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
             setMenu(null)
             openExportDialog(conv)
           }}
+          exportOpensConversation={
+            manager.getConversationExportRoute(menu.conv.id) === "open-first"
+          }
           onDelete={() => {
             setMenu(null)
             setDialog({

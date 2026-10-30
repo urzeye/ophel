@@ -2256,12 +2256,14 @@ export function createExportMetadata(
     showIndex?: boolean
     customDivider?: string
     style?: ExportStyle
+    /** 导出目标不是当前页面显示的对话时传入该对话自己的地址；缺省取当前页面地址 */
+    url?: string
   },
 ): ExportMetadata {
   return {
     title: title || t("exportUntitled"),
     id,
-    url: window.location.href,
+    url: options?.url ?? window.location.href,
     exportTime: new Date().toLocaleString(getCurrentLocale()),
     source,
     customUserName: options?.customUserName,

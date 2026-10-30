@@ -15,7 +15,7 @@ import {
   normalizeExportAssetUrl,
   type ExportAssetCollector,
 } from "~utils/export-assets"
-import { htmlToMarkdown, type ExportBundle } from "~utils/exporter"
+import { htmlToMarkdown, type ExportBundle, type ExportMessage } from "~utils/exporter"
 import { hashTextForCache } from "~utils/text-hash"
 
 import {
@@ -1683,7 +1683,10 @@ export class ChatGPTAdapter extends SiteAdapter {
 
     // 会话页统一优先走 conversations 接口拿全量历史（markdown 源文本，公式/代码
     // 零损耗，无需滚动分页）；接口不可用或无法证明历史完整时回退滚动收集
-    const apiMessages = await this.collectApiExportMessageSnapshots(exportAssetCollector)
+    const apiCid = this.isUserConversationPage() ? this.getSessionId() : ""
+    const apiMessages = apiCid
+      ? await this.collectApiExportMessageSnapshots(apiCid, exportAssetCollector)
+      : null
     if (apiMessages?.length) {
       this.mountExportSnapshot(apiMessages)
       this.exportBundle = {
@@ -1728,6 +1731,18 @@ export class ChatGPTAdapter extends SiteAdapter {
     return { count: messages.length }
   }
 
+  supportsExportByConversationId(): boolean {
+    return true
+  }
+
+  protected async fetchConversationExportMessagesById(
+    context: ExportLifecycleContext,
+    collector?: ExportAssetCollector,
+  ): Promise<ExportMessage[] | null> {
+    const snapshots = await this.collectApiExportMessageSnapshots(context.conversationId, collector)
+    return snapshots?.map(({ role, content }) => ({ role, content })) ?? null
+  }
+
   async extractExportBundle(_context: ExportLifecycleContext): Promise<ExportBundle | null> {
     return this.exportBundle
   }
@@ -1753,12 +1768,12 @@ export class ChatGPTAdapter extends SiteAdapter {
    * 滚动收集）；接口是纯服务端数据源，与 DOM 世代无关，新老版本均可用。
    * 接口不可用或无法证明历史完整时返回 null，回退滚动收集。
    * 翻页：沿 page_info.start_cursor 向前（cursor 参数），直至 has_previous_page=false。
+   * cid 由调用方显式传入：导出目标可能不是当前页面显示的对话。
    */
   private async collectApiExportMessageSnapshots(
+    cid: string,
     collector?: ExportAssetCollector | null,
   ): Promise<ChatGPTExportMessageSnapshot[] | null> {
-    if (!this.isUserConversationPage()) return null
-    const cid = this.getSessionId()
     if (!cid) return null
 
     try {
