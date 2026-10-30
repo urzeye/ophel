@@ -14,6 +14,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **Hide Ophel on specific pages** — Site Settings can now hide the panel and quick buttons on pages that match a path rule, so you no longer have to disable a whole site for a few pages. (#995, #998)
 - **Turn off Global Search** — Features settings has a new "Enable Global Search" switch; when it's off, Ctrl/⌘+K goes back to the website's own feature. Also fixed outline results in the search popup running their title into the text after it. (#1005)
 - **Export other chats from the list** — Export in a chat's menu now works for chats you haven't opened; on some sites Ophel opens the chat for you first. (#1007)
+- **Qwen Studio conversation management and full export** — Qwen Studio conversations now sync into Conversation Manager, and export or outline generation can use the full conversation history. (#1009)
 
 ### ✨ Improvements
 
