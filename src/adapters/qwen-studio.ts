@@ -88,6 +88,14 @@ const QWENAI_API_OUTLINE_FETCH_BACKOFF_MS = 10_000
 const QWENAI_API_OUTLINE_BOTTOM_TOLERANCE_PX = 100
 const QWENAI_API_OUTLINE_REVEAL_MAX_ROUNDS = 60
 const QWENAI_API_OUTLINE_REVEAL_WAIT_MS = 600
+const QWENAI_API_OUTLINE_LAYOUT_STABLE_INTERVAL_MS = 80
+const QWENAI_API_OUTLINE_LAYOUT_STABLE_ROUNDS = 3
+const QWENAI_API_OUTLINE_LAYOUT_STABLE_MAX_ROUNDS = 15
+const QWENAI_API_OUTLINE_LAYOUT_STABLE_TOLERANCE_PX = 2
+const QWENAI_API_OUTLINE_HEADING_MAX_ATTEMPTS = 12
+const QWENAI_API_OUTLINE_HEADING_RETRY_MS = 100
+const QWENAI_API_OUTLINE_JUMP_RETRY_DELAYS_MS = [0, 80, 200, 500, 900]
+const QWENAI_API_OUTLINE_JUMP_CLEANUP_DELAY_MS = 300
 
 interface QwenAiConversationApiResponse {
   success?: boolean
@@ -195,6 +203,8 @@ export class QwenAiAdapter extends SiteAdapter {
   private apiOutlineSessionId = ""
   private apiOutlineWasGenerating = false
   private apiOutlineForceRefetch = false
+  private outlineJumpRequestSeq = 0
+  private outlineJumpTargetResolvers = new WeakMap<Element, () => Element | null>()
 
   afterPropertiesSet(
     options: { modelLockConfig?: { enabled: boolean; keyword: string } } = {},
@@ -774,6 +784,7 @@ export class QwenAiAdapter extends SiteAdapter {
     item: Pick<OutlineItem, "level" | "text" | "isUserQuery" | "id" | "navigationId">,
     queryIndex?: number,
   ): Promise<Element | null> {
+    const requestId = ++this.outlineJumpRequestSeq
     const ref = item.navigationId || item.id || ""
     const data =
       this.apiOutlineData && this.apiOutlineData.sessionId === this.getSessionId()
@@ -782,17 +793,84 @@ export class QwenAiAdapter extends SiteAdapter {
 
     const headingRef = this.parseQwenApiHeadingItemId(ref)
     if (headingRef && data) {
-      const target = await this.resolveQwenApiHeadingTarget(headingRef, item.text)
-      if (target) return target
+      const target = await this.resolveQwenApiHeadingTarget(headingRef, item.text, requestId)
+      if (requestId !== this.outlineJumpRequestSeq) return null
+      if (target) {
+        this.outlineJumpTargetResolvers.set(target, () =>
+          this.findQwenApiHeadingTargetNow(headingRef, item.text),
+        )
+        return target
+      }
     }
 
     const queryMessageId = this.parseQwenApiUserQueryItemId(ref)
     if (queryMessageId && data) {
-      const target = await this.resolveQwenApiUserQueryTarget(queryMessageId, item.text, data)
-      if (target) return target
+      const target = await this.resolveQwenApiUserQueryTarget(
+        queryMessageId,
+        item.text,
+        data,
+        requestId,
+      )
+      if (requestId !== this.outlineJumpRequestSeq) return null
+      if (target) {
+        this.outlineJumpTargetResolvers.set(target, () =>
+          this.findQwenApiUserQueryTargetNow(queryMessageId, item.text, data),
+        )
+        return target
+      }
     }
 
+    if (requestId !== this.outlineJumpRequestSeq) return null
     return super.resolveOutlineTarget(item, queryIndex)
+  }
+
+  scrollToOutlineSourceTarget(element: HTMLElement, sourceId = "conversation"): void {
+    const resolveTarget = this.outlineJumpTargetResolvers.get(element)
+    if (sourceId !== "conversation" || !resolveTarget) {
+      super.scrollToOutlineSourceTarget(element, sourceId)
+      return
+    }
+
+    // 目标出现后 Qwen 仍可能继续插入旧消息并修正滚动位置；短时重锚定以最后一次跳转为准。
+    const requestId = ++this.outlineJumpRequestSeq
+    const container = this.getOutlineScrollContainer(sourceId)
+    const timers: number[] = []
+    let disposed = false
+    let cancelOnUserIntent = () => {}
+    const dispose = () => {
+      if (disposed) return
+      disposed = true
+      timers.forEach((timer) => window.clearTimeout(timer))
+      container?.removeEventListener("wheel", cancelOnUserIntent)
+      container?.removeEventListener("touchmove", cancelOnUserIntent)
+      container?.removeEventListener("pointerdown", cancelOnUserIntent)
+    }
+    cancelOnUserIntent = () => {
+      if (requestId !== this.outlineJumpRequestSeq || disposed) return
+      this.outlineJumpRequestSeq += 1
+      dispose()
+    }
+
+    container?.addEventListener("wheel", cancelOnUserIntent, { passive: true })
+    container?.addEventListener("touchmove", cancelOnUserIntent, { passive: true })
+    container?.addEventListener("pointerdown", cancelOnUserIntent, { passive: true })
+
+    const attempt = () => {
+      if (requestId !== this.outlineJumpRequestSeq || disposed) {
+        dispose()
+        return
+      }
+      const target = resolveTarget()
+      if (target?.isConnected) {
+        super.scrollToOutlineTarget(target as HTMLElement)
+      }
+    }
+
+    QWENAI_API_OUTLINE_JUMP_RETRY_DELAYS_MS.forEach((delay) => {
+      timers.push(window.setTimeout(attempt, delay))
+    })
+    const lastDelay = QWENAI_API_OUTLINE_JUMP_RETRY_DELAYS_MS.at(-1) ?? 0
+    timers.push(window.setTimeout(dispose, lastDelay + QWENAI_API_OUTLINE_JUMP_CLEANUP_DELAY_MS))
   }
 
   private parseQwenApiHeadingItemId(
@@ -814,12 +892,18 @@ export class QwenAiAdapter extends SiteAdapter {
   private async resolveQwenApiHeadingTarget(
     ref: { messageId: string; level: number; orderInMessage: number },
     text: string,
+    requestId: number,
   ): Promise<Element | null> {
-    const message = await this.revealQwenAssistantMessage(ref.messageId)
-    if (!message) return null
+    const message = await this.revealQwenAssistantMessage(ref.messageId, requestId)
+    if (!message || requestId !== this.outlineJumpRequestSeq) return null
     return (
-      (await this.findQwenApiHeadingInBlock(message, ref.level, ref.orderInMessage, text)) ||
-      message
+      (await this.findQwenApiHeadingInBlock(
+        message,
+        ref.level,
+        ref.orderInMessage,
+        text,
+        requestId,
+      )) || message
     )
   }
 
@@ -827,22 +911,56 @@ export class QwenAiAdapter extends SiteAdapter {
     messageId: string,
     text: string,
     data: QwenHistoryOutlineData,
+    requestId: number,
   ): Promise<Element | null> {
     const query = data.userQueries.find((entry) => entry.messageId === messageId)
     if (!query) return null
 
     const assistantId = data.assistantIdByQueryIndex.get(query.queryIndex)
     if (assistantId) {
-      const message = await this.revealQwenAssistantMessage(assistantId)
+      const message = await this.revealQwenAssistantMessage(assistantId, requestId)
+      if (requestId !== this.outlineJumpRequestSeq) return null
       if (message) {
         return this.findPreviousQwenUserBlock(message) || message
       }
     }
 
+    if (requestId !== this.outlineJumpRequestSeq) return null
     return this.findUserQueryElement(query.queryIndex, text || query.text)
   }
 
-  private async revealQwenAssistantMessage(messageId: string): Promise<Element | null> {
+  private findQwenApiHeadingTargetNow(
+    ref: { messageId: string; level: number; orderInMessage: number },
+    text: string,
+  ): Element | null {
+    const message = this.findQwenAssistantBlockById(ref.messageId)
+    if (!message) return null
+    return (
+      this.findQwenApiHeadingInBlockNow(message, ref.level, ref.orderInMessage, text) || message
+    )
+  }
+
+  private findQwenApiUserQueryTargetNow(
+    messageId: string,
+    text: string,
+    data: QwenHistoryOutlineData,
+  ): Element | null {
+    const query = data.userQueries.find((entry) => entry.messageId === messageId)
+    if (!query) return null
+
+    const assistantId = data.assistantIdByQueryIndex.get(query.queryIndex)
+    if (assistantId) {
+      const message = this.findQwenAssistantBlockById(assistantId)
+      if (message) return this.findPreviousQwenUserBlock(message) || message
+    }
+
+    return this.findUserQueryElement(query.queryIndex, text || query.text)
+  }
+
+  private async revealQwenAssistantMessage(
+    messageId: string,
+    requestId: number,
+  ): Promise<Element | null> {
     const findMessage = () => this.findQwenAssistantBlockById(messageId)
     const existing = findMessage()
     if (existing) return existing
@@ -855,6 +973,7 @@ export class QwenAiAdapter extends SiteAdapter {
     let stableRounds = 0
 
     for (let round = 0; round < QWENAI_API_OUTLINE_REVEAL_MAX_ROUNDS; round += 1) {
+      if (requestId !== this.outlineJumpRequestSeq) return null
       container.scrollTop = 0
       container.dispatchEvent(new Event("scroll", { bubbles: true }))
       container.dispatchEvent(
@@ -867,7 +986,11 @@ export class QwenAiAdapter extends SiteAdapter {
       await this.sleep(QWENAI_API_OUTLINE_REVEAL_WAIT_MS)
 
       const message = findMessage()
-      if (message) return message
+      if (message) {
+        const stableMessage = await this.waitForQwenMessageLayoutStable(messageId, requestId)
+        if (requestId !== this.outlineJumpRequestSeq) return null
+        if (stableMessage) return stableMessage
+      }
 
       if (container.scrollHeight === lastHeight) {
         stableRounds += 1
@@ -878,8 +1001,61 @@ export class QwenAiAdapter extends SiteAdapter {
       }
     }
 
-    container.scrollTop = previousScrollTop
+    if (requestId === this.outlineJumpRequestSeq) {
+      container.scrollTop = previousScrollTop
+    }
     return null
+  }
+
+  private async waitForQwenMessageLayoutStable(
+    messageId: string,
+    requestId: number,
+  ): Promise<Element | null> {
+    const container = this.getScrollContainer()
+    if (!container) return this.findQwenAssistantBlockById(messageId)
+
+    let lastMessage: Element | null = null
+    let lastTop = Number.NaN
+    let lastHeight = Number.NaN
+    let lastScrollHeight = -1
+    let stableRounds = 0
+
+    for (let round = 0; round < QWENAI_API_OUTLINE_LAYOUT_STABLE_MAX_ROUNDS; round += 1) {
+      if (requestId !== this.outlineJumpRequestSeq) return null
+
+      const message = this.findQwenAssistantBlockById(messageId)
+      if (message) {
+        const containerRect = container.getBoundingClientRect()
+        const rect = message.getBoundingClientRect()
+        const top = rect.top - containerRect.top + container.scrollTop
+        const height = rect.height
+        const scrollHeight = container.scrollHeight
+        const sameLayout =
+          message === lastMessage &&
+          Math.abs(top - lastTop) <= QWENAI_API_OUTLINE_LAYOUT_STABLE_TOLERANCE_PX &&
+          Math.abs(height - lastHeight) <= QWENAI_API_OUTLINE_LAYOUT_STABLE_TOLERANCE_PX &&
+          scrollHeight === lastScrollHeight
+
+        stableRounds = sameLayout ? stableRounds + 1 : 0
+        if (stableRounds >= QWENAI_API_OUTLINE_LAYOUT_STABLE_ROUNDS) return message
+
+        lastMessage = message
+        lastTop = top
+        lastHeight = height
+        lastScrollHeight = scrollHeight
+      } else {
+        stableRounds = 0
+        lastMessage = null
+        lastTop = Number.NaN
+        lastHeight = Number.NaN
+        lastScrollHeight = -1
+      }
+
+      await this.sleep(QWENAI_API_OUTLINE_LAYOUT_STABLE_INTERVAL_MS)
+    }
+
+    if (requestId !== this.outlineJumpRequestSeq) return null
+    return this.findQwenAssistantBlockById(messageId)
   }
 
   private findQwenAssistantBlockById(messageId: string): Element | null {
@@ -921,29 +1097,42 @@ export class QwenAiAdapter extends SiteAdapter {
     level: number,
     orderInMessage: number,
     text: string,
+    requestId: number,
   ): Promise<Element | null> {
-    const normalizedTarget = text.replace(/\s+/g, " ").trim()
-    for (let attempt = 0; attempt < 6; attempt += 1) {
-      const headings = Array.from(message.querySelectorAll("h1, h2, h3, h4, h5, h6")).filter(
-        (heading) =>
-          !heading.closest(this.config.sitePrivateSelectors.thinkingCard) &&
-          !this.isInRenderedMarkdownContainer(heading),
-      )
-      const direct = headings[orderInMessage]
-      if (direct && parseInt(direct.tagName[1], 10) === level) {
-        const directText = (direct.textContent || "").replace(/\s+/g, " ").trim()
-        if (directText === normalizedTarget) return direct
-      }
-
-      const precise = headings.find((heading) => {
-        if (parseInt(heading.tagName[1], 10) !== level) return false
-        const candidate = (heading.textContent || "").replace(/\s+/g, " ").trim()
-        return candidate === normalizedTarget
-      })
-      if (precise) return precise
-      if (direct && parseInt(direct.tagName[1], 10) === level) return direct
-      await this.sleep(80)
+    for (let attempt = 0; attempt < QWENAI_API_OUTLINE_HEADING_MAX_ATTEMPTS; attempt += 1) {
+      if (requestId !== this.outlineJumpRequestSeq) return null
+      const heading = this.findQwenApiHeadingInBlockNow(message, level, orderInMessage, text)
+      if (heading) return heading
+      await this.sleep(QWENAI_API_OUTLINE_HEADING_RETRY_MS)
     }
+    return null
+  }
+
+  private findQwenApiHeadingInBlockNow(
+    message: Element,
+    level: number,
+    orderInMessage: number,
+    text: string,
+  ): Element | null {
+    const normalizedTarget = text.replace(/\s+/g, " ").trim()
+    const headings = Array.from(message.querySelectorAll("h1, h2, h3, h4, h5, h6")).filter(
+      (heading) =>
+        !heading.closest(this.config.sitePrivateSelectors.thinkingCard) &&
+        !this.isInRenderedMarkdownContainer(heading),
+    )
+    const direct = headings[orderInMessage]
+    if (direct && parseInt(direct.tagName[1], 10) === level) {
+      const directText = (direct.textContent || "").replace(/\s+/g, " ").trim()
+      if (directText === normalizedTarget) return direct
+    }
+
+    const precise = headings.find((heading) => {
+      if (parseInt(heading.tagName[1], 10) !== level) return false
+      const candidate = (heading.textContent || "").replace(/\s+/g, " ").trim()
+      return candidate === normalizedTarget
+    })
+    if (precise) return precise
+    if (direct && parseInt(direct.tagName[1], 10) === level) return direct
     return null
   }
 
