@@ -24,7 +24,12 @@ import {
 import { htmlToMarkdown, type ExportBundle, type ExportMessage } from "~utils/exporter"
 import { loadCompleteHistoryForExport } from "~utils/history-loader"
 import { t } from "~utils/i18n"
-import { EVENT_OUTLINE_DATA_UPDATED } from "~utils/messaging"
+import {
+  EVENT_OUTLINE_DATA_UPDATED,
+  type MonitorResponseCaptureRule,
+  type MonitorResponsePayload,
+} from "~utils/messaging"
+import { subscribeNetworkResponses } from "~utils/network-response-capture"
 import { hashOutlineText } from "~utils/outline-heading-cache"
 import {
   dropTrailingFillDuplicates,
@@ -85,6 +90,14 @@ const QWENAI_ATTACHMENT_SOURCE_ATTRS = [
 ]
 const QWENAI_CONVERSATION_SNAPSHOT_TTL_MS = 30_000
 const QWENAI_CONVERSATION_SNAPSHOT_RETRY_MS = 30_000
+const QWENAI_CHAT_LIST_PATH = "/api/v2/chats/"
+// 新对话要等回复完成才有正式标题，页面会自己轮询列表接口直到拿到；复用它的响应，不另行轮询
+const QWENAI_CHAT_LIST_CAPTURE: MonitorResponseCaptureRule = {
+  id: `${SITE_IDS.QWENAI}:chat-list`,
+  method: "GET",
+  // 与 QWENAI_CHAT_LIST_PATH 同一接口，末尾斜杠可有可无
+  pathPattern: "^/api/v2/chats/?$",
+}
 const QWENAI_FETCH_PAGE_LIMIT = 100
 const QWENAI_BOOTSTRAP_PAGE_LIMIT = 5
 // 单对话接口的 limit 按“轮次”计，100 轮约 200 条消息；更早历史用 cursor 向前翻页。
@@ -212,6 +225,8 @@ export class QwenAiAdapter extends SiteAdapter {
   // 进行中的刷新；resolve 为 true 表示该次请求的范围已完整拿到（失败或不完整为 false）
   private conversationSnapshotPromise: Promise<boolean> | null = null
   private conversationSnapshotFetchesAll = false
+  private conversationListListeners = new Set<() => void>()
+  private stopConversationListCapture: (() => void) | null = null
   private exportIncludeThoughtsOverride: boolean | null = null
   private exportApiMessages: ExportMessage[] | null = null
   private exportApiBundle: ExportBundle | null = null
@@ -347,6 +362,34 @@ export class QwenAiAdapter extends SiteAdapter {
     }
 
     return this.mergeConversationInfos(snapshot, domList)
+  }
+
+  /**
+   * 侧边栏没有对话 ID，DOM 观察器同步不到对话，列表只能来自接口快照：
+   * 订阅期间转发页面自己的列表接口响应并入快照，有变化就回调同步。
+   * 只在「订阅时补同步」和「收到页面响应」两处回调，快照刷新本身不回调，
+   * 否则手动同步与首次全量同步的新增计数会被这里提前消费。
+   */
+  onConversationListChange(callback: () => void): () => void {
+    this.conversationListListeners.add(callback)
+    if (!this.stopConversationListCapture) {
+      this.stopConversationListCapture = subscribeNetworkResponses(
+        QWENAI_CHAT_LIST_CAPTURE,
+        (response) => this.applyCapturedConversationPage(response),
+      )
+    }
+
+    // 刷新页面后 store 可能落后于站点：订阅时先确保快照可用，再补同步一次
+    void this.refreshConversationSnapshot().then(() => {
+      if (this.conversationListListeners.has(callback)) callback()
+    })
+
+    return () => {
+      this.conversationListListeners.delete(callback)
+      if (this.conversationListListeners.size > 0) return
+      this.stopConversationListCapture?.()
+      this.stopConversationListCapture = null
+    }
   }
 
   private getConversationUrl(id: string): string {
@@ -2141,7 +2184,7 @@ export class QwenAiAdapter extends SiteAdapter {
       if (!fetchAllPages && currentSessionId && seen.has(currentSessionId)) break
     }
 
-    const pinned = await this.fetchPinnedConversations(this.getCurrentCid() || undefined)
+    const pinned = await this.fetchPinnedConversations()
     const complete = reachedEnd && pinned.ok
     if (pinned.items.length === 0) return { list: all, complete }
 
@@ -2156,7 +2199,7 @@ export class QwenAiAdapter extends SiteAdapter {
   }
 
   private async fetchConversationPage(page: number): Promise<ConversationInfo[]> {
-    const url = new URL("/api/v2/chats/", window.location.origin)
+    const url = new URL(QWENAI_CHAT_LIST_PATH, window.location.origin)
     url.searchParams.set("page", String(page))
     url.searchParams.set("exclude_project", "true")
     const authorization = this.getQwenAuthorizationHeader()
@@ -2177,32 +2220,12 @@ export class QwenAiAdapter extends SiteAdapter {
       throw new Error(`fetch conversations failed: ${response.status}`)
     }
 
-    const payload = (await response.json()) as QwenAiConversationApiResponse
-    if (payload.success === false) {
-      throw new Error(
-        `fetch conversations failed: response unsuccessful${formatQwenApiErrorDetail(payload.data)}`,
-      )
-    }
-    // 空列表也是数组；data 不是数组说明接口结构变了，不能当成「没有对话」
-    if (!Array.isArray(payload.data)) {
-      throw new Error("fetch conversations failed: unexpected response shape")
-    }
-
-    const cid = this.getCurrentCid() || undefined
-    const items: ConversationInfo[] = []
-
-    payload.data.forEach((entry) => {
-      const info = this.normalizeConversationApiItem(entry, cid)
-      if (info) items.push(info)
-    })
-
-    return items
+    return this.normalizeConversationApiItems(
+      this.readConversationListEntries(await response.json()),
+    )
   }
 
-  private async fetchPinnedConversations(
-    cid?: string,
-  ): Promise<{ items: ConversationInfo[]; ok: boolean }> {
-    const items: ConversationInfo[] = []
+  private async fetchPinnedConversations(): Promise<{ items: ConversationInfo[]; ok: boolean }> {
     try {
       const url = new URL("/api/v2/chats/pinned", window.location.origin)
       const authorization = this.getQwenAuthorizationHeader()
@@ -2220,26 +2243,102 @@ export class QwenAiAdapter extends SiteAdapter {
 
       if (!response.ok) throw new Error(`fetch pinned conversations failed: ${response.status}`)
 
-      const payload = (await response.json()) as QwenAiConversationApiResponse
-      if (payload.success === false || !Array.isArray(payload.data)) {
-        throw new Error(
-          `fetch pinned conversations failed: unexpected response${formatQwenApiErrorDetail(payload.data)}`,
-        )
-      }
-
-      payload.data.forEach((entry) => {
-        if (!entry || typeof entry !== "object") return
-        const projectId = (entry as Record<string, unknown>).project_id
-        if (typeof projectId === "string" && projectId.trim()) return
-        const info = this.normalizeConversationApiItem(entry, cid)
-        if (info) items.push({ ...info, isPinned: true })
-      })
-      return { items, ok: true }
+      // 与主列表的 exclude_project 口径一致，排除项目内对话
+      const items = this.normalizeConversationApiItems(
+        this.readConversationListEntries(await response.json()),
+        { skipProjectChats: true },
+      )
+      return { items: items.map((item) => ({ ...item, isPinned: true })), ok: true }
     } catch (error) {
       // 置顶只是主列表的补充，失败不拖垮主列表刷新；但快照因此不完整，不能用于同步删除
       console.warn("[QwenAiAdapter] Failed to fetch pinned conversations:", error)
       return { items: [], ok: false }
     }
+  }
+
+  /**
+   * 页面自己请求的列表分页并入快照：只新增或更新，不删除（分页结果证明不了删除，删除仍走手动同步）；
+   * 页面会反复轮询到相同数据，快照没变化时不回调。
+   */
+  private applyCapturedConversationPage(response: MonitorResponsePayload): void {
+    let items: ConversationInfo[]
+    try {
+      // 页面请求未必带 exclude_project，按主列表口径排除项目内对话
+      items = this.normalizeConversationApiItems(
+        this.readConversationListEntries(JSON.parse(response.body)),
+        { skipProjectChats: true },
+      )
+    } catch (error) {
+      console.warn("[QwenAiAdapter] Ignored captured conversation list response:", error)
+      return
+    }
+
+    if (this.mergeCapturedConversations(items)) this.notifyConversationListChange()
+
+    // 在途的快照刷新请求发得更早，结束时会整体覆盖快照：等它结束再并一次，保住这批较新的数据
+    const pendingRefresh = this.conversationSnapshotPromise
+    if (!pendingRefresh) return
+    void pendingRefresh.then(() => {
+      if (this.mergeCapturedConversations(items)) this.notifyConversationListChange()
+    })
+  }
+
+  /** 返回快照是否有变化；置顶沿用 mergeConversationInfos 的「任一方置顶即置顶」 */
+  private mergeCapturedConversations(items: ConversationInfo[]): boolean {
+    const currentById = new Map(this.conversationSnapshot.map((item) => [item.id, item]))
+    const changed = items.some((item) => {
+      const current = currentById.get(item.id)
+      return (
+        !current || current.title !== item.title || (item.isPinned === true && !current.isPinned)
+      )
+    })
+    if (!changed) return false
+
+    this.conversationSnapshot = this.mergeConversationInfos(this.conversationSnapshot, items)
+    return true
+  }
+
+  private notifyConversationListChange(): void {
+    this.conversationListListeners.forEach((listener) => listener())
+  }
+
+  /**
+   * 校验对话列表类接口响应并取出 data 数组。空列表也是数组；data 不是数组说明接口结构变了，
+   * 必须抛错，不能当成「没有对话」（全量刷新会据此误判列表到底）。
+   */
+  private readConversationListEntries(payload: unknown): unknown[] {
+    if (!payload || typeof payload !== "object") {
+      throw new Error("conversation list response: unexpected payload")
+    }
+
+    const { success, data } = payload as QwenAiConversationApiResponse
+    if (success === false) {
+      throw new Error(`conversation list response unsuccessful${formatQwenApiErrorDetail(data)}`)
+    }
+    if (!Array.isArray(data)) {
+      throw new Error("conversation list response: unexpected data shape")
+    }
+    return data
+  }
+
+  private normalizeConversationApiItems(
+    entries: unknown[],
+    options: { skipProjectChats?: boolean } = {},
+  ): ConversationInfo[] {
+    const cid = this.getCurrentCid() || undefined
+    const items: ConversationInfo[] = []
+    for (const entry of entries) {
+      if (options.skipProjectChats && this.isProjectConversationEntry(entry)) continue
+      const info = this.normalizeConversationApiItem(entry, cid)
+      if (info) items.push(info)
+    }
+    return items
+  }
+
+  private isProjectConversationEntry(entry: unknown): boolean {
+    if (!entry || typeof entry !== "object") return false
+    const projectId = (entry as Record<string, unknown>).project_id
+    return typeof projectId === "string" && projectId.trim().length > 0
   }
 
   private normalizeConversationApiItem(entry: unknown, cid?: string): ConversationInfo | null {

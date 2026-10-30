@@ -622,6 +622,15 @@ export abstract class SiteAdapter {
   }
 
   /**
+   * 订阅对话列表数据源更新：侧边栏 DOM 拿不到对话 ID、列表改由接口快照提供的站点，
+   * 在快照更新后回调，由 ConversationManager 增量同步进 store。返回取消订阅函数；
+   * 默认没有这类数据源，不会回调。
+   */
+  onConversationListChange(_callback: () => void): () => void {
+    return () => {}
+  }
+
+  /**
    * 导航到指定对话（SPA 导航，不刷新页面）
    * 各站点适配器应覆盖此方法实现站点特定的导航逻辑
    * @param _id 对话 ID

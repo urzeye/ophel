@@ -195,6 +195,8 @@ export class ConversationManager {
   private geminiMigrationTimer: ReturnType<typeof setTimeout> | null = null
   private geminiMigrationRetryCount = 0
   private initialAutoFullSyncPromise: Promise<void> | null = null
+  private conversationListUnsubscribe: (() => void) | null = null
+  private destroyed = false
 
   // Settings
   private syncUnpin: boolean = false
@@ -314,7 +316,26 @@ export class ConversationManager {
       }
     }
 
+    // 异步初始化期间面板可能已卸载，销毁后不能再挂观察者和订阅
+    if (this.destroyed) return
+
     this.startSidebarObserver()
+    this.subscribeConversationListSource()
+  }
+
+  /**
+   * 订阅适配器的对话列表数据源（列表由接口快照提供的站点），更新后增量同步。
+   * 基类为空操作，其他站点不会触发。
+   */
+  private subscribeConversationListSource() {
+    if (this.conversationListUnsubscribe) return
+
+    this.conversationListUnsubscribe = this.siteAdapter.onConversationListChange(() => {
+      const { newCount, updatedCount } = this.syncConversations(null, true)
+      if (newCount > 0 || updatedCount > 0) {
+        this.notifyDataChange()
+      }
+    })
   }
 
   /**
@@ -647,8 +668,11 @@ export class ConversationManager {
   }
 
   destroy() {
+    this.destroyed = true
     this.stopGeminiMigrationRetry()
     this.stopSidebarObserver()
+    this.conversationListUnsubscribe?.()
+    this.conversationListUnsubscribe = null
   }
 
   updateSettings(settings: { syncUnpin: boolean; syncDelete?: boolean }) {

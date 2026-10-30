@@ -265,7 +265,26 @@ AI Studio 接入的差异点（`src/adapters/aistudio-history-outline.ts`、`src
 
 Grok 接入的差异点（`src/adapters/grok-history-outline.ts`、`src/adapters/grok.ts`）：数据分两段接口，`GET /rest/app-chat/conversations/{id}/response-node` 返回全量分支骨架（responseId/sender/parentResponseId，按创建顺序排列），`POST .../load-responses` 按 responseId 批量取正文（单批 20 条）；树签名（节点数 + 叶 responseId）未变时跳过正文拉取，生成结束强制重拉。cookie 认证即可，无需额外请求头。激活分支叶节点优先取 URL `rid`（须为无子节点的叶子），否则取骨架末尾节点。消息 id 是 uuid 字符串，全链路用「分支位置序号」作为 messageIndex（同 Claude），但 DOM 虚拟行直接携带 responseId（`data-plane-row="gateway:<uuid>"`、消息元素 `id="response-<uuid>"`），挂载行映射天然精确，无需 aria-setsize 对齐；未入库的新行统一映射为 `maxMessageId + 1` 触发过期重拉。DOM 大纲条目的 id 本身即 `response-<uuid>`，回填提问条目沿用同一 id，挂载切换时收藏不失效，无需 DeepSeek 的 occurrence 签名重算。跳转定位只有 probe+bisect 滚动挂载一条路径（Grok 无原生 TOC 兜底），失败回退基类文本搜索。阅读历史的行身份用 responseId 字符串（`AnchorData.rowKey` 已扩为 `number | string`），恢复时有界等待接口数据以取得分支位置后复用同一 probe 挂载。导出改走同一组接口（`src/adapters/grok-history-export.ts`）：完整性门槛严于大纲——骨架必须恰有一个根、分支每个 responseId 都必须取到正文，否则返回 null 回退 DOM 收集；正文剥离 `<grok:render>` 占位标签，生成图片从 `cardAttachmentsJson` 图片块按卡片去重取最终版本（相对 URL 经 `buildGrokAssetSource` 归一到 assets.grok.com），用户附件直接用 `fileAttachmentsMetadata`（与分享页接口同构，复用同一解析器）；思考步骤标题（steps）与工具过程不参与导出，与 DOM 导出等价。
 
-Qwen Studio 接入的差异点（`src/adapters/qwen-studio-history-outline.ts`、`src/adapters/qwen-studio.ts`）：单对话接口 `GET /api/v2/chats/{id}?direction=up&limit=100[&cursor=<oldest_id>]` 返回 `data.chat.history = { messages, currentId, pagination }`（2026-10-30 实测：消息 `id` / `parentId` / `childrenIds` 为 camelCase，根消息 `parentId` 为 `null`，`pagination` 为 snake_case，`content_list` 阶段见 `thinking_summary` / `answer`；失败时是 HTTP 200 + `success:false` + `data.{code,details}`，如 `Unauthorized`）。大纲与导出共用 `resolveQwenActiveBranch`：必须从 `currentId` 回溯到 `parentId === null` 的根才算历史完整，缺 `currentId`、断链、成环或字段漂移一律判失败，不猜分支、不产出残缺链；导出失败回退 DOM 时，历史加载未收敛会经 `getExportCollectionReport` 触发「可能不完整」提示。Qwen 是服务端懒加载（DOM 不卸载），不声明 `virtualOutlineFill`；消息 id 为 uuid 字符串，归并时 DOM 已有已知行则未知行贴在其后，回填与无归属 DOM 条目同名时从尾部扣除（`dropTrailingFillDuplicates`）。网络、HTTP 与鉴权失败（token 过期到站点刷新之间接口返回 `Unauthorized`）不计入熔断，只有解析失败才熔断。对话列表快照只有翻到空页且置顶接口成功才算完整，`loadAllConversations` 否则返回 `false`，对话页据此不做「同步删除」。回填跳转为触发懒加载会把容器滚到顶，跳转最终没有目标时还原到滚动前的位置，用户自己滚动或新的跳转会取消进行中的定位。
+Qwen Studio 接入的差异点（`src/adapters/qwen-studio-history-outline.ts`、`src/adapters/qwen-studio.ts`）：单对话接口 `GET /api/v2/chats/{id}?direction=up&limit=100[&cursor=<oldest_id>]` 返回 `data.chat.history = { messages, currentId, pagination }`（2026-10-30 实测：消息 `id` / `parentId` / `childrenIds` 为 camelCase，根消息 `parentId` 为 `null`，`pagination` 为 snake_case，`content_list` 阶段见 `thinking_summary` / `answer`；失败时是 HTTP 200 + `success:false` + `data.{code,details}`，如 `Unauthorized`）。大纲与导出共用 `resolveQwenActiveBranch`：必须从 `currentId` 回溯到 `parentId === null` 的根才算历史完整，缺 `currentId`、断链、成环或字段漂移一律判失败，不猜分支、不产出残缺链；导出失败回退 DOM 时，历史加载未收敛会经 `getExportCollectionReport` 触发「可能不完整」提示。Qwen 是服务端懒加载（DOM 不卸载），不声明 `virtualOutlineFill`；消息 id 为 uuid 字符串，归并时 DOM 已有已知行则未知行贴在其后，回填与无归属 DOM 条目同名时从尾部扣除（`dropTrailingFillDuplicates`）。网络、HTTP 与鉴权失败（token 过期到站点刷新之间接口返回 `Unauthorized`）不计入熔断，只有解析失败才熔断。对话列表快照只有翻到空页且置顶接口成功才算完整，`loadAllConversations` 否则返回 `false`，对话页据此不做「同步删除」。侧边栏没有对话 ID，DOM 观察器同步不到对话：订阅期间经「页面响应转发」复用页面自己对 `GET /api/v2/chats/` 的轮询（新对话要等回复完成才有正式标题，之前一直是 `New Chat`），并在订阅时补同步一次，覆盖刷新页面的场景。回填跳转为触发懒加载会把容器滚到顶，跳转最终没有目标时还原到滚动前的位置，用户自己滚动或新的跳转会取消进行中的定位。
+
+#### 页面响应转发（NetworkMonitor）
+
+页面自己会请求、我们只需复用其数据的场景（Qwen Studio 对话列表首发），不另行轮询，由 main world 的 `src/core/network-monitor.ts` 转发页面请求的响应。NetworkMonitor 是单例，统一持有 fetch / XHR hook，服务两类互不影响的消费方：
+
+- 生成检测：`EVENT_MONITOR_INIT` 配置目标 URL，产出 `EVENT_MONITOR_START` / `EVENT_MONITOR_COMPLETE`。INIT 由 `TabManager.start()` 发送，关闭「标签页自动重命名」时不会发。
+- 响应转发：`EVENT_MONITOR_CAPTURE_REGISTER` / `EVENT_MONITOR_CAPTURE_UNREGISTER` 注册/注销规则，命中请求的 2xx 响应体经 `EVENT_MONITOR_RESPONSE` 转发。不依赖 INIT，也不参与生成检测。
+
+hook 在首个消费方出现时安装、之后不再卸载，重新 INIT 只替换生成检测配置。新需求不要另起一套 fetch / XHR hook：卸载时写回的「原始 fetch」会冲掉后装的那套。
+
+新站点接入清单：
+
+1. isolated world 侧统一用 `src/utils/network-response-capture.ts` 的 `subscribeNetworkResponses(rule, onResponse)`。它在收到 `EVENT_MONITOR_READY` 时重发注册（两侧脚本加载顺序没有保证，油猴端甚至先发 INIT、后注册监听），返回的取消函数会注销规则；订阅与数据消费方同生命周期。
+2. 规则为 `{ id, method, pathPattern }`：id 用 `{siteId}:{用途}` 保证唯一；只匹配与页面同源的请求，`pathPattern` 是 pathname（不含 query）的正则源码。规则不要放进 `NetworkMonitorConfig`，SitePack 校验器对该字段是白名单。
+3. 只转发 2xx；XHR 支持 `responseType` 为 `""` / `"text"` / `"json"`，其他类型跳过并告警；超过 4M 字符的响应跳过并告警。
+4. 响应体是不可信文本（同窗口脚本可伪造消息），站点自行解析与校验；分页类数据只能新增或更新，不能据此删除。
+5. 站点 origin 必须在 `src/contents/monitor-entry.ts` 的 `matches` 中（油猴端由入口统一初始化）。
+
+对话列表类数据源经 `SiteAdapter.onConversationListChange()` 通知 `ConversationManager` 增量同步（基类为空操作，其他站点不会触发）。只在「订阅时补同步」和「收到页面响应」时回调，快照刷新本身不回调，否则手动同步与首次全量同步的新增计数会被提前消费。
 
 ### 核心模块 (`src/core/modules-init.ts`)
 
@@ -328,7 +347,7 @@ Qwen Studio 接入的差异点（`src/adapters/qwen-studio-history-outline.ts`�
 | Claude   | `MSG_SET_CLAUDE_SESSION_KEY`, `MSG_TEST_CLAUDE_TOKEN`, `MSG_GET_CLAUDE_SESSION_KEY`, `MSG_CHECK_CLAUDE_GENERATING`, `MSG_SWITCH_NEXT_CLAUDE_KEY` | Claude 账号管理                    |
 | 模型     | `MSG_GET_AISTUDIO_MODELS`                                                                                                                        | AI Studio 模型列表                 |
 | 对话     | `MSG_START_NEW_CONVERSATION`                                                                                                                     | 发起新对话                         |
-| 事件     | `EVENT_MONITOR_INIT`                                                                                                                             | 网络监控初始化                     |
+| 事件     | `EVENT_MONITOR_INIT` / `START` / `COMPLETE`, `EVENT_MONITOR_CAPTURE_REGISTER` / `UNREGISTER`, `EVENT_MONITOR_READY`, `EVENT_MONITOR_RESPONSE` | 网络监控：生成检测与页面响应转发 |
 
 ## 测试策略
 
