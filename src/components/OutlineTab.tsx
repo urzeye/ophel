@@ -1187,7 +1187,9 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
   // Falls back to nearest visible ancestor when the target is hidden
   useEffect(() => {
     const followMode = settings?.features?.outline?.followMode || "current"
-    if (followMode !== "current") {
+    // 大纲为空（新对话页、非对话页）时没有可高亮的条目，不轮询查找滚动容器；
+    // 有条目后 tree.length 变化会重新进入这里绑定监听
+    if (followMode !== "current" || tree.length === 0) {
       updateActiveIndex(null)
       updateVisibleHighlightIndex(null)
       return
