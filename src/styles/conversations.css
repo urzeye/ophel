@@ -38,7 +38,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 7px 10px;
+  padding: 7px 10px 0;
   flex-shrink: 0;
   background: var(--gh-bg, #ffffff);
 }
@@ -90,6 +90,7 @@
   flex-shrink: 0;
   align-items: flex-start;
   gap: 8px;
+  margin-top: 7px;
   padding: 7px 10px;
   border-bottom: 1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 14%, transparent);
   background: color-mix(in srgb, var(--gh-primary, #4285f4) 8%, transparent);
@@ -485,7 +486,7 @@ html[data-theme="dark"] .conversations-unsupported-icon {
 
 /* 搜索栏样式 */
 .conversations-search-bar {
-  padding: 7px 10px;
+  padding: 8px 10px 7px;
   border-bottom: 1px solid var(--gh-border, #e5e7eb);
   background: var(--gh-bg, #ffffff);
   flex-shrink: 0;
