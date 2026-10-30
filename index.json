@@ -1,0 +1,177 @@
+{
+  "generatedAt": 1793378724000,
+  "schemaVersion": 1,
+  "registryRevision": 55,
+  "packs": [
+    {
+      "id": "deepseek-harness",
+      "version": 4,
+      "minAppVersion": "1.2.5",
+      "matches": [],
+      "file": "packs/deepseek-harness/4.json",
+      "sha256": "9ab23ec2bec9521084487e69f8fdfd184fcd74d5f72e78653fa8f1ec5b43d08e",
+      "disabled": false
+    },
+    {
+      "id": "duck-ai",
+      "version": 3,
+      "minAppVersion": "1.2.0",
+      "matches": [
+        "https://duck.ai/*"
+      ],
+      "file": "packs/duck-ai/3.json",
+      "sha256": "bd350f4f564045ea9e5f7fc332404931d6c59a1acdd79055a7647ffe019f934f",
+      "disabled": false
+    },
+    {
+      "id": "genspark",
+      "version": 1,
+      "minAppVersion": "1.2.3",
+      "matches": [
+        "https://www.genspark.ai/*"
+      ],
+      "file": "packs/genspark/1.json",
+      "sha256": "07985190cff4aa2c855ffbc7c10a701caff5d57ab1a5a45921cfa6d2a2e16d23",
+      "disabled": false
+    },
+    {
+      "id": "librechat",
+      "version": 6,
+      "minAppVersion": "1.2.5",
+      "matches": [],
+      "file": "packs/librechat/6.json",
+      "sha256": "230ac5f3be123c57bdc1993e0b6c4a5e4c735db4f350d9e336fcd99ccd2b0360",
+      "disabled": false
+    },
+    {
+      "id": "lobechat",
+      "version": 6,
+      "minAppVersion": "1.2.0",
+      "matches": [
+        "https://app.lobehub.com/*"
+      ],
+      "file": "packs/lobechat/6.json",
+      "sha256": "deeae3a7ec4d4426756a1f52078053153915900da315c5af9817ebdb5f864b44",
+      "disabled": false
+    },
+    {
+      "id": "longcat",
+      "version": 3,
+      "minAppVersion": "1.2.5",
+      "matches": [
+        "https://longcat.chat/*"
+      ],
+      "file": "packs/longcat/3.json",
+      "sha256": "0754530877378b9f8f0c2cb2742e44b6a3d5be480b90937290422242d1c14785",
+      "disabled": false
+    },
+    {
+      "id": "manus",
+      "version": 2,
+      "minAppVersion": "1.2.4",
+      "matches": [
+        "https://manus.im/*"
+      ],
+      "file": "packs/manus/2.json",
+      "sha256": "be70780ebb1652b44cf1f5a47b4531e7d9cd0b08e4fcabc2a6012138c2fdd247",
+      "disabled": false
+    },
+    {
+      "id": "nextchat",
+      "version": 4,
+      "minAppVersion": "1.2.5",
+      "matches": [],
+      "file": "packs/nextchat/4.json",
+      "sha256": "d85e998be7620d393430e32be65b1608bdf5a45dff95ef550eb20f8ba7effdcc",
+      "disabled": false
+    },
+    {
+      "id": "notion-ai",
+      "version": 2,
+      "minAppVersion": "1.2.5",
+      "matches": [
+        "https://app.notion.com/ai*",
+        "https://app.notion.com/chat*"
+      ],
+      "file": "packs/notion-ai/2.json",
+      "sha256": "1a328a8f1a73e1e9aea5fe807232d92ddc44a72f4eb1cc5417e12639201cb599",
+      "disabled": false
+    },
+    {
+      "id": "open-webui",
+      "version": 5,
+      "minAppVersion": "1.2.5",
+      "matches": [],
+      "file": "packs/open-webui/5.json",
+      "sha256": "6de61b2fc56f55611d64a70a67959fb19bfa1eba50623dc1e0e7a9ca0b43648d",
+      "disabled": false
+    },
+    {
+      "id": "opencode-share",
+      "version": 1,
+      "minAppVersion": "1.2.1",
+      "matches": [
+        "https://opncd.ai/*"
+      ],
+      "file": "packs/opencode-share/1.json",
+      "sha256": "99b70d225a897fddfb93213f8b478572d2cacf17e2bafbb47daa81a1a0549f9d",
+      "disabled": false
+    },
+    {
+      "id": "perplexity",
+      "version": 1,
+      "minAppVersion": "1.2.6",
+      "matches": [
+        "https://www.perplexity.ai/*"
+      ],
+      "file": "packs/perplexity/1.json",
+      "sha256": "4e942665950032eb34ceaff2aaa413519990876bbc1b1942d9d0ca68e7ee75ea",
+      "disabled": false
+    },
+    {
+      "id": "proton-lumo",
+      "version": 2,
+      "minAppVersion": "1.2.5",
+      "matches": [
+        "https://lumo.proton.me/*"
+      ],
+      "file": "packs/proton-lumo/2.json",
+      "sha256": "e152389b907ce9fa1bde6518bdacd31d8391b70546f192117cdcb0930f7a427b",
+      "disabled": false
+    },
+    {
+      "id": "stepfun",
+      "version": 1,
+      "minAppVersion": "1.2.2",
+      "matches": [
+        "https://chat.stepfun.com/*"
+      ],
+      "file": "packs/stepfun/1.json",
+      "sha256": "c40cf466b31651e6e7990309087689373adb30deb6334dcd07d305a8b980803f",
+      "disabled": false
+    },
+    {
+      "id": "wenxin",
+      "version": 1,
+      "minAppVersion": "1.2.5",
+      "matches": [
+        "https://wenxin.baidu.com/*"
+      ],
+      "file": "packs/wenxin/1.json",
+      "sha256": "1c6dcf229f967554be4e630bc83598e06f6b719db9dde6d10410c5ff04821062",
+      "disabled": false
+    },
+    {
+      "id": "zhida",
+      "version": 1,
+      "minAppVersion": "1.2.5",
+      "matches": [
+        "https://zhida.zhihu.com/*"
+      ],
+      "file": "packs/zhida/1.json",
+      "sha256": "f4dc927f778e996fc4a36a92dcf5844902764295610f27319a37b8a4c08ebb38",
+      "disabled": false
+    }
+  ],
+  "patches": []
+}

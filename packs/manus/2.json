@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "id": "manus",
+  "version": 2,
+  "minAppVersion": "1.2.4",
+  "name": "Manus",
+  "nameI18n": {
+    "zh-CN": "Manus",
+    "zh-TW": "Manus",
+    "en": "Manus",
+    "ja": "Manus",
+    "ko": "Manus",
+    "it": "Manus",
+    "de": "Manus",
+    "es": "Manus",
+    "fr": "Manus",
+    "pt-BR": "Manus",
+    "ru": "Manus"
+  },
+  "description": "Adds Ophel outlines, export, prompt insertion, layout tools, and zen mode to Manus.",
+  "descriptionI18n": {
+    "zh-CN": "为 Manus 添加 Ophel 大纲、导出、提示词插入、页面布局和禅模式功能。",
+    "zh-TW": "為 Manus 加入 Ophel 大綱、匯出、提示詞插入、頁面版面與禪模式功能。",
+    "en": "Adds Ophel outlines, export, prompt insertion, layout tools, and zen mode to Manus.",
+    "ja": "Manus に Ophel のアウトライン、エクスポート、プロンプト挿入、レイアウト調整、Zen モード機能を追加します。",
+    "ko": "Manus에 Ophel의 개요, 내보내기, 프롬프트 삽입, 레이아웃 조정 및 Zen 모드 기능을 추가합니다.",
+    "it": "Aggiunge a Manus le funzioni Ophel per struttura, esportazione, inserimento dei prompt, layout e modalità Zen.",
+    "de": "Ergänzt Manus um Ophel-Funktionen für Gliederung, Export, Prompt-Einfügung, Layout und Zen-Modus.",
+    "es": "Añade a Manus las funciones de Ophel para esquema, exportación, inserción de prompts, diseño y modo Zen.",
+    "fr": "Ajoute à Manus les fonctions Ophel de plan, d'exportation, d'insertion de prompts, de mise en page et de mode Zen.",
+    "pt-BR": "Adiciona ao Manus os recursos do Ophel para estrutura, exportação, inserção de prompts, layout e modo Zen.",
+    "ru": "Добавляет в Manus функции Ophel для структуры, экспорта, вставки промптов, настройки ширины и режима дзен."
+  },
+  "matches": [
+    "https://manus.im/*"
+  ],
+  "theme": {
+    "primary": "#000000",
+    "secondary": "#f8f8f7"
+  },
+  "capabilities": [
+    "outline",
+    "outline-user-queries",
+    "export-basic",
+    "new-chat",
+    "width",
+    "zen",
+    "clean",
+    "prompt-insert"
+  ],
+  "selectors": {
+    "textarea": [
+      ".chat-input-editor [contenteditable='true']",
+      ".ProseMirror[contenteditable='true']"
+    ],
+    "submitButton": [
+      "div:has(> .chat-input-editor) button:has(svg path[d*='7.91699'])",
+      "div:has(> .chat-input-editor) button:last-child"
+    ],
+    "responseContainer": "div[class*='--chat-message-list']",
+    "userQuery": "[data-chat-question-bubble='true']",
+    "assistantResponse": ".manus-markdown",
+    "newChatButton": [
+      "nav div:has(> * > svg.lucide-square-pen)",
+      "nav [title='新建任务']"
+    ],
+    "scrollContainer": [
+      "div[data-simplebar]:has([data-chat-question-bubble]) .simplebar-content-wrapper",
+      ".simplebar-content-wrapper:has([data-chat-question-bubble])",
+      ".simplebar-content-wrapper"
+    ],
+    "outlineExclude": [
+      "[data-chat-suggested-follow-ups]"
+    ]
+  },
+  "input": {
+    "mode": "contenteditable",
+    "submitKey": "Enter"
+  },
+  "session": {
+    "idFromPathRegex": "^/(?:app|share)/([^/?#]+)$",
+    "newConversationPathPatterns": [
+      "^/app/?$",
+      "^/$"
+    ],
+    "sharePathPrefix": "/share/",
+    "newTabPath": "/app"
+  },
+  "export": {
+    "userQuerySelector": "[data-chat-question-bubble='true']",
+    "assistantResponseSelector": ".manus-markdown",
+    "turnSelector": null,
+    "useShadowDOM": false
+  },
+  "zenMode": {
+    "hide": [
+      "nav[class*='background-nav']"
+    ]
+  },
+  "cleanMode": {
+    "hide": [
+      "div.desktop-drag",
+      "div.pointer-events-none.\\!max-w-\\[288px\\]"
+    ]
+  },
+  "widthSelectors": [
+    {
+      "selector": "div.mx-auto[class*='sm:max-w-']",
+      "property": "max-width",
+      "extraCss": "width: 100% !important; max-width: none !important; box-sizing: border-box !important;"
+    }
+  ],
+  "mermaidSupport": "fallback",
+  "quickQuote": "disabled",
+  "supportsHostThemeSync": false
+}
