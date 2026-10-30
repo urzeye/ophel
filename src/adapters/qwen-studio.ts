@@ -27,6 +27,7 @@ import { t } from "~utils/i18n"
 
 import {
   SiteAdapter,
+  type ConversationDeleteTarget,
   type ConversationInfo,
   type ConversationObserverConfig,
   type ExportLifecycleContext,
@@ -37,6 +38,7 @@ import {
   type NetworkMonitorConfig,
   type OutlineItem,
   type PanelAvoidanceConfig,
+  type SiteDeleteConversationResult,
   type ZenModeConfig,
 } from "./base"
 import type { BuiltinSiteConfig } from "./declarative"
@@ -345,6 +347,52 @@ export class QwenAiAdapter extends SiteAdapter {
     const targetUrl = url || this.getConversationUrl(id)
     if (this.navigateViaHistory(targetUrl)) return true
     return super.navigateToConversation(id, targetUrl)
+  }
+
+  async deleteConversationOnSite(
+    target: ConversationDeleteTarget,
+  ): Promise<SiteDeleteConversationResult> {
+    const id = typeof target.id === "string" ? target.id.trim() : ""
+    if (!id) {
+      return { id: target.id, success: false, method: "none", reason: "invalid_conversation_id" }
+    }
+
+    const authorization = this.getQwenAuthorizationHeader()
+    if (!authorization) {
+      return { id, success: false, method: "api", reason: "missing_auth_token" }
+    }
+
+    try {
+      const response = await fetch(
+        new URL(`/api/v2/chats/${encodeURIComponent(id)}`, window.location.origin).toString(),
+        {
+          method: "DELETE",
+          credentials: "include",
+          cache: "no-store",
+          headers: {
+            Authorization: authorization,
+            Accept: "application/json, text/plain, */*",
+            "X-Request-Id": crypto.randomUUID(),
+            source: "web",
+          },
+        },
+      )
+
+      if (!response.ok) {
+        return { id, success: false, method: "api", reason: `http_${response.status}` }
+      }
+
+      const payload = (await response.json().catch(() => null)) as { success?: boolean } | null
+      if (payload?.success === false) {
+        return { id, success: false, method: "api", reason: "response_unsuccessful" }
+      }
+
+      this.conversationSnapshot = this.conversationSnapshot.filter((item) => item.id !== id)
+      return { id, success: true, method: "api" }
+    } catch (error) {
+      console.warn("[QwenAiAdapter] Failed to delete conversation:", error)
+      return { id, success: false, method: "api", reason: "request_failed" }
+    }
   }
 
   getTextareaSelectors(): string[] {
@@ -1376,7 +1424,17 @@ export class QwenAiAdapter extends SiteAdapter {
       if (!fetchAllPages && currentSessionId && seen.has(currentSessionId)) break
     }
 
-    return all
+    const pinned = await this.fetchPinnedConversations(this.getCurrentCid() || undefined)
+    if (pinned.length === 0) return all
+
+    const pinnedById = new Map(pinned.map((item) => [item.id, item]))
+    const merged = all.map((item) => {
+      if (!pinnedById.has(item.id)) return item
+      pinnedById.delete(item.id)
+      return { ...item, isPinned: true }
+    })
+    pinnedById.forEach((item) => merged.push(item))
+    return merged
   }
 
   private async fetchConversationPage(page: number): Promise<ConversationInfo[]> {
@@ -1416,6 +1474,41 @@ export class QwenAiAdapter extends SiteAdapter {
     })
 
     return items
+  }
+
+  private async fetchPinnedConversations(cid?: string): Promise<ConversationInfo[]> {
+    const pinned: ConversationInfo[] = []
+    try {
+      const url = new URL("/api/v2/chats/pinned", window.location.origin)
+      const authorization = this.getQwenAuthorizationHeader()
+      const response = await fetch(url.toString(), {
+        method: "GET",
+        credentials: "include",
+        cache: "no-store",
+        headers: {
+          ...(authorization ? { Authorization: authorization } : {}),
+          Accept: "application/json, text/plain, */*",
+          "X-Request-Id": crypto.randomUUID(),
+          source: "web",
+        },
+      })
+
+      if (!response.ok) return pinned
+
+      const payload = (await response.json()) as QwenAiConversationApiResponse
+      if (payload.success === false || !Array.isArray(payload.data)) return pinned
+
+      payload.data.forEach((entry) => {
+        if (!entry || typeof entry !== "object") return
+        const projectId = (entry as Record<string, unknown>).project_id
+        if (typeof projectId === "string" && projectId.trim()) return
+        const info = this.normalizeConversationApiItem(entry, cid)
+        if (info) pinned.push({ ...info, isPinned: true })
+      })
+    } catch (error) {
+      console.warn("[QwenAiAdapter] Failed to fetch pinned conversations:", error)
+    }
+    return pinned
   }
 
   private normalizeConversationApiItem(entry: unknown, cid?: string): ConversationInfo | null {
@@ -1527,7 +1620,12 @@ export class QwenAiAdapter extends SiteAdapter {
     for (const list of lists) {
       for (const item of list) {
         const previous = merged.get(item.id)
-        merged.set(item.id, { ...previous, ...item })
+        const next = { ...previous, ...item }
+        // DOM 缺少可靠置顶标识时不能覆盖 API 已确认的置顶状态。
+        if (previous?.isPinned || item.isPinned) {
+          next.isPinned = true
+        }
+        merged.set(item.id, next)
       }
     }
     return Array.from(merged.values())

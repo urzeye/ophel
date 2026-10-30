@@ -217,6 +217,7 @@ export const BUILTIN_FEATURE_CAPABILITIES = {
   [SITE_IDS.QWENAI]: [
     "outline",
     "outline-user-queries",
+    "conversation-list",
     "export-basic",
     "model-lock",
     "generation-detect",
