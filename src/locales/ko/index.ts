@@ -176,16 +176,16 @@ export const ko = {
   required: "필수",
   permissionWebdavAccess: "고급 기능 액세스",
   permissionWebdavAccessDesc:
-    "모든 웹사이트에 대한 액세스. WebDAV 동기화, AI 이미지 워터마크 제거, 그리고 설치된 Site Pack이 사이트별 승인 없이 대상 사이트에서 실행되는 데 필요합니다.",
+    "Ophel이 사이트 간 리소스에 액세스할 수 있도록 합니다. WebDAV 동기화, AI 이미지 워터마크 제거, 대화의 이미지/첨부파일 내보내기, 사이트별 승인 없이 Site Pack 실행에 사용됩니다.",
 
   // Required permissions
   permissionStorage: "저장소",
   permissionStorageDesc: "확장 프로그램 설정, 프롬프트 및 대화 데이터를 저장하는 데 사용됩니다.",
   permissionNotifications: "알림",
-  permissionNotificationsDesc:
-    "선택 사항. AI 응답이 완료되면 데스크톱 알림을 보내는 데 사용됩니다.",
+  permissionNotificationsDesc: "AI 응답이 완료되면 데스크톱 알림을 보냅니다",
   permissionCookies: "쿠키 관리",
-  permissionCookiesDesc: "빠른 SessionKey 전환을 위해 Claude 사이트 쿠키를 관리합니다.",
+  permissionCookiesDesc:
+    "claude.ai의 Session Key 쿠키를 읽고 전환하여 Claude 계정 가져오기, 테스트, 빠른 전환을 지원합니다",
   permissionTabs: "탭",
   permissionTabsDesc: "선택 사항. 현재 탭 상태를 감지하고 세션을 관리하는 데 사용됩니다.",
   permissionDNR: "네트워크 요청 규칙",

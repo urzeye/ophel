@@ -1236,15 +1236,16 @@ export const zhTW = {
   // 可選權限
   permissionWebdavAccess: "進階功能權限",
   permissionWebdavAccessDesc:
-    "允許 Ophel 存取所有網站，用於 WebDAV 同步、移除 AI 圖片浮水印，以及讓適配包無需逐站點授權即可執行",
+    "允許 Ophel 跨站存取資源，用於 WebDAV 同步、AI 圖片浮水印移除、匯出對話中的圖片/附件，以及讓適配包無需逐站點授權即可執行",
 
   // 權限管理
   permissionStorage: "儲存",
   permissionStorageDesc: "儲存用戶設定和資料",
   permissionNotifications: "通知",
-  permissionNotificationsDesc: "顯示桌面通知",
+  permissionNotificationsDesc: "AI 回覆完成時傳送桌面通知",
   permissionCookies: "Cookie 管理",
-  permissionCookiesDesc: "管理 Claude 站點的 Cookie，用於快速切換 Session Key",
+  permissionCookiesDesc:
+    "讀取並切換 claude.ai 的 Session Key Cookie，用於匯入、測試和快速切換 Claude 帳號",
   permissionTabs: "標籤頁",
   permissionTabsDesc: "可選權限。用於檢測當前標籤頁狀態和管理對話。",
   permissionDNR: "網路請求規則",

@@ -180,15 +180,17 @@ export const es = {
   required: "Requerido",
   permissionWebdavAccess: "Acceso a Funciones Avanzadas",
   permissionWebdavAccessDesc:
-    "Acceso a todos los sitios. Necesario para WebDAV, quitar marcas de agua y ejecutar los Site Packs instalados en sus sitios de destino sin solicitudes por sitio.",
+    "Permitir que Ophel acceda a recursos de distintos sitios para la sincronización WebDAV, la eliminación de marcas de agua en imágenes de IA, la exportación de imágenes y archivos adjuntos de las conversaciones y la ejecución de Site Packs sin solicitudes por sitio.",
 
   // Required permissions
   permissionStorage: "Almacenamiento",
   permissionStorageDesc: "Para guardar ajustes, prompts y datos de conversación.",
   permissionNotifications: "Notificaciones",
-  permissionNotificationsDesc: "Opcional. Para avisar cuando la IA termine de responder.",
+  permissionNotificationsDesc:
+    "Enviar una notificación de escritorio cuando termine una respuesta de IA",
   permissionCookies: "Gestión de Cookies",
-  permissionCookiesDesc: "Gestionar cookies de Claude para cambio rápido de SessionKey.",
+  permissionCookiesDesc:
+    "Leer y cambiar la cookie Session Key de claude.ai para importar, probar y cambiar rápidamente entre cuentas de Claude",
   permissionTabs: "Pestañas",
   permissionTabsDesc: "Opcional. Para detectar estado de pestañas y gestionar sesiones.",
   permissionDNR: "Reglas de Red",

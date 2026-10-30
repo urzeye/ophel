@@ -178,15 +178,16 @@ export const ru = {
   required: "Обязательно",
   permissionWebdavAccess: "Доступ к расширенным функциям",
   permissionWebdavAccessDesc:
-    "Доступ ко всем сайтам. Нужен для WebDAV, удаления водяных знаков и работы установленных Site Pack на целевых сайтах без запросов по каждому сайту.",
+    "Разрешить Ophel доступ к ресурсам разных сайтов для синхронизации WebDAV, удаления водяных знаков с изображений ИИ, экспорта изображений и вложений из диалогов, а также запуска Site Pack без запросов для каждого сайта.",
 
   // Required permissions
   permissionStorage: "Хранилище",
   permissionStorageDesc: "Для сохранения настроек, промптов и истории чатов.",
   permissionNotifications: "Уведомления",
-  permissionNotificationsDesc: "Опционально. Для уведомлений о завершении ответа ИИ.",
+  permissionNotificationsDesc: "Отправлять уведомление на рабочий стол после завершения ответа ИИ",
   permissionCookies: "Управление Cookie",
-  permissionCookiesDesc: "Для быстрого переключения сессий (SessionKey) в Claude.",
+  permissionCookiesDesc:
+    "Читать и переключать cookie Session Key на claude.ai для импорта, проверки и быстрого переключения аккаунтов Claude",
   permissionTabs: "Вкладки",
   permissionTabsDesc: "Опционально. Для определения статуса вкладок и управления сессиями.",
   permissionDNR: "Правила сети",
