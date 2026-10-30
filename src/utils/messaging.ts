@@ -439,6 +439,13 @@ export function sendToBackground<T extends ExtensionMessage>(
 export const EVENT_MONITOR_INIT = "GH_MONITOR_INIT"
 export const EVENT_MONITOR_START = "GH_MONITOR_START"
 export const EVENT_MONITOR_COMPLETE = "GH_MONITOR_COMPLETE"
+// main world 消息监听就绪；isolated world 据此重发响应转发注册（两侧加载顺序无保证）
+export const EVENT_MONITOR_READY = "GH_MONITOR_READY"
+// 注册/注销响应转发规则，与生成检测（EVENT_MONITOR_INIT）互相独立
+export const EVENT_MONITOR_CAPTURE_REGISTER = "GH_MONITOR_CAPTURE_REGISTER"
+export const EVENT_MONITOR_CAPTURE_UNREGISTER = "GH_MONITOR_CAPTURE_UNREGISTER"
+// 命中转发规则的页面请求响应
+export const EVENT_MONITOR_RESPONSE = "GH_MONITOR_RESPONSE"
 // 适配器侧外部数据（如 DeepSeek 历史消息接口）就绪，请求大纲管理器刷新
 export const EVENT_OUTLINE_DATA_UPDATED = "OPHEL_OUTLINE_DATA_UPDATED"
 // 程序化跳转（去顶部/去底部/锚点）完成，请求大纲立即刷新对齐阅读位置，
@@ -463,6 +470,34 @@ export interface MonitorEventPayload {
   lastUrl?: string
   type?: string
   domCompletionRequired?: boolean
+}
+
+/**
+ * 页面请求响应转发规则：页面自己发出的、与页面同源且 method + pathname 都命中的请求，
+ * 在 2xx 完成后把响应体文本转发回 isolated world。只观察，不影响生成检测。
+ */
+export interface MonitorResponseCaptureRule {
+  /** 规则 id，由使用方保证唯一（建议 `{siteId}:{用途}`）；同 id 重复注册覆盖旧规则 */
+  id: string
+  /** HTTP 方法，大小写不敏感 */
+  method: string
+  /** 匹配 URL pathname（不含 query）的正则源码，如 "^/api/v2/chats/$" */
+  pathPattern: string
+}
+
+export interface MonitorCaptureUnregisterPayload {
+  id: string
+}
+
+export interface MonitorResponsePayload {
+  /** 命中的规则 id */
+  captureId: string
+  /** 请求的绝对 URL（含 query） */
+  url: string
+  status: number
+  /** 响应体文本；JSON 由使用方自行解析与校验 */
+  body: string
+  timestamp: number
 }
 
 export type GeminiMyStuffKind = "media" | "document"
