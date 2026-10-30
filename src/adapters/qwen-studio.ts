@@ -11,6 +11,7 @@ import {
   extractExportExtension,
   extractExportExtensionFromUrl,
   extractExportFilenameFromUrl,
+  createExportAssetCollector,
   formatExportFileAttachments,
   formatExportImageAttachments,
   formatExportImageMarkdownList,
@@ -69,6 +70,9 @@ const QWENAI_CONVERSATION_SNAPSHOT_TTL_MS = 30_000
 const QWENAI_CONVERSATION_SNAPSHOT_RETRY_MS = 30_000
 const QWENAI_FETCH_PAGE_LIMIT = 100
 const QWENAI_BOOTSTRAP_PAGE_LIMIT = 5
+// 单对话接口的 limit 按“轮次”计，100 轮约 200 条消息；更早历史用 cursor 向前翻页。
+const QWENAI_CHAT_API_PAGE_LIMIT = 100
+const QWENAI_CHAT_API_MAX_PAGES = 100
 
 interface QwenAiConversationApiResponse {
   success?: boolean
@@ -82,6 +86,66 @@ interface QwenAiSettingsUpdateResponse {
 
 interface QwenAiExportLifecycleState {
   shouldCloseThoughtPanel: boolean
+  usedApiExport: boolean
+}
+
+interface QwenAiChatApiFile {
+  name?: string
+  type?: string
+  file_type?: string
+  url?: string
+  size?: number
+}
+
+interface QwenAiChatApiContentPhase {
+  phase?: string
+  content?: string
+  extra?: {
+    summary_title?: { content?: string[] }
+    summary_thought?: { content?: string[] }
+    image_list?: Array<{ image?: string }>
+    tool_result?: Array<{ image?: string }>
+  } | null
+}
+
+interface QwenAiChatApiMessage {
+  id?: string
+  role?: string
+  content?: string
+  reasoning_content?: string
+  parentId?: string | null
+  files?: QwenAiChatApiFile[]
+  content_list?: QwenAiChatApiContentPhase[]
+  timestamp?: number
+}
+
+interface QwenAiChatApiPagination {
+  oldest_id?: string | null
+  has_more_older?: boolean
+  has_more_newer?: boolean
+  path_count?: number
+}
+
+interface QwenAiChatApiHistory {
+  messages?: Record<string, QwenAiChatApiMessage>
+  currentId?: string | null
+  currentResponseIds?: string[] | string | null
+  pagination?: QwenAiChatApiPagination | null
+}
+
+interface QwenAiChatApiChat {
+  id?: string
+  title?: string
+  history?: QwenAiChatApiHistory
+}
+
+interface QwenAiChatApiData extends QwenAiChatApiChat {
+  chat?: QwenAiChatApiChat
+}
+
+interface QwenAiChatApiResponse {
+  success?: boolean
+  data?: QwenAiChatApiData
 }
 
 interface QwenAiUserAttachment {
@@ -106,6 +170,8 @@ export class QwenAiAdapter extends SiteAdapter {
   private conversationSnapshotRetryAt = 0
   private conversationSnapshotPromise: Promise<ConversationInfo[]> | null = null
   private exportIncludeThoughtsOverride: boolean | null = null
+  private exportApiMessages: ExportMessage[] | null = null
+  private exportApiBundle: ExportBundle | null = null
   private exportThoughtBlocks = new WeakMap<Element, string[]>()
 
   afterPropertiesSet(
@@ -596,13 +662,38 @@ export class QwenAiAdapter extends SiteAdapter {
     context: ExportLifecycleContext,
   ): Promise<QwenAiExportLifecycleState> {
     this.exportIncludeThoughtsOverride = context.includeThoughts
+    this.exportApiMessages = null
+    this.exportApiBundle = null
     this.clearThoughtExportCache()
+
+    if (!this.isSharePage()) {
+      const conversationId = this.getSessionId()
+      if (conversationId && conversationId !== "default") {
+        const collector =
+          context.format === "markdown" && context.packaging === "zip"
+            ? createExportAssetCollector()
+            : undefined
+        const apiMessages = await this.collectQwenApiExportMessages(
+          conversationId,
+          context,
+          collector,
+        )
+        if (apiMessages) {
+          this.exportApiMessages = apiMessages
+          this.exportApiBundle = collector
+            ? { messages: apiMessages, assets: collector.assets }
+            : null
+          return { shouldCloseThoughtPanel: false, usedApiExport: true }
+        }
+      }
+    }
+
     await this.loadCompleteExportHistory()
     await this.prepareMermaidBlocksForExport()
 
     const panelWasOpen = this.getVisibleThoughtPanel() !== null
     if (!context.includeThoughts) {
-      return { shouldCloseThoughtPanel: false }
+      return { shouldCloseThoughtPanel: false, usedApiExport: false }
     }
 
     const assistantMessages = Array.from(
@@ -615,6 +706,7 @@ export class QwenAiAdapter extends SiteAdapter {
 
     return {
       shouldCloseThoughtPanel: !panelWasOpen && this.getVisibleThoughtPanel() !== null,
+      usedApiExport: false,
     }
   }
 
@@ -670,26 +762,339 @@ export class QwenAiAdapter extends SiteAdapter {
     _context: ExportLifecycleContext,
     state: unknown,
   ): Promise<void> {
+    const parsedState = this.parseThoughtExportState(state)
     try {
-      if (this.parseThoughtExportState(state)?.shouldCloseThoughtPanel) {
-        await this.closeThoughtPanelIfNeeded()
+      if (!parsedState?.usedApiExport) {
+        if (parsedState?.shouldCloseThoughtPanel) {
+          await this.closeThoughtPanelIfNeeded()
+        }
+        await this.restoreMermaidBlocksAfterExport()
       }
-      await this.restoreMermaidBlocksAfterExport()
     } finally {
+      this.exportApiMessages = null
+      this.exportApiBundle = null
       this.exportIncludeThoughtsOverride = null
       this.clearThoughtExportCache()
     }
   }
 
   async extractExportMessages(_context: ExportLifecycleContext): Promise<ExportMessage[] | null> {
+    if (this.exportApiMessages) return this.exportApiMessages
     const messages = this.extractQwenExportMessages()
     return messages.length > 0 ? messages : null
   }
 
   async extractExportBundle(_context: ExportLifecycleContext): Promise<ExportBundle | null> {
+    if (this.exportApiBundle) return this.exportApiBundle
     return this.createExportBundleFromMessages((collector) =>
       this.extractQwenExportMessages(collector),
     )
+  }
+
+  supportsExportByConversationId(): boolean {
+    return true
+  }
+
+  protected async fetchConversationExportMessagesById(
+    context: ExportLifecycleContext,
+    collector?: ExportAssetCollector,
+  ): Promise<ExportMessage[] | null> {
+    return this.collectQwenApiExportMessages(context.conversationId, context, collector)
+  }
+
+  /**
+   * 通过单对话接口导出完整主链。接口 limit 按轮次计，先取最新一段，
+   * 再沿 pagination.oldest_id 向前翻页；无法证明已到历史起点时返回 null。
+   */
+  private async collectQwenApiExportMessages(
+    conversationId: string,
+    context: ExportLifecycleContext,
+    collector?: ExportAssetCollector,
+  ): Promise<ExportMessage[] | null> {
+    if (!conversationId) return null
+
+    try {
+      const pages = await this.fetchQwenChatHistoryPages(conversationId)
+      if (!pages) return null
+
+      const messageMap = new Map<string, QwenAiChatApiMessage>()
+      let currentId: string | null | undefined
+
+      pages.forEach((history) => {
+        if (!currentId && history.currentId) currentId = history.currentId
+        Object.entries(history.messages || {}).forEach(([key, value]) => {
+          if (!value || typeof value !== "object") return
+          const id = typeof value.id === "string" && value.id.trim() ? value.id.trim() : key
+          messageMap.set(id, { ...value, id })
+        })
+      })
+
+      if (messageMap.size === 0) return null
+
+      const chain = this.buildQwenApiMessageChain(messageMap, currentId)
+      const messages: ExportMessage[] = []
+
+      for (const message of chain) {
+        const role = message.role
+        if (role !== "user" && role !== "assistant") continue
+
+        const content =
+          role === "user"
+            ? this.formatQwenApiUserMessage(message, collector)
+            : this.formatQwenApiAssistantMessage(message, context.includeThoughts, collector)
+        const normalized = content.trim()
+        if (normalized) messages.push({ role, content: normalized })
+      }
+
+      return messages.length > 0 ? messages : null
+    } catch (error) {
+      console.warn("[QwenAiAdapter] API export failed, falling back to DOM:", error)
+      return null
+    }
+  }
+
+  private async fetchQwenChatHistoryPages(
+    conversationId: string,
+  ): Promise<QwenAiChatApiHistory[] | null> {
+    const authorization = this.getQwenAuthorizationHeader()
+    const pages: QwenAiChatApiHistory[] = []
+    let cursor: string | undefined
+    let reachedHistoryStart = false
+
+    for (let page = 0; page < QWENAI_CHAT_API_MAX_PAGES; page += 1) {
+      const url = new URL(
+        `/api/v2/chats/${encodeURIComponent(conversationId)}`,
+        window.location.origin,
+      )
+      url.searchParams.set("direction", "up")
+      url.searchParams.set("limit", String(QWENAI_CHAT_API_PAGE_LIMIT))
+      if (cursor) url.searchParams.set("cursor", cursor)
+
+      const response = await fetch(url.toString(), {
+        method: "GET",
+        credentials: "include",
+        cache: "no-store",
+        headers: {
+          ...(authorization ? { Authorization: authorization } : {}),
+          Accept: "application/json, text/plain, */*",
+          "X-Request-Id": crypto.randomUUID(),
+          source: "web",
+        },
+      })
+
+      if (!response.ok) return null
+
+      const payload = (await response.json()) as QwenAiChatApiResponse
+      if (payload.success === false) return null
+
+      const chat = payload.data?.chat || payload.data
+      const history = chat?.history
+      if (!history?.messages || Array.isArray(history.messages)) return null
+      pages.push(history)
+
+      const pagination = history.pagination
+      if (!pagination?.has_more_older) {
+        reachedHistoryStart = true
+        break
+      }
+
+      const nextCursor = typeof pagination.oldest_id === "string" ? pagination.oldest_id.trim() : ""
+      if (!nextCursor || nextCursor === cursor) break
+      cursor = nextCursor
+    }
+
+    return reachedHistoryStart ? pages : null
+  }
+
+  private buildQwenApiMessageChain(
+    messages: Map<string, QwenAiChatApiMessage>,
+    currentId?: string | null,
+  ): QwenAiChatApiMessage[] {
+    const preferredLeaf =
+      (currentId && messages.has(currentId) ? currentId : "") ||
+      this.findNewestQwenApiLeafId(messages)
+    if (!preferredLeaf) return Array.from(messages.values())
+
+    const chain: QwenAiChatApiMessage[] = []
+    const seen = new Set<string>()
+    let cursor: string | null | undefined = preferredLeaf
+
+    while (cursor && messages.has(cursor) && !seen.has(cursor)) {
+      const message = messages.get(cursor)
+      if (!message) break
+      chain.push(message)
+      seen.add(cursor)
+      cursor = typeof message.parentId === "string" ? message.parentId : undefined
+    }
+
+    return chain.length > 0 ? chain.reverse() : Array.from(messages.values())
+  }
+
+  private findNewestQwenApiLeafId(messages: Map<string, QwenAiChatApiMessage>): string | undefined {
+    const parentIds = new Set<string>()
+    messages.forEach((message) => {
+      if (typeof message.parentId === "string" && message.parentId) {
+        parentIds.add(message.parentId)
+      }
+    })
+
+    return Array.from(messages.values())
+      .filter((message) => Boolean(message.id) && !parentIds.has(message.id || ""))
+      .sort((left, right) => (right.timestamp || 0) - (left.timestamp || 0))[0]?.id
+  }
+
+  private formatQwenApiUserMessage(
+    message: QwenAiChatApiMessage,
+    collector?: ExportAssetCollector,
+  ): string {
+    const body = typeof message.content === "string" ? message.content.trim() : ""
+    const attachments = this.mapQwenApiAttachments(message.files)
+    const images = attachments.filter((attachment) => attachment.kind === "image")
+    const files = attachments.filter((attachment) => attachment.kind === "file")
+    const imageMarkdown = this.formatQwenUserImageAttachments(images, collector)
+    const fileMarkdown = this.formatQwenUserFileAttachments(files, collector)
+    const fileBlock =
+      fileMarkdown.length > 0 ? `${t("exportAttachmentsLabel")}:\n${fileMarkdown.join("\n")}` : ""
+
+    return [imageMarkdown.join("\n\n"), fileBlock, body].filter(Boolean).join("\n\n")
+  }
+
+  private formatQwenApiAssistantMessage(
+    message: QwenAiChatApiMessage,
+    includeThoughts: boolean,
+    collector?: ExportAssetCollector,
+  ): string {
+    const blocks: string[] = []
+    const images: QwenAiAssistantImage[] = []
+    const seenImages = new Set<string>()
+    const contentList = Array.isArray(message.content_list) ? message.content_list : []
+
+    const addImage = (source: string) => {
+      const normalized = source.trim()
+      if (!normalized || seenImages.has(normalized)) return
+      seenImages.add(normalized)
+      images.push({
+        source: normalized,
+        alt: `generated image ${images.length + 1}`,
+      })
+    }
+
+    for (const phase of contentList) {
+      if (!phase || typeof phase !== "object") continue
+      const phaseName = typeof phase.phase === "string" ? phase.phase : ""
+
+      if (phaseName === "thinking_summary") {
+        if (!includeThoughts) continue
+        const thought = this.getQwenApiThoughtText(phase)
+        if (thought) {
+          blocks.push(this.formatAsThoughtBlockquote(thought, this.getQwenApiThoughtTitle(phase)))
+        }
+        continue
+      }
+
+      if (phaseName === "image_gen") {
+        if (typeof phase.content === "string") addImage(phase.content)
+        continue
+      }
+
+      if (phaseName === "image_gen_tool") {
+        this.getQwenApiPhaseImages(phase).forEach(addImage)
+        continue
+      }
+
+      // code_interpreter 是工具执行日志，最终结果通常在 answer 阶段；跳过避免污染正文。
+      if (phaseName === "code_interpreter") continue
+
+      const content = typeof phase.content === "string" ? phase.content.trim() : ""
+      if (content) blocks.push(content)
+    }
+
+    const plainContent = typeof message.content === "string" ? message.content.trim() : ""
+    if (plainContent && !blocks.includes(plainContent)) {
+      blocks.push(plainContent)
+    }
+
+    const reasoning =
+      includeThoughts && typeof message.reasoning_content === "string"
+        ? message.reasoning_content.trim()
+        : ""
+    if (reasoning && !blocks.some((block) => block.includes(reasoning))) {
+      blocks.unshift(this.formatAsThoughtBlockquote(reasoning))
+    }
+
+    const imageMarkdown = this.formatQwenAssistantImages(images, collector)
+    return [blocks.join("\n\n"), imageMarkdown.join("\n\n")].filter(Boolean).join("\n\n")
+  }
+
+  private getQwenApiThoughtText(phase: QwenAiChatApiContentPhase): string {
+    const contents = phase.extra?.summary_thought?.content
+    if (Array.isArray(contents)) {
+      const text = contents
+        .filter((item): item is string => typeof item === "string")
+        .join("\n\n")
+        .trim()
+      if (text) return text
+    }
+
+    return typeof phase.content === "string" ? phase.content.trim() : ""
+  }
+
+  private getQwenApiThoughtTitle(phase: QwenAiChatApiContentPhase): string {
+    const contents = phase.extra?.summary_title?.content
+    if (!Array.isArray(contents)) return ""
+    return contents
+      .filter((item): item is string => typeof item === "string")
+      .join(" ")
+      .trim()
+  }
+
+  private getQwenApiPhaseImages(phase: QwenAiChatApiContentPhase): string[] {
+    const candidates = [...(phase.extra?.image_list || []), ...(phase.extra?.tool_result || [])]
+    return candidates
+      .map((item) => (typeof item?.image === "string" ? item.image.trim() : ""))
+      .filter(Boolean)
+  }
+
+  private mapQwenApiAttachments(files?: QwenAiChatApiFile[]): QwenAiUserAttachment[] {
+    if (!Array.isArray(files)) return []
+
+    const attachments: QwenAiUserAttachment[] = []
+    const seen = new Set<string>()
+
+    files.forEach((file) => {
+      if (!file || typeof file !== "object") return
+
+      const source = typeof file.url === "string" ? file.url.trim() : ""
+      const name =
+        (typeof file.name === "string" ? file.name.trim() : "") ||
+        extractExportFilenameFromUrl(source) ||
+        "attachment"
+      const fileType = typeof file.file_type === "string" ? file.file_type.trim() : ""
+      const kind: QwenAiUserAttachment["kind"] =
+        file.type === "image" || fileType.toLowerCase().startsWith("image/") ? "image" : "file"
+      const type =
+        fileType || extractExportExtension(name) || (kind === "image" ? "image" : "") || ""
+      const key = `${kind}:${source || name}`
+      if (seen.has(key)) return
+      seen.add(key)
+
+      attachments.push({
+        kind,
+        name,
+        source,
+        type,
+        sizeLabel: this.formatQwenApiFileSize(file.size),
+      })
+    })
+
+    return attachments
+  }
+
+  private formatQwenApiFileSize(size?: number): string | undefined {
+    if (typeof size !== "number" || !Number.isFinite(size) || size <= 0) return undefined
+    if (size < 1024) return `${size} B`
+    if (size < 1024 * 1024) return `${Math.round(size / 1024)} KB`
+    return `${(size / 1024 / 1024).toFixed(1)} MB`
   }
 
   async toggleTheme(targetMode: "light" | "dark" | "system"): Promise<boolean> {
@@ -1852,6 +2257,7 @@ export class QwenAiAdapter extends SiteAdapter {
     const candidate = state as Partial<QwenAiExportLifecycleState>
     return {
       shouldCloseThoughtPanel: Boolean(candidate.shouldCloseThoughtPanel),
+      usedApiExport: Boolean(candidate.usedApiExport),
     }
   }
 
