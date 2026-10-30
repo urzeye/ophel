@@ -109,7 +109,7 @@ export interface QwenStudioSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const QWEN_STUDIO_CONFIG_VERSION = 5
+export const QWEN_STUDIO_CONFIG_VERSION = 3
 
 const createQwenStudioConfig = (): QwenStudioSiteConfig => {
   const sidebarRoot = "#sidebar"
@@ -165,8 +165,6 @@ const createQwenStudioConfig = (): QwenStudioSiteConfig => {
 
   return {
     capabilities: [...BUILTIN_FEATURE_CAPABILITIES[SITE_IDS.QWENAI]],
-    // 单对话接口可导出完整历史，导出时无需先滚动加载 DOM。
-    traits: { apiFirstExport: true },
     selectors: {
       textarea: [textarea, "textarea"],
       submitButton: [`${composerButton}:not([disabled])`],
