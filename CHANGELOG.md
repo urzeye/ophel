@@ -16,7 +16,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### ✨ Improvements
 
-- **Settings reorganized** — Once you pick a site in Site Settings, all of its settings are on one page; the settings menu goes from 10 entries to 8, with repeated descriptions removed and plainer wording. (#987, #988, #989, #996, #999)
+- **Settings reorganized** — Once you pick a site in Site Settings, all of its settings are on one page; the settings menu goes from 10 entries to 8, with repeated descriptions removed and plainer wording. (#987, #988, #989, #996, #999, #1006)
 - **Panel look and theme contrast** — The panel, settings and dialogs are restyled: low-contrast text in the preset themes is fixed, and hover hints now use the app's own tooltip. (#989, #991)
 - **Phone and tablet support** — On phones, the panel slides in from the side; on tablets, tap the edge handle to expand a docked panel. (#990)
 - **Conversation sync and prompt queue** — Conversation sync says which folder it syncs into; the prompt queue accepts prompts with variables, and the chained prompt editor can search prompts. (#1000, #1001)
