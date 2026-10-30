@@ -668,20 +668,6 @@ const PAGE_TAB_SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
     ],
   },
   {
-    settingId: "page-global-search",
-    title: "全局搜索",
-    keywords: [
-      "global search",
-      "search everywhere",
-      "search",
-      "全局搜索",
-      "搜索",
-      "全搜",
-      "双击 shift",
-      "模糊搜索",
-    ],
-  },
-  {
     settingId: "page-shortcuts",
     title: "快捷键",
     keywords: [
@@ -728,28 +714,12 @@ const PAGE_TAB_SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
       "数据管理",
       "数据与权限",
       "权限",
-      "权限管理",
       "导入导出",
       "云端同步",
       "还原",
       "WebDAV 备份",
       "webdav backup",
       "本地备份",
-    ],
-  },
-  {
-    settingId: "page-permissions",
-    title: "权限管理",
-    keywords: [
-      "permissions",
-      "auth",
-      "access",
-      "权限",
-      "权限管理",
-      "授权",
-      "通知权限",
-      "cookie",
-      "存储权限",
     ],
   },
   {
@@ -905,6 +875,20 @@ const SUB_TAB_SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
       "自动恢复",
     ],
   },
+  {
+    settingId: "subtab-features-global-search",
+    title: "全局搜索",
+    keywords: [
+      "global search",
+      "search everywhere",
+      "search",
+      "全局搜索",
+      "搜索",
+      "全搜",
+      "双击 shift",
+      "模糊搜索",
+    ],
+  },
   // 站点设置
   {
     settingId: "subtab-site-settings-gemini",
@@ -1013,6 +997,21 @@ const SUB_TAB_SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
       "webdav 备份",
       "云端备份",
       "webdav backup",
+    ],
+  },
+  {
+    settingId: "subtab-backup-permissions",
+    title: "权限管理",
+    keywords: [
+      "permissions",
+      "auth",
+      "access",
+      "权限",
+      "权限管理",
+      "授权",
+      "通知权限",
+      "cookie",
+      "存储权限",
     ],
   },
 ]
