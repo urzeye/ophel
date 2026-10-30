@@ -29,23 +29,32 @@ export const scrollWithinSettingsContent = (
   }
 
   const { block = "nearest", behavior = "smooth", margin = 12 } = options
+  const scrollerRect = scroller.getBoundingClientRect()
+  if (scroller.clientHeight <= 0 || scrollerRect.height <= 0) return
+
+  // 设置弹窗打开时带 scale 动画，getBoundingClientRect 返回缩放后的坐标，
+  // 而 scrollTop 使用布局像素。直接相减会让越靠下的目标滚动距离越短，这里先还原纵向比例。
+  const scaleY = scrollerRect.height / scroller.clientHeight
   // 吸顶条（如站点设置的站点选择器）会遮挡可视区顶部，定位时额外留出其高度
   const stickyHeader = scroller.querySelector<HTMLElement>("[data-settings-sticky]")
-  const stickyOffset = stickyHeader ? stickyHeader.getBoundingClientRect().height + 8 : 0
+  const stickyOffset = stickyHeader ? stickyHeader.offsetHeight + 8 : 0
   const effectiveMargin = margin + stickyOffset
   const targetRect = target.getBoundingClientRect()
-  const scrollerRect = scroller.getBoundingClientRect()
-  const topOverflow = scrollerRect.top + effectiveMargin - targetRect.top
+  const targetTop = (targetRect.top - scrollerRect.top) / scaleY
+  const targetHeight = targetRect.height / scaleY
+  const targetBottom = targetTop + targetHeight
+  const viewportHeight = scroller.clientHeight
+  const topOverflow = effectiveMargin - targetTop
 
   let delta: number
   if (block === "start") {
     delta = -topOverflow
   } else {
-    const bottomOverflow = targetRect.bottom - (scrollerRect.bottom - margin)
+    const bottomOverflow = targetBottom - (viewportHeight - margin)
     if (topOverflow <= 0 && bottomOverflow <= 0) return
     // 目标比可视区还高时优先顶对齐，否则按越界方向滚最小量
-    const viewportHeight = scrollerRect.height - effectiveMargin * 2
-    delta = topOverflow > 0 || targetRect.height > viewportHeight ? -topOverflow : bottomOverflow
+    const availableHeight = viewportHeight - effectiveMargin * 2
+    delta = topOverflow > 0 || targetHeight > availableHeight ? -topOverflow : bottomOverflow
   }
 
   scroller.scrollTo({ top: scroller.scrollTop + delta, behavior })
