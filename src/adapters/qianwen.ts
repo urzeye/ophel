@@ -123,7 +123,7 @@ export class QianwenAdapter extends SiteAdapter {
 
   isNewConversation(): boolean {
     const path = window.location.pathname.replace(/\/+$/, "") || "/"
-    return path === "/" || path === "/chat"
+    return path === "/" || path === "/chat" || path === "/chat/workbench"
   }
 
   isSharePage(): boolean {
