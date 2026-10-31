@@ -2201,7 +2201,7 @@ export class QwenAiAdapter extends SiteAdapter {
   private async fetchConversationPage(page: number): Promise<ConversationInfo[]> {
     const url = new URL(QWENAI_CHAT_LIST_PATH, window.location.origin)
     url.searchParams.set("page", String(page))
-    url.searchParams.set("exclude_project", "true")
+    url.searchParams.set("exclude_project", "false")
     const authorization = this.getQwenAuthorizationHeader()
 
     const response = await fetch(url.toString(), {
