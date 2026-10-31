@@ -3,7 +3,7 @@
  *
  * 说明：
  * - 与国内版 qianwen.com 完全独立，避免选择器/路由相互污染
- * - 对话列表优先走官方接口 /api/v2/chats/，DOM 只做补充
+ * - 对话列表优先走官方接口 /api/v2/chats/all，DOM 只做补充
  * - 输入框、导出、主题、模型选择器均基于 qwen.html 快照中的稳定类名和结构锚点
  */
 import { SITE_IDS } from "~constants"
@@ -90,12 +90,12 @@ const QWENAI_ATTACHMENT_SOURCE_ATTRS = [
 ]
 const QWENAI_CONVERSATION_SNAPSHOT_TTL_MS = 30_000
 const QWENAI_CONVERSATION_SNAPSHOT_RETRY_MS = 30_000
-const QWENAI_CHAT_LIST_PATH = "/api/v2/chats/"
+const QWENAI_CHAT_LIST_PATH = "/api/v2/chats/all"
 // 新对话要等回复完成才有正式标题，页面会自己轮询列表接口直到拿到；复用它的响应，不另行轮询
 const QWENAI_CHAT_LIST_CAPTURE: MonitorResponseCaptureRule = {
   id: `${SITE_IDS.QWENAI}:chat-list`,
   method: "GET",
-  // 与 QWENAI_CHAT_LIST_PATH 同一接口，末尾斜杠可有可无
+  // 页面自己请求的是 /api/v2/chats/，末尾斜杠可有可无
   pathPattern: "^/api/v2/chats/?$",
 }
 const QWENAI_FETCH_PAGE_LIMIT = 100
@@ -2201,7 +2201,7 @@ export class QwenAiAdapter extends SiteAdapter {
   private async fetchConversationPage(page: number): Promise<ConversationInfo[]> {
     const url = new URL(QWENAI_CHAT_LIST_PATH, window.location.origin)
     url.searchParams.set("page", String(page))
-    url.searchParams.set("exclude_project", "true")
+    url.searchParams.set("exclude_project", "false")
     const authorization = this.getQwenAuthorizationHeader()
 
     const response = await fetch(url.toString(), {
