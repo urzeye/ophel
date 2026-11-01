@@ -553,7 +553,8 @@ const UsageHistoryChart: React.FC<{ siteId: string }> = ({ siteId }) => {
                 border: `1px solid ${chartColors.activeBorder}`,
                 boxShadow: chartColors.shadow,
                 pointerEvents: "none",
-                zIndex: 5,
+                // 与共享 Tooltip 一致，用最大层级逃出设置弹窗的堆叠上下文
+                zIndex: 2147483647,
               }}>
               <div style={{ fontSize: "12px", fontWeight: 700, marginBottom: "8px" }}>
                 {formatBucketTime(hoveredBucket)}
