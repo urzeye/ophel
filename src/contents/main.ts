@@ -28,6 +28,7 @@ import {
 } from "~core/modules-init"
 import { APP_DISPLAY_NAME } from "~utils/config"
 import { INTER_LOCAL_FONT_FACE, getPlatformFontFamily } from "~utils/font"
+import { initI18n } from "~utils/i18n"
 import { EVENT_PAGE_URL_CHANGE } from "~utils/messaging"
 import { useBookmarkStore } from "~stores/bookmarks-store"
 import { useClaudeSessionKeysStore } from "~stores/claude-sessionkeys-store"
@@ -698,6 +699,9 @@ function initializeOphel() {
 }
 
 async function bootstrapOphel() {
+  // 语言资源需先于核心模块就绪：会话管理器依赖全语言「未命名会话」
+  // 词表做标题识别，store 播种/归一也依赖本地化文案
+  await initI18n()
   await initAdapterRegistry()
   registerBackgroundMessageListener()
   initializeOphel()

@@ -6,6 +6,7 @@
 
 import { t } from "~utils/i18n"
 
+import { SITE_IDS } from "~constants"
 import type {
   FetchOptions,
   FetchResponse,
@@ -13,6 +14,7 @@ import type {
   Platform,
   PlatformCapability,
 } from "../types"
+import type { AIStudioModelInfo, AIStudioModelsResponse } from "~utils/messaging"
 import {
   getKatexStylesText as getUserscriptKatexStylesText,
   renderKatexToMathML,
@@ -53,6 +55,18 @@ declare function GM_notification(details: {
   silent?: boolean
   onclick?: () => void
 }): void
+
+type AIStudioModelListAdapter = {
+  getSiteId(): string
+  getModelList(): Promise<AIStudioModelInfo[]>
+}
+
+function hasAIStudioModelList(adapter: unknown): adapter is AIStudioModelListAdapter {
+  if (!adapter || typeof adapter !== "object") return false
+
+  const candidate = adapter as Partial<AIStudioModelListAdapter>
+  return typeof candidate.getSiteId === "function" && typeof candidate.getModelList === "function"
+}
 
 /**
  * 油猴脚本平台实现
@@ -375,5 +389,23 @@ export const platform: Platform = {
     } catch (err) {
       return { success: false, error: (err as Error).message }
     }
+  },
+
+  async getAIStudioModels(): Promise<AIStudioModelsResponse> {
+    // 油猴无 background 代理：仅在当前页面即 AI Studio 时，
+    // 直接通过页面内适配器读取模型列表
+    if (window.location.hostname !== "aistudio.google.com") {
+      return { success: false, error: "NO_AISTUDIO_TAB" }
+    }
+
+    const { getAdapter } = await import("~adapters")
+    const adapter = getAdapter()
+
+    if (!hasAIStudioModelList(adapter) || adapter.getSiteId() !== SITE_IDS.AISTUDIO) {
+      return { success: false, error: "NOT_AISTUDIO" }
+    }
+
+    const models = await adapter.getModelList()
+    return { success: true, models }
   },
 }

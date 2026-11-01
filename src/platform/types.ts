@@ -10,6 +10,7 @@ import type {
   SitePackOriginReferenceEntry,
 } from "~core/site-pack-origin-references"
 import type { SitePackOriginBinding } from "~core/site-pack-origin-bindings"
+import type { AIStudioModelsResponse } from "~utils/messaging"
 
 /**
  * 存储接口
@@ -232,6 +233,13 @@ export interface Platform {
    * 在已保存的 Keys 列表中循环切换（Pro 优先）
    */
   switchNextClaudeKey(): Promise<{ success: boolean; keyName?: string; error?: string }>
+
+  /**
+   * 获取 AI Studio 可用模型列表（模型锁定设置用）。
+   * 扩展经 background 转发到已打开的 AI Studio 标签页；
+   * 油猴在当前页面（需为 aistudio.google.com）内直接读取适配器。
+   */
+  getAIStudioModels(): Promise<AIStudioModelsResponse>
 }
 
 /**

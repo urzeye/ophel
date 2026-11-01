@@ -42,7 +42,7 @@ import { platform } from "~platform"
 import { useSettingsStore } from "~stores/settings-store"
 import { GITHUB_REPO_URL, getDonateChannels } from "~utils/donate-channels"
 import { getStoreInfo } from "~utils/getStoreInfo"
-import { getCurrentLang, setLanguage, t } from "~utils/i18n"
+import { getCurrentLang, initI18n, setLanguage, t } from "~utils/i18n"
 import { MSG_START_NEW_CONVERSATION } from "~utils/messaging"
 import { version } from "../package.json"
 
@@ -184,7 +184,8 @@ function IndexPopup() {
         console.error("Failed to load language setting:", e)
         setLanguage("auto")
       }
-      setLanguageReady(true)
+      // 等语言资源加载完成后再放行首帧渲染，避免非英语用户看到英文闪帧
+      void initI18n().then(() => setLanguageReady(true))
     })
 
     // Load recent prompts from storage

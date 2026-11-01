@@ -15,6 +15,7 @@ import {
   MSG_CHECK_REMOTE_CONFIG,
   MSG_ENSURE_SITE_PACK_BINDING_ORIGIN,
   MSG_ENSURE_SITE_PACK_ORIGINS,
+  MSG_GET_AISTUDIO_MODELS,
   MSG_GET_REMOTE_CONFIG_STATE,
   MSG_IGNORE_REMOTE_CONFIG_PATCH,
   MSG_CLEAR_REMOTE_CONFIG_CACHE,
@@ -244,5 +245,9 @@ export const platform: Platform = {
 
   async switchNextClaudeKey() {
     return chrome.runtime.sendMessage({ type: "SWITCH_NEXT_CLAUDE_KEY" })
+  },
+
+  async getAIStudioModels() {
+    return sendToBackground({ type: MSG_GET_AISTUDIO_MODELS })
   },
 }

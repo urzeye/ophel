@@ -199,3 +199,11 @@ const LOCALE_MAP: Record<UserscriptLocale, string> = {
 export function getCurrentLocale(): string {
   return LOCALE_MAP[currentLang] ?? "en"
 }
+
+/**
+ * 与扩展端 ~utils/i18n 的 initI18n 契约对齐。
+ * 油猴实现经 GM_getResourceText 同步按需加载，无需异步初始化。
+ */
+export function initI18n(): Promise<void> {
+  return Promise.resolve()
+}

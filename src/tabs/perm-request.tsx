@@ -11,7 +11,7 @@ import { isSiteMatchPatternOriginPattern } from "~adapters/declarative/match-pat
 import { CheckIcon, ClearIcon, ShieldCheckIcon } from "~components/icons"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
 import { getPlatformFontFamily } from "~utils/font"
-import { setLanguage, t } from "~utils/i18n"
+import { initI18n, setLanguage, t } from "~utils/i18n"
 
 import "~styles/settings.css"
 
@@ -94,11 +94,19 @@ const PermissionRequestPage: React.FC = () => {
   // 初始化语言
   useEffect(() => {
     if (isHydrated) {
-      if (settings?.language) {
-        setLanguage(settings.language)
+      let cancelled = false
+      // 等语言资源加载完成后再标记就绪，避免非英语用户看到英文闪帧
+      void initI18n().then(() => {
+        if (cancelled) return
+        if (settings?.language) {
+          setLanguage(settings.language)
+        }
+        // 语言设置完成后标记为就绪，触发重渲染
+        setLangReady(true)
+      })
+      return () => {
+        cancelled = true
       }
-      // 语言设置完成后标记为就绪，触发重渲染
-      setLangReady(true)
     }
   }, [isHydrated, settings?.language])
 

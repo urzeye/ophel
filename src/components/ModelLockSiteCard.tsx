@@ -7,48 +7,9 @@ import { platform } from "~platform"
 import { useSettingsStore } from "~stores/settings-store"
 import { SettingCard, SettingRow } from "~tabs/options/components"
 import { t } from "~utils/i18n"
-import {
-  MSG_GET_AISTUDIO_MODELS,
-  sendToBackground,
-  type AIStudioModelInfo,
-  type AIStudioModelsResponse,
-} from "~utils/messaging"
+import type { AIStudioModelInfo } from "~utils/messaging"
 import type { Settings } from "~utils/storage"
 import { showToast, showToastThrottled } from "~utils/toast"
-
-type AIStudioModelListAdapter = {
-  getSiteId(): string
-  getModelList(): Promise<AIStudioModelInfo[]>
-}
-
-function hasAIStudioModelList(adapter: unknown): adapter is AIStudioModelListAdapter {
-  if (!adapter || typeof adapter !== "object") return false
-
-  const candidate = adapter as Partial<AIStudioModelListAdapter>
-  return typeof candidate.getSiteId === "function" && typeof candidate.getModelList === "function"
-}
-
-async function fetchAIStudioModels(): Promise<AIStudioModelsResponse> {
-  if (platform.type === "extension") {
-    return sendToBackground({
-      type: MSG_GET_AISTUDIO_MODELS,
-    })
-  }
-
-  if (window.location.hostname !== "aistudio.google.com") {
-    return { success: false, error: "NO_AISTUDIO_TAB" }
-  }
-
-  const { getAdapter } = await import("~adapters")
-  const adapter = getAdapter()
-
-  if (!hasAIStudioModelList(adapter) || adapter.getSiteId() !== SITE_IDS.AISTUDIO) {
-    return { success: false, error: "NOT_AISTUDIO" }
-  }
-
-  const models = await adapter.getModelList()
-  return { success: true, models }
-}
 
 const ModelLockRow: React.FC<{
   siteKey: string
@@ -150,7 +111,7 @@ const AIStudioModelLockRow: React.FC<{
   const handleRefresh = async () => {
     setIsLoading(true)
     try {
-      const response = await fetchAIStudioModels()
+      const response = await platform.getAIStudioModels()
 
       if (response.success && response.models) {
         setModelList(response.models)

@@ -3,6 +3,7 @@ import { createJSONStorage, persist } from "zustand/middleware"
 
 import type { PromptChain } from "~core/prompt-action-types"
 import { DEFAULT_PROMPT_CHAINS_VERSION, getDefaultPromptChains } from "~constants"
+import { initI18n } from "~utils/i18n"
 import { sanitizeSvgIcon } from "~utils/svg-sanitizer"
 
 import { chromeStorageAdapter } from "./chrome-adapter"
@@ -46,11 +47,21 @@ const mergeDefaultChains = (chains: PromptChain[], refreshDefaults = false): Pro
 
 let _completeHydration: (() => void) | null = null
 
+// 记录水合读到的持久化快照：默认 Chain 的安装/刷新依赖完整语言资源
+// （getDefaultPromptChains -> t()），推迟到 initI18n 就绪后执行
+let didRehydrateFromStorage = false
+let rehydratedChainsSnapshot: {
+  chains?: PromptChain[]
+  defaultChainsVersion?: number
+} | null = null
+
 export const usePromptChainsStore = create<PromptChainsState>()(
   persist(
     (set, get) => (
       (_completeHydration = () => set({ _hasHydrated: true })),
       {
+        // 初始为兜底语言（en）的默认 Chain（模块加载时语言资源可能尚未就绪）；
+        // 需要本地化文案的安装/刷新在水合完成后执行，见 onRehydrateStorage
         chains: getDefaultPromptChains().map(normalizeChain),
         defaultChainsVersion: DEFAULT_PROMPT_CHAINS_VERSION,
         _hasHydrated: false,
@@ -136,21 +147,36 @@ export const usePromptChainsStore = create<PromptChainsState>()(
         const persisted = persistedState as
           | { chains?: PromptChain[]; defaultChainsVersion?: number }
           | undefined
+        // zustand persist 无存储数据时也会调用 merge（persistedState 为 undefined），
+        // 只有 persistedState 非空才算命中历史数据
+        didRehydrateFromStorage = persistedState != null
+        rehydratedChainsSnapshot = persisted ?? null
         const persistedChains = persisted?.chains
         const chains = Array.isArray(persistedChains)
           ? persistedChains.map(normalizeChain)
           : currentState.chains
-        const shouldInstallDefaults =
-          !persisted || persisted.defaultChainsVersion !== DEFAULT_PROMPT_CHAINS_VERSION
 
         return {
           ...currentState,
-          chains: shouldInstallDefaults ? mergeDefaultChains(chains, true) : chains,
-          defaultChainsVersion: DEFAULT_PROMPT_CHAINS_VERSION,
+          chains,
+          defaultChainsVersion: persisted?.defaultChainsVersion ?? 0,
         }
       },
       onRehydrateStorage: () => () => {
-        _completeHydration?.()
+        // 默认 Chain 的安装/版本刷新需要本地化文案，等语言资源就绪后执行，
+        // 避免把英文兜底文案写进用户数据
+        void initI18n().then(() => {
+          const shouldInstallDefaults =
+            !didRehydrateFromStorage ||
+            rehydratedChainsSnapshot?.defaultChainsVersion !== DEFAULT_PROMPT_CHAINS_VERSION
+          if (shouldInstallDefaults) {
+            usePromptChainsStore.setState((state) => ({
+              chains: mergeDefaultChains(state.chains, true),
+              defaultChainsVersion: DEFAULT_PROMPT_CHAINS_VERSION,
+            }))
+          }
+          _completeHydration?.()
+        })
       },
     },
   ),

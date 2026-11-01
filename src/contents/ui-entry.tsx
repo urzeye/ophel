@@ -11,6 +11,7 @@ import { App } from "~components/App"
 import { startPageUrlChangeBroadcaster } from "~core/modules-init"
 import { useSettingsStore } from "~stores/settings-store"
 import { applyOphelPlatformFontClass } from "~utils/font"
+import { initI18n } from "~utils/i18n"
 import { matchesHiddenPath } from "~utils/hidden-paths"
 import { EVENT_PAGE_URL_CHANGE } from "~utils/messaging"
 
@@ -163,7 +164,8 @@ const PlasmoApp = () => {
 
   React.useEffect(() => {
     let mounted = true
-    void registryReady()
+    // 语言资源与适配器注册表并行加载，两者就绪后才允许首帧渲染
+    void Promise.all([registryReady(), initI18n()])
       .then(() => {
         if (mounted) {
           setIsRegistryReady(true)
