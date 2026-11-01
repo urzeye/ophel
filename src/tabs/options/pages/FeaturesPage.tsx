@@ -170,7 +170,9 @@ const UsageHistoryChart: React.FC<{ siteId: string }> = ({ siteId }) => {
   }, [hoveredIndex])
 
   const values = buckets.map((bucket) => getUsageMetricValue(bucket, metric))
-  const maxValue = Math.max(1, ...values)
+  // maxValue 用于摘要展示；scaleMaxValue 只避免全零数据时除以零，不对外显示
+  const maxValue = values.length > 0 ? Math.max(...values) : 0
+  const scaleMaxValue = Math.max(1, maxValue)
   const latestValue = values[values.length - 1] ?? 0
   const metricLabel =
     metric === "requestTokens"
@@ -200,7 +202,7 @@ const UsageHistoryChart: React.FC<{ siteId: string }> = ({ siteId }) => {
   const points = buckets.map((bucket, index) => {
     const x = padding.left + stepX * index
     const value = getUsageMetricValue(bucket, metric)
-    const ratio = value / maxValue
+    const ratio = value / scaleMaxValue
     const y = padding.top + innerHeight - ratio * innerHeight
     return { x, y, value, label: bucket.label }
   })
@@ -336,7 +338,7 @@ const UsageHistoryChart: React.FC<{ siteId: string }> = ({ siteId }) => {
           </div>
         </div>
         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "flex-start" }}>
-          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+          <div className="settings-segmented">
             {(
               [
                 ["hour", t("usageMonitorChartHour")],
@@ -344,34 +346,39 @@ const UsageHistoryChart: React.FC<{ siteId: string }> = ({ siteId }) => {
                 ["month", t("usageMonitorChartMonth")],
               ] as Array<[UsageHistoryGranularity, string]>
             ).map(([value, label]) => (
-              <Button
+              <button
+                type="button"
                 key={value}
-                size="sm"
-                variant={granularity === value ? "primary" : "secondary"}
+                className="settings-segmented-item"
+                aria-pressed={granularity === value}
                 onClick={() => setGranularity(value)}>
                 {label}
-              </Button>
+              </button>
             ))}
           </div>
-          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-            {(
-              [
-                ["count", t("usageMonitorChartMetricCount")],
-                ["requestTokens", t("usageMonitorChartMetricRequest")],
-                ["roundTripTokens", t("usageMonitorChartMetricRoundTrip")],
-                ["loadedConversationTokens", t("usageMonitorChartMetricConversation")],
-                ["loadedOutputTokens", t("usageMonitorChartMetricOutput")],
-              ] as Array<[UsageHistoryMetric, string]>
-            ).map(([value, label]) => (
-              <Button
-                key={value}
-                size="sm"
-                variant={metric === value ? "primary" : "secondary"}
-                title={value === "roundTripTokens" ? t("usageMonitorRoundTripDesc") : undefined}
-                onClick={() => setMetric(value)}>
-                {label}
-              </Button>
-            ))}
+          {/* 指标项较多，窄窗口下允许横向滚动而不是折行 */}
+          <div style={{ maxWidth: "100%", overflowX: "auto", scrollbarWidth: "none" }}>
+            <div className="settings-segmented">
+              {(
+                [
+                  ["count", t("usageMonitorChartMetricCount")],
+                  ["requestTokens", t("usageMonitorChartMetricRequest")],
+                  ["roundTripTokens", t("usageMonitorChartMetricRoundTrip")],
+                  ["loadedConversationTokens", t("usageMonitorChartMetricConversation")],
+                  ["loadedOutputTokens", t("usageMonitorChartMetricOutput")],
+                ] as Array<[UsageHistoryMetric, string]>
+              ).map(([value, label]) => (
+                <button
+                  type="button"
+                  key={value}
+                  className="settings-segmented-item"
+                  aria-pressed={metric === value}
+                  title={value === "roundTripTokens" ? t("usageMonitorRoundTripDesc") : undefined}
+                  onClick={() => setMetric(value)}>
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -559,7 +566,8 @@ const UsageHistoryChart: React.FC<{ siteId: string }> = ({ siteId }) => {
               <div style={{ fontSize: "12px", fontWeight: 700, marginBottom: "8px" }}>
                 {formatBucketTime(hoveredBucket)}
               </div>
-              {hoveredDelta !== null && (
+              {/* 差值为 0 时不展示，避免零数据下满屏 "+0 较上一时段" */}
+              {hoveredDelta !== null && hoveredDelta !== 0 && (
                 <div
                   style={{
                     fontSize: "11px",
@@ -579,36 +587,35 @@ const UsageHistoryChart: React.FC<{ siteId: string }> = ({ siteId }) => {
                   gap: "6px 10px",
                   fontSize: "12px",
                 }}>
-                <span style={{ color: chartColors.axis }}>{t("usageMonitorChartMetricCount")}</span>
-                <strong>{hoveredBucket.count}</strong>
-                <span style={{ color: chartColors.axis }}>
-                  {t("usageMonitorChartMetricRequest")}
-                </span>
-                <strong>{hoveredBucket.requestTokens}</strong>
-                <span style={{ color: chartColors.axis }}>
-                  {t("usageMonitorChartMetricRoundTrip")}
-                </span>
-                <strong>{hoveredBucket.roundTripTokens}</strong>
-                <span style={{ color: chartColors.axis }}>
-                  {t("usageMonitorChartMetricConversation")}
-                </span>
-                <strong>{hoveredBucket.loadedConversationTokens}</strong>
-                <span style={{ color: chartColors.axis }}>
-                  {t("usageMonitorChartMetricOutput")}
-                </span>
-                <strong>{hoveredBucket.loadedOutputTokens}</strong>
-                <span style={{ color: chartColors.axis }}>
-                  {t("usageMonitorChartMaxConversation")}
-                </span>
-                <strong>{hoveredBucket.maxLoadedConversationTokens}</strong>
-                <span style={{ color: chartColors.axis }}>{t("usageMonitorChartMaxRequest")}</span>
-                <strong>{hoveredBucket.maxRequestTokens}</strong>
-                <span style={{ color: chartColors.axis }}>
-                  {t("usageMonitorChartMaxRoundTrip")}
-                </span>
-                <strong>{hoveredBucket.maxRoundTripTokens}</strong>
-                <span style={{ color: chartColors.axis }}>{t("usageMonitorChartMaxOutput")}</span>
-                <strong>{hoveredBucket.maxLoadedOutputTokens}</strong>
+                {/* 零值指标不展示，避免 9 行全零的信息噪音；全零时只保留次数行 */}
+                {(() => {
+                  const rows: Array<[string, number]> = [
+                    [t("usageMonitorChartMetricCount"), hoveredBucket.count],
+                    [t("usageMonitorChartMetricRequest"), hoveredBucket.requestTokens],
+                    [t("usageMonitorChartMetricRoundTrip"), hoveredBucket.roundTripTokens],
+                    [
+                      t("usageMonitorChartMetricConversation"),
+                      hoveredBucket.loadedConversationTokens,
+                    ],
+                    [t("usageMonitorChartMetricOutput"), hoveredBucket.loadedOutputTokens],
+                    [
+                      t("usageMonitorChartMaxConversation"),
+                      hoveredBucket.maxLoadedConversationTokens,
+                    ],
+                    [t("usageMonitorChartMaxRequest"), hoveredBucket.maxRequestTokens],
+                    [t("usageMonitorChartMaxRoundTrip"), hoveredBucket.maxRoundTripTokens],
+                    [t("usageMonitorChartMaxOutput"), hoveredBucket.maxLoadedOutputTokens],
+                  ]
+                  const nonZeroRows = rows.filter(([, value]) => value > 0)
+                  return (nonZeroRows.length > 0 ? nonZeroRows : [rows[0]]).map(
+                    ([label, value]) => (
+                      <React.Fragment key={label}>
+                        <span style={{ color: chartColors.axis }}>{label}</span>
+                        <strong>{value}</strong>
+                      </React.Fragment>
+                    ),
+                  )
+                })()}
               </div>
             </div>,
             portalContainer,
