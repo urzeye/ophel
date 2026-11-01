@@ -8,6 +8,10 @@
 
 ## [Unreleased]
 
+---
+
+## [1.3.0][1.3.0] - 2026-11-01
+
 ### 🚀 新增功能
 
 - **在指定页面隐藏 Ophel** — 站点设置新增「在指定页面隐藏 Ophel」，按路径规则隐藏面板和快捷按钮，不用再为个别页面停用整个站点。 (#995, #998)
@@ -1657,6 +1661,7 @@
 
 ---
 
+[1.3.0]: https://github.com/urzeye/ophel/releases/tag/v1.3.0
 [1.2.13]: https://github.com/urzeye/ophel/releases/tag/v1.2.13
 [1.2.12]: https://github.com/urzeye/ophel/releases/tag/v1.2.12
 [1.2.11]: https://github.com/urzeye/ophel/releases/tag/v1.2.11

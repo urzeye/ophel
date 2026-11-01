@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+---
+
+## [1.3.0][1.3.0] - 2026-11-01
+
 ### 🚀 New Features
 
 - **Hide Ophel on specific pages** — Site Settings can now hide the panel and quick buttons on pages that match a path rule, so you no longer have to disable a whole site for a few pages. (#995, #998)
@@ -1656,6 +1660,7 @@ This is the first official release of Ophel, providing comprehensive enhancement
 
 ---
 
+[1.3.0]: https://github.com/urzeye/ophel/releases/tag/v1.3.0
 [1.2.13]: https://github.com/urzeye/ophel/releases/tag/v1.2.13
 [1.2.12]: https://github.com/urzeye/ophel/releases/tag/v1.2.12
 [1.2.11]: https://github.com/urzeye/ophel/releases/tag/v1.2.11
