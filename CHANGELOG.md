@@ -30,6 +30,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **Desktop notifications not showing on Firefox** — Fixed an issue on Firefox-based browsers where desktop notifications did not appear when AI replies finished. (#1003, #1004)
 - **No notifications with Auto Rename Tab off** — Fixed an issue where desktop notifications and the notification sound did not fire when AI replies finished with Auto Rename Tab turned off; switching chats also no longer changes the tab title in that case. (#1012)
 - **Export error on new chat pages** — Fixed an issue where exporting from a new chat page showed "Export failed"; it now shows "Please open the chat first". (#1013)
+- **Advanced Model Usage Estimate misplaced** — Fixed an issue on Gemini, AI Studio and Doubao where the usage estimate panel was squeezed to the right of the input box with vertical text; it now sits above the input box again. (#986)
 
 ---
 

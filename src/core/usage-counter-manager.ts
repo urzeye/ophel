@@ -275,6 +275,12 @@ export class UsageCounterManager {
     if (!target?.parentElement) return false
     this.ensureStylesForTarget(target)
 
+    // 站点输入区改版为横向 flex 后，slot 直接作为 target 的兄弟节点会被挤压成竖条。
+    // 沿父链向上爬出横向容器，保证面板始终纵向堆叠在输入区上方。
+    const mountPoint = this.resolveVerticalMountPoint(target)
+    const mountParent = mountPoint.parentElement
+    if (!mountParent) return false
+
     if (!this.root) {
       this.root = document.createElement("div")
       this.root.className = ROOT_CLASS
@@ -290,14 +296,10 @@ export class UsageCounterManager {
       this.activeAnchor !== target ||
       !this.root.isConnected ||
       !this.slot.isConnected ||
-      this.slot.parentElement !== target.parentElement ||
-      this.slot.nextSibling !== target
+      this.slot.parentElement !== mountParent ||
+      this.slot.nextSibling !== mountPoint
     if (changed) {
-      if (target.parentElement && this.slot.parentElement !== target.parentElement) {
-        target.parentElement.insertBefore(this.slot, target)
-      } else if (target.parentElement && this.slot.nextSibling !== target) {
-        target.parentElement.insertBefore(this.slot, target)
-      }
+      mountParent.insertBefore(this.slot, mountPoint)
 
       if (this.root.parentElement !== this.slot) {
         this.slot.appendChild(this.root)
@@ -308,6 +310,18 @@ export class UsageCounterManager {
     this.root.dataset.theme = this.detectThemeMode()
     this.applySlotLayout(target)
     return changed
+  }
+
+  private resolveVerticalMountPoint(target: HTMLElement): HTMLElement {
+    let current = target
+    while (current.parentElement && current.parentElement !== document.body) {
+      const parentStyle = window.getComputedStyle(current.parentElement)
+      const isHorizontalFlex =
+        parentStyle.display.includes("flex") && parentStyle.flexDirection.startsWith("row")
+      if (!isHorizontalFlex) break
+      current = current.parentElement
+    }
+    return current
   }
 
   private removeRoot() {

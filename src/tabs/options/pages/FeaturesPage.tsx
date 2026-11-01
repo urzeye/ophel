@@ -4,9 +4,11 @@
  * 使用顶部 Tab 切换
  */
 import React, { useCallback, useEffect, useMemo, useState } from "react"
+import { createPortal } from "react-dom"
 
 import { FeaturesIcon } from "~components/icons"
 import { Button, NumberInput, PlaceholderInput, SelectDropdown, Slider } from "~components/ui"
+import { resolveTooltipPortalContainer } from "~components/ui/Tooltip"
 import { FEATURES_TAB_IDS, NAV_IDS, NOTIFICATION_SOUND_PRESETS } from "~constants"
 import {
   DEFAULT_KEYBINDINGS,
@@ -104,6 +106,9 @@ const UsageHistoryChart: React.FC<{ siteId: string }> = ({ siteId }) => {
   const [loading, setLoading] = useState(true)
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
   const scrollRef = React.useRef<HTMLDivElement | null>(null)
+  const wrapRef = React.useRef<HTMLDivElement | null>(null)
+  const svgRef = React.useRef<SVGSVGElement | null>(null)
+  const [portalContainer, setPortalContainer] = useState<Element | DocumentFragment | null>(null)
 
   const siteOptions = React.useMemo(
     () => [
@@ -150,8 +155,24 @@ const UsageHistoryChart: React.FC<{ siteId: string }> = ({ siteId }) => {
     return () => window.cancelAnimationFrame(rafId)
   }, [granularity, buckets.length])
 
+  useEffect(() => {
+    if (wrapRef.current) {
+      setPortalContainer(resolveTooltipPortalContainer(wrapRef.current))
+    }
+  }, [])
+
+  // tooltip 用 fixed 定位渲染在文档流外，滚动时锚点会失效，直接隐藏
+  useEffect(() => {
+    if (hoveredIndex === null) return
+    const hideOnScroll = () => setHoveredIndex(null)
+    window.addEventListener("scroll", hideOnScroll, true)
+    return () => window.removeEventListener("scroll", hideOnScroll, true)
+  }, [hoveredIndex])
+
   const values = buckets.map((bucket) => getUsageMetricValue(bucket, metric))
-  const maxValue = Math.max(1, ...values)
+  // maxValue 用于摘要展示；scaleMaxValue 只避免全零数据时除以零，不对外显示
+  const maxValue = values.length > 0 ? Math.max(...values) : 0
+  const scaleMaxValue = Math.max(1, maxValue)
   const latestValue = values[values.length - 1] ?? 0
   const metricLabel =
     metric === "requestTokens"
@@ -181,7 +202,7 @@ const UsageHistoryChart: React.FC<{ siteId: string }> = ({ siteId }) => {
   const points = buckets.map((bucket, index) => {
     const x = padding.left + stepX * index
     const value = getUsageMetricValue(bucket, metric)
-    const ratio = value / maxValue
+    const ratio = value / scaleMaxValue
     const y = padding.top + innerHeight - ratio * innerHeight
     return { x, y, value, label: bucket.label }
   })
@@ -237,16 +258,25 @@ const UsageHistoryChart: React.FC<{ siteId: string }> = ({ siteId }) => {
   }
 
   const tooltipWidth = 220
-  const viewportWidth = scrollRef.current?.clientWidth || chartWidth
-  const scrollOffset = scrollRef.current?.scrollLeft || 0
-  const tooltipLeft =
-    hoveredPoint && viewportWidth > tooltipWidth
-      ? Math.min(
-          viewportWidth - tooltipWidth - 8,
-          Math.max(8, hoveredPoint.x - scrollOffset - tooltipWidth / 2),
-        )
-      : 8
-  const tooltipTop = hoveredPoint && hoveredPoint.y > 110 ? Math.max(8, hoveredPoint.y - 94) : 8
+  // 数据点的视口坐标：svg 用 viewBox 渲染，需按实际渲染尺寸换算
+  const hoveredAnchor = (() => {
+    if (!hoveredPoint || !svgRef.current) return null
+    const rect = svgRef.current.getBoundingClientRect()
+    if (rect.width <= 0 || rect.height <= 0) return null
+    const scaleX = rect.width / chartWidth
+    const scaleY = rect.height / chartHeight
+    return {
+      x: rect.left + hoveredPoint.x * scaleX,
+      y: rect.top + hoveredPoint.y * scaleY,
+    }
+  })()
+  const tooltipLeft = hoveredAnchor
+    ? Math.min(
+        Math.max(hoveredAnchor.x, 8 + tooltipWidth / 2),
+        window.innerWidth - 8 - tooltipWidth / 2,
+      )
+    : 0
+  const tooltipAbove = hoveredAnchor ? hoveredAnchor.y > window.innerHeight / 2 : false
   const chartColors = {
     grid: "var(--gh-border, #e5e7eb)",
     area: "var(--gh-user-query-bg, rgba(66, 133, 244, 0.08))",
@@ -308,7 +338,7 @@ const UsageHistoryChart: React.FC<{ siteId: string }> = ({ siteId }) => {
           </div>
         </div>
         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "flex-start" }}>
-          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+          <div className="settings-segmented">
             {(
               [
                 ["hour", t("usageMonitorChartHour")],
@@ -316,34 +346,39 @@ const UsageHistoryChart: React.FC<{ siteId: string }> = ({ siteId }) => {
                 ["month", t("usageMonitorChartMonth")],
               ] as Array<[UsageHistoryGranularity, string]>
             ).map(([value, label]) => (
-              <Button
+              <button
+                type="button"
                 key={value}
-                size="sm"
-                variant={granularity === value ? "primary" : "secondary"}
+                className="settings-segmented-item"
+                aria-pressed={granularity === value}
                 onClick={() => setGranularity(value)}>
                 {label}
-              </Button>
+              </button>
             ))}
           </div>
-          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-            {(
-              [
-                ["count", t("usageMonitorChartMetricCount")],
-                ["requestTokens", t("usageMonitorChartMetricRequest")],
-                ["roundTripTokens", t("usageMonitorChartMetricRoundTrip")],
-                ["loadedConversationTokens", t("usageMonitorChartMetricConversation")],
-                ["loadedOutputTokens", t("usageMonitorChartMetricOutput")],
-              ] as Array<[UsageHistoryMetric, string]>
-            ).map(([value, label]) => (
-              <Button
-                key={value}
-                size="sm"
-                variant={metric === value ? "primary" : "secondary"}
-                title={value === "roundTripTokens" ? t("usageMonitorRoundTripDesc") : undefined}
-                onClick={() => setMetric(value)}>
-                {label}
-              </Button>
-            ))}
+          {/* 指标项较多，窄窗口下允许横向滚动而不是折行 */}
+          <div style={{ maxWidth: "100%", overflowX: "auto", scrollbarWidth: "none" }}>
+            <div className="settings-segmented">
+              {(
+                [
+                  ["count", t("usageMonitorChartMetricCount")],
+                  ["requestTokens", t("usageMonitorChartMetricRequest")],
+                  ["roundTripTokens", t("usageMonitorChartMetricRoundTrip")],
+                  ["loadedConversationTokens", t("usageMonitorChartMetricConversation")],
+                  ["loadedOutputTokens", t("usageMonitorChartMetricOutput")],
+                ] as Array<[UsageHistoryMetric, string]>
+              ).map(([value, label]) => (
+                <button
+                  type="button"
+                  key={value}
+                  className="settings-segmented-item"
+                  aria-pressed={metric === value}
+                  title={value === "roundTripTokens" ? t("usageMonitorRoundTripDesc") : undefined}
+                  onClick={() => setMetric(value)}>
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -371,12 +406,12 @@ const UsageHistoryChart: React.FC<{ siteId: string }> = ({ siteId }) => {
       </div>
 
       <div
+        ref={wrapRef}
         style={{
           position: "relative",
           marginTop: "4px",
         }}
         onMouseLeave={() => setHoveredIndex(null)}>
-        {/* tooltip 提升到滚动容器外层渲染，避免被横向滚动区域裁切。 */}
         <div
           ref={scrollRef}
           style={{
@@ -390,6 +425,7 @@ const UsageHistoryChart: React.FC<{ siteId: string }> = ({ siteId }) => {
           }}>
           <div style={{ width: `${chartWidth}px`, minWidth: "100%", position: "relative" }}>
             <svg
+              ref={svgRef}
               viewBox={`0 0 ${chartWidth} ${chartHeight}`}
               style={{ width: "100%", height: "220px", display: "block" }}>
               {[0, 0.25, 0.5, 0.75, 1].map((ratio) => {
@@ -503,72 +539,87 @@ const UsageHistoryChart: React.FC<{ siteId: string }> = ({ siteId }) => {
           )}
         </div>
 
-        {hoveredBucket && hoveredPoint && (
-          <div
-            style={{
-              position: "absolute",
-              left: `${tooltipLeft}px`,
-              top: `${tooltipTop}px`,
-              width: `${tooltipWidth}px`,
-              borderRadius: "10px",
-              padding: "10px 12px",
-              background: chartColors.cardBg,
-              color: chartColors.text,
-              border: `1px solid ${chartColors.activeBorder}`,
-              boxShadow: chartColors.shadow,
-              pointerEvents: "none",
-              zIndex: 5,
-            }}>
-            <div style={{ fontSize: "12px", fontWeight: 700, marginBottom: "8px" }}>
-              {formatBucketTime(hoveredBucket)}
-            </div>
-            {hoveredDelta !== null && (
-              <div
-                style={{
-                  fontSize: "11px",
-                  marginBottom: "8px",
-                  color: "var(--gh-text-secondary, #6b7280)",
-                }}>
-                {metricLabel}: {hoveredMetricValue}
-                {" · "}
-                {hoveredDelta >= 0 ? "+" : ""}
-                {hoveredDelta} {t("usageMonitorChartDelta")}
-              </div>
-            )}
+        {/* tooltip 用 portal + fixed 渲染到文档流外，避免撑开设置弹窗的滚动区域 */}
+        {hoveredBucket &&
+          hoveredAnchor &&
+          portalContainer &&
+          createPortal(
             <div
               style={{
-                display: "grid",
-                gridTemplateColumns: "1fr auto",
-                gap: "6px 10px",
-                fontSize: "12px",
+                position: "fixed",
+                left: `${tooltipLeft}px`,
+                top: `${hoveredAnchor.y}px`,
+                transform: tooltipAbove
+                  ? "translate(-50%, calc(-100% - 10px))"
+                  : "translate(-50%, 10px)",
+                width: `${tooltipWidth}px`,
+                borderRadius: "10px",
+                padding: "10px 12px",
+                background: chartColors.cardBg,
+                color: chartColors.text,
+                border: `1px solid ${chartColors.activeBorder}`,
+                boxShadow: chartColors.shadow,
+                pointerEvents: "none",
+                // 与共享 Tooltip 一致，用最大层级逃出设置弹窗的堆叠上下文
+                zIndex: 2147483647,
               }}>
-              <span style={{ color: chartColors.axis }}>{t("usageMonitorChartMetricCount")}</span>
-              <strong>{hoveredBucket.count}</strong>
-              <span style={{ color: chartColors.axis }}>{t("usageMonitorChartMetricRequest")}</span>
-              <strong>{hoveredBucket.requestTokens}</strong>
-              <span style={{ color: chartColors.axis }}>
-                {t("usageMonitorChartMetricRoundTrip")}
-              </span>
-              <strong>{hoveredBucket.roundTripTokens}</strong>
-              <span style={{ color: chartColors.axis }}>
-                {t("usageMonitorChartMetricConversation")}
-              </span>
-              <strong>{hoveredBucket.loadedConversationTokens}</strong>
-              <span style={{ color: chartColors.axis }}>{t("usageMonitorChartMetricOutput")}</span>
-              <strong>{hoveredBucket.loadedOutputTokens}</strong>
-              <span style={{ color: chartColors.axis }}>
-                {t("usageMonitorChartMaxConversation")}
-              </span>
-              <strong>{hoveredBucket.maxLoadedConversationTokens}</strong>
-              <span style={{ color: chartColors.axis }}>{t("usageMonitorChartMaxRequest")}</span>
-              <strong>{hoveredBucket.maxRequestTokens}</strong>
-              <span style={{ color: chartColors.axis }}>{t("usageMonitorChartMaxRoundTrip")}</span>
-              <strong>{hoveredBucket.maxRoundTripTokens}</strong>
-              <span style={{ color: chartColors.axis }}>{t("usageMonitorChartMaxOutput")}</span>
-              <strong>{hoveredBucket.maxLoadedOutputTokens}</strong>
-            </div>
-          </div>
-        )}
+              <div style={{ fontSize: "12px", fontWeight: 700, marginBottom: "8px" }}>
+                {formatBucketTime(hoveredBucket)}
+              </div>
+              {/* 差值为 0 时不展示，避免零数据下满屏 "+0 较上一时段" */}
+              {hoveredDelta !== null && hoveredDelta !== 0 && (
+                <div
+                  style={{
+                    fontSize: "11px",
+                    marginBottom: "8px",
+                    color: "var(--gh-text-secondary, #6b7280)",
+                  }}>
+                  {metricLabel}: {hoveredMetricValue}
+                  {" · "}
+                  {hoveredDelta >= 0 ? "+" : ""}
+                  {hoveredDelta} {t("usageMonitorChartDelta")}
+                </div>
+              )}
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr auto",
+                  gap: "6px 10px",
+                  fontSize: "12px",
+                }}>
+                {/* 零值指标不展示，避免 9 行全零的信息噪音；全零时只保留次数行 */}
+                {(() => {
+                  const rows: Array<[string, number]> = [
+                    [t("usageMonitorChartMetricCount"), hoveredBucket.count],
+                    [t("usageMonitorChartMetricRequest"), hoveredBucket.requestTokens],
+                    [t("usageMonitorChartMetricRoundTrip"), hoveredBucket.roundTripTokens],
+                    [
+                      t("usageMonitorChartMetricConversation"),
+                      hoveredBucket.loadedConversationTokens,
+                    ],
+                    [t("usageMonitorChartMetricOutput"), hoveredBucket.loadedOutputTokens],
+                    [
+                      t("usageMonitorChartMaxConversation"),
+                      hoveredBucket.maxLoadedConversationTokens,
+                    ],
+                    [t("usageMonitorChartMaxRequest"), hoveredBucket.maxRequestTokens],
+                    [t("usageMonitorChartMaxRoundTrip"), hoveredBucket.maxRoundTripTokens],
+                    [t("usageMonitorChartMaxOutput"), hoveredBucket.maxLoadedOutputTokens],
+                  ]
+                  const nonZeroRows = rows.filter(([, value]) => value > 0)
+                  return (nonZeroRows.length > 0 ? nonZeroRows : [rows[0]]).map(
+                    ([label, value]) => (
+                      <React.Fragment key={label}>
+                        <span style={{ color: chartColors.axis }}>{label}</span>
+                        <strong>{value}</strong>
+                      </React.Fragment>
+                    ),
+                  )
+                })()}
+              </div>
+            </div>,
+            portalContainer,
+          )}
       </div>
     </div>
   )
