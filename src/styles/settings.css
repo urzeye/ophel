@@ -6102,6 +6102,18 @@ html[data-theme="dark"] .about-privacy-banner {
   justify-content: flex-end;
 }
 
+/* Firefox 无法通过扩展打开 about:addons，操作指引并入说明列并独占整行，
+   避免右侧长文本挤压标题和描述 */
+.settings-shortcuts-firefox-guide {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--gh-border, #e5e7eb);
+  border-radius: 8px;
+  background: var(--gh-bg-secondary, #f9fafb);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
 /* ==================== 权限管理 (PermissionsPage) ==================== */
 
 .settings-perm-header-row {

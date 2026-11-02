@@ -155,6 +155,7 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
   const { settings, setSettings } = useSettingsStore()
   const shortcuts = settings?.shortcuts
   const isMac = React.useMemo(() => isMacOS(), [])
+  const isFirefox = navigator.userAgent.includes("Firefox")
 
   // 检测快捷键冲突
   const checkConflict = useCallback(
@@ -306,50 +307,47 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
 
             <SettingRow
               label={t("globalShortcutsTitle")}
-              description={t("globalShortcutsDesc")}
-              settingId="shortcuts-browser-shortcuts">
-              {(() => {
-                const ua = navigator.userAgent
-                const isChrome = ua.includes("Chrome") && !ua.includes("Edg/")
-                const isEdge = ua.includes("Edg/")
-                const isFirefox = ua.includes("Firefox")
-
-                const isSupported = isChrome || isEdge || isFirefox
-
-                if (!isSupported) {
-                  return (
-                    <span style={{ fontSize: "13px", color: "var(--gh-text-tertiary)" }}>
-                      {t("browserNotSupported")}
-                    </span>
-                  )
-                }
-
-                let url = "chrome://extensions/shortcuts"
-                if (isEdge) url = "edge://extensions/shortcuts"
-
-                // Firefox does not allow extensions to open about:addons via tabs.create.
-                if (isFirefox) {
-                  return (
-                    <span
-                      style={{
-                        fontSize: "13px",
-                        color: "var(--gh-text-secondary)",
-                        lineHeight: "1.5",
-                      }}>
+              description={
+                isFirefox ? (
+                  <>
+                    <div>{t("globalShortcutsDesc")}</div>
+                    <div className="settings-shortcuts-firefox-guide">
                       {t("firefoxShortcutsGuide")}
-                    </span>
-                  )
-                }
-
-                return (
-                  <button
-                    type="button"
-                    className="settings-btn settings-btn-primary"
-                    onClick={() => sendToBackground({ type: MSG_OPEN_URL, url })}>
-                    {t("openBrowserShortcuts")}
-                  </button>
+                    </div>
+                  </>
+                ) : (
+                  t("globalShortcutsDesc")
                 )
-              })()}
+              }
+              settingId="shortcuts-browser-shortcuts">
+              {!isFirefox &&
+                (() => {
+                  const ua = navigator.userAgent
+                  const isChrome = ua.includes("Chrome") && !ua.includes("Edg/")
+                  const isEdge = ua.includes("Edg/")
+                  const isSupported = isChrome || isEdge
+
+                  if (!isSupported) {
+                    return (
+                      <span style={{ fontSize: "13px", color: "var(--gh-text-tertiary)" }}>
+                        {t("browserNotSupported")}
+                      </span>
+                    )
+                  }
+
+                  const url = isEdge
+                    ? "edge://extensions/shortcuts"
+                    : "chrome://extensions/shortcuts"
+
+                  return (
+                    <button
+                      type="button"
+                      className="settings-btn settings-btn-primary"
+                      onClick={() => sendToBackground({ type: MSG_OPEN_URL, url })}>
+                      {t("openBrowserShortcuts")}
+                    </button>
+                  )
+                })()}
             </SettingRow>
           </>
         )}

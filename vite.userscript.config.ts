@@ -306,6 +306,19 @@ async function buildAdaptersVendor(): Promise<void> {
               "src/platform/userscript/vendor-bridge/remote-config-stub.ts",
             )
           }
+          // 同理截断 platform.getAIStudioModels 对 ~adapters 的动态导入：
+          // vendor 只使用 platform 的存储/网络能力，若 ~adapters 整树进入
+          // vendor，platform-catalog 顶层 getCurrentLang() 会在 @require
+          // 阶段触碰尚未发布的桥接对象（i18n shim）而抛错。
+          if (
+            source === "./aistudio-model-list" &&
+            importer?.endsWith("platform/userscript/index.ts")
+          ) {
+            return path.resolve(
+              __dirname,
+              "src/platform/userscript/vendor-bridge/aistudio-model-list-stub.ts",
+            )
+          }
           return null
         },
       },

@@ -8,9 +8,14 @@ import React from "react"
 import { getAdapter, getEffectiveAdapter, registryReady } from "~adapters"
 import type { SiteAdapter } from "~adapters/base"
 import { App } from "~components/App"
-import { startPageUrlChangeBroadcaster } from "~core/modules-init"
+import { startPageUrlChangeBroadcaster } from "~core/page-url-change-broadcaster"
+// 面板内导出会话（conversationManager.exportConversation 在本上下文执行）
+// 的 HTML 格式会把公式渲染为 MathML，需显式引入完成 katex 渲染器注册；
+// 样式提供者只有 main 的用户消息渲染使用，本入口不引入
+import "~platform/katex-render"
 import { useSettingsStore } from "~stores/settings-store"
 import { applyOphelPlatformFontClass } from "~utils/font"
+import { initI18n } from "~utils/i18n"
 import { matchesHiddenPath } from "~utils/hidden-paths"
 import { EVENT_PAGE_URL_CHANGE } from "~utils/messaging"
 
@@ -163,7 +168,8 @@ const PlasmoApp = () => {
 
   React.useEffect(() => {
     let mounted = true
-    void registryReady()
+    // 语言资源与适配器注册表并行加载，两者就绪后才允许首帧渲染
+    void Promise.all([registryReady(), initI18n()])
       .then(() => {
         if (mounted) {
           setIsRegistryReady(true)

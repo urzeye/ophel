@@ -488,6 +488,15 @@ feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert, deps, ux
 - 应用内 i18n：`src/locales/` 下 11 种语言，通过 `~utils/i18n` 的 `t()` 函数调用
 - 扩展 manifest 国际化：`locales/` 下对应 Chrome `_locales` 规范
 - 支持语言：中文简体、中文繁体、英语、日语、韩语、意大利语、德语、西班牙语、法语、葡萄牙语(巴西)、俄语
+- 扩展端语言资源外置：构建期由 `scripts/prepare-locale-assets.ts` 生成
+  `assets/locales/messages.json`（避免内联进每个 JS bundle 触发 AMO 单文件 5MB
+  解析上限），运行时经 `initI18n()` 一次性加载；en 静态打包兜底。渲染入口与依赖
+  本地化文案的 store 播种/迁移必须先等 `initI18n()` 就绪；油猴端走 GM @resource，
+  两端以 `initI18n()` 契约对齐。
+- 产物编码约束：Chrome 扩展加载器拒绝含 Unicode noncharacter 的内容脚本（命中即整个
+  扩展无法安装）。KaTeX Lexer 正则的 `\uFFFF` 转义会被 Parcel 重打印为字面字符，
+  已通过 `patches/katex@*.patch` 在依赖源码侧根治；`build` / `build:firefox` 末尾的
+  `scripts/check-bundle-encoding.ts` 做冒烟检查，回潮直接构建失败。
 
 ## AI 使用指引
 

@@ -8,7 +8,7 @@ import { create } from "zustand"
 import { createJSONStorage, persist } from "zustand/middleware"
 
 import { getDefaultPrompts, VIRTUAL_CATEGORY } from "~constants"
-import { getAllLocalizedTexts } from "~utils/i18n"
+import { getAllLocalizedTexts, initI18n } from "~utils/i18n"
 import type { Prompt } from "~utils/storage"
 
 import { chromeStorageAdapter } from "./chrome-adapter"
@@ -47,11 +47,17 @@ const normalizeLegacyUncategorized = (prompts: Prompt[]): Prompt[] => {
   )
 }
 
+// 记录本次水合是否命中持久化数据：全新安装（无历史数据）需要在
+// i18n 资源就绪后按当前语言补种默认提示词
+let didRehydrateFromStorage = false
+
 export const usePromptsStore = create<PromptsState>()(
   persist(
     (set, _get) => (
       (_completeHydration = () => set({ _hasHydrated: true })),
       {
+        // 初始为兜底语言（en）的默认提示词（模块加载时语言资源可能尚未就绪）；
+        // 全新安装会在水合完成后按当前语言重新播种，见 onRehydrateStorage
         prompts: getDefaultPrompts(), // 使用国际化后的默认提示词
         _hasHydrated: false,
 
@@ -129,15 +135,39 @@ export const usePromptsStore = create<PromptsState>()(
       storage: createJSONStorage(() => chromeStorageAdapter),
       partialize: (state) => ({ prompts: state.prompts }),
       version: 1,
-      migrate: (persistedState, version) => {
-        const state = persistedState as { prompts?: Prompt[] } | undefined
-        if (version < 1 && Array.isArray(state?.prompts)) {
-          return { ...state, prompts: normalizeLegacyUncategorized(state.prompts) }
+      migrate: (persistedState) => {
+        // 旧版本（<1）数据原样保留；按语言归一「未分类」统一推迟到
+        // i18n 资源就绪后处理（见 onRehydrateStorage），避免水合早于
+        // 语言资源加载时漏掉非英文的历史文案
+        return persistedState as { prompts?: Prompt[] } | undefined
+      },
+      merge: (persistedState, currentState) => {
+        // zustand persist 无存储数据时也会调用 merge（persistedState 为 undefined），
+        // 只有 persistedState 非空才算命中历史数据
+        didRehydrateFromStorage = persistedState != null
+        return {
+          ...currentState,
+          ...(persistedState as Partial<PromptsState> | undefined),
         }
-        return state
       },
       onRehydrateStorage: () => () => {
-        _completeHydration?.()
+        // 默认提示词播种与「未分类」归一都依赖完整语言资源
+        // （getDefaultPrompts / getAllLocalizedTexts），等语言资源就绪后执行
+        void initI18n().then(() => {
+          const state = usePromptsStore.getState()
+          const next = normalizeLegacyUncategorized(
+            didRehydrateFromStorage ? state.prompts : getDefaultPrompts(),
+          )
+          // 内容未变化时不写回：zustand persist 对任何 setState 都会落盘，
+          // 无条件写回会让每个页面加载都多一次无意义的存储写
+          const unchanged =
+            next.length === state.prompts.length &&
+            next.every((prompt, index) => prompt === state.prompts[index])
+          if (!unchanged) {
+            usePromptsStore.setState({ prompts: next })
+          }
+          _completeHydration?.()
+        })
       },
     },
   ),

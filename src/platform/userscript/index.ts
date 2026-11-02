@@ -13,6 +13,7 @@ import type {
   Platform,
   PlatformCapability,
 } from "../types"
+import type { AIStudioModelsResponse } from "~utils/messaging"
 import {
   getKatexStylesText as getUserscriptKatexStylesText,
   renderKatexToMathML,
@@ -375,5 +376,12 @@ export const platform: Platform = {
     } catch (err) {
       return { success: false, error: (err as Error).message }
     }
+  },
+
+  async getAIStudioModels(): Promise<AIStudioModelsResponse> {
+    // 动态导入独立模块：adapters vendor 构建会把它 stub 掉，
+    // 避免 ~adapters 整树进入 vendor bundle
+    const { getAIStudioModelsFromPage } = await import("./aistudio-model-list")
+    return getAIStudioModelsFromPage()
   },
 }

@@ -23,7 +23,7 @@ import { ReleaseNotesModal } from "~components/ReleaseNotesModal"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
 import { APP_VERSION } from "~utils/config"
 import { getOphelPlatformFontClassName } from "~utils/font"
-import { setLanguage, t } from "~utils/i18n"
+import { initI18n, setLanguage, t } from "~utils/i18n"
 import { scrollWithinSettingsContent } from "~utils/settings-scroll"
 
 import { SettingsCompactBar, SettingsSidebar } from "./options/components/SettingsSidebar"
@@ -208,8 +208,16 @@ const OptionsPage = () => {
   // 当 settings 加载完成后，根据 settings.language 设置界面语言
   useEffect(() => {
     if (isHydrated && settings?.language) {
-      setLanguage(settings.language)
-      setLanguageReady(true)
+      let cancelled = false
+      // 等语言资源加载完成后再放行首帧渲染，避免非英语用户看到英文闪帧
+      void initI18n().then(() => {
+        if (cancelled) return
+        setLanguage(settings.language)
+        setLanguageReady(true)
+      })
+      return () => {
+        cancelled = true
+      }
     }
   }, [isHydrated, settings?.language])
 
