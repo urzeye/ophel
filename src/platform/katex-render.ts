@@ -1,23 +1,14 @@
 import katex from "katex"
 
-export type KatexRenderOptions = {
-  displayMode: boolean
-}
+import {
+  registerKatexRenderer,
+  renderKatexFallbackMathML,
+  renderKatexFallbackString,
+  wrapKatexResult,
+  type KatexRenderOptions,
+} from "./katex-registry"
 
-const escapeHtml = (value: string): string =>
-  value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;")
-
-const wrapKatexResult = (latex: string, rendered: string, displayMode: boolean): string => {
-  const className = displayMode ? "math-block gh-rendered-math" : "math-inline gh-rendered-math"
-  const tagName = displayMode ? "div" : "span"
-
-  return `<${tagName} class="${className}" data-math="${escapeHtml(latex)}">${rendered}</${tagName}>`
-}
+export type { KatexRenderOptions } from "./katex-registry"
 
 export const renderKatexToString = (
   content: string,
@@ -35,8 +26,7 @@ export const renderKatexToString = (
     })
     return wrapKatexResult(latex, rendered, displayMode)
   } catch {
-    const fallback = displayMode ? `$$\n${latex}\n$$` : `$${latex}$`
-    return wrapKatexResult(latex, `<code>${escapeHtml(fallback)}</code>`, displayMode)
+    return renderKatexFallbackString(latex, { displayMode })
   }
 }
 
@@ -59,6 +49,10 @@ export const renderKatexToMathML = (
     })
     return wrapKatexResult(latex, rendered, displayMode)
   } catch {
-    return wrapKatexResult(latex, `<math><mtext>${escapeHtml(latex)}</mtext></math>`, displayMode)
+    return renderKatexFallbackMathML(latex, { displayMode })
   }
 }
+
+// 自注册：引入本模块的入口（content script main、ui-entry）使 platform.math
+// 同步可用。未引入的入口（popup/options）不打包 katex，platform.math 走兜底输出。
+registerKatexRenderer({ renderKatexToString, renderKatexToMathML })

@@ -20,10 +20,13 @@ import katexSize3RegularWoff2Url from "url:katex/dist/fonts/KaTeX_Size3-Regular.
 import katexSize4RegularWoff2Url from "url:katex/dist/fonts/KaTeX_Size4-Regular.woff2"
 import katexTypewriterRegularWoff2Url from "url:katex/dist/fonts/KaTeX_Typewriter-Regular.woff2"
 
-// 渲染函数放在独立的 katex-render 模块：只依赖 katex npm 包，
-// 不含 Plasmo 的 raw:/url: 构建资源，保证 Vitest 等非扩展构建可以加载。
-export { renderKatexToMathML, renderKatexToString } from "./katex-render"
-export type { KatexRenderOptions } from "./katex-render"
+// 渲染函数在独立的 katex-render 模块（只依赖 katex npm 包，不含
+// Plasmo 的 raw:/url: 构建资源，保证 Vitest 等非扩展构建可以加载）。
+// 本模块（样式）与 katex-render（渲染）都只做自注册，由 platform.math
+// 经 katex-registry 读取：渲染器由 main 与 ui-entry 引入，样式仅 main
+// 引入（唯一调用方是 user-query-markdown），其余入口不再静态打包
+// katex 库与本 CSS 文本。
+import { registerKatexStylesProvider } from "./katex-registry"
 
 type ExtensionRuntimeLike = {
   getURL: (path: string) => string
@@ -108,3 +111,5 @@ const rewriteKatexAssetUrls = (cssText: string): string => {
 
 export const getKatexStylesText = (): string =>
   rewriteKatexAssetUrls(stripKatexLegacyFontFormats(katexStylesText))
+
+registerKatexStylesProvider(getKatexStylesText)

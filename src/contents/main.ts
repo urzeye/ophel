@@ -22,10 +22,15 @@ import {
   initUrlChangeObserver,
   destroyCoreModules,
   handleClearAllData,
-  startPageUrlChangeBroadcaster,
   subscribeModuleUpdates,
   type ModulesContext,
 } from "~core/modules-init"
+import { startPageUrlChangeBroadcaster } from "~core/page-url-change-broadcaster"
+// KaTeX 渲染器与样式经自注册注入 platform.math；本入口承担复制/导出/
+// 用户消息公式渲染，必须静态打包（Parcel 动态 import 在 content script
+// 中不可靠），在此显式引入完成注册
+import "~platform/katex-render"
+import "~platform/katex"
 import { APP_DISPLAY_NAME } from "~utils/config"
 import { INTER_LOCAL_FONT_FACE, getPlatformFontFamily } from "~utils/font"
 import { initI18n } from "~utils/i18n"

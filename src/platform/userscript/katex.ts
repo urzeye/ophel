@@ -1,8 +1,10 @@
+import {
+  renderKatexFallbackMathML,
+  renderKatexFallbackString,
+  wrapKatexResult,
+  type KatexRenderOptions,
+} from "../katex-registry"
 import { KATEX_CDN_FONT_BASE_URL, KATEX_CSS_RESOURCE_NAME } from "./katex-cdn"
-
-type KatexRenderOptions = {
-  displayMode: boolean
-}
 
 type KatexLike = {
   renderToString: (
@@ -16,14 +18,6 @@ type KatexLike = {
     },
   ) => string
 }
-
-const escapeHtml = (value: string): string =>
-  value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;")
 
 const getGlobalKatex = (): KatexLike | null => {
   const katex = (globalThis as typeof globalThis & { katex?: KatexLike }).katex
@@ -50,13 +44,6 @@ export const getKatexStylesText = (): string => {
   }
 }
 
-const wrapKatexResult = (latex: string, rendered: string, displayMode: boolean): string => {
-  const className = displayMode ? "math-block gh-rendered-math" : "math-inline gh-rendered-math"
-  const tagName = displayMode ? "div" : "span"
-
-  return `<${tagName} class="${className}" data-math="${escapeHtml(latex)}">${rendered}</${tagName}>`
-}
-
 export const renderKatexToString = (
   content: string,
   { displayMode }: KatexRenderOptions,
@@ -65,8 +52,7 @@ export const renderKatexToString = (
   const katex = getGlobalKatex()
 
   if (!katex) {
-    const fallback = displayMode ? `$$\n${latex}\n$$` : `$${latex}$`
-    return wrapKatexResult(latex, `<code>${escapeHtml(fallback)}</code>`, displayMode)
+    return renderKatexFallbackString(latex, { displayMode })
   }
 
   try {
@@ -79,8 +65,7 @@ export const renderKatexToString = (
     })
     return wrapKatexResult(latex, rendered, displayMode)
   } catch {
-    const fallback = displayMode ? `$$\n${latex}\n$$` : `$${latex}$`
-    return wrapKatexResult(latex, `<code>${escapeHtml(fallback)}</code>`, displayMode)
+    return renderKatexFallbackString(latex, { displayMode })
   }
 }
 
@@ -95,7 +80,7 @@ export const renderKatexToMathML = (
   const katex = getGlobalKatex()
 
   if (!katex) {
-    return wrapKatexResult(latex, `<math><mtext>${escapeHtml(latex)}</mtext></math>`, displayMode)
+    return renderKatexFallbackMathML(latex, { displayMode })
   }
 
   try {
@@ -108,6 +93,6 @@ export const renderKatexToMathML = (
     })
     return wrapKatexResult(latex, rendered, displayMode)
   } catch {
-    return wrapKatexResult(latex, `<math><mtext>${escapeHtml(latex)}</mtext></math>`, displayMode)
+    return renderKatexFallbackMathML(latex, { displayMode })
   }
 }

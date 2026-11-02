@@ -24,11 +24,18 @@ import {
   MSG_REMOVE_LOCAL_REMOTE_CONFIG_PATCH,
   sendToBackground,
 } from "~utils/messaging"
-// KaTeX 样式文本必须静态导入：Parcel 对 content script 的动态 import
-// 通过向页面注入 <script> 加载 chunk，chunk 在主世界执行并注册模块，
-// 隔离世界的 bundle.root 找不到该模块（Cannot find module）。
-import { getKatexStylesText as resolveKatexStylesText } from "../katex"
-import { renderKatexToMathML, renderKatexToString } from "../katex-render"
+// KaTeX 实现经 katex-registry 注入：需要公式能力的入口（content script
+// main、ui-entry）显式引入 ~platform/katex-render（与 ~platform/katex）
+// 完成注册；其余入口不打包 katex（约 250KB），platform.math 在此走兜底输出。
+// 不能对 content script 使用动态 import：Parcel 会向页面注入 <script>
+// 加载 chunk，chunk 在主世界执行并注册模块，隔离世界的 bundle.root
+// 找不到该模块（Cannot find module）。
+import {
+  getKatexRenderer,
+  getKatexStylesProvider,
+  renderKatexFallbackMathML,
+  renderKatexFallbackString,
+} from "../katex-registry"
 import { extensionStorage } from "./storage"
 
 export { extensionStorage }
@@ -49,10 +56,25 @@ export const platform: Platform = {
   storage: extensionStorage,
 
   math: {
-    renderKatexToString,
-    renderKatexToMathML,
+    renderKatexToString(content, options) {
+      return (
+        getKatexRenderer()?.renderKatexToString(content, options) ??
+        renderKatexFallbackString(content, options)
+      )
+    },
+    renderKatexToMathML(content, options) {
+      return (
+        getKatexRenderer()?.renderKatexToMathML(content, options) ??
+        renderKatexFallbackMathML(content, options)
+      )
+    },
     async getKatexStylesText() {
-      return resolveKatexStylesText()
+      const provider = getKatexStylesProvider()
+      if (!provider) {
+        console.warn("[Ophel] KaTeX styles requested but no provider registered")
+        return ""
+      }
+      return provider()
     },
   },
 
