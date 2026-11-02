@@ -23,6 +23,17 @@ const buildRoot = path.resolve(projectRoot, "build")
 const isNoncharacter = (cp: number): boolean =>
   (cp >= 0xfdd0 && cp <= 0xfdef) || (cp & 0xfffe) === 0xfffe
 
+// 用 BMP 转义表示任意码点：astral 码点拆成 UTF-16 代理对两个 \uXXXX，
+// 避免 \u{...} 形式在无 u 标志的正则字面量中改变语义
+const toEscapeSequence = (cp: number): string => {
+  if (cp <= 0xffff) return `\\u${cp.toString(16).padStart(4, "0")}`
+
+  const v = cp - 0x10000
+  const high = 0xd800 + (v >> 10)
+  const low = 0xdc00 + (v & 0x3ff)
+  return `\\u${high.toString(16)}\\u${low.toString(16)}`
+}
+
 const escapeNoncharacters = (content: string): { result: string; count: number } => {
   let count = 0
   let result = ""
@@ -33,7 +44,7 @@ const escapeNoncharacters = (content: string): { result: string; count: number }
       continue
     }
     count++
-    result += cp <= 0xffff ? `\\u${cp.toString(16).padStart(4, "0")}` : `\\u{${cp.toString(16)}}`
+    result += toEscapeSequence(cp)
   }
   return { result, count }
 }
