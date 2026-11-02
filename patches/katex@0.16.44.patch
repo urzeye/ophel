@@ -1,0 +1,26 @@
+diff --git a/dist/katex.js b/dist/katex.js
+index 87cac6b0606e21983fe4550a7abb0d59108d2c00..efb05ddfde5bdfe7e4302bd7258decc0c057bc58 100644
+--- a/dist/katex.js
++++ b/dist/katex.js
+@@ -14441,7 +14441,7 @@ const combiningDiacriticalMarksEndRegex = new RegExp(combiningDiacriticalMarkStr
+ const tokenRegexString = "(" + spaceRegexString + "+)|" + (// whitespace
+ controlSpaceRegexString + "|") +
+ // \whitespace
+-"([!-\\[\\]-\u2027\u202A-\uD7FF\uF900-\uFFFF]" + (// single codepoint
++"([!-\\[\\]-\u2027\u202A-\uD7FF\uF900-" + String.fromCharCode(0xffff) + "]" + (// single codepoint
+ combiningDiacriticalMarkString + "*") +
+ // ...plus accents
+ "|[\uD800-\uDBFF][\uDC00-\uDFFF]" + (// surrogate pair
+diff --git a/dist/katex.mjs b/dist/katex.mjs
+index 8cceb3d734dda4ca10ed4b3848996b4f67dac0ca..9c94bd104cb5d513fcec5ad21e326798d850eb7e 100644
+--- a/dist/katex.mjs
++++ b/dist/katex.mjs
+@@ -13360,7 +13360,7 @@ var combiningDiacriticalMarksEndRegex = new RegExp(combiningDiacriticalMarkStrin
+ var tokenRegexString = "(" + spaceRegexString + "+)|" + (// whitespace
+ controlSpaceRegexString + "|") +
+ // \whitespace
+-"([!-\\[\\]-\u2027\u202A-\uD7FF\uF900-\uFFFF]" + (// single codepoint
++"([!-\\[\\]-\u2027\u202A-\uD7FF\uF900-" + String.fromCharCode(0xffff) + "]" + (// single codepoint
+ combiningDiacriticalMarkString + "*") +
+ // ...plus accents
+ "|[\uD800-\uDBFF][\uDC00-\uDFFF]" + (// surrogate pair

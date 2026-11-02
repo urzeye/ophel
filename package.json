@@ -27,9 +27,9 @@
     "registry:build": "tsx registry/scripts/build-dist-local.mjs",
     "registry:build:signed": "tsx registry/scripts/build-dist.mjs",
     "registry:serve": "tsx registry/scripts/serve-local.mjs",
-    "sanitize:build-output": "tsx scripts/sanitize-build-output.ts",
-    "build": "pnpm prepare:mermaid-assets && pnpm prepare:locale-assets && plasmo build && pnpm sanitize:build-output",
-    "build:firefox": "pnpm prepare:mermaid-assets && pnpm prepare:locale-assets && plasmo build --target=firefox-mv3 && pnpm sanitize:build-output",
+    "check:bundle-encoding": "tsx scripts/check-bundle-encoding.ts",
+    "build": "pnpm prepare:mermaid-assets && pnpm prepare:locale-assets && plasmo build && pnpm check:bundle-encoding",
+    "build:firefox": "pnpm prepare:mermaid-assets && pnpm prepare:locale-assets && plasmo build --target=firefox-mv3 && pnpm check:bundle-encoding",
     "build:all": "pnpm build && pnpm build:firefox",
     "package": "pnpm build && plasmo package",
     "package:firefox": "pnpm build:firefox && node scripts/package-firefox.mjs",
@@ -181,6 +181,11 @@
         },
         "description": "Open Global URL"
       }
+    }
+  },
+  "pnpm": {
+    "patchedDependencies": {
+      "katex@0.16.44": "patches/katex@0.16.44.patch"
     }
   }
 }

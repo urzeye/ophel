@@ -493,9 +493,10 @@ feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert, deps, ux
   解析上限），运行时经 `initI18n()` 一次性加载；en 静态打包兜底。渲染入口与依赖
   本地化文案的 store 播种/迁移必须先等 `initI18n()` 就绪；油猴端走 GM @resource，
   两端以 `initI18n()` 契约对齐。
-- 构建产物编码清理：`build` / `build:firefox` 末尾运行 `scripts/sanitize-build-output.ts`，
-  把产物 JS 中的 Unicode noncharacter（如 KaTeX 正则里的 `\uffff` 被 Parcel 字面化后）
-  改写回转义序列；Chrome 扩展加载器拒绝含 noncharacter 的内容脚本，命中即整个扩展无法安装。
+- 产物编码约束：Chrome 扩展加载器拒绝含 Unicode noncharacter 的内容脚本（命中即整个
+  扩展无法安装）。KaTeX Lexer 正则的 `\uFFFF` 转义会被 Parcel 重打印为字面字符，
+  已通过 `patches/katex@*.patch` 在依赖源码侧根治；`build` / `build:firefox` 末尾的
+  `scripts/check-bundle-encoding.ts` 做冒烟检查，回潮直接构建失败。
 
 ## AI 使用指引
 
