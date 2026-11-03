@@ -73,6 +73,7 @@ import {
   type RemoteConfigCheckResult,
 } from "~core/remote-config-types"
 import { platform, type SitePackRuntimeStatus } from "~platform"
+import { moveQuickAccessItem, orderByQuickAccessOrder } from "~core/quick-access-sites"
 import { useSettingsStore } from "~stores/settings-store"
 import {
   getBuiltinSiteEntryUrls,
@@ -395,6 +396,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
   const updateNestedSetting = useSettingsStore((state) => state.updateNestedSetting)
   const setSettings = useSettingsStore((state) => state.setSettings)
   const disabledSites = useSettingsStore((state) => state.settings?.disabledSites) ?? []
+  const quickAccessOrder = useSettingsStore((state) => state.settings?.quickAccessOrder) ?? []
   const pageRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const patchFileInputRef = useRef<HTMLInputElement>(null)
@@ -406,6 +408,12 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
       : SITE_PACKS_TAB_IDS.BUILTIN,
   )
   const [installedPacks, setInstalledPacks] = useState<InstalledSitePack[]>([])
+  // 内置站点行拖拽排序：拖动中的行与落点提示（目标行 + 插入到其上/下方）
+  const [draggedBuiltinId, setDraggedBuiltinId] = useState<string | null>(null)
+  const [builtinDropTarget, setBuiltinDropTarget] = useState<{
+    id: string
+    position: "before" | "after"
+  } | null>(null)
   const [originBindings, setOriginBindings] = useState<SitePackOriginBindingsState>(
     createEmptySitePackOriginBindingsState,
   )
@@ -1578,7 +1586,75 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
   }
 
   const pageUrl = typeof window === "undefined" ? "" : window.location.href
-  const builtinSites = orderBuiltinSitesByCurrentUrl(SUPPORTED_AI_PLATFORMS, pageUrl)
+  // 用户自定义过快速访问排序后按自定义顺序渲染，当前站点只保留徽标不再置顶，
+  // 避免覆盖用户意图；未自定义时保持默认目录顺序并把当前站点提到第一项
+  const builtinSites =
+    quickAccessOrder.length > 0
+      ? orderByQuickAccessOrder(SUPPORTED_AI_PLATFORMS, quickAccessOrder, (site) => site.id)
+      : orderBuiltinSitesByCurrentUrl(SUPPORTED_AI_PLATFORMS, pageUrl)
+
+  // 列表是纵向布局，按指针位于目标行上/下半区判断插入位置
+  const getBuiltinDropPosition = (e: React.DragEvent): "before" | "after" => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    return e.clientY < rect.top + rect.height / 2 ? "before" : "after"
+  }
+
+  const clearBuiltinDrag = () => {
+    setDraggedBuiltinId(null)
+    setBuiltinDropTarget(null)
+  }
+
+  const handleBuiltinDragStart = (e: React.DragEvent, siteId: string) => {
+    // 从行内按钮/链接/开关上发起的拖拽无效，保留其点击行为（与行内拖拽惯例一致）
+    if ((e.target as HTMLElement).closest('button, a, input, [role="switch"]')) {
+      e.preventDefault()
+      return
+    }
+    e.dataTransfer.effectAllowed = "move"
+    // 必须写入 dataTransfer：部分站点在冒泡阶段检测空 dataTransfer 并取消拖拽，
+    // Firefox 也要求非空才能发起拖拽（与 usePromptDragSort 同一约束）
+    e.dataTransfer.setData("text/plain", siteId)
+    setDraggedBuiltinId(siteId)
+  }
+
+  const handleBuiltinDragOver = (e: React.DragEvent, siteId: string) => {
+    // 只接受列表内发起的排序拖拽；外部拖入的文字/链接不成为合法落点，
+    // 否则 drop 时会把目录顺序误写成自定义排序
+    if (!draggedBuiltinId) return
+    e.preventDefault()
+    e.dataTransfer.dropEffect = "move"
+    if (draggedBuiltinId === siteId) {
+      if (builtinDropTarget) setBuiltinDropTarget(null)
+      return
+    }
+    const position = getBuiltinDropPosition(e)
+    if (builtinDropTarget?.id !== siteId || builtinDropTarget.position !== position) {
+      setBuiltinDropTarget({ id: siteId, position })
+    }
+  }
+
+  const handleBuiltinDrop = (e: React.DragEvent, siteId: string) => {
+    e.preventDefault()
+    if (!draggedBuiltinId || draggedBuiltinId === siteId) {
+      clearBuiltinDrag()
+      return
+    }
+    // 本列表只展示内置站点；落点在完整目录（含启用中的适配包）上计算，
+    // 适配包占据的槽位保持不动，只重排内置站点之间的相对顺序
+    const enabledPackIds = installedPacks
+      .filter((pack) => pack.enabled)
+      .map((pack) => `pack:${pack.manifest.id}`)
+    const next = moveQuickAccessItem({
+      catalogIds: [...SUPPORTED_AI_PLATFORMS.map((site) => site.id), ...enabledPackIds],
+      order: quickAccessOrder,
+      visibleIds: SUPPORTED_AI_PLATFORMS.map((site) => site.id),
+      draggedId: draggedBuiltinId,
+      targetId: siteId,
+      position: getBuiltinDropPosition(e),
+    })
+    setSettings({ quickAccessOrder: next })
+    clearBuiltinDrag()
+  }
 
   // 跳到站点设置页并预选该站点；弹窗与独立 Options 页都监听此事件
   const handleOpenSiteSettings = (siteId: string) => {
@@ -1596,7 +1672,20 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
     const entryUrls = getBuiltinSiteEntryUrls(site)
 
     return (
-      <div className="settings-pack-item" key={site.id}>
+      <div
+        className={`settings-pack-item sortable${draggedBuiltinId === site.id ? " is-dragging" : ""}${
+          builtinDropTarget?.id === site.id
+            ? builtinDropTarget.position === "before"
+              ? " drop-above"
+              : " drop-below"
+            : ""
+        }`}
+        key={site.id}
+        draggable
+        onDragStart={(e) => handleBuiltinDragStart(e, site.id)}
+        onDragOver={(e) => handleBuiltinDragOver(e, site.id)}
+        onDrop={(e) => handleBuiltinDrop(e, site.id)}
+        onDragEnd={clearBuiltinDrag}>
         <div className="settings-pack-icon" aria-hidden="true">
           <PlatformIcon
             platform={faviconUrl ? { name: site.name, faviconUrl } : { name: site.name }}

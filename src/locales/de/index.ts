@@ -60,7 +60,7 @@ export const de = {
   sitePacksOpenSite: "Website öffnen",
   sitePacksTabBuiltin: "Integrierte Seiten",
   builtinSitesDesc:
-    "Verwalte, auf welchen integrierten KI-Seiten Ophel aktiv ist. Nach der Deaktivierung werden Panel und alle Erweiterungen auf dieser Seite nicht mehr geladen; lade geöffnete Seiten neu, damit die Änderung vollständig wirkt",
+    "Verwalte, auf welchen integrierten KI-Seiten Ophel aktiv ist. Nach der Deaktivierung werden Panel und alle Erweiterungen auf dieser Seite nicht mehr geladen; lade geöffnete Seiten neu, damit die Änderung vollständig wirkt. Per Drag & Drop lässt sich die Reihenfolge der Seiten im Schnellzugriff des Popups anpassen",
   builtinSiteCurrentBadge: "Aktuelle Seite",
   builtinSiteEnabledToast: "{site} wieder aktiviert",
   builtinSiteDisabledToast:
@@ -1600,8 +1600,6 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
     "Site-Paket {site} aktiviert; lade geöffnete Seiten neu, um die Änderung anzuwenden",
   popupPackDisabledToast:
     "Site-Paket {site} deaktiviert; lade geöffnete Seiten neu, um die Änderung anzuwenden",
-  popupSiteTileDisabledTooltip:
-    "Ophel ist auf dieser Seite deaktiviert; Klicken öffnet die Seite trotzdem",
   popupQuickAccess: "Schnellzugriff",
   popupSitePackUnbound: "Keine Website hinzugefügt",
   popupSwitchSiteEntry: "Seiten-Einstieg wechseln",

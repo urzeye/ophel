@@ -58,7 +58,7 @@ export const en = {
   sitePacksOpenSite: "Open site",
   sitePacksTabBuiltin: "Built-in sites",
   builtinSitesDesc:
-    "Manage where Ophel runs on built-in AI sites. Once disabled, the panel and all enhancements no longer load on that site; reload open pages for the change to take full effect.",
+    "Manage where Ophel runs on built-in AI sites. Once disabled, the panel and all enhancements no longer load on that site; reload open pages for the change to take full effect. Drag to reorder sites in the popup's quick access.",
   builtinSiteCurrentBadge: "Current site",
   builtinSiteEnabledToast: "{site} re-enabled",
   builtinSiteDisabledToast:
@@ -1635,7 +1635,6 @@ Please output the optimized code block directly, followed by a brief summary of 
   popupSiteEnabledToast: "Enabled",
   popupPackEnabledToast: "Site pack {site} enabled; reload open pages to apply",
   popupPackDisabledToast: "Site pack {site} disabled; reload open pages to apply",
-  popupSiteTileDisabledTooltip: "Ophel is disabled on this site; click to open it anyway",
   popupQuickAccess: "Quick Access",
   popupSitePackUnbound: "No site added",
   popupSwitchSiteEntry: "Switch site entry",

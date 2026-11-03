@@ -56,7 +56,7 @@ export const ko = {
   sitePacksOpenSite: "사이트 열기",
   sitePacksTabBuiltin: "기본 제공 사이트",
   builtinSitesDesc:
-    "기본 제공 AI 사이트에서 Ophel의 활성화 상태를 관리합니다. 비활성화하면 해당 사이트에서 패널과 모든 향상 기능이 로드되지 않으며, 열린 페이지는 새로 고침 후 완전히 적용됩니다",
+    "기본 제공 AI 사이트에서 Ophel의 활성화 상태를 관리합니다. 비활성화하면 해당 사이트에서 패널과 모든 향상 기능이 로드되지 않으며, 열린 페이지는 새로 고침 후 완전히 적용됩니다. 드래그하여 팝업 빠른 실행에서 사이트 순서를 변경할 수 있습니다",
   builtinSiteCurrentBadge: "현재 사이트",
   builtinSiteEnabledToast: "{site}을(를) 다시 활성화했습니다",
   builtinSiteDisabledToast:
@@ -1587,8 +1587,6 @@ export const ko = {
     "사이트 팩 {site}을(를) 활성화했습니다. 열린 페이지를 새로고침하면 적용됩니다",
   popupPackDisabledToast:
     "사이트 팩 {site}을(를) 비활성화했습니다. 열린 페이지를 새로고침하면 적용됩니다",
-  popupSiteTileDisabledTooltip:
-    "이 사이트에서 Ophel이 비활성화되어 있습니다. 클릭하면 사이트가 열립니다",
   popupQuickAccess: "빠른 액세스",
   popupSitePackUnbound: "사이트 미추가",
   popupSwitchSiteEntry: "사이트 진입점 전환",

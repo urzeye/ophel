@@ -59,7 +59,7 @@ export const pt = {
   sitePacksOpenSite: "Abrir site",
   sitePacksTabBuiltin: "Sites integrados",
   builtinSitesDesc:
-    "Gerencie em quais sites de IA integrados o Ophel é executado. Após a desativação, o painel e todas as melhorias deixam de carregar nesse site; recarregue as páginas abertas para aplicar totalmente a alteração",
+    "Gerencie em quais sites de IA integrados o Ophel é executado. Após a desativação, o painel e todas as melhorias deixam de carregar nesse site; recarregue as páginas abertas para aplicar totalmente a alteração. Arraste os sites para ajustar a ordem no acesso rápido do pop-up",
   builtinSiteCurrentBadge: "Site atual",
   builtinSiteEnabledToast: "{site} reativado",
   builtinSiteDisabledToast:
@@ -1731,8 +1731,6 @@ Dê o código e depois um resumo de melhorias.`,
     "Pacote de site {site} ativado; recarregue as páginas abertas para aplicar",
   popupPackDisabledToast:
     "Pacote de site {site} desativado; recarregue as páginas abertas para aplicar",
-  popupSiteTileDisabledTooltip:
-    "O Ophel está desativado neste site; clique para abri-lo mesmo assim",
   popupQuickAccess: "Acesso Rápido",
   popupSitePackUnbound: "Nenhum site adicionado",
   popupSwitchSiteEntry: "Alternar entrada do site",

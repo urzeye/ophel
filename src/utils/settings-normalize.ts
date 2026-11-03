@@ -37,6 +37,13 @@ const normalizeDisabledSites = (value: SettingsInput["disabledSites"]): string[]
   ]
 }
 
+// 快速访问排序只归一化为去重后的字符串数组；平台目录是动态的（适配包可装可卸），
+// 失效 ID 不在这里剔除，由渲染处按当前目录过滤，避免卸载再装回后丢失排位
+const normalizeQuickAccessOrder = (value: SettingsInput["quickAccessOrder"]): string[] => {
+  if (!Array.isArray(value)) return []
+  return [...new Set(value.filter((id): id is string => typeof id === "string"))]
+}
+
 // 隐藏页面规则归一化：丢弃结构不合法的规则，同站点内去重，没有规则的站点条目不保留
 const normalizeHiddenPaths = (value: SettingsInput["hiddenPaths"]): Settings["hiddenPaths"] => {
   if (!value || typeof value !== "object" || Array.isArray(value)) return {}
@@ -426,6 +433,7 @@ export const normalizeSettings = (settings: SettingsInput): Settings => {
     ...DEFAULT_SETTINGS,
     ...rest,
     disabledSites: normalizeDisabledSites(settings.disabledSites),
+    quickAccessOrder: normalizeQuickAccessOrder(settings.quickAccessOrder),
     hiddenPaths: normalizeHiddenPaths(settings.hiddenPaths),
     remoteConfig: {
       ...DEFAULT_SETTINGS.remoteConfig,

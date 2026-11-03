@@ -4,6 +4,8 @@
 
   "disabledSites": [],
 
+  "quickAccessOrder": [],
+
   "hiddenPaths": {
     "<siteId 或站点实例 key>": [
       { "pattern": "/artifact/*", "regex": false },

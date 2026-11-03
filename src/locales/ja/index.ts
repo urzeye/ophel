@@ -58,7 +58,7 @@ export const ja = {
   sitePacksOpenSite: "サイトを開く",
   sitePacksTabBuiltin: "内蔵サイト",
   builtinSitesDesc:
-    "内蔵 AI サイトでの Ophel の有効状態を管理します。無効にすると、そのサイトではパネルとすべての拡張機能が読み込まれなくなります。開いているページは再読み込み後に完全に反映されます",
+    "内蔵 AI サイトでの Ophel の有効状態を管理します。無効にすると、そのサイトではパネルとすべての拡張機能が読み込まれなくなります。開いているページは再読み込み後に完全に反映されます。ドラッグでポップアップのクイックアクセスの表示順を変更できます",
   builtinSiteCurrentBadge: "現在のサイト",
   builtinSiteEnabledToast: "{site} を再度有効にしました",
   builtinSiteDisabledToast:
@@ -1639,7 +1639,6 @@ export const ja = {
     "サイトパック {site} を有効にしました。開いているページを再読み込みすると反映されます",
   popupPackDisabledToast:
     "サイトパック {site} を無効にしました。開いているページを再読み込みすると反映されます",
-  popupSiteTileDisabledTooltip: "このサイトで Ophel は無効です。クリックするとサイトを開きます",
   popupQuickAccess: "クイックアクセス",
   popupSitePackUnbound: "サイト未追加",
   popupSwitchSiteEntry: "サイトの入口を切り替え",

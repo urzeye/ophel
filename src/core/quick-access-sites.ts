@@ -61,6 +61,60 @@ export const resolveQuickAccessUrl = (
   return site.urls[0]
 }
 
+/**
+ * 应用用户自定义顺序：被记录的项按记录序在前，未记录的项保持传入顺序追加在后
+ * （新上线站点、新装的包自动排到末尾）。传入列表按当前平台目录给出，
+ * 记录里已失效的 ID 不参与排序，天然被忽略。
+ */
+export const orderByQuickAccessOrder = <T>(
+  items: readonly T[],
+  order: readonly string[],
+  getId: (item: T) => string,
+): T[] => {
+  if (order.length === 0) return [...items]
+  const rank = new Map(order.map((id, index) => [id, index]))
+  // sort 稳定：未记录的项之间保持传入的目录顺序
+  return [...items].sort((a, b) => {
+    const rankA = rank.get(getId(a))
+    const rankB = rank.get(getId(b))
+    if (rankA === undefined) return rankB === undefined ? 0 : 1
+    if (rankB === undefined) return -1
+    return rankA - rankB
+  })
+}
+
+/**
+ * 拖拽落盘：visibleIds 为当前列表实际展示的项（popup 网格会隐藏停用站点、
+ * 适配中心内置站点 Tab 不展示适配包）。在应用自定义顺序后的完整顺序上，
+ * 隐藏项占据的槽位保持不动，可见项的槽位按拖拽后的新相对顺序重新填充，
+ * 返回新的完整排序数组供持久化。
+ */
+export const moveQuickAccessItem = (params: {
+  catalogIds: readonly string[]
+  order: readonly string[]
+  visibleIds: readonly string[]
+  draggedId: string
+  targetId: string
+  position: "before" | "after"
+}): string[] => {
+  const { catalogIds, order, visibleIds, draggedId, targetId, position } = params
+  const visibleSet = new Set(visibleIds)
+  const fullOrder = orderByQuickAccessOrder(catalogIds, order, (id) => id)
+  const visibleOrder = fullOrder.filter((id) => visibleSet.has(id))
+
+  const fromIndex = visibleOrder.indexOf(draggedId)
+  if (fromIndex < 0 || draggedId === targetId || !visibleOrder.includes(targetId)) {
+    return fullOrder
+  }
+  const nextVisible = visibleOrder.filter((id) => id !== draggedId)
+  let insertIndex = nextVisible.indexOf(targetId)
+  if (position === "after") insertIndex += 1
+  nextVisible.splice(insertIndex, 0, draggedId)
+
+  const queue = [...nextVisible]
+  return fullOrder.map((id) => (visibleSet.has(id) ? (queue.shift() as string) : id))
+}
+
 /** 当前标签页所在的入口地址优先，其次是平台首个入口，最后退回当前 origin。 */
 export const resolveSiteEntryUrl = (platform: SupportedAiPlatform, currentUrl: string): string => {
   const currentOrigin = originOf(currentUrl)
