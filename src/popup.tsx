@@ -427,9 +427,12 @@ function IndexPopup() {
   }
 
   const handleSiteDragOver = (e: React.DragEvent, site: QuickAccessSite) => {
+    // 只接受网格内发起的排序拖拽；外部拖入的文字/链接不成为合法落点，
+    // 否则 drop 时会把目录顺序误写成自定义排序
+    if (!draggedSiteKey) return
     e.preventDefault()
     e.dataTransfer.dropEffect = "move"
-    if (!draggedSiteKey || draggedSiteKey === site.key) {
+    if (draggedSiteKey === site.key) {
       if (siteDropTarget) setSiteDropTarget(null)
       return
     }
@@ -441,9 +444,7 @@ function IndexPopup() {
 
   const handleSiteDrop = (e: React.DragEvent, site: QuickAccessSite) => {
     e.preventDefault()
-    // state 丢失时（如拖拽跨过重渲染）回落到 dataTransfer 里的 id
-    const draggedId = draggedSiteKey || e.dataTransfer.getData("text/plain")
-    if (!draggedId || draggedId === site.key || !settings) {
+    if (!draggedSiteKey || draggedSiteKey === site.key || !settings) {
       clearSiteDrag()
       return
     }
@@ -452,7 +453,7 @@ function IndexPopup() {
       catalogIds: supportedPlatforms.map((p) => p.id),
       order: settings.quickAccessOrder ?? [],
       visibleIds: quickAccessSites.map((s) => s.platform.id),
-      draggedId,
+      draggedId: draggedSiteKey,
       targetId: site.platform.id,
       position: getTileDropPosition(e),
     })

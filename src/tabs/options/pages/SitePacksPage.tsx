@@ -1618,9 +1618,12 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
   }
 
   const handleBuiltinDragOver = (e: React.DragEvent, siteId: string) => {
+    // 只接受列表内发起的排序拖拽；外部拖入的文字/链接不成为合法落点，
+    // 否则 drop 时会把目录顺序误写成自定义排序
+    if (!draggedBuiltinId) return
     e.preventDefault()
     e.dataTransfer.dropEffect = "move"
-    if (!draggedBuiltinId || draggedBuiltinId === siteId) {
+    if (draggedBuiltinId === siteId) {
       if (builtinDropTarget) setBuiltinDropTarget(null)
       return
     }
@@ -1632,9 +1635,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
 
   const handleBuiltinDrop = (e: React.DragEvent, siteId: string) => {
     e.preventDefault()
-    // state 丢失时（如拖拽跨过重渲染）回落到 dataTransfer 里的 id
-    const draggedId = draggedBuiltinId || e.dataTransfer.getData("text/plain")
-    if (!draggedId || draggedId === siteId) {
+    if (!draggedBuiltinId || draggedBuiltinId === siteId) {
       clearBuiltinDrag()
       return
     }
@@ -1647,7 +1648,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
       catalogIds: [...SUPPORTED_AI_PLATFORMS.map((site) => site.id), ...enabledPackIds],
       order: quickAccessOrder,
       visibleIds: SUPPORTED_AI_PLATFORMS.map((site) => site.id),
-      draggedId,
+      draggedId: draggedBuiltinId,
       targetId: siteId,
       position: getBuiltinDropPosition(e),
     })
