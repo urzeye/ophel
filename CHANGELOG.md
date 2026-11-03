@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### 🚀 New Features
+
+- **Customizable quick access in the popup** — Drag to reorder sites in the popup or in Adapter Center's built-in site list; disabled sites no longer appear, and quick access now shows on every site. (#1019)
+
 ---
 
 ## [1.3.0][1.3.0] - 2026-11-01
