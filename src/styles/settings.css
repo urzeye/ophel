@@ -3565,6 +3565,49 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   transition: color 0.15s ease;
 }
 
+/* 适配中心内置站点行的拖拽排序：与可排序列表同一套反馈语言 */
+.settings-pack-item.sortable {
+  cursor: grab;
+  transition:
+    background-color 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.settings-pack-item.sortable.is-dragging {
+  opacity: 0.45;
+  cursor: grabbing;
+}
+
+.settings-pack-item.sortable.drop-above,
+.settings-pack-item.sortable.drop-below {
+  position: relative;
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 7%, transparent);
+  outline: 2px dashed color-mix(in srgb, var(--gh-primary, #4285f4) 70%, transparent);
+  outline-offset: -3px;
+}
+
+.settings-pack-item.sortable.drop-above::after,
+.settings-pack-item.sortable.drop-below::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  width: 36px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--gh-primary, #4285f4);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--gh-primary, #4285f4) 30%, transparent);
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+
+.settings-pack-item.sortable.drop-above::after {
+  top: -7px;
+}
+
+.settings-pack-item.sortable.drop-below::after {
+  bottom: -7px;
+}
+
 .settings-sortable-item:hover .settings-sortable-handle {
   color: var(--gh-text-secondary, #6b7280);
 }

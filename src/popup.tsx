@@ -22,16 +22,18 @@ import {
   sitePackInstalledSettingId,
 } from "~constants"
 import type { SupportedAiPlatform } from "~constants/defaults"
+import { isBuiltinSiteId } from "~constants/defaults"
 import {
   buildQuickAccessSites,
   hostOf,
+  moveQuickAccessItem,
+  orderByQuickAccessOrder,
   resolveQuickAccessUrl,
   resolveSiteEntryUrl,
   type QuickAccessSite,
 } from "~core/quick-access-sites"
 import { createRuntimePackManager } from "~core/pack-manager-runtime"
 import {
-  isQuickAccessTileDisabled,
   resolvePopupSiteToggleTarget,
   resolveSiteEffectiveState,
   type SiteEffectiveStatus,
@@ -68,18 +70,25 @@ interface SiteInfo {
 const QUICK_ACCESS_LAST_URLS_KEY = "popupQuickAccessLastEntryUrls"
 /** 设置未 hydration 时的稳定空引用，避免每次渲染生成新数组击穿 useMemo */
 const NO_DISABLED_SITES: readonly string[] = []
+const NO_QUICK_ACCESS_ORDER: readonly string[] = []
 
 function IndexPopup() {
   const supportedPlatforms = useSupportedAiPlatforms()
-  const quickAccessSites = useMemo(
-    () => buildQuickAccessSites(supportedPlatforms),
-    [supportedPlatforms],
-  )
   const [activeTabUrl, setActiveTabUrl] = useState("")
   const settings = useSettingsStore((state) => state.settings)
   const settingsHydrated = useSettingsStore((state) => state._hasHydrated)
   const setSettings = useSettingsStore((state) => state.setSettings)
   const disabledSites = settings?.disabledSites ?? NO_DISABLED_SITES
+  const quickAccessOrder = settings?.quickAccessOrder ?? NO_QUICK_ACCESS_ORDER
+
+  // 快速访问网格：停用的内置站点不再占位显示（重新启用的入口保留在
+  // 当前站点卡片与适配中心），其余按用户自定义顺序排列
+  const quickAccessSites = useMemo(() => {
+    const visible = buildQuickAccessSites(supportedPlatforms).filter(
+      (site) => !(isBuiltinSiteId(site.platform.id) && disabledSites.includes(site.platform.id)),
+    )
+    return orderByQuickAccessOrder(visible, quickAccessOrder, (site) => site.platform.id)
+  }, [supportedPlatforms, disabledSites, quickAccessOrder])
 
   // 站点有效状态：内置停用后由 SitePack 接管时仍视为激活
   const effectiveState = useMemo(
@@ -169,6 +178,12 @@ function IndexPopup() {
   const [entryMenuSiteKey, setEntryMenuSiteKey] = useState<string | null>(null)
   const [entryMenuDropUp, setEntryMenuDropUp] = useState(false)
   const entryMenuRef = useRef<HTMLDivElement>(null)
+  // 磁贴拖拽排序：拖动中的磁贴与落点提示（目标磁贴 + 插入到其前/后）
+  const [draggedSiteKey, setDraggedSiteKey] = useState<string | null>(null)
+  const [siteDropTarget, setSiteDropTarget] = useState<{
+    key: string
+    position: "before" | "after"
+  } | null>(null)
   const [toastVisible, setToastVisible] = useState(false)
   const [toastMessage, setToastMessage] = useState("")
   const [languageReady, setLanguageReady] = useState(false)
@@ -387,6 +402,64 @@ function IndexPopup() {
     openUrl(url)
   }
 
+  // 网格是横向流式布局，按指针位于目标磁贴左/右半区判断插入位置
+  const getTileDropPosition = (e: React.DragEvent): "before" | "after" => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    return e.clientX < rect.left + rect.width / 2 ? "before" : "after"
+  }
+
+  const clearSiteDrag = () => {
+    setDraggedSiteKey(null)
+    setSiteDropTarget(null)
+  }
+
+  const handleSiteDragStart = (e: React.DragEvent, site: QuickAccessSite) => {
+    // 从入口切换按钮/菜单上发起的拖拽无效，保留其点击行为
+    if ((e.target as HTMLElement).closest(".popup-site-entry-switch, .popup-site-entry-menu")) {
+      e.preventDefault()
+      return
+    }
+    e.dataTransfer.effectAllowed = "move"
+    // 必须写入 dataTransfer：部分站点在冒泡阶段检测空 dataTransfer 并取消拖拽，
+    // Firefox 也要求非空才能发起拖拽（与 usePromptDragSort 同一约束）
+    e.dataTransfer.setData("text/plain", site.key)
+    setDraggedSiteKey(site.key)
+  }
+
+  const handleSiteDragOver = (e: React.DragEvent, site: QuickAccessSite) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = "move"
+    if (!draggedSiteKey || draggedSiteKey === site.key) {
+      if (siteDropTarget) setSiteDropTarget(null)
+      return
+    }
+    const position = getTileDropPosition(e)
+    if (siteDropTarget?.key !== site.key || siteDropTarget.position !== position) {
+      setSiteDropTarget({ key: site.key, position })
+    }
+  }
+
+  const handleSiteDrop = (e: React.DragEvent, site: QuickAccessSite) => {
+    e.preventDefault()
+    // state 丢失时（如拖拽跨过重渲染）回落到 dataTransfer 里的 id
+    const draggedId = draggedSiteKey || e.dataTransfer.getData("text/plain")
+    if (!draggedId || draggedId === site.key || !settings) {
+      clearSiteDrag()
+      return
+    }
+    // 在完整平台目录上计算落点，网格里未显示的停用站点槽位保持不动
+    const next = moveQuickAccessItem({
+      catalogIds: supportedPlatforms.map((p) => p.id),
+      order: settings.quickAccessOrder ?? [],
+      visibleIds: quickAccessSites.map((s) => s.platform.id),
+      draggedId,
+      targetId: site.platform.id,
+      position: getTileDropPosition(e),
+    })
+    setSettings({ quickAccessOrder: next })
+    clearSiteDrag()
+  }
+
   const quickAccessTooltip = (site: QuickAccessSite): string => {
     if (site.urls.length === 0) return `${site.platform.name} · ${t("popupSitePackUnbound")}`
     if (site.urls.length > 1) {
@@ -574,20 +647,23 @@ function IndexPopup() {
             <div className="popup-sites-grid">
               {quickAccessSites.map((site) => {
                 const resolvedUrl = resolveQuickAccessUrl(site, lastEntryUrls)
-                // 停用的内置站点：保留导航能力，弱化展示并标注状态
-                const tileDisabled = isQuickAccessTileDisabled(site.platform, disabledSites)
                 return (
-                  <div className="popup-site-tile" key={site.key}>
+                  <div
+                    className={`popup-site-tile${draggedSiteKey === site.key ? " is-dragging" : ""}${
+                      siteDropTarget?.key === site.key ? ` drop-${siteDropTarget.position}` : ""
+                    }`}
+                    key={site.key}
+                    draggable
+                    onDragStart={(e) => handleSiteDragStart(e, site)}
+                    onDragOver={(e) => handleSiteDragOver(e, site)}
+                    onDrop={(e) => handleSiteDrop(e, site)}
+                    onDragEnd={clearSiteDrag}>
                     <Tooltip
-                      content={
-                        tileDisabled
-                          ? `${site.platform.name} · ${t("popupSiteTileDisabledTooltip")}`
-                          : quickAccessTooltip(site)
-                      }
+                      content={quickAccessTooltip(site)}
                       triggerStyle={{ width: "100%", display: "flex" }}
                       triggerClassName="popup-tooltip-trigger">
                       <button
-                        className={`popup-site-link${site.urls.length === 0 ? " unbound" : ""}${tileDisabled ? " site-disabled" : ""}`}
+                        className={`popup-site-link${site.urls.length === 0 ? " unbound" : ""}`}
                         onClick={() => openQuickAccessSite(site)}>
                         <PlatformIcon
                           platform={site.platform}

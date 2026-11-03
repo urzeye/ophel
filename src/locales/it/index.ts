@@ -58,7 +58,7 @@ export const it = {
   sitePacksOpenSite: "Apri sito",
   sitePacksTabBuiltin: "Siti integrati",
   builtinSitesDesc:
-    "Gestisci dove Ophel è attivo sui siti AI integrati. Una volta disattivato, il pannello e tutte le funzionalità non vengono più caricati su quel sito; ricarica le pagine aperte per applicare completamente la modifica",
+    "Gestisci dove Ophel è attivo sui siti AI integrati. Una volta disattivato, il pannello e tutte le funzionalità non vengono più caricati su quel sito; ricarica le pagine aperte per applicare completamente la modifica. Trascina i siti per riordinarli nell'accesso rapido del popup",
   builtinSiteCurrentBadge: "Sito attuale",
   builtinSiteEnabledToast: "{site} riattivato",
   builtinSiteDisabledToast:
@@ -1688,7 +1688,6 @@ export const it = {
   popupPackEnabledToast: "Pacchetto sito {site} attivato; ricarica le pagine aperte per applicare",
   popupPackDisabledToast:
     "Pacchetto sito {site} disattivato; ricarica le pagine aperte per applicare",
-  popupSiteTileDisabledTooltip: "Ophel è disattivato su questo sito; clicca per aprirlo comunque",
   popupQuickAccess: "Accesso rapido",
   popupSitePackUnbound: "Nessun sito aggiunto",
   popupSwitchSiteEntry: "Cambia punto di accesso al sito",

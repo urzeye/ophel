@@ -53,7 +53,7 @@ export const zhCN = {
   sitePacksOpenSite: "打开站点",
   sitePacksTabBuiltin: "内置站点",
   builtinSitesDesc:
-    "管理 Ophel 在内置 AI 站点的启用状态。停用后该站点不再加载面板与任何增强功能，已打开的页面刷新后完全生效",
+    "管理 Ophel 在内置 AI 站点的启用状态。停用后该站点不再加载面板与任何增强功能，已打开的页面刷新后完全生效。拖拽可调整站点在 Popup 快速访问中的顺序",
   builtinSiteCurrentBadge: "当前站点",
   builtinSiteEnabledToast: "已重新启用 {site}",
   builtinSiteDisabledToast: "已在 {site} 停用 Ophel，已打开的页面刷新后完全生效",
@@ -1575,7 +1575,6 @@ export const zhCN = {
   popupSiteEnabledToast: "已启用",
   popupPackEnabledToast: "已启用适配包 {site}，刷新已打开的页面后生效",
   popupPackDisabledToast: "已停用适配包 {site}，刷新已打开的页面后生效",
-  popupSiteTileDisabledTooltip: "Ophel 在此站点已停用，点击仍打开网站",
   popupQuickAccess: "快速访问",
   popupSitePackUnbound: "未添加站点",
   popupSwitchSiteEntry: "切换站点入口",

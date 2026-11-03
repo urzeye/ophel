@@ -141,6 +141,10 @@ export interface Settings {
   // 已停用的内置站点 ID 列表（SITE_IDS 值）；停用后该站点不再初始化任何功能
   disabledSites: string[]
 
+  // Popup 快速访问的自定义排序（内置站点 ID 与适配包平台 ID 即 "pack:xxx" 混合）；
+  // 空数组表示未自定义，按目录默认顺序展示；未列入的新站点/新装包追加在末尾
+  quickAccessOrder: string[]
+
   // 按站点配置的隐藏页面规则（key 为 siteId，SitePack 为站点实例 key）：
   // 页面路径命中任一规则时不挂载面板与快捷按钮，核心模块照常运行
   hiddenPaths: Record<string, HiddenPathRule[]>

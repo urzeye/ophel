@@ -577,21 +577,10 @@ button.popup-site-entry-pill:focus-visible {
   opacity: 0.5;
 }
 
-/* 停用站点的格子：弱化展示但保留导航能力 */
-.popup-site-link.site-disabled .popup-site-icon,
-.popup-site-link.site-disabled .popup-site-emoji {
-  opacity: 0.55;
-  filter: grayscale(0.6);
-}
-
 @media (prefers-color-scheme: dark) {
   /* 纯黑透明底的站点 logo（如 ChatGPT）在深色模式下反白 */
   .platform-icon-dark-invert {
     filter: invert(1);
-  }
-
-  .popup-site-link.site-disabled .platform-icon-dark-invert {
-    filter: grayscale(0.6) invert(1);
   }
 }
 
@@ -600,6 +589,44 @@ button.popup-site-entry-pill:focus-visible {
   position: relative;
   display: flex;
   width: 100%;
+  cursor: grab;
+  transition: opacity 0.15s ease;
+}
+
+/* 拖拽排序：拖动中的磁贴弱化，落点磁贴用插入侧的指示条提示 */
+.popup-site-tile.is-dragging {
+  opacity: 0.45;
+  cursor: grabbing;
+}
+
+/* 落点反馈与选项页可排序列表同一语言：虚线框 + 指示条（网格为横向布局，指示条竖向） */
+.popup-site-tile.drop-before .popup-site-link,
+.popup-site-tile.drop-after .popup-site-link {
+  outline: 2px dashed color-mix(in srgb, var(--popup-accent) 70%, transparent);
+  outline-offset: -3px;
+}
+
+.popup-site-tile.drop-before::before,
+.popup-site-tile.drop-after::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 5px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--popup-accent);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--popup-accent) 30%, transparent);
+  pointer-events: none;
+  transform: translateY(-50%);
+  z-index: 3;
+}
+
+.popup-site-tile.drop-before::before {
+  left: -5px;
+}
+
+.popup-site-tile.drop-after::after {
+  right: -5px;
 }
 
 .popup-site-entry-switch {

@@ -59,12 +59,6 @@ export const resolveSiteEffectiveState = (
   return { status: "unsupported", platform: null, builtinPlatform: null }
 }
 
-/** 快速访问网格中的内置站点格子是否处于停用态（适配包格子不参与内置开关）。 */
-export const isQuickAccessTileDisabled = (
-  platform: SupportedAiPlatform,
-  disabledSites: readonly string[],
-): boolean => isBuiltinSiteId(platform.id) && disabledSites.includes(platform.id)
-
 /**
  * 弹窗站点开关的作用对象。
  *

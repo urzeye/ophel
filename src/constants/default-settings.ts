@@ -83,6 +83,8 @@ export const DEFAULT_SETTINGS: Settings = {
 
   disabledSites: [],
 
+  quickAccessOrder: [],
+
   hiddenPaths: {},
 
   remoteConfig: {
