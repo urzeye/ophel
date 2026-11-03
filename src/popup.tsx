@@ -643,29 +643,6 @@ function IndexPopup() {
           )
         ) : null}
 
-        {/* Recent Prompts */}
-        <div>
-          <div className="popup-section-title">{t("popupRecentUsed")}</div>
-          {recentPrompts.length > 0 ? (
-            <div className="popup-prompts-list">
-              {recentPrompts.map((prompt) => (
-                <div
-                  key={prompt.id}
-                  className="popup-prompt-item"
-                  onClick={() => copyToClipboard(prompt.content)}>
-                  <span className="popup-prompt-title">{prompt.title}</span>
-                  <span className="popup-prompt-copy">{t("copy")}</span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="popup-no-prompts">
-              <TimeIcon size={28} />
-              <span>{t("popupNoRecentPrompts")}</span>
-            </div>
-          )}
-        </div>
-
         {/* 快速访问：所有场景常驻，作为跨站点启动器；全部停用时隐藏整区 */}
         {quickAccessSites.length > 0 && (
           <div>
@@ -743,6 +720,29 @@ function IndexPopup() {
             </div>
           </div>
         )}
+
+        {/* Recent Prompts */}
+        <div>
+          <div className="popup-section-title">{t("popupRecentUsed")}</div>
+          {recentPrompts.length > 0 ? (
+            <div className="popup-prompts-list">
+              {recentPrompts.map((prompt) => (
+                <div
+                  key={prompt.id}
+                  className="popup-prompt-item"
+                  onClick={() => copyToClipboard(prompt.content)}>
+                  <span className="popup-prompt-title">{prompt.title}</span>
+                  <span className="popup-prompt-copy">{t("copy")}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="popup-no-prompts">
+              <TimeIcon size={28} />
+              <span>{t("popupNoRecentPrompts")}</span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Footer - fixed at bottom */}
