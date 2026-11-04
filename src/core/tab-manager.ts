@@ -23,6 +23,7 @@ import { type Settings } from "~utils/storage"
 
 const BACKGROUND_IDLE_TITLE_UPDATE_INTERVAL_MS = 15_000
 const DEFAULT_RENAME_INTERVAL_SECONDS = 5
+const NATIVE_TAB_TITLE_ATTR = "data-ophel-native-tab-title"
 
 export class TabManager {
   private adapter: SiteAdapter
@@ -160,10 +161,11 @@ export class TabManager {
 
     this.isRunning = false
     this.stopTitleObserver()
+    this.restoreNativeTitle(this.expectedTitle)
     this.expectedTitle = null
+    this.lastConversationTitle = null
     this.staleManagedTitleAfterRouteChange = null
     this.staleConversationTitleAfterRouteChange = null
-    forgetManagedTabTitle()
     forgetStaleManagedTabTitle()
 
     this.syncUpdateLoop()
@@ -201,6 +203,16 @@ export class TabManager {
     // 检查适配器是否支持标签页重命名
     if (this.adapter.supportsTabRename && !this.adapter.supportsTabRename()) {
       return
+    }
+
+    // 扩展被浏览器直接停用时不会执行 destroy；重注入先释放上次接管的标题。
+    const rememberedTitle = getRememberedManagedTabTitle()
+    if (
+      rememberedTitle &&
+      document.title === rememberedTitle &&
+      document.documentElement.hasAttribute(NATIVE_TAB_TITLE_ATTR)
+    ) {
+      this.restoreNativeTitle(rememberedTitle)
     }
 
     this.isRunning = true
@@ -412,7 +424,26 @@ export class TabManager {
     return "✅ "
   }
 
+  private restoreNativeTitle(managedTitle: string | null) {
+    const nativeTitle = document.documentElement.getAttribute(NATIVE_TAB_TITLE_ATTR)
+    const stillOwnsTitle = document.title === managedTitle
+    document.documentElement.removeAttribute(NATIVE_TAB_TITLE_ATTR)
+    forgetManagedTabTitle()
+    if (stillOwnsTitle && nativeTitle !== null) {
+      document.title = nativeTitle
+    }
+  }
+
   private applyManagedTitle(title: string, force = false) {
+    // DOM 元数据可跨 content script 重注入保留，避免把上次接管的标题当作原生标题。
+    const currentTitle = document.title
+    if (
+      currentTitle !== this.expectedTitle &&
+      currentTitle !== getRememberedManagedTabTitle() &&
+      currentTitle !== this.staleManagedTitleAfterRouteChange
+    ) {
+      document.documentElement.setAttribute(NATIVE_TAB_TITLE_ATTR, currentTitle)
+    }
     this.expectedTitle = title
     forgetStaleManagedTabTitle()
     rememberManagedTabTitle(title)
