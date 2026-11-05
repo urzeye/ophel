@@ -6,6 +6,7 @@ import {
   forgetManagedTabTitle,
   formatManagedTabTitle,
   getRememberedManagedTabTitle,
+  getRememberedStaleManagedTabTitle,
   normalizeConversationTitle,
   rememberStaleManagedTabTitle,
   rememberManagedTabTitle,
@@ -162,7 +163,8 @@ export class TabManager {
 
     this.isRunning = false
     this.stopTitleObserver()
-    this.restoreNativeTitle(this.expectedTitle)
+    // 路由切换窗口内 expectedTitle 已清空，用 stale 受管标题识别所有权再恢复
+    this.restoreNativeTitle(this.expectedTitle ?? this.staleManagedTitleAfterRouteChange)
     this.expectedTitle = null
     this.lastConversationTitle = null
     this.staleManagedTitleAfterRouteChange = null
@@ -359,7 +361,8 @@ export class TabManager {
     if (
       currentTitle !== this.expectedTitle &&
       currentTitle !== getRememberedManagedTabTitle() &&
-      currentTitle !== this.staleManagedTitleAfterRouteChange
+      currentTitle !== this.staleManagedTitleAfterRouteChange &&
+      currentTitle !== getRememberedStaleManagedTabTitle()
     ) {
       document.documentElement.setAttribute(NATIVE_TAB_TITLE_ATTR, currentTitle)
     }

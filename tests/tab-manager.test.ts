@@ -124,6 +124,37 @@ describe("TabManager title ownership", () => {
     expect(pageDocument.title).toBe("设置")
   })
 
+  it("restores native provenance when toggled inside the route-change window", () => {
+    const manager = createManager()
+    manager.start()
+    expect(pageDocument.title).toBe("✅ 设置")
+
+    manager.resetConversationTitleCache()
+    manager.stop()
+    expect(pageDocument.title).toBe("设置")
+
+    manager.start()
+    expect(pageDocument.title).toBe("✅ 设置")
+    manager.destroy()
+    expect(pageDocument.title).toBe("设置")
+  })
+
+  it("retains native provenance when reinjected inside the route-change window", () => {
+    const previous = createManager()
+    previous.start()
+    expect(pageDocument.title).toBe("✅ 设置")
+
+    // 浏览器直接停用扩展时不执行 destroy；DOM 上的 stale 标记仍然保留
+    previous.resetConversationTitleCache()
+    const replacement = createManager()
+    replacement.start()
+    expect(pageDocument.title).not.toContain("✅ ✅")
+    replacement.destroy()
+    expect(pageDocument.title).toBe("设置")
+    previous.destroy()
+    expect(pageDocument.title).toBe("设置")
+  })
+
   it("restores a new route's native title after navigation", () => {
     const manager = createManager()
     manager.start()
