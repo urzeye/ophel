@@ -1163,85 +1163,79 @@ ${cssVars}
     // 暂停 MutationObserver，防止在 View Transition 期间触发额外的 DOM 修改
     this.stopThemeMonitoring()
 
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    if (!document.startViewTransition || prefersReducedMotion) {
-      try {
+    let animated = false
+    try {
+      const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      if (!document.startViewTransition || prefersReducedMotion) {
         action()
-      } finally {
-        if (currentTransitionId === this.transitionId) {
-          this.cleanupTransitionSnapshotTarget()
-          this.skipNextDetection = true
-          this.startThemeMonitoring()
+      } else {
+        const isShrink = targetMode === "light"
+        const direction: ThemeTransitionDirection = isShrink ? "shrink" : "expand"
+        const transitionTarget = this.prepareTransitionSnapshotTarget(direction)
+
+        let transition: ViewTransition | null = null
+        try {
+          transition = document.startViewTransition(() => {
+            action()
+          })
+        } catch {
+          action()
+        }
+
+        if (transition) {
+          animated = true
+          transition.ready
+            .then(() => {
+              if (currentTransitionId !== this.transitionId) return
+
+              const originX = (x / 100) * window.innerWidth
+              const originY = (y / 100) * window.innerHeight
+              const right = window.innerWidth - originX
+              const bottom = window.innerHeight - originY
+              const maxRadius = Math.hypot(Math.max(originX, right), Math.max(originY, bottom))
+
+              const collapsedCircle = `circle(0px at ${x}% ${y}%)`
+              const expandedCircle = `circle(${maxRadius}px at ${x}% ${y}%)`
+              const clipPath = isShrink
+                ? [expandedCircle, collapsedCircle]
+                : [collapsedCircle, expandedCircle]
+
+              this.cancelTransitionAnimations()
+              this.activeTransitionAnimation = document.documentElement.animate(
+                {
+                  clipPath,
+                },
+                {
+                  duration: 500,
+                  easing: isShrink ? "ease-out" : "ease-in",
+                  pseudoElement: transitionTarget.pseudoElement,
+                  fill: "forwards",
+                },
+              )
+            })
+            .catch(() => {
+              // 忽略被中断或跳过的过渡
+            })
+
+          await transition.finished.catch(() => {
+            // 忽略动画错误或连点中断
+          })
         }
       }
-      return { animated: false, superseded: currentTransitionId !== this.transitionId }
-    }
 
-    const isShrink = targetMode === "light"
-    const direction: ThemeTransitionDirection = isShrink ? "shrink" : "expand"
-    const transitionTarget = this.prepareTransitionSnapshotTarget(direction)
-
-    let transition: ViewTransition
-    try {
-      transition = document.startViewTransition(() => {
-        action()
-      })
-    } catch {
-      action()
+      const superseded = currentTransitionId !== this.transitionId
+      if (!superseded) {
+        // 恢复监听会读取当前模式，必须先提交目标模式。
+        this.mode = targetMode
+      }
+      return { animated, superseded }
+    } finally {
       if (currentTransitionId === this.transitionId) {
         this.cleanupTransitionSnapshotTarget()
         this.skipNextDetection = true
         this.startThemeMonitoring()
       }
-      return { animated: false, superseded: currentTransitionId !== this.transitionId }
     }
-
-    transition.ready
-      .then(() => {
-        if (currentTransitionId !== this.transitionId) return
-
-        const originX = (x / 100) * window.innerWidth
-        const originY = (y / 100) * window.innerHeight
-        const right = window.innerWidth - originX
-        const bottom = window.innerHeight - originY
-        const maxRadius = Math.hypot(Math.max(originX, right), Math.max(originY, bottom))
-
-        const collapsedCircle = `circle(0px at ${x}% ${y}%)`
-        const expandedCircle = `circle(${maxRadius}px at ${x}% ${y}%)`
-        const clipPath = isShrink
-          ? [expandedCircle, collapsedCircle]
-          : [collapsedCircle, expandedCircle]
-
-        this.cancelTransitionAnimations()
-        this.activeTransitionAnimation = document.documentElement.animate(
-          {
-            clipPath,
-          },
-          {
-            duration: 500,
-            easing: isShrink ? "ease-out" : "ease-in",
-            pseudoElement: transitionTarget.pseudoElement,
-            fill: "forwards",
-          },
-        )
-      })
-      .catch(() => {
-        // 忽略被中断或跳过的过渡
-      })
-
-    await transition.finished.catch(() => {
-      // 忽略动画错误或连点中断
-    })
-
-    if (currentTransitionId !== this.transitionId) {
-      return { animated: true, superseded: true }
-    }
-
-    this.cleanupTransitionSnapshotTarget()
-    // 标记跳过下一次检测，防止 observer 立即根据中间态把结果回写掉
-    this.skipNextDetection = true
-    this.startThemeMonitoring()
-    return { animated: true, superseded: false }
   }
 
   private async switchToMode(
@@ -1262,7 +1256,6 @@ ${cssVars}
       return { mode: this.mode, animated }
     }
 
-    this.mode = nextMode
     this.emitChange()
     if (this.onModeChange) {
       this.onModeChange(nextMode, this.preference)
@@ -1326,9 +1319,6 @@ ${cssVars}
       if (modeChanged) {
         this.mode = resolved
         this.emitChange()
-        if (!this.isHostThemeSyncActive()) {
-          this.syncPluginUiTheme(resolved)
-        }
       }
       if (this.onModeChange) {
         this.onModeChange(resolved, this.preference)
