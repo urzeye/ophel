@@ -1540,6 +1540,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             {onThemeToggle && (
               <Tooltip content={t("toggleTheme")}>
                 <button
+                  id="theme-toggle-btn"
                   type="button"
                   onClick={(event) => {
                     onThemeToggle?.(getButtonCenter(event.currentTarget))

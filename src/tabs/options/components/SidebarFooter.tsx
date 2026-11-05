@@ -9,6 +9,7 @@ import {
   TranslateIcon,
 } from "~components/icons"
 import { Tooltip } from "~components/ui/Tooltip"
+import { getThemeTransitionOriginFromEvent } from "~core/theme-manager"
 import { useSettingsStore } from "~stores/settings-store"
 import { getEffectiveLanguage, setLanguage, t } from "~utils/i18n"
 import { getSiteTheme } from "~utils/storage"
@@ -34,7 +35,7 @@ export const SidebarFooter = ({ siteId = "_default" }: { siteId?: string }) => {
 
     const themeManager = window.__ophelThemeManager
     if (themeManager?.setMode) {
-      await themeManager.setMode(mode, event?.nativeEvent)
+      await themeManager.setMode(mode, getThemeTransitionOriginFromEvent(event))
     } else {
       // 尝试调用 themeManager，如果失败则手动更新 settings
       const sites = settings?.theme?.sites || {}
