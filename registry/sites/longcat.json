@@ -51,8 +51,8 @@
   "selectors": {
     "textarea": [".chatInput .tiptap.ProseMirror"],
     "submitButton": [".chatInput .send-btn"],
-    "responseContainer": ".v-message-list",
-    "chatContent": [".v-message-list > .v-chat-messge-view"],
+    "responseContainer": ".v-message-list, .message-list",
+    "chatContent": [".v-message-list > .v-chat-messge-view", ".message-list > .v-chat-messge-view"],
     "userQuery": ".v-chat-user-message .user-text",
     "assistantResponse": ".v-chat-assistant-message .md-show-container",
     "newChatButton": [".slider-header .new-content"],
@@ -81,7 +81,7 @@
   },
   "widthSelectors": [
     {
-      "selector": ".v-message-list",
+      "selector": ".v-message-list, .message-list",
       "property": "max-width"
     },
     {

@@ -19,6 +19,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **Tab title issues** — Fixed the original title not returning after turning off Auto Rename Tab or Hide Tab Title, Hide Tab Title alone not taking effect, and multiple ✅ icons appearing in the title after disabling and re-enabling Ophel on some pages. (#1020)
 - **Perplexity page update adaptation** — Fixed Perplexity's page update breaking the outline and export (missing questions and replies) and preventing prompts from being inserted into the input box. (#1021)
 - **Multi-line prompt insertion issues** — Fixed multi-line prompts losing line breaks or getting scrambled on Perplexity and Kimi, Perplexity wrongly reporting "Insert failed", and the clear button not fully clearing the input box. (#1022)
+- **LongCat AI logged-out page update adaptation** — Fixed the outline and page width settings not working on LongCat AI's redesigned logged-out pages; both logged-in and logged-out pages now work normally. (#1023)
 
 ---
 
