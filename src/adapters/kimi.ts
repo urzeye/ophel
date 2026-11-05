@@ -68,6 +68,23 @@ const KIMI_HOSTS = new Set(["www.kimi.com", "www.kimi.ai"])
 const THEME_STORAGE_KEY = "CUSTOM_THEME"
 const FULL_LIST_SNAPSHOT_TTL_MS = 15_000
 const FULL_LIST_SNAPSHOT_MAX_USES = 6
+// Lexical 按内部选区处理编辑事件，DOM 全选后需派发 selectionchange 并让出
+// 事件循环等待选区同步，否则操作作用于过期光标（追加而非替换、删除落空）
+const KIMI_SELECTION_SYNC_MS = 60
+
+/**
+ * 归一化编辑器渲染文本：去零宽字符、折叠普通空白但保留换行、容忍连续空行差异。
+ * 必须保留换行——Lexical 对多行 execCommand("insertText") 会吃掉换行但保留字符，
+ * 若连同换行一起归一化掉，会把换行丢失的残缺的中间结果误判为插入成功。
+ */
+const normalizeEditorContent = (text: string): string =>
+  text
+    .replace(new RegExp("[\\u200B-\\u200D\\uFEFF]", "g"), "")
+    .replace(/\r\n?/g, "\n")
+    .replace(/[^\S\n]+/g, " ")
+    .replace(/\n{2,}/g, "\n")
+    .trim()
+
 const KIMI_DELETE_REASON = {
   MISSING_AUTH_TOKEN: "delete_api_missing_auth_token",
   API_REQUEST_FAILED: "delete_api_request_failed",
@@ -424,7 +441,7 @@ export class KimiAdapter extends SiteAdapter {
     return { key: this.config.input.submitKey ?? "Enter" }
   }
 
-  insertPrompt(content: string): boolean {
+  async insertPrompt(content: string): Promise<boolean> {
     const editor = this.getTextareaElement()
     if (!editor || !editor.isConnected) return false
 
@@ -433,16 +450,25 @@ export class KimiAdapter extends SiteAdapter {
       return false
     }
 
-    const insertedByExec = this.insertByExecCommand(editor, content)
-    if (insertedByExec) return true
+    // 实测 Kimi（Lexical）：execCommand("insertText") 会吃掉多行换行且模型提交
+    // 异步；合成 paste 事件被正常处理、换行完整保留，优先使用。每种方式都要
+    // 验证真实内容；验证失败必须清场再试下一种，否则残留会和新内容叠加。
+    const attempts: Array<() => boolean | Promise<boolean>> = [
+      () => this.insertByPasteEvent(editor, content),
+      () => this.insertBySyntheticBeforeInput(editor, content),
+      () => this.insertByExecCommand(editor, content),
+    ]
+    for (const attempt of attempts) {
+      if (!(await attempt())) continue
+      if (await this.waitForEditorContent(editor, content)) return true
+      if (!(await this.resetEditorIfDirty(editor))) return false
+    }
 
-    const insertedByPaste = this.insertByPasteEvent(editor, content)
-    if (insertedByPaste) return true
-
+    // 最后兜底：直写 DOM 只有内容不被框架模型还原时才算成功
     editor.textContent = content
     editor.dispatchEvent(new Event("input", { bubbles: true }))
     editor.dispatchEvent(new Event("change", { bubbles: true }))
-    return true
+    return this.waitForEditorContent(editor, content)
   }
 
   clearTextarea(): void {
@@ -1729,11 +1755,13 @@ export class KimiAdapter extends SiteAdapter {
     return false
   }
 
-  private insertByPasteEvent(editor: HTMLElement, content: string): boolean {
+  private async insertByPasteEvent(editor: HTMLElement, content: string): Promise<boolean> {
     try {
       if (typeof DataTransfer === "undefined") return false
 
-      const before = editor.textContent || ""
+      this.selectEditorAll(editor)
+      document.dispatchEvent(new Event("selectionchange"))
+      await new Promise((resolve) => setTimeout(resolve, KIMI_SELECTION_SYNC_MS))
       const dataTransfer = new DataTransfer()
       dataTransfer.setData("text/plain", content)
 
@@ -1747,8 +1775,80 @@ export class KimiAdapter extends SiteAdapter {
       )
       if (!notCanceled) return true
 
-      const after = editor.textContent || ""
-      return after !== before || content.length === 0
+      // 事件未被拦截说明没有编辑器处理粘贴，合成事件本身不会触发默认粘贴行为
+      return false
+    } catch {
+      return false
+    }
+  }
+
+  /**
+   * 等待编辑器内容落盘并校验完整性。模型驱动编辑器（如 Lexical）异步调和
+   * DOM，同步读取拿到的是提交前的旧内容；比对基于 innerText 保留换行结构，
+   * 换行被吃掉的残缺提交会判失败并触发清场重试。
+   */
+  private async waitForEditorContent(
+    editor: HTMLElement,
+    content: string,
+    timeoutMs = 500,
+  ): Promise<boolean> {
+    const target = normalizeEditorContent(content)
+    const deadline = Date.now() + timeoutMs
+    for (;;) {
+      const current = normalizeEditorContent(editor.innerText)
+      const matched =
+        target.length > 0
+          ? current.includes(target)
+          : normalizeEditorContent(editor.textContent || "").length === 0
+      if (editor.isConnected && matched) return true
+      if (Date.now() >= deadline) return false
+      await new Promise((resolve) => setTimeout(resolve, 50))
+    }
+  }
+
+  /**
+   * 插入方式之间的清场。Lexical 的模型提交是异步的：上一次尝试可能已写入
+   * 模型但 DOM 尚未渲染，DOM 看起来干净不代表模型干净，因此每次都做模型级
+   * 清空。实测 execCommand("delete")、range.deleteContents()、innerHTML 重置
+   * 都会被 Lexical 忽略或用模型还原，只有全选 + 合成 beforeinput 删除有效。
+   */
+  private async resetEditorIfDirty(editor: HTMLElement): Promise<boolean> {
+    this.selectEditorAll(editor)
+    document.dispatchEvent(new Event("selectionchange"))
+    await new Promise((resolve) => setTimeout(resolve, KIMI_SELECTION_SYNC_MS))
+    try {
+      editor.dispatchEvent(
+        new InputEvent("beforeinput", {
+          bubbles: true,
+          cancelable: true,
+          composed: true,
+          inputType: "deleteContentBackward",
+        }),
+      )
+    } catch {
+      // 由下方的内容验证兜底
+    }
+    return this.waitForEditorContent(editor, "")
+  }
+
+  private async insertBySyntheticBeforeInput(
+    editor: HTMLElement,
+    content: string,
+  ): Promise<boolean> {
+    try {
+      this.selectEditorAll(editor)
+      document.dispatchEvent(new Event("selectionchange"))
+      await new Promise((resolve) => setTimeout(resolve, KIMI_SELECTION_SYNC_MS))
+      editor.dispatchEvent(
+        new InputEvent("beforeinput", {
+          bubbles: true,
+          cancelable: true,
+          composed: true,
+          data: content,
+          inputType: "insertText",
+        }),
+      )
+      return true
     } catch {
       return false
     }

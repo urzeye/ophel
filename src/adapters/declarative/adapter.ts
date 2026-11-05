@@ -35,6 +35,15 @@ const DEFAULT_THEME_COLORS = {
 const ZERO_WIDTH_EDITOR_MARKERS = /[\u200B\u200C\u200D\uFEFF]/g
 const EDITOR_WHITESPACE = /\s+/g
 
+// 框架编辑器（如 Lexical）收到输入事件后按自身模型异步调和 DOM，
+// 同步校验会读到提交前的旧内容，需要短轮询等待提交完成再判定。
+const EDITOR_UPDATE_POLL_INTERVAL_MS = 50
+const EDITOR_UPDATE_POLL_TIMEOUT_MS = 500
+// 模型驱动编辑器的内部选区靠 selectionchange 异步同步，select-all 后需要
+// 让出事件循环再操作，否则操作只作用于过期选区。
+const EDITOR_SELECTION_SYNC_MS = 50
+const EDITOR_CLEAR_MAX_ROUNDS = 3
+
 type TextControl = HTMLInputElement | HTMLTextAreaElement
 
 type ConfiguredEditor =
@@ -104,10 +113,24 @@ const getNestedThemeValue = (source: Record<string, unknown>, path: string): unk
 const getEditorText = (editor: HTMLElement): string =>
   isTextControl(editor) ? editor.value : editor.textContent ?? ""
 
+// innerText 反映渲染后的换行结构（段落、<br>）；textContent 会把多段落拼成
+// 无换行的串，无法区分"按段落正确拆分"和"换行被吃掉"。
+const getEditorRenderedText = (editor: HTMLElement): string =>
+  isTextControl(editor) ? editor.value : editor.innerText
+
 // contenteditable DOM（如 ProseMirror 多段落）的 textContent 不保留换行与原始空白，
 // 校验插入结果时移除两侧全部空白字符，避免多行内容已插入却被误判为失败。
 const normalizeEditorText = (text: string): string =>
   text.replace(ZERO_WIDTH_EDITOR_MARKERS, "").replace(EDITOR_WHITESPACE, "")
+
+// 结构敏感比对：折叠普通空白但保留换行，连续空行差异容忍；换行丢失会判失败。
+const normalizeEditorRenderedText = (text: string): string =>
+  text
+    .replace(ZERO_WIDTH_EDITOR_MARKERS, "")
+    .replace(/\r\n?/g, "\n")
+    .replace(/[^\S\n]+/g, " ")
+    .replace(/\n{2,}/g, "\n")
+    .trim()
 
 const compareDomOrder = (left: Element, right: Element): number => {
   if (left === right) return 0
@@ -287,10 +310,30 @@ export class DeclarativeAdapter extends SiteAdapter {
     const editorText = getEditorText(editor)
     const contentMatches =
       content.length > 0
-        ? normalizeEditorText(editorText).includes(normalizeEditorText(content))
+        ? normalizeEditorRenderedText(getEditorRenderedText(editor)).includes(
+            normalizeEditorRenderedText(content),
+          )
         : editorText.replace(ZERO_WIDTH_EDITOR_MARKERS, "").length === 0
 
     return contentMatches && (!requireSubmitButton || this.hasReadySubmitButton())
+  }
+
+  /**
+   * 校验插入/清空结果。先立即校验一次，普通 contenteditable 同步命中、
+   * 不引入额外延迟；未命中再短轮询，覆盖框架编辑器的异步提交（如
+   * Perplexity 的 Lexical 多行插入，提交晚于同步校验，曾误报插入失败）。
+   */
+  private async waitForEditorUpdate(
+    editor: HTMLElement,
+    content: string,
+    requireSubmitButton: boolean,
+  ): Promise<boolean> {
+    const deadline = Date.now() + EDITOR_UPDATE_POLL_TIMEOUT_MS
+    for (;;) {
+      if (this.isEditorUpdateValid(editor, content, requireSubmitButton)) return true
+      if (Date.now() >= deadline) return false
+      await new Promise((resolve) => setTimeout(resolve, EDITOR_UPDATE_POLL_INTERVAL_MS))
+    }
   }
 
   private isSubmitButtonDisabled(element: HTMLElement): boolean {
@@ -380,11 +423,11 @@ export class DeclarativeAdapter extends SiteAdapter {
     }
   }
 
-  private replaceContentEditableContent(
+  private async replaceContentEditableContent(
     editor: HTMLElement,
     content: string,
     requireSubmitButton: boolean,
-  ): boolean {
+  ): Promise<boolean> {
     editor.focus()
 
     if (content === "") {
@@ -392,17 +435,22 @@ export class DeclarativeAdapter extends SiteAdapter {
       // 可信 beforeinput/input，对自有模型驱动的编辑器（如 Notion AI）等同真实
       // 键盘删除。合成事件必须放在其后兜底，否则编辑器会按自身选区模型部分处理
       // 合成事件，而强写 textContent 又会被模型重渲染还原，表现为清空无效。
-      this.selectAllEditorContent(editor)
-
-      try {
-        editor.ownerDocument.execCommand("delete", false, undefined)
-      } catch {
-        // Unsupported execCommand attempt continues to synthetic events.
+      //
+      // 模型驱动编辑器（如 Lexical）的内部选区靠 selectionchange 异步同步，
+      // select-all 后必须让出事件循环再删除，否则删除只作用于过期选区
+      // （Perplexity 上表现为只删掉光标前的一两个字符）；未清空就重选再删。
+      for (let round = 0; round < EDITOR_CLEAR_MAX_ROUNDS; round++) {
+        if (!this.selectAllEditorContent(editor)) return false
+        await new Promise((resolve) => setTimeout(resolve, EDITOR_SELECTION_SYNC_MS))
+        try {
+          editor.ownerDocument.execCommand("delete", false, undefined)
+        } catch {
+          // Unsupported execCommand attempt continues to synthetic events.
+        }
+        if (await this.waitForEditorUpdate(editor, "", requireSubmitButton)) return true
       }
 
-      if (this.isEditorUpdateValid(editor, "", requireSubmitButton)) return true
-
-      this.selectAllEditorContent(editor)
+      if (!this.selectAllEditorContent(editor)) return false
 
       try {
         editor.dispatchEvent(
@@ -476,22 +524,34 @@ export class DeclarativeAdapter extends SiteAdapter {
       editor.dispatchEvent(new Event("input", { bubbles: true, composed: true }))
       editor.dispatchEvent(new Event("change", { bubbles: true }))
 
-      return this.isEditorUpdateValid(editor, "", requireSubmitButton)
+      return this.waitForEditorUpdate(editor, "", requireSubmitButton)
     }
 
     // 与清空同理：先用原生 select-all + insertText 完成“替换”，可信事件才能让
     // 框架编辑器更新其内部模型；合成 beforeinput 只作兜底，提前派发会被框架按
     // 自身选区处理成“追加”而非“替换”（Notion AI 上表现为旧内容残留）。
+    const originalText = getEditorText(editor)
     if (this.selectAllEditorContent(editor)) {
       try {
         editor.ownerDocument.execCommand("insertText", false, content)
       } catch {
         // Unsupported execCommand attempt continues to the synthetic event.
       }
-      if (this.isEditorUpdateValid(editor, content, requireSubmitButton)) return true
+      if (await this.waitForEditorUpdate(editor, content, requireSubmitButton)) return true
+    }
+
+    // 内容未完整入框（如 Lexical 把多行 insertText 截断到首行）。编辑器里已有
+    // 非原始内容时必须先清场再试下一种方式，否则残留会与新内容叠加出错乱结果。
+    if (normalizeEditorText(getEditorText(editor)) !== normalizeEditorText(originalText)) {
+      const cleared = await this.replaceContentEditableContent(editor, "", false)
+      if (!cleared) return false
     }
 
     if (!this.selectAllEditorContent(editor)) return false
+
+    // 合成 beforeinput 没有 getTargetRanges，模型编辑器只能按内部选区处理，
+    // 先让出事件循环等选区同步完成。
+    await new Promise((resolve) => setTimeout(resolve, EDITOR_SELECTION_SYNC_MS))
 
     try {
       editor.dispatchEvent(
@@ -507,10 +567,10 @@ export class DeclarativeAdapter extends SiteAdapter {
       // Unsupported beforeinput construction; validation below reports failure.
     }
 
-    return this.isEditorUpdateValid(editor, content, requireSubmitButton)
+    return this.waitForEditorUpdate(editor, content, requireSubmitButton)
   }
 
-  insertPrompt(content: string): boolean {
+  async insertPrompt(content: string): Promise<boolean> {
     const configuredEditor = this.getConfiguredEditor()
     if (!configuredEditor) return false
     const requireSubmitButton = (this.manifest.selectors.submitButton?.length ?? 0) > 0
@@ -532,7 +592,7 @@ export class DeclarativeAdapter extends SiteAdapter {
     if (!configuredEditor) return
 
     if (configuredEditor.mode === "contenteditable") {
-      this.replaceContentEditableContent(configuredEditor.editor, "", false)
+      void this.replaceContentEditableContent(configuredEditor.editor, "", false)
       return
     }
 

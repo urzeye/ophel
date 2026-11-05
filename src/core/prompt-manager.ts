@@ -127,7 +127,7 @@ export class PromptManager {
         this.adapter.findTextarea()
       }
 
-      const result = this.adapter.insertPrompt(content)
+      const result = await this.adapter.insertPrompt(content)
       if (result) {
         rememberQuickQuoteReferencesFromContent(content)
         return true
