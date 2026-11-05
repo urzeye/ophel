@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+---
+
+## [1.3.1][1.3.1] - 2026-11-05
+
 ### 🚀 New Features
 
 - **Customizable quick access in the popup** — Drag to reorder sites in the popup or in Adapter Center's built-in site list; disabled sites no longer appear, and quick access now shows on every site. (#1019)
@@ -1672,6 +1676,7 @@ This is the first official release of Ophel, providing comprehensive enhancement
 
 ---
 
+[1.3.1]: https://github.com/urzeye/ophel/releases/tag/v1.3.1
 [1.3.0]: https://github.com/urzeye/ophel/releases/tag/v1.3.0
 [1.2.13]: https://github.com/urzeye/ophel/releases/tag/v1.2.13
 [1.2.12]: https://github.com/urzeye/ophel/releases/tag/v1.2.12
