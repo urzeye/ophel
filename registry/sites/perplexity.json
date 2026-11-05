@@ -54,7 +54,7 @@
     "prompt-insert"
   ],
   "selectors": {
-    "textarea": ["#ask-input[contenteditable='true']"],
+    "textarea": ["[data-lexical-editor='true']"],
     "responseContainer": ".scrollable-container .max-w-threadContentWidth",
     "userQuery": "[data-message-bubble='right']",
     "assistantResponse": ".prose[data-renderer='lm']",
