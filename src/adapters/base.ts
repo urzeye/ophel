@@ -475,8 +475,12 @@ export abstract class SiteAdapter {
   /** 返回输入框选择器列表 */
   abstract getTextareaSelectors(): string[]
 
-  /** 向输入框插入内容 */
-  abstract insertPrompt(content: string): boolean
+  /**
+   * 向输入框插入内容。
+   * 允许异步实现：框架编辑器（如 Lexical）按自身模型异步调和 DOM，
+   * 需要等待提交完成才能校验插入结果。
+   */
+  abstract insertPrompt(content: string): boolean | Promise<boolean>
 
   /**
    * 站点特定公式源码提取扩展点。

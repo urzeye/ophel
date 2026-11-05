@@ -18,6 +18,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **ChatGPT settings page squeezed** — Fixed an issue where enabling Page Width or Smart Avoidance also squeezed ChatGPT's own settings page; only chat pages are adjusted now. (#1020)
 - **Tab title issues** — Fixed the original title not returning after turning off Auto Rename Tab or Hide Tab Title, Hide Tab Title alone not taking effect, and multiple ✅ icons appearing in the title after disabling and re-enabling Ophel on some pages. (#1020)
 - **Perplexity page update adaptation** — Fixed Perplexity's page update breaking the outline and export (missing questions and replies) and preventing prompts from being inserted into the input box. (#1021)
+- **Multi-line prompt insertion issues** — Fixed multi-line prompts losing line breaks or getting scrambled on Perplexity and Kimi, Perplexity wrongly reporting "Insert failed", and the clear button not fully clearing the input box.
 
 ---
 
