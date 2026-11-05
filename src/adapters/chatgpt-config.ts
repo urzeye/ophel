@@ -101,7 +101,8 @@ export const CHATGPT_HOME_COMPOSER_SELECTOR =
   'form[data-composer-placement="home"]:is([data-chatgpt-composer], [data-thread-find-composer="true"])'
 export const CHATGPT_HOME_UX_SCOPE = `main[data-app-shell-main-surface]:has(${CHATGPT_HOME_COMPOSER_SELECTOR})`
 export const CHATGPT_PAGE_WIDTH_SCOPE = `:is(${CHATGPT_NEW_UX_SCOPE}, ${CHATGPT_HOME_UX_SCOPE})`
-const CHATGPT_LEGACY_WIDTH_SCOPE = `:is(#thread, ${CHATGPT_PAGE_WIDTH_SCOPE})`
+// 作用域不增加优先级，让新版布局规则仍能覆盖通用宽度规则。
+const CHATGPT_LEGACY_WIDTH_SCOPE = `:where(#thread, ${CHATGPT_PAGE_WIDTH_SCOPE})`
 // Normalize local width owners after broad legacy rules, which also affect nested rows and their margins.
 export const CHATGPT_NEW_UX_WIDTH_SELECTORS: Omit<WidthSelectorConfig, "transformValue">[] = [
   {

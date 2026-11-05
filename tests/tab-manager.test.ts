@@ -22,7 +22,10 @@ let pageDocument: EventTarget & {
   }
 }
 
-function createManager(overrides: Partial<Settings["tab"]> = {}) {
+function createManager(
+  overrides: Partial<Settings["tab"]> = {},
+  adapterOverrides: Partial<SiteAdapter> = {},
+) {
   const getTitle = () =>
     extractConversationTitleFromDocumentTitle(pageDocument.title, {
       siteName: "ChatGPT",
@@ -35,6 +38,7 @@ function createManager(overrides: Partial<Settings["tab"]> = {}) {
     isNewConversation: () => false,
     isGenerating: () => false,
     setNetworkGenerationState: () => {},
+    ...adapterOverrides,
   } as unknown as SiteAdapter
   return new TabManager(adapter, {
     autoRename: true,
@@ -63,6 +67,54 @@ beforeEach(() => {
 })
 
 describe("TabManager title ownership", () => {
+  it("preserves native provenance when the sidebar updates before the document title", () => {
+    let sidebarTitle: string | null = "设置"
+    const manager = createManager({}, { getConversationTitle: () => sidebarTitle })
+    manager.start()
+    manager.resetConversationTitleCache()
+    sidebarTitle = "新对话"
+    manager.updateTabName()
+    expect(pageDocument.title).toBe("✅ 新对话")
+
+    manager.stop()
+    expect(pageDocument.title).toBe("设置")
+    sidebarTitle = null
+    manager.start()
+    expect(pageDocument.title).toBe("✅ 设置")
+
+    pageDocument.title = "新对话"
+    manager.updateTabName()
+    manager.destroy()
+    expect(pageDocument.title).toBe("新对话")
+  })
+
+  it.each([true, false])(
+    "manages privacy titles independently of auto-rename: %s",
+    (autoRename) => {
+      const settings = { autoRename, privacyMode: true, privacyTitle: "Google" }
+      const manager = createManager(settings)
+      manager.start()
+      expect(pageDocument.title).toBe("Google")
+
+      manager.updateSettings({ ...settings, autoRename: false } as Settings["tab"])
+      expect(pageDocument.title).toBe("Google")
+      manager.updateSettings({
+        ...settings,
+        autoRename: false,
+        privacyTitle: "Work",
+      } as Settings["tab"])
+      expect(pageDocument.title).toBe("Work")
+
+      manager.updateSettings({
+        ...settings,
+        autoRename: false,
+        privacyMode: false,
+      } as Settings["tab"])
+      expect(pageDocument.title).toBe("设置")
+      manager.destroy()
+    },
+  )
+
   it("restores native provenance while a route is waiting for its new title", () => {
     const manager = createManager()
     manager.start()

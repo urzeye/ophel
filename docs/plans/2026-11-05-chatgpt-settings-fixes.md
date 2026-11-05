@@ -23,3 +23,12 @@
 - Run targeted tests, formatting, lint, typecheck, Chrome, Firefox and userscript builds.
 - Review the diff, excluding the user-provided HTML snapshot.
 - Commit and push `fix/chatgpt-settings-width-title`, then create an English Draft PR.
+
+### Task 4: Address review regressions
+
+**Files:** `src/core/tab-manager.ts`, `src/adapters/chatgpt-config.ts`, `tests/tab-manager.test.ts`.
+
+1. Add failing tests for sidebar-first navigation and privacy mode with auto-rename disabled; run `pnpm exec vitest run` to confirm the regressions.
+2. Keep title management active for either auto-rename or privacy mode. Capture native provenance before adapter reads clear stale route markers.
+3. Change the legacy width scope to `:where(...)` so new-layout normalization retains priority; compare nested widths in Chromium.
+4. Run tests, formatting, lint, typecheck and Chrome/Firefox/userscript builds. Review the diff, commit and push to the existing Draft PR.
