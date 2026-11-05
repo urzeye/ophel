@@ -13,6 +13,11 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 - **Customizable quick access in the popup** — Drag to reorder sites in the popup or in Adapter Center's built-in site list; disabled sites no longer appear, and quick access now shows on every site. (#1019)
 
+### 🐛 Bug Fixes
+
+- **ChatGPT settings page squeezed** — Fixed an issue where enabling Page Width or Smart Avoidance also squeezed ChatGPT's own settings page; only chat pages are adjusted now. (#1020)
+- **Tab title issues** — Fixed the original title not returning after turning off Auto Rename Tab or Hide Tab Title, Hide Tab Title alone not taking effect, and multiple ✅ icons appearing in the title after disabling and re-enabling Ophel on some pages. (#1020)
+
 ---
 
 ## [1.3.0][1.3.0] - 2026-11-01
