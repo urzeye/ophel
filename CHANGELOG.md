@@ -17,6 +17,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 - **ChatGPT settings page squeezed** — Fixed an issue where enabling Page Width or Smart Avoidance also squeezed ChatGPT's own settings page; only chat pages are adjusted now. (#1020)
 - **Tab title issues** — Fixed the original title not returning after turning off Auto Rename Tab or Hide Tab Title, Hide Tab Title alone not taking effect, and multiple ✅ icons appearing in the title after disabling and re-enabling Ophel on some pages. (#1020)
+- **Perplexity user questions missing** — Fixed an issue where your own questions disappeared from the outline and exports after a Perplexity page update. (#1021)
 
 ---
 
