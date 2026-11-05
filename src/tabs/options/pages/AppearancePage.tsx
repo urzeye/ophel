@@ -15,6 +15,7 @@ import {
 } from "~components/icons"
 import { ConfirmDialog, Tooltip } from "~components/ui"
 import { APPEARANCE_TAB_IDS } from "~constants"
+import { getThemeTransitionOriginFromEvent } from "~core/theme-manager"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
 import { getSiteTheme, type CustomStyle } from "~utils/storage"
@@ -490,7 +491,7 @@ const CSS_TEMPLATE = `/* =======================================================
 const ThemeCard: React.FC<{
   preset: ThemePreset
   isActive: boolean
-  onClick: () => void
+  onClick: (event: React.MouseEvent<HTMLButtonElement>) => void
 }> = ({ preset, isActive, onClick }) => {
   const key = `themePreset_${preset.id}`
   const translation = t(key)
@@ -541,12 +542,15 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
   ]
 
   // 选择浅色主题预置
-  const selectLightPreset = async (presetId: string) => {
+  const selectLightPreset = async (
+    presetId: string,
+    event?: React.MouseEvent<HTMLButtonElement>,
+  ) => {
     const themeManager = window.__ophelThemeManager
     const isSystemMode = currentTheme?.mode === "system"
     if (!isSystemMode && themeManager?.setMode) {
       // setMode 会等待动画完成后才返回
-      await themeManager.setMode("light")
+      await themeManager.setMode("light", getThemeTransitionOriginFromEvent(event))
     }
 
     // 更新样式 ID
@@ -568,12 +572,15 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
   }
 
   // 选择深色主题预置
-  const selectDarkPreset = async (presetId: string) => {
+  const selectDarkPreset = async (
+    presetId: string,
+    event?: React.MouseEvent<HTMLButtonElement>,
+  ) => {
     const themeManager = window.__ophelThemeManager
     const isSystemMode = currentTheme?.mode === "system"
     if (!isSystemMode && themeManager?.setMode) {
       // setMode 会等待动画完成后才返回
-      await themeManager.setMode("dark")
+      await themeManager.setMode("dark", getThemeTransitionOriginFromEvent(event))
     }
 
     // 更新样式 ID
@@ -710,7 +717,7 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
                   key={preset.id}
                   preset={preset}
                   isActive={(currentTheme?.lightStyleId || "google-gradient") === preset.id}
-                  onClick={() => selectLightPreset(preset.id)}
+                  onClick={(event) => selectLightPreset(preset.id, event)}
                 />
               ))}
             </div>
@@ -724,7 +731,7 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
                   key={preset.id}
                   preset={preset}
                   isActive={(currentTheme?.darkStyleId || "classic-dark") === preset.id}
-                  onClick={() => selectDarkPreset(preset.id)}
+                  onClick={(event) => selectDarkPreset(preset.id, event)}
                 />
               ))}
             </div>

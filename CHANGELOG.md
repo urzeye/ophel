@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### ✨ Improvements
+
+- **Theme switching animation** — Switching from dark to light mode now shrinks the dark view into the clicked spot, while switching from light to dark still expands outward. (#1024)
+
 ---
 
 ## [1.3.1][1.3.1] - 2026-11-05

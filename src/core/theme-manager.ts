@@ -15,6 +15,34 @@ import { getPreset, themeVariablesToCSS, type ThemeVariables } from "~utils/them
 export type ThemeMode = "light" | "dark"
 export type ThemePreference = "light" | "dark" | "system"
 export type ThemeTransitionOrigin = Pick<MouseEvent, "clientX" | "clientY">
+type ThemeTransitionDirection = "expand" | "shrink"
+
+/**
+ * 从交互事件提取主题过渡动画中心坐标；键盘触发（detail === 0）时回退到触发控件几何中心
+ */
+export function getThemeTransitionOriginFromEvent(event?: {
+  clientX: number
+  clientY: number
+  detail?: number
+  currentTarget?: EventTarget | null
+}): ThemeTransitionOrigin | undefined {
+  if (!event) return undefined
+  if (
+    event.detail === 0 &&
+    event.currentTarget &&
+    typeof (event.currentTarget as Element).getBoundingClientRect === "function"
+  ) {
+    const rect = (event.currentTarget as Element).getBoundingClientRect()
+    return {
+      clientX: rect.left + rect.width / 2,
+      clientY: rect.top + rect.height / 2,
+    }
+  }
+  return {
+    clientX: event.clientX,
+    clientY: event.clientY,
+  }
+}
 
 // Extend Document interface for View Transitions API
 declare global {
@@ -64,6 +92,9 @@ export class ThemeManager {
   private customStyles: CustomStyle[] = [] // 存储自定义样式列表
   private rootVariableKeys: string[] = [] // 上一次写到 :root 的预置变量名，换预置时据此清掉新预置没有的
   private skipNextDetection = false // 标志：跳过下一次主题检测，避免 toggle 后被 observer 立即反写
+  private transitionId = 0 // 递增过渡序号，防止快速连点时旧过渡的收尾清理干扰新过渡
+  private activeTransitionAnimation: Animation | null = null // 当前或刚结束的伪元素动画引用，必须在结束后显式 cancel
+  private savedBodyViewTransitionName: string | null = null // ChatGPT 临时覆盖 body view-transition-name 前的原始值
   private listeners: Set<Listener> = new Set() // 订阅者集合
   private systemMediaQuery: MediaQueryList | null = null
   private handleSystemChange = (event: MediaQueryListEvent) => {
@@ -399,28 +430,49 @@ export class ThemeManager {
 
   /**
    * 注入全局样式到主文档 head
-   * 主要是 View Transitions 相关的样式，因为它们必须在 document context 下才生效
+   * 主要是 View Transitions 相关的样式，因为它们必须在 document context 下才生效。
+   * 通过 html[data-gh-vt] 限定在 Ophel 主题过渡期间生效，避免干扰宿主页自身的 View Transitions：
+   * - expand（浅 -> 深）：新深色视图在顶层从点击点向外圆形扩散
+   * - shrink（深 -> 浅）：旧深色快照在顶层向点击点圆形收缩，露出底层新浅色视图
    */
   private injectGlobalStyles() {
-    if (document.getElementById("gh-global-styles")) return
-
-    const style = document.createElement("style")
-    style.id = "gh-global-styles"
+    let style = document.getElementById("gh-global-styles") as HTMLStyleElement | null
+    if (!style) {
+      style = document.createElement("style")
+      style.id = "gh-global-styles"
+      document.head.appendChild(style)
+    }
     style.textContent = `
-      ::view-transition-old(root),
-      ::view-transition-new(root),
-      ::view-transition-old(gh-page),
-      ::view-transition-new(gh-page) {
+      html[data-gh-vt]::view-transition-old(root),
+      html[data-gh-vt]::view-transition-new(root),
+      html[data-gh-vt]::view-transition-old(gh-page),
+      html[data-gh-vt]::view-transition-new(gh-page) {
         animation: none;
         mix-blend-mode: normal;
       }
 
-      ::view-transition-new(gh-page),
-      ::view-transition-new(root) {
+      html[data-gh-vt="expand-root"]::view-transition-old(root),
+      html[data-gh-vt="expand-page"]::view-transition-old(gh-page) {
+        z-index: 1;
+      }
+
+      html[data-gh-vt="expand-root"]::view-transition-new(root),
+      html[data-gh-vt="expand-page"]::view-transition-new(root),
+      html[data-gh-vt="expand-page"]::view-transition-new(gh-page) {
+        z-index: 2;
         clip-path: circle(0px at var(--theme-x, 50%) var(--theme-y, 50%));
       }
+
+      html[data-gh-vt="shrink-root"]::view-transition-new(root),
+      html[data-gh-vt="shrink-page"]::view-transition-new(gh-page) {
+        z-index: 1;
+      }
+
+      html[data-gh-vt="shrink-root"]::view-transition-old(root),
+      html[data-gh-vt="shrink-page"]::view-transition-old(gh-page) {
+        z-index: 2;
+      }
     `
-    document.head.appendChild(style)
   }
 
   /**
@@ -970,121 +1022,249 @@ ${cssVars}
     }
   }
 
+  private findFallbackThemeButton(): HTMLElement | null {
+    const selectors = ["#theme-toggle-btn", "#quick-theme-btn"]
+    const width = window.innerWidth || 1
+    const height = window.innerHeight || 1
+
+    const isVisibleInViewport = (el: Element | null): el is HTMLElement => {
+      if (!(el instanceof HTMLElement)) return false
+      if (el.closest(".edge-snapped-left:not(.edge-peek), .edge-snapped-right:not(.edge-peek)")) {
+        return false
+      }
+      const rect = el.getBoundingClientRect()
+      if (rect.width <= 0 || rect.height <= 0) return false
+      const centerX = rect.left + rect.width / 2
+      const centerY = rect.top + rect.height / 2
+      if (centerX < 0 || centerX > width || centerY < 0 || centerY > height) return false
+      const computed = window.getComputedStyle(el)
+      return computed.visibility !== "hidden" && Number.parseFloat(computed.opacity || "1") > 0
+    }
+
+    const shadowHosts = document.querySelectorAll("plasmo-csui, #ophel-userscript-root")
+    for (const selector of selectors) {
+      for (const host of Array.from(shadowHosts)) {
+        const candidate = host.shadowRoot?.querySelector(selector) ?? null
+        if (isVisibleInViewport(candidate)) {
+          return candidate
+        }
+      }
+      const docCandidate = document.querySelector(selector)
+      if (isVisibleInViewport(docCandidate)) {
+        return docCandidate
+      }
+    }
+    return null
+  }
+
   private getTransitionOrigin(event?: ThemeTransitionOrigin) {
+    const width = window.innerWidth || 1
+    const height = window.innerHeight || 1
     let x = 95
     let y = 5
     if (event && event.clientX !== undefined) {
-      x = (event.clientX / window.innerWidth) * 100
-      y = (event.clientY / window.innerHeight) * 100
+      x = (event.clientX / width) * 100
+      y = (event.clientY / height) * 100
       return { x, y }
     }
 
-    const themeBtn =
-      document.getElementById("theme-toggle-btn") || document.getElementById("quick-theme-btn")
+    const themeBtn = this.findFallbackThemeButton()
     if (themeBtn) {
       const rect = themeBtn.getBoundingClientRect()
-      x = ((rect.left + rect.width / 2) / window.innerWidth) * 100
-      y = ((rect.top + rect.height / 2) / window.innerHeight) * 100
+      x = ((rect.left + rect.width / 2) / width) * 100
+      y = ((rect.top + rect.height / 2) / height) * 100
     }
     return { x, y }
   }
 
   /**
-   * ChatGPT 新版页面中裁剪 root 快照不会产生圆形扩散效果。
-   * 临时给 body 设置独立的 view-transition-name，改为裁剪这个命名快照。
+   * 取消 View Transition 遗留的 Web Animation。
+   * fill: "forwards" 的伪元素动画在过渡结束后不会被浏览器自动销毁；
+   * 若不显式 cancel()，下次创建 ::view-transition-old(...) 时会重新命中上一次收缩留下的 circle(0px)，
+   * 导致浅 -> 深扩散开始前旧浅色快照直接不可见、整页提前变黑。
    */
-  private prepareTransitionSnapshotTarget(): { pseudoElement: string; cleanup: () => void } {
-    if (this.adapter?.getSiteId() !== SITE_IDS.CHATGPT || !document.body) {
-      return {
-        pseudoElement: "::view-transition-new(root)",
-        cleanup: () => {},
-      }
+  private cancelTransitionAnimations() {
+    if (this.activeTransitionAnimation) {
+      this.activeTransitionAnimation.cancel()
+      this.activeTransitionAnimation = null
     }
-
-    const previousName = document.body.style.getPropertyValue("view-transition-name")
-    document.body.style.setProperty("view-transition-name", "gh-page")
-
-    return {
-      pseudoElement: "::view-transition-new(gh-page)",
-      cleanup: () => {
-        if (previousName) {
-          document.body.style.setProperty("view-transition-name", previousName)
-        } else {
-          document.body.style.removeProperty("view-transition-name")
+    if (typeof document.documentElement?.getAnimations === "function") {
+      for (const anim of document.documentElement.getAnimations({ subtree: true })) {
+        const pseudo = (anim.effect as KeyframeEffect | null)?.pseudoElement
+        if (
+          pseudo === "::view-transition-old(root)" ||
+          pseudo === "::view-transition-new(root)" ||
+          pseudo === "::view-transition-old(gh-page)" ||
+          pseudo === "::view-transition-new(gh-page)"
+        ) {
+          anim.cancel()
         }
-      },
+      }
     }
   }
 
+  private cleanupTransitionSnapshotTarget() {
+    this.cancelTransitionAnimations()
+    delete document.documentElement.dataset.ghVt
+    if (this.savedBodyViewTransitionName !== null && document.body) {
+      if (this.savedBodyViewTransitionName) {
+        document.body.style.setProperty("view-transition-name", this.savedBodyViewTransitionName)
+      } else {
+        document.body.style.removeProperty("view-transition-name")
+      }
+      this.savedBodyViewTransitionName = null
+    }
+  }
+
+  /**
+   * 准备 View Transition 的目标伪元素与根标记。
+   * - 普通站点裁剪 root 快照；ChatGPT 新版页面裁剪命名快照 gh-page（root 上 clip-path 会被页面命名槽位静默忽略）
+   * - expand（浅 -> 深）裁剪 ::view-transition-new(...)；shrink（深 -> 浅）裁剪 ::view-transition-old(...)
+   */
+  private prepareTransitionSnapshotTarget(direction: ThemeTransitionDirection): {
+    pseudoElement: string
+  } {
+    const isChatGPT = this.adapter?.getSiteId() === SITE_IDS.CHATGPT && Boolean(document.body)
+    const snapshotName = isChatGPT ? "gh-page" : "root"
+    const phase = direction === "shrink" ? "old" : "new"
+
+    if (isChatGPT && document.body) {
+      if (this.savedBodyViewTransitionName === null) {
+        this.savedBodyViewTransitionName =
+          document.body.style.getPropertyValue("view-transition-name")
+      }
+      document.body.style.setProperty("view-transition-name", "gh-page")
+    }
+
+    document.documentElement.dataset.ghVt = `${direction}-${isChatGPT ? "page" : "root"}`
+
+    return {
+      pseudoElement: `::view-transition-${phase}(${snapshotName})`,
+    }
+  }
+
+  /**
+   * 统一执行带圆形过渡的主题切换：
+   * - 切换到深色（targetMode === "dark"）：从点击点向外圆形扩散新深色界面（ease-in）
+   * - 切换到浅色（targetMode === "light"）：将旧深色快照向点击点圆形收缩（ease-out），类似 Telegram 效果
+   */
   private async applyWithTransition(
     action: () => void,
+    targetMode: ThemeMode,
     event?: ThemeTransitionOrigin,
-  ): Promise<boolean> {
+  ): Promise<{ animated: boolean; superseded: boolean }> {
+    const currentTransitionId = ++this.transitionId
+    this.cancelTransitionAnimations()
     const { x, y } = this.getTransitionOrigin(event)
 
     document.documentElement.style.setProperty("--theme-x", `${x}%`)
     document.documentElement.style.setProperty("--theme-y", `${y}%`)
 
+    // 暂停 MutationObserver，防止在 View Transition 期间触发额外的 DOM 修改
     this.stopThemeMonitoring()
 
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    if (!document.startViewTransition || prefersReducedMotion) {
-      try {
+    let animated = false
+    try {
+      const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      if (!document.startViewTransition || prefersReducedMotion) {
         action()
-      } finally {
+      } else {
+        const isShrink = targetMode === "light"
+        const direction: ThemeTransitionDirection = isShrink ? "shrink" : "expand"
+        const transitionTarget = this.prepareTransitionSnapshotTarget(direction)
+
+        let transition: ViewTransition | null = null
+        try {
+          transition = document.startViewTransition(() => {
+            action()
+          })
+        } catch {
+          action()
+        }
+
+        if (transition) {
+          animated = true
+          transition.ready
+            .then(() => {
+              if (currentTransitionId !== this.transitionId) return
+
+              const originX = (x / 100) * window.innerWidth
+              const originY = (y / 100) * window.innerHeight
+              const right = window.innerWidth - originX
+              const bottom = window.innerHeight - originY
+              const maxRadius = Math.hypot(Math.max(originX, right), Math.max(originY, bottom))
+
+              const collapsedCircle = `circle(0px at ${x}% ${y}%)`
+              const expandedCircle = `circle(${maxRadius}px at ${x}% ${y}%)`
+              const clipPath = isShrink
+                ? [expandedCircle, collapsedCircle]
+                : [collapsedCircle, expandedCircle]
+
+              this.cancelTransitionAnimations()
+              this.activeTransitionAnimation = document.documentElement.animate(
+                {
+                  clipPath,
+                },
+                {
+                  duration: 500,
+                  easing: isShrink ? "ease-out" : "ease-in",
+                  pseudoElement: transitionTarget.pseudoElement,
+                  fill: "forwards",
+                },
+              )
+            })
+            .catch(() => {
+              // 忽略被中断或跳过的过渡
+            })
+
+          await transition.finished.catch(() => {
+            // 忽略动画错误或连点中断
+          })
+        }
+      }
+
+      const superseded = currentTransitionId !== this.transitionId
+      if (!superseded) {
+        // 恢复监听会读取当前模式，必须先提交目标模式。
+        this.mode = targetMode
+      }
+      return { animated, superseded }
+    } finally {
+      if (currentTransitionId === this.transitionId) {
+        this.cleanupTransitionSnapshotTarget()
+        this.skipNextDetection = true
         this.startThemeMonitoring()
       }
-      return false
+    }
+  }
+
+  private async switchToMode(
+    nextMode: ThemeMode,
+    event?: ThemeTransitionOrigin,
+  ): Promise<{ mode: ThemeMode; animated: boolean }> {
+    this.preference = nextMode
+
+    const { animated, superseded } = await this.applyWithTransition(
+      () => {
+        this.syncHostTheme(nextMode, nextMode)
+      },
+      nextMode,
+      event,
+    )
+
+    if (superseded) {
+      return { mode: this.mode, animated }
     }
 
-    const transitionTarget = this.prepareTransitionSnapshotTarget()
-
-    try {
-      const transition = document.startViewTransition(() => {
-        action()
-      })
-
-      transition.ready.then(() => {
-        const right = window.innerWidth - (x / 100) * window.innerWidth
-        const bottom = window.innerHeight - (y / 100) * window.innerHeight
-        const maxRadius = Math.hypot(
-          Math.max((x / 100) * window.innerWidth, right),
-          Math.max((y / 100) * window.innerHeight, bottom),
-        )
-
-        const clipPath = [`circle(0px at ${x}% ${y}%)`, `circle(${maxRadius}px at ${x}% ${y}%)`]
-
-        document.documentElement.animate(
-          {
-            clipPath: clipPath,
-          },
-          {
-            duration: 500,
-            easing: "ease-in",
-            pseudoElement: transitionTarget.pseudoElement,
-            fill: "forwards",
-          },
-        )
-      })
-
-      await transition.finished.catch(() => {
-        // 忽略动画错误
-      })
-    } catch {
-      action()
-      transitionTarget.cleanup()
-      this.startThemeMonitoring()
-      return false
+    this.emitChange()
+    if (this.onModeChange) {
+      this.onModeChange(nextMode, this.preference)
     }
-
-    transitionTarget.cleanup()
-    this.skipNextDetection = true
-    this.startThemeMonitoring()
-    return true
+    return { mode: nextMode, animated }
   }
 
   /**
-   * 切换主题（User Action）- 带圆形扩散动画
+   * 切换主题（User Action）- 浅到深圆形扩散，深到浅反向圆形收缩
    * @param event 可选的鼠标事件，用于确定动画中心
    */
   async toggle(event?: ThemeTransitionOrigin): Promise<ThemeMode> {
@@ -1094,135 +1274,9 @@ ${cssVars}
         ? this.mode
         : this.adapter?.detectHostThemeMode() ?? this.detectHostThemeMode()
     const nextMode: ThemeMode = currentMode === "dark" ? "light" : "dark"
-    this.preference = nextMode
 
-    // 计算动画起点坐标（从点击位置或默认右上角）
-    let x = 95
-    let y = 5
-    if (event && event.clientX !== undefined) {
-      x = (event.clientX / window.innerWidth) * 100
-      y = (event.clientY / window.innerHeight) * 100
-    } else {
-      // 尝试从主题按钮位置获取
-      const themeBtn =
-        document.getElementById("theme-toggle-btn") || document.getElementById("quick-theme-btn")
-      if (themeBtn) {
-        const rect = themeBtn.getBoundingClientRect()
-        x = ((rect.left + rect.width / 2) / window.innerWidth) * 100
-        y = ((rect.top + rect.height / 2) / window.innerHeight) * 100
-      }
-    }
-
-    // 设置 CSS 变量
-    document.documentElement.style.setProperty("--theme-x", `${x}%`)
-    document.documentElement.style.setProperty("--theme-y", `${y}%`)
-
-    // 暂停 MutationObserver，防止在 View Transition 期间触发额外的 DOM 修改
-    this.stopThemeMonitoring()
-
-    // 执行主题切换的核心逻辑
-    const doToggle = () => {
-      // 优先使用适配器的原生切换逻辑 (针对 Gemini Enterprise)
-      if (
-        this.isHostThemeSyncActive() &&
-        this.adapter &&
-        typeof this.adapter.toggleTheme === "function"
-      ) {
-        this.adapter.toggleTheme(nextMode).catch(() => {})
-      }
-      // 同步应用主题（包括 Shadow DOM）
-      this.applyTheme(nextMode)
-    }
-
-    // 检查是否支持 View Transitions API
-    if (
-      !document.startViewTransition ||
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    ) {
-      doToggle()
-      this.mode = nextMode
-      this.emitChange()
-      // 无条件启动监听（确保网页主题变化能被检测）
-      this.startThemeMonitoring()
-      return nextMode
-    }
-
-    const transitionTarget = this.prepareTransitionSnapshotTarget()
-
-    let transition: ViewTransition
-    try {
-      // 执行动画切换
-      transition = document.startViewTransition(() => {
-        doToggle()
-      })
-    } catch {
-      transitionTarget.cleanup()
-      doToggle()
-      this.mode = nextMode
-      this.emitChange()
-      this.startThemeMonitoring()
-      return nextMode
-    }
-
-    // 等待伪元素创建后，执行自定义动画
-    transition.ready.then(() => {
-      // 获取点击位置距离最远角落的距离（作为圆的半径）
-      const right = window.innerWidth - (x / 100) * window.innerWidth
-      const bottom = window.innerHeight - (y / 100) * window.innerHeight
-      const maxRadius = Math.hypot(
-        Math.max((x / 100) * window.innerWidth, right),
-        Math.max((y / 100) * window.innerHeight, bottom),
-      )
-
-      // 定义圆形扩散动画
-      const clipPath = [`circle(0px at ${x}% ${y}%)`, `circle(${maxRadius}px at ${x}% ${y}%)`]
-
-      // 统一使用扩散动画：新视图从中点扩散覆盖旧视图
-      // 配合 CSS 中 ::view-transition-new(root) 的初始 clip-path: circle(0px) 设置
-      document.documentElement.animate(
-        {
-          clipPath: clipPath,
-        },
-        {
-          duration: 500,
-          easing: "ease-in",
-          pseudoElement: transitionTarget.pseudoElement,
-          fill: "forwards",
-        },
-      )
-    })
-
-    // 使用 finally 确保 MutationObserver 一定会恢复（即使动画失败）
-    // 等待动画完成后再返回，确保调用方等待动画真正完成
-    await transition.finished.catch(() => {
-      // 忽略动画错误
-    })
-
-    transitionTarget.cleanup()
-
-    // 标记跳过下一次检测，防止 observer 立即根据中间态把结果回写掉
-    this.skipNextDetection = true
-    if (!this.isHostThemeSyncActive()) {
-      this.mode = nextMode
-      this.emitChange()
-      if (this.onModeChange) {
-        this.onModeChange(nextMode, this.preference)
-      }
-      this.startThemeMonitoring()
-      return nextMode
-    }
-
-    // 触发回调通知 React 更新状态（动画完成后）
-    if (this.onModeChange) {
-      this.onModeChange(nextMode, this.preference)
-    }
-    // 无条件启动监听（确保网页主题变化能被检测）
-    this.startThemeMonitoring()
-
-    // 更新内部状态
-    this.mode = nextMode
-    this.emitChange()
-    return nextMode
+    const { mode } = await this.switchToMode(nextMode, event)
+    return mode
   }
 
   /**
@@ -1248,18 +1302,23 @@ ${cssVars}
       const shouldAnimate = Boolean(event) && modeChanged
       let animated = false
       if (shouldAnimate) {
-        animated = await this.applyWithTransition(() => {
-          this.syncHostTheme(resolved, "system")
-        }, event)
+        const result = await this.applyWithTransition(
+          () => {
+            this.syncHostTheme(resolved, "system")
+          },
+          resolved,
+          event,
+        )
+        animated = result.animated
+        if (result.superseded) {
+          return { mode: this.mode, animated }
+        }
       } else {
         this.syncHostTheme(resolved, "system")
       }
       if (modeChanged) {
         this.mode = resolved
         this.emitChange()
-        if (!this.isHostThemeSyncActive()) {
-          this.syncPluginUiTheme(resolved)
-        }
       }
       if (this.onModeChange) {
         this.onModeChange(resolved, this.preference)
@@ -1282,8 +1341,7 @@ ${cssVars}
     }
 
     // 否则执行切换动画
-    const resultMode = await this.toggle(event)
-    return { mode: resultMode, animated: true }
+    return this.switchToMode(normalizedPreference, event)
   }
 
   /**
@@ -1331,6 +1389,8 @@ ${cssVars}
    * 销毁，清理资源
    */
   destroy() {
+    this.transitionId++
+    this.cleanupTransitionSnapshotTarget()
     this.stopThemeMonitoring()
     this.listeners.clear()
     // 注销系统主题偏好监听，避免实例销毁后回调仍持有引用
