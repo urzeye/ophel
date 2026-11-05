@@ -57,13 +57,13 @@
     "textarea": ["#ask-input[contenteditable='true']"],
     "responseContainer": ".scrollable-container .max-w-threadContentWidth",
     "userQuery": "[data-message-bubble='right']",
-    "assistantResponse": ".flow-root [data-renderer='lm']",
+    "assistantResponse": ".prose[data-renderer='lm']",
     "newChatButton": [
       "nav[class*='group/sidebar'] .relative.shrink-0 a[draggable='false']",
       "nav[class*='group/sidebar'] a[draggable='false'][href='/']"
     ],
     "scrollContainer": [".scrollable-container"],
-    "outlineExclude": [".flow-root .not-prose"]
+    "outlineExclude": [".not-prose"]
   },
   "input": {
     "mode": "contenteditable",
@@ -76,7 +76,7 @@
   },
   "export": {
     "userQuerySelector": "[data-message-bubble='right']",
-    "assistantResponseSelector": ".flow-root [data-renderer='lm']",
+    "assistantResponseSelector": ".prose[data-renderer='lm']",
     "turnSelector": null,
     "useShadowDOM": false
   },
