@@ -63,7 +63,7 @@ export function forgetStaleManagedTabTitle(): void {
   document.documentElement?.removeAttribute(STALE_MANAGED_TAB_TITLE_ATTR)
 }
 
-function getRememberedStaleManagedTabTitle(): string | null {
+export function getRememberedStaleManagedTabTitle(): string | null {
   if (typeof document === "undefined") return null
   return document.documentElement?.getAttribute(STALE_MANAGED_TAB_TITLE_ATTR) || null
 }

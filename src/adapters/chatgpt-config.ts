@@ -93,7 +93,7 @@ export interface ChatGPTSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const CHATGPT_CONFIG_VERSION = 8
+export const CHATGPT_CONFIG_VERSION = 9
 
 export const CHATGPT_NEW_UX_SCOPE =
   'main[data-app-shell-main-surface]:has([data-app-action-timeline-scroll], [data-thread-user-message-navigation-content="true"])'
@@ -101,6 +101,8 @@ export const CHATGPT_HOME_COMPOSER_SELECTOR =
   'form[data-composer-placement="home"]:is([data-chatgpt-composer], [data-thread-find-composer="true"])'
 export const CHATGPT_HOME_UX_SCOPE = `main[data-app-shell-main-surface]:has(${CHATGPT_HOME_COMPOSER_SELECTOR})`
 export const CHATGPT_PAGE_WIDTH_SCOPE = `:is(${CHATGPT_NEW_UX_SCOPE}, ${CHATGPT_HOME_UX_SCOPE})`
+// 作用域不增加优先级，让新版布局规则仍能覆盖通用宽度规则。
+const CHATGPT_LEGACY_WIDTH_SCOPE = `:where(#thread, ${CHATGPT_PAGE_WIDTH_SCOPE})`
 // Normalize local width owners after broad legacy rules, which also affect nested rows and their margins.
 export const CHATGPT_NEW_UX_WIDTH_SELECTORS: Omit<WidthSelectorConfig, "transformValue">[] = [
   {
@@ -300,23 +302,30 @@ const createChatGPTConfig = (): ChatGPTSiteConfig => {
       useShadowDOM: false,
     },
     widthSelectors: [
+      // 只修改对话/输入区；设置页也复用了 thread 宽度变量，不能全局匹配。
       // [LEGACY-CHATGPT-V1]: 旧版宽度限制
-      { selector: '[class*="thread-content-max-width"]', property: "max-width" },
-      { selector: '[style*="--thread-content-max-width"]', property: "max-width" },
+      {
+        selector: `${CHATGPT_LEGACY_WIDTH_SCOPE} [class*="thread-content-max-width"]`,
+        property: "max-width",
+      },
+      {
+        selector: `${CHATGPT_LEGACY_WIDTH_SCOPE} [style*="--thread-content-max-width"]`,
+        property: "max-width",
+      },
       // [CHATGPT-APP-SHELL]: 新版 Tailwind 变量类
       {
         // [CHATGPT-TURN-KEY]: 响应式宽度变量挂在外层容器上
-        selector: '[class*="--thread-content-responsive-max-width:"]',
+        selector: `${CHATGPT_LEGACY_WIDTH_SCOPE} [class*="--thread-content-responsive-max-width:"]`,
         property: "max-width",
         extraCss: "--thread-content-responsive-max-width: 100% !important;",
       },
       {
-        selector: '[class*="--thread-content-max-width:"]',
+        selector: `${CHATGPT_LEGACY_WIDTH_SCOPE} [class*="--thread-content-max-width:"]`,
         property: "max-width",
         extraCss: "--thread-content-max-width: 100% !important;",
       },
       {
-        selector: '[class*="--thread-body-max-width:"]',
+        selector: `${CHATGPT_LEGACY_WIDTH_SCOPE} [class*="--thread-body-max-width:"]`,
         property: "max-width",
         extraCss: "--thread-body-max-width: 100% !important;",
       },
@@ -412,10 +421,8 @@ const createChatGPTConfig = (): ChatGPTSiteConfig => {
       // [CHATGPT-APP-SHELL] main[data-app-shell-main-surface], main
       panelScope: "main#main, main[data-app-shell-main-surface], main",
       panelObstacle: [[deepResearchIframe, "#stage-slideover-sidebar"].join(", ")],
-      panelThreadContentWidth:
-        '#thread [class*="thread-content-max-width"]:not(:has(form[data-type="unified-composer"])), [data-app-shell-main-surface] [class*="--thread-content-max-width:"]',
-      panelThreadLegacyWidth:
-        '#thread [style*="--thread-content-max-width"]:not(:has(form[data-type="unified-composer"])), [data-app-shell-main-surface] [class*="--thread-body-max-width:"]',
+      panelThreadContentWidth: `#thread [class*="thread-content-max-width"]:not(:has(form[data-type="unified-composer"])), ${CHATGPT_NEW_UX_SCOPE} [class*="--thread-content-max-width:"]`,
+      panelThreadLegacyWidth: `#thread [style*="--thread-content-max-width"]:not(:has(form[data-type="unified-composer"])), ${CHATGPT_NEW_UX_SCOPE} [class*="--thread-body-max-width:"]`,
       panelComposerFormWidth:
         'main#main form[data-type="unified-composer"], form[data-chatgpt-composer], form[data-thread-find-composer="true"]',
       panelLibraryComposerFormWidth: libraryComposerForm,

@@ -2,10 +2,13 @@ import { type SiteAdapter } from "~adapters/base"
 import { NOTIFICATION_SOUND_PRESETS } from "~constants"
 import { platform } from "~platform"
 import {
+  GEMINI_NATIVE_TAB_TITLE_ATTR,
+  GEMINI_NATIVE_TAB_TITLE_PATH_ATTR,
   forgetStaleManagedTabTitle,
   forgetManagedTabTitle,
   formatManagedTabTitle,
   getRememberedManagedTabTitle,
+  getRememberedStaleManagedTabTitle,
   normalizeConversationTitle,
   rememberStaleManagedTabTitle,
   rememberManagedTabTitle,
@@ -23,11 +26,12 @@ import { type Settings } from "~utils/storage"
 
 const BACKGROUND_IDLE_TITLE_UPDATE_INTERVAL_MS = 15_000
 const DEFAULT_RENAME_INTERVAL_SECONDS = 5
+const NATIVE_TAB_TITLE_ATTR = "data-ophel-native-tab-title"
 
 export class TabManager {
   private adapter: SiteAdapter
   private settings: Settings["tab"]
-  // 是否在接管标签页标题（开启「自动重命名标签页」时）
+  // 是否在接管标签页标题（自动重命名或隐私模式）
   private isRunning = false
   // 生成检测是否已启用：通知、提示音、窗口置顶都依赖它，与是否接管标题无关
   private isTrackingGeneration = false
@@ -123,9 +127,10 @@ export class TabManager {
       this.stopNotificationPlayback()
     }
 
-    if (this.settings.autoRename && !this.isRunning) {
+    const shouldManageTitle = this.settings.autoRename || this.settings.privacyMode
+    if (shouldManageTitle && !this.isRunning) {
       this.start()
-    } else if (!this.settings.autoRename && this.isRunning) {
+    } else if (!shouldManageTitle && this.isRunning) {
       this.stop()
     }
 
@@ -143,7 +148,7 @@ export class TabManager {
     }
   }
 
-  /** 启用生成检测（通知依赖它，与自动重命名无关）；开启自动重命名时再接管标签页标题 */
+  /** 启用生成检测；自动重命名或隐私模式开启时接管标签页标题 */
   start() {
     if (!this.isTrackingGeneration) {
       this.isTrackingGeneration = true
@@ -160,10 +165,12 @@ export class TabManager {
 
     this.isRunning = false
     this.stopTitleObserver()
+    // 路由切换窗口内 expectedTitle 已清空，用 stale 受管标题识别所有权再恢复
+    this.restoreNativeTitle(this.expectedTitle ?? this.staleManagedTitleAfterRouteChange)
     this.expectedTitle = null
+    this.lastConversationTitle = null
     this.staleManagedTitleAfterRouteChange = null
     this.staleConversationTitleAfterRouteChange = null
-    forgetManagedTabTitle()
     forgetStaleManagedTabTitle()
 
     this.syncUpdateLoop()
@@ -196,11 +203,21 @@ export class TabManager {
   }
 
   private startTitleManagement() {
-    if (!this.settings.autoRename || this.isRunning) return
+    if (this.isRunning || !(this.settings.autoRename || this.settings.privacyMode)) return
 
     // 检查适配器是否支持标签页重命名
     if (this.adapter.supportsTabRename && !this.adapter.supportsTabRename()) {
       return
+    }
+
+    // 扩展被浏览器直接停用时不会执行 destroy；重注入先释放上次接管的标题。
+    const rememberedTitle = getRememberedManagedTabTitle()
+    if (
+      rememberedTitle &&
+      document.title === rememberedTitle &&
+      document.documentElement.hasAttribute(NATIVE_TAB_TITLE_ATTR)
+    ) {
+      this.restoreNativeTitle(rememberedTitle)
     }
 
     this.isRunning = true
@@ -231,7 +248,7 @@ export class TabManager {
 
   /**
    * 更新循环兼做标题刷新与 DOM 兜底的完成检测：接管标题时一直运行；
-   * 关闭自动重命名后只为通知与窗口置顶保留，两者都关闭时停掉。
+   * 停止接管标题后只为通知与窗口置顶保留，两者都关闭时停掉。
    */
   private shouldRunUpdateLoop(): boolean {
     if (!this.isTrackingGeneration) return false
@@ -333,12 +350,23 @@ export class TabManager {
     const isGenerating = this.isCurrentlyGenerating()
     this.detectDomCompletion(isGenerating)
 
-    // 关闭自动重命名后不改写站点标题；隐私模式在强制刷新（如切换对话）时仍套用伪装标题
-    if (!this.isRunning && !(force && this.settings.privacyMode)) return
+    if (!this.isRunning) return
 
     // 检查适配器是否支持标签页重命名
     if (this.adapter.supportsTabRename && !this.adapter.supportsTabRename()) {
       return
+    }
+
+    // 在适配器读取清除旧路由标记之前记录原生标题，避免把旧的受管标题存为原生标题。
+    // DOM 元数据可跨 content script 重注入保留。
+    const currentTitle = document.title
+    if (
+      currentTitle !== this.expectedTitle &&
+      currentTitle !== getRememberedManagedTabTitle() &&
+      currentTitle !== this.staleManagedTitleAfterRouteChange &&
+      currentTitle !== getRememberedStaleManagedTabTitle()
+    ) {
+      document.documentElement.setAttribute(NATIVE_TAB_TITLE_ATTR, currentTitle)
     }
 
     // 隐私模式
@@ -412,6 +440,28 @@ export class TabManager {
     return "✅ "
   }
 
+  private restoreNativeTitle(managedTitle: string | null) {
+    const nativeTitle = this.getLatestNativeTitle()
+    const stillOwnsTitle = document.title === managedTitle
+    document.documentElement.removeAttribute(NATIVE_TAB_TITLE_ATTR)
+    forgetManagedTabTitle()
+    if (stillOwnsTitle && nativeTitle !== null) {
+      document.title = nativeTitle
+    }
+  }
+
+  // Gemini 主世界 guard 会拦截站点标题更新，最新原生标题只记录在 guard 的属性里，
+  // 本管理器的快照自首次接管后不再更新；校验 path 避免恢复成其他页面的标题。
+  private getLatestNativeTitle(): string | null {
+    const root = document.documentElement
+    const geminiTitle = root.getAttribute(GEMINI_NATIVE_TAB_TITLE_ATTR)
+    const geminiPath = root.getAttribute(GEMINI_NATIVE_TAB_TITLE_PATH_ATTR)
+    if (geminiTitle && geminiPath === window.location.pathname) {
+      return geminiTitle
+    }
+    return root.getAttribute(NATIVE_TAB_TITLE_ATTR)
+  }
+
   private applyManagedTitle(title: string, force = false) {
     this.expectedTitle = title
     forgetStaleManagedTabTitle()
@@ -444,7 +494,7 @@ export class TabManager {
     }
 
     this.titleObserver = new MutationObserver(() => {
-      if (!this.isRunning || !this.settings.autoRename) return
+      if (!this.isRunning) return
       if (this.isApplyingManagedTitle) return
       if (!this.expectedTitle) return
       if (document.title === this.expectedTitle) return
@@ -455,7 +505,7 @@ export class TabManager {
 
       this.titleSyncTimer = window.setTimeout(() => {
         this.titleSyncTimer = null
-        if (!this.isRunning || !this.settings.autoRename) return
+        if (!this.isRunning) return
         if (this.isApplyingManagedTitle) return
         if (!this.expectedTitle || document.title === this.expectedTitle) return
         this.updateTabName(true)
