@@ -56,7 +56,7 @@
   "selectors": {
     "textarea": ["#ask-input[contenteditable='true']"],
     "responseContainer": ".scrollable-container .max-w-threadContentWidth",
-    "userQuery": ".flow-root .group.justify-end div.bg-subtle.rounded-2xl",
+    "userQuery": "[data-message-bubble='right']",
     "assistantResponse": ".flow-root [data-renderer='lm']",
     "newChatButton": [
       "nav[class*='group/sidebar'] .relative.shrink-0 a[draggable='false']",
@@ -75,7 +75,7 @@
     "newTabPath": "/"
   },
   "export": {
-    "userQuerySelector": ".flow-root .group.justify-end div.bg-subtle.rounded-2xl",
+    "userQuerySelector": "[data-message-bubble='right']",
     "assistantResponseSelector": ".flow-root [data-renderer='lm']",
     "turnSelector": null,
     "useShadowDOM": false
