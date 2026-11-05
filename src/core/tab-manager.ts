@@ -2,6 +2,8 @@ import { type SiteAdapter } from "~adapters/base"
 import { NOTIFICATION_SOUND_PRESETS } from "~constants"
 import { platform } from "~platform"
 import {
+  GEMINI_NATIVE_TAB_TITLE_ATTR,
+  GEMINI_NATIVE_TAB_TITLE_PATH_ATTR,
   forgetStaleManagedTabTitle,
   forgetManagedTabTitle,
   formatManagedTabTitle,
@@ -439,13 +441,25 @@ export class TabManager {
   }
 
   private restoreNativeTitle(managedTitle: string | null) {
-    const nativeTitle = document.documentElement.getAttribute(NATIVE_TAB_TITLE_ATTR)
+    const nativeTitle = this.getLatestNativeTitle()
     const stillOwnsTitle = document.title === managedTitle
     document.documentElement.removeAttribute(NATIVE_TAB_TITLE_ATTR)
     forgetManagedTabTitle()
     if (stillOwnsTitle && nativeTitle !== null) {
       document.title = nativeTitle
     }
+  }
+
+  // Gemini 主世界 guard 会拦截站点标题更新，最新原生标题只记录在 guard 的属性里，
+  // 本管理器的快照自首次接管后不再更新；校验 path 避免恢复成其他页面的标题。
+  private getLatestNativeTitle(): string | null {
+    const root = document.documentElement
+    const geminiTitle = root.getAttribute(GEMINI_NATIVE_TAB_TITLE_ATTR)
+    const geminiPath = root.getAttribute(GEMINI_NATIVE_TAB_TITLE_PATH_ATTR)
+    if (geminiTitle && geminiPath === window.location.pathname) {
+      return geminiTitle
+    }
+    return root.getAttribute(NATIVE_TAB_TITLE_ATTR)
   }
 
   private applyManagedTitle(title: string, force = false) {

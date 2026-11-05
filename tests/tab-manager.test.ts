@@ -2,7 +2,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import type { SiteAdapter } from "~adapters/base"
 import { TabManager } from "~core/tab-manager"
-import { extractConversationTitleFromDocumentTitle } from "~utils/conversation-title"
+import {
+  GEMINI_NATIVE_TAB_TITLE_ATTR,
+  GEMINI_NATIVE_TAB_TITLE_PATH_ATTR,
+  extractConversationTitleFromDocumentTitle,
+} from "~utils/conversation-title"
 import type { Settings } from "~utils/storage"
 
 vi.mock("~adapters/base", () => ({}))
@@ -21,6 +25,8 @@ let pageDocument: EventTarget & {
     removeAttribute: (name: string) => void
   }
 }
+
+let pageWindow: EventTarget & { location: { pathname: string } }
 
 function createManager(
   overrides: Partial<Settings["tab"]> = {},
@@ -63,7 +69,12 @@ beforeEach(() => {
     },
   })
   vi.stubGlobal("document", pageDocument)
-  vi.stubGlobal("window", Object.assign(new EventTarget(), { setTimeout, clearTimeout }))
+  pageWindow = Object.assign(new EventTarget(), {
+    setTimeout,
+    clearTimeout,
+    location: { pathname: "/" },
+  })
+  vi.stubGlobal("window", pageWindow)
 })
 
 describe("TabManager title ownership", () => {
@@ -164,6 +175,36 @@ describe("TabManager title ownership", () => {
     manager.destroy()
     expect(pageDocument.title).toBe("新页面")
   })
+
+  it("restores the Gemini guard's latest native title on stop", () => {
+    const manager = createManager()
+    manager.start()
+    expect(pageDocument.title).toBe("✅ 设置")
+
+    // Gemini 主世界 guard 拦截站点标题更新，最新原生标题只记录在 guard 的属性里
+    pageDocument.documentElement.setAttribute(GEMINI_NATIVE_TAB_TITLE_ATTR, "新对话")
+    pageDocument.documentElement.setAttribute(GEMINI_NATIVE_TAB_TITLE_PATH_ATTR, "/app/123")
+    pageWindow.location.pathname = "/app/123"
+
+    manager.stop()
+    expect(pageDocument.title).toBe("新对话")
+    manager.destroy()
+  })
+
+  it("ignores the Gemini guard's native title recorded for a different page", () => {
+    const manager = createManager()
+    manager.start()
+    expect(pageDocument.title).toBe("✅ 设置")
+
+    pageDocument.documentElement.setAttribute(GEMINI_NATIVE_TAB_TITLE_ATTR, "旧页面")
+    pageDocument.documentElement.setAttribute(GEMINI_NATIVE_TAB_TITLE_PATH_ATTR, "/app/old")
+    pageWindow.location.pathname = "/app/123"
+
+    manager.stop()
+    expect(pageDocument.title).toBe("设置")
+    manager.destroy()
+  })
+
   it.each([
     { titleFormat: "{status}{title}" },
     { titleFormat: "{status}{title} | {site}" },
