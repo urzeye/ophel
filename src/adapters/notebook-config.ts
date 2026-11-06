@@ -43,7 +43,7 @@ export const NOTEBOOK_CONFIG: NotebookSiteConfig = {
     widthSelectors: [
       {
         selector:
-          "notebook > .panel-container > .source-panel:has(source-viewer), notebook > .panel-container > .studio-panel:has(artifact-viewer), notebook > .panel-container > .chat-panel",
+          "notebook > .panel-container > .source-panel:has(source-viewer), notebook > .panel-container > .studio-panel:has(artifact-viewer, note-editor), notebook > .panel-container > .chat-panel",
         property: "max-inline-size",
         extraCss: "inline-size: auto !important; min-inline-size: 285px !important;",
       },
@@ -65,9 +65,11 @@ export const NOTEBOOK_CONFIG: NotebookSiteConfig = {
     workspace: "notebook > .panel-container",
     sourceRoot: "section.source-panel source-viewer .elements-container",
     sourceScroll: "section.source-panel source-viewer .scroll-area",
-    studioRoot: "section.studio-panel artifact-viewer .artifact-content",
+    studioRoot:
+      "section.studio-panel artifact-viewer .artifact-content, section.studio-panel note-editor .ProseMirror",
     headings: 'h1, h2, h3, h4, h5, h6, [role="heading"][aria-level]',
     sourceTitle: "section.source-panel .source-title",
-    studioTitle: "section.studio-panel input.artifact-title",
+    studioTitle:
+      'section.studio-panel input.artifact-title, section.studio-panel note-editor input[formcontrolname="name"]',
   },
 }
