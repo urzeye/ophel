@@ -1,3 +1,5 @@
+import { outlineSourceMessages } from "../outline-sources"
+
 export const de = {
   panelTitle: "Ophel",
 
@@ -855,8 +857,7 @@ export const de = {
   outlineLocateCurrent: "Aktuelle Position finden",
   outlineSearch: "Im Verzeichnis suchen...",
   outlineSearchResult: " Ergebnis(se)",
-  outlineSourceSources: "Quellen",
-  outlineSourceStudio: "Studio",
+  ...outlineSourceMessages["de"],
   outlineSourceConversation: "Chat",
   outlineSourceDocument: "Dokument",
   outlineSourceSwitchLabel: "Gliederungsquelle",

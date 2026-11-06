@@ -11,6 +11,8 @@ export interface NotebookSiteConfig extends BuiltinSiteConfig {
     studioRoot: string
     studioScroll: string
     headings: string
+    sourceTitle: string
+    studioTitle: string
   }
 }
 
@@ -19,7 +21,12 @@ export const NOTEBOOK_CONFIG_VERSION = 1
 export const NOTEBOOK_CONFIG: NotebookSiteConfig = {
   capabilities: [...BUILTIN_FEATURE_CAPABILITIES[SITE_IDS.NOTEBOOK]],
   theme: { primary: "#4285f4", secondary: "#6c63ff" },
-  traits: { historyLazyLoad: false, strictCapabilities: true, minimalEnhancements: true },
+  traits: {
+    historyLazyLoad: false,
+    strictCapabilities: true,
+    minimalEnhancements: true,
+    domSnapshotExport: true,
+  },
   selectors: {
     textarea: ["chat-panel query-box textarea"],
     responseContainer: "chat-panel .chat-panel-content",
@@ -62,5 +69,7 @@ export const NOTEBOOK_CONFIG: NotebookSiteConfig = {
     studioRoot: "section.studio-panel artifact-viewer labs-tailwind-doc-viewer",
     studioScroll: "section.studio-panel artifact-viewer .artifact-content-scrollable",
     headings: 'h1, h2, h3, h4, h5, h6, [role="heading"][aria-level]',
+    sourceTitle: "section.source-panel .source-title",
+    studioTitle: "section.studio-panel input.artifact-title",
   },
 }

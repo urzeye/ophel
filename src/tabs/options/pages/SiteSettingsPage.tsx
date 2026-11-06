@@ -52,24 +52,6 @@ const SITE_PACK_INFO_URL_ZH = "https://ophel.app/docs/zh/enhancements/site-exten
 const getSitePackInfoUrl = (lang: string): string =>
   lang.startsWith("zh") ? SITE_PACK_INFO_URL_ZH : SITE_PACK_INFO_URL_EN
 
-const PANEL_AVOIDANCE_SUPPORTED_SITE_IDS = new Set<string>([
-  SITE_IDS.AISTUDIO,
-  SITE_IDS.CHATGPT,
-  SITE_IDS.CLAUDE,
-  SITE_IDS.CHATGLM,
-  SITE_IDS.DEEPSEEK,
-  SITE_IDS.DOUBAO,
-  SITE_IDS.GEMINI,
-  SITE_IDS.GEMINI_ENTERPRISE,
-  SITE_IDS.GROK,
-  SITE_IDS.IMA,
-  SITE_IDS.KIMI,
-  SITE_IDS.QIANWEN,
-  SITE_IDS.QWENAI,
-  SITE_IDS.YUANBAO,
-  SITE_IDS.ZAI,
-])
-
 // 自动隐藏输入框首发站点白名单；其余站点验证后逐步加入
 const AUTO_HIDE_INPUT_SUPPORTED_SITE_IDS = new Set<string>([SITE_IDS.GEMINI])
 
@@ -209,9 +191,7 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
     : getBuiltinFeatureCapabilities(selectedSite)
   const supportsCapability = (capability: SitePackCapability): boolean =>
     selectedCapabilities.has(capability)
-  const supportsPanelAvoidance =
-    PANEL_AVOIDANCE_SUPPORTED_SITE_IDS.has(selectedSite) ||
-    (isCommunitySelected && selectedCapabilities.has("panel-avoidance"))
+  const supportsPanelAvoidance = supportsCapability("panel-avoidance")
   const supportsPageWidth = supportsCapability("width")
   const supportsUserQueryWidth =
     supportsPageWidth &&

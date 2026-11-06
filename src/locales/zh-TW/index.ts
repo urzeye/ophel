@@ -1,3 +1,5 @@
+import { outlineSourceMessages } from "../outline-sources"
+
 export const zhTW = {
   panelTitle: "Ophel",
 
@@ -746,8 +748,7 @@ export const zhTW = {
   outlineLocateCurrent: "定位到當前位置",
   outlineSearch: "搜尋大綱...",
   outlineSearchResult: "個結果",
-  outlineSourceSources: "來源",
-  outlineSourceStudio: "工作台",
+  ...outlineSourceMessages["zh-TW"],
   outlineSourceConversation: "對話",
   outlineSourceDocument: "文件",
   outlineSourceSwitchLabel: "大綱來源",

@@ -108,6 +108,8 @@ export interface ExportConfig {
 
 export interface ExportLifecycleContext {
   conversationId: string
+  /** 当前选择的内容栏目；未传入时沿用对话导出。 */
+  sourceId?: string
   format: ExportFormat
   includeThoughts: boolean
   packaging: ExportPackaging
@@ -1078,13 +1080,15 @@ export abstract class SiteAdapter {
 
   /**
    * 本次导出能否跳过 DOM 历史预加载（滚顶等收敛）。
-   * 静态能力在 config `traits.apiFirstExport` 声明；运行时才可判定的站点
+   * 接口或正文快照导出在 config `traits.apiFirstExport` / `traits.domSnapshotExport`
+   * 声明；运行时才可判定的站点
    * （如 ChatGPT 仅新版会话页可走接口导出）覆写本方法收窄。
    * 跳过后接口路径失败回退 DOM 采集时，导出流程会补做预加载再重试一次。
    * 缺省 false：维持导出前滚顶预加载的保守行为。
    */
   canSkipExportHistoryPreload(): boolean {
-    return this.getSiteTraits().apiFirstExport ?? false
+    const traits = this.getSiteTraits()
+    return Boolean(traits.apiFirstExport || traits.domSnapshotExport)
   }
 
   /** 获取当前视口中可见的锚点元素信息 */
@@ -1656,6 +1660,10 @@ export abstract class SiteAdapter {
 
   /** 获取导出配置 */
   getExportConfig(): ExportConfig | null {
+    return null
+  }
+
+  getExportTitle(_sourceId = "conversation"): string | null {
     return null
   }
 

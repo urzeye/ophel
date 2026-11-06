@@ -105,6 +105,8 @@ export interface SitePackDocumentOutlineConfig {
  * - 运行时状态查询：`has*` / `is*` 方法（如 hasUnloadedConversationHistory）。
  */
 export interface SiteTraits {
+  /** 导出当前已渲染的正文快照，不滚动预加载对话历史。 */
+  domSnapshotExport?: boolean
   /** 内置站点逐步启用严格能力入口过滤；既有站点保留原行为。 */
   strictCapabilities?: boolean
   /** 仅创建主题与布局模块；面板负责大纲和输入，不启用其他宿主页增强。 */

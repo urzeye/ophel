@@ -167,6 +167,7 @@ interface ConversationExportData {
 }
 
 export interface ConversationExportOptions {
+  sourceId?: string
   packaging?: ExportPackaging
   includeThoughts?: boolean
   showIndex?: boolean
@@ -1650,7 +1651,10 @@ export class ConversationManager {
     const cid = currentInfo.cid ?? existing?.cid
     const pinned = currentInfo.isPinned ?? existing?.pinned ?? false
 
-    if (existing) {
+    const persistConversation =
+      this.siteAdapter.getFeatureCapabilityPolicy() !== "strict" ||
+      this.siteAdapter.hasFeatureCapability("conversation-list")
+    if (existing && persistConversation) {
       const updates: Partial<Conversation> = {}
       let needsUpdate = false
 
@@ -1709,8 +1713,12 @@ export class ConversationManager {
       updatedAt: now,
     }
 
-    // 分享页与临时对话页（如 Claude 隐身对话）都不写入对话库，避免产生假记录
-    if (this.siteAdapter.isSharePage() || this.siteAdapter.isEphemeralConversationPage()) {
+    // 未提供对话列表的站点、分享页和临时对话页不写入对话库，避免产生假记录。
+    if (
+      !persistConversation ||
+      this.siteAdapter.isSharePage() ||
+      this.siteAdapter.isEphemeralConversationPage()
+    ) {
       return fallbackConversation
     }
 
@@ -1731,6 +1739,7 @@ export class ConversationManager {
     return {
       conversationId: convId,
       format,
+      sourceId: options.sourceId,
       includeThoughts: options.includeThoughts ?? settings.export?.includeThoughts ?? true,
       packaging: options.packaging ?? (settings.export?.packaging === "zip" ? "zip" : "markdown"),
     }
@@ -1822,6 +1831,7 @@ export class ConversationManager {
     const initialScrollTop = scrollContainer?.scrollTop ?? null
     const initialWindowScrollY = window.scrollY
     const exportContext = this.createExportContext(convId, format, options)
+    const sourceTitle = this.siteAdapter.getExportTitle(exportContext.sourceId)
     const exportPackaging = exportContext.packaging
 
     let exportLifecycleEnabled = false
@@ -1889,7 +1899,7 @@ export class ConversationManager {
       }
 
       const result = await handleExportData({
-        conv,
+        conv: sourceTitle ? { ...conv, title: sourceTitle } : conv,
         messages,
         exportBundle,
         exportPackaging,

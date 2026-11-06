@@ -1,3 +1,5 @@
+import { outlineSourceMessages } from "../outline-sources"
+
 export const ru = {
   panelTitle: "Ophel",
 
@@ -850,8 +852,7 @@ export const ru = {
   outlineLocateCurrent: "Найти текущее место",
   outlineSearch: "Поиск в содержании...",
   outlineSearchResult: " совп.",
-  outlineSourceSources: "Источники",
-  outlineSourceStudio: "Студия",
+  ...outlineSourceMessages["ru"],
   outlineSourceConversation: "Чат",
   outlineSourceDocument: "Документ",
   outlineSourceSwitchLabel: "Источник содержания",

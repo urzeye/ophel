@@ -128,6 +128,10 @@
           "type": "boolean",
           "description": "History lazy-loads from the server on upward scroll. Default true (conservative); full-render or client-virtualized sites should set false."
         },
+        "domSnapshotExport": {
+          "type": "boolean",
+          "description": "Export the currently rendered DOM snapshot without scrolling to preload conversation history. Default false."
+        },
         "strictCapabilities": {
           "type": "boolean",
           "description": "Opt a built-in adapter into capability-based action visibility. SitePacks always enforce capabilities."

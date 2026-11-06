@@ -64,7 +64,16 @@ const server = createServer(async (request, response) => {
       return
     }
     try {
-      const data = await readFile(asset)
+      let data = await readFile(asset)
+      if (path === "/assets/locales/messages.json") {
+        // Reproduce cached language assets from before Notebook was introduced.
+        const locales = JSON.parse(data.toString("utf8"))
+        for (const locale of Object.values(locales)) {
+          delete locale.outlineSourceSources
+          delete locale.outlineSourceStudio
+        }
+        data = Buffer.from(JSON.stringify(locales))
+      }
       response.writeHead(200, {
         "Content-Type": contentTypes[extname(asset)] ?? "application/octet-stream",
       })

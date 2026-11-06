@@ -3,6 +3,7 @@ import { scrollElementInContainer } from "~core/outline/dom-outline"
 import { notebookNativeThemeCss } from "~styles/native-theme-adapters/notebook"
 import { t } from "~utils/i18n"
 import { hashTextForCache } from "~utils/text-hash"
+import type { ExportMessage } from "~utils/exporter"
 
 import {
   SiteAdapter,
@@ -10,6 +11,7 @@ import {
   type OutlineNavigationContext,
   type OutlineSource,
   type PanelAvoidanceConfig,
+  type ExportLifecycleContext,
 } from "./base"
 import type { BuiltinSiteConfig } from "./declarative"
 import {
@@ -17,6 +19,7 @@ import {
   NOTEBOOK_CONFIG_VERSION,
   type NotebookSiteConfig,
 } from "./notebook-config"
+import { notebookBodyToMarkdown } from "./notebook-export"
 
 const normalizeText = (element: Element): string =>
   (element.textContent ?? "").replace(/\s+/g, " ").trim()
@@ -25,6 +28,7 @@ export class NotebookAdapter extends SiteAdapter {
   protected config: NotebookSiteConfig = NOTEBOOK_CONFIG
   private rootIds = new WeakMap<Element, number>()
   private nextRootId = 0
+  private exportSnapshots = new WeakMap<ExportLifecycleContext, ExportMessage[]>()
 
   match(): boolean {
     return location.hostname === "notebook.google.com"
@@ -260,6 +264,59 @@ export class NotebookAdapter extends SiteAdapter {
 
   getPanelAvoidanceConfig(): PanelAvoidanceConfig | null {
     return this.config.panelAvoidance ?? null
+  }
+
+  getExportTitle(sourceId = "conversation"): string {
+    const label =
+      this.getOutlineSources().find((source) => source.id === sourceId)?.label ?? sourceId
+    const selector =
+      sourceId === "source"
+        ? this.config.sitePrivateSelectors.sourceTitle
+        : sourceId === "studio"
+          ? this.config.sitePrivateSelectors.studioTitle
+          : null
+    const element = selector ? document.querySelector(selector) : null
+    const documentTitle =
+      element instanceof HTMLInputElement ? element.value : element ? normalizeText(element) : ""
+    return [this.getSessionName() || this.getName(), label, documentTitle]
+      .filter(Boolean)
+      .join(" - ")
+  }
+
+  private collectExportMessages(sourceId: string): ExportMessage[] {
+    const root = this.getOutlineRoot(sourceId)
+    if (!root) return []
+    if (sourceId !== "conversation") {
+      const content = notebookBodyToMarkdown(root)
+      return content.trim() ? [{ role: "assistant", content }] : []
+    }
+    const userSelector = this.getUserQuerySelector()
+    const assistantSelector = this.config.selectors.assistantResponse!
+    return Array.from(root.querySelectorAll(`${userSelector}, ${assistantSelector}`)).flatMap(
+      (element) => {
+        const isUser = element.matches(userSelector)
+        const content = isUser
+          ? this.extractUserQueryText(element).trim()
+          : notebookBodyToMarkdown(element)
+        return content.trim() ? [{ role: isUser ? "user" : "assistant", content }] : []
+      },
+    )
+  }
+
+  async prepareConversationExport(context: ExportLifecycleContext): Promise<ExportMessage[]> {
+    const messages = this.collectExportMessages(context.sourceId ?? "conversation")
+    this.exportSnapshots.set(context, messages)
+    return messages
+  }
+
+  async extractExportMessages(context: ExportLifecycleContext): Promise<ExportMessage[]> {
+    const messages = this.exportSnapshots.get(context)
+    if (!messages) throw new Error("Notebook export snapshot was not prepared")
+    return messages
+  }
+
+  async restoreConversationAfterExport(context: ExportLifecycleContext): Promise<void> {
+    this.exportSnapshots.delete(context)
   }
 
   supportsHostThemeSync(): boolean {

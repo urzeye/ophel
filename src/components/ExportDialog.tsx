@@ -424,8 +424,8 @@ export interface ExportDialogProps {
   onClose: () => void
   onExport: (format: ExportFormat, options: ConversationExportOptions) => Promise<boolean | void>
   /**
-   * 导出的是当前页面之外的对话。传入后弹窗显示该对话的标题，并隐藏只对当前页面
-   * 对话有效的入口（分段导出、复制大纲），避免它们作用到错误的对话。
+   * 导出目标是另一段对话或独立文档。传入后显示目标标题，并隐藏依赖默认对话
+   * 的入口（分段导出、复制大纲），避免它们作用到其他内容。
    */
   target?: { title: string }
   onSegmentedExport?: () => void

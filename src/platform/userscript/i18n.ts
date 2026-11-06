@@ -1,3 +1,5 @@
+import { getBundledOutlineSourceMessage } from "~locales/outline-sources"
+
 import {
   USERSCRIPT_LOCALE_RESOURCE_DEFINITIONS,
   USERSCRIPT_SUPPORTED_LOCALES,
@@ -156,7 +158,11 @@ export function t(key: string, params?: Record<string, string>): string {
   const langResources = loadLocaleMessages(currentLang)
   const fallbackResources =
     currentLang === DEFAULT_LOCALE ? langResources : loadLocaleMessages(DEFAULT_LOCALE)
-  let text = langResources[key] || fallbackResources[key] || key
+  let text =
+    langResources[key] ||
+    getBundledOutlineSourceMessage(currentLang, key) ||
+    fallbackResources[key] ||
+    key
 
   if (params) {
     Object.keys(params).forEach((paramKey) => {

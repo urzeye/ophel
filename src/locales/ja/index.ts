@@ -1,3 +1,5 @@
+import { outlineSourceMessages } from "../outline-sources"
+
 export const ja = {
   panelTitle: "Ophel",
 
@@ -866,8 +868,7 @@ export const ja = {
   outlineLocateCurrent: "現在の位置を特定",
   outlineSearch: "目次を検索...",
   outlineSearchResult: " 個の結果",
-  outlineSourceSources: "ソース",
-  outlineSourceStudio: "Studio",
+  ...outlineSourceMessages["ja"],
   outlineSourceConversation: "会話",
   outlineSourceDocument: "文書",
   outlineSourceSwitchLabel: "目次のソース",

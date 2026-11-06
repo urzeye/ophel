@@ -99,6 +99,7 @@ export class OutlineManager {
   private scrollPositionsStale: boolean = true
   private sources: OutlineSource[] = []
   private activeSourceId: string = "conversation"
+  private previousSessionId: string
 
   // State
   private minLevel: number = 1
@@ -163,6 +164,7 @@ export class OutlineManager {
     onShowUserQueriesChange?: (show: boolean) => void,
   ) {
     this.siteAdapter = adapter
+    this.previousSessionId = adapter.getSessionId()
     this.settings = settings
     this.onExpandLevelChange = onExpandLevelChange
     this.onShowUserQueriesChange = onShowUserQueriesChange
@@ -938,6 +940,15 @@ export class OutlineManager {
    * 立即 refresh 抓到的还是旧 DOM，所以排几个延迟点）。
    */
   handleUrlChange(): void {
+    const sessionId = this.siteAdapter.getSessionId()
+    if (
+      sessionId !== this.previousSessionId &&
+      this.getNavigationContext() !== null &&
+      this.sources.some((source) => source.id === "conversation")
+    ) {
+      this.activeSourceId = "conversation"
+    }
+    this.previousSessionId = sessionId
     const routeVersion = ++this.routeChangeVersion
 
     // 取消所有待执行的 refresh（包括防抖的），避免旧路由的 refresh 在新路由渲染后触发

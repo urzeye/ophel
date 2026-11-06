@@ -2759,7 +2759,11 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
 
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false)
   // 导出的是当前页面之外的对话（站点支持按 ID 走接口）时记录目标；为空表示导出当前页面的对话
-  const [exportTarget, setExportTarget] = useState<{ id: string; title: string } | null>(null)
+  const [exportTarget, setExportTarget] = useState<{
+    id: string
+    title: string
+    sourceId?: string
+  } | null>(null)
 
   const closeExportDialog = useCallback(() => {
     setIsExportDialogOpen(false)
@@ -2787,9 +2791,11 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
       }
 
       // 用户关闭“导出前显示选项弹窗”时，保持按默认格式一键直出
+      const sourceId = outlineManager?.getActiveSourceId() ?? "conversation"
+      const sourceTitle = adapter?.getExportTitle(sourceId)
       if (settings.export?.exportShowDialog === false) {
         const format = settings.export?.defaultExportFormat ?? "markdown"
-        const success = await conversationManager.exportConversation(targetId, format)
+        const success = await conversationManager.exportConversation(targetId, format, { sourceId })
         if (!success) {
           showToast(t("exportFailed"))
         }
@@ -2804,11 +2810,19 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
               title:
                 conversationManager.getConversation(targetId)?.title || t("untitledConversation"),
             }
-          : null,
+          : sourceTitle
+            ? { id: targetId, title: sourceTitle, sourceId }
+            : null,
       )
       setIsExportDialogOpen(true)
     },
-    [conversationManager, settings.export?.exportShowDialog, settings.export?.defaultExportFormat],
+    [
+      adapter,
+      outlineManager,
+      conversationManager,
+      settings.export?.exportShowDialog,
+      settings.export?.defaultExportFormat,
+    ],
   )
 
   const handleFloatingToolbarExport = useCallback(
@@ -2827,13 +2841,16 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
         showToast(t("exportNeedOpenFirst"))
         return false
       }
-      const success = await conversationManager.exportConversation(sessionId, format, options)
+      const success = await conversationManager.exportConversation(sessionId, format, {
+        ...options,
+        sourceId: exportTarget?.sourceId ?? outlineManager?.getActiveSourceId(),
+      })
       if (!success) {
         showToast(t("exportFailed"))
       }
       return success
     },
-    [conversationManager, exportTarget],
+    [conversationManager, exportTarget, outlineManager],
   )
 
   // 对话列表菜单通过事件请求导出（带目标对话 ID），工具箱、大纲按钮不带 ID，

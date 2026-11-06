@@ -1156,11 +1156,16 @@ const validateSiteTraits = (
       "periodicOutlineRefresh",
       "virtualOutlineFill",
       "apiFirstExport",
+      "domSnapshotExport",
     ],
     [],
     mode,
   )
   if (!traits) return
+
+  if (traits.domSnapshotExport !== undefined) {
+    validateBoolean(traits.domSnapshotExport, `${path}.domSnapshotExport`, context, mode)
+  }
 
   if (traits.strictCapabilities !== undefined) {
     validateBoolean(traits.strictCapabilities, `${path}.strictCapabilities`, context, mode)
