@@ -20,7 +20,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
-- **Gemini Deep Research document navigation** — Fixed an issue where Scroll to Top, Scroll to Bottom and anchors acted on the chat instead of the active document.
+- **Gemini Deep Research document navigation** — Fixed an issue where Scroll to Top, Scroll to Bottom and anchors acted on the chat instead of the active document. (#1027)
 
 ---
 
