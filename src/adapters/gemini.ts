@@ -133,6 +133,11 @@ const GEMINI_PANEL_MARKDOWN_ACTIONS_STYLE_ID = "gh-gemini-panel-markdown-actions
 const GEMINI_DEEP_RESEARCH_PANEL_ACTIONS_ATTR = "data-ophel-deep-research-panel-actions"
 const GEMINI_CANVAS_PANEL_ACTIONS_ATTR = "data-ophel-canvas-panel-actions"
 const GEMINI_DOCUMENT_OUTLINE_SOURCE_ID = "document"
+const DEEP_RESEARCH_CONTENT_OBSERVE_INIT: MutationObserverInit = {
+  childList: true,
+  subtree: true,
+  characterData: true,
+}
 
 interface GeminiMyStuffLocator {
   kind: GeminiMyStuffKind
@@ -819,6 +824,9 @@ export class GeminiAdapter extends SiteAdapter {
   private exportOpenedCanvasPanels = new Set<HTMLElement>()
   private outlineWordCountCache = new WeakMap<Element, GeminiOutlineWordCountCacheEntry>()
   private deepResearchDocumentContentIds = new WeakMap<Element, string>()
+  private deepResearchDocumentContentDirtyRoots = new WeakSet<Element>()
+  private observedDeepResearchDocumentRoots: Element[] = []
+  private deepResearchDocumentContentObserver: MutationObserver | null = null
 
   private getUserPathPrefix(): string {
     // Gemini 多账号路径格式：/u/2/app/...
@@ -2583,13 +2591,47 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   private getDeepResearchDocumentContentId(root: Element): string {
+    this.ensureDeepResearchDocumentContentObserved(root)
     const cached = this.deepResearchDocumentContentIds.get(root)
-    if (cached) return cached
+    if (cached && !this.deepResearchDocumentContentDirtyRoots.has(root)) return cached
 
     const content = (root.textContent ?? "").replace(/\s+/g, " ").trim()
     const id = `${GEMINI_DOCUMENT_OUTLINE_SOURCE_ID}:${hashTextForCache(content)}`
     this.deepResearchDocumentContentIds.set(root, id)
+    this.deepResearchDocumentContentDirtyRoots.delete(root)
     return id
+  }
+
+  private ensureDeepResearchDocumentContentObserved(root: Element): void {
+    if (this.observedDeepResearchDocumentRoots.includes(root)) return
+
+    if (!this.deepResearchDocumentContentObserver) {
+      this.deepResearchDocumentContentObserver = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+          const dirtyRoot = this.observedDeepResearchDocumentRoots.find(
+            (candidate) => candidate === mutation.target || candidate.contains(mutation.target),
+          )
+          if (dirtyRoot) this.deepResearchDocumentContentDirtyRoots.add(dirtyRoot)
+        }
+      })
+    }
+
+    const liveRoots = this.observedDeepResearchDocumentRoots.filter(
+      (candidate) => candidate.isConnected,
+    )
+    if (liveRoots.length !== this.observedDeepResearchDocumentRoots.length) {
+      this.deepResearchDocumentContentObserver.disconnect()
+      this.observedDeepResearchDocumentRoots = liveRoots
+      for (const candidate of liveRoots) {
+        this.deepResearchDocumentContentObserver.observe(
+          candidate,
+          DEEP_RESEARCH_CONTENT_OBSERVE_INIT,
+        )
+      }
+    }
+
+    this.observedDeepResearchDocumentRoots.push(root)
+    this.deepResearchDocumentContentObserver.observe(root, DEEP_RESEARCH_CONTENT_OBSERVE_INIT)
   }
 
   getOutlineContentId(sourceId: string): string {
