@@ -725,7 +725,7 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
                       )
                     }
                     label={t(def.label)}
-                    status={isEnabled && !isAvailable ? t("popupUnsupported") : undefined}
+                    status={!isAvailable ? t("popupUnsupported") : undefined}
                     index={index}
                     total={orderList.length}
                     enabled={isEnabled}
