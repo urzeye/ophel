@@ -901,6 +901,8 @@ export const en = {
   outlineLocateCurrent: "Locate current position",
   outlineSearch: "Search...",
   outlineSearchResult: "result(s)",
+  outlineSourceSources: "Sources",
+  outlineSourceStudio: "Studio",
   outlineSourceConversation: "Chat",
   outlineSourceDocument: "Document",
   outlineSourceSwitchLabel: "Outline source",

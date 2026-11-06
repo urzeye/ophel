@@ -241,7 +241,9 @@ export class OutlineManager {
     }
 
     const shouldObserveSources =
-      this.settings.enabled && this.isActive && this.siteAdapter.supportsDynamicOutlineSources()
+      this.settings.enabled &&
+      (this.isActive || this.getNavigationContext() !== null) &&
+      this.siteAdapter.supportsDynamicOutlineSources()
 
     if (shouldObserveSources && !this.sourceObserver) {
       this.startSourceObserver()
@@ -550,7 +552,7 @@ export class OutlineManager {
   getBookmarkSessionId(sourceId = this.activeSourceId): string {
     const sessionId = this.siteAdapter.getSessionId()
     if (sourceId === "conversation") return sessionId
-    return `${sessionId}::${sourceId}`
+    return `${sessionId}::${this.siteAdapter.getOutlineContentId(sourceId)}`
   }
 
   getTree(): OutlineNode[] {
@@ -571,6 +573,10 @@ export class OutlineManager {
 
   getActiveSourceId(): string {
     return this.activeSourceId
+  }
+
+  getNavigationContext() {
+    return this.siteAdapter.getOutlineNavigationContext(this.activeSourceId)
   }
 
   setActiveSource(sourceId: string): void {
@@ -1148,7 +1154,7 @@ export class OutlineManager {
     const showWordCountFlag = showWordCount ? "wc:1" : "wc:0"
     const sessionIdForKey = this.siteAdapter.getSessionId() || "no-session"
     const pathname = typeof window !== "undefined" ? window.location.pathname : ""
-    const sessionScopeKey = `${this.siteAdapter.getSiteId()}:${sessionIdForKey}:${pathname}:${this.activeSourceId}`
+    const sessionScopeKey = `${this.siteAdapter.getSiteId()}:${sessionIdForKey}:${pathname}:${this.siteAdapter.getOutlineContentId(this.activeSourceId)}`
     const mixer = createDjb2Mixer()
     mixer.mix(sessionScopeKey)
     mixer.mix("|")

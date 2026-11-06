@@ -127,6 +127,7 @@
     ],
     "host_permissions": [
       "https://gemini.google.com/*",
+      "https://notebook.google.com/*",
       "https://business.gemini.google/*",
       "https://aistudio.google.com/*",
       "https://*.googleusercontent.com/*",

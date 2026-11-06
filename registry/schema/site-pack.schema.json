@@ -128,6 +128,14 @@
           "type": "boolean",
           "description": "History lazy-loads from the server on upward scroll. Default true (conservative); full-render or client-virtualized sites should set false."
         },
+        "strictCapabilities": {
+          "type": "boolean",
+          "description": "Opt a built-in adapter into capability-based action visibility. SitePacks always enforce capabilities."
+        },
+        "minimalEnhancements": {
+          "type": "boolean",
+          "description": "Only initialize theme and layout host modules; leave outline and prompt interactions to the panel. Default false."
+        },
         "periodicOutlineRefresh": {
           "type": "boolean",
           "description": "Outline needs a periodic refresh fallback (virtualized/lazy-mounted views that do not reliably emit DOM mutations). Default false."

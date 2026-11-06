@@ -866,6 +866,8 @@ export const ja = {
   outlineLocateCurrent: "現在の位置を特定",
   outlineSearch: "目次を検索...",
   outlineSearchResult: " 個の結果",
+  outlineSourceSources: "ソース",
+  outlineSourceStudio: "Studio",
   outlineSourceConversation: "会話",
   outlineSourceDocument: "文書",
   outlineSourceSwitchLabel: "目次のソース",

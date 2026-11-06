@@ -20,6 +20,7 @@ import { GeminiEnterpriseAdapter } from "./gemini-enterprise"
 import { GrokAdapter } from "./grok"
 import { ImaAdapter } from "./ima"
 import { KimiAdapter } from "./kimi"
+import { NotebookAdapter } from "./notebook"
 import { QianwenAdapter } from "./qianwen"
 import { QwenAiAdapter } from "./qwen-studio"
 import { YuanbaoAdapter } from "./yuanbao"
@@ -29,6 +30,7 @@ import { ZaiAdapter } from "./zai"
 export const builtinAdapters: SiteAdapter[] = [
   new GeminiEnterpriseAdapter(),
   new GeminiAdapter(),
+  new NotebookAdapter(),
   new ChatGPTAdapter(),
   new GrokAdapter(),
   new AIStudioAdapter(),

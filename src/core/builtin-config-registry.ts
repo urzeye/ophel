@@ -12,6 +12,7 @@ import {
 } from "~adapters/gemini-enterprise-config"
 import { IMA_CONFIG, IMA_CONFIG_VERSION } from "~adapters/ima-config"
 import { KIMI_CONFIG, KIMI_CONFIG_VERSION } from "~adapters/kimi-config"
+import { NOTEBOOK_CONFIG, NOTEBOOK_CONFIG_VERSION } from "~adapters/notebook-config"
 import { QIANWEN_CONFIG, QIANWEN_CONFIG_VERSION } from "~adapters/qianwen-config"
 import { QWEN_STUDIO_CONFIG, QWEN_STUDIO_CONFIG_VERSION } from "~adapters/qwen-studio-config"
 import { YUANBAO_CONFIG, YUANBAO_CONFIG_VERSION } from "~adapters/yuanbao-config"
@@ -21,6 +22,14 @@ import { SITE_IDS } from "~constants/defaults"
 import type { BuiltinConfigDescriptor, ResolveBuiltinConfig } from "./remote-config-types"
 
 const BUILTIN_CONFIG_DESCRIPTORS = new Map<string, BuiltinConfigDescriptor>([
+  [
+    SITE_IDS.NOTEBOOK,
+    {
+      siteId: SITE_IDS.NOTEBOOK,
+      configVersion: NOTEBOOK_CONFIG_VERSION,
+      baseConfig: NOTEBOOK_CONFIG,
+    },
+  ],
   [
     SITE_IDS.AISTUDIO,
     {

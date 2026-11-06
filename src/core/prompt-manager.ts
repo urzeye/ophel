@@ -454,6 +454,8 @@ export class PromptManager {
   }
 
   async submitPrompt(submitShortcut?: "enter" | "ctrlEnter"): Promise<boolean> {
+    if (!this.adapter.supportsPromptSubmit()) return false
+
     this.syncAiStudioSubmitShortcut(submitShortcut ?? "enter")
     const submitSelectors = this.adapter.getSubmitButtonSelectors()
     const editor = this.adapter.getTextareaElement() || this.adapter.findTextarea()

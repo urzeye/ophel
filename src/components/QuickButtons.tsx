@@ -1,12 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-  useSyncExternalStore,
-} from "react"
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 
 import {
   createFeatureCapabilitiesFromSignature,
@@ -23,11 +15,12 @@ import {
   TOOLS_MENU_IDS,
   TOOLS_MENU_ITEMS,
   getDefaultToolsMenuIds,
-  isBuiltinSiteId,
   type ToolsMenuId,
 } from "~constants"
 import type { ThemeTransitionOrigin } from "~core/theme-manager"
 import { anchorStore, withAnchorOp } from "~stores/anchor-store"
+import type { OutlineManager } from "~core/outline-manager"
+import { useOutlineNavigation } from "~hooks/useOutlineNavigation"
 import { useSettingsStore } from "~stores/settings-store"
 import { loadHistoryUntil } from "~utils/history-loader"
 import { OPHEL_HOVER_WIDTH_RETAIN_LAYER_PROPS } from "~utils/dom-toolkit"
@@ -42,6 +35,7 @@ import {
 import { showToast } from "~utils/toast"
 
 interface QuickButtonsProps {
+  outlineManager?: OutlineManager | null
   /** 当前生效的站点适配器（内置站点停用后可能是接管它的社区 SitePack） */
   adapter?: SiteAdapter | null
   isPanelExpanded: boolean
@@ -119,6 +113,7 @@ const TOOLS_MENU_CAPABILITY_REQUIREMENTS: Partial<Record<ToolsMenuId, SitePackCa
 }
 
 export const QuickButtons: React.FC<QuickButtonsProps> = ({
+  outlineManager,
   adapter,
   isPanelExpanded,
   hasUnseenReleaseNotes = false,
@@ -161,7 +156,6 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   const quickButtonsOpacity = Math.min(Math.max(quickButtonsSettings.opacity ?? 1, 0.4), 1)
   const persistedGroupPosition = quickButtonsSettings.position ?? null
   const proximityRadius = quickButtonsSettings.proximityRadius ?? 150
-  const siteId = adapter?.getSiteId() || "_default"
   const siteInstanceKey = adapter?.getSiteInstanceKey() || "_default"
   const featureCapabilitiesSignature = getFeatureCapabilitiesSignature(
     adapter?.getFeatureCapabilities() ?? [],
@@ -170,7 +164,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     () => createFeatureCapabilitiesFromSignature(featureCapabilitiesSignature),
     [featureCapabilitiesSignature],
   )
-  const enforceFeatureCapabilities = Boolean(adapter && !isBuiltinSiteId(siteId))
+  const enforceFeatureCapabilities = adapter?.getFeatureCapabilityPolicy() === "strict"
   const supportsCapability = useCallback(
     (capability: SitePackCapability) =>
       !enforceFeatureCapabilities || featureCapabilities.has(capability),
@@ -190,10 +184,12 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   )
   const isToolsMenuItemSupported = useCallback(
     (id: ToolsMenuId) => {
+      if (id === TOOLS_MENU_IDS.SCROLL_LOCK && adapter?.getEnhancementMode() === "minimal")
+        return false
       const capability = TOOLS_MENU_CAPABILITY_REQUIREMENTS[id]
       return !capability || supportsCapability(capability)
     },
-    [supportsCapability],
+    [supportsCapability, adapter],
   )
   const siteTheme = getSiteTheme(currentSettings, siteInstanceKey)
   const resolvedThemeMode = themeMode || (siteTheme.mode === "dark" ? "dark" : "light")
@@ -245,7 +241,12 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   const positionPersistTimerRef = useRef<number | null>(null)
 
   // 锚点状态（使用全局存储）
-  const anchorPosition = useSyncExternalStore(anchorStore.subscribe, anchorStore.getSnapshot)
+  const {
+    anchorPosition,
+    isSourceNavigation,
+    canNavigate,
+    navigate: navigateSource,
+  } = useOutlineNavigation(outlineManager)
   const hasAnchor = anchorPosition !== null
   const [anchorTapId, setAnchorTapId] = useState(0)
   // prefers-reduced-motion 下 animation 为 none，不会触发 animationend；用 timeout 充当兜底重置
@@ -622,6 +623,10 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
 
   // 滚动到顶部
   const scrollToTop = useCallback(async () => {
+    if (isSourceNavigation) {
+      await navigateSource("top")
+      return
+    }
     await withAnchorOp(async (signal) => {
       // 遮罩延迟显示
       const OVERLAY_DELAY_MS = 1600
@@ -684,7 +689,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
         }
       }
     })
-  }, [adapter])
+  }, [adapter, isSourceNavigation, navigateSource])
 
   // 停止加载
   const stopLoading = useCallback(() => {
@@ -693,6 +698,10 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
 
   // 滚动到底部
   const scrollToBottom = useCallback(async () => {
+    if (isSourceNavigation) {
+      await navigateSource("bottom")
+      return
+    }
     await withAnchorOp(async () => {
       const { previousScrollTop, container } = await smartScrollToBottom(adapter)
 
@@ -703,10 +712,14 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
         anchorStore.set(previousScrollTop)
       }
     })
-  }, [adapter])
+  }, [adapter, isSourceNavigation, navigateSource])
 
   // 锚点跳转（双向）
   const handleAnchorClick = useCallback(async () => {
+    if (isSourceNavigation) {
+      if (await navigateSource("anchor")) setAnchorTapId((id) => id + 1)
+      return
+    }
     await withAnchorOp(async () => {
       const savedAnchor = anchorStore.get()
       if (savedAnchor === null) return
@@ -724,15 +737,19 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       // 交换位置
       anchorStore.set(currentPos)
     })
-  }, [adapter])
+  }, [adapter, isSourceNavigation, navigateSource])
 
   // 手动锚点：设置
   const setAnchorManually = useCallback(async () => {
+    if (isSourceNavigation) {
+      await navigateSource("save")
+      return
+    }
     await withAnchorOp(async () => {
       const scrollInfo = await getScrollInfo(adapter)
       anchorStore.set(scrollInfo.scrollTop)
     })
-  }, [adapter])
+  }, [adapter, isSourceNavigation, navigateSource])
 
   // 获取主题图标
   const getThemeIcon = () => {
@@ -848,7 +865,9 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
 
     const isAnchorBtn = id === "anchor"
     const isPanelBtn = id === "panel"
-    const anchorDisabled = isAnchorBtn && !hasAnchor
+    const anchorDisabled =
+      (isAnchorBtn && !hasAnchor) ||
+      (["scrollTop", "scrollBottom", "anchor"].includes(id) && !canNavigate)
 
     const tooltipContent = isAnchorBtn
       ? hasAnchor
@@ -917,7 +936,8 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
         <Tooltip content={t("setAnchor")} placement={quickBtnTooltipPlacement}>
           <button
             className="quick-prompt-btn manual-anchor-btn set-btn gh-interactive"
-            onClick={setAnchorManually}>
+            onClick={setAnchorManually}
+            disabled={!canNavigate}>
             {AnchorIcon ? <AnchorIcon size={18} /> : "📍"}
           </button>
         </Tooltip>

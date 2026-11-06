@@ -931,6 +931,8 @@ export const it = {
   outlineLocateCurrent: "Individua la posizione attuale",
   outlineSearch: "Cerca schema...",
   outlineSearchResult: "risultato(i)",
+  outlineSourceSources: "Fonti",
+  outlineSourceStudio: "Studio",
   outlineSourceConversation: "Chatta",
   outlineSourceDocument: "Documento",
   outlineSourceSwitchLabel: "Fonte del contorno",

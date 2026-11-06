@@ -853,6 +853,8 @@ export const pt = {
   outlineLocateCurrent: "Localizar posição atual",
   outlineSearch: "Buscar no índice...",
   outlineSearchResult: " resultado(s)",
+  outlineSourceSources: "Fontes",
+  outlineSourceStudio: "Studio",
   outlineSourceConversation: "Chat",
   outlineSourceDocument: "Documento",
   outlineSourceSwitchLabel: "Fonte do índice",

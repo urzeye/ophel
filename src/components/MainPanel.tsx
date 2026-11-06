@@ -1,12 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-  useSyncExternalStore,
-} from "react"
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 
 import type { SiteAdapter } from "~adapters/base"
 import {
@@ -31,13 +23,14 @@ import {
   ThemeLightIcon,
 } from "~components/icons"
 import { SparkleIcon } from "~components/icons/SparkleIcon"
-import { TAB_DEFINITIONS, TAB_IDS, type TabId, isBuiltinSiteId } from "~constants"
+import { TAB_DEFINITIONS, TAB_IDS, type TabId } from "~constants"
 import { isMacOS } from "~constants/shortcuts"
 import type { ConversationManager } from "~core/conversation-manager"
 import type { OutlineManager } from "~core/outline-manager"
 import type { PromptManager } from "~core/prompt-manager"
 import type { ThemeTransitionOrigin } from "~core/theme-manager"
 import { useDraggable } from "~hooks/useDraggable"
+import { useOutlineNavigation } from "~hooks/useOutlineNavigation"
 import { useSupportedAiPlatforms } from "~hooks/useSupportedAiPlatforms"
 import { useSettingsStore } from "~stores/settings-store"
 import {
@@ -202,7 +195,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     () => createFeatureCapabilitiesFromSignature(featureCapabilitiesSignature),
     [featureCapabilitiesSignature],
   )
-  const enforceFeatureCapabilities = Boolean(adapter && !isBuiltinSiteId(siteId))
+  const enforceFeatureCapabilities = adapter?.getFeatureCapabilityPolicy() === "strict"
   const visibleTabs = useMemo(
     () =>
       tabOrder.filter((tabId) => {
@@ -976,7 +969,12 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   }, [getPanelInteractionRoots, isDrawer, isOpen, onClose])
 
   // === 锚点状态（使用全局存储） ===
-  const anchorPosition = useSyncExternalStore(anchorStore.subscribe, anchorStore.getSnapshot)
+  const {
+    anchorPosition,
+    isSourceNavigation,
+    canNavigate,
+    navigate: navigateSource,
+  } = useOutlineNavigation(outlineManager)
   const hasAnchor = anchorPosition !== null
   // 使用递增 id 而非 boolean，确保快速连续点击时每次都能重播动画
   const [anchorTapId, setAnchorTapId] = useState(0)
@@ -994,6 +992,10 @@ export const MainPanel: React.FC<MainPanelProps> = ({
 
   // 滚动到顶部（自动记录当前位置为锚点，使用 HistoryLoader 加载全部历史）
   const scrollToTop = useCallback(async () => {
+    if (isSourceNavigation) {
+      await navigateSource("top")
+      return
+    }
     await withAnchorOp(async (signal) => {
       // 遮罩延迟显示
       const OVERLAY_DELAY_MS = 1600
@@ -1053,7 +1055,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         }
       }
     })
-  }, [adapter])
+  }, [adapter, isSourceNavigation, navigateSource])
 
   // 停止加载
   const stopLoading = useCallback(() => {
@@ -1062,6 +1064,10 @@ export const MainPanel: React.FC<MainPanelProps> = ({
 
   // 滚动到底部（自动记录当前位置为锚点）
   const scrollToBottom = useCallback(async () => {
+    if (isSourceNavigation) {
+      await navigateSource("bottom")
+      return
+    }
     await withAnchorOp(async () => {
       const { previousScrollTop, container } = await smartScrollToBottom(adapter || null)
       // 已在底部时不覆盖锚点，避免重复点击丢失原位置
@@ -1070,10 +1076,14 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         anchorStore.set(previousScrollTop)
       }
     })
-  }, [adapter])
+  }, [adapter, isSourceNavigation, navigateSource])
 
   // 跳转到锚点（实现位置交换，支持来回跳转）
   const goToAnchor = useCallback(async () => {
+    if (isSourceNavigation) {
+      if (await navigateSource("anchor")) setAnchorTapId((id) => id + 1)
+      return
+    }
     await withAnchorOp(async () => {
       const savedAnchor = anchorStore.get()
       if (savedAnchor === null) return
@@ -1091,13 +1101,17 @@ export const MainPanel: React.FC<MainPanelProps> = ({
       // 交换位置
       anchorStore.set(currentPos)
     })
-  }, [adapter])
+  }, [adapter, isSourceNavigation, navigateSource])
 
   // 记录锚点位置（每次跳转大纲时调用）
   const saveAnchor = useCallback(async () => {
+    if (isSourceNavigation) {
+      await navigateSource("save")
+      return
+    }
     const scrollInfo = await getScrollInfo(adapter || null)
     anchorStore.set(scrollInfo.scrollTop)
-  }, [adapter])
+  }, [adapter, isSourceNavigation, navigateSource])
 
   const flushPendingResizeWidth = useCallback(() => {
     resizeFrameRef.current = null
@@ -1686,6 +1700,9 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                 onJumpBefore={saveAnchor}
                 onJumped={onNavigate}
                 showUserQueryToggle={canShowOutlineUserQueries}
+                allowConversationExport={
+                  !enforceFeatureCapabilities || featureCapabilities.has("export-basic")
+                }
               />
             )}
           </div>
@@ -1701,6 +1718,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             <button
               type="button"
               className="gh-interactive scroll-nav-btn gh-panel-footer-action"
+              disabled={!canNavigate}
               onClick={runPageJump(scrollToTop)}>
               <ScrollTopIcon size={14} />
               <span>{t("scrollTop")}</span>
@@ -1716,7 +1734,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
               type="button"
               className="gh-interactive scroll-nav-btn anchor-btn gh-panel-footer-anchor"
               onClick={runPageJump(goToAnchor)}
-              disabled={!hasAnchor}>
+              disabled={!hasAnchor || !canNavigate}>
               {/* 动画目标：独立于按钮的 inline transform，key 变化强制重新挂载以重播动画 */}
               <span
                 key={anchorTapId}
@@ -1737,6 +1755,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             <button
               type="button"
               className="gh-interactive scroll-nav-btn gh-panel-footer-action"
+              disabled={!canNavigate}
               onClick={runPageJump(scrollToBottom)}>
               <ScrollBottomIcon size={14} />
               <span>{t("scrollBottom")}</span>

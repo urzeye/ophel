@@ -105,6 +105,10 @@ export interface SitePackDocumentOutlineConfig {
  * - 运行时状态查询：`has*` / `is*` 方法（如 hasUnloadedConversationHistory）。
  */
 export interface SiteTraits {
+  /** 内置站点逐步启用严格能力入口过滤；既有站点保留原行为。 */
+  strictCapabilities?: boolean
+  /** 仅创建主题与布局模块；面板负责大纲和输入，不启用其他宿主页增强。 */
+  minimalEnhancements?: boolean
   /** 正文渲染在 Shadow DOM 内，抽取前需等待 Shadow DOM 渲染。缺省 false。 */
   shadowDOM?: boolean
   /**

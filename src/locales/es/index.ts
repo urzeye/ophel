@@ -855,6 +855,8 @@ export const es = {
   outlineLocateCurrent: "Ubicar posición actual",
   outlineSearch: "Buscar en índice...",
   outlineSearchResult: " resultado(s)",
+  outlineSourceSources: "Fuentes",
+  outlineSourceStudio: "Studio",
   outlineSourceConversation: "Chat",
   outlineSourceDocument: "Documento",
   outlineSourceSwitchLabel: "Fuente del índice",

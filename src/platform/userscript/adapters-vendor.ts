@@ -20,6 +20,7 @@ import { GeminiEnterpriseAdapter } from "~adapters/gemini-enterprise"
 import { GrokAdapter } from "~adapters/grok"
 import { ImaAdapter } from "~adapters/ima"
 import { KimiAdapter } from "~adapters/kimi"
+import { NotebookAdapter } from "~adapters/notebook"
 import { QianwenAdapter } from "~adapters/qianwen"
 import { QwenAiAdapter } from "~adapters/qwen-studio"
 import { YuanbaoAdapter } from "~adapters/yuanbao"
@@ -39,6 +40,7 @@ window.__OphelAdaptersVendorMeta = {
 window.__OphelBuiltinAdapters = [
   GeminiEnterpriseAdapter,
   GeminiAdapter,
+  NotebookAdapter,
   ChatGPTAdapter,
   GrokAdapter,
   AIStudioAdapter,

@@ -282,6 +282,12 @@ export class ConversationManager {
   }
 
   async init() {
+    if (
+      this.siteAdapter.getFeatureCapabilityPolicy() === "strict" &&
+      !this.siteAdapter.hasFeatureCapability("conversation-list")
+    )
+      return
+
     // 等待所有 stores hydration 完成
     await this.waitForHydration()
 

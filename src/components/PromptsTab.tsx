@@ -1049,15 +1049,17 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
 }) => {
   const DOUBLE_CLICK_DELAY_MS = 340
   const supportedPlatforms = useSupportedAiPlatforms()
+  const supportsPromptSubmit = adapter?.supportsPromptSubmit() ?? true
 
   const doubleClickToSend = useSettingsStore(
-    (state) => state.settings.features?.prompts?.doubleClickToSend ?? false,
+    (state) =>
+      supportsPromptSubmit && (state.settings.features?.prompts?.doubleClickToSend ?? false),
   )
   const submitShortcut = useSettingsStore(
     (state) => state.settings.features?.prompts?.submitShortcut ?? "enter",
   )
   const promptQueueEnabled = useSettingsStore(
-    (state) => state.settings.features?.prompts?.promptQueue ?? false,
+    (state) => supportsPromptSubmit && (state.settings.features?.prompts?.promptQueue ?? false),
   )
   const quickQuoteEnabled = useSettingsStore(
     (state) => state.settings.features?.prompts?.quickQuoteEnabled ?? true,
@@ -1071,6 +1073,9 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   const [platformFilterOpen, setPlatformFilterOpen] = useState(false)
   const platformFilterButtonRef = useRef<HTMLButtonElement>(null)
   const [activeLibraryView, setActiveLibraryView] = useState<PromptLibraryView>("prompts")
+  useEffect(() => {
+    if (!supportsPromptSubmit) setActiveLibraryView("prompts")
+  }, [supportsPromptSubmit])
   const chains = usePromptChainsStore((state) => state.chains)
   const addChain = usePromptChainsStore((state) => state.addChain)
   const updateChain = usePromptChainsStore((state) => state.updateChain)
@@ -1685,6 +1690,10 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   }
 
   const doSend = async (prompt: Prompt, content: string) => {
+    if (!supportsPromptSubmit) {
+      await doInsert(prompt, content)
+      return
+    }
     const result = await sendOrQueuePrompt({
       adapter,
       manager,
@@ -3074,15 +3083,17 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
               onClick={() => setActiveLibraryView("prompts")}>
               {t("promptsViewPrompts")}
             </button>
-            <button
-              type="button"
-              role="tab"
-              className="gh-prompt-library-switch-btn"
-              data-active={activeLibraryView === "chains"}
-              aria-selected={activeLibraryView === "chains"}
-              onClick={() => setActiveLibraryView("chains")}>
-              {t("promptsViewChains")}
-            </button>
+            {supportsPromptSubmit && (
+              <button
+                type="button"
+                role="tab"
+                className="gh-prompt-library-switch-btn"
+                data-active={activeLibraryView === "chains"}
+                aria-selected={activeLibraryView === "chains"}
+                onClick={() => setActiveLibraryView("chains")}>
+                {t("promptsViewChains")}
+              </button>
+            )}
           </div>
           <div className="gh-panel-search">
             <span className="gh-panel-search-icon" aria-hidden="true">
@@ -3693,26 +3704,30 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
       )}
       {promptActionMenu && (
         <ContextMenu anchorEl={promptActionMenu.anchorEl} onClose={closePromptActionMenu}>
-          <MenuButton
-            onClick={() => {
-              doEnqueuePrompt(promptActionMenu.prompt)
-              closePromptActionMenu()
-            }}>
-            <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <AddToQueueIcon size={14} />
-              <span>{t("promptAddToQueue")}</span>
-            </span>
-          </MenuButton>
-          <MenuButton
-            onClick={() => {
-              doEnqueuePrompt(promptActionMenu.prompt, true)
-              closePromptActionMenu()
-            }}>
-            <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <SplitLinesToQueueIcon size={14} />
-              <span>{t("promptSplitLinesToQueue")}</span>
-            </span>
-          </MenuButton>
+          {supportsPromptSubmit && (
+            <MenuButton
+              onClick={() => {
+                doEnqueuePrompt(promptActionMenu.prompt)
+                closePromptActionMenu()
+              }}>
+              <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <AddToQueueIcon size={14} />
+                <span>{t("promptAddToQueue")}</span>
+              </span>
+            </MenuButton>
+          )}
+          {supportsPromptSubmit && (
+            <MenuButton
+              onClick={() => {
+                doEnqueuePrompt(promptActionMenu.prompt, true)
+                closePromptActionMenu()
+              }}>
+              <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <SplitLinesToQueueIcon size={14} />
+                <span>{t("promptSplitLinesToQueue")}</span>
+              </span>
+            </MenuButton>
+          )}
           {promptMoveTargets.previous && (
             <MenuButton
               onClick={() => {

@@ -843,6 +843,8 @@ export const ko = {
   outlineLocateCurrent: "현재 위치 찾기",
   outlineSearch: "개요 검색...",
   outlineSearchResult: "개의 결과",
+  outlineSourceSources: "소스",
+  outlineSourceStudio: "스튜디오",
   outlineSourceConversation: "대화",
   outlineSourceDocument: "문서",
   outlineSourceSwitchLabel: "개요 출처",

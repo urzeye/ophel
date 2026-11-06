@@ -36,6 +36,13 @@ export function createFeatureCapabilitiesFromSignature(signature: string): Set<S
  * 每个站点必须显式列出能力，不能从“全能力”默认值派生，避免新增能力时被静默开放。
  */
 export const BUILTIN_FEATURE_CAPABILITIES = {
+  [SITE_IDS.NOTEBOOK]: [
+    "outline",
+    "outline-user-queries",
+    "document-outline",
+    "panel-avoidance",
+    "prompt-insert",
+  ],
   [SITE_IDS.AISTUDIO]: [
     "outline",
     "outline-user-queries",

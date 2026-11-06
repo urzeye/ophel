@@ -468,7 +468,9 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
   }, [adapter])
 
   const queueDispatcher = useMemo(() => {
-    return adapter && promptManager ? new QueueDispatcher(adapter, promptManager) : null
+    return adapter?.supportsPromptSubmit() && promptManager
+      ? new QueueDispatcher(adapter, promptManager)
+      : null
   }, [adapter, promptManager])
 
   // QueueDispatcher lifecycle
@@ -3542,6 +3544,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
       />
 
       <QuickButtons
+        outlineManager={outlineManager}
         adapter={adapter}
         isPanelExpanded={isPanelShown}
         hasUnseenReleaseNotes={

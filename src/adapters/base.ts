@@ -5,6 +5,7 @@
  */
 
 import type { MarkdownFixerConfig } from "~core/markdown-fixer"
+import { isBuiltinSiteId } from "~constants/defaults"
 import { extractConversationTitleFromDocumentTitle } from "~utils/conversation-title"
 import { DOMToolkit } from "~utils/dom-toolkit"
 import { createExportAssetCollector, type ExportAssetCollector } from "~utils/export-assets"
@@ -35,6 +36,11 @@ export interface OutlineItem {
 }
 
 export type OutlineSourceKind = "conversation" | "document"
+
+export interface OutlineNavigationContext {
+  key: string
+  container: HTMLElement | null
+}
 
 export interface OutlineSource {
   id: string
@@ -482,6 +488,15 @@ export abstract class SiteAdapter {
    */
   abstract insertPrompt(content: string): boolean | Promise<boolean>
 
+  /** 只插入模式不暴露自动发送、链式发送或队列入口。 */
+  supportsPromptSubmit(): boolean {
+    return true
+  }
+
+  getEnhancementMode(): "full" | "minimal" {
+    return this.getSiteTraits().minimalEnhancements ? "minimal" : "full"
+  }
+
   /**
    * 站点特定公式源码提取扩展点。
    * 未适配站点返回 null，CopyManager 会继续使用通用 DOM/KaTeX 兜底。
@@ -861,6 +876,12 @@ export abstract class SiteAdapter {
 
   hasFeatureCapability(capability: SitePackCapability): boolean {
     return this.getFeatureCapabilities().has(capability)
+  }
+
+  getFeatureCapabilityPolicy(): "strict" | "legacy" {
+    return !isBuiltinSiteId(this.getSiteId()) || this.getSiteTraits().strictCapabilities
+      ? "strict"
+      : "legacy"
   }
 
   // ==================== 页面宽度控制 ====================
@@ -1617,6 +1638,15 @@ export abstract class SiteAdapter {
 
   getOutlineScrollContainer(_sourceId = "conversation"): HTMLElement | null {
     return this.getScrollContainer()
+  }
+
+  /** 返回当前文档的导航上下文；null 保持既有对话历史导航。 */
+  getOutlineNavigationContext(_sourceId = "conversation"): OutlineNavigationContext | null {
+    return null
+  }
+
+  getOutlineContentId(sourceId: string): string {
+    return sourceId
   }
 
   scrollToOutlineSourceTarget(element: HTMLElement, sourceId = "conversation"): void {

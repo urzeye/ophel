@@ -845,6 +845,8 @@ export const zhCN = {
   outlineLocateCurrent: "定位到当前位置",
   outlineSearch: "搜索大纲...",
   outlineSearchResult: "个结果",
+  outlineSourceSources: "来源",
+  outlineSourceStudio: "工作台",
   outlineSourceConversation: "对话",
   outlineSourceDocument: "文档",
   outlineSourceSwitchLabel: "大纲来源",
