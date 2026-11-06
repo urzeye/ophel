@@ -30,6 +30,7 @@
     <a href="https://claude.ai"><img src="https://cdn.jsdelivr.net/gh/urzeye/ophel@main/docs/media/badges/sites/claude.svg" alt="Claude"/></a>
     <a href="https://aistudio.google.com"><img src="https://cdn.jsdelivr.net/gh/urzeye/ophel@main/docs/media/badges/sites/aistudio.svg" alt="AI Studio"/></a>
     <a href="https://business.gemini.google/"><img src="https://cdn.jsdelivr.net/gh/urzeye/ophel@main/docs/media/badges/sites/gemini-enterprise.svg" alt="Gemini Enterprise"/></a>
+    <a href="https://notebook.google.com/"><img src="https://cdn.jsdelivr.net/gh/urzeye/ophel@main/docs/media/badges/sites/notebook.svg" alt="Gemini Notebook"/></a>
     <a href="https://grok.com"><img src="https://cdn.jsdelivr.net/gh/urzeye/ophel@main/docs/media/badges/sites/grok.svg" alt="Grok"/></a>
     <br/>
     <a href="https://www.doubao.com"><img src="https://cdn.jsdelivr.net/gh/urzeye/ophel@main/docs/media/badges/sites/doubao.svg" alt="Doubao"/></a>
