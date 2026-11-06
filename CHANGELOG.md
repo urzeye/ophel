@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### 🚀 New Features
+
+- **Gemini Notebook** — Added outline navigation, theme switching, Smart Avoidance, prompt insertion, and export of the selected column.
+
 ### ✨ Improvements
 
 - **Theme switching animation** — Switching from dark to light mode now shrinks the dark view into the clicked spot, while switching from light to dark still expands outward. (#1024)

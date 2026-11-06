@@ -2729,7 +2729,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
     if (!isSettingsHydrated || !outlineManager || !adapter || !hasSettings) return
 
     const mode = inlineBookmarkMode || "always"
-    if (!outlineEnabled || mode === "hidden") {
+    if (!outlineEnabled || mode === "hidden" || !adapter.supportsOutlineBookmarks()) {
       InlineBookmarkManager.cleanupInjectedArtifacts()
       return
     }
@@ -2792,6 +2792,10 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
 
       // 用户关闭“导出前显示选项弹窗”时，保持按默认格式一键直出
       const sourceId = outlineManager?.getActiveSourceId() ?? "conversation"
+      if (route !== "api" && adapter?.hasExportContent(sourceId) === false) {
+        showToast(t("exportNoContent"))
+        return
+      }
       const sourceTitle = adapter?.getExportTitle(sourceId)
       if (settings.export?.exportShowDialog === false) {
         const format = settings.export?.defaultExportFormat ?? "markdown"
@@ -2841,16 +2845,24 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
         showToast(t("exportNeedOpenFirst"))
         return false
       }
+      const sourceId = exportTarget?.sourceId ?? outlineManager?.getActiveSourceId()
+      if (
+        conversationManager.getConversationExportRoute(sessionId) !== "api" &&
+        adapter?.hasExportContent(sourceId) === false
+      ) {
+        showToast(t("exportNoContent"))
+        return false
+      }
       const success = await conversationManager.exportConversation(sessionId, format, {
         ...options,
-        sourceId: exportTarget?.sourceId ?? outlineManager?.getActiveSourceId(),
+        sourceId,
       })
       if (!success) {
         showToast(t("exportFailed"))
       }
       return success
     },
-    [conversationManager, exportTarget, outlineManager],
+    [adapter, conversationManager, exportTarget, outlineManager],
   )
 
   // 对话列表菜单通过事件请求导出（带目标对话 ID），工具箱、大纲按钮不带 ID，

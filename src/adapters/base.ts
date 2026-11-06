@@ -1541,6 +1541,10 @@ export abstract class SiteAdapter {
     return this.extractOutline(6, true, false).filter((item) => item.element?.isConnected)
   }
 
+  supportsOutlineBookmarks(): boolean {
+    return true
+  }
+
   /**
    * 根据标题级别和文本查找元素（支持 Shadow DOM 穿透）
    * 用于大纲跳转时元素失效后的重新查找
@@ -1665,6 +1669,11 @@ export abstract class SiteAdapter {
 
   getExportTitle(_sourceId = "conversation"): string | null {
     return null
+  }
+
+  /** 当前栏目导出前的内容检查；默认沿用各站点已有的导出流程。 */
+  hasExportContent(_sourceId = "conversation"): boolean {
+    return true
   }
 
   /**

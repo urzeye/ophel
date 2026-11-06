@@ -1041,7 +1041,7 @@ export const ru = {
   exportFailed: "Ошибка",
   exportMayBeIncomplete:
     "Экспорт может быть неполным: часть содержимого не была полностью загружена. Проверьте результат.",
-  exportNoContent: "Пусто",
+  exportNoContent: "Нет содержимого для экспорта",
   copySuccess: "Копировано",
   copyFailed: "Ошибка коп.",
   exportNeedOpenFirst: "Сначала откройте чат",

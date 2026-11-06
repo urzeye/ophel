@@ -75,10 +75,7 @@ import {
 import { platform, type SitePackRuntimeStatus } from "~platform"
 import { moveQuickAccessItem, orderByQuickAccessOrder } from "~core/quick-access-sites"
 import { useSettingsStore } from "~stores/settings-store"
-import {
-  getBuiltinSiteEntryUrls,
-  orderBuiltinSitesByCurrentUrl,
-} from "~tabs/options/builtin-sites-list"
+import { getBuiltinSiteEntryUrls } from "~tabs/options/builtin-sites-list"
 import { PageTitle, TabGroup } from "~tabs/options/components"
 import { formatDateTime } from "~utils/format"
 import { getCurrentLang, getCurrentLocale, subscribeI18nChanges, t } from "~utils/i18n"
@@ -1586,12 +1583,12 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
   }
 
   const pageUrl = typeof window === "undefined" ? "" : window.location.href
-  // 用户自定义过快速访问排序后按自定义顺序渲染，当前站点只保留徽标不再置顶，
-  // 避免覆盖用户意图；未自定义时保持默认目录顺序并把当前站点提到第一项
-  const builtinSites =
-    quickAccessOrder.length > 0
-      ? orderByQuickAccessOrder(SUPPORTED_AI_PLATFORMS, quickAccessOrder, (site) => site.id)
-      : orderBuiltinSitesByCurrentUrl(SUPPORTED_AI_PLATFORMS, pageUrl)
+  // 默认遵循目录顺序，拖拽后沿用用户排序；当前站点只显示徽标。
+  const builtinSites = orderByQuickAccessOrder(
+    SUPPORTED_AI_PLATFORMS,
+    quickAccessOrder,
+    (site) => site.id,
+  )
 
   // 列表是纵向布局，按指针位于目标行上/下半区判断插入位置
   const getBuiltinDropPosition = (e: React.DragEvent): "before" | "after" => {

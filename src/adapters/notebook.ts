@@ -1,5 +1,5 @@
 import { SITE_IDS } from "~constants/defaults"
-import { scrollElementInContainer } from "~core/outline/dom-outline"
+import { findScrollableAncestor, scrollElementInContainer } from "~core/outline/dom-outline"
 import { notebookNativeThemeCss } from "~styles/native-theme-adapters/notebook"
 import { t } from "~utils/i18n"
 import { hashTextForCache } from "~utils/text-hash"
@@ -82,6 +82,10 @@ export class NotebookAdapter extends SiteAdapter {
     return false
   }
 
+  supportsOutlineBookmarks(): boolean {
+    return false
+  }
+
   getTextareaSelectors(): string[] {
     return [...(this.config.selectors.textarea ?? [])]
   }
@@ -146,7 +150,7 @@ export class NotebookAdapter extends SiteAdapter {
   getOutlineContentId(sourceId: string): string {
     if (sourceId === "conversation") return sourceId
     const root = this.getOutlineRoot(sourceId)
-    // 保存的 DOM 没有来源/作品 ID，使用正文指纹，避免重名文档共享书签。
+    // 正文指纹用于区分来源和工作台中的不同文档。
     return root ? `${sourceId}:${hashTextForCache(normalizeText(root))}` : `${sourceId}:closed`
   }
 
@@ -235,8 +239,18 @@ export class NotebookAdapter extends SiteAdapter {
     if (sourceId === "conversation") return this.getScrollContainer()
     if (sourceId === "source")
       return document.querySelector(this.config.sitePrivateSelectors.sourceScroll)
-    if (sourceId === "studio")
-      return document.querySelector(this.config.sitePrivateSelectors.studioScroll)
+    if (sourceId === "studio") {
+      const root = this.getOutlineRoot(sourceId)
+      if (!root) return null
+      // 文件预览与报告的滚动层级不同，从正文定位并限定在工作台栏内。
+      const content =
+        root.querySelector(`${this.config.sitePrivateSelectors.headings}, p, pre, table`) ??
+        root.firstElementChild
+      const container = findScrollableAncestor(content)
+      return container && root.closest("section.studio-panel")?.contains(container)
+        ? container
+        : root
+    }
     return null
   }
 
@@ -301,6 +315,10 @@ export class NotebookAdapter extends SiteAdapter {
         return content.trim() ? [{ role: isUser ? "user" : "assistant", content }] : []
       },
     )
+  }
+
+  hasExportContent(sourceId = "conversation"): boolean {
+    return this.collectExportMessages(sourceId).length > 0
   }
 
   async prepareConversationExport(context: ExportLifecycleContext): Promise<ExportMessage[]> {

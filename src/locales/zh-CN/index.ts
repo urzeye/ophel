@@ -1091,7 +1091,7 @@ export const zhCN = {
   exportSuccess: "导出成功",
   exportFailed: "导出失败",
   exportMayBeIncomplete: "导出可能不完整：部分内容未加载完全，请核对结果",
-  exportNoContent: "未找到对话内容",
+  exportNoContent: "暂无可导出的内容",
   copySuccess: "已复制到剪贴板",
   copyFailed: "复制失败",
   exportUserLabel: "用户",

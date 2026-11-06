@@ -1700,6 +1700,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                 onJumpBefore={saveAnchor}
                 onJumped={onNavigate}
                 showUserQueryToggle={canShowOutlineUserQueries}
+                allowBookmarks={adapter?.supportsOutlineBookmarks() ?? true}
                 allowConversationExport={
                   !enforceFeatureCapabilities || featureCapabilities.has("export-basic")
                 }

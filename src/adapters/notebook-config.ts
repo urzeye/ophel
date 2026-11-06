@@ -9,7 +9,6 @@ export interface NotebookSiteConfig extends BuiltinSiteConfig {
     sourceRoot: string
     sourceScroll: string
     studioRoot: string
-    studioScroll: string
     headings: string
     sourceTitle: string
     studioTitle: string
@@ -32,7 +31,7 @@ export const NOTEBOOK_CONFIG: NotebookSiteConfig = {
     responseContainer: "chat-panel .chat-panel-content",
     scrollContainer: ["chat-panel .chat-panel-content"],
     userQuery: "chat-message .from-user-message-inner-content",
-    assistantResponse: "chat-message .to-user-message-inner-content labs-tailwind-doc-viewer",
+    assistantResponse: "chat-message .to-user-message-inner-content",
     chatContent: ["chat-message"],
   },
   input: { mode: "textarea", submitKey: "Enter" },
@@ -64,10 +63,9 @@ export const NOTEBOOK_CONFIG: NotebookSiteConfig = {
   },
   sitePrivateSelectors: {
     workspace: "notebook > .panel-container",
-    sourceRoot: "section.source-panel source-viewer .elements-container labs-tailwind-doc-viewer",
+    sourceRoot: "section.source-panel source-viewer .elements-container",
     sourceScroll: "section.source-panel source-viewer .scroll-area",
-    studioRoot: "section.studio-panel artifact-viewer labs-tailwind-doc-viewer",
-    studioScroll: "section.studio-panel artifact-viewer .artifact-content-scrollable",
+    studioRoot: "section.studio-panel artifact-viewer .artifact-content",
     headings: 'h1, h2, h3, h4, h5, h6, [role="heading"][aria-level]',
     sourceTitle: "section.source-panel .source-title",
     studioTitle: "section.studio-panel input.artifact-title",

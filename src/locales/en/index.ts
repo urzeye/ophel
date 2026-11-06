@@ -1111,7 +1111,7 @@ export const en = {
   exportFailed: "Export failed",
   exportMayBeIncomplete:
     "Export may be incomplete: some content was not fully loaded. Please review the result.",
-  exportNoContent: "No content found",
+  exportNoContent: "No content to export",
   copySuccess: "Copied to clipboard",
   copyFailed: "Copy failed",
   exportNeedOpenFirst: "Please open the chat first",

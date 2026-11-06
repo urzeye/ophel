@@ -636,6 +636,7 @@ export class OutlineManager {
 
   // 收藏模式
   setBookmarkMode(enabled: boolean) {
+    if (enabled && !this.siteAdapter.supportsOutlineBookmarks()) return
     if (enabled && !this.bookmarkMode) {
       // 开启收藏模式：保存当前折叠状态
       this.preBookmarkModeState = this.saveTreeCollapsedState(this.tree)
@@ -861,6 +862,7 @@ export class OutlineManager {
 
   // Helper public method for UI
   toggleBookmark(node: OutlineNode) {
+    if (!this.siteAdapter.supportsOutlineBookmarks()) return
     const sessionId = this.getBookmarkSessionId()
     const siteId = this.siteAdapter.getSiteId() // 站点标识
     const cid = this.siteAdapter.getCurrentCid() || "" // 账号 ID
@@ -1011,7 +1013,9 @@ export class OutlineManager {
         )
     // --- Merge Bookmarks ---
     const sessionId = this.getBookmarkSessionId()
-    const bookmarks = useBookmarkStore.getState().getBookmarksBySession(sessionId)
+    const bookmarks = this.siteAdapter.supportsOutlineBookmarks()
+      ? useBookmarkStore.getState().getBookmarksBySession(sessionId)
+      : []
     this.ghostBookmarkIds = new Set()
 
     if (!suppressConversationOutline && bookmarks.length > 0) {

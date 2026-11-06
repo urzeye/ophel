@@ -50,6 +50,7 @@ interface OutlineTabProps {
   onJumped?: () => void
   showUserQueryToggle?: boolean
   allowConversationExport?: boolean
+  allowBookmarks?: boolean
 }
 
 const countOutlineNodes = (nodes: OutlineNode[]): number => {
@@ -613,6 +614,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
   onJumped,
   showUserQueryToggle = true,
   allowConversationExport = true,
+  allowBookmarks = true,
 }) => {
   // 获取设置 - 使用 Zustand Store
   const { settings } = useSettingsStore()
@@ -1924,16 +1926,18 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
             )}
 
             {/* Bookmark Mode Toggle */}
-            <Tooltip content={t("bookmarkMode")}>
-              <button
-                type="button"
-                onClick={handleToggleBookmarkMode}
-                aria-label={t("bookmarkMode")}
-                aria-pressed={bookmarkMode}
-                className={`outline-toolbar-btn ${bookmarkMode ? "active-subtle" : ""}`}>
-                <StarIcon size={16} filled={bookmarkMode} color="currentColor" />
-              </button>
-            </Tooltip>
+            {allowBookmarks && (
+              <Tooltip content={t("bookmarkMode")}>
+                <button
+                  type="button"
+                  onClick={handleToggleBookmarkMode}
+                  aria-label={t("bookmarkMode")}
+                  aria-pressed={bookmarkMode}
+                  className={`outline-toolbar-btn ${bookmarkMode ? "active-subtle" : ""}`}>
+                  <StarIcon size={16} filled={bookmarkMode} color="currentColor" />
+                </button>
+              </Tooltip>
+            )}
 
             {/* Expand/Collapse */}
             <Tooltip
@@ -2181,7 +2185,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
       {/* 大纲树 */}
       <div
         ref={listRef}
-        className={`gh-outline-tree-container gh-panel-bookmark-mode-${settings?.features?.outline?.panelBookmarkMode || "always"}`}
+        className={`gh-outline-tree-container gh-panel-bookmark-mode-${allowBookmarks ? settings?.features?.outline?.panelBookmarkMode || "always" : "hidden"}`}
         style={{
           flex: 1,
           overflowY: "auto",

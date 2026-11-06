@@ -1158,7 +1158,7 @@ export const it = {
   exportFailed: "Esportazione non riuscita",
   exportMayBeIncomplete:
     "L'esportazione potrebbe essere incompleta: alcuni contenuti non sono stati caricati completamente. Controlla il risultato.",
-  exportNoContent: "Nessun contenuto trovato",
+  exportNoContent: "Nessun contenuto da esportare",
   copySuccess: "Copiato negli appunti",
   copyFailed: "Copia non riuscita",
   exportNeedOpenFirst: "Per favore apri prima la conversazione",

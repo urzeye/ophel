@@ -1070,7 +1070,7 @@ export const ja = {
   exportFailed: "出力失敗",
   exportMayBeIncomplete:
     "エクスポートが不完全な可能性があります：一部のコンテンツが完全に読み込まれませんでした。結果を確認してください。",
-  exportNoContent: "内容が見つかりません",
+  exportNoContent: "エクスポートできる内容がありません",
   copySuccess: "コピーしました",
   copyFailed: "コピー失敗",
   exportNeedOpenFirst: "まず会話を開いてください",

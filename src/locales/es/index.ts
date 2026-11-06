@@ -1045,7 +1045,7 @@ export const es = {
   exportFailed: "Fallo",
   exportMayBeIncomplete:
     "La exportación puede estar incompleta: parte del contenido no se cargó por completo. Revisa el resultado.",
-  exportNoContent: "Vacío",
+  exportNoContent: "No hay contenido para exportar",
   copySuccess: "Copiado",
   copyFailed: "Fallo copia",
   exportNeedOpenFirst: "Abre primero el chat",
