@@ -886,6 +886,15 @@ export abstract class SiteAdapter {
       : "legacy"
   }
 
+  /**
+   * 快捷键是否按能力表过滤。仅显式开启 strictCapabilities 的内置站点启用；
+   * 社区 SitePack 的面板入口已按能力过滤，但快捷键维持既有全量注册行为，
+   * 避免能力声明不全的包静默丢失可用快捷键。
+   */
+  enforcesCapabilityShortcuts(): boolean {
+    return isBuiltinSiteId(this.getSiteId()) && this.getSiteTraits().strictCapabilities === true
+  }
+
   // ==================== 页面宽度控制 ====================
 
   /** 返回需要加宽的 CSS 选择器列表 */

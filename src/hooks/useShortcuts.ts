@@ -857,7 +857,7 @@ export function useShortcuts({
       [SHORTCUT_ACTIONS.TOGGLE_PROMPT_QUEUE]: togglePromptQueue,
     }
 
-    if (adapter?.getFeatureCapabilityPolicy() === "strict") {
+    if (adapter?.enforcesCapabilityShortcuts()) {
       const requirements: Partial<Record<ShortcutActionId, SitePackCapability>> = {
         [SHORTCUT_ACTIONS.NEW_CONVERSATION]: "new-chat",
         [SHORTCUT_ACTIONS.REFRESH_CONVERSATIONS]: "conversation-list",
