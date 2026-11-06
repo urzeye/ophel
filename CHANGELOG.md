@@ -11,7 +11,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🚀 New Features
 
-- **Gemini Notebook** — Added outline navigation, theme switching, Smart Avoidance, prompt insertion, and export of the selected column.
+- **Gemini Notebook** — Added outline navigation, theme switching, Smart Avoidance, prompt insertion, and export of the selected column. (#1025)
 
 ### ✨ Improvements
 
