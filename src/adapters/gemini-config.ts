@@ -173,7 +173,7 @@ export interface GeminiSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时递增（相对上一 release 版本 +1），使旧缓存 patch 自动失效。一次发版周期内无需重复递增。 */
-export const GEMINI_CONFIG_VERSION = 8
+export const GEMINI_CONFIG_VERSION = 9
 
 const createGeminiConfig = (): GeminiSiteConfig => {
   const userQuery = "user-query"
@@ -189,7 +189,7 @@ const createGeminiConfig = (): GeminiSiteConfig => {
   const canvasCard = 'gem-processing-card, [data-test-id="gem-processing-card"]'
   const canvasEntryChip = "immersive-entry-chip"
   const deepResearchPanel =
-    "deep-research-immersive-panel, immersive-panel deep-research-immersive-panel"
+    ":is(deep-research-immersive-panel, immersive-panel deep-research-immersive-panel)"
   const canvasInlinePreview = "inline-preview, .inline-preview-container"
   const canvasSidePanel =
     "immersive-panel code-immersive-panel, code-immersive-panel, immersive-panel extended-response-panel:has(.code-editor), immersive-panel extended-response-panel:has(canvas-create-button)"

@@ -17,6 +17,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 - **Theme switching animation** — Switching from dark to light mode now shrinks the dark view into the clicked spot, while switching from light to dark still expands outward. (#1024)
 - **Sites without chat management** — The Chats tab is now hidden on unsupported sites, while the global switch remains available and is marked as unsupported on the current site. (#1026)
+- **Gemini Deep Research document navigation** — Scroll to Top, Scroll to Bottom and anchors now target the active document instead of the chat. (#1027)
 
 ---
 
