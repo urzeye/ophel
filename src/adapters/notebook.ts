@@ -24,11 +24,21 @@ import { notebookBodyToMarkdown } from "./notebook-export"
 const normalizeText = (element: Element): string =>
   (element.textContent ?? "").replace(/\s+/g, " ").trim()
 
+const CONTENT_OBSERVE_INIT: MutationObserverInit = {
+  childList: true,
+  subtree: true,
+  characterData: true,
+}
+
 export class NotebookAdapter extends SiteAdapter {
   protected config: NotebookSiteConfig = NOTEBOOK_CONFIG
   private rootIds = new WeakMap<Element, number>()
   private nextRootId = 0
   private exportSnapshots = new WeakMap<ExportLifecycleContext, ExportMessage[]>()
+  private contentIdCache = new WeakMap<Element, string>()
+  private contentDirtyRoots = new WeakSet<Element>()
+  private observedContentRoots: Element[] = []
+  private contentObserver: MutationObserver | null = null
 
   match(): boolean {
     return location.hostname === "notebook.google.com"
@@ -151,7 +161,41 @@ export class NotebookAdapter extends SiteAdapter {
     if (sourceId === "conversation") return sourceId
     const root = this.getOutlineRoot(sourceId)
     // 正文指纹用于区分来源和工作台中的不同文档。
-    return root ? `${sourceId}:${hashTextForCache(normalizeText(root))}` : `${sourceId}:closed`
+    if (!root) return `${sourceId}:closed`
+    // 大文档全文本哈希开销高，而签名/导航键会被频繁读取：
+    // 用 MutationObserver 做脏标记，内容未变时直接复用缓存指纹。
+    this.ensureContentObserved(root)
+    const cached = this.contentIdCache.get(root)
+    if (cached !== undefined && !this.contentDirtyRoots.has(root)) return cached
+    const id = `${sourceId}:${hashTextForCache(normalizeText(root))}`
+    this.contentIdCache.set(root, id)
+    this.contentDirtyRoots.delete(root)
+    return id
+  }
+
+  private ensureContentObserved(root: Element): void {
+    if (this.observedContentRoots.includes(root)) return
+    if (!this.contentObserver) {
+      this.contentObserver = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+          const dirtyRoot = this.observedContentRoots.find(
+            (candidate) => candidate === mutation.target || candidate.contains(mutation.target),
+          )
+          if (dirtyRoot) this.contentDirtyRoots.add(dirtyRoot)
+        }
+      })
+    }
+    // 修剪已脱离文档的根并重建观察，避免观察者长期持有游离子树
+    const liveRoots = this.observedContentRoots.filter((candidate) => candidate.isConnected)
+    if (liveRoots.length !== this.observedContentRoots.length) {
+      this.contentObserver.disconnect()
+      this.observedContentRoots = liveRoots
+      for (const candidate of liveRoots) {
+        this.contentObserver.observe(candidate, CONTENT_OBSERVE_INIT)
+      }
+    }
+    this.observedContentRoots.push(root)
+    this.contentObserver.observe(root, CONTENT_OBSERVE_INIT)
   }
 
   getOutlineSourcesSignature(): string {
