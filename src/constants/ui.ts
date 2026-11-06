@@ -3,6 +3,7 @@
  */
 import type React from "react"
 
+import type { SitePackCapability } from "~adapters/feature-capabilities"
 import {
   AnchorIcon,
   ConversationIcon,
@@ -29,6 +30,13 @@ export const TAB_IDS = {
 } as const
 
 export type TabId = (typeof TAB_IDS)[keyof typeof TAB_IDS]
+
+/** 面板 Tab 与站点功能能力的唯一映射，面板与设置页共用。 */
+export const PANEL_TAB_CAPABILITY_REQUIREMENTS: Record<TabId, SitePackCapability> = {
+  [TAB_IDS.PROMPTS]: "prompt-insert",
+  [TAB_IDS.CONVERSATIONS]: "conversation-list",
+  [TAB_IDS.OUTLINE]: "outline",
+}
 
 // ==================== 输入方式与窄屏 ====================
 // 触屏为主要输入：没有悬停、指针粗。悬停展开、拖拽吸附等鼠标交互在这里要换成点按

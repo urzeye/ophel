@@ -3624,8 +3624,23 @@ html[data-theme="dark"] .platform-icon-dark-invert {
 
 .settings-sortable-item-label {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 14px;
   color: var(--gh-text, #374151);
+}
+
+.settings-sortable-item-status {
+  flex-shrink: 0;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--gh-text-secondary, #6b7280) 10%, transparent);
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.45;
 }
 
 .settings-sortable-item-actions {

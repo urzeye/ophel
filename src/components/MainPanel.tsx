@@ -4,7 +4,6 @@ import type { SiteAdapter } from "~adapters/base"
 import {
   createFeatureCapabilitiesFromSignature,
   getFeatureCapabilitiesSignature,
-  type SitePackCapability,
 } from "~adapters/feature-capabilities"
 import {
   AnchorIcon,
@@ -23,7 +22,7 @@ import {
   ThemeLightIcon,
 } from "~components/icons"
 import { SparkleIcon } from "~components/icons/SparkleIcon"
-import { TAB_DEFINITIONS, TAB_IDS, type TabId } from "~constants"
+import { PANEL_TAB_CAPABILITY_REQUIREMENTS, TAB_DEFINITIONS, TAB_IDS, type TabId } from "~constants"
 import { isMacOS } from "~constants/shortcuts"
 import type { ConversationManager } from "~core/conversation-manager"
 import type { OutlineManager } from "~core/outline-manager"
@@ -137,12 +136,6 @@ const HOVER_WIDTH_RELEASE_DELAY_MS = 160
 const HEADER_PRESS_HINT_DELAY_MS = 450
 const HEADER_PRESS_HINT_MOVE_TOLERANCE = 6
 
-const PANEL_TAB_CAPABILITIES: Partial<Record<string, SitePackCapability>> = {
-  [TAB_IDS.PROMPTS]: "prompt-insert",
-  [TAB_IDS.CONVERSATIONS]: "conversation-list",
-  [TAB_IDS.OUTLINE]: "outline",
-}
-
 const clampPanelWidth = (value: number) =>
   Math.min(PANEL_MAX_WIDTH, Math.max(PANEL_MIN_WIDTH, Math.round(value)))
 
@@ -215,7 +208,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
           return false
         }
 
-        const requiredCapability = PANEL_TAB_CAPABILITIES[tabId]
+        const requiredCapability = PANEL_TAB_CAPABILITY_REQUIREMENTS[tabId as TabId]
         return (
           !enforceFeatureCapabilities ||
           !requiredCapability ||

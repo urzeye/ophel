@@ -362,6 +362,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         return (
           <GeneralPage
             siteId={siteId}
+            currentSiteCapabilities={adapter.getFeatureCapabilities()}
             initialTab={initialSubTab}
             locateSettingId={locateRequest?.settingId}
             onPanelHoverWidthPreviewChange={onPanelHoverWidthPreviewChange}
@@ -392,6 +393,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         return (
           <GeneralPage
             siteId={siteId}
+            currentSiteCapabilities={adapter.getFeatureCapabilities()}
             initialTab={initialSubTab}
             onPanelHoverWidthPreviewChange={onPanelHoverWidthPreviewChange}
           />

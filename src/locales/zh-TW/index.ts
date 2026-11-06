@@ -755,7 +755,7 @@ export const zhTW = {
   outlineLevelHint: "級標題",
   // Tab 順序設置
   tabOrderSettings: "面板標籤",
-  tabOrderDesc: "拖動手柄調整面板標籤的順序，用開關顯示或隱藏標籤",
+  tabOrderDesc: "拖動排序。開關控制面板標籤；站點不支援的功能會自動隱藏",
   tabOrderAtLeastOne: "至少保留一個面板標籤",
   moveUp: "上移",
   moveDown: "下移",
@@ -923,9 +923,6 @@ export const zhTW = {
   conversationsSyncNoSidebarItems: "未在側邊欄偵測到對話。請先展開/開啟側邊欄後再試一次。",
   conversationsSyncResult: "已同步 {added} 個對話到「{folder}」",
   conversationsSyncTargetChanged: "後續對話將存入「{folder}」",
-  conversationsUnsupportedTitle: "{site} 對話暫不支援",
-  conversationsUnsupportedDesc: "目前站點限制導致對話列表無法穩定取得",
-  conversationsUnsupportedSync: "{site} 對話暫不支援同步",
   conversationsLocate: "定位當前對話",
   conversationsLocateSuccess: "已定位到當前對話",
   conversationsLocateNotFound: "當前對話未收錄，正在同步...",

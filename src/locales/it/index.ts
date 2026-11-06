@@ -945,7 +945,7 @@ export const it = {
   // Tab Order Settings
   tabOrderSettings: "Ordine delle schede",
   tabOrderDesc:
-    "Regola l'ordine di visualizzazione delle schede del pannello (trascina la maniglia per riordinare)",
+    "Trascina per riordinare. Gli interruttori controllano le schede; le funzioni non supportate vengono nascoste automaticamente",
   tabOrderAtLeastOne: "Almeno una scheda di funzionalità deve rimanere abilitata",
   moveUp: "Spostati in alto",
   moveDown: "Sposta giù",
@@ -1099,11 +1099,6 @@ export const it = {
     "Nessuna conversazione rilevata nella barra laterale. Espandi/apri la barra laterale e riprova.",
   conversationsSyncResult: "{added} conversazioni sincronizzate in «{folder}»",
   conversationsSyncTargetChanged: "Le nuove conversazioni andranno in «{folder}»",
-  conversationsUnsupportedTitle: "Conversazioni {site} non supportate",
-  conversationsUnsupportedDesc:
-    "Le attuali restrizioni del sito impediscono il recupero affidabile dell'elenco delle conversazioni.",
-  conversationsUnsupportedSync:
-    "Le conversazioni {site} non sono supportate per la sincronizzazione.",
   conversationsLocate: "Individua la conversazione corrente",
   conversationsLocateSuccess: "Individuata la conversazione in corso",
   conversationsLocateNotFound: "Conversazione corrente non tracciata, sincronizzazione in corso...",

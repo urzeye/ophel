@@ -871,7 +871,8 @@ export const fr = {
   grokSyncingConversations: "Synchronisation des chats, attendez...",
   // Tab Order Settings
   tabOrderSettings: "Ordre des onglets",
-  tabOrderDesc: "Ordre des onglets du panneau (glisser pour réorganiser)",
+  tabOrderDesc:
+    "Glissez pour réorganiser. Les interrupteurs contrôlent les onglets ; les fonctions non prises en charge sont masquées automatiquement",
   tabOrderAtLeastOne: "Au moins un onglet de fonctionnalité doit rester activé",
   moveUp: "Monter",
   moveDown: "Descendre",
@@ -993,11 +994,6 @@ export const fr = {
     "Aucune conversation détectée dans la barre latérale. Ouvrez-la puis réessayez.",
   conversationsSyncResult: "{added} chats synchronisés dans « {folder} »",
   conversationsSyncTargetChanged: "Les nouveaux chats iront dans « {folder} »",
-  conversationsUnsupportedTitle: "Conversations {site} non prises en charge",
-  conversationsUnsupportedDesc:
-    "Les restrictions du site empêchent d'obtenir de façon stable la liste des conversations.",
-  conversationsUnsupportedSync:
-    "La synchronisation des conversations {site} n'est pas prise en charge.",
   conversationsLocate: "Localiser actuel",
   conversationsLocateSuccess: "Trouvé",
   conversationsLocateNotFound: "Non trouvé, synchronisation...",

@@ -861,7 +861,7 @@ export const zhCN = {
   refreshSettings: "刷新设置",
   // Tab 顺序设置
   tabOrderSettings: "面板标签",
-  tabOrderDesc: "拖动手柄调整面板标签的顺序，用开关显示或隐藏标签",
+  tabOrderDesc: "拖动排序。开关控制面板标签；站点不支持的功能会自动隐藏",
   tabOrderAtLeastOne: "至少保留一个面板标签",
   moveUp: "上移",
   moveDown: "下移",
@@ -1036,9 +1036,6 @@ export const zhCN = {
   conversationsSyncNoSidebarItems: "未在侧边栏检测到对话。请先展开/打开侧边栏后重试。",
   conversationsSyncResult: "已同步 {added} 个对话到「{folder}」",
   conversationsSyncTargetChanged: "后续对话将存入「{folder}」",
-  conversationsUnsupportedTitle: "{site} 对话暂不支持",
-  conversationsUnsupportedDesc: "当前站点限制导致对话列表无法稳定获取",
-  conversationsUnsupportedSync: "{site} 对话暂不支持同步",
   conversationsLocate: "定位当前对话",
   conversationsLocateSuccess: "已定位到当前对话",
   conversationsLocateNotFound: "当前对话未收录，正在同步...",

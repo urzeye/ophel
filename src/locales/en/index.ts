@@ -914,7 +914,8 @@ export const en = {
   grokSyncingConversations: "Syncing chats, please wait...",
   // Tab Order Settings
   tabOrderSettings: "Tab Order",
-  tabOrderDesc: "Adjust the display order of panel tabs (drag handle to reorder)",
+  tabOrderDesc:
+    "Reorder tabs. Switches control panel tabs; unsupported features are hidden automatically",
   tabOrderAtLeastOne: "At least one feature tab must remain enabled",
   moveUp: "Move Up",
   moveDown: "Move Down",
@@ -1056,10 +1057,6 @@ export const en = {
     "No chats detected in sidebar. Expand/open the sidebar and try again.",
   conversationsSyncResult: "Synced {added} chats to “{folder}”",
   conversationsSyncTargetChanged: "New chats will go to “{folder}”",
-  conversationsUnsupportedTitle: "{site} chats not supported",
-  conversationsUnsupportedDesc:
-    "Current site restrictions prevent reliably fetching the chat list.",
-  conversationsUnsupportedSync: "{site} chats are not supported for sync.",
   conversationsLocate: "Locate current chat",
   conversationsLocateSuccess: "Located current chat",
   conversationsLocateNotFound: "Current chat not tracked, syncing...",
