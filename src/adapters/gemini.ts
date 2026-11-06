@@ -76,6 +76,7 @@ import {
   type MarkdownFixerConfig,
   type ModelSwitcherConfig,
   type NetworkMonitorConfig,
+  type OutlineNavigationContext,
   type OutlineItem,
   type OutlineSource,
   type PanelAvoidanceConfig,
@@ -817,6 +818,7 @@ export class GeminiAdapter extends SiteAdapter {
   private canvasPanelTooltipBindings = new WeakMap<HTMLElement, DomTooltipBinding>()
   private exportOpenedCanvasPanels = new Set<HTMLElement>()
   private outlineWordCountCache = new WeakMap<Element, GeminiOutlineWordCountCacheEntry>()
+  private deepResearchDocumentContentIds = new WeakMap<Element, string>()
 
   private getUserPathPrefix(): string {
     // Gemini 多账号路径格式：/u/2/app/...
@@ -2578,6 +2580,35 @@ export class GeminiAdapter extends SiteAdapter {
   getOutlineSourcesSignature(): string {
     const hasDocument = this.getDeepResearchDocumentOutlineRoot() !== null
     return `conversation:1|${GEMINI_DOCUMENT_OUTLINE_SOURCE_ID}:${hasDocument ? 1 : 0}`
+  }
+
+  private getDeepResearchDocumentContentId(root: Element): string {
+    const cached = this.deepResearchDocumentContentIds.get(root)
+    if (cached) return cached
+
+    const content = (root.textContent ?? "").replace(/\s+/g, " ").trim()
+    const id = `${GEMINI_DOCUMENT_OUTLINE_SOURCE_ID}:${hashTextForCache(content)}`
+    this.deepResearchDocumentContentIds.set(root, id)
+    return id
+  }
+
+  getOutlineContentId(sourceId: string): string {
+    if (sourceId !== GEMINI_DOCUMENT_OUTLINE_SOURCE_ID) return sourceId
+
+    const root = this.getDeepResearchDocumentOutlineRoot()
+    return root
+      ? this.getDeepResearchDocumentContentId(root)
+      : `${GEMINI_DOCUMENT_OUTLINE_SOURCE_ID}:closed`
+  }
+
+  getOutlineNavigationContext(sourceId = "conversation"): OutlineNavigationContext | null {
+    if (sourceId !== GEMINI_DOCUMENT_OUTLINE_SOURCE_ID) return null
+
+    const root = this.getDeepResearchDocumentOutlineRoot()
+    return {
+      key: `${this.getSiteInstanceKey()}:${this.getSessionId()}:${this.getOutlineContentId(sourceId)}`,
+      container: root ? this.getOutlineScrollContainer(sourceId) : null,
+    }
   }
 
   extractOutlineForSource(
