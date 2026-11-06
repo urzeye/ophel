@@ -22,7 +22,7 @@ import {
   ThemeLightIcon,
 } from "~components/icons"
 import { SparkleIcon } from "~components/icons/SparkleIcon"
-import { TAB_DEFINITIONS, TAB_IDS, isPanelTabAvailable, type TabId } from "~constants"
+import { TAB_IDS, getVisiblePanelTabIds, type TabId } from "~constants"
 import { isMacOS } from "~constants/shortcuts"
 import type { ConversationManager } from "~core/conversation-manager"
 import type { OutlineManager } from "~core/outline-manager"
@@ -191,25 +191,12 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   const enforceFeatureCapabilities = adapter?.getFeatureCapabilityPolicy() === "strict"
   const visibleTabs = useMemo(
     () =>
-      tabOrder.filter((tabId) => {
-        if (!TAB_DEFINITIONS[tabId as TabId]) {
-          return false
-        }
-        if (tabId === TAB_IDS.PROMPTS && currentSettings.features?.prompts?.enabled === false) {
-          return false
-        }
-        if (
-          tabId === TAB_IDS.CONVERSATIONS &&
-          currentSettings.features?.conversations?.enabled === false
-        ) {
-          return false
-        }
-        if (tabId === TAB_IDS.OUTLINE && currentSettings.features?.outline?.enabled === false) {
-          return false
-        }
-
-        return isPanelTabAvailable(tabId as TabId, featureCapabilities, enforceFeatureCapabilities)
-      }),
+      getVisiblePanelTabIds(
+        tabOrder,
+        currentSettings.features,
+        featureCapabilities,
+        enforceFeatureCapabilities,
+      ),
     [currentSettings.features, enforceFeatureCapabilities, featureCapabilities, tabOrder],
   )
   const canOpenNewTab = !enforceFeatureCapabilities || featureCapabilities.has("new-chat")
@@ -866,7 +853,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   }, [])
 
   // 初始化 activeTab（先用默认值，等 settings 加载后更新）
-  const [activeTab, setActiveTab] = useState<string>(() =>
+  const [activeTab, setActiveTab] = useState<TabId | "">(() =>
     visibleTabs.includes(TAB_IDS.PROMPTS) ? TAB_IDS.PROMPTS : visibleTabs[0] ?? "",
   )
   const [isInitialized, setIsInitialized] = useState(false)
@@ -884,7 +871,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
 
   // 当设置或能力变化时，如果当前 activeTab 不可见，则切换到首个可见 tab
   useEffect(() => {
-    if (isInitialized && !visibleTabs.includes(activeTab)) {
+    if (isInitialized && (!activeTab || !visibleTabs.includes(activeTab))) {
       setActiveTab(visibleTabs[0] ?? "")
     }
   }, [visibleTabs, isInitialized, activeTab])
@@ -902,10 +889,10 @@ export const MainPanel: React.FC<MainPanelProps> = ({
       }
     }
 
-    const handleSwitchTab = (e: CustomEvent<{ index: number }>) => {
-      const idx = e.detail?.index
-      if (typeof idx === "number" && visibleTabs[idx]) {
-        setActiveTab(visibleTabs[idx])
+    const handleSwitchTab = (e: CustomEvent<{ tabId: TabId }>) => {
+      const tabId = e.detail?.tabId
+      if (tabId && visibleTabs.includes(tabId)) {
+        setActiveTab(tabId)
       }
     }
 
@@ -1373,7 +1360,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     })
   }
 
-  const handlePanelTabClick = (tab: string) => {
+  const handlePanelTabClick = (tab: TabId) => {
     if (suppressPanelTabClickRef.current) {
       return
     }
@@ -1381,7 +1368,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     setActiveTab(tab)
   }
 
-  const handlePanelTabKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, tab: string) => {
+  const handlePanelTabKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, tab: TabId) => {
     if (suppressPanelTabClickRef.current || visibleTabs.length === 0) {
       return
     }
@@ -1391,7 +1378,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
       return
     }
 
-    let nextTab: string | null = null
+    let nextTab: TabId | null = null
     if (event.key === "ArrowLeft") {
       nextTab = visibleTabs[(currentIndex - 1 + visibleTabs.length) % visibleTabs.length]
     } else if (event.key === "ArrowRight") {
@@ -1656,7 +1643,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         )}
 
         {/* Content - 内容区 */}
-        {visibleTabs.includes(activeTab) && (
+        {activeTab !== "" && visibleTabs.includes(activeTab) && (
           <div
             id={`gh-panel-tabpanel-${activeTab}`}
             className="gh-panel-content"

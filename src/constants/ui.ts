@@ -55,6 +55,42 @@ export function isPanelTabAvailable(
   return !enforceAllCapabilities || capabilities.has(requiredCapability)
 }
 
+interface PanelTabFeatureState {
+  prompts?: { enabled?: boolean }
+  conversations?: { enabled?: boolean }
+  outline?: { enabled?: boolean }
+}
+
+/**
+ * 按配置顺序和当前站点能力，返回面板实际可见的 Tab。
+ * capabilities 为空表示没有当前站点上下文（如独立 Options 页），此时只应用功能开关。
+ */
+export function getVisiblePanelTabIds(
+  order: readonly string[],
+  features: PanelTabFeatureState | undefined,
+  capabilities: ReadonlySet<SitePackCapability> | undefined,
+  enforceAllCapabilities: boolean,
+): TabId[] {
+  return order.filter((tabId): tabId is TabId => {
+    if (!Object.prototype.hasOwnProperty.call(PANEL_TAB_CAPABILITY_REQUIREMENTS, tabId)) {
+      return false
+    }
+
+    const resolvedTabId = tabId as TabId
+    if (resolvedTabId === TAB_IDS.PROMPTS && features?.prompts?.enabled === false) {
+      return false
+    }
+    if (resolvedTabId === TAB_IDS.CONVERSATIONS && features?.conversations?.enabled === false) {
+      return false
+    }
+    if (resolvedTabId === TAB_IDS.OUTLINE && features?.outline?.enabled === false) {
+      return false
+    }
+
+    return !capabilities || isPanelTabAvailable(resolvedTabId, capabilities, enforceAllCapabilities)
+  })
+}
+
 // ==================== 输入方式与窄屏 ====================
 // 触屏为主要输入：没有悬停、指针粗。悬停展开、拖拽吸附等鼠标交互在这里要换成点按
 export const TOUCH_INPUT_MEDIA_QUERY = "(hover: none) and (pointer: coarse)"

@@ -7,6 +7,7 @@ export {
   TAB_IDS,
   TAB_DEFINITIONS,
   isPanelTabAvailable,
+  getVisiblePanelTabIds,
   COLLAPSED_BUTTON_DEFS,
   NAV_IDS,
   TOUCH_INPUT_MEDIA_QUERY,

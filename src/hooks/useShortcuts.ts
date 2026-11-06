@@ -8,7 +8,7 @@ import { useCallback, useEffect, useMemo, useRef } from "react"
 
 import type { SiteAdapter } from "~adapters/base"
 import type { SitePackCapability } from "~adapters/feature-capabilities"
-import { isBuiltinSiteId } from "~constants"
+import { TAB_IDS, getVisiblePanelTabIds, isBuiltinSiteId } from "~constants"
 import { SHORTCUT_ACTIONS, isMacOS, type ShortcutActionId } from "~constants/shortcuts"
 import type { ConversationManager } from "~core/conversation-manager"
 import type { OutlineManager } from "~core/outline-manager"
@@ -23,7 +23,7 @@ import {
   smartScrollToBottom,
   smartScrollToTop,
 } from "~utils/scroll-helper"
-import { getSiteZenMode, type Settings } from "~utils/storage"
+import { DEFAULT_SETTINGS, getSiteZenMode, type Settings } from "~utils/storage"
 import { showToast } from "~utils/toast"
 import { useOutlineNavigation } from "~hooks/useOutlineNavigation"
 
@@ -107,6 +107,20 @@ export function useShortcuts({
   // 全局搜索关闭时不注册快捷键 handler，避免拦截按键，
   // 让 Cmd+K / Ctrl+K 等组合键回落到网站原生功能
   const isGlobalSearchEnabled = settings?.globalSearch?.enabled ?? true
+  const featureCapabilities = useMemo(
+    () => adapter?.getFeatureCapabilities() ?? new Set<SitePackCapability>(),
+    [adapter],
+  )
+  const visiblePanelTabIds = useMemo(
+    () =>
+      getVisiblePanelTabIds(
+        settings?.features?.order ?? DEFAULT_SETTINGS.features.order,
+        settings?.features,
+        featureCapabilities,
+        adapter?.getFeatureCapabilityPolicy() === "strict",
+      ),
+    [adapter, featureCapabilities, settings?.features],
+  )
   const { isSourceNavigation, navigate: navigateSource } = useOutlineNavigation(outlineManager)
 
   // 去顶部
@@ -369,6 +383,9 @@ export function useShortcuts({
   // 切换 Tab 辅助函数
   const switchTab = useCallback(
     (index: 0 | 1 | 2) => {
+      const tabId = visiblePanelTabIds[index]
+      if (!tabId) return
+
       // 1. 如果面板未打开，打开面板
       if (!isPanelVisible) {
         onPanelToggle()
@@ -376,14 +393,14 @@ export function useShortcuts({
         onShowSnappedPanel()
       }
 
-      // 2. 发送切换事件，由 MainPanel 处理具体的 Tab ID
+      // 2. 按当前可见顺序解析后，用稳定 Tab ID 通知 MainPanel
       window.dispatchEvent(
         new CustomEvent("ophel:switchTab", {
-          detail: { index },
+          detail: { tabId },
         }),
       )
     },
-    [isPanelVisible, onPanelToggle, isSnapped, onShowSnappedPanel],
+    [visiblePanelTabIds, isPanelVisible, onPanelToggle, isSnapped, onShowSnappedPanel],
   )
 
   const switchTab1 = useCallback(() => switchTab(0), [switchTab])
@@ -806,6 +823,7 @@ export function useShortcuts({
 
   // 注册处理器
   useEffect(() => {
+    const conversationsTabVisible = visiblePanelTabIds.includes(TAB_IDS.CONVERSATIONS)
     const handlers: Partial<Record<ShortcutActionId, () => void>> = {
       [SHORTCUT_ACTIONS.SCROLL_TOP]: scrollToTop,
       [SHORTCUT_ACTIONS.SCROLL_BOTTOM]: scrollToBottom,
@@ -833,8 +851,12 @@ export function useShortcuts({
       [SHORTCUT_ACTIONS.LOCATE_OUTLINE]: locateOutline,
       [SHORTCUT_ACTIONS.SEARCH_OUTLINE]: searchOutline,
       [SHORTCUT_ACTIONS.NEW_CONVERSATION]: newConversation,
-      [SHORTCUT_ACTIONS.REFRESH_CONVERSATIONS]: refreshConversations,
-      [SHORTCUT_ACTIONS.LOCATE_CONVERSATION]: locateConversation,
+      [SHORTCUT_ACTIONS.REFRESH_CONVERSATIONS]: conversationsTabVisible
+        ? refreshConversations
+        : undefined,
+      [SHORTCUT_ACTIONS.LOCATE_CONVERSATION]: conversationsTabVisible
+        ? locateConversation
+        : undefined,
       [SHORTCUT_ACTIONS.PREV_CONVERSATION]: prevConversation,
       [SHORTCUT_ACTIONS.NEXT_CONVERSATION]: nextConversation,
       [SHORTCUT_ACTIONS.EXPORT_CONVERSATION]: exportConversation,
@@ -932,6 +954,7 @@ export function useShortcuts({
     openThemeSettings,
     openModelLockSettings,
     togglePromptQueue,
+    visiblePanelTabIds,
   ])
 
   return shortcutManager

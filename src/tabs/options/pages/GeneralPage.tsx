@@ -19,6 +19,7 @@ import {
   TOOLS_MENU_IDS,
   TOOLS_MENU_ITEMS,
   getDefaultToolsMenuIds,
+  getVisiblePanelTabIds,
   isPanelTabAvailable,
   type TabId,
 } from "~constants"
@@ -701,9 +702,15 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
               currentSiteCapabilities,
               currentSiteEnforcesCapabilities,
             )
-          const enabledTabsCount = orderList.filter(
-            (id) => isTabEnabled(id) && isTabAvailable(id),
-          ).length
+          const visibleTabIds = new Set(
+            getVisiblePanelTabIds(
+              orderList,
+              settings.features,
+              currentSiteCapabilities,
+              currentSiteEnforcesCapabilities,
+            ),
+          )
+          const enabledTabsCount = visibleTabIds.size
 
           return (
             <SettingCard
@@ -714,7 +721,8 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
                 const def = TAB_DEFINITIONS[tabId]
                 const isEnabled = isTabEnabled(tabId)
                 const isAvailable = isTabAvailable(tabId)
-                const isOnlyVisible = isEnabled && isAvailable && enabledTabsCount <= 1
+                const isVisible = visibleTabIds.has(tabId as TabId)
+                const isOnlyVisible = isVisible && enabledTabsCount <= 1
 
                 return (
                   <SortableItem
