@@ -11,7 +11,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🚀 New Features
 
-- **Gemini Notebook Adaptation** — Added Gemini Notebook (formerly NotebookLM), supporting functions such as outline navigation, topic switching, smart avoidance, prompt word insertion, and export by current column.Gemini Notebook. \(#546, #1025)
+- **Gemini Notebook Adaptation** — Added Gemini Notebook (formerly NotebookLM) support with outline navigation, theme switching, panel avoidance, prompt insertion, and per-column export. (#546, #1025)
 
 ### ✨ Improvements
 
