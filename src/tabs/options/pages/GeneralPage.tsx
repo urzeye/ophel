@@ -15,11 +15,12 @@ import {
 import { Slider, Switch } from "~components/ui"
 import {
   COLLAPSED_BUTTON_DEFS,
-  PANEL_TAB_CAPABILITY_REQUIREMENTS,
   TAB_DEFINITIONS,
   TOOLS_MENU_IDS,
   TOOLS_MENU_ITEMS,
   getDefaultToolsMenuIds,
+  isPanelTabAvailable,
+  type TabId,
 } from "~constants"
 import { DEFAULT_SETTINGS } from "~constants/default-settings"
 import { useSettingsStore } from "~stores/settings-store"
@@ -32,6 +33,7 @@ interface GeneralPageProps {
   siteId: string
   /** 站内设置弹窗传入当前站点能力；独立 Options 页无当前站点上下文。 */
   currentSiteCapabilities?: ReadonlySet<SitePackCapability>
+  currentSiteEnforcesCapabilities?: boolean
   initialTab?: string
   locateSettingId?: string
   onPanelHoverWidthPreviewChange?: (isActive: boolean) => void
@@ -100,6 +102,7 @@ const SortableItem: React.FC<{
 const GeneralPage: React.FC<GeneralPageProps> = ({
   siteId: _siteId,
   currentSiteCapabilities,
+  currentSiteEnforcesCapabilities = false,
   initialTab,
   locateSettingId,
   onPanelHoverWidthPreviewChange,
@@ -691,14 +694,13 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
             if (id === "conversations") return settings.features?.conversations?.enabled !== false
             return false
           }
-          const isTabAvailable = (id: string) => {
-            const requiredCapability = PANEL_TAB_CAPABILITY_REQUIREMENTS[id]
-            return (
-              !currentSiteCapabilities ||
-              !requiredCapability ||
-              currentSiteCapabilities.has(requiredCapability)
+          const isTabAvailable = (id: string) =>
+            !currentSiteCapabilities ||
+            isPanelTabAvailable(
+              id as TabId,
+              currentSiteCapabilities,
+              currentSiteEnforcesCapabilities,
             )
-          }
           const enabledTabsCount = orderList.filter(
             (id) => isTabEnabled(id) && isTabAvailable(id),
           ).length

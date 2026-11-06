@@ -68,7 +68,7 @@ const EXPORT_USER_QUERY_SELECTOR = `[${ZAI_EXPORT_ROLE_ATTR}="user"]`
 const EXPORT_ASSISTANT_SELECTOR = `[${ZAI_EXPORT_ROLE_ATTR}="assistant"]`
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const ZAI_CONFIG_VERSION = 5
+export const ZAI_CONFIG_VERSION = 4
 
 const createZaiConfig = (): ZaiSiteConfig => {
   const chatContainer = "#chat-container"
@@ -132,7 +132,7 @@ const createZaiConfig = (): ZaiSiteConfig => {
 
   return {
     capabilities: [...BUILTIN_FEATURE_CAPABILITIES[SITE_IDS.ZAI]],
-    traits: { historyLazyLoad: false, strictCapabilities: true },
+    traits: { historyLazyLoad: false },
     selectors: {
       textarea: ["#chat-input", "textarea#chat-input"],
       responseContainer: chatScrollContainer,

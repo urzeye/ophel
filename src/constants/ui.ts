@@ -32,10 +32,27 @@ export const TAB_IDS = {
 export type TabId = (typeof TAB_IDS)[keyof typeof TAB_IDS]
 
 /** 面板 Tab 与站点功能能力的唯一映射，面板与设置页共用。 */
-export const PANEL_TAB_CAPABILITY_REQUIREMENTS: Record<TabId, SitePackCapability> = {
+const PANEL_TAB_CAPABILITY_REQUIREMENTS: Record<TabId, SitePackCapability> = {
   [TAB_IDS.PROMPTS]: "prompt-insert",
   [TAB_IDS.CONVERSATIONS]: "conversation-list",
   [TAB_IDS.OUTLINE]: "outline",
+}
+
+/**
+ * 判断面板 Tab 在当前站点是否可用。
+ *
+ * conversation-list 缺失时入口始终隐藏；其他能力仍仅在 strictCapabilities
+ * 站点统一门控，避免改变既有内置站点的快捷按钮、快捷键和核心模块行为。
+ */
+export function isPanelTabAvailable(
+  tabId: TabId,
+  capabilities: ReadonlySet<SitePackCapability>,
+  enforceAllCapabilities: boolean,
+): boolean {
+  const requiredCapability = PANEL_TAB_CAPABILITY_REQUIREMENTS[tabId]
+  if (!requiredCapability) return true
+  if (requiredCapability === "conversation-list") return capabilities.has(requiredCapability)
+  return !enforceAllCapabilities || capabilities.has(requiredCapability)
 }
 
 // ==================== 输入方式与窄屏 ====================

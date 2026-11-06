@@ -22,7 +22,7 @@ import {
   ThemeLightIcon,
 } from "~components/icons"
 import { SparkleIcon } from "~components/icons/SparkleIcon"
-import { PANEL_TAB_CAPABILITY_REQUIREMENTS, TAB_DEFINITIONS, TAB_IDS, type TabId } from "~constants"
+import { TAB_DEFINITIONS, TAB_IDS, isPanelTabAvailable, type TabId } from "~constants"
 import { isMacOS } from "~constants/shortcuts"
 import type { ConversationManager } from "~core/conversation-manager"
 import type { OutlineManager } from "~core/outline-manager"
@@ -208,12 +208,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
           return false
         }
 
-        const requiredCapability = PANEL_TAB_CAPABILITY_REQUIREMENTS[tabId as TabId]
-        return (
-          !enforceFeatureCapabilities ||
-          !requiredCapability ||
-          featureCapabilities.has(requiredCapability)
-        )
+        return isPanelTabAvailable(tabId as TabId, featureCapabilities, enforceFeatureCapabilities)
       }),
     [currentSettings.features, enforceFeatureCapabilities, featureCapabilities, tabOrder],
   )
