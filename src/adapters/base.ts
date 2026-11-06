@@ -5,6 +5,7 @@
  */
 
 import type { MarkdownFixerConfig } from "~core/markdown-fixer"
+import { isBuiltinSiteId } from "~constants/defaults"
 import { extractConversationTitleFromDocumentTitle } from "~utils/conversation-title"
 import { DOMToolkit } from "~utils/dom-toolkit"
 import { createExportAssetCollector, type ExportAssetCollector } from "~utils/export-assets"
@@ -35,6 +36,11 @@ export interface OutlineItem {
 }
 
 export type OutlineSourceKind = "conversation" | "document"
+
+export interface OutlineNavigationContext {
+  key: string
+  container: HTMLElement | null
+}
 
 export interface OutlineSource {
   id: string
@@ -102,6 +108,8 @@ export interface ExportConfig {
 
 export interface ExportLifecycleContext {
   conversationId: string
+  /** 当前选择的内容栏目；未传入时沿用对话导出。 */
+  sourceId?: string
   format: ExportFormat
   includeThoughts: boolean
   packaging: ExportPackaging
@@ -481,6 +489,15 @@ export abstract class SiteAdapter {
    * 需要等待提交完成才能校验插入结果。
    */
   abstract insertPrompt(content: string): boolean | Promise<boolean>
+
+  /** 只插入模式不暴露自动发送、链式发送或队列入口。 */
+  supportsPromptSubmit(): boolean {
+    return true
+  }
+
+  getEnhancementMode(): "full" | "minimal" {
+    return this.getSiteTraits().minimalEnhancements ? "minimal" : "full"
+  }
 
   /**
    * 站点特定公式源码提取扩展点。
@@ -863,6 +880,21 @@ export abstract class SiteAdapter {
     return this.getFeatureCapabilities().has(capability)
   }
 
+  getFeatureCapabilityPolicy(): "strict" | "legacy" {
+    return !isBuiltinSiteId(this.getSiteId()) || this.getSiteTraits().strictCapabilities
+      ? "strict"
+      : "legacy"
+  }
+
+  /**
+   * 快捷键是否按能力表过滤。仅显式开启 strictCapabilities 的内置站点启用；
+   * 社区 SitePack 的面板入口已按能力过滤，但快捷键维持既有全量注册行为，
+   * 避免能力声明不全的包静默丢失可用快捷键。
+   */
+  enforcesCapabilityShortcuts(): boolean {
+    return isBuiltinSiteId(this.getSiteId()) && this.getSiteTraits().strictCapabilities === true
+  }
+
   // ==================== 页面宽度控制 ====================
 
   /** 返回需要加宽的 CSS 选择器列表 */
@@ -1057,13 +1089,15 @@ export abstract class SiteAdapter {
 
   /**
    * 本次导出能否跳过 DOM 历史预加载（滚顶等收敛）。
-   * 静态能力在 config `traits.apiFirstExport` 声明；运行时才可判定的站点
+   * 接口或正文快照导出在 config `traits.apiFirstExport` / `traits.domSnapshotExport`
+   * 声明；运行时才可判定的站点
    * （如 ChatGPT 仅新版会话页可走接口导出）覆写本方法收窄。
    * 跳过后接口路径失败回退 DOM 采集时，导出流程会补做预加载再重试一次。
    * 缺省 false：维持导出前滚顶预加载的保守行为。
    */
   canSkipExportHistoryPreload(): boolean {
-    return this.getSiteTraits().apiFirstExport ?? false
+    const traits = this.getSiteTraits()
+    return Boolean(traits.apiFirstExport || traits.domSnapshotExport)
   }
 
   /** 获取当前视口中可见的锚点元素信息 */
@@ -1516,6 +1550,10 @@ export abstract class SiteAdapter {
     return this.extractOutline(6, true, false).filter((item) => item.element?.isConnected)
   }
 
+  supportsOutlineBookmarks(): boolean {
+    return true
+  }
+
   /**
    * 根据标题级别和文本查找元素（支持 Shadow DOM 穿透）
    * 用于大纲跳转时元素失效后的重新查找
@@ -1619,6 +1657,15 @@ export abstract class SiteAdapter {
     return this.getScrollContainer()
   }
 
+  /** 返回当前文档的导航上下文；null 保持既有对话历史导航。 */
+  getOutlineNavigationContext(_sourceId = "conversation"): OutlineNavigationContext | null {
+    return null
+  }
+
+  getOutlineContentId(sourceId: string): string {
+    return sourceId
+  }
+
   scrollToOutlineSourceTarget(element: HTMLElement, sourceId = "conversation"): void {
     void sourceId
     this.scrollToOutlineTarget(element)
@@ -1627,6 +1674,15 @@ export abstract class SiteAdapter {
   /** 获取导出配置 */
   getExportConfig(): ExportConfig | null {
     return null
+  }
+
+  getExportTitle(_sourceId = "conversation"): string | null {
+    return null
+  }
+
+  /** 当前栏目导出前的内容检查；默认沿用各站点已有的导出流程。 */
+  hasExportContent(_sourceId = "conversation"): boolean {
+    return true
   }
 
   /**

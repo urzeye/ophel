@@ -22,6 +22,7 @@ import { EVENT_PAGE_URL_CHANGE } from "~utils/messaging"
 export const config: PlasmoCSConfig = {
   matches: [
     "https://gemini.google.com/*",
+    "https://notebook.google.com/*",
     "https://business.gemini.google/*",
     "https://aistudio.google.com/*",
     "https://grok.com/*",

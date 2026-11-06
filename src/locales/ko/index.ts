@@ -1,3 +1,5 @@
+import { outlineSourceMessages } from "../outline-sources"
+
 export const ko = {
   panelTitle: "Ophel",
 
@@ -843,6 +845,7 @@ export const ko = {
   outlineLocateCurrent: "현재 위치 찾기",
   outlineSearch: "개요 검색...",
   outlineSearchResult: "개의 결과",
+  ...outlineSourceMessages["ko"],
   outlineSourceConversation: "대화",
   outlineSourceDocument: "문서",
   outlineSourceSwitchLabel: "개요 출처",
@@ -1031,7 +1034,7 @@ export const ko = {
   exportFailed: "내보내기 실패",
   exportMayBeIncomplete:
     "내보내기가 불완전할 수 있습니다: 일부 콘텐츠가 완전히 로드되지 않았습니다. 결과를 확인하세요.",
-  exportNoContent: "내용 없음",
+  exportNoContent: "내보낼 내용이 없습니다",
   copySuccess: "클립보드에 복사되었습니다",
   copyFailed: "복사 실패",
   exportNeedOpenFirst: "먼저 대화를 열어주세요",

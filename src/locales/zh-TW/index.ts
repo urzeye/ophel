@@ -1,3 +1,5 @@
+import { outlineSourceMessages } from "../outline-sources"
+
 export const zhTW = {
   panelTitle: "Ophel",
 
@@ -746,6 +748,7 @@ export const zhTW = {
   outlineLocateCurrent: "定位到當前位置",
   outlineSearch: "搜尋大綱...",
   outlineSearchResult: "個結果",
+  ...outlineSourceMessages["zh-TW"],
   outlineSourceConversation: "對話",
   outlineSourceDocument: "文件",
   outlineSourceSwitchLabel: "大綱來源",
@@ -970,7 +973,7 @@ export const zhTW = {
   exportSuccess: "匯出成功",
   exportFailed: "匯出失敗",
   exportMayBeIncomplete: "匯出可能不完整：部分內容未載入完全，請核對結果",
-  exportNoContent: "未找到對話內容",
+  exportNoContent: "暫無可匯出的內容",
   copySuccess: "已複製到剪貼簿",
   copyFailed: "複製失敗",
   exportNeedOpenFirst: "請先打開要匯出的對話",

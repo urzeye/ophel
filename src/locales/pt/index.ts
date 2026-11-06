@@ -1,3 +1,5 @@
+import { outlineSourceMessages } from "../outline-sources"
+
 export const pt = {
   panelTitle: "Ophel",
 
@@ -853,6 +855,7 @@ export const pt = {
   outlineLocateCurrent: "Localizar posição atual",
   outlineSearch: "Buscar no índice...",
   outlineSearchResult: " resultado(s)",
+  ...outlineSourceMessages["pt"],
   outlineSourceConversation: "Chat",
   outlineSourceDocument: "Documento",
   outlineSourceSwitchLabel: "Fonte do índice",
@@ -1041,7 +1044,7 @@ export const pt = {
   exportFailed: "Falha",
   exportMayBeIncomplete:
     "A exportação pode estar incompleta: parte do conteúdo não foi totalmente carregada. Verifique o resultado.",
-  exportNoContent: "Vazio",
+  exportNoContent: "Nenhum conteúdo para exportar",
   copySuccess: "Copiado",
   copyFailed: "Falha ao copiar",
   exportNeedOpenFirst: "Abra o chat primeiro",

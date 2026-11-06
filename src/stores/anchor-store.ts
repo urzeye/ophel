@@ -7,7 +7,7 @@
 
 type Listener = () => void
 
-let anchorPosition: number | null = null
+const anchorPositions = new Map<string, number>()
 const listeners = new Set<Listener>()
 
 /**
@@ -56,13 +56,13 @@ export const anchorStore = {
   /**
    * 获取当前锚点位置
    */
-  get: (): number | null => anchorPosition,
+  get: (scope = "default"): number | null => anchorPositions.get(scope) ?? null,
 
   /**
    * 设置锚点位置
    */
-  set: (position: number): void => {
-    anchorPosition = position
+  set: (position: number, scope = "default"): void => {
+    anchorPositions.set(scope, position)
     listeners.forEach((fn) => fn())
   },
 
@@ -70,7 +70,7 @@ export const anchorStore = {
    * 清除锚点
    */
   clear: (): void => {
-    anchorPosition = null
+    anchorPositions.clear()
     listeners.forEach((fn) => fn())
   },
 
@@ -86,10 +86,10 @@ export const anchorStore = {
   /**
    * 获取快照（用于 useSyncExternalStore）
    */
-  getSnapshot: (): number | null => anchorPosition,
+  getSnapshot: (scope = "default"): number | null => anchorPositions.get(scope) ?? null,
 }
 
 /**
  * 检查是否有锚点
  */
-export const hasAnchor = (): boolean => anchorPosition !== null
+export const hasAnchor = (): boolean => anchorPositions.has("default")

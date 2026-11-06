@@ -99,6 +99,7 @@ export class OutlineManager {
   private scrollPositionsStale: boolean = true
   private sources: OutlineSource[] = []
   private activeSourceId: string = "conversation"
+  private previousSessionId: string
 
   // State
   private minLevel: number = 1
@@ -163,6 +164,7 @@ export class OutlineManager {
     onShowUserQueriesChange?: (show: boolean) => void,
   ) {
     this.siteAdapter = adapter
+    this.previousSessionId = adapter.getSessionId()
     this.settings = settings
     this.onExpandLevelChange = onExpandLevelChange
     this.onShowUserQueriesChange = onShowUserQueriesChange
@@ -241,7 +243,9 @@ export class OutlineManager {
     }
 
     const shouldObserveSources =
-      this.settings.enabled && this.isActive && this.siteAdapter.supportsDynamicOutlineSources()
+      this.settings.enabled &&
+      (this.isActive || this.getNavigationContext() !== null) &&
+      this.siteAdapter.supportsDynamicOutlineSources()
 
     if (shouldObserveSources && !this.sourceObserver) {
       this.startSourceObserver()
@@ -550,7 +554,7 @@ export class OutlineManager {
   getBookmarkSessionId(sourceId = this.activeSourceId): string {
     const sessionId = this.siteAdapter.getSessionId()
     if (sourceId === "conversation") return sessionId
-    return `${sessionId}::${sourceId}`
+    return `${sessionId}::${this.siteAdapter.getOutlineContentId(sourceId)}`
   }
 
   getTree(): OutlineNode[] {
@@ -571,6 +575,10 @@ export class OutlineManager {
 
   getActiveSourceId(): string {
     return this.activeSourceId
+  }
+
+  getNavigationContext() {
+    return this.siteAdapter.getOutlineNavigationContext(this.activeSourceId)
   }
 
   setActiveSource(sourceId: string): void {
@@ -628,6 +636,7 @@ export class OutlineManager {
 
   // 收藏模式
   setBookmarkMode(enabled: boolean) {
+    if (enabled && !this.siteAdapter.supportsOutlineBookmarks()) return
     if (enabled && !this.bookmarkMode) {
       // 开启收藏模式：保存当前折叠状态
       this.preBookmarkModeState = this.saveTreeCollapsedState(this.tree)
@@ -853,6 +862,7 @@ export class OutlineManager {
 
   // Helper public method for UI
   toggleBookmark(node: OutlineNode) {
+    if (!this.siteAdapter.supportsOutlineBookmarks()) return
     const sessionId = this.getBookmarkSessionId()
     const siteId = this.siteAdapter.getSiteId() // 站点标识
     const cid = this.siteAdapter.getCurrentCid() || "" // 账号 ID
@@ -932,6 +942,15 @@ export class OutlineManager {
    * 立即 refresh 抓到的还是旧 DOM，所以排几个延迟点）。
    */
   handleUrlChange(): void {
+    const sessionId = this.siteAdapter.getSessionId()
+    if (
+      sessionId !== this.previousSessionId &&
+      this.getNavigationContext() !== null &&
+      this.sources.some((source) => source.id === "conversation")
+    ) {
+      this.activeSourceId = "conversation"
+    }
+    this.previousSessionId = sessionId
     const routeVersion = ++this.routeChangeVersion
 
     // 取消所有待执行的 refresh（包括防抖的），避免旧路由的 refresh 在新路由渲染后触发
@@ -994,7 +1013,9 @@ export class OutlineManager {
         )
     // --- Merge Bookmarks ---
     const sessionId = this.getBookmarkSessionId()
-    const bookmarks = useBookmarkStore.getState().getBookmarksBySession(sessionId)
+    const bookmarks = this.siteAdapter.supportsOutlineBookmarks()
+      ? useBookmarkStore.getState().getBookmarksBySession(sessionId)
+      : []
     this.ghostBookmarkIds = new Set()
 
     if (!suppressConversationOutline && bookmarks.length > 0) {
@@ -1148,7 +1169,7 @@ export class OutlineManager {
     const showWordCountFlag = showWordCount ? "wc:1" : "wc:0"
     const sessionIdForKey = this.siteAdapter.getSessionId() || "no-session"
     const pathname = typeof window !== "undefined" ? window.location.pathname : ""
-    const sessionScopeKey = `${this.siteAdapter.getSiteId()}:${sessionIdForKey}:${pathname}:${this.activeSourceId}`
+    const sessionScopeKey = `${this.siteAdapter.getSiteId()}:${sessionIdForKey}:${pathname}:${this.siteAdapter.getOutlineContentId(this.activeSourceId)}`
     const mixer = createDjb2Mixer()
     mixer.mix(sessionScopeKey)
     mixer.mix("|")

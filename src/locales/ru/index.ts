@@ -1,3 +1,5 @@
+import { outlineSourceMessages } from "../outline-sources"
+
 export const ru = {
   panelTitle: "Ophel",
 
@@ -850,6 +852,7 @@ export const ru = {
   outlineLocateCurrent: "Найти текущее место",
   outlineSearch: "Поиск в содержании...",
   outlineSearchResult: " совп.",
+  ...outlineSourceMessages["ru"],
   outlineSourceConversation: "Чат",
   outlineSourceDocument: "Документ",
   outlineSourceSwitchLabel: "Источник содержания",
@@ -1038,7 +1041,7 @@ export const ru = {
   exportFailed: "Ошибка",
   exportMayBeIncomplete:
     "Экспорт может быть неполным: часть содержимого не была полностью загружена. Проверьте результат.",
-  exportNoContent: "Пусто",
+  exportNoContent: "Нет содержимого для экспорта",
   copySuccess: "Копировано",
   copyFailed: "Ошибка коп.",
   exportNeedOpenFirst: "Сначала откройте чат",

@@ -81,7 +81,8 @@ export const DEFAULT_SETTINGS: Settings = {
   language: "auto",
   hasAgreedToTerms: false,
 
-  disabledSites: [],
+  // Gemini Enterprise 长期未跟进更新，新用户默认停用；已有用户保留持久化选择
+  disabledSites: ["gemini-enterprise"],
 
   quickAccessOrder: [],
 

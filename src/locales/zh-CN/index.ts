@@ -1,3 +1,5 @@
+import { outlineSourceMessages } from "../outline-sources"
+
 export const zhCN = {
   panelTitle: "Ophel",
   // 免责声明弹窗
@@ -845,6 +847,7 @@ export const zhCN = {
   outlineLocateCurrent: "定位到当前位置",
   outlineSearch: "搜索大纲...",
   outlineSearchResult: "个结果",
+  ...outlineSourceMessages["zh-CN"],
   outlineSourceConversation: "对话",
   outlineSourceDocument: "文档",
   outlineSourceSwitchLabel: "大纲来源",
@@ -1088,7 +1091,7 @@ export const zhCN = {
   exportSuccess: "导出成功",
   exportFailed: "导出失败",
   exportMayBeIncomplete: "导出可能不完整：部分内容未加载完全，请核对结果",
-  exportNoContent: "未找到对话内容",
+  exportNoContent: "暂无可导出的内容",
   copySuccess: "已复制到剪贴板",
   copyFailed: "复制失败",
   exportUserLabel: "用户",

@@ -486,6 +486,11 @@ export async function initCoreModules(ctx: ModulesContext): Promise<ModuleInstan
   }, 1000)
 
   // 2. Markdown 修复
+  if (ctx.adapter.getEnhancementMode() === "minimal") {
+    initLayoutManager(ctx)
+    return modules
+  }
+
   initMarkdownFixer(ctx)
 
   // 3. 页面宽度管理
@@ -621,6 +626,8 @@ export function subscribeModuleUpdates(ctx: ModulesContext): () => void {
     }
 
     // 6. Watermark Remover update
+    if (adapter.getEnhancementMode() === "minimal") return
+
     if (newSettings && (siteId === SITE_IDS.GEMINI || siteId === SITE_IDS.GEMINI_ENTERPRISE)) {
       if (newSettings.content?.watermarkRemoval) {
         if (!modules.watermarkRemover) {

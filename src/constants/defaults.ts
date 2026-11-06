@@ -122,6 +122,7 @@ export const BATCH_TEST_CONFIG = {
 export const SITE_IDS = {
   CLAUDE: "claude",
   GEMINI: "gemini",
+  NOTEBOOK: "notebook",
   CHATGPT: "chatgpt",
   CHATGLM: "chatglm",
   GEMINI_ENTERPRISE: "gemini-enterprise",
@@ -246,6 +247,14 @@ export const SUPPORTED_AI_PLATFORMS: SupportedAiPlatform[] = [
     matchPatterns: ["https://business.gemini.google/*", "https://*.business.gemini.google/*"],
     entryUrls: ["https://business.gemini.google"],
     icon: "🏢",
+  }),
+  createSupportedAiPlatform({
+    id: SITE_IDS.NOTEBOOK,
+    name: "Gemini Notebook",
+    matchPatterns: ["https://notebook.google.com/*"],
+    entryUrls: ["https://notebook.google.com"],
+    icon: "📓",
+    faviconUrl: "https://notebook.google.com/favicon.ico",
   }),
   createSupportedAiPlatform({
     id: SITE_IDS.DOUBAO,

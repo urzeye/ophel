@@ -1151,14 +1151,28 @@ const validateSiteTraits = (
     [
       "shadowDOM",
       "historyLazyLoad",
+      "strictCapabilities",
+      "minimalEnhancements",
       "periodicOutlineRefresh",
       "virtualOutlineFill",
       "apiFirstExport",
+      "domSnapshotExport",
     ],
     [],
     mode,
   )
   if (!traits) return
+
+  if (traits.domSnapshotExport !== undefined) {
+    validateBoolean(traits.domSnapshotExport, `${path}.domSnapshotExport`, context, mode)
+  }
+
+  if (traits.strictCapabilities !== undefined) {
+    validateBoolean(traits.strictCapabilities, `${path}.strictCapabilities`, context, mode)
+  }
+  if (traits.minimalEnhancements !== undefined) {
+    validateBoolean(traits.minimalEnhancements, `${path}.minimalEnhancements`, context, mode)
+  }
 
   if (traits.shadowDOM !== undefined) {
     validateBoolean(traits.shadowDOM, `${path}.shadowDOM`, context, mode)

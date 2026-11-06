@@ -49,6 +49,8 @@ interface OutlineTabProps {
   // 点击大纲条目并已滚动到目标后调用；触屏抽屉据此收起，让用户看到跳转结果
   onJumped?: () => void
   showUserQueryToggle?: boolean
+  allowConversationExport?: boolean
+  allowBookmarks?: boolean
 }
 
 const countOutlineNodes = (nodes: OutlineNode[]): number => {
@@ -611,6 +613,8 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
   onJumpBefore,
   onJumped,
   showUserQueryToggle = true,
+  allowConversationExport = true,
+  allowBookmarks = true,
 }) => {
   // 获取设置 - 使用 Zustand Store
   const { settings } = useSettingsStore()
@@ -660,6 +664,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
   const [bookmarkMode, setBookmarkMode] = useState(initialState.bookmarkMode)
   const [outlineSources, setOutlineSources] = useState<OutlineSource[]>(initialState.sources)
   const [activeSourceId, setActiveSourceId] = useState(initialState.activeSourceId)
+  const navigationScopeKey = manager.getNavigationContext()?.key ?? activeSourceId
   const [isCopyingFullOutline, setIsCopyingFullOutline] = useState(false)
   const [outlineScrollTop, setOutlineScrollTop] = useState(0)
   const [outlineViewportHeight, setOutlineViewportHeight] = useState(0)
@@ -1374,6 +1379,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
   }, [
     manager,
     tree.length,
+    navigationScopeKey,
     settings?.features?.outline?.followMode,
     getVisibleHeadingHighlightIndex,
     scrollOutlineNodeIntoView,
@@ -1544,7 +1550,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
     try {
       let result: ReturnType<typeof createOutlineTextFromExportMessages>
 
-      if (activeSourceId === "conversation") {
+      if (activeSourceId === "conversation" && allowConversationExport) {
         const messages = await conversationManager.collectCurrentConversationExportMessages()
         if (!messages || messages.length === 0) {
           showToast(t("outlineEmpty"))
@@ -1577,6 +1583,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
     }
   }, [
     activeSourceId,
+    allowConversationExport,
     conversationManager,
     expandLevel,
     isCopyingFullOutline,
@@ -1905,7 +1912,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
         <div className="gh-panel-toolbar">
           <div className="gh-panel-toolbar-group">
             {/* Group Mode */}
-            {showUserQueryToggle && (
+            {showUserQueryToggle && activeSourceId === "conversation" && (
               <Tooltip content={t("outlineShowUserQueries")}>
                 <button
                   type="button"
@@ -1919,16 +1926,18 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
             )}
 
             {/* Bookmark Mode Toggle */}
-            <Tooltip content={t("bookmarkMode")}>
-              <button
-                type="button"
-                onClick={handleToggleBookmarkMode}
-                aria-label={t("bookmarkMode")}
-                aria-pressed={bookmarkMode}
-                className={`outline-toolbar-btn ${bookmarkMode ? "active-subtle" : ""}`}>
-                <StarIcon size={16} filled={bookmarkMode} color="currentColor" />
-              </button>
-            </Tooltip>
+            {allowBookmarks && (
+              <Tooltip content={t("bookmarkMode")}>
+                <button
+                  type="button"
+                  onClick={handleToggleBookmarkMode}
+                  aria-label={t("bookmarkMode")}
+                  aria-pressed={bookmarkMode}
+                  className={`outline-toolbar-btn ${bookmarkMode ? "active-subtle" : ""}`}>
+                  <StarIcon size={16} filled={bookmarkMode} color="currentColor" />
+                </button>
+              </Tooltip>
+            )}
 
             {/* Expand/Collapse */}
             <Tooltip
@@ -1985,19 +1994,21 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
             </Tooltip>
 
             {/* Export Conversation: 复用全局导出入口，按设置弹出选项弹窗或一键直出 */}
-            <Tooltip content={t("exportConversationTitle")}>
-              <button
-                type="button"
-                onClick={() => {
-                  // 只有点击大纲工具栏的导出按钮才视为发现了该入口，停用流光引导
-                  markExportDiscoveredQuiet()
-                  window.dispatchEvent(new CustomEvent("ophel:openExportDialog"))
-                }}
-                aria-label={t("exportConversationTitle")}
-                className={`outline-toolbar-btn export-accent ${exportDiscovered ? "" : "export-shimmer"}`}>
-                <ExportIcon size={16} />
-              </button>
-            </Tooltip>
+            {allowConversationExport && (
+              <Tooltip content={t("exportConversationTitle")}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    // 只有点击大纲工具栏的导出按钮才视为发现了该入口，停用流光引导
+                    markExportDiscoveredQuiet()
+                    window.dispatchEvent(new CustomEvent("ophel:openExportDialog"))
+                  }}
+                  aria-label={t("exportConversationTitle")}
+                  className={`outline-toolbar-btn export-accent ${exportDiscovered ? "" : "export-shimmer"}`}>
+                  <ExportIcon size={16} />
+                </button>
+              </Tooltip>
+            )}
           </div>
 
           {/* Search Input */}
@@ -2152,7 +2163,10 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
       )}
 
       {outlineSourceOptions.length > 1 && !searchQuery && (
-        <div className="outline-source-switch" aria-label={t("outlineSourceSwitchLabel")}>
+        <div
+          className="outline-source-switch"
+          role="group"
+          aria-label={t("outlineSourceSwitchLabel")}>
           {outlineSourceOptions.map((source) => (
             <button
               key={source.id}
@@ -2160,6 +2174,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
               className={`outline-source-switch-option ${
                 activeSourceId === source.id ? "active" : ""
               }`}
+              aria-pressed={activeSourceId === source.id}
               onClick={() => manager.setActiveSource(source.id)}>
               <span>{getOutlineSourceLabel(source)}</span>
             </button>
@@ -2170,7 +2185,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
       {/* 大纲树 */}
       <div
         ref={listRef}
-        className={`gh-outline-tree-container gh-panel-bookmark-mode-${settings?.features?.outline?.panelBookmarkMode || "always"}`}
+        className={`gh-outline-tree-container gh-panel-bookmark-mode-${allowBookmarks ? settings?.features?.outline?.panelBookmarkMode || "always" : "hidden"}`}
         style={{
           flex: 1,
           overflowY: "auto",

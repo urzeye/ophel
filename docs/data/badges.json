@@ -92,6 +92,11 @@
       "url": "https://img.shields.io/static/v1?label=&message=Gemini%20Enterprise&color=9334E6&style=flat&logo={logo}"
     },
     {
+      "name": "sites/notebook.svg",
+      "logo": "notebook.png",
+      "url": "https://img.shields.io/static/v1?label=&message=Gemini%20Notebook&color=4285F4&style=flat&logo={logo}"
+    },
+    {
       "name": "sites/gemini.svg",
       "logo": "gemini.png",
       "url": "https://img.shields.io/static/v1?label=&message=Gemini&color=4285F4&style=flat&logo={logo}"

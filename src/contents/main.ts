@@ -458,6 +458,7 @@ if (!window.__ophelExtensionUpdateMessageListenerInstalled && typeof chrome !== 
 export const config: PlasmoCSConfig = {
   matches: [
     "https://gemini.google.com/*",
+    "https://notebook.google.com/*",
     "https://business.gemini.google/*",
     "https://aistudio.google.com/*",
     "https://grok.com/*",

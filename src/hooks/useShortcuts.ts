@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useMemo, useRef } from "react"
 
 import type { SiteAdapter } from "~adapters/base"
+import type { SitePackCapability } from "~adapters/feature-capabilities"
 import { isBuiltinSiteId } from "~constants"
 import { SHORTCUT_ACTIONS, isMacOS, type ShortcutActionId } from "~constants/shortcuts"
 import type { ConversationManager } from "~core/conversation-manager"
@@ -24,6 +25,7 @@ import {
 } from "~utils/scroll-helper"
 import { getSiteZenMode, type Settings } from "~utils/storage"
 import { showToast } from "~utils/toast"
+import { useOutlineNavigation } from "~hooks/useOutlineNavigation"
 
 /**
  * 辅助函数：导航到上/下一个对话
@@ -105,9 +107,14 @@ export function useShortcuts({
   // 全局搜索关闭时不注册快捷键 handler，避免拦截按键，
   // 让 Cmd+K / Ctrl+K 等组合键回落到网站原生功能
   const isGlobalSearchEnabled = settings?.globalSearch?.enabled ?? true
+  const { isSourceNavigation, navigate: navigateSource } = useOutlineNavigation(outlineManager)
 
   // 去顶部
   const scrollToTop = useCallback(async () => {
+    if (isSourceNavigation) {
+      await navigateSource("top")
+      return
+    }
     if (!adapter) return
 
     await withAnchorOp(async (signal) => {
@@ -133,10 +140,14 @@ export function useShortcuts({
 
       showToast(t("scrolledToTop"))
     })
-  }, [adapter])
+  }, [adapter, isSourceNavigation, navigateSource])
 
   // 去底部
   const scrollToBottom = useCallback(async () => {
+    if (isSourceNavigation) {
+      await navigateSource("bottom")
+      return
+    }
     if (!adapter) return
 
     await withAnchorOp(async (signal) => {
@@ -155,10 +166,14 @@ export function useShortcuts({
 
       showToast(t("scrolledToBottom"))
     })
-  }, [adapter])
+  }, [adapter, isSourceNavigation, navigateSource])
 
   // 返回锚点
   const goToAnchor = useCallback(async () => {
+    if (isSourceNavigation) {
+      await navigateSource("anchor")
+      return
+    }
     if (!adapter) return
 
     await withAnchorOp(async () => {
@@ -178,7 +193,7 @@ export function useShortcuts({
       // 交换位置（双向跳转）
       anchorStore.set(currentPos)
     })
-  }, [adapter])
+  }, [adapter, isSourceNavigation, navigateSource])
 
   // 刷新大纲
   const refreshOutline = useCallback(() => {
@@ -842,6 +857,29 @@ export function useShortcuts({
       [SHORTCUT_ACTIONS.TOGGLE_PROMPT_QUEUE]: togglePromptQueue,
     }
 
+    if (adapter?.enforcesCapabilityShortcuts()) {
+      const requirements: Partial<Record<ShortcutActionId, SitePackCapability>> = {
+        [SHORTCUT_ACTIONS.NEW_CONVERSATION]: "new-chat",
+        [SHORTCUT_ACTIONS.REFRESH_CONVERSATIONS]: "conversation-list",
+        [SHORTCUT_ACTIONS.LOCATE_CONVERSATION]: "conversation-list",
+        [SHORTCUT_ACTIONS.PREV_CONVERSATION]: "conversation-list",
+        [SHORTCUT_ACTIONS.NEXT_CONVERSATION]: "conversation-list",
+        [SHORTCUT_ACTIONS.EXPORT_CONVERSATION]: "export-basic",
+        [SHORTCUT_ACTIONS.COPY_LATEST_REPLY]: "export-basic",
+        [SHORTCUT_ACTIONS.COPY_LAST_CODE_BLOCK]: "export-basic",
+        [SHORTCUT_ACTIONS.TOGGLE_ZEN_MODE]: "zen",
+        [SHORTCUT_ACTIONS.STOP_GENERATION]: "stop-generation",
+        [SHORTCUT_ACTIONS.SHOW_MODEL_SELECTOR]: "model-lock",
+        [SHORTCUT_ACTIONS.OPEN_MODEL_LOCK_SETTINGS]: "model-lock",
+      }
+      for (const [action, capability] of Object.entries(requirements)) {
+        if (!adapter.hasFeatureCapability(capability)) delete handlers[action as ShortcutActionId]
+      }
+      if (!adapter.supportsPromptSubmit()) delete handlers[SHORTCUT_ACTIONS.TOGGLE_PROMPT_QUEUE]
+      if (adapter.getEnhancementMode() === "minimal")
+        delete handlers[SHORTCUT_ACTIONS.TOGGLE_SCROLL_LOCK]
+    }
+
     shortcutManager.registerAll(handlers)
     shortcutManager.startListening()
 
@@ -851,6 +889,7 @@ export function useShortcuts({
     }
   }, [
     shortcutManager,
+    adapter,
     scrollToTop,
     scrollToBottom,
     goToAnchor,

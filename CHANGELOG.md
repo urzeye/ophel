@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### 🚀 New Features
+
+- **Gemini Notebook Adaptation** — Added Gemini Notebook (formerly NotebookLM) support with outline navigation, theme switching, panel avoidance, prompt insertion, and per-column export. (#546, #1025)
+
 ### ✨ Improvements
 
 - **Theme switching animation** — Switching from dark to light mode now shrinks the dark view into the clicked spot, while switching from light to dark still expands outward. (#1024)

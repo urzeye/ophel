@@ -12,6 +12,7 @@
  */
 
 import { en } from "~locales/en"
+import { getBundledOutlineSourceMessage } from "~locales/outline-sources"
 
 type LocaleMessages = typeof en
 type LocaleResources = Record<string, LocaleMessages>
@@ -98,7 +99,9 @@ export function t(key: string, params?: Record<string, string>): string {
   const enResources = resources[FALLBACK_LANG]
   let text =
     (langResources?.[key as keyof LocaleMessages] as string) ||
+    getBundledOutlineSourceMessage(currentLang, key) ||
     (enResources[key as keyof LocaleMessages] as string) ||
+    en[key as keyof LocaleMessages] ||
     key
 
   if (params) {
