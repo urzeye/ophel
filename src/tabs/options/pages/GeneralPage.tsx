@@ -4,6 +4,7 @@
  */
 import React, { useEffect, useState } from "react"
 
+import type { SitePackCapability } from "~adapters/feature-capabilities"
 import {
   ChevronDownIcon,
   ReorderIcon,
@@ -18,6 +19,9 @@ import {
   TOOLS_MENU_IDS,
   TOOLS_MENU_ITEMS,
   getDefaultToolsMenuIds,
+  getVisiblePanelTabIds,
+  isPanelTabAvailable,
+  type TabId,
 } from "~constants"
 import { DEFAULT_SETTINGS } from "~constants/default-settings"
 import { useSettingsStore } from "~stores/settings-store"
@@ -28,6 +32,9 @@ import { PageTitle, SettingCard, SettingRow, TabGroup, ToggleRow } from "../comp
 
 interface GeneralPageProps {
   siteId: string
+  /** 站内设置弹窗传入当前站点能力；独立 Options 页无当前站点上下文。 */
+  currentSiteCapabilities?: ReadonlySet<SitePackCapability>
+  currentSiteEnforcesCapabilities?: boolean
   initialTab?: string
   locateSettingId?: string
   onPanelHoverWidthPreviewChange?: (isActive: boolean) => void
@@ -40,6 +47,7 @@ const PANEL_WIDTH_ADVANCED_SETTING_IDS = new Set(["panel-resize-on-hover", "pane
 const SortableItem: React.FC<{
   iconNode?: React.ReactNode
   label: string
+  status?: string
   index: number
   total: number
   enabled?: boolean
@@ -54,6 +62,7 @@ const SortableItem: React.FC<{
 }> = ({
   iconNode,
   label,
+  status,
   index,
   total: _total,
   enabled = true,
@@ -81,7 +90,10 @@ const SortableItem: React.FC<{
     </div>
 
     {iconNode && <span className="settings-sortable-item-icon">{iconNode}</span>}
-    <span className="settings-sortable-item-label">{label}</span>
+    <span className="settings-sortable-item-label">
+      {label}
+      {status && <span className="settings-sortable-item-status">{status}</span>}
+    </span>
     <div className="settings-sortable-item-actions">
       {showToggle && <Switch checked={enabled} onChange={() => onToggle?.()} size="sm" />}
     </div>
@@ -90,6 +102,8 @@ const SortableItem: React.FC<{
 
 const GeneralPage: React.FC<GeneralPageProps> = ({
   siteId: _siteId,
+  currentSiteCapabilities,
+  currentSiteEnforcesCapabilities = false,
   initialTab,
   locateSettingId,
   onPanelHoverWidthPreviewChange,
@@ -681,7 +695,22 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
             if (id === "conversations") return settings.features?.conversations?.enabled !== false
             return false
           }
-          const enabledTabsCount = orderList.filter((id) => isTabEnabled(id)).length
+          const isTabAvailable = (id: string) =>
+            !currentSiteCapabilities ||
+            isPanelTabAvailable(
+              id as TabId,
+              currentSiteCapabilities,
+              currentSiteEnforcesCapabilities,
+            )
+          const visibleTabIds = new Set(
+            getVisiblePanelTabIds(
+              orderList,
+              settings.features,
+              currentSiteCapabilities,
+              currentSiteEnforcesCapabilities,
+            ),
+          )
+          const enabledTabsCount = visibleTabIds.size
 
           return (
             <SettingCard
@@ -691,7 +720,9 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
               {orderList.map((tabId, index) => {
                 const def = TAB_DEFINITIONS[tabId]
                 const isEnabled = isTabEnabled(tabId)
-                const isOnlyEnabled = isEnabled && enabledTabsCount <= 1
+                const isAvailable = isTabAvailable(tabId)
+                const isVisible = visibleTabIds.has(tabId as TabId)
+                const isOnlyVisible = isVisible && enabledTabsCount <= 1
 
                 return (
                   <SortableItem
@@ -704,12 +735,13 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
                       )
                     }
                     label={t(def.label)}
+                    status={!isAvailable ? t("popupUnsupported") : undefined}
                     index={index}
                     total={orderList.length}
                     enabled={isEnabled}
                     showToggle
                     onToggle={() => {
-                      if (isOnlyEnabled) {
+                      if (isOnlyVisible) {
                         showToast(t("tabOrderAtLeastOne"))
                         return
                       }

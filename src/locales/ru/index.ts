@@ -863,7 +863,8 @@ export const ru = {
   grokSyncingConversations: "Грузим историю, подождите...",
   // Tab Order Settings
   tabOrderSettings: "Порядок вкладок",
-  tabOrderDesc: "Порядок вкладок панели (перетащите для сортировки)",
+  tabOrderDesc:
+    "Перетащите для сортировки. Переключатели управляют вкладками; неподдерживаемые функции скрываются автоматически",
   tabOrderAtLeastOne: "Должна оставаться включенной хотя бы одна вкладка функций",
   moveUp: "Выше",
   moveDown: "Ниже",
@@ -986,10 +987,6 @@ export const ru = {
     "В боковой панели не найдено разговоров. Откройте боковую панель и повторите попытку.",
   conversationsSyncResult: "Синхронизировано {added} чатов в «{folder}»",
   conversationsSyncTargetChanged: "Новые чаты будут сохраняться в «{folder}»",
-  conversationsUnsupportedTitle: "Диалоги {site} не поддерживаются",
-  conversationsUnsupportedDesc:
-    "Ограничения сайта не позволяют стабильно получать список диалогов.",
-  conversationsUnsupportedSync: "Синхронизация диалогов {site} не поддерживается.",
   conversationsLocate: "Найти текущий",
   conversationsLocateSuccess: "Найдено",
   conversationsLocateNotFound: "Нет в списке, синхро...",

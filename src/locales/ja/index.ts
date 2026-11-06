@@ -879,7 +879,8 @@ export const ja = {
   grokSyncingConversations: "会話リストを同期しています。お待ちください...",
   // Tab Order Settings
   tabOrderSettings: "タブ順序",
-  tabOrderDesc: "パネル内の各タブの並び順を調整します（ドラッグで並び替え可能）",
+  tabOrderDesc:
+    "ドラッグで並び替え。スイッチでパネルタブを制御し、未対応の機能は自動で非表示になります",
   tabOrderAtLeastOne: "少なくとも1つの機能タブを有効にしておく必要があります",
   moveUp: "上へ",
   moveDown: "下へ",
@@ -1010,9 +1011,6 @@ export const ja = {
     "サイドバーで会話が検出できませんでした。サイドバーを開いて再試行してください。",
   conversationsSyncResult: "{added} 件の会話を「{folder}」に同期しました",
   conversationsSyncTargetChanged: "新しい会話は「{folder}」に保存されます",
-  conversationsUnsupportedTitle: "{site} の会話は未対応",
-  conversationsUnsupportedDesc: "サイト側の制限により会話一覧を安定して取得できません",
-  conversationsUnsupportedSync: "{site} の会話同期は未対応です",
   conversationsLocate: "現在の会話を表示",
   conversationsLocateSuccess: "会話を特定しました",
   conversationsLocateNotFound: "会話が記録にありません。同期を試みます...",

@@ -866,7 +866,8 @@ export const pt = {
   grokSyncingConversations: "Sincronizando chats, aguarde...",
   // Tab Order Settings
   tabOrderSettings: "Ordem das abas",
-  tabOrderDesc: "Ordem das abas do painel (arraste para reordenar)",
+  tabOrderDesc:
+    "Arraste para reordenar. Os interruptores controlam as abas; os recursos não suportados são ocultados automaticamente",
   tabOrderAtLeastOne: "Pelo menos uma aba de funcionalidade deve permanecer ativada",
   moveUp: "Subir",
   moveDown: "Descer",
@@ -989,10 +990,6 @@ export const pt = {
     "Nenhuma conversa detectada na barra lateral. Abra a barra e tente novamente.",
   conversationsSyncResult: "{added} chats sincronizados em «{folder}»",
   conversationsSyncTargetChanged: "Os chats novos irão para «{folder}»",
-  conversationsUnsupportedTitle: "Conversas do {site} não suportadas",
-  conversationsUnsupportedDesc:
-    "As restrições do site impedem obter a lista de conversas de forma estável.",
-  conversationsUnsupportedSync: "A sincronização das conversas do {site} não é suportada.",
   conversationsLocate: "Localizar atual",
   conversationsLocateSuccess: "Encontrado",
   conversationsLocateNotFound: "Não encontrado, sincronizando...",

@@ -3,6 +3,7 @@
  */
 import type React from "react"
 
+import type { SitePackCapability } from "~adapters/feature-capabilities"
 import {
   AnchorIcon,
   ConversationIcon,
@@ -29,6 +30,66 @@ export const TAB_IDS = {
 } as const
 
 export type TabId = (typeof TAB_IDS)[keyof typeof TAB_IDS]
+
+/** 面板 Tab 与站点功能能力的唯一映射，面板与设置页共用。 */
+const PANEL_TAB_CAPABILITY_REQUIREMENTS: Record<TabId, SitePackCapability> = {
+  [TAB_IDS.PROMPTS]: "prompt-insert",
+  [TAB_IDS.CONVERSATIONS]: "conversation-list",
+  [TAB_IDS.OUTLINE]: "outline",
+}
+
+/**
+ * 判断面板 Tab 在当前站点是否可用。
+ *
+ * conversation-list 缺失时入口始终隐藏；其他能力仍仅在 strictCapabilities
+ * 站点统一门控，避免改变既有内置站点的快捷按钮、快捷键和核心模块行为。
+ */
+export function isPanelTabAvailable(
+  tabId: TabId,
+  capabilities: ReadonlySet<SitePackCapability>,
+  enforceAllCapabilities: boolean,
+): boolean {
+  const requiredCapability = PANEL_TAB_CAPABILITY_REQUIREMENTS[tabId]
+  if (!requiredCapability) return true
+  if (requiredCapability === "conversation-list") return capabilities.has(requiredCapability)
+  return !enforceAllCapabilities || capabilities.has(requiredCapability)
+}
+
+interface PanelTabFeatureState {
+  prompts?: { enabled?: boolean }
+  conversations?: { enabled?: boolean }
+  outline?: { enabled?: boolean }
+}
+
+/**
+ * 按配置顺序和当前站点能力，返回面板实际可见的 Tab。
+ * capabilities 为空表示没有当前站点上下文（如独立 Options 页），此时只应用功能开关。
+ */
+export function getVisiblePanelTabIds(
+  order: readonly string[],
+  features: PanelTabFeatureState | undefined,
+  capabilities: ReadonlySet<SitePackCapability> | undefined,
+  enforceAllCapabilities: boolean,
+): TabId[] {
+  return order.filter((tabId): tabId is TabId => {
+    if (!Object.prototype.hasOwnProperty.call(PANEL_TAB_CAPABILITY_REQUIREMENTS, tabId)) {
+      return false
+    }
+
+    const resolvedTabId = tabId as TabId
+    if (resolvedTabId === TAB_IDS.PROMPTS && features?.prompts?.enabled === false) {
+      return false
+    }
+    if (resolvedTabId === TAB_IDS.CONVERSATIONS && features?.conversations?.enabled === false) {
+      return false
+    }
+    if (resolvedTabId === TAB_IDS.OUTLINE && features?.outline?.enabled === false) {
+      return false
+    }
+
+    return !capabilities || isPanelTabAvailable(resolvedTabId, capabilities, enforceAllCapabilities)
+  })
+}
 
 // ==================== 输入方式与窄屏 ====================
 // 触屏为主要输入：没有悬停、指针粗。悬停展开、拖拽吸附等鼠标交互在这里要换成点按

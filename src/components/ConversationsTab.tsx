@@ -184,15 +184,8 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
   const [isNarrowLayout, setIsNarrowLayout] = useState(false)
   const currentLang = getCurrentLang()
 
-  const isConversationUnsupported = !manager.siteAdapter.hasFeatureCapability("conversation-list")
-  const unsupportedSiteLabel = manager.siteAdapter.getName() || manager.siteAdapter.getSiteId()
-  const unsupportedTitle = t("conversationsUnsupportedTitle", { site: unsupportedSiteLabel })
-  const unsupportedDesc = t("conversationsUnsupportedDesc")
-  const unsupportedSync = t("conversationsUnsupportedSync", { site: unsupportedSiteLabel })
   const [syncTargetHintSeen, setSyncTargetHintSeen] = useState<boolean | null>(null)
-  const showSyncHint = syncTargetHintSeen === false && !isConversationUnsupported
-
-  const showUnsupportedMask = isConversationUnsupported
+  const showSyncHint = syncTargetHintSeen === false
 
   // 对话框和菜单
   const [dialog, setDialog] = useState<DialogType>(null)
@@ -518,10 +511,6 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
 
   // 同步
   const handleSync = useCallback(async () => {
-    if (isConversationUnsupported) {
-      showToast(unsupportedSync)
-      return
-    }
     markSyncHintSeen()
     setSyncing(true)
     try {
@@ -561,15 +550,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
     } finally {
       setSyncing(false)
     }
-  }, [
-    isConversationUnsupported,
-    unsupportedSync,
-    manager,
-    lastUsedFolderId,
-    loadData,
-    folders,
-    markSyncHintSeen,
-  ])
+  }, [manager, lastUsedFolderId, loadData, folders, markSyncHintSeen])
 
   // 定位当前对话
   const handleLocate = useCallback(() => {
@@ -861,15 +842,6 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
           overflow: "hidden",
           position: "relative",
         }}>
-        {showUnsupportedMask && (
-          <div className="conversations-unsupported-mask" aria-hidden="true">
-            <div className="conversations-unsupported-card">
-              <div className="conversations-unsupported-icon">!</div>
-              <div className="conversations-unsupported-title">{unsupportedTitle}</div>
-              <div className="conversations-unsupported-desc">{unsupportedDesc}</div>
-            </div>
-          </div>
-        )}
         {/* 工具栏 */}
         <div className="conversations-toolbar gh-panel-toolbar">
           {/* 1. 新建文件夹 */}
@@ -919,7 +891,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
               <button
                 type="button"
                 className="conversations-toolbar-btn gh-panel-icon-btn sync"
-                disabled={syncing || isConversationUnsupported}
+                disabled={syncing}
                 aria-label={t("conversationsSync")}
                 onClick={handleSync}>
                 {syncing ? <HourglassIcon size={18} /> : <SyncIcon size={18} />}
@@ -1350,8 +1322,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                               <span>{t("conversationsEmpty")}</span>
                               {folder.id === lastUsedFolderId &&
                                 Object.keys(conversations).length === 0 &&
-                                !searchResult &&
-                                !isConversationUnsupported && (
+                                !searchResult && (
                                   <button
                                     type="button"
                                     className="conversations-empty-sync"

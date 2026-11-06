@@ -856,7 +856,8 @@ export const ko = {
   grokSyncingConversations: "대화 목록을 동기화하는 중입니다. 잠시만 기다려 주세요...",
   // Tab Order Settings
   tabOrderSettings: "탭 순서",
-  tabOrderDesc: "패널 탭의 표시 순서 조정 (드래그하여 재정렬)",
+  tabOrderDesc:
+    "드래그하여 정렬합니다. 스위치로 패널 탭을 제어하며, 지원되지 않는 기능은 자동으로 숨겨집니다",
   tabOrderAtLeastOne: "최소 하나의 기능 탭을 유지해야 합니다",
   moveUp: "위로 이동",
   moveDown: "아래로 이동",
@@ -978,9 +979,6 @@ export const ko = {
     "사이드바에서 대화를 찾지 못했습니다. 사이드바를 열고 다시 시도해 주세요.",
   conversationsSyncResult: "{added}개 대화를 “{folder}”에 동기화했습니다",
   conversationsSyncTargetChanged: "새 대화는 “{folder}”에 저장됩니다",
-  conversationsUnsupportedTitle: "{site} 대화 미지원",
-  conversationsUnsupportedDesc: "사이트 제한으로 대화 목록을 안정적으로 가져올 수 없습니다",
-  conversationsUnsupportedSync: "{site} 대화 동기화는 지원되지 않습니다",
   conversationsLocate: "현재 대화 찾기",
   conversationsLocateSuccess: "현재 대화 위치를 찾았습니다",
   conversationsLocateNotFound: "현재 대화가 추적되지 않았습니다. 동기화 중...",

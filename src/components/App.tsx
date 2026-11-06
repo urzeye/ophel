@@ -2067,16 +2067,11 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
 
         const openPromptsTab = () => {
           persistPanelExpanded(true)
-
-          const tabOrder = settings?.features?.order || DEFAULT_SETTINGS.features.order
-          const promptsTabIndex = tabOrder.indexOf(TAB_IDS.PROMPTS)
-          if (promptsTabIndex >= 0) {
-            window.dispatchEvent(
-              new CustomEvent("ophel:switchTab", {
-                detail: { index: promptsTabIndex },
-              }),
-            )
-          }
+          window.dispatchEvent(
+            new CustomEvent("ophel:switchTab", {
+              detail: { tabId: TAB_IDS.PROMPTS },
+            }),
+          )
         }
 
         const locatePrompt = () => {

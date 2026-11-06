@@ -868,7 +868,8 @@ export const es = {
   grokSyncingConversations: "Sincronizando chats, espera...",
   // Tab Order Settings
   tabOrderSettings: "Orden de las pestañas",
-  tabOrderDesc: "Orden de las pestañas del panel (arrastra para reordenar)",
+  tabOrderDesc:
+    "Arrastra para reordenar. Los interruptores controlan las pestañas; las funciones no compatibles se ocultan automáticamente",
   tabOrderAtLeastOne: "Debe permanecer activada al menos una pestaña de funciones",
   moveUp: "Subir",
   moveDown: "Bajar",
@@ -990,10 +991,6 @@ export const es = {
     "No se detectaron conversaciones en la barra lateral. Ábrela y vuelve a intentarlo.",
   conversationsSyncResult: "{added} chats sincronizados en «{folder}»",
   conversationsSyncTargetChanged: "Los chats nuevos irán a «{folder}»",
-  conversationsUnsupportedTitle: "Conversaciones de {site} no compatibles",
-  conversationsUnsupportedDesc:
-    "Las restricciones del sitio impiden obtener la lista de conversaciones de forma estable.",
-  conversationsUnsupportedSync: "La sincronización de conversaciones de {site} no está compatible.",
   conversationsLocate: "Ubicar actual",
   conversationsLocateSuccess: "Hallado",
   conversationsLocateNotFound: "No hallado, sincronizando...",

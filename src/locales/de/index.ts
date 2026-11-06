@@ -868,7 +868,8 @@ export const de = {
   grokSyncingConversations: "Chats werden geladen, bitte warten...",
   // Tab Order Settings
   tabOrderSettings: "Reihenfolge der Tabs",
-  tabOrderDesc: "Reihenfolge der Panels (zum Neuordnen ziehen)",
+  tabOrderDesc:
+    "Zum Sortieren ziehen. Schalter steuern Panel-Tabs; nicht unterstützte Funktionen werden automatisch ausgeblendet",
   tabOrderAtLeastOne: "Mindestens ein Funktions-Tab muss aktiviert bleiben",
   moveUp: "Hoch",
   moveDown: "Runter",
@@ -991,11 +992,6 @@ export const de = {
     "Keine Konversationen in der Seitenleiste erkannt. Öffne die Seitenleiste und versuche es erneut.",
   conversationsSyncResult: "{added} Chats nach „{folder}“ synchronisiert",
   conversationsSyncTargetChanged: "Neue Chats werden in „{folder}“ gespeichert",
-  conversationsUnsupportedTitle: "{site}-Unterhaltungen nicht unterstützt",
-  conversationsUnsupportedDesc:
-    "Aufgrund von Einschränkungen der Website kann die Gesprächsliste nicht zuverlässig geladen werden.",
-  conversationsUnsupportedSync:
-    "Die Synchronisierung von {site}-Unterhaltungen wird nicht unterstützt.",
   conversationsLocate: "Aktuellen finden",
   conversationsLocateSuccess: "Gefunden",
   conversationsLocateNotFound: "Nicht gefunden, synchronisiere...",
