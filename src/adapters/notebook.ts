@@ -39,6 +39,7 @@ export class NotebookAdapter extends SiteAdapter {
   private contentDirtyRoots = new WeakSet<Element>()
   private observedContentRoots: Element[] = []
   private contentObserver: MutationObserver | null = null
+  private themeClassGuard: MutationObserver | null = null
 
   match(): boolean {
     return location.hostname === "notebook.google.com"
@@ -402,33 +403,47 @@ export class NotebookAdapter extends SiteAdapter {
 
   detectHostThemeMode(): "light" | "dark" | null {
     const preference = this.detectHostThemePreference()
-    return preference === "system"
-      ? matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light"
-      : preference
-  }
-
-  async toggleTheme(preference: "light" | "dark" | "system"): Promise<boolean> {
-    const oldValue = localStorage.getItem("bcsp")
-    localStorage.setItem("bcsp", preference)
-    const resolved =
+    const mode =
       preference === "system"
         ? matchMedia("(prefers-color-scheme: dark)").matches
           ? "dark"
           : "light"
         : preference
-    // Notebook 的原生色板使用 light-dark()，color-scheme 同时驱动正文与弹层。
-    document.documentElement.style.colorScheme = resolved
-    document.body.style.colorScheme = resolved
-    window.dispatchEvent(
-      new StorageEvent("storage", {
-        key: "bcsp",
-        oldValue,
-        newValue: preference,
-        storageArea: localStorage,
-      }),
-    )
+    // 初始化期间管理器会调用本方法做主题同步检测，顺带装好 class 守卫
+    this.installNativeThemeClassGuard()
+    return mode
+  }
+
+  /**
+   * 站点色板由 body 上的 dark-theme 类驱动。应用内部主题信号只在启动时读 bcsp，
+   * 且在系统主题变化时会按其内存状态重设该类；以 localStorage 的 bcsp 为准校正，
+   * 保证页面亮暗始终与存储的偏好一致。
+   */
+  private ensureNativeThemeClass(): void {
+    const mode = this.detectHostThemeMode()
+    if (!mode || !document.body) return
+    const wantDark = mode === "dark"
+    if (document.body.classList.contains("dark-theme") !== wantDark) {
+      document.body.classList.toggle("dark-theme", wantDark)
+    }
+  }
+
+  private installNativeThemeClassGuard(): void {
+    if (this.themeClassGuard || !document.body) return
+    // 仅在 class 与偏好不一致时回写，converge 后不再产生新的 mutation，不会成环
+    this.themeClassGuard = new MutationObserver(() => this.ensureNativeThemeClass())
+    this.themeClassGuard.observe(document.body, { attributes: true, attributeFilter: ["class"] })
+  }
+
+  async toggleTheme(preference: "light" | "dark" | "system"): Promise<boolean> {
+    localStorage.setItem("bcsp", preference)
+    this.installNativeThemeClassGuard()
+    this.ensureNativeThemeClass()
+    const mode = this.detectHostThemeMode()
+    if (mode) {
+      document.documentElement.style.colorScheme = mode
+      document.body.style.colorScheme = mode
+    }
     return true
   }
 }
