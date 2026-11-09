@@ -246,6 +246,8 @@ export interface Platform {
  * 平台可选能力
  */
 export type PlatformCapability =
+  | "watermarkRemoval" // 图片去水印
+  | "notifications" // 系统通知（不包含页面提示音和标题状态）
   | "cookies" // 读写 cookies
   | "permissions" // 动态权限
   | "tabs" // 跨标签页操作

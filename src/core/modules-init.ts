@@ -20,6 +20,7 @@ import { ScrollLockManager } from "~core/scroll-lock-manager"
 import { TabManager } from "~core/tab-manager"
 import { ThemeManager, ensureGlobalThemeManager } from "~core/theme-manager"
 import { UsageCounterManager } from "~core/usage-counter-manager"
+import { platform } from "~platform"
 import { UserQueryMarkdownRenderer } from "~core/user-query-markdown"
 import { WatermarkRemover } from "~core/watermark-remover"
 import { getSettingsState, subscribeSettings } from "~stores/settings-store"
@@ -342,13 +343,21 @@ export function initUsageCounterManager(ctx: ModulesContext): void {
 export function initWatermarkRemover(ctx: ModulesContext): void {
   const { settings, siteId } = ctx
 
-  if (
-    (siteId === SITE_IDS.GEMINI || siteId === SITE_IDS.GEMINI_ENTERPRISE) &&
-    settings.content?.watermarkRemoval
-  ) {
-    modules.watermarkRemover = new WatermarkRemover()
-    modules.watermarkRemover.start()
+  syncWatermarkRemover(settings, siteId)
+}
+
+function syncWatermarkRemover(settings: Settings, siteId: string): void {
+  if (siteId !== SITE_IDS.GEMINI && siteId !== SITE_IDS.GEMINI_ENTERPRISE) return
+
+  if (!platform.hasCapability("watermarkRemoval") || !settings.content?.watermarkRemoval) {
+    modules.watermarkRemover?.stop()
+    return
   }
+
+  if (!modules.watermarkRemover) {
+    modules.watermarkRemover = new WatermarkRemover()
+  }
+  modules.watermarkRemover.start()
 }
 
 /**
@@ -628,16 +637,7 @@ export function subscribeModuleUpdates(ctx: ModulesContext): () => void {
     // 6. Watermark Remover update
     if (adapter.getEnhancementMode() === "minimal") return
 
-    if (newSettings && (siteId === SITE_IDS.GEMINI || siteId === SITE_IDS.GEMINI_ENTERPRISE)) {
-      if (newSettings.content?.watermarkRemoval) {
-        if (!modules.watermarkRemover) {
-          modules.watermarkRemover = new WatermarkRemover()
-        }
-        modules.watermarkRemover.start()
-      } else {
-        modules.watermarkRemover?.stop()
-      }
-    }
+    if (newSettings) syncWatermarkRemover(newSettings, siteId)
 
     // 7. Tab Manager update
     if (newSettings?.tab) {

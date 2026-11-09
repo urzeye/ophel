@@ -7,6 +7,7 @@ import React, { useCallback, useEffect, useState } from "react"
 import { CloudIcon, CookieIcon, NotificationIcon, SaveIcon } from "~components/icons"
 import { ConfirmDialog } from "~components/ui"
 import { useSettingsStore } from "~stores/settings-store"
+import { platform } from "~platform"
 import { t } from "~utils/i18n"
 import {
   MSG_CHECK_PERMISSIONS,
@@ -44,7 +45,9 @@ const OPTIONAL_PERMISSIONS = [
     Icon: CookieIcon,
     permissions: ["cookies"],
   },
-]
+].filter(
+  (permission) => permission.id !== "notifications" || platform.hasCapability("notifications"),
+)
 
 // 可选主机权限
 const OPTIONAL_HOST_PERMISSIONS = [

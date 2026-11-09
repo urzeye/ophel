@@ -794,6 +794,12 @@ export const pt = {
   showStatusDesc: "Ícone de carregamento na aba (⏳/✅)",
   hideStatusWhenReadLabel: "Mostrar ✅ apenas quando não lido",
   hideStatusWhenReadDesc: "Ao ativar, ✅ aparece só com a aba inativa e some ao visualizar",
+  featureUnavailableOnBrowser: "Este recurso não está disponível neste navegador",
+  completionReminderLabel: "Aviso de conclusão",
+  completionReminderSoundOnlyDesc:
+    "Reproduza um som quando a geração terminar. As notificações do sistema não estão disponíveis neste navegador.",
+  exportPartialSuccess:
+    "Texto exportado. Não foi possível baixar {count} anexos; consulte o manifesto no arquivo compactado.",
   showNotificationLabel: "Notificação de Desktop",
   showNotificationDesc: "Avisar quando a IA terminar de escrever",
   notificationSoundLabel: "Som de Aviso",

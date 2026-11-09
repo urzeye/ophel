@@ -801,6 +801,12 @@ export const ja = {
   hideStatusWhenReadLabel: "未読時のみ完了マークを表示",
   hideStatusWhenReadDesc:
     "有効にすると ✅ はタブが非アクティブの時のみ表示され、表示すると自動的に消えます",
+  featureUnavailableOnBrowser: "このブラウザではこの機能を利用できません",
+  completionReminderLabel: "完了リマインダー",
+  completionReminderSoundOnlyDesc:
+    "生成完了時に通知音を再生できます。このブラウザではシステム通知は送信されません。",
+  exportPartialSuccess:
+    "テキストをエクスポートしました。{count} 件の添付ファイルをダウンロードできませんでした。アーカイブ内の一覧を確認してください。",
   showNotificationLabel: "デスクトップ通知",
   showNotificationDesc: "AIの回答完了時にシステムの通知を送信します",
   notificationSoundLabel: "通知音",

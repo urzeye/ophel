@@ -37,6 +37,7 @@ import {
   renderKatexFallbackString,
 } from "../katex-registry"
 import { extensionStorage } from "./storage"
+import { extensionCapabilities } from "./browser-policy"
 
 export { extensionStorage }
 
@@ -228,6 +229,9 @@ export const platform: Platform = {
   },
 
   notify(options: NotifyOptions): void {
+    if (!extensionCapabilities.notifications) {
+      throw new Error("System notifications are not supported by this extension target")
+    }
     chrome.runtime.sendMessage({
       type: "SHOW_NOTIFICATION",
       title: options.title,
@@ -248,9 +252,8 @@ export const platform: Platform = {
     chrome.runtime.sendMessage({ type: "OPEN_URL", url })
   },
 
-  hasCapability(_cap: PlatformCapability): boolean {
-    // 扩展版支持所有能力
-    return true
+  hasCapability(cap: PlatformCapability): boolean {
+    return extensionCapabilities[cap]
   },
 
   async getClaudeSessionKey() {

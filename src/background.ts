@@ -13,6 +13,7 @@ import { SITE_PACK_ORIGIN_BINDINGS_STORAGE_KEY } from "~core/site-pack-storage-c
 import { extensionRegistryTransport } from "~platform/extension/registry-transport"
 import { createRuntimeSitePackRegistrationManager } from "~platform/extension/site-pack-registration-runtime"
 import { extensionStorage } from "~platform/extension/storage"
+import { extensionCapabilities } from "~platform/extension/browser-policy"
 import { APP_DISPLAY_NAME } from "~utils/config"
 import {
   MSG_CLEAR_ALL_DATA,
@@ -258,7 +259,11 @@ async function broadcastToTabs(tabs: chrome.tabs.Tab[], message: ExtensionMessag
 
 // 监听扩展安装/更新
 chrome.runtime.onInstalled.addListener(() => {
-  setupDynamicRules()
+  if (extensionCapabilities.declarativeNetRequest) {
+    void setupDynamicRules().catch((error) => {
+      console.error("[Ophel] Failed to initialize network rules:", error)
+    })
+  }
   scheduleRemoteConfigAlarmSetup()
   scheduleRemoteConfigCheck(false)
   scheduleSitePackRegistrationReconciliation("runtime-installed")
@@ -275,7 +280,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   }
 })
 
-chrome.runtime.onUpdateAvailable.addListener((details) => {
+chrome.runtime.onUpdateAvailable?.addListener((details) => {
   void (async () => {
     try {
       await broadcastToOphelTabs({
@@ -291,7 +296,11 @@ chrome.runtime.onUpdateAvailable.addListener((details) => {
 // 监听权限移除
 chrome.permissions.onRemoved.addListener(async (removed) => {
   scheduleSitePackRegistrationReconciliation("permission-removed")
-  if (removed.origins && removed.origins.includes("<all_urls>")) {
+  if (
+    extensionCapabilities.watermarkRemoval &&
+    removed.origins &&
+    removed.origins.includes("<all_urls>")
+  ) {
     // 获取当前设置
     const settings = await localStorage.get<Settings>("settings")
     if (settings && settings.content?.watermarkRemoval) {
@@ -427,6 +436,10 @@ async function setupDynamicRules() {
 chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendResponse) => {
   switch (message.type) {
     case MSG_SHOW_NOTIFICATION: {
+      if (!extensionCapabilities.notifications || !chrome.notifications?.create) {
+        sendResponse({ success: false, error: "System notifications are unavailable" })
+        break
+      }
       // 将 tabId/windowId 编码进 notifId，SW 重启后点击通知仍可正确跳转
       const tabId = sender.tab?.id
       const windowId = sender.tab?.windowId
@@ -435,24 +448,19 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
           ? encodeNotifId(tabId, windowId)
           : `ophel|${crypto.randomUUID()}`
 
-      if (chrome.notifications?.create) {
-        const options: chrome.notifications.NotificationOptions<true> = {
-          type: "basic",
-          iconUrl: chrome.runtime.getURL("assets/icon.png"),
-          title: message.title || APP_DISPLAY_NAME,
-          message: message.body || "",
-        }
-        // silent 用于禁用系统默认通知声音，由扩展自行播放自定义声音；
-        // Firefox 对 options 做严格校验、不支持 silent，传入会同步抛错导致通知创建失败
-        if (!/firefox/i.test(navigator.userAgent)) {
-          options.silent = true
-        }
-        chrome.notifications.create(notifId, options, () => {
-          if (chrome.runtime.lastError) {
-            console.error("[Ophel] Notification create failed:", chrome.runtime.lastError.message)
-          }
-        })
+      const options: chrome.notifications.NotificationOptions<true> = {
+        type: "basic",
+        iconUrl: chrome.runtime.getURL("assets/icon.png"),
+        title: message.title || APP_DISPLAY_NAME,
+        message: message.body || "",
       }
+      // Firefox 不支持 silent；其他浏览器由扩展播放自定义声音。
+      if (!/firefox/i.test(navigator.userAgent)) options.silent = true
+      chrome.notifications.create(notifId, options, () => {
+        if (chrome.runtime.lastError) {
+          console.error("[Ophel] Notification create failed:", chrome.runtime.lastError.message)
+        }
+      })
       sendResponse({ success: true })
       break
     }
@@ -591,10 +599,12 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
             throw new Error(`Blocked proxy fetch: private address ${hostname}`)
           }
 
-          // 确保规则已设置
-          const rules = await chrome.declarativeNetRequest.getDynamicRules()
-          if (!rules || rules.length === 0 || !rules.find((r) => r.id === 1001)) {
-            await setupDynamicRules()
+          // Safari 保留普通代理请求，不依赖请求头改写增强。
+          if (extensionCapabilities.declarativeNetRequest) {
+            const rules = await chrome.declarativeNetRequest.getDynamicRules()
+            if (!rules || rules.length === 0 || !rules.find((r) => r.id === 1001)) {
+              await setupDynamicRules()
+            }
           }
 
           // 携带credentials以便访问需要认证的图片资源

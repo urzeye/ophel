@@ -863,6 +863,12 @@ export const it = {
   hideStatusWhenReadLabel: "Mostra il segno di spunta solo quando non letto",
   hideStatusWhenReadDesc:
     "Se abilitato, ✅ viene visualizzato solo quando la scheda è inattiva e si nasconde una volta visualizzata",
+  featureUnavailableOnBrowser: "Questa funzione non è disponibile in questo browser",
+  completionReminderLabel: "Avviso di completamento",
+  completionReminderSoundOnlyDesc:
+    "Riproduci un suono al termine della generazione. Le notifiche di sistema non sono disponibili in questo browser.",
+  exportPartialSuccess:
+    "Testo esportato. Impossibile scaricare {count} allegati; consulta il manifesto nell’archivio.",
   showNotificationLabel: "Notifica sul desktop",
   showNotificationDesc: "Invia una notifica di sistema al termine della generazione",
   notificationSoundLabel: "Suono di notifica",

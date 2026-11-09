@@ -1,4 +1,5 @@
 import type { PlasmoCSConfig } from "plasmo"
+import { isSafariBuild } from "~platform/extension/browser-policy"
 import {
   isGeminiGeneratedImageUrl,
   normalizeGeminiImageUrl,
@@ -14,7 +15,7 @@ export const config: PlasmoCSConfig = {
   run_at: "document_start",
 }
 
-if (!window.__ophelGeminiWatermarkMainInitialized) {
+if (!isSafariBuild && !window.__ophelGeminiWatermarkMainInitialized) {
   window.__ophelGeminiWatermarkMainInitialized = true
   document.documentElement.setAttribute("data-ophel-wm-main", "1")
   document.documentElement.setAttribute("data-ophel-wm-main-fetch-enabled", "0")

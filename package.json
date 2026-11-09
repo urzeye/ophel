@@ -30,6 +30,7 @@
     "check:bundle-encoding": "tsx scripts/check-bundle-encoding.ts",
     "build": "pnpm prepare:mermaid-assets && pnpm prepare:locale-assets && plasmo build && pnpm check:bundle-encoding",
     "build:firefox": "pnpm prepare:mermaid-assets && pnpm prepare:locale-assets && plasmo build --target=firefox-mv3 && pnpm check:bundle-encoding",
+    "build:safari": "pnpm prepare:mermaid-assets && pnpm prepare:locale-assets && plasmo build --target=safari-mv3 && node scripts/strip-manifest-key.mjs build/safari-mv3-prod && pnpm check:bundle-encoding && node scripts/verify-safari-build.mjs build/safari-mv3-prod",
     "build:all": "pnpm build && pnpm build:firefox",
     "package": "pnpm build && plasmo package",
     "package:firefox": "pnpm build:firefox && node scripts/package-firefox.mjs",
@@ -174,6 +175,18 @@
         ]
       }
     ],
+    "overrides": {
+      "safari": {
+        "permissions": [
+          "storage",
+          "alarms",
+          "unlimitedStorage"
+        ],
+        "optional_permissions": [
+          "cookies"
+        ]
+      }
+    },
     "commands": {
       "open-global-url": {
         "suggested_key": {

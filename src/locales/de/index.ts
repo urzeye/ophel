@@ -797,6 +797,12 @@ export const de = {
   hideStatusWhenReadLabel: "Nur bei ungelesen anzeigen",
   hideStatusWhenReadDesc:
     "Wenn aktiviert, wird ✅ nur angezeigt, wenn der Tab inaktiv ist, und verschwindet beim Anzeigen",
+  featureUnavailableOnBrowser: "Diese Funktion ist in diesem Browser nicht verfügbar",
+  completionReminderLabel: "Erinnerung bei Abschluss",
+  completionReminderSoundOnlyDesc:
+    "Nach Abschluss der Generierung kann ein Ton abgespielt werden. Systembenachrichtigungen sind in diesem Browser nicht verfügbar.",
+  exportPartialSuccess:
+    "Text exportiert. {count} Anhänge konnten nicht heruntergeladen werden; siehe Manifest im Archiv.",
   showNotificationLabel: "Desktop-Benachrichtigung",
   showNotificationDesc: "Informieren, wenn die KI fertig ist",
   notificationSoundLabel: "Hinweiston",

@@ -961,7 +961,7 @@ export class TabManager {
     this.stopNotificationPlayback()
 
     // 发送桌面通知（使用平台抽象层，支持扩展和油猴脚本）
-    if (this.settings.showNotification) {
+    if (this.settings.showNotification && platform.hasCapability("notifications")) {
       try {
         const siteName = this.adapter.getName()
         // 使用国际化翻译，支持10种语言

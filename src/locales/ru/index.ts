@@ -792,6 +792,12 @@ export const ru = {
   hideStatusWhenReadLabel: "Галочка только для непрочитанных",
   hideStatusWhenReadDesc:
     "При включении ✅ показывается только когда вкладка неактивна и скрывается после просмотра",
+  featureUnavailableOnBrowser: "Эта функция недоступна в этом браузере",
+  completionReminderLabel: "Напоминание о завершении",
+  completionReminderSoundOnlyDesc:
+    "После завершения генерации можно воспроизвести звук. Системные уведомления в этом браузере недоступны.",
+  exportPartialSuccess:
+    "Текст экспортирован. Не удалось скачать вложения: {count}. См. манифест в архиве.",
   showNotificationLabel: "Уведомление на раб. стол",
   showNotificationDesc: "Сказать, когда ИИ закончит писать",
   notificationSoundLabel: "Звук",

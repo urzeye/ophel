@@ -786,6 +786,12 @@ export const ko = {
   hideStatusWhenReadLabel: "읽지 않았을 때만 완료 표시",
   hideStatusWhenReadDesc:
     "활성화하면 ✅는 탭이 비활성 상태일 때만 표시되며 확인 시 자동으로 숨겨집니다",
+  featureUnavailableOnBrowser: "이 브라우저에서는 이 기능을 사용할 수 없습니다",
+  completionReminderLabel: "완료 알림",
+  completionReminderSoundOnlyDesc:
+    "생성이 끝나면 알림음을 재생할 수 있습니다. 이 브라우저에서는 시스템 알림을 보내지 않습니다.",
+  exportPartialSuccess:
+    "텍스트를 내보냈습니다. 첨부 파일 {count}개를 다운로드하지 못했습니다. 압축 파일의 목록을 확인하세요.",
   showNotificationLabel: "데스크톱 알림",
   showNotificationDesc: "생성이 완료되면 시스템 알림 전송",
   notificationSoundLabel: "알림음",

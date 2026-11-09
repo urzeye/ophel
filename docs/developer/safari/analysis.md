@@ -1,6 +1,6 @@
 # Safari 核心功能适配分析
 
-日期：2026-11-09。分析基线：`63f193600`（v1.3.2）。状态：待实施；本文不代表 Safari 已可用。
+日期：2026-11-09。分析基线：`63f193600`（v1.3.2）。低风险代码适配与自动验证已完成，结果见 [tasks.csv](tasks.csv)；本文及目标构建通过均不代表 Safari 真机已验收。
 
 ## 1. 结论与范围
 
@@ -25,14 +25,14 @@ Ophel 可以继续使用 TypeScript、React、Plasmo 和现有站点适配器实
 | 核心       | SitePack 安装、授权、动态注册、停用及撤权        | 必须支持现有功能，包含来源绑定和重启后的注册恢复                                       |
 | 核心       | 页面内快捷键、标题和生成状态管理                 | 必须支持既有基础行为；验证 macOS 修饰键与系统快捷键冲突                                |
 | 增强       | Gemini 图片去水印、相关下载及复制拦截            | 首期明确不支持，不申请相关额外权限，不启动拦截器                                       |
-| 增强       | 扩展桌面通知及当前与通知绑定的提示音             | 建议首期不支持，不增加原生通知桥接；生成检测、标题状态、自动聚焦分别保留和验证         |
+| 增强       | 扩展桌面系统通知弹窗                             | 首期不支持，不增加原生通知桥接；完成检测、标题状态、提示音及重复播放保留并分别验证     |
 | 增强       | 依赖改写 Origin、Referer 等请求头的受限附件下载  | 不保证离线附件完整性；普通资源请求保留，缺失附件必须可见                               |
 | 非首期门槛 | Claude Cookie 账号切换、WebDAV、浏览器级命令     | 不直接删除，也不预先宣称兼容；分别验证，若发现阻塞则按真实能力限制入口，不影响核心链路 |
 | 后续       | iOS、iPadOS、旧版 Safari、原生 Swift 功能        | 单独评估和验收，不混入桌面核心适配                                                     |
 
-桌面通知、提示音和非首期门槛的划分属于本方案建议；用户已明确可舍弃的具体功能是去水印。实施时应公开支持范围，不把未验证功能写成已支持。
+系统通知弹窗和非首期门槛的划分属于本方案建议；用户已明确可舍弃的具体功能是去水印，并允许跳过当前做不了或改动过大的项目。提示音通过现有 Audio 路径保留，Safari 自动播放策略需要真机确认；不能因系统通知 API 缺失而一并关闭。实施时公开支持范围，不把未验证功能写成已支持。
 
-## 3. 当前证据
+## 3. 迁移前基线与外部依据
 
 ### 3.1 构建工具链可复用
 
@@ -42,11 +42,11 @@ Ophel 可以继续使用 TypeScript、React、Plasmo 和现有站点适配器实
 pnpm exec plasmo build --target=safari-mv3
 ```
 
-Plasmo 0.90.5 构建成功，输出 `build/safari-mv3-prod/`。当前产物仍包含 DNR 权限、可选通知权限和未保护的更新事件订阅，因此只是**目标构建基线通过**，不是 Safari 运行验收，也不是可发布安装包。此次未运行 Xcode、Apple 在线打包或 Safari 真机测试。
+Plasmo 0.90.5 构建成功，输出 `build/safari-mv3-prod/`。迁移前的基线产物仍包含 DNR 权限、可选通知权限和未保护的更新事件订阅，因此只是**目标构建基线通过**，不是 Safari 运行验收，也不是可发布安装包。迁移后的权限裁剪和验证结果见第 7 节。此次未运行 Xcode、Apple 在线打包或 Safari 真机测试。
 
 命令另外提示当前 pnpm 不再读取 `package.json` 内的 `pnpm.patchedDependencies`。本次构建未因此失败；后续正式构建仍须验证现有 KaTeX 补丁和产物编码，不能把环境警告误算成 Safari 兼容结论。
 
-### 3.2 源码与迁移影响
+### 3.2 迁移前源码与影响
 
 | 当前事实                                                          | 源码位置                                                         | 迁移影响                                                                         |
 | ----------------------------------------------------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------- |
@@ -57,7 +57,7 @@ Plasmo 0.90.5 构建成功，输出 `build/safari-mv3-prod/`。当前产物仍�
 | 去水印由设置控制，初始化和热更新都有启动路径                      | `src/core/modules-init.ts`                                       | 仅隐藏开关不够；旧数据、备份恢复仍可能启动模块                                   |
 | 去水印主环境入口会包装 `window.fetch`                             | `src/contents/gemini-watermark-main.ts`                          | 即便开关关闭也有包装副作用；Safari 应在注册副作用之前退出                        |
 | 去水印设置会申请 `<all_urls>`                                     | `src/tabs/options/pages/GeminiSettings.tsx`                      | Safari 不展示可开启入口，不触发此授权；SitePack 和 WebDAV 的按需授权另行保留     |
-| 桌面通知、提示音共用完成回调中的设置开关                          | `src/core/tab-manager.ts`、Options 的 `FeaturesPage.tsx`         | 桌面通知限制不能连带停掉生成状态检测和标题管理，也不新增声音独立模式             |
+| 桌面通知、提示音共用完成回调中的设置开关                          | `src/core/tab-manager.ts`、Options 的 `FeaturesPage.tsx`         | 系统通知发送单独按能力约束，保留声音设置、生成检测和标题；不新增持久化字段       |
 | 权限页静态列出通知权限                                            | `src/tabs/options/pages/PermissionsPage.tsx`                     | 需要与平台能力一致，避免展示无法授予的权限                                       |
 | NetworkMonitor、滚动锁、编辑器桥接等使用 MAIN world               | `src/contents/*-main.ts`、`monitor-entry.ts`                     | 核心依赖，不能随去水印入口一并移除                                               |
 | Plasmo 通过后台 `registerContentScripts()` 注册 MAIN world 脚本   | 已安装 Plasmo 0.90.5 的生成逻辑                                  | 不应假设它们已经写入静态 manifest；注册失败不能继续静默忽略                      |
@@ -148,4 +148,14 @@ Safari 不调用 DNR 规则初始化；普通 `MSG_PROXY_FETCH` 继续走已有�
 
 Apple 提供 Xcode/Mac 命令行打包，也提供 App Store Connect 在线打包；命令行工具现名 `safari-web-extension-packager`，旧名是 `safari-web-extension-converter`。在线打包不要求本地 Mac/Xcode，但运行验证仍需真实目标设备，不用 Playwright WebKit 代替 Safari 扩展测试。[Apple 打包说明](https://developer.apple.com/documentation/safariservices/packaging-a-web-extension-for-safari)、[在线分发说明](https://developer.apple.com/documentation/safariservices/packaging-and-distributing-safari-web-extensions-with-app-store-connect)
 
-App Store 分发通常需要 Apple Developer Program，标准费用为每年 99 美元，地区价格和减免以账户显示为准。是否上架、使用何种签名/分发渠道作为后续发布步骤，本次仅新建分支和提交方案文档，不上传、不发布。[Apple 会员说明](https://developer.apple.com/programs/enroll/)
+App Store 分发通常需要 Apple Developer Program，标准费用为每年 99 美元，地区价格和减免以账户显示为准。打包与上架是后续发布步骤；当前生成了扩展构建产物，尚未制作 Apple 安装包或发布。[Apple 会员说明](https://developer.apple.com/programs/enroll/)
+
+## 7. 已实施范围与验证记录
+
+当前执行状态统一维护在 [tasks.csv](tasks.csv)。已完成浏览器能力策略、后台可选 API 保护、Safari 普通代理与 DNR 解耦、去水印完整禁用、提示音保留、SitePack 资源路径兼容、附件缺失反馈、目标权限裁剪和产物检查，并把测试与 Safari 构建接入 CI。
+
+验证结果：39 项自动测试通过，覆盖实际油猴平台模块、Chrome/Firefox 请求与系统通知选项、去水印生命周期、提示音重复播放、导出 ZIP 内容及产物错误输入。格式、类型和注册表检查通过；Lint 为 0 错误、109 条警告，修改文件的警告数与基线一致，新增文件无警告。Chrome、Firefox、油猴及 Safari 构建均通过；另执行三个目标的编译后去水印脚本，Chrome/Firefox 安装原钩子、Safari 不安装，Chrome/Firefox 产物权限与迁移前基线完全一致。
+
+在 Chrome 中加载 Chrome/Safari 两套编译后的 Options 页面，使用模拟扩展 API 做了界面冒烟：Chrome 去水印仍可开启且请求通知权限；Safari 去水印禁用但不改存储原值，完成提醒不申请通知权限，声音设置仍可操作；权限页移除系统通知项并保留 cookies 和可选站点授权。该检查不代表真实 Safari 扩展安装或真实站点工作流通过。
+
+按用户要求跳过原生通知工程、Apple 打包分发、移动端和旧版本兼容。当前无 Safari 设备，真实站点、后台播放策略、大容量存储和安装包验收明确未完成；没有据此改写 Plasmo 注册机制、增加原生代理或修改存储 schema。

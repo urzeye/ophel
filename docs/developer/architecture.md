@@ -191,7 +191,10 @@ pnpm build
 # 构建 Firefox 扩展
 pnpm build:firefox
 
-# 构建所有平台
+# 构建 Safari 实验目标（含权限裁剪和产物检查，尚未通过 Safari 真机验收）
+pnpm build:safari
+
+# 构建现有 Chrome / Firefox 目标
 pnpm build:all
 
 # 构建油猴脚本

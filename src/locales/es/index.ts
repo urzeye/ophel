@@ -796,6 +796,12 @@ export const es = {
   hideStatusWhenReadLabel: "Mostrar ✅ solo cuando no leído",
   hideStatusWhenReadDesc:
     "Al activar, ✅ solo aparece con la pestaña inactiva y se oculta al visualizarla",
+  featureUnavailableOnBrowser: "Esta función no está disponible en este navegador",
+  completionReminderLabel: "Aviso de finalización",
+  completionReminderSoundOnlyDesc:
+    "Reproduce un sonido al finalizar la generación. Las notificaciones del sistema no están disponibles en este navegador.",
+  exportPartialSuccess:
+    "Texto exportado. No se pudieron descargar {count} archivos adjuntos; consulta el manifiesto del archivo comprimido.",
   showNotificationLabel: "Notificación Escritorio",
   showNotificationDesc: "Avisar cuando termine de escribir",
   notificationSoundLabel: "Sonido de Aviso",

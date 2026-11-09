@@ -836,6 +836,12 @@ export const en = {
   hideStatusWhenReadLabel: "Only show checkmark when unread",
   hideStatusWhenReadDesc:
     "When enabled, ✅ only shows when the tab is inactive and hides once you view it",
+  featureUnavailableOnBrowser: "This feature is unavailable in this browser",
+  completionReminderLabel: "Completion reminder",
+  completionReminderSoundOnlyDesc:
+    "Play a sound when generation finishes. System notifications are unavailable in this browser.",
+  exportPartialSuccess:
+    "Text exported. {count} attachments could not be downloaded; see the manifest in the archive.",
   showNotificationLabel: "Desktop Notification",
   showNotificationDesc: "Send system notification when generation completes",
   notificationSoundLabel: "Notification Sound",

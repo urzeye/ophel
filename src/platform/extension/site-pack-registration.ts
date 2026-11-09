@@ -117,7 +117,14 @@ const normalizeExtensionAssetPath = (assetPath: string): string => {
   const normalized = assetPath.replaceAll("\\", "/")
   try {
     const url = new URL(normalized)
-    if (url.protocol === "chrome-extension:" || url.protocol === "moz-extension:") {
+    if (
+      [
+        "chrome-extension:",
+        "moz-extension:",
+        "safari-web-extension:",
+        "safari-extension:",
+      ].includes(url.protocol)
+    ) {
       return url.pathname.replace(/^\/+/, "")
     }
   } catch {

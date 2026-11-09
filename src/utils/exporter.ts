@@ -2211,7 +2211,17 @@ export async function downloadExportPackage(input: ExportPackageInput): Promise<
 
   try {
     const zipBlob = await createZipBlob(files)
-    return await downloadBlob(zipBlob, input.packageFilename)
+    const downloaded = await downloadBlob(zipBlob, input.packageFilename)
+    if (downloaded) {
+      const missingCount = manifestAssets.filter((asset) => !asset.included).length
+      showToast(
+        missingCount > 0
+          ? t("exportPartialSuccess", { count: String(missingCount) })
+          : t("exportSuccess"),
+        missingCount > 0 ? 5000 : 2000,
+      )
+    }
+    return downloaded
   } catch (error) {
     console.error("[Exporter] Package download failed:", error)
     showToast(t("exportFailed"))

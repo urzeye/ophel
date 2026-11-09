@@ -800,6 +800,12 @@ export const fr = {
   hideStatusWhenReadLabel: "Afficher ✅ seulement si non lu",
   hideStatusWhenReadDesc:
     "Activé, ✅ s'affiche uniquement quand l'onglet est inactif et disparaît dès consultation",
+  featureUnavailableOnBrowser: "Cette fonction n’est pas disponible dans ce navigateur",
+  completionReminderLabel: "Rappel de fin",
+  completionReminderSoundOnlyDesc:
+    "Jouez un son à la fin de la génération. Les notifications système ne sont pas disponibles dans ce navigateur.",
+  exportPartialSuccess:
+    "Texte exporté. Impossible de télécharger {count} pièces jointes ; consultez le manifeste dans l’archive.",
   showNotificationLabel: "Notification de Bureau",
   showNotificationDesc: "Prévenir quand l'IA a fini d'écrire",
   notificationSoundLabel: "Son d'Alerte",
