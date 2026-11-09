@@ -465,7 +465,8 @@ export const es = {
   promptDeleteConfirm: "Este prompt se eliminará permanentemente.",
   promptSettingsTitle: "Configuración de prompts",
   promptSubmitShortcutLabel: "Atajo de envío",
-  promptSubmitShortcutDesc: "Se aplica tanto al envío manual como al envío automático de prompts.",
+  promptSubmitShortcutDesc:
+    "Elige la tecla de envío para el chat. Si seleccionas Ctrl + Enter, Enter inserta un salto de línea. Este ajuste también se aplica al envío automático de prompts y desde la cola.",
   promptSubmitShortcutEnter: "Enter",
   promptSubmitShortcutCtrlEnter: "Ctrl + Enter",
   promptDoubleClickSendLabel: "Enviar prompt con doble clic",
@@ -1354,6 +1355,8 @@ Dame el código y luego un resumen de mejoras.`,
   shortcutNotSet: "No configurado",
   shortcutRemove: "Eliminar",
   shortcutsGlobalSearchOpenSettings: "Abrir ajustes de la búsqueda global",
+  shortcutsSendMessageOpenSettings: "Abrir ajustes del atajo de envío",
+  shortcutSendMessage: "Enviar mensaje",
 
   // Shortcut Categories
   shortcutCategoryNavigation: "Ir a",

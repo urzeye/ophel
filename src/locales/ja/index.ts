@@ -467,7 +467,8 @@ export const ja = {
   promptDeleteConfirm: "このプロンプトは完全に削除されます。",
   promptSettingsTitle: "プロンプト設定",
   promptSubmitShortcutLabel: "送信ショートカット",
-  promptSubmitShortcutDesc: "手動送信とプロンプト自動送信の両方に適用されます。",
+  promptSubmitShortcutDesc:
+    "チャット入力欄の送信キーを選択します。Ctrl + Enter にすると、Enter で改行します。プロンプトの自動送信とキューからの送信にも適用されます。",
   promptSubmitShortcutEnter: "Enter",
   promptSubmitShortcutCtrlEnter: "Ctrl + Enter",
   promptDoubleClickSendLabel: "ダブルクリックでプロンプト送信",
@@ -1400,6 +1401,8 @@ export const ja = {
   shortcutNotSet: "未設定",
   shortcutRemove: "削除",
   shortcutsGlobalSearchOpenSettings: "グローバル検索の設定を開く",
+  shortcutsSendMessageOpenSettings: "送信ショートカットの設定を開く",
+  shortcutSendMessage: "メッセージを送信",
 
   // Shortcut Categories
   shortcutCategoryNavigation: "ナビゲーション",

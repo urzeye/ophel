@@ -465,7 +465,8 @@ export const pt = {
   promptDeleteConfirm: "Este prompt será excluído permanentemente.",
   promptSettingsTitle: "Configurações de prompts",
   promptSubmitShortcutLabel: "Atalho de envio",
-  promptSubmitShortcutDesc: "Aplica-se ao envio manual e ao envio automático de prompts.",
+  promptSubmitShortcutDesc:
+    "Escolha a tecla de envio no campo de texto do chat. Com Ctrl + Enter selecionado, Enter insere uma nova linha. Esta configuração também se aplica ao envio automático de prompts e ao envio pela fila.",
   promptSubmitShortcutEnter: "Enter",
   promptSubmitShortcutCtrlEnter: "Ctrl + Enter",
   promptDoubleClickSendLabel: "Enviar prompt com clique duplo",
@@ -1492,6 +1493,8 @@ Dê o código e depois um resumo de melhorias.`,
   shortcutNotSet: "Não definido",
   shortcutRemove: "Remover",
   shortcutsGlobalSearchOpenSettings: "Abrir configurações da pesquisa global",
+  shortcutsSendMessageOpenSettings: "Abrir configurações do atalho de envio",
+  shortcutSendMessage: "Enviar mensagem",
 
   // Shortcut Categories
   shortcutCategoryNavigation: "Navegação",

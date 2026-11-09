@@ -459,7 +459,8 @@ export const ko = {
   promptDeleteConfirm: "이 프롬프트는 영구적으로 삭제됩니다.",
   promptSettingsTitle: "프롬프트 설정",
   promptSubmitShortcutLabel: "전송 단축키",
-  promptSubmitShortcutDesc: "수동 전송과 프롬프트 자동 전송 모두에 적용됩니다.",
+  promptSubmitShortcutDesc:
+    "채팅 입력창의 전송 키를 선택합니다. Ctrl + Enter로 설정하면 Enter는 줄바꿈에 사용됩니다. 프롬프트 자동 전송과 대기열 전송에도 적용됩니다.",
   promptSubmitShortcutEnter: "Enter",
   promptSubmitShortcutCtrlEnter: "Ctrl + Enter",
   promptDoubleClickSendLabel: "더블클릭으로 프롬프트 전송",
@@ -1350,6 +1351,8 @@ export const ko = {
   shortcutNotSet: "미설정",
   shortcutRemove: "제거",
   shortcutsGlobalSearchOpenSettings: "전역 검색 설정 열기",
+  shortcutsSendMessageOpenSettings: "전송 단축키 설정 열기",
+  shortcutSendMessage: "메시지 보내기",
 
   // Shortcut Categories
   shortcutCategoryNavigation: "탐색",

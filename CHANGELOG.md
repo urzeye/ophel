@@ -13,6 +13,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 - **Experimental Safari support** — Added desktop Safari experimental adaptation, retaining core functions. It does not currently support system notifications, automatic top tabs after AI generation, and Gemini watermark removal. (#1030)
 
+### ✨ Improvements
+
+- **Send shortcut** — Shortcuts now shows the current send-message key with a link to its setting, which also explains how sending and line breaks work. (#1032)
+
 ---
 
 ## [1.3.2][1.3.2] - 2026-11-09

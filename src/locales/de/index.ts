@@ -466,7 +466,7 @@ export const de = {
   promptSettingsTitle: "Prompt-Einstellungen",
   promptSubmitShortcutLabel: "Sende-Tastenkürzel",
   promptSubmitShortcutDesc:
-    "Gilt sowohl für manuelles Senden als auch für automatisches Senden von Prompts.",
+    "Wähle die Sendetaste für das Chat-Eingabefeld. Bei Ctrl + Enter fügt Enter einen Zeilenumbruch ein. Diese Einstellung gilt auch für den automatischen Prompt-Versand und das Senden aus der Warteschlange.",
   promptSubmitShortcutEnter: "Enter",
   promptSubmitShortcutCtrlEnter: "Ctrl + Enter",
   promptDoubleClickSendLabel: "Prompt per Doppelklick senden",
@@ -1359,6 +1359,8 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   shortcutNotSet: "Nicht gesetzt",
   shortcutRemove: "Entfernen",
   shortcutsGlobalSearchOpenSettings: "Einstellungen der globalen Suche öffnen",
+  shortcutsSendMessageOpenSettings: "Einstellungen für das Sende-Tastenkürzel öffnen",
+  shortcutSendMessage: "Nachricht senden",
 
   // Shortcut Categories
   shortcutCategoryNavigation: "Navigation",
