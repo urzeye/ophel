@@ -1,16 +1,17 @@
 id,plan_task,task,status,validation,notes
 SA01,1,建立Safari构建入口与基线,done,pnpm build:safari通过,Node22.16 pnpm9.15 Plasmo0.90.5；包含资源准备和编码及产物验证
-SA02,2,集中浏览器能力判断,done,capabilities.test.ts通过,Chrome Firefox Edge能力保持；Safari关闭三项增强；油猴新增能力显式保留
+SA02,2,集中浏览器能力判断,done,删除测试前的历史验证通过,Chrome Firefox Edge能力保持；Safari关闭系统通知、去水印、自动聚焦及DNR增强；油猴能力显式保留
 SA03,2,修复后台可选API与普通代理请求,done,background-startup.test.ts九项通过,无可选API仍启动；普通代理与内网限制保留；Chrome和Firefox原系统通知选项及DNR路径通过
 SA04,3,关闭Safari去水印全部副作用,done,生命周期四平台用例及三个目标编译后脚本执行通过,恢复旧设置与热更新不启动Safari去水印且不改存储；Chrome和Firefox编译后仍安装钩子而Safari不安装
-SA05,3,保留提示音并隔离系统通知,done,notifications.test.ts通过,无系统通知时仍播放并重复声音且保留聚焦；UI绕过通知授权；自动播放待真机
+SA05,3,保留提示音并隔离系统通知及自动聚焦,done,删除测试前的历史验证通过,无系统通知时仍播放并重复声音；Safari不启用自动聚焦；UI绕过通知授权；自动播放待完整真机验收
 SA06,4,检查核心MAIN与SitePack注册,done,SitePack五项测试及真实产物九入口检查通过,补齐Safari资源URL归一化；保留原注册时机和模板；运行时验收另见SA11
 SA07,5,处理附件缺失反馈与文本导出,done,export.test.ts三项通过,读取真实ZIP核对文本与成功附件及失败清单；提示不被调用方覆盖；四种文本格式通过
 SA08,5,Safari权限裁剪与产物验证,done,Safari目标构建及manifest九项用例通过,无Chrome key且保留九个MAIN入口；Chrome与Firefox产物权限同基线完全一致；缺文件和错误权限均失败
 SA09,6,执行针对性测试及四平台构建回归,done,39项自动测试及四平台构建通过,格式类型注册表通过；lint零错误且修改文件警告数与基线一致；无新增警告；手工真机验收另见SA11
-SA10,6,接入Safari构建CI并更新文档,done,本地执行CI所用测试与构建命令通过,已添加CI步骤并修正通知与声音范围；架构命令和分析及计划同步实际结果；远端CI未触发
+SA10,6,接入Safari发布构建并同步文档,done,仅静态检查工作流配置,release.yml构建并上传Safari资源zip；仅供macOS Safari临时加载；暂无商店版或签名应用；PR CI不运行Safari测试或构建；发布流程未触发
 SA11,4/5/6,Safari真机与大容量及多站点验收,skipped_environment,未运行,当前Windows无真实Safari或Apple设备；不以WebKit模拟替代
 SA12,3/6,原生系统通知与Apple打包分发,skipped_scope,未运行,需原生工程或Apple账号及设备；按用户要求跳过改动过大和当前做不了的部分
 SA13,6,iOS与旧版Safari适配,skipped_scope,未运行,超出首期桌面核心范围；不改移动授权和旧版本注入
 SA14,3/6,编译产物设置页冒烟,done,Chrome浏览器加模拟扩展API,Chrome与Safari产物分别验证提醒开关和通知授权及去水印旧值和权限列表；不代表Safari真机或全站点回归
 SA15,4,重写Plasmo主环境注册与就绪流程,skipped_scope,未改动,当前无真机失败证据；涉及框架及SitePack时序耦合；按用户要求保留现有机制并只补资源路径兼容
+SA16,6,删除仓库测试目录,done,静态核对删除范围及配置引用,按用户要求移除tests目录和Vitest setupFiles引用；原测试结果仅保留为历史记录

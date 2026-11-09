@@ -152,7 +152,9 @@ App Store 分发通常需要 Apple Developer Program，标准费用为每年 99 
 
 ## 7. 已实施范围与验证记录
 
-当前执行状态统一维护在 [tasks.csv](tasks.csv)。已完成浏览器能力策略、后台可选 API 保护、Safari 普通代理与 DNR 解耦、去水印完整禁用、提示音保留、SitePack 资源路径兼容、附件缺失反馈、目标权限裁剪和产物检查，并把测试与 Safari 构建接入 CI。
+当前执行状态统一维护在 [tasks.csv](tasks.csv)。已完成浏览器能力策略、后台可选 API 保护、Safari 普通代理与 DNR 解耦、去水印完整禁用、提示音保留、SitePack 资源路径兼容、附件缺失反馈、目标权限裁剪和产物检查。发布工作流 `release.yml` 已配置 Safari 构建、资源 zip 打包和 Release 附件上传。目前不计划上架 Safari 商店，不提供已签名原生应用；在提供“添加临时扩展”入口的 macOS Safari 中，可直接选择该 zip 或包含 `manifest.json` 的解压目录，无需 Xcode 项目或付费 Apple 开发者会员。临时扩展会在 24 小时后或退出 Safari 时移除，需要重新添加；正式应用分发仍需另外打包。详见 [Apple 临时安装说明](https://developer.apple.com/documentation/safariservices/running-your-safari-web-extension)。PR CI 仍只构建 Chrome，未配置 Safari 测试或构建步骤。
+
+按用户要求已删除仓库 `tests/` 目录，并移除 Vitest 对 `tests/setup.ts` 的引用。下述测试数量和结果是删除前的历史验证记录，不代表当前仓库仍保留测试入口；本次工作流修改仅静态检查，尚未运行发布流程。
 
 ### Safari 测试反馈：适配包启用与窗口聚焦
 
@@ -160,7 +162,7 @@ App Store 分发通常需要 Apple Developer Program，标准费用为每年 99 
 - 原窗口聚焦消息在调用完成前立即回复成功，平台层也不读取响应，真实失败只写入后台日志。聚焦链路已改为等待实际结果，并处理最小化窗口。用户在 Safari 复测后仍不能自动切回，因此按当前扩展的功能范围将 Safari 的 `windowFocus` 能力设为 false：设置页明确提示“Safari 不支持自动将窗口带回前台”并禁用开关，旧设置保留但不触发聚焦，后台拒绝该请求。此处描述的是 Ophel 的自动切前台功能，不表示 Safari 没有窗口 API；Chrome、Firefox 和油猴保持原有能力。
 - 原适配包错误只放入单行省略号 Toast，页面没有记录异常。现复用错误详情弹窗展示完整、可选择复制的内容，并在 Options 页控制台记录异常；后台错误仍在扩展后台的独立控制台。不要仅检查站点页面控制台。
 
-本次 51 项自动测试、类型和全仓格式检查通过；Safari、Chrome、Firefox 和油猴构建通过。新增回归覆盖小写 world、保持 MAIN/ISOLATED 区分、连续对账不重复注册、聚焦异步响应、最小化恢复、浏览器拒绝聚焦、消息通道异常及页面失败反馈，以及 Safari 旧聚焦设置不触发请求且保留声音提醒。
+删除测试代码前的验证记录：51 项自动测试、类型和全仓格式检查通过；Safari、Chrome、Firefox 和油猴构建通过。当时的回归覆盖小写 world、保持 MAIN/ISOLATED 区分、连续对账不重复注册、聚焦异步响应、最小化恢复、浏览器拒绝聚焦、消息通道异常及页面失败反馈，以及 Safari 旧聚焦设置不触发请求且保留声音提醒。
 
 在 Chromium 中加载 Safari 编译后的 Options 页并模拟扩展 API，验证启用失败会回滚、页面控制台记录异常、1049 字符错误全文保持且不横向截断。浅色/深色与 390/1280 像素窗口下，详情内容单独滚动，关闭按钮保持可见，Esc 可关闭并将焦点还给原开关。该检查不代表真实 Safari 扩展 API 通过。完成提醒文案明确为“Safari 不支持系统通知；生成完成后可播放提示音”，两处 Safari 功能说明同步 11 种语言；额外加载旧设置中 `autoFocus: true`，确认 Safari 的开关仍禁用、显示关闭，存储原值不变。
 
