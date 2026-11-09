@@ -149,6 +149,7 @@ export const SETTING_SEARCH_TITLE_KEY_MAP: Record<string, string> = {
   "shortcuts-enabled": "enableShortcuts",
   "shortcuts-global-url": "globalShortcutUrl",
   "shortcuts-browser-shortcuts": "globalShortcutsTitle",
+  "shortcuts-send-message-link": "shortcutSendMessage",
   "shortcuts-prompt-submit-shortcut": "promptSubmitShortcutLabel",
   // 站点设置页的分组锚点（页面布局 / 模型锁定 / 隐藏页面），route 不带 subTab，落到当前站点
   "site-settings-layout": "tabLayout",

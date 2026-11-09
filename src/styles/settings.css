@@ -6034,7 +6034,8 @@ html[data-theme="dark"] .about-privacy-banner {
   gap: 8px;
 }
 
-.settings-shortcut-input {
+.settings-shortcut-input,
+.settings-shortcut-value {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -6046,8 +6047,11 @@ html[data-theme="dark"] .about-privacy-banner {
   border-radius: 8px;
   background: var(--gh-bg, #ffffff);
   color: var(--gh-text, #1f2937);
-  cursor: pointer;
   text-align: center;
+}
+
+.settings-shortcut-input {
+  cursor: pointer;
   transition:
     border-color 0.18s ease,
     background-color 0.18s ease,
@@ -6105,7 +6109,8 @@ html[data-theme="dark"] .about-privacy-banner {
 }
 
 /* 只读场景去掉键帽的按压阴影，避免看起来像可点击按钮 */
-.settings-global-search-shortcut .settings-kbd {
+.settings-global-search-shortcut .settings-kbd,
+.settings-shortcut-value .settings-kbd {
   box-shadow: none;
 }
 

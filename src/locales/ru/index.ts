@@ -461,7 +461,8 @@ export const ru = {
   promptDeleteConfirm: "Этот промпт будет удалён безвозвратно.",
   promptSettingsTitle: "Настройки промптов",
   promptSubmitShortcutLabel: "Горячая клавиша отправки",
-  promptSubmitShortcutDesc: "Применяется и к ручной отправке, и к автоотправке промптов.",
+  promptSubmitShortcutDesc:
+    "Выберите клавишу отправки в поле ввода чата. При выборе Ctrl + Enter клавиша Enter вставляет перенос строки. Настройка также применяется к автоотправке промптов и отправке из очереди.",
   promptSubmitShortcutEnter: "Enter",
   promptSubmitShortcutCtrlEnter: "Ctrl + Enter",
   promptDoubleClickSendLabel: "Отправлять промпт двойным кликом",
@@ -1351,6 +1352,8 @@ export const ru = {
   shortcutNotSet: "Не задано",
   shortcutRemove: "Удалить",
   shortcutsGlobalSearchOpenSettings: "Открыть настройки глобального поиска",
+  shortcutsSendMessageOpenSettings: "Открыть настройки горячей клавиши отправки",
+  shortcutSendMessage: "Отправить сообщение",
 
   // Shortcut Categories
   shortcutCategoryNavigation: "Навигация",

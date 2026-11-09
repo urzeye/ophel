@@ -235,6 +235,14 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
     )
   }, [])
 
+  const openSubmitShortcutSettings = useCallback(() => {
+    window.dispatchEvent(
+      new CustomEvent("ophel:navigateSettingsPage", {
+        detail: { settingId: "shortcuts-prompt-submit-shortcut" },
+      }),
+    )
+  }, [])
+
   // 恢复默认快捷键确认弹窗状态
   const [showResetConfirm, setShowResetConfirm] = useState(false)
 
@@ -364,6 +372,34 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
 
       {groupedActions.map(({ categoryId, categoryMeta, actions }) => (
         <SettingCard key={categoryId} title={t(categoryMeta.labelKey)}>
+          {categoryId === "edit" && (
+            <SettingRow
+              label={t("shortcutSendMessage")}
+              disabled={!shortcuts?.enabled}
+              settingId="shortcuts-send-message-link">
+              <div className="settings-shortcut-container">
+                <Tooltip content={t("shortcutsSendMessageOpenSettings")}>
+                  <button
+                    type="button"
+                    className="settings-shortcut-link-btn"
+                    disabled={!shortcuts?.enabled}
+                    onClick={openSubmitShortcutSettings}
+                    aria-label={t("shortcutsSendMessageOpenSettings")}>
+                    <SlidersHorizontalIcon size={13} />
+                  </button>
+                </Tooltip>
+                <span className="settings-shortcut-value">
+                  {settings.features?.prompts?.submitShortcut === "ctrlEnter" && (
+                    <>
+                      <kbd className="settings-kbd">Ctrl</kbd>
+                      <span className="settings-kbd-separator">+</span>
+                    </>
+                  )}
+                  <kbd className="settings-kbd">{t("promptSubmitShortcutEnter")}</kbd>
+                </span>
+              </div>
+            </SettingRow>
+          )}
           {actions.map(([actionId, meta]) => {
             const userBinding = shortcuts?.keybindings?.[actionId]
             const binding =

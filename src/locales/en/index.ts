@@ -465,7 +465,8 @@ export const en = {
   promptDeleteConfirm: "This prompt will be permanently deleted.",
   promptSettingsTitle: "Prompts Settings",
   promptSubmitShortcutLabel: "Send shortcut",
-  promptSubmitShortcutDesc: "Applies to both manual send and prompt auto-send.",
+  promptSubmitShortcutDesc:
+    "Choose the send key for the chat input. With Ctrl + Enter selected, Enter inserts a new line. Prompt auto-send and queue sending also use this setting.",
   promptSubmitShortcutEnter: "Enter",
   promptSubmitShortcutCtrlEnter: "Ctrl + Enter",
   promptDoubleClickSendLabel: "Double-click to send prompt",
@@ -1442,6 +1443,8 @@ Please output the optimized code block directly, followed by a brief summary of 
   shortcutNotSet: "Not set",
   shortcutRemove: "Remove",
   shortcutsGlobalSearchOpenSettings: "Open Global Search settings",
+  shortcutsSendMessageOpenSettings: "Open send shortcut settings",
+  shortcutSendMessage: "Send message",
 
   // Shortcut Categories
   shortcutCategoryNavigation: "Navigation",

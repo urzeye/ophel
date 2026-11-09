@@ -2397,6 +2397,11 @@ export const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
     keywords: ["shortcuts", "browser shortcuts", "chrome://extensions/shortcuts", "快捷键"],
   },
   {
+    settingId: "shortcuts-send-message-link",
+    title: "发送消息",
+    keywords: ["shortcuts", "send message", "submit", "enter", "ctrl+enter", "发送消息", "快捷键"],
+  },
+  {
     settingId: "shortcuts-prompt-submit-shortcut",
     title: "发送快捷键",
     keywords: ["shortcuts", "submit", "enter", "ctrl+enter", "发送", "快捷键"],

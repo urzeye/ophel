@@ -477,7 +477,7 @@ export const it = {
   promptSettingsTitle: "Impostazioni dei suggerimenti",
   promptSubmitShortcutLabel: "Invia scorciatoia",
   promptSubmitShortcutDesc:
-    "Si applica sia all'invio manuale che all'invio automatico tramite richiesta.",
+    "Scegli il tasto di invio per la chat. Se selezioni Ctrl + Enter, Enter inserisce una nuova riga. Questa impostazione si applica anche all’invio automatico dei prompt e dalla coda.",
   promptSubmitShortcutEnter: "Enter",
   promptSubmitShortcutCtrlEnter: "Ctrl+Enter",
   promptDoubleClickSendLabel: "Fare doppio clic per inviare la richiesta",
@@ -1483,6 +1483,8 @@ export const it = {
   shortcutNotSet: "Non impostato",
   shortcutRemove: "Rimuovi",
   shortcutsGlobalSearchOpenSettings: "Apri le impostazioni della ricerca globale",
+  shortcutsSendMessageOpenSettings: "Apri le impostazioni della scorciatoia di invio",
+  shortcutSendMessage: "Invia messaggio",
 
   // Shortcut Categories
   shortcutCategoryNavigation: "Navigazione",

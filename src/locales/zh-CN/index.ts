@@ -495,7 +495,8 @@ export const zhCN = {
   promptDeleteConfirm: "该提示词删除后无法恢复。",
   promptSettingsTitle: "提示词设置",
   promptSubmitShortcutLabel: "发送快捷键",
-  promptSubmitShortcutDesc: "同时作用于手动发送与提示词自动发送",
+  promptSubmitShortcutDesc:
+    "选择聊天输入框的发送按键。设为 Ctrl + Enter 时，Enter 用于换行；提示词自动发送和队列发送也使用此设置。",
   promptSubmitShortcutEnter: "Enter",
   promptSubmitShortcutCtrlEnter: "Ctrl + Enter",
   promptDoubleClickSendLabel: "双击提示词直接发送",
@@ -1385,6 +1386,8 @@ export const zhCN = {
   shortcutNotSet: "未设置",
   shortcutRemove: "移除",
   shortcutsGlobalSearchOpenSettings: "前往全局搜索设置",
+  shortcutsSendMessageOpenSettings: "前往发送快捷键设置",
+  shortcutSendMessage: "发送消息",
 
   // 快捷键分类
   shortcutCategoryNavigation: "导航",
