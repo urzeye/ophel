@@ -554,7 +554,8 @@ export class OutlineManager {
   getBookmarkSessionId(sourceId = this.activeSourceId): string {
     const sessionId = this.siteAdapter.getSessionId()
     if (sourceId === "conversation") return sessionId
-    return `${sessionId}::${this.siteAdapter.getOutlineContentId(sourceId)}`
+    // 持久书签沿用稳定栏目键，正文指纹只用于临时导航和刷新。
+    return `${sessionId}::${sourceId}`
   }
 
   getTree(): OutlineNode[] {

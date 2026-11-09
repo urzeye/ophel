@@ -101,6 +101,14 @@ export class NotebookAdapter extends SiteAdapter {
     return [...(this.config.selectors.textarea ?? [])]
   }
 
+  isValidTextarea(element: HTMLElement): boolean {
+    return (
+      super.isValidTextarea(element) &&
+      element instanceof HTMLTextAreaElement &&
+      this.getTextareaSelectors().some((selector) => element.matches(selector))
+    )
+  }
+
   insertPrompt(content: string): boolean {
     const editor = this.getTextareaElement()
     if (!(editor instanceof HTMLTextAreaElement) || editor.disabled || editor.readOnly) return false
