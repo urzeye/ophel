@@ -11,7 +11,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🚀 New Features
 
-- **Experimental Safari support** — Added experimental desktop Safari compatibility for core features and sound alerts; watermark removal and system notifications are unavailable, and testing in Safari is still pending. (#1030)
+- **Experimental Safari support** — Added desktop Safari experimental adaptation, retaining core functions. It does not currently support system notifications, automatic top tabs after AI generation, and Gemini watermark removal. (#1030)
 
 ---
 
