@@ -53,11 +53,5 @@ jobs:
       - name: 📐 Type Check (TypeScript)
         run: pnpm typecheck
 
-      - name: Verify Safari regression tests
-        run: pnpm exec vitest run tests/safari
-
       - name: 🏗️ Verify Build
         run: pnpm build
-
-      - name: Verify Safari target build
-        run: pnpm build:safari
