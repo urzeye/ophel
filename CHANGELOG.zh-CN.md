@@ -8,6 +8,10 @@
 
 ## [Unreleased]
 
+---
+
+## [1.3.2][1.3.2] - 2026-11-09
+
 ### 🚀 新增功能
 
 - **Gemini Notebook 适配** — 新增 Gemini Notebook（原 NotebookLM）适配，支持大纲导航、主题切换、智能避让、提示词插入和按当前栏目导出。 (#546, #1025)
@@ -1687,6 +1691,7 @@
 
 ---
 
+[1.3.2]: https://github.com/urzeye/ophel/releases/tag/v1.3.2
 [1.3.1]: https://github.com/urzeye/ophel/releases/tag/v1.3.1
 [1.3.0]: https://github.com/urzeye/ophel/releases/tag/v1.3.0
 [1.2.13]: https://github.com/urzeye/ophel/releases/tag/v1.2.13

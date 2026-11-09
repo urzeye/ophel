@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+---
+
+## [1.3.2][1.3.2] - 2026-11-09
+
 ### 🚀 New Features
 
 - **Gemini Notebook Adaptation** — Added Gemini Notebook (formerly NotebookLM) support with outline navigation, theme switching, panel avoidance, prompt insertion, and per-column export. (#546, #1025)
@@ -1686,6 +1690,7 @@ This is the first official release of Ophel, providing comprehensive enhancement
 
 ---
 
+[1.3.2]: https://github.com/urzeye/ophel/releases/tag/v1.3.2
 [1.3.1]: https://github.com/urzeye/ophel/releases/tag/v1.3.1
 [1.3.0]: https://github.com/urzeye/ophel/releases/tag/v1.3.0
 [1.2.13]: https://github.com/urzeye/ophel/releases/tag/v1.2.13
