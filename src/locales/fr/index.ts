@@ -182,6 +182,20 @@ export const fr = {
   grant: "Accorder",
   allowRecommended: "Autoriser (Recommandé)",
   required: "Requis",
+  permissionCheckFailed: "Impossible de vérifier les autorisations. Actualisez pour réessayer.",
+  safariWebsiteAccess: "Accès aux sites web",
+  safariWebsiteAccessDesc:
+    "Utilisé pour la synchronisation WebDAV, l’export d’images et de pièces jointes et l’accès des Site Packs. Dans Safari, vous pouvez autoriser uniquement les sites nécessaires.",
+  safariWebsiteAccessManaged: "Géré par Safari",
+  safariAllWebsitesAllowed: "Tous les sites autorisés",
+  safariWebsiteAccessGuide: "Voir les instructions Safari",
+  safariWebsiteAccessStep1: "Ouvrez Safari → Réglages → Extensions et sélectionnez Ophel Atlas.",
+  safariWebsiteAccessStep2:
+    "Cliquez sur « Modifier les sites web… » et autorisez les sites nécessaires. Pour accéder à tous les sites, cliquez sur « Toujours autoriser sur chaque site web… » et confirmez.",
+  safariWebsiteAccessStep3:
+    "Vous pouvez modifier ou révoquer l’accès dans Sites web → Ophel Atlas. Revenez ensuite dans Ophel et cliquez sur « Actualiser l’état ».",
+  safariWebsiteAccessScopeHint:
+    "Seul l’accès à tous les sites est vérifié ici. Les sites autorisés individuellement restent accessibles même sans autorisation globale.",
   permissionWebdavAccess: "Accès aux Fonctions Avancées",
   permissionWebdavAccessDesc:
     "Autoriser Ophel à accéder aux ressources de différents sites pour la synchronisation WebDAV, la suppression des filigranes des images IA, l'export des images et pièces jointes des conversations et l'exécution des Site Packs sans demande par site.",

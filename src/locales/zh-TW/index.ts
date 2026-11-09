@@ -1240,6 +1240,20 @@ export const zhTW = {
   required: "必需",
 
   // 可選權限
+  permissionCheckFailed: "檢測失敗，請重新整理後重試",
+  safariWebsiteAccess: "網站存取權限",
+  safariWebsiteAccessDesc:
+    "用於 WebDAV 同步、圖片及附件匯出和適配套件存取。可在 Safari 中只允許所需網站。",
+  safariWebsiteAccessManaged: "由 Safari 管理",
+  safariAllWebsitesAllowed: "已允許所有網站",
+  safariWebsiteAccessGuide: "查看 Safari 設定指引",
+  safariWebsiteAccessStep1: "開啟 Safari → 設定 → 延伸功能，選擇 Ophel Atlas。",
+  safariWebsiteAccessStep2:
+    "按一下「編輯網站…」，將所需網站設為「允許」；如需存取所有網站，按一下「在每個網站上永遠允許…」並確認。",
+  safariWebsiteAccessStep3:
+    "在「網站 → Ophel Atlas」中可調整或撤銷授權。完成後返回 Ophel，按一下「重新整理狀態」。",
+  safariWebsiteAccessScopeHint:
+    "此處只檢測是否允許所有網站；未允許所有網站時，個別授權的網站仍可使用。",
   permissionWebdavAccess: "進階功能權限",
   permissionWebdavAccessDesc:
     "允許 Ophel 跨站存取資源，用於 WebDAV 同步、AI 圖片浮水印移除、匯出對話中的圖片/附件，以及讓適配包無需逐站點授權即可執行",

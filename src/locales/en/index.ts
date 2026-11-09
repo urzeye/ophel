@@ -178,6 +178,20 @@ export const en = {
   allowRecommended: "Allow (Recommended)",
   required: "Required",
   // Optional permissions
+  permissionCheckFailed: "Could not check permissions. Refresh to retry.",
+  safariWebsiteAccess: "Website Access",
+  safariWebsiteAccessDesc:
+    "Used for WebDAV sync, image and attachment exports, and Site Pack access. You can allow only the websites you need in Safari.",
+  safariWebsiteAccessManaged: "Managed by Safari",
+  safariAllWebsitesAllowed: "All websites allowed",
+  safariWebsiteAccessGuide: "Show Safari setup instructions",
+  safariWebsiteAccessStep1: "Open Safari → Settings → Extensions and select Ophel Atlas.",
+  safariWebsiteAccessStep2:
+    "Click “Edit Websites…” and allow the websites you need. For access to all websites, click “Always Allow on Every Website…” and confirm.",
+  safariWebsiteAccessStep3:
+    "You can change or revoke access under Websites → Ophel Atlas. Then return to Ophel and click “Refresh Status”.",
+  safariWebsiteAccessScopeHint:
+    "This checks access to all websites only. Individually allowed websites remain available even without access to all websites.",
   permissionWebdavAccess: "Advanced Features Access",
   permissionWebdavAccessDesc:
     "Allow Ophel to access resources across sites for WebDAV sync, AI image watermark removal, exporting images and attachments from conversations, and running Site Packs without per-site prompts.",

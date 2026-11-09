@@ -251,6 +251,7 @@ export type PlatformCapability =
   | "notifications" // 系统通知（不包含页面提示音和标题状态）
   | "cookies" // 读写 cookies
   | "permissions" // 动态权限
+  | "browserManagedHostPermissions" // 网站授权需在浏览器设置中管理
   | "tabs" // 跨标签页操作
   | "declarativeNetRequest" // 网络请求规则
   | "commands" // 浏览器命令（全局快捷键）

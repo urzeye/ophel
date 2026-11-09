@@ -176,6 +176,20 @@ export const ko = {
   grant: "허용",
   allowRecommended: "허용(권장)",
   required: "필수",
+  permissionCheckFailed: "권한을 확인할 수 없습니다. 새로고침 후 다시 시도하세요.",
+  safariWebsiteAccess: "웹사이트 접근 권한",
+  safariWebsiteAccessDesc:
+    "WebDAV 동기화, 이미지 및 첨부 파일 내보내기, 사이트 팩 접근에 사용됩니다. Safari에서 필요한 웹사이트만 허용할 수 있습니다.",
+  safariWebsiteAccessManaged: "Safari에서 관리",
+  safariAllWebsitesAllowed: "모든 웹사이트 허용됨",
+  safariWebsiteAccessGuide: "Safari 설정 방법 보기",
+  safariWebsiteAccessStep1: "Safari → 설정 → 확장 프로그램을 열고 Ophel Atlas를 선택하세요.",
+  safariWebsiteAccessStep2:
+    "“웹사이트 편집…”에서 필요한 웹사이트를 “허용”으로 설정하세요. 모든 웹사이트에 접근하려면 “모든 웹사이트에서 항상 허용…”을 클릭하고 확인하세요.",
+  safariWebsiteAccessStep3:
+    "“웹사이트 → Ophel Atlas”에서 권한을 변경하거나 취소할 수 있습니다. 완료 후 Ophel로 돌아와 “상태 새로고침”을 클릭하세요.",
+  safariWebsiteAccessScopeHint:
+    "여기서는 모든 웹사이트 접근 권한만 확인합니다. 모든 웹사이트를 허용하지 않아도 개별적으로 허용한 웹사이트는 사용할 수 있습니다.",
   permissionWebdavAccess: "고급 기능 액세스",
   permissionWebdavAccessDesc:
     "Ophel이 사이트 간 리소스에 액세스할 수 있도록 합니다. WebDAV 동기화, AI 이미지 워터마크 제거, 대화의 이미지/첨부파일 내보내기, 사이트별 승인 없이 Site Pack 실행에 사용됩니다.",

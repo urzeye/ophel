@@ -180,6 +180,20 @@ export const de = {
   grant: "Zulassen",
   allowRecommended: "Zulassen (Empfohlen)",
   required: "Erforderlich",
+  permissionCheckFailed: "Berechtigungen konnten nicht geprüft werden. Bitte erneut aktualisieren.",
+  safariWebsiteAccess: "Website-Zugriff",
+  safariWebsiteAccessDesc:
+    "Für WebDAV-Synchronisierung, Bild- und Anhangexporte sowie den Zugriff von Site Packs. In Safari kannst du nur die benötigten Websites erlauben.",
+  safariWebsiteAccessManaged: "Von Safari verwaltet",
+  safariAllWebsitesAllowed: "Alle Websites erlaubt",
+  safariWebsiteAccessGuide: "Safari-Einrichtung anzeigen",
+  safariWebsiteAccessStep1: "Öffne Safari → Einstellungen → Erweiterungen und wähle Ophel Atlas.",
+  safariWebsiteAccessStep2:
+    "Klicke auf „Websites bearbeiten…“ und erlaube die benötigten Websites. Für Zugriff auf alle Websites klicke auf „Auf jeder Website immer erlauben…“ und bestätige.",
+  safariWebsiteAccessStep3:
+    "Unter Websites → Ophel Atlas kannst du den Zugriff ändern oder widerrufen. Kehre dann zu Ophel zurück und klicke auf „Status aktualisieren“.",
+  safariWebsiteAccessScopeHint:
+    "Hier wird nur der Zugriff auf alle Websites geprüft. Einzeln erlaubte Websites bleiben auch ohne Zugriff auf alle Websites verfügbar.",
   permissionWebdavAccess: "Zugriff auf erweiterte Funktionen",
   permissionWebdavAccessDesc:
     "Erlaubt Ophel den Website-übergreifenden Zugriff auf Ressourcen für WebDAV-Synchronisierung, Entfernung von KI-Bildwasserzeichen, Export von Bildern und Anhängen aus Unterhaltungen sowie die Ausführung von Site Packs ohne Abfragen pro Website.",

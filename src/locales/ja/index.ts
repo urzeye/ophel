@@ -178,6 +178,20 @@ export const ja = {
   grant: "許可する",
   allowRecommended: "許可（推奨）",
   required: "必須",
+  permissionCheckFailed: "権限を確認できませんでした。更新して再試行してください。",
+  safariWebsiteAccess: "Webサイトへのアクセス",
+  safariWebsiteAccessDesc:
+    "WebDAV同期、画像・添付ファイルのエクスポート、サイトパックのアクセスに使用します。Safariで必要なサイトのみ許可できます。",
+  safariWebsiteAccessManaged: "Safariで管理",
+  safariAllWebsitesAllowed: "すべてのサイトを許可済み",
+  safariWebsiteAccessGuide: "Safariの設定手順を表示",
+  safariWebsiteAccessStep1: "Safari → 設定 → 機能拡張を開き、Ophel Atlasを選択します。",
+  safariWebsiteAccessStep2:
+    "「Webサイトを編集…」で必要なサイトを「許可」にします。全サイトへのアクセスが必要な場合は「すべてのWebサイトで常に許可…」をクリックして確認します。",
+  safariWebsiteAccessStep3:
+    "「Webサイト → Ophel Atlas」で許可を変更・取り消しできます。その後Ophelに戻り、「状態を更新」をクリックします。",
+  safariWebsiteAccessScopeHint:
+    "ここでは全サイトへのアクセスのみを確認します。全サイトを許可していなくても、個別に許可したサイトは利用できます。",
   permissionWebdavAccess: "高度な機能へのアクセス",
   permissionWebdavAccessDesc:
     "Ophel がサイトをまたいでリソースにアクセスできるようにします。WebDAV 同期、AI 画像の透かし除去、会話内の画像・添付ファイルの書き出し、Site Pack をサイトごとの承認なしで実行するために使用します。",

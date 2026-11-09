@@ -9,19 +9,22 @@ import React, { useEffect, useState } from "react"
 
 import { isSiteMatchPatternOriginPattern } from "~adapters/declarative/match-pattern"
 import { CheckIcon, ClearIcon, ShieldCheckIcon } from "~components/icons"
+import { Button } from "~components/ui"
+import { platform } from "~platform"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
+import { SafariWebsiteAccessGuide } from "~tabs/options/components/SafariWebsiteAccessGuide"
 import { getPlatformFontFamily } from "~utils/font"
 import { initI18n, setLanguage, t } from "~utils/i18n"
 
 import "~styles/settings.css"
 
-// 注入页面级样式，去除滚动条
+// 授权指引展开后允许滚动，避免小窗口截断操作。
 const PERM_PAGE_STYLES = `
   html, body {
-    overflow: hidden !important;
+    overflow-x: hidden;
     margin: 0;
     padding: 0;
-    height: 100%;
+    min-height: 100%;
   }
 `
 
@@ -87,6 +90,10 @@ const readPermissionRequestConfig = (): PermissionRequestConfig => {
 const PermissionRequestPage: React.FC = () => {
   const [status, setStatus] = useState<"pending" | "granted" | "denied">("pending")
   const [config] = useState(readPermissionRequestConfig)
+  const [checking, setChecking] = useState(false)
+  const [checkFailed, setCheckFailed] = useState(false)
+  const browserManagedRequest =
+    platform.hasCapability("browserManagedHostPermissions") && config.origins.includes("<all_urls>")
   const [_langReady, setLangReady] = useState(false)
   const { settings } = useSettingsStore()
   const isHydrated = useSettingsHydrated()
@@ -134,6 +141,8 @@ const PermissionRequestPage: React.FC = () => {
 
   // 请求权限
   const handleRequest = async () => {
+    setChecking(true)
+    setCheckFailed(false)
     try {
       if (config.origins.length === 0 && config.permissions.length === 0) {
         throw new Error("Permission request contains no valid permissions")
@@ -142,10 +151,15 @@ const PermissionRequestPage: React.FC = () => {
         origins: config.origins,
         permissions: config.permissions,
       })
-      const granted = await chrome.permissions.request({
+      const query = {
         origins: config.origins.length > 0 ? config.origins : undefined,
         permissions: config.permissions.length > 0 ? config.permissions : undefined,
-      })
+      }
+      // Safari 的所有网站访问在系统设置中管理；刷新只核验实际状态。
+      if (!browserManagedRequest) await chrome.permissions.request(query)
+      const granted = await chrome.permissions.contains(query)
+
+      if (browserManagedRequest && !granted) return
 
       console.warn("[PermRequest] Permission granted:", granted)
       if (granted) {
@@ -163,10 +177,16 @@ const PermissionRequestPage: React.FC = () => {
       }
     } catch (e) {
       console.error("[PermRequest] Permission request failed:", e)
+      if (browserManagedRequest) {
+        setCheckFailed(true)
+        return
+      }
       setStatus("denied")
       setTimeout(() => {
         window.close()
       }, 1000)
+    } finally {
+      setChecking(false)
     }
   }
 
@@ -179,22 +199,8 @@ const PermissionRequestPage: React.FC = () => {
   }
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "var(--gh-bg, #ffffff)",
-        fontFamily: getPlatformFontFamily(),
-        padding: "20px",
-        overflow: "hidden",
-      }}>
-      <div
-        style={{
-          textAlign: "center",
-          maxWidth: "320px",
-        }}>
+    <div className="perm-request-page" style={{ fontFamily: getPlatformFontFamily() }}>
+      <div className="perm-request-content">
         {status === "pending" && (
           <>
             {/* 图标 */}
@@ -210,7 +216,7 @@ const PermissionRequestPage: React.FC = () => {
                 marginBottom: "12px",
                 color: "var(--gh-text, #1f2937)",
               }}>
-              {t(config.titleKey)}
+              {t(browserManagedRequest ? "safariWebsiteAccess" : config.titleKey)}
             </h1>
 
             {/* 描述 */}
@@ -221,38 +227,27 @@ const PermissionRequestPage: React.FC = () => {
                 marginBottom: "24px",
                 lineHeight: 1.5,
               }}>
-              {t(config.descKey, config.descParams)}
+              {t(
+                browserManagedRequest ? "safariWebsiteAccessDesc" : config.descKey,
+                config.descParams,
+              )}
             </p>
 
+            {browserManagedRequest && (
+              <>
+                <div aria-live="polite" className="settings-perm-request-status">
+                  {t(checkFailed ? "permissionCheckFailed" : "safariWebsiteAccessManaged")}
+                </div>
+                <SafariWebsiteAccessGuide />
+              </>
+            )}
+
             {/* 按钮 */}
-            <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
-              <button
-                onClick={handleCancel}
-                style={{
-                  padding: "10px 24px",
-                  borderRadius: "8px",
-                  border: "1px solid var(--gh-border, #e5e7eb)",
-                  background: "transparent",
-                  color: "var(--gh-text-secondary, #6b7280)",
-                  fontSize: "14px",
-                  cursor: "pointer",
-                }}>
-                {t("cancel")}
-              </button>
-              <button
-                onClick={handleRequest}
-                style={{
-                  padding: "10px 24px",
-                  borderRadius: "8px",
-                  border: "none",
-                  background: "var(--gh-primary, #4285f4)",
-                  color: "white",
-                  fontSize: "14px",
-                  fontWeight: 500,
-                  cursor: "pointer",
-                }}>
-                {t("allow")}
-              </button>
+            <div className="perm-request-actions">
+              <Button onClick={handleCancel}>{t("cancel")}</Button>
+              <Button variant="primary" onClick={handleRequest} disabled={checking}>
+                {t(checking ? "refreshing" : browserManagedRequest ? "refreshStatus" : "allow")}
+              </Button>
             </div>
           </>
         )}
