@@ -4,19 +4,15 @@
 
 ## 目录分工
 
-| 路径 | 类型 | 用途 |
-| --- | --- | --- |
-| `conventions/` | 工作规范 | 代理与贡献者都要遵守的写法约定，按需加载 |
-| `architecture.md` | 架构参考 | 全局模块、初始化链路、常用命令 |
-| `css-architecture.md` | 架构参考 | Shadow DOM、样式注入、主题系统机制详解与排查 |
-| `troubleshooting.md` | 排查手册 | 历史疑难案例 |
-| `options-page-ui.md` | 界面参考 | Options 页结构与 UI 说明 |
-| `settings-schema.json` | 设置结构 | 设置项 schema 快照 |
-| `site-adapter/` | 站点适配 | SitePack 审核清单、本地调试工作流、配置迁移手册、各站点热修字段矩阵 |
-| `review-consolidated.md` | 进行中工作 | 三方审查汇总与未完成的修复项，收尾后删除 |
-| `input-auto-hide-plan.md` | 进行中工作 | 清洁模式占位保留与输入框自动隐藏的技术方案与 SitePack 可行性分析，落地后删除 |
-| `aistudio-api-outline-plan.md` | 进行中工作 | AI Studio RPC 数据源大纲的接口/凭证/附件实测结论与实施计划，落地后删除 |
-| [safari/](safari/analysis.md) | 进行中工作 | Safari 核心功能适配分析、技术决策与实施验收计划，落地后合并长期参考并删除计划 |
+| 路径                     | 类型     | 用途                                                                |
+| ------------------------ | -------- | ------------------------------------------------------------------- |
+| `conventions/`         | 工作规范 | 代理与贡献者都要遵守的写法约定，按需加载                            |
+| `architecture.md`      | 架构参考 | 全局模块、初始化链路、常用命令                                      |
+| `css-architecture.md`  | 架构参考 | Shadow DOM、样式注入、主题系统机制详解与排查                        |
+| `troubleshooting.md`   | 排查手册 | 历史疑难案例                                                        |
+| `options-page-ui.md`   | 界面参考 | Options 页结构与 UI 说明                                            |
+| `settings-schema.json` | 设置结构 | 设置项 schema 快照                                                  |
+| `site-adapter/`        | 站点适配 | SitePack 审核清单、本地调试工作流、配置迁移手册、各站点热修字段矩阵 |
 
 ## 规范文档（conventions/）
 
