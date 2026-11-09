@@ -178,6 +178,20 @@ export const en = {
   allowRecommended: "Allow (Recommended)",
   required: "Required",
   // Optional permissions
+  permissionCheckFailed: "Could not check permissions. Refresh to retry.",
+  safariWebsiteAccess: "Website Access",
+  safariWebsiteAccessDesc:
+    "Used for WebDAV sync, image and attachment exports, and Site Pack access. You can allow only the websites you need in Safari.",
+  safariWebsiteAccessManaged: "Managed by Safari",
+  safariAllWebsitesAllowed: "All websites allowed",
+  safariWebsiteAccessGuide: "Show Safari setup instructions",
+  safariWebsiteAccessStep1: "Open Safari → Settings → Extensions and select Ophel Atlas.",
+  safariWebsiteAccessStep2:
+    "Click “Edit Websites…” and allow the websites you need. For access to all websites, click “Always Allow on Every Website…” and confirm.",
+  safariWebsiteAccessStep3:
+    "You can change or revoke access under Websites → Ophel Atlas. Then return to Ophel and click “Refresh Status”.",
+  safariWebsiteAccessScopeHint:
+    "This checks access to all websites only. Individually allowed websites remain available even without access to all websites.",
   permissionWebdavAccess: "Advanced Features Access",
   permissionWebdavAccessDesc:
     "Allow Ophel to access resources across sites for WebDAV sync, AI image watermark removal, exporting images and attachments from conversations, and running Site Packs without per-site prompts.",
@@ -836,6 +850,12 @@ export const en = {
   hideStatusWhenReadLabel: "Only show checkmark when unread",
   hideStatusWhenReadDesc:
     "When enabled, ✅ only shows when the tab is inactive and hides once you view it",
+  featureUnavailableOnBrowser: "This feature is unavailable in this browser",
+  completionReminderLabel: "Completion reminder",
+  completionReminderSoundOnlyDesc:
+    "Safari does not support system notifications. You can play a sound when generation finishes.",
+  exportPartialSuccess:
+    "Text exported. {count} attachments could not be downloaded; see the manifest in the archive.",
   showNotificationLabel: "Desktop Notification",
   showNotificationDesc: "Send system notification when generation completes",
   notificationSoundLabel: "Notification Sound",
@@ -853,7 +873,11 @@ export const en = {
   notifyWhenFocusedLabel: "Notify When Focused",
   notifyWhenFocusedDesc: "Send notifications even when the current page is visible",
   autoFocusLabel: "Auto Focus the Window",
-  autoFocusDesc: "Bring window to front when generation completes",
+  autoFocusDesc:
+    "Try to return to this window when generation completes; the browser may restrict background focus or switching from other apps",
+  autoFocusUnsupportedDesc:
+    "Safari does not support automatically bringing the window to the front.",
+  autoFocusFailed: "Could not bring the window to the front. Please return manually.",
   privacyModeLabel: "Hide Tab Title",
   privacyModeDesc:
     "Replaces the browser tab title with the decoy title below. Page content isn't affected.",

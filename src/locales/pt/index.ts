@@ -179,6 +179,21 @@ export const pt = {
   grant: "Conceder",
   allowRecommended: "Permitir (Recomendado)",
   required: "Obrigatório",
+  permissionCheckFailed:
+    "Não foi possível verificar as permissões. Atualize para tentar novamente.",
+  safariWebsiteAccess: "Acesso a sites",
+  safariWebsiteAccessDesc:
+    "Usado para sincronização WebDAV, exportação de imagens e anexos e acesso dos Site Packs. No Safari, você pode permitir apenas os sites necessários.",
+  safariWebsiteAccessManaged: "Gerenciado pelo Safari",
+  safariAllWebsitesAllowed: "Todos os sites permitidos",
+  safariWebsiteAccessGuide: "Ver instruções do Safari",
+  safariWebsiteAccessStep1: "Abra Safari → Ajustes → Extensões e selecione Ophel Atlas.",
+  safariWebsiteAccessStep2:
+    "Clique em “Editar Sites…” e permita os sites necessários. Para acessar todos os sites, clique em “Sempre Permitir em Todos os Sites…” e confirme.",
+  safariWebsiteAccessStep3:
+    "Você pode alterar ou revogar o acesso em Sites → Ophel Atlas. Depois volte ao Ophel e clique em “Atualizar status”.",
+  safariWebsiteAccessScopeHint:
+    "Aqui é verificado apenas o acesso a todos os sites. Os sites permitidos individualmente continuam disponíveis mesmo sem acesso a todos os sites.",
   permissionWebdavAccess: "Acesso a Recursos Avançados",
   permissionWebdavAccessDesc:
     "Permitir que o Ophel acesse recursos entre sites para sincronização WebDAV, remoção de marcas d'água em imagens de IA, exportação de imagens e anexos das conversas e execução de Site Packs sem solicitações por site.",
@@ -794,6 +809,12 @@ export const pt = {
   showStatusDesc: "Ícone de carregamento na aba (⏳/✅)",
   hideStatusWhenReadLabel: "Mostrar ✅ apenas quando não lido",
   hideStatusWhenReadDesc: "Ao ativar, ✅ aparece só com a aba inativa e some ao visualizar",
+  featureUnavailableOnBrowser: "Este recurso não está disponível neste navegador",
+  completionReminderLabel: "Aviso de conclusão",
+  completionReminderSoundOnlyDesc:
+    "O Safari não oferece suporte a notificações do sistema. Você pode reproduzir um som ao terminar a geração.",
+  exportPartialSuccess:
+    "Texto exportado. Não foi possível baixar {count} anexos; consulte o manifesto no arquivo compactado.",
   showNotificationLabel: "Notificação de Desktop",
   showNotificationDesc: "Avisar quando a IA terminar de escrever",
   notificationSoundLabel: "Som de Aviso",
@@ -811,7 +832,11 @@ export const pt = {
   notifyWhenFocusedLabel: "Avisar Mesmo Com Foco",
   notifyWhenFocusedDesc: "Enviar aviso mesmo se você estiver vendo a página",
   autoFocusLabel: "Auto Trazer a Janela à Frente",
-  autoFocusDesc: "Trazer para frente ao terminar",
+  autoFocusDesc:
+    "Tentar voltar a esta janela ao terminar; o navegador pode limitar a troca de outros apps ou o foco em segundo plano",
+  autoFocusUnsupportedDesc:
+    "O Safari não oferece suporte a trazer a janela automaticamente para a frente.",
+  autoFocusFailed: "Não foi possível trazer a janela para a frente. Volte manualmente.",
   privacyModeLabel: "Ocultar título da aba",
   privacyModeDesc:
     "Substitui o título da aba do navegador pelo título falso abaixo. O conteúdo da página não muda.",

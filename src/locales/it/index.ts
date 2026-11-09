@@ -183,6 +183,20 @@ export const it = {
   allowRecommended: "Consenti (consigliato)",
   required: "Obbligatorio",
   // Optional permissions
+  permissionCheckFailed: "Impossibile verificare i permessi. Aggiorna per riprovare.",
+  safariWebsiteAccess: "Accesso ai siti web",
+  safariWebsiteAccessDesc:
+    "Usato per la sincronizzazione WebDAV, l’esportazione di immagini e allegati e l’accesso dei Site Pack. In Safari puoi consentire solo i siti necessari.",
+  safariWebsiteAccessManaged: "Gestito da Safari",
+  safariAllWebsitesAllowed: "Tutti i siti consentiti",
+  safariWebsiteAccessGuide: "Mostra le istruzioni per Safari",
+  safariWebsiteAccessStep1: "Apri Safari → Impostazioni → Estensioni e seleziona Ophel Atlas.",
+  safariWebsiteAccessStep2:
+    "Fai clic su “Modifica siti web…” e consenti i siti necessari. Per accedere a tutti i siti, fai clic su “Consenti sempre su ogni sito web…” e conferma.",
+  safariWebsiteAccessStep3:
+    "Puoi modificare o revocare l’accesso in Siti web → Ophel Atlas. Poi torna a Ophel e fai clic su “Aggiorna stato”.",
+  safariWebsiteAccessScopeHint:
+    "Qui viene verificato solo l’accesso a tutti i siti. I siti autorizzati singolarmente restano disponibili anche senza l’accesso a tutti i siti.",
   permissionWebdavAccess: "Accesso alle funzionalità avanzate",
   permissionWebdavAccessDesc:
     "Consenti a Ophel di accedere alle risorse tra siti per la sincronizzazione WebDAV, la rimozione della filigrana dalle immagini AI, l'esportazione di immagini e allegati dalle conversazioni e l'esecuzione dei Site Pack senza richieste per sito.",
@@ -863,6 +877,12 @@ export const it = {
   hideStatusWhenReadLabel: "Mostra il segno di spunta solo quando non letto",
   hideStatusWhenReadDesc:
     "Se abilitato, ✅ viene visualizzato solo quando la scheda è inattiva e si nasconde una volta visualizzata",
+  featureUnavailableOnBrowser: "Questa funzione non è disponibile in questo browser",
+  completionReminderLabel: "Avviso di completamento",
+  completionReminderSoundOnlyDesc:
+    "Safari non supporta le notifiche di sistema. Puoi riprodurre un suono al termine della generazione.",
+  exportPartialSuccess:
+    "Testo esportato. Impossibile scaricare {count} allegati; consulta il manifesto nell’archivio.",
   showNotificationLabel: "Notifica sul desktop",
   showNotificationDesc: "Invia una notifica di sistema al termine della generazione",
   notificationSoundLabel: "Suono di notifica",
@@ -880,7 +900,11 @@ export const it = {
   notifyWhenFocusedLabel: "Notifica quando focalizzato",
   notifyWhenFocusedDesc: "Invia notifiche anche quando la pagina corrente è visibile",
   autoFocusLabel: "Messa a fuoco automatica della finestra",
-  autoFocusDesc: "Porta la finestra in primo piano al termine della generazione",
+  autoFocusDesc:
+    "Prova a tornare a questa finestra al termine della generazione; il browser può limitare il passaggio da altre app o la messa a fuoco in background",
+  autoFocusUnsupportedDesc:
+    "Safari non supporta la visualizzazione automatica della finestra in primo piano.",
+  autoFocusFailed: "Impossibile portare la finestra in primo piano. Torna manualmente.",
   privacyModeLabel: "Nascondi il titolo della scheda",
   privacyModeDesc:
     "Sostituisce il titolo della scheda del browser con il titolo esca qui sotto. Il contenuto della pagina non cambia.",

@@ -180,6 +180,20 @@ export const de = {
   grant: "Zulassen",
   allowRecommended: "Zulassen (Empfohlen)",
   required: "Erforderlich",
+  permissionCheckFailed: "Berechtigungen konnten nicht geprüft werden. Bitte erneut aktualisieren.",
+  safariWebsiteAccess: "Website-Zugriff",
+  safariWebsiteAccessDesc:
+    "Für WebDAV-Synchronisierung, Bild- und Anhangexporte sowie den Zugriff von Site Packs. In Safari kannst du nur die benötigten Websites erlauben.",
+  safariWebsiteAccessManaged: "Von Safari verwaltet",
+  safariAllWebsitesAllowed: "Alle Websites erlaubt",
+  safariWebsiteAccessGuide: "Safari-Einrichtung anzeigen",
+  safariWebsiteAccessStep1: "Öffne Safari → Einstellungen → Erweiterungen und wähle Ophel Atlas.",
+  safariWebsiteAccessStep2:
+    "Klicke auf „Websites bearbeiten…“ und erlaube die benötigten Websites. Für Zugriff auf alle Websites klicke auf „Auf jeder Website immer erlauben…“ und bestätige.",
+  safariWebsiteAccessStep3:
+    "Unter Websites → Ophel Atlas kannst du den Zugriff ändern oder widerrufen. Kehre dann zu Ophel zurück und klicke auf „Status aktualisieren“.",
+  safariWebsiteAccessScopeHint:
+    "Hier wird nur der Zugriff auf alle Websites geprüft. Einzeln erlaubte Websites bleiben auch ohne Zugriff auf alle Websites verfügbar.",
   permissionWebdavAccess: "Zugriff auf erweiterte Funktionen",
   permissionWebdavAccessDesc:
     "Erlaubt Ophel den Website-übergreifenden Zugriff auf Ressourcen für WebDAV-Synchronisierung, Entfernung von KI-Bildwasserzeichen, Export von Bildern und Anhängen aus Unterhaltungen sowie die Ausführung von Site Packs ohne Abfragen pro Website.",
@@ -797,6 +811,12 @@ export const de = {
   hideStatusWhenReadLabel: "Nur bei ungelesen anzeigen",
   hideStatusWhenReadDesc:
     "Wenn aktiviert, wird ✅ nur angezeigt, wenn der Tab inaktiv ist, und verschwindet beim Anzeigen",
+  featureUnavailableOnBrowser: "Diese Funktion ist in diesem Browser nicht verfügbar",
+  completionReminderLabel: "Erinnerung bei Abschluss",
+  completionReminderSoundOnlyDesc:
+    "Safari unterstützt keine Systembenachrichtigungen. Nach Abschluss der Generierung kann ein Ton abgespielt werden.",
+  exportPartialSuccess:
+    "Text exportiert. {count} Anhänge konnten nicht heruntergeladen werden; siehe Manifest im Archiv.",
   showNotificationLabel: "Desktop-Benachrichtigung",
   showNotificationDesc: "Informieren, wenn die KI fertig ist",
   notificationSoundLabel: "Hinweiston",
@@ -814,7 +834,12 @@ export const de = {
   notifyWhenFocusedLabel: "Auch bei Fokus melden",
   notifyWhenFocusedDesc: "Meldung senden, auch wenn die Seite offen ist",
   autoFocusLabel: "Fenster automatisch fokussieren",
-  autoFocusDesc: "Fenster bei Fertigstellung in den Vordergrund holen",
+  autoFocusDesc:
+    "Nach Abschluss versuchen, zu diesem Fenster zurückzukehren; der Browser kann den Wechsel aus anderen Apps oder den Fokus aus dem Hintergrund einschränken",
+  autoFocusUnsupportedDesc:
+    "Safari unterstützt das automatische Holen des Fensters in den Vordergrund nicht.",
+  autoFocusFailed:
+    "Das Fenster konnte nicht in den Vordergrund gebracht werden. Bitte manuell zurückkehren.",
   privacyModeLabel: "Tab-Titel verbergen",
   privacyModeDesc:
     "Ersetzt den Tab-Titel des Browsers durch den Scheintitel unten. Der Seiteninhalt bleibt unverändert.",

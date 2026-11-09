@@ -35,6 +35,5 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["tests/**/*.test.ts", "tests/**/*.test.mjs"],
-    setupFiles: ["tests/setup.ts"],
   },
 })

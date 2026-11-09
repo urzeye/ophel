@@ -2,11 +2,12 @@
  * 权限管理内容
  * 作为「数据与权限」页的权限 tab 内容渲染，不再是一级页面
  */
-import React, { useCallback, useEffect, useState } from "react"
+import React, { useCallback, useEffect, useRef, useState } from "react"
 
 import { CloudIcon, CookieIcon, NotificationIcon, SaveIcon } from "~components/icons"
 import { ConfirmDialog } from "~components/ui"
 import { useSettingsStore } from "~stores/settings-store"
+import { platform } from "~platform"
 import { t } from "~utils/i18n"
 import {
   MSG_CHECK_PERMISSIONS,
@@ -17,6 +18,16 @@ import {
 import { showToast } from "~utils/toast"
 
 import { SettingCard, SettingRow } from "../components"
+import { SafariWebsiteAccessGuide } from "../components/SafariWebsiteAccessGuide"
+
+interface OptionalPermission {
+  id: string
+  nameKey: string
+  description: string
+  Icon: typeof CloudIcon
+  permissions?: string[]
+  origins?: string[]
+}
 
 // 必需权限（在 manifest 中声明，无法动态修改）
 const REQUIRED_PERMISSIONS = [
@@ -29,7 +40,7 @@ const REQUIRED_PERMISSIONS = [
 ]
 
 // 可选权限（非主机权限）
-const OPTIONAL_PERMISSIONS = [
+const OPTIONAL_PERMISSIONS: OptionalPermission[] = [
   {
     id: "notifications",
     nameKey: "permissionNotifications",
@@ -44,10 +55,12 @@ const OPTIONAL_PERMISSIONS = [
     Icon: CookieIcon,
     permissions: ["cookies"],
   },
-]
+].filter(
+  (permission) => permission.id !== "notifications" || platform.hasCapability("notifications"),
+)
 
 // 可选主机权限
-const OPTIONAL_HOST_PERMISSIONS = [
+const OPTIONAL_HOST_PERMISSIONS: OptionalPermission[] = [
   {
     id: "webdav",
     nameKey: "permissionWebdavAccess",
@@ -57,13 +70,17 @@ const OPTIONAL_HOST_PERMISSIONS = [
   },
 ]
 
+const ALL_OPTIONAL_PERMISSIONS = [...OPTIONAL_PERMISSIONS, ...OPTIONAL_HOST_PERMISSIONS]
+
 const PermissionsPage: React.FC = () => {
   const { updateNestedSetting } = useSettingsStore()
   // 可选权限状态
-  const [optionalPermissionStatus, setOptionalPermissionStatus] = useState<Record<string, boolean>>(
-    {},
-  )
+  const [optionalPermissionStatus, setOptionalPermissionStatus] = useState<
+    Record<string, boolean | null>
+  >({})
   const [loading, setLoading] = useState(true)
+  const permissionCheckId = useRef(0)
+  const browserManagedHostPermissions = platform.hasCapability("browserManagedHostPermissions")
 
   // 确认弹窗状态
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -77,63 +94,42 @@ const PermissionsPage: React.FC = () => {
   })
 
   // 判断是否在扩展页面上下文（可以直接调用权限 API）
-  const isExtensionPage = typeof chrome.permissions !== "undefined"
+  const isExtensionPage = typeof chrome !== "undefined" && typeof chrome.permissions !== "undefined"
 
   // 检查可选权限状态
   const checkOptionalPermissions = useCallback(async () => {
+    const checkId = ++permissionCheckId.current
     setLoading(true)
-    const status: Record<string, boolean> = {}
+    const status: Record<string, boolean | null> = {}
 
-    // 检查可选非主机权限
-    for (const perm of OPTIONAL_PERMISSIONS) {
+    for (const perm of ALL_OPTIONAL_PERMISSIONS) {
       try {
-        let result = false
+        const query = {
+          permissions: perm.permissions,
+          origins: perm.origins,
+        }
         if (isExtensionPage) {
-          result = await chrome.permissions.contains({
-            permissions: perm.permissions || [],
-          })
+          status[perm.id] = await chrome.permissions.contains(query)
         } else {
           const response = await sendToBackground({
             type: MSG_CHECK_PERMISSIONS,
-            permissions: perm.permissions || [],
+            ...query,
           })
-          if (response && response.success) {
-            result = response.hasPermission
+          if (!response.success || typeof response.hasPermission !== "boolean") {
+            throw new Error(response.error || "Permission check returned no result")
           }
+          status[perm.id] = response.hasPermission
         }
-        status[perm.id] = result
       } catch (e) {
         console.error(`检查权限 ${perm.id} 失败:`, e)
-        status[perm.id] = false
+        status[perm.id] = null
       }
     }
 
-    // 检查可选主机权限
-    for (const perm of OPTIONAL_HOST_PERMISSIONS) {
-      try {
-        let result = false
-        if (isExtensionPage) {
-          result = await chrome.permissions.contains({
-            origins: perm.origins || [],
-          })
-        } else {
-          const response = await sendToBackground({
-            type: MSG_CHECK_PERMISSIONS,
-            origins: perm.origins || [],
-          })
-          if (response && response.success) {
-            result = response.hasPermission
-          }
-        }
-        status[perm.id] = result
-      } catch (e) {
-        console.error(`检查权限 ${perm.id} 失败:`, e)
-        status[perm.id] = false
-      }
-    }
-
+    if (checkId !== permissionCheckId.current) return false
     setOptionalPermissionStatus(status)
     setLoading(false)
+    return Object.values(status).every((value) => value !== null)
   }, [isExtensionPage])
 
   // 请求可选权限（通用函数）
@@ -141,14 +137,12 @@ const PermissionsPage: React.FC = () => {
     async (perm: { id: string; origins?: string[]; permissions?: string[] }) => {
       try {
         if (isExtensionPage) {
-          const granted = await chrome.permissions.request({
+          await chrome.permissions.request({
             origins: perm.origins?.length ? perm.origins : undefined,
             permissions: perm.permissions?.length ? perm.permissions : undefined,
           })
 
-          if (granted) {
-            setOptionalPermissionStatus((prev) => ({ ...prev, [perm.id]: true }))
-          }
+          await checkOptionalPermissions()
         } else {
           // Content Script 发送消息请求
           await sendToBackground({
@@ -157,8 +151,6 @@ const PermissionsPage: React.FC = () => {
             origins: perm.origins,
             permissions: perm.permissions,
           })
-          // 延迟后自动刷新权限状态（给用户操作弹窗的时间）
-          setTimeout(() => checkOptionalPermissions(), 2000)
         }
       } catch (e) {
         console.error(`请求权限 ${perm.id} 失败:`, e)
@@ -171,7 +163,7 @@ const PermissionsPage: React.FC = () => {
   useEffect(() => {
     checkOptionalPermissions()
 
-    if (isExtensionPage && typeof window !== "undefined") {
+    if (isExtensionPage && !browserManagedHostPermissions) {
       const urlParams = new URLSearchParams(window.location.search)
       if (urlParams.get("auto_request") === "true") {
         setTimeout(() => {
@@ -182,7 +174,26 @@ const PermissionsPage: React.FC = () => {
         }, 500)
       }
     }
-  }, [checkOptionalPermissions, isExtensionPage, requestPermission])
+  }, [checkOptionalPermissions, isExtensionPage, requestPermission, browserManagedHostPermissions])
+
+  useEffect(() => {
+    const refresh = () => void checkOptionalPermissions()
+    const onVisible = () => {
+      if (document.visibilityState === "visible") refresh()
+    }
+    window.addEventListener("focus", refresh)
+    document.addEventListener("visibilitychange", onVisible)
+    // Safari 的权限事件类型缺少标准 removeListener 声明。
+    const permissionEvents = (
+      isExtensionPage ? [chrome.permissions.onAdded, chrome.permissions.onRemoved] : []
+    ) as Array<typeof chrome.permissions.onAdded & { removeListener(listener: () => void): void }>
+    permissionEvents.forEach((event) => event.addListener(refresh))
+    return () => {
+      window.removeEventListener("focus", refresh)
+      document.removeEventListener("visibilitychange", onVisible)
+      permissionEvents.forEach((event) => event.removeListener(refresh))
+    }
+  }, [checkOptionalPermissions, isExtensionPage])
 
   // 执行撤销逻辑
   const executeRevoke = async (perm: {
@@ -251,69 +262,89 @@ const PermissionsPage: React.FC = () => {
         settingId="permissions-optional-card">
         {/* 同步提示 + 刷新按钮 */}
         <div className="settings-perm-header-row">
-          <span style={{ fontSize: "13px", color: "var(--gh-text-secondary, #9ca3af)" }}>
-            {t("permissionsSyncHint")}
-          </span>
+          <span className="settings-perm-sync-hint">{t("permissionsSyncHint")}</span>
           <button
             type="button"
             className="settings-btn settings-btn-secondary"
             onClick={async (e) => {
               e.preventDefault()
               e.stopPropagation()
-              await checkOptionalPermissions()
-              showToast(t("permissionsRefreshed"), 1500)
+              if (await checkOptionalPermissions()) {
+                showToast(t("permissionsRefreshed"), 1500)
+              }
             }}
             disabled={loading}>
             {loading ? t("refreshing") : t("refreshStatus")}
           </button>
         </div>
 
-        {[...OPTIONAL_PERMISSIONS, ...OPTIONAL_HOST_PERMISSIONS].map((perm) => (
-          <SettingRow
-            key={perm.id}
-            label={
-              <span className="settings-perm-item-label">
-                <span className="settings-perm-icon">
-                  <perm.Icon size={16} color="currentColor" />
+        {ALL_OPTIONAL_PERMISSIONS.map((perm) => {
+          const managedByBrowser = browserManagedHostPermissions && !!perm.origins?.length
+          const status = optionalPermissionStatus[perm.id]
+          return (
+            <SettingRow
+              key={perm.id}
+              label={
+                <span className="settings-perm-item-label">
+                  <span className="settings-perm-icon">
+                    <perm.Icon size={16} color="currentColor" />
+                  </span>
+                  <span>{t(managedByBrowser ? "safariWebsiteAccess" : perm.nameKey)}</span>
                 </span>
-                <span>{t(perm.nameKey)}</span>
-              </span>
-            }
-            description={t(perm.description)}
-            settingId={`permission-item-${perm.id}`}>
-            <div className="settings-perm-actions">
-              {optionalPermissionStatus[perm.id] ? (
-                <>
-                  <span className="settings-status-badge is-success">{t("granted")}</span>
-                  <button
-                    type="button"
-                    className="settings-btn settings-btn-secondary"
-                    onClick={(e) => {
-                      e.preventDefault()
-                      e.stopPropagation()
-                      handleRevokeClick(perm)
-                    }}>
-                    {t("revoke")}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <span className="settings-status-badge is-danger">{t("notGranted")}</span>
-                  <button
-                    type="button"
-                    className="settings-btn settings-btn-primary"
-                    onClick={(e) => {
-                      e.preventDefault()
-                      e.stopPropagation()
-                      requestPermission(perm)
-                    }}>
-                    {t("allowRecommended")}
-                  </button>
-                </>
-              )}
-            </div>
-          </SettingRow>
-        ))}
+              }
+              description={
+                managedByBrowser ? (
+                  <>
+                    {t("safariWebsiteAccessDesc")}
+                    <SafariWebsiteAccessGuide />
+                  </>
+                ) : (
+                  t(perm.description)
+                )
+              }
+              settingId={`permission-item-${perm.id}`}>
+              <div className="settings-perm-actions" aria-live="polite" aria-busy={loading}>
+                {loading || status == null ? (
+                  <span className="settings-status-badge is-muted">
+                    {t(loading ? "refreshing" : "permissionCheckFailed")}
+                  </span>
+                ) : managedByBrowser ? (
+                  <span className={`settings-status-badge ${status ? "is-success" : "is-muted"}`}>
+                    {t(status ? "safariAllWebsitesAllowed" : "safariWebsiteAccessManaged")}
+                  </span>
+                ) : status ? (
+                  <>
+                    <span className="settings-status-badge is-success">{t("granted")}</span>
+                    <button
+                      type="button"
+                      className="settings-btn settings-btn-secondary"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        handleRevokeClick(perm)
+                      }}>
+                      {t("revoke")}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <span className="settings-status-badge is-danger">{t("notGranted")}</span>
+                    <button
+                      type="button"
+                      className="settings-btn settings-btn-primary"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        requestPermission(perm)
+                      }}>
+                      {t("allowRecommended")}
+                    </button>
+                  </>
+                )}
+              </div>
+            </SettingRow>
+          )
+        })}
       </SettingCard>
 
       {/* 必需权限（只读展示） */}

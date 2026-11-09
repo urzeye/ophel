@@ -2290,9 +2290,11 @@ html[data-theme="dark"] .platform-icon-dark-invert {
 }
 
 .settings-pack-dialog {
+  display: flex;
+  flex-direction: column;
   width: min(460px, 100%);
   max-height: 80vh;
-  overflow-y: auto;
+  overflow: hidden;
   padding: 20px;
   border: 1px solid var(--gh-card-border, #e5e7eb);
   border-radius: 14px;
@@ -2301,6 +2303,7 @@ html[data-theme="dark"] .platform-icon-dark-invert {
 }
 
 .settings-pack-dialog h2 {
+  flex-shrink: 0;
   margin: 0 0 12px;
   font-size: 16px;
   font-weight: 600;
@@ -2311,6 +2314,8 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  min-height: 0;
+  overflow-y: auto;
   font-size: 13px;
   line-height: 1.6;
   color: var(--gh-text-secondary, #6b7280);
@@ -2320,12 +2325,19 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   margin: 0;
 }
 
+.settings-pack-error-details {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+
 .settings-pack-dialog-file {
   align-self: flex-start;
 }
 
 .settings-pack-dialog-actions {
   display: flex;
+  flex-shrink: 0;
   justify-content: flex-end;
   gap: 8px;
   margin-top: 18px;
@@ -6178,9 +6190,63 @@ html[data-theme="dark"] .about-privacy-banner {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
   margin-bottom: 16px;
   padding-bottom: 12px;
   border-bottom: 1px solid var(--gh-border, #e5e7eb);
+}
+
+.settings-perm-sync-hint {
+  font-size: 13px;
+  color: var(--gh-text-secondary, #6b7280);
+}
+
+.settings-perm-browser-guide {
+  margin-top: 8px;
+  text-align: start;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--gh-text-secondary, #6b7280);
+}
+
+.settings-perm-browser-guide summary {
+  width: fit-content;
+  padding: 4px 0;
+  color: var(--gh-primary-text, var(--gh-primary, #4285f4));
+  cursor: pointer;
+}
+
+.settings-perm-browser-guide summary:hover {
+  text-decoration: underline;
+}
+
+.settings-perm-browser-guide summary:focus-visible {
+  outline: 2px solid var(--gh-primary, #4285f4);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.settings-perm-browser-guide ol {
+  margin: 8px 0;
+  padding-inline-start: 24px;
+}
+
+.settings-perm-browser-guide li + li {
+  margin-top: 6px;
+}
+
+.settings-perm-browser-guide p {
+  margin: 8px 0 0;
+}
+
+.settings-perm-request-status {
+  font-size: 13px;
+  color: var(--gh-text-secondary, #6b7280);
+}
+
+.settings-perm-request-status + .settings-perm-browser-guide {
+  margin-bottom: 20px;
 }
 
 .settings-perm-item-label {
@@ -6205,6 +6271,7 @@ html[data-theme="dark"] .about-privacy-banner {
   display: flex;
   gap: 8px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .settings-status-badge {
@@ -6236,6 +6303,36 @@ html[data-theme="dark"] .about-privacy-banner {
 }
 
 /* ==================== 权限请求窗口 (perm-request) ==================== */
+
+.perm-request-page {
+  box-sizing: border-box;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: var(--gh-bg, #ffffff);
+}
+
+.perm-request-content {
+  width: 100%;
+  max-width: 320px;
+  text-align: center;
+}
+
+.perm-request-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+}
+
+.perm-request-origin {
+  margin: 0 0 16px;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  color: var(--gh-text, #1f2937);
+}
 
 /* 状态图标：主题色浅底圆 + 线性图标，替代原先的 emoji */
 .perm-request-icon {

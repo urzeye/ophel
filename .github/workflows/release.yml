@@ -65,8 +65,15 @@ jobs:
       - name: Sync supporters sections
         run: pnpm sync:supporters
 
-      - name: Package all platforms
+      - name: Package Chrome and Firefox
         run: pnpm package:all
+
+      - name: Build Safari Web Extension
+        run: pnpm build:safari
+
+      - name: Package Safari Web Extension
+        working-directory: build/safari-mv3-prod
+        run: zip -r ../safari-mv3-prod.zip .
 
       - name: Build Userscript
         run: pnpm build:userscript
@@ -221,6 +228,7 @@ jobs:
           cp build/chrome-mv3-prod.zip build/ophel-atlas-${{ steps.get_version.outputs.VERSION }}-chrome.zip
           cp build/chrome-mv3-edge.zip build/ophel-atlas-${{ steps.get_version.outputs.VERSION }}-edge-addons-upload.zip
           cp build/firefox-mv3-prod.zip build/ophel-atlas-${{ steps.get_version.outputs.VERSION }}-firefox.zip
+          cp build/safari-mv3-prod.zip build/ophel-atlas-${{ steps.get_version.outputs.VERSION }}-safari.zip
           cp build/userscript/ophel.user.js build/ophel-atlas-${{ steps.get_version.outputs.VERSION }}.user.js
           cp build/ophel-atlas-cws-upload.zip build/ophel-atlas-${{ steps.get_version.outputs.VERSION }}-cws-upload.zip
 
@@ -244,11 +252,13 @@ jobs:
             |----------|------|------|
             | **Chrome** | `ophel-atlas-${{ steps.get_version.outputs.VERSION }}-chrome.zip` | Manual extension package |
             | **Firefox** | `ophel-atlas-${{ steps.get_version.outputs.VERSION }}-firefox.zip` | Manual extension package |
+            | **Safari (Experimental, macOS)** | `ophel-atlas-${{ steps.get_version.outputs.VERSION }}-safari.zip` | Temporary extension only; expires after 24 hours or when Safari quits |
             | **Userscript** | `ophel-atlas-${{ steps.get_version.outputs.VERSION }}.user.js` | Tampermonkey script |
             | **CWS Upload** | `ophel-atlas-${{ steps.get_version.outputs.VERSION }}-cws-upload.zip` | **For Chrome Web Store submission only** (No Key) |
             | **Edge Add-ons Upload** | `ophel-atlas-${{ steps.get_version.outputs.VERSION }}-edge-addons-upload.zip` | **For Microsoft Edge Add-ons submission only** (No Key) |
 
-            ### 🏪 Store Version Status | 商店版本状态
+            <details>
+            <summary>🏪 Store Version Status | 商店版本状态</summary>
 
             > A GitHub Release only means these release files have been built and published here. It does **not** mean Chrome Web Store, Microsoft Edge Add-ons, or Firefox Add-ons have already been updated.
             > GitHub Release 只表示这里的发布文件已经构建并发布，并不表示 Chrome Web Store、Microsoft Edge Add-ons 或 Firefox Add-ons 已经同步更新。
@@ -259,9 +269,13 @@ jobs:
             > To confirm whether a store has received this version, check the version shown on that store's public listing. There is no fixed review or rollout time.
             > 如需确认某个商店是否已更新到此版本，请以该商店公开详情页显示的版本为准；审核和分发时间没有固定时长。
 
+            </details>
+
             ### 🔧 Installation | 安装方法
 
-            #### Browser Extensions | 浏览器扩展
+            <details>
+            <summary>Browser Extensions | 浏览器扩展</summary>
+
             > **Recommended:** Install Ophel Atlas from the official browser stores: Chrome Web Store, Microsoft Edge Add-ons, or Firefox Add-ons.
             > **推荐：** 请从官方浏览器商店安装 Ophel Atlas：Chrome Web Store、Microsoft Edge Add-ons 或 Firefox Add-ons。
 
@@ -274,9 +288,34 @@ jobs:
             > If you already installed a store version, do not install these GitHub extension zips unless you are intentionally testing a separate development copy.
             > 如果你已经安装了商店版本，请不要再安装这些 GitHub 扩展 zip，除非你明确想测试一个独立的开发副本。
 
-            #### Userscript (Tampermonkey) | 油猴脚本
+            </details>
+
+            <details>
+            <summary>Safari (Temporary Extension, macOS) | Safari 临时扩展（仅 macOS）</summary>
+
+            > Safari support is experimental and currently provided only as a temporary extension for local use on macOS. There is no Safari App Store release planned at this time, and no signed macOS or iOS app is included.
+            > Safari 目前为实验适配，仅提供 macOS 本地临时扩展，暂不计划上架 Safari 商店，也不提供已签名的 macOS 或 iOS 应用。
+
+            1. Download `ophel-atlas-${{ steps.get_version.outputs.VERSION }}-safari.zip`. | 下载 Safari zip 资源包。
+            2. In Safari Settings → Advanced, enable “Show features for web developers”. | 在 Safari「设置 → 高级」中启用「显示网页开发者功能」。
+            3. Open Settings → Developer → “Add Temporary Extension…”, and approve the unsigned-extension prompt. | 打开「设置 → 开发者 → 添加临时扩展…」，按提示允许未签名扩展。
+            4. Select the downloaded zip, or extract it and select the folder containing `manifest.json`. | 选择下载的 zip，或解压后选择包含 `manifest.json` 的文件夹。
+            5. Enable Ophel in Extensions settings, allow access to the relevant AI websites, then reload those pages. | 在「扩展」设置中启用 Ophel，允许访问相应 AI 站点，然后刷新页面。
+
+            > Temporary extensions expire after 24 hours and are also unloaded when Safari quits. Add the extension again to continue using it; this is not a permanent installation. This temporary loading method requires neither Xcode nor paid Apple Developer Program membership. Use a macOS Safari version with the “Add Temporary Extension…” option.
+            > 临时扩展会在 24 小时后或退出 Safari 时被移除，需要重新添加，不能像商店版一样长期安装。此临时加载方式无需 Xcode 或付费 Apple 开发者会员，但需要使用提供「添加临时扩展…」入口的 macOS Safari 版本。
+
+            [Apple’s temporary installation instructions | Apple 临时安装说明](https://developer.apple.com/documentation/safariservices/running-your-safari-web-extension)
+
+            </details>
+
+            <details>
+            <summary>Userscript (Tampermonkey) | 油猴脚本</summary>
+
             1. Install [Tampermonkey](https://www.tampermonkey.net/) | 安装 Tampermonkey 插件
             2. Click the `.user.js` file link | 点击 `.user.js` 文件链接即可安装
+
+            </details>
 
             ---
 
@@ -287,6 +326,7 @@ jobs:
             build/ophel-atlas-${{ steps.get_version.outputs.VERSION }}-chrome.zip
             build/ophel-atlas-${{ steps.get_version.outputs.VERSION }}-edge-addons-upload.zip
             build/ophel-atlas-${{ steps.get_version.outputs.VERSION }}-firefox.zip
+            build/ophel-atlas-${{ steps.get_version.outputs.VERSION }}-safari.zip
             build/ophel-atlas-${{ steps.get_version.outputs.VERSION }}.user.js
             build/ophel-atlas-${{ steps.get_version.outputs.VERSION }}-cws-upload.zip
           draft: false

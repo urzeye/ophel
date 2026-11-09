@@ -1,3 +1,4 @@
+import { isSiteMatchPatternOriginPattern } from "~adapters/declarative/match-pattern"
 import { DEFAULT_SHORTCUTS_SETTINGS } from "~constants/shortcuts"
 import {
   INSTALLED_SITE_PACKS_STORAGE_KEY,
@@ -13,6 +14,7 @@ import { SITE_PACK_ORIGIN_BINDINGS_STORAGE_KEY } from "~core/site-pack-storage-c
 import { extensionRegistryTransport } from "~platform/extension/registry-transport"
 import { createRuntimeSitePackRegistrationManager } from "~platform/extension/site-pack-registration-runtime"
 import { extensionStorage } from "~platform/extension/storage"
+import { extensionCapabilities } from "~platform/extension/browser-policy"
 import { APP_DISPLAY_NAME } from "~utils/config"
 import {
   MSG_CLEAR_ALL_DATA,
@@ -46,6 +48,7 @@ import {
   MSG_TEST_CLAUDE_TOKEN,
   MSG_WEBDAV_REQUEST,
   type ExtensionMessage,
+  type RequestPermissionsMessage,
 } from "~utils/messaging"
 import {
   PERSISTED_SETTINGS_STORAGE_KEY,
@@ -198,12 +201,15 @@ function decodeNotifId(notifId: string): { tabId: number; windowId: number } | n
 }
 
 async function focusTab(tabId: number) {
-  try {
-    const tab = await chrome.tabs.get(tabId)
-    await chrome.tabs.update(tabId, { active: true })
-    await chrome.windows.update(tab.windowId, { focused: true })
-  } catch (error) {
-    console.warn("[Ophel] Failed to focus notification tab:", error)
+  const tab = await chrome.tabs.get(tabId)
+  const targetWindow = await chrome.windows.get(tab.windowId)
+  if (targetWindow.state === "minimized") {
+    await chrome.windows.update(tab.windowId, { state: "normal" })
+  }
+  await chrome.tabs.update(tabId, { active: true })
+  const focusedWindow = await chrome.windows.update(tab.windowId, { focused: true })
+  if (!focusedWindow.focused) {
+    throw new Error(`Browser did not focus window ${tab.windowId}`)
   }
 }
 
@@ -213,7 +219,9 @@ if (chrome.notifications?.onClicked) {
   chrome.notifications.onClicked.addListener((notifId) => {
     const tab = decodeNotifId(notifId)
     if (tab) {
-      void focusTab(tab.tabId)
+      void focusTab(tab.tabId).catch((error) => {
+        console.error("[Ophel] Failed to focus notification tab:", error)
+      })
     }
     // MV3 returns Promise at runtime; cast to handle both callback/Promise signatures
     void Promise.resolve(chrome.notifications.clear(notifId)).catch(() => {
@@ -258,7 +266,11 @@ async function broadcastToTabs(tabs: chrome.tabs.Tab[], message: ExtensionMessag
 
 // 监听扩展安装/更新
 chrome.runtime.onInstalled.addListener(() => {
-  setupDynamicRules()
+  if (extensionCapabilities.declarativeNetRequest) {
+    void setupDynamicRules().catch((error) => {
+      console.error("[Ophel] Failed to initialize network rules:", error)
+    })
+  }
   scheduleRemoteConfigAlarmSetup()
   scheduleRemoteConfigCheck(false)
   scheduleSitePackRegistrationReconciliation("runtime-installed")
@@ -275,7 +287,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   }
 })
 
-chrome.runtime.onUpdateAvailable.addListener((details) => {
+chrome.runtime.onUpdateAvailable?.addListener((details) => {
   void (async () => {
     try {
       await broadcastToOphelTabs({
@@ -291,7 +303,11 @@ chrome.runtime.onUpdateAvailable.addListener((details) => {
 // 监听权限移除
 chrome.permissions.onRemoved.addListener(async (removed) => {
   scheduleSitePackRegistrationReconciliation("permission-removed")
-  if (removed.origins && removed.origins.includes("<all_urls>")) {
+  if (
+    extensionCapabilities.watermarkRemoval &&
+    removed.origins &&
+    removed.origins.includes("<all_urls>")
+  ) {
     // 获取当前设置
     const settings = await localStorage.get<Settings>("settings")
     if (settings && settings.content?.watermarkRemoval) {
@@ -427,6 +443,10 @@ async function setupDynamicRules() {
 chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendResponse) => {
   switch (message.type) {
     case MSG_SHOW_NOTIFICATION: {
+      if (!extensionCapabilities.notifications || !chrome.notifications?.create) {
+        sendResponse({ success: false, error: "System notifications are unavailable" })
+        break
+      }
       // 将 tabId/windowId 编码进 notifId，SW 重启后点击通知仍可正确跳转
       const tabId = sender.tab?.id
       const windowId = sender.tab?.windowId
@@ -435,34 +455,45 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
           ? encodeNotifId(tabId, windowId)
           : `ophel|${crypto.randomUUID()}`
 
-      if (chrome.notifications?.create) {
-        const options: chrome.notifications.NotificationOptions<true> = {
-          type: "basic",
-          iconUrl: chrome.runtime.getURL("assets/icon.png"),
-          title: message.title || APP_DISPLAY_NAME,
-          message: message.body || "",
-        }
-        // silent 用于禁用系统默认通知声音，由扩展自行播放自定义声音；
-        // Firefox 对 options 做严格校验、不支持 silent，传入会同步抛错导致通知创建失败
-        if (!/firefox/i.test(navigator.userAgent)) {
-          options.silent = true
-        }
-        chrome.notifications.create(notifId, options, () => {
-          if (chrome.runtime.lastError) {
-            console.error("[Ophel] Notification create failed:", chrome.runtime.lastError.message)
-          }
-        })
+      const options: chrome.notifications.NotificationOptions<true> = {
+        type: "basic",
+        iconUrl: chrome.runtime.getURL("assets/icon.png"),
+        title: message.title || APP_DISPLAY_NAME,
+        message: message.body || "",
       }
+      // Firefox 不支持 silent；其他浏览器由扩展播放自定义声音。
+      if (!/firefox/i.test(navigator.userAgent)) options.silent = true
+      chrome.notifications.create(notifId, options, () => {
+        if (chrome.runtime.lastError) {
+          console.error("[Ophel] Notification create failed:", chrome.runtime.lastError.message)
+        }
+      })
       sendResponse({ success: true })
       break
     }
 
-    case MSG_FOCUS_TAB:
-      if (sender.tab?.id) {
-        void focusTab(sender.tab.id)
+    case MSG_FOCUS_TAB: {
+      if (!extensionCapabilities.windowFocus) {
+        sendResponse({ success: false, error: "Automatic window focus is unavailable in Safari" })
+        break
       }
-      sendResponse({ success: true })
+      const tabId = sender.tab?.id
+      if (tabId === undefined) {
+        sendResponse({ success: false, error: "Window focus requires a sender tab" })
+        break
+      }
+      void focusTab(tabId).then(
+        () => sendResponse({ success: true }),
+        (error) => {
+          console.error("[Ophel] Failed to focus completion tab:", error)
+          sendResponse({
+            success: false,
+            error: error instanceof Error ? error.message : String(error),
+          })
+        },
+      )
       break
+    }
 
     case MSG_CHECK_REMOTE_CONFIG:
       if (message.force !== undefined && typeof message.force !== "boolean") {
@@ -591,10 +622,12 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
             throw new Error(`Blocked proxy fetch: private address ${hostname}`)
           }
 
-          // 确保规则已设置
-          const rules = await chrome.declarativeNetRequest.getDynamicRules()
-          if (!rules || rules.length === 0 || !rules.find((r) => r.id === 1001)) {
-            await setupDynamicRules()
+          // Safari 保留普通代理请求，不依赖请求头改写增强。
+          if (extensionCapabilities.declarativeNetRequest) {
+            const rules = await chrome.declarativeNetRequest.getDynamicRules()
+            if (!rules || rules.length === 0 || !rules.find((r) => r.id === 1001)) {
+              await setupDynamicRules()
+            }
           }
 
           // 携带credentials以便访问需要认证的图片资源
@@ -788,7 +821,7 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
       ;(async () => {
         try {
           // 支持 permType 或从 origins/permissions 推断类型
-          const VALID_PERM_TYPES = ["allUrls", "notifications", "cookies"] as const
+          const VALID_PERM_TYPES = ["allUrls", "webdavOrigin", "notifications", "cookies"] as const
           let permType: string = (message as any).permType
           if (!permType) {
             const { origins, permissions } = message as any
@@ -806,9 +839,15 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
           if (!VALID_PERM_TYPES.includes(permType as any)) {
             permType = "allUrls"
           }
-          const url = chrome.runtime.getURL(
-            `tabs/perm-request.html?type=${encodeURIComponent(permType)}`,
-          )
+          const params = new URLSearchParams({ type: permType })
+          if (permType === "webdavOrigin") {
+            const { origins } = message as RequestPermissionsMessage
+            if (origins?.length !== 1 || !isSiteMatchPatternOriginPattern(origins[0])) {
+              throw new Error("WebDAV permission request requires one valid server origin")
+            }
+            params.set("origin", origins[0])
+          }
+          const url = chrome.runtime.getURL(`tabs/perm-request.html?${params.toString()}`)
 
           // 获取当前窗口信息以计算居中位置
           const currentWindow = await chrome.windows.getCurrent()

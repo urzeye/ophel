@@ -178,6 +178,20 @@ export const ru = {
   grant: "Разрешить",
   allowRecommended: "Разрешить (рекомендуется)",
   required: "Обязательно",
+  permissionCheckFailed: "Не удалось проверить разрешения. Обновите статус и повторите попытку.",
+  safariWebsiteAccess: "Доступ к сайтам",
+  safariWebsiteAccessDesc:
+    "Используется для синхронизации WebDAV, экспорта изображений и вложений и доступа пакетов сайтов. В Safari можно разрешить только нужные сайты.",
+  safariWebsiteAccessManaged: "Управляется Safari",
+  safariAllWebsitesAllowed: "Все сайты разрешены",
+  safariWebsiteAccessGuide: "Показать инструкции для Safari",
+  safariWebsiteAccessStep1: "Откройте Safari → Настройки → Расширения и выберите Ophel Atlas.",
+  safariWebsiteAccessStep2:
+    "Нажмите «Изменить веб-сайты…» и разрешите нужные сайты. Для доступа ко всем сайтам нажмите «Всегда разрешать на каждом веб-сайте…» и подтвердите.",
+  safariWebsiteAccessStep3:
+    "Изменить или отозвать доступ можно в разделе «Веб-сайты → Ophel Atlas». Затем вернитесь в Ophel и нажмите «Обновить статус».",
+  safariWebsiteAccessScopeHint:
+    "Здесь проверяется только доступ ко всем сайтам. Сайты, разрешённые отдельно, остаются доступны даже без общего разрешения.",
   permissionWebdavAccess: "Доступ к расширенным функциям",
   permissionWebdavAccessDesc:
     "Разрешить Ophel доступ к ресурсам разных сайтов для синхронизации WebDAV, удаления водяных знаков с изображений ИИ, экспорта изображений и вложений из диалогов, а также запуска Site Pack без запросов для каждого сайта.",
@@ -792,6 +806,12 @@ export const ru = {
   hideStatusWhenReadLabel: "Галочка только для непрочитанных",
   hideStatusWhenReadDesc:
     "При включении ✅ показывается только когда вкладка неактивна и скрывается после просмотра",
+  featureUnavailableOnBrowser: "Эта функция недоступна в этом браузере",
+  completionReminderLabel: "Напоминание о завершении",
+  completionReminderSoundOnlyDesc:
+    "Safari не поддерживает системные уведомления. После завершения генерации можно воспроизвести звук.",
+  exportPartialSuccess:
+    "Текст экспортирован. Не удалось скачать вложения: {count}. См. манифест в архиве.",
   showNotificationLabel: "Уведомление на раб. стол",
   showNotificationDesc: "Сказать, когда ИИ закончит писать",
   notificationSoundLabel: "Звук",
@@ -809,7 +829,10 @@ export const ru = {
   notifyWhenFocusedLabel: "Звук даже в фокусе",
   notifyWhenFocusedDesc: "Пищать, даже если страница открыта",
   autoFocusLabel: "Авто-вывод окна вперед",
-  autoFocusDesc: "Выводить окно вперед в конце",
+  autoFocusDesc:
+    "Пытаться вернуться к этому окну после завершения генерации; браузер может ограничивать переключение из других приложений или фокусировку из фона",
+  autoFocusUnsupportedDesc: "Safari не поддерживает автоматический вывод окна на передний план.",
+  autoFocusFailed: "Не удалось вывести окно на передний план. Вернитесь вручную.",
   privacyModeLabel: "Скрывать заголовок вкладки",
   privacyModeDesc:
     "Заменяет заголовок вкладки браузера на фальшивый заголовок ниже. Содержимое страницы не меняется.",

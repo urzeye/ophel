@@ -178,6 +178,20 @@ export const ja = {
   grant: "許可する",
   allowRecommended: "許可（推奨）",
   required: "必須",
+  permissionCheckFailed: "権限を確認できませんでした。更新して再試行してください。",
+  safariWebsiteAccess: "Webサイトへのアクセス",
+  safariWebsiteAccessDesc:
+    "WebDAV同期、画像・添付ファイルのエクスポート、サイトパックのアクセスに使用します。Safariで必要なサイトのみ許可できます。",
+  safariWebsiteAccessManaged: "Safariで管理",
+  safariAllWebsitesAllowed: "すべてのサイトを許可済み",
+  safariWebsiteAccessGuide: "Safariの設定手順を表示",
+  safariWebsiteAccessStep1: "Safari → 設定 → 機能拡張を開き、Ophel Atlasを選択します。",
+  safariWebsiteAccessStep2:
+    "「Webサイトを編集…」で必要なサイトを「許可」にします。全サイトへのアクセスが必要な場合は「すべてのWebサイトで常に許可…」をクリックして確認します。",
+  safariWebsiteAccessStep3:
+    "「Webサイト → Ophel Atlas」で許可を変更・取り消しできます。その後Ophelに戻り、「状態を更新」をクリックします。",
+  safariWebsiteAccessScopeHint:
+    "ここでは全サイトへのアクセスのみを確認します。全サイトを許可していなくても、個別に許可したサイトは利用できます。",
   permissionWebdavAccess: "高度な機能へのアクセス",
   permissionWebdavAccessDesc:
     "Ophel がサイトをまたいでリソースにアクセスできるようにします。WebDAV 同期、AI 画像の透かし除去、会話内の画像・添付ファイルの書き出し、Site Pack をサイトごとの承認なしで実行するために使用します。",
@@ -801,6 +815,12 @@ export const ja = {
   hideStatusWhenReadLabel: "未読時のみ完了マークを表示",
   hideStatusWhenReadDesc:
     "有効にすると ✅ はタブが非アクティブの時のみ表示され、表示すると自動的に消えます",
+  featureUnavailableOnBrowser: "このブラウザではこの機能を利用できません",
+  completionReminderLabel: "完了リマインダー",
+  completionReminderSoundOnlyDesc:
+    "Safari はシステム通知に対応していません。生成完了時に通知音を再生できます。",
+  exportPartialSuccess:
+    "テキストをエクスポートしました。{count} 件の添付ファイルをダウンロードできませんでした。アーカイブ内の一覧を確認してください。",
   showNotificationLabel: "デスクトップ通知",
   showNotificationDesc: "AIの回答完了時にシステムの通知を送信します",
   notificationSoundLabel: "通知音",
@@ -818,7 +838,10 @@ export const ja = {
   notifyWhenFocusedLabel: "フォーカス時も通知",
   notifyWhenFocusedDesc: "該当ページがアクティブな場合でも通知を送信します",
   autoFocusLabel: "自動でウィンドウを最前面に",
-  autoFocusDesc: "回答完了時にブラウザのウィンドウをアクティブにします",
+  autoFocusDesc:
+    "回答完了時にこのウィンドウへの切り替えを試みます。ブラウザが他のアプリからの切り替えやバックグラウンドでのフォーカスを制限する場合があります",
+  autoFocusUnsupportedDesc: "Safari はウィンドウを自動的に最前面に表示する機能に対応していません。",
+  autoFocusFailed: "ウィンドウを前面に表示できませんでした。手動で戻ってください。",
   privacyModeLabel: "タブのタイトルを隠す",
   privacyModeDesc:
     "ブラウザのタブのタイトルを、下で設定したダミータイトルに置き換えます。ページの内容は変わりません。",

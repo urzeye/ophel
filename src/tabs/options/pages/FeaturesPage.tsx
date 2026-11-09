@@ -756,7 +756,11 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
   const showPrerequisiteToast = (label: string) =>
     showToastThrottled(prerequisiteToastTemplate.replace("{setting}", label), 2000, {}, 1500, label)
   const autoRenameLabel = t("autoRenameTabLabel")
-  const showNotificationLabel = t("showNotificationLabel")
+  const supportsSystemNotifications = platform.hasCapability("notifications")
+  const supportsWindowFocus = platform.hasCapability("windowFocus")
+  const showNotificationLabel = t(
+    supportsSystemNotifications ? "showNotificationLabel" : "completionReminderLabel",
+  )
   const showStatusLabel = t("showStatusLabel")
   const privacyModeLabel = t("privacyModeLabel")
   const readingHistoryLabel = t("readingHistoryPersistenceLabel")
@@ -854,15 +858,17 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
   const notificationSettingsCard = (
     <SettingCard title={t("notificationSettings")} settingId="notification-settings-card">
       <ToggleRow
-        label={t("showNotificationLabel")}
-        description={t("showNotificationDesc")}
+        label={showNotificationLabel}
+        description={t(
+          supportsSystemNotifications ? "showNotificationDesc" : "completionReminderSoundOnlyDesc",
+        )}
         settingId="tab-show-notification"
         checked={settings.tab?.showNotification ?? false}
         onChange={async () => {
           const checked = settings.tab?.showNotification
           if (!checked) {
-            // 油猴脚本环境：直接启用（不需要检查权限，GM_notification 已通过 @grant 声明）
-            if (!platform.hasCapability("permissions")) {
+            // 油猴无需扩展授权；不支持系统通知的目标仍可启用声音提醒。
+            if (!supportsSystemNotifications || !platform.hasCapability("permissions")) {
               updateNestedSetting("tab", "showNotification", true)
               return
             }
@@ -1009,9 +1015,10 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
 
       <ToggleRow
         label={t("autoFocusLabel")}
-        description={t("autoFocusDesc")}
+        description={t(supportsWindowFocus ? "autoFocusDesc" : "autoFocusUnsupportedDesc")}
         settingId="tab-auto-focus"
-        checked={settings.tab?.autoFocus ?? false}
+        checked={supportsWindowFocus && (settings.tab?.autoFocus ?? false)}
+        disabled={!supportsWindowFocus}
         onChange={() => updateNestedSetting("tab", "autoFocus", !settings.tab?.autoFocus)}
       />
     </SettingCard>

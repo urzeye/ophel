@@ -180,6 +180,20 @@ export const es = {
   grant: "Conceder",
   allowRecommended: "Permitir (Recomendado)",
   required: "Requerido",
+  permissionCheckFailed: "No se pudieron comprobar los permisos. Actualiza para reintentar.",
+  safariWebsiteAccess: "Acceso a sitios web",
+  safariWebsiteAccessDesc:
+    "Se usa para sincronizar por WebDAV, exportar imágenes y adjuntos y permitir el acceso de los Site Packs. En Safari puedes permitir solo los sitios necesarios.",
+  safariWebsiteAccessManaged: "Gestionado por Safari",
+  safariAllWebsitesAllowed: "Todos los sitios permitidos",
+  safariWebsiteAccessGuide: "Ver instrucciones para Safari",
+  safariWebsiteAccessStep1: "Abre Safari → Ajustes → Extensiones y selecciona Ophel Atlas.",
+  safariWebsiteAccessStep2:
+    "Haz clic en “Editar sitios web…” y permite los sitios necesarios. Para acceder a todos, haz clic en “Permitir siempre en todos los sitios web…” y confirma.",
+  safariWebsiteAccessStep3:
+    "Puedes cambiar o revocar el acceso en Sitios web → Ophel Atlas. Después vuelve a Ophel y haz clic en “Actualizar estado”.",
+  safariWebsiteAccessScopeHint:
+    "Aquí solo se comprueba el acceso a todos los sitios. Los sitios permitidos individualmente siguen disponibles aunque no permitas todos los sitios.",
   permissionWebdavAccess: "Acceso a Funciones Avanzadas",
   permissionWebdavAccessDesc:
     "Permitir que Ophel acceda a recursos de distintos sitios para la sincronización WebDAV, la eliminación de marcas de agua en imágenes de IA, la exportación de imágenes y archivos adjuntos de las conversaciones y la ejecución de Site Packs sin solicitudes por sitio.",
@@ -796,6 +810,12 @@ export const es = {
   hideStatusWhenReadLabel: "Mostrar ✅ solo cuando no leído",
   hideStatusWhenReadDesc:
     "Al activar, ✅ solo aparece con la pestaña inactiva y se oculta al visualizarla",
+  featureUnavailableOnBrowser: "Esta función no está disponible en este navegador",
+  completionReminderLabel: "Aviso de finalización",
+  completionReminderSoundOnlyDesc:
+    "Safari no admite notificaciones del sistema. Puedes reproducir un sonido al finalizar la generación.",
+  exportPartialSuccess:
+    "Texto exportado. No se pudieron descargar {count} archivos adjuntos; consulta el manifiesto del archivo comprimido.",
   showNotificationLabel: "Notificación Escritorio",
   showNotificationDesc: "Avisar cuando termine de escribir",
   notificationSoundLabel: "Sonido de Aviso",
@@ -813,7 +833,10 @@ export const es = {
   notifyWhenFocusedLabel: "Avisar Aun Con Foco",
   notifyWhenFocusedDesc: "Enviar aviso aunque estés viendo la página",
   autoFocusLabel: "Auto Poner la Ventana al Frente",
-  autoFocusDesc: "Traer al frente al terminar",
+  autoFocusDesc:
+    "Intentar volver a esta ventana al terminar; el navegador puede limitar el cambio desde otras apps o el enfoque en segundo plano",
+  autoFocusUnsupportedDesc: "Safari no admite traer la ventana al primer plano automáticamente.",
+  autoFocusFailed: "No se pudo traer la ventana al frente. Vuelve manualmente.",
   privacyModeLabel: "Ocultar título de la pestaña",
   privacyModeDesc:
     "Sustituye el título de la pestaña del navegador por el título falso de abajo. El contenido de la página no cambia.",

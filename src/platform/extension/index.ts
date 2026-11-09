@@ -15,6 +15,7 @@ import {
   MSG_CHECK_REMOTE_CONFIG,
   MSG_ENSURE_SITE_PACK_BINDING_ORIGIN,
   MSG_ENSURE_SITE_PACK_ORIGINS,
+  MSG_FOCUS_TAB,
   MSG_GET_AISTUDIO_MODELS,
   MSG_GET_REMOTE_CONFIG_STATE,
   MSG_IGNORE_REMOTE_CONFIG_PATCH,
@@ -37,6 +38,7 @@ import {
   renderKatexFallbackString,
 } from "../katex-registry"
 import { extensionStorage } from "./storage"
+import { extensionCapabilities } from "./browser-policy"
 
 export { extensionStorage }
 
@@ -228,6 +230,9 @@ export const platform: Platform = {
   },
 
   notify(options: NotifyOptions): void {
+    if (!extensionCapabilities.notifications) {
+      throw new Error("System notifications are not supported by this extension target")
+    }
     chrome.runtime.sendMessage({
       type: "SHOW_NOTIFICATION",
       title: options.title,
@@ -240,17 +245,19 @@ export const platform: Platform = {
     return path ? chrome.runtime.getURL(path) : undefined
   },
 
-  focusWindow(): void {
-    chrome.runtime.sendMessage({ type: "FOCUS_TAB" })
+  async focusWindow(): Promise<void> {
+    const response = await sendToBackground({ type: MSG_FOCUS_TAB })
+    if (!response?.success) {
+      throw new Error(response?.error || "Window focus request failed")
+    }
   },
 
   openTab(url: string): void {
     chrome.runtime.sendMessage({ type: "OPEN_URL", url })
   },
 
-  hasCapability(_cap: PlatformCapability): boolean {
-    // 扩展版支持所有能力
-    return true
+  hasCapability(cap: PlatformCapability): boolean {
+    return extensionCapabilities[cap]
   },
 
   async getClaudeSessionKey() {

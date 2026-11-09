@@ -678,6 +678,10 @@ export const zhTW = {
   showStatusDesc: "在標籤頁標題中顯示生成狀態圖示（⏳/✅）",
   hideStatusWhenReadLabel: "僅在未讀時顯示完成標記",
   hideStatusWhenReadDesc: "開啟後 ✅ 僅在標籤頁未啟用時顯示，一旦檢視即自動隱藏",
+  featureUnavailableOnBrowser: "此瀏覽器暫不支援此功能",
+  completionReminderLabel: "完成提醒",
+  completionReminderSoundOnlyDesc: "Safari 不支援系統通知；生成完成後可播放提示音。",
+  exportPartialSuccess: "文字已匯出，{count} 個附件未能下載，請查看壓縮檔中的清單。",
   showNotificationLabel: "傳送桌面通知",
   showNotificationDesc: "生成完成時傳送系统通知",
   notificationSoundLabel: "通知聲音",
@@ -695,7 +699,9 @@ export const zhTW = {
   notifyWhenFocusedLabel: "前台時也通知",
   notifyWhenFocusedDesc: "當前頁面可見時也發送通知，而不僅在後台時",
   autoFocusLabel: "完成後切回此視窗",
-  autoFocusDesc: "生成完成時自動將視窗帶回前台",
+  autoFocusDesc: "生成完成時嘗試切回此視窗；瀏覽器可能限制跨應用程式切換或背景聚焦",
+  autoFocusUnsupportedDesc: "Safari 不支援自動將視窗帶回前台",
+  autoFocusFailed: "無法自動切回視窗，請手動返回",
   privacyModeLabel: "隱藏分頁標題",
   privacyModeDesc: "把瀏覽器分頁標題換成下方的偽裝標題，不影響頁面內容",
   privacyTitleLabel: "偽裝標題",
@@ -1234,6 +1240,20 @@ export const zhTW = {
   required: "必需",
 
   // 可選權限
+  permissionCheckFailed: "檢測失敗，請重新整理後重試",
+  safariWebsiteAccess: "網站存取權限",
+  safariWebsiteAccessDesc:
+    "用於 WebDAV 同步、圖片及附件匯出和適配套件存取。可在 Safari 中只允許所需網站。",
+  safariWebsiteAccessManaged: "由 Safari 管理",
+  safariAllWebsitesAllowed: "已允許所有網站",
+  safariWebsiteAccessGuide: "查看 Safari 設定指引",
+  safariWebsiteAccessStep1: "開啟 Safari → 設定 → 延伸功能，選擇 Ophel Atlas。",
+  safariWebsiteAccessStep2:
+    "按一下「編輯網站…」，將所需網站設為「允許」；如需存取所有網站，按一下「在每個網站上永遠允許…」並確認。",
+  safariWebsiteAccessStep3:
+    "在「網站 → Ophel Atlas」中可調整或撤銷授權。完成後返回 Ophel，按一下「重新整理狀態」。",
+  safariWebsiteAccessScopeHint:
+    "此處只檢測是否允許所有網站；未允許所有網站時，個別授權的網站仍可使用。",
   permissionWebdavAccess: "進階功能權限",
   permissionWebdavAccessDesc:
     "允許 Ophel 跨站存取資源，用於 WebDAV 同步、AI 圖片浮水印移除、匯出對話中的圖片/附件，以及讓適配包無需逐站點授權即可執行",

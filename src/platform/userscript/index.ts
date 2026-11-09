@@ -190,7 +190,7 @@ export const platform: Platform = {
     return window.__OPHEL_NOTIFICATION_SOUND_URLS__?.[presetId]
   },
 
-  focusWindow(): void {
+  async focusWindow(): Promise<void> {
     window.focus()
   },
 
@@ -199,15 +199,18 @@ export const platform: Platform = {
   },
 
   hasCapability(cap: PlatformCapability): boolean {
-    // 油猴版不支持这些能力
-    const unsupported: PlatformCapability[] = [
-      "cookies",
-      "permissions",
-      "tabs",
-      "declarativeNetRequest",
-      "commands",
-    ]
-    return !unsupported.includes(cap)
+    const capabilities: Record<PlatformCapability, boolean> = {
+      cookies: false,
+      permissions: false,
+      browserManagedHostPermissions: false,
+      tabs: false,
+      declarativeNetRequest: false,
+      commands: false,
+      watermarkRemoval: true,
+      notifications: true,
+      windowFocus: true,
+    }
+    return capabilities[cap]
   },
 
   async getClaudeSessionKey() {

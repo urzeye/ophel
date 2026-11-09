@@ -16,7 +16,9 @@ const GeminiSettings: React.FC = () => {
 
   if (!settings) return null
 
+  const supportsWatermarkRemoval = platform.hasCapability("watermarkRemoval")
   const toggleWatermarkRemoval = async () => {
+    if (!supportsWatermarkRemoval) return
     if (settings.content?.watermarkRemoval) {
       updateNestedSetting("content", "watermarkRemoval", false)
       return
@@ -63,9 +65,12 @@ const GeminiSettings: React.FC = () => {
       />
       <ToggleRow
         label={t("watermarkRemovalLabel")}
-        description={t("watermarkRemovalDesc")}
+        description={
+          supportsWatermarkRemoval ? t("watermarkRemovalDesc") : t("featureUnavailableOnBrowser")
+        }
         settingId="gemini-watermark-removal"
-        checked={settings.content?.watermarkRemoval ?? false}
+        checked={supportsWatermarkRemoval && (settings.content?.watermarkRemoval ?? false)}
+        disabled={!supportsWatermarkRemoval}
         onChange={toggleWatermarkRemoval}
       />
     </SettingCard>

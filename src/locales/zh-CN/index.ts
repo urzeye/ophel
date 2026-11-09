@@ -167,6 +167,20 @@ export const zhCN = {
   allowRecommended: "允许（推荐）",
   required: "必需",
   // 可选权限
+  permissionCheckFailed: "检测失败，请刷新重试",
+  safariWebsiteAccess: "网站访问权限",
+  safariWebsiteAccessDesc:
+    "用于 WebDAV 同步、图片及附件导出和适配包访问。可在 Safari 中只允许所需网站。",
+  safariWebsiteAccessManaged: "由 Safari 管理",
+  safariAllWebsitesAllowed: "已允许所有网站",
+  safariWebsiteAccessGuide: "查看 Safari 设置指引",
+  safariWebsiteAccessStep1: "打开 Safari → 设置 → 扩展，选择 Ophel Atlas。",
+  safariWebsiteAccessStep2:
+    "点击“编辑网站…”，将所需网站设为“允许”；如需全站访问，点击“在每个网站上始终允许…”并确认。",
+  safariWebsiteAccessStep3:
+    "在“网站 → Ophel Atlas”中可调整或撤销授权。完成后返回 Ophel，点击“刷新状态”。",
+  safariWebsiteAccessScopeHint:
+    "这里只检测是否允许所有网站；未允许所有网站时，单独授权的网站仍可使用。",
   permissionWebdavAccess: "高级功能权限",
   permissionWebdavAccessDesc:
     "允许 Ophel 跨站访问资源，用于 WebDAV 同步、AI 图片去水印、导出对话中的图片/附件，以及让适配包无需逐站授权即可运行",
@@ -780,6 +794,10 @@ export const zhCN = {
   showStatusDesc: "在标签页标题中显示生成状态图标（⏳/✅）",
   hideStatusWhenReadLabel: "仅在未读时显示完成标记",
   hideStatusWhenReadDesc: "开启后 ✅ 仅在标签页未激活时显示，一旦查看即自动隐藏",
+  featureUnavailableOnBrowser: "此浏览器暂不支持此功能",
+  completionReminderLabel: "完成提醒",
+  completionReminderSoundOnlyDesc: "Safari 不支持系统通知；生成完成后可播放提示音。",
+  exportPartialSuccess: "文本已导出，{count} 个附件未能下载，请查看压缩包中的清单。",
   showNotificationLabel: "发送桌面通知",
   showNotificationDesc: "生成完成时发送系统通知",
   notificationSoundLabel: "通知声音",
@@ -797,7 +815,9 @@ export const zhCN = {
   notifyWhenFocusedLabel: "前台时也通知",
   notifyWhenFocusedDesc: "当前页面可见时也发送通知，而不仅在后台时",
   autoFocusLabel: "完成后切回此窗口",
-  autoFocusDesc: "生成完成时自动将窗口带回前台",
+  autoFocusDesc: "生成完成时尝试切回此窗口；浏览器可能限制跨应用切换或后台聚焦",
+  autoFocusUnsupportedDesc: "Safari 不支持自动将窗口带回前台",
+  autoFocusFailed: "未能自动切回窗口，请手动返回",
   privacyModeLabel: "隐藏标签页标题",
   privacyModeDesc: "把浏览器标签页标题换成下面的伪装标题，不影响页面内容",
   privacyTitleLabel: "伪装标题",

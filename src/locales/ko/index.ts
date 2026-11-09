@@ -176,6 +176,20 @@ export const ko = {
   grant: "허용",
   allowRecommended: "허용(권장)",
   required: "필수",
+  permissionCheckFailed: "권한을 확인할 수 없습니다. 새로고침 후 다시 시도하세요.",
+  safariWebsiteAccess: "웹사이트 접근 권한",
+  safariWebsiteAccessDesc:
+    "WebDAV 동기화, 이미지 및 첨부 파일 내보내기, 사이트 팩 접근에 사용됩니다. Safari에서 필요한 웹사이트만 허용할 수 있습니다.",
+  safariWebsiteAccessManaged: "Safari에서 관리",
+  safariAllWebsitesAllowed: "모든 웹사이트 허용됨",
+  safariWebsiteAccessGuide: "Safari 설정 방법 보기",
+  safariWebsiteAccessStep1: "Safari → 설정 → 확장 프로그램을 열고 Ophel Atlas를 선택하세요.",
+  safariWebsiteAccessStep2:
+    "“웹사이트 편집…”에서 필요한 웹사이트를 “허용”으로 설정하세요. 모든 웹사이트에 접근하려면 “모든 웹사이트에서 항상 허용…”을 클릭하고 확인하세요.",
+  safariWebsiteAccessStep3:
+    "“웹사이트 → Ophel Atlas”에서 권한을 변경하거나 취소할 수 있습니다. 완료 후 Ophel로 돌아와 “상태 새로고침”을 클릭하세요.",
+  safariWebsiteAccessScopeHint:
+    "여기서는 모든 웹사이트 접근 권한만 확인합니다. 모든 웹사이트를 허용하지 않아도 개별적으로 허용한 웹사이트는 사용할 수 있습니다.",
   permissionWebdavAccess: "고급 기능 액세스",
   permissionWebdavAccessDesc:
     "Ophel이 사이트 간 리소스에 액세스할 수 있도록 합니다. WebDAV 동기화, AI 이미지 워터마크 제거, 대화의 이미지/첨부파일 내보내기, 사이트별 승인 없이 Site Pack 실행에 사용됩니다.",
@@ -786,6 +800,12 @@ export const ko = {
   hideStatusWhenReadLabel: "읽지 않았을 때만 완료 표시",
   hideStatusWhenReadDesc:
     "활성화하면 ✅는 탭이 비활성 상태일 때만 표시되며 확인 시 자동으로 숨겨집니다",
+  featureUnavailableOnBrowser: "이 브라우저에서는 이 기능을 사용할 수 없습니다",
+  completionReminderLabel: "완료 알림",
+  completionReminderSoundOnlyDesc:
+    "Safari는 시스템 알림을 지원하지 않습니다. 생성이 완료되면 알림음을 재생할 수 있습니다.",
+  exportPartialSuccess:
+    "텍스트를 내보냈습니다. 첨부 파일 {count}개를 다운로드하지 못했습니다. 압축 파일의 목록을 확인하세요.",
   showNotificationLabel: "데스크톱 알림",
   showNotificationDesc: "생성이 완료되면 시스템 알림 전송",
   notificationSoundLabel: "알림음",
@@ -803,7 +823,10 @@ export const ko = {
   notifyWhenFocusedLabel: "포커스 시에도 알림",
   notifyWhenFocusedDesc: "현재 페이지가 표시 중일 때도 알림 전송",
   autoFocusLabel: "창 자동 전면 표시",
-  autoFocusDesc: "생성이 완료되면 창을 맨 앞으로 가져옴",
+  autoFocusDesc:
+    "생성이 완료되면 이 창으로 돌아오기를 시도합니다. 브라우저가 다른 앱에서의 전환이나 백그라운드 포커스를 제한할 수 있습니다",
+  autoFocusUnsupportedDesc: "Safari는 창을 자동으로 맨 앞으로 가져오는 기능을 지원하지 않습니다.",
+  autoFocusFailed: "창을 맨 앞으로 가져오지 못했습니다. 직접 돌아와 주세요.",
   privacyModeLabel: "탭 제목 숨기기",
   privacyModeDesc: "브라우저 탭 제목을 아래의 가짜 제목으로 바꿉니다. 페이지 내용은 그대로입니다.",
   privacyTitleLabel: "가짜 제목",

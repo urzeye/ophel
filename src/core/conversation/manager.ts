@@ -2301,7 +2301,6 @@ export class ConversationManager {
           metadata,
         })
         if (!downloaded) return false
-        showToast(t("exportSuccess"))
         return true
       }
     } else if (format === "json") {

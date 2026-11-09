@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### 🚀 New Features
+
+- **Experimental Safari support** — Added desktop Safari experimental adaptation, retaining core functions. It does not currently support system notifications, automatic top tabs after AI generation, and Gemini watermark removal. (#1030)
+
 ---
 
 ## [1.3.2][1.3.2] - 2026-11-09
