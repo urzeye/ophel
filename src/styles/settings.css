@@ -6327,6 +6327,13 @@ html[data-theme="dark"] .about-privacy-banner {
   justify-content: center;
 }
 
+.perm-request-origin {
+  margin: 0 0 16px;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  color: var(--gh-text, #1f2937);
+}
+
 /* 状态图标：主题色浅底圆 + 线性图标，替代原先的 emoji */
 .perm-request-icon {
   --perm-request-icon-color: var(--gh-primary, #4285f4);

@@ -674,12 +674,16 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
     }
   }
 
-  const requestWebDAVPermission = async (): Promise<boolean> => {
+  const requestWebDAVPermission = async (url: string): Promise<boolean> => {
     try {
+      const origin = `${new URL(url).origin}/*`
       const requestResult: { success?: boolean; error?: string } = await chrome.runtime.sendMessage(
         {
           type: MSG_REQUEST_PERMISSIONS,
-          permType: "allUrls",
+          permType: platform.hasCapability("browserManagedHostPermissions")
+            ? "webdavOrigin"
+            : "allUrls",
+          origins: [origin],
         },
       )
       if (!requestResult.success) {
@@ -687,7 +691,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
         return false
       }
 
-      const granted = await waitForWebDAVPermission("<all_urls>")
+      const granted = await waitForWebDAVPermission(origin)
       if (!granted) showDomToast(t("permissionRequired"))
       return granted
     } catch (error) {
@@ -732,7 +736,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
         onConfirm: () => {
           setPermissionConfirm((prev) => ({ ...prev, show: false }))
           void withWebDAVBusy(action, async () => {
-            if (await requestWebDAVPermission()) await task()
+            if (await requestWebDAVPermission(webdavForm.url)) await task()
           })
         },
       })

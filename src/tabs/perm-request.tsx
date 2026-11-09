@@ -3,7 +3,8 @@
  * 专用于请求可选权限，尺寸小（400x300），授权后自动关闭
  *
  * URL 参数：
- * - type: allUrls | notifications | cookies | sitePack
+ * - type: allUrls | webdavOrigin | notifications | cookies | sitePack
+ * - origin: WebDAV 服务器的访问模式或 SitePack 域名
  */
 import React, { useEffect, useState } from "react"
 
@@ -37,6 +38,13 @@ const PERMISSION_CONFIGS = {
     origins: ["<all_urls>"],
     permissions: [] as string[],
   },
+  webdavOrigin: {
+    titleKey: "permWebdavTitle",
+    descKey: "permWebdavDesc",
+    deniedKey: "permissionDenied",
+    origins: [] as string[],
+    permissions: [] as string[],
+  },
   notifications: {
     titleKey: "permNotifyTitle",
     descKey: "permNotifyDesc",
@@ -56,6 +64,7 @@ const PERMISSION_CONFIGS = {
 type PermissionType = keyof typeof PERMISSION_CONFIGS
 
 interface PermissionRequestConfig {
+  type: PermissionType | "sitePack"
   titleKey: string
   descKey: string
   deniedKey: string
@@ -71,6 +80,7 @@ const readPermissionRequestConfig = (): PermissionRequestConfig => {
       new Set(params.getAll("origin").filter(isSiteMatchPatternOriginPattern)),
     ).sort((left, right) => left.localeCompare(right))
     return {
+      type: "sitePack",
       titleKey: "sitePacksPermissionTitle",
       descKey: "sitePacksPermissionDesc",
       deniedKey: "sitePacksPermissionDenied",
@@ -84,7 +94,16 @@ const readPermissionRequestConfig = (): PermissionRequestConfig => {
   }
 
   const type = params.get("type") as PermissionType
-  return PERMISSION_CONFIGS[type && type in PERMISSION_CONFIGS ? type : "allUrls"]
+  const permissionType = type && type in PERMISSION_CONFIGS ? type : "allUrls"
+  const config: PermissionRequestConfig = {
+    type: permissionType,
+    ...PERMISSION_CONFIGS[permissionType],
+  }
+  if (permissionType === "webdavOrigin") {
+    const origin = params.get("origin")
+    config.origins = origin && isSiteMatchPatternOriginPattern(origin) ? [origin] : []
+  }
+  return config
 }
 
 const PermissionRequestPage: React.FC = () => {
@@ -93,7 +112,9 @@ const PermissionRequestPage: React.FC = () => {
   const [checking, setChecking] = useState(false)
   const [checkFailed, setCheckFailed] = useState(false)
   const browserManagedRequest =
-    platform.hasCapability("browserManagedHostPermissions") && config.origins.includes("<all_urls>")
+    platform.hasCapability("browserManagedHostPermissions") &&
+    (config.type === "allUrls" || config.type === "webdavOrigin")
+  const showAllWebsitesDescription = browserManagedRequest && config.type === "allUrls"
   const [_langReady, setLangReady] = useState(false)
   const { settings } = useSettingsStore()
   const isHydrated = useSettingsHydrated()
@@ -117,7 +138,7 @@ const PermissionRequestPage: React.FC = () => {
     }
   }, [isHydrated, settings?.language])
 
-  // 注入页面级样式（去除滚动条）
+  // 注入权限请求页的文档布局样式。
   useEffect(() => {
     const style = document.createElement("style")
     style.textContent = PERM_PAGE_STYLES
@@ -155,7 +176,7 @@ const PermissionRequestPage: React.FC = () => {
         origins: config.origins.length > 0 ? config.origins : undefined,
         permissions: config.permissions.length > 0 ? config.permissions : undefined,
       }
-      // Safari 的所有网站访问在系统设置中管理；刷新只核验实际状态。
+      // Safari 的网站访问在系统设置中管理；刷新只核验本次请求的范围。
       if (!browserManagedRequest) await chrome.permissions.request(query)
       const granted = await chrome.permissions.contains(query)
 
@@ -216,7 +237,7 @@ const PermissionRequestPage: React.FC = () => {
                 marginBottom: "12px",
                 color: "var(--gh-text, #1f2937)",
               }}>
-              {t(browserManagedRequest ? "safariWebsiteAccess" : config.titleKey)}
+              {t(showAllWebsitesDescription ? "safariWebsiteAccess" : config.titleKey)}
             </h1>
 
             {/* 描述 */}
@@ -228,17 +249,21 @@ const PermissionRequestPage: React.FC = () => {
                 lineHeight: 1.5,
               }}>
               {t(
-                browserManagedRequest ? "safariWebsiteAccessDesc" : config.descKey,
+                showAllWebsitesDescription ? "safariWebsiteAccessDesc" : config.descKey,
                 config.descParams,
               )}
             </p>
+
+            {config.type === "webdavOrigin" && (
+              <p className="perm-request-origin">{config.origins[0]}</p>
+            )}
 
             {browserManagedRequest && (
               <>
                 <div aria-live="polite" className="settings-perm-request-status">
                   {t(checkFailed ? "permissionCheckFailed" : "safariWebsiteAccessManaged")}
                 </div>
-                <SafariWebsiteAccessGuide />
+                <SafariWebsiteAccessGuide showAllWebsitesHint={config.type === "allUrls"} />
               </>
             )}
 

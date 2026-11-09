@@ -1,3 +1,4 @@
+import { isSiteMatchPatternOriginPattern } from "~adapters/declarative/match-pattern"
 import { DEFAULT_SHORTCUTS_SETTINGS } from "~constants/shortcuts"
 import {
   INSTALLED_SITE_PACKS_STORAGE_KEY,
@@ -47,6 +48,7 @@ import {
   MSG_TEST_CLAUDE_TOKEN,
   MSG_WEBDAV_REQUEST,
   type ExtensionMessage,
+  type RequestPermissionsMessage,
 } from "~utils/messaging"
 import {
   PERSISTED_SETTINGS_STORAGE_KEY,
@@ -819,7 +821,7 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
       ;(async () => {
         try {
           // 支持 permType 或从 origins/permissions 推断类型
-          const VALID_PERM_TYPES = ["allUrls", "notifications", "cookies"] as const
+          const VALID_PERM_TYPES = ["allUrls", "webdavOrigin", "notifications", "cookies"] as const
           let permType: string = (message as any).permType
           if (!permType) {
             const { origins, permissions } = message as any
@@ -837,9 +839,15 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
           if (!VALID_PERM_TYPES.includes(permType as any)) {
             permType = "allUrls"
           }
-          const url = chrome.runtime.getURL(
-            `tabs/perm-request.html?type=${encodeURIComponent(permType)}`,
-          )
+          const params = new URLSearchParams({ type: permType })
+          if (permType === "webdavOrigin") {
+            const { origins } = message as RequestPermissionsMessage
+            if (origins?.length !== 1 || !isSiteMatchPatternOriginPattern(origins[0])) {
+              throw new Error("WebDAV permission request requires one valid server origin")
+            }
+            params.set("origin", origins[0])
+          }
+          const url = chrome.runtime.getURL(`tabs/perm-request.html?${params.toString()}`)
 
           // 获取当前窗口信息以计算居中位置
           const currentWindow = await chrome.windows.getCurrent()
