@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### 🚀 New Features
+
+- **Experimental Safari support** — Added experimental desktop Safari compatibility for core features and sound alerts; watermark removal and system notifications are unavailable, and testing in Safari is still pending.
+
 ---
 
 ## [1.3.2][1.3.2] - 2026-11-09
