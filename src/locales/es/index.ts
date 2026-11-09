@@ -180,8 +180,6 @@ export const es = {
   grant: "Conceder",
   allowRecommended: "Permitir (Recomendado)",
   required: "Requerido",
-  safariAllSitesPermissionDesc:
-    "En Safari, abre Ajustes → Extensiones → Ophel. En Contenido de páginas web e historial de navegación, elige Permitir siempre en todos los sitios web. Después vuelve a Ophel y actualiza el estado de los permisos.",
   permissionWebdavAccess: "Acceso a Funciones Avanzadas",
   permissionWebdavAccessDesc:
     "Permitir que Ophel acceda a recursos de distintos sitios para la sincronización WebDAV, la eliminación de marcas de agua en imágenes de IA, la exportación de imágenes y archivos adjuntos de las conversaciones y la ejecución de Site Packs sin solicitudes por sitio.",

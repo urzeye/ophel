@@ -182,8 +182,6 @@ export const fr = {
   grant: "Accorder",
   allowRecommended: "Autoriser (Recommandé)",
   required: "Requis",
-  safariAllSitesPermissionDesc:
-    "Dans Safari, ouvrez Réglages → Extensions → Ophel. Sous Contenu des pages web et historique de navigation, choisissez Toujours autoriser sur tous les sites web. Revenez ensuite à Ophel et actualisez les autorisations.",
   permissionWebdavAccess: "Accès aux Fonctions Avancées",
   permissionWebdavAccessDesc:
     "Autoriser Ophel à accéder aux ressources de différents sites pour la synchronisation WebDAV, la suppression des filigranes des images IA, l'export des images et pièces jointes des conversations et l'exécution des Site Packs sans demande par site.",

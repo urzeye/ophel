@@ -9,7 +9,6 @@ import React, { useEffect, useState } from "react"
 
 import { isSiteMatchPatternOriginPattern } from "~adapters/declarative/match-pattern"
 import { CheckIcon, ClearIcon, ShieldCheckIcon } from "~components/icons"
-import { platform } from "~platform"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
 import { getPlatformFontFamily } from "~utils/font"
 import { initI18n, setLanguage, t } from "~utils/i18n"
@@ -88,8 +87,6 @@ const readPermissionRequestConfig = (): PermissionRequestConfig => {
 const PermissionRequestPage: React.FC = () => {
   const [status, setStatus] = useState<"pending" | "granted" | "denied">("pending")
   const [config] = useState(readPermissionRequestConfig)
-  const requiresBrowserWebsiteSettings =
-    config.origins.includes("<all_urls>") && !platform.hasCapability("allUrlsPermissionRequest")
   const [_langReady, setLangReady] = useState(false)
   const { settings } = useSettingsStore()
   const isHydrated = useSettingsHydrated()
@@ -137,7 +134,6 @@ const PermissionRequestPage: React.FC = () => {
 
   // 请求权限
   const handleRequest = async () => {
-    if (requiresBrowserWebsiteSettings) return
     try {
       if (config.origins.length === 0 && config.permissions.length === 0) {
         throw new Error("Permission request contains no valid permissions")
@@ -225,15 +221,13 @@ const PermissionRequestPage: React.FC = () => {
                 marginBottom: "24px",
                 lineHeight: 1.5,
               }}>
-              {requiresBrowserWebsiteSettings
-                ? t("safariAllSitesPermissionDesc")
-                : t(config.descKey, config.descParams)}
+              {t(config.descKey, config.descParams)}
             </p>
 
             {/* 按钮 */}
             <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
               <button
-                onClick={requiresBrowserWebsiteSettings ? () => window.close() : handleCancel}
+                onClick={handleCancel}
                 style={{
                   padding: "10px 24px",
                   borderRadius: "8px",
@@ -243,24 +237,22 @@ const PermissionRequestPage: React.FC = () => {
                   fontSize: "14px",
                   cursor: "pointer",
                 }}>
-                {t(requiresBrowserWebsiteSettings ? "close" : "cancel")}
+                {t("cancel")}
               </button>
-              {!requiresBrowserWebsiteSettings && (
-                <button
-                  onClick={handleRequest}
-                  style={{
-                    padding: "10px 24px",
-                    borderRadius: "8px",
-                    border: "none",
-                    background: "var(--gh-primary, #4285f4)",
-                    color: "white",
-                    fontSize: "14px",
-                    fontWeight: 500,
-                    cursor: "pointer",
-                  }}>
-                  {t("allow")}
-                </button>
-              )}
+              <button
+                onClick={handleRequest}
+                style={{
+                  padding: "10px 24px",
+                  borderRadius: "8px",
+                  border: "none",
+                  background: "var(--gh-primary, #4285f4)",
+                  color: "white",
+                  fontSize: "14px",
+                  fontWeight: 500,
+                  cursor: "pointer",
+                }}>
+                {t("allow")}
+              </button>
             </div>
           </>
         )}

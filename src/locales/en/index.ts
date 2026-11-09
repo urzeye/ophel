@@ -178,8 +178,6 @@ export const en = {
   allowRecommended: "Allow (Recommended)",
   required: "Required",
   // Optional permissions
-  safariAllSitesPermissionDesc:
-    "In Safari Settings → Extensions → Ophel, under Webpage Contents and Browsing History, click “Always Allow on Every Website…”. Then return to Ophel and click “Refresh Status”.",
   permissionWebdavAccess: "Advanced Features Access",
   permissionWebdavAccessDesc:
     "Allow Ophel to access resources across sites for WebDAV sync, AI image watermark removal, exporting images and attachments from conversations, and running Site Packs without per-site prompts.",

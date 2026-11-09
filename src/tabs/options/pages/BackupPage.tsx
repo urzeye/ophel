@@ -731,7 +731,6 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
         show: true,
         onConfirm: () => {
           setPermissionConfirm((prev) => ({ ...prev, show: false }))
-          if (!platform.hasCapability("allUrlsPermissionRequest")) return
           void withWebDAVBusy(action, async () => {
             if (await requestWebDAVPermission()) await task()
           })
@@ -836,12 +835,8 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
       {permissionConfirm.show && (
         <ConfirmDialog
           title={t("permissionRequired")}
-          message={t(
-            platform.hasCapability("allUrlsPermissionRequest")
-              ? "webdavPermissionDesc"
-              : "safariAllSitesPermissionDesc",
-          )}
-          confirmText={t(platform.hasCapability("allUrlsPermissionRequest") ? "allow" : "close")}
+          message={t("webdavPermissionDesc")}
+          confirmText={t("allow")}
           onConfirm={permissionConfirm.onConfirm}
           onCancel={() => setPermissionConfirm((prev) => ({ ...prev, show: false }))}
         />

@@ -178,8 +178,6 @@ export const ja = {
   grant: "許可する",
   allowRecommended: "許可（推奨）",
   required: "必須",
-  safariAllSitesPermissionDesc:
-    "Safari の「設定 → 機能拡張 → Ophel」で、「Webページの内容とブラウズ履歴」の「すべてのWebサイトで常に許可」を選択します。その後 Ophel に戻り、権限の状態を更新してください。",
   permissionWebdavAccess: "高度な機能へのアクセス",
   permissionWebdavAccessDesc:
     "Ophel がサイトをまたいでリソースにアクセスできるようにします。WebDAV 同期、AI 画像の透かし除去、会話内の画像・添付ファイルの書き出し、Site Pack をサイトごとの承認なしで実行するために使用します。",
