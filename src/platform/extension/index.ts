@@ -15,6 +15,7 @@ import {
   MSG_CHECK_REMOTE_CONFIG,
   MSG_ENSURE_SITE_PACK_BINDING_ORIGIN,
   MSG_ENSURE_SITE_PACK_ORIGINS,
+  MSG_FOCUS_TAB,
   MSG_GET_AISTUDIO_MODELS,
   MSG_GET_REMOTE_CONFIG_STATE,
   MSG_IGNORE_REMOTE_CONFIG_PATCH,
@@ -244,8 +245,11 @@ export const platform: Platform = {
     return path ? chrome.runtime.getURL(path) : undefined
   },
 
-  focusWindow(): void {
-    chrome.runtime.sendMessage({ type: "FOCUS_TAB" })
+  async focusWindow(): Promise<void> {
+    const response = await sendToBackground({ type: MSG_FOCUS_TAB })
+    if (!response?.success) {
+      throw new Error(response?.error || "Window focus request failed")
+    }
   },
 
   openTab(url: string): void {

@@ -402,6 +402,7 @@ export interface AIStudioModelsResponse {
 }
 
 interface BackgroundResponseMap {
+  [MSG_FOCUS_TAB]: BasicBackgroundResponse
   [MSG_CHECK_REMOTE_CONFIG]: CheckRemoteConfigResponse
   [MSG_GET_REMOTE_CONFIG_STATE]: GetRemoteConfigStateResponse
   [MSG_IGNORE_REMOTE_CONFIG_PATCH]: BasicBackgroundResponse

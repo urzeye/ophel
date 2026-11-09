@@ -839,7 +839,7 @@ export const en = {
   featureUnavailableOnBrowser: "This feature is unavailable in this browser",
   completionReminderLabel: "Completion reminder",
   completionReminderSoundOnlyDesc:
-    "Play a sound when generation finishes. System notifications are unavailable in this browser.",
+    "Safari does not support system notifications. You can play a sound when generation finishes.",
   exportPartialSuccess:
     "Text exported. {count} attachments could not be downloaded; see the manifest in the archive.",
   showNotificationLabel: "Desktop Notification",
@@ -859,7 +859,11 @@ export const en = {
   notifyWhenFocusedLabel: "Notify When Focused",
   notifyWhenFocusedDesc: "Send notifications even when the current page is visible",
   autoFocusLabel: "Auto Focus the Window",
-  autoFocusDesc: "Bring window to front when generation completes",
+  autoFocusDesc:
+    "Try to return to this window when generation completes; the browser may restrict background focus or switching from other apps",
+  autoFocusUnsupportedDesc:
+    "Safari does not support automatically bringing the window to the front.",
+  autoFocusFailed: "Could not bring the window to the front. Please return manually.",
   privacyModeLabel: "Hide Tab Title",
   privacyModeDesc:
     "Replaces the browser tab title with the decoy title below. Page content isn't affected.",

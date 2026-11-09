@@ -797,7 +797,7 @@ export const pt = {
   featureUnavailableOnBrowser: "Este recurso não está disponível neste navegador",
   completionReminderLabel: "Aviso de conclusão",
   completionReminderSoundOnlyDesc:
-    "Reproduza um som quando a geração terminar. As notificações do sistema não estão disponíveis neste navegador.",
+    "O Safari não oferece suporte a notificações do sistema. Você pode reproduzir um som ao terminar a geração.",
   exportPartialSuccess:
     "Texto exportado. Não foi possível baixar {count} anexos; consulte o manifesto no arquivo compactado.",
   showNotificationLabel: "Notificação de Desktop",
@@ -817,7 +817,11 @@ export const pt = {
   notifyWhenFocusedLabel: "Avisar Mesmo Com Foco",
   notifyWhenFocusedDesc: "Enviar aviso mesmo se você estiver vendo a página",
   autoFocusLabel: "Auto Trazer a Janela à Frente",
-  autoFocusDesc: "Trazer para frente ao terminar",
+  autoFocusDesc:
+    "Tentar voltar a esta janela ao terminar; o navegador pode limitar a troca de outros apps ou o foco em segundo plano",
+  autoFocusUnsupportedDesc:
+    "O Safari não oferece suporte a trazer a janela automaticamente para a frente.",
+  autoFocusFailed: "Não foi possível trazer a janela para a frente. Volte manualmente.",
   privacyModeLabel: "Ocultar título da aba",
   privacyModeDesc:
     "Substitui o título da aba do navegador pelo título falso abaixo. O conteúdo da página não muda.",

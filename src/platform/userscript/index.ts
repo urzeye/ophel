@@ -190,7 +190,7 @@ export const platform: Platform = {
     return window.__OPHEL_NOTIFICATION_SOUND_URLS__?.[presetId]
   },
 
-  focusWindow(): void {
+  async focusWindow(): Promise<void> {
     window.focus()
   },
 
@@ -207,6 +207,7 @@ export const platform: Platform = {
       commands: false,
       watermarkRemoval: true,
       notifications: true,
+      windowFocus: true,
     }
     return capabilities[cap]
   },

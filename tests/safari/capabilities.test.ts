@@ -24,6 +24,7 @@ describe("extension browser policy", () => {
       declarativeNetRequest: false,
       watermarkRemoval: false,
       notifications: false,
+      windowFocus: false,
     })
   })
 })

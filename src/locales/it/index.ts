@@ -866,7 +866,7 @@ export const it = {
   featureUnavailableOnBrowser: "Questa funzione non è disponibile in questo browser",
   completionReminderLabel: "Avviso di completamento",
   completionReminderSoundOnlyDesc:
-    "Riproduci un suono al termine della generazione. Le notifiche di sistema non sono disponibili in questo browser.",
+    "Safari non supporta le notifiche di sistema. Puoi riprodurre un suono al termine della generazione.",
   exportPartialSuccess:
     "Testo esportato. Impossibile scaricare {count} allegati; consulta il manifesto nell’archivio.",
   showNotificationLabel: "Notifica sul desktop",
@@ -886,7 +886,11 @@ export const it = {
   notifyWhenFocusedLabel: "Notifica quando focalizzato",
   notifyWhenFocusedDesc: "Invia notifiche anche quando la pagina corrente è visibile",
   autoFocusLabel: "Messa a fuoco automatica della finestra",
-  autoFocusDesc: "Porta la finestra in primo piano al termine della generazione",
+  autoFocusDesc:
+    "Prova a tornare a questa finestra al termine della generazione; il browser può limitare il passaggio da altre app o la messa a fuoco in background",
+  autoFocusUnsupportedDesc:
+    "Safari non supporta la visualizzazione automatica della finestra in primo piano.",
+  autoFocusFailed: "Impossibile portare la finestra in primo piano. Torna manualmente.",
   privacyModeLabel: "Nascondi il titolo della scheda",
   privacyModeDesc:
     "Sostituisce il titolo della scheda del browser con il titolo esca qui sotto. Il contenuto della pagina non cambia.",

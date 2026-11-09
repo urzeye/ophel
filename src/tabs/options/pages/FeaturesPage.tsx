@@ -757,6 +757,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
     showToastThrottled(prerequisiteToastTemplate.replace("{setting}", label), 2000, {}, 1500, label)
   const autoRenameLabel = t("autoRenameTabLabel")
   const supportsSystemNotifications = platform.hasCapability("notifications")
+  const supportsWindowFocus = platform.hasCapability("windowFocus")
   const showNotificationLabel = t(
     supportsSystemNotifications ? "showNotificationLabel" : "completionReminderLabel",
   )
@@ -1014,9 +1015,10 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
 
       <ToggleRow
         label={t("autoFocusLabel")}
-        description={t("autoFocusDesc")}
+        description={t(supportsWindowFocus ? "autoFocusDesc" : "autoFocusUnsupportedDesc")}
         settingId="tab-auto-focus"
-        checked={settings.tab?.autoFocus ?? false}
+        checked={supportsWindowFocus && (settings.tab?.autoFocus ?? false)}
+        disabled={!supportsWindowFocus}
         onChange={() => updateNestedSetting("tab", "autoFocus", !settings.tab?.autoFocus)}
       />
     </SettingCard>

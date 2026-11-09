@@ -154,7 +154,17 @@ App Store 分发通常需要 Apple Developer Program，标准费用为每年 99 
 
 当前执行状态统一维护在 [tasks.csv](tasks.csv)。已完成浏览器能力策略、后台可选 API 保护、Safari 普通代理与 DNR 解耦、去水印完整禁用、提示音保留、SitePack 资源路径兼容、附件缺失反馈、目标权限裁剪和产物检查，并把测试与 Safari 构建接入 CI。
 
-验证结果：39 项自动测试通过，覆盖实际油猴平台模块、Chrome/Firefox 请求与系统通知选项、去水印生命周期、提示音重复播放、导出 ZIP 内容及产物错误输入。格式、类型和注册表检查通过；Lint 为 0 错误、109 条警告，修改文件的警告数与基线一致，新增文件无警告。Chrome、Firefox、油猴及 Safari 构建均通过；另执行三个目标的编译后去水印脚本，Chrome/Firefox 安装原钩子、Safari 不安装，Chrome/Firefox 产物权限与迁移前基线完全一致。
+### Safari 测试反馈：适配包启用与窗口聚焦
+
+- `Expected MAIN world SitePack template: srcContents...` 来自模板发现的大小写校验。WebKit 将执行环境序列化为 `main` / `isolated`，原实现只接受 `MAIN`，会把已经注册的主环境脚本误判为错误。平台层现将两种表示统一为大写，并在对账比较时同时归一化资源 URL，避免重复注销、注册；缺失或实际为隔离环境的核心模板仍明确报错。[WebKit 枚举值](https://github.com/WebKit/WebKit/blob/main/Source/WebKit/WebProcess/Extensions/API/WebExtensionAPIKeys.h)、[注册结果序列化](https://github.com/WebKit/WebKit/blob/main/Source/WebKit/WebProcess/Extensions/API/Cocoa/WebExtensionAPIScriptingCocoa.mm)。
+- 原窗口聚焦消息在调用完成前立即回复成功，平台层也不读取响应，真实失败只写入后台日志。聚焦链路已改为等待实际结果，并处理最小化窗口。用户在 Safari 复测后仍不能自动切回，因此按当前扩展的功能范围将 Safari 的 `windowFocus` 能力设为 false：设置页明确提示“Safari 不支持自动将窗口带回前台”并禁用开关，旧设置保留但不触发聚焦，后台拒绝该请求。此处描述的是 Ophel 的自动切前台功能，不表示 Safari 没有窗口 API；Chrome、Firefox 和油猴保持原有能力。
+- 原适配包错误只放入单行省略号 Toast，页面没有记录异常。现复用错误详情弹窗展示完整、可选择复制的内容，并在 Options 页控制台记录异常；后台错误仍在扩展后台的独立控制台。不要仅检查站点页面控制台。
+
+本次 51 项自动测试、类型和全仓格式检查通过；Safari、Chrome、Firefox 和油猴构建通过。新增回归覆盖小写 world、保持 MAIN/ISOLATED 区分、连续对账不重复注册、聚焦异步响应、最小化恢复、浏览器拒绝聚焦、消息通道异常及页面失败反馈，以及 Safari 旧聚焦设置不触发请求且保留声音提醒。
+
+在 Chromium 中加载 Safari 编译后的 Options 页并模拟扩展 API，验证启用失败会回滚、页面控制台记录异常、1049 字符错误全文保持且不横向截断。浅色/深色与 390/1280 像素窗口下，详情内容单独滚动，关闭按钮保持可见，Esc 可关闭并将焦点还给原开关。该检查不代表真实 Safari 扩展 API 通过。完成提醒文案明确为“Safari 不支持系统通知；生成完成后可播放提示音”，两处 Safari 功能说明同步 11 种语言；额外加载旧设置中 `autoFocus: true`，确认 Safari 的开关仍禁用、显示关闭，存储原值不变。
+
+首轮适配验证结果：39 项自动测试通过，覆盖实际油猴平台模块、Chrome/Firefox 请求与系统通知选项、去水印生命周期、提示音重复播放、导出 ZIP 内容及产物错误输入。格式、类型和注册表检查通过；Lint 为 0 错误、109 条警告，修改文件的警告数与基线一致，新增文件无警告。Chrome、Firefox、油猴及 Safari 构建均通过；另执行三个目标的编译后去水印脚本，Chrome/Firefox 安装原钩子、Safari 不安装，Chrome/Firefox 产物权限与迁移前基线完全一致。
 
 在 Chrome 中加载 Chrome/Safari 两套编译后的 Options 页面，使用模拟扩展 API 做了界面冒烟：Chrome 去水印仍可开启且请求通知权限；Safari 去水印禁用但不改存储原值，完成提醒不申请通知权限，声音设置仍可操作；权限页移除系统通知项并保留 cookies 和可选站点授权。该检查不代表真实 Safari 扩展安装或真实站点工作流通过。
 

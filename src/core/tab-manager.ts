@@ -23,6 +23,7 @@ import {
   type MonitorEventPayload,
 } from "~utils/messaging"
 import { type Settings } from "~utils/storage"
+import { showToast } from "~utils/toast"
 
 const BACKGROUND_IDLE_TITLE_UPDATE_INTERVAL_MS = 15_000
 const DEFAULT_RENAME_INTERVAL_SECONDS = 5
@@ -252,7 +253,11 @@ export class TabManager {
    */
   private shouldRunUpdateLoop(): boolean {
     if (!this.isTrackingGeneration) return false
-    return this.isRunning || this.settings.showNotification || this.settings.autoFocus
+    return (
+      this.isRunning ||
+      this.settings.showNotification ||
+      (this.settings.autoFocus && platform.hasCapability("windowFocus"))
+    )
   }
 
   /** 按 shouldRunUpdateLoop 启停更新循环（使用可配置的检测频率，后台空闲时自动降频） */
@@ -987,8 +992,11 @@ export class TabManager {
     }
 
     // 自动窗口置顶（使用平台抽象层）
-    if (this.settings.autoFocus) {
-      platform.focusWindow()
+    if (this.settings.autoFocus && platform.hasCapability("windowFocus")) {
+      void platform.focusWindow().catch((error) => {
+        console.error("[TabManager] Failed to focus completion window:", error)
+        showToast(t("autoFocusFailed"), 5000)
+      })
     }
   }
 

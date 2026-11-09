@@ -789,7 +789,7 @@ export const ko = {
   featureUnavailableOnBrowser: "이 브라우저에서는 이 기능을 사용할 수 없습니다",
   completionReminderLabel: "완료 알림",
   completionReminderSoundOnlyDesc:
-    "생성이 끝나면 알림음을 재생할 수 있습니다. 이 브라우저에서는 시스템 알림을 보내지 않습니다.",
+    "Safari는 시스템 알림을 지원하지 않습니다. 생성이 완료되면 알림음을 재생할 수 있습니다.",
   exportPartialSuccess:
     "텍스트를 내보냈습니다. 첨부 파일 {count}개를 다운로드하지 못했습니다. 압축 파일의 목록을 확인하세요.",
   showNotificationLabel: "데스크톱 알림",
@@ -809,7 +809,10 @@ export const ko = {
   notifyWhenFocusedLabel: "포커스 시에도 알림",
   notifyWhenFocusedDesc: "현재 페이지가 표시 중일 때도 알림 전송",
   autoFocusLabel: "창 자동 전면 표시",
-  autoFocusDesc: "생성이 완료되면 창을 맨 앞으로 가져옴",
+  autoFocusDesc:
+    "생성이 완료되면 이 창으로 돌아오기를 시도합니다. 브라우저가 다른 앱에서의 전환이나 백그라운드 포커스를 제한할 수 있습니다",
+  autoFocusUnsupportedDesc: "Safari는 창을 자동으로 맨 앞으로 가져오는 기능을 지원하지 않습니다.",
+  autoFocusFailed: "창을 맨 앞으로 가져오지 못했습니다. 직접 돌아와 주세요.",
   privacyModeLabel: "탭 제목 숨기기",
   privacyModeDesc: "브라우저 탭 제목을 아래의 가짜 제목으로 바꿉니다. 페이지 내용은 그대로입니다.",
   privacyTitleLabel: "가짜 제목",

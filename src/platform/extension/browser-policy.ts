@@ -11,4 +11,5 @@ export const extensionCapabilities: Readonly<Record<PlatformCapability, boolean>
   declarativeNetRequest: !isSafariBuild,
   watermarkRemoval: !isSafariBuild,
   notifications: !isSafariBuild,
+  windowFocus: !isSafariBuild,
 }

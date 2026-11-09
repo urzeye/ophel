@@ -199,12 +199,15 @@ function decodeNotifId(notifId: string): { tabId: number; windowId: number } | n
 }
 
 async function focusTab(tabId: number) {
-  try {
-    const tab = await chrome.tabs.get(tabId)
-    await chrome.tabs.update(tabId, { active: true })
-    await chrome.windows.update(tab.windowId, { focused: true })
-  } catch (error) {
-    console.warn("[Ophel] Failed to focus notification tab:", error)
+  const tab = await chrome.tabs.get(tabId)
+  const targetWindow = await chrome.windows.get(tab.windowId)
+  if (targetWindow.state === "minimized") {
+    await chrome.windows.update(tab.windowId, { state: "normal" })
+  }
+  await chrome.tabs.update(tabId, { active: true })
+  const focusedWindow = await chrome.windows.update(tab.windowId, { focused: true })
+  if (!focusedWindow.focused) {
+    throw new Error(`Browser did not focus window ${tab.windowId}`)
   }
 }
 
@@ -214,7 +217,9 @@ if (chrome.notifications?.onClicked) {
   chrome.notifications.onClicked.addListener((notifId) => {
     const tab = decodeNotifId(notifId)
     if (tab) {
-      void focusTab(tab.tabId)
+      void focusTab(tab.tabId).catch((error) => {
+        console.error("[Ophel] Failed to focus notification tab:", error)
+      })
     }
     // MV3 returns Promise at runtime; cast to handle both callback/Promise signatures
     void Promise.resolve(chrome.notifications.clear(notifId)).catch(() => {
@@ -465,12 +470,28 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
       break
     }
 
-    case MSG_FOCUS_TAB:
-      if (sender.tab?.id) {
-        void focusTab(sender.tab.id)
+    case MSG_FOCUS_TAB: {
+      if (!extensionCapabilities.windowFocus) {
+        sendResponse({ success: false, error: "Automatic window focus is unavailable in Safari" })
+        break
       }
-      sendResponse({ success: true })
+      const tabId = sender.tab?.id
+      if (tabId === undefined) {
+        sendResponse({ success: false, error: "Window focus requires a sender tab" })
+        break
+      }
+      void focusTab(tabId).then(
+        () => sendResponse({ success: true }),
+        (error) => {
+          console.error("[Ophel] Failed to focus completion tab:", error)
+          sendResponse({
+            success: false,
+            error: error instanceof Error ? error.message : String(error),
+          })
+        },
+      )
       break
+    }
 
     case MSG_CHECK_REMOTE_CONFIG:
       if (message.force !== undefined && typeof message.force !== "boolean") {

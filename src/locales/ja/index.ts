@@ -804,7 +804,7 @@ export const ja = {
   featureUnavailableOnBrowser: "このブラウザではこの機能を利用できません",
   completionReminderLabel: "完了リマインダー",
   completionReminderSoundOnlyDesc:
-    "生成完了時に通知音を再生できます。このブラウザではシステム通知は送信されません。",
+    "Safari はシステム通知に対応していません。生成完了時に通知音を再生できます。",
   exportPartialSuccess:
     "テキストをエクスポートしました。{count} 件の添付ファイルをダウンロードできませんでした。アーカイブ内の一覧を確認してください。",
   showNotificationLabel: "デスクトップ通知",
@@ -824,7 +824,10 @@ export const ja = {
   notifyWhenFocusedLabel: "フォーカス時も通知",
   notifyWhenFocusedDesc: "該当ページがアクティブな場合でも通知を送信します",
   autoFocusLabel: "自動でウィンドウを最前面に",
-  autoFocusDesc: "回答完了時にブラウザのウィンドウをアクティブにします",
+  autoFocusDesc:
+    "回答完了時にこのウィンドウへの切り替えを試みます。ブラウザが他のアプリからの切り替えやバックグラウンドでのフォーカスを制限する場合があります",
+  autoFocusUnsupportedDesc: "Safari はウィンドウを自動的に最前面に表示する機能に対応していません。",
+  autoFocusFailed: "ウィンドウを前面に表示できませんでした。手動で戻ってください。",
   privacyModeLabel: "タブのタイトルを隠す",
   privacyModeDesc:
     "ブラウザのタブのタイトルを、下で設定したダミータイトルに置き換えます。ページの内容は変わりません。",

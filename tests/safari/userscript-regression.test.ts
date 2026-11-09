@@ -25,6 +25,7 @@ it("preserves actual userscript capabilities, GM notification and storage behavi
   }
   expect(platform.hasCapability("watermarkRemoval")).toBe(true)
   expect(platform.hasCapability("notifications")).toBe(true)
+  expect(platform.hasCapability("windowFocus")).toBe(true)
   platform.notify({ title: "Done", message: "Ready" })
   expect(notification).toHaveBeenCalledWith(
     expect.objectContaining({ title: "Done", text: "Ready" }),

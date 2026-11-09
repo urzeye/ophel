@@ -140,6 +140,7 @@ type ConfirmationState =
 
 interface ValidationReport {
   title: string
+  message?: string
   errors: SitePackValidationError[]
 }
 
@@ -743,11 +744,14 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
   const closeConfirmation = useCallback(() => setConfirmation(null), [])
 
   const reportOperationError = useCallback((error: unknown) => {
+    console.error("[Ophel] SitePack operation failed:", error)
     const validationErrors = getValidationErrors(error)
-    notifyError(t("sitePacksOperationFailed", { error: getErrorMessage(error) }))
-    if (validationErrors && validationErrors.length > 0) {
-      setValidationReport({ title: t("sitePacksValidationErrorsTitle"), errors: validationErrors })
-    }
+    notifyError(t("operationFailed"))
+    setValidationReport({
+      title: t(validationErrors?.length ? "sitePacksValidationErrorsTitle" : "operationFailed"),
+      message: getErrorMessage(error),
+      errors: validationErrors ?? [],
+    })
   }, [])
 
   const reportPermissionDenied = useCallback((pack: InstalledSitePack) => {
@@ -2621,6 +2625,9 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
           restoreFocusFallback={getConfirmationFocusFallback}
           onConfirm={() => setValidationReport(null)}
           onCancel={() => setValidationReport(null)}>
+          {validationReport.message && (
+            <p className="settings-pack-error-details">{validationReport.message}</p>
+          )}
           <ul className="settings-pack-validation-list">
             {validationReport.errors.map((error, index) => (
               <li key={`${error.path}-${error.code}-${index}`}>

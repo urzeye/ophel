@@ -800,7 +800,7 @@ export const de = {
   featureUnavailableOnBrowser: "Diese Funktion ist in diesem Browser nicht verfügbar",
   completionReminderLabel: "Erinnerung bei Abschluss",
   completionReminderSoundOnlyDesc:
-    "Nach Abschluss der Generierung kann ein Ton abgespielt werden. Systembenachrichtigungen sind in diesem Browser nicht verfügbar.",
+    "Safari unterstützt keine Systembenachrichtigungen. Nach Abschluss der Generierung kann ein Ton abgespielt werden.",
   exportPartialSuccess:
     "Text exportiert. {count} Anhänge konnten nicht heruntergeladen werden; siehe Manifest im Archiv.",
   showNotificationLabel: "Desktop-Benachrichtigung",
@@ -820,7 +820,12 @@ export const de = {
   notifyWhenFocusedLabel: "Auch bei Fokus melden",
   notifyWhenFocusedDesc: "Meldung senden, auch wenn die Seite offen ist",
   autoFocusLabel: "Fenster automatisch fokussieren",
-  autoFocusDesc: "Fenster bei Fertigstellung in den Vordergrund holen",
+  autoFocusDesc:
+    "Nach Abschluss versuchen, zu diesem Fenster zurückzukehren; der Browser kann den Wechsel aus anderen Apps oder den Fokus aus dem Hintergrund einschränken",
+  autoFocusUnsupportedDesc:
+    "Safari unterstützt das automatische Holen des Fensters in den Vordergrund nicht.",
+  autoFocusFailed:
+    "Das Fenster konnte nicht in den Vordergrund gebracht werden. Bitte manuell zurückkehren.",
   privacyModeLabel: "Tab-Titel verbergen",
   privacyModeDesc:
     "Ersetzt den Tab-Titel des Browsers durch den Scheintitel unten. Der Seiteninhalt bleibt unverändert.",

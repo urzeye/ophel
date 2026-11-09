@@ -799,7 +799,7 @@ export const es = {
   featureUnavailableOnBrowser: "Esta función no está disponible en este navegador",
   completionReminderLabel: "Aviso de finalización",
   completionReminderSoundOnlyDesc:
-    "Reproduce un sonido al finalizar la generación. Las notificaciones del sistema no están disponibles en este navegador.",
+    "Safari no admite notificaciones del sistema. Puedes reproducir un sonido al finalizar la generación.",
   exportPartialSuccess:
     "Texto exportado. No se pudieron descargar {count} archivos adjuntos; consulta el manifiesto del archivo comprimido.",
   showNotificationLabel: "Notificación Escritorio",
@@ -819,7 +819,10 @@ export const es = {
   notifyWhenFocusedLabel: "Avisar Aun Con Foco",
   notifyWhenFocusedDesc: "Enviar aviso aunque estés viendo la página",
   autoFocusLabel: "Auto Poner la Ventana al Frente",
-  autoFocusDesc: "Traer al frente al terminar",
+  autoFocusDesc:
+    "Intentar volver a esta ventana al terminar; el navegador puede limitar el cambio desde otras apps o el enfoque en segundo plano",
+  autoFocusUnsupportedDesc: "Safari no admite traer la ventana al primer plano automáticamente.",
+  autoFocusFailed: "No se pudo traer la ventana al frente. Vuelve manualmente.",
   privacyModeLabel: "Ocultar título de la pestaña",
   privacyModeDesc:
     "Sustituye el título de la pestaña del navegador por el título falso de abajo. El contenido de la página no cambia.",

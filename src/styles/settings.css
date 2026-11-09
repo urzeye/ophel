@@ -2290,9 +2290,11 @@ html[data-theme="dark"] .platform-icon-dark-invert {
 }
 
 .settings-pack-dialog {
+  display: flex;
+  flex-direction: column;
   width: min(460px, 100%);
   max-height: 80vh;
-  overflow-y: auto;
+  overflow: hidden;
   padding: 20px;
   border: 1px solid var(--gh-card-border, #e5e7eb);
   border-radius: 14px;
@@ -2301,6 +2303,7 @@ html[data-theme="dark"] .platform-icon-dark-invert {
 }
 
 .settings-pack-dialog h2 {
+  flex-shrink: 0;
   margin: 0 0 12px;
   font-size: 16px;
   font-weight: 600;
@@ -2311,6 +2314,8 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  min-height: 0;
+  overflow-y: auto;
   font-size: 13px;
   line-height: 1.6;
   color: var(--gh-text-secondary, #6b7280);
@@ -2320,12 +2325,19 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   margin: 0;
 }
 
+.settings-pack-error-details {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+
 .settings-pack-dialog-file {
   align-self: flex-start;
 }
 
 .settings-pack-dialog-actions {
   display: flex;
+  flex-shrink: 0;
   justify-content: flex-end;
   gap: 8px;
   margin-top: 18px;

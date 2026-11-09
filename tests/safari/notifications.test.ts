@@ -2,10 +2,18 @@ import type { SiteAdapter } from "~adapters/base"
 import type { Settings } from "~utils/storage"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 
-const state = vi.hoisted(() => ({ supportsSystem: false, notify: vi.fn(), focus: vi.fn() }))
+const state = vi.hoisted(() => ({
+  supportsSystem: false,
+  supportsWindowFocus: true,
+  notify: vi.fn(),
+  focus: vi.fn(),
+  toast: vi.fn(),
+}))
+vi.mock("~utils/toast", () => ({ showToast: state.toast }))
 vi.mock("~platform", () => ({
   platform: {
-    hasCapability: () => state.supportsSystem,
+    hasCapability: (cap: string) =>
+      cap === "windowFocus" ? state.supportsWindowFocus : state.supportsSystem,
     notify: state.notify,
     focusWindow: state.focus,
     getNotificationSoundUrl: () => "sound.mp3",
@@ -30,6 +38,9 @@ class AudioMock {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  state.focus.mockResolvedValue(undefined)
+  state.supportsSystem = false
+  state.supportsWindowFocus = true
   vi.useFakeTimers()
   AudioMock.instances = []
   vi.stubGlobal("Audio", AudioMock)
@@ -73,3 +84,41 @@ it.each([false, true])(
     expect(audio.play).toHaveBeenCalledTimes(2)
   },
 )
+
+it("reports a rejected focus request in the page without interrupting completion reminders", async () => {
+  const error = new Error("Browser did not focus window 1")
+  state.focus.mockRejectedValueOnce(error)
+  const log = vi.spyOn(console, "error").mockImplementation(() => {})
+  const { TabManager } = await import("~core/tab-manager")
+  const manager = new TabManager(
+    { getName: () => "Gemini" } as SiteAdapter,
+    {
+      autoFocus: true,
+      showNotification: true,
+      notificationSound: true,
+    } as Settings["tab"],
+  )
+  ;(manager as unknown as { sendCompletionNotification(): void }).sendCompletionNotification()
+  await Promise.resolve()
+  expect(log).toHaveBeenCalledWith(expect.stringContaining("Failed to focus"), error)
+  expect(state.toast).toHaveBeenCalledWith("autoFocusFailed", 5000)
+  expect(AudioMock.instances[0].play).toHaveBeenCalledOnce()
+  log.mockRestore()
+})
+
+it("keeps Safari sound reminders without attempting unsupported focus from stored settings", async () => {
+  state.supportsWindowFocus = false
+  const { TabManager } = await import("~core/tab-manager")
+  const settings = Object.freeze({
+    autoFocus: true,
+    showNotification: true,
+    notificationSound: true,
+  }) as Settings["tab"]
+  const manager = new TabManager({ getName: () => "Gemini" } as SiteAdapter, settings)
+  ;(manager as unknown as { sendCompletionNotification(): void }).sendCompletionNotification()
+  expect(state.focus).not.toHaveBeenCalled()
+  expect(state.notify).not.toHaveBeenCalled()
+  expect(state.toast).not.toHaveBeenCalled()
+  expect(AudioMock.instances[0].play).toHaveBeenCalledOnce()
+  expect(settings.autoFocus).toBe(true)
+})

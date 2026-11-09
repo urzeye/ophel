@@ -1,8 +1,14 @@
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
+
+import examplePack from "../../registry/examples/site-pack.example.json"
+import type { SitePackManifest } from "~adapters/declarative/types"
+import type { PlatformStorage } from "~platform/types"
 
 import {
   buildSitePackRegistrations,
+  createSitePackRegistrationManager,
   discoverSitePackScriptTemplates,
+  type RegisteredSitePackScript,
 } from "~platform/extension/site-pack-registration"
 
 const manifestScripts = [
@@ -39,5 +45,71 @@ describe("SitePack script templates", () => {
     expect(() => discoverSitePackScriptTemplates(manifestScripts, mainScripts.slice(1))).toThrow(
       /monitor-entry/,
     )
+  })
+
+  it("accepts Safari's lowercase execution worlds while keeping MAIN and ISOLATED distinct", () => {
+    const templates = discoverSitePackScriptTemplates(
+      manifestScripts.map((script) => ({ ...script, world: "isolated" })),
+      mainScripts.map((script) => ({ ...script, world: "main" })),
+    )
+    expect(templates.map((template) => template.world)).toEqual(["ISOLATED", "MAIN"])
+    for (const world of ["isolated", undefined] as const) {
+      expect(() =>
+        discoverSitePackScriptTemplates(
+          manifestScripts,
+          mainScripts.map((script) => ({ ...script, world })),
+        ),
+      ).toThrow(/Expected MAIN world.*world:/)
+    }
+  })
+
+  it("does not re-register unchanged scripts after Safari normalizes worlds and resource URLs", async () => {
+    let dynamicScripts: RegisteredSitePackScript[] = []
+    const scripting = {
+      getRegisteredContentScripts: async () => [
+        ...mainScripts.map((script): RegisteredSitePackScript => ({ ...script, world: "main" })),
+        ...dynamicScripts,
+      ],
+      registerContentScripts: vi.fn(async (scripts: chrome.scripting.RegisteredContentScript[]) => {
+        dynamicScripts = scripts.map((script) => ({
+          ...script,
+          world: script.world === "MAIN" ? "main" : "isolated",
+          js: script.js?.map((asset) => `safari-web-extension://extension-id/${asset}`),
+        }))
+      }),
+      unregisterContentScripts: vi.fn(),
+    }
+    const manager = createSitePackRegistrationManager({
+      packManager: {
+        getSnapshot: async () => ({
+          storageSchemaVersion: 1,
+          packs: [
+            {
+              manifest: examplePack as SitePackManifest,
+              source: "local",
+              enabled: true,
+              installedAt: 1,
+              updatedAt: 1,
+            },
+          ],
+          issues: [],
+        }),
+        getOriginBindings: async () => ({ storageSchemaVersion: 1, bindings: {} }),
+      },
+      storage: { get: async () => undefined } as unknown as PlatformStorage,
+      scripting,
+      permissions: { contains: async () => true, remove: vi.fn() },
+      getManifestContentScripts: () => manifestScripts,
+      requestOrigins: vi.fn(),
+    })
+    const first = await manager.reconcile()
+    expect(first.registrations).toHaveLength(2)
+    expect(first.registrations.find((script) => script.world === "MAIN")).toMatchObject({
+      runAt: "document_start",
+      matches: examplePack.matches,
+    })
+    await manager.reconcile()
+    expect(scripting.registerContentScripts).toHaveBeenCalledOnce()
+    expect(scripting.unregisterContentScripts).not.toHaveBeenCalled()
   })
 })

@@ -803,7 +803,7 @@ export const fr = {
   featureUnavailableOnBrowser: "Cette fonction n’est pas disponible dans ce navigateur",
   completionReminderLabel: "Rappel de fin",
   completionReminderSoundOnlyDesc:
-    "Jouez un son à la fin de la génération. Les notifications système ne sont pas disponibles dans ce navigateur.",
+    "Safari ne prend pas en charge les notifications système. Vous pouvez jouer un son à la fin de la génération.",
   exportPartialSuccess:
     "Texte exporté. Impossible de télécharger {count} pièces jointes ; consultez le manifeste dans l’archive.",
   showNotificationLabel: "Notification de Bureau",
@@ -823,7 +823,11 @@ export const fr = {
   notifyWhenFocusedLabel: "Alerter Même Avec Focus",
   notifyWhenFocusedDesc: "Envoyer l'alerte même si vous voyez la page",
   autoFocusLabel: "Auto Mettre la Fenêtre au Premier Plan",
-  autoFocusDesc: "Ramener au premier plan à la fin",
+  autoFocusDesc:
+    "Essayer de revenir à cette fenêtre à la fin de la génération ; le navigateur peut limiter le passage depuis d’autres apps ou la mise au premier plan en arrière-plan",
+  autoFocusUnsupportedDesc:
+    "Safari ne prend pas en charge le retour automatique de la fenêtre au premier plan.",
+  autoFocusFailed: "Impossible de ramener la fenêtre au premier plan. Revenez manuellement.",
   privacyModeLabel: "Masquer le titre de l'onglet",
   privacyModeDesc:
     "Remplace le titre de l'onglet du navigateur par le titre leurre ci-dessous. Le contenu de la page ne change pas.",

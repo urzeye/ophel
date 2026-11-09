@@ -72,10 +72,98 @@ afterEach(() => {
   vi.unstubAllEnvs()
 })
 
-const dispatch = (message: Record<string, unknown>) => {
+const dispatch = (message: Record<string, unknown>, sender: chrome.runtime.MessageSender = {}) => {
   const listener = chromeMock.runtime.onMessage.addListener.mock.calls[0][0]
-  return new Promise<Record<string, unknown>>((resolve) => listener(message, {}, resolve))
+  return new Promise<Record<string, unknown>>((resolve) => listener(message, sender, resolve))
 }
+
+describe("completion window focus", () => {
+  const sender = { tab: { id: 0 } } as chrome.runtime.MessageSender
+  const setupWindows = (state: string = "normal") => {
+    const tabs = {
+      get: vi.fn().mockResolvedValue({ id: 0, windowId: 42 }),
+      update: vi.fn().mockResolvedValue({ id: 0, windowId: 42, active: true }),
+    }
+    const windows = {
+      get: vi.fn().mockResolvedValue({ id: 42, state }),
+      update: vi.fn().mockResolvedValue({ id: 42, focused: true }),
+    }
+    vi.stubGlobal("chrome", { ...chromeMock, tabs, windows })
+    return { tabs, windows }
+  }
+
+  it.each(["chrome", "firefox"])("waits for the actual focus result in %s", async (browser) => {
+    vi.stubEnv("PLASMO_BROWSER", browser)
+    const { tabs, windows } = setupWindows("fullscreen")
+    let finishFocus!: (window: { focused: boolean }) => void
+    windows.update.mockReturnValueOnce(
+      new Promise((resolve) => {
+        finishFocus = resolve
+      }),
+    )
+    await import("~background")
+    const response = vi.fn()
+    chromeMock.runtime.onMessage.addListener.mock.calls[0][0](
+      { type: "FOCUS_TAB" },
+      sender,
+      response,
+    )
+    await vi.waitFor(() => expect(windows.update).toHaveBeenCalledWith(42, { focused: true }))
+    expect(response).not.toHaveBeenCalled()
+    finishFocus({ focused: true })
+    await vi.waitFor(() => expect(response).toHaveBeenCalledWith({ success: true }))
+    expect(tabs.update).toHaveBeenCalledWith(0, { active: true })
+    expect(windows.update).toHaveBeenCalledOnce()
+  })
+
+  it("restores a minimized window before focusing it", async () => {
+    vi.stubEnv("PLASMO_BROWSER", "chrome")
+    const { windows } = setupWindows("minimized")
+    await import("~background")
+    expect(await dispatch({ type: "FOCUS_TAB" }, sender)).toEqual({ success: true })
+    expect(windows.update.mock.calls).toEqual([
+      [42, { state: "normal" }],
+      [42, { focused: true }],
+    ])
+  })
+
+  it.each([false, true])(
+    "returns failure when focus is refused (API rejects: %s)",
+    async (rejects) => {
+      vi.stubEnv("PLASMO_BROWSER", "chrome")
+      const { windows } = setupWindows()
+      const log = vi.spyOn(console, "error").mockImplementation(() => {})
+      if (rejects) windows.update.mockRejectedValueOnce(new Error("Focus denied"))
+      else windows.update.mockResolvedValueOnce({ id: 42, focused: false })
+      await import("~background")
+      expect(await dispatch({ type: "FOCUS_TAB" }, sender)).toMatchObject({
+        success: false,
+        error: rejects ? "Focus denied" : "Browser did not focus window 42",
+      })
+      expect(log).toHaveBeenCalled()
+      log.mockRestore()
+    },
+  )
+
+  it("rejects focus messages without a sender tab", async () => {
+    vi.stubEnv("PLASMO_BROWSER", "chrome")
+    const { windows } = setupWindows()
+    await import("~background")
+    expect(await dispatch({ type: "FOCUS_TAB" })).toMatchObject({ success: false })
+    expect(windows.update).not.toHaveBeenCalled()
+  })
+
+  it("rejects unsupported Safari focus without activating a tab or window", async () => {
+    const { tabs, windows } = setupWindows()
+    await import("~background")
+    expect(await dispatch({ type: "FOCUS_TAB" }, sender)).toEqual({
+      success: false,
+      error: "Automatic window focus is unavailable in Safari",
+    })
+    expect(tabs.update).not.toHaveBeenCalled()
+    expect(windows.update).not.toHaveBeenCalled()
+  })
+})
 
 describe("background without optional Safari APIs", () => {
   it.each(["chrome", "firefox"])(

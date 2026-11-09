@@ -29,13 +29,19 @@ const GENERIC_MAIN_ENTRY_NAMES = [
 
 type ScriptRunAt = NonNullable<chrome.scripting.RegisteredContentScript["runAt"]>
 type ScriptWorld = NonNullable<chrome.scripting.RegisteredContentScript["world"]>
+type ScriptWorldValue = ScriptWorld | Lowercase<ScriptWorld>
+
+// Safari 的查询结果使用小写 world，Chrome 类型定义只包含大写。
+export type RegisteredSitePackScript = Omit<chrome.scripting.RegisteredContentScript, "world"> & {
+  world?: ScriptWorldValue
+}
 
 export interface ManifestContentScriptDescriptor {
   js?: string[]
   css?: string[]
   matches?: string[]
   run_at?: ScriptRunAt
-  world?: ScriptWorld
+  world?: ScriptWorldValue
   all_frames?: boolean
   match_origin_as_fallback?: boolean
 }
@@ -55,7 +61,7 @@ interface StoredSitePackRegistrationState {
 }
 
 export interface SitePackScriptingApi {
-  getRegisteredContentScripts(): Promise<chrome.scripting.RegisteredContentScript[]>
+  getRegisteredContentScripts(): Promise<RegisteredSitePackScript[]>
   registerContentScripts(scripts: chrome.scripting.RegisteredContentScript[]): Promise<void>
   unregisterContentScripts(filter: { ids: string[] }): Promise<void>
 }
@@ -109,6 +115,18 @@ const isPlainRecord = (value: unknown): value is Record<string, unknown> => {
 
 const uniqueSorted = (values: readonly string[]): string[] =>
   Array.from(new Set(values)).sort((left, right) => left.localeCompare(right))
+
+const normalizeScriptWorld = (world: ScriptWorldValue | undefined): ScriptWorld => {
+  if (world === undefined) return "ISOLATED"
+  switch (world.toUpperCase()) {
+    case "MAIN":
+      return "MAIN"
+    case "ISOLATED":
+      return "ISOLATED"
+    default:
+      throw new Error(`Unknown SitePack script world: ${world}`)
+  }
+}
 
 const getAssetBaseName = (assetPath: string): string =>
   assetPath.replaceAll("\\", "/").split("/").at(-1)?.split("?")[0] ?? ""
@@ -198,7 +216,7 @@ const groupTemplates = (templates: readonly SitePackScriptTemplate[]): SitePackS
 
 export const discoverSitePackScriptTemplates = (
   manifestScripts: readonly ManifestContentScriptDescriptor[],
-  registeredScripts: readonly chrome.scripting.RegisteredContentScript[],
+  registeredScripts: readonly RegisteredSitePackScript[],
 ): SitePackScriptTemplate[] => {
   const isolatedDescriptors = manifestScripts.filter((script) =>
     containsEntryAsset(script.js ?? [], GENERIC_ISOLATED_ENTRY_NAMES),
@@ -216,7 +234,7 @@ export const discoverSitePackScriptTemplates = (
 
   const isolatedTemplates = isolatedDescriptors.map(
     (script): SitePackScriptTemplate => ({
-      world: script.world ?? "ISOLATED",
+      world: normalizeScriptWorld(script.world),
       runAt: script.run_at ?? "document_idle",
       js: (script.js ?? []).map(normalizeExtensionAssetPath),
       css: (script.css ?? []).map(normalizeExtensionAssetPath),
@@ -225,9 +243,11 @@ export const discoverSitePackScriptTemplates = (
     }),
   )
   const mainTemplates = mainDescriptors.map((script): SitePackScriptTemplate => {
-    const world = script.world ?? "ISOLATED"
+    const world = normalizeScriptWorld(script.world)
     if (world !== "MAIN") {
-      throw new Error(`Expected MAIN world SitePack template: ${script.id}`)
+      throw new Error(
+        `Expected MAIN world SitePack template: ${script.id} (world: ${script.world ?? "missing"})`,
+      )
     }
     return {
       world,
@@ -281,14 +301,14 @@ export const buildSitePackRegistrations = async (
   return registrations.sort((left, right) => left.id.localeCompare(right.id))
 }
 
-const canonicalRegistration = (script: chrome.scripting.RegisteredContentScript): string =>
+const canonicalRegistration = (script: RegisteredSitePackScript): string =>
   JSON.stringify({
     id: script.id,
     matches: uniqueSorted(script.matches ?? []),
     excludeMatches: uniqueSorted(script.excludeMatches ?? []),
-    js: script.js ?? [],
-    css: script.css ?? [],
-    world: script.world ?? "ISOLATED",
+    js: (script.js ?? []).map(normalizeExtensionAssetPath),
+    css: (script.css ?? []).map(normalizeExtensionAssetPath),
+    world: normalizeScriptWorld(script.world),
     runAt: script.runAt ?? "document_idle",
     allFrames: script.allFrames ?? false,
     matchOriginAsFallback: script.matchOriginAsFallback ?? false,
@@ -296,8 +316,8 @@ const canonicalRegistration = (script: chrome.scripting.RegisteredContentScript)
   })
 
 const sameRegistration = (
-  left: chrome.scripting.RegisteredContentScript,
-  right: chrome.scripting.RegisteredContentScript,
+  left: RegisteredSitePackScript,
+  right: RegisteredSitePackScript,
 ): boolean => canonicalRegistration(left) === canonicalRegistration(right)
 
 const parseStoredState = (value: unknown): StoredSitePackRegistrationState => {
