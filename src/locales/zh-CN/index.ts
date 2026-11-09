@@ -167,6 +167,8 @@ export const zhCN = {
   allowRecommended: "允许（推荐）",
   required: "必需",
   // 可选权限
+  safariAllSitesPermissionDesc:
+    "在 Safari「设置 → 扩展 → Ophel」的「网页内容和浏览历史记录」下，点击「在每个网站上始终允许」。完成后返回 Ophel，点击「刷新状态」。",
   permissionWebdavAccess: "高级功能权限",
   permissionWebdavAccessDesc:
     "允许 Ophel 跨站访问资源，用于 WebDAV 同步、AI 图片去水印、导出对话中的图片/附件，以及让适配包无需逐站授权即可运行",

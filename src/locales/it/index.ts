@@ -183,6 +183,8 @@ export const it = {
   allowRecommended: "Consenti (consigliato)",
   required: "Obbligatorio",
   // Optional permissions
+  safariAllSitesPermissionDesc:
+    "In Safari, apri Impostazioni → Estensioni → Ophel. In Contenuti delle pagine web e cronologia di navigazione, scegli Consenti sempre su ogni sito web. Poi torna a Ophel e aggiorna lo stato dei permessi.",
   permissionWebdavAccess: "Accesso alle funzionalità avanzate",
   permissionWebdavAccessDesc:
     "Consenti a Ophel di accedere alle risorse tra siti per la sincronizzazione WebDAV, la rimozione della filigrana dalle immagini AI, l'esportazione di immagini e allegati dalle conversazioni e l'esecuzione dei Site Pack senza richieste per sito.",

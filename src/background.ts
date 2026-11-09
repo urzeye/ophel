@@ -844,7 +844,8 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
           // 获取当前窗口信息以计算居中位置
           const currentWindow = await chrome.windows.getCurrent()
           const width = 450
-          const height = 380
+          const height =
+            permType === "allUrls" && !extensionCapabilities.allUrlsPermissionRequest ? 460 : 380
           const left = currentWindow.left! + Math.round((currentWindow.width! - width) / 2)
           const top = currentWindow.top! + Math.round((currentWindow.height! - height) / 2)
 

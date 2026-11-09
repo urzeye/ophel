@@ -6,6 +6,7 @@ export const isSafariBuild = process.env.PLASMO_BROWSER === "safari"
 export const extensionCapabilities: Readonly<Record<PlatformCapability, boolean>> = {
   cookies: true,
   permissions: true,
+  allUrlsPermissionRequest: !isSafariBuild,
   tabs: true,
   commands: true,
   declarativeNetRequest: !isSafariBuild,

@@ -202,6 +202,7 @@ export const platform: Platform = {
     const capabilities: Record<PlatformCapability, boolean> = {
       cookies: false,
       permissions: false,
+      allUrlsPermissionRequest: false,
       tabs: false,
       declarativeNetRequest: false,
       commands: false,

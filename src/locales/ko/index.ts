@@ -176,6 +176,8 @@ export const ko = {
   grant: "허용",
   allowRecommended: "허용(권장)",
   required: "필수",
+  safariAllSitesPermissionDesc:
+    "Safari의 설정 → 확장 프로그램 → Ophel에서 웹 페이지 콘텐츠 및 방문 기록 아래의 모든 웹 사이트에서 항상 허용을 선택하세요. 그런 다음 Ophel로 돌아와 권한 상태를 새로 고치세요.",
   permissionWebdavAccess: "고급 기능 액세스",
   permissionWebdavAccessDesc:
     "Ophel이 사이트 간 리소스에 액세스할 수 있도록 합니다. WebDAV 동기화, AI 이미지 워터마크 제거, 대화의 이미지/첨부파일 내보내기, 사이트별 승인 없이 Site Pack 실행에 사용됩니다.",

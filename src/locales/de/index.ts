@@ -180,6 +180,8 @@ export const de = {
   grant: "Zulassen",
   allowRecommended: "Zulassen (Empfohlen)",
   required: "Erforderlich",
+  safariAllSitesPermissionDesc:
+    "Öffne in Safari Einstellungen → Erweiterungen → Ophel. Wähle unter Webseiteninhalte und Browserverlauf die Option Auf jeder Website immer erlauben. Kehre dann zu Ophel zurück und aktualisiere den Berechtigungsstatus.",
   permissionWebdavAccess: "Zugriff auf erweiterte Funktionen",
   permissionWebdavAccessDesc:
     "Erlaubt Ophel den Website-übergreifenden Zugriff auf Ressourcen für WebDAV-Synchronisierung, Entfernung von KI-Bildwasserzeichen, Export von Bildern und Anhängen aus Unterhaltungen sowie die Ausführung von Site Packs ohne Abfragen pro Website.",

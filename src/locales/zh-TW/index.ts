@@ -1240,6 +1240,8 @@ export const zhTW = {
   required: "必需",
 
   // 可選權限
+  safariAllSitesPermissionDesc:
+    "在 Safari「設定 → 延伸功能 → Ophel」的「網頁內容與瀏覽記錄」下，點選「在每個網站上一律允許」。完成後返回 Ophel，點選「重新整理狀態」。",
   permissionWebdavAccess: "進階功能權限",
   permissionWebdavAccessDesc:
     "允許 Ophel 跨站存取資源，用於 WebDAV 同步、AI 圖片浮水印移除、匯出對話中的圖片/附件，以及讓適配包無需逐站點授權即可執行",

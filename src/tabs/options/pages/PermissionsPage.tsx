@@ -62,6 +62,7 @@ const OPTIONAL_HOST_PERMISSIONS = [
 
 const PermissionsPage: React.FC = () => {
   const { updateNestedSetting } = useSettingsStore()
+  const requiresBrowserWebsiteSettings = !platform.hasCapability("allUrlsPermissionRequest")
   // 可选权限状态
   const [optionalPermissionStatus, setOptionalPermissionStatus] = useState<Record<string, boolean>>(
     {},
@@ -143,6 +144,10 @@ const PermissionsPage: React.FC = () => {
   const requestPermission = useCallback(
     async (perm: { id: string; origins?: string[]; permissions?: string[] }) => {
       try {
+        if (perm.id === "webdav" && requiresBrowserWebsiteSettings) {
+          await checkOptionalPermissions()
+          return
+        }
         if (isExtensionPage) {
           const granted = await chrome.permissions.request({
             origins: perm.origins?.length ? perm.origins : undefined,
@@ -167,7 +172,7 @@ const PermissionsPage: React.FC = () => {
         console.error(`请求权限 ${perm.id} 失败:`, e)
       }
     },
-    [isExtensionPage, checkOptionalPermissions],
+    [isExtensionPage, checkOptionalPermissions, requiresBrowserWebsiteSettings],
   )
 
   // 初始化时检查权限
@@ -282,7 +287,11 @@ const PermissionsPage: React.FC = () => {
                 <span>{t(perm.nameKey)}</span>
               </span>
             }
-            description={t(perm.description)}
+            description={t(
+              perm.id === "webdav" && requiresBrowserWebsiteSettings
+                ? "safariAllSitesPermissionDesc"
+                : perm.description,
+            )}
             settingId={`permission-item-${perm.id}`}>
             <div className="settings-perm-actions">
               {optionalPermissionStatus[perm.id] ? (
@@ -310,7 +319,11 @@ const PermissionsPage: React.FC = () => {
                       e.stopPropagation()
                       requestPermission(perm)
                     }}>
-                    {t("allowRecommended")}
+                    {t(
+                      perm.id === "webdav" && requiresBrowserWebsiteSettings
+                        ? "refreshStatus"
+                        : "allowRecommended",
+                    )}
                   </button>
                 </>
               )}
