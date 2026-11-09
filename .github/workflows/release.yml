@@ -257,7 +257,8 @@ jobs:
             | **CWS Upload** | `ophel-atlas-${{ steps.get_version.outputs.VERSION }}-cws-upload.zip` | **For Chrome Web Store submission only** (No Key) |
             | **Edge Add-ons Upload** | `ophel-atlas-${{ steps.get_version.outputs.VERSION }}-edge-addons-upload.zip` | **For Microsoft Edge Add-ons submission only** (No Key) |
 
-            ### 🏪 Store Version Status | 商店版本状态
+            <details>
+            <summary>🏪 Store Version Status | 商店版本状态</summary>
 
             > A GitHub Release only means these release files have been built and published here. It does **not** mean Chrome Web Store, Microsoft Edge Add-ons, or Firefox Add-ons have already been updated.
             > GitHub Release 只表示这里的发布文件已经构建并发布，并不表示 Chrome Web Store、Microsoft Edge Add-ons 或 Firefox Add-ons 已经同步更新。
@@ -268,9 +269,13 @@ jobs:
             > To confirm whether a store has received this version, check the version shown on that store's public listing. There is no fixed review or rollout time.
             > 如需确认某个商店是否已更新到此版本，请以该商店公开详情页显示的版本为准；审核和分发时间没有固定时长。
 
+            </details>
+
             ### 🔧 Installation | 安装方法
 
-            #### Browser Extensions | 浏览器扩展
+            <details>
+            <summary>Browser Extensions | 浏览器扩展</summary>
+
             > **Recommended:** Install Ophel Atlas from the official browser stores: Chrome Web Store, Microsoft Edge Add-ons, or Firefox Add-ons.
             > **推荐：** 请从官方浏览器商店安装 Ophel Atlas：Chrome Web Store、Microsoft Edge Add-ons 或 Firefox Add-ons。
 
@@ -283,7 +288,11 @@ jobs:
             > If you already installed a store version, do not install these GitHub extension zips unless you are intentionally testing a separate development copy.
             > 如果你已经安装了商店版本，请不要再安装这些 GitHub 扩展 zip，除非你明确想测试一个独立的开发副本。
 
-            #### Safari (Temporary Extension, macOS) | Safari 临时扩展（仅 macOS）
+            </details>
+
+            <details>
+            <summary>Safari (Temporary Extension, macOS) | Safari 临时扩展（仅 macOS）</summary>
+
             > Safari support is experimental and currently provided only as a temporary extension for local use on macOS. There is no Safari App Store release planned at this time, and no signed macOS or iOS app is included.
             > Safari 目前为实验适配，仅提供 macOS 本地临时扩展，暂不计划上架 Safari 商店，也不提供已签名的 macOS 或 iOS 应用。
 
@@ -298,9 +307,15 @@ jobs:
 
             [Apple’s temporary installation instructions | Apple 临时安装说明](https://developer.apple.com/documentation/safariservices/running-your-safari-web-extension)
 
-            #### Userscript (Tampermonkey) | 油猴脚本
+            </details>
+
+            <details>
+            <summary>Userscript (Tampermonkey) | 油猴脚本</summary>
+
             1. Install [Tampermonkey](https://www.tampermonkey.net/) | 安装 Tampermonkey 插件
             2. Click the `.user.js` file link | 点击 `.user.js` 文件链接即可安装
+
+            </details>
 
             ---
 
