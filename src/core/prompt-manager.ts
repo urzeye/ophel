@@ -411,6 +411,8 @@ export class PromptManager {
   }
 
   submitCurrentInputImmediately(submitShortcut?: "enter" | "ctrlEnter"): boolean {
+    if (!this.adapter.supportsPromptSubmit()) return false
+
     this.syncAiStudioSubmitShortcut(submitShortcut ?? "enter")
 
     const submitSelectors = this.adapter.getSubmitButtonSelectors()

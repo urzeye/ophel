@@ -3196,7 +3196,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
 
   // Manual send: trigger only when focused element is the chat input
   useEffect(() => {
-    if (!adapter || !promptManager) return
+    if (!adapter || !promptManager || !adapter.supportsPromptSubmit()) return
 
     const insertNewLine = (editor: HTMLElement) => {
       if (editor instanceof HTMLTextAreaElement) {
