@@ -496,6 +496,12 @@ feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert, deps, ux
   解析上限），运行时经 `initI18n()` 一次性加载；en 静态打包兜底。渲染入口与依赖
   本地化文案的 store 播种/迁移必须先等 `initI18n()` 就绪；油猴端走 GM @resource，
   两端以 `initI18n()` 契约对齐。
+- 语言资源维护：`src/locales/<lang>/index.ts` 是应用内文案的唯一数据源；
+  `assets/locales/messages.json` 是 Git 忽略的生成物，不需要提交。
+  `dev` / `dev:firefox` 启动及 Chrome / Firefox / Safari 构建前会自动生成；
+  `release.yml` 通过这些构建命令生成并打包，无需额外生成步骤。
+  开发服务运行期间修改文案后，执行 `pnpm prepare:locale-assets` 或重启开发服务。
+  油猴构建直接读取语言源文件，不依赖此 JSON。
 - 产物编码约束：Chrome 扩展加载器拒绝含 Unicode noncharacter 的内容脚本（命中即整个
   扩展无法安装）。KaTeX Lexer 正则的 `\uFFFF` 转义会被 Parcel 重打印为字面字符，
   已通过 `patches/katex@*.patch` 在依赖源码侧根治；`build` / `build:firefox` 末尾的
