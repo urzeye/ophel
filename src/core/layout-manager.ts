@@ -1622,6 +1622,9 @@ html.${AUTO_HIDE_FLOAT_CLASS} ${config.scrollContainer}::after {
     if (panelMode !== "floating") return true
 
     return (
+      // launcher-peek 是快捷按钮组悬浮出的临时预览面板，定位为只读预览，
+      // 不应被视为真实障碍触发页面避让，否则预览销毁时页面会回弹抖动
+      panel.classList.contains("launcher-peek") ||
       panel.classList.contains("edge-snapped-left") ||
       panel.classList.contains("edge-snapped-right")
     )
