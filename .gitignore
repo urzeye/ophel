@@ -49,6 +49,7 @@ docs/site/.vitepress/dist
 .playwright-mcp
 .playwright-cli
 assets/assistant-mermaid-vendor.js
+/assets/locales/messages.json
 comparison_result.txt
 test-results/
 
