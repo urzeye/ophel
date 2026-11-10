@@ -25,6 +25,18 @@ export const ChromeIcon: React.FC<{ size?: number; className?: string; color?: s
   </svg>
 )
 
+export const SafariIcon: React.FC<{ size?: number; className?: string }> = ({
+  size = 24,
+  className,
+}) => (
+  <svg width={size} height={size} viewBox="0 0 1024 1024" className={className}>
+    <circle cx="512" cy="512" r="512" fill="#2296F3" />
+    <circle cx="512" cy="512" r="384" fill="#FFFFFF" />
+    <path d="M704 320 576 576 448 448Z" fill="#F75045" />
+    <path d="M320 704 448 448 576 576Z" fill="#E1E1E6" />
+  </svg>
+)
+
 export const FirefoxIcon: React.FC<{ size?: number; className?: string }> = ({
   size = 24,
   className,

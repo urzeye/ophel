@@ -1,7 +1,14 @@
 import React from "react"
 
-import { ChromeIcon, EdgeIcon, FirefoxIcon, GreasyForkIcon } from "~components/icons/StoreIcons"
+import {
+  ChromeIcon,
+  EdgeIcon,
+  FirefoxIcon,
+  GreasyForkIcon,
+  SafariIcon,
+} from "~components/icons/StoreIcons"
 import { STORE_LINKS } from "~constants/store-links"
+import { isSafariBuild } from "~platform/extension/browser-policy"
 import type { ReactNode } from "react"
 import { t } from "~utils/i18n"
 
@@ -25,6 +32,15 @@ export const getStoreInfo = (): StoreInfo => {
     return {
       url: STORE_LINKS.greasyFork,
       icon: <GreasyForkIcon size={14} />,
+      label: t("reviewBtn"),
+    }
+  }
+
+  // Safari 按构建目标识别，优先于 UA 嗅探（Safari UA 不含特征串，会误落 Chrome 分支）
+  if (isSafariBuild) {
+    return {
+      url: STORE_LINKS.safari,
+      icon: <SafariIcon size={14} />,
       label: t("reviewBtn"),
     }
   }
