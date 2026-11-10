@@ -17,6 +17,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 - **Send shortcut** — Shortcuts now shows the current send-message key with a link to its setting, which also explains how sending and line breaks work. (#1032)
 
+### 🐛 Bug Fixes
+
+- **Hover preview triggering smart avoidance** — Fixed an issue where using outline jump in the hover preview panel activated smart avoidance and made the page jitter when the preview closed. (#1036)
+
 ---
 
 ## [1.3.2][1.3.2] - 2026-11-09
