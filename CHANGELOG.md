@@ -16,6 +16,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 ### ✨ Improvements
 
 - **Send shortcut** — Shortcuts now shows the current send-message key with a link to its setting, which also explains how sending and line breaks work. (#1032)
+- **Panel and outline UI refinement** — Refined panel header chrome, outline toolbar interactions, and empty-state presentation for a cleaner look.
 
 ### 🐛 Bug Fixes
 

@@ -32,10 +32,6 @@ export const SparkleIcon: React.FC<IconProps> = ({ size = 18, color, className =
         overflow: "visible",
         // 光学居中补偿：图标内容在 viewBox 内视觉重心略偏上，向下 1px 对齐同排文字
         transform: "translateY(1px)",
-        // 跟随当前主题主色的柔和光晕，避免深浅主题下刺眼或发脏
-        filter: isDefaultColor
-          ? "drop-shadow(0px 1px 4px color-mix(in srgb, var(--gh-primary, #4285f4) 26%, transparent))"
-          : "none",
         ...style,
       }}>
       <defs>
