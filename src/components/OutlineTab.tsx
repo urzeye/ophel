@@ -2291,6 +2291,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
                     onClose={() => {}}
                     tips={structuredTips}
                     isStatic={true}
+                    collapsible={true}
                   />
                 </div>
               </div>
@@ -2329,6 +2330,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
                     onClose={() => {}}
                     tips={structuredTips}
                     isStatic={true}
+                    collapsible={true}
                   />
                 </div>
               </div>

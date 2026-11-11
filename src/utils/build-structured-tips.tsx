@@ -11,24 +11,7 @@ const SC_MARK = "___SC___"
 const LINK_MARK = "___LINK___"
 
 function ShortcutChip({ value }: { value: string }) {
-  return (
-    <span
-      style={{
-        fontFamily: "monospace",
-        background: "var(--gh-bg-secondary, #f3f4f6)",
-        border: "1px solid var(--gh-border, #e5e7eb)",
-        padding: "1px 6px",
-        borderRadius: "4px",
-        fontSize: "11px",
-        fontWeight: 500,
-        color: "var(--gh-text, #1f2937)",
-        display: "inline-flex",
-        alignItems: "center",
-        verticalAlign: "bottom",
-      }}>
-      {value}
-    </span>
-  )
+  return <kbd className="gh-shortcut-chip">{value}</kbd>
 }
 
 // 把文本中的 SC_MARK 占位渲染为快捷键 chip
