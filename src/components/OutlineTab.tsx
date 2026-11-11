@@ -1831,6 +1831,8 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
   const [levelDragPreview, setLevelDragPreview] = useState<number | null>(null)
   const levelDotsRef = useRef<HTMLDivElement>(null)
   const sliderLevel = levelDragPreview ?? expandLevel
+  const isOutlineEmpty = tree.length === 0 && !searchQuery
+  const isSliderDisabled = bookmarkMode || isOutlineEmpty
 
   const getLevelFromClientX = useCallback((clientX: number): number => {
     const el = levelDotsRef.current
@@ -1848,12 +1850,12 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
     (e: React.PointerEvent<HTMLDivElement>) => {
       // 只响应主键：右键/中键不应触发层级调整，也避免吞掉右键菜单
       if (e.button !== 0) return
-      if (bookmarkMode) return
+      if (isSliderDisabled) return
       e.preventDefault()
       e.currentTarget.setPointerCapture(e.pointerId)
       setLevelDragPreview(getLevelFromClientX(e.clientX))
     },
-    [bookmarkMode, getLevelFromClientX],
+    [isSliderDisabled, getLevelFromClientX],
   )
 
   const handleLevelPointerMove = useCallback(
@@ -1944,20 +1946,24 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
               content={
                 bookmarkMode
                   ? t("bookmarkModeDisabled")
-                  : isAllExpanded
-                    ? t("outlineCollapseAll")
-                    : t("outlineExpandAll")
-              }>
-              <button
-                type="button"
-                onClick={bookmarkMode ? undefined : handleExpandAll}
-                disabled={bookmarkMode}
-                aria-label={
-                  bookmarkMode
-                    ? t("bookmarkModeDisabled")
+                  : isOutlineEmpty
+                    ? t("outlineEmpty")
                     : isAllExpanded
                       ? t("outlineCollapseAll")
                       : t("outlineExpandAll")
+              }>
+              <button
+                type="button"
+                onClick={isSliderDisabled ? undefined : handleExpandAll}
+                disabled={isSliderDisabled}
+                aria-label={
+                  bookmarkMode
+                    ? t("bookmarkModeDisabled")
+                    : isOutlineEmpty
+                      ? t("outlineEmpty")
+                      : isAllExpanded
+                        ? t("outlineCollapseAll")
+                        : t("outlineExpandAll")
                 }
                 className="outline-toolbar-btn outline-narrow-optional">
                 {isAllExpanded ? <CollapseAllIcon size={18} /> : <ExpandAllIcon size={18} />}
@@ -1965,10 +1971,11 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
             </Tooltip>
 
             {/* Locate Current */}
-            <Tooltip content={t("outlineLocateCurrent")}>
+            <Tooltip content={isOutlineEmpty ? t("outlineEmpty") : t("outlineLocateCurrent")}>
               <button
                 type="button"
-                onClick={handleLocateCurrent}
+                onClick={isOutlineEmpty ? undefined : handleLocateCurrent}
+                disabled={isOutlineEmpty}
                 aria-label={t("outlineLocateCurrent")}
                 className="outline-toolbar-btn">
                 <LocateIcon size={16} />
@@ -1977,10 +1984,17 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
 
             {/* Dynamic Scroll (Top/Bottom) */}
             <Tooltip
-              content={scrollState === "bottom" ? t("outlineScrollBottom") : t("outlineScrollTop")}>
+              content={
+                isOutlineEmpty
+                  ? t("outlineEmpty")
+                  : scrollState === "bottom"
+                    ? t("outlineScrollBottom")
+                    : t("outlineScrollTop")
+              }>
               <button
                 type="button"
-                onClick={handleDynamicScroll}
+                onClick={isOutlineEmpty ? undefined : handleDynamicScroll}
+                disabled={isOutlineEmpty}
                 aria-label={
                   scrollState === "bottom" ? t("outlineScrollBottom") : t("outlineScrollTop")
                 }
@@ -2044,7 +2058,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
           {/* Level Dots */}
           <div
             ref={levelDotsRef}
-            className={`outline-level-dots ${bookmarkMode ? "disabled" : ""}`}
+            className={`outline-level-dots ${isSliderDisabled ? "disabled" : ""}`}
             onPointerDown={handleLevelPointerDown}
             onPointerMove={handleLevelPointerMove}
             onPointerUp={(e) => {
@@ -2056,7 +2070,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
             <div className="outline-level-line-bg" />
             {/* Progress Line */}
             <div
-              className={`outline-level-progress ${bookmarkMode ? "disabled" : ""}`}
+              className={`outline-level-progress ${isSliderDisabled ? "disabled" : ""}`}
               style={{
                 width: `calc((${sliderLevel} / 6) * (100% - 8px))`,
               }}
@@ -2068,6 +2082,8 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
               let title = ""
               if (bookmarkMode) {
                 title = t("bookmarkModeDisabled")
+              } else if (isOutlineEmpty) {
+                title = t("outlineEmpty")
               } else if (lvl === 0) {
                 title =
                   showUserQueries && tree.some((node) => node.isUserQuery)
@@ -2081,7 +2097,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
               return (
                 <Tooltip key={lvl} content={title}>
                   <div
-                    className={`outline-level-dot ${isActive ? "active" : ""} ${bookmarkMode ? "disabled" : ""}`}
+                    className={`outline-level-dot ${isActive ? "active" : ""} ${isSliderDisabled ? "disabled" : ""}`}
                     data-level={lvl}
                   />
                 </Tooltip>
@@ -2092,14 +2108,16 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
             content={
               bookmarkMode
                 ? t("bookmarkModeDisabled")
-                : sliderLevel === 0
-                  ? showUserQueries && tree.some((node) => node.isUserQuery)
-                    ? t("outlineUserQueryRoleLabel")
-                    : t("outlineCollapseAll")
-                  : `H${sliderLevel}: ${levelCounts[sliderLevel] || 0}`
+                : isOutlineEmpty
+                  ? t("outlineEmpty")
+                  : sliderLevel === 0
+                    ? showUserQueries && tree.some((node) => node.isUserQuery)
+                      ? t("outlineUserQueryRoleLabel")
+                      : t("outlineCollapseAll")
+                    : `H${sliderLevel}: ${levelCounts[sliderLevel] || 0}`
             }>
             <span
-              className={`outline-level-badge ${bookmarkMode ? "disabled" : ""}`}
+              className={`outline-level-badge ${isSliderDisabled ? "disabled" : ""}`}
               aria-hidden="true">
               {sliderLevel === 0 ? (showUserQueries ? "💬" : "H0") : `H${sliderLevel}`}
             </span>
@@ -2188,13 +2206,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
                 <div className="outline-empty-state-title">{t("outlineNoBookmarks")}</div>
                 <div className="outline-empty-state-desc">{t("outlineAddBookmarkHint")}</div>
 
-                <div
-                  style={{
-                    marginTop: "32px",
-                    width: "100%",
-                    display: "flex",
-                    justifyContent: "center",
-                  }}>
+                <div className="outline-empty-state-codex">
                   <MagicCodex
                     isOpen={true}
                     onClose={() => {}}
@@ -2232,13 +2244,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
                   </button>
                 )}
 
-                <div
-                  style={{
-                    marginTop: "32px",
-                    width: "100%",
-                    display: "flex",
-                    justifyContent: "center",
-                  }}>
+                <div className="outline-empty-state-codex">
                   <MagicCodex
                     isOpen={true}
                     onClose={() => {}}

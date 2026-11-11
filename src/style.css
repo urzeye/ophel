@@ -1263,21 +1263,122 @@
 }
 
 .outline-empty-state-title {
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.4;
-  font-weight: 700;
-  color: var(--gh-text-secondary, #6b7280);
+  font-weight: 600;
+  color: var(--gh-text, #374151);
 }
 
 .outline-empty-state-desc {
   max-width: min(280px, calc(100% - 20px));
   font-size: 12px;
   line-height: 1.4;
-  color: var(--gh-text-tertiary, #9ca3af);
+  color: var(--gh-text-tertiary, #8d94a1);
 }
 
 .outline-empty-state-desc-line {
   display: block;
+}
+
+.outline-empty-state-codex {
+  margin-top: 22px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.gh-magic-codex-popover {
+  text-align: left;
+  border: 1px solid var(--gh-border, #e5e7eb);
+  border-radius: 14px;
+  z-index: 10000;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: gh-popover-enter 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.gh-magic-codex-popover.floating {
+  position: absolute;
+  top: 36px;
+  left: -4px;
+  width: max-content;
+  margin: 0;
+  max-width: calc(var(--panel-width, 320px) - 24px);
+  background-color: var(--gh-bg, #ffffff);
+  box-shadow: var(--gh-shadow-lg, 0 12px 32px -4px rgba(0, 0, 0, 0.15));
+}
+
+.gh-magic-codex-popover.static {
+  position: relative;
+  width: 100%;
+  margin: 0 auto;
+  max-width: 100%;
+  background-color: color-mix(in srgb, var(--gh-bg-secondary, #f9fafb) 72%, var(--gh-bg, #ffffff));
+  border-color: color-mix(in srgb, var(--gh-border, #e5e7eb) 72%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.gh-magic-codex-list {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 420px;
+  overflow-y: auto;
+  user-select: none;
+}
+
+.gh-magic-codex-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 6px 10px;
+  border-radius: 9px;
+  font-size: 12px;
+  color: var(--gh-text-secondary, #4b5563);
+  line-height: 1.5;
+  background-color: transparent;
+  transition:
+    background-color 0.2s ease,
+    transform 0.1s ease;
+}
+
+.gh-magic-codex-popover.floating .gh-magic-codex-item {
+  font-size: 13px;
+  background-color: var(--gh-bg, transparent);
+}
+
+.gh-magic-codex-icon {
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border-radius: 7px;
+  background-color: var(--gh-bg-tertiary, rgba(0, 0, 0, 0.04));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+.gh-magic-codex-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-self: center;
+  gap: 2px;
+}
+
+.gh-magic-codex-text {
+  white-space: normal;
+  word-break: break-word;
+  text-wrap: pretty;
+  color: var(--gh-text-secondary, #4b5563);
+}
+
+.gh-magic-codex-popover.floating .gh-magic-codex-text {
+  color: var(--gh-text, #374151);
 }
 
 /* 大纲空态的更新日志横幅：当前版本更新日志未读时显示，点击打开更新日志 */
