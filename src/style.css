@@ -1869,6 +1869,37 @@
   z-index: 10;
 }
 
+/* 复制与收藏按钮：通过 --gh-outline-row-hover-bg 自动跟随普通行、提问行与同步高亮行的当前底色 */
+.outline-item:hover,
+.outline-item:focus-within {
+  --gh-outline-row-hover-bg: var(--gh-hover, #f3f4f6);
+}
+
+.outline-item.user-query-node:hover,
+.outline-item.user-query-node:focus-within {
+  --gh-outline-row-hover-bg: color-mix(
+    in srgb,
+    var(--gh-primary, #4285f4) 11%,
+    var(--gh-bg, #ffffff)
+  );
+}
+
+.outline-item.sync-highlight:hover,
+.outline-item.sync-highlight:focus-within,
+.outline-item.sync-highlight-visible:hover,
+.outline-item.sync-highlight-visible:focus-within {
+  --gh-outline-row-hover-bg: var(--gh-outline-sync-bg, var(--gh-hover, #f3f4f6));
+}
+
+/* 默认 always 模式及 hover 模式下已收藏项：为右侧常驻星标预留安全内边距，防止截断文字与星标重叠 */
+.gh-outline-tree-container:not(.gh-panel-bookmark-mode-hidden):not(.gh-panel-bookmark-mode-hover)
+  .outline-item-text,
+.gh-panel-bookmark-mode-hover
+  .outline-item:has(.outline-item-bookmark-wrapper.active)
+  .outline-item-text {
+  padding-right: 22px;
+}
+
 /* 复制按钮 */
 .outline-item-copy-btn {
   position: absolute;
@@ -1877,6 +1908,9 @@
   transform: translateY(-50%);
   width: 24px;
   height: 24px;
+  padding: 0;
+  border: none;
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1892,20 +1926,26 @@
   z-index: 5;
 }
 
-.outline-item:hover .outline-item-copy-btn {
+.outline-item:hover .outline-item-copy-btn,
+.outline-item:focus-within .outline-item-copy-btn {
   opacity: 1;
-  background: var(--gh-hover, #f3f4f6);
+  background: var(--gh-outline-row-hover-bg, var(--gh-hover, #f3f4f6));
 }
 
 /* 复制按钮的渐变遮罩 */
-.outline-item:hover .outline-item-copy-btn::before {
+.outline-item:hover .outline-item-copy-btn::before,
+.outline-item:focus-within .outline-item-copy-btn::before {
   content: "";
   position: absolute;
-  left: -10px;
+  left: -14px;
   top: 0;
-  width: 10px;
+  width: 14px;
   height: 100%;
-  background: linear-gradient(to right, transparent, var(--gh-hover, #f3f4f6));
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--gh-outline-row-hover-bg, var(--gh-hover, #f3f4f6))
+  );
   pointer-events: none;
 }
 
@@ -1939,13 +1979,12 @@
   height: 100%;
 }
 
-.outline-item:hover .outline-item-bookmark-wrapper {
-  opacity: 1;
-}
-
 .outline-item-bookmark-btn {
   width: 24px;
   height: 24px;
+  padding: 0;
+  border: none;
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1954,41 +1993,42 @@
   border-radius: 4px;
 }
 
-/* 激活状态 */
+/* 激活状态（已收藏）始终显示 */
 .outline-item-bookmark-wrapper.active {
   opacity: 1;
 }
 
 .outline-item-bookmark-btn.active {
-  color: #f59e0b;
-}
-
-/* 激活状态（已收藏）始终显示 */
-.outline-item-bookmark-btn.active {
   opacity: 1;
   color: #f59e0b;
 }
 
-/* 悬停行时显示按钮 */
-/* 悬停行时显示按钮 */
-.outline-item:hover .outline-item-bookmark-wrapper {
+/* 悬停或聚焦行时显示按钮 */
+.outline-item:hover .outline-item-bookmark-wrapper,
+.outline-item:focus-within .outline-item-bookmark-wrapper {
   opacity: 1;
 }
 
 /* 收藏按钮在行 hover 时增加浅底，与复制按钮一致 */
-.outline-item:hover .outline-item-bookmark-btn {
-  background: var(--gh-hover, #f3f4f6);
+.outline-item:hover .outline-item-bookmark-btn,
+.outline-item:focus-within .outline-item-bookmark-btn {
+  background: var(--gh-outline-row-hover-bg, var(--gh-hover, #f3f4f6));
 }
 
 /* 渐变遮罩：在 wrapper 左侧添加 */
-.outline-item:hover .outline-item-bookmark-wrapper::before {
+.outline-item:hover .outline-item-bookmark-wrapper::before,
+.outline-item:focus-within .outline-item-bookmark-wrapper::before {
   content: "";
   position: absolute;
   left: -20px;
   top: 0;
   width: 20px;
   height: 100%;
-  background: linear-gradient(to right, transparent, var(--gh-hover, #f3f4f6));
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--gh-outline-row-hover-bg, var(--gh-hover, #f3f4f6))
+  );
   pointer-events: none;
 }
 
