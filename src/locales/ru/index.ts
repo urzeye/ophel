@@ -873,6 +873,8 @@ export const ru = {
   outlineScrollTop: "В начало структуры",
   outlineExpandAll: "Раскрыть всё",
   outlineCollapseAll: "Свернуть всё",
+  outlineLevelTooltip: "Развернуть до H{level} · {count} элементов",
+  outlineLevelQueryTooltip: "Только вопросы пользователя · {count} элементов",
   outlineLocateCurrent: "Найти текущее место",
   outlineSearch: "Поиск в содержании...",
   outlineSearchResult: " совп.",

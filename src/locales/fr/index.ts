@@ -882,6 +882,8 @@ export const fr = {
   outlineScrollTop: "Aller en haut du plan",
   outlineExpandAll: "Tout étendre",
   outlineCollapseAll: "Tout replier",
+  outlineLevelTooltip: "Développer jusqu'à H{level} · {count} éléments",
+  outlineLevelQueryTooltip: "Questions utilisateur uniquement · {count} éléments",
   outlineLocateCurrent: "Localiser position actuelle",
   outlineSearch: "Chercher dans le sommaire...",
   outlineSearchResult: " résultat(s)",

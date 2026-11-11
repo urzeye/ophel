@@ -925,6 +925,8 @@ export const en = {
   outlineScrollTop: "Scroll to outline top",
   outlineExpandAll: "Expand all",
   outlineCollapseAll: "Collapse all",
+  outlineLevelTooltip: "Expand to H{level} · {count} items",
+  outlineLevelQueryTooltip: "User queries only · {count} items",
   outlineLocateCurrent: "Locate current position",
   outlineSearch: "Search...",
   outlineSearchResult: "result(s)",

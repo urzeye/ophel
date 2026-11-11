@@ -878,6 +878,8 @@ export const pt = {
   outlineScrollTop: "Ir para o início do esquema",
   outlineExpandAll: "Expandir tudo",
   outlineCollapseAll: "Recolher tudo",
+  outlineLevelTooltip: "Expandir até H{level} · {count} itens",
+  outlineLevelQueryTooltip: "Apenas perguntas do usuário · {count} itens",
   outlineLocateCurrent: "Localizar posição atual",
   outlineSearch: "Buscar no índice...",
   outlineSearchResult: " resultado(s)",

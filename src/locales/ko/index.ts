@@ -866,6 +866,8 @@ export const ko = {
   outlineScrollTop: "개요 상단으로 스크롤",
   outlineExpandAll: "모두 확장",
   outlineCollapseAll: "모두 접기",
+  outlineLevelTooltip: "H{level}까지 펼치기 · {count}개",
+  outlineLevelQueryTooltip: "사용자 질문만 · {count}개",
   outlineLocateCurrent: "현재 위치 찾기",
   outlineSearch: "개요 검색...",
   outlineSearchResult: "개의 결과",

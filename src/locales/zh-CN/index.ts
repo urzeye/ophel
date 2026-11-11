@@ -873,6 +873,8 @@ export const zhCN = {
   outlineSourceDocument: "文档",
   outlineSourceSwitchLabel: "大纲来源",
   outlineLevelHint: "级标题",
+  outlineLevelTooltip: "展开至 H{level} 标题 · {count} 项",
+  outlineLevelQueryTooltip: "仅用户提问 · {count} 项",
   // 刷新按钮提示
   refreshPrompts: "刷新提示词",
   refreshOutline: "刷新大纲",

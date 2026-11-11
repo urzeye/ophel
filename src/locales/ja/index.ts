@@ -889,6 +889,8 @@ export const ja = {
   outlineScrollTop: "アウトラインの一番上へ",
   outlineExpandAll: "すべて展開",
   outlineCollapseAll: "すべて折りたたむ",
+  outlineLevelTooltip: "H{level} まで展開 · {count} 件",
+  outlineLevelQueryTooltip: "ユーザーの質問のみ · {count} 件",
   outlineLocateCurrent: "現在の位置を特定",
   outlineSearch: "目次を検索...",
   outlineSearchResult: " 個の結果",

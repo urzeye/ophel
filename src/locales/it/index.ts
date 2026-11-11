@@ -954,6 +954,8 @@ export const it = {
   outlineScrollTop: "Scorri fino al contorno in alto",
   outlineExpandAll: "Espandi tutto",
   outlineCollapseAll: "Comprimi tutto",
+  outlineLevelTooltip: "Espandi a H{level} · {count} elementi",
+  outlineLevelQueryTooltip: "Solo domande utente · {count} elementi",
   outlineLocateCurrent: "Individua la posizione attuale",
   outlineSearch: "Cerca schema...",
   outlineSearchResult: "risultato(i)",

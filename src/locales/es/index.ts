@@ -878,6 +878,8 @@ export const es = {
   outlineScrollTop: "Ir al inicio del esquema",
   outlineExpandAll: "Expandir todo",
   outlineCollapseAll: "Contraer todo",
+  outlineLevelTooltip: "Expandir hasta H{level} · {count} elementos",
+  outlineLevelQueryTooltip: "Solo preguntas del usuario · {count} elementos",
   outlineLocateCurrent: "Ubicar posición actual",
   outlineSearch: "Buscar en índice...",
   outlineSearchResult: " resultado(s)",

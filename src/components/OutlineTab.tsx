@@ -2139,12 +2139,16 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
               } else if (isOutlineEmpty) {
                 title = t("outlineEmpty")
               } else if (lvl === 0) {
+                const userQueryCount = tree.filter((node) => node.isUserQuery).length
                 title =
-                  showUserQueries && tree.some((node) => node.isUserQuery)
-                    ? t("outlineUserQueryRoleLabel")
+                  showUserQueries && userQueryCount > 0
+                    ? t("outlineLevelQueryTooltip", { count: userQueryCount })
                     : t("outlineCollapseAll")
               } else {
-                title = `H${lvl}: ${levelCounts[lvl] || 0}`
+                title = t("outlineLevelTooltip", {
+                  level: lvl,
+                  count: levelCounts[lvl] || 0,
+                })
               }
 
               const isActive = lvl <= sliderLevel
@@ -2166,9 +2170,14 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
                   ? t("outlineEmpty")
                   : sliderLevel === 0
                     ? showUserQueries && tree.some((node) => node.isUserQuery)
-                      ? t("outlineUserQueryRoleLabel")
+                      ? t("outlineLevelQueryTooltip", {
+                          count: tree.filter((node) => node.isUserQuery).length,
+                        })
                       : t("outlineCollapseAll")
-                    : `H${sliderLevel}: ${levelCounts[sliderLevel] || 0}`
+                    : t("outlineLevelTooltip", {
+                        level: sliderLevel,
+                        count: levelCounts[sliderLevel] || 0,
+                      })
             }>
             <span
               className={`outline-level-badge ${isSliderDisabled ? "disabled" : ""}`}

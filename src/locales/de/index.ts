@@ -879,6 +879,8 @@ export const de = {
   outlineScrollTop: "Zum Anfang der Gliederung",
   outlineExpandAll: "Alles ausklappen",
   outlineCollapseAll: "Alles einklappen",
+  outlineLevelTooltip: "Bis H{level} erweitern · {count} Elemente",
+  outlineLevelQueryTooltip: "Nur Benutzerfragen · {count} Elemente",
   outlineLocateCurrent: "Aktuelle Position finden",
   outlineSearch: "Im Verzeichnis suchen...",
   outlineSearchResult: " Ergebnis(se)",
