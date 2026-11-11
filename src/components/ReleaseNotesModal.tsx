@@ -247,13 +247,12 @@ export const ReleaseNotesModal: React.FC<ReleaseNotesModalProps> = ({
         <header className="gh-release-notes-header">
           <div className="gh-release-notes-header-top">
             <div className="gh-release-notes-title-group">
+              <span className="gh-release-notes-title-icon" aria-hidden="true">
+                <SparkleIcon size={18} color="brand" />
+              </span>
               <h2 id={titleId} className="gh-release-notes-title">
                 {t("releaseNotesTitle", { version })}
               </h2>
-              <span className="gh-release-notes-badge">
-                <SparkleIcon size={12} color="brand" />
-                <span>{t("releaseNotesKicker")}</span>
-              </span>
             </div>
             <button
               ref={closeButtonRef}

@@ -45,9 +45,15 @@
 .gh-release-notes-title-group {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 8px 10px;
+  gap: 8px;
   min-width: 0;
+}
+
+.gh-release-notes-title-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .gh-release-notes-title {
@@ -57,22 +63,6 @@
   font-weight: 750;
   line-height: 1.25;
   letter-spacing: -0.01em;
-}
-
-.gh-release-notes-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  height: 22px;
-  padding: 0 8px;
-  border-radius: 999px;
-  font-size: 11.5px;
-  font-weight: 600;
-  line-height: 1;
-  user-select: none;
-  color: var(--gh-primary-text, var(--gh-primary, #4285f4));
-  background: color-mix(in srgb, var(--gh-primary, #4285f4) 10%, var(--gh-bg, #ffffff));
-  border: 1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 22%, transparent);
 }
 
 .gh-release-notes-meta {
