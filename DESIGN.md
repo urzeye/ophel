@@ -1,5 +1,5 @@
 ---
-# 官方 DESIGN.md frontmatter（impeccable document 扫描生成，2026-10-22）
+# 官方 DESIGN.md frontmatter（impeccable document 扫描生成，2026-10-22；2026-11-11 刷新核对）
 # 取值 = 默认浅色主题（src/styles/theme-variables.css :root 基准）；24 套预置主题在运行时覆盖这些变量
 name: Ophel Atlas
 description: AI 对话结构化与导航工具——实时大纲、对话文件夹与 Prompt 词库，让对话成为可组织、可复用的工作流
@@ -12,7 +12,7 @@ colors:
   bg-tertiary: "#f3f4f6"
   text: "#1f2937"
   text-secondary: "#6b7280"
-  text-tertiary: "#9ca3af"
+  text-tertiary: "#8d94a1"
   border: "#e5e7eb"
   input-bg: "#ffffff"
   input-border: "#d1d5db"
@@ -142,6 +142,7 @@ Ophel Atlas 项目级设计规范。此文档服务于现有浏览器扩展与�
   - `12` 套深色主题，定义于 `src/utils/themes/dark/index.ts`
 - 主题注入由 `src/core/theme-manager.ts` 负责。
 - 静态样式通过 `src/contents/ui-entry.tsx` 的 `getStyle()` 注入 Shadow DOM。
+- 站点原生主题同步（「同步站点页面颜色」）由 `src/styles/native-theme-adapters/` 按站点把宿主页变量绑定到 `--gh-*`，同样由 `ThemeManager` 调度；新增语义变量时检查是否有适配器引用它。
 
 ### 主题变量优先级
 
