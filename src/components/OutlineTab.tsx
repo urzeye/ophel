@@ -2248,11 +2248,8 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
           if (bookmarkMode && !hasVisibleBookmarks && !searchQuery) {
             return (
               <div className="outline-empty-state">
-                <div
-                  className="outline-empty-state-icon"
-                  style={{ background: "rgba(245, 158, 11, 0.1)", color: "#f59e0b" }}
-                  aria-hidden="true">
-                  <StarIcon size={20} filled={true} color="#f59e0b" />
+                <div className="outline-empty-state-icon is-bookmark" aria-hidden="true">
+                  <StarIcon size={20} filled={true} color="currentColor" />
                 </div>
                 <div className="outline-empty-state-title">{t("outlineNoBookmarks")}</div>
                 <div className="outline-empty-state-desc">{t("outlineAddBookmarkHint")}</div>

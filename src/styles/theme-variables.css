@@ -233,6 +233,11 @@ html[data-theme="dark"] {
   --gh-badge-border: #4b5563;
   --gh-badge-shadow: #1f2937;
 
+  /* === 危险操作（深色模式） === */
+  --gh-bg-danger: rgba(239, 68, 68, 0.14);
+  --gh-text-danger: #f87171;
+  --gh-bg-danger-hover: rgba(239, 68, 68, 0.22);
+
   /* === 选中项渐变背景（深色模式） === */
   --gh-selected-gradient: linear-gradient(
     135deg,

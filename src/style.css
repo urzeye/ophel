@@ -1257,9 +1257,14 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--gh-text-tertiary, #9ca3af);
+  color: var(--gh-text-tertiary, #8d94a1);
   background: color-mix(in srgb, var(--gh-border, #e5e7eb) 22%, transparent);
   margin-bottom: 8px;
+}
+
+.outline-empty-state-icon.is-bookmark {
+  color: #f59e0b;
+  background: color-mix(in srgb, #f59e0b 12%, transparent);
 }
 
 .outline-empty-state-title {
