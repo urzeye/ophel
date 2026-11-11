@@ -762,6 +762,9 @@ export const zhTW = {
   outlineLevelHint: "級標題",
   outlineLevelTooltip: "展開至 H{level} 標題 · {count} 項",
   outlineLevelQueryTooltip: "僅使用者提問 · {count} 項",
+  magicCodexTitle: "快捷技巧與操作",
+  magicCodexCollapse: "收起技巧",
+  magicCodexExpand: "展開技巧",
   // Tab 順序設置
   tabOrderSettings: "面板標籤",
   tabOrderDesc: "拖動排序。開關控制面板標籤；站點不支援的功能會自動隱藏",
