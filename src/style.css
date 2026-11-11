@@ -506,14 +506,14 @@
 
 /* ============= 面板 Header 样式 ============= */
 .gh-panel-header {
-  /* 使用 CSS 变量，支持动态主题切换 */
-  background: var(--gh-header-bg, linear-gradient(135deg, #4285f4 0%, #34a853 100%));
-  /* 标题与品牌图标（currentColor）跟随主题：浅色头部背景的预置会给深色 */
-  color: var(--gh-header-text, #ffffff);
+  /* 使用 CSS 变量，支持动态主题切换；默认采用 macOS 风格同调微染表面 */
+  background: var(--gh-header-bg, linear-gradient(135deg, #f0f5ff 0%, #eefaf3 100%));
+  color: var(--gh-header-text, var(--gh-text, #1f2937));
+  border-bottom: 1px solid color-mix(in srgb, var(--gh-border, #e5e7eb) 65%, transparent);
   /* 整个 header 区域可拖动，按住后切换为抓取手势 */
   cursor: grab;
   position: relative;
-  padding: 10px 14px;
+  padding: 9px 12px 8px 14px;
   border-radius: 12px 12px 0 0;
   display: flex;
   align-items: center;
@@ -536,7 +536,7 @@
 .gh-panel-brand-trigger {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   cursor: pointer;
   position: relative;
   border: none;
@@ -551,9 +551,9 @@
 }
 
 .gh-panel-brand-trigger:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.42);
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 38%, transparent);
   outline-offset: 4px;
-  border-radius: 10px;
+  border-radius: 8px;
 }
 
 .gh-panel-brand-mark {
@@ -576,9 +576,10 @@
 }
 
 .gh-panel-brand-title {
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 600;
-  letter-spacing: -0.02em;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
   user-select: none;
 }
 
@@ -2116,9 +2117,9 @@
   width: 30px;
   height: 64px;
   padding: 0;
-  border: 1px solid var(--gh-brand-border, transparent);
-  background: var(--gh-header-bg, linear-gradient(135deg, #4285f4 0%, #34a853 100%));
-  color: var(--gh-header-text, #ffffff);
+  border: 1px solid var(--gh-border, #e5e7eb);
+  background: var(--gh-header-bg, linear-gradient(135deg, #f0f5ff 0%, #eefaf3 100%));
+  color: var(--gh-header-text, var(--gh-text, #1f2937));
   box-shadow: var(--gh-btn-shadow, 0 2px 6px rgba(0, 0, 0, 0.15));
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -4201,31 +4202,33 @@
 .gh-header-icon-btn {
   background: transparent;
   border: none;
-  color: var(--gh-glass-text, white);
-  width: 24px;
-  height: 24px;
+  color: var(--gh-glass-text, var(--gh-text-secondary, #4b5563));
+  width: 26px;
+  height: 26px;
   border-radius: 6px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition:
-    background 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
-    transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    background 0.18s cubic-bezier(0.2, 0.8, 0.2, 1),
+    color 0.18s ease,
+    transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
   padding: 0;
 }
 
 .gh-header-icon-btn:hover {
-  background: var(--gh-glass-bg-hover, rgba(255, 255, 255, 0.2));
+  background: var(--gh-glass-bg-hover, var(--gh-hover, rgba(0, 0, 0, 0.06)));
+  color: var(--gh-header-text, var(--gh-text, #1f2937));
 }
 
 .gh-header-icon-btn:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.38);
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 38%, transparent);
   outline-offset: 2px;
 }
 
 .gh-header-icon-btn:active {
-  background: var(--gh-glass-bg, rgba(255, 255, 255, 0.15));
+  background: var(--gh-glass-bg, var(--gh-active-bg, rgba(0, 0, 0, 0.1)));
   transform: scale(0.96);
 }
 

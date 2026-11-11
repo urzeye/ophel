@@ -32,18 +32,17 @@ export const SparkleIcon: React.FC<IconProps> = ({ size = 18, color, className =
         overflow: "visible",
         // 光学居中补偿：图标内容在 viewBox 内视觉重心略偏上，向下 1px 对齐同排文字
         transform: "translateY(1px)",
-        // 关键：抛弃发脏的黑色阴影，改为同色系（青蓝色）的通透光晕（Glow），带来现代科技感
-        filter: isDefaultColor ? "drop-shadow(0px 2px 6px rgba(34, 211, 238, 0.4))" : "none",
+        // 跟随当前主题主色的柔和光晕，避免深浅主题下刺眼或发脏
+        filter: isDefaultColor
+          ? "drop-shadow(0px 1px 4px color-mix(in srgb, var(--gh-primary, #4285f4) 26%, transparent))"
+          : "none",
         ...style,
       }}>
       <defs>
         {isDefaultColor && (
           <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
-            {/* 抛弃杂乱的红橙色，使用极具现代感和科技感的 Cyan -> Indigo 双色极光渐变 */}
-            {/* Cyan 青色 */}
-            <stop offset="0%" stopColor="#22d3ee" />
-            {/* Indigo 靛蓝色 */}
-            <stop offset="100%" stopColor="#6366f1" />
+            <stop offset="0%" stopColor="var(--gh-primary-text, var(--gh-primary, #4285f4))" />
+            <stop offset="100%" stopColor="var(--gh-secondary, #34a853)" />
           </linearGradient>
         )}
       </defs>

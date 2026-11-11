@@ -53,9 +53,9 @@
   --gh-shadow-brand: 0 4px 12px rgba(66, 133, 244, 0.3);
 
   /* === 语义化组件变量 === */
-  --gh-header-bg: linear-gradient(135deg, #4285f4 0%, #34a853 100%);
-  /* 头部标题与品牌图标；头部背景偏浅的预置改为深色 */
-  --gh-header-text: #ffffff;
+  --gh-header-bg: linear-gradient(135deg, #f0f5ff 0%, #eefaf3 100%);
+  /* 头部标题与控制文字；默认采用与面板同调的深色文字 */
+  --gh-header-text: #1f2937;
   --gh-tag-active-bg: #4285f4;
   --gh-checkbox-bg: #4f46e5;
 
@@ -132,9 +132,9 @@
   --gh-search-highlight-bg: rgba(255, 235, 59, 0.5);
 
   /* === 玻璃效果（用于 header 按钮） === */
-  --gh-glass-bg: rgba(255, 255, 255, 0.2);
-  --gh-glass-bg-hover: rgba(255, 255, 255, 0.3);
-  --gh-glass-text: #ffffff;
+  --gh-glass-bg: rgba(66, 133, 244, 0.08);
+  --gh-glass-bg-hover: rgba(66, 133, 244, 0.14);
+  --gh-glass-text: #4b5563;
 
   /* === Emoji 选中背景 === */
   --gh-emoji-selected-bg: #dbeafe;
@@ -189,7 +189,8 @@ html[data-theme="dark"] {
   --gh-shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.7);
 
   /* === 语义化组件变量（深色模式覆盖） === */
-  --gh-header-bg: #1e1e1e;
+  --gh-header-bg: linear-gradient(135deg, #232429 0%, #1e1e1e 100%);
+  --gh-header-text: #e3e3e3;
   --gh-tag-active-bg: rgba(66, 133, 244, 0.6);
   --gh-checkbox-bg: #818cf8;
 
@@ -252,7 +253,7 @@ html[data-theme="dark"] {
   /* === 玻璃效果（深色模式） === */
   --gh-glass-bg: rgba(255, 255, 255, 0.08);
   --gh-glass-bg-hover: rgba(255, 255, 255, 0.12);
-  --gh-glass-text: #e5e7eb;
+  --gh-glass-text: #a0a0a0;
 
   /* === Emoji 选中背景（深色模式） === */
   --gh-emoji-selected-bg: rgba(59, 130, 246, 0.3);
