@@ -812,8 +812,10 @@
 }
 
 /* 窄面板（宽度 < 280px，由 MainPanel 打 data-panel-narrow 标记）下
-   隐藏大纲工具栏的低频按钮（折叠全部、滚动到顶/底），优先保证搜索框可用宽度 */
-.gh-main-panel[data-panel-narrow="true"] .outline-toolbar-btn.outline-narrow-optional {
+   隐藏大纲工具栏的低频按钮（折叠全部、滚动到顶/底），优先保证搜索框可用宽度；
+   默认紧凑宽度（<= 340px，data-panel-compact）下收敛与底栏上下箭头重复的列表滚顶/底按钮 */
+.gh-main-panel[data-panel-narrow="true"] .outline-toolbar-btn.outline-narrow-optional,
+.gh-main-panel[data-panel-compact="true"] .outline-toolbar-btn.outline-compact-optional {
   display: none;
 }
 
@@ -897,7 +899,7 @@
 .outline-toolbar-btn.export-accent {
   position: relative;
   overflow: hidden;
-  margin-left: 2px;
+  margin-left: 4px;
   border: 1px solid transparent;
   background: transparent;
   color: var(--gh-primary-text, var(--gh-primary, #4285f4));

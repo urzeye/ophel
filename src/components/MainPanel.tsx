@@ -1431,6 +1431,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         data-panel-hover-width-active={isHoverWidthPreviewActive ? "true" : undefined}
         data-panel-base-width={basePanelWidth}
         data-panel-anchor-side={panelAnchorSide}
+        data-panel-compact={panelWidth <= 340 ? "true" : undefined}
         data-panel-narrow={panelWidth < 280 ? "true" : undefined}
         style={panelStyle}>
         {/* 自定义 CSS 注入：根据当前站点的样式 ID 查找自定义样式 */}

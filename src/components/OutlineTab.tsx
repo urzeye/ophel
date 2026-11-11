@@ -1984,7 +1984,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
                 aria-label={
                   scrollState === "bottom" ? t("outlineScrollBottom") : t("outlineScrollTop")
                 }
-                className="outline-toolbar-btn outline-narrow-optional">
+                className="outline-toolbar-btn outline-narrow-optional outline-compact-optional">
                 {scrollState === "bottom" ? (
                   <ScrollBottomIcon size={16} />
                 ) : (
