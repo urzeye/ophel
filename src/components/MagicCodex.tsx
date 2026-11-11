@@ -62,7 +62,7 @@ export const MagicCodex: React.FC<Props> = ({
   return (
     <div
       ref={popoverRef}
-      role="dialog"
+      role={isStatic ? "region" : "dialog"}
       aria-label={t("featureTipsCategory")}
       className={`gh-magic-codex-popover ${isStatic ? "static" : "floating"}`}
       onPointerDown={(e) => e.stopPropagation()}

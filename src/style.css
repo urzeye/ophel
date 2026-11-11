@@ -1670,6 +1670,11 @@
   background: var(--gh-hover, #f3f4f6);
 }
 
+.outline-item:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 36%, transparent);
+  outline-offset: -2px;
+}
+
 /* 定位高亮（Locate Current）：每套主题自带的撞色描边与淡底，外圈短暂呼吸后保持到高亮结束 */
 .outline-item.highlight {
   background: var(--gh-outline-locate-bg) !important;
@@ -2053,6 +2058,12 @@
 .outline-item-copy-btn:hover {
   color: var(--gh-border-active);
   transform: translateY(-50%) scale(1.1);
+}
+
+.outline-item-copy-btn:focus-visible,
+.outline-item-bookmark-btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 40%, transparent);
+  outline-offset: 1px;
 }
 
 .outline-item-copy-btn svg {

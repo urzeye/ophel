@@ -413,13 +413,31 @@ const OutlineNodeView: React.FC<{
       delay={500}>
       <div
         className={itemClassName}
+        role="treeitem"
+        tabIndex={0}
+        aria-level={Math.max(1, node.relativeLevel + 1)}
+        aria-expanded={hasChildren ? isExpanded : undefined}
         data-index={node.index}
         data-level={node.relativeLevel}
         ref={(el) => setItemRef(node.index, el)}
-        onClick={() => onClick(node)}>
+        onClick={() => onClick(node)}
+        onKeyDown={(e) => {
+          if (e.target !== e.currentTarget) return
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault()
+            onClick(node)
+          } else if (e.key === "ArrowRight" && hasChildren && !isExpanded) {
+            e.preventDefault()
+            onToggle(node)
+          } else if (e.key === "ArrowLeft" && hasChildren && isExpanded) {
+            e.preventDefault()
+            onToggle(node)
+          }
+        }}>
         {/* 折叠箭头 - 使用 hasChildren 显示箭头，允许手动展开 */}
         <span
           className={`outline-item-toggle ${hasChildren ? (isExpanded ? "expanded" : "") : "invisible"}`}
+          aria-hidden="true"
           onClick={(e) => {
             if (hasChildren) {
               e.stopPropagation()
@@ -445,8 +463,11 @@ const OutlineNodeView: React.FC<{
         {/* Bookmark Button (Hover or Bookmarked) */}
         <span className={`outline-item-bookmark-wrapper ${node.isBookmarked ? "active" : ""}`}>
           <Tooltip content={node.isBookmarked ? t("removeBookmark") : t("addBookmark")}>
-            <span
+            <button
+              type="button"
               className={`outline-item-bookmark-btn ${node.isBookmarked ? "active" : ""}`}
+              aria-label={node.isBookmarked ? t("removeBookmark") : t("addBookmark")}
+              aria-pressed={Boolean(node.isBookmarked)}
               onClick={(e) => onToggleBookmark(e, node)}
               onMouseEnter={() => setIsHoveringAction(true)}
               onMouseLeave={() => setIsHoveringAction(false)}>
@@ -455,14 +476,16 @@ const OutlineNodeView: React.FC<{
                 filled={node.isBookmarked}
                 color={node.isBookmarked ? "#f59e0b" : "currentColor"}
               />
-            </span>
+            </button>
           </Tooltip>
         </span>
 
         {/* 复制按钮 (所有节点显示) */}
         <Tooltip content={t("copy")}>
-          <span
+          <button
+            type="button"
             className="outline-item-copy-btn"
+            aria-label={t("copy")}
             onClick={handleCopy}
             onMouseEnter={() => setIsHoveringAction(true)}
             onMouseLeave={() => setIsHoveringAction(false)}>
@@ -473,7 +496,7 @@ const OutlineNodeView: React.FC<{
               // 复制图标
               <CopyIcon size={14} />
             )}
-          </span>
+          </button>
         </Tooltip>
       </div>
     </Tooltip>
@@ -1878,6 +1901,26 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
     [getLevelFromClientX, handleLevelClick],
   )
 
+  const handleLevelKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      if (isSliderDisabled) return
+      if (e.key === "ArrowLeft" || e.key === "ArrowDown") {
+        e.preventDefault()
+        handleLevelClick(Math.max(0, expandLevel - 1))
+      } else if (e.key === "ArrowRight" || e.key === "ArrowUp") {
+        e.preventDefault()
+        handleLevelClick(Math.min(6, expandLevel + 1))
+      } else if (e.key === "Home") {
+        e.preventDefault()
+        handleLevelClick(0)
+      } else if (e.key === "End") {
+        e.preventDefault()
+        handleLevelClick(6)
+      }
+    },
+    [isSliderDisabled, expandLevel, handleLevelClick],
+  )
+
   // 监听快捷键触发的定位事件
   useEffect(() => {
     const handleLocateEvent = () => {
@@ -2058,7 +2101,15 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
           {/* Level Dots */}
           <div
             ref={levelDotsRef}
+            role="slider"
+            tabIndex={isSliderDisabled ? -1 : 0}
+            aria-label={t("outlineExpandAll")}
+            aria-valuemin={0}
+            aria-valuemax={6}
+            aria-valuenow={sliderLevel}
+            aria-disabled={isSliderDisabled || undefined}
             className={`outline-level-dots ${isSliderDisabled ? "disabled" : ""}`}
+            onKeyDown={handleLevelKeyDown}
             onPointerDown={handleLevelPointerDown}
             onPointerMove={handleLevelPointerMove}
             onPointerUp={(e) => {
