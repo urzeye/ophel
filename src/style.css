@@ -1981,13 +1981,11 @@
 }
 
 /* 复制与收藏按钮：通过 --gh-outline-row-hover-bg 自动跟随普通行、提问行与同步高亮行的当前底色 */
-.outline-item:hover,
-.outline-item:focus-within {
+.outline-item:hover {
   --gh-outline-row-hover-bg: var(--gh-hover, #f3f4f6);
 }
 
-.outline-item.user-query-node:hover,
-.outline-item.user-query-node:focus-within {
+.outline-item.user-query-node:hover {
   --gh-outline-row-hover-bg: color-mix(
     in srgb,
     var(--gh-primary, #4285f4) 11%,
@@ -1996,9 +1994,7 @@
 }
 
 .outline-item.sync-highlight:hover,
-.outline-item.sync-highlight:focus-within,
-.outline-item.sync-highlight-visible:hover,
-.outline-item.sync-highlight-visible:focus-within {
+.outline-item.sync-highlight-visible:hover {
   --gh-outline-row-hover-bg: var(--gh-outline-sync-bg, var(--gh-hover, #f3f4f6));
 }
 
@@ -2011,7 +2007,7 @@
   padding-right: 22px;
 }
 
-/* 复制按钮 */
+/* 复制按钮：仅在鼠标悬停行或按钮本身获得键盘焦点时显示，点击行不常驻暴露 */
 .outline-item-copy-btn {
   position: absolute;
   right: 28px;
@@ -2029,6 +2025,7 @@
   cursor: pointer;
   border-radius: 4px;
   opacity: 0;
+  pointer-events: none;
   transition:
     background 0.2s ease,
     color 0.2s ease,
@@ -2038,14 +2035,15 @@
 }
 
 .outline-item:hover .outline-item-copy-btn,
-.outline-item:focus-within .outline-item-copy-btn {
+.outline-item-copy-btn:focus-visible {
   opacity: 1;
+  pointer-events: auto;
   background: var(--gh-outline-row-hover-bg, var(--gh-hover, #f3f4f6));
 }
 
 /* 复制按钮的渐变遮罩 */
 .outline-item:hover .outline-item-copy-btn::before,
-.outline-item:focus-within .outline-item-copy-btn::before {
+.outline-item-copy-btn:focus-visible::before {
   content: "";
   position: absolute;
   left: -14px;
@@ -2120,21 +2118,21 @@
   color: #f59e0b;
 }
 
-/* 悬停或聚焦行时显示按钮 */
+/* 仅在悬停行或按钮自身获得键盘焦点时高亮显示 */
 .outline-item:hover .outline-item-bookmark-wrapper,
-.outline-item:focus-within .outline-item-bookmark-wrapper {
+.outline-item-bookmark-btn:focus-visible {
   opacity: 1;
 }
 
 /* 收藏按钮在行 hover 时增加浅底，与复制按钮一致 */
 .outline-item:hover .outline-item-bookmark-btn,
-.outline-item:focus-within .outline-item-bookmark-btn {
+.outline-item-bookmark-btn:focus-visible {
   background: var(--gh-outline-row-hover-bg, var(--gh-hover, #f3f4f6));
 }
 
 /* 渐变遮罩：在 wrapper 左侧添加 */
 .outline-item:hover .outline-item-bookmark-wrapper::before,
-.outline-item:focus-within .outline-item-bookmark-wrapper::before {
+.outline-item-bookmark-btn:focus-visible::before {
   content: "";
   position: absolute;
   left: -20px;
