@@ -141,8 +141,8 @@ const CSS_TEMPLATE = `/* =======================================================
      --gh-header-bg accepts a solid color or any CSS gradient. When the header
      background is light, set --gh-header-text to a dark color.
      ------------------------------------------------------------------------ */
-  --gh-header-bg: linear-gradient(135deg, #4285f4 0%, #34a853 100%);
-  --gh-header-text: #ffffff;
+  --gh-header-bg: linear-gradient(135deg, #f0f5ff 0%, #eefaf3 100%);
+  --gh-header-text: #1f2937;
   --gh-tag-active-bg: #4285f4;
   --gh-checkbox-bg: #4f46e5;
 
@@ -209,9 +209,9 @@ const CSS_TEMPLATE = `/* =======================================================
      ------------------------------------------------------------------------ */
   --gh-brand-gradient: linear-gradient(135deg, #4285f4 0%, #34a853 100%);
   --gh-brand-border: transparent;
-  --gh-glass-bg: rgba(255, 255, 255, 0.2);
-  --gh-glass-bg-hover: rgba(255, 255, 255, 0.3);
-  --gh-glass-text: #ffffff;
+  --gh-glass-bg: rgba(66, 133, 244, 0.08);
+  --gh-glass-bg-hover: rgba(66, 133, 244, 0.14);
+  --gh-glass-text: #4b5563;
 
   /* ------------------------------------------------------------------------
      14. Settings surfaces
@@ -269,7 +269,7 @@ const CSS_TEMPLATE = `/* =======================================================
 
 .gh-panel-header {
   background: var(--gh-header-bg);
-  color: var(--gh-header-text, #ffffff);
+  color: var(--gh-header-text, var(--gh-text, #1f2937));
 }
 
 .gh-panel-tab-btn.active {
@@ -363,11 +363,11 @@ const CSS_TEMPLATE = `/* =======================================================
 
   /* ------------------------------------------------------------------------
      7. Panel header and tabs
-     A solid header color works better than a bright gradient in dark mode.
-     --gh-header-text must stay readable against --gh-header-bg.
+     A subtle dark surface gradient works better than a bright gradient in dark
+     mode. --gh-header-text must stay readable against --gh-header-bg.
      ------------------------------------------------------------------------ */
-  --gh-header-bg: #1e1e1e;
-  --gh-header-text: #ffffff;
+  --gh-header-bg: linear-gradient(135deg, #232429 0%, #1e1e1e 100%);
+  --gh-header-text: #e3e3e3;
   --gh-tag-active-bg: rgba(129, 140, 248, 0.6);
   --gh-checkbox-bg: #818cf8;
 
@@ -440,7 +440,7 @@ const CSS_TEMPLATE = `/* =======================================================
   --gh-brand-border: #333333;
   --gh-glass-bg: rgba(255, 255, 255, 0.08);
   --gh-glass-bg-hover: rgba(255, 255, 255, 0.12);
-  --gh-glass-text: #e3e3e3;
+  --gh-glass-text: #a0a0a0;
 
   /* ------------------------------------------------------------------------
      14. Settings surfaces

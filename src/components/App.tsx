@@ -3517,7 +3517,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
           className={`gh-edge-touch-handle gh-interactive ${edgeSnapState}`}
           aria-label={`${t("expand")} ${t("panelTitle")}`}
           onClick={showEdgePeek}>
-          <SparkleIcon size={16} color="currentColor" />
+          <SparkleIcon size={16} color="brand" />
         </button>
       )}
 

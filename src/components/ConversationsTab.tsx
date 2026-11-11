@@ -1000,7 +1000,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                   {tags.length === 0 ? (
                     <div
                       className="conversations-tag-filter-item"
-                      style={{ color: "var(--gh-text-tertiary, #9ca3af)", cursor: "default" }}>
+                      style={{ color: "var(--gh-text-tertiary, #8d94a1)", cursor: "default" }}>
                       {t("conversationsNoTags")}
                     </div>
                   ) : (

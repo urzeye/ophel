@@ -11,15 +11,17 @@ export const ThemePreview: React.FC<ThemePreviewProps> = ({ preset }) => {
 
   const bg = vars["--gh-bg"] || "#ffffff"
   const headerBg = vars["--gh-header-bg"] || vars["--gh-primary"] || "#4285f4"
+  const headerText = vars["--gh-header-text"] || vars["--gh-text"] || "#374151"
   const borderColor = vars["--gh-border"] || "#e5e7eb"
   const primary = vars["--gh-primary"] || "#4285f4"
+  const secondary = vars["--gh-secondary"] || primary
+  const brandGradient = vars["--gh-brand-gradient"] || primary
   const text = vars["--gh-text"] || "#374151"
   const textSecondary = vars["--gh-text-secondary"] || "#9ca3af"
   const sidebarBg = vars["--gh-bg-secondary"] || "#f3f4f6"
   const tertiaryBg = vars["--gh-bg-tertiary"] || vars["--gh-hover"] || "#f3f4f6"
   const selectedGradient = vars["--gh-selected-gradient"] || primary
   const bgTexture = vars["--gh-bg-image"]
-  const textOnPrimary = vars["--gh-text-on-primary"] || "#ffffff"
 
   return (
     <div
@@ -39,15 +41,21 @@ export const ThemePreview: React.FC<ThemePreviewProps> = ({ preset }) => {
           borderBottomColor: borderColor,
         }}>
         <div className="theme-preview-window-chrome">
-          <div className="theme-preview-dot" />
-          <div className="theme-preview-dot delay-1" />
-          <div className="theme-preview-dot delay-2" />
+          <div className="theme-preview-dot" style={{ background: primary, opacity: 0.9 }} />
+          <div
+            className="theme-preview-dot delay-1"
+            style={{ background: secondary, opacity: 0.72 }}
+          />
+          <div
+            className="theme-preview-dot delay-2"
+            style={{ backgroundColor: headerText, opacity: 0.28 }}
+          />
         </div>
         <div
           className="theme-preview-header-pill"
           style={{
-            backgroundColor: "rgba(255, 255, 255, 0.18)",
-            color: textOnPrimary,
+            backgroundColor: headerText,
+            opacity: 0.16,
           }}
         />
       </div>
@@ -140,7 +148,7 @@ export const ThemePreview: React.FC<ThemePreviewProps> = ({ preset }) => {
                 style={{ backgroundColor: textSecondary, opacity: 0.46 }}
               />
             </div>
-            <div className="theme-preview-button" style={{ background: headerBg }}></div>
+            <div className="theme-preview-button" style={{ background: brandGradient }}></div>
           </div>
         </div>
       </div>

@@ -120,7 +120,7 @@ const CHAIN_EDITOR_PORTAL_STYLES = `
 .gh-chain-editor-scroll {
   scrollbar-gutter: stable;
   scrollbar-width: thin;
-  scrollbar-color: color-mix(in srgb, var(--gh-text-tertiary, #9ca3af) 64%, transparent)
+  scrollbar-color: color-mix(in srgb, var(--gh-text-tertiary, #8d94a1) 64%, transparent)
     transparent;
 }
 
@@ -136,7 +136,7 @@ const CHAIN_EDITOR_PORTAL_STYLES = `
   min-height: 42px;
   border: 3px solid transparent;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--gh-text-tertiary, #9ca3af) 56%, transparent);
+  background: color-mix(in srgb, var(--gh-text-tertiary, #8d94a1) 56%, transparent);
   background-clip: content-box;
 }
 
@@ -342,7 +342,7 @@ const CHAIN_EDITOR_PORTAL_STYLES = `
 
 .gh-chain-icon-select-btn:hover {
   border-color: var(--gh-primary, #3b82f6);
-  background: var(--gh-primary-light, #eff6ff);
+  background: color-mix(in srgb, var(--gh-primary, #3b82f6) 8%, var(--gh-bg, #ffffff));
 }
 
 .gh-chain-editor-section {
@@ -565,14 +565,20 @@ const CHAIN_EDITOR_PORTAL_STYLES = `
 }
 
 .gh-chain-step-delete-btn:hover {
-  background: var(--gh-bg-danger, #fef2f2);
+  background: var(
+    --gh-bg-danger,
+    color-mix(in srgb, var(--gh-danger, #ef4444) 10%, transparent)
+  );
   color: var(--gh-text-danger, #ef4444);
   transform: scale(1.05);
 }
 
 .gh-chain-step-delete-btn:active {
   transform: scale(0.95);
-  background: var(--gh-bg-danger-hover, #fee2e2);
+  background: var(
+    --gh-bg-danger-hover,
+    color-mix(in srgb, var(--gh-danger, #ef4444) 18%, transparent)
+  );
 }
 
 .gh-chain-step-delete-btn svg {
@@ -977,7 +983,7 @@ const CATEGORY_MODAL_PORTAL_STYLES = `
   border: none;
   border-radius: 6px;
   background: transparent;
-  color: var(--gh-text-tertiary, #9ca3af);
+  color: var(--gh-text-tertiary, #8d94a1);
   cursor: pointer;
   transition: background-color 0.15s, color 0.15s;
 }
@@ -986,7 +992,10 @@ const CATEGORY_MODAL_PORTAL_STYLES = `
   color: var(--gh-text, #1f2937);
 }
 .gh-prompt-category-manage-btn.danger:hover {
-  background: var(--gh-bg-danger, #fef2f2);
+  background: var(
+    --gh-bg-danger,
+    color-mix(in srgb, var(--gh-danger, #ef4444) 10%, transparent)
+  );
   color: var(--gh-text-danger, #ef4444);
 }
 .gh-prompt-category-manage-btn:focus-visible {
@@ -2959,9 +2968,9 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
             }}>
             <div
               style={{
-                fontSize: "18px",
+                fontSize: "15px",
                 fontWeight: 600,
-                marginBottom: "20px",
+                marginBottom: "16px",
                 color: "var(--gh-text, #1f2937)",
               }}>
               {t("categoryManage")}
@@ -2972,7 +2981,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                 <div
                   style={{
                     textAlign: "center",
-                    color: "var(--gh-text-tertiary, #9ca3af)",
+                    color: "var(--gh-text-tertiary, #8d94a1)",
                     padding: "20px",
                   }}>
                   {t("categoryEmpty")}
@@ -2995,7 +3004,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                           {cat}
                         </div>
                         <div
-                          style={{ fontSize: "12px", color: "var(--gh-text-tertiary, #9ca3af)" }}>
+                          style={{ fontSize: "12px", color: "var(--gh-text-tertiary, #8d94a1)" }}>
                           {count} {t("promptCountSuffix")}
                         </div>
                       </div>
@@ -3455,7 +3464,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
             style={{
               textAlign: "center",
               padding: "40px 20px",
-              color: "var(--gh-text-tertiary, #9ca3af)",
+              color: "var(--gh-text-tertiary, #8d94a1)",
               fontSize: "14px",
             }}>
             {t("promptsEmpty")}

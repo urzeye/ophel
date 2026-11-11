@@ -249,12 +249,34 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   } = useOutlineNavigation(outlineManager)
   const hasAnchor = anchorPosition !== null
   const [anchorTapId, setAnchorTapId] = useState(0)
+  const [scrollTopTapId, setScrollTopTapId] = useState(0)
+  const [scrollBottomTapId, setScrollBottomTapId] = useState(0)
+  const [themeTapId, setThemeTapId] = useState(0)
+
   // prefers-reduced-motion 下 animation 为 none，不会触发 animationend；用 timeout 充当兜底重置
   useEffect(() => {
     if (anchorTapId === 0) return
     const timer = setTimeout(() => setAnchorTapId(0), 400)
     return () => clearTimeout(timer)
   }, [anchorTapId])
+
+  useEffect(() => {
+    if (scrollTopTapId === 0) return
+    const timer = setTimeout(() => setScrollTopTapId(0), 400)
+    return () => clearTimeout(timer)
+  }, [scrollTopTapId])
+
+  useEffect(() => {
+    if (scrollBottomTapId === 0) return
+    const timer = setTimeout(() => setScrollBottomTapId(0), 400)
+    return () => clearTimeout(timer)
+  }, [scrollBottomTapId])
+
+  useEffect(() => {
+    if (themeTapId === 0) return
+    const timer = setTimeout(() => setThemeTapId(0), 400)
+    return () => clearTimeout(timer)
+  }, [themeTapId])
 
   // 悬浮隐藏状态
   const [_isHovered, setIsHovered] = useState(false)
@@ -779,12 +801,19 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
 
   // 按钮点击处理器
   const buttonActions: Record<string, (e?: React.MouseEvent<HTMLButtonElement>) => void> = {
-    scrollTop: scrollToTop,
-    scrollBottom: scrollToBottom,
+    scrollTop: () => {
+      setScrollTopTapId((id) => id + 1)
+      scrollToTop()
+    },
+    scrollBottom: () => {
+      setScrollBottomTapId((id) => id + 1)
+      scrollToBottom()
+    },
     panel: onPanelToggle,
     anchor: handleAnchorClick,
     theme: (e) => {
       e?.stopPropagation()
+      setThemeTapId((id) => id + 1)
       const button = e?.currentTarget
       if (button) {
         onThemeToggle?.(getButtonCenter(button))
@@ -824,6 +853,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     id: string,
     def: (typeof COLLAPSED_BUTTON_DEFS)[string],
     enabled: boolean,
+    index?: number,
   ) => {
     if (!isCollapsedButtonSupported(id)) return null
 
@@ -865,6 +895,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
 
     const isAnchorBtn = id === "anchor"
     const isPanelBtn = id === "panel"
+    const isAnchorActive = isAnchorBtn && hasAnchor
     const anchorDisabled =
       (isAnchorBtn && !hasAnchor) ||
       (["scrollTop", "scrollBottom", "anchor"].includes(id) && !canNavigate)
@@ -879,7 +910,10 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       <Tooltip key={id} content={tooltipContent} placement={quickBtnTooltipPlacement}>
         <button
           id={id === "theme" ? "quick-theme-btn" : undefined}
-          className={`quick-prompt-btn gh-interactive ${isPanelOnly ? "panel-only" : ""} ${isPanelBtn ? "panel-btn" : ""} ${isActive ? "active" : ""} ${isFloatingToolbarBtn ? "tools-trigger-btn" : ""} ${isZenModeBtn ? "zen-mode-btn" : ""}`}
+          className={`quick-prompt-btn gh-interactive ${isPanelOnly ? "panel-only" : ""} ${isPanelBtn ? "panel-btn" : ""} ${isActive ? "active" : ""} ${isFloatingToolbarBtn ? "tools-trigger-btn" : ""} ${isZenModeBtn ? "zen-mode-btn" : ""} ${isAnchorActive ? "has-anchor" : ""}`}
+          style={
+            index !== undefined ? ({ "--btn-index": index } as React.CSSProperties) : undefined
+          }
           onClick={(e) => buttonActions[id]?.(e)}
           onMouseEnter={(event) => {
             if (!isPanelBtn) return
@@ -903,12 +937,35 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
                     : undefined
           }
           disabled={anchorDisabled}>
-          {/* 锚点按鈕动画目标：key 递增保证每次点击都重播 */}
           {isAnchorBtn ? (
             <span
               key={anchorTapId}
               className={`anchor-tap-wrapper${anchorTapId > 0 ? " is-tapping" : ""}`}
               onAnimationEnd={() => setAnchorTapId(0)}
+              style={{ display: "flex" }}>
+              {icon}
+            </span>
+          ) : id === "scrollTop" ? (
+            <span
+              key={scrollTopTapId}
+              className={`scroll-top-tap${scrollTopTapId > 0 ? " is-tapping" : ""}`}
+              onAnimationEnd={() => setScrollTopTapId(0)}
+              style={{ display: "flex" }}>
+              {icon}
+            </span>
+          ) : id === "scrollBottom" ? (
+            <span
+              key={scrollBottomTapId}
+              className={`scroll-bottom-tap${scrollBottomTapId > 0 ? " is-tapping" : ""}`}
+              onAnimationEnd={() => setScrollBottomTapId(0)}
+              style={{ display: "flex" }}>
+              {icon}
+            </span>
+          ) : id === "theme" ? (
+            <span
+              key={themeTapId}
+              className={`theme-tap${themeTapId > 0 ? " is-tapping" : ""}`}
+              onAnimationEnd={() => setThemeTapId(0)}
               style={{ display: "flex" }}>
               {icon}
             </span>
@@ -924,7 +981,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   }
 
   // 渲染手动锚点组
-  const renderManualAnchorGroup = (enabled: boolean) => {
+  const renderManualAnchorGroup = (enabled: boolean, index?: number) => {
     if (!enabled) return null
 
     const anchorDef = COLLAPSED_BUTTON_DEFS.manualAnchor
@@ -937,7 +994,10 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
           <button
             className="quick-prompt-btn manual-anchor-btn set-btn gh-interactive"
             onClick={setAnchorManually}
-            disabled={!canNavigate}>
+            disabled={!canNavigate}
+            style={
+              index !== undefined ? ({ "--btn-index": index } as React.CSSProperties) : undefined
+            }>
             {AnchorIcon ? <AnchorIcon size={18} /> : "📍"}
           </button>
         </Tooltip>
@@ -946,17 +1006,23 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   }
 
   // 渲染分隔线
-  const renderDivider = (isPanelOnly: boolean, key: string) => {
+  const renderDivider = (isPanelOnly: boolean, key: string, index?: number) => {
     // panel-only 分隔线：面板展开时隐藏
     if (isPanelOnly && isPanelExpanded) return null
-    return <div key={key} className={`divider ${isPanelOnly ? "panel-only" : ""}`} />
+    return (
+      <div
+        key={key}
+        className={`divider ${isPanelOnly ? "panel-only" : ""}`}
+        style={index !== undefined ? ({ "--btn-index": index } as React.CSSProperties) : undefined}
+      />
+    )
   }
 
   // 构建按钮列表（包含智能分隔线逻辑）
   const renderButtonGroup = () => {
     if (isLiquidCollapsed) {
       // 液态收缩态只显示固定品牌 Logo，避免受到按钮排序影响。
-      return [renderButton("panel", COLLAPSED_BUTTON_DEFS.panel, true)]
+      return [renderButton("panel", COLLAPSED_BUTTON_DEFS.panel, true, 0)]
     }
 
     const elements: React.ReactNode[] = []
@@ -988,6 +1054,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       .filter((item): item is NonNullable<typeof item> => item !== null)
 
     let index = 0
+    let renderIndex = 0
     while (index < renderable.length) {
       const { group } = renderable[index]
       let nextIndex = index
@@ -995,16 +1062,16 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       while (nextIndex < renderable.length && renderable[nextIndex].group === group) {
         const item = renderable[nextIndex]
         if (item.id === "manualAnchor") {
-          elements.push(renderManualAnchorGroup(item.enabled))
+          elements.push(renderManualAnchorGroup(item.enabled, renderIndex++))
         } else {
-          elements.push(renderButton(item.id, item.def, item.enabled))
+          elements.push(renderButton(item.id, item.def, item.enabled, renderIndex++))
         }
         nextIndex++
       }
 
       const runLength = nextIndex - index
       if (runLength >= 2 && nextIndex < renderable.length) {
-        elements.push(renderDivider(false, `divider-group-${index}`))
+        elements.push(renderDivider(false, `divider-group-${index}`, renderIndex++))
       }
 
       index = nextIndex
@@ -1291,6 +1358,16 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     suppressClickRef.current = false
   }
 
+  const handleContainerMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!groupRef.current || isLiquidCollapsed) return
+    const rect = groupRef.current.getBoundingClientRect()
+    if (rect.height > 0) {
+      const yRatio = (e.clientY - rect.top) / rect.height
+      const clamped = Math.max(0, Math.min(100, Math.round(yRatio * 100)))
+      groupRef.current.style.setProperty("--qb-spotlight-y", `${clamped}%`)
+    }
+  }
+
   return (
     <>
       {/* 加载历史遮罩 */}
@@ -1304,6 +1381,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
         onPointerLeave={handlePointerLeave}
+        onMouseMove={handleContainerMouseMove}
         onClickCapture={handleClickCapture}
         style={{
           position: "fixed",

@@ -873,6 +873,11 @@ export const zhCN = {
   outlineSourceDocument: "文档",
   outlineSourceSwitchLabel: "大纲来源",
   outlineLevelHint: "级标题",
+  outlineLevelTooltip: "展开至 H{level} 标题 · {count} 项",
+  outlineLevelQueryTooltip: "仅用户提问 · {count} 项",
+  magicCodexTitle: "快捷技巧与操作",
+  magicCodexCollapse: "收起技巧",
+  magicCodexExpand: "展开技巧",
   // 刷新按钮提示
   refreshPrompts: "刷新提示词",
   refreshOutline: "刷新大纲",
@@ -1791,7 +1796,6 @@ export const zhCN = {
   extensionUpdateNoticeWithVersion:
     "Ophel Atlas 已更新至 v{version}。刷新当前页面后即可继续使用最新版本。",
   extensionUpdateNoticeAction: "刷新页面",
-  releaseNotesKicker: "版本更新",
   releaseNotesTitle: "Ophel Atlas v{version} 更新",
   releaseNotesPublishedOn: "发布于 {date}",
   releaseNotesOpen: "查看更新日志",

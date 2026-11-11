@@ -29,43 +29,52 @@
 
 .gh-release-notes-header {
   position: relative;
-  padding: 22px 24px 18px;
+  padding: 18px 24px 14px;
   border-bottom: 1px solid var(--gh-border, #e5e7eb);
   background: linear-gradient(135deg, rgba(66, 133, 244, 0.08), rgba(52, 168, 83, 0.06)),
     var(--gh-bg, #ffffff);
 }
 
-.gh-release-notes-kicker {
+.gh-release-notes-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.gh-release-notes-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.gh-release-notes-title-icon {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  margin-bottom: 10px;
-  color: var(--gh-primary, #4285f4);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .gh-release-notes-title {
   margin: 0;
-  padding-right: 36px;
   color: var(--gh-text, #111827);
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 750;
   line-height: 1.25;
-  letter-spacing: 0;
+  letter-spacing: -0.01em;
 }
 
 .gh-release-notes-meta {
-  margin-top: 8px;
+  margin-top: 5px;
   color: var(--gh-text-secondary, #6b7280);
-  font-size: 13px;
+  font-size: 12.5px;
+  line-height: 1.4;
 }
 
 .gh-release-notes-close {
-  position: absolute;
-  top: 14px;
-  right: 14px;
+  flex-shrink: 0;
+  margin-left: auto;
   width: 32px;
   height: 32px;
   display: inline-flex;
@@ -535,7 +544,11 @@
   }
 
   .gh-release-notes-header {
-    padding: 18px 18px 16px;
+    padding: 14px 16px 12px;
+  }
+
+  .gh-release-notes-title {
+    font-size: 18px;
   }
 
   .gh-release-notes-body {

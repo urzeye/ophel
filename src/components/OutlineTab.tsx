@@ -275,6 +275,11 @@ const OutlineNodeView: React.FC<{
   setItemRef: (index: number, el: HTMLElement | null) => void
   searchQuery: string
   extractUserQueryText?: (element: Element) => string // Used for full text extraction
+  tabIndex: number
+  positionInSet: number
+  setSize: number
+  onFocusNode: (index: number) => void
+  onKeyboardNavigate: (index: number, key: "ArrowUp" | "ArrowDown" | "Home" | "End") => void
 }> = ({
   node,
   onToggle,
@@ -283,6 +288,11 @@ const OutlineNodeView: React.FC<{
   setItemRef,
   searchQuery,
   extractUserQueryText,
+  tabIndex,
+  positionInSet,
+  setSize,
+  onFocusNode,
+  onKeyboardNavigate,
 }) => {
   const hasChildren = node.children && node.children.length > 0
   // 只要有子节点就显示箭头，允许手动展开查看不匹配的子节点
@@ -413,13 +423,42 @@ const OutlineNodeView: React.FC<{
       delay={500}>
       <div
         className={itemClassName}
+        role="treeitem"
+        tabIndex={tabIndex}
+        aria-level={Math.max(1, node.relativeLevel + 1)}
+        aria-expanded={hasChildren ? isExpanded : undefined}
+        aria-posinset={positionInSet}
+        aria-setsize={setSize}
         data-index={node.index}
         data-level={node.relativeLevel}
         ref={(el) => setItemRef(node.index, el)}
-        onClick={() => onClick(node)}>
+        onClick={() => onClick(node)}
+        onFocus={() => onFocusNode(node.index)}
+        onKeyDown={(e) => {
+          if (e.target !== e.currentTarget) return
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault()
+            onClick(node)
+          } else if (e.key === "ArrowRight" && hasChildren && !isExpanded) {
+            e.preventDefault()
+            onToggle(node)
+          } else if (e.key === "ArrowLeft" && hasChildren && isExpanded) {
+            e.preventDefault()
+            onToggle(node)
+          } else if (
+            e.key === "ArrowDown" ||
+            e.key === "ArrowUp" ||
+            e.key === "Home" ||
+            e.key === "End"
+          ) {
+            e.preventDefault()
+            onKeyboardNavigate(node.index, e.key)
+          }
+        }}>
         {/* 折叠箭头 - 使用 hasChildren 显示箭头，允许手动展开 */}
         <span
           className={`outline-item-toggle ${hasChildren ? (isExpanded ? "expanded" : "") : "invisible"}`}
+          aria-hidden="true"
           onClick={(e) => {
             if (hasChildren) {
               e.stopPropagation()
@@ -445,8 +484,11 @@ const OutlineNodeView: React.FC<{
         {/* Bookmark Button (Hover or Bookmarked) */}
         <span className={`outline-item-bookmark-wrapper ${node.isBookmarked ? "active" : ""}`}>
           <Tooltip content={node.isBookmarked ? t("removeBookmark") : t("addBookmark")}>
-            <span
+            <button
+              type="button"
               className={`outline-item-bookmark-btn ${node.isBookmarked ? "active" : ""}`}
+              aria-label={node.isBookmarked ? t("removeBookmark") : t("addBookmark")}
+              aria-pressed={Boolean(node.isBookmarked)}
               onClick={(e) => onToggleBookmark(e, node)}
               onMouseEnter={() => setIsHoveringAction(true)}
               onMouseLeave={() => setIsHoveringAction(false)}>
@@ -455,14 +497,16 @@ const OutlineNodeView: React.FC<{
                 filled={node.isBookmarked}
                 color={node.isBookmarked ? "#f59e0b" : "currentColor"}
               />
-            </span>
+            </button>
           </Tooltip>
         </span>
 
         {/* 复制按钮 (所有节点显示) */}
         <Tooltip content={t("copy")}>
-          <span
+          <button
+            type="button"
             className="outline-item-copy-btn"
+            aria-label={t("copy")}
             onClick={handleCopy}
             onMouseEnter={() => setIsHoveringAction(true)}
             onMouseLeave={() => setIsHoveringAction(false)}>
@@ -473,7 +517,7 @@ const OutlineNodeView: React.FC<{
               // 复制图标
               <CopyIcon size={14} />
             )}
-          </span>
+          </button>
         </Tooltip>
       </div>
     </Tooltip>
@@ -491,6 +535,9 @@ const VirtualizedOutlineTree: React.FC<{
   setItemRef: (index: number, el: HTMLElement | null) => void
   searchQuery: string
   extractUserQueryText?: (element: Element) => string
+  focusedNodeIndex: number | null
+  onFocusNode: (index: number) => void
+  onKeyboardNavigate: (index: number, key: "ArrowUp" | "ArrowDown" | "Home" | "End") => void
 }> = ({
   items,
   metrics,
@@ -502,11 +549,17 @@ const VirtualizedOutlineTree: React.FC<{
   setItemRef,
   searchQuery,
   extractUserQueryText,
+  focusedNodeIndex,
+  onFocusNode,
+  onKeyboardNavigate,
 }) => {
   const virtualListRef = useRef<HTMLDivElement>(null)
   const warnedHeightDriftKeysRef = useRef<Set<string>>(new Set())
   const range = getOutlineVirtualRange(metrics, scrollTop, viewportHeight)
   const renderedItems = items.slice(range.start, range.end)
+  // Roving tabindex：仅当前聚焦项（或聚焦项被裁剪时的首个渲染项）进入 Tab 序列，
+  // 避免长对话中每行都成为 Tab 停靠点
+  const renderedHasFocusTarget = renderedItems.some((item) => item.node.index === focusedNodeIndex)
   const virtualListStyle = {
     "--gh-outline-item-height": `${OUTLINE_ITEM_HEIGHT}px`,
     height: metrics.totalHeight,
@@ -568,11 +621,15 @@ const VirtualizedOutlineTree: React.FC<{
   return (
     <div
       ref={virtualListRef}
+      role="tree"
+      aria-label={t("tabOutline")}
       className="outline-list outline-list-virtual"
       style={virtualListStyle}>
       {renderedItems.map((item, offset) => {
         const rowIndex = range.start + offset
         const spacing = getOutlineVirtualRowSpacing(item, rowIndex)
+        const isRovingTarget =
+          item.node.index === focusedNodeIndex || (!renderedHasFocusTarget && offset === 0)
 
         return (
           <div
@@ -599,6 +656,11 @@ const VirtualizedOutlineTree: React.FC<{
               setItemRef={setItemRef}
               searchQuery={searchQuery}
               extractUserQueryText={extractUserQueryText}
+              tabIndex={isRovingTarget ? 0 : -1}
+              positionInSet={rowIndex + 1}
+              setSize={items.length}
+              onFocusNode={onFocusNode}
+              onKeyboardNavigate={onKeyboardNavigate}
             />
           </div>
         )
@@ -1092,6 +1154,52 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
     [tree, visibleMap],
   )
   const virtualMetrics = useMemo(() => buildOutlineVirtualMetrics(visibleItems), [visibleItems])
+
+  // ===== 大纲树键盘导航（roving tabindex）=====
+  // 树内仅聚焦项进入 Tab 序列；上下/Home/End 在可见项间移动焦点
+  const [focusedNodeIndex, setFocusedNodeIndex] = useState<number | null>(null)
+  const pendingFocusNodeRef = useRef<number | null>(null)
+
+  const focusOutlineItemAt = useCallback(
+    (position: number) => {
+      const item = visibleItems[position]
+      if (!item) return
+      const el = itemRefMap.current.get(item.node.index)
+      if (el) {
+        el.focus()
+        return
+      }
+      // 目标行被虚拟化裁剪：先滚动到对应行，渲染完成后由下方 effect 补焦点
+      pendingFocusNodeRef.current = item.node.index
+      listRef.current?.scrollTo({ top: virtualMetrics.rowOffsets[position] })
+    },
+    [visibleItems, virtualMetrics],
+  )
+
+  const handleTreeKeyboardNavigate = useCallback(
+    (nodeIndex: number, key: "ArrowUp" | "ArrowDown" | "Home" | "End") => {
+      const position = visibleItems.findIndex((item) => item.node.index === nodeIndex)
+      if (position < 0) return
+      let target = position
+      if (key === "ArrowDown") target = Math.min(visibleItems.length - 1, position + 1)
+      else if (key === "ArrowUp") target = Math.max(0, position - 1)
+      else if (key === "Home") target = 0
+      else if (key === "End") target = visibleItems.length - 1
+      if (target === position) return
+      focusOutlineItemAt(target)
+    },
+    [visibleItems, focusOutlineItemAt],
+  )
+
+  useEffect(() => {
+    const pending = pendingFocusNodeRef.current
+    if (pending == null) return
+    const el = itemRefMap.current.get(pending)
+    if (!el) return
+    pendingFocusNodeRef.current = null
+    el.focus()
+  }, [outlineScrollTop, visibleItems])
+
   const outlineSourceOptions = useMemo(
     () => outlineSources.filter((source) => source.available),
     [outlineSources],
@@ -1831,6 +1939,8 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
   const [levelDragPreview, setLevelDragPreview] = useState<number | null>(null)
   const levelDotsRef = useRef<HTMLDivElement>(null)
   const sliderLevel = levelDragPreview ?? expandLevel
+  const isOutlineEmpty = tree.length === 0 && !searchQuery
+  const isSliderDisabled = bookmarkMode || isOutlineEmpty
 
   const getLevelFromClientX = useCallback((clientX: number): number => {
     const el = levelDotsRef.current
@@ -1848,12 +1958,12 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
     (e: React.PointerEvent<HTMLDivElement>) => {
       // 只响应主键：右键/中键不应触发层级调整，也避免吞掉右键菜单
       if (e.button !== 0) return
-      if (bookmarkMode) return
+      if (isSliderDisabled) return
       e.preventDefault()
       e.currentTarget.setPointerCapture(e.pointerId)
       setLevelDragPreview(getLevelFromClientX(e.clientX))
     },
-    [bookmarkMode, getLevelFromClientX],
+    [isSliderDisabled, getLevelFromClientX],
   )
 
   const handleLevelPointerMove = useCallback(
@@ -1874,6 +1984,26 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
       setLevelDragPreview(null)
     },
     [getLevelFromClientX, handleLevelClick],
+  )
+
+  const handleLevelKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      if (isSliderDisabled) return
+      if (e.key === "ArrowLeft" || e.key === "ArrowDown") {
+        e.preventDefault()
+        handleLevelClick(Math.max(0, expandLevel - 1))
+      } else if (e.key === "ArrowRight" || e.key === "ArrowUp") {
+        e.preventDefault()
+        handleLevelClick(Math.min(6, expandLevel + 1))
+      } else if (e.key === "Home") {
+        e.preventDefault()
+        handleLevelClick(0)
+      } else if (e.key === "End") {
+        e.preventDefault()
+        handleLevelClick(6)
+      }
+    },
+    [isSliderDisabled, expandLevel, handleLevelClick],
   )
 
   // 监听快捷键触发的定位事件
@@ -1944,20 +2074,24 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
               content={
                 bookmarkMode
                   ? t("bookmarkModeDisabled")
-                  : isAllExpanded
-                    ? t("outlineCollapseAll")
-                    : t("outlineExpandAll")
-              }>
-              <button
-                type="button"
-                onClick={bookmarkMode ? undefined : handleExpandAll}
-                disabled={bookmarkMode}
-                aria-label={
-                  bookmarkMode
-                    ? t("bookmarkModeDisabled")
+                  : isOutlineEmpty
+                    ? t("outlineEmpty")
                     : isAllExpanded
                       ? t("outlineCollapseAll")
                       : t("outlineExpandAll")
+              }>
+              <button
+                type="button"
+                onClick={isSliderDisabled ? undefined : handleExpandAll}
+                disabled={isSliderDisabled}
+                aria-label={
+                  bookmarkMode
+                    ? t("bookmarkModeDisabled")
+                    : isOutlineEmpty
+                      ? t("outlineEmpty")
+                      : isAllExpanded
+                        ? t("outlineCollapseAll")
+                        : t("outlineExpandAll")
                 }
                 className="outline-toolbar-btn outline-narrow-optional">
                 {isAllExpanded ? <CollapseAllIcon size={18} /> : <ExpandAllIcon size={18} />}
@@ -1965,10 +2099,11 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
             </Tooltip>
 
             {/* Locate Current */}
-            <Tooltip content={t("outlineLocateCurrent")}>
+            <Tooltip content={isOutlineEmpty ? t("outlineEmpty") : t("outlineLocateCurrent")}>
               <button
                 type="button"
-                onClick={handleLocateCurrent}
+                onClick={isOutlineEmpty ? undefined : handleLocateCurrent}
+                disabled={isOutlineEmpty}
                 aria-label={t("outlineLocateCurrent")}
                 className="outline-toolbar-btn">
                 <LocateIcon size={16} />
@@ -1977,14 +2112,21 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
 
             {/* Dynamic Scroll (Top/Bottom) */}
             <Tooltip
-              content={scrollState === "bottom" ? t("outlineScrollBottom") : t("outlineScrollTop")}>
+              content={
+                isOutlineEmpty
+                  ? t("outlineEmpty")
+                  : scrollState === "bottom"
+                    ? t("outlineScrollBottom")
+                    : t("outlineScrollTop")
+              }>
               <button
                 type="button"
-                onClick={handleDynamicScroll}
+                onClick={isOutlineEmpty ? undefined : handleDynamicScroll}
+                disabled={isOutlineEmpty}
                 aria-label={
                   scrollState === "bottom" ? t("outlineScrollBottom") : t("outlineScrollTop")
                 }
-                className="outline-toolbar-btn outline-narrow-optional">
+                className="outline-toolbar-btn outline-narrow-optional outline-compact-optional">
                 {scrollState === "bottom" ? (
                   <ScrollBottomIcon size={16} />
                 ) : (
@@ -1995,19 +2137,22 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
 
             {/* Export Conversation: 复用全局导出入口，按设置弹出选项弹窗或一键直出 */}
             {allowConversationExport && (
-              <Tooltip content={t("exportConversationTitle")}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    // 只有点击大纲工具栏的导出按钮才视为发现了该入口，停用流光引导
-                    markExportDiscoveredQuiet()
-                    window.dispatchEvent(new CustomEvent("ophel:openExportDialog"))
-                  }}
-                  aria-label={t("exportConversationTitle")}
-                  className={`outline-toolbar-btn export-accent ${exportDiscovered ? "" : "export-shimmer"}`}>
-                  <ExportIcon size={16} />
-                </button>
-              </Tooltip>
+              <>
+                <span className="outline-toolbar-divider" aria-hidden="true" />
+                <Tooltip content={t("exportConversationTitle")}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      // 只有点击大纲工具栏的导出按钮才视为发现了该入口，停用流光引导
+                      markExportDiscoveredQuiet()
+                      window.dispatchEvent(new CustomEvent("ophel:openExportDialog"))
+                    }}
+                    aria-label={t("exportConversationTitle")}
+                    className={`outline-toolbar-btn export-accent ${exportDiscovered ? "" : "export-shimmer"}`}>
+                    <ExportIcon size={16} />
+                  </button>
+                </Tooltip>
+              </>
             )}
           </div>
 
@@ -2040,57 +2185,35 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
         </div>
 
         {/* Row 2: Level Slider */}
-        <div className="outline-level-slider-container" style={{ padding: "0 4px" }}>
+        <div className="outline-level-slider-container">
           {/* Level Dots */}
           <div
             ref={levelDotsRef}
-            className="outline-level-dots"
+            role="slider"
+            tabIndex={isSliderDisabled ? -1 : 0}
+            aria-label={t("outlineExpandAll")}
+            aria-valuemin={0}
+            aria-valuemax={6}
+            aria-valuenow={sliderLevel}
+            aria-disabled={isSliderDisabled || undefined}
+            className={`outline-level-dots ${isSliderDisabled ? "disabled" : ""}`}
+            onKeyDown={handleLevelKeyDown}
             onPointerDown={handleLevelPointerDown}
             onPointerMove={handleLevelPointerMove}
             onPointerUp={(e) => {
               // 拖拽中副键抬起不提交，等主键抬起再应用层级
               if (e.button === 0) finishLevelDrag(e, true)
             }}
-            onPointerCancel={(e) => finishLevelDrag(e, false)}
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              position: "relative",
-              padding: "6px 0",
-              alignItems: "center",
-              touchAction: "none",
-            }}>
+            onPointerCancel={(e) => finishLevelDrag(e, false)}>
             {/* Background Line */}
-            <div
-              className="outline-level-line-bg"
-              style={{
-                position: "absolute",
-                top: "50%",
-                left: "4px",
-                right: "4px",
-                height: "4px",
-                background: "var(--gh-border, #e5e7eb)",
-                zIndex: 0,
-                transform: "translateY(-50%)",
-                borderRadius: "2px",
-              }}></div>
+            <div className="outline-level-line-bg" />
             {/* Progress Line */}
             <div
-              className="outline-level-progress"
+              className={`outline-level-progress ${isSliderDisabled ? "disabled" : ""}`}
               style={{
-                position: "absolute",
-                top: "50%",
-                left: "4px",
-                height: "4px",
-                background: bookmarkMode
-                  ? "var(--gh-text-disabled, #9ca3af)"
-                  : "var(--gh-primary, #3b82f6)",
-                zIndex: 0,
-                transform: "translateY(-50%)",
-                borderRadius: "2px",
                 width: `calc((${sliderLevel} / 6) * (100% - 8px))`,
-                transition: "width 0.2s ease",
-              }}></div>
+              }}
+            />
 
             {/* Dots */}
             {[0, 1, 2, 3, 4, 5, 6].map((lvl) => {
@@ -2098,66 +2221,78 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
               let title = ""
               if (bookmarkMode) {
                 title = t("bookmarkModeDisabled")
+              } else if (isOutlineEmpty) {
+                title = t("outlineEmpty")
               } else if (lvl === 0) {
+                const userQueryCount = tree.filter((node) => node.isUserQuery).length
                 title =
-                  showUserQueries && tree.some((node) => node.isUserQuery)
-                    ? t("outlineUserQueryRoleLabel")
+                  showUserQueries && userQueryCount > 0
+                    ? t("outlineLevelQueryTooltip", { count: userQueryCount })
                     : t("outlineCollapseAll")
               } else {
-                title = `H${lvl}: ${levelCounts[lvl] || 0}`
+                title = t("outlineLevelTooltip", {
+                  level: lvl,
+                  count: levelCounts[lvl] || 0,
+                })
               }
 
               const isActive = lvl <= sliderLevel
               return (
                 <Tooltip key={lvl} content={title}>
                   <div
-                    className={`outline-level-dot ${isActive ? "active" : ""} ${bookmarkMode ? "disabled" : ""}`}
+                    className={`outline-level-dot ${isActive ? "active" : ""} ${isSliderDisabled ? "disabled" : ""}`}
                     data-level={lvl}
-                    style={{
-                      width: "14px",
-                      height: "14px",
-                      borderRadius: "50%",
-                      backgroundColor: isActive
-                        ? bookmarkMode
-                          ? "var(--gh-text-disabled, #9ca3af)"
-                          : "var(--gh-primary, #3b82f6)"
-                        : "var(--gh-slider-dot-bg, #d1d5db)",
-                      border: isActive ? "2px solid var(--gh-bg, #fff)" : "none",
-                      zIndex: 1,
-                      cursor: bookmarkMode ? "not-allowed" : "pointer",
-                      position: "relative",
-                      transition: "all 0.2s ease",
-                      boxSizing: "border-box",
-                      boxShadow: isActive
-                        ? bookmarkMode
-                          ? "0 0 0 1px var(--gh-text-disabled, #9ca3af)"
-                          : "0 0 0 1px var(--gh-primary, #3b82f6)"
-                        : "none",
-                      opacity: bookmarkMode ? 0.5 : 1,
-                    }}
                   />
                 </Tooltip>
               )
             })}
           </div>
+          <Tooltip
+            content={
+              bookmarkMode
+                ? t("bookmarkModeDisabled")
+                : isOutlineEmpty
+                  ? t("outlineEmpty")
+                  : sliderLevel === 0
+                    ? showUserQueries && tree.some((node) => node.isUserQuery)
+                      ? t("outlineLevelQueryTooltip", {
+                          count: tree.filter((node) => node.isUserQuery).length,
+                        })
+                      : t("outlineCollapseAll")
+                    : t("outlineLevelTooltip", {
+                        level: sliderLevel,
+                        count: levelCounts[sliderLevel] || 0,
+                      })
+            }>
+            <span
+              className={`outline-level-badge ${isSliderDisabled ? "disabled" : ""}`}
+              aria-hidden="true">
+              {sliderLevel === 0 ? (
+                showUserQueries && tree.some((node) => node.isUserQuery) ? (
+                  <svg
+                    viewBox="0 0 1024 1024"
+                    width={12}
+                    height={12}
+                    fill="currentColor"
+                    className="outline-level-badge-icon"
+                    aria-hidden="true">
+                    <path d="M592.6912 941.056h-430.08c-36.2496 0-65.536-30.3104-65.536-67.7888V150.7328c0-37.4784 29.4912-67.584 65.536-67.584h700.6208c36.2496 0 65.536 30.3104 65.536 67.584v167.5264c0 19.0464 14.9504 34.4064 33.1776 34.4064 18.6368-0.4096 33.5872-15.5648 33.1776-34.2016v-167.936C995.328 75.5712 936.1408 14.336 863.232 14.336H162.6112C89.7024 14.336 30.3104 75.5712 30.3104 150.7328v722.5344c0 75.1616 59.392 136.3968 132.3008 136.3968h430.08c9.0112-0.2048 17.408-3.8912 23.7568-10.24 6.144-6.3488 9.6256-15.1552 9.4208-23.9616 0-19.0464-14.9504-34.4064-33.1776-34.4064z m0 0" />
+                    <path d="M804.2496 258.4576c0-20.8896-16.384-37.6832-36.6592-37.6832h-522.24c-20.48 0.4096-36.864 17.2032-36.6592 37.6832 0 20.8896 16.384 37.6832 36.6592 37.6832h522.24c20.6848-0.2048 37.0688-17.2032 36.6592-37.6832zM245.5552 461.824c-9.8304 0.2048-19.2512 4.3008-26.2144 11.264-6.7584 7.168-10.6496 16.5888-10.4448 26.4192 0 20.8896 16.384 37.6832 36.6592 37.6832h282.4192c20.48-0.4096 36.864-17.2032 36.6592-37.6832 0-20.8896-16.384-37.6832-36.6592-37.6832H245.5552zM763.2896 963.1744c0-18.0224 9.6256-34.816 25.3952-43.8272 15.5648-9.0112 35.0208-9.0112 50.5856 0 15.5648 9.0112 25.3952 25.8048 25.3952 43.8272 0 28.0576-22.7328 46.4896-50.5856 46.4896-28.2624 0-50.7904-18.6368-50.7904-46.4896zM813.8752 878.1824c-18.6368 0-33.792-15.1552-33.792-33.792v-57.1392c0-55.296 42.1888-97.4848 79.4624-134.7584 27.2384-27.2384 55.5008-55.5008 55.5008-78.0288 0-56.32-45.4656-101.9904-101.376-101.9904-56.7296 0-101.1712 43.8272-101.1712 99.7376-0.6144 18.2272-15.5648 32.768-33.792 32.768s-33.1776-14.5408-33.792-32.768c0-92.16 75.776-167.3216 168.7552-167.3216 92.9792 0 168.7552 75.9808 168.7552 169.5744 0 50.5856-38.2976 88.8832-75.3664 125.7472-29.4912 29.2864-59.8016 59.5968-59.8016 86.8352v57.1392c0 9.0112-3.4816 17.6128-9.8304 23.9616-5.9392 6.3488-14.5408 10.0352-23.552 10.0352zM245.5552 705.3312c-9.8304 0.2048-19.2512 4.3008-26.2144 11.264-6.7584 7.168-10.6496 16.5888-10.4448 26.4192 0 20.8896 16.384 37.6832 36.6592 37.6832h282.4192c20.48-0.4096 36.864-17.2032 36.6592-37.6832 0-20.8896-16.384-37.6832-36.6592-37.6832H245.5552z" />
+                  </svg>
+                ) : (
+                  "H0"
+                )
+              ) : (
+                `H${sliderLevel}`
+              )}
+            </span>
+          </Tooltip>
         </div>
       </div>
 
       {/* 搜索结果条 (Sticky) */}
       {searchQuery && (
-        <div
-          className="outline-result-bar"
-          style={{
-            textAlign: "center",
-            padding: "6px 8px", //稍微增加横向padding
-            margin: "0 8px 0 8px", // 去除底部外边距，由下方容器 padding 控制
-            color: "var(--gh-border-active)",
-            fontSize: "13px",
-            background: matchCount > 0 ? "var(--gh-folder-bg-default)" : "transparent",
-            borderRadius: "4px",
-            border: matchCount === 0 ? "1px dashed var(--gh-border, #e5e7eb)" : "none",
-            flexShrink: 0, // 防止被压缩
-          }}>
+        <div className={`outline-result-bar ${matchCount === 0 ? "is-empty" : ""}`}>
           {matchCount} {t("outlineSearchResult")}
         </div>
       )}
@@ -2227,27 +2362,19 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
           if (bookmarkMode && !hasVisibleBookmarks && !searchQuery) {
             return (
               <div className="outline-empty-state">
-                <div
-                  className="outline-empty-state-icon"
-                  style={{ background: "rgba(245, 158, 11, 0.1)", color: "#f59e0b" }}
-                  aria-hidden="true">
-                  <StarIcon size={20} filled={true} color="#f59e0b" />
+                <div className="outline-empty-state-icon is-bookmark" aria-hidden="true">
+                  <StarIcon size={20} filled={true} color="currentColor" />
                 </div>
                 <div className="outline-empty-state-title">{t("outlineNoBookmarks")}</div>
                 <div className="outline-empty-state-desc">{t("outlineAddBookmarkHint")}</div>
 
-                <div
-                  style={{
-                    marginTop: "32px",
-                    width: "100%",
-                    display: "flex",
-                    justifyContent: "center",
-                  }}>
+                <div className="outline-empty-state-codex">
                   <MagicCodex
                     isOpen={true}
                     onClose={() => {}}
                     tips={structuredTips}
                     isStatic={true}
+                    collapsible={true}
                   />
                 </div>
               </div>
@@ -2280,18 +2407,13 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
                   </button>
                 )}
 
-                <div
-                  style={{
-                    marginTop: "32px",
-                    width: "100%",
-                    display: "flex",
-                    justifyContent: "center",
-                  }}>
+                <div className="outline-empty-state-codex">
                   <MagicCodex
                     isOpen={true}
                     onClose={() => {}}
                     tips={structuredTips}
                     isStatic={true}
+                    collapsible={true}
                   />
                 </div>
               </div>
@@ -2310,6 +2432,9 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
               setItemRef={setItemRef}
               searchQuery={searchQuery}
               extractUserQueryText={extractUserQueryText}
+              focusedNodeIndex={focusedNodeIndex}
+              onFocusNode={setFocusedNodeIndex}
+              onKeyboardNavigate={handleTreeKeyboardNavigate}
             />
           )
         })()}

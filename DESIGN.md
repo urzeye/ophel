@@ -1,5 +1,5 @@
 ---
-# 官方 DESIGN.md frontmatter（impeccable document 扫描生成，2026-10-22；2026-11-11 刷新核对）
+# 官方 DESIGN.md frontmatter（impeccable document 增量合并刷新，2026-11-11）
 # 取值 = 默认浅色主题（src/styles/theme-variables.css :root 基准）；24 套预置主题在运行时覆盖这些变量
 name: Ophel Atlas
 description: AI 对话结构化与导航工具——实时大纲、对话文件夹与 Prompt 词库，让对话成为可组织、可复用的工作流
@@ -73,6 +73,16 @@ components:
     rounded: "{rounded.md}"
     padding: "8px 16px"
     typography: "{typography.button}"
+  button-quick:
+    backgroundColor: "transparent"
+    textColor: "{colors.text-secondary}"
+    rounded: "{rounded.pill}"
+    size: "38px"
+  button-quick-panel:
+    backgroundColor: "{colors.primary}"
+    textColor: "{colors.primary}"
+    rounded: "{rounded.pill}"
+    size: "38px"
   input-text:
     backgroundColor: "{colors.input-bg}"
     textColor: "{colors.text}"
@@ -212,6 +222,17 @@ Ophel Atlas 项目级设计规范。此文档服务于现有浏览器扩展与�
 - Footer 动作按钮属于工具动作，不要做成营销 CTA。
 - 吸附、展开、悬浮三种位置状态要共享同一套视觉骨架。
 
+### 快捷按钮组 `QuickButtons` 与悬浮控制岛
+
+- 宽度恒定为 `52px`，在展开与折叠态之间保持两端水平宽度一致，消除展开时的横向位移抖动。
+- 内部空间律动：
+  - 顶部拖拽手柄：`24px × 4px` 居中圆角条，悬停时展宽至 `28px`，长按充能时至 `32px`，视觉化长按进度。
+  - 面板主按钮：位于顶端独立入口位，与下方工具按钮组保持 `6px` 到 `8px` 的层次间距。
+  - 工具功能区与导航区：组内按钮间距统一为 `4px`。
+  - 渐隐微光分割线：`24px` 宽度的向两侧渐隐 `linear-gradient` 线，代替生硬实线。
+- 液态折叠（`liquid-collapsed`）：失焦感应后平滑收缩为 `52px × 52px` 的单图标品牌水滴，内部 Logo 接管容器背景，避免双层同心圆。
+- 工具箱浮层（`quick-menu-popover`）：朝向屏幕中心展开，`16px` 大圆角毛玻璃微卡片，避免遮挡页面主内容与相邻快捷按钮。
+
 ### 设置弹窗与 Options
 
 - 侧边栏负责一级导航，内容区负责扫描和操作，不要在视觉上抢主内容。
@@ -258,6 +279,9 @@ Ophel Atlas 项目级设计规范。此文档服务于现有浏览器扩展与�
 
 - **ambient-sm**（`0 1px 3px rgba(0, 0, 0, 0.1)`）：最轻分层，分段选中项、徽章。
 - **panel**（`0 10px 40px rgba(0, 0, 0, 0.15)`）：主面板浮层，悬浮于站点页面之上。
+- **floating-pill**（`0 14px 36px -2px color-mix(..., 10%), inset 0 1px 1.5px rgba(255, 255, 255, 0.45)`）：快捷按钮组双层天光玻璃拟态，深色主题冷光倒角。
+- **levitation-drag**（`0 24px 52px -4px color-mix(..., 28%)`，伴随 `scale: 1.035`）：长按拖拽充能与浮空飞行态。
+- **popover-glass**（`0 12px 32px color-mix(..., 10%), inset 0 1px 1px rgba(255, 255, 255, 0.3)`）：悬浮工具箱多层毛玻璃浮层。
 - **overlay-lg**（`0 20px 60px rgba(0, 0, 0, 0.3)`）：模态弹窗与导出对话框。
 - **button-rest / button-hover**（`0 2px 6px` / `0 4px 12px rgba(0, 0, 0, 0.15-0.2)`）：浮动按钮静止态与 hover 抬升。
 - **brand**（`0 4px 12px rgba(66, 133, 244, 0.3)`）：品牌色元素的染色阴影。
@@ -288,6 +312,11 @@ Ophel Atlas 项目级设计规范。此文档服务于现有浏览器扩展与�
 - 危险按钮必须只在危险语义出现。
 - 所有按钮都要有 `hover`、`active`、`focus-visible`、`disabled` 状态。
 - `active` 推荐使用 `translateY(1px)` 或 `scale(0.98)` 的轻微触感反馈。
+- **快捷按钮（`quick-prompt-btn`）**：
+  - 规格：外包围尺寸统一为 `38px × 38px`（圆角 `pill`），保证图标居中与触控面积。
+  - 触感反馈：`hover` 触发 `scale(1.05)` 伴随微光底色；`active`（按压瞬间）使用 `scale(0.92)` 提供明确物理回弹感。
+  - 面板主按钮（`panel-btn`）：顶置视觉锚点，采用主题品牌色渐变底色（`--gh-header-gradient` 或 `--gh-primary`），独立于普通操作按钮。
+  - 状态指示：已标记锚点等持久状态（`.has-anchor`）配备 `5px` 品牌色微呼吸光点（`quick-btn-badge-dot`），图标同步高亮为主题强调色；展开态（`.active`）保持常驻高亮。
 
 ### 标签页与分段切换
 
@@ -327,16 +356,22 @@ Ophel Atlas 项目级设计规范。此文档服务于现有浏览器扩展与�
   - 微交互：`150ms` 到 `200ms`
   - 面切换：`200ms` 到 `300ms`
   - 主题切换：沿用 `ThemeManager` 的过渡策略
-- 默认缓动：微交互用柔和 `ease`；位移动作用 `cubic-bezier(0.2, 0.8, 0.2, 1)`。
+- 默认缓动：微交互用柔和 `ease`；位移动作用 `cubic-bezier(0.2, 0.8, 0.2, 1)`；减速入场动作使用指数减速曲线 `cubic-bezier(0.16, 1, 0.3, 1)`。
 - 新增动效不加无目的的常驻循环；常驻动画只用于状态提示（加载、未读、更新、运行中）和下方的保留动效。
 - 禁止每个图标都在 hover 时剧烈旋转或跳跃。
 - 禁止用动画掩盖布局和层级问题。
 - 必须尊重 `prefers-reduced-motion`，保留动效也不例外。
+- **快捷悬浮岛动力学微交互**：
+  - 逐级瀑布落入（`quick-btn-drop-in`）：展开时每个按钮以 `18ms` 递增延迟按序坠入，配合指数减速曲线，消除机械式僵硬感。
+  - 滚动冲势反馈：点击置顶/置底触发单次箭头冲刺并弹性回位（`quick-scroll-shoot-up` / `quick-scroll-shoot-down`），视觉化表达滚动势能。
+  - 主题切换倾角微动（`quick-theme-tilt`）：伴随模式变换触发一次小角度倾摆，表达光影翻转触感。
+  - 专注模式呼吸辉光（`zen-pulse`）：触发单次柔和呼吸发光，传达环境沉浸感。
+  - 拖拽长按充能反馈：按住手柄时长按充能浮起（`scale: 1.025`，手柄展宽至 `32px`），拖拽中升至 `scale: 1.035` 伴随扩散柔光阴影（`levitation-drag`）。
 
 **保留的动效**：产品刻意保留的品牌与反馈动效，视觉清理时不要删除或弱化，除非用户明确要求。
 
 - 主题切换的圆形扩散过渡（View Transitions，`ThemeManager`）。
-- 工具箱按钮展开时持续旋转（`tools-spin`）。
+- 工具箱按钮展开时持续旋转（`tools-spin`）：必须具备最高选择器优先级并附带 `!important`，入场动画（`quick-btn-drop-in`）必须使用 `:not(.active)` 隔离，确保展开旋转不被任何伪类或状态动画重置。
 - Logo 悬停旋转：关于页大 logo、欢迎弹窗 logo；底栏锚点图标悬停旋转。
 - 导出按钮：首次发现时的流光（用过导出后停用），悬停时下载箭头弹跳。
 - 「更多」图标的三点轮流跳动。

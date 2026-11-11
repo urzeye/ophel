@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-11T10:21:25+08:00",
+  "generatedAt": "2026-11-11T18:28:00+08:00",
   "title": "Design System: Ophel Atlas",
   "extensions": {
     "colorMeta": {
@@ -117,6 +117,21 @@
         "purpose": "主面板浮层，悬浮于站点页面之上。"
       },
       {
+        "name": "floating-pill",
+        "value": "0 14px 36px -2px color-mix(in srgb, var(--gh-shadow-color, #000) 10%, transparent), inset 0 1px 1.5px rgba(255, 255, 255, 0.45)",
+        "purpose": "快捷按钮组双层天光玻璃拟态，深色主题冷光倒角。"
+      },
+      {
+        "name": "levitation-drag",
+        "value": "0 24px 52px -4px color-mix(in srgb, var(--gh-shadow-color, #000) 28%, transparent)",
+        "purpose": "长按拖拽充能与浮空飞行态，配合 scale: 1.035。"
+      },
+      {
+        "name": "popover-glass",
+        "value": "0 12px 32px color-mix(in srgb, var(--gh-shadow-color, #000) 10%, transparent), inset 0 1px 1px rgba(255, 255, 255, 0.3)",
+        "purpose": "悬浮工具箱多层毛玻璃浮层。"
+      },
+      {
         "name": "overlay-lg",
         "value": "0 20px 60px rgba(0, 0, 0, 0.3)",
         "purpose": "模态弹窗与导出对话框。"
@@ -147,6 +162,16 @@
         "name": "ease-emphasis",
         "value": "cubic-bezier(0.2, 0.8, 0.2, 1)",
         "purpose": "位移与按钮触感反馈（translateY/scale）。"
+      },
+      {
+        "name": "ease-decel",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "指数减速曲线，用于瀑布落入（quick-btn-drop-in）与物理滑入。"
+      },
+      {
+        "name": "stagger-step",
+        "value": "18ms",
+        "purpose": "列表与快捷按钮级联入场阶差步长。"
       },
       {
         "name": "duration-micro",
@@ -235,6 +260,22 @@
       "description": "面板品牌区头部的图标按钮（gh-header-icon-btn），玻璃质感，用于高频控制。",
       "html": "<button class=\"ds-icon-btn\" aria-label=\"设置\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"3\"/><path d=\"M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z\"/></svg></button>",
       "css": ".ds-icon-btn { background: transparent; border: none; color: var(--gh-glass-text, #ffffff); width: 24px; height: 24px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0; transition: background 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1); } .ds-icon-btn:hover { background: var(--gh-glass-bg, rgba(255, 255, 255, 0.2)); } .ds-icon-btn:active { transform: scale(0.94); } .ds-icon-btn:focus-visible { outline: 2px solid color-mix(in srgb, var(--gh-glass-text, #ffffff) 60%, transparent); outline-offset: 1px; }"
+    },
+    {
+      "name": "Quick Action Button",
+      "kind": "button",
+      "refersTo": "button-quick",
+      "description": "悬浮控制岛内的圆形快捷按钮（quick-prompt-btn），38px 触控尺寸，hover 浮动 1.05，active 按压 0.92。",
+      "html": "<button class=\"ds-quick-btn\" aria-label=\"回到顶部\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><line x1=\"12\" y1=\"19\" x2=\"12\" y2=\"5\"/><polyline points=\"5 12 12 5 19 12\"/></svg></button>",
+      "css": ".ds-quick-btn { width: 38px; height: 38px; border-radius: 9999px; border: 1px solid transparent; background: transparent; color: var(--gh-text-secondary, #6b7280); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), background 0.18s ease, color 0.18s ease; } .ds-quick-btn:hover { transform: scale(1.05); background: color-mix(in srgb, var(--gh-text, #1f2937) 6%, transparent); color: var(--gh-text, #1f2937); } .ds-quick-btn:active { transform: scale(0.92); } .ds-quick-btn:focus-visible { outline: 2px solid var(--gh-primary, #4285f4); outline-offset: 2px; }"
+    },
+    {
+      "name": "Panel Logo Button",
+      "kind": "button",
+      "refersTo": "button-quick-panel",
+      "description": "快捷岛顶端主入口按钮（panel-btn），38px 圆形，承载主题渐变色背景与悬浮光晕。",
+      "html": "<button class=\"ds-quick-panel-btn\" aria-label=\"打开主面板\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><circle cx=\"12\" cy=\"12\" r=\"10\"/></svg></button>",
+      "css": ".ds-quick-panel-btn { width: 38px; height: 38px; border-radius: 9999px; border: 1px solid rgba(255, 255, 255, 0.4); background: var(--gh-header-gradient, var(--gh-primary, #4285f4)); color: #ffffff; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 12px color-mix(in srgb, var(--gh-primary, #4285f4) 35%, transparent); transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), filter 0.2s ease; } .ds-quick-panel-btn:hover { transform: scale(1.05); filter: brightness(1.08); } .ds-quick-panel-btn:active { transform: scale(0.92); } .ds-quick-panel-btn:focus-visible { outline: 2px solid var(--gh-primary, #4285f4); outline-offset: 2px; }"
     }
   ],
   "narrative": {

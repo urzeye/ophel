@@ -506,14 +506,14 @@
 
 /* ============= 面板 Header 样式 ============= */
 .gh-panel-header {
-  /* 使用 CSS 变量，支持动态主题切换 */
-  background: var(--gh-header-bg, linear-gradient(135deg, #4285f4 0%, #34a853 100%));
-  /* 标题与品牌图标（currentColor）跟随主题：浅色头部背景的预置会给深色 */
-  color: var(--gh-header-text, #ffffff);
+  /* 使用 CSS 变量，支持动态主题切换；默认采用 macOS 风格同调微染表面 */
+  background: var(--gh-header-bg, linear-gradient(135deg, #f0f5ff 0%, #eefaf3 100%));
+  color: var(--gh-header-text, var(--gh-text, #1f2937));
+  border-bottom: 1px solid color-mix(in srgb, var(--gh-border, #e5e7eb) 65%, transparent);
   /* 整个 header 区域可拖动，按住后切换为抓取手势 */
   cursor: grab;
   position: relative;
-  padding: 10px 14px;
+  padding: 9px 12px 8px 14px;
   border-radius: 12px 12px 0 0;
   display: flex;
   align-items: center;
@@ -536,7 +536,7 @@
 .gh-panel-brand-trigger {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   cursor: pointer;
   position: relative;
   border: none;
@@ -551,9 +551,9 @@
 }
 
 .gh-panel-brand-trigger:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.42);
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 38%, transparent);
   outline-offset: 4px;
-  border-radius: 10px;
+  border-radius: 8px;
 }
 
 .gh-panel-brand-mark {
@@ -576,9 +576,10 @@
 }
 
 .gh-panel-brand-title {
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 600;
-  letter-spacing: -0.02em;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
   user-select: none;
 }
 
@@ -811,8 +812,10 @@
 }
 
 /* 窄面板（宽度 < 280px，由 MainPanel 打 data-panel-narrow 标记）下
-   隐藏大纲工具栏的低频按钮（折叠全部、滚动到顶/底），优先保证搜索框可用宽度 */
-.gh-main-panel[data-panel-narrow="true"] .outline-toolbar-btn.outline-narrow-optional {
+   隐藏大纲工具栏的低频按钮（折叠全部、滚动到顶/底），优先保证搜索框可用宽度；
+   默认紧凑宽度（<= 340px，data-panel-compact）下收敛与底栏上下箭头重复的列表滚顶/底按钮 */
+.gh-main-panel[data-panel-narrow="true"] .outline-toolbar-btn.outline-narrow-optional,
+.gh-main-panel[data-panel-compact="true"] .outline-toolbar-btn.outline-compact-optional {
   display: none;
 }
 
@@ -893,10 +896,18 @@
 }
 
 /* 导出入口：图标用主色与其它工具按钮区分 + 首次引导期间的微光扫过 + hover 淡色底与箭头微动效 */
+.outline-toolbar-divider {
+  flex: 0 0 1px;
+  width: 1px;
+  height: 16px;
+  margin: 0 3px 0 2px;
+  background: var(--gh-border, #e5e7eb);
+  opacity: 0.75;
+}
+
 .outline-toolbar-btn.export-accent {
   position: relative;
   overflow: hidden;
-  margin-left: 2px;
   border: 1px solid transparent;
   background: transparent;
   color: var(--gh-primary-text, var(--gh-primary, #4285f4));
@@ -1254,27 +1265,311 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--gh-text-tertiary, #9ca3af);
+  color: var(--gh-text-tertiary, #8d94a1);
   background: color-mix(in srgb, var(--gh-border, #e5e7eb) 22%, transparent);
   margin-bottom: 8px;
 }
 
+.outline-empty-state-icon.is-bookmark {
+  color: #f59e0b;
+  background: color-mix(in srgb, #f59e0b 12%, transparent);
+}
+
 .outline-empty-state-title {
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.4;
-  font-weight: 700;
-  color: var(--gh-text-secondary, #6b7280);
+  font-weight: 600;
+  color: var(--gh-text, #374151);
 }
 
 .outline-empty-state-desc {
   max-width: min(280px, calc(100% - 20px));
   font-size: 12px;
   line-height: 1.4;
-  color: var(--gh-text-tertiary, #9ca3af);
+  color: var(--gh-text-tertiary, #8d94a1);
 }
 
 .outline-empty-state-desc-line {
   display: block;
+}
+
+.outline-empty-state-codex {
+  margin-top: 20px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+/* 快捷键键帽样式（macOS 质感，取代裸写 inline monospace） */
+.gh-shortcut-chip {
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25;
+  color: var(--gh-text, #1f2937);
+  background: color-mix(in srgb, var(--gh-bg, #ffffff) 82%, var(--gh-bg-secondary, #f3f4f6));
+  border: 1px solid color-mix(in srgb, var(--gh-border, #e5e7eb) 75%, transparent);
+  border-radius: 5px;
+  padding: 1px 6px;
+  margin: 0 2px;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: baseline;
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--gh-border, #e5e7eb) 40%, transparent);
+  user-select: none;
+}
+
+/* MagicCodex 折叠为胶囊药丸时的包裹与按钮 */
+.gh-magic-codex-collapsed-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  animation: gh-popover-enter 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.gh-magic-codex-pill {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  padding: 0 12px 0 10px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--gh-border, #e5e7eb) 70%, transparent);
+  background: color-mix(in srgb, var(--gh-bg-secondary, #f9fafb) 75%, var(--gh-bg, #ffffff));
+  color: var(--gh-text-secondary, #4b5563);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  user-select: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.15s ease;
+}
+
+.gh-magic-codex-pill:hover {
+  color: var(--gh-text, #111827);
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 8%, var(--gh-bg, #ffffff));
+  border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 28%, transparent);
+  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.gh-magic-codex-pill:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.gh-magic-codex-pill-icon {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.gh-magic-codex-pill-title {
+  letter-spacing: -0.01em;
+}
+
+.gh-magic-codex-pill-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--gh-text-tertiary, #6b7280);
+  background: color-mix(in srgb, var(--gh-text, #111827) 6%, transparent);
+}
+
+.gh-magic-codex-pill:hover .gh-magic-codex-pill-count {
+  color: var(--gh-primary, #4285f4);
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 14%, transparent);
+}
+
+.gh-magic-codex-pill-arrow {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--gh-text-tertiary, #9ca3af);
+  line-height: 1;
+  transition: transform 0.18s ease;
+}
+
+.gh-magic-codex-pill:hover .gh-magic-codex-pill-arrow {
+  transform: translateX(1.5px);
+  color: var(--gh-primary, #4285f4);
+}
+
+/* MagicCodex 展开时的精致顶栏与收起按钮 */
+.gh-magic-codex-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px 7px 12px;
+  border-bottom: 1px solid color-mix(in srgb, var(--gh-border, #e5e7eb) 50%, transparent);
+}
+
+.gh-magic-codex-header-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--gh-text-secondary, #4b5563);
+  letter-spacing: -0.01em;
+  user-select: none;
+}
+
+.gh-magic-codex-header-icon {
+  font-size: 12px;
+  line-height: 1;
+}
+
+.gh-magic-codex-header-count {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 999px;
+  color: var(--gh-text-tertiary, #6b7280);
+  background: color-mix(in srgb, var(--gh-text, #111827) 6%, transparent);
+}
+
+.gh-magic-codex-collapse-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--gh-text-tertiary, #6b7280);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.gh-magic-codex-collapse-btn:hover {
+  color: var(--gh-text, #111827);
+  background: color-mix(in srgb, var(--gh-text, #111827) 6%, transparent);
+}
+
+.gh-magic-codex-collapse-arrow {
+  font-size: 10px;
+  line-height: 1;
+}
+
+.gh-magic-codex-popover {
+  text-align: left;
+  border: 1px solid var(--gh-border, #e5e7eb);
+  border-radius: 14px;
+  z-index: 10000;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: gh-popover-enter 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.gh-magic-codex-popover.floating {
+  position: absolute;
+  top: 36px;
+  left: -4px;
+  width: max-content;
+  margin: 0;
+  max-width: calc(var(--panel-width, 320px) - 24px);
+  background-color: var(--gh-bg, #ffffff);
+  box-shadow: var(--gh-shadow-lg, 0 12px 32px -4px rgba(0, 0, 0, 0.15));
+}
+
+.gh-magic-codex-popover.static {
+  position: relative;
+  width: 100%;
+  margin: 0 auto;
+  max-width: 100%;
+  background-color: color-mix(in srgb, var(--gh-bg-secondary, #f9fafb) 68%, var(--gh-bg, #ffffff));
+  border-color: color-mix(in srgb, var(--gh-border, #e5e7eb) 60%, transparent);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.02),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.gh-magic-codex-list {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 420px;
+  overflow-y: auto;
+  user-select: none;
+}
+
+.gh-magic-codex-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 6px 10px;
+  border-radius: 9px;
+  font-size: 12px;
+  color: var(--gh-text-secondary, #4b5563);
+  line-height: 1.5;
+  background-color: transparent;
+  transition:
+    background-color 0.2s ease,
+    transform 0.1s ease;
+}
+
+.gh-magic-codex-item:hover {
+  background-color: color-mix(in srgb, var(--gh-primary, #4285f4) 6%, transparent);
+}
+
+.gh-magic-codex-popover.floating .gh-magic-codex-item {
+  font-size: 13px;
+  background-color: var(--gh-bg, transparent);
+}
+
+.gh-magic-codex-icon {
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border-radius: 7px;
+  background-color: var(--gh-bg-tertiary, rgba(0, 0, 0, 0.04));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+.gh-magic-codex-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-self: center;
+  gap: 2px;
+}
+
+.gh-magic-codex-text {
+  white-space: normal;
+  word-break: break-word;
+  text-wrap: pretty;
+  color: var(--gh-text-secondary, #4b5563);
+}
+
+.gh-magic-codex-popover.floating .gh-magic-codex-text {
+  color: var(--gh-text, #374151);
 }
 
 /* 大纲空态的更新日志横幅：当前版本更新日志未读时显示，点击打开更新日志 */
@@ -1367,12 +1662,140 @@
   display: none !important;
 }
 
-/* 搜索结果条 */
+/* 搜索结果条与层级滑块 */
+.outline-level-slider-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 2px 0 4px;
+}
+
+.outline-level-dots {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  justify-content: space-between;
+  position: relative;
+  padding: 6px 0;
+  align-items: center;
+  touch-action: none;
+}
+
+.outline-level-dots:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 36%, transparent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.outline-level-line-bg {
+  position: absolute;
+  top: 50%;
+  left: 4px;
+  right: 4px;
+  height: 4px;
+  background: var(--gh-border, #e5e7eb);
+  z-index: 0;
+  transform: translateY(-50%);
+  border-radius: 999px;
+}
+
+.outline-level-progress {
+  position: absolute;
+  top: 50%;
+  left: 4px;
+  height: 4px;
+  background: var(--gh-primary, #3b82f6);
+  z-index: 0;
+  transform: translateY(-50%);
+  border-radius: 999px;
+  transition: width 0.2s ease;
+}
+
+.outline-level-progress.disabled {
+  background: var(--gh-text-disabled, #8d94a1);
+}
+
+.outline-level-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background-color: var(--gh-slider-dot-bg, #d1d5db);
+  border: none;
+  z-index: 1;
+  cursor: pointer;
+  position: relative;
+  transition:
+    background-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease,
+    opacity 0.2s ease;
+  box-sizing: border-box;
+}
+
+.outline-level-dot.active {
+  background-color: var(--gh-primary, #3b82f6);
+  border: 2px solid var(--gh-bg, #ffffff);
+  box-shadow: 0 0 0 1px var(--gh-primary, #3b82f6);
+}
+
+.outline-level-dot.disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.outline-level-dot.active.disabled {
+  background-color: var(--gh-text-disabled, #8d94a1);
+  box-shadow: 0 0 0 1px var(--gh-text-disabled, #8d94a1);
+}
+
+.outline-level-badge {
+  min-width: 26px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  user-select: none;
+  cursor: default;
+  pointer-events: none;
+  color: var(--gh-primary-text, var(--gh-primary, #4285f4));
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 10%, var(--gh-bg, #ffffff));
+  border: 1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 18%, transparent);
+}
+
+.outline-level-badge-icon {
+  display: block;
+  flex-shrink: 0;
+}
+
+.outline-level-badge.disabled {
+  color: var(--gh-text-disabled, #8d94a1);
+  background: color-mix(in srgb, var(--gh-border, #e5e7eb) 30%, transparent);
+  border-color: transparent;
+  opacity: 0.6;
+}
+
 .outline-result-bar {
   text-align: center;
-  color: #4285f4;
+  padding: 6px 8px;
+  margin: 0 8px;
+  color: var(--gh-border-active, var(--gh-primary, #4285f4));
   font-size: 12px;
-  padding: 4px 0;
+  background: var(--gh-folder-bg-default, transparent);
+  border-radius: 4px;
+  border: none;
+  flex-shrink: 0;
+}
+
+.outline-result-bar.is-empty {
+  background: transparent;
+  border: 1px dashed var(--gh-border, #e5e7eb);
 }
 
 .outline-source-switch {
@@ -1443,6 +1866,11 @@
 
 .outline-item:hover {
   background: var(--gh-hover, #f3f4f6);
+}
+
+.outline-item:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 36%, transparent);
+  outline-offset: -2px;
 }
 
 /* 定位高亮（Locate Current）：每套主题自带的撞色描边与淡底，外圈短暂呼吸后保持到高亮结束 */
@@ -1745,7 +2173,34 @@
   z-index: 10;
 }
 
-/* 复制按钮 */
+/* 复制与收藏按钮：通过 --gh-outline-row-hover-bg 自动跟随普通行、提问行与同步高亮行的当前底色 */
+.outline-item:hover {
+  --gh-outline-row-hover-bg: var(--gh-hover, #f3f4f6);
+}
+
+.outline-item.user-query-node:hover {
+  --gh-outline-row-hover-bg: color-mix(
+    in srgb,
+    var(--gh-primary, #4285f4) 11%,
+    var(--gh-bg, #ffffff)
+  );
+}
+
+.outline-item.sync-highlight:hover,
+.outline-item.sync-highlight-visible:hover {
+  --gh-outline-row-hover-bg: var(--gh-outline-sync-bg, var(--gh-hover, #f3f4f6));
+}
+
+/* 默认 always 模式及 hover 模式下已收藏项：为右侧常驻星标预留安全内边距，防止截断文字与星标重叠 */
+.gh-outline-tree-container:not(.gh-panel-bookmark-mode-hidden):not(.gh-panel-bookmark-mode-hover)
+  .outline-item-text,
+.gh-panel-bookmark-mode-hover
+  .outline-item:has(.outline-item-bookmark-wrapper.active)
+  .outline-item-text {
+  padding-right: 22px;
+}
+
+/* 复制按钮：仅在鼠标悬停行或按钮本身获得键盘焦点时显示，点击行不常驻暴露 */
 .outline-item-copy-btn {
   position: absolute;
   right: 28px;
@@ -1753,6 +2208,9 @@
   transform: translateY(-50%);
   width: 24px;
   height: 24px;
+  padding: 0;
+  border: none;
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1760,6 +2218,7 @@
   cursor: pointer;
   border-radius: 4px;
   opacity: 0;
+  pointer-events: none;
   transition:
     background 0.2s ease,
     color 0.2s ease,
@@ -1768,26 +2227,39 @@
   z-index: 5;
 }
 
-.outline-item:hover .outline-item-copy-btn {
+.outline-item:hover .outline-item-copy-btn,
+.outline-item-copy-btn:focus-visible {
   opacity: 1;
-  background: var(--gh-hover, #f3f4f6);
+  pointer-events: auto;
+  background: var(--gh-outline-row-hover-bg, var(--gh-hover, #f3f4f6));
 }
 
 /* 复制按钮的渐变遮罩 */
-.outline-item:hover .outline-item-copy-btn::before {
+.outline-item:hover .outline-item-copy-btn::before,
+.outline-item-copy-btn:focus-visible::before {
   content: "";
   position: absolute;
-  left: -10px;
+  left: -14px;
   top: 0;
-  width: 10px;
+  width: 14px;
   height: 100%;
-  background: linear-gradient(to right, transparent, var(--gh-hover, #f3f4f6));
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--gh-outline-row-hover-bg, var(--gh-hover, #f3f4f6))
+  );
   pointer-events: none;
 }
 
 .outline-item-copy-btn:hover {
   color: var(--gh-border-active);
   transform: translateY(-50%) scale(1.1);
+}
+
+.outline-item-copy-btn:focus-visible,
+.outline-item-bookmark-btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 40%, transparent);
+  outline-offset: 1px;
 }
 
 .outline-item-copy-btn svg {
@@ -1815,13 +2287,12 @@
   height: 100%;
 }
 
-.outline-item:hover .outline-item-bookmark-wrapper {
-  opacity: 1;
-}
-
 .outline-item-bookmark-btn {
   width: 24px;
   height: 24px;
+  padding: 0;
+  border: none;
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1830,41 +2301,42 @@
   border-radius: 4px;
 }
 
-/* 激活状态 */
+/* 激活状态（已收藏）始终显示 */
 .outline-item-bookmark-wrapper.active {
   opacity: 1;
 }
 
 .outline-item-bookmark-btn.active {
-  color: #f59e0b;
-}
-
-/* 激活状态（已收藏）始终显示 */
-.outline-item-bookmark-btn.active {
   opacity: 1;
   color: #f59e0b;
 }
 
-/* 悬停行时显示按钮 */
-/* 悬停行时显示按钮 */
-.outline-item:hover .outline-item-bookmark-wrapper {
+/* 仅在悬停行或按钮自身获得键盘焦点时高亮显示 */
+.outline-item:hover .outline-item-bookmark-wrapper,
+.outline-item-bookmark-btn:focus-visible {
   opacity: 1;
 }
 
 /* 收藏按钮在行 hover 时增加浅底，与复制按钮一致 */
-.outline-item:hover .outline-item-bookmark-btn {
-  background: var(--gh-hover, #f3f4f6);
+.outline-item:hover .outline-item-bookmark-btn,
+.outline-item-bookmark-btn:focus-visible {
+  background: var(--gh-outline-row-hover-bg, var(--gh-hover, #f3f4f6));
 }
 
 /* 渐变遮罩：在 wrapper 左侧添加 */
-.outline-item:hover .outline-item-bookmark-wrapper::before {
+.outline-item:hover .outline-item-bookmark-wrapper::before,
+.outline-item-bookmark-btn:focus-visible::before {
   content: "";
   position: absolute;
   left: -20px;
   top: 0;
   width: 20px;
   height: 100%;
-  background: linear-gradient(to right, transparent, var(--gh-hover, #f3f4f6));
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--gh-outline-row-hover-bg, var(--gh-hover, #f3f4f6))
+  );
   pointer-events: none;
 }
 
@@ -2116,9 +2588,9 @@
   width: 30px;
   height: 64px;
   padding: 0;
-  border: 1px solid var(--gh-brand-border, transparent);
-  background: var(--gh-header-bg, linear-gradient(135deg, #4285f4 0%, #34a853 100%));
-  color: var(--gh-header-text, #ffffff);
+  border: 1px solid var(--gh-border, #e5e7eb);
+  background: var(--gh-header-bg, linear-gradient(135deg, #f0f5ff 0%, #eefaf3 100%));
+  color: var(--gh-header-text, var(--gh-text, #1f2937));
   box-shadow: var(--gh-btn-shadow, 0 2px 6px rgba(0, 0, 0, 0.15));
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -2351,29 +2823,86 @@
   box-sizing: border-box;
   z-index: 9998;
 
-  /* Modern Glassmorphism Pill */
-  background: color-mix(in srgb, var(--gh-bg) 80%, transparent);
-  backdrop-filter: blur(28px) saturate(180%);
-  -webkit-backdrop-filter: blur(28px) saturate(180%);
-  border: 1px solid color-mix(in srgb, var(--gh-border, #e5e7eb) 70%, transparent);
+  /* Modern Specular Glassmorphism Pill */
+  background: color-mix(in srgb, var(--gh-bg) 82%, transparent);
+  backdrop-filter: blur(28px) saturate(190%) contrast(102%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%) contrast(102%);
+  border: 1px solid color-mix(in srgb, var(--gh-border, #e5e7eb) 75%, transparent);
   border-radius: 36px;
   box-shadow:
-    0 12px 32px color-mix(in srgb, var(--gh-text) 8%, transparent),
-    inset 0 1px 1px color-mix(in srgb, var(--gh-bg) 80%, transparent);
+    0 14px 36px -2px color-mix(in srgb, var(--gh-text) 10%, transparent),
+    0 4px 12px -1px color-mix(in srgb, var(--gh-text) 5%, transparent),
+    inset 0 1px 1.5px color-mix(in srgb, #ffffff 45%, transparent),
+    inset 0 -1px 1px color-mix(in srgb, var(--gh-text) 4%, transparent);
 
-  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.24s cubic-bezier(0.16, 1, 0.3, 1),
+    scale 0.24s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.24s ease;
   cursor: grab;
   user-select: none;
   touch-action: none;
+  overflow: visible;
+}
+
+/* 内部动态微光反射层 */
+.quick-btn-group::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    110px circle at 50% var(--qb-spotlight-y, 50%),
+    color-mix(in srgb, var(--gh-primary) 14%, transparent),
+    transparent 72%
+  );
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.28s ease;
+  z-index: 0;
+}
+
+.quick-btn-group:hover::before {
+  opacity: 1;
+}
+
+.quick-btn-group > * {
+  position: relative;
+  z-index: 1;
+}
+
+:host([data-theme="dark"]) .quick-btn-group {
+  box-shadow:
+    0 16px 40px -2px rgba(0, 0, 0, 0.45),
+    0 4px 14px -1px rgba(0, 0, 0, 0.25),
+    inset 0 1px 1.5px color-mix(in srgb, var(--gh-primary, #4285f4) 25%, transparent),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.05);
+  border-color: color-mix(in srgb, var(--gh-border, #374151) 85%, transparent);
+}
+
+.quick-btn-group.pressing {
+  scale: 1.025;
+  box-shadow:
+    0 20px 44px -4px color-mix(in srgb, var(--gh-primary) 24%, transparent),
+    0 6px 18px -2px color-mix(in srgb, var(--gh-text) 10%, transparent),
+    inset 0 1px 1.5px color-mix(in srgb, #ffffff 60%, transparent);
+  transition:
+    scale 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .quick-btn-group.dragging {
   cursor: grabbing;
-  box-shadow: 0 16px 40px color-mix(in srgb, var(--gh-text) 12%, transparent);
-  transform: scale(1.02); /* Slight scale when grabbed */
+  scale: 1.035;
+  box-shadow:
+    0 24px 52px -4px color-mix(in srgb, var(--gh-primary) 28%, transparent),
+    0 8px 24px -2px color-mix(in srgb, var(--gh-text) 14%, transparent),
+    inset 0 1px 1.5px color-mix(in srgb, #ffffff 60%, transparent);
   transition:
     opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-    transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    box-shadow 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
+    scale 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 /* 工具箱菜单打开期间，临时把按钮组抬到面板（z-index: 9999）之上。
@@ -2407,7 +2936,12 @@
     height 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
     padding 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
     transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
-    width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    scale 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.quick-btn-group.liquid-collapsed::before {
+  display: none !important;
 }
 
 .quick-btn-group.liquid-collapsed:hover {
@@ -2450,21 +2984,22 @@
 .quick-btn-group .quick-btn-drag-handle {
   width: 24px;
   height: 4px;
-  margin: 4px auto 6px;
+  margin: 3px auto 5px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--gh-text) 15%, transparent);
+  background: color-mix(in srgb, var(--gh-text) 18%, transparent);
   display: flex;
   cursor: inherit;
   position: relative;
   overflow: hidden;
   transition:
     background 0.2s ease,
-    width 0.2s ease,
+    width 0.24s cubic-bezier(0.16, 1, 0.3, 1),
     transform 0.2s ease;
 }
 
 .quick-btn-group:hover .quick-btn-drag-handle {
-  background: color-mix(in srgb, var(--gh-text) 25%, transparent);
+  width: 28px;
+  background: color-mix(in srgb, var(--gh-text) 28%, transparent);
 }
 
 .quick-btn-group .quick-btn-drag-handle::after {
@@ -2479,13 +3014,17 @@
 }
 
 /* 长按进度填充效果 */
+.quick-btn-group.pressing .quick-btn-drag-handle {
+  width: 32px;
+}
+
 .quick-btn-group.pressing .quick-btn-drag-handle::after {
   animation: quick-btn-hold-fill var(--quick-btn-press-duration, 150ms) linear forwards;
 }
 
 /* 拖拽时效果 */
 .quick-btn-group.dragging .quick-btn-drag-handle {
-  width: 16px;
+  width: 18px;
   background: var(--gh-primary);
   transform: translateY(2px);
 }
@@ -2518,33 +3057,34 @@
   font-size: 18px;
   cursor: pointer;
   transition:
-    background-color 0.18s ease,
-    color 0.18s ease,
-    box-shadow 0.18s ease,
+    background-color 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+    color 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.18s cubic-bezier(0.16, 1, 0.3, 1),
     transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
 }
 
-/* 悬停只加深底色、不上浮缩放：一列 8 个图标逐个跳动会很吵，与面板列表的平稳悬停保持一致。
-   :where() 不增加优先级，激活态（.active）等后续规则在悬停时仍然生效 */
+/* 悬停加深底色并微缩放响应，触感平稳，符合操作台秩序感 */
 .quick-prompt-btn:hover:where(:not(:disabled)) {
-  background: color-mix(in srgb, var(--gh-text) 6%, transparent);
+  background: color-mix(in srgb, var(--gh-text) 8%, transparent);
   color: var(--gh-text, #111827);
+  transform: scale(1.05);
 }
 
 .quick-prompt-btn:active:where(:not(:disabled)) {
-  transform: scale(0.97);
+  transform: scale(0.92);
+  background: color-mix(in srgb, var(--gh-text) 12%, transparent);
 }
 
 .quick-prompt-btn:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 34%, transparent);
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 40%, transparent);
   outline-offset: 2px;
 }
 
-/* 无锚点时的返回锚点按钮等：置灰且不响应悬停 */
+/* 无锚点时的返回锚点按钮等：置灰且不可点击 */
 .quick-prompt-btn:disabled {
-  opacity: 0.4;
-  cursor: default;
+  opacity: 0.32;
+  cursor: not-allowed;
 }
 
 .quick-prompt-btn.active {
@@ -2552,28 +3092,61 @@
   color: var(--gh-primary);
 }
 
+/* 有记录锚点时的返回锚点按钮：点亮主色并带有活跃状态小圆点 */
+.quick-prompt-btn.has-anchor {
+  color: var(--gh-primary);
+}
+
+.quick-prompt-btn.has-anchor:hover {
+  background: color-mix(in srgb, var(--gh-primary) 14%, transparent);
+  color: var(--gh-primary);
+}
+
+.quick-prompt-btn.has-anchor::after {
+  content: "";
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--gh-primary);
+  box-shadow: 0 0 5px color-mix(in srgb, var(--gh-primary) 70%, transparent);
+  pointer-events: none;
+}
+
 /* 面板主控制按钮强化视觉层级，与主题色融合并更显眼 */
 .quick-prompt-btn.panel-btn {
   background: color-mix(in srgb, var(--gh-primary) 12%, transparent);
   color: var(--gh-primary) !important;
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--gh-primary) 15%, transparent);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--gh-primary) 16%, transparent);
+  margin-bottom: 2px;
 }
 
 .quick-prompt-btn.panel-btn svg {
   /* 容器物理尺寸修复后，由于星芒图案本身的非对称性（左下角视觉重心较重），
      视觉上会显得偏向左下。需要向右上（X正，Y负）进行微调补偿 */
   transform: translate(1px, -1px);
+  transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .quick-prompt-btn.panel-btn:hover {
-  /* 悬浮时不再使用刺眼的深色实心背景，而是适度加深透明度，保持琉璃感和呼吸感 */
-  background: color-mix(in srgb, var(--gh-primary) 24%, transparent);
+  background: color-mix(in srgb, var(--gh-primary) 22%, transparent);
   color: var(--gh-primary) !important;
-  box-shadow: 0 4px 16px color-mix(in srgb, var(--gh-primary) 35%, transparent);
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--gh-primary) 32%, transparent);
+  transform: scale(1.04);
 }
 
 .quick-prompt-btn.panel-btn:hover svg {
-  transform: translate(1px, -1px);
+  transform: translate(1px, -1px) scale(1.08);
+}
+
+.quick-prompt-btn.panel-btn:active {
+  transform: scale(0.94);
+}
+
+.quick-prompt-btn.panel-btn:active svg {
+  transform: translate(1px, -1px) scale(0.96);
 }
 
 .quick-prompt-btn:has(svg[color="currentColor"]) {
@@ -2587,18 +3160,25 @@
 /* 工具箱悬浮菜单按钮：打开时保留旋转反馈，表示工具箱处于展开状态（DESIGN.md 保留动效） */
 .quick-prompt-btn.tools-trigger-btn {
   transition:
-    background 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
-    box-shadow 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
-    color 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
-    transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    background 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+    color 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.quick-btn-group .quick-prompt-btn.tools-trigger-btn.active,
 .quick-prompt-btn.tools-trigger-btn.active {
   background: color-mix(in srgb, var(--gh-primary, #4285f4) 14%, var(--gh-bg, #ffffff));
   color: var(--gh-primary-text, var(--gh-primary, #4285f4));
   box-shadow: 0 2px 8px color-mix(in srgb, var(--gh-primary, #4285f4) 18%, transparent);
-  animation: tools-spin 3s linear infinite;
+  animation: tools-spin 3s linear infinite !important;
   transform: scale(1.03);
+}
+
+.quick-btn-group .quick-prompt-btn.tools-trigger-btn.active:hover {
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 22%, var(--gh-bg, #ffffff));
+  color: var(--gh-primary-text, var(--gh-primary, #4285f4));
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--gh-primary, #4285f4) 28%, transparent);
 }
 
 @keyframes tools-spin {
@@ -2651,13 +3231,18 @@
   color: var(--gh-error) !important;
 }
 
-/* 分隔线 */
+/* 分隔线：两端渐隐的羽化微光 */
 .quick-btn-group .divider {
-  width: 20px;
+  width: 24px;
   height: 1px;
-  /* Subtler divider line blending with background */
-  background: color-mix(in srgb, var(--gh-text) 10%, transparent);
-  margin: 2px auto;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--gh-text) 16%, transparent) 25%,
+    color-mix(in srgb, var(--gh-text) 16%, transparent) 75%,
+    transparent 100%
+  );
+  margin: 4px auto;
   border-radius: 1px;
 }
 
@@ -2670,6 +3255,109 @@
   display: block;
 }
 
+/* 展开时的级联出现动效 */
+@keyframes quick-btn-drop-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.85);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.quick-btn-group:not(.liquid-collapsed) .quick-prompt-btn:not(.panel-btn):not(.active) {
+  animation: quick-btn-drop-in 0.28s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  animation-delay: calc(var(--btn-index, 0) * 18ms);
+}
+
+.quick-btn-group:not(.liquid-collapsed) .divider {
+  animation: quick-btn-drop-in 0.24s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  animation-delay: calc(var(--btn-index, 0) * 18ms);
+}
+
+/* 点击微动效：向上/向下射箭发射 & 主题切换轻转 */
+@keyframes quick-scroll-shoot-up {
+  0% {
+    transform: translateY(0);
+  }
+  25% {
+    transform: translateY(3px) scale(0.9);
+  }
+  65% {
+    transform: translateY(-5px) scale(1.08);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes quick-scroll-shoot-down {
+  0% {
+    transform: translateY(0);
+  }
+  25% {
+    transform: translateY(-3px) scale(0.9);
+  }
+  65% {
+    transform: translateY(5px) scale(1.08);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes quick-theme-tilt {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  30% {
+    transform: rotate(-30deg) scale(0.88);
+  }
+  70% {
+    transform: rotate(18deg) scale(1.08);
+  }
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
+}
+
+.scroll-top-tap.is-tapping {
+  animation: quick-scroll-shoot-up 0.38s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.scroll-bottom-tap.is-tapping {
+  animation: quick-scroll-shoot-down 0.38s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.theme-tap.is-tapping {
+  animation: quick-theme-tilt 0.38s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* 禅模式呼吸微光 */
+@keyframes zen-pulse {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 3px color-mix(in srgb, var(--gh-primary) 35%, transparent));
+    opacity: 0.92;
+  }
+  50% {
+    filter: drop-shadow(0 0 7px color-mix(in srgb, var(--gh-primary) 65%, transparent));
+    opacity: 1;
+  }
+}
+
+.quick-prompt-btn.zen-mode-btn.active svg {
+  animation: zen-pulse 2.8s ease-in-out infinite;
+}
+
+/* 统一滚动箭头的视觉线宽与重心 */
+.scroll-top-tap svg,
+.scroll-bottom-tap svg {
+  stroke-width: 1.75px;
+}
+
 /* ============= 快捷菜单 (工具箱) ============= */
 .quick-menu-popover {
   position: absolute;
@@ -2677,14 +3365,24 @@
   transform: translateY(-50%);
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 8px 6px;
-  background: var(--gh-bg, #ffffff);
-  border: 1px solid var(--gh-border, #e5e7eb);
-  border-radius: 12px;
-  box-shadow: var(--gh-shadow, 0 6px 16px rgba(0, 0, 0, 0.1));
+  gap: 6px;
+  padding: 6px;
+  background: color-mix(in srgb, var(--gh-bg) 88%, transparent);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid color-mix(in srgb, var(--gh-border, #e5e7eb) 75%, transparent);
+  border-radius: 16px;
+  box-shadow:
+    0 12px 32px color-mix(in srgb, var(--gh-text) 10%, transparent),
+    inset 0 1px 1px color-mix(in srgb, #ffffff 30%, transparent);
   z-index: 999999;
-  animation: quick-menu-enter 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: quick-menu-enter 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+:host([data-theme="dark"]) .quick-menu-popover {
+  box-shadow:
+    0 16px 36px rgba(0, 0, 0, 0.4),
+    inset 0 1px 1px color-mix(in srgb, var(--gh-primary, #4285f4) 20%, transparent);
 }
 
 /* Side Positioning */
@@ -2702,9 +3400,9 @@
 
 /* Menu Buttons */
 .quick-menu-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
   border: none;
   background: transparent;
   color: var(--gh-text-secondary, #6b7280);
@@ -2713,16 +3411,20 @@
   justify-content: center;
   cursor: pointer;
   transition:
-    background 0.2s ease,
-    color 0.2s ease,
-    transform 0.2s ease;
+    background 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
 }
 
 .quick-menu-btn:hover {
-  background: color-mix(in srgb, var(--gh-text) 6%, transparent);
+  background: color-mix(in srgb, var(--gh-text) 7%, transparent);
   color: var(--gh-text, #111827);
-  transform: scale(1.05);
+  transform: scale(1.06);
+}
+
+.quick-menu-btn:active {
+  transform: scale(0.94);
 }
 
 .quick-menu-btn.active {
@@ -2959,7 +3661,13 @@
   .selected-prompt-bar,
   .outline-toolbar-btn.export-accent::after,
   .outline-toolbar-btn.export-accent .export-icon-arrow,
-  .ophel-tooltip {
+  .ophel-tooltip,
+  .quick-btn-group:not(.liquid-collapsed) .quick-prompt-btn:not(.panel-btn),
+  .quick-btn-group:not(.liquid-collapsed) .divider,
+  .scroll-top-tap.is-tapping,
+  .scroll-bottom-tap.is-tapping,
+  .theme-tap.is-tapping,
+  .quick-prompt-btn.zen-mode-btn.active svg {
     animation: none !important;
   }
 
@@ -2969,7 +3677,10 @@
   }
 
   .scroll-nav-btn.anchor-btn .anchor-tap-wrapper.is-tapping,
-  .quick-prompt-btn .anchor-tap-wrapper.is-tapping {
+  .quick-prompt-btn .anchor-tap-wrapper.is-tapping,
+  .scroll-top-tap.is-tapping,
+  .scroll-bottom-tap.is-tapping,
+  .theme-tap.is-tapping {
     animation: none !important;
     transition: none !important;
     transform: none !important;
@@ -4201,31 +4912,33 @@
 .gh-header-icon-btn {
   background: transparent;
   border: none;
-  color: var(--gh-glass-text, white);
-  width: 24px;
-  height: 24px;
+  color: var(--gh-glass-text, var(--gh-text-secondary, #4b5563));
+  width: 26px;
+  height: 26px;
   border-radius: 6px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition:
-    background 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
-    transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    background 0.18s cubic-bezier(0.2, 0.8, 0.2, 1),
+    color 0.18s ease,
+    transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
   padding: 0;
 }
 
 .gh-header-icon-btn:hover {
-  background: var(--gh-glass-bg-hover, rgba(255, 255, 255, 0.2));
+  background: var(--gh-glass-bg-hover, var(--gh-hover, rgba(0, 0, 0, 0.06)));
+  color: var(--gh-header-text, var(--gh-text, #1f2937));
 }
 
 .gh-header-icon-btn:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.38);
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 38%, transparent);
   outline-offset: 2px;
 }
 
 .gh-header-icon-btn:active {
-  background: var(--gh-glass-bg, rgba(255, 255, 255, 0.15));
+  background: var(--gh-glass-bg, var(--gh-active-bg, rgba(0, 0, 0, 0.1)));
   transform: scale(0.96);
 }
 

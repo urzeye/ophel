@@ -231,9 +231,8 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     resolvedThemeMode === "light"
       ? siteTheme.lightStyleId || "google-gradient"
       : siteTheme.darkStyleId || "classic-dark"
-  // 浅色模式：currentColor，跟随 .gh-panel-header 的 --gh-header-text（浅色头部背景的主题为深色）
-  // 深色模式：深色纯色 header → 品牌渐变，美观且对比鲜明
-  const panelSparkleColor = resolvedThemeMode === "dark" ? "brand" : "currentColor"
+  // 面板顶栏采用 macOS 同调微染表面，品牌色彩集中体现在左侧星芒徽标上
+  const panelSparkleColor = "brand"
   const currentCustomStyle = Array.isArray(currentSettings.theme?.customStyles)
     ? currentSettings.theme.customStyles.find((style) => style.id === currentThemeStyleId)
     : null
@@ -1432,6 +1431,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         data-panel-hover-width-active={isHoverWidthPreviewActive ? "true" : undefined}
         data-panel-base-width={basePanelWidth}
         data-panel-anchor-side={panelAnchorSide}
+        data-panel-compact={panelWidth <= 340 ? "true" : undefined}
         data-panel-narrow={panelWidth < 280 ? "true" : undefined}
         style={panelStyle}>
         {/* 自定义 CSS 注入：根据当前站点的样式 ID 查找自定义样式 */}
@@ -1476,7 +1476,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
               onClick={onOpenReleaseNotes ? handleBrandClick : undefined}
               onKeyDown={onOpenReleaseNotes ? handleBrandKeyDown : undefined}>
               <div className="gh-panel-brand-mark">
-                <SparkleIcon size={18} color={panelSparkleColor} />
+                <SparkleIcon size={16} color={panelSparkleColor} />
                 {hasUnseenReleaseNotes && (
                   <span className="gh-panel-brand-unread" aria-hidden="true" />
                 )}
@@ -1531,6 +1531,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                 <button
                   id="theme-toggle-btn"
                   type="button"
+                  aria-label={t("toggleTheme")}
                   onClick={(event) => {
                     onThemeToggle?.(getButtonCenter(event.currentTarget))
                   }}
@@ -1545,6 +1546,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
               <Tooltip content={t("newTabTooltip")}>
                 <button
                   type="button"
+                  aria-label={t("newTabTooltip")}
                   onClick={() => window.open(window.location.origin, "_blank")}
                   className="gh-header-icon-btn">
                   <NewTabIcon size={14} />
@@ -1556,6 +1558,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             <Tooltip content={t("tabSettings")}>
               <button
                 type="button"
+                aria-label={t("tabSettings")}
                 data-tip-target="settings-btn"
                 onClick={() => {
                   onOpenSettings?.()

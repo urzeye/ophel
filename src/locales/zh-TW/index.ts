@@ -760,6 +760,11 @@ export const zhTW = {
   outlineSourceDocument: "文件",
   outlineSourceSwitchLabel: "大綱來源",
   outlineLevelHint: "級標題",
+  outlineLevelTooltip: "展開至 H{level} 標題 · {count} 項",
+  outlineLevelQueryTooltip: "僅使用者提問 · {count} 項",
+  magicCodexTitle: "快捷技巧與操作",
+  magicCodexCollapse: "收起技巧",
+  magicCodexExpand: "展開技巧",
   // Tab 順序設置
   tabOrderSettings: "面板標籤",
   tabOrderDesc: "拖動排序。開關控制面板標籤；站點不支援的功能會自動隱藏",
@@ -1793,7 +1798,6 @@ export const zhTW = {
   extensionUpdateNoticeWithVersion:
     "Ophel Atlas 已更新至 v{version}。重新整理目前頁面後即可繼續使用最新版本。",
   extensionUpdateNoticeAction: "重新整理頁面",
-  releaseNotesKicker: "版本更新",
   releaseNotesTitle: "Ophel Atlas v{version} 更新",
   releaseNotesPublishedOn: "發佈於 {date}",
   releaseNotesOpen: "查看更新日誌",

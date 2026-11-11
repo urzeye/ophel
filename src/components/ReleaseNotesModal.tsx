@@ -245,21 +245,24 @@ export const ReleaseNotesModal: React.FC<ReleaseNotesModalProps> = ({
         aria-labelledby={titleId}
         onClick={(event) => event.stopPropagation()}>
         <header className="gh-release-notes-header">
-          <div className="gh-release-notes-kicker">
-            <SparkleIcon size={16} color="brand" />
-            <span>{t("releaseNotesKicker")}</span>
+          <div className="gh-release-notes-header-top">
+            <div className="gh-release-notes-title-group">
+              <span className="gh-release-notes-title-icon" aria-hidden="true">
+                <SparkleIcon size={18} color="brand" />
+              </span>
+              <h2 id={titleId} className="gh-release-notes-title">
+                {t("releaseNotesTitle", { version })}
+              </h2>
+            </div>
+            <button
+              ref={closeButtonRef}
+              type="button"
+              className="gh-release-notes-close"
+              aria-label={t("close")}
+              onClick={onClose}>
+              <ClearIcon size={16} />
+            </button>
           </div>
-          <button
-            ref={closeButtonRef}
-            type="button"
-            className="gh-release-notes-close"
-            aria-label={t("close")}
-            onClick={onClose}>
-            <ClearIcon size={16} />
-          </button>
-          <h2 id={titleId} className="gh-release-notes-title">
-            {t("releaseNotesTitle", { version })}
-          </h2>
           {date ? (
             <div className="gh-release-notes-meta">{t("releaseNotesPublishedOn", { date })}</div>
           ) : null}

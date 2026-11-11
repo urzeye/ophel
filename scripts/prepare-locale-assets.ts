@@ -24,14 +24,30 @@ const content = JSON.stringify(resources)
 
 const currentContent = fs.existsSync(targetPath) ? fs.readFileSync(targetPath, "utf-8") : null
 
-if (currentContent === content) {
+if (currentContent !== content) {
+  fs.mkdirSync(path.dirname(targetPath), { recursive: true })
+  fs.writeFileSync(targetPath, content, "utf-8")
+  console.log(
+    `[prepare-locale-assets] Wrote assets/locales/messages.json (${Buffer.byteLength(content, "utf8")} bytes)`,
+  )
+} else {
   console.log("[prepare-locale-assets] assets/locales/messages.json is up to date")
-  process.exit(0)
 }
 
-fs.mkdirSync(path.dirname(targetPath), { recursive: true })
-fs.writeFileSync(targetPath, content, "utf-8")
-
-console.log(
-  `[prepare-locale-assets] Wrote assets/locales/messages.json (${Buffer.byteLength(content, "utf8")} bytes)`,
-)
+// 同步已存在的构建目录，避免开发中修改文案后需重启 plasmo dev
+const buildDirs = [
+  "build/chrome-mv3-dev",
+  "build/firefox-mv3-dev",
+  "build/chrome-mv3-prod",
+  "build/firefox-mv3-prod",
+]
+for (const dir of buildDirs) {
+  const buildTarget = path.resolve(projectRoot, dir, "assets/locales/messages.json")
+  if (fs.existsSync(path.dirname(buildTarget))) {
+    const existing = fs.existsSync(buildTarget) ? fs.readFileSync(buildTarget, "utf-8") : null
+    if (existing !== content) {
+      fs.writeFileSync(buildTarget, content, "utf-8")
+      console.log(`[prepare-locale-assets] Synced to ${dir}/assets/locales/messages.json`)
+    }
+  }
+}
