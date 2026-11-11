@@ -1796,7 +1796,6 @@ export const zhCN = {
   extensionUpdateNoticeWithVersion:
     "Ophel Atlas 已更新至 v{version}。刷新当前页面后即可继续使用最新版本。",
   extensionUpdateNoticeAction: "刷新页面",
-  releaseNotesKicker: "版本更新",
   releaseNotesTitle: "Ophel Atlas v{version} 更新",
   releaseNotesPublishedOn: "发布于 {date}",
   releaseNotesOpen: "查看更新日志",

@@ -275,6 +275,11 @@ const OutlineNodeView: React.FC<{
   setItemRef: (index: number, el: HTMLElement | null) => void
   searchQuery: string
   extractUserQueryText?: (element: Element) => string // Used for full text extraction
+  tabIndex: number
+  positionInSet: number
+  setSize: number
+  onFocusNode: (index: number) => void
+  onKeyboardNavigate: (index: number, key: "ArrowUp" | "ArrowDown" | "Home" | "End") => void
 }> = ({
   node,
   onToggle,
@@ -283,6 +288,11 @@ const OutlineNodeView: React.FC<{
   setItemRef,
   searchQuery,
   extractUserQueryText,
+  tabIndex,
+  positionInSet,
+  setSize,
+  onFocusNode,
+  onKeyboardNavigate,
 }) => {
   const hasChildren = node.children && node.children.length > 0
   // 只要有子节点就显示箭头，允许手动展开查看不匹配的子节点
@@ -414,13 +424,16 @@ const OutlineNodeView: React.FC<{
       <div
         className={itemClassName}
         role="treeitem"
-        tabIndex={0}
+        tabIndex={tabIndex}
         aria-level={Math.max(1, node.relativeLevel + 1)}
         aria-expanded={hasChildren ? isExpanded : undefined}
+        aria-posinset={positionInSet}
+        aria-setsize={setSize}
         data-index={node.index}
         data-level={node.relativeLevel}
         ref={(el) => setItemRef(node.index, el)}
         onClick={() => onClick(node)}
+        onFocus={() => onFocusNode(node.index)}
         onKeyDown={(e) => {
           if (e.target !== e.currentTarget) return
           if (e.key === "Enter" || e.key === " ") {
@@ -432,6 +445,14 @@ const OutlineNodeView: React.FC<{
           } else if (e.key === "ArrowLeft" && hasChildren && isExpanded) {
             e.preventDefault()
             onToggle(node)
+          } else if (
+            e.key === "ArrowDown" ||
+            e.key === "ArrowUp" ||
+            e.key === "Home" ||
+            e.key === "End"
+          ) {
+            e.preventDefault()
+            onKeyboardNavigate(node.index, e.key)
           }
         }}>
         {/* 折叠箭头 - 使用 hasChildren 显示箭头，允许手动展开 */}
@@ -514,6 +535,9 @@ const VirtualizedOutlineTree: React.FC<{
   setItemRef: (index: number, el: HTMLElement | null) => void
   searchQuery: string
   extractUserQueryText?: (element: Element) => string
+  focusedNodeIndex: number | null
+  onFocusNode: (index: number) => void
+  onKeyboardNavigate: (index: number, key: "ArrowUp" | "ArrowDown" | "Home" | "End") => void
 }> = ({
   items,
   metrics,
@@ -525,11 +549,17 @@ const VirtualizedOutlineTree: React.FC<{
   setItemRef,
   searchQuery,
   extractUserQueryText,
+  focusedNodeIndex,
+  onFocusNode,
+  onKeyboardNavigate,
 }) => {
   const virtualListRef = useRef<HTMLDivElement>(null)
   const warnedHeightDriftKeysRef = useRef<Set<string>>(new Set())
   const range = getOutlineVirtualRange(metrics, scrollTop, viewportHeight)
   const renderedItems = items.slice(range.start, range.end)
+  // Roving tabindex：仅当前聚焦项（或聚焦项被裁剪时的首个渲染项）进入 Tab 序列，
+  // 避免长对话中每行都成为 Tab 停靠点
+  const renderedHasFocusTarget = renderedItems.some((item) => item.node.index === focusedNodeIndex)
   const virtualListStyle = {
     "--gh-outline-item-height": `${OUTLINE_ITEM_HEIGHT}px`,
     height: metrics.totalHeight,
@@ -591,11 +621,15 @@ const VirtualizedOutlineTree: React.FC<{
   return (
     <div
       ref={virtualListRef}
+      role="tree"
+      aria-label={t("tabOutline")}
       className="outline-list outline-list-virtual"
       style={virtualListStyle}>
       {renderedItems.map((item, offset) => {
         const rowIndex = range.start + offset
         const spacing = getOutlineVirtualRowSpacing(item, rowIndex)
+        const isRovingTarget =
+          item.node.index === focusedNodeIndex || (!renderedHasFocusTarget && offset === 0)
 
         return (
           <div
@@ -622,6 +656,11 @@ const VirtualizedOutlineTree: React.FC<{
               setItemRef={setItemRef}
               searchQuery={searchQuery}
               extractUserQueryText={extractUserQueryText}
+              tabIndex={isRovingTarget ? 0 : -1}
+              positionInSet={rowIndex + 1}
+              setSize={items.length}
+              onFocusNode={onFocusNode}
+              onKeyboardNavigate={onKeyboardNavigate}
             />
           </div>
         )
@@ -1115,6 +1154,52 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
     [tree, visibleMap],
   )
   const virtualMetrics = useMemo(() => buildOutlineVirtualMetrics(visibleItems), [visibleItems])
+
+  // ===== 大纲树键盘导航（roving tabindex）=====
+  // 树内仅聚焦项进入 Tab 序列；上下/Home/End 在可见项间移动焦点
+  const [focusedNodeIndex, setFocusedNodeIndex] = useState<number | null>(null)
+  const pendingFocusNodeRef = useRef<number | null>(null)
+
+  const focusOutlineItemAt = useCallback(
+    (position: number) => {
+      const item = visibleItems[position]
+      if (!item) return
+      const el = itemRefMap.current.get(item.node.index)
+      if (el) {
+        el.focus()
+        return
+      }
+      // 目标行被虚拟化裁剪：先滚动到对应行，渲染完成后由下方 effect 补焦点
+      pendingFocusNodeRef.current = item.node.index
+      listRef.current?.scrollTo({ top: virtualMetrics.rowOffsets[position] })
+    },
+    [visibleItems, virtualMetrics],
+  )
+
+  const handleTreeKeyboardNavigate = useCallback(
+    (nodeIndex: number, key: "ArrowUp" | "ArrowDown" | "Home" | "End") => {
+      const position = visibleItems.findIndex((item) => item.node.index === nodeIndex)
+      if (position < 0) return
+      let target = position
+      if (key === "ArrowDown") target = Math.min(visibleItems.length - 1, position + 1)
+      else if (key === "ArrowUp") target = Math.max(0, position - 1)
+      else if (key === "Home") target = 0
+      else if (key === "End") target = visibleItems.length - 1
+      if (target === position) return
+      focusOutlineItemAt(target)
+    },
+    [visibleItems, focusOutlineItemAt],
+  )
+
+  useEffect(() => {
+    const pending = pendingFocusNodeRef.current
+    if (pending == null) return
+    const el = itemRefMap.current.get(pending)
+    if (!el) return
+    pendingFocusNodeRef.current = null
+    el.focus()
+  }, [outlineScrollTop, visibleItems])
+
   const outlineSourceOptions = useMemo(
     () => outlineSources.filter((source) => source.available),
     [outlineSources],
@@ -2183,7 +2268,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
               className={`outline-level-badge ${isSliderDisabled ? "disabled" : ""}`}
               aria-hidden="true">
               {sliderLevel === 0 ? (
-                showUserQueries ? (
+                showUserQueries && tree.some((node) => node.isUserQuery) ? (
                   <svg
                     viewBox="0 0 1024 1024"
                     width={12}
@@ -2347,6 +2432,9 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
               setItemRef={setItemRef}
               searchQuery={searchQuery}
               extractUserQueryText={extractUserQueryText}
+              focusedNodeIndex={focusedNodeIndex}
+              onFocusNode={setFocusedNodeIndex}
+              onKeyboardNavigate={handleTreeKeyboardNavigate}
             />
           )
         })()}

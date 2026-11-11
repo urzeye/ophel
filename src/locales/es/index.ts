@@ -1866,7 +1866,6 @@ Dame el código y luego un resumen de mejoras.`,
   extensionUpdateNoticeWithVersion:
     "Ophel Atlas se ha actualizado a la versión v{version}. Recarga esta página para seguir usando la versión más reciente.",
   extensionUpdateNoticeAction: "Recargar página",
-  releaseNotesKicker: "Novedades",
   releaseNotesTitle: "Ophel Atlas v{version}",
   releaseNotesPublishedOn: "Publicado el {date}",
   releaseNotesOpen: "Novedades",

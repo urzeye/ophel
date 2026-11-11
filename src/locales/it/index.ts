@@ -1927,7 +1927,6 @@ export const it = {
   extensionUpdateNoticeWithVersion:
     "Ophel Atlas è stato aggiornato a v{version}. Ricarica questa pagina per continuare a utilizzare la versione più recente.",
   extensionUpdateNoticeAction: "Ricarica la pagina",
-  releaseNotesKicker: "Cosa c'è di nuovo",
   releaseNotesTitle: "Ophel Atlas v{version}",
   releaseNotesPublishedOn: "Rilasciato il {date}",
   releaseNotesOpen: "Cosa c'è di nuovo",

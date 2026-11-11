@@ -1,8 +1,7 @@
-import React, { useEffect, useRef, useState } from "react"
+import React, { useEffect, useRef } from "react"
 
+import { useMagicCodexCollapsed } from "~hooks/useMagicCodexCollapsed"
 import { t } from "~utils/i18n"
-
-const CODEX_COLLAPSED_STORAGE_KEY = "ophel:magic_codex_collapsed"
 
 interface Props {
   isOpen: boolean
@@ -25,31 +24,11 @@ export const MagicCodex: React.FC<Props> = ({
 }) => {
   const popoverRef = useRef<HTMLDivElement>(null)
 
-  const [isCollapsed, setIsCollapsed] = useState(() => {
-    if (!isStatic || !collapsible) return false
-    try {
-      if (typeof window !== "undefined") {
-        return window.localStorage.getItem(CODEX_COLLAPSED_STORAGE_KEY) === "true"
-      }
-    } catch {
-      // fallback to expanded
-    }
-    return false
-  })
+  const [isCollapsed, setIsCollapsed] = useMagicCodexCollapsed()
 
   const handleToggleCollapse = (e: React.MouseEvent) => {
     e.stopPropagation()
-    setIsCollapsed((prev) => {
-      const next = !prev
-      try {
-        if (typeof window !== "undefined") {
-          window.localStorage.setItem(CODEX_COLLAPSED_STORAGE_KEY, String(next))
-        }
-      } catch {
-        // ignore
-      }
-      return next
-    })
+    setIsCollapsed(!isCollapsed)
   }
 
   useEffect(() => {

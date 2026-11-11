@@ -1873,7 +1873,6 @@ export const ja = {
   extensionUpdateNoticeWithVersion:
     "Ophel Atlas が v{version} に更新されました。最新バージョンを引き続き使うには、このページを再読み込みしてください。",
   extensionUpdateNoticeAction: "ページを再読み込み",
-  releaseNotesKicker: "新着情報",
   releaseNotesTitle: "Ophel Atlas v{version}",
   releaseNotesPublishedOn: "{date} リリース",
   releaseNotesOpen: "新着情報",

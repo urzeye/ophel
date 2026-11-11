@@ -1798,7 +1798,6 @@ export const zhTW = {
   extensionUpdateNoticeWithVersion:
     "Ophel Atlas 已更新至 v{version}。重新整理目前頁面後即可繼續使用最新版本。",
   extensionUpdateNoticeAction: "重新整理頁面",
-  releaseNotesKicker: "版本更新",
   releaseNotesTitle: "Ophel Atlas v{version} 更新",
   releaseNotesPublishedOn: "發佈於 {date}",
   releaseNotesOpen: "查看更新日誌",
