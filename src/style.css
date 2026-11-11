@@ -872,8 +872,17 @@
   color: var(--gh-text-disabled, #9ca3af);
   background: transparent;
   cursor: not-allowed;
-  opacity: 0.5;
+  opacity: 0.4;
   transform: none;
+}
+
+.gh-panel-icon-btn:disabled.active,
+.gh-panel-icon-btn:disabled.active-subtle,
+.outline-toolbar-btn:disabled.active,
+.outline-toolbar-btn:disabled.active-subtle {
+  color: var(--gh-text-disabled, #9ca3af);
+  background: transparent;
+  border-color: transparent;
 }
 
 .outline-toolbar-btn.is-busy:disabled {
@@ -1073,6 +1082,12 @@
   border-color: var(--gh-primary, #4285f4);
   background: var(--gh-input-bg, #ffffff);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--gh-primary, #4285f4) 18%, transparent);
+}
+
+.gh-panel-search-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: color-mix(in srgb, var(--gh-text, #1f2937) 3%, var(--gh-bg, #ffffff));
 }
 
 .gh-panel-search-action {

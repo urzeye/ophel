@@ -1958,13 +1958,14 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
           <div className="gh-panel-toolbar-group">
             {/* Group Mode */}
             {showUserQueryToggle && activeSourceId === "conversation" && (
-              <Tooltip content={t("outlineShowUserQueries")}>
+              <Tooltip content={isOutlineEmpty ? t("outlineEmpty") : t("outlineShowUserQueries")}>
                 <button
                   type="button"
-                  onClick={handleGroupModeToggle}
+                  onClick={isOutlineEmpty ? undefined : handleGroupModeToggle}
+                  disabled={isOutlineEmpty}
                   aria-label={t("outlineShowUserQueries")}
                   aria-pressed={showUserQueries}
-                  className={`outline-toolbar-btn ${showUserQueries ? "active-subtle" : ""}`}>
+                  className={`outline-toolbar-btn ${showUserQueries && !isOutlineEmpty ? "active-subtle" : ""}`}>
                   <UserQueryIcon size={15} />
                 </button>
               </Tooltip>
@@ -2084,6 +2085,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
               aria-label={t("outlineSearch")}
               value={searchQuery}
               onChange={handleSearchChange}
+              disabled={isOutlineEmpty && !searchQuery}
             />
             {searchQuery && (
               <Tooltip content={t("clear")} triggerClassName="gh-panel-search-action-anchor">
