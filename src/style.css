@@ -1584,9 +1584,16 @@
   justify-content: center;
   flex-shrink: 0;
   user-select: none;
+  cursor: default;
+  pointer-events: none;
   color: var(--gh-primary-text, var(--gh-primary, #4285f4));
   background: color-mix(in srgb, var(--gh-primary, #4285f4) 10%, var(--gh-bg, #ffffff));
   border: 1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 18%, transparent);
+}
+
+.outline-level-badge-icon {
+  display: block;
+  flex-shrink: 0;
 }
 
 .outline-level-badge.disabled {

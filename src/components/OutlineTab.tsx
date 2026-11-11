@@ -2173,7 +2173,28 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
             <span
               className={`outline-level-badge ${isSliderDisabled ? "disabled" : ""}`}
               aria-hidden="true">
-              {sliderLevel === 0 ? (showUserQueries ? "💬" : "H0") : `H${sliderLevel}`}
+              {sliderLevel === 0 ? (
+                showUserQueries ? (
+                  <svg
+                    viewBox="0 0 16 16"
+                    width={12}
+                    height={12}
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="outline-level-badge-icon">
+                    <path d="M2.5 12.5V3.5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H5.5L2.5 12.5z" />
+                    <path d="M5.5 6.5h5" />
+                    <path d="M5.5 8.5h3" />
+                  </svg>
+                ) : (
+                  "H0"
+                )
+              ) : (
+                `H${sliderLevel}`
+              )}
             </span>
           </Tooltip>
         </div>
