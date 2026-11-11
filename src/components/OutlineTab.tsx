@@ -2040,57 +2040,27 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
         </div>
 
         {/* Row 2: Level Slider */}
-        <div className="outline-level-slider-container" style={{ padding: "0 4px" }}>
+        <div className="outline-level-slider-container">
           {/* Level Dots */}
           <div
             ref={levelDotsRef}
-            className="outline-level-dots"
+            className={`outline-level-dots ${bookmarkMode ? "disabled" : ""}`}
             onPointerDown={handleLevelPointerDown}
             onPointerMove={handleLevelPointerMove}
             onPointerUp={(e) => {
               // 拖拽中副键抬起不提交，等主键抬起再应用层级
               if (e.button === 0) finishLevelDrag(e, true)
             }}
-            onPointerCancel={(e) => finishLevelDrag(e, false)}
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              position: "relative",
-              padding: "6px 0",
-              alignItems: "center",
-              touchAction: "none",
-            }}>
+            onPointerCancel={(e) => finishLevelDrag(e, false)}>
             {/* Background Line */}
-            <div
-              className="outline-level-line-bg"
-              style={{
-                position: "absolute",
-                top: "50%",
-                left: "4px",
-                right: "4px",
-                height: "4px",
-                background: "var(--gh-border, #e5e7eb)",
-                zIndex: 0,
-                transform: "translateY(-50%)",
-                borderRadius: "2px",
-              }}></div>
+            <div className="outline-level-line-bg" />
             {/* Progress Line */}
             <div
-              className="outline-level-progress"
+              className={`outline-level-progress ${bookmarkMode ? "disabled" : ""}`}
               style={{
-                position: "absolute",
-                top: "50%",
-                left: "4px",
-                height: "4px",
-                background: bookmarkMode
-                  ? "var(--gh-text-disabled, #9ca3af)"
-                  : "var(--gh-primary, #3b82f6)",
-                zIndex: 0,
-                transform: "translateY(-50%)",
-                borderRadius: "2px",
                 width: `calc((${sliderLevel} / 6) * (100% - 8px))`,
-                transition: "width 0.2s ease",
-              }}></div>
+              }}
+            />
 
             {/* Dots */}
             {[0, 1, 2, 3, 4, 5, 6].map((lvl) => {
@@ -2113,51 +2083,33 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
                   <div
                     className={`outline-level-dot ${isActive ? "active" : ""} ${bookmarkMode ? "disabled" : ""}`}
                     data-level={lvl}
-                    style={{
-                      width: "14px",
-                      height: "14px",
-                      borderRadius: "50%",
-                      backgroundColor: isActive
-                        ? bookmarkMode
-                          ? "var(--gh-text-disabled, #9ca3af)"
-                          : "var(--gh-primary, #3b82f6)"
-                        : "var(--gh-slider-dot-bg, #d1d5db)",
-                      border: isActive ? "2px solid var(--gh-bg, #fff)" : "none",
-                      zIndex: 1,
-                      cursor: bookmarkMode ? "not-allowed" : "pointer",
-                      position: "relative",
-                      transition: "all 0.2s ease",
-                      boxSizing: "border-box",
-                      boxShadow: isActive
-                        ? bookmarkMode
-                          ? "0 0 0 1px var(--gh-text-disabled, #9ca3af)"
-                          : "0 0 0 1px var(--gh-primary, #3b82f6)"
-                        : "none",
-                      opacity: bookmarkMode ? 0.5 : 1,
-                    }}
                   />
                 </Tooltip>
               )
             })}
           </div>
+          <Tooltip
+            content={
+              bookmarkMode
+                ? t("bookmarkModeDisabled")
+                : sliderLevel === 0
+                  ? showUserQueries && tree.some((node) => node.isUserQuery)
+                    ? t("outlineUserQueryRoleLabel")
+                    : t("outlineCollapseAll")
+                  : `H${sliderLevel}: ${levelCounts[sliderLevel] || 0}`
+            }>
+            <span
+              className={`outline-level-badge ${bookmarkMode ? "disabled" : ""}`}
+              aria-hidden="true">
+              {sliderLevel === 0 ? (showUserQueries ? "💬" : "H0") : `H${sliderLevel}`}
+            </span>
+          </Tooltip>
         </div>
       </div>
 
       {/* 搜索结果条 (Sticky) */}
       {searchQuery && (
-        <div
-          className="outline-result-bar"
-          style={{
-            textAlign: "center",
-            padding: "6px 8px", //稍微增加横向padding
-            margin: "0 8px 0 8px", // 去除底部外边距，由下方容器 padding 控制
-            color: "var(--gh-border-active)",
-            fontSize: "13px",
-            background: matchCount > 0 ? "var(--gh-folder-bg-default)" : "transparent",
-            borderRadius: "4px",
-            border: matchCount === 0 ? "1px dashed var(--gh-border, #e5e7eb)" : "none",
-            flexShrink: 0, // 防止被压缩
-          }}>
+        <div className={`outline-result-bar ${matchCount === 0 ? "is-empty" : ""}`}>
           {matchCount} {t("outlineSearchResult")}
         </div>
       )}
