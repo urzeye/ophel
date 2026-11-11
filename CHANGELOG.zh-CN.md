@@ -8,6 +8,10 @@
 
 ## [Unreleased]
 
+---
+
+## [1.3.3][1.3.3] - 2026-11-11
+
 ### 🚀 新增功能
 
 - **Safari 实验性适配** — 新增桌面 Safari 实验适配，保留核心功能，暂不支持系统通知、AI 生成后自动置顶标签页、Gemini 去水印。 (#1030)
@@ -1704,6 +1708,7 @@
 
 ---
 
+[1.3.3]: https://github.com/urzeye/ophel/releases/tag/v1.3.3
 [1.3.2]: https://github.com/urzeye/ophel/releases/tag/v1.3.2
 [1.3.1]: https://github.com/urzeye/ophel/releases/tag/v1.3.1
 [1.3.0]: https://github.com/urzeye/ophel/releases/tag/v1.3.0

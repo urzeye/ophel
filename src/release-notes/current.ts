@@ -2,11 +2,11 @@
 import type { ReleaseNotesContent } from "./types"
 
 export const currentReleaseNotes = {
-  version: "1.3.2",
-  date: "2026-11-09",
+  version: "1.3.3",
+  date: "2026-11-11",
   notes: {
-    en: "### 🚀 New Features\n\n- **Gemini Notebook Adaptation** — Added Gemini Notebook (formerly NotebookLM) support with outline navigation, theme switching, panel avoidance, prompt insertion, and per-column export. (#546, #1025)\n\n### ✨ Improvements\n\n- **Theme switching animation** — Switching from dark to light mode now shrinks the dark view into the clicked spot, while switching from light to dark still expands outward. (#1024)\n- **Sites without chat management** — The Chats tab is now hidden on unsupported sites, while the global switch remains available and is marked as unsupported on the current site. (#1026)\n- **Gemini Deep Research document navigation** — Scroll to Top, Scroll to Bottom and anchors now target the active document instead of the chat. (#1027)",
-    zh: "### 🚀 新增功能\n\n- **Gemini Notebook 适配** — 新增 Gemini Notebook（原 NotebookLM）适配，支持大纲导航、主题切换、智能避让、提示词插入和按当前栏目导出。 (#546, #1025)\n\n### ✨ 功能优化\n\n- **深浅主题切换动画** — 从深色切换到浅色时，过渡动画改为深色画面向点击位置收缩消失，从浅色切换到深色保持向外扩散。 (#1024)\n- **不支持对话的站点** — 对话标签不再显示，设置中的全局开关会标注当前站点不支持。 (#1026)\n- **Gemini 深度研究文档导航** — 在深度研究文档中使用「去顶部」「去底部」和锚点时会定位到当前文档，不再操作对话区域。 (#1027)",
+    en: "### 🚀 New Features\n\n- **Experimental Safari support** — Added desktop Safari experimental adaptation, retaining core functions. It does not currently support system notifications, automatic top tabs after AI generation, and Gemini watermark removal. (#1030)\n\n### ✨ Improvements\n\n- **Send shortcut** — Shortcuts now shows the current send-message key with a link to its setting, which also explains how sending and line breaks work. (#1032)\n- **Panel and outline UI refinement** — Refined panel header chrome, outline toolbar interactions, and empty-state presentation for a cleaner look. (#1038)\n\n### 🐛 Bug Fixes\n\n- **Hover preview triggering smart avoidance** — Fixed an issue where using outline jump in the hover preview panel activated smart avoidance and made the page jitter when the preview closed. (#1036)",
+    zh: "### 🚀 新增功能\n\n- **Safari 实验性适配** — 新增桌面 Safari 实验适配，保留核心功能，暂不支持系统通知、AI 生成后自动置顶标签页、Gemini 去水印。 (#1030)\n\n### ✨ 功能优化\n\n- **发送快捷键** — 快捷键位现在展示「发送消息」的当前按键并提供设置跳转入口，设置说明补充了发送与换行的行为。 (#1032)\n- **面板与大纲界面优化** — 优化面板顶栏质感、大纲工具栏交互与空态展示，界面更清爽统一。 (#1038)\n\n### 🐛 问题修复\n\n- **悬停预览误触智能避让** — 修复在悬停出现的预览面板里点击大纲跳转后会触发页面避让、预览消失时页面抖动的问题，现在预览期间不再触发避让。 (#1036)",
   },
   fullChangelogUrls: {
     en: "https://ophel.app/docs/changelog",

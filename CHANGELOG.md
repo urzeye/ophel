@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+---
+
+## [1.3.3][1.3.3] - 2026-11-11
+
 ### 🚀 New Features
 
 - **Experimental Safari support** — Added desktop Safari experimental adaptation, retaining core functions. It does not currently support system notifications, automatic top tabs after AI generation, and Gemini watermark removal. (#1030)
@@ -1703,6 +1707,7 @@ This is the first official release of Ophel, providing comprehensive enhancement
 
 ---
 
+[1.3.3]: https://github.com/urzeye/ophel/releases/tag/v1.3.3
 [1.3.2]: https://github.com/urzeye/ophel/releases/tag/v1.3.2
 [1.3.1]: https://github.com/urzeye/ophel/releases/tag/v1.3.1
 [1.3.0]: https://github.com/urzeye/ophel/releases/tag/v1.3.0
