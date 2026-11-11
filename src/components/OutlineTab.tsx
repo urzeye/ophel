@@ -2052,19 +2052,22 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
 
             {/* Export Conversation: 复用全局导出入口，按设置弹出选项弹窗或一键直出 */}
             {allowConversationExport && (
-              <Tooltip content={t("exportConversationTitle")}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    // 只有点击大纲工具栏的导出按钮才视为发现了该入口，停用流光引导
-                    markExportDiscoveredQuiet()
-                    window.dispatchEvent(new CustomEvent("ophel:openExportDialog"))
-                  }}
-                  aria-label={t("exportConversationTitle")}
-                  className={`outline-toolbar-btn export-accent ${exportDiscovered ? "" : "export-shimmer"}`}>
-                  <ExportIcon size={16} />
-                </button>
-              </Tooltip>
+              <>
+                <span className="outline-toolbar-divider" aria-hidden="true" />
+                <Tooltip content={t("exportConversationTitle")}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      // 只有点击大纲工具栏的导出按钮才视为发现了该入口，停用流光引导
+                      markExportDiscoveredQuiet()
+                      window.dispatchEvent(new CustomEvent("ophel:openExportDialog"))
+                    }}
+                    aria-label={t("exportConversationTitle")}
+                    className={`outline-toolbar-btn export-accent ${exportDiscovered ? "" : "export-shimmer"}`}>
+                    <ExportIcon size={16} />
+                  </button>
+                </Tooltip>
+              </>
             )}
           </div>
 

@@ -896,10 +896,18 @@
 }
 
 /* 导出入口：图标用主色与其它工具按钮区分 + 首次引导期间的微光扫过 + hover 淡色底与箭头微动效 */
+.outline-toolbar-divider {
+  flex: 0 0 1px;
+  width: 1px;
+  height: 16px;
+  margin: 0 3px 0 2px;
+  background: var(--gh-border, #e5e7eb);
+  opacity: 0.75;
+}
+
 .outline-toolbar-btn.export-accent {
   position: relative;
   overflow: hidden;
-  margin-left: 4px;
   border: 1px solid transparent;
   background: transparent;
   color: var(--gh-primary-text, var(--gh-primary, #4285f4));
