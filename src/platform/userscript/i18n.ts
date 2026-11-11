@@ -154,7 +154,7 @@ export function getEffectiveLanguage(settingLang: string): string {
   return resolveLocale(settingLang)
 }
 
-export function t(key: string, params?: Record<string, string>): string {
+export function t(key: string, params?: Record<string, string | number>): string {
   const langResources = loadLocaleMessages(currentLang)
   const fallbackResources =
     currentLang === DEFAULT_LOCALE ? langResources : loadLocaleMessages(DEFAULT_LOCALE)
@@ -166,7 +166,7 @@ export function t(key: string, params?: Record<string, string>): string {
 
   if (params) {
     Object.keys(params).forEach((paramKey) => {
-      text = text.replace(new RegExp(`{${paramKey}}`, "g"), params[paramKey])
+      text = text.replace(new RegExp(`{${paramKey}}`, "g"), String(params[paramKey]))
     })
   }
 

@@ -94,7 +94,7 @@ export function getEffectiveLanguage(settingLang: string): string {
   return settingLang
 }
 
-export function t(key: string, params?: Record<string, string>): string {
+export function t(key: string, params?: Record<string, string | number>): string {
   const langResources = resources[currentLang]
   const enResources = resources[FALLBACK_LANG]
   let text =
@@ -106,7 +106,7 @@ export function t(key: string, params?: Record<string, string>): string {
 
   if (params) {
     Object.keys(params).forEach((paramKey) => {
-      text = text.replace(new RegExp(`{${paramKey}}`, "g"), params[paramKey])
+      text = text.replace(new RegExp(`{${paramKey}}`, "g"), String(params[paramKey]))
     })
   }
 
