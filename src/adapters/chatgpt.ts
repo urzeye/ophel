@@ -43,6 +43,7 @@ import {
 import {
   CHATGPT_CONFIG,
   CHATGPT_CONFIG_VERSION,
+  CHATGPT_DIL_TABLE_WIDTH_SELECTOR,
   CHATGPT_HOME_UX_SCOPE,
   CHATGPT_NEW_UX_SCOPE,
   CHATGPT_NEW_UX_WIDTH_SELECTORS,
@@ -1192,6 +1193,9 @@ export class ChatGPTAdapter extends SiteAdapter {
           extraCss: "width: 100% !important; min-width: 0 !important;",
         },
         ...CHATGPT_NEW_UX_WIDTH_SELECTORS,
+        // 避免避让规则里继承的 --thread-content-max-width: 100% 把 DIL 表格拉满
+        // container query 容器（issue #1037）；px 目标值原样生效。
+        CHATGPT_DIL_TABLE_WIDTH_SELECTOR,
       ],
       insetSelectors: [
         {
