@@ -11,7 +11,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
-- **ChatGPT table distortion** — Fixed an issue where tables in ChatGPT answers were stretched and misaligned after opening the panel; tables now keep their original width. (#1037, #1042)
+- **ChatGPT table distortion** — Fixed an issue where tables in ChatGPT answers were stretched and misaligned after opening the panel or changing the site width; tables now stay as wide as the content. (#1037, #1042)
 
 ---
 

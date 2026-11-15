@@ -43,10 +43,10 @@ import {
 import {
   CHATGPT_CONFIG,
   CHATGPT_CONFIG_VERSION,
+  CHATGPT_DIL_TABLE_WIDTH_SELECTOR,
   CHATGPT_HOME_UX_SCOPE,
   CHATGPT_NEW_UX_SCOPE,
   CHATGPT_NEW_UX_WIDTH_SELECTORS,
-  CHATGPT_PAGE_WIDTH_SCOPE,
   type ChatGPTSiteConfig,
 } from "./chatgpt-config"
 
@@ -1193,15 +1193,9 @@ export class ChatGPTAdapter extends SiteAdapter {
           extraCss: "width: 100% !important; min-width: 0 !important;",
         },
         ...CHATGPT_NEW_UX_WIDTH_SELECTORS,
-        {
-          // ChatGPT DIL 表格用 --thread-content-max-width 计算表格宽度（min(100cqw, var(...))）。
-          // 上面的规则把容器上的该变量改成 100% 后会沿继承链把表格拉满 container query
-          // 容器，而不是保持内容列宽（issue #1037）。这里把表格组件上的变量钉回避让
-          // 目标宽度，保持表格与内容列同宽。
-          selector: `${CHATGPT_PAGE_WIDTH_SCOPE} [data-d-component="table"][data-d-column-sizing="auto"]`,
-          property: "--thread-content-max-width",
-          noCenter: true,
-        },
+        // 避免避让规则里继承的 --thread-content-max-width: 100% 把 DIL 表格拉满
+        // container query 容器（issue #1037）；px 目标值原样生效。
+        CHATGPT_DIL_TABLE_WIDTH_SELECTOR,
       ],
       insetSelectors: [
         {

@@ -83,7 +83,7 @@ export interface ChatGPTSiteConfig extends BuiltinSiteConfig {
   networkMonitor: NetworkMonitorConfig
   modelSwitcher: Omit<ModelSwitcherConfig, "targetModelKeyword">
   export: ExportConfig
-  widthSelectors: Omit<WidthSelectorConfig, "transformValue">[]
+  widthSelectors: WidthSelectorConfig[]
   zenMode: ZenModeConfig
   cleanMode: ZenModeConfig
   mermaidSupport: NonNullable<BuiltinSiteConfig["mermaidSupport"]>
@@ -93,7 +93,7 @@ export interface ChatGPTSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const CHATGPT_CONFIG_VERSION = 9
+export const CHATGPT_CONFIG_VERSION = 10
 
 export const CHATGPT_NEW_UX_SCOPE =
   'main[data-app-shell-main-surface]:has([data-app-action-timeline-scroll], [data-thread-user-message-navigation-content="true"])'
@@ -135,6 +135,18 @@ export const CHATGPT_NEW_UX_WIDTH_SELECTORS: Omit<WidthSelectorConfig, "transfor
       "width: 100% !important; min-width: 0 !important; margin-left: auto !important; margin-right: auto !important;",
   },
 ]
+
+// ChatGPT DIL 表格用继承的 --thread-content-max-width 计算表格宽度（min(100cqw, var(...))）。
+// 宽度规则把容器上的该变量改成 100% 后会把表格拉满 container query 容器（issue #1037）。
+// 这里把表格组件上的变量钉回目标内容列宽：px 目标（面板避让）原样使用；
+// % 目标（页面宽度）换算成 cqw，等价于内容列相对 container 的百分比，避免百分比
+// 在表格包含块上形成循环依赖。
+export const CHATGPT_DIL_TABLE_WIDTH_SELECTOR: WidthSelectorConfig = {
+  selector: `${CHATGPT_PAGE_WIDTH_SCOPE} [data-d-component="table"][data-d-column-sizing="auto"]`,
+  property: "--thread-content-max-width",
+  transformValue: (value) => value.replace(/%$/, "cqw"),
+  noCenter: true,
+}
 
 const createChatGPTConfig = (): ChatGPTSiteConfig => {
   // 消息单元选择器：
@@ -340,6 +352,7 @@ const createChatGPTConfig = (): ChatGPTSiteConfig => {
         extraCss: "max-width: calc(100vw - 32px) !important; min-width: 0 !important;",
       },
       ...CHATGPT_NEW_UX_WIDTH_SELECTORS,
+      CHATGPT_DIL_TABLE_WIDTH_SELECTOR,
     ],
     zenMode: {
       hide: [
