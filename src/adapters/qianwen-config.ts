@@ -79,7 +79,7 @@ export interface QianwenSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const QIANWEN_CONFIG_VERSION = 2
+export const QIANWEN_CONFIG_VERSION = 3
 
 const createQianwenConfig = (): QianwenSiteConfig => {
   const questionItem =
@@ -276,7 +276,12 @@ const createQianwenConfig = (): QianwenSiteConfig => {
     zenMode: { hide: [sidebar] },
     cleanMode: {
       hide: ["#ice-container .root-G6nVVr"],
-      preserveFlow: ['[class*="mainContent"] > div:last-child'],
+      // 新建会话页 mainContent 末尾会追加推广轮播和用户协议条，其数量与位置随页面
+      // 状态变化，故按内容特征而非位置匹配；guideComp/wrapper 内含输入框与会话，豁免
+      preserveFlow: [
+        '[class*="mainContent"] > div:has([data-promo-banner-canvas]):not([class*="guideComp"]):not([class*="wrapper"])',
+        '[class*="mainContent"] > div:has(a[href*="terms.alicdn.com/legal-agreement"]):not([class*="guideComp"]):not([class*="wrapper"])',
+      ],
     },
     sitePrivateSelectors: {
       chatInput,

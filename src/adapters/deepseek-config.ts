@@ -63,7 +63,7 @@ export interface DeepSeekSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const DEEPSEEK_CONFIG_VERSION = 5
+export const DEEPSEEK_CONFIG_VERSION = 6
 
 const createDeepSeekConfig = (): DeepSeekSiteConfig => {
   const conversationLink = 'a[href*="/a/chat/s/"]'
@@ -173,7 +173,9 @@ const createDeepSeekConfig = (): DeepSeekSiteConfig => {
     ],
     zenMode: { hide: [".dc04ec1d"] },
     cleanMode: {
-      preserveFlow: ["._0fcaa63", ".ds-virtual-list > div:last-child > div:last-child"],
+      // 免责声明是输入区容器里的纯文本叶子节点；按“含输入框的容器内的叶子 div”定位，
+      // 不依赖位置、hash 类名与多语言文案；新会话页消息区不渲染时同样成立
+      preserveFlow: [`.ds-virtual-list > div:has(textarea${sidebarScrollArea}) > div:not(:has(*))`],
     },
     quickQuote: "enabled",
     sitePrivateSelectors: {
