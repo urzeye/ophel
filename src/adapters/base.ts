@@ -11,7 +11,7 @@ import { DOMToolkit } from "~utils/dom-toolkit"
 import { createExportAssetCollector, type ExportAssetCollector } from "~utils/export-assets"
 import type { ExportBundle, ExportFormat, ExportMessage } from "~utils/exporter"
 import { t } from "~utils/i18n"
-import { createSiteInstanceKey } from "~utils/site-identity"
+import { canBuiltinSiteClaimLegacyData, createSiteInstanceKey } from "~utils/site-identity"
 import type { ExportPackaging } from "~utils/storage"
 import type { VirtualOutlinePositionSnapshot } from "~utils/virtual-outline-position"
 
@@ -463,15 +463,16 @@ export abstract class SiteAdapter {
   /** 返回适配器/站点包标识符（用于能力、行为与更新身份） */
   abstract getSiteId(): string
 
-  /** 返回当前站点实例的数据分区键；内置站点保持与 siteId 相同。 */
+  /** 返回当前站点实例的数据分区键；单 host 内置站点与 siteId 相同，多 host 站点按 origin 分区。 */
   getSiteInstanceKey(): string {
     const origin = typeof window !== "undefined" ? window.location.origin : undefined
     return createSiteInstanceKey(this.getSiteId(), origin)
   }
 
-  /** 当前实例是否能安全接管旧版仅按 siteId 保存的数据。 */
+  /** 当前实例是否能安全接管旧版仅按 siteId 保存的数据；多 host 站点仅主 host 接管。 */
   canClaimLegacySiteData(): boolean {
-    return this.getSiteInstanceKey() === this.getSiteId()
+    const origin = typeof window !== "undefined" ? window.location.origin : undefined
+    return canBuiltinSiteClaimLegacyData(this.getSiteId(), origin)
   }
 
   /** 返回站点显示名称 */

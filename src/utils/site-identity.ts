@@ -1,3 +1,5 @@
+import { SITE_IDS } from "~constants"
+
 const SITE_PACK_SITE_ID_PREFIX = "pack:"
 const SITE_INSTANCE_ORIGIN_SEPARATOR = "@"
 const SCOPED_STORAGE_KEY_VERSION = "v1"
@@ -10,6 +12,20 @@ export interface PersistedSiteIdentity {
 
 export const isSitePackSiteId = (siteId: string): boolean =>
   siteId.startsWith(SITE_PACK_SITE_ID_PREFIX)
+
+/**
+ * 内置多 host 站点：同一适配器服务多个域名与账号体系独立的站点（如
+ * kimi.com / kimi.ai、doubao.com / dola.com），本地数据必须按 origin 分区，
+ * 否则两站同 ID 的对话会共用同一份本地记录互相覆盖。
+ * host 归一化去掉 www 前缀（www.zchat.z.ai 与 zchat.z.ai 视为同一分区）。
+ */
+const MULTI_HOST_BUILTIN_SITES: Readonly<
+  Record<string, { hosts: readonly string[]; primaryHost: string }>
+> = {
+  [SITE_IDS.KIMI]: { hosts: ["kimi.com", "kimi.ai"], primaryHost: "kimi.com" },
+  [SITE_IDS.DOUBAO]: { hosts: ["doubao.com", "dola.com"], primaryHost: "doubao.com" },
+  [SITE_IDS.ZAI]: { hosts: ["chat.z.ai", "zchat.z.ai"], primaryHost: "chat.z.ai" },
+}
 
 export const normalizeSiteOrigin = (origin: string): string => {
   let url: URL
@@ -37,13 +53,49 @@ export const tryNormalizeSiteOrigin = (origin: string | null | undefined): strin
   }
 }
 
+const normalizeInstanceHost = (origin: string): string | null => {
+  const normalized = tryNormalizeSiteOrigin(origin)
+  if (!normalized) return null
+
+  try {
+    return new URL(normalized).hostname.toLowerCase().replace(/^www\./, "")
+  } catch {
+    return null
+  }
+}
+
+/** 已知多 host 按 origin 分区；host 缺失或未知时归主分区，避免数据散落。 */
+const resolveMultiHostPartition = (
+  config: { hosts: readonly string[]; primaryHost: string },
+  origin?: string | null,
+): string => {
+  const host = origin ? normalizeInstanceHost(origin) : null
+  return host && config.hosts.includes(host) ? host : config.primaryHost
+}
+
 export const createSiteInstanceKey = (siteId: string, origin?: string): string => {
+  const multiHost = MULTI_HOST_BUILTIN_SITES[siteId]
+  if (multiHost) {
+    const host = resolveMultiHostPartition(multiHost, origin)
+    return `${siteId}${SITE_INSTANCE_ORIGIN_SEPARATOR}https://${host}`
+  }
+
   if (!isSitePackSiteId(siteId)) return siteId
   if (!origin) {
     throw new TypeError(`SitePack instance ${siteId} requires a runtime origin`)
   }
 
   return `${siteId}${SITE_INSTANCE_ORIGIN_SEPARATOR}${normalizeSiteOrigin(origin)}`
+}
+
+/**
+ * 内置站点能否认领仅按 siteId 保存的旧数据。
+ * 多 host 站点只有主 host 认领（旧数据无法区分归属，归主站损失最小）。
+ */
+export const canBuiltinSiteClaimLegacyData = (siteId: string, origin?: string): boolean => {
+  const multiHost = MULTI_HOST_BUILTIN_SITES[siteId]
+  if (!multiHost) return true
+  return resolveMultiHostPartition(multiHost, origin) === multiHost.primaryHost
 }
 
 export const createSiteScopedStorageKey = (siteInstanceKey: string, resourceId: string): string =>
@@ -55,6 +107,9 @@ export const resolvePersistedSiteInstanceKey = (identity: PersistedSiteIdentity)
 
   const siteId = identity.siteId?.trim()
   if (!siteId) return null
+  if (MULTI_HOST_BUILTIN_SITES[siteId]) {
+    return createSiteInstanceKey(siteId, identity.url ?? undefined)
+  }
   if (!isSitePackSiteId(siteId)) return siteId
 
   const origin = tryNormalizeSiteOrigin(identity.url)

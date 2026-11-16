@@ -231,7 +231,9 @@ export class InlineBookmarkManager {
       // 生成签名和检查是否已收藏
       const sessionId = this.outlineManager.getBookmarkSessionId(sourceId)
       const signature = this.outlineManager.getSignature(item, sourceId)
-      const isBookmarked = bookmarkStore.getBookmarkId(sessionId, signature) !== null
+      const isBookmarked =
+        bookmarkStore.getBookmarkId(sessionId, this.adapter.getSiteInstanceKey(), signature) !==
+        null
 
       // 2. 注入图标。虚拟滚动可能复用 DOM 元素承载不同消息，
       // 所以不能只按元素去重，还要确认签名仍然一致。
@@ -451,13 +453,13 @@ export class InlineBookmarkManager {
   ) {
     const bookmarkStore = useBookmarkStore.getState()
     const sessionId = this.outlineManager.getBookmarkSessionId(sourceId)
-    const siteId = this.adapter.getSiteId()
+    const siteInstanceKey = this.adapter.getSiteInstanceKey()
     const cid = this.adapter.getCurrentCid() || ""
 
     const scrollContainer = this.adapter.getOutlineScrollContainer(sourceId)
     const scrollTop = (item.element as HTMLElement).offsetTop + (scrollContainer?.scrollTop || 0)
 
-    bookmarkStore.toggleBookmark(sessionId, siteId, cid, item, signature, scrollTop)
+    bookmarkStore.toggleBookmark(sessionId, siteInstanceKey, cid, item, signature, scrollTop)
   }
 
   /**
@@ -467,6 +469,7 @@ export class InlineBookmarkManager {
     if (this.displayMode === "hidden") return
 
     const bookmarkStore = useBookmarkStore.getState()
+    const siteInstanceKey = this.adapter.getSiteInstanceKey()
 
     const icons = DOMToolkit.query(`.${ICON_CLASS}`, {
       all: true,
@@ -480,7 +483,8 @@ export class InlineBookmarkManager {
       if (!signature) return
 
       const sessionId = this.outlineManager.getBookmarkSessionId(sourceId)
-      const isBookmarked = bookmarkStore.getBookmarkId(sessionId, signature) !== null
+      const isBookmarked =
+        bookmarkStore.getBookmarkId(sessionId, siteInstanceKey, signature) !== null
       const hasClass = wrapper.classList.contains(ICON_BOOKMARKED_CLASS)
 
       if (isBookmarked !== hasClass) {

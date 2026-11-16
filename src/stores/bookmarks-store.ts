@@ -2,6 +2,7 @@ import { create } from "zustand"
 import { createJSONStorage, persist } from "zustand/middleware"
 
 import { BOOKMARKS_STORAGE_KEY } from "~constants/storage-keys"
+import { resolvePersistedSiteInstanceKey } from "~utils/site-identity"
 
 import { chromeStorageAdapter } from "./chrome-adapter"
 import type { OutlineItem } from "~adapters/base"
@@ -9,7 +10,7 @@ import type { OutlineItem } from "~adapters/base"
 export interface Bookmark {
   id: string
   sessionId: string
-  siteId: string // 站点标识 (chatgpt/claude/gemini...)
+  siteInstanceKey: string // 站点数据分区键（多 host 站点含 origin，如 kimi@https://kimi.ai）
   cid: string // 账号/团队 ID
   title: string
   level: number
@@ -24,7 +25,7 @@ interface BookmarkStore {
   // Actions
   addBookmark: (
     sessionId: string,
-    siteId: string,
+    siteInstanceKey: string,
     cid: string,
     node: OutlineItem,
     signature: string,
@@ -33,16 +34,16 @@ interface BookmarkStore {
   removeBookmark: (id: string) => void
   toggleBookmark: (
     sessionId: string,
-    siteId: string,
+    siteInstanceKey: string,
     cid: string,
     node: OutlineItem,
     signature: string,
     scrollTop: number,
   ) => void
   updateBookmark: (id: string, updates: Partial<Omit<Bookmark, "id">>) => void
-  getBookmarksBySession: (sessionId: string) => Bookmark[]
-  getBookmarkId: (sessionId: string, signature: string) => string | null
-  clearSessionBookmarks: (sessionId: string) => void
+  getBookmarksBySession: (sessionId: string, siteInstanceKey: string) => Bookmark[]
+  getBookmarkId: (sessionId: string, siteInstanceKey: string, signature: string) => string | null
+  clearSessionBookmarks: (sessionId: string, siteInstanceKey: string) => void
   clearAllBookmarks: () => void
 }
 
@@ -70,11 +71,11 @@ export const useBookmarkStore = create<BookmarkStore>()(
     (set, get) => ({
       bookmarks: [],
 
-      addBookmark: (sessionId, siteId, cid, node, signature, scrollTop) => {
+      addBookmark: (sessionId, siteInstanceKey, cid, node, signature, scrollTop) => {
         const newBookmark: Bookmark = {
           id: crypto.randomUUID(),
           sessionId,
-          siteId,
+          siteInstanceKey,
           cid,
           title: node.text,
           level: node.level,
@@ -100,31 +101,38 @@ export const useBookmarkStore = create<BookmarkStore>()(
         }))
       },
 
-      toggleBookmark: (sessionId, siteId, cid, node, signature, scrollTop) => {
+      toggleBookmark: (sessionId, siteInstanceKey, cid, node, signature, scrollTop) => {
         const state = get()
-        const existingId = state.getBookmarkId(sessionId, signature)
+        const existingId = state.getBookmarkId(sessionId, siteInstanceKey, signature)
 
         if (existingId) {
           state.removeBookmark(existingId)
         } else {
-          state.addBookmark(sessionId, siteId, cid, node, signature, scrollTop)
+          state.addBookmark(sessionId, siteInstanceKey, cid, node, signature, scrollTop)
         }
       },
 
-      getBookmarksBySession: (sessionId) => {
-        return get().bookmarks.filter((b) => b.sessionId === sessionId)
+      getBookmarksBySession: (sessionId, siteInstanceKey) => {
+        return get().bookmarks.filter(
+          (b) => b.sessionId === sessionId && b.siteInstanceKey === siteInstanceKey,
+        )
       },
 
-      getBookmarkId: (sessionId, signature) => {
+      getBookmarkId: (sessionId, siteInstanceKey, signature) => {
         const found = get().bookmarks.find(
-          (b) => b.sessionId === sessionId && b.signature === signature,
+          (b) =>
+            b.sessionId === sessionId &&
+            b.siteInstanceKey === siteInstanceKey &&
+            b.signature === signature,
         )
         return found ? found.id : null
       },
 
-      clearSessionBookmarks: (sessionId) => {
+      clearSessionBookmarks: (sessionId, siteInstanceKey) => {
         set((state) => ({
-          bookmarks: state.bookmarks.filter((b) => b.sessionId !== sessionId),
+          bookmarks: state.bookmarks.filter(
+            (b) => !(b.sessionId === sessionId && b.siteInstanceKey === siteInstanceKey),
+          ),
         }))
       },
 
@@ -135,6 +143,31 @@ export const useBookmarkStore = create<BookmarkStore>()(
     {
       name: BOOKMARKS_STORAGE_KEY,
       storage: createJSONStorage(() => flatBookmarkStorage),
+      version: 1,
+      migrate: (persistedState, version) => {
+        if (version >= 1) return persistedState
+        const state = persistedState as { bookmarks?: Array<Record<string, unknown>> }
+        if (!Array.isArray(state?.bookmarks)) return persistedState
+
+        // v0 书签的 siteId 仅为内置站点 ID（多 host 站点两站混用同一值），
+        // 迁移为站点分区键；无法归属的记录归主分区，避免数据散落。
+        return {
+          ...state,
+          bookmarks: state.bookmarks.map((bookmark) => {
+            if (typeof bookmark.siteInstanceKey === "string" && bookmark.siteInstanceKey) {
+              return bookmark
+            }
+            const siteInstanceKey = resolvePersistedSiteInstanceKey({
+              siteId: typeof bookmark.siteId === "string" ? bookmark.siteId : null,
+            })
+            if (!siteInstanceKey) return bookmark
+
+            const next: Record<string, unknown> = { ...bookmark, siteInstanceKey }
+            delete next.siteId
+            return next
+          }),
+        }
+      },
     },
   ),
 )
