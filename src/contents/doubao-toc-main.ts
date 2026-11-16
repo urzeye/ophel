@@ -10,7 +10,7 @@ import type { PlasmoCSConfig } from "plasmo"
 import { installDoubaoTocBridge } from "~core/doubao-toc-bridge"
 
 export const config: PlasmoCSConfig = {
-  matches: ["https://www.doubao.com/*"],
+  matches: ["https://www.doubao.com/*", "https://www.dola.com/*"],
   world: "MAIN",
   run_at: "document_start",
 }

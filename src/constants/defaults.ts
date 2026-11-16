@@ -259,8 +259,8 @@ export const SUPPORTED_AI_PLATFORMS: SupportedAiPlatform[] = [
   createSupportedAiPlatform({
     id: SITE_IDS.DOUBAO,
     name: "Doubao",
-    matchPatterns: ["https://www.doubao.com/*"],
-    entryUrls: ["https://www.doubao.com"],
+    matchPatterns: ["https://www.doubao.com/*", "https://www.dola.com/*"],
+    entryUrls: ["https://www.doubao.com", "https://www.dola.com"],
     icon: "🌱",
   }),
   createSupportedAiPlatform({

@@ -1,5 +1,5 @@
 /**
- * 豆包适配器（www.doubao.com）
+ * 豆包适配器（www.doubao.com / www.dola.com 海外版 Dola）
  *
  * 选择器策略：
  * - 侧边栏基于新结构的稳定根节点 `#flow_chat_sidebar`
@@ -82,11 +82,17 @@ import { DOUBAO_CONFIG, DOUBAO_CONFIG_VERSION, type DoubaoSiteConfig } from "./d
 
 /** 匹配 /chat/{id}、/code/chat/{id} 或 /thread/{id}，捕获对话 ID */
 const conversationPathPattern = /^(?:(?:\/code)?\/chat|\/thread)\/([^/?#]+)/
-const DOUBAO_HOST = "www.doubao.com"
+// 裸域名均 302 到 www 子域，content script 注入链路也只匹配 www，无需覆盖裸域名
+const DOLA_HOST = "www.dola.com"
+const DOUBAO_HOSTS = new Set(["www.doubao.com", DOLA_HOST])
 const DOUBAO_THEME_STORAGE_KEY = "dbx-web-theme"
 
 function isDoubaoHost(): boolean {
-  return typeof window !== "undefined" && window.location.hostname === DOUBAO_HOST
+  return typeof window !== "undefined" && DOUBAO_HOSTS.has(window.location.hostname)
+}
+
+function isDolaHost(): boolean {
+  return typeof window !== "undefined" && window.location.hostname === DOLA_HOST
 }
 
 /**
@@ -244,7 +250,7 @@ export class DoubaoAdapter extends SiteAdapter {
   }
 
   getName(): string {
-    return "豆包"
+    return isDolaHost() ? "Dola" : "豆包"
   }
 
   getBuiltinConfig(): DoubaoSiteConfig {
@@ -604,7 +610,7 @@ export class DoubaoAdapter extends SiteAdapter {
 
   getNewTabUrl(): string {
     const prefix = window.location.pathname.startsWith("/code/") ? "/code" : ""
-    return `https://www.doubao.com${prefix}/chat/`
+    return `${window.location.origin}${prefix}/chat/`
   }
 
   // ===== 对话列表 =====
@@ -1196,9 +1202,10 @@ export class DoubaoAdapter extends SiteAdapter {
 
       try {
         const url = new URL(source)
+        // Dola 图片 CDN 在 ibyteimg.com 下，且签名域名为 flow-image-sign（无 x）
         const isGeneratedImage =
-          /(^|\.)byteimg\.com$/i.test(url.hostname) &&
-          (/\/rc_gen_image\//i.test(url.pathname) || /flow-imagex-sign/i.test(url.hostname))
+          /(^|\.)i?byteimg\.com$/i.test(url.hostname) &&
+          (/\/rc_gen_image\//i.test(url.pathname) || /flow-image/i.test(url.hostname))
 
         if (!isGeneratedImage) return
       } catch {
