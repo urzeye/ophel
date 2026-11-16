@@ -534,7 +534,7 @@ async function init() {
           const store = settingsStoreRef.current
           if (!store || !adapter) return false
           return matchesHiddenPath(
-            store.getState().settings.hiddenPaths[adapter.getSiteInstanceKey()],
+            store.getState().settings.hiddenPaths[adapter.getSiteSettingsKey()],
             window.location.pathname,
           )
         }, [])
@@ -717,9 +717,8 @@ async function init() {
         adapter.afterPropertiesSet({})
 
         const siteId = adapter.getSiteId()
-        const siteInstanceKey = adapter.getSiteInstanceKey()
         if (adapter.canClaimLegacySiteData()) {
-          claimLegacySiteSettings(siteId, siteInstanceKey)
+          claimLegacySiteSettings(siteId, adapter.getSiteSettingsKey())
         }
 
         // ========== 初始化所有核心模块（使用共享模块） ==========
@@ -735,7 +734,6 @@ async function init() {
           adapter,
           settings,
           siteId,
-          siteInstanceKey,
           isStale: () => generation !== initGeneration || activeAdapter !== adapter,
         }
 

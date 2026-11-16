@@ -79,6 +79,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 }) => {
   const siteId = adapter.getSiteId()
   const siteInstanceKey = adapter.getSiteInstanceKey()
+  // 主题等站点设置按站点共享：多 host 内置站点必须读写裸 siteId 键，
+  // 不能随 origin 分区，否则与运行时的 getSiteSettingsKey 读取脱节
+  const siteSettingsKey = adapter.getSiteSettingsKey()
   const [activePage, setActivePage] = useState<string>(NAV_IDS.GENERAL)
   const hasUnseenReleaseNotes = useHasUnseenReleaseNotes()
   const [initialSubTab, setInitialSubTab] = useState<string | undefined>(undefined)
@@ -381,7 +384,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       case NAV_IDS.SITE_PACKS:
         return <SitePacksPage initialTab={initialSubTab} />
       case NAV_IDS.APPEARANCE:
-        return <AppearancePage siteId={siteInstanceKey} initialTab={initialSubTab} />
+        return <AppearancePage siteId={siteSettingsKey} initialTab={initialSubTab} />
       case NAV_IDS.FEATURES:
         return <FeaturesPage siteId={siteId} initialTab={initialSubTab} />
       case NAV_IDS.SHORTCUTS:
@@ -449,7 +452,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             showPage()
           }}
           hasUnseenReleaseNotes={hasUnseenReleaseNotes}
-          siteId={siteInstanceKey}
+          siteId={siteSettingsKey}
           titleId={titleId}
         />
 

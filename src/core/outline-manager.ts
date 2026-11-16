@@ -865,7 +865,10 @@ export class OutlineManager {
   toggleBookmark(node: OutlineNode) {
     if (!this.siteAdapter.supportsOutlineBookmarks()) return
     const sessionId = this.getBookmarkSessionId()
-    const siteId = this.siteAdapter.getSiteId() // 站点标识
+    const siteInstanceKey = this.siteAdapter.getSiteInstanceKey() // 站点数据分区键
+    const legacySiteId = this.siteAdapter.canClaimLegacySiteData()
+      ? this.siteAdapter.getSiteId()
+      : undefined
     const cid = this.siteAdapter.getCurrentCid() || "" // 账号 ID
     const signature = this.generateSignature(node)
     // Use node.element.offsetTop if available, or current scroll position?
@@ -879,7 +882,7 @@ export class OutlineManager {
 
     // 切换收藏状态
     const store = useBookmarkStore.getState()
-    const existingId = store.getBookmarkId(sessionId, signature)
+    const existingId = store.getBookmarkId(sessionId, siteInstanceKey, signature, legacySiteId)
 
     if (existingId) {
       // 移除收藏
@@ -888,9 +891,10 @@ export class OutlineManager {
       node.bookmarkId = undefined
     } else {
       // 添加收藏
-      store.addBookmark(sessionId, siteId, cid, node, signature, scrollTop)
+      store.addBookmark(sessionId, siteInstanceKey, cid, node, signature, scrollTop)
       node.isBookmarked = true
-      node.bookmarkId = store.getBookmarkId(sessionId, signature) || undefined
+      node.bookmarkId =
+        store.getBookmarkId(sessionId, siteInstanceKey, signature, legacySiteId) || undefined
     }
 
     // 直接通知 UI 更新，不重建树（避免折叠状态被重置）
@@ -1015,7 +1019,13 @@ export class OutlineManager {
     // --- Merge Bookmarks ---
     const sessionId = this.getBookmarkSessionId()
     const bookmarks = this.siteAdapter.supportsOutlineBookmarks()
-      ? useBookmarkStore.getState().getBookmarksBySession(sessionId)
+      ? useBookmarkStore
+          .getState()
+          .getBookmarksBySession(
+            sessionId,
+            this.siteAdapter.getSiteInstanceKey(),
+            this.siteAdapter.canClaimLegacySiteData() ? this.siteAdapter.getSiteId() : undefined,
+          )
       : []
     this.ghostBookmarkIds = new Set()
 

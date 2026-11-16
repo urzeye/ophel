@@ -9,7 +9,7 @@ import type { OutlineItem } from "~adapters/base"
 export interface Bookmark {
   id: string
   sessionId: string
-  siteId: string // 站点标识 (chatgpt/claude/gemini...)
+  siteId: string // 沿用存储字段名，值为站点数据分区键；多 host 站点含 origin。
   cid: string // 账号/团队 ID
   title: string
   level: number
@@ -24,7 +24,7 @@ interface BookmarkStore {
   // Actions
   addBookmark: (
     sessionId: string,
-    siteId: string,
+    siteInstanceKey: string,
     cid: string,
     node: OutlineItem,
     signature: string,
@@ -33,17 +33,41 @@ interface BookmarkStore {
   removeBookmark: (id: string) => void
   toggleBookmark: (
     sessionId: string,
-    siteId: string,
+    siteInstanceKey: string,
     cid: string,
     node: OutlineItem,
     signature: string,
     scrollTop: number,
+    legacySiteId?: string,
   ) => void
   updateBookmark: (id: string, updates: Partial<Omit<Bookmark, "id">>) => void
-  getBookmarksBySession: (sessionId: string) => Bookmark[]
-  getBookmarkId: (sessionId: string, signature: string) => string | null
-  clearSessionBookmarks: (sessionId: string) => void
+  getBookmarksBySession: (
+    sessionId: string,
+    siteInstanceKey: string,
+    legacySiteId?: string,
+  ) => Bookmark[]
+  getBookmarkId: (
+    sessionId: string,
+    siteInstanceKey: string,
+    signature: string,
+    legacySiteId?: string,
+  ) => string | null
+  clearSessionBookmarks: (sessionId: string, siteInstanceKey: string, legacySiteId?: string) => void
   clearAllBookmarks: () => void
+}
+
+/**
+ * 仅为能够安全认领旧数据的站点保留裸 siteId 匹配。
+ * 多 host 内置站点只匹配完整分区键，不继承旧收藏。
+ */
+const matchesSiteScope = (
+  bookmark: Bookmark,
+  siteInstanceKey: string,
+  legacySiteId?: string,
+): boolean => {
+  return (
+    bookmark.siteId === siteInstanceKey || Boolean(legacySiteId && bookmark.siteId === legacySiteId)
+  )
 }
 
 // 扁平化 storage adapter：直接存储 bookmarks 数组到根节点
@@ -70,11 +94,11 @@ export const useBookmarkStore = create<BookmarkStore>()(
     (set, get) => ({
       bookmarks: [],
 
-      addBookmark: (sessionId, siteId, cid, node, signature, scrollTop) => {
+      addBookmark: (sessionId, siteInstanceKey, cid, node, signature, scrollTop) => {
         const newBookmark: Bookmark = {
           id: crypto.randomUUID(),
           sessionId,
-          siteId,
+          siteId: siteInstanceKey,
           cid,
           title: node.text,
           level: node.level,
@@ -100,31 +124,47 @@ export const useBookmarkStore = create<BookmarkStore>()(
         }))
       },
 
-      toggleBookmark: (sessionId, siteId, cid, node, signature, scrollTop) => {
+      toggleBookmark: (
+        sessionId,
+        siteInstanceKey,
+        cid,
+        node,
+        signature,
+        scrollTop,
+        legacySiteId,
+      ) => {
         const state = get()
-        const existingId = state.getBookmarkId(sessionId, signature)
+        const existingId = state.getBookmarkId(sessionId, siteInstanceKey, signature, legacySiteId)
 
         if (existingId) {
           state.removeBookmark(existingId)
         } else {
-          state.addBookmark(sessionId, siteId, cid, node, signature, scrollTop)
+          state.addBookmark(sessionId, siteInstanceKey, cid, node, signature, scrollTop)
         }
       },
 
-      getBookmarksBySession: (sessionId) => {
-        return get().bookmarks.filter((b) => b.sessionId === sessionId)
+      getBookmarksBySession: (sessionId, siteInstanceKey, legacySiteId) => {
+        return get().bookmarks.filter(
+          (b) => b.sessionId === sessionId && matchesSiteScope(b, siteInstanceKey, legacySiteId),
+        )
       },
 
-      getBookmarkId: (sessionId, signature) => {
+      getBookmarkId: (sessionId, siteInstanceKey, signature, legacySiteId) => {
         const found = get().bookmarks.find(
-          (b) => b.sessionId === sessionId && b.signature === signature,
+          (b) =>
+            b.sessionId === sessionId &&
+            matchesSiteScope(b, siteInstanceKey, legacySiteId) &&
+            b.signature === signature,
         )
         return found ? found.id : null
       },
 
-      clearSessionBookmarks: (sessionId) => {
+      clearSessionBookmarks: (sessionId, siteInstanceKey, legacySiteId) => {
         set((state) => ({
-          bookmarks: state.bookmarks.filter((b) => b.sessionId !== sessionId),
+          bookmarks: state.bookmarks.filter(
+            (b) =>
+              !(b.sessionId === sessionId && matchesSiteScope(b, siteInstanceKey, legacySiteId)),
+          ),
         }))
       },
 

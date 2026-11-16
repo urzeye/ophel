@@ -641,9 +641,8 @@ function initializeOphel() {
         adapter.afterPropertiesSet({})
 
         const siteId = adapter.getSiteId()
-        const siteInstanceKey = adapter.getSiteInstanceKey()
         if (adapter.canClaimLegacySiteData()) {
-          claimLegacySiteSettings(siteId, siteInstanceKey)
+          claimLegacySiteSettings(siteId, adapter.getSiteSettingsKey())
         }
         const settings = getSettingsState()
 
@@ -652,7 +651,6 @@ function initializeOphel() {
           adapter,
           settings,
           siteId,
-          siteInstanceKey,
           isStale: () => generation !== initGeneration || activeAdapterInstance !== adapter,
         }
 

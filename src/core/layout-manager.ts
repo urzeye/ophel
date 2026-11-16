@@ -2170,10 +2170,10 @@ html.${AUTO_HIDE_FLOAT_CLASS} ${config.scrollContainer}::after {
   }
 
   private handleZenModeExit = () => {
-    const siteInstanceKey = this.siteAdapter.getSiteInstanceKey()
+    const siteSettingsKey = this.siteAdapter.getSiteSettingsKey()
     const nextZenMode = { ...this.zenModeConfig, enabled: false }
     this.updateZenMode(nextZenMode)
-    useSettingsStore.getState().updateDeepSetting("layout", "zenMode", siteInstanceKey, nextZenMode)
+    useSettingsStore.getState().updateDeepSetting("layout", "zenMode", siteSettingsKey, nextZenMode)
   }
 
   // ==================== 国际化支持 ====================

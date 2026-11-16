@@ -165,7 +165,7 @@ const PlasmoApp = () => {
   const effectiveAdapter = adapter && settingsHydrated ? getEffectiveAdapter(disabledSites) : null
   // 当前页面命中该站点的隐藏规则时不挂载 UI；离开这些页面会自动恢复
   const isPageHidden = effectiveAdapter
-    ? matchesHiddenPath(hiddenPaths[effectiveAdapter.getSiteInstanceKey()], pathname)
+    ? matchesHiddenPath(hiddenPaths[effectiveAdapter.getSiteSettingsKey()], pathname)
     : false
 
   React.useEffect(() => {
