@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### 🚀 New Features
+
+- **Uninstall feedback survey** — Removing the extension now opens a short optional survey page where you can tell us what went wrong and shape what we improve next.
+
 ### 🐛 Bug Fixes
 
 - **ChatGPT table distortion** — Fixed an issue where tables in ChatGPT answers were stretched and misaligned after opening the panel or changing the site width; tables now stay as wide as the content. (#1037, #1042)

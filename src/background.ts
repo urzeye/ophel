@@ -73,6 +73,52 @@ const STATIC_OPHEL_TARGET_URLS = Array.from(
   ),
 )
 
+// 卸载问卷：浏览器在用户移除扩展后自动打开该地址（Chrome/Edge/Firefox 支持，Safari 无效果）。
+// 参数仅携带版本、浏览器、界面语言与安装天数，不含任何用户标识。
+const UNINSTALL_SURVEY_PAGE_URL = "https://ophel.app/uninstall/"
+const INSTALL_DATE_STORAGE_KEY = "installDate"
+
+function detectBrowserName(): string {
+  const ua = navigator.userAgent
+  if (/edg\//i.test(ua)) return "edge"
+  if (/firefox\//i.test(ua)) return "firefox"
+  if (/safari\//i.test(ua) && !/chrom(e|ium)\//i.test(ua)) return "safari"
+  return "chrome"
+}
+
+// 首次后台启动时记录安装日期；存量用户从本次升级后的首次启动算起
+async function readInstallDays(): Promise<number> {
+  const now = Date.now()
+  const stored = await localStorage.get<number>(INSTALL_DATE_STORAGE_KEY)
+  if (typeof stored === "number" && stored > 0 && stored <= now) {
+    return Math.floor((now - stored) / 86_400_000)
+  }
+  await localStorage.set(INSTALL_DATE_STORAGE_KEY, now)
+  return 0
+}
+
+async function buildUninstallSurveyUrl(): Promise<string> {
+  const params = new URLSearchParams({
+    v: chrome.runtime.getManifest().version,
+    b: detectBrowserName(),
+    l: chrome.i18n?.getUILanguage?.() || "en",
+  })
+  try {
+    params.set("d", String(await readInstallDays()))
+  } catch (error) {
+    console.warn("[Ophel] Failed to read install date for uninstall survey:", error)
+  }
+  return `${UNINSTALL_SURVEY_PAGE_URL}?${params.toString()}`
+}
+
+if (extensionCapabilities.uninstallSurvey && typeof chrome.runtime.setUninstallURL === "function") {
+  void buildUninstallSurveyUrl()
+    .then((url) => chrome.runtime.setUninstallURL(url))
+    .catch((error) => {
+      console.warn("[Ophel] Failed to set uninstall survey URL:", error)
+    })
+}
+
 const remoteConfigManager = createRuntimeRemoteConfigManager(
   extensionStorage,
   extensionRegistryTransport,

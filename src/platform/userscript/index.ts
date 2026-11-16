@@ -209,6 +209,8 @@ export const platform: Platform = {
       watermarkRemoval: true,
       notifications: true,
       windowFocus: true,
+      // 油猴脚本管理器不提供卸载回调，无法跳转问卷页
+      uninstallSurvey: false,
     }
     return capabilities[cap]
   },
