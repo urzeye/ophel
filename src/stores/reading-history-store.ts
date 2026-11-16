@@ -66,9 +66,6 @@ export const useReadingHistoryStore = create<ReadingHistoryState>()(
         claimPosition: (legacyKey, key) => {
           const state = get()
           const current = state.history[key]
-          // 单 host 站点的实例键等于 siteId，上一代作用域键与当前键相同，
-          // 此时不存在可认领的旧记录；直接返回当前记录，避免误删。
-          if (legacyKey === key) return current
           const legacy = state.history[legacyKey]
           if (!legacy) return current
 

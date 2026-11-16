@@ -718,7 +718,6 @@ async function init() {
 
         const siteId = adapter.getSiteId()
         if (adapter.canClaimLegacySiteData()) {
-          // 多 host 内置站点设置按 siteId 共享，认领键与 siteId 相同则不迁移
           claimLegacySiteSettings(siteId, adapter.getSiteSettingsKey())
         }
 

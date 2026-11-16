@@ -63,8 +63,7 @@ interface ConversationsState {
 
 // Captured set for safe hydration (avoids referencing store variable before assignment in sync hydration)
 let _completeHydration: (() => void) | null = null
-// v2：多 host 内置站点旧记录的裸 siteInstanceKey 按 url 重新分区
-export const CONVERSATIONS_STORAGE_SCHEMA_VERSION = 2
+export const CONVERSATIONS_STORAGE_SCHEMA_VERSION = 1
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value)

@@ -1,4 +1,4 @@
-import { SITE_IDS } from "~constants"
+import { SITE_IDS } from "~constants/defaults"
 
 const SITE_PACK_SITE_ID_PREFIX = "pack:"
 const SITE_INSTANCE_ORIGIN_SEPARATOR = "@"
@@ -19,17 +19,15 @@ export const isSitePackSiteId = (siteId: string): boolean =>
  * 否则两站同 ID 的对话会共用同一份本地记录互相覆盖。
  * host 归一化去掉 www 前缀（www.zchat.z.ai 与 zchat.z.ai 视为同一分区）。
  */
-const MULTI_HOST_BUILTIN_SITES: Readonly<
-  Record<string, { hosts: readonly string[]; primaryHost: string }>
-> = {
-  [SITE_IDS.KIMI]: { hosts: ["kimi.com", "kimi.ai"], primaryHost: "kimi.com" },
-  [SITE_IDS.DOUBAO]: { hosts: ["doubao.com", "dola.com"], primaryHost: "doubao.com" },
-  [SITE_IDS.ZAI]: { hosts: ["chat.z.ai", "zchat.z.ai"], primaryHost: "chat.z.ai" },
-}
+const MULTI_HOST_BUILTIN_SITES: ReadonlySet<string> = new Set([
+  SITE_IDS.KIMI,
+  SITE_IDS.DOUBAO,
+  SITE_IDS.ZAI,
+])
 
 /** 是否为内置多 host 站点（同一适配器服务多个独立域名）。 */
 export const isMultiHostBuiltinSite = (siteId: string): boolean =>
-  Object.prototype.hasOwnProperty.call(MULTI_HOST_BUILTIN_SITES, siteId)
+  MULTI_HOST_BUILTIN_SITES.has(siteId)
 
 export const normalizeSiteOrigin = (origin: string): string => {
   let url: URL
@@ -57,50 +55,16 @@ export const tryNormalizeSiteOrigin = (origin: string | null | undefined): strin
   }
 }
 
-const normalizeInstanceHost = (origin: string): string | null => {
-  const normalized = tryNormalizeSiteOrigin(origin)
-  if (!normalized) return null
-
-  try {
-    return new URL(normalized).hostname.toLowerCase().replace(/^www\./, "")
-  } catch {
-    return null
-  }
-}
-
-/** 已知多 host 按 origin 分区；host 缺失或未知时归主分区，避免数据散落。 */
-const resolveMultiHostPartition = (
-  config: { hosts: readonly string[]; primaryHost: string },
-  origin?: string | null,
-): string => {
-  const host = origin ? normalizeInstanceHost(origin) : null
-  return host && config.hosts.includes(host) ? host : config.primaryHost
-}
-
 export const createSiteInstanceKey = (siteId: string, origin?: string): string => {
-  const multiHost = MULTI_HOST_BUILTIN_SITES[siteId]
-  if (multiHost) {
-    const host = resolveMultiHostPartition(multiHost, origin)
-    return `${siteId}${SITE_INSTANCE_ORIGIN_SEPARATOR}https://${host}`
-  }
-
-  if (!isSitePackSiteId(siteId)) return siteId
+  const multiHost = isMultiHostBuiltinSite(siteId)
+  if (!multiHost && !isSitePackSiteId(siteId)) return siteId
   if (!origin) {
-    throw new TypeError(`SitePack instance ${siteId} requires a runtime origin`)
+    throw new TypeError(`Site instance ${siteId} requires a runtime origin`)
   }
 
-  return `${siteId}${SITE_INSTANCE_ORIGIN_SEPARATOR}${normalizeSiteOrigin(origin)}`
-}
-
-/**
- * 内置站点能否认领仅按 siteId 保存的旧数据。
- * 多 host 站点只有主 host 认领（旧数据无法区分归属，归主站损失最小）。
- */
-export const canBuiltinSiteClaimLegacyData = (siteId: string, origin?: string): boolean => {
-  const multiHost = MULTI_HOST_BUILTIN_SITES[siteId]
-  // SitePack 的裸 id 旧数据无法归属到具体 origin，保持不认领（与原行为一致）
-  if (!multiHost) return !isSitePackSiteId(siteId)
-  return resolveMultiHostPartition(multiHost, origin) === multiHost.primaryHost
+  const url = new URL(normalizeSiteOrigin(origin))
+  if (multiHost) url.hostname = url.hostname.replace(/^www\./, "")
+  return `${siteId}${SITE_INSTANCE_ORIGIN_SEPARATOR}${url.origin}`
 }
 
 export const createSiteScopedStorageKey = (siteInstanceKey: string, resourceId: string): string =>
@@ -109,18 +73,12 @@ export const createSiteScopedStorageKey = (siteInstanceKey: string, resourceId: 
 export const resolvePersistedSiteInstanceKey = (identity: PersistedSiteIdentity): string | null => {
   const storedInstanceKey = identity.siteInstanceKey?.trim()
   if (storedInstanceKey) {
-    // 旧版为多 host 站点写入的裸 siteId 实例键不含分区信息，按 URL 重新归属
-    if (MULTI_HOST_BUILTIN_SITES[storedInstanceKey]) {
-      return createSiteInstanceKey(storedInstanceKey, identity.url ?? undefined)
-    }
-    return storedInstanceKey
+    // 多 host 站点的未分区旧数据只保留，不按 URL 推断归属。
+    return isMultiHostBuiltinSite(storedInstanceKey) ? null : storedInstanceKey
   }
 
   const siteId = identity.siteId?.trim()
-  if (!siteId) return null
-  if (MULTI_HOST_BUILTIN_SITES[siteId]) {
-    return createSiteInstanceKey(siteId, identity.url ?? undefined)
-  }
+  if (!siteId || isMultiHostBuiltinSite(siteId)) return null
   if (!isSitePackSiteId(siteId)) return siteId
 
   const origin = tryNormalizeSiteOrigin(identity.url)

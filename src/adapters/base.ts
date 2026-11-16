@@ -11,11 +11,7 @@ import { DOMToolkit } from "~utils/dom-toolkit"
 import { createExportAssetCollector, type ExportAssetCollector } from "~utils/export-assets"
 import type { ExportBundle, ExportFormat, ExportMessage } from "~utils/exporter"
 import { t } from "~utils/i18n"
-import {
-  canBuiltinSiteClaimLegacyData,
-  createSiteInstanceKey,
-  isMultiHostBuiltinSite,
-} from "~utils/site-identity"
+import { createSiteInstanceKey, isMultiHostBuiltinSite } from "~utils/site-identity"
 import type { ExportPackaging } from "~utils/storage"
 import type { VirtualOutlinePositionSnapshot } from "~utils/virtual-outline-position"
 
@@ -481,10 +477,9 @@ export abstract class SiteAdapter {
     return isMultiHostBuiltinSite(this.getSiteId()) ? this.getSiteId() : this.getSiteInstanceKey()
   }
 
-  /** 当前实例是否能安全接管旧版仅按 siteId 保存的数据；多 host 站点仅主 host 接管。 */
+  /** 当前实例是否能安全接管旧版仅按 siteId 保存的数据；多 host 内置站点不接管。 */
   canClaimLegacySiteData(): boolean {
-    const origin = typeof window !== "undefined" ? window.location.origin : undefined
-    return canBuiltinSiteClaimLegacyData(this.getSiteId(), origin)
+    return this.getSiteInstanceKey() === this.getSiteId()
   }
 
   /** 返回站点显示名称 */

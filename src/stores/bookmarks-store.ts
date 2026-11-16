@@ -2,7 +2,6 @@ import { create } from "zustand"
 import { createJSONStorage, persist } from "zustand/middleware"
 
 import { BOOKMARKS_STORAGE_KEY } from "~constants/storage-keys"
-import { resolvePersistedSiteInstanceKey } from "~utils/site-identity"
 
 import { chromeStorageAdapter } from "./chrome-adapter"
 import type { OutlineItem } from "~adapters/base"
@@ -10,7 +9,7 @@ import type { OutlineItem } from "~adapters/base"
 export interface Bookmark {
   id: string
   sessionId: string
-  siteInstanceKey: string // 站点数据分区键（多 host 站点含 origin，如 kimi@https://kimi.ai）
+  siteId: string // 沿用存储字段名，值为站点数据分区键；多 host 站点含 origin。
   cid: string // 账号/团队 ID
   title: string
   level: number
@@ -58,19 +57,17 @@ interface BookmarkStore {
 }
 
 /**
- * 匹配书签的站点分区。v0 旧记录没有分区键（SitePack 书签缺少 URL 无法迁移），
- * 仅在调用方确认可安全认领（单 origin 站点）时按旧 siteId 匹配。
+ * 仅为能够安全认领旧数据的站点保留裸 siteId 匹配。
+ * 多 host 内置站点只匹配完整分区键，不继承旧收藏。
  */
 const matchesSiteScope = (
   bookmark: Bookmark,
   siteInstanceKey: string,
   legacySiteId?: string,
 ): boolean => {
-  if (bookmark.siteInstanceKey === siteInstanceKey) return true
-  if (legacySiteId && !bookmark.siteInstanceKey) {
-    return (bookmark as { siteId?: string }).siteId === legacySiteId
-  }
-  return false
+  return (
+    bookmark.siteId === siteInstanceKey || Boolean(legacySiteId && bookmark.siteId === legacySiteId)
+  )
 }
 
 // 扁平化 storage adapter：直接存储 bookmarks 数组到根节点
@@ -101,7 +98,7 @@ export const useBookmarkStore = create<BookmarkStore>()(
         const newBookmark: Bookmark = {
           id: crypto.randomUUID(),
           sessionId,
-          siteInstanceKey,
+          siteId: siteInstanceKey,
           cid,
           title: node.text,
           level: node.level,
@@ -178,31 +175,6 @@ export const useBookmarkStore = create<BookmarkStore>()(
     {
       name: BOOKMARKS_STORAGE_KEY,
       storage: createJSONStorage(() => flatBookmarkStorage),
-      version: 1,
-      migrate: (persistedState, version) => {
-        if (version >= 1) return persistedState
-        const state = persistedState as { bookmarks?: Array<Record<string, unknown>> }
-        if (!Array.isArray(state?.bookmarks)) return persistedState
-
-        // v0 书签的 siteId 仅为内置站点 ID（多 host 站点两站混用同一值），
-        // 迁移为站点分区键；无法归属的记录归主分区，避免数据散落。
-        return {
-          ...state,
-          bookmarks: state.bookmarks.map((bookmark) => {
-            if (typeof bookmark.siteInstanceKey === "string" && bookmark.siteInstanceKey) {
-              return bookmark
-            }
-            const siteInstanceKey = resolvePersistedSiteInstanceKey({
-              siteId: typeof bookmark.siteId === "string" ? bookmark.siteId : null,
-            })
-            if (!siteInstanceKey) return bookmark
-
-            const next: Record<string, unknown> = { ...bookmark, siteInstanceKey }
-            delete next.siteId
-            return next
-          }),
-        }
-      },
     },
   ),
 )

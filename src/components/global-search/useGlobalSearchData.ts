@@ -13,7 +13,7 @@ import type { ShortcutActionId } from "~constants/shortcuts"
 import { getSupportedAiPlatforms } from "~core/platform-catalog"
 import { getConversationsStore } from "~stores/conversations-store"
 import { t } from "~utils/i18n"
-import { resolvePersistedSiteInstanceKey } from "~utils/site-identity"
+import { isMultiHostBuiltinSite, resolvePersistedSiteInstanceKey } from "~utils/site-identity"
 import type { Prompt } from "~utils/storage"
 
 import {
@@ -1094,9 +1094,14 @@ export const useGlobalSearchData = ({
       buildConversationEntry(conversation, index),
     )
 
-    // 站外对话标题搜索：对话元数据 store 含所有站点，按站点实例 key 过滤出非当前站点
+    // 多 host 站点的未分区旧记录保留在存储中，但不进入全局搜索。
     const offsiteConversations = Object.values(getConversationsStore().conversations).filter(
-      (conversation) => resolvePersistedSiteInstanceKey(conversation) !== currentSiteInstanceKey,
+      (conversation) => {
+        const siteInstanceKey = resolvePersistedSiteInstanceKey(conversation) ?? conversation.siteId
+        return (
+          !isMultiHostBuiltinSite(siteInstanceKey) && siteInstanceKey !== currentSiteInstanceKey
+        )
+      },
     )
 
     offsiteConversations.forEach((conversation, offset) => {
