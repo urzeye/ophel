@@ -39,12 +39,38 @@ interface BookmarkStore {
     node: OutlineItem,
     signature: string,
     scrollTop: number,
+    legacySiteId?: string,
   ) => void
   updateBookmark: (id: string, updates: Partial<Omit<Bookmark, "id">>) => void
-  getBookmarksBySession: (sessionId: string, siteInstanceKey: string) => Bookmark[]
-  getBookmarkId: (sessionId: string, siteInstanceKey: string, signature: string) => string | null
-  clearSessionBookmarks: (sessionId: string, siteInstanceKey: string) => void
+  getBookmarksBySession: (
+    sessionId: string,
+    siteInstanceKey: string,
+    legacySiteId?: string,
+  ) => Bookmark[]
+  getBookmarkId: (
+    sessionId: string,
+    siteInstanceKey: string,
+    signature: string,
+    legacySiteId?: string,
+  ) => string | null
+  clearSessionBookmarks: (sessionId: string, siteInstanceKey: string, legacySiteId?: string) => void
   clearAllBookmarks: () => void
+}
+
+/**
+ * 匹配书签的站点分区。v0 旧记录没有分区键（SitePack 书签缺少 URL 无法迁移），
+ * 仅在调用方确认可安全认领（单 origin 站点）时按旧 siteId 匹配。
+ */
+const matchesSiteScope = (
+  bookmark: Bookmark,
+  siteInstanceKey: string,
+  legacySiteId?: string,
+): boolean => {
+  if (bookmark.siteInstanceKey === siteInstanceKey) return true
+  if (legacySiteId && !bookmark.siteInstanceKey) {
+    return (bookmark as { siteId?: string }).siteId === legacySiteId
+  }
+  return false
 }
 
 // 扁平化 storage adapter：直接存储 bookmarks 数组到根节点
@@ -101,9 +127,17 @@ export const useBookmarkStore = create<BookmarkStore>()(
         }))
       },
 
-      toggleBookmark: (sessionId, siteInstanceKey, cid, node, signature, scrollTop) => {
+      toggleBookmark: (
+        sessionId,
+        siteInstanceKey,
+        cid,
+        node,
+        signature,
+        scrollTop,
+        legacySiteId,
+      ) => {
         const state = get()
-        const existingId = state.getBookmarkId(sessionId, siteInstanceKey, signature)
+        const existingId = state.getBookmarkId(sessionId, siteInstanceKey, signature, legacySiteId)
 
         if (existingId) {
           state.removeBookmark(existingId)
@@ -112,26 +146,27 @@ export const useBookmarkStore = create<BookmarkStore>()(
         }
       },
 
-      getBookmarksBySession: (sessionId, siteInstanceKey) => {
+      getBookmarksBySession: (sessionId, siteInstanceKey, legacySiteId) => {
         return get().bookmarks.filter(
-          (b) => b.sessionId === sessionId && b.siteInstanceKey === siteInstanceKey,
+          (b) => b.sessionId === sessionId && matchesSiteScope(b, siteInstanceKey, legacySiteId),
         )
       },
 
-      getBookmarkId: (sessionId, siteInstanceKey, signature) => {
+      getBookmarkId: (sessionId, siteInstanceKey, signature, legacySiteId) => {
         const found = get().bookmarks.find(
           (b) =>
             b.sessionId === sessionId &&
-            b.siteInstanceKey === siteInstanceKey &&
+            matchesSiteScope(b, siteInstanceKey, legacySiteId) &&
             b.signature === signature,
         )
         return found ? found.id : null
       },
 
-      clearSessionBookmarks: (sessionId, siteInstanceKey) => {
+      clearSessionBookmarks: (sessionId, siteInstanceKey, legacySiteId) => {
         set((state) => ({
           bookmarks: state.bookmarks.filter(
-            (b) => !(b.sessionId === sessionId && b.siteInstanceKey === siteInstanceKey),
+            (b) =>
+              !(b.sessionId === sessionId && matchesSiteScope(b, siteInstanceKey, legacySiteId)),
           ),
         }))
       },

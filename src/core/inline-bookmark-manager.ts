@@ -232,8 +232,12 @@ export class InlineBookmarkManager {
       const sessionId = this.outlineManager.getBookmarkSessionId(sourceId)
       const signature = this.outlineManager.getSignature(item, sourceId)
       const isBookmarked =
-        bookmarkStore.getBookmarkId(sessionId, this.adapter.getSiteInstanceKey(), signature) !==
-        null
+        bookmarkStore.getBookmarkId(
+          sessionId,
+          this.adapter.getSiteInstanceKey(),
+          signature,
+          this.adapter.canClaimLegacySiteData() ? this.adapter.getSiteId() : undefined,
+        ) !== null
 
       // 2. 注入图标。虚拟滚动可能复用 DOM 元素承载不同消息，
       // 所以不能只按元素去重，还要确认签名仍然一致。
@@ -454,12 +458,23 @@ export class InlineBookmarkManager {
     const bookmarkStore = useBookmarkStore.getState()
     const sessionId = this.outlineManager.getBookmarkSessionId(sourceId)
     const siteInstanceKey = this.adapter.getSiteInstanceKey()
+    const legacySiteId = this.adapter.canClaimLegacySiteData()
+      ? this.adapter.getSiteId()
+      : undefined
     const cid = this.adapter.getCurrentCid() || ""
 
     const scrollContainer = this.adapter.getOutlineScrollContainer(sourceId)
     const scrollTop = (item.element as HTMLElement).offsetTop + (scrollContainer?.scrollTop || 0)
 
-    bookmarkStore.toggleBookmark(sessionId, siteInstanceKey, cid, item, signature, scrollTop)
+    bookmarkStore.toggleBookmark(
+      sessionId,
+      siteInstanceKey,
+      cid,
+      item,
+      signature,
+      scrollTop,
+      legacySiteId,
+    )
   }
 
   /**
@@ -470,6 +485,9 @@ export class InlineBookmarkManager {
 
     const bookmarkStore = useBookmarkStore.getState()
     const siteInstanceKey = this.adapter.getSiteInstanceKey()
+    const legacySiteId = this.adapter.canClaimLegacySiteData()
+      ? this.adapter.getSiteId()
+      : undefined
 
     const icons = DOMToolkit.query(`.${ICON_CLASS}`, {
       all: true,
@@ -484,7 +502,7 @@ export class InlineBookmarkManager {
 
       const sessionId = this.outlineManager.getBookmarkSessionId(sourceId)
       const isBookmarked =
-        bookmarkStore.getBookmarkId(sessionId, siteInstanceKey, signature) !== null
+        bookmarkStore.getBookmarkId(sessionId, siteInstanceKey, signature, legacySiteId) !== null
       const hasClass = wrapper.classList.contains(ICON_BOOKMARKED_CLASS)
 
       if (isBookmarked !== hasClass) {
