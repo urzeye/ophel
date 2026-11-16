@@ -15,4 +15,5 @@ export const extensionCapabilities: Readonly<Record<PlatformCapability, boolean>
   watermarkRemoval: !isSafariBuild,
   notifications: !isSafariBuild,
   windowFocus: !isSafariBuild,
+  uninstallSurvey: !isSafariBuild,
 }

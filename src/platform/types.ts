@@ -255,3 +255,4 @@ export type PlatformCapability =
   | "tabs" // 跨标签页操作
   | "declarativeNetRequest" // 网络请求规则
   | "commands" // 浏览器命令（全局快捷键）
+  | "uninstallSurvey" // 卸载后自动打开问卷页（Safari 上 API 存在但不生效）
