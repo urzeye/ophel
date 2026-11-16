@@ -11,7 +11,6 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🚀 New Features
 
-- **Uninstall feedback survey** — Removing the extension now opens a short optional survey page where you can tell us what went wrong and shape what we improve next. (#1044)
 - **Dola support** — Added support for Dola (dola.com), Doubao's international version, with the same outlines, export, and panel features as Doubao. (#1046)
 
 ### 🐛 Bug Fixes
