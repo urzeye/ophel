@@ -52,7 +52,7 @@ async function applyCachedBuiltinPatches(): Promise<void> {
     } catch (error) {
       applyMergedConfig(adapter, adapter.getBuiltinConfig())
       console.error(
-        `[Ophel] Failed to load cached patch for ${siteId}; using built-in config:`,
+        `[Ophel] Failed to resolve site config for ${siteId}; using built-in config:`,
         error,
       )
     }

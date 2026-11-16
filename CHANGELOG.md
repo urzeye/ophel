@@ -18,6 +18,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 - **ChatGPT table distortion** — Fixed an issue where tables in ChatGPT answers were stretched and misaligned after opening the panel or changing the site width; tables now stay as wide as the content. (#1037, #1042)
 - **Clean Mode hiding chat input** — Fixed Clean Mode hiding the input box on Qianwen's new chat page; disclaimer hiding on Qianwen and DeepSeek now matches content instead of element position, and Qianwen's "AI-generated content" notice is hidden again. (#1041, #1043, #1045)
+- **Site adaptation updates not applying** — Fixed an issue where pushed site adaptation updates were silently rejected by over-strict validation and never took effect; updates now apply as expected. (#1048)
 
 ---
 

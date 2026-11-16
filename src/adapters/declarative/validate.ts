@@ -53,11 +53,12 @@ export interface SiteConfigValidationOptions extends SitePackValidationOptions {
   requiredPrivateSelectorKeys?: readonly string[]
   requiredCapabilities?: readonly SitePackCapability[]
   /**
-   * 内置适配器的 document-outline 可由适配器代码命令式实现（Claude / Gemini /
-   * Gemini Enterprise），不要求声明 documentOutline 配置；仅 SitePack manifest
-   * 校验强制该字段。
+   * 内置适配器配置允许命令式扩展：部分能力（document-outline / panel-avoidance /
+   * export-basic）可由适配器类代码实现（如覆写 getPanelAvoidanceConfig()、独立的
+   * 导出模块），widthSelectors 可携带函数字段 transformValue。SitePack manifest /
+   * 远程 patch 等 JSON 层不设置此标志，仍强制纯声明式形态。
    */
-  allowImperativeDocumentOutline?: boolean
+  allowImperativeImplementation?: boolean
 }
 
 type ValidationMode = "full" | "partial"
@@ -66,14 +67,14 @@ interface ValidationContext {
   errors: SitePackValidationError[]
   regexSafetyCheck?: (pattern: string) => boolean
   allowHttpMatches: boolean
-  allowImperativeDocumentOutline: boolean
+  allowImperativeImplementation: boolean
 }
 
 const createValidationContext = (options: SiteConfigValidationOptions = {}): ValidationContext => ({
   errors: [],
   regexSafetyCheck: options.regexSafetyCheck,
   allowHttpMatches: options.allowHttpMatches === true,
-  allowImperativeDocumentOutline: options.allowImperativeDocumentOutline === true,
+  allowImperativeImplementation: options.allowImperativeImplementation === true,
 })
 
 interface StringValidationOptions {
@@ -1569,11 +1570,29 @@ const validateWidthSelector = (
     value,
     path,
     context,
-    ["selector", "property", "globalSelector", "value", "extraCss", "noCenter"],
+    context.allowImperativeImplementation
+      ? [
+          "selector",
+          "property",
+          "globalSelector",
+          "value",
+          "extraCss",
+          "noCenter",
+          "transformValue",
+        ]
+      : ["selector", "property", "globalSelector", "value", "extraCss", "noCenter"],
     ["selector", "property"],
     mode,
   )
   if (!widthSelector) return
+  // 内置配置允许 transformValue 函数（layout-manager 在应用宽度时调用）；JSON 层无法携带函数。
+  if (
+    context.allowImperativeImplementation &&
+    widthSelector.transformValue !== undefined &&
+    typeof widthSelector.transformValue !== "function"
+  ) {
+    addError(context, `${path}.transformValue`, "invalid_type", "transformValue must be a function")
+  }
   if (widthSelector.selector !== undefined) {
     validateSelectorString(widthSelector.selector, `${path}.selector`, context, mode)
   }
@@ -1835,7 +1854,10 @@ const validateCapabilityRequirements = (
     `${path}.selectors.responseContainer`,
   )
   requireField("conversation-list", isPlainRecord(config.conversation), `${path}.conversation`)
-  requireField("export-basic", isPlainRecord(config.export), `${path}.export`)
+  // 内置适配器的导出可在适配器类中命令式实现（如 notebook-export.ts），无 export 配置块。
+  if (!context.allowImperativeImplementation) {
+    requireField("export-basic", isPlainRecord(config.export), `${path}.export`)
+  }
   requireField("model-lock", isPlainRecord(config.modelSwitcher), `${path}.modelSwitcher`)
   requireField(
     "generation-detect",
@@ -1857,7 +1879,10 @@ const validateCapabilityRequirements = (
     Array.isArray(config.widthSelectors) && config.widthSelectors.length > 0,
     `${path}.widthSelectors`,
   )
-  requireField("panel-avoidance", isPlainRecord(config.panelAvoidance), `${path}.panelAvoidance`)
+  // 内置适配器普遍覆写 getPanelAvoidanceConfig() 命令式提供面板避让，无 panelAvoidance 配置块。
+  if (!context.allowImperativeImplementation) {
+    requireField("panel-avoidance", isPlainRecord(config.panelAvoidance), `${path}.panelAvoidance`)
+  }
   requireField("zen", isPlainRecord(config.zenMode), `${path}.zenMode`)
   requireField("clean", isPlainRecord(config.cleanMode), `${path}.cleanMode`)
   requireField(
@@ -1876,7 +1901,7 @@ const validateCapabilityRequirements = (
     typeof selectors.userQuery === "string",
     `${path}.selectors.userQuery`,
   )
-  if (!context.allowImperativeDocumentOutline) {
+  if (!context.allowImperativeImplementation) {
     requireField(
       "document-outline",
       isPlainRecord(config.documentOutline) && typeof config.documentOutline.container === "string",
@@ -2201,7 +2226,7 @@ export function validateBuiltinSiteConfig(
   input: unknown,
   options: SiteConfigValidationOptions = {},
 ): SitePackValidationResult<BuiltinSiteConfig> {
-  const context = createValidationContext({ ...options, allowImperativeDocumentOutline: true })
+  const context = createValidationContext({ ...options, allowImperativeImplementation: true })
   validateBuiltinConfigInto(input, "$", context, "full", options)
   return finishValidation(input, context)
 }
