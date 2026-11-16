@@ -907,7 +907,12 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
               value={lastUsedFolderId}
               ariaLabel={t("conversationsSelectFolder")}
               buttonTitle={t("conversationsSelectFolder")}
-              menuHeader={t("conversationsSyncFolderMenuTitle")}
+              menuHeader={
+                <>
+                  <FolderMoveIcon size={12} />
+                  <span>{t("conversationsSyncFolderMenuTitle")}</span>
+                </>
+              }
               onOpenChange={(open) => {
                 setIsFolderSelectOpen(open)
                 if (open) markSyncHintSeen()

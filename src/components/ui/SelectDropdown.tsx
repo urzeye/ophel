@@ -358,21 +358,7 @@ export const SelectDropdown: React.FC<SelectDropdownProps> = ({
             padding: "4px",
           }}>
           {menuHeader && (
-            <div
-              role="presentation"
-              aria-hidden="true"
-              style={{
-                position: "sticky",
-                top: 0,
-                zIndex: 1,
-                padding: "5px 10px 4px",
-                fontSize: 11,
-                fontWeight: 600,
-                letterSpacing: "0.02em",
-                color: "var(--gh-text-secondary, #6b7280)",
-                background: "var(--gh-bg, #ffffff)",
-                userSelect: "none",
-              }}>
+            <div role="presentation" aria-hidden="true" className="gh-select-dropdown-menu-header">
               {menuHeader}
             </div>
           )}
