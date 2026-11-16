@@ -82,7 +82,7 @@ export interface DoubaoSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const DOUBAO_CONFIG_VERSION = 9
+export const DOUBAO_CONFIG_VERSION = 10
 
 const createDoubaoConfig = (): DoubaoSiteConfig => {
   const sidebarRoot = "#flow_chat_sidebar"
@@ -123,8 +123,10 @@ const createDoubaoConfig = (): DoubaoSiteConfig => {
   const contentColumn = `${mainLayoutScope} .flex.h-full.min-h-0.w-full.flex-1.flex-col:has(${virtualScroll}):has([class*="input-content-container"])`
   const newChatSafeArea = `${mainLayoutScope} [class*="-mt-[var(--header-height)]"][class*="flex-grow"][class*="items-center"]:has([class*="input-content-container"])`
   const canvasScope = "aside:has(.code-canvas)"
-  // v3 模型切换入口换成 div 形态的 Radix trigger，用语义化的 data-valid-btn 定位
+  // v3 模型切换入口换成 div 形态的 Radix trigger，用语义化的 data-valid-btn 定位；
+  // Dola 海外版同一入口命名为 mode-select-action-btn
   const modelSelectorButton = '[data-valid-btn="model-select-action-btn"]'
+  const dolaModelSelectorButton = '[data-valid-btn="mode-select-action-btn"]'
   const dropdownMenuTrigger = 'button[data-slot="dropdown-menu-trigger"][aria-haspopup="menu"]'
   // v3 停止按钮无 testid，退化为 CSS module 前缀匹配
   const stopButtonSelectors = [
@@ -169,7 +171,7 @@ const createDoubaoConfig = (): DoubaoSiteConfig => {
     },
     generating: { existsSelectors: stopButtonSelectors },
     modelSwitcher: {
-      selectorButtonSelectors: [modelSelectorButton, dropdownMenuTrigger],
+      selectorButtonSelectors: [modelSelectorButton, dolaModelSelectorButton, dropdownMenuTrigger],
       menuItemSelector: 'div[role="menuitem"][data-slot="dropdown-menu-item"]',
       menuRenderDelay: 100,
     },
