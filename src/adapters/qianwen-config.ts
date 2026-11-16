@@ -281,6 +281,9 @@ const createQianwenConfig = (): QianwenSiteConfig => {
       preserveFlow: [
         '[class*="mainContent"] > div:has([data-promo-banner-canvas]):not([class*="guideComp"]):not([class*="wrapper"])',
         '[class*="mainContent"] > div:has(a[href*="terms.alicdn.com/legal-agreement"]):not([class*="guideComp"]):not([class*="wrapper"])',
+        // “内容由AI生成”免责声明条：mainContent 下唯一直接子节点为 text-caption 段落的容器，
+        // 同样不依赖其在兄弟节点中的位置
+        '[class*="mainContent"] > div:has(> p.text-caption):not([class*="guideComp"]):not([class*="wrapper"])',
       ],
     },
     sitePrivateSelectors: {
