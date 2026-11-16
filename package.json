@@ -24,6 +24,7 @@
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
     "registry:validate": "tsx registry/scripts/validate.mjs",
+    "adapters:validate": "tsx scripts/validate-builtin-configs.ts",
     "registry:build": "tsx registry/scripts/build-dist-local.mjs",
     "registry:build:signed": "tsx registry/scripts/build-dist.mjs",
     "registry:serve": "tsx registry/scripts/serve-local.mjs",

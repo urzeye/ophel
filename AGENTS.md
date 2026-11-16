@@ -42,6 +42,7 @@ Ophel Atlas 是 TypeScript + React 18 + Plasmo 的浏览器扩展，同时支持
 - Lint 检查：`pnpm lint:check`
 - 类型检查：`pnpm typecheck`
 - 校验 SitePack：`pnpm registry:validate`
+- 校验内置站点配置：`pnpm adapters:validate`
 - Chrome 构建：`pnpm build`
 - Firefox 构建：`pnpm build:firefox`
 - 打包压缩包：`pnpm package`（Chrome）/ `pnpm package:firefox`（Firefox）
@@ -85,6 +86,9 @@ Ophel Atlas 是 TypeScript + React 18 + Plasmo 的浏览器扩展，同时支持
 - 修改 background 消息时，使用 `src/utils/messaging.ts` 的常量，避免散落字符串。
 - 跨扩展和油猴的能力差异必须通过 `src/platform/` 显式表达，不在业务代码里分散判断。
 - 修改内置站点适配器默认配置（`*-config.ts`）时，对应 `*_CONFIG_VERSION` 仅需在同一个发版周期内相对上个 release 版本加 1（使旧缓存 patch 失效），无需在同一次发版的多次修改或 commit 中重复累加。
+- 内置适配器的站点能力可由适配器类命令式实现（如覆写 `getPanelAvoidanceConfig()`、独立导出模块 `notebook-export.ts`），`capabilities` 声明不要求都有对应的声明式配置字段；"能力 ⇒ 配置字段" 的强校验只适用于 SitePack manifest / 远程 patch 等 JSON 层。内置配置校验报错时，先确认该能力的实现方式再动校验规则；禁止通过增删站点 `capabilities` 或配置字段来"修"校验，那会直接改变线上功能。
+- 修改 `feature-capabilities.ts` 能力表、内置 `*-config.ts` 结构或 `declarative/validate.ts` 校验规则后，必须运行 `pnpm adapters:validate`，确认全部内置配置通过校验再交付。教训：v1.3.3 曾因缺少该检查，16 个内置配置全部校验失败却静默发布，导致所有站点的缓存 patch 机制失效。
+- 声明式配置（SitePack manifest / 远程 patch / 用户覆盖）是纯 JSON，禁止函数值；`transformValue` 等函数字段只允许出现在内置 TS 配置中，由校验器的内置模式放行。
 - 修改 `src/platform/`、存储适配、内容脚本入口、样式注入或核心初始化时，必须同时考虑浏览器扩展和油猴脚本；高风险变更优先验证 `pnpm build` 和 `pnpm build:userscript`。
 
 ## UI 与 CSS 规则
