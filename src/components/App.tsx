@@ -461,7 +461,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
   // 单例实例
   const fallbackAdapter = useMemo(() => getAdapter(), [])
   const adapter = propAdapter !== undefined ? propAdapter : fallbackAdapter
-  const siteInstanceKey = adapter?.getSiteInstanceKey() || "_default"
+  const siteSettingsKey = adapter?.getSiteSettingsKey() || "_default"
 
   const promptManager = useMemo(() => {
     return adapter ? new PromptManager(adapter) : null
@@ -2468,8 +2468,8 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
   // userscript 场景下 App 可能先于核心模块渲染，这里统一复用全局单例
   const themeManager = useMemo(() => {
     // 使用 props 传入的生效适配器：全局 getAdapter() 会绕过内置站点停用与 SitePack 接管
-    const currentSiteInstanceKey = adapter?.getSiteInstanceKey() || "_default"
-    const fallbackTheme = settings ? getSiteTheme(settings, currentSiteInstanceKey) : undefined
+    const currentSiteSettingsKey = adapter?.getSiteSettingsKey() || "_default"
+    const fallbackTheme = settings ? getSiteTheme(settings, currentSiteSettingsKey) : undefined
 
     return ensureGlobalThemeManager({
       mode: fallbackTheme?.mode || "light",
@@ -2506,11 +2506,11 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
       const sites = currentSettings?.theme?.sites || {}
 
       // 获取当前站点 ID（使用 props 传入的生效适配器）
-      const currentSiteInstanceKey = adapter?.getSiteInstanceKey() || "_default"
+      const currentSiteSettingsKey = adapter?.getSiteSettingsKey() || "_default"
 
       // 确保站点配置有完整的默认值，但优先使用已有配置
       const existingSite = currentSettings
-        ? getSiteTheme(currentSettings, currentSiteInstanceKey)
+        ? getSiteTheme(currentSettings, currentSiteSettingsKey)
         : sites._default
       const siteConfig = {
         lightStyleId: "google-gradient",
@@ -2525,7 +2525,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
           ...currentSettings?.theme,
           sites: {
             ...sites,
-            [currentSiteInstanceKey]: {
+            [currentSiteSettingsKey]: {
               ...siteConfig,
               mode: nextPreference, // 最后更新 mode，确保生效
             },
@@ -2568,8 +2568,8 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
     if (!isSettingsHydrated) return // 等待 hydration 完成
 
     // 使用当前站点（生效适配器）的配置而非 _default
-    const currentSiteInstanceKey = adapter?.getSiteInstanceKey() || "_default"
-    const siteTheme = themeSites?.[currentSiteInstanceKey] || themeSites?._default
+    const currentSiteSettingsKey = adapter?.getSiteSettingsKey() || "_default"
+    const siteTheme = themeSites?.[currentSiteSettingsKey] || themeSites?._default
     const lightId = siteTheme?.lightStyleId
     const darkId = siteTheme?.darkStyleId
 
@@ -2955,7 +2955,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
     const current = settingsRef.current
     if (!current) return
 
-    const modelLockConfig = current.modelLock?.[siteInstanceKey] || {
+    const modelLockConfig = current.modelLock?.[siteSettingsKey] || {
       enabled: false,
       keyword: "",
     }
@@ -2967,7 +2967,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
         setSettings({
           modelLock: {
             ...current.modelLock,
-            [siteInstanceKey]: {
+            [siteSettingsKey]: {
               ...modelLockConfig,
               enabled: false,
             },
@@ -2979,7 +2979,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
         setSettings({
           modelLock: {
             ...current.modelLock,
-            [siteInstanceKey]: {
+            [siteSettingsKey]: {
               ...modelLockConfig,
               enabled: true,
             },
@@ -3007,7 +3007,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
     setSettings({
       modelLock: {
         ...current.modelLock,
-        [siteInstanceKey]: {
+        [siteSettingsKey]: {
           ...modelLockConfig,
           enabled: newEnabled,
         },
@@ -3015,13 +3015,13 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
     })
 
     showToast(newEnabled ? t("modelLockEnabled") : t("modelLockDisabled"))
-  }, [adapter, openSettingsModal, setSettings, siteInstanceKey])
+  }, [adapter, openSettingsModal, setSettings, siteSettingsKey])
 
   // 获取当前站点的模型锁定状态
   const isModelLocked = useMemo(() => {
     if (!adapter || !settings) return false
-    return settings.modelLock?.[siteInstanceKey]?.enabled || false
-  }, [adapter, settings, siteInstanceKey])
+    return settings.modelLock?.[siteSettingsKey]?.enabled || false
+  }, [adapter, settings, siteSettingsKey])
 
   // 面板统一切换：快捷键与快捷按钮组共用，确保 edge-snap 模式下同步进入 peek 状态
   const handlePanelToggle = useCallback(() => {

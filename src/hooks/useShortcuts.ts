@@ -575,12 +575,12 @@ export function useShortcuts({
   const toggleZenMode = useCallback(() => {
     if (!adapter) return
 
-    const siteInstanceKey = adapter.getSiteInstanceKey()
+    const siteSettingsKey = adapter.getSiteSettingsKey()
     const liveSettings = useSettingsStore.getState().settings
-    const currentZenMode = getSiteZenMode(liveSettings, siteInstanceKey)
+    const currentZenMode = getSiteZenMode(liveSettings, siteSettingsKey)
     const nextEnabled = !currentZenMode.enabled
 
-    useSettingsStore.getState().updateDeepSetting("layout", "zenMode", siteInstanceKey, {
+    useSettingsStore.getState().updateDeepSetting("layout", "zenMode", siteSettingsKey, {
       ...currentZenMode,
       enabled: nextEnabled,
     })

@@ -641,9 +641,9 @@ function initializeOphel() {
         adapter.afterPropertiesSet({})
 
         const siteId = adapter.getSiteId()
-        const siteInstanceKey = adapter.getSiteInstanceKey()
         if (adapter.canClaimLegacySiteData()) {
-          claimLegacySiteSettings(siteId, siteInstanceKey)
+          // 多 host 内置站点设置按 siteId 共享，认领键与 siteId 相同则不迁移
+          claimLegacySiteSettings(siteId, adapter.getSiteSettingsKey())
         }
         const settings = getSettingsState()
 
@@ -652,7 +652,6 @@ function initializeOphel() {
           adapter,
           settings,
           siteId,
-          siteInstanceKey,
           isStale: () => generation !== initGeneration || activeAdapterInstance !== adapter,
         }
 

@@ -27,6 +27,10 @@ const MULTI_HOST_BUILTIN_SITES: Readonly<
   [SITE_IDS.ZAI]: { hosts: ["chat.z.ai", "zchat.z.ai"], primaryHost: "chat.z.ai" },
 }
 
+/** 是否为内置多 host 站点（同一适配器服务多个独立域名）。 */
+export const isMultiHostBuiltinSite = (siteId: string): boolean =>
+  Object.prototype.hasOwnProperty.call(MULTI_HOST_BUILTIN_SITES, siteId)
+
 export const normalizeSiteOrigin = (origin: string): string => {
   let url: URL
 

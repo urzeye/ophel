@@ -156,7 +156,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   const quickButtonsOpacity = Math.min(Math.max(quickButtonsSettings.opacity ?? 1, 0.4), 1)
   const persistedGroupPosition = quickButtonsSettings.position ?? null
   const proximityRadius = quickButtonsSettings.proximityRadius ?? 150
-  const siteInstanceKey = adapter?.getSiteInstanceKey() || "_default"
+  const siteSettingsKey = adapter?.getSiteSettingsKey() || "_default"
   const featureCapabilitiesSignature = getFeatureCapabilitiesSignature(
     adapter?.getFeatureCapabilities() ?? [],
   )
@@ -191,7 +191,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     },
     [supportsCapability, adapter],
   )
-  const siteTheme = getSiteTheme(currentSettings, siteInstanceKey)
+  const siteTheme = getSiteTheme(currentSettings, siteSettingsKey)
   const resolvedThemeMode = themeMode || (siteTheme.mode === "dark" ? "dark" : "light")
   const panelSparkleColor = resolvedThemeMode === "dark" ? "brand" : "currentColor"
 
@@ -834,11 +834,11 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     zenMode: (e) => {
       e?.stopPropagation()
       if (!supportsCapability("zen")) return
-      const currentZenMode = getSiteZenMode(settings || DEFAULT_SETTINGS, siteInstanceKey)
+      const currentZenMode = getSiteZenMode(settings || DEFAULT_SETTINGS, siteSettingsKey)
       const newZenEnabled = !currentZenMode.enabled
       updateNestedSetting("layout", "zenMode", {
         ...(settings?.layout?.zenMode ?? {}),
-        [siteInstanceKey]: { ...currentZenMode, enabled: newZenEnabled },
+        [siteSettingsKey]: { ...currentZenMode, enabled: newZenEnabled },
       })
     },
     settings: (e) => {
@@ -863,7 +863,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     const isZenModeBtn = id === "zenMode"
     // Check if Zen mode is active
     const isZenModeActive =
-      isZenModeBtn && getSiteZenMode(settings || DEFAULT_SETTINGS, siteInstanceKey).enabled
+      isZenModeBtn && getSiteZenMode(settings || DEFAULT_SETTINGS, siteSettingsKey).enabled
 
     // Animation: Active state
     const isActive = isFloatingToolbarBtn ? isToolsMenuOpen : isZenModeActive
