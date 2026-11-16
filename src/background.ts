@@ -74,7 +74,7 @@ const STATIC_OPHEL_TARGET_URLS = Array.from(
 )
 
 // 卸载问卷：浏览器在用户移除扩展后自动打开该地址（Chrome/Edge/Firefox 支持，Safari 无效果）。
-// 参数仅携带版本、浏览器、界面语言与安装天数，不含任何用户标识。
+// 参数仅携带版本、浏览器、界面语言与安装日期，不含任何用户标识。
 const UNINSTALL_SURVEY_PAGE_URL = "https://ophel.app/uninstall/"
 const INSTALL_DATE_STORAGE_KEY = "installDate"
 
@@ -86,15 +86,17 @@ function detectBrowserName(): string {
   return "chrome"
 }
 
-// 首次后台启动时记录安装日期；存量用户从本次升级后的首次启动算起
-async function readInstallDays(): Promise<number> {
+// 首次后台启动时记录安装日期；存量用户从本次升级后的首次启动算起。
+// 返回安装日的 epoch day 供问卷页换算天数：URL 是静态存储的，相对天数会随
+// worker 休眠而过期，安装日期则始终准确。
+async function readInstallEpochDay(): Promise<number> {
   const now = Date.now()
   const stored = await localStorage.get<number>(INSTALL_DATE_STORAGE_KEY)
   if (typeof stored === "number" && stored > 0 && stored <= now) {
-    return Math.floor((now - stored) / 86_400_000)
+    return Math.floor(stored / 86_400_000)
   }
   await localStorage.set(INSTALL_DATE_STORAGE_KEY, now)
-  return 0
+  return Math.floor(now / 86_400_000)
 }
 
 async function buildUninstallSurveyUrl(): Promise<string> {
@@ -104,7 +106,7 @@ async function buildUninstallSurveyUrl(): Promise<string> {
     l: chrome.i18n?.getUILanguage?.() || "en",
   })
   try {
-    params.set("d", String(await readInstallDays()))
+    params.set("i", String(await readInstallEpochDay()))
   } catch (error) {
     console.warn("[Ophel] Failed to read install date for uninstall survey:", error)
   }
