@@ -2566,6 +2566,37 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   scrollbar-color: auto;
 }
 
+/* 公共下拉菜单的分区标题：吸顶 + 发丝分隔线，列表滚动时分组结构保持可读 */
+.gh-select-dropdown-menu-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px 6px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  line-height: 1.4;
+  color: var(--gh-text-secondary, #6b7280);
+  background: var(--gh-bg, #ffffff);
+  border-bottom: 1px solid var(--gh-border, #e5e7eb);
+  user-select: none;
+}
+
+.gh-select-dropdown-menu-header > svg {
+  flex-shrink: 0;
+  color: var(--gh-primary, #4285f4);
+}
+
+.gh-select-dropdown-menu-header > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Firefox 不支持 ::-webkit-scrollbar，只在这里启用标准细滚动条 */
 @supports (-moz-appearance: none) {
   .gh-select-dropdown-menu {
