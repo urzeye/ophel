@@ -303,12 +303,22 @@ export class ReadingHistoryManager {
     return `${this.adapter.getSiteId()}:${normalizedSessionId}`
   }
 
+  /** 上一代（v1 作用域键 + 裸 siteId 分区）格式的阅读进度键。 */
+  private getPreviousScopedKey(sessionId = this.getSessionId()): string {
+    const normalizedSessionId = sessionId || "unknown"
+    return createSiteScopedStorageKey(this.adapter.getSiteId(), normalizedSessionId)
+  }
+
   private claimLegacyPosition(sessionId: string): ReadingPosition | undefined {
     const store = getReadingHistoryStore()
     const key = this.getKey(sessionId)
     const current = store.getPosition(key)
     if (!this.adapter.canClaimLegacySiteData()) return current
-    return store.claimPosition(this.getLegacyKey(sessionId), key)
+    // 依次认领上一代作用域键与更早期的裸键
+    return (
+      store.claimPosition(this.getPreviousScopedKey(sessionId), key) ??
+      store.claimPosition(this.getLegacyKey(sessionId), key)
+    )
   }
 
   private getSessionId(): string {

@@ -94,7 +94,8 @@ export const createSiteInstanceKey = (siteId: string, origin?: string): string =
  */
 export const canBuiltinSiteClaimLegacyData = (siteId: string, origin?: string): boolean => {
   const multiHost = MULTI_HOST_BUILTIN_SITES[siteId]
-  if (!multiHost) return true
+  // SitePack 的裸 id 旧数据无法归属到具体 origin，保持不认领（与原行为一致）
+  if (!multiHost) return !isSitePackSiteId(siteId)
   return resolveMultiHostPartition(multiHost, origin) === multiHost.primaryHost
 }
 
@@ -103,7 +104,13 @@ export const createSiteScopedStorageKey = (siteInstanceKey: string, resourceId: 
 
 export const resolvePersistedSiteInstanceKey = (identity: PersistedSiteIdentity): string | null => {
   const storedInstanceKey = identity.siteInstanceKey?.trim()
-  if (storedInstanceKey) return storedInstanceKey
+  if (storedInstanceKey) {
+    // 旧版为多 host 站点写入的裸 siteId 实例键不含分区信息，按 URL 重新归属
+    if (MULTI_HOST_BUILTIN_SITES[storedInstanceKey]) {
+      return createSiteInstanceKey(storedInstanceKey, identity.url ?? undefined)
+    }
+    return storedInstanceKey
+  }
 
   const siteId = identity.siteId?.trim()
   if (!siteId) return null
