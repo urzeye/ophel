@@ -2,11 +2,11 @@
 import type { ReleaseNotesContent } from "./types"
 
 export const currentReleaseNotes = {
-  version: "1.3.3",
-  date: "2026-11-11",
+  version: "1.3.4",
+  date: "2026-11-16",
   notes: {
-    en: "### 🚀 New Features\n\n- **Experimental Safari support** — Added desktop Safari experimental adaptation, retaining core functions. It does not currently support system notifications, automatic top tabs after AI generation, and Gemini watermark removal. (#1030)\n\n### ✨ Improvements\n\n- **Send shortcut** — Shortcuts now shows the current send-message key with a link to its setting, which also explains how sending and line breaks work. (#1032)\n- **Panel and outline UI refinement** — Refined panel header chrome, outline toolbar interactions, and empty-state presentation for a cleaner look. (#1038)\n\n### 🐛 Bug Fixes\n\n- **Hover preview triggering smart avoidance** — Fixed an issue where using outline jump in the hover preview panel activated smart avoidance and made the page jitter when the preview closed. (#1036)",
-    zh: "### 🚀 新增功能\n\n- **Safari 实验性适配** — 新增桌面 Safari 实验适配，保留核心功能，暂不支持系统通知、AI 生成后自动置顶标签页、Gemini 去水印。 (#1030)\n\n### ✨ 功能优化\n\n- **发送快捷键** — 快捷键位现在展示「发送消息」的当前按键并提供设置跳转入口，设置说明补充了发送与换行的行为。 (#1032)\n- **面板与大纲界面优化** — 优化面板顶栏质感、大纲工具栏交互与空态展示，界面更清爽统一。 (#1038)\n\n### 🐛 问题修复\n\n- **悬停预览误触智能避让** — 修复在悬停出现的预览面板里点击大纲跳转后会触发页面避让、预览消失时页面抖动的问题，现在预览期间不再触发避让。 (#1036)",
+    en: "### 🚀 New Features\n\n- **Dola support** — Added support for Dola (dola.com), Doubao's international version, with the same outlines, export, and panel features as Doubao. (#1046)\n\n### 🐛 Bug Fixes\n\n- **ChatGPT table distortion** — Fixed an issue where tables in ChatGPT answers were stretched and misaligned after opening the panel or changing the site width; tables now stay as wide as the content. (#1037, #1042)\n- **Clean Mode hiding chat input** — Fixed Clean Mode hiding the input box on Qianwen's new chat page; disclaimer hiding on Qianwen and DeepSeek now matches content instead of element position, and Qianwen's \"AI-generated content\" notice is hidden again. (#1041, #1043, #1045)\n- **Multi-domain site data isolation** — Kimi, Doubao/Dola, and Z.ai now separate local data by domain while sharing settings; existing local data is not migrated, so resync conversations to rebuild the list. (#1047)\n- **Site adaptation updates not applying** — Fixed an issue where pushed site adaptation updates were silently rejected by over-strict validation and never took effect; updates now apply as expected. (#1048)",
+    zh: "### 🚀 新增功能\n\n- **Dola 支持** — 新增适配豆包海外版 Dola（dola.com），大纲、导出、面板等豆包已有功能在 Dola 上同样可用。 (#1046)\n\n### 🐛 问题修复\n\n- **ChatGPT 表格错位** — 修复打开面板或调整页面宽度后 ChatGPT 回答中的表格被拉伸变形、列宽失调的问题，现在表格保持与正文同宽。 (#1037, #1042)\n- **净化模式误藏输入框** — 修复净化模式误藏千问新建会话页输入框的问题；千问、DeepSeek 免责声明改按内容定位避免误伤，千问「内容由AI生成」提示条恢复隐藏。 (#1041, #1043, #1045)\n- **多域名站点数据隔离** — Kimi、豆包/Dola 和 Z.ai 按域名隔离本地数据并共享设置，旧数据不迁移，升级后需重新同步对话列表。 (#1047)\n- **站点适配更新不生效** — 修复站点适配更新被过严的内部校验误拦、推送后始终不生效的问题，现在适配更新会正常应用。 (#1048)",
   },
   fullChangelogUrls: {
     en: "https://ophel.app/docs/changelog",

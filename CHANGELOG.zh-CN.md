@@ -8,6 +8,10 @@
 
 ## [Unreleased]
 
+---
+
+## [1.3.4][1.3.4] - 2026-11-16
+
 ### 🚀 新增功能
 
 - **Dola 支持** — 新增适配豆包海外版 Dola（dola.com），大纲、导出、面板等豆包已有功能在 Dola 上同样可用。 (#1046)
@@ -1719,6 +1723,7 @@
 
 ---
 
+[1.3.4]: https://github.com/urzeye/ophel/releases/tag/v1.3.4
 [1.3.3]: https://github.com/urzeye/ophel/releases/tag/v1.3.3
 [1.3.2]: https://github.com/urzeye/ophel/releases/tag/v1.3.2
 [1.3.1]: https://github.com/urzeye/ophel/releases/tag/v1.3.1

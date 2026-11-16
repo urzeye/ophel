@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+---
+
+## [1.3.4][1.3.4] - 2026-11-16
+
 ### 🚀 New Features
 
 - **Dola support** — Added support for Dola (dola.com), Doubao's international version, with the same outlines, export, and panel features as Doubao. (#1046)
@@ -1718,6 +1722,7 @@ This is the first official release of Ophel, providing comprehensive enhancement
 
 ---
 
+[1.3.4]: https://github.com/urzeye/ophel/releases/tag/v1.3.4
 [1.3.3]: https://github.com/urzeye/ophel/releases/tag/v1.3.3
 [1.3.2]: https://github.com/urzeye/ophel/releases/tag/v1.3.2
 [1.3.1]: https://github.com/urzeye/ophel/releases/tag/v1.3.1
