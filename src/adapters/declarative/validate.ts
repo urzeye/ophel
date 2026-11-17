@@ -920,6 +920,7 @@ const validateThemeSync = (
       "extraKeys",
       "darkClass",
       "lightClass",
+      "domSync",
     ],
     ["storageKey", "values"],
     mode,
@@ -1104,6 +1105,127 @@ const validateThemeSync = (
       )
     }
   }
+
+  if (themeSync.domSync !== undefined) {
+    validateThemeSyncDomSync(themeSync.domSync, `${path}.domSync`, context, mode)
+  }
+}
+
+const THEME_SYNC_MODE_PLACEHOLDER = "{mode}"
+const THEME_SYNC_DOM_ATTRIBUTE_NAME = /^data-[a-zA-Z0-9-]+$/
+const THEME_SYNC_DOM_CLASS_TEMPLATE = /^[A-Za-z0-9_-]+$/
+
+const validateThemeSyncDomAttributeValue = (
+  value: unknown,
+  path: string,
+  context: ValidationContext,
+  mode: ValidationMode,
+): void => {
+  if (typeof value === "string") {
+    validateString(value, path, context, mode, { maxLength: 100 })
+    return
+  }
+  if (isPlainRecord(value)) {
+    validateString(value.dark, `${path}.dark`, context, mode, { maxLength: 100 })
+    validateString(value.light, `${path}.light`, context, mode, { maxLength: 100 })
+    return
+  }
+  addError(context, path, "invalid_type", "Expected a string or { dark, light } mapping")
+}
+
+const validateThemeSyncDomSync = (
+  value: unknown,
+  path: string,
+  context: ValidationContext,
+  mode: ValidationMode,
+): void => {
+  if (!isDeletion(value, mode) && !Array.isArray(value)) {
+    addError(context, path, "invalid_type", "Expected an array")
+    return
+  }
+  if (!Array.isArray(value)) return
+  if (value.length > SITE_PACK_MAX_ARRAY_ITEMS) {
+    addError(
+      context,
+      path,
+      "too_large",
+      `Array must not contain more than ${SITE_PACK_MAX_ARRAY_ITEMS} items`,
+    )
+  }
+
+  value.forEach((target, index) => {
+    const targetPath = `${path}[${index}]`
+    // 数组合并是整体替换，数组项必须按 full 校验
+    const entry = validateObject(
+      target,
+      targetPath,
+      context,
+      ["selector", "attributes", "classes"],
+      ["selector"],
+      "full",
+    )
+    if (!entry) return
+
+    if (entry.selector !== undefined) {
+      validateString(entry.selector, `${targetPath}.selector`, context, "full", {
+        maxLength: 500,
+      })
+    }
+
+    if (entry.classes !== undefined) {
+      const classesPath = `${targetPath}.classes`
+      if (!Array.isArray(entry.classes)) {
+        addError(context, classesPath, "invalid_type", "Expected an array")
+      } else {
+        if (entry.classes.length > SITE_PACK_MAX_ARRAY_ITEMS) {
+          addError(
+            context,
+            classesPath,
+            "too_large",
+            `Array must not contain more than ${SITE_PACK_MAX_ARRAY_ITEMS} items`,
+          )
+        }
+        entry.classes.forEach((template, templateIndex) => {
+          const templatePath = `${classesPath}[${templateIndex}]`
+          if (!validateString(template, templatePath, context, "full", { maxLength: 100 })) return
+          const resolvedProbe = template.replaceAll(THEME_SYNC_MODE_PLACEHOLDER, "mode")
+          if (!THEME_SYNC_DOM_CLASS_TEMPLATE.test(resolvedProbe)) {
+            addError(
+              context,
+              templatePath,
+              "invalid_value",
+              "Class template must resolve to a single class token ([A-Za-z0-9_-] and optional {mode})",
+            )
+          }
+        })
+      }
+    }
+
+    if (entry.attributes !== undefined) {
+      const attributesPath = `${targetPath}.attributes`
+      if (!isPlainRecord(entry.attributes)) {
+        addError(context, attributesPath, "invalid_type", "Expected an object")
+        return
+      }
+      for (const [name, attributeValue] of Object.entries(entry.attributes)) {
+        const attributePath = `${attributesPath}.${name}`
+        if (
+          name.length === 0 ||
+          DANGEROUS_OBJECT_KEYS.has(name) ||
+          !THEME_SYNC_DOM_ATTRIBUTE_NAME.test(name)
+        ) {
+          addError(
+            context,
+            attributePath,
+            "invalid_value",
+            `Attribute name "${name}" is not allowed; only data-* attributes are supported`,
+          )
+          continue
+        }
+        validateThemeSyncDomAttributeValue(attributeValue, attributePath, context, "full")
+      }
+    }
+  })
 }
 
 const validateDocumentOutline = (

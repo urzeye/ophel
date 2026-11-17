@@ -25,7 +25,12 @@ import { getCurrentLang, t } from "~utils/i18n"
 
 import { resolveSitePackName } from "./localization"
 import { siteMatchPatternMatchesUrl, siteMatchPatternOrigin } from "./match-pattern"
-import type { SitePackManifest, SitePackThemeSyncConfig, SiteTraits } from "./types"
+import type {
+  SitePackManifest,
+  SitePackThemeSyncConfig,
+  SitePackThemeSyncDomTarget,
+  SiteTraits,
+} from "./types"
 
 const DEFAULT_THEME_COLORS = {
   primary: "#2563eb",
@@ -1351,6 +1356,7 @@ export class DeclarativeAdapter extends SiteAdapter {
         if (config.lightClass) html.classList.add(config.lightClass)
       }
       html.style.colorScheme = resolvedMode
+      this.applyThemeSyncDomTargets(config.domSync, resolvedMode)
 
       // 手动派发的 storage 事件同标签页监听者也能收到，next-themes 类实现靠它同步状态
       for (const written of writtenKeys) {
@@ -1368,6 +1374,40 @@ export class DeclarativeAdapter extends SiteAdapter {
     } catch (error) {
       console.error(`[SitePackAdapter:${this.manifest.id}] toggleTheme error:`, error)
       return false
+    }
+  }
+
+  /**
+   * 按解析模式应用 themeSync.domSync 声明的 DOM 主题标记：
+   * 类名模板添加当前模式解析值、移除相反模式解析值；
+   * data-* 属性写入字符串（{mode} 占位解析）或按模式映射的值。
+   */
+  private applyThemeSyncDomTargets(
+    targets: SitePackThemeSyncDomTarget[] | undefined,
+    mode: "light" | "dark",
+  ): void {
+    if (!targets || targets.length === 0) return
+    const oppositeMode = mode === "dark" ? "light" : "dark"
+
+    for (const target of targets) {
+      const elements = document.querySelectorAll(target.selector)
+      for (const element of Array.from(elements)) {
+        for (const template of target.classes ?? []) {
+          const modeClass = template.replaceAll("{mode}", mode)
+          const oppositeClass = template.replaceAll("{mode}", oppositeMode)
+          if (oppositeClass && oppositeClass !== modeClass) {
+            element.classList.remove(oppositeClass)
+          }
+          if (modeClass) {
+            element.classList.add(modeClass)
+          }
+        }
+        for (const [name, value] of Object.entries(target.attributes ?? {})) {
+          const resolved =
+            typeof value === "string" ? value.replaceAll("{mode}", mode) : value[mode]
+          element.setAttribute(name, resolved)
+        }
+      }
     }
   }
 }

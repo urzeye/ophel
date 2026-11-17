@@ -641,6 +641,82 @@
           "minLength": 1,
           "maxLength": 100,
           "description": "Omit when the site only toggles a dark class."
+        },
+        "domSync": {
+          "type": "array",
+          "maxItems": 50,
+          "description": "Declarative DOM theme-marker sync applied on every toggle with the resolved dark/light mode: for sites whose theme is driven by multiple classes and data-* attributes on html/body (single darkClass/lightClass is not enough). Class templates and attribute string values support the {mode} placeholder.",
+          "items": {
+            "$ref": "#/definitions/themeSyncDomTarget"
+          }
+        }
+      }
+    },
+    "themeSyncDomTarget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["selector"],
+      "properties": {
+        "selector": {
+          "$ref": "#/definitions/selector",
+          "description": "Target element selector; all matched elements are updated."
+        },
+        "attributes": {
+          "type": "object",
+          "description": "data-* attributes to write. String values support the {mode} placeholder; use a {dark, light} mapping for mode-specific values.",
+          "propertyNames": {
+            "allOf": [
+              {
+                "pattern": "^data-[a-zA-Z0-9-]+$"
+              },
+              {
+                "minLength": 1,
+                "maxLength": 100
+              },
+              {
+                "not": {
+                  "enum": ["__proto__", "prototype", "constructor"]
+                }
+              }
+            ]
+          },
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["dark", "light"],
+                "properties": {
+                  "dark": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                  },
+                  "light": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "classes": {
+          "type": "array",
+          "maxItems": 50,
+          "description": "Class templates; each resolves with {mode} to a single class token. Switching modes adds the current-mode class and removes the opposite-mode class.",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "pattern": "^(?:[A-Za-z0-9_-]|\\{mode\\})+$"
+          }
         }
       }
     },
