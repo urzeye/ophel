@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "workbuddy",
   "version": 1,
-  "minAppVersion": "1.3.5",
+  "minAppVersion": "1.3.4",
   "name": "WorkBuddy",
   "nameI18n": {
     "zh-CN": "WorkBuddy",
@@ -84,7 +84,7 @@
   },
   "export": {
     "userQuerySelector": ".cr-frame--right .cr-self-message",
-    "assistantResponseSelector": ".cr-frame--left .cr-agent__body",
+    "assistantResponseSelector": ".cr-frame--left .cr-agent__content",
     "turnSelector": null,
     "useShadowDOM": false
   },
@@ -127,11 +127,8 @@
     ],
     "insetSelectors": [
       {
-        "selector": ".cr-message-list__content",
-        "extraCss": "box-sizing: border-box;"
-      },
-      {
-        "selector": ".conversation-input-area",
+        "selector": ".conversation-shell__main",
+        "insetMode": "edge",
         "extraCss": "box-sizing: border-box;"
       }
     ],
