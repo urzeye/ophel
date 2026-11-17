@@ -106,6 +106,7 @@ const CONFIG_KEYS = [
   "selectors",
   "input",
   "conversation",
+  "conversationTitleSelector",
   "generating",
   "session",
   "networkMonitor",
@@ -2079,6 +2080,14 @@ const validateConfigFields = (
   if (config.input !== undefined) validateInput(config.input, `${path}.input`, context, mode)
   if (config.conversation !== undefined) {
     validateConversation(config.conversation, `${path}.conversation`, context, mode)
+  }
+  if (config.conversationTitleSelector !== undefined) {
+    validateSelectorString(
+      config.conversationTitleSelector,
+      `${path}.conversationTitleSelector`,
+      context,
+      mode,
+    )
   }
   if (config.generating !== undefined) {
     validateGenerating(config.generating, `${path}.generating`, context, mode)

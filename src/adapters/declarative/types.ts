@@ -149,6 +149,8 @@ export interface SitePackConfig {
   selectors: SitePackSelectors
   input?: SitePackInputConfig
   conversation?: SitePackConversationConfig
+  /** 当前对话标题元素选择器（如顶栏标题）；用于对话列表缺失或 document.title 不含标题的站点。 */
+  conversationTitleSelector?: string
   generating?: SitePackGeneratingConfig
   session?: SitePackSessionConfig
   networkMonitor?: NetworkMonitorConfig

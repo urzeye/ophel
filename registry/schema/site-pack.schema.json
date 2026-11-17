@@ -74,6 +74,10 @@
     "conversation": {
       "$ref": "#/definitions/conversation"
     },
+    "conversationTitleSelector": {
+      "$ref": "#/definitions/selector",
+      "description": "Selector for the element holding the current conversation title (e.g. a topbar title), used when the title is not available from the conversation list item or document.title."
+    },
     "generating": {
       "$ref": "#/definitions/generating"
     },

@@ -874,6 +874,14 @@ export class DeclarativeAdapter extends SiteAdapter {
       }
     }
 
+    const titleSelector = this.manifest.conversationTitleSelector
+    if (titleSelector) {
+      for (const element of document.querySelectorAll(titleSelector)) {
+        const title = normalizeElementText(element)
+        if (title) return title
+      }
+    }
+
     return this.getDocumentConversationTitle()
   }
 
