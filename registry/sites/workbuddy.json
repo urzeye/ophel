@@ -32,6 +32,7 @@
     "ru": "Добавляет в WorkBuddy (workbuddy.cn / workbuddy.ai) функции Ophel для структуры, базового экспорта, отслеживания и остановки генерации, ширины чата, режима Zen, чистого режима, нового чата, вставки промптов и синхронизации темы хоста."
   },
   "matches": ["https://www.workbuddy.cn/*", "https://www.workbuddy.ai/*"],
+  "logoUrl": "https://static.workbuddy.cn/web/agents/91e8705fce7fb33abd9e02e26cd5e9d2e3247cfb/assets/share-logo.png?v=2",
   "theme": {
     "primary": "#00c29a",
     "secondary": "#009e7f"
