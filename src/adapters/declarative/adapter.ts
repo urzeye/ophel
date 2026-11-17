@@ -115,13 +115,50 @@ const getNestedThemeValue = (source: Record<string, unknown>, path: string): unk
   return current
 }
 
-const getEditorText = (editor: HTMLElement): string =>
-  isTextControl(editor) ? editor.value : editor.textContent ?? ""
+// 模型驱动编辑器（Slate/Lexical/ProseMirror）按自身数据模型渲染；Chrome 已不再为
+// execCommand 派发 beforeinput，其直接 DOM 修改不会进入模型，表现为文本可见但
+// 站点状态为空。这类编辑器必须改走自身监听的合成 beforeinput/paste 管线。
+const MODEL_DRIVEN_EDITOR_SELECTOR = "[data-slate-editor], [data-lexical-editor], .ProseMirror"
+// Slate 的占位提示是编辑器内的真实 DOM 节点（data-slate-placeholder），会被
+// textContent/innerText 一并读出：空编辑器被读为非空、插入内容被占位文本截断，
+// 插入/清空校验都会误判。读数时统一排除占位子树。
+const SLATE_PLACEHOLDER_SELECTOR = "[data-slate-placeholder]"
+
+const isModelDrivenEditor = (editor: HTMLElement): boolean =>
+  editor.matches(MODEL_DRIVEN_EDITOR_SELECTOR)
+
+const getEditorText = (editor: HTMLElement): string => {
+  if (isTextControl(editor)) return editor.value
+  if (!editor.querySelector(SLATE_PLACEHOLDER_SELECTOR)) return editor.textContent ?? ""
+  let text = ""
+  const walker = editor.ownerDocument.createTreeWalker(editor, NodeFilter.SHOW_TEXT)
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    if (!node.parentElement?.closest(SLATE_PLACEHOLDER_SELECTOR)) {
+      text += node.nodeValue ?? ""
+    }
+  }
+  return text
+}
 
 // innerText 反映渲染后的换行结构（段落、<br>）；textContent 会把多段落拼成
 // 无换行的串，无法区分"按段落正确拆分"和"换行被吃掉"。
-const getEditorRenderedText = (editor: HTMLElement): string =>
-  isTextControl(editor) ? editor.value : editor.innerText
+const getEditorRenderedText = (editor: HTMLElement): string => {
+  if (isTextControl(editor)) return editor.value
+  const placeholders = Array.from(editor.querySelectorAll<HTMLElement>(SLATE_PLACEHOLDER_SELECTOR))
+  if (placeholders.length === 0) return editor.innerText
+  // innerText 只反映渲染树：临时隐藏占位节点即可排除其文本，读取后立即还原。
+  const previousDisplays = placeholders.map((element) => element.style.display)
+  placeholders.forEach((element) => {
+    element.style.display = "none"
+  })
+  try {
+    return editor.innerText
+  } finally {
+    placeholders.forEach((element, index) => {
+      element.style.display = previousDisplays[index]
+    })
+  }
+}
 
 // contenteditable DOM（如 ProseMirror 多段落）的 textContent 不保留换行与原始空白，
 // 校验插入结果时移除两侧全部空白字符，避免多行内容已插入却被误判为失败。
@@ -136,6 +173,21 @@ const normalizeEditorRenderedText = (text: string): string =>
     .replace(/[^\S\n]+/g, " ")
     .replace(/\n{2,}/g, "\n")
     .trim()
+
+type EditorInsertMethod = "beforeinput" | "paste" | "execCommand"
+
+// 按编辑器类型排序插入方式，每种方式之后都经内容校验再决定是否尝试下一种：
+// - Slate 的合成 beforeinput（insertText）能完整进入模型并保留多行（实测 slate-react 0.147）。
+// - Lexical/ProseMirror 需要合成 paste 才能保留换行（#1022：其 insertText 管线会丢换行）。
+// - 普通 contenteditable 只能走可信 execCommand；合成不可信事件不触发默认行为，仅作兜底。
+// execCommand 对模型驱动编辑器只产生模型外的 DOM 污染，因此排在最后。
+const getEditorInsertAttempts = (editor: HTMLElement): EditorInsertMethod[] => {
+  if (editor.matches("[data-slate-editor]")) return ["beforeinput", "paste", "execCommand"]
+  if (editor.matches("[data-lexical-editor], .ProseMirror")) {
+    return ["paste", "beforeinput", "execCommand"]
+  }
+  return ["execCommand", "beforeinput"]
+}
 
 const compareDomOrder = (left: Element, right: Element): number => {
   if (left === right) return 0
@@ -436,24 +488,42 @@ export class DeclarativeAdapter extends SiteAdapter {
     editor.focus()
 
     if (content === "") {
-      // 优先走浏览器原生编辑管线：select-all + execCommand("delete") 会触发
-      // 可信 beforeinput/input，对自有模型驱动的编辑器（如 Notion AI）等同真实
-      // 键盘删除。合成事件必须放在其后兜底，否则编辑器会按自身选区模型部分处理
-      // 合成事件，而强写 textContent 又会被模型重渲染还原，表现为清空无效。
-      //
-      // 模型驱动编辑器（如 Lexical）的内部选区靠 selectionchange 异步同步，
+      // 模型驱动编辑器（Slate/Lexical 等）的内部选区靠 selectionchange 异步同步，
       // select-all 后必须让出事件循环再删除，否则删除只作用于过期选区
       // （Perplexity 上表现为只删掉光标前的一两个字符）；未清空就重选再删。
-      for (let round = 0; round < EDITOR_CLEAR_MAX_ROUNDS; round++) {
-        if (!this.selectAllEditorContent(editor)) return false
-        await new Promise((resolve) => setTimeout(resolve, EDITOR_SELECTION_SYNC_MS))
-        try {
-          editor.ownerDocument.execCommand("delete", false, undefined)
-        } catch {
-          // Unsupported execCommand attempt continues to synthetic events.
+      // 模型驱动编辑器优先走其监听的合成 beforeinput 删除管线（execCommand 只改 DOM
+      // 不进模型）；普通 contenteditable 相反，合成事件不触发默认行为，仅作兜底。
+      const modelDriven = isModelDrivenEditor(editor)
+      const deleteMethods = modelDriven
+        ? (["beforeinput", "execCommand"] as const)
+        : (["execCommand", "beforeinput"] as const)
+      for (const method of deleteMethods) {
+        for (let round = 0; round < EDITOR_CLEAR_MAX_ROUNDS; round++) {
+          if (!this.selectAllEditorContent(editor)) return false
+          await new Promise((resolve) => setTimeout(resolve, EDITOR_SELECTION_SYNC_MS))
+          try {
+            if (method === "execCommand") {
+              editor.ownerDocument.execCommand("delete", false, undefined)
+            } else {
+              editor.dispatchEvent(
+                new InputEvent("beforeinput", {
+                  bubbles: true,
+                  cancelable: true,
+                  composed: true,
+                  inputType: "deleteContentBackward",
+                }),
+              )
+            }
+          } catch {
+            // Unsupported event construction; validation below reports failure.
+          }
+          if (await this.waitForEditorUpdate(editor, "", requireSubmitButton)) return true
         }
-        if (await this.waitForEditorUpdate(editor, "", requireSubmitButton)) return true
       }
+
+      // 模型驱动编辑器的 DOM 由模型渲染，强写 textContent 只会被重渲染还原甚至
+      // 破坏 React 节点映射，到这里只能判定失败，不做 DOM 级强清。
+      if (modelDriven) return false
 
       if (!this.selectAllEditorContent(editor)) return false
 
@@ -532,47 +602,64 @@ export class DeclarativeAdapter extends SiteAdapter {
       return this.waitForEditorUpdate(editor, "", requireSubmitButton)
     }
 
-    // 与清空同理：先用原生 select-all + insertText 完成“替换”，可信事件才能让
-    // 框架编辑器更新其内部模型；合成 beforeinput 只作兜底，提前派发会被框架按
-    // 自身选区处理成“追加”而非“替换”（Notion AI 上表现为旧内容残留）。
+    // 按编辑器类型排序尝试插入（见 getEditorInsertAttempts），每种方式之后经
+    // 内容校验再决定是否尝试下一种，避免 execCommand 在模型驱动编辑器上留下
+    // 模型无法感知的 DOM 污染、进而打乱后续方式的选区映射。
     const originalText = getEditorText(editor)
-    if (this.selectAllEditorContent(editor)) {
-      try {
-        editor.ownerDocument.execCommand("insertText", false, content)
-      } catch {
-        // Unsupported execCommand attempt continues to the synthetic event.
+    const attempts = getEditorInsertAttempts(editor)
+    let attempted = false
+
+    for (const attempt of attempts) {
+      // 上次尝试写入了未通过校验的内容时必须先清场（模型编辑器走模型级清空），
+      // 否则残留会与新内容叠加出错乱结果。
+      if (attempted) {
+        if (normalizeEditorText(getEditorText(editor)) !== normalizeEditorText(originalText)) {
+          const cleared = await this.replaceContentEditableContent(editor, "", false)
+          if (!cleared) return false
+        }
       }
+
+      if (!this.selectAllEditorContent(editor)) return false
+      attempted = true
+
+      try {
+        if (attempt === "execCommand") {
+          editor.ownerDocument.execCommand("insertText", false, content)
+        } else {
+          // 合成 beforeinput/paste 没有 getTargetRanges，模型编辑器只能按内部选区
+          // 处理，先让出事件循环等选区同步完成。
+          await new Promise((resolve) => setTimeout(resolve, EDITOR_SELECTION_SYNC_MS))
+          if (attempt === "beforeinput") {
+            editor.dispatchEvent(
+              new InputEvent("beforeinput", {
+                bubbles: true,
+                cancelable: true,
+                composed: true,
+                data: content,
+                inputType: "insertText",
+              }),
+            )
+          } else {
+            const dataTransfer = new DataTransfer()
+            dataTransfer.setData("text/plain", content)
+            editor.dispatchEvent(
+              new ClipboardEvent("paste", {
+                clipboardData: dataTransfer,
+                bubbles: true,
+                cancelable: true,
+                composed: true,
+              }),
+            )
+          }
+        }
+      } catch {
+        // Unsupported event construction; validation below reports failure.
+      }
+
       if (await this.waitForEditorUpdate(editor, content, requireSubmitButton)) return true
     }
 
-    // 内容未完整入框（如 Lexical 把多行 insertText 截断到首行）。编辑器里已有
-    // 非原始内容时必须先清场再试下一种方式，否则残留会与新内容叠加出错乱结果。
-    if (normalizeEditorText(getEditorText(editor)) !== normalizeEditorText(originalText)) {
-      const cleared = await this.replaceContentEditableContent(editor, "", false)
-      if (!cleared) return false
-    }
-
-    if (!this.selectAllEditorContent(editor)) return false
-
-    // 合成 beforeinput 没有 getTargetRanges，模型编辑器只能按内部选区处理，
-    // 先让出事件循环等选区同步完成。
-    await new Promise((resolve) => setTimeout(resolve, EDITOR_SELECTION_SYNC_MS))
-
-    try {
-      editor.dispatchEvent(
-        new InputEvent("beforeinput", {
-          bubbles: true,
-          cancelable: true,
-          composed: true,
-          data: content,
-          inputType: "insertText",
-        }),
-      )
-    } catch {
-      // Unsupported beforeinput construction; validation below reports failure.
-    }
-
-    return this.waitForEditorUpdate(editor, content, requireSubmitButton)
+    return false
   }
 
   async insertPrompt(content: string): Promise<boolean> {
