@@ -1,5 +1,8 @@
 import { resolveSitePackName } from "~adapters/declarative/localization"
-import { siteMatchPatternOrigin } from "~adapters/declarative/match-pattern"
+import {
+  siteMatchPatternDisplayUrl,
+  siteMatchPatternOrigin,
+} from "~adapters/declarative/match-pattern"
 import { createSupportedAiPlatform, type SupportedAiPlatform } from "~constants/defaults"
 
 import type { InstalledSitePack } from "./pack-manager"
@@ -11,6 +14,10 @@ const getPlatformInitial = (name: string): string =>
 
 const uniqueOrigins = (patterns: readonly string[]): string[] =>
   Array.from(new Set(patterns.map(siteMatchPatternOrigin)))
+
+/** 入口地址保留 match pattern 里的具体路径（如 /app），与设置页「打开站点」一致。 */
+const uniqueEntryUrls = (patterns: readonly string[]): string[] =>
+  Array.from(new Set(patterns.map(siteMatchPatternDisplayUrl)))
 
 /**
  * 适配包站点图标规则：manifest 声明的 logoUrl 优先；否则取匹配合集
@@ -39,7 +46,7 @@ export const getDynamicPlatforms = (
     const matchPatterns = Array.from(
       new Set([...pack.manifest.matches, ...getSitePackBoundOriginPatterns(pack, bindings)]),
     )
-    const entryUrls = uniqueOrigins(matchPatterns)
+    const entryUrls = uniqueEntryUrls(matchPatterns)
     const name = resolveSitePackName(pack.manifest, language)
     const faviconUrl = getSitePackFaviconUrl(matchPatterns, pack.manifest.logoUrl)
     return createSupportedAiPlatform(
