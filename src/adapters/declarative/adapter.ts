@@ -115,17 +115,14 @@ const getNestedThemeValue = (source: Record<string, unknown>, path: string): unk
   return current
 }
 
-// 模型驱动编辑器（Slate/Lexical/ProseMirror）按自身数据模型渲染；Chrome 已不再为
-// execCommand 派发 beforeinput，其直接 DOM 修改不会进入模型，表现为文本可见但
-// 站点状态为空。这类编辑器必须改走自身监听的合成 beforeinput/paste 管线。
-const MODEL_DRIVEN_EDITOR_SELECTOR = "[data-slate-editor], [data-lexical-editor], .ProseMirror"
+// 模型驱动编辑器（Slate/Lexical/ProseMirror/Draft.js）按自身数据模型渲染；Chrome 已不再为
+// execCommand 派发 beforeinput，其直接 DOM 修改不会进入模型，表现为文本可见但站点状态
+// 为空；Draft.js 上更会撞毁 React 节点映射（removeChild 崩溃、编辑器被销毁）。这类编辑器
+// 必须改走各自监听的合成事件管线（paste/beforeinput/keydown），禁止 DOM 级强写。
 // Slate 的占位提示是编辑器内的真实 DOM 节点（data-slate-placeholder），会被
 // textContent/innerText 一并读出：空编辑器被读为非空、插入内容被占位文本截断，
 // 插入/清空校验都会误判。读数时统一排除占位子树。
 const SLATE_PLACEHOLDER_SELECTOR = "[data-slate-placeholder]"
-
-const isModelDrivenEditor = (editor: HTMLElement): boolean =>
-  editor.matches(MODEL_DRIVEN_EDITOR_SELECTOR)
 
 const getEditorText = (editor: HTMLElement): string => {
   if (isTextControl(editor)) return editor.value
@@ -175,18 +172,51 @@ const normalizeEditorRenderedText = (text: string): string =>
     .trim()
 
 type EditorInsertMethod = "beforeinput" | "paste" | "execCommand"
+type EditorDeleteMethod = "beforeinput" | "keydownBackspace" | "execCommand"
 
-// 按编辑器类型排序插入方式，每种方式之后都经内容校验再决定是否尝试下一种：
+interface EditorEventPipeline {
+  insert: EditorInsertMethod[]
+  delete: EditorDeleteMethod[]
+}
+
+/** 普通 contenteditable：可信 execCommand 优先；合成不可信事件不触发默认行为，仅作兜底。 */
+const PLAIN_EDITOR_PIPELINE: EditorEventPipeline = {
+  insert: ["execCommand", "beforeinput"],
+  delete: ["execCommand", "beforeinput"],
+}
+
+// 按编辑器框架选择事件管线，每种方式之后都经内容校验再决定是否尝试下一种；
+// 返回 null 表示非模型驱动编辑器（走 PLAIN_EDITOR_PIPELINE）：
 // - Slate 的合成 beforeinput（insertText）能完整进入模型并保留多行（实测 slate-react 0.147）。
-// - Lexical/ProseMirror 需要合成 paste 才能保留换行（#1022：其 insertText 管线会丢换行）。
-// - 普通 contenteditable 只能走可信 execCommand；合成不可信事件不触发默认行为，仅作兜底。
-// execCommand 对模型驱动编辑器只产生模型外的 DOM 污染，因此排在最后。
-const getEditorInsertAttempts = (editor: HTMLElement): EditorInsertMethod[] => {
-  if (editor.matches("[data-slate-editor]")) return ["beforeinput", "paste", "execCommand"]
-  if (editor.matches("[data-lexical-editor], .ProseMirror")) {
-    return ["paste", "beforeinput", "execCommand"]
+// - Lexical/ProseMirror 需要合成 paste 才能保留换行（#1022：其 insertText 管线会丢换行）；
+//   删除分别走 beforeinput 删除（#1022 的 Lexical 模型级清空）和合成 keydown Backspace
+//   （doubao 的 TipTap 生产路径）。
+// - Draft.js 忽略合成 beforeinput（实测 no-op），仅接受合成 paste 与 keydown Backspace；
+//   execCommand 对 Draft 是致命的（内容部分入模型后 React removeChild 崩溃），绝不使用。
+// execCommand 对其余模型驱动编辑器只产生模型外的 DOM 污染，因此一律排在最后。
+const getEditorEventPipeline = (editor: HTMLElement): EditorEventPipeline | null => {
+  if (editor.matches(".public-DraftEditor-content")) {
+    return { insert: ["paste"], delete: ["keydownBackspace"] }
   }
-  return ["execCommand", "beforeinput"]
+  if (editor.matches("[data-slate-editor]")) {
+    return {
+      insert: ["beforeinput", "paste", "execCommand"],
+      delete: ["beforeinput", "execCommand"],
+    }
+  }
+  if (editor.matches("[data-lexical-editor]")) {
+    return {
+      insert: ["paste", "beforeinput", "execCommand"],
+      delete: ["beforeinput", "execCommand"],
+    }
+  }
+  if (editor.matches(".ProseMirror")) {
+    return {
+      insert: ["paste", "beforeinput", "execCommand"],
+      delete: ["keydownBackspace", "beforeinput", "execCommand"],
+    }
+  }
+  return null
 }
 
 const compareDomOrder = (left: Element, right: Element): number => {
@@ -491,19 +521,29 @@ export class DeclarativeAdapter extends SiteAdapter {
       // 模型驱动编辑器（Slate/Lexical 等）的内部选区靠 selectionchange 异步同步，
       // select-all 后必须让出事件循环再删除，否则删除只作用于过期选区
       // （Perplexity 上表现为只删掉光标前的一两个字符）；未清空就重选再删。
-      // 模型驱动编辑器优先走其监听的合成 beforeinput 删除管线（execCommand 只改 DOM
-      // 不进模型）；普通 contenteditable 相反，合成事件不触发默认行为，仅作兜底。
-      const modelDriven = isModelDrivenEditor(editor)
-      const deleteMethods = modelDriven
-        ? (["beforeinput", "execCommand"] as const)
-        : (["execCommand", "beforeinput"] as const)
-      for (const method of deleteMethods) {
+      // 删除方式按框架管线排序（见 getEditorEventPipeline）；普通 contenteditable
+      // 合成事件不触发默认行为，仅作兜底。
+      const detectedPipeline = getEditorEventPipeline(editor)
+      const pipeline = detectedPipeline ?? PLAIN_EDITOR_PIPELINE
+      const modelDriven = detectedPipeline !== null
+      for (const method of pipeline.delete) {
         for (let round = 0; round < EDITOR_CLEAR_MAX_ROUNDS; round++) {
           if (!this.selectAllEditorContent(editor)) return false
           await new Promise((resolve) => setTimeout(resolve, EDITOR_SELECTION_SYNC_MS))
           try {
             if (method === "execCommand") {
               editor.ownerDocument.execCommand("delete", false, undefined)
+            } else if (method === "keydownBackspace") {
+              editor.dispatchEvent(
+                new KeyboardEvent("keydown", {
+                  key: "Backspace",
+                  code: "Backspace",
+                  keyCode: 8,
+                  which: 8,
+                  bubbles: true,
+                  composed: true,
+                }),
+              )
             } else {
               editor.dispatchEvent(
                 new InputEvent("beforeinput", {
@@ -602,11 +642,11 @@ export class DeclarativeAdapter extends SiteAdapter {
       return this.waitForEditorUpdate(editor, "", requireSubmitButton)
     }
 
-    // 按编辑器类型排序尝试插入（见 getEditorInsertAttempts），每种方式之后经
+    // 按编辑器框架管线排序尝试插入（见 getEditorEventPipeline），每种方式之后经
     // 内容校验再决定是否尝试下一种，避免 execCommand 在模型驱动编辑器上留下
     // 模型无法感知的 DOM 污染、进而打乱后续方式的选区映射。
     const originalText = getEditorText(editor)
-    const attempts = getEditorInsertAttempts(editor)
+    const attempts = (getEditorEventPipeline(editor) ?? PLAIN_EDITOR_PIPELINE).insert
     let attempted = false
 
     for (const attempt of attempts) {
