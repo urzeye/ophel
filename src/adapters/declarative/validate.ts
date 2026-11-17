@@ -1168,9 +1168,7 @@ const validateThemeSyncDomSync = (
     if (!entry) return
 
     if (entry.selector !== undefined) {
-      validateString(entry.selector, `${targetPath}.selector`, context, "full", {
-        maxLength: 500,
-      })
+      validateSelectorString(entry.selector, `${targetPath}.selector`, context, "full")
     }
 
     if (entry.classes !== undefined) {
