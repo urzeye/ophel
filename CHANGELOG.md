@@ -15,7 +15,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### ✨ Improvements
 
-- **Settings layout and icons** — Site Packs now uses the same content width as other settings pages, with updated navigation and page title icons.
+- **Settings layout and icons** — Site Packs now uses the same content width as other settings pages, with updated navigation and page title icons. (#1052)
 
 ---
 
