@@ -99,7 +99,23 @@ const getSitePackGuideUrl = (lang: string): string =>
 const ERROR_TOAST_DURATION = 3500
 
 // 元信息行里可截断的匹配规则：Tooltip 触发层默认按全文撑宽，限制在行宽内省略号才会生效
-const TRUNCATED_META_TRIGGER_STYLE: React.CSSProperties = { minWidth: 0, maxWidth: "100%" }
+interface SiteEntry {
+  match: string
+  url: string
+}
+
+/** 多 match 的包（如双域名站点）每个地址一个入口；displayUrl 相同的重复 match 只保留首个。 */
+const getSitePackSiteEntries = (matches: readonly string[]): SiteEntry[] => {
+  const seen = new Set<string>()
+  const entries: SiteEntry[] = []
+  for (const match of matches) {
+    const url = siteMatchPatternDisplayUrl(match)
+    if (seen.has(url)) continue
+    seen.add(url)
+    entries.push({ match, url })
+  }
+  return entries
+}
 
 const builtinPlatformNames = new Map(
   SUPPORTED_AI_PLATFORMS.map(({ id, name }) => [id as string, name] as const),
@@ -1752,8 +1768,8 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
     const isBusy = isPackBusy(packId)
     const canToggleOn = pack.source === "local" || pack.registryStatus === "available"
     const toggleDisabled = isBusy || (!pack.enabled && !canToggleOn)
-    const firstMatch = pack.manifest.matches[0]
-    const firstSiteUrl = firstMatch ? siteMatchPatternDisplayUrl(firstMatch) : undefined
+    const siteEntries = getSitePackSiteEntries(pack.manifest.matches)
+    const firstSiteUrl = siteEntries[0]?.url
     const name = resolveSitePackName(pack.manifest, currentLanguage)
     // 与提示词平台筛选同一条 favicon 规则；无 favicon 或加载失败时回退为首字母
     const faviconUrl = getSitePackFaviconUrl(
@@ -1791,26 +1807,18 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
             <span className="settings-pack-source">
               {t(pack.source === "registry" ? "sitePacksSourceRegistry" : "sitePacksSourceLocal")}
             </span>
-            {firstMatch &&
-              (firstSiteUrl ? (
-                <Tooltip content={firstMatch}>
-                  <button
-                    type="button"
-                    className="settings-pack-origin-link"
-                    aria-label={`${t("sitePacksOpenSite")}: ${firstSiteUrl}`}
-                    onClick={() => platform.openTab(firstSiteUrl)}>
-                    <span className="settings-pack-origin">{firstSiteUrl}</span>
-                    <ExternalLinkIcon size={12} />
-                  </button>
-                </Tooltip>
-              ) : (
-                <Tooltip
-                  content={firstMatch}
-                  showOnlyWhenTruncated
-                  triggerStyle={TRUNCATED_META_TRIGGER_STYLE}>
-                  <code className="settings-pack-match">{firstMatch}</code>
-                </Tooltip>
-              ))}
+            {siteEntries.map(({ match, url }) => (
+              <Tooltip key={url} content={match}>
+                <button
+                  type="button"
+                  className="settings-pack-origin-link"
+                  aria-label={`${t("sitePacksOpenSite")}: ${url}`}
+                  onClick={() => platform.openTab(url)}>
+                  <span className="settings-pack-origin">{url}</span>
+                  <ExternalLinkIcon size={12} />
+                </button>
+              </Tooltip>
+            ))}
             {needsBinding && (
               <button
                 type="button"
@@ -1869,8 +1877,7 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
     const isAvailable = view.availability === "available"
     const isBusy = isPackBusy(view.id)
     const isSelfHosted = view.matches.length === 0
-    const firstMatch = view.matches[0]
-    const firstSiteUrl = firstMatch ? siteMatchPatternDisplayUrl(firstMatch) : undefined
+    const siteEntries = getSitePackSiteEntries(view.matches)
     const version = view.availableVersion ?? view.latestVersion
     // 已安装的 registry 包把用户绑定域名也计入 favicon 来源，与已安装列表保持一致
     const faviconUrl = getSitePackFaviconUrl(
@@ -1906,26 +1913,18 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
           {view.description && renderPackDescription(view.description)}
           <div className="settings-pack-meta">
             <span className="settings-pack-version">v{version}</span>
-            {firstMatch &&
-              (firstSiteUrl ? (
-                <Tooltip content={firstMatch}>
-                  <button
-                    type="button"
-                    className="settings-pack-origin-link"
-                    aria-label={`${t("sitePacksOpenSite")}: ${firstSiteUrl}`}
-                    onClick={() => platform.openTab(firstSiteUrl)}>
-                    <span className="settings-pack-origin">{firstSiteUrl}</span>
-                    <ExternalLinkIcon size={12} />
-                  </button>
-                </Tooltip>
-              ) : (
-                <Tooltip
-                  content={firstMatch}
-                  showOnlyWhenTruncated
-                  triggerStyle={TRUNCATED_META_TRIGGER_STYLE}>
-                  <code className="settings-pack-match">{firstMatch}</code>
-                </Tooltip>
-              ))}
+            {siteEntries.map(({ match, url }) => (
+              <Tooltip key={url} content={match}>
+                <button
+                  type="button"
+                  className="settings-pack-origin-link"
+                  aria-label={`${t("sitePacksOpenSite")}: ${url}`}
+                  onClick={() => platform.openTab(url)}>
+                  <span className="settings-pack-origin">{url}</span>
+                  <ExternalLinkIcon size={12} />
+                </button>
+              </Tooltip>
+            ))}
             {isSelfHosted && <span>{t("sitePacksSelfHostedHint")}</span>}
             {view.availability === "incompatible" && (
               <span>{t("sitePacksRequiresNewerApp", { version: view.minAppVersion })}</span>

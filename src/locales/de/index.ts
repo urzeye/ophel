@@ -474,6 +474,7 @@ export const de = {
     "Wenn aktiviert, sendet ein Doppelklick den Prompt direkt. Prompts mit Variablen werden nach dem Bestätigen gesendet.",
   promptSent: "Prompt gesendet",
   promptSendFailed: "Senden fehlgeschlagen, Prompt bleibt im Eingabefeld",
+  promptClearFailed: "Das Eingabefeld konnte nicht geleert werden. Bitte manuell leeren.",
   promptQueued: "{count} Prompt(s) zur Warteschlange hinzugefügt",
   promptAddToQueue: "Zur Warteschlange hinzufügen",
   promptSplitLinesToQueue: "Zeilen trennen und zur Warteschlange hinzufügen",

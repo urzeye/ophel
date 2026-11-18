@@ -10,6 +10,7 @@ import { VIRTUAL_CATEGORY } from "~constants"
 import { SITE_IDS } from "~constants/defaults"
 import { rememberQuickQuoteReferencesFromContent } from "~core/quick-quote-marker"
 import { DOMToolkit } from "~utils/dom-toolkit"
+import { getEditorText } from "~utils/editor-text"
 import {
   filterPrompts,
   getCategories,
@@ -23,6 +24,7 @@ export const AI_STUDIO_SHORTCUT_SYNC_EVENT = "ophel:aistudio-submit-shortcut-syn
 
 export class PromptManager {
   private adapter: SiteAdapter
+  private insertionRequestId = 0
 
   constructor(adapter: SiteAdapter) {
     this.adapter = adapter
@@ -112,12 +114,15 @@ export class PromptManager {
    * 插入提示词到输入框
    */
   async insertPrompt(content: string): Promise<boolean> {
+    const requestId = ++this.insertionRequestId
+    const isCurrentRequest = () => requestId === this.insertionRequestId
     const retryDelays = [0, 80, 120, 180, 240]
 
     for (let index = 0; index < retryDelays.length; index++) {
       if (index > 0) {
         await new Promise((resolve) => setTimeout(resolve, retryDelays[index]))
       }
+      if (!isCurrentRequest()) return false
 
       // 首次优先复用已缓存的输入框：findTextarea 的可见性校验（offsetParent）会强制同步布局，
       // 在长对话页面上触发一次全文档样式重算；重试时仍重新查找，保留输入框失效后的恢复能力
@@ -128,6 +133,7 @@ export class PromptManager {
       }
 
       const result = await this.adapter.insertPrompt(content)
+      if (!isCurrentRequest()) return false
       if (result) {
         rememberQuickQuoteReferencesFromContent(content)
         return true
@@ -137,19 +143,16 @@ export class PromptManager {
     return false
   }
 
-  private getEditorContent(editor: HTMLElement | null): string {
-    if (!editor) return ""
-
-    if (editor instanceof HTMLTextAreaElement || editor instanceof HTMLInputElement) {
-      return editor.value || ""
-    }
-
-    return editor.textContent || ""
+  /** 清空时终止旧插入的重试，避免清空完成后旧提示词再次入框。 */
+  async clearEditor(): Promise<boolean> {
+    this.insertionRequestId++
+    // 既有内置适配器同步返回 void；异步适配器显式报告校验失败。
+    return (await this.adapter.clearTextarea()) !== false
   }
 
   getCurrentEditorContent(): string {
     const editor = this.adapter.getTextareaElement() || this.adapter.findTextarea()
-    return this.getEditorContent(editor)
+    return getEditorText(editor)
   }
 
   hasEditorContent(): boolean {
@@ -339,7 +342,7 @@ export class PromptManager {
 
     while (Date.now() < deadline) {
       const currentEditor = this.adapter.getTextareaElement() || this.adapter.findTextarea()
-      const currentContent = this.getEditorContent(currentEditor)
+      const currentContent = getEditorText(currentEditor)
 
       if (hadContent && currentContent.trim().length === 0) {
         return true
@@ -424,7 +427,7 @@ export class PromptManager {
       return true
     }
 
-    const currentContent = this.getEditorContent(editor)
+    const currentContent = getEditorText(editor)
       .replace(/[\u200B\u200C\u200D\uFEFF]/g, "")
       .trim()
     if (!editor || !currentContent) return false
@@ -440,7 +443,7 @@ export class PromptManager {
     const editor = this.adapter.getTextareaElement() || this.adapter.findTextarea()
     if (!editor) return false
 
-    const currentContent = this.getEditorContent(editor)
+    const currentContent = getEditorText(editor)
       .replace(/[\u200B\u200C\u200D\uFEFF]/g, "")
       .trim()
     const normalizedInitial = initialContent.replace(/[\u200B\u200C\u200D\uFEFF]/g, "").trim()
@@ -461,7 +464,7 @@ export class PromptManager {
     this.syncAiStudioSubmitShortcut(submitShortcut ?? "enter")
     const submitSelectors = this.adapter.getSubmitButtonSelectors()
     const editor = this.adapter.getTextareaElement() || this.adapter.findTextarea()
-    const initialContent = this.getEditorContent(editor)
+    const initialContent = getEditorText(editor)
 
     // 安全检查：如果编辑器为空，后面只允许点击已启用的真实发送按钮。
     // 这保留纯空输入保护，同时放行图片/附件-only 发送。

@@ -106,6 +106,7 @@ const CONFIG_KEYS = [
   "selectors",
   "input",
   "conversation",
+  "conversationTitleSelector",
   "generating",
   "session",
   "networkMonitor",
@@ -719,13 +720,31 @@ const validateInput = (
   context: ValidationContext,
   mode: ValidationMode,
 ): void => {
-  const input = validateObject(value, path, context, ["mode", "submitKey"], ["mode"], mode)
+  const input = validateObject(
+    value,
+    path,
+    context,
+    ["mode", "submitKey", "insertStrategy"],
+    ["mode"],
+    mode,
+  )
   if (!input) return
   if (input.mode !== undefined) {
     validateEnum(input.mode, `${path}.mode`, context, mode, ["textarea", "contenteditable"])
   }
   if (input.submitKey !== undefined) {
     validateEnum(input.submitKey, `${path}.submitKey`, context, mode, ["Enter", "Ctrl+Enter"])
+  }
+  if (input.insertStrategy !== undefined) {
+    validateEnum(input.insertStrategy, `${path}.insertStrategy`, context, mode, ["native", "paste"])
+    if (input.mode === "textarea" && !isDeletion(input.insertStrategy, mode)) {
+      addError(
+        context,
+        `${path}.insertStrategy`,
+        "invalid_value",
+        "insertStrategy is only supported for contenteditable inputs",
+      )
+    }
   }
 }
 
@@ -920,6 +939,7 @@ const validateThemeSync = (
       "extraKeys",
       "darkClass",
       "lightClass",
+      "domSync",
     ],
     ["storageKey", "values"],
     mode,
@@ -961,6 +981,8 @@ const validateThemeSync = (
       "timestampPath",
       "staticFields",
       "extraKeys",
+      // cookie 分支写完后直接返回，domSync 永远不会执行，必须显式拒绝而非静默忽略
+      "domSync",
     ] as const) {
       if (themeSync[unsupportedKey] !== undefined) {
         addError(
@@ -1104,6 +1126,132 @@ const validateThemeSync = (
       )
     }
   }
+
+  if (themeSync.domSync !== undefined) {
+    validateThemeSyncDomSync(themeSync.domSync, `${path}.domSync`, context, mode)
+  }
+}
+
+const THEME_SYNC_MODE_PLACEHOLDER = "{mode}"
+const THEME_SYNC_DOM_ATTRIBUTE_NAME = /^data-[a-zA-Z0-9-]+$/
+const THEME_SYNC_DOM_CLASS_TEMPLATE = /^[A-Za-z0-9_-]+$/
+
+const validateThemeSyncDomAttributeValue = (
+  value: unknown,
+  path: string,
+  context: ValidationContext,
+  mode: ValidationMode,
+): void => {
+  if (typeof value === "string") {
+    validateString(value, path, context, mode, { maxLength: 100 })
+    return
+  }
+  if (isPlainRecord(value)) {
+    // 映射严格限定 dark/light 两键，与 Schema additionalProperties:false 保持一致
+    const mapping = validateObject(value, path, context, ["dark", "light"], ["dark", "light"], mode)
+    if (!mapping) return
+    if (mapping.dark !== undefined) {
+      validateString(mapping.dark, `${path}.dark`, context, mode, { maxLength: 100 })
+    }
+    if (mapping.light !== undefined) {
+      validateString(mapping.light, `${path}.light`, context, mode, { maxLength: 100 })
+    }
+    return
+  }
+  addError(context, path, "invalid_type", "Expected a string or { dark, light } mapping")
+}
+
+const validateThemeSyncDomSync = (
+  value: unknown,
+  path: string,
+  context: ValidationContext,
+  mode: ValidationMode,
+): void => {
+  if (!isDeletion(value, mode) && !Array.isArray(value)) {
+    addError(context, path, "invalid_type", "Expected an array")
+    return
+  }
+  if (!Array.isArray(value)) return
+  if (value.length > SITE_PACK_MAX_ARRAY_ITEMS) {
+    addError(
+      context,
+      path,
+      "too_large",
+      `Array must not contain more than ${SITE_PACK_MAX_ARRAY_ITEMS} items`,
+    )
+  }
+
+  value.forEach((target, index) => {
+    const targetPath = `${path}[${index}]`
+    // 数组合并是整体替换，数组项必须按 full 校验
+    const entry = validateObject(
+      target,
+      targetPath,
+      context,
+      ["selector", "attributes", "classes"],
+      ["selector"],
+      "full",
+    )
+    if (!entry) return
+
+    if (entry.selector !== undefined) {
+      validateSelectorString(entry.selector, `${targetPath}.selector`, context, "full")
+    }
+
+    if (entry.classes !== undefined) {
+      const classesPath = `${targetPath}.classes`
+      if (!Array.isArray(entry.classes)) {
+        addError(context, classesPath, "invalid_type", "Expected an array")
+      } else {
+        if (entry.classes.length > SITE_PACK_MAX_ARRAY_ITEMS) {
+          addError(
+            context,
+            classesPath,
+            "too_large",
+            `Array must not contain more than ${SITE_PACK_MAX_ARRAY_ITEMS} items`,
+          )
+        }
+        entry.classes.forEach((template, templateIndex) => {
+          const templatePath = `${classesPath}[${templateIndex}]`
+          if (!validateString(template, templatePath, context, "full", { maxLength: 100 })) return
+          const resolvedProbe = template.replaceAll(THEME_SYNC_MODE_PLACEHOLDER, "mode")
+          if (!THEME_SYNC_DOM_CLASS_TEMPLATE.test(resolvedProbe)) {
+            addError(
+              context,
+              templatePath,
+              "invalid_value",
+              "Class template must resolve to a single class token ([A-Za-z0-9_-] and optional {mode})",
+            )
+          }
+        })
+      }
+    }
+
+    if (entry.attributes !== undefined) {
+      const attributesPath = `${targetPath}.attributes`
+      if (!isPlainRecord(entry.attributes)) {
+        addError(context, attributesPath, "invalid_type", "Expected an object")
+        return
+      }
+      for (const [name, attributeValue] of Object.entries(entry.attributes)) {
+        const attributePath = `${attributesPath}.${name}`
+        if (
+          name.length === 0 ||
+          DANGEROUS_OBJECT_KEYS.has(name) ||
+          !THEME_SYNC_DOM_ATTRIBUTE_NAME.test(name)
+        ) {
+          addError(
+            context,
+            attributePath,
+            "invalid_value",
+            `Attribute name "${name}" is not allowed; only data-* attributes are supported`,
+          )
+          continue
+        }
+        validateThemeSyncDomAttributeValue(attributeValue, attributePath, context, "full")
+      }
+    }
+  })
 }
 
 const validateDocumentOutline = (
@@ -1957,6 +2105,14 @@ const validateConfigFields = (
   if (config.input !== undefined) validateInput(config.input, `${path}.input`, context, mode)
   if (config.conversation !== undefined) {
     validateConversation(config.conversation, `${path}.conversation`, context, mode)
+  }
+  if (config.conversationTitleSelector !== undefined) {
+    validateSelectorString(
+      config.conversationTitleSelector,
+      `${path}.conversationTitleSelector`,
+      context,
+      mode,
+    )
   }
   if (config.generating !== undefined) {
     validateGenerating(config.generating, `${path}.generating`, context, mode)

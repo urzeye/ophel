@@ -474,6 +474,7 @@ export const es = {
     "Si está activado, al hacer doble clic se envía el prompt directamente. Los prompts con variables se envían tras confirmar.",
   promptSent: "Prompt enviado",
   promptSendFailed: "No se pudo enviar; el prompt permanece en el cuadro de entrada",
+  promptClearFailed: "No se pudo vaciar el campo de entrada. Vacíalo manualmente.",
   promptQueued: "{count} prompt(s) añadidos a la cola",
   promptAddToQueue: "Añadir a la cola",
   promptSplitLinesToQueue: "Dividir líneas y añadir a la cola",

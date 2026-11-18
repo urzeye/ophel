@@ -468,6 +468,7 @@ export const ko = {
     "활성화하면 프롬프트를 더블클릭해 바로 전송합니다. 변수가 있는 프롬프트는 확인 후 전송됩니다.",
   promptSent: "프롬프트 전송됨",
   promptSendFailed: "전송에 실패했습니다. 프롬프트는 입력창에 유지됩니다",
+  promptClearFailed: "입력창을 비우지 못했습니다. 직접 비워 주세요.",
   promptQueued: "{count}개의 프롬프트를 대기열에 추가했습니다",
   promptAddToQueue: "대기열에 추가",
   promptSplitLinesToQueue: "줄 단위로 나누어 대기열에 추가",

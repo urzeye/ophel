@@ -477,6 +477,7 @@ export const fr = {
     "Une fois activé, un double-clic envoie directement le prompt. Les prompts avec variables sont envoyés après confirmation.",
   promptSent: "Prompt envoyé",
   promptSendFailed: "Échec de l'envoi, le prompt reste dans le champ de saisie",
+  promptClearFailed: "Impossible de vider le champ de saisie. Veuillez le vider manuellement.",
   promptQueued: "{count} prompt(s) ajoutés à la file",
   promptAddToQueue: "Ajouter à la file",
   promptSplitLinesToQueue: "Découper les lignes et ajouter à la file",

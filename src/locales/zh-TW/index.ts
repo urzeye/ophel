@@ -349,6 +349,7 @@ export const zhTW = {
   promptDoubleClickSendDesc: "開啟後，雙擊提示詞會直接發送；含變數的提示詞會在確認後發送",
   promptSent: "提示詞已發送",
   promptSendFailed: "發送失敗，提示詞已保留在輸入框中",
+  promptClearFailed: "清空失敗，請手動清空輸入框",
   promptQueued: "已加入隊列 {count} 條",
   promptAddToQueue: "加入隊列",
   promptSplitLinesToQueue: "按行拆分並加入隊列",

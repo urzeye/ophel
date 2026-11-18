@@ -21,11 +21,17 @@ import {
   findScrollableAncestor,
   scrollElementInContainer,
 } from "~core/outline/dom-outline"
+import { getEditorText, SLATE_PLACEHOLDER_SELECTOR } from "~utils/editor-text"
 import { getCurrentLang, t } from "~utils/i18n"
 
 import { resolveSitePackName } from "./localization"
 import { siteMatchPatternMatchesUrl, siteMatchPatternOrigin } from "./match-pattern"
-import type { SitePackManifest, SitePackThemeSyncConfig, SiteTraits } from "./types"
+import type {
+  SitePackManifest,
+  SitePackThemeSyncConfig,
+  SitePackThemeSyncDomTarget,
+  SiteTraits,
+} from "./types"
 
 const DEFAULT_THEME_COLORS = {
   primary: "#2563eb",
@@ -110,13 +116,25 @@ const getNestedThemeValue = (source: Record<string, unknown>, path: string): unk
   return current
 }
 
-const getEditorText = (editor: HTMLElement): string =>
-  isTextControl(editor) ? editor.value : editor.textContent ?? ""
-
 // innerText 反映渲染后的换行结构（段落、<br>）；textContent 会把多段落拼成
 // 无换行的串，无法区分"按段落正确拆分"和"换行被吃掉"。
-const getEditorRenderedText = (editor: HTMLElement): string =>
-  isTextControl(editor) ? editor.value : editor.innerText
+const getEditorRenderedText = (editor: HTMLElement): string => {
+  if (isTextControl(editor)) return editor.value
+  const placeholders = Array.from(editor.querySelectorAll<HTMLElement>(SLATE_PLACEHOLDER_SELECTOR))
+  if (placeholders.length === 0) return editor.innerText
+  // innerText 只反映渲染树：临时隐藏占位节点即可排除其文本，读取后立即还原。
+  const previousDisplays = placeholders.map((element) => element.style.display)
+  placeholders.forEach((element) => {
+    element.style.display = "none"
+  })
+  try {
+    return editor.innerText
+  } finally {
+    placeholders.forEach((element, index) => {
+      element.style.display = previousDisplays[index]
+    })
+  }
+}
 
 // contenteditable DOM（如 ProseMirror 多段落）的 textContent 不保留换行与原始空白，
 // 校验插入结果时移除两侧全部空白字符，避免多行内容已插入却被误判为失败。
@@ -131,6 +149,54 @@ const normalizeEditorRenderedText = (text: string): string =>
     .replace(/[^\S\n]+/g, " ")
     .replace(/\n{2,}/g, "\n")
     .trim()
+
+type EditorInsertMethod = "beforeinput" | "paste" | "execCommand"
+type EditorDeleteMethod = "beforeinput" | "keydownBackspace" | "execCommand"
+
+interface EditorEventPipeline {
+  insert: EditorInsertMethod[]
+  delete: EditorDeleteMethod[]
+}
+
+/** 普通 contenteditable：可信 execCommand 优先；合成不可信事件不触发默认行为，仅作兜底。 */
+const PLAIN_EDITOR_PIPELINE: EditorEventPipeline = {
+  insert: ["execCommand", "beforeinput"],
+  delete: ["execCommand", "beforeinput"],
+}
+
+// 按编辑器框架选择事件管线，每种方式之后都经内容校验再决定是否尝试下一种；
+// 返回 null 表示非模型驱动编辑器（走 PLAIN_EDITOR_PIPELINE）：
+// - Slate 的合成 beforeinput（insertText）能完整进入模型并保留多行（实测 slate-react 0.147）。
+// - Lexical 通过 paste 保留换行，删除通过 beforeinput 进入模型。
+// - ProseMirror 保留原生插入优先，避免站点 paste 处理把长文本转成附件；
+//   需要粘贴管线的站点显式声明 input.insertStrategy，删除仍走模型事件。
+// - Draft.js 忽略合成 beforeinput（实测 no-op），仅接受合成 paste 与 keydown Backspace；
+//   execCommand 对 Draft 是致命的（内容部分入模型后 React removeChild 崩溃），绝不使用。
+// 模型事件失败后不追加 DOM 强写兜底；ProseMirror 的原生插入是其既有默认路径。
+const getEditorEventPipeline = (editor: HTMLElement): EditorEventPipeline | null => {
+  if (editor.matches(".public-DraftEditor-content")) {
+    return { insert: ["paste"], delete: ["keydownBackspace"] }
+  }
+  if (editor.matches("[data-slate-editor]")) {
+    return {
+      insert: ["beforeinput", "paste"],
+      delete: ["beforeinput"],
+    }
+  }
+  if (editor.matches("[data-lexical-editor]")) {
+    return {
+      insert: ["paste", "beforeinput"],
+      delete: ["beforeinput"],
+    }
+  }
+  if (editor.matches(".ProseMirror")) {
+    return {
+      insert: PLAIN_EDITOR_PIPELINE.insert,
+      delete: ["keydownBackspace", "beforeinput"],
+    }
+  }
+  return null
+}
 
 const compareDomOrder = (left: Element, right: Element): number => {
   if (left === right) return 0
@@ -187,6 +253,7 @@ const normalizeElementText = (element: Element | null): string | null => {
 /** 把已通过校验的 SitePack manifest 显式映射到现有 SiteAdapter API。 */
 export class DeclarativeAdapter extends SiteAdapter {
   private manifest: SitePackManifest
+  private editorOperationId = 0
   private conversationIdPattern: RegExp | null = null
   private sessionIdPattern: RegExp | null = null
   private newConversationPathPatterns: RegExp[] | null = null
@@ -203,6 +270,7 @@ export class DeclarativeAdapter extends SiteAdapter {
   }
 
   private rebuildManifestState(): void {
+    this.editorOperationId++
     this.featureCapabilities = new Set(this.manifest.capabilities)
     this.conversationIdPattern = this.manifest.conversation
       ? new RegExp(this.manifest.conversation.idFrom.regex)
@@ -327,9 +395,11 @@ export class DeclarativeAdapter extends SiteAdapter {
     editor: HTMLElement,
     content: string,
     requireSubmitButton: boolean,
+    isCurrentOperation: () => boolean,
   ): Promise<boolean> {
     const deadline = Date.now() + EDITOR_UPDATE_POLL_TIMEOUT_MS
     for (;;) {
+      if (!isCurrentOperation()) return false
       if (this.isEditorUpdateValid(editor, content, requireSubmitButton)) return true
       if (Date.now() >= deadline) return false
       await new Promise((resolve) => setTimeout(resolve, EDITOR_UPDATE_POLL_INTERVAL_MS))
@@ -427,28 +497,68 @@ export class DeclarativeAdapter extends SiteAdapter {
     editor: HTMLElement,
     content: string,
     requireSubmitButton: boolean,
+    operationId: number,
   ): Promise<boolean> {
+    const initialUrl = window.location.href
+    // 新编辑请求使旧操作失效；导航后停止清空，但插入本身可能创建会话 URL。
+    const isCurrentOperation = () =>
+      operationId === this.editorOperationId &&
+      editor.isConnected &&
+      (content !== "" || window.location.href === initialUrl)
+    if (!isCurrentOperation()) return false
     editor.focus()
 
     if (content === "") {
-      // 优先走浏览器原生编辑管线：select-all + execCommand("delete") 会触发
-      // 可信 beforeinput/input，对自有模型驱动的编辑器（如 Notion AI）等同真实
-      // 键盘删除。合成事件必须放在其后兜底，否则编辑器会按自身选区模型部分处理
-      // 合成事件，而强写 textContent 又会被模型重渲染还原，表现为清空无效。
-      //
-      // 模型驱动编辑器（如 Lexical）的内部选区靠 selectionchange 异步同步，
+      // 模型驱动编辑器（Slate/Lexical 等）的内部选区靠 selectionchange 异步同步，
       // select-all 后必须让出事件循环再删除，否则删除只作用于过期选区
       // （Perplexity 上表现为只删掉光标前的一两个字符）；未清空就重选再删。
-      for (let round = 0; round < EDITOR_CLEAR_MAX_ROUNDS; round++) {
-        if (!this.selectAllEditorContent(editor)) return false
-        await new Promise((resolve) => setTimeout(resolve, EDITOR_SELECTION_SYNC_MS))
-        try {
-          editor.ownerDocument.execCommand("delete", false, undefined)
-        } catch {
-          // Unsupported execCommand attempt continues to synthetic events.
+      // 删除方式按框架管线排序（见 getEditorEventPipeline）；普通 contenteditable
+      // 合成事件不触发默认行为，仅作兜底。
+      const detectedPipeline = getEditorEventPipeline(editor)
+      const pipeline = detectedPipeline ?? PLAIN_EDITOR_PIPELINE
+      const modelDriven = detectedPipeline !== null
+      for (const method of pipeline.delete) {
+        for (let round = 0; round < EDITOR_CLEAR_MAX_ROUNDS; round++) {
+          if (!isCurrentOperation()) return false
+          if (!this.selectAllEditorContent(editor)) return false
+          await new Promise((resolve) => setTimeout(resolve, EDITOR_SELECTION_SYNC_MS))
+          if (!isCurrentOperation()) return false
+          try {
+            if (method === "execCommand") {
+              editor.ownerDocument.execCommand("delete", false, undefined)
+            } else if (method === "keydownBackspace") {
+              editor.dispatchEvent(
+                new KeyboardEvent("keydown", {
+                  key: "Backspace",
+                  code: "Backspace",
+                  keyCode: 8,
+                  which: 8,
+                  bubbles: true,
+                  composed: true,
+                }),
+              )
+            } else {
+              editor.dispatchEvent(
+                new InputEvent("beforeinput", {
+                  bubbles: true,
+                  cancelable: true,
+                  composed: true,
+                  inputType: "deleteContentBackward",
+                }),
+              )
+            }
+          } catch {
+            // Unsupported event construction; validation below reports failure.
+          }
+          if (await this.waitForEditorUpdate(editor, "", requireSubmitButton, isCurrentOperation)) {
+            return true
+          }
         }
-        if (await this.waitForEditorUpdate(editor, "", requireSubmitButton)) return true
       }
+
+      // 模型驱动编辑器的 DOM 由模型渲染，强写 textContent 只会被重渲染还原甚至
+      // 破坏 React 节点映射，到这里只能判定失败，不做 DOM 级强清。
+      if (modelDriven || !isCurrentOperation()) return false
 
       if (!this.selectAllEditorContent(editor)) return false
 
@@ -524,53 +634,84 @@ export class DeclarativeAdapter extends SiteAdapter {
       editor.dispatchEvent(new Event("input", { bubbles: true, composed: true }))
       editor.dispatchEvent(new Event("change", { bubbles: true }))
 
-      return this.waitForEditorUpdate(editor, "", requireSubmitButton)
+      return this.waitForEditorUpdate(editor, "", requireSubmitButton, isCurrentOperation)
     }
 
-    // 与清空同理：先用原生 select-all + insertText 完成“替换”，可信事件才能让
-    // 框架编辑器更新其内部模型；合成 beforeinput 只作兜底，提前派发会被框架按
-    // 自身选区处理成“追加”而非“替换”（Notion AI 上表现为旧内容残留）。
+    // 显式策略优先于框架默认值；每次尝试后仍校验完整内容与换行。
     const originalText = getEditorText(editor)
-    if (this.selectAllEditorContent(editor)) {
-      try {
-        editor.ownerDocument.execCommand("insertText", false, content)
-      } catch {
-        // Unsupported execCommand attempt continues to the synthetic event.
+    const strategy = this.manifest.input?.insertStrategy
+    const pipeline = getEditorEventPipeline(editor) ?? PLAIN_EDITOR_PIPELINE
+    let attempts = pipeline.insert
+    if (strategy === "native") {
+      // 显式配置也不能绕过 Slate/Lexical/Draft 的模型保护。
+      if (!pipeline.insert.includes("execCommand")) return false
+      attempts = PLAIN_EDITOR_PIPELINE.insert
+    } else if (strategy === "paste") {
+      attempts = ["paste"]
+    }
+    let attempted = false
+
+    for (const attempt of attempts) {
+      if (!isCurrentOperation()) return false
+      // 上次尝试写入了未通过校验的内容时必须先清场（模型编辑器走模型级清空），
+      // 否则残留会与新内容叠加出错乱结果。
+      if (attempted) {
+        if (normalizeEditorText(getEditorText(editor)) !== normalizeEditorText(originalText)) {
+          const cleared = await this.replaceContentEditableContent(editor, "", false, operationId)
+          if (!cleared) return false
+        }
       }
-      if (await this.waitForEditorUpdate(editor, content, requireSubmitButton)) return true
+
+      if (!isCurrentOperation() || !this.selectAllEditorContent(editor)) return false
+      attempted = true
+
+      try {
+        if (attempt === "execCommand") {
+          editor.ownerDocument.execCommand("insertText", false, content)
+        } else {
+          // 合成 beforeinput/paste 没有 getTargetRanges，模型编辑器只能按内部选区
+          // 处理，先让出事件循环等选区同步完成。
+          await new Promise((resolve) => setTimeout(resolve, EDITOR_SELECTION_SYNC_MS))
+          if (!isCurrentOperation()) return false
+          if (attempt === "beforeinput") {
+            editor.dispatchEvent(
+              new InputEvent("beforeinput", {
+                bubbles: true,
+                cancelable: true,
+                composed: true,
+                data: content,
+                inputType: "insertText",
+              }),
+            )
+          } else {
+            const dataTransfer = new DataTransfer()
+            dataTransfer.setData("text/plain", content)
+            editor.dispatchEvent(
+              new ClipboardEvent("paste", {
+                clipboardData: dataTransfer,
+                bubbles: true,
+                cancelable: true,
+                composed: true,
+              }),
+            )
+          }
+        }
+      } catch {
+        // Unsupported event construction; validation below reports failure.
+      }
+
+      if (
+        await this.waitForEditorUpdate(editor, content, requireSubmitButton, isCurrentOperation)
+      ) {
+        return true
+      }
     }
 
-    // 内容未完整入框（如 Lexical 把多行 insertText 截断到首行）。编辑器里已有
-    // 非原始内容时必须先清场再试下一种方式，否则残留会与新内容叠加出错乱结果。
-    if (normalizeEditorText(getEditorText(editor)) !== normalizeEditorText(originalText)) {
-      const cleared = await this.replaceContentEditableContent(editor, "", false)
-      if (!cleared) return false
-    }
-
-    if (!this.selectAllEditorContent(editor)) return false
-
-    // 合成 beforeinput 没有 getTargetRanges，模型编辑器只能按内部选区处理，
-    // 先让出事件循环等选区同步完成。
-    await new Promise((resolve) => setTimeout(resolve, EDITOR_SELECTION_SYNC_MS))
-
-    try {
-      editor.dispatchEvent(
-        new InputEvent("beforeinput", {
-          bubbles: true,
-          cancelable: true,
-          composed: true,
-          data: content,
-          inputType: "insertText",
-        }),
-      )
-    } catch {
-      // Unsupported beforeinput construction; validation below reports failure.
-    }
-
-    return this.waitForEditorUpdate(editor, content, requireSubmitButton)
+    return false
   }
 
   async insertPrompt(content: string): Promise<boolean> {
+    const operationId = ++this.editorOperationId
     const configuredEditor = this.getConfiguredEditor()
     if (!configuredEditor) return false
     const requireSubmitButton = (this.manifest.selectors.submitButton?.length ?? 0) > 0
@@ -580,6 +721,7 @@ export class DeclarativeAdapter extends SiteAdapter {
         configuredEditor.editor,
         content,
         requireSubmitButton,
+        operationId,
       )
     }
 
@@ -587,17 +729,17 @@ export class DeclarativeAdapter extends SiteAdapter {
     return this.isEditorUpdateValid(configuredEditor.editor, content, requireSubmitButton)
   }
 
-  clearTextarea(): void {
+  async clearTextarea(): Promise<boolean> {
+    const operationId = ++this.editorOperationId
     const configuredEditor = this.getConfiguredEditor()
-    if (!configuredEditor) return
+    if (!configuredEditor) return false
 
     if (configuredEditor.mode === "contenteditable") {
-      void this.replaceContentEditableContent(configuredEditor.editor, "", false)
-      return
+      return this.replaceContentEditableContent(configuredEditor.editor, "", false, operationId)
     }
 
-    if (!this.setTextControlValue(configuredEditor.editor, "")) return
-    if (!this.isEditorUpdateValid(configuredEditor.editor, "", false)) return
+    if (!this.setTextControlValue(configuredEditor.editor, "")) return false
+    return this.isEditorUpdateValid(configuredEditor.editor, "", false)
   }
 
   private isInsideOutlineExclude(element: Element): boolean {
@@ -865,6 +1007,14 @@ export class DeclarativeAdapter extends SiteAdapter {
       const activeItem = this.getConversationItems().find((item) => item.matches(activeMatch))
       if (activeItem) {
         const title = normalizeElementText(this.getConversationTitleElement(activeItem))
+        if (title) return title
+      }
+    }
+
+    const titleSelector = this.manifest.conversationTitleSelector
+    if (titleSelector) {
+      for (const element of document.querySelectorAll(titleSelector)) {
+        const title = normalizeElementText(element)
         if (title) return title
       }
     }
@@ -1351,6 +1501,7 @@ export class DeclarativeAdapter extends SiteAdapter {
         if (config.lightClass) html.classList.add(config.lightClass)
       }
       html.style.colorScheme = resolvedMode
+      this.applyThemeSyncDomTargets(config.domSync, resolvedMode)
 
       // 手动派发的 storage 事件同标签页监听者也能收到，next-themes 类实现靠它同步状态
       for (const written of writtenKeys) {
@@ -1368,6 +1519,40 @@ export class DeclarativeAdapter extends SiteAdapter {
     } catch (error) {
       console.error(`[SitePackAdapter:${this.manifest.id}] toggleTheme error:`, error)
       return false
+    }
+  }
+
+  /**
+   * 按解析模式应用 themeSync.domSync 声明的 DOM 主题标记：
+   * 类名模板添加当前模式解析值、移除相反模式解析值；
+   * data-* 属性写入字符串（{mode} 占位解析）或按模式映射的值。
+   */
+  private applyThemeSyncDomTargets(
+    targets: SitePackThemeSyncDomTarget[] | undefined,
+    mode: "light" | "dark",
+  ): void {
+    if (!targets || targets.length === 0) return
+    const oppositeMode = mode === "dark" ? "light" : "dark"
+
+    for (const target of targets) {
+      const elements = document.querySelectorAll(target.selector)
+      for (const element of Array.from(elements)) {
+        for (const template of target.classes ?? []) {
+          const modeClass = template.replaceAll("{mode}", mode)
+          const oppositeClass = template.replaceAll("{mode}", oppositeMode)
+          if (oppositeClass && oppositeClass !== modeClass) {
+            element.classList.remove(oppositeClass)
+          }
+          if (modeClass) {
+            element.classList.add(modeClass)
+          }
+        }
+        for (const [name, value] of Object.entries(target.attributes ?? {})) {
+          const resolved =
+            typeof value === "string" ? value.replaceAll("{mode}", mode) : value[mode]
+          element.setAttribute(name, resolved)
+        }
+      }
     }
   }
 }

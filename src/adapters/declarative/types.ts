@@ -38,6 +38,8 @@ export interface SitePackSelectors {
 export interface SitePackInputConfig {
   mode: "textarea" | "contenteditable"
   submitKey?: "Enter" | "Ctrl+Enter"
+  /** contenteditable 插入策略；native 适用于普通输入框与 ProseMirror，省略时按框架选择。 */
+  insertStrategy?: "native" | "paste"
 }
 
 /** 对话列表字段映射，用受限原语替代站点自定义提取函数。 */
@@ -149,6 +151,8 @@ export interface SitePackConfig {
   selectors: SitePackSelectors
   input?: SitePackInputConfig
   conversation?: SitePackConversationConfig
+  /** 当前对话标题元素选择器（如顶栏标题）；用于对话列表缺失或 document.title 不含标题的站点。 */
+  conversationTitleSelector?: string
   generating?: SitePackGeneratingConfig
   session?: SitePackSessionConfig
   networkMonitor?: NetworkMonitorConfig
@@ -228,6 +232,29 @@ export interface SitePackThemeSyncConfig {
   darkClass?: string
   /** html 元素上的亮色类名；缺省时亮色仅移除 darkClass。 */
   lightClass?: string
+  /**
+   * 除存储与 <html> 单类名外，需要按解析模式（dark/light）同步写入的
+   * DOM 主题标记：站点主题由多 class、data-* 属性或 <body> 共同驱动时
+   * （如 CodeBuddy 系的 agent-ui-theme），用本字段声明即时生效路径。
+   * 类名模板与属性字符串值支持 {mode} 占位（解析为 dark/light）。
+   */
+  domSync?: SitePackThemeSyncDomTarget[]
+}
+
+/** themeSync.domSync 的单项目标元素主题标记同步规则。 */
+export interface SitePackThemeSyncDomTarget {
+  /** 目标元素选择器（如 "html"、"body"、"[data-cr-theme]"）；命中多个元素时全部应用。 */
+  selector: string
+  /**
+   * 需要写入的 data-* 属性（仅允许 data- 前缀，防注入可执行属性）。
+   * 字符串值支持 {mode} 占位；也可用 { dark, light } 按模式显式映射。
+   */
+  attributes?: Record<string, string | { dark: string; light: string }>
+  /**
+   * 类名模板，每项支持 {mode} 占位；切到某模式时添加该模式解析类名、
+   * 移除相反模式解析类名（如 ["{mode}", "cb-{mode}", "vscode-{mode}"]）。
+   */
+  classes?: string[]
 }
 
 /** themeSync.extraKeys 的额外表键写入配置，仅支持扁平存储。 */

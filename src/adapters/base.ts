@@ -1005,8 +1005,8 @@ export abstract class SiteAdapter {
     return element.offsetParent !== null
   }
 
-  /** 清空输入框内容 */
-  clearTextarea(): void {
+  /** 清空输入框；异步实现返回校验结果，既有同步实现保持 void 契约。 */
+  clearTextarea(): void | Promise<boolean> {
     if (this.textarea) {
       if (
         this.textarea instanceof HTMLInputElement ||

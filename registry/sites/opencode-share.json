@@ -32,6 +32,7 @@
     "ru": "Добавляет в общие диалоги OpenCode на opncd.ai функции Ophel для структуры (с распознаванием вопросов пользователя) и базового экспорта."
   },
   "matches": ["https://opncd.ai/*"],
+  "logoUrl": "https://opencode.ai/favicon.svg",
   "theme": {
     "primary": "#131010",
     "secondary": "#F8F7F7"

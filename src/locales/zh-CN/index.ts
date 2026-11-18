@@ -503,6 +503,7 @@ export const zhCN = {
   promptDoubleClickSendDesc: "开启后，双击提示词会直接发送；含变量的提示词会在变量确认后发送",
   promptSent: "提示词已发送",
   promptSendFailed: "发送失败，提示词已保留在输入框中",
+  promptClearFailed: "清空失败，请手动清空输入框",
   promptQueued: "已加入队列 {count} 条",
   promptAddToQueue: "加入队列",
   promptSplitLinesToQueue: "按行拆分并加入队列",

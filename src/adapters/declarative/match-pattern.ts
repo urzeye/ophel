@@ -104,11 +104,11 @@ export const siteMatchPatternOrigin = (pattern: string): string => {
   return new URL(`${scheme}://${concreteAuthority}/`).origin
 }
 
-/** 从已校验 match pattern 取得可展示/访问的具体入口 URL（保留具体路径，仅去除尾部通配符及根通配符）。 */
+/** 从已校验 match pattern 取得入口 URL，仅保留首个通配符之前的固定路径前缀。 */
 export const siteMatchPatternDisplayUrl = (pattern: string): string => {
   const { scheme, authority, pathPattern } = parseSiteMatchPattern(pattern)
   const concreteAuthority = authority.startsWith("*.") ? authority.slice(2) : authority
-  let cleanPath = pathPattern.replace(/\*+$/g, "")
+  let cleanPath = pathPattern.split("*", 1)[0]
   if (cleanPath === "/" || cleanPath === "") {
     return new URL(`${scheme}://${concreteAuthority}/`).origin
   }

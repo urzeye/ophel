@@ -74,6 +74,10 @@
     "conversation": {
       "$ref": "#/definitions/conversation"
     },
+    "conversationTitleSelector": {
+      "$ref": "#/definitions/selector",
+      "description": "Selector for the element holding the current conversation title (e.g. a topbar title), used when the title is not available from the conversation list item or document.title."
+    },
     "generating": {
       "$ref": "#/definitions/generating"
     },
@@ -641,6 +645,82 @@
           "minLength": 1,
           "maxLength": 100,
           "description": "Omit when the site only toggles a dark class."
+        },
+        "domSync": {
+          "type": "array",
+          "maxItems": 50,
+          "description": "Declarative DOM theme-marker sync applied on every toggle with the resolved dark/light mode: for sites whose theme is driven by multiple classes and data-* attributes on html/body (single darkClass/lightClass is not enough). Class templates and attribute string values support the {mode} placeholder.",
+          "items": {
+            "$ref": "#/definitions/themeSyncDomTarget"
+          }
+        }
+      }
+    },
+    "themeSyncDomTarget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["selector"],
+      "properties": {
+        "selector": {
+          "$ref": "#/definitions/selector",
+          "description": "Target element selector; all matched elements are updated."
+        },
+        "attributes": {
+          "type": "object",
+          "description": "data-* attributes to write. String values support the {mode} placeholder; use a {dark, light} mapping for mode-specific values.",
+          "propertyNames": {
+            "allOf": [
+              {
+                "pattern": "^data-[a-zA-Z0-9-]+$"
+              },
+              {
+                "minLength": 1,
+                "maxLength": 100
+              },
+              {
+                "not": {
+                  "enum": ["__proto__", "prototype", "constructor"]
+                }
+              }
+            ]
+          },
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["dark", "light"],
+                "properties": {
+                  "dark": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                  },
+                  "light": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "classes": {
+          "type": "array",
+          "maxItems": 50,
+          "description": "Class templates; each resolves with {mode} to a single class token. Switching modes adds the current-mode class and removes the opposite-mode class.",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "pattern": "^(?:[A-Za-z0-9_-]|\\{mode\\})+$"
+          }
         }
       }
     },
@@ -738,6 +818,16 @@
       "type": "object",
       "additionalProperties": false,
       "required": ["mode"],
+      "if": {
+        "required": ["insertStrategy"]
+      },
+      "then": {
+        "properties": {
+          "mode": {
+            "const": "contenteditable"
+          }
+        }
+      },
       "properties": {
         "mode": {
           "type": "string",
@@ -746,6 +836,11 @@
         "submitKey": {
           "type": "string",
           "enum": ["Enter", "Ctrl+Enter"]
+        },
+        "insertStrategy": {
+          "type": "string",
+          "enum": ["native", "paste"],
+          "description": "Contenteditable insertion only. Native uses execCommand followed by beforeinput, never dispatches paste, and is rejected for recognized Slate/Lexical/Draft.js editors. Paste uses the site's paste pipeline. When omitted, the framework default is used; ProseMirror remains native-first to avoid site paste side effects."
         }
       }
     },
