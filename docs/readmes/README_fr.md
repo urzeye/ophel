@@ -405,6 +405,7 @@ Notre plus profonde gratitude aux personnes remarquables ci-dessous. Vos contrib
     </tr>
     <tr>
       <td align="center" valign="top" width="12.5%"><a href="https://github.com/Piracola"><img src="https://avatars.githubusercontent.com/u/116626041?v=4&s=80" width="80" height="80" alt="Cola"/></a><br /><a href="https://github.com/Piracola"><sub><b>Cola</b></sub></a><br /><span title="Code">💻</span></td>
+      <td align="center" valign="top" width="12.5%"><a href="https://github.com/Silvertraces"><img src="https://avatars.githubusercontent.com/u/75523019?v=4&s=80" width="80" height="80" alt="Silvertraces"/></a><br /><a href="https://github.com/Silvertraces"><sub><b>Silvertraces</b></sub></a><br /><span title="Ideas, Planning, & Feedback">🤔</span></td>
     </tr>
   </tbody>
 </table>
