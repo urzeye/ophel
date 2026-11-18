@@ -21,6 +21,7 @@ import {
   findScrollableAncestor,
   scrollElementInContainer,
 } from "~core/outline/dom-outline"
+import { getEditorText, SLATE_PLACEHOLDER_SELECTOR } from "~utils/editor-text"
 import { getCurrentLang, t } from "~utils/i18n"
 
 import { resolveSitePackName } from "./localization"
@@ -115,28 +116,6 @@ const getNestedThemeValue = (source: Record<string, unknown>, path: string): unk
   return current
 }
 
-// 模型驱动编辑器（Slate/Lexical/ProseMirror/Draft.js）按自身数据模型渲染；Chrome 已不再为
-// execCommand 派发 beforeinput，其直接 DOM 修改不会进入模型，表现为文本可见但站点状态
-// 为空；Draft.js 上更会撞毁 React 节点映射（removeChild 崩溃、编辑器被销毁）。这类编辑器
-// 必须改走各自监听的合成事件管线（paste/beforeinput/keydown），禁止 DOM 级强写。
-// Slate 的占位提示是编辑器内的真实 DOM 节点（data-slate-placeholder），会被
-// textContent/innerText 一并读出：空编辑器被读为非空、插入内容被占位文本截断，
-// 插入/清空校验都会误判。读数时统一排除占位子树。
-const SLATE_PLACEHOLDER_SELECTOR = "[data-slate-placeholder]"
-
-const getEditorText = (editor: HTMLElement): string => {
-  if (isTextControl(editor)) return editor.value
-  if (!editor.querySelector(SLATE_PLACEHOLDER_SELECTOR)) return editor.textContent ?? ""
-  let text = ""
-  const walker = editor.ownerDocument.createTreeWalker(editor, NodeFilter.SHOW_TEXT)
-  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-    if (!node.parentElement?.closest(SLATE_PLACEHOLDER_SELECTOR)) {
-      text += node.nodeValue ?? ""
-    }
-  }
-  return text
-}
-
 // innerText 反映渲染后的换行结构（段落、<br>）；textContent 会把多段落拼成
 // 无换行的串，无法区分"按段落正确拆分"和"换行被吃掉"。
 const getEditorRenderedText = (editor: HTMLElement): string => {
@@ -193,27 +172,28 @@ const PLAIN_EDITOR_PIPELINE: EditorEventPipeline = {
 //   （doubao 的 TipTap 生产路径）。
 // - Draft.js 忽略合成 beforeinput（实测 no-op），仅接受合成 paste 与 keydown Backspace；
 //   execCommand 对 Draft 是致命的（内容部分入模型后 React removeChild 崩溃），绝不使用。
-// execCommand 对其余模型驱动编辑器只产生模型外的 DOM 污染，因此一律排在最后。
+// 已识别的模型编辑器不回退 execCommand：事件管线失败时显式返回失败，
+// 避免模型外的 DOM 修改被内容校验误判为成功。
 const getEditorEventPipeline = (editor: HTMLElement): EditorEventPipeline | null => {
   if (editor.matches(".public-DraftEditor-content")) {
     return { insert: ["paste"], delete: ["keydownBackspace"] }
   }
   if (editor.matches("[data-slate-editor]")) {
     return {
-      insert: ["beforeinput", "paste", "execCommand"],
-      delete: ["beforeinput", "execCommand"],
+      insert: ["beforeinput", "paste"],
+      delete: ["beforeinput"],
     }
   }
   if (editor.matches("[data-lexical-editor]")) {
     return {
-      insert: ["paste", "beforeinput", "execCommand"],
-      delete: ["beforeinput", "execCommand"],
+      insert: ["paste", "beforeinput"],
+      delete: ["beforeinput"],
     }
   }
   if (editor.matches(".ProseMirror")) {
     return {
-      insert: ["paste", "beforeinput", "execCommand"],
-      delete: ["keydownBackspace", "beforeinput", "execCommand"],
+      insert: ["paste", "beforeinput"],
+      delete: ["keydownBackspace", "beforeinput"],
     }
   }
   return null

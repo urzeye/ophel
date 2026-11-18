@@ -10,6 +10,7 @@ import { VIRTUAL_CATEGORY } from "~constants"
 import { SITE_IDS } from "~constants/defaults"
 import { rememberQuickQuoteReferencesFromContent } from "~core/quick-quote-marker"
 import { DOMToolkit } from "~utils/dom-toolkit"
+import { getEditorText } from "~utils/editor-text"
 import {
   filterPrompts,
   getCategories,
@@ -137,19 +138,9 @@ export class PromptManager {
     return false
   }
 
-  private getEditorContent(editor: HTMLElement | null): string {
-    if (!editor) return ""
-
-    if (editor instanceof HTMLTextAreaElement || editor instanceof HTMLInputElement) {
-      return editor.value || ""
-    }
-
-    return editor.textContent || ""
-  }
-
   getCurrentEditorContent(): string {
     const editor = this.adapter.getTextareaElement() || this.adapter.findTextarea()
-    return this.getEditorContent(editor)
+    return getEditorText(editor)
   }
 
   hasEditorContent(): boolean {
@@ -339,7 +330,7 @@ export class PromptManager {
 
     while (Date.now() < deadline) {
       const currentEditor = this.adapter.getTextareaElement() || this.adapter.findTextarea()
-      const currentContent = this.getEditorContent(currentEditor)
+      const currentContent = getEditorText(currentEditor)
 
       if (hadContent && currentContent.trim().length === 0) {
         return true
@@ -424,7 +415,7 @@ export class PromptManager {
       return true
     }
 
-    const currentContent = this.getEditorContent(editor)
+    const currentContent = getEditorText(editor)
       .replace(/[\u200B\u200C\u200D\uFEFF]/g, "")
       .trim()
     if (!editor || !currentContent) return false
@@ -440,7 +431,7 @@ export class PromptManager {
     const editor = this.adapter.getTextareaElement() || this.adapter.findTextarea()
     if (!editor) return false
 
-    const currentContent = this.getEditorContent(editor)
+    const currentContent = getEditorText(editor)
       .replace(/[\u200B\u200C\u200D\uFEFF]/g, "")
       .trim()
     const normalizedInitial = initialContent.replace(/[\u200B\u200C\u200D\uFEFF]/g, "").trim()
@@ -461,7 +452,7 @@ export class PromptManager {
     this.syncAiStudioSubmitShortcut(submitShortcut ?? "enter")
     const submitSelectors = this.adapter.getSubmitButtonSelectors()
     const editor = this.adapter.getTextareaElement() || this.adapter.findTextarea()
-    const initialContent = this.getEditorContent(editor)
+    const initialContent = getEditorText(editor)
 
     // 安全检查：如果编辑器为空，后面只允许点击已启用的真实发送按钮。
     // 这保留纯空输入保护，同时放行图片/附件-only 发送。

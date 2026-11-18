@@ -32,6 +32,7 @@
     "ru": "Добавляет в Perplexity функции Ophel для структуры (включая вопросы пользователя), базового экспорта, ширины чата, режима Zen, нового чата и вставки промптов."
   },
   "matches": ["https://www.perplexity.ai/*"],
+  "logoUrl": "https://perplexity.ai/favicon.svg",
   "theme": {
     "primary": "#016a71",
     "secondary": "#01838c"

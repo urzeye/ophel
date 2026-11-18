@@ -31,7 +31,12 @@
     "pt-BR": "Adiciona ao WorkBuddy (workbuddy.cn / workbuddy.ai) os recursos do Ophel para estrutura, exportação básica, detecção e interrupção da geração, largura da conversa, modo Zen, modo limpo, nova conversa, inserção de prompts e sincronização do tema do host.",
     "ru": "Добавляет в WorkBuddy (workbuddy.cn / workbuddy.ai) функции Ophel для структуры, базового экспорта, отслеживания и остановки генерации, ширины чата, режима Zen, чистого режима, нового чата, вставки промптов и синхронизации темы хоста."
   },
-  "matches": ["https://www.workbuddy.cn/app/*", "https://www.workbuddy.ai/app/*"],
+  "matches": [
+    "https://www.workbuddy.cn/app",
+    "https://www.workbuddy.cn/app/*",
+    "https://www.workbuddy.ai/app",
+    "https://www.workbuddy.ai/app/*"
+  ],
   "logoUrl": "https://static.workbuddy.cn/web/agents/91e8705fce7fb33abd9e02e26cd5e9d2e3247cfb/assets/share-logo.png?v=2",
   "theme": {
     "primary": "#00c29a",
