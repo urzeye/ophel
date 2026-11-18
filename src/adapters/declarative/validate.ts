@@ -963,6 +963,8 @@ const validateThemeSync = (
       "timestampPath",
       "staticFields",
       "extraKeys",
+      // cookie 分支写完后直接返回，domSync 永远不会执行，必须显式拒绝而非静默忽略
+      "domSync",
     ] as const) {
       if (themeSync[unsupportedKey] !== undefined) {
         addError(
@@ -1127,8 +1129,15 @@ const validateThemeSyncDomAttributeValue = (
     return
   }
   if (isPlainRecord(value)) {
-    validateString(value.dark, `${path}.dark`, context, mode, { maxLength: 100 })
-    validateString(value.light, `${path}.light`, context, mode, { maxLength: 100 })
+    // 映射严格限定 dark/light 两键，与 Schema additionalProperties:false 保持一致
+    const mapping = validateObject(value, path, context, ["dark", "light"], ["dark", "light"], mode)
+    if (!mapping) return
+    if (mapping.dark !== undefined) {
+      validateString(mapping.dark, `${path}.dark`, context, mode, { maxLength: 100 })
+    }
+    if (mapping.light !== undefined) {
+      validateString(mapping.light, `${path}.light`, context, mode, { maxLength: 100 })
+    }
     return
   }
   addError(context, path, "invalid_type", "Expected a string or { dark, light } mapping")
