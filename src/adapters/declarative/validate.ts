@@ -720,13 +720,31 @@ const validateInput = (
   context: ValidationContext,
   mode: ValidationMode,
 ): void => {
-  const input = validateObject(value, path, context, ["mode", "submitKey"], ["mode"], mode)
+  const input = validateObject(
+    value,
+    path,
+    context,
+    ["mode", "submitKey", "insertStrategy"],
+    ["mode"],
+    mode,
+  )
   if (!input) return
   if (input.mode !== undefined) {
     validateEnum(input.mode, `${path}.mode`, context, mode, ["textarea", "contenteditable"])
   }
   if (input.submitKey !== undefined) {
     validateEnum(input.submitKey, `${path}.submitKey`, context, mode, ["Enter", "Ctrl+Enter"])
+  }
+  if (input.insertStrategy !== undefined) {
+    validateEnum(input.insertStrategy, `${path}.insertStrategy`, context, mode, ["native", "paste"])
+    if (input.mode === "textarea" && !isDeletion(input.insertStrategy, mode)) {
+      addError(
+        context,
+        `${path}.insertStrategy`,
+        "invalid_value",
+        "insertStrategy is only supported for contenteditable inputs",
+      )
+    }
   }
 }
 

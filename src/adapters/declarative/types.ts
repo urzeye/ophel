@@ -38,6 +38,8 @@ export interface SitePackSelectors {
 export interface SitePackInputConfig {
   mode: "textarea" | "contenteditable"
   submitKey?: "Enter" | "Ctrl+Enter"
+  /** contenteditable 插入策略；native 适用于普通输入框与 ProseMirror，省略时按框架选择。 */
+  insertStrategy?: "native" | "paste"
 }
 
 /** 对话列表字段映射，用受限原语替代站点自定义提取函数。 */

@@ -818,6 +818,16 @@
       "type": "object",
       "additionalProperties": false,
       "required": ["mode"],
+      "if": {
+        "required": ["insertStrategy"]
+      },
+      "then": {
+        "properties": {
+          "mode": {
+            "const": "contenteditable"
+          }
+        }
+      },
       "properties": {
         "mode": {
           "type": "string",
@@ -826,6 +836,11 @@
         "submitKey": {
           "type": "string",
           "enum": ["Enter", "Ctrl+Enter"]
+        },
+        "insertStrategy": {
+          "type": "string",
+          "enum": ["native", "paste"],
+          "description": "Contenteditable insertion only. Native uses execCommand followed by beforeinput, never dispatches paste, and is rejected for recognized Slate/Lexical/Draft.js editors. Paste uses the site's paste pipeline. When omitted, the framework default is used; ProseMirror remains native-first to avoid site paste side effects."
         }
       }
     },

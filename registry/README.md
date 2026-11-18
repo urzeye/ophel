@@ -52,7 +52,7 @@ SitePack 的 TypeScript 运行时校验器是安全与兼容性的最终真值�
 
 ### 配置分组
 
-- `input`：输入元素类型与提交快捷键。
+- `input`：输入元素类型与提交快捷键。`contenteditable` 可用 `insertStrategy: "native" | "paste"` 显式选择插入策略：`native` 适用于普通输入框与 ProseMirror，依次尝试 `execCommand`、`beforeinput`，不触发粘贴；识别到 Slate、Lexical、Draft.js 时拒绝此策略，保留模型保护。`paste` 仅触发站点粘贴管线，需确认不会把正文转换为附件或触发其他副作用。省略时沿用框架默认策略，ProseMirror 保持原生插入优先，Slate、Lexical、Draft.js 使用各自事件管线；该字段不改变清空策略。使用新字段的包须声明 `minAppVersion: "1.3.5"` 或更高。
 - `conversation`：对话列表项、ID 捕获正则、标题和同源跳转模板。
 - `conversationTitleSelector`：当前对话标题元素选择器（如顶栏标题）；用于对话列表或 `document.title` 无法提供标题的站点。
 - `generating` / `networkMonitor`：DOM 或网络生成状态检测。

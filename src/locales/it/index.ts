@@ -485,6 +485,7 @@ export const it = {
     "Quando abilitato, il doppio clic invia direttamente il prompt. I prompt con variabili vengono inviati dopo la conferma.",
   promptSent: "Richiesta inviata",
   promptSendFailed: "Invio fallito, il prompt rimane in input",
+  promptClearFailed: "Impossibile svuotare il campo di input. Svuotalo manualmente.",
   promptQueued: "Aggiunti i prompt {count} alla coda",
   promptAddToQueue: "Aggiungi alla coda",
   promptSplitLinesToQueue: "Dividi le linee e aggiungile alla coda",

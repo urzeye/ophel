@@ -474,6 +474,7 @@ export const pt = {
     "Quando ativado, um clique duplo envia o prompt diretamente. Prompts com variáveis são enviados após a confirmação.",
   promptSent: "Prompt enviado",
   promptSendFailed: "Falha ao enviar, o prompt permanece na caixa de entrada",
+  promptClearFailed: "Não foi possível limpar o campo de entrada. Limpe-o manualmente.",
   promptQueued: "{count} prompt(s) adicionados à fila",
   promptAddToQueue: "Adicionar à fila",
   promptSplitLinesToQueue: "Dividir linhas e adicionar à fila",

@@ -474,6 +474,7 @@ export const en = {
     "When enabled, double-click sends the prompt directly. Prompts with variables are sent after confirmation.",
   promptSent: "Prompt sent",
   promptSendFailed: "Send failed, prompt remains in input",
+  promptClearFailed: "Could not clear the input. Please clear it manually.",
   promptQueued: "Added {count} prompt(s) to queue",
   promptAddToQueue: "Add to queue",
   promptSplitLinesToQueue: "Split lines and add to queue",

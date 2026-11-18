@@ -24,6 +24,7 @@ export const AI_STUDIO_SHORTCUT_SYNC_EVENT = "ophel:aistudio-submit-shortcut-syn
 
 export class PromptManager {
   private adapter: SiteAdapter
+  private insertionRequestId = 0
 
   constructor(adapter: SiteAdapter) {
     this.adapter = adapter
@@ -113,12 +114,15 @@ export class PromptManager {
    * 插入提示词到输入框
    */
   async insertPrompt(content: string): Promise<boolean> {
+    const requestId = ++this.insertionRequestId
+    const isCurrentRequest = () => requestId === this.insertionRequestId
     const retryDelays = [0, 80, 120, 180, 240]
 
     for (let index = 0; index < retryDelays.length; index++) {
       if (index > 0) {
         await new Promise((resolve) => setTimeout(resolve, retryDelays[index]))
       }
+      if (!isCurrentRequest()) return false
 
       // 首次优先复用已缓存的输入框：findTextarea 的可见性校验（offsetParent）会强制同步布局，
       // 在长对话页面上触发一次全文档样式重算；重试时仍重新查找，保留输入框失效后的恢复能力
@@ -129,6 +133,7 @@ export class PromptManager {
       }
 
       const result = await this.adapter.insertPrompt(content)
+      if (!isCurrentRequest()) return false
       if (result) {
         rememberQuickQuoteReferencesFromContent(content)
         return true
@@ -136,6 +141,13 @@ export class PromptManager {
     }
 
     return false
+  }
+
+  /** 清空时终止旧插入的重试，避免清空完成后旧提示词再次入框。 */
+  async clearEditor(): Promise<boolean> {
+    this.insertionRequestId++
+    // 既有内置适配器同步返回 void；异步适配器显式报告校验失败。
+    return (await this.adapter.clearTextarea()) !== false
   }
 
   getCurrentEditorContent(): string {

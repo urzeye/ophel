@@ -699,6 +699,9 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
 
   // 选中的提示词状态
   const [selectedPrompt, setSelectedPrompt] = useState<Prompt | null>(null)
+  const selectedPromptContextRef = useRef({ adapter, selectedPrompt })
+  selectedPromptContextRef.current = { adapter, selectedPrompt }
+  const clearingSelectedPromptRef = useRef(false)
 
   // 设置模态框状态
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
@@ -2439,14 +2442,41 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
     setSelectedPrompt(prompt)
   }, [])
 
-  // 清除选中的提示词
-  const handleClearSelectedPrompt = useCallback(() => {
-    setSelectedPrompt(null)
-    // 同时清空输入框（可选）
-    if (adapter) {
-      adapter.clearTextarea()
+  const clearPromptEditor = useCallback(async (): Promise<boolean> => {
+    if (!promptManager) return true
+    try {
+      return await promptManager.clearEditor()
+    } catch (error) {
+      console.error("[App] Failed to clear prompt input:", error)
+      return false
     }
-  }, [adapter])
+  }, [promptManager])
+
+  // 清空成功后再移除悬浮条，失败时保留重试入口。
+  const handleClearSelectedPrompt = useCallback(async () => {
+    if (!selectedPrompt || clearingSelectedPromptRef.current) return
+    clearingSelectedPromptRef.current = true
+    const promptToClear = selectedPrompt
+    const initialUrl = window.location.href
+    try {
+      const cleared = await clearPromptEditor()
+      const current = selectedPromptContextRef.current
+      if (
+        current.adapter !== adapter ||
+        current.selectedPrompt !== promptToClear ||
+        window.location.href !== initialUrl
+      ) {
+        return
+      }
+      if (!cleared) {
+        showToast(t("promptClearFailed"))
+        return
+      }
+      setSelectedPrompt((prompt) => (prompt === promptToClear ? null : prompt))
+    } finally {
+      clearingSelectedPromptRef.current = false
+    }
+  }, [adapter, clearPromptEditor, selectedPrompt])
 
   // 单独用 useEffect 同步 settings 变化到 manager
   useEffect(() => {
@@ -3349,12 +3379,25 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
   // 切换对话时自动清空选中的提示词悬浮条及输入框
   useEffect(() => {
     if (!selectedPrompt || !adapter) return
+    const selectedPromptEditor = adapter.getTextareaElement()
 
-    // 清空悬浮条和输入框
-    const clearPromptAndTextarea = () => {
+    // 新会话立即移除旧悬浮条；清空失败也不能把旧提示词状态带回来。
+    const clearPromptAndTextarea = async () => {
+      const initialUrl = window.location.href
       setSelectedPrompt(null)
-      // 同时清空输入框（adapter.clearTextarea 内部有校验，不会误选全页面）
-      adapter.clearTextarea()
+      // 站点已换成另一个输入框时，保留新会话自己的草稿。
+      if (!selectedPromptEditor?.isConnected) return
+      if (adapter.getTextareaElement() !== selectedPromptEditor) return
+      const cleared = await clearPromptEditor()
+      const current = selectedPromptContextRef.current
+      if (
+        !cleared &&
+        current.adapter === adapter &&
+        (!current.selectedPrompt || current.selectedPrompt === selectedPrompt) &&
+        window.location.href === initialUrl
+      ) {
+        showToast(t("promptClearFailed"))
+      }
     }
 
     window.addEventListener(EVENT_PAGE_URL_CHANGE, clearPromptAndTextarea)
@@ -3362,7 +3405,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
     return () => {
       window.removeEventListener(EVENT_PAGE_URL_CHANGE, clearPromptAndTextarea)
     }
-  }, [selectedPrompt, adapter])
+  }, [selectedPrompt, adapter, clearPromptEditor])
 
   // 浮动工具栏设置标签状态
   const [floatingToolbarTagState, setFloatingToolbarTagState] = useState<{

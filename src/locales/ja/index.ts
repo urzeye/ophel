@@ -476,6 +476,7 @@ export const ja = {
     "有効にすると、ダブルクリックでプロンプトを直接送信します。変数付きプロンプトは確認後に送信されます。",
   promptSent: "プロンプトを送信しました",
   promptSendFailed: "送信に失敗しました。プロンプトは入力欄に残りました",
+  promptClearFailed: "入力欄を消去できませんでした。手動で消去してください。",
   promptQueued: "{count} 件をキューに追加しました",
   promptAddToQueue: "キューに追加",
   promptSplitLinesToQueue: "行ごとに分割してキューに追加",

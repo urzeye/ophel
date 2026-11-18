@@ -167,13 +167,12 @@ const PLAIN_EDITOR_PIPELINE: EditorEventPipeline = {
 // 按编辑器框架选择事件管线，每种方式之后都经内容校验再决定是否尝试下一种；
 // 返回 null 表示非模型驱动编辑器（走 PLAIN_EDITOR_PIPELINE）：
 // - Slate 的合成 beforeinput（insertText）能完整进入模型并保留多行（实测 slate-react 0.147）。
-// - Lexical/ProseMirror 需要合成 paste 才能保留换行（#1022：其 insertText 管线会丢换行）；
-//   删除分别走 beforeinput 删除（#1022 的 Lexical 模型级清空）和合成 keydown Backspace
-//   （doubao 的 TipTap 生产路径）。
+// - Lexical 通过 paste 保留换行，删除通过 beforeinput 进入模型。
+// - ProseMirror 保留原生插入优先，避免站点 paste 处理把长文本转成附件；
+//   需要粘贴管线的站点显式声明 input.insertStrategy，删除仍走模型事件。
 // - Draft.js 忽略合成 beforeinput（实测 no-op），仅接受合成 paste 与 keydown Backspace；
 //   execCommand 对 Draft 是致命的（内容部分入模型后 React removeChild 崩溃），绝不使用。
-// 已识别的模型编辑器不回退 execCommand：事件管线失败时显式返回失败，
-// 避免模型外的 DOM 修改被内容校验误判为成功。
+// 模型事件失败后不追加 DOM 强写兜底；ProseMirror 的原生插入是其既有默认路径。
 const getEditorEventPipeline = (editor: HTMLElement): EditorEventPipeline | null => {
   if (editor.matches(".public-DraftEditor-content")) {
     return { insert: ["paste"], delete: ["keydownBackspace"] }
@@ -192,7 +191,7 @@ const getEditorEventPipeline = (editor: HTMLElement): EditorEventPipeline | null
   }
   if (editor.matches(".ProseMirror")) {
     return {
-      insert: ["paste", "beforeinput"],
+      insert: PLAIN_EDITOR_PIPELINE.insert,
       delete: ["keydownBackspace", "beforeinput"],
     }
   }
@@ -254,6 +253,7 @@ const normalizeElementText = (element: Element | null): string | null => {
 /** 把已通过校验的 SitePack manifest 显式映射到现有 SiteAdapter API。 */
 export class DeclarativeAdapter extends SiteAdapter {
   private manifest: SitePackManifest
+  private editorOperationId = 0
   private conversationIdPattern: RegExp | null = null
   private sessionIdPattern: RegExp | null = null
   private newConversationPathPatterns: RegExp[] | null = null
@@ -270,6 +270,7 @@ export class DeclarativeAdapter extends SiteAdapter {
   }
 
   private rebuildManifestState(): void {
+    this.editorOperationId++
     this.featureCapabilities = new Set(this.manifest.capabilities)
     this.conversationIdPattern = this.manifest.conversation
       ? new RegExp(this.manifest.conversation.idFrom.regex)
@@ -394,9 +395,11 @@ export class DeclarativeAdapter extends SiteAdapter {
     editor: HTMLElement,
     content: string,
     requireSubmitButton: boolean,
+    isCurrentOperation: () => boolean,
   ): Promise<boolean> {
     const deadline = Date.now() + EDITOR_UPDATE_POLL_TIMEOUT_MS
     for (;;) {
+      if (!isCurrentOperation()) return false
       if (this.isEditorUpdateValid(editor, content, requireSubmitButton)) return true
       if (Date.now() >= deadline) return false
       await new Promise((resolve) => setTimeout(resolve, EDITOR_UPDATE_POLL_INTERVAL_MS))
@@ -494,7 +497,15 @@ export class DeclarativeAdapter extends SiteAdapter {
     editor: HTMLElement,
     content: string,
     requireSubmitButton: boolean,
+    operationId: number,
   ): Promise<boolean> {
+    const initialUrl = window.location.href
+    // 新编辑请求使旧操作失效；导航后停止清空，但插入本身可能创建会话 URL。
+    const isCurrentOperation = () =>
+      operationId === this.editorOperationId &&
+      editor.isConnected &&
+      (content !== "" || window.location.href === initialUrl)
+    if (!isCurrentOperation()) return false
     editor.focus()
 
     if (content === "") {
@@ -508,8 +519,10 @@ export class DeclarativeAdapter extends SiteAdapter {
       const modelDriven = detectedPipeline !== null
       for (const method of pipeline.delete) {
         for (let round = 0; round < EDITOR_CLEAR_MAX_ROUNDS; round++) {
+          if (!isCurrentOperation()) return false
           if (!this.selectAllEditorContent(editor)) return false
           await new Promise((resolve) => setTimeout(resolve, EDITOR_SELECTION_SYNC_MS))
+          if (!isCurrentOperation()) return false
           try {
             if (method === "execCommand") {
               editor.ownerDocument.execCommand("delete", false, undefined)
@@ -537,13 +550,15 @@ export class DeclarativeAdapter extends SiteAdapter {
           } catch {
             // Unsupported event construction; validation below reports failure.
           }
-          if (await this.waitForEditorUpdate(editor, "", requireSubmitButton)) return true
+          if (await this.waitForEditorUpdate(editor, "", requireSubmitButton, isCurrentOperation)) {
+            return true
+          }
         }
       }
 
       // 模型驱动编辑器的 DOM 由模型渲染，强写 textContent 只会被重渲染还原甚至
       // 破坏 React 节点映射，到这里只能判定失败，不做 DOM 级强清。
-      if (modelDriven) return false
+      if (modelDriven || !isCurrentOperation()) return false
 
       if (!this.selectAllEditorContent(editor)) return false
 
@@ -619,27 +634,35 @@ export class DeclarativeAdapter extends SiteAdapter {
       editor.dispatchEvent(new Event("input", { bubbles: true, composed: true }))
       editor.dispatchEvent(new Event("change", { bubbles: true }))
 
-      return this.waitForEditorUpdate(editor, "", requireSubmitButton)
+      return this.waitForEditorUpdate(editor, "", requireSubmitButton, isCurrentOperation)
     }
 
-    // 按编辑器框架管线排序尝试插入（见 getEditorEventPipeline），每种方式之后经
-    // 内容校验再决定是否尝试下一种，避免 execCommand 在模型驱动编辑器上留下
-    // 模型无法感知的 DOM 污染、进而打乱后续方式的选区映射。
+    // 显式策略优先于框架默认值；每次尝试后仍校验完整内容与换行。
     const originalText = getEditorText(editor)
-    const attempts = (getEditorEventPipeline(editor) ?? PLAIN_EDITOR_PIPELINE).insert
+    const strategy = this.manifest.input?.insertStrategy
+    const pipeline = getEditorEventPipeline(editor) ?? PLAIN_EDITOR_PIPELINE
+    let attempts = pipeline.insert
+    if (strategy === "native") {
+      // 显式配置也不能绕过 Slate/Lexical/Draft 的模型保护。
+      if (!pipeline.insert.includes("execCommand")) return false
+      attempts = PLAIN_EDITOR_PIPELINE.insert
+    } else if (strategy === "paste") {
+      attempts = ["paste"]
+    }
     let attempted = false
 
     for (const attempt of attempts) {
+      if (!isCurrentOperation()) return false
       // 上次尝试写入了未通过校验的内容时必须先清场（模型编辑器走模型级清空），
       // 否则残留会与新内容叠加出错乱结果。
       if (attempted) {
         if (normalizeEditorText(getEditorText(editor)) !== normalizeEditorText(originalText)) {
-          const cleared = await this.replaceContentEditableContent(editor, "", false)
+          const cleared = await this.replaceContentEditableContent(editor, "", false, operationId)
           if (!cleared) return false
         }
       }
 
-      if (!this.selectAllEditorContent(editor)) return false
+      if (!isCurrentOperation() || !this.selectAllEditorContent(editor)) return false
       attempted = true
 
       try {
@@ -649,6 +672,7 @@ export class DeclarativeAdapter extends SiteAdapter {
           // 合成 beforeinput/paste 没有 getTargetRanges，模型编辑器只能按内部选区
           // 处理，先让出事件循环等选区同步完成。
           await new Promise((resolve) => setTimeout(resolve, EDITOR_SELECTION_SYNC_MS))
+          if (!isCurrentOperation()) return false
           if (attempt === "beforeinput") {
             editor.dispatchEvent(
               new InputEvent("beforeinput", {
@@ -676,13 +700,18 @@ export class DeclarativeAdapter extends SiteAdapter {
         // Unsupported event construction; validation below reports failure.
       }
 
-      if (await this.waitForEditorUpdate(editor, content, requireSubmitButton)) return true
+      if (
+        await this.waitForEditorUpdate(editor, content, requireSubmitButton, isCurrentOperation)
+      ) {
+        return true
+      }
     }
 
     return false
   }
 
   async insertPrompt(content: string): Promise<boolean> {
+    const operationId = ++this.editorOperationId
     const configuredEditor = this.getConfiguredEditor()
     if (!configuredEditor) return false
     const requireSubmitButton = (this.manifest.selectors.submitButton?.length ?? 0) > 0
@@ -692,6 +721,7 @@ export class DeclarativeAdapter extends SiteAdapter {
         configuredEditor.editor,
         content,
         requireSubmitButton,
+        operationId,
       )
     }
 
@@ -699,17 +729,17 @@ export class DeclarativeAdapter extends SiteAdapter {
     return this.isEditorUpdateValid(configuredEditor.editor, content, requireSubmitButton)
   }
 
-  clearTextarea(): void {
+  async clearTextarea(): Promise<boolean> {
+    const operationId = ++this.editorOperationId
     const configuredEditor = this.getConfiguredEditor()
-    if (!configuredEditor) return
+    if (!configuredEditor) return false
 
     if (configuredEditor.mode === "contenteditable") {
-      void this.replaceContentEditableContent(configuredEditor.editor, "", false)
-      return
+      return this.replaceContentEditableContent(configuredEditor.editor, "", false, operationId)
     }
 
-    if (!this.setTextControlValue(configuredEditor.editor, "")) return
-    if (!this.isEditorUpdateValid(configuredEditor.editor, "", false)) return
+    if (!this.setTextControlValue(configuredEditor.editor, "")) return false
+    return this.isEditorUpdateValid(configuredEditor.editor, "", false)
   }
 
   private isInsideOutlineExclude(element: Element): boolean {
