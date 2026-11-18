@@ -13,6 +13,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 - **WorkBuddy support** — Added support for WorkBuddy (workbuddy.cn / workbuddy.ai), with outlines, export, prompt insertion, panel avoidance, and host theme sync. (#1050, #1051)
 
+### ✨ Improvements
+
+- **Settings layout and icons** — Site Packs now uses the same content width as other settings pages, with updated navigation and page title icons.
+
 ---
 
 ## [1.3.4][1.3.4] - 2026-11-16
