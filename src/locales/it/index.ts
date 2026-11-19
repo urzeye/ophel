@@ -1528,6 +1528,8 @@ export const it = {
   shortcutTogglePanelMode: "Attiva/disattiva la modalità pannello (Snap/Float)",
   shortcutToggleTheme: "Attiva/disattiva tema",
   shortcutOpenSettings: "Apri Impostazioni",
+  shortcutSwitchTabGroup: "Passa tra le schede del pannello",
+  shortcutExpandLevelGroup: "Espandi a un livello specifico",
   shortcutSwitchTab1: "Passa alla prima scheda",
   shortcutSwitchTab2: "Passa alla seconda scheda",
   shortcutSwitchTab3: "Passa alla terza scheda",

@@ -1389,6 +1389,8 @@ export const zhTW = {
   shortcutTogglePanelMode: "切換面板模式（自動吸附/懸浮）",
   shortcutToggleTheme: "切換主題",
   shortcutOpenSettings: "開啟設置",
+  shortcutSwitchTabGroup: "切換面板標籤",
+  shortcutExpandLevelGroup: "展開到指定層級",
   shortcutSwitchTab1: "切換到第 1 個面板標籤",
   shortcutSwitchTab2: "切換到第 2 個面板標籤",
   shortcutSwitchTab3: "切換到第 3 個面板標籤",
