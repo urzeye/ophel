@@ -1036,33 +1036,40 @@ html[data-theme="dark"] .platform-icon-dark-invert {
    全局搜索定位时由 scrollWithinSettingsContent 自动展开闭合的 details 祖先 */
 .settings-card-advanced {
   margin-top: 4px;
+  border-radius: 10px;
+  transition: background-color 0.2s ease;
+}
+
+/* 展开时整组（标题行 + 设置行）共享一层主色浅底，读作一个整体；
+   标题行用负边距抵消容器内边距，开合瞬间文字位置不动，只有底色与内容出现 */
+.settings-card-advanced[open] {
+  padding: 4px 12px 8px;
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 5%, transparent);
 }
 
 .settings-card-advanced-summary {
   display: flex;
   align-items: center;
   gap: 8px;
-  /* 负边距 + 等值内边距：hover 底色向卡片留白外扩一档，文字仍与上方行标签对齐 */
-  margin: 0 -8px;
-  padding: 10px 8px;
-  border-radius: 8px;
+  padding: 12px 0;
   cursor: pointer;
   list-style: none;
   user-select: none;
-  transition: background-color 0.15s ease;
 }
 
 .settings-card-advanced-summary::-webkit-details-marker {
   display: none;
 }
 
-.settings-card-advanced-summary:hover {
-  background: var(--gh-hover, #f3f4f6);
+.settings-card-advanced[open] > .settings-card-advanced-summary {
+  margin: -4px -12px 0;
+  padding: 14px 12px 10px;
 }
 
 .settings-card-advanced-summary:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 42%, transparent);
   outline-offset: 2px;
+  border-radius: 6px;
 }
 
 /* 与面板手风琴一致的圆形指示片：收起时 Chevron 指向右，展开时指向下 */
@@ -1084,9 +1091,14 @@ html[data-theme="dark"] .platform-icon-dark-invert {
     color 0.18s ease;
 }
 
-.settings-card-advanced-summary:hover .settings-card-advanced-disclosure {
+.settings-card-advanced-summary:hover .settings-card-advanced-disclosure,
+.settings-card-advanced[open] .settings-card-advanced-disclosure {
   border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 45%, transparent);
   color: var(--gh-primary, #4285f4);
+}
+
+.settings-card-advanced[open] .settings-card-advanced-disclosure {
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 12%, transparent);
 }
 
 .settings-card-advanced-icon {
@@ -1108,16 +1120,25 @@ html[data-theme="dark"] .platform-icon-dark-invert {
   transition: color 0.15s ease;
 }
 
-.settings-card-advanced-summary:hover .settings-card-advanced-label {
+.settings-card-advanced-summary:hover .settings-card-advanced-label,
+.settings-card-advanced[open] .settings-card-advanced-label {
   color: var(--gh-text, #374151);
 }
 
-/* 展开反馈复用面板手风琴的入场曲线 */
+/* 展开区与标题行之间用一道细分隔线收束，行内容相对标题缩进一档表达从属 */
 .settings-card-advanced-body {
+  padding-top: 2px;
+  border-top: 1px solid color-mix(in srgb, var(--gh-border, #e5e7eb) 72%, transparent);
+  /* 展开反馈复用面板手风琴的入场曲线 */
   animation: settings-accordion-reveal 0.18s ease;
 }
 
+.settings-card-advanced-body > .settings-row:first-child {
+  padding-top: 10px;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .settings-card-advanced,
   .settings-card-advanced-summary,
   .settings-card-advanced-disclosure,
   .settings-card-advanced-icon,
