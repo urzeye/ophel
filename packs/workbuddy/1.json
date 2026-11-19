@@ -1,0 +1,211 @@
+{
+  "schemaVersion": 1,
+  "id": "workbuddy",
+  "version": 1,
+  "minAppVersion": "1.3.5",
+  "name": "WorkBuddy",
+  "nameI18n": {
+    "zh-CN": "WorkBuddy",
+    "zh-TW": "WorkBuddy",
+    "en": "WorkBuddy",
+    "ja": "WorkBuddy",
+    "ko": "WorkBuddy",
+    "it": "WorkBuddy",
+    "de": "WorkBuddy",
+    "es": "WorkBuddy",
+    "fr": "WorkBuddy",
+    "pt-BR": "WorkBuddy",
+    "ru": "WorkBuddy"
+  },
+  "description": "Adds Ophel outlines, basic export, generation detection and stopping, chat width, Zen Mode, Clean Mode, new chat, prompt insertion, and host theme sync to WorkBuddy (workbuddy.cn / workbuddy.ai).",
+  "descriptionI18n": {
+    "zh-CN": "为 WorkBuddy（workbuddy.cn / workbuddy.ai）添加 Ophel 大纲、基础导出、生成检测与停止、对话宽度、禅模式、清洁模式、新对话、提示词插入与宿主主题联动。",
+    "zh-TW": "為 WorkBuddy（workbuddy.cn / workbuddy.ai）加入 Ophel 大綱、基本匯出、生成偵測與停止、對話寬度、禪模式、清潔模式、新對話、提示詞插入與宿主主題聯動。",
+    "en": "Adds Ophel outlines, basic export, generation detection and stopping, chat width, Zen Mode, Clean Mode, new chat, prompt insertion, and host theme sync to WorkBuddy (workbuddy.cn / workbuddy.ai).",
+    "ja": "WorkBuddy（workbuddy.cn / workbuddy.ai）に、Ophel のアウトライン、基本エクスポート、生成の検出と停止、チャット幅、Zen モード、クリーンモード、新規チャット、プロンプト挿入、ホストテーマ連携を追加します。",
+    "ko": "WorkBuddy(workbuddy.cn / workbuddy.ai)에 Ophel의 개요, 기본 내보내기, 생성 감지 및 중지, 대화 너비, Zen 모드, 클린 모드, 새 채팅, 프롬프트 삽입, 호스트 테마 동기화를 추가합니다.",
+    "it": "Aggiunge a WorkBuddy (workbuddy.cn / workbuddy.ai) le funzioni Ophel per struttura, esportazione di base, rilevamento e arresto della generazione, larghezza della chat, modalità Zen, modalità pulita, nuova chat, inserimento dei prompt e sincronizzazione del tema dell'host.",
+    "de": "Ergänzt WorkBuddy (workbuddy.cn / workbuddy.ai) um Ophel-Funktionen für Gliederung, Basisexport, Erkennung und Stoppen der Generierung, Chatbreite, Zen-Modus, Clean-Modus, neuen Chat, Prompt-Einfügung und Host-Theme-Synchronisierung.",
+    "es": "Añade a WorkBuddy (workbuddy.cn / workbuddy.ai) las funciones de Ophel para esquema, exportación básica, detección y detención de la generación, ancho del chat, modo zen, modo limpio, nuevo chat, inserción de prompts y sincronización del tema del host.",
+    "fr": "Ajoute à WorkBuddy (workbuddy.cn / workbuddy.ai) les fonctions Ophel de plan, d’exportation de base, de détection et d’arrêt de la génération, de largeur de discussion, de mode Zen, de mode épuré, de nouvelle discussion, d’insertion de prompts et de synchronisation du thème hôte.",
+    "pt-BR": "Adiciona ao WorkBuddy (workbuddy.cn / workbuddy.ai) os recursos do Ophel para estrutura, exportação básica, detecção e interrupção da geração, largura da conversa, modo Zen, modo limpo, nova conversa, inserção de prompts e sincronização do tema do host.",
+    "ru": "Добавляет в WorkBuddy (workbuddy.cn / workbuddy.ai) функции Ophel для структуры, базового экспорта, отслеживания и остановки генерации, ширины чата, режима Zen, чистого режима, нового чата, вставки промптов и синхронизации темы хоста."
+  },
+  "matches": [
+    "https://www.workbuddy.cn/app",
+    "https://www.workbuddy.cn/app/*",
+    "https://www.workbuddy.ai/app",
+    "https://www.workbuddy.ai/app/*"
+  ],
+  "logoUrl": "https://static.workbuddy.cn/web/agents/91e8705fce7fb33abd9e02e26cd5e9d2e3247cfb/assets/share-logo.png?v=2",
+  "theme": {
+    "primary": "#00c29a",
+    "secondary": "#009e7f"
+  },
+  "capabilities": [
+    "outline",
+    "outline-user-queries",
+    "export-basic",
+    "generation-detect",
+    "new-chat",
+    "stop-generation",
+    "width",
+    "panel-avoidance",
+    "zen",
+    "clean",
+    "prompt-insert"
+  ],
+  "selectors": {
+    "textarea": [
+      "[data-testid=\"conversation-input\"] [data-slate-editor=\"true\"][contenteditable=\"true\"]",
+      "[data-testid=\"conversation-input\"] [contenteditable=\"true\"]"
+    ],
+    "submitButton": [
+      "button.cr-send-button"
+    ],
+    "responseContainer": ".cr-message-list",
+    "chatContent": [
+      ".cr-frame--right .cr-self-message",
+      ".cr-frame--left .cr-agent"
+    ],
+    "userQuery": ".cr-frame--right .cr-self-message",
+    "assistantResponse": ".cr-frame--left .cr-agent",
+    "newChatButton": [
+      ".conversation-list-tabs .conversation-list-tab-button:first-child"
+    ],
+    "stopButton": [
+      ".cr-input-toolbar__send button[aria-label*=\"停止\"]",
+      ".cr-input-toolbar__send button[aria-label*=\"Stop\"]"
+    ],
+    "scrollContainer": [
+      ".cr-message-list"
+    ],
+    "sidebarScrollContainer": ".conversation-list-content"
+  },
+  "input": {
+    "mode": "contenteditable",
+    "submitKey": "Enter"
+  },
+  "conversationTitleSelector": "[data-testid=\"conversation-topbar\"] .workbuddy-topbar-title-area .workbuddy-topbar-title",
+  "generating": {
+    "existsSelectors": [
+      ".cr-input-toolbar__send button[aria-label*=\"停止\"]",
+      ".cr-input-toolbar__send button[aria-label*=\"Stop\"]"
+    ]
+  },
+  "session": {
+    "idFromPathRegex": "^/app/conversation/([^/?#]+)",
+    "newConversationPathPatterns": [
+      "^/app/?$",
+      "^/?$"
+    ],
+    "newTabPath": "/app"
+  },
+  "export": {
+    "userQuerySelector": ".cr-frame--right .cr-self-message",
+    "assistantResponseSelector": ".cr-frame--left .cr-agent__content",
+    "turnSelector": null,
+    "useShadowDOM": false
+  },
+  "zenMode": {
+    "hide": [
+      ".conversation-sidebar"
+    ]
+  },
+  "cleanMode": {
+    "preserveFlow": [
+      "[data-testid=\"conversation-disclaimer\"]"
+    ]
+  },
+  "widthSelectors": [
+    {
+      "selector": ".cr-message-list__content",
+      "property": "max-width"
+    },
+    {
+      "selector": ".cr-message-list__bottom-mask",
+      "property": "max-width"
+    },
+    {
+      "selector": ".conversation-input-area",
+      "property": "max-width"
+    }
+  ],
+  "panelAvoidance": {
+    "scopeSelector": "[data-view-id=\"main-content\"]",
+    "obstacleSelectors": [
+      "[data-view-id=\"detail-panel\"]",
+      "[data-view-id=\"sources-panel\"]"
+    ],
+    "widthSelectors": [
+      {
+        "selector": ".cr-message-list__content",
+        "property": "max-width"
+      },
+      {
+        "selector": ".cr-message-list__bottom-mask",
+        "property": "max-width"
+      },
+      {
+        "selector": ".conversation-input-area",
+        "property": "max-width"
+      }
+    ],
+    "insetSelectors": [
+      {
+        "selector": ".conversation-shell__main",
+        "insetMode": "edge",
+        "extraCss": "box-sizing: border-box;"
+      }
+    ],
+    "defaultWidth": "832px",
+    "gap": 16
+  },
+  "themeSync": {
+    "storageKey": "agent-ui-theme",
+    "valuePath": "theme",
+    "values": {
+      "dark": "dark",
+      "light": "light"
+    },
+    "domSync": [
+      {
+        "selector": "html",
+        "classes": [
+          "{mode}",
+          "cb-{mode}",
+          "vscode-{mode}"
+        ],
+        "attributes": {
+          "data-theme": "{mode}"
+        }
+      },
+      {
+        "selector": "body",
+        "classes": [
+          "{mode}",
+          "cb-{mode}",
+          "vscode-{mode}"
+        ],
+        "attributes": {
+          "data-theme-source": "{mode}",
+          "data-vscode-theme-kind": "vscode-{mode}",
+          "data-vscode-theme-name": {
+            "dark": "IDE Dark",
+            "light": "IDE Light"
+          }
+        }
+      },
+      {
+        "selector": "[data-cr-theme]",
+        "attributes": {
+          "data-cr-theme": "{mode}",
+          "data-theme": "{mode}"
+        }
+      }
+    ]
+  },
+  "traits": {
+    "periodicOutlineRefresh": true
+  }
+}
