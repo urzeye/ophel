@@ -1671,12 +1671,13 @@
 }
 
 .outline-level-dots {
+  --outline-level-dot-size: 10px;
   flex: 1 1 auto;
   min-width: 0;
   display: flex;
   justify-content: space-between;
   position: relative;
-  padding: 6px 0;
+  padding: 8px 0;
   align-items: center;
   touch-action: none;
 }
@@ -1690,9 +1691,9 @@
 .outline-level-line-bg {
   position: absolute;
   top: 50%;
-  left: 4px;
-  right: 4px;
-  height: 4px;
+  left: calc(var(--outline-level-dot-size) / 2);
+  right: calc(var(--outline-level-dot-size) / 2);
+  height: 2px;
   background: var(--gh-border, #e5e7eb);
   z-index: 0;
   transform: translateY(-50%);
@@ -1702,8 +1703,8 @@
 .outline-level-progress {
   position: absolute;
   top: 50%;
-  left: 4px;
-  height: 4px;
+  left: calc(var(--outline-level-dot-size) / 2);
+  height: 2px;
   background: var(--gh-primary, #3b82f6);
   z-index: 0;
   transform: translateY(-50%);
@@ -1716,8 +1717,8 @@
 }
 
 .outline-level-dot {
-  width: 14px;
-  height: 14px;
+  width: var(--outline-level-dot-size);
+  height: var(--outline-level-dot-size);
   border-radius: 50%;
   background-color: var(--gh-slider-dot-bg, #d1d5db);
   border: none;
@@ -1734,7 +1735,7 @@
 
 .outline-level-dot.active {
   background-color: var(--gh-primary, #3b82f6);
-  border: 2px solid var(--gh-bg, #ffffff);
+  border: 1px solid var(--gh-bg, #ffffff);
   box-shadow: 0 0 0 1px var(--gh-primary, #3b82f6);
 }
 

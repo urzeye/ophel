@@ -1944,10 +1944,11 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
 
   const getLevelFromClientX = useCallback((clientX: number): number => {
     const el = levelDotsRef.current
-    if (!el) return 0
+    const dot = el?.querySelector<HTMLElement>(".outline-level-dot")
+    if (!el || !dot) return 0
     const rect = el.getBoundingClientRect()
     // 圆点按 space-between 分布：首点中心在 dotSize/2，末点中心在 width - dotSize/2
-    const dotSize = 14
+    const dotSize = dot.getBoundingClientRect().width
     const usableWidth = rect.width - dotSize
     if (usableWidth <= 0) return 0
     const ratio = (clientX - rect.left - dotSize / 2) / usableWidth
@@ -2211,7 +2212,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
             <div
               className={`outline-level-progress ${isSliderDisabled ? "disabled" : ""}`}
               style={{
-                width: `calc((${sliderLevel} / 6) * (100% - 8px))`,
+                width: `calc((${sliderLevel} / 6) * (100% - var(--outline-level-dot-size)))`,
               }}
             />
 
