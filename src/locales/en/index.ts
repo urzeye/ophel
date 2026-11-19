@@ -19,6 +19,26 @@ export const en = {
     "By clicking the button above, you acknowledge that you have read, understood, and agree to the above.",
   disclaimerContribute: "Contribute",
 
+  // First-run panel tour
+  onboardingTourAriaLabel: "Panel tour",
+  onboardingTourStepOf: "Step {current} of {total}",
+  onboardingTourOutlineTitle: "Outline · Conversation map",
+  onboardingTourOutlineDesc:
+    "Parses the current conversation in real time. Click an entry to jump to it, or search and bookmark it.",
+  onboardingTourConversationsTitle: "Chats · Organize and find",
+  onboardingTourConversationsDesc:
+    "Chats from the site sync here automatically. Sort them with folders and tags, and find them again with search.",
+  onboardingTourPromptsTitle: "Prompts · Your library",
+  onboardingTourPromptsDesc:
+    "Save frequent prompts as templates and insert them in one click, with variables and chained sending.",
+  onboardingTourSettingsTitle: "Settings · Make it yours",
+  onboardingTourSettingsDesc:
+    "Open settings from the gear at the top of the panel: themes, shortcuts, backup, and site adapters.",
+  onboardingTourSkip: "Skip",
+  onboardingTourPrev: "Back",
+  onboardingTourNext: "Next",
+  onboardingTourDone: "Get started",
+
   tabPrompts: "Prompts",
   tabSettings: "Settings",
 

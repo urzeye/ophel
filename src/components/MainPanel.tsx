@@ -29,6 +29,7 @@ import type { OutlineManager } from "~core/outline-manager"
 import type { PromptManager } from "~core/prompt-manager"
 import type { ThemeTransitionOrigin } from "~core/theme-manager"
 import { useDraggable } from "~hooks/useDraggable"
+import { useFirstRunPanelTour } from "~hooks/useFirstRunPanelTour"
 import { useOutlineNavigation } from "~hooks/useOutlineNavigation"
 import { useSupportedAiPlatforms } from "~hooks/useSupportedAiPlatforms"
 import { useSettingsStore } from "~stores/settings-store"
@@ -48,6 +49,7 @@ import { anchorStore, withAnchorOp } from "~stores/anchor-store"
 import { ConversationsTab } from "./ConversationsTab"
 import { LoadingOverlay } from "./LoadingOverlay"
 import { OutlineTab } from "./OutlineTab"
+import { PanelOnboardingTour } from "./PanelOnboardingTour"
 import { PromptsTab } from "./PromptsTab"
 import { Tooltip } from "~components/ui/Tooltip"
 
@@ -178,6 +180,10 @@ export const MainPanel: React.FC<MainPanelProps> = ({
 
   const { settings, updateNestedSetting } = useSettingsStore()
   const currentSettings = settings || DEFAULT_SETTINGS
+  // 首装导览：面板完整展开（非启动器/边缘预览）时才允许展示
+  const { tourVisible, exitTour } = useFirstRunPanelTour(
+    isOpen && !isLauncherPeeking && !isEdgePeeking,
+  )
   const tabOrder = currentSettings.features?.order || DEFAULT_SETTINGS.features.order
   const siteId = adapter?.getSiteId() || "_default"
   const siteSettingsKey = adapter?.getSiteSettingsKey() || "_default"
@@ -1741,6 +1747,9 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             </button>
           </Tooltip>
         </div>
+
+        {/* 首装导览卡片：锚定面板底部，完成/跳过后不再展示 */}
+        {tourVisible && <PanelOnboardingTour onExit={exitTour} />}
       </div>
     </>
   )

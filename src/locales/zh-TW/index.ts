@@ -17,6 +17,24 @@ export const zhTW = {
   disclaimerAgreeNote: "點擊上方按鈕即表示你已閱讀、理解並同意以上內容。",
   disclaimerContribute: "參與貢獻",
 
+  // 首裝面板導覽
+  onboardingTourAriaLabel: "面板功能導覽",
+  onboardingTourStepOf: "第 {current} 步，共 {total} 步",
+  onboardingTourOutlineTitle: "大綱 · 對話目錄",
+  onboardingTourOutlineDesc: "即時解析目前對話的結構，點擊條目即可跳轉定位，還支援搜尋與書籤。",
+  onboardingTourConversationsTitle: "對話 · 整理歸檔",
+  onboardingTourConversationsDesc:
+    "站點裡的對話會自動同步到這裡，用資料夾和標籤分類，隨時搜尋找回。",
+  onboardingTourPromptsTitle: "提示詞 · 快捷詞庫",
+  onboardingTourPromptsDesc: "把常用提示詞存成範本，一鍵插入輸入框，支援變數與鏈式發送。",
+  onboardingTourSettingsTitle: "設定 · 照你的習慣調整",
+  onboardingTourSettingsDesc:
+    "點擊面板頂部的齒輪進入設定：主題外觀、快捷鍵、備份與站點適配都在這裡。",
+  onboardingTourSkip: "略過",
+  onboardingTourPrev: "上一步",
+  onboardingTourNext: "下一步",
+  onboardingTourDone: "開始使用",
+
   tabPrompts: "提示詞",
   tabSettings: "設置",
 

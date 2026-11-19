@@ -3614,6 +3614,154 @@
   transition: none !important;
 }
 
+/* ============= 首装导览卡片 ============= */
+.gh-onboarding-tour {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  /* 要盖住内容区的浮层（快捷技巧 popover z-index: 10000） */
+  z-index: 10001;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px 10px;
+  background: var(--gh-card-bg, #ffffff);
+  border: 1px solid var(--gh-border, #e5e7eb);
+  border-radius: 12px;
+  box-shadow: var(--gh-shadow, 0 10px 40px rgba(0, 0, 0, 0.15));
+  color: var(--gh-text, #1f2937);
+  animation: gh-onboarding-tour-in 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes gh-onboarding-tour-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.gh-onboarding-tour-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gh-onboarding-tour-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  color: var(--gh-primary, #4285f4);
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 12%, transparent);
+}
+
+.gh-onboarding-tour-title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.gh-onboarding-tour-body {
+  animation: gh-onboarding-step-in 0.18s ease;
+}
+
+@keyframes gh-onboarding-step-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.gh-onboarding-tour-desc {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--gh-text-secondary, #6b7280);
+}
+
+.gh-onboarding-tour-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.gh-onboarding-tour-dots {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.gh-onboarding-tour-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--gh-border, #d1d5db);
+  transition: background-color 0.15s ease;
+}
+
+.gh-onboarding-tour-dot.active {
+  background: var(--gh-primary, #4285f4);
+}
+
+.gh-onboarding-tour-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gh-onboarding-tour-btn {
+  padding: 5px 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--gh-text-secondary, #6b7280);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.1s ease;
+}
+
+.gh-onboarding-tour-btn:hover {
+  background: var(--gh-hover, #f3f4f6);
+  color: var(--gh-text, #1f2937);
+}
+
+.gh-onboarding-tour-btn:active {
+  transform: translateY(1px);
+}
+
+.gh-onboarding-tour-btn:focus-visible {
+  outline: 2px solid var(--gh-primary, #4285f4);
+  outline-offset: 1px;
+}
+
+.gh-onboarding-tour-btn-primary,
+.gh-onboarding-tour-btn-primary:hover {
+  background: var(--gh-primary, #4285f4);
+  color: #ffffff;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .gh-panel-icon-btn,
   .gh-main-panel,
@@ -3655,6 +3803,8 @@
   .gh-loading-spinner,
   .gh-update-notice,
   .gh-update-notice-icon,
+  .gh-onboarding-tour,
+  .gh-onboarding-tour-body,
   .gh-panel-brand-unread,
   .gh-release-toast,
   .gh-quick-btn-unread,

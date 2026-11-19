@@ -16,6 +16,24 @@ export const zhCN = {
   disclaimerAgreeNote: "点击上方按钮即表示你已阅读、理解并同意以上内容。",
   disclaimerContribute: "参与贡献",
 
+  // 首装面板导览
+  onboardingTourAriaLabel: "面板功能导览",
+  onboardingTourStepOf: "第 {current} 步，共 {total} 步",
+  onboardingTourOutlineTitle: "大纲 · 对话目录",
+  onboardingTourOutlineDesc: "实时解析当前对话的结构，点击条目即可跳转定位，还支持搜索与书签。",
+  onboardingTourConversationsTitle: "对话 · 整理归档",
+  onboardingTourConversationsDesc:
+    "站点里的对话会自动同步到这里，用文件夹和标签分类，随时搜索找回。",
+  onboardingTourPromptsTitle: "提示词 · 快捷词库",
+  onboardingTourPromptsDesc: "把常用提示词存成模板，一键插入输入框，支持变量与链式发送。",
+  onboardingTourSettingsTitle: "设置 · 按你的习惯调整",
+  onboardingTourSettingsDesc:
+    "点击面板顶部的齿轮进入设置：主题外观、快捷键、备份与站点适配都在这里。",
+  onboardingTourSkip: "跳过",
+  onboardingTourPrev: "上一步",
+  onboardingTourNext: "下一步",
+  onboardingTourDone: "开始使用",
+
   tabPrompts: "提示词",
   tabSettings: "设置",
 
