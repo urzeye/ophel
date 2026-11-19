@@ -7,14 +7,14 @@
 
 ## 总进度表
 
-| # | 分支名                             | PR 标题（英文）                                                      | 依赖                 | 状态   | 完成日期 / PR |
-| - | ---------------------------------- | -------------------------------------------------------------------- | -------------------- | ------ | ------------- |
+| # | 分支名                             | PR 标题（英文）                                                      | 依赖                 | 状态   | 完成日期 / PR                                                   |
+| - | ---------------------------------- | -------------------------------------------------------------------- | -------------------- | ------ | --------------------------------------------------------------- |
 | 1 | `ux/settings-card-layering`      | `ux(settings): add collapsible advanced sections to setting cards` | 无                   | 已完成 | 2026-11-19 · [#1055](https://github.com/urzeye/ophel/pull/1055) |
-| 2 | `feat/guidance-registry`         | `feat(guidance): add unified guidance state registry`              | 无                   | 未开始 | —            |
-| 3 | `feat/first-run-onboarding`      | `feat(onboarding): add first-run panel tour`                       | #2                   | 未开始 | —            |
-| 4 | `ux/conversation-classify-nudge` | `ux(conversations): add new-conversation classify nudge`           | #2                   | 未开始 | —            |
-| 5 | `ux/inbox-triage-entry`          | `ux(conversations): add inbox triage entry`                        | #2，建议排在 #4 后   | 未开始 | —            |
-| 6 | `feat/settings-consolidation`    | `feat(settings): consolidate low-frequency switches`               | #1，且删除项需先决策 | 未开始 | —            |
+| 2 | `feat/guidance-registry`         | `feat(guidance): add unified guidance state registry`              | 无                   | 已完成 | 2026-11-19 · PR 待回填                                          |
+| 3 | `feat/first-run-onboarding`      | `feat(onboarding): add first-run panel tour`                       | #2                   | 未开始 | —                                                              |
+| 4 | `ux/conversation-classify-nudge` | `ux(conversations): add new-conversation classify nudge`           | #2                   | 未开始 | —                                                              |
+| 5 | `ux/inbox-triage-entry`          | `ux(conversations): add inbox triage entry`                        | #2，建议排在 #4 后   | 未开始 | —                                                              |
+| 6 | `feat/settings-consolidation`    | `feat(settings): consolidate low-frequency switches`               | #1，且删除项需先决策 | 未开始 | —                                                              |
 
 状态取值：`未开始` / `进行中` / `已完成` / `已搁置`。
 
@@ -57,7 +57,7 @@
 **做什么**
 
 - 新增引导注册表模块：每个引导一个 id，统一存储 shownCount / dismissed / lastShownAt 等状态，走 `platform.storage`（油猴端 localStorage 按站点隔离，不能用于跨站点一致的引导状态）。
-- 迁移现有两处引导状态：导出按钮流光（`ophel:exportDiscovered`）与全局搜索快捷键 nudge（localStorage），含旧数据迁移逻辑，保证老用户引导状态不重置。
+- 不需要迁移现有两处引导状态：导出按钮流光（`ophel:exportDiscovered`）与全局搜索快捷键 nudge（localStorage），可以无视老用户引导状态数据丢失，这不是大问题。
 - 注册表 API 保持小而显式：`shouldShow(id)` / `markShown(id)` / `dismiss(id)` / `reset(id)` 级别的接口，不做通用规则引擎。
 
 **不做什么**
@@ -72,7 +72,7 @@
 
 **进度记录**：
 
-- （待填写）
+- 2026-11-19 完成。新增纯逻辑层 `src/utils/guidance.ts`（规则表 `GUIDANCE_RULES`、状态归一化、`decideShouldShowGuidance` / `hasGuidanceCompleted` 纯函数）与存储层 `src/utils/guidance-storage.ts`（单键 `ophel:guidance` 合存全部引导状态，走 `platform.storage`，API：`getGuidanceState` / `shouldShowGuidance` / `markGuidanceShown` / `dismissGuidance` / `markGuidanceAction` / `watchGuidanceState`）。导出流光与全局搜索快捷键 nudge 两处消费者接入注册表，对外接口与触发时机不变；规则数值（3 次 / 24h / 2 次快捷键后停用）从 global-search constants 迁入规则表。油猴端 `KNOWN_STORAGE_KEYS` 补 `ophel:guidance` 保证「清除全部数据」覆盖；`handleClearAllData` 保留旧 localStorage 键清理并标注为历史遗留。按用户决策不做旧数据迁移。新增 `tests/guidance.test.ts` 8 个用例（vitest 配置原本就绪但无测试）。验证：vitest / format / lint / typecheck / build / build:userscript 通过；Playwright 实测首装同意免责声明 → 打开全局搜索 → nudge 展示且 `chrome.storage.local` 正确写入注册表状态。
 
 ## 分支 3：`feat/first-run-onboarding`
 

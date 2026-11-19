@@ -2,7 +2,7 @@ import React from "react"
 import ReactDOM from "react-dom/client"
 
 import type { SiteAdapter } from "~adapters/base"
-import { SYNC_TARGET_HINT_STORAGE_KEY } from "~constants/storage-keys"
+import { GUIDANCE_STORAGE_KEY, SYNC_TARGET_HINT_STORAGE_KEY } from "~constants/storage-keys"
 import { BACKUP_EXCLUDED_STORAGE_KEYS, BACKUP_USER_DATA_STORAGE_KEYS } from "~core/backup-codec"
 import { startPageUrlChangeBroadcaster } from "~core/page-url-change-broadcaster"
 import { applyOphelPlatformFontClass } from "~utils/font"
@@ -217,6 +217,7 @@ if (typeof chrome === "undefined" || !chrome.storage) {
   const KNOWN_STORAGE_KEYS = Array.from(
     new Set([
       ...BACKUP_USER_DATA_STORAGE_KEYS,
+      GUIDANCE_STORAGE_KEY,
       "ophel:global-search-shortcut-nudge:v1",
       "ophel:releaseNotesState",
       SYNC_TARGET_HINT_STORAGE_KEY,
