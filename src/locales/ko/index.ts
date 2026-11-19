@@ -774,6 +774,7 @@ export const ko = {
     "채팅 페이지 너비를 실시간으로 조정합니다. 스마트 회피가 켜져 있으면 패널이 열릴 때 페이지가 공간을 비워 주므로 실제 너비가 조금 줄어들 수 있습니다.",
   panelAvoidanceTitle: "스마트 회피",
   betaBadge: "Beta",
+  settingsAdvancedToggle: "고급 옵션",
   panelAvoidanceDesc:
     "패널이 열려 있을 때 현재 사이트의 콘텐츠 영역을 자동으로 조정합니다. 좁은 화면에서는 자동으로 비활성화됩니다.",
   widthValue: "너비 값",

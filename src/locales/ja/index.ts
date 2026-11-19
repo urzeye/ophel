@@ -789,6 +789,7 @@ export const ja = {
     "チャットページの幅をリアルタイムに調整します。「スマート回避」が有効な場合、パネルを開くとページが場所を空けるため、実際の幅は少し小さくなることがあります。",
   panelAvoidanceTitle: "スマート回避",
   betaBadge: "Beta",
+  settingsAdvancedToggle: "詳細オプション",
   panelAvoidanceDesc:
     "パネル表示中に現在のサイトのコンテンツ領域を自動調整します。狭い画面では自動的に無効になります。",
   widthValue: "幅",

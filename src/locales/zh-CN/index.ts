@@ -768,6 +768,7 @@ export const zhCN = {
     "调整聊天页面宽度，即时生效。开启「智能避让」后，面板展开时页面会让出空间，实际宽度可能略小。",
   panelAvoidanceTitle: "智能避让",
   betaBadge: "Beta",
+  settingsAdvancedToggle: "高级选项",
   panelAvoidanceDesc: "面板展开时自动调整当前站点的内容区域，减少遮挡；窄屏设备会自动停用",
   widthValue: "宽度值",
   widthUnit: "单位",

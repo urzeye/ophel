@@ -822,6 +822,7 @@ export const en = {
     "Adjust the chat page width in real time. With Smart Avoidance on, the page makes room for an open panel, so the actual width may be slightly smaller.",
   panelAvoidanceTitle: "Smart Avoidance",
   betaBadge: "Beta",
+  settingsAdvancedToggle: "Advanced options",
   panelAvoidanceDesc:
     "Automatically adjusts the current site's content area while the panel is open; disabled on narrow screens.",
   widthValue: "Width Value",

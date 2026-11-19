@@ -784,6 +784,7 @@ export const pt = {
     "Ajusta a largura da página do chat em tempo real. Quando o desvio inteligente está ativado, a página abre espaço para o painel aberto, então a largura real pode ficar um pouco menor.",
   panelAvoidanceTitle: "Desvio inteligente",
   betaBadge: "Beta",
+  settingsAdvancedToggle: "Opções avançadas",
   panelAvoidanceDesc:
     "Ajusta automaticamente a área de conteúdo do site atual enquanto o painel está aberto; desativado em telas estreitas.",
   widthValue: "Largura",
