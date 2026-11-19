@@ -33,9 +33,6 @@ export const zhTW = {
   onboardingTourPrev: "上一步",
   onboardingTourNext: "下一步",
   onboardingTourDone: "開始使用",
-  onboardingTourWelcomeTitle: "歡迎使用 Ophel",
-  onboardingTourWelcomeDesc: "花半分鐘，認識面板的四個核心區域。",
-  onboardingTourStart: "開始導覽",
 
   tabPrompts: "提示詞",
   tabSettings: "設置",

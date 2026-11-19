@@ -38,9 +38,6 @@ export const en = {
   onboardingTourPrev: "Back",
   onboardingTourNext: "Next",
   onboardingTourDone: "Get started",
-  onboardingTourWelcomeTitle: "Welcome to Ophel",
-  onboardingTourWelcomeDesc: "Take 30 seconds to meet the panel's four core areas.",
-  onboardingTourStart: "Start tour",
 
   tabPrompts: "Prompts",
   tabSettings: "Settings",

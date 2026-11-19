@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react"
 
 import { ConversationIcon, OutlineIcon, PromptIcon, SettingsIcon } from "~components/icons"
-import { SparkleIcon } from "~components/icons/SparkleIcon"
 import { t } from "~utils/i18n"
 
 interface TourStep {
@@ -56,7 +55,7 @@ type QueryRoot = Document | ShadowRoot
 
 /**
  * 首装全屏导览：蒙层压暗整个视口，聚光灯逐个高亮面板核心区域，
- * 气泡卡片跟随目标位置；欢迎页先行，tab 步骤会真实切换面板内容区，
+ * 气泡卡片跟随目标位置；直接从大纲开始，tab 步骤会真实切换面板内容区，
  * 退出时恢复原 tab。完成、跳过、Esc 均经退场动画后走 onExit（注册表永久记录）。
  * 导览期间蒙层拦截全部页面交互，避免误触造成状态错乱。
  */
@@ -66,11 +65,10 @@ export const PanelOnboardingTour: React.FC<{ onExit: () => void }> = ({ onExit }
   const primaryButtonRef = useRef<HTMLButtonElement>(null)
   // 进入导览时激活的 tab，退出时恢复，不留副作用
   const originalTabRef = useRef<Element | null>(null)
-  // 步进方向驱动内容横移入场；初始 none 不给欢迎页强加滑入
+  // 步进方向驱动内容横移入场；第一步只播放卡片入场动画
   const dirRef = useRef<"fwd" | "back" | "none">("none")
   const exitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [steps, setSteps] = useState<TourStep[] | null>(null)
-  const [started, setStarted] = useState(false)
   const [stepIndex, setStepIndex] = useState(0)
   const [exiting, setExiting] = useState(false)
   // undefined = 尚未测量；null = 已测量但目标消失
@@ -122,7 +120,7 @@ export const PanelOnboardingTour: React.FC<{ onExit: () => void }> = ({ onExit }
   // 每步测量高亮目标位置；窗口尺寸变化时重测。
   // tab 步骤同步真实切换到对应内容区，讲解与蒙层下露出的内容保持一致
   useLayoutEffect(() => {
-    if (!steps || !started) return
+    if (!steps) return
     const step = steps[stepIndex]
     const target = queryTarget(step.targetSelector)
     if (
@@ -139,7 +137,7 @@ export const PanelOnboardingTour: React.FC<{ onExit: () => void }> = ({ onExit }
     measure()
     window.addEventListener("resize", measure)
     return () => window.removeEventListener("resize", measure)
-  }, [steps, started, stepIndex, queryTarget])
+  }, [steps, stepIndex, queryTarget])
 
   // 目标中途消失（如布局切换）：前进到下一步，已是最后一步则退出
   useEffect(() => {
@@ -153,24 +151,16 @@ export const PanelOnboardingTour: React.FC<{ onExit: () => void }> = ({ onExit }
     }
   }, [steps, spotRect, stepIndex, requestExit])
 
-  // 卡片定位：欢迎页居中；步骤态跟随目标，默认放目标下方，
+  // 卡片跟随目标，默认放目标下方，
   // 空间不足翻转到上方，水平随目标居中并夹取在视口内
   useLayoutEffect(() => {
-    if (!steps) return
+    if (!steps || !spotRect) return
     const place = () => {
       // 实测卡片宽度，避免盒模型/窄视口 max-width 导致右缘夹取失准
       const cardWidth = cardRef.current?.offsetWidth ?? CARD_WIDTH
       const cardHeight = cardRef.current?.offsetHeight ?? 180
       const viewportWidth = window.innerWidth
       const viewportHeight = window.innerHeight
-
-      if (!started || !spotRect) {
-        setCardPos({
-          top: Math.max(VIEWPORT_MARGIN, (viewportHeight - cardHeight) / 2),
-          left: Math.max(VIEWPORT_MARGIN, (viewportWidth - cardWidth) / 2),
-        })
-        return
-      }
 
       let top = spotRect.bottom + CARD_GAP
       if (top + cardHeight > viewportHeight - VIEWPORT_MARGIN) {
@@ -186,12 +176,12 @@ export const PanelOnboardingTour: React.FC<{ onExit: () => void }> = ({ onExit }
     place()
     window.addEventListener("resize", place)
     return () => window.removeEventListener("resize", place)
-  }, [steps, started, spotRect, stepIndex])
+  }, [steps, spotRect, stepIndex])
 
   // 每步把焦点交给主按钮，键盘用户可直接回车推进
   useEffect(() => {
     primaryButtonRef.current?.focus()
-  }, [started, stepIndex])
+  }, [steps, stepIndex])
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === "Escape") {
@@ -202,10 +192,6 @@ export const PanelOnboardingTour: React.FC<{ onExit: () => void }> = ({ onExit }
 
   const goNext = () => {
     dirRef.current = "fwd"
-    if (!started) {
-      setStarted(true)
-      return
-    }
     if (isLastStep) {
       requestExit()
       return
@@ -215,26 +201,22 @@ export const PanelOnboardingTour: React.FC<{ onExit: () => void }> = ({ onExit }
 
   const goPrev = () => {
     dirRef.current = "back"
-    if (stepIndex === 0) {
-      setStarted(false)
-      return
-    }
     setStepIndex(stepIndex - 1)
   }
 
-  const step = started && steps ? steps[stepIndex] : undefined
+  const step = steps?.[stepIndex]
   const isLastStep = steps ? stepIndex === steps.length - 1 : false
   const StepIcon = step?.icon
 
   return (
     <div
       ref={overlayRef}
-      className={`gh-tour-overlay${exiting ? " is-exiting" : ""}${started ? "" : " is-welcome"}`}
+      className={`gh-tour-overlay${exiting ? " is-exiting" : ""}`}
       role="dialog"
       aria-modal="true"
       aria-label={t("onboardingTourAriaLabel")}
       onKeyDown={handleKeyDown}>
-      {started && step && spotRect && (
+      {step && spotRect && (
         <div
           className="gh-tour-spotlight"
           style={{
@@ -248,7 +230,7 @@ export const PanelOnboardingTour: React.FC<{ onExit: () => void }> = ({ onExit }
         </div>
       )}
 
-      {steps && (
+      {steps && step && StepIcon && (
         <div
           ref={cardRef}
           className="gh-onboarding-tour"
@@ -257,52 +239,31 @@ export const PanelOnboardingTour: React.FC<{ onExit: () => void }> = ({ onExit }
             left: cardPos?.left ?? 0,
             visibility: cardPos ? "visible" : "hidden",
           }}>
-          <div
-            key={started ? stepIndex : -1}
-            className={`gh-onboarding-tour-step${started ? "" : " is-welcome"}`}
-            data-dir={dirRef.current}>
-            {!started ? (
-              <>
-                <span className="gh-onboarding-tour-logo" aria-hidden="true">
-                  <SparkleIcon size={24} />
-                </span>
-                <h3 className="gh-onboarding-tour-title gh-onboarding-tour-title-welcome">
-                  {t("onboardingTourWelcomeTitle")}
-                </h3>
-                <p className="gh-onboarding-tour-desc">{t("onboardingTourWelcomeDesc")}</p>
-              </>
-            ) : step && StepIcon ? (
-              <>
-                <div className="gh-onboarding-tour-head">
-                  <span className="gh-onboarding-tour-icon" aria-hidden="true">
-                    <StepIcon size={16} />
-                  </span>
-                  <h3 className="gh-onboarding-tour-title">{t(step.titleKey)}</h3>
-                </div>
-                <p className="gh-onboarding-tour-desc">{t(step.descKey)}</p>
-              </>
-            ) : null}
+          <div key={stepIndex} className="gh-onboarding-tour-step" data-dir={dirRef.current}>
+            <div className="gh-onboarding-tour-head">
+              <span className="gh-onboarding-tour-icon" aria-hidden="true">
+                <StepIcon size={16} />
+              </span>
+              <h3 className="gh-onboarding-tour-title">{t(step.titleKey)}</h3>
+            </div>
+            <p className="gh-onboarding-tour-desc">{t(step.descKey)}</p>
           </div>
 
           <div className="gh-onboarding-tour-footer">
-            {started ? (
-              <div
-                className="gh-onboarding-tour-dots"
-                role="img"
-                aria-label={t("onboardingTourStepOf", {
-                  current: stepIndex + 1,
-                  total: steps.length,
-                })}>
-                {steps.map((tourStep, index) => (
-                  <span
-                    key={tourStep.titleKey}
-                    className={`gh-onboarding-tour-dot${index === stepIndex ? " active" : ""}`}
-                  />
-                ))}
-              </div>
-            ) : (
-              <span />
-            )}
+            <div
+              className="gh-onboarding-tour-dots"
+              role="img"
+              aria-label={t("onboardingTourStepOf", {
+                current: stepIndex + 1,
+                total: steps.length,
+              })}>
+              {steps.map((tourStep, index) => (
+                <span
+                  key={tourStep.titleKey}
+                  className={`gh-onboarding-tour-dot${index === stepIndex ? " active" : ""}`}
+                />
+              ))}
+            </div>
             <div className="gh-onboarding-tour-actions">
               <button
                 type="button"
@@ -311,7 +272,7 @@ export const PanelOnboardingTour: React.FC<{ onExit: () => void }> = ({ onExit }
                 onClick={requestExit}>
                 {t("onboardingTourSkip")}
               </button>
-              {started && (
+              {stepIndex > 0 && (
                 <button
                   type="button"
                   className="gh-onboarding-tour-btn"
@@ -323,14 +284,10 @@ export const PanelOnboardingTour: React.FC<{ onExit: () => void }> = ({ onExit }
               <button
                 type="button"
                 ref={primaryButtonRef}
-                className={`gh-onboarding-tour-btn gh-onboarding-tour-btn-primary${started && isLastStep ? " is-final" : ""}`}
+                className={`gh-onboarding-tour-btn gh-onboarding-tour-btn-primary${isLastStep ? " is-final" : ""}`}
                 disabled={exiting}
                 onClick={goNext}>
-                {!started
-                  ? t("onboardingTourStart")
-                  : isLastStep
-                    ? t("onboardingTourDone")
-                    : t("onboardingTourNext")}
+                {isLastStep ? t("onboardingTourDone") : t("onboardingTourNext")}
               </button>
             </div>
           </div>

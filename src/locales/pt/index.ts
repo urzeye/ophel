@@ -38,9 +38,6 @@ export const pt = {
   onboardingTourPrev: "Anterior",
   onboardingTourNext: "Seguinte",
   onboardingTourDone: "Começar",
-  onboardingTourWelcomeTitle: "Bem-vindo ao Ophel",
-  onboardingTourWelcomeDesc: "Conheça as quatro áreas principais do painel em 30 segundos.",
-  onboardingTourStart: "Iniciar tour",
 
   tabPrompts: "Comandos",
   tabSettings: "Ajustes",

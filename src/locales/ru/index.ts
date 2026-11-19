@@ -38,9 +38,6 @@ export const ru = {
   onboardingTourPrev: "Назад",
   onboardingTourNext: "Далее",
   onboardingTourDone: "Начать",
-  onboardingTourWelcomeTitle: "Добро пожаловать в Ophel",
-  onboardingTourWelcomeDesc: "За 30 секунд познакомьтесь с четырьмя ключевыми областями панели.",
-  onboardingTourStart: "Начать тур",
 
   tabPrompts: "Промпты",
   tabSettings: "Настройки",

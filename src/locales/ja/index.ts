@@ -37,9 +37,6 @@ export const ja = {
   onboardingTourPrev: "戻る",
   onboardingTourNext: "次へ",
   onboardingTourDone: "はじめる",
-  onboardingTourWelcomeTitle: "Ophel へようこそ",
-  onboardingTourWelcomeDesc: "30秒でパネルの4つの核心エリアを紹介します。",
-  onboardingTourStart: "ツアーを開始",
 
   tabPrompts: "プロンプト",
   tabSettings: "設定",

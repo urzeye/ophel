@@ -3624,15 +3624,8 @@
   /* .gh-root 全局 pointer-events: none，蒙层要拦截交互必须显式恢复 */
   pointer-events: auto;
   background: transparent;
-  transition:
-    opacity 0.26s ease-in,
-    background-color 0.3s ease;
+  transition: opacity 0.26s ease-in;
   animation: gh-tour-overlay-in 0.28s ease-out;
-}
-
-/* 欢迎页没有聚光灯目标，压暗改由蒙层背景承担，进入步骤后交还给聚光灯阴影 */
-.gh-tour-overlay.is-welcome {
-  background: var(--gh-tour-dim, rgba(17, 24, 39, 0.55));
 }
 
 .gh-tour-overlay.is-exiting {
@@ -3757,11 +3750,6 @@
   gap: 8px;
 }
 
-.gh-onboarding-tour-step.is-welcome {
-  align-items: center;
-  text-align: center;
-}
-
 .gh-onboarding-tour-step[data-dir="fwd"] {
   animation: gh-tour-step-fwd 0.26s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -3809,30 +3797,6 @@
   font-size: 15px;
   font-weight: 600;
   line-height: 1.4;
-}
-
-.gh-onboarding-tour-title-welcome {
-  font-size: 16px;
-}
-
-.gh-onboarding-tour-logo {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  color: var(--gh-primary, #4285f4);
-  background: color-mix(in srgb, var(--gh-primary, #4285f4) 14%, transparent);
-  box-shadow: 0 4px 14px color-mix(in srgb, var(--gh-primary, #4285f4) 30%, transparent);
-  animation: gh-tour-logo-in 0.45s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes gh-tour-logo-in {
-  from {
-    opacity: 0;
-    transform: scale(0.6);
-  }
 }
 
 .gh-onboarding-tour-desc {
@@ -4007,7 +3971,6 @@
   .gh-update-notice-icon,
   .gh-onboarding-tour,
   .gh-onboarding-tour-step,
-  .gh-onboarding-tour-logo,
   .gh-onboarding-tour-btn-primary.is-final::after,
   .gh-tour-overlay,
   .gh-tour-spotlight,

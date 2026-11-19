@@ -31,9 +31,6 @@ export const zhCN = {
   onboardingTourPrev: "上一步",
   onboardingTourNext: "下一步",
   onboardingTourDone: "开始使用",
-  onboardingTourWelcomeTitle: "欢迎使用 Ophel",
-  onboardingTourWelcomeDesc: "花半分钟，认识面板的四个核心区域。",
-  onboardingTourStart: "开始导览",
 
   tabPrompts: "提示词",
   tabSettings: "设置",

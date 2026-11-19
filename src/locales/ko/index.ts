@@ -36,9 +36,6 @@ export const ko = {
   onboardingTourPrev: "이전",
   onboardingTourNext: "다음",
   onboardingTourDone: "시작하기",
-  onboardingTourWelcomeTitle: "Ophel에 오신 것을 환영합니다",
-  onboardingTourWelcomeDesc: "30초면 패널의 네 가지 핵심 영역을 알 수 있어요.",
-  onboardingTourStart: "둘러보기 시작",
 
   tabPrompts: "프롬프트",
   tabSettings: "설정",
