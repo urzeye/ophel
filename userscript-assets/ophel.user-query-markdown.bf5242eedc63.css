@@ -1,0 +1,379 @@
+
+/* ============= 用户提问 Markdown 渲染样式 ============= */
+.gh-user-query-markdown {
+  font-size: 15px;
+  line-height: 1.6;
+  color: inherit;
+  white-space: normal !important;
+  /* 默认：浅色主题代码块（透明叠加，叠加在气泡背景之上，适配任意站点/主题） */
+  --gh-user-query-code-bg: rgba(0, 0, 0, 0.06);
+  --gh-user-query-code-border: rgba(0, 0, 0, 0.08);
+  --gh-user-query-code-fg: #24292e;
+  --gh-user-query-code-comment: #6a737d;
+  --gh-user-query-code-keyword: #d73a49;
+  --gh-user-query-code-string: #032f62;
+  --gh-user-query-code-number: #005cc5;
+  --gh-user-query-code-title: #6f42c1;
+  --gh-user-query-code-type: #d73a49;
+  --gh-user-query-code-variable: #e36209;
+  --gh-user-query-code-scrollbar: rgba(0, 0, 0, 0.2);
+  --gh-user-query-code-scrollbar-hover: rgba(0, 0, 0, 0.35);
+}
+
+.gh-user-query-markdown.gh-markdown-preview {
+  color: inherit;
+}
+
+.gh-user-query-markdown.gh-user-query-markdown-deepseek {
+  color: var(--dsw-alias-label-primary, var(--dsr-input-label-primary, #111827)) !important;
+}
+
+/* 为无原生气泡背景的站点（DeepSeek、Kimi 等）提供统一气泡底色
+ * Gemini 的用户气泡由外层原生元素（user-query）提供背景，排除在外 */
+.gh-user-query-markdown:not(.gh-user-query-markdown-gemini) {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+/* 通用深色模式覆盖（覆盖非 Gemini 站点） */
+html.dark .gh-user-query-markdown,
+body.dark .gh-user-query-markdown,
+html[data-theme='dark'] .gh-user-query-markdown,
+body[data-theme='dark'] .gh-user-query-markdown,
+html[yb-theme-mode='dark'] .gh-user-query-markdown {
+  --gh-user-query-code-bg: rgba(255, 255, 255, 0.09);
+  --gh-user-query-code-border: rgba(255, 255, 255, 0.1);
+  --gh-user-query-code-fg: #e6edf3;
+  --gh-user-query-code-comment: #8b949e;
+  --gh-user-query-code-keyword: #ff7b72;
+  --gh-user-query-code-string: #a5d6ff;
+  --gh-user-query-code-number: #79c0ff;
+  --gh-user-query-code-title: #d2a8ff;
+  --gh-user-query-code-type: #7ee787;
+  --gh-user-query-code-variable: #ffa657;
+  --gh-user-query-code-scrollbar: rgba(255, 255, 255, 0.2);
+  --gh-user-query-code-scrollbar-hover: rgba(255, 255, 255, 0.35);
+}
+html.dark .gh-user-query-markdown:not(.gh-user-query-markdown-gemini),
+body.dark .gh-user-query-markdown:not(.gh-user-query-markdown-gemini),
+html[data-theme='dark'] .gh-user-query-markdown:not(.gh-user-query-markdown-gemini),
+body[data-theme='dark'] .gh-user-query-markdown:not(.gh-user-query-markdown-gemini),
+html[yb-theme-mode='dark'] .gh-user-query-markdown:not(.gh-user-query-markdown-gemini) {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.gh-user-query-markdown.gh-user-query-markdown-qianwen {
+  color: #111827 !important;
+  background: #f3f6fb !important;
+  border: 1px solid rgba(17, 24, 39, 0.06) !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+  --gh-user-query-code-bg: rgba(15, 23, 42, 0.07);
+  --gh-user-query-code-border: rgba(15, 23, 42, 0.12);
+  --gh-user-query-code-fg: #111827;
+  --gh-user-query-code-comment: #64748b;
+  --gh-user-query-code-keyword: #b91c1c;
+  --gh-user-query-code-string: #075985;
+  --gh-user-query-code-number: #1d4ed8;
+  --gh-user-query-code-title: #6d28d9;
+  --gh-user-query-code-type: #047857;
+  --gh-user-query-code-variable: #c2410c;
+}
+
+.gh-user-query-markdown.gh-user-query-markdown-qianwen,
+.gh-user-query-markdown.gh-user-query-markdown-qianwen
+  *:not(pre):not(code):not(svg):not(path):not(.hljs):not([class*='hljs-']) {
+  color: #111827 !important;
+}
+
+html.dark .gh-user-query-markdown.gh-user-query-markdown-qianwen,
+body.dark .gh-user-query-markdown.gh-user-query-markdown-qianwen,
+html[data-theme='dark'] .gh-user-query-markdown.gh-user-query-markdown-qianwen,
+body[data-theme='dark'] .gh-user-query-markdown.gh-user-query-markdown-qianwen {
+  color: #f8fafc !important;
+  background: #1f2937 !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18) !important;
+  --gh-user-query-code-bg: rgba(255, 255, 255, 0.1);
+  --gh-user-query-code-border: rgba(255, 255, 255, 0.14);
+  --gh-user-query-code-fg: #f8fafc;
+}
+
+html.dark .gh-user-query-markdown.gh-user-query-markdown-qianwen,
+html.dark
+  .gh-user-query-markdown.gh-user-query-markdown-qianwen
+  *:not(pre):not(code):not(svg):not(path):not(.hljs):not([class*='hljs-']),
+body.dark .gh-user-query-markdown.gh-user-query-markdown-qianwen,
+body.dark
+  .gh-user-query-markdown.gh-user-query-markdown-qianwen
+  *:not(pre):not(code):not(svg):not(path):not(.hljs):not([class*='hljs-']),
+html[data-theme='dark'] .gh-user-query-markdown.gh-user-query-markdown-qianwen,
+html[data-theme='dark']
+  .gh-user-query-markdown.gh-user-query-markdown-qianwen
+  *:not(pre):not(code):not(svg):not(path):not(.hljs):not([class*='hljs-']),
+body[data-theme='dark'] .gh-user-query-markdown.gh-user-query-markdown-qianwen,
+body[data-theme='dark']
+  .gh-user-query-markdown.gh-user-query-markdown-qianwen
+  *:not(pre):not(code):not(svg):not(path):not(.hljs):not([class*='hljs-']) {
+  color: #f8fafc !important;
+}
+
+.gh-user-query-markdown.gh-user-query-markdown-gemini {
+  font-family: 'Google Sans', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+  --gh-user-query-code-bg: rgba(0, 0, 0, 0.06);
+  --gh-user-query-code-border: rgba(0, 0, 0, 0.08);
+  --gh-user-query-code-fg: #24292e;
+  --gh-user-query-code-comment: #6a737d;
+  --gh-user-query-code-keyword: #d73a49;
+  --gh-user-query-code-string: #032f62;
+  --gh-user-query-code-number: #005cc5;
+  --gh-user-query-code-title: #6f42c1;
+  --gh-user-query-code-type: #d73a49;
+  --gh-user-query-code-variable: #e36209;
+  --gh-user-query-code-scrollbar: rgba(0, 0, 0, 0.2);
+  --gh-user-query-code-scrollbar-hover: rgba(0, 0, 0, 0.35);
+}
+
+body.dark-theme .gh-user-query-markdown.gh-user-query-markdown-gemini,
+html[dark-theme] .gh-user-query-markdown.gh-user-query-markdown-gemini {
+  --gh-user-query-code-bg: rgba(255, 255, 255, 0.09);
+  --gh-user-query-code-border: rgba(255, 255, 255, 0.1);
+  --gh-user-query-code-fg: #e6edf3;
+  --gh-user-query-code-comment: #8b949e;
+  --gh-user-query-code-keyword: #ff7b72;
+  --gh-user-query-code-string: #a5d6ff;
+  --gh-user-query-code-number: #79c0ff;
+  --gh-user-query-code-title: #d2a8ff;
+  --gh-user-query-code-type: #7ee787;
+  --gh-user-query-code-variable: #ffa657;
+  --gh-user-query-code-scrollbar: rgba(255, 255, 255, 0.2);
+  --gh-user-query-code-scrollbar-hover: rgba(255, 255, 255, 0.35);
+}
+
+.gh-user-query-markdown.gh-user-query-markdown-gemini pre,
+.gh-user-query-markdown.gh-user-query-markdown-gemini code {
+  font-family: 'Roboto Mono', 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace !important;
+}
+
+/* 图片宽度不大于消息气泡 */
+.gh-user-query-markdown img {
+  max-width: 100%;
+}
+
+/* 代码块外层包裹器 - 作为定位祖先，不参与滚动，使复制按钮始终固定在右上角 */
+.gh-user-query-markdown .gh-code-wrapper {
+  position: relative;
+  margin: 0.5em 0;
+}
+
+/* 代码块样式 - 透明叠加背景，在任意气泡背景上自动形成视觉层次 */
+.gh-user-query-markdown pre {
+  margin: 0;
+  padding: 0.75em;
+  padding-right: 0.5em;
+  background: var(--gh-user-query-code-bg);
+  border: 1px solid var(--gh-user-query-code-border);
+  color: var(--gh-user-query-code-fg);
+  border-radius: 6px;
+  font-size: 0.95em;
+  max-height: 200px;
+  overflow: auto;
+}
+
+/* 美化滚动条 */
+.gh-user-query-markdown pre::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.gh-user-query-markdown pre::-webkit-scrollbar-track {
+  background: transparent;
+}
+.gh-user-query-markdown pre::-webkit-scrollbar-thumb {
+  background: var(--gh-user-query-code-scrollbar);
+  border-radius: 3px;
+}
+.gh-user-query-markdown pre::-webkit-scrollbar-thumb:hover {
+  background: var(--gh-user-query-code-scrollbar-hover);
+}
+
+.gh-user-query-markdown pre code {
+  background: transparent !important;
+  color: var(--gh-user-query-code-fg) !important;
+  padding: 0;
+  display: block;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  word-break: break-all;
+  overflow: visible; /* 覆盖 .hljs 的 overflow-x: auto，让 pre 控制滚动 */
+}
+
+.gh-user-query-markdown pre .hljs-comment,
+.gh-user-query-markdown pre .hljs-quote {
+  color: var(--gh-user-query-code-comment) !important;
+}
+.gh-user-query-markdown pre .hljs-keyword,
+.gh-user-query-markdown pre .hljs-selector-tag,
+.gh-user-query-markdown pre .hljs-doctag {
+  color: var(--gh-user-query-code-keyword) !important;
+}
+.gh-user-query-markdown pre .hljs-string,
+.gh-user-query-markdown pre .hljs-regexp {
+  color: var(--gh-user-query-code-string) !important;
+}
+.gh-user-query-markdown pre .hljs-number,
+.gh-user-query-markdown pre .hljs-literal,
+.gh-user-query-markdown pre .hljs-attr,
+.gh-user-query-markdown pre .hljs-attribute {
+  color: var(--gh-user-query-code-number) !important;
+}
+.gh-user-query-markdown pre .hljs-title,
+.gh-user-query-markdown pre .hljs-section,
+.gh-user-query-markdown pre .hljs-selector-id {
+  color: var(--gh-user-query-code-title) !important;
+}
+.gh-user-query-markdown pre .hljs-type,
+.gh-user-query-markdown pre .hljs-class .hljs-title {
+  color: var(--gh-user-query-code-type) !important;
+}
+.gh-user-query-markdown pre .hljs-variable,
+.gh-user-query-markdown pre .hljs-template-variable,
+.gh-user-query-markdown pre .hljs-built_in {
+  color: var(--gh-user-query-code-variable) !important;
+}
+
+/* 行内代码 */
+.gh-user-query-markdown.gh-markdown-preview :not(pre) > code:not(.hljs),
+.gh-user-query-markdown :not(pre) > code {
+  background: var(--gh-user-query-code-bg) !important;
+  color: var(--gh-user-query-code-fg) !important;
+  padding: 0.2em 0.4em;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+/* 代码块复制按钮 - 绝对定位于 .gh-code-wrapper 右上角，wrapper 不滚动故按钮始终可见 */
+.gh-user-query-markdown .gh-code-copy-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  color: #666;
+  font-size: 12px;
+  cursor: pointer;
+  opacity: 0.2;
+  pointer-events: none;
+  transition: opacity 0.2s, background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+.gh-user-query-markdown .gh-code-wrapper:hover .gh-code-copy-btn {
+  opacity: 1;
+  pointer-events: auto;
+}
+.gh-user-query-markdown .gh-code-copy-btn:hover {
+  background: #4285f4;
+  color: white;
+  border-color: #4285f4;
+}
+
+/* 标题间距优化 */
+.gh-user-query-markdown h1,
+.gh-user-query-markdown h2,
+.gh-user-query-markdown h3,
+.gh-user-query-markdown h4,
+.gh-user-query-markdown h5,
+.gh-user-query-markdown h6 {
+  margin: 0.5em 0 0.3em;
+  line-height: 1.3;
+}
+
+.gh-user-query-markdown h1 { font-size: 1.3em; }
+.gh-user-query-markdown h2 { font-size: 1.2em; }
+.gh-user-query-markdown h3 { font-size: 1.1em; }
+
+/* 列表样式 */
+.gh-user-query-markdown ul,
+.gh-user-query-markdown ol {
+  margin: 0.4em 0;
+  padding-left: 1.5em;
+}
+
+.gh-user-query-markdown li {
+  margin: 0.2em 0;
+}
+
+/* 引用块 */
+.gh-user-query-markdown blockquote {
+  margin: 0.5em 0;
+  padding: 0.5em 1em;
+  border-left: 3px solid #4285f4;
+  background: rgba(0, 0, 0, 0.03);
+  color: inherit;
+  border-radius: 0 4px 4px 0;
+}
+
+/* 表格优化 */
+.gh-user-query-markdown table {
+  margin: 0.5em 0;
+  font-size: 0.9em;
+}
+
+/* 分隔线 */
+.gh-user-query-markdown hr {
+  margin: 0.5em 0;
+  border: none;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* 深色模式适配 */
+body.dark-theme .gh-user-query-markdown :not(pre) > code {
+  background: rgba(255, 255, 255, 0.12);
+}
+body.dark-theme .gh-user-query-markdown .gh-code-copy-btn {
+  background: rgba(0, 0, 0, 0.5);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #aaa;
+}
+body.dark-theme .gh-user-query-markdown blockquote {
+  background: rgba(255, 255, 255, 0.05);
+}
+body.dark-theme .gh-user-query-markdown hr {
+  border-top-color: #4b5563;
+}
+
+/* Gemini Enterprise 深色模式 */
+html[dark-theme] .gh-user-query-markdown :not(pre) > code {
+  background: rgba(255, 255, 255, 0.12);
+}
+html[dark-theme] .gh-user-query-markdown .gh-code-copy-btn {
+  background: rgba(0, 0, 0, 0.5);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #aaa;
+}
+html[dark-theme] .gh-user-query-markdown blockquote {
+  background: rgba(255, 255, 255, 0.05);
+}
+html[dark-theme] .gh-user-query-markdown hr {
+  border-top-color: #4b5563;
+}
+
+/* ChatGPT 深色模式（使用 html.dark 类） */
+html.dark .gh-user-query-markdown :not(pre) > code {
+  background: rgba(255, 255, 255, 0.12);
+}
+html.dark .gh-user-query-markdown .gh-code-copy-btn {
+  background: rgba(0, 0, 0, 0.5);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #aaa;
+}
+html.dark .gh-user-query-markdown blockquote {
+  background: rgba(255, 255, 255, 0.05);
+}
+html.dark .gh-user-query-markdown hr {
+  border-top-color: #4b5563;
+}
