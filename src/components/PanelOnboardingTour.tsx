@@ -9,6 +9,8 @@ interface TourStep {
   descKey: string
   /** 高亮目标选择器（在 Shadow Root 内查询）；目标不存在时整步跳过 */
   targetSelector: string
+  /** 进入该步时真实点击目标（仅 tab 步骤），让面板切到被讲解的内容区 */
+  activateTarget?: boolean
 }
 
 // 步骤即面板的核心区域：三个 tab + 头部设置入口
@@ -18,18 +20,21 @@ const TOUR_STEPS: TourStep[] = [
     titleKey: "onboardingTourOutlineTitle",
     descKey: "onboardingTourOutlineDesc",
     targetSelector: "#gh-panel-tab-outline",
+    activateTarget: true,
   },
   {
     icon: ConversationIcon,
     titleKey: "onboardingTourConversationsTitle",
     descKey: "onboardingTourConversationsDesc",
     targetSelector: "#gh-panel-tab-conversations",
+    activateTarget: true,
   },
   {
     icon: PromptIcon,
     titleKey: "onboardingTourPromptsTitle",
     descKey: "onboardingTourPromptsDesc",
     targetSelector: "#gh-panel-tab-prompts",
+    activateTarget: true,
   },
   {
     icon: SettingsIcon,
@@ -49,13 +54,16 @@ type QueryRoot = Document | ShadowRoot
 
 /**
  * 首装全屏导览：蒙层压暗整个视口，聚光灯逐个高亮面板核心区域，
- * 气泡卡片跟随目标位置。完成、跳过、Esc 均走 onExit（注册表永久记录）。
+ * 气泡卡片跟随目标位置；tab 步骤会真实切换面板内容区，退出时恢复原 tab。
+ * 完成、跳过、Esc 均走 onExit（注册表永久记录）。
  * 导览期间蒙层拦截全部页面交互，避免误触造成状态错乱。
  */
 export const PanelOnboardingTour: React.FC<{ onExit: () => void }> = ({ onExit }) => {
   const overlayRef = useRef<HTMLDivElement>(null)
   const cardRef = useRef<HTMLDivElement>(null)
   const primaryButtonRef = useRef<HTMLButtonElement>(null)
+  // 进入导览时激活的 tab，退出时恢复，不留副作用
+  const originalTabRef = useRef<Element | null>(null)
   const [steps, setSteps] = useState<TourStep[] | null>(null)
   const [stepIndex, setStepIndex] = useState(0)
   // undefined = 尚未测量；null = 已测量但目标消失
@@ -70,6 +78,7 @@ export const PanelOnboardingTour: React.FC<{ onExit: () => void }> = ({ onExit }
   // 挂载后按目标存在性过滤步骤（站点能力差异会隐藏个别 tab）；
   // 全部缺失时直接退出，不留蒙层
   useLayoutEffect(() => {
+    originalTabRef.current = queryTarget('.gh-panel-tab-btn[aria-selected="true"]')
     const available = TOUR_STEPS.filter((step) => queryTarget(step.targetSelector) !== null)
     if (available.length === 0) {
       onExit()
@@ -78,13 +87,32 @@ export const PanelOnboardingTour: React.FC<{ onExit: () => void }> = ({ onExit }
     setSteps(available)
   }, [onExit, queryTarget])
 
-  // 每步测量高亮目标位置；窗口尺寸变化时重测
+  // 卸载即恢复初始 tab：覆盖完成/跳过/Esc/面板关闭等全部退出路径
+  useEffect(() => {
+    return () => {
+      const original = originalTabRef.current
+      if (original instanceof HTMLElement && original.getAttribute("aria-selected") !== "true") {
+        original.click()
+      }
+    }
+  }, [])
+
+  // 每步测量高亮目标位置；窗口尺寸变化时重测。
+  // tab 步骤同步真实切换到对应内容区，讲解与蒙层下露出的内容保持一致
   useLayoutEffect(() => {
     if (!steps) return
-    const selector = steps[stepIndex].targetSelector
+    const step = steps[stepIndex]
+    const target = queryTarget(step.targetSelector)
+    if (
+      step.activateTarget &&
+      target instanceof HTMLElement &&
+      target.getAttribute("aria-selected") !== "true"
+    ) {
+      target.click()
+    }
     const measure = () => {
-      const target = queryTarget(selector)
-      setSpotRect(target ? target.getBoundingClientRect() : null)
+      const el = queryTarget(step.targetSelector)
+      setSpotRect(el ? el.getBoundingClientRect() : null)
     }
     measure()
     window.addEventListener("resize", measure)
