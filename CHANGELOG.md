@@ -21,7 +21,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
-- **ChatGPT theme switching** — Fixed an issue where switching between light and dark mode in Ophel did not change ChatGPT's page colors after its interface update.
+- **ChatGPT theme switching** — Fixed an issue where switching between light and dark mode in Ophel did not change ChatGPT's page colors after its interface update. (#1060)
 
 ---
 
