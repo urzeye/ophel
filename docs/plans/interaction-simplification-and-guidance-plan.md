@@ -100,6 +100,7 @@
 - 2026-11-19：完成，PR [#1057](https://github.com/urzeye/ophel/pull/1057)（Draft）。⚠️ 方向变更：用户明确要求改为全屏蒙层 + 逐步高亮页面元素的 tour，原"不做全屏蒙层"约束作废；步数也从 ≤3 步调整为 4 步（大纲 / 对话 / 提示词 tab + 设置入口），i18n 已按 4 步同步 11 语言。
 - 实现要点：导览挂载在 App 根级（与 `DisclaimerModal` 同级），因为面板内联 `transform` 会成为 `position: fixed` 后代的包含块，导致聚光灯定位整体偏移；`.gh-root` 全局 `pointer-events: none`，蒙层需显式恢复 `pointer-events: auto`；卡片水平夹取用实测宽度，避免盒模型差异导致右缘超出视口。
 - 验证：四件套 + 油猴 / Firefox 构建通过；Playwright 真实浏览器全流程（同意免责声明 → 四步聚光灯几何与目标对齐 → 完成注销注册表 → 刷新不复发）。
+- 2026-11-19 追加：tab 步骤真实切换面板内容区（真实点击 tab 按钮，走原有路径），退出导览时恢复初始 tab；设置步只指向齿轮、不打开设置弹窗（避免 modal 叠 modal）。恢复逻辑收敛在组件卸载 cleanup，覆盖完成/跳过/Esc/面板关闭全部退出路径。
 
 ## 分支 4：`ux/conversation-classify-nudge`
 
