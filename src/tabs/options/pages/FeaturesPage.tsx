@@ -1118,22 +1118,6 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
               onChange={() => updateNestedSetting("tab", "autoRename", !settings.tab?.autoRename)}
             />
 
-            <SettingRow
-              label={t("renameIntervalLabel")}
-              settingId="tab-rename-interval"
-              disabled={!settings.tab?.autoRename}
-              onDisabledClick={() => showPrerequisiteToast(autoRenameLabel)}>
-              <SelectDropdown
-                className="settings-select-dropdown"
-                buttonClassName="settings-select"
-                options={toNumberOptions([1, 3, 5, 10, 30, 60], formatSecondsOptionLabel)}
-                value={String(settings.tab?.renameInterval || 3)}
-                ariaLabel={t("renameIntervalLabel")}
-                disabled={!settings.tab?.autoRename}
-                onChange={(value) => updateNestedSetting("tab", "renameInterval", Number(value))}
-              />
-            </SettingRow>
-
             <ToggleRow
               label={t("showStatusLabel")}
               description={t("showStatusDesc")}
@@ -1143,6 +1127,22 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
             />
 
             <SettingCardAdvanced>
+              <SettingRow
+                label={t("renameIntervalLabel")}
+                settingId="tab-rename-interval"
+                disabled={!settings.tab?.autoRename}
+                onDisabledClick={() => showPrerequisiteToast(autoRenameLabel)}>
+                <SelectDropdown
+                  className="settings-select-dropdown"
+                  buttonClassName="settings-select"
+                  options={toNumberOptions([1, 3, 5, 10, 30, 60], formatSecondsOptionLabel)}
+                  value={String(settings.tab?.renameInterval || 3)}
+                  ariaLabel={t("renameIntervalLabel")}
+                  disabled={!settings.tab?.autoRename}
+                  onChange={(value) => updateNestedSetting("tab", "renameInterval", Number(value))}
+                />
+              </SettingRow>
+
               <SettingRow
                 label={t("titleFormatLabel")}
                 description={t("titleFormatDesc")}
@@ -1218,32 +1218,6 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
       {activeTab === FEATURES_TAB_IDS.OUTLINE && (
         <>
           <SettingCard title={t("outlineSettings")} settingId="outline-settings-card">
-            <ToggleRow
-              label={t("outlineAutoUpdateLabel")}
-              description={t("outlineAutoUpdateDesc")}
-              settingId="outline-auto-update"
-              checked={settings.features?.outline?.autoUpdate ?? true}
-              onChange={() =>
-                updateDeepSetting(
-                  "features",
-                  "outline",
-                  "autoUpdate",
-                  !settings.features?.outline?.autoUpdate,
-                )
-              }
-            />
-
-            <SettingRow label={t("outlineUpdateIntervalLabel")} settingId="outline-update-interval">
-              <NumberInput
-                value={settings.features?.outline?.updateInterval ?? 2}
-                onChange={(val) => updateDeepSetting("features", "outline", "updateInterval", val)}
-                min={1}
-                max={60}
-                defaultValue={2}
-                style={{ width: "80px" }}
-              />
-            </SettingRow>
-
             <SettingRow
               label={t("outlineFollowModeLabel")}
               description={
@@ -1275,20 +1249,52 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
               />
             </SettingRow>
 
-            <ToggleRow
-              label={t("outlineShowWordCountLabel")}
-              description={t("outlineShowWordCountDesc")}
-              settingId="outline-show-word-count"
-              checked={settings.features?.outline?.showWordCount ?? false}
-              onChange={() =>
-                updateDeepSetting(
-                  "features",
-                  "outline",
-                  "showWordCount",
-                  !settings.features?.outline?.showWordCount,
-                )
-              }
-            />
+            <SettingCardAdvanced>
+              <ToggleRow
+                label={t("outlineAutoUpdateLabel")}
+                description={t("outlineAutoUpdateDesc")}
+                settingId="outline-auto-update"
+                checked={settings.features?.outline?.autoUpdate ?? true}
+                onChange={() =>
+                  updateDeepSetting(
+                    "features",
+                    "outline",
+                    "autoUpdate",
+                    !settings.features?.outline?.autoUpdate,
+                  )
+                }
+              />
+
+              <SettingRow
+                label={t("outlineUpdateIntervalLabel")}
+                settingId="outline-update-interval">
+                <NumberInput
+                  value={settings.features?.outline?.updateInterval ?? 2}
+                  onChange={(val) =>
+                    updateDeepSetting("features", "outline", "updateInterval", val)
+                  }
+                  min={1}
+                  max={60}
+                  defaultValue={2}
+                  style={{ width: "80px" }}
+                />
+              </SettingRow>
+
+              <ToggleRow
+                label={t("outlineShowWordCountLabel")}
+                description={t("outlineShowWordCountDesc")}
+                settingId="outline-show-word-count"
+                checked={settings.features?.outline?.showWordCount ?? false}
+                onChange={() =>
+                  updateDeepSetting(
+                    "features",
+                    "outline",
+                    "showWordCount",
+                    !settings.features?.outline?.showWordCount,
+                  )
+                }
+              />
+            </SettingCardAdvanced>
           </SettingCard>
 
           {/* 收藏图标设置卡片 */}

@@ -1445,6 +1445,8 @@ export const ja = {
   shortcutTogglePanelMode: "パネルモードを切り替える（スナップ/フロート）",
   shortcutToggleTheme: "テーマ切り替え",
   shortcutOpenSettings: "設定を開く",
+  shortcutSwitchTabGroup: "パネルのタブ切り替え",
+  shortcutExpandLevelGroup: "指定した階層まで展開",
   shortcutSwitchTab1: "第1タブへ",
   shortcutSwitchTab2: "第2タブへ",
   shortcutSwitchTab3: "第3タブへ",

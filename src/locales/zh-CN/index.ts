@@ -1427,6 +1427,8 @@ export const zhCN = {
   shortcutTogglePanelMode: "切换面板模式（自动吸附/悬浮）",
   shortcutToggleTheme: "切换主题",
   shortcutOpenSettings: "打开设置",
+  shortcutSwitchTabGroup: "切换面板标签",
+  shortcutExpandLevelGroup: "展开到指定层级",
   shortcutSwitchTab1: "切换到第 1 个面板标签",
   shortcutSwitchTab2: "切换到第 2 个面板标签",
   shortcutSwitchTab3: "切换到第 3 个面板标签",

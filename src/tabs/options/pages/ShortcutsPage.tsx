@@ -25,10 +25,36 @@ import { OPHEL_ESCAPE_LAYER_PROPS } from "~utils/dom-toolkit"
 import { t } from "~utils/i18n"
 import { MSG_OPEN_URL, sendToBackground } from "~utils/messaging"
 
-import { PageTitle, SettingCard, SettingRow, ToggleRow } from "../components"
+import { PageTitle, SettingCard, SettingCardAdvanced, SettingRow, ToggleRow } from "../components"
 
 interface ShortcutsPageProps {
   siteId: string
+}
+
+type ShortcutActionEntry = [ShortcutActionId, (typeof SHORTCUT_META)[ShortcutActionId]]
+
+const SHORTCUT_FAMILIES: Partial<
+  Record<string, { labelKey: string; actions: ShortcutActionId[] }>
+> = {
+  panel: {
+    labelKey: "shortcutSwitchTabGroup",
+    actions: [
+      SHORTCUT_ACTIONS.SWITCH_TAB_1,
+      SHORTCUT_ACTIONS.SWITCH_TAB_2,
+      SHORTCUT_ACTIONS.SWITCH_TAB_3,
+    ],
+  },
+  outline: {
+    labelKey: "shortcutExpandLevelGroup",
+    actions: [
+      SHORTCUT_ACTIONS.EXPAND_LEVEL_1,
+      SHORTCUT_ACTIONS.EXPAND_LEVEL_2,
+      SHORTCUT_ACTIONS.EXPAND_LEVEL_3,
+      SHORTCUT_ACTIONS.EXPAND_LEVEL_4,
+      SHORTCUT_ACTIONS.EXPAND_LEVEL_5,
+      SHORTCUT_ACTIONS.EXPAND_LEVEL_6,
+    ],
+  },
 }
 
 // 快捷键录入组件
@@ -261,11 +287,56 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
   const groupedActions = Object.entries(SHORTCUT_CATEGORIES).map(([categoryId, categoryMeta]) => {
     const actions = Object.entries(SHORTCUT_META).filter(
       ([, meta]) => meta.category === categoryId,
-    ) as [ShortcutActionId, (typeof SHORTCUT_META)[ShortcutActionId]][]
-    return { categoryId, categoryMeta, actions }
+    ) as ShortcutActionEntry[]
+    const family = SHORTCUT_FAMILIES[categoryId]
+    return {
+      categoryId,
+      categoryMeta,
+      actions: actions.filter(([actionId]) => !family?.actions.includes(actionId)),
+      family: family
+        ? {
+            labelKey: family.labelKey,
+            actions: actions.filter(([actionId]) => family.actions.includes(actionId)),
+          }
+        : undefined,
+    }
   })
 
   if (!settings) return null
+
+  const renderShortcutRow = ([actionId, meta]: ShortcutActionEntry) => {
+    const userBinding = shortcuts?.keybindings?.[actionId]
+    const binding = userBinding === null ? null : userBinding || DEFAULT_KEYBINDINGS[actionId]
+    const conflict = checkConflict(actionId, binding)
+
+    return (
+      <SettingRow
+        key={actionId}
+        label={t(meta.labelKey)}
+        disabled={!shortcuts?.enabled}
+        settingId={`shortcut-binding-${actionId}`}>
+        <ShortcutInput
+          binding={binding}
+          onChange={(b) => updateKeybinding(actionId, b)}
+          onRemove={() => removeKeybinding(actionId)}
+          conflictWarning={conflict || undefined}
+          leadingAction={
+            actionId === SHORTCUT_ACTIONS.OPEN_GLOBAL_SEARCH ? (
+              <Tooltip content={t("shortcutsGlobalSearchOpenSettings")}>
+                <button
+                  type="button"
+                  className="settings-shortcut-link-btn"
+                  onClick={openGlobalSearchSettings}
+                  aria-label={t("shortcutsGlobalSearchOpenSettings")}>
+                  <SlidersHorizontalIcon size={13} />
+                </button>
+              </Tooltip>
+            ) : undefined
+          }
+        />
+      </SettingRow>
+    )
+  }
 
   return (
     <div>
@@ -370,7 +441,7 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
         </div>
       </SettingCard>
 
-      {groupedActions.map(({ categoryId, categoryMeta, actions }) => (
+      {groupedActions.map(({ categoryId, categoryMeta, actions, family }) => (
         <SettingCard key={categoryId} title={t(categoryMeta.labelKey)}>
           {categoryId === "edit" && (
             <SettingRow
@@ -400,40 +471,12 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
               </div>
             </SettingRow>
           )}
-          {actions.map(([actionId, meta]) => {
-            const userBinding = shortcuts?.keybindings?.[actionId]
-            const binding =
-              userBinding === null ? null : userBinding || DEFAULT_KEYBINDINGS[actionId]
-            const conflict = checkConflict(actionId, binding)
-
-            return (
-              <SettingRow
-                key={actionId}
-                label={t(meta.labelKey)}
-                disabled={!shortcuts?.enabled}
-                settingId={`shortcut-binding-${actionId}`}>
-                <ShortcutInput
-                  binding={binding}
-                  onChange={(b) => updateKeybinding(actionId, b)}
-                  onRemove={() => removeKeybinding(actionId)}
-                  conflictWarning={conflict || undefined}
-                  leadingAction={
-                    actionId === SHORTCUT_ACTIONS.OPEN_GLOBAL_SEARCH ? (
-                      <Tooltip content={t("shortcutsGlobalSearchOpenSettings")}>
-                        <button
-                          type="button"
-                          className="settings-shortcut-link-btn"
-                          onClick={openGlobalSearchSettings}
-                          aria-label={t("shortcutsGlobalSearchOpenSettings")}>
-                          <SlidersHorizontalIcon size={13} />
-                        </button>
-                      </Tooltip>
-                    ) : undefined
-                  }
-                />
-              </SettingRow>
-            )
-          })}
+          {actions.map(renderShortcutRow)}
+          {family && (
+            <SettingCardAdvanced label={t(family.labelKey)}>
+              {family.actions.map(renderShortcutRow)}
+            </SettingCardAdvanced>
+          )}
         </SettingCard>
       ))}
 

@@ -14,7 +14,7 @@
 | 3 | `feat/first-run-onboarding`      | `feat(onboarding): add first-run panel spotlight tour`             | #2                   | 已完成 | 2026-11-19 · [#1057](https://github.com/urzeye/ophel/pull/1057) |
 | 4 | `ux/conversation-classify-nudge` | `ux(conversations): add new-conversation classify nudge`           | #2                   | 未开始 | —                                                              |
 | 5 | `ux/inbox-triage-entry`          | `ux(conversations): add inbox triage entry`                        | #2，建议排在 #4 后   | 未开始 | —                                                              |
-| 6 | `feat/settings-consolidation`    | `feat(settings): consolidate low-frequency switches`               | #1，且删除项需先决策 | 未开始 | —                                                              |
+| 6 | `feat/settings-consolidation`    | `ux(settings): consolidate low-frequency options and shortcut groups` | #1                   | 进行中 | —                                                              |
 
 状态取值：`未开始` / `进行中` / `已完成` / `已搁置`。
 
@@ -156,28 +156,38 @@
 
 ## 分支 6：`feat/settings-consolidation`
 
-**目标**：在分支 1 的分层基础上，收敛同族设置、处置低频开关。这是唯一可能删设置的改动，放最后并需先决策。
+**目标**：在分支 1 的分层基础上，将功能页低频设置移入高级区，并收敛快捷键同族项；按用户确认跳过分支 4、5，先实施本分支。
 
 **做什么**
 
-- 同族收敛：快捷键 expandLevel1~6、switchTab1~3 等成组项在 UI 上收敛为分组/档位呈现（存储结构尽量不变，避免迁移）。
-- 低频开关移入分支 1 的高级区。
-- 删除候选逐项确认后再删：默认值即正确行为、删除后可通过 persist 迁移静默处理的项；删除前在社区或 issue 收集一轮反馈。
+- 功能 → 标签页：标题更新间隔移入现有「高级选项」，保留原有禁用条件。
+- 功能 → 大纲：常规区保留跟随模式，自动更新、更新检测间隔、悬停显示字数移入「高级选项」。
+- 快捷键：expandLevel1~6、switchTab1~3 分别收进「展开到指定层级」「切换面板标签」折叠组，默认收起，展开后仍可逐项编辑、移除绑定和查看冲突。
+- 复用 `SettingCardAdvanced` 的原生 details/summary 和主题样式，只增加可选分组标签；新增标签同步 11 种语言。
 
 **不做什么**
 
-- 不在没有反馈依据的情况下批量删设置。
-- 不改变任何保留下来的设置的默认行为。
+- 不删除设置或字段，保留模糊搜索的设置页入口和 `tab.customIcon`。
+- 文件夹彩虹色保持常规显示，不为单项增加高级区。
+- 常规页与站点设置全部保持现状，包括 AI Studio 的默认折叠开关。
+- 收藏图标、用量自动清零、阅读历史保留时间等分析中建议暂时保留的项目不动。
+- 不改变设置默认值、存储结构、备份格式和快捷键实际行为。
 
-**关键文件**：`src/tabs/options/pages/FeaturesPage.tsx`、`src/constants/default-settings.ts`、`src/stores/settings-store.ts`（persist 迁移）、`docs/developer/settings-schema.json`。
+**关键文件**：`src/tabs/options/pages/FeaturesPage.tsx`、`src/tabs/options/pages/ShortcutsPage.tsx`、`src/tabs/options/components/SettingCard.tsx`、`src/locales/*/index.ts`。
 
-**注意**：删除设置项属于 `feat!` 级别的用户可见变更；涉及 persist 迁移必须检查备份/恢复兼容与旧数据路径；文案删改同步 11 语言。
+**注意**：保持所有 `data-setting-id`，使全局搜索和深链定位继续自动展开目标折叠组；折叠不改变原有保存值或未绑定状态。
 
-**验证**：标准四件套；重点验证旧版本设置数据升级后行为不变（含备份导入旧数据的场景）。
+**实施顺序与验证**：
+
+1. 移动功能页四项设置，核对控件值、写入回调和禁用条件不变。
+2. 为折叠组件增加可选标签，将两组快捷键分组，核对 46 个动作均保留且没有重复渲染。
+3. 同步 11 种语言与中英文更新日志；运行格式、Lint、类型检查和 Chrome 构建。
+4. 浏览器最小冒烟：默认收起、鼠标与键盘展开/收起、目标设置深链定位、独立快捷键改绑/移除/冲突提示，以及深浅主题显示。
 
 **进度记录**：
 
-- （待填写）
+- 2026-11-19：用户确认仅实施功能页四项低频设置下沉与快捷键同族分组；不删除设置，不修改常规页和站点设置。已在 `feat/settings-consolidation` 开始实现。
+- 2026-11-19：本地实现完成，尚未提交或创建 PR。`SettingCardAdvanced` 增加可选分组标签，功能页四项设置下沉，两组快捷键默认折叠，46 个动作及原有绑定独立保留；新增文案已同步 11 种语言，中英文日志合并进已有设置分层条目。验证：`pnpm format:check`、`pnpm lint:check`（0 错误，112 条原有警告）、`pnpm typecheck`、`pnpm build` 和 `git diff --check` 通过；Playwright 加载 Chrome 构建产物，在独立 Options 页验证默认折叠、键盘开合、逐项改绑与移除、冲突提示、六个设置深链自动展开、已有非默认值与未绑定状态保留，并检查深浅主题截图。
 
 ## 通用约定
 

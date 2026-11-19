@@ -1395,6 +1395,8 @@ export const ko = {
   shortcutTogglePanelMode: "패널 모드 전환 (스냅/플로트)",
   shortcutToggleTheme: "테마 전환",
   shortcutOpenSettings: "설정 열기",
+  shortcutSwitchTabGroup: "패널 탭 전환",
+  shortcutExpandLevelGroup: "지정한 레벨까지 확장",
   shortcutSwitchTab1: "첫 번째 탭으로 전환",
   shortcutSwitchTab2: "두 번째 탭으로 전환",
   shortcutSwitchTab3: "세 번째 탭으로 전환",

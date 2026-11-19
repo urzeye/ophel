@@ -1397,6 +1397,8 @@ export const ru = {
   shortcutTogglePanelMode: "Переключить режим панели (Прилипание/Свободное)",
   shortcutToggleTheme: "Смена темы",
   shortcutOpenSettings: "В настройки",
+  shortcutSwitchTabGroup: "Переключение вкладок панели",
+  shortcutExpandLevelGroup: "Развернуть до указанного уровня",
   shortcutSwitchTab1: "Таб 1",
   shortcutSwitchTab2: "Таб 2",
   shortcutSwitchTab3: "Таб 3",

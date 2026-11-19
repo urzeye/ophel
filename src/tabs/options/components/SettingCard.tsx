@@ -57,6 +57,8 @@ export const SettingCard: React.FC<SettingCardProps> = ({
 export default SettingCard
 
 export interface SettingCardAdvancedProps {
+  /** 同族设置可使用具体分组名，默认显示「高级选项」 */
+  label?: string
   /** 折叠区内的低频设置行 */
   children: React.ReactNode
 }
@@ -66,14 +68,14 @@ export interface SettingCardAdvancedProps {
  * 用原生 details/summary 实现：键盘天然可访问，且全局搜索定位时
  * scrollWithinSettingsContent 会自动展开闭合的 details 祖先，无需额外状态。
  */
-export const SettingCardAdvanced: React.FC<SettingCardAdvancedProps> = ({ children }) => {
+export const SettingCardAdvanced: React.FC<SettingCardAdvancedProps> = ({ label, children }) => {
   return (
     <details className="settings-card-advanced">
       <summary className="settings-card-advanced-summary">
         <span className="settings-card-advanced-disclosure" aria-hidden="true">
           <ChevronDownIcon size={12} className="settings-card-advanced-icon" />
         </span>
-        <span className="settings-card-advanced-label">{t("settingsAdvancedToggle")}</span>
+        <span className="settings-card-advanced-label">{label ?? t("settingsAdvancedToggle")}</span>
       </summary>
       <div className="settings-card-advanced-body">{children}</div>
     </details>

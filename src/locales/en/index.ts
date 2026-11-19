@@ -1488,6 +1488,8 @@ Please output the optimized code block directly, followed by a brief summary of 
   shortcutTogglePanelMode: "Toggle Panel Mode (Snap/Float)",
   shortcutToggleTheme: "Toggle Theme",
   shortcutOpenSettings: "Open Settings",
+  shortcutSwitchTabGroup: "Switch Panel Tabs",
+  shortcutExpandLevelGroup: "Expand to a Specific Level",
   shortcutSwitchTab1: "Switch to 1st Tab",
   shortcutSwitchTab2: "Switch to 2nd Tab",
   shortcutSwitchTab3: "Switch to 3rd Tab",
