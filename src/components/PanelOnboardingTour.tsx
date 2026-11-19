@@ -257,16 +257,6 @@ export const PanelOnboardingTour: React.FC<{ onExit: () => void }> = ({ onExit }
             left: cardPos?.left ?? 0,
             visibility: cardPos ? "visible" : "hidden",
           }}>
-          <div className="gh-onboarding-tour-topbar">
-            <button
-              type="button"
-              className="gh-onboarding-tour-btn gh-onboarding-tour-skip"
-              disabled={exiting}
-              onClick={requestExit}>
-              {t("onboardingTourSkip")}
-            </button>
-          </div>
-
           <div
             key={started ? stepIndex : -1}
             className={`gh-onboarding-tour-step${started ? "" : " is-welcome"}`}
@@ -314,6 +304,13 @@ export const PanelOnboardingTour: React.FC<{ onExit: () => void }> = ({ onExit }
               <span />
             )}
             <div className="gh-onboarding-tour-actions">
+              <button
+                type="button"
+                className="gh-onboarding-tour-btn"
+                disabled={exiting}
+                onClick={requestExit}>
+                {t("onboardingTourSkip")}
+              </button>
               {started && (
                 <button
                   type="button"

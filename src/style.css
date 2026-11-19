@@ -3726,7 +3726,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 10px 16px 14px;
+  padding: 14px 16px;
   background: var(--gh-card-bg, #ffffff);
   border-radius: 14px;
   box-shadow: var(--gh-shadow-lg, 0 20px 60px rgba(0, 0, 0, 0.3));
@@ -3749,12 +3749,6 @@
     opacity: 0;
     transform: translateY(12px) scale(0.97);
   }
-}
-
-.gh-onboarding-tour-topbar {
-  display: flex;
-  justify-content: flex-end;
-  margin: -2px -4px -4px 0;
 }
 
 .gh-onboarding-tour-step {
