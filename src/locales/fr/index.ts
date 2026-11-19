@@ -788,6 +788,7 @@ export const fr = {
     "Ajuste la largeur de la page de chat en temps réel. Lorsque l'évitement intelligent est activé, la page laisse de la place au panneau ouvert ; la largeur réelle peut donc être un peu plus petite.",
   panelAvoidanceTitle: "Évitement intelligent",
   betaBadge: "Beta",
+  settingsAdvancedToggle: "Options avancées",
   panelAvoidanceDesc:
     "Ajuste automatiquement la zone de contenu du site actuel lorsque le panneau est ouvert ; désactivé sur les écrans étroits.",
   widthValue: "Largeur",

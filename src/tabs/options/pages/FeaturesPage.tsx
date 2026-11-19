@@ -39,7 +39,14 @@ import {
 } from "~utils/usage-monitor-storage"
 import { showToast, showToastThrottled } from "~utils/toast"
 
-import { PageTitle, SettingCard, SettingRow, TabGroup, ToggleRow } from "../components"
+import {
+  PageTitle,
+  SettingCard,
+  SettingCardAdvanced,
+  SettingRow,
+  TabGroup,
+  ToggleRow,
+} from "../components"
 
 interface FeaturesPageProps {
   siteId: string
@@ -967,60 +974,64 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
         />
       </SettingRow>
 
-      <SettingRow
-        label={t("notificationRepeatCountLabel")}
-        settingId="tab-notification-repeat-count"
-        disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}
-        onDisabledClick={() => showPrerequisiteToast(showNotificationLabel)}>
-        <SelectDropdown
-          className="settings-select-dropdown"
-          buttonClassName="settings-select"
-          options={toNumberOptions([1, 2, 3, 5], formatRepeatCountOptionLabel)}
-          value={String(settings.tab?.notificationRepeatCount ?? 1)}
-          ariaLabel={t("notificationRepeatCountLabel")}
+      <SettingCardAdvanced>
+        <SettingRow
+          label={t("notificationRepeatCountLabel")}
+          settingId="tab-notification-repeat-count"
           disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}
-          onChange={(value) => updateNestedSetting("tab", "notificationRepeatCount", Number(value))}
-        />
-      </SettingRow>
+          onDisabledClick={() => showPrerequisiteToast(showNotificationLabel)}>
+          <SelectDropdown
+            className="settings-select-dropdown"
+            buttonClassName="settings-select"
+            options={toNumberOptions([1, 2, 3, 5], formatRepeatCountOptionLabel)}
+            value={String(settings.tab?.notificationRepeatCount ?? 1)}
+            ariaLabel={t("notificationRepeatCountLabel")}
+            disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}
+            onChange={(value) =>
+              updateNestedSetting("tab", "notificationRepeatCount", Number(value))
+            }
+          />
+        </SettingRow>
 
-      <SettingRow
-        label={t("notificationRepeatIntervalLabel")}
-        settingId="tab-notification-repeat-interval"
-        disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}
-        onDisabledClick={() => showPrerequisiteToast(showNotificationLabel)}>
-        <SelectDropdown
-          className="settings-select-dropdown"
-          buttonClassName="settings-select"
-          options={toNumberOptions([1, 2, 3, 5, 10], formatSecondsOptionLabel)}
-          value={String(settings.tab?.notificationRepeatInterval ?? 3)}
-          ariaLabel={t("notificationRepeatIntervalLabel")}
+        <SettingRow
+          label={t("notificationRepeatIntervalLabel")}
+          settingId="tab-notification-repeat-interval"
           disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}
-          onChange={(value) =>
-            updateNestedSetting("tab", "notificationRepeatInterval", Number(value))
+          onDisabledClick={() => showPrerequisiteToast(showNotificationLabel)}>
+          <SelectDropdown
+            className="settings-select-dropdown"
+            buttonClassName="settings-select"
+            options={toNumberOptions([1, 2, 3, 5, 10], formatSecondsOptionLabel)}
+            value={String(settings.tab?.notificationRepeatInterval ?? 3)}
+            ariaLabel={t("notificationRepeatIntervalLabel")}
+            disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}
+            onChange={(value) =>
+              updateNestedSetting("tab", "notificationRepeatInterval", Number(value))
+            }
+          />
+        </SettingRow>
+
+        <ToggleRow
+          label={t("notifyWhenFocusedLabel")}
+          description={t("notifyWhenFocusedDesc")}
+          settingId="tab-notify-when-focused"
+          checked={settings.tab?.notifyWhenFocused ?? false}
+          disabled={!settings.tab?.showNotification}
+          onDisabledClick={() => showPrerequisiteToast(showNotificationLabel)}
+          onChange={() =>
+            updateNestedSetting("tab", "notifyWhenFocused", !settings.tab?.notifyWhenFocused)
           }
         />
-      </SettingRow>
 
-      <ToggleRow
-        label={t("notifyWhenFocusedLabel")}
-        description={t("notifyWhenFocusedDesc")}
-        settingId="tab-notify-when-focused"
-        checked={settings.tab?.notifyWhenFocused ?? false}
-        disabled={!settings.tab?.showNotification}
-        onDisabledClick={() => showPrerequisiteToast(showNotificationLabel)}
-        onChange={() =>
-          updateNestedSetting("tab", "notifyWhenFocused", !settings.tab?.notifyWhenFocused)
-        }
-      />
-
-      <ToggleRow
-        label={t("autoFocusLabel")}
-        description={t(supportsWindowFocus ? "autoFocusDesc" : "autoFocusUnsupportedDesc")}
-        settingId="tab-auto-focus"
-        checked={supportsWindowFocus && (settings.tab?.autoFocus ?? false)}
-        disabled={!supportsWindowFocus}
-        onChange={() => updateNestedSetting("tab", "autoFocus", !settings.tab?.autoFocus)}
-      />
+        <ToggleRow
+          label={t("autoFocusLabel")}
+          description={t(supportsWindowFocus ? "autoFocusDesc" : "autoFocusUnsupportedDesc")}
+          settingId="tab-auto-focus"
+          checked={supportsWindowFocus && (settings.tab?.autoFocus ?? false)}
+          disabled={!supportsWindowFocus}
+          onChange={() => updateNestedSetting("tab", "autoFocus", !settings.tab?.autoFocus)}
+        />
+      </SettingCardAdvanced>
     </SettingCard>
   )
   const usageMonitorCard = (
@@ -1123,22 +1134,6 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
               />
             </SettingRow>
 
-            <SettingRow
-              label={t("titleFormatLabel")}
-              description={t("titleFormatDesc")}
-              settingId="tab-title-format"
-              disabled={!settings.tab?.autoRename}
-              onDisabledClick={() => showPrerequisiteToast(autoRenameLabel)}>
-              <PlaceholderInput
-                value={settings.tab?.titleFormat ?? "{status}{title}"}
-                onChange={(val) => updateNestedSetting("tab", "titleFormat", val)}
-                placeholders={["{status}", "{title}", "{model}"]}
-                placeholder="{status}{title}"
-                disabled={!settings.tab?.autoRename}
-                style={{ width: "260px" }}
-              />
-            </SettingRow>
-
             <ToggleRow
               label={t("showStatusLabel")}
               description={t("showStatusDesc")}
@@ -1147,17 +1142,39 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
               onChange={() => updateNestedSetting("tab", "showStatus", !settings.tab?.showStatus)}
             />
 
-            <ToggleRow
-              label={t("hideStatusWhenReadLabel")}
-              description={t("hideStatusWhenReadDesc")}
-              settingId="tab-hide-status-when-read"
-              disabled={!settings.tab?.showStatus}
-              onDisabledClick={() => showPrerequisiteToast(showStatusLabel)}
-              checked={settings.tab?.hideStatusWhenRead ?? false}
-              onChange={() =>
-                updateNestedSetting("tab", "hideStatusWhenRead", !settings.tab?.hideStatusWhenRead)
-              }
-            />
+            <SettingCardAdvanced>
+              <SettingRow
+                label={t("titleFormatLabel")}
+                description={t("titleFormatDesc")}
+                settingId="tab-title-format"
+                disabled={!settings.tab?.autoRename}
+                onDisabledClick={() => showPrerequisiteToast(autoRenameLabel)}>
+                <PlaceholderInput
+                  value={settings.tab?.titleFormat ?? "{status}{title}"}
+                  onChange={(val) => updateNestedSetting("tab", "titleFormat", val)}
+                  placeholders={["{status}", "{title}", "{model}"]}
+                  placeholder="{status}{title}"
+                  disabled={!settings.tab?.autoRename}
+                  style={{ width: "260px" }}
+                />
+              </SettingRow>
+
+              <ToggleRow
+                label={t("hideStatusWhenReadLabel")}
+                description={t("hideStatusWhenReadDesc")}
+                settingId="tab-hide-status-when-read"
+                disabled={!settings.tab?.showStatus}
+                onDisabledClick={() => showPrerequisiteToast(showStatusLabel)}
+                checked={settings.tab?.hideStatusWhenRead ?? false}
+                onChange={() =>
+                  updateNestedSetting(
+                    "tab",
+                    "hideStatusWhenRead",
+                    !settings.tab?.hideStatusWhenRead,
+                  )
+                }
+              />
+            </SettingCardAdvanced>
           </SettingCard>
 
           {/* 隐私模式卡片 */}
@@ -1403,87 +1420,89 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
               }
             />
 
-            <ToggleRow
-              label={t("exportShowIndexLabel")}
-              description={t("exportShowIndexDesc")}
-              settingId="export-show-index"
-              checked={settings.export?.exportShowIndex ?? false}
-              onChange={() =>
-                updateNestedSetting(
-                  "export",
-                  "exportShowIndex",
-                  !(settings.export?.exportShowIndex ?? false),
-                )
-              }
-            />
-
-            <ToggleRow
-              label={t("exportFilenameTimestamp")}
-              settingId="export-filename-timestamp"
-              checked={settings.export?.exportFilenameTimestamp ?? false}
-              onChange={() =>
-                updateNestedSetting(
-                  "export",
-                  "exportFilenameTimestamp",
-                  !settings.export?.exportFilenameTimestamp,
-                )
-              }
-            />
-
-            <SettingRow
-              label={t("exportMarkdownDividerLabel")}
-              description={t("exportMarkdownDividerDesc")}
-              settingId="export-markdown-divider">
-              <LazyInput
-                className="settings-input"
-                value={settings.export?.exportMarkdownDivider ?? "---"}
-                onChange={(val) => updateNestedSetting("export", "exportMarkdownDivider", val)}
-                placeholder="---"
-                style={{ width: "180px" }}
-              />
-            </SettingRow>
-
-            <SettingRow
-              label={t("exportCustomUserName")}
-              description={t("exportCustomUserNameDesc")}
-              settingId="export-custom-user-name">
-              <LazyInput
-                className="settings-input"
-                value={settings.export?.customUserName || ""}
-                onChange={(val) => updateNestedSetting("export", "customUserName", val)}
-                placeholder="User"
-                style={{ width: "180px" }}
-              />
-            </SettingRow>
-
-            <SettingRow
-              label={t("exportCustomModelName")}
-              description={t("exportCustomModelNameDesc")}
-              settingId="export-custom-model-name">
-              <LazyInput
-                className="settings-input"
-                value={settings.export?.customModelName || ""}
-                onChange={(val) => updateNestedSetting("export", "customModelName", val)}
-                placeholder="Site Name"
-                style={{ width: "180px" }}
-              />
-            </SettingRow>
-
-            <SettingRow
-              label={t("exportStyleLabel")}
-              description={t("exportStyleDesc")}
-              settingId="export-style">
-              <SelectDropdown
-                className="settings-select-dropdown"
-                buttonClassName="settings-select"
-                options={exportStyleOptions}
-                value={exportStyle}
-                ariaLabel={t("exportStyleLabel")}
-                onChange={(value) =>
-                  updateNestedSetting("export", "exportStyle", value as ExportStyle)
+            <SettingCardAdvanced>
+              <ToggleRow
+                label={t("exportShowIndexLabel")}
+                description={t("exportShowIndexDesc")}
+                settingId="export-show-index"
+                checked={settings.export?.exportShowIndex ?? false}
+                onChange={() =>
+                  updateNestedSetting(
+                    "export",
+                    "exportShowIndex",
+                    !(settings.export?.exportShowIndex ?? false),
+                  )
                 }
               />
-            </SettingRow>
+
+              <ToggleRow
+                label={t("exportFilenameTimestamp")}
+                settingId="export-filename-timestamp"
+                checked={settings.export?.exportFilenameTimestamp ?? false}
+                onChange={() =>
+                  updateNestedSetting(
+                    "export",
+                    "exportFilenameTimestamp",
+                    !settings.export?.exportFilenameTimestamp,
+                  )
+                }
+              />
+
+              <SettingRow
+                label={t("exportMarkdownDividerLabel")}
+                description={t("exportMarkdownDividerDesc")}
+                settingId="export-markdown-divider">
+                <LazyInput
+                  className="settings-input"
+                  value={settings.export?.exportMarkdownDivider ?? "---"}
+                  onChange={(val) => updateNestedSetting("export", "exportMarkdownDivider", val)}
+                  placeholder="---"
+                  style={{ width: "180px" }}
+                />
+              </SettingRow>
+
+              <SettingRow
+                label={t("exportCustomUserName")}
+                description={t("exportCustomUserNameDesc")}
+                settingId="export-custom-user-name">
+                <LazyInput
+                  className="settings-input"
+                  value={settings.export?.customUserName || ""}
+                  onChange={(val) => updateNestedSetting("export", "customUserName", val)}
+                  placeholder="User"
+                  style={{ width: "180px" }}
+                />
+              </SettingRow>
+
+              <SettingRow
+                label={t("exportCustomModelName")}
+                description={t("exportCustomModelNameDesc")}
+                settingId="export-custom-model-name">
+                <LazyInput
+                  className="settings-input"
+                  value={settings.export?.customModelName || ""}
+                  onChange={(val) => updateNestedSetting("export", "customModelName", val)}
+                  placeholder="Site Name"
+                  style={{ width: "180px" }}
+                />
+              </SettingRow>
+
+              <SettingRow
+                label={t("exportStyleLabel")}
+                description={t("exportStyleDesc")}
+                settingId="export-style">
+                <SelectDropdown
+                  className="settings-select-dropdown"
+                  buttonClassName="settings-select"
+                  options={exportStyleOptions}
+                  value={exportStyle}
+                  ariaLabel={t("exportStyleLabel")}
+                  onChange={(value) =>
+                    updateNestedSetting("export", "exportStyle", value as ExportStyle)
+                  }
+                />
+              </SettingRow>
+            </SettingCardAdvanced>
           </SettingCard>
 
           <SettingCard
@@ -1704,41 +1723,6 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
             }
           />
 
-          <SettingRow
-            label={t("formulaCopyFormatLabel")}
-            description={t("formulaCopyFormatDesc")}
-            settingId="content-formula-copy-format"
-            disabled={!settings.content?.formulaCopy}
-            onDisabledClick={() => showPrerequisiteToast(formulaCopyLabel)}>
-            <SelectDropdown
-              className="settings-select-dropdown"
-              buttonClassName="settings-select"
-              options={formulaCopyFormatOptions}
-              value={formulaCopyFormat}
-              ariaLabel={t("formulaCopyFormatLabel")}
-              disabled={!settings.content?.formulaCopy}
-              onChange={(value) =>
-                updateNestedSetting("content", "formulaCopyFormat", value as FormulaCopyFormat)
-              }
-            />
-          </SettingRow>
-
-          <ToggleRow
-            label={t("formulaDelimiterLabel")}
-            description={t("formulaDelimiterDesc")}
-            settingId="content-formula-delimiter"
-            checked={settings.content?.formulaDelimiter ?? true}
-            disabled={!settings.content?.formulaCopy || formulaCopyFormat !== "latex"}
-            onDisabledClick={showFormulaDelimiterPrerequisiteToast}
-            onChange={() =>
-              updateNestedSetting(
-                "content",
-                "formulaDelimiter",
-                !settings.content?.formulaDelimiter,
-              )
-            }
-          />
-
           <ToggleRow
             label={t("tableCopyLabel")}
             description={t("tableCopyDesc")}
@@ -1748,6 +1732,43 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
               updateNestedSetting("content", "tableCopy", !settings.content?.tableCopy)
             }
           />
+
+          <SettingCardAdvanced>
+            <SettingRow
+              label={t("formulaCopyFormatLabel")}
+              description={t("formulaCopyFormatDesc")}
+              settingId="content-formula-copy-format"
+              disabled={!settings.content?.formulaCopy}
+              onDisabledClick={() => showPrerequisiteToast(formulaCopyLabel)}>
+              <SelectDropdown
+                className="settings-select-dropdown"
+                buttonClassName="settings-select"
+                options={formulaCopyFormatOptions}
+                value={formulaCopyFormat}
+                ariaLabel={t("formulaCopyFormatLabel")}
+                disabled={!settings.content?.formulaCopy}
+                onChange={(value) =>
+                  updateNestedSetting("content", "formulaCopyFormat", value as FormulaCopyFormat)
+                }
+              />
+            </SettingRow>
+
+            <ToggleRow
+              label={t("formulaDelimiterLabel")}
+              description={t("formulaDelimiterDesc")}
+              settingId="content-formula-delimiter"
+              checked={settings.content?.formulaDelimiter ?? true}
+              disabled={!settings.content?.formulaCopy || formulaCopyFormat !== "latex"}
+              onDisabledClick={showFormulaDelimiterPrerequisiteToast}
+              onChange={() =>
+                updateNestedSetting(
+                  "content",
+                  "formulaDelimiter",
+                  !settings.content?.formulaDelimiter,
+                )
+              }
+            />
+          </SettingCardAdvanced>
         </SettingCard>
       )}
 

@@ -654,6 +654,7 @@ export const zhTW = {
     "調整聊天頁面寬度，即時生效。開啟「智慧避讓」後，面板展開時頁面會讓出空間，實際寬度可能略小。",
   panelAvoidanceTitle: "智慧避讓",
   betaBadge: "Beta",
+  settingsAdvancedToggle: "進階選項",
   panelAvoidanceDesc: "面板展開時自動調整目前站點的內容區域，減少遮擋；窄螢幕裝置會自動停用",
   widthValue: "寬度值",
   widthUnit: "單位",

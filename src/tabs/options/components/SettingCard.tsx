@@ -4,6 +4,9 @@
  */
 import React from "react"
 
+import { ChevronDownIcon } from "~components/icons"
+import { t } from "~utils/i18n"
+
 export interface SettingCardProps {
   /** 卡片标题 */
   title?: React.ReactNode
@@ -52,3 +55,27 @@ export const SettingCard: React.FC<SettingCardProps> = ({
 }
 
 export default SettingCard
+
+export interface SettingCardAdvancedProps {
+  /** 折叠区内的低频设置行 */
+  children: React.ReactNode
+}
+
+/**
+ * 设置卡片底部的「高级选项」折叠区。
+ * 用原生 details/summary 实现：键盘天然可访问，且全局搜索定位时
+ * scrollWithinSettingsContent 会自动展开闭合的 details 祖先，无需额外状态。
+ */
+export const SettingCardAdvanced: React.FC<SettingCardAdvancedProps> = ({ children }) => {
+  return (
+    <details className="settings-card-advanced">
+      <summary className="settings-card-advanced-summary">
+        <span className="settings-card-advanced-disclosure" aria-hidden="true">
+          <ChevronDownIcon size={12} className="settings-card-advanced-icon" />
+        </span>
+        <span className="settings-card-advanced-label">{t("settingsAdvancedToggle")}</span>
+      </summary>
+      <div className="settings-card-advanced-body">{children}</div>
+    </details>
+  )
+}

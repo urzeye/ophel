@@ -784,6 +784,7 @@ export const es = {
     "Ajusta el ancho de la página del chat en tiempo real. Con Evitación inteligente activada, la página deja sitio al panel abierto, por lo que el ancho real puede ser algo menor.",
   panelAvoidanceTitle: "Evitación inteligente",
   betaBadge: "Beta",
+  settingsAdvancedToggle: "Opciones avanzadas",
   panelAvoidanceDesc:
     "Ajusta automáticamente el área de contenido del sitio actual mientras el panel está abierto; se desactiva en pantallas estrechas.",
   widthValue: "Ancho",

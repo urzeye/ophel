@@ -844,6 +844,7 @@ export const it = {
     "Regola la larghezza della pagina della chat in tempo reale. Con l'evitamento intelligente attivo, la pagina lascia spazio al pannello aperto, quindi la larghezza effettiva può essere un po' minore.",
   panelAvoidanceTitle: "Evitamento intelligente",
   betaBadge: "Beta",
+  settingsAdvancedToggle: "Opzioni avanzate",
   panelAvoidanceDesc:
     "Regola automaticamente l'area dei contenuti del sito corrente mentre il pannello è aperto; disattivato sugli schermi stretti.",
   widthValue: "Valore larghezza",

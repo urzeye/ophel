@@ -784,6 +784,7 @@ export const de = {
     "Passt die Breite der Chatseite in Echtzeit an. Bei aktiviertem intelligentem Ausweichen macht die Seite Platz für das geöffnete Panel, daher kann die tatsächliche Breite etwas kleiner sein.",
   panelAvoidanceTitle: "Intelligentes Ausweichen",
   betaBadge: "Beta",
+  settingsAdvancedToggle: "Erweiterte Optionen",
   panelAvoidanceDesc:
     "Passt den Inhaltsbereich der aktuellen Website automatisch an, solange das Panel geöffnet ist; auf schmalen Bildschirmen deaktiviert.",
   widthValue: "Breite",
