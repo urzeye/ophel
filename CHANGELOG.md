@@ -12,6 +12,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 ### 🚀 New Features
 
 - **WorkBuddy support** — Added support for WorkBuddy (workbuddy.cn / workbuddy.ai), with outlines, export, prompt insertion, panel avoidance, and host theme sync. (#1050, #1051)
+- **First-run tour** — New installs now get a full-screen guided tour that spotlights the panel's Outline, Conversations, and Prompts tabs plus the settings entry, right after accepting the disclaimer. (#1057)
 
 ### ✨ Improvements
 

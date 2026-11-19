@@ -11,7 +11,7 @@
 | - | ---------------------------------- | -------------------------------------------------------------------- | -------------------- | ------ | --------------------------------------------------------------- |
 | 1 | `ux/settings-card-layering`      | `ux(settings): add collapsible advanced sections to setting cards` | 无                   | 已完成 | 2026-11-19 · [#1055](https://github.com/urzeye/ophel/pull/1055) |
 | 2 | `feat/guidance-registry`         | `feat(guidance): add unified guidance state registry`              | 无                   | 已完成 | 2026-11-19 · [#1056](https://github.com/urzeye/ophel/pull/1056) |
-| 3 | `feat/first-run-onboarding`      | `feat(onboarding): add first-run panel tour`                       | #2                   | 未开始 | —                                                              |
+| 3 | `feat/first-run-onboarding`      | `feat(onboarding): add first-run panel spotlight tour`             | #2                   | 已完成 | 2026-11-19 · [#1057](https://github.com/urzeye/ophel/pull/1057) |
 | 4 | `ux/conversation-classify-nudge` | `ux(conversations): add new-conversation classify nudge`           | #2                   | 未开始 | —                                                              |
 | 5 | `ux/inbox-triage-entry`          | `ux(conversations): add inbox triage entry`                        | #2，建议排在 #4 后   | 未开始 | —                                                              |
 | 6 | `feat/settings-consolidation`    | `feat(settings): consolidate low-frequency switches`               | #1，且删除项需先决策 | 未开始 | —                                                              |
@@ -87,7 +87,6 @@
 
 **不做什么**
 
-- 不做全屏蒙层 tour、不做逐步高亮页面元素的复杂引导。
 - 不在 `onInstalled` 里新增打开页面行为。
 
 **关键文件**：`src/components/DisclaimerModal.tsx`、`src/components/App.tsx`、分支 2 的注册表模块、面板 tab 组件。
@@ -98,7 +97,9 @@
 
 **进度记录**：
 
-- （待填写）
+- 2026-11-19：完成，PR [#1057](https://github.com/urzeye/ophel/pull/1057)（Draft）。⚠️ 方向变更：用户明确要求改为全屏蒙层 + 逐步高亮页面元素的 tour，原"不做全屏蒙层"约束作废；步数也从 ≤3 步调整为 4 步（大纲 / 对话 / 提示词 tab + 设置入口），i18n 已按 4 步同步 11 语言。
+- 实现要点：导览挂载在 App 根级（与 `DisclaimerModal` 同级），因为面板内联 `transform` 会成为 `position: fixed` 后代的包含块，导致聚光灯定位整体偏移；`.gh-root` 全局 `pointer-events: none`，蒙层需显式恢复 `pointer-events: auto`；卡片水平夹取用实测宽度，避免盒模型差异导致右缘超出视口。
+- 验证：四件套 + 油猴 / Firefox 构建通过；Playwright 真实浏览器全流程（同意免责声明 → 四步聚光灯几何与目标对齐 → 完成注销注册表 → 刷新不复发）。
 
 ## 分支 4：`ux/conversation-classify-nudge`
 
