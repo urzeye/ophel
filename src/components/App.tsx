@@ -27,6 +27,7 @@ import { QuickQuoteActions } from "~components/QuickQuoteActions"
 import { ensureGlobalThemeManager, type ThemeTransitionOrigin } from "~core/theme-manager"
 import { SparkleIcon } from "~components/icons/SparkleIcon"
 import { useEdgePeekController } from "~hooks/useEdgePeekController"
+import { useFirstRunPanelTour } from "~hooks/useFirstRunPanelTour"
 import { useMediaQuery } from "~hooks/useMediaQuery"
 import { useShortcuts } from "~hooks/useShortcuts"
 import { platform } from "~platform"
@@ -64,6 +65,7 @@ import { ConfirmDialog, FolderSelectDialog, TagManagerDialog } from "./Conversat
 import { DisclaimerModal } from "./DisclaimerModal"
 import { LoadingOverlay } from "./LoadingOverlay"
 import { MainPanel } from "./MainPanel"
+import { PanelOnboardingTour } from "./PanelOnboardingTour"
 import { QueueOverlay } from "./QueueOverlay"
 import { ReleaseNotesModal } from "./ReleaseNotesModal"
 import { QuickButtons } from "./QuickButtons"
@@ -1050,6 +1052,13 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
   const [launcherPeekAnchorRect, setLauncherPeekAnchorRect] =
     useState<LauncherPeekAnchorRect | null>(null)
   const isLauncherPeekingRef = useRef(false)
+
+  // 首装导览：面板完整展开（非启动器/边缘预览）时才允许展示；
+  // 挂在 App 根级，fixed 定位不受面板 transform 影响
+  const { tourVisible, exitTour } = useFirstRunPanelTour(
+    isPanelShown && (isPanelDrawer || (!isLauncherPeeking && !isEdgePeeking)),
+  )
+
   const isLauncherPeekInteractionActiveRef = useRef(false)
   const launcherPeekDwellTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const launcherPeekHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -4107,6 +4116,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
         </section>
       )}
       <DisclaimerModal />
+      {tourVisible && <PanelOnboardingTour onExit={exitTour} />}
     </div>
   )
 }

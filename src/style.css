@@ -3614,14 +3614,52 @@
   transition: none !important;
 }
 
-/* ============= 首装导览卡片 ============= */
+/* ============= 首装导览（全屏蒙层 + 聚光灯） ============= */
+.gh-tour-overlay {
+  /* 蒙层本体透明，压暗来自聚光灯的巨大 box-shadow；
+     挂在 App 根级，与免责声明弹窗同层（面板 9999，快捷技巧 popover 10000） */
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  /* .gh-root 全局 pointer-events: none，蒙层要拦截交互必须显式恢复 */
+  pointer-events: auto;
+}
+
+.gh-tour-spotlight {
+  position: fixed;
+  border-radius: 10px;
+  pointer-events: none;
+  outline: 2px solid var(--gh-primary, #4285f4);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 9999px var(--gh-tour-dim, rgba(17, 24, 39, 0.55));
+  transition:
+    top 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+    left 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+    width 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+    height 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: gh-tour-spotlight-pulse 2s ease-in-out infinite;
+}
+
+@keyframes gh-tour-spotlight-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 9999px var(--gh-tour-dim, rgba(17, 24, 39, 0.55)),
+      0 0 0 5px color-mix(in srgb, var(--gh-primary, #4285f4) 0%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 0 9999px var(--gh-tour-dim, rgba(17, 24, 39, 0.55)),
+      0 0 0 9px color-mix(in srgb, var(--gh-primary, #4285f4) 25%, transparent);
+  }
+}
+
 .gh-onboarding-tour {
-  position: absolute;
-  left: 12px;
-  right: 12px;
-  bottom: 12px;
-  /* 要盖住内容区的浮层（快捷技巧 popover z-index: 10000） */
-  z-index: 10001;
+  position: fixed;
+  z-index: 1;
+  box-sizing: border-box;
+  width: 300px;
+  max-width: calc(100vw - 24px);
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -3629,8 +3667,11 @@
   background: var(--gh-card-bg, #ffffff);
   border: 1px solid var(--gh-border, #e5e7eb);
   border-radius: 12px;
-  box-shadow: var(--gh-shadow, 0 10px 40px rgba(0, 0, 0, 0.15));
+  box-shadow: var(--gh-shadow-lg, 0 20px 60px rgba(0, 0, 0, 0.3));
   color: var(--gh-text, #1f2937);
+  transition:
+    top 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+    left 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
   animation: gh-onboarding-tour-in 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -3787,6 +3828,8 @@
   .gh-release-toast,
   .gh-release-toast-button,
   .gh-release-toast-close,
+  .gh-onboarding-tour,
+  .gh-tour-spotlight,
   .selected-prompt-bar,
   .ophel-tooltip {
     transition: none !important;
@@ -3805,6 +3848,7 @@
   .gh-update-notice-icon,
   .gh-onboarding-tour,
   .gh-onboarding-tour-body,
+  .gh-tour-spotlight,
   .gh-panel-brand-unread,
   .gh-release-toast,
   .gh-quick-btn-unread,
