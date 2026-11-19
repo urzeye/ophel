@@ -22,22 +22,25 @@ export const fr = {
   // Visite guidée du panneau
   onboardingTourAriaLabel: "Visite du panneau",
   onboardingTourStepOf: "Étape {current} sur {total}",
-  onboardingTourOutlineTitle: "Sommaire · Carte de la conversation",
+  onboardingTourOutlineTitle: "Sommaire",
   onboardingTourOutlineDesc:
-    "Analyse la conversation en cours en temps réel. Cliquez sur une entrée pour y accéder, la rechercher ou l'ajouter aux signets.",
-  onboardingTourConversationsTitle: "Chats · Organiser et retrouver",
+    "Analyse la structure de la conversation en direct. Cliquez sur une entrée pour y sauter, avec recherche et signets.",
+  onboardingTourConversationsTitle: "Chats",
   onboardingTourConversationsDesc:
-    "Les chats du site se synchronisent ici automatiquement. Classez-les avec des dossiers et des tags, et retrouvez-les via la recherche.",
-  onboardingTourPromptsTitle: "Invites · Votre bibliothèque",
+    "Les chats du site se synchronisent ici automatiquement. Classez-les avec dossiers et tags, retrouvez-les à tout moment.",
+  onboardingTourPromptsTitle: "Invites",
   onboardingTourPromptsDesc:
-    "Enregistrez vos invites fréquentes en modèles et insérez-les en un clic, avec variables et envoi en chaîne.",
-  onboardingTourSettingsTitle: "Réglages · À votre image",
+    "Enregistrez vos invites fréquentes en modèles et insérez-les en un clic, avec variables et envoi en file.",
+  onboardingTourSettingsTitle: "Réglages",
   onboardingTourSettingsDesc:
-    "Ouvrez les réglages via l'engrenage en haut du panneau : thèmes, raccourcis, sauvegarde et adaptateurs de sites.",
+    "Thèmes, raccourcis, sauvegarde et adaptation des sites se cachent derrière cet engrenage.",
   onboardingTourSkip: "Ignorer",
   onboardingTourPrev: "Précédent",
   onboardingTourNext: "Suivant",
   onboardingTourDone: "Commencer",
+  onboardingTourWelcomeTitle: "Bienvenue dans Ophel",
+  onboardingTourWelcomeDesc: "Découvrez les quatre zones clés du panneau en 30 secondes.",
+  onboardingTourStart: "Commencer la visite",
 
   tabPrompts: "Invites",
   tabSettings: "Réglages",

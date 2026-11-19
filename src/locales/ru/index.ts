@@ -22,22 +22,25 @@ export const ru = {
   // Тур по панели при первом запуске
   onboardingTourAriaLabel: "Тур по панели",
   onboardingTourStepOf: "Шаг {current} из {total}",
-  onboardingTourOutlineTitle: "Содержание · Карта диалога",
+  onboardingTourOutlineTitle: "Содержание",
   onboardingTourOutlineDesc:
-    "Анализирует текущий диалог в реальном времени. Нажмите на пункт, чтобы перейти к нему, найти или добавить закладку.",
-  onboardingTourConversationsTitle: "Чаты · Порядок и поиск",
+    "Разбирает структуру диалога в реальном времени. Клик по пункту — переход, есть поиск и закладки.",
+  onboardingTourConversationsTitle: "Чаты",
   onboardingTourConversationsDesc:
-    "Чаты с сайта автоматически синхронизируются сюда. Раскладывайте их по папкам и тегам и находите поиском.",
-  onboardingTourPromptsTitle: "Промпты · Ваша библиотека",
+    "Чаты с сайта автоматически попадают сюда. Раскладывайте их по папкам и тегам, находите в любой момент.",
+  onboardingTourPromptsTitle: "Промпты",
   onboardingTourPromptsDesc:
-    "Сохраняйте частые промпты как шаблоны и вставляйте в один клик — с переменными и цепочной отправкой.",
-  onboardingTourSettingsTitle: "Настройки · Под ваш стиль",
+    "Сохраняйте частые промпты как шаблоны и вставляйте в один клик — с переменными и отправкой очередью.",
+  onboardingTourSettingsTitle: "Настройки",
   onboardingTourSettingsDesc:
-    "Откройте настройки через шестерёнку вверху панели: темы, горячие клавиши, резервное копирование и адаптеры сайтов.",
+    "Темы, горячие клавиши, резервные копии и адаптация сайтов — за этой шестерёнкой.",
   onboardingTourSkip: "Пропустить",
   onboardingTourPrev: "Назад",
   onboardingTourNext: "Далее",
   onboardingTourDone: "Начать",
+  onboardingTourWelcomeTitle: "Добро пожаловать в Ophel",
+  onboardingTourWelcomeDesc: "За 30 секунд познакомьтесь с четырьмя ключевыми областями панели.",
+  onboardingTourStart: "Начать тур",
 
   tabPrompts: "Промпты",
   tabSettings: "Настройки",

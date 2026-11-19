@@ -22,22 +22,25 @@ export const it = {
   // Tour iniziale del pannello
   onboardingTourAriaLabel: "Tour del pannello",
   onboardingTourStepOf: "Passaggio {current} di {total}",
-  onboardingTourOutlineTitle: "Contorno · Mappa della conversazione",
+  onboardingTourOutlineTitle: "Contorno",
   onboardingTourOutlineDesc:
-    "Analizza la conversazione corrente in tempo reale. Clicca su una voce per saltarvi, cercarla o salvarla nei segnalibri.",
-  onboardingTourConversationsTitle: "Chat · Organizza e ritrova",
+    "Analizza la struttura della conversazione in tempo reale. Clicca su una voce per saltarvi, con ricerca e segnalibri.",
+  onboardingTourConversationsTitle: "Chat",
   onboardingTourConversationsDesc:
-    "Le chat del sito si sincronizzano qui automaticamente. Organizzale con cartelle e tag e ritrovale con la ricerca.",
-  onboardingTourPromptsTitle: "Suggerimenti · La tua libreria",
+    "Le chat del sito si sincronizzano qui automaticamente. Organizzale con cartelle e tag, ritrovale quando vuoi.",
+  onboardingTourPromptsTitle: "Suggerimenti",
   onboardingTourPromptsDesc:
-    "Salva i suggerimenti più usati come modelli e inseriscili con un clic, con variabili e invio concatenato.",
-  onboardingTourSettingsTitle: "Impostazioni · A modo tuo",
+    "Salva i suggerimenti più usati come modelli e inseriscili con un clic, con variabili e invio in coda.",
+  onboardingTourSettingsTitle: "Impostazioni",
   onboardingTourSettingsDesc:
-    "Apri le impostazioni dall'ingranaggio in cima al pannello: temi, scorciatoie, backup e adattatori dei siti.",
+    "Temi, scorciatoie, backup e adattamento dei siti sono dietro questo ingranaggio.",
   onboardingTourSkip: "Salta",
   onboardingTourPrev: "Indietro",
   onboardingTourNext: "Avanti",
   onboardingTourDone: "Inizia",
+  onboardingTourWelcomeTitle: "Benvenuto in Ophel",
+  onboardingTourWelcomeDesc: "Scopri le quattro aree chiave del pannello in 30 secondi.",
+  onboardingTourStart: "Inizia il tour",
 
   tabPrompts: "Suggerimenti",
   tabSettings: "Impostazioni",

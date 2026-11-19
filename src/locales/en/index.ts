@@ -22,22 +22,25 @@ export const en = {
   // First-run panel tour
   onboardingTourAriaLabel: "Panel tour",
   onboardingTourStepOf: "Step {current} of {total}",
-  onboardingTourOutlineTitle: "Outline · Conversation map",
+  onboardingTourOutlineTitle: "Outline",
   onboardingTourOutlineDesc:
-    "Parses the current conversation in real time. Click an entry to jump to it, or search and bookmark it.",
-  onboardingTourConversationsTitle: "Chats · Organize and find",
+    "Parses the conversation structure live. Click an entry to jump to it, with search and bookmarks.",
+  onboardingTourConversationsTitle: "Chats",
   onboardingTourConversationsDesc:
-    "Chats from the site sync here automatically. Sort them with folders and tags, and find them again with search.",
-  onboardingTourPromptsTitle: "Prompts · Your library",
+    "Chats from the site sync here automatically. Organize them with folders and tags, and find them anytime.",
+  onboardingTourPromptsTitle: "Prompts",
   onboardingTourPromptsDesc:
-    "Save frequent prompts as templates and insert them in one click, with variables and chained sending.",
-  onboardingTourSettingsTitle: "Settings · Make it yours",
+    "Save frequent prompts as templates and insert them in one click, with variables and queued sending.",
+  onboardingTourSettingsTitle: "Settings",
   onboardingTourSettingsDesc:
-    "Open settings from the gear at the top of the panel: themes, shortcuts, backup, and site adapters.",
+    "Themes, shortcuts, backup, and site adapters all live behind this gear.",
   onboardingTourSkip: "Skip",
   onboardingTourPrev: "Back",
   onboardingTourNext: "Next",
   onboardingTourDone: "Get started",
+  onboardingTourWelcomeTitle: "Welcome to Ophel",
+  onboardingTourWelcomeDesc: "Take 30 seconds to meet the panel's four core areas.",
+  onboardingTourStart: "Start tour",
 
   tabPrompts: "Prompts",
   tabSettings: "Settings",

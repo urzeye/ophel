@@ -22,22 +22,25 @@ export const pt = {
   // Tour inicial do painel
   onboardingTourAriaLabel: "Tour do painel",
   onboardingTourStepOf: "Etapa {current} de {total}",
-  onboardingTourOutlineTitle: "Índice · Mapa da conversa",
+  onboardingTourOutlineTitle: "Índice",
   onboardingTourOutlineDesc:
-    "Analisa a conversa atual em tempo real. Clique numa entrada para saltar para ela, pesquisar ou adicionar aos marcadores.",
-  onboardingTourConversationsTitle: "Chats · Organizar e encontrar",
+    "Analisa a estrutura da conversa em tempo real. Clique numa entrada para saltar, com pesquisa e marcadores.",
+  onboardingTourConversationsTitle: "Chats",
   onboardingTourConversationsDesc:
-    "Os chats do site são sincronizados aqui automaticamente. Organize-os com pastas e etiquetas e encontre-os na pesquisa.",
-  onboardingTourPromptsTitle: "Comandos · A sua biblioteca",
+    "Os chats do site são sincronizados aqui automaticamente. Organize-os com pastas e etiquetas e encontre-os quando quiser.",
+  onboardingTourPromptsTitle: "Comandos",
   onboardingTourPromptsDesc:
-    "Guarde os comandos frequentes como modelos e insira-os com um clique, com variáveis e envio encadeado.",
-  onboardingTourSettingsTitle: "Definições · Do seu jeito",
+    "Guarde os comandos frequentes como modelos e insira-os com um clique, com variáveis e envio em fila.",
+  onboardingTourSettingsTitle: "Definições",
   onboardingTourSettingsDesc:
-    "Abra as definições na engrenagem no topo do painel: temas, atalhos, cópias de segurança e adaptadores de sites.",
+    "Temas, atalhos, cópias de segurança e adaptação de sites estão nesta engrenagem.",
   onboardingTourSkip: "Ignorar",
   onboardingTourPrev: "Anterior",
   onboardingTourNext: "Seguinte",
   onboardingTourDone: "Começar",
+  onboardingTourWelcomeTitle: "Bem-vindo ao Ophel",
+  onboardingTourWelcomeDesc: "Conheça as quatro áreas principais do painel em 30 segundos.",
+  onboardingTourStart: "Iniciar tour",
 
   tabPrompts: "Comandos",
   tabSettings: "Ajustes",

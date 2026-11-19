@@ -22,22 +22,25 @@ export const de = {
   // Erste Panel-Tour
   onboardingTourAriaLabel: "Panel-Tour",
   onboardingTourStepOf: "Schritt {current} von {total}",
-  onboardingTourOutlineTitle: "Verzeichnis · Gesprächsüberblick",
+  onboardingTourOutlineTitle: "Verzeichnis",
   onboardingTourOutlineDesc:
-    "Analysiert das aktuelle Gespräch in Echtzeit. Klicken Sie auf einen Eintrag, um direkt hinzuspringen, zu suchen oder Lesezeichen zu setzen.",
-  onboardingTourConversationsTitle: "Chats · Ordnen und finden",
+    "Analysiert die Gesprächsstruktur live. Ein Klick springt zur Stelle – mit Suche und Lesezeichen.",
+  onboardingTourConversationsTitle: "Chats",
   onboardingTourConversationsDesc:
-    "Chats von der Seite werden hier automatisch synchronisiert. Sortieren Sie sie mit Ordnern und Tags und finden Sie sie per Suche wieder.",
-  onboardingTourPromptsTitle: "Prompt-Bibliothek · Ihre Vorlagen",
+    "Chats der Seite werden hier automatisch synchronisiert. Mit Ordnern und Tags ordnen, jederzeit wiederfinden.",
+  onboardingTourPromptsTitle: "Prompt-Bibliothek",
   onboardingTourPromptsDesc:
-    "Speichern Sie häufige Prompts als Vorlagen und fügen Sie sie mit einem Klick ein – mit Variablen und verkettetem Senden.",
-  onboardingTourSettingsTitle: "Einstellungen · Nach Ihren Wünschen",
+    "Häufige Prompts als Vorlagen speichern und per Klick einfügen – mit Variablen und Warteschlangen-Versand.",
+  onboardingTourSettingsTitle: "Einstellungen",
   onboardingTourSettingsDesc:
-    "Öffnen Sie die Einstellungen über das Zahnrad oben im Panel: Designs, Tastenkürzel, Backup und Site-Anpassungen.",
+    "Designs, Tastenkürzel, Backup und Site-Anpassungen liegen hinter diesem Zahnrad.",
   onboardingTourSkip: "Überspringen",
   onboardingTourPrev: "Zurück",
   onboardingTourNext: "Weiter",
   onboardingTourDone: "Loslegen",
+  onboardingTourWelcomeTitle: "Willkommen bei Ophel",
+  onboardingTourWelcomeDesc: "Lernen Sie die vier Kernbereiche des Panels in 30 Sekunden kennen.",
+  onboardingTourStart: "Tour starten",
 
   tabPrompts: "Prompt-Bibliothek",
   tabSettings: "Einstellungen",

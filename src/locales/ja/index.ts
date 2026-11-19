@@ -22,22 +22,24 @@ export const ja = {
   // 初回パネルツアー
   onboardingTourAriaLabel: "パネル機能ツアー",
   onboardingTourStepOf: "ステップ {current} / {total}",
-  onboardingTourOutlineTitle: "目次 · 会話のマップ",
+  onboardingTourOutlineTitle: "目次",
   onboardingTourOutlineDesc:
-    "現在の会話をリアルタイムで解析します。項目をクリックでジャンプ、検索やブックマークにも対応。",
-  onboardingTourConversationsTitle: "会話管理 · 整理と検索",
+    "会話の構造をリアルタイムで解析。項目をクリックでジャンプ、検索とブックマークにも対応。",
+  onboardingTourConversationsTitle: "会話管理",
   onboardingTourConversationsDesc:
-    "サイトの会話がここに自動同期されます。フォルダとタグで分類し、検索ですぐに見つかります。",
-  onboardingTourPromptsTitle: "プロンプト · マイライブラリ",
+    "サイトの会話がここに自動同期。フォルダとタグで整理して、いつでも検索で見つかります。",
+  onboardingTourPromptsTitle: "プロンプト",
   onboardingTourPromptsDesc:
-    "よく使うプロンプトをテンプレートに保存し、ワンクリックで入力欄に挿入。変数と連鎖送信に対応。",
-  onboardingTourSettingsTitle: "設定 · 好みに合わせる",
-  onboardingTourSettingsDesc:
-    "パネル上部の歯車から設定を開きます：テーマ、ショートカット、バックアップ、サイト適配はこちら。",
+    "よく使うプロンプトをテンプレート化してワンクリック挿入。変数とキュー送信にも対応。",
+  onboardingTourSettingsTitle: "設定",
+  onboardingTourSettingsDesc: "テーマ、ショートカット、バックアップ、サイト適配はこの歯車から。",
   onboardingTourSkip: "スキップ",
   onboardingTourPrev: "戻る",
   onboardingTourNext: "次へ",
   onboardingTourDone: "はじめる",
+  onboardingTourWelcomeTitle: "Ophel へようこそ",
+  onboardingTourWelcomeDesc: "30秒でパネルの4つの核心エリアを紹介します。",
+  onboardingTourStart: "ツアーを開始",
 
   tabPrompts: "プロンプト",
   tabSettings: "設定",

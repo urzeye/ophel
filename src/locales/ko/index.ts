@@ -21,22 +21,24 @@ export const ko = {
   // 첫 실행 패널 둘러보기
   onboardingTourAriaLabel: "패널 기능 둘러보기",
   onboardingTourStepOf: "{current}/{total}단계",
-  onboardingTourOutlineTitle: "개요 · 대화 지도",
+  onboardingTourOutlineTitle: "개요",
   onboardingTourOutlineDesc:
-    "현재 대화를 실시간으로 분석합니다. 항목을 클릭해 바로 이동하거나 검색·북마크할 수 있습니다.",
-  onboardingTourConversationsTitle: "대화 · 정리와 검색",
+    "대화 구조를 실시간으로 분석합니다. 항목을 클릭해 바로 이동하고, 검색과 북마크도 지원합니다.",
+  onboardingTourConversationsTitle: "대화",
   onboardingTourConversationsDesc:
-    "사이트의 대화가 여기에 자동으로 동기화됩니다. 폴더와 태그로 분류하고 검색으로 다시 찾으세요.",
-  onboardingTourPromptsTitle: "프롬프트 · 나만의 라이브러리",
+    "사이트의 대화가 여기에 자동으로 동기화됩니다. 폴더와 태그로 정리하고 언제든 검색하세요.",
+  onboardingTourPromptsTitle: "프롬프트",
   onboardingTourPromptsDesc:
-    "자주 쓰는 프롬프트를 템플릿으로 저장해 한 번의 클릭으로 입력창에 넣으세요. 변수와 연쇄 전송을 지원합니다.",
-  onboardingTourSettingsTitle: "설정 · 내 방식대로",
-  onboardingTourSettingsDesc:
-    "패널 상단의 톱니바퀴로 설정을 여세요: 테마, 단축키, 백업, 사이트 어댑터가 모두 여기 있습니다.",
+    "자주 쓰는 프롬프트를 템플릿으로 저장해 한 번의 클릭으로 삽입하고, 변수와 대기열 전송을 지원합니다.",
+  onboardingTourSettingsTitle: "설정",
+  onboardingTourSettingsDesc: "테마, 단축키, 백업, 사이트 어댑터는 이 톱니바퀴에서 열 수 있습니다.",
   onboardingTourSkip: "건너뛰기",
   onboardingTourPrev: "이전",
   onboardingTourNext: "다음",
   onboardingTourDone: "시작하기",
+  onboardingTourWelcomeTitle: "Ophel에 오신 것을 환영합니다",
+  onboardingTourWelcomeDesc: "30초면 패널의 네 가지 핵심 영역을 알 수 있어요.",
+  onboardingTourStart: "둘러보기 시작",
 
   tabPrompts: "프롬프트",
   tabSettings: "설정",

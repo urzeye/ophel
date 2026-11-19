@@ -22,22 +22,25 @@ export const es = {
   // Tour inicial del panel
   onboardingTourAriaLabel: "Tour del panel",
   onboardingTourStepOf: "Paso {current} de {total}",
-  onboardingTourOutlineTitle: "Índice · Mapa de la conversación",
+  onboardingTourOutlineTitle: "Índice",
   onboardingTourOutlineDesc:
-    "Analiza la conversación actual en tiempo real. Haz clic en una entrada para saltar a ella, buscarla o marcarla.",
-  onboardingTourConversationsTitle: "Chats · Organiza y encuentra",
+    "Analiza la estructura de la conversación en vivo. Haz clic en una entrada para saltar a ella, con búsqueda y marcadores.",
+  onboardingTourConversationsTitle: "Chats",
   onboardingTourConversationsDesc:
-    "Los chats del sitio se sincronizan aquí automáticamente. Ordénalos con carpetas y etiquetas, y encuéntralos con la búsqueda.",
-  onboardingTourPromptsTitle: "Indicaciones · Tu biblioteca",
+    "Los chats del sitio se sincronizan aquí automáticamente. Ordénalos con carpetas y etiquetas y encuéntralos cuando quieras.",
+  onboardingTourPromptsTitle: "Indicaciones",
   onboardingTourPromptsDesc:
-    "Guarda las indicaciones frecuentes como plantillas e insértalas con un clic, con variables y envío encadenado.",
-  onboardingTourSettingsTitle: "Ajustes · A tu manera",
+    "Guarda las indicaciones frecuentes como plantillas e insértalas con un clic, con variables y envío en cola.",
+  onboardingTourSettingsTitle: "Ajustes",
   onboardingTourSettingsDesc:
-    "Abre los ajustes desde el engranaje de la parte superior del panel: temas, atajos, copias de seguridad y adaptadores de sitios.",
+    "Temas, atajos, copias de seguridad y adaptación de sitios están tras este engranaje.",
   onboardingTourSkip: "Omitir",
   onboardingTourPrev: "Atrás",
   onboardingTourNext: "Siguiente",
   onboardingTourDone: "Empezar",
+  onboardingTourWelcomeTitle: "Bienvenido a Ophel",
+  onboardingTourWelcomeDesc: "Conoce las cuatro áreas clave del panel en 30 segundos.",
+  onboardingTourStart: "Iniciar recorrido",
 
   tabPrompts: "Indicaciones",
   tabSettings: "Ajustes",
