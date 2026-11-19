@@ -19,6 +19,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **Settings layout and icons** — Site Packs now uses the same content width as other settings pages, with updated navigation and page title icons. (#1052)
 - **Layered settings** — Low-frequency options in cards like Export and Notifications now sit under an "Advanced options" toggle at the bottom of each card, keeping everyday options in focus. (#1055, #1058)
 
+### 🐛 Bug Fixes
+
+- **ChatGPT theme switching** — Fixed an issue where switching between light and dark mode in Ophel did not change ChatGPT's page colors after its interface update. (#1060)
+
 ---
 
 ## [1.3.4][1.3.4] - 2026-11-16
