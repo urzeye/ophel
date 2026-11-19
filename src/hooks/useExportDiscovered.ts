@@ -1,21 +1,13 @@
 import { useEffect, useState } from "react"
 
-import { platform } from "~platform"
+import { GUIDANCE_RULES, hasGuidanceCompleted, type GuidanceEntryState } from "~utils/guidance"
+import { getGuidanceState, markGuidanceAction, watchGuidanceState } from "~utils/guidance-storage"
 
-export const EXPORT_DISCOVERED_KEY = "ophel:exportDiscovered"
-
-export const getExportDiscovered = async (): Promise<boolean> => {
-  const value = await platform.storage.get<boolean>(EXPORT_DISCOVERED_KEY)
-  return value === true
-}
-
-export const markExportDiscovered = async (): Promise<void> => {
-  await platform.storage.set(EXPORT_DISCOVERED_KEY, true)
-}
+const EXPORT_SHIMMER_ID = "export-entry-shimmer"
 
 /** 静默标记：持久化失败仅告警，不阻断导出主流程 */
 export const markExportDiscoveredQuiet = (): void => {
-  markExportDiscovered().catch((error) => {
+  markGuidanceAction(EXPORT_SHIMMER_ID).catch((error) => {
     console.warn("[Ophel] Failed to persist export discovery state:", error)
   })
 }
@@ -30,17 +22,17 @@ export function useExportDiscovered(): boolean {
 
   useEffect(() => {
     let cancelled = false
-    const apply = (value: unknown) => {
+    const apply = (state: GuidanceEntryState) => {
       if (cancelled) return
-      setDiscovered(value === true)
+      setDiscovered(hasGuidanceCompleted(state, GUIDANCE_RULES[EXPORT_SHIMMER_ID]))
     }
 
-    getExportDiscovered()
+    getGuidanceState(EXPORT_SHIMMER_ID)
       .then(apply)
       .catch((error) => {
         console.warn("[Ophel] Failed to read export discovery state:", error)
       })
-    const unwatch = platform.storage.watch(EXPORT_DISCOVERED_KEY, apply)
+    const unwatch = watchGuidanceState(EXPORT_SHIMMER_ID, apply)
 
     return () => {
       cancelled = true

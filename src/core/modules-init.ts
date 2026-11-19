@@ -875,6 +875,7 @@ export function handleClearAllData(): void {
     } else {
       localStorage.removeItem("ophel_ext_theme_cache")
     }
+    // 历史遗留键：引导状态已迁移至 platform.storage（ophel:guidance:*）
     localStorage.removeItem("ophel:global-search-shortcut-nudge:v1")
   } catch (e) {
     console.warn("Failed to clear theme cache from localStorage:", e)
