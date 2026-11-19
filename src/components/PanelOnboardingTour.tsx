@@ -131,7 +131,7 @@ export const PanelOnboardingTour: React.FC<{ onShown: () => void; onExit: () => 
     }
   }, [])
 
-  // 每步测量高亮目标位置；窗口、面板尺寸变化和吸附展开动画结束后重测。
+  // 每步测量高亮目标位置；窗口、面板尺寸变化和吸附/抽屉入场结束后重测。
   // tab 步骤同步真实切换到对应内容区，讲解与蒙层下露出的内容保持一致
   useLayoutEffect(() => {
     if (!steps) return
@@ -154,10 +154,14 @@ export const PanelOnboardingTour: React.FC<{ onShown: () => void; onExit: () => 
     if (panel) observer.observe(panel)
     measure()
     panel?.addEventListener("transitionend", measure)
+    panel?.addEventListener("animationend", measure)
+    panel?.addEventListener("animationcancel", measure)
     window.addEventListener("resize", measure)
     return () => {
       observer.disconnect()
       panel?.removeEventListener("transitionend", measure)
+      panel?.removeEventListener("animationend", measure)
+      panel?.removeEventListener("animationcancel", measure)
       window.removeEventListener("resize", measure)
     }
   }, [steps, stepIndex, queryTarget])
@@ -208,31 +212,53 @@ export const PanelOnboardingTour: React.FC<{ onShown: () => void; onExit: () => 
     primaryButtonRef.current?.focus({ preventScroll: true })
   }, [cardVisible, onShown, stepIndex])
 
-  const handleKeyDown = (event: React.KeyboardEvent) => {
-    event.stopPropagation()
-    if (event.isDefaultPrevented() || event.nativeEvent.isComposing) return
-    if (event.key === "Escape") {
-      event.preventDefault()
-      requestExit()
-      return
-    }
-    if (event.key === "Tab") {
+  // 捕获阶段覆盖焦点已离开导览的情况；composedPath 保留 Shadow DOM 内的真实目标。
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || event.isComposing) return
+      if (event.key === "Escape") {
+        event.preventDefault()
+        event.stopPropagation()
+        requestExit()
+        return
+      }
+      if (event.key !== "Tab") return
+
       const buttons = cardRef.current?.querySelectorAll<HTMLButtonElement>("button:not(:disabled)")
       const first = buttons?.[0]
       const last = buttons?.[buttons.length - 1]
       if (!first || !last) {
         event.preventDefault()
+        event.stopPropagation()
         return
       }
-      if (event.shiftKey && event.target === first) {
+
+      const path = event.composedPath()
+      const card = cardRef.current
+      const outsideCard = !card || !path.includes(card)
+      if (outsideCard || (event.shiftKey ? path.includes(first) : path.includes(last))) {
         event.preventDefault()
-        last.focus()
-      } else if (!event.shiftKey && event.target === last) {
-        event.preventDefault()
-        first.focus()
+        event.stopPropagation()
+        const nextFocus = event.shiftKey ? last : first
+        nextFocus.focus({ preventScroll: true })
       }
     }
-  }
+
+    const handleFocusIn = (event: FocusEvent) => {
+      if (!cardVisible || exiting) return
+      const card = cardRef.current
+      if (card && !event.composedPath().includes(card)) {
+        primaryButtonRef.current?.focus({ preventScroll: true })
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown, true)
+    document.addEventListener("focusin", handleFocusIn, true)
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown, true)
+      document.removeEventListener("focusin", handleFocusIn, true)
+    }
+  }, [cardVisible, exiting, requestExit])
 
   const goNext = () => {
     dirRef.current = "fwd"
@@ -258,10 +284,11 @@ export const PanelOnboardingTour: React.FC<{ onShown: () => void; onExit: () => 
       {...OPHEL_HOVER_WIDTH_RETAIN_LAYER_PROPS}
       {...OPHEL_ESCAPE_LAYER_PROPS}
       className={`gh-tour-overlay${exiting ? " is-exiting" : ""}`}
+      tabIndex={-1}
       role="dialog"
       aria-modal="true"
       aria-label={t("onboardingTourAriaLabel")}
-      onKeyDown={handleKeyDown}>
+      onKeyDown={(event) => event.stopPropagation()}>
       {step && spotRect && (
         <div
           className="gh-tour-spotlight"
