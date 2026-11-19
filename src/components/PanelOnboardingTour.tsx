@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react"
 
 import { ConversationIcon, OutlineIcon, PromptIcon, SettingsIcon } from "~components/icons"
+import { TAB_IDS } from "~constants"
+import { OPHEL_ESCAPE_LAYER_PROPS, OPHEL_HOVER_WIDTH_RETAIN_LAYER_PROPS } from "~utils/dom-toolkit"
 import { t } from "~utils/i18n"
 
 interface TourStep {
@@ -59,12 +61,16 @@ type QueryRoot = Document | ShadowRoot
  * 退出时恢复原 tab。完成、跳过、Esc 均经退场动画后走 onExit（注册表永久记录）。
  * 导览期间蒙层拦截全部页面交互，避免误触造成状态错乱。
  */
-export const PanelOnboardingTour: React.FC<{ onExit: () => void }> = ({ onExit }) => {
+export const PanelOnboardingTour: React.FC<{ onShown: () => void; onExit: () => void }> = ({
+  onShown,
+  onExit,
+}) => {
   const overlayRef = useRef<HTMLDivElement>(null)
   const cardRef = useRef<HTMLDivElement>(null)
   const primaryButtonRef = useRef<HTMLButtonElement>(null)
   // 进入导览时激活的 tab，退出时恢复，不留副作用
   const originalTabRef = useRef<Element | null>(null)
+  const originalFocusRef = useRef<Element | null>(null)
   // 步进方向驱动内容横移入场；第一步只播放卡片入场动画
   const dirRef = useRef<"fwd" | "back" | "none">("none")
   const exitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -74,6 +80,7 @@ export const PanelOnboardingTour: React.FC<{ onExit: () => void }> = ({ onExit }
   // undefined = 尚未测量；null = 已测量但目标消失
   const [spotRect, setSpotRect] = useState<DOMRect | null | undefined>(undefined)
   const [cardPos, setCardPos] = useState<{ top: number; left: number } | null>(null)
+  const cardVisible = cardPos !== null && !!spotRect
 
   const queryTarget = useCallback((selector: string): Element | null => {
     const root = overlayRef.current?.getRootNode() as QueryRoot | null
@@ -98,6 +105,8 @@ export const PanelOnboardingTour: React.FC<{ onExit: () => void }> = ({ onExit }
   // 挂载后按目标存在性过滤步骤（站点能力差异会隐藏个别 tab）；
   // 全部缺失时直接退出，不留蒙层
   useLayoutEffect(() => {
+    const root = overlayRef.current?.getRootNode() as QueryRoot | undefined
+    originalFocusRef.current = root?.activeElement ?? null
     originalTabRef.current = queryTarget('.gh-panel-tab-btn[aria-selected="true"]')
     const available = TOUR_STEPS.filter((step) => queryTarget(step.targetSelector) !== null)
     if (available.length === 0) {
@@ -107,17 +116,22 @@ export const PanelOnboardingTour: React.FC<{ onExit: () => void }> = ({ onExit }
     setSteps(available)
   }, [onExit, queryTarget])
 
-  // 卸载即恢复初始 tab：覆盖完成/跳过/Esc/面板关闭等全部退出路径
+  // 通过已有 tab 事件恢复，即使面板关闭、原按钮已脱离 DOM 也能还原。
   useEffect(() => {
     return () => {
       const original = originalTabRef.current
-      if (original instanceof HTMLElement && original.getAttribute("aria-selected") !== "true") {
-        original.click()
+      if (original && original.getAttribute("aria-selected") !== "true") {
+        const tabId = Object.values(TAB_IDS).find((id) => original.id === `gh-panel-tab-${id}`)
+        if (tabId) window.dispatchEvent(new CustomEvent("ophel:switchTab", { detail: { tabId } }))
+      }
+      const previousFocus = originalFocusRef.current
+      if (previousFocus instanceof HTMLElement && previousFocus.isConnected) {
+        previousFocus.focus({ preventScroll: true })
       }
     }
   }, [])
 
-  // 每步测量高亮目标位置；窗口尺寸变化时重测。
+  // 每步测量高亮目标位置；窗口、面板尺寸变化和吸附展开动画结束后重测。
   // tab 步骤同步真实切换到对应内容区，讲解与蒙层下露出的内容保持一致
   useLayoutEffect(() => {
     if (!steps) return
@@ -134,9 +148,18 @@ export const PanelOnboardingTour: React.FC<{ onExit: () => void }> = ({ onExit }
       const el = queryTarget(step.targetSelector)
       setSpotRect(el ? el.getBoundingClientRect() : null)
     }
+    const panel = queryTarget(".gh-main-panel")
+    const observer = new ResizeObserver(measure)
+    if (target) observer.observe(target)
+    if (panel) observer.observe(panel)
     measure()
+    panel?.addEventListener("transitionend", measure)
     window.addEventListener("resize", measure)
-    return () => window.removeEventListener("resize", measure)
+    return () => {
+      observer.disconnect()
+      panel?.removeEventListener("transitionend", measure)
+      window.removeEventListener("resize", measure)
+    }
   }, [steps, stepIndex, queryTarget])
 
   // 目标中途消失（如布局切换）：前进到下一步，已是最后一步则退出
@@ -178,15 +201,36 @@ export const PanelOnboardingTour: React.FC<{ onExit: () => void }> = ({ onExit }
     return () => window.removeEventListener("resize", place)
   }, [steps, spotRect, stepIndex])
 
-  // 每步把焦点交给主按钮，键盘用户可直接回车推进
-  useEffect(() => {
-    primaryButtonRef.current?.focus()
-  }, [steps, stepIndex])
+  // 定位完成、卡片真正可见后再计数和聚焦，避免聚焦隐藏按钮。
+  useLayoutEffect(() => {
+    if (!cardVisible) return
+    onShown()
+    primaryButtonRef.current?.focus({ preventScroll: true })
+  }, [cardVisible, onShown, stepIndex])
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
+    event.stopPropagation()
+    if (event.isDefaultPrevented() || event.nativeEvent.isComposing) return
     if (event.key === "Escape") {
-      event.stopPropagation()
+      event.preventDefault()
       requestExit()
+      return
+    }
+    if (event.key === "Tab") {
+      const buttons = cardRef.current?.querySelectorAll<HTMLButtonElement>("button:not(:disabled)")
+      const first = buttons?.[0]
+      const last = buttons?.[buttons.length - 1]
+      if (!first || !last) {
+        event.preventDefault()
+        return
+      }
+      if (event.shiftKey && event.target === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && event.target === last) {
+        event.preventDefault()
+        first.focus()
+      }
     }
   }
 
@@ -211,6 +255,8 @@ export const PanelOnboardingTour: React.FC<{ onExit: () => void }> = ({ onExit }
   return (
     <div
       ref={overlayRef}
+      {...OPHEL_HOVER_WIDTH_RETAIN_LAYER_PROPS}
+      {...OPHEL_ESCAPE_LAYER_PROPS}
       className={`gh-tour-overlay${exiting ? " is-exiting" : ""}`}
       role="dialog"
       aria-modal="true"
@@ -237,7 +283,7 @@ export const PanelOnboardingTour: React.FC<{ onExit: () => void }> = ({ onExit }
           style={{
             top: cardPos?.top ?? 0,
             left: cardPos?.left ?? 0,
-            visibility: cardPos ? "visible" : "hidden",
+            visibility: cardVisible ? "visible" : "hidden",
           }}>
           <div key={stepIndex} className="gh-onboarding-tour-step" data-dir={dirRef.current}>
             <div className="gh-onboarding-tour-head">

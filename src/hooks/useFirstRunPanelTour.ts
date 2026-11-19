@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 
-import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
 import { dismissGuidance, markGuidanceShown, shouldShowGuidance } from "~utils/guidance-storage"
 
 const TOUR_ID = "first-run-panel-tour"
@@ -8,52 +7,61 @@ const TOUR_ID = "first-run-panel-tour"
 /**
  * 首装面板导览触发器。
  *
- * 免责声明在本会话由「未同意」变为「同意」时挂起一次导览，待面板可见后
- * 经注册表确认（每个浏览器只展示一次）再打开；完成或跳过都会永久记录。
- * 老用户升级时 hydration 直接得到已同意，不满足 false -> true，不会触发。
+ * 只响应当前页面的协议确认回调，跨标签页设置同步和老用户升级均不触发。
+ * 注册表允许展示时主动展开面板，卡片实际可见后才记录展示；完成或跳过永久停用。
  */
-export function useFirstRunPanelTour(canShow: boolean) {
-  const [tourVisible, setTourVisible] = useState(false)
-  const pendingRef = useRef(false)
-  const agreedRef = useRef<boolean | null>(null)
-  const isHydrated = useSettingsHydrated()
-  const hasAgreedToTerms = useSettingsStore((state) => state.settings?.hasAgreedToTerms ?? false)
+export function useFirstRunPanelTour(canShow: boolean, preparePanel: () => void) {
+  const [phase, setPhase] = useState<"idle" | "pending" | "shown">("idle")
+  const mountedRef = useRef(false)
+  const checkingRef = useRef(false)
+  const shownWriteRef = useRef<Promise<unknown> | null>(null)
 
-  // 同意状态翻转检测 + 待展示消费放在同一个 effect：
-  // ref 变化不会触发重跑，拆成两个 effect 时消费方会因依赖未变而永远挂起
   useEffect(() => {
-    if (!isHydrated) return
-    const prev = agreedRef.current
-    agreedRef.current = hasAgreedToTerms
-    if (prev === false && hasAgreedToTerms) {
-      pendingRef.current = true
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
     }
+  }, [])
 
-    if (!canShow || !pendingRef.current || tourVisible) return
-    pendingRef.current = false
+  const requestTour = useCallback(() => {
+    if (checkingRef.current || shownWriteRef.current) return
+    checkingRef.current = true
 
-    let cancelled = false
     void (async () => {
       try {
         if (!(await shouldShowGuidance(TOUR_ID))) return
-        await markGuidanceShown(TOUR_ID)
-        if (!cancelled) setTourVisible(true)
+        if (!mountedRef.current) return
+        preparePanel()
+        setPhase("pending")
       } catch (error) {
         console.warn("[Ophel] Failed to check first-run tour state:", error)
+      } finally {
+        checkingRef.current = false
       }
     })()
+  }, [preparePanel])
 
-    return () => {
-      cancelled = true
-    }
-  }, [isHydrated, hasAgreedToTerms, canShow, tourVisible])
-
-  const exitTour = useCallback(() => {
-    dismissGuidance(TOUR_ID).catch((error) => {
-      console.warn("[Ophel] Failed to persist first-run tour state:", error)
+  const markTourShown = useCallback(() => {
+    if (shownWriteRef.current) return
+    setPhase("shown")
+    shownWriteRef.current = markGuidanceShown(TOUR_ID).catch((error) => {
+      console.warn("[Ophel] Failed to record first-run tour display:", error)
     })
-    setTourVisible(false)
   }, [])
 
-  return { tourVisible, exitTour }
+  const exitTour = useCallback(() => {
+    setPhase("idle")
+    // 展示计数和关闭标记串行写同一个键，避免快速跳过时互相覆盖。
+    void (shownWriteRef.current ?? Promise.resolve())
+      .then(() => dismissGuidance(TOUR_ID))
+      .catch((error) => {
+        console.warn("[Ophel] Failed to persist first-run tour state:", error)
+      })
+  }, [])
+
+  useEffect(() => {
+    if (phase === "shown" && !canShow) exitTour()
+  }, [canShow, exitTour, phase])
+
+  return { tourVisible: canShow && phase !== "idle", requestTour, markTourShown, exitTour }
 }

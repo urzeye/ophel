@@ -5,7 +5,7 @@ import { GITHUB_REPO_URL } from "~utils/donate-channels"
 import { OPHEL_FONT_FAMILY_CSS_VAR } from "~utils/font"
 import { t } from "~utils/i18n"
 
-export const DisclaimerModal: React.FC = () => {
+export const DisclaimerModal: React.FC<{ onAgree: () => void }> = ({ onAgree }) => {
   const { settings, setSettings } = useSettingsStore()
   const isHydrated = useSettingsHydrated()
 
@@ -16,6 +16,7 @@ export const DisclaimerModal: React.FC = () => {
 
   const handleAgree = () => {
     setSettings({ hasAgreedToTerms: true })
+    onAgree()
   }
 
   return (
