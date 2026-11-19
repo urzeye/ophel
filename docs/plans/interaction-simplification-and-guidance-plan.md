@@ -10,7 +10,7 @@
 | # | 分支名                             | PR 标题（英文）                                                      | 依赖                 | 状态   | 完成日期 / PR                                                   |
 | - | ---------------------------------- | -------------------------------------------------------------------- | -------------------- | ------ | --------------------------------------------------------------- |
 | 1 | `ux/settings-card-layering`      | `ux(settings): add collapsible advanced sections to setting cards` | 无                   | 已完成 | 2026-11-19 · [#1055](https://github.com/urzeye/ophel/pull/1055) |
-| 2 | `feat/guidance-registry`         | `feat(guidance): add unified guidance state registry`              | 无                   | 已完成 | 2026-11-19 · PR 待回填                                          |
+| 2 | `feat/guidance-registry`         | `feat(guidance): add unified guidance state registry`              | 无                   | 已完成 | 2026-11-19 · [#1056](https://github.com/urzeye/ophel/pull/1056) |
 | 3 | `feat/first-run-onboarding`      | `feat(onboarding): add first-run panel tour`                       | #2                   | 未开始 | —                                                              |
 | 4 | `ux/conversation-classify-nudge` | `ux(conversations): add new-conversation classify nudge`           | #2                   | 未开始 | —                                                              |
 | 5 | `ux/inbox-triage-entry`          | `ux(conversations): add inbox triage entry`                        | #2，建议排在 #4 后   | 未开始 | —                                                              |
