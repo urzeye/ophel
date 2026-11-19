@@ -3614,6 +3614,316 @@
   transition: none !important;
 }
 
+/* ============= 首装导览（全屏蒙层 + 聚光灯） ============= */
+.gh-tour-overlay {
+  /* 步骤态的压暗来自聚光灯的巨大 box-shadow（目标处自然留空）；
+     挂在 App 根级，与免责声明弹窗同层（面板 9999，快捷技巧 popover 10000） */
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  /* .gh-root 全局 pointer-events: none，蒙层要拦截交互必须显式恢复 */
+  pointer-events: auto;
+  background: transparent;
+  transition: opacity 0.26s ease-in;
+  animation: gh-tour-overlay-in 0.28s ease-out;
+}
+
+.gh-tour-overlay.is-exiting {
+  opacity: 0;
+}
+
+@keyframes gh-tour-overlay-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.gh-tour-spotlight {
+  position: fixed;
+  border-radius: 12px;
+  pointer-events: none;
+  outline: 2px solid var(--gh-primary, #4285f4);
+  outline-offset: 2px;
+  box-shadow:
+    0 0 0 9999px var(--gh-tour-dim, rgba(17, 24, 39, 0.55)),
+    0 0 30px 2px color-mix(in srgb, var(--gh-primary, #4285f4) 38%, transparent),
+    inset 0 0 16px color-mix(in srgb, var(--gh-primary, #4285f4) 10%, transparent);
+  transition:
+    top 0.42s cubic-bezier(0.2, 0.8, 0.2, 1),
+    left 0.42s cubic-bezier(0.2, 0.8, 0.2, 1),
+    width 0.42s cubic-bezier(0.2, 0.8, 0.2, 1),
+    height 0.42s cubic-bezier(0.2, 0.8, 0.2, 1),
+    transform 0.3s ease-in,
+    opacity 0.3s ease-in;
+  animation:
+    gh-tour-spot-in 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+    gh-tour-spotlight-pulse 2.6s ease-in-out 0.7s infinite;
+}
+
+.gh-tour-overlay.is-exiting .gh-tour-spotlight {
+  transform: scale(1.6);
+  opacity: 0;
+}
+
+@keyframes gh-tour-spot-in {
+  from {
+    opacity: 0;
+    transform: scale(1.14);
+  }
+}
+
+@keyframes gh-tour-spotlight-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 9999px var(--gh-tour-dim, rgba(17, 24, 39, 0.55)),
+      0 0 30px 2px color-mix(in srgb, var(--gh-primary, #4285f4) 38%, transparent),
+      inset 0 0 16px color-mix(in srgb, var(--gh-primary, #4285f4) 10%, transparent);
+  }
+
+  50% {
+    box-shadow:
+      0 0 0 9999px var(--gh-tour-dim, rgba(17, 24, 39, 0.55)),
+      0 0 42px 6px color-mix(in srgb, var(--gh-primary, #4285f4) 52%, transparent),
+      inset 0 0 16px color-mix(in srgb, var(--gh-primary, #4285f4) 10%, transparent);
+  }
+}
+
+/* 每步到位的「锁定」扩散环，一步一次 */
+.gh-tour-spotlight-ping {
+  position: absolute;
+  inset: -6px;
+  border-radius: 14px;
+  border: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 65%, transparent);
+  animation: gh-tour-ping 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes gh-tour-ping {
+  from {
+    opacity: 0.9;
+    transform: scale(0.97);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(1.12);
+  }
+}
+
+.gh-onboarding-tour {
+  position: fixed;
+  z-index: 1;
+  box-sizing: border-box;
+  width: 320px;
+  max-width: calc(100vw - 24px);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  background: var(--gh-card-bg, #ffffff);
+  border-radius: 14px;
+  box-shadow: var(--gh-shadow-lg, 0 20px 60px rgba(0, 0, 0, 0.3));
+  color: var(--gh-text, #1f2937);
+  transition:
+    top 0.42s cubic-bezier(0.2, 0.8, 0.2, 1),
+    left 0.42s cubic-bezier(0.2, 0.8, 0.2, 1),
+    transform 0.26s ease-in,
+    opacity 0.26s ease-in;
+  animation: gh-onboarding-tour-in 0.38s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.gh-tour-overlay.is-exiting .gh-onboarding-tour {
+  transform: translateY(10px);
+  opacity: 0;
+}
+
+@keyframes gh-onboarding-tour-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+}
+
+.gh-onboarding-tour-step {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gh-onboarding-tour-step[data-dir="fwd"] {
+  animation: gh-tour-step-fwd 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.gh-onboarding-tour-step[data-dir="back"] {
+  animation: gh-tour-step-back 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes gh-tour-step-fwd {
+  from {
+    opacity: 0;
+    transform: translateX(14px);
+  }
+}
+
+@keyframes gh-tour-step-back {
+  from {
+    opacity: 0;
+    transform: translateX(-14px);
+  }
+}
+
+.gh-onboarding-tour-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gh-onboarding-tour-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  flex-shrink: 0;
+  color: var(--gh-primary, #4285f4);
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 12%, transparent);
+}
+
+.gh-onboarding-tour-title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.gh-onboarding-tour-desc {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--gh-text-secondary, #6b7280);
+}
+
+.gh-onboarding-tour-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.gh-onboarding-tour-dots {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.gh-onboarding-tour-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--gh-text-tertiary, #8d94a1);
+  opacity: 0.4;
+  transition:
+    width 0.25s cubic-bezier(0.2, 0.8, 0.2, 1),
+    background-color 0.25s ease,
+    opacity 0.25s ease;
+}
+
+.gh-onboarding-tour-dot.active {
+  width: 16px;
+  opacity: 1;
+  background: var(--gh-primary, #4285f4);
+}
+
+.gh-onboarding-tour-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gh-onboarding-tour-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--gh-text-secondary, #6b7280);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.1s ease;
+}
+
+.gh-onboarding-tour-btn:hover {
+  background: var(--gh-hover, #f3f4f6);
+  color: var(--gh-text, #1f2937);
+}
+
+.gh-onboarding-tour-btn:active {
+  transform: translateY(1px);
+}
+
+.gh-onboarding-tour-btn:focus-visible {
+  outline: 2px solid var(--gh-primary, #4285f4);
+  outline-offset: 1px;
+}
+
+.gh-onboarding-tour-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.gh-onboarding-tour-btn-primary,
+.gh-onboarding-tour-btn-primary:hover {
+  background: var(--gh-primary, #4285f4);
+  color: #ffffff;
+}
+
+.gh-onboarding-tour-btn-primary {
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--gh-primary, #4285f4) 35%, transparent);
+}
+
+.gh-onboarding-tour-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--gh-primary, #4285f4) 42%, transparent);
+}
+
+.gh-onboarding-tour-btn-primary:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+/* 最后一步主按钮的一次性流光，呼应导出按钮的发现流光 */
+.gh-onboarding-tour-btn-primary.is-final::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    105deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.5) 50%,
+    transparent 65%
+  );
+  transform: translateX(-130%);
+  animation: gh-tour-shimmer 0.9s ease-out 0.3s;
+}
+
+@keyframes gh-tour-shimmer {
+  to {
+    transform: translateX(130%);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .gh-panel-icon-btn,
   .gh-main-panel,
@@ -3639,6 +3949,10 @@
   .gh-release-toast,
   .gh-release-toast-button,
   .gh-release-toast-close,
+  .gh-onboarding-tour,
+  .gh-onboarding-tour-dot,
+  .gh-tour-overlay,
+  .gh-tour-spotlight,
   .selected-prompt-bar,
   .ophel-tooltip {
     transition: none !important;
@@ -3655,6 +3969,12 @@
   .gh-loading-spinner,
   .gh-update-notice,
   .gh-update-notice-icon,
+  .gh-onboarding-tour,
+  .gh-onboarding-tour-step,
+  .gh-onboarding-tour-btn-primary.is-final::after,
+  .gh-tour-overlay,
+  .gh-tour-spotlight,
+  .gh-tour-spotlight-ping,
   .gh-panel-brand-unread,
   .gh-release-toast,
   .gh-quick-btn-unread,

@@ -19,6 +19,25 @@ export const ja = {
     "上のボタンをクリックすると、上記の内容を読み、理解し、同意したことになります。",
   disclaimerContribute: "貢献する",
 
+  // 初回パネルツアー
+  onboardingTourAriaLabel: "パネル機能ツアー",
+  onboardingTourStepOf: "ステップ {current} / {total}",
+  onboardingTourOutlineTitle: "目次",
+  onboardingTourOutlineDesc:
+    "会話の構造をリアルタイムで解析。項目をクリックでジャンプ、検索とブックマークにも対応。",
+  onboardingTourConversationsTitle: "会話管理",
+  onboardingTourConversationsDesc:
+    "サイトの会話がここに自動同期。フォルダとタグで整理して、いつでも検索で見つかります。",
+  onboardingTourPromptsTitle: "プロンプト",
+  onboardingTourPromptsDesc:
+    "よく使うプロンプトをテンプレート化してワンクリック挿入。変数とキュー送信にも対応。",
+  onboardingTourSettingsTitle: "設定",
+  onboardingTourSettingsDesc: "テーマ、ショートカット、バックアップ、サイト適配はこの歯車から。",
+  onboardingTourSkip: "スキップ",
+  onboardingTourPrev: "戻る",
+  onboardingTourNext: "次へ",
+  onboardingTourDone: "はじめる",
+
   tabPrompts: "プロンプト",
   tabSettings: "設定",
 

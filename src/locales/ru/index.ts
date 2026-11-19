@@ -19,6 +19,26 @@ export const ru = {
     "Нажимая кнопку выше, вы подтверждаете, что прочитали, поняли и принимаете изложенное выше.",
   disclaimerContribute: "Участвовать",
 
+  // Тур по панели при первом запуске
+  onboardingTourAriaLabel: "Тур по панели",
+  onboardingTourStepOf: "Шаг {current} из {total}",
+  onboardingTourOutlineTitle: "Содержание",
+  onboardingTourOutlineDesc:
+    "Разбирает структуру диалога в реальном времени. Клик по пункту — переход, есть поиск и закладки.",
+  onboardingTourConversationsTitle: "Чаты",
+  onboardingTourConversationsDesc:
+    "Чаты с сайта автоматически попадают сюда. Раскладывайте их по папкам и тегам, находите в любой момент.",
+  onboardingTourPromptsTitle: "Промпты",
+  onboardingTourPromptsDesc:
+    "Сохраняйте частые промпты как шаблоны и вставляйте в один клик — с переменными и отправкой очередью.",
+  onboardingTourSettingsTitle: "Настройки",
+  onboardingTourSettingsDesc:
+    "Темы, горячие клавиши, резервные копии и адаптация сайтов — за этой шестерёнкой.",
+  onboardingTourSkip: "Пропустить",
+  onboardingTourPrev: "Назад",
+  onboardingTourNext: "Далее",
+  onboardingTourDone: "Начать",
+
   tabPrompts: "Промпты",
   tabSettings: "Настройки",
 

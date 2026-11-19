@@ -18,6 +18,25 @@ export const ko = {
   disclaimerAgreeNote: "위 버튼을 클릭하면 위 내용을 읽고 이해했으며 동의한 것으로 간주됩니다.",
   disclaimerContribute: "기여하기",
 
+  // 첫 실행 패널 둘러보기
+  onboardingTourAriaLabel: "패널 기능 둘러보기",
+  onboardingTourStepOf: "{current}/{total}단계",
+  onboardingTourOutlineTitle: "개요",
+  onboardingTourOutlineDesc:
+    "대화 구조를 실시간으로 분석합니다. 항목을 클릭해 바로 이동하고, 검색과 북마크도 지원합니다.",
+  onboardingTourConversationsTitle: "대화",
+  onboardingTourConversationsDesc:
+    "사이트의 대화가 여기에 자동으로 동기화됩니다. 폴더와 태그로 정리하고 언제든 검색하세요.",
+  onboardingTourPromptsTitle: "프롬프트",
+  onboardingTourPromptsDesc:
+    "자주 쓰는 프롬프트를 템플릿으로 저장해 한 번의 클릭으로 삽입하고, 변수와 대기열 전송을 지원합니다.",
+  onboardingTourSettingsTitle: "설정",
+  onboardingTourSettingsDesc: "테마, 단축키, 백업, 사이트 어댑터는 이 톱니바퀴에서 열 수 있습니다.",
+  onboardingTourSkip: "건너뛰기",
+  onboardingTourPrev: "이전",
+  onboardingTourNext: "다음",
+  onboardingTourDone: "시작하기",
+
   tabPrompts: "프롬프트",
   tabSettings: "설정",
 

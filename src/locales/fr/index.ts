@@ -19,6 +19,26 @@ export const fr = {
     "En cliquant sur le bouton ci-dessus, vous confirmez avoir lu, compris et accepté ce qui précède.",
   disclaimerContribute: "Contribuer",
 
+  // Visite guidée du panneau
+  onboardingTourAriaLabel: "Visite du panneau",
+  onboardingTourStepOf: "Étape {current} sur {total}",
+  onboardingTourOutlineTitle: "Sommaire",
+  onboardingTourOutlineDesc:
+    "Analyse la structure de la conversation en direct. Cliquez sur une entrée pour y sauter, avec recherche et signets.",
+  onboardingTourConversationsTitle: "Chats",
+  onboardingTourConversationsDesc:
+    "Les chats du site se synchronisent ici automatiquement. Classez-les avec dossiers et tags, retrouvez-les à tout moment.",
+  onboardingTourPromptsTitle: "Invites",
+  onboardingTourPromptsDesc:
+    "Enregistrez vos invites fréquentes en modèles et insérez-les en un clic, avec variables et envoi en file.",
+  onboardingTourSettingsTitle: "Réglages",
+  onboardingTourSettingsDesc:
+    "Thèmes, raccourcis, sauvegarde et adaptation des sites se cachent derrière cet engrenage.",
+  onboardingTourSkip: "Ignorer",
+  onboardingTourPrev: "Précédent",
+  onboardingTourNext: "Suivant",
+  onboardingTourDone: "Commencer",
+
   tabPrompts: "Invites",
   tabSettings: "Réglages",
 

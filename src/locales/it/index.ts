@@ -19,6 +19,26 @@ export const it = {
     "Facendo clic sul pulsante qui sopra, dichiari di aver letto, compreso e accettato quanto sopra.",
   disclaimerContribute: "Contribuisci",
 
+  // Tour iniziale del pannello
+  onboardingTourAriaLabel: "Tour del pannello",
+  onboardingTourStepOf: "Passaggio {current} di {total}",
+  onboardingTourOutlineTitle: "Contorno",
+  onboardingTourOutlineDesc:
+    "Analizza la struttura della conversazione in tempo reale. Clicca su una voce per saltarvi, con ricerca e segnalibri.",
+  onboardingTourConversationsTitle: "Chat",
+  onboardingTourConversationsDesc:
+    "Le chat del sito si sincronizzano qui automaticamente. Organizzale con cartelle e tag, ritrovale quando vuoi.",
+  onboardingTourPromptsTitle: "Suggerimenti",
+  onboardingTourPromptsDesc:
+    "Salva i suggerimenti più usati come modelli e inseriscili con un clic, con variabili e invio in coda.",
+  onboardingTourSettingsTitle: "Impostazioni",
+  onboardingTourSettingsDesc:
+    "Temi, scorciatoie, backup e adattamento dei siti sono dietro questo ingranaggio.",
+  onboardingTourSkip: "Salta",
+  onboardingTourPrev: "Indietro",
+  onboardingTourNext: "Avanti",
+  onboardingTourDone: "Inizia",
+
   tabPrompts: "Suggerimenti",
   tabSettings: "Impostazioni",
 

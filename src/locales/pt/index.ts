@@ -19,6 +19,26 @@ export const pt = {
     "Ao clicar no botão acima, você confirma que leu, compreendeu e concorda com o conteúdo acima.",
   disclaimerContribute: "Contribuir",
 
+  // Tour inicial do painel
+  onboardingTourAriaLabel: "Tour do painel",
+  onboardingTourStepOf: "Etapa {current} de {total}",
+  onboardingTourOutlineTitle: "Índice",
+  onboardingTourOutlineDesc:
+    "Analisa a estrutura da conversa em tempo real. Clique numa entrada para saltar, com pesquisa e marcadores.",
+  onboardingTourConversationsTitle: "Chats",
+  onboardingTourConversationsDesc:
+    "Os chats do site são sincronizados aqui automaticamente. Organize-os com pastas e etiquetas e encontre-os quando quiser.",
+  onboardingTourPromptsTitle: "Comandos",
+  onboardingTourPromptsDesc:
+    "Guarde os comandos frequentes como modelos e insira-os com um clique, com variáveis e envio em fila.",
+  onboardingTourSettingsTitle: "Definições",
+  onboardingTourSettingsDesc:
+    "Temas, atalhos, cópias de segurança e adaptação de sites estão nesta engrenagem.",
+  onboardingTourSkip: "Ignorar",
+  onboardingTourPrev: "Anterior",
+  onboardingTourNext: "Seguinte",
+  onboardingTourDone: "Começar",
+
   tabPrompts: "Comandos",
   tabSettings: "Ajustes",
 

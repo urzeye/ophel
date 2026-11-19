@@ -27,6 +27,7 @@ import { QuickQuoteActions } from "~components/QuickQuoteActions"
 import { ensureGlobalThemeManager, type ThemeTransitionOrigin } from "~core/theme-manager"
 import { SparkleIcon } from "~components/icons/SparkleIcon"
 import { useEdgePeekController } from "~hooks/useEdgePeekController"
+import { useFirstRunPanelTour } from "~hooks/useFirstRunPanelTour"
 import { useMediaQuery } from "~hooks/useMediaQuery"
 import { useShortcuts } from "~hooks/useShortcuts"
 import { platform } from "~platform"
@@ -64,6 +65,7 @@ import { ConfirmDialog, FolderSelectDialog, TagManagerDialog } from "./Conversat
 import { DisclaimerModal } from "./DisclaimerModal"
 import { LoadingOverlay } from "./LoadingOverlay"
 import { MainPanel } from "./MainPanel"
+import { PanelOnboardingTour } from "./PanelOnboardingTour"
 import { QueueOverlay } from "./QueueOverlay"
 import { ReleaseNotesModal } from "./ReleaseNotesModal"
 import { QuickButtons } from "./QuickButtons"
@@ -1050,6 +1052,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
   const [launcherPeekAnchorRect, setLauncherPeekAnchorRect] =
     useState<LauncherPeekAnchorRect | null>(null)
   const isLauncherPeekingRef = useRef(false)
+
   const isLauncherPeekInteractionActiveRef = useRef(false)
   const launcherPeekDwellTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const launcherPeekHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -1078,6 +1081,30 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
     setIsLauncherPeeking(false)
     setLauncherPeekAnchorRect(null)
   }, [clearLauncherPeekDwellTimer, clearLauncherPeekHideTimer])
+
+  const preparePanelForTour = useCallback(() => {
+    hideLauncherPeek()
+    if (isPanelDrawer) {
+      setIsDrawerOpen(true)
+      return
+    }
+
+    persistPanelExpanded(true)
+    if (settingsRef.current?.panel?.panelMode === "edge-snap") {
+      setEdgeSnapState(edgeSnapState ?? settingsRef.current.panel.defaultPosition)
+      showEdgePeek()
+    }
+  }, [edgeSnapState, hideLauncherPeek, isPanelDrawer, persistPanelExpanded, showEdgePeek])
+
+  // 吸附模式的 edge-peek 就是实际展开态；收起或进入启动器预览时不保留蒙层。
+  const canShowPanelTour =
+    isPanelShown &&
+    !isLauncherPeeking &&
+    (isPanelDrawer || !edgeSnapState || settings?.panel?.panelMode !== "edge-snap" || isEdgePeeking)
+  const { tourVisible, requestTour, markTourShown, exitTour } = useFirstRunPanelTour(
+    canShowPanelTour,
+    preparePanelForTour,
+  )
 
   const isLauncherPeekRetainedByPointer = useCallback(() => {
     if (isLauncherPeekPointerStaleRef.current) {
@@ -2207,6 +2234,11 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
 
   useEffect(() => {
     const handleOpenSearchShortcut = (event: KeyboardEvent) => {
+      if (tourVisible) {
+        lastShiftPressedAtRef.current = 0
+        return
+      }
+
       // Use ref to check if search is already open
       if (isGlobalSettingsSearchOpenRef.current) {
         return
@@ -2248,7 +2280,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
     return () => {
       window.removeEventListener("keydown", handleOpenSearchShortcut, true)
     }
-  }, [markGlobalSearchShortcutUsed, openGlobalSettingsSearch])
+  }, [markGlobalSearchShortcutUsed, openGlobalSettingsSearch, tourVisible])
 
   useEffect(() => {
     const handleOpenSearchEvent = () => {
@@ -3100,6 +3132,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
 
   // 快捷键管理
   useShortcuts({
+    disabled: tourVisible,
     settings,
     adapter,
     outlineManager,
@@ -4106,7 +4139,8 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
           </div>
         </section>
       )}
-      <DisclaimerModal />
+      <DisclaimerModal onAgree={requestTour} />
+      {tourVisible && <PanelOnboardingTour onShown={markTourShown} onExit={exitTour} />}
     </div>
   )
 }

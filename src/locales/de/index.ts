@@ -19,6 +19,26 @@ export const de = {
     "Mit einem Klick auf die Schaltfläche oben bestätigst du, dass du das Obige gelesen, verstanden und akzeptiert hast.",
   disclaimerContribute: "Mitwirken",
 
+  // Erste Panel-Tour
+  onboardingTourAriaLabel: "Panel-Tour",
+  onboardingTourStepOf: "Schritt {current} von {total}",
+  onboardingTourOutlineTitle: "Verzeichnis",
+  onboardingTourOutlineDesc:
+    "Analysiert die Gesprächsstruktur live. Ein Klick springt zur Stelle – mit Suche und Lesezeichen.",
+  onboardingTourConversationsTitle: "Chats",
+  onboardingTourConversationsDesc:
+    "Chats der Seite werden hier automatisch synchronisiert. Mit Ordnern und Tags ordnen, jederzeit wiederfinden.",
+  onboardingTourPromptsTitle: "Prompt-Bibliothek",
+  onboardingTourPromptsDesc:
+    "Häufige Prompts als Vorlagen speichern und per Klick einfügen – mit Variablen und Warteschlangen-Versand.",
+  onboardingTourSettingsTitle: "Einstellungen",
+  onboardingTourSettingsDesc:
+    "Designs, Tastenkürzel, Backup und Site-Anpassungen liegen hinter diesem Zahnrad.",
+  onboardingTourSkip: "Überspringen",
+  onboardingTourPrev: "Zurück",
+  onboardingTourNext: "Weiter",
+  onboardingTourDone: "Loslegen",
+
   tabPrompts: "Prompt-Bibliothek",
   tabSettings: "Einstellungen",
 

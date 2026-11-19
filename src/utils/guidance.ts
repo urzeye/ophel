@@ -43,6 +43,12 @@ export const GUIDANCE_RULES = {
     minIntervalMs: 24 * 60 * 60 * 1000,
     autoDismissAfterActions: 2,
   },
+  // 首装面板导览：同意免责声明后的当次会话展示一次
+  "first-run-panel-tour": {
+    maxShows: 1,
+    minIntervalMs: 0,
+    autoDismissAfterActions: Number.POSITIVE_INFINITY,
+  },
 } as const satisfies Record<string, GuidanceRule>
 
 export type GuidanceId = keyof typeof GUIDANCE_RULES

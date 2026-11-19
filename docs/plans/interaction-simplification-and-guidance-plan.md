@@ -11,7 +11,7 @@
 | - | ---------------------------------- | -------------------------------------------------------------------- | -------------------- | ------ | --------------------------------------------------------------- |
 | 1 | `ux/settings-card-layering`      | `ux(settings): add collapsible advanced sections to setting cards` | 无                   | 已完成 | 2026-11-19 · [#1055](https://github.com/urzeye/ophel/pull/1055) |
 | 2 | `feat/guidance-registry`         | `feat(guidance): add unified guidance state registry`              | 无                   | 已完成 | 2026-11-19 · [#1056](https://github.com/urzeye/ophel/pull/1056) |
-| 3 | `feat/first-run-onboarding`      | `feat(onboarding): add first-run panel tour`                       | #2                   | 未开始 | —                                                              |
+| 3 | `feat/first-run-onboarding`      | `feat(onboarding): add first-run panel spotlight tour`             | #2                   | 已完成 | 2026-11-19 · [#1057](https://github.com/urzeye/ophel/pull/1057) |
 | 4 | `ux/conversation-classify-nudge` | `ux(conversations): add new-conversation classify nudge`           | #2                   | 未开始 | —                                                              |
 | 5 | `ux/inbox-triage-entry`          | `ux(conversations): add inbox triage entry`                        | #2，建议排在 #4 后   | 未开始 | —                                                              |
 | 6 | `feat/settings-consolidation`    | `feat(settings): consolidate low-frequency switches`               | #1，且删除项需先决策 | 未开始 | —                                                              |
@@ -77,28 +77,34 @@
 
 ## 分支 3：`feat/first-run-onboarding`
 
-**目标**：补首装引导空白。用户同意免责声明后，看到不超过 3 步的面板导览。
+**目标**：补首装引导空白。用户同意免责声明后，直接进入四步面板聚光灯导览。
 
 **做什么**
 
-- 以 `DisclaimerModal` 同意动作（`hasAgreedToTerms` 置真）为零号触点，触发一次轻量导览：介绍大纲 / 对话 / 提示词三个 tab 各是什么，≤3 步。
+- 以 `DisclaimerModal` 当前页面的同意回调触发一次导览：自动展开面板，依次介绍大纲 / 对话 / 提示词 tab 和设置入口，共四步。
 - 可跳过、可"不再提示"；完成或跳过后经分支 2 的注册表永久记录。
-- 仅对新安装用户展示（`hasAgreedToTerms` 由 false 变 true 的当次），老用户升级不触发。
+- 仅在当前页面确认协议时触发；跨标签页设置同步与老用户升级不触发，卡片实际可见后才记录展示次数。
 
 **不做什么**
 
-- 不做全屏蒙层 tour、不做逐步高亮页面元素的复杂引导。
 - 不在 `onInstalled` 里新增打开页面行为。
 
 **关键文件**：`src/components/DisclaimerModal.tsx`、`src/components/App.tsx`、分支 2 的注册表模块、面板 tab 组件。
 
-**注意**：触及 UI 先做 `DESIGN.md` design read；全部新增文案一次性同步 11 种语言；步骤越多文案成本越高，严格 ≤3 步。
+**注意**：触及 UI 先做 `DESIGN.md` design read；全部新增文案一次性同步 11 种语言，保持四步。
 
 **验证**：标准四件套；冒烟：清 `hasAgreedToTerms` 后首启流程（同意 → 导览 → 跳过/完成 → 刷新不再出现）。
 
 **进度记录**：
 
-- （待填写）
+- 2026-11-19：完成，PR [#1057](https://github.com/urzeye/ophel/pull/1057)（Draft）。⚠️ 方向变更：用户明确要求改为全屏蒙层 + 逐步高亮页面元素的 tour，原"不做全屏蒙层"约束作废；步数也从 ≤3 步调整为 4 步（大纲 / 对话 / 提示词 tab + 设置入口），i18n 已按 4 步同步 11 语言。
+- 实现要点：导览挂载在 App 根级（与 `DisclaimerModal` 同级），因为面板内联 `transform` 会成为 `position: fixed` 后代的包含块，导致聚光灯定位整体偏移；`.gh-root` 全局 `pointer-events: none`，蒙层需显式恢复 `pointer-events: auto`；卡片水平夹取用实测宽度，避免盒模型差异导致右缘超出视口。
+- 验证：四件套 + 油猴 / Firefox 构建通过；Playwright 真实浏览器全流程（同意免责声明 → 四步聚光灯几何与目标对齐 → 完成注销注册表 → 刷新不复发）。
+- 2026-11-19 追加：tab 步骤真实切换面板内容区（真实点击 tab 按钮，走原有路径），退出导览时恢复初始 tab；设置步只指向齿轮、不打开设置弹窗（避免 modal 叠 modal）。恢复逻辑收敛在组件卸载 cleanup，覆盖完成/跳过/Esc/面板关闭全部退出路径。
+- 2026-11-19 追加：移除导览前的「欢迎使用 Ophel」弹窗，直接从大纲聚光灯开始，保留大纲 / 对话 / 提示词 / 设置四步；第一步不显示「上一步」，同步清理欢迎页专用状态、样式和 11 种语言文案。
+- 2026-11-19 评审修复：合并静态审查与 PR #1057 review 的意见，按「本地确认与展示计数 → 面板生命周期 → 键盘和焦点」修复；改为本地协议确认回调触发并自动展开抽屉 / 吸附面板，纠正吸附可见性判断，卡片可见后计数且计数与关闭写入串行；面板关闭时同步退出，导览接入交互层 / Esc / 悬停宽度保活，暂停快捷键和双 Shift 搜索，定位后聚焦并限制 Tab 焦点范围，退出经已有事件恢复初始 tab。
+- 本次静态检查：相关文件 Prettier / ESLint 与 `pnpm typecheck` 通过，ESLint 仅保留 `useShortcuts.ts` 原有的 `any` 警告；按用户要求不运行构建或浏览器模拟验证。
+- 2026-11-19 静态审查后续修复：补充面板 `animationend` / `animationcancel` 后的聚光灯重测，覆盖抽屉平移入场；Esc / Tab 改为文档捕获监听，通过 `composedPath()` 识别真实目标，并在焦点进入导览外时拉回主按钮，蒙层支持程序化聚焦以承接空白处点击。验证：组件 Prettier / ESLint、`pnpm typecheck` 与 `git diff --check` 通过；按用户要求不运行构建或浏览器模拟验证。
 
 ## 分支 4：`ux/conversation-classify-nudge`
 

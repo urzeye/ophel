@@ -70,6 +70,7 @@ function navigateConversation(
 }
 
 interface UseShortcutsOptions {
+  disabled?: boolean
   settings: Settings | undefined
   adapter: SiteAdapter | null
   outlineManager: OutlineManager | null
@@ -87,6 +88,7 @@ interface UseShortcutsOptions {
 }
 
 export function useShortcuts({
+  disabled = false,
   settings,
   adapter,
   outlineManager,
@@ -823,6 +825,8 @@ export function useShortcuts({
 
   // 注册处理器
   useEffect(() => {
+    if (disabled) return
+
     const conversationsTabVisible = visiblePanelTabIds.includes(TAB_IDS.CONVERSATIONS)
     const handlers: Partial<Record<ShortcutActionId, () => void>> = {
       [SHORTCUT_ACTIONS.SCROLL_TOP]: scrollToTop,
@@ -910,6 +914,7 @@ export function useShortcuts({
       shortcutManager.clearAll()
     }
   }, [
+    disabled,
     shortcutManager,
     adapter,
     scrollToTop,
