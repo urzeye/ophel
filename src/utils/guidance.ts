@@ -5,6 +5,8 @@
  * 本模块不依赖平台与 React，便于单测；存储读写见 ./guidance-storage。
  */
 
+import { GUIDANCE_STORAGE_KEY_PREFIX } from "~constants/storage-keys"
+
 /** 单个引导的持久化状态 */
 export interface GuidanceEntryState {
   shownCount: number
@@ -44,6 +46,11 @@ export const GUIDANCE_RULES = {
 } as const satisfies Record<string, GuidanceRule>
 
 export type GuidanceId = keyof typeof GUIDANCE_RULES
+
+export const GUIDANCE_IDS = Object.keys(GUIDANCE_RULES) as GuidanceId[]
+
+/** 单个引导的存储键：每引导一键，不同引导的读写互不干扰 */
+export const guidanceStorageKey = (id: GuidanceId): string => `${GUIDANCE_STORAGE_KEY_PREFIX}${id}`
 
 export const DEFAULT_GUIDANCE_ENTRY_STATE: GuidanceEntryState = {
   shownCount: 0,

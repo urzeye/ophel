@@ -72,7 +72,8 @@
 
 **进度记录**：
 
-- 2026-11-19 完成。新增纯逻辑层 `src/utils/guidance.ts`（规则表 `GUIDANCE_RULES`、状态归一化、`decideShouldShowGuidance` / `hasGuidanceCompleted` 纯函数）与存储层 `src/utils/guidance-storage.ts`（单键 `ophel:guidance` 合存全部引导状态，走 `platform.storage`，API：`getGuidanceState` / `shouldShowGuidance` / `markGuidanceShown` / `dismissGuidance` / `markGuidanceAction` / `watchGuidanceState`）。导出流光与全局搜索快捷键 nudge 两处消费者接入注册表，对外接口与触发时机不变；规则数值（3 次 / 24h / 2 次快捷键后停用）从 global-search constants 迁入规则表。油猴端 `KNOWN_STORAGE_KEYS` 补 `ophel:guidance` 保证「清除全部数据」覆盖；`handleClearAllData` 保留旧 localStorage 键清理并标注为历史遗留。按用户决策不做旧数据迁移。新增 `tests/guidance.test.ts` 8 个用例（vitest 配置原本就绪但无测试）。验证：vitest / format / lint / typecheck / build / build:userscript 通过；Playwright 实测首装同意免责声明 → 打开全局搜索 → nudge 展示且 `chrome.storage.local` 正确写入注册表状态。
+- 2026-11-19 完成。新增纯逻辑层 `src/utils/guidance.ts`（规则表 `GUIDANCE_RULES`、状态归一化、`decideShouldShowGuidance` / `hasGuidanceCompleted` 纯函数）与存储层 `src/utils/guidance-storage.ts`（每个引导独立存储键 `ophel:guidance:<id>`，走 `platform.storage`，API：`getGuidanceState` / `shouldShowGuidance` / `markGuidanceShown` / `dismissGuidance` / `markGuidanceAction` / `watchGuidanceState`）。导出流光与全局搜索快捷键 nudge 两处消费者接入注册表，对外接口与触发时机不变；规则数值（3 次 / 24h / 2 次快捷键后停用）从 global-search constants 迁入规则表。油猴端 `KNOWN_STORAGE_KEYS` 从 `GUIDANCE_RULES` 派生引导键，保证「清除全部数据」覆盖且新增引导自动纳入；`handleClearAllData` 保留旧 localStorage 键清理并标注为历史遗留。按用户决策不做旧数据迁移。验证：format / lint / typecheck / build / build:userscript 通过；Playwright 实测首装同意免责声明 → 打开全局搜索 → nudge 展示且 `chrome.storage.local` 正确写入注册表状态。
+- 2026-11-19 评审修复（PR #1056 Codex review）：存储形态从单键 blob 改为每引导独立键。原单键方案的异步读-改-写跨标签页不原子，两个引导并发写会丢更新（流光重复启用 / nudge 计数丢失）；按键隔离后不同引导物理隔离，同一引导并发写各操作幂等（置位类重复写结果相同、计数类允许低估），结构性消除该风险。另：分支内曾新增的 `tests/guidance.test.ts` 已由用户移除。
 
 ## 分支 3：`feat/first-run-onboarding`
 

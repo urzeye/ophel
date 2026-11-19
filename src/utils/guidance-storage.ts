@@ -1,43 +1,38 @@
 /**
  * 引导状态注册表 - 存储层
  *
- * 全部引导状态合存于 GUIDANCE_STORAGE_KEY 一个键下（Record<id, state>），
- * 走 platform.storage：扩展端 chrome.storage.local，油猴端 GM 存储，
- * 保证同一浏览器内跨站点一致（localStorage 按站点隔离，不适用）。
+ * 每个引导一个独立存储键（ophel:guidance:<id>），走 platform.storage：
+ * 扩展端 chrome.storage.local，油猴端 GM 存储，保证同一浏览器内跨站点一致
+ * （localStorage 按站点隔离，不适用）。
+ *
+ * chrome.storage / GM 均不提供原子的读-改-写。按键隔离后，不同引导的写入
+ * 物理上互不覆盖；同一引导在多个标签页并发写时以后写为准，但注册表各操作
+ * 幂等（置位类重复写结果相同，计数类允许低估），不会跨引导丢失状态。
  */
 
-import { GUIDANCE_STORAGE_KEY } from "~constants/storage-keys"
 import { platform } from "~platform"
 
 import {
   decideShouldShowGuidance,
   GUIDANCE_RULES,
+  guidanceStorageKey,
   normalizeGuidanceEntryState,
   type GuidanceEntryState,
   type GuidanceId,
 } from "./guidance"
 
-type GuidanceStoreShape = Partial<Record<GuidanceId, unknown>>
-
-const readGuidanceStore = async (): Promise<GuidanceStoreShape> => {
-  const value = await platform.storage.get<GuidanceStoreShape>(GUIDANCE_STORAGE_KEY)
-  return value && typeof value === "object" ? value : {}
-}
-
 const writeGuidanceEntry = async (
   id: GuidanceId,
   updater: (state: GuidanceEntryState) => GuidanceEntryState,
 ): Promise<GuidanceEntryState> => {
-  const store = await readGuidanceStore()
-  const next = updater(normalizeGuidanceEntryState(store[id]))
-  await platform.storage.set(GUIDANCE_STORAGE_KEY, { ...store, [id]: next })
+  const key = guidanceStorageKey(id)
+  const next = updater(normalizeGuidanceEntryState(await platform.storage.get(key)))
+  await platform.storage.set(key, next)
   return next
 }
 
-export const getGuidanceState = async (id: GuidanceId): Promise<GuidanceEntryState> => {
-  const store = await readGuidanceStore()
-  return normalizeGuidanceEntryState(store[id])
-}
+export const getGuidanceState = async (id: GuidanceId): Promise<GuidanceEntryState> =>
+  normalizeGuidanceEntryState(await platform.storage.get(guidanceStorageKey(id)))
 
 export const shouldShowGuidance = async (id: GuidanceId): Promise<boolean> => {
   const state = await getGuidanceState(id)
@@ -70,6 +65,6 @@ export const watchGuidanceState = (
   id: GuidanceId,
   callback: (state: GuidanceEntryState) => void,
 ): (() => void) =>
-  platform.storage.watch<GuidanceStoreShape>(GUIDANCE_STORAGE_KEY, (newValue) => {
-    callback(normalizeGuidanceEntryState(newValue?.[id]))
+  platform.storage.watch(guidanceStorageKey(id), (newValue) => {
+    callback(normalizeGuidanceEntryState(newValue))
   })
