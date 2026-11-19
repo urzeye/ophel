@@ -14,7 +14,7 @@
 | 3 | `feat/first-run-onboarding`      | `feat(onboarding): add first-run panel spotlight tour`             | #2                   | 已完成 | 2026-11-19 · [#1057](https://github.com/urzeye/ophel/pull/1057) |
 | 4 | `ux/conversation-classify-nudge` | `ux(conversations): add new-conversation classify nudge`           | #2                   | 未开始 | —                                                              |
 | 5 | `ux/inbox-triage-entry`          | `ux(conversations): add inbox triage entry`                        | #2，建议排在 #4 后   | 未开始 | —                                                              |
-| 6 | `feat/settings-consolidation`    | `ux(settings): consolidate low-frequency options and shortcut groups` | #1                   | 进行中 | —                                                              |
+| 6 | `feat/settings-consolidation`    | `ux(settings): consolidate low-frequency options and shortcut groups` | #1                   | 已完成 | 2026-11-19 · [#1058](https://github.com/urzeye/ophel/pull/1058) |
 
 状态取值：`未开始` / `进行中` / `已完成` / `已搁置`。
 
@@ -188,6 +188,8 @@
 
 - 2026-11-19：用户确认仅实施功能页四项低频设置下沉与快捷键同族分组；不删除设置，不修改常规页和站点设置。已在 `feat/settings-consolidation` 开始实现。
 - 2026-11-19：本地实现完成，尚未提交或创建 PR。`SettingCardAdvanced` 增加可选分组标签，功能页四项设置下沉，两组快捷键默认折叠，46 个动作及原有绑定独立保留；新增文案已同步 11 种语言，中英文日志合并进已有设置分层条目。验证：`pnpm format:check`、`pnpm lint:check`（0 错误，112 条原有警告）、`pnpm typecheck`、`pnpm build` 和 `git diff --check` 通过；Playwright 加载 Chrome 构建产物，在独立 Options 页验证默认折叠、键盘开合、逐项改绑与移除、冲突提示、六个设置深链自动展开、已有非默认值与未绑定状态保留，并检查深浅主题截图。
+
+- 2026-11-19：已提交并创建 Draft PR [#1058](https://github.com/urzeye/ophel/pull/1058)。中英文更新日志沿用 #1055 的现有条目和文案，仅追加 #1058 编号。
 
 ## 通用约定
 
