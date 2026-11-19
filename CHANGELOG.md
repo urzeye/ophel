@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+---
+
+## [1.3.5][1.3.5] - 2026-11-19
+
 ### 🚀 New Features
 
 - **WorkBuddy support** — Added support for WorkBuddy (workbuddy.cn / workbuddy.ai), with outlines, export, prompt insertion, panel avoidance, and host theme sync. (#1050, #1051)
@@ -1736,6 +1740,7 @@ This is the first official release of Ophel, providing comprehensive enhancement
 
 ---
 
+[1.3.5]: https://github.com/urzeye/ophel/releases/tag/v1.3.5
 [1.3.4]: https://github.com/urzeye/ophel/releases/tag/v1.3.4
 [1.3.3]: https://github.com/urzeye/ophel/releases/tag/v1.3.3
 [1.3.2]: https://github.com/urzeye/ophel/releases/tag/v1.3.2

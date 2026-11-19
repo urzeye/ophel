@@ -8,6 +8,10 @@
 
 ## [Unreleased]
 
+---
+
+## [1.3.5][1.3.5] - 2026-11-19
+
 ### 🚀 新增功能
 
 - **WorkBuddy 支持** — 新增适配 WorkBuddy（workbuddy.cn / workbuddy.ai），大纲、导出、提示词插入、智能避让与主题联动均可用。 (#1050, #1051)
@@ -1737,6 +1741,7 @@
 
 ---
 
+[1.3.5]: https://github.com/urzeye/ophel/releases/tag/v1.3.5
 [1.3.4]: https://github.com/urzeye/ophel/releases/tag/v1.3.4
 [1.3.3]: https://github.com/urzeye/ophel/releases/tag/v1.3.3
 [1.3.2]: https://github.com/urzeye/ophel/releases/tag/v1.3.2
