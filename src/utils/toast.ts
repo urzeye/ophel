@@ -61,37 +61,73 @@ ${INTER_LOCAL_FONT_FACE}
         left: 50% !important;
         display: flex !important;
         align-items: center !important;
-        gap: 12px !important;
+        gap: 10px !important;
         box-sizing: border-box !important;
         width: max-content !important;
         max-width: min(calc(100vw - 32px), var(--gh-toast-max-width, 480px)) !important;
-        background: color-mix(in srgb, var(--gh-primary, #4285f4) 6%, var(--gh-bg, #ffffff)) !important;
-        color: var(--gh-text, #1f2937) !important;
-        border: 1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 24%, var(--gh-border, #e5e7eb)) !important;
-        padding: 10px 16px !important;
+        padding: 9px 16px !important;
         border-radius: 12px !important;
-        font-size: 14px !important;
+        overflow: hidden !important;
+        background:
+          linear-gradient(
+            135deg,
+            color-mix(in srgb, var(--gh-primary, #4285f4) 14%, transparent),
+            color-mix(in srgb, var(--gh-primary, #4285f4) 5%, transparent)
+          ),
+          color-mix(in srgb, var(--gh-bg, #ffffff) 90%, transparent) !important;
+        backdrop-filter: blur(14px) saturate(150%) !important;
+        -webkit-backdrop-filter: blur(14px) saturate(150%) !important;
+        border: 1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 28%, var(--gh-border, #e5e7eb)) !important;
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.22),
+          0 1px 2px rgba(15, 23, 42, 0.05),
+          0 12px 32px -10px color-mix(in srgb, var(--gh-primary, #4285f4) 36%, transparent) !important;
+        color: var(--gh-text, #1f2937) !important;
+        font-size: 13px !important;
         font-weight: 500 !important;
         line-height: 20px !important;
-        box-shadow:
-          var(--gh-shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.1)),
-          0 8px 24px color-mix(in srgb, var(--gh-text, #1f2937) 10%, transparent) !important;
         z-index: 2147483646 !important; /* 刚好在一级最高层（禅模式按钮 2147483647）之下 */
         pointer-events: none !important;
         opacity: 0 !important;
-        transform: translate(-50%, -8px) scale(0.98) !important;
+        transform: translate(-50%, -10px) scale(0.96) !important;
+        filter: blur(4px) !important;
         transform-origin: center top !important;
-        transition: opacity ${TOAST_EXIT_DURATION}ms ease, transform ${TOAST_EXIT_DURATION}ms ease !important;
+        transition:
+          opacity ${TOAST_EXIT_DURATION}ms ease,
+          transform ${TOAST_EXIT_DURATION}ms ease,
+          filter ${TOAST_EXIT_DURATION}ms ease !important;
         font-family: ${getPlatformFontFamily()} !important;
         letter-spacing: normal !important;
       }
       .gh-toast::before {
         content: "";
-        flex: 0 0 6px;
-        width: 6px;
-        height: 6px;
+        flex: 0 0 7px;
+        width: 7px;
+        height: 7px;
         border-radius: 50%;
-        background: var(--gh-toast-accent);
+        background: linear-gradient(
+          135deg,
+          var(--gh-toast-accent),
+          color-mix(in srgb, var(--gh-toast-accent) 55%, var(--gh-bg, #ffffff))
+        );
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--gh-toast-accent) 16%, transparent);
+      }
+      .gh-toast::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        pointer-events: none;
+        opacity: 0;
+        background: linear-gradient(
+          115deg,
+          transparent 36%,
+          rgba(255, 255, 255, 0.18) 46%,
+          rgba(255, 255, 255, 0.3) 50%,
+          rgba(255, 255, 255, 0.18) 54%,
+          transparent 64%
+        );
+        transform: translateX(-130%);
       }
       .gh-toast-message {
         min-width: 0;
@@ -105,8 +141,36 @@ ${INTER_LOCAL_FONT_FACE}
       .gh-toast.show {
         opacity: 1 !important;
         transform: translate(-50%, 0) scale(1) !important;
+        filter: blur(0) !important;
         transition-duration: 240ms !important;
         transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1) !important;
+      }
+      .gh-toast.show::before {
+        animation: gh-toast-dot-ping 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.12s 1 backwards;
+      }
+      .gh-toast.show::after {
+        animation: gh-toast-sheen 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.1s 1 backwards;
+      }
+      @keyframes gh-toast-dot-ping {
+        0% {
+          box-shadow: 0 0 0 0 color-mix(in srgb, var(--gh-toast-accent) 45%, transparent);
+        }
+        100% {
+          box-shadow: 0 0 0 8px transparent;
+        }
+      }
+      @keyframes gh-toast-sheen {
+        0% {
+          opacity: 0;
+          transform: translateX(-130%);
+        }
+        15% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 1;
+          transform: translateX(130%);
+        }
       }
       .gh-toast--outline-nav {
         --gh-toast-max-width: 360px;
@@ -116,9 +180,14 @@ ${INTER_LOCAL_FONT_FACE}
         .gh-toast {
           transition: opacity ${TOAST_EXIT_DURATION}ms ease !important;
           transform: translateX(-50%) !important;
+          filter: none !important;
         }
         .gh-toast.show {
           transform: translateX(-50%) !important;
+        }
+        .gh-toast.show::before,
+        .gh-toast.show::after {
+          animation: none !important;
         }
       }
     `
