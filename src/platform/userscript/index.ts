@@ -62,6 +62,16 @@ export const platform: Platform = {
   type: "userscript",
 
   storage: userscriptStorage,
+  webdav: {
+    async request(...args) {
+      const { userscriptWebDAVRequest } = await import("./webdav")
+      return userscriptWebDAVRequest(...args)
+    },
+    async runAction(...args) {
+      const { userscriptWebDAV } = await import("./webdav")
+      return userscriptWebDAV.runAction(...args)
+    },
+  },
 
   math: {
     renderKatexToString,

@@ -1237,6 +1237,21 @@ export const de = {
   webdavUploadBtn: "Hochladen",
   webdavDownloadBtn: "Herunterladen",
   webdavDownloadConfirm: "Downloads überschreiben lokale Daten. Fortfahren?",
+  webdavAutoBackup: "Automatische Sicherung",
+  webdavAutoBackupDesc:
+    "Sicherungen regelmäßig ohne Leseverlauf hochladen. Die letzten 7 automatischen Sicherungen je Gerät behalten; Wiederherstellung erfolgt manuell.",
+  webdavAutoBackupInterval: "Sicherungsintervall",
+  webdavAutoBackupHourly: "Jede Stunde",
+  webdavAutoBackupHours: "Alle {hours} Stunden",
+  webdavAutoBackupUserscriptHint:
+    "Für das Userscript muss mindestens eine Seite mit Ophel geöffnet bleiben. Automatische Sicherungen enden, sobald alle diese Seiten geschlossen sind.",
+  webdavBackupFailed:
+    "Letzte Sicherung oder Wiederherstellung fehlgeschlagen. Einstellungen und Netzwerk prüfen und manuell erneut versuchen.",
+  webdavBusy: "Eine Sicherung oder Wiederherstellung läuft. Bitte später erneut versuchen.",
+  webdavCleanupFailed:
+    "Sicherung hochgeladen, aber alte automatische Sicherungen konnten nicht gelöscht werden ({detail}).",
+  webdavPermissionDenied:
+    "Kein Zugriff auf den WebDAV-Server. Konfiguration erneut speichern und den Zugriff erlauben.",
   webdavLastSync: "Zuletzt synchronisiert: {time}",
   webdavConnectionSuccess: "OK",
   webdavUploadSuccess: "Hochgeladen",

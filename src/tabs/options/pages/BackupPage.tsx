@@ -46,6 +46,7 @@ import {
   type WebDAVProvider,
 } from "~core/webdav-sync"
 import { platform } from "~platform"
+import { normalizeWebDAVInterval, WEBDAV_BACKUP_INTERVALS } from "~types/webdav"
 import { useBookmarkStore } from "~stores/bookmarks-store"
 import { useClaudeSessionKeysStore } from "~stores/claude-sessionkeys-store"
 import { useConversationsStore } from "~stores/conversations-store"
@@ -67,7 +68,7 @@ import {
 import { CLEAR_ALL_FLAG_KEY, DEFAULT_SETTINGS, RESTORE_FLAG_KEY } from "~utils/storage"
 import { showToast as showDomToast } from "~utils/toast"
 
-import { PageTitle, SettingCard, SettingRow, TabGroup } from "../components"
+import { PageTitle, SettingCard, SettingRow, TabGroup, ToggleRow } from "../components"
 import PermissionsPage from "./PermissionsPage"
 
 interface BackupPageProps {
@@ -77,6 +78,9 @@ interface BackupPageProps {
 }
 
 interface WebDAVFormState {
+  enabled: boolean
+  syncMode: "manual" | "auto"
+  syncInterval: number
   url: string
   username: string
   password: string
@@ -84,7 +88,7 @@ interface WebDAVFormState {
   provider: WebDAVProvider
 }
 
-type WebDAVAction = "test" | "upload" | "restore"
+type WebDAVAction = "test" | "upload" | "restore" | "save"
 
 // 导入预览按用户能理解的功能归类展示备份内容；存储键与 backup-codec 的用户数据键一一对应
 const BACKUP_CONTENT_GROUPS: ReadonlyArray<{ labelKey: string; storageKeys: readonly string[] }> = [
@@ -389,6 +393,9 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
 
   // WebDAV 本地表单状态（与 Store 解耦，仅点击保存时同步）
   const [webdavForm, setWebdavForm] = useState<WebDAVFormState>({
+    enabled: false,
+    syncMode: "manual",
+    syncInterval: 1440,
     url: "",
     username: "",
     password: "",
@@ -401,7 +408,17 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
   const webdavBusyRef = useRef(false)
   const webdavFieldId = useId()
 
-  // 初始化表单
+  const savedWebDAVFormRef = useRef("")
+
+  useEffect(
+    () =>
+      platform.storage.watch("settings", () => {
+        if (platform.type === "userscript") void useSettingsStore.persist.rehydrate()
+      }),
+    [],
+  )
+
+  // Status updates must not discard unsaved connection fields.
   useEffect(() => {
     if (settings?.webdav) {
       const webdav = settings.webdav
@@ -410,11 +427,21 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
         : webdav.url
           ? detectProviderFromUrl(webdav.url)
           : "custom"
-      setWebdavForm((prev) => ({
-        ...prev,
-        ...webdav,
+      const nextForm: WebDAVFormState = {
+        url: webdav.url,
+        username: webdav.username,
+        password: webdav.password,
+        remoteDir: webdav.remoteDir,
+        enabled: webdav.enabled && webdav.syncMode === "auto",
+        syncMode: webdav.enabled && webdav.syncMode === "auto" ? "auto" : "manual",
+        syncInterval: normalizeWebDAVInterval(webdav.syncInterval),
         provider: resolvedProvider,
-      }))
+      }
+      const savedForm = JSON.stringify(nextForm)
+      if (savedWebDAVFormRef.current !== savedForm) {
+        savedWebDAVFormRef.current = savedForm
+        setWebdavForm(nextForm)
+      }
     }
   }, [settings?.webdav])
 
@@ -744,14 +771,13 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
   }
 
   const handleSaveConfig = () => {
-    const baseWebdav = settings.webdav ?? DEFAULT_SETTINGS.webdav
-    setSettings({
-      webdav: {
-        ...baseWebdav,
-        ...webdavForm,
-      },
-    })
-    showDomToast(t("saveSuccess"))
+    const save = async () => {
+      const baseWebdav = useSettingsStore.getState().settings.webdav ?? DEFAULT_SETTINGS.webdav
+      setSettings({ webdav: { ...baseWebdav, ...webdavForm } })
+      showDomToast(t("saveSuccess"))
+    }
+    if (webdavForm.enabled) runWebDAVAction("save", save)
+    else void save()
   }
 
   const handleTestConnection = () =>
@@ -789,7 +815,9 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
       webdavForm.username !== base.username ||
       webdavForm.password !== base.password ||
       webdavForm.remoteDir !== base.remoteDir ||
-      webdavForm.provider !== normalizedBaseProvider
+      webdavForm.provider !== normalizedBaseProvider ||
+      webdavForm.enabled !== (base.enabled && base.syncMode === "auto") ||
+      webdavForm.syncInterval !== normalizeWebDAVInterval(base.syncInterval)
     )
   })()
 
@@ -1138,12 +1166,58 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
             </div>
           </div>
 
+          <ToggleRow
+            label={t("webdavAutoBackup")}
+            description={t("webdavAutoBackupDesc")}
+            ariaLabel={t("webdavAutoBackup")}
+            checked={webdavForm.enabled}
+            onChange={() =>
+              setWebdavForm((form) => ({
+                ...form,
+                enabled: !form.enabled,
+                syncMode: form.enabled ? "manual" : "auto",
+              }))
+            }
+            disabled={isWebDAVBusy}
+            settingId="backup-webdav-auto"
+          />
+          {webdavForm.enabled && (
+            <SettingRow label={t("webdavAutoBackupInterval")} settingId="backup-webdav-interval">
+              <SelectDropdown
+                className="settings-select-dropdown"
+                buttonClassName="settings-select"
+                ariaLabel={t("webdavAutoBackupInterval")}
+                value={String(webdavForm.syncInterval)}
+                options={WEBDAV_BACKUP_INTERVALS.map((minutes) => ({
+                  value: String(minutes),
+                  label:
+                    minutes === 60
+                      ? t("webdavAutoBackupHourly")
+                      : t("webdavAutoBackupHours", { hours: minutes / 60 }),
+                }))}
+                onChange={(value) =>
+                  setWebdavForm((form) => ({ ...form, syncInterval: Number(value) }))
+                }
+                disabled={isWebDAVBusy}
+              />
+            </SettingRow>
+          )}
+          {platform.type === "userscript" && (
+            <p className="settings-backup-field-hint">{t("webdavAutoBackupUserscriptHint")}</p>
+          )}
+
           <div className="settings-backup-sync-status">
             <TimeIcon size={14} />
             <span>
-              {lastSyncTime
-                ? t("webdavLastSync", { time: formatDateTime(lastSyncTime, getCurrentLocale()) })
-                : t("webdavNeverSynced")}
+              {settings.webdav?.lastSyncStatus === "failed"
+                ? t("webdavBackupFailed")
+                : settings.webdav?.lastSyncStatus === "syncing"
+                  ? t("webdavUploading")
+                  : lastSyncTime
+                    ? t("webdavLastSync", {
+                        time: formatDateTime(lastSyncTime, getCurrentLocale()),
+                      })
+                    : t("webdavNeverSynced")}
             </span>
           </div>
 
@@ -1163,6 +1237,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
                 <button
                   type="button"
                   className={`settings-btn ${isWebDAVUnsaved ? "settings-btn-primary" : "settings-btn-secondary"}`}
+                  disabled={isWebDAVBusy}
                   onClick={handleSaveConfig}>
                   <SaveIcon size={16} /> {t("saveConfig")}
                 </button>

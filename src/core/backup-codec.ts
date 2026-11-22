@@ -286,10 +286,12 @@ export const createBackupDocument = async (
   storage: PlatformStorage,
   type: BackupType,
   timestamp = new Date().toISOString(),
+  options: { excludeKeys?: readonly string[] } = {},
 ): Promise<BackupDocument> => {
   const data: Record<string, unknown> = {}
 
   for (const key of BACKUP_TYPE_KEYS[type]) {
+    if (options.excludeKeys?.includes(key)) continue
     const storedValue = await storage.get<unknown>(key)
     if (storedValue === undefined || storedValue === null) continue
     const normalizedValue = normalizeKnownValue(key, storedValue)

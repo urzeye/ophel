@@ -443,6 +443,14 @@ export const SETTING_ID_ROUTE_MAP: Record<string, SettingRoute> = {
     page: NAV_IDS.BACKUP,
     subTab: BACKUP_TAB_IDS.WEBDAV,
   },
+  "backup-webdav-auto": {
+    page: NAV_IDS.BACKUP,
+    subTab: BACKUP_TAB_IDS.WEBDAV,
+  },
+  "backup-webdav-interval": {
+    page: NAV_IDS.BACKUP,
+    subTab: BACKUP_TAB_IDS.WEBDAV,
+  },
   "global-search-matching-card": {
     page: NAV_IDS.FEATURES,
     subTab: FEATURES_TAB_IDS.GLOBAL_SEARCH,

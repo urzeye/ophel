@@ -1236,6 +1236,21 @@ export const pt = {
   webdavUploadBtn: "Enviar",
   webdavDownloadBtn: "Baixar",
   webdavDownloadConfirm: "Baixar substituirá os dados atuais. Continuar?",
+  webdavAutoBackup: "Backup automático",
+  webdavAutoBackupDesc:
+    "Envie backups agendados sem o histórico de leitura. Mantenha os 7 backups automáticos mais recentes por dispositivo; restauração manual.",
+  webdavAutoBackupInterval: "Intervalo de backup",
+  webdavAutoBackupHourly: "A cada hora",
+  webdavAutoBackupHours: "A cada {hours} horas",
+  webdavAutoBackupUserscriptHint:
+    "O script de usuário precisa de pelo menos uma página com o Ophel aberta. Os backups automáticos param quando todas essas páginas são fechadas.",
+  webdavBackupFailed:
+    "O último backup ou restauração falhou. Verifique as configurações e a rede e tente novamente manualmente.",
+  webdavBusy: "Um backup ou restauração está em andamento. Tente novamente mais tarde.",
+  webdavCleanupFailed:
+    "Backup enviado, mas não foi possível excluir os backups automáticos antigos ({detail}).",
+  webdavPermissionDenied:
+    "Sem permissão de acesso ao servidor WebDAV. Salve a configuração novamente e permita o acesso.",
   webdavLastSync: "Última sincronização: {time}",
   webdavConnectionSuccess: "OK",
   webdavUploadSuccess: "Enviado",

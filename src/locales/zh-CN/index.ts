@@ -1306,6 +1306,18 @@ export const zhCN = {
   webdavUploadBtn: "上传",
   webdavDownloadBtn: "下载",
   webdavDownloadConfirm: "下载将覆盖当前数据，确定继续？",
+  webdavAutoBackup: "自动备份",
+  webdavAutoBackupDesc:
+    "定时上传备份，不含阅读历史；每台设备保留最近 7 份自动备份，恢复需手动操作。",
+  webdavAutoBackupInterval: "备份周期",
+  webdavAutoBackupHourly: "每小时",
+  webdavAutoBackupHours: "每 {hours} 小时",
+  webdavAutoBackupUserscriptHint:
+    "油猴版需要至少保留一个运行 Ophel 的页面，关闭所有页面后无法自动备份。",
+  webdavBackupFailed: "上次备份或恢复失败，请检查配置与网络后手动重试。",
+  webdavBusy: "备份或恢复正在进行，请稍后重试。",
+  webdavCleanupFailed: "备份已上传，但旧自动备份清理失败（{detail}）。",
+  webdavPermissionDenied: "缺少 WebDAV 服务器访问权限，请重新保存配置并授权。",
   webdavLastSync: "上次同步：{time}",
   webdavConnectionSuccess: "连接成功",
   webdavUploadSuccess: "上传成功",

@@ -1268,6 +1268,21 @@ export const ja = {
   webdavUploadBtn: "アップロード",
   webdavDownloadBtn: "ダウンロード",
   webdavDownloadConfirm: "ダウンロードすると現在のデータは上書きされます。続行しますか？",
+  webdavAutoBackup: "自動バックアップ",
+  webdavAutoBackupDesc:
+    "読書履歴を除いて定期的にアップロードします。端末ごとに最新 7 件を保持し、復元は手動で行います。",
+  webdavAutoBackupInterval: "バックアップ間隔",
+  webdavAutoBackupHourly: "1 時間ごと",
+  webdavAutoBackupHours: "{hours} 時間ごと",
+  webdavAutoBackupUserscriptHint:
+    "ユーザースクリプト版では、Ophel が動作するページを少なくとも 1 つ開いておく必要があります。すべて閉じると自動バックアップは停止します。",
+  webdavBackupFailed:
+    "前回のバックアップまたは復元に失敗しました。設定とネットワークを確認して手動で再試行してください。",
+  webdavBusy: "バックアップまたは復元を実行中です。しばらくしてから再試行してください。",
+  webdavCleanupFailed:
+    "バックアップはアップロードされましたが、古い自動バックアップを削除できませんでした（{detail}）。",
+  webdavPermissionDenied:
+    "WebDAV サーバーへのアクセス権限がありません。設定を再保存してアクセスを許可してください。",
   webdavLastSync: "前回の同期：{time}",
   webdavConnectionSuccess: "接続成功",
   webdavUploadSuccess: "アップロード成功",

@@ -340,7 +340,7 @@ export const DEFAULT_SETTINGS: Settings = {
     username: "",
     password: "",
     syncMode: "manual",
-    syncInterval: 30,
+    syncInterval: 1440,
     remoteDir: "ophel",
     dataSources: ["settings", "conversations", "prompts", "claudeSessionKeys"], // 默认包括所有数据
   },
