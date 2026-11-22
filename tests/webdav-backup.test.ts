@@ -1,3 +1,4 @@
+import { WEBDAV_BACKUP_STATUS_STORAGE_KEY } from "~constants/storage-keys"
 import { describe, expect, it, vi } from "vitest"
 
 import type { PlatformStorage } from "~platform/types"
@@ -94,7 +95,7 @@ describe("WebDAV snapshots", () => {
       config,
       storage: f.storage,
       request: f.request,
-      saveConfig: async () => {},
+      saveStatus: async () => {},
     })
     await manager.upload({ automaticDeviceId: "device-a" })
     const put = f.request.mock.calls.find(([method]) => method === "PUT") as unknown as [
@@ -170,7 +171,7 @@ describe("WebDAV retention and operation safety", () => {
       config,
       storage: f.storage,
       request,
-      saveConfig: async () => {},
+      saveStatus: async () => {},
     })
     expect((await manager.upload({ automaticDeviceId: "device-a" })).success).toBe(true)
     const deleted = request.mock.calls.filter(([method]) => method === "DELETE") as unknown as [
@@ -192,7 +193,7 @@ describe("WebDAV retention and operation safety", () => {
       config,
       storage: f.storage,
       request,
-      saveConfig: async () => {},
+      saveStatus: async () => {},
     })
     expect((await manager.upload({ automaticDeviceId: "device-a" })).success).toBe(false)
     expect(request.mock.calls.map(([method]) => method)).toEqual(["MKCOL", "PUT"])
@@ -207,7 +208,7 @@ describe("WebDAV retention and operation safety", () => {
       config,
       storage: f.storage,
       request,
-      saveConfig: async () => {},
+      saveStatus: async () => {},
     })
     const result = await manager.upload({ automaticDeviceId: "device-a" })
     expect(result).toMatchObject({ success: false, messageKey: "webdavCleanupFailed" })
@@ -229,7 +230,9 @@ describe("WebDAV retention and operation safety", () => {
     expect(request.mock.calls.some(([method]) => method === "PROPFIND")).toBe(false)
     const saved = JSON.parse(f.values.get("settings") as string).state.settings
     expect(saved.webdav.password).toBe(config.password)
-    expect(saved.webdav.lastSyncStatus).toBe("success")
+    expect(f.values.get(WEBDAV_BACKUP_STATUS_STORAGE_KEY)).toMatchObject({
+      lastSyncStatus: "success",
+    })
   })
 
   it("rejects a second operation while an upload is pending and preserves unrelated settings edits", async () => {
@@ -318,7 +321,7 @@ it("always retains the just-uploaded file when the server timestamps tie", async
     config,
     storage: f.storage,
     request,
-    saveConfig: async () => {},
+    saveStatus: async () => {},
   })
   expect((await manager.upload({ automaticDeviceId: "device-a" })).success).toBe(true)
   const deleted = request.mock.calls.filter(([method]) => method === "DELETE")

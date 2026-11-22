@@ -53,3 +53,20 @@
 - Light/dark and 520px layouts were rendered and inspected; page console had no warnings or errors. Screenshots are local ignored artifacts under `output/playwright/`.
 - The UI detector reported only an unchanged existing 16px remote-backup heading advisory.
 - Userscript coordination/transport were tested with GM API doubles; no real Tampermonkey/Violentmonkey browser installation was used.
+
+### Review follow-up: isolate runtime status and saved configuration
+
+1. Add permanent regressions in `tests/webdav-regressions.test.ts` for the three reproduced failures, and run them before implementation.
+2. Add a separate local status key in `src/constants/storage-keys.ts` and `WebDAVStatus` in `src/types/webdav.ts`. Read legacy metadata only when the new status key is absent; never write status back to settings. Exclude local status from backup/restore and include it in userscript clearing.
+3. Add `src/core/webdav-storage.ts` for saved configuration and compatible status reads. Update `src/core/webdav-backup.ts` and `src/core/webdav-sync.ts` so status callbacks only write status; restore reads the latest saved configuration and uses disabled defaults when none exists. Temporary request credentials and form scheduling values must never be saved by backup/restore.
+4. Update `src/tabs/options/pages/BackupPage.tsx` to subscribe to local status separately, show existing loading/error feedback, and reject stale asynchronous reads after a newer storage event or unmount.
+5. Update existing tests and add coverage for first-time restore, legacy status, status exclusion, partial restore failures, and saved-config changes during download. Run focused Vitest, formatting/lint/type checks, all three builds, and a built-extension browser smoke for first manual backup, status rendering, and restore without applying unsaved scheduling changes.
+6. Keep the existing bilingual feature changelog entry; describe the review fixes in PR #1062, commit the focused changes, push the existing branch, and verify the remote PR head and clean worktree.
+
+### Review follow-up validation
+
+- The three permanent regressions first failed against the old code, then passed after the fixes; all 38 WebDAV tests now pass.
+- Formatting, full ESLint (zero errors, existing warnings), TypeScript, Chrome/Firefox/userscript production builds passed.
+- A fresh-profile Chrome smoke confirmed manual backup before any settings were persisted: upload succeeded, the separate status key updated the UI, and there were zero writes to settings.
+- Chrome restore smoke used unsaved auto-enable, hourly interval and password values, plus conflicting remote configuration. Actual restored data was verified; the saved disabled/daily schedule and saved credentials remained unchanged, and no automatic alarm was created.
+- Cross-language restore exposed a pre-existing `settings-store.ts` dynamic import `.then` error in the Plasmo build; this file is unchanged from main. Restore/data/configuration assertions passed. This separate existing issue is not included in these three fixes.

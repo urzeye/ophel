@@ -46,6 +46,8 @@ import {
   type WebDAVProvider,
 } from "~core/webdav-sync"
 import { platform } from "~platform"
+import { subscribeWebDAVStatus } from "~core/webdav-storage"
+import type { WebDAVStatus } from "~types/webdav"
 import { normalizeWebDAVInterval, WEBDAV_BACKUP_INTERVALS } from "~types/webdav"
 import { useBookmarkStore } from "~stores/bookmarks-store"
 import { useClaudeSessionKeysStore } from "~stores/claude-sessionkeys-store"
@@ -402,11 +404,29 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
     remoteDir: "ophel",
     provider: "custom",
   })
+  const [webdavStatus, setWebdavStatus] = useState<WebDAVStatus | null>(null)
+  const [webdavStatusLoadFailed, setWebdavStatusLoadFailed] = useState(false)
   const [isPasswordVisible, setIsPasswordVisible] = useState(false)
   const [webdavBusyAction, setWebdavBusyAction] = useState<WebDAVAction | null>(null)
   // 同步锁：按钮禁用状态渲染出来之前的连点也只放行一次
   const webdavBusyRef = useRef(false)
   const webdavFieldId = useId()
+
+  useEffect(
+    () =>
+      subscribeWebDAVStatus(
+        platform.storage,
+        (status) => {
+          setWebdavStatus(status)
+          setWebdavStatusLoadFailed(false)
+        },
+        (error) => {
+          console.error("[WebDAV] Failed to load backup status:", error)
+          setWebdavStatusLoadFailed(true)
+        },
+      ),
+    [],
+  )
 
   const savedWebDAVFormRef = useRef("")
 
@@ -828,7 +848,15 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
     value: preset.id,
     label: t(preset.labelKey),
   }))
-  const lastSyncTime = settings.webdav?.lastSyncTime
+  let webdavStatusText = t("webdavNeverSynced")
+  if (webdavStatusLoadFailed) webdavStatusText = t("loadFailed")
+  else if (!webdavStatus) webdavStatusText = t("loading")
+  else if (webdavStatus.lastSyncStatus === "failed") webdavStatusText = t("webdavBackupFailed")
+  else if (webdavStatus.lastSyncStatus === "syncing") webdavStatusText = t("webdavUploading")
+  else if (webdavStatus.lastSyncTime)
+    webdavStatusText = t("webdavLastSync", {
+      time: formatDateTime(webdavStatus.lastSyncTime, getCurrentLocale()),
+    })
 
   const handleProviderChange = (value: string) => {
     const provider = value as WebDAVProvider
@@ -1208,17 +1236,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
 
           <div className="settings-backup-sync-status">
             <TimeIcon size={14} />
-            <span>
-              {settings.webdav?.lastSyncStatus === "failed"
-                ? t("webdavBackupFailed")
-                : settings.webdav?.lastSyncStatus === "syncing"
-                  ? t("webdavUploading")
-                  : lastSyncTime
-                    ? t("webdavLastSync", {
-                        time: formatDateTime(lastSyncTime, getCurrentLocale()),
-                      })
-                    : t("webdavNeverSynced")}
-            </span>
+            <span>{webdavStatusText}</span>
           </div>
 
           {/* 操作按钮行 */}

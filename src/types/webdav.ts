@@ -25,6 +25,9 @@ export interface WebDAVConfig {
   remoteDir: string // 远程备份目录，如 /backup
   dataSources?: Array<"settings" | "conversations" | "prompts" | "claudeSessionKeys">
   provider?: WebDAVProvider // 服务商标识（可选，兼容旧数据）
+}
+
+export interface WebDAVStatus {
   lastSyncTime?: number // 上次同步时间戳
   lastSyncStatus?: "success" | "failed" | "syncing"
 }

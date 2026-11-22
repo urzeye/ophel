@@ -1,3 +1,4 @@
+import { WEBDAV_BACKUP_STATUS_STORAGE_KEY } from "~constants/storage-keys"
 import type { PlatformStorage } from "~platform/types"
 import {
   normalizeWebDAVInterval,
@@ -6,8 +7,9 @@ import {
   type WebDAVAction,
   type WebDAVConfig,
   type WebDAVTransport,
+  type WebDAVStatus,
 } from "~types/webdav"
-import { parsePersistedSettings } from "~utils/persisted-settings"
+import { readSavedWebDAVConfig, readWebDAVStatus } from "./webdav-storage"
 
 import { DEFAULT_WEBDAV_CONFIG, WebDAVSyncManager } from "./webdav-sync"
 
@@ -38,36 +40,19 @@ export class WebDAVBackupService {
   }
 
   private async readConfig(): Promise<WebDAVConfig> {
-    const settings = parsePersistedSettings(await this.options.storage.get("settings"))
-    return { ...DEFAULT_WEBDAV_CONFIG, ...settings?.webdav }
+    return { ...DEFAULT_WEBDAV_CONFIG, ...(await readSavedWebDAVConfig(this.options.storage)) }
   }
 
-  private async saveStatus(patch: Partial<WebDAVConfig>): Promise<void> {
-    // Read fresh settings: a background backup must not write a stale UI store over user edits.
-    const raw = await this.options.storage.get<unknown>("settings")
-    const settings = parsePersistedSettings(raw)
-    if (!settings) throw new Error("Cannot update WebDAV status without saved settings")
-    const parsed = typeof raw === "string" ? JSON.parse(raw) : raw
-    const envelope =
-      parsed && typeof parsed === "object" && "state" in parsed
-        ? (parsed as { state: Record<string, unknown>; version?: number })
-        : { state: {}, version: 0 }
-    await this.options.storage.set(
-      "settings",
-      JSON.stringify({
-        ...envelope,
-        state: {
-          ...envelope.state,
-          settings: { ...settings, webdav: { ...settings.webdav, ...patch } },
-        },
-      }),
-    )
+  private async saveStatus(patch: WebDAVStatus): Promise<void> {
+    const current = await readWebDAVStatus(this.options.storage)
+    await this.options.storage.set(WEBDAV_BACKUP_STATUS_STORAGE_KEY, { ...current, ...patch })
   }
 
   async getNextBackupAt(): Promise<number | null> {
     const config = await this.readConfig()
     const state = await this.options.storage.get<BackupSchedule>(WEBDAV_BACKUP_STATE_KEY)
-    if (!this.running && config.lastSyncStatus === "syncing") {
+    const status = await readWebDAVStatus(this.options.storage)
+    if (!this.running && status.lastSyncStatus === "syncing") {
       await this.saveStatus({ lastSyncStatus: "failed" })
     }
     if (
@@ -164,7 +149,7 @@ export class WebDAVBackupService {
       config,
       storage: this.options.storage,
       request: this.options.request,
-      saveConfig: (patch) => this.saveStatus(patch),
+      saveStatus: (patch) => this.saveStatus(patch),
     })
     return action === "upload" ? manager.upload({ automaticDeviceId }) : manager.download(fileName)
   }

@@ -1,3 +1,4 @@
+import { readSavedWebDAVConfig } from "./webdav-storage"
 /**
  * WebDAV 同步管理器
  * 支持将本地数据同步到 WebDAV 服务器（如坚果云、Nextcloud 等）
@@ -10,7 +11,13 @@ import {
   type BackupDocument,
 } from "~core/backup-codec"
 import { platform } from "~platform"
-import type { WebDAVConfig, WebDAVProvider, WebDAVTransport, SyncResult } from "~types/webdav"
+import type {
+  WebDAVConfig,
+  WebDAVProvider,
+  WebDAVTransport,
+  WebDAVStatus,
+  SyncResult,
+} from "~types/webdav"
 import type { PlatformStorage } from "~platform/types"
 import { APP_NAME } from "~utils/config"
 import { btoaUtf8 } from "~utils/encoding"
@@ -271,7 +278,7 @@ export interface WebDAVRuntime {
   config: WebDAVConfig
   storage: PlatformStorage
   request: WebDAVTransport
-  saveConfig: (patch: Partial<WebDAVConfig>) => Promise<void>
+  saveStatus: (patch: WebDAVStatus) => Promise<void>
 }
 
 export class WebDAVSyncManager {
@@ -328,16 +335,9 @@ export class WebDAVSyncManager {
     }
   }
 
-  /**
-   * 保存配置 (兼容旧方法，强制持久化)
-   */
-  async saveConfig(config: Partial<WebDAVConfig>): Promise<void> {
-    if (this.runtime) {
-      this.config = { ...this.config, ...config }
-      await this.runtime.saveConfig(config)
-      return
-    }
-    return this.setConfig(config, true)
+  private async saveStatus(status: WebDAVStatus): Promise<void> {
+    if (!this.runtime) throw new Error("Backup status requires an execution runtime")
+    await this.runtime.saveStatus(status)
   }
 
   /**
@@ -393,7 +393,7 @@ export class WebDAVSyncManager {
     if (!this.runtime) return platform.webdav.runAction("upload", this.config)
 
     try {
-      await this.saveConfig({ lastSyncStatus: "syncing" })
+      await this.saveStatus({ lastSyncStatus: "syncing" })
 
       const exportData = await createBackupDocument(this.runtime.storage, "full", undefined, {
         excludeKeys: options.automaticDeviceId ? ["readingHistory"] : [],
@@ -423,7 +423,7 @@ export class WebDAVSyncManager {
 
       if (response.ok || response.status === 201 || response.status === 204) {
         const now = Date.now()
-        await this.saveConfig({ lastSyncTime: now, lastSyncStatus: "success" })
+        await this.saveStatus({ lastSyncTime: now, lastSyncStatus: "success" })
         if (options.automaticDeviceId) {
           try {
             const prefix = `${APP_NAME}_backup_auto_${options.automaticDeviceId}_`
@@ -436,7 +436,7 @@ export class WebDAVSyncManager {
               if (!deleted.success) throw new Error(backup.name)
             }
           } catch (error) {
-            await this.saveConfig({ lastSyncStatus: "failed" })
+            await this.saveStatus({ lastSyncStatus: "failed" })
             return {
               success: false,
               messageKey: "webdavCleanupFailed",
@@ -446,7 +446,7 @@ export class WebDAVSyncManager {
         }
         return { success: true, messageKey: "webdavUploadSuccess", timestamp: now }
       } else {
-        await this.saveConfig({ lastSyncStatus: "failed" })
+        await this.saveStatus({ lastSyncStatus: "failed" })
         return {
           success: false,
           messageKey: "webdavUploadFailed",
@@ -454,7 +454,7 @@ export class WebDAVSyncManager {
         }
       }
     } catch (err) {
-      await this.saveConfig({ lastSyncStatus: "failed" })
+      await this.saveStatus({ lastSyncStatus: "failed" })
       return {
         success: false,
         messageKey: "webdavUploadFailed",
@@ -541,16 +541,15 @@ export class WebDAVSyncManager {
     }
     if (!this.runtime) return platform.webdav.runAction("download", this.config, targetFileName)
 
-    let restoreWriteStarted = false
     try {
-      await this.saveConfig({ lastSyncStatus: "syncing" })
+      await this.saveStatus({ lastSyncStatus: "syncing" })
 
       let fileName = targetFileName
       if (!fileName) {
         // Find latest backup
         const list = await this.getBackupList(1)
         if (list.length === 0) {
-          await this.saveConfig({ lastSyncStatus: "failed" })
+          await this.saveStatus({ lastSyncStatus: "failed" })
           return { success: false, messageKey: "webdavFileNotFound" }
         }
         fileName = list[0].name
@@ -560,7 +559,7 @@ export class WebDAVSyncManager {
       const response = await this.request("GET", remotePath)
 
       if (!response.ok) {
-        await this.saveConfig({ lastSyncStatus: "failed" })
+        await this.saveStatus({ lastSyncStatus: "failed" })
         console.warn(`[WebDAV] download failed: HTTP ${response.status}`)
         return { success: false, messageKey: "webdavDownloadFailed" }
       }
@@ -571,40 +570,29 @@ export class WebDAVSyncManager {
         backupData = normalizeBackupDocument(JSON.parse(text))
       } catch (error) {
         console.error("Backup validation failed:", error)
-        await this.saveConfig({ lastSyncStatus: "failed" })
+        await this.saveStatus({ lastSyncStatus: "failed" })
         return { success: false, messageKey: "webdavInvalidFormat" }
       }
 
-      const currentWebdavConfig = this.config
       const now = Date.now()
-      const nextWebdavConfig: WebDAVConfig = {
-        ...currentWebdavConfig,
-        lastSyncTime: now,
-        lastSyncStatus: "success",
-      }
       const restoredSettings = backupData.data.settings
       if (isObjectRecord(restoredSettings)) {
         backupData.data.settings = {
           ...restoredSettings,
-          webdav: nextWebdavConfig,
+          // Preserve saved settings, not temporary connection/schedule values from the request form.
+          webdav: {
+            ...DEFAULT_WEBDAV_CONFIG,
+            ...(await readSavedWebDAVConfig(this.runtime.storage)),
+          },
         }
       }
 
-      restoreWriteStarted = true
       await restoreBackupDocument(this.runtime.storage, backupData)
-      if (isObjectRecord(restoredSettings)) {
-        this.config = nextWebdavConfig
-      } else {
-        await this.saveConfig({ lastSyncTime: now, lastSyncStatus: "success" })
-      }
+      await this.saveStatus({ lastSyncTime: now, lastSyncStatus: "success" })
       return { success: true, messageKey: "webdavDownloadSuccess", timestamp: now }
     } catch (err) {
       console.error("[WebDAV] download failed:", err)
-      if (restoreWriteStarted) {
-        this.config = { ...this.config, lastSyncStatus: "failed" }
-      } else {
-        await this.saveConfig({ lastSyncStatus: "failed" })
-      }
+      await this.saveStatus({ lastSyncStatus: "failed" })
       return { success: false, messageKey: "webdavDownloadFailed" }
     }
   }
