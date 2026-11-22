@@ -11,7 +11,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🚀 New Features
 
-- **WebDAV automatic backups** — Schedule backups without reading history, keep the latest seven automatic backups per device, and restore manually.
+- **WebDAV automatic backups** — Schedule backups without reading history, keep the latest seven automatic backups per device, and restore manually. (#246, #1062)
 
 ---
 
