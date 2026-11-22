@@ -27,6 +27,7 @@ out/
 output/
 build/
 dist/
+/downloads/
 /registry/dist/
 /.registry-dist/
 
