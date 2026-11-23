@@ -81,7 +81,9 @@ export class WebDAVBackupService {
     const next: BackupSchedule = {
       deviceId: state?.deviceId ?? this.createDeviceId(),
       scheduleKey,
-      nextBackupAt: this.now() + interval * 60_000,
+      // 新调度（启用或目标变更）立即到期，让首次备份尽快发生并提供即时反馈；
+      // 之后的周期由 runScheduled 执行时按间隔预留，扩展端 alarm 最小粒度约 1 分钟。
+      nextBackupAt: this.now(),
     }
     await this.options.storage.set(WEBDAV_BACKUP_STATE_KEY, next)
     return next.nextBackupAt
