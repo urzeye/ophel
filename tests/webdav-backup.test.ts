@@ -1,4 +1,4 @@
-import { WEBDAV_BACKUP_STATUS_STORAGE_KEY } from "~constants/storage-keys"
+import { WEBDAV_BACKUP_STATE_KEY, WEBDAV_BACKUP_STATUS_STORAGE_KEY } from "~constants/storage-keys"
 import { describe, expect, it, vi } from "vitest"
 
 import type { PlatformStorage } from "~platform/types"
@@ -14,7 +14,7 @@ vi.mock("~utils/config", () => ({
 vi.mock("~platform", () => ({ platform: { type: "extension", storage: {} } }))
 
 import { createBackupDocument, restoreBackupDocument } from "~core/backup-codec"
-import { WebDAVBackupService, WEBDAV_BACKUP_STATE_KEY } from "~core/webdav-backup"
+import { WebDAVBackupService } from "~core/webdav-backup"
 import { DEFAULT_WEBDAV_CONFIG, WebDAVSyncManager } from "~core/webdav-sync"
 
 function memoryStorage(seed: Record<string, unknown> = {}) {

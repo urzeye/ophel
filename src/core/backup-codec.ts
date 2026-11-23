@@ -2,6 +2,7 @@ import { ZUSTAND_KEYS } from "~constants/defaults"
 import {
   BOOKMARKS_STORAGE_KEY,
   USAGE_MONITOR_STORAGE_KEY,
+  WEBDAV_BACKUP_STATE_KEY,
   WEBDAV_BACKUP_STATUS_STORAGE_KEY,
 } from "~constants/storage-keys"
 import type { PlatformStorage } from "~platform/types"
@@ -43,6 +44,7 @@ export const BACKUP_USER_DATA_STORAGE_KEYS: readonly string[] = Array.from(
 
 export const BACKUP_EXCLUDED_STORAGE_KEYS: readonly string[] = [
   WEBDAV_BACKUP_STATUS_STORAGE_KEY,
+  WEBDAV_BACKUP_STATE_KEY,
   REMOTE_CONFIG_STORAGE_KEY,
   SITE_PACK_REGISTRATION_STATE_STORAGE_KEY,
 ]

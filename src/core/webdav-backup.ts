@@ -1,4 +1,4 @@
-import { WEBDAV_BACKUP_STATUS_STORAGE_KEY } from "~constants/storage-keys"
+import { WEBDAV_BACKUP_STATE_KEY, WEBDAV_BACKUP_STATUS_STORAGE_KEY } from "~constants/storage-keys"
 import type { PlatformStorage } from "~platform/types"
 import {
   normalizeWebDAVInterval,
@@ -12,8 +12,6 @@ import {
 import { readSavedWebDAVConfig, readWebDAVStatus } from "./webdav-storage"
 
 import { DEFAULT_WEBDAV_CONFIG, WebDAVSyncManager } from "./webdav-sync"
-
-export const WEBDAV_BACKUP_STATE_KEY = "ophel:webdavBackup:v1"
 
 interface BackupSchedule {
   deviceId: string

@@ -8,7 +8,7 @@ vi.mock("~utils/config", () => ({
 }))
 vi.mock("~platform", () => ({ platform: { type: "extension", storage: {} } }))
 
-import { WEBDAV_BACKUP_STATUS_STORAGE_KEY } from "~constants/storage-keys"
+import { WEBDAV_BACKUP_STATE_KEY, WEBDAV_BACKUP_STATUS_STORAGE_KEY } from "~constants/storage-keys"
 import {
   createBackupDocument,
   createBackupRestorePlan,
@@ -218,6 +218,11 @@ it("keeps runtime status out of backups and ignores attempts to restore that key
   expect(plan.updates).not.toHaveProperty(WEBDAV_BACKUP_STATUS_STORAGE_KEY)
   expect(values.get(WEBDAV_BACKUP_STATUS_STORAGE_KEY)).toBe(status)
   expect(BACKUP_EXCLUDED_STORAGE_KEYS).toContain(WEBDAV_BACKUP_STATUS_STORAGE_KEY)
+})
+
+it("keeps the automatic backup schedule clearable on the userscript clear-all path", async () => {
+  // 油猴端 clear() 只删除 BACKUP_EXCLUDED_STORAGE_KEYS 里的运行时键；调度键必须注册在内。
+  expect(BACKUP_EXCLUDED_STORAGE_KEYS).toContain(WEBDAV_BACKUP_STATE_KEY)
 })
 
 it("recovers interrupted local status without modifying saved configuration", async () => {
