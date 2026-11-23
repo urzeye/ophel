@@ -8,9 +8,14 @@ export const webdavBackupService = new WebDAVBackupService({
   storage: extensionStorage,
   request: fetchWebDAV,
   canRequest: async (url) => {
-    const target = new URL(url)
-    if (target.protocol !== "http:" && target.protocol !== "https:") return false
-    return chrome.permissions.contains({ origins: [`${target.origin}/*`] })
+    try {
+      const target = new URL(url)
+      if (target.protocol !== "http:" && target.protocol !== "https:") return false
+      return await chrome.permissions.contains({ origins: [`${target.origin}/*`] })
+    } catch {
+      // 无法解析的 URL 视为不可请求，让服务层记录失败状态而不是静默抛错
+      return false
+    }
   },
 })
 
