@@ -1,5 +1,10 @@
 import { ZUSTAND_KEYS } from "~constants/defaults"
-import { BOOKMARKS_STORAGE_KEY, USAGE_MONITOR_STORAGE_KEY } from "~constants/storage-keys"
+import {
+  BOOKMARKS_STORAGE_KEY,
+  USAGE_MONITOR_STORAGE_KEY,
+  WEBDAV_BACKUP_STATE_KEY,
+  WEBDAV_BACKUP_STATUS_STORAGE_KEY,
+} from "~constants/storage-keys"
 import type { PlatformStorage } from "~platform/types"
 
 import {
@@ -38,6 +43,8 @@ export const BACKUP_USER_DATA_STORAGE_KEYS: readonly string[] = Array.from(
 )
 
 export const BACKUP_EXCLUDED_STORAGE_KEYS: readonly string[] = [
+  WEBDAV_BACKUP_STATUS_STORAGE_KEY,
+  WEBDAV_BACKUP_STATE_KEY,
   REMOTE_CONFIG_STORAGE_KEY,
   SITE_PACK_REGISTRATION_STATE_STORAGE_KEY,
 ]
@@ -286,10 +293,12 @@ export const createBackupDocument = async (
   storage: PlatformStorage,
   type: BackupType,
   timestamp = new Date().toISOString(),
+  options: { excludeKeys?: readonly string[] } = {},
 ): Promise<BackupDocument> => {
   const data: Record<string, unknown> = {}
 
   for (const key of BACKUP_TYPE_KEYS[type]) {
+    if (options.excludeKeys?.includes(key)) continue
     const storedValue = await storage.get<unknown>(key)
     if (storedValue === undefined || storedValue === null) continue
     const normalizedValue = normalizeKnownValue(key, storedValue)

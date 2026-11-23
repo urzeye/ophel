@@ -1224,6 +1224,20 @@ export const ko = {
   webdavUploadBtn: "업로드",
   webdavDownloadBtn: "다운로드",
   webdavDownloadConfirm: "다운로드하면 현재 데이터를 덮어씁니다. 계속하시겠습니까?",
+  webdavAutoBackup: "자동 백업",
+  webdavAutoBackupDesc:
+    "읽기 기록을 제외하고 정기적으로 업로드합니다. 기기마다 최근 자동 백업 7개를 보관하며, 복원은 수동으로 진행합니다.",
+  webdavAutoBackupInterval: "백업 주기",
+  webdavAutoBackupHourly: "매시간",
+  webdavAutoBackupHours: "{hours}시간마다",
+  webdavAutoBackupUserscriptHint:
+    "유저스크립트는 Ophel이 실행 중인 페이지를 하나 이상 열어 두어야 합니다. 모든 페이지를 닫으면 자동 백업이 중지됩니다.",
+  webdavBackupFailed:
+    "마지막 백업 또는 복원에 실패했습니다. 설정과 네트워크를 확인한 뒤 수동으로 다시 시도하세요.",
+  webdavBusy: "백업 또는 복원이 진행 중입니다. 나중에 다시 시도하세요.",
+  webdavCleanupFailed: "백업을 업로드했지만 이전 자동 백업을 삭제하지 못했습니다({detail}).",
+  webdavPermissionDenied:
+    "WebDAV 서버 접근 권한이 없습니다. 설정을 다시 저장하고 접근을 허용하세요.",
   webdavLastSync: "마지막 동기화: {time}",
   webdavConnectionSuccess: "연결 성공",
   webdavUploadSuccess: "업로드 성공",

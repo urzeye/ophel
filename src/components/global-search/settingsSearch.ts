@@ -228,6 +228,8 @@ export const SETTING_SEARCH_TITLE_KEY_MAP: Record<string, string> = {
   "backup-webdav-username": "username",
   "backup-webdav-password": "password",
   "backup-webdav-dir": "defaultDir",
+  "backup-webdav-auto": "webdavAutoBackup",
+  "backup-webdav-interval": "webdavAutoBackupInterval",
   "global-search-matching-card": "globalSearchMatchingSettingsTitle",
   "global-search-prompt-card": "globalSearchPromptSettingsTitle",
   [ABOUT_SPONSOR_SETTING_ID]: "sponsorSupport",

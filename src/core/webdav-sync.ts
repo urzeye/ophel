@@ -10,10 +10,18 @@ import {
   type BackupDocument,
 } from "~core/backup-codec"
 import { platform } from "~platform"
-import type { WebDAVProvider } from "~types/webdav"
+import type {
+  WebDAVConfig,
+  WebDAVProvider,
+  WebDAVTransport,
+  WebDAVStatus,
+  SyncResult,
+} from "~types/webdav"
+import type { PlatformStorage } from "~platform/types"
 import { APP_NAME } from "~utils/config"
 import { btoaUtf8 } from "~utils/encoding"
-import { MSG_WEBDAV_REQUEST } from "~utils/messaging"
+
+import { readSavedWebDAVConfig } from "./webdav-storage"
 
 function safeDecodeURIComponent(str: string) {
   try {
@@ -220,19 +228,7 @@ export function detectProviderFromUrl(url: string): WebDAVProvider {
   return "custom"
 }
 
-// WebDAV 配置接口
-export interface WebDAVConfig {
-  enabled: boolean
-  url: string // WebDAV 服务器地址，如 https://dav.jianguoyun.com/dav/
-  username: string
-  password: string // 应用专用密码
-  syncMode: "manual" | "auto"
-  syncInterval: number // 自动同步间隔（分钟）
-  remoteDir: string // 远程备份目录，如 /backup
-  provider?: WebDAVProvider // 服务商标识（可选，兼容旧数据）
-  lastSyncTime?: number // 上次同步时间戳
-  lastSyncStatus?: "success" | "failed" | "syncing"
-}
+export type { WebDAVConfig, SyncResult } from "~types/webdav"
 
 export const DEFAULT_WEBDAV_CONFIG: WebDAVConfig = {
   enabled: false,
@@ -240,7 +236,7 @@ export const DEFAULT_WEBDAV_CONFIG: WebDAVConfig = {
   username: "",
   password: "",
   syncMode: "manual",
-  syncInterval: 30,
+  syncInterval: 1440,
   remoteDir: APP_NAME,
 }
 
@@ -266,14 +262,6 @@ const httpStatusDetail = (status: number): string => `HTTP ${status}`
 const errorDetail = (err: unknown): string =>
   err instanceof Error && err.message ? err.message : String(err)
 
-// 同步结果
-export interface SyncResult {
-  success: boolean
-  messageKey: string // 国际化键名
-  messageArgs?: Record<string, string> // 文案占位符参数，如连接测试和上传失败文案的 {detail}
-  timestamp?: number
-}
-
 /**
  * 备份文件信息
  */
@@ -287,14 +275,21 @@ export interface BackupFile {
 /**
  * WebDAV 同步管理器
  */
+export interface WebDAVRuntime {
+  config: WebDAVConfig
+  storage: PlatformStorage
+  request: WebDAVTransport
+  saveStatus: (patch: WebDAVStatus) => Promise<void>
+}
+
 export class WebDAVSyncManager {
   private config: WebDAVConfig = DEFAULT_WEBDAV_CONFIG
-  private autoSyncTimer: ReturnType<typeof setTimeout> | null = null
   // 首次加载必须先于任何 setConfig 完成：它晚到时会把调用方刚设置的配置覆盖回已保存的值
   private readonly initialLoad: Promise<WebDAVConfig>
 
-  constructor() {
-    this.initialLoad = this.loadConfig()
+  constructor(private readonly runtime?: WebDAVRuntime) {
+    if (runtime) this.config = runtime.config
+    this.initialLoad = runtime ? Promise.resolve(this.config) : this.loadConfig()
   }
 
   /**
@@ -341,11 +336,9 @@ export class WebDAVSyncManager {
     }
   }
 
-  /**
-   * 保存配置 (兼容旧方法，强制持久化)
-   */
-  async saveConfig(config: Partial<WebDAVConfig>): Promise<void> {
-    return this.setConfig(config, true)
+  private async saveStatus(status: WebDAVStatus): Promise<void> {
+    if (!this.runtime) throw new Error("Backup status requires an execution runtime")
+    await this.runtime.saveStatus(status)
   }
 
   /**
@@ -393,18 +386,24 @@ export class WebDAVSyncManager {
   /**
    * 上传数据到 WebDAV
    */
-  async upload(): Promise<SyncResult> {
+  async upload(options: { automaticDeviceId?: string } = {}): Promise<SyncResult> {
+    await this.initialLoad
     if (!this.config.url || !this.config.username || !this.config.password) {
       return { success: false, messageKey: "webdavConfigIncomplete" }
     }
+    if (!this.runtime) return platform.webdav.runAction("upload", this.config)
 
     try {
-      await this.saveConfig({ lastSyncStatus: "syncing" })
+      await this.saveStatus({ lastSyncStatus: "syncing" })
 
-      const exportData = await createBackupDocument(platform.storage, "full")
+      const exportData = await createBackupDocument(this.runtime.storage, "full", undefined, {
+        excludeKeys: options.automaticDeviceId ? ["readingHistory"] : [],
+      })
 
       // 上传到 WebDAV（使用动态生成的文件名）
-      const fileName = generateBackupFileName()
+      const fileName = options.automaticDeviceId
+        ? `${APP_NAME}_backup_auto_${options.automaticDeviceId}_${Date.now()}.json`
+        : generateBackupFileName()
       const remotePath = this.buildRemotePath(fileName)
 
       // 确保目录存在
@@ -419,16 +418,36 @@ export class WebDAVSyncManager {
         }
       }
 
-      const response = await this.request("PUT", remotePath, JSON.stringify(exportData, null, 2), {
+      const response = await this.request("PUT", remotePath, JSON.stringify(exportData), {
         "Content-Type": "application/json",
       })
 
       if (response.ok || response.status === 201 || response.status === 204) {
         const now = Date.now()
-        await this.saveConfig({ lastSyncTime: now, lastSyncStatus: "success" })
+        await this.saveStatus({ lastSyncTime: now, lastSyncStatus: "success" })
+        if (options.automaticDeviceId) {
+          try {
+            const prefix = `${APP_NAME}_backup_auto_${options.automaticDeviceId}_`
+            const backups = (await this.getBackupList(Infinity)).filter(
+              (file) => file.name.startsWith(prefix) && file.name !== fileName,
+            )
+            // The just-uploaded file counts as one, even if directory listing is eventually consistent.
+            for (const backup of backups.slice(6)) {
+              const deleted = await this.deleteFile(backup.name)
+              if (!deleted.success) throw new Error(backup.name)
+            }
+          } catch (error) {
+            await this.saveStatus({ lastSyncStatus: "failed" })
+            return {
+              success: false,
+              messageKey: "webdavCleanupFailed",
+              messageArgs: { detail: errorDetail(error) },
+            }
+          }
+        }
         return { success: true, messageKey: "webdavUploadSuccess", timestamp: now }
       } else {
-        await this.saveConfig({ lastSyncStatus: "failed" })
+        await this.saveStatus({ lastSyncStatus: "failed" })
         return {
           success: false,
           messageKey: "webdavUploadFailed",
@@ -436,7 +455,7 @@ export class WebDAVSyncManager {
         }
       }
     } catch (err) {
-      await this.saveConfig({ lastSyncStatus: "failed" })
+      await this.saveStatus({ lastSyncStatus: "failed" })
       return {
         success: false,
         messageKey: "webdavUploadFailed",
@@ -470,18 +489,21 @@ export class WebDAVSyncManager {
         "Content-Type": "application/xml",
       })
 
-      if (!response.ok) return []
+      if (!response.ok) throw new Error(httpStatusDetail(response.status))
 
       const text = await response.text()
       const files = parseBackupFilesFromWebDAVXml(text)
 
       // 按时间倒序
-      files.sort((a, b) => b.lastModified.getTime() - a.lastModified.getTime())
+      files.sort(
+        (a, b) =>
+          b.lastModified.getTime() - a.lastModified.getTime() || b.name.localeCompare(a.name),
+      )
 
       return files.slice(0, limit)
     } catch (err) {
       console.error("Failed to get backup list:", err)
-      return []
+      throw err
     }
   }
 
@@ -514,20 +536,21 @@ export class WebDAVSyncManager {
    * @param targetFileName 可选，指定下载的文件名。若不指定则下载最新。
    */
   async download(targetFileName?: string): Promise<SyncResult> {
+    await this.initialLoad
     if (!this.config.url || !this.config.username || !this.config.password) {
       return { success: false, messageKey: "webdavConfigIncomplete" }
     }
+    if (!this.runtime) return platform.webdav.runAction("download", this.config, targetFileName)
 
-    let restoreWriteStarted = false
     try {
-      await this.saveConfig({ lastSyncStatus: "syncing" })
+      await this.saveStatus({ lastSyncStatus: "syncing" })
 
       let fileName = targetFileName
       if (!fileName) {
         // Find latest backup
         const list = await this.getBackupList(1)
         if (list.length === 0) {
-          await this.saveConfig({ lastSyncStatus: "failed" })
+          await this.saveStatus({ lastSyncStatus: "failed" })
           return { success: false, messageKey: "webdavFileNotFound" }
         }
         fileName = list[0].name
@@ -537,7 +560,7 @@ export class WebDAVSyncManager {
       const response = await this.request("GET", remotePath)
 
       if (!response.ok) {
-        await this.saveConfig({ lastSyncStatus: "failed" })
+        await this.saveStatus({ lastSyncStatus: "failed" })
         console.warn(`[WebDAV] download failed: HTTP ${response.status}`)
         return { success: false, messageKey: "webdavDownloadFailed" }
       }
@@ -548,66 +571,30 @@ export class WebDAVSyncManager {
         backupData = normalizeBackupDocument(JSON.parse(text))
       } catch (error) {
         console.error("Backup validation failed:", error)
-        await this.saveConfig({ lastSyncStatus: "failed" })
+        await this.saveStatus({ lastSyncStatus: "failed" })
         return { success: false, messageKey: "webdavInvalidFormat" }
       }
 
-      const currentWebdavConfig = this.config
       const now = Date.now()
-      const nextWebdavConfig: WebDAVConfig = {
-        ...currentWebdavConfig,
-        lastSyncTime: now,
-        lastSyncStatus: "success",
-      }
       const restoredSettings = backupData.data.settings
       if (isObjectRecord(restoredSettings)) {
         backupData.data.settings = {
           ...restoredSettings,
-          webdav: nextWebdavConfig,
+          // Preserve saved settings, not temporary connection/schedule values from the request form.
+          webdav: {
+            ...DEFAULT_WEBDAV_CONFIG,
+            ...(await readSavedWebDAVConfig(this.runtime.storage)),
+          },
         }
       }
 
-      restoreWriteStarted = true
-      await restoreBackupDocument(platform.storage, backupData)
-      if (isObjectRecord(restoredSettings)) {
-        this.config = nextWebdavConfig
-      } else {
-        await this.saveConfig({ lastSyncTime: now, lastSyncStatus: "success" })
-      }
+      await restoreBackupDocument(this.runtime.storage, backupData)
+      await this.saveStatus({ lastSyncTime: now, lastSyncStatus: "success" })
       return { success: true, messageKey: "webdavDownloadSuccess", timestamp: now }
     } catch (err) {
       console.error("[WebDAV] download failed:", err)
-      if (restoreWriteStarted) {
-        this.config = { ...this.config, lastSyncStatus: "failed" }
-      } else {
-        await this.saveConfig({ lastSyncStatus: "failed" })
-      }
+      await this.saveStatus({ lastSyncStatus: "failed" })
       return { success: false, messageKey: "webdavDownloadFailed" }
-    }
-  }
-
-  /**
-   * 启动自动同步
-   */
-  startAutoSync(): void {
-    this.stopAutoSync()
-    if (this.config.enabled && this.config.syncMode === "auto" && this.config.syncInterval > 0) {
-      this.autoSyncTimer = setInterval(
-        () => {
-          this.upload()
-        },
-        this.config.syncInterval * 60 * 1000,
-      )
-    }
-  }
-
-  /**
-   * 停止自动同步
-   */
-  stopAutoSync(): void {
-    if (this.autoSyncTimer) {
-      clearInterval(this.autoSyncTimer)
-      this.autoSyncTimer = null
     }
   }
 
@@ -637,109 +624,9 @@ export class WebDAVSyncManager {
   ): Promise<Response> {
     const url = this.buildUrl(path)
 
-    // 检测是否为油猴脚本环境
-    // @ts-ignore - __PLATFORM__ 是构建时注入的全局变量
-    const isUserscript = typeof __PLATFORM__ !== "undefined" && __PLATFORM__ === "userscript"
-
-    if (isUserscript) {
-      // 油猴脚本：使用 GM_xmlhttpRequest
-      return this.requestViaGM(method, url, body, headers)
-    } else {
-      // 浏览器扩展：通过 background 代理请求以绕过 CORS
-      return this.requestViaBackground(method, url, body, headers)
-    }
-  }
-
-  /**
-   * 油猴脚本环境：使用 GM_xmlhttpRequest 发送请求
-   */
-  private requestViaGM(
-    method: string,
-    url: string,
-    body?: string | null,
-    headers?: Record<string, string>,
-  ): Promise<Response> {
-    return new Promise((resolve, reject) => {
-      // 构建请求头，添加 Basic Auth
-      const requestHeaders: Record<string, string> = { ...headers }
-      if (this.config.username && this.config.password) {
-        const credentials = btoaUtf8(`${this.config.username}:${this.config.password}`)
-        requestHeaders["Authorization"] = `Basic ${credentials}`
-      }
-
-      // @ts-ignore - GM_xmlhttpRequest 是油猴脚本 API
-      GM_xmlhttpRequest({
-        method,
-        url,
-        headers: requestHeaders,
-        data: body || undefined,
-        onload: (response: any) => {
-          // 构造一个类 Response 对象返回
-          resolve({
-            ok: response.status >= 200 && response.status < 300,
-            status: response.status,
-            statusText: response.statusText,
-            text: async () => response.responseText,
-            headers: {
-              get: (name: string) => {
-                // 解析响应头
-                const headerLines = response.responseHeaders?.split("\r\n") || []
-                for (const line of headerLines) {
-                  const [key, ...valueParts] = line.split(":")
-                  if (key?.toLowerCase() === name.toLowerCase()) {
-                    return valueParts.join(":").trim()
-                  }
-                }
-                return null
-              },
-            },
-          } as unknown as Response)
-        },
-        onerror: (error: any) => {
-          reject(new Error(error.statusText || "GM_xmlhttpRequest failed"))
-        },
-        ontimeout: () => {
-          reject(new Error("Request timeout"))
-        },
-      })
-    })
-  }
-
-  /**
-   * 浏览器扩展环境：通过 background service worker 发送请求
-   */
-  private async requestViaBackground(
-    method: string,
-    url: string,
-    body?: string | null,
-    headers?: Record<string, string>,
-  ): Promise<Response> {
-    const response = await chrome.runtime.sendMessage({
-      type: MSG_WEBDAV_REQUEST,
-      method,
-      url,
-      body,
-      headers,
-      auth: {
-        username: this.config.username,
-        password: this.config.password,
-      },
-    })
-
-    if (!response.success) {
-      throw new Error(response.error || "WebDAV request failed")
-    }
-
-    // 构造一个类 Response 对象返回
-    return {
-      ok: response.status >= 200 && response.status < 300,
-      status: response.status,
-      statusText: response.statusText,
-      text: async () => response.body,
-      headers: {
-        get: (name: string) => response.headers?.[name.toLowerCase()] || null,
-      },
-    } as unknown as Response
+    const requestHeaders = { ...headers }
+    requestHeaders.Authorization = `Basic ${btoaUtf8(`${this.config.username}:${this.config.password}`)}`
+    return (this.runtime?.request ?? platform.webdav.request)(method, url, body, requestHeaders)
   }
 
   /**

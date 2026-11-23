@@ -443,6 +443,14 @@ export const SETTING_ID_ROUTE_MAP: Record<string, SettingRoute> = {
     page: NAV_IDS.BACKUP,
     subTab: BACKUP_TAB_IDS.WEBDAV,
   },
+  "backup-webdav-auto": {
+    page: NAV_IDS.BACKUP,
+    subTab: BACKUP_TAB_IDS.WEBDAV,
+  },
+  "backup-webdav-interval": {
+    page: NAV_IDS.BACKUP,
+    subTab: BACKUP_TAB_IDS.WEBDAV,
+  },
   "global-search-matching-card": {
     page: NAV_IDS.FEATURES,
     subTab: FEATURES_TAB_IDS.GLOBAL_SEARCH,
@@ -1660,6 +1668,31 @@ const ADDITIONAL_SETTING_SEARCH_ITEMS: SettingsSearchItem[] = [
     settingId: "backup-webdav-dir",
     title: "WebDAV 备份存储目录",
     keywords: ["webdav dir", "directory", "folder", "存储目录", "备份目录", "文件夹"],
+  },
+  {
+    settingId: "backup-webdav-auto",
+    title: "WebDAV 自动备份",
+    keywords: [
+      "webdav auto backup",
+      "automatic backup",
+      "scheduled backup",
+      "自动备份",
+      "定时备份",
+      "计划备份",
+    ],
+  },
+  {
+    settingId: "backup-webdav-interval",
+    title: "WebDAV 备份周期",
+    keywords: [
+      "webdav backup interval",
+      "backup interval",
+      "schedule",
+      "hourly",
+      "备份周期",
+      "备份间隔",
+      "每小时",
+    ],
   },
   {
     settingId: "remote-config-registry-source",

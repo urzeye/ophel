@@ -1,3 +1,4 @@
+import type { WebDAVAction, WebDAVConfig, WebDAVTransport, SyncResult } from "~types/webdav"
 /**
  * Platform Abstraction Layer - Type Definitions
  *
@@ -162,6 +163,14 @@ export interface Platform {
    * 平台类型标识
    */
   readonly type: "extension" | "userscript"
+
+  /**
+   * WebDAV 请求与备份/恢复执行
+   */
+  readonly webdav: {
+    request: WebDAVTransport
+    runAction(action: WebDAVAction, config: WebDAVConfig, fileName?: string): Promise<SyncResult>
+  }
 
   /**
    * 存储接口

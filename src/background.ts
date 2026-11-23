@@ -1,3 +1,10 @@
+import {
+  scheduleWebDAVBackup,
+  runScheduledWebDAVBackup,
+  WEBDAV_BACKUP_ALARM,
+  webdavBackupService,
+} from "~platform/extension/webdav-backup"
+import { fetchWebDAV } from "~platform/extension/webdav"
 import { isSiteMatchPatternOriginPattern } from "~adapters/declarative/match-pattern"
 import { DEFAULT_SHORTCUTS_SETTINGS } from "~constants/shortcuts"
 import {
@@ -47,6 +54,7 @@ import {
   MSG_SWITCH_NEXT_CLAUDE_KEY,
   MSG_TEST_CLAUDE_TOKEN,
   MSG_WEBDAV_REQUEST,
+  MSG_WEBDAV_ACTION,
   type ExtensionMessage,
   type RequestPermissionsMessage,
 } from "~utils/messaging"
@@ -223,11 +231,15 @@ function scheduleRemoteConfigAlarmSetup() {
 }
 
 scheduleRemoteConfigAlarmSetup()
+scheduleWebDAVBackup()
 setTimeout(() => scheduleSitePackRegistrationReconciliation("background-init"), 0)
 
 chrome.storage.onChanged.addListener((changes, areaName) => {
   if (areaName !== "local") return
-  if (changes[PERSISTED_SETTINGS_STORAGE_KEY]) scheduleRemoteConfigAlarmSetup()
+  if (changes[PERSISTED_SETTINGS_STORAGE_KEY]) {
+    scheduleRemoteConfigAlarmSetup()
+    scheduleWebDAVBackup()
+  }
   if (changes[INSTALLED_SITE_PACKS_STORAGE_KEY] || changes[SITE_PACK_ORIGIN_BINDINGS_STORAGE_KEY]) {
     scheduleSitePackRegistrationReconciliation("site-pack-state-changed")
   }
@@ -330,6 +342,7 @@ chrome.runtime.onStartup.addListener(() => {
 })
 
 chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === WEBDAV_BACKUP_ALARM) runScheduledWebDAVBackup()
   if (alarm.name === REMOTE_CONFIG_ALARM_NAME) {
     scheduleRemoteConfigCheck(false)
   }
@@ -708,6 +721,20 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
       })()
       break
 
+    case MSG_WEBDAV_ACTION:
+      void webdavBackupService
+        .runManual(message.action, message.config, message.fileName)
+        .then(sendResponse)
+        .catch((error) =>
+          sendResponse({
+            success: false,
+            messageKey:
+              message.action === "download" ? "webdavDownloadFailed" : "webdavUploadFailed",
+            messageArgs: { detail: String(error) },
+          }),
+        )
+      break
+
     case MSG_WEBDAV_REQUEST:
       ;(async () => {
         try {
@@ -720,11 +747,7 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
             fetchHeaders["Authorization"] = `Basic ${credentials}`
           }
 
-          const response = await fetch(url, {
-            method,
-            headers: fetchHeaders,
-            body: body || undefined,
-          })
+          const response = await fetchWebDAV(method, url, body, fetchHeaders)
 
           // 获取响应文本
           const responseText = await response.text()

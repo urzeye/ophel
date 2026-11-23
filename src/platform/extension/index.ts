@@ -37,6 +37,7 @@ import {
   renderKatexFallbackMathML,
   renderKatexFallbackString,
 } from "../katex-registry"
+import { extensionWebDAV } from "./webdav"
 import { extensionStorage } from "./storage"
 import { extensionCapabilities } from "./browser-policy"
 
@@ -56,6 +57,7 @@ export const platform: Platform = {
   type: "extension",
 
   storage: extensionStorage,
+  webdav: extensionWebDAV,
 
   math: {
     renderKatexToString(content, options) {

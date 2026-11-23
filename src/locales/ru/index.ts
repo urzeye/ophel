@@ -1231,6 +1231,21 @@ export const ru = {
   webdavUploadBtn: "Залить",
   webdavDownloadBtn: "Скачать",
   webdavDownloadConfirm: "Скачивание сотрет текущие данные. Ок?",
+  webdavAutoBackup: "Автоматическое резервное копирование",
+  webdavAutoBackupDesc:
+    "Загружать копии по расписанию без истории чтения. Хранить последние 7 автоматических копий для каждого устройства; восстановление вручную.",
+  webdavAutoBackupInterval: "Интервал копирования",
+  webdavAutoBackupHourly: "Каждый час",
+  webdavAutoBackupHours: "Каждые {hours} ч",
+  webdavAutoBackupUserscriptHint:
+    "Для пользовательского скрипта нужна хотя бы одна открытая страница с Ophel. После закрытия всех таких страниц автоматическое копирование останавливается.",
+  webdavBackupFailed:
+    "Последнее копирование или восстановление не удалось. Проверьте настройки и сеть и повторите попытку вручную.",
+  webdavBusy: "Выполняется копирование или восстановление. Повторите попытку позже.",
+  webdavCleanupFailed:
+    "Копия загружена, но удалить старые автоматические копии не удалось ({detail}).",
+  webdavPermissionDenied:
+    "Нет разрешения на доступ к серверу WebDAV. Сохраните настройки заново и разрешите доступ.",
   webdavLastSync: "Последняя синхронизация: {time}",
   webdavConnectionSuccess: "ОК",
   webdavUploadSuccess: "Залито",

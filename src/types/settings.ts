@@ -1,5 +1,5 @@
 import type { ShortcutsSettings } from "~constants/shortcuts"
-import type { WebDAVProvider } from "~types/webdav"
+import type { WebDAVConfig } from "~types/webdav"
 
 // 内置与动态 SitePack 共用的站点 ID 类型
 export type SiteId = string
@@ -283,19 +283,7 @@ export interface Settings {
   }
 
   //  WebDAV 同步
-  webdav?: {
-    enabled: boolean
-    url: string
-    username: string
-    password: string
-    syncMode: "manual" | "auto"
-    syncInterval: number
-    remoteDir: string
-    provider?: WebDAVProvider // 服务商标识（可选，兼容旧数据）
-    dataSources?: Array<"settings" | "conversations" | "prompts" | "claudeSessionKeys"> // 可备份的数据源
-    lastSyncTime?: number // 上次同步时间戳
-    lastSyncStatus?: "success" | "failed" | "syncing"
-  }
+  webdav?: WebDAVConfig
 
   // 快捷键设置
   shortcuts: ShortcutsSettings

@@ -1,3 +1,4 @@
+import type { WebDAVAction, WebDAVConfig } from "~types/webdav"
 import type { NetworkMonitorRequestBodyRule } from "~adapters/base"
 import type { RemoteConfigCheckResult, RemoteConfigState } from "~core/remote-config-types"
 import type { SitePackOriginBinding } from "~core/site-pack-origin-bindings"
@@ -125,6 +126,14 @@ export interface ReapplyRemoteConfigSitePayload {
 
 export interface ReapplyRemoteConfigSiteMessage extends ReapplyRemoteConfigSitePayload {
   type: typeof MSG_REAPPLY_REMOTE_CONFIG_SITE
+}
+
+export const MSG_WEBDAV_ACTION = "WEBDAV_ACTION"
+export interface WebDAVActionMessage {
+  type: typeof MSG_WEBDAV_ACTION
+  action: WebDAVAction
+  config: WebDAVConfig
+  fileName?: string
 }
 
 // WebDAV 代理请求（绕过 CORS）
@@ -350,6 +359,7 @@ export type ExtensionMessage =
   | ResetRemoteConfigSiteMessage
   | ReapplyRemoteConfigSiteMessage
   | WebDAVRequestMessage
+  | WebDAVActionMessage
   | CheckPermissionMessage
   | CheckPermissionsMessage
   | RequestPermissionsMessage

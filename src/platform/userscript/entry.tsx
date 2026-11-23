@@ -400,6 +400,8 @@ if (!shouldRun) {
  * document-start 时 DOM 尚未就绪，需等待 document.readyState 变化
  */
 async function init() {
+  const { startUserscriptWebDAVBackup } = await import("./webdav")
+  startUserscriptWebDAVBackup()
   void import("./remote-config")
     .then(({ checkUserscriptRemoteConfigOnStartup }) => checkUserscriptRemoteConfigOnStartup())
     .then((result) => {
