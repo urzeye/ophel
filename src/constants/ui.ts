@@ -1670,6 +1670,31 @@ const ADDITIONAL_SETTING_SEARCH_ITEMS: SettingsSearchItem[] = [
     keywords: ["webdav dir", "directory", "folder", "存储目录", "备份目录", "文件夹"],
   },
   {
+    settingId: "backup-webdav-auto",
+    title: "WebDAV 自动备份",
+    keywords: [
+      "webdav auto backup",
+      "automatic backup",
+      "scheduled backup",
+      "自动备份",
+      "定时备份",
+      "计划备份",
+    ],
+  },
+  {
+    settingId: "backup-webdav-interval",
+    title: "WebDAV 备份周期",
+    keywords: [
+      "webdav backup interval",
+      "backup interval",
+      "schedule",
+      "hourly",
+      "备份周期",
+      "备份间隔",
+      "每小时",
+    ],
+  },
+  {
     settingId: "remote-config-registry-source",
     title: "开发 Registry 源",
     keywords: [

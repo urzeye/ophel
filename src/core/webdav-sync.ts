@@ -1,4 +1,3 @@
-import { readSavedWebDAVConfig } from "./webdav-storage"
 /**
  * WebDAV 同步管理器
  * 支持将本地数据同步到 WebDAV 服务器（如坚果云、Nextcloud 等）
@@ -21,6 +20,8 @@ import type {
 import type { PlatformStorage } from "~platform/types"
 import { APP_NAME } from "~utils/config"
 import { btoaUtf8 } from "~utils/encoding"
+
+import { readSavedWebDAVConfig } from "./webdav-storage"
 
 function safeDecodeURIComponent(str: string) {
   try {

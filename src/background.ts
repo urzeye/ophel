@@ -728,7 +728,8 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
         .catch((error) =>
           sendResponse({
             success: false,
-            messageKey: "webdavUploadFailed",
+            messageKey:
+              message.action === "download" ? "webdavDownloadFailed" : "webdavUploadFailed",
             messageArgs: { detail: String(error) },
           }),
         )

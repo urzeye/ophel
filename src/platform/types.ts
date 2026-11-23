@@ -165,13 +165,16 @@ export interface Platform {
   readonly type: "extension" | "userscript"
 
   /**
-   * 存储接口
+   * WebDAV 请求与备份/恢复执行
    */
   readonly webdav: {
     request: WebDAVTransport
     runAction(action: WebDAVAction, config: WebDAVConfig, fileName?: string): Promise<SyncResult>
   }
 
+  /**
+   * 存储接口
+   */
   readonly storage: PlatformStorage
 
   /**
