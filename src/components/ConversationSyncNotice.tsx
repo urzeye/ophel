@@ -11,7 +11,9 @@ export function ConversationSyncNotice({ manager }: { manager: ConversationManag
 
   return (
     <section className="gh-conversation-sync-notice gh-interactive">
-      <SyncIcon size={18} />
+      <span className="gh-conversation-sync-notice-icon" aria-hidden="true">
+        <SyncIcon size={18} />
+      </span>
       <div className="gh-conversation-sync-notice-content" role="status" aria-live="polite">
         <strong>
           {t(progress.initial ? "conversationsInitialSyncTitle" : "conversationsSync")}
