@@ -757,7 +757,8 @@ export class ConversationManager {
       rememberPosition()
       const complete = await this.siteAdapter.loadAllConversations({
         signal: controller.signal,
-        readyTimeoutMs: CONVERSATION_FULL_SYNC_READY_TIMEOUT_MS,
+        // 手动同步用适配器默认就绪等待；首次同步放宽，慢渲染侧栏由 pending 重试兜底
+        readyTimeoutMs: initial ? CONVERSATION_FULL_SYNC_READY_TIMEOUT_MS : undefined,
         onNavigation: (url) => {
           onNavigationChange()
           controller.signal.throwIfAborted()
@@ -769,14 +770,17 @@ export class ConversationManager {
         },
       })
       collect(this.siteAdapter.getConversationList())
+      // 空账号收尾：容器已就绪但列表为空时按完成处理。
+      // 晚到的对话由观察者/接口订阅增量补入，避免空账号每次打开都重试全量同步
+      const syncComplete = complete || (initial && this.isConversationListDefinitelyEmpty())
       this.setSyncProgress({ initial, stage: "saving", loadedCount: collected.size })
       const changes = this.syncConversations(targetFolderId, true, {
         items: Array.from(collected.values()),
-        syncDeleted: complete && !initial,
+        syncDeleted: syncComplete && !initial,
       })
       deletedCount = changes.deletedCount
       this.notifyDataChange()
-      if (complete) {
+      if (syncComplete) {
         this.clearPendingInitialSync()
         getConversationsStore().setInitialSyncState(accountKey, "complete")
         status = "complete"
@@ -831,6 +835,15 @@ export class ConversationManager {
       showToast(t(messageKey, { count: String(result.loadedCount) }), 4000)
     }
     return result
+  }
+
+  /**
+   * 判定列表为"确定为空"（而非尚未渲染）：滚动容器已挂载但没有任何对话。
+   * 仅用于初始同步的空账号收尾；手动同步保持严格，避免误删本地记录
+   */
+  private isConversationListDefinitelyEmpty(): boolean {
+    if (this.siteAdapter.getConversationList().some((item) => item.id)) return false
+    return this.siteAdapter.getSidebarScrollContainer() !== null
   }
 
   destroy() {

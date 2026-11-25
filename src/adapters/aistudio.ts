@@ -964,8 +964,10 @@ export class AIStudioAdapter extends SiteAdapter {
       options.onProgress?.(conversations)
       return true
     } finally {
-      if (!isOnLibrary && !options.signal?.aborted && window.location.pathname === "/library") {
-        options.onNavigation?.(originalUrl)
+      // 中止（停止/超时）时同样回退，避免把用户留在 library 页；
+      // 已中止则跳过 onNavigation 通知（manager 侧会拒收）
+      if (!isOnLibrary && window.location.pathname === "/library") {
+        if (!options.signal?.aborted) options.onNavigation?.(originalUrl)
         window.history.back()
       }
       setTimeout(() => {

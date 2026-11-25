@@ -304,8 +304,10 @@ export class KimiAdapter extends SiteAdapter {
       })
       return complete
     } finally {
-      if (!wasHistoryOpen && !options.signal?.aborted && this.isHistoryPath()) {
-        options.onNavigation?.(originalUrl)
+      // 中止（停止/超时）时同样回退临时路由，避免把用户留在历史页；
+      // 已中止则跳过 onNavigation 通知（manager 侧会拒收）
+      if (!wasHistoryOpen && this.isHistoryPath()) {
+        if (!options.signal?.aborted) options.onNavigation?.(originalUrl)
         await this.closeMoreHistoryView()
       }
     }

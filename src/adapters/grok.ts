@@ -241,7 +241,9 @@ export class GrokAdapter extends SiteAdapter {
     const timeout = setTimeout(() => {
       controller.abort(new Error("Grok conversation list request timed out"))
     }, 90000)
-    const seen = new Map<string, ConversationInfo>()
+    // 全量同步成功翻到底才整体替换快照，避免中途失败丢失已有数据；
+    // 单页预取则在现有快照上合并
+    const seen = allPages ? new Map<string, ConversationInfo>() : new Map(this.apiConversations)
     const pageTokens = new Set<string>()
     let pageToken: string | null = null
 
@@ -264,10 +266,13 @@ export class GrokAdapter extends SiteAdapter {
         const page = parseGrokConversationPage(await response.json())
         controller.signal.throwIfAborted()
         page.items.forEach((item) => seen.set(item.id, item))
-        this.apiConversations = seen
-        options.onProgress?.(this.getConversationList())
-        if (!page.nextPageToken) return true
-        if (!allPages) return false
+        const done = !page.nextPageToken
+        if (done || !allPages) {
+          this.apiConversations = seen
+          options.onProgress?.(this.getConversationList())
+          return done
+        }
+        options.onProgress?.(Array.from(seen.values()))
         if (pageTokens.has(page.nextPageToken)) {
           throw new Error("Grok conversation pagination did not advance")
         }

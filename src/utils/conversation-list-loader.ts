@@ -1,7 +1,9 @@
 import type { ConversationInfo, ConversationLoadOptions } from "~adapters/base"
 
 export const CONVERSATION_LIST_READY_TIMEOUT_MS = 3200
-export const CONVERSATION_FULL_SYNC_READY_TIMEOUT_MS = 90000
+// 首次全量同步的就绪等待：只需覆盖常见的侧栏慢渲染，
+// 更晚就绪由 pending 重试机制接管，避免空账号/选择器失效时长时间空转
+export const CONVERSATION_FULL_SYNC_READY_TIMEOUT_MS = 10000
 
 export function waitForConversationLoad(ms: number, signal?: AbortSignal): Promise<void> {
   if (signal?.aborted) return Promise.reject(signal.reason)
@@ -84,8 +86,7 @@ export async function loadConversationList({
     }
 
     await loadMore(container)
-    const requestedAt = Date.now()
-    let lastActivityAt = requestedAt
+    let lastActivityAt = Date.now()
     let hasGrowth = false
 
     while (Date.now() - startedAt < maxDurationMs) {
@@ -107,7 +108,6 @@ export async function loadConversationList({
       }
       if (hasGrowth && !loading) break
 
-      const waitingMs = Date.now() - requestedAt
       if (Date.now() - lastActivityAt >= idleMs && !loading) {
         if (
           container.clientHeight > 0 &&
@@ -121,7 +121,6 @@ export async function loadConversationList({
         onProgress?.(Array.from(seen.values()))
         return seen.size > 0
       }
-      if (waitingMs >= Math.max(idleMs, 10000)) return false
     }
   }
 
