@@ -31,6 +31,8 @@ import { htmlToMarkdown, type ExportBundle, type ExportMessage } from "~utils/ex
 import { t } from "~utils/i18n"
 import { renderMarkdown } from "~utils/markdown"
 import { EVENT_OUTLINE_DATA_UPDATED } from "~utils/messaging"
+import { subscribeNetworkResponses } from "~utils/network-response-capture"
+import { waitForConversationLoad } from "~utils/conversation-list-loader"
 import { READING_HISTORY_RESTORE_TOKEN_ATTRIBUTE } from "~utils/reading-history-navigation"
 import {
   API_OUTLINE_PARSE_FAILURE_LIMIT,
@@ -53,6 +55,7 @@ import {
   type AnchorData,
   type ConversationDeleteTarget,
   type ConversationInfo,
+  type ConversationLoadOptions,
   type ConversationObserverConfig,
   type ExportConfig,
   type ExportLifecycleContext,
@@ -65,6 +68,10 @@ import {
   type ZenModeConfig,
 } from "./base"
 import { CLAUDE_CONFIG, CLAUDE_CONFIG_VERSION, type ClaudeSiteConfig } from "./claude-config"
+import {
+  CLAUDE_CONVERSATIONS_PATH_PATTERN,
+  parseClaudeConversationPage,
+} from "./claude-conversation-list"
 import type { BuiltinSiteConfig } from "./declarative"
 
 const CLAUDE_DELETE_REASON = {
@@ -104,7 +111,7 @@ const CLAUDE_CANCEL_KEYWORDS = [
   "cancelar",
 ]
 
-const ORG_ID_REGEX = /^[a-f0-9-]{36}$/i
+const ORG_ID_REGEX = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i
 
 const CLAUDE_BLOCK_MATH_PATTERNS = [/(^|[^\\])\$\$[\s\S]+?\$\$/m, /\\\[[\s\S]+?\\\]/m]
 
@@ -116,8 +123,8 @@ const CLAUDE_INLINE_MATH_PATTERNS = [
 const CLAUDE_DOCUMENT_OUTLINE_SOURCE_ID = "document"
 const CLAUDE_EXPORT_ROOT_ATTR = "data-gh-claude-export-root"
 
-// 账号隔离标识：localStorage 中的同步属主 ID，不同账号互不相同
-const CID_STORAGE_KEY = "ccd-sync-owner"
+// 本地隔离与站点 API 共用当前组织，避免同一账号下的工作空间互相混入。
+const CID_STORAGE_KEY = "ccd-sync-org"
 
 // 会话接口大纲数据源的拉取冷却与贴底判定（与 deepseek 同值）
 const CLAUDE_API_OUTLINE_FETCH_BACKOFF_MS = 10_000
@@ -224,8 +231,11 @@ interface ClaudeOutlineCacheEntry {
 
 export class ClaudeAdapter extends SiteAdapter {
   protected config: ClaudeSiteConfig = CLAUDE_CONFIG
-  private activeOrganizationId: string | null = null
-  private activeOrganizationIdExpiresAt = 0
+  private apiConversations: Map<string, ConversationInfo> | null = null
+  private apiConversationsScope = ""
+  private conversationListController: AbortController | null = null
+  private conversationListListeners = new Set<() => void>()
+  private stopConversationListCapture: (() => void) | null = null
   private exportDocumentCache: ClaudeDocumentExportCacheEntry[] = []
   private exportApiMessages: ExportMessage[] | null = null
   private exportApiBundle: ExportBundle | null = null
@@ -361,29 +371,15 @@ export class ClaudeAdapter extends SiteAdapter {
   // ==================== 对话管理 ====================
 
   /**
-   * 获取当前账户标识（用于对话隔离）
-   * Claude 通过 localStorage.ccd-sync-owner 区分登录账号
+   * 获取当前组织标识，同时用于本地对话隔离和站点 API 请求。
+   * 旧 owner 记录保持原样，由实际同步到的对话逐条更新归属并保留元数据。
    */
   getCurrentCid(): string | null {
     const raw = window.localStorage.getItem(CID_STORAGE_KEY)
     if (!raw) return null
 
-    try {
-      const parsed = JSON.parse(raw) as unknown
-      if (typeof parsed === "string" && parsed.trim()) return parsed.trim()
-      if (parsed && typeof parsed === "object") {
-        for (const key of ["uid", "id", "userId", "uuid"]) {
-          const value = (parsed as Record<string, unknown>)[key]
-          if (typeof value === "string" && value.trim()) {
-            return value.trim()
-          }
-        }
-      }
-    } catch {
-      // 回退到原始字符串
-    }
-
-    return raw.trim() || null
+    const orgId = raw.trim().replace(/^"(.*)"$/, "$1")
+    return ORG_ID_REGEX.test(orgId) ? orgId : null
   }
 
   private getClaudeConversationItems(root: ParentNode = document): Element[] {
@@ -447,10 +443,169 @@ export class ClaudeAdapter extends SiteAdapter {
   }
 
   getConversationList(): ConversationInfo[] {
+    this.ensureApiConversationsScope()
     const cid = this.getCurrentCid() || undefined
+    if (this.apiConversations) {
+      const sessionId = this.getSessionId()
+      return Array.from(this.apiConversations.values(), (item) => ({
+        ...item,
+        cid,
+        url: new URL(this.getClaudeConversationPath(item.id), this.getNewTabUrl()).href,
+        isActive: item.id === sessionId,
+      }))
+    }
     return this.getClaudeConversationItems()
       .map((element) => this.extractClaudeConversationInfo(element, cid))
       .filter((conversation): conversation is ConversationInfo => conversation !== null)
+  }
+
+  private ensureApiConversationsScope(): void {
+    const scope = this.getConversationSyncContext()
+    if (scope === this.apiConversationsScope) return
+    this.apiConversationsScope = scope
+    this.apiConversations = null
+  }
+
+  async loadAllConversations(options: ConversationLoadOptions = {}): Promise<boolean> {
+    return this.fetchConversationList(true, options)
+  }
+
+  private async fetchConversationList(
+    allPages: boolean,
+    options: ConversationLoadOptions = {},
+  ): Promise<boolean> {
+    while (this.conversationListController) {
+      await waitForConversationLoad(100, options.signal)
+    }
+    options.signal?.throwIfAborted()
+    this.ensureApiConversationsScope()
+    const scope = this.apiConversationsScope
+    const cid = this.getCurrentCid() || undefined
+    const controller = new AbortController()
+    this.conversationListController = controller
+    const onAbort = () => controller.abort(options.signal?.reason)
+    options.signal?.addEventListener("abort", onAbort, { once: true })
+    const timeout = setTimeout(() => {
+      controller.abort(new Error("Claude conversation list request timed out"))
+    }, 90000)
+    const assertCurrentContext = () => {
+      controller.signal.throwIfAborted()
+      if (this.getConversationSyncContext() !== scope) {
+        throw new Error("Claude conversation sync context changed")
+      }
+    }
+
+    try {
+      const orgId = this.getCurrentCid()
+      assertCurrentContext()
+      if (!orgId) throw new Error("Claude conversation organization is unavailable")
+
+      // 全量翻到底才替换快照；首屏预取和页面捕获只能合并，不能据此判断缺失。
+      const seen = allPages ? new Map<string, ConversationInfo>() : new Map(this.apiConversations)
+      let offset = 0
+      while (true) {
+        assertCurrentContext()
+        const url = new URL(
+          `/api/organizations/${encodeURIComponent(orgId)}/chat_conversations_v2`,
+          window.location.origin,
+        )
+        url.search = new URLSearchParams({
+          limit: "30",
+          offset: String(offset),
+          archived: "false",
+          light_settings: "true",
+          consistency: "eventual",
+        }).toString()
+        const response = await fetch(url.href, {
+          method: "GET",
+          credentials: "include",
+          cache: "no-store",
+          headers: this.buildNativeApiHeaders(),
+          signal: controller.signal,
+        })
+        if (!response.ok) {
+          throw new Error(`Claude conversation list responded ${response.status}`)
+        }
+        const page = parseClaudeConversationPage(await response.json())
+        assertCurrentContext()
+        const previousCount = seen.size
+        page.items.forEach((item) => seen.set(item.id, item))
+        if (page.hasMore && (!page.items.length || (allPages && seen.size === previousCount))) {
+          throw new Error("Claude conversation pagination did not advance")
+        }
+        if (!page.hasMore || !allPages) {
+          this.apiConversations = seen
+          options.onProgress?.(this.getConversationList())
+          return !page.hasMore
+        }
+        options.onProgress?.(Array.from(seen.values(), (item) => ({ ...item, cid })))
+        offset += page.items.length
+      }
+    } finally {
+      clearTimeout(timeout)
+      options.signal?.removeEventListener("abort", onAbort)
+      this.conversationListController = null
+    }
+  }
+
+  onConversationListChange(callback: () => void): () => void {
+    this.conversationListListeners.add(callback)
+    if (!this.stopConversationListCapture) {
+      this.stopConversationListCapture = subscribeNetworkResponses(
+        {
+          id: "claude:conversation-list",
+          method: "GET",
+          pathPattern: CLAUDE_CONVERSATIONS_PATH_PATTERN,
+        },
+        (response) => {
+          if (this.conversationListController) return
+          try {
+            const url = new URL(response.url)
+            const orgId = url.pathname.match(
+              new RegExp(CLAUDE_CONVERSATIONS_PATH_PATTERN, "i"),
+            )?.[1]
+            const currentOrgId = this.getCurrentCid()
+            if (
+              url.origin !== window.location.origin ||
+              !orgId ||
+              orgId !== currentOrgId ||
+              url.searchParams.get("archived") !== "false"
+            ) {
+              return
+            }
+            const page = parseClaudeConversationPage(JSON.parse(response.body))
+            this.ensureApiConversationsScope()
+            const conversations = (this.apiConversations ??= new Map())
+            page.items.forEach((item) => conversations.set(item.id, item))
+          } catch (error) {
+            console.warn("[ClaudeAdapter] Invalid captured conversation list:", error)
+            return
+          }
+          this.conversationListListeners.forEach((listener) => listener())
+        },
+      )
+    }
+
+    queueMicrotask(() => {
+      if (!this.conversationListListeners.has(callback) || this.conversationListController) return
+      void this.fetchConversationList(false)
+        .then(() => {
+          this.conversationListListeners.forEach((listener) => listener())
+        })
+        .catch((error) => {
+          if (this.conversationListListeners.size > 0) {
+            console.warn("[ClaudeAdapter] Failed to refresh conversation list:", error)
+          }
+        })
+    })
+
+    return () => {
+      this.conversationListListeners.delete(callback)
+      if (this.conversationListListeners.size > 0) return
+      this.stopConversationListCapture?.()
+      this.stopConversationListCapture = null
+      this.conversationListController?.abort()
+    }
   }
 
   getSidebarScrollContainer(): Element | null {
@@ -501,6 +656,7 @@ export class ClaudeAdapter extends SiteAdapter {
     }
 
     const uiSuccess = await this.deleteConversationViaUi(target.id)
+    if (uiSuccess) this.apiConversations?.delete(target.id)
     return {
       id: target.id,
       success: uiSuccess,
@@ -512,7 +668,7 @@ export class ClaudeAdapter extends SiteAdapter {
   private async tryDeleteViaNativeApi(
     target: ConversationDeleteTarget,
   ): Promise<SiteDeleteConversationResult> {
-    const orgId = await this.getActiveOrganizationId()
+    const orgId = this.getCurrentCid()
     if (!orgId) {
       return {
         id: target.id,
@@ -629,175 +785,6 @@ export class ClaudeAdapter extends SiteAdapter {
     }
   }
 
-  private async getActiveOrganizationId(forceRefresh = false): Promise<string | null> {
-    const now = Date.now()
-    if (
-      !forceRefresh &&
-      this.activeOrganizationId &&
-      this.activeOrganizationIdExpiresAt > now + 5 * 1000
-    ) {
-      return this.activeOrganizationId
-    }
-
-    if (this.isUserscriptRuntime()) {
-      const fromApi = await this.fetchOrganizationIdFromApi()
-      if (fromApi) {
-        this.activeOrganizationId = fromApi
-        this.activeOrganizationIdExpiresAt = now + 10 * 60 * 1000
-        return fromApi
-      }
-
-      const fromStorage = this.getOrganizationIdFromStorage()
-      if (fromStorage) {
-        this.activeOrganizationId = fromStorage
-        this.activeOrganizationIdExpiresAt = now + 10 * 60 * 1000
-        return fromStorage
-      }
-
-      const fromCookie = this.getCookieValue("lastActiveOrg")
-      if (this.isValidOrganizationId(fromCookie)) {
-        this.activeOrganizationId = fromCookie
-        this.activeOrganizationIdExpiresAt = now + 10 * 60 * 1000
-        return fromCookie
-      }
-
-      return null
-    }
-
-    const fromCookie = this.getCookieValue("lastActiveOrg")
-    if (this.isValidOrganizationId(fromCookie)) {
-      this.activeOrganizationId = fromCookie
-      this.activeOrganizationIdExpiresAt = now + 10 * 60 * 1000
-      return fromCookie
-    }
-
-    const fromStorage = this.getOrganizationIdFromStorage()
-    if (fromStorage) {
-      this.activeOrganizationId = fromStorage
-      this.activeOrganizationIdExpiresAt = now + 10 * 60 * 1000
-      return fromStorage
-    }
-
-    const fromApi = await this.fetchOrganizationIdFromApi()
-    if (fromApi) {
-      this.activeOrganizationId = fromApi
-      this.activeOrganizationIdExpiresAt = now + 10 * 60 * 1000
-      return fromApi
-    }
-
-    return null
-  }
-
-  private isUserscriptRuntime(): boolean {
-    return typeof __PLATFORM__ !== "undefined" && __PLATFORM__ === "userscript"
-  }
-
-  private async fetchOrganizationIdFromApi(): Promise<string | null> {
-    try {
-      const response = await fetch("/api/organizations", {
-        method: "GET",
-        headers: { accept: "application/json, text/plain, */*" },
-        credentials: "include",
-      })
-      if (!response.ok) return null
-
-      const payload = (await response.json()) as unknown
-      return this.extractOrganizationId(payload)
-    } catch {
-      return null
-    }
-  }
-
-  private getOrganizationIdFromStorage(): string | null {
-    const directKeys = [
-      "lastActiveOrg",
-      "activeOrg",
-      "organizationId",
-      "lastActiveOrganization",
-      "LSS-lastActiveOrg",
-    ]
-
-    for (const key of directKeys) {
-      const raw = localStorage.getItem(key)
-      const orgId = this.extractOrganizationId(raw)
-      if (orgId) return orgId
-    }
-
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i)
-      if (!key || !key.toLowerCase().includes("org")) continue
-      const raw = localStorage.getItem(key)
-      const orgId = this.extractOrganizationId(raw)
-      if (orgId) return orgId
-    }
-
-    return null
-  }
-
-  private extractOrganizationId(payload: unknown): string | null {
-    if (!payload) return null
-
-    if (typeof payload === "string") {
-      const trimmed = payload.trim().replace(/^"(.*)"$/, "$1")
-      if (this.isValidOrganizationId(trimmed)) return trimmed
-
-      if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
-        try {
-          return this.extractOrganizationId(JSON.parse(trimmed))
-        } catch {
-          return null
-        }
-      }
-
-      const match = trimmed.match(/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/i)
-      return match ? match[0] : null
-    }
-
-    if (Array.isArray(payload)) {
-      for (const item of payload) {
-        const id = this.extractOrganizationId(item)
-        if (id) return id
-      }
-      return null
-    }
-
-    if (typeof payload === "object") {
-      const record = payload as Record<string, unknown>
-      const candidateKeys = [
-        "uuid",
-        "id",
-        "organization_uuid",
-        "organization_id",
-        "organizationId",
-        "org_uuid",
-      ]
-
-      for (const key of candidateKeys) {
-        const value = record[key]
-        if (typeof value === "string" && this.isValidOrganizationId(value)) {
-          return value
-        }
-      }
-
-      for (const nestedKey of [
-        "organizations",
-        "organization",
-        "activeOrganization",
-        "currentOrganization",
-      ]) {
-        const nested = record[nestedKey]
-        const id = this.extractOrganizationId(nested)
-        if (id) return id
-      }
-    }
-
-    return null
-  }
-
-  private isValidOrganizationId(value: string | null | undefined): boolean {
-    return typeof value === "string" && ORG_ID_REGEX.test(value)
-  }
-
   private readAnthropicDeviceId(): string | null {
     return this.getCookieValue("anthropic-device-id")
   }
@@ -837,6 +824,7 @@ export class ClaudeAdapter extends SiteAdapter {
   }
 
   private syncSidebarAfterRemoteDelete(id: string): void {
+    this.apiConversations?.delete(id)
     const row = this.findConversationRow(id)
     if (!row) return
 
@@ -1916,7 +1904,7 @@ export class ClaudeAdapter extends SiteAdapter {
   private async fetchApiOutline(
     sessionId: string,
   ): Promise<"changed" | "unchanged" | "parse-failed" | "no-org"> {
-    const orgId = await this.getActiveOrganizationId()
+    const orgId = this.getCurrentCid()
     if (!orgId) return "no-org"
 
     const response = await fetch(this.buildConversationApiUrl(orgId, sessionId), {
@@ -2760,7 +2748,7 @@ export class ClaudeAdapter extends SiteAdapter {
     if (!sessionId) return null
 
     try {
-      const orgId = await this.getActiveOrganizationId()
+      const orgId = this.getCurrentCid()
       if (!orgId) return null
 
       const response = await fetch(this.buildConversationApiUrl(orgId, sessionId), {
@@ -3824,10 +3812,12 @@ export class ClaudeAdapter extends SiteAdapter {
     const container = this.getClaudeThoughtBlockContainer(button)
     if (!container) return false
 
-    const statusText = container
-      .querySelector(this.config.sitePrivateSelectors.thoughtStatus)
-      ?.textContent?.trim()
-    return Boolean(statusText)
+    return Boolean(this.getClaudeThoughtStatusText(container))
+  }
+
+  private getClaudeThoughtStatusText(container: Element): string {
+    const status = container.querySelector(this.config.sitePrivateSelectors.thoughtStatus)
+    return status?.getAttribute("data-cds-row-title")?.trim() || status?.textContent?.trim() || ""
   }
 
   private getClaudeThoughtBlockContainer(element: Element): HTMLElement | null {
@@ -3923,10 +3913,7 @@ export class ClaudeAdapter extends SiteAdapter {
       const markdown = this.extractClaudeThoughtMarkdown(container).trim()
       if (!markdown) return
 
-      const title =
-        container
-          .querySelector(this.config.sitePrivateSelectors.thoughtStatus)
-          ?.textContent?.trim() || ""
+      const title = this.getClaudeThoughtStatusText(container)
       blocks.push(this.formatAsThoughtBlockquote(markdown, title))
     })
 

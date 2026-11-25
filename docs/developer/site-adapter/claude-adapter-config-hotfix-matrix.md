@@ -22,7 +22,7 @@ Claude 是 P3-07 大站批次的第二个配置化站点，当前 `configVersion
 ## 仍需随应用发版
 
 - hostname、对话/分享路由判断、对话 ID 以外的 URL 控制流和新标签页域名。
-- 组织 ID 的 Cookie/localStorage/API 解析、Anthropic 客户端标识、原生删除 API endpoint/header、HTTP 错误映射、删除关键词、批量失败熔断、点击/hover 和等待时序。
+- 组织 ID 与对话隔离标识的 `localStorage.ccd-sync-org` 读取、Anthropic 客户端标识、原生删除 API endpoint/header、HTTP 错误映射、删除关键词、批量失败熔断、点击/hover 和等待时序。
 - ProseMirror 的 `execCommand` 输入编排、可见性和滚动范围判断、动态消息 ID selector、锚点恢复与通用 `button/li/img/a/h1-h6` DOM 原语。
 - 长对话虚拟滚动遍历、扫描缓存、消息去重与排序、导出快照 `data-gh-*` 标记和不完整快照的显式失败。
 - Artifact 文档签名、打开/稳定等待、缓存匹配、资源文件生成、原面板恢复和失败处理；附件 URL 规范化、安全过滤及文件名/类型解析。

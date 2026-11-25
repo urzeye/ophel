@@ -100,13 +100,14 @@ const createClaudeConfig = (): ClaudeSiteConfig => {
   // 用标签无关的 [data-testid="sidebar"] 同时覆盖新旧两代结构
   const conversationItem = '[data-testid="sidebar"] a[href*="/chat/"]'
   const userQuery = '[data-testid="user-message"]'
-  const assistantResponse = ".font-claude-response"
+  const assistantResponse = ':is([data-testid="assistant-message"], .font-claude-response)'
   const documentRoot = "#wiggle-file-content"
   const responseMarkdown = ".standard-markdown, .progressive-markdown"
   const artifactCell = ".artifact-block-cell"
   const userFileThumbnail = '[data-testid="file-thumbnail"]'
   const thoughtToggle = "button[aria-expanded]"
-  const thoughtStatus = 'span[role="status"][aria-live="polite"]'
+  const thoughtStatus =
+    ':is([data-cds="TurnStatus"] > [data-cds-row-title], span[role="status"][aria-live="polite"])'
   const stopButton = ['button[aria-label="Stop response"]']
   // 新版 dframe 布局主容器为 main[data-perf-region="main"]，#main-content 已被移除；
   // 用 :is() 同时兼容新旧主容器，保证下游 "${layoutScope} xxx" 和
@@ -134,12 +135,11 @@ const createClaudeConfig = (): ClaudeSiteConfig => {
     '[data-skill-file-viewer="true"]',
     "> div.contents > div:not([inert])",
   ].join(", ")
-  const panelCanvasScope = ["chat-stale-nav-frame", "chat-stale-nav-inert"]
-    .map(
-      (host) =>
-        `${layoutScope} [data-testid="${host}"] > div > div:not([aria-hidden="true"]):has(${panelRowRightPaneOpen})`,
-    )
-    .join(", ")
+  // 新版始终挂载隐藏的 chat-side-pane；只有去掉 inert/aria-hidden 才是打开态。
+  // 旧版没有这个节点时才使用原来的 contents 结构，避免把空占位层误判为面板。
+  const panelCanvasScope =
+    `${layoutScope} :is([data-testid="chat-stale-nav-frame"], [data-testid="chat-stale-nav-inert"]) > div > div:not([aria-hidden="true"])` +
+    `:is(:has(> [data-testid="chat-side-pane"]:not([inert]):not([aria-hidden="true"])), :not(:has(> [data-testid="chat-side-pane"])):has(${panelRowRightPaneOpen}))`
   // 文档/文件预览面板（打开时头部带 close-file-preview 关闭按钮）打开后 Artifacts
   // 侧栏会被藏在视口右侧，整行左移会把它带回来，所以只给预览面板自身加右 padding。
   const panelFilePreviewScope = ["chat-stale-nav-frame", "chat-stale-nav-inert"]
@@ -163,6 +163,7 @@ const createClaudeConfig = (): ClaudeSiteConfig => {
     selectors: {
       textarea: ['[contenteditable="true"]', ".ProseMirror", 'div[role="textbox"]'],
       submitButton: [
+        'button[data-testid="chat-input-send"]',
         'button[aria-label="Send Message"]',
         'button[aria-label="Send message"]',
         'button[data-testid="send-button"]',
