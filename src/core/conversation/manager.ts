@@ -90,6 +90,7 @@ export type ConversationSegmentedExportMode = "zip-markdown" | "merged-markdown"
  */
 const HISTORY_LOAD_TIME_BUDGET_MS = 5 * 60 * 1000
 const CONVERSATION_SYNC_CANCELLED_BY_USER = "conversation-sync-cancelled-by-user"
+const INITIAL_SYNC_NOTICE_DELAY_MS = 150
 
 /**
  * 高度收敛后、适配器仍报告历史起点缺口时的补载预算。
@@ -170,6 +171,7 @@ export interface ConversationSyncProgress {
   initial: boolean
   stage: "loading" | "saving" | "stopping"
   loadedCount: number
+  showNotice: boolean
 }
 
 export interface ConversationFullSyncResult extends ConversationSyncResult {
@@ -765,7 +767,12 @@ export class ConversationManager {
         this.syncAbortController = null
         this.setSyncProgress(null)
       })
-    this.setSyncProgress({ initial: options.initial ?? false, stage: "loading", loadedCount: 0 })
+    this.setSyncProgress({
+      initial: options.initial ?? false,
+      stage: "loading",
+      loadedCount: 0,
+      showNotice: !options.initial,
+    })
     return this.syncTask
   }
 
@@ -829,6 +836,7 @@ export class ConversationManager {
     let accountKey = this.getInitialSyncKey()
     let userTookControl = false
     let timedOut = false
+    let noticeTimer: ReturnType<typeof setTimeout> | null = null
     let status: ConversationFullSyncResult["status"] = "partial"
     const targetFolderId = options.targetFolderId ?? null
 
@@ -870,6 +878,15 @@ export class ConversationManager {
       controller.abort()
     }, 120000)
 
+    const updateProgress = (stage: ConversationSyncProgress["stage"]) => {
+      this.setSyncProgress({
+        initial,
+        stage,
+        loadedCount: collected.size,
+        showNotice: this.syncProgress?.showNotice ?? false,
+      })
+    }
+
     const collect = (items: ConversationInfo[]) => {
       controller.signal.throwIfAborted()
       const currentKey = this.getInitialSyncKey()
@@ -892,7 +909,7 @@ export class ConversationManager {
       })
       const changes = this.syncConversations(targetFolderId, true, { items })
       if (changes.newCount > 0 || changes.updatedCount > 0) this.notifyDataChange()
-      this.setSyncProgress({ initial, stage: "loading", loadedCount: collected.size })
+      updateProgress("loading")
     }
 
     try {
@@ -911,13 +928,22 @@ export class ConversationManager {
         onProgress: (items) => {
           collect(items)
           if (items.some((item) => item.id)) this.clearPendingInitialSync()
+          if (initial && collected.size > 0 && noticeTimer === null) {
+            // Some adapters report their first batch at completion. Avoid flashing the notice.
+            noticeTimer = setTimeout(() => {
+              const progress = this.syncProgress
+              if (progress?.stage === "loading" && !controller.signal.aborted) {
+                this.setSyncProgress({ ...progress, showNotice: true })
+              }
+            }, INITIAL_SYNC_NOTICE_DELAY_MS)
+          }
         },
       })
       collect(this.siteAdapter.getConversationList())
       // 空账号收尾：容器已就绪但列表为空时按完成处理。
       // 晚到的对话由观察者/接口订阅增量补入，避免空账号每次打开都重试全量同步
       const syncComplete = complete || (initial && this.isConversationListDefinitelyEmpty())
-      this.setSyncProgress({ initial, stage: "saving", loadedCount: collected.size })
+      updateProgress("saving")
       this.syncConversations(targetFolderId, true, {
         items: Array.from(collected.values()),
       })
@@ -951,6 +977,7 @@ export class ConversationManager {
       }
     } finally {
       clearTimeout(timeout)
+      if (noticeTimer !== null) clearTimeout(noticeTimer)
       navigationEvents.forEach((event) => window.removeEventListener(event, onNavigationChange))
       events.forEach((event) => document.removeEventListener(event, onUserInteraction, true))
       if (
@@ -979,7 +1006,8 @@ export class ConversationManager {
         (id) => original[id] && current[id] && original[id] !== current[id],
       ).length,
     }
-    if (!this.destroyed && (initial || status !== "complete")) {
+    const shouldShowResult = initial ? result.loadedCount > 0 : status !== "complete"
+    if (!this.destroyed && shouldShowResult) {
       const messageKey = {
         complete: "conversationsInitialSyncComplete",
         partial: "conversationsSyncPartial",
