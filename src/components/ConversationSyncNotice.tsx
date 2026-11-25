@@ -7,7 +7,7 @@ import { SyncIcon } from "./icons/SyncIcon"
 
 export function ConversationSyncNotice({ manager }: { manager: ConversationManager }) {
   const progress = useSyncExternalStore(manager.subscribeSyncProgress, manager.getSyncProgress)
-  if (!progress) return null
+  if (!progress?.showNotice) return null
 
   return (
     <section className="gh-conversation-sync-notice gh-interactive">
