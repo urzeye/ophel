@@ -1063,10 +1063,10 @@ export const ja = {
   conversationsIcon: "アイコン",
   conversationsFolderName: "フォルダ名",
   conversationsFolderNamePlaceholder: "フォルダ名を入力",
-  conversationsSyncEmpty: "会話が見つかりませんでした",
+
   conversationsSyncNoChange: "「{folder}」は最新です",
   conversationsSyncUpdated: "{updated} 件の会話を更新しました",
-  conversationsSyncRemoved: "ローカル記録を {removed} 件削除しました",
+
   conversationsSyncNoSidebarItems:
     "サイドバーで会話が検出できませんでした。サイドバーを開いて再試行してください。",
   conversationsSyncResult: "{added} 件の会話を「{folder}」に同期しました",
@@ -1089,9 +1089,7 @@ export const ja = {
   shortcutToggleZenMode: "禅モード切替",
 
   conversationsMoved: "移動しました: ",
-  conversationsSyncDeleteTitle: "同期削除",
-  conversationsSyncDeleteMsg:
-    "クラウドで {count} 件の削除を検出しました。ローカルからも削除しますか？",
+
   deleteConvRemoteError: "パネルから削除しましたが、クラウドの削除に失敗しました",
   conversationsDeleted: "削除完了",
   // Conversation Settings
@@ -1101,6 +1099,30 @@ export const ja = {
     "同期時、サイト側でピン留めが解除された会話は、ローカルでも解除します",
   folderRainbowLabel: "フォルダのレインボー表示",
   folderRainbowDesc: "フォルダごとに背景色をランダムに設定します",
+  conversationsMissingNotice:
+    "前回の同期で {count} 件の会話が見つかりませんでした。記録は保持されています。",
+  conversationsMissingCompact: "前回見つからなかった会話：{count} 件",
+  conversationsMissingReview: "確認",
+  conversationsMissingTitle: "見つからなかった会話を確認",
+  conversationsMissingDescription:
+    "見つからない会話も削除されたとは限りません。プロジェクト内、アーカイブ済み、または未読み込みの可能性があります。",
+  conversationsMissingSearch: "タイトル、フォルダー、タグを検索",
+  conversationsMissingSelectResults: "結果をすべて選択",
+  conversationsMissingSelection: "{selected} 件選択 / 全 {total} 件",
+  conversationsMissingInvertSelection: "選択を反転",
+  conversationsMissingResolved: "これらの記録は再検出または削除済みです。整理は不要です。",
+  conversationsMissingOpen: "元の会話を新しいタブで開く",
+  conversationsMissingLocalOnly:
+    "Ophel の記録のみを削除し、サイトの会話には影響しません。このページの再読み込み前なら元に戻せます。",
+  conversationsMissingKeep: "今はしない",
+  conversationsMissingRemove: "Ophel の記録のみ削除（{count} 件）",
+  conversationsMissingChanged:
+    "一覧が変更されました。記録は保持されています。再度確認してください。",
+  conversationsCleanupDone: "Ophel の記録を {count} 件削除しました",
+  conversationsCleanupUndo: "元に戻す",
+  conversationsCleanupRestored: "記録と元のフォルダー、タグを復元しました",
+  conversationsSyncNoData:
+    "会話を読み取れませんでした。ローカル記録は保持されています。後で再試行してください。",
   conversationsSyncDeleteLabel: "サイト上の会話も一緒に削除",
   conversationsSyncDeleteDesc:
     "Ophel で会話を削除すると、サイト上の元の会話も削除されます。元に戻せません。",

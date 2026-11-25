@@ -1032,10 +1032,10 @@ export const ko = {
   conversationsIcon: "아이콘",
   conversationsFolderName: "이름",
   conversationsFolderNamePlaceholder: "폴더 이름 입력",
-  conversationsSyncEmpty: "대화를 찾을 수 없습니다",
+
   conversationsSyncNoChange: "“{folder}”이(가) 최신 상태입니다",
   conversationsSyncUpdated: "{updated}개 대화를 업데이트했습니다",
-  conversationsSyncRemoved: "로컬 기록 {removed}개를 제거했습니다",
+
   conversationsSyncNoSidebarItems:
     "사이드바에서 대화를 찾지 못했습니다. 사이드바를 열고 다시 시도해 주세요.",
   conversationsSyncResult: "{added}개 대화를 “{folder}”에 동기화했습니다",
@@ -1055,9 +1055,7 @@ export const ko = {
   conversationsMoveTo: "대화 이동",
   conversationsSetTag: "태그 설정",
   conversationsMoved: "다음으로 이동됨: ",
-  conversationsSyncDeleteTitle: "삭제 동기화",
-  conversationsSyncDeleteMsg:
-    "클라우드에서 {count}개의 대화가 삭제된 것을 감지했습니다. 로컬 기록도 동기화하여 삭제하시겠습니까?",
+
   deleteConvRemoteError: "패널에서 제거됨, 하지만 클라우드 삭제 실패",
   conversationsDeleted: "삭제됨",
   // Conversation Settings
@@ -1067,6 +1065,29 @@ export const ko = {
     "동기화할 때 사이트에서 고정 해제된 대화는 로컬에서도 고정 해제합니다",
   folderRainbowLabel: "폴더 무지개 색상",
   folderRainbowDesc: "폴더에 서로 다른 배경색 할당",
+  conversationsMissingNotice:
+    "지난 동기화에서 대화 {count}개를 찾지 못했습니다. 기록은 보존되었습니다.",
+  conversationsMissingCompact: "지난 동기화에서 찾지 못한 대화 {count}개",
+  conversationsMissingReview: "검토",
+  conversationsMissingTitle: "찾지 못한 대화 검토",
+  conversationsMissingDescription:
+    "찾지 못했다고 삭제된 것은 아닙니다. 프로젝트로 이동했거나 보관되었거나 아직 로드되지 않았을 수 있습니다.",
+  conversationsMissingSearch: "제목, 폴더 또는 태그 검색",
+  conversationsMissingSelectResults: "결과 모두 선택",
+  conversationsMissingSelection: "{selected}개 선택 / 전체 {total}개",
+  conversationsMissingInvertSelection: "선택 반전",
+  conversationsMissingResolved: "다시 발견되었거나 제거된 기록입니다. 정리할 항목이 없습니다.",
+  conversationsMissingOpen: "새 탭에서 원래 대화 열기",
+  conversationsMissingLocalOnly:
+    "Ophel 기록만 삭제하며 사이트 대화에는 영향을 주지 않습니다. 페이지를 새로고침하기 전까지 실행 취소할 수 있습니다.",
+  conversationsMissingKeep: "나중에",
+  conversationsMissingRemove: "Ophel 기록만 삭제 ({count}개)",
+  conversationsMissingChanged: "목록이 변경되었습니다. 기록은 보존되었으니 다시 검토하세요.",
+  conversationsCleanupDone: "Ophel 기록 {count}개 삭제됨",
+  conversationsCleanupUndo: "실행 취소",
+  conversationsCleanupRestored: "기록과 원래 폴더, 태그를 복원했습니다",
+  conversationsSyncNoData:
+    "대화를 읽지 못했습니다. 로컬 기록은 보존되었습니다. 나중에 다시 시도하세요.",
   conversationsSyncDeleteLabel: "사이트의 대화도 함께 삭제",
   conversationsSyncDeleteDesc:
     "Ophel에서 대화를 삭제하면 사이트의 원본 대화도 함께 삭제됩니다. 되돌릴 수 없습니다.",

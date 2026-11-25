@@ -424,7 +424,7 @@ export class QwenAiAdapter extends SiteAdapter {
 
   /**
    * 返回 false 表示没能拿到完整列表（请求失败、置顶接口失败或页数触顶）：
-   * 调用方据此不做「同步删除」，否则会拿残缺列表去清本地记录。
+   * 调用方据此保留未完成状态，不拿残缺列表生成缺失记录核对结果。
    */
   async loadAllConversations(options: ConversationLoadOptions = {}): Promise<boolean> {
     const complete = await this.refreshConversationSnapshot({
@@ -2120,7 +2120,7 @@ export class QwenAiAdapter extends SiteAdapter {
   /**
    * 刷新对话快照。返回 true 表示该次请求的范围已完整拿到：
    * 普通刷新 = 请求成功；fetchAllPages = 翻到了空页且置顶接口也成功。
-   * 失败或不完整返回 false，loadAllConversations 据此让调用方拒绝「同步删除」。
+   * 失败或不完整返回 false，loadAllConversations 据此让调用方拒绝生成缺失核对结果。
    */
   private async refreshConversationSnapshot(
     options: ConversationLoadOptions & { force?: boolean; fetchAllPages?: boolean } = {},
@@ -2277,7 +2277,7 @@ export class QwenAiAdapter extends SiteAdapter {
       return { items: items.map((item) => ({ ...item, isPinned: true })), ok: true }
     } catch (error) {
       if (signal?.aborted) throw error
-      // 置顶只是主列表的补充，失败不拖垮主列表刷新；但快照因此不完整，不能用于同步删除
+      // 置顶只是主列表的补充，失败不拖垮主列表刷新；但快照因此不完整，不能生成缺失核对结果
       console.warn("[QwenAiAdapter] Failed to fetch pinned conversations:", error)
       return { items: [], ok: false }
     }

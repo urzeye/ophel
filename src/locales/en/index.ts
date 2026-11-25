@@ -1111,10 +1111,10 @@ export const en = {
   conversationsIcon: "Icon",
   conversationsFolderName: "Name",
   conversationsFolderNamePlaceholder: "Enter folder name",
-  conversationsSyncEmpty: "No chats found",
+
   conversationsSyncNoChange: "“{folder}” is up to date",
   conversationsSyncUpdated: "Updated {updated} chats",
-  conversationsSyncRemoved: "Removed {removed} local records",
+
   conversationsSyncNoSidebarItems:
     "No chats detected in sidebar. Expand/open the sidebar and try again.",
   conversationsSyncResult: "Synced {added} chats to “{folder}”",
@@ -1134,8 +1134,7 @@ export const en = {
   conversationsMoveTo: "Move Chat",
   conversationsSetTag: "Set Tag",
   conversationsMoved: "Moved to",
-  conversationsSyncDeleteTitle: "Sync Delete",
-  conversationsSyncDeleteMsg: "Detected {count} chats deleted in cloud. Sync delete local records?",
+
   deleteConvRemoteError: "Removed from panel, but cloud deletion failed",
   conversationsDeleted: "Removed",
   // Conversation Settings
@@ -1144,6 +1143,29 @@ export const en = {
   conversationsSyncUnpinDesc: "When syncing, unpin local chats that were unpinned on the site.",
   folderRainbowLabel: "Folder Rainbow Colors",
   folderRainbowDesc: "Assign different background colors to folders",
+  conversationsMissingNotice:
+    "{count} chats were not found in the last sync. Local records were kept.",
+  conversationsMissingCompact: "{count} chats not found in the last sync",
+  conversationsMissingReview: "Review",
+  conversationsMissingTitle: "Review chats not found",
+  conversationsMissingDescription:
+    "Not found does not mean deleted. Chats may be in projects, archived, or not loaded.",
+  conversationsMissingSearch: "Search titles, folders, or tags",
+  conversationsMissingSelectResults: "Select all results",
+  conversationsMissingSelection: "{selected} selected / {total} total",
+  conversationsMissingInvertSelection: "Invert selection",
+  conversationsMissingResolved: "These records were found again or removed. Nothing to clean up.",
+  conversationsMissingOpen: "Open original chat in a new tab",
+  conversationsMissingLocalOnly:
+    "Only Ophel records are removed. Site chats are unaffected. Undo is available on this page until it is reloaded.",
+  conversationsMissingKeep: "Not now",
+  conversationsMissingRemove: "Remove Ophel records only ({count})",
+  conversationsMissingChanged: "The list has changed. Records were kept; please review again.",
+  conversationsCleanupDone: "Removed {count} Ophel records",
+  conversationsCleanupUndo: "Undo",
+  conversationsCleanupRestored: "Records, folders, and tags restored",
+  conversationsSyncNoData:
+    "No chats could be read. Local records were kept. Please try again later.",
   conversationsSyncDeleteLabel: "Also delete the chat on the site",
   conversationsSyncDeleteDesc:
     "When you delete a chat in Ophel, the original chat on the site is deleted too. This can't be undone.",

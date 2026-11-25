@@ -2,6 +2,71 @@
  * 对话 Tab 样式
  */
 
+.gh-sync-review-notice {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 8px 10px 0;
+  padding: 8px;
+  border: 1px solid var(--gh-border, #e5e7eb);
+  border-radius: 8px;
+  background: var(--gh-bg-secondary, #f9fafb);
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.gh-sync-review-notice > svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.gh-sync-review-notice > span {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.gh-sync-review-notice button {
+  flex-shrink: 0;
+  border: 0;
+  padding: 0 2px;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--gh-primary-text, var(--gh-primary, #4285f4));
+  font: inherit;
+  cursor: pointer;
+}
+.gh-sync-review-notice button:hover:not(:disabled) {
+  text-decoration: underline;
+}
+.gh-sync-review-notice button:focus-visible {
+  outline: 2px solid var(--gh-primary, #4285f4);
+  outline-offset: 2px;
+}
+.gh-sync-review-notice button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.gh-sync-review-notice .gh-sync-review-notice-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  min-height: 32px;
+  color: var(--gh-text-secondary, #6b7280);
+  padding: 2px;
+}
+.gh-sync-review-notice.is-compact {
+  border-color: transparent;
+  background: transparent;
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+.is-touch .gh-sync-review-notice button {
+  min-width: 44px;
+  min-height: 44px;
+}
+
 /* ========== 主面板内容区滚动条隐藏 ========== */
 .gh-panel-content::-webkit-scrollbar {
   display: none;
