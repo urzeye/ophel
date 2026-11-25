@@ -16,7 +16,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 ### ✨ Improvements
 
 - **Conversation sync** — First-run full sync waits until history can scroll, shows progress, supports stopping, and avoids importing only the first page; Grok sync loads conversations directly without relying on the sidebar. (#1064)
-- **New chat** — Starting a new chat now switches in place instead of reloading the page. (#1066)
+- **New chat** — Starting a new chat now uses SPA history navigation instead of simulating a click on the new-chat button. (#1066)
 
 ### 🐛 Bug Fixes
 
