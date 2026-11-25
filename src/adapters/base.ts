@@ -628,6 +628,14 @@ export abstract class SiteAdapter {
     return null
   }
 
+  /**
+   * 旧版 cid 数据源的值，仅在 cid 取数口径发生过变更的站点实现（如 ChatGPT）。
+   * 用于识别并迁移存量对话：旧值与新 getCurrentCid() 必然不同，否则无法起到隔离作用。
+   */
+  getLegacyCid(): string | null {
+    return null
+  }
+
   getConversationSyncContext(): string {
     return JSON.stringify([this.getSiteInstanceKey(), this.getCurrentCid() || ""])
   }

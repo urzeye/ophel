@@ -327,6 +327,9 @@ export class ConversationManager {
     // 清理历史 ChatGPT 对话中残留的 "personal" cid，归一化为 undefined（默认个人空间）
     this.repairLegacyChatgptPersonalCid()
 
+    // cid 取数口径变更（如 ChatGPT 从 _account 换成空间 ID）后的存量迁移
+    this.repairLegacyAccountCid()
+
     // 修复历史数据中 folderId 指向已不存在文件夹的对话（面板只按现有文件夹渲染，
     // 这类对话会不可见）。同步的更新分支也会修复 folderId，但只覆盖本次侧边栏
     // 扫到的对话；这里在启动时兜底修复其余对话。
@@ -391,6 +394,37 @@ export class ConversationManager {
           conversation.siteInstanceKey === SITE_IDS.CHATGPT) &&
         conversation.cid === "personal"
       ) {
+        const cleaned = { ...conversation }
+        delete cleaned.cid
+        nextConversations[storageKey] = cleaned
+        changed = true
+      } else {
+        nextConversations[storageKey] = conversation
+      }
+    }
+
+    if (changed) {
+      useConversationsStore.setState({ conversations: nextConversations })
+      this.notifyDataChange()
+    }
+  }
+
+  /**
+   * cid 取数口径变更站点的存量迁移：把仍挂着旧 cid 的对话清成 undefined。
+   * 旧 cid 与新 getCurrentCid() 不匹配会被 matchesCid 过滤掉（对用户表现为数据消失）；
+   * 清成 undefined 后回到「无 cid 全空间可见」，再由后续同步按当前账号渐进盖章归位。
+   * 幂等，每次启动执行；恢复旧备份后下次启动会再次生效。
+   */
+  private repairLegacyAccountCid(): void {
+    const legacyCid = this.siteAdapter.getLegacyCid?.()
+    if (!legacyCid) return
+
+    const all = this.storedConversations
+    let changed = false
+    const nextConversations: Record<string, Conversation> = {}
+
+    for (const [storageKey, conversation] of Object.entries(all)) {
+      if (this.isCurrentSiteInstance(conversation) && conversation.cid === legacyCid) {
         const cleaned = { ...conversation }
         delete cleaned.cid
         nextConversations[storageKey] = cleaned
