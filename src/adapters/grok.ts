@@ -204,6 +204,7 @@ export class GrokAdapter extends SiteAdapter {
   }
 
   private apiConversations = new Map<string, ConversationInfo>()
+  private apiConversationsCid: string | null = null
   private conversationListController: AbortController | null = null
   private conversationListListeners = new Set<() => void>()
   private stopConversationListCapture: (() => void) | null = null
@@ -233,6 +234,7 @@ export class GrokAdapter extends SiteAdapter {
     allPages: boolean,
     options: ConversationLoadOptions = {},
   ): Promise<boolean> {
+    this.ensureApiConversationsAccountScope()
     while (this.conversationListController) {
       await waitForConversationLoad(100, options.signal)
     }
@@ -303,6 +305,7 @@ export class GrokAdapter extends SiteAdapter {
           if (this.conversationListController) return
           try {
             const page = parseGrokConversationPage(JSON.parse(response.body))
+            this.ensureApiConversationsAccountScope()
             page.items.forEach((item) => this.apiConversations.set(item.id, item))
           } catch (error) {
             console.warn("[GrokAdapter] Invalid captured conversation list:", error)
@@ -345,6 +348,17 @@ export class GrokAdapter extends SiteAdapter {
     return this.readCookieValue(CID_COOKIE_NAME)
   }
 
+  /**
+   * 缓存条目来自旧账号的接口响应，账号切换（SPA 内不重载页面）后继续
+   * 合并/上报会被盖上新账号的 cid 造成误归属，因此账号变化时作废缓存。
+   */
+  private ensureApiConversationsAccountScope(): void {
+    const cid = this.getCurrentCid()
+    if (cid === this.apiConversationsCid) return
+    this.apiConversationsCid = cid
+    this.apiConversations.clear()
+  }
+
   private readCookieValue(name: string): string | null {
     const pattern = new RegExp(`(?:^|; )${name}=([^;]+)`)
     const matched = document.cookie.match(pattern)
@@ -357,6 +371,7 @@ export class GrokAdapter extends SiteAdapter {
   }
 
   getConversationList(): ConversationInfo[] {
+    this.ensureApiConversationsAccountScope()
     const sessionId = this.getSessionId()
     const cid = this.getCurrentCid() || undefined
     return Array.from(this.apiConversations.values(), (item) => ({
