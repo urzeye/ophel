@@ -24,7 +24,6 @@ interface YuanbaoSiteSelectors extends SitePackSelectors {
   chatContent: string[]
   userQuery: string
   assistantResponse: string
-  newChatButton: string[]
   stopButton: string[]
   scrollContainer: string[]
   sidebarScrollContainer: string
@@ -84,7 +83,7 @@ export interface YuanbaoSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const YUANBAO_CONFIG_VERSION = 3
+export const YUANBAO_CONFIG_VERSION = 4
 
 const createYuanbaoConfig = (): YuanbaoSiteConfig => {
   const inputContainer = ".agent-dialogue__content--common__input"
@@ -95,7 +94,6 @@ const createYuanbaoConfig = (): YuanbaoSiteConfig => {
   ].join(", ")
   const primarySubmitButton = "#yuanbao-send-btn"
   const submitButton = `${primarySubmitButton}, a.style__send-btn___RwTm5`
-  const newChatButton = '.yb-common-nav__trigger[data-desc="new-chat"]'
   const stopButton = "a.style__send-btn___RwTm5"
 
   const sidebarScrollContainer = ".yb-nav__content"
@@ -272,7 +270,6 @@ const createYuanbaoConfig = (): YuanbaoSiteConfig => {
       chatContent: [userMessage, assistantMessage],
       userQuery: userMessage,
       assistantResponse: assistantMessage,
-      newChatButton: [newChatButton],
       stopButton: [stopButton],
       scrollContainer: [responseScroll, responseContainer, "#chat-content"],
       sidebarScrollContainer,

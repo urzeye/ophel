@@ -2981,10 +2981,6 @@ export class DoubaoAdapter extends SiteAdapter {
     return [...this.config.selectors.stopButton]
   }
 
-  getNewChatButtonSelectors(): string[] {
-    return [...this.config.selectors.newChatButton]
-  }
-
   getSubmitButtonSelectors(): string[] {
     return [...this.config.selectors.submitButton]
   }

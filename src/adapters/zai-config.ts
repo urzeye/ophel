@@ -15,7 +15,6 @@ interface ZaiSiteSelectors extends SitePackSelectors {
   responseContainer: string
   chatContent: string[]
   userQuery: string
-  newChatButton: string[]
   stopButton: string[]
 }
 
@@ -68,7 +67,7 @@ const EXPORT_USER_QUERY_SELECTOR = `[${ZAI_EXPORT_ROLE_ATTR}="user"]`
 const EXPORT_ASSISTANT_SELECTOR = `[${ZAI_EXPORT_ROLE_ATTR}="assistant"]`
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const ZAI_CONFIG_VERSION = 4
+export const ZAI_CONFIG_VERSION = 5
 
 const createZaiConfig = (): ZaiSiteConfig => {
   const chatContainer = "#chat-container"
@@ -138,7 +137,6 @@ const createZaiConfig = (): ZaiSiteConfig => {
       responseContainer: chatScrollContainer,
       chatContent: [userQuery, ...assistantMarkdown],
       userQuery,
-      newChatButton: ["#sidebar-new-chat-button", "#new-chat-button"],
       stopButton: [stopButton],
     },
     input: { mode: "textarea", submitKey: "Enter" },

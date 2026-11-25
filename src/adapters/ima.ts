@@ -251,10 +251,6 @@ export class ImaAdapter extends SiteAdapter {
     return null
   }
 
-  getNewChatButtonSelectors(): string[] {
-    return [...this.config.selectors.newChatButton]
-  }
-
   getSidebarScrollContainer(): Element | null {
     return document.querySelector(this.config.sitePrivateSelectors.sidebarScrollContainer)
   }

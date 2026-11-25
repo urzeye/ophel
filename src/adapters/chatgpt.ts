@@ -1111,10 +1111,6 @@ export class ChatGPTAdapter extends SiteAdapter {
     return this.getSessionName()
   }
 
-  getNewChatButtonSelectors(): string[] {
-    return [...this.config.selectors.newChatButton]
-  }
-
   getLatestReplyText(): string | null {
     const container = this.findCurrentResponseContainer()
     if (!container) return null

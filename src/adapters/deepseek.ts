@@ -1836,10 +1836,6 @@ export class DeepSeekAdapter extends SiteAdapter {
     return null
   }
 
-  getNewChatButtonSelectors(): string[] {
-    return [...this.config.selectors.newChatButton]
-  }
-
   getWidthSelectors() {
     return this.config.widthSelectors.map((selector) => ({ ...selector }))
   }

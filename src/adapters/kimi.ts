@@ -932,10 +932,6 @@ export class KimiAdapter extends SiteAdapter {
     }
   }
 
-  getNewChatButtonSelectors(): string[] {
-    return [...this.config.selectors.newChatButton]
-  }
-
   getWidthSelectors() {
     return this.config.widthSelectors.map((selector) => ({ ...selector }))
   }

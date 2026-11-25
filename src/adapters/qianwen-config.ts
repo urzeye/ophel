@@ -23,7 +23,6 @@ interface QianwenSiteSelectors extends SitePackSelectors {
   chatContent: string[]
   userQuery: string
   assistantResponse: string
-  newChatButton: string[]
   stopButton: string[]
 }
 
@@ -79,7 +78,7 @@ export interface QianwenSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const QIANWEN_CONFIG_VERSION = 3
+export const QIANWEN_CONFIG_VERSION = 4
 
 const createQianwenConfig = (): QianwenSiteConfig => {
   const questionItem =
@@ -207,7 +206,6 @@ const createQianwenConfig = (): QianwenSiteConfig => {
       chatContent: [questionItem, answerItem],
       userQuery: questionItem,
       assistantResponse: answerItem,
-      newChatButton: ['[class*="newChatButton"]'],
       stopButton: [stopButton],
     },
     input: { mode: "contenteditable", submitKey: "Enter" },

@@ -1510,10 +1510,6 @@ export class ClaudeAdapter extends SiteAdapter {
 
   // ==================== 杂项 ====================
 
-  getNewChatButtonSelectors(): string[] {
-    return [...this.config.selectors.newChatButton]
-  }
-
   getDefaultLockSettings(): { enabled: boolean; keyword: string } {
     return { enabled: false, keyword: "sonnet" }
   }

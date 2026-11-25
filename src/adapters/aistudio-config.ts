@@ -18,7 +18,6 @@ interface AIStudioSiteSelectors extends SitePackSelectors {
   chatContent: string[]
   userQuery: string
   assistantResponse: string
-  newChatButton: string[]
   stopButton: string[]
   scrollContainer: string[]
   sidebarScrollContainer: string
@@ -110,7 +109,7 @@ export interface AIStudioSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const AISTUDIO_CONFIG_VERSION = 5
+export const AISTUDIO_CONFIG_VERSION = 6
 
 const createAIStudioConfig = (): AIStudioSiteConfig => {
   const turn = "ms-chat-turn"
@@ -157,11 +156,6 @@ const createAIStudioConfig = (): AIStudioSiteConfig => {
       chatContent: [".chat-turn-container", '[class*="message"]', '[class*="response"]'],
       userQuery,
       assistantResponse,
-      newChatButton: [
-        'button[iconname="add"]',
-        'button[data-test-clear="outside"]',
-        'button .material-symbols-outlined[aria-hidden="true"]',
-      ],
       stopButton: [
         "ms-stop-button",
         'button:has(mat-icon[fonticon="stop"])',

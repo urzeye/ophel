@@ -413,10 +413,6 @@ export class QianwenAdapter extends SiteAdapter {
     return super.findSubmitButton(editor)
   }
 
-  getNewChatButtonSelectors(): string[] {
-    return [...this.config.selectors.newChatButton]
-  }
-
   // ==================== 滚动与消息 ====================
 
   getScrollContainer(): HTMLElement | null {
