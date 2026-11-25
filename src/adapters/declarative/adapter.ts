@@ -1167,6 +1167,28 @@ export class DeclarativeAdapter extends SiteAdapter {
     return url.href
   }
 
+  /**
+   * SitePack 的路由是否响应 popstate 未经逐站实测，不走基类的 SPA 优先路径；
+   * 保留点击站点原生"新对话"按钮，点击后导航未生效再回退 newTabPath 整页跳转。
+   */
+  override startNewConversation(): boolean {
+    const beforeState = this.captureConversationNavigationState()
+    const trigger = this.findVisibleElementBySelectors(this.manifest.selectors.newChatButton ?? [])
+    if (trigger) {
+      this.simulateClick(trigger)
+
+      window.setTimeout(() => {
+        if (!this.hasConversationNavigationChanged(beforeState)) {
+          this.navigateToNewConversationUrl()
+        }
+      }, 150)
+
+      return true
+    }
+
+    return this.navigateToNewConversationUrl()
+  }
+
   getSubmitButtonSelectors(): string[] {
     return [...(this.manifest.selectors.submitButton ?? [])]
   }

@@ -2012,8 +2012,15 @@ const validateCapabilityRequirements = (
     isPlainRecord(config.generating) || isPlainRecord(config.networkMonitor),
     `${path}.generating`,
   )
-  // new-chat 无字段要求：startNewConversation 改为基于 getNewTabUrl 的 SPA 导航 +
-  // href 兜底（基类实现），不再消费 newChatButton 选择器。
+  // 内置适配器由基类命令式实现（SPA 导航 + href 兜底），无按钮选择器配置；
+  // SitePack 仍走 DeclarativeAdapter 的"点击原生按钮"路径，必须声明选择器。
+  if (!context.allowImperativeImplementation) {
+    requireField(
+      "new-chat",
+      hasNonEmptyStringArray(selectors.newChatButton),
+      `${path}.selectors.newChatButton`,
+    )
+  }
   requireField(
     "stop-generation",
     hasNonEmptyStringArray(selectors.stopButton),

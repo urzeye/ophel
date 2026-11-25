@@ -27,7 +27,7 @@ export interface SitePackSelectors {
   chatContent?: string[]
   userQuery?: string
   assistantResponse?: string
-  /** 已废弃：新对话改为 URL 导航，运行时不再消费；仅为兼容存量 SitePack 保留。 */
+  /** 声明 new-chat 能力的 SitePack 必填：点击站点原生"新对话"按钮的选择器。 */
   newChatButton?: string[]
   stopButton?: string[]
   scrollContainer?: string[]

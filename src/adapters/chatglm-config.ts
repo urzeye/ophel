@@ -230,7 +230,7 @@ const createChatGLMConfig = (): ChatGLMSiteConfig => {
       },
       { selector: ".component-box-new", property: "max-width" },
     ],
-    zenMode: { hide: [".el-aside"] },
+    zenMode: { hide: [".app-shell-sidebar-inline"] },
     cleanMode: {
       hide: [".vip-btn", ".slogan-banner"],
       preserveFlow: [".policy-wrap, .policy-wrap *"],

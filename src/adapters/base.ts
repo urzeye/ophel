@@ -2487,6 +2487,30 @@ export abstract class SiteAdapter {
     )
   }
 
+  /**
+   * 整页跳转到新对话 URL。基类的 startNewConversation 已改为 SPA 优先并内联
+   * href 兜底，此方法仅供 DeclarativeAdapter 的"点击新对话按钮"流程作失败兜底。
+   */
+  protected navigateToNewConversationUrl(): boolean {
+    const targetUrl = this.getNewTabUrl()
+    if (!targetUrl) {
+      return false
+    }
+
+    try {
+      const resolvedTargetUrl = new URL(targetUrl, window.location.origin).href
+      if (resolvedTargetUrl === window.location.href && this.isNewConversation()) {
+        return true
+      }
+
+      window.location.href = resolvedTargetUrl
+      return true
+    } catch {
+      window.location.href = targetUrl
+      return true
+    }
+  }
+
   protected captureConversationNavigationState(): {
     href: string
     sessionId: string
