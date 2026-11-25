@@ -3,7 +3,14 @@
  * 从油猴脚本 geminiHelper.user.js 5874~6606 行原封不动移植
  */
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react"
 
 import { SYNC_TARGET_HINT_STORAGE_KEY } from "~constants/storage-keys"
 import type { Conversation, ConversationManager, Folder, Tag } from "~core/conversation-manager"
@@ -171,7 +178,8 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
   const [expandedFolderId, setExpandedFolderId] = useState<string | null>(null)
   const [batchMode, setBatchMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
-  const [syncing, setSyncing] = useState(false)
+  const syncProgress = useSyncExternalStore(manager.subscribeSyncProgress, manager.getSyncProgress)
+  const syncing = syncProgress !== null
   const [isDeleting, setIsDeleting] = useState(false)
 
   // 搜索状态
@@ -512,43 +520,33 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
   // 同步
   const handleSync = useCallback(async () => {
     markSyncHintSeen()
-    setSyncing(true)
-    try {
-      const loadResult = await manager.siteAdapter?.loadAllConversations?.()
-      const canSyncDeleted = loadResult !== false
-      const sidebarCount = manager.siteAdapter?.getConversationList?.()?.length || 0
-      const { newCount, updatedCount, deletedCount } = await manager.syncConversations(
-        lastUsedFolderId,
-        false,
-        { syncDeleted: canSyncDeleted },
+    const result = await manager.syncAllConversations({ targetFolderId: lastUsedFolderId })
+    loadData()
+    if (result.status !== "complete") return
+    const { newCount, updatedCount, deletedCount } = result
+    if (result.loadedCount === 0) {
+      showToast(t("conversationsSyncEmpty"))
+      return
+    }
+
+    const targetFolder = folders.find((folder) => folder.id === lastUsedFolderId)
+    const targetFolderName = targetFolder
+      ? getFolderDisplayName(targetFolder)
+      : getInboxDisplayName()
+
+    if (newCount > 0) {
+      showToast(
+        t("conversationsSyncResult", {
+          added: String(newCount),
+          folder: targetFolderName,
+        }),
       )
-      loadData()
-      if (sidebarCount === 0) {
-        showToast(t("conversationsSyncNoSidebarItems"))
-        return
-      }
-
-      const targetFolder = folders.find((folder) => folder.id === lastUsedFolderId)
-      const targetFolderName = targetFolder
-        ? getFolderDisplayName(targetFolder)
-        : getInboxDisplayName()
-
-      if (newCount > 0) {
-        showToast(
-          t("conversationsSyncResult", {
-            added: String(newCount),
-            folder: targetFolderName,
-          }),
-        )
-      } else if (deletedCount > 0) {
-        showToast(t("conversationsSyncRemoved", { removed: String(deletedCount) }))
-      } else if (updatedCount > 0) {
-        showToast(t("conversationsSyncUpdated", { updated: String(updatedCount) }))
-      } else {
-        showToast(t("conversationsSyncNoChange", { folder: targetFolderName }))
-      }
-    } finally {
-      setSyncing(false)
+    } else if (deletedCount > 0) {
+      showToast(t("conversationsSyncRemoved", { removed: String(deletedCount) }))
+    } else if (updatedCount > 0) {
+      showToast(t("conversationsSyncUpdated", { updated: String(updatedCount) }))
+    } else {
+      showToast(t("conversationsSyncNoChange", { folder: targetFolderName }))
     }
   }, [manager, lastUsedFolderId, loadData, folders, markSyncHintSeen])
 

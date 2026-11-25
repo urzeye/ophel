@@ -19,6 +19,7 @@ import {
   type AIStudioRpcBridgeWindow,
 } from "~core/aistudio-rpc-bridge"
 import { platform } from "~platform"
+import { waitForConversationLoad } from "~utils/conversation-list-loader"
 import { useSettingsStore } from "~stores/settings-store"
 import {
   createExportAssetCollector,
@@ -56,6 +57,7 @@ import {
   type AnchorData,
   type ConversationDeleteTarget,
   type ConversationInfo,
+  type ConversationLoadOptions,
   type ConversationObserverConfig,
   type ExportCollectionReport,
   type ExportConfig,
@@ -937,43 +939,40 @@ export class AIStudioAdapter extends SiteAdapter {
    * 加载全部对话（从 library 页面抓取）
    * 跳转到 /library 页面，等待桌面表格或移动端卡片列表加载后缓存。
    */
-  async loadAllConversations(): Promise<void> {
+  async loadAllConversations(options: ConversationLoadOptions = {}): Promise<boolean> {
+    options.signal?.throwIfAborted()
     const currentPath = window.location.pathname
     const isOnLibrary = currentPath === "/library"
 
-    if (!isOnLibrary) {
-      // 尝试 SPA 跳转到 library 页面（新版侧边栏已移除 view-all-history-link）
-      const navigated = await this.navigateToLibraryViaSpa()
-      if (!navigated) {
-        // SPA 导航失败，降级为全页面跳转
-        window.location.href = "/library"
-        return
+    try {
+      if (!isOnLibrary) {
+        const navigated = await this.navigateToLibraryViaSpa(options.signal)
+        if (!navigated) return false
+      } else if (!(await this.waitForLibraryContent(options.signal))) {
+        return false
       }
-    }
 
-    // 抓取 library 数据
-    const conversations = this.extractLibraryConversations()
-    if (conversations.length > 0) {
+      options.signal?.throwIfAborted()
+      const conversations = this.extractLibraryConversations()
       this.cachedLibraryConversations = conversations
+      options.onProgress?.(conversations)
+      return true
+    } finally {
+      if (!isOnLibrary && window.location.pathname === "/library") {
+        window.history.back()
+      }
+      setTimeout(() => {
+        this.cachedLibraryConversations = null
+      }, 10000)
     }
-
-    // 如果是从其他页面跳转过来的，返回原页面
-    if (!isOnLibrary) {
-      // 使用 history.back() 返回，保持 SPA 状态
-      window.history.back()
-    }
-
-    // 10 秒后清除缓存，确保后续调用使用实时数据
-    setTimeout(() => {
-      this.cachedLibraryConversations = null
-    }, 10000)
   }
 
   /**
    * 通过 SPA 方式导航到 /library 页面
    * 优先寻找页面内的 Angular 路由链接，回退到 history.pushState + popstate
    */
-  private async navigateToLibraryViaSpa(): Promise<boolean> {
+  private async navigateToLibraryViaSpa(signal?: AbortSignal): Promise<boolean> {
+    signal?.throwIfAborted()
     const privateSelectors = this.config.sitePrivateSelectors
     // 方法 1: 仅在导航容器（ms-navbar-v2）内查找 /library 链接，
     // 或链接本身带有 Angular routerLink 属性，确保是 SPA 路由链接而非普通 <a>
@@ -988,28 +987,28 @@ export class AIStudioAdapter extends SiteAdapter {
 
     if (isRouterLink && candidate) {
       candidate.click()
-      return this.waitForLibraryContent()
+      return this.waitForLibraryContent(signal)
     }
 
     // 方法 2: 使用 history.pushState + popstate 触发 Angular 路由器
     window.history.pushState(null, "", "/library")
     window.dispatchEvent(new PopStateEvent("popstate", { state: null }))
-    return this.waitForLibraryContent()
+    return this.waitForLibraryContent(signal)
   }
 
   /**
    * 等待 library 页面内容加载完成
    */
-  private async waitForLibraryContent(): Promise<boolean> {
+  private async waitForLibraryContent(signal?: AbortSignal): Promise<boolean> {
     // 最多等待 5 秒
     // 以桌面表格、移动端卡片列表、真实对话链接或明确空状态为就绪信号。
     // 不把裸 ms-library-table 当作完成信号，避免 Angular shell 阶段提前返回。
     for (let i = 0; i < 50; i++) {
-      await new Promise((resolve) => setTimeout(resolve, 100))
+      await waitForConversationLoad(100, signal)
       const content = this.getLibraryContentElement()
       if (content) {
         // 额外等待 200ms 确保数据渲染完成
-        await new Promise((resolve) => setTimeout(resolve, 200))
+        await waitForConversationLoad(200, signal)
         return true
       }
     }

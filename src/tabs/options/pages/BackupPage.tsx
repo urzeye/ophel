@@ -639,7 +639,11 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
     usePromptChainsStore.getState().setChains(getDefaultPromptChains())
     useFoldersStore.setState({ folders: DEFAULT_FOLDERS })
     useTagsStore.setState({ tags: [] })
-    useConversationsStore.setState({ conversations: {}, lastUsedFolderId: "inbox" })
+    useConversationsStore.setState({
+      conversations: {},
+      lastUsedFolderId: "inbox",
+      initialSyncStates: {},
+    })
     useReadingHistoryStore.setState({ history: {}, lastCleanupRun: 0 })
     useBookmarkStore.getState().clearAllBookmarks()
     useClaudeSessionKeysStore.setState({ keys: [], currentKeyId: "" })

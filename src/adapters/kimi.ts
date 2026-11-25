@@ -16,11 +16,13 @@ import {
 } from "~utils/export-assets"
 import { htmlToMarkdown, type ExportBundle, type ExportMessage } from "~utils/exporter"
 import { t } from "~utils/i18n"
+import { loadConversationList, waitForConversationLoad } from "~utils/conversation-list-loader"
 
 import {
   SiteAdapter,
   type ConversationDeleteTarget,
   type ConversationInfo,
+  type ConversationLoadOptions,
   type ConversationObserverConfig,
   type ExportConfig,
   type ExportLifecycleContext,
@@ -281,34 +283,23 @@ export class KimiAdapter extends SiteAdapter {
     return null
   }
 
-  async loadAllConversations(): Promise<void> {
-    await this.openMoreHistoryView()
-
+  async loadAllConversations(options: ConversationLoadOptions = {}): Promise<boolean> {
+    const wasHistoryOpen = this.isHistoryPath()
     try {
-      let lastCount = 0
-      let stableRounds = 0
-      const maxStableRounds = 4
-
-      while (stableRounds < maxStableRounds) {
-        const container = this.getSidebarScrollContainer() as HTMLElement | null
-        if (!container) return
-
-        container.scrollTop = container.scrollHeight
-        container.dispatchEvent(new Event("scroll", { bubbles: true }))
-        await new Promise((resolve) => setTimeout(resolve, 500))
-
-        const count = this.getConversationItems().length
-        if (count === lastCount) {
-          stableRounds++
-        } else {
-          lastCount = count
-          stableRounds = 0
-        }
-      }
-
-      this.cacheFullListSnapshot(this.collectConversationListFromDom())
+      await this.openMoreHistoryView(options.signal)
+      const complete = await loadConversationList({
+        ...options,
+        getContainer: () => this.getSidebarScrollContainer(),
+        readList: () => this.collectConversationListFromDom(),
+        idleMs: 2000,
+        onProgress: (items) => {
+          this.cacheFullListSnapshot(items)
+          options.onProgress?.(items)
+        },
+      })
+      return complete
     } finally {
-      await this.closeMoreHistoryView()
+      if (!wasHistoryOpen) await this.closeMoreHistoryView()
     }
   }
 
@@ -1623,7 +1614,8 @@ export class KimiAdapter extends SiteAdapter {
       : Array.from(document.querySelectorAll(this.config.conversation.itemSelector))
   }
 
-  private async openMoreHistoryView(): Promise<void> {
+  private async openMoreHistoryView(signal?: AbortSignal): Promise<void> {
+    signal?.throwIfAborted()
     if (this.isHistoryPath()) return
 
     const moreHistoryLink = document.querySelector(
@@ -1647,7 +1639,7 @@ export class KimiAdapter extends SiteAdapter {
       if (currentPath !== beforePath || currentCount > beforeCount) {
         return
       }
-      await new Promise((resolve) => setTimeout(resolve, 120))
+      await waitForConversationLoad(120, signal)
     }
   }
 

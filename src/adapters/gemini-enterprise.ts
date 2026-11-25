@@ -3,6 +3,7 @@
  */
 import { SITE_IDS } from "~constants"
 import { DOMToolkit } from "~utils/dom-toolkit"
+import { waitForConversationLoad } from "~utils/conversation-list-loader"
 import { htmlToMarkdown } from "~utils/exporter"
 import { setSafeHTML } from "~utils/trusted-types"
 
@@ -12,6 +13,7 @@ import {
   type AssistantMermaidBlock,
   type ConversationDeleteTarget,
   type ConversationInfo,
+  type ConversationLoadOptions,
   type ConversationObserverConfig,
   type ExportConfig,
   type ModelSwitcherConfig,
@@ -1642,10 +1644,11 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
   }
 
   /** 覆盖基类：通过点击“展开”按钮加载更多对话 */
-  async loadAllConversations(): Promise<void> {
+  async loadAllConversations(options: ConversationLoadOptions = {}): Promise<boolean> {
     const maxIterations = 20 // 防止无限循环
 
     for (let i = 0; i < maxIterations; i++) {
+      options.signal?.throwIfAborted()
       // 查找所有按钮（穿透 Shadow DOM）
       const allBtns =
         (DOMToolkit.query(this.config.sitePrivateSelectors.showMoreButton, {
@@ -1661,7 +1664,8 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
       })
 
       if (expandBtns.length === 0) {
-        break // 没有更多需要展开的按钮
+        options.onProgress?.(this.getConversationList())
+        return this.getSidebarScrollContainer() !== null
       }
 
       // 点击所有展开按钮
@@ -1670,8 +1674,10 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
       }
 
       // 等待对话加载
-      await new Promise((r) => setTimeout(r, 300))
+      await waitForConversationLoad(300, options.signal)
+      options.onProgress?.(this.getConversationList())
     }
+    return false
   }
 
   // ==================== 模型锁定 ====================

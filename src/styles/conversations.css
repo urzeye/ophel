@@ -1264,3 +1264,106 @@
 .conversations-tag-filter-action {
   color: var(--gh-primary, #3b82f6) !important;
 }
+
+.gh-conversation-sync-notice {
+  position: fixed;
+  top: max(20px, env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2147483645;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: max-content;
+  max-width: min(460px, calc(100vw - 32px));
+  box-sizing: border-box;
+  padding: 12px 16px;
+  border: 1px solid var(--gh-border);
+  border-radius: 12px;
+  background: var(--gh-bg);
+  color: var(--gh-text);
+  font-size: 13px;
+}
+
+.gh-conversation-sync-notice > svg {
+  flex-shrink: 0;
+  color: var(--gh-primary);
+}
+
+.gh-conversation-sync-notice-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.gh-conversation-sync-notice-content strong {
+  font-size: inherit;
+  font-weight: 600;
+}
+
+.gh-conversation-sync-notice-content span {
+  color: var(--gh-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.gh-conversation-sync-notice button {
+  flex-shrink: 0;
+  max-width: 45%;
+  min-height: 32px;
+  padding: 6px 10px;
+  border: 1px solid var(--gh-border);
+  border-radius: 6px;
+  background: var(--gh-bg);
+  color: var(--gh-text);
+  font: inherit;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.gh-conversation-sync-notice button:hover:not(:disabled) {
+  background: var(--gh-hover);
+}
+
+.gh-conversation-sync-notice button:active:not(:disabled) {
+  background: var(--gh-bg-secondary);
+}
+
+.gh-conversation-sync-notice button:focus-visible {
+  outline: 2px solid var(--gh-primary);
+  outline-offset: 2px;
+}
+
+.gh-conversation-sync-notice button:disabled {
+  color: var(--gh-text-secondary);
+  cursor: default;
+}
+
+@media (max-width: 480px) {
+  .gh-conversation-sync-notice {
+    display: grid;
+    grid-template-columns: 18px minmax(0, 1fr);
+    gap: 8px;
+    padding: 10px 12px;
+  }
+
+  .gh-conversation-sync-notice button {
+    grid-column: 2;
+    justify-self: start;
+    max-width: 100%;
+  }
+}
+
+@media (pointer: coarse) {
+  .gh-conversation-sync-notice button {
+    min-height: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gh-conversation-sync-notice button {
+    transition: none;
+  }
+}

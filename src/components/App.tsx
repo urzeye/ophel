@@ -63,6 +63,7 @@ import { isLikelyMobileDevice } from "~utils/device"
 
 import { ConfirmDialog, FolderSelectDialog, TagManagerDialog } from "./ConversationDialogs"
 import { DisclaimerModal } from "./DisclaimerModal"
+import { ConversationSyncNotice } from "./ConversationSyncNotice"
 import { LoadingOverlay } from "./LoadingOverlay"
 import { MainPanel } from "./MainPanel"
 import { PanelOnboardingTour } from "./PanelOnboardingTour"
@@ -4037,6 +4038,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
       {adapter && promptManager && (settings?.features?.prompts?.enabled ?? true) && (
         <QuickQuoteActions adapter={adapter} promptManager={promptManager} />
       )}
+      {conversationManager && <ConversationSyncNotice manager={conversationManager} />}
       <LoadingOverlay
         isVisible={Boolean(exportProgress)}
         text={exportOverlayText}

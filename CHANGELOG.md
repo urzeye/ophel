@@ -13,6 +13,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 - **WebDAV automatic backups** — Schedule backups without reading history, keep the latest seven automatic backups per device, and restore manually. (#246, #1062)
 
+### ✨ Improvements
+
+- **Conversation sync** — First-run full sync now shows progress and can be stopped, avoids repeated loading at the end of history, and restores the sidebar position afterward.
+
 ---
 
 ## [1.3.5][1.3.5] - 2026-11-19

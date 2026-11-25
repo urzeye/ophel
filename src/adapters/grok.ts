@@ -24,6 +24,7 @@ import {
 } from "~utils/export-assets"
 import { htmlToMarkdown, type ExportBundle, type ExportMessage } from "~utils/exporter"
 import { t } from "~utils/i18n"
+import { loadConversationList, waitForConversationLoad } from "~utils/conversation-list-loader"
 import { EVENT_OUTLINE_DATA_UPDATED } from "~utils/messaging"
 import { hashOutlineText } from "~utils/outline-heading-cache"
 import {
@@ -47,6 +48,7 @@ import {
   type AnchorData,
   type ConversationDeleteTarget,
   type ConversationInfo,
+  type ConversationLoadOptions,
   type ConversationObserverConfig,
   type ExportConfig,
   type ExportLifecycleContext,
@@ -220,13 +222,13 @@ export class GrokAdapter extends SiteAdapter {
   /** 导出链路缓存的接口全量数据（prepareConversationExport 拉取，导出结束清空） */
   private exportApiData: GrokHistoryExportData | null = null
 
-  async loadAllConversations(): Promise<void> {
+  async loadAllConversations(options: ConversationLoadOptions = {}): Promise<boolean> {
     // 侧边栏折叠（icon 模式）时对话列表不渲染，先主动展开再加载，
     // 否则同步会扫不到任何对话
-    await this.ensureSidebarExpanded()
+    await this.ensureSidebarExpanded(options.signal)
 
     const sidebar = document.querySelector(this.config.sitePrivateSelectors.sidebarScrollContainer)
-    if (!sidebar) return
+    if (!sidebar) return false
 
     // 使用 CSS 类特征定位"查看全部"按钮，避免依赖文本
     // 特征：button, w-full, justify-start, text-xs, text-secondary
@@ -234,56 +236,28 @@ export class GrokAdapter extends SiteAdapter {
     const viewAllBtn = sidebar.querySelector(this.config.sitePrivateSelectors.viewAllButton)
 
     if (viewAllBtn) {
-      // 显示同步提示
-      const { showToast } = await import("~utils/toast")
-      const { t } = await import("~utils/i18n")
-      showToast(t("grokSyncingConversations"))
+      options.signal?.throwIfAborted()
+      this.cachedDialogConversations = null
       ;(viewAllBtn as HTMLElement).click()
-
-      // 轮询等待对话框出现（最多 3 秒）
-      let cmdkList: Element | null = null
-      for (let i = 0; i < 30; i++) {
-        await new Promise((resolve) => setTimeout(resolve, 100))
-        cmdkList = document.querySelector(this.config.sitePrivateSelectors.cmdkList)
-        if (cmdkList) break
+      try {
+        return await loadConversationList({
+          ...options,
+          getContainer: () => document.querySelector(this.config.sitePrivateSelectors.cmdkList),
+          readList: () => this.getConversationList(),
+          idleMs: 1600,
+          onProgress: (items) => {
+            this.cachedDialogConversations = new Map(items.map((item) => [item.id, item]))
+            options.onProgress?.(items)
+          },
+        })
+      } finally {
+        this.dispatchEscapeKey()
+        setTimeout(() => {
+          this.cachedDialogConversations = null
+        }, 5000)
       }
-
-      // 多次滚动，确保虚拟列表加载全部内容
-      if (cmdkList) {
-        let prevHeight = 0
-        let stableCount = 0
-        const maxAttempts = 15
-
-        for (let i = 0; i < maxAttempts; i++) {
-          cmdkList.scrollTop = cmdkList.scrollHeight
-          await new Promise((resolve) => setTimeout(resolve, 400))
-
-          const currentHeight = cmdkList.scrollHeight
-          if (currentHeight === prevHeight) {
-            stableCount++
-            // 连续3次高度不变，认为已加载完毕
-            if (stableCount >= 3) break
-          } else {
-            stableCount = 0
-            prevHeight = currentHeight
-          }
-        }
-      }
-
-      // 在关闭弹窗之前，缓存弹窗中的所有对话
-      // 这样 getConversationList 在弹窗关闭后仍然可以返回这些数据
-      this.cacheDialogConversations()
-
-      // 自动关闭弹窗：模拟按下 ESC 键（避免 target 不是元素导致快捷键处理报错）
-      this.dispatchEscapeKey()
-
-      // 5 秒后清除缓存，确保后续调用使用实时数据
-      setTimeout(() => {
-        this.cachedDialogConversations = null
-      }, 5000)
-
-      return
     }
+    return super.loadAllConversations(options)
   }
 
   /**
@@ -293,7 +267,8 @@ export class GrokAdapter extends SiteAdapter {
    * 折叠态以 shadcn 侧栏的状态容器为准（trigger 的 data-state 不可靠，
    * 展开页也可能命中 closed 状态的同名按钮），且只点容器内的 trigger。
    */
-  private async ensureSidebarExpanded(): Promise<void> {
+  private async ensureSidebarExpanded(signal?: AbortSignal): Promise<void> {
+    signal?.throwIfAborted()
     const collapsedRoot = document.querySelector('[data-collapsible][data-state="collapsed"]')
     if (!collapsedRoot) return
     const trigger = collapsedRoot.querySelector<HTMLElement>(
@@ -308,54 +283,10 @@ export class GrokAdapter extends SiteAdapter {
     const itemSelector = this.config.conversation.itemSelector
     const viewAllSelector = this.config.sitePrivateSelectors.viewAllButton
     for (let i = 0; i < 30; i++) {
-      await this.sleep(100)
+      await waitForConversationLoad(100, signal)
       const sidebar = document.querySelector(containerSelector)
       if (sidebar?.querySelector(itemSelector) || sidebar?.querySelector(viewAllSelector)) return
     }
-  }
-
-  /** 缓存弹窗中的对话数据 */
-  private cacheDialogConversations(): void {
-    const cache = new Map<string, ConversationInfo>()
-    const conversation = this.config.conversation
-
-    // 扫描所有 cmdk 对话框中的对话链接
-    const allLinks = document.querySelectorAll(conversation.itemSelector)
-    allLinks.forEach((link) => {
-      if (this.isCmdkActionItem(link)) return
-
-      const href = link.getAttribute(conversation.idFrom.attr ?? "href")
-      if (!href) return
-
-      const id = this.extractConversationIdFromHref(href)
-      if (!id) return
-      if (cache.has(id)) return
-
-      let title = "New Chat"
-      let isActive = false
-      const isPinned = false
-
-      // 识别 cmdk 对话框项
-      const cmdkItem = link.closest(this.config.sitePrivateSelectors.cmdkItem)
-      if (cmdkItem) {
-        const titleSpan = cmdkItem.querySelector(this.config.sitePrivateSelectors.cmdkTitle)
-        title = titleSpan?.textContent?.trim() || title
-        isActive =
-          cmdkItem.querySelector(this.config.sitePrivateSelectors.cmdkActiveIndicator) !== null
-      } else {
-        title = link.textContent?.trim() || title
-      }
-
-      cache.set(id, {
-        id,
-        title,
-        url: href,
-        isPinned,
-        isActive,
-      })
-    })
-
-    this.cachedDialogConversations = cache
   }
 
   // ==================== 对话管理 ====================

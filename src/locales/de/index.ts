@@ -1020,6 +1020,17 @@ export const de = {
   conversationsSync: "Synchro",
   conversationsSyncTooltip: "Neue Chats dieser Seite importieren",
   conversationsSyncing: "Synchronisierung...",
+  conversationsInitialSyncTitle: "Erster Abgleich des Gesprächsverlaufs",
+  conversationsSyncProgress: "{count} Gespräche eingelesen",
+  conversationsSyncSaving: "Gespräche werden gespeichert…",
+  conversationsSyncStop: "Abbrechen",
+  conversationsSyncStopping: "Wird abgebrochen…",
+  conversationsInitialSyncComplete: "Erster Abgleich abgeschlossen: {count} Gespräche eingelesen",
+  conversationsSyncPartial:
+    "{count} Gespräche gespeichert. Abgleich unvollständig; bitte erneut synchronisieren.",
+  conversationsSyncCancelled: "Abgleich abgebrochen. {count} Gespräche bleiben erhalten.",
+  conversationsSyncFailed:
+    "Abgleich fehlgeschlagen. {count} Gespräche bleiben erhalten; bitte erneut versuchen.",
   conversationsSynced: "Fertig",
   conversationsAddFolder: "Ordner",
   conversationsOpenInNewTab: "In neuem Tab öffnen",
