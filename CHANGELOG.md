@@ -13,6 +13,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 - **WebDAV automatic backups** — Schedule backups without reading history, keep the latest seven automatic backups per device, and restore manually. (#246, #1062)
 
+### ✨ Improvements
+
+- **Conversation sync** — First-run full sync waits until history can scroll, shows progress, supports stopping, and avoids importing only the first page; Grok sync loads conversations directly without relying on the sidebar. (#1064)
+
 ---
 
 ## [1.3.5][1.3.5] - 2026-11-19

@@ -24,6 +24,7 @@ import {
 import { htmlToMarkdown, type ExportBundle, type ExportMessage } from "~utils/exporter"
 import { loadCompleteHistoryForExport } from "~utils/history-loader"
 import { t } from "~utils/i18n"
+import { waitForConversationLoad } from "~utils/conversation-list-loader"
 import {
   EVENT_OUTLINE_DATA_UPDATED,
   type MonitorResponseCaptureRule,
@@ -43,6 +44,7 @@ import {
   SiteAdapter,
   type ConversationDeleteTarget,
   type ConversationInfo,
+  type ConversationLoadOptions,
   type ConversationObserverConfig,
   type ExportCollectionReport,
   type ExportLifecycleContext,
@@ -424,8 +426,15 @@ export class QwenAiAdapter extends SiteAdapter {
    * 返回 false 表示没能拿到完整列表（请求失败、置顶接口失败或页数触顶）：
    * 调用方据此不做「同步删除」，否则会拿残缺列表去清本地记录。
    */
-  async loadAllConversations(): Promise<boolean> {
-    return this.refreshConversationSnapshot({ force: true, fetchAllPages: true })
+  async loadAllConversations(options: ConversationLoadOptions = {}): Promise<boolean> {
+    const complete = await this.refreshConversationSnapshot({
+      force: true,
+      fetchAllPages: true,
+      ...options,
+    })
+    options.signal?.throwIfAborted()
+    options.onProgress?.(this.getConversationList())
+    return complete
   }
 
   navigateToConversation(id: string, url?: string): boolean {
@@ -2118,9 +2127,10 @@ export class QwenAiAdapter extends SiteAdapter {
    * 失败或不完整返回 false，loadAllConversations 据此让调用方拒绝「同步删除」。
    */
   private async refreshConversationSnapshot(
-    options: { force?: boolean; fetchAllPages?: boolean } = {},
+    options: ConversationLoadOptions & { force?: boolean; fetchAllPages?: boolean } = {},
   ): Promise<boolean> {
     const { force = false, fetchAllPages = false } = options
+    options.signal?.throwIfAborted()
     const isFresh =
       Date.now() - this.conversationSnapshotFetchedAt < QWENAI_CONVERSATION_SNAPSHOT_TTL_MS
 
@@ -2129,21 +2139,31 @@ export class QwenAiAdapter extends SiteAdapter {
 
     // 进行中的是部分刷新而本次要全量：等它结束再补一次，不能被它吞掉
     while (this.conversationSnapshotPromise) {
+      const pending = this.conversationSnapshotPromise
       if (!fetchAllPages || this.conversationSnapshotFetchesAll) {
-        return this.conversationSnapshotPromise
+        if (!options.signal) return pending
+        while (this.conversationSnapshotPromise === pending) {
+          await waitForConversationLoad(100, options.signal)
+        }
+        return pending
       }
-      await this.conversationSnapshotPromise
+      while (this.conversationSnapshotPromise === pending) {
+        await waitForConversationLoad(100, options.signal)
+      }
+      options.signal?.throwIfAborted()
     }
 
     this.conversationSnapshotFetchesAll = fetchAllPages
     this.conversationSnapshotPromise = (async () => {
       try {
-        const { list, complete } = await this.fetchConversationSnapshot(fetchAllPages)
+        const { list, complete } = await this.fetchConversationSnapshot(fetchAllPages, options)
+        options.signal?.throwIfAborted()
         this.conversationSnapshot = list
         this.conversationSnapshotFetchedAt = Date.now()
         this.conversationSnapshotRetryAt = 0
         return !fetchAllPages || complete
       } catch (error) {
+        if (options.signal?.aborted) return false
         this.conversationSnapshotRetryAt = Date.now() + QWENAI_CONVERSATION_SNAPSHOT_RETRY_MS
         console.warn("[QwenAiAdapter] Failed to refresh conversation snapshot:", error)
         return false
@@ -2157,6 +2177,7 @@ export class QwenAiAdapter extends SiteAdapter {
 
   private async fetchConversationSnapshot(
     fetchAllPages: boolean,
+    options: ConversationLoadOptions = {},
   ): Promise<{ list: ConversationInfo[]; complete: boolean }> {
     const currentSessionId = this.getSessionId()
     const maxPages = fetchAllPages ? QWENAI_FETCH_PAGE_LIMIT : QWENAI_BOOTSTRAP_PAGE_LIMIT
@@ -2166,7 +2187,8 @@ export class QwenAiAdapter extends SiteAdapter {
     let reachedEnd = false
 
     for (let page = 1; page <= maxPages; page++) {
-      const items = await this.fetchConversationPage(page)
+      options.signal?.throwIfAborted()
+      const items = await this.fetchConversationPage(page, options.signal)
       if (items.length === 0) {
         reachedEnd = true
         break
@@ -2181,10 +2203,11 @@ export class QwenAiAdapter extends SiteAdapter {
       }
 
       if (newCount === 0) break
+      options.onProgress?.([...all])
       if (!fetchAllPages && currentSessionId && seen.has(currentSessionId)) break
     }
 
-    const pinned = await this.fetchPinnedConversations()
+    const pinned = await this.fetchPinnedConversations(options.signal)
     const complete = reachedEnd && pinned.ok
     if (pinned.items.length === 0) return { list: all, complete }
 
@@ -2198,13 +2221,17 @@ export class QwenAiAdapter extends SiteAdapter {
     return { list: merged, complete }
   }
 
-  private async fetchConversationPage(page: number): Promise<ConversationInfo[]> {
+  private async fetchConversationPage(
+    page: number,
+    signal?: AbortSignal,
+  ): Promise<ConversationInfo[]> {
     const url = new URL(QWENAI_CHAT_LIST_PATH, window.location.origin)
     url.searchParams.set("page", String(page))
     url.searchParams.set("exclude_project", "false")
     const authorization = this.getQwenAuthorizationHeader()
 
     const response = await fetch(url.toString(), {
+      signal,
       method: "GET",
       credentials: "include",
       cache: "no-store",
@@ -2225,11 +2252,14 @@ export class QwenAiAdapter extends SiteAdapter {
     )
   }
 
-  private async fetchPinnedConversations(): Promise<{ items: ConversationInfo[]; ok: boolean }> {
+  private async fetchPinnedConversations(
+    signal?: AbortSignal,
+  ): Promise<{ items: ConversationInfo[]; ok: boolean }> {
     try {
       const url = new URL("/api/v2/chats/pinned", window.location.origin)
       const authorization = this.getQwenAuthorizationHeader()
       const response = await fetch(url.toString(), {
+        signal,
         method: "GET",
         credentials: "include",
         cache: "no-store",
@@ -2250,6 +2280,7 @@ export class QwenAiAdapter extends SiteAdapter {
       )
       return { items: items.map((item) => ({ ...item, isPinned: true })), ok: true }
     } catch (error) {
+      if (signal?.aborted) throw error
       // 置顶只是主列表的补充，失败不拖垮主列表刷新；但快照因此不完整，不能用于同步删除
       console.warn("[QwenAiAdapter] Failed to fetch pinned conversations:", error)
       return { items: [], ok: false }

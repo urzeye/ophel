@@ -1018,6 +1018,18 @@ export const es = {
   conversationsSync: "Sincro",
   conversationsSyncTooltip: "Importar chats de este sitio",
   conversationsSyncing: "Sincronizando...",
+  conversationsInitialSyncTitle: "Primera sincronización del historial",
+  conversationsSyncProgress: "{count} conversaciones leídas",
+  conversationsSyncSaving: "Guardando conversaciones…",
+  conversationsSyncStop: "Detener",
+  conversationsSyncStopping: "Deteniendo…",
+  conversationsInitialSyncComplete:
+    "Primera sincronización completada: {count} conversaciones leídas",
+  conversationsSyncPartial:
+    "Se guardaron {count} conversaciones. La sincronización está incompleta; vuelve a sincronizar.",
+  conversationsSyncCancelled: "Sincronización detenida. Se conservaron {count} conversaciones.",
+  conversationsSyncFailed:
+    "Error de sincronización. Se conservaron {count} conversaciones; vuelve a intentarlo.",
   conversationsSynced: "Listo",
   conversationsAddFolder: "Carpeta",
   conversationsOpenInNewTab: "Abrir en una pestaña nueva",

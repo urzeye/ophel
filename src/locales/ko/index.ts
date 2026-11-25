@@ -1005,6 +1005,17 @@ export const ko = {
   conversationsSync: "동기화",
   conversationsSyncTooltip: "현재 사이트에서 새 대화 가져오기",
   conversationsSyncing: "동기화 중...",
+  conversationsInitialSyncTitle: "대화 기록 최초 동기화 중",
+  conversationsSyncProgress: "대화 {count}개 읽음",
+  conversationsSyncSaving: "대화 저장 중…",
+  conversationsSyncStop: "동기화 중지",
+  conversationsSyncStopping: "중지 중…",
+  conversationsInitialSyncComplete: "최초 동기화 완료: 대화 {count}개 읽음",
+  conversationsSyncPartial:
+    "대화 {count}개를 저장했습니다. 동기화가 완료되지 않았습니다. 다시 동기화해 주세요.",
+  conversationsSyncCancelled: "동기화를 중지했습니다. 대화 {count}개를 유지했습니다.",
+  conversationsSyncFailed:
+    "동기화에 실패했습니다. 대화 {count}개를 유지했습니다. 다시 시도해 주세요.",
   conversationsSynced: "동기화됨",
   conversationsAddFolder: "새 폴더",
   conversationsOpenInNewTab: "새 탭에서 열기",

@@ -1022,6 +1022,18 @@ export const fr = {
   conversationsSync: "Synchro",
   conversationsSyncTooltip: "Importer les chats de ce site",
   conversationsSyncing: "Synchronisation...",
+  conversationsInitialSyncTitle: "Première synchronisation de l’historique",
+  conversationsSyncProgress: "{count} conversations lues",
+  conversationsSyncSaving: "Enregistrement des conversations…",
+  conversationsSyncStop: "Arrêter",
+  conversationsSyncStopping: "Arrêt en cours…",
+  conversationsInitialSyncComplete:
+    "Première synchronisation terminée : {count} conversations lues",
+  conversationsSyncPartial:
+    "{count} conversations enregistrées. Synchronisation incomplète ; relancez-la.",
+  conversationsSyncCancelled: "Synchronisation arrêtée. {count} conversations conservées.",
+  conversationsSyncFailed:
+    "Échec de la synchronisation. {count} conversations conservées ; réessayez.",
   conversationsSynced: "Prêt",
   conversationsAddFolder: "Dossier",
   conversationsOpenInNewTab: "Ouvrir dans un nouvel onglet",

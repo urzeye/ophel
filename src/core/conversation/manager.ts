@@ -18,6 +18,7 @@ import { getTagsStore, useTagsStore } from "~stores/tags-store"
 import { stripQuickQuoteMarkers } from "~core/quick-quote-marker"
 import { sanitizeConversationTitleCandidate } from "~utils/conversation-title"
 import { DOMToolkit } from "~utils/dom-toolkit"
+import { CONVERSATION_FULL_SYNC_READY_TIMEOUT_MS } from "~utils/conversation-list-loader"
 import {
   consolidateThoughtBlocks,
   createExportMetadata,
@@ -37,6 +38,7 @@ import {
   htmlToMarkdown,
 } from "~utils/exporter"
 import { getAllLocalizedTexts, t } from "~utils/i18n"
+import { EVENT_PAGE_URL_CHANGE } from "~utils/messaging"
 import { getTopScrollPosition } from "~utils/scroll-helper"
 import { createSiteScopedStorageKey, resolvePersistedSiteInstanceKey } from "~utils/site-identity"
 import { consumeRestoreFlag, type ExportPackaging, type ExportStyle } from "~utils/storage"
@@ -87,6 +89,7 @@ export type ConversationSegmentedExportMode = "zip-markdown" | "merged-markdown"
  * 收敛条件满足（高度连续 3 轮稳定）时立即结束；预算触顶则继续导出但标记"历史可能不完整"。
  */
 const HISTORY_LOAD_TIME_BUDGET_MS = 5 * 60 * 1000
+const CONVERSATION_SYNC_CANCELLED_BY_USER = "conversation-sync-cancelled-by-user"
 
 /**
  * 高度收敛后、适配器仍报告历史起点缺口时的补载预算。
@@ -154,6 +157,18 @@ export interface ConversationSyncResult {
 
 interface ConversationSyncOptions {
   syncDeleted?: boolean
+  items?: ConversationInfo[]
+}
+
+export interface ConversationSyncProgress {
+  initial: boolean
+  stage: "loading" | "saving" | "stopping"
+  loadedCount: number
+}
+
+export interface ConversationFullSyncResult extends ConversationSyncResult {
+  status: "complete" | "partial" | "cancelled" | "failed"
+  loadedCount: number
 }
 
 interface ConversationExportData {
@@ -177,12 +192,6 @@ export interface ConversationExportOptions {
 
 type ConversationExportDataOptions = ConversationExportOptions
 
-interface AutoFullSyncResult {
-  scannedCount: number
-  changedCount: number
-  loadSucceeded: boolean
-}
-
 type GeminiCidMigrationResult = "migrated" | "pending_email" | "noop"
 
 export class ConversationManager {
@@ -195,7 +204,15 @@ export class ConversationManager {
   private pollInterval: ReturnType<typeof setTimeout> | null = null
   private geminiMigrationTimer: ReturnType<typeof setTimeout> | null = null
   private geminiMigrationRetryCount = 0
-  private initialAutoFullSyncPromise: Promise<void> | null = null
+  private syncTask: Promise<ConversationFullSyncResult> | null = null
+  private syncAbortController: AbortController | null = null
+  private syncProgress: ConversationSyncProgress | null = null
+  private syncProgressListeners = new Set<() => void>()
+  private pendingInitialSync: {
+    context: string
+    accountKey: string
+    resumeTimer: ReturnType<typeof setTimeout> | null
+  } | null = null
   private conversationListUnsubscribe: (() => void) | null = null
   private destroyed = false
 
@@ -291,6 +308,7 @@ export class ConversationManager {
 
     // 等待所有 stores hydration 完成
     await this.waitForHydration()
+    if (this.destroyed) return
 
     // Gemini 老用户升级迁移：将旧版数字 cid 自动迁移为当前账号邮箱 cid
     const migrateResult = this.tryMigrateGeminiLegacyCidToEmail()
@@ -309,25 +327,28 @@ export class ConversationManager {
 
     // 检查是否刚恢复了备份数据，如果是则跳过自动同步以保持备份的干净状态
     const isRestore = await consumeRestoreFlag()
+    if (this.destroyed) return
 
     // 首次安装或当前站点数据为空时，自动加载全部对话
     const currentSiteCount = Object.keys(this.getAllConversations()).length
+    const initialSyncKey = this.getInitialSyncKey()
+    const initialSyncState = getConversationsStore().initialSyncStates[initialSyncKey]
     const shouldRunInitialAutoFullSync =
-      currentSiteCount === 0 && this.siteAdapter.loadAllConversations && !isRestore
+      !isRestore &&
+      initialSyncState !== "complete" &&
+      (initialSyncState === "pending" || currentSiteCount === 0)
 
-    if (shouldRunInitialAutoFullSync) {
-      try {
-        await this.runInitialAutoFullSync()
-      } catch (error) {
-        console.warn("[ConversationManager] Initial auto conversation sync failed:", error)
-      }
+    const initialSync = shouldRunInitialAutoFullSync
+      ? this.syncAllConversations({ initial: true })
+      : null
+    if (!initialSync && !isRestore) {
+      const { newCount, updatedCount } = this.syncConversations(null, true)
+      if (newCount > 0 || updatedCount > 0) this.notifyDataChange()
     }
-
-    // 异步初始化期间面板可能已卸载，销毁后不能再挂观察者和订阅
-    if (this.destroyed) return
 
     this.startSidebarObserver()
     this.subscribeConversationListSource()
+    if (initialSync) await initialSync
   }
 
   /**
@@ -338,6 +359,8 @@ export class ConversationManager {
     if (this.conversationListUnsubscribe) return
 
     this.conversationListUnsubscribe = this.siteAdapter.onConversationListChange(() => {
+      if (this.destroyed || this.syncTask) return
+      this.schedulePendingInitialSync()
       const { newCount, updatedCount } = this.syncConversations(null, true)
       if (newCount > 0 || updatedCount > 0) {
         this.notifyDataChange()
@@ -543,139 +566,289 @@ export class ConversationManager {
     )
   }
 
-  private async waitForSidebarReady(timeoutMs = 10000): Promise<boolean> {
-    const start = Date.now()
-    while (Date.now() - start < timeoutMs) {
-      if (this.siteAdapter.getSidebarScrollContainer()) return true
-      await this.delay(250)
-    }
-    return false
+  private getInitialSyncKey(): string {
+    return JSON.stringify([this.siteInstanceKey, this.siteAdapter.getCurrentCid() || ""])
   }
 
-  private async runInitialAutoFullSync(): Promise<void> {
-    if (this.initialAutoFullSyncPromise) {
-      return this.initialAutoFullSyncPromise
-    }
+  getSyncProgress = (): ConversationSyncProgress | null => this.syncProgress
 
-    this.initialAutoFullSyncPromise = this.autoFullSyncWithRetry().finally(() => {
-      this.initialAutoFullSyncPromise = null
-    })
-
-    return this.initialAutoFullSyncPromise
+  subscribeSyncProgress = (listener: () => void): (() => void) => {
+    this.syncProgressListeners.add(listener)
+    return () => this.syncProgressListeners.delete(listener)
   }
 
-  private async autoFullSyncWithRetry(): Promise<void> {
-    const maxAttempts = 4
-    const retryDelayMs = 2500
-    const requiredStableAttempts = 2
-    let bestScannedCount = 0
-    let stableAttempts = 0
+  private setSyncProgress(progress: ConversationSyncProgress | null): void {
+    this.syncProgress = progress
+    this.syncProgressListeners.forEach((listener) => listener())
+  }
 
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      const sidebarReady = await this.waitForSidebarReady(attempt === 0 ? 10000 : 5000)
-      if (!sidebarReady) {
-        if (attempt < maxAttempts - 1) {
-          await this.delay(retryDelayMs)
+  cancelSync = (): void => {
+    this.clearPendingInitialSync()
+    if (this.syncProgress) this.setSyncProgress({ ...this.syncProgress, stage: "stopping" })
+    this.syncAbortController?.abort(CONVERSATION_SYNC_CANCELLED_BY_USER)
+  }
+
+  syncAllConversations(
+    options: { initial?: boolean; targetFolderId?: string } = {},
+  ): Promise<ConversationFullSyncResult> {
+    if (this.syncTask) return this.syncTask
+
+    if (options.initial) {
+      const accountKey = this.getInitialSyncKey()
+      if (this.pendingInitialSync) {
+        this.movePendingInitialSyncState(this.pendingInitialSync.accountKey, accountKey)
+        this.pendingInitialSync.accountKey = accountKey
+      }
+      if (!this.pendingInitialSync) {
+        this.pendingInitialSync = {
+          context: this.siteAdapter.getConversationSyncContext(),
+          accountKey,
+          resumeTimer: null,
         }
-        continue
+        getConversationsStore().setInitialSyncState(accountKey, "pending")
       }
+    } else {
+      this.clearPendingInitialSync()
+    }
 
-      const result = await this.autoFullSync()
-      const hasGrowth = result.scannedCount > bestScannedCount
+    const controller = new AbortController()
+    this.syncAbortController = controller
+    this.syncTask = Promise.resolve()
+      .then(() => this.performFullSync(options, controller))
+      .finally(() => {
+        this.syncTask = null
+        this.syncAbortController = null
+        this.setSyncProgress(null)
+      })
+    this.setSyncProgress({ initial: options.initial ?? false, stage: "loading", loadedCount: 0 })
+    return this.syncTask
+  }
 
-      if (hasGrowth) {
-        bestScannedCount = result.scannedCount
-        stableAttempts = 0
-      } else if (result.loadSucceeded && result.scannedCount > 0 && result.changedCount === 0) {
-        stableAttempts++
-      }
+  private clearPendingInitialSync(): void {
+    if (this.pendingInitialSync?.resumeTimer) {
+      clearTimeout(this.pendingInitialSync.resumeTimer)
+    }
+    this.pendingInitialSync = null
+  }
 
-      if (
-        result.loadSucceeded &&
-        result.scannedCount > 0 &&
-        stableAttempts >= requiredStableAttempts
-      ) {
-        break
-      }
-
-      if (attempt < maxAttempts - 1) {
-        await this.delay(retryDelayMs)
-      }
+  private movePendingInitialSyncState(previousKey: string, accountKey: string): void {
+    if (previousKey === accountKey) return
+    const store = getConversationsStore()
+    if (store.initialSyncStates[previousKey] !== "pending") return
+    store.setInitialSyncState(previousKey, null)
+    if (store.initialSyncStates[accountKey] !== "complete") {
+      store.setInitialSyncState(accountKey, "pending")
     }
   }
 
-  private async autoFullSync(): Promise<AutoFullSyncResult> {
-    const loadResult = await this.siteAdapter.loadAllConversations()
-    await this.delay(400)
-
-    if (loadResult === false) {
-      const { newCount, updatedCount } = this.syncConversations(null, true)
-      const changedCount = newCount + updatedCount
-
-      if (changedCount > 0) {
-        this.notifyDataChange()
+  private schedulePendingInitialSync(): void {
+    const pending = this.pendingInitialSync
+    if (!pending || this.destroyed || this.syncTask) return
+    if (pending.context !== this.siteAdapter.getConversationSyncContext()) {
+      this.clearPendingInitialSync()
+      return
+    }
+    const accountKey = this.getInitialSyncKey()
+    const store = getConversationsStore()
+    this.movePendingInitialSyncState(pending.accountKey, accountKey)
+    pending.accountKey = accountKey
+    if (store.initialSyncStates[accountKey] === "complete") {
+      this.clearPendingInitialSync()
+      return
+    }
+    if (pending.resumeTimer !== null) return
+    if (!this.siteAdapter.getConversationList().some((item) => item.id)) return
+    store.setInitialSyncState(accountKey, "pending")
+    pending.resumeTimer = setTimeout(() => {
+      pending.resumeTimer = null
+      if (this.pendingInitialSync !== pending || this.destroyed || this.syncTask) return
+      if (pending.context !== this.siteAdapter.getConversationSyncContext()) {
+        this.clearPendingInitialSync()
+        return
       }
+      void this.syncAllConversations({ initial: true })
+    }, 200)
+  }
 
-      return {
-        scannedCount: this.siteAdapter.getConversationList().length,
-        changedCount,
-        loadSucceeded: false,
+  private async performFullSync(
+    options: { initial?: boolean; targetFolderId?: string },
+    controller: AbortController,
+  ): Promise<ConversationFullSyncResult> {
+    const initial = options.initial ?? false
+    const original = this.getAllConversations()
+    const collected = new Map<string, ConversationInfo>()
+    const scrollPositions = new Map<Element, number>()
+    let navigationHref = window.location.href
+    let expectedNavigationHref: string | null = null
+    const syncContext = this.siteAdapter.getConversationSyncContext()
+    let accountKey = this.getInitialSyncKey()
+    let userTookControl = false
+    let timedOut = false
+    let deletedCount = 0
+    let status: ConversationFullSyncResult["status"] = "partial"
+    const targetFolderId = options.targetFolderId ?? null
+
+    const hasNavigationChanged = () => {
+      const href = window.location.href
+      if (href === expectedNavigationHref) {
+        navigationHref = href
+        expectedNavigationHref = null
+      }
+      return href !== navigationHref
+    }
+    const onNavigationChange = () => {
+      if (!hasNavigationChanged()) return
+      userTookControl = true
+      this.clearPendingInitialSync()
+      controller.abort()
+    }
+    const navigationEvents = [EVENT_PAGE_URL_CHANGE, "popstate", "hashchange"]
+    navigationEvents.forEach((event) => window.addEventListener(event, onNavigationChange))
+
+    const rememberPosition = () => {
+      const container = this.siteAdapter.getSidebarScrollContainer()
+      if (container && !scrollPositions.has(container)) {
+        scrollPositions.set(container, container.scrollTop)
       }
     }
+    const onUserInteraction = (event: Event) => {
+      if (!event.isTrusted || !(event.target instanceof Node)) return
+      const container = this.siteAdapter.getSidebarScrollContainer()
+      if (!container?.contains(event.target)) return
+      userTookControl = true
+      this.clearPendingInitialSync()
+      controller.abort()
+    }
+    const events = ["wheel", "touchstart", "pointerdown", "keydown"]
+    events.forEach((event) => document.addEventListener(event, onUserInteraction, true))
+    const timeout = setTimeout(() => {
+      timedOut = true
+      controller.abort()
+    }, 120000)
 
-    const maxRounds = 10
-    const maxStableRounds = 2
-    let stableRounds = 0
-    let lastListCount = this.siteAdapter.getConversationList().length
-    let totalNewCount = 0
-    let totalUpdatedCount = 0
-
-    for (let i = 0; i < maxRounds; i++) {
-      if (i > 0) {
-        const container = this.siteAdapter.getSidebarScrollContainer()
-        if (!container) break
-
-        const el = container as HTMLElement
-        el.scrollTop = el.scrollHeight
-        el.dispatchEvent(new Event("scroll", { bubbles: true }))
-        await this.delay(400)
+    const collect = (items: ConversationInfo[]) => {
+      controller.signal.throwIfAborted()
+      const currentKey = this.getInitialSyncKey()
+      if (hasNavigationChanged() || this.siteAdapter.getConversationSyncContext() !== syncContext) {
+        userTookControl = true
+        this.clearPendingInitialSync()
+        controller.abort()
+        controller.signal.throwIfAborted()
       }
-
-      const { newCount, updatedCount } = this.syncConversations(null, true)
-      totalNewCount += newCount
-      totalUpdatedCount += updatedCount
-
-      if (newCount > 0 || updatedCount > 0) {
-        this.notifyDataChange()
+      if (currentKey !== accountKey) {
+        this.movePendingInitialSyncState(accountKey, currentKey)
+        accountKey = currentKey
       }
+      if (initial && !getConversationsStore().initialSyncStates[accountKey]) {
+        getConversationsStore().setInitialSyncState(accountKey, "pending")
+      }
+      rememberPosition()
+      items.forEach((item) => {
+        if (item.id) collected.set(item.id, item)
+      })
+      const changes = this.syncConversations(targetFolderId, true, { items })
+      if (changes.newCount > 0 || changes.updatedCount > 0) this.notifyDataChange()
+      this.setSyncProgress({ initial, stage: "loading", loadedCount: collected.size })
+    }
 
-      await this.delay(300)
-
-      const currentListCount = this.siteAdapter.getConversationList().length
-      const hasProgress = newCount > 0 || currentListCount > lastListCount
-      if (hasProgress) {
-        lastListCount = Math.max(lastListCount, currentListCount)
-        stableRounds = 0
+    try {
+      if (this.destroyed) controller.abort()
+      controller.signal.throwIfAborted()
+      rememberPosition()
+      const complete = await this.siteAdapter.loadAllConversations({
+        signal: controller.signal,
+        // 手动同步用适配器默认就绪等待；首次同步放宽，慢渲染侧栏由 pending 重试兜底
+        readyTimeoutMs: initial ? CONVERSATION_FULL_SYNC_READY_TIMEOUT_MS : undefined,
+        onNavigation: (url) => {
+          onNavigationChange()
+          controller.signal.throwIfAborted()
+          expectedNavigationHref = new URL(url, window.location.href).href
+        },
+        onProgress: (items) => {
+          collect(items)
+          if (items.some((item) => item.id)) this.clearPendingInitialSync()
+        },
+      })
+      collect(this.siteAdapter.getConversationList())
+      // 空账号收尾：容器已就绪但列表为空时按完成处理。
+      // 晚到的对话由观察者/接口订阅增量补入，避免空账号每次打开都重试全量同步
+      const syncComplete = complete || (initial && this.isConversationListDefinitelyEmpty())
+      this.setSyncProgress({ initial, stage: "saving", loadedCount: collected.size })
+      const changes = this.syncConversations(targetFolderId, true, {
+        items: Array.from(collected.values()),
+        syncDeleted: syncComplete && !initial,
+      })
+      deletedCount = changes.deletedCount
+      this.notifyDataChange()
+      if (syncComplete) {
+        this.clearPendingInitialSync()
+        getConversationsStore().setInitialSyncState(accountKey, "complete")
+        status = "complete"
+      }
+    } catch (error) {
+      if (controller.signal.aborted) {
+        if (!timedOut) this.clearPendingInitialSync()
+        status = timedOut ? "partial" : "cancelled"
       } else {
-        stableRounds++
+        this.clearPendingInitialSync()
+        status = "failed"
+        console.warn("[ConversationManager] Full conversation sync failed:", error)
       }
-
-      if (stableRounds >= maxStableRounds) break
+    } finally {
+      clearTimeout(timeout)
+      navigationEvents.forEach((event) => window.removeEventListener(event, onNavigationChange))
+      events.forEach((event) => document.removeEventListener(event, onUserInteraction, true))
+      if (
+        !userTookControl &&
+        controller.signal.reason !== CONVERSATION_SYNC_CANCELLED_BY_USER &&
+        !this.destroyed &&
+        !hasNavigationChanged() &&
+        this.siteAdapter.getConversationSyncContext() === syncContext &&
+        this.getInitialSyncKey() === accountKey
+      ) {
+        const container = this.siteAdapter.getSidebarScrollContainer()
+        if (container?.isConnected && scrollPositions.size > 0) {
+          container.scrollTop = initial
+            ? 0
+            : scrollPositions.get(container) ?? scrollPositions.values().next().value ?? 0
+        }
+      }
     }
 
-    return {
-      scannedCount: this.siteAdapter.getConversationList().length,
-      changedCount: totalNewCount + totalUpdatedCount,
-      loadSucceeded: true,
+    const current = this.getAllConversations()
+    const result: ConversationFullSyncResult = {
+      status,
+      loadedCount: collected.size,
+      newCount: Array.from(collected.keys()).filter((id) => !original[id] && current[id]).length,
+      updatedCount: Array.from(collected.keys()).filter(
+        (id) => original[id] && current[id] && original[id] !== current[id],
+      ).length,
+      deletedCount,
     }
+    if (!this.destroyed && (initial || status !== "complete")) {
+      const messageKey = {
+        complete: "conversationsInitialSyncComplete",
+        partial: "conversationsSyncPartial",
+        cancelled: "conversationsSyncCancelled",
+        failed: "conversationsSyncFailed",
+      }[status]
+      showToast(t(messageKey, { count: String(result.loadedCount) }), 4000)
+    }
+    return result
   }
 
-  private delay(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms))
+  /**
+   * 判定列表为"确定为空"（而非尚未渲染）：滚动容器已挂载但没有任何对话。
+   * 仅用于初始同步的空账号收尾；手动同步保持严格，避免误删本地记录
+   */
+  private isConversationListDefinitelyEmpty(): boolean {
+    if (this.siteAdapter.getConversationList().some((item) => item.id)) return false
+    return this.siteAdapter.getSidebarScrollContainer() !== null
   }
 
   destroy() {
     this.destroyed = true
+    this.cancelSync()
     this.stopGeminiMigrationRetry()
     this.stopSidebarObserver()
     this.conversationListUnsubscribe?.()
@@ -702,6 +875,7 @@ export class ConversationManager {
     this.observerConfig = config
 
     const startObserverRetry = (retryCount = 0) => {
+      if (this.destroyed) return
       const maxRetries = 5
       const retryDelay = 1000
 
@@ -720,7 +894,7 @@ export class ConversationManager {
         (el, isNew) => {
           this.handleObservedElement(el, isNew, config)
         },
-        { parent: sidebarContainer, shadow: config.shadow },
+        { parent: this.pendingInitialSync ? document : sidebarContainer, shadow: config.shadow },
       )
     }
 
@@ -755,9 +929,11 @@ export class ConversationManager {
 
   private handleObservedElement(el: Element, isNew: boolean, config: ConversationObserverConfig) {
     const tryAdd = (retries = 5) => {
+      if (this.destroyed) return
       const info = config.extractInfo(el)
 
       if (info?.id) {
+        this.schedulePendingInitialSync()
         this.updateConversationFromObservation(info, isNew)
         this.monitorConversationTitle(el as HTMLElement, info.id)
       } else if (retries > 0) {
@@ -768,6 +944,7 @@ export class ConversationManager {
   }
 
   private updateConversationFromObservation(info: ConversationInfo, isNew: boolean) {
+    if (this.destroyed || this.syncTask) return
     const conversations = this.conversations
     const existing = conversations[info.id]
 
@@ -832,6 +1009,7 @@ export class ConversationManager {
     if (this.pollInterval) return
     this.pollInterval = setInterval(() => {
       if (!this.observerConfig) return
+      this.schedulePendingInitialSync()
       const config = this.observerConfig
       // DOMToolkit.queryAll?
       // Checking dom-toolkit.ts: query returns Element | Element[]
@@ -1201,9 +1379,9 @@ export class ConversationManager {
     _silent = false,
     options: ConversationSyncOptions = {},
   ): ConversationSyncResult {
-    const sidebarItems = this.siteAdapter.getConversationList()
+    const sidebarItems = options.items ?? this.siteAdapter.getConversationList()
 
-    if (!sidebarItems || sidebarItems.length === 0) {
+    if (!sidebarItems || (sidebarItems.length === 0 && !options.syncDeleted)) {
       return { newCount: 0, updatedCount: 0, deletedCount: 0 }
     }
 
@@ -1248,7 +1426,7 @@ export class ConversationManager {
           updates.siteInstanceKey = this.siteInstanceKey
           needsUpdate = true
         }
-        if (item.cid && !existing.cid) {
+        if (item.cid && item.cid !== existing.cid) {
           updates.cid = item.cid
           needsUpdate = true
         }

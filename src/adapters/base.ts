@@ -7,6 +7,7 @@
 import type { MarkdownFixerConfig } from "~core/markdown-fixer"
 import { isBuiltinSiteId } from "~constants/defaults"
 import { extractConversationTitleFromDocumentTitle } from "~utils/conversation-title"
+import { loadConversationList } from "~utils/conversation-list-loader"
 import { DOMToolkit } from "~utils/dom-toolkit"
 import { createExportAssetCollector, type ExportAssetCollector } from "~utils/export-assets"
 import type { ExportBundle, ExportFormat, ExportMessage } from "~utils/exporter"
@@ -57,6 +58,13 @@ export interface ConversationInfo {
   isActive?: boolean
   isPinned?: boolean
   cid?: string
+}
+
+export interface ConversationLoadOptions {
+  signal?: AbortSignal
+  onProgress?: (items: ConversationInfo[]) => void
+  readyTimeoutMs?: number
+  onNavigation?: (url: string) => void
 }
 
 export interface ConversationDeleteTarget {
@@ -614,14 +622,13 @@ export abstract class SiteAdapter {
     return null
   }
 
+  getConversationSyncContext(): string {
+    return JSON.stringify([this.getSiteInstanceKey(), this.getCurrentCid() || ""])
+  }
+
   /** 获取侧边栏对话列表 */
   getConversationList(): ConversationInfo[] {
     return []
-  }
-
-  /** 获取已加载的对话数量，用于判断滚动加载是否稳定 */
-  protected getLoadedConversationCount(): number {
-    return this.getConversationList().length
   }
 
   /** 获取当前页面对话的基础元数据 */
@@ -737,40 +744,12 @@ export abstract class SiteAdapter {
     return results
   }
 
-  async loadAllConversations(): Promise<boolean | void> {
-    const container = this.getSidebarScrollContainer()
-    if (!container) return false
-
-    let lastCount = this.getLoadedConversationCount()
-    let lastScrollHeight = container.scrollHeight
-    let stableRounds = 0
-    const maxStableRounds = 4
-    const maxRounds = 40
-    const waitMs = 800
-
-    for (let round = 0; round < maxRounds; round++) {
-      container.scrollTop = container.scrollHeight
-      container.dispatchEvent(new Event("scroll", { bubbles: true }))
-      await new Promise((r) => setTimeout(r, waitMs))
-
-      const currentCount = this.getLoadedConversationCount()
-      const currentScrollHeight = container.scrollHeight
-      const hasProgress = currentCount > lastCount || currentScrollHeight > lastScrollHeight
-
-      if (hasProgress) {
-        lastCount = Math.max(lastCount, currentCount)
-        lastScrollHeight = Math.max(lastScrollHeight, currentScrollHeight)
-        stableRounds = 0
-      } else {
-        stableRounds++
-      }
-
-      if (stableRounds >= maxStableRounds) {
-        return true
-      }
-    }
-
-    return false
+  async loadAllConversations(options: ConversationLoadOptions = {}): Promise<boolean> {
+    return loadConversationList({
+      ...options,
+      getContainer: () => this.getSidebarScrollContainer(),
+      readList: () => this.getConversationList(),
+    })
   }
 
   // ==================== 生成状态检测 ====================

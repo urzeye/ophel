@@ -11,4 +11,6 @@ export {
   type ConversationSegmentedExportDraft,
   type ConversationSegmentedExportMode,
   type ConversationExportStage,
+  type ConversationFullSyncResult,
+  type ConversationSyncProgress,
 } from "./manager"

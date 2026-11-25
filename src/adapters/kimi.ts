@@ -16,11 +16,17 @@ import {
 } from "~utils/export-assets"
 import { htmlToMarkdown, type ExportBundle, type ExportMessage } from "~utils/exporter"
 import { t } from "~utils/i18n"
+import {
+  CONVERSATION_LIST_READY_TIMEOUT_MS,
+  loadConversationList,
+  waitForConversationLoad,
+} from "~utils/conversation-list-loader"
 
 import {
   SiteAdapter,
   type ConversationDeleteTarget,
   type ConversationInfo,
+  type ConversationLoadOptions,
   type ConversationObserverConfig,
   type ExportConfig,
   type ExportLifecycleContext,
@@ -281,34 +287,29 @@ export class KimiAdapter extends SiteAdapter {
     return null
   }
 
-  async loadAllConversations(): Promise<void> {
-    await this.openMoreHistoryView()
-
+  async loadAllConversations(options: ConversationLoadOptions = {}): Promise<boolean> {
+    const wasHistoryOpen = this.isHistoryPath()
+    const originalUrl = window.location.href
     try {
-      let lastCount = 0
-      let stableRounds = 0
-      const maxStableRounds = 4
-
-      while (stableRounds < maxStableRounds) {
-        const container = this.getSidebarScrollContainer() as HTMLElement | null
-        if (!container) return
-
-        container.scrollTop = container.scrollHeight
-        container.dispatchEvent(new Event("scroll", { bubbles: true }))
-        await new Promise((resolve) => setTimeout(resolve, 500))
-
-        const count = this.getConversationItems().length
-        if (count === lastCount) {
-          stableRounds++
-        } else {
-          lastCount = count
-          stableRounds = 0
-        }
-      }
-
-      this.cacheFullListSnapshot(this.collectConversationListFromDom())
+      if (!(await this.openMoreHistoryView(options))) return false
+      const complete = await loadConversationList({
+        ...options,
+        getContainer: () => this.getSidebarScrollContainer(),
+        readList: () => this.collectConversationListFromDom(),
+        idleMs: 2000,
+        onProgress: (items) => {
+          this.cacheFullListSnapshot(items)
+          options.onProgress?.(items)
+        },
+      })
+      return complete
     } finally {
-      await this.closeMoreHistoryView()
+      // 中止（停止/超时）时同样回退临时路由，避免把用户留在历史页；
+      // 已中止则跳过 onNavigation 通知（manager 侧会拒收）
+      if (!wasHistoryOpen && this.isHistoryPath()) {
+        if (!options.signal?.aborted) options.onNavigation?.(originalUrl)
+        await this.closeMoreHistoryView()
+      }
     }
   }
 
@@ -1623,19 +1624,27 @@ export class KimiAdapter extends SiteAdapter {
       : Array.from(document.querySelectorAll(this.config.conversation.itemSelector))
   }
 
-  private async openMoreHistoryView(): Promise<void> {
-    if (this.isHistoryPath()) return
-
-    const moreHistoryLink = document.querySelector(
-      this.config.sitePrivateSelectors.moreHistoryLink,
-    ) as HTMLElement | null
-    if (!moreHistoryLink) return
+  private async openMoreHistoryView(options: ConversationLoadOptions = {}): Promise<boolean> {
+    const { signal, readyTimeoutMs = CONVERSATION_LIST_READY_TIMEOUT_MS } = options
+    signal?.throwIfAborted()
+    const deadline = Date.now() + readyTimeoutMs
+    let moreHistoryLink: HTMLElement | null = null
+    while (Date.now() < deadline) {
+      if (this.isHistoryPath()) return true
+      moreHistoryLink = document.querySelector(this.config.sitePrivateSelectors.moreHistoryLink)
+      if (moreHistoryLink) break
+      if (document.querySelector(this.config.sitePrivateSelectors.nextSidebarBody)) return true
+      await waitForConversationLoad(200, signal)
+    }
+    if (!moreHistoryLink) return false
 
     const beforePath = window.location.pathname
     const beforeCount = document.querySelectorAll(
       this.config.sitePrivateSelectors.sidebarConversation,
     ).length
 
+    const historyUrl = moreHistoryLink.getAttribute("href") || "/chat/history"
+    options.onNavigation?.(new URL(historyUrl, window.location.href).href)
     moreHistoryLink.click()
 
     const timeoutAt = Date.now() + 3000
@@ -1645,10 +1654,11 @@ export class KimiAdapter extends SiteAdapter {
         this.config.sitePrivateSelectors.sidebarConversation,
       ).length
       if (currentPath !== beforePath || currentCount > beforeCount) {
-        return
+        return true
       }
-      await new Promise((resolve) => setTimeout(resolve, 120))
+      await waitForConversationLoad(120, signal)
     }
+    return false
   }
 
   private async closeMoreHistoryView(): Promise<void> {

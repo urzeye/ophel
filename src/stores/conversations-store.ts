@@ -29,6 +29,7 @@ interface ConversationBatchChanges {
 interface PersistedConversationsState {
   conversations?: Record<string, unknown>
   lastUsedFolderId?: unknown
+  initialSyncStates?: Record<string, "pending" | "complete">
 }
 
 export interface ConversationsMigrationResult {
@@ -40,6 +41,7 @@ interface ConversationsState {
   // 状态
   conversations: Record<string, Conversation>
   lastUsedFolderId: string
+  initialSyncStates: Record<string, "pending" | "complete">
   _hasHydrated: boolean
 
   // Actions
@@ -56,6 +58,7 @@ interface ConversationsState {
   removeTagFromAll: (tagId: string) => void
   moveConversationsToInbox: (folderId: string) => void
   setLastUsedFolderId: (folderId: string) => void
+  setInitialSyncState: (key: string, state: "pending" | "complete" | null) => void
   setHasHydrated: (state: boolean) => void
 }
 
@@ -166,6 +169,7 @@ export const useConversationsStore = create<ConversationsState>()(
       {
         conversations: {},
         lastUsedFolderId: "inbox",
+        initialSyncStates: {},
         _hasHydrated: false,
 
         addConversation: (conv) =>
@@ -356,6 +360,15 @@ export const useConversationsStore = create<ConversationsState>()(
 
         setLastUsedFolderId: (folderId) => set({ lastUsedFolderId: folderId }),
 
+        setInitialSyncState: (key, syncState) =>
+          set((state) => {
+            if (syncState === null) {
+              const { [key]: _, ...initialSyncStates } = state.initialSyncStates
+              return { initialSyncStates }
+            }
+            return { initialSyncStates: { ...state.initialSyncStates, [key]: syncState } }
+          }),
+
         setHasHydrated: (state) => set({ _hasHydrated: state }),
       }
     ),
@@ -377,6 +390,7 @@ export const useConversationsStore = create<ConversationsState>()(
       partialize: (state) => ({
         conversations: state.conversations,
         lastUsedFolderId: state.lastUsedFolderId,
+        initialSyncStates: state.initialSyncStates,
       }),
       onRehydrateStorage: () => () => {
         _completeHydration?.()
