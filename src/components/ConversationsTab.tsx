@@ -20,6 +20,7 @@ import { useFoldersStore } from "~stores/folders-store"
 import { useSettingsStore } from "~stores/settings-store"
 import { useTagsStore } from "~stores/tags-store"
 import { getReadableTextColor } from "~utils/color"
+import { getSafeConversationOpenUrl } from "~utils/conversation-url"
 import { getCurrentLang, t } from "~utils/i18n"
 import { localStorage as appStorage } from "~utils/storage"
 import { showToast } from "~utils/toast"
@@ -33,6 +34,7 @@ import {
   TagManagerDialog,
 } from "./ConversationDialogs"
 import { LoadingOverlay } from "./LoadingOverlay"
+import { ConversationSyncReview } from "./ConversationSyncReview"
 import { ConversationMenu, FolderMenu, type MenuAnchorPoint } from "./ConversationMenus"
 
 import "~styles/conversations.css"
@@ -49,6 +51,7 @@ import {
   FolderMoveIcon,
   FolderPlusIcon,
   HourglassIcon,
+  InfoIcon,
   LocateIcon,
   MoreHorizontalIcon,
   PinIcon,
@@ -141,19 +144,6 @@ const highlightText = (text: string, query: string): React.ReactNode => {
   )
 }
 
-const getSafeConversationOpenUrl = (conv: Conversation): string | null => {
-  const rawUrl = (conv.url || "").trim()
-  if (!rawUrl) return null
-
-  try {
-    const url = new URL(rawUrl, window.location.origin)
-    if (url.protocol !== "http:" && url.protocol !== "https:") return null
-    return url.toString()
-  } catch {
-    return null
-  }
-}
-
 // ==================== 主组件 ====================
 
 export const ConversationsTab: React.FC<ConversationsTabProps> = ({
@@ -181,6 +171,8 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
   const syncProgress = useSyncExternalStore(manager.subscribeSyncProgress, manager.getSyncProgress)
   const syncing = syncProgress !== null
   const [isDeleting, setIsDeleting] = useState(false)
+  const [syncReadEmpty, setSyncReadEmpty] = useState(false)
+  const [isReviewOpen, setIsReviewOpen] = useState(false)
 
   // 搜索状态
   const [searchQuery, setSearchQuery] = useState("")
@@ -355,10 +347,19 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
       dialog ||
       showTagFilterMenu ||
       isFolderSelectOpen ||
+      isReviewOpen ||
       isDeleting
     )
     onInteractionStateChange?.(isInteracting)
-  }, [menu, dialog, showTagFilterMenu, isFolderSelectOpen, isDeleting, onInteractionStateChange])
+  }, [
+    menu,
+    dialog,
+    showTagFilterMenu,
+    isFolderSelectOpen,
+    isReviewOpen,
+    isDeleting,
+    onInteractionStateChange,
+  ])
 
   // 防抖搜索
   const handleSearchInput = (value: string) => {
@@ -520,12 +521,13 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
   // 同步
   const handleSync = useCallback(async () => {
     markSyncHintSeen()
+    setSyncReadEmpty(false)
     const result = await manager.syncAllConversations({ targetFolderId: lastUsedFolderId })
     loadData()
+    setSyncReadEmpty(result.loadedCount === 0 && result.status !== "cancelled")
     if (result.status !== "complete") return
-    const { newCount, updatedCount, deletedCount } = result
+    const { newCount, updatedCount } = result
     if (result.loadedCount === 0) {
-      showToast(t("conversationsSyncEmpty"))
       return
     }
 
@@ -541,11 +543,9 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
           folder: targetFolderName,
         }),
       )
-    } else if (deletedCount > 0) {
-      showToast(t("conversationsSyncRemoved", { removed: String(deletedCount) }))
     } else if (updatedCount > 0) {
       showToast(t("conversationsSyncUpdated", { updated: String(updatedCount) }))
-    } else {
+    } else if (!manager.getSyncReview()?.missingIds.length) {
       showToast(t("conversationsSyncNoChange", { folder: targetFolderName }))
     }
   }, [manager, lastUsedFolderId, loadData, folders, markSyncHintSeen])
@@ -932,6 +932,27 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
             />
           </div>
         </div>
+
+        {syncReadEmpty && (
+          <div className="gh-sync-review-notice" role="status">
+            <InfoIcon size={16} />
+            <span>{t("conversationsSyncNoData")}</span>
+            <button
+              type="button"
+              className="gh-sync-review-notice-close"
+              aria-label={t("close")}
+              onClick={() => setSyncReadEmpty(false)}>
+              <ClearIcon size={14} />
+            </button>
+          </div>
+        )}
+        <ConversationSyncReview
+          manager={manager}
+          conversations={conversations}
+          folders={folders}
+          tags={tags}
+          onInteractionStateChange={setIsReviewOpen}
+        />
 
         {/* 首次使用提示：解释同步落点，只出现一次 */}
         {showSyncHint && (

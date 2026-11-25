@@ -1045,10 +1045,10 @@ export const pt = {
   conversationsIcon: "Ícone",
   conversationsFolderName: "Nome",
   conversationsFolderNamePlaceholder: "Digite o nome...",
-  conversationsSyncEmpty: "Sem chats encontrados",
+
   conversationsSyncNoChange: "«{folder}» está atualizada",
   conversationsSyncUpdated: "{updated} chats atualizados",
-  conversationsSyncRemoved: "{removed} registos locais removidos",
+
   conversationsSyncNoSidebarItems:
     "Nenhuma conversa detectada na barra lateral. Abra a barra e tente novamente.",
   conversationsSyncResult: "{added} chats sincronizados em «{folder}»",
@@ -1068,8 +1068,7 @@ export const pt = {
   conversationsMoveTo: "Mover conversa",
   conversationsSetTag: "Definir etiqueta",
   conversationsMoved: "Movido para: ",
-  conversationsSyncDeleteTitle: "Sincro de Exclusão",
-  conversationsSyncDeleteMsg: "Detectados {count} excluídos na nuvem. Excluir localmente também?",
+
   deleteConvRemoteError: "Removido do painel, mas a exclusão na nuvem falhou",
   conversationsDeleted: "Removido",
   // Conversation Settings
@@ -1078,6 +1077,32 @@ export const pt = {
   conversationsSyncUnpinDesc: "Ao sincronizar, desafixar localmente o que foi desafixado no site",
   folderRainbowLabel: "Pastas Arco-íris",
   folderRainbowDesc: "Cores aleatórias para as pastas",
+  conversationsMissingNotice:
+    "{count} conversas não foram encontradas na última sincronização. Os registros locais foram mantidos.",
+  conversationsMissingCompact: "{count} conversas não encontradas na última sincronização",
+  conversationsMissingReview: "Revisar",
+  conversationsMissingTitle: "Revisar conversas não encontradas",
+  conversationsMissingDescription:
+    "Não encontrado não significa excluído. As conversas podem estar em projetos, arquivadas ou não carregadas.",
+  conversationsMissingSearch: "Buscar títulos, pastas ou etiquetas",
+  conversationsMissingSelectResults: "Todos os resultados",
+  conversationsMissingSelection: "{selected} selecionados / {total} no total",
+  conversationsMissingInvertSelection: "Inverter seleção",
+  conversationsMissingResolved:
+    "Estes registros foram encontrados novamente ou removidos. Nada para limpar.",
+  conversationsMissingOpen: "Abrir conversa original em nova aba",
+  conversationsMissingLocalOnly:
+    "Apenas registros do Ophel são removidos, sem afetar as conversas do site. Desfaça antes que o aviso com a contagem regressiva feche.",
+  conversationsMissingKeep: "Agora não",
+  conversationsMissingRemove: "Remover apenas registros do Ophel ({count})",
+  conversationsMissingChanged: "A lista mudou. Os registros foram mantidos; revise novamente.",
+  conversationsCleanupDone: "{count} registros do Ophel removidos",
+  conversationsCleanupUndoHint:
+    "Fecha após {seconds} segundos. Passe o cursor ou dê foco para pausar a contagem regressiva.",
+  conversationsCleanupUndo: "Desfazer",
+  conversationsCleanupRestored: "Registros, pastas e etiquetas originais restaurados",
+  conversationsSyncNoData:
+    "Não foi possível ler as conversas. Os registros locais foram mantidos. Tente novamente mais tarde.",
   conversationsSyncDeleteLabel: "Excluir também no site",
   conversationsSyncDeleteDesc:
     "Ao excluir uma conversa no Ophel, a original no site também é excluída. Não é possível desfazer.",

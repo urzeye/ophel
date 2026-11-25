@@ -1046,10 +1046,10 @@ export const es = {
   conversationsIcon: "Icono",
   conversationsFolderName: "Nombre",
   conversationsFolderNamePlaceholder: "Escribe nombre...",
-  conversationsSyncEmpty: "Sin chats",
+
   conversationsSyncNoChange: "«{folder}» está al día",
   conversationsSyncUpdated: "{updated} chats actualizados",
-  conversationsSyncRemoved: "{removed} registros locales eliminados",
+
   conversationsSyncNoSidebarItems:
     "No se detectaron conversaciones en la barra lateral. Ábrela y vuelve a intentarlo.",
   conversationsSyncResult: "{added} chats sincronizados en «{folder}»",
@@ -1069,8 +1069,7 @@ export const es = {
   conversationsMoveTo: "Mover...",
   conversationsSetTag: "Establecer etiqueta",
   conversationsMoved: "Movido a: ",
-  conversationsSyncDeleteTitle: "Sincro de Borrado",
-  conversationsSyncDeleteMsg: "Detectados {count} borrados arriba. ¿Borrar aquí también?",
+
   deleteConvRemoteError: "Eliminado del panel, pero no se pudo eliminar en la nube",
   conversationsDeleted: "Quitado",
   // Conversation Settings
@@ -1079,6 +1078,32 @@ export const es = {
   conversationsSyncUnpinDesc: "Al sincronizar, desfijar en local lo que se desfijó en el sitio",
   folderRainbowLabel: "Carpetas Arcoíris",
   folderRainbowDesc: "Colores aleatorios para carpetas",
+  conversationsMissingNotice:
+    "No se encontraron {count} chats en la última sincronización. Se conservaron los registros locales.",
+  conversationsMissingCompact: "{count} chats no encontrados en la última sincronización",
+  conversationsMissingReview: "Revisar",
+  conversationsMissingTitle: "Revisar chats no encontrados",
+  conversationsMissingDescription:
+    "No encontrado no significa eliminado. Los chats pueden estar en proyectos, archivados o sin cargar.",
+  conversationsMissingSearch: "Buscar títulos, carpetas o etiquetas",
+  conversationsMissingSelectResults: "Todos los resultados",
+  conversationsMissingSelection: "{selected} seleccionados / {total} en total",
+  conversationsMissingInvertSelection: "Invertir selección",
+  conversationsMissingResolved:
+    "Estos registros se encontraron de nuevo o se quitaron. No hay nada que limpiar.",
+  conversationsMissingOpen: "Abrir el chat original en otra pestaña",
+  conversationsMissingLocalOnly:
+    "Solo se quitan registros de Ophel, sin afectar a los chats del sitio. Puedes deshacer antes de que se cierre el aviso con la cuenta atrás.",
+  conversationsMissingKeep: "Ahora no",
+  conversationsMissingRemove: "Quitar solo registros de Ophel ({count})",
+  conversationsMissingChanged: "La lista cambió. Los registros se conservaron; revísalos de nuevo.",
+  conversationsCleanupDone: "Se quitaron {count} registros de Ophel",
+  conversationsCleanupUndoHint:
+    "Se cierra tras {seconds} segundos. Coloca el cursor o el foco para pausar la cuenta atrás.",
+  conversationsCleanupUndo: "Deshacer",
+  conversationsCleanupRestored: "Registros, carpetas y etiquetas originales restaurados",
+  conversationsSyncNoData:
+    "No se pudieron leer los chats. Se conservaron los registros locales. Inténtalo más tarde.",
   conversationsSyncDeleteLabel: "Borrar también en el sitio",
   conversationsSyncDeleteDesc:
     "Al borrar un chat en Ophel, también se borra el original en el sitio. No se puede deshacer.",

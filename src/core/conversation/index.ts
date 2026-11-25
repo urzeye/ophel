@@ -13,4 +13,5 @@ export {
   type ConversationExportStage,
   type ConversationFullSyncResult,
   type ConversationSyncProgress,
+  type ConversationSyncReview,
 } from "./manager"

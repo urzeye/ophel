@@ -2,6 +2,156 @@
  * 对话 Tab 样式
  */
 
+.gh-sync-review-notice {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 10px 0;
+  padding: 8px;
+  border: 1px solid var(--gh-border, #e5e7eb);
+  border-radius: 8px;
+  background: var(--gh-bg-secondary, #f9fafb);
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.gh-sync-review-notice > svg {
+  flex-shrink: 0;
+}
+.gh-sync-review-notice > span {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.gh-sync-review-notice button {
+  flex-shrink: 0;
+  border: 0;
+  padding: 0 2px;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--gh-primary-text, var(--gh-primary, #4285f4));
+  font: inherit;
+  cursor: pointer;
+}
+.gh-sync-review-notice button:hover:not(:disabled) {
+  text-decoration: underline;
+}
+.gh-sync-review-notice button:focus-visible {
+  outline: 2px solid var(--gh-primary, #4285f4);
+  outline-offset: 2px;
+}
+.gh-sync-review-notice button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.gh-sync-review-notice .gh-sync-review-notice-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  min-height: 32px;
+  color: var(--gh-text-secondary, #6b7280);
+  padding: 2px;
+}
+.gh-sync-review-notice.is-compact {
+  border-color: transparent;
+  background: transparent;
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+.is-touch .gh-sync-review-notice button {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.gh-cleanup-undo-notice {
+  flex-wrap: nowrap;
+  animation: gh-cleanup-undo-enter 160ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.gh-cleanup-undo-notice > .gh-cleanup-undo-message {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+.gh-cleanup-undo-notice .gh-cleanup-undo-action {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 2px 6px;
+  color: color-mix(
+    in srgb,
+    var(--gh-primary-text, var(--gh-primary, #4285f4)) 85%,
+    var(--gh-text, #1f2937)
+  );
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background 150ms ease;
+}
+.gh-cleanup-undo-notice .gh-cleanup-undo-action:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 8%, transparent);
+  text-decoration: none;
+}
+.gh-cleanup-undo-notice .gh-cleanup-undo-action:active:not(:disabled) {
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 14%, transparent);
+}
+.gh-cleanup-countdown {
+  display: grid;
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+}
+.gh-cleanup-countdown > * {
+  grid-area: 1 / 1;
+}
+.gh-cleanup-countdown circle {
+  stroke: currentColor;
+  stroke-width: 2;
+}
+.gh-cleanup-countdown-track {
+  opacity: 0.18;
+}
+.gh-cleanup-countdown-progress {
+  stroke-linecap: round;
+}
+.gh-cleanup-countdown-seconds {
+  color: var(--gh-text, #1f2937);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.gh-cleanup-undo-notice > .gh-cleanup-undo-hint {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+@keyframes gh-cleanup-undo-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gh-cleanup-undo-notice {
+    animation: none;
+  }
+  .gh-cleanup-undo-notice .gh-cleanup-undo-action {
+    transition: none;
+  }
+}
+
 /* ========== 主面板内容区滚动条隐藏 ========== */
 .gh-panel-content::-webkit-scrollbar {
   display: none;
@@ -1273,28 +1423,51 @@
   z-index: 2147483645;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   width: max-content;
   max-width: min(460px, calc(100vw - 32px));
   box-sizing: border-box;
-  padding: 12px 16px;
+  padding: 10px 14px;
   border: 1px solid var(--gh-border);
   border-radius: 12px;
   background: var(--gh-bg);
+  box-shadow: var(--gh-shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.1));
   color: var(--gh-text);
   font-size: 13px;
+  animation: gh-sync-notice-enter 180ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.gh-conversation-sync-notice > svg {
+.gh-conversation-sync-notice-icon {
+  display: inline-flex;
   flex-shrink: 0;
-  color: var(--gh-primary);
+  color: var(--gh-primary, #4285f4);
+  will-change: transform;
+  animation: gh-sync-notice-spin 1.2s linear infinite;
+}
+
+/* 箭头本身朝逆时针方向追逐，旋转方向与之一致 */
+@keyframes gh-sync-notice-spin {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+@keyframes gh-sync-notice-enter {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -6px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
 }
 
 .gh-conversation-sync-notice-content {
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
   min-width: 0;
   overflow-wrap: anywhere;
 }
@@ -1302,10 +1475,13 @@
 .gh-conversation-sync-notice-content strong {
   font-size: inherit;
   font-weight: 600;
+  line-height: 1.35;
 }
 
 .gh-conversation-sync-notice-content span {
-  color: var(--gh-text);
+  color: var(--gh-text-secondary);
+  font-size: 12px;
+  line-height: 1.35;
   font-variant-numeric: tabular-nums;
 }
 
@@ -1318,7 +1494,12 @@
   border-radius: 6px;
   background: var(--gh-bg);
   color: var(--gh-text);
-  font: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   cursor: pointer;
   transition: background-color 150ms ease;
 }
@@ -1363,6 +1544,14 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .gh-conversation-sync-notice {
+    animation: none;
+  }
+
+  .gh-conversation-sync-notice-icon {
+    animation: none;
+  }
+
   .gh-conversation-sync-notice button {
     transition: none;
   }

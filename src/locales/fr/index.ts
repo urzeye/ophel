@@ -1050,10 +1050,10 @@ export const fr = {
   conversationsIcon: "Icône",
   conversationsFolderName: "Nom",
   conversationsFolderNamePlaceholder: "Saisir le nom...",
-  conversationsSyncEmpty: "Aucun chat trouvé",
+
   conversationsSyncNoChange: "« {folder} » est à jour",
   conversationsSyncUpdated: "{updated} chats mis à jour",
-  conversationsSyncRemoved: "{removed} enregistrements locaux supprimés",
+
   conversationsSyncNoSidebarItems:
     "Aucune conversation détectée dans la barre latérale. Ouvrez-la puis réessayez.",
   conversationsSyncResult: "{added} chats synchronisés dans « {folder} »",
@@ -1073,8 +1073,7 @@ export const fr = {
   conversationsMoveTo: "Déplacer la conversation",
   conversationsSetTag: "Définir l'étiquette",
   conversationsMoved: "Déplacé vers : ",
-  conversationsSyncDeleteTitle: "Synchro de Suppression",
-  conversationsSyncDeleteMsg: "{count} suppressions détectées là-haut. Supprimer ici aussi ?",
+
   deleteConvRemoteError: "Supprimé du panneau, mais la suppression dans le cloud a échoué",
   conversationsDeleted: "Retiré",
   // Conversation Settings
@@ -1083,6 +1082,33 @@ export const fr = {
   conversationsSyncUnpinDesc: "À la synchronisation, désépingler ici ce qui l'a été sur le site",
   folderRainbowLabel: "Dossiers Arc-en-ciel",
   folderRainbowDesc: "Couleurs aléatoires pour les dossiers",
+  conversationsMissingNotice:
+    "{count} conversations introuvables lors de la dernière synchronisation. Les données locales sont conservées.",
+  conversationsMissingCompact:
+    "{count} conversations introuvables lors de la dernière synchronisation",
+  conversationsMissingReview: "Examiner",
+  conversationsMissingTitle: "Examiner les conversations introuvables",
+  conversationsMissingDescription:
+    "Introuvable ne signifie pas supprimé : ces conversations peuvent être dans un projet, archivées ou non chargées.",
+  conversationsMissingSearch: "Rechercher titres, dossiers ou étiquettes",
+  conversationsMissingSelectResults: "Tous les résultats",
+  conversationsMissingSelection: "{selected} sélectionnés / {total} au total",
+  conversationsMissingInvertSelection: "Inverser la sélection",
+  conversationsMissingResolved: "Ces données ont été retrouvées ou retirées. Rien à nettoyer.",
+  conversationsMissingOpen: "Ouvrir la conversation originale dans un nouvel onglet",
+  conversationsMissingLocalOnly:
+    "Seules les données d’Ophel sont retirées, sans effet sur les conversations du site. Annulez avant la fermeture de l’avis avec le compte à rebours.",
+  conversationsMissingKeep: "Pas maintenant",
+  conversationsMissingRemove: "Retirer uniquement les données d’Ophel ({count})",
+  conversationsMissingChanged:
+    "La liste a changé. Les données sont conservées ; vérifiez à nouveau.",
+  conversationsCleanupDone: "{count} entrées Ophel retirées",
+  conversationsCleanupUndoHint:
+    "Se ferme après {seconds} secondes. Survolez ou placez le focus pour mettre le compte à rebours en pause.",
+  conversationsCleanupUndo: "Annuler",
+  conversationsCleanupRestored: "Données, dossiers et étiquettes d’origine restaurés",
+  conversationsSyncNoData:
+    "Impossible de lire les conversations. Les données locales sont conservées. Réessayez plus tard.",
   conversationsSyncDeleteLabel: "Supprimer aussi sur le site",
   conversationsSyncDeleteDesc:
     "Supprimer une conversation dans Ophel supprime aussi l'originale sur le site. Action irréversible.",

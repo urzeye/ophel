@@ -1154,10 +1154,10 @@ export const it = {
   conversationsIcon: "Icona",
   conversationsFolderName: "Nome",
   conversationsFolderNamePlaceholder: "Inserisci il nome della cartella",
-  conversationsSyncEmpty: "Nessuna conversazione trovata",
+
   conversationsSyncNoChange: "«{folder}» è aggiornata",
   conversationsSyncUpdated: "{updated} conversazioni aggiornate",
-  conversationsSyncRemoved: "{removed} record locali rimossi",
+
   conversationsSyncNoSidebarItems:
     "Nessuna conversazione rilevata nella barra laterale. Espandi/apri la barra laterale e riprova.",
   conversationsSyncResult: "{added} conversazioni sincronizzate in «{folder}»",
@@ -1177,9 +1177,7 @@ export const it = {
   conversationsMoveTo: "Sposta conversazione",
   conversationsSetTag: "Imposta etichetta",
   conversationsMoved: "Trasferito a",
-  conversationsSyncDeleteTitle: "Sincronizza Elimina",
-  conversationsSyncDeleteMsg:
-    "Rilevate conversazioni {count} eliminate nel cloud. Sincronizzare eliminare i record locali?",
+
   deleteConvRemoteError: "Rimosso dal pannello, ma l'eliminazione del cloud non è riuscita",
   conversationsDeleted: "Rimosso",
   // Conversation Settings
@@ -1189,6 +1187,31 @@ export const it = {
     "Durante la sincronizzazione, sblocca in locale le conversazioni sbloccate sul sito",
   folderRainbowLabel: "Cartella Colori Arcobaleno",
   folderRainbowDesc: "Assegna diversi colori di sfondo alle cartelle",
+  conversationsMissingNotice:
+    "{count} conversazioni non trovate nell’ultima sincronizzazione. I dati locali sono conservati.",
+  conversationsMissingCompact: "{count} conversazioni non trovate nell’ultima sincronizzazione",
+  conversationsMissingReview: "Verifica",
+  conversationsMissingTitle: "Verifica le conversazioni non trovate",
+  conversationsMissingDescription:
+    "Non trovato non significa eliminato: le chat possono essere in progetti, archiviate o non caricate.",
+  conversationsMissingSearch: "Cerca titoli, cartelle o tag",
+  conversationsMissingSelectResults: "Tutti i risultati",
+  conversationsMissingSelection: "{selected} selezionati / {total} totali",
+  conversationsMissingInvertSelection: "Inverti selezione",
+  conversationsMissingResolved: "Questi dati sono stati ritrovati o rimossi. Nulla da ripulire.",
+  conversationsMissingOpen: "Apri la conversazione originale in una nuova scheda",
+  conversationsMissingLocalOnly:
+    "Vengono rimossi solo i dati di Ophel, non le conversazioni sul sito. Puoi annullare prima che l’avviso con il conto alla rovescia si chiuda.",
+  conversationsMissingKeep: "Non ora",
+  conversationsMissingRemove: "Rimuovi solo i dati di Ophel ({count})",
+  conversationsMissingChanged: "L’elenco è cambiato. I dati sono conservati; verifica di nuovo.",
+  conversationsCleanupDone: "Rimossi {count} dati di conversazioni da Ophel",
+  conversationsCleanupUndoHint:
+    "Si chiude dopo {seconds} secondi. Passa il cursore o porta il focus sull’avviso per sospendere il conto alla rovescia.",
+  conversationsCleanupUndo: "Annulla",
+  conversationsCleanupRestored: "Ripristinati dati, cartelle e tag originali",
+  conversationsSyncNoData:
+    "Impossibile leggere le conversazioni. I dati locali sono conservati. Riprova più tardi.",
   conversationsSyncDeleteLabel: "Elimina anche la conversazione sul sito",
   conversationsSyncDeleteDesc:
     "Quando elimini una conversazione in Ophel, viene eliminata anche l'originale sul sito. L'operazione non è reversibile.",

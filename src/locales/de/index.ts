@@ -1047,10 +1047,10 @@ export const de = {
   conversationsIcon: "Symbol",
   conversationsFolderName: "Ordnername",
   conversationsFolderNamePlaceholder: "Name eingeben...",
-  conversationsSyncEmpty: "Keine Chats gefunden",
+
   conversationsSyncNoChange: "„{folder}“ ist aktuell",
   conversationsSyncUpdated: "{updated} Chats aktualisiert",
-  conversationsSyncRemoved: "{removed} lokale Einträge entfernt",
+
   conversationsSyncNoSidebarItems:
     "Keine Konversationen in der Seitenleiste erkannt. Öffne die Seitenleiste und versuche es erneut.",
   conversationsSyncResult: "{added} Chats nach „{folder}“ synchronisiert",
@@ -1070,8 +1070,7 @@ export const de = {
   conversationsMoveTo: "Konversation verschieben",
   conversationsSetTag: "Tag setzen",
   conversationsMoved: "Verschoben nach: ",
-  conversationsSyncDeleteTitle: "Lösch-Synchro",
-  conversationsSyncDeleteMsg: "{count} Löschungen oben erkannt. Hier auch löschen?",
+
   deleteConvRemoteError: "Aus dem Panel entfernt, aber Cloud-Löschung fehlgeschlagen",
   conversationsDeleted: "Entfernt",
   // Conversation Settings
@@ -1080,6 +1079,33 @@ export const de = {
   conversationsSyncUnpinDesc: "Beim Synchronisieren lokal lösen, was auf der Website gelöst wurde",
   folderRainbowLabel: "Regenbogen-Ordner",
   folderRainbowDesc: "Zufällige Ordnerfarben",
+  conversationsMissingNotice:
+    "{count} Chats wurden beim letzten Abgleich nicht gefunden. Lokale Einträge bleiben erhalten.",
+  conversationsMissingCompact: "{count} Chats beim letzten Abgleich nicht gefunden",
+  conversationsMissingReview: "Prüfen",
+  conversationsMissingTitle: "Nicht gefundene Chats prüfen",
+  conversationsMissingDescription:
+    "Nicht gefunden heißt nicht gelöscht: Die Chats könnten in Projekten, archiviert oder noch nicht geladen sein.",
+  conversationsMissingSearch: "Titel, Ordner oder Tags suchen",
+  conversationsMissingSelectResults: "Alle Ergebnisse",
+  conversationsMissingSelection: "{selected} ausgewählt / {total} insgesamt",
+  conversationsMissingInvertSelection: "Auswahl umkehren",
+  conversationsMissingResolved:
+    "Diese Einträge wurden wiedergefunden oder entfernt. Nichts zu bereinigen.",
+  conversationsMissingOpen: "Originalchat in neuem Tab öffnen",
+  conversationsMissingLocalOnly:
+    "Nur Ophel-Einträge werden entfernt, nicht die Chats der Website. Bis zum Ende des Countdowns kannst du dies rückgängig machen.",
+  conversationsMissingKeep: "Nicht jetzt",
+  conversationsMissingRemove: "Nur Ophel-Einträge entfernen ({count})",
+  conversationsMissingChanged:
+    "Die Liste hat sich geändert. Einträge bleiben erhalten. Bitte erneut prüfen.",
+  conversationsCleanupDone: "{count} Ophel-Einträge entfernt",
+  conversationsCleanupUndoHint:
+    "Schließt nach {seconds} Sekunden. Mit Mauszeiger oder Tastaturfokus pausiert der Countdown.",
+  conversationsCleanupUndo: "Rückgängig",
+  conversationsCleanupRestored: "Einträge, ursprüngliche Ordner und Tags wiederhergestellt",
+  conversationsSyncNoData:
+    "Chats konnten nicht gelesen werden. Lokale Einträge bleiben erhalten. Bitte später erneut versuchen.",
   conversationsSyncDeleteLabel: "Auch auf der Website löschen",
   conversationsSyncDeleteDesc:
     "Beim Löschen eines Chats in Ophel wird auch der Original-Chat auf der Website gelöscht. Nicht rückgängig zu machen.",

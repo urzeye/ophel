@@ -152,12 +152,18 @@ export interface ConversationBatchDeleteResult {
 export interface ConversationSyncResult {
   newCount: number
   updatedCount: number
-  deletedCount: number
 }
 
 interface ConversationSyncOptions {
-  syncDeleted?: boolean
   items?: ConversationInfo[]
+}
+
+export interface ConversationSyncReview {
+  context: string
+  missingIds: string[]
+  dismissed: boolean
+  undoCount: number
+  undoRevision: number
 }
 
 export interface ConversationSyncProgress {
@@ -208,6 +214,11 @@ export class ConversationManager {
   private syncAbortController: AbortController | null = null
   private syncProgress: ConversationSyncProgress | null = null
   private syncProgressListeners = new Set<() => void>()
+  // 核对结果与撤销仅在当前页面保留，不把不确定的站点状态写入用户元数据。
+  private syncReview: ConversationSyncReview | null = null
+  private syncReviewListeners = new Set<() => void>()
+  private cleanupUndo: Conversation[] = []
+  private cleanupUndoSequence = 0
   private pendingInitialSync: {
     context: string
     accountKey: string
@@ -292,6 +303,7 @@ export class ConversationManager {
    * 触发数据变更通知
    */
   notifyDataChange() {
+    this.pruneSyncReview()
     this.onChangeCallbacks.forEach((cb) => cb())
   }
 
@@ -578,6 +590,109 @@ export class ConversationManager {
     this.syncProgressListeners.forEach((listener) => listener())
   }
 
+  getSyncReview = (): ConversationSyncReview | null => {
+    if (this.syncReview?.context !== this.siteAdapter.getConversationSyncContext()) return null
+    return this.syncReview
+  }
+
+  subscribeSyncReview = (listener: () => void): (() => void) => {
+    this.syncReviewListeners.add(listener)
+    const checkContext = () => this.pruneSyncReview()
+    const events = [EVENT_PAGE_URL_CHANGE, "popstate", "hashchange"]
+    events.forEach((event) => window.addEventListener(event, checkContext))
+    // 某些站点切账号不改变 URL；操作前也会再次校验上下文。
+    const timer = setInterval(checkContext, 1000)
+    return () => {
+      this.syncReviewListeners.delete(listener)
+      events.forEach((event) => window.removeEventListener(event, checkContext))
+      clearInterval(timer)
+    }
+  }
+
+  private setSyncReview(review: ConversationSyncReview | null): void {
+    this.syncReview = review
+    this.syncReviewListeners.forEach((listener) => listener())
+  }
+
+  private pruneSyncReview(observedIds: Set<string> = new Set()): void {
+    const review = this.syncReview
+    if (!review) return
+    if (review.context !== this.siteAdapter.getConversationSyncContext()) {
+      this.cleanupUndo = []
+      this.setSyncReview(null)
+      return
+    }
+    const conversations = this.getAllConversations()
+    const missingIds = review.missingIds.filter((id) => conversations[id] && !observedIds.has(id))
+    if (missingIds.length !== review.missingIds.length) {
+      this.setSyncReview({ ...review, missingIds })
+    }
+  }
+
+  dismissSyncReview = (): void => {
+    const review = this.getSyncReview()
+    if (review) this.setSyncReview({ ...review, dismissed: true })
+  }
+
+  /** 清理核对中选定的本地记录，绝不走站点删除路径。 */
+  removeMissingConversations(ids: string[], context: string): number {
+    this.pruneSyncReview(new Set(this.siteAdapter.getConversationList().map((item) => item.id)))
+    const review = this.getSyncReview()
+    if (!review || review.context !== context || this.syncTask || this.destroyed) return 0
+    const candidates = new Set(review.missingIds)
+    const conversations = this.getAllConversations()
+    const targets = Array.from(new Set(ids))
+      .filter((id) => candidates.has(id) && conversations[id])
+      .map((id) => conversations[id])
+    if (targets.length === 0) return 0
+
+    // 多次清理合并为一个可撤销批次，避免第二次操作丢掉第一次的元数据。
+    this.cleanupUndo = Array.from(
+      new Map([...this.cleanupUndo, ...targets].map((conv) => [conv.id, conv])).values(),
+    )
+    getConversationsStore().applyConversationChanges({
+      deleteIds: targets.map((conv) => this.getConversationStorageKey(conv.id)),
+    })
+    const removedIds = new Set(targets.map((conv) => conv.id))
+    this.setSyncReview({
+      ...review,
+      missingIds: review.missingIds.filter((id) => !removedIds.has(id)),
+      undoCount: this.cleanupUndo.length,
+      undoRevision: ++this.cleanupUndoSequence,
+    })
+    this.notifyDataChange()
+    return targets.length
+  }
+
+  expireCleanupUndo(context: string, revision: number): void {
+    const review = this.getSyncReview()
+    if (!review || review.context !== context || review.undoRevision !== revision) return
+    this.cleanupUndo = []
+    this.setSyncReview({ ...review, undoCount: 0 })
+  }
+
+  undoMissingConversationCleanup = (): number => {
+    const review = this.getSyncReview()
+    if (!review || this.syncTask || this.destroyed || this.cleanupUndo.length === 0) return 0
+    const conversations = this.getAllConversations()
+    const folderIds = new Set(this.folders.map((folder) => folder.id))
+    const tagIds = new Set(this.tags.map((tag) => tag.id))
+    const restored = this.cleanupUndo.map((conv) => ({
+      ...conv,
+      // 重新被同步到的记录保留站点最新标题/链接，恢复用户整理的元数据。
+      title: conversations[conv.id]?.title ?? conv.title,
+      url: conversations[conv.id]?.url ?? conv.url,
+      folderId: folderIds.has(conv.folderId) ? conv.folderId : "inbox",
+      tagIds: conv.tagIds?.filter((id) => tagIds.has(id)),
+      updatedAt: Date.now(),
+    }))
+    getConversationsStore().applyConversationChanges({ upserts: restored })
+    this.cleanupUndo = []
+    this.setSyncReview({ ...review, undoCount: 0 })
+    this.notifyDataChange()
+    return restored.length
+  }
+
   cancelSync = (): void => {
     this.clearPendingInitialSync()
     if (this.syncProgress) this.setSyncProgress({ ...this.syncProgress, stage: "stopping" })
@@ -680,7 +795,6 @@ export class ConversationManager {
     let accountKey = this.getInitialSyncKey()
     let userTookControl = false
     let timedOut = false
-    let deletedCount = 0
     let status: ConversationFullSyncResult["status"] = "partial"
     const targetFolderId = options.targetFolderId ?? null
 
@@ -770,11 +884,22 @@ export class ConversationManager {
       // 晚到的对话由观察者/接口订阅增量补入，避免空账号每次打开都重试全量同步
       const syncComplete = complete || (initial && this.isConversationListDefinitelyEmpty())
       this.setSyncProgress({ initial, stage: "saving", loadedCount: collected.size })
-      const changes = this.syncConversations(targetFolderId, true, {
+      this.syncConversations(targetFolderId, true, {
         items: Array.from(collected.values()),
-        syncDeleted: syncComplete && !initial,
       })
-      deletedCount = changes.deletedCount
+      if (syncComplete && !initial && collected.size > 0) {
+        const previous = this.getSyncReview()
+        const current = this.getAllConversations()
+        const missingIds = Object.keys(original).filter((id) => !collected.has(id) && current[id])
+        const previousIds = new Set(previous?.missingIds)
+        this.setSyncReview({
+          context: syncContext,
+          missingIds,
+          dismissed: Boolean(previous?.dismissed) && missingIds.every((id) => previousIds.has(id)),
+          undoCount: previous?.undoCount ?? 0,
+          undoRevision: this.cleanupUndoSequence,
+        })
+      }
       this.notifyDataChange()
       if (syncComplete) {
         this.clearPendingInitialSync()
@@ -819,7 +944,6 @@ export class ConversationManager {
       updatedCount: Array.from(collected.keys()).filter(
         (id) => original[id] && current[id] && original[id] !== current[id],
       ).length,
-      deletedCount,
     }
     if (!this.destroyed && (initial || status !== "complete")) {
       const messageKey = {
@@ -835,7 +959,7 @@ export class ConversationManager {
 
   /**
    * 判定列表为"确定为空"（而非尚未渲染）：滚动容器已挂载但没有任何对话。
-   * 仅用于初始同步的空账号收尾；手动同步保持严格，避免误删本地记录
+   * 仅用于初始同步的空账号收尾；手动同步保持严格，避免把未加载当成完整结果
    */
   private isConversationListDefinitelyEmpty(): boolean {
     if (this.siteAdapter.getConversationList().some((item) => item.id)) return false
@@ -849,6 +973,8 @@ export class ConversationManager {
     this.stopSidebarObserver()
     this.conversationListUnsubscribe?.()
     this.conversationListUnsubscribe = null
+    this.cleanupUndo = []
+    this.setSyncReview(null)
   }
 
   updateSettings(settings: { syncUnpin: boolean; syncDelete?: boolean }) {
@@ -941,6 +1067,7 @@ export class ConversationManager {
 
   private updateConversationFromObservation(info: ConversationInfo, isNew: boolean) {
     if (this.destroyed || this.syncTask) return
+    this.pruneSyncReview(new Set([info.id]))
     const conversations = this.conversations
     const existing = conversations[info.id]
 
@@ -1377,23 +1504,21 @@ export class ConversationManager {
   ): ConversationSyncResult {
     const sidebarItems = options.items ?? this.siteAdapter.getConversationList()
 
-    if (!sidebarItems || (sidebarItems.length === 0 && !options.syncDeleted)) {
-      return { newCount: 0, updatedCount: 0, deletedCount: 0 }
+    this.pruneSyncReview(new Set(sidebarItems?.map((item) => item.id)))
+    if (!sidebarItems || sidebarItems.length === 0) {
+      return { newCount: 0, updatedCount: 0 }
     }
 
     const conversations = this.conversations
     let newCount = 0
     let updatedCount = 0
-    let deletedCount = 0
     const now = Date.now()
     const validFolderIds = new Set(this.folders.map((folder) => folder.id))
     const requestedFolderId = targetFolderId || this.lastUsedFolderId || "inbox"
     const folderId = validFolderIds.has(requestedFolderId) ? requestedFolderId : "inbox"
     const store = getConversationsStore()
-    const sidebarIds = new Set(sidebarItems.map((item) => item.id))
     const upserts: Conversation[] = []
     const updateEntries: Array<{ id: string; updates: Partial<Conversation> }> = []
-    const deleteIds: string[] = []
 
     sidebarItems.forEach((item) => {
       const existing = conversations[item.id]
@@ -1456,26 +1581,13 @@ export class ConversationManager {
       }
     })
 
-    if (options.syncDeleted) {
-      const currentCid = this.siteAdapter.getCurrentCid?.() || null
-
-      Object.entries(conversations).forEach(([id, conv]) => {
-        if (!this.matchesCid(conv, currentCid)) return
-        if (sidebarIds.has(id)) return
-
-        deleteIds.push(this.getConversationStorageKey(id))
-        deletedCount++
-      })
-    }
-
     store.applyConversationChanges({
       upserts,
       updates: updateEntries,
-      deleteIds,
       lastUsedFolderId: targetFolderId !== null ? folderId : undefined,
     })
 
-    return { newCount, updatedCount, deletedCount }
+    return { newCount, updatedCount }
   }
 
   /**

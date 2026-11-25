@@ -1040,10 +1040,10 @@ export const ru = {
   conversationsIcon: "Значок",
   conversationsFolderName: "Имя",
   conversationsFolderNamePlaceholder: "Введите имя...",
-  conversationsSyncEmpty: "Ничего не найдено",
+
   conversationsSyncNoChange: "«{folder}» обновлена",
   conversationsSyncUpdated: "Обновлено чатов: {updated}",
-  conversationsSyncRemoved: "Удалено локальных записей: {removed}",
+
   conversationsSyncNoSidebarItems:
     "В боковой панели не найдено разговоров. Откройте боковую панель и повторите попытку.",
   conversationsSyncResult: "Синхронизировано {added} чатов в «{folder}»",
@@ -1063,8 +1063,7 @@ export const ru = {
   conversationsMoveTo: "Переместить разговор",
   conversationsSetTag: "Установить тег",
   conversationsMoved: "Ушло в: ",
-  conversationsSyncDeleteTitle: "Синхро удаления",
-  conversationsSyncDeleteMsg: "Удалено {count} чатов в облаке. Удалить и здесь?",
+
   deleteConvRemoteError: "Удалено из панели, но удаление в облаке не удалось",
   conversationsDeleted: "Убрано",
   // Conversation Settings
@@ -1073,6 +1072,31 @@ export const ru = {
   conversationsSyncUnpinDesc: "При синхронизации откреплять здесь то, что откреплено на сайте",
   folderRainbowLabel: "Радужные папки",
   folderRainbowDesc: "Случайные цвета папок",
+  conversationsMissingNotice:
+    "При последней синхронизации не найдено чатов: {count}. Локальные записи сохранены.",
+  conversationsMissingCompact: "Не найдено при последней синхронизации: {count}",
+  conversationsMissingReview: "Проверить",
+  conversationsMissingTitle: "Проверка ненайденных чатов",
+  conversationsMissingDescription:
+    "Чат не найден — это не значит, что он удалён. Он может быть в проекте, архиве или ещё не загружен.",
+  conversationsMissingSearch: "Поиск по заголовкам, папкам и меткам",
+  conversationsMissingSelectResults: "Все результаты",
+  conversationsMissingSelection: "Выбрано: {selected} / всего: {total}",
+  conversationsMissingInvertSelection: "Инвертировать выбор",
+  conversationsMissingResolved: "Эти записи найдены снова или удалены. Очищать нечего.",
+  conversationsMissingOpen: "Открыть исходный чат в новой вкладке",
+  conversationsMissingLocalOnly:
+    "Удаляются только записи Ophel, а не чаты сайта. Отменить действие можно до закрытия уведомления с обратным отсчётом.",
+  conversationsMissingKeep: "Не сейчас",
+  conversationsMissingRemove: "Удалить только записи Ophel ({count})",
+  conversationsMissingChanged: "Список изменился. Записи сохранены; проверьте снова.",
+  conversationsCleanupDone: "Удалено записей Ophel: {count}",
+  conversationsCleanupUndoHint:
+    "Закроется через {seconds} секунд. Наведение указателя или фокус приостанавливает отсчёт.",
+  conversationsCleanupUndo: "Отменить",
+  conversationsCleanupRestored: "Записи, исходные папки и метки восстановлены",
+  conversationsSyncNoData:
+    "Не удалось прочитать чаты. Локальные записи сохранены. Повторите попытку позже.",
   conversationsSyncDeleteLabel: "Удалять и на сайте",
   conversationsSyncDeleteDesc:
     "При удалении диалога в Ophel исходный диалог на сайте тоже удаляется. Это нельзя отменить.",
