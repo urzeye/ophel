@@ -72,7 +72,7 @@ export interface GrokSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const GROK_CONFIG_VERSION = 8
+export const GROK_CONFIG_VERSION = 9
 
 const createGrokConfig = (): GrokSiteConfig => {
   const sidebarScrollContainer =
@@ -120,6 +120,8 @@ const createGrokConfig = (): GrokSiteConfig => {
       userQuery,
       assistantResponse,
       newChatButton: [
+        // 新版侧边栏主"New chat"按钮带 aria-keyshortcuts（Ctrl+J / Meta+J），语言无关
+        '#app-sidebar button[aria-keyshortcuts$="+J" i]',
         '[data-testid="new-chat"]',
         'a[href="/"]',
         '[data-sidebar="header"] a',
@@ -165,7 +167,8 @@ const createGrokConfig = (): GrokSiteConfig => {
       { selector: inlineContentWidth, property: "--content-max-width" },
     ],
     zenMode: {
-      hide: [".text-sidebar-foreground", '[data-sidebar="sidebar"]'],
+      // 新版侧边栏是 aside#app-sidebar（data-sidebar 属性已移除）；旧选择器留作兼容
+      hide: ["aside#app-sidebar", '[data-sidebar="sidebar"]', ".text-sidebar-foreground"],
     },
     quickQuote: "native",
     sitePrivateSelectors: {
@@ -189,7 +192,8 @@ const createGrokConfig = (): GrokSiteConfig => {
       actionDialog: '[role="dialog"]',
       cmdkRoot: "[cmdk-root]",
       actionIconNodes: "svg, path, use, [data-icon], [class*='icon'], [aria-label]",
-      conversationTitle: ".conversation-title",
+      // 新版会话标题在 data-testid="conversation-title" 容器内；旧类名留作兼容
+      conversationTitle: '[data-testid="conversation-title"], .conversation-title',
       messageBubble,
       responseMarkdown,
       responseRoot: '[id^="response-"]',

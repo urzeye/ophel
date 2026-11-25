@@ -17,6 +17,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 - **Conversation sync** — First-run full sync waits until history can scroll, shows progress, supports stopping, and avoids importing only the first page; Grok sync loads conversations directly without relying on the sidebar. (#1064)
 
+### 🐛 Bug Fixes
+
+- **Grok interface redesign** — Fixed the current conversation title missing, Zen Mode failing to hide the sidebar, and the new-chat shortcut reloading the page after Grok's interface update. (#1065)
+
 ---
 
 ## [1.3.5][1.3.5] - 2026-11-19
