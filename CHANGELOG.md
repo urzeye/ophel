@@ -21,6 +21,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 ### 🐛 Bug Fixes
 
 - **Grok interface redesign** — Fixed the current conversation title missing, Zen Mode failing to hide the sidebar, and the new-chat shortcut reloading the page after Grok's interface update. (#1065)
+- **Multi-account chat isolation** — Chats on ChatGPT, Grok, Claude, and AI Studio no longer mix together after switching accounts or workspaces; existing chats, folders, and bookmarks stay intact. (#1069)
 
 ---
 
