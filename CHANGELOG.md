@@ -15,7 +15,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### ✨ Improvements
 
-- **Conversation sync** — First-run full sync waits for history to load, shows progress, supports stopping, avoids repeated loading, and restores the sidebar position afterward. (#1064)
+- **Conversation sync** — First-run full sync shows progress, supports stopping, and waits for history without repeated loading; Grok sync now loads all conversations directly without relying on the sidebar. (#1064)
 
 ---
 

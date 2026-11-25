@@ -56,5 +56,16 @@
 1. Wait for both the list container and real first rows before scrolling; keep readiness and pagination time budgets separate.
 2. Preserve pending initialization after a readiness timeout and resume once late DOM rows or API snapshots arrive, with task deduplication and cancellation cleanup.
 3. Observe a stable document root during initial loading so replaced sidebar placeholders do not lose late updates.
-4. Keep Grok imports inside the full-history dialog and AI Studio imports on `/library`; missing controls or empty table shells must not certify a partial sidebar snapshot as complete.
+4. Keep AI Studio imports on `/library`; missing controls or empty table shells must not certify a partial sidebar snapshot as complete.
 5. Cover late first rows, deferred resumption, identity refinement, cancellation, and custom adapter entry contracts with focused regression checks.
+
+### Follow-up: Grok API conversation synchronization
+
+**Files:** `src/adapters/grok.ts`, `src/adapters/grok-conversation-list.ts`, `src/adapters/grok-config.ts`, and the existing bilingual changelog entry.
+
+1. Use the verified same-origin `/rest/app-chat/conversations` endpoint with `pageSize=100`, browser-managed authentication, and `pageToken` from each nonempty `nextPageToken`.
+2. Validate the response schema before accepting IDs, titles, and starred state; only a missing or empty continuation token certifies completion.
+3. Replace both automatic and manual full-history loading with one bounded, abortable API paginator that publishes cumulative progress and rejects repeated tokens, HTTP errors, and malformed responses.
+4. Make API snapshots the only conversation-list source, reuse native response capture for incremental updates, and remove the obsolete dialog-based synchronization path.
+5. Verify pagination, empty results, cancellation, failures, and deletion safety using temporary regression checks; run targeted formatting/lint, type checking, built-in adapter validation, and platform builds without storing credentials or HTML snapshots.
+6. Keep changes local; do not push or update the existing PR without a new request.

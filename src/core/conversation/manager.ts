@@ -1344,7 +1344,7 @@ export class ConversationManager {
   ): ConversationSyncResult {
     const sidebarItems = options.items ?? this.siteAdapter.getConversationList()
 
-    if (!sidebarItems || sidebarItems.length === 0) {
+    if (!sidebarItems || (sidebarItems.length === 0 && !options.syncDeleted)) {
       return { newCount: 0, updatedCount: 0, deletedCount: 0 }
     }
 

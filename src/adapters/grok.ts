@@ -24,12 +24,9 @@ import {
 } from "~utils/export-assets"
 import { htmlToMarkdown, type ExportBundle, type ExportMessage } from "~utils/exporter"
 import { t } from "~utils/i18n"
-import {
-  CONVERSATION_LIST_READY_TIMEOUT_MS,
-  loadConversationList,
-  waitForConversationLoad,
-} from "~utils/conversation-list-loader"
+import { waitForConversationLoad } from "~utils/conversation-list-loader"
 import { EVENT_OUTLINE_DATA_UPDATED } from "~utils/messaging"
+import { subscribeNetworkResponses } from "~utils/network-response-capture"
 import { hashOutlineText } from "~utils/outline-heading-cache"
 import {
   API_OUTLINE_PARSE_FAILURE_LIMIT,
@@ -63,6 +60,7 @@ import {
   type SiteDeleteConversationResult,
 } from "./base"
 import { GROK_CONFIG, GROK_CONFIG_VERSION, type GrokSiteConfig } from "./grok-config"
+import { GROK_CONVERSATIONS_PATH, parseGrokConversationPage } from "./grok-conversation-list"
 import type { BuiltinSiteConfig } from "./declarative"
 import { parseGrokHistoryExport, type GrokHistoryExportData } from "./grok-history-export"
 import {
@@ -81,10 +79,6 @@ const VIRTUAL_ROW_PROBE_SETTLE_MS = 60
 const OUTLINE_HEADING_SELECTOR = "h1, h2, h3, h4, h5, h6"
 /** 虚拟行内消息元素的 id 前缀（id="response-<uuid>"） */
 const RESPONSE_ID_PREFIX = "response-"
-
-const PIN_ICON_PATH_SIGNATURES = [
-  "M13 21L12 23L11 21V16H4.5V13.7129L4.65234 13.4697L6.95801 9.78027L6.41797 5.99512C6.11675 3.8866 7.75289 2 9.88281 2H14.1172C16.2471 2 17.8832 3.8866 17.582 5.99512L17.041 9.78027L19.5 13.7129V16H13V21Z",
-].map((path) => path.replace(/\s+/g, ""))
 
 // 提示词按行转为 ProseMirror/Tiptap 段落 HTML，必须先转义再拼接，
 // 否则提示词中的 < > & 会被解析为 DOM，多行文本也会丢失分段
@@ -206,8 +200,10 @@ export class GrokAdapter extends SiteAdapter {
     return !this.isSharePage() && /^\/c\/[^/?#]+(?:\/|$)/i.test(window.location.pathname)
   }
 
-  // 缓存弹窗中的对话数据（用于同步时弹窗已关闭的情况）
-  private cachedDialogConversations: Map<string, ConversationInfo> | null = null
+  private apiConversations = new Map<string, ConversationInfo>()
+  private conversationListController: AbortController | null = null
+  private conversationListListeners = new Set<() => void>()
+  private stopConversationListCapture: (() => void) | null = null
 
   private exportUserAttachmentsByResponseId: Map<string, GrokUserAttachment[]> | null = null
 
@@ -227,181 +223,117 @@ export class GrokAdapter extends SiteAdapter {
   private exportApiData: GrokHistoryExportData | null = null
 
   async loadAllConversations(options: ConversationLoadOptions = {}): Promise<boolean> {
-    const selectors = this.config.sitePrivateSelectors
-    const deadline = Date.now() + CONVERSATION_LIST_READY_TIMEOUT_MS
-    let dialog = document.querySelector(selectors.cmdkList)
-    let viewAllButton: Element | null = null
+    return this.fetchConversationList(true, options)
+  }
 
-    while (!dialog && !viewAllButton && Date.now() < deadline) {
-      await this.ensureSidebarExpanded(options.signal)
-      const sidebar = document.querySelector(selectors.sidebarScrollContainer)
-      viewAllButton = sidebar?.querySelector(selectors.viewAllButton) ?? null
-      dialog = document.querySelector(selectors.cmdkList)
-      if (!dialog && !viewAllButton) await waitForConversationLoad(200, options.signal)
+  private async fetchConversationList(
+    allPages: boolean,
+    options: ConversationLoadOptions = {},
+  ): Promise<boolean> {
+    while (this.conversationListController) {
+      await waitForConversationLoad(100, options.signal)
     }
     options.signal?.throwIfAborted()
-    if (!dialog && !viewAllButton) return false
+    const controller = new AbortController()
+    this.conversationListController = controller
+    const onAbort = () => controller.abort(options.signal?.reason)
+    options.signal?.addEventListener("abort", onAbort, { once: true })
+    const timeout = setTimeout(() => {
+      controller.abort(new Error("Grok conversation list request timed out"))
+    }, 90000)
+    const seen = new Map<string, ConversationInfo>()
+    const pageTokens = new Set<string>()
+    let pageToken: string | null = null
 
-    const openedHere = !dialog
-    this.cachedDialogConversations = null
-    if (openedHere) (viewAllButton as HTMLElement).click()
     try {
-      return await loadConversationList({
-        ...options,
-        getContainer: () => document.querySelector(selectors.cmdkList),
-        readList: () => {
-          const list = document.querySelector(selectors.cmdkList)
-          const links = list?.querySelectorAll(this.config.conversation.itemSelector) ?? []
-          const ids = new Set(
-            Array.from(links).map((link) =>
-              this.extractConversationIdFromHref(
-                link.getAttribute(this.config.conversation.idFrom.attr ?? "href") ?? "",
-              ),
-            ),
-          )
-          return this.getConversationList().filter((item) => ids.has(item.id))
-        },
-        idleMs: 1600,
-        onProgress: (items) => {
-          this.cachedDialogConversations = new Map(items.map((item) => [item.id, item]))
-          options.onProgress?.(items)
-        },
-      })
-    } finally {
-      if (openedHere && document.querySelector(selectors.cmdkList)) {
-        this.dispatchEscapeKey()
+      while (true) {
+        controller.signal.throwIfAborted()
+        const url = new URL(GROK_CONVERSATIONS_PATH, window.location.origin)
+        url.searchParams.set("pageSize", "100")
+        if (pageToken) url.searchParams.set("pageToken", pageToken)
+        const response = await fetch(url.href, {
+          method: "GET",
+          credentials: "include",
+          cache: "no-store",
+          headers: { accept: "application/json" },
+          signal: controller.signal,
+        })
+        if (!response.ok) {
+          throw new Error(`Grok conversation list responded ${response.status}`)
+        }
+        const page = parseGrokConversationPage(await response.json())
+        controller.signal.throwIfAborted()
+        page.items.forEach((item) => seen.set(item.id, item))
+        this.apiConversations = seen
+        options.onProgress?.(this.getConversationList())
+        if (!page.nextPageToken) return true
+        if (!allPages) return false
+        if (pageTokens.has(page.nextPageToken)) {
+          throw new Error("Grok conversation pagination did not advance")
+        }
+        pageTokens.add(page.nextPageToken)
+        pageToken = page.nextPageToken
       }
-      setTimeout(() => {
-        this.cachedDialogConversations = null
-      }, 5000)
+    } finally {
+      clearTimeout(timeout)
+      options.signal?.removeEventListener("abort", onAbort)
+      this.conversationListController = null
     }
   }
 
-  /**
-   * 侧边栏折叠时点击 trigger 展开，并有界等待对话列表挂载。
-   * 折叠（icon 模式）下 content 容器仍在 DOM 但不渲染对话条目，
-   * 不展开直接扫描会误判为"侧边栏无对话"。
-   * 折叠态以 shadcn 侧栏的状态容器为准（trigger 的 data-state 不可靠，
-   * 展开页也可能命中 closed 状态的同名按钮），且只点容器内的 trigger。
-   */
-  private async ensureSidebarExpanded(signal?: AbortSignal): Promise<void> {
-    signal?.throwIfAborted()
-    const collapsedRoot = document.querySelector('[data-collapsible][data-state="collapsed"]')
-    if (!collapsedRoot) return
-    const trigger = collapsedRoot.querySelector<HTMLElement>(
-      this.config.sitePrivateSelectors.sidebarTrigger,
-    )
-    if (!trigger) return
+  onConversationListChange(callback: () => void): () => void {
+    this.conversationListListeners.add(callback)
+    if (!this.stopConversationListCapture) {
+      this.stopConversationListCapture = subscribeNetworkResponses(
+        {
+          id: "grok:conversation-list",
+          method: "GET",
+          pathPattern: `^${GROK_CONVERSATIONS_PATH}$`,
+        },
+        (response) => {
+          if (this.conversationListController) return
+          try {
+            const page = parseGrokConversationPage(JSON.parse(response.body))
+            page.items.forEach((item) => this.apiConversations.set(item.id, item))
+          } catch (error) {
+            console.warn("[GrokAdapter] Invalid captured conversation list:", error)
+            return
+          }
+          this.conversationListListeners.forEach((listener) => listener())
+        },
+      )
+    }
 
-    trigger.click()
+    queueMicrotask(() => {
+      if (!this.conversationListListeners.has(callback) || this.conversationListController) return
+      void this.fetchConversationList(false)
+        .then(() => {
+          this.conversationListListeners.forEach((listener) => listener())
+        })
+        .catch((error) => {
+          if (this.conversationListListeners.size > 0) {
+            console.warn("[GrokAdapter] Failed to refresh conversation list:", error)
+          }
+        })
+    })
 
-    // 展开后站点异步渲染对话列表，有界等待其出现（含"查看全部"入口）
-    const containerSelector = this.config.sitePrivateSelectors.sidebarScrollContainer
-    const itemSelector = this.config.conversation.itemSelector
-    const viewAllSelector = this.config.sitePrivateSelectors.viewAllButton
-    for (let i = 0; i < 30; i++) {
-      await waitForConversationLoad(100, signal)
-      const sidebar = document.querySelector(containerSelector)
-      if (sidebar?.querySelector(itemSelector) || sidebar?.querySelector(viewAllSelector)) return
+    return () => {
+      this.conversationListListeners.delete(callback)
+      if (this.conversationListListeners.size > 0) return
+      this.stopConversationListCapture?.()
+      this.stopConversationListCapture = null
+      this.conversationListController?.abort()
     }
   }
 
   // ==================== 对话管理 ====================
 
   getConversationList(): ConversationInfo[] {
-    const conversationMap = new Map<string, ConversationInfo>()
-    const conversation = this.config.conversation
-    const privateSelectors = this.config.sitePrivateSelectors
-
-    // 1. 优先扫描侧边栏（获取置顶状态）
-    const sidebar = document.querySelector(privateSelectors.sidebarScrollContainer)
-    if (sidebar) {
-      const groups = sidebar.querySelectorAll(privateSelectors.sidebarGroup)
-      groups.forEach((group) => {
-        // 侧边栏中的链接
-        const links = group.querySelectorAll(conversation.itemSelector)
-        if (links.length === 0) return
-
-        links.forEach((link) => {
-          const href = link.getAttribute(conversation.idFrom.attr ?? "href")
-          if (!href) return
-
-          const id = this.extractConversationIdFromHref(href)
-          if (!id) return
-          // 侧边栏标题提取：a > span
-          const titleSpan = conversation.titleSelector
-            ? link.querySelector(conversation.titleSelector)
-            : null
-          const title = titleSpan?.textContent?.trim() || link.textContent?.trim() || "New Chat"
-          const isActive = conversation.activeMatch ? link.matches(conversation.activeMatch) : false
-          const isPinned = this.isPinnedSidebarConversation(link)
-
-          conversationMap.set(id, {
-            id,
-            title,
-            url: href,
-            isPinned,
-            isActive,
-          })
-        })
-      })
-    }
-
-    // 2. 扫描所有对话链接（补充对话框中的对话）
-    // 这能捕获"查看全部"对话框中的对话，无论选择器细节如何
-    const allLinks = document.querySelectorAll(conversation.itemSelector)
-    allLinks.forEach((link) => {
-      if (this.isCmdkActionItem(link)) return
-
-      const href = link.getAttribute(conversation.idFrom.attr ?? "href")
-      if (!href) return
-
-      const id = this.extractConversationIdFromHref(href)
-      if (!id) return
-      if (conversationMap.has(id)) return // 已从侧边栏获取，跳过
-
-      // 处理对话框（或其他位置）的对话
-      let title = "New Chat"
-      let isActive = false
-      const isPinned = false // 侧边栏以外默认不置顶
-
-      // 尝试识别 cmdk 对话框项
-      // 结构: div[cmdk-item] > a (empty) + div > ... > span.truncate
-      const cmdkItem = link.closest(privateSelectors.cmdkItem)
-      if (cmdkItem) {
-        // 对话框标题提取：cmdk-item 内部查找
-        const titleSpan = cmdkItem.querySelector(privateSelectors.cmdkTitle)
-        title = titleSpan?.textContent?.trim() || title
-        // 对话框激活状态：检查 current 标签
-        isActive = cmdkItem.querySelector(privateSelectors.cmdkActiveIndicator) !== null
-      } else {
-        // 其他情况的回退提取
-        title = link.textContent?.trim() || title
-      }
-
-      conversationMap.set(id, {
-        id,
-        title,
-        url: href,
-        isPinned,
-        isActive,
-      })
-    })
-
-    // 3. 合并缓存的弹窗对话数据（用于弹窗已关闭但缓存未过期的情况）
-    if (this.cachedDialogConversations) {
-      this.cachedDialogConversations.forEach((conv, id) => {
-        if (!conversationMap.has(id)) {
-          conversationMap.set(id, conv)
-        }
-      })
-    }
-
-    return Array.from(conversationMap.values())
-  }
-
-  getSidebarScrollContainer(): Element | null {
-    return document.querySelector(this.config.sitePrivateSelectors.sidebarScrollContainer)
+    const sessionId = this.getSessionId()
+    return Array.from(this.apiConversations.values(), (item) => ({
+      ...item,
+      isActive: item.id === sessionId,
+    }))
   }
 
   getZenModeConfig() {
@@ -415,56 +347,7 @@ export class GrokAdapter extends SiteAdapter {
   }
 
   getConversationObserverConfig(): ConversationObserverConfig | null {
-    const conversation = this.config.conversation
-    const privateSelectors = this.config.sitePrivateSelectors
-    const sidebarSelector = privateSelectors.sidebarScrollContainer
-    const itemSelector = `:is(${conversation.itemSelector})`
-
-    return {
-      // 同时匹配侧边栏和 cmdk 对话框中的对话链接
-      // - 侧边栏：[data-sidebar="content"] 内的对话链接（相对 /c/ 或绝对 https://grok.com/c/）
-      // - 对话框：[cmdk-item][data-value^="conversation:"] a[href^="/c/"]
-      selector: `${sidebarSelector} ${itemSelector}, ${privateSelectors.cmdkConversationItem} ${itemSelector}`,
-      shadow: false,
-      extractInfo: (el: Element) => {
-        const href = el.getAttribute(conversation.idFrom.attr ?? "href")
-        if (!href) return null
-        const id = this.extractConversationIdFromHref(href)
-        if (!id) return null
-
-        // 判断来源：侧边栏还是对话框
-        const isFromSidebar = !!el.closest(sidebarSelector)
-        const isFromCmdk = !!el.closest(privateSelectors.cmdkItem)
-
-        let title = ""
-        let isPinned = false
-
-        if (isFromSidebar) {
-          const titleSpan = conversation.titleSelector
-            ? el.querySelector(conversation.titleSelector)
-            : null
-          title = titleSpan?.textContent?.trim() || el.textContent?.trim() || ""
-          // 通过左侧置顶图标判断（未置顶项没有 icon）
-          isPinned = this.isPinnedSidebarConversation(el)
-        } else if (isFromCmdk) {
-          const cmdkItem = el.closest(privateSelectors.cmdkItem)
-          const titleSpan = cmdkItem?.querySelector(privateSelectors.cmdkTitle)
-          title = titleSpan?.textContent?.trim() || ""
-          isPinned = false // 对话框中无法判断置顶
-        }
-
-        return { id, title, url: href, isPinned }
-      },
-      getTitleElement: (el: Element) => {
-        // 优先从对话框 cmdk-item 中找
-        const cmdkItem = el.closest(privateSelectors.cmdkItem)
-        if (cmdkItem) {
-          return cmdkItem.querySelector(privateSelectors.cmdkTitle) || el
-        }
-        // 否则从侧边栏找
-        return (conversation.titleSelector && el.querySelector(conversation.titleSelector)) || el
-      },
-    }
+    return null
   }
 
   navigateToConversation(id: string, url?: string): boolean {
@@ -670,7 +553,7 @@ export class GrokAdapter extends SiteAdapter {
   }
 
   private syncConversationListAfterDelete(id: string): void {
-    this.cachedDialogConversations?.delete(id)
+    this.apiConversations.delete(id)
     const anchors = this.findConversationAnchors(id)
     for (const anchor of anchors) {
       const item = this.getConversationItemContainer(anchor)
@@ -1097,61 +980,6 @@ export class GrokAdapter extends SiteAdapter {
 
     const match = href.match(new RegExp(this.config.conversation.idFrom.regex))
     return match ? match[1] : null
-  }
-
-  private isPinnedSidebarConversation(element: Element): boolean {
-    if (!element.closest(this.config.sitePrivateSelectors.sidebarScrollContainer)) return false
-
-    const anchor = element.closest(this.config.conversation.itemSelector) ?? element
-    if (!this.hasPinnedIcon(anchor)) return false
-
-    const item = anchor.closest(this.config.sitePrivateSelectors.sidebarMenuItem)
-    const menu = anchor.closest(this.config.sitePrivateSelectors.sidebarMenu)
-    if (!item || !menu) return true
-
-    return this.isPinnedSectionItem(item)
-  }
-
-  private hasPinnedIcon(anchor: Element): boolean {
-    const icon = anchor.querySelector(this.config.sitePrivateSelectors.sidebarIcon)
-    if (!icon) return false
-    if (!this.isDomElementVisible(icon)) return false
-
-    const paths = Array.from(icon.querySelectorAll("path"))
-    if (paths.length === 0) return false
-
-    return paths.some((path) => {
-      const data = (path.getAttribute("d") || "").replace(/\s+/g, "")
-      if (!data) return false
-      return PIN_ICON_PATH_SIGNATURES.some((signature) => data === signature)
-    })
-  }
-
-  private isPinnedSectionItem(item: Element): boolean {
-    let sibling = item.previousElementSibling
-    while (sibling) {
-      if (!sibling.matches(this.config.sitePrivateSelectors.sidebarMenuItem)) {
-        return false
-      }
-      sibling = sibling.previousElementSibling
-    }
-    return true
-  }
-
-  private isCmdkActionItem(element: Element): boolean {
-    const cmdkItem = element.closest(this.config.sitePrivateSelectors.cmdkItem)
-    if (!cmdkItem) return false
-
-    const itemValue = (cmdkItem.getAttribute("data-value") || "").toLowerCase()
-    if (itemValue.startsWith("action:")) return true
-
-    const group = cmdkItem.closest(this.config.sitePrivateSelectors.cmdkGroup)
-    if (!group) return false
-
-    const groupValue = (group.getAttribute("data-value") || "").replace(/\s+/g, "").toLowerCase()
-    if (groupValue === "actionsshowall" || groupValue.startsWith("actions")) return true
-
-    return false
   }
 
   private isDomElementVisible(element: Element | null): boolean {

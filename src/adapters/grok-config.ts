@@ -36,16 +36,8 @@ type GrokPrivateSelectors = SitePrivateSelectors & {
   viewAllButton: string
   cmdkList: string
   cmdkItem: string
-  cmdkConversationItem: string
-  cmdkTitle: string
-  cmdkActiveIndicator: string
-  cmdkGroup: string
-  sidebarGroup: string
   sidebarMenuButton: string
   sidebarMenuItem: string
-  sidebarMenu: string
-  sidebarIcon: string
-  sidebarTrigger: string
   actionDialog: string
   cmdkRoot: string
   actionIconNodes: string
@@ -80,10 +72,11 @@ export interface GrokSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const GROK_CONFIG_VERSION = 7
+export const GROK_CONFIG_VERSION = 8
 
 const createGrokConfig = (): GrokSiteConfig => {
-  const sidebarScrollContainer = '[data-sidebar="content"]'
+  const sidebarScrollContainer =
+    '#app-sidebar [data-slot="sidebar-scrollport"], [data-sidebar="content"]'
   const conversationItem = 'a[href^="/c/"], a[href^="https://grok.com/c/"]'
   const cmdkItem = "[cmdk-item]"
   const messageBubble = ".message-bubble"
@@ -191,16 +184,8 @@ const createGrokConfig = (): GrokSiteConfig => {
       viewAllButton: "button.w-full.justify-start.text-xs.text-secondary.font-semibold",
       cmdkList: '[cmdk-list-sizer=""], [cmdk-list]',
       cmdkItem,
-      cmdkConversationItem: `${cmdkItem}[data-value^="conversation:"]`,
-      cmdkTitle: "span.truncate",
-      cmdkActiveIndicator: '[class*="border-border-l2"]',
-      cmdkGroup: "[cmdk-group]",
-      sidebarGroup: '[data-sidebar="group"]',
       sidebarMenuButton: '[data-sidebar="menu-button"]',
       sidebarMenuItem: '[data-sidebar="menu-item"]',
-      sidebarMenu: '[data-sidebar="menu"]',
-      sidebarIcon: '[data-sidebar="icon"] svg',
-      sidebarTrigger: 'button[data-sidebar="trigger"]',
       actionDialog: '[role="dialog"]',
       cmdkRoot: "[cmdk-root]",
       actionIconNodes: "svg, path, use, [data-icon], [class*='icon'], [aria-label]",
