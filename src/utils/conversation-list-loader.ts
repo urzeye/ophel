@@ -1,6 +1,7 @@
 import type { ConversationInfo, ConversationLoadOptions } from "~adapters/base"
 
-export const CONVERSATION_LIST_READY_TIMEOUT_MS = 90000
+export const CONVERSATION_LIST_READY_TIMEOUT_MS = 3200
+export const CONVERSATION_FULL_SYNC_READY_TIMEOUT_MS = 90000
 
 export function waitForConversationLoad(ms: number, signal?: AbortSignal): Promise<void> {
   if (signal?.aborted) return Promise.reject(signal.reason)
@@ -25,9 +26,10 @@ export function waitForConversationLoad(ms: number, signal?: AbortSignal): Promi
 interface ConversationListLoaderOptions extends ConversationLoadOptions {
   getContainer: () => Element | null
   readList: () => ConversationInfo[]
-  loadMore?: (container: Element) => void
+  loadMore?: (container: Element) => void | Promise<void>
   isLoading?: () => boolean
   idleMs?: number
+  idlePasses?: number
   maxDurationMs?: number
 }
 
@@ -40,12 +42,14 @@ export async function loadConversationList({
   },
   isLoading = () => false,
   idleMs = 3200,
+  idlePasses = 1,
+  readyTimeoutMs = CONVERSATION_LIST_READY_TIMEOUT_MS,
   maxDurationMs = 90000,
   signal,
   onProgress,
 }: ConversationListLoaderOptions): Promise<boolean> {
   signal?.throwIfAborted()
-  const readyDeadline = Date.now() + CONVERSATION_LIST_READY_TIMEOUT_MS
+  const readyDeadline = Date.now() + readyTimeoutMs
   let container = getContainer()
   let initialItems = container ? readList() : []
   while ((!container || !initialItems.some((item) => item.id)) && Date.now() < readyDeadline) {
@@ -56,6 +60,7 @@ export async function loadConversationList({
   if (!container || !initialItems.some((item) => item.id)) return false
 
   const startedAt = Date.now()
+  let idleCount = 0
   const seen = new Map<string, ConversationInfo>()
   const collect = () => {
     const previousCount = seen.size
@@ -72,28 +77,52 @@ export async function loadConversationList({
     signal?.throwIfAborted()
     container = getContainer()
     if (!container) return false
+    if (isLoading()) {
+      await waitForConversationLoad(400, signal)
+      collect()
+      continue
+    }
 
-    loadMore(container)
+    await loadMore(container)
     const requestedAt = Date.now()
+    let lastActivityAt = requestedAt
     let hasGrowth = false
 
     while (Date.now() - startedAt < maxDurationMs) {
       await waitForConversationLoad(400, signal)
-      if (!getContainer()) return false
+      const currentContainer = getContainer()
+      if (!currentContainer) return false
       if (collect()) {
         hasGrowth = true
+        idleCount = 0
+        lastActivityAt = Date.now()
       }
-      if (hasGrowth && !isLoading()) break
+      if (currentContainer !== container) {
+        idleCount = 0
+        break
+      }
+      const loading = isLoading()
+      if (loading) {
+        lastActivityAt = Date.now()
+      }
+      if (hasGrowth && !loading) break
 
       const waitingMs = Date.now() - requestedAt
-      if (waitingMs >= idleMs && !isLoading()) {
+      if (Date.now() - lastActivityAt >= idleMs && !loading) {
+        if (
+          container.clientHeight > 0 &&
+          container.scrollTop + container.clientHeight < container.scrollHeight - 1
+        ) {
+          idleCount = 0
+          break
+        }
+        idleCount++
+        if (idleCount < idlePasses) break
         onProgress?.(Array.from(seen.values()))
         return seen.size > 0
       }
       if (waitingMs >= Math.max(idleMs, 10000)) return false
     }
-
-    if (!hasGrowth) return false
   }
 
   return false

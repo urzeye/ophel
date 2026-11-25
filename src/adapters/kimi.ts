@@ -289,8 +289,9 @@ export class KimiAdapter extends SiteAdapter {
 
   async loadAllConversations(options: ConversationLoadOptions = {}): Promise<boolean> {
     const wasHistoryOpen = this.isHistoryPath()
+    const originalUrl = window.location.href
     try {
-      if (!(await this.openMoreHistoryView(options.signal))) return false
+      if (!(await this.openMoreHistoryView(options))) return false
       const complete = await loadConversationList({
         ...options,
         getContainer: () => this.getSidebarScrollContainer(),
@@ -303,7 +304,10 @@ export class KimiAdapter extends SiteAdapter {
       })
       return complete
     } finally {
-      if (!wasHistoryOpen) await this.closeMoreHistoryView()
+      if (!wasHistoryOpen && !options.signal?.aborted && this.isHistoryPath()) {
+        options.onNavigation?.(originalUrl)
+        await this.closeMoreHistoryView()
+      }
     }
   }
 
@@ -1618,9 +1622,10 @@ export class KimiAdapter extends SiteAdapter {
       : Array.from(document.querySelectorAll(this.config.conversation.itemSelector))
   }
 
-  private async openMoreHistoryView(signal?: AbortSignal): Promise<boolean> {
+  private async openMoreHistoryView(options: ConversationLoadOptions = {}): Promise<boolean> {
+    const { signal, readyTimeoutMs = CONVERSATION_LIST_READY_TIMEOUT_MS } = options
     signal?.throwIfAborted()
-    const deadline = Date.now() + CONVERSATION_LIST_READY_TIMEOUT_MS
+    const deadline = Date.now() + readyTimeoutMs
     let moreHistoryLink: HTMLElement | null = null
     while (Date.now() < deadline) {
       if (this.isHistoryPath()) return true
@@ -1636,6 +1641,8 @@ export class KimiAdapter extends SiteAdapter {
       this.config.sitePrivateSelectors.sidebarConversation,
     ).length
 
+    const historyUrl = moreHistoryLink.getAttribute("href") || "/chat/history"
+    options.onNavigation?.(new URL(historyUrl, window.location.href).href)
     moreHistoryLink.click()
 
     const timeoutAt = Date.now() + 3000

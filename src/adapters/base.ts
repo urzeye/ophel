@@ -63,6 +63,8 @@ export interface ConversationInfo {
 export interface ConversationLoadOptions {
   signal?: AbortSignal
   onProgress?: (items: ConversationInfo[]) => void
+  readyTimeoutMs?: number
+  onNavigation?: (url: string) => void
 }
 
 export interface ConversationDeleteTarget {

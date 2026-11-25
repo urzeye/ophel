@@ -18,6 +18,7 @@ import { getTagsStore, useTagsStore } from "~stores/tags-store"
 import { stripQuickQuoteMarkers } from "~core/quick-quote-marker"
 import { sanitizeConversationTitleCandidate } from "~utils/conversation-title"
 import { DOMToolkit } from "~utils/dom-toolkit"
+import { CONVERSATION_FULL_SYNC_READY_TIMEOUT_MS } from "~utils/conversation-list-loader"
 import {
   consolidateThoughtBlocks,
   createExportMetadata,
@@ -37,6 +38,7 @@ import {
   htmlToMarkdown,
 } from "~utils/exporter"
 import { getAllLocalizedTexts, t } from "~utils/i18n"
+import { EVENT_PAGE_URL_CHANGE } from "~utils/messaging"
 import { getTopScrollPosition } from "~utils/scroll-helper"
 import { createSiteScopedStorageKey, resolvePersistedSiteInstanceKey } from "~utils/site-identity"
 import { consumeRestoreFlag, type ExportPackaging, type ExportStyle } from "~utils/storage"
@@ -676,7 +678,8 @@ export class ConversationManager {
     const original = this.getAllConversations()
     const collected = new Map<string, ConversationInfo>()
     const scrollPositions = new Map<Element, number>()
-    const navigationScope = this.siteAdapter.getNewTabUrl()
+    let navigationHref = window.location.href
+    let expectedNavigationHref: string | null = null
     const syncContext = this.siteAdapter.getConversationSyncContext()
     let accountKey = this.getInitialSyncKey()
     let userTookControl = false
@@ -684,6 +687,23 @@ export class ConversationManager {
     let deletedCount = 0
     let status: ConversationFullSyncResult["status"] = "partial"
     const targetFolderId = options.targetFolderId ?? null
+
+    const hasNavigationChanged = () => {
+      const href = window.location.href
+      if (href === expectedNavigationHref) {
+        navigationHref = href
+        expectedNavigationHref = null
+      }
+      return href !== navigationHref
+    }
+    const onNavigationChange = () => {
+      if (!hasNavigationChanged()) return
+      userTookControl = true
+      this.clearPendingInitialSync()
+      controller.abort()
+    }
+    const navigationEvents = [EVENT_PAGE_URL_CHANGE, "popstate", "hashchange"]
+    navigationEvents.forEach((event) => window.addEventListener(event, onNavigationChange))
 
     const rememberPosition = () => {
       const container = this.siteAdapter.getSidebarScrollContainer()
@@ -709,10 +729,7 @@ export class ConversationManager {
     const collect = (items: ConversationInfo[]) => {
       controller.signal.throwIfAborted()
       const currentKey = this.getInitialSyncKey()
-      if (
-        this.siteAdapter.getNewTabUrl() !== navigationScope ||
-        this.siteAdapter.getConversationSyncContext() !== syncContext
-      ) {
+      if (hasNavigationChanged() || this.siteAdapter.getConversationSyncContext() !== syncContext) {
         userTookControl = true
         this.clearPendingInitialSync()
         controller.abort()
@@ -740,6 +757,12 @@ export class ConversationManager {
       rememberPosition()
       const complete = await this.siteAdapter.loadAllConversations({
         signal: controller.signal,
+        readyTimeoutMs: CONVERSATION_FULL_SYNC_READY_TIMEOUT_MS,
+        onNavigation: (url) => {
+          onNavigationChange()
+          controller.signal.throwIfAborted()
+          expectedNavigationHref = new URL(url, window.location.href).href
+        },
         onProgress: (items) => {
           collect(items)
           if (items.some((item) => item.id)) this.clearPendingInitialSync()
@@ -769,12 +792,13 @@ export class ConversationManager {
       }
     } finally {
       clearTimeout(timeout)
+      navigationEvents.forEach((event) => window.removeEventListener(event, onNavigationChange))
       events.forEach((event) => document.removeEventListener(event, onUserInteraction, true))
       if (
         !userTookControl &&
         controller.signal.reason !== CONVERSATION_SYNC_CANCELLED_BY_USER &&
         !this.destroyed &&
-        this.siteAdapter.getNewTabUrl() === navigationScope &&
+        !hasNavigationChanged() &&
         this.siteAdapter.getConversationSyncContext() === syncContext &&
         this.getInitialSyncKey() === accountKey
       ) {

@@ -69,3 +69,11 @@
 4. Make API snapshots the only conversation-list source, reuse native response capture for incremental updates, and remove the obsolete dialog-based synchronization path.
 5. Verify pagination, empty results, cancellation, failures, and deletion safety using temporary regression checks; run targeted formatting/lint, type checking, built-in adapter validation, and platform builds without storing credentials or HTML snapshots.
 6. Keep changes local; do not push or update the existing PR without a new request.
+
+### Follow-up: Gemini first-page truncation and review feedback
+
+1. Reproduce a 30-row initial snapshot with a replaced scroll container or a first scroll fired before pagination listeners attach; require the same loader to reach subsequent pages without restarting full synchronization.
+2. Wait for active loading to settle, retrigger pagination after container replacement, measure idle time from the latest activity, and use one bounded idle-confirmation pass for Gemini with a real scroll transition.
+3. Default operational readiness waits to 3.2 seconds and explicitly give managed full synchronization a 90-second readiness budget, including custom full-history entry points.
+4. Track actual page URLs and URL-change events, explicitly authorize adapter-owned history navigation, cancel unrelated navigation promptly, and never restore scroll state onto a different page.
+5. Add focused temporary regressions for these cases and run formatting, lint, type checks, built-in config validation, and Chrome/Firefox/userscript builds.

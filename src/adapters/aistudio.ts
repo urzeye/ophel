@@ -945,18 +945,16 @@ export class AIStudioAdapter extends SiteAdapter {
   async loadAllConversations(options: ConversationLoadOptions = {}): Promise<boolean> {
     options.signal?.throwIfAborted()
     const currentPath = window.location.pathname
+    const originalUrl = window.location.href
     const isOnLibrary = currentPath === "/library"
+    const readyTimeoutMs = options.readyTimeoutMs ?? CONVERSATION_LIST_READY_TIMEOUT_MS
 
     try {
       if (!isOnLibrary) {
-        const navigated = await this.navigateToLibraryViaSpa(
-          options.signal,
-          CONVERSATION_LIST_READY_TIMEOUT_MS,
-        )
+        options.onNavigation?.(new URL("/library", window.location.origin).href)
+        const navigated = await this.navigateToLibraryViaSpa(options.signal, readyTimeoutMs)
         if (!navigated) return false
-      } else if (
-        !(await this.waitForLibraryContent(options.signal, CONVERSATION_LIST_READY_TIMEOUT_MS))
-      ) {
+      } else if (!(await this.waitForLibraryContent(options.signal, readyTimeoutMs))) {
         return false
       }
 
@@ -966,7 +964,8 @@ export class AIStudioAdapter extends SiteAdapter {
       options.onProgress?.(conversations)
       return true
     } finally {
-      if (!isOnLibrary && window.location.pathname === "/library") {
+      if (!isOnLibrary && !options.signal?.aborted && window.location.pathname === "/library") {
+        options.onNavigation?.(originalUrl)
         window.history.back()
       }
       setTimeout(() => {

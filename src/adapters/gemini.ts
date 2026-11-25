@@ -1519,30 +1519,43 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   async loadAllConversations(options: ConversationLoadOptions = {}): Promise<boolean> {
-    const sectionReady = await this.ensureChatsExpandableSectionOpen(options.signal)
+    const sectionReady = await this.ensureChatsExpandableSectionOpen(
+      options.signal,
+      options.readyTimeoutMs,
+    )
     if (!sectionReady) return false
 
     return loadConversationList({
       ...options,
       getContainer: () => this.getSidebarScrollContainer(),
       readList: () => this.getConversationList(),
-      loadMore: (container) => this.scrollGeminiConversationHistoryToBottom(container),
+      loadMore: (container) =>
+        this.scrollGeminiConversationHistoryToBottom(container, options.signal),
       isLoading: () => this.isConversationHistoryLoading(),
       idleMs: 4000,
+      idlePasses: 2,
     })
   }
 
-  private async ensureChatsExpandableSectionOpen(signal?: AbortSignal): Promise<boolean> {
+  private async ensureChatsExpandableSectionOpen(
+    signal?: AbortSignal,
+    timeoutMs = CONVERSATION_LIST_READY_TIMEOUT_MS,
+  ): Promise<boolean> {
     const start = Date.now()
     let expanded = false
-    while (Date.now() - start < CONVERSATION_LIST_READY_TIMEOUT_MS) {
+    while (Date.now() - start < timeoutMs) {
       signal?.throwIfAborted()
-      if (this.getConversationList().length > 0) return true
       const section = this.getChatsExpandableSection()
       const toggle = section?.querySelector<HTMLElement>("button[aria-expanded][aria-controls]")
       if (!expanded && toggle?.getAttribute("aria-expanded") === "false") {
         toggle.click()
         expanded = true
+      }
+      if (
+        toggle?.getAttribute("aria-expanded") !== "false" &&
+        this.getConversationList().length > 0
+      ) {
+        return true
       }
       if (
         toggle?.getAttribute("aria-expanded") === "true" &&
@@ -1583,7 +1596,17 @@ export class GeminiAdapter extends SiteAdapter {
     return loadingSpinner instanceof HTMLElement && this.isVisible(loadingSpinner)
   }
 
-  private scrollGeminiConversationHistoryToBottom(container: Element): void {
+  private async scrollGeminiConversationHistoryToBottom(
+    container: Element,
+    signal?: AbortSignal,
+  ): Promise<void> {
+    const bottom = Math.max(0, container.scrollHeight - container.clientHeight)
+    if (bottom > 0 && container.scrollTop >= bottom - 1) {
+      container.scrollTop = Math.max(0, bottom - 1)
+      container.dispatchEvent(new Event("scroll", { bubbles: true, composed: true }))
+      await waitForConversationLoad(50, signal)
+    }
+    signal?.throwIfAborted()
     const targetTop = Math.max(container.scrollHeight, container.scrollTop + container.clientHeight)
 
     container.scrollTop = targetTop
@@ -1600,14 +1623,9 @@ export class GeminiAdapter extends SiteAdapter {
 
   private getChatsScrollableContainer(): Element | null {
     const privateSelectors = this.config.sitePrivateSelectors
-    const anchor = document.querySelector(
-      [
-        this.config.selectors.sidebarScrollContainer,
-        privateSelectors.chatsExpandableSection,
-        privateSelectors.chatsExpandableSectionFallback,
-        this.config.conversation.itemSelector,
-      ].join(","),
-    )
+    const anchor =
+      document.querySelector(privateSelectors.conversationList) ??
+      document.querySelector(this.config.conversation.itemSelector)
     if (!(anchor instanceof HTMLElement)) return null
 
     let current: HTMLElement | null = anchor
@@ -1620,13 +1638,15 @@ export class GeminiAdapter extends SiteAdapter {
       const style = window.getComputedStyle(current)
       const canScroll =
         /(auto|scroll|overlay)/i.test(style.overflowY) || current.classList.contains("chat-history")
-      if (canScroll && current.scrollHeight > current.clientHeight) {
+      if (canScroll && current.clientHeight > 0 && current.scrollHeight > current.clientHeight) {
         return current
       }
       current = current.parentElement
     }
 
-    return closestInfiniteScroller
+    return closestInfiniteScroller && closestInfiniteScroller.clientHeight > 0
+      ? closestInfiniteScroller
+      : null
   }
 
   getConversationObserverConfig(): ConversationObserverConfig {
