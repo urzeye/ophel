@@ -50,3 +50,11 @@
 3. Self-review lifecycle cleanup, account scoping, empty/unready distinction, backup compatibility, and partial-list deletion safety.
 4. Add one bilingual Unreleased changelog entry, excluding the user-provided HTML snapshot from Git staging.
 5. Commit with an English Conventional Commit, push the new branch, and create a Draft PR with validation and limitations.
+
+### Follow-up: Late readiness and full-history entry points
+
+1. Wait for both the list container and real first rows before scrolling; keep readiness and pagination time budgets separate.
+2. Preserve pending initialization after a readiness timeout and resume once late DOM rows or API snapshots arrive, with task deduplication and cancellation cleanup.
+3. Observe a stable document root during initial loading so replaced sidebar placeholders do not lose late updates.
+4. Keep Grok imports inside the full-history dialog and AI Studio imports on `/library`; missing controls or empty table shells must not certify a partial sidebar snapshot as complete.
+5. Cover late first rows, deferred resumption, identity refinement, cancellation, and custom adapter entry contracts with focused regression checks.

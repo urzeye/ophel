@@ -206,6 +206,11 @@ export class ConversationManager {
   private syncAbortController: AbortController | null = null
   private syncProgress: ConversationSyncProgress | null = null
   private syncProgressListeners = new Set<() => void>()
+  private pendingInitialSync: {
+    context: string
+    accountKey: string
+    resumeTimer: ReturnType<typeof setTimeout> | null
+  } | null = null
   private conversationListUnsubscribe: (() => void) | null = null
   private destroyed = false
 
@@ -331,10 +336,6 @@ export class ConversationManager {
       initialSyncState !== "complete" &&
       (initialSyncState === "pending" || currentSiteCount === 0)
 
-    if (shouldRunInitialAutoFullSync) {
-      getConversationsStore().setInitialSyncState(initialSyncKey, "pending")
-    }
-
     const initialSync = shouldRunInitialAutoFullSync
       ? this.syncAllConversations({ initial: true })
       : null
@@ -357,6 +358,7 @@ export class ConversationManager {
 
     this.conversationListUnsubscribe = this.siteAdapter.onConversationListChange(() => {
       if (this.destroyed || this.syncTask) return
+      this.schedulePendingInitialSync()
       const { newCount, updatedCount } = this.syncConversations(null, true)
       if (newCount > 0 || updatedCount > 0) {
         this.notifyDataChange()
@@ -579,6 +581,7 @@ export class ConversationManager {
   }
 
   cancelSync = (): void => {
+    this.clearPendingInitialSync()
     if (this.syncProgress) this.setSyncProgress({ ...this.syncProgress, stage: "stopping" })
     this.syncAbortController?.abort(CONVERSATION_SYNC_CANCELLED_BY_USER)
   }
@@ -587,6 +590,24 @@ export class ConversationManager {
     options: { initial?: boolean; targetFolderId?: string } = {},
   ): Promise<ConversationFullSyncResult> {
     if (this.syncTask) return this.syncTask
+
+    if (options.initial) {
+      const accountKey = this.getInitialSyncKey()
+      if (this.pendingInitialSync) {
+        this.movePendingInitialSyncState(this.pendingInitialSync.accountKey, accountKey)
+        this.pendingInitialSync.accountKey = accountKey
+      }
+      if (!this.pendingInitialSync) {
+        this.pendingInitialSync = {
+          context: this.siteAdapter.getConversationSyncContext(),
+          accountKey,
+          resumeTimer: null,
+        }
+        getConversationsStore().setInitialSyncState(accountKey, "pending")
+      }
+    } else {
+      this.clearPendingInitialSync()
+    }
 
     const controller = new AbortController()
     this.syncAbortController = controller
@@ -599,6 +620,52 @@ export class ConversationManager {
       })
     this.setSyncProgress({ initial: options.initial ?? false, stage: "loading", loadedCount: 0 })
     return this.syncTask
+  }
+
+  private clearPendingInitialSync(): void {
+    if (this.pendingInitialSync?.resumeTimer) {
+      clearTimeout(this.pendingInitialSync.resumeTimer)
+    }
+    this.pendingInitialSync = null
+  }
+
+  private movePendingInitialSyncState(previousKey: string, accountKey: string): void {
+    if (previousKey === accountKey) return
+    const store = getConversationsStore()
+    if (store.initialSyncStates[previousKey] !== "pending") return
+    store.setInitialSyncState(previousKey, null)
+    if (store.initialSyncStates[accountKey] !== "complete") {
+      store.setInitialSyncState(accountKey, "pending")
+    }
+  }
+
+  private schedulePendingInitialSync(): void {
+    const pending = this.pendingInitialSync
+    if (!pending || this.destroyed || this.syncTask) return
+    if (pending.context !== this.siteAdapter.getConversationSyncContext()) {
+      this.clearPendingInitialSync()
+      return
+    }
+    const accountKey = this.getInitialSyncKey()
+    const store = getConversationsStore()
+    this.movePendingInitialSyncState(pending.accountKey, accountKey)
+    pending.accountKey = accountKey
+    if (store.initialSyncStates[accountKey] === "complete") {
+      this.clearPendingInitialSync()
+      return
+    }
+    if (pending.resumeTimer !== null) return
+    if (!this.siteAdapter.getConversationList().some((item) => item.id)) return
+    store.setInitialSyncState(accountKey, "pending")
+    pending.resumeTimer = setTimeout(() => {
+      pending.resumeTimer = null
+      if (this.pendingInitialSync !== pending || this.destroyed || this.syncTask) return
+      if (pending.context !== this.siteAdapter.getConversationSyncContext()) {
+        this.clearPendingInitialSync()
+        return
+      }
+      void this.syncAllConversations({ initial: true })
+    }, 200)
   }
 
   private async performFullSync(
@@ -629,6 +696,7 @@ export class ConversationManager {
       const container = this.siteAdapter.getSidebarScrollContainer()
       if (!container?.contains(event.target)) return
       userTookControl = true
+      this.clearPendingInitialSync()
       controller.abort()
     }
     const events = ["wheel", "touchstart", "pointerdown", "keydown"]
@@ -646,13 +714,12 @@ export class ConversationManager {
         this.siteAdapter.getConversationSyncContext() !== syncContext
       ) {
         userTookControl = true
+        this.clearPendingInitialSync()
         controller.abort()
         controller.signal.throwIfAborted()
       }
       if (currentKey !== accountKey) {
-        if (getConversationsStore().initialSyncStates[accountKey] === "pending") {
-          getConversationsStore().setInitialSyncState(accountKey, null)
-        }
+        this.movePendingInitialSyncState(accountKey, currentKey)
         accountKey = currentKey
       }
       if (initial && !getConversationsStore().initialSyncStates[accountKey]) {
@@ -673,7 +740,10 @@ export class ConversationManager {
       rememberPosition()
       const complete = await this.siteAdapter.loadAllConversations({
         signal: controller.signal,
-        onProgress: collect,
+        onProgress: (items) => {
+          collect(items)
+          if (items.some((item) => item.id)) this.clearPendingInitialSync()
+        },
       })
       collect(this.siteAdapter.getConversationList())
       this.setSyncProgress({ initial, stage: "saving", loadedCount: collected.size })
@@ -684,13 +754,16 @@ export class ConversationManager {
       deletedCount = changes.deletedCount
       this.notifyDataChange()
       if (complete) {
+        this.clearPendingInitialSync()
         getConversationsStore().setInitialSyncState(accountKey, "complete")
         status = "complete"
       }
     } catch (error) {
       if (controller.signal.aborted) {
+        if (!timedOut) this.clearPendingInitialSync()
         status = timedOut ? "partial" : "cancelled"
       } else {
+        this.clearPendingInitialSync()
         status = "failed"
         console.warn("[ConversationManager] Full conversation sync failed:", error)
       }
@@ -784,7 +857,7 @@ export class ConversationManager {
         (el, isNew) => {
           this.handleObservedElement(el, isNew, config)
         },
-        { parent: sidebarContainer, shadow: config.shadow },
+        { parent: this.pendingInitialSync ? document : sidebarContainer, shadow: config.shadow },
       )
     }
 
@@ -823,6 +896,7 @@ export class ConversationManager {
       const info = config.extractInfo(el)
 
       if (info?.id) {
+        this.schedulePendingInitialSync()
         this.updateConversationFromObservation(info, isNew)
         this.monitorConversationTitle(el as HTMLElement, info.id)
       } else if (retries > 0) {
@@ -898,6 +972,7 @@ export class ConversationManager {
     if (this.pollInterval) return
     this.pollInterval = setInterval(() => {
       if (!this.observerConfig) return
+      this.schedulePendingInitialSync()
       const config = this.observerConfig
       // DOMToolkit.queryAll?
       // Checking dom-toolkit.ts: query returns Element | Element[]

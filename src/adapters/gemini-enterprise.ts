@@ -1665,7 +1665,7 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
 
       if (expandBtns.length === 0) {
         options.onProgress?.(this.getConversationList())
-        return this.getSidebarScrollContainer() !== null
+        return this.getConversationList().length > 0
       }
 
       // 点击所有展开按钮

@@ -17,7 +17,11 @@ import {
 import { platform } from "~platform"
 import { geminiNativeThemeCss } from "~styles/native-theme-adapters/gemini"
 import { DOMToolkit } from "~utils/dom-toolkit"
-import { loadConversationList, waitForConversationLoad } from "~utils/conversation-list-loader"
+import {
+  CONVERSATION_LIST_READY_TIMEOUT_MS,
+  loadConversationList,
+  waitForConversationLoad,
+} from "~utils/conversation-list-loader"
 import {
   extractConversationTitleFromDocumentTitle,
   GEMINI_NATIVE_TAB_TITLE_ATTR,
@@ -1531,7 +1535,7 @@ export class GeminiAdapter extends SiteAdapter {
   private async ensureChatsExpandableSectionOpen(signal?: AbortSignal): Promise<boolean> {
     const start = Date.now()
     let expanded = false
-    while (Date.now() - start < 10000) {
+    while (Date.now() - start < CONVERSATION_LIST_READY_TIMEOUT_MS) {
       signal?.throwIfAborted()
       if (this.getConversationList().length > 0) return true
       const section = this.getChatsExpandableSection()

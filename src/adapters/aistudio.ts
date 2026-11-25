@@ -19,7 +19,10 @@ import {
   type AIStudioRpcBridgeWindow,
 } from "~core/aistudio-rpc-bridge"
 import { platform } from "~platform"
-import { waitForConversationLoad } from "~utils/conversation-list-loader"
+import {
+  CONVERSATION_LIST_READY_TIMEOUT_MS,
+  waitForConversationLoad,
+} from "~utils/conversation-list-loader"
 import { useSettingsStore } from "~stores/settings-store"
 import {
   createExportAssetCollector,
@@ -946,9 +949,14 @@ export class AIStudioAdapter extends SiteAdapter {
 
     try {
       if (!isOnLibrary) {
-        const navigated = await this.navigateToLibraryViaSpa(options.signal)
+        const navigated = await this.navigateToLibraryViaSpa(
+          options.signal,
+          CONVERSATION_LIST_READY_TIMEOUT_MS,
+        )
         if (!navigated) return false
-      } else if (!(await this.waitForLibraryContent(options.signal))) {
+      } else if (
+        !(await this.waitForLibraryContent(options.signal, CONVERSATION_LIST_READY_TIMEOUT_MS))
+      ) {
         return false
       }
 
@@ -971,7 +979,7 @@ export class AIStudioAdapter extends SiteAdapter {
    * 通过 SPA 方式导航到 /library 页面
    * 优先寻找页面内的 Angular 路由链接，回退到 history.pushState + popstate
    */
-  private async navigateToLibraryViaSpa(signal?: AbortSignal): Promise<boolean> {
+  private async navigateToLibraryViaSpa(signal?: AbortSignal, timeoutMs = 5000): Promise<boolean> {
     signal?.throwIfAborted()
     const privateSelectors = this.config.sitePrivateSelectors
     // 方法 1: 仅在导航容器（ms-navbar-v2）内查找 /library 链接，
@@ -987,29 +995,36 @@ export class AIStudioAdapter extends SiteAdapter {
 
     if (isRouterLink && candidate) {
       candidate.click()
-      return this.waitForLibraryContent(signal)
+      return this.waitForLibraryContent(signal, timeoutMs)
     }
 
     // 方法 2: 使用 history.pushState + popstate 触发 Angular 路由器
     window.history.pushState(null, "", "/library")
     window.dispatchEvent(new PopStateEvent("popstate", { state: null }))
-    return this.waitForLibraryContent(signal)
+    return this.waitForLibraryContent(signal, timeoutMs)
   }
 
   /**
    * 等待 library 页面内容加载完成
    */
-  private async waitForLibraryContent(signal?: AbortSignal): Promise<boolean> {
-    // 最多等待 5 秒
-    // 以桌面表格、移动端卡片列表、真实对话链接或明确空状态为就绪信号。
-    // 不把裸 ms-library-table 当作完成信号，避免 Angular shell 阶段提前返回。
-    for (let i = 0; i < 50; i++) {
+  private async waitForLibraryContent(signal?: AbortSignal, timeoutMs = 5000): Promise<boolean> {
+    const deadline = Date.now() + timeoutMs
+    let enteredLibrary = false
+    while (Date.now() < deadline) {
       await waitForConversationLoad(100, signal)
-      const content = this.getLibraryContentElement()
-      if (content) {
-        // 额外等待 200ms 确保数据渲染完成
+      if (window.location.pathname !== "/library") {
+        if (enteredLibrary) return false
+        continue
+      }
+      enteredLibrary = true
+      if (this.extractLibraryConversations().length > 0 || this.getLibraryEmptyStateElement()) {
         await waitForConversationLoad(200, signal)
-        return true
+        if (
+          window.location.pathname === "/library" &&
+          (this.extractLibraryConversations().length > 0 || this.getLibraryEmptyStateElement())
+        ) {
+          return true
+        }
       }
     }
     return false
@@ -1031,16 +1046,6 @@ export class AIStudioAdapter extends SiteAdapter {
     })
 
     return Array.from(conversations.values())
-  }
-
-  private getLibraryContentElement(): Element | null {
-    const privateSelectors = this.config.sitePrivateSelectors
-    return (
-      document.querySelector(privateSelectors.libraryTable) ||
-      document.querySelector(privateSelectors.libraryMobileCards) ||
-      document.querySelector(this.config.conversation.itemSelector) ||
-      this.getLibraryEmptyStateElement()
-    )
   }
 
   private getLibraryEmptyStateElement(): HTMLElement | null {
@@ -1139,7 +1144,7 @@ export class AIStudioAdapter extends SiteAdapter {
     }
 
     // 优先返回缓存的 library 数据（全量）
-    if (this.cachedLibraryConversations && this.cachedLibraryConversations.length > 0) {
+    if (this.cachedLibraryConversations !== null) {
       return this.cachedLibraryConversations
     }
 

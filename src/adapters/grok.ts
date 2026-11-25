@@ -24,7 +24,11 @@ import {
 } from "~utils/export-assets"
 import { htmlToMarkdown, type ExportBundle, type ExportMessage } from "~utils/exporter"
 import { t } from "~utils/i18n"
-import { loadConversationList, waitForConversationLoad } from "~utils/conversation-list-loader"
+import {
+  CONVERSATION_LIST_READY_TIMEOUT_MS,
+  loadConversationList,
+  waitForConversationLoad,
+} from "~utils/conversation-list-loader"
 import { EVENT_OUTLINE_DATA_UPDATED } from "~utils/messaging"
 import { hashOutlineText } from "~utils/outline-heading-cache"
 import {
@@ -223,41 +227,54 @@ export class GrokAdapter extends SiteAdapter {
   private exportApiData: GrokHistoryExportData | null = null
 
   async loadAllConversations(options: ConversationLoadOptions = {}): Promise<boolean> {
-    // 侧边栏折叠（icon 模式）时对话列表不渲染，先主动展开再加载，
-    // 否则同步会扫不到任何对话
-    await this.ensureSidebarExpanded(options.signal)
+    const selectors = this.config.sitePrivateSelectors
+    const deadline = Date.now() + CONVERSATION_LIST_READY_TIMEOUT_MS
+    let dialog = document.querySelector(selectors.cmdkList)
+    let viewAllButton: Element | null = null
 
-    const sidebar = document.querySelector(this.config.sitePrivateSelectors.sidebarScrollContainer)
-    if (!sidebar) return false
-
-    // 使用 CSS 类特征定位"查看全部"按钮，避免依赖文本
-    // 特征：button, w-full, justify-start, text-xs, text-secondary
-    // 这些 Tailwind 类名描述了按钮的视觉样式（全宽、左对齐、小字体、次要颜色），相对稳定
-    const viewAllBtn = sidebar.querySelector(this.config.sitePrivateSelectors.viewAllButton)
-
-    if (viewAllBtn) {
-      options.signal?.throwIfAborted()
-      this.cachedDialogConversations = null
-      ;(viewAllBtn as HTMLElement).click()
-      try {
-        return await loadConversationList({
-          ...options,
-          getContainer: () => document.querySelector(this.config.sitePrivateSelectors.cmdkList),
-          readList: () => this.getConversationList(),
-          idleMs: 1600,
-          onProgress: (items) => {
-            this.cachedDialogConversations = new Map(items.map((item) => [item.id, item]))
-            options.onProgress?.(items)
-          },
-        })
-      } finally {
-        this.dispatchEscapeKey()
-        setTimeout(() => {
-          this.cachedDialogConversations = null
-        }, 5000)
-      }
+    while (!dialog && !viewAllButton && Date.now() < deadline) {
+      await this.ensureSidebarExpanded(options.signal)
+      const sidebar = document.querySelector(selectors.sidebarScrollContainer)
+      viewAllButton = sidebar?.querySelector(selectors.viewAllButton) ?? null
+      dialog = document.querySelector(selectors.cmdkList)
+      if (!dialog && !viewAllButton) await waitForConversationLoad(200, options.signal)
     }
-    return super.loadAllConversations(options)
+    options.signal?.throwIfAborted()
+    if (!dialog && !viewAllButton) return false
+
+    const openedHere = !dialog
+    this.cachedDialogConversations = null
+    if (openedHere) (viewAllButton as HTMLElement).click()
+    try {
+      return await loadConversationList({
+        ...options,
+        getContainer: () => document.querySelector(selectors.cmdkList),
+        readList: () => {
+          const list = document.querySelector(selectors.cmdkList)
+          const links = list?.querySelectorAll(this.config.conversation.itemSelector) ?? []
+          const ids = new Set(
+            Array.from(links).map((link) =>
+              this.extractConversationIdFromHref(
+                link.getAttribute(this.config.conversation.idFrom.attr ?? "href") ?? "",
+              ),
+            ),
+          )
+          return this.getConversationList().filter((item) => ids.has(item.id))
+        },
+        idleMs: 1600,
+        onProgress: (items) => {
+          this.cachedDialogConversations = new Map(items.map((item) => [item.id, item]))
+          options.onProgress?.(items)
+        },
+      })
+    } finally {
+      if (openedHere && document.querySelector(selectors.cmdkList)) {
+        this.dispatchEscapeKey()
+      }
+      setTimeout(() => {
+        this.cachedDialogConversations = null
+      }, 5000)
+    }
   }
 
   /**

@@ -1,5 +1,7 @@
 import type { ConversationInfo, ConversationLoadOptions } from "~adapters/base"
 
+export const CONVERSATION_LIST_READY_TIMEOUT_MS = 90000
+
 export function waitForConversationLoad(ms: number, signal?: AbortSignal): Promise<void> {
   if (signal?.aborted) return Promise.reject(signal.reason)
 
@@ -43,14 +45,17 @@ export async function loadConversationList({
   onProgress,
 }: ConversationListLoaderOptions): Promise<boolean> {
   signal?.throwIfAborted()
-  const startedAt = Date.now()
+  const readyDeadline = Date.now() + CONVERSATION_LIST_READY_TIMEOUT_MS
   let container = getContainer()
-  while (!container && Date.now() - startedAt < 10000) {
+  let initialItems = container ? readList() : []
+  while ((!container || !initialItems.some((item) => item.id)) && Date.now() < readyDeadline) {
     await waitForConversationLoad(200, signal)
     container = getContainer()
+    initialItems = container ? readList() : []
   }
-  if (!container) return false
+  if (!container || !initialItems.some((item) => item.id)) return false
 
+  const startedAt = Date.now()
   const seen = new Map<string, ConversationInfo>()
   const collect = () => {
     const previousCount = seen.size

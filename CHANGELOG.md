@@ -15,7 +15,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### ✨ Improvements
 
-- **Conversation sync** — First-run full sync now shows progress and can be stopped, avoids repeated loading at the end of history, and restores the sidebar position afterward. (#1064)
+- **Conversation sync** — First-run full sync waits for history to load, shows progress, supports stopping, avoids repeated loading, and restores the sidebar position afterward. (#1064)
 
 ---
 

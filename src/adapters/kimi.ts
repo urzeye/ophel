@@ -16,7 +16,11 @@ import {
 } from "~utils/export-assets"
 import { htmlToMarkdown, type ExportBundle, type ExportMessage } from "~utils/exporter"
 import { t } from "~utils/i18n"
-import { loadConversationList, waitForConversationLoad } from "~utils/conversation-list-loader"
+import {
+  CONVERSATION_LIST_READY_TIMEOUT_MS,
+  loadConversationList,
+  waitForConversationLoad,
+} from "~utils/conversation-list-loader"
 
 import {
   SiteAdapter,
@@ -286,7 +290,7 @@ export class KimiAdapter extends SiteAdapter {
   async loadAllConversations(options: ConversationLoadOptions = {}): Promise<boolean> {
     const wasHistoryOpen = this.isHistoryPath()
     try {
-      await this.openMoreHistoryView(options.signal)
+      if (!(await this.openMoreHistoryView(options.signal))) return false
       const complete = await loadConversationList({
         ...options,
         getContainer: () => this.getSidebarScrollContainer(),
@@ -1614,14 +1618,18 @@ export class KimiAdapter extends SiteAdapter {
       : Array.from(document.querySelectorAll(this.config.conversation.itemSelector))
   }
 
-  private async openMoreHistoryView(signal?: AbortSignal): Promise<void> {
+  private async openMoreHistoryView(signal?: AbortSignal): Promise<boolean> {
     signal?.throwIfAborted()
-    if (this.isHistoryPath()) return
-
-    const moreHistoryLink = document.querySelector(
-      this.config.sitePrivateSelectors.moreHistoryLink,
-    ) as HTMLElement | null
-    if (!moreHistoryLink) return
+    const deadline = Date.now() + CONVERSATION_LIST_READY_TIMEOUT_MS
+    let moreHistoryLink: HTMLElement | null = null
+    while (Date.now() < deadline) {
+      if (this.isHistoryPath()) return true
+      moreHistoryLink = document.querySelector(this.config.sitePrivateSelectors.moreHistoryLink)
+      if (moreHistoryLink) break
+      if (document.querySelector(this.config.sitePrivateSelectors.nextSidebarBody)) return true
+      await waitForConversationLoad(200, signal)
+    }
+    if (!moreHistoryLink) return false
 
     const beforePath = window.location.pathname
     const beforeCount = document.querySelectorAll(
@@ -1637,10 +1645,11 @@ export class KimiAdapter extends SiteAdapter {
         this.config.sitePrivateSelectors.sidebarConversation,
       ).length
       if (currentPath !== beforePath || currentCount > beforeCount) {
-        return
+        return true
       }
       await waitForConversationLoad(120, signal)
     }
+    return false
   }
 
   private async closeMoreHistoryView(): Promise<void> {
