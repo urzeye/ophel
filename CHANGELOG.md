@@ -15,7 +15,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### ✨ Improvements
 
-- **Conversation sync and cleanup** — Missing chats remain local for review, selective cleanup, and timed undo; initial sync waits for history, shows progress, and supports stopping, while Grok loads chats directly. (#1064, #1067)
+- **Conversation sync and cleanup** — Missing chats remain local for review, selective cleanup, and timed undo; initial sync waits for history, shows progress, and supports stopping, while Grok loads chats directly. (#1064, #1067, #1068)
 - **New chat** — Starting a new chat now uses SPA history navigation instead of simulating a click on the new-chat button. (#1066)
 
 ### 🐛 Bug Fixes
