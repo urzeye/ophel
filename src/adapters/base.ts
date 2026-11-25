@@ -574,9 +574,15 @@ export abstract class SiteAdapter {
    * 不使用 DOMToolkit 缓存，避免路由切换后读到残留的命中元素。
    */
   hasUserMessagesInDom(): boolean {
+    return Boolean(this.getFirstUserMessageElement())
+  }
+
+  /** 首个用户消息节点（不走缓存，保证路由切换后读到的是当前 DOM） */
+  protected getFirstUserMessageElement(): Element | null {
     const selector = this.getUserQuerySelector()
-    if (!selector) return false
-    return Boolean(DOMToolkit.query(selector, { shadow: this.usesShadowDOM(), useCache: false }))
+    if (!selector) return null
+    const found = DOMToolkit.query(selector, { shadow: this.usesShadowDOM(), useCache: false })
+    return found && !Array.isArray(found) ? found : null
   }
 
   /**
@@ -1851,8 +1857,9 @@ export abstract class SiteAdapter {
     }
 
     if (resolvedTargetUrl === window.location.href) {
-      // 已在新对话落地页无需处理；同 URL 的临时会话等场景只能整页刷新重置
-      if (this.isNewConversation()) {
+      // 已在新对话落地页（无真实消息）无需处理；同 URL 的临时会话（如 Gemini
+      // 临时对话）isNewConversation 仍为 true，只能整页刷新重置
+      if (this.isNewConversationLanding()) {
         return true
       }
       window.location.href = resolvedTargetUrl
@@ -1860,17 +1867,21 @@ export abstract class SiteAdapter {
     }
 
     // pushState 只接受同源 URL，失败时直接整页跳转兜底
-    const hadUserMessages = this.hasUserMessagesInDom()
+    const previousUserMessage = this.getFirstUserMessageElement()
     if (!this.navigateViaHistory(resolvedTargetUrl)) {
       window.location.href = resolvedTargetUrl
       return true
     }
 
-    // pushState 成功不代表站点路由响应了 popstate：若超时后旧对话消息仍在
-    // DOM 中，说明路由未切换，回退整页跳转（赋同 URL 也会触发重载）
-    if (hadUserMessages) {
+    // pushState 成功不代表站点路由响应了 popstate：超时后首个用户消息仍是同一个
+    // 旧 DOM 节点（SPA 成功会重建消息列表，节点必然更换），且页面仍停留在目标
+    // URL 上，才说明路由未切换，回退整页跳转（赋同 URL 也会触发重载）
+    if (previousUserMessage) {
       window.setTimeout(() => {
-        if (this.hasUserMessagesInDom()) {
+        if (
+          window.location.href === resolvedTargetUrl &&
+          this.getFirstUserMessageElement() === previousUserMessage
+        ) {
           window.location.href = resolvedTargetUrl
         }
       }, 500)
