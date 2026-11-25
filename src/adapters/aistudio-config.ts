@@ -24,6 +24,7 @@ interface AIStudioSiteSelectors extends SitePackSelectors {
 }
 
 type AIStudioPrivateSelectors = SitePrivateSelectors & {
+  accountIdentity: string
   scrollbarButton: string
   activeScrollbarButton: string
   pageHeading: string
@@ -109,7 +110,7 @@ export interface AIStudioSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const AISTUDIO_CONFIG_VERSION = 6
+export const AISTUDIO_CONFIG_VERSION = 7
 
 const createAIStudioConfig = (): AIStudioSiteConfig => {
   const turn = "ms-chat-turn"
@@ -227,6 +228,8 @@ const createAIStudioConfig = (): AIStudioSiteConfig => {
     quickQuote: "disabled",
     supportsHostThemeSync: true,
     sitePrivateSelectors: {
+      // 顶部账号切换器里的邮箱文本，作为多账号隔离标识
+      accountIdentity: ".account-switcher-text",
       scrollbarButton: [
         "ms-items-scrollbar button[aria-controls]",
         "ms-items-scrollbar button[data-test-item-id]",

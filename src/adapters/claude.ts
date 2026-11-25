@@ -116,6 +116,9 @@ const CLAUDE_INLINE_MATH_PATTERNS = [
 const CLAUDE_DOCUMENT_OUTLINE_SOURCE_ID = "document"
 const CLAUDE_EXPORT_ROOT_ATTR = "data-gh-claude-export-root"
 
+// 账号隔离标识：localStorage 中的同步属主 ID，不同账号互不相同
+const CID_STORAGE_KEY = "ccd-sync-owner"
+
 // 会话接口大纲数据源的拉取冷却与贴底判定（与 deepseek 同值）
 const CLAUDE_API_OUTLINE_FETCH_BACKOFF_MS = 10_000
 const CLAUDE_API_OUTLINE_BOTTOM_TOLERANCE_PX = 100
@@ -357,6 +360,32 @@ export class ClaudeAdapter extends SiteAdapter {
 
   // ==================== 对话管理 ====================
 
+  /**
+   * 获取当前账户标识（用于对话隔离）
+   * Claude 通过 localStorage.ccd-sync-owner 区分登录账号
+   */
+  getCurrentCid(): string | null {
+    const raw = window.localStorage.getItem(CID_STORAGE_KEY)
+    if (!raw) return null
+
+    try {
+      const parsed = JSON.parse(raw) as unknown
+      if (typeof parsed === "string" && parsed.trim()) return parsed.trim()
+      if (parsed && typeof parsed === "object") {
+        for (const key of ["uid", "id", "userId", "uuid"]) {
+          const value = (parsed as Record<string, unknown>)[key]
+          if (typeof value === "string" && value.trim()) {
+            return value.trim()
+          }
+        }
+      }
+    } catch {
+      // 回退到原始字符串
+    }
+
+    return raw.trim() || null
+  }
+
   private getClaudeConversationItems(root: ParentNode = document): Element[] {
     return Array.from(root.querySelectorAll(this.config.conversation.itemSelector))
   }
@@ -402,13 +431,14 @@ export class ClaudeAdapter extends SiteAdapter {
     return this.config.conversation.urlTemplate.replace("{id}", id)
   }
 
-  private extractClaudeConversationInfo(element: Element): ConversationInfo | null {
+  private extractClaudeConversationInfo(element: Element, cid?: string): ConversationInfo | null {
     const id = this.getClaudeConversationId(element)
     if (!id) return null
 
     const href = element.getAttribute("href") || this.getClaudeConversationPath(id)
     return {
       id,
+      cid,
       title: this.getClaudeConversationTitle(element),
       url: new URL(href, this.getNewTabUrl()).href,
       isActive: window.location.href.includes(id),
@@ -417,8 +447,9 @@ export class ClaudeAdapter extends SiteAdapter {
   }
 
   getConversationList(): ConversationInfo[] {
+    const cid = this.getCurrentCid() || undefined
     return this.getClaudeConversationItems()
-      .map((element) => this.extractClaudeConversationInfo(element))
+      .map((element) => this.extractClaudeConversationInfo(element, cid))
       .filter((conversation): conversation is ConversationInfo => conversation !== null)
   }
 
@@ -3971,7 +4002,8 @@ export class ClaudeAdapter extends SiteAdapter {
     return {
       selector: this.config.conversation.itemSelector,
       shadow: this.config.conversation.shadow ?? false,
-      extractInfo: (el: Element): ConversationInfo | null => this.extractClaudeConversationInfo(el),
+      extractInfo: (el: Element): ConversationInfo | null =>
+        this.extractClaudeConversationInfo(el, this.getCurrentCid() || undefined),
       getTitleElement: (el: Element): Element | null => {
         return this.getClaudeConversationTitleElement(el)
       },

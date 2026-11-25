@@ -255,6 +255,16 @@ export class AIStudioAdapter extends SiteAdapter {
     return ""
   }
 
+  /**
+   * 获取当前账户标识（用于对话隔离）
+   * AI Studio 通过顶部账号切换器里的邮箱文本区分 Google 账号
+   */
+  getCurrentCid(): string | null {
+    const el = document.querySelector(this.config.sitePrivateSelectors.accountIdentity)
+    const email = el?.textContent?.trim()
+    return email || null
+  }
+
   private normalizeTurnId(turnId: string): string {
     return turnId.replace(/^turn-/, "").trim()
   }
@@ -1036,12 +1046,13 @@ export class AIStudioAdapter extends SiteAdapter {
    */
   private extractLibraryConversations(): ConversationInfo[] {
     const conversations = new Map<string, ConversationInfo>()
+    const cid = this.getCurrentCid() || undefined
     const links = Array.from(
       document.querySelectorAll(this.config.conversation.itemSelector),
     ) as HTMLAnchorElement[]
 
     links.forEach((link) => {
-      const info = this.extractLibraryConversationInfo(link)
+      const info = this.extractLibraryConversationInfo(link, cid)
       if (!info || conversations.has(info.id)) return
       conversations.set(info.id, info)
     })
@@ -1069,7 +1080,10 @@ export class AIStudioAdapter extends SiteAdapter {
     return document.querySelector(privateSelectors.libraryRoot)
   }
 
-  private extractLibraryConversationInfo(link: HTMLAnchorElement): ConversationInfo | null {
+  private extractLibraryConversationInfo(
+    link: HTMLAnchorElement,
+    cid?: string,
+  ): ConversationInfo | null {
     const hrefAttribute = this.config.conversation.idFrom.attr || "href"
     const href = link.getAttribute(hrefAttribute) || ""
     if (!href || href.includes("new_chat")) return null
@@ -1091,6 +1105,7 @@ export class AIStudioAdapter extends SiteAdapter {
 
     return {
       id,
+      cid,
       title,
       url: href,
       isActive: window.location.pathname.includes(id),
@@ -1103,6 +1118,7 @@ export class AIStudioAdapter extends SiteAdapter {
    */
   private extractSidebarConversations(): ConversationInfo[] {
     const conversationMap = new Map<string, ConversationInfo>()
+    const cid = this.getCurrentCid() || undefined
 
     // 从侧边栏历史记录提取
     const historyLinks = document.querySelectorAll(
@@ -1128,6 +1144,7 @@ export class AIStudioAdapter extends SiteAdapter {
 
       conversationMap.set(id, {
         id,
+        cid,
         title,
         url: href,
         isActive,
@@ -1179,7 +1196,10 @@ export class AIStudioAdapter extends SiteAdapter {
         selector: this.config.conversation.itemSelector,
         shadow: this.config.conversation.shadow ?? false,
         extractInfo: (el: Element) => {
-          return this.extractLibraryConversationInfo(el as HTMLAnchorElement)
+          return this.extractLibraryConversationInfo(
+            el as HTMLAnchorElement,
+            this.getCurrentCid() || undefined,
+          )
         },
         getTitleElement: (el: Element) => el,
       }
