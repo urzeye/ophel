@@ -80,6 +80,9 @@ const OUTLINE_HEADING_SELECTOR = "h1, h2, h3, h4, h5, h6"
 /** 虚拟行内消息元素的 id 前缀（id="response-<uuid>"） */
 const RESPONSE_ID_PREFIX = "response-"
 
+// 账号隔离标识：登录态 cookie，不同账号互不相同
+const CID_COOKIE_NAME = "x-userid"
+
 // 提示词按行转为 ProseMirror/Tiptap 段落 HTML，必须先转义再拼接，
 // 否则提示词中的 < > & 会被解析为 DOM，多行文本也会丢失分段
 const escapeHtmlForInsert = (value: string): string =>
@@ -272,7 +275,8 @@ export class GrokAdapter extends SiteAdapter {
           options.onProgress?.(this.getConversationList())
           return done
         }
-        options.onProgress?.(Array.from(seen.values()))
+        const cid = this.getCurrentCid() || undefined
+        options.onProgress?.(Array.from(seen.values(), (item) => ({ ...item, cid })))
         if (pageTokens.has(page.nextPageToken)) {
           throw new Error("Grok conversation pagination did not advance")
         }
@@ -333,10 +337,31 @@ export class GrokAdapter extends SiteAdapter {
 
   // ==================== 对话管理 ====================
 
+  /**
+   * 获取当前账户标识（用于对话隔离）
+   * Grok 通过登录 cookie x-userid 区分账号
+   */
+  getCurrentCid(): string | null {
+    return this.readCookieValue(CID_COOKIE_NAME)
+  }
+
+  private readCookieValue(name: string): string | null {
+    const pattern = new RegExp(`(?:^|; )${name}=([^;]+)`)
+    const matched = document.cookie.match(pattern)
+    if (!matched?.[1]) return null
+    try {
+      return decodeURIComponent(matched[1]).trim() || null
+    } catch {
+      return matched[1].trim() || null
+    }
+  }
+
   getConversationList(): ConversationInfo[] {
     const sessionId = this.getSessionId()
+    const cid = this.getCurrentCid() || undefined
     return Array.from(this.apiConversations.values(), (item) => ({
       ...item,
+      cid,
       isActive: item.id === sessionId,
     }))
   }
