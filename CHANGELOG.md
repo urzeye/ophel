@@ -20,9 +20,9 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
-- **Grok interface redesign** — Fixed the current conversation title missing, Zen Mode failing to hide the sidebar, and the new-chat shortcut reloading the page after Grok's interface update. (#1065)
 - **Account and workspace chat isolation** — Chats stay separate across ChatGPT workspaces, Grok accounts, Claude organizations, and AI Studio accounts, while existing chats, folders, and bookmarks are preserved. (#1069, #1071)
 - **Claude interface update** — Restored full conversation sync, outline jumps, message sending, thought export, and panel avoidance after Claude's interface update. (#1071)
+- **Grok interface redesign** — Fixed the current conversation title missing, Zen Mode failing to hide the sidebar, and the new-chat shortcut reloading the page after Grok's interface update. (#1065)
 
 ---
 
