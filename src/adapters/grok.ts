@@ -204,7 +204,7 @@ export class GrokAdapter extends SiteAdapter {
   }
 
   private apiConversations = new Map<string, ConversationInfo>()
-  private apiConversationsCid: string | null = null
+  private apiConversationsCid: string | undefined
   private conversationListController: AbortController | null = null
   private conversationListListeners = new Set<() => void>()
   private stopConversationListCapture: (() => void) | null = null
@@ -234,11 +234,13 @@ export class GrokAdapter extends SiteAdapter {
     allPages: boolean,
     options: ConversationLoadOptions = {},
   ): Promise<boolean> {
-    this.ensureApiConversationsAccountScope()
     while (this.conversationListController) {
       await waitForConversationLoad(100, options.signal)
     }
     options.signal?.throwIfAborted()
+    this.ensureApiConversationsAccountScope()
+    const syncContext = this.getConversationSyncContext()
+    const cid = this.getCurrentCid()
     const controller = new AbortController()
     this.conversationListController = controller
     const onAbort = () => controller.abort(options.signal?.reason)
@@ -246,6 +248,12 @@ export class GrokAdapter extends SiteAdapter {
     const timeout = setTimeout(() => {
       controller.abort(new Error("Grok conversation list request timed out"))
     }, 90000)
+    const assertCurrentContext = () => {
+      controller.signal.throwIfAborted()
+      if (this.getConversationSyncContext() !== syncContext) {
+        throw new Error("Grok conversation sync context changed")
+      }
+    }
     // 全量同步成功翻到底才整体替换快照，避免中途失败丢失已有数据；
     // 单页预取则在现有快照上合并
     const seen = allPages ? new Map<string, ConversationInfo>() : new Map(this.apiConversations)
@@ -253,8 +261,9 @@ export class GrokAdapter extends SiteAdapter {
     let pageToken: string | null = null
 
     try {
+      if (!cid) throw new Error("Grok conversation account is unavailable")
       while (true) {
-        controller.signal.throwIfAborted()
+        assertCurrentContext()
         const url = new URL(GROK_CONVERSATIONS_PATH, window.location.origin)
         url.searchParams.set("pageSize", "100")
         if (pageToken) url.searchParams.set("pageToken", pageToken)
@@ -269,7 +278,7 @@ export class GrokAdapter extends SiteAdapter {
           throw new Error(`Grok conversation list responded ${response.status}`)
         }
         const page = parseGrokConversationPage(await response.json())
-        controller.signal.throwIfAborted()
+        assertCurrentContext()
         page.items.forEach((item) => seen.set(item.id, item))
         const done = !page.nextPageToken
         if (done || !allPages) {
@@ -277,7 +286,6 @@ export class GrokAdapter extends SiteAdapter {
           options.onProgress?.(this.getConversationList())
           return done
         }
-        const cid = this.getCurrentCid() || undefined
         options.onProgress?.(Array.from(seen.values(), (item) => ({ ...item, cid })))
         if (pageTokens.has(page.nextPageToken)) {
           throw new Error("Grok conversation pagination did not advance")
@@ -294,39 +302,11 @@ export class GrokAdapter extends SiteAdapter {
 
   onConversationListChange(callback: () => void): () => void {
     this.conversationListListeners.add(callback)
-    if (!this.stopConversationListCapture) {
-      this.stopConversationListCapture = subscribeNetworkResponses(
-        {
-          id: "grok:conversation-list",
-          method: "GET",
-          pathPattern: `^${GROK_CONVERSATIONS_PATH}$`,
-        },
-        (response) => {
-          if (this.conversationListController) return
-          try {
-            const page = parseGrokConversationPage(JSON.parse(response.body))
-            this.ensureApiConversationsAccountScope()
-            page.items.forEach((item) => this.apiConversations.set(item.id, item))
-          } catch (error) {
-            console.warn("[GrokAdapter] Invalid captured conversation list:", error)
-            return
-          }
-          this.conversationListListeners.forEach((listener) => listener())
-        },
-      )
-    }
+    this.ensureApiConversationsAccountScope()
+    if (!this.stopConversationListCapture) this.bindConversationListCapture()
 
     queueMicrotask(() => {
-      if (!this.conversationListListeners.has(callback) || this.conversationListController) return
-      void this.fetchConversationList(false)
-        .then(() => {
-          this.conversationListListeners.forEach((listener) => listener())
-        })
-        .catch((error) => {
-          if (this.conversationListListeners.size > 0) {
-            console.warn("[GrokAdapter] Failed to refresh conversation list:", error)
-          }
-        })
+      if (this.conversationListListeners.has(callback)) this.refreshConversationList()
     })
 
     return () => {
@@ -338,14 +318,58 @@ export class GrokAdapter extends SiteAdapter {
     }
   }
 
+  private bindConversationListCapture(): void {
+    this.stopConversationListCapture?.()
+    this.stopConversationListCapture = null
+    const cid = this.apiConversationsCid
+    if (!cid || this.conversationListListeners.size === 0) return
+    this.stopConversationListCapture = subscribeNetworkResponses(
+      {
+        // Monitor 在请求发起时保存规则 ID；换账号后，旧响应无法命中新订阅。
+        id: `grok:conversation-list:${cid}`,
+        method: "GET",
+        pathPattern: `^${GROK_CONVERSATIONS_PATH}$`,
+      },
+      (response) => {
+        if (this.conversationListController) return
+        if (this.getCurrentCid() !== cid) {
+          this.ensureApiConversationsAccountScope()
+          this.refreshConversationList()
+          return
+        }
+        try {
+          const page = parseGrokConversationPage(JSON.parse(response.body))
+          page.items.forEach((item) => this.apiConversations.set(item.id, item))
+        } catch (error) {
+          console.warn("[GrokAdapter] Invalid captured conversation list:", error)
+          return
+        }
+        this.conversationListListeners.forEach((listener) => listener())
+      },
+    )
+  }
+
+  private refreshConversationList(): void {
+    if (this.conversationListController || this.getCurrentCid() === undefined) return
+    void this.fetchConversationList(false)
+      .then(() => {
+        this.conversationListListeners.forEach((listener) => listener())
+      })
+      .catch((error) => {
+        if (this.conversationListListeners.size > 0) {
+          console.warn("[GrokAdapter] Failed to refresh conversation list:", error)
+        }
+      })
+  }
+
   // ==================== 对话管理 ====================
 
   /**
    * 获取当前账户标识（用于对话隔离）
    * Grok 通过登录 cookie x-userid 区分账号
    */
-  getCurrentCid(): string | null {
-    return this.readCookieValue(CID_COOKIE_NAME)
+  getCurrentCid(): string | undefined {
+    return this.readCookieValue(CID_COOKIE_NAME) || undefined
   }
 
   /**
@@ -357,6 +381,7 @@ export class GrokAdapter extends SiteAdapter {
     if (cid === this.apiConversationsCid) return
     this.apiConversationsCid = cid
     this.apiConversations.clear()
+    this.bindConversationListCapture()
   }
 
   private readCookieValue(name: string): string | null {

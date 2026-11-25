@@ -123,9 +123,9 @@ export class ImaAdapter extends SiteAdapter {
     return window.location.pathname.startsWith("/share/")
   }
 
-  getCurrentCid(): string | null {
+  getCurrentCid(): string | undefined {
     const raw = window.localStorage.getItem(IMA_CID_STORAGE_KEY)
-    if (!raw) return null
+    if (!raw) return undefined
 
     try {
       const parsed = JSON.parse(raw) as unknown
@@ -142,7 +142,7 @@ export class ImaAdapter extends SiteAdapter {
       // fallback to raw string below
     }
 
-    return raw.trim() || null
+    return raw.trim() || undefined
   }
 
   getSessionName(): string | null {

@@ -273,7 +273,7 @@ export class DeepSeekAdapter extends SiteAdapter {
     return title.replace(/\s*[-|]\s*DeepSeek$/i, "").trim() || null
   }
 
-  getCurrentCid(): string | null {
+  getCurrentCid(): string | undefined {
     try {
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i)
@@ -292,7 +292,7 @@ export class DeepSeekAdapter extends SiteAdapter {
       // ignore malformed localStorage data
     }
 
-    return null
+    return undefined
   }
 
   getConversationList(): ConversationInfo[] {

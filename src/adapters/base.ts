@@ -620,11 +620,10 @@ export abstract class SiteAdapter {
   }
 
   /**
-   * 获取当前团队 ID（用于对话隔离）
-   * 仅在支持多团队的站点（如 Gemini Enterprise）中实现
-   * @returns 团队 ID 或 null（无团队/默认团队）
+   * 获取当前账号/团队 ID（用于对话隔离）。
+   * undefined 表示身份尚未就绪；null 表示无需账号隔离，不必等待身份。
    */
-  getCurrentCid(): string | null {
+  getCurrentCid(): string | null | undefined {
     return null
   }
 

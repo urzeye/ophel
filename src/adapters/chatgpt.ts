@@ -294,16 +294,16 @@ export class ChatGPTAdapter extends SiteAdapter {
    * ChatGPT 通过 localStorage.precise_location_identity 的第一个元素（空间 ID）区分，
    * 个人/团队空间互不相同，同一浏览器下不同账号也不同；_account 已无法区分个人与团队
    */
-  getCurrentCid(): string | null {
+  getCurrentCid(): string | undefined {
     try {
       const raw = localStorage.getItem(CID_STORAGE_KEY)
-      if (!raw) return null
+      if (!raw) return undefined
       const parsed: unknown = JSON.parse(raw)
-      if (!Array.isArray(parsed)) return null
+      if (!Array.isArray(parsed)) return undefined
       const spaceId = parsed[0]
-      return typeof spaceId === "string" && spaceId.trim() ? spaceId : null
+      return typeof spaceId === "string" && spaceId.trim() ? spaceId : undefined
     } catch {
-      return null
+      return undefined
     }
   }
 

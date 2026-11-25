@@ -309,11 +309,11 @@ export class QwenAiAdapter extends SiteAdapter {
     return !this.isSharePage() && QWENAI_CHAT_PATH_PATTERN.test(window.location.pathname)
   }
 
-  getCurrentCid(): string | null {
+  getCurrentCid(): string | undefined {
     const fromCookie = this.readCookieValue("aui") || this.readCookieValue("cnaui")
     if (fromCookie) return fromCookie
     // 与接口鉴权同一取数口径：站点已把 token 迁到 qwen_access_token_state，旧 token 可能是上个账号残留
-    return this.extractUidFromToken(this.getQwenAccessToken())
+    return this.extractUidFromToken(this.getQwenAccessToken()) || undefined
   }
 
   getSessionName(): string | null {

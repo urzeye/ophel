@@ -259,10 +259,10 @@ export class AIStudioAdapter extends SiteAdapter {
    * 获取当前账户标识（用于对话隔离）
    * AI Studio 通过顶部账号切换器里的邮箱文本区分 Google 账号
    */
-  getCurrentCid(): string | null {
+  getCurrentCid(): string | undefined {
     const el = document.querySelector(this.config.sitePrivateSelectors.accountIdentity)
     const email = el?.textContent?.trim()
-    return email || null
+    return email || undefined
   }
 
   private normalizeTurnId(turnId: string): string {

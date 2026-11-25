@@ -200,7 +200,7 @@ const RemoteBackupModal: React.FC<{
     setLoading(true)
     try {
       const manager = getWebDAVSyncManager()
-      const files = await manager.getBackupList()
+      const files = await manager.getBackupList(Infinity)
       setBackups(files)
     } catch (e) {
       showDomToast(t("loadFailed") + ": " + String(e))
