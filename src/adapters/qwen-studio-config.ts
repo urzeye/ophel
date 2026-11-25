@@ -24,7 +24,6 @@ interface QwenStudioSiteSelectors extends SitePackSelectors {
   chatContent: string[]
   userQuery: string
   assistantResponse: string
-  newChatButton: string[]
   stopButton: string[]
   scrollContainer: string[]
 }
@@ -109,14 +108,13 @@ export interface QwenStudioSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const QWEN_STUDIO_CONFIG_VERSION = 5
+export const QWEN_STUDIO_CONFIG_VERSION = 6
 
 const createQwenStudioConfig = (): QwenStudioSiteConfig => {
   const sidebarRoot = "#sidebar"
   const sidebarScroll = ".session-list-wrapper"
   const conversationItem = ".chat-item-drag"
   const conversationTitle = ".chat-item-drag-link-content-tip-text"
-  const newChatButton = ".sidebar-entry-fixed-list-content"
   const layoutScope =
     ".chat-left-panel, body:not(:has(.chat-left-panel)) .splitter-container-left-panel"
   // 新版 DOM 中消息滚动容器为 .chat-messages（overflow-y: auto），保留旧 id 兼容旧结构
@@ -174,7 +172,6 @@ const createQwenStudioConfig = (): QwenStudioSiteConfig => {
       chatContent: [userMessage, assistantMessage],
       userQuery: userMessage,
       assistantResponse: assistantMessage,
-      newChatButton: [newChatButton],
       stopButton: [...stopButton],
       scrollContainer: [messageScroll],
     },

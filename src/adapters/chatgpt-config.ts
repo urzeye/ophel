@@ -24,7 +24,6 @@ interface ChatGPTSiteSelectors extends SitePackSelectors {
   chatContent: string[]
   userQuery: string
   assistantResponse: string
-  newChatButton: string[]
   stopButton: string[]
   scrollContainer: string[]
   sidebarScrollContainer: string
@@ -93,7 +92,7 @@ export interface ChatGPTSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const CHATGPT_CONFIG_VERSION = 10
+export const CHATGPT_CONFIG_VERSION = 11
 
 export const CHATGPT_NEW_UX_SCOPE =
   'main[data-app-shell-main-surface]:has([data-app-action-timeline-scroll], [data-thread-user-message-navigation-content="true"])'
@@ -241,17 +240,6 @@ const createChatGPTConfig = (): ChatGPTSiteConfig => {
       chatContent: [assistantMessage, userMessage, ".markdown"],
       userQuery: userMessage,
       assistantResponse: assistantMessage,
-      newChatButton: [
-        // [LEGACY-CHATGPT-V1]: 旧版新建聊天按钮
-        '[data-testid="create-new-chat-button"]',
-        'a[href="/"]',
-        'button[aria-label="New chat"]',
-        'button[aria-label="新对话"]',
-        // [CHATGPT-APP-SHELL]: 新版侧边栏新建聊天按钮
-        'button.sidebar-item[aria-label*="新聊天"]',
-        'button.sidebar-item[aria-label*="New chat" i]',
-        "button.sidebar-item:has(.text-fade-truncate)",
-      ],
       stopButton: [...stopButton],
       scrollContainer: [
         // [LEGACY-CHATGPT-V1]: 旧版滚动容器

@@ -18,7 +18,6 @@ interface DoubaoSiteSelectors extends SitePackSelectors {
   chatContent: string[]
   userQuery: string
   assistantResponse: string
-  newChatButton: string[]
   stopButton: string[]
 }
 
@@ -82,19 +81,11 @@ export interface DoubaoSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const DOUBAO_CONFIG_VERSION = 10
+export const DOUBAO_CONFIG_VERSION = 11
 
 const createDoubaoConfig = (): DoubaoSiteConfig => {
   const sidebarRoot = "#flow_chat_sidebar"
   const conversationItem = `${sidebarRoot} a[id^="conversation_"][href*="/chat/"]`
-  const newChatIconPath = 'svg path[d^="M12.6221 1.01074"]'
-  const newChatButton = [
-    `${sidebarRoot} [class*="sidebar_nav_item"]:has(${newChatIconPath})`,
-    `[class*="sidebar_nav_item"]:has(${newChatIconPath})`,
-    `div[class*="cursor-pointer"]:has(${newChatIconPath})`,
-    `:is(button, div):has(> svg > ${newChatIconPath})`,
-    `${sidebarRoot} > div:nth-child(2)`,
-  ]
   const virtualScroll = '[class*="v_list_scroller"]'
   const virtualRow = ".v_list_row"
   const messageBlock = '[data-target-id="message-box-target-id"]'
@@ -155,7 +146,6 @@ const createDoubaoConfig = (): DoubaoSiteConfig => {
       chatContent: [assistantContent, userQuery],
       userQuery,
       assistantResponse,
-      newChatButton,
       stopButton: stopButtonSelectors,
     },
     input: { mode: "contenteditable", submitKey: "Enter" },

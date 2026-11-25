@@ -746,10 +746,6 @@ export class YuanbaoAdapter extends SiteAdapter {
     }
   }
 
-  getNewChatButtonSelectors(): string[] {
-    return [...this.config.selectors.newChatButton]
-  }
-
   getZenModeConfig() {
     const { hide, preserveFlow, rootClass, styles } = this.config.zenMode
     return {

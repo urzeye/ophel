@@ -365,28 +365,6 @@ export class GrokAdapter extends SiteAdapter {
     return true
   }
 
-  /**
-   * "新对话"入口的兜底导航同样走 SPA history 切换，避免基类 location.href
-   * 整页刷新（会丢失当前会话滚动位置与未发送草稿）
-   */
-  protected override navigateToNewConversationUrl(): boolean {
-    const targetUrl = this.getNewTabUrl()
-    if (!targetUrl) return false
-
-    try {
-      const resolvedTargetUrl = new URL(targetUrl, window.location.origin).href
-      if (resolvedTargetUrl === window.location.href && this.isNewConversation()) {
-        return true
-      }
-      if (this.navigateViaHistory(resolvedTargetUrl)) return true
-      window.location.href = resolvedTargetUrl
-      return true
-    } catch {
-      window.location.href = targetUrl
-      return true
-    }
-  }
-
   async deleteConversationOnSite(
     target: ConversationDeleteTarget,
   ): Promise<SiteDeleteConversationResult> {
@@ -1084,10 +1062,6 @@ export class GrokAdapter extends SiteAdapter {
       .replace(/\s*[|]\s*Grok$/i, "")
       .trim()
     return cleaned || null
-  }
-
-  getNewChatButtonSelectors(): string[] {
-    return [...this.config.selectors.newChatButton]
   }
 
   getLatestReplyText(): string | null {

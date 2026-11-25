@@ -752,10 +752,6 @@ export class ZaiAdapter extends SiteAdapter {
     return text
   }
 
-  getNewChatButtonSelectors(): string[] {
-    return [...this.config.selectors.newChatButton]
-  }
-
   getNewTabUrl(): string {
     return `${window.location.origin}/`
   }

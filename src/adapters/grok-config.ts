@@ -24,7 +24,6 @@ interface GrokSiteSelectors extends SitePackSelectors {
   chatContent: string[]
   userQuery: string
   assistantResponse: string
-  newChatButton: string[]
   stopButton: string[]
 }
 
@@ -72,7 +71,7 @@ export interface GrokSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const GROK_CONFIG_VERSION = 9
+export const GROK_CONFIG_VERSION = 10
 
 const createGrokConfig = (): GrokSiteConfig => {
   const sidebarScrollContainer =
@@ -119,15 +118,6 @@ const createGrokConfig = (): GrokSiteConfig => {
       chatContent: ['[class*="prose"]', '[dir="ltr"]'],
       userQuery,
       assistantResponse,
-      newChatButton: [
-        // 新版侧边栏主"New chat"按钮带 aria-keyshortcuts（Ctrl+J / Meta+J），语言无关
-        '#app-sidebar button[aria-keyshortcuts$="+J" i]',
-        '[data-testid="new-chat"]',
-        'a[href="/"]',
-        '[data-sidebar="header"] a',
-        'button[aria-label*="新"]',
-        'button[aria-label*="New"]',
-      ],
       stopButton,
     },
     input: { mode: "contenteditable", submitKey: "Enter" },

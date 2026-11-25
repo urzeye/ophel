@@ -799,10 +799,6 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
     await new Promise((resolve) => setTimeout(resolve, ms))
   }
 
-  getNewChatButtonSelectors(): string[] {
-    return [...this.config.selectors.newChatButton]
-  }
-
   // ==================== 页面宽度控制 ====================
 
   getWidthSelectors() {

@@ -1224,10 +1224,6 @@ export class DeclarativeAdapter extends SiteAdapter {
     setTimeout(attempt, 320)
   }
 
-  getNewChatButtonSelectors(): string[] {
-    return [...(this.manifest.selectors.newChatButton ?? [])]
-  }
-
   getStopButtonSelectors(): string[] {
     return [...(this.manifest.selectors.stopButton ?? [])]
   }

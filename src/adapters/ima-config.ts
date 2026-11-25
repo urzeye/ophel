@@ -22,7 +22,6 @@ interface ImaSiteSelectors extends SitePackSelectors {
   chatContent: string[]
   userQuery: string
   assistantResponse: string
-  newChatButton: string[]
   stopButton: string[]
 }
 
@@ -72,7 +71,7 @@ export interface ImaSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const IMA_CONFIG_VERSION = 3
+export const IMA_CONFIG_VERSION = 4
 
 const createImaConfig = (): ImaSiteConfig => {
   const scrollContainer = "#scrollContainer"
@@ -140,7 +139,6 @@ const createImaConfig = (): ImaSiteConfig => {
     'button[class*="stopButton"]',
     '[class*="stopButton"]',
   ].join(", ")
-  const newChatButton = '[class*="newChatWrap"]'
   const modelText = '[class*="modelSelectionText"]'
   const pageContent = ".expandable-sidebar-panel-sidebar ~ [class*='_content_']"
   const chatInputContainer = '[class*="chatInputContainer"]'
@@ -156,7 +154,6 @@ const createImaConfig = (): ImaSiteConfig => {
       chatContent: [userQuery, assistantResponse],
       userQuery,
       assistantResponse,
-      newChatButton: [newChatButton],
       stopButton: [stopButton],
     },
     input: { mode: "contenteditable", submitKey: "Enter" },

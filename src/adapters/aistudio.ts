@@ -4515,12 +4515,6 @@ export class AIStudioAdapter extends SiteAdapter {
     })
   }
 
-  // ==================== 新对话按钮 ====================
-
-  getNewChatButtonSelectors(): string[] {
-    return [...this.config.selectors.newChatButton]
-  }
-
   // ==================== 主题切换 ====================
 
   /**

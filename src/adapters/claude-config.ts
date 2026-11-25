@@ -24,7 +24,6 @@ interface ClaudeSiteSelectors extends SitePackSelectors {
   chatContent: string[]
   userQuery: string
   assistantResponse: string
-  newChatButton: string[]
   stopButton: string[]
   scrollContainer: string[]
   sidebarScrollContainer: string
@@ -94,7 +93,7 @@ export interface ClaudeSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const CLAUDE_CONFIG_VERSION = 8
+export const CLAUDE_CONFIG_VERSION = 9
 
 const createClaudeConfig = (): ClaudeSiteConfig => {
   // dframe 布局中侧栏列表容器是 div#frame-peek-popover（不再是 nav），
@@ -173,7 +172,6 @@ const createClaudeConfig = (): ClaudeSiteConfig => {
       chatContent: [`div${userQuery}`, `div${assistantResponse}`],
       userQuery,
       assistantResponse,
-      newChatButton: ['a[aria-label="New chat"]', 'a[href*="/new"]'],
       stopButton: [...stopButton],
       scrollContainer: [
         '[data-autoscroll-container="true"]',

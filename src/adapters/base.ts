@@ -1832,28 +1832,51 @@ export abstract class SiteAdapter {
     return null
   }
 
-  /** 获取"新对话"按钮的选择器列表 */
-  getNewChatButtonSelectors(): string[] {
-    return []
-  }
-
-  /** 触发站点原生"新对话"入口 */
+  /**
+   * 开始新对话：优先用 pushState + popstate 做 SPA 切换（与对话 tab 的
+   * navigateToConversation 一致），站点路由不支持时回退整页跳转。
+   */
   startNewConversation(): boolean {
-    const beforeState = this.captureConversationNavigationState()
-    const trigger = this.findVisibleElementBySelectors(this.getNewChatButtonSelectors())
-    if (trigger) {
-      this.simulateClick(trigger)
+    const targetUrl = this.getNewTabUrl()
+    if (!targetUrl) {
+      return false
+    }
 
-      window.setTimeout(() => {
-        if (!this.hasConversationNavigationChanged(beforeState)) {
-          this.navigateToNewConversationUrl()
-        }
-      }, 150)
-
+    let resolvedTargetUrl: string
+    try {
+      resolvedTargetUrl = new URL(targetUrl, window.location.origin).href
+    } catch {
+      window.location.href = targetUrl
       return true
     }
 
-    return this.navigateToNewConversationUrl()
+    if (resolvedTargetUrl === window.location.href) {
+      // 已在新对话落地页无需处理；同 URL 的临时会话等场景只能整页刷新重置
+      if (this.isNewConversation()) {
+        return true
+      }
+      window.location.href = resolvedTargetUrl
+      return true
+    }
+
+    // pushState 只接受同源 URL，失败时直接整页跳转兜底
+    const hadUserMessages = this.hasUserMessagesInDom()
+    if (!this.navigateViaHistory(resolvedTargetUrl)) {
+      window.location.href = resolvedTargetUrl
+      return true
+    }
+
+    // pushState 成功不代表站点路由响应了 popstate：若超时后旧对话消息仍在
+    // DOM 中，说明路由未切换，回退整页跳转（赋同 URL 也会触发重载）
+    if (hadUserMessages) {
+      window.setTimeout(() => {
+        if (this.hasUserMessagesInDom()) {
+          window.location.href = resolvedTargetUrl
+        }
+      }, 500)
+    }
+
+    return true
   }
 
   /** 获取"停止生成"按钮的选择器列表 */
@@ -2462,26 +2485,6 @@ export abstract class SiteAdapter {
         ".gh-root, .gh-user-query-markdown, .gh-markdown-preview, .gh-assistant-mermaid",
       ) && this.isElementVisible(element)
     )
-  }
-
-  protected navigateToNewConversationUrl(): boolean {
-    const targetUrl = this.getNewTabUrl()
-    if (!targetUrl) {
-      return false
-    }
-
-    try {
-      const resolvedTargetUrl = new URL(targetUrl, window.location.origin).href
-      if (resolvedTargetUrl === window.location.href && this.isNewConversation()) {
-        return true
-      }
-
-      window.location.href = resolvedTargetUrl
-      return true
-    } catch {
-      window.location.href = targetUrl
-      return true
-    }
   }
 
   protected captureConversationNavigationState(): {

@@ -25,7 +25,6 @@ interface GeminiSiteSelectors extends SitePackSelectors {
   chatContent: string[]
   userQuery: string
   assistantResponse: string
-  newChatButton: string[]
   stopButton: string[]
   scrollContainer: string[]
   sidebarScrollContainer: string
@@ -173,7 +172,7 @@ export interface GeminiSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时递增（相对上一 release 版本 +1），使旧缓存 patch 自动失效。一次发版周期内无需重复递增。 */
-export const GEMINI_CONFIG_VERSION = 9
+export const GEMINI_CONFIG_VERSION = 10
 
 const createGeminiConfig = (): GeminiSiteConfig => {
   const userQuery = "user-query"
@@ -278,17 +277,6 @@ const createGeminiConfig = (): GeminiSiteConfig => {
       ],
       userQuery,
       assistantResponse,
-      newChatButton: [
-        'gem-nav-list-item[data-test-id="new-chat-button"] a',
-        '[aria-label="New chat"]',
-        '[aria-label="新对话"]',
-        '[aria-label="发起新对话"]',
-        '[data-testid="new-chat-button"]',
-        '[data-test-id="new-chat-button"]',
-        '[data-test-id="expanded-button"]',
-        '[data-test-id="temp-chat-button"]',
-        'button[aria-label="临时对话"]',
-      ],
       stopButton: [
         'button:has(mat-icon[fonticon="stop"])',
         'mat-icon[fonticon="stop"]',

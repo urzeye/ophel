@@ -24,7 +24,6 @@ interface GeminiEnterpriseSiteSelectors extends SitePackSelectors {
   chatContent: string[]
   userQuery: string
   assistantResponse: string
-  newChatButton: string[]
   stopButton: string[]
   scrollContainer: string[]
   sidebarScrollContainer: string
@@ -80,7 +79,7 @@ export interface GeminiEnterpriseSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const GEMINI_ENTERPRISE_CONFIG_VERSION = 3
+export const GEMINI_ENTERPRISE_CONFIG_VERSION = 4
 
 const createGeminiEnterpriseConfig = (): GeminiEnterpriseSiteConfig => {
   const conversationItem = ".conversation"
@@ -149,11 +148,6 @@ const createGeminiEnterpriseConfig = (): GeminiEnterpriseSiteConfig => {
       ],
       userQuery,
       assistantResponse,
-      newChatButton: [
-        ".chat-button.list-item",
-        'button[aria-label="New chat"]',
-        'button[aria-label="新对话"]',
-      ],
       stopButton: [...stopButton],
       scrollContainer: [".chat-mode-scroller"],
       sidebarScrollContainer: ".conversation-list",

@@ -571,10 +571,6 @@ export class QwenAiAdapter extends SiteAdapter {
     return button
   }
 
-  getNewChatButtonSelectors(): string[] {
-    return [...this.config.selectors.newChatButton]
-  }
-
   getScrollContainer(): HTMLElement | null {
     for (const selector of this.config.selectors.scrollContainer) {
       const container = document.querySelector(selector)

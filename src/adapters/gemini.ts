@@ -2332,10 +2332,6 @@ export class GeminiAdapter extends SiteAdapter {
     return this.getSessionName()
   }
 
-  getNewChatButtonSelectors(): string[] {
-    return [...this.config.selectors.newChatButton]
-  }
-
   getLatestReplyText(): string | null {
     const container = document.querySelector(this.getResponseContainerSelector())
     if (!container) return null

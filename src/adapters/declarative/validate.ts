@@ -2012,11 +2012,8 @@ const validateCapabilityRequirements = (
     isPlainRecord(config.generating) || isPlainRecord(config.networkMonitor),
     `${path}.generating`,
   )
-  requireField(
-    "new-chat",
-    hasNonEmptyStringArray(selectors.newChatButton),
-    `${path}.selectors.newChatButton`,
-  )
+  // new-chat 无字段要求：startNewConversation 改为基于 getNewTabUrl 的 SPA 导航 +
+  // href 兜底（基类实现），不再消费 newChatButton 选择器。
   requireField(
     "stop-generation",
     hasNonEmptyStringArray(selectors.stopButton),
