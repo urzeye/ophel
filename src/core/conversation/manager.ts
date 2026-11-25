@@ -163,6 +163,7 @@ export interface ConversationSyncReview {
   missingIds: string[]
   dismissed: boolean
   undoCount: number
+  undoRevision: number
 }
 
 export interface ConversationSyncProgress {
@@ -217,6 +218,7 @@ export class ConversationManager {
   private syncReview: ConversationSyncReview | null = null
   private syncReviewListeners = new Set<() => void>()
   private cleanupUndo: Conversation[] = []
+  private cleanupUndoSequence = 0
   private pendingInitialSync: {
     context: string
     accountKey: string
@@ -656,9 +658,17 @@ export class ConversationManager {
       ...review,
       missingIds: review.missingIds.filter((id) => !removedIds.has(id)),
       undoCount: this.cleanupUndo.length,
+      undoRevision: ++this.cleanupUndoSequence,
     })
     this.notifyDataChange()
     return targets.length
+  }
+
+  expireCleanupUndo(context: string, revision: number): void {
+    const review = this.getSyncReview()
+    if (!review || review.context !== context || review.undoRevision !== revision) return
+    this.cleanupUndo = []
+    this.setSyncReview({ ...review, undoCount: 0 })
   }
 
   undoMissingConversationCleanup = (): number => {
@@ -887,6 +897,7 @@ export class ConversationManager {
           missingIds,
           dismissed: Boolean(previous?.dismissed) && missingIds.every((id) => previousIds.has(id)),
           undoCount: previous?.undoCount ?? 0,
+          undoRevision: this.cleanupUndoSequence,
         })
       }
       this.notifyDataChange()

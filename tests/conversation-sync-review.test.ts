@@ -163,6 +163,50 @@ describe("safe conversation sync review", () => {
     expect(Object.keys(useConversationsStore.getState().conversations)).toHaveLength(3)
   })
 
+  it("expires only undo metadata without changing the remaining conversations", async () => {
+    const { manager } = setup()
+    await manager.syncAllConversations()
+    const context = manager.getSyncReview()!.context
+    manager.removeMissingConversations(["project"], context)
+    const revision = manager.getSyncReview()!.undoRevision
+    const records = useConversationsStore.getState().conversations
+    manager.expireCleanupUndo(context, revision)
+    expect(manager.getSyncReview()?.undoCount).toBe(0)
+    expect(manager.undoMissingConversationCleanup()).toBe(0)
+    expect(useConversationsStore.getState().conversations).toBe(records)
+    manager.removeMissingConversations(["archived"], context)
+    expect(manager.getSyncReview()?.undoCount).toBe(1)
+    expect(manager.undoMissingConversationCleanup()).toBe(1)
+    expect(useConversationsStore.getState().conversations[key("project")]).toBeUndefined()
+  })
+
+  it("ignores an expired notice callback after a newer cleanup batch", async () => {
+    const { manager } = setup()
+    await manager.syncAllConversations()
+    const context = manager.getSyncReview()!.context
+    manager.removeMissingConversations(["project"], context)
+    const previousRevision = manager.getSyncReview()!.undoRevision
+    manager.removeMissingConversations(["archived"], context)
+    expect(manager.getSyncReview()!.undoRevision).not.toBe(previousRevision)
+    manager.expireCleanupUndo(context, previousRevision)
+    expect(manager.getSyncReview()?.undoCount).toBe(2)
+    expect(manager.undoMissingConversationCleanup()).toBe(2)
+  })
+
+  it("assigns a fresh revision even when the next cleanup has the same count", async () => {
+    const { manager } = setup()
+    await manager.syncAllConversations()
+    const context = manager.getSyncReview()!.context
+    manager.removeMissingConversations(["project"], context)
+    const previousRevision = manager.getSyncReview()!.undoRevision
+    manager.undoMissingConversationCleanup()
+    manager.removeMissingConversations(["archived"], context)
+    expect(manager.getSyncReview()?.undoCount).toBe(1)
+    expect(manager.getSyncReview()!.undoRevision).toBeGreaterThan(previousRevision)
+    manager.expireCleanupUndo(context, previousRevision)
+    expect(manager.getSyncReview()?.undoCount).toBe(1)
+  })
+
   it("rechecks the current list immediately before cleanup", async () => {
     const { manager, setItems } = setup()
     await manager.syncAllConversations()
@@ -280,7 +324,7 @@ describe("sync review translations", () => {
   it.each(Object.entries(resources))(
     "includes every review message and placeholder in %s",
     (_locale, messages) => {
-      expect(reviewKeys).toHaveLength(19)
+      expect(reviewKeys).toHaveLength(20)
       for (const key of reviewKeys) {
         const source = resources.en[key as keyof typeof resources.en]
         const translated = messages[key as keyof typeof messages]

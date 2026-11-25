@@ -22,6 +22,7 @@ import { showToast } from "~utils/toast"
 
 import { ClearIcon, ExternalLinkIcon, InfoIcon, PinIcon } from "./icons"
 import { DialogOverlay } from "./ui"
+import { ConversationCleanupUndoNotice } from "./ConversationCleanupUndoNotice"
 
 interface ReviewProps {
   manager: ConversationManager
@@ -58,18 +59,14 @@ export function ConversationSyncReview({
   return (
     <>
       {review.undoCount > 0 && (
-        <div className="gh-sync-review-notice" role="status">
-          <span>{t("conversationsCleanupDone", { count: review.undoCount })}</span>
-          <button
-            type="button"
-            disabled={Boolean(progress)}
-            onClick={() => {
-              if (manager.undoMissingConversationCleanup() > 0)
-                showToast(t("conversationsCleanupRestored"))
-            }}>
-            {t("conversationsCleanupUndo")}
-          </button>
-        </div>
+        <ConversationCleanupUndoNotice
+          key={`${review.context}:${review.undoRevision}`}
+          manager={manager}
+          context={review.context}
+          revision={review.undoRevision}
+          count={review.undoCount}
+          disabled={Boolean(progress)}
+        />
       )}
       {count > 0 && (
         <div className={`gh-sync-review-notice ${review.dismissed ? "is-compact" : ""}`}>

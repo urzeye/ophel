@@ -1093,11 +1093,13 @@ export const es = {
     "Estos registros se encontraron de nuevo o se quitaron. No hay nada que limpiar.",
   conversationsMissingOpen: "Abrir el chat original en otra pestaña",
   conversationsMissingLocalOnly:
-    "Solo se quitan registros de Ophel. No afecta a los chats del sitio. Puedes deshacerlo hasta recargar esta página.",
+    "Solo se quitan registros de Ophel, sin afectar a los chats del sitio. Puedes deshacer antes de que se cierre el aviso con la cuenta atrás.",
   conversationsMissingKeep: "Ahora no",
   conversationsMissingRemove: "Quitar solo registros de Ophel ({count})",
   conversationsMissingChanged: "La lista cambió. Los registros se conservaron; revísalos de nuevo.",
   conversationsCleanupDone: "Se quitaron {count} registros de Ophel",
+  conversationsCleanupUndoHint:
+    "Se cierra tras {seconds} segundos. Coloca el cursor o el foco para pausar la cuenta atrás.",
   conversationsCleanupUndo: "Deshacer",
   conversationsCleanupRestored: "Registros, carpetas y etiquetas originales restaurados",
   conversationsSyncNoData:

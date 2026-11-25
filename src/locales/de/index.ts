@@ -1094,12 +1094,14 @@ export const de = {
     "Diese Einträge wurden wiedergefunden oder entfernt. Nichts zu bereinigen.",
   conversationsMissingOpen: "Originalchat in neuem Tab öffnen",
   conversationsMissingLocalOnly:
-    "Nur Ophel-Einträge werden entfernt. Chats auf der Website bleiben unverändert. Rückgängig machen ist bis zum Neuladen dieser Seite möglich.",
+    "Nur Ophel-Einträge werden entfernt, nicht die Chats der Website. Bis zum Ende des Countdowns kannst du dies rückgängig machen.",
   conversationsMissingKeep: "Nicht jetzt",
   conversationsMissingRemove: "Nur Ophel-Einträge entfernen ({count})",
   conversationsMissingChanged:
     "Die Liste hat sich geändert. Einträge bleiben erhalten. Bitte erneut prüfen.",
   conversationsCleanupDone: "{count} Ophel-Einträge entfernt",
+  conversationsCleanupUndoHint:
+    "Schließt nach {seconds} Sekunden. Mit Mauszeiger oder Tastaturfokus pausiert der Countdown.",
   conversationsCleanupUndo: "Rückgängig",
   conversationsCleanupRestored: "Einträge, ursprüngliche Ordner und Tags wiederhergestellt",
   conversationsSyncNoData:

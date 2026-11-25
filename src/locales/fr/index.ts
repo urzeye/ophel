@@ -1097,12 +1097,14 @@ export const fr = {
   conversationsMissingResolved: "Ces données ont été retrouvées ou retirées. Rien à nettoyer.",
   conversationsMissingOpen: "Ouvrir la conversation originale dans un nouvel onglet",
   conversationsMissingLocalOnly:
-    "Seules les données d’Ophel sont retirées, sans effet sur les conversations du site. L’annulation reste possible jusqu’au rechargement de cette page.",
+    "Seules les données d’Ophel sont retirées, sans effet sur les conversations du site. Annulez avant la fermeture de l’avis avec le compte à rebours.",
   conversationsMissingKeep: "Pas maintenant",
   conversationsMissingRemove: "Retirer uniquement les données d’Ophel ({count})",
   conversationsMissingChanged:
     "La liste a changé. Les données sont conservées ; vérifiez à nouveau.",
   conversationsCleanupDone: "{count} entrées Ophel retirées",
+  conversationsCleanupUndoHint:
+    "Se ferme après {seconds} secondes. Survolez ou placez le focus pour mettre le compte à rebours en pause.",
   conversationsCleanupUndo: "Annuler",
   conversationsCleanupRestored: "Données, dossiers et étiquettes d’origine restaurés",
   conversationsSyncNoData:

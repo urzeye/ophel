@@ -66,6 +66,92 @@
   min-height: 44px;
 }
 
+.gh-cleanup-undo-notice {
+  flex-wrap: nowrap;
+  animation: gh-cleanup-undo-enter 160ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.gh-cleanup-undo-notice > .gh-cleanup-undo-message {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+.gh-cleanup-undo-notice .gh-cleanup-undo-action {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 2px 6px;
+  color: color-mix(
+    in srgb,
+    var(--gh-primary-text, var(--gh-primary, #4285f4)) 85%,
+    var(--gh-text, #1f2937)
+  );
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background 150ms ease;
+}
+.gh-cleanup-undo-notice .gh-cleanup-undo-action:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 8%, transparent);
+  text-decoration: none;
+}
+.gh-cleanup-undo-notice .gh-cleanup-undo-action:active:not(:disabled) {
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 14%, transparent);
+}
+.gh-cleanup-countdown {
+  display: grid;
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+}
+.gh-cleanup-countdown > * {
+  grid-area: 1 / 1;
+}
+.gh-cleanup-countdown circle {
+  stroke: currentColor;
+  stroke-width: 2;
+}
+.gh-cleanup-countdown-track {
+  opacity: 0.18;
+}
+.gh-cleanup-countdown-progress {
+  stroke-linecap: round;
+}
+.gh-cleanup-countdown-seconds {
+  color: var(--gh-text, #1f2937);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.gh-cleanup-undo-notice > .gh-cleanup-undo-hint {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+@keyframes gh-cleanup-undo-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gh-cleanup-undo-notice {
+    animation: none;
+  }
+  .gh-cleanup-undo-notice .gh-cleanup-undo-action {
+    transition: none;
+  }
+}
+
 /* ========== 主面板内容区滚动条隐藏 ========== */
 .gh-panel-content::-webkit-scrollbar {
   display: none;

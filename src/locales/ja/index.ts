@@ -1113,12 +1113,14 @@ export const ja = {
   conversationsMissingResolved: "これらの記録は再検出または削除済みです。整理は不要です。",
   conversationsMissingOpen: "元の会話を新しいタブで開く",
   conversationsMissingLocalOnly:
-    "Ophel の記録のみを削除し、サイトの会話には影響しません。このページの再読み込み前なら元に戻せます。",
+    "Ophel の記録のみを削除し、サイトの会話には影響しません。カウントダウンの通知が閉じる前に元に戻せます。",
   conversationsMissingKeep: "今はしない",
   conversationsMissingRemove: "Ophel の記録のみ削除（{count} 件）",
   conversationsMissingChanged:
     "一覧が変更されました。記録は保持されています。再度確認してください。",
   conversationsCleanupDone: "Ophel の記録を {count} 件削除しました",
+  conversationsCleanupUndoHint:
+    "{seconds} 秒後に自動で閉じます。カーソルを置くかフォーカスすると一時停止します。",
   conversationsCleanupUndo: "元に戻す",
   conversationsCleanupRestored: "記録と元のフォルダー、タグを復元しました",
   conversationsSyncNoData:

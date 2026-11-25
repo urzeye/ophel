@@ -1157,11 +1157,13 @@ export const en = {
   conversationsMissingResolved: "These records were found again or removed. Nothing to clean up.",
   conversationsMissingOpen: "Open original chat in a new tab",
   conversationsMissingLocalOnly:
-    "Only Ophel records are removed. Site chats are unaffected. Undo is available on this page until it is reloaded.",
+    "Only Ophel records are removed. Site chats are unaffected. Undo before the countdown notice closes.",
   conversationsMissingKeep: "Not now",
   conversationsMissingRemove: "Remove Ophel records only ({count})",
   conversationsMissingChanged: "The list has changed. Records were kept; please review again.",
   conversationsCleanupDone: "Removed {count} Ophel records",
+  conversationsCleanupUndoHint:
+    "Closes after {seconds} seconds. Hover or focus to pause the countdown.",
   conversationsCleanupUndo: "Undo",
   conversationsCleanupRestored: "Records, folders, and tags restored",
   conversationsSyncNoData:

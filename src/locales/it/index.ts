@@ -1201,11 +1201,13 @@ export const it = {
   conversationsMissingResolved: "Questi dati sono stati ritrovati o rimossi. Nulla da ripulire.",
   conversationsMissingOpen: "Apri la conversazione originale in una nuova scheda",
   conversationsMissingLocalOnly:
-    "Vengono rimossi solo i dati di Ophel, non le conversazioni sul sito. Puoi annullare finché non ricarichi questa pagina.",
+    "Vengono rimossi solo i dati di Ophel, non le conversazioni sul sito. Puoi annullare prima che l’avviso con il conto alla rovescia si chiuda.",
   conversationsMissingKeep: "Non ora",
   conversationsMissingRemove: "Rimuovi solo i dati di Ophel ({count})",
   conversationsMissingChanged: "L’elenco è cambiato. I dati sono conservati; verifica di nuovo.",
   conversationsCleanupDone: "Rimossi {count} dati di conversazioni da Ophel",
+  conversationsCleanupUndoHint:
+    "Si chiude dopo {seconds} secondi. Passa il cursore o porta il focus sull’avviso per sospendere il conto alla rovescia.",
   conversationsCleanupUndo: "Annulla",
   conversationsCleanupRestored: "Ripristinati dati, cartelle e tag originali",
   conversationsSyncNoData:

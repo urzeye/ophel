@@ -1079,11 +1079,13 @@ export const ko = {
   conversationsMissingResolved: "다시 발견되었거나 제거된 기록입니다. 정리할 항목이 없습니다.",
   conversationsMissingOpen: "새 탭에서 원래 대화 열기",
   conversationsMissingLocalOnly:
-    "Ophel 기록만 삭제하며 사이트 대화에는 영향을 주지 않습니다. 페이지를 새로고침하기 전까지 실행 취소할 수 있습니다.",
+    "Ophel 기록만 삭제하며 사이트 대화에는 영향을 주지 않습니다. 카운트다운 알림이 사라지기 전에 실행 취소할 수 있습니다.",
   conversationsMissingKeep: "나중에",
   conversationsMissingRemove: "Ophel 기록만 삭제 ({count}개)",
   conversationsMissingChanged: "목록이 변경되었습니다. 기록은 보존되었으니 다시 검토하세요.",
   conversationsCleanupDone: "Ophel 기록 {count}개 삭제됨",
+  conversationsCleanupUndoHint:
+    "{seconds}초 후 자동으로 닫힙니다. 마우스를 올리거나 포커스하면 카운트다운이 일시 중지됩니다.",
   conversationsCleanupUndo: "실행 취소",
   conversationsCleanupRestored: "기록과 원래 폴더, 태그를 복원했습니다",
   conversationsSyncNoData:

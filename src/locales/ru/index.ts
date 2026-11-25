@@ -1086,11 +1086,13 @@ export const ru = {
   conversationsMissingResolved: "Эти записи найдены снова или удалены. Очищать нечего.",
   conversationsMissingOpen: "Открыть исходный чат в новой вкладке",
   conversationsMissingLocalOnly:
-    "Удаляются только записи Ophel. Чаты на сайте не затрагиваются. Отмена доступна до перезагрузки этой страницы.",
+    "Удаляются только записи Ophel, а не чаты сайта. Отменить действие можно до закрытия уведомления с обратным отсчётом.",
   conversationsMissingKeep: "Не сейчас",
   conversationsMissingRemove: "Удалить только записи Ophel ({count})",
   conversationsMissingChanged: "Список изменился. Записи сохранены; проверьте снова.",
   conversationsCleanupDone: "Удалено записей Ophel: {count}",
+  conversationsCleanupUndoHint:
+    "Закроется через {seconds} секунд. Наведение указателя или фокус приостанавливает отсчёт.",
   conversationsCleanupUndo: "Отменить",
   conversationsCleanupRestored: "Записи, исходные папки и метки восстановлены",
   conversationsSyncNoData:

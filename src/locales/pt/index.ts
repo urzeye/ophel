@@ -1092,11 +1092,13 @@ export const pt = {
     "Estes registros foram encontrados novamente ou removidos. Nada para limpar.",
   conversationsMissingOpen: "Abrir conversa original em nova aba",
   conversationsMissingLocalOnly:
-    "Apenas registros do Ophel são removidos. As conversas do site não são afetadas. É possível desfazer até recarregar esta página.",
+    "Apenas registros do Ophel são removidos, sem afetar as conversas do site. Desfaça antes que o aviso com a contagem regressiva feche.",
   conversationsMissingKeep: "Agora não",
   conversationsMissingRemove: "Remover apenas registros do Ophel ({count})",
   conversationsMissingChanged: "A lista mudou. Os registros foram mantidos; revise novamente.",
   conversationsCleanupDone: "{count} registros do Ophel removidos",
+  conversationsCleanupUndoHint:
+    "Fecha após {seconds} segundos. Passe o cursor ou dê foco para pausar a contagem regressiva.",
   conversationsCleanupUndo: "Desfazer",
   conversationsCleanupRestored: "Registros, pastas e etiquetas originais restaurados",
   conversationsSyncNoData:
