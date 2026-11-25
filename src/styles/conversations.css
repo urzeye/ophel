@@ -5,7 +5,7 @@
 .gh-sync-review-notice {
   display: flex;
   flex: 0 0 auto;
-  align-items: flex-start;
+  align-items: center;
   gap: 6px;
   margin: 8px 10px 0;
   padding: 8px;
@@ -19,7 +19,6 @@
 
 .gh-sync-review-notice > svg {
   flex-shrink: 0;
-  margin-top: 2px;
 }
 .gh-sync-review-notice > span {
   flex: 1;
