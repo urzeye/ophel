@@ -31,6 +31,8 @@ import { htmlToMarkdown, type ExportBundle, type ExportMessage } from "~utils/ex
 import { t } from "~utils/i18n"
 import { renderMarkdown } from "~utils/markdown"
 import { EVENT_OUTLINE_DATA_UPDATED } from "~utils/messaging"
+import { subscribeNetworkResponses } from "~utils/network-response-capture"
+import { waitForConversationLoad } from "~utils/conversation-list-loader"
 import { READING_HISTORY_RESTORE_TOKEN_ATTRIBUTE } from "~utils/reading-history-navigation"
 import {
   API_OUTLINE_PARSE_FAILURE_LIMIT,
@@ -53,6 +55,7 @@ import {
   type AnchorData,
   type ConversationDeleteTarget,
   type ConversationInfo,
+  type ConversationLoadOptions,
   type ConversationObserverConfig,
   type ExportConfig,
   type ExportLifecycleContext,
@@ -65,6 +68,10 @@ import {
   type ZenModeConfig,
 } from "./base"
 import { CLAUDE_CONFIG, CLAUDE_CONFIG_VERSION, type ClaudeSiteConfig } from "./claude-config"
+import {
+  CLAUDE_CONVERSATIONS_PATH_PATTERN,
+  parseClaudeConversationPage,
+} from "./claude-conversation-list"
 import type { BuiltinSiteConfig } from "./declarative"
 
 const CLAUDE_DELETE_REASON = {
@@ -226,6 +233,11 @@ export class ClaudeAdapter extends SiteAdapter {
   protected config: ClaudeSiteConfig = CLAUDE_CONFIG
   private activeOrganizationId: string | null = null
   private activeOrganizationIdExpiresAt = 0
+  private apiConversations: Map<string, ConversationInfo> | null = null
+  private apiConversationsScope = ""
+  private conversationListController: AbortController | null = null
+  private conversationListListeners = new Set<() => void>()
+  private stopConversationListCapture: (() => void) | null = null
   private exportDocumentCache: ClaudeDocumentExportCacheEntry[] = []
   private exportApiMessages: ExportMessage[] | null = null
   private exportApiBundle: ExportBundle | null = null
@@ -447,10 +459,183 @@ export class ClaudeAdapter extends SiteAdapter {
   }
 
   getConversationList(): ConversationInfo[] {
+    this.ensureApiConversationsScope()
     const cid = this.getCurrentCid() || undefined
+    if (this.apiConversations) {
+      const sessionId = this.getSessionId()
+      return Array.from(this.apiConversations.values(), (item) => ({
+        ...item,
+        cid,
+        url: new URL(this.getClaudeConversationPath(item.id), this.getNewTabUrl()).href,
+        isActive: item.id === sessionId,
+      }))
+    }
     return this.getClaudeConversationItems()
       .map((element) => this.extractClaudeConversationInfo(element, cid))
       .filter((conversation): conversation is ConversationInfo => conversation !== null)
+  }
+
+  getConversationSyncContext(): string {
+    return JSON.stringify([
+      super.getConversationSyncContext(),
+      this.getConversationListOrganizationId() || "",
+    ])
+  }
+
+  private getConversationListOrganizationId(): string | null {
+    const fromCookie = this.getCookieValue("lastActiveOrg")
+    return this.isValidOrganizationId(fromCookie) ? fromCookie : this.getOrganizationIdFromStorage()
+  }
+
+  private ensureApiConversationsScope(): void {
+    const scope = this.getConversationSyncContext()
+    if (scope === this.apiConversationsScope) return
+    this.apiConversationsScope = scope
+    this.apiConversations = null
+  }
+
+  async loadAllConversations(options: ConversationLoadOptions = {}): Promise<boolean> {
+    return this.fetchConversationList(true, options)
+  }
+
+  private async fetchConversationList(
+    allPages: boolean,
+    options: ConversationLoadOptions = {},
+  ): Promise<boolean> {
+    while (this.conversationListController) {
+      await waitForConversationLoad(100, options.signal)
+    }
+    options.signal?.throwIfAborted()
+    this.ensureApiConversationsScope()
+    const scope = this.apiConversationsScope
+    const cid = this.getCurrentCid() || undefined
+    const controller = new AbortController()
+    this.conversationListController = controller
+    const onAbort = () => controller.abort(options.signal?.reason)
+    options.signal?.addEventListener("abort", onAbort, { once: true })
+    const timeout = setTimeout(() => {
+      controller.abort(new Error("Claude conversation list request timed out"))
+    }, 90000)
+    const assertCurrentContext = () => {
+      controller.signal.throwIfAborted()
+      if (this.getConversationSyncContext() !== scope) {
+        throw new Error("Claude conversation sync context changed")
+      }
+    }
+
+    try {
+      const orgId =
+        this.getConversationListOrganizationId() || (await this.getActiveOrganizationId(true))
+      assertCurrentContext()
+      if (!orgId) throw new Error("Claude conversation organization is unavailable")
+
+      // 全量翻到底才替换快照；首屏预取和页面捕获只能合并，不能据此判断缺失。
+      const seen = allPages ? new Map<string, ConversationInfo>() : new Map(this.apiConversations)
+      let offset = 0
+      while (true) {
+        assertCurrentContext()
+        const url = new URL(
+          `/api/organizations/${encodeURIComponent(orgId)}/chat_conversations_v2`,
+          window.location.origin,
+        )
+        url.search = new URLSearchParams({
+          limit: "30",
+          offset: String(offset),
+          archived: "false",
+          light_settings: "true",
+          consistency: "eventual",
+        }).toString()
+        const response = await fetch(url.href, {
+          method: "GET",
+          credentials: "include",
+          cache: "no-store",
+          headers: this.buildNativeApiHeaders(),
+          signal: controller.signal,
+        })
+        if (!response.ok) {
+          throw new Error(`Claude conversation list responded ${response.status}`)
+        }
+        const page = parseClaudeConversationPage(await response.json())
+        assertCurrentContext()
+        const previousCount = seen.size
+        page.items.forEach((item) => seen.set(item.id, item))
+        if (page.hasMore && (!page.items.length || (allPages && seen.size === previousCount))) {
+          throw new Error("Claude conversation pagination did not advance")
+        }
+        if (!page.hasMore || !allPages) {
+          this.apiConversations = seen
+          options.onProgress?.(this.getConversationList())
+          return !page.hasMore
+        }
+        options.onProgress?.(Array.from(seen.values(), (item) => ({ ...item, cid })))
+        offset += page.items.length
+      }
+    } finally {
+      clearTimeout(timeout)
+      options.signal?.removeEventListener("abort", onAbort)
+      this.conversationListController = null
+    }
+  }
+
+  onConversationListChange(callback: () => void): () => void {
+    this.conversationListListeners.add(callback)
+    if (!this.stopConversationListCapture) {
+      this.stopConversationListCapture = subscribeNetworkResponses(
+        {
+          id: "claude:conversation-list",
+          method: "GET",
+          pathPattern: CLAUDE_CONVERSATIONS_PATH_PATTERN,
+        },
+        (response) => {
+          if (this.conversationListController) return
+          try {
+            const url = new URL(response.url)
+            const orgId = url.pathname.match(
+              new RegExp(CLAUDE_CONVERSATIONS_PATH_PATTERN, "i"),
+            )?.[1]
+            const currentOrgId =
+              this.getConversationListOrganizationId() || this.activeOrganizationId
+            if (
+              url.origin !== window.location.origin ||
+              !orgId ||
+              orgId !== currentOrgId ||
+              url.searchParams.get("archived") !== "false"
+            ) {
+              return
+            }
+            const page = parseClaudeConversationPage(JSON.parse(response.body))
+            this.ensureApiConversationsScope()
+            const conversations = (this.apiConversations ??= new Map())
+            page.items.forEach((item) => conversations.set(item.id, item))
+          } catch (error) {
+            console.warn("[ClaudeAdapter] Invalid captured conversation list:", error)
+            return
+          }
+          this.conversationListListeners.forEach((listener) => listener())
+        },
+      )
+    }
+
+    queueMicrotask(() => {
+      if (!this.conversationListListeners.has(callback) || this.conversationListController) return
+      void this.fetchConversationList(false)
+        .then(() => {
+          this.conversationListListeners.forEach((listener) => listener())
+        })
+        .catch((error) => {
+          if (this.conversationListListeners.size > 0) {
+            console.warn("[ClaudeAdapter] Failed to refresh conversation list:", error)
+          }
+        })
+    })
+
+    return () => {
+      this.conversationListListeners.delete(callback)
+      if (this.conversationListListeners.size > 0) return
+      this.stopConversationListCapture?.()
+      this.stopConversationListCapture = null
+      this.conversationListController?.abort()
+    }
   }
 
   getSidebarScrollContainer(): Element | null {
@@ -501,6 +686,7 @@ export class ClaudeAdapter extends SiteAdapter {
     }
 
     const uiSuccess = await this.deleteConversationViaUi(target.id)
+    if (uiSuccess) this.apiConversations?.delete(target.id)
     return {
       id: target.id,
       success: uiSuccess,
@@ -837,6 +1023,7 @@ export class ClaudeAdapter extends SiteAdapter {
   }
 
   private syncSidebarAfterRemoteDelete(id: string): void {
+    this.apiConversations?.delete(id)
     const row = this.findConversationRow(id)
     if (!row) return
 
@@ -3824,10 +4011,12 @@ export class ClaudeAdapter extends SiteAdapter {
     const container = this.getClaudeThoughtBlockContainer(button)
     if (!container) return false
 
-    const statusText = container
-      .querySelector(this.config.sitePrivateSelectors.thoughtStatus)
-      ?.textContent?.trim()
-    return Boolean(statusText)
+    return Boolean(this.getClaudeThoughtStatusText(container))
+  }
+
+  private getClaudeThoughtStatusText(container: Element): string {
+    const status = container.querySelector(this.config.sitePrivateSelectors.thoughtStatus)
+    return status?.getAttribute("data-cds-row-title")?.trim() || status?.textContent?.trim() || ""
   }
 
   private getClaudeThoughtBlockContainer(element: Element): HTMLElement | null {
@@ -3923,10 +4112,7 @@ export class ClaudeAdapter extends SiteAdapter {
       const markdown = this.extractClaudeThoughtMarkdown(container).trim()
       if (!markdown) return
 
-      const title =
-        container
-          .querySelector(this.config.sitePrivateSelectors.thoughtStatus)
-          ?.textContent?.trim() || ""
+      const title = this.getClaudeThoughtStatusText(container)
       blocks.push(this.formatAsThoughtBlockquote(markdown, title))
     })
 
