@@ -111,7 +111,7 @@ const CLAUDE_CANCEL_KEYWORDS = [
   "cancelar",
 ]
 
-const ORG_ID_REGEX = /^[a-f0-9-]{36}$/i
+const ORG_ID_REGEX = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i
 
 const CLAUDE_BLOCK_MATH_PATTERNS = [/(^|[^\\])\$\$[\s\S]+?\$\$/m, /\\\[[\s\S]+?\\\]/m]
 
@@ -123,8 +123,8 @@ const CLAUDE_INLINE_MATH_PATTERNS = [
 const CLAUDE_DOCUMENT_OUTLINE_SOURCE_ID = "document"
 const CLAUDE_EXPORT_ROOT_ATTR = "data-gh-claude-export-root"
 
-// 账号隔离标识：localStorage 中的同步属主 ID，不同账号互不相同
-const CID_STORAGE_KEY = "ccd-sync-owner"
+// 本地隔离与站点 API 共用当前组织，避免同一账号下的工作空间互相混入。
+const CID_STORAGE_KEY = "ccd-sync-org"
 
 // 会话接口大纲数据源的拉取冷却与贴底判定（与 deepseek 同值）
 const CLAUDE_API_OUTLINE_FETCH_BACKOFF_MS = 10_000
@@ -231,8 +231,6 @@ interface ClaudeOutlineCacheEntry {
 
 export class ClaudeAdapter extends SiteAdapter {
   protected config: ClaudeSiteConfig = CLAUDE_CONFIG
-  private activeOrganizationId: string | null = null
-  private activeOrganizationIdExpiresAt = 0
   private apiConversations: Map<string, ConversationInfo> | null = null
   private apiConversationsScope = ""
   private conversationListController: AbortController | null = null
@@ -373,29 +371,15 @@ export class ClaudeAdapter extends SiteAdapter {
   // ==================== 对话管理 ====================
 
   /**
-   * 获取当前账户标识（用于对话隔离）
-   * Claude 通过 localStorage.ccd-sync-owner 区分登录账号
+   * 获取当前组织标识，同时用于本地对话隔离和站点 API 请求。
+   * 旧 owner 记录保持原样，由实际同步到的对话逐条更新归属并保留元数据。
    */
   getCurrentCid(): string | null {
     const raw = window.localStorage.getItem(CID_STORAGE_KEY)
     if (!raw) return null
 
-    try {
-      const parsed = JSON.parse(raw) as unknown
-      if (typeof parsed === "string" && parsed.trim()) return parsed.trim()
-      if (parsed && typeof parsed === "object") {
-        for (const key of ["uid", "id", "userId", "uuid"]) {
-          const value = (parsed as Record<string, unknown>)[key]
-          if (typeof value === "string" && value.trim()) {
-            return value.trim()
-          }
-        }
-      }
-    } catch {
-      // 回退到原始字符串
-    }
-
-    return raw.trim() || null
+    const orgId = raw.trim().replace(/^"(.*)"$/, "$1")
+    return ORG_ID_REGEX.test(orgId) ? orgId : null
   }
 
   private getClaudeConversationItems(root: ParentNode = document): Element[] {
@@ -475,18 +459,6 @@ export class ClaudeAdapter extends SiteAdapter {
       .filter((conversation): conversation is ConversationInfo => conversation !== null)
   }
 
-  getConversationSyncContext(): string {
-    return JSON.stringify([
-      super.getConversationSyncContext(),
-      this.getConversationListOrganizationId() || "",
-    ])
-  }
-
-  private getConversationListOrganizationId(): string | null {
-    const fromCookie = this.getCookieValue("lastActiveOrg")
-    return this.isValidOrganizationId(fromCookie) ? fromCookie : this.getOrganizationIdFromStorage()
-  }
-
   private ensureApiConversationsScope(): void {
     const scope = this.getConversationSyncContext()
     if (scope === this.apiConversationsScope) return
@@ -524,8 +496,7 @@ export class ClaudeAdapter extends SiteAdapter {
     }
 
     try {
-      const orgId =
-        this.getConversationListOrganizationId() || (await this.getActiveOrganizationId(true))
+      const orgId = this.getCurrentCid()
       assertCurrentContext()
       if (!orgId) throw new Error("Claude conversation organization is unavailable")
 
@@ -593,8 +564,7 @@ export class ClaudeAdapter extends SiteAdapter {
             const orgId = url.pathname.match(
               new RegExp(CLAUDE_CONVERSATIONS_PATH_PATTERN, "i"),
             )?.[1]
-            const currentOrgId =
-              this.getConversationListOrganizationId() || this.activeOrganizationId
+            const currentOrgId = this.getCurrentCid()
             if (
               url.origin !== window.location.origin ||
               !orgId ||
@@ -698,7 +668,7 @@ export class ClaudeAdapter extends SiteAdapter {
   private async tryDeleteViaNativeApi(
     target: ConversationDeleteTarget,
   ): Promise<SiteDeleteConversationResult> {
-    const orgId = await this.getActiveOrganizationId()
+    const orgId = this.getCurrentCid()
     if (!orgId) {
       return {
         id: target.id,
@@ -813,175 +783,6 @@ export class ClaudeAdapter extends SiteAdapter {
       default:
         return `delete_api_http_${status}`
     }
-  }
-
-  private async getActiveOrganizationId(forceRefresh = false): Promise<string | null> {
-    const now = Date.now()
-    if (
-      !forceRefresh &&
-      this.activeOrganizationId &&
-      this.activeOrganizationIdExpiresAt > now + 5 * 1000
-    ) {
-      return this.activeOrganizationId
-    }
-
-    if (this.isUserscriptRuntime()) {
-      const fromApi = await this.fetchOrganizationIdFromApi()
-      if (fromApi) {
-        this.activeOrganizationId = fromApi
-        this.activeOrganizationIdExpiresAt = now + 10 * 60 * 1000
-        return fromApi
-      }
-
-      const fromStorage = this.getOrganizationIdFromStorage()
-      if (fromStorage) {
-        this.activeOrganizationId = fromStorage
-        this.activeOrganizationIdExpiresAt = now + 10 * 60 * 1000
-        return fromStorage
-      }
-
-      const fromCookie = this.getCookieValue("lastActiveOrg")
-      if (this.isValidOrganizationId(fromCookie)) {
-        this.activeOrganizationId = fromCookie
-        this.activeOrganizationIdExpiresAt = now + 10 * 60 * 1000
-        return fromCookie
-      }
-
-      return null
-    }
-
-    const fromCookie = this.getCookieValue("lastActiveOrg")
-    if (this.isValidOrganizationId(fromCookie)) {
-      this.activeOrganizationId = fromCookie
-      this.activeOrganizationIdExpiresAt = now + 10 * 60 * 1000
-      return fromCookie
-    }
-
-    const fromStorage = this.getOrganizationIdFromStorage()
-    if (fromStorage) {
-      this.activeOrganizationId = fromStorage
-      this.activeOrganizationIdExpiresAt = now + 10 * 60 * 1000
-      return fromStorage
-    }
-
-    const fromApi = await this.fetchOrganizationIdFromApi()
-    if (fromApi) {
-      this.activeOrganizationId = fromApi
-      this.activeOrganizationIdExpiresAt = now + 10 * 60 * 1000
-      return fromApi
-    }
-
-    return null
-  }
-
-  private isUserscriptRuntime(): boolean {
-    return typeof __PLATFORM__ !== "undefined" && __PLATFORM__ === "userscript"
-  }
-
-  private async fetchOrganizationIdFromApi(): Promise<string | null> {
-    try {
-      const response = await fetch("/api/organizations", {
-        method: "GET",
-        headers: { accept: "application/json, text/plain, */*" },
-        credentials: "include",
-      })
-      if (!response.ok) return null
-
-      const payload = (await response.json()) as unknown
-      return this.extractOrganizationId(payload)
-    } catch {
-      return null
-    }
-  }
-
-  private getOrganizationIdFromStorage(): string | null {
-    const directKeys = [
-      "lastActiveOrg",
-      "activeOrg",
-      "organizationId",
-      "lastActiveOrganization",
-      "LSS-lastActiveOrg",
-    ]
-
-    for (const key of directKeys) {
-      const raw = localStorage.getItem(key)
-      const orgId = this.extractOrganizationId(raw)
-      if (orgId) return orgId
-    }
-
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i)
-      if (!key || !key.toLowerCase().includes("org")) continue
-      const raw = localStorage.getItem(key)
-      const orgId = this.extractOrganizationId(raw)
-      if (orgId) return orgId
-    }
-
-    return null
-  }
-
-  private extractOrganizationId(payload: unknown): string | null {
-    if (!payload) return null
-
-    if (typeof payload === "string") {
-      const trimmed = payload.trim().replace(/^"(.*)"$/, "$1")
-      if (this.isValidOrganizationId(trimmed)) return trimmed
-
-      if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
-        try {
-          return this.extractOrganizationId(JSON.parse(trimmed))
-        } catch {
-          return null
-        }
-      }
-
-      const match = trimmed.match(/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/i)
-      return match ? match[0] : null
-    }
-
-    if (Array.isArray(payload)) {
-      for (const item of payload) {
-        const id = this.extractOrganizationId(item)
-        if (id) return id
-      }
-      return null
-    }
-
-    if (typeof payload === "object") {
-      const record = payload as Record<string, unknown>
-      const candidateKeys = [
-        "uuid",
-        "id",
-        "organization_uuid",
-        "organization_id",
-        "organizationId",
-        "org_uuid",
-      ]
-
-      for (const key of candidateKeys) {
-        const value = record[key]
-        if (typeof value === "string" && this.isValidOrganizationId(value)) {
-          return value
-        }
-      }
-
-      for (const nestedKey of [
-        "organizations",
-        "organization",
-        "activeOrganization",
-        "currentOrganization",
-      ]) {
-        const nested = record[nestedKey]
-        const id = this.extractOrganizationId(nested)
-        if (id) return id
-      }
-    }
-
-    return null
-  }
-
-  private isValidOrganizationId(value: string | null | undefined): boolean {
-    return typeof value === "string" && ORG_ID_REGEX.test(value)
   }
 
   private readAnthropicDeviceId(): string | null {
@@ -2103,7 +1904,7 @@ export class ClaudeAdapter extends SiteAdapter {
   private async fetchApiOutline(
     sessionId: string,
   ): Promise<"changed" | "unchanged" | "parse-failed" | "no-org"> {
-    const orgId = await this.getActiveOrganizationId()
+    const orgId = this.getCurrentCid()
     if (!orgId) return "no-org"
 
     const response = await fetch(this.buildConversationApiUrl(orgId, sessionId), {
@@ -2947,7 +2748,7 @@ export class ClaudeAdapter extends SiteAdapter {
     if (!sessionId) return null
 
     try {
-      const orgId = await this.getActiveOrganizationId()
+      const orgId = this.getCurrentCid()
       if (!orgId) return null
 
       const response = await fetch(this.buildConversationApiUrl(orgId, sessionId), {
