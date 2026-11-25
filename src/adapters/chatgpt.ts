@@ -49,6 +49,9 @@ import {
 
 const DEFAULT_TITLE = "ChatGPT"
 
+// 账号/空间隔离标识：JSON 数组，[0] 为空间 ID（个人/团队/不同账号互不相同），[1] 为登录用户 ID
+const CID_STORAGE_KEY = "precise_location_identity"
+
 // Firefox insertText 修复：把纯文本按行转为 ProseMirror 可解析的段落 HTML
 const escapeHtmlForInsert = (value: string): string =>
   value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
@@ -288,28 +291,20 @@ export class ChatGPTAdapter extends SiteAdapter {
 
   /**
    * 获取当前账户标识（用于对话隔离）
-   * ChatGPT 通过 localStorage._account 区分不同账户/团队
-   * 个人空间为 "personal"、空或缺失，统一返回 null
-   * 团队空间返回工作区 UUID
+   * ChatGPT 通过 localStorage.precise_location_identity 的第一个元素（空间 ID）区分，
+   * 个人/团队空间互不相同，同一浏览器下不同账号也不同；_account 已无法区分个人与团队
    */
   getCurrentCid(): string | null {
     try {
-      const account = localStorage.getItem("_account")
-      if (!account) return null
-      let parsed: unknown = account
-      try {
-        parsed = JSON.parse(account)
-      } catch {
-        // 静默处理非 JSON 字符串
-      }
-      if (typeof parsed !== "string" || !parsed || parsed === "personal") {
-        return null
-      }
-      return parsed
+      const raw = localStorage.getItem(CID_STORAGE_KEY)
+      if (!raw) return null
+      const parsed: unknown = JSON.parse(raw)
+      if (!Array.isArray(parsed)) return null
+      const spaceId = parsed[0]
+      return typeof spaceId === "string" && spaceId.trim() ? spaceId : null
     } catch {
-      // 静默处理解析错误
+      return null
     }
-    return null
   }
 
   // ==================== 对话管理 ====================
