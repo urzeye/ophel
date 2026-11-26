@@ -11,7 +11,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🚀 New Features
 
-- **Image export** — Export whole chats or selected segments as a long PNG or JPG image, with optional splitting and a branded footer. (#1073)
+- **Image export** — Export whole chats or selected segments as a long PNG or JPG image, with optional splitting and a branded footer. (#1073, #1078)
 
 ---
 
