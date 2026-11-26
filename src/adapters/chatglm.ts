@@ -30,6 +30,8 @@ import { CHATGLM_CONFIG, CHATGLM_CONFIG_VERSION, type ChatGLMSiteConfig } from "
 
 const CHATGLM_HOSTS = new Set(["chatglm.cn"])
 const SESSION_ID_PARAM = "cid"
+// 新版页面会话 id 在路径中：/chat/<agent>/<sessionId>
+const CONVERSATION_PATH_PATTERN = /^\/chat\/[^/?#]+\/([^/?#]+)/
 const SHARE_SESSION_ID_PARAM = "share_conversation_id"
 const SHARE_ID_PARAM = "share_id"
 const NEW_TAB_PATH = "/main/alltoolsdetail?lang=zh"
@@ -366,8 +368,10 @@ export class ChatGLMAdapter extends SiteAdapter {
       )
     }
 
-    const cid = params.get(SESSION_ID_PARAM)
-    return cid ? cid.trim() : ""
+    const cid = params.get(SESSION_ID_PARAM)?.trim()
+    if (cid) return cid
+
+    return window.location.pathname.match(CONVERSATION_PATH_PATTERN)?.[1]?.trim() || ""
   }
 
   isNewConversation(): boolean {
@@ -388,8 +392,7 @@ export class ChatGLMAdapter extends SiteAdapter {
   }
 
   isUserConversationPage(): boolean {
-    const cid = new URLSearchParams(window.location.search).get(SESSION_ID_PARAM)?.trim()
-    return !this.isSharePage() && Boolean(cid) && cid === this.getSessionId()
+    return !this.isSharePage() && Boolean(this.getSessionId())
   }
 
   getSessionName(): string | null {
@@ -1429,17 +1432,12 @@ export class ChatGLMAdapter extends SiteAdapter {
       scopeSelector: this.config.sitePrivateSelectors.conversationScope,
       widthSelectors: [
         {
-          selector: this.config.selectors.responseContainer,
+          selector: this.config.sitePrivateSelectors.messagesWrapper,
           property: "max-width",
           extraCss: "width: 100% !important; min-width: 0 !important;",
         },
         {
-          selector: this.config.sitePrivateSelectors.messageWidth,
-          property: "max-width",
-          extraCss: "width: 100% !important; min-width: 0 !important;",
-        },
-        {
-          selector: this.config.sitePrivateSelectors.markdownWidth,
+          selector: this.config.sitePrivateSelectors.chatFooter,
           property: "max-width",
           extraCss: "min-width: 0 !important;",
         },
@@ -1462,7 +1460,7 @@ export class ChatGLMAdapter extends SiteAdapter {
           extraCss: "box-sizing: border-box; min-width: 0;",
         },
       ],
-      defaultWidth: "872px",
+      defaultWidth: "960px",
       gap: 16,
     }
   }
