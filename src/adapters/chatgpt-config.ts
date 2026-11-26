@@ -164,6 +164,8 @@ const createChatGPTConfig = (): ChatGPTSiteConfig => {
   const conversationItem = [
     'a[data-sidebar-item="true"][href^="/c/"]',
     'a[data-sidebar-item="true"][href*="chatgpt.com/c/"]',
+    'a[data-sidebar-item="true"][href^="/g/"][href*="/c/"]',
+    'a[data-sidebar-item="true"][href*="chatgpt.com/g/"][href*="/c/"]',
     "div[data-sidebar-chatgpt-conversation-key]",
     "div[data-pinned-content-tab-drop-key]",
   ].join(", ")

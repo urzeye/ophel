@@ -365,8 +365,10 @@ export class ChatGPTAdapter extends SiteAdapter {
     return href.match(new RegExp(this.config.conversation.idFrom.regex, "i"))?.[1] || null
   }
 
-  private getChatGPTConversationPath(id: string): string {
-    return this.config.conversation.urlTemplate.replace("{id}", id)
+  private getChatGPTConversationPath(el: Element, id: string): string {
+    const selector = `a[href*="/c/${id}"]`
+    const link = el.closest(selector) || el.querySelector(selector)
+    return link?.getAttribute("href") || this.config.conversation.urlTemplate.replace("{id}", id)
   }
 
   private getChatGPTConversationTitleElement(el: Element): Element | null {
@@ -408,7 +410,7 @@ export class ChatGPTAdapter extends SiteAdapter {
       ? el.matches(this.config.conversation.activeMatch) ||
         Boolean(el.querySelector(this.config.conversation.activeMatch))
       : false
-    const path = this.getChatGPTConversationPath(id)
+    const path = this.getChatGPTConversationPath(el, id)
 
     return {
       id,
