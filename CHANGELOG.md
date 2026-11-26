@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+---
+
+## [1.3.6][1.3.6] - 2026-11-26
+
 ### 🚀 New Features
 
 - **WebDAV automatic backups** — Schedule backups without reading history, keep the latest seven automatic backups per device, and restore manually. (#246, #1062)
@@ -1756,6 +1760,7 @@ This is the first official release of Ophel, providing comprehensive enhancement
 
 ---
 
+[1.3.6]: https://github.com/urzeye/ophel/releases/tag/v1.3.6
 [1.3.5]: https://github.com/urzeye/ophel/releases/tag/v1.3.5
 [1.3.4]: https://github.com/urzeye/ophel/releases/tag/v1.3.4
 [1.3.3]: https://github.com/urzeye/ophel/releases/tag/v1.3.3

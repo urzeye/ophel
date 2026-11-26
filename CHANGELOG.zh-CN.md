@@ -8,6 +8,10 @@
 
 ## [Unreleased]
 
+---
+
+## [1.3.6][1.3.6] - 2026-11-26
+
 ### 🚀 新增功能
 
 - **WebDAV 自动备份** — 支持定时备份，排除阅读历史，每台设备保留最近 7 份自动备份，恢复由用户手动操作。 (#246, #1062)
@@ -1757,6 +1761,7 @@
 
 ---
 
+[1.3.6]: https://github.com/urzeye/ophel/releases/tag/v1.3.6
 [1.3.5]: https://github.com/urzeye/ophel/releases/tag/v1.3.5
 [1.3.4]: https://github.com/urzeye/ophel/releases/tag/v1.3.4
 [1.3.3]: https://github.com/urzeye/ophel/releases/tag/v1.3.3
