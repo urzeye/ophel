@@ -309,8 +309,8 @@ export class ChatGPTAdapter extends SiteAdapter {
 
   /**
    * 旧版 cid 取自 localStorage._account（个人/团队同值，已无法用作隔离标识）。
-   * 存量对话的 cid 即该值，供 ConversationManager 迁移识别；新数据不会命中，
-   * 因为新 cid（precise_location_identity 空间 ID）与 _account 必然不同。
+   * 存量对话的 cid 即该值，供 ConversationManager 迁移识别。
+   * 旧值可能与新的个人空间 ID 重合，迁移必须同时检查记录的归属版本。
    * 解析口径与旧版 getCurrentCid 严格一致（含非 JSON 裸字符串），否则漏迁。
    */
   getLegacyCid(): string | null {

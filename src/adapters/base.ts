@@ -629,7 +629,7 @@ export abstract class SiteAdapter {
 
   /**
    * 旧版 cid 数据源的值，仅在 cid 取数口径发生过变更的站点实现（如 ChatGPT）。
-   * 用于识别并迁移存量对话：旧值与新 getCurrentCid() 必然不同，否则无法起到隔离作用。
+   * 用于识别存量对话；旧值可能与新值重合，迁移时还需检查记录的归属版本。
    */
   getLegacyCid(): string | null {
     return null

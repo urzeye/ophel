@@ -7,6 +7,8 @@ import type { Folder } from "~constants"
 
 export type { Folder }
 
+export const CONVERSATION_CID_VERSION = 1
+
 export interface Tag {
   id: string
   name: string
@@ -16,6 +18,7 @@ export interface Tag {
 export interface Conversation extends ConversationInfo {
   siteId: string
   siteInstanceKey: string
+  cidVersion?: number
   folderId: string
   createdAt: number
   updatedAt: number
