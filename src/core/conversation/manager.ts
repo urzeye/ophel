@@ -831,6 +831,7 @@ export class ConversationManager {
     pending.awaitingAccount = false
     if (store.initialSyncStates[accountKey] === "complete") {
       this.clearPendingInitialSync()
+      this.notifyDataChange()
       return
     }
     if (pending.resumeTimer !== null) return
@@ -969,7 +970,8 @@ export class ConversationManager {
         this.clearPendingInitialSync()
         const items = this.siteAdapter.getConversationList()
         const changes = this.syncConversations(null, true, { items })
-        if (changes.newCount > 0 || changes.updatedCount > 0) this.notifyDataChange()
+        // 身份就绪会改变可见对话范围，即使记录未变化也需要刷新消费者。
+        this.notifyDataChange()
         return { status: "complete", loadedCount: items.length, ...changes }
       }
       rememberPosition()
