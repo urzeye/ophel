@@ -3,7 +3,7 @@ import { DOMToolkit } from "~utils/dom-toolkit"
 import { collectChangedElements } from "~utils/dom-mutations"
 import { t } from "~utils/i18n"
 import { showToast } from "~utils/toast"
-import { setSafeScriptSrc } from "~utils/trusted-types"
+import { ensureMermaidRuntime, requestMermaidRender } from "~utils/mermaid-runtime"
 
 const STYLE_ID = "gh-assistant-mermaid-style"
 const RESPONSE_UPDATE_DELAY = 200
@@ -18,14 +18,6 @@ const PREVIEW_TOKEN_ATTR = "data-ophel-assistant-mermaid-render-token"
 const FULLSCREEN_ACTIVE_ATTR = "data-ophel-assistant-mermaid-fullscreen"
 const FULLSCREEN_RESTORE_ZOOM_ATTR = "data-ophel-assistant-mermaid-restore-zoom"
 const FULLSCREEN_MAX_ZOOM_ATTR = "data-ophel-assistant-mermaid-fullscreen-max-zoom"
-const RUNTIME_ROOT_ATTR = "data-ophel-assistant-mermaid-runner"
-const RUNTIME_VENDOR_PATH = "assets/assistant-mermaid-vendor.js"
-const RUNTIME_RUNNER_PATH = "assets/assistant-mermaid-runner.js"
-const RUNTIME_VENDOR_KEY = "assistantMermaidVendor"
-const RUNTIME_RUNNER_KEY = "assistantMermaidRunner"
-const RUNTIME_REQUEST_EVENT = "OPHEL_ASSISTANT_MERMAID_RENDER_REQUEST"
-const RUNTIME_RESPONSE_EVENT = "OPHEL_ASSISTANT_MERMAID_RENDER_RESPONSE"
-const RUNTIME_TIMEOUT_MS = 15000
 const DEFAULT_PREVIEW_ZOOM = 1
 const MIN_PREVIEW_ZOOM = 0.5
 const MAX_PREVIEW_ZOOM = 3
@@ -208,12 +200,6 @@ html[dark-theme] .gh-assistant-mermaid-btn.is-active {
 type MermaidTheme = "default" | "dark"
 type MermaidView = "preview" | "code"
 
-type PendingRenderRequest = {
-  reject: (reason?: unknown) => void
-  resolve: () => void
-  timeoutId: number
-}
-
 function shouldRetryMermaidRender(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error)
 
@@ -225,31 +211,6 @@ function shouldRetryMermaidRender(error: unknown): boolean {
     "render timed out",
     "preview container not found",
   ].some((keyword) => message.toLowerCase().includes(keyword))
-}
-
-function isUserscriptPlatform(): boolean {
-  return typeof __PLATFORM__ !== "undefined" && __PLATFORM__ === "userscript"
-}
-
-function getRuntimeAssetUrl(
-  kind: typeof RUNTIME_VENDOR_KEY | typeof RUNTIME_RUNNER_KEY,
-): string | null {
-  if (isUserscriptPlatform()) {
-    const assetUrl = window.__OPHEL_USERSCRIPT_ASSET_URLS__?.[kind]
-    return typeof assetUrl === "string" && assetUrl.length > 0 ? assetUrl : null
-  }
-
-  if (typeof chrome === "undefined" || !chrome.runtime?.getURL) {
-    return null
-  }
-
-  return chrome.runtime.getURL(
-    kind === RUNTIME_VENDOR_KEY ? RUNTIME_VENDOR_PATH : RUNTIME_RUNNER_PATH,
-  )
-}
-
-function isAssistantMermaidRuntimeReady(): boolean {
-  return document.documentElement.getAttribute(RUNTIME_ROOT_ATTR) === "1"
 }
 
 function createToolbarIcon(documentRef: Document, viewBox: string): SVGSVGElement {
@@ -331,15 +292,13 @@ export class AssistantMermaidRenderer {
   private retryTimers = new Map<HTMLElement, number>()
   private retryAttempts = new WeakMap<HTMLElement, { key: string; count: number }>()
   private clickHandler: ((e: MouseEvent) => void) | null = null
-  private messageHandler: ((event: MessageEvent) => void) | null = null
   private fullscreenChangeHandler: (() => void) | null = null
-  private runtimePromise: Promise<void> | null = null
+  private runtimeController = new AbortController()
   private processedBlocks = new WeakMap<HTMLElement, string>()
   private renderingBlocks = new WeakMap<HTMLElement, { key: string; requestId: string }>()
   private blockPanels = new WeakMap<HTMLElement, HTMLElement>()
   private panelBlocks = new WeakMap<HTMLElement, HTMLElement>()
   private injectedRoots = new WeakSet<Document | ShadowRoot>()
-  private pendingRequests = new Map<string, PendingRenderRequest>()
   private previewIdCounter = 0
 
   constructor(adapter: SiteAdapter, enabled: boolean) {
@@ -391,11 +350,6 @@ export class AssistantMermaidRenderer {
       this.clickHandler = null
     }
 
-    if (this.messageHandler) {
-      window.removeEventListener("message", this.messageHandler)
-      this.messageHandler = null
-    }
-
     if (this.fullscreenChangeHandler) {
       document.removeEventListener("fullscreenchange", this.fullscreenChangeHandler)
       document.removeEventListener(
@@ -405,11 +359,7 @@ export class AssistantMermaidRenderer {
       this.fullscreenChangeHandler = null
     }
 
-    for (const pending of this.pendingRequests.values()) {
-      window.clearTimeout(pending.timeoutId)
-      pending.reject(new Error("Assistant Mermaid renderer stopped"))
-    }
-    this.pendingRequests.clear()
+    this.runtimeController.abort(new Error("Assistant Mermaid renderer stopped"))
 
     this.processedBlocks = new WeakMap()
     this.renderingBlocks = new WeakMap()
@@ -499,7 +449,7 @@ export class AssistantMermaidRenderer {
 
     this.injectStyles(document)
     this.initClickHandler()
-    this.initMessageHandler()
+    this.runtimeController = new AbortController()
     this.initFullscreenChangeHandler()
 
     const queueAllResponses = () => {
@@ -608,37 +558,6 @@ export class AssistantMermaidRenderer {
     }
 
     document.addEventListener("click", this.clickHandler, true)
-  }
-
-  private initMessageHandler() {
-    if (this.messageHandler) return
-
-    this.messageHandler = (event: MessageEvent) => {
-      const payload = event.data
-
-      // 在 userscript 沙箱中，event.source 可能是页面 window 的代理对象，
-      // 不能依赖与当前 window 的严格相等判断。
-      if (event.source !== window && payload?.type !== RUNTIME_RESPONSE_EVENT) return
-      if (payload?.type !== RUNTIME_RESPONSE_EVENT) return
-
-      const requestId = typeof payload.requestId === "string" ? payload.requestId : ""
-      if (!requestId) return
-
-      const pending = this.pendingRequests.get(requestId)
-      if (!pending) return
-
-      window.clearTimeout(pending.timeoutId)
-      this.pendingRequests.delete(requestId)
-
-      if (payload.success) {
-        pending.resolve()
-        return
-      }
-
-      pending.reject(new Error(payload.error || "Mermaid render failed"))
-    }
-
-    window.addEventListener("message", this.messageHandler)
   }
 
   private initFullscreenChangeHandler() {
@@ -795,7 +714,7 @@ export class AssistantMermaidRenderer {
     this.renderingBlocks.set(block, { key: processedKey, requestId })
 
     try {
-      await this.ensureRuntime()
+      await ensureMermaidRuntime()
       if (
         !this.enabled ||
         !block.isConnected ||
@@ -805,7 +724,10 @@ export class AssistantMermaidRenderer {
       )
         return
 
-      await this.requestRender(requestId, previewId, renderSource, theme)
+      await requestMermaidRender(
+        { requestId, previewId, source: renderSource, theme },
+        this.runtimeController.signal,
+      )
       if (!this.enabled || !block.isConnected) return
       if (!panel.isConnected || !preview.isConnected) {
         return
@@ -1545,110 +1467,5 @@ export class AssistantMermaidRenderer {
 
   private createRequestId(): string {
     return `gh-assistant-mermaid-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
-  }
-
-  private async ensureRuntime(): Promise<void> {
-    if (isAssistantMermaidRuntimeReady()) {
-      return
-    }
-
-    if (!this.runtimePromise) {
-      this.runtimePromise = (async () => {
-        const vendorUrl = getRuntimeAssetUrl(RUNTIME_VENDOR_KEY)
-        const runnerUrl = getRuntimeAssetUrl(RUNTIME_RUNNER_KEY)
-
-        if (!vendorUrl || !runnerUrl) {
-          throw new Error("Assistant Mermaid runtime asset URL is unavailable")
-        }
-
-        await this.injectScript(vendorUrl, "ophel-assistant-mermaid-vendor")
-        await this.injectScript(runnerUrl, "ophel-assistant-mermaid-runner")
-
-        if (!isAssistantMermaidRuntimeReady()) {
-          throw new Error("Assistant Mermaid runner did not initialize")
-        }
-      })().catch((error) => {
-        this.runtimePromise = null
-        throw error
-      })
-    }
-
-    return this.runtimePromise
-  }
-
-  private injectScript(src: string, marker: string): Promise<void> {
-    const selector = `script[data-ophel-runtime="${marker}"]`
-    const existing = document.querySelector(selector) as HTMLScriptElement | null
-    if (existing?.dataset.loaded === "true") {
-      return Promise.resolve()
-    }
-
-    return new Promise<void>((resolve, reject) => {
-      const script = existing || document.createElement("script")
-      const cleanup = () => {
-        script.removeEventListener("load", handleLoad)
-        script.removeEventListener("error", handleError)
-      }
-      const handleLoad = () => {
-        cleanup()
-        script.dataset.loaded = "true"
-        resolve()
-      }
-      const handleError = () => {
-        cleanup()
-        reject(new Error(`Failed to load script: ${src}`))
-      }
-
-      script.addEventListener("load", handleLoad, { once: true })
-      script.addEventListener("error", handleError, { once: true })
-
-      try {
-        script.dataset.ophelRuntime = marker
-        script.dataset.loaded = "false"
-        script.async = false
-        const currentSrc = script.getAttribute("src") || script.src
-        if (currentSrc !== src && !setSafeScriptSrc(script, src)) {
-          throw new Error(`Failed to set trusted script src: ${src}`)
-        }
-
-        if (!existing) {
-          ;(document.head || document.documentElement).appendChild(script)
-        }
-      } catch (error) {
-        cleanup()
-        reject(error instanceof Error ? error : new Error(`Failed to load script: ${src}`))
-      }
-    })
-  }
-
-  private requestRender(
-    requestId: string,
-    previewId: string,
-    source: string,
-    theme: MermaidTheme,
-  ): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
-      const timeoutId = window.setTimeout(() => {
-        this.pendingRequests.delete(requestId)
-        reject(new Error("Assistant Mermaid render timed out"))
-      }, RUNTIME_TIMEOUT_MS)
-
-      this.pendingRequests.set(requestId, {
-        resolve,
-        reject,
-        timeoutId,
-      })
-
-      window.postMessage(
-        {
-          type: RUNTIME_REQUEST_EVENT,
-          requestId,
-          previewId,
-          source,
-          theme,
-        },
-        "*",
-      )
-    })
   }
 }

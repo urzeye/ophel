@@ -482,6 +482,7 @@ export const SegmentedExportDialog: React.FC<SegmentedExportDialogProps> = ({
             <option value="zip-markdown">{t("segmentedExportModeZip")}</option>
             <option value="merged-markdown">{t("segmentedExportModeMerged")}</option>
             <option value="clipboard">{t("segmentedExportModeClipboard")}</option>
+            <option value="image">{t("exportToImage")}</option>
           </select>
           <button className="gh-segmented-export-button" disabled={isExporting} onClick={onCancel}>
             {t("cancel")}

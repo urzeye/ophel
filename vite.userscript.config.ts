@@ -52,6 +52,13 @@ const reactDomVersion: string = reactDomPkg.version
 const geminiWatermarkRemoverVersion: string = geminiWatermarkRemoverPkg.version
 const reactCdnUrl = `https://cdn.jsdelivr.net/npm/react@${reactVersion}/umd/react.production.min.js`
 const reactDomCdnUrl = `https://cdn.jsdelivr.net/npm/react-dom@${reactDomVersion}/umd/react-dom.production.min.js`
+const imageCapturePackage = JSON.parse(
+  fs.readFileSync(path.resolve(__dirname, "node_modules/html-to-image/package.json"), "utf-8"),
+)
+const imageCaptureIntegrity = createHash("sha256")
+  .update(fs.readFileSync(path.resolve(__dirname, "node_modules/html-to-image/dist/html-to-image.js")))
+  .digest("hex")
+const imageCaptureCdnUrl = `https://cdn.jsdelivr.net/npm/html-to-image@${imageCapturePackage.version}/dist/html-to-image.js#sha256=${imageCaptureIntegrity}`
 const geminiWatermarkRemoverGlobalName = "__OphelGeminiWatermarkRemover"
 const userscriptMetadataCommentPattern = /^!?\s*(==\/?UserScript==|@)/
 
@@ -638,6 +645,7 @@ export default defineConfig({
         require: [
           reactCdnUrl,
           reactDomCdnUrl,
+          imageCaptureCdnUrl,
           "https://cdn.jsdelivr.net/npm/fuzzysort@3.1.0/fuzzysort.min.js",
           KATEX_CDN_JS_URL,
           userscriptMarkdownVendorUrl,
@@ -677,6 +685,7 @@ export default defineConfig({
       "~utils/markdown": path.resolve(__dirname, "src/platform/userscript/markdown-global.ts"),
       "~platform/katex": path.resolve(__dirname, "src/platform/userscript/katex.ts"),
       // 注意：chrome-adapter.ts 已内置跨平台支持（通过 __PLATFORM__ 判断），无需 alias 替换
+      "~platform/image-capture": path.resolve(__dirname, "src/platform/userscript/image-capture.ts"),
 
       // ========== 路径别名（与 Plasmo 的 ~ 别名一致）==========
       // 内置适配器列表改由 @require 的 adapters vendor 提供（必须放在 ~adapters 之前）

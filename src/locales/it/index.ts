@@ -1251,6 +1251,53 @@ export const it = {
   exportMetaTime: "Tempo",
   exportMetaSource: "Fonte",
   exportNotSupported: "Esportazione non supportata su questo sito",
+  // Image export
+  exportToImage: "Immagine da condividere",
+  imageExportTitle: "Esporta come immagine",
+  imageExportPreview: "Anteprima immagine",
+  imageExportLayout: "Modalità di uscita",
+  imageExportSingle: "Immagine lunga unica",
+  imageExportSplit: "Divisione automatica",
+  imageExportSingleLimit:
+    "L’immagine supera le dimensioni sicure a questa risoluzione. Usa la risoluzione standard o dividila.",
+  imageExportSingleLimitNoScale:
+    "L’immagine supera le dimensioni sicure per un’unica immagine. Usa la divisione automatica.",
+  imageExportUseStandard: "Usa risoluzione standard",
+  imageExportUseSplit: "Dividi automaticamente",
+  imageExportFormat: "Formato immagine",
+  imageExportTheme: "Tema immagine",
+  imageExportQuality: "Risoluzione",
+  imageExportStandard: "Standard · 1×",
+  imageExportHigh: "Alta · 2×",
+  imageExportIncludeQuestions: "Includi domande",
+  imageExportBranding: "Firma del marchio",
+  imageExportBrandingHint: "Mostra logo e attribuzione su ogni immagine.",
+  imageExportPoweredBy: "Powered by Ophel Atlas",
+  imageExportPreparing: "Preparazione di layout, immagini e diagrammi…",
+  imageExportProgress: "Generazione immagini {current} / {total}…",
+  imageExportReady: "Immagini pronte: {count}.",
+  imageExportPage: "Immagine {index} / {total} · {width} × {height}",
+  imageExportOpenPreview: "Apri l’immagine completa",
+  imageExportDownload: "Scarica immagine",
+  imageExportDownloadAll: "Scarica tutto (ZIP)",
+  imageExportCopy: "Copia immagine",
+  imageExportCopyHint: "È possibile copiare solo un singolo PNG. Scarica più immagini in uno ZIP.",
+  imageExportCopyUnavailable:
+    "La copia di immagini non è disponibile in questo browser. Scarica per condividere.",
+  imageExportCopying: "Copia dell’immagine…",
+  imageExportCopyFailed: "Impossibile copiare l’immagine. Riprova o scaricala.",
+  imageExportImageFailed:
+    "Impossibile caricare un’immagine. Verifica che l’allegato sia accessibile e riprova.",
+  imageExportDiagramFailed:
+    "Impossibile visualizzare un diagramma Mermaid. Verifica la sintassi e riprova.",
+  imageExportRenderFailed: "Impossibile generare le immagini. Riprova.",
+  imageExportLimit:
+    "Il contenuto supera il limite delle immagini. Seleziona meno segmenti e riprova.",
+  imageExportContentChanged:
+    "I segmenti della conversazione sono cambiati. Chiudi e seleziona di nuovo il contenuto.",
+  imageExportEmpty: "Nessun contenuto da esportare. Includi le domande o seleziona altri segmenti.",
+  imageExportRetry: "Genera di nuovo",
+
   exportToTXT: "TXT",
   exportToHTML: "HTML",
   exportMetaUrl: "URL",

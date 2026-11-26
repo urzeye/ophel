@@ -31,6 +31,9 @@ importers:
       highlight.js:
         specifier: ^11.11.1
         version: 11.11.1
+      html-to-image:
+        specifier: 1.11.13
+        version: 1.11.13
       katex:
         specifier: ^0.16.44
         version: 0.16.44(patch_hash=5xgg6rpiakhxwpilw5celyfuni)
@@ -3527,6 +3530,9 @@ packages:
   highlight.js@11.11.1:
     resolution: {integrity: sha512-Xwwo44whKBVCYoliBQwaPvtd/2tYFkRQtXDWj1nackaV2JPXx3L0+Jvd8/qCJ2p+ML0/XVkJ2q+Mr+UVdpJK5w==}
     engines: {node: '>=12.0.0'}
+
+  html-to-image@1.11.13:
+    resolution: {integrity: sha512-cuOPoI7WApyhBElTTb9oqsawRvZ0rHhaHwghRLlTuffoD1B2aDemlCruLeZrUIIdvG7gs9xeELEPm6PhuASqrg==}
 
   htmlnano@2.1.5:
     resolution: {integrity: sha512-IXffzXq1beGQN2rsr03aIPK/rVU1jR2uwHymlAIEf97Tl5WdpG50IsQ5nWGvSGQJ+x6U7S6yac9rRiFgAg4/xQ==}
@@ -9013,6 +9019,8 @@ snapshots:
       hermes-estree: 0.25.1
 
   highlight.js@11.11.1: {}
+
+  html-to-image@1.11.13: {}
 
   htmlnano@2.1.5(postcss@8.5.6)(svgo@2.8.0)(terser@5.46.0)(typescript@5.8.2):
     dependencies:
