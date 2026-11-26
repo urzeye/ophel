@@ -200,7 +200,7 @@ export class KimiAdapter extends SiteAdapter {
     return normalized || null
   }
 
-  getCurrentCid(): string | null {
+  getCurrentCid(): string | undefined {
     try {
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i)
@@ -219,7 +219,7 @@ export class KimiAdapter extends SiteAdapter {
       // ignore malformed storage data
     }
 
-    return null
+    return undefined
   }
 
   getConversationList(): ConversationInfo[] {

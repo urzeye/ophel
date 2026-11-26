@@ -301,9 +301,9 @@ export class YuanbaoAdapter extends SiteAdapter {
     return cleaned
   }
 
-  getCurrentCid(): string | null {
+  getCurrentCid(): string | undefined {
     const raw = localStorage.getItem(USER_ID_STORAGE_KEY)
-    if (!raw) return null
+    if (!raw) return undefined
 
     try {
       const parsed = JSON.parse(raw) as unknown
@@ -318,7 +318,7 @@ export class YuanbaoAdapter extends SiteAdapter {
       // 回退到原始值
     }
 
-    return raw.trim() || null
+    return raw.trim() || undefined
   }
 
   getConversationTitle(): string | null {

@@ -770,19 +770,19 @@ export class ZaiAdapter extends SiteAdapter {
     return SHARE_PATH_PATTERN.test(window.location.pathname)
   }
 
-  getCurrentCid(): string | null {
+  getCurrentCid(): string | undefined {
     try {
       const raw = localStorage.getItem(CID_STORAGE_KEY)
-      if (!raw) return null
+      if (!raw) return undefined
       const trimmed = raw.trim()
-      if (!trimmed) return null
+      if (!trimmed) return undefined
       if (trimmed.startsWith('"')) {
         const parsed = JSON.parse(trimmed)
-        return typeof parsed === "string" ? parsed : null
+        return typeof parsed === "string" && parsed.trim() ? parsed : undefined
       }
       return trimmed
     } catch {
-      return null
+      return undefined
     }
   }
 

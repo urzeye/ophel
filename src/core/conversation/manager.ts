@@ -18,7 +18,11 @@ import { getTagsStore, useTagsStore } from "~stores/tags-store"
 import { stripQuickQuoteMarkers } from "~core/quick-quote-marker"
 import { sanitizeConversationTitleCandidate } from "~utils/conversation-title"
 import { DOMToolkit } from "~utils/dom-toolkit"
-import { CONVERSATION_FULL_SYNC_READY_TIMEOUT_MS } from "~utils/conversation-list-loader"
+import {
+  CONVERSATION_FULL_SYNC_READY_TIMEOUT_MS,
+  CONVERSATION_LIST_READY_TIMEOUT_MS,
+  waitForConversationLoad,
+} from "~utils/conversation-list-loader"
 import {
   consolidateThoughtBlocks,
   createExportMetadata,
@@ -224,6 +228,7 @@ export class ConversationManager {
   private pendingInitialSync: {
     context: string
     accountKey: string
+    awaitingAccount: boolean
     resumeTimer: ReturnType<typeof setTimeout> | null
   } | null = null
   private conversationListUnsubscribe: (() => void) | null = null
@@ -348,8 +353,9 @@ export class ConversationManager {
     const initialSyncState = getConversationsStore().initialSyncStates[initialSyncKey]
     const shouldRunInitialAutoFullSync =
       !isRestore &&
-      initialSyncState !== "complete" &&
-      (initialSyncState === "pending" || currentSiteCount === 0)
+      (this.siteAdapter.getCurrentCid() === undefined ||
+        (initialSyncState !== "complete" &&
+          (initialSyncState === "pending" || currentSiteCount === 0)))
 
     const initialSync = shouldRunInitialAutoFullSync
       ? this.syncAllConversations({ initial: true })
@@ -750,6 +756,7 @@ export class ConversationManager {
         this.pendingInitialSync = {
           context: this.siteAdapter.getConversationSyncContext(),
           accountKey,
+          awaitingAccount: this.siteAdapter.getCurrentCid() === undefined,
           resumeTimer: null,
         }
         getConversationsStore().setInitialSyncState(accountKey, "pending")
@@ -766,6 +773,7 @@ export class ConversationManager {
         this.syncTask = null
         this.syncAbortController = null
         this.setSyncProgress(null)
+        this.schedulePendingInitialSync()
       })
     this.setSyncProgress({
       initial: options.initial ?? false,
@@ -796,7 +804,22 @@ export class ConversationManager {
   private schedulePendingInitialSync(): void {
     const pending = this.pendingInitialSync
     if (!pending || this.destroyed || this.syncTask) return
-    if (pending.context !== this.siteAdapter.getConversationSyncContext()) {
+    if (pending.awaitingAccount && this.siteAdapter.getCurrentCid() === undefined) {
+      if (pending.resumeTimer === null) {
+        pending.resumeTimer = setTimeout(() => {
+          pending.resumeTimer = null
+          this.schedulePendingInitialSync()
+        }, 1000)
+      }
+      return
+    }
+    const accountResolved = pending.awaitingAccount
+    if (accountResolved && pending.resumeTimer !== null) {
+      clearTimeout(pending.resumeTimer)
+      pending.resumeTimer = null
+    }
+    const context = this.siteAdapter.getConversationSyncContext()
+    if (pending.context !== context && !accountResolved) {
       this.clearPendingInitialSync()
       return
     }
@@ -804,12 +827,15 @@ export class ConversationManager {
     const store = getConversationsStore()
     this.movePendingInitialSyncState(pending.accountKey, accountKey)
     pending.accountKey = accountKey
+    pending.context = context
+    pending.awaitingAccount = false
     if (store.initialSyncStates[accountKey] === "complete") {
       this.clearPendingInitialSync()
+      this.notifyDataChange()
       return
     }
     if (pending.resumeTimer !== null) return
-    if (!this.siteAdapter.getConversationList().some((item) => item.id)) return
+    if (!accountResolved && !this.siteAdapter.getConversationList().some((item) => item.id)) return
     store.setInitialSyncState(accountKey, "pending")
     pending.resumeTimer = setTimeout(() => {
       pending.resumeTimer = null
@@ -827,12 +853,12 @@ export class ConversationManager {
     controller: AbortController,
   ): Promise<ConversationFullSyncResult> {
     const initial = options.initial ?? false
-    const original = this.getAllConversations()
+    let original: Record<string, Conversation> = {}
     const collected = new Map<string, ConversationInfo>()
     const scrollPositions = new Map<Element, number>()
     let navigationHref = window.location.href
     let expectedNavigationHref: string | null = null
-    const syncContext = this.siteAdapter.getConversationSyncContext()
+    let syncContext = this.siteAdapter.getConversationSyncContext()
     let accountKey = this.getInitialSyncKey()
     let userTookControl = false
     let timedOut = false
@@ -915,6 +941,39 @@ export class ConversationManager {
     try {
       if (this.destroyed) controller.abort()
       controller.signal.throwIfAborted()
+      const readyDeadline =
+        Date.now() +
+        (initial ? CONVERSATION_FULL_SYNC_READY_TIMEOUT_MS : CONVERSATION_LIST_READY_TIMEOUT_MS)
+      // 身份未就绪时不读取列表，避免把初始化延迟当成切号，也不接收未知归属的响应。
+      while (this.siteAdapter.getCurrentCid() === undefined) {
+        if (Date.now() >= readyDeadline) {
+          timedOut = true
+          controller.abort(new Error("Conversation account identity is not ready"))
+          controller.signal.throwIfAborted()
+        }
+        await waitForConversationLoad(200, controller.signal)
+      }
+      controller.signal.throwIfAborted()
+      syncContext = this.siteAdapter.getConversationSyncContext()
+      const readyAccountKey = this.getInitialSyncKey()
+      if (initial) {
+        this.movePendingInitialSyncState(accountKey, readyAccountKey)
+        if (this.pendingInitialSync) {
+          this.pendingInitialSync.context = syncContext
+          this.pendingInitialSync.accountKey = readyAccountKey
+          this.pendingInitialSync.awaitingAccount = false
+        }
+      }
+      accountKey = readyAccountKey
+      original = this.getAllConversations()
+      if (initial && getConversationsStore().initialSyncStates[accountKey] === "complete") {
+        this.clearPendingInitialSync()
+        const items = this.siteAdapter.getConversationList()
+        const changes = this.syncConversations(null, true, { items })
+        // 身份就绪会改变可见对话范围，即使记录未变化也需要刷新消费者。
+        this.notifyDataChange()
+        return { status: "complete", loadedCount: items.length, ...changes }
+      }
       rememberPosition()
       const complete = await this.siteAdapter.loadAllConversations({
         signal: controller.signal,
@@ -1128,7 +1187,7 @@ export class ConversationManager {
   }
 
   private updateConversationFromObservation(info: ConversationInfo, isNew: boolean) {
-    if (this.destroyed || this.syncTask) return
+    if (this.destroyed || this.syncTask || this.siteAdapter.getCurrentCid() === undefined) return
     this.pruneSyncReview(new Set([info.id]))
     const conversations = this.conversations
     const existing = conversations[info.id]
@@ -1564,6 +1623,7 @@ export class ConversationManager {
     _silent = false,
     options: ConversationSyncOptions = {},
   ): ConversationSyncResult {
+    if (this.siteAdapter.getCurrentCid() === undefined) return { newCount: 0, updatedCount: 0 }
     const sidebarItems = options.items ?? this.siteAdapter.getConversationList()
 
     this.pruneSyncReview(new Set(sidebarItems?.map((item) => item.id)))

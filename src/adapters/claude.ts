@@ -374,12 +374,12 @@ export class ClaudeAdapter extends SiteAdapter {
    * 获取当前组织标识，同时用于本地对话隔离和站点 API 请求。
    * 旧 owner 记录保持原样，由实际同步到的对话逐条更新归属并保留元数据。
    */
-  getCurrentCid(): string | null {
+  getCurrentCid(): string | undefined {
     const raw = window.localStorage.getItem(CID_STORAGE_KEY)
-    if (!raw) return null
+    if (!raw) return undefined
 
     const orgId = raw.trim().replace(/^"(.*)"$/, "$1")
-    return ORG_ID_REGEX.test(orgId) ? orgId : null
+    return ORG_ID_REGEX.test(orgId) ? orgId : undefined
   }
 
   private getClaudeConversationItems(root: ParentNode = document): Element[] {

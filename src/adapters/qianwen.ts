@@ -134,9 +134,9 @@ export class QianwenAdapter extends SiteAdapter {
     return !this.isSharePage() && CHAT_PATH_PATTERN.test(window.location.pathname)
   }
 
-  getCurrentCid(): string | null {
+  getCurrentCid(): string | undefined {
     const raw = localStorage.getItem(CID_STORAGE_KEY)
-    if (!raw) return null
+    if (!raw) return undefined
 
     try {
       const parsed = JSON.parse(raw) as unknown
@@ -151,7 +151,7 @@ export class QianwenAdapter extends SiteAdapter {
       // 回退到原始字符串
     }
 
-    return raw.trim() || null
+    return raw.trim() || undefined
   }
 
   getSessionName(): string | null {
