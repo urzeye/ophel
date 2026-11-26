@@ -1847,7 +1847,7 @@ export abstract class SiteAdapter {
 
   /**
    * 开始新对话：优先用 pushState + popstate 做 SPA 切换（与对话 tab 的
-   * navigateToConversation 一致），站点路由不支持时回退整页跳转。
+   * navigateToConversation 一致），history 不可用时回退整页跳转。
    */
   startNewConversation(): boolean {
     const targetUrl = this.getNewTabUrl()
@@ -1874,24 +1874,8 @@ export abstract class SiteAdapter {
     }
 
     // pushState 只接受同源 URL，失败时直接整页跳转兜底
-    const previousUserMessage = this.getFirstUserMessageElement()
     if (!this.navigateViaHistory(resolvedTargetUrl)) {
       window.location.href = resolvedTargetUrl
-      return true
-    }
-
-    // pushState 成功不代表站点路由响应了 popstate：超时后首个用户消息仍是同一个
-    // 旧 DOM 节点（SPA 成功会重建消息列表，节点必然更换），且页面仍停留在目标
-    // URL 上，才说明路由未切换，回退整页跳转（赋同 URL 也会触发重载）
-    if (previousUserMessage) {
-      window.setTimeout(() => {
-        if (
-          window.location.href === resolvedTargetUrl &&
-          this.getFirstUserMessageElement() === previousUserMessage
-        ) {
-          window.location.href = resolvedTargetUrl
-        }
-      }, 500)
     }
 
     return true
