@@ -493,19 +493,10 @@ export class ChatGPTAdapter extends SiteAdapter {
   }
 
   navigateToConversation(id: string, url?: string): boolean {
-    // 通过对话 ID 查找侧边栏项
-    const sidebarLink = this.findConversationRow(id)
-
-    if (sidebarLink && this.config.conversation.navigationStrategy === "click-item") {
-      // [CHATGPT-APP-SHELL]: 如果是新版外层 div 容器，优先点击内部带 role="button" 的 sidebar-item
-      const clickable =
-        sidebarLink.querySelector<HTMLElement>('.sidebar-item[role="button"]') || sidebarLink
-      clickable.click()
-      return true
-    }
-    // 降级：优先 history 导航免刷新（路由响应 popstate，已实测），失败再整页刷新
-    if (url && this.navigateViaHistory(url)) return true
-    return super.navigateToConversation(id, url)
+    const targetUrl =
+      url || this.config.conversation.urlTemplate.replace("{id}", encodeURIComponent(id))
+    if (this.navigateViaHistory(targetUrl)) return true
+    return super.navigateToConversation(id, targetUrl)
   }
 
   async deleteConversationOnSite(

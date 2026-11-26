@@ -270,7 +270,6 @@ const createChatGPTConfig = (): ChatGPTSiteConfig => {
       // [CHATGPT-APP-SHELL]: [data-app-action-sidebar-thread-selected="true"], [aria-current="page"]
       activeMatch:
         '[data-active], [data-app-action-sidebar-thread-selected="true"], [aria-current="page"]',
-      navigationStrategy: "click-item",
       shadow: false,
     },
     generating: { existsSelectors: [...stopButton] },
