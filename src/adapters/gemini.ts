@@ -1683,21 +1683,10 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   navigateToConversation(id: string, url?: string): boolean {
-    if (this.config.conversation.navigationStrategy === "location") {
-      return super.navigateToConversation(id, url)
-    }
-
-    // 新版侧边栏：通过配置化对话信号定位行，再点击内部链接。
-    const privateSelectors = this.config.sitePrivateSelectors
-    const row = this.findConversationRow(id)
-    const anchor = row?.querySelector(privateSelectors.conversationAnchor) as HTMLElement | null
-    if (anchor) {
-      anchor.click()
-      return true
-    }
-    // 降级：优先 history 导航免刷新，失败再整页刷新
-    if (url && this.navigateViaHistory(url)) return true
-    return super.navigateToConversation(id, url)
+    const path = this.config.conversation.urlTemplate.replace("{id}", encodeURIComponent(id))
+    const targetUrl = url || new URL(`${this.getUserPathPrefix()}${path}`, this.getNewTabUrl()).href
+    if (this.navigateViaHistory(targetUrl)) return true
+    return super.navigateToConversation(id, targetUrl)
   }
 
   async deleteConversationOnSite(

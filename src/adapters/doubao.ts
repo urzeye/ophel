@@ -642,18 +642,9 @@ export class DoubaoAdapter extends SiteAdapter {
   }
 
   navigateToConversation(id: string, url?: string): boolean {
-    const link = this.getConversationRows().find(
-      (candidate) => this.extractConversationId(candidate) === id,
-    )
-    if (this.config.conversation.navigationStrategy === "click-item" && link) {
-      link.click()
-      return true
-    }
-    // 降级：优先 history 导航免刷新（路由响应 popstate，已实测），失败再整页刷新
     const targetUrl = url || this.getConversationUrl(id)
     if (this.navigateViaHistory(targetUrl)) return true
-    window.location.href = targetUrl
-    return true
+    return super.navigateToConversation(id, targetUrl)
   }
 
   getSidebarScrollContainer(): Element | null {

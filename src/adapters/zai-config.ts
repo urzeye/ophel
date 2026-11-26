@@ -38,7 +38,6 @@ type ZaiPrivateSelectors = SitePrivateSelectors & {
   exportDecoration: string
   sidebarItem: string
   sidebarTitle: string
-  sidebarItemTrigger: string
   sidebarScrollContainer: string
   paneRoot: string
   inputWithinScrollContainer: string
@@ -213,7 +212,6 @@ const createZaiConfig = (): ZaiSiteConfig => {
       ].join(", "),
       sidebarItem: "#sidebar .w-full.mb-1.relative.group",
       sidebarTitle: 'div[dir="auto"]',
-      sidebarItemTrigger: "button",
       sidebarScrollContainer: "#sidebar .overflow-y-auto",
       paneRoot: "[data-pane-id]",
       inputWithinScrollContainer: "textarea, #chat-input",

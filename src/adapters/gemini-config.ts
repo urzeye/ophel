@@ -296,7 +296,6 @@ const createGeminiConfig = (): GeminiSiteConfig => {
       titleSelector: conversationTitle,
       urlTemplate: "/app/{id}",
       activeMatch: "a.mdc-list-item--activated",
-      navigationStrategy: "click-item",
       shadow: false,
     },
     generating: {

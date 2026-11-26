@@ -181,7 +181,6 @@ const createQwenStudioConfig = (): QwenStudioSiteConfig => {
       idFrom: { attr: "href", regex: "/c/([a-fA-F0-9-]+)" },
       titleSelector: conversationTitle,
       urlTemplate: "/c/{id}",
-      navigationStrategy: "click-item",
       shadow: false,
     },
     generating: { existsSelectors: [...stopButton] },

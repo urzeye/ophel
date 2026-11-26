@@ -3999,15 +3999,8 @@ export class ClaudeAdapter extends SiteAdapter {
 
   navigateToConversation(id: string, url?: string): boolean {
     const targetUrl = url || new URL(this.getClaudeConversationPath(id), this.getNewTabUrl()).href
-    const link = this.findConversationRow(id)
-    if (link && this.config.conversation.navigationStrategy === "click-item") {
-      link.click()
-      return true
-    }
-    // 降级：优先 history 导航免刷新（路由响应 popstate，已实测），失败再直接跳转
     if (this.navigateViaHistory(targetUrl)) return true
-    window.location.href = targetUrl
-    return true
+    return super.navigateToConversation(id, targetUrl)
   }
 
   getSessionName(): string | null {

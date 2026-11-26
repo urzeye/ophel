@@ -281,7 +281,6 @@ const createYuanbaoConfig = (): YuanbaoSiteConfig => {
       titleSelector: conversationTitle,
       urlTemplate: "/chat/{id}",
       activeMatch: ".active",
-      navigationStrategy: "click-item",
       shadow: false,
     },
     generating: { existsSelectors: [stopButton] },

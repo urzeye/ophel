@@ -861,18 +861,6 @@ export class ZaiAdapter extends SiteAdapter {
   }
 
   navigateToConversation(id: string, url?: string): boolean {
-    const nodes = document.querySelectorAll(this.config.sitePrivateSelectors.sidebarItem)
-    for (const node of Array.from(nodes)) {
-      if (this.extractConversationId(node) !== id) continue
-      const button = node.querySelector(
-        this.config.sitePrivateSelectors.sidebarItemTrigger,
-      ) as HTMLElement | null
-      if (button) {
-        button.click()
-        return true
-      }
-    }
-    // 降级：优先 history 导航免刷新（路由响应 popstate，已实测），失败再整页刷新
     const targetUrl = url || `${window.location.origin}/c/${id}`
     if (this.navigateViaHistory(targetUrl)) return true
     return super.navigateToConversation(id, targetUrl)
