@@ -175,6 +175,19 @@ const getRestoreSuccessMessage = (message: string, missingPermissionOrigins: rea
     ? `${message} ${t("sitePacksPermissionReviewTitle")}`
     : message
 
+// 确认文案中的备份文件名是无空白长标识，单独渲染为等宽数据文本以便核对与断行
+const renderFileNameConfirmMessage = (message: string, fileName: string): React.ReactNode => {
+  const index = message.indexOf(fileName)
+  if (index === -1) return message
+  return (
+    <>
+      {message.slice(0, index)}
+      <span className="gh-dialog-file-name">{fileName}</span>
+      {message.slice(index + fileName.length)}
+    </>
+  )
+}
+
 // ==================== 远程备份列表模态框 ====================
 const RemoteBackupModal: React.FC<{
   onClose: () => void
@@ -185,7 +198,7 @@ const RemoteBackupModal: React.FC<{
   const [confirmConfig, setConfirmConfig] = useState<{
     show: boolean
     title: string
-    message: string
+    message: React.ReactNode
     confirmText?: string
     danger?: boolean
     onConfirm: () => void
@@ -217,7 +230,10 @@ const RemoteBackupModal: React.FC<{
     setConfirmConfig({
       show: true,
       title: t("restore"),
-      message: t("backupRestoreConfirmMsg", { name: file.name }),
+      message: renderFileNameConfirmMessage(
+        t("backupRestoreConfirmMsg", { name: file.name }),
+        file.name,
+      ),
       confirmText: t("restore"),
       danger: true,
       onConfirm: async () => {
@@ -251,7 +267,10 @@ const RemoteBackupModal: React.FC<{
     setConfirmConfig({
       show: true,
       title: t("delete"),
-      message: t("backupDeleteCloudConfirmMsg", { name: file.name }),
+      message: renderFileNameConfirmMessage(
+        t("backupDeleteCloudConfirmMsg", { name: file.name }),
+        file.name,
+      ),
       confirmText: t("delete"),
       danger: true,
       onConfirm: async () => {
