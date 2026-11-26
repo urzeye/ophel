@@ -67,6 +67,7 @@ const CAPTURE_STYLES = [
   "text-indent",
   "text-transform",
   "text-rendering",
+  "text-wrap",
   "white-space",
   "word-break",
   "overflow-wrap",
@@ -136,7 +137,6 @@ function createImageFrame(
   const viewport = document.createElement("div")
   viewport.className = "gh-export-slice"
   viewport.style.height = `${slice.end - slice.start}px`
-  viewport.style.marginTop = "28px"
   shell.append(viewport)
   const footer = createExportBrand(prepared, index, total)
   if (footer) shell.append(footer)
