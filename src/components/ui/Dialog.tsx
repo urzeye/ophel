@@ -42,6 +42,14 @@ const DIALOG_STYLES = `
     margin-bottom: 20px;
     line-height: 1.5;
     white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  /* 确认文案中的长标识（如备份文件名）：按数据文本呈现并允许任意断行 */
+  .gh-dialog-file-name {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.92em;
+    color: var(--gh-text, #1f2937);
+    word-break: break-all;
   }
   .gh-dialog-buttons {
     display: flex;
