@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### 🚀 New Features
+
+- **Image export** — Export whole chats or selected segments as a long PNG or JPG image, with optional splitting and a branded footer. (#1073)
+
 ---
 
 ## [1.3.6][1.3.6] - 2026-11-26
