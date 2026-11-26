@@ -49,8 +49,8 @@ type ChatGLMPrivateSelectors = SitePrivateSelectors & {
   thoughtContent: string
   avatar: string
   modelName: string[]
-  messageWidth: string
-  markdownWidth: string
+  messagesWrapper: string
+  chatFooter: string
   submitButton: string
   submitButtonDisabled: string
 }
@@ -73,18 +73,20 @@ export interface ChatGLMSiteConfig extends BuiltinSiteConfig {
 export const CHATGLM_CONFIG_VERSION = 5
 
 const createChatGLMConfig = (): ChatGLMSiteConfig => {
-  const responseContainer = ".conversation-list"
-  const conversationScope = ".conversation-container"
-  const conversationInner = ".conversation-inner"
+  const responseContainer = ".chat-list"
+  const conversationScope = ".chat-wrapper"
+  const conversationInner = ".chat-wrapper"
   const newChatGuideSafeArea = ".init-page .main-chat-guide-container"
   const canvasLayoutScope = "section.el-container:has(> .code-preview-tabs)"
   const canvasPreviewSafeArea = ".code-preview-tabs"
-  const conversationItem = ".conversation-item"
-  const userQuery = ".conversation.question"
-  const userText = ".question-txt"
-  const assistantResponse = ".answer-content-wrap"
+  const conversationItem = ".chat-list__message-row"
+  const userQuery = ".user-message-item"
+  const userText = ".user-message-item__text-content"
+  const assistantResponse = ".assistant-message-item"
   const markdownBody = ".markdown-body"
   const assistantMarkdown = `${assistantResponse} ${markdownBody}`
+  const messagesWrapper = ".messages-wrapper"
+  const chatFooter = ".chat-footer"
   const thinkingContainer = [
     ".advance-thinking",
     ".advance-thinking-area",
@@ -115,37 +117,18 @@ const createChatGLMConfig = (): ChatGLMSiteConfig => {
     "script",
   ].join(", ")
   const textarea = [
-    "#search-input-box textarea",
-    ".main-chat-search #search-input-box textarea",
-    ".main-chat-search textarea",
+    ".chat-sender textarea.el-textarea__inner",
+    ".chat-footer textarea",
+    "textarea.el-textarea__inner",
   ]
-  const submitButton = ".enter-icon-container"
-  const submitButtonDisabled = ".empty"
+  const submitButton = ".send-button"
+  const submitButtonDisabled = ".send-button--disabled"
   const stopButton = [
-    ".enter.searching .enter-icon-container",
+    "button.send-button[aria-label*='停止']",
+    ".chat-sender [aria-label*='停止']",
     ".stop-generate",
     ".stop-stream-tip",
-    ".answer-content-wrap .generating-icon",
-    ".enter-icon-container.stop",
-    ".enter.searching",
-    ".enter.is-main-chat.searching",
   ]
-  const messageWidth = [
-    ".dialogue .detail .item",
-    ".dialogue .detail .item.item",
-    ".dialogue .detail .item.item.item",
-  ].join(", ")
-  const markdownWidth = [
-    markdownBody,
-    `${markdownBody}${markdownBody}`,
-    `${assistantResponse} ${markdownBody}`,
-  ].join(", ")
-  const codeBlockStretchCss = [
-    "width: 100% !important;",
-    "margin-left: 0 !important;",
-    "margin-right: 0 !important;",
-    "box-sizing: border-box !important;",
-  ].join(" ")
   const themePopover = ".theme-popper"
   const themeOption = ".selecttheme-list"
 
@@ -160,7 +143,7 @@ const createChatGLMConfig = (): ChatGLMSiteConfig => {
       userQuery,
       assistantResponse,
       stopButton,
-      scrollContainer: [responseContainer, ".chatScrollContainer"],
+      scrollContainer: [responseContainer],
     },
     input: { mode: "textarea", submitKey: "Enter" },
     generating: { existsSelectors: [...stopButton] },
@@ -169,14 +152,9 @@ const createChatGLMConfig = (): ChatGLMSiteConfig => {
       silenceThreshold: 2000,
     },
     modelSwitcher: {
-      selectorButtonSelectors: [
-        ".wrapper-title",
-        ".wrapper-title .showHideText",
-        ".model-select-icon-container",
-        ".selected-model-info",
-        ".model-select-container",
-      ],
-      menuItemSelector: ".model-select-list .model-select-item",
+      selectorButtonSelectors: [".think-mode-button"],
+      menuItemSelector:
+        ".chat-sender-think-popover button, .chat-sender-think-popover [role='menuitem'], .model-select-list .model-select-item",
       menuRenderDelay: 150,
       checkInterval: 1000,
       maxAttempts: 10,
@@ -188,28 +166,10 @@ const createChatGLMConfig = (): ChatGLMSiteConfig => {
       useShadowDOM: false,
     },
     widthSelectors: [
-      { selector: conversationScope, property: "max-width" },
-      { selector: conversationInner, property: "max-width" },
-      { selector: responseContainer, property: "max-width" },
-      { selector: messageWidth, property: "max-width" },
-      { selector: markdownWidth, property: "max-width" },
+      { selector: messagesWrapper, property: "max-width" },
+      { selector: chatFooter, property: "max-width" },
       {
-        selector: ".code-no-artifacts .markdown-body.md-code, .code-no-artifacts .md-code",
-        property: "max-width",
-        value: "100%",
-        extraCss: codeBlockStretchCss,
-        noCenter: true,
-      },
-      {
-        selector:
-          ".code-no-artifacts .markdown-body.md-code > .language, .code-no-artifacts .markdown-body.md-code pre",
-        property: "max-width",
-        value: "100%",
-        extraCss: "width: 100% !important; box-sizing: border-box !important;",
-        noCenter: true,
-      },
-      {
-        selector: ".markdown-body table, .answer-content-wrap .markdown-body table",
+        selector: ".markdown-body table",
         property: "width",
         value: "100%",
         extraCss:
@@ -222,18 +182,11 @@ const createChatGLMConfig = (): ChatGLMSiteConfig => {
         value: "0",
         noCenter: true,
       },
-      { selector: responseContainer, property: "width", value: "100%" },
-      {
-        selector: ".conversation-bottom",
-        property: "max-width",
-        extraCss: "flex: 1 !important;",
-      },
-      { selector: ".component-box-new", property: "max-width" },
     ],
     zenMode: { hide: [".app-shell-sidebar-inline"] },
     cleanMode: {
-      hide: [".vip-btn", ".slogan-banner"],
-      preserveFlow: [".policy-wrap, .policy-wrap *"],
+      hide: [".sidebar-login-reward", ".login-reward-card"],
+      preserveFlow: [".ai-statement"],
     },
     quickQuote: "native",
     sitePrivateSelectors: {
@@ -266,18 +219,13 @@ const createChatGLMConfig = (): ChatGLMSiteConfig => {
       attachmentNameRoot: "button, a, [class*='file']",
       thoughtContent:
         "blockquote[slot='content'], blockquote, .text-advance-thinking-content .markdown-body, .thinking-content .markdown-body, .advance-thinking-area .markdown-body, .markdown-body",
-      avatar: ".user-img, .avatar, .user-avatar, .userInfoBar-header",
+      avatar: ".user-img, .avatar, .user-avatar, .userInfoBar-header, .conversation-avatar",
       modelName: [
-        ".wrapper-title .showHideText",
-        ".wrapper-title .wrapper-title-innerText",
-        ".wrapper-title",
-        ".selected-model-info .model-select-name",
-        ".model-select-container .model-select-name",
-        ".model-select-list .model-select-item.selected .model-select-name",
-        ".model-select-name",
+        ".think-mode-button span:not(.think-text)",
+        ".think-mode-button span:first-child",
       ],
-      messageWidth,
-      markdownWidth,
+      messagesWrapper,
+      chatFooter,
       submitButton,
       submitButtonDisabled,
     },
