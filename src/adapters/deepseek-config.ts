@@ -134,7 +134,6 @@ const createDeepSeekConfig = (): DeepSeekSiteConfig => {
       idFrom: { attr: "href", regex: "/a/chat/s/([a-z0-9-]+)" },
       urlTemplate: "/a/chat/s/{id}",
       activeMatch: '[aria-current="page"]',
-      navigationStrategy: "click-item",
       shadow: false,
     },
     generating: { existsSelectors: [...stopButton] },

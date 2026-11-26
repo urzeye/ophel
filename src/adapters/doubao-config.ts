@@ -156,7 +156,6 @@ const createDoubaoConfig = (): DoubaoSiteConfig => {
         '[data-testid="chat_list_item_title"], [class*="overallTitle-"], [class*="title-"]',
       urlTemplate: "/chat/{id}",
       activeMatch: '[aria-current="page"], [class*="active-link-"], .e2e-test-active',
-      navigationStrategy: "click-item",
       shadow: false,
     },
     generating: { existsSelectors: stopButtonSelectors },

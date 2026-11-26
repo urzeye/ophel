@@ -188,7 +188,6 @@ const createClaudeConfig = (): ClaudeSiteConfig => {
       // dframe 布局标题为 .dframe-fade-label（无 truncate 类），旧结构保留 span.truncate
       titleSelector: ".dframe-fade-label, span.truncate",
       urlTemplate: "/chat/{id}",
-      navigationStrategy: "click-item",
       shadow: false,
     },
     generating: {

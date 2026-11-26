@@ -158,7 +158,6 @@ const createGeminiEnterpriseConfig = (): GeminiEnterpriseSiteConfig => {
       idFrom: { attr: "id", regex: "^menu-(\\d+)$" },
       titleSelector: conversationTitle,
       urlTemplate: "/session/{id}",
-      navigationStrategy: "click-item",
       shadow: true,
     },
     generating: {

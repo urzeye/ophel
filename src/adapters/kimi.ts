@@ -379,27 +379,7 @@ export class KimiAdapter extends SiteAdapter {
 
   navigateToConversation(id: string, url?: string): boolean {
     const targetUrl = this.buildConversationUrl(id, url)
-    if ((this.config.conversation.navigationStrategy ?? "click-item") === "location") {
-      return super.navigateToConversation(id, targetUrl)
-    }
-
-    const link = this.findConversationLinkById(id)
-    if (link) {
-      const beforeSessionId = this.getSessionId()
-      link.click()
-
-      window.setTimeout(() => {
-        if (this.getSessionId() !== id && this.getSessionId() === beforeSessionId) {
-          this.navigateToKimiConversationRoute(targetUrl)
-        }
-      }, 120)
-      return true
-    }
-
-    if (this.navigateToKimiConversationRoute(targetUrl)) {
-      return true
-    }
-
+    if (this.navigateViaHistory(targetUrl)) return true
     return super.navigateToConversation(id, targetUrl)
   }
 
@@ -1550,34 +1530,6 @@ export class KimiAdapter extends SiteAdapter {
     }
 
     return null
-  }
-
-  private navigateToKimiConversationRoute(url: string): boolean {
-    let target: URL
-    try {
-      target = new URL(url, window.location.origin)
-    } catch {
-      return false
-    }
-
-    if (target.origin !== window.location.origin) return false
-    if (!this.extractConversationIdFromHref(target.href)) return false
-
-    const targetPath = `${target.pathname}${target.search}${target.hash}`
-    const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`
-    if (targetPath === currentPath) return true
-
-    try {
-      window.history.pushState(window.history.state, "", targetPath)
-      const event =
-        typeof PopStateEvent === "function"
-          ? new PopStateEvent("popstate", { state: window.history.state })
-          : new Event("popstate")
-      window.dispatchEvent(event)
-      return true
-    } catch {
-      return false
-    }
   }
 
   private findScrollableParent(element: Element | null): HTMLElement | null {

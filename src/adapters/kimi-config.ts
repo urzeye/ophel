@@ -171,7 +171,6 @@ const createKimiConfig = (): KimiSiteConfig => {
       titleSelector: `${conversationTitle}, ${historyTitle}`,
       urlTemplate: "/chat/{id}",
       activeMatch: ".router-link-active, .router-link-exact-active",
-      navigationStrategy: "click-item",
       shadow: false,
     },
     generating: { existsSelectors: [activeStopButton, stopIcon] },

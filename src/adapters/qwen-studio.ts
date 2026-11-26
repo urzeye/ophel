@@ -438,23 +438,6 @@ export class QwenAiAdapter extends SiteAdapter {
   }
 
   navigateToConversation(id: string, url?: string): boolean {
-    const cid = this.getCurrentCid() || undefined
-    const nodes = document.querySelectorAll(this.config.conversation.itemSelector)
-
-    if (this.config.conversation.navigationStrategy === "click-item") {
-      for (const node of Array.from(nodes)) {
-        const info = this.extractSidebarConversationInfo(node, cid)
-        if (!info || info.id !== id) continue
-
-        const clickable =
-          (node.querySelector("a, button, [role='button']") as HTMLElement | null) ||
-          (node as HTMLElement)
-        this.simulateClick(clickable)
-        return true
-      }
-    }
-
-    // 降级：优先 history 导航免刷新（路由响应 popstate，已实测），失败再整页刷新
     const targetUrl = url || this.getConversationUrl(id)
     if (this.navigateViaHistory(targetUrl)) return true
     return super.navigateToConversation(id, targetUrl)

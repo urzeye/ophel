@@ -332,25 +332,9 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
   }
 
   navigateToConversation(id: string, url?: string): boolean {
-    // 通过菜单按钮 ID 查找侧边栏对话元素
-    const conversations = DOMToolkit.query(this.config.conversation.itemSelector, {
-      all: true,
-      shadow: this.config.conversation.shadow ?? true,
-    }) as Element[] | null
-
-    if (conversations && this.config.conversation.navigationStrategy === "click-item") {
-      for (const convEl of Array.from(conversations)) {
-        if (this.extractConversationIdFromElement(convEl) === id) {
-          const btn = this.getConversationButton(convEl)
-          if (btn) (btn as HTMLElement).click()
-          else (convEl as HTMLElement).click()
-          return true
-        }
-      }
-    }
-    // 降级：优先 history 导航免刷新（路由响应 popstate，已实测），失败再整页刷新
-    if (url && this.navigateViaHistory(url)) return true
-    return super.navigateToConversation(id, url)
+    const targetUrl = url || this.getConversationUrl(id)
+    if (this.navigateViaHistory(targetUrl)) return true
+    return super.navigateToConversation(id, targetUrl)
   }
 
   async deleteConversationOnSite(

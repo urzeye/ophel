@@ -411,21 +411,8 @@ export class DeepSeekAdapter extends SiteAdapter {
   }
 
   navigateToConversation(id: string, url?: string): boolean {
-    if ((this.config.conversation.navigationStrategy ?? "click-item") !== "location") {
-      const conversationLink = this.config.conversation.itemSelector
-      const link = document.querySelector(
-        `${conversationLink}[href*="/a/chat/s/${id}"]`,
-      ) as HTMLElement | null
-
-      if (link) {
-        link.click()
-        return true
-      }
-    }
-
     const path = this.config.conversation.urlTemplate.replace("{id}", encodeURIComponent(id))
     const targetUrl = url || new URL(path, DEEPSEEK_HOME_URL).toString()
-    // 降级：优先 history 导航免刷新（路由响应 popstate，已实测），失败再整页刷新
     if (this.navigateViaHistory(targetUrl)) return true
     return super.navigateToConversation(id, targetUrl)
   }

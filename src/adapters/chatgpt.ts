@@ -309,8 +309,8 @@ export class ChatGPTAdapter extends SiteAdapter {
 
   /**
    * 旧版 cid 取自 localStorage._account（个人/团队同值，已无法用作隔离标识）。
-   * 存量对话的 cid 即该值，供 ConversationManager 迁移识别；新数据不会命中，
-   * 因为新 cid（precise_location_identity 空间 ID）与 _account 必然不同。
+   * 存量对话的 cid 即该值，供 ConversationManager 迁移识别。
+   * 旧值可能与新的个人空间 ID 重合，迁移必须同时检查记录的归属版本。
    * 解析口径与旧版 getCurrentCid 严格一致（含非 JSON 裸字符串），否则漏迁。
    */
   getLegacyCid(): string | null {
@@ -365,8 +365,10 @@ export class ChatGPTAdapter extends SiteAdapter {
     return href.match(new RegExp(this.config.conversation.idFrom.regex, "i"))?.[1] || null
   }
 
-  private getChatGPTConversationPath(id: string): string {
-    return this.config.conversation.urlTemplate.replace("{id}", id)
+  private getChatGPTConversationPath(el: Element, id: string): string {
+    const selector = `a[href*="/c/${id}"]`
+    const link = el.closest(selector) || el.querySelector(selector)
+    return link?.getAttribute("href") || this.config.conversation.urlTemplate.replace("{id}", id)
   }
 
   private getChatGPTConversationTitleElement(el: Element): Element | null {
@@ -408,7 +410,7 @@ export class ChatGPTAdapter extends SiteAdapter {
       ? el.matches(this.config.conversation.activeMatch) ||
         Boolean(el.querySelector(this.config.conversation.activeMatch))
       : false
-    const path = this.getChatGPTConversationPath(id)
+    const path = this.getChatGPTConversationPath(el, id)
 
     return {
       id,
@@ -491,19 +493,10 @@ export class ChatGPTAdapter extends SiteAdapter {
   }
 
   navigateToConversation(id: string, url?: string): boolean {
-    // 通过对话 ID 查找侧边栏项
-    const sidebarLink = this.findConversationRow(id)
-
-    if (sidebarLink && this.config.conversation.navigationStrategy === "click-item") {
-      // [CHATGPT-APP-SHELL]: 如果是新版外层 div 容器，优先点击内部带 role="button" 的 sidebar-item
-      const clickable =
-        sidebarLink.querySelector<HTMLElement>('.sidebar-item[role="button"]') || sidebarLink
-      clickable.click()
-      return true
-    }
-    // 降级：优先 history 导航免刷新（路由响应 popstate，已实测），失败再整页刷新
-    if (url && this.navigateViaHistory(url)) return true
-    return super.navigateToConversation(id, url)
+    const targetUrl =
+      url || this.config.conversation.urlTemplate.replace("{id}", encodeURIComponent(id))
+    if (this.navigateViaHistory(targetUrl)) return true
+    return super.navigateToConversation(id, targetUrl)
   }
 
   async deleteConversationOnSite(

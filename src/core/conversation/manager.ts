@@ -55,7 +55,12 @@ import {
   readConversationSignature,
   waitForConversationReady,
 } from "./open-for-export"
-import type { Conversation, ConversationData, Tag } from "./types"
+import {
+  CONVERSATION_CID_VERSION,
+  type Conversation,
+  type ConversationData,
+  type Tag,
+} from "./types"
 
 export type { Conversation, ConversationData, Folder, Tag }
 
@@ -400,9 +405,10 @@ export class ConversationManager {
       if (
         (conversation.siteId === SITE_IDS.CHATGPT ||
           conversation.siteInstanceKey === SITE_IDS.CHATGPT) &&
+        (conversation.cidVersion ?? 0) < CONVERSATION_CID_VERSION &&
         conversation.cid === "personal"
       ) {
-        const cleaned = { ...conversation }
+        const cleaned = { ...conversation, cidVersion: CONVERSATION_CID_VERSION }
         delete cleaned.cid
         nextConversations[storageKey] = cleaned
         changed = true
@@ -421,7 +427,7 @@ export class ConversationManager {
    * cid 取数口径变更站点的存量迁移：把仍挂着旧 cid 的对话清成 undefined。
    * 旧 cid 与新 getCurrentCid() 不匹配会被 matchesCid 过滤掉（对用户表现为数据消失）；
    * 清成 undefined 后回到「无 cid 全空间可见」，再由后续同步按当前账号渐进盖章归位。
-   * 幂等，每次启动执行；恢复旧备份后下次启动会再次生效。
+   * 只处理旧归属版本；同步认领或已迁移的记录不再清空，旧备份仍可逐条迁移。
    */
   private repairLegacyAccountCid(): void {
     const legacyCid = this.siteAdapter.getLegacyCid?.()
@@ -432,8 +438,12 @@ export class ConversationManager {
     const nextConversations: Record<string, Conversation> = {}
 
     for (const [storageKey, conversation] of Object.entries(all)) {
-      if (this.isCurrentSiteInstance(conversation) && conversation.cid === legacyCid) {
-        const cleaned = { ...conversation }
+      if (
+        this.isCurrentSiteInstance(conversation) &&
+        (conversation.cidVersion ?? 0) < CONVERSATION_CID_VERSION &&
+        conversation.cid === legacyCid
+      ) {
+        const cleaned = { ...conversation, cidVersion: CONVERSATION_CID_VERSION }
         delete cleaned.cid
         nextConversations[storageKey] = cleaned
         changed = true
@@ -1199,6 +1209,7 @@ export class ConversationManager {
         siteId: this.siteAdapter.getSiteId(),
         siteInstanceKey: this.siteInstanceKey,
         cid: info.cid,
+        cidVersion: info.cid !== undefined ? CONVERSATION_CID_VERSION : undefined,
         title: info.title,
         url: info.url,
         folderId: this.lastUsedFolderId,
@@ -1227,8 +1238,12 @@ export class ConversationManager {
         needsUpdate = true
       }
 
-      if (info.cid !== undefined && info.cid !== existing.cid) {
+      if (
+        info.cid !== undefined &&
+        (info.cid !== existing.cid || (existing.cidVersion ?? 0) < CONVERSATION_CID_VERSION)
+      ) {
         updates.cid = info.cid
+        updates.cidVersion = CONVERSATION_CID_VERSION
         needsUpdate = true
       }
 
@@ -1669,8 +1684,12 @@ export class ConversationManager {
           updates.siteInstanceKey = this.siteInstanceKey
           needsUpdate = true
         }
-        if (item.cid && item.cid !== existing.cid) {
+        if (
+          item.cid &&
+          (item.cid !== existing.cid || (existing.cidVersion ?? 0) < CONVERSATION_CID_VERSION)
+        ) {
           updates.cid = item.cid
+          updates.cidVersion = CONVERSATION_CID_VERSION
           needsUpdate = true
         }
         if (!existing.folderId || !validFolderIds.has(existing.folderId)) {
@@ -1692,6 +1711,7 @@ export class ConversationManager {
           siteId: this.siteAdapter.getSiteId(),
           siteInstanceKey: this.siteInstanceKey,
           cid: item.cid,
+          cidVersion: item.cid !== undefined ? CONVERSATION_CID_VERSION : undefined,
           title: item.title,
           url: item.url,
           folderId: folderId,
@@ -2081,8 +2101,12 @@ export class ConversationManager {
         needsUpdate = true
       }
 
-      if (cid !== undefined && cid !== existing.cid) {
+      if (
+        currentInfo.cid !== undefined &&
+        (cid !== existing.cid || (existing.cidVersion ?? 0) < CONVERSATION_CID_VERSION)
+      ) {
         updates.cid = cid
+        updates.cidVersion = CONVERSATION_CID_VERSION
         needsUpdate = true
       }
 
@@ -2113,6 +2137,7 @@ export class ConversationManager {
       siteId: this.siteAdapter.getSiteId(),
       siteInstanceKey: this.siteInstanceKey,
       cid,
+      cidVersion: currentInfo.cid !== undefined ? CONVERSATION_CID_VERSION : existing?.cidVersion,
       title,
       url,
       folderId: this.lastUsedFolderId || "inbox",

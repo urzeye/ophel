@@ -177,7 +177,6 @@ const createAIStudioConfig = (): AIStudioSiteConfig => {
       itemSelector: libraryConversationLink,
       idFrom: { attr: "href", regex: "/prompts/([^/?#]+)" },
       urlTemplate: "/prompts/{id}",
-      navigationStrategy: "click-item",
       shadow: false,
     },
     generating: {

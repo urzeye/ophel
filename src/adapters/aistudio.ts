@@ -1209,17 +1209,9 @@ export class AIStudioAdapter extends SiteAdapter {
   }
 
   navigateToConversation(id: string, url?: string): boolean {
-    // 优先在 ms-library-table 内查找，避免误命中页面其他区域的同 URL 链接
-    const link = this.findConversationLinkById(this.config.conversation.itemSelector, id)
-    if (link) {
-      link.click()
-      return true
-    }
-    // 降级：优先 history 导航免刷新（Angular 路由响应 popstate，已实测），失败再硬跳转
     const targetUrl = url || this.config.conversation.urlTemplate.replace("{id}", id)
     if (this.navigateViaHistory(targetUrl)) return true
-    window.location.href = targetUrl
-    return true
+    return super.navigateToConversation(id, targetUrl)
   }
 
   private findConversationLinkById(selector: string, id: string): HTMLAnchorElement | null {
