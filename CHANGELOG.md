@@ -23,6 +23,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **Account and workspace chat isolation** — Chats stay separate across accounts and workspaces, and switching ChatGPT workspaces no longer mixes previously synced personal chats into team history. (#1069, #1071, #1075)
 - **Claude interface update** — Restored full conversation sync, outline jumps, message sending, thought export, and panel avoidance after Claude's interface update. (#1071)
 - **Grok interface redesign** — Fixed the current conversation title missing, Zen Mode failing to hide the sidebar, and the new-chat shortcut reloading the page after Grok's interface update. (#1065)
+- **ChatGLM interface update** — Restored the outline, Smart Avoidance, Clean Mode, and Page Width controls after chatglm.cn's interface redesign. (#1074, #1076)
 
 ---
 
