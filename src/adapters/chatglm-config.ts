@@ -70,7 +70,7 @@ export interface ChatGLMSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const CHATGLM_CONFIG_VERSION = 6
+export const CHATGLM_CONFIG_VERSION = 5
 
 const createChatGLMConfig = (): ChatGLMSiteConfig => {
   const responseContainer = ".chat-list"

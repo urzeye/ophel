@@ -71,7 +71,7 @@ export interface GrokSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const GROK_CONFIG_VERSION = 10
+export const GROK_CONFIG_VERSION = 8
 
 const createGrokConfig = (): GrokSiteConfig => {
   const sidebarScrollContainer =
