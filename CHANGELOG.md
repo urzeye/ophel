@@ -15,7 +15,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### ✨ Improvements
 
-- **Conversation sync and cleanup** — Missing chats remain local for review, selective cleanup, and timed undo, while initial sync shows stoppable progress once chats are found and Grok loads chats directly. (#1064, #1067, #1068, #1070)
+- **Conversation sync and cleanup** — Missing chats remain local for review, selective cleanup, and timed undo, while initial sync shows stoppable progress once chats are found. (#1064, #1067, #1068, #1070)
 - **Conversation navigation** — Built-in sites now switch chats within the page, ChatGPT project and GPT chats retain their original links, and starting a new chat no longer reloads a slowly rendering page. (#1066, #1075)
 
 ### 🐛 Bug Fixes
