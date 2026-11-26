@@ -16,11 +16,11 @@ versioning follows [Semantic Versioning](https://semver.org/).
 ### ✨ Improvements
 
 - **Conversation sync and cleanup** — Missing chats remain local for review, selective cleanup, and timed undo, while initial sync shows stoppable progress once chats are found and Grok loads chats directly. (#1064, #1067, #1068, #1070)
-- **Conversation navigation** — Built-in sites now switch chats within the page, ChatGPT project and GPT chats retain their original links, and starting a new chat no longer reloads a slowly rendering page. (#1066)
+- **Conversation navigation** — Built-in sites now switch chats within the page, ChatGPT project and GPT chats retain their original links, and starting a new chat no longer reloads a slowly rendering page. (#1066, #1075)
 
 ### 🐛 Bug Fixes
 
-- **Account and workspace chat isolation** — Chats stay separate across accounts and workspaces, and switching ChatGPT workspaces no longer mixes previously synced personal chats into team history. (#1069, #1071)
+- **Account and workspace chat isolation** — Chats stay separate across accounts and workspaces, and switching ChatGPT workspaces no longer mixes previously synced personal chats into team history. (#1069, #1071, #1075)
 - **Claude interface update** — Restored full conversation sync, outline jumps, message sending, thought export, and panel avoidance after Claude's interface update. (#1071)
 - **Grok interface redesign** — Fixed the current conversation title missing, Zen Mode failing to hide the sidebar, and the new-chat shortcut reloading the page after Grok's interface update. (#1065)
 
