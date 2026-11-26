@@ -2915,10 +2915,10 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
         ...options,
         sourceId,
       })
-      if (!success) {
+      if (success === false) {
         showToast(t("exportFailed"))
       }
-      return success
+      return success === "cancelled" ? false : success
     },
     [adapter, conversationManager, exportTarget, outlineManager],
   )

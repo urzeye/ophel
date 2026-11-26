@@ -1147,6 +1147,46 @@ export const fr = {
   exportMetaTime: "Date",
   exportMetaSource: "Origine",
   exportNotSupported: "Non supporté ici",
+  // Image export
+  exportToImage: "Image à partager",
+  imageExportTitle: "Exporter en image",
+  imageExportPreview: "Aperçu de l’image",
+  imageExportFormat: "Format de l’image",
+  imageExportTheme: "Thème de l’image",
+  imageExportQuality: "Résolution",
+  imageExportStandard: "Standard · 1×",
+  imageExportHigh: "Haute · 2×",
+  imageExportIncludeQuestions: "Inclure les questions",
+  imageExportBranding: "Signature de marque",
+  imageExportBrandingHint: "Afficher le logo et la mention sur chaque image.",
+  imageExportPoweredBy: "Powered by Ophel Atlas",
+  imageExportPreparing: "Préparation de la mise en page, des images et des diagrammes…",
+  imageExportProgress: "Création des images {current} / {total}…",
+  imageExportReady: "{count} images prêtes. Les contenus longs sont automatiquement divisés.",
+  imageExportPage: "Image {index} / {total} · {width} × {height}",
+  imageExportOpenPreview: "Ouvrir l’image complète",
+  imageExportDownload: "Télécharger l’image",
+  imageExportDownloadAll: "Tout télécharger (ZIP)",
+  imageExportCopy: "Copier l’image",
+  imageExportCopyHint:
+    "Seul un PNG unique peut être copié. Téléchargez plusieurs images dans un ZIP.",
+  imageExportCopyUnavailable:
+    "Ce navigateur ne permet pas de copier les images. Téléchargez-les pour les partager.",
+  imageExportCopying: "Copie de l’image…",
+  imageExportCopyFailed: "Impossible de copier l’image. Réessayez ou téléchargez-la.",
+  imageExportImageFailed:
+    "Impossible de charger une image. Vérifiez l’accès à la pièce jointe et réessayez.",
+  imageExportDiagramFailed:
+    "Impossible d’afficher un diagramme Mermaid. Vérifiez sa syntaxe et réessayez.",
+  imageExportRenderFailed: "Impossible de créer les images. Veuillez réessayer.",
+  imageExportLimit:
+    "Le contenu dépasse la limite des images. Sélectionnez moins de segments et réessayez.",
+  imageExportContentChanged:
+    "Les segments de la conversation ont changé. Fermez et sélectionnez à nouveau le contenu.",
+  imageExportEmpty:
+    "Aucun contenu à exporter. Incluez les questions ou sélectionnez d’autres segments.",
+  imageExportRetry: "Générer à nouveau",
+
   exportToTXT: "TXT",
   exportToHTML: "HTML",
   exportMetaUrl: "Lien",

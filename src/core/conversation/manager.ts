@@ -7,6 +7,7 @@ import type {
   SiteDeleteConversationResult,
 } from "~adapters/base"
 import { SITE_IDS, type Folder } from "~constants"
+import { showImageExportDialog } from "~components/ImageExportDialog"
 import {
   getConversationsForSiteInstance,
   getConversationsStore,
@@ -91,7 +92,11 @@ export type ConversationExportRoute = "current" | "api" | "open-first"
 
 export type ConversationOpenResult = "ready" | "blocked" | "failed"
 
-export type ConversationSegmentedExportMode = "zip-markdown" | "merged-markdown" | "clipboard"
+export type ConversationSegmentedExportMode =
+  | "zip-markdown"
+  | "merged-markdown"
+  | "clipboard"
+  | "image"
 
 /**
  * 历史分页加载的总时长预算。
@@ -2171,10 +2176,14 @@ export class ConversationManager {
     const settings = useSettingsStore.getState().settings
     return {
       conversationId: convId,
-      format,
+      // 图片使用附件打包的采集语义，适配器继续只负责统一消息和资源。
+      format: format === "image" ? "markdown" : format,
       sourceId: options.sourceId,
       includeThoughts: options.includeThoughts ?? settings.export?.includeThoughts ?? true,
-      packaging: options.packaging ?? (settings.export?.packaging === "zip" ? "zip" : "markdown"),
+      packaging:
+        format === "image"
+          ? "zip"
+          : options.packaging ?? (settings.export?.packaging === "zip" ? "zip" : "markdown"),
     }
   }
 
@@ -2317,9 +2326,10 @@ export class ConversationManager {
         exportLifecycleState = await this.siteAdapter.prepareConversationExport(exportContext)
       }
 
-      // 只有 ZIP 模式才收集附件资产；Markdown 模式保持单文件导出路径。
+      // 图片与 ZIP 都需要资源映射；普通 Markdown 保持单文件导出路径。
       notifyProgress("extracting")
-      const shouldPackageAssets = format === "markdown" && exportPackaging === "zip"
+      const shouldPackageAssets =
+        format === "image" || (format === "markdown" && exportPackaging === "zip")
       const exportBundle = shouldPackageAssets
         ? await this.siteAdapter.extractExportBundle(exportContext)
         : null
@@ -2340,7 +2350,7 @@ export class ConversationManager {
       })
 
       // 导出失败时由调用方提示 exportFailed，这里只对成功的结果做完整性提示，避免双重打扰
-      if (result) {
+      if (result && result !== "cancelled") {
         this.reportExportCompleteness(convId, historyPossiblyIncomplete)
       }
       return result
@@ -2504,6 +2514,41 @@ export class ConversationManager {
     }
 
     try {
+      if (mode === "image") {
+        // 只有选择图片时才采集附件，保持原有分段 Markdown 的链接与性能不变。
+        const result = await this.withConversationExportData(
+          draft.conversationId,
+          "image",
+          async ({ messages, exportBundle }) => {
+            const currentSegments = this.createConversationExportSegments(messages)
+            const selected = currentSegments.filter((segment) =>
+              selectedSegmentIds.includes(segment.id),
+            )
+            if (
+              selected.length !== segments.length ||
+              selected.some(
+                (segment, index) =>
+                  segment.exportTitle !== segments[index].exportTitle ||
+                  segment.userMessageCount !== segments[index].userMessageCount ||
+                  segment.assistantMessageCount !== segments[index].assistantMessageCount,
+              )
+            ) {
+              showToast(t("imageExportContentChanged"))
+              return false
+            }
+            this.notifyExportProgress(null)
+            return showImageExportDialog({
+              metadata: draft.metadata,
+              messages: selected.flatMap((segment) => segment.messages),
+              assets: this.normalizeExportAssets(exportBundle),
+              filename: `${draft.filenamePrefix}${draft.safeTitle}${draft.timestampSuffix} - segments`,
+            })
+          },
+          "segment-export",
+        )
+        if (result === null) showToast(t("exportFailed"))
+        return result === true
+      }
       if (mode === "clipboard") {
         const content = this.formatSegmentedMarkdown(draft, segments)
         await navigator.clipboard.writeText(content)
@@ -2577,9 +2622,10 @@ export class ConversationManager {
     convId: string,
     format: ExportFormat,
     options?: ConversationExportOptions,
-  ): Promise<boolean> {
+  ): Promise<boolean | "cancelled"> {
     if (this.getConversationExportRoute(convId) === "api") {
       const outcome = await this.exportConversationViaApi(convId, format, options)
+      if (outcome === "cancelled") return "cancelled"
       if (outcome !== "unavailable") return outcome === "exported"
 
       // 接口无法给出完整内容：公开降级为先打开对话再走 DOM 导出（遮罩会显示"正在打开对话"）
@@ -2598,7 +2644,7 @@ export class ConversationManager {
       options,
     )
 
-    return result === true
+    return result === "cancelled" ? "cancelled" : result === true
   }
 
   /**
@@ -2610,7 +2656,7 @@ export class ConversationManager {
     convId: string,
     format: ExportFormat,
     options?: ConversationExportOptions,
-  ): Promise<"exported" | "failed" | "unavailable"> {
+  ): Promise<"exported" | "failed" | "unavailable" | "cancelled"> {
     const conv = this.getConversation(convId)
     if (!conv) {
       console.error("[ConversationManager] Conversation not found:", convId)
@@ -2641,7 +2687,7 @@ export class ConversationManager {
         notifyProgress,
         sourceUrl: this.resolveConversationSourceUrl(conv),
       })
-      return exported ? "exported" : "failed"
+      return exported === "cancelled" ? "cancelled" : exported ? "exported" : "failed"
     } catch (error) {
       console.error("[ConversationManager] API export failed:", error)
       return "failed"
@@ -2674,7 +2720,7 @@ export class ConversationManager {
       notifyProgress,
       sourceUrl,
     }: ConversationExportData,
-  ): Promise<boolean> {
+  ): Promise<boolean | "cancelled"> {
     const settings = useSettingsStore.getState().settings
 
     // 格式化
@@ -2712,7 +2758,16 @@ export class ConversationManager {
     const safeSiteName = siteName.replace(/[<>:"/\\|?*]/g, "_")
     const filenamePrefix = `${safeSiteName} - `
 
-    if (format === "clipboard") {
+    if (format === "image") {
+      this.notifyExportProgress(null)
+      const exported = await showImageExportDialog({
+        metadata,
+        messages,
+        assets: this.normalizeExportAssets(exportBundle),
+        filename: `${filenamePrefix}${safeTitle}${timestampSuffix}`,
+      })
+      return exported ? true : "cancelled"
+    } else if (format === "clipboard") {
       notifyProgress("copying")
       content = formatToMarkdown(metadata, messages)
       await navigator.clipboard.writeText(content)

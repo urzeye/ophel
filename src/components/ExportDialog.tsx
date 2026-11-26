@@ -17,6 +17,7 @@ import { t } from "~utils/i18n"
 import { useSettingsStore } from "~stores/settings-store"
 
 import { DialogOverlay } from "./ui/Dialog"
+import { ImageFileIcon } from "./icons/ImageFileIcon"
 import { Tooltip } from "./ui/Tooltip"
 
 const EXPORT_DIALOG_STYLES = `
@@ -440,6 +441,7 @@ const getFormatOptions = (): {
 }[] => [
   { format: "markdown", label: "Markdown", badge: ".md", Icon: MarkdownIcon },
   { format: "html", label: "HTML", badge: ".html", Icon: HTMLFileIcon },
+  { format: "image", label: t("exportToImage"), badge: "PNG / JPG", Icon: ImageFileIcon },
   { format: "json", label: "JSON", badge: ".json", Icon: JSONFileIcon },
   { format: "txt", label: "Text", badge: ".txt", Icon: TXTFileIcon },
   { format: "clipboard", label: t("exportToClipboard"), Icon: CopyIcon },
@@ -752,7 +754,9 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
               ? t("exporting")
               : outlineCopySelected || selectedFormat === "clipboard"
                 ? t("copy")
-                : t("export")}
+                : selectedFormat === "image"
+                  ? t("imageExportPreview")
+                  : t("export")}
           </button>
         </div>
       </div>

@@ -54,7 +54,7 @@ export interface ExportMetadata {
   style?: ExportStyle
 }
 
-export type ExportFormat = "markdown" | "json" | "txt" | "html" | "clipboard"
+export type ExportFormat = "markdown" | "json" | "txt" | "html" | "image" | "clipboard"
 
 export interface ZipFileInput {
   path: string
@@ -1014,7 +1014,7 @@ function renderExportMarkdown(content: string): string {
   return html
 }
 
-const EXPORT_HTML_CSS = `
+export const EXPORT_HTML_CSS = `
 :root {
   --gh-bg: #f7f6f4;
   --gh-surface: #ffffff;
@@ -1922,7 +1922,7 @@ function withFetchTimeout<T>(promise: Promise<T>, timeoutMs: number, label: stri
   return Promise.race([promise, timeout]).finally(() => clearTimeout(timer))
 }
 
-async function resolveAssetData(
+export async function resolveAssetData(
   asset: ExportAsset,
 ): Promise<string | Blob | ArrayBuffer | Uint8Array> {
   if (asset.content !== undefined) {

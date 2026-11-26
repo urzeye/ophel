@@ -262,7 +262,7 @@
   }
 
   async function renderMermaid(payload) {
-    const { requestId, previewId, source, theme } = payload || {}
+    const { requestId, previewId, source, theme, exportImage } = payload || {}
 
     try {
       const previewElement = findPreviewElement(previewId)
@@ -278,13 +278,15 @@
       }
 
       const mermaid = getMermaid()
-      if (initializedTheme !== theme) {
+      const configurationKey = `${theme}:${exportImage === true}`
+      if (initializedTheme !== configurationKey) {
         mermaid.initialize({
           startOnLoad: false,
           securityLevel: "strict",
           theme: theme === "dark" ? "dark" : "default",
+          ...(exportImage === true ? { flowchart: { htmlLabels: false } } : {}),
         })
-        initializedTheme = theme
+        initializedTheme = configurationKey
       }
 
       await withTrustedHtmlAssignments(async () => {
@@ -317,6 +319,8 @@
     }
   }
 
+  // 初始化主题与渲染必须串行，避免页面增强和导出使用不同主题时互相污染。
+  let renderQueue = Promise.resolve()
   window.addEventListener("message", (event) => {
     const payload = event.data
 
@@ -325,6 +329,6 @@
     if (event.source !== window && payload?.type !== REQUEST_EVENT) return
     if (payload?.type !== REQUEST_EVENT) return
 
-    void renderMermaid(payload)
+    renderQueue = renderQueue.then(() => renderMermaid(payload))
   })
 })()
