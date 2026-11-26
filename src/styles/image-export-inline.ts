@@ -42,6 +42,8 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
 .gh-image-export-state { min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; text-align: center; }
 .gh-image-export-state p { max-width: 36ch; margin: 0; font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
 .gh-image-export-state progress { width: min(240px, 80%); height: 6px; accent-color: var(--gh-primary, #4285f4); }
+.gh-image-export-error-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-width: 100%; }
+.gh-image-export-error-actions .gh-dialog-btn { white-space: normal; }
 .gh-image-export-footer { flex-wrap: wrap; border-top: 1px solid var(--gh-border, #e5e7eb); }
 .gh-image-export-status { margin: 0; flex: 1 1 180px; color: var(--gh-text-secondary, #6b7280); font-size: 12px; line-height: 1.5; }
 .gh-image-export-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
@@ -58,14 +60,14 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
   .gh-image-export-body { display: flex; flex-direction: column; overflow-y: auto; }
   .gh-image-export-controls { overflow: visible; border-right: 0; border-bottom: 1px solid var(--gh-border, #e5e7eb); padding: 16px; display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 16px; }
   .gh-image-export-controls fieldset { margin: 0; }
-  .gh-image-export-controls fieldset:nth-of-type(3) { grid-column: 1 / -1; }
+  .gh-image-export-controls .gh-image-export-wide-options { grid-column: 1 / -1; }
   .gh-image-export-toggle { margin: 0; }
   .gh-image-export-preview { flex: 1 0 240px; overflow: visible; padding: 16px; }
   .gh-image-export-actions { width: 100%; justify-content: flex-end; }
 }
 @media (pointer: coarse) {
   .gh-image-export-close { width: 44px; height: 44px; }
-  .gh-image-export-choice, .gh-image-export-actions .gh-dialog-btn { min-height: 44px; }
+  .gh-image-export-choice, .gh-image-export-actions .gh-dialog-btn, .gh-image-export-error-actions .gh-dialog-btn { min-height: 44px; }
   .gh-image-export-toggle { min-height: 44px; padding-block: 10px; box-sizing: border-box; }
 }
 @media (prefers-reduced-motion: reduce) { .gh-image-export-choice { transition: none; } }

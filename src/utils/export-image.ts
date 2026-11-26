@@ -5,12 +5,19 @@ import {
   prepareExportDocument,
   type ExportDocumentInput,
   type ExportDocumentOptions,
+  type PreparedExportDocument,
 } from "~utils/export-document"
-import { planExportImageSlices } from "~utils/export-image-layout"
+import {
+  getExportImageContentHeight,
+  isWithinExportImageBudget,
+  planExportImageSlices,
+  type ExportImageSlice,
+} from "~utils/export-image-layout"
 
 export interface ExportImageOptions extends ExportDocumentOptions {
   format: "png" | "jpeg"
   scale: 1 | 2
+  layout: "single" | "split"
 }
 
 export interface ExportImagePage {
@@ -113,6 +120,30 @@ function collectBreaks(conversation: HTMLElement): number[] {
   return points
 }
 
+function createImageFrame(
+  prepared: PreparedExportDocument,
+  slice: ExportImageSlice,
+  index: number,
+  total: number,
+): { page: HTMLElement; viewport: HTMLElement } {
+  const page = document.createElement("div")
+  page.className = prepared.root.className
+  page.dataset.theme = prepared.options.theme
+  page.style.width = `${prepared.options.width}px`
+  const shell = document.createElement("main")
+  shell.className = "gh-shell"
+  shell.append(prepared.header.cloneNode(true))
+  const viewport = document.createElement("div")
+  viewport.className = "gh-export-slice"
+  viewport.style.height = `${slice.end - slice.start}px`
+  viewport.style.marginTop = "28px"
+  shell.append(viewport)
+  const footer = createExportBrand(prepared, index, total)
+  if (footer) shell.append(footer)
+  page.append(shell)
+  return { page, viewport }
+}
+
 export async function renderExportImages(
   input: ExportDocumentInput,
   options: ExportImageOptions,
@@ -122,38 +153,48 @@ export async function renderExportImages(
   const prepared = await prepareExportDocument(input, options, signal)
   try {
     signal.throwIfAborted()
-    const { root, conversation, header } = prepared
+    const { root, conversation } = prepared
     const bounds = conversation.getBoundingClientRect()
     if (!bounds.height || !bounds.width)
       throw new ExportDocumentError("render", "Empty export layout")
-    const slices = planExportImageSlices(bounds.height, collectBreaks(conversation))
+    const contentHeight = Math.ceil(bounds.height)
+    // 用同一个框架测量实际开销；1px 正文避免空块的 margin 折叠改变高度。
+    const probe = createImageFrame(prepared, { start: 0, end: 1 }, 0, 1)
+    root.after(probe.page)
+    const frameHeight = probe.page.getBoundingClientRect().height - 1
+    probe.page.remove()
+    if (
+      options.layout === "single" &&
+      !isWithinExportImageBudget(options.width, contentHeight + frameHeight, options.scale)
+    ) {
+      throw new ExportDocumentError(
+        "single-limit",
+        "Long image exceeds the pixel budget",
+        options.scale === 2 &&
+          isWithinExportImageBudget(options.width, contentHeight + frameHeight, 1),
+      )
+    }
+    const maxContentHeight = getExportImageContentHeight(options.width, options.scale, frameHeight)
+    if (maxContentHeight < 1)
+      throw new ExportDocumentError("limit", "Image frame exceeds the pixel budget")
+    const slices =
+      options.layout === "single"
+        ? [{ start: 0, end: contentHeight }]
+        : planExportImageSlices(contentHeight, collectBreaks(conversation), maxContentHeight)
     const pages: ExportImagePage[] = []
     onProgress(0, slices.length)
     for (const [index, slice] of slices.entries()) {
       signal.throwIfAborted()
-      const page = document.createElement("div")
-      page.className = root.className
-      page.dataset.theme = options.theme
-      page.style.width = `${options.width}px`
-      const shell = document.createElement("main")
-      shell.className = "gh-shell"
-      shell.append(header.cloneNode(true))
-      const viewport = document.createElement("div")
-      viewport.className = "gh-export-slice"
-      viewport.style.height = `${slice.end - slice.start}px`
-      viewport.style.marginTop = "28px"
+      const { page, viewport } = createImageFrame(prepared, slice, index, slices.length)
       const content = conversation.cloneNode(true) as HTMLElement
       content.style.transform = `translateY(-${slice.start}px)`
       viewport.append(content)
-      shell.append(viewport)
-      const footer = createExportBrand(prepared, index, slices.length)
-      if (footer) shell.append(footer)
-      page.append(shell)
       root.after(page)
       try {
-        const width = Math.ceil(page.getBoundingClientRect().width * options.scale)
-        const height = Math.ceil(page.getBoundingClientRect().height * options.scale)
-        if (width * height > 16_000_000 || Math.max(width, height) > 16_000) {
+        const dimensions = page.getBoundingClientRect()
+        const width = Math.ceil(dimensions.width * options.scale)
+        const height = Math.ceil(dimensions.height * options.scale)
+        if (!isWithinExportImageBudget(dimensions.width, dimensions.height, options.scale)) {
           throw new ExportDocumentError("limit", "Export image exceeds the pixel budget")
         }
         const canvas = await captureExportCanvas(page, {

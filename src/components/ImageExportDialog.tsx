@@ -20,10 +20,14 @@ interface ImageExportDialogProps {
 }
 
 function getRenderError(error: unknown): string {
+  if (typeof error === "string") return error
   if (error instanceof ExportDocumentError) {
     if (error.kind === "image") return t("imageExportImageFailed")
     if (error.kind === "diagram") return t("imageExportDiagramFailed")
     if (error.kind === "limit") return t("imageExportLimit")
+    if (error.kind === "single-limit") {
+      return t(error.canReduceScale ? "imageExportSingleLimit" : "imageExportSingleLimitNoScale")
+    }
   }
   return t("imageExportRenderFailed")
 }
@@ -34,13 +38,14 @@ export function ImageExportDialog({ input, onClose }: ImageExportDialogProps) {
     document.documentElement.dataset.theme === "dark" ? "dark" : "light",
   )
   const [scale, setScale] = useState<1 | 2>(2)
+  const [layout, setLayout] = useState<ExportImageOptions["layout"]>("single")
   const [branding, setBranding] = useState(true)
   const [includeQuestions, setIncludeQuestions] = useState(true)
   const [revision, setRevision] = useState(0)
   const [pages, setPages] = useState<(ExportImagePage & { url: string })[]>([])
   const [progress, setProgress] = useState({ completed: 0, total: 0 })
   const [rendering, setRendering] = useState(true)
-  const [error, setError] = useState("")
+  const [error, setError] = useState<ExportDocumentError | string | null>(null)
   const [actionError, setActionError] = useState("")
   const [activity, setActivity] = useState<"download" | "copy" | null>(null)
   const saving = activity !== null
@@ -49,8 +54,8 @@ export function ImageExportDialog({ input, onClose }: ImageExportDialogProps) {
   const didExport = useRef(false)
   const closeButton = useRef<HTMLButtonElement>(null)
   const options = useMemo(
-    () => ({ format, theme, scale, branding, width: 800 }),
-    [format, theme, scale, branding],
+    () => ({ format, theme, scale, layout, branding, width: 800 }),
+    [format, theme, scale, layout, branding],
   )
   const canCopy =
     pages.length === 1 &&
@@ -103,7 +108,7 @@ export function ImageExportDialog({ input, onClose }: ImageExportDialogProps) {
     const urls: string[] = []
     setPages([])
     setRendering(true)
-    setError("")
+    setError(null)
     setActionError("")
     setProgress({ completed: 0, total: 0 })
     const messages = includeQuestions
@@ -135,7 +140,7 @@ export function ImageExportDialog({ input, onClose }: ImageExportDialogProps) {
       .catch((failure: unknown) => {
         if (controller.signal.aborted) return
         console.error("[ImageExport] Render failed:", failure)
-        setError(getRenderError(failure))
+        setError(failure instanceof ExportDocumentError ? failure : getRenderError(failure))
       })
       .finally(() => {
         if (!controller.signal.aborted) setRendering(false)
@@ -234,6 +239,21 @@ export function ImageExportDialog({ input, onClose }: ImageExportDialogProps) {
       </header>
       <div className="gh-image-export-body">
         <aside className="gh-image-export-controls">
+          <fieldset disabled={saving} className="gh-image-export-wide-options">
+            <legend>{t("imageExportLayout")}</legend>
+            <div className="gh-image-export-options">
+              {(["single", "split"] as const).map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  className="gh-image-export-choice"
+                  aria-pressed={layout === value}
+                  onClick={() => setLayout(value)}>
+                  {t(value === "single" ? "imageExportSingle" : "imageExportSplit")}
+                </button>
+              ))}
+            </div>
+          </fieldset>
           <fieldset disabled={saving}>
             <legend>{t("imageExportFormat")}</legend>
             <div className="gh-image-export-options">
@@ -264,7 +284,7 @@ export function ImageExportDialog({ input, onClose }: ImageExportDialogProps) {
               ))}
             </div>
           </fieldset>
-          <fieldset disabled={saving}>
+          <fieldset disabled={saving} className="gh-image-export-wide-options">
             <legend>{t("imageExportQuality")}</legend>
             <div className="gh-image-export-options">
               {([1, 2] as const).map((value) => (
@@ -317,14 +337,33 @@ export function ImageExportDialog({ input, onClose }: ImageExportDialogProps) {
           ) : error ? (
             <div className="gh-image-export-state">
               <p role="alert" className="gh-image-export-error">
-                {error}
+                {getRenderError(error)}
               </p>
-              <button
-                type="button"
-                className="gh-dialog-btn gh-dialog-btn-primary"
-                onClick={() => setRevision((current) => current + 1)}>
-                {t("imageExportRetry")}
-              </button>
+              {error instanceof ExportDocumentError && error.kind === "single-limit" ? (
+                <div className="gh-image-export-error-actions">
+                  {error.canReduceScale && (
+                    <button
+                      type="button"
+                      className="gh-dialog-btn gh-dialog-btn-secondary"
+                      onClick={() => setScale(1)}>
+                      {t("imageExportUseStandard")}
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className="gh-dialog-btn gh-dialog-btn-primary"
+                    onClick={() => setLayout("split")}>
+                    {t("imageExportUseSplit")}
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className="gh-dialog-btn gh-dialog-btn-primary"
+                  onClick={() => setRevision((current) => current + 1)}>
+                  {t("imageExportRetry")}
+                </button>
+              )}
             </div>
           ) : (
             pages.map((page, index) => (

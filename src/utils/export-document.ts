@@ -35,8 +35,9 @@ export interface PreparedExportDocument {
 
 export class ExportDocumentError extends Error {
   constructor(
-    readonly kind: "image" | "diagram" | "render" | "limit",
+    readonly kind: "image" | "diagram" | "render" | "limit" | "single-limit",
     detail = "",
+    readonly canReduceScale = false,
   ) {
     super(detail)
     this.name = "ExportDocumentError"
