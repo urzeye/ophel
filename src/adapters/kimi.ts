@@ -30,6 +30,7 @@ import {
   type ConversationObserverConfig,
   type ExportConfig,
   type ExportLifecycleContext,
+  type TableCopyTarget,
   type MarkdownFixerConfig,
   type ModelSwitcherConfig,
   type NetworkMonitorConfig,
@@ -702,6 +703,8 @@ export class KimiAdapter extends SiteAdapter {
       .querySelectorAll(this.config.sitePrivateSelectors.exportDecoration)
       .forEach((node) => node.remove())
 
+    this.normalizeKimiExportContent(clone)
+
     const includeThoughts = this.shouldIncludeThoughtsInExport()
     const thoughtBlocks = includeThoughts ? this.extractThoughtBlockquotes(clone) : []
 
@@ -721,6 +724,44 @@ export class KimiAdapter extends SiteAdapter {
       return content ? `${thoughtSection}\n\n${content}` : thoughtSection
     }
     return content
+  }
+
+  private normalizeKimiExportContent(root: HTMLElement): void {
+    for (const container of root.querySelectorAll(".table.markdown-table")) {
+      const headerTable = container.querySelector("table.header-table")
+      const body = container.querySelector("table.body-table > tbody")
+      if (!headerTable?.querySelector("thead") || !body) continue
+
+      const bodyTable = body.parentElement!
+      headerTable.append(body)
+      bodyTable.remove()
+    }
+
+    for (const paragraph of root.querySelectorAll("div.paragraph")) {
+      const normalized = root.ownerDocument.createElement("p")
+      for (const child of Array.from(paragraph.childNodes)) {
+        if (child.nodeType === Node.TEXT_NODE) {
+          child.textContent = (child.textContent || "").replace(/[ \t]*\r?\n[ \t]*/g, "\n\n")
+        }
+        normalized.append(child)
+      }
+      paragraph.replaceWith(normalized)
+    }
+  }
+
+  getTableCopyTarget(table: HTMLTableElement): TableCopyTarget | null {
+    if (!table.matches(".header-table, .body-table")) return null
+
+    const container = table.closest<HTMLElement>(".table.markdown-table")
+    if (!container) return null
+
+    return {
+      container,
+      getRows: () => [
+        ...container.querySelectorAll<HTMLTableRowElement>("table.header-table > thead > tr"),
+        ...container.querySelectorAll<HTMLTableRowElement>("table.body-table > tbody > tr"),
+      ],
+    }
   }
 
   getLatestReplyText(): string | null {

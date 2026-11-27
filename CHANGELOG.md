@@ -13,6 +13,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 - **Image export** — Export whole chats or selected segments as a long PNG or JPG image, with optional splitting and a branded footer. (#1073, #1078)
 
+### 🐛 Bug Fixes
+
+- **Kimi table copying and Markdown export** — Fixed duplicate table copy buttons, incomplete copied tables, and broken tables and paragraph breaks in exported conversations. (#1079, #1080)
+
 ---
 
 ## [1.3.6][1.3.6] - 2026-11-26
