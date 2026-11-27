@@ -11,7 +11,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🚀 New Features
 
-- **Image export** — Share conversations as PNG/JPG images with automatic themes, custom watermarks, adjustable content and appearance, preview zoom, and saved export preferences. (#1073, #1078)
+- **Image export** — Share conversations as PNG/JPG images with automatic themes, custom watermarks, adjustable content and appearance, preview zoom, and saved export preferences. (#1073, #1078, #1084)
 - **Muse SitePack** — Adds outlines, basic export, prompt insertion, width controls, and Zen Mode to Muse main and side chats, and fixes return anchors when scrolling in reverse. (#1083)
 
 ### 🐛 Bug Fixes
