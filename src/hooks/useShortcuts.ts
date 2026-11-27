@@ -137,7 +137,7 @@ export function useShortcuts({
       // 保存锚点到全局存储
       const scrollInfo = await getScrollInfo(adapter)
       // 已在顶部时不覆盖锚点，避免重复点击丢失原位置
-      if (scrollInfo.scrollTop >= 4) anchorStore.set(scrollInfo.scrollTop)
+      if (!scrollInfo.atTop) anchorStore.set(scrollInfo.scrollTop)
 
       const result = await loadHistoryUntil({
         adapter,
@@ -170,10 +170,7 @@ export function useShortcuts({
       // 保存锚点到全局存储
       const scrollInfo = await getScrollInfo(adapter)
       // 已在底部时不覆盖锚点，避免重复点击丢失原位置
-      const atBottom =
-        scrollInfo.clientHeight > 0 &&
-        scrollInfo.scrollHeight - scrollInfo.clientHeight - scrollInfo.scrollTop < 4
-      if (!atBottom) anchorStore.set(scrollInfo.scrollTop)
+      if (!scrollInfo.atBottom) anchorStore.set(scrollInfo.scrollTop)
 
       const { virtualEdgeSettled } = await smartScrollToBottom(adapter, { signal })
 

@@ -12,7 +12,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 ### 🚀 New Features
 
 - **Image export** — Export whole chats or selected segments as a long PNG or JPG image, with optional splitting and a branded footer. (#1073, #1078)
-- **Muse SitePack** — Adds outline navigation, top and bottom jumps, return anchors, basic export, prompt insertion, chat width controls, and Zen Mode for Muse main and side chats. (#1083)
+- **Muse SitePack** — Adds outlines, basic export, prompt insertion, width controls, and Zen Mode to Muse main and side chats, and fixes return anchors when scrolling in reverse. (#1083)
 
 ### 🐛 Bug Fixes
 

@@ -971,6 +971,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
       return
     }
     await withAnchorOp(async (signal) => {
+      const scrollInfo = await getScrollInfo(adapter || null)
       // 遮罩延迟显示
       const OVERLAY_DELAY_MS = 1600
       abortLoadingRef.current = false
@@ -1008,7 +1009,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
           },
         })
         // 已在顶部时不覆盖锚点，避免重复点击丢失原位置
-        if (result.previousScrollTop >= 4) anchorStore.set(result.previousScrollTop)
+        if (!scrollInfo.atTop) anchorStore.set(scrollInfo.scrollTop)
 
         // 清理遮罩
         if (overlayTimer) {
@@ -1043,11 +1044,11 @@ export const MainPanel: React.FC<MainPanelProps> = ({
       return
     }
     await withAnchorOp(async () => {
-      const { previousScrollTop, container } = await smartScrollToBottom(adapter || null)
+      const scrollInfo = await getScrollInfo(adapter || null)
+      await smartScrollToBottom(adapter || null)
       // 已在底部时不覆盖锚点，避免重复点击丢失原位置
-      const maxScroll = container.scrollHeight - container.clientHeight
-      if (container.clientHeight <= 0 || maxScroll - previousScrollTop >= 4) {
-        anchorStore.set(previousScrollTop)
+      if (!scrollInfo.atBottom) {
+        anchorStore.set(scrollInfo.scrollTop)
       }
     })
   }, [adapter, isSourceNavigation, navigateSource])
