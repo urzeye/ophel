@@ -176,6 +176,11 @@ export interface FormulaCopySource {
   isBlock?: boolean
 }
 
+export interface TableCopyTarget {
+  container: HTMLElement
+  getRows: () => HTMLTableRowElement[]
+}
+
 export interface ZenModeStyleRule {
   selector: string
   property: string
@@ -526,6 +531,10 @@ export abstract class SiteAdapter {
   /** 当前站点是否支持从页面 DOM 稳定提取公式源码 */
   supportsFormulaCopy(): boolean {
     return true
+  }
+
+  getTableCopyTarget(_table: HTMLTableElement): TableCopyTarget | null {
+    return null
   }
 
   // ==================== 对话相关 ====================

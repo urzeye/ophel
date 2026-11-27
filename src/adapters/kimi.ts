@@ -30,6 +30,7 @@ import {
   type ConversationObserverConfig,
   type ExportConfig,
   type ExportLifecycleContext,
+  type TableCopyTarget,
   type MarkdownFixerConfig,
   type ModelSwitcherConfig,
   type NetworkMonitorConfig,
@@ -745,6 +746,21 @@ export class KimiAdapter extends SiteAdapter {
         normalized.append(child)
       }
       paragraph.replaceWith(normalized)
+    }
+  }
+
+  getTableCopyTarget(table: HTMLTableElement): TableCopyTarget | null {
+    if (!table.matches(".header-table, .body-table")) return null
+
+    const container = table.closest<HTMLElement>(".table.markdown-table")
+    if (!container) return null
+
+    return {
+      container,
+      getRows: () => [
+        ...container.querySelectorAll<HTMLTableRowElement>("table.header-table > thead > tr"),
+        ...container.querySelectorAll<HTMLTableRowElement>("table.body-table > tbody > tr"),
+      ],
     }
   }
 

@@ -15,7 +15,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
-- **Kimi Markdown export** — Fixed broken tables and missing paragraph breaks when exporting Kimi conversations. (#1079, #1080)
+- **Kimi table copying and Markdown export** — Fixed duplicate table copy buttons, incomplete copied tables, and broken tables and paragraph breaks in exported conversations. (#1079, #1080)
 
 ---
 

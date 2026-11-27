@@ -464,12 +464,18 @@ export class CopyManager {
     if (!isInMarkdownPreview && this.isTableInsideEditableHost(table)) return
 
     try {
+      const target = isInMarkdownPreview ? null : this.siteAdapter?.getTableCopyTarget(table)
       // 尝试找到原生表格容器
       let container: HTMLElement
       if (isInMarkdownPreview) {
         // Markdown 预览区域：直接用表格作为容器
         container = table
         table.style.position = "relative"
+      } else if (target) {
+        container = target.container
+        if (container.querySelector(":scope > .gh-table-copy-btn")) return
+        container.classList.add("gh-table-container")
+        container.style.position = "relative"
       } else {
         container = table.closest("table-block, ucs-markdown-table") as HTMLElement
         if (!container) {
@@ -530,7 +536,7 @@ export class CopyManager {
         e.preventDefault()
         e.stopPropagation()
 
-        const markdown = this.tableToMarkdown(table)
+        const markdown = this.tableToMarkdown(table, target?.getRows())
         navigator.clipboard
           .writeText(markdown)
           .then(() => {
@@ -591,8 +597,10 @@ export class CopyManager {
   /**
    * 表格转 Markdown
    */
-  tableToMarkdown(table: HTMLTableElement): string {
-    const rows = table.querySelectorAll("tr")
+  tableToMarkdown(
+    table: HTMLTableElement,
+    rows = Array.from(table.querySelectorAll("tr")),
+  ): string {
     if (rows.length === 0) return ""
 
     const lines: string[] = []
