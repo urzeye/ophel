@@ -1,7 +1,7 @@
-import { EXPORT_IMAGE_DOCUMENT_CSS } from "~styles/export-document-inline"
+import { getExportImageDocumentCss } from "~styles/export-document-inline"
 import { getAppIconUrl } from "~utils/config"
 import {
-  EXPORT_HTML_CSS,
+  getExportHtmlCss,
   formatToHTML,
   resolveAssetData,
   type ExportAsset,
@@ -194,10 +194,11 @@ export async function prepareExportDocument(
   const shadow = host.attachShadow({ mode: "open" })
   const style = document.createElement("style")
   style.textContent =
-    EXPORT_HTML_CSS.replaceAll(":root", ".gh-export-document")
+    getExportHtmlCss()
+      .replaceAll(":root", ".gh-export-document")
       .replaceAll('html[data-theme="dark"]', '.gh-export-document[data-theme="dark"]')
       .replace(/(^|[\s,])(?:html|body)(?=\s*[{,])/g, "$1.gh-export-document") +
-    EXPORT_IMAGE_DOCUMENT_CSS
+    getExportImageDocumentCss()
   const parsed = new DOMParser().parseFromString(
     createSafeHTML(formatToHTML(input.metadata, input.messages)),
     "text/html",

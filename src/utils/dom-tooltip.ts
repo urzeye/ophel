@@ -46,7 +46,7 @@ export function isFocusFromWindowRestoration(): boolean {
   })
 })()
 
-export const GLOBAL_TOOLTIP_STYLE_TEXT = `
+export const getGlobalTooltipStyleText = (): string => `
   .ophel-tooltip {
     /* 与 src/style.css 的 .ophel-tooltip 保持一致：反色派生，跟随主题变量 */
     background-color: color-mix(in srgb, var(--gh-text, rgb(24, 24, 28)) 94%, transparent);
@@ -76,6 +76,8 @@ export const GLOBAL_TOOLTIP_STYLE_TEXT = `
     }
   }
 `
+
+export const GLOBAL_TOOLTIP_STYLE_TEXT = /*#__PURE__*/ getGlobalTooltipStyleText()
 
 export type TooltipPlacement = "top" | "bottom" | "left" | "right" | "auto"
 
@@ -153,7 +155,7 @@ export function ensureGlobalTooltipStyles(container: Element | DocumentFragment 
 
   const style = document.createElement("style")
   style.id = GLOBAL_TOOLTIP_STYLE_ID
-  style.textContent = GLOBAL_TOOLTIP_STYLE_TEXT
+  style.textContent = getGlobalTooltipStyleText()
   document.head.appendChild(style)
 }
 

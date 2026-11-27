@@ -1,6 +1,6 @@
 // 独立导出表面使用自洽的编辑级配色与排版，不继承宿主页样式。
 // 注意：成品经 html-to-image 白名单内联样式捕获，新增样式只使用白名单内的属性。
-export const EXPORT_IMAGE_DOCUMENT_CSS = `
+export const getExportImageDocumentCss = (): string => `
 .gh-export-document {
   --gh-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
   --gh-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
@@ -543,3 +543,5 @@ export const EXPORT_IMAGE_DOCUMENT_CSS = `
   border-top: 1px solid var(--gh-border);
 }
 `
+
+export const EXPORT_IMAGE_DOCUMENT_CSS = /*#__PURE__*/ getExportImageDocumentCss()

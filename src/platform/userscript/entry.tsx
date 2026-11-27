@@ -11,6 +11,7 @@ import { matchesHiddenPath } from "~utils/hidden-paths"
 import { EVENT_PAGE_URL_CHANGE } from "~utils/messaging"
 
 import { USERSCRIPT_RESOURCE_DEFINITIONS } from "./resource-manifest"
+import { ensureUserscriptHostStyles } from "./text-resources"
 import { injectGeminiCanvasCodeBridge } from "./gemini-canvas-inject"
 import { getInitialUserscriptLanguage, primeUserscriptLocales, subscribeI18nChanges } from "./i18n"
 import { injectScrollLock } from "./scroll-lock-inject"
@@ -434,6 +435,7 @@ async function init() {
   publishAdaptersVendorBridge()
   await initAdapterRegistry()
   initGeminiTitleGuard()
+  ensureUserscriptHostStyles()
 
   let mountObserver: MutationObserver | null = null
   let mountInterval: number | null = null

@@ -1,4 +1,4 @@
-export const IMAGE_EXPORT_DIALOG_CSS = `
+export const getImageExportDialogCss = (): string => `
 .gh-dialog.gh-image-export-dialog {
   width: min(1160px, calc(100vw - 32px));
   max-width: 1160px;
@@ -1221,3 +1221,5 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
   }
 }
 `
+
+export const IMAGE_EXPORT_DIALOG_CSS = /*#__PURE__*/ getImageExportDialogCss()

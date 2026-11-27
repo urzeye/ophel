@@ -23,7 +23,7 @@ import { DEFAULT_IMAGE_EXPORT } from "~constants/image-export"
 import type { ThemeManager } from "~core/theme-manager"
 import { useImageExport } from "~hooks/useImageExport"
 import { useSettingsStore } from "~stores/settings-store"
-import { IMAGE_EXPORT_DIALOG_CSS } from "~styles/image-export-inline"
+import { getImageExportDialogCss } from "~styles/image-export-inline"
 import type { ImageExportPreferences, ImageExportWatermark } from "~types/image-export"
 import { ExportDocumentError, type ExportDocumentInput } from "~utils/export-document"
 import type { ExportImageOptions } from "~utils/export-image"
@@ -61,7 +61,7 @@ function ensureImageExportDialogStyles(): void {
   }
   const style = document.createElement("style")
   style.id = IMAGE_EXPORT_STYLE_ID
-  style.textContent = IMAGE_EXPORT_DIALOG_CSS
+  style.textContent = getImageExportDialogCss()
   document.head.appendChild(style)
   imageExportStylesInjected = true
 }

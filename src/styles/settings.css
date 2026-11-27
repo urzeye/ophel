@@ -4322,6 +4322,70 @@ html[data-theme="dark"] .about-slogan-badge {
   line-height: 1.65;
 }
 
+.about-hero-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.about-release-notes-btn {
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 7px;
+  padding: 0 12px;
+  border: 1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 24%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 8%, transparent);
+  color: var(--gh-primary-text, var(--gh-primary, #4285f4));
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 0;
+}
+
+.about-release-notes-btn:hover,
+.about-release-notes-btn:focus-visible {
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 14%, transparent);
+}
+
+.about-release-notes-btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 42%, transparent);
+  outline-offset: 2px;
+}
+
+/* 关于页“查看更新日志”按钮上的未读红点 */
+.about-release-notes-unread {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--gh-danger, #ef4444);
+  /* keyframes 复用本文件定义的 gh-unread-dot-pulse */
+  animation: gh-unread-dot-pulse 2s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .about-release-notes-unread {
+    animation: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .about-hero-heading {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .about-release-notes-btn {
+    width: 100%;
+  }
+}
+
 .about-platforms-card {
   background: var(--gh-surface, var(--gh-card-bg, #ffffff));
   border: 1px solid var(--gh-card-border, var(--gh-border, #e5e7eb));

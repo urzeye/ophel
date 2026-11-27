@@ -282,31 +282,39 @@ export interface WebDAVRuntime {
   saveStatus: (patch: WebDAVStatus) => Promise<void>
 }
 
+export interface WebDAVConfigStore {
+  getConfig: () => Partial<WebDAVConfig> | undefined
+  saveConfig: (config: WebDAVConfig) => void
+}
+
 export class WebDAVSyncManager {
   private config: WebDAVConfig = DEFAULT_WEBDAV_CONFIG
   // 首次加载必须先于任何 setConfig 完成：它晚到时会把调用方刚设置的配置覆盖回已保存的值
   private readonly initialLoad: Promise<WebDAVConfig>
 
-  constructor(private readonly runtime?: WebDAVRuntime) {
+  constructor(
+    private readonly runtime?: WebDAVRuntime,
+    private configStore?: WebDAVConfigStore,
+  ) {
     if (runtime) this.config = runtime.config
     this.initialLoad = runtime ? Promise.resolve(this.config) : this.loadConfig()
   }
 
+  setConfigStore(configStore: WebDAVConfigStore): void {
+    this.configStore = configStore
+  }
+
   /**
    * 加载配置
-   * ⭐ 使用 Zustand store 读取 settings
+   * 通过外部注入的 configStore 读取 settings，避免动态导入 settings-store 触发扩展端额外分块
    */
   async loadConfig(): Promise<WebDAVConfig> {
-    // 动态导入避免循环依赖
-    const { getSettingsState } = await import("~stores/settings-store")
-    const settings = getSettingsState()
-    if (settings?.webdav) {
+    const savedWebdav = this.configStore?.getConfig()
+    if (savedWebdav) {
       const config: WebDAVConfig = {
         ...DEFAULT_WEBDAV_CONFIG,
-        ...settings.webdav,
-        provider: isValidWebDAVProvider(settings.webdav.provider)
-          ? settings.webdav.provider
-          : undefined,
+        ...savedWebdav,
+        provider: isValidWebDAVProvider(savedWebdav.provider) ? savedWebdav.provider : undefined,
       }
       // 静默迁移：老用户没有 provider 字段时，根据 URL 自动识别
       if (!config.provider && config.url) {
@@ -318,10 +326,6 @@ export class WebDAVSyncManager {
   }
 
   /**
-   * 保存配置
-   * ⭐ 通过 Zustand store 保存，确保一致性
-   */
-  /**
    * 设置配置
    * @param config 配置对象
    * @param persist 是否持久化到 storage (默认 true)
@@ -330,9 +334,10 @@ export class WebDAVSyncManager {
     await this.initialLoad
     this.config = { ...this.config, ...config }
     if (persist) {
-      // 动态导入避免循环依赖
-      const { useSettingsStore } = await import("~stores/settings-store")
-      useSettingsStore.getState().setSettings({ webdav: this.config })
+      if (!this.configStore) {
+        throw new Error("Persisting WebDAV config requires a config store")
+      }
+      this.configStore.saveConfig(this.config)
     }
   }
 
@@ -648,9 +653,11 @@ export class WebDAVSyncManager {
 // 单例
 let instance: WebDAVSyncManager | null = null
 
-export function getWebDAVSyncManager(): WebDAVSyncManager {
+export function getWebDAVSyncManager(configStore?: WebDAVConfigStore): WebDAVSyncManager {
   if (!instance) {
-    instance = new WebDAVSyncManager()
+    instance = new WebDAVSyncManager(undefined, configStore)
+  } else if (configStore) {
+    instance.setConfigStore(configStore)
   }
   return instance
 }

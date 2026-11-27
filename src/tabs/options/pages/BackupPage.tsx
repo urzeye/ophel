@@ -43,6 +43,7 @@ import {
   isValidWebDAVProvider,
   getWebDAVSyncManager,
   type BackupFile,
+  type WebDAVConfigStore,
   type WebDAVProvider,
 } from "~core/webdav-sync"
 import { platform } from "~platform"
@@ -56,7 +57,7 @@ import { useFoldersStore } from "~stores/folders-store"
 import { usePromptChainsStore } from "~stores/prompt-chains-store"
 import { usePromptsStore } from "~stores/prompts-store"
 import { useReadingHistoryStore } from "~stores/reading-history-store"
-import { useSettingsStore } from "~stores/settings-store"
+import { getSettingsState, useSettingsStore } from "~stores/settings-store"
 import { useTagsStore } from "~stores/tags-store"
 import { formatDateTime } from "~utils/format"
 import { getCurrentLocale, t } from "~utils/i18n"
@@ -188,6 +189,13 @@ const renderFileNameConfirmMessage = (message: string, fileName: string): React.
   )
 }
 
+const WEBDAV_CONFIG_STORE: WebDAVConfigStore = {
+  getConfig: () => getSettingsState().webdav,
+  saveConfig: (webdav) => useSettingsStore.getState().setSettings({ webdav }),
+}
+
+const getBackupWebDAVSyncManager = () => getWebDAVSyncManager(WEBDAV_CONFIG_STORE)
+
 // ==================== 远程备份列表模态框 ====================
 const RemoteBackupModal: React.FC<{
   onClose: () => void
@@ -212,7 +220,7 @@ const RemoteBackupModal: React.FC<{
   const loadBackups = async () => {
     setLoading(true)
     try {
-      const manager = getWebDAVSyncManager()
+      const manager = getBackupWebDAVSyncManager()
       const files = await manager.getBackupList(Infinity)
       setBackups(files)
     } catch (e) {
@@ -240,7 +248,7 @@ const RemoteBackupModal: React.FC<{
         setConfirmConfig((prev) => ({ ...prev, show: false }))
         try {
           setLoading(true)
-          const manager = getWebDAVSyncManager()
+          const manager = getBackupWebDAVSyncManager()
           const result = await manager.download(file.name)
           if (result.success) {
             const missingPermissionOrigins = await notifyRestoreContexts()
@@ -277,7 +285,7 @@ const RemoteBackupModal: React.FC<{
         setConfirmConfig((prev) => ({ ...prev, show: false }))
         try {
           setLoading(true)
-          const manager = getWebDAVSyncManager()
+          const manager = getBackupWebDAVSyncManager()
           const result = await manager.deleteFile(file.name)
           if (result.success) {
             showDomToast(t("deleteSuccess"))
@@ -825,7 +833,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
 
   const handleTestConnection = () =>
     runWebDAVAction("test", async () => {
-      const manager = getWebDAVSyncManager()
+      const manager = getBackupWebDAVSyncManager()
       await manager.setConfig(webdavForm, false)
 
       // 管理器按失败原因选好 messageKey（认证失败有专属文案），其余失败的文案带 {detail}
@@ -835,7 +843,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
 
   const handleUpload = () =>
     runWebDAVAction("upload", async () => {
-      const manager = getWebDAVSyncManager()
+      const manager = getBackupWebDAVSyncManager()
       await manager.setConfig(webdavForm, false)
 
       const res = await manager.upload()
@@ -844,7 +852,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ initialTab, onNavigate: _onNavi
 
   const handleOpenRestore = () =>
     runWebDAVAction("restore", async () => {
-      const manager = getWebDAVSyncManager()
+      const manager = getBackupWebDAVSyncManager()
       await manager.setConfig(webdavForm, false)
       setShowRemoteBackups(true)
     })

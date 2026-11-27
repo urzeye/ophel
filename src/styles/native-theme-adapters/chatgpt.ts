@@ -1,4 +1,4 @@
-export const chatgptNativeThemeCss = `
+export const getChatgptNativeThemeCss = (): string => `
 /* =============================================
  * ChatGPT 站点原生主题适配器 (ChatGPT Theme Adapter)
  * ============================================= */
@@ -62,13 +62,15 @@ a.decorated-link:where(:not(.not-markdown *)) {
 }
 `
 
+export const chatgptNativeThemeCss = /*#__PURE__*/ getChatgptNativeThemeCss()
+
 /**
  * App shell 只内联当前主题的 lightningcss 开关规则，需补全另一方向才能即时换肤。
  * 使用原生 CSS 的 data-theme 作为锚点，避免依赖已更名的 appearance 属性。
  */
 export const CHATGPT_THEME_TOGGLE_STYLE_ID = "gh-chatgpt-theme-toggle"
 
-export const chatgptThemeToggleCss = `
+export const getChatgptThemeToggleCss = (): string => `
 html[data-theme="dark"] {
   --theme-variant: dark;
   --lightningcss-light: ;
@@ -83,12 +85,14 @@ html[data-theme="light"] {
 }
 `
 
+export const chatgptThemeToggleCss = /*#__PURE__*/ getChatgptThemeToggleCss()
+
 /** 幂等注入主题开关补丁样式。 */
 const ensureChatGPTThemeToggleStyle = (): void => {
   if (document.getElementById(CHATGPT_THEME_TOGGLE_STYLE_ID)) return
   const style = document.createElement("style")
   style.id = CHATGPT_THEME_TOGGLE_STYLE_ID
-  style.textContent = chatgptThemeToggleCss
+  style.textContent = getChatgptThemeToggleCss()
   document.head.appendChild(style)
 }
 
