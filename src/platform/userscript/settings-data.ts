@@ -74,3 +74,89 @@ export function readUserscriptSettingsData<K extends keyof UserscriptSettingsDat
   }
   return settingsData[key]
 }
+
+export function createLazyUserscriptSettingsRecord<K extends "routes" | "aliases" | "legacyRoutes">(
+  key: K,
+): UserscriptSettingsData[K] {
+  const target = {} as UserscriptSettingsData[K]
+  let populated = false
+  const ensurePopulated = () => {
+    if (!populated) {
+      Object.assign(target, readUserscriptSettingsData(key))
+      populated = true
+    }
+    return target
+  }
+  return new Proxy(target, {
+    get(_target, prop, receiver) {
+      return Reflect.get(ensurePopulated(), prop, receiver)
+    },
+    has(_target, prop) {
+      return Reflect.has(ensurePopulated(), prop)
+    },
+    ownKeys() {
+      return Reflect.ownKeys(ensurePopulated())
+    },
+    getOwnPropertyDescriptor(_target, prop) {
+      return Reflect.getOwnPropertyDescriptor(ensurePopulated(), prop)
+    },
+  })
+}
+
+export function createLazyUserscriptSettingsArray<K extends "prefixRoutes" | "items">(
+  key: K,
+): UserscriptSettingsData[K] {
+  const target = [] as unknown as UserscriptSettingsData[K]
+  let populated = false
+  const ensurePopulated = () => {
+    if (!populated) {
+      ;(target as unknown[]).push(...readUserscriptSettingsData(key))
+      populated = true
+    }
+    return target
+  }
+  return new Proxy(target, {
+    get(_target, prop, receiver) {
+      return Reflect.get(ensurePopulated(), prop, receiver)
+    },
+    has(_target, prop) {
+      return Reflect.has(ensurePopulated(), prop)
+    },
+    ownKeys() {
+      return Reflect.ownKeys(ensurePopulated())
+    },
+    getOwnPropertyDescriptor(_target, prop) {
+      return Reflect.getOwnPropertyDescriptor(ensurePopulated(), prop)
+    },
+  })
+}
+
+export function createLazyUserscriptSettingsSet(key: "cardIds"): Set<string> {
+  const target = new Set<string>()
+  let populated = false
+  const ensurePopulated = () => {
+    if (!populated) {
+      for (const id of readUserscriptSettingsData(key)) {
+        target.add(id)
+      }
+      populated = true
+    }
+    return target
+  }
+  return new Proxy(target, {
+    get(_target, prop) {
+      const populatedTarget = ensurePopulated()
+      const value = Reflect.get(populatedTarget, prop, populatedTarget)
+      return typeof value === "function" ? value.bind(populatedTarget) : value
+    },
+    has(_target, prop) {
+      return Reflect.has(ensurePopulated(), prop)
+    },
+    ownKeys() {
+      return Reflect.ownKeys(ensurePopulated())
+    },
+    getOwnPropertyDescriptor(_target, prop) {
+      return Reflect.getOwnPropertyDescriptor(ensurePopulated(), prop)
+    },
+  })
+}

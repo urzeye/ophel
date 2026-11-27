@@ -1,6 +1,15 @@
 import { USERSCRIPT_RESOURCE_DEFINITIONS } from "./resource-manifest"
 
+declare function GM_addStyle(css: string): unknown
 declare function GM_getResourceText(name: string): string
+
+let hostStylesInjected = false
+
+export function ensureUserscriptHostStyles(): void {
+  if (hostStylesInjected) return
+  GM_addStyle(readUserscriptResourceText(USERSCRIPT_RESOURCE_DEFINITIONS.hostStyles.metaName))
+  hostStylesInjected = true
+}
 
 export function readUserscriptResourceText(name: string): string {
   const text = GM_getResourceText(name)

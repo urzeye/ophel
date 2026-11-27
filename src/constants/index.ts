@@ -23,6 +23,7 @@ export {
   SETTING_ID_ALIASES,
   SETTING_CARD_LEVEL_SEARCH_IDS,
   SETTINGS_SEARCH_ITEMS,
+  getSettingIdAliasSearchMap,
   resolveSettingId,
   resolveSettingRoute,
   resolveSettingsNavigateDetail,

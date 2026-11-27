@@ -7,7 +7,7 @@ import React, {
   useSyncExternalStore,
 } from "react"
 
-import { CONVERSATION_SYNC_REVIEW_STYLES } from "~styles/conversation-sync-review-inline"
+import { getConversationSyncReviewStyles } from "~styles/conversation-sync-review-inline"
 
 import type {
   Conversation,
@@ -204,7 +204,7 @@ function ReviewDialog({
       trapFocus={false}
       ariaLabel={t("conversationsMissingTitle")}
       dialogClassName="gh-dialog-frame gh-sync-review">
-      <style>{CONVERSATION_SYNC_REVIEW_STYLES}</style>
+      <style>{getConversationSyncReviewStyles()}</style>
       <div ref={rootRef} className="gh-sync-review-content">
         <header className="gh-dialog-frame-header">
           <div>
