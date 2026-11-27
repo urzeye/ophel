@@ -733,14 +733,15 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
     }
   }, [isSettingsOpen])
 
-  useEffect(() => {
-    if (isReleaseNotesOpen) {
-      ensurePanelLazyStyles(appRootRef.current, ["release-notes"])
-    }
-  }, [isReleaseNotesOpen])
   // 本进程内已标记已读的版本：防止关闭弹窗时 effect 重读存储的竞态把红点复活
   const markedSeenVersionRef = useRef<string | null>(null)
   const [showReleaseNotesToast, setShowReleaseNotesToast] = useState(false)
+
+  useEffect(() => {
+    if (isReleaseNotesOpen || showReleaseNotesToast) {
+      ensurePanelLazyStyles(appRootRef.current, ["release-notes"])
+    }
+  }, [isReleaseNotesOpen, showReleaseNotesToast])
   const [showExtensionUpdateNotice, setShowExtensionUpdateNotice] = useState(
     () => typeof window !== "undefined" && Boolean(window.__OPHEL_EXTENSION_UPDATE_AVAILABLE__),
   )
