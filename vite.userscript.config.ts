@@ -26,6 +26,8 @@ import { SITE_ICONS } from "./src/constants/site-icons"
 import { resources as localeResources } from "./src/locales/resources"
 import { INLINE_HIGHLIGHT_STYLES } from "./src/styles/markdown-preview-inline"
 import { INLINE_USER_QUERY_MARKDOWN_STYLES } from "./src/styles/user-query-markdown-inline"
+import { lightPresets } from "./src/utils/themes/light"
+import { darkPresets } from "./src/utils/themes/dark"
 
 const isUserscriptDevelopmentBuild =
   process.env.NODE_ENV === "development" || Boolean(process.env.USERSCRIPT_ASSET_BASE_URL)
@@ -206,6 +208,10 @@ function readUserscriptAssetContent(
 ): string | Buffer {
   if (key === "styles") {
     return buildUserscriptStyleBundle()
+  }
+
+  if (key === "themePresets") {
+    return JSON.stringify({ lightPresets, darkPresets })
   }
 
   if (key === "markdownPreviewStyles") {
@@ -592,6 +598,23 @@ const userscriptLocaleResourceUrls = getUserscriptLocaleResourceUrls(userscriptL
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
+    {
+      name: "ophel-userscript-theme-presets",
+      enforce: "pre",
+      transform(_code, id) {
+        const source = id.replace(/\\/g, "/")
+        const themeRoot = path.resolve(__dirname, "src/utils/themes").replace(/\\/g, "/")
+        const presetName =
+          source === `${themeRoot}/light/index.ts`
+            ? "lightPresets"
+            : source === `${themeRoot}/dark/index.ts`
+              ? "darkPresets"
+              : undefined
+        if (!presetName) return
+        const loader = path.resolve(__dirname, "src/platform/userscript/theme-presets.ts")
+        return `export { ${presetName} } from ${JSON.stringify(loader)}`
+      },
+    },
     react(),
     emitUserscriptAssets(),
     monkey({

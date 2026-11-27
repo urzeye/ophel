@@ -78,6 +78,10 @@ jobs:
       - name: Build Userscript
         run: pnpm build:userscript
 
+      # Includes generated theme presets and other hashed @resource assets.
+      - name: Check userscript asset metadata and integrity
+        run: node scripts/check-userscript-build.mjs
+
       - name: Extract Changelog
         id: extract_changelog
         run: |
@@ -216,6 +220,7 @@ jobs:
             ${{ steps.userscript_assets_final.outputs.commit }} \
             build/userscript/ophel.user.js \
             build/userscript/userscript-assets/manifest.json
+          node scripts/check-userscript-build.mjs
 
       # 暂时停用：jsDelivr 缓存生效慢，该步骤轮询耗时过长，占用过多 Actions 额度
       # - name: Verify userscript assets on jsDelivr
