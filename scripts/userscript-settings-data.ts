@@ -7,12 +7,15 @@ import type { Plugin } from "vite"
 import { SHORTCUT_META } from "../src/constants/shortcuts"
 
 const DATA_FIELDS = {
-  SETTING_ID_ROUTE_MAP: "routes",
-  SETTING_ID_ROUTE_RULES: "prefixRoutes",
-  SETTING_ID_ALIASES: "aliases",
-  LEGACY_SETTINGS_PAGE_REDIRECTS: "legacyRoutes",
-  SETTINGS_SEARCH_ITEMS: "items",
-  SETTING_CARD_LEVEL_SEARCH_IDS: "cardIds",
+  SETTING_ID_ROUTE_MAP: { key: "routes", helper: "createLazyUserscriptSettingsRecord" },
+  SETTING_ID_ROUTE_RULES: { key: "prefixRoutes", helper: "createLazyUserscriptSettingsArray" },
+  SETTING_ID_ALIASES: { key: "aliases", helper: "createLazyUserscriptSettingsRecord" },
+  LEGACY_SETTINGS_PAGE_REDIRECTS: {
+    key: "legacyRoutes",
+    helper: "createLazyUserscriptSettingsRecord",
+  },
+  SETTINGS_SEARCH_ITEMS: { key: "items", helper: "createLazyUserscriptSettingsArray" },
+  SETTING_CARD_LEVEL_SEARCH_IDS: { key: "cardIds", helper: "createLazyUserscriptSettingsSet" },
 } as const
 
 const SEARCH_ITEM_GROUPS = new Set([
@@ -57,7 +60,7 @@ function serializeSettingsData(source: ts.SourceFile): string {
     { filename: source.fileName },
   )
   const data = Object.fromEntries(
-    Object.entries(DATA_FIELDS).map(([name, key]) => [
+    Object.entries(DATA_FIELDS).map(([name, { key }]) => [
       key,
       key === "cardIds"
         ? Array.from(module.exports[name] as Iterable<string>)
@@ -112,7 +115,7 @@ export function createUserscriptSettingsData(root: string): { content: string; p
             Object.prototype.hasOwnProperty.call(DATA_FIELDS, node.name.text)
           ) {
             const name = node.name.text as keyof typeof DATA_FIELDS
-            const read = `readUserscriptSettingsData(${JSON.stringify(DATA_FIELDS[name])})`
+            const { key, helper } = DATA_FIELDS[name]
             if (
               name === "SETTING_CARD_LEVEL_SEARCH_IDS" &&
               (!ts.isNewExpression(node.initializer) ||
@@ -124,7 +127,7 @@ export function createUserscriptSettingsData(root: string): { content: string; p
             edits.push({
               start: node.initializer.getStart(source),
               end: node.initializer.end,
-              text: name === "SETTING_CARD_LEVEL_SEARCH_IDS" ? `new Set(${read})` : read,
+              text: `${helper}(${JSON.stringify(key)})`,
             })
             return
           }
@@ -140,7 +143,7 @@ export function createUserscriptSettingsData(root: string): { content: string; p
         for (const edit of edits.sort((a, b) => b.start - a.start)) {
           code = code.slice(0, edit.start) + edit.text + code.slice(edit.end)
         }
-        return `import { readUserscriptSettingsData } from ${JSON.stringify(loader)};\n${code}`
+        return `import { createLazyUserscriptSettingsArray, createLazyUserscriptSettingsRecord, createLazyUserscriptSettingsSet } from ${JSON.stringify(loader)};\n${code}`
       },
     },
   }

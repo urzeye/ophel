@@ -2,7 +2,10 @@
  * ChatGPT 适配器 (chatgpt.com)
  */
 import { SITE_IDS } from "~constants"
-import { applyChatGPTThemeMode, chatgptNativeThemeCss } from "~styles/native-theme-adapters/chatgpt"
+import {
+  applyChatGPTThemeMode,
+  getChatgptNativeThemeCss,
+} from "~styles/native-theme-adapters/chatgpt"
 import {
   createExportAssetCollector,
   escapeMarkdownLinkText,
@@ -241,7 +244,7 @@ export class ChatGPTAdapter extends SiteAdapter {
   }
 
   getNativeThemeCss(): string | null {
-    return chatgptNativeThemeCss
+    return getChatgptNativeThemeCss()
   }
 
   getQuickQuoteSupportMode() {

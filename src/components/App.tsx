@@ -727,12 +727,6 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
     return schedulePanelLazyStyles(appRootRef.current, PANEL_LAZY_STYLE_IDS)
   }, [])
 
-  useEffect(() => {
-    if (isSettingsOpen) {
-      ensurePanelLazyStyles(appRootRef.current, ["settings"])
-    }
-  }, [isSettingsOpen])
-
   // 本进程内已标记已读的版本：防止关闭弹窗时 effect 重读存储的竞态把红点复活
   const markedSeenVersionRef = useRef<string | null>(null)
   const [showReleaseNotesToast, setShowReleaseNotesToast] = useState(false)
@@ -799,6 +793,12 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
     scheduleGlobalSearchPointerPreview,
     refreshGlobalSearchPromptPreviewAnchorRect,
   } = globalSearchController
+
+  useEffect(() => {
+    if (isSettingsOpen || isGlobalSettingsSearchOpen) {
+      ensurePanelLazyStyles(appRootRef.current, ["settings"])
+    }
+  }, [isGlobalSettingsSearchOpen, isSettingsOpen])
 
   const syncGlobalSearchValueAndCategory = useCallback(
     (nextValue: string) => {

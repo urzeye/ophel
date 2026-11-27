@@ -1019,7 +1019,7 @@ function renderExportMarkdown(content: string): string {
   return html
 }
 
-export const EXPORT_HTML_CSS = `
+export const getExportHtmlCss = (): string => `
 :root {
   --gh-bg: #f7f6f4;
   --gh-surface: #ffffff;
@@ -1363,6 +1363,8 @@ math { font-family: "Cambria Math", "STIX Two Math", "Latin Modern Math", "Times
 }
 `
 
+export const EXPORT_HTML_CSS = /*#__PURE__*/ getExportHtmlCss()
+
 function getExportHtmlJs(): string {
   const themeLabels = JSON.stringify({
     auto: t("themeAuto"),
@@ -1515,7 +1517,7 @@ export function formatToHTML(metadata: ExportMetadata, messages: ExportMessage[]
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${title}</title>
-<style>${EXPORT_HTML_CSS}</style>
+<style>${getExportHtmlCss()}</style>
 <script>${getExportHtmlJs()}</script>
 </head>
 <body>

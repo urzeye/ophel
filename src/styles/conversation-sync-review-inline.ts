@@ -1,5 +1,5 @@
 // Portal styles shared by extension and userscript builds.
-export const CONVERSATION_SYNC_REVIEW_STYLES = `
+export const getConversationSyncReviewStyles = (): string => `
 .gh-dialog.gh-sync-review {
   width: min(640px, calc(100vw - 24px));
   max-width: 640px;
@@ -237,3 +237,5 @@ export const CONVERSATION_SYNC_REVIEW_STYLES = `
   }
 }
 `
+
+export const CONVERSATION_SYNC_REVIEW_STYLES = /*#__PURE__*/ getConversationSyncReviewStyles()

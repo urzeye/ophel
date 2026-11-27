@@ -6,6 +6,157 @@ import type { Plugin } from "vite"
 
 import { USERSCRIPT_RESOURCE_DEFINITIONS } from "../src/platform/userscript/resource-manifest"
 
+interface TextEdit {
+  start: number
+  end: number
+  text: string
+}
+
+function applyTextEdits(code: string, edits: TextEdit[]): string {
+  const sorted = [...edits].sort((a, b) => b.start - a.start)
+  for (let index = 1; index < sorted.length; index += 1) {
+    if (sorted[index].end > sorted[index - 1].start) {
+      throw new Error("Overlapping text edits during userscript resource extraction")
+    }
+  }
+  for (const edit of sorted) {
+    code = code.slice(0, edit.start) + edit.text + code.slice(edit.end)
+  }
+  return code
+}
+
+function isInsideFunction(node: ts.Node): boolean {
+  let current: ts.Node | undefined = node.parent
+  while (current) {
+    if (ts.isFunctionLike(current)) return true
+    current = current.parent
+  }
+  return false
+}
+
+function isExportedStatement(statement: ts.Statement): boolean {
+  return Boolean(
+    ts.canHaveModifiers(statement) &&
+      ts.getModifiers(statement)?.some((modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword),
+  )
+}
+
+function isNonValueIdentifier(node: ts.Identifier): boolean {
+  const parent = node.parent
+  if (ts.isPropertyAccessExpression(parent) && parent.name === node) return true
+  if (ts.isPropertyAssignment(parent) && parent.name === node) return true
+  if (ts.isMethodDeclaration(parent) && parent.name === node) return true
+  if (ts.isGetAccessorDeclaration(parent) && parent.name === node) return true
+  if (ts.isSetAccessorDeclaration(parent) && parent.name === node) return true
+  if (ts.isPropertyDeclaration(parent) && parent.name === node) return true
+  if (ts.isJsxAttribute(parent) && parent.name === node) return true
+  if (ts.isLabeledStatement(parent) && parent.label === node) return true
+  if (ts.isBreakOrContinueStatement(parent) && parent.label === node) return true
+  if (ts.isBindingElement(parent) && parent.propertyName === node) return true
+  return false
+}
+
+function isBindingOrDeclarationIdentifier(node: ts.Identifier): boolean {
+  const parent = node.parent
+  if (ts.isVariableDeclaration(parent) && parent.name === node) return true
+  if (ts.isParameter(parent) && parent.name === node) return true
+  if (ts.isBindingElement(parent) && parent.name === node) return true
+  if (
+    (ts.isFunctionDeclaration(parent) ||
+      ts.isFunctionExpression(parent) ||
+      ts.isClassDeclaration(parent) ||
+      ts.isClassExpression(parent)) &&
+    parent.name === node
+  ) {
+    return true
+  }
+  return false
+}
+
+function isMutationTarget(node: ts.Identifier): boolean {
+  const parent = node.parent
+  if (
+    ts.isBinaryExpression(parent) &&
+    parent.left === node &&
+    parent.operatorToken.kind >= ts.SyntaxKind.FirstAssignment &&
+    parent.operatorToken.kind <= ts.SyntaxKind.LastAssignment
+  ) {
+    return true
+  }
+  if (
+    (ts.isPrefixUnaryExpression(parent) || ts.isPostfixUnaryExpression(parent)) &&
+    (parent.operator === ts.SyntaxKind.PlusPlusToken ||
+      parent.operator === ts.SyntaxKind.MinusMinusToken)
+  ) {
+    return true
+  }
+  return false
+}
+
+// 将模块顶层非导出 `const NAME = <static>` 声明内联到函数内引用点，避免在非白名单站点顶层触发资源读取。
+function collectLocalConstInlineEdits(
+  source: ts.SourceFile,
+  statement: ts.VariableStatement,
+  name: string,
+  replacement: string,
+  fileLabel: string,
+): TextEdit[] {
+  if (
+    statement.parent !== source ||
+    statement.declarationList.declarations.length !== 1 ||
+    (statement.declarationList.flags & ts.NodeFlags.Const) === 0 ||
+    isExportedStatement(statement)
+  ) {
+    throw new Error(`Expected non-exported top-level const "${name}" in ${fileLabel}`)
+  }
+
+  const edits: TextEdit[] = [{ start: statement.getStart(source), end: statement.end, text: "" }]
+  let refCount = 0
+
+  const visit = (node: ts.Node) => {
+    if (
+      node === statement ||
+      ts.isTypeNode(node) ||
+      ts.isInterfaceDeclaration(node) ||
+      ts.isTypeAliasDeclaration(node) ||
+      ts.isImportDeclaration(node) ||
+      ts.isExportDeclaration(node)
+    ) {
+      return
+    }
+    if (ts.isIdentifier(node) && node.text === name) {
+      if (isNonValueIdentifier(node)) return
+      if (isBindingOrDeclarationIdentifier(node)) {
+        throw new Error(`Shadowed userscript constant "${name}" in ${fileLabel}`)
+      }
+      if (isMutationTarget(node)) {
+        throw new Error(`Mutated userscript constant "${name}" in ${fileLabel}`)
+      }
+      if (!isInsideFunction(node)) {
+        throw new Error(`Top-level reference to userscript constant "${name}" in ${fileLabel}`)
+      }
+      refCount += 1
+      if (ts.isShorthandPropertyAssignment(node.parent) && node.parent.name === node) {
+        edits.push({
+          start: node.parent.getStart(source),
+          end: node.parent.end,
+          text: `${name}: ${replacement}`,
+        })
+      } else {
+        edits.push({ start: node.getStart(source), end: node.end, text: replacement })
+      }
+      return
+    }
+    ts.forEachChild(node, visit)
+  }
+
+  visit(source)
+  if (refCount === 0) {
+    throw new Error(`Unused userscript constant "${name}" in ${fileLabel}`)
+  }
+  return edits
+}
+
 function findStyleTemplate(code: string) {
   const source = ts.createSourceFile(
     "appearance.tsx",
@@ -14,22 +165,34 @@ function findStyleTemplate(code: string) {
     true,
     ts.ScriptKind.TSX,
   )
-  let template: ts.StringLiteral | ts.NoSubstitutionTemplateLiteral | undefined
-  const visit = (node: ts.Node) => {
+  let match: { statement: ts.VariableStatement; text: string } | undefined
+  for (const statement of source.statements) {
     if (
-      ts.isVariableDeclaration(node) &&
-      ts.isIdentifier(node.name) &&
-      node.name.text === "CSS_TEMPLATE" &&
-      node.initializer &&
-      (ts.isStringLiteral(node.initializer) || ts.isNoSubstitutionTemplateLiteral(node.initializer))
+      !ts.isVariableStatement(statement) ||
+      statement.declarationList.declarations.length !== 1 ||
+      (statement.declarationList.flags & ts.NodeFlags.Const) === 0 ||
+      isExportedStatement(statement)
     ) {
-      template = node.initializer
+      continue
     }
-    ts.forEachChild(node, visit)
+    const declaration = statement.declarationList.declarations[0]
+    if (
+      ts.isIdentifier(declaration.name) &&
+      declaration.name.text === "CSS_TEMPLATE" &&
+      declaration.initializer &&
+      (ts.isStringLiteral(declaration.initializer) ||
+        ts.isNoSubstitutionTemplateLiteral(declaration.initializer))
+    ) {
+      match = { statement, text: declaration.initializer.text }
+      break
+    }
   }
-  visit(source)
-  if (!template) throw new Error("Userscript custom-style template must be a static string")
-  return { start: template.getStart(source), end: template.end, text: template.text }
+  if (!match) {
+    throw new Error(
+      "Userscript custom-style template must be a non-exported top-level const string",
+    )
+  }
+  return { source, ...match }
 }
 
 export function createUserscriptStyleTemplate(root: string): { content: string; plugin: Plugin } {
@@ -47,11 +210,16 @@ export function createUserscriptStyleTemplate(root: string): { content: string; 
         if (current.text !== template.text)
           throw new Error("Userscript style template changed during build")
         const replacement = `readUserscriptResourceText(${JSON.stringify(USERSCRIPT_RESOURCE_DEFINITIONS.customStyleTemplate.metaName)})`
+        const edits = collectLocalConstInlineEdits(
+          current.source,
+          current.statement,
+          "CSS_TEMPLATE",
+          replacement,
+          id,
+        )
         return (
           `import { readUserscriptResourceText } from ${JSON.stringify(loader)};\n` +
-          code.slice(0, current.start) +
-          replacement +
-          code.slice(current.end)
+          applyTextEdits(code, edits)
         )
       },
     },
@@ -81,17 +249,24 @@ export const USERSCRIPT_INLINE_STYLE_SOURCES = [
   "src/styles/export-document-inline.ts",
   "src/styles/image-export-inline.ts",
   "src/styles/native-theme-adapters/chatgpt.ts",
-  "src/styles/user-query-markdown-inline.ts",
   "src/tabs/options/components/CustomStyleEditorDialog.tsx",
   "src/utils/exporter.ts",
 ] as const
 
-export const USERSCRIPT_HOST_STYLE_SOURCES = [
-  "src/styles/conversations.css",
-  "src/styles/queue-overlay.css",
-] as const
+export const USERSCRIPT_HOST_STYLE_SOURCES = ["src/styles/queue-overlay.css"] as const
 
-export function findUserscriptStaticStyles(code: string) {
+interface StaticStyleNode {
+  node: ts.StringLiteral | ts.NoSubstitutionTemplateLiteral
+  start: number
+  end: number
+  text: string
+  key: string
+}
+
+function parseUserscriptStaticStyles(code: string): {
+  source: ts.SourceFile
+  styles: StaticStyleNode[]
+} {
   const source = ts.createSourceFile(
     "styles.tsx",
     code,
@@ -99,7 +274,7 @@ export function findUserscriptStaticStyles(code: string) {
     true,
     ts.ScriptKind.TSX,
   )
-  const styles: { start: number; end: number; text: string; key: string }[] = []
+  const styles: StaticStyleNode[] = []
   const visit = (node: ts.Node) => {
     if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
       const text = node.text
@@ -112,6 +287,7 @@ export function findUserscriptStaticStyles(code: string) {
         !text.includes("<script")
       ) {
         styles.push({
+          node,
           start: node.getStart(source),
           end: node.end,
           text,
@@ -122,7 +298,16 @@ export function findUserscriptStaticStyles(code: string) {
     ts.forEachChild(node, visit)
   }
   visit(source)
-  return styles
+  return { source, styles }
+}
+
+export function findUserscriptStaticStyles(code: string) {
+  return parseUserscriptStaticStyles(code).styles.map(({ start, end, text, key }) => ({
+    start,
+    end,
+    text,
+    key,
+  }))
 }
 
 export function createUserscriptInlineStyles(root: string): {
@@ -159,23 +344,43 @@ export function createUserscriptInlineStyles(root: string): {
       },
       load(id) {
         if (id !== hostModule) return
-        return (
-          `import { readUserscriptResourceText } from ${JSON.stringify(loader)};\n` +
-          `GM_addStyle(readUserscriptResourceText(${JSON.stringify(USERSCRIPT_RESOURCE_DEFINITIONS.hostStyles.metaName)}));`
-        )
+        // 宿主样式改由 entry.tsx 在白名单校验通过后按需调用 ensureUserscriptHostStyles() 注入。
+        return "export {}"
       },
       transform(code, id) {
         if (!files.has(id.replace(/\\/g, "/"))) return
-        const styles = findUserscriptStaticStyles(code)
+        const { source, styles } = parseUserscriptStaticStyles(code)
         if (!styles.length) throw new Error(`Userscript styles changed during build: ${id}`)
-        for (const style of styles.reverse()) {
+        const edits: TextEdit[] = []
+        for (const style of styles) {
           if (texts[style.key] !== style.text) throw new Error(`Unknown userscript style in ${id}`)
-          code =
-            code.slice(0, style.start) +
-            `readUserscriptInlineStyle(${JSON.stringify(style.key)})` +
-            code.slice(style.end)
+          const replacement = `readUserscriptInlineStyle(${JSON.stringify(style.key)})`
+          const parent = style.node.parent
+          if (
+            ts.isVariableDeclaration(parent) &&
+            parent.initializer === style.node &&
+            ts.isIdentifier(parent.name) &&
+            ts.isVariableDeclarationList(parent.parent) &&
+            ts.isVariableStatement(parent.parent.parent) &&
+            parent.parent.parent.parent === source
+          ) {
+            const statement = parent.parent.parent
+            if (isExportedStatement(statement)) {
+              throw new Error(
+                `Exported top-level userscript style "${parent.name.text}" in ${id} must use a getter function to stay lazy`,
+              )
+            }
+            edits.push(
+              ...collectLocalConstInlineEdits(source, statement, parent.name.text, replacement, id),
+            )
+            continue
+          }
+          if (!isInsideFunction(style.node)) {
+            throw new Error(`Top-level userscript inline style in ${id} must stay lazy`)
+          }
+          edits.push({ start: style.start, end: style.end, text: replacement })
         }
-        return `import { readUserscriptInlineStyle } from ${JSON.stringify(loader)};\n${code}`
+        return `import { readUserscriptInlineStyle } from ${JSON.stringify(loader)};\n${applyTextEdits(code, edits)}`
       },
     },
   }

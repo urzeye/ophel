@@ -1,18 +1,21 @@
 ---
-# 官方 DESIGN.md frontmatter（impeccable document 增量合并刷新，2026-11-11）
-# 取值 = 默认浅色主题（src/styles/theme-variables.css :root 基准）；24 套预置主题在运行时覆盖这些变量
+# 官方 DESIGN.md frontmatter（impeccable document 刷新，2026-11-28）
+# 取值 = 默认浅色主题基准（src/styles/theme-variables.css :root 与 google-gradient 预置）；24 套预置主题在运行时覆盖对应 --gh-* 变量
 name: Ophel Atlas
 description: AI 对话结构化与导航工具——实时大纲、对话文件夹与 Prompt 词库，让对话成为可组织、可复用的工作流
 colors:
   primary: "#4285f4"
+  primary-text: "#1a73e8"
   secondary: "#34a853"
   danger: "#ef4444"
+  danger-bg: "#fef2f2"
   bg: "#ffffff"
   bg-secondary: "#f9fafb"
   bg-tertiary: "#f3f4f6"
   text: "#1f2937"
   text-secondary: "#6b7280"
   text-tertiary: "#8d94a1"
+  text-on-primary: "#ffffff"
   border: "#e5e7eb"
   input-bg: "#ffffff"
   input-border: "#d1d5db"
@@ -20,6 +23,15 @@ colors:
   card-bg: "#ffffff"
   overlay: "rgba(0, 0, 0, 0.5)"
 typography:
+  headline:
+    fontFamily: "Inter, system-ui, sans-serif"
+    fontSize: "16px"
+    fontWeight: 600
+    lineHeight: 1.4
+  title:
+    fontFamily: "Inter, system-ui, sans-serif"
+    fontSize: "15px"
+    fontWeight: 600
   body:
     fontFamily: "Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
     fontSize: "13px"
@@ -29,10 +41,6 @@ typography:
     fontFamily: "Inter, system-ui, sans-serif"
     fontSize: "12px"
     fontWeight: 500
-  title:
-    fontFamily: "Inter, system-ui, sans-serif"
-    fontSize: "15px"
-    fontWeight: 600
   button:
     fontFamily: "Inter, system-ui, sans-serif"
     fontSize: "14px"
@@ -57,7 +65,7 @@ spacing:
 components:
   button-primary:
     backgroundColor: "{colors.primary}"
-    textColor: "#ffffff"
+    textColor: "{colors.text-on-primary}"
     rounded: "{rounded.md}"
     padding: "8px 16px"
     typography: "{typography.button}"
@@ -68,18 +76,23 @@ components:
     padding: "8px 16px"
     typography: "{typography.button}"
   button-danger:
-    backgroundColor: "{colors.danger}"
-    textColor: "#ffffff"
+    backgroundColor: "transparent"
+    textColor: "{colors.danger}"
     rounded: "{rounded.md}"
     padding: "8px 16px"
     typography: "{typography.button}"
+  button-header-icon:
+    backgroundColor: "transparent"
+    textColor: "{colors.text-secondary}"
+    rounded: "{rounded.sm}"
+    size: "26px"
   button-quick:
     backgroundColor: "transparent"
     textColor: "{colors.text-secondary}"
     rounded: "{rounded.pill}"
     size: "38px"
   button-quick-panel:
-    backgroundColor: "{colors.primary}"
+    backgroundColor: "rgba(66, 133, 244, 0.12)"
     textColor: "{colors.primary}"
     rounded: "{rounded.pill}"
     size: "38px"
@@ -120,7 +133,7 @@ Ophel Atlas 项目级设计规范。此文档服务于现有浏览器扩展与�
 ### 设计定位
 
 - 产品类型：高频 AI 工作流工具，不是展示型网站。
-- 主要界面：内容面板、设置弹窗、独立 Options 页面、主题选择器。
+- 主要界面：内容面板、设置弹窗、独立 Options 页面、主题选择器，以及挂载于宿主页的确认/审查/导出等 Portal 弹窗。
 - 用户心智：用户依赖它快速浏览、定位、整理对话内容，优先级是清晰、稳定、可扫读、可操作。
 - 重设计模式：`preserve`。默认保留信息架构、核心布局与现有功能入口，只升级视觉层级、操作反馈和主题表达。现有动效、品牌口号和表情徽标同样在保留范围内（清单见「交互与动效」的保留的动效、「文案与信息表达」的品牌位）；清单外但代码注释写明"保留"的，改动前先问。
 
@@ -145,14 +158,21 @@ Ophel Atlas 项目级设计规范。此文档服务于现有浏览器扩展与�
 
 主题色板由 24 套预置主题承载，运行时覆盖 frontmatter 中的默认基准值；颜色、边框、阴影、背景、交互态都通过 `--gh-*` 变量表达。
 
+### 色彩角色（以默认浅色基准为例，具体值以 frontmatter 为准）
+
+- **Primary**：主题主强调色（`--gh-primary`）与可读主色文字（`--gh-primary-text`，浅色主色预置会单独加深以保障小字、链接和图标对比度），用于主操作按钮、激活页签、聚焦描边与状态指示。
+- **Secondary**：品牌辅助色（`--gh-secondary`），与主色构成品牌渐变（`--gh-brand-gradient`）和选中项轻渐变（`--gh-selected-gradient`），不单独抢占主强调位。
+- **Tertiary / Semantic**：危险语义色（`--gh-danger` / `--gh-text-danger` / `--gh-bg-danger`）仅用于删除、清空、重置等不可逆风险提示；大纲定位与同步高亮使用独立的翡翠绿语义组（`--gh-outline-locate-*` / `--gh-outline-sync-*`）。
+- **Neutral & Surface 层级**：主次背景（`--gh-bg` / `--gh-bg-secondary` / `--gh-bg-tertiary`）、文字三阶（`--gh-text` / `--gh-text-secondary` / `--gh-text-tertiary`）、边框与输入表面（`--gh-border` / `--gh-input-*`），以及设置页的画布/面派生层（`--gh-canvas` 在下、`--gh-surface` 在上；浅色下卡片白面亮于微灰画布，深色下通过 `color-mix` 维持面比画布亮）。面板头部使用同调微染表面（`--gh-header-bg` / `--gh-header-text`）配合玻璃态控制变量（`--gh-glass-text` / `--gh-glass-bg` / `--gh-glass-bg-hover`）。
+
 ### 主题系统：当前事实
 
 - 项目当前内置 `24` 套主题预置：
   - `12` 套浅色主题，定义于 `src/utils/themes/light/index.ts`
   - `12` 套深色主题，定义于 `src/utils/themes/dark/index.ts`
 - 主题注入由 `src/core/theme-manager.ts` 负责。
-- 首屏基础样式与对话 Tab 样式通过 `src/contents/ui-entry.tsx` 的 `getStyle()` 注入 Shadow DOM；对话 Tab 可被设为首个标签，必须同步提供样式。设置、发布说明等非首屏大块样式通过 `~utils/panel-lazy-styles` 以 Shadow DOM `<link>` 延迟加载。
-- 站点原生主题同步（「同步站点页面颜色」）由 `src/styles/native-theme-adapters/` 按站点把宿主页变量绑定到 `--gh-*`，同样由 `ThemeManager` 调度；新增语义变量时检查是否有适配器引用它。
+- 扩展端首屏基础样式与对话 Tab 样式通过 `src/contents/ui-entry.tsx` 的 `getStyle()` 同步注入 Shadow DOM（并预注入 `localStorage` 缓存主题防 FOUC）；设置（`settings.css`）、发布说明（`release-notes.css`）等非首屏大块样式通过 `~utils/panel-lazy-styles` 以 Shadow DOM `<link>` 延迟加载，插在 `#gh-theme-vars` 之前。油猴端由 `src/platform/userscript/entry.tsx` 注入合并样式资源并预注入缓存主题。
+- 站点原生主题同步（「同步站点页面颜色」）由 `src/styles/native-theme-adapters/`（当前覆盖 ChatGPT、DeepSeek、Gemini、Grok、Kimi、NotebookLM、Qianwen）按站点把宿主页变量绑定到 `--gh-*`，同样由 `ThemeManager` 调度；新增语义变量时检查是否有适配器引用它。
 
 ### 主题变量优先级
 
@@ -189,15 +209,19 @@ Ophel Atlas 项目级设计规范。此文档服务于现有浏览器扩展与�
 
 ## Typography
 
-**Body Font:** Inter（可变字体，`assets/fonts/InterVariable.woff2`，在 `src/style.css` 通过 `@font-face` 注册），系统栈兜底；中文回退 Hiragino Sans SC / PingFang SC 等。
-**Mono Font:** `ui-monospace, SFMono-Regular, Menlo, Consolas` 栈，用于代码与等宽场景。
+**Body Font:** Inter（扩展端由 `src/contents/ui-entry.tsx` 的 `getStyle()` 注入可变字体 `assets/fonts/InterVariable.woff2`；`src/style.css`、`src/styles/settings.css` 与 `src/utils/font.ts` 同时以受限 `unicode-range` 声明本机 `local("Inter")`，油猴端不打包字体文件、自动回退本机 Inter 或系统栈）。中文与东亚字符排除在 Inter 的 `unicode-range` 之外，由 `applyOphelPlatformFontClass()` 按平台挂载 `.gh-platform-macos` 等类名，在 macOS 上优先回退 Hiragino Sans SC / PingFang SC / Apple SD Gothic Neo，其他平台回退系统栈。
+**Mono Font:** `ui-monospace, SFMono-Regular, Menlo, Consolas, monospace` 栈，用于代码、变量模板（`PlaceholderInput`）、备份文件名等数据文本场景。
 
 **Character:** 稳定、紧凑、好扫读的工具型无衬线排版；层级靠字号、字重、间距，不靠颜色。
 
 ### 字号与层级
 
-- 工具界面优先稳定、紧凑、好扫读的无衬线排版。
-- 面板与设置页正文字号以 `12px` / `13px` / `14px` 为主，卡片标题等层级用 `15px`+ 配合字重区分。
+- **Headline**（`600`，`16px`，`1.4`）：弹窗主标题、模态对话框标题（侧边栏品牌标题为 `17px / 600`）。
+- **Title**（`600`，`15px`）：设置卡片标题、导览步骤标题、区块分组标题。
+- **Button**（`500`，`14px`）：主次按钮与设置页分段项文字；行内小按钮用 `13px`。
+- **Body**（`400`，`13px`，`1.5`）：面板列表、设置项描述、对话框正文的默认字号；部分独立输入和基础正文用 `14px`。
+- **Label**（`500`，`12px`）：辅助说明、元信息、徽章、副标题与标签。
+- 计数、倒计时秒数与同步进度数字使用 `font-variant-numeric: tabular-nums` 防止跳动；长标识符（如备份文件名）使用等宽字并允许断行（`word-break: break-all`）。
 - 标题通过字号、字重、间距拉开层级，不靠过多颜色切换。
 - 正文和说明文字单行长度控制在易读范围内，避免一整行横跨内容区。
 - 面向用户的文案使用句式大小写或自然大小写，不用全大写标签堆叠。
@@ -216,33 +240,34 @@ Ophel Atlas 项目级设计规范。此文档服务于现有浏览器扩展与�
 
 ### 面板 `MainPanel`
 
-- Header、Tabs、Content、Footer 四段结构保持稳定。
-- Header 是品牌区加高频控制区，视觉上要比内容区更紧凑、更明确。
-- Tabs 必须一眼可辨当前激活项，且点击目标足够大。
+- Header、Tabs、Content、Footer 四段结构保持稳定，主容器最小高度 `500px`，圆角 `12px`。
+- Header 是品牌区加高频控制区，采用同调微染表面（`--gh-header-bg`），整条支持拖拽（`cursor: grab`），视觉上比内容区更紧凑、更明确。
+- Tabs 必须一眼可辨当前激活项（主题色底部 `2px` 指示线 + 加粗文字 + 半透明高亮底），支持拖拽排序，且点击目标足够大。
 - Footer 动作按钮属于工具动作，不要做成营销 CTA。
 - 吸附、展开、悬浮三种位置状态要共享同一套视觉骨架。
 
 ### 快捷按钮组 `QuickButtons` 与悬浮控制岛
 
-- 宽度恒定为 `52px`，在展开与折叠态之间保持两端水平宽度一致，消除展开时的横向位移抖动。
+- 宽度恒定为 `52px`（外壳圆角 `36px`，双层高饱和毛玻璃 `blur(28px) saturate(190%)`），在展开与折叠态之间保持两端水平宽度一致，消除展开时的横向位移抖动；悬停时内部 `::before` 渲染跟随光标纵坐标的微光反射层（`--qb-spotlight-y`）。
 - 内部空间律动：
-  - 顶部拖拽手柄：`24px × 4px` 居中圆角条，悬停时展宽至 `28px`，长按充能时至 `32px`，视觉化长按进度。
-  - 面板主按钮：位于顶端独立入口位，与下方工具按钮组保持 `6px` 到 `8px` 的层次间距。
+  - 顶部拖拽手柄：`24px × 4px` 居中圆角条，悬停时展宽至 `28px`，长按充能时展宽至 `32px` 并以主色进度条填充，进入拖拽态后收敛为 `18px` 主题色指示条。
+  - 面板主按钮：位于顶端独立入口位，与下方工具按钮组保持清晰间距（底部留白与分割线区分）。
   - 工具功能区与导航区：组内按钮间距统一为 `4px`。
   - 渐隐微光分割线：`24px` 宽度的向两侧渐隐 `linear-gradient` 线，代替生硬实线。
-- 液态折叠（`liquid-collapsed`）：失焦感应后平滑收缩为 `52px × 52px` 的单图标品牌水滴，内部 Logo 接管容器背景，避免双层同心圆。
-- 工具箱浮层（`quick-menu-popover`）：朝向屏幕中心展开，`16px` 大圆角毛玻璃微卡片，避免遮挡页面主内容与相邻快捷按钮。
+- 液态折叠（`liquid-collapsed`）：失焦感应后平滑收缩为 `52px × 52px`（圆角 `26px`）的单图标品牌水滴，外层容器接管 `12%` 主色浅底与高光边框，内部 Logo 按钮背景变透明，避免双层同心圆。
+- 工具箱浮层（`quick-menu-popover`）：朝向屏幕中心展开，`16px` 大圆角毛玻璃微卡片（`blur(24px) saturate(180%)`），打开期间临时抬升控制岛层级至 `z-index: 10000`（高于面板 `9999`、低于对话框），避免被面板遮挡。
 
 ### 设置弹窗与 Options
 
-- 侧边栏负责一级导航，内容区负责扫描和操作，不要在视觉上抢主内容。
+- 侧边栏定宽 `228px`，负责一级导航，与卡片同处 `--gh-surface` 面层；右侧内容区位于 `--gh-canvas` 画布层，负责扫描和操作，侧栏不在视觉上抢主内容。
+- 二级标签组（`.settings-tab-group-container`）支持粘性吸顶与 `blur(14px)` 磨砂背景，确保长页面滚动时切换上下文顺手。
 - 侧边栏动效和装饰应低干扰：除未读红点等状态提示外，不加持续性脉冲、旋转或喧闹反馈。
-- 卡片之间的层级要清晰，避免所有卡片看起来一样重。
+- 卡片之间的层级要清晰，低频设置项收进卡片底部的折叠高级区（`.settings-card-advanced`），避免所有设置项和卡片一样重。
 - 弹窗和独立页面虽然载体不同，但应共享同一套设计语言。
 
 ### 主题选择器
 
-- 主题网格应优先强调差异识别，而不是仅强调"能点"。
+- 主题网格采用响应式自适应列（`repeat(auto-fill, minmax(168px, 1fr))`，`14px` 间距，窄屏 `<= 720px` 收缩至 `144px`），优先强调差异识别，而不是仅强调"能点"。
 - 主题卡片必须同时传达：
   - 大背景
   - 头部或品牌色
@@ -253,19 +278,24 @@ Ophel Atlas 项目级设计规范。此文档服务于现有浏览器扩展与�
 
 ### 响应式断点（代码现状）
 
-- 面板与设置样式中的现有断点：`520px`、`720px`、`760px`、`900px`。
+- 现有样式表中的视口断点：
+  - `480px`：同步进度浮条（`.gh-conversation-sync-notice`）转为双列栅格换行。
+  - `520px`：关于页头图、更新日志弹窗、对话同步审查弹窗切换为紧凑布局与全宽按钮。
+  - `720px`：主题卡片网格最小列宽从 `168px` 收紧至 `144px`。
+  - `760px`：站点绑定表单纵向堆叠；图片导出弹窗切为贴边全屏尺寸。
+  - `900px`：自定义样式列表项切单列；图片导出弹窗配置侧栏缩窄至 `296px`。
 - 触屏判定 `(hover: none) and (pointer: coarse)`、面板抽屉上限 `767px`、设置窄屏上限 `640px` 统一定义在 `src/constants/ui.ts`，由 JS 挂载 `.is-touch` / `.is-drawer` / `.is-compact` 类，样式只认类名，不在 CSS 里重复写这几个断点。
-- 设置弹窗内容区比视口窄，视口断点对弹窗不生效：设置页二级标签放不下时单行横向滚动（两端渐隐并出现箭头按钮，鼠标滚轮可横向滚动，激活项自动滚入可视区），表单列数用 grid 轨道最小宽度控制，不依赖视口断点。
-- 能力媒体查询：`@media (hover: hover) and (pointer: fine)` 用于仅限精确指针的 hover 增强；`@media (prefers-reduced-motion: reduce)` 用于减弱动效。
+- 设置弹窗内容区比视口窄，视口断点对弹窗不生效：设置页二级标签放不下时单行横向滚动（两端渐隐并出现 `26px` 箭头按钮，鼠标滚轮可横向滚动，激活项自动滚入可视区），表单列数用 grid 轨道最小宽度控制，不依赖视口断点。
+- 能力媒体查询：`@media (hover: hover) and (pointer: fine)` 用于仅限精确指针的 hover 增强；`@media (hover: none)` 与 `@media (pointer: coarse)` 用于触屏交互回退与放大触控热区至 `44px`；`@media (prefers-reduced-motion: reduce)` 用于减弱动效。
 
 ### 触屏与窄屏
 
 按设备能力自动切换形态，不新增设置项：设置会在多设备间同步，形态必须跟随当前设备。
 
-- 触屏窄屏（触屏且视口不超过 767px）：面板改为侧边抽屉，全高贴默认侧边、带遮罩、不可拖动，不区分悬浮/吸附；由快捷按钮组的面板按钮开合，点遮罩、收起按钮或 Esc 关闭；在面板内跳转（大纲、切换会话、使用提示词、页面滚动）后自动收起。抽屉开合不写回设置，每次加载都从收起开始。
+- 触屏窄屏（触屏且视口不超过 `767px`）：面板改为侧边抽屉，全高贴默认侧边、带遮罩、不可拖动，不区分悬浮/吸附；由快捷按钮组的面板按钮开合，点遮罩、收起按钮或 Esc 关闭；在面板内跳转（大纲、切换会话、使用提示词、页面滚动）后自动收起。抽屉开合不写回设置，每次加载都从收起开始。
 - 宽屏触屏：保留悬浮/吸附。吸附收起时整块面板移出视口，改由贴边把手点按展开，展开后保持到点按面板外或跳转为止；顶栏拖拽走 Pointer Events。
-- 设置弹窗与 Options 页（视口不超过 640px）：全屏单栏两级导航，导航屏选项、页面屏顶部返回；设置行放不下「说明 + 控件」时控件换行。
-- 新增交互不要只靠悬停暴露入口或信息；触屏上的点按目标不小于 44px，过窄的可见区域用伪元素扩大热区。
+- 设置弹窗与 Options 页（视口不超过 `640px`）：全屏单栏两级导航，导航屏选项、页面屏顶部返回；设置行放不下「说明 + 控件」时控件换行。
+- 新增交互不要只靠悬停暴露入口或信息；触屏上的点按目标不小于 `44px`，过窄的可见区域用伪元素扩大热区。
 
 ## Elevation & Depth
 
@@ -277,14 +307,14 @@ Ophel Atlas 项目级设计规范。此文档服务于现有浏览器扩展与�
 
 ### Shadow Vocabulary（默认浅色主题基准）
 
-- **ambient-sm**（`0 1px 3px rgba(0, 0, 0, 0.1)`）：最轻分层，分段选中项、徽章。
-- **panel**（`0 10px 40px rgba(0, 0, 0, 0.15)`）：主面板浮层，悬浮于站点页面之上。
-- **floating-pill**（`0 14px 36px -2px color-mix(..., 10%), inset 0 1px 1.5px rgba(255, 255, 255, 0.45)`）：快捷按钮组双层天光玻璃拟态，深色主题冷光倒角。
-- **levitation-drag**（`0 24px 52px -4px color-mix(..., 28%)`，伴随 `scale: 1.035`）：长按拖拽充能与浮空飞行态。
-- **popover-glass**（`0 12px 32px color-mix(..., 10%), inset 0 1px 1px rgba(255, 255, 255, 0.3)`）：悬浮工具箱多层毛玻璃浮层。
-- **overlay-lg**（`0 20px 60px rgba(0, 0, 0, 0.3)`）：模态弹窗与导出对话框。
-- **button-rest / button-hover**（`0 2px 6px` / `0 4px 12px rgba(0, 0, 0, 0.15-0.2)`）：浮动按钮静止态与 hover 抬升。
-- **brand**（`0 4px 12px rgba(66, 133, 244, 0.3)`）：品牌色元素的染色阴影。
+- **ambient-sm**（`0 1px 3px rgba(0, 0, 0, 0.1)`）：最轻分层，分段选中项、箭头按钮、徽章与同步浮条（`--gh-shadow-sm`）。
+- **panel**（`0 10px 40px rgba(0, 0, 0, 0.15)`）：主面板浮层，悬浮于站点页面之上（`--gh-shadow`）。
+- **floating-pill**（`0 14px 36px -2px color-mix(in srgb, var(--gh-text) 10%, transparent), 0 4px 12px -1px color-mix(in srgb, var(--gh-text) 5%, transparent), inset 0 1px 1.5px color-mix(in srgb, #ffffff 45%, transparent), inset 0 -1px 1px color-mix(in srgb, var(--gh-text) 4%, transparent)`）：快捷按钮组双层天光玻璃拟态，深色主题切为冷光倒角与主色内高光。
+- **levitation-drag**（`0 24px 52px -4px color-mix(in srgb, var(--gh-primary) 28%, transparent), 0 8px 24px -2px color-mix(in srgb, var(--gh-text) 14%, transparent), inset 0 1px 1.5px color-mix(in srgb, #ffffff 60%, transparent)`，伴随 `scale: 1.035`）：长按拖拽充能（`scale: 1.025`）与浮空飞行态。
+- **popover-glass**（`0 12px 32px color-mix(in srgb, var(--gh-text) 10%, transparent), inset 0 1px 1px color-mix(in srgb, #ffffff 30%, transparent)`）：悬浮工具箱多层毛玻璃浮层。
+- **overlay-lg**（`0 20px 60px rgba(0, 0, 0, 0.3)`）：模态弹窗、首装导览浮卡与导出对话框（`--gh-shadow-lg`）。
+- **button-rest / button-hover**（`0 2px 6px rgba(0, 0, 0, 0.15)` / `0 4px 12px rgba(0, 0, 0, 0.2)`）：浮动按钮静止态与 hover 抬升（`--gh-btn-shadow` / `--gh-btn-shadow-hover`）。
+- **brand**（`0 4px 12px rgba(66, 133, 244, 0.3)`）：品牌色元素的染色阴影（`--gh-shadow-brand`）。
 - **focus-ring**（`0 0 0 2px rgba(66, 133, 244, 0.1)`）：输入框聚焦外环，跟随 `--gh-input-focus-shadow`。
 
 **The Flat-By-Default Rule.** 表面在静止态保持平坦，靠边框与留白分层；阴影只服务于浮层、弹窗与状态反馈，并优先跟随主题色调而非死黑。
@@ -294,57 +324,67 @@ Ophel Atlas 项目级设计规范。此文档服务于现有浏览器扩展与�
 - 全项目保持统一圆角体系（阶梯与现有代码实际用量对齐）：
   - 微型控件（图标按钮、输入框、小徽章）：`4px` 到 `6px`
   - 常规控件（按钮、分段项、菜单）：`8px`
-  - 分组与卡片：`10px` 到 `12px`
-  - 大容器（弹窗、面板级容器）：`12px` 到 `16px`
-  - 胶囊型（`999px`）仅用于分段选择、标签、计数、滑块轨道和特殊模式按钮
-  - 正圆（`50%`）仅用于滑块圆点、头像等真正的圆形元素
+  - 分组与卡片：`10px` 到 `12px`（导览浮卡 `14px`）
+  - 大容器（面板、弹窗、毛玻璃浮层）：`12px` 到 `16px`（悬浮控制岛外胶囊 `36px`，液态折叠水滴 `26px`）
+  - 胶囊型（`999px`）仅用于分段选择、标签、进度指示点、计数、滑块轨道和悬浮提示条
+  - 正圆（`50%`）仅用于快捷按钮、滑块圆点、状态圆点、头像等真正的圆形元素
 - 能用留白分组时，少用厚重卡片。
 - 卡片存在的理由必须是分层，不是为了把每一块内容都装进盒子里。
 
 ## Components
 
-- 通用控件优先复用 `src/components/ui/` 共享控件库（Button、Dialog、Input、NumberInput、SelectDropdown、Slider、Switch、Tooltip、PlaceholderInput），不要在业务组件里重造同名基础控件。
+- 通用控件优先复用 `src/components/ui/` 共享控件库（`Button`、`Dialog`、`Input`、`NumberInput`、`PlaceholderInput`、`SafeSvgMarkup`、`SelectDropdown`、`Slider`、`Switch`、`Tooltip`），不要在业务组件里重造同名基础控件。
 
 ### 按钮
 
-- 主按钮使用主题强调色或主题头部背景。
-- 次按钮使用中性表面，不与主按钮争夺注意力。
-- 危险按钮必须只在危险语义出现。
-- 所有按钮都要有 `hover`、`active`、`focus-visible`、`disabled` 状态。
-- `active` 推荐使用 `translateY(1px)` 或 `scale(0.98)` 的轻微触感反馈。
-- **快捷按钮（`quick-prompt-btn`）**：
-  - 规格：外包围尺寸统一为 `38px × 38px`（圆角 `pill`），保证图标居中与触控面积。
-  - 触感反馈：`hover` 触发 `scale(1.05)` 伴随微光底色；`active`（按压瞬间）使用 `scale(0.92)` 提供明确物理回弹感。
-  - 面板主按钮（`panel-btn`）：顶置视觉锚点，采用主题品牌色渐变底色（`--gh-header-gradient` 或 `--gh-primary`），独立于普通操作按钮。
-  - 状态指示：已标记锚点等持久状态（`.has-anchor`）配备 `5px` 品牌色微呼吸光点（`quick-btn-badge-dot`），图标同步高亮为主题强调色；展开态（`.active`）保持常驻高亮。
+- 主按钮使用主题强调色（`--gh-primary`）配 `--gh-text-on-primary`。
+- 次按钮使用中性表面配细边框，不与主按钮争夺注意力。
+- 危险按钮只在删除、清空、重置等危险语义出现：
+  - **设置页危险按钮（`.settings-btn-danger`）**：采用透明底 + 45% 危险色描边 + `--gh-text-danger` 文字，避免在单色主题（如 `mono-pro`）中因危险色与主色相近而和主按钮撞色。
+  - **模态确认弹窗危险提交按钮（`.gh-dialog-btn-danger`）**：处于高注意力确认上下文中，采用实心 `--gh-danger` 填充配 `--gh-text-on-primary` 明确警示。
+- 所有按钮都要有 `hover`、`active`、`focus-visible`、`disabled` 状态；`active` 推荐使用 `translateY(1px)` 或 `scale(0.96)` / `scale(0.92)` 的轻微触感反馈。
+- **面板头部图标按钮（`.gh-header-icon-btn`）**：`26px × 26px`（`6px` 圆角），使用 `--gh-glass-text` 图标色，悬停切 `--gh-glass-bg-hover` 与 `--gh-header-text`，按压 `scale(0.96)`。
+- **快捷按钮（`.quick-prompt-btn`）**：
+  - 规格：外包围尺寸统一为 `38px × 38px` 正圆（`50%`），保证图标居中与触控面积；禁用态降为 `opacity: 0.32`。
+  - 触感反馈：`hover` 触发 `scale(1.05)` 伴随 `8%` 文字色微光底；`active` 使用 `scale(0.92)` 提供明确物理回弹感。
+  - 面板主按钮（`.panel-btn`）：顶置视觉锚点，采用 `12%` 主色浅底（`color-mix(in srgb, var(--gh-primary) 12%, transparent)`）+ 主色图标与轻染色阴影，悬停升至 `22%` 主色底与 `scale(1.04)`；液态折叠时将背景交给外层容器承接，自身变透明消除双环。
+  - 状态指示：已标记锚点等持久状态（`.has-anchor`）通过 `::after` 渲染 `5px` 品牌色圆点，图标同步高亮为主色；未读更新红点（`.gh-quick-btn-unread`）为 `7px` 危险色圆点配 `2px` 背景描边；展开态（`.active`）保持主色浅底常驻高亮。
 
 ### 标签页与分段切换
 
-- 当前项必须有清晰的高亮面和文字对比。
-- 非激活项保持可读，不使用过低透明度。
-- 切换动效控制在 `150ms` 到 `250ms`。
+- 面板页签（`.gh-panel-tab-btn`）使用底部 `2px` 主题色指示线、半透明底面与加粗文字标识激活项，支持拖拽排序状态反馈。
+- 设置页二级标签组（`.settings-tab-group`）、设置项分段控件（`.settings-segmented`）与侧栏主题切换（`.settings-theme-segmented`）共用同一套「画布凹轨 + 面层凸起选中项」配色：轨道取 `--gh-canvas` 混入 `6%` `--gh-text`，选中项取提亮后的 `--gh-surface` 加 `--gh-shadow-sm`，确保深浅 24 套主题下凹槽与凸块关系一致。
+- 非激活项保持可读，不使用过低透明度；切换动效控制在 `150ms` 到 `250ms`。
 
 ### 表单
 
 - 标签、说明、输入框和错误信息保持固定顺序。
-- 输入框、下拉、文本域和代码编辑器的边框、圆角和聚焦环语言要统一。
+- 输入框、下拉、文本域和代码编辑器（含 `PlaceholderInput` 等宽模板输入框）的边框、圆角（`6px`）和聚焦环语言要统一。
 - 不用漂浮标签，不做多余动画。
 
-### 卡片与列表
+### 卡片、折叠区与列表
 
-- 卡片标题、描述、操作区之间要有清晰的间距节奏。
-- 操作列表优先使用规则对齐，不要用大量内联样式临时拼装。
-- 列表项中的主信息、元信息和操作按钮要有固定层次。
+- 设置卡片（`.settings-card`）使用 `--gh-surface` 底色、`1px` 细边框、`12px` 圆角与 `20px` 内边距；标题、描述、操作区之间保持清晰间距节奏。
+- **高级选项折叠区（`.settings-card-advanced`）**：低频设置项收进卡片底部的原生 `<details>` 折叠区；展开时整组（标题行 + 设置行）共享 `5%` 主题主色浅底与顶部细分隔线，左侧 `16px` 圆形指示片内的 chevron 旋转 `90°`，全局搜索定位到折叠项时自动展开祖先 `<details>`。
+- 操作列表优先使用规则对齐，不要用大量内联样式临时拼装；列表项中的主信息、元信息和操作按钮要有固定层次。
+
+### 对话框与特征交互模式
+
+- **Portal 弹窗骨架（`DialogOverlay` / `.gh-dialog-frame`）**：Portal 渲染至 `document.body`，内置初始聚焦、最顶层 Tab 焦点循环、穿透 Shadow DOM 的关闭焦点恢复以及可编辑区键盘守卫；同时修正宿主站点全局 `appearance: none` 对原生 checkbox 的影响。复杂功能弹窗（批量队列、Chain 编辑器、对话同步审查 `ConversationSyncReview`、图片分享导出 `ImageExportDialog`）共用「固定头部 / 可滚动主体 / 固定页脚」三段式骨架，窄屏自动折行并放大触控热区至 `44px`。
+- **非阻塞状态提示与可撤销倒计时条**：
+  - 同步进度悬浮条（`.gh-conversation-sync-notice`）：顶部居中 `12px` 圆角中性卡片，携带逆时针旋转图标、`tabular-nums` 计数与紧凑操作按钮，不阻断页面阅读。
+  - 同步差异提示与本地清理撤销条（`.gh-sync-review-notice` / `.gh-cleanup-undo-notice`）：嵌入面板工具栏下方的单行紧凑提示；清理后在撤销按钮前置 `24px` 主题色缩减倒计时环与等宽秒数，悬停、聚焦或页面隐藏时暂停计时。
+- **首装导览聚光灯（`PanelOnboardingTour` / `.gh-tour-overlay`）**：挂载于应用根级（`z-index: 99999`），通过聚光灯超大阴影自然挖空目标区域，配 `320px` 浮卡（`14px` 圆角）、胶囊形进度点与末步主按钮的一次性发现流光；遵循 `prefers-reduced-motion`。
 
 ### 图标
 
-- 复用 `src/components/icons/` 内现有图标体系。
+- 复用 `src/components/icons/` 内现有图标体系；外部或自定义 SVG 渲染统一通过 `SafeSvgMarkup`。
 - 同一块区域尽量保持统一笔触和视觉重量。
 - 不使用 emoji 代替功能图标。
 
 ### 可访问性
 
-- `icon-only` 按钮必须有可访问名称，点击区域不应小于 `32px × 32px`。
+- `icon-only` 按钮必须有可访问名称，点击区域不应小于 `32px × 32px`（触屏及窄屏下不小于 `44px × 44px`）。
 - 焦点态不能只靠颜色变化，必须有清晰可见的轮廓、底色或阴影反馈。
 - 次级文字可以弱化，但不能弱化到在深浅主题下都难以辨认。
 - 面板、弹窗和设置页的键盘焦点流保持自然，不制造隐藏焦点或键盘陷阱。
@@ -357,7 +397,7 @@ Ophel Atlas 项目级设计规范。此文档服务于现有浏览器扩展与�
   - 面切换：`200ms` 到 `300ms`
   - 主题切换：沿用 `ThemeManager` 的过渡策略
 - 默认缓动：微交互用柔和 `ease`；位移动作用 `cubic-bezier(0.2, 0.8, 0.2, 1)`；减速入场动作使用指数减速曲线 `cubic-bezier(0.16, 1, 0.3, 1)`。
-- 新增动效不加无目的的常驻循环；常驻动画只用于状态提示（加载、未读、更新、运行中）和下方的保留动效。
+- 新增动效不加无目的的常驻循环；常驻动画只用于状态提示（加载、未读、更新、运行中、导览目标锁定）和下方的保留动效。
 - 禁止每个图标都在 hover 时剧烈旋转或跳跃。
 - 禁止用动画掩盖布局和层级问题。
 - 必须尊重 `prefers-reduced-motion`，保留动效也不例外。
@@ -449,6 +489,7 @@ Ophel Atlas 项目级设计规范。此文档服务于现有浏览器扩展与�
 
 - 面板及弹窗样式优先落在 `src/style.css`、`src/styles/*.css`。
 - Options 页面样式优先落在 `src/styles/settings.css` 和 `src/tabs/options.css`。
+- Portal 到宿主页的独立复杂弹窗样式（如 `src/styles/conversation-sync-review-inline.ts`、`src/styles/image-export-inline.ts`）以共享内联样式模块方式供扩展和油猴双端按需注入 `document.head`。
 - 新增面板样式文件必须纳入 Shadow DOM 注入链路：首屏必需样式走 `getStyle()`，非首屏大块样式走 `registerPanelLazyStyles()`。
 - 需要作用于主文档或第三方 Shadow DOM 的样式，继续按 `docs/developer/css-architecture.md` 的机制处理。
 

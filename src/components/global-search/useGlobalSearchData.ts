@@ -3,7 +3,7 @@ import fuzzysort from "fuzzysort"
 
 import {
   SETTING_CARD_LEVEL_SEARCH_IDS,
-  SETTING_ID_ALIASES,
+  getSettingIdAliasSearchMap,
   type SettingsSearchItem,
 } from "~constants"
 import { FEATURE_TIPS } from "~constants/feature-tips"
@@ -109,21 +109,6 @@ const ORDERED_GLOBAL_SEARCH_CATEGORIES: GlobalSearchResultCategory[] = [
   "settings",
   "tips",
 ]
-
-const buildSettingAliasMap = (): Record<string, string[]> => {
-  return Object.entries(SETTING_ID_ALIASES).reduce(
-    (collector, [aliasId, targetSettingId]) => {
-      if (!collector[targetSettingId]) {
-        collector[targetSettingId] = []
-      }
-      collector[targetSettingId].push(aliasId)
-      return collector
-    },
-    {} as Record<string, string[]>,
-  )
-}
-
-const GLOBAL_SEARCH_SETTING_ALIAS_MAP = buildSettingAliasMap()
 
 const buildGlobalSearchSnippet = ({
   content,
@@ -877,6 +862,8 @@ export const useGlobalSearchData = ({
       return []
     }
 
+    const settingAliasMap = getSettingIdAliasSearchMap()
+
     return settingsSearchResults.map((item, index) => {
       const title = resolveSettingSearchTitle(item)
       const breadcrumb = getSettingsBreadcrumb(item.settingId)
@@ -929,9 +916,7 @@ export const useGlobalSearchData = ({
           highlightField: "code",
         },
         {
-          value: normalizeGlobalSearchValue(
-            (GLOBAL_SEARCH_SETTING_ALIAS_MAP[item.settingId] || []).join(" "),
-          ),
+          value: normalizeGlobalSearchValue((settingAliasMap[item.settingId] || []).join(" ")),
           exact: 0,
           prefix: 0,
           includes: 44,

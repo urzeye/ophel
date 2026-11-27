@@ -2484,16 +2484,23 @@ export const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
   ...ADDITIONAL_SETTING_SEARCH_ITEMS,
 ]
 
-const SETTING_ID_ALIAS_SEARCH_MAP = Object.entries(SETTING_ID_ALIASES).reduce(
-  (collector, [aliasId, targetSettingId]) => {
-    if (!collector[targetSettingId]) {
-      collector[targetSettingId] = []
-    }
-    collector[targetSettingId].push(aliasId)
-    return collector
-  },
-  {} as Record<string, string[]>,
-)
+let settingIdAliasSearchMap: Record<string, string[]> | null = null
+
+export const getSettingIdAliasSearchMap = (): Record<string, string[]> => {
+  if (!settingIdAliasSearchMap) {
+    settingIdAliasSearchMap = Object.entries(SETTING_ID_ALIASES).reduce(
+      (collector, [aliasId, targetSettingId]) => {
+        if (!collector[targetSettingId]) {
+          collector[targetSettingId] = []
+        }
+        collector[targetSettingId].push(aliasId)
+        return collector
+      },
+      {} as Record<string, string[]>,
+    )
+  }
+  return settingIdAliasSearchMap
+}
 
 const normalizeSearchValue = (value: string): string => value.trim().toLowerCase()
 const toSearchTokens = (query: string): string[] =>
@@ -2505,13 +2512,14 @@ const toSearchTokens = (query: string): string[] =>
 export const searchSettingsItems = (query: string, limit?: number): SettingsSearchItem[] => {
   const normalizedQuery = normalizeSearchValue(query)
   const tokens = toSearchTokens(normalizedQuery)
+  const aliasSearchMap = getSettingIdAliasSearchMap()
 
   const scoredItems = SETTINGS_SEARCH_ITEMS.map((item, index) => {
     const normalizedTitle = normalizeSearchValue(item.title)
     const normalizedKeywords = normalizeSearchValue((item.keywords || []).join(" "))
     const normalizedSettingId = normalizeSearchValue(item.settingId)
     const normalizedAliasKeywords = normalizeSearchValue(
-      (SETTING_ID_ALIAS_SEARCH_MAP[item.settingId] || []).join(" "),
+      (aliasSearchMap[item.settingId] || []).join(" "),
     )
     const searchableText = `${normalizedTitle} ${normalizedKeywords} ${normalizedSettingId} ${normalizedAliasKeywords}`
 

@@ -4,7 +4,7 @@
 
 ---
 
-## 📋 目录
+## 目录
 
 1. [Plasmo CSUI Shadow DOM 样式隔离](#1-plasmo-csui-shadow-dom-样式隔离)
 2. [Plasmo Shadow DOM 样式注入顺序与 CSS 优先级冲突](#2-plasmo-shadow-dom-样式注入顺序与-css-优先级冲突)
@@ -17,9 +17,12 @@
 9. [操作其他设置后主题意外重置为默认值](#9-操作其他设置后主题意外重置为默认值)
 10. [阅读记录恢复异常与性能优化排查](#10-阅读记录恢复异常与性能优化排查)
 11. [首次安装对话同步不全问题](#11-首次安装对话同步不全问题)
-12. [ChatGPT 面板被 React Hydration 清除](#12-chatgpt-面板被-react-hydration-清除)
-13. [onRehydrateStorage 回调中 Store 变量未初始化](#13-onrehydratestorage-回调中-store-变量未初始化)
-14. [SitePack 跨浏览器动态注册与 userscript 管理器回归](#14-sitepack-跨浏览器动态注册与-userscript-管理器回归)
+12. [边缘吸附 Peeking 状态下输入时面板自动隐藏](#12-边缘吸附-peeking-状态下输入时面板自动隐藏)
+13. [ChatGPT 面板被 React Hydration 清除](#13-chatgpt-面板被-react-hydration-清除)
+14. [Grok 页面输入框焦点被强制抢占](#14-grok-页面输入框焦点被强制抢占)
+15. [油猴脚本设置持久化失效：异步 Hydration 竞态问题](#15-油猴脚本设置持久化失效异步-hydration-竞态问题)
+16. [onRehydrateStorage 回调中 Store 变量未初始化](#16-onrehydratestorage-回调中-store-变量未初始化)
+17. [SitePack 跨浏览器动态注册与 userscript 管理器回归](#17-sitepack-跨浏览器动态注册与-userscript-管理器回归)
 
 ---
 
@@ -1629,7 +1632,7 @@ async init() {
 
 ---
 
-## 11. 边缘吸附 Peeking 状态下输入时面板自动隐藏
+## 12. 边缘吸附 Peeking 状态下输入时面板自动隐藏
 
 **日期**: 2026-01-11
 
@@ -1804,7 +1807,7 @@ onMouseLeave={() => {
 
 ---
 
-## 12. ChatGPT 面板被 React Hydration 清除
+## 13. ChatGPT 面板被 React Hydration 清除
 
 **日期**: 2026-01-11
 
@@ -1898,7 +1901,7 @@ export const mountShadowHost: PlasmoMountShadowHost = ({ shadowHost }) => {
 
 ---
 
-## 13. Grok 页面输入框焦点被强制抢占
+## 14. Grok 页面输入框焦点被强制抢占
 
 **日期**: 2026-01-12
 
@@ -2077,7 +2080,7 @@ const containerRef = useRef<HTMLDivElement>(null)
 
 ---
 
-## 13. 油猴脚本设置持久化失效：异步 Hydration 竞态问题
+## 15. 油猴脚本设置持久化失效：异步 Hydration 竞态问题
 
 **日期**: 2026-01-22
 
@@ -2198,7 +2201,7 @@ const userscriptStorageAdapter: StateStorage = {
 
 ---
 
-## 13. onRehydrateStorage 回调中 Store 变量未初始化
+## 16. onRehydrateStorage 回调中 Store 变量未初始化
 
 **日期**: 2026-04-20
 
@@ -2344,7 +2347,7 @@ runWithoutPersist(() => {
 
 ---
 
-## 14. SitePack 跨浏览器动态注册与 userscript 管理器回归
+## 17. SitePack 跨浏览器动态注册与 userscript 管理器回归
 
 **日期**: 2026-07-29
 
