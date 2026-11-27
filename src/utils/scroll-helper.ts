@@ -39,16 +39,7 @@ function getBottomScrollPosition(container: HTMLElement): number {
     return 0
   }
 
-  return Math.max(0, container.scrollHeight - container.clientHeight)
-}
-
-/** 反向布局的顶部坐标为负值，不能用 scrollTop 接近 0 判断。 */
-export function isAtScrollTop(container: HTMLElement, scrollTop = container.scrollTop): boolean {
-  return container.clientHeight > 0 && scrollTop - getTopScrollPosition(container) < 4
-}
-
-export function isAtScrollBottom(container: HTMLElement, scrollTop = container.scrollTop): boolean {
-  return container.clientHeight > 0 && getBottomScrollPosition(container) - scrollTop < 4
+  return container.scrollHeight
 }
 
 /**

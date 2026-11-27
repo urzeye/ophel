@@ -19,8 +19,6 @@ import { loadHistoryUntil } from "~utils/history-loader"
 import { t } from "~utils/i18n"
 import {
   getScrollInfo,
-  isAtScrollBottom,
-  isAtScrollTop,
   smartScrollTo,
   smartScrollToBottom,
   smartScrollToTop,
@@ -139,8 +137,7 @@ export function useShortcuts({
       // 保存锚点到全局存储
       const scrollInfo = await getScrollInfo(adapter)
       // 已在顶部时不覆盖锚点，避免重复点击丢失原位置
-      const container = adapter.getScrollContainer() || document.documentElement
-      if (!isAtScrollTop(container, scrollInfo.scrollTop)) anchorStore.set(scrollInfo.scrollTop)
+      if (scrollInfo.scrollTop >= 4) anchorStore.set(scrollInfo.scrollTop)
 
       const result = await loadHistoryUntil({
         adapter,
@@ -173,8 +170,10 @@ export function useShortcuts({
       // 保存锚点到全局存储
       const scrollInfo = await getScrollInfo(adapter)
       // 已在底部时不覆盖锚点，避免重复点击丢失原位置
-      const container = adapter.getScrollContainer() || document.documentElement
-      if (!isAtScrollBottom(container, scrollInfo.scrollTop)) anchorStore.set(scrollInfo.scrollTop)
+      const atBottom =
+        scrollInfo.clientHeight > 0 &&
+        scrollInfo.scrollHeight - scrollInfo.clientHeight - scrollInfo.scrollTop < 4
+      if (!atBottom) anchorStore.set(scrollInfo.scrollTop)
 
       const { virtualEdgeSettled } = await smartScrollToBottom(adapter, { signal })
 

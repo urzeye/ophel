@@ -40,13 +40,7 @@ import {
 } from "~utils/dom-toolkit"
 import { loadHistoryUntil } from "~utils/history-loader"
 import { t } from "~utils/i18n"
-import {
-  getScrollInfo,
-  isAtScrollBottom,
-  isAtScrollTop,
-  smartScrollTo,
-  smartScrollToBottom,
-} from "~utils/scroll-helper"
+import { getScrollInfo, smartScrollTo, smartScrollToBottom } from "~utils/scroll-helper"
 import { DEFAULT_SETTINGS, getSiteTheme, type Prompt } from "~utils/storage"
 import { showToast } from "~utils/toast"
 import { anchorStore, withAnchorOp } from "~stores/anchor-store"
@@ -977,8 +971,6 @@ export const MainPanel: React.FC<MainPanelProps> = ({
       return
     }
     await withAnchorOp(async (signal) => {
-      const container = adapter?.getScrollContainer() || document.documentElement
-      const wasAtTop = isAtScrollTop(container)
       // 遮罩延迟显示
       const OVERLAY_DELAY_MS = 1600
       abortLoadingRef.current = false
@@ -1016,7 +1008,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
           },
         })
         // 已在顶部时不覆盖锚点，避免重复点击丢失原位置
-        if (!wasAtTop) anchorStore.set(result.previousScrollTop)
+        if (result.previousScrollTop >= 4) anchorStore.set(result.previousScrollTop)
 
         // 清理遮罩
         if (overlayTimer) {
@@ -1053,7 +1045,8 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     await withAnchorOp(async () => {
       const { previousScrollTop, container } = await smartScrollToBottom(adapter || null)
       // 已在底部时不覆盖锚点，避免重复点击丢失原位置
-      if (!isAtScrollBottom(container, previousScrollTop)) {
+      const maxScroll = container.scrollHeight - container.clientHeight
+      if (container.clientHeight <= 0 || maxScroll - previousScrollTop >= 4) {
         anchorStore.set(previousScrollTop)
       }
     })
