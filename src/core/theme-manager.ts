@@ -10,7 +10,12 @@ import { SITE_IDS } from "~constants/defaults"
 import { applyChatGPTThemeMode } from "~styles/native-theme-adapters/chatgpt"
 import { DOMToolkit } from "~utils/dom-toolkit"
 import type { CustomStyle } from "~utils/storage"
-import { getPreset, themeVariablesToCSS, type ThemeVariables } from "~utils/themes"
+import {
+  getPreset,
+  parseThemeVariablesFromCSS,
+  themeVariablesToCSS,
+  type ThemeVariables,
+} from "~utils/themes"
 
 export type ThemeMode = "light" | "dark"
 export type ThemePreference = "light" | "dark" | "system"
@@ -77,44 +82,6 @@ export interface GlobalThemeManagerOptions {
   // 沿用 settings 里的历史字段名；仅控制站点原生颜色覆盖 CSS。
   syncNativePageTheme?: boolean
   apply?: boolean
-}
-
-// 从自定义样式的顶层 :host / :root / 当前明暗块提取 --gh-* 变量，供 Portal 弹窗在 documentElement 上继承。
-function extractCustomStyleVariables(css: string, mode: ThemeMode): Record<string, string> {
-  const cleaned = css.replace(/\/\*[\s\S]*?\*\//g, "")
-  const baseVars: Record<string, string> = {}
-  const modeVars: Record<string, string> = {}
-  const otherMode: ThemeMode = mode === "dark" ? "light" : "dark"
-  const blockPattern = /([^{}@]+)\{([^{}]+)\}/g
-  const varPattern = /(--gh-[a-zA-Z0-9-]+)\s*:\s*([^;]+)/g
-
-  let blockMatch: RegExpExecArray | null
-  while ((blockMatch = blockPattern.exec(cleaned)) !== null) {
-    const selectors = blockMatch[1].split(",").map((item) => item.trim())
-    const body = blockMatch[2]
-    let target: Record<string, string> | null = null
-
-    for (const selector of selectors) {
-      if (new RegExp(`data-theme\\s*=\\s*["']?${otherMode}["']?`).test(selector)) continue
-      if (new RegExp(`data-theme\\s*=\\s*["']?${mode}["']?`).test(selector)) {
-        target = modeVars
-        break
-      }
-      if (/^(?::host|:root|html)$/.test(selector)) {
-        target = baseVars
-      }
-    }
-
-    if (!target) continue
-    varPattern.lastIndex = 0
-    let varMatch: RegExpExecArray | null
-    while ((varMatch = varPattern.exec(body)) !== null) {
-      const value = varMatch[2].replace(/\s*!important\s*$/i, "").trim()
-      if (value) target[varMatch[1]] = value
-    }
-  }
-
-  return { ...baseVars, ...modeVars }
 }
 
 export class ThemeManager {
@@ -838,7 +805,7 @@ export class ThemeManager {
       const baseVars = getPreset(fallbackPresetId, currentMode).variables
       vars = {
         ...baseVars,
-        ...extractCustomStyleVariables(customStyle.css, currentMode),
+        ...parseThemeVariablesFromCSS(customStyle.css, currentMode),
       } as ThemeVariables
     } else {
       // 否则从预置系统获取

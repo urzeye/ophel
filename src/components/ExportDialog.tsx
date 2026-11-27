@@ -708,11 +708,11 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
     }
   }
 
-  const handleDialogKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    if (event.key !== "Enter" || event.nativeEvent.isComposing || isExporting) return
+  const handleDialogKeyDown = (event: KeyboardEvent) => {
+    if (event.key !== "Enter" || event.isComposing || isExporting) return
     const active = event.target as HTMLElement | null
-    // 聚焦在普通按钮或链接上时交由浏览器执行该按钮自身动作；在输入框或弹窗容器上回车直接确认导出。
-    if (active?.closest("button, a, textarea")) return
+    // 聚焦在普通按钮、链接、文本域或开关上时交由控件自身处理；在文本输入框或弹窗容器上回车直接确认导出。
+    if (active?.closest("button, a, textarea") || active?.matches('input[type="checkbox"]')) return
     event.preventDefault()
     void handleConfirm()
   }

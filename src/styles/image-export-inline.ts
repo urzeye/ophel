@@ -1187,17 +1187,22 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
   .gh-image-export-chevron,
   .gh-image-export-field input[type="text"],
   .gh-image-export-inline-icon-btn,
-  .gh-image-export-range::-webkit-slider-thumb,
-  .gh-image-export-range::-moz-range-thumb,
   .gh-image-export-swatch-btn,
   .gh-image-export-zoom-btn,
   .gh-image-export-open-btn,
   .gh-image-export-caption-btn,
   .gh-image-export-canvas-btn,
   .gh-image-export-preview,
-  .gh-image-export-preview figure,
+  .gh-image-export-preview figure {
+    transition: none;
+  }
+  /* 私有伪元素必须按引擎拆块，避免任一浏览器因未知选择器丢弃整条降动效规则 */
+  .gh-image-export-range::-webkit-slider-thumb,
   .gh-image-export-update-bar progress::-webkit-progress-value,
   .gh-image-export-state progress::-webkit-progress-value {
+    transition: none;
+  }
+  .gh-image-export-range::-moz-range-thumb {
     transition: none;
   }
   .gh-dialog.gh-image-export-dialog,

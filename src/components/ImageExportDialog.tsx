@@ -17,7 +17,7 @@ import {
   ImageFileIcon,
 } from "~components/icons"
 import { ImageExportControls } from "~components/ImageExportControls"
-import { DialogOverlay } from "~components/ui/Dialog"
+import { DialogOverlay, getDeepActiveElement } from "~components/ui/Dialog"
 import { Tooltip } from "~components/ui/Tooltip"
 import { DEFAULT_IMAGE_EXPORT } from "~constants/image-export"
 import type { ThemeManager } from "~core/theme-manager"
@@ -77,6 +77,8 @@ interface ImageExportDialogProps {
   input: ExportDocumentInput
   themeManager: Pick<ThemeManager, "subscribe" | "getSnapshot">
   onClose: (exported: boolean) => void
+  focusRef?: React.MutableRefObject<(() => void) | null>
+  onUnmount?: () => void
 }
 
 function getRenderError(error: unknown): string {
@@ -97,7 +99,13 @@ function formatFileSize(bytes: number): string {
   return `${new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 }).format(bytes / (unit === "MB" ? 1_048_576 : 1024))} ${unit}`
 }
 
-export function ImageExportDialog({ input, themeManager, onClose }: ImageExportDialogProps) {
+export function ImageExportDialog({
+  input,
+  themeManager,
+  onClose,
+  focusRef,
+  onUnmount,
+}: ImageExportDialogProps) {
   const prefs = useSettingsStore((state) => state.settings.export?.image ?? DEFAULT_IMAGE_EXPORT)
   const hydrated = useSettingsStore((state) => state._hasHydrated)
   const [resetUndo, setResetUndo] = useState<{
@@ -143,6 +151,8 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
   const [canZoomFromFit, setCanZoomFromFit] = useState(false)
   const resetSnapshotRef = useRef({ prefs, title, zoom, defaultTitle: input.metadata.title })
   resetSnapshotRef.current = { prefs, title, zoom, defaultTitle: input.metadata.title }
+  const resetUndoRef = useRef(resetUndo)
+  resetUndoRef.current = resetUndo
   const handleControlsTitleChange = useCallback((nextTitle: string) => {
     setResetUndo(null)
     setTitle(nextTitle)
@@ -159,13 +169,12 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
     setZoom("fit")
   }, [updatePreferences])
   const handleControlsUndoReset = useCallback(() => {
-    setResetUndo((current) => {
-      if (!current) return null
-      updatePreferences(current.prefs, false)
-      setTitle(current.title)
-      setZoom(current.zoom)
-      return null
-    })
+    const current = resetUndoRef.current
+    if (!current) return
+    setResetUndo(null)
+    updatePreferences(current.prefs, false)
+    setTitle(current.title)
+    setZoom(current.zoom)
   }, [updatePreferences])
   const statusId = useId()
   const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -247,9 +256,19 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
   const canCopy = pages.length === 1 && canCopyPng
   const displaySubtitle = title.trim() || input.metadata.title
 
-  const focusDialogContainer = () => {
+  const focusDialogContainer = useCallback(() => {
     closeButton.current?.closest<HTMLElement>("[role='dialog']")?.focus({ preventScroll: true })
-  }
+  }, [])
+
+  const onUnmountRef = useRef(onUnmount)
+  onUnmountRef.current = onUnmount
+  useEffect(() => {
+    if (focusRef) focusRef.current = focusDialogContainer
+    return () => {
+      if (focusRef) focusRef.current = null
+      onUnmountRef.current?.()
+    }
+  }, [focusRef, focusDialogContainer])
 
   const markCopied = (target: "all" | number) => {
     if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current)
@@ -370,7 +389,7 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
   }
 
   useEffect(() => {
-    const previousFocus = document.activeElement
+    const previousFocus = getDeepActiveElement()
     const dialog = closeButton.current?.closest<HTMLElement>("[role='dialog']")
     if (dialog) {
       dialog.focus({ preventScroll: true })
@@ -387,7 +406,7 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
         return
       }
 
-      if ((event.metaKey || event.ctrlKey) && !event.altKey) {
+      if ((event.metaKey || event.ctrlKey) && !event.altKey && !event.shiftKey) {
         const lower = event.key.toLowerCase()
         if (lower === "s") {
           event.preventDefault()
@@ -410,7 +429,13 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
         }
       }
 
-      if (!event.metaKey && !event.ctrlKey && !event.altKey && !isEditableTarget(event.target)) {
+      if (
+        !event.metaKey &&
+        !event.ctrlKey &&
+        !event.altKey &&
+        !state.saving &&
+        !isEditableTarget(event.target)
+      ) {
         if (event.key === "0") {
           event.preventDefault()
           setZoom("fit")
@@ -467,7 +492,10 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
     return () => {
       document.removeEventListener("keydown", handleKeyDown, true)
       if (previousFocus instanceof HTMLElement && previousFocus.isConnected) {
-        previousFocus.focus({ preventScroll: true })
+        const restoreTarget = previousFocus.matches(":disabled")
+          ? previousFocus.closest<HTMLElement>("[role='dialog']")
+          : previousFocus
+        restoreTarget?.focus({ preventScroll: true })
       }
     }
   }, [])
@@ -1001,22 +1029,39 @@ export function showImageExportDialog(input: ExportDocumentInput): Promise<boole
     const container = document.createElement("div")
     document.body.append(container)
     const root = createRoot(container)
-    activeImageExportDialog = {
+    const dialogFocusRef: { current: (() => void) | null } = { current: null }
+    let settled = false
+    const handle = {
       focus: () => {
-        container.querySelector<HTMLElement>("[role='dialog']")?.focus({ preventScroll: true })
+        dialogFocusRef.current?.()
       },
     }
-    root.render(
-      <ImageExportDialog
-        input={input}
-        themeManager={themeManager}
-        onClose={(exported) => {
-          activeImageExportDialog = null
-          root.unmount()
-          container.remove()
-          resolve(exported)
-        }}
-      />,
-    )
+    const finish = (exported: boolean, shouldUnmount: boolean) => {
+      if (settled) return
+      settled = true
+      if (activeImageExportDialog === handle) {
+        activeImageExportDialog = null
+      }
+      if (shouldUnmount) {
+        root.unmount()
+      }
+      container.remove()
+      resolve(exported)
+    }
+    activeImageExportDialog = handle
+    try {
+      root.render(
+        <ImageExportDialog
+          input={input}
+          themeManager={themeManager}
+          focusRef={dialogFocusRef}
+          onUnmount={() => finish(false, false)}
+          onClose={(exported) => finish(exported, true)}
+        />,
+      )
+    } catch (error) {
+      finish(false, true)
+      throw error
+    }
   })
 }

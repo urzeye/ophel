@@ -261,8 +261,17 @@ export interface DialogOverlayProps {
   editableKeyboardGuard?: boolean
   /** 是否由 DialogOverlay 统一提供初始聚焦、Tab 焦点陷阱与关闭焦点恢复；默认开启 */
   trapFocus?: boolean
-  /** 绑定到 dialog 容器上的键盘事件 */
-  onDialogKeyDown?: React.KeyboardEventHandler<HTMLDivElement>
+  /** 绑定到 dialog 容器上的原生键盘事件（早于外层 overlay 的 editableKeyboardGuard 触发） */
+  onDialogKeyDown?: (event: KeyboardEvent) => void
+}
+
+/** 穿透 Shadow DOM 获取真实聚焦元素，避免关闭 Portal 弹窗后焦点只回到不可聚焦的 Shadow Host。 */
+export function getDeepActiveElement(): Element | null {
+  let active: Element | null = document.activeElement
+  while (active?.shadowRoot?.activeElement) {
+    active = active.shadowRoot.activeElement
+  }
+  return active
 }
 
 const DIALOG_FOCUSABLE_SELECTOR = [
@@ -292,6 +301,8 @@ export const DialogOverlay: React.FC<DialogOverlayProps> = ({
 }) => {
   const overlayRef = useRef<HTMLDivElement>(null)
   const dialogRef = useRef<HTMLDivElement>(null)
+  const onDialogKeyDownRef = useRef(onDialogKeyDown)
+  onDialogKeyDownRef.current = onDialogKeyDown
 
   useEffect(() => {
     injectDialogStyles()
@@ -305,11 +316,23 @@ export const DialogOverlay: React.FC<DialogOverlayProps> = ({
   }, [closeOnEscape, onClose])
 
   useEffect(() => {
+    const dialog = dialogRef.current
+    if (!dialog) return
+
+    // 在 dialog 节点上用原生冒泡监听，确保输入框内按键在被外层 overlay 守卫拦截前能触发回调。
+    const handleDialogKeyDown = (event: KeyboardEvent) => {
+      onDialogKeyDownRef.current?.(event)
+    }
+    dialog.addEventListener("keydown", handleDialogKeyDown)
+    return () => dialog.removeEventListener("keydown", handleDialogKeyDown)
+  }, [])
+
+  useEffect(() => {
     if (!trapFocus) return
     const dialog = dialogRef.current
     if (!dialog) return
 
-    const previousFocus = document.activeElement
+    const previousFocus = getDeepActiveElement()
     // 若子组件（如 InputDialog）未在挂载时自行聚焦，则将初始焦点移入弹窗容器。
     if (!dialog.contains(document.activeElement)) {
       dialog.focus({ preventScroll: true })
@@ -351,7 +374,11 @@ export const DialogOverlay: React.FC<DialogOverlayProps> = ({
     document.addEventListener("keydown", handleTab, true)
     return () => {
       document.removeEventListener("keydown", handleTab, true)
-      if (previousFocus instanceof HTMLElement && previousFocus.isConnected) {
+      if (
+        previousFocus instanceof HTMLElement &&
+        previousFocus.isConnected &&
+        !previousFocus.matches(":disabled")
+      ) {
         previousFocus.focus({ preventScroll: true })
       }
     }
@@ -381,7 +408,6 @@ export const DialogOverlay: React.FC<DialogOverlayProps> = ({
         aria-modal="true"
         aria-label={ariaLabel}
         tabIndex={-1}
-        onKeyDown={onDialogKeyDown}
         onClick={(e) => e.stopPropagation()}>
         {children}
       </div>

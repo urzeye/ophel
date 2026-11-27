@@ -201,6 +201,7 @@ function ReviewDialog({
   return (
     <DialogOverlay
       onClose={onClose}
+      trapFocus={false}
       ariaLabel={t("conversationsMissingTitle")}
       dialogClassName="gh-dialog-frame gh-sync-review">
       <style>{CONVERSATION_SYNC_REVIEW_STYLES}</style>
