@@ -9,6 +9,7 @@
 # testing
 /coverage
 /tests/
+/docs/plans/
 
 # misc
 .DS_Store

@@ -22,6 +22,30 @@ export const USERSCRIPT_SUPPORTED_LOCALES = [
 export type UserscriptLocale = (typeof USERSCRIPT_SUPPORTED_LOCALES)[number]
 
 export const USERSCRIPT_RESOURCE_DEFINITIONS = {
+  settingsData: {
+    metaName: "ophelSettingsData",
+    fileName: "ophel.settings-data.json",
+  },
+  svgPaths: {
+    metaName: "ophelSvgPaths",
+    fileName: "ophel.svg-paths.json",
+  },
+  inlineStyles: {
+    metaName: "ophelInlineStyles",
+    fileName: "ophel.inline-styles.json",
+  },
+  hostStyles: {
+    metaName: "ophelHostStyles",
+    fileName: "ophel.host-styles.css",
+  },
+  customStyleTemplate: {
+    metaName: "ophelCustomStyleTemplate",
+    fileName: "ophel.custom-style-template.css",
+  },
+  themePresets: {
+    metaName: "ophelThemePresets",
+    fileName: "ophel.theme-presets.json",
+  },
   styles: {
     metaName: "ophelStyles",
     fileName: "ophel.user.css",

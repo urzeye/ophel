@@ -6,6 +6,14 @@ import react from "@vitejs/plugin-react"
 import { build as viteBuild, defineConfig, type Plugin } from "vite"
 import monkey from "vite-plugin-monkey"
 
+import { rewriteUserscriptCssHighlighter } from "./scripts/userscript-highlighter"
+import { createUserscriptSvgPaths } from "./scripts/userscript-svg-paths"
+import { createUserscriptSettingsData } from "./scripts/userscript-settings-data"
+import {
+  createUserscriptInlineStyles,
+  createUserscriptStyleTemplate,
+} from "./scripts/userscript-text-resources"
+
 import {
   USERSCRIPT_RESOURCE_DEFINITIONS,
   USERSCRIPT_LOCALE_RESOURCE_DEFINITIONS,
@@ -26,9 +34,16 @@ import { SITE_ICONS } from "./src/constants/site-icons"
 import { resources as localeResources } from "./src/locales/resources"
 import { INLINE_HIGHLIGHT_STYLES } from "./src/styles/markdown-preview-inline"
 import { INLINE_USER_QUERY_MARKDOWN_STYLES } from "./src/styles/user-query-markdown-inline"
+import { lightPresets } from "./src/utils/themes/light"
+import { darkPresets } from "./src/utils/themes/dark"
 
 const isUserscriptDevelopmentBuild =
   process.env.NODE_ENV === "development" || Boolean(process.env.USERSCRIPT_ASSET_BASE_URL)
+
+const userscriptStyleTemplate = createUserscriptStyleTemplate(__dirname)
+const userscriptInlineStyles = createUserscriptInlineStyles(__dirname)
+const userscriptSvgPaths = createUserscriptSvgPaths(__dirname)
+const userscriptSettingsData = createUserscriptSettingsData(__dirname)
 
 // ========== Dynamic Metadata Loading ==========
 const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, "package.json"), "utf-8"))
@@ -187,11 +202,11 @@ function createContentHash(content: string | Buffer): string {
   return createHash("sha256").update(content).digest("hex").slice(0, 12)
 }
 
-// Greasyfork 脚本本体大小硬限制 2MB（按字节计）；项目闸门预留余量，
-// 触闸说明需要继续向 vendor 拆分，而不是顶着上限发布。
-// 必须按 UTF-8 字节而非 UTF-16 码元度量：CJK 字符编码后占 3 字节，
-// 按字符数计量可能在未触闸的情况下超出平台字节上限。
-const USERSCRIPT_GREASYFORK_BYTE_LIMIT = 2_000_000
+// Greasy Fork 的 MAX_CODE_LENGTH = 2.megabytes，Rails 按字符串长度校验，
+// 即 2,097,152 个 Unicode 字符，不是 UTF-8 字节数或 JS UTF-16 码元数。
+// https://github.com/greasyfork-org/greasyfork/blob/main/app/models/script_version.rb
+const USERSCRIPT_GREASYFORK_CHARACTER_LIMIT = 2 * 1024 * 1024
+// 保留项目原有的 UTF-8 大小闸门；这是更保守的项目策略，不是平台上限。
 const USERSCRIPT_BYTE_GATE = 1_950_000
 const userscriptMainFileName = `${pkg.name}.user.js`
 
@@ -204,8 +219,32 @@ function createHashedFileName(fileName: string, content: string | Buffer): strin
 function readUserscriptAssetContent(
   key: keyof typeof USERSCRIPT_RESOURCE_DEFINITIONS,
 ): string | Buffer {
+  if (key === "settingsData") {
+    return userscriptSettingsData.content
+  }
+
+  if (key === "svgPaths") {
+    return userscriptSvgPaths.content
+  }
+
   if (key === "styles") {
     return buildUserscriptStyleBundle()
+  }
+
+  if (key === "themePresets") {
+    return JSON.stringify({ lightPresets, darkPresets })
+  }
+
+  if (key === "customStyleTemplate") {
+    return userscriptStyleTemplate.content
+  }
+
+  if (key === "inlineStyles") {
+    return userscriptInlineStyles.content
+  }
+
+  if (key === "hostStyles") {
+    return userscriptInlineStyles.hostStyles
   }
 
   if (key === "markdownPreviewStyles") {
@@ -563,18 +602,24 @@ function emitUserscriptAssets(): Plugin {
 
       fs.writeFileSync(mainScriptPath, mainScript, "utf-8")
 
+      const mainScriptCharacters = Array.from(mainScript).length
+      if (mainScriptCharacters > USERSCRIPT_GREASYFORK_CHARACTER_LIMIT) {
+        throw new Error(
+          `${userscriptMainFileName} is ${mainScriptCharacters} characters, exceeding the ` +
+            `${USERSCRIPT_GREASYFORK_CHARACTER_LIMIT} Greasy Fork character limit.`,
+        )
+      }
       const mainScriptBytes = Buffer.byteLength(mainScript, "utf8")
       if (mainScriptBytes > USERSCRIPT_BYTE_GATE) {
         throw new Error(
           `${userscriptMainFileName} is ${mainScriptBytes} bytes, exceeding the ` +
-            `${USERSCRIPT_BYTE_GATE} project gate (Greasyfork hard limit ` +
-            `${USERSCRIPT_GREASYFORK_BYTE_LIMIT}). Move more code into @require vendor ` +
+            `${USERSCRIPT_BYTE_GATE} project size gate. Move more code into @require vendor ` +
             "bundles or @resource data instead of shipping near the limit.",
         )
       }
       console.warn(
-        `[ophel-userscript-assets] ${userscriptMainFileName}: ${mainScriptBytes} bytes ` +
-          `(gate ${USERSCRIPT_BYTE_GATE}, Greasyfork limit ${USERSCRIPT_GREASYFORK_BYTE_LIMIT})`,
+        `[ophel-userscript-assets] ${userscriptMainFileName}: ${mainScriptCharacters} characters ` +
+          `(Greasy Fork limit ${USERSCRIPT_GREASYFORK_CHARACTER_LIMIT})`,
       )
     },
   }
@@ -586,6 +631,37 @@ const userscriptLocaleResourceUrls = getUserscriptLocaleResourceUrls(userscriptL
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
+    userscriptSettingsData.plugin,
+    userscriptSvgPaths.plugin,
+    userscriptInlineStyles.plugin,
+    userscriptStyleTemplate.plugin,
+    {
+      name: "ophel-userscript-css-highlighter",
+      enforce: "pre",
+      transform(code, id) {
+        const editor = path.resolve(__dirname, "src/tabs/options/components/CustomStyleEditorDialog.tsx")
+        if (id === editor || id === editor.replace(/\\/g, "/")) {
+          return rewriteUserscriptCssHighlighter(code)
+        }
+      },
+    },
+    {
+      name: "ophel-userscript-theme-presets",
+      enforce: "pre",
+      transform(_code, id) {
+        const source = id.replace(/\\/g, "/")
+        const themeRoot = path.resolve(__dirname, "src/utils/themes").replace(/\\/g, "/")
+        const presetName =
+          source === `${themeRoot}/light/index.ts`
+            ? "lightPresets"
+            : source === `${themeRoot}/dark/index.ts`
+              ? "darkPresets"
+              : undefined
+        if (!presetName) return
+        const loader = path.resolve(__dirname, "src/platform/userscript/theme-presets.ts")
+        return `export { ${presetName} } from ${JSON.stringify(loader)}`
+      },
+    },
     react(),
     emitUserscriptAssets(),
     monkey({
@@ -603,6 +679,7 @@ export default defineConfig({
         // 实际运行范围由 whitelist-check.ts 在运行时收紧。
         match: ["http://*/*", "https://*/*"],
         grant: [
+          "GM_addStyle",
           "GM_getResourceText",
           "GM_getResourceURL",
           "GM_getValue",
