@@ -8,6 +8,7 @@ import monkey from "vite-plugin-monkey"
 
 import { rewriteUserscriptCssHighlighter } from "./scripts/userscript-highlighter"
 import { createUserscriptSvgPaths } from "./scripts/userscript-svg-paths"
+import { createUserscriptSettingsData } from "./scripts/userscript-settings-data"
 import {
   createUserscriptInlineStyles,
   createUserscriptStyleTemplate,
@@ -42,6 +43,7 @@ const isUserscriptDevelopmentBuild =
 const userscriptStyleTemplate = createUserscriptStyleTemplate(__dirname)
 const userscriptInlineStyles = createUserscriptInlineStyles(__dirname)
 const userscriptSvgPaths = createUserscriptSvgPaths(__dirname)
+const userscriptSettingsData = createUserscriptSettingsData(__dirname)
 
 // ========== Dynamic Metadata Loading ==========
 const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, "package.json"), "utf-8"))
@@ -217,6 +219,10 @@ function createHashedFileName(fileName: string, content: string | Buffer): strin
 function readUserscriptAssetContent(
   key: keyof typeof USERSCRIPT_RESOURCE_DEFINITIONS,
 ): string | Buffer {
+  if (key === "settingsData") {
+    return userscriptSettingsData.content
+  }
+
   if (key === "svgPaths") {
     return userscriptSvgPaths.content
   }
@@ -625,6 +631,7 @@ const userscriptLocaleResourceUrls = getUserscriptLocaleResourceUrls(userscriptL
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
+    userscriptSettingsData.plugin,
     userscriptSvgPaths.plugin,
     userscriptInlineStyles.plugin,
     userscriptStyleTemplate.plugin,

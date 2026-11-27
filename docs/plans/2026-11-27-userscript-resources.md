@@ -38,6 +38,10 @@ Use the existing hashed `@resource` manifest, SHA-256 fragments, GitHub asset pu
 
 Follow-up SVG result: 1,521,118 characters, saving 59,870 from the initial optimized build. All 25 tests, typecheck, targeted lint/formatting, the production build, and asset integrity checks passed. Run artifact-dependent tests after the build finishes.
 
+Follow-up settings result: 1,487,197 characters, saving another 33,921; the two approved changes save 93,791 characters in total. Settings data is generated from the original declarations and their constant dependencies, including shortcut metadata, without importing UI rendering modules into the Vite configuration. Search scoring and navigation functions remain unchanged, and card IDs remain a Set at runtime.
+
+Follow-up validation: all 40 tests passed, covering every setting title/alias, prefix routes, legacy page redirects, search ranking/limits, malformed resource fields, exact SVG markup, and cache reads. Typecheck, format, lint (existing warnings only), Chrome, Firefox, and production/local userscript builds passed. Chrome again has 75 identical files and the known generated background differences. Browser smoke confirmed alias search `appearance.presets.dark` opens the Appearance presets page, the longest extracted SVG path renders in both themes, and both new JSON resources are read once with no console errors.
+
 ## Initial results
 
 Character counts below use Unicode code points from the compressed production build before release URL pinning.
