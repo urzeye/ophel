@@ -47,7 +47,7 @@ export interface AIStudioHistoryOutlineData extends ApiOutlineSourceData {
   replyMarkdownByQueryIndex: Map<number, string>
 }
 
-// chunk 槽位定义（见 docs/developer/aistudio-api-outline-plan.md）
+// ResolveDriveResource chunk 槽位定义
 const CHUNK_SLOT_TEXT = 0
 const CHUNK_SLOT_IMAGE_IDS = 1
 const CHUNK_SLOT_FILE_IDS = 3

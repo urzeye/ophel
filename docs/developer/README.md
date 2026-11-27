@@ -1,29 +1,30 @@
 # 开发者文档索引
 
-本目录只保留**长期有效**的参考文档与工作规范。一次性的计划、审计、审查记录在对应工作完成后删除，历史可从 git 记录找回。
+本目录只放**长期有效**的参考文档和工作规范。一次性计划、审计、审查记录做完就删，历史留给 git。
 
 ## 目录分工
 
 | 路径                     | 类型     | 用途                                                                |
 | ------------------------ | -------- | ------------------------------------------------------------------- |
-| `conventions/`         | 工作规范 | 代理与贡献者都要遵守的写法约定，按需加载                            |
-| `architecture.md`      | 架构参考 | 全局模块、初始化链路、常用命令                                      |
-| `export-formats.md`    | 导出参考 | 图片、PDF、DOCX 选型、体积预算、双平台策略与渲染边界                 |
-| `css-architecture.md`  | 架构参考 | Shadow DOM、样式注入、主题系统机制详解与排查                        |
-| `troubleshooting.md`   | 排查手册 | 历史疑难案例                                                        |
-| `options-page-ui.md`   | 界面参考 | Options 页结构与 UI 说明                                            |
-| `settings-schema.json` | 设置结构 | 设置项 schema 快照                                                  |
-| `site-adapter/`        | 站点适配 | SitePack 审核清单、本地调试工作流、配置迁移手册、各站点热修字段矩阵 |
+| `conventions/`           | 工作规范 | 代理和贡献者都要遵守的写法与流程约定，按需查阅                      |
+| `architecture.md`        | 架构参考 | 模块划分、双平台构建、初始化顺序、消息常量与关键数据流              |
+| `css-architecture.md`    | 架构参考 | Shadow DOM、双平台样式注入链路、主题运行时机制与排查                |
+| `export-formats.md`      | 导出参考 | 图片、PDF、DOCX 选型、体积预算、双平台策略与渲染边界                |
+| `options-page-ui.md`     | 界面参考 | Options 独立页与设置弹窗结构、路由与改动清单                        |
+| `settings-schema.json`   | 设置结构 | 设置项 schema 快照                                                  |
+| `troubleshooting.md`     | 排查手册 | 历史疑难故障归档                                                    |
+| `site-adapter/`          | 站点适配 | 配置化迁移手册、SitePack 审核清单、本地调试工作流、各站点热修矩阵   |
 
-## 规范文档（conventions/）
+## 工作规范（`conventions/`）
 
-- `changelog.md`：更新日志怎么写：核心规则、自检、分类与格式、编号与发版、示例。
-- `commits.md`：Commit message、PR 与提交前检查规范。
+- [changelog.md](./conventions/changelog.md)：更新日志写法、自检、分类格式与正反示例。
+- [commits.md](./conventions/commits.md)：Commit message、PR 规则与提交前检查顺序。
+- [site-pack.md](./conventions/site-pack.md)：内置站点适配器与 SitePack 的边界、命名分层、校验红线与版本规则。
 
-`AGENTS.md` 只保留这两条规范的核心禁令与指针，细节以本目录为准。
+`AGENTS.md` 只保留这些规范的底线与触发指针，细则以 `conventions/` 为准。
 
-## 新增文档的归位规则
+## 新增文档归位规则
 
-- 长期参考（架构、机制、排查）：放本目录根级，并在上表登记。
-- 工作规范（写法、流程约定）：放 `conventions/`。
-- 一次性计划/审计/审查报告：默认不留在仓库；确需暂存的放在对应主题目录，工作完成后删除。
+- **长期参考**（架构、机制、排障）：放 `docs/developer/` 根级，并在上表登记。
+- **工作规范**（写法、流程约定）：放 `docs/developer/conventions/`。
+- **一次性计划 / 审计 / 审查报告**：不入库；本地规划放 `docs/plans/`（已被 `.gitignore` 忽略），切勿提交。

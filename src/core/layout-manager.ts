@@ -653,8 +653,7 @@ html.${AUTO_HIDE_FLOAT_CLASS} ${config.scrollContainer}::after {
       }
     })
     // 只观察 childList、不观察 attributes：依赖 :has() 的零态排除（如 is-zero-state）
-    // 要求站点的页面切换是 DOM 重建式；原地切 class 的站点不适用，见
-    // docs/developer/input-auto-hide-plan.md §4 约束清单
+    // 要求站点的页面切换是 DOM 重建式，原地切 class 的站点不适用
     this.autoHideInputMutationObserver.observe(document.body, { childList: true, subtree: true })
   }
 

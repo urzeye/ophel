@@ -4,7 +4,7 @@
  * （cookie / localStorage / performance / 内联配置脚本），isolated world
  * 与 main world 均可执行。
  *
- * 认证模型（见 docs/developer/aistudio-api-outline-plan.md）：
+ * 认证模型：
  * cookie（浏览器自动附带）+ authorization: SAPISIDHASH + x-goog-api-key +
  * origin 头。SAPISIDHASH 校验绑定 origin，跨域请求必须由页面上下文发起。
  *
