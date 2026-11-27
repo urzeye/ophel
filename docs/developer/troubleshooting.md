@@ -86,18 +86,19 @@ Shadow DOM 的样式隔离机制：
 
 ### 修复方案
 
-当前实现只把首屏必需的 `style.css` 放进 `getStyle()`；`conversations.css` 等非首屏样式改为独立 CSS 资源，并通过 `~utils/panel-lazy-styles` 注入 Shadow Root：
+当前实现把 `style.css` 和 `conversations.css` 同步放进 `getStyle()`，保证对话 Tab 被设为首个标签时也不会闪过无样式内容；设置、发布说明等非首屏样式使用独立 CSS 资源，并通过 `~utils/panel-lazy-styles` 注入 Shadow Root：
 
 ```tsx
 import cssText from "data-text:~style.css"
-import conversationsCssUrl from "url:~styles/conversations.css"
+import conversationsCssText from "data-text:~styles/conversations.css"
+import settingsCssUrl from "url:~styles/settings.css"
 import { registerPanelLazyStyles } from "~utils/panel-lazy-styles"
 
-registerPanelLazyStyles({ conversations: conversationsCssUrl })
+registerPanelLazyStyles({ settings: settingsCssUrl })
 
 export const getStyle = () => {
   const style = document.createElement("style")
-  style.textContent = cssText
+  style.textContent = cssText + "\n" + conversationsCssText
   return style
 }
 ```

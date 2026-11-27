@@ -1,6 +1,6 @@
 import cssText from "data-text:~style.css"
+import conversationsCssText from "data-text:~styles/conversations.css"
 import type { PlasmoCSConfig, PlasmoMountShadowHost } from "plasmo"
-import conversationsCssUrl from "url:~styles/conversations.css"
 import releaseNotesCssUrl from "url:~styles/release-notes.css"
 import settingsCssUrl from "url:~styles/settings.css"
 import React from "react"
@@ -47,7 +47,6 @@ export const config: PlasmoCSConfig = {
 
 registerPanelLazyStyles({
   settings: settingsCssUrl,
-  conversations: conversationsCssUrl,
   "release-notes": releaseNotesCssUrl,
 })
 
@@ -79,8 +78,13 @@ export const getStyle = () => {
     earlyThemeCSS = localStorage.getItem("ophel_ext_theme_cache") || ""
   } catch {}
 
-  // 首屏只同步注入基础样式；设置、对话、发布说明样式由 Shadow DOM link 延迟加载。
-  style.textContent = interFontFace + "\n" + cssText + (earlyThemeCSS ? "\n" + earlyThemeCSS : "")
+  style.textContent =
+    interFontFace +
+    "\n" +
+    cssText +
+    "\n" +
+    conversationsCssText +
+    (earlyThemeCSS ? "\n" + earlyThemeCSS : "")
   return style
 }
 

@@ -441,9 +441,9 @@ src/utils/themes/
 
 **两种 Shadow Host**：`<plasmo-csui>`（扩展模式）、`<div id="ophel-userscript-root">`（油猴模式）。
 
-**首屏样式**（初始化时）：`ui-entry.tsx` 通过 `getStyle()` 将基础 CSS 与主题缓存同步注入 Shadow DOM `<style>` 标签。
+**首屏样式**（初始化时）：`ui-entry.tsx` 通过 `getStyle()` 将基础 CSS、对话 Tab CSS 与主题缓存同步注入 Shadow DOM `<style>` 标签。对话 Tab 可被设为首个标签，因此其样式必须在首帧可用。
 
-**非首屏样式**：`settings.css`、`conversations.css`、`release-notes.css` 经 `~utils/panel-lazy-styles` 注册，在空闲时或对应界面打开时以 Shadow DOM `<link>` 延迟加载。
+**非首屏样式**：`settings.css`、`release-notes.css` 经 `~utils/panel-lazy-styles` 注册，在空闲时或对应界面打开时以 Shadow DOM `<link>` 延迟加载。
 
 **动态主题变量**（切换时）：`ThemeManager.syncPluginUITheme()` 创建/更新 `<style id="gh-theme-vars">`，注入 `:host { ... }` 规则到各 Shadow Root。
 

@@ -176,7 +176,6 @@
           "assets/support/*",
           "KaTeX_*.woff2",
           "settings.*.css",
-          "conversations.*.css",
           "release-notes.*.css"
         ],
         "matches": [

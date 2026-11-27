@@ -151,7 +151,7 @@ Ophel Atlas 项目级设计规范。此文档服务于现有浏览器扩展与�
   - `12` 套浅色主题，定义于 `src/utils/themes/light/index.ts`
   - `12` 套深色主题，定义于 `src/utils/themes/dark/index.ts`
 - 主题注入由 `src/core/theme-manager.ts` 负责。
-- 首屏基础样式通过 `src/contents/ui-entry.tsx` 的 `getStyle()` 注入 Shadow DOM；设置、对话、发布说明等非首屏大块样式通过 `~utils/panel-lazy-styles` 以 Shadow DOM `<link>` 延迟加载。
+- 首屏基础样式与对话 Tab 样式通过 `src/contents/ui-entry.tsx` 的 `getStyle()` 注入 Shadow DOM；对话 Tab 可被设为首个标签，必须同步提供样式。设置、发布说明等非首屏大块样式通过 `~utils/panel-lazy-styles` 以 Shadow DOM `<link>` 延迟加载。
 - 站点原生主题同步（「同步站点页面颜色」）由 `src/styles/native-theme-adapters/` 按站点把宿主页变量绑定到 `--gh-*`，同样由 `ThemeManager` 调度；新增语义变量时检查是否有适配器引用它。
 
 ### 主题变量优先级
@@ -407,7 +407,7 @@ Ophel Atlas 项目级设计规范。此文档服务于现有浏览器扩展与�
 - **Do** 颜色、边框、阴影、交互态优先使用 `--gh-*` 变量，并提供合理 fallback。
 - **Do** 通用控件复用 `src/components/ui/`，图标复用 `src/components/icons/`。
 - **Do** 为所有按钮补齐 `hover`、`active`、`focus-visible`、`disabled` 状态，`icon-only` 按钮提供可访问名称。
-- **Do** 首屏必需的面板样式通过 `getStyle()` + `data-text:` 注入；设置、对话、发布说明等非首屏大块样式通过 `url:` + `registerPanelLazyStyles()` 注入 Shadow DOM，避免进入入口 JS bundle。
+- **Do** 首屏必需的面板样式（含可作为首个标签的对话 Tab）通过 `getStyle()` + `data-text:` 注入；设置、发布说明等非首屏大块样式通过 `url:` + `registerPanelLazyStyles()` 注入 Shadow DOM，避免进入入口 JS bundle。
 - **Do** 深浅两套主题都验证后再交付；Shadow DOM 内深浅选择器统一用 `:host([data-theme="dark"])`。
 - **Do** 主题预览同时呈现大背景、头部品牌色、内容面、按钮强调态与可选纹理。
 

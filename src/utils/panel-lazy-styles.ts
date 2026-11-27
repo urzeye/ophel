@@ -1,4 +1,4 @@
-export const PANEL_LAZY_STYLE_IDS = ["settings", "conversations", "release-notes"] as const
+export const PANEL_LAZY_STYLE_IDS = ["settings", "release-notes"] as const
 
 export type PanelLazyStyleId = (typeof PANEL_LAZY_STYLE_IDS)[number]
 
