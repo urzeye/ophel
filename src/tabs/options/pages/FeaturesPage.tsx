@@ -8,7 +8,7 @@ import { createPortal } from "react-dom"
 
 import { FeaturesIcon } from "~components/icons"
 import { Button, NumberInput, PlaceholderInput, SelectDropdown, Slider } from "~components/ui"
-import { resolveTooltipPortalContainer } from "~components/ui/Tooltip"
+import { resolveTooltipPortalContainer } from "~utils/dom-tooltip"
 import { FEATURES_TAB_IDS, NAV_IDS, NOTIFICATION_SOUND_PRESETS } from "~constants"
 import {
   DEFAULT_KEYBINDINGS,

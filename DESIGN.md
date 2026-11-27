@@ -151,7 +151,7 @@ Ophel Atlas 项目级设计规范。此文档服务于现有浏览器扩展与�
   - `12` 套浅色主题，定义于 `src/utils/themes/light/index.ts`
   - `12` 套深色主题，定义于 `src/utils/themes/dark/index.ts`
 - 主题注入由 `src/core/theme-manager.ts` 负责。
-- 静态样式通过 `src/contents/ui-entry.tsx` 的 `getStyle()` 注入 Shadow DOM。
+- 首屏基础样式与对话 Tab 样式通过 `src/contents/ui-entry.tsx` 的 `getStyle()` 注入 Shadow DOM；对话 Tab 可被设为首个标签，必须同步提供样式。设置、发布说明等非首屏大块样式通过 `~utils/panel-lazy-styles` 以 Shadow DOM `<link>` 延迟加载。
 - 站点原生主题同步（「同步站点页面颜色」）由 `src/styles/native-theme-adapters/` 按站点把宿主页变量绑定到 `--gh-*`，同样由 `ThemeManager` 调度；新增语义变量时检查是否有适配器引用它。
 
 ### 主题变量优先级
@@ -407,7 +407,7 @@ Ophel Atlas 项目级设计规范。此文档服务于现有浏览器扩展与�
 - **Do** 颜色、边框、阴影、交互态优先使用 `--gh-*` 变量，并提供合理 fallback。
 - **Do** 通用控件复用 `src/components/ui/`，图标复用 `src/components/icons/`。
 - **Do** 为所有按钮补齐 `hover`、`active`、`focus-visible`、`disabled` 状态，`icon-only` 按钮提供可访问名称。
-- **Do** 新增面板样式文件时通过 `src/contents/ui-entry.tsx` 的 `getStyle()` 以 `data-text:` 合并注入 Shadow DOM。
+- **Do** 首屏必需的面板样式（含可作为首个标签的对话 Tab）通过 `getStyle()` + `data-text:` 注入；设置、发布说明等非首屏大块样式通过 `url:` + `registerPanelLazyStyles()` 注入 Shadow DOM，避免进入入口 JS bundle。
 - **Do** 深浅两套主题都验证后再交付；Shadow DOM 内深浅选择器统一用 `:host([data-theme="dark"])`。
 - **Do** 主题预览同时呈现大背景、头部品牌色、内容面、按钮强调态与可选纹理。
 
@@ -449,7 +449,7 @@ Ophel Atlas 项目级设计规范。此文档服务于现有浏览器扩展与�
 
 - 面板及弹窗样式优先落在 `src/style.css`、`src/styles/*.css`。
 - Options 页面样式优先落在 `src/styles/settings.css` 和 `src/tabs/options.css`。
-- 新增面板样式文件时，必须通过 `src/contents/ui-entry.tsx` 的 `getStyle()` 注入。
+- 新增面板样式文件必须纳入 Shadow DOM 注入链路：首屏必需样式走 `getStyle()`，非首屏大块样式走 `registerPanelLazyStyles()`。
 - 需要作用于主文档或第三方 Shadow DOM 的样式，继续按 `docs/developer/css-architecture.md` 的机制处理。
 
 ### 组件实现
@@ -470,7 +470,7 @@ Ophel Atlas 项目级设计规范。此文档服务于现有浏览器扩展与�
 ### Shadow DOM 与样式注入
 
 - 面板运行在 Plasmo Shadow DOM 中；普通 CSS import 不会自动作用于面板。
-- 面板样式必须通过 `src/contents/ui-entry.tsx` 的 `getStyle()` 注入，新增 CSS 文件需用 `data-text:` 合并进去。
+- 面板样式必须注入 Shadow DOM：首屏必需 CSS 由 `getStyle()` 同步注入，非首屏 CSS 通过 `panel-lazy-styles` 的 `<link>` 延迟注入，并保持在 `#gh-theme-vars` 之前。
 - 动态主题变量由 `ThemeManager` 注入到 Shadow Root 末尾，避免被静态变量覆盖。
 - `::view-transition-*` 等文档根伪元素样式必须注入主文档 `document.head`，不能放在 Shadow DOM CSS 里。
 - Gemini Enterprise 等第三方 Shadow DOM 场景，样式要注入目标 shadowRoot，而不是只注入页面或插件 Shadow DOM。

@@ -18,6 +18,7 @@ import {
   type ConversationSegmentedExportDraft,
   type ConversationSegmentedExportMode,
 } from "~core/conversation-manager"
+import { registerImageExportDialogHandler } from "~core/image-export-dialog-bridge"
 import type { ExportFormat } from "~utils/exporter"
 import { InlineBookmarkManager } from "~core/inline-bookmark-manager"
 import { OutlineManager, type OutlineNode } from "~core/outline-manager"
@@ -60,6 +61,11 @@ import { createSafeHTML } from "~utils/trusted-types"
 import { initCopyButtons, showCopySuccess } from "~utils/icons"
 import { hasOphelInteractionLayer } from "~utils/dom-toolkit"
 import { isLikelyMobileDevice } from "~utils/device"
+import {
+  PANEL_LAZY_STYLE_IDS,
+  ensurePanelLazyStyles,
+  schedulePanelLazyStyles,
+} from "~utils/panel-lazy-styles"
 
 import { ConfirmDialog, FolderSelectDialog, TagManagerDialog } from "./ConversationDialogs"
 import { DisclaimerModal } from "./DisclaimerModal"
@@ -72,6 +78,7 @@ import { ReleaseNotesModal } from "./ReleaseNotesModal"
 import { QuickButtons } from "./QuickButtons"
 import { SelectedPromptBar } from "./SelectedPromptBar"
 import { ExportDialog } from "./ExportDialog"
+import { showImageExportDialog as showImageExportDialogUI } from "./ImageExportDialog"
 import { SegmentedExportDialog } from "./SegmentedExportDialog"
 import { SettingsModal } from "./SettingsModal"
 import { GlobalSearchOverlay } from "./global-search/GlobalSearchOverlay"
@@ -139,6 +146,8 @@ import {
   type ShortcutActionId,
 } from "~constants/shortcuts"
 
+registerImageExportDialogHandler(showImageExportDialogUI)
+
 interface LocalizedLabelDefinition {
   key: string
   fallback: string
@@ -204,6 +213,7 @@ export interface AppProps {
 }
 
 export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
+  const appRootRef = useRef<HTMLDivElement>(null)
   // 读取设置 - 使用 Zustand Store
   const { settings, setSettings, updateDeepSetting, updateNestedSetting } = useSettingsStore()
   const isSettingsHydrated = useSettingsHydrated()
@@ -712,9 +722,26 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
   const [hoverWidthReleaseToken, setHoverWidthReleaseToken] = useState(0)
   const [isReleaseNotesOpen, setIsReleaseNotesOpen] = useState(false)
   const [hasUnseenReleaseNotes, setHasUnseenReleaseNotes] = useState(false)
+
+  useEffect(() => {
+    return schedulePanelLazyStyles(appRootRef.current, PANEL_LAZY_STYLE_IDS)
+  }, [])
+
+  useEffect(() => {
+    if (isSettingsOpen) {
+      ensurePanelLazyStyles(appRootRef.current, ["settings"])
+    }
+  }, [isSettingsOpen])
+
   // 本进程内已标记已读的版本：防止关闭弹窗时 effect 重读存储的竞态把红点复活
   const markedSeenVersionRef = useRef<string | null>(null)
   const [showReleaseNotesToast, setShowReleaseNotesToast] = useState(false)
+
+  useEffect(() => {
+    if (isReleaseNotesOpen || showReleaseNotesToast) {
+      ensurePanelLazyStyles(appRootRef.current, ["release-notes"])
+    }
+  }, [isReleaseNotesOpen, showReleaseNotesToast])
   const [showExtensionUpdateNotice, setShowExtensionUpdateNotice] = useState(
     () => typeof window !== "undefined" && Boolean(window.__OPHEL_EXTENSION_UPDATE_AVAILABLE__),
   )
@@ -2527,7 +2554,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
     }
   }, [conversationManager, settings])
 
-  // 从 window 获取 main.ts 创建的全局 ThemeManager 实例
+  // 从 window 获取扩展启动流程创建的全局 ThemeManager 实例
   // userscript 场景下 App 可能先于核心模块渲染，这里统一复用全局单例
   const themeManager = useMemo(() => {
     // 使用 props 传入的生效适配器：全局 getAdapter() 会绕过内置站点停用与 SitePack 接管
@@ -3578,6 +3605,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
 
   return (
     <div
+      ref={appRootRef}
       className={`gh-root ${isPassThrough ? "gh-pass-through" : ""} ${isTouchInput ? "is-touch" : ""}`}>
       {shouldRenderEdgeHoverZone && edgeSnapState && (
         <div

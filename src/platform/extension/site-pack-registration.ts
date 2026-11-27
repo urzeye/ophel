@@ -20,7 +20,9 @@ export { SITE_PACK_REGISTRATION_STATE_STORAGE_KEY } from "~core/site-pack-storag
 export const SITE_PACK_REGISTRATION_STATE_SCHEMA_VERSION = 1 as const
 export const SITE_PACK_DYNAMIC_SCRIPT_ID_PREFIX = "ophel-sitepack-"
 
-const GENERIC_ISOLATED_ENTRY_NAMES = ["main", "ui-entry"] as const
+// 通用 isolated world 入口：content script 已合并为 ui-entry 单入口，
+// SitePack 动态注册按此名单克隆模板，不再引用已删除的 main 入口
+const GENERIC_ISOLATED_ENTRY_NAMES = ["ui-entry"] as const
 const GENERIC_MAIN_ENTRY_NAMES = [
   "monitor-entry",
   "scroll-lock-main",

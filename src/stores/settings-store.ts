@@ -321,7 +321,7 @@ export const usePersistedSettings = () => useSettingsStore((state) => state.pers
 // ==================== 非 React 环境使用 ====================
 
 /**
- * 在非 React 环境（如 main.ts）中获取当前 settings
+ * 在非 React 环境（如 extension-bootstrap）中获取当前 settings
  * 注意：首次调用时可能还未完成 hydration
  */
 export const getSettingsState = () => useSettingsStore.getState().settings
@@ -342,7 +342,7 @@ export const claimLegacySiteSettings = (legacySiteId: string, siteInstanceKey: s
 }
 
 /**
- * 订阅 settings 变化（用于 main.ts 等非 React 模块）
+ * 订阅 settings 变化（用于 extension-bootstrap 等非 React 模块）
  * 返回取消订阅函数
  */
 export const subscribeSettings = (listener: (settings: Settings) => void) =>

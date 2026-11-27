@@ -7,7 +7,7 @@ import type {
   SiteDeleteConversationResult,
 } from "~adapters/base"
 import { SITE_IDS, type Folder } from "~constants"
-import { showImageExportDialog } from "~components/ImageExportDialog"
+import { showImageExportDialog } from "~core/image-export-dialog-bridge"
 import {
   getConversationsForSiteInstance,
   getConversationsStore,

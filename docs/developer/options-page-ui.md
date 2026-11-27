@@ -7,7 +7,7 @@
 - `src/components/SettingsModal.tsx`：内容脚本中的设置弹窗，渲染在扩展 Shadow DOM 内，复用 `src/tabs/options/pages/*` 页面组件。
 - `src/tabs/options.tsx`：独立 Options 页面入口，加载 `tabs/options.html`，用于扩展独立窗口、权限请求窗口等场景。
 - `src/tabs/options.css`：独立页面样式入口，导入 `src/styles/theme-variables.css` 与 `src/styles/settings.css`。
-- `src/contents/ui-entry.tsx`：面板与设置弹窗的 Shadow DOM 样式入口，通过 `data-text:~styles/settings.css` 注入设置页共享样式。
+- `src/contents/ui-entry.tsx`：面板与设置弹窗的 Shadow DOM 样式入口。基础样式经 `getStyle()` 同步注入；`settings.css` 经 `~utils/panel-lazy-styles` 在需要时以 Shadow DOM `<link>` 延迟加载。
 
 ## 2. 导航结构
 
@@ -69,7 +69,7 @@
 ## 5. 样式与主题约束
 
 - 设置页共享样式放在 `src/styles/settings.css`；独立页面额外通过 `src/tabs/options.css` 引入基础主题变量。
-- 面板内设置弹窗样式必须通过 `src/contents/ui-entry.tsx` 的 `getStyle()` 注入 Shadow DOM。
+- 面板内设置弹窗样式必须纳入 Shadow DOM 注入链路；`settings.css` 由 `~utils/panel-lazy-styles` 延迟注入，不得退化为普通文档 CSS import。
 - 颜色、边框、阴影和交互态优先使用 `--gh-*` 主题变量。
 - 新增样式文件时，必须确认扩展 Shadow DOM 和独立 Options 页面是否都需要引入。
 - 不要在设置页组件中新增大段内联样式；必要的运行时几何值除外。

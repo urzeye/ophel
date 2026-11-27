@@ -73,7 +73,7 @@ export const USERSCRIPT_INLINE_STYLE_SOURCES = [
   "src/components/prompts/PromptEditorDialog.tsx",
   "src/components/prompts/PromptPreviewModal.tsx",
   "src/components/ui/Dialog.tsx",
-  "src/components/ui/Tooltip.tsx",
+  "src/utils/dom-tooltip.ts",
   "src/core/copy-manager.ts",
   "src/core/inline-bookmark-manager.ts",
   "src/core/watermark-remover.ts",
