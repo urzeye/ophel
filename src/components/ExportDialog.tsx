@@ -611,7 +611,9 @@ export interface ExportDialogProps {
   onOpenSettings?: () => void
 }
 
-const getFormatOptions = (): {
+const getFormatOptions = (
+  imageBadge: ".png" | ".jpg",
+): {
   format: ExportFormat
   label: string
   badge?: string
@@ -619,7 +621,7 @@ const getFormatOptions = (): {
 }[] => [
   { format: "markdown", label: "Markdown", badge: ".md", Icon: MarkdownIcon },
   { format: "html", label: "HTML", badge: ".html", Icon: HTMLFileIcon },
-  { format: "image", label: t("exportToImage"), badge: "PNG/JPG", Icon: ImageFileIcon },
+  { format: "image", label: t("exportToImage"), badge: imageBadge, Icon: ImageFileIcon },
   { format: "json", label: "JSON", badge: ".json", Icon: JSONFileIcon },
   { format: "txt", label: "Text", badge: ".txt", Icon: TXTFileIcon },
   { format: "clipboard", label: t("exportToClipboard"), Icon: CopyIcon },
@@ -710,6 +712,7 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
   if (!isOpen) return null
 
   const isMarkdownLike = selectedFormat === "markdown" || selectedFormat === "clipboard"
+  const imageBadge: ".png" | ".jpg" = settings.export?.image?.format === "jpeg" ? ".jpg" : ".png"
 
   const handleConfirm = async () => {
     // 复制大纲由大纲 tab 暴露的能力完成，不走导出流程，也不使用下面的导出选项
@@ -794,7 +797,7 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
       <div className="gh-export-section">
         <div className="gh-export-section-title">{t("exportFormat")}</div>
         <div className="gh-export-format-grid">
-          {getFormatOptions().map((item) => (
+          {getFormatOptions(imageBadge).map((item) => (
             <button
               key={item.format}
               type="button"

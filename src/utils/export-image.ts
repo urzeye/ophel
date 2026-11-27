@@ -25,6 +25,8 @@ export interface ExportImagePage {
   blob: Blob
   width: number
   height: number
+  /** 逻辑排版宽度（CSS px），用于预览缩放基准，避免切换 1×/2× 清晰度时画面跳变。 */
+  cssWidth: number
   watermarkSlot?: { x: number; y: number; width: number; height: number }
 }
 
@@ -222,6 +224,7 @@ export async function captureExportImages(
       root.after(page)
       try {
         const dimensions = page.getBoundingClientRect()
+        const cssWidth = Math.ceil(dimensions.width)
         const width = Math.ceil(dimensions.width * options.scale)
         const height = Math.ceil(dimensions.height * options.scale)
         const slot = page.querySelector(".gh-export-watermark-slot")?.getBoundingClientRect()
@@ -246,7 +249,7 @@ export async function captureExportImages(
           signal.throwIfAborted()
           const blob = await encodeCanvas(canvas, "png")
           signal.throwIfAborted()
-          pages.push({ blob, width, height, watermarkSlot })
+          pages.push({ blob, width, height, cssWidth, watermarkSlot })
           onProgress(index + 1, slices.length)
         } finally {
           canvas.width = 0

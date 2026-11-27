@@ -652,11 +652,39 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
   font-weight: 600;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 }
+.gh-image-export-toolbar-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+  min-width: 0;
+}
 .gh-image-export-toolbar-meta {
   font-size: 12px;
   font-variant-numeric: tabular-nums;
   color: var(--gh-text-secondary, #6b7280);
   white-space: nowrap;
+}
+.gh-image-export-open-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--gh-border, #e5e7eb);
+  background: var(--gh-bg, #ffffff);
+  color: var(--gh-text, #1f2937);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.35;
+  text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
+}
+.gh-image-export-open-btn:hover {
+  background: var(--gh-hover, #f3f4f6);
+  border-color: color-mix(in srgb, var(--gh-text-secondary, #6b7280) 38%, var(--gh-border, #e5e7eb));
 }
 
 /* 后台更新时的极细顶部进度条，不占位不闪屏 */
@@ -690,7 +718,7 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
 .gh-image-export-preview {
   flex: 1;
   overflow: auto;
-  padding: 28px 32px;
+  padding: 0;
   min-width: 0;
   overscroll-behavior: contain;
   background-color: color-mix(in srgb, var(--gh-bg-secondary, #f3f4f6) 55%, var(--gh-bg-tertiary, #e5e7eb));
@@ -703,17 +731,33 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
   scrollbar-color: color-mix(in srgb, var(--gh-text-tertiary, #8d94a1) 48%, transparent) transparent;
   transition: opacity 180ms ease;
 }
+.gh-image-export-preview.is-pannable {
+  cursor: grab;
+}
+.gh-image-export-preview.is-panning {
+  cursor: grabbing;
+  user-select: none;
+}
+.gh-image-export-preview-stage {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 100%;
+  padding: 28px 32px;
+  box-sizing: border-box;
+  gap: 28px;
+}
 .gh-image-export-preview.is-updating figure {
   opacity: 0.72;
 }
 .gh-image-export-preview figure {
-  margin: 0 auto 28px;
+  margin: 0;
+  width: 100%;
   max-width: 800px;
   transition: opacity 180ms ease;
   animation: gh-image-export-page-in 280ms cubic-bezier(0.16, 1, 0.3, 1) both;
   animation-delay: calc(var(--i, 0) * 50ms);
 }
-.gh-image-export-preview figure:last-child { margin-bottom: 0; }
 
 .gh-image-export-canvas-btn {
   display: block;
@@ -730,6 +774,8 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
 }
 .gh-image-export-canvas-btn.is-fit { cursor: zoom-in; }
 .gh-image-export-canvas-btn.is-zoomed { cursor: zoom-out; }
+.gh-image-export-preview.is-pannable .gh-image-export-canvas-btn { cursor: grab; }
+.gh-image-export-preview.is-panning .gh-image-export-canvas-btn { cursor: grabbing; }
 .gh-image-export-canvas-btn:hover:not(:disabled) {
   box-shadow:
     0 2px 4px rgba(0, 0, 0, 0.08),
@@ -739,13 +785,15 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
   display: block;
   width: 100%;
   height: auto;
+  user-select: none;
+  -webkit-user-drag: none;
 }
-.gh-image-export-preview figcaption {
+.gh-image-export-page-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  margin-top: 10px;
+  margin-bottom: 8px;
   padding: 0 2px;
   font-size: 12px;
   font-variant-numeric: tabular-nums;
@@ -757,7 +805,7 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.gh-image-export-caption-actions {
+.gh-image-export-page-actions {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -992,7 +1040,17 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
   }
   .gh-image-export-preview {
     flex: 1 1 auto;
+    padding: 0;
+  }
+  .gh-image-export-preview-stage {
     padding: 14px;
+    gap: 18px;
+  }
+  .gh-image-export-open-btn span {
+    display: none;
+  }
+  .gh-image-export-open-btn {
+    padding: 5px 7px;
   }
   .gh-image-export-actions {
     width: 100%;
@@ -1010,6 +1068,7 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
   .gh-image-export-close { width: 44px; height: 44px; }
   .gh-image-export-choice,
   .gh-image-export-zoom-btn,
+  .gh-image-export-open-btn,
   .gh-image-export-actions .gh-dialog-btn,
   .gh-image-export-error-actions .gh-dialog-btn,
   .gh-image-export-reset { min-height: 42px; }

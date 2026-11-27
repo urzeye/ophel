@@ -83,7 +83,19 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
   const [actionError, setActionError] = useState("")
   const [activity, setActivity] = useState<"download" | "copy" | null>(null)
   const [copiedTarget, setCopiedTarget] = useState<"all" | number | null>(null)
+  const [isPanning, setIsPanning] = useState(false)
+  const [canPan, setCanPan] = useState(false)
   const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const previewRef = useRef<HTMLElement>(null)
+  const panStateRef = useRef<{
+    pointerId: number
+    startX: number
+    startY: number
+    startScrollLeft: number
+    startScrollTop: number
+    moved: boolean
+  } | null>(null)
+  const suppressClickRef = useRef(false)
   const saving = activity !== null
   const busyRef = useRef(saving)
   busyRef.current = saving
@@ -212,6 +224,99 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
     setActionError("")
     setCopiedTarget(null)
   }, [documentInput, options, composition])
+
+  // 检测预览内容是否水平超出可视区（超宽时开启抓手拖拽提示；拖拽手势同时支持横纵平移）
+  useEffect(() => {
+    const el = previewRef.current
+    if (!el) return
+    const updateCanPan = () => {
+      setCanPan(el.scrollWidth > el.clientWidth + 2)
+    }
+    updateCanPan()
+    const observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(updateCanPan) : null
+    observer?.observe(el)
+    const stage = el.firstElementChild
+    if (stage) observer?.observe(stage)
+    return () => observer?.disconnect()
+  }, [pages, zoom])
+
+  // 窗口失焦时中断拖拽，避免指针状态残留
+  useEffect(() => {
+    const endPanOnBlur = () => {
+      const state = panStateRef.current
+      if (!state) return
+      const el = previewRef.current
+      if (el?.hasPointerCapture(state.pointerId)) {
+        try {
+          el.releasePointerCapture(state.pointerId)
+        } catch {
+          // 忽略已失效指针捕获
+        }
+      }
+      panStateRef.current = null
+      setIsPanning(false)
+    }
+    window.addEventListener("blur", endPanOnBlur)
+    return () => window.removeEventListener("blur", endPanOnBlur)
+  }, [])
+
+  const handlePreviewPointerDown = (event: React.PointerEvent<HTMLElement>) => {
+    if (event.pointerType !== "mouse" || event.button !== 0 || panStateRef.current) return
+    const target = event.target as HTMLElement | null
+    if (target?.closest("a, .gh-image-export-page-actions button")) return
+    const el = previewRef.current
+    if (!el) return
+    if (el.scrollWidth <= el.clientWidth + 2 && el.scrollHeight <= el.clientHeight + 2) return
+    panStateRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      startScrollLeft: el.scrollLeft,
+      startScrollTop: el.scrollTop,
+      moved: false,
+    }
+  }
+
+  const handlePreviewPointerMove = (event: React.PointerEvent<HTMLElement>) => {
+    const state = panStateRef.current
+    const el = previewRef.current
+    if (!state || !el || event.pointerId !== state.pointerId) return
+    const dx = event.clientX - state.startX
+    const dy = event.clientY - state.startY
+    if (!state.moved && Math.hypot(dx, dy) < 4) return
+    if (!state.moved) {
+      state.moved = true
+      setIsPanning(true)
+      try {
+        el.setPointerCapture(event.pointerId)
+      } catch {
+        // 忽略无法捕获场景
+      }
+    }
+    el.scrollLeft = state.startScrollLeft - dx
+    el.scrollTop = state.startScrollTop - dy
+  }
+
+  const finishPreviewPan = (event: React.PointerEvent<HTMLElement>) => {
+    const state = panStateRef.current
+    if (!state || event.pointerId !== state.pointerId) return
+    const el = previewRef.current
+    if (el?.hasPointerCapture(state.pointerId)) {
+      try {
+        el.releasePointerCapture(state.pointerId)
+      } catch {
+        // 忽略已释放的指针捕获
+      }
+    }
+    if (state.moved) {
+      suppressClickRef.current = true
+      setTimeout(() => {
+        suppressClickRef.current = false
+      }, 0)
+    }
+    panStateRef.current = null
+    setIsPanning(false)
+  }
 
   const close = () => onClose(didExport.current)
   const extension = format === "jpeg" ? "jpg" : "png"
@@ -380,7 +485,21 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
                 </button>
               ))}
             </div>
-            {toolbarMeta && <span className="gh-image-export-toolbar-meta">{toolbarMeta}</span>}
+            <div className="gh-image-export-toolbar-right">
+              {toolbarMeta && <span className="gh-image-export-toolbar-meta">{toolbarMeta}</span>}
+              {pages.length === 1 && !error && (
+                <a
+                  className="gh-image-export-open-btn"
+                  href={pages[0].url}
+                  target="_blank"
+                  rel="noreferrer"
+                  title={t("imageExportOpenPreview")}
+                  aria-label={t("imageExportOpenPreview")}>
+                  <ExternalLinkIcon size={13} />
+                  <span>{t("imageExportOpenPreview")}</span>
+                </a>
+              )}
+            </div>
           </div>
           <div
             className={`gh-image-export-update-bar${updating ? " is-active" : ""}`}
@@ -394,9 +513,15 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
             )}
           </div>
           <section
-            className={`gh-image-export-preview${updating ? " is-updating" : ""}`}
+            ref={previewRef}
+            className={`gh-image-export-preview${updating ? " is-updating" : ""}${canPan ? " is-pannable" : ""}${isPanning ? " is-panning" : ""}`}
             aria-busy={rendering}
-            aria-label={t("imageExportTitle")}>
+            aria-label={t("imageExportTitle")}
+            onPointerDown={handlePreviewPointerDown}
+            onPointerMove={handlePreviewPointerMove}
+            onPointerUp={finishPreviewPan}
+            onPointerCancel={finishPreviewPan}
+            onLostPointerCapture={finishPreviewPan}>
             {initialRendering ? (
               <div className="gh-image-export-state">
                 <div className="gh-image-export-skeleton" aria-hidden="true">
@@ -461,81 +586,90 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
                 )}
               </div>
             ) : (
-              pages.map((page, index) => {
-                const pageLabel = t("imageExportPage", {
-                  index: String(index + 1),
-                  total: String(pages.length),
-                  width: String(page.width),
-                  height: String(page.height),
-                })
-                return (
-                  <figure
-                    key={index}
-                    style={
-                      {
-                        "--i": Math.min(index, 6),
-                        ...(zoom !== "fit"
-                          ? { width: (page.width * Number(zoom)) / 100, maxWidth: "none" }
-                          : {}),
-                      } as React.CSSProperties
-                    }>
-                    <button
-                      type="button"
-                      className={`gh-image-export-canvas-btn${zoom === "fit" ? " is-fit" : " is-zoomed"}`}
-                      aria-label={t("imageExportZoom")}
-                      disabled={saving}
-                      onClick={() => setZoom((current) => (current === "fit" ? "100" : "fit"))}>
-                      <img src={page.url} alt={pageLabel} />
-                    </button>
-                    <figcaption>
-                      <span className="gh-image-export-caption-meta">
-                        {pageLabel}
-                        {` · ${formatFileSize(page.blob.size)}`}
-                      </span>
-                      <span className="gh-image-export-caption-actions">
-                        {pages.length > 1 && canCopyPng && (
-                          <Tooltip content={t("imageExportCopy")}>
-                            <button
-                              type="button"
-                              className="gh-image-export-caption-btn"
-                              aria-label={t("imageExportCopy")}
-                              disabled={rendering || saving}
-                              onClick={() => void copyBlob(page.blob, index)}>
-                              {copiedTarget === index ? (
-                                <CheckIcon size={13} />
-                              ) : (
-                                <CopyIcon size={13} />
-                              )}
-                            </button>
-                          </Tooltip>
-                        )}
-                        {pages.length > 1 && (
-                          <Tooltip content={t("imageExportDownload")}>
-                            <button
-                              type="button"
-                              className="gh-image-export-caption-btn"
-                              aria-label={t("imageExportDownload")}
-                              disabled={rendering || saving}
-                              onClick={() => void downloadSinglePage(index)}>
-                              <DownloadIcon size={13} />
-                            </button>
-                          </Tooltip>
-                        )}
-                        <Tooltip content={t("imageExportOpenPreview")}>
-                          <a
-                            className="gh-image-export-caption-btn"
-                            href={page.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            aria-label={t("imageExportOpenPreview")}>
-                            <ExternalLinkIcon size={13} />
-                          </a>
-                        </Tooltip>
-                      </span>
-                    </figcaption>
-                  </figure>
-                )
-              })
+              <div className="gh-image-export-preview-stage">
+                {pages.map((page, index) => {
+                  const pageLabel = t("imageExportPage", {
+                    index: String(index + 1),
+                    total: String(pages.length),
+                    width: String(page.width),
+                    height: String(page.height),
+                  })
+                  const logicalWidth = page.cssWidth || width
+                  return (
+                    <figure
+                      key={index}
+                      style={
+                        {
+                          "--i": Math.min(index, 6),
+                          ...(zoom !== "fit"
+                            ? {
+                                width: Math.round((logicalWidth * Number(zoom)) / 100),
+                                maxWidth: "none",
+                              }
+                            : {}),
+                        } as React.CSSProperties
+                      }>
+                      {pages.length > 1 && (
+                        <figcaption className="gh-image-export-page-bar">
+                          <span className="gh-image-export-caption-meta">
+                            {pageLabel}
+                            {` · ${formatFileSize(page.blob.size)}`}
+                          </span>
+                          <span className="gh-image-export-page-actions">
+                            {canCopyPng && (
+                              <Tooltip content={t("imageExportCopy")}>
+                                <button
+                                  type="button"
+                                  className="gh-image-export-caption-btn"
+                                  aria-label={t("imageExportCopy")}
+                                  disabled={rendering || saving}
+                                  onClick={() => void copyBlob(page.blob, index)}>
+                                  {copiedTarget === index ? (
+                                    <CheckIcon size={13} />
+                                  ) : (
+                                    <CopyIcon size={13} />
+                                  )}
+                                </button>
+                              </Tooltip>
+                            )}
+                            <Tooltip content={t("imageExportDownload")}>
+                              <button
+                                type="button"
+                                className="gh-image-export-caption-btn"
+                                aria-label={t("imageExportDownload")}
+                                disabled={rendering || saving}
+                                onClick={() => void downloadSinglePage(index)}>
+                                <DownloadIcon size={13} />
+                              </button>
+                            </Tooltip>
+                            <Tooltip content={t("imageExportOpenPreview")}>
+                              <a
+                                className="gh-image-export-caption-btn"
+                                href={page.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                aria-label={t("imageExportOpenPreview")}>
+                                <ExternalLinkIcon size={13} />
+                              </a>
+                            </Tooltip>
+                          </span>
+                        </figcaption>
+                      )}
+                      <button
+                        type="button"
+                        className={`gh-image-export-canvas-btn${zoom === "fit" ? " is-fit" : " is-zoomed"}`}
+                        aria-label={t("imageExportZoom")}
+                        disabled={saving}
+                        onClick={() => {
+                          if (suppressClickRef.current) return
+                          setZoom((current) => (current === "fit" ? "100" : "fit"))
+                        }}>
+                        <img src={page.url} alt={pageLabel} draggable={false} />
+                      </button>
+                    </figure>
+                  )
+                })}
+              </div>
             )}
           </section>
         </div>
