@@ -1,11 +1,8 @@
 /**
- * Ophel - Content Script 入口
+ * Ophel - 扩展 content script 核心启动入口。
  *
- * 多站点 AI 对话增强工具
- * 核心模块初始化入口
+ * 由 ui-entry 单入口引入，避免 main / ui-entry 两份 bundle 重复打包。
  */
-
-import type { PlasmoCSConfig } from "plasmo"
 
 import {
   getAdapter,
@@ -456,35 +453,6 @@ if (!window.__ophelExtensionUpdateMessageListenerInstalled && typeof chrome !== 
     sendResponse({ success: true })
     return true
   })
-}
-
-// Content Script 配置 - 匹配所有支持的站点
-export const config: PlasmoCSConfig = {
-  matches: [
-    "https://gemini.google.com/*",
-    "https://notebook.google.com/*",
-    "https://business.gemini.google/*",
-    "https://aistudio.google.com/*",
-    "https://grok.com/*",
-    "https://chat.openai.com/*",
-    "https://chatgpt.com/*",
-    "https://claude.ai/*",
-    "https://www.doubao.com/*",
-    "https://www.dola.com/*",
-    "https://ima.qq.com/*",
-    "https://chat.deepseek.com/*",
-    "https://www.kimi.com/*",
-    "https://www.kimi.ai/*",
-    "https://chatglm.cn/*",
-    "https://chat.qwen.ai/*",
-    "https://www.qianwen.com/*",
-    "https://qianwen.com/*",
-    "https://yuanbao.tencent.com/*",
-    "https://chat.z.ai/*",
-    "https://zchat.z.ai/*",
-    "https://www.zchat.z.ai/*",
-  ],
-  run_at: "document_idle",
 }
 
 let activeAdapterInstance: SiteAdapter | null = null

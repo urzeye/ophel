@@ -1,23 +1,21 @@
 import cssText from "data-text:~style.css"
-import conversationsCssText from "data-text:~styles/conversations.css"
-import releaseNotesCssText from "data-text:~styles/release-notes.css"
-import settingsCssText from "data-text:~styles/settings.css"
 import type { PlasmoCSConfig, PlasmoMountShadowHost } from "plasmo"
+import conversationsCssUrl from "url:~styles/conversations.css"
+import releaseNotesCssUrl from "url:~styles/release-notes.css"
+import settingsCssUrl from "url:~styles/settings.css"
 import React from "react"
 
 import { getAdapter, getEffectiveAdapter, registryReady } from "~adapters"
 import type { SiteAdapter } from "~adapters/base"
 import { App } from "~components/App"
+import "~core/extension-bootstrap"
 import { startPageUrlChangeBroadcaster } from "~core/page-url-change-broadcaster"
-// 面板内导出会话（conversationManager.exportConversation 在本上下文执行）
-// 的 HTML 格式会把公式渲染为 MathML，需显式引入完成 katex 渲染器注册；
-// 样式提供者只有 main 的用户消息渲染使用，本入口不引入
-import "~platform/katex-render"
 import { useSettingsStore } from "~stores/settings-store"
 import { applyOphelPlatformFontClass } from "~utils/font"
 import { initI18n } from "~utils/i18n"
 import { matchesHiddenPath } from "~utils/hidden-paths"
 import { EVENT_PAGE_URL_CHANGE } from "~utils/messaging"
+import { registerPanelLazyStyles } from "~utils/panel-lazy-styles"
 
 export const config: PlasmoCSConfig = {
   matches: [
@@ -44,7 +42,14 @@ export const config: PlasmoCSConfig = {
     "https://zchat.z.ai/*",
     "https://www.zchat.z.ai/*",
   ],
+  run_at: "document_idle",
 }
+
+registerPanelLazyStyles({
+  settings: settingsCssUrl,
+  conversations: conversationsCssUrl,
+  "release-notes": releaseNotesCssUrl,
+})
 
 export const getStyle = () => {
   const style = document.createElement("style")
@@ -74,18 +79,8 @@ export const getStyle = () => {
     earlyThemeCSS = localStorage.getItem("ophel_ext_theme_cache") || ""
   } catch {}
 
-  // 合并所有 CSS 样式
-  style.textContent =
-    interFontFace +
-    "\n" +
-    cssText +
-    "\n" +
-    conversationsCssText +
-    "\n" +
-    releaseNotesCssText +
-    "\n" +
-    settingsCssText +
-    (earlyThemeCSS ? "\n" + earlyThemeCSS : "")
+  // 首屏只同步注入基础样式；设置、对话、发布说明样式由 Shadow DOM link 延迟加载。
+  style.textContent = interFontFace + "\n" + cssText + (earlyThemeCSS ? "\n" + earlyThemeCSS : "")
   return style
 }
 

@@ -29,7 +29,7 @@ Ophel 是一款跨平台浏览器扩展（同时支持油猴脚本），将 AI �
 本项目采用 **适配器模式 (Adapter Pattern)** 实现多站点支持：
 
 ```
-Content Script (main.ts)
+Content Script (ui-entry.tsx + extension-bootstrap.ts)
     |
     v
 getAdapter() --> SiteAdapter (抽象基类)
@@ -153,7 +153,7 @@ graph TD
 | `src/core/`       | 核心业务模块（多个管理器），由 `modules-init.ts` 统一编排     | `modules-init.ts`, `outline-manager.ts`, `theme-manager.ts`, `layout-manager.ts`, `conversation/`, `webdav-sync.ts`, `assistant-mermaid-renderer.ts`, `gemini-mystuff-bridge.ts`, `usage-counter-manager.ts`                         |
 | `src/components/` | React UI 层，运行在 Shadow DOM 中                             | `App.tsx`, `MainPanel.tsx`, `OutlineTab.tsx`, `ConversationsTab.tsx`, `SettingsModal.tsx`, `global-search/`                                                                                                                          |
 | `src/stores/`     | Zustand 状态管理，persist 到 chrome.storage.local             | `settings-store.ts`, `conversations-store.ts`, `prompts-store.ts`, `folders-store.ts`, `tags-store.ts`                                                                                                                               |
-| `src/contents/`   | Plasmo Content Script 入口                                    | `main.ts`（逻辑入口）, `ui-entry.tsx`（UI/Shadow DOM）, `monitor-entry.ts`（网络监控）, `aistudio-preload.ts`, `gemini-watermark-main.ts`, `scroll-lock-main.ts`                                                                     |
+| `src/contents/`   | Plasmo Content Script 入口                                    | `ui-entry.tsx`（单 Content Script 入口 + UI/Shadow DOM）, `monitor-entry.ts`（网络监控）, `aistudio-preload.ts`, `gemini-watermark-main.ts`, `scroll-lock-main.ts`                                                                     |
 | `src/platform/`   | 平台抽象层（浏览器扩展 vs 油猴脚本）                          | `types.ts`, `index.ts`, `extension/`, `userscript/`                                                                                                                                                                                  |
 | `src/utils/`      | 工具函数                                                      | `i18n.ts`, `dom-toolkit.ts`, `exporter.ts`, `markdown.ts`, `themes/`, `scroll-helper.ts`                                                                                                                                             |
 | `src/constants/`  | 常量与默认配置                                                | `defaults.ts`（SITE_IDS）, `ui.ts`, `shortcuts.ts`, `tools-menu.ts`                                                                                                                                                                  |
@@ -219,8 +219,8 @@ pnpm typecheck     # TypeScript 类型检查
 
 | 入口                      | 路径                                | 说明                                  |
 | ------------------------- | ----------------------------------- | ------------------------------------- |
-| Content Script 逻辑入口   | `src/contents/main.ts`              | 初始化适配器和核心模块                |
-| Content Script UI 入口    | `src/contents/ui-entry.tsx`         | Shadow DOM 内挂载 React App           |
+| Content Script 启动逻辑   | `src/core/extension-bootstrap.ts`   | 初始化适配器和核心模块                |
+| Content Script 单入口     | `src/contents/ui-entry.tsx`         | 启动核心并挂载 Shadow DOM React App   |
 | Background Service Worker | `src/background.ts`                 | 消息处理、通知、代理请求、Cookie 管理 |
 | Popup 页面                | `src/popup.tsx`                     | 扩展弹出窗口                          |
 | Options 页面              | `src/tabs/options.tsx`              | 独立设置页面                          |
@@ -441,12 +441,15 @@ src/utils/themes/
 
 **两种 Shadow Host**：`<plasmo-csui>`（扩展模式）、`<div id="ophel-userscript-root">`（油猴模式）。
 
-**静态样式**（初始化时）：`ui-entry.tsx` 通过 `getStyle()` 将三个 CSS 文件合并注入 Shadow DOM `<style>` 标签。
+**首屏样式**（初始化时）：`ui-entry.tsx` 通过 `getStyle()` 将基础 CSS 与主题缓存同步注入 Shadow DOM `<style>` 标签。
+
+**非首屏样式**：`settings.css`、`conversations.css`、`release-notes.css` 经 `~utils/panel-lazy-styles` 注册，在空闲时或对应界面打开时以 Shadow DOM `<link>` 延迟加载。
 
 **动态主题变量**（切换时）：`ThemeManager.syncPluginUITheme()` 创建/更新 `<style id="gh-theme-vars">`，注入 `:host { ... }` 规则到各 Shadow Root。
 
 **CSS 导入方式**：
-- Plasmo 扩展：`import cssText from "data-text:~style.css"`（编译时转字符串）
+- Plasmo 扩展首屏：`import cssText from "data-text:~style.css"`（编译时转字符串）
+- Plasmo 扩展非首屏：`import cssUrl from "url:~styles/settings.css"` + `registerPanelLazyStyles()`
 - 油猴脚本：`import mainStyle from "../../style.css?inline"`（Vite 内联）
 - 常规页面：`import "./popup.css"`（直接导入）
 
@@ -522,7 +525,7 @@ feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert, deps, ux
 
 ### 关键路径
 
-- 用户操作流程：`popup.tsx` -> 支持站点检测 -> Content Script 注入 -> `main.ts` 初始化适配器 -> `modules-init.ts` 初始化模块 -> `ui-entry.tsx` 挂载 Shadow DOM -> `App.tsx` 渲染面板
+- 用户操作流程：`popup.tsx` -> 支持站点检测 -> `ui-entry.tsx` 单入口 -> `extension-bootstrap.ts` 初始化适配器 -> `modules-init.ts` 初始化模块 -> Shadow DOM 挂载 -> `App.tsx` 渲染面板
 - 设置同步流程：UI 操作 -> `useSettingsStore.updateNestedSetting()` -> Zustand persist -> `chrome.storage.local` -> `subscribeModuleUpdates()` 热更新模块
 - 对话管理流程：`ConversationObserverConfig` 观察 DOM -> `ConversationManager` 聚合数据 -> `conversations-store` 持久化
 - WebDAV 同步流程：`WebDAVSyncManager` -> `MSG_WEBDAV_REQUEST` -> Background SW 代理 -> WebDAV 服务器

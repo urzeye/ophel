@@ -1,7 +1,7 @@
 /**
  * Gemini 标准版适配器 (gemini.google.com)
  */
-import { bindDomTooltip, type DomTooltipBinding } from "~components/ui/Tooltip"
+import { bindDomTooltip, type DomTooltipBinding } from "~utils/dom-tooltip"
 import {
   DOWNLOAD_ICON_ARROW_PATH,
   DOWNLOAD_ICON_CHEVRON_PATH,

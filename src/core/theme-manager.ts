@@ -512,7 +512,7 @@ export class ThemeManager {
 
   /**
    * 动态设置主题变化回调（用于 React 组件动态注册）
-   * 这使得单一 ThemeManager 实例可以在 main.ts 创建后，由 App.tsx 动态注册回调
+   * 这使得单一 ThemeManager 实例可以在扩展启动后，由 App.tsx 动态注册回调
    */
   setOnModeChange(callback: ThemeModeChangeCallback | undefined) {
     this.onModeChange = callback

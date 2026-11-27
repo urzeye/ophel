@@ -31,6 +31,7 @@ import type { ThemeTransitionOrigin } from "~core/theme-manager"
 import { useDraggable } from "~hooks/useDraggable"
 import { useOutlineNavigation } from "~hooks/useOutlineNavigation"
 import { useSupportedAiPlatforms } from "~hooks/useSupportedAiPlatforms"
+import { ensurePanelLazyStyles } from "~utils/panel-lazy-styles"
 import { useSettingsStore } from "~stores/settings-store"
 import {
   attachEditableKeyboardFocusGuard,
@@ -874,6 +875,12 @@ export const MainPanel: React.FC<MainPanelProps> = ({
       setActiveTab(visibleTabs[0] ?? "")
     }
   }, [visibleTabs, isInitialized, activeTab])
+
+  useEffect(() => {
+    if (activeTab === TAB_IDS.CONVERSATIONS) {
+      ensurePanelLazyStyles(panelRef.current, ["conversations"])
+    }
+  }, [activeTab, panelRef])
 
   // 监听快捷键触发的 tab 切换事件
   useEffect(() => {

@@ -70,7 +70,7 @@ Shadow DOM 的样式隔离机制：
 
 - Shadow DOM 内部的元素只能被 Shadow DOM 内部的样式影响
 - 外部样式表（包括通过 `import` 导入的 CSS 模块）无法穿透 Shadow DOM 边界
-- 只有通过 `getStyle()` 函数返回的样式才会被 Plasmo 注入到 Shadow DOM 内
+- 首屏样式通过 `getStyle()` 返回；非首屏大块样式通过 `~utils/panel-lazy-styles` 以 Shadow DOM `<link>` 延迟注入
 
 ```
 样式注入流程：
@@ -86,43 +86,27 @@ Shadow DOM 的样式隔离机制：
 
 ### 修复方案
 
-在 `ui-entry.tsx` 中添加 `conversations.css` 的导入，并合并到 `getStyle()` 返回的样式中：
+当前实现只把首屏必需的 `style.css` 放进 `getStyle()`；`conversations.css` 等非首屏样式改为独立 CSS 资源，并通过 `~utils/panel-lazy-styles` 注入 Shadow Root：
 
 ```tsx
 import cssText from "data-text:~style.css"
-import conversationsCssText from "data-text:~styles/conversations.css"
-import type { PlasmoCSConfig } from "plasmo"
-import React from "react"
+import conversationsCssUrl from "url:~styles/conversations.css"
+import { registerPanelLazyStyles } from "~utils/panel-lazy-styles"
 
-import { App } from "~components/App"
-
-export const config: PlasmoCSConfig = {
-  matches: [
-    "https://gemini.google.com/*",
-    "https://business.gemini.google/*",
-    // ... other matches
-  ],
-}
+registerPanelLazyStyles({ conversations: conversationsCssUrl })
 
 export const getStyle = () => {
   const style = document.createElement("style")
-  // 合并所有 CSS 样式
-  style.textContent = cssText + "\n" + conversationsCssText
+  style.textContent = cssText
   return style
 }
-
-const PlasmoApp = () => {
-  return <App />
-}
-
-export default PlasmoApp
 ```
 
 关键变化：
 
-1. 使用 `data-text:` 前缀导入 CSS 文件为文本
-2. 在 `getStyle()` 中将多个 CSS 文本合并
-3. 返回包含所有样式的 `<style>` 元素
+1. 首屏必需样式使用 `data-text:` + `getStyle()`
+2. 非首屏大块样式使用 `url:` 独立产出，并注册到 `panel-lazy-styles`
+3. 懒加载 `<link>` 必须插在 `#gh-theme-vars` 之前
 
 ### 经验总结
 
@@ -130,27 +114,20 @@ export default PlasmoApp
 | ------------------------- | --------------------------------------------------------------------- |
 | **Shadow DOM 样式隔离**   | Plasmo CSUI 使用 Shadow DOM，普通 CSS import 无法穿透 Shadow DOM 边界 |
 | **data-text: 导入方式**   | Plasmo 提供 `data-text:` 前缀将文件内容作为字符串导入，用于样式注入   |
-| **getStyle() 是关键入口** | 所有需要在 CSUI 中生效的样式都必须通过 `getStyle()` 返回              |
-| **多个 CSS 文件合并**     | 可以导入多个 CSS 文件并在 `getStyle()` 中拼接，保持样式文件的模块化   |
+| **Shadow 注入链路**       | 首屏用 `getStyle()`，非首屏用 `panel-lazy-styles` 的 `<link>`          |
+| **避免入口膨胀**          | 只在特定界面使用的大块 CSS 不应回填到 `data-text:` 入口字符串          |
 
 ### 扩展：添加新的样式文件
 
-如果将来需要添加更多样式文件（如 `prompts.css`、`outline.css` 等），遵循相同模式：
+新增样式时先判断首屏是否必需：
 
 ```tsx
-import cssText from "data-text:~style.css"
-import conversationsCssText from "data-text:~styles/conversations.css"
-import promptsCssText from "data-text:~styles/prompts.css" // 新增
+// 首屏必需：同步注入
+import promptsCss from "data-text:~styles/prompts.css"
 
-export const getStyle = () => {
-  const style = document.createElement("style")
-  style.textContent = [
-    cssText,
-    conversationsCssText,
-    promptsCssText, // 新增
-  ].join("\n")
-  return style
-}
+// 只在特定界面使用：独立资源 + 延迟加载
+import promptsCssUrl from "url:~styles/prompts.css"
+registerPanelLazyStyles({ prompts: promptsCssUrl })
 ```
 
 ---

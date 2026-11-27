@@ -46,7 +46,7 @@
 外部样式表 ──→ 无法穿透 ──→ Shadow DOM 内部元素
                 │
                 ↓
-       必须通过 getStyle() 注入
+  首屏用 getStyle()；非首屏用 Shadow DOM <link>
 ```
 
 Plasmo 框架将 React 组件渲染在 `<plasmo-csui>` 元素的 Shadow DOM 内：
@@ -55,8 +55,10 @@ Plasmo 框架将 React 组件渲染在 `<plasmo-csui>` 元素的 Shadow DOM 内�
 <plasmo-csui>
   #shadow-root (open)
   <style>
-    /* 通过 getStyle() 注入的样式 */
+    /* getStyle() 同步注入的首屏样式 */
   </style>
+  <link rel="stylesheet" data-ophel-lazy-style="settings">
+  <style id="gh-theme-vars">/* 主题变量保持最后 */</style>
   <div class="gh-root">
     <!-- 插件 UI 组件 -->
   </div>
@@ -81,30 +83,47 @@ document
 
 ## 2. CSS 文件分类与用途
 
-### 2.1 静态 CSS 文件（通过 Plasmo `getStyle()` 注入）
+### 2.1 首屏 CSS（通过 Plasmo `getStyle()` 同步注入）
 
-这些文件的样式会被注入到 **Plasmo 的 Shadow DOM** 中，用于插件 UI 组件。
+这些样式在面板首帧就必须可用，会被同步注入到 **Plasmo 的 Shadow DOM**。
 
-| 文件                             | 用途                                             | 注入方式                              |
-| -------------------------------- | ------------------------------------------------ | ------------------------------------- |
-| `src/style.css`                  | 主样式文件，包含面板、大纲、工具栏等核心 UI 样式 | `data-text:~style.css`                |
-| `src/styles/conversations.css`   | 对话 Tab 专用样式，从油猴脚本迁移                | `data-text:~styles/conversations.css` |
-| `src/styles/theme-variables.css` | CSS 变量定义（浅色/深色模式默认值）              | 被 `style.css` 通过 `@import` 引入    |
+| 文件                             | 用途                                             | 注入方式                           |
+| -------------------------------- | ------------------------------------------------ | ---------------------------------- |
+| `src/style.css`                  | 主样式文件，包含面板、大纲、工具栏等核心 UI 样式 | `data-text:~style.css`             |
+| `src/styles/theme-variables.css` | CSS 变量定义（浅色/深色模式默认值）              | 被 `style.css` 通过 `@import` 引入 |
 
 **注入代码** (`src/contents/ui-entry.tsx`)：
 
 ```typescript
 import cssText from "data-text:~style.css"
-import conversationsCssText from "data-text:~styles/conversations.css"
 
 export const getStyle = () => {
   const style = document.createElement("style")
-  style.textContent = cssText + "\n" + conversationsCssText
+  style.textContent = cssText
   return style
 }
 ```
 
-### 2.2 动态注入的 CSS（内嵌在 TypeScript 中）
+### 2.2 非首屏 CSS（Shadow DOM `<link>` 延迟加载）
+
+设置、对话列表、发布说明等只在特定界面使用的样式，通过 `url:` 独立产出 CSS 资源，再由 `~utils/panel-lazy-styles` 注入 Shadow Root：
+
+| 文件                           | 用途            | 注入方式                             |
+| ------------------------------ | --------------- | ------------------------------------ |
+| `src/styles/settings.css`      | 设置弹窗/设置页 | `url:` + `registerPanelLazyStyles()` |
+| `src/styles/conversations.css` | 对话列表 Tab    | `url:` + `registerPanelLazyStyles()` |
+| `src/styles/release-notes.css` | 发布说明弹窗    | `url:` + `registerPanelLazyStyles()` |
+
+```typescript
+import settingsCssUrl from "url:~styles/settings.css"
+import { registerPanelLazyStyles } from "~utils/panel-lazy-styles"
+
+registerPanelLazyStyles({ settings: settingsCssUrl })
+```
+
+面板挂载后会在空闲时预加载这些资源；设置、发布说明打开或对话 Tab 激活时还会立即兜底加载。`link` 必须插在 `#gh-theme-vars` 之前。
+
+### 2.3 动态注入的 CSS（内嵌在 TypeScript 中）
 
 这些样式需要动态注入到**主世界的 `document.head`** 或 **Gemini 的 Shadow DOM** 中，因此作为字符串内嵌在 TS 文件里。
 
@@ -155,17 +174,26 @@ private injectStyleToShadowRoot(shadowRoot: ShadowRoot) {
 
 ```
 编译时:
-  style.css + conversations.css
+  style.css
        │
        ↓ (data-text: 导入)
   ui-entry.tsx 中的 getStyle()
        │
        ↓ (Plasmo 框架调用)
-运行时:
+运行时首帧:
   创建 <style> 元素
        │
        ↓
   插入到 <plasmo-csui> 的 Shadow Root 中
+
+空闲时 / 对应界面打开:
+  settings.css / conversations.css / release-notes.css
+       │
+       ↓ (url: 独立资源 + registerPanelLazyStyles)
+  <link rel="stylesheet" data-ophel-lazy-style>
+       │
+       ↓
+  插入到 #gh-theme-vars 之前
 ```
 
 ### 3.2 主题变量动态注入流程
@@ -184,7 +212,7 @@ ThemeManager.syncPluginUITheme()
        │
        ↓ (关键!)
   4. 使用 shadowRoot.append() 将样式移到末尾
-      以确保覆盖 getStyle() 注入的默认样式
+      以确保覆盖 getStyle()/懒加载 link 注入的默认样式
 ```
 
 **为什么需要 `append()` 到末尾？**
@@ -330,7 +358,7 @@ src/
 │   ├── theme-manager.ts               # 主题管理器 (View Transitions 样式)
 │   └── user-query-markdown.ts         # 用户提问 Markdown 样式
 └── contents/
-    └── ui-entry.tsx                   # getStyle() - 静态样式注入
+    └── ui-entry.tsx                   # getStyle() + 懒加载 CSS 注册
 ```
 
 ### 5.2 样式来源速查表
@@ -339,7 +367,7 @@ src/
 | ---------------- | --------------------------------------- | -------------------------- | ----------------------- |
 | 面板框架         | `style.css`                             | Plasmo Shadow DOM          | `getStyle()`            |
 | 大纲组件         | `style.css`                             | Plasmo Shadow DOM          | `getStyle()`            |
-| 对话列表         | `conversations.css`                     | Plasmo Shadow DOM          | `getStyle()`            |
+| 对话列表         | `conversations.css`                     | Plasmo Shadow DOM          | 懒加载 `<link>`         |
 | 提示词 Tab       | `style.css`                             | Plasmo Shadow DOM          | `getStyle()`            |
 | CSS 变量默认值   | `theme-variables.css`                   | Plasmo Shadow DOM          | `@import` by style.css  |
 | 主题预置变量     | `themes/light/*.ts`, `themes/dark/*.ts` | Plasmo Shadow DOM          | `ThemeManager` 动态注入 |
@@ -359,30 +387,28 @@ src/
 
 **解决**：
 
-1. 使用 `data-text:` 前缀导入为字符串
-2. 在 `ui-entry.tsx` 的 `getStyle()` 中合并
+1. 首屏必需样式用 `data-text:` 导入，并在 `ui-entry.tsx` 的 `getStyle()` 中合并。
+2. 非首屏大块样式用 `url:` 导入，并注册到 `~utils/panel-lazy-styles`，由 Shadow DOM `<link>` 延迟加载。
 
 ```typescript
 // ❌ 错误
 import "./my-component.css"
 
-// ✅ 正确
-// ui-entry.tsx
+// ✅ 首屏必需
 import myComponentCss from "data-text:~styles/my-component.css"
 
-export const getStyle = () => {
-  style.textContent = cssText + "\n" + myComponentCss
-  return style
-}
+// ✅ 非首屏大块样式
+import myComponentCssUrl from "url:~styles/my-component.css"
+registerPanelLazyStyles({ "my-component": myComponentCssUrl })
 ```
 
 ### 6.2 主题变量被覆盖
 
 **症状**：深色模式下某些变量仍显示浅色值。
 
-**原因**：`getStyle()` 注入的样式在动态主题样式之后。
+**原因**：主题变量样式没有保持在 Shadow Root 末尾，或被后注入的面板样式覆盖。
 
-**解决**：确保 `ThemeManager` 使用 `shadowRoot.append()` 将主题样式移到末尾。
+**解决**：确保 `ThemeManager` 使用 `shadowRoot.append()` 将 `#gh-theme-vars` 移到末尾；懒加载 `link` 必须插在它之前。
 
 ### 6.3 样式冲突
 
@@ -438,8 +464,8 @@ export const getStyle = () => {
        ├─ 插件 UI 组件 (面板/Tab/弹窗)
        │       │
        │       ↓
-       │   添加到 style.css 或创建新 CSS 文件
-       │   并在 ui-entry.tsx 中合并
+       │   首屏样式用 data-text + getStyle()
+       │   非首屏大块样式用 url: + panel-lazy-styles
        │
        ├─ 需要注入到主世界 (页面增强功能)
        │       │
