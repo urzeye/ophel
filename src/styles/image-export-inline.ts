@@ -21,7 +21,7 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
 }
 .gh-image-export-close { width: 32px; height: 32px; flex: 0 0 auto; padding: 6px; border-radius: 8px; }
 
-.gh-image-export-body { display: grid; grid-template-columns: 252px minmax(0, 1fr); flex: 1; min-height: 0; }
+.gh-image-export-body { display: grid; grid-template-columns: 284px minmax(0, 1fr); flex: 1; min-height: 0; }
 
 /* 控制列：分组标签 + 分段控件 */
 .gh-image-export-controls { padding: 20px 20px 24px; overflow-y: auto; border-right: 1px solid var(--gh-border, #e5e7eb); }
@@ -60,10 +60,35 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
 .gh-image-export-toggle:hover { background: var(--gh-hover, #f3f4f6); }
 .gh-image-export-toggle input { accent-color: var(--gh-primary, #4285f4); margin-top: 3px; flex: 0 0 auto; }
 .gh-image-export-toggle small { display: block; margin-top: 2px; color: var(--gh-text-secondary, #6b7280); font-size: 12px; }
+.gh-image-export-controls .gh-image-export-all-controls { margin: 0; }
+.gh-image-export-controls fieldset:disabled fieldset { opacity: 1; }
+.gh-image-export-group { border-top: 1px solid var(--gh-border, #e5e7eb); padding-top: 12px; margin: 16px 0; }
+.gh-image-export-group summary { cursor: pointer; font-size: 13px; font-weight: 600; line-height: 1.5; padding: 4px 0; color: var(--gh-text, #1f2937); }
+.gh-image-export-group[open] summary { margin-bottom: 14px; }
+.gh-image-export-field { display: flex; flex-direction: column; gap: 8px; margin: 14px 0; font-size: 12px; color: var(--gh-text-secondary, #6b7280); }
+.gh-image-export-field > span { display: flex; justify-content: space-between; gap: 8px; }
+.gh-image-export-field output { color: var(--gh-text, #1f2937); font-variant-numeric: tabular-nums; }
+.gh-image-export-field input[type="text"], .gh-image-export-preview-toolbar select {
+  box-sizing: border-box; min-width: 0; width: 100%; padding: 8px 10px; border-radius: 6px;
+  border: 1px solid var(--gh-input-border, var(--gh-border, #d1d5db));
+  background: var(--gh-input-bg, var(--gh-bg, #ffffff)); color: var(--gh-text, #1f2937); font: inherit; font-size: 13px;
+  caret-color: var(--gh-primary, #4285f4);
+}
+.gh-image-export-field input[type="text"]:hover:not(:disabled), .gh-image-export-preview-toolbar select:hover { border-color: var(--gh-primary, #4285f4); }
+.gh-image-export-field input[type="range"] { width: 100%; margin: 0; accent-color: var(--gh-primary, #4285f4); }
+.gh-image-export-field input[type="color"] { width: 100%; height: 34px; border: 1px solid var(--gh-border, #e5e7eb); border-radius: 6px; background: var(--gh-input-bg, var(--gh-bg, #ffffff)); cursor: pointer; }
+.gh-image-export-field input:disabled { opacity: 0.55; cursor: not-allowed; }
+.gh-image-export-watermark-controls { padding-left: 10px; border-left: 1px solid var(--gh-border, #e5e7eb); }
+.gh-image-export-hint { margin: 8px 0 0; font-size: 12px; line-height: 1.5; color: var(--gh-text-secondary, #6b7280); }
+.gh-image-export-reset { margin-top: 18px; width: 100%; white-space: normal; }
+.gh-image-export-preview-pane { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.gh-image-export-preview-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding: 10px 20px; border-bottom: 1px solid var(--gh-border, #e5e7eb); font-size: 12px; color: var(--gh-text-secondary, #6b7280); }
+.gh-image-export-preview-toolbar label { display: flex; align-items: center; gap: 8px; }
+.gh-image-export-preview-toolbar select { width: auto; max-width: 180px; padding: 5px 8px; }
 
 /* 预览列：灰底 + 装裱卡片 */
 .gh-image-export-preview {
-  overflow: auto; padding: 28px 32px; background: var(--gh-bg-secondary, #f3f4f6); min-width: 0;
+  flex: 1; overflow: auto; padding: 28px 32px; background: var(--gh-bg-secondary, #f3f4f6); min-width: 0;
   overscroll-behavior: contain; scrollbar-color: var(--gh-border, #d1d5db) transparent;
 }
 .gh-image-export-preview figure { margin: 0 auto 24px; max-width: 800px; animation: gh-image-export-page-in 340ms cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: calc(var(--i, 0) * 70ms); }
@@ -154,7 +179,7 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
 .gh-image-export-actions .gh-dialog-btn { min-height: 36px; }
 .gh-image-export-error { color: var(--gh-danger, #b91c1c); }
 .gh-image-export-state .gh-image-export-error { color: var(--gh-text, #1f2937); font-weight: 500; }
-.gh-image-export-dialog button:focus-visible, .gh-image-export-dialog a:focus-visible, .gh-image-export-dialog input:focus-visible {
+.gh-image-export-dialog button:focus-visible, .gh-image-export-dialog a:focus-visible, .gh-image-export-dialog input:focus-visible, .gh-image-export-dialog select:focus-visible, .gh-image-export-dialog summary:focus-visible {
   outline: 2px solid var(--gh-primary, #4285f4); outline-offset: 3px;
 }
 .gh-image-export-dialog button:disabled { cursor: not-allowed; opacity: 0.5; }
@@ -164,11 +189,13 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
   .gh-dialog.gh-image-export-dialog { width: calc(100vw - 16px); height: calc(100dvh - 16px); min-width: 0; }
   .gh-image-export-header, .gh-image-export-footer { padding: 14px 16px; gap: 12px; }
   .gh-image-export-body { display: flex; flex-direction: column; overflow-y: auto; }
-  .gh-image-export-controls { overflow: visible; border-right: 0; border-bottom: 1px solid var(--gh-border, #e5e7eb); padding: 16px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-  .gh-image-export-controls fieldset { margin: 0; }
-  .gh-image-export-controls .gh-image-export-wide-options { grid-column: 1 / -1; }
-  .gh-image-export-toggle { margin: 0; }
-  .gh-image-export-preview { flex: 1 0 240px; overflow: visible; padding: 16px; }
+  .gh-image-export-controls { overflow: visible; border-right: 0; border-bottom: 1px solid var(--gh-border, #e5e7eb); padding: 16px; }
+  .gh-image-export-all-controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .gh-image-export-all-controls > fieldset { grid-column: 1 / -1; margin: 0; }
+  .gh-image-export-all-controls > .gh-image-export-group, .gh-image-export-all-controls > .gh-image-export-watermark-controls, .gh-image-export-all-controls > .gh-image-export-hint { grid-column: 1 / -1; margin: 0; }
+  .gh-image-export-all-controls > .gh-image-export-toggle, .gh-image-export-reset { margin: 0; }
+  .gh-image-export-preview-pane { flex: 1 0 300px; overflow: hidden; }
+  .gh-image-export-preview { flex: 1 0 240px; padding: 16px; }
   .gh-image-export-actions { width: 100%; justify-content: flex-end; }
 }
 @media (pointer: coarse) {

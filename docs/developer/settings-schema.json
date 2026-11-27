@@ -44,6 +44,32 @@
   },
 
   "export": {
+    "image": {
+      "format": "png",
+      "theme": "auto",
+      "scale": 2,
+      "layout": "single",
+      "branding": true,
+      "includeQuestions": true,
+      "showTitle": true,
+      "showSource": true,
+      "showTime": true,
+      "width": 800,
+      "fontSize": 16,
+      "appearance": "paper",
+      "watermark": {
+        "enabled": false,
+        "text": "",
+        "mode": "tile",
+        "color": "",
+        "opacity": 0.12,
+        "fontSize": 24,
+        "rotation": -30,
+        "gapX": 100,
+        "gapY": 100,
+        "stagger": true
+      }
+    },
     "customUserName": "",
     "customModelName": "",
     "exportFilenameTimestamp": false,

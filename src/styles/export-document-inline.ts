@@ -9,7 +9,7 @@ export const EXPORT_IMAGE_DOCUMENT_CSS = `
   --gh-export-bubble-border: #d7e4fb;
   --gh-export-bubble-name: #3367d6;
   --gh-export-head-gap: 30px;
-  width: 800px; font-size: 16px; line-height: 1.75;
+  width: 800px; font-size: var(--gh-export-font-size, 16px); line-height: 1.75;
 }
 .gh-export-document[data-theme="dark"] {
   --gh-export-canvas: #131315;
@@ -28,6 +28,15 @@ export const EXPORT_IMAGE_DOCUMENT_CSS = `
   width: 100%; max-width: none; margin: 0; padding: 44px 48px 30px;
   border: 0; border-radius: 0; box-shadow: none; background: transparent;
 }
+.gh-export-document[data-appearance="card"], .gh-export-document[data-appearance="shadow"] { padding: 24px; }
+.gh-export-document[data-appearance="card"] .gh-shell,
+.gh-export-document[data-appearance="shadow"] .gh-shell { border-radius: 16px; background: var(--gh-export-card); }
+.gh-export-document[data-appearance="card"] { background: color-mix(in srgb, var(--gh-primary) 8%, var(--gh-export-canvas)); }
+.gh-export-document[data-appearance="shadow"] { padding: 40px; }
+.gh-export-document[data-appearance="shadow"] .gh-shell { box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18); }
+.gh-export-document[data-has-header="false"] .gh-conversation,
+.gh-export-document[data-has-header="false"] .gh-export-slice { margin-top: 0; }
+.gh-export-document .gh-export-watermark-slot { margin-top: 18px; }
 
 /* 文档头部：展示级标题 + 安静元信息 */
 .gh-export-document .gh-doc-header {
@@ -74,7 +83,7 @@ export const EXPORT_IMAGE_DOCUMENT_CSS = `
 .gh-export-document .gh-message[data-role="user"] .gh-msg-name { color: var(--gh-export-bubble-name); }
 
 /* 正文排版 */
-.gh-export-document .gh-markdown-preview { font-size: 16px; line-height: 1.75; text-wrap: pretty; }
+.gh-export-document .gh-markdown-preview { font-size: var(--gh-export-font-size, 16px); line-height: 1.75; text-wrap: pretty; }
 .gh-export-document .gh-markdown-preview p { margin: 14px 0; }
 .gh-export-document .gh-markdown-preview h1,
 .gh-export-document .gh-markdown-preview h2,
@@ -118,7 +127,7 @@ export const EXPORT_IMAGE_DOCUMENT_CSS = `
 }
 .gh-export-document .gh-code-header { height: 40px; padding: 0 16px; }
 .gh-export-document .gh-code-lang { font-size: 11px; letter-spacing: 0.08em; }
-.gh-export-document .gh-code-wrapper pre code { padding: 16px 20px; font-size: 13px; line-height: 1.7; }
+.gh-export-document .gh-code-wrapper pre code { padding: 16px 20px; font-size: calc(var(--gh-export-font-size, 16px) * 0.8125); line-height: 1.7; }
 .gh-export-document .gh-markdown-preview pre,
 .gh-export-document .gh-code-wrapper pre code {
   white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; overflow: visible;
@@ -126,7 +135,7 @@ export const EXPORT_IMAGE_DOCUMENT_CSS = `
 
 /* 表格 */
 .gh-export-document .gh-markdown-preview table {
-  display: table; width: 100%; table-layout: fixed; overflow: visible; margin: 18px 0; font-size: 14px;
+  display: table; width: 100%; table-layout: fixed; overflow: visible; margin: 18px 0; font-size: calc(var(--gh-export-font-size, 16px) * 0.875);
 }
 .gh-export-document .gh-markdown-preview th, .gh-export-document .gh-markdown-preview td { padding: 9px 14px; }
 .gh-export-document th, .gh-export-document td { overflow-wrap: anywhere; word-break: break-word; }

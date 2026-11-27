@@ -1,21 +1,24 @@
-import React, { useEffect, useMemo, useRef, useState } from "react"
+import React, { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react"
 import { createRoot } from "react-dom/client"
 
+import type { ThemeManager } from "~core/theme-manager"
+import { DEFAULT_IMAGE_EXPORT } from "~constants/image-export"
+import { ImageExportControls } from "~components/ImageExportControls"
+import { useImageExport } from "~hooks/useImageExport"
+import { useSettingsStore } from "~stores/settings-store"
+import type { ImageExportPreferences } from "~types/image-export"
 import { CopyIcon, DownloadIcon } from "~components/icons"
 import { DialogOverlay } from "~components/ui/Dialog"
 import { IMAGE_EXPORT_DIALOG_CSS } from "~styles/image-export-inline"
 import { ExportDocumentError, type ExportDocumentInput } from "~utils/export-document"
-import {
-  renderExportImages,
-  type ExportImageOptions,
-  type ExportImagePage,
-} from "~utils/export-image"
+import type { ExportImageOptions } from "~utils/export-image"
 import { downloadBlob, downloadZipFiles } from "~utils/exporter"
 import { t } from "~utils/i18n"
 import { showToast } from "~utils/toast"
 
 interface ImageExportDialogProps {
   input: ExportDocumentInput
+  themeManager: Pick<ThemeManager, "subscribe" | "getSnapshot">
   onClose: (exported: boolean) => void
 }
 
@@ -32,20 +35,40 @@ function getRenderError(error: unknown): string {
   return t("imageExportRenderFailed")
 }
 
-export function ImageExportDialog({ input, onClose }: ImageExportDialogProps) {
-  const [format, setFormat] = useState<ExportImageOptions["format"]>("png")
-  const [theme, setTheme] = useState<ExportImageOptions["theme"]>(() =>
-    document.documentElement.dataset.theme === "dark" ? "dark" : "light",
-  )
-  const [scale, setScale] = useState<1 | 2>(2)
-  const [layout, setLayout] = useState<ExportImageOptions["layout"]>("single")
-  const [branding, setBranding] = useState(true)
-  const [includeQuestions, setIncludeQuestions] = useState(true)
+function formatFileSize(bytes: number): string {
+  const unit = bytes >= 1_048_576 ? "MB" : "KB"
+  return `${new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 }).format(bytes / (unit === "MB" ? 1_048_576 : 1024))} ${unit}`
+}
+
+export function ImageExportDialog({ input, themeManager, onClose }: ImageExportDialogProps) {
+  const prefs = useSettingsStore((state) => state.settings.export?.image ?? DEFAULT_IMAGE_EXPORT)
+  const hydrated = useSettingsStore((state) => state._hasHydrated)
+  const updatePreferences = (patch: Partial<ImageExportPreferences>) => {
+    const store = useSettingsStore.getState()
+    store.updateNestedSetting("export", "image", {
+      ...store.persistedSettings.export?.image,
+      ...patch,
+    })
+  }
+  const mode = useSyncExternalStore(themeManager.subscribe, themeManager.getSnapshot)
+  const theme = prefs.theme === "auto" ? mode : prefs.theme
+  const {
+    format,
+    scale,
+    layout,
+    branding,
+    width,
+    fontSize,
+    appearance,
+    showTitle,
+    showSource,
+    showTime,
+    includeQuestions,
+    watermark,
+  } = prefs
+  const [title, setTitle] = useState(input.metadata.title)
+  const [zoom, setZoom] = useState("fit")
   const [revision, setRevision] = useState(0)
-  const [pages, setPages] = useState<(ExportImagePage & { url: string })[]>([])
-  const [progress, setProgress] = useState({ completed: 0, total: 0 })
-  const [rendering, setRendering] = useState(true)
-  const [error, setError] = useState<ExportDocumentError | string | null>(null)
   const [actionError, setActionError] = useState("")
   const [activity, setActivity] = useState<"download" | "copy" | null>(null)
   const saving = activity !== null
@@ -53,10 +76,62 @@ export function ImageExportDialog({ input, onClose }: ImageExportDialogProps) {
   busyRef.current = saving
   const didExport = useRef(false)
   const closeButton = useRef<HTMLButtonElement>(null)
-  const options = useMemo(
-    () => ({ format, theme, scale, layout, branding, width: 800 }),
-    [format, theme, scale, layout, branding],
+  const footerWatermarkSize =
+    watermark.enabled && watermark.text.trim() && watermark.mode === "footer"
+      ? watermark.fontSize
+      : 0
+  const options = useMemo<ExportImageOptions>(
+    () => ({
+      theme,
+      scale,
+      layout,
+      branding,
+      width,
+      fontSize,
+      appearance,
+      showTitle,
+      showSource,
+      showTime,
+      footerWatermarkSize,
+    }),
+    [
+      theme,
+      scale,
+      layout,
+      branding,
+      width,
+      fontSize,
+      appearance,
+      showTitle,
+      showSource,
+      showTime,
+      footerWatermarkSize,
+    ],
   )
+  const documentInput = useMemo(
+    () => ({
+      ...input,
+      metadata: { ...input.metadata, title },
+      messages: includeQuestions
+        ? input.messages
+        : input.messages.filter((message) => message.role !== "user"),
+    }),
+    [input, title, includeQuestions],
+  )
+  const composition = useMemo(
+    () => ({ format, scale, theme, watermark }),
+    [format, scale, theme, watermark],
+  )
+  const result = useImageExport(
+    documentInput,
+    options,
+    composition,
+    revision,
+    hydrated && documentInput.messages.length > 0,
+  )
+  const { pages, progress } = result
+  const error = documentInput.messages.length ? result.error : t("imageExportEmpty")
+  const rendering = !error && result.rendering
   const canCopy =
     pages.length === 1 &&
     format === "png" &&
@@ -80,9 +155,9 @@ export function ImageExportDialog({ input, onClose }: ImageExportDialogProps) {
       if (key.key !== "Tab" || !dialog) return
       const controls = Array.from(
         dialog.querySelectorAll<HTMLElement>(
-          "button:not(:disabled), input:not(:disabled), a[href]",
+          "button:not(:disabled), input:not(:disabled), select:not(:disabled), summary, a[href]",
         ),
-      ).filter((element) => !element.matches(":disabled"))
+      ).filter((element) => !element.matches(":disabled") && element.getClientRects().length > 0)
       const first = controls[0]
       const last = controls[controls.length - 1]
       if (!dialog.contains(document.activeElement) || document.activeElement === dialog) {
@@ -103,53 +178,7 @@ export function ImageExportDialog({ input, onClose }: ImageExportDialogProps) {
     }
   }, [onClose])
 
-  useEffect(() => {
-    const controller = new AbortController()
-    const urls: string[] = []
-    setPages([])
-    setRendering(true)
-    setError(null)
-    setActionError("")
-    setProgress({ completed: 0, total: 0 })
-    const messages = includeQuestions
-      ? input.messages
-      : input.messages.filter((message) => message.role !== "user")
-    if (messages.length === 0) {
-      setError(t("imageExportEmpty"))
-      setRendering(false)
-      return () => controller.abort()
-    }
-    void renderExportImages(
-      { ...input, messages },
-      options,
-      controller.signal,
-      (completed, total) => {
-        if (!controller.signal.aborted) setProgress({ completed, total })
-      },
-    )
-      .then((result) => {
-        if (controller.signal.aborted) return
-        setPages(
-          result.map((page) => {
-            const url = URL.createObjectURL(page.blob)
-            urls.push(url)
-            return { ...page, url }
-          }),
-        )
-      })
-      .catch((failure: unknown) => {
-        if (controller.signal.aborted) return
-        console.error("[ImageExport] Render failed:", failure)
-        setError(failure instanceof ExportDocumentError ? failure : getRenderError(failure))
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setRendering(false)
-      })
-    return () => {
-      controller.abort()
-      urls.forEach((url) => URL.revokeObjectURL(url))
-    }
-  }, [input, options, includeQuestions, revision])
+  useEffect(() => setActionError(""), [documentInput, options, composition])
 
   const close = () => onClose(didExport.current)
   const download = async () => {
@@ -238,186 +267,148 @@ export function ImageExportDialog({ input, onClose }: ImageExportDialogProps) {
         </button>
       </header>
       <div className="gh-image-export-body">
-        <aside className="gh-image-export-controls">
-          <fieldset disabled={saving} className="gh-image-export-wide-options">
-            <legend>{t("imageExportLayout")}</legend>
-            <div className="gh-image-export-options">
-              {(["single", "split"] as const).map((value) => (
-                <button
-                  key={value}
-                  type="button"
-                  className="gh-image-export-choice"
-                  aria-pressed={layout === value}
-                  onClick={() => setLayout(value)}>
-                  {t(value === "single" ? "imageExportSingle" : "imageExportSplit")}
-                </button>
-              ))}
-            </div>
-          </fieldset>
-          <fieldset disabled={saving}>
-            <legend>{t("imageExportFormat")}</legend>
-            <div className="gh-image-export-options">
-              {(["png", "jpeg"] as const).map((value) => (
-                <button
-                  key={value}
-                  type="button"
-                  className="gh-image-export-choice"
-                  aria-pressed={format === value}
-                  onClick={() => setFormat(value)}>
-                  {value === "png" ? "PNG" : "JPG"}
-                </button>
-              ))}
-            </div>
-          </fieldset>
-          <fieldset disabled={saving}>
-            <legend>{t("imageExportTheme")}</legend>
-            <div className="gh-image-export-options">
-              {(["light", "dark"] as const).map((value) => (
-                <button
-                  key={value}
-                  type="button"
-                  className="gh-image-export-choice"
-                  aria-pressed={theme === value}
-                  onClick={() => setTheme(value)}>
-                  {t(value === "light" ? "themeLight" : "themeDark")}
-                </button>
-              ))}
-            </div>
-          </fieldset>
-          <fieldset disabled={saving} className="gh-image-export-wide-options">
-            <legend>{t("imageExportQuality")}</legend>
-            <div className="gh-image-export-options">
-              {([1, 2] as const).map((value) => (
-                <button
-                  key={value}
-                  type="button"
-                  className="gh-image-export-choice"
-                  aria-pressed={scale === value}
-                  onClick={() => setScale(value)}>
-                  {t(value === 1 ? "imageExportStandard" : "imageExportHigh")}
-                </button>
-              ))}
-            </div>
-          </fieldset>
-          <label className="gh-image-export-toggle">
-            <input
-              type="checkbox"
-              checked={includeQuestions}
-              disabled={saving}
-              onChange={(event) => setIncludeQuestions(event.target.checked)}
-            />
-            <span>{t("imageExportIncludeQuestions")}</span>
-          </label>
-          <label className="gh-image-export-toggle">
-            <input
-              type="checkbox"
-              checked={branding}
-              disabled={saving}
-              onChange={(event) => setBranding(event.target.checked)}
-            />
-            <span>
-              {t("imageExportBranding")}
-              <small>{t("imageExportBrandingHint")}</small>
-            </span>
-          </label>
-        </aside>
-        <section
-          className="gh-image-export-preview"
-          aria-busy={rendering}
-          aria-label={t("imageExportTitle")}>
-          {rendering ? (
-            <div className="gh-image-export-state">
-              <div className="gh-image-export-skeleton" aria-hidden="true">
-                <span className="gh-image-export-sk-title" />
-                <span className="gh-image-export-sk-meta" />
-                <span className="gh-image-export-sk-bubble" />
-                <span />
-                <span className="gh-image-export-sk-short" />
-                <span className="gh-image-export-sk-media" />
+        <ImageExportControls
+          preferences={prefs}
+          title={title}
+          onTitleChange={setTitle}
+          onChange={updatePreferences}
+          onReset={() => {
+            updatePreferences(DEFAULT_IMAGE_EXPORT)
+            setTitle(input.metadata.title)
+            setZoom("fit")
+          }}
+          disabled={saving || !hydrated}
+        />
+        <div className="gh-image-export-preview-pane">
+          <div className="gh-image-export-preview-toolbar">
+            <label>
+              {t("imageExportZoom")}
+              <select
+                aria-label={t("imageExportZoom")}
+                value={zoom}
+                disabled={saving}
+                onChange={(event) => setZoom(event.target.value)}>
+                <option value="fit">{t("imageExportFit")}</option>
+                <option value="50">50%</option>
+                <option value="100">100%</option>
+              </select>
+            </label>
+            {pages.length > 0 && (
+              <span>
+                {t("imageExportTotalSize", {
+                  size: formatFileSize(pages.reduce((sum, page) => sum + page.blob.size, 0)),
+                })}
+              </span>
+            )}
+          </div>
+          <section
+            className="gh-image-export-preview"
+            aria-busy={rendering}
+            aria-label={t("imageExportTitle")}>
+            {rendering ? (
+              <div className="gh-image-export-state">
+                <div className="gh-image-export-skeleton" aria-hidden="true">
+                  <span className="gh-image-export-sk-title" />
+                  <span className="gh-image-export-sk-meta" />
+                  <span className="gh-image-export-sk-bubble" />
+                  <span />
+                  <span className="gh-image-export-sk-short" />
+                  <span className="gh-image-export-sk-media" />
+                </div>
+                <progress
+                  aria-label={t("imageExportTitle")}
+                  max={progress.total || undefined}
+                  value={progress.total ? progress.completed : undefined}
+                />
+                <p>{status}</p>
               </div>
-              <progress
-                aria-label={t("imageExportTitle")}
-                max={progress.total || undefined}
-                value={progress.total ? progress.completed : undefined}
-              />
-              <p>{status}</p>
-            </div>
-          ) : error ? (
-            <div className="gh-image-export-state">
-              <svg
-                className="gh-image-export-error-icon"
-                width="28"
-                height="28"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true">
-                <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-                <path d="M12 9v4" />
-                <path d="M12 17h.01" />
-              </svg>
-              <p role="alert" className="gh-image-export-error">
-                {getRenderError(error)}
-              </p>
-              {error instanceof ExportDocumentError && error.kind === "single-limit" ? (
-                <div className="gh-image-export-error-actions">
-                  {error.canReduceScale && (
+            ) : error ? (
+              <div className="gh-image-export-state">
+                <svg
+                  className="gh-image-export-error-icon"
+                  width="28"
+                  height="28"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true">
+                  <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                  <path d="M12 9v4" />
+                  <path d="M12 17h.01" />
+                </svg>
+                <p role="alert" className="gh-image-export-error">
+                  {getRenderError(error)}
+                </p>
+                {error instanceof ExportDocumentError && error.kind === "single-limit" ? (
+                  <div className="gh-image-export-error-actions">
+                    {error.canReduceScale && (
+                      <button
+                        type="button"
+                        className="gh-dialog-btn gh-dialog-btn-secondary"
+                        onClick={() => updatePreferences({ scale: 1 })}>
+                        {t("imageExportUseStandard")}
+                      </button>
+                    )}
                     <button
                       type="button"
-                      className="gh-dialog-btn gh-dialog-btn-secondary"
-                      onClick={() => setScale(1)}>
-                      {t("imageExportUseStandard")}
+                      className="gh-dialog-btn gh-dialog-btn-primary"
+                      onClick={() => updatePreferences({ layout: "split" })}>
+                      {t("imageExportUseSplit")}
                     </button>
-                  )}
+                  </div>
+                ) : (
                   <button
                     type="button"
                     className="gh-dialog-btn gh-dialog-btn-primary"
-                    onClick={() => setLayout("split")}>
-                    {t("imageExportUseSplit")}
+                    onClick={() => setRevision((current) => current + 1)}>
+                    {t("imageExportRetry")}
                   </button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  className="gh-dialog-btn gh-dialog-btn-primary"
-                  onClick={() => setRevision((current) => current + 1)}>
-                  {t("imageExportRetry")}
-                </button>
-              )}
-            </div>
-          ) : (
-            pages.map((page, index) => (
-              <figure key={page.url} style={{ "--i": Math.min(index, 6) } as React.CSSProperties}>
-                <a
-                  href={page.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label={t("imageExportOpenPreview")}>
-                  <img
-                    src={page.url}
-                    alt={t("imageExportPage", {
+                )}
+              </div>
+            ) : (
+              pages.map((page, index) => (
+                <figure
+                  key={page.url}
+                  style={
+                    {
+                      "--i": Math.min(index, 6),
+                      ...(zoom !== "fit"
+                        ? { width: (page.width * Number(zoom)) / 100, maxWidth: "none" }
+                        : {}),
+                    } as React.CSSProperties
+                  }>
+                  <a
+                    href={page.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label={t("imageExportOpenPreview")}>
+                    <img
+                      src={page.url}
+                      alt={t("imageExportPage", {
+                        index: String(index + 1),
+                        total: String(pages.length),
+                        width: String(page.width),
+                        height: String(page.height),
+                      })}
+                    />
+                  </a>
+                  <figcaption>
+                    {t("imageExportPage", {
                       index: String(index + 1),
                       total: String(pages.length),
                       width: String(page.width),
                       height: String(page.height),
                     })}
-                  />
-                </a>
-                <figcaption>
-                  {t("imageExportPage", {
-                    index: String(index + 1),
-                    total: String(pages.length),
-                    width: String(page.width),
-                    height: String(page.height),
-                  })}
-                </figcaption>
-              </figure>
-            ))
-          )}
-        </section>
+                    {` · ${formatFileSize(page.blob.size)}`}
+                  </figcaption>
+                </figure>
+              ))
+            )}
+          </section>
+        </div>
       </div>
       <footer className="gh-image-export-footer">
         <p
@@ -464,6 +455,9 @@ export function ImageExportDialog({ input, onClose }: ImageExportDialogProps) {
 }
 
 export function showImageExportDialog(input: ExportDocumentInput): Promise<boolean> {
+  const themeManager = window.__ophelThemeManager
+  if (!themeManager)
+    return Promise.reject(new Error("Image export requires the initialized ThemeManager"))
   return new Promise((resolve) => {
     const container = document.createElement("div")
     document.body.append(container)
@@ -471,6 +465,7 @@ export function showImageExportDialog(input: ExportDocumentInput): Promise<boole
     root.render(
       <ImageExportDialog
         input={input}
+        themeManager={themeManager}
         onClose={(exported) => {
           root.unmount()
           container.remove()

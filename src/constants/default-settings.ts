@@ -1,4 +1,5 @@
 import { DEFAULT_SHORTCUTS_SETTINGS } from "~constants/shortcuts"
+import { DEFAULT_IMAGE_EXPORT } from "~constants/image-export"
 import { isUserscriptPlatform } from "~platform/utils"
 import type {
   PageWidthConfig,
@@ -120,6 +121,7 @@ export const DEFAULT_SETTINGS: Settings = {
   },
 
   export: {
+    image: DEFAULT_IMAGE_EXPORT,
     customUserName: "",
     customModelName: "",
     exportFilenameTimestamp: false,

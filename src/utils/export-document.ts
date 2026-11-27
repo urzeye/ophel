@@ -11,6 +11,7 @@ import {
 import { t } from "~utils/i18n"
 import { ensureMermaidRuntime, requestMermaidRender } from "~utils/mermaid-runtime"
 import { createSafeHTML } from "~utils/trusted-types"
+import type { ImageExportPreferences } from "~types/image-export"
 
 /** 格式无关的数据快照：未来 PDF 复用视图，DOCX 复用消息和资源。 */
 export interface ExportDocumentInput extends ExportBundle {
@@ -22,12 +23,17 @@ export interface ExportDocumentOptions {
   theme: "light" | "dark"
   width: number
   branding: boolean
+  fontSize: number
+  appearance: ImageExportPreferences["appearance"]
+  showTitle: boolean
+  showSource: boolean
+  showTime: boolean
 }
 
 export interface PreparedExportDocument {
   root: HTMLElement
   conversation: HTMLElement
-  header: HTMLElement
+  header: HTMLElement | null
   logo: string
   options: ExportDocumentOptions
   dispose(): void
@@ -198,6 +204,8 @@ export async function prepareExportDocument(
   const root = document.createElement("div")
   root.className = "gh-export-document"
   root.dataset.theme = options.theme
+  root.dataset.appearance = options.appearance
+  root.style.setProperty("--gh-export-font-size", `${options.fontSize}px`)
   root.style.width = `${options.width}px`
   const shell = parsed.querySelector(".gh-shell")
   if (!shell) throw new ExportDocumentError("render", "Document content is missing")
@@ -205,6 +213,17 @@ export async function prepareExportDocument(
   root
     .querySelectorAll(".gh-toolbar, .gh-code-copy-btn, .gh-doc-footer, .gh-kicker")
     .forEach((node) => node.remove())
+  const header = root.querySelector<HTMLElement>(".gh-doc-header")!
+  if (!options.showTitle) header.querySelector("h1")?.remove()
+  const meta = header.querySelector<HTMLElement>(".gh-doc-meta")!
+  const [time, dot, source] = Array.from(meta.children)
+  if (!options.showTime) time.remove()
+  if (!options.showSource) source.remove()
+  if (!options.showTime || !options.showSource) dot.remove()
+  if (!options.showTime && !options.showSource) meta.remove()
+  const hasHeader = options.showTitle || options.showSource || options.showTime
+  if (!hasHeader) header.remove()
+  root.dataset.hasHeader = String(hasHeader)
   root.querySelectorAll("details").forEach((node) => (node.open = true))
   const imageSources = new Map<HTMLImageElement, string>()
   for (const image of Array.from(root.querySelectorAll("img"))) {
@@ -247,7 +266,7 @@ export async function prepareExportDocument(
     }
     return {
       root,
-      header: root.querySelector<HTMLElement>(".gh-doc-header")!,
+      header: hasHeader ? header : null,
       conversation: root.querySelector<HTMLElement>(".gh-conversation")!,
       logo,
       options,

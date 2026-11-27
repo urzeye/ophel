@@ -1,4 +1,5 @@
 import { captureExportCanvas } from "~platform/image-capture"
+import type { ImageExportPreferences, ImageExportWatermark } from "~types/image-export"
 import {
   createExportBrand,
   ExportDocumentError,
@@ -15,15 +16,16 @@ import {
 } from "~utils/export-image-layout"
 
 export interface ExportImageOptions extends ExportDocumentOptions {
-  format: "png" | "jpeg"
   scale: 1 | 2
   layout: "single" | "split"
+  footerWatermarkSize: number
 }
 
 export interface ExportImagePage {
   blob: Blob
   width: number
   height: number
+  watermarkSlot?: { x: number; y: number; width: number; height: number }
 }
 
 // 仅复制成品使用的样式，避免宿主页数百个 CSS 属性膨胀每个 SVG 节点。
@@ -46,6 +48,7 @@ const CAPTURE_STYLES = [
   "border",
   "border-collapse",
   "border-spacing",
+  "table-layout",
   "border-radius",
   "border-top",
   "border-bottom",
@@ -126,25 +129,30 @@ function createImageFrame(
   slice: ExportImageSlice,
   index: number,
   total: number,
+  footerWatermarkSize: number,
 ): { page: HTMLElement; viewport: HTMLElement } {
-  const page = document.createElement("div")
-  page.className = prepared.root.className
-  page.dataset.theme = prepared.options.theme
-  page.style.width = `${prepared.options.width}px`
+  const page = prepared.root.cloneNode(false) as HTMLElement
   const shell = document.createElement("main")
   shell.className = "gh-shell"
-  shell.append(prepared.header.cloneNode(true))
+  if (prepared.header) shell.append(prepared.header.cloneNode(true))
   const viewport = document.createElement("div")
   viewport.className = "gh-export-slice"
   viewport.style.height = `${slice.end - slice.start}px`
   shell.append(viewport)
   const footer = createExportBrand(prepared, index, total)
   if (footer) shell.append(footer)
+  if (footerWatermarkSize) {
+    const slot = document.createElement("div")
+    slot.className = "gh-export-watermark-slot"
+    slot.style.height = `${footerWatermarkSize * 1.5}px`
+    shell.append(slot)
+  }
   page.append(shell)
   return { page, viewport }
 }
 
-export async function renderExportImages(
+/** 只缓存压缩后的干净 PNG；不跨设置保留大量 Canvas 或重复获取附件。 */
+export async function captureExportImages(
   input: ExportDocumentInput,
   options: ExportImageOptions,
   signal: AbortSignal,
@@ -159,7 +167,13 @@ export async function renderExportImages(
       throw new ExportDocumentError("render", "Empty export layout")
     const contentHeight = Math.ceil(bounds.height)
     // 用同一个框架测量实际开销；1px 正文避免空块的 margin 折叠改变高度。
-    const probe = createImageFrame(prepared, { start: 0, end: 1 }, 0, 1)
+    const probe = createImageFrame(
+      prepared,
+      { start: 0, end: 1 },
+      0,
+      1,
+      options.footerWatermarkSize,
+    )
     root.after(probe.page)
     const frameHeight = probe.page.getBoundingClientRect().height - 1
     probe.page.remove()
@@ -185,7 +199,13 @@ export async function renderExportImages(
     onProgress(0, slices.length)
     for (const [index, slice] of slices.entries()) {
       signal.throwIfAborted()
-      const { page, viewport } = createImageFrame(prepared, slice, index, slices.length)
+      const { page, viewport } = createImageFrame(
+        prepared,
+        slice,
+        index,
+        slices.length,
+        options.footerWatermarkSize,
+      )
       const content = conversation.cloneNode(true) as HTMLElement
       content.style.transform = `translateY(-${slice.start}px)`
       viewport.append(content)
@@ -194,6 +214,15 @@ export async function renderExportImages(
         const dimensions = page.getBoundingClientRect()
         const width = Math.ceil(dimensions.width * options.scale)
         const height = Math.ceil(dimensions.height * options.scale)
+        const slot = page.querySelector(".gh-export-watermark-slot")?.getBoundingClientRect()
+        const watermarkSlot = slot
+          ? {
+              x: slot.left - dimensions.left,
+              y: slot.top - dimensions.top,
+              width: slot.width,
+              height: slot.height,
+            }
+          : undefined
         if (!isWithinExportImageBudget(dimensions.width, dimensions.height, options.scale)) {
           throw new ExportDocumentError("limit", "Export image exceeds the pixel budget")
         }
@@ -205,16 +234,9 @@ export async function renderExportImages(
         })
         try {
           signal.throwIfAborted()
-          // html-to-image 1.11.13 的 toBlob 不传递 type，显式使用浏览器编码器。
-          const mimeType = options.format === "jpeg" ? "image/jpeg" : "image/png"
-          const blob = await new Promise<Blob | null>((resolve) =>
-            canvas.toBlob(resolve, mimeType, 0.94),
-          )
+          const blob = await encodeCanvas(canvas, "png")
           signal.throwIfAborted()
-          if (!blob || blob.size === 0 || blob.type !== mimeType) {
-            throw new ExportDocumentError("render", "Image encoding failed")
-          }
-          pages.push({ blob, width, height })
+          pages.push({ blob, width, height, watermarkSlot })
           onProgress(index + 1, slices.length)
         } finally {
           canvas.width = 0
@@ -231,4 +253,109 @@ export async function renderExportImages(
   } finally {
     prepared.dispose()
   }
+}
+
+async function encodeCanvas(
+  canvas: HTMLCanvasElement,
+  format: ImageExportPreferences["format"],
+): Promise<Blob> {
+  // html-to-image 1.11.13 的 toBlob 不传递 type，显式调用浏览器编码器并校验结果。
+  const mimeType = format === "jpeg" ? "image/jpeg" : "image/png"
+  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, mimeType, 0.94))
+  if (!blob || !blob.size || blob.type !== mimeType)
+    throw new ExportDocumentError("render", "Image encoding failed")
+  return blob
+}
+
+export function drawExportWatermark(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  watermark: ImageExportWatermark,
+  theme: "light" | "dark",
+  slot?: ExportImagePage["watermarkSlot"],
+): void {
+  if (!watermark.enabled || !watermark.text.trim()) return
+  ctx.save()
+  try {
+    ctx.fillStyle = watermark.color || (theme === "dark" ? "#ffffff" : "#1f2937")
+    ctx.globalAlpha = watermark.opacity
+    ctx.font = `500 ${watermark.fontSize}px system-ui, sans-serif`
+    ctx.textAlign = "center"
+    ctx.textBaseline = "middle"
+    if (watermark.mode === "footer") {
+      if (!slot) throw new ExportDocumentError("render", "Watermark footer layout is missing")
+      ctx.fillText(watermark.text, slot.x + slot.width / 2, slot.y + slot.height / 2, slot.width)
+      return
+    }
+    const textWidth = Math.min(ctx.measureText(watermark.text).width, width - 48)
+    const angle = (watermark.rotation * Math.PI) / 180
+    // 按旋转后的包围盒计算间距，长文案和大字号同样不会互相重叠。
+    const stepX =
+      Math.abs(textWidth * Math.cos(angle)) +
+      Math.abs(watermark.fontSize * Math.sin(angle)) +
+      watermark.gapX
+    const stepY =
+      Math.abs(textWidth * Math.sin(angle)) +
+      Math.abs(watermark.fontSize * Math.cos(angle)) +
+      watermark.gapY
+    for (let row = 0, y = -stepY / 2; y < height + stepY; row++, y += stepY) {
+      const offset = watermark.stagger && row % 2 ? stepX / 2 : 0
+      for (let x = -stepX / 2 + offset; x < width + stepX; x += stepX) {
+        ctx.save()
+        ctx.translate(x, y)
+        ctx.rotate(angle)
+        ctx.fillText(watermark.text, 0, 0, textWidth)
+        ctx.restore()
+      }
+    }
+  } finally {
+    ctx.restore()
+  }
+}
+
+export async function composeExportImages(
+  pages: ExportImagePage[],
+  options: Pick<ImageExportPreferences, "format" | "scale" | "watermark"> & {
+    theme: "light" | "dark"
+  },
+  signal: AbortSignal,
+  onProgress: (completed: number, total: number) => void,
+): Promise<ExportImagePage[]> {
+  signal.throwIfAborted()
+  if (options.format === "png" && (!options.watermark.enabled || !options.watermark.text.trim()))
+    return pages
+  const result: ExportImagePage[] = []
+  onProgress(0, pages.length)
+  for (const [index, page] of pages.entries()) {
+    signal.throwIfAborted()
+    const bitmap = await createImageBitmap(page.blob)
+    const canvas = document.createElement("canvas")
+    try {
+      signal.throwIfAborted()
+      canvas.width = page.width
+      canvas.height = page.height
+      const ctx = canvas.getContext("2d")
+      if (!ctx) throw new ExportDocumentError("render", "Canvas context is unavailable")
+      ctx.drawImage(bitmap, 0, 0)
+      ctx.scale(options.scale, options.scale)
+      drawExportWatermark(
+        ctx,
+        page.width / options.scale,
+        page.height / options.scale,
+        options.watermark,
+        options.theme,
+        page.watermarkSlot,
+      )
+      const blob = await encodeCanvas(canvas, options.format)
+      signal.throwIfAborted()
+      result.push({ ...page, blob })
+      onProgress(index + 1, pages.length)
+    } finally {
+      bitmap.close()
+      canvas.width = 0
+      canvas.height = 0
+    }
+  }
+  return result
 }
