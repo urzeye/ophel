@@ -984,6 +984,7 @@ export const zhCN = {
   exportPackagingMarkdown: "Markdown",
   exportPackagingZip: "ZIP",
   exportFormat: "导出格式",
+  exportQuickCopy: "快捷复制",
   exportOptions: "导出选项",
   exportPackagingZipOption: "打包为 ZIP 压缩包 (含附件)",
   exportConversationTitle: "导出对话",

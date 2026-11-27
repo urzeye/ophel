@@ -1731,6 +1731,7 @@ export const zhTW = {
   exportPackagingMarkdown: "Markdown",
   exportPackagingZip: "ZIP",
   exportFormat: "匯出格式",
+  exportQuickCopy: "快捷複製",
   exportOptions: "匯出選項",
   exportPackagingZipOption: "打包為 ZIP 壓縮檔 (含附件)",
   exportConversationTitle: "匯出對話",

@@ -1813,6 +1813,7 @@ export const ja = {
   exportPackagingMarkdown: "Markdown",
   exportPackagingZip: "ZIP",
   exportFormat: "エクスポート形式",
+  exportQuickCopy: "クイックコピー",
   exportOptions: "エクスポート設定",
   exportPackagingZipOption: "ZIP圧縮ファイルとして保存 (添付ファイル含む)",
   exportConversationTitle: "対話をエクスポート",

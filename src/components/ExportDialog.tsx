@@ -32,7 +32,7 @@ const EXPORT_DIALOG_STYLES = `
     padding: 20px 22px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 14px;
     box-sizing: border-box;
     background: var(--gh-bg, #ffffff);
     color: var(--gh-text, #1f2937);
@@ -197,10 +197,39 @@ const EXPORT_DIALOG_STYLES = `
     cursor: not-allowed;
   }
 
-  .gh-export-format-grid {
+  .gh-export-format-grid,
+  .gh-export-copy-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
+  }
+
+  /* 导出其他对话隐藏“复制大纲”时，剩余单按钮自动铺满整行，避免半行空位 */
+  .gh-export-copy-grid > .gh-export-format-btn:only-child {
+    grid-column: 1 / -1;
+  }
+
+  .gh-export-format-btn-full {
+    width: 100%;
+  }
+
+  .gh-export-format-trailing {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .gh-export-format-chevron {
+    color: var(--gh-text-tertiary, var(--gh-text-secondary, #8d94a1));
+    flex-shrink: 0;
+    transition: transform 0.15s ease, color 0.15s ease;
+  }
+
+  .gh-export-format-btn:hover:not(:disabled) .gh-export-format-chevron,
+  .gh-export-format-btn[data-active="true"] .gh-export-format-chevron {
+    color: var(--gh-primary-text, var(--gh-primary, #4285f4));
+    transform: translateX(1.5px);
   }
 
   .gh-export-format-btn {
@@ -485,7 +514,8 @@ const EXPORT_DIALOG_STYLES = `
       padding: 16px;
     }
 
-    .gh-export-format-grid {
+    .gh-export-format-grid,
+    .gh-export-copy-grid {
       grid-template-columns: 1fr;
     }
   }
@@ -518,6 +548,7 @@ const EXPORT_DIALOG_STYLES = `
     .gh-export-format-btn,
     .gh-export-format-badge,
     .gh-export-format-icon,
+    .gh-export-format-chevron,
     .gh-export-option-row,
     .gh-export-divider-input,
     .gh-export-segmented-link {
@@ -556,20 +587,17 @@ export interface ExportDialogProps {
   onOpenSettings?: () => void
 }
 
-const getFormatOptions = (
-  imageBadge: ".png" | ".jpg",
-): {
+// 文档类文件格式（2 列网格，未来扩展 PDF / DOCX 直接追加到此列表即可满排）
+const getFileFormatOptions = (): {
   format: ExportFormat
   label: string
-  badge?: string
+  badge: string
   Icon: React.FC<{ size?: number; className?: string }>
 }[] => [
   { format: "markdown", label: "Markdown", badge: ".md", Icon: MarkdownIcon },
   { format: "html", label: "HTML", badge: ".html", Icon: HTMLFileIcon },
-  { format: "image", label: t("exportToImage"), badge: imageBadge, Icon: ImageFileIcon },
   { format: "json", label: "JSON", badge: ".json", Icon: JSONFileIcon },
   { format: "txt", label: t("exportToTXT"), badge: ".txt", Icon: TXTFileIcon },
-  { format: "clipboard", label: t("exportToClipboard"), Icon: CopyIcon },
 ]
 
 export const ExportDialog: React.FC<ExportDialogProps> = ({
@@ -738,7 +766,7 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
       <div className="gh-export-section">
         <div className="gh-export-section-title">{t("exportFormat")}</div>
         <div className="gh-export-format-grid">
-          {getFormatOptions(imageBadge).map((item) => (
+          {getFileFormatOptions().map((item) => (
             <button
               key={item.format}
               type="button"
@@ -758,10 +786,71 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
                   <span className="gh-export-format-text">{item.label}</span>
                 </Tooltip>
               </span>
-              {item.badge && <span className="gh-export-format-badge">{item.badge}</span>}
+              <span className="gh-export-format-badge">{item.badge}</span>
             </button>
           ))}
-          {/* 复制大纲：与“复制 Markdown”一样先选中、再点底部“复制”；能力由大纲 tab 挂载期间暴露，未挂载时不显示；只针对当前页面的对话，导出其他对话时隐藏 */}
+        </div>
+        {/* 分享图片需进入独立预览工坊，单独占通栏并配轻量右箭头区分于直出文件格式 */}
+        <button
+          type="button"
+          className="gh-export-format-btn gh-export-format-btn-full"
+          aria-pressed={!outlineCopySelected && selectedFormat === "image"}
+          data-active={!outlineCopySelected && selectedFormat === "image"}
+          onClick={() => {
+            setSelectedFormat("image")
+            setOutlineCopySelected(false)
+          }}>
+          <span className="gh-export-format-label">
+            <ImageFileIcon size={15} className="gh-export-format-icon" />
+            <Tooltip
+              content={t("exportToImage")}
+              showOnlyWhenTruncated
+              triggerStyle={{ display: "block", minWidth: 0, overflow: "hidden" }}>
+              <span className="gh-export-format-text">{t("exportToImage")}</span>
+            </Tooltip>
+          </span>
+          <span className="gh-export-format-trailing">
+            <span className="gh-export-format-badge">{imageBadge}</span>
+            <svg
+              className="gh-export-format-chevron"
+              viewBox="0 0 24 24"
+              width="14"
+              height="14"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </span>
+        </button>
+      </div>
+
+      <div className="gh-export-section">
+        <div className="gh-export-section-title">{t("exportQuickCopy")}</div>
+        <div className="gh-export-copy-grid">
+          <button
+            type="button"
+            className="gh-export-format-btn"
+            aria-pressed={!outlineCopySelected && selectedFormat === "clipboard"}
+            data-active={!outlineCopySelected && selectedFormat === "clipboard"}
+            onClick={() => {
+              setSelectedFormat("clipboard")
+              setOutlineCopySelected(false)
+            }}>
+            <span className="gh-export-format-label">
+              <CopyIcon size={15} className="gh-export-format-icon" />
+              <Tooltip
+                content={t("exportToClipboard")}
+                showOnlyWhenTruncated
+                triggerStyle={{ display: "block", minWidth: 0, overflow: "hidden" }}>
+                <span className="gh-export-format-text">{t("exportToClipboard")}</span>
+              </Tooltip>
+            </span>
+          </button>
+          {/* 复制大纲：与“复制 Markdown”同行并列；能力由大纲 tab 挂载期间暴露，导出其他对话时隐藏 */}
           {!target && typeof window.__ophelCopyFullOutline === "function" && (
             <button
               type="button"

@@ -1757,6 +1757,7 @@ export const ko = {
   exportPackagingMarkdown: "Markdown",
   exportPackagingZip: "ZIP",
   exportFormat: "내보내기 형식",
+  exportQuickCopy: "빠른 복사",
   exportOptions: "내보내기 옵션",
   exportPackagingZipOption: "ZIP 압축 파일로 패키징 (첨부 파일 포함)",
   exportConversationTitle: "대화 내보내기",

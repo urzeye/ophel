@@ -834,6 +834,7 @@ export const it = {
   exportPackagingMarkdown: "Markdown",
   exportPackagingZip: "ZIP",
   exportFormat: "Formato di esportazione",
+  exportQuickCopy: "Copia rapida",
   exportOptions: "Opzioni di esportazione",
   exportPackagingZipOption: "Crea pacchetto ZIP (con allegati)",
   exportConversationTitle: "Esporta conversazione",

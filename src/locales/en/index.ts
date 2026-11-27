@@ -812,6 +812,7 @@ export const en = {
   exportPackagingMarkdown: "Markdown",
   exportPackagingZip: "ZIP",
   exportFormat: "Export Format",
+  exportQuickCopy: "Quick Copy",
   exportOptions: "Export Options",
   exportPackagingZipOption: "Package as ZIP (with attachments)",
   exportConversationTitle: "Export Chat",

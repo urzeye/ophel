@@ -1941,6 +1941,7 @@ export const ru = {
   exportPackagingMarkdown: "Markdown",
   exportPackagingZip: "ZIP",
   exportFormat: "Формат экспорта",
+  exportQuickCopy: "Быстрое копирование",
   exportOptions: "Параметры экспорта",
   exportPackagingZipOption: "Упаковать в ZIP-архив (с вложениями)",
   exportConversationTitle: "Экспорт диалога",
