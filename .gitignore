@@ -8,8 +8,8 @@
 
 # testing
 /coverage
-/tests/*
-!/tests/userscript-*.test.ts
+/tests/
+/docs/plans/
 
 # misc
 .DS_Store
