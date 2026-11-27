@@ -3,8 +3,7 @@
  *
  * ResolveDriveResource 等 MakerSuite RPC 的 SAPISIDHASH 校验绑定 Origin 头，
  * content script（isolated world）发起的跨域 fetch 会被浏览器改写 Origin
- * 导致 401，因此请求必须由页面上下文代发（见
- * docs/developer/aistudio-api-outline-plan.md §3）。
+ * 导致 401，因此请求必须由页面上下文代发。
  *
  * - 扩展端：src/contents/aistudio-rpc-main.ts 以 world:"MAIN" 安装；
  * - 油猴端：适配器直接把本桥安装到 unsafeWindow。

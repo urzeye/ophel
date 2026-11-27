@@ -1,541 +1,200 @@
-# Ophel Atlas - AI 对话结构化与导航工具
+# Ophel Atlas 架构参考
 
-## 项目愿景
+本文档介绍仓库的模块划分、双平台构建机制、核心初始化顺序与关键数据流。
 
-Ophel 是一款跨平台浏览器扩展（同时支持油猴脚本），将 AI 对话转化为可阅读、可导航、可复用的知识内容。通过实时大纲、对话文件夹与 Prompt 词库，让 AI 对话告别无限滚动，成为可组织、可沉淀的工作流。
+- 编码、提交与站点包规范见 [conventions/](./conventions/)。
+- Shadow DOM 样式注入与主题机制见 [css-architecture.md](./css-architecture.md)；UI 与视觉规范见根目录 [DESIGN.md](../../DESIGN.md)。
 
-支持站点（15 个）：Gemini、Gemini Enterprise、AI Studio、ChatGPT、Grok、Claude、DeepSeek、Doubao、Kimi、Qwen Studio（原 QwenAI，文件已重命名 qwen-studio.ts）、Qianwen、Yuanbao、Z.ai、ChatGLM、Ima。
+## 1. 技术栈与支持范围
 
-## 架构总览
+Ophel Atlas 用同一套源码同时构建**浏览器扩展**（Chrome / Firefox）和**油猴脚本**（Greasy Fork 分发）。
 
-### 技术栈
+- **内置站点（16 个）**：顺序定义在 `src/adapters/builtin.ts`——Gemini Enterprise、Gemini、NotebookLM（`notebook.ts`）、ChatGPT、Grok、AI Studio、Claude、DeepSeek、Doubao、Ima、ChatGLM、Kimi、Qwen Studio（`qwen-studio.ts`，`SITE_IDS` 为 `qwenai`）、Qianwen、Yuanbao、Z.ai。
+- **社区扩展站点**：通过 `registry/` 的 SitePack 声明式配置包热插拔支持。
 
-| 类别     | 技术                                                    |
-| -------- | ------------------------------------------------------- |
-| 语言     | TypeScript 5.3                                          |
-| UI 框架  | React 18                                                |
-| 状态管理 | Zustand 5 (persist 中间件 + chrome.storage.local)       |
-| 扩展框架 | Plasmo 0.90 (Manifest V3, Chrome + Firefox)             |
-| 油猴构建 | Vite + vite-plugin-monkey                               |
-| 样式     | 纯 CSS（无 CSS-in-JS 或预处理器）                       |
-| 包管理   | pnpm 9.15                                               |
-| 代码质量 | ESLint 9 (flat config) + Prettier + TypeScript 严格模式 |
-| Git 规范 | Husky + lint-staged + commitlint (Conventional Commits) |
-| 文档站   | VitePress (中/英双语)                                   |
-| 函数式库 | Effect (用于部分核心逻辑)                               |
+| 类别     | 实现                                                          |
+| -------- | ------------------------------------------------------------- |
+| 语言与 UI | TypeScript 5.3 + React 18                                     |
+| 状态管理 | Zustand 5 + persist（扩展用 `chrome.storage.local`，油猴用 GM） |
+| 扩展构建 | Plasmo 0.90（Manifest V3，Chrome + Firefox）                  |
+| 油猴构建 | Vite + `vite-plugin-monkey`                                   |
+| 样式     | 原生 CSS（无预处理器、无 CSS-in-JS），Shadow DOM 隔离         |
+| 工具链   | pnpm 9.15、ESLint 9 (flat config)、Prettier、Husky + commitlint |
 
-### 架构模式
+## 2. 双平台构建与油猴 Adapter 外置
 
-本项目采用 **适配器模式 (Adapter Pattern)** 实现多站点支持：
+跨平台差异统一收口在 `src/platform/`（`extension/` 与 `userscript/`），构建期通过 `__PLATFORM__` 切换实现。
 
-```
-Content Script (ui-entry.tsx + extension-bootstrap.ts)
-    |
-    v
-getAdapter() --> SiteAdapter (抽象基类)
-    |               |
-    |               +-- GeminiAdapter
-    |               +-- GeminiEnterpriseAdapter
-    |               +-- ChatGPTAdapter
-    |               +-- ClaudeAdapter
-    |               +-- GrokAdapter
-    |               +-- AIStudioAdapter
-    |               +-- DeepSeekAdapter
-    |               +-- DoubaoAdapter
-    |               +-- KimiAdapter
-    |               +-- QwenAiAdapter
-    |               +-- QianwenAdapter
-    |               +-- YuanbaoAdapter
-    |               +-- ZaiAdapter
-    |               +-- ChatGLMAdapter
-    |               +-- ImaAdapter
-    |
-    v
-initCoreModules(ctx) --> 13 个核心模块
-    |
-    v
-App.tsx (Shadow DOM 内的 React 面板)
-```
+### 油猴 adapters vendor
 
-### 双平台构建
+为了守住 Greasy Fork 200 万字符硬限，油猴构建把全部内置站点适配器拆到独立的 `ophel-adapters-vendor-*.js`，通过 `@require` 引入（安装时缓存，不计入脚本本体字符数）：
 
-项目同时支持浏览器扩展和油猴脚本两种分发形式：
+- **双端顺序一致**：扩展端直接打包 `src/adapters/builtin.ts`；油猴构建用 Vite alias 把 `~adapters/builtin` 替换为 `src/platform/userscript/builtin-adapters.ts`，实例化 vendor 挂载到 `window.__OphelBuiltinAdapters` 上的类。vendor 入口 `src/platform/userscript/adapters-vendor.ts` 的类顺序必须和 `builtin.ts` 一致。
+- **有状态模块禁止双份打包**：vendor 与主包是两个独立 bundle。适配器引用有状态共享模块时，必须通过 `window.__OphelAdaptersVendorBridge` 懒解析主包单例（桥接 shim 在 `src/platform/userscript/vendor-bridge/`）。当前桥接清单：`~stores/settings-store`、`~core/watermark-remover`、`~utils/i18n`。新增对有状态模块的引用时，必须评估是否加入桥接。
+- **截断远程配置链路**：vendor 中的 `platform.remoteConfig` 会被替换为显式抛错的 `remote-config-stub.ts`，适配器代码不允许直接调用 `platform.remoteConfig.*`。
+- **版本握手**：vendor 在 `window.__OphelAdaptersVendorMeta` 注册 `{ version, schemaVersion }`，主包实例化前比对，不匹配则显式报错并停用内置适配器，防止 `@require` 旧缓存静默错配。
+- **SRI 与字符数门禁**：构建会为自托管 `@require` / `@resource` URL 追加 `#sha256=` 完整性片段；发布前 `scripts/verify-userscript-assets.mjs` 逐字节校验远端与本地产物。构建末尾检查 `ophel.user.js` 字符数，超过项目闸门（195 万）直接失败，触闸时继续向 vendor / `@resource` 拆分。
 
-- **浏览器扩展**：通过 Plasmo 构建，使用 `chrome.*` API
-- **油猴脚本**：通过 Vite + vite-plugin-monkey 构建，使用 `GM_*` API
-- **平台抽象层**：`src/platform/` 提供统一接口，构建时通过 `__PLATFORM__` 变量切换实现
+## 3. 目录与入口
 
-#### 油猴 adapters vendor（适配器外置）
+项目使用 `~` 作为 `src/` 的路径别名（配置在 `tsconfig.json` 和 `vite.userscript.config.ts`）。
 
-为控制 Greasyfork 的脚本字符数上限，油猴构建把全部内置站点适配器拆成独立的
-`ophel-adapters-vendor-*.js`，经 `@require` 引入（安装时缓存，不占用脚本本字符数）：
+| 目录 / 文件       | 职责                                           | 关键文件                                                                                                  |
+| ----------------- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `src/adapters/`   | 站点适配器与声明式配置校验                     | `base.ts`, `builtin.ts`, `index.ts`, `feature-capabilities.ts`, `declarative/`, 各站点 `*.ts` / `*-config.ts` |
+| `src/core/`       | 核心业务管理器与远程配置/SitePack 运行时       | `modules-init.ts`, `extension-bootstrap.ts`, `theme-manager.ts`, `layout-manager.ts`, `outline-manager.ts`, `conversation/`, `webdav-sync.ts`, `network-monitor.ts` |
+| `src/components/` | Shadow DOM 内 React UI 与共享控件              | `App.tsx`, `MainPanel.tsx`, `OutlineTab.tsx`, `ConversationsTab.tsx`, `PromptsTab.tsx`, `SettingsModal.tsx`, `ui/`, `global-search/` |
+| `src/stores/`     | Zustand 持久化状态（11 个 store）              | `settings-store.ts`, `conversations-store.ts`, `prompts-store.ts`, `prompt-chains-store.ts`, `folders-store.ts`, `tags-store.ts` 等 |
+| `src/contents/`   | Plasmo Content Script 入口（isolated + main）  | `ui-entry.tsx`（单 UI 入口）, `monitor-entry.ts`, `aistudio-preload.ts`, `aistudio-rpc-main.ts`, `scroll-lock-main.ts`, `gemini-watermark-main.ts` 等 |
+| `src/platform/`   | 扩展 / 油猴平台抽象层                          | `types.ts`, `index.ts`, `extension/`, `userscript/`                                                       |
+| `src/tabs/`       | 扩展独立页面                                   | `options.tsx`, `options/pages/`, `perm-request.tsx`                                                       |
+| `src/styles/`     | 原生 CSS、主题变量、内联弹窗样式、原生主题适配 | `theme-variables.css`, `conversations.css`, `settings.css`, `release-notes.css`, `queue-overlay.css`, `*-inline.ts`, `native-theme-adapters/` |
+| `src/utils/`      | 通用工具与主题预置                             | `i18n.ts`, `storage.ts`, `messaging.ts`, `dom-toolkit.ts`, `exporter.ts`, `themes/`, `panel-lazy-styles.ts` |
+| `src/constants/`  | 常量、默认配置、快捷键与设置路由               | `defaults.ts`, `ui.ts`, `shortcuts.ts`, `tools-menu.ts`                                                   |
+| `src/hooks/`      | React Hooks                                    | `useDraggable.ts`, `useEdgePeekController.ts`, `useShortcuts.ts`, `useFirstRunPanelTour.ts`, `useImageExport.ts` |
+| `src/locales/`    | 应用内 11 语种 i18n 源文件                     | `zh-CN/`, `zh-TW/`, `en/`, `ja/`, `ko/`, `it/`, `de/`, `es/`, `fr/`, `pt/`, `ru/`                         |
+| `locales/`        | 扩展 Manifest 11 语种 `_locales` 资源          | `zh_CN/messages.json` … `pt_BR/messages.json`                                                             |
+| `registry/`       | SitePack 注册表与内置热修 patch                | `sites/`, `patches/`, 校验与构建脚本                                                                      |
+| `docs/`           | 开发者文档、多语种 README 与素材               | `developer/`, `readmes/`（用户文档站独立维护在 `ophel-docs`，发布于 `https://ophel.app/docs`）            |
 
-- `src/adapters/builtin.ts`：扩展端内置适配器列表（顺序即匹配优先级）。
-  油猴构建通过 vite alias 把 `~adapters/builtin` 替换为
-  `src/platform/userscript/builtin-adapters.ts`，改为实例化 vendor 注册到
-  `window.__OphelBuiltinAdapters` 的类。vendor 入口
-  `src/platform/userscript/adapters-vendor.ts` 中的类顺序必须与 `builtin.ts` 一致。
-- vendor 与主包是两个独立 bundle，**有状态模块禁止双份打包**，统一经
-  `window.__OphelAdaptersVendorBridge` 懒解析主包单例，桥接 shim 位于
-  `src/platform/userscript/vendor-bridge/`。当前桥接清单：
-  `~stores/settings-store`（store 单例）、`~core/watermark-remover`（静态单例）、
-  `~utils/i18n`（语言状态）。适配器新增对有状态共享模块的 import 时，
-  必须评估是双份（仅限无状态模块）还是加入桥接清单。
-- `platform.remoteConfig` 在 vendor 中被替换为显式抛错的 stub
-  （`remote-config-stub.ts`），用于截断站点包注册表链路；
-  适配器代码不允许调用 `platform.remoteConfig.*`。
-- **版本握手**：vendor 在 `window.__OphelAdaptersVendorMeta` 注册
-  `{ version, schemaVersion }`（由 `__OPHEL_APP_VERSION__` 注入），
-  主包实例化前校验，不一致则显式报错并停用内置适配器，
-  防止脚本更新后 @require 缓存滞留导致静默错配。
-- **完整性片段**：构建会为自托管资产的 `@require`/`@resource` URL 追加
-  `#sha256=` SRI 片段，Tampermonkey 安装时校验内容；release 工作流在
-  pin URL 之后执行 `scripts/verify-userscript-assets.mjs`，逐字节比对
-  jsDelivr 远端与本地产物。
-- **字符数闸门**：构建结尾检查 `ophel.user.js` 字符数，超过项目闸门
-  （195 万，Greasyfork 硬限 200 万）直接构建失败；触闸应继续向
-  vendor/`@resource` 拆分，而不是顶着上限发布。
+### 关键运行入口
 
-## 模块结构图
+| 入口                      | 路径                                | 说明                                           |
+| ------------------------- | ----------------------------------- | ---------------------------------------------- |
+| Content Script UI 单入口  | `src/contents/ui-entry.tsx`         | 启动核心、注入首屏样式并挂载 Shadow DOM React App |
+| 核心启动编排              | `src/core/extension-bootstrap.ts`   | 初始化适配器与核心模块                         |
+| Background Service Worker | `src/background.ts`                 | 通知、代理请求、WebDAV、权限、远程配置与数据维护 |
+| Popup 页面                | `src/popup.tsx`                     | 扩展工具栏弹窗                                 |
+| Options 页面              | `src/tabs/options.tsx`              | 独立设置页面                                   |
+| 油猴脚本入口              | `src/platform/userscript/entry.tsx` | Vite 构建入口与 Shadow DOM 挂载                |
 
-```mermaid
-graph TD
-    Root["Ophel (根)"] --> SRC["src/"]
-    Root --> DOCS["docs/"]
-    Root --> LOCALES["locales/"]
-    Root --> ASSETS["assets/"]
+## 4. 常用命令
 
-    SRC --> ADAPTERS["adapters/"]
-    SRC --> CORE["core/"]
-    SRC --> COMPONENTS["components/"]
-    SRC --> STORES["stores/"]
-    SRC --> CONTENTS["contents/"]
-    SRC --> PLATFORM["platform/"]
-    SRC --> UTILS["utils/"]
-    SRC --> CONSTANTS["constants/"]
-    SRC --> HOOKS["hooks/"]
-    SRC --> LOCALES_SRC["locales/ (i18n 资源)"]
-    SRC --> STYLES["styles/"]
-    SRC --> TABS["tabs/"]
-    SRC --> TYPES["types/"]
-
-    ADAPTERS --> A_BASE["base.ts (SiteAdapter 抽象基类)"]
-    ADAPTERS --> A_GEMINI["gemini.ts"]
-    ADAPTERS --> A_GE["gemini-enterprise.ts"]
-    ADAPTERS --> A_CHATGPT["chatgpt.ts"]
-    ADAPTERS --> A_CLAUDE["claude.ts"]
-    ADAPTERS --> A_GROK["grok.ts"]
-    ADAPTERS --> A_AI["aistudio.ts"]
-
-    CORE --> C_MOD["modules-init.ts (模块编排)"]
-    CORE --> C_OUTLINE["outline-manager.ts"]
-    CORE --> C_CONV["conversation/ (对话管理)"]
-    CORE --> C_THEME["theme-manager.ts"]
-    CORE --> C_COPY["copy-manager.ts"]
-    CORE --> C_LAYOUT["layout-manager.ts"]
-    CORE --> C_MODEL["model-locker.ts"]
-    CORE --> C_SCROLL["scroll-lock-manager.ts"]
-    CORE --> C_TAB["tab-manager.ts"]
-    CORE --> C_WEBDAV["webdav-sync.ts"]
-    CORE --> C_PROMPT["prompt-manager.ts"]
-    CORE --> C_QUEUE["queue-dispatcher.ts"]
-    CORE --> C_OTHER["...其他管理器"]
-
-    PLATFORM --> P_EXT["extension/ (Chrome API)"]
-    PLATFORM --> P_US["userscript/ (GM_* API)"]
-```
-
-## 模块索引
-
-| 模块路径          | 职责                                                          | 关键文件                                                                                                                                                                                                                             |
-| ----------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `src/adapters/`   | 多站点适配器层，基于 `SiteAdapter` 抽象基类，每个站点一个实现 | `base.ts`, `gemini.ts`, `gemini-enterprise.ts`, `chatgpt.ts`, `claude.ts`, `grok.ts`, `aistudio.ts`, `deepseek.ts`, `doubao.ts`, `kimi.ts`, `qwen-studio.ts`（qwenai）, `qianwen.ts`, `yuanbao.ts`, `zai.ts`, `chatglm.ts`, `ima.ts` |
-| `src/core/`       | 核心业务模块（多个管理器），由 `modules-init.ts` 统一编排     | `modules-init.ts`, `outline-manager.ts`, `theme-manager.ts`, `layout-manager.ts`, `conversation/`, `webdav-sync.ts`, `assistant-mermaid-renderer.ts`, `gemini-mystuff-bridge.ts`, `usage-counter-manager.ts`                         |
-| `src/components/` | React UI 层，运行在 Shadow DOM 中                             | `App.tsx`, `MainPanel.tsx`, `OutlineTab.tsx`, `ConversationsTab.tsx`, `SettingsModal.tsx`, `global-search/`                                                                                                                          |
-| `src/stores/`     | Zustand 状态管理，persist 到 chrome.storage.local             | `settings-store.ts`, `conversations-store.ts`, `prompts-store.ts`, `folders-store.ts`, `tags-store.ts`                                                                                                                               |
-| `src/contents/`   | Plasmo Content Script 入口                                    | `ui-entry.tsx`（单 Content Script 入口 + UI/Shadow DOM）, `monitor-entry.ts`（网络监控）, `aistudio-preload.ts`, `gemini-watermark-main.ts`, `scroll-lock-main.ts`                                                                     |
-| `src/platform/`   | 平台抽象层（浏览器扩展 vs 油猴脚本）                          | `types.ts`, `index.ts`, `extension/`, `userscript/`                                                                                                                                                                                  |
-| `src/utils/`      | 工具函数                                                      | `i18n.ts`, `dom-toolkit.ts`, `exporter.ts`, `markdown.ts`, `themes/`, `scroll-helper.ts`                                                                                                                                             |
-| `src/constants/`  | 常量与默认配置                                                | `defaults.ts`（SITE_IDS）, `ui.ts`, `shortcuts.ts`, `tools-menu.ts`                                                                                                                                                                  |
-| `src/hooks/`      | React Hooks                                                   | `useDraggable.ts`, `useShortcuts.ts`, `useEdgePeekController.ts`                                                                                                                                                                     |
-| `src/locales/`    | 应用内 i18n 资源（11 种语言）                                 | `resources.ts`, `zh-CN/`, `en/`, `ja/`, `ko/`, `it/`, `de/`, `es/`, `fr/`, `pt/`, `ru/`, `zh-TW/`                                                                                                                                    |
-| `src/tabs/`       | 独立页面（选项页、权限请求页）                                | `options.tsx`, `options/pages/`, `perm-request.tsx`                                                                                                                                                                                  |
-| `src/styles/`     | 全局样式                                                      | `conversations.css`, `settings.css`, `theme-variables.css`, `queue-overlay.css`                                                                                                                                                      |
-| `locales/`        | Chrome 扩展 manifest 多语言（_locales 等价）                  | `zh_CN/messages.json`, `en/messages.json` 等 11 种语言                                                                                                                                                                               |
-| `docs/`           | VitePress 文档站（中英双语）                                  | `zh/`, `en/`, `.vitepress/config.mts`                                                                                                                                                                                                |
-| `assets/`         | 静态资源（图标、截图、音效）                                  | `icon.png`, `store/`, `demo/`                                                                                                                                                                                                        |
-
-## 运行与开发
-
-### 环境要求
-
-- Node.js >= 18
-- pnpm >= 9.15
-
-### 常用命令
+要求 Node.js >= 18、pnpm >= 9.15。完整脚本见 `package.json`。
 
 ```bash
-# 安装依赖
-pnpm install
+# 开发
+pnpm dev                        # 扩展开发（Chrome）
+pnpm dev:firefox                # 扩展开发（Firefox）
+pnpm build:userscript:local     # 油猴本地调试构建（资源指向 127.0.0.1）
+pnpm serve:userscript:assets    # 启动油猴本地资源服务（需保持运行）
 
-# 开发模式（浏览器扩展）
-pnpm dev
+# 检查与校验
+pnpm format:check               # Prettier 检查（格式化用 pnpm format）
+pnpm lint:check                 # ESLint 检查（自动修复用 pnpm lint）
+pnpm typecheck                  # TypeScript 类型检查
+pnpm adapters:validate          # 校验全部内置站点配置
+pnpm registry:validate          # 校验 SitePack 与远程 patch
+pnpm prepare:locale-assets      # 开发服务运行期间改完文案后刷新语言资源
 
-# 本地调试油猴脚本（两条命令配合，资源服务需保持运行）
-pnpm build:userscript:local      # 构建并指向本地资源服务
-pnpm serve:userscript:assets     # 启动本地资源服务（@require/@resource 走 127.0.0.1）
-
-# 构建浏览器扩展 (Chrome)
-pnpm build
-
-# 构建 Firefox 扩展
-pnpm build:firefox
-
-# 构建 Safari 实验目标（含权限裁剪和产物检查，尚未通过 Safari 真机验收）
-pnpm build:safari
-
-# 构建现有 Chrome / Firefox 目标
-pnpm build:all
-
-# 构建油猴脚本
-pnpm build:userscript
-
-# 打包扩展（发布用）
-pnpm package
-pnpm package:all
-
-# 代码检查
-pnpm lint          # ESLint 自动修复
-pnpm lint:check    # ESLint 只检查
-pnpm format        # Prettier 格式化
-pnpm format:check  # Prettier 只检查
-pnpm typecheck     # TypeScript 类型检查
-
-# 文档站
-用户文档由独立仓库 ophel-docs 维护，发布到 https://ophel.app/docs（中文版位于 https://ophel.app/docs/zh）。
+# 构建与打包
+pnpm build                      # Chrome 扩展
+pnpm build:firefox              # Firefox 扩展
+pnpm build:safari               # Safari 实验构建（尚未真机验收）
+pnpm build:userscript           # 油猴脚本
+pnpm package                    # 打包 Chrome（package:firefox / package:all 同理）
 ```
 
-### 关键入口文件
+## 5. 核心机制详解
 
-| 入口                      | 路径                                | 说明                                  |
-| ------------------------- | ----------------------------------- | ------------------------------------- |
-| Content Script 启动逻辑   | `src/core/extension-bootstrap.ts`   | 初始化适配器和核心模块                |
-| Content Script 单入口     | `src/contents/ui-entry.tsx`         | 启动核心并挂载 Shadow DOM React App   |
-| Background Service Worker | `src/background.ts`                 | 消息处理、通知、代理请求、Cookie 管理 |
-| Popup 页面                | `src/popup.tsx`                     | 扩展弹出窗口                          |
-| Options 页面              | `src/tabs/options.tsx`              | 独立设置页面                          |
-| 油猴脚本入口              | `src/platform/userscript/entry.tsx` | Vite 构建入口                         |
+### 5.1 适配器层（`src/adapters/`）
 
-### 路径别名
+`SiteAdapter` 抽象基类约定单站接口：`match()` / `getSiteId()` / `getName()`（识别）、`getTextareaSelectors()` / `insertPrompt()`（输入）、`extractOutline()`（大纲）、`getConversationList()` / `navigateToConversation()`（对话）、`getExportConfig()`（导出）、`lockModel()`（模型锁定，通用流程在基类）。
 
-项目使用 `~` 前缀作为 `src/` 的别名（在 `tsconfig.json` 和 `vite.userscript.config.ts` 中配置）：
+站点适配器与 SitePack 的命名分层、校验红线与版本规则统一维护在 [conventions/site-pack.md](./conventions/site-pack.md)。
 
-```typescript
-import { SiteAdapter } from "~adapters/base"
-import { useSettingsStore } from "~stores/settings-store"
-```
+#### API 数据源大纲与导出（虚拟滚动 / 懒加载站点）
 
-## 核心模块详解
-
-### 适配器层 (`src/adapters/`)
-
-`SiteAdapter` 抽象基类定义了所有站点必须实现的接口：
-
-- `match()` / `getSiteId()` / `getName()` - 站点识别
-- `getTextareaSelectors()` / `insertPrompt()` - 输入框交互
-- `extractOutline()` - 大纲提取
-- `getConversationList()` / `navigateToConversation()` - 对话管理
-- `getExportConfig()` - 导出配置
-- `lockModel()` - 模型锁定（通用实现在基类中）
-
-支持的站点标识（`SITE_IDS`）：`gemini`, `gemini-enterprise`, `chatgpt`, `claude`, `grok`, `aistudio`, `deepseek`, `doubao`, `kimi`, `qwenai`（文件为 `qwen-studio.ts`）, `qianwen`, `yuanbao`, `zai`, `chatglm`, `ima`
-
-#### API 数据源大纲与导出（虚拟滚动站点）
-
-消息列表虚拟滚动的站点（DeepSeek 首发），大纲与导出可以直接请求站点历史消息接口，替代纯 DOM 扫描/滚动收集。站无关机制统一在 `src/utils/outline-api-source.ts`（分支回溯、缓存过期判定、拉取闸门、分支序号归并）与 `src/utils/outline-heading-cache.ts`（markdown 标题解析、文本清洗、哈希）；站点文件（如 `src/adapters/deepseek-history-outline.ts` / `deepseek-history-export.ts`）只负责把接口 payload 解析为通用数据形态。
+消息列表虚拟滚动或服务端懒加载的站点，可直接读取站点历史消息接口来补全大纲和导出，替代纯 DOM 滚动扫描。站无关能力集中在 `src/utils/outline-api-source.ts`（分支回溯、过期判定、拉取闸门、分支归并）和 `src/utils/outline-heading-cache.ts`（标题解析、清洗、哈希）；单站文件只负责把 payload 解析为通用结构。
 
 新站点接入清单：
 
-1. 解析器返回 extends `ApiOutlineSourceData` 的数据（`sessionId` / `branchMessageIds` / `maxMessageId` 为契约字段）；导出解析的完整性要求必须严于大纲（无法证明历史完整时返回 null，回退滚动收集）。
-2. 虚拟滚动站点在 config `traits` 声明 `virtualOutlineFill: true`，并 bump 对应 `*_CONFIG_VERSION`；声明后跳转即时刷新与高亮重算经 `usesVirtualOutlineFill()` / `hasPositionlessOutlineNodes()` 门控，不影响其他站点。服务端懒加载、DOM 不卸载的站点（Qwen Studio）不声明：该 trait 还会切换高亮算法、去顶部/回底等待和阅读历史恢复路径，并要求适配器实现虚拟列表覆写。
-3. 拉取必须过 `shouldAttemptApiOutlineFetch` 闸门（单飞、生成中跳过、冷却、解析失败熔断），会话切换时重置冷却与熔断计数；数据更新后 `postMessage(EVENT_OUTLINE_DATA_UPDATED)` 请求大纲刷新。
-4. 大纲条目统一按 `mergeByBranchMessageOrder` 归并：挂载项以 DOM 为准，接口只补未挂载条目（DeepSeek 提问条目按「是否产出 DOM 条目」判定——纯附件提问行挂载但无文本可提取，仍需接口回填）；回填条目用 `navigationId` 携带定位信息（如 `{site}:api-h:{messageId}:...`），`resolveOutlineTarget` 优先按它精确定位。纯附件（如只发图片）的提问没有文本，条目文案回退用首个附件文件名，与站点原生 TOC 的标题口径一致。
-5. 接口主机与附件 CDN 加入 `package.json` `host_permissions`（油猴端 `connect: ["*"]` 无需改）；manifest 权限保持最小授权。
+1. 解析器返回继承 `ApiOutlineSourceData` 的数据（`sessionId` / `branchMessageIds` / `maxMessageId`）；导出完整性要求严于大纲，无法证明完整时返回 `null` 回退 DOM 收集。
+2. 虚拟滚动站点在 config `traits` 声明 `virtualOutlineFill: true` 并递增 `*_CONFIG_VERSION`；跳转刷新与高亮重算由 `usesVirtualOutlineFill()` / `hasPositionlessOutlineNodes()` 门控。服务端懒加载但 DOM 不卸载的站点（如 Qwen Studio）不要声明该 trait。
+3. 拉取统一走 `shouldAttemptApiOutlineFetch` 闸门（单飞、生成中跳过、冷却、解析失败熔断），切会话重置计数；数据就绪后 `postMessage(EVENT_OUTLINE_DATA_UPDATED)` 触发大纲刷新。
+4. 大纲条目默认按 `mergeByBranchMessageOrder` 归并：已挂载项以 DOM 为准，接口只补未挂载项；回填项用 `navigationId` 携带精确定位标识。纯附件提问无文本时，文案回退为首个附件文件名。
+5. 接口域名与附件 CDN 按最小授权加入 `package.json` 的 `host_permissions`（油猴端 `connect: ["*"]` 无需调整）。
 
-Claude 接入的差异点（`src/adapters/claude-history-outline.ts`、`src/adapters/claude.ts`）：DOM 虚拟行没有消息 id、只有位置序号（`data-rs-index`），消息 id 为 uuid 字符串。解析器内部做 uuid 到数值的预映射后复用 `resolveActiveBranch`，全链路统一用「分支位置序号」作为 messageIndex（接口历史截断时按 aria-setsize 尾部对齐，无法对齐判解析失败）；过期判定在位置语义之外补充两个粘性强制重拉信号——生成结束（含重新生成）与同 id 标题文本漂移；回填直接写入站点已有的 `outlineItemCache`（id 体系与 DOM 扫描一致，下游归并/定位不变），不走 `mergeByBranchMessageOrder`；全量滚动回填保留为接口不可用时的兜底。纯附件（如只发图片）的提问 text 块为空，条目文案回退用首个附件 `file_name`（`files` 先于 `attachments`，与导出解析同一字段口径），DOM 扫描对这类行同样无条目，缓存回填天然覆盖。
+已接入站点的关键差异：
 
-AI Studio 接入的差异点（`src/adapters/aistudio-history-outline.ts`、`src/adapters/aistudio.ts`，详见 `docs/developer/aistudio-api-outline-plan.md`）：接口是 Google 内部 RPC（ResolveDriveResource，`application/json+protobuf` 位置数组），历史为线性单链，无需分支回溯；SAPISIDHASH 校验绑定 Origin，请求必须经 main world 桥（`src/core/aistudio-rpc-bridge.ts` + `src/contents/aistudio-rpc-main.ts`，油猴端装进 `unsafeWindow`）代发，因此 RPC 本身不需要新增 host_permissions。序号空间用「带文本提问的 1-based 序号」，与时间线滚动条条目同构；过期判定的 mountedIds 直接取滚动条序号（滚动条始终列出全部提问），生成结束强制重拉。回填不走进出口归并，直接在滚动条分支按 `aistudio-api:q<queryIndex>:h<order>` id 补未挂载轮次的回答标题，跳转经滚动条 reveal 后按文本定位。认证与端点解析与删除链路共用 `src/utils/google-rpc-auth.ts`。导出走同一接口主动拉取全量对话（含思考链与附件）：附件是用户 Drive 文件（chunk 内只有文件 ID），真实文件名与字节经平台 `fetch` 通道（扩展 background / 油猴 GM_xhr）从 `drive.usercontent.google.com` 获取——浏览器页面上下文受 CORS 限制读不到 `Content-Disposition`。
-
-Grok 接入的差异点（`src/adapters/grok-history-outline.ts`、`src/adapters/grok.ts`）：数据分两段接口，`GET /rest/app-chat/conversations/{id}/response-node` 返回全量分支骨架（responseId/sender/parentResponseId，按创建顺序排列），`POST .../load-responses` 按 responseId 批量取正文（单批 20 条）；树签名（节点数 + 叶 responseId）未变时跳过正文拉取，生成结束强制重拉。cookie 认证即可，无需额外请求头。激活分支叶节点优先取 URL `rid`（须为无子节点的叶子），否则取骨架末尾节点。消息 id 是 uuid 字符串，全链路用「分支位置序号」作为 messageIndex（同 Claude），但 DOM 虚拟行直接携带 responseId（`data-plane-row="gateway:<uuid>"`、消息元素 `id="response-<uuid>"`），挂载行映射天然精确，无需 aria-setsize 对齐；未入库的新行统一映射为 `maxMessageId + 1` 触发过期重拉。DOM 大纲条目的 id 本身即 `response-<uuid>`，回填提问条目沿用同一 id，挂载切换时收藏不失效，无需 DeepSeek 的 occurrence 签名重算。跳转定位只有 probe+bisect 滚动挂载一条路径（Grok 无原生 TOC 兜底），失败回退基类文本搜索。阅读历史的行身份用 responseId 字符串（`AnchorData.rowKey` 已扩为 `number | string`），恢复时有界等待接口数据以取得分支位置后复用同一 probe 挂载。导出改走同一组接口（`src/adapters/grok-history-export.ts`）：完整性门槛严于大纲——骨架必须恰有一个根、分支每个 responseId 都必须取到正文，否则返回 null 回退 DOM 收集；正文剥离 `<grok:render>` 占位标签，生成图片从 `cardAttachmentsJson` 图片块按卡片去重取最终版本（相对 URL 经 `buildGrokAssetSource` 归一到 assets.grok.com），用户附件直接用 `fileAttachmentsMetadata`（与分享页接口同构，复用同一解析器）；思考步骤标题（steps）与工具过程不参与导出，与 DOM 导出等价。
-
-Qwen Studio 接入的差异点（`src/adapters/qwen-studio-history-outline.ts`、`src/adapters/qwen-studio.ts`）：单对话接口 `GET /api/v2/chats/{id}?direction=up&limit=100[&cursor=<oldest_id>]` 返回 `data.chat.history = { messages, currentId, pagination }`（2026-10-30 实测：消息 `id` / `parentId` / `childrenIds` 为 camelCase，根消息 `parentId` 为 `null`，`pagination` 为 snake_case，`content_list` 阶段见 `thinking_summary` / `answer`；失败时是 HTTP 200 + `success:false` + `data.{code,details}`，如 `Unauthorized`）。大纲与导出共用 `resolveQwenActiveBranch`：必须从 `currentId` 回溯到 `parentId === null` 的根才算历史完整，缺 `currentId`、断链、成环或字段漂移一律判失败，不猜分支、不产出残缺链；导出失败回退 DOM 时，历史加载未收敛会经 `getExportCollectionReport` 触发「可能不完整」提示。Qwen 是服务端懒加载（DOM 不卸载），不声明 `virtualOutlineFill`；消息 id 为 uuid 字符串，归并时 DOM 已有已知行则未知行贴在其后，回填与无归属 DOM 条目同名时从尾部扣除（`dropTrailingFillDuplicates`）。网络、HTTP 与鉴权失败（token 过期到站点刷新之间接口返回 `Unauthorized`）不计入熔断，只有解析失败才熔断。对话列表快照只有翻到空页且置顶接口成功才算完整，`loadAllConversations` 否则返回 `false`，对话页据此不生成缺失记录核对结果。侧边栏没有对话 ID，DOM 观察器同步不到对话：订阅期间经「页面响应转发」复用页面自己对 `GET /api/v2/chats/` 的轮询（新对话要等回复完成才有正式标题，之前一直是 `New Chat`），并在订阅时补同步一次，覆盖刷新页面的场景。回填跳转为触发懒加载会把容器滚到顶，跳转最终没有目标时还原到滚动前的位置，用户自己滚动或新的跳转会取消进行中的定位。
+- **DeepSeek**（`deepseek-history-outline.ts` / `deepseek-history-export.ts`）：首发参考实现；提问条目按“是否产出 DOM 条目”决定是否回填，纯附件提问行由接口补齐。
+- **Claude**（`claude-history-outline.ts`、`claude.ts`）：DOM 虚拟行无 uuid、只有 `data-rs-index`，内部把 uuid 预映射为分支位置序号（历史截断时按 `aria-setsize` 尾部对齐，对不上判解析失败）；补充“生成结束”和“同 id 标题漂移”两个强制重拉信号；回填直接写站点原有 `outlineItemCache`，不走 `mergeByBranchMessageOrder`。
+- **AI Studio**（`aistudio-history-outline.ts`、`aistudio.ts`）：走 Google 内部 RPC（`ResolveDriveResource`，线性单链无分支）；因 SAPISIDHASH 校验 Origin，请求经 main world 桥（`src/core/aistudio-rpc-bridge.ts` + `src/contents/aistudio-rpc-main.ts`，油猴端挂 `unsafeWindow`）代发，无需为 RPC 加 `host_permissions`；认证与删除链路共用 `src/utils/google-rpc-auth.ts`；序号与时间线滚动条 1-based 提问序号一致；导出附件通过平台 fetch 通道从 `drive.usercontent.google.com` 获取以避开页面 CORS。
+- **Grok**（`grok-history-outline.ts` / `grok-history-export.ts`、`grok.ts`）：两段接口——先拉 `response-node` 分支骨架，再按 `load-responses` 批量（20 条/批）取正文，树签名未变跳过正文拉取；激活叶节点优先 URL `rid`，否则取末尾；DOM 行自带 `response-<uuid>`，回填提问复用同 id 保持收藏稳定；跳转只走 probe + bisect 滚动挂载（失败回退文本搜索）；导出要求恰有单根且每个节点取到正文，剥离 `<grok:render>`，图片取 `cardAttachmentsJson` 最终版本，思考步骤与工具过程不参与导出。
+- **Qwen Studio**（`qwen-studio-history-outline.ts`、`qwen-studio.ts`）：服务端懒加载、不声明 `virtualOutlineFill`；接口分页拉取 `data.chat.history`，必须从 `currentId` 完整回溯到 `parentId === null` 根才算成功，不猜残缺链；网络/鉴权失败（如 token 过期返回 `Unauthorized`）不计熔断，仅解析失败熔断；侧边栏无对话 ID，订阅期间通过下方 NetworkMonitor 复用页面自己的 `GET /api/v2/chats/` 轮询同步对话列表。
 
 #### 页面响应转发（NetworkMonitor）
 
-页面自己会请求、我们只需复用其数据的场景（Qwen Studio 对话列表首发），不另行轮询，由 main world 的 `src/core/network-monitor.ts` 转发页面请求的响应。NetworkMonitor 是单例，统一持有 fetch / XHR hook，服务两类互不影响的消费方：
+页面本身会发请求、Ophel 只需复用响应体的场景（如 Qwen Studio 对话列表），不要另起轮询，统一由 main world 单例 `src/core/network-monitor.ts` 持有唯一的 fetch / XHR hook，服务两类互不干扰的消费方：
 
-- 生成检测：`EVENT_MONITOR_INIT` 配置目标 URL，产出 `EVENT_MONITOR_START` / `EVENT_MONITOR_COMPLETE`。INIT 由 `TabManager.start()` 发送，与是否开启「自动重命名标签页」无关（完成通知、提示音、窗口置顶都依赖它），收到 `EVENT_MONITOR_READY` 时重发。
-- 响应转发：`EVENT_MONITOR_CAPTURE_REGISTER` / `EVENT_MONITOR_CAPTURE_UNREGISTER` 注册/注销规则，命中请求的 2xx 响应体经 `EVENT_MONITOR_RESPONSE` 转发。不依赖 INIT，也不参与生成检测。
+- **生成检测**：`TabManager.start()` 发送 `EVENT_MONITOR_INIT`（与是否开启自动重命名标签页无关，完成通知、提示音、窗口置顶都依赖它），产出 `EVENT_MONITOR_START` / `EVENT_MONITOR_COMPLETE`，收到 `EVENT_MONITOR_READY` 时重发。
+- **响应转发**：通过 `EVENT_MONITOR_CAPTURE_REGISTER` / `UNREGISTER` 管理规则，命中同源 2xx 请求后经 `EVENT_MONITOR_RESPONSE` 转发响应体文本，不参与生成检测。
 
-hook 在首个消费方出现时安装、之后不再卸载，重新 INIT 只替换生成检测配置。新需求不要另起一套 fetch / XHR hook：卸载时写回的「原始 fetch」会冲掉后装的那套。
+> hook 在首个消费方出现时安装且不再卸载。**禁止另起第二套 fetch / XHR hook**，否则卸载时写回的“原始 fetch”会冲掉后装的那套。
 
-新站点接入清单：
+接入规则：
 
-1. isolated world 侧统一用 `src/utils/network-response-capture.ts` 的 `subscribeNetworkResponses(rule, onResponse)`。它在收到 `EVENT_MONITOR_READY` 时重发注册（两侧脚本加载顺序没有保证，油猴端甚至先发 INIT、后注册监听），返回的取消函数会注销规则；订阅与数据消费方同生命周期。
-2. 规则为 `{ id, method, pathPattern }`：id 用 `{siteId}:{用途}` 保证唯一；只匹配与页面同源的请求，`pathPattern` 是 pathname（不含 query）的正则源码。规则不要放进 `NetworkMonitorConfig`，SitePack 校验器对该字段是白名单。
-3. 只转发 2xx；XHR 支持 `responseType` 为 `""` / `"text"` / `"json"`，其他类型跳过并告警；超过 4M 字符的响应跳过并告警。
-4. 响应体是不可信文本（同窗口脚本可伪造消息），站点自行解析与校验；分页类数据只能新增或更新，不能据此删除。
-5. 站点 origin 必须在 `src/contents/monitor-entry.ts` 的 `matches` 中（油猴端由入口统一初始化）。
-
-对话列表类数据源经 `SiteAdapter.onConversationListChange()` 通知 `ConversationManager` 增量同步（基类为空操作，其他站点不会触发）。只在「订阅时补同步」和「收到页面响应」时回调，快照刷新本身不回调，否则手动同步与首次全量同步的新增计数会被提前消费。
-
-### 核心模块 (`src/core/modules-init.ts`)
-
-`initCoreModules()` 按以下顺序初始化管理器（共 13 个，见 `modules-init.ts`）：
-
-1. **ThemeManager** - 主题管理（light/dark/system + 自定义预设样式）
-2. **MarkdownFixer** - AI 响应中的 Markdown 渲染修复
-3. **LayoutManager** - 页面宽度、用户提问宽度、禅模式（Zen Mode）、净化模式
-4. **CopyManager** - 公式复制（LaTeX）、表格复制
-5. **TabManager** - 生成完成通知（始终启用）、标签页自动重命名、隐私模式
-6. **WatermarkRemover** - Gemini 去水印（仅 gemini/gemini-enterprise）
-7. **UsageCounterManager** - 本地使用量计数与预估面板
-8. **ReadingHistoryManager** - 阅读历史记录与进度恢复
-9. **ModelLocker** - 模型锁定（自动切换到指定模型）
-10. **ScrollLockManager** - 滚动锁定
-11. **UserQueryMarkdownRenderer** - 用户提问 Markdown 渲染
-12. **AssistantMermaidRenderer** - AI 回复 Mermaid 兜底渲染
-
-其他核心模块（不在 init 序列中，独立管理）：`ConversationManager`、`OutlineManager`、`PromptManager`、`WebDAVSyncManager`、`ShortcutManager`、`GeminiMystuffBridge`、`InlineBookmarkManager`、`NetworkMonitor`、`QueueDispatcher`。
-
-所有模块支持通过 `subscribeModuleUpdates()` 响应设置变化的热更新。
-
-### 状态管理 (`src/stores/`)
-
-使用 Zustand + persist 中间件，数据持久化到 `chrome.storage.local`：
-
-- **settings-store** - 全局设置（主题、功能开关、站点特定配置）
-- **conversations-store** - 对话元数据（标题、文件夹、标签、置顶）
-- **prompts-store** - 提示词库
-- **folders-store** - 文件夹管理
-- **tags-store** - 标签管理
-- **queue-store** - Prompt 队列
-- **anchor-store** - 大纲锚点
-- **bookmarks-store** - 书签
-- **reading-history-store** - 阅读历史
-- **claude-sessionkeys-store** - Claude Session Key 管理
-
-### 全局搜索 (`src/components/global-search/`)
-
-支持语法化搜索的全局搜索功能：
-
-- `syntax.ts` - 搜索语法解析器（支持 `type:`, `folder:`, `tag:`, `is:`, `level:`, `date:` 过滤器）
-- `useGlobalSearchData.ts` - 数据源聚合
-- `useGlobalSearchKeyboard.ts` - 键盘导航
-- `useGlobalSearchPreview.ts` - 预览面板
-- `useGlobalSearchSyntax.ts` - 语法高亮与补全
-
-### Background Service Worker (`src/background.ts`)
-
-消息类型常量定义在 `src/utils/messaging.ts`，共 21 个 MSG_ 常量：
-
-| 类别     | 常量                                                                                                                                             | 说明                               |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------- |
-| 通知     | `MSG_SHOW_NOTIFICATION`, `MSG_FOCUS_TAB`                                                                                                         | 桌面通知与标签页聚焦               |
-| 网络     | `MSG_PROXY_FETCH`, `MSG_WEBDAV_REQUEST`                                                                                                          | 代理请求（绕过 CORS）、WebDAV 同步 |
-| 权限     | `MSG_CHECK_PERMISSION`, `MSG_CHECK_PERMISSIONS`, `MSG_REQUEST_PERMISSIONS`, `MSG_REVOKE_PERMISSIONS`                                             | 权限管理                           |
-| 导航     | `MSG_OPEN_OPTIONS_PAGE`, `MSG_OPEN_URL`                                                                                                          | 打开选项页/URL                     |
-| 扩展状态 | `MSG_EXTENSION_UPDATE_AVAILABLE`                                                                                                                 | 更新通知                           |
-| 数据     | `MSG_CLEAR_ALL_DATA`, `MSG_RESTORE_DATA`                                                                                                         | 数据清除/恢复                      |
-| Claude   | `MSG_SET_CLAUDE_SESSION_KEY`, `MSG_TEST_CLAUDE_TOKEN`, `MSG_GET_CLAUDE_SESSION_KEY`, `MSG_CHECK_CLAUDE_GENERATING`, `MSG_SWITCH_NEXT_CLAUDE_KEY` | Claude 账号管理                    |
-| 模型     | `MSG_GET_AISTUDIO_MODELS`                                                                                                                        | AI Studio 模型列表                 |
-| 对话     | `MSG_START_NEW_CONVERSATION`                                                                                                                     | 发起新对话                         |
-| 事件     | `EVENT_MONITOR_INIT` / `START` / `COMPLETE`, `EVENT_MONITOR_CAPTURE_REGISTER` / `UNREGISTER`, `EVENT_MONITOR_READY`, `EVENT_MONITOR_RESPONSE` | 网络监控：生成检测与页面响应转发 |
+1. isolated world 统一使用 `src/utils/network-response-capture.ts` 的 `subscribeNetworkResponses(rule, onResponse)`（自动处理 `EVENT_MONITOR_READY` 重发与取消注销）。
+2. 规则为 `{ id, method, pathPattern }`，`id` 用 `{siteId}:{用途}`，只匹配同源请求，`pathPattern` 匹配不含 query 的 pathname；规则不放进 `NetworkMonitorConfig`（校验器白名单会拦截）。
+3. 只转发 2xx、文本/JSON 响应且上限 4M 字符；超限或非文本类型跳过并告警。
+4. 转发内容视为不可信文本，由站点自行解析校验；分页响应只能新增/更新，不得据此删除本地记录。
+5. 站点 origin 须列入 `src/contents/monitor-entry.ts` 的 `matches`（油猴端统一初始化）。对话列表类数据通过 `SiteAdapter.onConversationListChange()` 触发增量同步（快照刷新本身不回调，避免吃掉手动/首次全量同步的新增计数）。
 
-## 测试策略
+### 5.2 核心模块初始化（`src/core/modules-init.ts`）
 
-**当前状态：项目尚未建立测试体系。** 源码中无 test/spec 文件，`package.json` 中无测试相关命令或依赖（如 Jest、Vitest、Playwright）。
+`initCoreModules()` 按顺序初始化以下 **13 个管理器**（`adapter.getEnhancementMode() === "minimal"` 时只初始化第 1、3 项；异步步骤间检查 `ctx.isStale()` 防止 SPA 导航后重复建实例）：
 
-建议优先引入的测试：
-1. **单元测试**：适配器的 `match()` / `getSiteId()` 逻辑、`backup-codec.ts`（备份解析与校验）、`format.ts`、`syntax.ts`（搜索语法解析）
-2. **集成测试**：`modules-init.ts` 的模块编排、`webdav-sync.ts` 的同步逻辑
-3. **E2E 测试**：使用 Playwright + 浏览器扩展测试框架验证核心用户流程
+1. **ThemeManager** — 主题管理（light / dark / system + 24 套预置 + 自定义样式）
+2. **MarkdownFixer** — AI 回复 Markdown 渲染修复
+3. **LayoutManager** — 页面宽度、提问宽度、禅模式、净化模式、自动隐藏输入框
+4. **CopyManager** — LaTeX 公式复制、表格复制
+5. **TabManager** — 生成完成通知、标签页自动重命名、隐私模式
+6. **WatermarkRemover** — Gemini / Gemini Enterprise 去水印
+7. **UsageCounterManager** — 本地使用量统计与预估
+8. **ReadingHistoryManager** — 阅读历史记录与位置恢复（异步）
+9. **ModelLocker** — 模型自动锁定
+10. **ScrollLockManager** — 滚动锁定
+11. **UserQueryMarkdownRenderer** — 用户提问 Markdown 渲染
+12. **AssistantMermaidRenderer** — AI 回复 Mermaid 兜底渲染（异步）
+13. **ChatGptPerfManager** — ChatGPT 长对话渲染性能优化
 
-## CSS 架构
+独立管理的其他核心模块：`ConversationManager`、`OutlineManager`、`PromptManager`、`PromptChainRunner`、`QueueDispatcher`、`WebDAVSyncManager`、`ShortcutManager`、`InlineBookmarkManager`、`NetworkMonitor`、`PackManager`、`RemoteConfigManager`、`GeminiMystuffBridge`。
 
-### 样式文件清单
+所有模块通过 `subscribeModuleUpdates()` 响应设置变更热更新。
 
-项目共 **7 个 CSS 文件**（纯原生 CSS，无预处理器），总计 ~5,974 行：
+### 5.3 状态管理（`src/stores/`）
 
-| 文件路径                         | 行数  | 用途                                            |
-| -------------------------------- | ----- | ----------------------------------------------- |
-| `src/style.css`                  | 1,472 | 主样式（大纲面板、快捷按钮、tooltip 等核心 UI） |
-| `src/styles/settings.css`        | 2,081 | 设置页面（Options Page）样式                    |
-| `src/styles/conversations.css`   | 1,313 | 对话 Tab 样式（文件夹、标签、搜索、批量操作）   |
-| `src/styles/queue-overlay.css`   | 395   | Prompt Queue 排队叠加层样式                     |
-| `src/styles/theme-variables.css` | 286   | CSS 变量定义文件（浅色/深色模式默认值）         |
-| `src/popup.css`                  | 395   | 浏览器扩展 Popup 页面样式                       |
-| `src/tabs/options.css`           | 32    | Options 页面入口（仅 @import）                  |
+全部使用 Zustand + persist（扩展走 `chrome.storage.local`，油猴走同步 GM 存储适配）：
 
-### 样式技术方案
+`settings-store`、`conversations-store`、`prompts-store`、`prompt-chains-store`、`folders-store`、`tags-store`、`queue-store`、`anchor-store`、`bookmarks-store`、`reading-history-store`、`claude-sessionkeys-store`（共 11 个 store；`chrome-adapter.ts` 为存储适配层）。
 
-| 维度      | 方案                                                                  |
-| --------- | --------------------------------------------------------------------- |
-| 预处理器  | 无（纯原生 CSS）                                                      |
-| CSS 框架  | 无（全部手写）                                                        |
-| CSS-in-JS | 无（外部 CSS 文件 + React 内联 style 混合）                           |
-| 主题系统  | CSS 变量 + TypeScript 预设 + 运行时动态注入                           |
-| 样式隔离  | Shadow DOM（`:host` 选择器 + 动态 style 注入）                        |
-| 命名前缀  | `--gh-*`（项目前身 Gemini Helper 缩写）                               |
-| 布局      | Flexbox 为主，Grid 辅助，固定定位用于浮动 UI                          |
-| 响应式    | 极少媒体查询，主要依赖 JS 动态类名（`.is-narrow`、`.is-compact`、`.is-drawer`、`.is-touch`），断点与触屏判定集中在 `src/constants/ui.ts` |
-| 现代特性  | `color-mix()`、`backdrop-filter`、View Transitions、`scrollbar-width` |
+### 5.4 全局搜索（`src/components/global-search/`）
 
-### 主题系统
+支持 `type:`、`folder:`、`tag:`、`is:`、`level:`、`date:` 语法过滤，拆分为 `syntax.ts`（解析）、`useGlobalSearchData.ts`（数据聚合）、`useGlobalSearchKeyboard.ts`（键盘导航）、`useGlobalSearchPreview.ts`（预览）、`useGlobalSearchSyntax.ts`（高亮与补全）。
 
-**架构**：`src/utils/themes/` 目录，TypeScript 预设对象 + CSS 变量动态注入。
+### 5.5 Background 消息与跨世界事件（`src/utils/messaging.ts`）
 
-**目录结构：**
-```
-src/utils/themes/
-  index.ts       -- 统一导出
-  types.ts       -- ThemeVariables 接口（60+ CSS 变量键名）、ThemePreset 接口
-  helpers.ts     -- 查找预设、CSS 转换、解析工具函数
-  dark/index.ts  -- 12 个暗色主题预设
-  light/index.ts -- 12 个亮色主题预设
-```
-
-**主题列表**：亮色 12 个（默认 `google-gradient`），暗色 12 个（默认 `classic-dark`）。支持 `light` / `dark` / `system` 三种模式。
-
-**核心控制器**：`src/core/theme-manager.ts`（943 行）
-- 多站点主题检测（ChatGPT、Gemini、Claude 等各有不同的检测策略）
-- MutationObserver 监听 `body`/`html` 的 `class`、`data-theme`、`style` 属性变化
-- View Transitions API 圆形扩散动画（从点击位置辐射展开）
-- Shadow DOM 注入：查找 `plasmo-csui` 和 `#ophel-userscript-root` 两种 Shadow Host，通过 `<style id="gh-theme-vars">` 注入变量
-- 提供 `subscribe()` / `getSnapshot()` 方法，支持 React `useSyncExternalStore`
-
-### CSS 变量体系
-
-**命名规范**：`--gh-{语义域}-{属性}[-{状态}]`，总计约 **87 个变量**。
-
-| 分类       | 示例                                                            |
-| ---------- | --------------------------------------------------------------- |
-| 基础背景   | `--gh-bg`, `--gh-bg-secondary`, `--gh-bg-tertiary`              |
-| 文字颜色   | `--gh-text`, `--gh-text-secondary`, `--gh-text-tertiary`        |
-| 边框/交互  | `--gh-border`, `--gh-hover`, `--gh-active-bg`                   |
-| 输入框     | `--gh-input-bg`, `--gh-input-border`, `--gh-input-focus-border` |
-| 品牌色     | `--gh-primary`, `--gh-primary-text`, `--gh-secondary`, `--gh-danger` |
-| 头部       | `--gh-header-bg`, `--gh-header-text`, `--gh-glass-*`（头部图标） |
-| 阴影       | `--gh-shadow`, `--gh-shadow-sm`, `--gh-shadow-lg`               |
-| 设置页层级 | `--gh-canvas`（内容画布）, `--gh-surface`（侧栏与卡片）         |
-| 文件夹色板 | `--gh-folder-bg-0` ~ `--gh-folder-bg-7`（8 个）                 |
-| 大纲高亮   | `--gh-outline-locate-*`, `--gh-outline-sync-*`                  |
-
-派生变量：`--gh-primary-text`（默认等于主色）、`--gh-header-text`（默认白色）、`--gh-canvas` / `--gh-surface`（由 `--gh-bg` / `--gh-card-bg` 派生，深色另行派生）都在 `theme-variables.css` 给出默认值，预置主题只在需要时覆盖，自定义样式也可直接覆盖。大纲高亮色由每套预置单独给出与主色撞色的值，用来让当前位置一眼可见。
-
-**特殊前缀**：`--popup-*`（Popup 页面独立体系）、`--panel-width`（布局动态变量）、`--theme-x/y`（View Transitions 坐标）。
-
-变量引用统一使用 `var(--gh-*, fallback)` 形式并带硬编码回退值。
-
-### Shadow DOM 样式注入
-
-**两种 Shadow Host**：`<plasmo-csui>`（扩展模式）、`<div id="ophel-userscript-root">`（油猴模式）。
-
-**首屏样式**（初始化时）：`ui-entry.tsx` 通过 `getStyle()` 将基础 CSS、对话 Tab CSS 与主题缓存同步注入 Shadow DOM `<style>` 标签。对话 Tab 可被设为首个标签，因此其样式必须在首帧可用。
-
-**非首屏样式**：`settings.css`、`release-notes.css` 经 `~utils/panel-lazy-styles` 注册，在空闲时或对应界面打开时以 Shadow DOM `<link>` 延迟加载。
-
-**动态主题变量**（切换时）：`ThemeManager.syncPluginUITheme()` 创建/更新 `<style id="gh-theme-vars">`，注入 `:host { ... }` 规则到各 Shadow Root。
-
-**CSS 导入方式**：
-- Plasmo 扩展首屏：`import cssText from "data-text:~style.css"`（编译时转字符串）
-- Plasmo 扩展非首屏：`import cssUrl from "url:~styles/settings.css"` + `registerPanelLazyStyles()`
-- 油猴脚本：`import mainStyle from "../../style.css?inline"`（Vite 内联）
-- 常规页面：`import "./popup.css"`（直接导入）
-
-### CSS 动画
-
-项目定义了多个 `@keyframes` 动画：`tooltip-fade-in`、`outlineLocatePulse`（定位呼吸光晕）、`quick-btn-hold-fill`（长按填充进度）、`quick-menu-enter`（菜单弹出缩放）、`gh-scanline`/`gh-mist-drift`（背景纹理动画）等。主题切换使用 View Transitions API 实现圆形扩散过渡效果。
-
-## 编码规范
-
-### 提交规范 (Conventional Commits)
-
-```
-type(scope): subject
-
-# type 可选值：
-feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert, deps, ux
-
-# 约束：
-- header 最长 100 字符
-- scope 使用小写
-- body/footer 前必须空行
-- commit message 必须使用英文
-```
-
-### ESLint 规则要点
-
-- React Hooks 规则强制执行
-- `@typescript-eslint/no-unused-vars`：warn（`_` 前缀参数/变量忽略）
-- `@typescript-eslint/no-explicit-any`：warn
-- `no-console`：warn（允许 `console.warn` 和 `console.error`）
-- 不强制 React import（React 17+ JSX Transform）
-
-### 代码风格
-
-- Prettier 统一格式化
-- 路径别名使用 `~` 前缀映射到 `src/`
-- CSS 类名前缀使用 `gh-`（历史命名，来自项目前身）
-- 组件内中文注释，代码标识符使用英文
-
-### 国际化
-
-- 应用内 i18n：`src/locales/` 下 11 种语言，通过 `~utils/i18n` 的 `t()` 函数调用
-- 扩展 manifest 国际化：`locales/` 下对应 Chrome `_locales` 规范
-- 支持语言：中文简体、中文繁体、英语、日语、韩语、意大利语、德语、西班牙语、法语、葡萄牙语(巴西)、俄语
-- 扩展端语言资源外置：构建期由 `scripts/prepare-locale-assets.ts` 生成
-  `assets/locales/messages.json`（避免内联进每个 JS bundle 触发 AMO 单文件 5MB
-  解析上限），运行时经 `initI18n()` 一次性加载；en 静态打包兜底。渲染入口与依赖
-  本地化文案的 store 播种/迁移必须先等 `initI18n()` 就绪；油猴端走 GM @resource，
-  两端以 `initI18n()` 契约对齐。
-- 语言资源维护：`src/locales/<lang>/index.ts` 是应用内文案的唯一数据源；
-  `assets/locales/messages.json` 是 Git 忽略的生成物，不需要提交。
-  `dev` / `dev:firefox` 启动及 Chrome / Firefox / Safari 构建前会自动生成；
-  `release.yml` 通过这些构建命令生成并打包，无需额外生成步骤。
-  开发服务运行期间修改文案后，执行 `pnpm prepare:locale-assets` 或重启开发服务。
-  油猴构建直接读取语言源文件，不依赖此 JSON。
-- 产物编码约束：Chrome 扩展加载器拒绝含 Unicode noncharacter 的内容脚本（命中即整个
-  扩展无法安装）。KaTeX Lexer 正则的 `\uFFFF` 转义会被 Parcel 重打印为字面字符，
-  已通过 `patches/katex@*.patch` 在依赖源码侧根治；`build` / `build:firefox` 末尾的
-  `scripts/check-bundle-encoding.ts` 做冒烟检查，回潮直接构建失败。
-
-## AI 使用指引
-
-### 修改代码时的注意事项
-
-1. **适配器修改**：修改某个站点的适配器时，注意检查 `SiteAdapter` 基类的默认实现是否仍然适用
-2. **新站点支持**：新增站点需要创建适配器类并在 `src/adapters/index.ts` 中注册
-3. **设置项变更**：新增设置项需同步更新 `DEFAULT_SETTINGS`（在 `~utils/storage` 中）、对应的 store 和 UI 页面
-4. **平台兼容性**：修改核心逻辑时注意浏览器扩展和油猴脚本的差异，通过 `src/platform/` 抽象层处理
-5. **Shadow DOM**：面板 UI 运行在 Shadow DOM 中，样式隔离；需要穿透 DOM 查询时使用 `DOMToolkit`
-6. **模块热更新**：`subscribeModuleUpdates()` 负责在设置变化时动态更新模块，新增模块需在此处添加更新逻辑
-7. **备份兼容性**：`ZUSTAND_KEYS` 和 `MULTI_PROP_STORES` 常量影响备份导出/导入逻辑
-8. **CSS 类名前缀**：扩展注入页面的 CSS 使用 `gh-` 前缀避免冲突
-
-### 关键路径
-
-- 用户操作流程：`popup.tsx` -> 支持站点检测 -> `ui-entry.tsx` 单入口 -> `extension-bootstrap.ts` 初始化适配器 -> `modules-init.ts` 初始化模块 -> Shadow DOM 挂载 -> `App.tsx` 渲染面板
-- 设置同步流程：UI 操作 -> `useSettingsStore.updateNestedSetting()` -> Zustand persist -> `chrome.storage.local` -> `subscribeModuleUpdates()` 热更新模块
-- 对话管理流程：`ConversationObserverConfig` 观察 DOM -> `ConversationManager` 聚合数据 -> `conversations-store` 持久化
-- WebDAV 同步流程：`WebDAVSyncManager` -> `MSG_WEBDAV_REQUEST` -> Background SW 代理 -> WebDAV 服务器
-
-## 变更记录 (Changelog)
-
-| 日期       | 操作         | 说明                                                                                                                |
-| ---------- | ------------ | ------------------------------------------------------------------------------------------------------------------- |
-| 2026-03-04 | 初始创建     | 全仓扫描生成，覆盖率 ~92%                                                                                           |
-| 2026-03-04 | CSS 架构分析 | 补充完整 CSS 架构文档：7 个样式文件、主题系统、CSS 变量体系、Shadow DOM 注入机制                                    |
-| 2026-04-03 | 全面更新     | 更新支持站点列表（新增 7 个站点）、更新核心模块列表（新增 4 个模块）、更新 TypeScript 配置（使用 bundler 模块解析） |
-| 2026-05-14 | 全面更新     | 修正核心模块初始化顺序（13 个）、新增 hooks（useEdgePeekController）、更新内容脚本列表（7 个）、更新消息类型（messaging.ts，21 个常量）、修正 qwenai 适配器文件名（qwen-studio.ts） |
-| 2026-05-26 | 文档迁移     | 从 `CLAUDE.md` 迁移为项目架构文档，项目级代理规则统一维护在 `AGENTS.md` |
+当前共定义 **32 个 `MSG_*` 扩展消息常量**与 **13 个 `EVENT_*` 跨世界窗口事件常量**：
+
+| 类别       | 常量前缀 / 代表常量                                                                                                                    | 用途                                       |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| 通知与导航 | `MSG_SHOW_NOTIFICATION`, `MSG_FOCUS_TAB`, `MSG_OPEN_OPTIONS_PAGE`, `MSG_OPEN_URL`, `MSG_EXTENSION_UPDATE_AVAILABLE`, `MSG_START_NEW_CONVERSATION` | 桌面通知、标签聚焦、打开页面、发起新对话   |
+| 代理与同步 | `MSG_PROXY_FETCH`, `MSG_WEBDAV_ACTION`, `MSG_WEBDAV_REQUEST`                                                                           | 绕过 CORS 的代理抓取与 WebDAV 同步         |
+| 远程配置   | `MSG_CHECK_REMOTE_CONFIG`, `MSG_GET_REMOTE_CONFIG_STATE`, `MSG_IGNORE/INSTALL_LOCAL/REMOVE_LOCAL/CLEAR/RESET/REAPPLY_REMOTE_CONFIG_*`  | 内置配置热修 patch 检查、本地导入与回滚    |
+| 权限与站点包 | `MSG_CHECK_PERMISSION(S)`, `MSG_REQUEST/REVOKE_PERMISSIONS`, `MSG_ENSURE_SITE_PACK_*`, `MSG_RECONCILE_SITE_PACK_REGISTRATIONS`         | 可选权限申请/撤销、SitePack 动态域名注册   |
+| 数据维护   | `MSG_CLEAR_ALL_DATA`, `MSG_RESTORE_DATA`                                                                                               | 清除或恢复后通知各上下文重置/重载          |
+| 站点专项   | `MSG_SET/TEST/GET_CLAUDE_SESSION_KEY`, `MSG_CHECK_CLAUDE_GENERATING`, `MSG_SWITCH_NEXT_CLAUDE_KEY`, `MSG_GET_AISTUDIO_MODELS`          | Claude 账号切换检测、AI Studio 模型列表    |
+| 跨世界事件 | `EVENT_MONITOR_*`（7 个）、`EVENT_OUTLINE_*`（2 个）、`EVENT_GEMINI_MYSTUFF_*`（2 个）、`EVENT_EXTENSION_UPDATE_AVAILABLE`、`EVENT_PAGE_URL_CHANGE` | Main World 与 Isolated World 通信          |
+
+### 5.6 国际化与扩展产物编码门禁
+
+- **双体系 11 语种**：应用内文案源文件在 `src/locales/<lang>/index.ts`，扩展 manifest 文案在 `locales/<lang>/messages.json`。
+- **扩展端语言资源外置**：构建前由 `scripts/prepare-locale-assets.ts` 生成 `assets/locales/messages.json`（Git 忽略，避免内联进每个 JS 触发 Firefox AMO 单文件 5MB 上限），运行时通过 `initI18n()` 加载，英文静态兜底。渲染入口和依赖文案的 store 播种必须等 `initI18n()` 就绪；油猴端走 GM `@resource`，两端统一对齐 `initI18n()`。开发服务运行中改文案后执行 `pnpm prepare:locale-assets` 或重启。
+- **产物非字符编码检查**：Chrome 扩展加载器会拒绝含 Unicode noncharacter 的内容脚本。KaTeX Lexer 正则中的 `\uFFFF` 会被 Parcel 重打印为字面字符，已用 `patches/katex@*.patch` 在依赖源码侧修复；`build` / `build:firefox` 末尾执行 `scripts/check-bundle-encoding.ts` 冒烟，回潮直接构建失败。
+
+## 6. 关键数据流
+
+- **启动挂载**：支持站点命中 → `ui-entry.tsx`（或油猴 `entry.tsx`）→ `extension-bootstrap.ts` 初始化适配器 → `initCoreModules()` → Shadow DOM 挂载 `App.tsx`。
+- **设置热更新**：设置 UI → `useSettingsStore.updateNestedSetting()` → Zustand persist → 平台存储 → `subscribeModuleUpdates()` 推送到各管理器。
+- **对话管理**：`ConversationObserverConfig` 监听 DOM（或 NetworkMonitor 转发响应）→ `ConversationManager` 聚合 → `conversations-store` 持久化。
+- **WebDAV 同步**：`WebDAVSyncManager` → `MSG_WEBDAV_REQUEST` → Background 代理（油猴走 `GM_xmlhttpRequest`）→ WebDAV 服务器。

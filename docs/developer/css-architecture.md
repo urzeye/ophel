@@ -1,505 +1,78 @@
-# Ophel Atlas Extension CSS 架构指南
+# Ophel Atlas CSS 与样式注入架构
 
-> 本文档详细说明项目中 CSS 的使用方法、注入机制和约束条件。
-> 供开发者和 AI 分析问题时参考。
+本文档说明项目的样式隔离边界、双平台（浏览器扩展 + 油猴脚本）注入链路、主题运行时机制与常见样式排查。视觉规范、设计令牌和硬约束以根目录 [DESIGN.md](../../DESIGN.md)（尤其是附录 B）为准，本文只讲底层机制。
 
----
+## 1. 四类执行环境与样式边界
 
-## 📋 目录
+| 环境                | 典型容器 / 挂载点                          | 样式特点与注入要求                                                    |
+| ------------------- | ------------------------------------------ | --------------------------------------------------------------------- |
+| 扩展 Shadow DOM     | `<plasmo-csui>` 的 shadowRoot              | 样式完全隔离，普通 `import "*.css"` 进不去；首屏走 `getStyle()`，非首屏走 `<link>` 懒加载 |
+| 油猴 Shadow DOM     | `<div id="ophel-userscript-root">`         | 同属 Shadow DOM；由 `src/platform/userscript/entry.tsx` 注入 `@resource` 合并样式 |
+| 主文档（宿主页）    | `document.head` / `document.body`          | Portal 弹窗（`DialogOverlay` 等）、`::view-transition-*`、页面增强（如提问 Markdown）必须注入这里 |
+| 第三方 Shadow DOM   | Gemini Enterprise 的 `<ucs-fast-markdown>` | 宿主页本身嵌套 Shadow DOM，页面增强样式需直接 `shadowRoot.prepend(style)` |
 
-1. [核心概念：执行环境与样式隔离](#1-核心概念执行环境与样式隔离)
-2. [CSS 文件分类与用途](#2-css-文件分类与用途)
-3. [样式注入机制详解](#3-样式注入机制详解)
-4. [主题系统架构](#4-主题系统架构)
-5. [样式文件索引](#5-样式文件索引)
-6. [常见问题与陷阱](#6-常见问题与陷阱)
-7. [决策树：如何添加新样式](#7-决策树如何添加新样式)
+## 2. 样式文件与来源速查
 
----
+项目使用纯原生 CSS（无预处理器、无 CSS-in-JS），CSS 类名前缀延续历史命名 `gh-`，变量前缀统一为 `--gh-*`。
 
-## 1. 核心概念：执行环境与样式隔离
+| 类别           | 文件路径                                              | 作用范围 / 注入目标              | 注入方式                                                   |
+| -------------- | ----------------------------------------------------- | -------------------------------- | ---------------------------------------------------------- |
+| 首屏面板主样式 | `src/style.css`                                       | 扩展 / 油猴 Shadow DOM           | 扩展：`data-text:` + `getStyle()`；油猴：打包进 `@resource` |
+| 对话 Tab 样式  | `src/styles/conversations.css`                        | 扩展 / 油猴 Shadow DOM           | 同上（对话 Tab 可设为首标签，必须首屏同步可用）            |
+| 主题变量默认值 | `src/styles/theme-variables.css`                      | Shadow DOM + Options 页          | 被 `style.css` 与 `options.css` 通过 `@import` 引入        |
+| 设置页/弹窗    | `src/styles/settings.css`                             | Shadow DOM（弹窗）+ Options 页   | 扩展弹窗：`url:` + `registerPanelLazyStyles()`；Options 页直接导入 |
+| 发布说明弹窗   | `src/styles/release-notes.css`                        | Shadow DOM + Options 页          | 同上，懒加载                                               |
+| 队列悬浮层     | `src/styles/queue-overlay.css`                        | 扩展 / 油猴页面                  | 组件导入 / 油猴合并资源                                    |
+| 扩展独立页     | `src/tabs/options.css`、`src/popup.css`               | Options 独立页、Popup 弹窗       | 常规 CSS 导入（`options.css` 导入 `theme-variables` / `settings` / `release-notes`） |
+| Portal 内联样式 | `src/components/ui/Dialog.tsx`、`src/styles/conversation-sync-review-inline.ts`、`src/styles/image-export-inline.ts` 等 `*-inline.ts` | 主文档 `document.head`           | 扩展与油猴共享的 TS 字符串，按需注入 `<style>`             |
+| 页面增强内联   | `src/core/user-query-markdown.ts`、`src/utils/markdown.ts`、`src/core/theme-manager.ts` | `document.head` 或第三方 Shadow DOM | 运行时动态创建 `<style>` 注入                              |
+| 原生主题适配器 | `src/styles/native-theme-adapters/*.ts`（7 个站点）   | 同步宿主页颜色到 `--gh-*`        | `ThemeManager` 按当前站点调度                              |
 
-### 1.1 三种执行环境
+## 3. Shadow DOM 注入顺序（核心机制）
 
-项目涉及三种不同的 JavaScript/CSS 执行环境，理解它们的边界是正确使用样式的关键：
-
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                           浏览器标签页                                    │
-├─────────────────┬────────────────────────┬──────────────────────────────┤
-│   隔离世界        │      主世界             │        Shadow DOM            │
-│  (Isolated)      │     (Main)              │      (Encapsulated)          │
-├─────────────────┼────────────────────────┼──────────────────────────────┤
-│ Content Script  │ 页面脚本 (Gemini)        │ Plasmo CSUI                  │
-│ 默认运行环境      │ scroll-lock-main.ts     │ <plasmo-csui>                │
-│                 │                         │                              │
-│ • 可访问 DOM     │ • 可修改全局 API         │ • 样式完全隔离               │
-│ • 无法修改原型链  │ • 受 CSP 限制           │ • 需要特殊方式注入 CSS       │
-└─────────────────┴────────────────────────┴──────────────────────────────┘
-```
-
-### 1.2 Shadow DOM 样式隔离
-
-**关键规则**：Shadow DOM 内的元素只能被 Shadow DOM 内部的样式影响。
-
-```
-外部样式表 ──→ 无法穿透 ──→ Shadow DOM 内部元素
-                │
-                ↓
-  首屏用 getStyle()；非首屏用 Shadow DOM <link>
-```
-
-Plasmo 框架将 React 组件渲染在 `<plasmo-csui>` 元素的 Shadow DOM 内：
+Shadow Root 内所有样式必须维持严格顺序，保证**动态主题变量永远压在最底部**：
 
 ```html
-<plasmo-csui>
+<plasmo-csui> <!-- 油猴端为 #ophel-userscript-root -->
   #shadow-root (open)
-  <style>
-    /* getStyle() 同步注入的首屏样式 */
-  </style>
-  <link rel="stylesheet" data-ophel-lazy-style="settings">
-  <style id="gh-theme-vars">/* 主题变量保持最后 */</style>
-  <div class="gh-root">
-    <!-- 插件 UI 组件 -->
-  </div>
+    <style>/* 1. 首屏同步样式（扩展含 Inter @font-face + style.css + conversations.css + 主题缓存） */</style>
+    <link rel="stylesheet" data-ophel-lazy-style="settings">      <!-- 2. 懒加载样式，强制插在 #gh-theme-vars 之前 -->
+    <link rel="stylesheet" data-ophel-lazy-style="release-notes">
+    <style id="gh-theme-vars">/* 3. ThemeManager 注入的当前主题变量，始终 append() 在末尾 */</style>
+    <div class="gh-root">...</div>
 </plasmo-csui>
 ```
 
-### 1.3 Gemini Enterprise 的双重 Shadow DOM
-
-Gemini Enterprise (business.gemini.google) 页面本身使用 Shadow DOM：
-
-```
-document
-└── 页面元素
-    └── <ucs-fast-markdown>
-        └── #shadow-root (Gemini 的 Shadow DOM)
-            └── 用户提问内容
-```
-
-这意味着某些功能（如用户提问 Markdown 渲染）需要将样式注入到 **Gemini 的 Shadow DOM** 中，而不是 Plasmo 的。
-
----
-
-## 2. CSS 文件分类与用途
-
-### 2.1 首屏 CSS（通过 Plasmo `getStyle()` 同步注入）
-
-这些样式在面板首帧就必须可用，会被同步注入到 **Plasmo 的 Shadow DOM**。
-
-| 文件                             | 用途                                             | 注入方式                           |
-| -------------------------------- | ------------------------------------------------ | ---------------------------------- |
-| `src/style.css`                  | 主样式文件，包含面板、大纲、工具栏等核心 UI 样式 | `data-text:~style.css`             |
-| `src/styles/conversations.css` | 对话列表 Tab，可被设为首个标签 | `data-text:~styles/conversations.css` |
-| `src/styles/theme-variables.css` | CSS 变量定义（浅色/深色模式默认值）              | 被 `style.css` 通过 `@import` 引入 |
-
-**注入代码** (`src/contents/ui-entry.tsx`)：
-
-```typescript
-import cssText from "data-text:~style.css"
-import conversationsCssText from "data-text:~styles/conversations.css"
-
-export const getStyle = () => {
-  const style = document.createElement("style")
-  style.textContent = cssText + "\n" + conversationsCssText
-  return style
-}
-```
-
-### 2.2 非首屏 CSS（Shadow DOM `<link>` 延迟加载）
-
-设置、发布说明等只在特定界面使用的样式，通过 `url:` 独立产出 CSS 资源，再由 `~utils/panel-lazy-styles` 注入 Shadow Root：
-
-| 文件                           | 用途            | 注入方式                             |
-| ------------------------------ | --------------- | ------------------------------------ |
-| `src/styles/settings.css`      | 设置弹窗/设置页 | `url:` + `registerPanelLazyStyles()` |
-| `src/styles/release-notes.css` | 发布说明弹窗    | `url:` + `registerPanelLazyStyles()` |
-
-```typescript
-import settingsCssUrl from "url:~styles/settings.css"
-import { registerPanelLazyStyles } from "~utils/panel-lazy-styles"
-
-registerPanelLazyStyles({ settings: settingsCssUrl })
-```
-
-面板挂载后会在空闲时预加载这些资源；设置、发布说明打开时还会立即兜底加载。`link` 必须插在 `#gh-theme-vars` 之前。
-
-### 2.3 动态注入的 CSS（内嵌在 TypeScript 中）
-
-这些样式需要动态注入到**主世界的 `document.head`** 或 **Gemini 的 Shadow DOM** 中，因此作为字符串内嵌在 TS 文件里。
-
-| 文件                                             | 样式用途                    | 注入目标                                    |
-| ------------------------------------------------ | --------------------------- | ------------------------------------------- |
-| `src/core/user-query-markdown.ts`                | 用户提问 Markdown 渲染样式  | 主世界 `document.head` 或 Gemini Shadow DOM |
-| `src/utils/markdown.ts` (`getHighlightStyles()`) | 代码高亮样式 (highlight.js) | 多个上下文复用                              |
-| `src/core/theme-manager.ts`                      | View Transitions 动画样式   | 主世界 `document.head`                      |
-
-**为什么不抽离成独立 CSS 文件？**
-
-1. **注入目标不是 Plasmo Shadow DOM**：`getStyle()` 只能注入到 Plasmo 的 Shadow DOM
-2. **需要在运行时动态注入**：根据页面类型（普通版/Enterprise）注入到不同位置
-3. **需要作为字符串拼接**：与其他样式组合后注入
-
-```typescript
-// user-query-markdown.ts 的注入逻辑
-private injectGlobalStyles() {
-  const style = document.createElement("style")
-  style.textContent = getHighlightStyles() + "\n" + USER_QUERY_MARKDOWN_CSS
-  document.head.appendChild(style)  // 注入到主世界
-}
-
-private injectStyleToShadowRoot(shadowRoot: ShadowRoot) {
-  // Gemini Enterprise：注入到页面的 Shadow DOM
-  const style = document.createElement("style")
-  style.textContent = getHighlightStyles() + "\n" + USER_QUERY_MARKDOWN_CSS
-  shadowRoot.prepend(style)
-}
-```
-
-### 2.3 主题预置（TypeScript 对象）
-
-主题变量定义在 TypeScript 中，以便支持多主题预置系统。
-
-| 文件                              | 用途                                       |
-| --------------------------------- | ------------------------------------------ |
-| `src/utils/themes/index.ts`       | 主题系统入口，导出预置列表和工具函数       |
-| `src/utils/themes/types.ts`       | 类型定义 (`ThemePreset`, `ThemeVariables`) |
-| `src/utils/themes/light/index.ts` | 浅色主题预置 (10+ 种配色方案)              |
-| `src/utils/themes/dark/index.ts`  | 深色主题预置 (10+ 种配色方案)              |
-
----
-
-## 3. 样式注入机制详解
-
-### 3.1 Plasmo Shadow DOM 样式注入流程
-
-```
-编译时:
-  style.css + conversations.css
-       │
-       ↓ (data-text: 导入)
-  ui-entry.tsx 中的 getStyle()
-       │
-       ↓ (Plasmo 框架调用)
-运行时首帧:
-  创建 <style> 元素
-       │
-       ↓
-  插入到 <plasmo-csui> 的 Shadow Root 中
-
-空闲时 / 对应界面打开:
-  settings.css / release-notes.css
-       │
-       ↓ (url: 独立资源 + registerPanelLazyStyles)
-  <link rel="stylesheet" data-ophel-lazy-style>
-       │
-       ↓
-  插入到 #gh-theme-vars 之前
-```
-
-### 3.2 主题变量动态注入流程
-
-```
-ThemeManager.syncPluginUITheme()
-       │
-       ↓
-  1. 从预置系统获取 CSS 变量对象
-       │
-       ↓
-  2. 生成 :host { --gh-bg: ...; } 样式文本
-       │
-       ↓
-  3. 插入/更新 Shadow Root 中的 <style id="gh-theme-vars">
-       │
-       ↓ (关键!)
-  4. 使用 shadowRoot.append() 将样式移到末尾
-      以确保覆盖 getStyle()/懒加载 link 注入的默认样式
-```
-
-**为什么需要 `append()` 到末尾？**
-
-CSS 优先级规则：当选择器特异性相同时，后出现的规则覆盖先出现的。
-
-```
-<plasmo-csui>
-  #shadow-root
-    <style>/* getStyle() 注入，包含默认浅色变量 */</style>
-    <style id="gh-theme-vars">/* 主题变量，必须在后面 */</style>
-    <div class="gh-root">...</div>
-```
-
-### 3.3 用户提问 Markdown 样式注入流程
-
-```
-UserQueryMarkdownRenderer 初始化
-       │
-       ├─ 普通站点 (gemini.google.com)
-       │       │
-       │       ↓
-       │   injectGlobalStyles()
-       │       │
-       │       ↓
-       │   document.head.appendChild(style)
-       │
-       └─ Shadow DOM 站点 (business.gemini.google)
-               │
-               ↓
-           injectStyleToShadowRoot(shadowRoot)
-               │
-               ↓
-           geminiShadowRoot.prepend(style)
-```
-
----
-
-## 4. 主题系统架构
-
-### 4.1 架构图
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                         主题系统架构                                  │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│  ┌─────────────────┐     ┌─────────────────┐                        │
-│  │ theme-variables │     │  themes/light/  │                        │
-│  │      .css       │     │    index.ts     │                        │
-│  │                 │     │                 │                        │
-│  │ 默认 CSS 变量    │     │ 浅色预置方案     │                        │
-│  │ (静态注入)       │     │ (10+ 种配色)     │                        │
-│  └────────┬────────┘     └────────┬────────┘                        │
-│           │                       │                                 │
-│           ↓                       ↓                                 │
-│  ┌─────────────────────────────────────────┐                        │
-│  │            ThemeManager                  │                        │
-│  │                                          │                        │
-│  │  • 检测页面主题 (light/dark)             │                        │
-│  │  • 根据用户选择加载预置                  │                        │
-│  │  • 生成 CSS 变量并注入到 Shadow DOM     │                        │
-│  │  • 监听页面主题变化 (MutationObserver)  │                        │
-│  └─────────────────────────────────────────┘                        │
-│                       │                                             │
-│                       ↓                                             │
-│  ┌─────────────────────────────────────────┐                        │
-│  │  <style id="gh-theme-vars">             │                        │
-│  │    :host {                              │                        │
-│  │      --gh-bg: #1e1e1e;                  │                        │
-│  │      --gh-text: #e3e3e3;                │                        │
-│  │      ...                                │                        │
-│  │    }                                    │                        │
-│  │  </style>                               │                        │
-│  │                                          │                        │
-│  │  动态注入到 plasmo-csui Shadow Root     │                        │
-│  └─────────────────────────────────────────┘                        │
-│                                                                     │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
-### 4.2 CSS 变量命名规范
-
-所有 CSS 变量使用 `--gh-` 前缀（Ophel）：
-
-| 变量类别 | 示例                                 | 说明          |
-| -------- | ------------------------------------ | ------------- |
-| 背景色   | `--gh-bg`, `--gh-bg-secondary`       | 基础背景颜色  |
-| 文字色   | `--gh-text`, `--gh-text-secondary`   | 文字颜色层级  |
-| 边框     | `--gh-border`, `--gh-border-active`  | 边框颜色      |
-| 交互状态 | `--gh-hover`, `--gh-active-bg`       | 悬停/点击状态 |
-| 品牌色   | `--gh-primary`, `--gh-header-bg`     | 主题色/渐变   |
-| 阴影     | `--gh-shadow`, `--gh-shadow-sm`      | 阴影效果      |
-| 输入框   | `--gh-input-bg`, `--gh-input-border` | 表单元素      |
-| 大纲     | `--gh-outline-locate-bg`             | 大纲面板专用  |
-| 危险操作 | `--gh-danger`, `--gh-text-danger`    | 删除/警告     |
-
-### 4.3 主题预置结构
-
-```typescript
-// src/utils/themes/types.ts
-export interface ThemePreset {
-  id: string         // 唯一标识，如 "google-gradient"
-  name: string       // 显示名称，如 "Google 渐变"
-  description: string
-  variables: ThemeVariables  // CSS 变量键值对
-}
-
-// 示例
-{
-  id: "classic-dark",
-  name: "经典深黑",
-  description: "默认深色主题",
-  variables: {
-    "--gh-bg": "#1e1e1e",
-    "--gh-text": "#e3e3e3",
-    // ... 约 50+ 个变量
-  }
-}
-```
-
----
-
-## 5. 样式文件索引
-
-### 5.1 完整文件清单
-
-```
-src/
-├── style.css                          # 主样式文件
-├── styles/
-│   ├── theme-variables.css            # CSS 变量默认值
-│   └── conversations.css              # 对话 Tab 样式
-├── utils/
-│   ├── themes.ts                      # 主题系统入口
-│   ├── themes/
-│   │   ├── index.ts                   # 预置列表和工具函数
-│   │   ├── types.ts                   # 类型定义
-│   │   ├── light/index.ts             # 浅色预置 (10+ 种)
-│   │   └── dark/index.ts              # 深色预置 (10+ 种)
-│   └── markdown.ts                    # getHighlightStyles() - 代码高亮样式
-├── core/
-│   ├── theme-manager.ts               # 主题管理器 (View Transitions 样式)
-│   └── user-query-markdown.ts         # 用户提问 Markdown 样式
-└── contents/
-    └── ui-entry.tsx                   # getStyle() + 懒加载 CSS 注册
-```
-
-### 5.2 样式来源速查表
-
-| 样式类型         | 定义位置                                | 注入目标                   | 注入方式                |
-| ---------------- | --------------------------------------- | -------------------------- | ----------------------- |
-| 面板框架         | `style.css`                             | Plasmo Shadow DOM          | `getStyle()`            |
-| 大纲组件         | `style.css`                             | Plasmo Shadow DOM          | `getStyle()`            |
-| 对话列表         | `conversations.css`                     | Plasmo Shadow DOM          | `getStyle()`            |
-| 提示词 Tab       | `style.css`                             | Plasmo Shadow DOM          | `getStyle()`            |
-| CSS 变量默认值   | `theme-variables.css`                   | Plasmo Shadow DOM          | `@import` by style.css  |
-| 主题预置变量     | `themes/light/*.ts`, `themes/dark/*.ts` | Plasmo Shadow DOM          | `ThemeManager` 动态注入 |
-| 代码高亮         | `markdown.ts`                           | 多个上下文                 | 函数返回字符串          |
-| 用户提问渲染     | `user-query-markdown.ts`                | 主世界 / Gemini Shadow DOM | 动态创建 `<style>`      |
-| View Transitions | `theme-manager.ts`                      | 主世界 `document.head`     | 动态创建 `<style>`      |
-
----
-
-## 6. 常见问题与陷阱
-
-### 6.1 Shadow DOM 样式不生效
-
-**症状**：在组件中 `import` 的 CSS 完全不生效。
-
-**原因**：普通 `import` 的 CSS 无法穿透 Shadow DOM。
-
-**解决**：
-
-1. 首屏必需样式用 `data-text:` 导入，并在 `ui-entry.tsx` 的 `getStyle()` 中合并。
-2. 非首屏大块样式用 `url:` 导入，并注册到 `~utils/panel-lazy-styles`，由 Shadow DOM `<link>` 延迟加载。
-
-```typescript
-// ❌ 错误
-import "./my-component.css"
-
-// ✅ 首屏必需
-import myComponentCss from "data-text:~styles/my-component.css"
-
-// ✅ 非首屏大块样式
-import myComponentCssUrl from "url:~styles/my-component.css"
-registerPanelLazyStyles({ "my-component": myComponentCssUrl })
-```
-
-### 6.2 主题变量被覆盖
-
-**症状**：深色模式下某些变量仍显示浅色值。
-
-**原因**：主题变量样式没有保持在 Shadow Root 末尾，或被后注入的面板样式覆盖。
-
-**解决**：确保 `ThemeManager` 使用 `shadowRoot.append()` 将 `#gh-theme-vars` 移到末尾；懒加载 `link` 必须插在它之前。
-
-### 6.3 样式冲突
-
-**症状**：不同来源的样式相互覆盖（如代码块样式）。
-
-**案例**：`getHighlightStyles()` 中的 `.hljs` 与 `user-query-markdown.ts` 中的样式冲突。
-
-**解决**：
-
-1. 调整 CSS 加载顺序（先加载可被覆盖的）
-2. 使用更具体的选择器（如 `.gh-user-query-markdown pre code`）
-
-### 6.4 View Transitions 样式不生效
-
-**症状**：主题切换动画不显示或闪烁。
-
-**原因**：`::view-transition-*` 伪元素在 Document Root 上，Shadow DOM 内的样式无法影响。
-
-**解决**：在 `ThemeManager.injectGlobalStyles()` 中向 `document.head` 注入。
-
-### 6.5 ChatGPT 面板被 React Hydration 清除
-
-**症状**：面板在 ChatGPT 页面刷新后短暂显示后消失。
-
-**原因**：ChatGPT 的 React Hydration 会清除 `document.body` 下的非预期元素。
-
-**尝试的方案**：
-
-1. **挂载到 `<html>`**（已放弃）：避开 Hydration，但引发 Portal 渲染、pointer-events、z-index 等连锁问题
-2. **body 挂载 + 延迟监控**（采用）：ChatGPT 特殊处理，其他站点不受影响
-
-**解决**：在 `ui-entry.tsx` 中实现 `mountShadowHost`，对 ChatGPT 使用延迟挂载 + MutationObserver 监控重挂载。
-
-**Portal 渲染规则**：
-
-| 挂载位置                   | Portal 目标       | 适用场景                      |
-| -------------------------- | ----------------- | ----------------------------- |
-| `document.body`            | `document.body`   | 默认方案，简单可靠            |
-| `document.documentElement` | Shadow DOM 内容器 | 需要额外的 Context 和样式处理 |
-
-详见 [troubleshooting.md #12](./troubleshooting.md#12-chatgpt-面板被-react-hydration-清除)。
-
----
-
-## 7. 决策树：如何添加新样式
-
-```
-开始：我需要添加新样式
-       │
-       ↓
-这些样式用于什么？
-       │
-       ├─ 插件 UI 组件 (面板/Tab/弹窗)
-       │       │
-       │       ↓
-       │   首屏样式用 data-text + getStyle()
-       │   非首屏大块样式用 url: + panel-lazy-styles
-       │
-       ├─ 需要注入到主世界 (页面增强功能)
-       │       │
-       │       ↓
-       │   在 TS 文件中内嵌 CSS 字符串
-       │   使用 document.head.appendChild() 注入
-       │
-       ├─ 需要注入到第三方 Shadow DOM (Gemini Enterprise)
-       │       │
-       │       ↓
-       │   在 TS 文件中内嵌 CSS 字符串
-       │   使用 shadowRoot.prepend() 注入
-       │
-       └─ 全局动画/过渡效果
-               │
-               ↓
-           在 ThemeManager.injectGlobalStyles() 中添加
-           或创建专门的全局样式注入函数
-```
-
----
-
-## 📚 相关文档
-
-- [troubleshooting.md](./troubleshooting.md) - 详细的问题排查案例
-- [Plasmo 官方文档 - CSUI](https://docs.plasmo.com/framework/content-scripts-ui)
-- [Shadow DOM 样式隔离](https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_shadow_DOM)
-
----
-
-## 📝 更新日志
-
-| 日期       | 内容                                      |
-| ---------- | ----------------------------------------- |
-| 2026-01-11 | 添加 ChatGPT 面板挂载与 Portal 渲染的说明 |
-| 2026-01-07 | 创建文档，整理 CSS 架构                   |
+关键细节：
+
+1. **防闪烁（FOUC）**：扩展端（`ophel_ext_theme_cache`）与油猴端（`ophel_us_theme_cache`）在首帧都会从 `localStorage` 预读上次的主题变量拼进首个 `<style>`。
+2. **懒加载占位规则**：`src/utils/panel-lazy-styles.ts` 在空闲时预加载、打开设置或发布说明时立即兜底注入；插入 `<link>` 时会先查 `#gh-theme-vars`，存在则 `insertBefore(link, themeStyle)`，避免后加载的样式盖掉主题变量。
+3. **字体注入差异**：扩展端在 `ui-entry.tsx` 的 `getStyle()` 里注册打包字体 `assets/fonts/InterVariable.woff2`（`unicode-range` 排除 CJK/韩文防缺字），油猴端不打包字体文件，按本机 Inter → 平台系统栈回退；`applyOphelPlatformFontClass()` 给 Shadow Host 挂 `.gh-platform-macos` 等类名调整中文字体优先级。
+
+## 4. 主题系统运行时
+
+- **24 套预置**：12 套浅色（`src/utils/themes/light/index.ts`，默认 `google-gradient`）+ 12 套深色（`src/utils/themes/dark/index.ts`，默认 `classic-dark`）；类型在 `src/utils/themes/types.ts`，工具函数在 `helpers.ts`。
+- **`ThemeManager`（`src/core/theme-manager.ts`）职责**：
+  - 监听宿主页 `html` / `body` 的 `class`、`data-theme`、`style` 变化以判断页面明暗；
+  - 将当前预置（及用户自定义样式、原生主题适配映射）同时写入 `<html>` 与 Shadow Root 末尾的 `<style id="gh-theme-vars">`；
+  - 向 Shadow Host 写入 `data-theme="dark" | "light"`；
+  - 向 `document.head` 注入 `::view-transition-*` 样式以支持圆形扩散切换动画。
+- **跨浏览器深浅选择器**：Shadow DOM 内部统一写 `:host([data-theme="dark"])`。**禁用 `:host-context()`**——Firefox 不支持，且同一条规则的选择器列表里只要混入无效选择器，整条规则都会被浏览器丢弃。
+- **Portal 弹窗读变量**：Portal 到 `document.body` 的弹窗不在 Shadow DOM 内，拿不到 `theme-variables.css` 的默认值，只能继承 `ThemeManager` 写在 `<html>` 上的预置变量。读取派生变量（如 `--gh-primary-text`、`--gh-surface`）时必须写完整回退链，例如 `var(--gh-primary-text, var(--gh-primary, #4285f4))`。
+
+## 5. 新增样式决策清单
+
+1. **面板首屏必需样式**（如主面板、大纲、提示词、对话 Tab）：写进 `src/style.css` 或 `src/styles/conversations.css`；若必须拆新文件，需同步接入 `ui-entry.tsx` 的 `getStyle()` 以及油猴打包样式清单。
+2. **面板非首屏大块样式**（如弹窗子系统）：用 `url:` 导入并在 `ui-entry.tsx` 调用 `registerPanelLazyStyles()`，同时确认 Options 页和油猴端是否需要引入。
+3. **Portal 到 `document.body` 的弹窗样式**：放在共享内联样式模块（如 `src/styles/*-inline.ts` 或组件内 `inject*Styles`）按需注入 `document.head`，确保扩展与油猴两端一致。
+4. **作用于宿主页或第三方 Shadow DOM 的增强样式**：内嵌在 TS 中，按站点形态注入 `document.head` 或目标 `shadowRoot.prepend(style)`。
+5. **文档根级伪元素动画**（如 `::view-transition-*`）：统一在 `ThemeManager` 中注入 `document.head`，不要放进 Shadow DOM CSS。
+
+## 6. 常见样式陷阱速查
+
+- **组件里 `import "./foo.css"` 不生效**：普通 import 进不了 Shadow DOM；按上节 1 / 2 走 `getStyle()` 或 `panel-lazy-styles`。
+- **深色模式局部仍显示浅色**：检查 `#gh-theme-vars` 是否被后插的样式盖住，以及深色派生变量是否在 `html[data-theme="dark"]` 与 `:host([data-theme="dark"])` 两处都声明了。
+- **Firefox 下整条样式规则神秘失效**：排查是否误用了 `:host-context()`，或把浏览器私有选择器跟通用选择器写进了同一组逗号选择器里。
+- **View Transitions 动画闪烁或不生效**：确认规则注入在 `document.head` 而不是 Shadow DOM。
+- **代码高亮与页面增强样式打架**：注意 `getHighlightStyles()` 与用户提问 Markdown 样式的注入顺序，必要时提高选择器具体度（如 `.gh-user-query-markdown pre code`）。
+- **ChatGPT / Next.js 站点面板闪一下就消失**：宿主 React Hydration 清除了 `body` 下的新增节点，挂载与重挂载机制见 [troubleshooting.md #13](./troubleshooting.md#13-chatgpt-面板被-react-hydration-清除)。

@@ -136,7 +136,7 @@ const createAIStudioConfig = (): AIStudioSiteConfig => {
   return {
     capabilities: [...BUILTIN_FEATURE_CAPABILITIES[SITE_IDS.AISTUDIO]],
     // virtualOutlineFill：长对话虚拟滚动，离屏轮次的回答标题由
-    // ResolveDriveResource 接口回填（见 docs/developer/aistudio-api-outline-plan.md）
+    // ResolveDriveResource 接口回填
     // apiFirstExport：ResolveDriveResource 接口可导出全量历史，不依赖 DOM 历史
     // 预加载；接口失败时的 DOM 回退遍历全部 turn 自行 scrollIntoView，无需补预加载
     traits: { historyLazyLoad: false, virtualOutlineFill: true, apiFirstExport: true },
