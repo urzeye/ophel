@@ -205,6 +205,7 @@ export async function prepareExportDocument(
   root.className = "gh-export-document"
   root.dataset.theme = options.theme
   root.dataset.appearance = options.appearance
+  root.dataset.width = String(options.width)
   root.style.setProperty("--gh-export-font-size", `${options.fontSize}px`)
   root.style.width = `${options.width}px`
   const shell = parsed.querySelector(".gh-shell")
@@ -217,9 +218,11 @@ export async function prepareExportDocument(
   if (!options.showTitle) header.querySelector("h1")?.remove()
   const meta = header.querySelector<HTMLElement>(".gh-doc-meta")!
   const [time, dot, source] = Array.from(meta.children)
-  if (!options.showTime) time.remove()
-  if (!options.showSource) source.remove()
-  if (!options.showTime || !options.showSource) dot.remove()
+  if (time) time.className = "gh-doc-time"
+  if (source) source.className = "gh-doc-source"
+  if (!options.showTime) time?.remove()
+  if (!options.showSource) source?.remove()
+  if (!options.showTime || !options.showSource) dot?.remove()
   if (!options.showTime && !options.showSource) meta.remove()
   const hasHeader = options.showTitle || options.showSource || options.showTime
   if (!hasHeader) header.remove()

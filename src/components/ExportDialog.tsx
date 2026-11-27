@@ -21,31 +21,46 @@ import { ImageFileIcon } from "./icons/ImageFileIcon"
 import { Tooltip } from "./ui/Tooltip"
 
 const EXPORT_DIALOG_STYLES = `
-  .gh-export-dialog {
-    width: min(440px, calc(100vw - 28px));
-    padding: 22px 24px;
+  .gh-dialog.gh-export-dialog {
+    width: min(492px, calc(100vw - 28px));
+    max-width: 492px;
+    padding: 20px 22px;
     display: flex;
     flex-direction: column;
     gap: 16px;
     box-sizing: border-box;
     background: var(--gh-bg, #ffffff);
     color: var(--gh-text, #1f2937);
+    font-family: var(--gh-font-family, Inter, system-ui, -apple-system, sans-serif);
     border: 1px solid var(--gh-border, rgba(0, 0, 0, 0.08));
-    border-radius: 14px;
+    border-radius: 16px;
     box-shadow: var(--gh-shadow-lg, 0 20px 50px rgba(0, 0, 0, 0.25));
+    animation: gh-export-dialog-in 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @keyframes gh-export-dialog-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px) scale(0.99);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
   }
 
   .gh-export-dialog-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding-bottom: 2px;
+    gap: 12px;
   }
 
   .gh-export-dialog-title-wrap {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 9px;
+    min-width: 0;
   }
 
   .gh-export-dialog-icon {
@@ -54,28 +69,33 @@ const EXPORT_DIALOG_STYLES = `
     justify-content: center;
     width: 28px;
     height: 28px;
-    border-radius: 7px;
-    background: color-mix(in srgb, var(--gh-primary, #4285f4) 14%, transparent);
-    color: var(--gh-primary, #4285f4);
+    flex-shrink: 0;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--gh-primary, #4285f4) 12%, transparent);
+    color: var(--gh-primary-text, var(--gh-primary, #4285f4));
   }
 
   .gh-export-dialog-title {
-    font-size: 16px;
+    font-size: 15.5px;
     font-weight: 650;
     margin: 0;
     letter-spacing: -0.01em;
     color: var(--gh-text, #1f2937);
+    line-height: 1.35;
   }
 
   .gh-export-dialog-close {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
     background: transparent;
     border: none;
     cursor: pointer;
     color: var(--gh-text-secondary, #6b7280);
-    padding: 6px;
-    margin: -4px -4px 0 0;
+    padding: 0;
+    margin: -4px -4px -4px 0;
     border-radius: 8px;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     transition: background 0.15s ease, color 0.15s ease;
@@ -86,6 +106,15 @@ const EXPORT_DIALOG_STYLES = `
     color: var(--gh-text, #1f2937);
   }
 
+  .gh-export-dialog-close:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+
+  .gh-export-dialog-close:focus-visible {
+    outline: 2px solid var(--gh-primary, #4285f4);
+    outline-offset: 2px;
+  }
+
   .gh-export-dialog-close:disabled {
     opacity: 0.5;
     cursor: not-allowed;
@@ -94,7 +123,7 @@ const EXPORT_DIALOG_STYLES = `
   /* 导出的不是当前页面的对话时，用标题说明导出对象；过长省略，完整标题在悬浮提示里 */
   .gh-export-dialog-target {
     padding: 8px 12px;
-    border-radius: 9px;
+    border-radius: 8px;
     border: 1px solid var(--gh-border, #e5e7eb);
     background: var(--gh-bg-secondary, #f9fafb);
     color: var(--gh-text, #1f2937);
@@ -116,12 +145,13 @@ const EXPORT_DIALOG_STYLES = `
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 8px;
   }
 
   .gh-export-section-title {
     font-size: 12px;
     font-weight: 600;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.01em;
     color: var(--gh-text-secondary, #6b7280);
     margin: 0;
   }
@@ -131,8 +161,10 @@ const EXPORT_DIALOG_STYLES = `
     border: none;
     cursor: pointer;
     color: var(--gh-text-secondary, #6b7280);
-    padding: 3px;
-    margin: -3px 0;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    margin: -4px -2px -4px 0;
     border-radius: 6px;
     display: inline-flex;
     align-items: center;
@@ -148,7 +180,7 @@ const EXPORT_DIALOG_STYLES = `
 
   .gh-export-settings-btn:focus-visible {
     outline: 2px solid var(--gh-primary, #4285f4);
-    outline-offset: 1px;
+    outline-offset: 2px;
   }
 
   .gh-export-settings-btn:disabled {
@@ -158,7 +190,7 @@ const EXPORT_DIALOG_STYLES = `
 
   .gh-export-format-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
   }
 
@@ -167,27 +199,31 @@ const EXPORT_DIALOG_STYLES = `
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 14px;
-    border-radius: 9px;
+    gap: 8px;
+    min-width: 0;
+    min-height: 42px;
+    padding: 9px 12px;
+    border-radius: 8px;
     border: 1px solid var(--gh-border, #e5e7eb);
     background: var(--gh-bg-secondary, #f9fafb);
     color: var(--gh-text, #1f2937);
+    font: inherit;
     font-size: 13px;
     font-weight: 500;
+    line-height: 1.3;
     cursor: pointer;
-    transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
     box-sizing: border-box;
     outline: none;
   }
 
-  .gh-export-format-btn:hover {
-    border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 50%, var(--gh-border, #e5e7eb));
+  .gh-export-format-btn:hover:not(:disabled):not([data-active="true"]) {
+    border-color: color-mix(in srgb, var(--gh-text-secondary, #6b7280) 35%, var(--gh-border, #e5e7eb));
     background: var(--gh-hover, #f3f4f6);
-    transform: translateY(-1px);
   }
 
-  .gh-export-format-btn:active {
-    transform: translateY(0);
+  .gh-export-format-btn:active:not(:disabled) {
+    transform: translateY(1px);
   }
 
   .gh-export-format-btn:focus-visible {
@@ -195,28 +231,32 @@ const EXPORT_DIALOG_STYLES = `
     outline-offset: 2px;
   }
 
-  /* 选中：主色描边 + 淡底 + 主色字；不再叠外圈和加粗 */
+  /* 选中：主色描边 + 柔和淡底 + 高对比主色字，兼顾 24 套深浅预置 WCAG AA 对比度 */
   .gh-export-format-btn[data-active="true"] {
     border-color: var(--gh-primary, #4285f4);
-    background: color-mix(in srgb, var(--gh-primary, #4285f4) 10%, var(--gh-bg, #ffffff));
-    color: var(--gh-primary-text, var(--gh-primary, #4285f4));
+    background: color-mix(in srgb, var(--gh-primary, #4285f4) 7%, var(--gh-bg, #ffffff));
+    color: color-mix(in srgb, var(--gh-primary-text, var(--gh-primary, #4285f4)) 76%, var(--gh-text, #1f2937));
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--gh-primary, #4285f4) 22%, transparent);
   }
 
   .gh-export-format-badge {
     font-size: 11px;
     font-weight: 600;
-    padding: 2px 7px;
-    border-radius: 5px;
+    line-height: 1.3;
+    letter-spacing: 0.01em;
+    font-variant-numeric: tabular-nums;
+    padding: 2px 6px;
+    border-radius: 6px;
     background: var(--gh-bg-tertiary, #f3f4f6);
     color: var(--gh-text-secondary, #6b7280);
     flex-shrink: 0;
     white-space: nowrap;
-    transition: all 0.15s ease;
+    transition: background 0.15s ease, color 0.15s ease;
   }
 
   .gh-export-format-btn[data-active="true"] .gh-export-format-badge {
-    background: color-mix(in srgb, var(--gh-primary, #4285f4) 18%, transparent);
-    color: var(--gh-primary, #4285f4);
+    background: color-mix(in srgb, var(--gh-primary, #4285f4) 11%, var(--gh-bg, #ffffff));
+    color: color-mix(in srgb, var(--gh-primary-text, var(--gh-primary, #4285f4)) 72%, var(--gh-text, #1f2937));
   }
 
   .gh-export-format-label {
@@ -224,6 +264,7 @@ const EXPORT_DIALOG_STYLES = `
     align-items: center;
     gap: 8px;
     min-width: 0;
+    flex: 1 1 auto;
     white-space: nowrap;
     overflow: hidden;
   }
@@ -235,7 +276,7 @@ const EXPORT_DIALOG_STYLES = `
 
   .gh-export-format-icon {
     flex-shrink: 0;
-    opacity: 0.75;
+    opacity: 0.78;
     transition: opacity 0.15s ease;
   }
 
@@ -247,8 +288,8 @@ const EXPORT_DIALOG_STYLES = `
   .gh-export-options-list {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    padding: 10px 12px;
+    gap: 2px;
+    padding: 6px;
     border-radius: 10px;
     background: var(--gh-bg-secondary, #f9fafb);
     border: 1px solid var(--gh-border, #e5e7eb);
@@ -268,17 +309,26 @@ const EXPORT_DIALOG_STYLES = `
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 6px 6px;
+    gap: 12px;
+    min-height: 34px;
+    padding: 6px 8px;
     border-radius: 6px;
     font-size: 13px;
+    line-height: 1.4;
     color: var(--gh-text, #1f2937);
     cursor: pointer;
     user-select: none;
     transition: background 0.12s ease;
+    box-sizing: border-box;
   }
 
-  .gh-export-option-row:hover {
-    background: var(--gh-hover, rgba(0, 0, 0, 0.03));
+  .gh-export-option-row > span:first-child {
+    min-width: 0;
+    overflow-wrap: break-word;
+  }
+
+  .gh-export-option-row:hover:not([data-disabled="true"]) {
+    background: var(--gh-hover, rgba(0, 0, 0, 0.04));
   }
 
   .gh-export-option-row[data-disabled="true"] {
@@ -286,27 +336,80 @@ const EXPORT_DIALOG_STYLES = `
     cursor: not-allowed;
   }
 
-  .gh-export-option-row input[type="checkbox"] {
-    accent-color: var(--gh-primary, #4285f4);
-    width: 16px;
-    height: 16px;
-    cursor: pointer;
+  /* 统一紧凑开关：替代宿主不一致的原生 checkbox，同时保持无障碍键盘导航 */
+  .gh-export-switch {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    width: 32px;
+    height: 18px;
+  }
+
+  .gh-export-switch-input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
     margin: 0;
+    opacity: 0;
+    cursor: inherit;
+  }
+
+  .gh-export-switch-track {
+    position: relative;
+    display: block;
+    width: 32px;
+    height: 18px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--gh-text-secondary, #6b7280) 32%, transparent);
+    transition: background-color 0.18s ease, box-shadow 0.15s ease;
+  }
+
+  .gh-export-switch-track::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--gh-bg, #ffffff);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+    transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1), background-color 0.18s ease;
+  }
+
+  .gh-export-switch-input:checked + .gh-export-switch-track {
+    background: var(--gh-primary, #4285f4);
+  }
+
+  .gh-export-switch-input:checked + .gh-export-switch-track::after {
+    transform: translateX(14px);
+    background: var(--gh-text-on-primary, #ffffff);
+  }
+
+  .gh-export-switch-input:focus-visible + .gh-export-switch-track {
+    outline: 2px solid var(--gh-primary, #4285f4);
+    outline-offset: 2px;
   }
 
   .gh-export-divider-wrap {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 6px 6px;
+    gap: 12px;
+    min-height: 36px;
+    padding: 5px 8px;
     border-radius: 6px;
     font-size: 13px;
+    line-height: 1.4;
     color: var(--gh-text, #1f2937);
   }
 
   .gh-export-divider-input {
-    width: 80px;
+    width: 82px;
     height: 28px;
+    flex-shrink: 0;
     padding: 2px 10px;
     border: 1px solid var(--gh-input-border, var(--gh-border, #d1d5db));
     border-radius: 6px;
@@ -315,6 +418,7 @@ const EXPORT_DIALOG_STYLES = `
     text-align: center;
     background: var(--gh-input-bg, var(--gh-bg, #ffffff));
     color: var(--gh-text, #1f2937);
+    caret-color: var(--gh-primary, #4285f4);
     box-sizing: border-box;
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
   }
@@ -329,36 +433,59 @@ const EXPORT_DIALOG_STYLES = `
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 10px;
-    margin-top: 4px;
-    padding-top: 2px;
+    flex-wrap: wrap;
+    gap: 10px 12px;
+    margin-top: 2px;
+    padding-top: 14px;
+    border-top: 1px solid var(--gh-border, #e5e7eb);
   }
 
   .gh-export-footer-actions {
     display: flex;
     align-items: center;
-    gap: 10px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-left: auto;
   }
 
   /* 分段导出的唯一入口：主色淡底 + 主色描边 + 主色字，比“取消”醒目，又不和实心的“导出”抢 */
   .gh-export-segmented-link {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
+    min-height: 36px;
     padding: 7px 12px;
+    font: inherit;
     font-size: 13px;
     font-weight: 550;
-    color: var(--gh-primary-text, var(--gh-primary, #4285f4));
-    background: color-mix(in srgb, var(--gh-primary, #4285f4) 8%, var(--gh-bg, #ffffff));
-    border: 1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 35%, var(--gh-border, #e5e7eb));
+    line-height: 1.25;
+    white-space: nowrap;
+    flex-shrink: 0;
+    word-break: normal;
+    overflow-wrap: normal;
+    color: color-mix(in srgb, var(--gh-primary-text, var(--gh-primary, #4285f4)) 76%, var(--gh-text, #1f2937));
+    background: color-mix(in srgb, var(--gh-primary, #4285f4) 6%, var(--gh-bg, #ffffff));
+    border: 1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 32%, var(--gh-border, #e5e7eb));
     border-radius: 8px;
     cursor: pointer;
-    transition: all 0.15s ease;
+    box-sizing: border-box;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
   }
 
   .gh-export-segmented-link:hover:not(:disabled) {
     border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 55%, var(--gh-border, #e5e7eb));
     background: color-mix(in srgb, var(--gh-primary, #4285f4) 14%, var(--gh-bg, #ffffff));
+  }
+
+  .gh-export-segmented-link:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+
+  .gh-export-segmented-link:focus-visible {
+    outline: 2px solid var(--gh-primary, #4285f4);
+    outline-offset: 2px;
   }
 
   .gh-export-segmented-link:disabled {
@@ -370,25 +497,40 @@ const EXPORT_DIALOG_STYLES = `
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 8px 18px;
+    min-height: 36px;
+    padding: 7px 16px;
     border-radius: 8px;
+    font: inherit;
     font-size: 13px;
     font-weight: 550;
+    line-height: 1.25;
+    white-space: nowrap;
+    flex-shrink: 0;
+    word-break: normal;
+    overflow-wrap: normal;
     cursor: pointer;
-    transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, filter 0.15s ease, transform 0.12s ease;
     box-sizing: border-box;
+  }
+
+  .gh-export-action-btn:focus-visible {
+    outline: 2px solid var(--gh-primary, #4285f4);
+    outline-offset: 2px;
   }
 
   .gh-export-cancel-btn {
     border: 1px solid var(--gh-border, #d1d5db);
-    background: var(--gh-bg-secondary, #ffffff);
-    color: var(--gh-text-secondary, #6b7280);
+    background: var(--gh-card-bg, var(--gh-bg, #ffffff));
+    color: var(--gh-text, #374151);
   }
 
   .gh-export-cancel-btn:hover:not(:disabled) {
     background: var(--gh-hover, #f3f4f6);
-    color: var(--gh-text, #1f2937);
     border-color: color-mix(in srgb, var(--gh-text-secondary, #6b7280) 40%, var(--gh-border, #d1d5db));
+  }
+
+  .gh-export-cancel-btn:active:not(:disabled) {
+    transform: translateY(1px);
   }
 
   .gh-export-cancel-btn:disabled {
@@ -397,26 +539,62 @@ const EXPORT_DIALOG_STYLES = `
   }
 
   .gh-export-submit-btn {
-    border: 1px solid var(--gh-primary, #4285f4);
+    border: 1px solid transparent;
     background: var(--gh-primary, #4285f4);
     color: var(--gh-text-on-primary, #ffffff);
-    box-shadow: var(--gh-shadow-brand, 0 3px 10px rgba(66, 133, 244, 0.25));
+    box-shadow: var(--gh-shadow-brand, 0 2px 8px rgba(66, 133, 244, 0.25));
   }
 
   .gh-export-submit-btn:hover:not(:disabled) {
     filter: brightness(1.06);
-    transform: translateY(-1px);
-    box-shadow: var(--gh-shadow-brand, 0 5px 14px rgba(66, 133, 244, 0.35));
   }
 
   .gh-export-submit-btn:active:not(:disabled) {
-    transform: translateY(0);
+    transform: translateY(1px);
   }
 
   .gh-export-submit-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
     box-shadow: none;
+  }
+
+  @media (max-width: 440px) {
+    .gh-dialog.gh-export-dialog {
+      padding: 16px;
+    }
+
+    .gh-export-format-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (pointer: coarse) {
+    .gh-export-dialog-close,
+    .gh-export-format-btn,
+    .gh-export-segmented-link,
+    .gh-export-action-btn {
+      min-height: 44px;
+    }
+
+    .gh-export-dialog-close {
+      width: 44px;
+      height: 44px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .gh-dialog.gh-export-dialog {
+      animation: none;
+    }
+
+    .gh-export-format-btn,
+    .gh-export-switch-track,
+    .gh-export-switch-track::after,
+    .gh-export-segmented-link,
+    .gh-export-action-btn {
+      transition: none;
+    }
   }
 `
 
@@ -441,11 +619,29 @@ const getFormatOptions = (): {
 }[] => [
   { format: "markdown", label: "Markdown", badge: ".md", Icon: MarkdownIcon },
   { format: "html", label: "HTML", badge: ".html", Icon: HTMLFileIcon },
-  { format: "image", label: t("exportToImage"), badge: "PNG / JPG", Icon: ImageFileIcon },
+  { format: "image", label: t("exportToImage"), badge: "PNG/JPG", Icon: ImageFileIcon },
   { format: "json", label: "JSON", badge: ".json", Icon: JSONFileIcon },
   { format: "txt", label: "Text", badge: ".txt", Icon: TXTFileIcon },
   { format: "clipboard", label: t("exportToClipboard"), Icon: CopyIcon },
 ]
+
+const ExportSwitch: React.FC<{
+  checked: boolean
+  disabled?: boolean
+  onChange: (checked: boolean) => void
+}> = ({ checked, disabled, onChange }) => (
+  <span className="gh-export-switch">
+    <input
+      type="checkbox"
+      role="switch"
+      className="gh-export-switch-input"
+      checked={checked}
+      disabled={disabled}
+      onChange={(e) => onChange(e.target.checked)}
+    />
+    <span className="gh-export-switch-track" aria-hidden="true" />
+  </span>
+)
 
 export const ExportDialog: React.FC<ExportDialogProps> = ({
   isOpen,
@@ -603,6 +799,8 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
               key={item.format}
               type="button"
               className="gh-export-format-btn"
+              title={item.label}
+              aria-pressed={!outlineCopySelected && selectedFormat === item.format}
               data-active={!outlineCopySelected && selectedFormat === item.format}
               onClick={() => {
                 setSelectedFormat(item.format)
@@ -620,6 +818,8 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
             <button
               type="button"
               className="gh-export-format-btn"
+              title={t("outlineCopyFull")}
+              aria-pressed={outlineCopySelected}
               data-active={outlineCopySelected}
               onClick={() => setOutlineCopySelected(true)}>
               <span className="gh-export-format-label">
@@ -655,11 +855,10 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
             aria-disabled={outlineCopySelected}>
             <label className="gh-export-option-row">
               <span>{t("exportIncludeThoughtsLabel")}</span>
-              <input
-                type="checkbox"
+              <ExportSwitch
                 checked={includeThoughts}
                 disabled={outlineCopySelected}
-                onChange={(e) => setIncludeThoughts(e.target.checked)}
+                onChange={setIncludeThoughts}
               />
             </label>
 
@@ -671,11 +870,10 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
                 className="gh-export-option-row"
                 data-disabled={!outlineCopySelected && selectedFormat === "json"}>
                 <span>{t("exportShowIndexLabel")}</span>
-                <input
-                  type="checkbox"
+                <ExportSwitch
                   checked={showIndex}
                   disabled={outlineCopySelected || selectedFormat === "json"}
-                  onChange={(e) => setShowIndex(e.target.checked)}
+                  onChange={setShowIndex}
                 />
               </label>
             </Tooltip>
@@ -697,11 +895,10 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
             {selectedFormat === "markdown" && (
               <label className="gh-export-option-row">
                 <span>{t("exportPackagingZipOption")}</span>
-                <input
-                  type="checkbox"
+                <ExportSwitch
                   checked={packageZip}
                   disabled={outlineCopySelected}
-                  onChange={(e) => setPackageZip(e.target.checked)}
+                  onChange={setPackageZip}
                 />
               </label>
             )}
@@ -709,11 +906,10 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
             {isMarkdownLike && (
               <label className="gh-export-option-row">
                 <span>{t("exportStyleCleanOption")}</span>
-                <input
-                  type="checkbox"
+                <ExportSwitch
                   checked={exportStyle === "clean"}
                   disabled={outlineCopySelected}
-                  onChange={(e) => setExportStyle(e.target.checked ? "clean" : "standard")}
+                  onChange={(checked) => setExportStyle(checked ? "clean" : "standard")}
                 />
               </label>
             )}
@@ -732,7 +928,7 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
               onSegmentedExport()
             }}>
             <SegmentedExportIcon size={14} />
-            {t("segmentedExportMenuItem")}
+            <span>{t("segmentedExportMenuItem")}</span>
           </button>
         ) : (
           <span />

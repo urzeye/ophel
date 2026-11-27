@@ -1165,6 +1165,7 @@ export const ru = {
   imageExportDownload: "Скачать изображение",
   imageExportDownloadAll: "Скачать всё (ZIP)",
   imageExportCopy: "Копировать изображение",
+  imageExportCopied: "Скопировано",
   imageExportCopyHint:
     "Можно скопировать только один PNG. Несколько изображений можно скачать в ZIP.",
   imageExportCopyUnavailable:
@@ -1202,6 +1203,7 @@ export const ru = {
   imageExportShadow: "Тень",
   imageExportWatermark: "Водяной знак",
   imageExportWatermarkText: "Текст водяного знака",
+  imageExportWatermarkPlaceholder: "Введите текст водяного знака",
   imageExportWatermarkMode: "Расположение водяного знака",
   imageExportWatermarkFooter: "Подпись внизу",
   imageExportWatermarkTile: "Повторять по всему изображению",

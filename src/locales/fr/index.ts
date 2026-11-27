@@ -1177,6 +1177,7 @@ export const fr = {
   imageExportDownload: "Télécharger l’image",
   imageExportDownloadAll: "Tout télécharger (ZIP)",
   imageExportCopy: "Copier l’image",
+  imageExportCopied: "Copié",
   imageExportCopyHint:
     "Seul un PNG unique peut être copié. Téléchargez plusieurs images dans un ZIP.",
   imageExportCopyUnavailable:
@@ -1216,6 +1217,7 @@ export const fr = {
   imageExportShadow: "Ombre",
   imageExportWatermark: "Filigrane",
   imageExportWatermarkText: "Texte du filigrane",
+  imageExportWatermarkPlaceholder: "Saisissez le texte du filigrane",
   imageExportWatermarkMode: "Position du filigrane",
   imageExportWatermarkFooter: "Signature en bas",
   imageExportWatermarkTile: "Répéter sur toute l’image",

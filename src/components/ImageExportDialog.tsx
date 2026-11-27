@@ -1,20 +1,31 @@
 import React, { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react"
 import { createRoot } from "react-dom/client"
 
-import type { ThemeManager } from "~core/theme-manager"
-import { DEFAULT_IMAGE_EXPORT } from "~constants/image-export"
+import { CheckIcon, CopyIcon, DownloadIcon, ExternalLinkIcon } from "~components/icons"
+import { ImageFileIcon } from "~components/icons/ImageFileIcon"
 import { ImageExportControls } from "~components/ImageExportControls"
+import { DialogOverlay } from "~components/ui/Dialog"
+import { Tooltip } from "~components/ui/Tooltip"
+import { DEFAULT_IMAGE_EXPORT } from "~constants/image-export"
+import type { ThemeManager } from "~core/theme-manager"
 import { useImageExport } from "~hooks/useImageExport"
 import { useSettingsStore } from "~stores/settings-store"
-import type { ImageExportPreferences } from "~types/image-export"
-import { CopyIcon, DownloadIcon } from "~components/icons"
-import { DialogOverlay } from "~components/ui/Dialog"
 import { IMAGE_EXPORT_DIALOG_CSS } from "~styles/image-export-inline"
+import type { ImageExportPreferences } from "~types/image-export"
 import { ExportDocumentError, type ExportDocumentInput } from "~utils/export-document"
 import type { ExportImageOptions } from "~utils/export-image"
 import { downloadBlob, downloadZipFiles } from "~utils/exporter"
 import { t } from "~utils/i18n"
 import { showToast } from "~utils/toast"
+
+type ZoomOption = "fit" | "50" | "75" | "100"
+
+const ZOOM_OPTIONS: readonly { value: ZoomOption; label: () => string }[] = [
+  { value: "fit", label: () => t("imageExportFit") },
+  { value: "50", label: () => "50%" },
+  { value: "75", label: () => "75%" },
+  { value: "100", label: () => "100%" },
+]
 
 interface ImageExportDialogProps {
   input: ExportDocumentInput
@@ -67,10 +78,12 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
     watermark,
   } = prefs
   const [title, setTitle] = useState(input.metadata.title)
-  const [zoom, setZoom] = useState("fit")
+  const [zoom, setZoom] = useState<ZoomOption>("fit")
   const [revision, setRevision] = useState(0)
   const [actionError, setActionError] = useState("")
   const [activity, setActivity] = useState<"download" | "copy" | null>(null)
+  const [copiedTarget, setCopiedTarget] = useState<"all" | number | null>(null)
+  const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const saving = activity !== null
   const busyRef = useRef(saving)
   busyRef.current = saving
@@ -129,20 +142,37 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
     revision,
     hydrated && documentInput.messages.length > 0,
   )
-  const { pages, progress } = result
+  const { pages, progress, updating } = result
   const error = documentInput.messages.length ? result.error : t("imageExportEmpty")
   const rendering = !error && result.rendering
-  const canCopy =
-    pages.length === 1 &&
-    format === "png" &&
-    typeof ClipboardItem !== "undefined" &&
-    !!navigator.clipboard?.write
+  const initialRendering = rendering && !updating
+  const clipboardSupported = typeof ClipboardItem !== "undefined" && !!navigator.clipboard?.write
+  const canCopyPng = format === "png" && clipboardSupported
+  const canCopy = pages.length === 1 && canCopyPng
+
+  const markCopied = (target: "all" | number) => {
+    if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current)
+    setCopiedTarget(target)
+    copiedTimerRef.current = setTimeout(() => {
+      copiedTimerRef.current = null
+      setCopiedTarget(null)
+    }, 1800)
+  }
+
+  useEffect(
+    () => () => {
+      if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current)
+    },
+    [],
+  )
 
   useEffect(() => {
     const previousFocus = document.activeElement
     const dialog = closeButton.current?.closest<HTMLElement>("[role='dialog']")
-    if (dialog) dialog.tabIndex = -1
-    closeButton.current?.focus()
+    if (dialog) {
+      dialog.tabIndex = -1
+      dialog.focus({ preventScroll: true })
+    }
     const trapFocus = (event: Event) => {
       const key = event as KeyboardEvent
       // Checkbox 的键盘保护会截断冒泡，关闭快捷键需在本弹窗捕获阶段处理。
@@ -178,16 +208,20 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
     }
   }, [onClose])
 
-  useEffect(() => setActionError(""), [documentInput, options, composition])
+  useEffect(() => {
+    setActionError("")
+    setCopiedTarget(null)
+  }, [documentInput, options, composition])
 
   const close = () => onClose(didExport.current)
+  const extension = format === "jpeg" ? "jpg" : "png"
+
   const download = async () => {
     if (!pages.length || rendering || saving) return
     setActivity("download")
     closeButton.current?.closest<HTMLElement>("[role='dialog']")?.focus()
     setActionError("")
     try {
-      const extension = format === "jpeg" ? "jpg" : "png"
       const success =
         pages.length === 1
           ? await downloadBlob(pages[0].blob, `${input.filename}.${extension}`)
@@ -206,14 +240,32 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
       setActivity(null)
     }
   }
-  const copy = async () => {
-    if (!canCopy || saving || rendering) return
-    setActivity("copy")
-    closeButton.current?.closest<HTMLElement>("[role='dialog']")?.focus()
+
+  const downloadSinglePage = async (index: number) => {
+    const page = pages[index]
+    if (!page || rendering || saving) return
+    setActivity("download")
     setActionError("")
     try {
-      await navigator.clipboard.write([new ClipboardItem({ "image/png": pages[0].blob })])
+      const suffix = pages.length > 1 ? `-${String(index + 1).padStart(2, "0")}` : ""
+      const success = await downloadBlob(page.blob, `${input.filename}${suffix}.${extension}`)
+      if (success) {
+        didExport.current = true
+        showToast(t("exportSuccess"))
+      } else setActionError(t("exportFailed"))
+    } finally {
+      setActivity(null)
+    }
+  }
+
+  const copyBlob = async (blob: Blob, target: "all" | number) => {
+    if (!canCopyPng || saving || rendering) return
+    setActivity("copy")
+    setActionError("")
+    try {
+      await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })])
       didExport.current = true
+      markCopied(target)
       showToast(t("copySuccess"))
     } catch {
       setActionError(t("imageExportCopyFailed"))
@@ -221,6 +273,22 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
       setActivity(null)
     }
   }
+
+  const copy = async () => {
+    if (!canCopy) return
+    closeButton.current?.closest<HTMLElement>("[role='dialog']")?.focus()
+    await copyBlob(pages[0].blob, "all")
+  }
+
+  const copyDisabledHint =
+    !rendering && pages.length > 0 && !canCopy
+      ? t(
+          pages.length !== 1 || format !== "png"
+            ? "imageExportCopyHint"
+            : "imageExportCopyUnavailable",
+        )
+      : ""
+
   const status = saving
     ? t(activity === "copy" ? "imageExportCopying" : "exportOverlayDownloading")
     : rendering
@@ -234,6 +302,14 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
         ? t("imageExportReady", { count: String(pages.length) })
         : ""
 
+  const totalBytes = pages.reduce((sum, page) => sum + page.blob.size, 0)
+  const toolbarMeta =
+    pages.length === 1
+      ? `${pages[0].width} × ${pages[0].height} px · ${formatFileSize(totalBytes)}`
+      : pages.length > 1
+        ? t("imageExportTotalSize", { size: formatFileSize(totalBytes) })
+        : ""
+
   return (
     <DialogOverlay
       onClose={close}
@@ -243,14 +319,19 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
       ariaLabel={t("imageExportTitle")}>
       <style>{IMAGE_EXPORT_DIALOG_CSS}</style>
       <header className="gh-image-export-header">
-        <div className="gh-image-export-heading">
-          <h2>{t("imageExportTitle")}</h2>
-          <p title={input.metadata.title}>{input.metadata.title}</p>
+        <div className="gh-image-export-header-lead">
+          <div className="gh-image-export-header-icon" aria-hidden="true">
+            <ImageFileIcon size={16} />
+          </div>
+          <div className="gh-image-export-heading">
+            <h2>{t("imageExportTitle")}</h2>
+            <p title={input.metadata.title}>{input.metadata.title}</p>
+          </div>
         </div>
         <button
           ref={closeButton}
           type="button"
-          className="gh-dialog-btn gh-dialog-btn-secondary gh-image-export-close"
+          className="gh-image-export-close"
           onClick={close}
           disabled={saving}
           aria-label={t("close")}>
@@ -261,6 +342,7 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
             fill="none"
             stroke="currentColor"
             strokeWidth="2"
+            strokeLinecap="round"
             aria-hidden="true">
             <path d="m6 6 12 12M6 18 18 6" />
           </svg>
@@ -270,6 +352,7 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
         <ImageExportControls
           preferences={prefs}
           title={title}
+          defaultTitle={input.metadata.title}
           onTitleChange={setTitle}
           onChange={updatePreferences}
           onReset={() => {
@@ -281,31 +364,40 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
         />
         <div className="gh-image-export-preview-pane">
           <div className="gh-image-export-preview-toolbar">
-            <label>
-              {t("imageExportZoom")}
-              <select
-                aria-label={t("imageExportZoom")}
-                value={zoom}
-                disabled={saving}
-                onChange={(event) => setZoom(event.target.value)}>
-                <option value="fit">{t("imageExportFit")}</option>
-                <option value="50">50%</option>
-                <option value="100">100%</option>
-              </select>
-            </label>
-            {pages.length > 0 && (
-              <span>
-                {t("imageExportTotalSize", {
-                  size: formatFileSize(pages.reduce((sum, page) => sum + page.blob.size, 0)),
-                })}
-              </span>
+            <div
+              className="gh-image-export-zoom-bar"
+              role="group"
+              aria-label={t("imageExportZoom")}>
+              {ZOOM_OPTIONS.map((item) => (
+                <button
+                  key={item.value}
+                  type="button"
+                  className="gh-image-export-zoom-btn"
+                  aria-pressed={zoom === item.value}
+                  disabled={saving}
+                  onClick={() => setZoom(item.value)}>
+                  {item.label()}
+                </button>
+              ))}
+            </div>
+            {toolbarMeta && <span className="gh-image-export-toolbar-meta">{toolbarMeta}</span>}
+          </div>
+          <div
+            className={`gh-image-export-update-bar${updating ? " is-active" : ""}`}
+            aria-hidden={!updating}>
+            {updating && (
+              <progress
+                aria-label={t("imageExportTitle")}
+                max={progress.total || undefined}
+                value={progress.total ? progress.completed : undefined}
+              />
             )}
           </div>
           <section
-            className="gh-image-export-preview"
+            className={`gh-image-export-preview${updating ? " is-updating" : ""}`}
             aria-busy={rendering}
             aria-label={t("imageExportTitle")}>
-            {rendering ? (
+            {initialRendering ? (
               <div className="gh-image-export-state">
                 <div className="gh-image-export-skeleton" aria-hidden="true">
                   <span className="gh-image-export-sk-title" />
@@ -369,43 +461,81 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
                 )}
               </div>
             ) : (
-              pages.map((page, index) => (
-                <figure
-                  key={page.url}
-                  style={
-                    {
-                      "--i": Math.min(index, 6),
-                      ...(zoom !== "fit"
-                        ? { width: (page.width * Number(zoom)) / 100, maxWidth: "none" }
-                        : {}),
-                    } as React.CSSProperties
-                  }>
-                  <a
-                    href={page.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    aria-label={t("imageExportOpenPreview")}>
-                    <img
-                      src={page.url}
-                      alt={t("imageExportPage", {
-                        index: String(index + 1),
-                        total: String(pages.length),
-                        width: String(page.width),
-                        height: String(page.height),
-                      })}
-                    />
-                  </a>
-                  <figcaption>
-                    {t("imageExportPage", {
-                      index: String(index + 1),
-                      total: String(pages.length),
-                      width: String(page.width),
-                      height: String(page.height),
-                    })}
-                    {` · ${formatFileSize(page.blob.size)}`}
-                  </figcaption>
-                </figure>
-              ))
+              pages.map((page, index) => {
+                const pageLabel = t("imageExportPage", {
+                  index: String(index + 1),
+                  total: String(pages.length),
+                  width: String(page.width),
+                  height: String(page.height),
+                })
+                return (
+                  <figure
+                    key={index}
+                    style={
+                      {
+                        "--i": Math.min(index, 6),
+                        ...(zoom !== "fit"
+                          ? { width: (page.width * Number(zoom)) / 100, maxWidth: "none" }
+                          : {}),
+                      } as React.CSSProperties
+                    }>
+                    <button
+                      type="button"
+                      className={`gh-image-export-canvas-btn${zoom === "fit" ? " is-fit" : " is-zoomed"}`}
+                      aria-label={t("imageExportZoom")}
+                      disabled={saving}
+                      onClick={() => setZoom((current) => (current === "fit" ? "100" : "fit"))}>
+                      <img src={page.url} alt={pageLabel} />
+                    </button>
+                    <figcaption>
+                      <span className="gh-image-export-caption-meta">
+                        {pageLabel}
+                        {` · ${formatFileSize(page.blob.size)}`}
+                      </span>
+                      <span className="gh-image-export-caption-actions">
+                        {pages.length > 1 && canCopyPng && (
+                          <Tooltip content={t("imageExportCopy")}>
+                            <button
+                              type="button"
+                              className="gh-image-export-caption-btn"
+                              aria-label={t("imageExportCopy")}
+                              disabled={rendering || saving}
+                              onClick={() => void copyBlob(page.blob, index)}>
+                              {copiedTarget === index ? (
+                                <CheckIcon size={13} />
+                              ) : (
+                                <CopyIcon size={13} />
+                              )}
+                            </button>
+                          </Tooltip>
+                        )}
+                        {pages.length > 1 && (
+                          <Tooltip content={t("imageExportDownload")}>
+                            <button
+                              type="button"
+                              className="gh-image-export-caption-btn"
+                              aria-label={t("imageExportDownload")}
+                              disabled={rendering || saving}
+                              onClick={() => void downloadSinglePage(index)}>
+                              <DownloadIcon size={13} />
+                            </button>
+                          </Tooltip>
+                        )}
+                        <Tooltip content={t("imageExportOpenPreview")}>
+                          <a
+                            className="gh-image-export-caption-btn"
+                            href={page.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            aria-label={t("imageExportOpenPreview")}>
+                            <ExternalLinkIcon size={13} />
+                          </a>
+                        </Tooltip>
+                      </span>
+                    </figcaption>
+                  </figure>
+                )
+              })
             )}
           </section>
         </div>
@@ -415,14 +545,6 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
           className={`gh-image-export-status${actionError ? " gh-image-export-error" : ""}`}
           role={actionError ? "alert" : "status"}>
           {actionError || status}
-          <br />
-          {!rendering && pages.length > 0 && !canCopy
-            ? t(
-                pages.length !== 1 || format !== "png"
-                  ? "imageExportCopyHint"
-                  : "imageExportCopyUnavailable",
-              )
-            : ""}
         </p>
         <div className="gh-image-export-actions">
           <button
@@ -432,21 +554,23 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
             onClick={close}>
             {t("close")}
           </button>
-          <button
-            type="button"
-            className="gh-dialog-btn gh-dialog-btn-secondary"
-            disabled={!canCopy || rendering || saving}
-            onClick={() => void copy()}>
-            <CopyIcon size={16} />
-            {t("imageExportCopy")}
-          </button>
+          <Tooltip content={copyDisabledHint} disabled={!copyDisabledHint}>
+            <button
+              type="button"
+              className="gh-dialog-btn gh-dialog-btn-secondary"
+              disabled={!canCopy || rendering || saving}
+              onClick={() => void copy()}>
+              {copiedTarget === "all" ? <CheckIcon size={15} /> : <CopyIcon size={15} />}
+              <span>{t(copiedTarget === "all" ? "imageExportCopied" : "imageExportCopy")}</span>
+            </button>
+          </Tooltip>
           <button
             type="button"
             className="gh-dialog-btn gh-dialog-btn-primary"
             disabled={!pages.length || rendering || saving}
             onClick={() => void download()}>
-            <DownloadIcon size={16} />
-            {t(pages.length > 1 ? "imageExportDownloadAll" : "imageExportDownload")}
+            <DownloadIcon size={15} />
+            <span>{t(pages.length > 1 ? "imageExportDownloadAll" : "imageExportDownload")}</span>
           </button>
         </div>
       </footer>

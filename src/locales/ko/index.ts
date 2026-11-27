@@ -1157,6 +1157,7 @@ export const ko = {
   imageExportDownload: "이미지 다운로드",
   imageExportDownloadAll: "모두 다운로드 (ZIP)",
   imageExportCopy: "이미지 복사",
+  imageExportCopied: "복사됨",
   imageExportCopyHint: "단일 PNG만 복사할 수 있습니다. 여러 이미지는 ZIP으로 다운로드하세요.",
   imageExportCopyUnavailable:
     "이 브라우저에서는 이미지 복사를 사용할 수 없습니다. 다운로드하여 공유하세요.",
@@ -1191,6 +1192,7 @@ export const ko = {
   imageExportShadow: "그림자",
   imageExportWatermark: "워터마크",
   imageExportWatermarkText: "워터마크 문구",
+  imageExportWatermarkPlaceholder: "워터마크로 표시할 텍스트 입력",
   imageExportWatermarkMode: "워터마크 위치",
   imageExportWatermarkFooter: "하단 서명",
   imageExportWatermarkTile: "전체에 반복",

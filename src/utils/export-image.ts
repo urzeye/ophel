@@ -50,12 +50,17 @@ const CAPTURE_STYLES = [
   "border-spacing",
   "table-layout",
   "border-radius",
+  "border-top-left-radius",
+  "border-top-right-radius",
+  "border-bottom-right-radius",
+  "border-bottom-left-radius",
   "border-top",
   "border-bottom",
   "border-left",
   "border-right",
   "background",
   "background-color",
+  "background-image",
   "color",
   "opacity",
   "font-family",
@@ -67,6 +72,8 @@ const CAPTURE_STYLES = [
   "letter-spacing",
   "text-align",
   "text-decoration",
+  "text-decoration-color",
+  "text-underline-offset",
   "text-indent",
   "text-transform",
   "text-rendering",
@@ -84,9 +91,12 @@ const CAPTURE_STYLES = [
   "transform",
   "transform-origin",
   "flex",
+  "flex-grow",
+  "flex-shrink",
   "flex-direction",
   "flex-wrap",
   "align-items",
+  "align-self",
   "justify-content",
   "gap",
   "object-fit",
@@ -144,7 +154,7 @@ function createImageFrame(
   if (footerWatermarkSize) {
     const slot = document.createElement("div")
     slot.className = "gh-export-watermark-slot"
-    slot.style.height = `${footerWatermarkSize * 1.5}px`
+    slot.style.height = `${Math.ceil(footerWatermarkSize * 1.8 + 8)}px`
     shell.append(slot)
   }
   page.append(shell)

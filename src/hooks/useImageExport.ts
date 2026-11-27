@@ -21,9 +21,9 @@ function useDebouncedValue<T>(value: T): T {
 type CompositionOptions = Pick<ImageExportPreferences, "format" | "scale" | "watermark"> & {
   theme: "light" | "dark"
 }
-type PreviewPage = ExportImagePage & { url: string }
+export type PreviewPage = ExportImagePage & { url: string }
 
-/** 用请求身份隔离过期结果；调整水印或格式只重做合成，不再捕获正文。 */
+/** 用请求身份隔离过期结果；调整水印或格式只重做合成，更新期间保留上一帧避免闪烁与滚动重置。 */
 export function useImageExport(
   input: ExportDocumentInput,
   options: ExportImageOptions,
@@ -55,11 +55,19 @@ export function useImageExport(
   } | null>(null)
   const [progress, setProgress] = useState({ completed: 0, total: 0 })
 
+  // 仅当新一批预览图 commit 替换或组件卸载时，才释放上一批 ObjectURL，避免更新过程中图片闪烁失效。
+  const renderedPages = preview?.pages
+  useEffect(() => {
+    if (!renderedPages?.length) return
+    const urls = renderedPages.map((page) => page.url)
+    return () => {
+      urls.forEach((url) => URL.revokeObjectURL(url))
+    }
+  }, [renderedPages])
+
   useEffect(() => {
     if (!settled.enabled) return
     const controller = new AbortController()
-    setCapture(null)
-    setPreview(null)
     setCompositionError(null)
     setCaptureError(null)
     setProgress({ completed: 0, total: 0 })
@@ -88,8 +96,6 @@ export function useImageExport(
   useEffect(() => {
     if (!capture || capture.request !== request || settledComposition !== composition) return
     const controller = new AbortController()
-    const urls: string[] = []
-    setPreview(null)
     setCompositionError(null)
     setProgress({ completed: 0, total: 0 })
     void composeExportImages(capture.pages, composition, controller.signal, (completed, total) => {
@@ -100,11 +106,10 @@ export function useImageExport(
         setPreview({
           capture,
           options: composition,
-          pages: pages.map((page) => {
-            const url = URL.createObjectURL(page.blob)
-            urls.push(url)
-            return { ...page, url }
-          }),
+          pages: pages.map((page) => ({
+            ...page,
+            url: URL.createObjectURL(page.blob),
+          })),
         })
       })
       .catch((failure: unknown) => {
@@ -118,13 +123,13 @@ export function useImageExport(
       })
     return () => {
       controller.abort()
-      urls.forEach((url) => URL.revokeObjectURL(url))
     }
   }, [capture, request, composition, settledComposition])
 
   const currentCapture = capture?.request === request ? capture : null
-  const ready =
-    currentCapture && preview?.capture === currentCapture && preview.options === composition
+  const ready = Boolean(
+    currentCapture && preview?.capture === currentCapture && preview.options === composition,
+  )
   const error =
     captureError?.request === request
       ? captureError.error
@@ -133,5 +138,13 @@ export function useImageExport(
           compositionError.options === composition
         ? compositionError.error
         : null
-  return { pages: ready ? preview.pages : [], progress, error, rendering: !ready && !error }
+  const pages = error || !enabled ? [] : preview?.pages ?? []
+  const rendering = enabled && !ready && !error
+  return {
+    pages,
+    progress,
+    error,
+    rendering,
+    updating: rendering && pages.length > 0,
+  }
 }

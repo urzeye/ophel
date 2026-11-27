@@ -1194,6 +1194,7 @@ export const ja = {
   imageExportDownload: "画像をダウンロード",
   imageExportDownloadAll: "すべてダウンロード（ZIP）",
   imageExportCopy: "画像をコピー",
+  imageExportCopied: "コピー済み",
   imageExportCopyHint: "コピーできるのは PNG 1 枚のみです。複数の画像は ZIP で保存できます。",
   imageExportCopyUnavailable:
     "このブラウザーでは画像をコピーできません。ダウンロードして共有してください。",
@@ -1230,6 +1231,7 @@ export const ja = {
   imageExportShadow: "影",
   imageExportWatermark: "透かし",
   imageExportWatermarkText: "透かしのテキスト",
+  imageExportWatermarkPlaceholder: "透かしを表示する文字を入力",
   imageExportWatermarkMode: "透かしの配置",
   imageExportWatermarkFooter: "下部に署名",
   imageExportWatermarkTile: "画像全体に繰り返す",

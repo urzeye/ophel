@@ -1174,6 +1174,7 @@ export const de = {
   imageExportDownload: "Bild herunterladen",
   imageExportDownloadAll: "Alle herunterladen (ZIP)",
   imageExportCopy: "Bild kopieren",
+  imageExportCopied: "Kopiert",
   imageExportCopyHint:
     "Nur ein einzelnes PNG kann kopiert werden. Mehrere Bilder als ZIP herunterladen.",
   imageExportCopyUnavailable:
@@ -1214,6 +1215,7 @@ export const de = {
   imageExportShadow: "Schatten",
   imageExportWatermark: "Wasserzeichen",
   imageExportWatermarkText: "Wasserzeichentext",
+  imageExportWatermarkPlaceholder: "Text für Wasserzeichen eingeben",
   imageExportWatermarkMode: "Wasserzeichenposition",
   imageExportWatermarkFooter: "Signatur unten",
   imageExportWatermarkTile: "Im ganzen Bild wiederholen",

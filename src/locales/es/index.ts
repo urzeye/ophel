@@ -1172,6 +1172,7 @@ export const es = {
   imageExportDownload: "Descargar imagen",
   imageExportDownloadAll: "Descargar todo (ZIP)",
   imageExportCopy: "Copiar imagen",
+  imageExportCopied: "Copiado",
   imageExportCopyHint:
     "Solo se puede copiar un PNG individual. Descarga varias imágenes en un ZIP.",
   imageExportCopyUnavailable:
@@ -1211,6 +1212,7 @@ export const es = {
   imageExportShadow: "Sombra",
   imageExportWatermark: "Marca de agua",
   imageExportWatermarkText: "Texto de marca de agua",
+  imageExportWatermarkPlaceholder: "Escribe el texto de la marca de agua",
   imageExportWatermarkMode: "Posición de marca de agua",
   imageExportWatermarkFooter: "Firma al pie",
   imageExportWatermarkTile: "Repetir en toda la imagen",
