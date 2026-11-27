@@ -650,6 +650,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       return
     }
     await withAnchorOp(async (signal) => {
+      const scrollInfo = await getScrollInfo(adapter)
       // 遮罩延迟显示
       const OVERLAY_DELAY_MS = 1600
       abortLoadingRef.current = false
@@ -690,7 +691,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
 
         // 保存锚点到全局存储
         // 已在顶部时不覆盖锚点，避免重复点击丢失原位置
-        if (result.previousScrollTop >= 4) anchorStore.set(result.previousScrollTop)
+        if (!scrollInfo.atTop) anchorStore.set(scrollInfo.scrollTop)
 
         // 清理遮罩
         if (overlayTimer) {
@@ -725,13 +726,13 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       return
     }
     await withAnchorOp(async () => {
-      const { previousScrollTop, container } = await smartScrollToBottom(adapter)
+      const scrollInfo = await getScrollInfo(adapter)
+      await smartScrollToBottom(adapter)
 
       // 保存锚点到全局存储
       // 已在底部时不覆盖锚点，避免重复点击丢失原位置
-      const maxScroll = container.scrollHeight - container.clientHeight
-      if (container.clientHeight <= 0 || maxScroll - previousScrollTop >= 4) {
-        anchorStore.set(previousScrollTop)
+      if (!scrollInfo.atBottom) {
+        anchorStore.set(scrollInfo.scrollTop)
       }
     })
   }, [adapter, isSourceNavigation, navigateSource])

@@ -227,21 +227,32 @@ export async function getScrollInfo(adapter: SiteAdapter | null): Promise<{
   scrollTop: number
   scrollHeight: number
   clientHeight: number
+  atTop: boolean
+  atBottom: boolean
 }> {
   const container = adapter?.getScrollContainer()
 
   if (container && container.scrollHeight > container.clientHeight) {
-    return {
-      scrollTop: container.scrollTop,
-      scrollHeight: container.scrollHeight,
-      clientHeight: container.clientHeight,
-    }
+    return captureScrollInfo(container)
   }
 
   // 最终回退
+  return captureScrollInfo(document.documentElement)
+}
+
+function captureScrollInfo(container: HTMLElement) {
+  const scrollTop = container.scrollTop
+  const scrollHeight = container.scrollHeight
+  const clientHeight = container.clientHeight
+  const maxScroll = Math.max(0, scrollHeight - clientHeight)
+  // 位置与边界取自同一实际容器、同一时刻，避免异步加载后重新测量或误用整页回退前的容器。
+  const distanceFromTop = isColumnReverseContainer(container) ? maxScroll + scrollTop : scrollTop
+
   return {
-    scrollTop: document.documentElement.scrollTop,
-    scrollHeight: document.documentElement.scrollHeight,
-    clientHeight: document.documentElement.clientHeight,
+    scrollTop,
+    scrollHeight,
+    clientHeight,
+    atTop: distanceFromTop < 4,
+    atBottom: clientHeight > 0 && maxScroll - distanceFromTop < 4,
   }
 }

@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "id": "muse",
+  "version": 1,
+  "minAppVersion": "1.3.7",
+  "name": "Muse",
+  "description": "Adds Ophel outline navigation, basic export, prompt insertion, chat width, and Zen Mode to Muse main and side chats.",
+  "descriptionI18n": {
+    "zh-CN": "为 Muse 主聊天和旁聊添加 Ophel 大纲导航、基础导出、提示词插入、对话宽度调整和禅模式。",
+    "zh-TW": "為 Muse 主聊天與旁聊加入 Ophel 大綱導覽、基本匯出、提示詞插入、對話寬度調整與禪模式。",
+    "en": "Adds Ophel outline navigation, basic export, prompt insertion, chat width, and Zen Mode to Muse main and side chats.",
+    "ja": "Muse のメインチャットとサイドチャットに、Ophel のアウトラインナビゲーション、基本エクスポート、プロンプト挿入、チャット幅調整、Zen モードを追加します。",
+    "ko": "Muse의 기본 채팅과 보조 채팅에 Ophel의 개요 탐색, 기본 내보내기, 프롬프트 삽입, 대화 너비 조정 및 Zen 모드를 추가합니다.",
+    "it": "Aggiunge alle chat principali e secondarie di Muse la navigazione nella struttura, l'esportazione di base, l'inserimento dei prompt, la regolazione della larghezza e la modalità Zen di Ophel.",
+    "de": "Ergänzt Haupt- und Nebenchats von Muse um Ophel-Gliederungsnavigation, Basisexport, Prompt-Einfügung, Chatbreitenanpassung und Zen-Modus.",
+    "es": "Añade a los chats principales y secundarios de Muse la navegación por el esquema, la exportación básica, la inserción de prompts, el ajuste del ancho y el modo zen de Ophel.",
+    "fr": "Ajoute aux discussions principales et secondaires de Muse la navigation dans le plan, l'exportation de base, l'insertion de prompts, le réglage de la largeur et le mode Zen d'Ophel.",
+    "pt-BR": "Adiciona às conversas principais e secundárias do Muse a navegação pela estrutura, a exportação básica, a inserção de prompts, o ajuste da largura e o modo Zen do Ophel.",
+    "ru": "Добавляет в основные и боковые чаты Muse навигацию по структуре, базовый экспорт, вставку промптов, настройку ширины чата и режим Zen от Ophel."
+  },
+  "matches": ["https://muse.ai/"],
+  "capabilities": [
+    "outline",
+    "outline-user-queries",
+    "export-basic",
+    "prompt-insert",
+    "width",
+    "zen"
+  ],
+  "selectors": {
+    "textarea": ["[data-hatch-composer-root] textarea"],
+    "responseContainer": "#hatch-chat-scroll [role='log']",
+    "chatContent": ["#hatch-chat-scroll [data-message-item][data-message-id]"],
+    "userQuery": "[data-message-item][data-message-role='user'] .hatch-chat-groupable-bubble > p",
+    "scrollContainer": ["#hatch-chat-scroll"],
+    "outlineExclude": ["[data-copy-exclude]"]
+  },
+  "input": {
+    "mode": "textarea",
+    "submitKey": "Enter"
+  },
+  "session": {
+    "newConversationPathPatterns": ["^/thread/new/?$"],
+    "newTabPath": "/"
+  },
+  "export": {
+    "userQuerySelector": "[data-message-item][data-message-role='user'] .hatch-chat-groupable-bubble > p",
+    "assistantResponseSelector": "[data-message-item][data-message-role='assistant'] [data-hatch-assistant-message-body] .prose",
+    "turnSelector": "#hatch-chat-scroll [data-message-item][data-message-id]",
+    "useShadowDOM": false
+  },
+  "widthSelectors": [
+    {
+      "selector": "[data-hatch-chat-column]",
+      "property": "max-width"
+    }
+  ],
+  "zenMode": {
+    "hide": [
+      "[data-hatch-dock]",
+      "[data-hatch-status-panel-surface][data-hatch-status-panel-presentation='side-panel']",
+      "[data-hatch-vt-pane='chat-toolbar']",
+      "[data-hatch-shell-mobile-nav-hydration-guard]"
+    ],
+    "styles": [
+      {
+        "selector": "[data-hatch-full-page-shell]",
+        "property": "margin-inline-start",
+        "value": "0px"
+      },
+      {
+        "selector": "[data-hatch-shell-composer-layer]",
+        "property": "left",
+        "value": "0px",
+        "extraCss": "right: 0px !important;"
+      }
+    ]
+  },
+  "traits": {
+    "minimalEnhancements": true
+  },
+  "quickQuote": "disabled",
+  "supportsHostThemeSync": false
+}
