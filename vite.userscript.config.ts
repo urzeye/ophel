@@ -187,11 +187,11 @@ function createContentHash(content: string | Buffer): string {
   return createHash("sha256").update(content).digest("hex").slice(0, 12)
 }
 
-// Greasyfork 脚本本体大小硬限制 2MB（按字节计）；项目闸门预留余量，
-// 触闸说明需要继续向 vendor 拆分，而不是顶着上限发布。
-// 必须按 UTF-8 字节而非 UTF-16 码元度量：CJK 字符编码后占 3 字节，
-// 按字符数计量可能在未触闸的情况下超出平台字节上限。
-const USERSCRIPT_GREASYFORK_BYTE_LIMIT = 2_000_000
+// Greasy Fork 的 MAX_CODE_LENGTH = 2.megabytes，Rails 按字符串长度校验，
+// 即 2,097,152 个 Unicode 字符，不是 UTF-8 字节数或 JS UTF-16 码元数。
+// https://github.com/greasyfork-org/greasyfork/blob/main/app/models/script_version.rb
+const USERSCRIPT_GREASYFORK_CHARACTER_LIMIT = 2 * 1024 * 1024
+// 保留项目原有的 UTF-8 大小闸门；这是更保守的项目策略，不是平台上限。
 const USERSCRIPT_BYTE_GATE = 1_950_000
 const userscriptMainFileName = `${pkg.name}.user.js`
 
@@ -563,18 +563,24 @@ function emitUserscriptAssets(): Plugin {
 
       fs.writeFileSync(mainScriptPath, mainScript, "utf-8")
 
+      const mainScriptCharacters = Array.from(mainScript).length
+      if (mainScriptCharacters > USERSCRIPT_GREASYFORK_CHARACTER_LIMIT) {
+        throw new Error(
+          `${userscriptMainFileName} is ${mainScriptCharacters} characters, exceeding the ` +
+            `${USERSCRIPT_GREASYFORK_CHARACTER_LIMIT} Greasy Fork character limit.`,
+        )
+      }
       const mainScriptBytes = Buffer.byteLength(mainScript, "utf8")
       if (mainScriptBytes > USERSCRIPT_BYTE_GATE) {
         throw new Error(
           `${userscriptMainFileName} is ${mainScriptBytes} bytes, exceeding the ` +
-            `${USERSCRIPT_BYTE_GATE} project gate (Greasyfork hard limit ` +
-            `${USERSCRIPT_GREASYFORK_BYTE_LIMIT}). Move more code into @require vendor ` +
+            `${USERSCRIPT_BYTE_GATE} project size gate. Move more code into @require vendor ` +
             "bundles or @resource data instead of shipping near the limit.",
         )
       }
       console.warn(
-        `[ophel-userscript-assets] ${userscriptMainFileName}: ${mainScriptBytes} bytes ` +
-          `(gate ${USERSCRIPT_BYTE_GATE}, Greasyfork limit ${USERSCRIPT_GREASYFORK_BYTE_LIMIT})`,
+        `[ophel-userscript-assets] ${userscriptMainFileName}: ${mainScriptCharacters} characters ` +
+          `(Greasy Fork limit ${USERSCRIPT_GREASYFORK_CHARACTER_LIMIT})`,
       )
     },
   }
