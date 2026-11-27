@@ -748,7 +748,8 @@ export function formatToMarkdown(metadata: ExportMetadata, messages: ExportMessa
   // clean 样式不输出装饰 emoji，面向专业场景
   const isClean = metadata.style === "clean"
   const exportEmoji = isClean ? "" : `${EMOJI_EXPORT} `
-  const safeTitle = metadata.title.replace(/\r?\n/g, " ").trim()
+  const toSingleLine = (value: string): string => value.replace(/\r?\n/g, " ").trim()
+  const safeTitle = toSingleLine(metadata.title)
 
   // 元数据头：保留一级会话标题，元信息使用引用块避免占用 ## 标题层级污染目录；
   // 头部结构分隔线固定为 ---，自定义分割线只作用于消息之间
@@ -757,9 +758,9 @@ export function formatToMarkdown(metadata: ExportMetadata, messages: ExportMessa
   lines.push(`> **${exportEmoji}${t("exportMetaTitle")}**`)
   lines.push(">")
   lines.push(`> - **${t("exportMetaConvTitle")}**: ${safeTitle}`)
-  lines.push(`> - **${t("exportMetaTime")}**: ${metadata.exportTime}`)
-  lines.push(`> - **${t("exportMetaSource")}**: ${metadata.source}`)
-  lines.push(`> - **${t("exportMetaUrl")}**: ${metadata.url}`)
+  lines.push(`> - **${t("exportMetaTime")}**: ${toSingleLine(metadata.exportTime)}`)
+  lines.push(`> - **${t("exportMetaSource")}**: ${toSingleLine(metadata.source)}`)
+  lines.push(`> - **${t("exportMetaUrl")}**: ${toSingleLine(metadata.url)}`)
   lines.push("")
   lines.push("---")
   lines.push("")
@@ -771,7 +772,7 @@ export function formatToMarkdown(metadata: ExportMetadata, messages: ExportMessa
 
     if (msg.role === "user") {
       turnNumber += 1
-      const userLabel = metadata.customUserName || t("exportUserLabel")
+      const userLabel = toSingleLine(metadata.customUserName || t("exportUserLabel"))
       const titlePrefix = metadata.showIndex ? `${turnNumber}. ` : ""
       const userEmoji = isClean ? "" : `${EMOJI_USER} `
       lines.push(`# ${titlePrefix}${userEmoji}${userLabel}`)
@@ -783,7 +784,7 @@ export function formatToMarkdown(metadata: ExportMetadata, messages: ExportMessa
         lines.push("")
       }
     } else {
-      const modelLabel = metadata.customModelName || metadata.source
+      const modelLabel = toSingleLine(metadata.customModelName || metadata.source)
       // 开场 assistant（尚未出现 user 轮次）不编号，避免与首轮 1 重复
       const titlePrefix = metadata.showIndex && turnNumber > 0 ? `${turnNumber}. ` : ""
       const assistantEmoji = isClean ? "" : `${EMOJI_ASSISTANT} `

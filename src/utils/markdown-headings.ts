@@ -107,15 +107,15 @@ function escapeTrailingOddBackslash(text: string): string {
   return `${text}\\`
 }
 
-function stripUnprotectedStrongDelimiters(text: string): string {
-  // 保留行内代码片段，避免误改反引号内的 ** 或 __
+function stripUnprotectedStarStrongDelimiters(text: string): string {
+  // 保留行内代码片段，且只剥离可能与外层 ** 冲突的 **，避免误伤链接 URL 等处的 __
   const codeSpans: string[] = []
   const placeholderText = text.replace(/(`+)([\s\S]*?)\1/g, (match) => {
     codeSpans.push(match)
     return `\x00CODE${codeSpans.length - 1}\x00`
   })
 
-  const stripped = placeholderText.replace(/\\.|(\*\*|__)/g, (match, delimiter?: string) =>
+  const stripped = placeholderText.replace(/\\.|(\*\*)/g, (match, delimiter?: string) =>
     delimiter ? "" : match,
   )
 
@@ -198,7 +198,9 @@ export function formatBoldMarkdownLine(text: string): string {
     return underCandidate
   }
 
-  const cleaned = escapeTrailingOddBackslash(stripUnprotectedStrongDelimiters(singleLine).trim())
+  const cleaned = escapeTrailingOddBackslash(
+    stripUnprotectedStarStrongDelimiters(singleLine).trim(),
+  )
   return cleaned ? `**${cleaned}**` : `**${safeInner}**`
 }
 
@@ -224,32 +226,45 @@ export function normalizeMarkdownHeadings(content: string): string {
 
   const lines = normalized.split("\n")
   const result: string[] = []
-  let previousWasDemotedH6 = false
-  let previousWasRemovedEmptyH6 = false
+  let needBlankLineBeforeNextContent = false
+  let skipNextBlankLine = false
+
+  const ensureBlankLineIfNeeded = () => {
+    if (
+      needBlankLineBeforeNextContent &&
+      result.length > 0 &&
+      result[result.length - 1].trim() !== ""
+    ) {
+      result.push("")
+    }
+    needBlankLineBeforeNextContent = false
+    skipNextBlankLine = false
+  }
 
   for (let i = 0; i < lines.length; ) {
     const heading = headingByStartLine.get(i)
 
     if (!heading) {
-      if (previousWasRemovedEmptyH6 && lines[i].trim() === "") {
-        previousWasRemovedEmptyH6 = false
+      if (lines[i].trim() === "") {
+        if (skipNextBlankLine) {
+          skipNextBlankLine = false
+          i += 1
+          continue
+        }
+        needBlankLineBeforeNextContent = false
+        result.push(lines[i])
         i += 1
         continue
       }
-      if (previousWasDemotedH6 && lines[i].trim() !== "") {
-        result.push("")
-      }
-      previousWasDemotedH6 = false
-      previousWasRemovedEmptyH6 = false
+
+      ensureBlankLineIfNeeded()
       result.push(lines[i])
       i += 1
       continue
     }
 
     if (heading.level < 6) {
-      if (previousWasDemotedH6 && result.length > 0 && result[result.length - 1].trim() !== "") {
-        result.push("")
-      }
+      ensureBlankLineIfNeeded()
 
       if (heading.isSetext) {
         const headingText = heading.text.replace(/\s*\n\s*/g, " ").trim()
@@ -259,8 +274,6 @@ export function normalizeMarkdownHeadings(content: string): string {
         result.push(lines[i].replace(/^(\s{0,3})(#{1,5})(?=[ \t]|$)/, "$1#$2"))
       }
 
-      previousWasDemotedH6 = false
-      previousWasRemovedEmptyH6 = false
       i = heading.endLine
       continue
     }
@@ -271,15 +284,14 @@ export function normalizeMarkdownHeadings(content: string): string {
         result.push("")
       }
       result.push(boldLine)
-      previousWasDemotedH6 = true
-      previousWasRemovedEmptyH6 = false
+      needBlankLineBeforeNextContent = true
+      skipNextBlankLine = false
     } else {
-      // 空 H6 不生成 ****，且避免制造连续空行
-      if (result.length > 0 && result[result.length - 1].trim() !== "") {
-        result.push("")
-      }
-      previousWasDemotedH6 = false
-      previousWasRemovedEmptyH6 = true
+      // 空 H6 不生成 ****：延迟到后面真正出现非空内容时再补空行，避免末尾产生多余空行；
+      // 若上方已有空行则跳过紧随其后的重复空行
+      const hasLeadingBlank = result.length > 0 && result[result.length - 1].trim() === ""
+      needBlankLineBeforeNextContent = result.length > 0 && !hasLeadingBlank
+      skipNextBlankLine = hasLeadingBlank
     }
 
     i = heading.endLine

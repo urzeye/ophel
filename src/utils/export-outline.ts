@@ -84,21 +84,15 @@ export function createOutlineTextFromExportMessages(
   options: ExportMessagesOutlineOptions,
 ): ExportMessagesOutlineResult {
   const maxHeadingLevel = clampHeadingLevel(options.maxHeadingLevel)
-  const hasVisibleUserQueries =
-    options.includeUserQueries &&
-    messages.some(
-      (message) =>
-        message.role.toLowerCase() === "user" &&
-        isNonEmptyUserQueryText(normalizeOutlineText(message.content)),
-    )
-
   const lines: string[] = []
   let userQueryCount = 0
   let pendingHeadings: ExportOutlineItem[] = []
 
   const flushPendingHeadings = () => {
     if (pendingHeadings.length === 0) return
-    lines.push(...formatHeadingGroup(pendingHeadings, maxHeadingLevel, hasVisibleUserQueries))
+    // 仅当当前标题组确实跟在已输出的 # Qn. 用户提问之后时，才对含 H1 的组顺延降级，
+    // 避免开场 AI 回复的标题在没有父级 # Qn. 时悬空缩进为 H2
+    lines.push(...formatHeadingGroup(pendingHeadings, maxHeadingLevel, userQueryCount > 0))
     pendingHeadings = []
   }
 
@@ -171,7 +165,6 @@ export function createOutlineTextFromOutlineTree(
 
   nodes.forEach(traverse)
 
-  const hasVisibleUserQueries = entries.some((entry) => entry.isUserQuery)
   const lines: string[] = []
   let userQueryCount = 0
   let pendingHeadings: ExportOutlineItem[] = []
@@ -179,7 +172,7 @@ export function createOutlineTextFromOutlineTree(
   const flushPendingHeadings = () => {
     if (pendingHeadings.length === 0) return
     lines.push(
-      ...formatHeadingGroup(pendingHeadings, MAX_MARKDOWN_HEADING_LEVEL, hasVisibleUserQueries),
+      ...formatHeadingGroup(pendingHeadings, MAX_MARKDOWN_HEADING_LEVEL, userQueryCount > 0),
     )
     pendingHeadings = []
   }
