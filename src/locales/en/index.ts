@@ -805,8 +805,7 @@ export const en = {
   exportAttachmentsLabel: "Attachments",
   exportPackagingLabel: "Markdown Export Method",
   exportDefaultFormatLabel: "Default Export Format",
-  exportDefaultFormatDesc:
-    "Sets the default format used by the keyboard shortcut and quick export (Markdown / JSON / TXT / HTML)",
+  exportDefaultFormatDesc: "Sets the default format used by the keyboard shortcut and quick export",
 
   exportPackagingDesc:
     "ZIP includes the Markdown file and downloadable attachments, storing attachments in assets and referencing them with relative paths.",

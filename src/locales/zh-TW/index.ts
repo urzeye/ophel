@@ -1720,7 +1720,7 @@ export const zhTW = {
   exportAttachmentsLabel: "附件",
   exportPackagingLabel: "Markdown 匯出方式",
   exportDefaultFormatLabel: "預設匯出格式",
-  exportDefaultFormatDesc: "設定快捷鍵與一鍵匯出使用的預設格式（Markdown / JSON / TXT / HTML）",
+  exportDefaultFormatDesc: "設定快捷鍵與一鍵匯出使用的預設格式",
 
   exportPackagingDesc:
     "ZIP 會包含 Markdown 檔案與可下載附件，" + "附件放入 assets 並以相對路徑引用",

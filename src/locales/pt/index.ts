@@ -1899,7 +1899,7 @@ Dê o código e depois um resumo de melhorias.`,
   exportPackagingLabel: "Método de exportação Markdown",
   exportDefaultFormatLabel: "Formato de exportação padrão",
   exportDefaultFormatDesc:
-    "Define o formato padrão usado pelo atalho de teclado e pela exportação rápida (Markdown / JSON / TXT / HTML)",
+    "Define o formato padrão usado pelo atalho de teclado e pela exportação rápida",
 
   exportPackagingDesc:
     "O ZIP inclui o arquivo Markdown e anexos baixáveis, salva os anexos em assets e os referencia com caminhos relativos.",

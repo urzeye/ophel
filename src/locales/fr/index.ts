@@ -1780,7 +1780,7 @@ Donnez le code puis un résumé des améliorations.`,
   exportPackagingLabel: "Méthode d'export Markdown",
   exportDefaultFormatLabel: "Format d'export par défaut",
   exportDefaultFormatDesc:
-    "Définit le format par défaut utilisé par le raccourci clavier et l'export rapide (Markdown / JSON / TXT / HTML)",
+    "Définit le format par défaut utilisé par le raccourci clavier et l'export rapide",
 
   exportPackagingDesc:
     "ZIP inclut le fichier Markdown et les pièces jointes téléchargeables, place les pièces jointes dans assets et les référence avec des chemins relatifs.",

@@ -365,7 +365,8 @@ const normalizeExportSettings = (
     exportSettings?.defaultExportFormat === "markdown" ||
     exportSettings?.defaultExportFormat === "json" ||
     exportSettings?.defaultExportFormat === "txt" ||
-    exportSettings?.defaultExportFormat === "html"
+    exportSettings?.defaultExportFormat === "html" ||
+    exportSettings?.defaultExportFormat === "image"
       ? exportSettings.defaultExportFormat
       : defaults.defaultExportFormat
   const exportShowIndex =

@@ -1771,7 +1771,7 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   exportPackagingLabel: "Markdown-Exportmethode",
   exportDefaultFormatLabel: "Standard-Exportformat",
   exportDefaultFormatDesc:
-    "Legt das Standardformat fest, das die Tastenkombination und der Schnellexport verwenden (Markdown / JSON / TXT / HTML)",
+    "Legt das Standardformat fest, das die Tastenkombination und der Schnellexport verwenden",
 
   exportPackagingDesc:
     "ZIP enthält die Markdown-Datei und herunterladbare Anhänge, speichert Anhänge in assets und referenziert sie relativ.",

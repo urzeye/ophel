@@ -1768,7 +1768,7 @@ Dame el código y luego un resumen de mejoras.`,
   exportPackagingLabel: "Método de exportación Markdown",
   exportDefaultFormatLabel: "Formato de exportación predeterminado",
   exportDefaultFormatDesc:
-    "Establece el formato predeterminado que usan el atajo de teclado y la exportación rápida (Markdown / JSON / TXT / HTML)",
+    "Establece el formato predeterminado que usan el atajo de teclado y la exportación rápida",
 
   exportPackagingDesc:
     "ZIP incluye el archivo Markdown y los adjuntos descargables, guarda los adjuntos en assets y los referencia con rutas relativas.",

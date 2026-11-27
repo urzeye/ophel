@@ -1746,8 +1746,7 @@ export const ko = {
   exportAttachmentsLabel: "첨부 파일",
   exportPackagingLabel: "Markdown 내보내기 방식",
   exportDefaultFormatLabel: "기본 내보내기 형식",
-  exportDefaultFormatDesc:
-    "단축키와 빠른 내보내기에 사용할 기본 형식을 설정합니다 (Markdown / JSON / TXT / HTML)",
+  exportDefaultFormatDesc: "단축키와 빠른 내보내기에 사용할 기본 형식을 설정합니다",
 
   exportPackagingDesc:
     "ZIP에는 Markdown 파일과 다운로드 가능한 첨부 파일이 포함되며, 첨부 파일은 assets에 저장되고 상대 경로로 참조됩니다",

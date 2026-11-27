@@ -1801,8 +1801,7 @@ export const ja = {
   exportAttachmentsLabel: "添付ファイル",
   exportPackagingLabel: "Markdownエクスポート方式",
   exportDefaultFormatLabel: "デフォルトのエクスポート形式",
-  exportDefaultFormatDesc:
-    "ショートカットキーとワンクリック書き出しで使う既定の形式を設定します（Markdown / JSON / TXT / HTML）",
+  exportDefaultFormatDesc: "ショートカットキーとワンクリック書き出しで使う既定の形式を設定します",
 
   exportPackagingDesc:
     "ZIPにはMarkdownファイルとダウンロード可能な添付ファイルが含まれ、添付ファイルはassetsに保存され相対パスで参照されます",

@@ -786,6 +786,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
     { value: "json", label: t("exportToJSON") },
     { value: "txt", label: t("exportToTXT") },
     { value: "html", label: t("exportToHTML") },
+    { value: "image", label: t("exportToImage") },
   ]
   const exportStyle = settings.export?.exportStyle === "clean" ? "clean" : "standard"
   const exportStyleOptions = [

@@ -827,7 +827,7 @@ export const it = {
   exportPackagingLabel: "Metodo di esportazione Markdown",
   exportDefaultFormatLabel: "Formato di esportazione predefinito",
   exportDefaultFormatDesc:
-    "Imposta il formato predefinito usato dalla scorciatoia da tastiera e dall'esportazione rapida (Markdown / JSON / TXT / HTML)",
+    "Imposta il formato predefinito usato dalla scorciatoia da tastiera e dall'esportazione rapida",
 
   exportPackagingDesc:
     "ZIP include il file Markdown e gli allegati scaricabili, salvando gli allegati in assets e referenziandoli con percorsi relativi.",

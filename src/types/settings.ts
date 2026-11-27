@@ -72,7 +72,7 @@ export interface ExportSettings {
   exportStyle?: ExportStyle // 导出样式：standard 保留装饰，clean 去除装饰 emoji
 }
 
-export type ExportFormatSetting = "markdown" | "json" | "txt" | "html"
+export type ExportFormatSetting = "markdown" | "json" | "txt" | "html" | "image"
 
 // AI Studio 设置
 export interface AIStudioSettings {

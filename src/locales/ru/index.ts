@@ -1929,8 +1929,7 @@ export const ru = {
   exportAttachmentsLabel: "Вложения",
   exportPackagingLabel: "Способ экспорта Markdown",
   exportDefaultFormatLabel: "Формат экспорта по умолчанию",
-  exportDefaultFormatDesc:
-    "Задает формат по умолчанию для сочетания клавиш и быстрого экспорта (Markdown / JSON / TXT / HTML)",
+  exportDefaultFormatDesc: "Задает формат по умолчанию для сочетания клавиш и быстрого экспорта",
 
   exportPackagingDesc:
     "ZIP включает файл Markdown и загружаемые вложения, сохраняет вложения в assets и ссылается на них относительными путями.",

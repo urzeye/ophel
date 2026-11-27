@@ -977,7 +977,7 @@ export const zhCN = {
   exportAttachmentsLabel: "附件",
   exportPackagingLabel: "Markdown 导出方式",
   exportDefaultFormatLabel: "默认导出格式",
-  exportDefaultFormatDesc: "设置快捷键与一键导出使用的默认格式（Markdown / JSON / TXT / HTML）",
+  exportDefaultFormatDesc: "设置快捷键与一键导出使用的默认格式",
 
   exportPackagingDesc:
     "ZIP 会包含 Markdown 文件和可下载附件，" + "附件放入 assets 并用相对路径引用",

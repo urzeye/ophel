@@ -658,7 +658,8 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
   const defaultFormat: ExportFormat =
     defaultSettingFormat === "html" ||
     defaultSettingFormat === "json" ||
-    defaultSettingFormat === "txt"
+    defaultSettingFormat === "txt" ||
+    defaultSettingFormat === "image"
       ? defaultSettingFormat
       : "markdown"
 
@@ -697,7 +698,10 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
     const current = useSettingsStore.getState().settings
     const formatSetting = current.export?.defaultExportFormat ?? "markdown"
     setSelectedFormat(
-      formatSetting === "html" || formatSetting === "json" || formatSetting === "txt"
+      formatSetting === "html" ||
+        formatSetting === "json" ||
+        formatSetting === "txt" ||
+        formatSetting === "image"
         ? formatSetting
         : "markdown",
     )
