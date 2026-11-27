@@ -7,6 +7,7 @@ import { build as viteBuild, defineConfig, type Plugin } from "vite"
 import monkey from "vite-plugin-monkey"
 
 import { rewriteUserscriptCssHighlighter } from "./scripts/userscript-highlighter"
+import { createUserscriptStyleTemplate } from "./scripts/userscript-text-resources"
 
 import {
   USERSCRIPT_RESOURCE_DEFINITIONS,
@@ -33,6 +34,8 @@ import { darkPresets } from "./src/utils/themes/dark"
 
 const isUserscriptDevelopmentBuild =
   process.env.NODE_ENV === "development" || Boolean(process.env.USERSCRIPT_ASSET_BASE_URL)
+
+const userscriptStyleTemplate = createUserscriptStyleTemplate(__dirname)
 
 // ========== Dynamic Metadata Loading ==========
 const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, "package.json"), "utf-8"))
@@ -214,6 +217,10 @@ function readUserscriptAssetContent(
 
   if (key === "themePresets") {
     return JSON.stringify({ lightPresets, darkPresets })
+  }
+
+  if (key === "customStyleTemplate") {
+    return userscriptStyleTemplate.content
   }
 
   if (key === "markdownPreviewStyles") {
@@ -600,6 +607,7 @@ const userscriptLocaleResourceUrls = getUserscriptLocaleResourceUrls(userscriptL
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
+    userscriptStyleTemplate.plugin,
     {
       name: "ophel-userscript-css-highlighter",
       enforce: "pre",

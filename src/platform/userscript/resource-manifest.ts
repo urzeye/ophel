@@ -22,6 +22,10 @@ export const USERSCRIPT_SUPPORTED_LOCALES = [
 export type UserscriptLocale = (typeof USERSCRIPT_SUPPORTED_LOCALES)[number]
 
 export const USERSCRIPT_RESOURCE_DEFINITIONS = {
+  customStyleTemplate: {
+    metaName: "ophelCustomStyleTemplate",
+    fileName: "ophel.custom-style-template.css",
+  },
   themePresets: {
     metaName: "ophelThemePresets",
     fileName: "ophel.theme-presets.json",
