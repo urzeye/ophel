@@ -14,6 +14,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **Image export** — Share conversations as PNG/JPG images with automatic themes, custom watermarks, adjustable content and appearance, preview zoom, and saved export preferences. (#1073, #1078, #1084)
 - **Muse SitePack** — Adds outlines, basic export, prompt insertion, width controls, and Zen Mode to Muse main and side chats, and fixes return anchors when scrolling in reverse. (#1083)
 
+### ✨ Improvements
+
+- **Markdown export and outline heading hierarchy** — Exported and copied Markdown chats and outlines now use top-level headings for turns, place metadata in a quote block, and shift message headings down when needed so outlines stay nested. (#1085, #1087)
+
 ### 🐛 Bug Fixes
 
 - **Kimi table copying and Markdown export** — Fixed duplicate table copy buttons, incomplete copied tables, and broken tables and paragraph breaks in exported conversations. (#1079, #1080)

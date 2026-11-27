@@ -9,6 +9,7 @@ import { platform } from "~platform"
 import type { ExportStyle } from "~types/settings"
 import { getCurrentLang, getCurrentLocale, t } from "~utils/i18n"
 import { createMarkdownIt } from "~utils/markdown"
+import { normalizeMarkdownHeadings } from "~utils/markdown-headings"
 import { showToast } from "~utils/toast"
 
 // 使用 String.fromCodePoint 在运行时生成 emoji
@@ -747,45 +748,49 @@ export function formatToMarkdown(metadata: ExportMetadata, messages: ExportMessa
   // clean 样式不输出装饰 emoji，面向专业场景
   const isClean = metadata.style === "clean"
   const exportEmoji = isClean ? "" : `${EMOJI_EXPORT} `
+  const toSingleLine = (value: string): string => value.replace(/\r?\n/g, " ").trim()
+  const safeTitle = toSingleLine(metadata.title)
 
-  // 元数据头（头部结构分隔线固定为 ---，自定义分割线只作用于消息之间）
-  lines.push(`# ${metadata.title}`)
+  // 元数据头：保留一级会话标题，元信息使用引用块避免占用 ## 标题层级污染目录；
+  // 头部结构分隔线固定为 ---，自定义分割线只作用于消息之间
+  lines.push(`# ${safeTitle}`)
+  lines.push("")
+  lines.push(`> **${exportEmoji}${t("exportMetaTitle")}**`)
+  lines.push(">")
+  lines.push(`> - **${t("exportMetaConvTitle")}**: ${safeTitle}`)
+  lines.push(`> - **${t("exportMetaTime")}**: ${toSingleLine(metadata.exportTime)}`)
+  lines.push(`> - **${t("exportMetaSource")}**: ${toSingleLine(metadata.source)}`)
+  lines.push(`> - **${t("exportMetaUrl")}**: ${toSingleLine(metadata.url)}`)
   lines.push("")
   lines.push("---")
   lines.push("")
-  lines.push(`## ${exportEmoji}${t("exportMetaTitle")}`)
-  lines.push(`- **${t("exportMetaConvTitle")}**: ${metadata.title}`)
-  lines.push(`- **${t("exportMetaTime")}**: ${metadata.exportTime}`)
-  lines.push(`- **${t("exportMetaSource")}**: ${metadata.source}`)
-  lines.push(`- **${t("exportMetaUrl")}**: ${metadata.url}`)
-  lines.push("")
-  lines.push("---")
-  lines.push("")
 
-  // 对话内容
+  // 对话内容：每轮角色使用一级标题，正文仅在含 H1 时顺延降级（H1~H5 -> H2~H6，H6 -> 加粗）
   let turnNumber = 0
   normalizedMessages.forEach((msg) => {
+    const normalizedContent = normalizeMarkdownHeadings(msg.content)
+
     if (msg.role === "user") {
       turnNumber += 1
-      const userLabel = metadata.customUserName || t("exportUserLabel")
+      const userLabel = toSingleLine(metadata.customUserName || t("exportUserLabel"))
       const titlePrefix = metadata.showIndex ? `${turnNumber}. ` : ""
       const userEmoji = isClean ? "" : `${EMOJI_USER} `
-      lines.push(`## ${titlePrefix}${userEmoji}${userLabel}`)
+      lines.push(`# ${titlePrefix}${userEmoji}${userLabel}`)
       lines.push("")
-      lines.push(msg.content)
+      lines.push(normalizedContent)
       lines.push("")
       if (divider) {
         lines.push(divider)
         lines.push("")
       }
     } else {
-      const modelLabel = metadata.customModelName || metadata.source
+      const modelLabel = toSingleLine(metadata.customModelName || metadata.source)
       // 开场 assistant（尚未出现 user 轮次）不编号，避免与首轮 1 重复
       const titlePrefix = metadata.showIndex && turnNumber > 0 ? `${turnNumber}. ` : ""
       const assistantEmoji = isClean ? "" : `${EMOJI_ASSISTANT} `
-      lines.push(`## ${titlePrefix}${assistantEmoji}${modelLabel}`)
+      lines.push(`# ${titlePrefix}${assistantEmoji}${modelLabel}`)
       lines.push("")
-      lines.push(msg.content)
+      lines.push(normalizedContent)
       lines.push("")
       if (divider) {
         lines.push(divider)

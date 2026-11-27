@@ -43,6 +43,7 @@ import {
   htmlToMarkdown,
 } from "~utils/exporter"
 import { getAllLocalizedTexts, t } from "~utils/i18n"
+import { normalizeMarkdownHeadings } from "~utils/markdown-headings"
 import { EVENT_PAGE_URL_CHANGE } from "~utils/messaging"
 import { getTopScrollPosition } from "~utils/scroll-helper"
 import { createSiteScopedStorageKey, resolvePersistedSiteInstanceKey } from "~utils/site-identity"
@@ -2012,14 +2013,15 @@ export class ConversationManager {
   }
 
   private formatSegmentBody(segment: ConversationExportSegment): string {
-    // 分段正文绕过 formatTo* 系列函数，需要在这里补一遍思维链聚合清洗，
+    // 分段正文绕过 formatTo* 系列函数，需要在这里补一遍思维链聚合清洗与标题层级标准化，
     // 保证分段导出与整篇导出共享同一条清洗管道
-    return consolidateThoughtBlocks(
+    const consolidated = consolidateThoughtBlocks(
       this.getSegmentReplyMessages(segment)
         .map((message) => message.content.trim())
         .filter(Boolean)
         .join("\n\n"),
     ).trim()
+    return normalizeMarkdownHeadings(consolidated)
   }
 
   private formatSingleSegmentMarkdown(
@@ -2029,7 +2031,7 @@ export class ConversationManager {
     const lines = [
       formatToMarkdown(this.createSegmentMetadata(draft, segment), []).trimEnd(),
       "",
-      `## ${segment.index}. ${segment.exportTitle}`,
+      `# ${segment.index}. ${segment.exportTitle}`,
     ]
     const body = this.formatSegmentBody(segment)
 
@@ -2047,7 +2049,7 @@ export class ConversationManager {
     const lines = [formatToMarkdown(draft.metadata, []).trimEnd()]
 
     segments.forEach((segment) => {
-      lines.push("", `## ${segment.index}. ${segment.exportTitle}`)
+      lines.push("", `# ${segment.index}. ${segment.exportTitle}`)
       const body = this.formatSegmentBody(segment)
 
       if (body) {

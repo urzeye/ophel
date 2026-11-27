@@ -6,6 +6,28 @@ type MarkdownItLike = {
   render: (content: string) => string
 }
 
+export type CommonmarkTokenLike = {
+  type: string
+  tag: string
+  level: number
+  markup: string
+  content: string
+  map: [number, number] | null
+  children?: CommonmarkTokenLike[] | null
+}
+
+export type CommonmarkParserLike = {
+  block: {
+    parse: (
+      src: string,
+      md: CommonmarkParserLike,
+      env: Record<string, unknown>,
+      outTokens: CommonmarkTokenLike[],
+    ) => void
+  }
+  parseInline: (src: string, env: Record<string, unknown>) => CommonmarkTokenLike[]
+}
+
 type MarkdownVendor = {
   highlightCss: (code: string) => string
   renderMarkdown: (
@@ -18,6 +40,7 @@ type MarkdownVendor = {
     linkGithubReferences?: boolean,
     mathRenderer?: (content: string, displayMode: boolean) => string,
   ) => MarkdownItLike
+  createCommonmarkParser: () => CommonmarkParserLike
 }
 
 function getMarkdownVendor(): MarkdownVendor {
@@ -59,6 +82,14 @@ export const createMarkdownIt = (
     throw new Error("[Ophel] Markdown vendor createMarkdownIt is missing")
   }
   return vendor.createMarkdownIt(enableMath, linkGithubReferences, mathRenderer)
+}
+
+export const createCommonmarkParser = (): CommonmarkParserLike => {
+  const vendor = getMarkdownVendor()
+  if (typeof vendor.createCommonmarkParser !== "function") {
+    throw new Error("[Ophel] Markdown vendor createCommonmarkParser is missing")
+  }
+  return vendor.createCommonmarkParser()
 }
 
 export const getHighlightStyles = (): string => {

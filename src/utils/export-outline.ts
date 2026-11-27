@@ -1,4 +1,5 @@
 import type { ExportMessage } from "~utils/exporter"
+import { extractTopLevelMarkdownHeadings, formatBoldMarkdownLine } from "~utils/markdown-headings"
 import { cleanOutlineTitle } from "~utils/outline-text"
 
 export interface ExportMessagesOutlineOptions {
@@ -41,50 +42,36 @@ function normalizeOutlineText(value: string): string {
   return cleanOutlineTitle(value)
 }
 
-function extractMarkdownHeadings(content: string): ExportOutlineItem[] {
-  const items: ExportOutlineItem[] = []
-  const lines = content.replace(/\r\n?/g, "\n").split("\n")
-  let fenceMarker: { char: string; length: number } | null = null
-
-  for (const line of lines) {
-    const fenceMatch = /^\s{0,3}(```+|~~~+)/.exec(line)
-    if (fenceMatch) {
-      const marker = fenceMatch[1]
-      const markerChar = marker[0]
-      if (!fenceMarker) {
-        fenceMarker = { char: markerChar, length: marker.length }
-      } else if (fenceMarker.char === markerChar && marker.length >= fenceMarker.length) {
-        fenceMarker = null
-      }
-      continue
-    }
-
-    if (fenceMarker) continue
-
-    const headingMatch = /^\s{0,3}(#{1,6})(?:\s+|$)(.*?)(?:\s+#+\s*)?$/.exec(line)
-    if (!headingMatch) continue
-
-    const level = headingMatch[1].length
-    const text = normalizeOutlineText(headingMatch[2])
-    if (!text) continue
-
-    items.push({ level, text })
-  }
-
-  return items
+function isNonEmptyUserQueryText(text: string): boolean {
+  // 跳过空白与不可见字符（含快速引用标记残留的 U+2063 Invisible Separator）
+  return Boolean(text && text.replace(/[\s\u2063]/g, "").length > 0)
 }
 
 function getMarkdownHeadingPrefix(level: number): string {
   return "#".repeat(Math.min(MAX_MARKDOWN_HEADING_LEVEL, Math.max(1, level)))
 }
 
-function formatAssistantHeadings(headings: ExportOutlineItem[], maxHeadingLevel: number): string[] {
+function formatHeadingOutlineLine(level: number, text: string, shift: number): string {
+  const effectiveLevel = level + shift
+  if (effectiveLevel > MAX_MARKDOWN_HEADING_LEVEL) {
+    return formatBoldMarkdownLine(text)
+  }
+  return `${getMarkdownHeadingPrefix(effectiveLevel)} ${text}`
+}
+
+function formatHeadingGroup(
+  headings: ExportOutlineItem[],
+  maxHeadingLevel: number,
+  shiftWhenHasH1: boolean,
+): string[] {
   if (headings.length === 0 || maxHeadingLevel < 1) return []
+
+  const shift = shiftWhenHasH1 && headings.some((item) => item.level === 1) ? 1 : 0
 
   return headings.flatMap((item) => {
     if (item.level > maxHeadingLevel) return []
 
-    return [`${getMarkdownHeadingPrefix(item.level)} ${item.text}`]
+    return [formatHeadingOutlineLine(item.level, item.text, shift)]
   })
 }
 
@@ -99,6 +86,15 @@ export function createOutlineTextFromExportMessages(
   const maxHeadingLevel = clampHeadingLevel(options.maxHeadingLevel)
   const lines: string[] = []
   let userQueryCount = 0
+  let pendingHeadings: ExportOutlineItem[] = []
+
+  const flushPendingHeadings = () => {
+    if (pendingHeadings.length === 0) return
+    // 仅当当前标题组确实跟在已输出的 # Qn. 用户提问之后时，才对含 H1 的组顺延降级，
+    // 避免开场 AI 回复的标题在没有父级 # Qn. 时悬空缩进为 H2
+    lines.push(...formatHeadingGroup(pendingHeadings, maxHeadingLevel, userQueryCount > 0))
+    pendingHeadings = []
+  }
 
   for (const message of messages) {
     const role = message.role.toLowerCase()
@@ -107,17 +103,23 @@ export function createOutlineTextFromExportMessages(
       if (!options.includeUserQueries) continue
 
       const text = normalizeOutlineText(message.content)
-      // Skip empty or whitespace-only content (including invisible unicode characters)
-      if (text && text.replace(/[\s⁣]/g, "").length > 0) {
+      if (isNonEmptyUserQueryText(text)) {
+        flushPendingHeadings()
         userQueryCount += 1
         lines.push(formatUserQueryHeading(text, userQueryCount))
       }
       continue
     }
 
-    const headings = extractMarkdownHeadings(message.content)
-    lines.push(...formatAssistantHeadings(headings, maxHeadingLevel))
+    const headings: ExportOutlineItem[] = extractTopLevelMarkdownHeadings(message.content).flatMap(
+      (heading) => {
+        const text = normalizeOutlineText(heading.text)
+        return text ? [{ level: heading.level, text }] : []
+      },
+    )
+    pendingHeadings.push(...headings)
   }
+  flushPendingHeadings()
 
   if (lines.length === 0) {
     return { text: "", count: 0 }
@@ -133,8 +135,13 @@ export function createOutlineTextFromOutlineTree(
   nodes: OutlineTextNode[],
   options: OutlineTextTreeOptions,
 ): ExportMessagesOutlineResult {
-  const lines: string[] = []
-  let userQueryCount = 0
+  type FlatEntry = {
+    isUserQuery: boolean
+    level: number
+    text: string
+  }
+
+  const entries: FlatEntry[] = []
 
   const traverse = (node: OutlineTextNode) => {
     const included = options.isIncluded ? options.isIncluded(node) : true
@@ -144,12 +151,11 @@ export function createOutlineTextFromOutlineTree(
 
       if (text) {
         if (node.isUserQuery) {
-          if (options.includeUserQueries) {
-            userQueryCount += 1
-            lines.push(formatUserQueryHeading(text, userQueryCount))
+          if (options.includeUserQueries && isNonEmptyUserQueryText(text)) {
+            entries.push({ isUserQuery: true, level: USER_QUERY_HEADING_LEVEL, text })
           }
         } else {
-          lines.push(`${getMarkdownHeadingPrefix(node.level)} ${text}`)
+          entries.push({ isUserQuery: false, level: node.level, text })
         }
       }
     }
@@ -158,6 +164,29 @@ export function createOutlineTextFromOutlineTree(
   }
 
   nodes.forEach(traverse)
+
+  const lines: string[] = []
+  let userQueryCount = 0
+  let pendingHeadings: ExportOutlineItem[] = []
+
+  const flushPendingHeadings = () => {
+    if (pendingHeadings.length === 0) return
+    lines.push(
+      ...formatHeadingGroup(pendingHeadings, MAX_MARKDOWN_HEADING_LEVEL, userQueryCount > 0),
+    )
+    pendingHeadings = []
+  }
+
+  for (const entry of entries) {
+    if (entry.isUserQuery) {
+      flushPendingHeadings()
+      userQueryCount += 1
+      lines.push(formatUserQueryHeading(entry.text, userQueryCount))
+    } else {
+      pendingHeadings.push({ level: entry.level, text: entry.text })
+    }
+  }
+  flushPendingHeadings()
 
   if (lines.length === 0) {
     return { text: "", count: 0 }

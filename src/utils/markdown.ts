@@ -190,6 +190,8 @@ const githubReferenceRule: MarkdownItInlineRule = (state, silent) => {
 
 export type MarkdownMathRenderer = (content: string, displayMode: boolean) => string
 
+export const createCommonmarkParser = (): MarkdownIt => new MarkdownIt("commonmark")
+
 export const createMarkdownIt = (
   enableMath = false,
   linkGithubReferences = false,
