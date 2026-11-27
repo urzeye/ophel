@@ -174,7 +174,10 @@
           "assets/notification-sounds/*",
           "assets/userscript/*",
           "assets/support/*",
-          "KaTeX_*.woff2"
+          "KaTeX_*.woff2",
+          "settings.*.css",
+          "conversations.*.css",
+          "release-notes.*.css"
         ],
         "matches": [
           "<all_urls>"
