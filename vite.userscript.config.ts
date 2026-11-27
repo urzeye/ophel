@@ -6,6 +6,8 @@ import react from "@vitejs/plugin-react"
 import { build as viteBuild, defineConfig, type Plugin } from "vite"
 import monkey from "vite-plugin-monkey"
 
+import { rewriteUserscriptCssHighlighter } from "./scripts/userscript-highlighter"
+
 import {
   USERSCRIPT_RESOURCE_DEFINITIONS,
   USERSCRIPT_LOCALE_RESOURCE_DEFINITIONS,
@@ -598,6 +600,16 @@ const userscriptLocaleResourceUrls = getUserscriptLocaleResourceUrls(userscriptL
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
+    {
+      name: "ophel-userscript-css-highlighter",
+      enforce: "pre",
+      transform(code, id) {
+        const editor = path.resolve(__dirname, "src/tabs/options/components/CustomStyleEditorDialog.tsx")
+        if (id === editor || id === editor.replace(/\\/g, "/")) {
+          return rewriteUserscriptCssHighlighter(code)
+        }
+      },
+    },
     {
       name: "ophel-userscript-theme-presets",
       enforce: "pre",

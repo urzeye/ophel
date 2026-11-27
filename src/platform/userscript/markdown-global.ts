@@ -7,6 +7,7 @@ type MarkdownItLike = {
 }
 
 type MarkdownVendor = {
+  highlightCss: (code: string) => string
   renderMarkdown: (
     content: string,
     highlightVariables?: boolean,
@@ -35,6 +36,14 @@ export const renderMarkdown = (
   highlightVariables = true,
   options: RenderMarkdownOptions = {},
 ): string => getMarkdownVendor().renderMarkdown(content, highlightVariables, options)
+
+export function highlightCss(code: string): string {
+  const vendor = getMarkdownVendor()
+  if (typeof vendor.highlightCss !== "function") {
+    throw new Error("[Ophel] Markdown vendor highlightCss is missing")
+  }
+  return vendor.highlightCss(code)
+}
 
 /**
  * 创建 markdown-it 实例（用于 HTML 导出等场景）
