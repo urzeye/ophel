@@ -11,7 +11,7 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
   border: 1px solid var(--gh-border, rgba(0, 0, 0, 0.08));
   background: var(--gh-bg, #ffffff);
   color: var(--gh-text, #1f2937);
-  font-family: var(--gh-font-family, Inter, system-ui, -apple-system, sans-serif);
+  font-family: var(--gh-font-family, "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Microsoft YaHei", "PingFang SC", "Hiragino Sans SC", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif);
   animation: gh-image-export-dialog-in 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @keyframes gh-image-export-dialog-in {
@@ -134,7 +134,10 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
   padding: 0;
   min-width: 0;
 }
-.gh-image-export-all-controls:disabled { opacity: 0.55; }
+.gh-image-export-all-controls:disabled {
+  opacity: 0.55;
+  pointer-events: none;
+}
 .gh-image-export-primary-controls {
   display: flex;
   flex-direction: column;
@@ -161,7 +164,7 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
   align-items: stretch;
   gap: 3px;
   padding: 3px;
-  background: var(--gh-bg-secondary, #f3f4f6);
+  background: var(--gh-bg-secondary, #f9fafb);
   border: 1px solid var(--gh-border, #e5e7eb);
   border-radius: 8px;
 }
@@ -187,18 +190,21 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
   overflow-wrap: break-word;
   hyphens: auto;
   text-wrap: balance;
-  transition: background 150ms ease, color 150ms ease, box-shadow 150ms ease;
+  transition: background 150ms ease, color 150ms ease, box-shadow 150ms ease, transform 120ms ease;
 }
 .gh-image-export-choice:hover:not(:disabled):not([aria-pressed="true"]) {
   color: var(--gh-text, #1f2937);
   background: color-mix(in srgb, var(--gh-text, #1f2937) 6%, transparent);
+}
+.gh-image-export-choice:active:not(:disabled) {
+  transform: translateY(1px);
 }
 .gh-image-export-choice[aria-pressed="true"] {
   background: var(--gh-bg, #ffffff);
   color: var(--gh-primary-text, var(--gh-primary, #4285f4));
   font-weight: 600;
   box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.08),
+    var(--gh-shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.08)),
     0 0 0 1px color-mix(in srgb, var(--gh-primary, #4285f4) 24%, var(--gh-border, #d1d5db));
 }
 
@@ -237,55 +243,6 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
   line-height: 1.45;
   color: var(--gh-text-secondary, #6b7280);
 }
-.gh-image-export-switch {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  flex: 0 0 auto;
-  width: 32px;
-  height: 18px;
-}
-.gh-image-export-switch-input {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  opacity: 0;
-  cursor: inherit;
-}
-.gh-image-export-switch-track {
-  position: relative;
-  display: block;
-  width: 32px;
-  height: 18px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--gh-text-secondary, #6b7280) 32%, transparent);
-  transition: background-color 180ms ease;
-}
-.gh-image-export-switch-track::after {
-  content: "";
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: var(--gh-bg, #ffffff);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
-  transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1), background-color 180ms ease;
-}
-.gh-image-export-switch-input:checked + .gh-image-export-switch-track {
-  background: var(--gh-primary, #4285f4);
-}
-.gh-image-export-switch-input:checked + .gh-image-export-switch-track::after {
-  transform: translateX(14px);
-  background: var(--gh-text-on-primary, #ffffff);
-}
-.gh-image-export-switch-input:focus-visible + .gh-image-export-switch-track {
-  outline: 2px solid var(--gh-primary, #4285f4);
-  outline-offset: 2px;
-}
 
 /* 可折叠分组 */
 .gh-image-export-group {
@@ -316,6 +273,7 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
 }
 .gh-image-export-summary-title {
   min-width: 0;
+  flex: 1 1 auto;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -332,7 +290,7 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
   font-weight: 450;
   color: var(--gh-text-secondary, #6b7280);
   font-variant-numeric: tabular-nums;
-  max-width: 124px;
+  max-width: 112px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -407,10 +365,10 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
   color: var(--gh-text-tertiary, var(--gh-text-secondary, #8d94a1));
 }
 .gh-image-export-field input[type="text"]:hover:not(:disabled) {
-  border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 60%, var(--gh-input-border, #d1d5db));
+  border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 60%, var(--gh-input-border, var(--gh-border, #d1d5db)));
 }
 .gh-image-export-field input[type="text"]:focus {
-  outline: none;
+  outline: 2px solid transparent;
   border-color: var(--gh-primary, #4285f4);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--gh-primary, #4285f4) 18%, transparent);
 }
@@ -419,8 +377,8 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
   cursor: not-allowed;
 }
 .gh-image-export-inline-icon-btn {
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   flex: 0 0 auto;
   padding: 0;
   border: 1px solid var(--gh-border, #e5e7eb);
@@ -431,11 +389,14 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
+  transition: background 140ms ease, color 140ms ease, border-color 140ms ease, transform 120ms ease;
 }
 .gh-image-export-inline-icon-btn:hover:not(:disabled) {
   background: var(--gh-hover, #f3f4f6);
   color: var(--gh-text, #1f2937);
+}
+.gh-image-export-inline-icon-btn:active:not(:disabled) {
+  transform: translateY(1px);
 }
 
 /* 自定义滑块：双色填充轨道，兼容 Chrome 与 Firefox */
@@ -463,7 +424,7 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
   border-radius: 50%;
   background: var(--gh-bg, #ffffff);
   border: 2px solid var(--gh-primary, #4285f4);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--gh-shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.2));
   transition: transform 140ms ease, box-shadow 140ms ease;
 }
 .gh-image-export-range:hover::-webkit-slider-thumb {
@@ -475,7 +436,7 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
   border-radius: 50%;
   background: var(--gh-bg, #ffffff);
   border: 2px solid var(--gh-primary, #4285f4);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--gh-shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.2));
   box-sizing: border-box;
   transition: transform 140ms ease;
 }
@@ -503,8 +464,31 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
   background: var(--gh-bg-secondary, #f9fafb);
   border: 1px solid var(--gh-border, #e5e7eb);
 }
+.gh-image-export-watermark-empty-note {
+  margin: -4px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--gh-text-secondary, #6b7280);
+}
+.gh-image-export-watermark-params {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.gh-image-export-watermark-params:disabled {
+  opacity: 0.48;
+  pointer-events: none;
+}
 .gh-image-export-watermark-card .gh-image-export-options {
+  flex-wrap: wrap;
   background: var(--gh-bg-tertiary, color-mix(in srgb, var(--gh-bg-secondary, #f3f4f6) 65%, var(--gh-border, #e5e7eb)));
+}
+.gh-image-export-watermark-card .gh-image-export-choice {
+  flex: 1 1 108px;
 }
 .gh-image-export-watermark-card .gh-image-export-toggle {
   margin: 0 -4px;
@@ -531,11 +515,27 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
   display: inline-flex;
   align-items: center;
   gap: 7px;
+  min-height: 30px;
   padding: 4px 9px 4px 5px;
   border-radius: 6px;
   border: 1px solid var(--gh-input-border, var(--gh-border, #d1d5db));
   background: var(--gh-input-bg, var(--gh-bg, #ffffff));
   cursor: pointer;
+  box-sizing: border-box;
+}
+/* 透明原生取色器本身不可见，由外层容器承接键盘焦点环以符合 WCAG 2.4.7；支持 :has 时仅在键盘焦点显环 */
+.gh-image-export-color-picker:focus-within {
+  outline: 2px solid var(--gh-primary, #4285f4);
+  outline-offset: 2px;
+}
+@supports selector(:has(*)) {
+  .gh-image-export-color-picker:focus-within {
+    outline: none;
+  }
+  .gh-image-export-color-picker:has(input:focus-visible) {
+    outline: 2px solid var(--gh-primary, #4285f4);
+    outline-offset: 2px;
+  }
 }
 .gh-image-export-color-picker input[type="color"] {
   position: absolute;
@@ -560,19 +560,29 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
 .gh-image-export-swatches {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 .gh-image-export-swatch-btn {
+  position: relative;
   width: 18px;
   height: 18px;
   padding: 0;
   border-radius: 50%;
-  border: 1px solid color-mix(in srgb, var(--gh-text, #1f2937) 22%, transparent);
+  border: 1px solid color-mix(in srgb, var(--gh-text, #1f2937) 26%, transparent);
   cursor: pointer;
   transition: transform 140ms ease, box-shadow 140ms ease;
 }
-.gh-image-export-swatch-btn:hover {
+/* 扩展透明点击热区至 28px，保持视觉圆点精巧的同时满足可达性 */
+.gh-image-export-swatch-btn::after {
+  content: "";
+  position: absolute;
+  inset: -5px;
+}
+.gh-image-export-swatch-btn:hover:not(:disabled) {
   transform: scale(1.12);
+}
+.gh-image-export-swatch-btn:active:not(:disabled) {
+  transform: scale(0.95);
 }
 .gh-image-export-swatch-btn[aria-pressed="true"] {
   box-shadow: 0 0 0 2px var(--gh-bg, #ffffff), 0 0 0 3.5px var(--gh-primary, #4285f4);
@@ -586,10 +596,13 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
 .gh-image-export-reset {
   width: 100%;
   min-height: 34px;
+  padding-block: 6px;
   font-size: 13px;
   font-weight: 550;
+  line-height: 1.3;
   border-radius: 8px;
-  white-space: nowrap;
+  white-space: normal;
+  text-wrap: balance;
 }
 .gh-image-export-hint {
   margin: 8px 0 0;
@@ -624,7 +637,7 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
   gap: 2px;
   padding: 2px;
   border-radius: 8px;
-  background: var(--gh-bg-secondary, #f3f4f6);
+  background: var(--gh-bg-secondary, #f9fafb);
   border: 1px solid var(--gh-border, #e5e7eb);
 }
 .gh-image-export-zoom-btn {
@@ -640,22 +653,27 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
   cursor: pointer;
-  transition: background 140ms ease, color 140ms ease, box-shadow 140ms ease;
+  transition: background 140ms ease, color 140ms ease, box-shadow 140ms ease, transform 120ms ease;
 }
 .gh-image-export-zoom-btn:hover:not(:disabled):not([aria-pressed="true"]) {
   color: var(--gh-text, #1f2937);
   background: color-mix(in srgb, var(--gh-text, #1f2937) 6%, transparent);
 }
+.gh-image-export-zoom-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
 .gh-image-export-zoom-btn[aria-pressed="true"] {
   background: var(--gh-bg, #ffffff);
   color: var(--gh-text, #1f2937);
   font-weight: 600;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--gh-shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.08));
 }
 .gh-image-export-toolbar-right {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 6px 10px;
   margin-left: auto;
   min-width: 0;
 }
@@ -668,23 +686,30 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
 .gh-image-export-open-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 5px;
+  min-height: 28px;
   padding: 4px 10px;
   border-radius: 6px;
   border: 1px solid var(--gh-border, #e5e7eb);
   background: var(--gh-bg, #ffffff);
   color: var(--gh-text, #1f2937);
+  font: inherit;
   font-size: 12px;
   font-weight: 500;
   line-height: 1.35;
   text-decoration: none;
   white-space: nowrap;
   flex-shrink: 0;
-  transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
+  cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease, transform 120ms ease;
 }
-.gh-image-export-open-btn:hover {
+.gh-image-export-open-btn:hover:not(:disabled) {
   background: var(--gh-hover, #f3f4f6);
   border-color: color-mix(in srgb, var(--gh-text-secondary, #6b7280) 38%, var(--gh-border, #e5e7eb));
+}
+.gh-image-export-open-btn:active:not(:disabled) {
+  transform: translateY(1px);
 }
 
 /* 后台更新时的极细顶部进度条，不占位不闪屏 */
@@ -693,16 +718,19 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
   height: 0;
   z-index: 2;
 }
-.gh-image-export-update-bar progress {
+.gh-image-export-update-bar progress,
+.gh-image-export-update-bar .gh-image-export-indeterminate {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 2px;
+  display: block;
+}
+.gh-image-export-update-bar progress {
   appearance: none;
   border: 0;
   background: transparent;
-  display: block;
 }
 .gh-image-export-update-bar progress::-webkit-progress-bar {
   background: color-mix(in srgb, var(--gh-primary, #4285f4) 14%, transparent);
@@ -715,13 +743,34 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
   background: var(--gh-primary, #4285f4);
 }
 
+/* 不确定阶段滑动条：替代去外观后静止不动的原生 indeterminate progress */
+.gh-image-export-indeterminate {
+  position: relative;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 16%, transparent);
+}
+.gh-image-export-indeterminate::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 38%;
+  border-radius: inherit;
+  background: var(--gh-primary, #4285f4);
+  animation: gh-image-export-indeterminate 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+@keyframes gh-image-export-indeterminate {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(360%); }
+}
+
 .gh-image-export-preview {
   flex: 1;
   overflow: auto;
   padding: 0;
   min-width: 0;
   overscroll-behavior: contain;
-  background-color: color-mix(in srgb, var(--gh-bg-secondary, #f3f4f6) 55%, var(--gh-bg-tertiary, #e5e7eb));
+  background-color: color-mix(in srgb, var(--gh-bg-secondary, #f9fafb) 55%, var(--gh-bg-tertiary, var(--gh-hover, #e5e7eb)));
   background-image: radial-gradient(
     color-mix(in srgb, var(--gh-text, #1f2937) 9%, transparent) 1px,
     transparent 1px
@@ -753,7 +802,6 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
 .gh-image-export-preview figure {
   margin: 0;
   width: 100%;
-  max-width: 800px;
   transition: opacity 180ms ease;
   animation: gh-image-export-page-in 280ms cubic-bezier(0.16, 1, 0.3, 1) both;
   animation-delay: calc(var(--i, 0) * 50ms);
@@ -767,19 +815,18 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
   border-radius: 6px;
   overflow: hidden;
   background: transparent;
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.06),
-    0 14px 36px -10px rgba(0, 0, 0, 0.18);
+  box-shadow: var(--gh-shadow-lg, 0 14px 36px -10px rgba(0, 0, 0, 0.18));
   transition: box-shadow 180ms ease;
 }
 .gh-image-export-canvas-btn.is-fit { cursor: zoom-in; }
+.gh-image-export-canvas-btn.is-static { cursor: default; }
 .gh-image-export-canvas-btn.is-zoomed { cursor: zoom-out; }
 .gh-image-export-preview.is-pannable .gh-image-export-canvas-btn { cursor: grab; }
 .gh-image-export-preview.is-panning .gh-image-export-canvas-btn { cursor: grabbing; }
 .gh-image-export-canvas-btn:hover:not(:disabled) {
   box-shadow:
-    0 2px 4px rgba(0, 0, 0, 0.08),
-    0 20px 44px -10px rgba(0, 0, 0, 0.24);
+    0 2px 4px color-mix(in srgb, var(--gh-text, #000000) 10%, transparent),
+    var(--gh-shadow-lg, 0 20px 44px -10px rgba(0, 0, 0, 0.24));
 }
 .gh-image-export-preview img {
   display: block;
@@ -812,8 +859,8 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
   flex-shrink: 0;
 }
 .gh-image-export-caption-btn {
-  width: 26px;
-  height: 26px;
+  width: 32px;
+  height: 32px;
   padding: 0;
   border: 1px solid var(--gh-border, #e5e7eb);
   border-radius: 6px;
@@ -824,12 +871,15 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
   justify-content: center;
   text-decoration: none;
   cursor: pointer;
-  transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
+  transition: background 140ms ease, color 140ms ease, border-color 140ms ease, transform 120ms ease;
 }
 .gh-image-export-caption-btn:hover:not(:disabled) {
   background: var(--gh-hover, #f3f4f6);
   color: var(--gh-text, #1f2937);
   border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 40%, var(--gh-border, #e5e7eb));
+}
+.gh-image-export-caption-btn:active:not(:disabled) {
+  transform: translateY(1px);
 }
 @keyframes gh-image-export-page-in {
   from { opacity: 0; transform: translateY(10px) scale(0.99); }
@@ -839,6 +889,8 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
 /* 首次加载态：迷你页面骨架 + 真实进度 */
 .gh-image-export-state {
   min-height: 100%;
+  padding: 20px;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -854,9 +906,12 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
   color: var(--gh-text-secondary, #6b7280);
   overflow-wrap: break-word;
 }
-.gh-image-export-state progress {
+.gh-image-export-state progress,
+.gh-image-export-state .gh-image-export-indeterminate {
   width: min(220px, 80%);
   height: 4px;
+}
+.gh-image-export-state progress {
   appearance: none;
   border: 0;
   border-radius: 999px;
@@ -885,7 +940,7 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
   gap: 8px;
   background: var(--gh-bg, #ffffff);
   border: 1px solid var(--gh-border, #e5e7eb);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 16px 40px -16px rgba(0, 0, 0, 0.18);
+  box-shadow: var(--gh-shadow-lg, 0 16px 40px -16px rgba(0, 0, 0, 0.18));
   animation: gh-image-export-skeleton-in 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 .gh-image-export-skeleton span {
@@ -953,11 +1008,19 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
 }
 .gh-image-export-status {
   margin: 0;
-  flex: 1 1 180px;
+  flex: 1 1 200px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
   color: var(--gh-text-secondary, #6b7280);
   font-size: 12.5px;
   line-height: 1.45;
   font-variant-numeric: tabular-nums;
+}
+.gh-image-export-status-note {
+  color: var(--gh-text-tertiary, var(--gh-text-secondary, #8d94a1));
+  font-size: 12px;
 }
 .gh-image-export-actions {
   display: flex;
@@ -1000,7 +1063,7 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
   color: var(--gh-text-on-primary, #ffffff);
 }
 
-@media (max-width: 920px) {
+@media (max-width: 900px) {
   .gh-image-export-body {
     grid-template-columns: 296px minmax(0, 1fr);
   }
@@ -1017,21 +1080,24 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
     padding: 12px 16px;
     gap: 10px;
   }
+  /* 窄屏固定上方预览窗、下方控制区独立滚动，消除双层滚动打架与盲调 */
   .gh-image-export-body {
     display: flex;
     flex-direction: column;
-    overflow-y: auto;
+    overflow: hidden;
   }
   .gh-image-export-preview-pane {
     order: -1;
     flex: 0 0 auto;
-    height: min(340px, 42dvh);
-    min-height: 220px;
+    height: min(300px, 38dvh);
+    min-height: 180px;
     border-bottom: 1px solid var(--gh-border, #e5e7eb);
     overflow: hidden;
   }
   .gh-image-export-controls {
-    overflow: visible;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
     border-right: 0;
     padding: 14px 16px 18px;
   }
@@ -1050,6 +1116,8 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
     display: none;
   }
   .gh-image-export-open-btn {
+    min-width: 32px;
+    min-height: 32px;
     padding: 5px 7px;
   }
   .gh-image-export-actions {
@@ -1065,29 +1133,86 @@ export const IMAGE_EXPORT_DIALOG_CSS = `
 }
 
 @media (pointer: coarse) {
-  .gh-image-export-close { width: 44px; height: 44px; }
+  .gh-image-export-close,
+  .gh-image-export-inline-icon-btn,
+  .gh-image-export-caption-btn {
+    width: 44px;
+    height: 44px;
+  }
+  .gh-image-export-open-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
   .gh-image-export-choice,
   .gh-image-export-zoom-btn,
-  .gh-image-export-open-btn,
   .gh-image-export-actions .gh-dialog-btn,
   .gh-image-export-error-actions .gh-dialog-btn,
-  .gh-image-export-reset { min-height: 42px; }
-  .gh-image-export-toggle { min-height: 44px; padding-block: 10px; }
-  .gh-image-export-caption-btn { width: 34px; height: 34px; }
+  .gh-image-export-reset,
+  .gh-image-export-group summary {
+    min-height: 44px;
+  }
+  .gh-image-export-toggle {
+    min-height: 44px;
+    padding-block: 10px;
+  }
+  .gh-image-export-swatch-btn {
+    width: 24px;
+    height: 24px;
+  }
+  .gh-image-export-swatch-btn::after {
+    inset: -10px;
+  }
+  .gh-image-export-swatches {
+    gap: 14px;
+  }
+  .gh-image-export-range {
+    height: 8px;
+    margin: 14px 0 8px;
+  }
+  .gh-image-export-range::-webkit-slider-thumb {
+    width: 22px;
+    height: 22px;
+  }
+  .gh-image-export-range::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .gh-image-export-close,
   .gh-image-export-choice,
   .gh-image-export-toggle,
-  .gh-image-export-switch-track,
-  .gh-image-export-switch-track::after,
+  .gh-image-export-group summary,
   .gh-image-export-chevron,
+  .gh-image-export-field input[type="text"],
+  .gh-image-export-inline-icon-btn,
+  .gh-image-export-range::-webkit-slider-thumb,
+  .gh-image-export-range::-moz-range-thumb,
+  .gh-image-export-swatch-btn,
+  .gh-image-export-zoom-btn,
+  .gh-image-export-open-btn,
+  .gh-image-export-caption-btn,
   .gh-image-export-canvas-btn,
   .gh-image-export-preview,
-  .gh-image-export-preview figure { transition: none; }
+  .gh-image-export-preview figure,
+  .gh-image-export-update-bar progress::-webkit-progress-value,
+  .gh-image-export-state progress::-webkit-progress-value {
+    transition: none;
+  }
   .gh-dialog.gh-image-export-dialog,
   .gh-image-export-preview figure,
-  .gh-image-export-skeleton { animation: none; }
-  .gh-image-export-skeleton span::after { animation: none; content: none; }
+  .gh-image-export-skeleton {
+    animation: none;
+  }
+  .gh-image-export-skeleton span::after {
+    animation: none;
+    content: none;
+  }
+  .gh-image-export-indeterminate::after {
+    animation: none;
+    width: 50%;
+    transform: translateX(50%);
+  }
 }
 `

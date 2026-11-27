@@ -1167,7 +1167,9 @@ export const de = {
   imageExportBrandingHint: "Logo und Herkunft auf jedem Bild anzeigen.",
   imageExportPoweredBy: "Powered by Ophel Atlas",
   imageExportPreparing: "Layout, Bilder und Diagramme werden vorbereitet…",
+  imageExportApplying: "Format und Wasserzeichen werden angewendet…",
   imageExportProgress: "Bilder werden erstellt {current} / {total}…",
+  imageExportReadySingle: "1 Bild bereit.",
   imageExportReady: "Bilder bereit: {count}.",
   imageExportPage: "Bild {index} / {total} · {width} × {height}",
   imageExportOpenPreview: "Vollständiges Bild öffnen",
@@ -1177,6 +1179,8 @@ export const de = {
   imageExportCopied: "Kopiert",
   imageExportCopyHint:
     "Nur ein einzelnes PNG kann kopiert werden. Mehrere Bilder als ZIP herunterladen.",
+  imageExportCopyPngOnlyHint:
+    "Nur PNG-Bilder können kopiert werden. Zu PNG wechseln oder herunterladen.",
   imageExportCopyUnavailable:
     "Dieser Browser unterstützt das Kopieren von Bildern nicht. Zum Teilen herunterladen.",
   imageExportCopying: "Bild wird kopiert…",
@@ -1229,6 +1233,7 @@ export const de = {
   imageExportWatermarkGapY: "Vertikaler Abstand",
   imageExportWatermarkStagger: "Zeilen versetzen",
   imageExportReset: "Standard wiederherstellen",
+  imageExportUndoReset: "Rückgängig",
   imageExportRemembered:
     "Exportoptionen werden automatisch gespeichert. Geänderte Titel gelten nur für diesen Export.",
   imageExportZoom: "Vorschauzoom",

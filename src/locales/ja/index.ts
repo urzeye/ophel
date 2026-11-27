@@ -1187,7 +1187,9 @@ export const ja = {
   imageExportBrandingHint: "各画像の下部にロゴと出典を表示します。",
   imageExportPoweredBy: "Powered by Ophel Atlas",
   imageExportPreparing: "レイアウト、画像、図を準備中…",
+  imageExportApplying: "形式と透かしを適用中…",
   imageExportProgress: "画像を生成中 {current} / {total}…",
+  imageExportReadySingle: "画像を 1 枚生成しました。",
   imageExportReady: "画像を {count} 枚生成しました。",
   imageExportPage: "画像 {index} / {total} · {width} × {height}",
   imageExportOpenPreview: "画像を全体表示",
@@ -1196,6 +1198,8 @@ export const ja = {
   imageExportCopy: "画像をコピー",
   imageExportCopied: "コピー済み",
   imageExportCopyHint: "コピーできるのは PNG 1 枚のみです。複数の画像は ZIP で保存できます。",
+  imageExportCopyPngOnlyHint:
+    "コピーできるのは PNG 形式のみです。PNG に切り替えるかダウンロードしてください。",
   imageExportCopyUnavailable:
     "このブラウザーでは画像をコピーできません。ダウンロードして共有してください。",
   imageExportCopying: "画像をコピー中…",
@@ -1245,6 +1249,7 @@ export const ja = {
   imageExportWatermarkGapY: "縦の間隔",
   imageExportWatermarkStagger: "交互に配置",
   imageExportReset: "初期設定に戻す",
+  imageExportUndoReset: "元に戻す",
   imageExportRemembered: "書き出し設定は自動保存されます。変更したタイトルは今回のみ適用されます。",
   imageExportZoom: "プレビュー倍率",
   imageExportFit: "幅に合わせる",

@@ -1158,7 +1158,9 @@ export const ru = {
   imageExportBrandingHint: "Показывать логотип и подпись на каждом изображении.",
   imageExportPoweredBy: "Powered by Ophel Atlas",
   imageExportPreparing: "Подготовка макета, изображений и диаграмм…",
+  imageExportApplying: "Применение формата и водяного знака…",
   imageExportProgress: "Создание изображений {current} / {total}…",
+  imageExportReadySingle: "Готово 1 изображение.",
   imageExportReady: "Изображений готово: {count}.",
   imageExportPage: "Изображение {index} / {total} · {width} × {height}",
   imageExportOpenPreview: "Открыть полное изображение",
@@ -1168,6 +1170,8 @@ export const ru = {
   imageExportCopied: "Скопировано",
   imageExportCopyHint:
     "Можно скопировать только один PNG. Несколько изображений можно скачать в ZIP.",
+  imageExportCopyPngOnlyHint:
+    "Копировать можно только PNG. Переключитесь на PNG или скачайте изображение.",
   imageExportCopyUnavailable:
     "Этот браузер не поддерживает копирование изображений. Скачайте их для публикации.",
   imageExportCopying: "Копирование изображения…",
@@ -1217,6 +1221,7 @@ export const ru = {
   imageExportWatermarkGapY: "Вертикальный интервал",
   imageExportWatermarkStagger: "Шахматное расположение",
   imageExportReset: "Сбросить настройки",
+  imageExportUndoReset: "Отменить",
   imageExportRemembered:
     "Параметры экспорта сохраняются автоматически. Изменённый заголовок применяется только к этому экспорту.",
   imageExportZoom: "Масштаб просмотра",

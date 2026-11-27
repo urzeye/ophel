@@ -1,8 +1,21 @@
-import React, { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react"
+import React, {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react"
 import { createRoot } from "react-dom/client"
 
-import { CheckIcon, CopyIcon, DownloadIcon, ExternalLinkIcon } from "~components/icons"
-import { ImageFileIcon } from "~components/icons/ImageFileIcon"
+import {
+  CheckIcon,
+  CopyIcon,
+  DownloadIcon,
+  ExternalLinkIcon,
+  ImageFileIcon,
+} from "~components/icons"
 import { ImageExportControls } from "~components/ImageExportControls"
 import { DialogOverlay } from "~components/ui/Dialog"
 import { Tooltip } from "~components/ui/Tooltip"
@@ -11,7 +24,7 @@ import type { ThemeManager } from "~core/theme-manager"
 import { useImageExport } from "~hooks/useImageExport"
 import { useSettingsStore } from "~stores/settings-store"
 import { IMAGE_EXPORT_DIALOG_CSS } from "~styles/image-export-inline"
-import type { ImageExportPreferences } from "~types/image-export"
+import type { ImageExportPreferences, ImageExportWatermark } from "~types/image-export"
 import { ExportDocumentError, type ExportDocumentInput } from "~utils/export-document"
 import type { ExportImageOptions } from "~utils/export-image"
 import { downloadBlob, downloadZipFiles } from "~utils/exporter"
@@ -26,6 +39,39 @@ const ZOOM_OPTIONS: readonly { value: ZoomOption; label: () => string }[] = [
   { value: "75", label: () => "75%" },
   { value: "100", label: () => "100%" },
 ]
+
+const ZOOM_SEQUENCE: readonly ZoomOption[] = ["fit", "50", "75", "100"]
+
+// 水印关闭或文案为空时使用稳定常量，避免无关滑块/颜色变动触发预览重合成与闪烁。
+const INACTIVE_WATERMARK: ImageExportWatermark = {
+  ...DEFAULT_IMAGE_EXPORT.watermark,
+  enabled: false,
+  text: "",
+}
+
+const IMAGE_EXPORT_STYLE_ID = "gh-image-export-dialog-styles"
+let imageExportStylesInjected = false
+
+function ensureImageExportDialogStyles(): void {
+  if (imageExportStylesInjected && document.getElementById(IMAGE_EXPORT_STYLE_ID)) return
+  const existing = document.getElementById(IMAGE_EXPORT_STYLE_ID)
+  if (existing) {
+    imageExportStylesInjected = true
+    return
+  }
+  const style = document.createElement("style")
+  style.id = IMAGE_EXPORT_STYLE_ID
+  style.textContent = IMAGE_EXPORT_DIALOG_CSS
+  document.head.appendChild(style)
+  imageExportStylesInjected = true
+}
+
+function isEditableTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false
+  if (target.isContentEditable) return true
+  const tag = target.tagName
+  return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT"
+}
 
 interface ImageExportDialogProps {
   input: ExportDocumentInput
@@ -54,13 +100,22 @@ function formatFileSize(bytes: number): string {
 export function ImageExportDialog({ input, themeManager, onClose }: ImageExportDialogProps) {
   const prefs = useSettingsStore((state) => state.settings.export?.image ?? DEFAULT_IMAGE_EXPORT)
   const hydrated = useSettingsStore((state) => state._hasHydrated)
-  const updatePreferences = (patch: Partial<ImageExportPreferences>) => {
-    const store = useSettingsStore.getState()
-    store.updateNestedSetting("export", "image", {
-      ...store.persistedSettings.export?.image,
-      ...patch,
-    })
-  }
+  const [resetUndo, setResetUndo] = useState<{
+    prefs: ImageExportPreferences
+    title: string
+    zoom: ZoomOption
+  } | null>(null)
+  const updatePreferences = useCallback(
+    (patch: Partial<ImageExportPreferences>, clearUndo = true) => {
+      if (clearUndo) setResetUndo(null)
+      const store = useSettingsStore.getState()
+      store.updateNestedSetting("export", "image", {
+        ...store.persistedSettings.export?.image,
+        ...patch,
+      })
+    },
+    [],
+  )
   const mode = useSyncExternalStore(themeManager.subscribe, themeManager.getSnapshot)
   const theme = prefs.theme === "auto" ? mode : prefs.theme
   const {
@@ -85,6 +140,34 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
   const [copiedTarget, setCopiedTarget] = useState<"all" | number | null>(null)
   const [isPanning, setIsPanning] = useState(false)
   const [canPan, setCanPan] = useState(false)
+  const [canZoomFromFit, setCanZoomFromFit] = useState(false)
+  const resetSnapshotRef = useRef({ prefs, title, zoom, defaultTitle: input.metadata.title })
+  resetSnapshotRef.current = { prefs, title, zoom, defaultTitle: input.metadata.title }
+  const handleControlsTitleChange = useCallback((nextTitle: string) => {
+    setResetUndo(null)
+    setTitle(nextTitle)
+  }, [])
+  const handleControlsChange = useCallback(
+    (patch: Partial<ImageExportPreferences>) => updatePreferences(patch),
+    [updatePreferences],
+  )
+  const handleControlsReset = useCallback(() => {
+    const snap = resetSnapshotRef.current
+    setResetUndo({ prefs: snap.prefs, title: snap.title, zoom: snap.zoom })
+    updatePreferences(DEFAULT_IMAGE_EXPORT, false)
+    setTitle(snap.defaultTitle)
+    setZoom("fit")
+  }, [updatePreferences])
+  const handleControlsUndoReset = useCallback(() => {
+    setResetUndo((current) => {
+      if (!current) return null
+      updatePreferences(current.prefs, false)
+      setTitle(current.title)
+      setZoom(current.zoom)
+      return null
+    })
+  }, [updatePreferences])
+  const statusId = useId()
   const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const previewRef = useRef<HTMLElement>(null)
   const panStateRef = useRef<{
@@ -97,14 +180,15 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
   } | null>(null)
   const suppressClickRef = useRef(false)
   const saving = activity !== null
-  const busyRef = useRef(saving)
-  busyRef.current = saving
   const didExport = useRef(false)
   const closeButton = useRef<HTMLButtonElement>(null)
+  const hasActiveWatermark = watermark.enabled && Boolean(watermark.text.trim())
+  const effectiveWatermark = hasActiveWatermark ? watermark : INACTIVE_WATERMARK
   const footerWatermarkSize =
-    watermark.enabled && watermark.text.trim() && watermark.mode === "footer"
-      ? watermark.fontSize
-      : 0
+    hasActiveWatermark && watermark.mode === "footer" ? watermark.fontSize : 0
+  const hasExportableMessages = includeQuestions
+    ? input.messages.length > 0
+    : input.messages.some((message) => message.role !== "user")
   const options = useMemo<ExportImageOptions>(
     () => ({
       theme,
@@ -117,6 +201,7 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
       showTitle,
       showSource,
       showTime,
+      includeQuestions,
       footerWatermarkSize,
     }),
     [
@@ -130,37 +215,41 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
       showTitle,
       showSource,
       showTime,
+      includeQuestions,
       footerWatermarkSize,
     ],
   )
+  // 保留完整消息数组交由 export-document 统一编号后再隐藏用户提问，防止关闭包含提问时消息序号丢失。
   const documentInput = useMemo(
     () => ({
       ...input,
       metadata: { ...input.metadata, title },
-      messages: includeQuestions
-        ? input.messages
-        : input.messages.filter((message) => message.role !== "user"),
     }),
-    [input, title, includeQuestions],
+    [input, title],
   )
   const composition = useMemo(
-    () => ({ format, scale, theme, watermark }),
-    [format, scale, theme, watermark],
+    () => ({ format, scale, theme, watermark: effectiveWatermark }),
+    [format, scale, theme, effectiveWatermark],
   )
   const result = useImageExport(
     documentInput,
     options,
     composition,
     revision,
-    hydrated && documentInput.messages.length > 0,
+    hydrated && hasExportableMessages,
   )
-  const { pages, progress, updating } = result
-  const error = documentInput.messages.length ? result.error : t("imageExportEmpty")
+  const { pages, progress, updating, phase } = result
+  const error = hasExportableMessages ? result.error : t("imageExportEmpty")
   const rendering = !error && result.rendering
   const initialRendering = rendering && !updating
   const clipboardSupported = typeof ClipboardItem !== "undefined" && !!navigator.clipboard?.write
   const canCopyPng = format === "png" && clipboardSupported
   const canCopy = pages.length === 1 && canCopyPng
+  const displaySubtitle = title.trim() || input.metadata.title
+
+  const focusDialogContainer = () => {
+    closeButton.current?.closest<HTMLElement>("[role='dialog']")?.focus({ preventScroll: true })
+  }
 
   const markCopied = (target: "all" | number) => {
     if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current)
@@ -171,6 +260,10 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
     }, 1800)
   }
 
+  useEffect(() => {
+    ensureImageExportDialogStyles()
+  }, [])
+
   useEffect(
     () => () => {
       if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current)
@@ -178,67 +271,235 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
     [],
   )
 
+  const close = () => onClose(didExport.current)
+  const extension = format === "jpeg" ? "jpg" : "png"
+
+  const download = async () => {
+    if (!pages.length || rendering || saving) return
+    setActivity("download")
+    focusDialogContainer()
+    setActionError("")
+    try {
+      const success =
+        pages.length === 1
+          ? await downloadBlob(pages[0].blob, `${input.filename}.${extension}`)
+          : await downloadZipFiles(
+              pages.map((page, index) => ({
+                path: `${input.filename}-${String(index + 1).padStart(2, "0")}.${extension}`,
+                data: page.blob,
+              })),
+              `${input.filename}.zip`,
+            )
+      if (success) {
+        didExport.current = true
+        showToast(t("exportSuccess"))
+      } else setActionError(t("exportFailed"))
+    } finally {
+      setActivity(null)
+    }
+  }
+
+  const downloadSinglePage = async (index: number) => {
+    const page = pages[index]
+    if (!page || rendering || saving) return
+    setActivity("download")
+    focusDialogContainer()
+    setActionError("")
+    try {
+      const suffix = pages.length > 1 ? `-${String(index + 1).padStart(2, "0")}` : ""
+      const success = await downloadBlob(page.blob, `${input.filename}${suffix}.${extension}`)
+      if (success) {
+        didExport.current = true
+        showToast(t("exportSuccess"))
+      } else setActionError(t("exportFailed"))
+    } finally {
+      setActivity(null)
+    }
+  }
+
+  const copyBlob = async (blob: Blob, target: "all" | number) => {
+    if (!canCopyPng || saving || rendering) return
+    setActivity("copy")
+    focusDialogContainer()
+    setActionError("")
+    try {
+      await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })])
+      didExport.current = true
+      markCopied(target)
+      showToast(t("copySuccess"))
+    } catch {
+      setActionError(t("imageExportCopyFailed"))
+    } finally {
+      setActivity(null)
+    }
+  }
+
+  const copy = async () => {
+    if (!canCopy) return
+    await copyBlob(pages[0].blob, "all")
+  }
+
+  // 按需生成独立 ObjectURL 打开新标签页，不绑定预览刷新/关窗时的 revoke 生命周期，防止新页图片失效。
+  const openFullImage = (blob: Blob) => {
+    if (rendering || saving) return
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.target = "_blank"
+    link.rel = "noopener noreferrer"
+    link.click()
+  }
+
+  const keyboardStateRef = useRef({
+    saving,
+    rendering,
+    canCopy,
+    hasPages: pages.length > 0,
+    onClose,
+    download,
+    copy,
+  })
+  keyboardStateRef.current = {
+    saving,
+    rendering,
+    canCopy,
+    hasPages: pages.length > 0,
+    onClose,
+    download,
+    copy,
+  }
+
   useEffect(() => {
     const previousFocus = document.activeElement
     const dialog = closeButton.current?.closest<HTMLElement>("[role='dialog']")
     if (dialog) {
-      dialog.tabIndex = -1
       dialog.focus({ preventScroll: true })
     }
-    const trapFocus = (event: Event) => {
-      const key = event as KeyboardEvent
-      // Checkbox 的键盘保护会截断冒泡，关闭快捷键需在本弹窗捕获阶段处理。
-      if (key.key === "Escape" && !busyRef.current) {
-        key.preventDefault()
-        key.stopPropagation()
-        onClose(didExport.current)
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.isComposing) return
+      const state = keyboardStateRef.current
+
+      // Checkbox 的键盘保护会截断冒泡，关闭与高频快捷键需在本弹窗捕获阶段处理。
+      if (event.key === "Escape" && !state.saving) {
+        event.preventDefault()
+        event.stopPropagation()
+        state.onClose(didExport.current)
         return
       }
-      if (key.key !== "Tab" || !dialog) return
+
+      if ((event.metaKey || event.ctrlKey) && !event.altKey) {
+        const lower = event.key.toLowerCase()
+        if (lower === "s") {
+          event.preventDefault()
+          event.stopPropagation()
+          if (state.hasPages && !state.rendering && !state.saving) void state.download()
+          return
+        }
+        if (
+          lower === "c" &&
+          !isEditableTarget(event.target) &&
+          !window.getSelection()?.toString() &&
+          state.canCopy &&
+          !state.rendering &&
+          !state.saving
+        ) {
+          event.preventDefault()
+          event.stopPropagation()
+          void state.copy()
+          return
+        }
+      }
+
+      if (!event.metaKey && !event.ctrlKey && !event.altKey && !isEditableTarget(event.target)) {
+        if (event.key === "0") {
+          event.preventDefault()
+          setZoom("fit")
+          return
+        }
+        if (event.key === "+" || event.key === "=") {
+          event.preventDefault()
+          setZoom((current) => {
+            const idx = ZOOM_SEQUENCE.indexOf(current)
+            return ZOOM_SEQUENCE[Math.min(ZOOM_SEQUENCE.length - 1, idx + 1)]
+          })
+          return
+        }
+        if (event.key === "-") {
+          event.preventDefault()
+          setZoom((current) => {
+            const idx = ZOOM_SEQUENCE.indexOf(current)
+            return ZOOM_SEQUENCE[Math.max(0, idx - 1)]
+          })
+          return
+        }
+      }
+
+      if (event.key !== "Tab" || !dialog) return
       const controls = Array.from(
         dialog.querySelectorAll<HTMLElement>(
           "button:not(:disabled), input:not(:disabled), select:not(:disabled), summary, a[href]",
         ),
-      ).filter((element) => !element.matches(":disabled") && element.getClientRects().length > 0)
+      ).filter(
+        (element) =>
+          !element.matches(":disabled") &&
+          !element.closest("fieldset:disabled") &&
+          element.getClientRects().length > 0,
+      )
+      if (controls.length === 0) {
+        event.preventDefault()
+        dialog.focus({ preventScroll: true })
+        return
+      }
       const first = controls[0]
       const last = controls[controls.length - 1]
       if (!dialog.contains(document.activeElement) || document.activeElement === dialog) {
-        key.preventDefault()
-        ;(key.shiftKey ? last : first)?.focus()
-      } else if (key.shiftKey && document.activeElement === first) {
-        key.preventDefault()
-        last?.focus()
-      } else if (!key.shiftKey && document.activeElement === last) {
-        key.preventDefault()
-        first?.focus()
+        event.preventDefault()
+        ;(event.shiftKey ? last : first).focus()
+      } else if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
       }
     }
-    document.addEventListener("keydown", trapFocus, true)
+    document.addEventListener("keydown", handleKeyDown, true)
     return () => {
-      document.removeEventListener("keydown", trapFocus, true)
-      if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus()
+      document.removeEventListener("keydown", handleKeyDown, true)
+      if (previousFocus instanceof HTMLElement && previousFocus.isConnected) {
+        previousFocus.focus({ preventScroll: true })
+      }
     }
-  }, [onClose])
+  }, [])
 
   useEffect(() => {
     setActionError("")
     setCopiedTarget(null)
   }, [documentInput, options, composition])
 
-  // 检测预览内容是否水平超出可视区（超宽时开启抓手拖拽提示；拖拽手势同时支持横纵平移）
+  // 检测预览内容是否水平超出可视区（开启抓手拖拽），以及 fit 模式下图片是否确实被缩小显示。
+  const firstLogicalWidth = pages[0]?.cssWidth || width
   useEffect(() => {
     const el = previewRef.current
     if (!el) return
-    const updateCanPan = () => {
+    const updatePreviewMetrics = () => {
       setCanPan(el.scrollWidth > el.clientWidth + 2)
+      const firstFigure = el.querySelector<HTMLElement>("figure")
+      setCanZoomFromFit(
+        zoom === "fit" &&
+          Boolean(firstFigure) &&
+          firstFigure!.clientWidth > 0 &&
+          firstFigure!.clientWidth < firstLogicalWidth - 2,
+      )
     }
-    updateCanPan()
-    const observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(updateCanPan) : null
+    updatePreviewMetrics()
+    const observer =
+      typeof ResizeObserver !== "undefined" ? new ResizeObserver(updatePreviewMetrics) : null
     observer?.observe(el)
     const stage = el.firstElementChild
     if (stage) observer?.observe(stage)
     return () => observer?.disconnect()
-  }, [pages, zoom])
+  }, [pages, zoom, firstLogicalWidth])
 
   // 窗口失焦时中断拖拽，避免指针状态残留
   useEffect(() => {
@@ -263,10 +524,10 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
   const handlePreviewPointerDown = (event: React.PointerEvent<HTMLElement>) => {
     if (event.pointerType !== "mouse" || event.button !== 0 || panStateRef.current) return
     const target = event.target as HTMLElement | null
-    if (target?.closest("a, .gh-image-export-page-actions button")) return
+    if (target?.closest("a, button:not(.gh-image-export-canvas-btn), input, select, summary"))
+      return
     const el = previewRef.current
-    if (!el) return
-    if (el.scrollWidth <= el.clientWidth + 2 && el.scrollHeight <= el.clientHeight + 2) return
+    if (!el || el.scrollWidth <= el.clientWidth + 2) return
     panStateRef.current = {
       pointerId: event.pointerId,
       startX: event.clientX,
@@ -318,79 +579,14 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
     setIsPanning(false)
   }
 
-  const close = () => onClose(didExport.current)
-  const extension = format === "jpeg" ? "jpg" : "png"
-
-  const download = async () => {
-    if (!pages.length || rendering || saving) return
-    setActivity("download")
-    closeButton.current?.closest<HTMLElement>("[role='dialog']")?.focus()
-    setActionError("")
-    try {
-      const success =
-        pages.length === 1
-          ? await downloadBlob(pages[0].blob, `${input.filename}.${extension}`)
-          : await downloadZipFiles(
-              pages.map((page, index) => ({
-                path: `${input.filename}-${String(index + 1).padStart(2, "0")}.${extension}`,
-                data: page.blob,
-              })),
-              `${input.filename}.zip`,
-            )
-      if (success) {
-        didExport.current = true
-        showToast(t("exportSuccess"))
-      } else setActionError(t("exportFailed"))
-    } finally {
-      setActivity(null)
-    }
-  }
-
-  const downloadSinglePage = async (index: number) => {
-    const page = pages[index]
-    if (!page || rendering || saving) return
-    setActivity("download")
-    setActionError("")
-    try {
-      const suffix = pages.length > 1 ? `-${String(index + 1).padStart(2, "0")}` : ""
-      const success = await downloadBlob(page.blob, `${input.filename}${suffix}.${extension}`)
-      if (success) {
-        didExport.current = true
-        showToast(t("exportSuccess"))
-      } else setActionError(t("exportFailed"))
-    } finally {
-      setActivity(null)
-    }
-  }
-
-  const copyBlob = async (blob: Blob, target: "all" | number) => {
-    if (!canCopyPng || saving || rendering) return
-    setActivity("copy")
-    setActionError("")
-    try {
-      await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })])
-      didExport.current = true
-      markCopied(target)
-      showToast(t("copySuccess"))
-    } catch {
-      setActionError(t("imageExportCopyFailed"))
-    } finally {
-      setActivity(null)
-    }
-  }
-
-  const copy = async () => {
-    if (!canCopy) return
-    closeButton.current?.closest<HTMLElement>("[role='dialog']")?.focus()
-    await copyBlob(pages[0].blob, "all")
-  }
-
   const copyDisabledHint =
     !rendering && pages.length > 0 && !canCopy
       ? t(
-          pages.length !== 1 || format !== "png"
-            ? "imageExportCopyHint"
-            : "imageExportCopyUnavailable",
+          !clipboardSupported
+            ? "imageExportCopyUnavailable"
+            : pages.length > 1
+              ? "imageExportCopyHint"
+              : "imageExportCopyPngOnlyHint",
         )
       : ""
 
@@ -402,10 +598,13 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
             current: String(progress.completed),
             total: String(progress.total),
           })
-        : t("imageExportPreparing")
-      : pages.length
-        ? t("imageExportReady", { count: String(pages.length) })
-        : ""
+        : t(phase === "composing" ? "imageExportApplying" : "imageExportPreparing")
+      : pages.length === 1
+        ? t("imageExportReadySingle")
+        : pages.length > 1
+          ? t("imageExportReady", { count: String(pages.length) })
+          : ""
+  const showCopyStatusNote = !actionError && !saving && !rendering && Boolean(copyDisabledHint)
 
   const totalBytes = pages.reduce((sum, page) => sum + page.blob.size, 0)
   const toolbarMeta =
@@ -415,14 +614,99 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
         ? t("imageExportTotalSize", { size: formatFileSize(totalBytes) })
         : ""
 
+  const renderProgressBar = () =>
+    progress.total > 0 ? (
+      <progress
+        aria-label={t("imageExportTitle")}
+        max={progress.total}
+        value={progress.completed}
+      />
+    ) : (
+      <div
+        className="gh-image-export-indeterminate"
+        role="progressbar"
+        aria-label={t("imageExportTitle")}
+      />
+    )
+
+  const renderErrorActions = () => {
+    if (!hasExportableMessages) {
+      if (input.messages.length > 0 && !includeQuestions) {
+        return (
+          <button
+            type="button"
+            className="gh-dialog-btn gh-dialog-btn-primary"
+            onClick={() => updatePreferences({ includeQuestions: true })}>
+            {t("imageExportIncludeQuestions")}
+          </button>
+        )
+      }
+      return null
+    }
+    if (error instanceof ExportDocumentError && error.kind === "single-limit") {
+      return (
+        <div className="gh-image-export-error-actions">
+          {error.canReduceScale && (
+            <button
+              type="button"
+              className="gh-dialog-btn gh-dialog-btn-secondary"
+              onClick={() => updatePreferences({ scale: 1 })}>
+              {t("imageExportUseStandard")}
+            </button>
+          )}
+          <button
+            type="button"
+            className="gh-dialog-btn gh-dialog-btn-primary"
+            onClick={() => updatePreferences({ layout: "split" })}>
+            {t("imageExportUseSplit")}
+          </button>
+        </div>
+      )
+    }
+    if (error instanceof ExportDocumentError && error.kind === "limit") {
+      const canReduce = scale === 2
+      const canSplit = layout === "single"
+      if (canReduce || canSplit) {
+        return (
+          <div className="gh-image-export-error-actions">
+            {canReduce && (
+              <button
+                type="button"
+                className="gh-dialog-btn gh-dialog-btn-secondary"
+                onClick={() => updatePreferences({ scale: 1 })}>
+                {t("imageExportUseStandard")}
+              </button>
+            )}
+            {canSplit && (
+              <button
+                type="button"
+                className="gh-dialog-btn gh-dialog-btn-primary"
+                onClick={() => updatePreferences({ layout: "split" })}>
+                {t("imageExportUseSplit")}
+              </button>
+            )}
+          </div>
+        )
+      }
+    }
+    return (
+      <button
+        type="button"
+        className="gh-dialog-btn gh-dialog-btn-primary"
+        onClick={() => setRevision((current) => current + 1)}>
+        {t("imageExportRetry")}
+      </button>
+    )
+  }
+
   return (
     <DialogOverlay
       onClose={close}
       closeOnOverlayClick={!saving}
       closeOnEscape={false}
+      trapFocus={false}
       dialogClassName="gh-image-export-dialog"
       ariaLabel={t("imageExportTitle")}>
-      <style>{IMAGE_EXPORT_DIALOG_CSS}</style>
       <header className="gh-image-export-header">
         <div className="gh-image-export-header-lead">
           <div className="gh-image-export-header-icon" aria-hidden="true">
@@ -430,7 +714,12 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
           </div>
           <div className="gh-image-export-heading">
             <h2>{t("imageExportTitle")}</h2>
-            <p title={input.metadata.title}>{input.metadata.title}</p>
+            <Tooltip
+              content={displaySubtitle}
+              showOnlyWhenTruncated
+              triggerStyle={{ display: "block", minWidth: 0 }}>
+              <p>{displaySubtitle}</p>
+            </Tooltip>
           </div>
         </div>
         <button
@@ -458,13 +747,11 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
           preferences={prefs}
           title={title}
           defaultTitle={input.metadata.title}
-          onTitleChange={setTitle}
-          onChange={updatePreferences}
-          onReset={() => {
-            updatePreferences(DEFAULT_IMAGE_EXPORT)
-            setTitle(input.metadata.title)
-            setZoom("fit")
-          }}
+          onTitleChange={handleControlsTitleChange}
+          onChange={handleControlsChange}
+          onReset={handleControlsReset}
+          canUndoReset={resetUndo !== null}
+          onUndoReset={resetUndo ? handleControlsUndoReset : undefined}
           disabled={saving || !hydrated}
         />
         <div className="gh-image-export-preview-pane">
@@ -488,29 +775,24 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
             <div className="gh-image-export-toolbar-right">
               {toolbarMeta && <span className="gh-image-export-toolbar-meta">{toolbarMeta}</span>}
               {pages.length === 1 && !error && (
-                <a
-                  className="gh-image-export-open-btn"
-                  href={pages[0].url}
-                  target="_blank"
-                  rel="noreferrer"
-                  title={t("imageExportOpenPreview")}
-                  aria-label={t("imageExportOpenPreview")}>
-                  <ExternalLinkIcon size={13} />
-                  <span>{t("imageExportOpenPreview")}</span>
-                </a>
+                <Tooltip content={t("imageExportOpenPreview")}>
+                  <button
+                    type="button"
+                    className="gh-image-export-open-btn"
+                    disabled={rendering || saving}
+                    aria-label={t("imageExportOpenPreview")}
+                    onClick={() => openFullImage(pages[0].blob)}>
+                    <ExternalLinkIcon size={13} />
+                    <span>{t("imageExportOpenPreview")}</span>
+                  </button>
+                </Tooltip>
               )}
             </div>
           </div>
           <div
             className={`gh-image-export-update-bar${updating ? " is-active" : ""}`}
             aria-hidden={!updating}>
-            {updating && (
-              <progress
-                aria-label={t("imageExportTitle")}
-                max={progress.total || undefined}
-                value={progress.total ? progress.completed : undefined}
-              />
-            )}
+            {updating && renderProgressBar()}
           </div>
           <section
             ref={previewRef}
@@ -532,11 +814,7 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
                   <span className="gh-image-export-sk-short" />
                   <span className="gh-image-export-sk-media" />
                 </div>
-                <progress
-                  aria-label={t("imageExportTitle")}
-                  max={progress.total || undefined}
-                  value={progress.total ? progress.completed : undefined}
-                />
+                {renderProgressBar()}
                 <p>{status}</p>
               </div>
             ) : error ? (
@@ -559,31 +837,7 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
                 <p role="alert" className="gh-image-export-error">
                   {getRenderError(error)}
                 </p>
-                {error instanceof ExportDocumentError && error.kind === "single-limit" ? (
-                  <div className="gh-image-export-error-actions">
-                    {error.canReduceScale && (
-                      <button
-                        type="button"
-                        className="gh-dialog-btn gh-dialog-btn-secondary"
-                        onClick={() => updatePreferences({ scale: 1 })}>
-                        {t("imageExportUseStandard")}
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      className="gh-dialog-btn gh-dialog-btn-primary"
-                      onClick={() => updatePreferences({ layout: "split" })}>
-                      {t("imageExportUseSplit")}
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    className="gh-dialog-btn gh-dialog-btn-primary"
-                    onClick={() => setRevision((current) => current + 1)}>
-                    {t("imageExportRetry")}
-                  </button>
-                )}
+                {renderErrorActions()}
               </div>
             ) : (
               <div className="gh-image-export-preview-stage">
@@ -595,20 +849,19 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
                     height: String(page.height),
                   })
                   const logicalWidth = page.cssWidth || width
-                  return (
-                    <figure
-                      key={index}
-                      style={
-                        {
+                  const figureStyle: React.CSSProperties & { "--i": number } =
+                    zoom !== "fit"
+                      ? {
                           "--i": Math.min(index, 6),
-                          ...(zoom !== "fit"
-                            ? {
-                                width: Math.round((logicalWidth * Number(zoom)) / 100),
-                                maxWidth: "none",
-                              }
-                            : {}),
-                        } as React.CSSProperties
-                      }>
+                          width: Math.round((logicalWidth * Number(zoom)) / 100),
+                          maxWidth: "none",
+                        }
+                      : {
+                          "--i": Math.min(index, 6),
+                          maxWidth: logicalWidth,
+                        }
+                  return (
+                    <figure key={index} style={figureStyle}>
                       {pages.length > 1 && (
                         <figcaption className="gh-image-export-page-bar">
                           <span className="gh-image-export-caption-meta">
@@ -625,9 +878,9 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
                                   disabled={rendering || saving}
                                   onClick={() => void copyBlob(page.blob, index)}>
                                   {copiedTarget === index ? (
-                                    <CheckIcon size={13} />
+                                    <CheckIcon size={14} />
                                   ) : (
-                                    <CopyIcon size={13} />
+                                    <CopyIcon size={14} />
                                   )}
                                 </button>
                               </Tooltip>
@@ -639,30 +892,44 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
                                 aria-label={t("imageExportDownload")}
                                 disabled={rendering || saving}
                                 onClick={() => void downloadSinglePage(index)}>
-                                <DownloadIcon size={13} />
+                                <DownloadIcon size={14} />
                               </button>
                             </Tooltip>
                             <Tooltip content={t("imageExportOpenPreview")}>
-                              <a
+                              <button
+                                type="button"
                                 className="gh-image-export-caption-btn"
-                                href={page.url}
-                                target="_blank"
-                                rel="noreferrer"
-                                aria-label={t("imageExportOpenPreview")}>
-                                <ExternalLinkIcon size={13} />
-                              </a>
+                                aria-label={t("imageExportOpenPreview")}
+                                disabled={rendering || saving}
+                                onClick={() => openFullImage(page.blob)}>
+                                <ExternalLinkIcon size={14} />
+                              </button>
                             </Tooltip>
                           </span>
                         </figcaption>
                       )}
                       <button
                         type="button"
-                        className={`gh-image-export-canvas-btn${zoom === "fit" ? " is-fit" : " is-zoomed"}`}
-                        aria-label={t("imageExportZoom")}
+                        className={`gh-image-export-canvas-btn${
+                          zoom === "fit"
+                            ? canZoomFromFit
+                              ? " is-fit"
+                              : " is-static"
+                            : " is-zoomed"
+                        }`}
+                        aria-label={`${t("imageExportZoom")}: ${zoom === "fit" ? t("imageExportFit") : `${zoom}%`}`}
                         disabled={saving}
                         onClick={() => {
-                          if (suppressClickRef.current) return
-                          setZoom((current) => (current === "fit" ? "100" : "fit"))
+                          if (suppressClickRef.current || canPan) return
+                          if (zoom === "fit") {
+                            if (canZoomFromFit) setZoom("100")
+                            return
+                          }
+                          setZoom("fit")
+                        }}
+                        onDoubleClick={() => {
+                          if (!canPan) return
+                          setZoom("fit")
                         }}>
                         <img src={page.url} alt={pageLabel} draggable={false} />
                       </button>
@@ -676,9 +943,13 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
       </div>
       <footer className="gh-image-export-footer">
         <p
+          id={statusId}
           className={`gh-image-export-status${actionError ? " gh-image-export-error" : ""}`}
           role={actionError ? "alert" : "status"}>
-          {actionError || status}
+          <span>{actionError || status}</span>
+          {showCopyStatusNote && (
+            <span className="gh-image-export-status-note">{copyDisabledHint}</span>
+          )}
         </p>
         <div className="gh-image-export-actions">
           <button
@@ -693,6 +964,8 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
               type="button"
               className="gh-dialog-btn gh-dialog-btn-secondary"
               disabled={!canCopy || rendering || saving}
+              aria-busy={activity === "copy"}
+              aria-describedby={copyDisabledHint ? statusId : undefined}
               onClick={() => void copy()}>
               {copiedTarget === "all" ? <CheckIcon size={15} /> : <CopyIcon size={15} />}
               <span>{t(copiedTarget === "all" ? "imageExportCopied" : "imageExportCopy")}</span>
@@ -702,6 +975,7 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
             type="button"
             className="gh-dialog-btn gh-dialog-btn-primary"
             disabled={!pages.length || rendering || saving}
+            aria-busy={activity === "download"}
             onClick={() => void download()}>
             <DownloadIcon size={15} />
             <span>{t(pages.length > 1 ? "imageExportDownloadAll" : "imageExportDownload")}</span>
@@ -712,19 +986,32 @@ export function ImageExportDialog({ input, themeManager, onClose }: ImageExportD
   )
 }
 
+// 单例守卫：防止快捷键或重复触发叠加挂载多个图片导出弹窗实例。
+let activeImageExportDialog: { focus: () => void } | null = null
+
 export function showImageExportDialog(input: ExportDocumentInput): Promise<boolean> {
   const themeManager = window.__ophelThemeManager
   if (!themeManager)
     return Promise.reject(new Error("Image export requires the initialized ThemeManager"))
+  if (activeImageExportDialog) {
+    activeImageExportDialog.focus()
+    return Promise.resolve(false)
+  }
   return new Promise((resolve) => {
     const container = document.createElement("div")
     document.body.append(container)
     const root = createRoot(container)
+    activeImageExportDialog = {
+      focus: () => {
+        container.querySelector<HTMLElement>("[role='dialog']")?.focus({ preventScroll: true })
+      },
+    }
     root.render(
       <ImageExportDialog
         input={input}
         themeManager={themeManager}
         onClose={(exported) => {
+          activeImageExportDialog = null
           root.unmount()
           container.remove()
           resolve(exported)

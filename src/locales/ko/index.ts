@@ -1150,7 +1150,9 @@ export const ko = {
   imageExportBrandingHint: "각 이미지 하단에 로고와 출처를 표시합니다.",
   imageExportPoweredBy: "Powered by Ophel Atlas",
   imageExportPreparing: "레이아웃, 이미지 및 다이어그램 준비 중…",
+  imageExportApplying: "형식 및 워터마크 적용 중…",
   imageExportProgress: "이미지 생성 중 {current} / {total}…",
+  imageExportReadySingle: "이미지 1개가 준비되었습니다.",
   imageExportReady: "이미지 {count}개가 준비되었습니다.",
   imageExportPage: "이미지 {index} / {total} · {width} × {height}",
   imageExportOpenPreview: "전체 이미지 열기",
@@ -1159,6 +1161,7 @@ export const ko = {
   imageExportCopy: "이미지 복사",
   imageExportCopied: "복사됨",
   imageExportCopyHint: "단일 PNG만 복사할 수 있습니다. 여러 이미지는 ZIP으로 다운로드하세요.",
+  imageExportCopyPngOnlyHint: "PNG 형식만 복사할 수 있습니다. PNG로 전환하거나 다운로드하세요.",
   imageExportCopyUnavailable:
     "이 브라우저에서는 이미지 복사를 사용할 수 없습니다. 다운로드하여 공유하세요.",
   imageExportCopying: "이미지 복사 중…",
@@ -1206,6 +1209,7 @@ export const ko = {
   imageExportWatermarkGapY: "세로 간격",
   imageExportWatermarkStagger: "엇갈리게 배치",
   imageExportReset: "기본값 복원",
+  imageExportUndoReset: "실행 취소",
   imageExportRemembered:
     "내보내기 설정은 자동 저장됩니다. 수정한 제목은 이번 내보내기에만 적용됩니다.",
   imageExportZoom: "미리보기 배율",

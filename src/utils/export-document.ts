@@ -28,6 +28,7 @@ export interface ExportDocumentOptions {
   showTitle: boolean
   showSource: boolean
   showTime: boolean
+  includeQuestions?: boolean
 }
 
 export interface PreparedExportDocument {
@@ -214,17 +215,24 @@ export async function prepareExportDocument(
   root
     .querySelectorAll(".gh-toolbar, .gh-code-copy-btn, .gh-doc-footer, .gh-kicker")
     .forEach((node) => node.remove())
+  // 先由 formatToHTML 基于完整对话计算轮次编号，再按选项隐藏用户提问节点，避免开启消息编号时序号丢失。
+  if (options.includeQuestions === false) {
+    root.querySelectorAll('.gh-message[data-role="user"]').forEach((node) => node.remove())
+  }
   const header = root.querySelector<HTMLElement>(".gh-doc-header")!
-  if (!options.showTitle) header.querySelector("h1")?.remove()
+  const effectiveShowTitle = options.showTitle && Boolean(input.metadata.title.trim())
+  const effectiveShowTime = options.showTime && Boolean(input.metadata.exportTime.trim())
+  const effectiveShowSource = options.showSource && Boolean(input.metadata.source.trim())
+  if (!effectiveShowTitle) header.querySelector("h1")?.remove()
   const meta = header.querySelector<HTMLElement>(".gh-doc-meta")!
   const [time, dot, source] = Array.from(meta.children)
   if (time) time.className = "gh-doc-time"
   if (source) source.className = "gh-doc-source"
-  if (!options.showTime) time?.remove()
-  if (!options.showSource) source?.remove()
-  if (!options.showTime || !options.showSource) dot?.remove()
-  if (!options.showTime && !options.showSource) meta.remove()
-  const hasHeader = options.showTitle || options.showSource || options.showTime
+  if (!effectiveShowTime) time?.remove()
+  if (!effectiveShowSource) source?.remove()
+  if (!effectiveShowTime || !effectiveShowSource) dot?.remove()
+  if (!effectiveShowTime && !effectiveShowSource) meta.remove()
+  const hasHeader = effectiveShowTitle || effectiveShowSource || effectiveShowTime
   if (!hasHeader) header.remove()
   root.dataset.hasHeader = String(hasHeader)
   root.querySelectorAll("details").forEach((node) => (node.open = true))
@@ -260,12 +268,18 @@ export async function prepareExportDocument(
     const logo = options.branding ? await resolve(getAppIconUrl()) : ""
     // 成品使用系统字体，不等待宿主页无关的网络字体。
     signal.throwIfAborted()
-    // 超宽公式整体缩放，保留排版；图片输出不能依赖横向滚动。
+    // 超宽公式整体缩放，保留排版；先批量测量再统一写入，避免多公式循环触发读写交替回流。
+    const mathScales: Array<{ node: HTMLElement; ratio: number }> = []
     for (const math of Array.from(root.querySelectorAll<HTMLElement>(".math-block"))) {
       const rendered = math.querySelector("math")
       if (!rendered) continue
-      const ratio = Math.min(1, math.clientWidth / rendered.getBoundingClientRect().width)
-      if (ratio < 1) math.style.fontSize = `${ratio}em`
+      const renderedWidth = rendered.getBoundingClientRect().width
+      if (!renderedWidth) continue
+      const ratio = Math.min(1, math.clientWidth / renderedWidth)
+      if (ratio < 1) mathScales.push({ node: math, ratio })
+    }
+    for (const { node, ratio } of mathScales) {
+      node.style.fontSize = `${ratio}em`
     }
     return {
       root,

@@ -10,6 +10,8 @@ import {
 } from "~utils/export-document"
 import {
   getExportImageContentHeight,
+  IMAGE_EXPORT_MAX_PIXELS,
+  IMAGE_EXPORT_MAX_SIDE,
   isWithinExportImageBudget,
   planExportImageSlices,
   type ExportImageSlice,
@@ -124,13 +126,13 @@ function collectBreaks(conversation: HTMLElement): number[] {
   for (const block of Array.from(
     conversation.querySelectorAll(".gh-message, .gh-markdown-preview > *, li, tr"),
   )) {
-    add(block.getBoundingClientRect().bottom)
-    if (block.getBoundingClientRect().height < 1200 || block.matches("svg, math, img, table"))
-      continue
+    const rect = block.getBoundingClientRect()
+    add(rect.bottom)
+    if (rect.height < 1200 || block.matches("svg, math, img, table")) continue
     const range = document.createRange()
     range.selectNodeContents(block)
-    for (const rect of Array.from(range.getClientRects())) {
-      if (rect.height > 0 && rect.height < 80) add(rect.bottom)
+    for (const lineRect of Array.from(range.getClientRects())) {
+      if (lineRect.height > 0 && lineRect.height < 80) add(lineRect.bottom)
     }
   }
   return points
@@ -178,12 +180,13 @@ export async function captureExportImages(
     if (!bounds.height || !bounds.width)
       throw new ExportDocumentError("render", "Empty export layout")
     const contentHeight = Math.ceil(bounds.height)
-    // 用同一个框架测量实际开销；1px 正文避免空块的 margin 折叠改变高度。
+    // 用同一个框架测量实际开销；1px 正文避免空块的 margin 折叠改变高度；
+    // 分图模式按两位数页码探测品牌页脚高度，避免多页窄宽下页脚折行突破预算。
     const probe = createImageFrame(
       prepared,
       { start: 0, end: 1 },
       0,
-      1,
+      options.layout === "split" ? 99 : 1,
       options.footerWatermarkSize,
     )
     root.after(probe.page)
@@ -224,9 +227,6 @@ export async function captureExportImages(
       root.after(page)
       try {
         const dimensions = page.getBoundingClientRect()
-        const cssWidth = Math.ceil(dimensions.width)
-        const width = Math.ceil(dimensions.width * options.scale)
-        const height = Math.ceil(dimensions.height * options.scale)
         const slot = page.querySelector(".gh-export-watermark-slot")?.getBoundingClientRect()
         const watermarkSlot = slot
           ? {
@@ -247,6 +247,18 @@ export async function captureExportImages(
         })
         try {
           signal.throwIfAborted()
+          // 直接读取真实生成的 Canvas 尺寸，避免与 html-to-image 基于 clientWidth/Height 取整的结果相差 1px。
+          const width = canvas.width
+          const height = canvas.height
+          const cssWidth = Math.max(1, Math.round(width / options.scale))
+          if (
+            !width ||
+            !height ||
+            Math.max(width, height) > IMAGE_EXPORT_MAX_SIDE ||
+            width * height > IMAGE_EXPORT_MAX_PIXELS
+          ) {
+            throw new ExportDocumentError("limit", "Export image exceeds the pixel budget")
+          }
           const blob = await encodeCanvas(canvas, "png")
           signal.throwIfAborted()
           pages.push({ blob, width, height, cssWidth, watermarkSlot })
@@ -346,23 +358,28 @@ export async function composeExportImages(
     const canvas = document.createElement("canvas")
     try {
       signal.throwIfAborted()
-      canvas.width = page.width
-      canvas.height = page.height
+      canvas.width = bitmap.width
+      canvas.height = bitmap.height
       const ctx = canvas.getContext("2d")
       if (!ctx) throw new ExportDocumentError("render", "Canvas context is unavailable")
+      // JPEG 不支持透明通道：显式铺底避免任何透明像素或边缘抗锯齿被编码为黑边。
+      if (options.format === "jpeg") {
+        ctx.fillStyle = options.theme === "dark" ? "#12141a" : "#faf9f6"
+        ctx.fillRect(0, 0, canvas.width, canvas.height)
+      }
       ctx.drawImage(bitmap, 0, 0)
       ctx.scale(options.scale, options.scale)
       drawExportWatermark(
         ctx,
-        page.width / options.scale,
-        page.height / options.scale,
+        canvas.width / options.scale,
+        canvas.height / options.scale,
         options.watermark,
         options.theme,
         page.watermarkSlot,
       )
       const blob = await encodeCanvas(canvas, options.format)
       signal.throwIfAborted()
-      result.push({ ...page, blob })
+      result.push({ ...page, blob, width: canvas.width, height: canvas.height })
       onProgress(index + 1, pages.length)
     } finally {
       bitmap.close()

@@ -10,6 +10,8 @@ export interface SwitchProps {
   ariaLabel?: string
   /** 尺寸: sm=32x18, md=36x20 */
   size?: "sm" | "md"
+  /** 当外层已被 <label> 包裹时传 "span"，避免非法的嵌套 <label> */
+  renderAs?: "label" | "span"
 }
 
 /**
@@ -22,12 +24,14 @@ export const Switch: React.FC<SwitchProps> = ({
   disabled = false,
   ariaLabel,
   size = "md",
+  renderAs = "label",
 }) => {
   // 尺寸配置
   const dimensions = size === "sm" ? { w: 32, h: 18, thumb: 14 } : { w: 36, h: 20, thumb: 16 }
+  const Wrapper = renderAs
 
   return (
-    <label
+    <Wrapper
       className="gh-switch"
       style={{
         position: "relative",
@@ -39,14 +43,24 @@ export const Switch: React.FC<SwitchProps> = ({
       <input
         className="gh-switch-input"
         type="checkbox"
+        role="switch"
         checked={checked}
-        onChange={() => onChange(!checked)}
+        onChange={(event) => onChange(event.target.checked)}
         disabled={disabled}
         aria-label={ariaLabel}
-        style={{ opacity: 0, width: 0, height: 0, position: "absolute" }}
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          margin: 0,
+          opacity: 0,
+          cursor: disabled ? "not-allowed" : "inherit",
+        }}
       />
       <span
         className="gh-switch-track"
+        aria-hidden="true"
         style={{
           position: "absolute",
           cursor: disabled ? "not-allowed" : "pointer",
@@ -56,9 +70,9 @@ export const Switch: React.FC<SwitchProps> = ({
           bottom: 0,
           backgroundColor: checked
             ? "var(--gh-primary, #4285f4)"
-            : "var(--gh-input-border, #d1d5db)",
+            : "color-mix(in srgb, var(--gh-text-secondary, #6b7280) 32%, transparent)",
           borderRadius: `${dimensions.h}px`,
-          transition: "background-color 0.3s",
+          transition: "background-color 0.2s ease",
         }}>
         <span
           className="gh-switch-thumb"
@@ -68,13 +82,16 @@ export const Switch: React.FC<SwitchProps> = ({
             width: `${dimensions.thumb}px`,
             left: checked ? `${dimensions.w - dimensions.thumb - 2}px` : "2px",
             bottom: `${(dimensions.h - dimensions.thumb) / 2}px`,
-            backgroundColor: "var(--gh-bg, #ffffff)",
+            backgroundColor: checked
+              ? "var(--gh-text-on-primary, #ffffff)"
+              : "var(--gh-bg, #ffffff)",
             borderRadius: "50%",
-            transition: "left 0.3s",
+            boxShadow: "0 1px 2px rgba(0, 0, 0, 0.18)",
+            transition: "left 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), background-color 0.2s ease",
           }}
         />
       </span>
-    </label>
+    </Wrapper>
   )
 }
 

@@ -1170,7 +1170,9 @@ export const fr = {
   imageExportBrandingHint: "Afficher le logo et la mention sur chaque image.",
   imageExportPoweredBy: "Powered by Ophel Atlas",
   imageExportPreparing: "Préparation de la mise en page, des images et des diagrammes…",
+  imageExportApplying: "Application du format et du filigrane…",
   imageExportProgress: "Création des images {current} / {total}…",
+  imageExportReadySingle: "1 image prête.",
   imageExportReady: "Images prêtes : {count}.",
   imageExportPage: "Image {index} / {total} · {width} × {height}",
   imageExportOpenPreview: "Ouvrir l’image complète",
@@ -1180,6 +1182,8 @@ export const fr = {
   imageExportCopied: "Copié",
   imageExportCopyHint:
     "Seul un PNG unique peut être copié. Téléchargez plusieurs images dans un ZIP.",
+  imageExportCopyPngOnlyHint:
+    "Seules les images PNG peuvent être copiées. Passez en PNG ou téléchargez l’image.",
   imageExportCopyUnavailable:
     "Ce navigateur ne permet pas de copier les images. Téléchargez-les pour les partager.",
   imageExportCopying: "Copie de l’image…",
@@ -1231,6 +1235,7 @@ export const fr = {
   imageExportWatermarkGapY: "Espacement vertical",
   imageExportWatermarkStagger: "Décaler les lignes",
   imageExportReset: "Rétablir les valeurs",
+  imageExportUndoReset: "Annuler",
   imageExportRemembered:
     "Les options sont enregistrées automatiquement. Le titre modifié ne s’applique qu’à cet export.",
   imageExportZoom: "Zoom de l’aperçu",

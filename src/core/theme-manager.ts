@@ -79,6 +79,44 @@ export interface GlobalThemeManagerOptions {
   apply?: boolean
 }
 
+// 从自定义样式的顶层 :host / :root / 当前明暗块提取 --gh-* 变量，供 Portal 弹窗在 documentElement 上继承。
+function extractCustomStyleVariables(css: string, mode: ThemeMode): Record<string, string> {
+  const cleaned = css.replace(/\/\*[\s\S]*?\*\//g, "")
+  const baseVars: Record<string, string> = {}
+  const modeVars: Record<string, string> = {}
+  const otherMode: ThemeMode = mode === "dark" ? "light" : "dark"
+  const blockPattern = /([^{}@]+)\{([^{}]+)\}/g
+  const varPattern = /(--gh-[a-zA-Z0-9-]+)\s*:\s*([^;]+)/g
+
+  let blockMatch: RegExpExecArray | null
+  while ((blockMatch = blockPattern.exec(cleaned)) !== null) {
+    const selectors = blockMatch[1].split(",").map((item) => item.trim())
+    const body = blockMatch[2]
+    let target: Record<string, string> | null = null
+
+    for (const selector of selectors) {
+      if (new RegExp(`data-theme\\s*=\\s*["']?${otherMode}["']?`).test(selector)) continue
+      if (new RegExp(`data-theme\\s*=\\s*["']?${mode}["']?`).test(selector)) {
+        target = modeVars
+        break
+      }
+      if (/^(?::host|:root|html)$/.test(selector)) {
+        target = baseVars
+      }
+    }
+
+    if (!target) continue
+    varPattern.lastIndex = 0
+    let varMatch: RegExpExecArray | null
+    while ((varMatch = varPattern.exec(body)) !== null) {
+      const value = varMatch[2].replace(/\s*!important\s*$/i, "").trim()
+      if (value) target[varMatch[1]] = value
+    }
+  }
+
+  return { ...baseVars, ...modeVars }
+}
+
 export class ThemeManager {
   private mode: ThemeMode
   private preference: ThemePreference
@@ -793,8 +831,15 @@ export class ThemeManager {
     let vars: ThemeVariables | null = null
 
     if (customStyle) {
-      // 如果是自定义样式，直接使用其 CSS
-      // 不需要获取 vars，因为我们会直接注入 CSS
+      // 自定义样式直接注入 Shadow DOM；同时以当前明暗基准预置 + 自定义 --gh-* 变量同步到 <html>，
+      // 防止 Portal 弹窗在自定义深色样式下残留上一套浅色变量或退回硬编码浅色 fallback。
+      const fallbackPresetId =
+        currentMode === "dark" ? DEFAULT_DARK_PRESET_ID : DEFAULT_LIGHT_PRESET_ID
+      const baseVars = getPreset(fallbackPresetId, currentMode).variables
+      vars = {
+        ...baseVars,
+        ...extractCustomStyleVariables(customStyle.css, currentMode),
+      } as ThemeVariables
     } else {
       // 否则从预置系统获取
       try {

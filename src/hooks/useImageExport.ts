@@ -65,6 +65,13 @@ export function useImageExport(
     }
   }, [renderedPages])
 
+  // 不可用时清空旧预览，避免下次恢复或错误切换时短暂闪回过期图像。
+  useEffect(() => {
+    if (!enabled) {
+      setPreview(null)
+    }
+  }, [enabled])
+
   useEffect(() => {
     if (!settled.enabled) return
     const controller = new AbortController()
@@ -85,6 +92,7 @@ export function useImageExport(
       .catch((failure: unknown) => {
         if (controller.signal.aborted) return
         console.error("[ImageExport] Capture failed:", failure)
+        setPreview(null)
         setCaptureError({
           request: settled,
           error: failure instanceof Error ? failure : new Error(String(failure)),
@@ -115,6 +123,7 @@ export function useImageExport(
       .catch((failure: unknown) => {
         if (controller.signal.aborted) return
         console.error("[ImageExport] Composition failed:", failure)
+        setPreview(null)
         setCompositionError({
           capture,
           options: composition,
@@ -140,11 +149,17 @@ export function useImageExport(
         : null
   const pages = error || !enabled ? [] : preview?.pages ?? []
   const rendering = enabled && !ready && !error
+  const phase: "idle" | "capturing" | "composing" = !rendering
+    ? "idle"
+    : currentCapture
+      ? "composing"
+      : "capturing"
   return {
     pages,
     progress,
     error,
     rendering,
     updating: rendering && pages.length > 0,
+    phase,
   }
 }

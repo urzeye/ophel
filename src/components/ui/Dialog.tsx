@@ -30,6 +30,9 @@ const DIALOG_STYLES = `
     max-width: 400px;
     box-shadow: var(--gh-shadow-lg, 0 20px 50px rgba(0,0,0,0.3));
   }
+  .gh-dialog:focus {
+    outline: none;
+  }
   .gh-dialog-title {
     font-size: 16px;
     font-weight: 600;
@@ -71,11 +74,12 @@ const DIALOG_STYLES = `
   }
   .gh-dialog-btn-secondary {
     border: 1px solid var(--gh-border, #d1d5db);
-    background: var(--gh-card-bg, var(--gh-bg, #ffffff));
+    background: color-mix(in srgb, var(--gh-text, #1f2937) 4%, var(--gh-bg, #ffffff));
     color: var(--gh-text, #374151);
   }
   .gh-dialog-btn-secondary:hover:not(:disabled) {
     background: var(--gh-hover, #f3f4f6);
+    border-color: color-mix(in srgb, var(--gh-text-secondary, #6b7280) 40%, var(--gh-border, #d1d5db));
   }
   .gh-dialog-btn-primary {
     background: var(--gh-primary, #4285f4);
@@ -213,6 +217,21 @@ const DIALOG_STYLES = `
   .gh-dialog-overlay input[type="checkbox"] {
     appearance: auto;
   }
+  /* 供 Portal 弹窗内复用的 Switch 组件提供焦点环与禁用态反馈 */
+  .gh-dialog-overlay .gh-switch-input:focus-visible + .gh-switch-track {
+    outline: 2px solid var(--gh-primary, #4285f4);
+    outline-offset: 2px;
+  }
+  .gh-dialog-overlay .gh-switch-input:disabled + .gh-switch-track {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .gh-dialog-overlay .gh-switch-track,
+    .gh-dialog-overlay .gh-switch-thumb {
+      transition: none !important;
+    }
+  }
 `
 
 // 样式注入状态
@@ -240,7 +259,21 @@ export interface DialogOverlayProps {
   ariaLabel?: string
   /** 是否拦截弹窗内输入框的按键事件，防止宿主站点抢走焦点；默认开启 */
   editableKeyboardGuard?: boolean
+  /** 是否由 DialogOverlay 统一提供初始聚焦、Tab 焦点陷阱与关闭焦点恢复；默认开启 */
+  trapFocus?: boolean
+  /** 绑定到 dialog 容器上的键盘事件 */
+  onDialogKeyDown?: React.KeyboardEventHandler<HTMLDivElement>
 }
+
+const DIALOG_FOCUSABLE_SELECTOR = [
+  "button:not(:disabled)",
+  "input:not(:disabled)",
+  "select:not(:disabled)",
+  "textarea:not(:disabled)",
+  "summary",
+  "a[href]",
+  "[tabindex]:not([tabindex='-1'])",
+].join(", ")
 
 /**
  * 对话框覆盖层 - 使用 Portal 渲染到 document.body
@@ -254,18 +287,75 @@ export const DialogOverlay: React.FC<DialogOverlayProps> = ({
   dialogStyle,
   ariaLabel,
   editableKeyboardGuard = true,
+  trapFocus = true,
+  onDialogKeyDown,
 }) => {
   const overlayRef = useRef<HTMLDivElement>(null)
+  const dialogRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     injectDialogStyles()
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.isComposing) return
       if (closeOnEscape && e.key === "Escape") onClose()
     }
     document.addEventListener("keydown", handleKeyDown)
     return () => document.removeEventListener("keydown", handleKeyDown)
   }, [closeOnEscape, onClose])
+
+  useEffect(() => {
+    if (!trapFocus) return
+    const dialog = dialogRef.current
+    if (!dialog) return
+
+    const previousFocus = document.activeElement
+    // 若子组件（如 InputDialog）未在挂载时自行聚焦，则将初始焦点移入弹窗容器。
+    if (!dialog.contains(document.activeElement)) {
+      dialog.focus({ preventScroll: true })
+    }
+
+    const handleTab = (event: KeyboardEvent) => {
+      if (event.key !== "Tab") return
+      // 仅由最顶层弹窗接管 Tab 焦点循环，避免双层叠窗时底层弹窗抢焦。
+      const overlays = document.querySelectorAll(".gh-dialog-overlay")
+      if (overlays[overlays.length - 1] !== overlayRef.current) return
+
+      const controls = Array.from(
+        dialog.querySelectorAll<HTMLElement>(DIALOG_FOCUSABLE_SELECTOR),
+      ).filter(
+        (element) =>
+          !element.matches(":disabled") &&
+          !element.closest("fieldset:disabled") &&
+          element.getClientRects().length > 0,
+      )
+      if (controls.length === 0) {
+        event.preventDefault()
+        dialog.focus({ preventScroll: true })
+        return
+      }
+      const first = controls[0]
+      const last = controls[controls.length - 1]
+      if (!dialog.contains(document.activeElement) || document.activeElement === dialog) {
+        event.preventDefault()
+        ;(event.shiftKey ? last : first).focus()
+      } else if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
+    }
+
+    document.addEventListener("keydown", handleTab, true)
+    return () => {
+      document.removeEventListener("keydown", handleTab, true)
+      if (previousFocus instanceof HTMLElement && previousFocus.isConnected) {
+        previousFocus.focus({ preventScroll: true })
+      }
+    }
+  }, [trapFocus])
 
   useEffect(() => {
     const overlay = overlayRef.current
@@ -284,11 +374,14 @@ export const DialogOverlay: React.FC<DialogOverlayProps> = ({
       {...OPHEL_HOVER_WIDTH_RETAIN_LAYER_PROPS}
       onClick={closeOnOverlayClick ? onClose : undefined}>
       <div
+        ref={dialogRef}
         className={dialogClassName ? `gh-dialog ${dialogClassName}` : "gh-dialog"}
         style={dialogStyle}
         role="dialog"
         aria-modal="true"
         aria-label={ariaLabel}
+        tabIndex={-1}
+        onKeyDown={onDialogKeyDown}
         onClick={(e) => e.stopPropagation()}>
         {children}
       </div>

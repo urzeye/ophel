@@ -1,9 +1,11 @@
-import React, { useCallback, useEffect, useState } from "react"
+import React, { useCallback, useEffect, useId, useState } from "react"
 
 import {
   CopyIcon,
   CopyOutlineIcon,
+  DownloadIcon,
   HTMLFileIcon,
+  ImageFileIcon,
   JSONFileIcon,
   MarkdownIcon,
   SegmentedExportIcon,
@@ -11,19 +13,22 @@ import {
   TXTFileIcon,
 } from "~components/icons"
 import type { ConversationExportOptions } from "~core/conversation-manager"
+import { useSettingsStore } from "~stores/settings-store"
 import type { ExportPackaging, ExportStyle } from "~types/settings"
 import type { ExportFormat } from "~utils/exporter"
 import { t } from "~utils/i18n"
-import { useSettingsStore } from "~stores/settings-store"
 
 import { DialogOverlay } from "./ui/Dialog"
-import { ImageFileIcon } from "./icons/ImageFileIcon"
+import { Switch } from "./ui/Switch"
 import { Tooltip } from "./ui/Tooltip"
 
 const EXPORT_DIALOG_STYLES = `
   .gh-dialog.gh-export-dialog {
     width: min(492px, calc(100vw - 28px));
     max-width: 492px;
+    max-height: calc(100dvh - 28px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
     padding: 20px 22px;
     display: flex;
     flex-direction: column;
@@ -31,7 +36,7 @@ const EXPORT_DIALOG_STYLES = `
     box-sizing: border-box;
     background: var(--gh-bg, #ffffff);
     color: var(--gh-text, #1f2937);
-    font-family: var(--gh-font-family, Inter, system-ui, -apple-system, sans-serif);
+    font-family: var(--gh-font-family, "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Microsoft YaHei", "PingFang SC", "Hiragino Sans SC", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif);
     border: 1px solid var(--gh-border, rgba(0, 0, 0, 0.08));
     border-radius: 16px;
     box-shadow: var(--gh-shadow-lg, 0 20px 50px rgba(0, 0, 0, 0.25));
@@ -98,7 +103,7 @@ const EXPORT_DIALOG_STYLES = `
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.15s ease, color 0.15s ease;
+    transition: background 0.15s ease, color 0.15s ease, transform 0.12s ease;
   }
 
   .gh-export-dialog-close:hover:not(:disabled) {
@@ -161,21 +166,25 @@ const EXPORT_DIALOG_STYLES = `
     border: none;
     cursor: pointer;
     color: var(--gh-text-secondary, #6b7280);
-    width: 26px;
-    height: 26px;
+    width: 32px;
+    height: 32px;
     padding: 0;
-    margin: -4px -2px -4px 0;
+    margin: -6px -6px -6px 0;
     border-radius: 6px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.15s ease, color 0.15s ease;
+    transition: background 0.15s ease, color 0.15s ease, transform 0.12s ease;
     outline: none;
   }
 
   .gh-export-settings-btn:hover:not(:disabled) {
     background: var(--gh-hover, rgba(0, 0, 0, 0.05));
     color: var(--gh-text, #1f2937);
+  }
+
+  .gh-export-settings-btn:active:not(:disabled) {
+    transform: translateY(1px);
   }
 
   .gh-export-settings-btn:focus-visible {
@@ -205,14 +214,14 @@ const EXPORT_DIALOG_STYLES = `
     padding: 9px 12px;
     border-radius: 8px;
     border: 1px solid var(--gh-border, #e5e7eb);
-    background: var(--gh-bg-secondary, #f9fafb);
+    background: color-mix(in srgb, var(--gh-text, #1f2937) 3%, var(--gh-bg, #ffffff));
     color: var(--gh-text, #1f2937);
     font: inherit;
     font-size: 13px;
     font-weight: 500;
     line-height: 1.3;
     cursor: pointer;
-    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.12s ease;
     box-sizing: border-box;
     outline: none;
   }
@@ -240,14 +249,14 @@ const EXPORT_DIALOG_STYLES = `
   }
 
   .gh-export-format-badge {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
-    line-height: 1.3;
+    line-height: 1.25;
     letter-spacing: 0.01em;
     font-variant-numeric: tabular-nums;
     padding: 2px 6px;
     border-radius: 6px;
-    background: var(--gh-bg-tertiary, #f3f4f6);
+    background: var(--gh-bg-tertiary, var(--gh-hover, #f3f4f6));
     color: var(--gh-text-secondary, #6b7280);
     flex-shrink: 0;
     white-space: nowrap;
@@ -269,7 +278,8 @@ const EXPORT_DIALOG_STYLES = `
     overflow: hidden;
   }
 
-  .gh-export-format-label > span {
+  .gh-export-format-text {
+    display: block;
     overflow: hidden;
     text-overflow: ellipsis;
   }
@@ -336,61 +346,11 @@ const EXPORT_DIALOG_STYLES = `
     cursor: not-allowed;
   }
 
-  /* 统一紧凑开关：替代宿主不一致的原生 checkbox，同时保持无障碍键盘导航 */
-  .gh-export-switch {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    flex-shrink: 0;
-    width: 32px;
-    height: 18px;
-  }
-
-  .gh-export-switch-input {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
+  .gh-export-options-note {
     margin: 0;
-    opacity: 0;
-    cursor: inherit;
-  }
-
-  .gh-export-switch-track {
-    position: relative;
-    display: block;
-    width: 32px;
-    height: 18px;
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--gh-text-secondary, #6b7280) 32%, transparent);
-    transition: background-color 0.18s ease, box-shadow 0.15s ease;
-  }
-
-  .gh-export-switch-track::after {
-    content: "";
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    background: var(--gh-bg, #ffffff);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
-    transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1), background-color 0.18s ease;
-  }
-
-  .gh-export-switch-input:checked + .gh-export-switch-track {
-    background: var(--gh-primary, #4285f4);
-  }
-
-  .gh-export-switch-input:checked + .gh-export-switch-track::after {
-    transform: translateX(14px);
-    background: var(--gh-text-on-primary, #ffffff);
-  }
-
-  .gh-export-switch-input:focus-visible + .gh-export-switch-track {
-    outline: 2px solid var(--gh-primary, #4285f4);
-    outline-offset: 2px;
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--gh-text-secondary, #6b7280);
   }
 
   .gh-export-divider-wrap {
@@ -404,6 +364,11 @@ const EXPORT_DIALOG_STYLES = `
     font-size: 13px;
     line-height: 1.4;
     color: var(--gh-text, #1f2937);
+  }
+
+  .gh-export-divider-label {
+    min-width: 0;
+    overflow-wrap: break-word;
   }
 
   .gh-export-divider-input {
@@ -424,7 +389,7 @@ const EXPORT_DIALOG_STYLES = `
   }
 
   .gh-export-divider-input:focus {
-    outline: none;
+    outline: 2px solid transparent;
     border-color: var(--gh-primary, #4285f4);
     box-shadow: 0 0 0 2px color-mix(in srgb, var(--gh-primary, #4285f4) 20%, transparent);
   }
@@ -447,6 +412,28 @@ const EXPORT_DIALOG_STYLES = `
     flex-wrap: wrap;
     gap: 8px;
     margin-left: auto;
+  }
+
+  .gh-export-footer-actions .gh-dialog-btn {
+    min-height: 36px;
+    padding: 7px 16px;
+    border-radius: 8px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 550;
+    line-height: 1.25;
+    flex-shrink: 0;
+    word-break: normal;
+    overflow-wrap: normal;
+    box-sizing: border-box;
+  }
+
+  .gh-export-footer-actions .gh-dialog-btn-primary {
+    box-shadow: var(--gh-shadow-brand, 0 2px 8px rgba(66, 133, 244, 0.25));
+  }
+
+  .gh-export-footer-actions .gh-dialog-btn-primary:disabled {
+    box-shadow: none;
   }
 
   /* 分段导出的唯一入口：主色淡底 + 主色描边 + 主色字，比“取消”醒目，又不和实心的“导出”抢 */
@@ -493,72 +480,6 @@ const EXPORT_DIALOG_STYLES = `
     cursor: not-allowed;
   }
 
-  .gh-export-action-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 36px;
-    padding: 7px 16px;
-    border-radius: 8px;
-    font: inherit;
-    font-size: 13px;
-    font-weight: 550;
-    line-height: 1.25;
-    white-space: nowrap;
-    flex-shrink: 0;
-    word-break: normal;
-    overflow-wrap: normal;
-    cursor: pointer;
-    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, filter 0.15s ease, transform 0.12s ease;
-    box-sizing: border-box;
-  }
-
-  .gh-export-action-btn:focus-visible {
-    outline: 2px solid var(--gh-primary, #4285f4);
-    outline-offset: 2px;
-  }
-
-  .gh-export-cancel-btn {
-    border: 1px solid var(--gh-border, #d1d5db);
-    background: var(--gh-card-bg, var(--gh-bg, #ffffff));
-    color: var(--gh-text, #374151);
-  }
-
-  .gh-export-cancel-btn:hover:not(:disabled) {
-    background: var(--gh-hover, #f3f4f6);
-    border-color: color-mix(in srgb, var(--gh-text-secondary, #6b7280) 40%, var(--gh-border, #d1d5db));
-  }
-
-  .gh-export-cancel-btn:active:not(:disabled) {
-    transform: translateY(1px);
-  }
-
-  .gh-export-cancel-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
-  .gh-export-submit-btn {
-    border: 1px solid transparent;
-    background: var(--gh-primary, #4285f4);
-    color: var(--gh-text-on-primary, #ffffff);
-    box-shadow: var(--gh-shadow-brand, 0 2px 8px rgba(66, 133, 244, 0.25));
-  }
-
-  .gh-export-submit-btn:hover:not(:disabled) {
-    filter: brightness(1.06);
-  }
-
-  .gh-export-submit-btn:active:not(:disabled) {
-    transform: translateY(1px);
-  }
-
-  .gh-export-submit-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    box-shadow: none;
-  }
-
   @media (max-width: 440px) {
     .gh-dialog.gh-export-dialog {
       padding: 16px;
@@ -571,15 +492,19 @@ const EXPORT_DIALOG_STYLES = `
 
   @media (pointer: coarse) {
     .gh-export-dialog-close,
+    .gh-export-settings-btn {
+      width: 44px;
+      height: 44px;
+    }
+
     .gh-export-format-btn,
     .gh-export-segmented-link,
-    .gh-export-action-btn {
+    .gh-export-footer-actions .gh-dialog-btn {
       min-height: 44px;
     }
 
-    .gh-export-dialog-close {
-      width: 44px;
-      height: 44px;
+    .gh-export-option-row {
+      min-height: 44px;
     }
   }
 
@@ -588,15 +513,35 @@ const EXPORT_DIALOG_STYLES = `
       animation: none;
     }
 
+    .gh-export-dialog-close,
+    .gh-export-settings-btn,
     .gh-export-format-btn,
-    .gh-export-switch-track,
-    .gh-export-switch-track::after,
-    .gh-export-segmented-link,
-    .gh-export-action-btn {
+    .gh-export-format-badge,
+    .gh-export-format-icon,
+    .gh-export-option-row,
+    .gh-export-divider-input,
+    .gh-export-segmented-link {
       transition: none;
     }
   }
 `
+
+const EXPORT_DIALOG_STYLE_ID = "gh-export-dialog-styles"
+let exportDialogStylesInjected = false
+
+function ensureExportDialogStyles(): void {
+  if (exportDialogStylesInjected && document.getElementById(EXPORT_DIALOG_STYLE_ID)) return
+  const existing = document.getElementById(EXPORT_DIALOG_STYLE_ID)
+  if (existing) {
+    exportDialogStylesInjected = true
+    return
+  }
+  const style = document.createElement("style")
+  style.id = EXPORT_DIALOG_STYLE_ID
+  style.textContent = EXPORT_DIALOG_STYLES
+  document.head.appendChild(style)
+  exportDialogStylesInjected = true
+}
 
 export interface ExportDialogProps {
   isOpen: boolean
@@ -623,27 +568,9 @@ const getFormatOptions = (
   { format: "html", label: "HTML", badge: ".html", Icon: HTMLFileIcon },
   { format: "image", label: t("exportToImage"), badge: imageBadge, Icon: ImageFileIcon },
   { format: "json", label: "JSON", badge: ".json", Icon: JSONFileIcon },
-  { format: "txt", label: "Text", badge: ".txt", Icon: TXTFileIcon },
+  { format: "txt", label: t("exportToTXT"), badge: ".txt", Icon: TXTFileIcon },
   { format: "clipboard", label: t("exportToClipboard"), Icon: CopyIcon },
 ]
-
-const ExportSwitch: React.FC<{
-  checked: boolean
-  disabled?: boolean
-  onChange: (checked: boolean) => void
-}> = ({ checked, disabled, onChange }) => (
-  <span className="gh-export-switch">
-    <input
-      type="checkbox"
-      role="switch"
-      className="gh-export-switch-input"
-      checked={checked}
-      disabled={disabled}
-      onChange={(e) => onChange(e.target.checked)}
-    />
-    <span className="gh-export-switch-track" aria-hidden="true" />
-  </span>
-)
 
 export const ExportDialog: React.FC<ExportDialogProps> = ({
   isOpen,
@@ -654,6 +581,8 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
   onOpenSettings,
 }) => {
   const settings = useSettingsStore((state) => state.settings)
+  const dividerInputId = useId()
+  const optionsNoteId = useId()
   const defaultSettingFormat = settings.export?.defaultExportFormat ?? "markdown"
   const defaultFormat: ExportFormat =
     defaultSettingFormat === "html" ||
@@ -692,9 +621,10 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
   )
   const [isExporting, setIsExporting] = useState(false)
 
-  // 每次打开时从全局设置重新同步初始值，避免常驻挂载导致的过期快照
+  // 每次打开时确保样式已单次注入并从全局设置同步初始值，避免常驻挂载导致的过期快照
   useEffect(() => {
     if (!isOpen) return
+    ensureExportDialogStyles()
     const current = useSettingsStore.getState().settings
     const formatSetting = current.export?.defaultExportFormat ?? "markdown"
     setSelectedFormat(
@@ -717,6 +647,11 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
 
   const isMarkdownLike = selectedFormat === "markdown" || selectedFormat === "clipboard"
   const imageBadge: ".png" | ".jpg" = settings.export?.image?.format === "jpeg" ? ".jpg" : ".png"
+  const optionsInlineNote = outlineCopySelected
+    ? t("exportOptionsOutlineCopyHint")
+    : selectedFormat === "json"
+      ? t("exportShowIndexJsonUnsupported")
+      : ""
 
   const handleConfirm = async () => {
     // 复制大纲由大纲 tab 暴露的能力完成，不走导出流程，也不使用下面的导出选项
@@ -745,29 +680,27 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
     }
   }
 
+  const handleDialogKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== "Enter" || event.nativeEvent.isComposing || isExporting) return
+    const active = event.target as HTMLElement | null
+    // 聚焦在普通按钮或链接上时交由浏览器执行该按钮自身动作；在输入框或弹窗容器上回车直接确认导出。
+    if (active?.closest("button, a, textarea")) return
+    event.preventDefault()
+    void handleConfirm()
+  }
+
   return (
     <DialogOverlay
       onClose={onClose}
       dialogClassName="gh-export-dialog"
+      ariaLabel={t("exportConversationTitle")}
+      onDialogKeyDown={handleDialogKeyDown}
       closeOnOverlayClick={!isExporting}
       closeOnEscape={!isExporting}>
-      <style>{EXPORT_DIALOG_STYLES}</style>
       <div className="gh-export-dialog-header">
         <div className="gh-export-dialog-title-wrap">
-          <div className="gh-export-dialog-icon">
-            <svg
-              viewBox="0 0 24 24"
-              width="16"
-              height="16"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
+          <div className="gh-export-dialog-icon" aria-hidden="true">
+            <DownloadIcon size={16} />
           </div>
           <h3 className="gh-export-dialog-title">{t("exportConversationTitle")}</h3>
         </div>
@@ -785,7 +718,8 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
             stroke="currentColor"
             strokeWidth="2"
             strokeLinecap="round"
-            strokeLinejoin="round">
+            strokeLinejoin="round"
+            aria-hidden="true">
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
           </svg>
@@ -793,7 +727,10 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
       </div>
 
       {target && (
-        <Tooltip content={target.title} triggerStyle={{ display: "block", minWidth: 0 }}>
+        <Tooltip
+          content={target.title}
+          showOnlyWhenTruncated
+          triggerStyle={{ display: "block", minWidth: 0 }}>
           <div className="gh-export-dialog-target">{target.title}</div>
         </Tooltip>
       )}
@@ -806,7 +743,6 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
               key={item.format}
               type="button"
               className="gh-export-format-btn"
-              title={item.label}
               aria-pressed={!outlineCopySelected && selectedFormat === item.format}
               data-active={!outlineCopySelected && selectedFormat === item.format}
               onClick={() => {
@@ -815,7 +751,12 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
               }}>
               <span className="gh-export-format-label">
                 <item.Icon size={15} className="gh-export-format-icon" />
-                <span>{item.label}</span>
+                <Tooltip
+                  content={item.label}
+                  showOnlyWhenTruncated
+                  triggerStyle={{ display: "block", minWidth: 0, overflow: "hidden" }}>
+                  <span className="gh-export-format-text">{item.label}</span>
+                </Tooltip>
               </span>
               {item.badge && <span className="gh-export-format-badge">{item.badge}</span>}
             </button>
@@ -825,13 +766,17 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
             <button
               type="button"
               className="gh-export-format-btn"
-              title={t("outlineCopyFull")}
               aria-pressed={outlineCopySelected}
               data-active={outlineCopySelected}
               onClick={() => setOutlineCopySelected(true)}>
               <span className="gh-export-format-label">
                 <CopyOutlineIcon size={15} className="gh-export-format-icon" />
-                <span>{t("outlineCopyFull")}</span>
+                <Tooltip
+                  content={t("outlineCopyFull")}
+                  showOnlyWhenTruncated
+                  triggerStyle={{ display: "block", minWidth: 0, overflow: "hidden" }}>
+                  <span className="gh-export-format-text">{t("outlineCopyFull")}</span>
+                </Tooltip>
               </span>
             </button>
           )}
@@ -859,10 +804,13 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
           <div
             className="gh-export-options-list"
             data-disabled={outlineCopySelected}
-            aria-disabled={outlineCopySelected}>
+            aria-disabled={outlineCopySelected}
+            aria-describedby={optionsInlineNote ? optionsNoteId : undefined}>
             <label className="gh-export-option-row">
               <span>{t("exportIncludeThoughtsLabel")}</span>
-              <ExportSwitch
+              <Switch
+                size="sm"
+                renderAs="span"
                 checked={includeThoughts}
                 disabled={outlineCopySelected}
                 onChange={setIncludeThoughts}
@@ -877,7 +825,9 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
                 className="gh-export-option-row"
                 data-disabled={!outlineCopySelected && selectedFormat === "json"}>
                 <span>{t("exportShowIndexLabel")}</span>
-                <ExportSwitch
+                <Switch
+                  size="sm"
+                  renderAs="span"
                   checked={showIndex}
                   disabled={outlineCopySelected || selectedFormat === "json"}
                   onChange={setShowIndex}
@@ -887,8 +837,11 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
 
             {isMarkdownLike && (
               <div className="gh-export-divider-wrap">
-                <span>{t("exportMarkdownDividerLabel")}</span>
+                <label htmlFor={dividerInputId} className="gh-export-divider-label">
+                  {t("exportMarkdownDividerLabel")}
+                </label>
                 <input
+                  id={dividerInputId}
                   type="text"
                   className="gh-export-divider-input"
                   value={customDivider}
@@ -902,7 +855,9 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
             {selectedFormat === "markdown" && (
               <label className="gh-export-option-row">
                 <span>{t("exportPackagingZipOption")}</span>
-                <ExportSwitch
+                <Switch
+                  size="sm"
+                  renderAs="span"
                   checked={packageZip}
                   disabled={outlineCopySelected}
                   onChange={setPackageZip}
@@ -913,7 +868,9 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
             {isMarkdownLike && (
               <label className="gh-export-option-row">
                 <span>{t("exportStyleCleanOption")}</span>
-                <ExportSwitch
+                <Switch
+                  size="sm"
+                  renderAs="span"
                   checked={exportStyle === "clean"}
                   disabled={outlineCopySelected}
                   onChange={(checked) => setExportStyle(checked ? "clean" : "standard")}
@@ -922,6 +879,11 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
             )}
           </div>
         </Tooltip>
+        {optionsInlineNote && (
+          <p id={optionsNoteId} className="gh-export-options-note">
+            {optionsInlineNote}
+          </p>
+        )}
       </div>
 
       <div className="gh-export-footer">
@@ -943,14 +905,14 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
         <div className="gh-export-footer-actions">
           <button
             type="button"
-            className="gh-export-action-btn gh-export-cancel-btn"
+            className="gh-dialog-btn gh-dialog-btn-secondary"
             disabled={isExporting}
             onClick={onClose}>
             {t("cancel")}
           </button>
           <button
             type="button"
-            className="gh-export-action-btn gh-export-submit-btn"
+            className="gh-dialog-btn gh-dialog-btn-primary"
             disabled={isExporting}
             onClick={handleConfirm}>
             {isExporting

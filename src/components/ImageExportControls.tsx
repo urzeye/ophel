@@ -1,6 +1,8 @@
 import React, { useId } from "react"
 
 import { ChevronDownIcon, RefreshIcon } from "~components/icons"
+import { Switch } from "~components/ui/Switch"
+import { Tooltip } from "~components/ui/Tooltip"
 import { DEFAULT_IMAGE_EXPORT, WATERMARK_LIMITS } from "~constants/image-export"
 import type { ImageExportPreferences, ImageExportWatermark } from "~types/image-export"
 import { t } from "~utils/i18n"
@@ -80,29 +82,22 @@ function Toggle({
     <div className="gh-image-export-toggle-wrap">
       <label className="gh-image-export-toggle">
         <span className="gh-image-export-toggle-label">{label}</span>
-        <span className="gh-image-export-switch">
-          <input
-            type="checkbox"
-            role="switch"
-            className="gh-image-export-switch-input"
-            checked={checked}
-            onChange={(event) => onChange(event.target.checked)}
-          />
-          <span className="gh-image-export-switch-track" aria-hidden="true" />
-        </span>
+        <Switch size="sm" renderAs="span" checked={checked} onChange={onChange} />
       </label>
       {hint && <p className="gh-image-export-toggle-hint">{hint}</p>}
     </div>
   )
 }
 
-export function ImageExportControls({
+export const ImageExportControls = React.memo(function ImageExportControls({
   preferences: prefs,
   title,
   defaultTitle,
   onTitleChange,
   onChange,
   onReset,
+  canUndoReset = false,
+  onUndoReset,
   disabled,
 }: {
   preferences: ImageExportPreferences
@@ -111,9 +106,12 @@ export function ImageExportControls({
   onTitleChange: (title: string) => void
   onChange: (patch: Partial<ImageExportPreferences>) => void
   onReset: () => void
+  canUndoReset?: boolean
+  onUndoReset?: () => void
   disabled: boolean
 }) {
   const mark = prefs.watermark
+  const hasWatermarkText = Boolean(mark.text.trim())
   const idPrefix = useId()
   const updateMark = (patch: Partial<ImageExportWatermark>) =>
     onChange({ watermark: { ...mark, ...patch } })
@@ -207,7 +205,7 @@ export function ImageExportControls({
         </div>
 
         <details className="gh-image-export-group">
-          <summary>
+          <summary tabIndex={disabled ? -1 : undefined} aria-disabled={disabled || undefined}>
             <span className="gh-image-export-summary-title">{t("imageExportContent")}</span>
             <span className="gh-image-export-summary-end">
               <span className="gh-image-export-summary-meta">{enabledContentCount}/5</span>
@@ -234,14 +232,15 @@ export function ImageExportControls({
                     onChange={(event) => onTitleChange(event.target.value)}
                   />
                   {titleEdited && (
-                    <button
-                      type="button"
-                      className="gh-image-export-inline-icon-btn"
-                      aria-label={t("restore")}
-                      title={t("restore")}
-                      onClick={() => onTitleChange(defaultTitle)}>
-                      <RefreshIcon size={13} />
-                    </button>
+                    <Tooltip content={t("restore")}>
+                      <button
+                        type="button"
+                        className="gh-image-export-inline-icon-btn"
+                        aria-label={t("restore")}
+                        onClick={() => onTitleChange(defaultTitle)}>
+                        <RefreshIcon size={14} />
+                      </button>
+                    </Tooltip>
                   )}
                 </div>
               </div>
@@ -271,7 +270,7 @@ export function ImageExportControls({
         </details>
 
         <details className="gh-image-export-group">
-          <summary>
+          <summary tabIndex={disabled ? -1 : undefined} aria-disabled={disabled || undefined}>
             <span className="gh-image-export-summary-title">{t("imageExportTypography")}</span>
             <span className="gh-image-export-summary-end">
               <span className="gh-image-export-summary-meta">
@@ -332,94 +331,115 @@ export function ImageExportControls({
                   onChange={(event) => updateMark({ text: event.target.value })}
                 />
               </label>
-              <Choice
-                label={t("imageExportWatermarkMode")}
-                value={mark.mode}
-                choices={[
-                  ["footer", t("imageExportWatermarkFooter")],
-                  ["tile", t("imageExportWatermarkTile")],
-                ]}
-                onChange={(mode) => updateMark({ mode })}
-              />
-              <Toggle
-                label={t("imageExportWatermarkAutoColor")}
-                checked={!mark.color}
-                onChange={(auto) => updateMark({ color: auto ? "" : "#64748b" })}
-              />
-              {mark.color && (
-                <div className="gh-image-export-field">
-                  <span className="gh-image-export-field-label">
-                    {t("imageExportWatermarkColor")}
-                  </span>
-                  <div className="gh-image-export-color-row">
-                    <label className="gh-image-export-color-picker">
-                      <input
-                        type="color"
-                        value={mark.color}
-                        aria-label={t("imageExportWatermarkColor")}
-                        onChange={(event) => updateMark({ color: event.target.value })}
-                      />
-                      <span
-                        className="gh-image-export-color-swatch"
-                        style={{ backgroundColor: mark.color }}
-                        aria-hidden="true"
-                      />
-                      <code>{mark.color.toUpperCase()}</code>
-                    </label>
-                    <div className="gh-image-export-swatches">
-                      {WATERMARK_COLOR_SWATCHES.map((swatch) => (
-                        <button
-                          key={swatch}
-                          type="button"
-                          className="gh-image-export-swatch-btn"
-                          style={{ backgroundColor: swatch }}
-                          aria-label={swatch}
-                          aria-pressed={mark.color.toLowerCase() === swatch}
-                          onClick={() => updateMark({ color: swatch })}
+              {!hasWatermarkText && (
+                <p className="gh-image-export-watermark-empty-note">
+                  {t("imageExportWatermarkPlaceholder")}
+                </p>
+              )}
+              <fieldset disabled={!hasWatermarkText} className="gh-image-export-watermark-params">
+                <Choice
+                  label={t("imageExportWatermarkMode")}
+                  value={mark.mode}
+                  choices={[
+                    ["footer", t("imageExportWatermarkFooter")],
+                    ["tile", t("imageExportWatermarkTile")],
+                  ]}
+                  onChange={(mode) => updateMark({ mode })}
+                />
+                <Toggle
+                  label={t("imageExportWatermarkAutoColor")}
+                  checked={!mark.color}
+                  onChange={(auto) =>
+                    updateMark({ color: auto ? "" : WATERMARK_COLOR_SWATCHES[1] })
+                  }
+                />
+                {mark.color && (
+                  <div className="gh-image-export-field">
+                    <span className="gh-image-export-field-label">
+                      {t("imageExportWatermarkColor")}
+                    </span>
+                    <div className="gh-image-export-color-row">
+                      <label className="gh-image-export-color-picker">
+                        <input
+                          type="color"
+                          value={mark.color}
+                          aria-label={t("imageExportWatermarkColor")}
+                          onChange={(event) => updateMark({ color: event.target.value })}
                         />
-                      ))}
+                        <span
+                          className="gh-image-export-color-swatch"
+                          style={{ backgroundColor: mark.color }}
+                          aria-hidden="true"
+                        />
+                        <code>{mark.color.toUpperCase()}</code>
+                      </label>
+                      <div className="gh-image-export-swatches">
+                        {WATERMARK_COLOR_SWATCHES.map((swatch) => (
+                          <button
+                            key={swatch}
+                            type="button"
+                            className="gh-image-export-swatch-btn"
+                            style={{ backgroundColor: swatch }}
+                            aria-label={`${t("imageExportWatermarkColor")}: ${swatch}`}
+                            aria-pressed={mark.color.toLowerCase() === swatch}
+                            onClick={() => updateMark({ color: swatch })}
+                          />
+                        ))}
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
-              {range("opacity", t("imageExportWatermarkOpacity"))}
-              {range("fontSize", t("imageExportWatermarkSize"))}
-              {mark.mode === "tile" && (
-                <details className="gh-image-export-group gh-image-export-subgroup">
-                  <summary>
-                    <span className="gh-image-export-summary-title">
-                      {t("imageExportWatermarkAdvanced")}
-                    </span>
-                    <ChevronDownIcon size={13} className="gh-image-export-chevron" />
-                  </summary>
-                  <div className="gh-image-export-group-body">
-                    {range("rotation", t("imageExportWatermarkRotation"))}
-                    {range("gapX", t("imageExportWatermarkGapX"))}
-                    {range("gapY", t("imageExportWatermarkGapY"))}
-                    <Toggle
-                      label={t("imageExportWatermarkStagger")}
-                      checked={mark.stagger}
-                      onChange={(stagger) => updateMark({ stagger })}
-                    />
-                  </div>
-                </details>
-              )}
+                )}
+                {range("opacity", t("imageExportWatermarkOpacity"))}
+                {range("fontSize", t("imageExportWatermarkSize"))}
+                {mark.mode === "tile" && (
+                  <details className="gh-image-export-group gh-image-export-subgroup">
+                    <summary
+                      tabIndex={disabled || !hasWatermarkText ? -1 : undefined}
+                      aria-disabled={disabled || !hasWatermarkText || undefined}>
+                      <span className="gh-image-export-summary-title">
+                        {t("imageExportWatermarkAdvanced")}
+                      </span>
+                      <ChevronDownIcon size={13} className="gh-image-export-chevron" />
+                    </summary>
+                    <div className="gh-image-export-group-body">
+                      {range("rotation", t("imageExportWatermarkRotation"))}
+                      {range("gapX", t("imageExportWatermarkGapX"))}
+                      {range("gapY", t("imageExportWatermarkGapY"))}
+                      <Toggle
+                        label={t("imageExportWatermarkStagger")}
+                        checked={mark.stagger}
+                        onChange={(stagger) => updateMark({ stagger })}
+                      />
+                    </div>
+                  </details>
+                )}
+              </fieldset>
             </div>
           )}
         </div>
 
         <div className="gh-image-export-controls-footer">
-          <button
-            type="button"
-            className="gh-dialog-btn gh-dialog-btn-secondary gh-image-export-reset"
-            disabled={!isModified}
-            onClick={onReset}>
-            <RefreshIcon size={14} />
-            <span>{t("imageExportReset")}</span>
-          </button>
+          {canUndoReset && onUndoReset ? (
+            <button
+              type="button"
+              className="gh-dialog-btn gh-dialog-btn-secondary gh-image-export-reset"
+              onClick={onUndoReset}>
+              <RefreshIcon size={14} />
+              <span>{t("imageExportUndoReset")}</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="gh-dialog-btn gh-dialog-btn-secondary gh-image-export-reset"
+              disabled={!isModified}
+              onClick={onReset}>
+              <RefreshIcon size={14} />
+              <span>{t("imageExportReset")}</span>
+            </button>
+          )}
           <p className="gh-image-export-hint">{t("imageExportRemembered")}</p>
         </div>
       </fieldset>
     </aside>
   )
-}
+})
