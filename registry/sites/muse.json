@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "muse",
   "version": 1,
-  "minAppVersion": "1.3.6",
+  "minAppVersion": "1.3.7",
   "name": "Muse",
   "description": "Adds Ophel outline navigation, basic export, prompt insertion, chat width, and Zen Mode to Muse main and side chats.",
   "descriptionI18n": {
