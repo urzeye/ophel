@@ -7,7 +7,10 @@ import { build as viteBuild, defineConfig, type Plugin } from "vite"
 import monkey from "vite-plugin-monkey"
 
 import { rewriteUserscriptCssHighlighter } from "./scripts/userscript-highlighter"
-import { createUserscriptStyleTemplate } from "./scripts/userscript-text-resources"
+import {
+  createUserscriptInlineStyles,
+  createUserscriptStyleTemplate,
+} from "./scripts/userscript-text-resources"
 
 import {
   USERSCRIPT_RESOURCE_DEFINITIONS,
@@ -36,6 +39,7 @@ const isUserscriptDevelopmentBuild =
   process.env.NODE_ENV === "development" || Boolean(process.env.USERSCRIPT_ASSET_BASE_URL)
 
 const userscriptStyleTemplate = createUserscriptStyleTemplate(__dirname)
+const userscriptInlineStyles = createUserscriptInlineStyles(__dirname)
 
 // ========== Dynamic Metadata Loading ==========
 const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, "package.json"), "utf-8"))
@@ -221,6 +225,14 @@ function readUserscriptAssetContent(
 
   if (key === "customStyleTemplate") {
     return userscriptStyleTemplate.content
+  }
+
+  if (key === "inlineStyles") {
+    return userscriptInlineStyles.content
+  }
+
+  if (key === "hostStyles") {
+    return userscriptInlineStyles.hostStyles
   }
 
   if (key === "markdownPreviewStyles") {
@@ -607,6 +619,7 @@ const userscriptLocaleResourceUrls = getUserscriptLocaleResourceUrls(userscriptL
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
+    userscriptInlineStyles.plugin,
     userscriptStyleTemplate.plugin,
     {
       name: "ophel-userscript-css-highlighter",
@@ -652,6 +665,7 @@ export default defineConfig({
         // 实际运行范围由 whitelist-check.ts 在运行时收紧。
         match: ["http://*/*", "https://*/*"],
         grant: [
+          "GM_addStyle",
           "GM_getResourceText",
           "GM_getResourceURL",
           "GM_getValue",

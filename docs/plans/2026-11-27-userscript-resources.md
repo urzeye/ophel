@@ -26,3 +26,22 @@ Before each commit: inspect the diff, run focused tests and formatting/lint chec
 ## Release path
 
 `pnpm build:userscript` emits resources into `build/userscript/userscript-assets`. `.github/workflows/release.yml` publishes that entire directory to the `userscript-assets` branch, resolves the published commit, and rewrites metadata/manifest URLs to the immutable jsDelivr commit URL. New resources must enter the existing manifest and SRI loop, so both production releases and `build:userscript:local` discover them automatically.
+
+## Results
+
+Character counts below use Unicode code points from the compressed production build before release URL pinning.
+
+| Step | Main script characters | Reduction |
+| --- | ---: | ---: |
+| Baseline | 1,856,217 | — |
+| Theme presets | 1,790,966 | 65,251 |
+| CSS highlighting | 1,757,181 | 33,785 |
+| Custom-style tutorial | 1,737,271 | 19,910 |
+| Static styles | 1,580,988 | 156,283 |
+| Total | | 275,229 |
+
+Validation: 17 regression tests; typecheck; repository formatting; lint (no errors, 110 existing warnings); production and local userscript builds; Chrome and Firefox production builds. The asset checker verifies every generated resource/vendor and SRI before publication and after release URL pinning.
+
+Chrome comparison: 75 of 76 files are identical to the baseline. Background output varies between unchanged repeated builds because Plasmo generates module identifiers and reorders generated main-world registrations; shared extension sources and configuration were not modified.
+
+Browser smoke: isolated Chromium with a ChatGPT DOM fixture and mocked GM storage, loading the actual local script, resources, and vendors. Panel initialization had no console errors; all 24 theme backgrounds matched their source values; the CSS tutorial matched the resource exactly; the editor produced 605 highlighting spans, stayed in its document portal, and followed light/dark changes. The inline-style JSON was read once. No account-backed live-site flow or remote release was performed.
