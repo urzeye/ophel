@@ -10,20 +10,31 @@ export function readUserscriptResourceText(name: string): string {
   return text
 }
 
-let inlineStyles: Record<string, unknown> | undefined
+const jsonResources = new Map<string, unknown>()
+
+export function readUserscriptJsonResource(name: string): unknown {
+  if (!jsonResources.has(name)) {
+    jsonResources.set(name, JSON.parse(readUserscriptResourceText(name)))
+  }
+  return jsonResources.get(name)
+}
+
+function readStringMapValue(name: string, key: string): string {
+  const values = readUserscriptJsonResource(name)
+  if (!values || typeof values !== "object" || Array.isArray(values)) {
+    throw new Error(`[Ophel] Invalid string map resource: ${name}`)
+  }
+  const value = (values as Record<string, unknown>)[key]
+  if (typeof value !== "string" || value.length === 0) {
+    throw new Error(`[Ophel] Required resource entry is missing: ${name}/${key}`)
+  }
+  return value
+}
 
 export function readUserscriptInlineStyle(key: string): string {
-  if (!inlineStyles) {
-    const name = USERSCRIPT_RESOURCE_DEFINITIONS.inlineStyles.metaName
-    const data: unknown = JSON.parse(readUserscriptResourceText(name))
-    if (!data || typeof data !== "object" || Array.isArray(data)) {
-      throw new Error(`[Ophel] Invalid inline styles resource: ${name}`)
-    }
-    inlineStyles = data as Record<string, unknown>
-  }
-  const style = inlineStyles[key]
-  if (typeof style !== "string" || style.length === 0) {
-    throw new Error(`[Ophel] Required inline style is missing: ${key}`)
-  }
-  return style
+  return readStringMapValue(USERSCRIPT_RESOURCE_DEFINITIONS.inlineStyles.metaName, key)
+}
+
+export function readUserscriptSvgPath(key: string): string {
+  return readStringMapValue(USERSCRIPT_RESOURCE_DEFINITIONS.svgPaths.metaName, key)
 }

@@ -27,7 +27,18 @@ Before each commit: inspect the diff, run focused tests and formatting/lint chec
 
 `pnpm build:userscript` emits resources into `build/userscript/userscript-assets`. `.github/workflows/release.yml` publishes that entire directory to the `userscript-assets` branch, resolves the published commit, and rewrites metadata/manifest URLs to the immutable jsDelivr commit URL. New resources must enter the existing manifest and SRI loop, so both production releases and `build:userscript:local` discover them automatically.
 
-## Results
+## Follow-up: SVG paths and settings data
+
+Scope: only the two approved data extractions; leave compression passes, dynamic CSS, metadata spacing, and remaining vendors unchanged. Append one local commit per optimization to PR #1081, then push the branch.
+
+1. Generate a content-addressed SVG path map directly from the existing component/core sources. A userscript-only Vite transform replaces long static paths with cached resource reads, including proper JSX expression wrapping. Preserve every SVG element, attribute, event handler, and animation. Test source/resource parity, full rendered SVG equality, caching, and invalid-resource errors; build and commit.
+2. Generate settings search/routing data from `src/constants/ui.ts`, preserving the original search ordering/scoring, aliases, prefix routes, legacy navigation, and Set behavior. Replace only userscript data initializers, keep shared extension sources unchanged, and test navigation/search equivalence plus release pinning; build and commit.
+
+Use the existing hashed `@resource` manifest, SHA-256 fragments, GitHub asset publication, and full commit URL pinning for both resources. Finish with repository checks, Chrome/Firefox builds, browser smoke, and a clean working tree before pushing.
+
+Follow-up SVG result: 1,521,118 characters, saving 59,870 from the initial optimized build. All 25 tests, typecheck, targeted lint/formatting, the production build, and asset integrity checks passed. Run artifact-dependent tests after the build finishes.
+
+## Initial results
 
 Character counts below use Unicode code points from the compressed production build before release URL pinning.
 

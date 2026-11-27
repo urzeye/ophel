@@ -22,6 +22,10 @@ export const USERSCRIPT_SUPPORTED_LOCALES = [
 export type UserscriptLocale = (typeof USERSCRIPT_SUPPORTED_LOCALES)[number]
 
 export const USERSCRIPT_RESOURCE_DEFINITIONS = {
+  svgPaths: {
+    metaName: "ophelSvgPaths",
+    fileName: "ophel.svg-paths.json",
+  },
   inlineStyles: {
     metaName: "ophelInlineStyles",
     fileName: "ophel.inline-styles.json",
