@@ -521,7 +521,7 @@ export function useShortcuts({
       const liveSettings = useSettingsStore.getState().settings
       const format = liveSettings.export?.defaultExportFormat ?? "markdown"
       const success = await conversationManager.exportConversation(sessionId, format)
-      if (!success) {
+      if (success === false) {
         showToast(t("exportFailed"))
       }
     } catch (error) {

@@ -2885,7 +2885,7 @@ export const App: React.FC<AppProps> = ({ adapter: propAdapter }) => {
       if (settings.export?.exportShowDialog === false) {
         const format = settings.export?.defaultExportFormat ?? "markdown"
         const success = await conversationManager.exportConversation(targetId, format, { sourceId })
-        if (!success) {
+        if (success === false) {
           showToast(t("exportFailed"))
         }
         return

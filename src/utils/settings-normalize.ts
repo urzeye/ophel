@@ -1,6 +1,7 @@
 import { LAYOUT_CONFIG, isBuiltinSiteId } from "~constants"
 import { normalizeShortcutsSettings } from "~constants/shortcuts"
 import { DEFAULT_QUICK_BUTTONS_SETTINGS, DEFAULT_SETTINGS } from "~constants/default-settings"
+import { normalizeImageExportPreferences } from "~utils/image-export-settings"
 import type {
   HiddenPathRule,
   PageWidthConfig,
@@ -364,7 +365,8 @@ const normalizeExportSettings = (
     exportSettings?.defaultExportFormat === "markdown" ||
     exportSettings?.defaultExportFormat === "json" ||
     exportSettings?.defaultExportFormat === "txt" ||
-    exportSettings?.defaultExportFormat === "html"
+    exportSettings?.defaultExportFormat === "html" ||
+    exportSettings?.defaultExportFormat === "image"
       ? exportSettings.defaultExportFormat
       : defaults.defaultExportFormat
   const exportShowIndex =
@@ -387,6 +389,7 @@ const normalizeExportSettings = (
   return {
     ...defaults,
     ...exportSettings,
+    image: normalizeImageExportPreferences(exportSettings?.image),
     exportShowIndex,
     exportMarkdownDivider,
     exportShowDialog,

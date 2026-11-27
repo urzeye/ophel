@@ -1,5 +1,6 @@
 import type { ShortcutsSettings } from "~constants/shortcuts"
 import type { WebDAVConfig } from "~types/webdav"
+import type { ImageExportPreferences } from "~types/image-export"
 
 // 内置与动态 SitePack 共用的站点 ID 类型
 export type SiteId = string
@@ -58,6 +59,7 @@ export interface PanelAvoidanceSettings {
 
 // 导出设置
 export interface ExportSettings {
+  image?: ImageExportPreferences
   customUserName?: string // 自定义用户名称
   customModelName?: string // 自定义 AI 名称
   exportFilenameTimestamp?: boolean // 导出文件名包含时间戳
@@ -70,7 +72,7 @@ export interface ExportSettings {
   exportStyle?: ExportStyle // 导出样式：standard 保留装饰，clean 去除装饰 emoji
 }
 
-export type ExportFormatSetting = "markdown" | "json" | "txt" | "html"
+export type ExportFormatSetting = "markdown" | "json" | "txt" | "html" | "image"
 
 // AI Studio 设置
 export interface AIStudioSettings {

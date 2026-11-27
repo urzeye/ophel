@@ -10,7 +10,12 @@ import { SITE_IDS } from "~constants/defaults"
 import { applyChatGPTThemeMode } from "~styles/native-theme-adapters/chatgpt"
 import { DOMToolkit } from "~utils/dom-toolkit"
 import type { CustomStyle } from "~utils/storage"
-import { getPreset, themeVariablesToCSS, type ThemeVariables } from "~utils/themes"
+import {
+  getPreset,
+  parseThemeVariablesFromCSS,
+  themeVariablesToCSS,
+  type ThemeVariables,
+} from "~utils/themes"
 
 export type ThemeMode = "light" | "dark"
 export type ThemePreference = "light" | "dark" | "system"
@@ -793,8 +798,15 @@ export class ThemeManager {
     let vars: ThemeVariables | null = null
 
     if (customStyle) {
-      // 如果是自定义样式，直接使用其 CSS
-      // 不需要获取 vars，因为我们会直接注入 CSS
+      // 自定义样式直接注入 Shadow DOM；同时以当前明暗基准预置 + 自定义 --gh-* 变量同步到 <html>，
+      // 防止 Portal 弹窗在自定义深色样式下残留上一套浅色变量或退回硬编码浅色 fallback。
+      const fallbackPresetId =
+        currentMode === "dark" ? DEFAULT_DARK_PRESET_ID : DEFAULT_LIGHT_PRESET_ID
+      const baseVars = getPreset(fallbackPresetId, currentMode).variables
+      vars = {
+        ...baseVars,
+        ...parseThemeVariablesFromCSS(customStyle.css, currentMode),
+      } as ThemeVariables
     } else {
       // 否则从预置系统获取
       try {
