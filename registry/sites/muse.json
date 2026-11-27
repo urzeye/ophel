@@ -18,7 +18,7 @@
     "pt-BR": "Adiciona às conversas principais e secundárias do Muse a navegação pela estrutura, a exportação básica, a inserção de prompts, o ajuste da largura e o modo Zen do Ophel.",
     "ru": "Добавляет в основные и боковые чаты Muse навигацию по структуре, базовый экспорт, вставку промптов, настройку ширины чата и режим Zen от Ophel."
   },
-  "matches": ["https://muse.ai/", "https://muse.ai/thread/*"],
+  "matches": ["https://muse.ai/"],
   "capabilities": [
     "outline",
     "outline-user-queries",
