@@ -1,0 +1,864 @@
+/* ==================== Queue Overlay ==================== */
+
+/* 折叠态胶囊 */
+.gh-queue-capsule {
+  position: fixed;
+  z-index: 9998;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  background: var(--gh-bg, #ffffff);
+  border: 1px solid var(--gh-border, #e5e7eb);
+  color: var(--gh-text, #1f2937);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  transition:
+    background 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+  font-family: var(
+    --gh-font-family,
+    "Inter",
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    "Microsoft YaHei",
+    "PingFang SC",
+    "Hiragino Sans SC",
+    "Apple SD Gothic Neo",
+    "Malgun Gothic",
+    sans-serif
+  );
+}
+
+.gh-queue-capsule:hover {
+  transform: translateY(-1px);
+  background: var(--gh-bg-secondary, #f9fafb);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.gh-queue-capsule-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.gh-queue-capsule-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 8px;
+  background: var(--gh-bg-accent, #eef2ff);
+  color: var(--gh-accent, #4285f4);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* 展开态面板 */
+.gh-queue-panel {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: auto;
+  width: 420px;
+  max-width: calc(100vw - 40px);
+  max-height: min(440px, calc(100vh - 32px));
+  border-radius: 14px;
+  background: var(--gh-bg, #ffffff);
+  border: 1px solid var(--gh-border, #e5e7eb);
+  box-shadow:
+    0 18px 48px rgba(15, 23, 42, 0.16),
+    0 3px 12px rgba(15, 23, 42, 0.08);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: var(
+    --gh-font-family,
+    "Inter",
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    "Microsoft YaHei",
+    "PingFang SC",
+    "Hiragino Sans SC",
+    "Apple SD Gothic Neo",
+    "Malgun Gothic",
+    sans-serif
+  );
+}
+
+/* 面板头部 */
+.gh-queue-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 48px;
+  padding: 10px 14px 9px;
+  border-bottom: 1px solid var(--gh-border-light, #f3f4f6);
+  background: linear-gradient(
+    180deg,
+    var(--gh-bg, #ffffff) 0%,
+    var(--gh-bg-secondary, #fafafa) 100%
+  );
+}
+
+.gh-queue-header-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gh-text, #1f2937);
+}
+
+.gh-queue-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.gh-queue-header-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--gh-text-secondary, #6b7280);
+  cursor: pointer;
+  font-size: 16px;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    opacity 0.15s;
+}
+
+.gh-queue-header-btn:hover {
+  background: var(--gh-bg-tertiary, #f3f4f6);
+  color: var(--gh-text, #1f2937);
+}
+
+/* 队列列表 */
+.gh-queue-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  max-height: 196px;
+  background: var(--gh-bg, #ffffff);
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.gh-queue-list:hover {
+  scrollbar-color: rgba(148, 163, 184, 0.45) transparent;
+}
+
+.gh-queue-list::-webkit-scrollbar {
+  width: 7px;
+}
+
+.gh-queue-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.gh-queue-list::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  background-clip: padding-box;
+}
+
+.gh-queue-list:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(148, 163, 184, 0.48);
+}
+
+.gh-queue-list:hover::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(100, 116, 139, 0.62);
+}
+
+.gh-queue-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 16px;
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 13px;
+  text-align: center;
+}
+
+/* 「可在设置中关闭」做成真正能点的入口，而不是常驻底栏的灰字 */
+.gh-queue-empty-link {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--gh-primary-text, var(--gh-primary, #4285f4));
+  font-size: 12px;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.gh-queue-empty-link:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 55%, transparent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.gh-queue-capsule:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 55%, transparent);
+  outline-offset: 2px;
+}
+
+.gh-queue-item {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 9px;
+  padding: 9px 10px 9px 9px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  background: var(--gh-bg-secondary, #f8fafc);
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+.gh-queue-item:hover {
+  background: var(--gh-bg, #ffffff);
+  border-color: var(--gh-border-light, #e5e7eb);
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06);
+}
+
+.gh-queue-item-index {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--gh-border, #d7dde6);
+  border-radius: 7px;
+  background: var(--gh-bg, #ffffff);
+  color: var(--gh-text-secondary, #64748b);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  margin-top: 0;
+}
+
+.gh-queue-item-content {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--gh-text, #1f2937);
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.gh-queue-item-main {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.gh-queue-item-chain {
+  color: var(--gh-text-secondary, #64748b);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gh-queue-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: opacity 0.15s;
+}
+
+/* 仅精确指针设备悬停或键盘聚焦时显示；触屏和键盘不依赖 hover */
+@media (hover: hover) and (pointer: fine) {
+  .gh-queue-item-actions {
+    opacity: 0;
+  }
+
+  .gh-queue-item:hover .gh-queue-item-actions,
+  .gh-queue-item:focus-within .gh-queue-item-actions {
+    opacity: 1;
+  }
+}
+
+.gh-queue-item-remove,
+.gh-queue-item-force-send,
+.gh-queue-item-edit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--gh-text-secondary, #6b7280);
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    opacity 0.15s;
+}
+
+.gh-queue-item-remove svg,
+.gh-queue-item-force-send svg,
+.gh-queue-item-edit svg {
+  width: 16px;
+  height: 16px;
+}
+
+.gh-queue-item-remove:hover {
+  background: var(--gh-bg-danger, #fef2f2);
+  color: var(--gh-text-danger, #dc2626);
+}
+
+.gh-queue-item-force-send:hover,
+.gh-queue-item-edit:hover {
+  background: var(--gh-bg-accent, #eef2ff);
+  color: var(--gh-accent, #4285f4);
+}
+
+/* Edit Area */
+.gh-queue-item-edit-area {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gh-queue-item-edit-input {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--gh-accent, #4285f4);
+  border-radius: 6px;
+  background: var(--gh-bg, #ffffff);
+  color: var(--gh-text, #1f2937);
+  font-size: 13px;
+  line-height: 1.5;
+  resize: vertical;
+  min-height: 48px;
+  max-height: 120px;
+  outline: none;
+  font-family: inherit;
+}
+
+.gh-queue-item-edit-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.gh-queue-item-edit-btn-save,
+.gh-queue-item-edit-btn-cancel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    opacity 0.15s;
+}
+
+.gh-queue-item-edit-btn-save {
+  color: var(--gh-accent, #4285f4);
+}
+.gh-queue-item-edit-btn-save:hover {
+  background: var(--gh-bg-accent, #eef2ff);
+}
+
+.gh-queue-item-edit-btn-cancel {
+  color: var(--gh-text-secondary, #6b7280);
+}
+.gh-queue-item-edit-btn-cancel:hover {
+  background: var(--gh-bg-tertiary, #f3f4f6);
+  color: var(--gh-text, #1f2937);
+}
+
+/* 状态指示器 */
+.gh-queue-item[data-status="sending"] {
+  border-color: rgba(66, 133, 244, 0.28);
+  background: var(--gh-bg-accent, #eef2ff);
+  background: color-mix(in srgb, var(--gh-bg-accent, #eef2ff) 52%, var(--gh-bg, #ffffff));
+  box-shadow: inset 0 0 0 1px rgba(66, 133, 244, 0.08);
+}
+
+.gh-queue-item[data-status="sending"] .gh-queue-item-index {
+  border-color: rgba(66, 133, 244, 0.38);
+  background: var(--gh-bg-accent, #eef2ff);
+  color: var(--gh-accent, #4285f4);
+}
+
+.gh-queue-item[data-status="sent"] {
+  opacity: 0.5;
+}
+
+.gh-queue-item[data-status="failed"] {
+  border-color: rgba(220, 38, 38, 0.22);
+  background: var(--gh-bg-danger, #fef2f2);
+}
+
+.gh-queue-item[data-status="failed"] .gh-queue-item-index {
+  border-color: rgba(220, 38, 38, 0.28);
+  color: var(--gh-text-danger, #dc2626);
+}
+
+/* 输入区 */
+.gh-queue-input-area {
+  padding: 12px 14px 10px;
+  border-top: 1px solid var(--gh-border-light, #f3f4f6);
+  background: var(--gh-bg, #ffffff);
+}
+
+.gh-queue-input-wrapper {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.gh-queue-input {
+  flex: 1;
+  min-height: 36px;
+  max-height: 120px;
+  padding: 9px 12px;
+  border: 1px solid var(--gh-border, #e5e7eb);
+  border-radius: 8px;
+  background: var(--gh-bg, #ffffff);
+  color: var(--gh-text, #1f2937);
+  font-size: 13px;
+  line-height: 1.5;
+  resize: none;
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.15s;
+}
+
+.gh-queue-input:focus {
+  border-color: var(--gh-accent, #4285f4);
+  box-shadow: var(--gh-input-focus-shadow, 0 0 0 3px rgba(66, 133, 244, 0.1));
+}
+
+.gh-queue-input::placeholder {
+  color: var(--gh-text-secondary, #6b7280);
+}
+
+.gh-queue-send-btn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 8px;
+  background: var(--gh-accent, #4285f4);
+  color: #fff;
+  cursor: pointer;
+  font-size: 16px;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    opacity 0.15s;
+}
+
+.gh-queue-send-btn:hover {
+  background: var(--gh-accent-hover, #3b78e7);
+}
+
+.gh-queue-send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 底部状态 */
+.gh-queue-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 6px;
+  min-height: 28px;
+  padding: 3px 14px 10px;
+  font-size: 11px;
+  color: var(--gh-text-secondary, #6b7280);
+  background: var(--gh-bg, #ffffff);
+}
+
+.gh-queue-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gh-success, #22c55e);
+}
+
+.gh-queue-status-dot[data-generating="true"] {
+  background: var(--gh-warning, #f59e0b);
+  animation: gh-queue-pulse 1.5s infinite;
+}
+
+@keyframes gh-queue-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+/* 快捷键提示 */
+.gh-queue-shortcut-hint {
+  margin-left: auto;
+}
+
+/* Batch Import Dialog：头部 / 内容 / 页脚的骨架来自共享的 .gh-dialog-frame（Dialog.tsx） */
+.gh-queue-batch-dialog {
+  max-width: 560px;
+}
+
+.gh-queue-batch-tab:focus-visible,
+.gh-queue-batch-mode-btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 55%, transparent);
+  outline-offset: 2px;
+}
+
+/* 最小高度让两个 Tab 的内容高度接近，切换时弹窗不再上下跳动。
+   必须带上 .gh-queue-batch-dialog：共享的 .gh-dialog-frame-body（min-height: 0）是后注入的，
+   权重相同会盖掉这里；上限扣掉头部和页脚，矮窗口里也不会把页脚顶出弹窗 */
+.gh-queue-batch-dialog .gh-queue-batch-body {
+  min-height: min(440px, calc(86vh - 150px));
+}
+
+.gh-queue-batch-section {
+  margin-bottom: 16px;
+}
+
+.gh-queue-batch-tabs {
+  display: flex;
+  gap: 6px;
+  margin: 0 0 16px;
+  padding: 3px;
+  border: 1px solid var(--gh-border-light, #e5e7eb);
+  border-radius: 8px;
+  background: var(--gh-bg-secondary, #f9fafb);
+}
+
+.gh-queue-batch-tab {
+  flex: 1;
+  height: 30px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--gh-text-secondary, #6b7280);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.gh-queue-batch-tab:hover:not([data-active="true"]) {
+  color: var(--gh-text, #1f2937);
+}
+
+/* 一级 Tab 的选中态要比下面的二级选项更醒目：主色文字 + 凸起的白底 */
+.gh-queue-batch-tab[data-active="true"] {
+  background: var(--gh-bg, #ffffff);
+  color: var(--gh-primary-text, var(--gh-primary, #4285f4));
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+}
+
+.gh-queue-batch-label {
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gh-text, #1f2937);
+}
+
+.gh-queue-batch-mode-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.gh-queue-batch-mode-btn {
+  padding: 8px 12px;
+  border: 1px solid var(--gh-border, #d1d5db);
+  border-radius: 8px;
+  background: var(--gh-bg, #ffffff);
+  color: var(--gh-text-secondary, #6b7280);
+  cursor: pointer;
+  font-size: 13px;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.gh-queue-batch-mode-btn:hover {
+  border-color: var(--gh-accent, #4285f4);
+  color: var(--gh-text, #1f2937);
+}
+
+/* 二级选项的选中态保持克制：淡主色底 + 主色描边，文字不再用主色 */
+.gh-queue-batch-mode-btn[data-active="true"] {
+  border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 55%, var(--gh-border, #d1d5db));
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 6%, var(--gh-bg, #ffffff));
+  color: var(--gh-text, #1f2937);
+  font-weight: 600;
+}
+
+/* 与共享 .gh-dialog-input（margin-bottom: 20px，后注入）同权重会被覆盖，这里提高一级 */
+.gh-queue-batch-dialog .gh-queue-batch-delimiter-input {
+  margin-bottom: 0;
+}
+
+.gh-queue-batch-dialog .gh-queue-batch-library-search {
+  margin-bottom: 10px;
+}
+
+.gh-queue-batch-library-list {
+  max-height: 260px;
+  overflow-y: auto;
+  border: 1px solid var(--gh-border-light, #e5e7eb);
+  border-radius: 10px;
+  background: var(--gh-bg, #ffffff);
+}
+
+.gh-queue-batch-library-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--gh-border-light, #e5e7eb);
+  cursor: pointer;
+}
+
+.gh-queue-batch-library-item:last-child {
+  border-bottom: none;
+}
+
+.gh-queue-batch-library-item:hover {
+  background: var(--gh-hover, #f3f4f6);
+}
+
+.gh-queue-batch-library-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.gh-queue-batch-library-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gh-text, #1f2937);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gh-queue-batch-library-content {
+  font-size: 12px;
+  color: var(--gh-text-secondary, #6b7280);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gh-queue-batch-library-category {
+  max-width: 90px;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: var(--gh-hover, #f3f4f6);
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gh-queue-batch-library-tags {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.gh-queue-batch-library-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 18px;
+  padding: 0 7px 0 5px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 10%, var(--gh-bg, #ffffff));
+  color: var(--gh-primary-text, var(--gh-primary, #4285f4));
+  font-size: 11px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.gh-queue-batch-hint {
+  margin-top: 8px;
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.gh-queue-batch-hint-above {
+  margin: 0 0 8px;
+}
+
+.gh-queue-batch-library-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 12px;
+}
+
+.gh-queue-batch-select-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--gh-text, #1f2937);
+  cursor: pointer;
+}
+
+.gh-queue-batch-library-empty {
+  padding: 24px 12px;
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 13px;
+  text-align: center;
+}
+
+.gh-queue-batch-textarea {
+  width: 100%;
+  min-height: 160px;
+  max-height: 300px;
+  padding: 10px 12px;
+  border: 1px solid var(--gh-border, #d1d5db);
+  border-radius: 10px;
+  background: var(--gh-bg, #ffffff);
+  color: var(--gh-text, #1f2937);
+  font-size: 13px;
+  line-height: 1.55;
+  resize: vertical;
+  box-sizing: border-box;
+  outline: none;
+  font-family: inherit;
+}
+
+.gh-queue-batch-textarea:focus {
+  border-color: var(--gh-accent, #4285f4);
+}
+
+.gh-queue-batch-preview {
+  padding: 12px;
+  border: 1px solid var(--gh-border-light, #e5e7eb);
+  border-radius: 10px;
+  background: var(--gh-bg-secondary, #f9fafb);
+  display: flex;
+  flex-direction: column;
+}
+
+.gh-queue-batch-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 12px;
+  color: var(--gh-text-secondary, #6b7280);
+}
+
+.gh-queue-batch-preview-body {
+  max-height: 220px;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.gh-queue-batch-preview-list {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gh-queue-batch-preview-item {
+  color: var(--gh-text, #1f2937);
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.gh-queue-batch-preview-empty,
+.gh-queue-batch-preview-more {
+  font-size: 12px;
+  color: var(--gh-text-secondary, #6b7280);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gh-queue-capsule,
+  .gh-queue-panel,
+  .gh-queue-header-btn,
+  .gh-queue-item,
+  .gh-queue-item-actions,
+  .gh-queue-item-remove,
+  .gh-queue-item-force-send,
+  .gh-queue-item-edit,
+  .gh-queue-item-edit-btn-save,
+  .gh-queue-item-edit-btn-cancel,
+  .gh-queue-input,
+  .gh-queue-send-btn,
+  .gh-queue-batch-dialog,
+  .gh-queue-batch-mode-btn {
+    transition: none !important;
+  }
+
+  .gh-queue-status-dot[data-generating="true"] {
+    animation: none !important;
+  }
+}

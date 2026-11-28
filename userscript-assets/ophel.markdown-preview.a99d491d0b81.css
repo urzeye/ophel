@@ -1,0 +1,166 @@
+
+/* highlight.js GitHub Dark 主题
+   面板（Shadow DOM）通过 var() 跟随 Ophel 主题变量；
+   主文档注入（用户提问）var() 不可用，fallback 为 #1e1e1e */
+.hljs {
+  background: var(--gh-bg-tertiary, #1e1e1e);
+  color: var(--gh-text, #e6edf3);
+  padding: 12px;
+  border-radius: 6px;
+  overflow-x: auto;
+  font-family: 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  /* 代码块自动换行 */
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  word-break: break-all;
+}
+.hljs-comment,
+.hljs-quote { color: #8b949e; font-style: italic; }
+.hljs-keyword,
+.hljs-selector-tag { color: #ff7b72; }
+.hljs-string,
+.hljs-doctag { color: #a5d6ff; }
+.hljs-number,
+.hljs-literal { color: #79c0ff; }
+.hljs-title,
+.hljs-section,
+.hljs-selector-id { color: #d2a8ff; font-weight: bold; }
+.hljs-function > .hljs-title { color: #d2a8ff; }
+.hljs-type,
+.hljs-class .hljs-title { color: #7ee787; }
+.hljs-attribute { color: #79c0ff; }
+.hljs-variable,
+.hljs-template-variable { color: #ffa657; }
+.hljs-built_in { color: #ffa657; }
+.hljs-addition { color: #aff5b4; background: rgba(46, 160, 67, 0.15); }
+.hljs-deletion { color: #ffdcd7; background: rgba(248, 81, 73, 0.15); }
+
+/* 变量占位符高亮 */
+.gh-variable-highlight {
+  background: rgba(56, 139, 253, 0.2);
+  color: #58a6ff;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+/* Markdown 渲染样式 */
+.gh-markdown-preview {
+  line-height: 1.6;
+  color: var(--gh-text, #e6edf3);
+}
+.gh-markdown-preview h1,
+.gh-markdown-preview h2,
+.gh-markdown-preview h3 {
+  margin: 16px 0 8px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--gh-border, #30363d);
+  padding-bottom: 4px;
+}
+.gh-markdown-preview h1 { font-size: 1.5em; }
+.gh-markdown-preview h2 { font-size: 1.3em; }
+.gh-markdown-preview h3 { font-size: 1.1em; }
+.gh-markdown-preview p { margin: 8px 0; }
+.gh-markdown-preview :not(pre) > code:not(.hljs) {
+  background: var(--gh-bg-tertiary, #343942);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+.gh-markdown-preview .gh-code-wrapper {
+  position: relative;
+  margin: 12px 0;
+}
+.gh-markdown-preview pre {
+  margin: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+.gh-markdown-preview pre code {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  word-break: break-all;
+}
+/* 代码块复制按钮 */
+.gh-code-copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 4px 8px;
+  background: var(--gh-bg-secondary, #2d333b);
+  border: 1px solid var(--gh-border, #444c56);
+  border-radius: 4px;
+  color: var(--gh-text-secondary, #8b949e);
+  font-size: 12px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.gh-markdown-preview .gh-code-wrapper:hover .gh-code-copy-btn {
+  opacity: 1;
+}
+.gh-code-copy-btn:hover {
+  background: var(--gh-hover, #373e47);
+  color: var(--gh-text, #e6edf3);
+}
+.gh-markdown-preview blockquote {
+  border-left: 3px solid var(--gh-primary, #4285f4);
+  margin: 12px 0;
+  padding: 8px 16px;
+  background: var(--gh-bg-secondary, #161b22);
+  color: var(--gh-text-secondary, #8b949e);
+}
+.gh-markdown-preview ul,
+.gh-markdown-preview ol {
+  margin: 8px 0;
+  padding-left: 24px;
+}
+.gh-markdown-preview li { margin: 4px 0; }
+.gh-markdown-preview a {
+  color: var(--gh-primary, #58a6ff);
+  text-decoration: none;
+}
+.gh-markdown-preview a:hover { text-decoration: underline; }
+
+/* 任务列表样式 */
+.gh-markdown-preview .task-list-item {
+  list-style: none;
+  margin-left: -20px;
+}
+.gh-markdown-preview .task-list-item input[type="checkbox"] {
+  margin-right: 8px;
+  pointer-events: none;
+}
+
+/* 高亮 ==text== */
+.gh-markdown-preview mark {
+  background: rgba(255, 235, 59, 0.4);
+  color: inherit;
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+
+/* 容器样式 :::info, :::warning, :::danger */
+.gh-container {
+  margin: 12px 0;
+  padding: 12px 16px;
+  border-radius: 6px;
+  border-left: 4px solid;
+}
+.gh-container-info {
+  background: rgba(56, 139, 253, 0.1);
+  border-color: #388bfd;
+}
+.gh-container-warning {
+  background: rgba(255, 166, 87, 0.1);
+  border-color: #ffa657;
+}
+.gh-container-danger {
+  background: rgba(248, 81, 73, 0.1);
+  border-color: #f85149;
+}
