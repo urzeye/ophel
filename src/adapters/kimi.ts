@@ -800,8 +800,14 @@ export class KimiAdapter extends SiteAdapter {
   }
 
   extractUserQueryText(element: Element): string {
-    const contentBox = element.querySelector(this.config.sitePrivateSelectors.userContentBox)
-    return this.extractTextWithLineBreaks(contentBox || element).trim()
+    const source = this.findOriginalUserQueryContent(element) || element
+    if (!source.querySelector(".gh-user-query-markdown")) {
+      return this.extractTextWithLineBreaks(source).trim()
+    }
+
+    const clone = source.cloneNode(true) as HTMLElement
+    clone.querySelectorAll(".gh-user-query-markdown").forEach((node) => node.remove())
+    return this.extractTextWithLineBreaks(clone).trim()
   }
 
   extractUserQueryMarkdown(element: Element): string {
@@ -818,8 +824,7 @@ export class KimiAdapter extends SiteAdapter {
     }
 
     // 优先替换气泡载体 .user-content 以保留新版 toolcall-rollup 包裹下的背景与圆角样式
-    const contentBox = (element.querySelector(this.config.sitePrivateSelectors.userQueryContent) ||
-      element.querySelector(this.config.sitePrivateSelectors.userContentBox)) as HTMLElement | null
+    const contentBox = this.findOriginalUserQueryContent(element) as HTMLElement | null
     if (!contentBox) return false
 
     const rendered = document.createElement("div")
@@ -2127,6 +2132,20 @@ export class KimiAdapter extends SiteAdapter {
     return [imageMarkdown.join("\n\n"), fileBlock, body].filter(Boolean).join("\n\n")
   }
 
+  private findOriginalUserQueryContent(element: Element): Element | null {
+    const directContents = Array.from(
+      element.querySelectorAll(this.config.sitePrivateSelectors.userQueryContent),
+    ).filter((node) => !node.closest(".gh-user-query-markdown"))
+    if (directContents.length > 0) {
+      return directContents[0]
+    }
+
+    const contentBoxes = Array.from(
+      element.querySelectorAll(this.config.sitePrivateSelectors.userContentBox),
+    ).filter((node) => !node.closest(".gh-user-query-markdown"))
+    return contentBoxes[0] || null
+  }
+
   private extractKimiUserBodyMarkdown(element: Element): string {
     const clone = element.cloneNode(true) as HTMLElement
     clone
@@ -2135,8 +2154,9 @@ export class KimiAdapter extends SiteAdapter {
     clone
       .querySelectorAll(this.config.sitePrivateSelectors.exportDecoration)
       .forEach((node) => node.remove())
+    clone.querySelectorAll(".gh-user-query-markdown").forEach((node) => node.remove())
 
-    const contentBox = clone.querySelector(this.config.sitePrivateSelectors.userContentBox)
+    const contentBox = this.findOriginalUserQueryContent(clone)
     return this.extractTextWithLineBreaks(contentBox || clone).trim()
   }
 
@@ -2146,7 +2166,10 @@ export class KimiAdapter extends SiteAdapter {
   ): string[] {
     const images = Array.from(
       element.querySelectorAll(this.config.sitePrivateSelectors.userAttachmentImage),
-    ).filter((node): node is HTMLImageElement => node instanceof HTMLImageElement)
+    ).filter(
+      (node): node is HTMLImageElement =>
+        node instanceof HTMLImageElement && !node.closest(".gh-user-query-markdown"),
+    )
     const seenSources = new Set<string>()
     const imageMarkdown: string[] = []
 
@@ -2202,7 +2225,7 @@ export class KimiAdapter extends SiteAdapter {
   ): string[] {
     const cards = Array.from(
       element.querySelectorAll(this.config.sitePrivateSelectors.userFileCard),
-    )
+    ).filter((card) => !card.closest(".gh-user-query-markdown"))
     const seenFiles = new Set<string>()
     const fileMarkdown: string[] = []
 
