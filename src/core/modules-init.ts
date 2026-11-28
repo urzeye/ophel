@@ -255,7 +255,7 @@ export function initMarkdownFixer(ctx: ModulesContext): void {
   if (config && enabled) {
     modules.markdownFixer = new MarkdownFixer(config)
     modules.markdownFixer.start()
-    console.warn(`[Ophel] MarkdownFixer started for ${adapter.getName()}`)
+    console.debug(`[Ophel] MarkdownFixer started for ${adapter.getName()}`)
   }
 }
 
@@ -346,7 +346,21 @@ export function initWatermarkRemover(ctx: ModulesContext): void {
   syncWatermarkRemover(settings, siteId)
 }
 
+function setAIStudioWatermarkBlockerEnabled(enabled: boolean): void {
+  if (document.documentElement) {
+    document.documentElement.dataset.ophelAistudioWatermarkBlock = enabled ? "1" : "0"
+  }
+  window.postMessage({ type: "OPHEL_AISTUDIO_WATERMARK_TOGGLE", enabled }, "*")
+}
+
+function syncAIStudioWatermarkBlocker(settings: Settings, siteId: string): void {
+  if (siteId !== SITE_IDS.AISTUDIO) return
+  setAIStudioWatermarkBlockerEnabled(Boolean(settings.aistudio?.removeWatermark))
+}
+
 function syncWatermarkRemover(settings: Settings, siteId: string): void {
+  syncAIStudioWatermarkBlocker(settings, siteId)
+
   if (siteId !== SITE_IDS.GEMINI && siteId !== SITE_IDS.GEMINI_ENTERPRISE) return
 
   if (!platform.hasCapability("watermarkRemoval") || !settings.content?.watermarkRemoval) {
@@ -737,7 +751,7 @@ export function initUrlChangeObserver(ctx: ModulesContext): () => void {
     if (currentPathname === lastPathname) return
 
     lastPathname = currentPathname
-    console.warn("[Ophel] URL changed, reinitializing modules...")
+    console.debug("[Ophel] URL changed, reinitializing modules...")
 
     // 1. 阅读历史：停止录制 → 在可取消的稳定等待后恢复并重启
     const restoreRequestId = ++readingHistoryRestoreRequestId
@@ -828,6 +842,9 @@ export function destroyCoreModules(): void {
   modules.markdownFixer?.stop()
   modules.tabManager?.destroy()
   modules.watermarkRemover?.stop()
+  if (document.documentElement?.dataset?.ophelAistudioWatermarkBlock === "1") {
+    setAIStudioWatermarkBlockerEnabled(false)
+  }
   modules.readingHistoryManager?.stopRecording()
   modules.modelLocker?.stop()
   modules.scrollLockManager?.stop()

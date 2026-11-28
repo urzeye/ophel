@@ -102,6 +102,8 @@ export interface ClaudeTestResult {
  */
 export interface CheckRemoteConfigRequestOptions {
   sources?: readonly string[]
+  /** 为 true 时表示页面切入/后台自动静默检查，失败仅更新 lastError，不打告警日志 */
+  silent?: boolean
 }
 
 export interface PlatformRemoteConfig {

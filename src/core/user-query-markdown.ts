@@ -112,7 +112,7 @@ export class UserQueryMarkdownRenderer {
   private init() {
     const selector = this.adapter.getUserQuerySelector()
     if (!selector) {
-      console.warn("[UserQueryMarkdownRenderer] No user query selector found for this site")
+      console.debug("[UserQueryMarkdownRenderer] No user query selector found for this site")
       return
     }
 

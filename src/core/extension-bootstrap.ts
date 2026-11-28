@@ -607,7 +607,7 @@ function initializeOphel() {
         activeAdapterInstance = adapter
         const generation = initGeneration
 
-        console.warn(`[Ophel] Loaded ${adapter.getName()} adapter on:`, window.location.hostname)
+        console.debug(`[Ophel] Loaded ${adapter.getName()} adapter on:`, window.location.hostname)
 
         // 初始化适配器
         adapter.afterPropertiesSet({})

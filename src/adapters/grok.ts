@@ -2579,7 +2579,7 @@ export class GrokAdapter extends SiteAdapter {
       .catch((error) => {
         // 网络/HTTP 失败同样计入熔断
         this.apiOutlineFailures += 1
-        console.warn("[GrokAdapter] Failed to fetch conversation outline:", error)
+        console.debug("[GrokAdapter] Failed to fetch conversation outline:", error)
       })
       .finally(() => {
         this.apiOutlineFetchPromise = null
@@ -3187,7 +3187,7 @@ export class GrokAdapter extends SiteAdapter {
     while (!this.isVirtualScrollConversation()) {
       if (signal?.aborted) return false
       if (Date.now() >= deadline) {
-        console.warn("[Ophel] Reading history restore skipped: Grok message list not ready")
+        console.debug("[Ophel] Reading history restore skipped: Grok message list not ready")
         return false
       }
       await this.sleep(100)
@@ -3201,7 +3201,7 @@ export class GrokAdapter extends SiteAdapter {
     const quiet = await waitForVirtualScrollQuiet(() => this.getScrollContainer(), signal)
     if (signal?.aborted) return false
     if (!quiet) {
-      console.warn("[Ophel] Reading history restore skipped: Grok page kept scrolling")
+      console.debug("[Ophel] Reading history restore skipped: Grok page kept scrolling")
       return false
     }
 
@@ -3210,14 +3210,14 @@ export class GrokAdapter extends SiteAdapter {
     if (!data || signal?.aborted) return false
     const position = data.positionByResponseId.get(responseId)
     if (position === undefined) {
-      console.warn("[Ophel] Reading history restore skipped: Grok message not found", responseId)
+      console.debug("[Ophel] Reading history restore skipped: Grok message not found", responseId)
       return false
     }
 
     const row = await this.probeMountVirtualRow(responseId, position, container, data, null, signal)
     if (signal?.aborted) return false
     if (!row) {
-      console.warn("[Ophel] Reading history restore skipped: Grok message not found", responseId)
+      console.debug("[Ophel] Reading history restore skipped: Grok message not found", responseId)
       return false
     }
 
@@ -3225,7 +3225,7 @@ export class GrokAdapter extends SiteAdapter {
     if (anchor.textSignature) {
       const current = (row.textContent || "").trim().substring(0, 50)
       if (current !== anchor.textSignature) {
-        console.warn(
+        console.debug(
           "[Ophel] Reading history restore skipped: Grok message content changed",
           responseId,
         )
@@ -3281,7 +3281,7 @@ export class GrokAdapter extends SiteAdapter {
       const visualOffset =
         finalRow.getBoundingClientRect().top - finalContainer.getBoundingClientRect().top
       if (Math.abs(visualOffset + offset) <= 240) {
-        console.warn(
+        console.debug(
           "[Ophel] Reading history restore accepted with loose alignment",
           samples.slice(-12),
         )

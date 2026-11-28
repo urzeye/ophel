@@ -98,6 +98,7 @@ export const platform: Platform = {
         ...(options?.sources && options.sources.length > 0
           ? { sources: [...options.sources] }
           : {}),
+        ...(options?.silent !== undefined ? { silent: options.silent } : {}),
       })
       if (response.result) return response.result
       throw new Error(response.error || "Remote config check returned no result")

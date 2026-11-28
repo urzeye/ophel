@@ -168,7 +168,7 @@ const PermissionRequestPage: React.FC = () => {
       if (config.origins.length === 0 && config.permissions.length === 0) {
         throw new Error("Permission request contains no valid permissions")
       }
-      console.warn("[PermRequest] Requesting permissions:", {
+      console.debug("[PermRequest] Requesting permissions:", {
         origins: config.origins,
         permissions: config.permissions,
       })
@@ -182,7 +182,7 @@ const PermissionRequestPage: React.FC = () => {
 
       if (browserManagedRequest && !granted) return
 
-      console.warn("[PermRequest] Permission granted:", granted)
+      console.debug("[PermRequest] Permission granted:", granted)
       if (granted) {
         setStatus("granted")
         // 延迟关闭窗口

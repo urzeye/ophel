@@ -1510,7 +1510,7 @@ export class AIStudioAdapter extends SiteAdapter {
       .catch((error) => {
         // 网络/HTTP 失败计入熔断：连续失败时回退纯 DOM 扫描
         this.apiOutlineFailures += 1
-        console.warn("[AIStudioAdapter] Failed to fetch conversation outline:", error)
+        console.debug("[AIStudioAdapter] Failed to fetch conversation outline:", error)
       })
       .finally(() => {
         this.apiOutlineFetchPromise = null
@@ -3240,7 +3240,7 @@ export class AIStudioAdapter extends SiteAdapter {
     while (entries.length === 0) {
       if (signal?.aborted) return false
       if (Date.now() >= deadline) {
-        console.warn("[Ophel] Reading history restore skipped: AI Studio scrollbar not ready")
+        console.debug("[Ophel] Reading history restore skipped: AI Studio scrollbar not ready")
         return false
       }
       await this.sleep(100)
@@ -3249,14 +3249,14 @@ export class AIStudioAdapter extends SiteAdapter {
 
     const entry = entries[anchor.rowKey]
     if (!entry) {
-      console.warn(
+      console.debug(
         "[Ophel] Reading history restore skipped: AI Studio query not found",
         anchor.rowKey,
       )
       return false
     }
     if (anchor.textSignature && !this.isSameOutlineText(entry.text, anchor.textSignature)) {
-      console.warn("[Ophel] Reading history restore skipped: AI Studio query text changed")
+      console.debug("[Ophel] Reading history restore skipped: AI Studio query text changed")
       return false
     }
 
@@ -3265,7 +3265,7 @@ export class AIStudioAdapter extends SiteAdapter {
     const quiet = await waitForVirtualScrollQuiet(() => this.getScrollContainer(), signal)
     if (signal?.aborted) return false
     if (!quiet) {
-      console.warn("[Ophel] Reading history restore skipped: AI Studio page kept scrolling")
+      console.debug("[Ophel] Reading history restore skipped: AI Studio page kept scrolling")
       return false
     }
 
@@ -3311,7 +3311,7 @@ export class AIStudioAdapter extends SiteAdapter {
       const visualOffset =
         finalTurn.getBoundingClientRect().top - finalContainer.getBoundingClientRect().top
       if (Math.abs(visualOffset + offset) <= 240) {
-        console.warn("[Ophel] Reading history restore accepted with loose alignment")
+        console.debug("[Ophel] Reading history restore accepted with loose alignment")
         return true
       }
     }

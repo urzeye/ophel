@@ -19,6 +19,7 @@ const OPHEL_WATERMARK_PROCESS_REQUEST = "OPHEL_WATERMARK_PROCESS_REQUEST"
 const OPHEL_WATERMARK_PROCESS_RESPONSE = "OPHEL_WATERMARK_PROCESS_RESPONSE"
 const OPHEL_WATERMARK_LOADING_STYLE_ID = "ophel-watermark-loading-style"
 const WATERMARK_NOT_DETECTED_ERROR = "watermark-not-detected"
+const FAILED_SOURCE_COOLDOWN_MS = 60_000
 const GEMINI_IMAGE_LOADING_HOST_SELECTOR = [
   "[data-image-attachment-index]",
   "single-image.generated-image",
@@ -71,7 +72,11 @@ export class WatermarkRemover {
   private processingMap = new Map<string, Promise<string>>()
   private processedDataUrlCache = new Map<string, string>()
   private skippedSourceCache = new Set<string>()
+  // 仅用于自动扫描去重：记录自动去水印拉取/解码失败的源 URL 及失败时间戳（带冷却期），
+  // 避免节点重建时反复重试刷爆后台错误，同时允许冷却到期或手动重试成功后自愈。
+  private failedSourceCache = new Map<string, number>()
   private enabled = false
+  private runGeneration = 0
   private stopObserver: (() => void) | null = null
   private processImagesTimer: ReturnType<typeof setTimeout> | null = null
   private mainWorldMessageListener: ((event: MessageEvent) => void) | null = null
@@ -83,6 +88,7 @@ export class WatermarkRemover {
     this.processingMap = new Map()
     this.processedDataUrlCache = new Map()
     this.skippedSourceCache = new Set()
+    this.failedSourceCache = new Map()
   }
 
   static getActiveInstance(): WatermarkRemover | null {
@@ -92,6 +98,7 @@ export class WatermarkRemover {
   start() {
     if (this.enabled) return
     this.enabled = true
+    this.runGeneration += 1
     WatermarkRemover.activeInstance = this
 
     if (!isUserscript) {
@@ -111,6 +118,7 @@ export class WatermarkRemover {
   stop() {
     if (!this.enabled) return
     this.enabled = false
+    this.runGeneration += 1
 
     if (!isUserscript) {
       this.toggleMainWorldFetchInterception(false)
@@ -122,6 +130,15 @@ export class WatermarkRemover {
     this.processingMap.clear()
     this.processingQueue.clear()
     this.skippedSourceCache.clear()
+    this.failedSourceCache.clear()
+    document
+      .querySelectorAll<HTMLImageElement>("img[data-ophel-wm-processing-source]")
+      .forEach((img) => {
+        img.removeAttribute("data-ophel-wm-processing-source")
+        if (img.dataset.watermarkProcessed === "processing") {
+          delete img.dataset.watermarkProcessed
+        }
+      })
     this.clearAllProcessingIndicators()
     this.removeProcessingIndicatorStyles()
     if (WatermarkRemover.activeInstance === this) {
@@ -336,7 +353,9 @@ export class WatermarkRemover {
 
     const comparableSource = this.getComparableProcessingSource(source)
     const processedSource = img.getAttribute("data-ophel-wm-source") || ""
+    const processingSource = img.getAttribute("data-ophel-wm-processing-source") || ""
     const skippedSource = img.getAttribute("data-ophel-wm-skip-source") || ""
+    const errorSource = img.getAttribute("data-ophel-wm-error-source") || ""
 
     if (processedSource && processedSource !== comparableSource) {
       img.removeAttribute("data-ophel-wm-source")
@@ -344,8 +363,20 @@ export class WatermarkRemover {
       delete img.dataset.watermarkProcessed
     }
 
+    if (processingSource && processingSource !== comparableSource) {
+      img.removeAttribute("data-ophel-wm-processing-source")
+      if (img.dataset.watermarkProcessed === "processing") {
+        delete img.dataset.watermarkProcessed
+      }
+    }
+
     if (skippedSource && skippedSource !== comparableSource) {
       img.removeAttribute("data-ophel-wm-skip-source")
+      delete img.dataset.watermarkProcessed
+    }
+
+    if (errorSource && errorSource !== comparableSource) {
+      img.removeAttribute("data-ophel-wm-error-source")
       delete img.dataset.watermarkProcessed
     }
   }
@@ -1201,6 +1232,7 @@ export class WatermarkRemover {
     const response = await sendToBackground({
       type: MSG_PROXY_FETCH,
       url,
+      silentError: true,
     })
 
     if (!response.success || !response.data) {
@@ -1298,9 +1330,11 @@ export class WatermarkRemover {
     this.throwIfSourceSkipped(skipCacheKey)
 
     try {
-      return await this.processImageBlobToDataUrl(blob, normalizedSourceUrl, {
+      const processedDataUrl = await this.processImageBlobToDataUrl(blob, normalizedSourceUrl, {
         scene: "fetch",
       })
+      this.failedSourceCache.delete(normalizedSourceUrl)
+      return processedDataUrl
     } catch (error) {
       if (error instanceof Error && error.message === WATERMARK_NOT_DETECTED_ERROR) {
         this.rememberSkippedSource(skipCacheKey)
@@ -1345,6 +1379,7 @@ export class WatermarkRemover {
           normalizedSourceUrl,
           { scene: options?.scene ?? "download" },
         )
+        this.failedSourceCache.delete(normalizedSourceUrl)
         if (!options?.bypassCache) {
           this.processedDataUrlCache.set(normalizedSourceUrl, processedDataUrl)
           this.trimProcessedDataUrlCache()
@@ -1391,6 +1426,34 @@ export class WatermarkRemover {
     }
   }
 
+  private isFailedSourceInCooldown(sourceUrl: string): boolean {
+    if (!sourceUrl) return false
+    if (this.processedDataUrlCache.has(sourceUrl)) {
+      this.failedSourceCache.delete(sourceUrl)
+      return false
+    }
+    const failedAt = this.failedSourceCache.get(sourceUrl)
+    if (failedAt === undefined) return false
+    if (Date.now() - failedAt >= FAILED_SOURCE_COOLDOWN_MS) {
+      this.failedSourceCache.delete(sourceUrl)
+      return false
+    }
+    return true
+  }
+
+  private rememberFailedSource(sourceUrl: string) {
+    if (!sourceUrl) return
+    if (this.processedDataUrlCache.has(sourceUrl)) return
+    this.failedSourceCache.delete(sourceUrl)
+    this.failedSourceCache.set(sourceUrl, Date.now())
+    if (this.failedSourceCache.size <= 120) return
+
+    const oldestKey = this.failedSourceCache.keys().next().value
+    if (oldestKey) {
+      this.failedSourceCache.delete(oldestKey)
+    }
+  }
+
   private throwIfSourceSkipped(cacheKey: string) {
     if (this.processedDataUrlCache.has(cacheKey)) return
     if (cacheKey && this.skippedSourceCache.has(cacheKey)) {
@@ -1419,10 +1482,16 @@ export class WatermarkRemover {
       const skipSource = img.getAttribute("data-ophel-wm-skip-source") || ""
       const isSkippedForCurrentSource =
         img.dataset.watermarkProcessed === "skipped" && skipSource === comparableSource
+      const inFailedCooldown = this.isFailedSourceInCooldown(comparableSource)
+      if (!inFailedCooldown && img.dataset.watermarkProcessed === "error") {
+        img.removeAttribute("data-ophel-wm-error-source")
+        delete img.dataset.watermarkProcessed
+      }
       return (
         this.isValidGeminiImage(img) &&
         this.isSupportedGeminiImageSource(source) &&
         !this.shouldSkipAutoProcessingSource(source) &&
+        !inFailedCooldown &&
         img.dataset.watermarkProcessed !== "true" &&
         img.dataset.watermarkProcessed !== "processing" &&
         !isSkippedForCurrentSource
@@ -1442,38 +1511,79 @@ export class WatermarkRemover {
     if (!originalSrc || !this.isSupportedGeminiImageSource(originalSrc)) return
     this.resetProcessedImageStateIfSourceChanged(img, originalSrc)
     if (this.shouldSkipAutoProcessingSource(originalSrc)) return
-    if (this.processingQueue.has(originalSrc)) return
-    this.processingQueue.add(originalSrc)
-    img.dataset.watermarkProcessed = "processing"
-    const loadingHost = this.showImageProcessingIndicator(img)
     const sourceForProcessing =
       originalSrc.startsWith("data:image/") || originalSrc.startsWith("blob:")
         ? originalSrc
         : this.replaceWithNormalSize(originalSrc)
+    if (this.isFailedSourceInCooldown(sourceForProcessing)) return
+    if (this.processingQueue.has(originalSrc)) return
+    const generation = this.runGeneration
+    this.processingQueue.add(originalSrc)
+    img.dataset.watermarkProcessed = "processing"
+    img.setAttribute("data-ophel-wm-processing-source", sourceForProcessing)
+    const loadingHost = this.showImageProcessingIndicator(img)
+    const isStaleRun = () => !this.enabled || generation !== this.runGeneration
+    const isSameImageSource = () =>
+      this.getComparableProcessingSource(this.getCurrentImageSource(img)) === sourceForProcessing
+    let sourceChangedDuringProcessing = false
 
     try {
       const newUrl = await this.getProcessedDisplayDataUrl(sourceForProcessing)
+      if (isStaleRun()) return
+      this.failedSourceCache.delete(sourceForProcessing)
+      if (!isSameImageSource()) {
+        sourceChangedDuringProcessing = true
+        return
+      }
       img.dataset.watermarkProcessed = "true"
       img.setAttribute("data-ophel-wm-source", sourceForProcessing)
       img.setAttribute("data-ophel-wm-processed", "1")
+      img.removeAttribute("data-ophel-wm-processing-source")
       img.removeAttribute("data-ophel-wm-skip-source")
+      img.removeAttribute("data-ophel-wm-error-source")
       img.removeAttribute("srcset")
       img.src = newUrl
     } catch (error) {
+      if (isStaleRun()) return
       const message = error instanceof Error ? error.message : ""
       if (message === WATERMARK_NOT_DETECTED_ERROR) {
+        if (!isSameImageSource()) {
+          sourceChangedDuringProcessing = true
+          return
+        }
         img.dataset.watermarkProcessed = "skipped"
         img.setAttribute("data-ophel-wm-skip-source", sourceForProcessing)
+        img.removeAttribute("data-ophel-wm-processing-source")
+        img.removeAttribute("data-ophel-wm-error-source")
         img.removeAttribute("data-ophel-wm-source")
         img.removeAttribute("data-ophel-wm-processed")
         return
       }
 
-      img.dataset.watermarkProcessed = "error"
-      img.removeAttribute("data-ophel-wm-processed")
+      this.rememberFailedSource(sourceForProcessing)
+      if (isSameImageSource()) {
+        img.dataset.watermarkProcessed = "error"
+        img.setAttribute("data-ophel-wm-error-source", sourceForProcessing)
+        img.removeAttribute("data-ophel-wm-processing-source")
+        img.removeAttribute("data-ophel-wm-processed")
+      } else {
+        sourceChangedDuringProcessing = true
+      }
+      console.debug("[WatermarkRemover] Auto-processing failed for image source:", error)
     } finally {
-      this.hideImageProcessingIndicator(loadingHost)
-      this.processingQueue.delete(originalSrc)
+      if (generation === this.runGeneration) {
+        if (img.getAttribute("data-ophel-wm-processing-source") === sourceForProcessing) {
+          img.removeAttribute("data-ophel-wm-processing-source")
+          if (img.dataset.watermarkProcessed === "processing") {
+            delete img.dataset.watermarkProcessed
+          }
+        }
+        this.hideImageProcessingIndicator(loadingHost)
+        this.processingQueue.delete(originalSrc)
+        if (this.enabled && sourceChangedDuringProcessing) {
+          this.scheduleProcessExistingImages()
+        }
+      }
     }
   }
 
@@ -1487,11 +1597,24 @@ export class WatermarkRemover {
     return normalizeGeminiImageUrl(src)
   }
 
+  private isWatermarkUiNode(node: Node): boolean {
+    return (
+      node instanceof HTMLElement &&
+      (node.classList.contains("ophel-wm-loading-indicator") ||
+        node.id === OPHEL_WATERMARK_LOADING_STYLE_ID)
+    )
+  }
+
   private startObserver() {
     const observer = new MutationObserver((mutations) => {
       let shouldCheck = false
       for (const m of mutations) {
-        if (m.addedNodes.length > 0) shouldCheck = true
+        if (
+          m.addedNodes.length > 0 &&
+          Array.from(m.addedNodes).some((node) => !this.isWatermarkUiNode(node))
+        ) {
+          shouldCheck = true
+        }
         if (m.type === "attributes" && m.target instanceof HTMLImageElement) {
           this.resetProcessedImageStateIfSourceChanged(
             m.target,

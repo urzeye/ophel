@@ -1398,7 +1398,7 @@ export class QwenAiAdapter extends SiteAdapter {
       .catch((error) => {
         // 网络、HTTP 失败和鉴权失败（token 过期到站点刷新之间接口返回 Unauthorized）都是暂态，
         // 只靠拉取间隔重试，不计入熔断；熔断只留给解析失败（接口改版或历史不完整）
-        console.warn("[QwenAiAdapter] Failed to fetch conversation outline:", error)
+        console.debug("[QwenAiAdapter] Failed to fetch conversation outline:", error)
       })
       .finally(() => {
         this.apiOutlineFetchPromise = null

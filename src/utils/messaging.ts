@@ -35,6 +35,8 @@ export const MSG_PROXY_FETCH = "PROXY_FETCH"
 
 export interface ProxyFetchPayload {
   url: string
+  /** 多候选 URL 探测场景：单次候选失败属预期分支，由调用方统一收口，不在后台刷 console.error */
+  silentError?: boolean
 }
 
 export interface ProxyFetchMessage extends ProxyFetchPayload {
@@ -46,6 +48,7 @@ export const MSG_CHECK_REMOTE_CONFIG = "CHECK_REMOTE_CONFIG"
 export interface CheckRemoteConfigPayload {
   force?: boolean
   sources?: string[]
+  silent?: boolean
 }
 
 export interface CheckRemoteConfigMessage extends CheckRemoteConfigPayload {
