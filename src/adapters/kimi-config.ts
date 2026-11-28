@@ -91,10 +91,12 @@ export interface KimiSiteConfig extends BuiltinSiteConfig {
 }
 
 /** 内置修复修改默认配置时必须递增，使旧缓存 patch 自动失效。 */
-export const KIMI_CONFIG_VERSION = 4
+export const KIMI_CONFIG_VERSION = 5
 
 const createKimiConfig = (): KimiSiteConfig => {
-  const sidebarConversation = "a.chat-info-item, a.next-sidebar-history-item__link"
+  const legacySidebarConversation = "a.chat-info-item"
+  const nextSidebarConversation = "a.next-sidebar-history-item__link"
+  const sidebarConversation = `${legacySidebarConversation}, ${nextSidebarConversation}`
   const historyConversation = "a.history-link"
   const conversation = `${sidebarConversation}, ${historyConversation}`
   const historyContainer = ".history-part"
@@ -112,7 +114,9 @@ const createKimiConfig = (): KimiSiteConfig => {
   const chatDetailMain = ".chat-detail-main"
   const chatContentContainer = ".chat-content-container"
   const chatActionContainer = ".chat-action .bottom-action-container"
-  const chatEditor = ".chat-editor"
+  // 仅对新版外层 .chat-editor-wrap 或无包装的旧版 .chat-editor 限宽，避免父子叠加百分比二次缩放
+  const chatEditor = ".chat-editor-wrap, :not(.chat-editor-wrap) > .chat-editor"
+  const editorScope = ".chat-editor-wrap, .chat-editor"
   const chatListWidth = [
     chatList,
     `${chatList}${chatList}`,
@@ -126,21 +130,23 @@ const createKimiConfig = (): KimiSiteConfig => {
   const userSegment = ".segment.segment-user"
   const assistantSegment = ".segment.segment-assistant"
   const userQueryWrapper = [
-    ".segment-user .segment-content",
-    `${userItem} .segment-content`,
-    ".segment-container:has(.user-content) > .segment-content",
+    ".segment-user .segment-container",
+    `${userItem} .segment-container`,
+    ".segment-container:has(.user-content)",
   ].join(", ")
   const userContent = [
     ".segment-user .segment-content-box",
     `${userItem} .segment-content-box`,
-    ".segment-content-box:has(> .user-content)",
+    ".segment-content-box:has(.user-content)",
   ].join(", ")
   const userQueryContent = [
     ".segment-user .user-content",
     `${userItem} .user-content`,
-    ".segment-content-box > .user-content",
+    ".segment-content-box .user-content",
   ].join(", ")
   const assistantBodyMarkdown = [
+    ".segment-assistant .toolcall-rollup__tail-in > .markdown-container > .markdown",
+    `${assistantItem} .toolcall-rollup__tail-in > .markdown-container > .markdown`,
     ".segment-assistant .segment-content-box > .markdown-container > .markdown",
     `${assistantItem} .segment-content-box > .markdown-container > .markdown`,
   ].join(", ")
@@ -150,7 +156,9 @@ const createKimiConfig = (): KimiSiteConfig => {
 
   return {
     capabilities: [...BUILTIN_FEATURE_CAPABILITIES[SITE_IDS.KIMI]],
-    traits: { historyLazyLoad: false },
+    // apiFirstExport：GetChatShare / ListMessages 接口返回完整结构化消息与思维链，
+    // 不受页面折叠态懒渲染限制；接口不可用时返回 null 触发补载并回退 DOM 采集
+    traits: { historyLazyLoad: false, apiFirstExport: true },
     selectors: {
       textarea: [
         '.chat-input-editor[data-lexical-editor="true"]',
@@ -170,7 +178,7 @@ const createKimiConfig = (): KimiSiteConfig => {
       idFrom: { attr: "href", regex: "^/chat/([A-Za-z0-9-]+)(?:/|$)" },
       titleSelector: `${conversationTitle}, ${historyTitle}`,
       urlTemplate: "/chat/{id}",
-      activeMatch: ".router-link-active, .router-link-exact-active",
+      activeMatch: '.router-link-active, .router-link-exact-active, [aria-current="page"]',
       shadow: false,
     },
     generating: { existsSelectors: [activeStopButton, stopIcon] },
@@ -256,8 +264,16 @@ const createKimiConfig = (): KimiSiteConfig => {
       ],
       nextSidebarBody,
       conversationHeaderTitle: ".chat-header-content h2",
-      pinnedConversation: "svg.pinned, .pinned, .next-sidebar-history-item__pinned",
-      activeConversation: `${sidebarConversation}.router-link-active, ${sidebarConversation}.router-link-exact-active`,
+      pinnedConversation:
+        "svg.pinned, .pinned, .next-sidebar-history-item__pinned, .next-sidebar-pinned-list__item",
+      activeConversation: [
+        ...[legacySidebarConversation, nextSidebarConversation].flatMap((selector) => [
+          `${selector}.router-link-active`,
+          `${selector}.router-link-exact-active`,
+          `${selector}[aria-current="page"]`,
+        ]),
+        ".next-sidebar-history-item.is-active a.next-sidebar-history-item__link",
+      ].join(", "),
       moreHistoryLink: [
         'a.more-history[href*="/chat/history"]',
         'a.nav-item.more-history[href*="/chat/history"]',
@@ -271,11 +287,11 @@ const createKimiConfig = (): KimiSiteConfig => {
       ].join(", "),
       closeButtonContainer: ".close-button-container",
       inputScope: ".chat-input-editor-container",
-      editorScope: chatEditor,
+      editorScope,
       submitButtonContainer,
       submitButtonDisabled: `${submitButtonContainer}.disabled, ${submitButtonContainer}.stop`,
       shareScrollContainer: ".share-detail",
-      chatDetailScrollContainer: ".chat-detail-content",
+      chatDetailScrollContainer: ".chat-detail-main, .chat-detail-content",
       chatContentContainer,
       chatItem,
       userItem,
@@ -287,7 +303,7 @@ const createKimiConfig = (): KimiSiteConfig => {
       toolcallContainer: ".toolcall-container, .container-block",
       toolcallContentMarkdown: ".markdown-container.toolcall-content-text",
       exportDecoration:
-        "button, [role='button'], svg, canvas, [aria-hidden='true'], .segment-avatar, .okc-cards-container",
+        "button, [role='button'], svg, canvas, [aria-hidden='true'], .segment-avatar, .okc-cards-container, .pua-ref-renderer",
       userAttachmentList: ".attachment-list",
       userAttachmentImage:
         ".attachment-list-image img, .image-thumbnail img.image-main, .image-wrapper img.image-main",
@@ -306,7 +322,8 @@ const createKimiConfig = (): KimiSiteConfig => {
       userQueryWrapper,
       userContent,
       userQueryContent,
-      markdownFixerParagraph: ".segment-assistant .markdown p",
+      markdownFixerParagraph:
+        ".segment-assistant .markdown p, .segment-assistant .markdown div.paragraph",
       lastAssistant: `${assistantItem} .segment-assistant`,
     },
   }

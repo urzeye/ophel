@@ -774,6 +774,7 @@ export class OutlineManager {
     if (!container) return false
 
     signalReadingHistoryUserNavigation()
+    this.siteAdapter.prepareProgrammaticScroll(container)
     container.scrollTo({ top: position, behavior })
     return true
   }

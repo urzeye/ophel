@@ -8,6 +8,9 @@
 import { SITE_IDS } from "~constants"
 import { kimiNativeThemeCss } from "~styles/native-theme-adapters/kimi"
 import {
+  addFileExportAsset,
+  createExportAssetCollector,
+  escapeMarkdownLinkText,
   formatExportFileAttachments,
   formatExportImageMarkdown,
   isDownloadableExportAssetUrl,
@@ -24,6 +27,7 @@ import {
 
 import {
   SiteAdapter,
+  type AnchorData,
   type ConversationDeleteTarget,
   type ConversationInfo,
   type ConversationLoadOptions,
@@ -40,27 +44,41 @@ import {
 } from "./base"
 import type { BuiltinSiteConfig } from "./declarative"
 import { KIMI_CONFIG, KIMI_CONFIG_VERSION, type KimiSiteConfig } from "./kimi-config"
+import {
+  parseKimiListMessagesExport,
+  parseKimiShareExport,
+  resolveKimiTextReferences,
+  type KimiHistoryExportData,
+  type KimiHistoryExportFile,
+  type KimiHistoryExportReference,
+} from "./kimi-history-export"
 
 const CHAT_PATH_PATTERN = /^\/chat\/([a-z0-9-]+)(?:\/|$)/i
 const SHARE_PATH_PATTERN = /^\/(?:share|kimiplus)\/([a-z0-9-]+)(?:\/|$)/i
+const CHAT_SHARE_PATH_PATTERN = /^\/share\/([a-z0-9-]+)(?:\/|$)/i
 const NON_CHAT_PATH_PREFIXES = ["/docs/", "/website/", "/table/"]
 const TOKEN_STORAGE_PREFIX = "__tea_cache_tokens_"
 const KIMI_DELETE_API_PATH = "/apiv2/kimi.chat.v1.ChatService/DeleteChat"
+const KIMI_GET_CHAT_SHARE_API_PATH = "/apiv2/kimi.gateway.chat.v1.ChatService/GetChatShare"
+const KIMI_LIST_MESSAGES_API_PATH = "/apiv2/kimi.gateway.chat.v1.ChatService/ListMessages"
+const KIMI_LIST_MESSAGES_PAGE_SIZE = 100
+const KIMI_LIST_MESSAGES_MAX_PAGES = 50
+const KIMI_JWT_EXPIRY_SKEW_SECONDS = 30
 const KIMI_AUTH_COOKIE_KEY = "kimi-auth"
 const KIMI_AUTH_STORAGE_KEYS = [
-  KIMI_AUTH_COOKIE_KEY,
-  "kimi_auth",
   "access_token",
   "accessToken",
+  KIMI_AUTH_COOKIE_KEY,
+  "kimi_auth",
   "token",
   "auth",
   "authorization",
 ]
 const KIMI_TOKEN_FIELD_KEYS = [
-  "value",
-  "token",
   "access_token",
   "accessToken",
+  "value",
+  "token",
   "auth",
   "authorization",
   "id_token",
@@ -69,6 +87,7 @@ const KIMI_TOKEN_FIELD_KEYS = [
 ]
 const JWT_TOKEN_REGEX = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/
 const TOKEN_KEYWORD_REGEX = /(token|auth|jwt|tea)/i
+const REFRESH_TOKEN_KEY_REGEX = /refresh/i
 // 裸域名均 302 到 www 子域，content script 注入链路也只匹配 www，无需覆盖裸域名
 const KIMI_HOSTS = new Set(["www.kimi.com", "www.kimi.ai"])
 
@@ -107,6 +126,7 @@ export class KimiAdapter extends SiteAdapter {
   private fullListSnapshotExpiresAt = 0
   private fullListSnapshotUsesLeft = 0
   private exportIncludeThoughts: boolean | undefined = undefined
+  private exportApiBundle: ExportBundle | null = null
 
   match(): boolean {
     const matched = KIMI_HOSTS.has(window.location.hostname)
@@ -625,27 +645,180 @@ export class KimiAdapter extends SiteAdapter {
   }
 
   getScrollContainer(): HTMLElement | null {
-    const shareDetail = document.querySelector(
-      this.config.sitePrivateSelectors.shareScrollContainer,
-    ) as HTMLElement | null
-    if (shareDetail && shareDetail.scrollHeight > shareDetail.clientHeight) {
-      return shareDetail
+    const candidates = [
+      ...this.collectScrollCandidates(this.config.sitePrivateSelectors.shareScrollContainer),
+      ...this.collectScrollCandidates(this.config.sitePrivateSelectors.chatDetailScrollContainer),
+    ]
+
+    // 优先匹配真正可垂直滚动且当前已溢出的容器，避免命中 overflow: visible 的外层包装
+    const overflowed = candidates.find(
+      (candidate) =>
+        this.isScrollableOverflowY(candidate) && candidate.scrollHeight > candidate.clientHeight,
+    )
+    if (overflowed) {
+      return overflowed
     }
 
-    const detail = document.querySelector(
-      this.config.sitePrivateSelectors.chatDetailScrollContainer,
-    ) as HTMLElement | null
-    if (detail && detail.scrollHeight > detail.clientHeight) {
-      return detail
-    }
-
+    const readyContainer = candidates.find((candidate) => this.isScrollableOverflowY(candidate))
     const content = document.querySelector(this.config.sitePrivateSelectors.chatContentContainer)
-    const scrollable = this.findScrollableParent(content)
+    const scrollable = this.findScrollableParent(content, readyContainer ?? null)
     if (scrollable && !scrollable.closest(this.config.sitePrivateSelectors.historyContainer)) {
       return scrollable
     }
 
+    // 短对话尚未溢出时返回已挂载的可滚动容器，确保大纲与阅读历史正确绑定 scroll 监听
+    if (readyContainer) {
+      return readyContainer
+    }
+
     return super.getScrollContainer()
+  }
+
+  /**
+   * Kimi 新版在 .chat-detail-main 上挂载了 v-auto-scroll（preserveReadingPosition），
+   * 会监听容器内的 DOM/class 变更（如 .outline-highlight、.to-bottom-show）并在下一帧
+   * 将 scrollTop 拉回旧阅读锚点。程序化滚动前先同步派发轻量合成 wheel 事件，
+   * 触发 Kimi 自身的 interactionListener 挂起锚定并在滚动结束后重新捕获新位置。
+   */
+  prepareProgrammaticScroll(container: HTMLElement): void {
+    if (typeof WheelEvent === "function") {
+      container.dispatchEvent(
+        new WheelEvent("wheel", { deltaY: 0, bubbles: false, cancelable: false }),
+      )
+      return
+    }
+    container.dispatchEvent(new Event("wheel", { bubbles: false, cancelable: false }))
+  }
+
+  /**
+   * 直接滚动 Kimi 对话滚动容器（如 .chat-detail-main），避免默认 scrollIntoView
+   * 连带滚动外层同样设置 overflow-y: auto 的 .app.has-sidebar .main。
+   */
+  scrollToOutlineTarget(element: HTMLElement): void {
+    const container = this.getScrollContainer()
+    if (!container || !container.contains(element)) {
+      super.scrollToOutlineTarget(element)
+      return
+    }
+
+    this.prepareProgrammaticScroll(container)
+    const targetScrollTop = this.getRelativeTop(container, element)
+    container.scrollTo({
+      top: Math.max(0, targetScrollTop),
+      behavior: "instant",
+      __bypassLock: true,
+    } as ScrollToOptions & { __bypassLock: true })
+  }
+
+  /**
+   * Kimi 消息内部的 .segment-content 为 position: relative，导致内容块 offsetTop 恒为 0。
+   * 覆写为基于容器坐标计算可见锚点，修复阅读历史记录与恢复错位。
+   */
+  getVisibleAnchorElement(): AnchorData | null {
+    const container = this.getScrollContainer()
+    if (!container) return null
+
+    const candidates = this.getChatContentCandidates(container)
+    if (candidates.length === 0) return null
+
+    const scrollTop = container.scrollTop
+    let bestElement: HTMLElement | null = null
+    let bestTop = Number.NEGATIVE_INFINITY
+
+    for (const element of candidates) {
+      const top = this.getRelativeTop(container, element)
+      if (top <= scrollTop + 100 && top > bestTop) {
+        bestElement = element
+        bestTop = top
+      }
+    }
+
+    if (!bestElement) {
+      bestElement = candidates[0]
+      bestTop = this.getRelativeTop(container, bestElement)
+    }
+
+    const offset = scrollTop - bestTop
+    const id = bestElement.getAttribute("data-message-id") || bestElement.id
+    if (id) {
+      let selector = `[data-message-id="${id}"]`
+      if (!bestElement.matches(selector)) selector = `#${id}`
+      return { type: "selector", selector, offset }
+    }
+
+    const index = candidates.indexOf(bestElement)
+    if (index === -1) return null
+
+    const textSignature = this.getAnchorTextSignature(bestElement)
+    return { type: "index", index, offset, textSignature }
+  }
+
+  restoreScroll(anchorData: AnchorData): boolean {
+    const container = this.getScrollContainer()
+    if (!container || !anchorData) return false
+
+    let targetElement: HTMLElement | null = null
+
+    if (anchorData.type === "selector" && anchorData.selector) {
+      targetElement = container.querySelector(anchorData.selector) as HTMLElement | null
+    } else if (anchorData.type === "index" && typeof anchorData.index === "number") {
+      const candidates = this.getChatContentCandidates(container)
+      if (candidates[anchorData.index]) {
+        targetElement = candidates[anchorData.index]
+        if (anchorData.textSignature) {
+          const currentText = this.getAnchorTextSignature(targetElement)
+          if (currentText !== anchorData.textSignature) {
+            targetElement =
+              candidates.find(
+                (candidate) => this.getAnchorTextSignature(candidate) === anchorData.textSignature,
+              ) || targetElement
+          }
+        }
+      } else if (anchorData.textSignature) {
+        targetElement =
+          candidates.find(
+            (candidate) => this.getAnchorTextSignature(candidate) === anchorData.textSignature,
+          ) || null
+      }
+    }
+
+    if (!targetElement) return false
+
+    this.prepareProgrammaticScroll(container)
+    const targetTop = this.getRelativeTop(container, targetElement) + (anchorData.offset || 0)
+    container.scrollTo({
+      top: Math.max(0, targetTop),
+      behavior: "instant",
+      __bypassLock: true,
+    } as ScrollToOptions & { __bypassLock: true })
+    return true
+  }
+
+  /**
+   * extractOutline 对超过 80 字符的用户提问会拼接 "..."，基类 startsWith 校验会因此失败；
+   * 归一化空白并剥离末尾省略号后再匹配，保证 DOM 刷新后长提问仍可准确重定位。
+   */
+  findUserQueryElement(queryIndex: number, text: string): Element | null {
+    const selector = this.getUserQuerySelector()
+    if (!selector) return null
+
+    const elements = Array.from(document.querySelectorAll(selector))
+    if (elements.length === 0) return null
+
+    if (queryIndex > 0 && elements.length >= queryIndex) {
+      const candidate = elements[queryIndex - 1]
+      if (!text) return candidate
+      if (this.isEquivalentUserQueryText(this.extractUserQueryText(candidate), text)) {
+        return candidate
+      }
+    }
+
+    if (!text) return null
+    return (
+      elements.find((element) =>
+        this.isEquivalentUserQueryText(this.extractUserQueryText(element), text),
+      ) || null
+    )
   }
 
   getResponseContainerSelector(): string {
@@ -661,8 +834,14 @@ export class KimiAdapter extends SiteAdapter {
   }
 
   extractUserQueryText(element: Element): string {
-    const contentBox = element.querySelector(this.config.sitePrivateSelectors.userContentBox)
-    return this.extractTextWithLineBreaks(contentBox || element).trim()
+    const source = this.findOriginalUserQueryContent(element) || element
+    if (!source.querySelector(".gh-user-query-markdown")) {
+      return this.extractTextWithLineBreaks(source).trim()
+    }
+
+    const clone = source.cloneNode(true) as HTMLElement
+    clone.querySelectorAll(".gh-user-query-markdown").forEach((node) => node.remove())
+    return this.extractTextWithLineBreaks(clone).trim()
   }
 
   extractUserQueryMarkdown(element: Element): string {
@@ -678,13 +857,17 @@ export class KimiAdapter extends SiteAdapter {
       return false
     }
 
-    const contentBox = element.querySelector(
-      this.config.sitePrivateSelectors.userContentBox,
-    ) as HTMLElement | null
+    // 优先替换气泡载体 .user-content 以保留新版 toolcall-rollup 包裹下的背景与圆角样式
+    const contentBox = this.findOriginalUserQueryContent(element) as HTMLElement | null
     if (!contentBox) return false
 
     const rendered = document.createElement("div")
     rendered.className = `${contentBox.className} gh-user-query-markdown gh-markdown-preview`.trim()
+    for (const attr of Array.from(contentBox.attributes)) {
+      if (attr.name.startsWith("data-v-")) {
+        rendered.setAttribute(attr.name, attr.value)
+      }
+    }
     rendered.innerHTML = html
 
     const inlineStyle = contentBox.getAttribute("style")
@@ -765,6 +948,12 @@ export class KimiAdapter extends SiteAdapter {
   }
 
   getLatestReplyText(): string | null {
+    const responses = Array.from(document.querySelectorAll(this.config.selectors.assistantResponse))
+    for (let i = responses.length - 1; i >= 0; i -= 1) {
+      const text = this.extractAssistantResponseText(responses[i])
+      if (text) return text
+    }
+
     const replies = document.querySelectorAll(
       this.config.sitePrivateSelectors.assistantBodyMarkdown,
     )
@@ -861,11 +1050,17 @@ export class KimiAdapter extends SiteAdapter {
   }
 
   async extractExportMessages(_context: ExportLifecycleContext): Promise<ExportMessage[] | null> {
+    if (this.exportApiBundle) {
+      return this.exportApiBundle.messages
+    }
     const messages = this.extractKimiExportMessages()
     return messages.length > 0 ? messages : null
   }
 
   async extractExportBundle(_context: ExportLifecycleContext): Promise<ExportBundle | null> {
+    if (this.exportApiBundle) {
+      return this.exportApiBundle
+    }
     return this.createExportBundleFromMessages((collector) =>
       this.extractKimiExportMessages(collector),
     )
@@ -873,7 +1068,32 @@ export class KimiAdapter extends SiteAdapter {
 
   async prepareConversationExport(context: ExportLifecycleContext): Promise<unknown> {
     this.exportIncludeThoughts = context.includeThoughts
-    return null
+    this.exportApiBundle = null
+
+    const collector =
+      context.format === "markdown" && context.packaging === "zip"
+        ? createExportAssetCollector()
+        : undefined
+
+    const apiMessages = await this.collectCurrentPageApiExportMessages(
+      context.includeThoughts,
+      collector,
+    )
+    if (apiMessages?.length) {
+      this.exportApiBundle = {
+        messages: apiMessages,
+        assets: collector?.assets,
+      }
+      return { source: "api", count: apiMessages.length }
+    }
+
+    // 接口不可用且 DOM 历史未预加载（manager 因 apiFirstExport 跳过了预加载）：
+    // 返回 null 触发 manager 补做滚顶预加载后再回退 DOM 采集
+    if (context.domHistoryPreloaded === false) {
+      return null
+    }
+
+    return { source: "dom" }
   }
 
   async restoreConversationAfterExport(
@@ -881,6 +1101,22 @@ export class KimiAdapter extends SiteAdapter {
     _state: unknown,
   ): Promise<void> {
     this.exportIncludeThoughts = undefined
+    this.exportApiBundle = null
+  }
+
+  supportsExportByConversationId(): boolean {
+    return true
+  }
+
+  protected async fetchConversationExportMessagesById(
+    context: ExportLifecycleContext,
+    collector?: ExportAssetCollector,
+  ): Promise<ExportMessage[] | null> {
+    return this.collectChatApiExportMessages(
+      context.conversationId,
+      context.includeThoughts,
+      collector,
+    )
   }
 
   isGenerating(): boolean {
@@ -1006,11 +1242,7 @@ export class KimiAdapter extends SiteAdapter {
     noCenter?: boolean
   }> {
     const alignRightCss = "margin-left: auto !important; margin-right: 0 !important;"
-    const wrapperCss = [
-      alignRightCss,
-      "max-width: 100% !important;",
-      "box-sizing: border-box !important;",
-    ].join(" ")
+    const wrapperCss = [alignRightCss, "box-sizing: border-box !important;"].join(" ")
     const contentBoxCss = [
       "max-width: 100% !important;",
       "margin-left: 0 !important;",
@@ -1026,7 +1258,7 @@ export class KimiAdapter extends SiteAdapter {
     return [
       {
         selector: this.config.sitePrivateSelectors.userQueryWrapper,
-        property: "width",
+        property: "max-width",
         extraCss: wrapperCss,
         noCenter: true,
       },
@@ -1198,21 +1430,30 @@ export class KimiAdapter extends SiteAdapter {
   }
 
   private buildDeleteHeaders(token: string): Record<string, string> {
-    const payload = this.parseJwtPayload(token)
+    return this.buildApiHeaders(token)
+  }
+
+  private buildApiHeaders(token?: string | null): Record<string, string> {
     const language = this.getClientLanguage()
     const timezone = this.getClientTimezone()
 
     const headers: Record<string, string> = {
       accept: "*/*",
-      authorization: `Bearer ${token}`,
       "connect-protocol-version": "1",
       "content-type": "application/json",
       "x-language": language,
       "r-timezone": timezone,
       "x-msh-platform": "web",
-      "x-msh-version": "1.0.0",
+      "x-msh-version": "2.3.0",
     }
 
+    if (!token) {
+      return headers
+    }
+
+    headers.authorization = `Bearer ${token}`
+
+    const payload = this.parseJwtPayload(token)
     const deviceId = typeof payload.device_id === "string" ? payload.device_id.trim() : ""
     const sessionId = typeof payload.ssid === "string" ? payload.ssid.trim() : ""
     const trafficId = typeof payload.sub === "string" ? payload.sub.trim() : ""
@@ -1225,9 +1466,8 @@ export class KimiAdapter extends SiteAdapter {
   }
 
   private getAuthToken(): string | null {
-    const fromCookie = this.getCookieToken(KIMI_AUTH_COOKIE_KEY)
-    if (fromCookie) return fromCookie
-
+    // 新版 Kimi 将活跃短期 access_token 存在 localStorage，而旧版 kimi-auth Cookie 可能已过期；
+    // 优先读取未过期的 storage access_token，再回退 sessionStorage 与 Cookie
     const fromLocalStorage = this.findAuthTokenInStorage(localStorage)
     if (fromLocalStorage) return fromLocalStorage
 
@@ -1237,6 +1477,9 @@ export class KimiAdapter extends SiteAdapter {
     } catch {
       // ignore unavailable sessionStorage
     }
+
+    const fromCookie = this.getCookieToken(KIMI_AUTH_COOKIE_KEY)
+    if (fromCookie) return fromCookie
 
     return null
   }
@@ -1265,7 +1508,7 @@ export class KimiAdapter extends SiteAdapter {
 
     for (let i = 0; i < storage.length; i++) {
       const key = storage.key(i)
-      if (!key || !TOKEN_KEYWORD_REGEX.test(key)) continue
+      if (!key || REFRESH_TOKEN_KEY_REGEX.test(key) || !TOKEN_KEYWORD_REGEX.test(key)) continue
       const token = this.extractTokenFromRaw(storage.getItem(key))
       if (token) return token
     }
@@ -1318,7 +1561,22 @@ export class KimiAdapter extends SiteAdapter {
     token = token.replace(/^"(.*)"$/, "$1").trim()
     token = token.replace(/^Bearer\s+/i, "").trim()
 
-    return JWT_TOKEN_REGEX.test(token) ? token : null
+    if (!JWT_TOKEN_REGEX.test(token)) return null
+    return this.isUsableAccessJwt(token) ? token : null
+  }
+
+  private isUsableAccessJwt(token: string): boolean {
+    const payload = this.parseJwtPayload(token)
+    if (typeof payload.typ === "string" && payload.typ.toLowerCase() === "refresh") {
+      return false
+    }
+    const exp = payload.exp
+    if (typeof exp === "number" && exp > 0) {
+      if (exp * 1000 <= Date.now() + KIMI_JWT_EXPIRY_SKEW_SECONDS * 1000) {
+        return false
+      }
+    }
+    return true
   }
 
   private safeDecodeURIComponent(value: string): string {
@@ -1370,6 +1628,7 @@ export class KimiAdapter extends SiteAdapter {
 
     for (const [key, nested] of Object.entries(record)) {
       if (
+        REFRESH_TOKEN_KEY_REGEX.test(key) ||
         KIMI_TOKEN_FIELD_KEYS.includes(key) ||
         (depth > 0 && !TOKEN_KEYWORD_REGEX.test(key) && typeof nested !== "object")
       ) {
@@ -1492,8 +1751,10 @@ export class KimiAdapter extends SiteAdapter {
       id === this.getSessionId() ||
       (this.config.conversation.activeMatch
         ? el.matches(this.config.conversation.activeMatch)
-        : false)
-    const isPinned = !!el.querySelector(this.config.sitePrivateSelectors.pinnedConversation)
+        : false) ||
+      el.closest(".next-sidebar-history-item.is-active") !== null
+    const pinnedSelector = this.config.sitePrivateSelectors.pinnedConversation
+    const isPinned = !!(el.querySelector(pinnedSelector) || el.closest(pinnedSelector))
     const conversationPath = this.config.conversation.urlTemplate
       .split("{id}")
       .join(encodeURIComponent(id))
@@ -1573,14 +1834,93 @@ export class KimiAdapter extends SiteAdapter {
     return null
   }
 
-  private findScrollableParent(element: Element | null): HTMLElement | null {
+  private isScrollableOverflowY(element: HTMLElement): boolean {
+    const overflowY = window.getComputedStyle(element).overflowY
+    return overflowY === "auto" || overflowY === "scroll" || overflowY === "overlay"
+  }
+
+  private splitSelectorList(selectorList: string): string[] {
+    return selectorList
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean)
+  }
+
+  private collectScrollCandidates(selectorList: string): HTMLElement[] {
+    const results: HTMLElement[] = []
+    const seen = new Set<HTMLElement>()
+    const selectors = this.splitSelectorList(selectorList)
+
+    // 按配置顺序收集候选，避免复合选择器按文档前序优先返回外层非滚动祖先
+    for (const selector of selectors) {
+      for (const node of Array.from(document.querySelectorAll(selector))) {
+        if (!(node instanceof HTMLElement) || seen.has(node)) continue
+        if (node.clientHeight <= 0) continue
+        if (node.closest(this.config.sitePrivateSelectors.historyContainer)) continue
+        seen.add(node)
+        results.push(node)
+      }
+    }
+
+    return results
+  }
+
+  private getRelativeTop(container: HTMLElement, element: HTMLElement): number {
+    return (
+      container.scrollTop +
+      (element.getBoundingClientRect().top - container.getBoundingClientRect().top)
+    )
+  }
+
+  private getAnchorTextSignature(element: Element): string {
+    if (!element.querySelector(".gh-user-query-markdown")) {
+      return (element.textContent || "").trim().substring(0, 50)
+    }
+
+    const clone = element.cloneNode(true) as HTMLElement
+    clone.querySelectorAll(".gh-user-query-markdown").forEach((node) => node.remove())
+    return (clone.textContent || "").trim().substring(0, 50)
+  }
+
+  private getChatContentCandidates(container: HTMLElement): HTMLElement[] {
+    const selectors = this.getChatContentSelectors()
+    if (selectors.length === 0) return []
+
+    return Array.from(container.querySelectorAll(selectors.join(", "))).filter(
+      (node): node is HTMLElement => {
+        if (!(node instanceof HTMLElement)) return false
+        const rect = node.getBoundingClientRect()
+        return rect.height > 0 || rect.width > 0
+      },
+    )
+  }
+
+  private normalizeUserQueryMatchText(text: string): string {
+    return text
+      .replace(/\s+/g, " ")
+      .trim()
+      .replace(/(?:\.{3}|…)$/u, "")
+  }
+
+  private isEquivalentUserQueryText(candidate: string, target: string): boolean {
+    const normalizedCandidate = this.normalizeUserQueryMatchText(candidate)
+    const normalizedTarget = this.normalizeUserQueryMatchText(target)
+    if (!normalizedCandidate || !normalizedTarget) return false
+
+    return (
+      normalizedCandidate === normalizedTarget ||
+      normalizedCandidate.startsWith(normalizedTarget) ||
+      normalizedTarget.startsWith(normalizedCandidate)
+    )
+  }
+
+  private findScrollableParent(
+    element: Element | null,
+    stopAt: Element | null = null,
+  ): HTMLElement | null {
     let current = element as HTMLElement | null
-    while (current && current !== document.body) {
-      const style = window.getComputedStyle(current)
-      if (
-        (style.overflowY === "auto" || style.overflowY === "scroll") &&
-        current.scrollHeight > current.clientHeight
-      ) {
+    while (current && current !== document.body && current !== stopAt) {
+      if (this.isScrollableOverflowY(current) && current.scrollHeight > current.clientHeight) {
         return current
       }
       current = current.parentElement
@@ -1862,6 +2202,341 @@ export class KimiAdapter extends SiteAdapter {
     }
   }
 
+  private getChatShareIdFromLocation(): string | null {
+    const match = window.location.pathname.match(CHAT_SHARE_PATH_PATTERN)
+    return match?.[1] || null
+  }
+
+  private async collectCurrentPageApiExportMessages(
+    includeThoughts: boolean,
+    collector?: ExportAssetCollector,
+  ): Promise<ExportMessage[] | null> {
+    const shareId = this.getChatShareIdFromLocation()
+    if (shareId) {
+      return this.collectShareApiExportMessages(shareId, includeThoughts, collector)
+    }
+
+    if (this.isSharePage() || this.isNewConversation()) {
+      return null
+    }
+
+    const sessionId = this.getSessionId()
+    if (!sessionId) return null
+
+    return this.collectChatApiExportMessages(sessionId, includeThoughts, collector)
+  }
+
+  private async collectShareApiExportMessages(
+    shareId: string,
+    includeThoughts: boolean,
+    collector?: ExportAssetCollector,
+  ): Promise<ExportMessage[] | null> {
+    if (!shareId) return null
+
+    try {
+      const apiUrl = new URL(KIMI_GET_CHAT_SHARE_API_PATH, window.location.origin).toString()
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: this.buildApiHeaders(),
+        body: JSON.stringify({ share_id: shareId }),
+        credentials: "include",
+      })
+      if (!response.ok) return null
+
+      const payload = await this.safeParseJson(response)
+      const parsed = parseKimiShareExport(payload)
+      if (!parsed) return null
+
+      return this.formatKimiApiExportMessages(parsed, includeThoughts, collector)
+    } catch (error) {
+      console.warn("[KimiAdapter] Failed to collect share API export payload:", error)
+      return null
+    }
+  }
+
+  private async collectChatApiExportMessages(
+    chatId: string,
+    includeThoughts: boolean,
+    collector?: ExportAssetCollector,
+  ): Promise<ExportMessage[] | null> {
+    const token = this.getAuthToken()
+    if (!chatId || !token) return null
+
+    try {
+      const apiUrl = new URL(KIMI_LIST_MESSAGES_API_PATH, window.location.origin).toString()
+      const headers = this.buildApiHeaders(token)
+      const rawMessages: unknown[] = []
+      const seenPageTokens = new Set<string>()
+      let pageToken = ""
+
+      for (let page = 0; page < KIMI_LIST_MESSAGES_MAX_PAGES; page += 1) {
+        const body: Record<string, unknown> = {
+          chat_id: chatId,
+          page_size: KIMI_LIST_MESSAGES_PAGE_SIZE,
+        }
+        if (pageToken) {
+          body.page_token = pageToken
+        }
+
+        const response = await fetch(apiUrl, {
+          method: "POST",
+          headers,
+          body: JSON.stringify(body),
+          credentials: "include",
+        })
+        if (!response.ok) return null
+
+        const payload = (await this.safeParseJson(response)) as Record<string, unknown> | null
+        if (!payload || typeof payload !== "object") return null
+        // Proto3 JSON 编码可能省略空 repeated 字段（如最后一页无消息返回 {}）
+        if (payload.messages !== undefined && !Array.isArray(payload.messages)) return null
+
+        if (Array.isArray(payload.messages)) {
+          rawMessages.push(...payload.messages)
+        }
+
+        const nextPageToken =
+          typeof payload.nextPageToken === "string"
+            ? payload.nextPageToken.trim()
+            : typeof payload.next_page_token === "string"
+              ? payload.next_page_token.trim()
+              : ""
+        if (!nextPageToken) {
+          const parsed = parseKimiListMessagesExport(rawMessages, chatId)
+          if (!parsed) return null
+          return this.formatKimiApiExportMessages(parsed, includeThoughts, collector)
+        }
+
+        if (seenPageTokens.has(nextPageToken)) {
+          return null
+        }
+        seenPageTokens.add(nextPageToken)
+        pageToken = nextPageToken
+      }
+
+      // 达到分页上限仍有后续页，不能保证历史完整，交由调用方回退
+      return null
+    } catch (error) {
+      console.warn("[KimiAdapter] Failed to collect chat API export payload:", error)
+      return null
+    }
+  }
+
+  private formatKimiApiExportMessages(
+    data: KimiHistoryExportData,
+    includeThoughts: boolean,
+    collector?: ExportAssetCollector,
+  ): ExportMessage[] | null {
+    const messages: ExportMessage[] = []
+
+    for (const message of data.messages) {
+      if (message.role === "user") {
+        const content = this.formatKimiApiUserMessage(message.requestText, message.files, collector)
+        if (content) {
+          messages.push({ role: "user", content })
+        }
+        continue
+      }
+
+      const parts: string[] = []
+      for (const segment of message.segments) {
+        if (segment.type === "think") {
+          if (includeThoughts && segment.content) {
+            parts.push(this.formatAsThoughtBlockquote(segment.content))
+          }
+          continue
+        }
+
+        if (segment.type === "text") {
+          const resolved = resolveKimiTextReferences(segment.content, segment.references, {
+            resolveFile: (reference) => this.formatKimiApiInlineFileReference(reference, collector),
+            resolveImage: (reference) =>
+              this.formatKimiApiInlineImageReference(reference, collector),
+          })
+          if (resolved) {
+            parts.push(resolved)
+          }
+          continue
+        }
+
+        if (segment.type === "file") {
+          const formatted = this.formatKimiApiAssistantFile(segment.file, collector)
+          if (formatted) {
+            parts.push(formatted)
+          }
+        }
+      }
+
+      const content = parts.join("\n\n").trim()
+      if (content) {
+        messages.push({ role: "assistant", content })
+      }
+    }
+
+    return messages.length > 0 ? messages : null
+  }
+
+  private formatKimiApiUserMessage(
+    requestText: string,
+    files: KimiHistoryExportFile[],
+    collector?: ExportAssetCollector,
+  ): string {
+    const seenImageSources = new Set<string>()
+    const imageMarkdown: string[] = []
+    const fileMarkdown: string[] = []
+
+    for (const file of files) {
+      const normalizedSource = file.source ? normalizeExportAssetUrl(file.source) : ""
+      const downloadableSource =
+        normalizedSource && isDownloadableExportAssetUrl(normalizedSource) ? normalizedSource : ""
+
+      if (file.kind === "image" && downloadableSource) {
+        if (seenImageSources.has(downloadableSource)) continue
+        seenImageSources.add(downloadableSource)
+
+        const markdown = formatExportImageMarkdown(
+          { source: downloadableSource, alt: file.name, extensionHint: file.name || file.type },
+          collector,
+          {
+            siteId: this.getSiteId(),
+            role: "user",
+            category: "image",
+            fallbackAlt: "uploaded image",
+          },
+        )
+        if (markdown) imageMarkdown.push(markdown)
+        continue
+      }
+
+      const label = this.formatKimiFileLabel(file.name, file.type, file.sizeLabel)
+      const formatted = formatExportFileAttachments(
+        [
+          {
+            kind: "file",
+            name: file.name,
+            source: downloadableSource,
+            type: file.type,
+            sizeLabel: file.sizeLabel,
+          },
+        ],
+        collector,
+        {
+          siteId: this.getSiteId(),
+          getLabel: () => label,
+        },
+      )[0]
+      if (formatted) fileMarkdown.push(formatted)
+    }
+
+    const body = requestText.trim()
+    if (imageMarkdown.length === 0 && fileMarkdown.length === 0) {
+      return body
+    }
+
+    const fileBlock =
+      fileMarkdown.length > 0 ? `${t("exportAttachmentsLabel")}:\n${fileMarkdown.join("\n")}` : ""
+
+    return [imageMarkdown.join("\n\n"), fileBlock, body].filter(Boolean).join("\n\n")
+  }
+
+  private formatKimiApiInlineFileReference(
+    reference: KimiHistoryExportReference,
+    collector?: ExportAssetCollector,
+  ): string {
+    const displayName = reference.fileName || reference.title
+    const normalizedUrl = reference.url ? normalizeExportAssetUrl(reference.url) : ""
+    const downloadableUrl =
+      normalizedUrl && isDownloadableExportAssetUrl(normalizedUrl) ? normalizedUrl : ""
+
+    if (!displayName && !downloadableUrl) return ""
+
+    const label = escapeMarkdownLinkText(displayName || downloadableUrl)
+    if (!downloadableUrl) {
+      return displayName.includes("`") ? `\`\` ${displayName} \`\`` : `\`${displayName}\``
+    }
+
+    const targetPath = collector
+      ? addFileExportAsset(collector, {
+          source: downloadableUrl,
+          name: displayName || "file",
+          mimeHint: reference.ext || displayName,
+          idPrefix: `${this.getSiteId()}-assistant-file`,
+        })
+      : downloadableUrl.replace(/\(/g, "%28").replace(/\)/g, "%29").replace(/\s/g, "%20")
+
+    return targetPath
+      ? `[${label}](${targetPath})`
+      : displayName.includes("`")
+        ? `\`\` ${displayName} \`\``
+        : `\`${displayName}\``
+  }
+
+  private formatKimiApiInlineImageReference(
+    reference: KimiHistoryExportReference,
+    collector?: ExportAssetCollector,
+  ): string {
+    const normalizedUrl = reference.url ? normalizeExportAssetUrl(reference.url) : ""
+    if (!normalizedUrl || !isDownloadableExportAssetUrl(normalizedUrl)) return ""
+
+    return formatExportImageMarkdown(
+      {
+        source: normalizedUrl,
+        alt: reference.title || reference.fileName || "image",
+        extensionHint: reference.fileName || reference.ext || reference.title,
+      },
+      collector,
+      {
+        siteId: this.getSiteId(),
+        role: "assistant",
+        category: "image",
+        fallbackAlt: "image",
+      },
+    )
+  }
+
+  private formatKimiApiAssistantFile(
+    file: KimiHistoryExportFile,
+    collector?: ExportAssetCollector,
+  ): string {
+    const normalizedSource = file.source ? normalizeExportAssetUrl(file.source) : ""
+    const downloadableSource =
+      normalizedSource && isDownloadableExportAssetUrl(normalizedSource) ? normalizedSource : ""
+
+    if (file.kind === "image" && downloadableSource) {
+      return formatExportImageMarkdown(
+        { source: downloadableSource, alt: file.name, extensionHint: file.name || file.type },
+        collector,
+        {
+          siteId: this.getSiteId(),
+          role: "assistant",
+          category: "image",
+          fallbackAlt: "image",
+        },
+      )
+    }
+
+    const label = this.formatKimiFileLabel(file.name, file.type, file.sizeLabel)
+    return (
+      formatExportFileAttachments(
+        [
+          {
+            kind: "file",
+            name: file.name,
+            source: downloadableSource,
+            type: file.type,
+            sizeLabel: file.sizeLabel,
+          },
+        ],
+        collector,
+        {
+          siteId: this.getSiteId(),
+          role: "assistant",
+          getLabel: () => label,
+        },
+      )[0] || ""
+    )
+  }
+
   private extractKimiExportMessages(collector?: ExportAssetCollector): ExportMessage[] {
     const container = document.querySelector(this.config.selectors.responseContainer)
     if (!container) return []
@@ -1923,6 +2598,20 @@ export class KimiAdapter extends SiteAdapter {
     return [imageMarkdown.join("\n\n"), fileBlock, body].filter(Boolean).join("\n\n")
   }
 
+  private findOriginalUserQueryContent(element: Element): Element | null {
+    const directContents = Array.from(
+      element.querySelectorAll(this.config.sitePrivateSelectors.userQueryContent),
+    ).filter((node) => !node.closest(".gh-user-query-markdown"))
+    if (directContents.length > 0) {
+      return directContents[0]
+    }
+
+    const contentBoxes = Array.from(
+      element.querySelectorAll(this.config.sitePrivateSelectors.userContentBox),
+    ).filter((node) => !node.closest(".gh-user-query-markdown"))
+    return contentBoxes[0] || null
+  }
+
   private extractKimiUserBodyMarkdown(element: Element): string {
     const clone = element.cloneNode(true) as HTMLElement
     clone
@@ -1931,8 +2620,9 @@ export class KimiAdapter extends SiteAdapter {
     clone
       .querySelectorAll(this.config.sitePrivateSelectors.exportDecoration)
       .forEach((node) => node.remove())
+    clone.querySelectorAll(".gh-user-query-markdown").forEach((node) => node.remove())
 
-    const contentBox = clone.querySelector(this.config.sitePrivateSelectors.userContentBox)
+    const contentBox = this.findOriginalUserQueryContent(clone)
     return this.extractTextWithLineBreaks(contentBox || clone).trim()
   }
 
@@ -1942,7 +2632,10 @@ export class KimiAdapter extends SiteAdapter {
   ): string[] {
     const images = Array.from(
       element.querySelectorAll(this.config.sitePrivateSelectors.userAttachmentImage),
-    ).filter((node): node is HTMLImageElement => node instanceof HTMLImageElement)
+    ).filter(
+      (node): node is HTMLImageElement =>
+        node instanceof HTMLImageElement && !node.closest(".gh-user-query-markdown"),
+    )
     const seenSources = new Set<string>()
     const imageMarkdown: string[] = []
 
@@ -1998,7 +2691,7 @@ export class KimiAdapter extends SiteAdapter {
   ): string[] {
     const cards = Array.from(
       element.querySelectorAll(this.config.sitePrivateSelectors.userFileCard),
-    )
+    ).filter((card) => !card.closest(".gh-user-query-markdown"))
     const seenFiles = new Set<string>()
     const fileMarkdown: string[] = []
 
@@ -2114,20 +2807,53 @@ export class KimiAdapter extends SiteAdapter {
   }
 
   private findAssistantBodyMarkdownRoot(element: Element): Element | null {
-    if (
-      element.matches(this.config.sitePrivateSelectors.markdown) &&
-      !this.isInsideAssistantToolcall(element)
-    ) {
+    const markdownSelector = this.config.sitePrivateSelectors.markdown
+    if (element.matches(markdownSelector) && !this.isInsideAssistantToolcall(element)) {
       return element
     }
 
-    const directBody = element.querySelector(this.config.sitePrivateSelectors.assistantBodyMarkdown)
-    if (directBody && !this.isInsideAssistantToolcall(directBody)) {
-      return directBody
+    // 按配置顺序逐条匹配，避免复合逗号选择器按文档前序优先返回前置内容而非 rollup 最终回答
+    for (const selector of this.splitSelectorList(
+      this.config.sitePrivateSelectors.assistantBodyMarkdown,
+    )) {
+      const matched = Array.from(element.querySelectorAll(selector)).find(
+        (node) => !this.isInsideAssistantToolcall(node),
+      )
+      if (matched) {
+        return matched
+      }
+    }
+
+    // 当 element 本身就是 .segment-assistant（含导出克隆节点）时，带祖先前缀的
+    // assistantBodyMarkdown 无法匹配自身；优先取 toolcall-rollup 最终回答尾节点，
+    // 避免误选中 .toolcall-rollup-segment__body 里的开头过渡语。
+    const rollupTailStrict = Array.from(
+      element.querySelectorAll(
+        `.toolcall-rollup__tail-in > .markdown-container > ${markdownSelector}`,
+      ),
+    ).find((markdown) => !this.isInsideAssistantToolcall(markdown))
+    if (rollupTailStrict) {
+      return rollupTailStrict
+    }
+
+    const rollupTail = Array.from(
+      element.querySelectorAll(`.toolcall-rollup__tail-in ${markdownSelector}`),
+    ).find((markdown) => !this.isInsideAssistantToolcall(markdown))
+    if (rollupTail) {
+      return rollupTail
+    }
+
+    const legacyDirectBody = Array.from(
+      element.querySelectorAll(
+        `${this.config.sitePrivateSelectors.userContentBox} > .markdown-container > ${markdownSelector}`,
+      ),
+    ).find((markdown) => !this.isInsideAssistantToolcall(markdown))
+    if (legacyDirectBody) {
+      return legacyDirectBody
     }
 
     return (
-      Array.from(element.querySelectorAll(this.config.sitePrivateSelectors.markdown)).find(
+      Array.from(element.querySelectorAll(markdownSelector)).find(
         (markdown) => !this.isInsideAssistantToolcall(markdown),
       ) || null
     )

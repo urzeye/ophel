@@ -94,6 +94,7 @@ export async function smartScrollToTop(
     const previousScrollTop = container.scrollTop
     const scrollHeight = container.scrollHeight
 
+    adapter?.prepareProgrammaticScroll(container)
     // 站点级去顶部准备（如豆包：补合成 wheel 解除吸底，避免跳顶后被拉回）
     await adapter?.prepareScrollToTop(container)
 
@@ -143,6 +144,7 @@ export async function smartScrollToBottom(
   if (container && container.scrollHeight > container.clientHeight) {
     const previousScrollTop = container.scrollTop
 
+    adapter?.prepareProgrammaticScroll(container)
     container.scrollTo({
       top: getBottomScrollPosition(container),
       behavior: "instant",
@@ -189,6 +191,7 @@ export async function smartScrollTo(
   const container = adapter?.getScrollContainer()
 
   if (container && container.scrollHeight > container.clientHeight) {
+    adapter?.prepareProgrammaticScroll(container)
     container.scrollTo({ top: position, behavior: "instant", ...{ __bypassLock: true } } as any)
     if (options.preservePositionLock) {
       syncPositionLock(container.scrollTop)
