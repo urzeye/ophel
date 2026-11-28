@@ -94,7 +94,9 @@ export interface KimiSiteConfig extends BuiltinSiteConfig {
 export const KIMI_CONFIG_VERSION = 5
 
 const createKimiConfig = (): KimiSiteConfig => {
-  const sidebarConversation = "a.chat-info-item, a.next-sidebar-history-item__link"
+  const legacySidebarConversation = "a.chat-info-item"
+  const nextSidebarConversation = "a.next-sidebar-history-item__link"
+  const sidebarConversation = `${legacySidebarConversation}, ${nextSidebarConversation}`
   const historyConversation = "a.history-link"
   const conversation = `${sidebarConversation}, ${historyConversation}`
   const historyContainer = ".history-part"
@@ -112,7 +114,9 @@ const createKimiConfig = (): KimiSiteConfig => {
   const chatDetailMain = ".chat-detail-main"
   const chatContentContainer = ".chat-content-container"
   const chatActionContainer = ".chat-action .bottom-action-container"
-  const chatEditor = ".chat-editor-wrap, .chat-editor"
+  // 仅对新版外层 .chat-editor-wrap 或无包装的旧版 .chat-editor 限宽，避免父子叠加百分比二次缩放
+  const chatEditor = ".chat-editor-wrap, :not(.chat-editor-wrap) > .chat-editor"
+  const editorScope = ".chat-editor-wrap, .chat-editor"
   const chatListWidth = [
     chatList,
     `${chatList}${chatList}`,
@@ -261,9 +265,11 @@ const createKimiConfig = (): KimiSiteConfig => {
       pinnedConversation:
         "svg.pinned, .pinned, .next-sidebar-history-item__pinned, .next-sidebar-pinned-list__item",
       activeConversation: [
-        `${sidebarConversation}.router-link-active`,
-        `${sidebarConversation}.router-link-exact-active`,
-        `${sidebarConversation}[aria-current="page"]`,
+        ...[legacySidebarConversation, nextSidebarConversation].flatMap((selector) => [
+          `${selector}.router-link-active`,
+          `${selector}.router-link-exact-active`,
+          `${selector}[aria-current="page"]`,
+        ]),
         ".next-sidebar-history-item.is-active a.next-sidebar-history-item__link",
       ].join(", "),
       moreHistoryLink: [
@@ -279,7 +285,7 @@ const createKimiConfig = (): KimiSiteConfig => {
       ].join(", "),
       closeButtonContainer: ".close-button-container",
       inputScope: ".chat-input-editor-container",
-      editorScope: chatEditor,
+      editorScope,
       submitButtonContainer,
       submitButtonDisabled: `${submitButtonContainer}.disabled, ${submitButtonContainer}.stop`,
       shareScrollContainer: ".share-detail",
