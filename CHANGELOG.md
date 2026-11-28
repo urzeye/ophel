@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+---
+
+## [1.3.7][1.3.7] - 2026-11-28
+
 ### 🚀 New Features
 
 - **Image export** — Share conversations as PNG/JPG images with automatic themes, custom watermarks, adjustable content and appearance, preview zoom, and saved export preferences. (#1073, #1078, #1084)
@@ -1774,6 +1778,7 @@ This is the first official release of Ophel, providing comprehensive enhancement
 
 ---
 
+[1.3.7]: https://github.com/urzeye/ophel/releases/tag/v1.3.7
 [1.3.6]: https://github.com/urzeye/ophel/releases/tag/v1.3.6
 [1.3.5]: https://github.com/urzeye/ophel/releases/tag/v1.3.5
 [1.3.4]: https://github.com/urzeye/ophel/releases/tag/v1.3.4
