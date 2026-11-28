@@ -150,6 +150,7 @@
       "https://drive.usercontent.google.com/*",
       "https://www.kimi.com/*",
       "https://www.kimi.ai/*",
+      "https://prod-chat-kimi.tos-cn-beijing.volces.com/*",
       "https://chatglm.cn/*",
       "https://chat.qwen.ai/*",
       "https://cdn.qwenlm.ai/*",

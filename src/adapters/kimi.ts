@@ -8,6 +8,9 @@
 import { SITE_IDS } from "~constants"
 import { kimiNativeThemeCss } from "~styles/native-theme-adapters/kimi"
 import {
+  addFileExportAsset,
+  createExportAssetCollector,
+  escapeMarkdownLinkText,
   formatExportFileAttachments,
   formatExportImageMarkdown,
   isDownloadableExportAssetUrl,
@@ -41,27 +44,41 @@ import {
 } from "./base"
 import type { BuiltinSiteConfig } from "./declarative"
 import { KIMI_CONFIG, KIMI_CONFIG_VERSION, type KimiSiteConfig } from "./kimi-config"
+import {
+  parseKimiListMessagesExport,
+  parseKimiShareExport,
+  resolveKimiTextReferences,
+  type KimiHistoryExportData,
+  type KimiHistoryExportFile,
+  type KimiHistoryExportReference,
+} from "./kimi-history-export"
 
 const CHAT_PATH_PATTERN = /^\/chat\/([a-z0-9-]+)(?:\/|$)/i
 const SHARE_PATH_PATTERN = /^\/(?:share|kimiplus)\/([a-z0-9-]+)(?:\/|$)/i
+const CHAT_SHARE_PATH_PATTERN = /^\/share\/([a-z0-9-]+)(?:\/|$)/i
 const NON_CHAT_PATH_PREFIXES = ["/docs/", "/website/", "/table/"]
 const TOKEN_STORAGE_PREFIX = "__tea_cache_tokens_"
 const KIMI_DELETE_API_PATH = "/apiv2/kimi.chat.v1.ChatService/DeleteChat"
+const KIMI_GET_CHAT_SHARE_API_PATH = "/apiv2/kimi.gateway.chat.v1.ChatService/GetChatShare"
+const KIMI_LIST_MESSAGES_API_PATH = "/apiv2/kimi.gateway.chat.v1.ChatService/ListMessages"
+const KIMI_LIST_MESSAGES_PAGE_SIZE = 100
+const KIMI_LIST_MESSAGES_MAX_PAGES = 50
+const KIMI_JWT_EXPIRY_SKEW_SECONDS = 30
 const KIMI_AUTH_COOKIE_KEY = "kimi-auth"
 const KIMI_AUTH_STORAGE_KEYS = [
-  KIMI_AUTH_COOKIE_KEY,
-  "kimi_auth",
   "access_token",
   "accessToken",
+  KIMI_AUTH_COOKIE_KEY,
+  "kimi_auth",
   "token",
   "auth",
   "authorization",
 ]
 const KIMI_TOKEN_FIELD_KEYS = [
-  "value",
-  "token",
   "access_token",
   "accessToken",
+  "value",
+  "token",
   "auth",
   "authorization",
   "id_token",
@@ -70,6 +87,7 @@ const KIMI_TOKEN_FIELD_KEYS = [
 ]
 const JWT_TOKEN_REGEX = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/
 const TOKEN_KEYWORD_REGEX = /(token|auth|jwt|tea)/i
+const REFRESH_TOKEN_KEY_REGEX = /refresh/i
 // 裸域名均 302 到 www 子域，content script 注入链路也只匹配 www，无需覆盖裸域名
 const KIMI_HOSTS = new Set(["www.kimi.com", "www.kimi.ai"])
 
@@ -108,6 +126,7 @@ export class KimiAdapter extends SiteAdapter {
   private fullListSnapshotExpiresAt = 0
   private fullListSnapshotUsesLeft = 0
   private exportIncludeThoughts: boolean | undefined = undefined
+  private exportApiBundle: ExportBundle | null = null
 
   match(): boolean {
     const matched = KIMI_HOSTS.has(window.location.hostname)
@@ -1031,11 +1050,17 @@ export class KimiAdapter extends SiteAdapter {
   }
 
   async extractExportMessages(_context: ExportLifecycleContext): Promise<ExportMessage[] | null> {
+    if (this.exportApiBundle) {
+      return this.exportApiBundle.messages
+    }
     const messages = this.extractKimiExportMessages()
     return messages.length > 0 ? messages : null
   }
 
   async extractExportBundle(_context: ExportLifecycleContext): Promise<ExportBundle | null> {
+    if (this.exportApiBundle) {
+      return this.exportApiBundle
+    }
     return this.createExportBundleFromMessages((collector) =>
       this.extractKimiExportMessages(collector),
     )
@@ -1043,7 +1068,32 @@ export class KimiAdapter extends SiteAdapter {
 
   async prepareConversationExport(context: ExportLifecycleContext): Promise<unknown> {
     this.exportIncludeThoughts = context.includeThoughts
-    return null
+    this.exportApiBundle = null
+
+    const collector =
+      context.format === "markdown" && context.packaging === "zip"
+        ? createExportAssetCollector()
+        : undefined
+
+    const apiMessages = await this.collectCurrentPageApiExportMessages(
+      context.includeThoughts,
+      collector,
+    )
+    if (apiMessages?.length) {
+      this.exportApiBundle = {
+        messages: apiMessages,
+        assets: collector?.assets,
+      }
+      return { source: "api", count: apiMessages.length }
+    }
+
+    // 接口不可用且 DOM 历史未预加载（manager 因 apiFirstExport 跳过了预加载）：
+    // 返回 null 触发 manager 补做滚顶预加载后再回退 DOM 采集
+    if (context.domHistoryPreloaded === false) {
+      return null
+    }
+
+    return { source: "dom" }
   }
 
   async restoreConversationAfterExport(
@@ -1051,6 +1101,22 @@ export class KimiAdapter extends SiteAdapter {
     _state: unknown,
   ): Promise<void> {
     this.exportIncludeThoughts = undefined
+    this.exportApiBundle = null
+  }
+
+  supportsExportByConversationId(): boolean {
+    return true
+  }
+
+  protected async fetchConversationExportMessagesById(
+    context: ExportLifecycleContext,
+    collector?: ExportAssetCollector,
+  ): Promise<ExportMessage[] | null> {
+    return this.collectChatApiExportMessages(
+      context.conversationId,
+      context.includeThoughts,
+      collector,
+    )
   }
 
   isGenerating(): boolean {
@@ -1364,21 +1430,30 @@ export class KimiAdapter extends SiteAdapter {
   }
 
   private buildDeleteHeaders(token: string): Record<string, string> {
-    const payload = this.parseJwtPayload(token)
+    return this.buildApiHeaders(token)
+  }
+
+  private buildApiHeaders(token?: string | null): Record<string, string> {
     const language = this.getClientLanguage()
     const timezone = this.getClientTimezone()
 
     const headers: Record<string, string> = {
       accept: "*/*",
-      authorization: `Bearer ${token}`,
       "connect-protocol-version": "1",
       "content-type": "application/json",
       "x-language": language,
       "r-timezone": timezone,
       "x-msh-platform": "web",
-      "x-msh-version": "1.0.0",
+      "x-msh-version": "2.3.0",
     }
 
+    if (!token) {
+      return headers
+    }
+
+    headers.authorization = `Bearer ${token}`
+
+    const payload = this.parseJwtPayload(token)
     const deviceId = typeof payload.device_id === "string" ? payload.device_id.trim() : ""
     const sessionId = typeof payload.ssid === "string" ? payload.ssid.trim() : ""
     const trafficId = typeof payload.sub === "string" ? payload.sub.trim() : ""
@@ -1391,9 +1466,8 @@ export class KimiAdapter extends SiteAdapter {
   }
 
   private getAuthToken(): string | null {
-    const fromCookie = this.getCookieToken(KIMI_AUTH_COOKIE_KEY)
-    if (fromCookie) return fromCookie
-
+    // 新版 Kimi 将活跃短期 access_token 存在 localStorage，而旧版 kimi-auth Cookie 可能已过期；
+    // 优先读取未过期的 storage access_token，再回退 sessionStorage 与 Cookie
     const fromLocalStorage = this.findAuthTokenInStorage(localStorage)
     if (fromLocalStorage) return fromLocalStorage
 
@@ -1403,6 +1477,9 @@ export class KimiAdapter extends SiteAdapter {
     } catch {
       // ignore unavailable sessionStorage
     }
+
+    const fromCookie = this.getCookieToken(KIMI_AUTH_COOKIE_KEY)
+    if (fromCookie) return fromCookie
 
     return null
   }
@@ -1431,7 +1508,7 @@ export class KimiAdapter extends SiteAdapter {
 
     for (let i = 0; i < storage.length; i++) {
       const key = storage.key(i)
-      if (!key || !TOKEN_KEYWORD_REGEX.test(key)) continue
+      if (!key || REFRESH_TOKEN_KEY_REGEX.test(key) || !TOKEN_KEYWORD_REGEX.test(key)) continue
       const token = this.extractTokenFromRaw(storage.getItem(key))
       if (token) return token
     }
@@ -1484,7 +1561,22 @@ export class KimiAdapter extends SiteAdapter {
     token = token.replace(/^"(.*)"$/, "$1").trim()
     token = token.replace(/^Bearer\s+/i, "").trim()
 
-    return JWT_TOKEN_REGEX.test(token) ? token : null
+    if (!JWT_TOKEN_REGEX.test(token)) return null
+    return this.isUsableAccessJwt(token) ? token : null
+  }
+
+  private isUsableAccessJwt(token: string): boolean {
+    const payload = this.parseJwtPayload(token)
+    if (typeof payload.typ === "string" && payload.typ.toLowerCase() === "refresh") {
+      return false
+    }
+    const exp = payload.exp
+    if (typeof exp === "number" && exp > 0) {
+      if (exp * 1000 <= Date.now() + KIMI_JWT_EXPIRY_SKEW_SECONDS * 1000) {
+        return false
+      }
+    }
+    return true
   }
 
   private safeDecodeURIComponent(value: string): string {
@@ -1536,6 +1628,7 @@ export class KimiAdapter extends SiteAdapter {
 
     for (const [key, nested] of Object.entries(record)) {
       if (
+        REFRESH_TOKEN_KEY_REGEX.test(key) ||
         KIMI_TOKEN_FIELD_KEYS.includes(key) ||
         (depth > 0 && !TOKEN_KEYWORD_REGEX.test(key) && typeof nested !== "object")
       ) {
@@ -2107,6 +2200,341 @@ export class KimiAdapter extends SiteAdapter {
     } catch {
       return false
     }
+  }
+
+  private getChatShareIdFromLocation(): string | null {
+    const match = window.location.pathname.match(CHAT_SHARE_PATH_PATTERN)
+    return match?.[1] || null
+  }
+
+  private async collectCurrentPageApiExportMessages(
+    includeThoughts: boolean,
+    collector?: ExportAssetCollector,
+  ): Promise<ExportMessage[] | null> {
+    const shareId = this.getChatShareIdFromLocation()
+    if (shareId) {
+      return this.collectShareApiExportMessages(shareId, includeThoughts, collector)
+    }
+
+    if (this.isSharePage() || this.isNewConversation()) {
+      return null
+    }
+
+    const sessionId = this.getSessionId()
+    if (!sessionId) return null
+
+    return this.collectChatApiExportMessages(sessionId, includeThoughts, collector)
+  }
+
+  private async collectShareApiExportMessages(
+    shareId: string,
+    includeThoughts: boolean,
+    collector?: ExportAssetCollector,
+  ): Promise<ExportMessage[] | null> {
+    if (!shareId) return null
+
+    try {
+      const apiUrl = new URL(KIMI_GET_CHAT_SHARE_API_PATH, window.location.origin).toString()
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: this.buildApiHeaders(),
+        body: JSON.stringify({ share_id: shareId }),
+        credentials: "include",
+      })
+      if (!response.ok) return null
+
+      const payload = await this.safeParseJson(response)
+      const parsed = parseKimiShareExport(payload)
+      if (!parsed) return null
+
+      return this.formatKimiApiExportMessages(parsed, includeThoughts, collector)
+    } catch (error) {
+      console.warn("[KimiAdapter] Failed to collect share API export payload:", error)
+      return null
+    }
+  }
+
+  private async collectChatApiExportMessages(
+    chatId: string,
+    includeThoughts: boolean,
+    collector?: ExportAssetCollector,
+  ): Promise<ExportMessage[] | null> {
+    const token = this.getAuthToken()
+    if (!chatId || !token) return null
+
+    try {
+      const apiUrl = new URL(KIMI_LIST_MESSAGES_API_PATH, window.location.origin).toString()
+      const headers = this.buildApiHeaders(token)
+      const rawMessages: unknown[] = []
+      const seenPageTokens = new Set<string>()
+      let pageToken = ""
+
+      for (let page = 0; page < KIMI_LIST_MESSAGES_MAX_PAGES; page += 1) {
+        const body: Record<string, unknown> = {
+          chat_id: chatId,
+          page_size: KIMI_LIST_MESSAGES_PAGE_SIZE,
+        }
+        if (pageToken) {
+          body.page_token = pageToken
+        }
+
+        const response = await fetch(apiUrl, {
+          method: "POST",
+          headers,
+          body: JSON.stringify(body),
+          credentials: "include",
+        })
+        if (!response.ok) return null
+
+        const payload = (await this.safeParseJson(response)) as Record<string, unknown> | null
+        if (!payload || typeof payload !== "object") return null
+        // Proto3 JSON 编码可能省略空 repeated 字段（如最后一页无消息返回 {}）
+        if (payload.messages !== undefined && !Array.isArray(payload.messages)) return null
+
+        if (Array.isArray(payload.messages)) {
+          rawMessages.push(...payload.messages)
+        }
+
+        const nextPageToken =
+          typeof payload.nextPageToken === "string"
+            ? payload.nextPageToken.trim()
+            : typeof payload.next_page_token === "string"
+              ? payload.next_page_token.trim()
+              : ""
+        if (!nextPageToken) {
+          const parsed = parseKimiListMessagesExport(rawMessages, chatId)
+          if (!parsed) return null
+          return this.formatKimiApiExportMessages(parsed, includeThoughts, collector)
+        }
+
+        if (seenPageTokens.has(nextPageToken)) {
+          return null
+        }
+        seenPageTokens.add(nextPageToken)
+        pageToken = nextPageToken
+      }
+
+      // 达到分页上限仍有后续页，不能保证历史完整，交由调用方回退
+      return null
+    } catch (error) {
+      console.warn("[KimiAdapter] Failed to collect chat API export payload:", error)
+      return null
+    }
+  }
+
+  private formatKimiApiExportMessages(
+    data: KimiHistoryExportData,
+    includeThoughts: boolean,
+    collector?: ExportAssetCollector,
+  ): ExportMessage[] | null {
+    const messages: ExportMessage[] = []
+
+    for (const message of data.messages) {
+      if (message.role === "user") {
+        const content = this.formatKimiApiUserMessage(message.requestText, message.files, collector)
+        if (content) {
+          messages.push({ role: "user", content })
+        }
+        continue
+      }
+
+      const parts: string[] = []
+      for (const segment of message.segments) {
+        if (segment.type === "think") {
+          if (includeThoughts && segment.content) {
+            parts.push(this.formatAsThoughtBlockquote(segment.content))
+          }
+          continue
+        }
+
+        if (segment.type === "text") {
+          const resolved = resolveKimiTextReferences(segment.content, segment.references, {
+            resolveFile: (reference) => this.formatKimiApiInlineFileReference(reference, collector),
+            resolveImage: (reference) =>
+              this.formatKimiApiInlineImageReference(reference, collector),
+          })
+          if (resolved) {
+            parts.push(resolved)
+          }
+          continue
+        }
+
+        if (segment.type === "file") {
+          const formatted = this.formatKimiApiAssistantFile(segment.file, collector)
+          if (formatted) {
+            parts.push(formatted)
+          }
+        }
+      }
+
+      const content = parts.join("\n\n").trim()
+      if (content) {
+        messages.push({ role: "assistant", content })
+      }
+    }
+
+    return messages.length > 0 ? messages : null
+  }
+
+  private formatKimiApiUserMessage(
+    requestText: string,
+    files: KimiHistoryExportFile[],
+    collector?: ExportAssetCollector,
+  ): string {
+    const seenImageSources = new Set<string>()
+    const imageMarkdown: string[] = []
+    const fileMarkdown: string[] = []
+
+    for (const file of files) {
+      const normalizedSource = file.source ? normalizeExportAssetUrl(file.source) : ""
+      const downloadableSource =
+        normalizedSource && isDownloadableExportAssetUrl(normalizedSource) ? normalizedSource : ""
+
+      if (file.kind === "image" && downloadableSource) {
+        if (seenImageSources.has(downloadableSource)) continue
+        seenImageSources.add(downloadableSource)
+
+        const markdown = formatExportImageMarkdown(
+          { source: downloadableSource, alt: file.name, extensionHint: file.name || file.type },
+          collector,
+          {
+            siteId: this.getSiteId(),
+            role: "user",
+            category: "image",
+            fallbackAlt: "uploaded image",
+          },
+        )
+        if (markdown) imageMarkdown.push(markdown)
+        continue
+      }
+
+      const label = this.formatKimiFileLabel(file.name, file.type, file.sizeLabel)
+      const formatted = formatExportFileAttachments(
+        [
+          {
+            kind: "file",
+            name: file.name,
+            source: downloadableSource,
+            type: file.type,
+            sizeLabel: file.sizeLabel,
+          },
+        ],
+        collector,
+        {
+          siteId: this.getSiteId(),
+          getLabel: () => label,
+        },
+      )[0]
+      if (formatted) fileMarkdown.push(formatted)
+    }
+
+    const body = requestText.trim()
+    if (imageMarkdown.length === 0 && fileMarkdown.length === 0) {
+      return body
+    }
+
+    const fileBlock =
+      fileMarkdown.length > 0 ? `${t("exportAttachmentsLabel")}:\n${fileMarkdown.join("\n")}` : ""
+
+    return [imageMarkdown.join("\n\n"), fileBlock, body].filter(Boolean).join("\n\n")
+  }
+
+  private formatKimiApiInlineFileReference(
+    reference: KimiHistoryExportReference,
+    collector?: ExportAssetCollector,
+  ): string {
+    const displayName = reference.fileName || reference.title
+    const normalizedUrl = reference.url ? normalizeExportAssetUrl(reference.url) : ""
+    const downloadableUrl =
+      normalizedUrl && isDownloadableExportAssetUrl(normalizedUrl) ? normalizedUrl : ""
+
+    if (!displayName && !downloadableUrl) return ""
+
+    const label = escapeMarkdownLinkText(displayName || downloadableUrl)
+    if (!downloadableUrl) {
+      return displayName.includes("`") ? `\`\` ${displayName} \`\`` : `\`${displayName}\``
+    }
+
+    const targetPath = collector
+      ? addFileExportAsset(collector, {
+          source: downloadableUrl,
+          name: displayName || "file",
+          mimeHint: reference.ext || displayName,
+          idPrefix: `${this.getSiteId()}-assistant-file`,
+        })
+      : downloadableUrl.replace(/\(/g, "%28").replace(/\)/g, "%29").replace(/\s/g, "%20")
+
+    return targetPath
+      ? `[${label}](${targetPath})`
+      : displayName.includes("`")
+        ? `\`\` ${displayName} \`\``
+        : `\`${displayName}\``
+  }
+
+  private formatKimiApiInlineImageReference(
+    reference: KimiHistoryExportReference,
+    collector?: ExportAssetCollector,
+  ): string {
+    const normalizedUrl = reference.url ? normalizeExportAssetUrl(reference.url) : ""
+    if (!normalizedUrl || !isDownloadableExportAssetUrl(normalizedUrl)) return ""
+
+    return formatExportImageMarkdown(
+      {
+        source: normalizedUrl,
+        alt: reference.title || reference.fileName || "image",
+        extensionHint: reference.fileName || reference.ext || reference.title,
+      },
+      collector,
+      {
+        siteId: this.getSiteId(),
+        role: "assistant",
+        category: "image",
+        fallbackAlt: "image",
+      },
+    )
+  }
+
+  private formatKimiApiAssistantFile(
+    file: KimiHistoryExportFile,
+    collector?: ExportAssetCollector,
+  ): string {
+    const normalizedSource = file.source ? normalizeExportAssetUrl(file.source) : ""
+    const downloadableSource =
+      normalizedSource && isDownloadableExportAssetUrl(normalizedSource) ? normalizedSource : ""
+
+    if (file.kind === "image" && downloadableSource) {
+      return formatExportImageMarkdown(
+        { source: downloadableSource, alt: file.name, extensionHint: file.name || file.type },
+        collector,
+        {
+          siteId: this.getSiteId(),
+          role: "assistant",
+          category: "image",
+          fallbackAlt: "image",
+        },
+      )
+    }
+
+    const label = this.formatKimiFileLabel(file.name, file.type, file.sizeLabel)
+    return (
+      formatExportFileAttachments(
+        [
+          {
+            kind: "file",
+            name: file.name,
+            source: downloadableSource,
+            type: file.type,
+            sizeLabel: file.sizeLabel,
+          },
+        ],
+        collector,
+        {
+          siteId: this.getSiteId(),
+          role: "assistant",
+          getLabel: () => label,
+        },
+      )[0] || ""
+    )
   }
 
   private extractKimiExportMessages(collector?: ExportAssetCollector): ExportMessage[] {

@@ -156,7 +156,9 @@ const createKimiConfig = (): KimiSiteConfig => {
 
   return {
     capabilities: [...BUILTIN_FEATURE_CAPABILITIES[SITE_IDS.KIMI]],
-    traits: { historyLazyLoad: false },
+    // apiFirstExport：GetChatShare / ListMessages 接口返回完整结构化消息与思维链，
+    // 不受页面折叠态懒渲染限制；接口不可用时返回 null 触发补载并回退 DOM 采集
+    traits: { historyLazyLoad: false, apiFirstExport: true },
     selectors: {
       textarea: [
         '.chat-input-editor[data-lexical-editor="true"]',
