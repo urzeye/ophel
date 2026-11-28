@@ -518,6 +518,7 @@ const scrollRangeIntoView = (range: Range, adapter: SiteAdapter): void => {
       containerRect.top -
       containerRect.height / 2 +
       rect.height / 2
+    adapter.prepareProgrammaticScroll(scrollContainer)
     scrollContainer.scrollTo({ top, behavior: "smooth" })
     return
   }
@@ -578,6 +579,10 @@ export const scrollToQuoteReference = (
     return true
   }
 
+  const scrollContainer = adapter.getScrollContainer()
+  if (scrollContainer && scrollContainer.contains(rootElement)) {
+    adapter.prepareProgrammaticScroll(scrollContainer)
+  }
   rootElement.scrollIntoView({ behavior: "smooth", block: "center" })
   highlightElement(rootElement)
   return true

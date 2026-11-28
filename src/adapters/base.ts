@@ -1070,6 +1070,13 @@ export abstract class SiteAdapter {
   }
 
   /**
+   * 程序化滚动之前的站点级准备钩子（默认无需处理）。
+   * 适用于带有自研阅读位置保持器（如 Kimi 的 v-auto-scroll preserveReadingPosition）的站点：
+   * 滚动前同步派发轻量手势事件以挂起站点的阅读位置回拉，避免程序化跳转后被拉回原位。
+   */
+  prepareProgrammaticScroll(_container: HTMLElement): void {}
+
+  /**
    * 程序化去顶部之前的站点级准备钩子（默认无需处理）。
    * 豆包等站点在「用户尚未真实滚动」时保持吸底/初始定位，会把程序化跳顶
    * 拉回底部；子类可在此补一个合成手势（如 wheel）让站点解除该状态。

@@ -656,6 +656,22 @@ export class KimiAdapter extends SiteAdapter {
   }
 
   /**
+   * Kimi 新版在 .chat-detail-main 上挂载了 v-auto-scroll（preserveReadingPosition），
+   * 会监听容器内的 DOM/class 变更（如 .outline-highlight、.to-bottom-show）并在下一帧
+   * 将 scrollTop 拉回旧阅读锚点。程序化滚动前先同步派发轻量合成 wheel 事件，
+   * 触发 Kimi 自身的 interactionListener 挂起锚定并在滚动结束后重新捕获新位置。
+   */
+  prepareProgrammaticScroll(container: HTMLElement): void {
+    if (typeof WheelEvent === "function") {
+      container.dispatchEvent(
+        new WheelEvent("wheel", { deltaY: 0, bubbles: false, cancelable: false }),
+      )
+      return
+    }
+    container.dispatchEvent(new Event("wheel", { bubbles: false, cancelable: false }))
+  }
+
+  /**
    * 直接滚动 Kimi 对话滚动容器（如 .chat-detail-main），避免默认 scrollIntoView
    * 连带滚动外层同样设置 overflow-y: auto 的 .app.has-sidebar .main。
    */
@@ -666,6 +682,7 @@ export class KimiAdapter extends SiteAdapter {
       return
     }
 
+    this.prepareProgrammaticScroll(container)
     const targetScrollTop = this.getRelativeTop(container, element)
     container.scrollTo({
       top: Math.max(0, targetScrollTop),
@@ -748,6 +765,7 @@ export class KimiAdapter extends SiteAdapter {
 
     if (!targetElement) return false
 
+    this.prepareProgrammaticScroll(container)
     const targetTop = this.getRelativeTop(container, targetElement) + (anchorData.offset || 0)
     container.scrollTo({
       top: Math.max(0, targetTop),
