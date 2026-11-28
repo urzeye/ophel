@@ -120,6 +120,13 @@ if (!window.__ophelScrollLockInitialized) {
 
   // 2. 劫持 window.scrollTo
   window.scrollTo = function (x?: ScrollToOptions | number, y?: number) {
+    if (
+      typeof x === "object" &&
+      x !== null &&
+      (x as ScrollToOptions & { __bypassLock?: boolean }).__bypassLock
+    ) {
+      return callOriginalScrollTo(arguments)
+    }
     if (getPositionLockTarget() !== null) {
       recordPositionLockBlock()
       return
@@ -200,6 +207,13 @@ if (!window.__ophelScrollLockInitialized) {
     optionsOrX?: ScrollToOptions | number,
     y?: number,
   ) {
+    if (
+      typeof optionsOrX === "object" &&
+      optionsOrX !== null &&
+      (optionsOrX as ScrollToOptions & { __bypassLock?: boolean }).__bypassLock
+    ) {
+      return originalElementScrollTo.apply(this, arguments as any)
+    }
     // 如果是纯水平滚动（仅设置 left，无 top），直接放行
     if (typeof optionsOrX === "object" && optionsOrX !== null) {
       if (optionsOrX.left !== undefined && optionsOrX.top === undefined) {
@@ -245,6 +259,13 @@ if (!window.__ophelScrollLockInitialized) {
     optionsOrX?: ScrollToOptions | number,
     y?: number,
   ) {
+    if (
+      typeof optionsOrX === "object" &&
+      optionsOrX !== null &&
+      (optionsOrX as ScrollToOptions & { __bypassLock?: boolean }).__bypassLock
+    ) {
+      return originalElementScroll.apply(this, arguments as any)
+    }
     // 如果是纯水平滚动（仅设置 left，无 top），直接放行
     if (typeof optionsOrX === "object" && optionsOrX !== null) {
       if (optionsOrX.left !== undefined && optionsOrX.top === undefined) {
@@ -290,6 +311,13 @@ if (!window.__ophelScrollLockInitialized) {
     optionsOrX?: ScrollToOptions | number,
     y?: number,
   ) {
+    if (
+      typeof optionsOrX === "object" &&
+      optionsOrX !== null &&
+      (optionsOrX as ScrollToOptions & { __bypassLock?: boolean }).__bypassLock
+    ) {
+      return originalElementScrollBy.apply(this, arguments as any)
+    }
     // 如果是纯水平滚动（仅设置 left，无 top），直接放行
     if (typeof optionsOrX === "object" && optionsOrX !== null) {
       if (optionsOrX.left !== undefined && optionsOrX.top === undefined) {

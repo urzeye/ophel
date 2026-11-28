@@ -24,6 +24,7 @@ import {
 
 import {
   SiteAdapter,
+  type AnchorData,
   type ConversationDeleteTarget,
   type ConversationInfo,
   type ConversationLoadOptions,
@@ -625,18 +626,18 @@ export class KimiAdapter extends SiteAdapter {
   }
 
   getScrollContainer(): HTMLElement | null {
-    const shareDetail = document.querySelector(
-      this.config.sitePrivateSelectors.shareScrollContainer,
-    ) as HTMLElement | null
-    if (shareDetail && shareDetail.scrollHeight > shareDetail.clientHeight) {
-      return shareDetail
-    }
+    const candidates = [
+      ...this.collectScrollCandidates(this.config.sitePrivateSelectors.shareScrollContainer),
+      ...this.collectScrollCandidates(this.config.sitePrivateSelectors.chatDetailScrollContainer),
+    ]
 
-    const detail = document.querySelector(
-      this.config.sitePrivateSelectors.chatDetailScrollContainer,
-    ) as HTMLElement | null
-    if (detail && detail.scrollHeight > detail.clientHeight) {
-      return detail
+    // 优先匹配真正可垂直滚动且当前已溢出的容器，避免命中 overflow: visible 的外层包装
+    const overflowed = candidates.find(
+      (candidate) =>
+        this.isScrollableOverflowY(candidate) && candidate.scrollHeight > candidate.clientHeight,
+    )
+    if (overflowed) {
+      return overflowed
     }
 
     const content = document.querySelector(this.config.sitePrivateSelectors.chatContentContainer)
@@ -645,7 +646,145 @@ export class KimiAdapter extends SiteAdapter {
       return scrollable
     }
 
+    // 短对话尚未溢出时返回已挂载的可滚动容器，确保大纲与阅读历史正确绑定 scroll 监听
+    const readyContainer = candidates.find((candidate) => this.isScrollableOverflowY(candidate))
+    if (readyContainer) {
+      return readyContainer
+    }
+
     return super.getScrollContainer()
+  }
+
+  /**
+   * 直接滚动 Kimi 对话滚动容器（如 .chat-detail-main），避免默认 scrollIntoView
+   * 连带滚动外层同样设置 overflow-y: auto 的 .app.has-sidebar .main。
+   */
+  scrollToOutlineTarget(element: HTMLElement): void {
+    const container = this.getScrollContainer()
+    if (!container || !container.contains(element)) {
+      super.scrollToOutlineTarget(element)
+      return
+    }
+
+    const targetScrollTop = this.getRelativeTop(container, element)
+    container.scrollTo({
+      top: Math.max(0, targetScrollTop),
+      behavior: "instant",
+      __bypassLock: true,
+    } as ScrollToOptions & { __bypassLock: true })
+  }
+
+  /**
+   * Kimi 消息内部的 .segment-content 为 position: relative，导致内容块 offsetTop 恒为 0。
+   * 覆写为基于容器坐标计算可见锚点，修复阅读历史记录与恢复错位。
+   */
+  getVisibleAnchorElement(): AnchorData | null {
+    const container = this.getScrollContainer()
+    if (!container) return null
+
+    const candidates = this.getChatContentCandidates(container)
+    if (candidates.length === 0) return null
+
+    const scrollTop = container.scrollTop
+    let bestElement: HTMLElement | null = null
+    let bestTop = Number.NEGATIVE_INFINITY
+
+    for (const element of candidates) {
+      const top = this.getRelativeTop(container, element)
+      if (top <= scrollTop + 100 && top > bestTop) {
+        bestElement = element
+        bestTop = top
+      }
+    }
+
+    if (!bestElement) {
+      bestElement = candidates[0]
+      bestTop = this.getRelativeTop(container, bestElement)
+    }
+
+    const offset = scrollTop - bestTop
+    const id = bestElement.getAttribute("data-message-id") || bestElement.id
+    if (id) {
+      let selector = `[data-message-id="${id}"]`
+      if (!bestElement.matches(selector)) selector = `#${id}`
+      return { type: "selector", selector, offset }
+    }
+
+    const index = candidates.indexOf(bestElement)
+    if (index === -1) return null
+
+    const textSignature = (bestElement.textContent || "").trim().substring(0, 50)
+    return { type: "index", index, offset, textSignature }
+  }
+
+  restoreScroll(anchorData: AnchorData): boolean {
+    const container = this.getScrollContainer()
+    if (!container || !anchorData) return false
+
+    let targetElement: HTMLElement | null = null
+
+    if (anchorData.type === "selector" && anchorData.selector) {
+      targetElement = container.querySelector(anchorData.selector) as HTMLElement | null
+    } else if (anchorData.type === "index" && typeof anchorData.index === "number") {
+      const candidates = this.getChatContentCandidates(container)
+      if (candidates[anchorData.index]) {
+        targetElement = candidates[anchorData.index]
+        if (anchorData.textSignature) {
+          const currentText = (targetElement.textContent || "").trim().substring(0, 50)
+          if (currentText !== anchorData.textSignature) {
+            targetElement =
+              candidates.find(
+                (candidate) =>
+                  (candidate.textContent || "").trim().substring(0, 50) ===
+                  anchorData.textSignature,
+              ) || targetElement
+          }
+        }
+      } else if (anchorData.textSignature) {
+        targetElement =
+          candidates.find(
+            (candidate) =>
+              (candidate.textContent || "").trim().substring(0, 50) === anchorData.textSignature,
+          ) || null
+      }
+    }
+
+    if (!targetElement) return false
+
+    const targetTop = this.getRelativeTop(container, targetElement) + (anchorData.offset || 0)
+    container.scrollTo({
+      top: Math.max(0, targetTop),
+      behavior: "instant",
+      __bypassLock: true,
+    } as ScrollToOptions & { __bypassLock: true })
+    return true
+  }
+
+  /**
+   * extractOutline 对超过 80 字符的用户提问会拼接 "..."，基类 startsWith 校验会因此失败；
+   * 归一化空白并剥离末尾省略号后再匹配，保证 DOM 刷新后长提问仍可准确重定位。
+   */
+  findUserQueryElement(queryIndex: number, text: string): Element | null {
+    const selector = this.getUserQuerySelector()
+    if (!selector) return null
+
+    const elements = Array.from(document.querySelectorAll(selector))
+    if (elements.length === 0) return null
+
+    if (queryIndex > 0 && elements.length >= queryIndex) {
+      const candidate = elements[queryIndex - 1]
+      if (!text) return candidate
+      if (this.isEquivalentUserQueryText(this.extractUserQueryText(candidate), text)) {
+        return candidate
+      }
+    }
+
+    if (!text) return null
+    return (
+      elements.find((element) =>
+        this.isEquivalentUserQueryText(this.extractUserQueryText(element), text),
+      ) || null
+    )
   }
 
   getResponseContainerSelector(): string {
@@ -678,13 +817,18 @@ export class KimiAdapter extends SiteAdapter {
       return false
     }
 
-    const contentBox = element.querySelector(
-      this.config.sitePrivateSelectors.userContentBox,
-    ) as HTMLElement | null
+    // 优先替换气泡载体 .user-content 以保留新版 toolcall-rollup 包裹下的背景与圆角样式
+    const contentBox = (element.querySelector(this.config.sitePrivateSelectors.userQueryContent) ||
+      element.querySelector(this.config.sitePrivateSelectors.userContentBox)) as HTMLElement | null
     if (!contentBox) return false
 
     const rendered = document.createElement("div")
     rendered.className = `${contentBox.className} gh-user-query-markdown gh-markdown-preview`.trim()
+    for (const attr of Array.from(contentBox.attributes)) {
+      if (attr.name.startsWith("data-v-")) {
+        rendered.setAttribute(attr.name, attr.value)
+      }
+    }
     rendered.innerHTML = html
 
     const inlineStyle = contentBox.getAttribute("style")
@@ -1006,11 +1150,7 @@ export class KimiAdapter extends SiteAdapter {
     noCenter?: boolean
   }> {
     const alignRightCss = "margin-left: auto !important; margin-right: 0 !important;"
-    const wrapperCss = [
-      alignRightCss,
-      "max-width: 100% !important;",
-      "box-sizing: border-box !important;",
-    ].join(" ")
+    const wrapperCss = [alignRightCss, "box-sizing: border-box !important;"].join(" ")
     const contentBoxCss = [
       "max-width: 100% !important;",
       "margin-left: 0 !important;",
@@ -1026,7 +1166,7 @@ export class KimiAdapter extends SiteAdapter {
     return [
       {
         selector: this.config.sitePrivateSelectors.userQueryWrapper,
-        property: "width",
+        property: "max-width",
         extraCss: wrapperCss,
         noCenter: true,
       },
@@ -1492,8 +1632,10 @@ export class KimiAdapter extends SiteAdapter {
       id === this.getSessionId() ||
       (this.config.conversation.activeMatch
         ? el.matches(this.config.conversation.activeMatch)
-        : false)
-    const isPinned = !!el.querySelector(this.config.sitePrivateSelectors.pinnedConversation)
+        : false) ||
+      el.closest(".next-sidebar-history-item.is-active") !== null
+    const pinnedSelector = this.config.sitePrivateSelectors.pinnedConversation
+    const isPinned = !!(el.querySelector(pinnedSelector) || el.closest(pinnedSelector))
     const conversationPath = this.config.conversation.urlTemplate
       .split("{id}")
       .join(encodeURIComponent(id))
@@ -1573,14 +1715,76 @@ export class KimiAdapter extends SiteAdapter {
     return null
   }
 
+  private isScrollableOverflowY(element: HTMLElement): boolean {
+    const overflowY = window.getComputedStyle(element).overflowY
+    return overflowY === "auto" || overflowY === "scroll" || overflowY === "overlay"
+  }
+
+  private collectScrollCandidates(selectorList: string): HTMLElement[] {
+    const results: HTMLElement[] = []
+    const seen = new Set<HTMLElement>()
+    const selectors = selectorList
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean)
+
+    // 按配置顺序收集候选，避免复合选择器按文档前序优先返回外层非滚动祖先
+    for (const selector of selectors) {
+      for (const node of Array.from(document.querySelectorAll(selector))) {
+        if (!(node instanceof HTMLElement) || seen.has(node)) continue
+        if (node.clientHeight <= 0) continue
+        if (node.closest(this.config.sitePrivateSelectors.historyContainer)) continue
+        seen.add(node)
+        results.push(node)
+      }
+    }
+
+    return results
+  }
+
+  private getRelativeTop(container: HTMLElement, element: HTMLElement): number {
+    return (
+      container.scrollTop +
+      (element.getBoundingClientRect().top - container.getBoundingClientRect().top)
+    )
+  }
+
+  private getChatContentCandidates(container: HTMLElement): HTMLElement[] {
+    const selectors = this.getChatContentSelectors()
+    if (selectors.length === 0) return []
+
+    return Array.from(container.querySelectorAll(selectors.join(", "))).filter(
+      (node): node is HTMLElement => {
+        if (!(node instanceof HTMLElement)) return false
+        const rect = node.getBoundingClientRect()
+        return rect.height > 0 || rect.width > 0
+      },
+    )
+  }
+
+  private normalizeUserQueryMatchText(text: string): string {
+    return text
+      .replace(/\s+/g, " ")
+      .trim()
+      .replace(/(?:\.{3}|…)$/u, "")
+  }
+
+  private isEquivalentUserQueryText(candidate: string, target: string): boolean {
+    const normalizedCandidate = this.normalizeUserQueryMatchText(candidate)
+    const normalizedTarget = this.normalizeUserQueryMatchText(target)
+    if (!normalizedCandidate || !normalizedTarget) return false
+
+    return (
+      normalizedCandidate === normalizedTarget ||
+      normalizedCandidate.startsWith(normalizedTarget) ||
+      normalizedTarget.startsWith(normalizedCandidate)
+    )
+  }
+
   private findScrollableParent(element: Element | null): HTMLElement | null {
     let current = element as HTMLElement | null
     while (current && current !== document.body) {
-      const style = window.getComputedStyle(current)
-      if (
-        (style.overflowY === "auto" || style.overflowY === "scroll") &&
-        current.scrollHeight > current.clientHeight
-      ) {
+      if (this.isScrollableOverflowY(current) && current.scrollHeight > current.clientHeight) {
         return current
       }
       current = current.parentElement
@@ -2114,10 +2318,8 @@ export class KimiAdapter extends SiteAdapter {
   }
 
   private findAssistantBodyMarkdownRoot(element: Element): Element | null {
-    if (
-      element.matches(this.config.sitePrivateSelectors.markdown) &&
-      !this.isInsideAssistantToolcall(element)
-    ) {
+    const markdownSelector = this.config.sitePrivateSelectors.markdown
+    if (element.matches(markdownSelector) && !this.isInsideAssistantToolcall(element)) {
       return element
     }
 
@@ -2126,8 +2328,36 @@ export class KimiAdapter extends SiteAdapter {
       return directBody
     }
 
+    // 当 element 本身就是 .segment-assistant（含导出克隆节点）时，带祖先前缀的
+    // assistantBodyMarkdown 无法匹配自身；优先取 toolcall-rollup 最终回答尾节点，
+    // 避免误选中 .toolcall-rollup-segment__body 里的开头过渡语。
+    const rollupTailStrict = Array.from(
+      element.querySelectorAll(
+        `.toolcall-rollup__tail-in > .markdown-container > ${markdownSelector}`,
+      ),
+    ).find((markdown) => !this.isInsideAssistantToolcall(markdown))
+    if (rollupTailStrict) {
+      return rollupTailStrict
+    }
+
+    const rollupTail = Array.from(
+      element.querySelectorAll(`.toolcall-rollup__tail-in ${markdownSelector}`),
+    ).find((markdown) => !this.isInsideAssistantToolcall(markdown))
+    if (rollupTail) {
+      return rollupTail
+    }
+
+    const legacyDirectBody = Array.from(
+      element.querySelectorAll(
+        `${this.config.sitePrivateSelectors.userContentBox} > .markdown-container > ${markdownSelector}`,
+      ),
+    ).find((markdown) => !this.isInsideAssistantToolcall(markdown))
+    if (legacyDirectBody) {
+      return legacyDirectBody
+    }
+
     return (
-      Array.from(element.querySelectorAll(this.config.sitePrivateSelectors.markdown)).find(
+      Array.from(element.querySelectorAll(markdownSelector)).find(
         (markdown) => !this.isInsideAssistantToolcall(markdown),
       ) || null
     )

@@ -109,6 +109,13 @@ export function injectScrollLock(): void {
 
   // 2. 劫持 window.scrollTo
   pageWin.scrollTo = function (x?: ScrollToOptions | number, y?: number) {
+    if (
+      typeof x === "object" &&
+      x !== null &&
+      (x as ScrollToOptions & { __bypassLock?: boolean }).__bypassLock
+    ) {
+      return originalApis.scrollTo.apply(pageWin, arguments as any)
+    }
     if (getPositionLockTarget() !== null) {
       recordPositionLockBlock()
       return
@@ -182,6 +189,13 @@ export function injectScrollLock(): void {
     optionsOrX?: ScrollToOptions | number,
     y?: number,
   ) {
+    if (
+      typeof optionsOrX === "object" &&
+      optionsOrX !== null &&
+      (optionsOrX as ScrollToOptions & { __bypassLock?: boolean }).__bypassLock
+    ) {
+      return originalElementScrollTo.apply(this, arguments as any)
+    }
     // 纯水平滚动（仅设置 left，无 top），直接放行
     if (typeof optionsOrX === "object" && optionsOrX !== null) {
       if (optionsOrX.left !== undefined && optionsOrX.top === undefined) {
@@ -223,6 +237,13 @@ export function injectScrollLock(): void {
     optionsOrX?: ScrollToOptions | number,
     y?: number,
   ) {
+    if (
+      typeof optionsOrX === "object" &&
+      optionsOrX !== null &&
+      (optionsOrX as ScrollToOptions & { __bypassLock?: boolean }).__bypassLock
+    ) {
+      return originalElementScroll.apply(this, arguments as any)
+    }
     // 纯水平滚动（仅设置 left，无 top），直接放行
     if (typeof optionsOrX === "object" && optionsOrX !== null) {
       if (optionsOrX.left !== undefined && optionsOrX.top === undefined) {
@@ -264,6 +285,13 @@ export function injectScrollLock(): void {
     optionsOrX?: ScrollToOptions | number,
     y?: number,
   ) {
+    if (
+      typeof optionsOrX === "object" &&
+      optionsOrX !== null &&
+      (optionsOrX as ScrollToOptions & { __bypassLock?: boolean }).__bypassLock
+    ) {
+      return originalElementScrollBy.apply(this, arguments as any)
+    }
     // 纯水平滚动（仅设置 left，无 top），直接放行
     if (typeof optionsOrX === "object" && optionsOrX !== null) {
       if (optionsOrX.left !== undefined && optionsOrX.top === undefined) {
