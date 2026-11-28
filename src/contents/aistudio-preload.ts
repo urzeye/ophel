@@ -8,7 +8,6 @@
 import type { PlasmoCSConfig } from "plasmo"
 
 const OPHEL_AISTUDIO_WATERMARK_TOGGLE = "OPHEL_AISTUDIO_WATERMARK_TOGGLE"
-const OPHEL_AISTUDIO_WATERMARK_CACHE_KEY = "ophel:aistudio:removeWatermark"
 
 // 配置：仅匹配 AI Studio，在 document_start 阶段执行
 export const config: PlasmoCSConfig = {
@@ -17,11 +16,6 @@ export const config: PlasmoCSConfig = {
 }
 
 function syncWatermarkBlockerSetting(enabled: boolean): void {
-  try {
-    localStorage.setItem(OPHEL_AISTUDIO_WATERMARK_CACHE_KEY, enabled ? "1" : "0")
-  } catch {
-    // 忽略受限环境下的 localStorage 写入失败
-  }
   if (document.documentElement) {
     document.documentElement.dataset.ophelAistudioWatermarkBlock = enabled ? "1" : "0"
   }

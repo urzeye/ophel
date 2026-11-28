@@ -346,7 +346,18 @@ export function initWatermarkRemover(ctx: ModulesContext): void {
   syncWatermarkRemover(settings, siteId)
 }
 
+function syncAIStudioWatermarkBlocker(settings: Settings, siteId: string): void {
+  if (siteId !== SITE_IDS.AISTUDIO) return
+  const enabled = Boolean(settings.aistudio?.removeWatermark)
+  if (document.documentElement) {
+    document.documentElement.dataset.ophelAistudioWatermarkBlock = enabled ? "1" : "0"
+  }
+  window.postMessage({ type: "OPHEL_AISTUDIO_WATERMARK_TOGGLE", enabled }, "*")
+}
+
 function syncWatermarkRemover(settings: Settings, siteId: string): void {
+  syncAIStudioWatermarkBlocker(settings, siteId)
+
   if (siteId !== SITE_IDS.GEMINI && siteId !== SITE_IDS.GEMINI_ENTERPRISE) return
 
   if (!platform.hasCapability("watermarkRemoval") || !settings.content?.watermarkRemoval) {
@@ -638,21 +649,7 @@ export function subscribeModuleUpdates(ctx: ModulesContext): () => void {
     // 6. Watermark Remover update
     if (adapter.getEnhancementMode() === "minimal") return
 
-    if (newSettings) {
-      syncWatermarkRemover(newSettings, siteId)
-      if (siteId === SITE_IDS.AISTUDIO) {
-        const enabled = Boolean(newSettings.aistudio?.removeWatermark)
-        try {
-          localStorage.setItem("ophel:aistudio:removeWatermark", enabled ? "1" : "0")
-        } catch {
-          // 忽略受限环境下的 localStorage 写入失败
-        }
-        if (document.documentElement) {
-          document.documentElement.dataset.ophelAistudioWatermarkBlock = enabled ? "1" : "0"
-        }
-        window.postMessage({ type: "OPHEL_AISTUDIO_WATERMARK_TOGGLE", enabled }, "*")
-      }
-    }
+    if (newSettings) syncWatermarkRemover(newSettings, siteId)
 
     // 7. Tab Manager update
     if (newSettings?.tab) {

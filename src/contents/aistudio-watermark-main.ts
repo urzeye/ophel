@@ -6,16 +6,15 @@
  * gemini-watermark-main.ts 同一模式）。
  *
  * 开关来源：
- * 1. document_start 阶段先同步读取 localStorage 缓存（由 aistudio-preload.ts 与
- *    modules-init.ts 维护），保证首屏最早的 watermark_v4.png 请求也能被拦截；
- * 2. 运行期间通过 documentElement.dataset.ophelAistudioWatermarkBlock 与
- *    OPHEL_AISTUDIO_WATERMARK_TOGGLE 消息与隔离世界保持实时同步。
+ * - 默认关闭（与 gemini-watermark-main.ts 一致），不使用跨会话 localStorage 缓存，
+ *   避免用户在未打开 AI Studio 标签页时于扩展设置页修改开关导致读取过期值；
+ * - document_start 阶段读取当前文档瞬态 dataset.ophelAistudioWatermarkBlock，
+ *   并在运行期间通过 OPHEL_AISTUDIO_WATERMARK_TOGGLE 消息与隔离世界保持实时同步。
  */
 
 import type { PlasmoCSConfig } from "plasmo"
 
 const OPHEL_AISTUDIO_WATERMARK_TOGGLE = "OPHEL_AISTUDIO_WATERMARK_TOGGLE"
-const OPHEL_AISTUDIO_WATERMARK_CACHE_KEY = "ophel:aistudio:removeWatermark"
 
 export const config: PlasmoCSConfig = {
   matches: ["https://aistudio.google.com/*"],
@@ -31,17 +30,10 @@ if (!window.__ophelAistudioWatermarkMainInitialized) {
   window.__ophelAistudioWatermarkMainInitialized = true
 
   const pattern = /watermark_v4\.png/i
+  const styleUrlPattern = /url\(\s*(?:"[^"]*"|'[^']*'|[^)]*)\s*\)/gi
 
-  const readInitialEnabled = (): boolean => {
-    const attr = document.documentElement?.dataset?.ophelAistudioWatermarkBlock
-    if (attr === "1") return true
-    if (attr === "0") return false
-    try {
-      return window.localStorage.getItem(OPHEL_AISTUDIO_WATERMARK_CACHE_KEY) === "1"
-    } catch {
-      return false
-    }
-  }
+  const readInitialEnabled = (): boolean =>
+    document.documentElement?.dataset?.ophelAistudioWatermarkBlock === "1"
 
   let watermarkBlockEnabled = readInitialEnabled()
 
@@ -54,14 +46,7 @@ if (!window.__ophelAistudioWatermarkMainInitialized) {
 
   const shouldBlock = (candidate: unknown): boolean => {
     if (!isEnabled() || !candidate) return false
-    const value = String(candidate)
-    if (pattern.test(value)) return true
-    try {
-      const absolute = new URL(value, location.href).href
-      return pattern.test(absolute)
-    } catch {
-      return false
-    }
+    return pattern.test(String(candidate))
   }
 
   // 1. fetch()
@@ -94,15 +79,18 @@ if (!window.__ophelAistudioWatermarkMainInitialized) {
     this: MonitoredWatermarkXhr,
     method: string,
     url: string | URL,
-    async?: boolean,
-    username?: string | null,
-    password?: string | null,
+    ...rest: unknown[]
   ) {
     this.__ophelWatermarkBlocked = shouldBlock(url)
     if (this.__ophelWatermarkBlocked) {
       console.debug("[Ophel Watermark Blocker] Blocked XHR:", url)
     }
-    return originalOpen.call(this, method, url, async ?? true, username ?? null, password ?? null)
+    return (originalOpen as (this: XMLHttpRequest, ...args: unknown[]) => void).call(
+      this,
+      method,
+      url,
+      ...rest,
+    )
   }
 
   xhrProto.send = function (
@@ -149,7 +137,9 @@ if (!window.__ophelAistudioWatermarkMainInitialized) {
 
     if (lower === "style" && shouldBlock(strValue)) {
       console.debug("[Ophel Watermark Blocker] Sanitized inline style:", strValue)
-      const sanitized = strValue.replace(pattern, "none")
+      const sanitized = strValue.replace(styleUrlPattern, (match) =>
+        pattern.test(match) ? "none" : match,
+      )
       return originalSetAttribute.call(this, name, sanitized)
     }
 
@@ -213,11 +203,16 @@ if (!window.__ophelAistudioWatermarkMainInitialized) {
     })
   }
 
-  // 监听来自隔离世界的开关更新
+  // 监听来自隔离世界的开关更新，并同步 dataset 避免状态源分叉
   window.addEventListener("message", (event) => {
     if (event.source !== window) return
     if (event.data?.type === OPHEL_AISTUDIO_WATERMARK_TOGGLE) {
       watermarkBlockEnabled = Boolean(event.data.enabled)
+      if (document.documentElement) {
+        document.documentElement.dataset.ophelAistudioWatermarkBlock = watermarkBlockEnabled
+          ? "1"
+          : "0"
+      }
     }
   })
 }
