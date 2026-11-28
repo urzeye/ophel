@@ -149,7 +149,7 @@ const normalizeRawMessage = (raw: Record<string, unknown>): RawKimiMessage | nul
  * - ListMessages 返回倒序（messages[0] 为最新叶子节点）
  * - GetChatShare 返回正序（最后一条为最新叶子节点）
  *
- * 从叶子节点沿 parentId 向上回溯并反转；检测到环路时返回 null 交由调用方回退。
+ * 从叶子节点沿 parentId 向上回溯并反转；检测到环路或非根父节点缺失时返回 null 交由调用方回退。
  */
 const resolveKimiActiveBranch = (
   messages: RawKimiMessage[],
@@ -170,11 +170,11 @@ const resolveKimiActiveBranch = (
     unique.push(message)
   }
 
-  // 若历史老数据不含 id/parentId 关系，直接按给定顺序规整为正序
-  const hasParentLinks = unique.some(
-    (message) => Boolean(message.parentId) && byId.has(message.parentId),
-  )
-  if (!hasParentLinks) {
+  const isRootParent = (parentId: string) => !parentId || (Boolean(chatId) && parentId === chatId)
+
+  // 仅当所有消息均不含指向其他消息的 parentId 时（如单条根消息或无树结构老数据），直接按顺序规整
+  const hasNonRootParent = unique.some((message) => !isRootParent(message.parentId))
+  if (!hasNonRootParent) {
     return order === "desc" ? [...unique].reverse() : unique
   }
 
@@ -200,7 +200,7 @@ const resolveKimiActiveBranch = (
     leaf = nextChild
   }
 
-  // 从叶子沿 parentId 回溯至根
+  // 从叶子沿 parentId 回溯至根；非根父节点缺失时拒绝导出，避免静默截断早期轮次
   const chain: RawKimiMessage[] = []
   const upVisited = new Set<string>()
   let current: RawKimiMessage | undefined = leaf
@@ -212,8 +212,11 @@ const resolveKimiActiveBranch = (
     chain.push(current)
 
     const parentId = current.parentId
-    if (!parentId || (chatId && parentId === chatId)) break
-    current = byId.get(parentId)
+    if (isRootParent(parentId)) break
+
+    const parent = byId.get(parentId)
+    if (!parent) return null
+    current = parent
   }
 
   return chain.reverse()
