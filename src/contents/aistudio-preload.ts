@@ -44,8 +44,10 @@ function syncWatermarkBlockerSetting(enabled: boolean): void {
 
     // 从 Zustand persist 格式中提取 aistudio 设置
     const aistudioSettings = settingsObj?.state?.settings?.aistudio || settingsObj?.aistudio
+    const disabledSites = settingsObj?.state?.settings?.disabledSites || settingsObj?.disabledSites
+    const isAIStudioDisabled = Array.isArray(disabledSites) && disabledSites.includes("aistudio")
 
-    // 如果没有 AI Studio 设置，确保关闭旧缓存后返回
+    // 如果没有 AI Studio 设置，确保同步关闭状态后返回
     if (!aistudioSettings) {
       syncWatermarkBlockerSetting(false)
       return
@@ -53,7 +55,7 @@ function syncWatermarkBlockerSetting(enabled: boolean): void {
 
     // 同步去水印拦截开关给主世界脚本（aistudio-watermark-main.ts），
     // 不再向文档插入内联 <script>，彻底避免触发页面 CSP 阻断报错
-    syncWatermarkBlockerSetting(Boolean(aistudioSettings.removeWatermark))
+    syncWatermarkBlockerSetting(!isAIStudioDisabled && Boolean(aistudioSettings.removeWatermark))
 
     // 读取现有的 AI Studio 用户偏好
     const prefStr = localStorage.getItem("aiStudioUserPreference") || "{}"

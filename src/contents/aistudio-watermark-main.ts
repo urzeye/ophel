@@ -53,6 +53,9 @@ if (!window.__ophelAistudioWatermarkMainInitialized) {
   if (typeof window.fetch === "function") {
     const originalFetch = window.fetch.bind(window)
     window.fetch = function (...args: Parameters<typeof fetch>) {
+      if (!isEnabled()) {
+        return originalFetch(...args)
+      }
       const input = args[0]
       const url =
         typeof input === "string"
@@ -127,23 +130,29 @@ if (!window.__ophelAistudioWatermarkMainInitialized) {
   // 4. Element.prototype.setAttribute
   const originalSetAttribute = Element.prototype.setAttribute
   Element.prototype.setAttribute = function (name: string, value: string) {
+    if (!isEnabled()) {
+      return Reflect.apply(originalSetAttribute, this, arguments)
+    }
+
     const lower = String(name).toLowerCase()
-    const strValue = String(value)
-
-    if (lower === "src" && shouldBlock(strValue)) {
-      console.debug("[Ophel Watermark Blocker] Blocked setAttribute src:", strValue)
-      return
+    if (lower === "src") {
+      const strValue = String(value)
+      if (shouldBlock(strValue)) {
+        console.debug("[Ophel Watermark Blocker] Blocked setAttribute src:", strValue)
+        return
+      }
+    } else if (lower === "style") {
+      const strValue = String(value)
+      if (shouldBlock(strValue)) {
+        console.debug("[Ophel Watermark Blocker] Sanitized inline style:", strValue)
+        const sanitized = strValue.replace(styleUrlPattern, (match) =>
+          pattern.test(match) ? "none" : match,
+        )
+        return originalSetAttribute.call(this, name, sanitized)
+      }
     }
 
-    if (lower === "style" && shouldBlock(strValue)) {
-      console.debug("[Ophel Watermark Blocker] Sanitized inline style:", strValue)
-      const sanitized = strValue.replace(styleUrlPattern, (match) =>
-        pattern.test(match) ? "none" : match,
-      )
-      return originalSetAttribute.call(this, name, sanitized)
-    }
-
-    return originalSetAttribute.call(this, name, value)
+    return Reflect.apply(originalSetAttribute, this, arguments)
   }
 
   // 5. CSSStyleDeclaration / CSSStyleProperties background-image
