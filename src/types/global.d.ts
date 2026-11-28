@@ -35,6 +35,8 @@ declare global {
     }
     /** Gemini 水印主世界 fetch 劫持初始化标记 */
     __ophelGeminiWatermarkMainInitialized?: boolean
+    /** AI Studio 水印拦截主世界脚本初始化标记 */
+    __ophelAistudioWatermarkMainInitialized?: boolean
     /** 油猴脚本主世界 window 代理（仅 userscript 环境存在） */
     unsafeWindow?: Window & typeof globalThis
     /** Gemini Canvas 主世界桥接初始化标记 */

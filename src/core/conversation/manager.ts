@@ -550,7 +550,7 @@ export class ConversationManager {
 
     useConversationsStore.setState({ conversations: nextConversations })
     this.notifyDataChange()
-    console.warn(
+    console.debug(
       `[ConversationManager] Gemini legacy cid migrated: ${sourceLegacyCid} -> ${currentCid}, updated ${toMigrate.length} conversations.`,
     )
     return "migrated"

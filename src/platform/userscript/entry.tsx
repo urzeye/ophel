@@ -373,10 +373,10 @@ if (!shouldRun) {
   )
 } else if (window.top !== window.self) {
   // 防止在 iframe 中执行（@noframes 之外的兜底防御）
-  console.warn("[Ophel] Running in iframe, skipping initialization")
+  console.debug("[Ophel] Running in iframe, skipping initialization")
 } else if (window.ophelUserscriptInitialized) {
   // 防止重复初始化
-  console.warn("[Ophel] Already initialized, skipping")
+  console.debug("[Ophel] Already initialized, skipping")
 } else {
   window.ophelUserscriptInitialized = true
 
@@ -407,7 +407,7 @@ async function init() {
     .then(({ checkUserscriptRemoteConfigOnStartup }) => checkUserscriptRemoteConfigOnStartup())
     .then((result) => {
       if (result?.status === "failed") {
-        console.warn("[Ophel] Remote config check failed:", result.error)
+        console.debug("[Ophel] Remote config check failed:", result.error)
       }
     })
     .catch((error) => {

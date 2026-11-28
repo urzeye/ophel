@@ -1046,10 +1046,21 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
       const key = "registry:refresh"
       if (manageBusyState && !beginBusy(key)) return null
       try {
+        const checkOptions = {
+          ...(options.sources && options.sources.length > 0 ? { sources: options.sources } : {}),
+          ...(options.silent ? { silent: true } : {}),
+        }
         const result = await platform.remoteConfig.checkForUpdates(
-          options.sources && options.sources.length > 0 ? { sources: options.sources } : undefined,
+          Object.keys(checkOptions).length > 0 ? checkOptions : undefined,
         )
         if (result.status === "failed") {
+          await loadRegistryState()
+          if (options.silent) {
+            // 进入页面时的自动静默检查失败仅更新页面内的 lastError 状态区，
+            // 不写 console.error 污染扩展错误页，也不弹出阻断式弹窗与错误 Toast
+            console.debug("[Ophel] Silent SitePack registry check failed:", result.error)
+            return result
+          }
           throw new Error(result.error || t("operationFailed"))
         }
         const syncResult = await packManager.syncRegistryPacks()
@@ -1080,6 +1091,11 @@ const SitePacksPage: React.FC<SitePacksPageProps> = ({ initialTab }) => {
         }
         return result
       } catch (error) {
+        if (options.silent) {
+          await loadRegistryState().catch(() => {})
+          console.debug("[Ophel] Silent SitePack registry refresh failed:", error)
+          return null
+        }
         reportOperationError(error)
         return null
       } finally {

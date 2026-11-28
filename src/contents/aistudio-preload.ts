@@ -7,12 +7,25 @@
 
 import type { PlasmoCSConfig } from "plasmo"
 
-import { WATERMARK_BLOCKER_CODE } from "~constants/scripts"
+const OPHEL_AISTUDIO_WATERMARK_TOGGLE = "OPHEL_AISTUDIO_WATERMARK_TOGGLE"
+const OPHEL_AISTUDIO_WATERMARK_CACHE_KEY = "ophel:aistudio:removeWatermark"
 
 // 配置：仅匹配 AI Studio，在 document_start 阶段执行
 export const config: PlasmoCSConfig = {
   matches: ["https://aistudio.google.com/*"],
   run_at: "document_start",
+}
+
+function syncWatermarkBlockerSetting(enabled: boolean): void {
+  try {
+    localStorage.setItem(OPHEL_AISTUDIO_WATERMARK_CACHE_KEY, enabled ? "1" : "0")
+  } catch {
+    // 忽略受限环境下的 localStorage 写入失败
+  }
+  if (document.documentElement) {
+    document.documentElement.dataset.ophelAistudioWatermarkBlock = enabled ? "1" : "0"
+  }
+  window.postMessage({ type: OPHEL_AISTUDIO_WATERMARK_TOGGLE, enabled }, "*")
 }
 
 // 立即执行
@@ -38,24 +51,15 @@ export const config: PlasmoCSConfig = {
     // 从 Zustand persist 格式中提取 aistudio 设置
     const aistudioSettings = settingsObj?.state?.settings?.aistudio || settingsObj?.aistudio
 
-    // 如果没有 AI Studio 设置，直接返回
+    // 如果没有 AI Studio 设置，确保关闭旧缓存后返回
     if (!aistudioSettings) {
+      syncWatermarkBlockerSetting(false)
       return
     }
 
-    // 注入去水印脚本 (如果启用)
-    // 需在 Main World 执行以劫持原生 API
-    if (aistudioSettings.removeWatermark) {
-      const script = document.createElement("script")
-      script.textContent = WATERMARK_BLOCKER_CODE
-      try {
-        ;(document.head || document.documentElement).appendChild(script)
-        script.remove()
-        console.warn("[Ophel] Watermark blocker injected")
-      } catch (e) {
-        console.error("[Ophel] Failed to inject watermark blocker:", e)
-      }
-    }
+    // 同步去水印拦截开关给主世界脚本（aistudio-watermark-main.ts），
+    // 不再向文档插入内联 <script>，彻底避免触发页面 CSP 阻断报错
+    syncWatermarkBlockerSetting(Boolean(aistudioSettings.removeWatermark))
 
     // 读取现有的 AI Studio 用户偏好
     const prefStr = localStorage.getItem("aiStudioUserPreference") || "{}"
@@ -165,7 +169,7 @@ function waitForButtonAndClick(selector: string) {
             const event = new MouseEvent("click", { bubbles: true, cancelable: true })
             button.dispatchEvent(event)
             hasClicked = true
-            console.warn("[Ophel] Run settings panel closed")
+            console.debug("[Ophel] Run settings panel closed")
             cleanup()
           } catch (e) {
             console.error("[Ophel] Failed to click button:", e)

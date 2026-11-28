@@ -603,7 +603,7 @@ const VirtualizedOutlineTree: React.FC<{
         if (warnedHeightDriftKeysRef.current.has(warningKey)) return
         warnedHeightDriftKeysRef.current.add(warningKey)
 
-        console.warn("[OutlineTab] Virtual outline row height drift", {
+        console.debug("[OutlineTab] Virtual outline row height drift", {
           nodeIndex,
           nodeKind: row.dataset.nodeKind,
           itemHeight,
@@ -1452,7 +1452,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
       } else {
         // Fallback to window only if desperate, but typically window scroll won't help if container is internal
         // But for safety let's leave valid container check
-        console.warn("[OutlineTab] Failed to find scroll container after retries")
+        console.debug("[OutlineTab] Failed to find scroll container after retries")
       }
     }
 

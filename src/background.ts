@@ -189,7 +189,7 @@ async function shouldRunAutomaticRemoteConfig(): Promise<boolean> {
   }
 }
 
-async function runRemoteConfigCheck(force: boolean, sources?: readonly string[]) {
+async function runRemoteConfigCheck(force: boolean, sources?: readonly string[], silent = false) {
   if (!force && !(await shouldRunAutomaticRemoteConfig())) return null
 
   const result = await remoteConfigManager.checkForUpdates({
@@ -197,7 +197,13 @@ async function runRemoteConfigCheck(force: boolean, sources?: readonly string[])
     ...(sources && sources.length > 0 ? { sources } : {}),
   })
   if (result.status === "failed") {
-    console.warn("[Ophel] Remote config check failed:", result.error)
+    // 后台定时/启动自动检查或设置页切入静默检查在离线或网络受限时属常态，
+    // 错误已持久化到 lastError 供设置页展示，不应每次都打 console.warn 点亮扩展错误面板
+    if (force && !silent) {
+      console.warn("[Ophel] Remote config check failed:", result.error)
+    } else {
+      console.debug("[Ophel] Remote config check failed:", result.error)
+    }
   } else {
     await syncInstalledRegistryPacks()
   }
@@ -561,6 +567,10 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
         sendResponse({ success: false, error: "force must be a boolean" })
         break
       }
+      if (message.silent !== undefined && typeof message.silent !== "boolean") {
+        sendResponse({ success: false, error: "silent must be a boolean" })
+        break
+      }
       if (
         message.sources !== undefined &&
         (!Array.isArray(message.sources) ||
@@ -570,7 +580,11 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
         break
       }
       ;(async () => {
-        const result = await runRemoteConfigCheck(message.force ?? true, message.sources)
+        const result = await runRemoteConfigCheck(
+          message.force ?? true,
+          message.sources,
+          message.silent ?? false,
+        )
         if (!result) {
           sendResponse({ success: true })
           return
@@ -715,7 +729,11 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
           }
           reader.readAsDataURL(blob)
         } catch (err) {
-          console.error("Proxy fetch failed:", err)
+          if (message.silentError) {
+            console.debug("Proxy fetch candidate failed:", err)
+          } else {
+            console.error("Proxy fetch failed:", err)
+          }
           sendResponse({ success: false, error: (err as Error).message })
         }
       })()

@@ -519,7 +519,7 @@ export class DeepSeekAdapter extends SiteAdapter {
     while (!this.isVirtualScrollConversation()) {
       if (signal?.aborted) return false
       if (Date.now() >= deadline) {
-        console.warn("[Ophel] Reading history restore skipped: DeepSeek message list not ready")
+        console.debug("[Ophel] Reading history restore skipped: DeepSeek message list not ready")
         return false
       }
       await this.sleep(100)
@@ -533,7 +533,7 @@ export class DeepSeekAdapter extends SiteAdapter {
     const quiet = await waitForVirtualScrollQuiet(() => this.getScrollContainer(), signal)
     if (signal?.aborted) return false
     if (!quiet) {
-      console.warn("[Ophel] Reading history restore skipped: DeepSeek page kept scrolling")
+      console.debug("[Ophel] Reading history restore skipped: DeepSeek page kept scrolling")
       return false
     }
 
@@ -544,7 +544,7 @@ export class DeepSeekAdapter extends SiteAdapter {
     const row = await this.probeMountVirtualRow(rowKey, container, outlineData, null, signal)
     if (signal?.aborted) return false
     if (!row) {
-      console.warn("[Ophel] Reading history restore skipped: DeepSeek message not found", rowKey)
+      console.debug("[Ophel] Reading history restore skipped: DeepSeek message not found", rowKey)
       return false
     }
 
@@ -552,7 +552,7 @@ export class DeepSeekAdapter extends SiteAdapter {
     if (anchor.textSignature) {
       const current = (row.textContent || "").trim().substring(0, 50)
       if (current !== anchor.textSignature) {
-        console.warn(
+        console.debug(
           "[Ophel] Reading history restore skipped: DeepSeek message content changed",
           rowKey,
         )
@@ -608,7 +608,7 @@ export class DeepSeekAdapter extends SiteAdapter {
       const visualOffset =
         finalRow.getBoundingClientRect().top - finalContainer.getBoundingClientRect().top
       if (Math.abs(visualOffset + offset) <= 240) {
-        console.warn(
+        console.debug(
           "[Ophel] Reading history restore accepted with loose alignment",
           samples.slice(-12),
         )

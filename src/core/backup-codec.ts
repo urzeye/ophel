@@ -350,7 +350,7 @@ export const restoreBackupDocument = async (
   const { updates, ...result } = createBackupRestorePlan(input)
   await Promise.all(Object.entries(updates).map(([key, value]) => storage.set(key, value)))
   if (result.ignoredKeys.length > 0) {
-    console.warn("[Ophel] Ignored non-user backup keys:", result.ignoredKeys)
+    console.debug("[Ophel] Ignored non-user backup keys:", result.ignoredKeys)
   }
   return result
 }

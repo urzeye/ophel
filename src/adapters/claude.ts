@@ -1879,7 +1879,7 @@ export class ClaudeAdapter extends SiteAdapter {
       .catch((error) => {
         // 网络/HTTP 失败同样计入熔断：连续失败时滚动回填兜底需要启动
         this.apiOutlineFailures += 1
-        console.warn("[ClaudeAdapter] Failed to fetch conversation outline:", error)
+        console.debug("[ClaudeAdapter] Failed to fetch conversation outline:", error)
       })
       .finally(() => {
         this.apiOutlineFetchPromise = null
@@ -2075,7 +2075,7 @@ export class ClaudeAdapter extends SiteAdapter {
     while (!this.isClaudeVirtualConversation()) {
       if (signal?.aborted) return false
       if (Date.now() >= deadline) {
-        console.warn("[Ophel] Reading history restore skipped: Claude message list not ready")
+        console.debug("[Ophel] Reading history restore skipped: Claude message list not ready")
         return false
       }
       await this.sleep(100)
@@ -2111,7 +2111,7 @@ export class ClaudeAdapter extends SiteAdapter {
     }
     if (signal?.aborted) return false
     if (!row) {
-      console.warn("[Ophel] Reading history restore skipped: Claude message not found", rowKey)
+      console.debug("[Ophel] Reading history restore skipped: Claude message not found", rowKey)
       return false
     }
 
@@ -2119,7 +2119,7 @@ export class ClaudeAdapter extends SiteAdapter {
     if (anchor.textSignature) {
       const current = (row.textContent || "").trim().substring(0, 50)
       if (current !== anchor.textSignature) {
-        console.warn(
+        console.debug(
           "[Ophel] Reading history restore skipped: Claude message content changed",
           rowKey,
         )

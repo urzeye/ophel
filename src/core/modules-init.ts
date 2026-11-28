@@ -255,7 +255,7 @@ export function initMarkdownFixer(ctx: ModulesContext): void {
   if (config && enabled) {
     modules.markdownFixer = new MarkdownFixer(config)
     modules.markdownFixer.start()
-    console.warn(`[Ophel] MarkdownFixer started for ${adapter.getName()}`)
+    console.debug(`[Ophel] MarkdownFixer started for ${adapter.getName()}`)
   }
 }
 
@@ -638,7 +638,21 @@ export function subscribeModuleUpdates(ctx: ModulesContext): () => void {
     // 6. Watermark Remover update
     if (adapter.getEnhancementMode() === "minimal") return
 
-    if (newSettings) syncWatermarkRemover(newSettings, siteId)
+    if (newSettings) {
+      syncWatermarkRemover(newSettings, siteId)
+      if (siteId === SITE_IDS.AISTUDIO) {
+        const enabled = Boolean(newSettings.aistudio?.removeWatermark)
+        try {
+          localStorage.setItem("ophel:aistudio:removeWatermark", enabled ? "1" : "0")
+        } catch {
+          // 忽略受限环境下的 localStorage 写入失败
+        }
+        if (document.documentElement) {
+          document.documentElement.dataset.ophelAistudioWatermarkBlock = enabled ? "1" : "0"
+        }
+        window.postMessage({ type: "OPHEL_AISTUDIO_WATERMARK_TOGGLE", enabled }, "*")
+      }
+    }
 
     // 7. Tab Manager update
     if (newSettings?.tab) {
@@ -737,7 +751,7 @@ export function initUrlChangeObserver(ctx: ModulesContext): () => void {
     if (currentPathname === lastPathname) return
 
     lastPathname = currentPathname
-    console.warn("[Ophel] URL changed, reinitializing modules...")
+    console.debug("[Ophel] URL changed, reinitializing modules...")
 
     // 1. 阅读历史：停止录制 → 在可取消的稳定等待后恢复并重启
     const restoreRequestId = ++readingHistoryRestoreRequestId
